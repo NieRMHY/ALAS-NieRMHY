@@ -4,6 +4,7 @@ from module.campaign.campaign_event import CampaignEvent
 from module.coalition.assets import *
 from module.coalition.combat import CoalitionCombat
 from module.exception import ScriptError, ScriptEnd
+from module.log_res.log_res import LogRes
 from module.logger import logger
 from module.ocr.ocr import Digit
 from module.ui.page import page_campaign_menu
