@@ -1,3 +1,5 @@
+# 此文件专门用于管理 Web 界面自身的偏好设置及持久化状态类文件。
+# 包括界面主题、常用项展开折叠状态以及各类预览占位图、图标资源的路径定义与缓存管理机制。
 import multiprocessing
 import threading
 from multiprocessing.managers import SyncManager
@@ -59,7 +61,50 @@ class State:
     manager: SyncManager = None
     electron: bool = False
     theme: str = "default"
+    last_screenshot_base64: str = None
+    placeholder_images: list = [
+        "screen1.jpg",
+        "screen2.jpg",
+        "screen3.jpg",
+        "screen4.png",
+        "screen5.png",
+        "screen6.png",
+        "screen7.png",
+        "screen8.jpg",
+        "screen9.png",
+    ]
+    placeholder_index: int = 0
 
+    @classmethod
+    def get_placeholder_url(cls) -> str:
+        try:
+            idx = getattr(cls.deploy_config, "PlaceholderIndex", None)
+            if idx is not None:
+                try:
+                    idx = int(idx)
+                    cls.placeholder_index = idx % len(cls.placeholder_images)
+                except Exception:
+                    pass
+        except Exception:
+            pass
+
+        name = cls.placeholder_images[cls.placeholder_index % len(cls.placeholder_images)]
+        return f"/static/assets/spa/{name}"
+
+    @classmethod
+    def toggle_placeholder(cls) -> str:
+        return cls.advance_placeholder()
+
+    @classmethod
+    def advance_placeholder(cls) -> str:
+        cls.placeholder_index = (cls.placeholder_index + 1) % len(cls.placeholder_images)
+        try:
+            cls.deploy_config.PlaceholderIndex = cls.placeholder_index
+        except Exception:
+            pass
+        name = cls.placeholder_images[cls.placeholder_index]
+        return f"/static/assets/spa/{name}"
+    
     @classmethod
     def init(cls):
         cls.manager = multiprocessing.Manager()

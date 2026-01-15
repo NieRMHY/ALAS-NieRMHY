@@ -175,11 +175,8 @@ class InfoHandler(ModuleBase):
                 raise GameNotRunningError
             # Use template match without color match due to maintenance popup
             if self.appear(LOGIN_CHECK, offset=(30, 30)):
-                logger.error('Account logged out, '
-                             'probably because account kicked by server maintenance or another log in')
-                # Kill game, because game patches after maintenance can only be downloaded at game startup
-                self.device.app_stop()
-                raise GameNotRunningError
+                logger.warning('Account logged out, '
+                               'probably because account kicked by server maintenance or another log in')
             self._hot_fix_check_wait.clear()
 
         return appear
@@ -413,10 +410,59 @@ class InfoHandler(ModuleBase):
                 self._story_option_confirm.reset()
             elif options_count == self._story_option_record:
                 if self._story_option_confirm.reached():
-                    try:
-                        select = options[self.config.STORY_OPTION]
-                    except IndexError:
-                        select = options[0]
+                    # 检查是否是塞壬研究装置(3个选项时才检查)
+                    is_siren_device = False
+                    if options_count == 3:
+                        logger.info('[Story] 检测到3个选项,检查是否为塞壬研究装置')
+                        try:
+                            try:
+                                # 模板匹配失效，改用OCR识别
+                                from module.ocr.ocr import Ocr
+                                
+                                keywords = ['探测', '隐藏', '离开', '取消']
+                                match_count = 0
+                                
+                                for i, option in enumerate(options):
+                                    # 对每个选项按钮进行OCR
+                                    # 注意：这里临时实例化OCR可能会有轻微性能开销，但在剧情对话中是可以接受的
+                                    text = Ocr(option, lang='cnocr').ocr(self.device.image)
+                                    logger.info(f'[Story] 选项{i+1} OCR结果: "{text}"')
+                                    
+                                    # 检查关键字
+                                    if any(k in text for k in keywords):
+                                        match_count += 1
+                                
+                                logger.info(f'[Story] 塞壬研究装置OCR匹配结果: {match_count}/3 个选项包含关键字')
+                                
+                                # 3个选项中至少2个包含关键字
+                                if match_count >= 2:
+                                    is_siren_device = True
+                                    logger.info('[Story] ✓ 确认为塞壬研究装置 (OCR验证通过)')
+                                else:
+                                    logger.info('[Story] ✗ 不是塞壬研究装置 (OCR验证不通过)')
+                                    
+                            except Exception as e:
+                                logger.warning(f'[Story] 塞壬研究装置检测异常: {e}')
+                                is_siren_device = False
+                        except Exception as e:
+                            logger.warning(f'[Story] 塞壬研究装置检测异常: {e}')
+                            is_siren_device = False
+                    
+                    # 设置标志位供外部检查 (map.py)
+                    self.is_siren_device_confirmed = is_siren_device
+                    
+                    # 根据检测结果选择点击哪个选项
+                    if is_siren_device:
+                        # 塞壬研究装置:点击第2个选项(索引1)
+                        select = options[1]
+                        logger.info(f'[Story] 点击塞壬研究装置第2个选项: {select.name}')
+                    else:
+                        # 普通剧情:按配置的索引点击
+                        try:
+                            select = options[self.config.STORY_OPTION]
+                        except IndexError:
+                            select = options[0]
+                    
                     self.device.click(select)
                     self._story_option_timer.reset()
                     self.story_popup_timeout.reset()
@@ -535,11 +581,18 @@ class InfoHandler(ModuleBase):
         """
         Wait until manjuu loading disappear.
         """
+        # Abuse of notation. Template do not have readable name, so add string here.
+        self.device.stuck_record_add('TEMPLATE_MANJUU')
+        timer = Timer(1.5, count=3).start()
         while 1:
             self.device.screenshot()
-            if not self.manjuu_count():
-                break
-
+            if self.manjuu_count():
+                timer.reset()
+            else:
+                if timer.reached():
+                    logger.info(f'Manjuu disappeared')
+                    break
+    
     def handle_manjuu(self):
         """
         Handle manjuu loading.

@@ -1,7 +1,7 @@
 {
   "Menu": {
     "Alas": {
-      "name": "Alas",
+      "name": "智慧港区",
       "help": ""
     },
     "Farm": {
@@ -13,11 +13,11 @@
       "help": ""
     },
     "EventDaily": {
-      "name": "活动每日",
+      "name": "活动-每日任务",
       "help": ""
     },
     "Reward": {
-      "name": "收获",
+      "name": "自动收获",
       "help": ""
     },
     "DailyMission": {
@@ -35,7 +35,7 @@
   },
   "Task": {
     "Alas": {
-      "name": "Alas设置",
+      "name": "智慧港区设置",
       "help": ""
     },
     "General": {
@@ -47,7 +47,7 @@
       "help": ""
     },
     "Main": {
-      "name": "主线图",
+      "name": "主线图-1",
       "help": ""
     },
     "Main2": {
@@ -59,15 +59,15 @@
       "help": ""
     },
     "GemsFarming": {
-      "name": "刷紧急委托",
+      "name": "紧急委托",
       "help": ""
     },
     "EventGeneral": {
-      "name": "活动通用设置",
+      "name": "活动通用",
       "help": ""
     },
     "Event": {
-      "name": "活动图",
+      "name": "活动图-1",
       "help": ""
     },
     "Event2": {
@@ -90,28 +90,32 @@
       "name": "商船护航",
       "help": ""
     },
+    "EventShop": {
+      "name": "活动商店",
+      "help": ""
+    },
     "WarArchives": {
       "name": "作战档案",
       "help": "由于作战档案缺少维护，开荒功能不一定能正常使用，如果发现Alas运行异常，请手动完成开荒后使用自律寻敌功能"
     },
     "EventA": {
-      "name": "活动每日A图",
+      "name": "每日A图",
       "help": ""
     },
     "EventB": {
-      "name": "活动每日B图",
+      "name": "每日B图",
       "help": ""
     },
     "EventC": {
-      "name": "活动每日C图",
+      "name": "每日C图",
       "help": ""
     },
     "EventD": {
-      "name": "活动每日D图",
+      "name": "每日D图",
       "help": ""
     },
     "EventSp": {
-      "name": "活动每日SP图",
+      "name": "每日SP图",
       "help": ""
     },
     "RaidDaily": {
@@ -154,12 +158,16 @@
       "name": "认知觉醒",
       "help": ""
     },
+    "Island": {
+      "name": "岛屿计划",
+      "help": "需要岛屿等级18级并解锁集成管理面板后使用"
+    },
     "Daily": {
       "name": "每日任务",
       "help": ""
     },
     "Hard": {
-      "name": "困难图",
+      "name": "主线-困难图",
       "help": ""
     },
     "Exercise": {
@@ -167,7 +175,7 @@
       "help": ""
     },
     "ShopFrequent": {
-      "name": "通用商店",
+      "name": "军火商商店",
       "help": ""
     },
     "ShopOnce": {
@@ -215,11 +223,11 @@
       "help": ""
     },
     "OpsiVoucher": {
-      "name": "兑换商店",
+      "name": "白票商店",
       "help": ""
     },
     "OpsiDaily": {
-      "name": "大世界每日",
+      "name": "大世界-每日",
       "help": ""
     },
     "OpsiObscure": {
@@ -264,6 +272,10 @@
     },
     "EventStory": {
       "name": "活动剧情",
+      "help": ""
+    },
+    "BoxDisassemble": {
+      "name": "拆装备箱",
       "help": ""
     },
     "Benchmark": {
@@ -724,6 +736,10 @@
       "name": "出错时，保存 Log 和截图",
       "help": ""
     },
+    "StrictRestart": {
+      "name": "敏感任务出错时禁止重启",
+      "help": "运行敏感任务出错时停止Alas，而不是重启游戏\n敏感任务包含隐秘海域、深渊海域、跨月每日"
+    },
     "OnePushConfig": {
       "name": "错误推送设置",
       "help": "发生无法处理的异常后，使用 Onepush 推送一条错误信息。配置方法见文档：https://github.com/LmeSzinc/AzurLaneAutoScript/wiki/Onepush-configuration-%5BCN%5D"
@@ -820,6 +836,14 @@
       "save": "保存",
       "upload": "上传",
       "save_and_upload": "保存并上传"
+    },
+    "TelemetryReport": {
+      "name": "遥测数据上报",
+      "help": "启用后将定期向服务器匿名上报 CL1 统计数据（战斗次数、明石遇见概率等匿名数据）ID生成详见源码，统计信息 https://alas.nanoda.work/"
+    },
+    "BugReport": {
+      "name": "Bug 日志上报",
+      "help": "启用后将在遇到异常时向服务器匿名上报 Bug 日志以帮助改进ID生成详见源码"
     }
   },
   "Retirement": {
@@ -833,6 +857,16 @@
       "one_click_retire": "一键退役",
       "enhance": "强化",
       "old_retire": "传统退役"
+    }
+  },
+  "YukikazeTaskManager": {
+    "_info": {
+      "name": "雪风大人的任务管理",
+      "help": "任务相关的优先级与调度设置。"
+    },
+    "TaskPriorityAdjustment": {
+      "name": "任务优先级调整",
+      "help": "Restart    # 重启游戏\n> OpsiCrossMonth    # 大世界跨月每日\n> Commission > Tactical > Research    # 委托 > 战术学院 > 科研\n> Exercise    # 演习\n> Dorm > Meowfficer > Guild > Gacha    # 后宅 > 指挥喵 > 大舰队 > 每日抽卡\n> Reward    # 收获\n> ShopFrequent > ShopOnce > Shipyard > Freebies    # 通用商店 > 其他商店 > 开发船坞 > 白嫖奖励\n> PrivateQuarters    # 宿舍计划\n> OpsiExplore    # 每月开荒\n> Minigame > Awaken    # 小游戏 > 认知觉醒\n> OpsiAshBeacon    # meta作战\n> OpsiDaily > OpsiShop > OpsiVoucher    # 大世界日常 > 港口商店 > 兑换商店\n> OpsiAbyssal > OpsiStronghold > OpsiObscure > OpsiArchive    # 深渊海域 > 塞壬要塞 > 隐秘海域 > 档案坐标\n> Daily > Hard > OpsiAshBeacon > OpsiAshAssist > OpsiMonthBoss    # 每日挑战 > 困难图 > meta作战 > meta支援 > 月度boss\n> Sos > EventSp > EventA > EventB > EventC > EventD    # Sos > 活动每日SP > 活动每日A > 活动每日B > 活动每日C > 活动每日D\n> RaidDaily > CoalitionSp > WarArchives > MaritimeEscort    # 共斗活动每日 > 共斗活动sp > 作战档案 > 商船护航\n> Event > Event2 > Raid > Hospital > Coalition > Main > Main2 > Main3    # 活动图 > 活动图2 > 共斗活动 > Hospital > 共斗活动 > 主线 > 主线2 > 主线3\n> OpsiMeowfficerFarming    # 短猫相接\n> GemsFarming    # 刷紧急委托\n> OpsiHazard1Leveling    # 侵蚀一练级"
     }
   },
   "OneClickRetire": {
@@ -901,7 +935,7 @@
       "help": ""
     },
     "Name": {
-      "name": "关卡名称",
+      "name": "关卡名称（输入7-2-3可使用7-2三战撤退）",
       "help": "例如 7-2, 12-4, D3, SP4，不区分大小写\n若关卡缺失，请等待更新"
     },
     "Event": {
@@ -1090,6 +1124,7 @@
       "name": "达成关卡成就后停止",
       "help": "达成地图 100% 通关，达成三星通关，达成安全海域，\n或达成安全海域但不打三星后停止",
       "non_stop": "否",
+      "non_stop_clear_all": "non_stop_clear_all",
       "100_percent_clear": "100%通关",
       "map_3_stars": "100%通关 + 三星",
       "threat_safe": "100%通关 + 三星 + 安全海域",
@@ -1264,6 +1299,10 @@
       "name": "一队全员已婚 (+10/h)",
       "help": ""
     },
+    "Fleet1Onsen": {
+      "name": "一队全员已放置温泉 (+10/h)",
+      "help": ""
+    },
     "Fleet2Value": {
       "name": "二队心情值",
       "help": ""
@@ -1289,6 +1328,10 @@
     },
     "Fleet2Oath": {
       "name": "二队全员已婚 (+10/h)",
+      "help": ""
+    },
+    "Fleet2Onsen": {
+      "name": "二队全员已放置温泉 (+10/h)",
       "help": ""
     }
   },
@@ -1410,29 +1453,64 @@
       "name": "刷紧急委托",
       "help": "警告: 这个功能可以让玩家获取少量的钻石，但不是一个能高效获取钻石的方法\n玩碧蓝航线不久的玩家, 很容易迷信零破和低耗等, 而忽视了角色养成\n运行这个功能只会让你自己感觉很充实, 而你的帐号实际零提升\n这个功能的主要用途，是让阵容成型的玩家获取额外的魔方，请理性地把钻石当作副产物\n\n这个功能将在旗舰32级之后更换旗舰\n关于紧急委托刷新机制, 可阅读 https://bbs.nga.cn/read.php?tid=27134956\n委托油耗比: A3 > A1 > 2-4 > 2-1, 有活动图时建议选活动图, 2-1会拣问号有更多物资\n一队会完成所有的战斗, 前排应当为百级零破驱逐带输出装, 后排应该为33级及以下白皮零破航母\n二队应提供跨队支援（跨队弹幕、跨队辅助）"
     },
+    "ChangeFlagship": {
+      "name": "更换旗舰",
+      "help": "当旗舰等级>=32或红脸时更换旗舰\n寻找等级在1-31之间的白皮航母，同时会在退役时选择更换下来的旗舰。所有等级大于1级的白皮航母均会被视为退役目标，请务必锁定不是目标的船。换船时更换旗舰装备，这通过记录之前的装备完成。\n\n换装备只会更换正在装备中的栏位，即使是白装也会更换。如果指定了旗舰，则会更换全部5个装备，未指定旗舰只会更换设备。",
+      "ship": "更换舰船",
+      "ship_equip": "更换舰船 + 装备"
+    },
     "CommonCV": {
       "name": "指定旗舰航母",
       "help": "",
+      "custom": "custom",
       "any": "任意",
+      "eagle": "eagle",
       "langley": "兰利",
       "bogue": "博格",
       "ranger": "突击者",
       "hermes": "竞技神"
     },
+    "CommonCVFilter": {
+      "name": "自定义旗舰航母过滤器",
+      "help": "使用自定义过滤器需将 \"指定旗舰航母\" 设置为 \"自定义\"，将按照过滤器顺序优先选择旗舰航母更换\nbogue：博格    ranger：突击者    langley：兰利    hermes：竞技神"
+    },
     "ChangeVanguard": {
       "name": "更换前排",
       "help": "当前排红脸时更换前排，选择不更换则会强制红脸出击\n换前排通过找一艘心情不低于10、等级100的白鹰或铁血的白皮驱逐完成，所以尽量保证有足够多的驱逐。国服以外则为等级70的白鹰白船驱逐。\n\n换装备只会更换正在装备中的栏位，即使是白装也会更换。前排会更换全部5个装备。",
       "disabled": "不更换",
-      "ship": "更换舰船"
+      "ship": "更换舰船",
+      "ship_equip": "更换舰船 + 装备"
     },
     "CommonDD": {
       "name": "指定前排",
       "help": "",
+      "custom": "custom",
       "any": "任意",
       "favourite": "仅常用",
       "aulick_or_foote": "奥利克或富特",
       "cassin_or_downes": "卡辛或唐斯",
-      "z20_or_z21": "Z20或Z21"
+      "z20_or_z21": "Z20或Z21",
+      "DDG": "DDG"
+    },
+    "CommonDDFilter": {
+      "name": "自定义前排过滤器",
+      "help": "使用自定义过滤器需将 \"指定前排\" 设置为 \"自定义\"，将按照过滤器顺序优先选择前排更换\nz20：Z20    z21：Z21    aulick：奥利克    foote：富特    cassin：卡辛    downes：唐斯"
+    },
+    "EquipmentCode": {
+      "name": "装备码",
+      "help": "仅当选择“更换舰船 + 装备”时生效。\n在换下舰船时，若设置里当前舰船装备码为null则会导出；在换上舰船时，若设置里当前舰船装备码为null则会使用上一艘舰船导出的装备码，否则使用设置里的装备码\n蓝叠模拟器用户需要先开启虚拟键盘，详见https://support.bluestacks.com/hc/zh-tw/articles/360061968892-%E5%A6%82%E4%BD%95%E5%9C%A8-BlueStacks-5-%E4%B8%8A%E4%BD%BF%E7%94%A8%E5%B0%8F%E9%8D%B5%E7%9B%A4-%E8%99%9B%E6%93%AC%E9%8D%B5%E7%9B%A4"
+    },
+    "ALLowHighFlagshipLevel": {
+      "name": "仅更换满级后排",
+      "help": "打开后，更换旗舰时仅会选择100级的白皮轻航。\n使用时请保证船坞中有符合条件的舰船。"
+    },
+    "ALLowLowVanguardLevel": {
+      "name": "可更换低等级前排",
+      "help": "打开后，前排等级限制改为30级以上。若为困难模式（如CD图）则改为70级。"
+    },
+    "DelayTaskIFNoFlagship": {
+      "name": "没有可更换的旗舰时推迟任务",
+      "help": "更换旗舰时，若找不到满足条件的白皮航母，则推迟任务"
     },
     "CommissionLimit": {
       "name": "防止紧急委托数量过多",
@@ -1526,6 +1604,28 @@
       "help": "如果关闭，需要事先手动为所有15个关卡配队"
     }
   },
+  "HospitalEvent": {
+    "_info": {
+      "name": "共斗活动设定",
+      "help": ""
+    },
+    "Mode": {
+      "name": "难度",
+      "help": "",
+      "easy": "正午",
+      "normal": "黄昏",
+      "hard": "夜晚"
+    },
+    "Stage": {
+      "name": "地图名称",
+      "help": "",
+      "T1": "T1",
+      "T2": "T2",
+      "T3": "T3",
+      "T4": "T4",
+      "ESP": "ESP"
+    }
+  },
   "MaritimeEscort": {
     "_info": {
       "name": "商船护航",
@@ -1562,6 +1662,33 @@
       "help": "",
       "single": "单队连战",
       "multi": "多队出击"
+    }
+  },
+  "EventShop": {
+    "_info": {
+      "name": "活动商店",
+      "help": ""
+    },
+    "UnlockSSRShip": {
+      "name": "解锁SSR舰船",
+      "help": ""
+    },
+    "BuyURShip": {
+      "name": "购买X只UR舰船",
+      "help": "",
+      "0": "0",
+      "1": "1",
+      "2": "2"
+    },
+    "PresetFilter": {
+      "name": "活动商店过滤器",
+      "help": "一般默认全买即可",
+      "all": "全部",
+      "custom": "自定义"
+    },
+    "CustomFilter": {
+      "name": "自定义过滤器",
+      "help": "使用自定义过滤器需将“活动商店过滤器”设置为“自定义”，并阅读 https://github.com/LmeSzinc/AzurLaneAutoScript/wiki/filter_string_cn"
     }
   },
   "Commission": {
@@ -1884,6 +2011,1260 @@
     "Favourite": {
       "name": "仅觉醒常用舰船",
       "help": ""
+    }
+  },
+  "Island1": {
+    "_info": {
+      "name": "丰壤农田",
+      "help": ""
+    },
+    "Receive": {
+      "name": "收获丰壤农田",
+      "help": ""
+    },
+    "Option1": {
+      "name": "第 1 格生产物品",
+      "help": "",
+      "0": "不生产",
+      "1": "小麦",
+      "2": "玉米",
+      "3": "牧草",
+      "4": "咖啡豆",
+      "5": "大米",
+      "6": "白菜",
+      "7": "土豆",
+      "8": "大豆"
+    },
+    "Character1": {
+      "name": "第 1 格使用角色",
+      "help": "",
+      "manjuu": "工作啾",
+      "saratoga": "萨拉托加",
+      "new_jersey": "新泽西",
+      "tashkent": "塔什干",
+      "lemalin": "恶毒",
+      "shimakaze": "岛风",
+      "akashi": "明石",
+      "ying_swei": "应瑞",
+      "chao_ho": "肇和",
+      "unicorn": "独角兽",
+      "cheshire": "柴郡",
+      "amagi_chan": "小天城"
+    },
+    "Option2": {
+      "name": "第 2 格生产物品",
+      "help": "",
+      "0": "不生产",
+      "1": "小麦",
+      "2": "玉米",
+      "3": "牧草",
+      "4": "咖啡豆",
+      "5": "大米",
+      "6": "白菜",
+      "7": "土豆",
+      "8": "大豆"
+    },
+    "Character2": {
+      "name": "第 2 格使用角色",
+      "help": "",
+      "manjuu": "工作啾",
+      "saratoga": "萨拉托加",
+      "new_jersey": "新泽西",
+      "tashkent": "塔什干",
+      "lemalin": "恶毒",
+      "shimakaze": "岛风",
+      "akashi": "明石",
+      "ying_swei": "应瑞",
+      "chao_ho": "肇和",
+      "unicorn": "独角兽",
+      "cheshire": "柴郡",
+      "amagi_chan": "小天城"
+    },
+    "Option3": {
+      "name": "第 3 格生产物品",
+      "help": "",
+      "0": "不生产",
+      "1": "小麦",
+      "2": "玉米",
+      "3": "牧草",
+      "4": "咖啡豆",
+      "5": "大米",
+      "6": "白菜",
+      "7": "土豆",
+      "8": "大豆"
+    },
+    "Character3": {
+      "name": "第 3 格使用角色",
+      "help": "",
+      "manjuu": "工作啾",
+      "saratoga": "萨拉托加",
+      "new_jersey": "新泽西",
+      "tashkent": "塔什干",
+      "lemalin": "恶毒",
+      "shimakaze": "岛风",
+      "akashi": "明石",
+      "ying_swei": "应瑞",
+      "chao_ho": "肇和",
+      "unicorn": "独角兽",
+      "cheshire": "柴郡",
+      "amagi_chan": "小天城"
+    },
+    "Option4": {
+      "name": "第 4 格生产物品",
+      "help": "",
+      "0": "不生产",
+      "1": "小麦",
+      "2": "玉米",
+      "3": "牧草",
+      "4": "咖啡豆",
+      "5": "大米",
+      "6": "白菜",
+      "7": "土豆",
+      "8": "大豆"
+    },
+    "Character4": {
+      "name": "第 4 格使用角色",
+      "help": "",
+      "manjuu": "工作啾",
+      "saratoga": "萨拉托加",
+      "new_jersey": "新泽西",
+      "tashkent": "塔什干",
+      "lemalin": "恶毒",
+      "shimakaze": "岛风",
+      "akashi": "明石",
+      "ying_swei": "应瑞",
+      "chao_ho": "肇和",
+      "unicorn": "独角兽",
+      "cheshire": "柴郡",
+      "amagi_chan": "小天城"
+    }
+  },
+  "Island2": {
+    "_info": {
+      "name": "悠然牧场",
+      "help": ""
+    },
+    "Receive": {
+      "name": "收获悠然牧场",
+      "help": ""
+    },
+    "Option1": {
+      "name": "第 1 格生产物品",
+      "help": "",
+      "0": "不生产",
+      "1": "鸡蛋（禽肉）"
+    },
+    "Character1": {
+      "name": "第 1 格使用角色",
+      "help": "",
+      "manjuu": "工作啾",
+      "saratoga": "萨拉托加",
+      "new_jersey": "新泽西",
+      "tashkent": "塔什干",
+      "lemalin": "恶毒",
+      "shimakaze": "岛风",
+      "akashi": "明石",
+      "ying_swei": "应瑞",
+      "chao_ho": "肇和",
+      "unicorn": "独角兽",
+      "cheshire": "柴郡",
+      "amagi_chan": "小天城"
+    },
+    "Option2": {
+      "name": "第 2 格生产物品",
+      "help": "",
+      "0": "不生产",
+      "2": "鲜肉"
+    },
+    "Character2": {
+      "name": "第 2 格使用角色",
+      "help": "",
+      "manjuu": "工作啾",
+      "saratoga": "萨拉托加",
+      "new_jersey": "新泽西",
+      "tashkent": "塔什干",
+      "lemalin": "恶毒",
+      "shimakaze": "岛风",
+      "akashi": "明石",
+      "ying_swei": "应瑞",
+      "chao_ho": "肇和",
+      "unicorn": "独角兽",
+      "cheshire": "柴郡",
+      "amagi_chan": "小天城"
+    },
+    "Option3": {
+      "name": "第 3 格生产物品",
+      "help": "",
+      "0": "不生产",
+      "3": "牛奶（皮料）"
+    },
+    "Character3": {
+      "name": "第 3 格使用角色",
+      "help": "",
+      "manjuu": "工作啾",
+      "saratoga": "萨拉托加",
+      "new_jersey": "新泽西",
+      "tashkent": "塔什干",
+      "lemalin": "恶毒",
+      "shimakaze": "岛风",
+      "akashi": "明石",
+      "ying_swei": "应瑞",
+      "chao_ho": "肇和",
+      "unicorn": "独角兽",
+      "cheshire": "柴郡",
+      "amagi_chan": "小天城"
+    },
+    "Option4": {
+      "name": "第 4 格生产物品",
+      "help": "",
+      "0": "不生产",
+      "4": "羊毛"
+    },
+    "Character4": {
+      "name": "第 4 格使用角色",
+      "help": "",
+      "manjuu": "工作啾",
+      "saratoga": "萨拉托加",
+      "new_jersey": "新泽西",
+      "tashkent": "塔什干",
+      "lemalin": "恶毒",
+      "shimakaze": "岛风",
+      "akashi": "明石",
+      "ying_swei": "应瑞",
+      "chao_ho": "肇和",
+      "unicorn": "独角兽",
+      "cheshire": "柴郡",
+      "amagi_chan": "小天城"
+    }
+  },
+  "Island3": {
+    "_info": {
+      "name": "沉石矿山",
+      "help": ""
+    },
+    "Receive": {
+      "name": "收获沉石矿山",
+      "help": ""
+    },
+    "Option1": {
+      "name": "第 1 格生产物品",
+      "help": "",
+      "0": "不生产",
+      "1": "煤炭",
+      "2": "铜矿",
+      "3": "铝矿",
+      "4": "铁矿",
+      "5": "硫矿",
+      "6": "银矿"
+    },
+    "Character1": {
+      "name": "第 1 格使用角色",
+      "help": "",
+      "manjuu": "工作啾",
+      "saratoga": "萨拉托加",
+      "new_jersey": "新泽西",
+      "tashkent": "塔什干",
+      "lemalin": "恶毒",
+      "shimakaze": "岛风",
+      "akashi": "明石",
+      "ying_swei": "应瑞",
+      "chao_ho": "肇和",
+      "unicorn": "独角兽",
+      "cheshire": "柴郡",
+      "amagi_chan": "小天城"
+    },
+    "Option2": {
+      "name": "第 2 格生产物品",
+      "help": "",
+      "0": "不生产",
+      "1": "煤炭",
+      "2": "铜矿",
+      "3": "铝矿",
+      "4": "铁矿",
+      "5": "硫矿",
+      "6": "银矿"
+    },
+    "Character2": {
+      "name": "第 2 格使用角色",
+      "help": "",
+      "manjuu": "工作啾",
+      "saratoga": "萨拉托加",
+      "new_jersey": "新泽西",
+      "tashkent": "塔什干",
+      "lemalin": "恶毒",
+      "shimakaze": "岛风",
+      "akashi": "明石",
+      "ying_swei": "应瑞",
+      "chao_ho": "肇和",
+      "unicorn": "独角兽",
+      "cheshire": "柴郡",
+      "amagi_chan": "小天城"
+    },
+    "Option3": {
+      "name": "第 3 格生产物品",
+      "help": "",
+      "0": "不生产",
+      "1": "煤炭",
+      "2": "铜矿",
+      "3": "铝矿",
+      "4": "铁矿",
+      "5": "硫矿",
+      "6": "银矿"
+    },
+    "Character3": {
+      "name": "第 3 格使用角色",
+      "help": "",
+      "manjuu": "工作啾",
+      "saratoga": "萨拉托加",
+      "new_jersey": "新泽西",
+      "tashkent": "塔什干",
+      "lemalin": "恶毒",
+      "shimakaze": "岛风",
+      "akashi": "明石",
+      "ying_swei": "应瑞",
+      "chao_ho": "肇和",
+      "unicorn": "独角兽",
+      "cheshire": "柴郡",
+      "amagi_chan": "小天城"
+    },
+    "Option4": {
+      "name": "第 4 格生产物品",
+      "help": "",
+      "0": "不生产",
+      "1": "煤炭",
+      "2": "铜矿",
+      "3": "铝矿",
+      "4": "铁矿",
+      "5": "硫矿",
+      "6": "银矿"
+    },
+    "Character4": {
+      "name": "第 4 格使用角色",
+      "help": "",
+      "manjuu": "工作啾",
+      "saratoga": "萨拉托加",
+      "new_jersey": "新泽西",
+      "tashkent": "塔什干",
+      "lemalin": "恶毒",
+      "shimakaze": "岛风",
+      "akashi": "明石",
+      "ying_swei": "应瑞",
+      "chao_ho": "肇和",
+      "unicorn": "独角兽",
+      "cheshire": "柴郡",
+      "amagi_chan": "小天城"
+    }
+  },
+  "Island4": {
+    "_info": {
+      "name": "翠土林场",
+      "help": ""
+    },
+    "Receive": {
+      "name": "收获翠土林场",
+      "help": ""
+    },
+    "Option1": {
+      "name": "第 1 格生产物品",
+      "help": "",
+      "0": "不生产",
+      "1": "自然之木",
+      "2": "实用之木",
+      "3": "精选之木",
+      "4": "典雅之木"
+    },
+    "Character1": {
+      "name": "第 1 格使用角色",
+      "help": "",
+      "manjuu": "工作啾",
+      "saratoga": "萨拉托加",
+      "new_jersey": "新泽西",
+      "tashkent": "塔什干",
+      "lemalin": "恶毒",
+      "shimakaze": "岛风",
+      "akashi": "明石",
+      "ying_swei": "应瑞",
+      "chao_ho": "肇和",
+      "unicorn": "独角兽",
+      "cheshire": "柴郡",
+      "amagi_chan": "小天城"
+    },
+    "Option2": {
+      "name": "第 2 格生产物品",
+      "help": "",
+      "0": "不生产",
+      "1": "自然之木",
+      "2": "实用之木",
+      "3": "精选之木",
+      "4": "典雅之木"
+    },
+    "Character2": {
+      "name": "第 2 格使用角色",
+      "help": "",
+      "manjuu": "工作啾",
+      "saratoga": "萨拉托加",
+      "new_jersey": "新泽西",
+      "tashkent": "塔什干",
+      "lemalin": "恶毒",
+      "shimakaze": "岛风",
+      "akashi": "明石",
+      "ying_swei": "应瑞",
+      "chao_ho": "肇和",
+      "unicorn": "独角兽",
+      "cheshire": "柴郡",
+      "amagi_chan": "小天城"
+    },
+    "Option3": {
+      "name": "第 3 格生产物品",
+      "help": "",
+      "0": "不生产",
+      "1": "自然之木",
+      "2": "实用之木",
+      "3": "精选之木",
+      "4": "典雅之木"
+    },
+    "Character3": {
+      "name": "第 3 格使用角色",
+      "help": "",
+      "manjuu": "工作啾",
+      "saratoga": "萨拉托加",
+      "new_jersey": "新泽西",
+      "tashkent": "塔什干",
+      "lemalin": "恶毒",
+      "shimakaze": "岛风",
+      "akashi": "明石",
+      "ying_swei": "应瑞",
+      "chao_ho": "肇和",
+      "unicorn": "独角兽",
+      "cheshire": "柴郡",
+      "amagi_chan": "小天城"
+    },
+    "Option4": {
+      "name": "第 4 格生产物品",
+      "help": "",
+      "0": "不生产",
+      "1": "自然之木",
+      "2": "实用之木",
+      "3": "精选之木",
+      "4": "典雅之木"
+    },
+    "Character4": {
+      "name": "第 4 格使用角色",
+      "help": "",
+      "manjuu": "工作啾",
+      "saratoga": "萨拉托加",
+      "new_jersey": "新泽西",
+      "tashkent": "塔什干",
+      "lemalin": "恶毒",
+      "shimakaze": "岛风",
+      "akashi": "明石",
+      "ying_swei": "应瑞",
+      "chao_ho": "肇和",
+      "unicorn": "独角兽",
+      "cheshire": "柴郡",
+      "amagi_chan": "小天城"
+    }
+  },
+  "Island5": {
+    "_info": {
+      "name": "坠香果园",
+      "help": ""
+    },
+    "Receive": {
+      "name": "收获坠香果园",
+      "help": ""
+    },
+    "Option1": {
+      "name": "第 1 格生产物品",
+      "help": "",
+      "0": "不生产",
+      "1": "秋月梨",
+      "2": "柿子",
+      "3": "苹果",
+      "4": "柑橘",
+      "5": "香蕉",
+      "6": "芒果",
+      "7": "柠檬",
+      "8": "牛油果",
+      "9": "橡胶"
+    },
+    "Character1": {
+      "name": "第 1 格使用角色",
+      "help": "",
+      "manjuu": "工作啾",
+      "saratoga": "萨拉托加",
+      "new_jersey": "新泽西",
+      "tashkent": "塔什干",
+      "lemalin": "恶毒",
+      "shimakaze": "岛风",
+      "akashi": "明石",
+      "ying_swei": "应瑞",
+      "chao_ho": "肇和",
+      "unicorn": "独角兽",
+      "cheshire": "柴郡",
+      "amagi_chan": "小天城"
+    },
+    "Option2": {
+      "name": "第 2 格生产物品",
+      "help": "",
+      "0": "不生产",
+      "1": "秋月梨",
+      "2": "柿子",
+      "3": "苹果",
+      "4": "柑橘",
+      "5": "香蕉",
+      "6": "芒果",
+      "7": "柠檬",
+      "8": "牛油果",
+      "9": "橡胶"
+    },
+    "Character2": {
+      "name": "第 2 格使用角色",
+      "help": "",
+      "manjuu": "工作啾",
+      "saratoga": "萨拉托加",
+      "new_jersey": "新泽西",
+      "tashkent": "塔什干",
+      "lemalin": "恶毒",
+      "shimakaze": "岛风",
+      "akashi": "明石",
+      "ying_swei": "应瑞",
+      "chao_ho": "肇和",
+      "unicorn": "独角兽",
+      "cheshire": "柴郡",
+      "amagi_chan": "小天城"
+    },
+    "Option3": {
+      "name": "第 3 格生产物品",
+      "help": "",
+      "0": "不生产",
+      "1": "秋月梨",
+      "2": "柿子",
+      "3": "苹果",
+      "4": "柑橘",
+      "5": "香蕉",
+      "6": "芒果",
+      "7": "柠檬",
+      "8": "牛油果",
+      "9": "橡胶"
+    },
+    "Character3": {
+      "name": "第 3 格使用角色",
+      "help": "",
+      "manjuu": "工作啾",
+      "saratoga": "萨拉托加",
+      "new_jersey": "新泽西",
+      "tashkent": "塔什干",
+      "lemalin": "恶毒",
+      "shimakaze": "岛风",
+      "akashi": "明石",
+      "ying_swei": "应瑞",
+      "chao_ho": "肇和",
+      "unicorn": "独角兽",
+      "cheshire": "柴郡",
+      "amagi_chan": "小天城"
+    },
+    "Option4": {
+      "name": "第 4 格生产物品",
+      "help": "",
+      "0": "不生产",
+      "1": "秋月梨",
+      "2": "柿子",
+      "3": "苹果",
+      "4": "柑橘",
+      "5": "香蕉",
+      "6": "芒果",
+      "7": "柠檬",
+      "8": "牛油果",
+      "9": "橡胶"
+    },
+    "Character4": {
+      "name": "第 4 格使用角色",
+      "help": "",
+      "manjuu": "工作啾",
+      "saratoga": "萨拉托加",
+      "new_jersey": "新泽西",
+      "tashkent": "塔什干",
+      "lemalin": "恶毒",
+      "shimakaze": "岛风",
+      "akashi": "明石",
+      "ying_swei": "应瑞",
+      "chao_ho": "肇和",
+      "unicorn": "独角兽",
+      "cheshire": "柴郡",
+      "amagi_chan": "小天城"
+    }
+  },
+  "Island6": {
+    "_info": {
+      "name": "青芽苗圃",
+      "help": ""
+    },
+    "Receive": {
+      "name": "收获青芽苗圃",
+      "help": ""
+    },
+    "Option1": {
+      "name": "第 1 格生产物品",
+      "help": "",
+      "0": "不生产",
+      "1": "亚麻",
+      "2": "草莓",
+      "3": "棉花",
+      "4": "茶叶",
+      "5": "薰衣草",
+      "6": "胡萝卜",
+      "7": "洋葱"
+    },
+    "Character1": {
+      "name": "第 1 格使用角色",
+      "help": "",
+      "manjuu": "工作啾",
+      "saratoga": "萨拉托加",
+      "new_jersey": "新泽西",
+      "tashkent": "塔什干",
+      "lemalin": "恶毒",
+      "shimakaze": "岛风",
+      "akashi": "明石",
+      "ying_swei": "应瑞",
+      "chao_ho": "肇和",
+      "unicorn": "独角兽",
+      "cheshire": "柴郡",
+      "amagi_chan": "小天城"
+    },
+    "Option2": {
+      "name": "第 2 格生产物品",
+      "help": "",
+      "0": "不生产",
+      "1": "亚麻",
+      "2": "草莓",
+      "3": "棉花",
+      "4": "茶叶",
+      "5": "薰衣草",
+      "6": "胡萝卜",
+      "7": "洋葱"
+    },
+    "Character2": {
+      "name": "第 2 格使用角色",
+      "help": "",
+      "manjuu": "工作啾",
+      "saratoga": "萨拉托加",
+      "new_jersey": "新泽西",
+      "tashkent": "塔什干",
+      "lemalin": "恶毒",
+      "shimakaze": "岛风",
+      "akashi": "明石",
+      "ying_swei": "应瑞",
+      "chao_ho": "肇和",
+      "unicorn": "独角兽",
+      "cheshire": "柴郡",
+      "amagi_chan": "小天城"
+    }
+  },
+  "Island7": {
+    "_info": {
+      "name": "有鱼餐馆",
+      "help": ""
+    },
+    "Receive": {
+      "name": "收获有鱼餐馆",
+      "help": ""
+    },
+    "Option1": {
+      "name": "第 1 格生产物品",
+      "help": "",
+      "0": "不生产",
+      "1": "柿子饼",
+      "2": "松茸鸡汤",
+      "3": "豆腐",
+      "4": "肉末烧豆腐",
+      "5": "蛋包饭",
+      "6": "白菜豆腐汤",
+      "7": "蔬菜沙拉",
+      "8": "经典豆腐套餐",
+      "9": "绵玉定食"
+    },
+    "Character1": {
+      "name": "第 1 格使用角色",
+      "help": "",
+      "manjuu": "工作啾",
+      "saratoga": "萨拉托加",
+      "new_jersey": "新泽西",
+      "tashkent": "塔什干",
+      "lemalin": "恶毒",
+      "shimakaze": "岛风",
+      "akashi": "明石",
+      "ying_swei": "应瑞",
+      "chao_ho": "肇和",
+      "unicorn": "独角兽",
+      "cheshire": "柴郡",
+      "amagi_chan": "小天城"
+    },
+    "Option2": {
+      "name": "第 2 格生产物品",
+      "help": "",
+      "0": "不生产",
+      "1": "柿子饼",
+      "2": "松茸鸡汤",
+      "3": "豆腐",
+      "4": "肉末烧豆腐",
+      "5": "蛋包饭",
+      "6": "白菜豆腐汤",
+      "7": "蔬菜沙拉",
+      "8": "经典豆腐套餐",
+      "9": "绵玉定食"
+    },
+    "Character2": {
+      "name": "第 2 格使用角色",
+      "help": "",
+      "manjuu": "工作啾",
+      "saratoga": "萨拉托加",
+      "new_jersey": "新泽西",
+      "tashkent": "塔什干",
+      "lemalin": "恶毒",
+      "shimakaze": "岛风",
+      "akashi": "明石",
+      "ying_swei": "应瑞",
+      "chao_ho": "肇和",
+      "unicorn": "独角兽",
+      "cheshire": "柴郡",
+      "amagi_chan": "小天城"
+    }
+  },
+  "Island8": {
+    "_info": {
+      "name": "白熊饮品",
+      "help": ""
+    },
+    "Receive": {
+      "name": "收获白熊饮品",
+      "help": ""
+    },
+    "Option1": {
+      "name": "第 1 格生产物品",
+      "help": "",
+      "0": "不生产",
+      "1": "胡萝卜秋梨汁",
+      "2": "菊花茶",
+      "3": "苹果汁",
+      "4": "香蕉芒果汁",
+      "5": "蜂蜜柠檬水",
+      "6": "草莓蜜沁",
+      "7": "薰衣草茶",
+      "8": "草莓蜂蜜冰沙",
+      "9": "阳光蜜水",
+      "10": "花香果韵",
+      "11": "缤纷果乐园"
+    },
+    "Character1": {
+      "name": "第 1 格使用角色",
+      "help": "",
+      "manjuu": "工作啾",
+      "saratoga": "萨拉托加",
+      "new_jersey": "新泽西",
+      "tashkent": "塔什干",
+      "lemalin": "恶毒",
+      "shimakaze": "岛风",
+      "akashi": "明石",
+      "ying_swei": "应瑞",
+      "chao_ho": "肇和",
+      "unicorn": "独角兽",
+      "cheshire": "柴郡",
+      "amagi_chan": "小天城"
+    },
+    "Option2": {
+      "name": "第 2 格生产物品",
+      "help": "",
+      "0": "不生产",
+      "1": "胡萝卜秋梨汁",
+      "2": "菊花茶",
+      "3": "苹果汁",
+      "4": "香蕉芒果汁",
+      "5": "蜂蜜柠檬水",
+      "6": "草莓蜜沁",
+      "7": "薰衣草茶",
+      "8": "草莓蜂蜜冰沙",
+      "9": "阳光蜜水",
+      "10": "花香果韵",
+      "11": "缤纷果乐园"
+    },
+    "Character2": {
+      "name": "第 2 格使用角色",
+      "help": "",
+      "manjuu": "工作啾",
+      "saratoga": "萨拉托加",
+      "new_jersey": "新泽西",
+      "tashkent": "塔什干",
+      "lemalin": "恶毒",
+      "shimakaze": "岛风",
+      "akashi": "明石",
+      "ying_swei": "应瑞",
+      "chao_ho": "肇和",
+      "unicorn": "独角兽",
+      "cheshire": "柴郡",
+      "amagi_chan": "小天城"
+    }
+  },
+  "Island9": {
+    "_info": {
+      "name": "啾啾简餐",
+      "help": ""
+    },
+    "Receive": {
+      "name": "收获啾啾简餐",
+      "help": ""
+    },
+    "Option1": {
+      "name": "第 1 格生产物品",
+      "help": "",
+      "0": "不生产",
+      "1": "玉米杯",
+      "2": "苹果派",
+      "3": "香橙派",
+      "4": "芒果糯米饭",
+      "5": "香蕉可丽饼",
+      "6": "草莓夏洛特",
+      "7": "香甜组合",
+      "8": "果园二重奏",
+      "9": "莓果香橙甜点组"
+    },
+    "Character1": {
+      "name": "第 1 格使用角色",
+      "help": "",
+      "manjuu": "工作啾",
+      "saratoga": "萨拉托加",
+      "new_jersey": "新泽西",
+      "tashkent": "塔什干",
+      "lemalin": "恶毒",
+      "shimakaze": "岛风",
+      "akashi": "明石",
+      "ying_swei": "应瑞",
+      "chao_ho": "肇和",
+      "unicorn": "独角兽",
+      "cheshire": "柴郡",
+      "amagi_chan": "小天城"
+    },
+    "Option2": {
+      "name": "第 2 格生产物品",
+      "help": "",
+      "0": "不生产",
+      "1": "玉米杯",
+      "2": "苹果派",
+      "3": "香橙派",
+      "4": "芒果糯米饭",
+      "5": "香蕉可丽饼",
+      "6": "草莓夏洛特",
+      "7": "香甜组合",
+      "8": "果园二重奏",
+      "9": "莓果香橙甜点组"
+    },
+    "Character2": {
+      "name": "第 2 格使用角色",
+      "help": "",
+      "manjuu": "工作啾",
+      "saratoga": "萨拉托加",
+      "new_jersey": "新泽西",
+      "tashkent": "塔什干",
+      "lemalin": "恶毒",
+      "shimakaze": "岛风",
+      "akashi": "明石",
+      "ying_swei": "应瑞",
+      "chao_ho": "肇和",
+      "unicorn": "独角兽",
+      "cheshire": "柴郡",
+      "amagi_chan": "小天城"
+    }
+  },
+  "Island10": {
+    "_info": {
+      "name": "乌鱼烤肉",
+      "help": ""
+    },
+    "Receive": {
+      "name": "收获乌鱼烤肉",
+      "help": ""
+    },
+    "Option1": {
+      "name": "第 1 格生产物品",
+      "help": "",
+      "0": "不生产",
+      "1": "炭烤肉串",
+      "2": "禽肉土豆拼盘",
+      "3": "爆炒禽肉",
+      "4": "胡萝卜厚蛋烧",
+      "5": "汉堡肉饭",
+      "6": "烤肉狂欢",
+      "7": "能量双拼套餐"
+    },
+    "Character1": {
+      "name": "第 1 格使用角色",
+      "help": "",
+      "manjuu": "工作啾",
+      "saratoga": "萨拉托加",
+      "new_jersey": "新泽西",
+      "tashkent": "塔什干",
+      "lemalin": "恶毒",
+      "shimakaze": "岛风",
+      "akashi": "明石",
+      "ying_swei": "应瑞",
+      "chao_ho": "肇和",
+      "unicorn": "独角兽",
+      "cheshire": "柴郡",
+      "amagi_chan": "小天城"
+    },
+    "Option2": {
+      "name": "第 2 格生产物品",
+      "help": "",
+      "0": "不生产",
+      "1": "炭烤肉串",
+      "2": "禽肉土豆拼盘",
+      "3": "爆炒禽肉",
+      "4": "胡萝卜厚蛋烧",
+      "5": "汉堡肉饭",
+      "6": "烤肉狂欢",
+      "7": "能量双拼套餐"
+    },
+    "Character2": {
+      "name": "第 2 格使用角色",
+      "help": "",
+      "manjuu": "工作啾",
+      "saratoga": "萨拉托加",
+      "new_jersey": "新泽西",
+      "tashkent": "塔什干",
+      "lemalin": "恶毒",
+      "shimakaze": "岛风",
+      "akashi": "明石",
+      "ying_swei": "应瑞",
+      "chao_ho": "肇和",
+      "unicorn": "独角兽",
+      "cheshire": "柴郡",
+      "amagi_chan": "小天城"
+    }
+  },
+  "Island11": {
+    "_info": {
+      "name": "木料加工设备",
+      "help": ""
+    },
+    "Receive": {
+      "name": "收获木料加工设备",
+      "help": ""
+    },
+    "Option1": {
+      "name": "第 1 格生产物品",
+      "help": "",
+      "0": "不生产",
+      "1": "纸张",
+      "2": "记事本",
+      "3": "桌椅",
+      "4": "精选木桶",
+      "5": "文件柜"
+    },
+    "Character1": {
+      "name": "第 1 格使用角色",
+      "help": "",
+      "manjuu": "工作啾",
+      "saratoga": "萨拉托加",
+      "new_jersey": "新泽西",
+      "tashkent": "塔什干",
+      "lemalin": "恶毒",
+      "shimakaze": "岛风",
+      "akashi": "明石",
+      "ying_swei": "应瑞",
+      "chao_ho": "肇和",
+      "unicorn": "独角兽",
+      "cheshire": "柴郡",
+      "amagi_chan": "小天城"
+    },
+    "Option2": {
+      "name": "第 2 格生产物品",
+      "help": "",
+      "0": "不生产",
+      "1": "纸张",
+      "2": "记事本",
+      "3": "桌椅",
+      "4": "精选木桶",
+      "5": "文件柜"
+    },
+    "Character2": {
+      "name": "第 2 格使用角色",
+      "help": "",
+      "manjuu": "工作啾",
+      "saratoga": "萨拉托加",
+      "new_jersey": "新泽西",
+      "tashkent": "塔什干",
+      "lemalin": "恶毒",
+      "shimakaze": "岛风",
+      "akashi": "明石",
+      "ying_swei": "应瑞",
+      "chao_ho": "肇和",
+      "unicorn": "独角兽",
+      "cheshire": "柴郡",
+      "amagi_chan": "小天城"
+    }
+  },
+  "Island12": {
+    "_info": {
+      "name": "工业生产设备",
+      "help": ""
+    },
+    "Receive": {
+      "name": "收获工业生产设备",
+      "help": ""
+    },
+    "Option1": {
+      "name": "第 1 格生产物品",
+      "help": "",
+      "0": "不生产",
+      "1": "炭笔",
+      "2": "铁钉",
+      "3": "电缆",
+      "4": "硫酸",
+      "5": "火药",
+      "6": "刀叉餐具"
+    },
+    "Character1": {
+      "name": "第 1 格使用角色",
+      "help": "",
+      "manjuu": "工作啾",
+      "saratoga": "萨拉托加",
+      "new_jersey": "新泽西",
+      "tashkent": "塔什干",
+      "lemalin": "恶毒",
+      "shimakaze": "岛风",
+      "akashi": "明石",
+      "ying_swei": "应瑞",
+      "chao_ho": "肇和",
+      "unicorn": "独角兽",
+      "cheshire": "柴郡",
+      "amagi_chan": "小天城"
+    },
+    "Option2": {
+      "name": "第 2 格生产物品",
+      "help": "",
+      "0": "不生产",
+      "1": "炭笔",
+      "2": "铁钉",
+      "3": "电缆",
+      "4": "硫酸",
+      "5": "火药",
+      "6": "刀叉餐具"
+    },
+    "Character2": {
+      "name": "第 2 格使用角色",
+      "help": "",
+      "manjuu": "工作啾",
+      "saratoga": "萨拉托加",
+      "new_jersey": "新泽西",
+      "tashkent": "塔什干",
+      "lemalin": "恶毒",
+      "shimakaze": "岛风",
+      "akashi": "明石",
+      "ying_swei": "应瑞",
+      "chao_ho": "肇和",
+      "unicorn": "独角兽",
+      "cheshire": "柴郡",
+      "amagi_chan": "小天城"
+    }
+  },
+  "Island13": {
+    "_info": {
+      "name": "电子加工设备",
+      "help": ""
+    },
+    "Receive": {
+      "name": "收获电子加工设备",
+      "help": ""
+    },
+    "Option1": {
+      "name": "第 1 格生产物品",
+      "help": "",
+      "0": "不生产",
+      "1": "墨盒",
+      "2": "钟表",
+      "3": "蓄电池",
+      "4": "净水滤芯"
+    },
+    "Character1": {
+      "name": "第 1 格使用角色",
+      "help": "",
+      "manjuu": "工作啾",
+      "saratoga": "萨拉托加",
+      "new_jersey": "新泽西",
+      "tashkent": "塔什干",
+      "lemalin": "恶毒",
+      "shimakaze": "岛风",
+      "akashi": "明石",
+      "ying_swei": "应瑞",
+      "chao_ho": "肇和",
+      "unicorn": "独角兽",
+      "cheshire": "柴郡",
+      "amagi_chan": "小天城"
+    },
+    "Option2": {
+      "name": "第 2 格生产物品",
+      "help": "",
+      "0": "不生产",
+      "1": "墨盒",
+      "2": "钟表",
+      "3": "蓄电池",
+      "4": "净水滤芯"
+    },
+    "Character2": {
+      "name": "第 2 格使用角色",
+      "help": "",
+      "manjuu": "工作啾",
+      "saratoga": "萨拉托加",
+      "new_jersey": "新泽西",
+      "tashkent": "塔什干",
+      "lemalin": "恶毒",
+      "shimakaze": "岛风",
+      "akashi": "明石",
+      "ying_swei": "应瑞",
+      "chao_ho": "肇和",
+      "unicorn": "独角兽",
+      "cheshire": "柴郡",
+      "amagi_chan": "小天城"
+    }
+  },
+  "Island14": {
+    "_info": {
+      "name": "手工制作设备",
+      "help": ""
+    },
+    "Receive": {
+      "name": "收获手工制作设备",
+      "help": ""
+    },
+    "Option1": {
+      "name": "第 1 格生产物品",
+      "help": "",
+      "0": "不生产",
+      "1": "秋季花束",
+      "2": "花生油",
+      "3": "布料",
+      "4": "皮革",
+      "5": "绳索",
+      "6": "手套",
+      "7": "香囊",
+      "8": "鞋靴",
+      "9": "绷带"
+    },
+    "Character1": {
+      "name": "第 1 格使用角色",
+      "help": "",
+      "manjuu": "工作啾",
+      "saratoga": "萨拉托加",
+      "new_jersey": "新泽西",
+      "tashkent": "塔什干",
+      "lemalin": "恶毒",
+      "shimakaze": "岛风",
+      "akashi": "明石",
+      "ying_swei": "应瑞",
+      "chao_ho": "肇和",
+      "unicorn": "独角兽",
+      "cheshire": "柴郡",
+      "amagi_chan": "小天城"
+    },
+    "Option2": {
+      "name": "第 2 格生产物品",
+      "help": "",
+      "0": "不生产",
+      "1": "秋季花束",
+      "2": "花生油",
+      "3": "布料",
+      "4": "皮革",
+      "5": "绳索",
+      "6": "手套",
+      "7": "香囊",
+      "8": "鞋靴",
+      "9": "绷带"
+    },
+    "Character2": {
+      "name": "第 2 格使用角色",
+      "help": "",
+      "manjuu": "工作啾",
+      "saratoga": "萨拉托加",
+      "new_jersey": "新泽西",
+      "tashkent": "塔什干",
+      "lemalin": "恶毒",
+      "shimakaze": "岛风",
+      "akashi": "明石",
+      "ying_swei": "应瑞",
+      "chao_ho": "肇和",
+      "unicorn": "独角兽",
+      "cheshire": "柴郡",
+      "amagi_chan": "小天城"
+    }
+  },
+  "Island15": {
+    "_info": {
+      "name": "啾咖啡",
+      "help": ""
+    },
+    "Receive": {
+      "name": "收获啾咖啡",
+      "help": ""
+    },
+    "Option1": {
+      "name": "第 1 格生产物品",
+      "help": "",
+      "0": "不生产",
+      "1": "欧姆蛋",
+      "2": "冰咖啡",
+      "3": "芝士",
+      "4": "拿铁",
+      "5": "柑橘咖啡",
+      "6": "草莓奶绿",
+      "7": "晨光活力组合",
+      "8": "醒神套餐",
+      "9": "果香双杯乐"
+    },
+    "Character1": {
+      "name": "第 1 格使用角色",
+      "help": "",
+      "manjuu": "工作啾",
+      "saratoga": "萨拉托加",
+      "new_jersey": "新泽西",
+      "tashkent": "塔什干",
+      "lemalin": "恶毒",
+      "shimakaze": "岛风",
+      "akashi": "明石",
+      "ying_swei": "应瑞",
+      "chao_ho": "肇和",
+      "unicorn": "独角兽",
+      "cheshire": "柴郡",
+      "amagi_chan": "小天城"
+    },
+    "Option2": {
+      "name": "第 2 格生产物品",
+      "help": "",
+      "0": "不生产",
+      "1": "欧姆蛋",
+      "2": "冰咖啡",
+      "3": "芝士",
+      "4": "拿铁",
+      "5": "柑橘咖啡",
+      "6": "草莓奶绿",
+      "7": "晨光活力组合",
+      "8": "醒神套餐",
+      "9": "果香双杯乐"
+    },
+    "Character2": {
+      "name": "第 2 格使用角色",
+      "help": "",
+      "manjuu": "工作啾",
+      "saratoga": "萨拉托加",
+      "new_jersey": "新泽西",
+      "tashkent": "塔什干",
+      "lemalin": "恶毒",
+      "shimakaze": "岛风",
+      "akashi": "明石",
+      "ying_swei": "应瑞",
+      "chao_ho": "肇和",
+      "unicorn": "独角兽",
+      "cheshire": "柴郡",
+      "amagi_chan": "小天城"
     }
   },
   "GeneralShop": {
@@ -2314,7 +3695,8 @@
       "noshiro": "能代",
       "sirius": "天狼星",
       "new_jersey": "新泽西",
-      "taihou": "鹩"
+      "taihou": "鹩",
+      "aegir": "埃吉尔"
     }
   },
   "Daily": {
@@ -2462,6 +3844,16 @@
       "name": "演习",
       "help": "打演习，血量过低时自动撤退"
     },
+    "DelayUntilHoursBeforeNextUpdate": {
+      "name": "推迟演习至下次更新次数前 X 小时",
+      "help": "",
+      "1": "1",
+      "2": "2",
+      "3": "3",
+      "4": "4",
+      "5": "5",
+      "12": "不推迟"
+    },
     "OpponentChooseMode": {
       "name": "对手选择模式",
       "help": "",
@@ -2558,13 +3950,25 @@
       "name": "任意舰船血量低于 X 后，回港修理",
       "help": "0.0 ~ 1.0"
     },
+    "UseRepairPack": {
+      "name": "使用维修箱修船",
+      "help": "开启后，将使用仓库内的维修箱修船，建议配合侵蚀1练级功能使用"
+    },
+    "RepairPackThreshold": {
+      "name": "任意舰船血量低于 X 后，使用维修箱修理",
+      "help": "仅在开启“使用维修箱修船”时生效\n仅在打完深渊海域、塞壬要塞、月度Boss后尝试维修\n0.0 ~ 1.0"
+    },
     "DoRandomMapEvent": {
       "name": "完成地图随机事件",
       "help": "在自律寻敌完成后重新扫描一遍地图，购买明石商店，使用塞壬信息收集装置、使用塞壬探测装置、解锁两舰队机关"
     },
     "AkashiShopFilter": {
       "name": "商店过滤器",
-      "help": "一般不需要修改，只买行动力和紫币即可"
+      "help": "默认只购买体力nanoda。如果要购买紫币，设置为 'ActionPoint > PurpleCoins'"
+    },
+    "NotifyOpsiMail": {
+      "name": "推送大世界相关邮件",
+      "help": "推送关于侵蚀1和短猫的邮件，需要同时开启“推送邮件”功能，由于邮件较多会比较吵"
     }
   },
   "OpsiAshBeacon": {
@@ -2593,6 +3997,10 @@
     "EnsureFullyCollected": {
       "name": "保证收集满每日200信标数据",
       "help": "在收集满为前，暂时无视保留行动力设置，需要同时开启 \"短猫相接\""
+    },
+    "AutoCollectShip": {
+      "name": "自动获取新META舰船",
+      "help": "领取奖励时自动获取新META舰船。关闭后将不会点击\"点击同步\"按钮，需要手动领取"
     }
   },
   "OpsiFleetFilter": {
@@ -2636,6 +4044,18 @@
       "name": "无视运行间隔强制运行",
       "help": "开启后将带来额外的行动力消耗，一般不用打开，慢慢打就好"
     },
+    "IfSkipSirenResearch": {
+      "name": "跳过塞壬研究装置",
+      "help": "开启后，将跳过对应坐标等级的塞壬研究装置,以方便卡bug\n经过了几个海域的初步测试，但未完成一次完整的月度开荒，可能存在未知问题",
+      "0": "不跳过",
+      "6": "仅跳过6级",
+      "65": "跳过6级和5级",
+      "654": "跳过6级、5级和4级"
+    },
+    "SkipedSirenResearch": {
+      "name": "已经跳过塞壬研究装置的海域",
+      "help": "这个数值是自动记录的，不需要手动修改。\n月初重新开荒时会重置，或者修改\"上一次完成的区域\"为0并重新运行月度开荒来重置"
+    },
     "LastZone": {
       "name": "上一次完成的区域",
       "help": "自动更新的数值，填0可重置进度，重置后自动跳过已开荒的海域\n支持海域ID、国服/国际服/日服/台服海域名称，例如 \"51\", \"NA海域东南E\", \"NA Ocean SE Sector E\""
@@ -2658,6 +4078,10 @@
     "CustomFilter": {
       "name": "自定义过滤器",
       "help": "使用自定义过滤器需将 \"港口商店过滤器\" 设置为 \"自定义\"，并阅读 https://github.com/LmeSzinc/AzurLaneAutoScript/wiki/filter_string_cn"
+    },
+    "DisableBeforeDate": {
+      "name": "每月 X 号前，不购买大世界商店",
+      "help": "从指定日期的后一天开始，每天买一次大世界商店\n0 表示不限制，每天都购买"
     }
   },
   "OpsiVoucher": {
@@ -2682,12 +4106,28 @@
     "UseTuningSample": {
       "name": "使用效能样本",
       "help": "使用所有六种效能样本和强力效能样本"
+    },
+    "SkipSirenResearchMission": {
+      "name": "不做塞壬研究任务",
+      "help": "开启后，将跳过“塞壬研究·I”与“塞壬研究·II”两个任务\n塞壬研究任务使用黄币兑换紫币"
+    },
+    "KeepMissionZone": {
+      "name": "保留海域不清理",
+      "help": "完成每日任务后退出海域，下次任务刷在同一海域时不用再消耗行动力进入\n每个月的最后一天会对所有未清理海域进行清理"
+    },
+    "MissionZones": {
+      "name": "月底需要清理的海域",
+      "help": "这个数值是自动记录的，一般不需要修改"
     }
   },
   "OpsiObscure": {
     "_info": {
       "name": "隐秘海域",
       "help": "每隔27分钟清理一个隐秘海域，以保证空域搜索冷却\n使用此功能前必须满足以下条件：\n- 通关大世界主线并完成模拟战+塞壬试验场\n- 启用大世界开荒任务或使用战役信息记录仪（5000油道具）"
+    },
+    "SkipHazard2Obscure": {
+      "name": "不清理2级坐标",
+      "help": "开启后，将不会打侵蚀等级为2的隐秘海域"
     },
     "ForceRun": {
       "name": "无视运行间隔强制运行",
@@ -2709,9 +4149,17 @@
       "name": "塞壬要塞",
       "help": "清理每周的塞壬要塞\n使用此功能前必须满足以下条件：\n- 通关大世界主线并完成模拟战+塞壬试验场\n- 启用大世界开荒任务或使用战役信息记录仪（5000油道具）"
     },
+    "SubmarineEveryCombat": {
+      "name": "潜艇每战出击",
+      "help": "开启后，如果出击舰队过滤器中存在潜艇编队，则当潜艇编队弹药耗尽时，退出塞壬要塞并推迟任务"
+    },
     "ForceRun": {
       "name": "无视运行间隔强制运行",
       "help": "开启后将带来额外的行动力消耗，一般不用打开，慢慢打就好"
+    },
+    "HasStronghold": {
+      "name": "OpsiStronghold.HasStronghold.name",
+      "help": "OpsiStronghold.HasStronghold.help"
     }
   },
   "OpsiMonthBoss": {
@@ -2746,6 +4194,7 @@
     "HazardLevel": {
       "name": "侵蚀等级",
       "help": "按顺时针出击特定侵蚀等级的海域\n建议选 5 或 3，有更高的 猫点/行动力 比",
+      "2": "2",
       "3": "3",
       "4": "4",
       "5": "5",
@@ -2755,6 +4204,14 @@
     "TargetZone": {
       "name": "指定海域",
       "help": "仅出击指定的海域，可以用来获取大世界成就星星\n支持海域ID、国服/国际服/日服/台服海域名称，例如 \"51\", \"NA海域东南E\", \"NA Ocean SE Sector E\"\n填入默认值0，或者删除数值即可取消指定"
+    },
+    "StayInZone": {
+      "name": "指定海域计划作战",
+      "help": "雪风大人温馨提示:打开这个功能并指定海域后，将会在指定海域进行计划作战，不会再回到港口nanoda!侵蚀三推荐NA海域东南B，侵蚀五推荐卡利比安海B或者C nanoda!"
+    },
+    "APPreserveUntilReset": {
+      "name": "保留行动力直到月底",
+      "help": "'保留 X 点行动力' 设置不会在大世界重置前几天减少\n注意：开启后只会在跨月每日任务中消耗这些行动力，未启用跨月每日任务时该设置无效，这意味着你需要手动使用这些行动力以获得更高的收益"
     }
   },
   "OpsiHazard1Leveling": {
@@ -2768,6 +4225,92 @@
       "0": "不指定",
       "44": "44 | 西大陆架D",
       "22": "22 | NA海域西南B"
+    },
+    "OperationCoinsPreserve": {
+      "name": "保留 X 个作战补给凭证",
+      "help": "作战补给凭证低于 X 时运行短猫相接，不建议修改"
+    },
+    "MinimumActionPointReserve": {
+      "name": "保留 X 点行动力",
+      "help": "搏一搏，单车变摩托，雪风大人已经把幸运分给指挥官了nanoda，上吧nanoda！"
+    },
+    "ExecuteFixedPatrolScan": {
+      "name": "舰队强制移动",
+      "help": "雪风大人温馨提示：开启后，将强制移动舰队以免找不到明石，指挥官你也不想因为找不到明石导致坠机nanoda？打开这个功能轻轻松松达到50万海里每月nanoda，指挥官还在等什么nanoda!"
+    },
+    "Cl1Filter": {
+      "name": "明石购买筛选",
+      "help": "默认只购买体力nanoda。如果要同时购买紫币，设置为 'ActionPoint > PurpleCoins'"
+    }
+  },
+  "OpsiSirenBug": {
+    "_info": {
+      "name": "塞壬研究装置Bug利用",
+      "help": "专门用于配置塞壬研究装置及其Bug利用的相关选项"
+    },
+    "SirenResearch_Enable": {
+      "name": "塞壬研究装置",
+      "help": "雪风大人提醒：消耗紫币换黄币，一个月没有几十万海里慎用nanoda!"
+    },
+    "SirenBug_Enable": {
+      "name": "塞壬研究装置Bug利用(实验性)",
+      "help": "利用塞壬研究装置Bug，无限刷取高侵蚀区域塞壬研究装置资源\n启用该功能前需启用塞壬研究装置功能，否则该功能将不生效"
+    },
+    "SirenBug_Type": {
+      "name": "海域类型切换",
+      "help": "选择前往的海域是安全海域还是普通海域",
+      "dangerous": "普通海域",
+      "safe": "安全海域"
+    },
+    "SirenBug_Zone": {
+      "name": "指定Bug利用区域(实验性)",
+      "help": "指定已刷出塞壬研究装置的高侵蚀区域\n支持海域ID、国服/国际服/日服/台服海域名称，例如 \"51\", \"NA海域东南E\", \"NA Ocean SE Sector E\"\n填入默认值0，或者删除数值即可取消指定"
+    },
+    "DisableTaskSwitchDuringBug": {
+      "name": "Bug利用期间禁止任务切换(实验性)",
+      "help": "实验性功能 \nBug利用期间临时禁用调度器的任务切换检查，避免被委托、日常等任务打断\n如果Bug利用过程中经常被其他到时任务中断，可以启用此选项",
+      "True": "True",
+      "False": "False"
+    },
+    "SirenBug_DailyCount": {
+      "name": "利用Bug次数(实验性)",
+      "help": "已经利用塞壬Bug的次数，每次扫图前会Sleep对应秒数"
+    },
+    "SirenBug_DailyCountRecord": {
+      "name": "Bug次数记录时间(实验性)",
+      "help": ""
+    }
+  },
+  "OpsiCheckLeveling": {
+    "_info": {
+      "name": "每日经验检测",
+      "help": "检测出击舰队所有船是否已经获取满经验，是的话则发送一条推送消息\n需要先设置“错误推送设置”"
+    },
+    "TargetLevel": {
+      "name": "所有舰船获取到可升级至X级的经验后推送",
+      "help": "0表示不限制等级"
+    },
+    "LastRun": {
+      "name": "上次检查时间",
+      "help": "记录上一次检查的时间以防止任务重复运行，检查间隔为1天，这个数值是自动记录的，一般不需要修改"
+    },
+    "DelayAfterFull": {
+      "name": "到达目标等级后推迟任务",
+      "help": ""
+    }
+  },
+  "OpsiScheduling": {
+    "_info": {
+      "name": "智能调度Beta",
+      "help": "侵蚀1与短猫相接之间的智能调度功能\n启用后将根据黄币和行动力自动切换任务并发送推送通知"
+    },
+    "EnableSmartScheduling": {
+      "name": "启用智能调度",
+      "help": "雪风大人温馨提示：启用后将自动管理侵蚀1和短猫相接之间的切换nanoda!\n启用后将强制开启短猫相接\n• 黄币不足且行动力充足时 → 自动切换到短猫获取黄币\n• 黄币不足且行动力也不足时 → 推迟1小时并推送通知\n• 短猫中行动力不足时 → 推迟短猫并切换回侵蚀1\n• 侵蚀1行动力低于最低保留时 → 推迟1小时并推送通知\n• 行动力跨越阈值时 → 发送推送通知"
+    },
+    "ActionPointNotifyLevels": {
+      "name": "行动力推送阈值",
+      "help": "雪风大人提醒：行动力升至或降至这些阈值时会发送推送通知nanoda!\n使用逗号分隔多个阈值，例如: 500,1000,2000,3000\n注意：需要在 Alas - 错误处理 中配置推送通知才能生效"
     }
   },
   "Daemon": {
@@ -2804,6 +4347,36 @@
       "help": "",
       "True": "已启用",
       "False": "False"
+    }
+  },
+  "BoxDisassemble": {
+    "_info": {
+      "name": "拆解装备箱",
+      "help": "拆解仓库中的装备箱子，配置完成后启动并等待即可"
+    },
+    "UsePurpleBox": {
+      "name": "拆解紫色装备箱",
+      "help": ""
+    },
+    "PurpleBoxLimit": {
+      "name": "保留每种紫色装备箱 X 个",
+      "help": ""
+    },
+    "UseBlueBox": {
+      "name": "拆解蓝色装备箱",
+      "help": ""
+    },
+    "BlueBoxLimit": {
+      "name": "保留每种蓝色装备箱 X 个",
+      "help": ""
+    },
+    "UseWhiteBox": {
+      "name": "拆解白色装备箱",
+      "help": ""
+    },
+    "WhiteBoxLimit": {
+      "name": "保留每种白色装备箱 X 个",
+      "help": ""
     }
   },
   "Benchmark": {
@@ -2885,11 +4458,11 @@
       "DisableTranslateMode": "点击这里关闭翻译模式",
       "ConfigSaved": "设置已保存",
       "AlasIsRunning": "调度器已在运行中",
-      "ClickToUpdate": "有更新可用，点击这里进行更新"
+      "ClickToUpdate": "有可用更新nanoda!"
     },
     "Status": {
-      "Running": "运行中",
-      "Inactive": "闲置",
+      "Running": "秘书舰正在处理",
+      "Inactive": "茗正在偷走你的箱子",
       "Warning": "发生错误",
       "Updating": "等待更新"
     },
@@ -2906,13 +4479,42 @@
     },
     "Overview": {
       "Scheduler": "调度器",
-      "Dashboard": "Gui.Overview.Dashboard",
+      "Dashboard": "仪表盘",
+      "SecondsAgo": "Gui.Overview.SecondsAgo",
+      "MinutesAgo": "Gui.Overview.MinutesAgo",
+      "HoursAgo": "Gui.Overview.HoursAgo",
+      "DaysAgo": "Gui.Overview.DaysAgo",
+      "MonthsAgo": "Gui.Overview.MonthsAgo",
+      "YearsAgo": "Gui.Overview.YearsAgo",
+      "NoData": "Gui.Overview.NoData",
+      "Oil": "Gui.Overview.Oil",
+      "Coin": "Gui.Overview.Coin",
+      "Gem": "Gui.Overview.Gem",
+      "Cube": "Gui.Overview.Cube",
+      "Pt": "Gui.Overview.Pt",
+      "YellowCoin": "Gui.Overview.YellowCoin",
+      "PurpleCoin": "Gui.Overview.PurpleCoin",
+      "ActionPoint": "Gui.Overview.ActionPoint",
+      "Merit": "Gui.Overview.Merit",
+      "Medal": "Gui.Overview.Medal",
+      "Core": "Gui.Overview.Core",
+      "GuildCoin": "Gui.Overview.GuildCoin",
+      "Log": "日志",
+      "Running": "运行中",
+      "Pending": "队列中",
+      "Waiting": "等待中",
+      "NoTask": "无任务"
+    },
+    "Dashboard": {
+      "TimeError": "时间错误",
+      "JustNow": "刚刚",
       "SecondsAgo": "秒前",
       "MinutesAgo": "分钟前",
       "HoursAgo": "小时前",
       "DaysAgo": "天前",
       "MonthsAgo": "月前",
       "YearsAgo": "年前",
+      "LongTimeAgo": "很久之前",
       "NoData": "无数据",
       "Oil": "石油",
       "Coin": "物资",
@@ -2925,12 +4527,7 @@
       "Merit": "功勋",
       "Medal": "勋章",
       "Core": "核心数据",
-      "GuildCoin": "舰队币",
-      "Log": "日志",
-      "Running": "运行中",
-      "Pending": "队列中",
-      "Waiting": "等待中",
-      "NoTask": "无任务"
+      "GuildCoin": "舰队币"
     },
     "AddAlas": {
       "PopupTitle": "添加新配置",

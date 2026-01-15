@@ -1,8 +1,10 @@
+# 此文件专门用于监测普通商店（包含勋章、功勋、核心商店等）中的资源余额状态。
+# 通过 OCR 提取钻石、金币、各类奖章的数值，并利用 LogRes 类将数据同步至 Dashboard。
 import module.config.server as server
 from module.ocr.ocr import Digit
 from module.shop.assets import *
 from module.ui.ui import UI
-from module.log_res.log_res import LogRes
+from module.log_res import LogRes
 
 if server.server != 'jp':
     OCR_SHOP_GEMS = Digit(SHOP_GEMS, letter=(255, 243, 82), name='OCR_SHOP_GEMS')

@@ -7,12 +7,19 @@ from PIL import Image
 from module.exception import RequestHumanTakeover
 from module.logger import logger
 
-logger.info('Loading OCR dependencies')
-from cnocr import CnOcr
-from cnocr.cn_ocr import (check_model_name, data_dir, gen_network, load_module,
-                          read_charset)
-from cnocr.fit.ctc_metrics import CtcMetrics
-from cnocr.hyperparams.cn_hyperparams import CnHyperparams as Hyperparams
+try:
+    logger.info('Loading OCR dependencies')
+    from cnocr import CnOcr
+    from cnocr.cn_ocr import (check_model_name, data_dir, gen_network, load_module,
+                              read_charset)
+    from cnocr.fit.ctc_metrics import CtcMetrics
+    from cnocr.hyperparams.cn_hyperparams import CnHyperparams as Hyperparams
+except Exception as e:
+    logger.critical(f'Failed to load OCR dependencies: {e}')
+    # Define dummy classes to prevent ImportErrors in other modules
+    class CnOcr:
+        pass
+
 from module.device.pkg_resources import PACKAGE_CACHE
 
 

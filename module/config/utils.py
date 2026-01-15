@@ -1,6 +1,9 @@
+# 此文件提供了配置管理相关的通用工具函数。
+# 包含 JSON/YAML 读写、数据类型解析转换、服务器特定时间计算以及随机 ID 生成等底层功能。
 import json
 import random
 import string
+import time
 from datetime import datetime, timedelta, timezone
 
 import yaml
@@ -9,7 +12,7 @@ import module.config.server as server_
 from deploy.atomic import atomic_read_text, atomic_read_bytes, atomic_write
 from module.submodule.utils import *
 
-LANGUAGES = ['zh-CN', 'en-US', 'ja-JP', 'zh-TW']
+LANGUAGES = ['zh-CN', 'zh-HW', 'en-US', 'ja-JP', 'zh-TW']
 SERVER_TO_LANG = {
     'cn': 'zh-CN',
     'en': 'en-US',
@@ -23,7 +26,7 @@ SERVER_TO_TIMEZONE = {
     'jp': timedelta(hours=9),
     'tw': timedelta(hours=8),
 }
-DEFAULT_TIME = datetime(2020, 1, 1, 0, 0)
+DEFAULT_TIME = datetime(2023, 1, 1, 0, 0)
 
 
 # https://stackoverflow.com/questions/8640959/how-can-i-control-what-scalar-form-pyyaml-uses-for-my-data/15423007
@@ -584,5 +587,43 @@ def time_delta(_timedelta):
     return _time_dict
 
 
+def readable_time(before: str, value: str) -> str:
+    """
+    Output the delta between two times
+    """
+    timedata = {
+        'value': value,
+        'time': '',
+        'time_name': 'NoData'
+    }
+    if not before:
+        timedata['value'] = 'None'
+        return timedata
+    try:
+        ti = datetime.fromisoformat(before)
+    except ValueError:
+        timedata['time_name'] = 'TimeError'
+        return timedata
+    if ti == DEFAULT_TIME:
+        timedata['value'] = 'None'
+        return timedata
+
+    diff = time.time() - ti.timestamp()
+    if diff < -1:
+        timedata['time_name'] = 'TimeError'
+    elif diff < 60:
+        timedata['time_name'] = 'JustNow'
+    elif diff < 5400:
+        timedata['time'] = int(diff // 60)
+        timedata['time_name'] = 'MinutesAgo'
+    elif diff < 129600:
+        timedata['time'] = int(diff // 3600)
+        timedata['time_name'] = 'HoursAgo'
+    elif diff < 1296000:
+        timedata['time'] = int(diff // 86400)
+        timedata['time_name'] = 'DaysAgo'
+    else:
+        timedata['time_name'] = 'LongTimeAgo'
+    return timedata
 if __name__ == '__main__':
     get_os_reset_remain()

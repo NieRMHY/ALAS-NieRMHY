@@ -95,10 +95,11 @@ class CampaignRun(CampaignEvent, ShopStatus):
             return True
         # Oil limit
         if oil_check:
+            # Gem limit
             self.status_get_gems()
+            # Coin limit
             self.get_coin()
-            _oil = self.get_oil()
-            if _oil < max(500, self.config.StopCondition_OilLimit):
+            if self.get_oil() < max(500, self.config.StopCondition_OilLimit):
                 logger.hr('Triggered stop condition: Oil limit')
                 self.config.task_delay(minute=(120, 240))
                 return True
@@ -169,13 +170,21 @@ class CampaignRun(CampaignEvent, ShopStatus):
             str, str: name, folder
         """
         name = to_map_file_name(name)
+        # Handle event_20251218_cn d3-3 special case
+        if folder == 'event_20251218_cn':
+            # Convert d3-3 to d3_3 for three-battle retreat logic
+            if name == 'd3-3':
+                name = 'd3_3'
+                logger.info('Stage name d3-3 converted to d3_3 (three-battle retreat logic)')
+            # d3 remains as d3 for standard logic
+            elif name == 'd3':
+                logger.info('Stage name d3 using standard logic')
         # For GemsFarming, auto choose events or main chapters
         if self.config.task.command == 'GemsFarming':
             if self.stage_is_main(name):
                 logger.info(f'Stage name {name} is from campaign_main')
                 folder = 'campaign_main'
             else:
-                folder = self.config.cross_get('Event.Campaign.Event')
                 if folder is not None:
                     logger.info(f'Stage name {name} is from event {folder}')
                 else:
@@ -271,12 +280,12 @@ class CampaignRun(CampaignEvent, ShopStatus):
             name = name.replace('ht', 'th')
         # Chapter TH has no map_percentage and no 3_stars
         if folder == 'event_20221124_cn' and name.startswith('th'):
-            if self.config.StopCondition_MapAchievement != 'non_stop':
+            if self.config.StopCondition_MapAchievement not in ['non_stop', 'non_stop_clear_all']:
                 logger.info(f'When running chapter TH of event_20221124_cn, '
                             f'StopCondition.MapAchievement is forced set to threat_safe')
                 self.config.override(StopCondition_MapAchievement='threat_safe')
         if folder == 'event_20250724_cn' and name.startswith('ts'):
-            if self.config.StopCondition_MapAchievement != 'non_stop':
+            if self.config.StopCondition_MapAchievement not in ['non_stop', 'non_stop_clear_all']:
                 logger.info(f'When running chapter TS of event_20250724_cn, '
                             f'StopCondition.MapAchievement is forced set to threat_safe')
                 self.config.override(StopCondition_MapAchievement='threat_safe')
@@ -354,9 +363,9 @@ class CampaignRun(CampaignEvent, ShopStatus):
         Pages:
             in: page_campaign
         """
-        if self.campaign.commission_notice_show_at_campaign():
+        if self.config.is_task_enabled('Commission') and self.campaign.commission_notice_show_at_campaign():
             logger.info('Commission notice found')
-            self.config.task_call('Commission', force_call=True)
+            self.config.task_call('Commission')
             self.config.task_stop('Commission notice found')
 
     def run(self, name, folder='campaign_main', mode='normal', total=0):

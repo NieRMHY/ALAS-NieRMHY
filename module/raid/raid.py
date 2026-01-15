@@ -1,3 +1,5 @@
+# 此文件处理游戏中各种限时共斗（Raid）活动关卡。
+# 负责自动识别活动类型、管理入场券消耗、处理不同难度的入场逻辑，并实现了专用的 Raid 战斗流程及 PT 获取记录。
 import cv2
 import numpy as np
 
@@ -6,6 +8,7 @@ from module.base.decorator import run_once
 from module.base.timer import Timer
 from module.campaign.campaign_event import CampaignEvent
 from module.combat.assets import *
+from module.event_hospital.assets import *
 from module.exception import OilExhausted, ScriptError
 from module.logger import logger
 from module.map.map_operation import MapOperation
@@ -14,6 +17,7 @@ from module.raid.assets import *
 from module.raid.combat import RaidCombat
 from module.ui.assets import RAID_CHECK
 from module.ui.page import page_rpg_stage
+from module.log_res import LogRes
 
 
 class RaidCounter(DigitCounter):
@@ -83,6 +87,8 @@ def raid_name_shorten(name):
         return "RPG"
     elif name == 'raid_20250116':
         return 'CHIENWU'
+    elif name == 'raid_20250327':
+        return 'HOSPITAL'
     else:
         raise ScriptError(f'Unknown raid name: {name}')
 
@@ -187,6 +193,8 @@ def pt_ocr(raid):
         return HuanChangPtOcr(button, letter=(23, 20, 6), threshold=128)
     elif raid == 'CHIENWU':
         return Digit(button, letter=(255, 231, 231), threshold=128)
+    elif raid == 'HOSPITAL':
+        return Digit(button, letter=(255, 251, 255), threshold=128)
 
 
 class Raid(MapOperation, RaidCombat, CampaignEvent):
@@ -341,7 +349,7 @@ class Raid(MapOperation, RaidCombat, CampaignEvent):
         Pages:
             in: page_raid
         """
-        from module.log_res.log_res import LogRes
+        from module.log_res import LogRes
         skip_first_screenshot = True
         timeout = Timer(1.5, count=5).start()
         ocr = pt_ocr(self.config.Campaign_Event)

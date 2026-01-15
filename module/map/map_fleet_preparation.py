@@ -1,6 +1,8 @@
 import numpy as np
 from scipy import signal
 
+# 此文件处理进入关卡前的编队准备（Fleet Preparation）逻辑。
+# 包含编队的选择与重置、潜艇部署设置以及满足困难地图条件限制的检查、请求人工接管等操作。
 from module.base.button import Button
 from module.base.timer import Timer
 from module.base.utils import *
@@ -127,7 +129,7 @@ class FleetOperator:
             stage = self.main.config.Campaign_Name
             logger.critical(f'Stage "{stage}" is a hard mode, '
                             f'please prepare your fleet "{str(self)}" in game before running Alas')
-            raise RequestHumanTakeover
+            raise RequestHumanTakeover('Hard not satisfied', str(self))
 
     def clear(self, skip_first_screenshot=True):
         """
@@ -298,7 +300,7 @@ class FleetPreparation(InfoHandler):
     map_fleet_checked = False
     map_is_hard_mode = False
 
-    def fleet_preparation(self):
+    def fleet_preparation(self, skip_first_screenshot=True):
         """Change fleets.
 
         Returns:
@@ -354,8 +356,6 @@ class FleetPreparation(InfoHandler):
                     pass
                 else:
                     submarine.clear()
-            else:
-                self.config.SUBMARINE = 0
             return False
 
         # Submarine.
@@ -408,5 +408,26 @@ class FleetPreparation(InfoHandler):
                 submarine.clear()
         else:
             self.config.SUBMARINE = 0
+
+        if self.appear(FLEET_1_CLEAR, offset=(-20, -80, 20, 5)):
+            AUTO_SEARCH_SET_MOB.load_offset(FLEET_1_CLEAR)
+            AUTO_SEARCH_SET_BOSS.load_offset(FLEET_1_CLEAR)
+            AUTO_SEARCH_SET_ALL.load_offset(FLEET_1_CLEAR)
+            AUTO_SEARCH_SET_STANDBY.load_offset(FLEET_1_CLEAR)
+
+        timeout = Timer(1, count=3).start()
+        while 1:
+            if skip_first_screenshot:
+                skip_first_screenshot = False
+            else:
+                self.device.screenshot()
+
+            if timeout.reached():
+                break
+
+            if self.appear(SUBMARINE_CLEAR, offset=(-20, -80, 20, 5)):
+                AUTO_SEARCH_SET_SUB_AUTO.load_offset(SUBMARINE_CLEAR)
+                AUTO_SEARCH_SET_SUB_STANDBY.load_offset(SUBMARINE_CLEAR)
+                break
 
         return True

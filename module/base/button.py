@@ -1,3 +1,6 @@
+# 此文件定义了 Alas 视觉交互系统的核心基类：Button（按钮）及相关网格。
+# 它是所有 UI 交互的基本单位，包含了坐标偏移、颜色/模板识别逻辑以及模拟点击的具体实现方案。
+import typing as t
 import os
 import traceback
 

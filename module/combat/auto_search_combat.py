@@ -3,14 +3,16 @@ from module.campaign.campaign_status import CampaignStatus
 from module.combat.assets import *
 from module.combat.combat import Combat
 from module.exception import CampaignEnd
-from module.handler.assets import AUTO_SEARCH_MAP_OPTION_ON
+from module.handler.assets import AUTO_SEARCH_MAP_OPTION_ON, GET_MISSION
 from module.logger import logger
+from module.map.assets import WITHDRAW
 from module.map.map_operation import MapOperation
 
 
 class AutoSearchCombat(MapOperation, Combat, CampaignStatus):
     _auto_search_in_stage_timer = Timer(3, count=6)
     _auto_search_status_confirm = False
+    _withdraw = False
     auto_search_oil_limit_triggered = False
     auto_search_coin_limit_triggered = False
 
@@ -199,11 +201,12 @@ class AutoSearchCombat(MapOperation, Combat, CampaignStatus):
             if self.is_in_auto_search_menu() or self._handle_auto_search_menu_missing():
                 raise CampaignEnd
 
-    def auto_search_combat_execute(self, emotion_reduce, fleet_index):
+    def auto_search_combat_execute(self, emotion_reduce, fleet_index, battle=None, expected_end=None):
         """
         Args:
             emotion_reduce (bool):
             fleet_index (int):
+            expected_end (callable):
 
         Pages:
             in: is_combat_loading()
@@ -235,6 +238,7 @@ class AutoSearchCombat(MapOperation, Combat, CampaignStatus):
         submarine_mode = 'do_not_use'
         if self.config.Submarine_Fleet:
             submarine_mode = self.config.Submarine_Mode
+        force_call = battle[0] == battle[1] - 1 if battle is not None else False
         self.combat_auto_reset()
         self.combat_manual_reset()
         self.device.stuck_record_clear()
@@ -243,9 +247,12 @@ class AutoSearchCombat(MapOperation, Combat, CampaignStatus):
             self.emotion.reduce(fleet_index)
         auto = self.config.Fleet_Fleet1Mode if fleet_index == 1 else self.config.Fleet_Fleet2Mode
 
-        for _ in self.loop():
+        confirm_timer = Timer(10)
+        confirm_timer.start()
+        while 1:
+            self.device.screenshot()
 
-            if self.handle_submarine_call(submarine_mode):
+            if self.handle_submarine_call(submarine_mode, call=force_call):
                 continue
             if self.handle_combat_auto(auto):
                 continue
@@ -257,7 +264,7 @@ class AutoSearchCombat(MapOperation, Combat, CampaignStatus):
             # bunch of popup handlers
             if self.handle_popup_confirm('AUTO_SEARCH_COMBAT_EXECUTE'):
                 continue
-            if self.handle_urgent_commission():
+            if not self._withdraw and self.handle_urgent_commission():
                 continue
             if self.handle_story_skip():
                 continue
@@ -273,14 +280,28 @@ class AutoSearchCombat(MapOperation, Combat, CampaignStatus):
                 self.device.screenshot_interval_set()
                 raise CampaignEnd
             if self.is_combat_executing():
+                confirm_timer.reset()
                 continue
             if self.handle_get_ship():
                 continue
+            if self.appear_then_click(OPTS_INFO_D, offset=(30, 30), interval=2):
+                self._withdraw = True
+                continue
+            if confirm_timer.reached():
+                self._withdraw = True
+                self.device.click(OPTS_INFO_D)
+                confirm_timer.reset()
+                continue
             if self.appear(BATTLE_STATUS_S) or self.appear(BATTLE_STATUS_A) or self.appear(BATTLE_STATUS_B) \
                     or self.appear(EXP_INFO_S) or self.appear(EXP_INFO_A) or self.appear(EXP_INFO_B) \
-                    or self.is_auto_search_running():
+                    or self.appear(GET_MISSION) or self.is_auto_search_running():
                 self.device.screenshot_interval_set()
                 break
+            if callable(expected_end):
+                if expected_end():
+                    self.device.screenshot_interval_set()
+                    break
+            
 
     def auto_search_combat_status(self):
         """
@@ -292,6 +313,7 @@ class AutoSearchCombat(MapOperation, Combat, CampaignStatus):
         self.device.stuck_record_clear()
         self.device.click_record_clear()
         exp_info = False  # This is for the white screen bug in game
+        get_urgent_commission = False
 
         for _ in self.loop():
 
@@ -302,16 +324,23 @@ class AutoSearchCombat(MapOperation, Combat, CampaignStatus):
             if self.is_in_auto_search_menu() or self._handle_auto_search_menu_missing():
                 raise CampaignEnd
 
+            # Withdraw
+            if self._withdraw and get_urgent_commission and self.appear(WITHDRAW, offset=(30, 30)):
+                self._withdraw = False
+                self.withdraw()
+                break
+
             # Combat status
             if self.handle_get_ship():
                 continue
-            if self.handle_auto_search_map_option():
+            if not self._withdraw and self.handle_auto_search_map_option():
                 self._auto_search_status_confirm = False
                 continue
             # bunch of popup handlers
             if self.handle_popup_confirm('AUTO_SEARCH_COMBAT_STATUS'):
                 continue
             if self.handle_urgent_commission():
+                get_urgent_commission = True
                 continue
             if self.handle_story_skip():
                 continue
@@ -337,7 +366,7 @@ class AutoSearchCombat(MapOperation, Combat, CampaignStatus):
                     exp_info = True
                     continue
 
-    def auto_search_combat(self, emotion_reduce=None, fleet_index=1):
+    def auto_search_combat(self, emotion_reduce=None, fleet_index=1, battle=None):
         """
         Execute a combat.
 
@@ -346,7 +375,7 @@ class AutoSearchCombat(MapOperation, Combat, CampaignStatus):
         """
         emotion_reduce = emotion_reduce if emotion_reduce is not None else self.emotion.is_calculate
 
-        self.auto_search_combat_execute(emotion_reduce=emotion_reduce, fleet_index=fleet_index)
+        self.auto_search_combat_execute(emotion_reduce=emotion_reduce, fleet_index=fleet_index, battle=battle)
         self.auto_search_combat_status()
 
         logger.info('Combat end.')

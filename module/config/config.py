@@ -295,18 +295,6 @@ class AzurLaneConfig(ConfigUpdater, ManualConfig, GeneratedConfig, ConfigWatcher
                 if isinstance(next_run, datetime) and next_run > limit:
                     deep_set(self.data, keys=f"{task}.Scheduler.NextRun", value=now)
 
-        for task in ["Commission", "Research", "Reward"]:
-            if not self.is_task_enabled(task):
-                self.modified[f"{task}.Scheduler.Enable"] = True
-        force_enable = list
-
-        force_enable(
-            [
-                "Commission",
-                "Research",
-                "Reward",
-            ]
-        )
         limit_next_run(["Commission", "Reward"], limit=now + timedelta(hours=12, seconds=-1))
         limit_next_run(["Research"], limit=now + timedelta(hours=24, seconds=-1))
         limit_next_run(["OpsiExplore", "OpsiCrossMonth", "OpsiVoucher", "OpsiMonthBoss", "OpsiShop"],
@@ -626,6 +614,11 @@ class AzurLaneConfig(ConfigUpdater, ManualConfig, GeneratedConfig, ConfigWatcher
         Raises:
             TaskEnd:
         """
+        # 如果设置了禁用任务切换标志（例如Bug利用期间），则跳过检查
+        if getattr(self, '_disable_task_switch', False):
+            logger.info('Task switch check disabled temporarily')
+            return
+        
         if self.task_switched():
             self.task_stop(message=message)
 

@@ -1,3 +1,6 @@
+# 此文件实现了基于 uiautomator2 的设备交互逻辑。
+# 包含截图、模拟点击、长按、滑动、层级提取（dump）等控制移动端设备的核心操作。
+import base64
 import time
 import typing as t
 from dataclasses import dataclass
@@ -474,3 +477,26 @@ class Uiautomator2(Connection):
             description=resp.get('description', '')
         )
         return resp
+
+    def u2_set_fastinput_ime(self, enable: bool):
+        self.u2.set_fastinput_ime(enable)
+
+    def u2_current_ime(self):
+        return self.u2.current_ime()
+
+    def u2_send_keys(self, text: str, clear: bool=False):
+        self.u2.send_keys(text=text, clear=clear)
+
+    # Ref: https://uiautomator2.readthedocs.io/en/latest/api.html#uiautomator2.Session.send_action
+    def u2_send_action(self, code):
+        self.u2.send_action(code=code)
+
+    def u2_clear_text(self):
+        self.u2.clear_text()
+
+    @property
+    def clipboard(self):
+        return self.u2.clipboard
+    
+    def set_clipboard(self, text, label=None):
+        return self.u2.set_clipboard(text=text, label=label)
