@@ -1007,7 +1007,7 @@
       "event_20230914_cn": "Effulgence Before Eclipse Rerun",
       "event_20231026_cn": "Tempesta and the Fountain of Youth",
       "event_20231123_cn": "The Ninja Scrolls: Azur Flash",
-      "event_20231221_cn": "Light-Chasing Sea of Stars",
+      "event_20231221_cn": "Light-Chasing Sea of Stars Rerun",
       "event_20240229_cn": "Snowrealm Peregrination",
       "event_20240425_cn": "Heart-Linking Harmony",
       "event_20240521_cn": "Light of the Martyrium",
@@ -3695,8 +3695,7 @@
       "noshiro": "Noshiro",
       "sirius": "Sirius",
       "new_jersey": "New Jersey",
-      "taihou": "Taihou",
-      "aegir": "Aegir"
+      "taihou": "Taihou"
     }
   },
   "Daily": {
@@ -4241,6 +4240,10 @@
     "Cl1Filter": {
       "name": "明石购买筛选",
       "help": "侵蚀一明石一般只购买体力nanoda"
+    },
+    "RecordNonCL1AP": {
+      "name": "OpsiHazard1Leveling.RecordNonCL1AP.name",
+      "help": "OpsiHazard1Leveling.RecordNonCL1AP.help"
     }
   },
   "OpsiSirenBug": {

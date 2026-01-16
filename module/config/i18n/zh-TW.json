@@ -3695,8 +3695,7 @@
       "noshiro": "能代",
       "sirius": "天狼星",
       "new_jersey": "紐澤西",
-      "taihou": "大鳳",
-      "aegir": "埃吉爾"
+      "taihou": "大鳳"
     }
   },
   "Daily": {
@@ -4241,6 +4240,10 @@
     "Cl1Filter": {
       "name": "明石购买筛选",
       "help": "侵蚀一明石一般只购买体力nanoda"
+    },
+    "RecordNonCL1AP": {
+      "name": "OpsiHazard1Leveling.RecordNonCL1AP.name",
+      "help": "OpsiHazard1Leveling.RecordNonCL1AP.help"
     }
   },
   "OpsiSirenBug": {

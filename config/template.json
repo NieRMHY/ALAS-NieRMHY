@@ -2194,7 +2194,8 @@
       "OperationCoinsPreserve": 100000,
       "MinimumActionPointReserve": 200,
       "ExecuteFixedPatrolScan": false,
-      "Cl1Filter": "ActionPoint"
+      "Cl1Filter": "ActionPoint",
+      "RecordNonCL1AP": true
     },
     "OpsiSirenBug": {
       "SirenResearch_Enable": false,

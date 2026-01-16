@@ -1088,6 +1088,7 @@ OpsiHazard1Leveling:
   ExecuteFixedPatrolScan: false
   Cl1Filter: |-
     ActionPoint
+  RecordNonCL1AP: true
 OpsiSirenBug:
   SirenResearch_Enable: false
   SirenBug_Enable: false

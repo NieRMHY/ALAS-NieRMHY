@@ -553,7 +553,7 @@ class GeneratedConfig:
     PrivateQuarters_BuyRoses = True
     PrivateQuarters_BuyCake = False
     PrivateQuarters_TargetInteract = True
-    PrivateQuarters_TargetShip = 'anchorage'  # anchorage, noshiro, sirius, new_jersey, taihou, aegir
+    PrivateQuarters_TargetShip = 'anchorage'  # anchorage, noshiro, sirius, new_jersey, taihou
 
     # Group `Daily`
     Daily_UseDailySkip = True
@@ -669,6 +669,7 @@ class GeneratedConfig:
     OpsiHazard1Leveling_MinimumActionPointReserve = 200
     OpsiHazard1Leveling_ExecuteFixedPatrolScan = False
     OpsiHazard1Leveling_Cl1Filter = 'ActionPoint'
+    OpsiHazard1Leveling_RecordNonCL1AP = True
 
     # Group `OpsiSirenBug`
     OpsiSirenBug_SirenResearch_Enable = False
