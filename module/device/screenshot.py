@@ -27,19 +27,8 @@ from module.logger import logger
 
 class Screenshot(Adb, WSA, DroidCast, AScreenCap, Scrcpy, NemuIpc, LDOpenGL):
     
-    def __init__(self, screenshot_queue=None, screenshot_enabled=None, *args, **kwargs):
-        self._screenshot_enabled = screenshot_enabled
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.screenshot_queue = screenshot_queue
-        self._latest_frames = deque(maxlen=2)  
-        self._encoder_stop = False
-        self._encode_lock = threading.Lock()
-        self._encoder_thread = threading.Thread(target=self._encoder_worker, daemon=True, name='ScreenshotEncoder')
-        self._encoder_thread.start()
-        self._encoder_paused = False
-        self._screenshot_drop_count = 0
-        self._last_queue_warn_time = 0.0
-        self._queue_full_since = 0.0
     _screen_size_checked = False
     _screen_black_checked = False
     _minicap_uninstalled = False
@@ -81,16 +70,6 @@ class Screenshot(Adb, WSA, DroidCast, AScreenCap, Scrcpy, NemuIpc, LDOpenGL):
                 method = self.config.Emulator_ScreenshotMethod
             method = self.screenshot_methods.get(method, self.screenshot_adb)
 
-            if self.screenshot_queue is not None:
-                try:
-                    queue_size = self.screenshot_queue.qsize()
-                except NotImplementedError:
-                    # macOS 不支持 qsize()，此处跳过队列大小检查（或根据需求调整）
-                    queue_size = 0  # 假设队列未满
-                if queue_size >= 10:
-                    logger.warning('截图队列已满，跳过本次抓图以避免编码开销')
-                    continue
-
             self.image = method()
 
             if self.config.Emulator_ScreenshotDedithering:
@@ -100,15 +79,6 @@ class Screenshot(Adb, WSA, DroidCast, AScreenCap, Scrcpy, NemuIpc, LDOpenGL):
 
             if self.config.Error_SaveError:
                 self.screenshot_deque.append({'time': datetime.now(), 'image': self.image})
-            if self.screenshot_queue is not None and self.image is not None:
-                try:
-                    with self._encode_lock:
-                        self._latest_frames.append(self.image.copy())
-                except MemoryError:
-                    logger.error('放入最新帧缓冲时 MemoryError，丢弃一帧并尝试回收内存')
-                    import gc; gc.collect()
-                except Exception as e:
-                    logger.debug('放入最新帧缓冲失败: %s', e)
 
             if self.check_screen_size() and self.check_screen_black():
                 break
@@ -315,135 +285,4 @@ class Screenshot(Adb, WSA, DroidCast, AScreenCap, Scrcpy, NemuIpc, LDOpenGL):
             self._screen_black_checked = True
             return True
 
-    def _encoder_worker(self):
-        """后台编码线程：只编码最新帧并把 base64 放入 self.screenshot_queue
-        支持暂停以在关闭调度器时停止编码并清空缓冲。"""
-        while not getattr(self, '_encoder_stop', False):
-            if getattr(self, '_encoder_paused', False):
-                time.sleep(0.1)
-                continue
-            if getattr(self, '_screenshot_enabled', None) is not None:
-                try:
-                    if not bool(self._screenshot_enabled.value):
-                        with self._encode_lock:
-                            try:
-                                self._latest_frames.clear()
-                            except Exception:
-                                pass
-                        time.sleep(0.1)
-                        continue
-                except Exception:
-                    pass
-            try:
-                if not self._latest_frames:
-                    time.sleep(0.05)
-                    continue
 
-                try:
-                    qmax = getattr(self.screenshot_queue, 'maxsize', 8) or 8
-                    qsize = self.screenshot_queue.qsize() if self.screenshot_queue is not None else 0
-                except Exception:
-                    qmax, qsize = 8, 0
-
-                nowt = time.time()
-                q_threshold = max(1, int(qmax))
-
-                if qsize >= q_threshold:
-                    self._screenshot_drop_count += 1
-                    if self._queue_full_since == 0.0:
-                        self._queue_full_since = nowt
-                    if nowt - self._last_queue_warn_time > 15.0:
-                        logger.warning('雪风大人提示：已丢帧=%d qsize=%d max=%d', self._screenshot_drop_count, qsize, qmax)
-                        self._last_queue_warn_time = nowt
-                    if nowt - self._queue_full_since > 10.0:
-                        time.sleep(0.3)
-                        continue
-                else:
-                    if self._screenshot_drop_count:
-                        self._screenshot_drop_count = 0
-                    self._queue_full_since = 0.0
-
-                with self._encode_lock:
-                    try:
-                        image = self._latest_frames.pop()
-                    except Exception:
-                        image = None
-                    self._latest_frames.clear()
-
-                if image is None:
-                    continue
-
-                rgb_image = image
-                if rgb_image.ndim == 2:
-                    rgb_image = cv2.cvtColor(rgb_image, cv2.COLOR_GRAY2BGR)
-                elif rgb_image.shape[2] == 4:
-                    try:
-                        rgb_image = cv2.cvtColor(rgb_image, cv2.COLOR_RGBA2BGR)
-                    except Exception:
-                        rgb_image = rgb_image[..., :3][:, :, ::-1]
-                elif rgb_image.shape[2] == 3:
-                    try:
-                        rgb_image = cv2.cvtColor(rgb_image, cv2.COLOR_RGB2BGR)
-                    except Exception:
-                        rgb_image = rgb_image[:, :, ::-1]
-
-                h, w = rgb_image.shape[:2]
-                max_w, max_h = 900, 1600
-                if w > max_w or h > max_h:
-                    scale = min(max_w / w, max_h / h)
-                    rgb_image = cv2.resize(rgb_image, (int(w * scale), int(h * scale)), interpolation=cv2.INTER_AREA)
-
-                quality = 100
-                try:
-                    qsize = self.screenshot_queue.qsize() if self.screenshot_queue is not None else 0
-                    if qsize >= max(4, int(qmax * 0.75)):
-                        quality = 80
-                    elif qsize >= max(2, int(qmax * 0.5)):
-                        quality = 90
-                except Exception:
-                    pass
-
-                is_success, buffer = cv2.imencode(".jpg", rgb_image, [int(cv2.IMWRITE_JPEG_QUALITY), quality])
-                if not is_success:
-                    continue
-                img_base64 = base64.b64encode(buffer.tobytes()).decode("utf-8")
-
-                if self.screenshot_queue is None:
-                    continue
-
-                try:
-                    self.screenshot_queue.put(img_base64, timeout=0.1)
-                except Exception:
-                    try:
-                        _ = self.screenshot_queue.get_nowait()
-                        self.screenshot_queue.put_nowait(img_base64)
-                        self._screenshot_drop_count += 1
-                    except Exception:
-                        self._screenshot_drop_count += 1
-
-            except Exception as e:
-                logger.debug('编码线程异常: %s', e)
-                time.sleep(0.1)
-
-    def pause_encoder(self):
-        """暂停编码线程并清空 _latest_frames，适用于关闭调度器前调用。"""
-        self._encoder_paused = True
-        with self._encode_lock:
-            try:
-                self._latest_frames.clear()
-            except Exception:
-                pass
-
-    def resume_encoder(self):
-        """恢复编码线程（在清空队列后调用以避免瞬间显示旧帧）。"""
-        self._encoder_paused = False
-
-    def clear_screenshot_queue(self):
-        """清空外部 screenshot_queue（若存在），用于恢复前清理旧数据。"""
-        if self.screenshot_queue is None:
-            return
-        try:
-            while True:
-                self.screenshot_queue.get_nowait()
-        except Exception:
-            pass

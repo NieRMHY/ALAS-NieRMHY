@@ -72,10 +72,10 @@ class Device(Screenshot, Control, AppControl, Input):
     stuck_timer_long = Timer(195, count=195).start()
     stuck_long_wait_list = ['BATTLE_STATUS_S', 'PAUSE', 'LOGIN_CHECK', 'TEMPLATE_MANJUU']
 
-    def __init__(self, *args, screenshot_queue=None, screenshot_enabled=None, **kwargs):
+    def __init__(self, *args, **kwargs):
         for trial in range(4):
             try:
-                super().__init__(*args, screenshot_queue=screenshot_queue, screenshot_enabled=screenshot_enabled, **kwargs)
+                super().__init__(*args, **kwargs)
                 break
             except EmulatorNotRunningError:
                 if trial >= 3:

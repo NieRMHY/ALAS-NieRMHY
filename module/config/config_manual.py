@@ -18,8 +18,7 @@ class ManualConfig:
     > Exercise
     > Dorm > Meowfficer > Guild > Gacha
     > Reward
-    > ShopFrequent > EventShop > ShopOnce > Shipyard > Freebies
-    > Island
+    > ShopFrequent > EventShop > ShopOnce > Shipyard > Freebies > Island
     > PrivateQuarters
     > OpsiExplore
     > Minigame > Awaken

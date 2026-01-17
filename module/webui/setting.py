@@ -61,7 +61,6 @@ class State:
     manager: SyncManager = None
     electron: bool = False
     theme: str = "default"
-    last_screenshot_base64: str = None
     placeholder_images: list = [
         "screen1.jpg",
         "screen2.jpg",

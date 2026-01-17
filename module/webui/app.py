@@ -156,7 +156,7 @@ class AlasGUI(Frame):
         self.inst_cache = []
         self.load_home = False
         self.af_flag = False
-        self.last_displayed_screenshot_base64 = None
+
 
     @use_scope("aside", clear=True)
     def set_aside(self) -> None:
@@ -702,18 +702,6 @@ class AlasGUI(Frame):
         put_scope("overview", [put_scope("schedulers"), put_scope("logs")])
 
         with use_scope("schedulers"):
-            if getattr(State, "display_screenshots", False) and hasattr(self, 'alas') and self.alas.alive and self.alas.get_latest_screenshot:
-                img_html = f'<img id="screenshot-img" src="data:image/jpg;base64,{self.alas.get_latest_screenshot}" style="max-height:240px; width:auto;">'
-                put_scope("image-container", [put_html(img_html)])
-            else:
-                put_scope(
-                    "image-container",
-                    [
-                        put_html(
-                            f'<img id="screenshot-img" src="{State.get_placeholder_url()}" data-modal-src="{State.get_placeholder_url()}" style="max-height:240px; width:auto;">'
-                        )
-                    ],
-                )
             put_scope(
                 "scheduler-bar",
                 [
@@ -789,7 +777,6 @@ class AlasGUI(Frame):
                         put_scope(
                             "log-bar-btns",
                             [
-                                put_scope("screenshot_control_btn"),
                                 put_scope("log_scroll_btn"),
                                 put_scope("dashboard_btn"),
                             ],
@@ -831,93 +818,6 @@ class AlasGUI(Frame):
             self.task_handler.add(self.alas_update_dashboard, 10, True)
         if hasattr(self, 'alas') and self.alas is not None:
             self.task_handler.add(log.put_log(self.alas), 0.25, True)
-            self.task_handler.add(self.update_screenshot_display, 0.5, True)
-        else:
-            self.task_handler.add(self.update_screenshot_display, 0.5, True)
-
-        with use_scope("screenshot_control_btn", clear=True):
-            label = "看见了nanoda" if getattr(State, "display_screenshots", False) else "看不见nanoda"
-
-            def _toggle_screenshot(_=None):
-                State.display_screenshots = not getattr(State, "display_screenshots", False)
-                if State.display_screenshots:
-                    try:
-                        img_base64 = None
-                        if hasattr(self, 'alas') and self.alas.alive:
-                            img_base64 = self.alas.get_latest_screenshot
-                        if img_base64 is None:
-                            img_base64 = State.last_screenshot_base64
-                        if img_base64:
-                            src = f"data:image/jpg;base64,{img_base64}"
-                            run_js(f'var img=document.getElementById("screenshot-img"); if(img) {{ img.src="{src}"; img.setAttribute("data-modal-src", "{src}"); }}')
-                    except Exception:
-                        pass
-                else:
-                    current_url = State.get_placeholder_url()
-                    run_js(f'var img=document.getElementById("screenshot-img"); if(img) {{ img.src="{current_url}"; img.setAttribute("data-modal-src", "{current_url}"); }}')
-                try:
-                    for pm in ProcessManager.running_instances():
-                        try:
-                            pm.set_screenshot_enabled(State.display_screenshots)
-                        except Exception:
-                            pass
-                except Exception:
-                    pass
-                with use_scope("screenshot_control_btn", clear=True):
-                    put_buttons(
-                        [
-                            {"label": "显示" if State.display_screenshots else "隐藏", "value": "toggle", "color": "off"},
-                            {"label": "切换雪风大人图片", "value": "switch", "color": "off"},
-                        ],
-                        onclick=[_toggle_screenshot, _switch_placeholder],
-                    ).style("text-align: center")
-
-            def _switch_placeholder(_=None):
-                try:
-                    url = State.advance_placeholder()
-                    run_js(f'var img=document.getElementById("screenshot-img"); if(img) {{ img.src="{url}"; img.setAttribute("data-modal-src", "{url}"); }}')
-                    gradient = 'linear-gradient(90deg, #00b894, #0984e3)'
-                    toast(t("切换雪风大人图片"), duration=1, position="top", color=gradient)
-                    run_js(r"""
-                        setTimeout(function(){
-                            var el = document.querySelector('.toastify.toastify-top.toastify-right') || document.querySelector('.toastify.toastify-top') || document.querySelector('.toastify');
-                            if (!el) return;
-                            el.classList.add('alas-force-text');
-                            el.style.boxShadow = '0 6px 18px rgba(0,0,0,0.22)';
-                            el.style.zIndex = '2147483647';
-                            /* children inherit via .alas-force-text */
-                            try{
-                                if (el.classList && el.classList.contains('toastify-right')){
-                                    el.style.position = 'fixed';
-                                    el.style.top = '8px';
-                                    el.style.right = '8px';
-                                    el.style.left = 'auto';
-                                    el.style.transform = 'none';
-                                    el.style.margin = '0';
-                                } else {
-                                    el.style.position = 'fixed';
-                                    el.style.top = '8px';
-                                    el.style.left = '50%';
-                                    el.style.right = 'auto';
-                                    el.style.transform = 'translateX(-50%)';
-                                    el.style.margin = '0';
-                                }
-                            }catch(e){}
-                        }, 80);
-                    """)
-                except Exception:
-                    pass
-
-            if not hasattr(State, "display_screenshots"):
-                State.display_screenshots = True
-
-            put_buttons(
-                [
-                    {"label": label, "value": "toggle", "color": "off"},
-                    {"label": "切换雪风大人图片", "value": "switch", "color": "off"},
-                ],
-                onclick=[_toggle_screenshot, _switch_placeholder],
-            ).style("text-align: center")
 
     def set_dashboard_display(self, b):
         self._log.set_dashboard_display(b)
@@ -1162,6 +1062,7 @@ class AlasGUI(Frame):
         if self._log.first_display:
             self._log.first_display = False
 
+
     def alas_update_dashboard(self, _clear=False):
         if not self.visible:
             return
@@ -1171,196 +1072,6 @@ class AlasGUI(Frame):
             elif self._log.display_dashboard:
                 self._update_dashboard()
 
-    def update_screenshot_display(self):
-        if not getattr(State, "display_screenshots", False):
-            self.last_displayed_screenshot_base64 = None
-            if hasattr(State, "screenshot_queue") and hasattr(State.screenshot_queue, "clear"):
-                State.screenshot_queue.clear()
-            if hasattr(State, "last_screenshot_base64"):
-                State.last_screenshot_base64 = None
-            run_js(f'''
-                var img = document.getElementById("screenshot-img");
-                if (img) {{
-                    img.src = "{State.get_placeholder_url()}";
-                }}
-            ''')
-            return
-        img_base64 = None
-        if hasattr(self, 'alas') and self.alas.alive:
-            try:
-                img_base64 = self.alas.get_latest_screenshot
-            except Exception as e:
-                logger.error(f"从调度器获取截图失败: {e}")
-                with use_scope("image-container", clear=True):
-                    put_text("无法获取实时截图").style("font-size: 1.25rem; color: red; margin: auto;")
-
-        if img_base64 is None and State.last_screenshot_base64 is not None:
-            img_base64 = State.last_screenshot_base64
-
-        if img_base64 is not None and img_base64 != self.last_displayed_screenshot_base64:
-            self.last_displayed_screenshot_base64 = img_base64
-            js = '''
-            (function(){
-                var src = "data:image/jpg;base64,<<IMG>>";
-                var img = document.getElementById("screenshot-img");
-                if (!img) {
-                    return;
-                }
-                img.src = src;
-                img.setAttribute("data-modal-src", src);
-                img.style.maxWidth = "100%";
-                img.style.maxHeight = "240px";
-                img.style.height = "auto";
-                img.style.cursor = "zoom-in";
-                img.style.transform = "";
-
-                var modal = document.getElementById("screenshot-modal");
-                if (!modal) {
-                    modal = document.createElement("div");
-                    modal.id = "screenshot-modal";
-                    Object.assign(modal.style, {
-                        position: "fixed",
-                        left: 0,
-                        top: 0,
-                        width: "100vw",
-                        height: "100vh",
-                        display: "none",
-                        justifyContent: "center",
-                        alignItems: "center",
-                        background: "rgba(0,0,0,0.65)",
-                        zIndex: 99999,
-                        overflow: "hidden",
-                        padding: "20px",
-                        boxSizing: "border-box",
-                        cursor: "grab"
-                    });
-                    var modalImg = document.createElement("img");
-                    modalImg.id = "screenshot-modal-img";
-                    Object.assign(modalImg.style, {
-                        maxWidth: "100%",
-                        maxHeight: "90vh",
-                        objectFit: "contain",
-                        boxShadow: "0 4px 20px rgba(0,0,0,0.5)",
-                        transition: "transform 0.05s linear",
-                        transformOrigin: "center center",
-                        willChange: "transform"
-                    });
-                    modal.appendChild(modalImg);
-
-                    modal.dataset.scale = 1;
-                    modal.dataset.tx = 0;
-                    modal.dataset.ty = 0;
-                    modal.dataset.panning = 0;
-
-                    function applyTransform() {
-                        var s = parseFloat(modal.dataset.scale) || 1;
-                        var tx = parseFloat(modal.dataset.tx) || 0;
-                        var ty = parseFloat(modal.dataset.ty) || 0;
-                        modalImg.style.transform = 'translate(' + tx + 'px,' + ty + 'px) scale(' + s + ')';
-                    }
-
-                    modal.addEventListener('wheel', function(e) {
-                        if (e.ctrlKey) return;
-                        e.preventDefault();
-                        var rect = modalImg.getBoundingClientRect();
-                        var cx = e.clientX - (rect.left + rect.width/2);
-                        var cy = e.clientY - (rect.top + rect.height/2);
-                        var scale = parseFloat(modal.dataset.scale) || 1;
-                        var delta = -e.deltaY;
-                        var factor = delta > 0 ? 1.12 : 0.88;
-                        var newScale = Math.min(6, Math.max(0.3, scale * factor));
-
-                        var tx = parseFloat(modal.dataset.tx) || 0;
-                        var ty = parseFloat(modal.dataset.ty) || 0;
-                        modal.dataset.tx = tx - cx * (newScale - scale);
-                        modal.dataset.ty = ty - cy * (newScale - scale);
-                        modal.dataset.scale = newScale;
-                        applyTransform();
-                    }, { passive: false });
-
-                    var start = { x:0, y:0 };
-                    modalImg.addEventListener('mousedown', function(e) {
-                        e.preventDefault();
-                        modal.dataset.panning = 1;
-                        start.x = e.clientX;
-                        start.y = e.clientY;
-                        modal.style.cursor = 'grabbing';
-                    });
-                    window.addEventListener('mousemove', function(e) {
-                        if (modal.dataset.panning !== '1') return;
-                        var dx = e.clientX - start.x;
-                        var dy = e.clientY - start.y;
-                        start.x = e.clientX;
-                        start.y = e.clientY;
-                        modal.dataset.tx = (parseFloat(modal.dataset.tx) || 0) + dx;
-                        modal.dataset.ty = (parseFloat(modal.dataset.ty) || 0) + dy;
-                        applyTransform();
-                    });
-                    window.addEventListener('mouseup', function(e) {
-                        if (modal.dataset.panning === '1') {
-                            modal.dataset.panning = 0;
-                            modal.style.cursor = 'grab';
-                        }
-                    });
-
-                    modalImg.addEventListener('dblclick', function(e) {
-                        modal.dataset.scale = 1;
-                        modal.dataset.tx = 0;
-                        modal.dataset.ty = 0;
-                        applyTransform();
-                    });
-
-                    modal.addEventListener('click', function(e) {
-                        if (e.target === modal) modal.style.display = "none";
-                    });
-
-                    document.body.appendChild(modal);
-                    document.addEventListener("keydown", function(e) {
-                        if (e.key === "Escape") modal.style.display = "none";
-                    });
-                }
-
-                img.src = src;
-                var modalImgEl = document.getElementById("screenshot-modal-img");
-                if (modalImgEl) {
-                    modalImgEl.src = img.getAttribute("data-modal-src") || src;
-                }
-
-                img.onclick = function(e) {
-                    var m = document.getElementById("screenshot-modal");
-                    var mi = document.getElementById("screenshot-modal-img");
-                    if (m && mi) {
-                        mi.src = img.getAttribute("data-modal-src") || img.src;
-                        m.dataset.scale = 1;
-                        m.dataset.tx = 0;
-                        m.dataset.ty = 0;
-                        mi.style.transform = '';
-                        m.style.display = "flex";
-                        applyTransform();
-                    }
-                };
-
-                function applyTransform() {
-                    var m = document.getElementById("screenshot-modal");
-                    if (!m) return;
-                    var mi = document.getElementById("screenshot-modal-img");
-                    var s = parseFloat(m.dataset.scale) || 1;
-                    var tx = parseFloat(m.dataset.tx) || 0;
-                    var ty = parseFloat(m.dataset.ty) || 0;
-                    if (mi) mi.style.transform = 'translate(' + tx + 'px,' + ty + 'px) scale(' + s + ')';
-                }
-            })();
-            '''
-            js = js.replace('<<IMG>>', img_base64)
-            run_js(js)
-        elif img_base64 is None:
-            run_js(f'''
-                var img = document.getElementById("screenshot-img");
-                if (img) {{
-                    img.src = "{State.get_placeholder_url()}";
-                    img.setAttribute("data-modal-src", "{State.get_placeholder_url()}");
-                }}
-            ''')
     @use_scope("content", clear=True)
     def alas_daemon_overview(self, task: str) -> None:
         self.init_menu(name=task)
