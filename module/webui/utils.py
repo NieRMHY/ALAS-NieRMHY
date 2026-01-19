@@ -416,7 +416,7 @@ def _load_icon(name: str) -> str:
                 data = base64.b64encode(f.read()).decode("ascii")
             return (
                 f'<img src="data:image/png;base64,{data}" alt="{name}" '
-                'style="width:1.6rem;height:1.6rem;display:block;" />'
+                'style="width:2.4rem;height:2.4rem;display:block;" />'
             )
         except Exception as e:
             logger.warning("读取 PNG 图标失败，回退 SVG: %s", e)
