@@ -831,9 +831,9 @@ class AlasGUI(Frame):
             self.task_handler.add(self.alas_update_dashboard, 10, True)
         if hasattr(self, 'alas') and self.alas is not None:
             self.task_handler.add(log.put_log(self.alas), 0.25, True)
-            self.task_handler.add(self.update_screenshot_display, 0.2, True)
+            self.task_handler.add(self.update_screenshot_display, 0.1, True)
         else:
-            self.task_handler.add(self.update_screenshot_display, 0.2, True)
+            self.task_handler.add(self.update_screenshot_display, 0.1, True)
 
         with use_scope("screenshot_control_btn", clear=True):
             label = "看见了nanoda" if getattr(State, "display_screenshots", False) else "看不见nanoda"

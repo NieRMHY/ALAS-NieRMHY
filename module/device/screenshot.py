@@ -393,13 +393,13 @@ class Screenshot(Adb, WSA, DroidCast, AScreenCap, Scrcpy, NemuIpc, LDOpenGL):
                     scale = min(max_w / w, max_h / h)
                     rgb_image = cv2.resize(rgb_image, (int(w * scale), int(h * scale)), interpolation=cv2.INTER_AREA)
 
-                quality = 50  # 默认足够清晰但降低带宽
+                quality = 30  # 默认足够清晰但降低带宽
                 try:
                     qsize = self.screenshot_queue.qsize() if self.screenshot_queue is not None else 0
                     if qsize >= max(4, int(qmax * 0.75)):
-                        quality = 30
+                        quality = 10
                     elif qsize >= max(2, int(qmax * 0.5)):
-                        quality = 40
+                        quality = 20
                 except Exception:
                     pass
 
