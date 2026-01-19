@@ -866,7 +866,7 @@ class AlasGUI(Frame):
                 with use_scope("screenshot_control_btn", clear=True):
                     put_buttons(
                         [
-                            {"label": "显示" if State.display_screenshots else "隐藏", "value": "toggle", "color": "off"},
+                            {"label": "隐藏监控" if State.display_screenshots else "显示监控", "value": "toggle", "color": "off"},
                             {"label": "切换图片", "value": "switch", "color": "off"},
                         ],
                         onclick=[_toggle_screenshot, _switch_placeholder],
