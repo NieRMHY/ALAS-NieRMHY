@@ -409,6 +409,8 @@ pre.rich-traceback-code {
     height: 100%;
     overflow: auto;
     display: grid;
+    gap: 0.5rem; /* 分块间预留间距，避免背景重叠 */
+    align-content: start;
 }
 
 #pywebio-scope-running,
@@ -425,11 +427,16 @@ pre.rich-traceback-code {
 }
 
 #pywebio-scope-scheduler-bar,
-#pywebio-scope-image-container,
 #pywebio-scope-log-bar {
     display: flex;
     align-items: center;
     justify-content: space-between;
+}
+
+#pywebio-scope-image-container {
+    display: flex;
+    align-items: center;
+    justify-content: center; /* 占位图/截图居中 */
 }
 
 #pywebio-scope-log-bar {
@@ -491,12 +498,6 @@ pre.rich-traceback-code {
 #pywebio-scope-waiting_tasks {
     overflow-y: auto;
     height: 100%;
-}
-
-#pywebio-scope-pending_tasks {
-    height: 100%;
-    max-height: 100%;
-    min-height: 100%;
 }
 
 #pywebio-scope-logs {
