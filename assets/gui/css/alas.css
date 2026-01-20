@@ -487,6 +487,11 @@ pre.rich-traceback-code {
     height: 100%;
 }
 
+#pywebio-scope-pending_tasks {
+    height: auto;
+    max-height: calc(1.75rem * 3); /* 队列区最多展示约三行，超出可滚动 */
+}
+
 #pywebio-scope-logs {
     display: grid;
     grid-auto-flow: column;
