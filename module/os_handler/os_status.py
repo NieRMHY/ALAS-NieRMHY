@@ -1,3 +1,5 @@
+# 此文件用于管理大世界（Operation Siren）模式下的状态信息。
+# 负责海域代币（黄币/紫币）的数值追踪、任务类型识别以及子任务冷却（CD）状态的实时计算。
 import typing as t
 from datetime import datetime, timedelta
 
@@ -37,6 +39,11 @@ class OSStatus(UI):
     @property
     def is_cl1_enabled(self) -> bool:
         return self.config.is_task_enabled('OpsiHazard1Leveling')
+
+    @property
+    def cl1_enough_yellow_coins(self) -> bool:
+        return self.get_yellow_coins() >= self.config.cross_get(
+            keys='OpsiHazard1Leveling.OpsiHazard1Leveling.OperationCoinsPreserve')
 
     @property
     def nearest_task_cooling_down(self) -> t.Optional[Function]:
@@ -83,18 +90,23 @@ class OSStatus(UI):
             else:
                 break
         LogRes(self.config).YellowCoin = yellow_coins
+        logger.info(f'Yellow coins: {yellow_coins}')
 
         return yellow_coins
 
     def get_purple_coins(self) -> int:
         if self.appear(OS_SHOP_CHECK):
-            amount = OCR_OS_SHOP_PURPLE_COINS.ocr(self.device.image)
+            purple_coins = OCR_OS_SHOP_PURPLE_COINS.ocr(self.device.image)
         else:
-            amount = OCR_SHOP_PURPLE_COINS.ocr(self.device.image)
-        LogRes(self.config).PurpleCoin = amount
-        return amount
+            purple_coins = OCR_SHOP_PURPLE_COINS.ocr(self.device.image)
+        LogRes(self.config).PurpleCoin = purple_coins
+        return purple_coins
 
     def os_shop_get_coins(self):
         self._shop_yellow_coins = self.get_yellow_coins()
         self._shop_purple_coins = self.get_purple_coins()
         logger.info(f'Yellow coins: {self._shop_yellow_coins}, purple coins: {self._shop_purple_coins}')
+
+    def cl1_task_call(self):
+        if self.is_cl1_enabled and self.cl1_enough_yellow_coins:
+            self.config.task_call('OpsiHazard1Leveling')

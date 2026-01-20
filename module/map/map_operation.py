@@ -187,7 +187,7 @@ class MapOperation(MysteryHandler, FleetPreparation, Retirement, FastForwardHand
                     continue
 
                 # Auto search continue
-                if self.handle_auto_search_continue():
+                if self.handle_auto_search_continue(drop=drop):
                     campaign_timer.reset()
                     continue
 
@@ -209,6 +209,9 @@ class MapOperation(MysteryHandler, FleetPreparation, Retirement, FastForwardHand
 
                 # 2X book popup
                 if self.handle_2x_book_popup():
+                    continue
+
+                if self.handle_submarine_cost_popup():
                     continue
 
                 # Story skip

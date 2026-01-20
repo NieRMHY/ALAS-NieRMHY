@@ -1,3 +1,5 @@
+# 此文件实现了大世界（Operation Siren）商店的物品筛选与选择逻辑。
+# 基于正则表达式解析商品类型，并根据用户配置的过滤器（如明石商店过滤或 OS 商店预设）决定购买行为。
 import re
 from typing import List
 from module.config.config_generated import GeneratedConfig
@@ -98,11 +100,16 @@ class Selector():
             list[Item]:
         """
         items = self.pretreatment(items)
-        parser = self.config.OpsiGeneral_AkashiShopFilter
-        if not parser.strip():
-            parser = GeneratedConfig.OpsiGeneral_AkashiShopFilter
+        if getattr(self, 'is_in_task_cl1_leveling', False) and getattr(self, 'is_cl1_enabled', False):
+            parser = self.config.OpsiHazard1Leveling_Cl1Filter
+            if not parser:
+                parser = 'ActionPoint'
+        else:
+            parser = self.config.OpsiGeneral_AkashiShopFilter
+            if not parser.strip():
+                parser = GeneratedConfig.OpsiGeneral_AkashiShopFilter
         FILTER.load(parser)
-        return FILTER.applys(items, funcs=[self.check_cl1_purple_coins, self.enough_coins_in_akashi])
+        return FILTER.applys(items, funcs=[self.enough_coins_in_akashi])
 
     def items_filter_in_os_shop(self, items) -> List[Item]:
         """

@@ -222,16 +222,23 @@ class CampaignUI(MapOperation, CampaignEvent, CampaignOcr):
             Button:
         """
         entrance_name = name
+        # Handle special case: d3_3 uses d3 entrance in UI
+        # but loads different battle logic from d3_3.py
+        search_name = name
+        if name == 'd3_3':
+            search_name = 'd3'
+            logger.info(f'Stage {name} uses entrance {search_name} in UI')
+        
         if self.config.MAP_HAS_MODE_SWITCH:
-            for mode_name in self.campaign_get_mode_names(name):
+            for mode_name in self.campaign_get_mode_names(search_name):
                 if mode_name in self.stage_entrance:
-                    name = mode_name
+                    search_name = mode_name
 
-        if name not in self.stage_entrance:
-            logger.warning(f'Stage not found: {name}')
+        if search_name not in self.stage_entrance:
+            logger.warning(f'Stage not found: {search_name}')
             raise CampaignNameError
 
-        entrance = self.stage_entrance[name]
+        entrance = self.stage_entrance[search_name]
         entrance.name = entrance_name
         return entrance
 
@@ -329,7 +336,12 @@ class CampaignUI(MapOperation, CampaignEvent, CampaignOcr):
             name (str): Campaign name, such as '7-2', 'd3', 'sp3'.
             mode (str): 'normal' or 'hard'.
         """
-        chapter, stage = self._campaign_separate_name(name)
+        # Handle special case: d3_3 uses d3 for chapter navigation
+        chapter_name = name
+        if name == 'd3_3':
+            chapter_name = 'd3'
+        
+        chapter, stage = self._campaign_separate_name(chapter_name)
 
         if self.campaign_set_chapter_main(chapter, mode):
             pass

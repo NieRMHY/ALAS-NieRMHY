@@ -35,6 +35,14 @@
     grid-template-columns: 1fr auto;
     grid-template-rows: 1fr auto;
 }
+#pywebio-scope-dashboard {
+    font-weight: 400;
+    width: 100%;
+    display: grid;
+    grid-auto-flow: row;
+    grid-template-columns: repeat(auto-fit,minmax(6rem,1fr));
+    overflow: hidden;
+}
 
 /* dashboard */
 #pywebio-scope-dashboard {
@@ -71,7 +79,6 @@
     overflow-y: auto;
 }
 
-/* dashboard */
 #output-container .status-point {
     margin: 45% 50% 55% 50%;
     width: .4rem;

@@ -1,3 +1,5 @@
+# 此文件处理大世界（Operation Siren）模式下的行动力（Action Point, AP）管理。
+# 包含行动力数值 OCR 识别、药剂（AP Box）库存解析以及自动购买或使用补给的交互逻辑。
 from datetime import datetime
 
 import module.config.server as server
@@ -12,8 +14,7 @@ from module.os_handler.map_event import MapEventHandler
 from module.statistics.item import Item, ItemGrid
 from module.ui.assets import OS_CHECK
 from module.ui.ui import UI
-from module.config.deep import deep_get
-from module.log_res.log_res import LogRes
+from module.log_res import LogRes
 
 OCR_ACTION_POINT_REMAIN = Digit(ACTION_POINT_REMAIN, letter=(255, 219, 66), name='OCR_ACTION_POINT_REMAIN')
 OCR_ACTION_POINT_REMAIN_OS = Digit(ACTION_POINT_REMAIN_OS, letter=(239, 239, 239),
@@ -142,6 +143,7 @@ class ActionPointHandler(UI, MapEventHandler):
         if self.config.OS_ACTION_POINT_BOX_USE:
             total += np.sum(np.array(box) * tuple(ACTION_POINT_BOX.values()))
         oil = box[0]
+
         LogRes(self.config).Oil = oil
         logger.info(f'Action points: {current}({total}), oil: {oil}')
         LogRes(self.config).ActionPoint = {'Value': current, 'Total': total}
@@ -433,7 +435,7 @@ class ActionPointHandler(UI, MapEventHandler):
 
             # Sort action point boxes
             box = []
-            for index in [1, 2, 3]:
+            for index in [3, 2, 1]:
                 if self._action_point_box[index] > 0:
                     if self._action_point_current + ACTION_POINT_BOX[index] >= 200:
                         box.append(index)

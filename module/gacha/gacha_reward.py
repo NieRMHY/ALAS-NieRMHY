@@ -1,5 +1,7 @@
+# 此文件处理建造（Gacha/Build）相关的操作。
+# 包括多级建造页面的导航、资源消耗预计算、提交建造订单以及自动化收菜和队列清理逻辑。
 from module.base.timer import Timer
-from module.campaign.campaign_status import OCR_COIN
+from module.campaign.campaign_status import CampaignStatus
 from module.combat.assets import GET_SHIP
 from module.exception import ScriptError
 from module.gacha.assets import *
@@ -8,8 +10,7 @@ from module.handler.assets import POPUP_CONFIRM, STORY_SKIP
 from module.logger import logger
 from module.ocr.ocr import Digit
 from module.retire.retirement import Retirement
-from module.shop.shop_general import GeneralShop
-from module.log_res.log_res import LogRes
+from module.log_res import LogRes
 
 RECORD_GACHA_OPTION = ('RewardRecord', 'gacha')
 RECORD_GACHA_SINCE = (0,)
@@ -19,7 +20,7 @@ OCR_BUILD_SUBMIT_COUNT = Digit(BUILD_SUBMIT_COUNT, letter=(255, 247, 247), thres
 OCR_BUILD_SUBMIT_WW_COUNT = Digit(BUILD_SUBMIT_WW_COUNT, letter=(255, 247, 247), threshold=64)
 
 
-class RewardGacha(GachaUI, Retirement):
+class RewardGacha(GachaUI, Retirement, CampaignStatus):
     build_coin_count = 0
     build_cube_count = 0
     build_ticket_count = 0
@@ -300,7 +301,7 @@ class RewardGacha(GachaUI, Retirement):
         self.gacha_flush_queue()
 
         # OCR Gold and Cubes
-        self.build_coin_count = OCR_COIN.ocr(self.device.image)
+        self.build_coin_count = self.get_coin()
         self.build_cube_count = OCR_BUILD_CUBE_COUNT.ocr(self.device.image)
 
         # Transition to appropriate target construction pool

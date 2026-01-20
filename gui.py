@@ -1,18 +1,26 @@
+import os
+import sys  # 核心修复：新增sys模块导入
 import threading
-from multiprocessing import Event, Process
+from multiprocessing import Event, Process, set_start_method
+from typing import Optional
 
 from module.logger import logger
 from module.webui.setting import State
 
 
-def func(ev: threading.Event):
+def func(ev: Optional[Event]):  # 修正：改为multiprocessing.Event（Optional适配None传参）
     import argparse
     import asyncio
-    import sys
 
     import uvicorn
 
-    if sys.platform.startswith("win"):
+    # 修复：macOS下asyncio兼容配置（补充）
+    if sys.platform == "darwin":
+        # 禁用fork安全检查，解决Mach端口冲突
+        os.environ["OBJC_DISABLE_INITIALIZE_FORK_SAFETY"] = "YES"
+        # macOS下asyncio事件循环兼容
+        asyncio.set_event_loop_policy(asyncio.DefaultEventLoopPolicy())
+    elif sys.platform.startswith("win"):
         asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
 
     State.restart_event = ev
@@ -79,31 +87,77 @@ def func(ev: threading.Event):
     elif ssl_key is None and ssl_cert is not None:
         logger.error("SSL certificate provided without key. Please provide both SSL key and certificate.")
 
-    if ssl:
-        uvicorn.run("module.webui.app:app", host=host, port=port, factory=True, ssl_keyfile=ssl_key, ssl_certfile=ssl_cert)
-    else:
-        uvicorn.run("module.webui.app:app", host=host, port=port, factory=True)
+    try:  # 新增：捕获uvicorn运行时异常，避免子进程崩溃无日志
+        if ssl:
+            uvicorn.run(
+                "module.webui.app:app",
+                host=host,
+                port=port,
+                factory=True,
+                ssl_keyfile=ssl_key,
+                ssl_certfile=ssl_cert
+            )
+        else:
+            uvicorn.run("module.webui.app:app", host=host, port=port, factory=True)
+    except Exception as e:
+        logger.error(f"Uvicorn service crashed: {str(e)}")
+        raise  # 抛出异常让父进程感知
 
 
 if __name__ == "__main__":
+    # 核心修复：强制设置multiprocessing启动方式为spawn（解决macOS fork导致的Mach端口崩溃）
+    try:
+        # 优先设置spawn，兼容多平台
+        set_start_method("spawn", force=True)
+        # macOS下额外添加环境变量，禁用fork安全检查
+        if os.name == "posix" and sys.platform == "darwin":
+            os.environ["OBJC_DISABLE_INITIALIZE_FORK_SAFETY"] = "YES"
+    except RuntimeError:
+        logger.warning("Failed to set spawn start method, may use fork (not recommended on macOS)")
+
     if State.deploy_config.EnableReload:
         should_exit = False
         while not should_exit:
             event = Event()
             process = Process(target=func, args=(event,))
             process.start()
+            logger.info(f"Started Alas web service (PID: {process.pid})")
+            
             while not should_exit:
                 try:
-                    b = event.wait(1)
+                    # 等待重启事件（1秒超时，避免阻塞）
+                    restart_triggered = event.wait(1)
                 except KeyboardInterrupt:
+                    logger.info("Received KeyboardInterrupt, exiting...")
                     should_exit = True
                     break
-                if b:
+                except Exception as e:
+                    logger.error(f"Error waiting for restart event: {str(e)}")
+                    should_exit = True
+                    break
+
+                if restart_triggered:
+                    logger.info("Restart event triggered, killing current service...")
                     process.kill()
+                    process.join(timeout=5)  # 新增：等待子进程退出，避免僵尸进程
+                    if process.is_alive():
+                        logger.warning("Failed to kill service process, force exit")
                     break
-                elif process.is_alive():
-                    continue
-                else:
+                elif not process.is_alive():
+                    logger.error("Alas web service exited unexpectedly")
                     should_exit = True
+                # 进程仍存活则继续循环
+
+            # 确保子进程完全退出
+            if process.is_alive():
+                process.terminate()
+                process.join(timeout=3)
+        
+        # 最终清理：确保子进程退出
+        if process.is_alive():
+            process.kill()
+            process.join()
+        logger.info("Alas web service exited successfully")
     else:
+        # 非重启模式直接运行
         func(None)

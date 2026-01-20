@@ -90,6 +90,10 @@
       "name": "Maritime Escort",
       "help": ""
     },
+    "EventShop": {
+      "name": "Event Shop",
+      "help": ""
+    },
     "WarArchives": {
       "name": "War Archives",
       "help": "Due to the lack of maintenance of war archives, continuous clear may not work normally, if Alas runs abnormally, Please manually finish clearing and use auto search"
@@ -153,6 +157,10 @@
     "Awaken": {
       "name": "Awaken",
       "help": ""
+    },
+    "Island": {
+      "name": "Island",
+      "help": "Task.Island.help"
     },
     "Daily": {
       "name": "Daily",
@@ -265,6 +273,10 @@
     "EventStory": {
       "name": "Event Story",
       "help": ""
+    },
+    "BoxDisassemble": {
+      "name": "Task.BoxDisassemble.name",
+      "help": "Task.BoxDisassemble.help"
     },
     "Benchmark": {
       "name": "Performance Test",
@@ -724,6 +736,10 @@
       "name": "Record Exception",
       "help": "Records exception and log into directory for review or sharing"
     },
+    "StrictRestart": {
+      "name": "Error.StrictRestart.name",
+      "help": "Error.StrictRestart.help"
+    },
     "OnePushConfig": {
       "name": "Error notify config",
       "help": "When Alas cannot handle exception, send a message through Onepush. Configuration document: \nhttps://github.com/LmeSzinc/AzurLaneAutoScript/wiki/Onepush-configuration-%5BEN%5D"
@@ -820,6 +836,14 @@
       "save": "Save",
       "upload": "Upload",
       "save_and_upload": "Save and upload"
+    },
+    "TelemetryReport": {
+      "name": "DropRecord.TelemetryReport.name",
+      "help": "DropRecord.TelemetryReport.help"
+    },
+    "BugReport": {
+      "name": "DropRecord.BugReport.name",
+      "help": "DropRecord.BugReport.help"
     }
   },
   "Retirement": {
@@ -833,6 +857,16 @@
       "one_click_retire": "One-click Retire",
       "enhance": "Enhance",
       "old_retire": "Old Retire"
+    }
+  },
+  "YukikazeTaskManager": {
+    "_info": {
+      "name": "雪风大人的任务管理",
+      "help": "任务相关的优先级与调度设置。"
+    },
+    "TaskPriorityAdjustment": {
+      "name": "任务优先级调整",
+      "help": "Restart    # 重启游戏\n> OpsiCrossMonth    # 大世界跨月每日\n> Commission > Tactical > Research    # 委托 > 战术学院 > 科研\n> Exercise    # 演习\n> Dorm > Meowfficer > Guild > Gacha    # 后宅 > 指挥喵 > 大舰队 > 每日抽卡\n> Reward    # 收获\n> ShopFrequent > ShopOnce > Shipyard > Freebies > Island    # 通用商店 > 其他商店 > 开发船坞 > 白嫖奖励 > 岛屿计划\n> PrivateQuarters    # 宿舍计划\n> OpsiExplore    # 每月开荒\n> Minigame > Awaken    # 小游戏 > 认知觉醒\n> OpsiAshBeacon    # meta作战\n> OpsiDaily > OpsiShop > OpsiVoucher    # 大世界日常 > 港口商店 > 兑换商店\n> OpsiAbyssal > OpsiStronghold > OpsiObscure > OpsiArchive    # 深渊海域 > 塞壬要塞 > 隐秘海 > 档案坐标\n> Daily > Hard > OpsiAshBeacon > OpsiAshAssist > OpsiMonthBoss    # 每日挑战 > 困难图 > meta作战 > meta支援 > 月度boss\n> Sos > EventSp > EventA > EventB > EventC > EventD    # Sos > 活动每日SP > 活动每日A > 活动每日B > 活动每日C > 活动每日D\n> RaidDaily > CoalitionSp > WarArchives > MaritimeEscort    # 共斗活动每日 > 共斗活动sp > 作战档案 > 商船护航\n> Event > Event2 > Raid > Hospital > Coalition > Main > Main2 > Main3    # 活动图 > 活动图2 > 共斗活动 > Hospital > 共斗活动 > 主线 > 主线2 > 主线3\n> OpsiMeowfficerFarming    # 短猫相接\n> GemsFarming    # 刷紧急委托\n> OpsiHazard1Leveling    # 侵蚀一练级"
     }
   },
   "OneClickRetire": {
@@ -1090,6 +1124,7 @@
       "name": "Level Achievement",
       "help": "Stop current task if level has been 100% Clear, 3 Stars, Threat Safe, or Threat Safe without 3 Stars. Non-stop implies no achievement requirement and loops until different stop condition is met",
       "non_stop": "Non-stop",
+      "non_stop_clear_all": "non_stop_clear_all",
       "100_percent_clear": "100% Clear",
       "map_3_stars": "100% Clear + 3 Stars",
       "threat_safe": "100% Clear + 3 Stars + Threat Safe",
@@ -1264,6 +1299,10 @@
       "name": "Fleet 1 All Oath",
       "help": "+10/hr emotion recovery is included into calculation"
     },
+    "Fleet1Onsen": {
+      "name": "Emotion.Fleet1Onsen.name",
+      "help": "Emotion.Fleet1Onsen.help"
+    },
     "Fleet2Value": {
       "name": "Fleet 2 Emotion Value",
       "help": ""
@@ -1290,6 +1329,10 @@
     "Fleet2Oath": {
       "name": "Fleet 2 All Oath",
       "help": "+10/hr emotion recovery is included into calculation"
+    },
+    "Fleet2Onsen": {
+      "name": "Emotion.Fleet2Onsen.name",
+      "help": "Emotion.Fleet2Onsen.help"
     }
   },
   "HpControl": {
@@ -1410,29 +1453,64 @@
       "name": "Commission Farming Settings",
       "help": "Warning: This task allows players to get a small amount of gems, but not an efficient way to farm.\nPlayers who have recently started Azur Lane are easily superstitious about 0LB and low oil consumption, while being ignorant about character leveling.\nRunning this function will only make you feel fulfilled however in reality your account will not actually progress very much.\nThe main purpose of this task is to get extra cubes for players with a formed lineup. Please rationally treat gems as a by-product.\n\nFleet 1 is expected to consist of 1 0LB CV/CVL and 1 0LB Vanguard, Fleet 2 is expected to consist of support ships such as New Jersey or Shinano to provide external battle assistance.\nFor information about the drop mechanism/rate of urgent commissions, you can refer to <https://bbs.nga.cn/read.php?tid=27134956> (in Chinese Simplified)"
     },
+    "ChangeFlagship": {
+      "name": "Change Flagship",
+      "help": "Change flagship if flagship level >= 32 or either flagship or vanguard are emotion exhausted. If you choose not to change, your fleet will ignore the low emotion warning and continue combat.\nSwitch out to new common CV/CVL whose level is in range of 1 to 31, after current has reached level 32+. Meanwhile, abandoned flagships will be retired. Any common CV/CVL whose level is 2+ will be regarded as targets. Do confirm that your own ships which is not a target has been locked\n\nThe flagship's equipment is replaced when being switched out by first recording the current setup\nOnly populated equipment slots will be replaced. If the CV/CVL preference has been configured, all 5 slots will be populated otherwise only the auxiliary slots will be populated.",
+      "ship": "Change Ship",
+      "ship_equip": "Change Ship + Gears"
+    },
     "CommonCV": {
       "name": "Flagship Common CV/CVL Preference",
       "help": "",
+      "custom": "custom",
       "any": "any",
+      "eagle": "eagle",
       "langley": "langley",
       "bogue": "bogue",
       "ranger": "ranger",
       "hermes": "hermes"
     },
+    "CommonCVFilter": {
+      "name": "GemsFarming.CommonCVFilter.name",
+      "help": "GemsFarming.CommonCVFilter.help"
+    },
     "ChangeVanguard": {
       "name": "Change Vanguard",
       "help": "Change vanguard if flagship or vanguard are emotion exhausted. If you choose not to change, your fleet will ignore the low emotion warning and continue combat.\nSwitch out to new level 100(70) common vanguard from eagle or ironblood after current flagship has reached level 32+ (Only CN players'0 limit break ship can reach level 100)\n\nThe vanguard's equipment is replaced when being switched out by first recording the current setup. Only populated equipment slots will be replaced.",
       "disabled": "Don't Change",
-      "ship": "Change Ship"
+      "ship": "Change Ship",
+      "ship_equip": "Change Ship + Gears"
     },
     "CommonDD": {
       "name": "Flagship Common DD Preference",
       "help": "",
+      "custom": "custom",
       "any": "any",
       "favourite": "Favourite Ships Only",
       "aulick_or_foote": "Aulick or Foote",
       "cassin_or_downes": "Cassin or Downes",
-      "z20_or_z21": "Z20 or Z21"
+      "z20_or_z21": "Z20 or Z21",
+      "DDG": "DDG"
+    },
+    "CommonDDFilter": {
+      "name": "GemsFarming.CommonDDFilter.name",
+      "help": "GemsFarming.CommonDDFilter.help"
+    },
+    "EquipmentCode": {
+      "name": "Gear Code",
+      "help": "Only works when 'Change Ship + Gears' is chosen.\nWhen substituting down CV/CVL/DD, if corresponding gear code is not provided, alas will export it\nWhen substituting up corresponding CV/CVL/DD, if corresponding gear code is not provided, alas will use exported gear code from previous ship; otherwise alas will use gear code in the config\nBluestacks users need to enable virtual keyboard first.\nSee https://support.bluestacks.com/hc/en-us/articles/360061968892-How-to-use-a-virtual-on-screen-keyboard-on-BlueStacks-5"
+    },
+    "ALLowHighFlagshipLevel": {
+      "name": "GemsFarming.ALLowHighFlagshipLevel.name",
+      "help": "GemsFarming.ALLowHighFlagshipLevel.help"
+    },
+    "ALLowLowVanguardLevel": {
+      "name": "GemsFarming.ALLowLowVanguardLevel.name",
+      "help": "GemsFarming.ALLowLowVanguardLevel.help"
+    },
+    "DelayTaskIFNoFlagship": {
+      "name": "GemsFarming.DelayTaskIFNoFlagship.name",
+      "help": "GemsFarming.DelayTaskIFNoFlagship.help"
     },
     "CommissionLimit": {
       "name": "Prevent Too Many Urgent Commissions",
@@ -1526,6 +1604,28 @@
       "help": "If turned off, you need to manually prepare fleets of all 15 stages in advance"
     }
   },
+  "HospitalEvent": {
+    "_info": {
+      "name": "HospitalEvent._info.name",
+      "help": "HospitalEvent._info.help"
+    },
+    "Mode": {
+      "name": "HospitalEvent.Mode.name",
+      "help": "HospitalEvent.Mode.help",
+      "easy": "easy",
+      "normal": "normal",
+      "hard": "hard"
+    },
+    "Stage": {
+      "name": "HospitalEvent.Stage.name",
+      "help": "HospitalEvent.Stage.help",
+      "T1": "T1",
+      "T2": "T2",
+      "T3": "T3",
+      "T4": "T4",
+      "ESP": "ESP"
+    }
+  },
   "MaritimeEscort": {
     "_info": {
       "name": "Maritime Escort",
@@ -1562,6 +1662,33 @@
       "help": "",
       "single": "Solo Challenge",
       "multi": "Coalition Battle"
+    }
+  },
+  "EventShop": {
+    "_info": {
+      "name": "Event Shop Settings",
+      "help": ""
+    },
+    "UnlockSSRShip": {
+      "name": "Unlock SSR Ship",
+      "help": ""
+    },
+    "BuyURShip": {
+      "name": "Buy X UR Ship(s)",
+      "help": "",
+      "0": "0",
+      "1": "1",
+      "2": "2"
+    },
+    "PresetFilter": {
+      "name": "Event Shop Filter",
+      "help": "Generally does not need to be modified.",
+      "all": "All",
+      "custom": "Custom"
+    },
+    "CustomFilter": {
+      "name": "Custom Filter",
+      "help": "To use your own filter, set \"Event Shop Filter\" to \"Custom\". All options have been defined at <https://github.com/LmeSzinc/AzurLaneAutoScript/wiki/filter_string_en>"
     }
   },
   "Commission": {
@@ -1884,6 +2011,1260 @@
     "Favourite": {
       "name": "Awaken Favourite Ships Only",
       "help": ""
+    }
+  },
+  "Island1": {
+    "_info": {
+      "name": "Island1._info.name",
+      "help": "Island1._info.help"
+    },
+    "Receive": {
+      "name": "Island1.Receive.name",
+      "help": "Island1.Receive.help"
+    },
+    "Option1": {
+      "name": "Island1.Option1.name",
+      "help": "Island1.Option1.help",
+      "0": "0",
+      "1": "1",
+      "2": "2",
+      "3": "3",
+      "4": "4",
+      "5": "5",
+      "6": "6",
+      "7": "7",
+      "8": "8"
+    },
+    "Character1": {
+      "name": "Island1.Character1.name",
+      "help": "Island1.Character1.help",
+      "manjuu": "manjuu",
+      "saratoga": "saratoga",
+      "new_jersey": "new_jersey",
+      "tashkent": "tashkent",
+      "lemalin": "lemalin",
+      "shimakaze": "shimakaze",
+      "akashi": "akashi",
+      "ying_swei": "ying_swei",
+      "chao_ho": "chao_ho",
+      "unicorn": "unicorn",
+      "cheshire": "cheshire",
+      "amagi_chan": "amagi_chan"
+    },
+    "Option2": {
+      "name": "Island1.Option2.name",
+      "help": "Island1.Option2.help",
+      "0": "0",
+      "1": "1",
+      "2": "2",
+      "3": "3",
+      "4": "4",
+      "5": "5",
+      "6": "6",
+      "7": "7",
+      "8": "8"
+    },
+    "Character2": {
+      "name": "Island1.Character2.name",
+      "help": "Island1.Character2.help",
+      "manjuu": "manjuu",
+      "saratoga": "saratoga",
+      "new_jersey": "new_jersey",
+      "tashkent": "tashkent",
+      "lemalin": "lemalin",
+      "shimakaze": "shimakaze",
+      "akashi": "akashi",
+      "ying_swei": "ying_swei",
+      "chao_ho": "chao_ho",
+      "unicorn": "unicorn",
+      "cheshire": "cheshire",
+      "amagi_chan": "amagi_chan"
+    },
+    "Option3": {
+      "name": "Island1.Option3.name",
+      "help": "Island1.Option3.help",
+      "0": "0",
+      "1": "1",
+      "2": "2",
+      "3": "3",
+      "4": "4",
+      "5": "5",
+      "6": "6",
+      "7": "7",
+      "8": "8"
+    },
+    "Character3": {
+      "name": "Island1.Character3.name",
+      "help": "Island1.Character3.help",
+      "manjuu": "manjuu",
+      "saratoga": "saratoga",
+      "new_jersey": "new_jersey",
+      "tashkent": "tashkent",
+      "lemalin": "lemalin",
+      "shimakaze": "shimakaze",
+      "akashi": "akashi",
+      "ying_swei": "ying_swei",
+      "chao_ho": "chao_ho",
+      "unicorn": "unicorn",
+      "cheshire": "cheshire",
+      "amagi_chan": "amagi_chan"
+    },
+    "Option4": {
+      "name": "Island1.Option4.name",
+      "help": "Island1.Option4.help",
+      "0": "0",
+      "1": "1",
+      "2": "2",
+      "3": "3",
+      "4": "4",
+      "5": "5",
+      "6": "6",
+      "7": "7",
+      "8": "8"
+    },
+    "Character4": {
+      "name": "Island1.Character4.name",
+      "help": "Island1.Character4.help",
+      "manjuu": "manjuu",
+      "saratoga": "saratoga",
+      "new_jersey": "new_jersey",
+      "tashkent": "tashkent",
+      "lemalin": "lemalin",
+      "shimakaze": "shimakaze",
+      "akashi": "akashi",
+      "ying_swei": "ying_swei",
+      "chao_ho": "chao_ho",
+      "unicorn": "unicorn",
+      "cheshire": "cheshire",
+      "amagi_chan": "amagi_chan"
+    }
+  },
+  "Island2": {
+    "_info": {
+      "name": "Island2._info.name",
+      "help": "Island2._info.help"
+    },
+    "Receive": {
+      "name": "Island2.Receive.name",
+      "help": "Island2.Receive.help"
+    },
+    "Option1": {
+      "name": "Island2.Option1.name",
+      "help": "Island2.Option1.help",
+      "0": "0",
+      "1": "1"
+    },
+    "Character1": {
+      "name": "Island2.Character1.name",
+      "help": "Island2.Character1.help",
+      "manjuu": "manjuu",
+      "saratoga": "saratoga",
+      "new_jersey": "new_jersey",
+      "tashkent": "tashkent",
+      "lemalin": "lemalin",
+      "shimakaze": "shimakaze",
+      "akashi": "akashi",
+      "ying_swei": "ying_swei",
+      "chao_ho": "chao_ho",
+      "unicorn": "unicorn",
+      "cheshire": "cheshire",
+      "amagi_chan": "amagi_chan"
+    },
+    "Option2": {
+      "name": "Island2.Option2.name",
+      "help": "Island2.Option2.help",
+      "0": "0",
+      "2": "2"
+    },
+    "Character2": {
+      "name": "Island2.Character2.name",
+      "help": "Island2.Character2.help",
+      "manjuu": "manjuu",
+      "saratoga": "saratoga",
+      "new_jersey": "new_jersey",
+      "tashkent": "tashkent",
+      "lemalin": "lemalin",
+      "shimakaze": "shimakaze",
+      "akashi": "akashi",
+      "ying_swei": "ying_swei",
+      "chao_ho": "chao_ho",
+      "unicorn": "unicorn",
+      "cheshire": "cheshire",
+      "amagi_chan": "amagi_chan"
+    },
+    "Option3": {
+      "name": "Island2.Option3.name",
+      "help": "Island2.Option3.help",
+      "0": "0",
+      "3": "3"
+    },
+    "Character3": {
+      "name": "Island2.Character3.name",
+      "help": "Island2.Character3.help",
+      "manjuu": "manjuu",
+      "saratoga": "saratoga",
+      "new_jersey": "new_jersey",
+      "tashkent": "tashkent",
+      "lemalin": "lemalin",
+      "shimakaze": "shimakaze",
+      "akashi": "akashi",
+      "ying_swei": "ying_swei",
+      "chao_ho": "chao_ho",
+      "unicorn": "unicorn",
+      "cheshire": "cheshire",
+      "amagi_chan": "amagi_chan"
+    },
+    "Option4": {
+      "name": "Island2.Option4.name",
+      "help": "Island2.Option4.help",
+      "0": "0",
+      "4": "4"
+    },
+    "Character4": {
+      "name": "Island2.Character4.name",
+      "help": "Island2.Character4.help",
+      "manjuu": "manjuu",
+      "saratoga": "saratoga",
+      "new_jersey": "new_jersey",
+      "tashkent": "tashkent",
+      "lemalin": "lemalin",
+      "shimakaze": "shimakaze",
+      "akashi": "akashi",
+      "ying_swei": "ying_swei",
+      "chao_ho": "chao_ho",
+      "unicorn": "unicorn",
+      "cheshire": "cheshire",
+      "amagi_chan": "amagi_chan"
+    }
+  },
+  "Island3": {
+    "_info": {
+      "name": "Island3._info.name",
+      "help": "Island3._info.help"
+    },
+    "Receive": {
+      "name": "Island3.Receive.name",
+      "help": "Island3.Receive.help"
+    },
+    "Option1": {
+      "name": "Island3.Option1.name",
+      "help": "Island3.Option1.help",
+      "0": "0",
+      "1": "1",
+      "2": "2",
+      "3": "3",
+      "4": "4",
+      "5": "5",
+      "6": "6"
+    },
+    "Character1": {
+      "name": "Island3.Character1.name",
+      "help": "Island3.Character1.help",
+      "manjuu": "manjuu",
+      "saratoga": "saratoga",
+      "new_jersey": "new_jersey",
+      "tashkent": "tashkent",
+      "lemalin": "lemalin",
+      "shimakaze": "shimakaze",
+      "akashi": "akashi",
+      "ying_swei": "ying_swei",
+      "chao_ho": "chao_ho",
+      "unicorn": "unicorn",
+      "cheshire": "cheshire",
+      "amagi_chan": "amagi_chan"
+    },
+    "Option2": {
+      "name": "Island3.Option2.name",
+      "help": "Island3.Option2.help",
+      "0": "0",
+      "1": "1",
+      "2": "2",
+      "3": "3",
+      "4": "4",
+      "5": "5",
+      "6": "6"
+    },
+    "Character2": {
+      "name": "Island3.Character2.name",
+      "help": "Island3.Character2.help",
+      "manjuu": "manjuu",
+      "saratoga": "saratoga",
+      "new_jersey": "new_jersey",
+      "tashkent": "tashkent",
+      "lemalin": "lemalin",
+      "shimakaze": "shimakaze",
+      "akashi": "akashi",
+      "ying_swei": "ying_swei",
+      "chao_ho": "chao_ho",
+      "unicorn": "unicorn",
+      "cheshire": "cheshire",
+      "amagi_chan": "amagi_chan"
+    },
+    "Option3": {
+      "name": "Island3.Option3.name",
+      "help": "Island3.Option3.help",
+      "0": "0",
+      "1": "1",
+      "2": "2",
+      "3": "3",
+      "4": "4",
+      "5": "5",
+      "6": "6"
+    },
+    "Character3": {
+      "name": "Island3.Character3.name",
+      "help": "Island3.Character3.help",
+      "manjuu": "manjuu",
+      "saratoga": "saratoga",
+      "new_jersey": "new_jersey",
+      "tashkent": "tashkent",
+      "lemalin": "lemalin",
+      "shimakaze": "shimakaze",
+      "akashi": "akashi",
+      "ying_swei": "ying_swei",
+      "chao_ho": "chao_ho",
+      "unicorn": "unicorn",
+      "cheshire": "cheshire",
+      "amagi_chan": "amagi_chan"
+    },
+    "Option4": {
+      "name": "Island3.Option4.name",
+      "help": "Island3.Option4.help",
+      "0": "0",
+      "1": "1",
+      "2": "2",
+      "3": "3",
+      "4": "4",
+      "5": "5",
+      "6": "6"
+    },
+    "Character4": {
+      "name": "Island3.Character4.name",
+      "help": "Island3.Character4.help",
+      "manjuu": "manjuu",
+      "saratoga": "saratoga",
+      "new_jersey": "new_jersey",
+      "tashkent": "tashkent",
+      "lemalin": "lemalin",
+      "shimakaze": "shimakaze",
+      "akashi": "akashi",
+      "ying_swei": "ying_swei",
+      "chao_ho": "chao_ho",
+      "unicorn": "unicorn",
+      "cheshire": "cheshire",
+      "amagi_chan": "amagi_chan"
+    }
+  },
+  "Island4": {
+    "_info": {
+      "name": "Island4._info.name",
+      "help": "Island4._info.help"
+    },
+    "Receive": {
+      "name": "Island4.Receive.name",
+      "help": "Island4.Receive.help"
+    },
+    "Option1": {
+      "name": "Island4.Option1.name",
+      "help": "Island4.Option1.help",
+      "0": "0",
+      "1": "1",
+      "2": "2",
+      "3": "3",
+      "4": "4"
+    },
+    "Character1": {
+      "name": "Island4.Character1.name",
+      "help": "Island4.Character1.help",
+      "manjuu": "manjuu",
+      "saratoga": "saratoga",
+      "new_jersey": "new_jersey",
+      "tashkent": "tashkent",
+      "lemalin": "lemalin",
+      "shimakaze": "shimakaze",
+      "akashi": "akashi",
+      "ying_swei": "ying_swei",
+      "chao_ho": "chao_ho",
+      "unicorn": "unicorn",
+      "cheshire": "cheshire",
+      "amagi_chan": "amagi_chan"
+    },
+    "Option2": {
+      "name": "Island4.Option2.name",
+      "help": "Island4.Option2.help",
+      "0": "0",
+      "1": "1",
+      "2": "2",
+      "3": "3",
+      "4": "4"
+    },
+    "Character2": {
+      "name": "Island4.Character2.name",
+      "help": "Island4.Character2.help",
+      "manjuu": "manjuu",
+      "saratoga": "saratoga",
+      "new_jersey": "new_jersey",
+      "tashkent": "tashkent",
+      "lemalin": "lemalin",
+      "shimakaze": "shimakaze",
+      "akashi": "akashi",
+      "ying_swei": "ying_swei",
+      "chao_ho": "chao_ho",
+      "unicorn": "unicorn",
+      "cheshire": "cheshire",
+      "amagi_chan": "amagi_chan"
+    },
+    "Option3": {
+      "name": "Island4.Option3.name",
+      "help": "Island4.Option3.help",
+      "0": "0",
+      "1": "1",
+      "2": "2",
+      "3": "3",
+      "4": "4"
+    },
+    "Character3": {
+      "name": "Island4.Character3.name",
+      "help": "Island4.Character3.help",
+      "manjuu": "manjuu",
+      "saratoga": "saratoga",
+      "new_jersey": "new_jersey",
+      "tashkent": "tashkent",
+      "lemalin": "lemalin",
+      "shimakaze": "shimakaze",
+      "akashi": "akashi",
+      "ying_swei": "ying_swei",
+      "chao_ho": "chao_ho",
+      "unicorn": "unicorn",
+      "cheshire": "cheshire",
+      "amagi_chan": "amagi_chan"
+    },
+    "Option4": {
+      "name": "Island4.Option4.name",
+      "help": "Island4.Option4.help",
+      "0": "0",
+      "1": "1",
+      "2": "2",
+      "3": "3",
+      "4": "4"
+    },
+    "Character4": {
+      "name": "Island4.Character4.name",
+      "help": "Island4.Character4.help",
+      "manjuu": "manjuu",
+      "saratoga": "saratoga",
+      "new_jersey": "new_jersey",
+      "tashkent": "tashkent",
+      "lemalin": "lemalin",
+      "shimakaze": "shimakaze",
+      "akashi": "akashi",
+      "ying_swei": "ying_swei",
+      "chao_ho": "chao_ho",
+      "unicorn": "unicorn",
+      "cheshire": "cheshire",
+      "amagi_chan": "amagi_chan"
+    }
+  },
+  "Island5": {
+    "_info": {
+      "name": "Island5._info.name",
+      "help": "Island5._info.help"
+    },
+    "Receive": {
+      "name": "Island5.Receive.name",
+      "help": "Island5.Receive.help"
+    },
+    "Option1": {
+      "name": "Island5.Option1.name",
+      "help": "Island5.Option1.help",
+      "0": "0",
+      "1": "1",
+      "2": "2",
+      "3": "3",
+      "4": "4",
+      "5": "5",
+      "6": "6",
+      "7": "7",
+      "8": "8",
+      "9": "9"
+    },
+    "Character1": {
+      "name": "Island5.Character1.name",
+      "help": "Island5.Character1.help",
+      "manjuu": "manjuu",
+      "saratoga": "saratoga",
+      "new_jersey": "new_jersey",
+      "tashkent": "tashkent",
+      "lemalin": "lemalin",
+      "shimakaze": "shimakaze",
+      "akashi": "akashi",
+      "ying_swei": "ying_swei",
+      "chao_ho": "chao_ho",
+      "unicorn": "unicorn",
+      "cheshire": "cheshire",
+      "amagi_chan": "amagi_chan"
+    },
+    "Option2": {
+      "name": "Island5.Option2.name",
+      "help": "Island5.Option2.help",
+      "0": "0",
+      "1": "1",
+      "2": "2",
+      "3": "3",
+      "4": "4",
+      "5": "5",
+      "6": "6",
+      "7": "7",
+      "8": "8",
+      "9": "9"
+    },
+    "Character2": {
+      "name": "Island5.Character2.name",
+      "help": "Island5.Character2.help",
+      "manjuu": "manjuu",
+      "saratoga": "saratoga",
+      "new_jersey": "new_jersey",
+      "tashkent": "tashkent",
+      "lemalin": "lemalin",
+      "shimakaze": "shimakaze",
+      "akashi": "akashi",
+      "ying_swei": "ying_swei",
+      "chao_ho": "chao_ho",
+      "unicorn": "unicorn",
+      "cheshire": "cheshire",
+      "amagi_chan": "amagi_chan"
+    },
+    "Option3": {
+      "name": "Island5.Option3.name",
+      "help": "Island5.Option3.help",
+      "0": "0",
+      "1": "1",
+      "2": "2",
+      "3": "3",
+      "4": "4",
+      "5": "5",
+      "6": "6",
+      "7": "7",
+      "8": "8",
+      "9": "9"
+    },
+    "Character3": {
+      "name": "Island5.Character3.name",
+      "help": "Island5.Character3.help",
+      "manjuu": "manjuu",
+      "saratoga": "saratoga",
+      "new_jersey": "new_jersey",
+      "tashkent": "tashkent",
+      "lemalin": "lemalin",
+      "shimakaze": "shimakaze",
+      "akashi": "akashi",
+      "ying_swei": "ying_swei",
+      "chao_ho": "chao_ho",
+      "unicorn": "unicorn",
+      "cheshire": "cheshire",
+      "amagi_chan": "amagi_chan"
+    },
+    "Option4": {
+      "name": "Island5.Option4.name",
+      "help": "Island5.Option4.help",
+      "0": "0",
+      "1": "1",
+      "2": "2",
+      "3": "3",
+      "4": "4",
+      "5": "5",
+      "6": "6",
+      "7": "7",
+      "8": "8",
+      "9": "9"
+    },
+    "Character4": {
+      "name": "Island5.Character4.name",
+      "help": "Island5.Character4.help",
+      "manjuu": "manjuu",
+      "saratoga": "saratoga",
+      "new_jersey": "new_jersey",
+      "tashkent": "tashkent",
+      "lemalin": "lemalin",
+      "shimakaze": "shimakaze",
+      "akashi": "akashi",
+      "ying_swei": "ying_swei",
+      "chao_ho": "chao_ho",
+      "unicorn": "unicorn",
+      "cheshire": "cheshire",
+      "amagi_chan": "amagi_chan"
+    }
+  },
+  "Island6": {
+    "_info": {
+      "name": "Island6._info.name",
+      "help": "Island6._info.help"
+    },
+    "Receive": {
+      "name": "Island6.Receive.name",
+      "help": "Island6.Receive.help"
+    },
+    "Option1": {
+      "name": "Island6.Option1.name",
+      "help": "Island6.Option1.help",
+      "0": "0",
+      "1": "1",
+      "2": "2",
+      "3": "3",
+      "4": "4",
+      "5": "5",
+      "6": "6",
+      "7": "7"
+    },
+    "Character1": {
+      "name": "Island6.Character1.name",
+      "help": "Island6.Character1.help",
+      "manjuu": "manjuu",
+      "saratoga": "saratoga",
+      "new_jersey": "new_jersey",
+      "tashkent": "tashkent",
+      "lemalin": "lemalin",
+      "shimakaze": "shimakaze",
+      "akashi": "akashi",
+      "ying_swei": "ying_swei",
+      "chao_ho": "chao_ho",
+      "unicorn": "unicorn",
+      "cheshire": "cheshire",
+      "amagi_chan": "amagi_chan"
+    },
+    "Option2": {
+      "name": "Island6.Option2.name",
+      "help": "Island6.Option2.help",
+      "0": "0",
+      "1": "1",
+      "2": "2",
+      "3": "3",
+      "4": "4",
+      "5": "5",
+      "6": "6",
+      "7": "7"
+    },
+    "Character2": {
+      "name": "Island6.Character2.name",
+      "help": "Island6.Character2.help",
+      "manjuu": "manjuu",
+      "saratoga": "saratoga",
+      "new_jersey": "new_jersey",
+      "tashkent": "tashkent",
+      "lemalin": "lemalin",
+      "shimakaze": "shimakaze",
+      "akashi": "akashi",
+      "ying_swei": "ying_swei",
+      "chao_ho": "chao_ho",
+      "unicorn": "unicorn",
+      "cheshire": "cheshire",
+      "amagi_chan": "amagi_chan"
+    }
+  },
+  "Island7": {
+    "_info": {
+      "name": "Island7._info.name",
+      "help": "Island7._info.help"
+    },
+    "Receive": {
+      "name": "Island7.Receive.name",
+      "help": "Island7.Receive.help"
+    },
+    "Option1": {
+      "name": "Island7.Option1.name",
+      "help": "Island7.Option1.help",
+      "0": "0",
+      "1": "1",
+      "2": "2",
+      "3": "3",
+      "4": "4",
+      "5": "5",
+      "6": "6",
+      "7": "7",
+      "8": "8",
+      "9": "9"
+    },
+    "Character1": {
+      "name": "Island7.Character1.name",
+      "help": "Island7.Character1.help",
+      "manjuu": "manjuu",
+      "saratoga": "saratoga",
+      "new_jersey": "new_jersey",
+      "tashkent": "tashkent",
+      "lemalin": "lemalin",
+      "shimakaze": "shimakaze",
+      "akashi": "akashi",
+      "ying_swei": "ying_swei",
+      "chao_ho": "chao_ho",
+      "unicorn": "unicorn",
+      "cheshire": "cheshire",
+      "amagi_chan": "amagi_chan"
+    },
+    "Option2": {
+      "name": "Island7.Option2.name",
+      "help": "Island7.Option2.help",
+      "0": "0",
+      "1": "1",
+      "2": "2",
+      "3": "3",
+      "4": "4",
+      "5": "5",
+      "6": "6",
+      "7": "7",
+      "8": "8",
+      "9": "9"
+    },
+    "Character2": {
+      "name": "Island7.Character2.name",
+      "help": "Island7.Character2.help",
+      "manjuu": "manjuu",
+      "saratoga": "saratoga",
+      "new_jersey": "new_jersey",
+      "tashkent": "tashkent",
+      "lemalin": "lemalin",
+      "shimakaze": "shimakaze",
+      "akashi": "akashi",
+      "ying_swei": "ying_swei",
+      "chao_ho": "chao_ho",
+      "unicorn": "unicorn",
+      "cheshire": "cheshire",
+      "amagi_chan": "amagi_chan"
+    }
+  },
+  "Island8": {
+    "_info": {
+      "name": "Island8._info.name",
+      "help": "Island8._info.help"
+    },
+    "Receive": {
+      "name": "Island8.Receive.name",
+      "help": "Island8.Receive.help"
+    },
+    "Option1": {
+      "name": "Island8.Option1.name",
+      "help": "Island8.Option1.help",
+      "0": "0",
+      "1": "1",
+      "2": "2",
+      "3": "3",
+      "4": "4",
+      "5": "5",
+      "6": "6",
+      "7": "7",
+      "8": "8",
+      "9": "9",
+      "10": "10",
+      "11": "11"
+    },
+    "Character1": {
+      "name": "Island8.Character1.name",
+      "help": "Island8.Character1.help",
+      "manjuu": "manjuu",
+      "saratoga": "saratoga",
+      "new_jersey": "new_jersey",
+      "tashkent": "tashkent",
+      "lemalin": "lemalin",
+      "shimakaze": "shimakaze",
+      "akashi": "akashi",
+      "ying_swei": "ying_swei",
+      "chao_ho": "chao_ho",
+      "unicorn": "unicorn",
+      "cheshire": "cheshire",
+      "amagi_chan": "amagi_chan"
+    },
+    "Option2": {
+      "name": "Island8.Option2.name",
+      "help": "Island8.Option2.help",
+      "0": "0",
+      "1": "1",
+      "2": "2",
+      "3": "3",
+      "4": "4",
+      "5": "5",
+      "6": "6",
+      "7": "7",
+      "8": "8",
+      "9": "9",
+      "10": "10",
+      "11": "11"
+    },
+    "Character2": {
+      "name": "Island8.Character2.name",
+      "help": "Island8.Character2.help",
+      "manjuu": "manjuu",
+      "saratoga": "saratoga",
+      "new_jersey": "new_jersey",
+      "tashkent": "tashkent",
+      "lemalin": "lemalin",
+      "shimakaze": "shimakaze",
+      "akashi": "akashi",
+      "ying_swei": "ying_swei",
+      "chao_ho": "chao_ho",
+      "unicorn": "unicorn",
+      "cheshire": "cheshire",
+      "amagi_chan": "amagi_chan"
+    }
+  },
+  "Island9": {
+    "_info": {
+      "name": "Island9._info.name",
+      "help": "Island9._info.help"
+    },
+    "Receive": {
+      "name": "Island9.Receive.name",
+      "help": "Island9.Receive.help"
+    },
+    "Option1": {
+      "name": "Island9.Option1.name",
+      "help": "Island9.Option1.help",
+      "0": "0",
+      "1": "1",
+      "2": "2",
+      "3": "3",
+      "4": "4",
+      "5": "5",
+      "6": "6",
+      "7": "7",
+      "8": "8",
+      "9": "9"
+    },
+    "Character1": {
+      "name": "Island9.Character1.name",
+      "help": "Island9.Character1.help",
+      "manjuu": "manjuu",
+      "saratoga": "saratoga",
+      "new_jersey": "new_jersey",
+      "tashkent": "tashkent",
+      "lemalin": "lemalin",
+      "shimakaze": "shimakaze",
+      "akashi": "akashi",
+      "ying_swei": "ying_swei",
+      "chao_ho": "chao_ho",
+      "unicorn": "unicorn",
+      "cheshire": "cheshire",
+      "amagi_chan": "amagi_chan"
+    },
+    "Option2": {
+      "name": "Island9.Option2.name",
+      "help": "Island9.Option2.help",
+      "0": "0",
+      "1": "1",
+      "2": "2",
+      "3": "3",
+      "4": "4",
+      "5": "5",
+      "6": "6",
+      "7": "7",
+      "8": "8",
+      "9": "9"
+    },
+    "Character2": {
+      "name": "Island9.Character2.name",
+      "help": "Island9.Character2.help",
+      "manjuu": "manjuu",
+      "saratoga": "saratoga",
+      "new_jersey": "new_jersey",
+      "tashkent": "tashkent",
+      "lemalin": "lemalin",
+      "shimakaze": "shimakaze",
+      "akashi": "akashi",
+      "ying_swei": "ying_swei",
+      "chao_ho": "chao_ho",
+      "unicorn": "unicorn",
+      "cheshire": "cheshire",
+      "amagi_chan": "amagi_chan"
+    }
+  },
+  "Island10": {
+    "_info": {
+      "name": "Island10._info.name",
+      "help": "Island10._info.help"
+    },
+    "Receive": {
+      "name": "Island10.Receive.name",
+      "help": "Island10.Receive.help"
+    },
+    "Option1": {
+      "name": "Island10.Option1.name",
+      "help": "Island10.Option1.help",
+      "0": "0",
+      "1": "1",
+      "2": "2",
+      "3": "3",
+      "4": "4",
+      "5": "5",
+      "6": "6",
+      "7": "7"
+    },
+    "Character1": {
+      "name": "Island10.Character1.name",
+      "help": "Island10.Character1.help",
+      "manjuu": "manjuu",
+      "saratoga": "saratoga",
+      "new_jersey": "new_jersey",
+      "tashkent": "tashkent",
+      "lemalin": "lemalin",
+      "shimakaze": "shimakaze",
+      "akashi": "akashi",
+      "ying_swei": "ying_swei",
+      "chao_ho": "chao_ho",
+      "unicorn": "unicorn",
+      "cheshire": "cheshire",
+      "amagi_chan": "amagi_chan"
+    },
+    "Option2": {
+      "name": "Island10.Option2.name",
+      "help": "Island10.Option2.help",
+      "0": "0",
+      "1": "1",
+      "2": "2",
+      "3": "3",
+      "4": "4",
+      "5": "5",
+      "6": "6",
+      "7": "7"
+    },
+    "Character2": {
+      "name": "Island10.Character2.name",
+      "help": "Island10.Character2.help",
+      "manjuu": "manjuu",
+      "saratoga": "saratoga",
+      "new_jersey": "new_jersey",
+      "tashkent": "tashkent",
+      "lemalin": "lemalin",
+      "shimakaze": "shimakaze",
+      "akashi": "akashi",
+      "ying_swei": "ying_swei",
+      "chao_ho": "chao_ho",
+      "unicorn": "unicorn",
+      "cheshire": "cheshire",
+      "amagi_chan": "amagi_chan"
+    }
+  },
+  "Island11": {
+    "_info": {
+      "name": "Island11._info.name",
+      "help": "Island11._info.help"
+    },
+    "Receive": {
+      "name": "Island11.Receive.name",
+      "help": "Island11.Receive.help"
+    },
+    "Option1": {
+      "name": "Island11.Option1.name",
+      "help": "Island11.Option1.help",
+      "0": "0",
+      "1": "1",
+      "2": "2",
+      "3": "3",
+      "4": "4",
+      "5": "5"
+    },
+    "Character1": {
+      "name": "Island11.Character1.name",
+      "help": "Island11.Character1.help",
+      "manjuu": "manjuu",
+      "saratoga": "saratoga",
+      "new_jersey": "new_jersey",
+      "tashkent": "tashkent",
+      "lemalin": "lemalin",
+      "shimakaze": "shimakaze",
+      "akashi": "akashi",
+      "ying_swei": "ying_swei",
+      "chao_ho": "chao_ho",
+      "unicorn": "unicorn",
+      "cheshire": "cheshire",
+      "amagi_chan": "amagi_chan"
+    },
+    "Option2": {
+      "name": "Island11.Option2.name",
+      "help": "Island11.Option2.help",
+      "0": "0",
+      "1": "1",
+      "2": "2",
+      "3": "3",
+      "4": "4",
+      "5": "5"
+    },
+    "Character2": {
+      "name": "Island11.Character2.name",
+      "help": "Island11.Character2.help",
+      "manjuu": "manjuu",
+      "saratoga": "saratoga",
+      "new_jersey": "new_jersey",
+      "tashkent": "tashkent",
+      "lemalin": "lemalin",
+      "shimakaze": "shimakaze",
+      "akashi": "akashi",
+      "ying_swei": "ying_swei",
+      "chao_ho": "chao_ho",
+      "unicorn": "unicorn",
+      "cheshire": "cheshire",
+      "amagi_chan": "amagi_chan"
+    }
+  },
+  "Island12": {
+    "_info": {
+      "name": "Island12._info.name",
+      "help": "Island12._info.help"
+    },
+    "Receive": {
+      "name": "Island12.Receive.name",
+      "help": "Island12.Receive.help"
+    },
+    "Option1": {
+      "name": "Island12.Option1.name",
+      "help": "Island12.Option1.help",
+      "0": "0",
+      "1": "1",
+      "2": "2",
+      "3": "3",
+      "4": "4",
+      "5": "5",
+      "6": "6"
+    },
+    "Character1": {
+      "name": "Island12.Character1.name",
+      "help": "Island12.Character1.help",
+      "manjuu": "manjuu",
+      "saratoga": "saratoga",
+      "new_jersey": "new_jersey",
+      "tashkent": "tashkent",
+      "lemalin": "lemalin",
+      "shimakaze": "shimakaze",
+      "akashi": "akashi",
+      "ying_swei": "ying_swei",
+      "chao_ho": "chao_ho",
+      "unicorn": "unicorn",
+      "cheshire": "cheshire",
+      "amagi_chan": "amagi_chan"
+    },
+    "Option2": {
+      "name": "Island12.Option2.name",
+      "help": "Island12.Option2.help",
+      "0": "0",
+      "1": "1",
+      "2": "2",
+      "3": "3",
+      "4": "4",
+      "5": "5",
+      "6": "6"
+    },
+    "Character2": {
+      "name": "Island12.Character2.name",
+      "help": "Island12.Character2.help",
+      "manjuu": "manjuu",
+      "saratoga": "saratoga",
+      "new_jersey": "new_jersey",
+      "tashkent": "tashkent",
+      "lemalin": "lemalin",
+      "shimakaze": "shimakaze",
+      "akashi": "akashi",
+      "ying_swei": "ying_swei",
+      "chao_ho": "chao_ho",
+      "unicorn": "unicorn",
+      "cheshire": "cheshire",
+      "amagi_chan": "amagi_chan"
+    }
+  },
+  "Island13": {
+    "_info": {
+      "name": "Island13._info.name",
+      "help": "Island13._info.help"
+    },
+    "Receive": {
+      "name": "Island13.Receive.name",
+      "help": "Island13.Receive.help"
+    },
+    "Option1": {
+      "name": "Island13.Option1.name",
+      "help": "Island13.Option1.help",
+      "0": "0",
+      "1": "1",
+      "2": "2",
+      "3": "3",
+      "4": "4"
+    },
+    "Character1": {
+      "name": "Island13.Character1.name",
+      "help": "Island13.Character1.help",
+      "manjuu": "manjuu",
+      "saratoga": "saratoga",
+      "new_jersey": "new_jersey",
+      "tashkent": "tashkent",
+      "lemalin": "lemalin",
+      "shimakaze": "shimakaze",
+      "akashi": "akashi",
+      "ying_swei": "ying_swei",
+      "chao_ho": "chao_ho",
+      "unicorn": "unicorn",
+      "cheshire": "cheshire",
+      "amagi_chan": "amagi_chan"
+    },
+    "Option2": {
+      "name": "Island13.Option2.name",
+      "help": "Island13.Option2.help",
+      "0": "0",
+      "1": "1",
+      "2": "2",
+      "3": "3",
+      "4": "4"
+    },
+    "Character2": {
+      "name": "Island13.Character2.name",
+      "help": "Island13.Character2.help",
+      "manjuu": "manjuu",
+      "saratoga": "saratoga",
+      "new_jersey": "new_jersey",
+      "tashkent": "tashkent",
+      "lemalin": "lemalin",
+      "shimakaze": "shimakaze",
+      "akashi": "akashi",
+      "ying_swei": "ying_swei",
+      "chao_ho": "chao_ho",
+      "unicorn": "unicorn",
+      "cheshire": "cheshire",
+      "amagi_chan": "amagi_chan"
+    }
+  },
+  "Island14": {
+    "_info": {
+      "name": "Island14._info.name",
+      "help": "Island14._info.help"
+    },
+    "Receive": {
+      "name": "Island14.Receive.name",
+      "help": "Island14.Receive.help"
+    },
+    "Option1": {
+      "name": "Island14.Option1.name",
+      "help": "Island14.Option1.help",
+      "0": "0",
+      "1": "1",
+      "2": "2",
+      "3": "3",
+      "4": "4",
+      "5": "5",
+      "6": "6",
+      "7": "7",
+      "8": "8",
+      "9": "9"
+    },
+    "Character1": {
+      "name": "Island14.Character1.name",
+      "help": "Island14.Character1.help",
+      "manjuu": "manjuu",
+      "saratoga": "saratoga",
+      "new_jersey": "new_jersey",
+      "tashkent": "tashkent",
+      "lemalin": "lemalin",
+      "shimakaze": "shimakaze",
+      "akashi": "akashi",
+      "ying_swei": "ying_swei",
+      "chao_ho": "chao_ho",
+      "unicorn": "unicorn",
+      "cheshire": "cheshire",
+      "amagi_chan": "amagi_chan"
+    },
+    "Option2": {
+      "name": "Island14.Option2.name",
+      "help": "Island14.Option2.help",
+      "0": "0",
+      "1": "1",
+      "2": "2",
+      "3": "3",
+      "4": "4",
+      "5": "5",
+      "6": "6",
+      "7": "7",
+      "8": "8",
+      "9": "9"
+    },
+    "Character2": {
+      "name": "Island14.Character2.name",
+      "help": "Island14.Character2.help",
+      "manjuu": "manjuu",
+      "saratoga": "saratoga",
+      "new_jersey": "new_jersey",
+      "tashkent": "tashkent",
+      "lemalin": "lemalin",
+      "shimakaze": "shimakaze",
+      "akashi": "akashi",
+      "ying_swei": "ying_swei",
+      "chao_ho": "chao_ho",
+      "unicorn": "unicorn",
+      "cheshire": "cheshire",
+      "amagi_chan": "amagi_chan"
+    }
+  },
+  "Island15": {
+    "_info": {
+      "name": "Island15._info.name",
+      "help": "Island15._info.help"
+    },
+    "Receive": {
+      "name": "Island15.Receive.name",
+      "help": "Island15.Receive.help"
+    },
+    "Option1": {
+      "name": "Island15.Option1.name",
+      "help": "Island15.Option1.help",
+      "0": "0",
+      "1": "1",
+      "2": "2",
+      "3": "3",
+      "4": "4",
+      "5": "5",
+      "6": "6",
+      "7": "7",
+      "8": "8",
+      "9": "9"
+    },
+    "Character1": {
+      "name": "Island15.Character1.name",
+      "help": "Island15.Character1.help",
+      "manjuu": "manjuu",
+      "saratoga": "saratoga",
+      "new_jersey": "new_jersey",
+      "tashkent": "tashkent",
+      "lemalin": "lemalin",
+      "shimakaze": "shimakaze",
+      "akashi": "akashi",
+      "ying_swei": "ying_swei",
+      "chao_ho": "chao_ho",
+      "unicorn": "unicorn",
+      "cheshire": "cheshire",
+      "amagi_chan": "amagi_chan"
+    },
+    "Option2": {
+      "name": "Island15.Option2.name",
+      "help": "Island15.Option2.help",
+      "0": "0",
+      "1": "1",
+      "2": "2",
+      "3": "3",
+      "4": "4",
+      "5": "5",
+      "6": "6",
+      "7": "7",
+      "8": "8",
+      "9": "9"
+    },
+    "Character2": {
+      "name": "Island15.Character2.name",
+      "help": "Island15.Character2.help",
+      "manjuu": "manjuu",
+      "saratoga": "saratoga",
+      "new_jersey": "new_jersey",
+      "tashkent": "tashkent",
+      "lemalin": "lemalin",
+      "shimakaze": "shimakaze",
+      "akashi": "akashi",
+      "ying_swei": "ying_swei",
+      "chao_ho": "chao_ho",
+      "unicorn": "unicorn",
+      "cheshire": "cheshire",
+      "amagi_chan": "amagi_chan"
     }
   },
   "GeneralShop": {
@@ -2463,6 +3844,16 @@
       "name": "Exercise Settings",
       "help": "Runs exercise and automatically retreats when sum HP volume is low"
     },
+    "DelayUntilHoursBeforeNextUpdate": {
+      "name": "Exercise.DelayUntilHoursBeforeNextUpdate.name",
+      "help": "Exercise.DelayUntilHoursBeforeNextUpdate.help",
+      "1": "1",
+      "2": "2",
+      "3": "3",
+      "4": "4",
+      "5": "5",
+      "12": "12"
+    },
     "OpponentChooseMode": {
       "name": "Opponent Choose Mode",
       "help": "",
@@ -2559,6 +3950,14 @@
       "name": "Repair Threshold",
       "help": "After completion of an OpSi map; if any one ship's HP is below threshold, retreat back to nearest port for repairs\n0.0 ~ 1.0"
     },
+    "UseRepairPack": {
+      "name": "OpsiGeneral.UseRepairPack.name",
+      "help": "OpsiGeneral.UseRepairPack.help"
+    },
+    "RepairPackThreshold": {
+      "name": "OpsiGeneral.RepairPackThreshold.name",
+      "help": "OpsiGeneral.RepairPackThreshold.help"
+    },
     "DoRandomMapEvent": {
       "name": "Do Random Map Events",
       "help": "Rescan the whole map after auto search, purchase akashi's shop, use siren logging tower, use siren scanning device, unlock mechanism that require 2 fleets,"
@@ -2566,6 +3965,10 @@
     "AkashiShopFilter": {
       "name": "Akashi Shop Filter",
       "help": "Generally does not need to be modified or re-arranged but can do so if desired\nBuy AP boxes and Purple Coins"
+    },
+    "NotifyOpsiMail": {
+      "name": "OpsiGeneral.NotifyOpsiMail.name",
+      "help": "OpsiGeneral.NotifyOpsiMail.help"
     }
   },
   "OpsiAshBeacon": {
@@ -2594,6 +3997,10 @@
     "EnsureFullyCollected": {
       "name": "Ensure 200 Beacon Data Fully Collected",
       "help": "Ignore AP limit setting temporarily before ash beacon fully collected. \"Meowfficer Farming\" must be enabled"
+    },
+    "AutoCollectShip": {
+      "name": "Automatically acquire new META ships",
+      "help": "Automatically acquire new META ships when claiming rewards. If disabled, the \"Sync\" button will not be clicked, and rewards must be claimed manually."
     }
   },
   "OpsiFleetFilter": {
@@ -2637,6 +4044,18 @@
       "name": "Force Run",
       "help": "Ignore interval, clear all obscure zones, and use AP to submit scan orders (and submarine if enabled)\nGenerally not needed to force run, just run in intervals unless in a rush"
     },
+    "IfSkipSirenResearch": {
+      "name": "OpsiExplore.IfSkipSirenResearch.name",
+      "help": "OpsiExplore.IfSkipSirenResearch.help",
+      "0": "0",
+      "6": "6",
+      "65": "65",
+      "654": "654"
+    },
+    "SkipedSirenResearch": {
+      "name": "OpsiExplore.SkipedSirenResearch.name",
+      "help": "OpsiExplore.SkipedSirenResearch.help"
+    },
     "LastZone": {
       "name": "Last Zone Completed",
       "help": "Automatically updated with map ID\nReplace with 0 to reset progress\nAlready completed zones will be skipped\nSupports either Zone ID or Name in CN/EN/JP/TW, i.e. \"51\", \"NA Ocean SE Sector E\""
@@ -2659,6 +4078,10 @@
     "CustomFilter": {
       "name": "Custom Research Priority",
       "help": "To use your own filter, set \"OpSi Shop Filter Select\" to \"custom\". All options have been defined at  <https://github.com/LmeSzinc/AzurLaneAutoScript/wiki/filter_string_en>"
+    },
+    "DisableBeforeDate": {
+      "name": "OpsiShop.DisableBeforeDate.name",
+      "help": "OpsiShop.DisableBeforeDate.help"
     }
   },
   "OpsiVoucher": {
@@ -2683,12 +4106,28 @@
     "UseTuningSample": {
       "name": "Use Tuning Samples",
       "help": "Use all tuning samples and quality tuning samples"
+    },
+    "SkipSirenResearchMission": {
+      "name": "OpsiDaily.SkipSirenResearchMission.name",
+      "help": "OpsiDaily.SkipSirenResearchMission.help"
+    },
+    "KeepMissionZone": {
+      "name": "OpsiDaily.KeepMissionZone.name",
+      "help": "OpsiDaily.KeepMissionZone.help"
+    },
+    "MissionZones": {
+      "name": "OpsiDaily.MissionZones.name",
+      "help": "OpsiDaily.MissionZones.help"
     }
   },
   "OpsiObscure": {
     "_info": {
       "name": "OpSi Obscure Settings",
       "help": "Clear obscure zones every 27 minutes\nThe following must be satisfied:\n- OpSi story and practice battles must be complete\n- Task OpSi Explore enabled or consuming 5000 oil for special radar in OpSi voucher shop"
+    },
+    "SkipHazard2Obscure": {
+      "name": "OpsiObscure.SkipHazard2Obscure.name",
+      "help": "OpsiObscure.SkipHazard2Obscure.help"
     },
     "ForceRun": {
       "name": "Force Run",
@@ -2710,9 +4149,17 @@
       "name": "OpSi Siren Stronghold Settings",
       "help": "Clear the weekly siren strongholds\nThe following must be satisfied:\n- OpSi story and practice battles must be complete\n- Task OpSi Explore enabled or consuming 5000 oil for special radar in OpSi voucher shop"
     },
+    "SubmarineEveryCombat": {
+      "name": "OpsiStronghold.SubmarineEveryCombat.name",
+      "help": "OpsiStronghold.SubmarineEveryCombat.help"
+    },
     "ForceRun": {
       "name": "Force Run",
       "help": "Ignore interval, clear all siren strongholds, and use AP to submit scan orders (and submarine if enabled)\nGenerally not needed to force run, just run in intervals unless in a rush"
+    },
+    "HasStronghold": {
+      "name": "OpsiStronghold.HasStronghold.name",
+      "help": "OpsiStronghold.HasStronghold.help"
     }
   },
   "OpsiMonthBoss": {
@@ -2747,6 +4194,7 @@
     "HazardLevel": {
       "name": "Target Zone Hazard Level",
       "help": "Recommend 3 or 5 as these have higher meowfficer ratio to AP cost",
+      "2": "2",
       "3": "3",
       "4": "4",
       "5": "5",
@@ -2756,6 +4204,14 @@
     "TargetZone": {
       "name": "Target Zone ID",
       "help": "Supports either Zone ID or Name in CN/EN/JP/TW, i.e. \"51\", \"NA Ocean SE Sector E\"\nIf specified, Alas will loop on this same zone after each clear\nUse default value 0 or clear the field to remove the specification\nZone information can be acquired from <./module/os/map_data.py>"
+    },
+    "StayInZone": {
+      "name": "指定海域计划作战",
+      "help": "雪风大人温馨提示:打开这个功能并指定海域后，将会在指定海域进行计划作战，不会再回到港口nanoda!侵蚀三推荐NA海域东南B，侵蚀五推荐卡利比安海B或者C nanoda!"
+    },
+    "APPreserveUntilReset": {
+      "name": "OpsiMeowfficerFarming.APPreserveUntilReset.name",
+      "help": "OpsiMeowfficerFarming.APPreserveUntilReset.help"
     }
   },
   "OpsiHazard1Leveling": {
@@ -2769,6 +4225,96 @@
       "0": "No Specification",
       "44": "44 | West Continental Shelf D",
       "22": "22 | NA Ocean SW Sector B"
+    },
+    "OperationCoinsPreserve": {
+      "name": "OpsiHazard1Leveling.OperationCoinsPreserve.name",
+      "help": "OpsiHazard1Leveling.OperationCoinsPreserve.help"
+    },
+    "MinimumActionPointReserve": {
+      "name": "保留 X 点行动力",
+      "help": "搏一搏，单车变摩托，雪风大人已经把幸运分给指挥官了nanoda，上吧nanoda！"
+    },
+    "ExecuteFixedPatrolScan": {
+      "name": "舰队强制移动",
+      "help": "雪风大人温馨提示：开启后，将强制移动舰队以免找不到明石，指挥官你也不想因为找不到明石导致坠机nanoda？打开这个功能轻轻松松达到50万+海里每月nanoda，指挥官还在等什么nanoda!"
+    },
+    "Cl1Filter": {
+      "name": "明石购买筛选",
+      "help": "侵蚀一明石一般只购买体力nanoda"
+    },
+    "RecordNonCL1AP": {
+      "name": "OpsiHazard1Leveling.RecordNonCL1AP.name",
+      "help": "OpsiHazard1Leveling.RecordNonCL1AP.help"
+    }
+  },
+  "OpsiSirenBug": {
+    "_info": {
+      "name": "OpsiSirenBug._info.name",
+      "help": "OpsiSirenBug._info.help"
+    },
+    "SirenResearch_Enable": {
+      "name": "OpsiSirenBug.SirenResearch_Enable.name",
+      "help": "OpsiSirenBug.SirenResearch_Enable.help"
+    },
+    "SirenBug_Enable": {
+      "name": "OpsiSirenBug.SirenBug_Enable.name",
+      "help": "OpsiSirenBug.SirenBug_Enable.help"
+    },
+    "SirenBug_Type": {
+      "name": "OpsiSirenBug.SirenBug_Type.name",
+      "help": "OpsiSirenBug.SirenBug_Type.help",
+      "dangerous": "dangerous",
+      "safe": "safe"
+    },
+    "SirenBug_Zone": {
+      "name": "OpsiSirenBug.SirenBug_Zone.name",
+      "help": "OpsiSirenBug.SirenBug_Zone.help"
+    },
+    "DisableTaskSwitchDuringBug": {
+      "name": "OpsiSirenBug.DisableTaskSwitchDuringBug.name",
+      "help": "OpsiSirenBug.DisableTaskSwitchDuringBug.help",
+      "True": "True",
+      "False": "False"
+    },
+    "SirenBug_DailyCount": {
+      "name": "OpsiSirenBug.SirenBug_DailyCount.name",
+      "help": "OpsiSirenBug.SirenBug_DailyCount.help"
+    },
+    "SirenBug_DailyCountRecord": {
+      "name": "OpsiSirenBug.SirenBug_DailyCountRecord.name",
+      "help": "OpsiSirenBug.SirenBug_DailyCountRecord.help"
+    }
+  },
+  "OpsiCheckLeveling": {
+    "_info": {
+      "name": "Daily Leveling Check",
+      "help": "Check if all ships in current fleet have received enough experience to reach the target level\nIf yes, then Alas will push a message.\n'Error notify config' should be set first."
+    },
+    "TargetLevel": {
+      "name": "Push when all ships received enough experience to reach target level X",
+      "help": "0 means no limit"
+    },
+    "LastRun": {
+      "name": "Last Check Time",
+      "help": "Automatically updated with the last check time, generally does not need to be modified"
+    },
+    "DelayAfterFull": {
+      "name": "Delay task when target level reached",
+      "help": ""
+    }
+  },
+  "OpsiScheduling": {
+    "_info": {
+      "name": "OpsiScheduling._info.name",
+      "help": "OpsiScheduling._info.help"
+    },
+    "EnableSmartScheduling": {
+      "name": "OpsiScheduling.EnableSmartScheduling.name",
+      "help": "OpsiScheduling.EnableSmartScheduling.help"
+    },
+    "ActionPointNotifyLevels": {
+      "name": "OpsiScheduling.ActionPointNotifyLevels.name",
+      "help": "OpsiScheduling.ActionPointNotifyLevels.help"
     }
   },
   "Daemon": {
@@ -2805,6 +4351,36 @@
       "help": "",
       "True": "Enabled",
       "False": "False"
+    }
+  },
+  "BoxDisassemble": {
+    "_info": {
+      "name": "BoxDisassemble._info.name",
+      "help": "BoxDisassemble._info.help"
+    },
+    "UsePurpleBox": {
+      "name": "BoxDisassemble.UsePurpleBox.name",
+      "help": "BoxDisassemble.UsePurpleBox.help"
+    },
+    "PurpleBoxLimit": {
+      "name": "BoxDisassemble.PurpleBoxLimit.name",
+      "help": "BoxDisassemble.PurpleBoxLimit.help"
+    },
+    "UseBlueBox": {
+      "name": "BoxDisassemble.UseBlueBox.name",
+      "help": "BoxDisassemble.UseBlueBox.help"
+    },
+    "BlueBoxLimit": {
+      "name": "BoxDisassemble.BlueBoxLimit.name",
+      "help": "BoxDisassemble.BlueBoxLimit.help"
+    },
+    "UseWhiteBox": {
+      "name": "BoxDisassemble.UseWhiteBox.name",
+      "help": "BoxDisassemble.UseWhiteBox.help"
+    },
+    "WhiteBoxLimit": {
+      "name": "BoxDisassemble.WhiteBoxLimit.name",
+      "help": "BoxDisassemble.WhiteBoxLimit.help"
     }
   },
   "Benchmark": {
@@ -2873,8 +4449,8 @@
       "Stop": "Stop",
       "ScrollON": "Auto Scroll ON",
       "ScrollOFF": "Auto Scroll OFF",
-      "DashboardON": "Fold",
-      "DashboardOFF": "Unfold",
+      "DashboardON": "Dashboard ON",
+      "DashboardOFF": "Dashboard OFF",
       "ClearLog": "Clear Log",
       "Setting": "Setting",
       "CheckUpdate": "Check update",
@@ -2907,13 +4483,42 @@
     },
     "Overview": {
       "Scheduler": "Scheduler",
-      "Dashboard": "Gui.Overview.Dashboard",
+      "Dashboard": "Dashboard",
+      "SecondsAgo": "Gui.Overview.SecondsAgo",
+      "MinutesAgo": "Gui.Overview.MinutesAgo",
+      "HoursAgo": "Gui.Overview.HoursAgo",
+      "DaysAgo": "Gui.Overview.DaysAgo",
+      "MonthsAgo": "Gui.Overview.MonthsAgo",
+      "YearsAgo": "Gui.Overview.YearsAgo",
+      "NoData": "Gui.Overview.NoData",
+      "Oil": "Gui.Overview.Oil",
+      "Coin": "Gui.Overview.Coin",
+      "Gem": "Gui.Overview.Gem",
+      "Cube": "Gui.Overview.Cube",
+      "Pt": "Gui.Overview.Pt",
+      "YellowCoin": "Gui.Overview.YellowCoin",
+      "PurpleCoin": "Gui.Overview.PurpleCoin",
+      "ActionPoint": "Gui.Overview.ActionPoint",
+      "Merit": "Gui.Overview.Merit",
+      "Medal": "Gui.Overview.Medal",
+      "Core": "Gui.Overview.Core",
+      "GuildCoin": "Gui.Overview.GuildCoin",
+      "Log": "Log",
+      "Running": "Running",
+      "Pending": "Pending",
+      "Waiting": "Waiting",
+      "NoTask": "No Task"
+    },
+    "Dashboard": {
+      "TimeError": "Time error",
+      "JustNow": "Just now",
       "SecondsAgo": "Seconds ago",
       "MinutesAgo": "Minutes ago",
       "HoursAgo": "Hours ago",
       "DaysAgo": "Days ago",
       "MonthsAgo": "Months ago",
       "YearsAgo": "Years ago",
+      "LongTimeAgo": "Long time ago",
       "NoData": "No data",
       "Oil": "Oil",
       "Coin": "Coin",
@@ -2926,12 +4531,7 @@
       "Merit": "Merit",
       "Medal": "Medal",
       "Core": "Core Data",
-      "GuildCoin": "Guild Coin",
-      "Log": "Log",
-      "Running": "Running",
-      "Pending": "Pending",
-      "Waiting": "Waiting",
-      "NoTask": "No Task"
+      "GuildCoin": "Guild Coin"
     },
     "AddAlas": {
       "PopupTitle": "Add new config",

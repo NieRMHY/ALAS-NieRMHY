@@ -1,0 +1,96 @@
+from module.campaign.campaign_base import CampaignBase
+from module.map.map_base import CampaignMap
+from module.map.map_grids import SelectedGrids, RoadGrids
+from module.logger import logger
+from .d1 import Config as ConfigBase
+
+MAP = CampaignMap('D3')
+MAP.shape = 'K10'
+MAP.camera_data = ['F3', 'F6']
+MAP.camera_data_spawn_point = ['F6']
+MAP.map_data = """
+    -- ++ ++ ++ -- -- -- ++ ++ ++ --
+    -- ++ -- Me -- MB -- Me -- ++ --
+    -- -- ME -- Me -- Me -- ME -- --
+    -- -- ++ MS -- __ -- MS ++ -- --
+    -- -- ++ -- -- MS -- -- ++ -- --
+    ++ ++ ME -- -- -- -- -- ME ++ ++
+    ++ ++ -- -- SP -- SP -- -- ++ ++
+    -- -- ME -- ++ ++ ++ -- ME -- --
+    -- ++ -- -- ++ ++ ++ -- -- ++ --
+    -- -- -- -- ++ ++ ++ -- -- -- --
+"""
+MAP.weight_data = """
+    50 50 50 50 50 50 50 50 50 50 50
+    50 50 50 50 50 50 50 50 50 50 50
+    50 50 50 50 50 50 50 50 50 50 50
+    50 50 50 50 50 50 50 50 50 50 50
+    50 50 50 50 50 50 50 50 50 50 50
+    50 50 50 50 50 50 50 50 50 50 50
+    50 50 50 50 50 50 50 50 50 50 50
+    50 50 50 50 50 50 50 50 50 50 50
+    50 50 50 50 50 50 50 50 50 50 50
+    50 50 50 50 50 50 50 50 50 50 50
+"""
+MAP.spawn_data = [
+    {'battle': 0, 'enemy': 9, 'siren': 3},
+    {'battle': 1},
+    {'battle': 2},
+    {'battle': 3},
+    {'battle': 4},
+    {'battle': 5},
+    {'battle': 6, 'boss': 1},
+]
+A1, B1, C1, D1, E1, F1, G1, H1, I1, J1, K1, \
+A2, B2, C2, D2, E2, F2, G2, H2, I2, J2, K2, \
+A3, B3, C3, D3, E3, F3, G3, H3, I3, J3, K3, \
+A4, B4, C4, D4, E4, F4, G4, H4, I4, J4, K4, \
+A5, B5, C5, D5, E5, F5, G5, H5, I5, J5, K5, \
+A6, B6, C6, D6, E6, F6, G6, H6, I6, J6, K6, \
+A7, B7, C7, D7, E7, F7, G7, H7, I7, J7, K7, \
+A8, B8, C8, D8, E8, F8, G8, H8, I8, J8, K8, \
+A9, B9, C9, D9, E9, F9, G9, H9, I9, J9, K9, \
+A10, B10, C10, D10, E10, F10, G10, H10, I10, J10, K10, \
+    = MAP.flatten()
+
+
+class Config(ConfigBase):
+    # ===== Start of generated config =====
+    MAP_SIREN_TEMPLATE = ['Vboss_Lovers', 'Vboss_Chariot']
+    MOVABLE_ENEMY_TURN = (2,)
+    MAP_HAS_SIREN = True
+    MAP_HAS_MOVABLE_ENEMY = True
+    MAP_HAS_MAP_STORY = False
+    MAP_HAS_FLEET_STEP = True
+    MAP_HAS_AMBUSH = False
+    MAP_HAS_MYSTERY = False
+    # ===== End of generated config =====
+    DETECTION_BACKEND = 'homography'
+    HOMO_EDGE_HOUGHLINES_THRESHOLD = 120
+    HOMO_STORAGE = ((9, 6), [(219.576, 86.713), (1226.51, 86.713), (98.511, 620.206), (1399.1, 620.206)])
+
+
+class Campaign(CampaignBase):
+    MAP = MAP
+    ENEMY_FILTER = '1L > 1M > 1E > 1C > 2L > 2M > 2E > 2C > 3L > 3M > 3E > 3C'
+
+    def battle_0(self):
+        logger.info('Attempting to clear fixed siren at F5 (first battle)')
+        self.clear_chosen_enemy(F5, expected='siren')
+        return True
+
+    def battle_1(self):
+        logger.info('Attempting to clear fixed siren at D4 (second battle)')
+        self.clear_chosen_enemy(D4, expected='siren')
+        return True
+
+    def battle_2(self):
+        logger.info('Attempting to clear fixed siren at H4 (third battle)')
+        self.clear_chosen_enemy(H4, expected='siren')
+        logger.info('Third battle finished. Withdrawing immediately.')
+        self.withdraw()
+        return True
+
+    @property
+    def _map_battle(self):
+        return 3

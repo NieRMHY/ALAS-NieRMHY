@@ -2,6 +2,7 @@ import numpy as np
 
 from module.base.timer import Timer
 from module.base.utils import color_similar, get_color
+from module.base.api_client import ApiClient
 from module.combat.assets import *
 from module.combat.combat_auto import CombatAuto
 from module.combat.combat_manual import CombatManual
@@ -61,7 +62,6 @@ class Combat(Level, HPBalancer, Retirement, SubmarineCall, CombatAuto, CombatMan
             # Break
             if self.combat_appear():
                 break
-
     def is_combat_loading(self):
         """
         Returns:
@@ -74,8 +74,10 @@ class Combat(Level, HPBalancer, Retirement, SubmarineCall, CombatAuto, CombatMan
             loading = (button.area[0] + 38 - LOADING_BAR.area[0]) / (LOADING_BAR.area[2] - LOADING_BAR.area[0])
             logger.attr('Loading', f'{int(loading * 100)}%')
             return True
-        else:
-            return False
+        if self.is_combat_executing():
+            logger.warning('检测到战斗状态但未检测到加载条')
+            return True
+        return False
 
     def is_combat_executing(self):
         """

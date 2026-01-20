@@ -1,7 +1,12 @@
+# 此文件提供了 WebUI 相关的底层工具函数。
+# 包含 LocalStorage 读写、JavaScript 代码注入执行、CSS 样式管理、时间格式转换以及维持 UI 刷新的任务调度控制器。
 import datetime
+import base64
 import operator
 import re
 import sys
+import os
+import json
 import threading
 import time
 import traceback
@@ -362,32 +367,82 @@ def get_generator(func: Callable):
 def filepath_css(filename):
     return f"./assets/gui/css/{filename}.css"
 
-
-def filepath_icon(filename):
-    return f"./assets/gui/icon/{filename}.svg"
+# def filepath_icon(filename):
+#     return f"./assets/gui/icon/{filename}.svg"
+def filepath_icon(filename, ext: str = "svg"):
+    return f"./assets/gui/icon/{filename}.{ext}"
 
 
 def add_css(filepath):
-    with open(filepath, "r") as f:
-        css = f.read().replace("\n", "")
-        run_js(f"""$('head').append('<style>{css}</style>')""")
+    """
+    Safely inject a CSS file into the document head.
+    Uses document.createElement + text node so CSS containing quotes
+    or </style> won't break JS/HTML parsing.
+    """
+    with open(filepath, "r", encoding="utf-8") as f:
+        css = f.read()
+
+    style_id = f"alas-css-{os.path.basename(filepath).replace('.', '-') }"
+
+    js = (
+        "(function(){"
+        "var old = document.getElementById('" + style_id + "');"
+        "if(old) old.parentNode.removeChild(old);"
+        "var s = document.createElement('style');"
+        "s.type = 'text/css';"
+        "s.id = '" + style_id + "';"
+        "s.appendChild(document.createTextNode(%s));"
+        "document.head.appendChild(s);"
+        "})();"
+    ) % json.dumps(css)
+
+    run_js(js)
 
 
 def _read(path):
     with open(path, "r") as f:
         return f.read()
 
+# Modified by NieRMHY 修改头图
+def _load_icon(name: str) -> str:
+    """
+    优先使用同名 PNG，若不存在或读取失败则回退到 SVG。
+    PNG 以 data URI 形式嵌入，可避免静态路径问题；设置固定尺寸保证展示一致。
+    """
+    png_path = filepath_icon(name, "png")
+    if os.path.exists(png_path):
+        try:
+            with open(png_path, "rb") as f:
+                data = base64.b64encode(f.read()).decode("ascii")
+            return (
+                f'<img src="data:image/png;base64,{data}" alt="{name}" '
+                'style="width:2.4rem;height:2.4rem;display:block;" />'
+            )
+        except Exception as e:
+            logger.warning("读取 PNG 图标失败，回退 SVG: %s", e)
+
+    svg_path = filepath_icon(name, "svg")
+    try:
+        return _read(svg_path)
+    except Exception as e:
+        logger.error("读取 SVG 图标失败: %s", e)
+        return ""
+
 
 class Icon:
     """
     Storage html of icon.
     """
-
-    ALAS = _read(filepath_icon("alas"))
-    SETTING = _read(filepath_icon("setting"))
-    RUN = _read(filepath_icon("run"))
-    DEVELOP = _read(filepath_icon("develop"))
-    ADD = _read(filepath_icon("add"))
+    # ALAS = _read(filepath_icon("alas"))
+    # SETTING = _read(filepath_icon("setting"))
+    # RUN = _read(filepath_icon("run"))
+    # DEVELOP = _read(filepath_icon("develop"))
+    # ADD = _read(filepath_icon("add"))
+    ALAS = _load_icon("alas")
+    SETTING = _load_icon("setting")
+    RUN = _load_icon("run")
+    DEVELOP = _load_icon("develop")
+    ADD = _load_icon("add")
 
 
 str2type = {

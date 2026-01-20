@@ -1,4 +1,6 @@
 import argparse
+# 此文件专门用于管理 Alas 运行时各实例进程的生存周期及其子进程。
+# 负责多账号多开时的进程池维护、状态（运行中、停止、异常）追踪及进程间通信的安全处理逻辑。
 import os
 import queue
 import threading
@@ -28,6 +30,7 @@ class ProcessManager:
     def __init__(self, config_name: str = "alas") -> None:
         self.config_name = config_name
         self._renderable_queue: queue.Queue[ConsoleRenderable] = State.manager.Queue()
+        self._screenshot_data_queue = None
         self.renderables: List[ConsoleRenderable] = []
         self.renderables_max_length = 400
         self.renderables_reduce_length = 80
@@ -39,14 +42,40 @@ class ProcessManager:
         if not self.alive:
             if func is None:
                 func = get_config_mod(self.config_name)
+            try:
+                import multiprocessing
+                if getattr(self, "_screenshot_data_queue", None) is not None:
+                    try:
+                        self._screenshot_data_queue.close()
+                    except Exception:
+                        pass
+                    try:
+                        self._screenshot_data_queue.join_thread()
+                    except Exception:
+                        pass
+                self._screenshot_data_queue = multiprocessing.Queue(maxsize=8)
+                try:
+                    enabled = 1 if getattr(State, "display_screenshots", False) else 0
+                except Exception:
+                    enabled = 1
+                try:
+                    self._screenshot_enabled_flag = multiprocessing.Value('b', enabled)
+                except Exception:
+                    self._screenshot_enabled_flag = None
+            except Exception:
+                logger.exception("雪风大人提醒无法创建多进程截图队列")
+            args = (
+                self.config_name,
+                func,
+                self._renderable_queue,
+                self._screenshot_data_queue,
+                ev,
+            )
+            if getattr(self, '_screenshot_enabled_flag', None) is not None:
+                args = args + (self._screenshot_enabled_flag,)
             self._process = Process(
                 target=ProcessManager.run_process,
-                args=(
-                    self.config_name,
-                    func,
-                    self._renderable_queue,
-                    ev,
-                ),
+                args=args,
             )
             self._process.start()
             self.start_log_queue_handler()
@@ -121,6 +150,34 @@ class ProcessManager:
             else:
                 return 3
 
+    @property
+    def get_latest_screenshot(self):
+        """
+        获取最新的截图数据（Base64编码）。
+        """
+        if self._screenshot_data_queue is None:
+            return None
+
+        latest_screenshot = None
+        while not self._screenshot_data_queue.empty():
+            try:
+                latest_screenshot = self._screenshot_data_queue.get_nowait()
+                State.last_screenshot_base64 = latest_screenshot
+            except queue.Empty:
+                break  # 队列为空
+            except Exception as e:
+                logger.error(f"从截图队列获取数据失败: {e}")
+                break
+        return latest_screenshot
+
+    def set_screenshot_enabled(self, enabled: bool):
+        """Set shared screenshot enabled flag for the running process (if supported)."""
+        try:
+            if getattr(self, '_screenshot_enabled_flag', None) is not None:
+                self._screenshot_enabled_flag.value = 1 if enabled else 0
+        except Exception:
+            logger.debug('Unable to set screenshot_enabled_flag for %s', self.config_name)
+
     @classmethod
     def get_manager(cls, config_name: str) -> "ProcessManager":
         """
@@ -132,7 +189,7 @@ class ProcessManager:
 
     @staticmethod
     def run_process(
-        config_name, func: str, q: queue.Queue, e: threading.Event = None
+        config_name, func: str, q: queue.Queue, screenshot_q: queue.Queue, e: threading.Event = None, screenshot_enabled=None
     ) -> None:
         parser = argparse.ArgumentParser()
         parser.add_argument(
@@ -163,11 +220,17 @@ class ProcessManager:
 
                 if e is not None:
                     AzurLaneAutoScript.stop_event = e
-                AzurLaneAutoScript(config_name=config_name).loop()
+                if screenshot_enabled is not None:
+                    AzurLaneAutoScript(config_name=config_name, screenshot_queue=screenshot_q, screenshot_enabled=screenshot_enabled).loop()
+                else:
+                    AzurLaneAutoScript(config_name=config_name, screenshot_queue=screenshot_q).loop()
             elif func in get_available_func():
                 from alas import AzurLaneAutoScript
 
-                AzurLaneAutoScript(config_name=config_name).run(inflection.underscore(func), skip_first_screenshot=True)
+                if screenshot_enabled is not None:
+                    AzurLaneAutoScript(config_name=config_name, screenshot_enabled=screenshot_enabled).run(inflection.underscore(func), skip_first_screenshot=True)
+                else:
+                    AzurLaneAutoScript(config_name=config_name).run(inflection.underscore(func), skip_first_screenshot=True)
             elif func in get_available_mod():
                 mod = load_mod(func)
 

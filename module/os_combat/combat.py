@@ -22,6 +22,11 @@ class Combat(Combat_, MapEventHandler):
         if self.is_combat_loading():
             return True
 
+        # Check if already in combat execution (PAUSE button visible)
+        # This handles cases where auto search skips battle preparation
+        if self.is_combat_executing():
+            return True
+
         if self.appear(BATTLE_PREPARATION):
             return True
         if self.appear(SIREN_PREPARATION, offset=(20, 20)):
@@ -229,6 +234,19 @@ class Combat(Combat_, MapEventHandler):
             in: is_combat_loading()
             out: combat status
         """
+        # 记录战斗开始时间用于统计 (仅侵蚀1任务)
+        _is_cl1_battle = False
+        _instance_name = None
+        try:
+            if hasattr(self, 'config') and hasattr(self.config, 'task'):
+                if self.config.task.command == 'OpsiHazard1Leveling':
+                    _is_cl1_battle = True
+                    _instance_name = self.config.config_name if hasattr(self.config, 'config_name') else None
+                    from module.statistics.ship_exp_stats import get_ship_exp_stats
+                    get_ship_exp_stats(instance_name=_instance_name).on_battle_start()
+        except Exception:
+            pass
+        
         logger.info('Auto search combat loading')
         self.device.stuck_record_clear()
         self.device.click_record_clear()
@@ -277,11 +295,20 @@ class Combat(Combat_, MapEventHandler):
             if self.handle_auto_search_battle_status():
                 success = None
                 continue
-            if self.handle_auto_search_exp_info():
+            if self.config.OpsiGeneral_RepairThreshold > 0 and self.handle_auto_search_exp_info():
                 success = None
                 continue
             if self.handle_map_event():
                 continue
             
         logger.info('Combat end.')
+        
+        # 记录战斗结束，统计耗时 (仅侵蚀1任务)
+        if _is_cl1_battle:
+            try:
+                from module.statistics.ship_exp_stats import get_ship_exp_stats
+                get_ship_exp_stats(instance_name=_instance_name).on_battle_end()
+            except Exception:
+                pass
+        
         return success

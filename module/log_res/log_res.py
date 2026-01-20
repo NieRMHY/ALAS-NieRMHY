@@ -1,3 +1,5 @@
+# 此文件实现了资源变动的记录与同步功能。
+# 当各项资源数值（如石油、魔方等）发生变化时，负责更新配置文件中对应的 Dashboard 项及记录时间戳。
 from cached_property import cached_property
 from module.logger import logger
 from module.config.deep import deep_get
@@ -40,6 +42,8 @@ class LogRes:
             logger.info('No such resource on dashboard')
             super().__setattr__(name=key, value=value)
 
+    def group(self, name):
+        return deep_get(self.config.data, f'Dashboard.{name}')
     @cached_property
     def groups(self) -> dict:
         from module.config.utils import read_file, filepath_argument
@@ -67,3 +71,9 @@ class LogRes:
             logger.warning('No such resource!')
         return True
         """
+if __name__ == '__main__':
+    from module.config.config import AzurLaneConfig
+    config = AzurLaneConfig('alas2')
+    LogRes(config=config).ActionPoint = {'Total': 99999, 'Value': 99999}
+    config.update()
+    exit(0)

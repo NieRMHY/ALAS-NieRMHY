@@ -1,5 +1,8 @@
 from pywebio.io_ctrl import Output
 
+# 此文件定义了手动配置项。
+# 包含了非自动生成的硬编码设置，如资源文件路径、UI 按钮偏移量以及任务调度的默认优先级逻辑。
+from module.config.utils import *
 import module.config.server as server
 
 
@@ -8,14 +11,14 @@ class ManualConfig:
     def SERVER(self):
         return server.server
 
-    SCHEDULER_PRIORITY = """
+    _DEFAULT_SCHEDULER_PRIORITY = """
     Restart
     > OpsiCrossMonth
     > Commission > Tactical > Research
     > Exercise
     > Dorm > Meowfficer > Guild > Gacha
     > Reward
-    > ShopFrequent > ShopOnce > Shipyard > Freebies
+    > ShopFrequent > EventShop > ShopOnce > Shipyard > Freebies > Island
     > PrivateQuarters
     > OpsiExplore
     > Minigame > Awaken
@@ -25,11 +28,26 @@ class ManualConfig:
     > Daily > Hard > OpsiAshBeacon > OpsiAshAssist > OpsiMonthBoss
     > Sos > EventSp > EventA > EventB > EventC > EventD
     > RaidDaily > CoalitionSp > WarArchives > MaritimeEscort
-    > Event > Event2 > Raid > Hospital > Coalition > Main > Main2 > Main3
+    > Event > Event2 > Raid > Hospital > HospitalEvent > Coalition > Main > Main2 > Main3
     > OpsiMeowfficerFarming
     > GemsFarming
     > OpsiHazard1Leveling
     """
+
+    @property
+    def SCHEDULER_PRIORITY(self):
+        task_adj = None
+        try:
+            task_adj = self.cross_get(keys=["YukikazeTaskManager", "TaskPriorityAdjustment"], default=None)
+        except Exception:
+            task_adj = None
+
+        if not task_adj:
+            task_adj = getattr(self, "YukikazeTaskManager_TaskPriorityAdjustment", None)
+
+        if task_adj:
+            return str(task_adj) + "\n" + (self._DEFAULT_SCHEDULER_PRIORITY or "")
+        return self._DEFAULT_SCHEDULER_PRIORITY
 
     """
     module.assets
@@ -98,6 +116,8 @@ class ManualConfig:
     """
     module.campaign.gems_farming
     """
+    COMMON_CV_FILTER = 'bogue > ranger > langley > hermes'
+    COMMON_DD_FILTER =  'z20 > z21 > aulick > foote > cassin > downes'
     GEMS_EMOTION_TRIGGERED = False
 
     """
@@ -143,6 +163,7 @@ class ManualConfig:
     MAP_HAS_MISSILE_ATTACK = False  # event_202111229_cn, missile attack covers the feature area of sirens.
     MAP_HAS_BOUNCING_ENEMY = False  # event_20220224_cn, enemy is bouncing in a fixed route.
     MAP_HAS_DECOY_ENEMY = False  # event_20220428, decoy enemy on map, disappear when fleet reach there.
+    MAP_HAS_SUBMARINE_SUPPORT = False # campaign 16-1 and 16-2 has submarine support fleet.
     MAP_FOCUS_ENEMY_AFTER_BATTLE = False  # Operation siren
     MAP_ENEMY_TEMPLATE = ['Light', 'Main', 'Carrier', 'Treasure']
     MAP_SIREN_TEMPLATE = ['DD', 'CL', 'CA', 'BB', 'CV']
@@ -333,9 +354,9 @@ class ManualConfig:
     """
     OS_ACTION_POINT_BOX_USE = True
     OS_ACTION_POINT_PRESERVE = 0
-    OS_CL1_YELLOW_COINS_PRESERVE = 100000
     OS_NORMAL_YELLOW_COINS_PRESERVE = 35000
     OS_NORMAL_PURPLE_COINS_PRESERVE = 100
+    OS_MISSION_COMPLETE = False
 
     """
     module.os.globe_detection
@@ -373,6 +394,11 @@ class ManualConfig:
     """
     # For dev purpose, auto extract new item templates
     SHOP_EXTRACT_TEMPLATE = False
+
+    """
+    module.shop_event
+    """
+    EVENT_SHOP_IGNORE_DEADLINE = False
 
     """
     module.war_archives

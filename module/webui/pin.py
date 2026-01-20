@@ -4,6 +4,9 @@ Add **other_html_attrs to put_xxx()
 """
 
 from pywebio.io_ctrl import Output
+# 此文件专门封装了 PyWebIO 的 Pin 交互组件类库文件。
+# 提供针对 Alas 配置系统的各种输入控件（如下拉选择框、数字输入及开关等）的自动化渲染与数值同步转换。
+from module.webui.utils import *
 from pywebio.output import OutputPosition
 from pywebio.pin import _pin_output, check_dom_name_value, pin_update
 

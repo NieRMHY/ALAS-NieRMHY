@@ -1,4 +1,6 @@
 import onepush.core
+# 此文件提供了脚本的外发通知（Notification）接口。
+# 它整合了 onepush 库，支持根据配置文件中的 token 向多种渠道（如 QQ、微信等）推送任务报告或报警信息。
 import yaml
 from onepush import get_notifier
 from onepush.core import Provider
@@ -44,7 +46,9 @@ def handle_notify(_config: str, **kwargs) -> bool:
                 config["data"]["title"] = kwargs["title"]
             if "content" in kwargs:
                 config["data"]["content"] = kwargs["content"]
-
+                if "data" in config and "message" in config["data"] and '${content}' in config["data"]["message"]:
+                    config["data"]["message"] = config["data"]["message"].replace("${content}", config["data"]["content"])
+                    
         if provider_name.lower() == "gocqhttp":
             access_token = config.get("access_token")
             if access_token:
