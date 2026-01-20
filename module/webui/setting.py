@@ -64,6 +64,8 @@ class State:
     last_screenshot_base64: str = None
     placeholder_images: list = [
         "screen1.jpg",
+        "screen2.jpg",
+        "screen3.jpg",
     ]
     placeholder_index: int = 0
 

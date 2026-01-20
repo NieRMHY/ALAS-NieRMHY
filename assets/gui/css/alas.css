@@ -474,7 +474,8 @@ pre.rich-traceback-code {
 
 #pywebio-scope-pending {
     /* 固定队列区三行高度，避免被上方占位图压缩 */
-    grid-template-rows: auto auto calc(1.75rem * 3);
+    grid-template-rows: auto auto calc(1.75rem * 6);
+    min-height: calc(1.75rem * 6 + 2.5rem); /* 预留标题与分隔线的背景高度 */
 }
 
 #pywebio-scope-running > p,
