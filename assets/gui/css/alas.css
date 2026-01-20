@@ -472,6 +472,11 @@ pre.rich-traceback-code {
     grid-template-rows: auto auto 1fr;
 }
 
+#pywebio-scope-pending {
+    /* 固定队列区三行高度，避免被上方占位图压缩 */
+    grid-template-rows: auto auto calc(1.75rem * 3);
+}
+
 #pywebio-scope-running > p,
 #pywebio-scope-pending > p,
 #pywebio-scope-waiting > p {
@@ -488,8 +493,9 @@ pre.rich-traceback-code {
 }
 
 #pywebio-scope-pending_tasks {
-    height: auto;
-    max-height: calc(1.75rem * 3); /* 队列区最多展示约三行，超出可滚动 */
+    height: 100%;
+    max-height: 100%;
+    min-height: 100%;
 }
 
 #pywebio-scope-logs {
