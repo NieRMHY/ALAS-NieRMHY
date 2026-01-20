@@ -409,8 +409,6 @@ pre.rich-traceback-code {
     height: 100%;
     overflow: auto;
     display: grid;
-    gap: 0.5rem; /* 分块间预留间距，避免背景重叠 */
-    align-content: start;
 }
 
 #pywebio-scope-running,
@@ -471,18 +469,13 @@ pre.rich-traceback-code {
     white-space: pre;
 }
 
+/* 调度区三块采用块级流式，避免固定网格导致重叠或背景截断 */
 #pywebio-scope-running,
 #pywebio-scope-pending,
 #pywebio-scope-waiting {
-    display: grid;
-    grid-auto-flow: row;
-    grid-template-rows: auto auto 1fr;
-}
-
-#pywebio-scope-pending {
-    /* 固定队列区三行高度，避免被上方占位图压缩 */
-    grid-template-rows: auto auto calc(1.75rem * 6);
-    min-height: calc(1.75rem * 6 + 2.5rem); /* 预留标题与分隔线的背景高度 */
+    display: block;
+    height: auto;
+    overflow: visible;
 }
 
 #pywebio-scope-running > p,
@@ -496,8 +489,20 @@ pre.rich-traceback-code {
 #pywebio-scope-running_tasks,
 #pywebio-scope-pending_tasks,
 #pywebio-scope-waiting_tasks {
-    overflow-y: auto;
-    height: 100%;
+    display: block;
+    overflow: visible;
+    height: auto;
+}
+
+#pywebio-scope-pending {
+    height: auto;
+    overflow: visible;
+}
+
+#pywebio-scope-pending_tasks {
+    height: auto;
+    max-height: none;
+    overflow: visible;
 }
 
 #pywebio-scope-logs {
@@ -529,8 +534,11 @@ pre.rich-traceback-code {
     padding: 0.3125rem;
 }
 
+/* 整个调度容器改为纵向 flex，确保子块顺序堆叠并留出间距 */
 #pywebio-scope-schedulers {
-    display: grid;
+    display: flex;
+    flex-direction: column;
+    gap: .375rem;
 }
 
 .bs-title-option {
