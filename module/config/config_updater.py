@@ -693,7 +693,7 @@ class ConfigUpdater:
         for task in EVENTS + WAR_ARCHIVES:
             default_stage(task, 'D3')
         for task in COALITIONS:
-            default_stage(task, 'area1-normal')
+            default_stage(task, 'TC-3')
 
         if not is_template:
             new = self.config_redirect(old, new)
