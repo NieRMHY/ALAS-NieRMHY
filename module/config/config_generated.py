@@ -126,7 +126,7 @@ class GeneratedConfig:
     Retirement_RetireMode = 'one_click_retire'  # one_click_retire, enhance, old_retire
 
     # Group `YukikazeTaskManager`
-    YukikazeTaskManager_TaskPriorityAdjustment = 'Restart\n> OpsiCrossMonth\n> Commission > Tactical > Research\n> Exercise\n> Dorm > Meowfficer > Guild > Gacha\n> Reward\n> ShopFrequent > ShopOnce > Shipyard > Freebies >Island\n> PrivateQuarters\n> OpsiExplore\n> Minigame > Awaken\n> OpsiAshBeacon\n> OpsiDaily > OpsiShop > OpsiVoucher\n> OpsiAbyssal > OpsiStronghold > OpsiObscure > OpsiArchive\n> Daily > Hard > OpsiAshBeacon > OpsiAshAssist > OpsiMonthBoss\n> Sos > EventSp > EventA > EventB > EventC > EventD\n> RaidDaily > CoalitionSp > WarArchives > MaritimeEscort\n> Event > Event2 > Raid > Hospital > HospitalEvent > Coalition > Main > Main2 > Main3\n> OpsiMeowfficerFarming\n> GemsFarming\n> OpsiHazard1Leveling'
+    YukikazeTaskManager_TaskPriorityAdjustment = 'Restart\n> OpsiCrossMonth\n> Commission > Tactical > Research\n> Exercise\n> Dorm > Meowfficer > Guild > Gacha\n> Reward\n> ShopFrequent > ShopOnce > Shipyard > Freebies > Island\n> PrivateQuarters\n> OpsiExplore\n> Minigame > Awaken\n> OpsiAshBeacon\n> OpsiDaily > OpsiShop > OpsiVoucher\n> OpsiAbyssal > OpsiStronghold > OpsiObscure > OpsiArchive\n> Daily > Hard > OpsiAshBeacon > OpsiAshAssist > OpsiMonthBoss\n> Sos > EventSp > EventA > EventB > EventC > EventD\n> RaidDaily > CoalitionSp > WarArchives > MaritimeEscort\n> Event > Event2 > Raid > Hospital > HospitalEvent > Coalition > Main > Main2 > Main3\n> OpsiMeowfficerFarming\n> GemsFarming\n> OpsiHazard1Leveling'
 
     # Group `OneClickRetire`
     OneClickRetire_KeepLimitBreak = 'keep_limit_break'  # keep_limit_break, do_not_keep
@@ -346,6 +346,18 @@ class GeneratedConfig:
     # Group `Awaken`
     Awaken_LevelCap = 'level120'  # level120, level125
     Awaken_Favourite = False
+
+    # Group `IslandTransport`
+    IslandTransport_SubmitCarrot = True
+    IslandTransport_SubmitCotton = True
+    IslandTransport_SubmitFlex = True
+    IslandTransport_SubmitFreshMeat = True
+    IslandTransport_SubmitManjuu = True
+    IslandTransport_SubmitMilk = True
+    IslandTransport_SubmitNapaCabbage = True
+    IslandTransport_SubmitOnion = True
+    IslandTransport_SubmitPoultry = True
+    IslandTransport_SubmitStrawberries = True
 
     # Group `Island1`
     Island1_Receive = False
@@ -688,6 +700,12 @@ class GeneratedConfig:
     # Group `OpsiScheduling`
     OpsiScheduling_EnableSmartScheduling = False
     OpsiScheduling_ActionPointNotifyLevels = '500,1000,2000,3000'
+
+    # Group `IslandSeasonTask`
+    IslandSeasonTask_TaskDict = None
+
+    # Group `IslandTechnology`
+    IslandTechnology_TechnologyStatus = None
 
     # Group `Daemon`
     Daemon_EnterMap = True

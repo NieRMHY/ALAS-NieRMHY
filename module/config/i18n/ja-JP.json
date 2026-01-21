@@ -28,6 +28,10 @@
       "name": "セイレーン作戦",
       "help": ""
     },
+    "Island": {
+      "name": "Menu.Island.name",
+      "help": "Menu.Island.help"
+    },
     "Tool": {
       "name": "ツール",
       "help": ""
@@ -261,6 +265,14 @@
     "OpsiCrossMonth": {
       "name": "Cross Month Daily",
       "help": "    ALAS will enter OpSi 10min before OpSi reset, wait until OpSi reset but not exit OpSi. Then do the daily, obscure, abyssal and meowfficer farming to get extra gold plates. When running dailies, settings in task \"OpSiDaily\" are used, the rest function are the same.\n    IMPORTANT: Please do not touch the game while ALAS is waiting for OpSi reset."
+    },
+    "IslandInfo": {
+      "name": "Task.IslandInfo.name",
+      "help": "Task.IslandInfo.help"
+    },
+    "IslandSeasonTask": {
+      "name": "Task.IslandSeasonTask.name",
+      "help": "Task.IslandSeasonTask.help"
     },
     "Daemon": {
       "name": "半自動クリック",
@@ -1026,6 +1038,7 @@
       "event_20250912_cn": "アマハラに舞い奉れ",
       "event_20251023_cn": "テンペスタと自由群島",
       "event_20251218_cn": "天穹に響く音謡",
+      "event_20260122_cn": "特集写真――撮影進行中！",
       "raid_20200624": "特別演習超空強襲波（復刻）",
       "raid_20210708": "交錯する新たな波 (復刻)",
       "raid_20220127": "秘密事件調査",
@@ -1644,18 +1657,11 @@
     "Mode": {
       "name": "Coalition.Mode.name",
       "help": "Coalition.Mode.help",
-      "area1-normal": "area1-normal",
-      "area1-hard": "area1-hard",
-      "area2-normal": "area2-normal",
-      "area2-hard": "area2-hard",
-      "area3-normal": "area3-normal",
-      "area3-hard": "area3-hard",
-      "area4-normal": "area4-normal",
-      "area4-hard": "area4-hard",
-      "area5-normal": "area5-normal",
-      "area5-hard": "area5-hard",
-      "area6-normal": "area6-normal",
-      "area6-hard": "area6-hard"
+      "tc1": "tc1",
+      "tc2": "tc2",
+      "tc3": "tc3",
+      "sp": "sp",
+      "ex": "ex"
     },
     "Fleet": {
       "name": "Coalition.Fleet.name",
@@ -2011,6 +2017,52 @@
     "Favourite": {
       "name": "Awaken.Favourite.name",
       "help": "Awaken.Favourite.help"
+    }
+  },
+  "IslandTransport": {
+    "_info": {
+      "name": "IslandTransport._info.name",
+      "help": "IslandTransport._info.help"
+    },
+    "SubmitCarrot": {
+      "name": "IslandTransport.SubmitCarrot.name",
+      "help": "IslandTransport.SubmitCarrot.help"
+    },
+    "SubmitCotton": {
+      "name": "IslandTransport.SubmitCotton.name",
+      "help": "IslandTransport.SubmitCotton.help"
+    },
+    "SubmitFlex": {
+      "name": "IslandTransport.SubmitFlex.name",
+      "help": "IslandTransport.SubmitFlex.help"
+    },
+    "SubmitFreshMeat": {
+      "name": "IslandTransport.SubmitFreshMeat.name",
+      "help": "IslandTransport.SubmitFreshMeat.help"
+    },
+    "SubmitManjuu": {
+      "name": "IslandTransport.SubmitManjuu.name",
+      "help": "IslandTransport.SubmitManjuu.help"
+    },
+    "SubmitMilk": {
+      "name": "IslandTransport.SubmitMilk.name",
+      "help": "IslandTransport.SubmitMilk.help"
+    },
+    "SubmitNapaCabbage": {
+      "name": "IslandTransport.SubmitNapaCabbage.name",
+      "help": "IslandTransport.SubmitNapaCabbage.help"
+    },
+    "SubmitOnion": {
+      "name": "IslandTransport.SubmitOnion.name",
+      "help": "IslandTransport.SubmitOnion.help"
+    },
+    "SubmitPoultry": {
+      "name": "IslandTransport.SubmitPoultry.name",
+      "help": "IslandTransport.SubmitPoultry.help"
+    },
+    "SubmitStrawberries": {
+      "name": "IslandTransport.SubmitStrawberries.name",
+      "help": "IslandTransport.SubmitStrawberries.help"
     }
   },
   "Island1": {
@@ -4315,6 +4367,26 @@
     "ActionPointNotifyLevels": {
       "name": "OpsiScheduling.ActionPointNotifyLevels.name",
       "help": "OpsiScheduling.ActionPointNotifyLevels.help"
+    }
+  },
+  "IslandSeasonTask": {
+    "_info": {
+      "name": "IslandSeasonTask._info.name",
+      "help": "IslandSeasonTask._info.help"
+    },
+    "TaskDict": {
+      "name": "IslandSeasonTask.TaskDict.name",
+      "help": "IslandSeasonTask.TaskDict.help"
+    }
+  },
+  "IslandTechnology": {
+    "_info": {
+      "name": "IslandTechnology._info.name",
+      "help": "IslandTechnology._info.help"
+    },
+    "TechnologyStatus": {
+      "name": "IslandTechnology.TechnologyStatus.name",
+      "help": "IslandTechnology.TechnologyStatus.help"
     }
   },
   "Daemon": {

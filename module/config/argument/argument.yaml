@@ -650,6 +650,17 @@ _Island:
       - unicorn
       - cheshire
       - amagi_chan
+IslandTransport:
+  SubmitCarrot: true
+  SubmitCotton: true
+  SubmitFlex: true
+  SubmitFreshMeat: true
+  SubmitManjuu: true
+  SubmitMilk: true
+  SubmitNapaCabbage: true
+  SubmitOnion: true
+  SubmitPoultry: true
+  SubmitStrawberries: true
 Island1:
   Receive: false
   Option1: *IslandOption8
@@ -1101,6 +1112,16 @@ OpsiScheduling:
   ActionPointNotifyLevels:
     value: "500,1000,2000,3000"
     valuetype: str
+
+# =================== Island ====================
+IslandSeasonTask:
+  TaskDict:
+    type: textarea
+    value: |-
+IslandTechnology:
+  TechnologyStatus:
+    type: textarea
+    value: |-
 
 # ==================== Tools ====================
 

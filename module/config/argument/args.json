@@ -595,7 +595,7 @@
     "YukikazeTaskManager": {
       "TaskPriorityAdjustment": {
         "type": "textarea",
-        "value": "Restart\n> OpsiCrossMonth\n> Commission > Tactical > Research\n> Exercise\n> Dorm > Meowfficer > Guild > Gacha\n> Reward\n> ShopFrequent > ShopOnce > Shipyard > Freebies >Island\n> PrivateQuarters\n> OpsiExplore\n> Minigame > Awaken\n> OpsiAshBeacon\n> OpsiDaily > OpsiShop > OpsiVoucher\n> OpsiAbyssal > OpsiStronghold > OpsiObscure > OpsiArchive\n> Daily > Hard > OpsiAshBeacon > OpsiAshAssist > OpsiMonthBoss\n> Sos > EventSp > EventA > EventB > EventC > EventD\n> RaidDaily > CoalitionSp > WarArchives > MaritimeEscort\n> Event > Event2 > Raid > Hospital > HospitalEvent > Coalition > Main > Main2 > Main3\n> OpsiMeowfficerFarming\n> GemsFarming\n> OpsiHazard1Leveling"
+        "value": "Restart\n> OpsiCrossMonth\n> Commission > Tactical > Research\n> Exercise\n> Dorm > Meowfficer > Guild > Gacha\n> Reward\n> ShopFrequent > ShopOnce > Shipyard > Freebies > Island\n> PrivateQuarters\n> OpsiExplore\n> Minigame > Awaken\n> OpsiAshBeacon\n> OpsiDaily > OpsiShop > OpsiVoucher\n> OpsiAbyssal > OpsiStronghold > OpsiObscure > OpsiArchive\n> Daily > Hard > OpsiAshBeacon > OpsiAshAssist > OpsiMonthBoss\n> Sos > EventSp > EventA > EventB > EventC > EventD\n> RaidDaily > CoalitionSp > WarArchives > MaritimeEscort\n> Event > Event2 > Raid > Hospital > HospitalEvent > Coalition > Main > Main2 > Main3\n> OpsiMeowfficerFarming\n> GemsFarming\n> OpsiHazard1Leveling"
       }
     },
     "Storage": {
@@ -1932,25 +1932,25 @@
         "type": "select",
         "value": "campaign_main",
         "option": [
-          "event_20231221_cn",
-          "event_20251218_cn"
+          "event_20251218_cn",
+          "event_20260122_cn"
         ],
         "display": "hide",
         "option_cn": [
-          "event_20231221_cn"
+          "event_20260122_cn"
         ],
         "option_en": [
-          "event_20231221_cn"
+          "event_20260122_cn"
         ],
         "option_jp": [
-          "event_20231221_cn"
+          "event_20260122_cn"
         ],
         "option_tw": [
-          "event_20231221_cn"
+          "event_20251218_cn"
         ],
         "option_bold": [
-          "event_20231221_cn",
-          "event_20251218_cn"
+          "event_20251218_cn",
+          "event_20260122_cn"
         ]
       },
       "Mode": {
@@ -2346,24 +2346,24 @@
         "type": "state",
         "value": "campaign_main",
         "option": [
-          "event_20231221_cn",
-          "event_20251218_cn"
+          "event_20251218_cn",
+          "event_20260122_cn"
         ],
         "option_cn": [
-          "event_20231221_cn"
+          "event_20260122_cn"
         ],
         "option_en": [
-          "event_20231221_cn"
+          "event_20260122_cn"
         ],
         "option_jp": [
-          "event_20231221_cn"
+          "event_20260122_cn"
         ],
         "option_tw": [
-          "event_20231221_cn"
+          "event_20251218_cn"
         ],
         "option_bold": [
-          "event_20231221_cn",
-          "event_20251218_cn"
+          "event_20251218_cn",
+          "event_20260122_cn"
         ]
       },
       "Mode": {
@@ -2750,24 +2750,24 @@
         "type": "state",
         "value": "campaign_main",
         "option": [
-          "event_20231221_cn",
-          "event_20251218_cn"
+          "event_20251218_cn",
+          "event_20260122_cn"
         ],
         "option_cn": [
-          "event_20231221_cn"
+          "event_20260122_cn"
         ],
         "option_en": [
-          "event_20231221_cn"
+          "event_20260122_cn"
         ],
         "option_jp": [
-          "event_20231221_cn"
+          "event_20260122_cn"
         ],
         "option_tw": [
-          "event_20231221_cn"
+          "event_20251218_cn"
         ],
         "option_bold": [
-          "event_20231221_cn",
-          "event_20251218_cn"
+          "event_20251218_cn",
+          "event_20260122_cn"
         ]
       },
       "Mode": {
@@ -3591,22 +3591,22 @@
         "type": "state",
         "value": "campaign_main",
         "option": [
-          "coalition_20260122"
+          "coalition_20251120"
         ],
         "option_cn": [
-          "coalition_20260122"
+          "coalition_20251120"
         ],
         "option_en": [
-          "coalition_20260122"
+          "coalition_20251120"
         ],
         "option_jp": [
-          "coalition_20260122"
+          "coalition_20251120"
         ],
         "option_tw": [
-          "coalition_20260122"
+          "coalition_20251120"
         ],
         "option_bold": [
-          "coalition_20260122"
+          "coalition_20251120"
         ]
       },
       "Mode": {
@@ -3652,6 +3652,7 @@
           "tc1",
           "tc2",
           "tc3",
+          "sp",
           "ex"
         ]
       },
@@ -4634,24 +4635,24 @@
         "type": "state",
         "value": "campaign_main",
         "option": [
-          "event_20231221_cn",
-          "event_20251218_cn"
+          "event_20251218_cn",
+          "event_20260122_cn"
         ],
         "option_cn": [
-          "event_20231221_cn"
+          "event_20260122_cn"
         ],
         "option_en": [
-          "event_20231221_cn"
+          "event_20260122_cn"
         ],
         "option_jp": [
-          "event_20231221_cn"
+          "event_20260122_cn"
         ],
         "option_tw": [
-          "event_20231221_cn"
+          "event_20251218_cn"
         ],
         "option_bold": [
-          "event_20231221_cn",
-          "event_20251218_cn"
+          "event_20251218_cn",
+          "event_20260122_cn"
         ]
       },
       "Mode": {
@@ -5055,24 +5056,24 @@
         "type": "state",
         "value": "campaign_main",
         "option": [
-          "event_20231221_cn",
-          "event_20251218_cn"
+          "event_20251218_cn",
+          "event_20260122_cn"
         ],
         "option_cn": [
-          "event_20231221_cn"
+          "event_20260122_cn"
         ],
         "option_en": [
-          "event_20231221_cn"
+          "event_20260122_cn"
         ],
         "option_jp": [
-          "event_20231221_cn"
+          "event_20260122_cn"
         ],
         "option_tw": [
-          "event_20231221_cn"
+          "event_20251218_cn"
         ],
         "option_bold": [
-          "event_20231221_cn",
-          "event_20251218_cn"
+          "event_20251218_cn",
+          "event_20260122_cn"
         ]
       },
       "Mode": {
@@ -5476,24 +5477,24 @@
         "type": "state",
         "value": "campaign_main",
         "option": [
-          "event_20231221_cn",
-          "event_20251218_cn"
+          "event_20251218_cn",
+          "event_20260122_cn"
         ],
         "option_cn": [
-          "event_20231221_cn"
+          "event_20260122_cn"
         ],
         "option_en": [
-          "event_20231221_cn"
+          "event_20260122_cn"
         ],
         "option_jp": [
-          "event_20231221_cn"
+          "event_20260122_cn"
         ],
         "option_tw": [
-          "event_20231221_cn"
+          "event_20251218_cn"
         ],
         "option_bold": [
-          "event_20231221_cn",
-          "event_20251218_cn"
+          "event_20251218_cn",
+          "event_20260122_cn"
         ]
       },
       "Mode": {
@@ -5897,24 +5898,24 @@
         "type": "state",
         "value": "campaign_main",
         "option": [
-          "event_20231221_cn",
-          "event_20251218_cn"
+          "event_20251218_cn",
+          "event_20260122_cn"
         ],
         "option_cn": [
-          "event_20231221_cn"
+          "event_20260122_cn"
         ],
         "option_en": [
-          "event_20231221_cn"
+          "event_20260122_cn"
         ],
         "option_jp": [
-          "event_20231221_cn"
+          "event_20260122_cn"
         ],
         "option_tw": [
-          "event_20231221_cn"
+          "event_20251218_cn"
         ],
         "option_bold": [
-          "event_20231221_cn",
-          "event_20251218_cn"
+          "event_20251218_cn",
+          "event_20260122_cn"
         ]
       },
       "Mode": {
@@ -6308,24 +6309,24 @@
         "type": "state",
         "value": "campaign_main",
         "option": [
-          "event_20231221_cn",
-          "event_20251218_cn"
+          "event_20251218_cn",
+          "event_20260122_cn"
         ],
         "option_cn": [
-          "event_20231221_cn"
+          "event_20260122_cn"
         ],
         "option_en": [
-          "event_20231221_cn"
+          "event_20260122_cn"
         ],
         "option_jp": [
-          "event_20231221_cn"
+          "event_20260122_cn"
         ],
         "option_tw": [
-          "event_20231221_cn"
+          "event_20251218_cn"
         ],
         "option_bold": [
-          "event_20231221_cn",
-          "event_20251218_cn"
+          "event_20251218_cn",
+          "event_20260122_cn"
         ]
       },
       "Mode": {
@@ -6963,22 +6964,22 @@
         "type": "state",
         "value": "campaign_main",
         "option": [
-          "coalition_20260122"
+          "coalition_20251120"
         ],
         "option_cn": [
-          "coalition_20260122"
+          "coalition_20251120"
         ],
         "option_en": [
-          "coalition_20260122"
+          "coalition_20251120"
         ],
         "option_jp": [
-          "coalition_20260122"
+          "coalition_20251120"
         ],
         "option_tw": [
-          "coalition_20260122"
+          "coalition_20251120"
         ],
         "option_bold": [
-          "coalition_20260122"
+          "coalition_20251120"
         ]
       },
       "Mode": {
@@ -7026,7 +7027,8 @@
           "tc3",
           "sp",
           "ex"
-        ]
+        ],
+        "display": "hide"
       },
       "Fleet": {
         "type": "select",
@@ -7177,12 +7179,16 @@
   "Commission": {
     "Scheduler": {
       "Enable": {
-        "type": "checkbox",
-        "value": false,
+        "type": "switch",
+        "value": true,
         "option": [
           true,
           false
-        ]
+        ],
+        "option_bold": [
+          true
+        ],
+        "display": "hide"
       },
       "NextRun": {
         "type": "datetime",
@@ -7338,12 +7344,16 @@
   "Research": {
     "Scheduler": {
       "Enable": {
-        "type": "checkbox",
-        "value": false,
+        "type": "switch",
+        "value": true,
         "option": [
           true,
           false
-        ]
+        ],
+        "option_bold": [
+          true
+        ],
+        "display": "hide"
       },
       "NextRun": {
         "type": "datetime",
@@ -7700,12 +7710,16 @@
   "Reward": {
     "Scheduler": {
       "Enable": {
-        "type": "checkbox",
-        "value": false,
+        "type": "switch",
+        "value": true,
         "option": [
           true,
           false
-        ]
+        ],
+        "option_bold": [
+          true
+        ],
+        "display": "hide"
       },
       "NextRun": {
         "type": "datetime",
@@ -7857,6 +7871,48 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      }
+    },
+    "IslandTransport": {
+      "SubmitCarrot": {
+        "type": "checkbox",
+        "value": true
+      },
+      "SubmitCotton": {
+        "type": "checkbox",
+        "value": true
+      },
+      "SubmitFlex": {
+        "type": "checkbox",
+        "value": true
+      },
+      "SubmitFreshMeat": {
+        "type": "checkbox",
+        "value": true
+      },
+      "SubmitManjuu": {
+        "type": "checkbox",
+        "value": true
+      },
+      "SubmitMilk": {
+        "type": "checkbox",
+        "value": true
+      },
+      "SubmitNapaCabbage": {
+        "type": "checkbox",
+        "value": true
+      },
+      "SubmitOnion": {
+        "type": "checkbox",
+        "value": true
+      },
+      "SubmitPoultry": {
+        "type": "checkbox",
+        "value": true
+      },
+      "SubmitStrawberries": {
+        "type": "checkbox",
+        "value": true
       }
     },
     "Island1": {
@@ -11406,6 +11462,73 @@
       }
     }
   },
+  "IslandInfo": {
+    "IslandSeasonTask": {
+      "TaskDict": {
+        "type": "textarea",
+        "value": ""
+      }
+    },
+    "IslandTechnology": {
+      "TechnologyStatus": {
+        "type": "textarea",
+        "value": ""
+      }
+    },
+    "Storage": {
+      "Storage": {
+        "type": "storage",
+        "value": {},
+        "valuetype": "ignore",
+        "display": "disabled"
+      }
+    }
+  },
+  "IslandSeasonTask": {
+    "Scheduler": {
+      "Enable": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "NextRun": {
+        "type": "datetime",
+        "value": "2020-01-01 00:00:00",
+        "validate": "datetime"
+      },
+      "Command": {
+        "type": "input",
+        "value": "IslandSeasonTask",
+        "display": "hide"
+      },
+      "SuccessInterval": {
+        "type": "input",
+        "value": 0,
+        "display": "hide"
+      },
+      "FailureInterval": {
+        "type": "input",
+        "value": 120,
+        "display": "hide"
+      },
+      "ServerUpdate": {
+        "type": "input",
+        "value": "00:00",
+        "display": "hide"
+      }
+    },
+    "Storage": {
+      "Storage": {
+        "type": "storage",
+        "value": {},
+        "valuetype": "ignore",
+        "display": "disabled"
+      }
+    }
+  },
   "Daemon": {
     "Daemon": {
       "EnterMap": {
@@ -11445,11 +11568,13 @@
   "EventStory": {
     "EventStory": {
       "SkipBattle": {
-        "type": "checkbox",
-        "value": false,
+        "type": "lock",
+        "value": true,
         "option": [
-          true,
-          false
+          true
+        ],
+        "option_bold": [
+          true
         ]
       }
     },

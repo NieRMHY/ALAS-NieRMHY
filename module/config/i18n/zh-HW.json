@@ -28,6 +28,10 @@
       "name": "开放世界探索协议",
       "help": ""
     },
+    "Island": {
+      "name": "Menu.Island.name",
+      "help": "Menu.Island.help"
+    },
     "Tool": {
       "name": "生态工具箱",
       "help": ""
@@ -261,6 +265,14 @@
     "OpsiCrossMonth": {
       "name": "跨月无缝衔接",
       "help": "    基于毫秒级时间同步，Alas将在重置前10分钟介入，通过驻留进程实现跨月无缝流转。自动完成跨周期的高价值任务链（每日/隐秘/深渊/短猫）以最大化金菜产出。\n    核心提示：系统执行跨月驻留协议期间，请勿进行人工干预，以免破坏进程保活。"
+    },
+    "IslandInfo": {
+      "name": "Task.IslandInfo.name",
+      "help": "Task.IslandInfo.help"
+    },
+    "IslandSeasonTask": {
+      "name": "Task.IslandSeasonTask.name",
+      "help": "Task.IslandSeasonTask.help"
     },
     "Daemon": {
       "name": "半自动辅助驾驶",
@@ -798,6 +810,7 @@
       "event_20250912_cn": "A Dance for Amahara Above",
       "event_20251023_cn": "Tempesta and Islas de Libertád",
       "event_20251218_cn": "A Note Through the Firmament",
+      "event_20260122_cn": "Light & Shadow Fashion Shoot!",
       "raid_20200624": "Air Raid Drills with Essex Rerun",
       "raid_20210708": "Cross Wave rerun",
       "raid_20220127": "Mystery Investigation",
@@ -1416,18 +1429,11 @@
     "Mode": {
       "name": "Coalition.Mode.name",
       "help": "Coalition.Mode.help",
-      "area1-normal": "area1-normal",
-      "area1-hard": "area1-hard",
-      "area2-normal": "area2-normal",
-      "area2-hard": "area2-hard",
-      "area3-normal": "area3-normal",
-      "area3-hard": "area3-hard",
-      "area4-normal": "area4-normal",
-      "area4-hard": "area4-hard",
-      "area5-normal": "area5-normal",
-      "area5-hard": "area5-hard",
-      "area6-normal": "area6-normal",
-      "area6-hard": "area6-hard"
+      "tc1": "tc1",
+      "tc2": "tc2",
+      "tc3": "tc3",
+      "sp": "sp",
+      "ex": "ex"
     },
     "Fleet": {
       "name": "Coalition.Fleet.name",
@@ -1783,6 +1789,52 @@
     "Favourite": {
       "name": "Awaken.Favourite.name",
       "help": "Awaken.Favourite.help"
+    }
+  },
+  "IslandTransport": {
+    "_info": {
+      "name": "IslandTransport._info.name",
+      "help": "IslandTransport._info.help"
+    },
+    "SubmitCarrot": {
+      "name": "IslandTransport.SubmitCarrot.name",
+      "help": "IslandTransport.SubmitCarrot.help"
+    },
+    "SubmitCotton": {
+      "name": "IslandTransport.SubmitCotton.name",
+      "help": "IslandTransport.SubmitCotton.help"
+    },
+    "SubmitFlex": {
+      "name": "IslandTransport.SubmitFlex.name",
+      "help": "IslandTransport.SubmitFlex.help"
+    },
+    "SubmitFreshMeat": {
+      "name": "IslandTransport.SubmitFreshMeat.name",
+      "help": "IslandTransport.SubmitFreshMeat.help"
+    },
+    "SubmitManjuu": {
+      "name": "IslandTransport.SubmitManjuu.name",
+      "help": "IslandTransport.SubmitManjuu.help"
+    },
+    "SubmitMilk": {
+      "name": "IslandTransport.SubmitMilk.name",
+      "help": "IslandTransport.SubmitMilk.help"
+    },
+    "SubmitNapaCabbage": {
+      "name": "IslandTransport.SubmitNapaCabbage.name",
+      "help": "IslandTransport.SubmitNapaCabbage.help"
+    },
+    "SubmitOnion": {
+      "name": "IslandTransport.SubmitOnion.name",
+      "help": "IslandTransport.SubmitOnion.help"
+    },
+    "SubmitPoultry": {
+      "name": "IslandTransport.SubmitPoultry.name",
+      "help": "IslandTransport.SubmitPoultry.help"
+    },
+    "SubmitStrawberries": {
+      "name": "IslandTransport.SubmitStrawberries.name",
+      "help": "IslandTransport.SubmitStrawberries.help"
     }
   },
   "Island1": {
@@ -3467,7 +3519,8 @@
       "noshiro": "noshiro",
       "sirius": "sirius",
       "new_jersey": "new_jersey",
-      "taihou": "taihou"
+      "taihou": "taihou",
+      "aegir": "aegir"
     }
   },
   "Daily": {
@@ -4086,6 +4139,26 @@
     "ActionPointNotifyLevels": {
       "name": "OpsiScheduling.ActionPointNotifyLevels.name",
       "help": "OpsiScheduling.ActionPointNotifyLevels.help"
+    }
+  },
+  "IslandSeasonTask": {
+    "_info": {
+      "name": "IslandSeasonTask._info.name",
+      "help": "IslandSeasonTask._info.help"
+    },
+    "TaskDict": {
+      "name": "IslandSeasonTask.TaskDict.name",
+      "help": "IslandSeasonTask.TaskDict.help"
+    }
+  },
+  "IslandTechnology": {
+    "_info": {
+      "name": "IslandTechnology._info.name",
+      "help": "IslandTechnology._info.help"
+    },
+    "TechnologyStatus": {
+      "name": "IslandTechnology.TechnologyStatus.name",
+      "help": "IslandTechnology.TechnologyStatus.help"
     }
   },
   "Daemon": {

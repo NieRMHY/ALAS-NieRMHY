@@ -730,7 +730,7 @@
       "AmbushEvade": true
     },
     "Coalition": {
-      "Mode": "area1-normal",
+      "Mode": "tc1",
       "Fleet": "single"
     },
     "StopCondition": {
@@ -1336,7 +1336,7 @@
       "AmbushEvade": true
     },
     "Coalition": {
-      "Mode": "area1-normal",
+      "Mode": "sp",
       "Fleet": "single"
     },
     "StopCondition": {
@@ -1552,6 +1552,18 @@
       "SuccessInterval": 0,
       "FailureInterval": 120,
       "ServerUpdate": "00:00"
+    },
+    "IslandTransport": {
+      "SubmitCarrot": true,
+      "SubmitCotton": true,
+      "SubmitFlex": true,
+      "SubmitFreshMeat": true,
+      "SubmitManjuu": true,
+      "SubmitMilk": true,
+      "SubmitNapaCabbage": true,
+      "SubmitOnion": true,
+      "SubmitPoultry": true,
+      "SubmitStrawberries": true
     },
     "Island1": {
       "Receive": false,
@@ -2228,6 +2240,30 @@
       "Enable": false,
       "NextRun": "2020-01-01 00:00:00",
       "Command": "OpsiCrossMonth",
+      "SuccessInterval": 0,
+      "FailureInterval": 120,
+      "ServerUpdate": "00:00"
+    },
+    "Storage": {
+      "Storage": {}
+    }
+  },
+  "IslandInfo": {
+    "IslandSeasonTask": {
+      "TaskDict": null
+    },
+    "IslandTechnology": {
+      "TechnologyStatus": null
+    },
+    "Storage": {
+      "Storage": {}
+    }
+  },
+  "IslandSeasonTask": {
+    "Scheduler": {
+      "Enable": false,
+      "NextRun": "2020-01-01 00:00:00",
+      "Command": "IslandSeasonTask",
       "SuccessInterval": 0,
       "FailureInterval": 120,
       "ServerUpdate": "00:00"

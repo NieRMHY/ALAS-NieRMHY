@@ -28,6 +28,10 @@
       "name": "大世界",
       "help": ""
     },
+    "Island": {
+      "name": "岛屿计划",
+      "help": ""
+    },
     "Tool": {
       "name": "工具",
       "help": ""
@@ -261,6 +265,14 @@
     "OpsiCrossMonth": {
       "name": "跨月每日",
       "help": "    Alas将在大世界跨月重置之前10分钟进入大世界，等待大世界重置但不退出大世界，然后完成新一天的大世界每日、隐秘海域、深渊海域和短猫相接，以获得额外的金菜。运行大世界每日时，按\"大世界每日\"任务设置运行，其余同理。\n    重要：Alas等待跨月期间，请不要操作游戏。"
+    },
+    "IslandInfo": {
+      "name": "岛屿信息",
+      "help": "岛屿仪表盘"
+    },
+    "IslandSeasonTask": {
+      "name": "赛季任务",
+      "help": ""
     },
     "Daemon": {
       "name": "半自动点击",
@@ -946,7 +958,6 @@
       "coalition_20240627": "欢迎来到童心学院",
       "coalition_20250626": "迷彩都市的寻踪者",
       "coalition_20251120": "DATE A LANE",
-      "coalition_20260122": "光影风尚——拍摄进行时！",
       "event_20200227_cn": "北境序曲",
       "event_20200312_cn": "复刻斯图尔特的硝烟",
       "event_20200326_cn": "微层混合",
@@ -1027,6 +1038,7 @@
       "event_20250912_cn": "起舞于天原之上",
       "event_20251023_cn": "飓风与自由群岛",
       "event_20251218_cn": "响彻于天穹之音",
+      "event_20260122_cn": "光影风尚——拍摄进行时！",
       "raid_20200624": "复刻特别演习埃塞克斯级",
       "raid_20210708": "复刻穿越彼方的水线",
       "raid_20220127": "演习神秘事件调查",
@@ -2004,6 +2016,52 @@
     },
     "Favourite": {
       "name": "仅觉醒常用舰船",
+      "help": ""
+    }
+  },
+  "IslandTransport": {
+    "_info": {
+      "name": "岛屿运输",
+      "help": "自动提交岛屿运输所需的物资"
+    },
+    "SubmitCarrot": {
+      "name": "提交胡萝卜",
+      "help": ""
+    },
+    "SubmitCotton": {
+      "name": "提交棉花",
+      "help": ""
+    },
+    "SubmitFlex": {
+      "name": "提交亚麻",
+      "help": ""
+    },
+    "SubmitFreshMeat": {
+      "name": "提交鲜肉",
+      "help": ""
+    },
+    "SubmitManjuu": {
+      "name": "提交蛮啾",
+      "help": ""
+    },
+    "SubmitMilk": {
+      "name": "提交牛奶",
+      "help": ""
+    },
+    "SubmitNapaCabbage": {
+      "name": "提交白菜",
+      "help": ""
+    },
+    "SubmitOnion": {
+      "name": "提交洋葱",
+      "help": ""
+    },
+    "SubmitPoultry": {
+      "name": "提交禽肉",
+      "help": ""
+    },
+    "SubmitStrawberries": {
+      "name": "提交草莓",
       "help": ""
     }
   },
@@ -4309,6 +4367,26 @@
     "ActionPointNotifyLevels": {
       "name": "行动力推送阈值",
       "help": "雪风大人提醒：行动力升至或降至这些阈值时会发送推送通知nanoda!\n使用逗号分隔多个阈值，例如: 500,1000,2000,3000\n注意：需要在 Alas - 错误处理 中配置推送通知才能生效"
+    }
+  },
+  "IslandSeasonTask": {
+    "_info": {
+      "name": "赛季任务",
+      "help": ""
+    },
+    "TaskDict": {
+      "name": "任务列表",
+      "help": "Alas会自动导出列表"
+    }
+  },
+  "IslandTechnology": {
+    "_info": {
+      "name": "岛屿科技",
+      "help": ""
+    },
+    "TechnologyStatus": {
+      "name": "科技列表",
+      "help": "Alas会自动导出列表"
     }
   },
   "Daemon": {
