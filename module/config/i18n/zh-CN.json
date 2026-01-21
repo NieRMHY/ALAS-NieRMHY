@@ -83,7 +83,7 @@
       "help": ""
     },
     "Coalition": {
-      "name": "DATE A LANE",
+      "name": "光影风尚——拍摄进行时！",
       "help": ""
     },
     "MaritimeEscort": {
@@ -123,7 +123,7 @@
       "help": ""
     },
     "CoalitionSp": {
-      "name": "迷彩都市的寻踪者SP",
+      "name": "光影风尚——拍摄进行时！",
       "help": ""
     },
     "Commission": {
@@ -946,6 +946,7 @@
       "coalition_20240627": "欢迎来到童心学院",
       "coalition_20250626": "迷彩都市的寻踪者",
       "coalition_20251120": "DATE A LANE",
+      "coalition_20260122": "光影风尚——拍摄进行时！",
       "event_20200227_cn": "北境序曲",
       "event_20200312_cn": "复刻斯图尔特的硝烟",
       "event_20200326_cn": "微层混合",
@@ -1644,18 +1645,11 @@
     "Mode": {
       "name": "难度",
       "help": "SP图需要使用活动每日SP运行",
-      "area1-normal": "area1-normal",
-      "area1-hard": "area1-hard",
-      "area2-normal": "area2-normal",
-      "area2-hard": "area2-hard",
-      "area3-normal": "area3-normal",
-      "area3-hard": "area3-hard",
-      "area4-normal": "area4-normal",
-      "area4-hard": "area4-hard",
-      "area5-normal": "area5-normal",
-      "area5-hard": "area5-hard",
-      "area6-normal": "area6-normal",
-      "area6-hard": "area6-hard"
+      "tc1": "tc1",
+      "tc2": "tc2",
+      "tc3": "tc3",
+      "sp": "sp",
+      "ex": "EX"
     },
     "Fleet": {
       "name": "出击队伍",

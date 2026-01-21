@@ -440,21 +440,10 @@ MaritimeEscort:
   Enable: true
 Coalition:
   Mode:
-    value: area1-normal
+    value: tc1
     option:
       [
-        area1-normal,
-        area1-hard,
-        area2-normal,
-        area2-hard,
-        area3-normal,
-        area3-hard,
-        area4-normal,
-        area4-hard,
-        area5-normal,
-        area5-hard,
-        area6-normal,
-        area6-hard,
+        tc1, tc2, tc3, sp, ex
       ]
   Fleet:
     value: single

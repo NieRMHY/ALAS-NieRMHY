@@ -272,9 +272,9 @@ Coalition:
     UseAutoSearch: false
     Use2xBook: false
     AmbushEvade: true
-  #  Coalition:
-  #    Mode:
-  #      option: [ easy, normal, hard, ex ]
+  Coalition:
+    Mode:
+      option: [ tc1, tc2, tc3, sp, ex ]
   StopCondition:
     MapAchievement: non_stop
     StageIncrease: false
@@ -328,9 +328,9 @@ EventShop:
 Commission:
   Scheduler:
     Enable:
-      type: lock
+      type: switch
       value: true
-      option: [true]
+      option: [true, false]
       option_bold: [true]
     SuccessInterval: 30-60
     FailureInterval: 30-60
@@ -343,9 +343,9 @@ Tactical:
 Research:
   Scheduler:
     Enable:
-      type: lock
+      type: switch
       value: true
-      option: [true]
+      option: [true, false]
       option_bold: [true]
     SuccessInterval: 30-60
     FailureInterval: 30-60
@@ -368,9 +368,9 @@ Guild:
 Reward:
   Scheduler:
     Enable:
-      type: lock
+      type: switch
       value: true
-      option: [true]
+      option: [true, false]
       option_bold: [true]
     SuccessInterval: 120-240
     FailureInterval: 120-240
