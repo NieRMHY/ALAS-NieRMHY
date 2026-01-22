@@ -1,21 +1,11 @@
+
 from module.config.utils import get_nearest_weekday_date
 from module.logger import logger
 from module.os.map import OSMap
-from module.os_handler.assets import EXCHANGE_CHECK, EXCHANGE_ENTER
 from module.shop.shop_voucher import VoucherShop
 
 
 class OpsiArchive(OSMap):
-    def _os_voucher_enter(self):
-        self.os_map_goto_globe(unpin=False)
-        self.ui_click(click_button=EXCHANGE_ENTER, check_button=EXCHANGE_CHECK,
-                      offset=(200, 20), retry_wait=3, skip_first_screenshot=True)
-
-    def _os_voucher_exit(self):
-        self.ui_back(check_button=EXCHANGE_ENTER, appear_button=EXCHANGE_CHECK,
-                     offset=(200, 20), retry_wait=3, skip_first_screenshot=True)
-        self.os_globe_goto_map()
-
     def os_archive(self):
         """
         Complete active archive zone in daily mission
@@ -34,7 +24,9 @@ class OpsiArchive(OSMap):
         while True:
             # In case logger bought manually,
             # finish pre-existing archive zone
-            self.os_finish_daily_mission(question=False, rescan=False)
+            self.os_finish_daily_mission(
+                skip_siren_mission=self.config.cross_get('OpsiDaily.OpsiDaily.SkipSirenResearchMission'),
+                question=False, rescan=False)
 
             logger.hr('OS voucher', level=1)
             self._os_voucher_enter()

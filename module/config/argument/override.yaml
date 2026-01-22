@@ -274,7 +274,7 @@ Coalition:
     AmbushEvade: true
   Coalition:
     Mode:
-      option: [ tc1, tc2, tc3, sp, ex ]
+      option: [ easy, normal, hard, ex ]
   StopCondition:
     MapAchievement: non_stop
     StageIncrease: false
@@ -304,7 +304,7 @@ CoalitionSp:
     AmbushEvade: true
   Coalition:
     # CoalitionSp hard-codes Mode='sp'
-    Mode: sp
+    Mode: hard
   StopCondition:
     MapAchievement: non_stop
     StageIncrease: false
@@ -327,11 +327,6 @@ EventShop:
 
 Commission:
   Scheduler:
-    Enable:
-      type: switch
-      value: true
-      option: [true, false]
-      option_bold: [true]
     SuccessInterval: 30-60
     FailureInterval: 30-60
     ServerUpdate: 00:00
@@ -342,11 +337,6 @@ Tactical:
     ServerUpdate: 00:00
 Research:
   Scheduler:
-    Enable:
-      type: switch
-      value: true
-      option: [true, false]
-      option_bold: [true]
     SuccessInterval: 30-60
     FailureInterval: 30-60
     ServerUpdate: 00:00
@@ -367,11 +357,6 @@ Guild:
     ServerUpdate: 00:00, 06:00, 12:00, 18:00, 21:00
 Reward:
   Scheduler:
-    Enable:
-      type: switch
-      value: true
-      option: [true, false]
-      option_bold: [true]
     SuccessInterval: 120-240
     FailureInterval: 120-240
     ServerUpdate: 00:00

@@ -23,15 +23,13 @@ from module.logger import logger
 class Cl1DataSubmitter:
     """CL1数据提交器"""
     
-    def __init__(self, endpoint: str = 'https://alas-apiv2.nanoda.work/api/telemetry', instance_name: str | None = None):
+    def __init__(self, instance_name: str | None = None):
         """
         初始化数据提交器
         
         Args:
-            endpoint: API端点URL
             instance_name: Alas实例名称
         """
-        self.endpoint = endpoint
         self._device_id: Optional[str] = None
         self._last_submit_time: float = 0
         self._submit_interval: int = 600  # 10分钟

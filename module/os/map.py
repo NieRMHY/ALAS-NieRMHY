@@ -21,7 +21,7 @@ from module.os.fleet import OSFleet, BossFleet
 from module.os.globe_camera import GlobeCamera
 from module.os.globe_operation import RewardUncollectedError
 from module.os_handler.assets import AUTO_SEARCH_OS_MAP_OPTION_OFF, AUTO_SEARCH_OS_MAP_OPTION_OFF_DISABLED, \
-    AUTO_SEARCH_OS_MAP_OPTION_ON, AUTO_SEARCH_REWARD
+    AUTO_SEARCH_OS_MAP_OPTION_ON, AUTO_SEARCH_REWARD, REWARD_BOX_THIRD_OPTION
 from module.os_handler.storage import StorageHandler
 from module.os_handler.strategic import StrategicSearchHandler
 from module.ui.assets import GOTO_MAIN, BACK_ARROW
@@ -1707,6 +1707,12 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
                         # 找到选项，处理剧情
                         with self.config.temporary(STORY_ALLOW_SKIP=False):
                             self._solved_map_event.add('is_scanning_device')
+
+                            # 首先检测是否遇到的是柱子
+                            if self.appear_then_click(REWARD_BOX_THIRD_OPTION, offset=(20, 20), interval=3):
+                                logger.warning('[Bug利用] 检测到柱子选项，重新开始寻找装置')
+                                self._solved_map_event.remove('is_scanning_device')
+                                continue  
 
                             # 第1次：选择第2个选项
                             logger.info('[Bug利用] 等待第1组选项（选择第2个）')

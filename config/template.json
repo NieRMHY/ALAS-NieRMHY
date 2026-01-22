@@ -730,7 +730,7 @@
       "AmbushEvade": true
     },
     "Coalition": {
-      "Mode": "tc1",
+      "Mode": "hard",
       "Fleet": "single"
     },
     "StopCondition": {
@@ -1336,7 +1336,7 @@
       "AmbushEvade": true
     },
     "Coalition": {
-      "Mode": "sp",
+      "Mode": "hard",
       "Fleet": "single"
     },
     "StopCondition": {
@@ -1368,7 +1368,7 @@
   },
   "Commission": {
     "Scheduler": {
-      "Enable": true,
+      "Enable": false,
       "NextRun": "2020-01-01 00:00:00",
       "Command": "Commission",
       "SuccessInterval": "30-60",
@@ -1414,7 +1414,7 @@
   },
   "Research": {
     "Scheduler": {
-      "Enable": true,
+      "Enable": false,
       "NextRun": "2020-01-01 00:00:00",
       "Command": "Research",
       "SuccessInterval": "30-60",
@@ -1509,7 +1509,7 @@
   },
   "Reward": {
     "Scheduler": {
-      "Enable": true,
+      "Enable": false,
       "NextRun": "2020-01-01 00:00:00",
       "Command": "Reward",
       "SuccessInterval": "120-240",

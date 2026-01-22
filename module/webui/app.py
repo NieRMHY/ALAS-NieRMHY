@@ -2295,19 +2295,15 @@ class AlasGUI(Frame):
         def _fetch_announcement_async():
             """Background thread function to fetch announcement from API"""
             try:
-                # Add timestamp to bypass cache
-                timestamp = int(time.time())
-                resp = requests.get(
-                    f'https://alas-apiv2.nanoda.work/api/get/announcement?t={timestamp}',
-                    timeout=10
-                )
-                if resp.status_code == 200:
-                    data = resp.json()
-                    if data and data.get('announcementId') and data.get('title') and data.get('content'):
-                        # Put the data in queue for main thread to process
-                        self._announcement_queue.put(data)
+                from module.base.api_client import ApiClient
+                # 使用ApiClient的双域名故障转移机制
+                data = ApiClient.get_announcement(timeout=10)
+                if data:
+                    # Put the data in queue for main thread to process
+                    self._announcement_queue.put(data)
             except Exception as e:
                 logger.debug(f"Announcement fetch failed: {e}")
+
         
         def check_and_push_announcement():
             """Start async fetch and process any queued announcements"""

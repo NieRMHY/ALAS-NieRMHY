@@ -1,10 +1,11 @@
 """
 API 客户端模块
-负责与 alas-apiv2.nanoda.work 进行所有HTTP交互
-包括Bug日志上报和CL1数据提交
+负责与 API 服务器进行所有HTTP交互
+包括Bug日志上报、CL1数据提交和公告获取
+支持主域名(nanoda.work)和备用域名(xf-sama.xyz)的自动故障转移
 """
 import threading
-from typing import Any, Dict
+from typing import Any, Dict, List, Tuple
 
 import requests
 
@@ -13,10 +14,127 @@ from module.logger import logger
 
 
 class ApiClient:
-    """统一的API客户端"""
+    """统一的API客户端，支持双域名故障转移"""
     
-    BUG_LOG_ENDPOINT = 'https://alas-apiv2.nanoda.work/api/post/bug'
-    CL1_DATA_ENDPOINT = 'https://alas-apiv2.nanoda.work/api/telemetry'
+    # 主域名和备用域名列表
+    PRIMARY_DOMAIN = 'https://alas-apiv2.nanoda.work'
+    FALLBACK_DOMAIN = 'https://alas-apiv2.xf-sama.xyz'
+    
+    # API端点路径
+    BUG_LOG_PATH = '/api/post/bug'
+    CL1_DATA_PATH = '/api/telemetry'
+    ANNOUNCEMENT_PATH = '/api/get/announcement'
+    
+    @classmethod
+    def _get_endpoints(cls, path: str) -> List[str]:
+        """
+        获取指定路径的所有端点URL（主域名+备用域名）
+        
+        Args:
+            path: API路径
+            
+        Returns:
+            端点URL列表
+        """
+        return [
+            f'{cls.PRIMARY_DOMAIN}{path}',
+            f'{cls.FALLBACK_DOMAIN}{path}'
+        ]
+    
+    @classmethod
+    def _post_with_fallback(cls, path: str, json_data: Dict[str, Any], timeout: int = 5) -> Tuple[bool, int, str]:
+        """
+        使用故障转移机制发送POST请求
+        
+        Args:
+            path: API路径
+            json_data: 要发送的JSON数据
+            timeout: 超时时间（秒）
+            
+        Returns:
+            (是否成功, HTTP状态码, 响应文本)
+        """
+        endpoints = cls._get_endpoints(path)
+        last_error = None
+        
+        for i, endpoint in enumerate(endpoints):
+            try:
+                domain_type = "主域名" if i == 0 else "备用域名"
+                logger.debug(f'尝试使用{domain_type}: {endpoint}')
+                
+                response = requests.post(
+                    endpoint,
+                    json=json_data,
+                    timeout=timeout,
+                    headers={'Content-Type': 'application/json'}
+                )
+                
+                if response.status_code == 200:
+                    if i > 0:
+                        logger.info(f'✓ 使用{domain_type}请求成功')
+                    return True, response.status_code, response.text
+                else:
+                    logger.warning(f'{domain_type}返回错误状态: {response.status_code}')
+                    last_error = f'HTTP {response.status_code}'
+                    
+            except requests.exceptions.Timeout:
+                logger.warning(f'{domain_type if i > 0 else "主域名"}请求超时')
+                last_error = 'Timeout'
+            except requests.exceptions.RequestException as e:
+                logger.warning(f'{domain_type if i > 0 else "主域名"}请求失败: {e}')
+                last_error = str(e)
+            except Exception as e:
+                logger.warning(f'{domain_type if i > 0 else "主域名"}发生异常: {e}')
+                last_error = str(e)
+        
+        return False, 0, last_error or 'Unknown error'
+    
+    @classmethod
+    def _get_with_fallback(cls, path: str, params: Dict[str, Any] = None, timeout: int = 10) -> Tuple[bool, int, str]:
+        """
+        使用故障转移机制发送GET请求
+        
+        Args:
+            path: API路径
+            params: URL参数
+            timeout: 超时时间（秒）
+            
+        Returns:
+            (是否成功, HTTP状态码, 响应文本)
+        """
+        endpoints = cls._get_endpoints(path)
+        last_error = None
+        
+        for i, endpoint in enumerate(endpoints):
+            try:
+                domain_type = "主域名" if i == 0 else "备用域名"
+                logger.debug(f'尝试使用{domain_type}: {endpoint}')
+                
+                response = requests.get(
+                    endpoint,
+                    params=params,
+                    timeout=timeout
+                )
+                
+                if response.status_code == 200:
+                    if i > 0:
+                        logger.info(f'✓ 使用{domain_type}请求成功')
+                    return True, response.status_code, response.text
+                else:
+                    logger.warning(f'{domain_type}返回错误状态: {response.status_code}')
+                    last_error = f'HTTP {response.status_code}'
+                    
+            except requests.exceptions.Timeout:
+                logger.warning(f'{domain_type if i > 0 else "主域名"}请求超时')
+                last_error = 'Timeout'
+            except requests.exceptions.RequestException as e:
+                logger.warning(f'{domain_type if i > 0 else "主域名"}请求失败: {e}')
+                last_error = str(e)
+            except Exception as e:
+                logger.warning(f'{domain_type if i > 0 else "主域名"}发生异常: {e}')
+                last_error = str(e)
+        
+        return False, 0, last_error or 'Unknown error'
     
     @staticmethod
     def _submit_bug_log(content: str, log_type: str):
@@ -35,16 +153,16 @@ class ApiClient:
                 'log_content': content,
             }
             
-            response = requests.post(
-                ApiClient.BUG_LOG_ENDPOINT,
-                json=data,
+            success, status_code, response_text = ApiClient._post_with_fallback(
+                ApiClient.BUG_LOG_PATH,
+                data,
                 timeout=5
             )
             
-            if response.status_code == 200:
+            if success:
                 logger.info(f'Bug log submitted: {content[:50]}...')
             else:
-                logger.warning(f'Failed to submit bug log, status: {response.status_code}')
+                logger.warning(f'Failed to submit bug log: {response_text}')
         except Exception as e:
             logger.warning(f'Failed to submit bug log: {e}')
     
@@ -86,23 +204,17 @@ class ApiClient:
             logger.attr('akashi_encounters', data.get('akashi_encounters', 0))
             logger.attr('akashi_probability', f"{data.get('akashi_probability', 0):.2%}")
             
-            response = requests.post(
-                ApiClient.CL1_DATA_ENDPOINT,
-                json=data,
-                timeout=timeout,
-                headers={'Content-Type': 'application/json'}
+            success, status_code, response_text = ApiClient._post_with_fallback(
+                ApiClient.CL1_DATA_PATH,
+                data,
+                timeout=timeout
             )
             
-            if response.status_code == 200:
+            if success:
                 logger.info('✓ CL1 data submitted successfully')
             else:
-                logger.warning(f'✗ CL1 data submission failed: HTTP {response.status_code}')
-                logger.warning(f'Response: {response.text[:200]}')
+                logger.warning(f'✗ CL1 data submission failed: {response_text}')
         
-        except requests.exceptions.Timeout:
-            logger.warning(f'CL1 data submission timeout after {timeout}s')
-        except requests.exceptions.RequestException as e:
-            logger.warning(f'CL1 data submission failed: {e}')
         except Exception as e:
             logger.exception(f'Unexpected error during CL1 data submission: {e}')
     
@@ -120,3 +232,43 @@ class ApiClient:
             args=(data, timeout),
             daemon=True
         ).start()
+    
+    @classmethod
+    def get_announcement(cls, timeout: int = 10) -> Dict[str, Any]:
+        """
+        获取公告信息（同步）
+        
+        Args:
+            timeout: 请求超时时间（秒），默认10秒
+            
+        Returns:
+            公告数据字典，失败时返回空字典
+        """
+        import time
+        try:
+            # 添加时间戳参数以绕过缓存
+            timestamp = int(time.time())
+            params = {'t': timestamp}
+            
+            success, status_code, response_text = cls._get_with_fallback(
+                cls.ANNOUNCEMENT_PATH,
+                params=params,
+                timeout=timeout
+            )
+            
+            if success:
+                import json
+                data = json.loads(response_text)
+                if data and data.get('announcementId') and data.get('title') and data.get('content'):
+                    return data
+                else:
+                    logger.debug('Announcement data is incomplete')
+                    return {}
+            else:
+                logger.debug(f'Failed to get announcement: {response_text}')
+                return {}
+                
+        except Exception as e:
+            logger.debug(f'Failed to get announcement: {e}')
+            return {}
+
