@@ -8,11 +8,97 @@ from module.os_handler.action_point import ActionPointLimit
 
 
 class OpsiMeowfficerFarming(OSMap):
+    def _get_operation_coins_return_threshold(self):
+        """
+        Calculate the yellow coin return threshold for switching back to CL1.
+        
+        Returns:
+            tuple: (return_threshold, cl1_preserve) or (None, cl1_preserve) if disabled
+                - return_threshold: The threshold value, or None if check is disabled (value is 0)
+                - cl1_preserve: The CL1 preserve value (cached for reuse)
+        """
+        if not self.is_cl1_enabled:
+            return None, None
+        
+        # Get and cache CL1 preserve value
+        cl1_preserve = self.config.cross_get(
+            keys='OpsiHazard1Leveling.OpsiHazard1Leveling.OperationCoinsPreserve',
+            default=100000
+        )
+        
+        # Get OperationCoinsReturnThreshold
+        return_threshold_config = self.config.cross_get(
+            keys='OpsiMeowfficerFarming.OpsiMeowfficerFarming.OperationCoinsReturnThreshold',
+            default=None
+        )
+        
+        # If value is 0, disable yellow coin check
+        if return_threshold_config == 0:
+            return None, cl1_preserve
+        
+        # If value is None, use default (equal to cl1_preserve, resulting in 2x threshold)
+        if return_threshold_config is None:
+            return_threshold_config = cl1_preserve
+        
+        # Calculate final threshold: CL1 preserve + return threshold
+        return_threshold = cl1_preserve + return_threshold_config
+        
+        return return_threshold, cl1_preserve
+    
+    def _check_yellow_coins_and_return_to_cl1(self, context="循环中"):
+        """
+        Check if yellow coins are sufficient and return to CL1 if so.
+        
+        Args:
+            context: Context string for logging (e.g., "任务开始前", "循环中")
+        
+        Returns:
+            bool: True if returned to CL1, False otherwise
+        """
+        if not self.is_cl1_enabled:
+            return False
+        
+        return_threshold, cl1_preserve = self._get_operation_coins_return_threshold()
+        
+        # If check is disabled (return_threshold is None), skip
+        if return_threshold is None:
+            logger.debug('OperationCoinsReturnThreshold 为 0，跳过黄币检查')
+            return False
+        
+        yellow_coins = self.get_yellow_coins()
+        logger.info(f'【{context}黄币检查】黄币={yellow_coins}, 阈值={return_threshold}')
+        
+        if yellow_coins >= return_threshold:
+            logger.info(f'黄币充足 ({yellow_coins} >= {return_threshold})，切换回侵蚀1继续执行')
+            self.notify_push(
+                title="[Alas] 短猫相接 - 黄币充足",
+                content=f"黄币 {yellow_coins} 达到阈值 {return_threshold}\n切换回侵蚀1继续执行"
+            )
+            with self.config.multi_set():
+                # 禁用短猫任务的调度器，防止被重新调度
+                self.config.cross_set(keys='OpsiMeowfficerFarming.Scheduler.Enable', value=False)
+                self.config.task_call('OpsiHazard1Leveling')
+            self.config.task_stop()
+            return True
+        
+        return False
+    
     def os_meowfficer_farming(self):
         """
         Recommend 3 or 5 for higher meowfficer searching point per action points ratio.
         """
         logger.hr(f'OS meowfficer farming, hazard_level={self.config.OpsiMeowfficerFarming_HazardLevel}', level=1)
+        
+        # ===== 任务开始前黄币检查 =====
+        # 如果启用了CL1且黄币充足，直接返回CL1，不执行短猫
+        # 如果 OperationCoinsReturnThreshold 为 0，则禁用黄币检查，只使用行动力阈值控制
+        if self.is_cl1_enabled:
+            return_threshold, cl1_preserve = self._get_operation_coins_return_threshold()
+            if return_threshold is None:
+                logger.info('OperationCoinsReturnThreshold 为 0，禁用黄币检查，仅使用行动力阈值控制')
+            elif self._check_yellow_coins_and_return_to_cl1("任务开始前"):
+                return
+        
         if self.is_cl1_enabled and self.config.OpsiMeowfficerFarming_ActionPointPreserve < 500:
             logger.info('With CL1 leveling enabled, set action point preserve to 500')
             self.config.OpsiMeowfficerFarming_ActionPointPreserve = 500
@@ -55,8 +141,13 @@ class OpsiMeowfficerFarming(OSMap):
                 # When not running CL1 and use oil
                 keep_current_ap = True
                 check_rest_ap = True
-                if self.is_cl1_enabled and self.get_yellow_coins() >= self.config.OpsiHazard1Leveling_OperationCoinsPreserve:
-                    check_rest_ap = False
+                if self.is_cl1_enabled:
+                    return_threshold, _ = self._get_operation_coins_return_threshold()
+                    # 如果值为 0，跳过黄币检查
+                    if return_threshold is not None:
+                        yellow_coins = self.get_yellow_coins()
+                        if yellow_coins >= return_threshold:
+                            check_rest_ap = False
                 if not self.is_cl1_enabled and self.config.OpsiGeneral_BuyActionPointLimit > 0:
                     keep_current_ap = False
                 if self.is_cl1_enabled and self.cl1_enough_yellow_coins:
@@ -180,6 +271,12 @@ class OpsiMeowfficerFarming(OSMap):
                 #        logger.warning(f'重新进入目标海域失败: {e2}')
 
                 self.config.check_task_switch()
+                
+                # ===== 循环中黄币充足检查 =====
+                # 在每次循环后检查黄币是否充足，如果充足则返回侵蚀1
+                if self._check_yellow_coins_and_return_to_cl1("循环中"):
+                    return
+                
                 continue
 
             zones = self.zone_select(hazard_level=self.config.OpsiMeowfficerFarming_HazardLevel) \
@@ -196,3 +293,10 @@ class OpsiMeowfficerFarming(OSMap):
             self.run_auto_search()
             self.handle_after_auto_search()
             self.config.check_task_switch()
+            
+            # ===== 循环中黄币充足检查 =====
+            # 在每次循环后检查黄币是否充足，如果充足则返回侵蚀1
+            if self._check_yellow_coins_and_return_to_cl1("循环中"):
+                return
+            
+            continue

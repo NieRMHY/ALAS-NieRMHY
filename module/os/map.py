@@ -1195,6 +1195,8 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
                     self._solved_map_event.add('is_akashi')
                     return True
                 else:
+                    logger.info('无法到达明石位置，执行定点巡逻扫描')
+                    self._execute_fixed_patrol_scan(ExecuteFixedPatrolScan=True)
                     return False
             else:
                 logger.info(f'Akashi ({grid}) is near current fleet ({fleet})')

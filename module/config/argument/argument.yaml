@@ -1076,6 +1076,7 @@ OpsiMeowfficerFarming:
     value: 0
   StayInZone: false
   APPreserveUntilReset: false
+  OperationCoinsReturnThreshold: 30000
 OpsiHazard1Leveling:
   TargetZone:
     value: 0
