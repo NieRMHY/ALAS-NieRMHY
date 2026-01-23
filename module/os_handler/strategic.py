@@ -122,8 +122,11 @@ class StrategicSearchHandler(MapEventHandler):
             if self.is_in_map():
                 return True
 
-    def strategic_search_start(self):
+    def strategic_search_start(self, skip_first_screenshot=True):
         """
+        Args:
+            skip_first_screenshot (bool): Skip first screenshot or not
+
         Returns:
             If success.
 
