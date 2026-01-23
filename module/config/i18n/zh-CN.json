@@ -70,6 +70,10 @@
       "name": "活动通用",
       "help": ""
     },
+    "Coalition": {
+      "name": "光影风尚——拍摄进行时！",
+      "help": ""
+    },
     "Event": {
       "name": "活动图-1",
       "help": ""
@@ -86,8 +90,8 @@
       "name": "深谷来信",
       "help": ""
     },
-    "Coalition": {
-      "name": "光影风尚——拍摄进行时！",
+    "Coalition_DATEALANE": {
+      "name": "DATE A LANE",
       "help": ""
     },
     "MaritimeEscort": {
@@ -101,6 +105,10 @@
     "WarArchives": {
       "name": "作战档案",
       "help": "由于作战档案缺少维护，开荒功能不一定能正常使用，如果发现Alas运行异常，请手动完成开荒后使用自律寻敌功能"
+    },
+    "CoalitionSp": {
+      "name": "光影风尚——拍摄进行时！每日SP",
+      "help": ""
     },
     "EventA": {
       "name": "每日A图",
@@ -126,8 +134,8 @@
       "name": "共斗活动每日",
       "help": ""
     },
-    "CoalitionSp": {
-      "name": "光影风尚——拍摄进行时！每日SP",
+    "CoalitionSp_迷彩都市的寻踪者SP": {
+      "name": "迷彩都市的寻踪者SP",
       "help": ""
     },
     "Commission": {
@@ -1657,10 +1665,18 @@
     "Mode": {
       "name": "难度",
       "help": "SP图需要使用活动每日SP运行",
-      "easy": "简单",
-      "normal": "普通",
-      "hard": "困难",
-      "ex": "EX"
+      "area1-normal": "area1-normal",
+      "area1-hard": "area1-hard",
+      "area2-normal": "area2-normal",
+      "area2-hard": "area2-hard",
+      "area3-normal": "area3-normal",
+      "area3-hard": "area3-hard",
+      "area4-normal": "area4-normal",
+      "area4-hard": "area4-hard",
+      "area5-normal": "area5-normal",
+      "area5-hard": "area5-hard",
+      "area6-normal": "area6-normal",
+      "area6-hard": "area6-hard"
     },
     "Fleet": {
       "name": "出击队伍",
