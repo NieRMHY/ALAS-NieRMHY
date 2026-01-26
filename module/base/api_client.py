@@ -7,8 +7,6 @@ API 客户端模块
 import threading
 from typing import Any, Dict, List, Tuple
 
-import requests
-
 from module.base.device_id import get_device_id
 from module.logger import logger
 
@@ -19,6 +17,7 @@ class ApiClient:
     # 主域名和备用域名列表
     PRIMARY_DOMAIN = 'https://alas-apiv2.nanoda.work'
     FALLBACK_DOMAIN = 'https://alas-apiv2.xf-sama.xyz'
+    ENABLE_REPORT = False
     
     # API端点路径
     BUG_LOG_PATH = '/api/post/bug'
@@ -54,6 +53,12 @@ class ApiClient:
         Returns:
             (是否成功, HTTP状态码, 响应文本)
         """
+        if not cls.ENABLE_REPORT:
+            return False, 0, 'report disabled'
+        try:
+            import requests  # type: ignore
+        except Exception:
+            return False, 0, 'requests not available'
         endpoints = cls._get_endpoints(path)
         last_error = None
         
@@ -102,6 +107,12 @@ class ApiClient:
         Returns:
             (是否成功, HTTP状态码, 响应文本)
         """
+        if not cls.ENABLE_REPORT:
+            return False, 0, 'report disabled'
+        try:
+            import requests  # type: ignore
+        except Exception:
+            return False, 0, 'requests not available'
         endpoints = cls._get_endpoints(path)
         last_error = None
         
@@ -145,6 +156,8 @@ class ApiClient:
             content: 日志内容
             log_type: 日志类型
         """
+        if not ApiClient.ENABLE_REPORT:
+            return
         try:
             device_id = get_device_id()
             data = {
@@ -176,7 +189,7 @@ class ApiClient:
             log_type: 日志类型，默认为'warning'
             enabled: 是否启用上报，可传入 config.DropRecord_BugReport 配置值
         """
-        if not enabled:
+        if not enabled or not cls.ENABLE_REPORT:
             return
         threading.Thread(
             target=cls._submit_bug_log,
@@ -193,6 +206,8 @@ class ApiClient:
             data: 数据字典
             timeout: 超时时间（秒）
         """
+        if not ApiClient.ENABLE_REPORT:
+            return
         try:
             # 如果没有任何战斗数据,不提交
             if data.get('battle_count', 0) == 0:
@@ -227,6 +242,8 @@ class ApiClient:
             data: 包含device_id和统计数据的字典
             timeout: 请求超时时间（秒），默认10秒
         """
+        if not cls.ENABLE_REPORT:
+            return
         threading.Thread(
             target=cls._submit_cl1_data,
             args=(data, timeout),
@@ -244,6 +261,8 @@ class ApiClient:
         Returns:
             公告数据字典，失败时返回空字典
         """
+        if not cls.ENABLE_REPORT:
+            return {}
         import time
         try:
             # 添加时间戳参数以绕过缓存
