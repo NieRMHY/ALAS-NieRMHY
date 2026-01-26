@@ -198,26 +198,66 @@ class OpsiHazard1Leveling(OSMap):
                         self.config.task_delay(minute=60)
                         self.config.task_stop()
                     else:
-                        # 行动力充足，切换到短猫相接获取黄币
-                        logger.info(f'行动力充足 ({self._action_point_total}), 切换到短猫相接获取黄币')
+                        # 行动力充足，切换到黄币补充任务获取黄币
+                        logger.info(f'行动力充足 ({self._action_point_total}), 切换到黄币补充任务获取黄币')
                         _previous_coins_ap_insufficient = False
+                        
+                        # 收集可用的黄币补充任务（短猫、隐秘海域、深渊海域、塞壬要塞）
+                        # 智能调度功能要求：自动启用所有黄币补充任务
+                        all_coin_tasks = ['OpsiMeowfficerFarming', 'OpsiObscure', 'OpsiAbyssal', 'OpsiStronghold']
+                        task_names = {
+                            'OpsiMeowfficerFarming': '短猫相接',
+                            'OpsiObscure': '隐秘海域',
+                            'OpsiAbyssal': '深渊海域',
+                            'OpsiStronghold': '塞壬要塞'
+                        }
+                        
+                        # 自动启用所有黄币补充任务的调度器
+                        enabled_tasks = []
+                        auto_enabled_tasks = []
+                        with self.config.multi_set():
+                            for task in all_coin_tasks:
+                                if self.config.is_task_enabled(task):
+                                    enabled_tasks.append(task)
+                                    logger.info(f'黄币补充任务已启用: {task_names.get(task, task)}')
+                                else:
+                                    # 自动启用未启用的任务
+                                    logger.info(f'自动启用黄币补充任务: {task_names.get(task, task)}')
+                                    self.config.cross_set(keys=f'{task}.Scheduler.Enable', value=True)
+                                    auto_enabled_tasks.append(task)
+                        
+                        # 合并所有任务（已启用 + 自动启用）
+                        available_tasks = enabled_tasks + auto_enabled_tasks
+                        
+                        if auto_enabled_tasks:
+                            auto_enabled_names = '、'.join([task_names.get(task, task) for task in auto_enabled_tasks])
+                            logger.info(f'已自动启用以下黄币补充任务: {auto_enabled_names}')
+                        
+                        if not available_tasks:
+                            # 理论上不应该到达这里，因为我们已经自动启用了所有任务
+                            logger.error('无法启用任何黄币补充任务，这是一个错误状态')
+                            self.config.task_delay(minute=60)
+                            self.config.task_stop()
+                            self.config.OpsiHazard1_PreviousCoinsApInsufficient = _previous_coins_ap_insufficient
+                            return
+                        
+                        task_names_str = '、'.join([task_names.get(task, task) for task in available_tasks])
                         self.notify_push(
-                            title="[Alas] 侵蚀1 - 切换至短猫相接",
-                            content=f"黄币 {yellow_coins} 低于保留值 {self.config.OpsiHazard1Leveling_OperationCoinsPreserve}\n行动力: {self._action_point_total} (需要 {meow_ap_preserve})\n切换至短猫相接获取黄币"
+                            title="[Alas] 侵蚀1 - 切换至黄币补充任务",
+                            content=f"黄币 {yellow_coins} 低于保留值 {self.config.OpsiHazard1Leveling_OperationCoinsPreserve}\n行动力: {self._action_point_total} (需要 {meow_ap_preserve})\n切换至{task_names_str}获取黄币"
                         )
 
                         with self.config.multi_set():
                             cd = self.nearest_task_cooling_down
                             if cd is not None:
                                 # 有冷却任务时，同时延迟侵蚀1任务到冷却任务之后
-                                # 避免侵蚀1在短猫被延迟后立即再次运行导致无限循环
+                                # 避免侵蚀1在黄币补充任务被延迟后立即再次运行导致无限循环
                                 logger.info(f'有冷却任务 {cd.command}，延迟侵蚀1到 {cd.next_run}')
                                 self.config.task_delay(target=cd.next_run)
                             else:
-                                for task in ['OpsiAbyssal', 'OpsiStronghold', 'OpsiObscure']:
-                                    if self.config.is_task_enabled(task):
-                                        self.config.task_call(task)
-                            self.config.task_call('OpsiMeowfficerFarming')
+                                # 启用所有可用的黄币补充任务
+                                for task in available_tasks:
+                                    self.config.task_call(task)
                         self.config.task_stop()
                     self.config.OpsiHazard1_PreviousCoinsApInsufficient = _previous_coins_ap_insufficient
             else:

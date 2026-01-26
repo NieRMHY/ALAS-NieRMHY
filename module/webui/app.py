@@ -141,7 +141,12 @@ class AlasGUI(Frame):
     def initial(self) -> None:
         self.ALAS_MENU = read_file(filepath_args("menu", self.alas_mod))
         self.ALAS_ARGS = read_file(filepath_args("args", self.alas_mod))
+        self.ALAS_MENU = read_file(filepath_args("menu", self.alas_mod))
+        self.ALAS_ARGS = read_file(filepath_args("args", self.alas_mod))
         self._init_alas_config_watcher()
+
+        if self.theme == "apple":
+            add_css(filepath_css("apple-alas"))
 
     def __init__(self) -> None:
         super().__init__()
@@ -263,6 +268,9 @@ class AlasGUI(Frame):
         pywebio_theme = theme if theme in ("default", "dark", "light") else "dark"
         if theme == "socialism":
             pywebio_theme = "default"
+        if theme == "apple":
+            pywebio_theme = "default"
+
         webconfig(theme=pywebio_theme)
 
     @use_scope("menu", clear=True)
@@ -1897,6 +1905,7 @@ class AlasGUI(Frame):
                     {"label": "Dark", "value": "dark", "color": "dark"},
 
                     {"label": "新春 ", "value": "socialism", "color": "danger"},
+                    {"label": "Apple", "value": "apple", "color": "primary"},
                 ],
                 onclick=lambda t: set_theme(t),
             ).style("text-align: center")

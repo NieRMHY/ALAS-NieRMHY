@@ -70,10 +70,6 @@
       "name": "Event General",
       "help": ""
     },
-    "Coalition": {
-      "name": "Light & Shadow Fashion Shoot",
-      "help": ""
-    },
     "Event": {
       "name": "Event",
       "help": ""
@@ -88,6 +84,10 @@
     },
     "Hospital": {
       "name": "Valley Hospital",
+      "help": ""
+    },
+    "Coalition": {
+      "name": "Light & Shadow Fashion Shoot",
       "help": ""
     },
     "MaritimeEscort": {
@@ -1660,7 +1660,7 @@
       "easy": "easy",
       "normal": "normal",
       "hard": "hard",
-      "ex": "ex"
+      "sp": "sp"
     },
     "Fleet": {
       "name": "Fleet",
@@ -4263,10 +4263,6 @@
     "APPreserveUntilReset": {
       "name": "OpsiMeowfficerFarming.APPreserveUntilReset.name",
       "help": "OpsiMeowfficerFarming.APPreserveUntilReset.help"
-    },
-    "OperationCoinsReturnThreshold": {
-      "name": "OpsiMeowfficerFarming.OperationCoinsReturnThreshold.name",
-      "help": "OpsiMeowfficerFarming.OperationCoinsReturnThreshold.help"
     }
   },
   "OpsiHazard1Leveling": {
@@ -4338,6 +4334,10 @@
     "SirenBug_DailyCountRecord": {
       "name": "OpsiSirenBug.SirenBug_DailyCountRecord.name",
       "help": "OpsiSirenBug.SirenBug_DailyCountRecord.help"
+    },
+    "SirenBug_CountLimit": {
+      "name": "OpsiSirenBug.SirenBug_CountLimit.name",
+      "help": "OpsiSirenBug.SirenBug_CountLimit.help"
     }
   },
   "OpsiCheckLeveling": {
@@ -4370,6 +4370,10 @@
     "ActionPointNotifyLevels": {
       "name": "OpsiScheduling.ActionPointNotifyLevels.name",
       "help": "OpsiScheduling.ActionPointNotifyLevels.help"
+    },
+    "OperationCoinsReturnThreshold": {
+      "name": "OpsiScheduling.OperationCoinsReturnThreshold.name",
+      "help": "OpsiScheduling.OperationCoinsReturnThreshold.help"
     }
   },
   "IslandSeasonTask": {

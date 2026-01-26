@@ -70,10 +70,6 @@
       "name": "活动通用",
       "help": ""
     },
-    "Coalition": {
-      "name": "光影风尚——拍摄进行时！",
-      "help": ""
-    },
     "Event": {
       "name": "活动图-1",
       "help": ""
@@ -90,8 +86,8 @@
       "name": "深谷来信",
       "help": ""
     },
-    "Coalition_DATEALANE": {
-      "name": "DATE A LANE",
+    "Coalition": {
+      "name": "光影风尚——拍摄进行时！",
       "help": ""
     },
     "MaritimeEscort": {
@@ -132,10 +128,6 @@
     },
     "RaidDaily": {
       "name": "共斗活动每日",
-      "help": ""
-    },
-    "CoalitionSp_迷彩都市的寻踪者SP": {
-      "name": "迷彩都市的寻踪者SP",
       "help": ""
     },
     "Commission": {
@@ -966,7 +958,7 @@
       "coalition_20240627": "欢迎来到童心学院",
       "coalition_20250626": "迷彩都市的寻踪者",
       "coalition_20251120": "DATE A LANE",
-      "coalition_20260122": "光影风尚——拍摄进行时！",
+      "coalition_20260122": "光影风尚-拍摄进行时",
       "event_20200227_cn": "北境序曲",
       "event_20200312_cn": "复刻斯图尔特的硝烟",
       "event_20200326_cn": "微层混合",
@@ -1665,18 +1657,10 @@
     "Mode": {
       "name": "难度",
       "help": "SP图需要使用活动每日SP运行",
-      "area1-normal": "area1-normal",
-      "area1-hard": "area1-hard",
-      "area2-normal": "area2-normal",
-      "area2-hard": "area2-hard",
-      "area3-normal": "area3-normal",
-      "area3-hard": "area3-hard",
-      "area4-normal": "area4-normal",
-      "area4-hard": "area4-hard",
-      "area5-normal": "area5-normal",
-      "area5-hard": "area5-hard",
-      "area6-normal": "area6-normal",
-      "area6-hard": "area6-hard"
+      "easy": "easy",
+      "normal": "normal",
+      "hard": "hard",
+      "sp": "sp"
     },
     "Fleet": {
       "name": "出击队伍",
@@ -4279,10 +4263,6 @@
     "APPreserveUntilReset": {
       "name": "保留行动力直到月底",
       "help": "'保留 X 点行动力' 设置不会在大世界重置前几天减少\n注意：开启后只会在跨月每日任务中消耗这些行动力，未启用跨月每日任务时该设置无效，这意味着你需要手动使用这些行动力以获得更高的收益"
-    },
-    "OperationCoinsReturnThreshold": {
-      "name": "短猫需补充的黄币数",
-      "help": "CL1 黄币不足后，需要短猫相接补充多少黄币才返回侵蚀1\n计算公式：返回阈值 = 侵蚀1保留值 + 此值\n例如：侵蚀1保留值=100000，此值=50000，则短猫运行到黄币≥150000时返回CL1\n特殊值：填 0 表示禁用黄币检查，短猫只使用行动力阈值控制；填 null 表示使用默认值（等于侵蚀1保留值，最终阈值为2倍）"
     }
   },
   "OpsiHazard1Leveling": {
@@ -4354,6 +4334,10 @@
     "SirenBug_DailyCountRecord": {
       "name": "Bug次数记录时间(实验性)",
       "help": ""
+    },
+    "SirenBug_CountLimit": {
+      "name": "自动处理阈值(实验性)",
+      "help": "实验性功能，可能导致把塞壬研究装置刷没，刷没后果自负\n当利用Bug次数达到设置阈值时，使用当前舰队卡住敌舰并使用另一舰队收菜。设为0则不启用该功能"
     }
   },
   "OpsiCheckLeveling": {
@@ -4386,6 +4370,10 @@
     "ActionPointNotifyLevels": {
       "name": "行动力推送阈值",
       "help": "雪风大人提醒：行动力升至或降至这些阈值时会发送推送通知nanoda!\n使用逗号分隔多个阈值，例如: 500,1000,2000,3000\n注意：需要在 Alas - 错误处理 中配置推送通知才能生效"
+    },
+    "OperationCoinsReturnThreshold": {
+      "name": "黄币补充任务需补充的黄币数",
+      "help": "侵蚀1黄币不足后，需要短猫相接/隐秘海域/深渊海域/塞壬要塞补充多少黄币才返回侵蚀1\n计算公式：返回阈值 = 侵蚀1保留值 + 此值\n例如：侵蚀1保留值=100000，此值=50000，则任务运行到黄币≥150000时返回CL1\n特殊值：填 0 表示禁用黄币检查，任务只使用行动力阈值控制；填 null 表示使用默认值（等于侵蚀1保留值，最终阈值为2倍）\n此配置项同时应用于短猫相接、隐秘海域、深渊海域、塞壬要塞四个任务"
     }
   },
   "IslandSeasonTask": {

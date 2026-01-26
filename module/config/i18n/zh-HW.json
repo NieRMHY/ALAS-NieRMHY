@@ -102,6 +102,10 @@
       "name": "历史档案回溯",
       "help": "由于历史数据接口缺乏维护，自动开荒协议可能存在兼容性波动。如遇异常阻断，建议人工介入完成初始化，随后接管自律寻敌系统。"
     },
+    "CoalitionSp": {
+      "name": "特别寻踪行动 SP",
+      "help": ""
+    },
     "EventA": {
       "name": "周期作业 A区",
       "help": ""
@@ -124,10 +128,6 @@
     },
     "RaidDaily": {
       "name": "常态化共斗流",
-      "help": ""
-    },
-    "CoalitionSp": {
-      "name": "特别寻踪行动 SP",
       "help": ""
     },
     "Commission": {
@@ -1432,7 +1432,7 @@
       "easy": "easy",
       "normal": "normal",
       "hard": "hard",
-      "ex": "ex"
+      "sp": "sp"
     },
     "Fleet": {
       "name": "Coalition.Fleet.name",
@@ -4035,10 +4035,6 @@
     "APPreserveUntilReset": {
       "name": "OpsiMeowfficerFarming.APPreserveUntilReset.name",
       "help": "OpsiMeowfficerFarming.APPreserveUntilReset.help"
-    },
-    "OperationCoinsReturnThreshold": {
-      "name": "OpsiMeowfficerFarming.OperationCoinsReturnThreshold.name",
-      "help": "OpsiMeowfficerFarming.OperationCoinsReturnThreshold.help"
     }
   },
   "OpsiHazard1Leveling": {
@@ -4110,6 +4106,10 @@
     "SirenBug_DailyCountRecord": {
       "name": "OpsiSirenBug.SirenBug_DailyCountRecord.name",
       "help": "OpsiSirenBug.SirenBug_DailyCountRecord.help"
+    },
+    "SirenBug_CountLimit": {
+      "name": "OpsiSirenBug.SirenBug_CountLimit.name",
+      "help": "OpsiSirenBug.SirenBug_CountLimit.help"
     }
   },
   "OpsiCheckLeveling": {
@@ -4142,6 +4142,10 @@
     "ActionPointNotifyLevels": {
       "name": "OpsiScheduling.ActionPointNotifyLevels.name",
       "help": "OpsiScheduling.ActionPointNotifyLevels.help"
+    },
+    "OperationCoinsReturnThreshold": {
+      "name": "OpsiScheduling.OperationCoinsReturnThreshold.name",
+      "help": "OpsiScheduling.OperationCoinsReturnThreshold.help"
     }
   },
   "IslandSeasonTask": {

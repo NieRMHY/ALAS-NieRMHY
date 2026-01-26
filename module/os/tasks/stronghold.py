@@ -3,10 +3,12 @@ from module.logger import logger
 from module.os.fleet import BossFleet
 from module.os.map import OSMap
 from module.os_handler.assets import OS_SUBMARINE_EMPTY
+from module.os.tasks.coin_task_mixin import CoinTaskMixin
 from module.ui.page import page_os
 
 
-class OpsiStronghold(OSMap):
+class OpsiStronghold(CoinTaskMixin, OSMap):
+    
     def clear_stronghold(self):
         """
         Find a siren stronghold on globe map,
@@ -27,10 +29,10 @@ class OpsiStronghold(OSMap):
             self.globe_update()
             zone = self.find_siren_stronghold()
             if zone is None:
-                # No siren stronghold, delay next run to tomorrow.
+                # No siren stronghold - handle and try other tasks if needed
                 self.config.OpsiStronghold_HasStronghold = False
-                self.config.task_delay(server_update=True)
-                self.config.task_stop()
+                if self._handle_no_content_and_try_other_tasks('塞壬要塞', '塞壬要塞没有可执行内容'):
+                    return
 
         self.globe_enter(zone)
         self.zone_init()
@@ -44,10 +46,34 @@ class OpsiStronghold(OSMap):
                 self.globe_goto(self.zone_nearest_azur_port(self.zone))
         self.handle_fleet_repair_by_config(revert=False)
         self.handle_fleet_resolve(revert=False)
+        
+        # 检查是否还有更多要塞
+        self.os_map_goto_globe()
+        self.globe_update()
+        next_zone = self.find_siren_stronghold()
+        if next_zone is None:
+            # 没有更多要塞 - handle and try other tasks if needed
+            self.config.OpsiStronghold_HasStronghold = False
+            if self._handle_no_content_and_try_other_tasks('塞壬要塞', '塞壬要塞没有更多可执行内容'):
+                return
 
     def os_stronghold(self):
+        # ===== 任务开始前黄币检查 =====
+        # 如果启用了CL1且黄币充足，直接返回CL1，不执行塞壬要塞
+        if self.is_cl1_enabled:
+            return_threshold, cl1_preserve = self._get_operation_coins_return_threshold()
+            if return_threshold is None:
+                logger.info('OperationCoinsReturnThreshold 为 0，禁用黄币检查，仅使用行动力阈值控制')
+            elif self._check_yellow_coins_and_return_to_cl1("任务开始前", "塞壬要塞"):
+                return
+        
         while True:
             self.clear_stronghold()
+            # ===== 循环中黄币充足检查 =====
+            # 在每次循环后检查黄币是否充足，如果充足则返回侵蚀1
+            if self.is_cl1_enabled:
+                if self._check_yellow_coins_and_return_to_cl1("循环中", "塞壬要塞"):
+                    return
             self.config.check_task_switch()
 
     def os_sumbarine_empty(self):

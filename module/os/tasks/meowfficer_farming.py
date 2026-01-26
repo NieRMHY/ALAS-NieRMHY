@@ -5,83 +5,10 @@ from module.logger import logger
 from module.map.map_grids import SelectedGrids
 from module.os.map import OSMap
 from module.os_handler.action_point import ActionPointLimit
+from module.os.tasks.coin_task_mixin import CoinTaskMixin
 
 
-class OpsiMeowfficerFarming(OSMap):
-    def _get_operation_coins_return_threshold(self):
-        """
-        Calculate the yellow coin return threshold for switching back to CL1.
-        
-        Returns:
-            tuple: (return_threshold, cl1_preserve) or (None, cl1_preserve) if disabled
-                - return_threshold: The threshold value, or None if check is disabled (value is 0)
-                - cl1_preserve: The CL1 preserve value (cached for reuse)
-        """
-        if not self.is_cl1_enabled:
-            return None, None
-        
-        # Get and cache CL1 preserve value
-        cl1_preserve = self.config.cross_get(
-            keys='OpsiHazard1Leveling.OpsiHazard1Leveling.OperationCoinsPreserve',
-            default=100000
-        )
-        
-        # Get OperationCoinsReturnThreshold
-        return_threshold_config = self.config.cross_get(
-            keys='OpsiMeowfficerFarming.OpsiMeowfficerFarming.OperationCoinsReturnThreshold',
-            default=None
-        )
-        
-        # If value is 0, disable yellow coin check
-        if return_threshold_config == 0:
-            return None, cl1_preserve
-        
-        # If value is None, use default (equal to cl1_preserve, resulting in 2x threshold)
-        if return_threshold_config is None:
-            return_threshold_config = cl1_preserve
-        
-        # Calculate final threshold: CL1 preserve + return threshold
-        return_threshold = cl1_preserve + return_threshold_config
-        
-        return return_threshold, cl1_preserve
-    
-    def _check_yellow_coins_and_return_to_cl1(self, context="循环中"):
-        """
-        Check if yellow coins are sufficient and return to CL1 if so.
-        
-        Args:
-            context: Context string for logging (e.g., "任务开始前", "循环中")
-        
-        Returns:
-            bool: True if returned to CL1, False otherwise
-        """
-        if not self.is_cl1_enabled:
-            return False
-        
-        return_threshold, cl1_preserve = self._get_operation_coins_return_threshold()
-        
-        # If check is disabled (return_threshold is None), skip
-        if return_threshold is None:
-            logger.debug('OperationCoinsReturnThreshold 为 0，跳过黄币检查')
-            return False
-        
-        yellow_coins = self.get_yellow_coins()
-        logger.info(f'【{context}黄币检查】黄币={yellow_coins}, 阈值={return_threshold}')
-        
-        if yellow_coins >= return_threshold:
-            logger.info(f'黄币充足 ({yellow_coins} >= {return_threshold})，切换回侵蚀1继续执行')
-            self.notify_push(
-                title="[Alas] 短猫相接 - 黄币充足",
-                content=f"黄币 {yellow_coins} 达到阈值 {return_threshold}\n切换回侵蚀1继续执行"
-            )
-            with self.config.multi_set():
-                # 禁用短猫任务的调度器，防止被重新调度
-                self.config.cross_set(keys='OpsiMeowfficerFarming.Scheduler.Enable', value=False)
-                self.config.task_call('OpsiHazard1Leveling')
-            self.config.task_stop()
-            return True
-        
-        return False
+class OpsiMeowfficerFarming(CoinTaskMixin, OSMap):
     
     def os_meowfficer_farming(self):
         """
@@ -96,7 +23,7 @@ class OpsiMeowfficerFarming(OSMap):
             return_threshold, cl1_preserve = self._get_operation_coins_return_threshold()
             if return_threshold is None:
                 logger.info('OperationCoinsReturnThreshold 为 0，禁用黄币检查，仅使用行动力阈值控制')
-            elif self._check_yellow_coins_and_return_to_cl1("任务开始前"):
+            elif self._check_yellow_coins_and_return_to_cl1("任务开始前", "短猫相接"):
                 return
         
         if self.is_cl1_enabled and self.config.OpsiMeowfficerFarming_ActionPointPreserve < 500:
@@ -274,7 +201,7 @@ class OpsiMeowfficerFarming(OSMap):
                 
                 # ===== 循环中黄币充足检查 =====
                 # 在每次循环后检查黄币是否充足，如果充足则返回侵蚀1
-                if self._check_yellow_coins_and_return_to_cl1("循环中"):
+                if self._check_yellow_coins_and_return_to_cl1("循环中", "短猫相接"):
                     return
                 
                 continue

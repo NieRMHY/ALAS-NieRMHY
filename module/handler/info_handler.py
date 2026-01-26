@@ -453,9 +453,13 @@ class InfoHandler(ModuleBase):
                     
                     # 根据检测结果选择点击哪个选项
                     if is_siren_device:
-                        # 塞壬研究装置:点击第2个选项(索引1)
-                        select = options[1]
-                        logger.info(f'[Story] 点击塞壬研究装置第2个选项: {select.name}')
+                        if hasattr(self.config, '_disable_siren_research') and self.config._disable_siren_research:
+                            select = options[2]
+                            logger.info(f'[Story] 塞壬研究装置处理被禁用，点击第3个选项: {select.name}')
+                        else:
+                            # 塞壬研究装置:点击第2个选项(索引1)
+                            select = options[1]
+                            logger.info(f'[Story] 点击塞壬研究装置第2个选项: {select.name}')
                     else:
                         # 普通剧情:按配置的索引点击
                         try:

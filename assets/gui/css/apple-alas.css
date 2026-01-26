@@ -1,0 +1,290 @@
+/* Modern Apple Style Theme for Alas - Refined v2 */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+
+:root {
+    --alas-apple-bg: #f5f5f7;
+    --alas-apple-sidebar-translucent: rgba(245, 245, 247, 0.75);
+    --alas-apple-card-bg: #ffffff;
+    --alas-apple-text: #1d1d1f;
+    --alas-apple-text-secondary: #86868b;
+    --alas-apple-accent: #007aff; 
+    --alas-apple-accent-hover: #0071eb;
+    --alas-apple-border: rgba(0, 0, 0, 0.06); 
+    --alas-apple-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    --alas-apple-shadow-lg: 0 12px 24px rgba(0, 0, 0, 0.06);
+    --alas-font-stack: "SF Pro Text", "SF Pro Icons", "Helvetica Neue", "Helvetica", "Arial", sans-serif;
+    
+    /* Navigation Pill Colors */
+    --alas-nav-active-bg: rgba(0, 122, 255, 0.1);
+    --alas-nav-active-text: #007aff;
+}
+
+body {
+    background-color: var(--alas-apple-bg) !important;
+    font-family: var(--alas-font-stack) !important;
+    color: var(--alas-apple-text) !important;
+    -webkit-font-smoothing: antialiased;
+    letter-spacing: -0.01em;
+}
+
+/* ================= Sidebar (Glassmorphism) ================= */
+#pywebio-scope-aside {
+    background-color: var(--alas-apple-sidebar-translucent) !important;
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border-right: 1px solid rgba(0,0,0,0.05) !important;
+    padding-top: 16px !important;
+    /* Removed fixed width - let original CSS handle it */
+}
+
+#pywebio-scope-menu {
+    background-color: transparent !important; /* Merge visually with aside */
+    border-right: 1px solid rgba(0,0,0,0.05);
+    box-shadow: none !important;
+    padding-top: 16px !important;
+}
+
+/* ================= Header ================= */
+#pywebio-scope-header {
+    background-color: rgba(255, 255, 255, 0.8) !important;
+    backdrop-filter: blur(20px) saturate(180%);
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+    box-shadow: none !important;
+    height: 52px !important; /* Slimmer header */
+    z-index: 1000; 
+}
+
+/* ================= Content Area ================= */
+#pywebio-scope-content {
+    background-color: transparent !important;
+    padding: 32px 40px !important; /* More breathing room */
+}
+
+/* ================= Cards / Groups ================= */
+[id^="pywebio-scope-group_"], 
+#pywebio-scope-running, 
+#pywebio-scope-pending, 
+#pywebio-scope-waiting, 
+#pywebio-scope-log-bar, 
+#pywebio-scope-log,
+.container-log {
+    background-color: var(--alas-apple-card-bg) !important;
+    border-radius: 16px !important; /* Larger radius */
+    border: 1px solid var(--alas-apple-border) !important;
+    box-shadow: var(--alas-apple-shadow);
+    padding: 24px !important;
+    margin-bottom: 24px !important;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* ================= Buttons ================= */
+/* Exclude .btn-aside and .btn-menu to preserve sidebar layout */
+.btn:not(.btn-aside):not(.btn-menu) {
+    border-radius: 8px !important;
+    font-weight: 500 !important;
+    font-size: 13px !important;
+    transition: all 0.2s cubic-bezier(0.25, 0.1, 0.25, 1);
+    border: none !important;
+    box-shadow: none !important;
+    padding: 6px 14px !important;
+}
+
+/* Primary Button (Apple Blue) */
+.btn-primary {
+    background-color: var(--alas-apple-accent) !important;
+    color: white !important;
+}
+
+.btn-primary:active {
+    transform: scale(0.96);
+    opacity: 0.9;
+}
+
+.btn-primary:hover {
+    background-color: var(--alas-apple-accent-hover) !important;
+    box-shadow: 0 4px 10px rgba(0, 122, 255, 0.25) !important;
+}
+
+/* Secondary Button (Standard Gray) */
+.btn-secondary, .btn-light {
+    background-color: rgba(0, 0, 0, 0.05) !important;
+    color: var(--alas-apple-text) !important;
+}
+
+.btn-secondary:hover, .btn-light:hover {
+    background-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+/* ================= Navigation Pills (Sidebar Icons) ================= */
+/* Aside Icon Buttons - MINIMAL OVERRIDES (preserve original layout) */
+.btn-aside:hover,
+.btn-aside-active {
+    border-color: var(--alas-apple-accent) !important;
+    color: var(--alas-apple-accent) !important;
+}
+
+/* ================= Menu List (Secondary Sidebar) ================= */
+.btn-menu {
+    border-radius: 8px !important;
+    margin: 2px 12px !important;
+    padding: 8px 12px !important;
+    color: var(--alas-apple-text) !important;
+    border: none !important;
+    background-color: transparent !important;
+    text-align: left !important;
+    width: calc(100% - 24px) !important; /* Adjust for margins */
+    display: block !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+}
+
+.btn-menu:hover {
+    background-color: rgba(0, 0, 0, 0.04) !important;
+}
+
+/* Active Menu Item */
+.btn-menu-active {
+    background-color: var(--alas-apple-accent) !important;
+    color: white !important;
+    font-weight: 600 !important;
+    box-shadow: 0 2px 5px rgba(0, 122, 255, 0.2) !important;
+    border-left: none !important;
+}
+
+.btn-menu-active:hover {
+    background-color: var(--alas-apple-accent) !important;
+}
+
+/* Category Headers (Summary) */
+details > summary {
+    color: #6e6e73 !important; /* Darker grey */
+    font-size: 13px !important; /* Increased from 11px */
+    font-weight: 600 !important;
+    text-transform: none !important; /* Remove uppercase for better readability */
+    letter-spacing: normal !important;
+    padding: 14px 16px 6px 16px !important;
+    margin: 0 !important;
+    list-style: none !important;
+    cursor: default;
+    user-select: none;
+}
+
+details > summary:hover {
+    color: #1d1d1f !important;
+}
+
+details > summary::-webkit-details-marker {
+    display: none !important;
+}
+
+/* ================= Menu List Items ================= */
+.btn-menu {
+    border-radius: 8px !important;
+    margin: 2px 8px !important;
+    padding: 8px 12px !important;
+    color: #1d1d1f !important; /* Darker black for better contrast */
+    border: none !important;
+    background-color: transparent !important;
+    text-align: left !important;
+    width: calc(100% - 16px) !important;
+    display: block !important;
+    font-size: 14px !important; /* Increased from 13px */
+    font-weight: 500 !important;
+    transition: all 0.1s ease;
+}
+
+/* Indent items inside expanded details */
+details .btn-menu {
+    margin-left: 16px !important; 
+    width: calc(100% - 24px) !important;
+    font-size: 14px !important;
+    color: #424245 !important; /* Slightly softer for sub-items */
+}
+
+/* Hover State */
+.btn-menu:hover {
+    background-color: rgba(0, 0, 0, 0.05) !important;
+}
+
+/* Active Menu Item (Solid Blue Pill) */
+.btn-menu-active {
+    background-color: #007aff !important; /* Solid vibrant blue */
+    color: white !important; /* White text */
+    font-weight: 600 !important;
+    box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3) !important;
+}
+
+.btn-menu-active:hover {
+    background-color: #007aff !important;
+    color: white !important;
+}
+
+/* Fix for sub-items inheriting active text color if needed */
+details .btn-menu-active {
+    color: white !important;
+}
+
+/* ================= Typography & Headers ================= */
+h1, h2, h3, h4, h5, h6 {
+    font-weight: 600 !important;
+    color: var(--alas-apple-text);
+    margin-bottom: 16px !important;
+}
+
+.hr-task-group-text {
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    color: #86868b !important;
+    text-transform: uppercase;  
+    letter-spacing: 0.02em;
+    margin-top: 24px !important;
+    margin-bottom: 8px !important;
+}
+
+.hr-task-group-line {
+    border-top: 1px solid rgba(0,0,0,0.08) !important;
+}
+
+/* ================= Inputs ================= */
+.form-control, select, input {
+    border-radius: 8px !important;
+    border: 1px solid #d1d1d6 !important;
+    background-color: #ffffff !important;
+    padding: 6px 10px !important;
+    font-size: 13px !important;
+    color: var(--alas-apple-text) !important;
+    box-shadow: none !important;
+}
+
+.form-control:focus, select:focus, input:focus {
+    border-color: var(--alas-apple-accent) !important;
+    box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.15) !important;
+    outline: none !important;
+}
+
+/* ================= Logs ================= */
+#pywebio-scope-log {
+    font-family: "SF Mono", "Menlo", "Monaco", "Courier New", monospace !important;
+    font-size: 12px !important;
+    background-color: #fafafa !important;
+    border: 1px solid rgba(0,0,0,0.06) !important;
+    border-radius: 12px !important;
+    padding: 16px !important;
+    color: #424245 !important;
+    line-height: 1.5;
+}
+
+/* ================= Scheduler Bar ================= */
+#pywebio-scope-scheduler-bar {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+}
+
+/* Fix "Overview" button color in menu if it uses bespoke coloring */
+button[style*="--menu-Overview--"] {
+    /* Target via attribute selector if class isn't sufficient */
+    border-left: none !important;
+}

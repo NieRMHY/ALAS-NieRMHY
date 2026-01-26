@@ -264,7 +264,7 @@ class GeneratedConfig:
     MaritimeEscort_Enable = True
 
     # Group `Coalition`
-    Coalition_Mode = 'hard'  # easy, normal, hard, ex
+    Coalition_Mode = 'hard'  # easy, normal, hard, sp
     Coalition_Fleet = 'single'  # single, multi
 
     # Group `EventShop`
@@ -674,7 +674,6 @@ class GeneratedConfig:
     OpsiMeowfficerFarming_TargetZone = 0
     OpsiMeowfficerFarming_StayInZone = False
     OpsiMeowfficerFarming_APPreserveUntilReset = False
-    OpsiMeowfficerFarming_OperationCoinsReturnThreshold = 30000
 
     # Group `OpsiHazard1Leveling`
     OpsiHazard1Leveling_TargetZone = 0  # 0, 44, 22
@@ -692,6 +691,7 @@ class GeneratedConfig:
     OpsiSirenBug_DisableTaskSwitchDuringBug = False  # True, False
     OpsiSirenBug_SirenBug_DailyCount = 0
     OpsiSirenBug_SirenBug_DailyCountRecord = datetime.datetime(2020, 1, 1, 0, 0)
+    OpsiSirenBug_SirenBug_CountLimit = 0
 
     # Group `OpsiCheckLeveling`
     OpsiCheckLeveling_TargetLevel = 0
@@ -701,6 +701,7 @@ class GeneratedConfig:
     # Group `OpsiScheduling`
     OpsiScheduling_EnableSmartScheduling = False
     OpsiScheduling_ActionPointNotifyLevels = '500,1000,2000,3000'
+    OpsiScheduling_OperationCoinsReturnThreshold = 30000
 
     # Group `IslandSeasonTask`
     IslandSeasonTask_TaskDict = None

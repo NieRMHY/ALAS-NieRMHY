@@ -441,7 +441,7 @@ MaritimeEscort:
 Coalition:
   Mode:
     value: hard
-    option: [easy, normal, hard, ex]
+    option: [ easy, normal, hard, sp ]
   Fleet:
     value: single
     option: [ single, multi ]
@@ -1076,7 +1076,6 @@ OpsiMeowfficerFarming:
     value: 0
   StayInZone: false
   APPreserveUntilReset: false
-  OperationCoinsReturnThreshold: 30000
 OpsiHazard1Leveling:
   TargetZone:
     value: 0
@@ -1100,6 +1099,7 @@ OpsiSirenBug:
     option: [true, false]
   SirenBug_DailyCount: 0
   SirenBug_DailyCountRecord: 2020-01-01 00:00:00
+  SirenBug_CountLimit: 0
 
 OpsiCheckLeveling:
   TargetLevel: 0
@@ -1110,6 +1110,7 @@ OpsiScheduling:
   ActionPointNotifyLevels:
     value: "500,1000,2000,3000"
     valuetype: str
+  OperationCoinsReturnThreshold: 30000
 
 # =================== Island ====================
 IslandSeasonTask:

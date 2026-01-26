@@ -1,9 +1,10 @@
 **| [英語](README_en.md) | [中国語](README.md) | 日本語 |**
-
+1
 
 # AzurLaneAutoScript
 
-#### Discord [![](https://img.shields.io/discord/720789890354249748?logo=discord&logoColor=ffffff&color=4e4c97)](https://discord.gg/AQN6GeJ) QQグループ  ![](https://img.shields.io/badge/QQ%20Group-1087735381-4e4c97)
+#### Discord [![](https://img.shields.io/discord/720789890354249748?logo=discord&logoColor=ffffff&color=4e4c97)](https://discord.gg/AQN6GeJ) QQグループ ![](https://img.shields.io/badge/QQ%20Group-1087735381-4e4c97)
+
 Azur Lane bot with GUI (Supports CN, EN, JP, TW, able to support other servers), designed for 24/7 running scenes, can take over almost all Azur Lane gameplay. Azur Lane, as a mobile game, has entered the late stage of its life cycle. During the period from now to the server down, please reduce the time spent on the Azur Lane and leave everything to Alas.
 
 Alas is a free open source software, link: https://github.com/LmeSzinc/AzurLaneAutoScript
@@ -26,8 +27,6 @@ GUI development, thanks **[@18870](https://github.com/18870)** , say HURRAY.
 これはGUIプレビュー画像の一枚である：
 ![gui](https://raw.githubusercontent.com/LmeSzinc/AzurLaneAutoScript/master/doc/README.assets/gui.png)
 
-
-
 ## 機能 Features
 
 - **出撃**：通常海域、イベント海域、チャレンジイベントなどの自動攻略。
@@ -42,8 +41,6 @@ GUI development, thanks **[@18870](https://github.com/18870)** , say HURRAY.
 - **セイレーン作戦**：日課任務、ショップ購入、毎月海域攻略などゲーム内全システム操作一括完成。
 - **毎月セイレーン作戦海域攻略**：作戦記録（5000石油のアイテム）なくでも全地図自動攻略できる。
 
-
-
 ## インストール Installation [![](https://img.shields.io/github/downloads/LmeSzinc/AzurLaneAutoScript/total?color=4e4c97)](https://github.com/LmeSzinc/AzurLaneAutoScript/releases)
 
 [インストールする方法（中国語）](https://github.com/LmeSzinc/AzurLaneAutoScript/wiki/Installation_cn)
@@ -51,7 +48,6 @@ GUI development, thanks **[@18870](https://github.com/18870)** , say HURRAY.
 [インストールする方法（英語）](https://github.com/LmeSzinc/AzurLaneAutoScript/wiki/Installation_en)日本語はいまだ未翻訳の状態です。
 
 [設備対応ドキュメント](https://github.com/LmeSzinc/AzurLaneAutoScript/wiki/Emulator_cn)様々な設備とエミュレータで、アズールレーンとAlasを実行ようにの説明ドキュメント。（今は中国語しかありません）
-
 
 ## スケジューラープログラムを正しく使ってください
 
@@ -76,29 +72,28 @@ GUI development, thanks **[@18870](https://github.com/18870)** , say HURRAY.
 
 メイン画面⇒右下の「設定」⇒上から二つ目の「設定」：
 
-
-| 設定名                           | 設定値   |
-| ----------------------------------- | ---- |
-| フレーム                           | 60FPS |
-| セイレーン作戦・TB案内軽量化          | ON   |
-| セイレーン作戦・自動攻略ｱｲﾃﾑ自動使用  |  ON  |
-| セイレーン作戦・エリア自動攻略 | OFF   |
-| ストーリー自動送り                     | ON |
-| オートページ送りスピード                | 非常に速い |
+| 設定名                               | 設定値     |
+| ------------------------------------ | ---------- |
+| フレーム                             | 60FPS      |
+| セイレーン作戦・TB案内軽量化         | ON         |
+| セイレーン作戦・自動攻略ｱｲﾃﾑ自動使用 | ON         |
+| セイレーン作戦・エリア自動攻略       | OFF        |
+| ストーリー自動送り                   | ON         |
+| オートページ送りスピード             | 非常に速い |
 
 セイレーン作戦⇒ナビゲーション⇒オーダー⇒潜水支援
-| 設定名                                                 | 設定値               |
+| 設定名 | 設定値 |
 | -------------------------------------------------------- | ---------------- |
-| 潜水支援は行動力消費はX  |　使用しない　|
+| 潜水支援は行動力消費はX |　使用しない　|
 
 メイン⇒下の建造⇒退役⇒左の歯車⇒一括退役設定：
 
-| 設定名                                                | 設定値               |
-| -------------------------------------------------------- | ---------------- |
-| 優先選択対象1                                              | R                |
-| 優先選択対象2                                              | SR               |
-| 優先選択対象3                                              | N                |
-| 3回限界突破を行った艦船を所持している場合、その艦船と同名の艦船は | 全部選択する           |
+| 設定名                                                              | 設定値                                         |
+| ------------------------------------------------------------------- | ---------------------------------------------- |
+| 優先選択対象1                                                       | R                                              |
+| 優先選択対象2                                                       | SR                                             |
+| 優先選択対象3                                                       | N                                              |
+| 3回限界突破を行った艦船を所持している場合、その艦船と同名の艦船は   | 全部選択する                                   |
 | 3回限界突破を行った艦船を所持していない場合、その艦船と同名の艦船は | 限界突破分を残して選択する、あるいは選択しない |
 
 艦船の装備外装を削除して、画像認識に影響を与えないようにしてください。
@@ -112,8 +107,6 @@ GUI development, thanks **[@18870](https://github.com/18870)** , say HURRAY.
 - Alasのアップデータと最新commitをチェックして、お使いのAlasは最新版と確保してください。
 - ディレクトリ`log/error`の中では、時間順で保存されているログフィールド（中身はlog.txtと当時のスクリーンショット）が入っています。それを質問をする際に、issuesと共に提出してください。
 
-
-
 ## 今存在している問題 Known Issues
 
 - **ネット環境によるエラーを処理できません**エラーダイアログの自動処理ができませんのため、その時はスクリプト停止となります。
@@ -122,13 +115,9 @@ GUI development, thanks **[@18870](https://github.com/18870)** , say HURRAY.
 - **ADBとuiautomator2が作動しない状況はごくまれに発生します**この状況なら普通エミュレータを再起動すれば解決します。
 - **一部の状況でエミュレータでのフリック操作はクリック操作と認識されます**
 
-
-
 ## Alas コミュニティールール Alas Community Guidelines
 
 [#1416](https://github.com/LmeSzinc/AzurLaneAutoScript/issues/1416)でご参照ください。
-
-
 
 ## ドキュメント Documents
 
@@ -147,16 +136,12 @@ GUI development, thanks **[@18870](https://github.com/18870)** , say HURRAY.
 
 [WIKI](https://github.com/LmeSzinc/AzurLaneAutoScript/wiki)で全てのドキュメントを読めます。
 
-
-
 ## 開発にお手伝 Join Development
 
 現在、Alasはまだ開発し続いている。私たちは未来の開発方向を不定期に[Issues](https://github.com/LmeSzinc/AzurLaneAutoScript/issues?q=is%3Aopen+is%3Aissue+label%3A%22help+wanted%22)に発表して、`help wanted`と表記します。
 ですので、皆さんからAlasに[Pull Requests](https://github.com/LmeSzinc/AzurLaneAutoScript/pulls)を提出することが歓迎しています。私たちは必ず提出してくれる方々のコートを行列ごとにきちんと読んで分析します。
 
 勿論、[開発ドキュメント](https://github.com/LmeSzinc/AzurLaneAutoScript/wiki/1.-Start)を読むことを忘れないでね。
-
-
 
 ## 関連プロジェクト Relative Repositories
 
@@ -167,10 +152,7 @@ GUI development, thanks **[@18870](https://github.com/18870)** , say HURRAY.
 - [PyWebIO](https://github.com/pywebio/PyWebIO)：Alasに使われているGUIクラス。
 - [MaaAssistantArknights](https://github.com/MaaAssistantArknights/MaaAssistantArknights)：ゲームアークナイトのスクリプト、ゲーム日課を自動的に一括完成できる。 -> [MAAプラグインの使い方](https://github.com/LmeSzinc/AzurLaneAutoScript/wiki/submodule_maa_cn)
 
-
-
 ## お問い合わせ Contact Us
 
 - Discord: [https://discord.gg/AQN6GeJ](https://discord.gg/AQN6GeJ)
 - Bilibili 生放送：https://live.bilibili.com/22216705
-

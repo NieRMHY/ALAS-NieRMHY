@@ -1,9 +1,11 @@
 from module.config.utils import get_os_reset_remain
 from module.logger import logger
 from module.os.map import OSMap
+from module.os.tasks.coin_task_mixin import CoinTaskMixin
 
 
-class OpsiObscure(OSMap):
+class OpsiObscure(CoinTaskMixin, OSMap):
+    
     def clear_obscure(self):
         """
         Raises:
@@ -17,13 +19,9 @@ class OpsiObscure(OSMap):
         result = self.storage_get_next_item('OBSCURE', use_logger=self.config.OpsiGeneral_UseLogger,
                                             skip_obscure_hazard_2=self.config.OpsiObscure_SkipHazard2Obscure)
         if not result:
-            # No obscure coordinates, delay next run to tomorrow.
-            if get_os_reset_remain() > 0:
-                self.config.task_delay(server_update=True)
-            else:
-                logger.info('Just less than 1 day to OpSi reset, delay 2.5 hours')
-                self.config.task_delay(minute=150, server_update=True)
-            self.config.task_stop()
+            # No obscure coordinates - handle and try other tasks if needed
+            if self._handle_no_content_and_try_other_tasks('隐秘海域', '隐秘海域没有可执行内容'):
+                return
 
         self.config.override(
             OpsiGeneral_DoRandomMapEvent=False,
@@ -41,10 +39,28 @@ class OpsiObscure(OSMap):
         self.handle_after_auto_search()
 
     def os_obscure(self):
+        # ===== 任务开始前黄币检查 =====
+        # 如果启用了CL1且黄币充足，直接返回CL1，不执行隐秘海域
+        if self.is_cl1_enabled:
+            return_threshold, cl1_preserve = self._get_operation_coins_return_threshold()
+            if return_threshold is None:
+                logger.info('OperationCoinsReturnThreshold 为 0，禁用黄币检查，仅使用行动力阈值控制')
+            elif self._check_yellow_coins_and_return_to_cl1("任务开始前", "隐秘海域"):
+                return
+        
         while True:
             self.clear_obscure()
-            if self.config.OpsiObscure_ForceRun:
-                self.config.check_task_switch()
-                continue
-            else:
+            # ===== 循环中黄币充足检查 =====
+            # 在每次循环后检查黄币是否充足，如果充足则返回侵蚀1
+            if self.is_cl1_enabled:
+                if self._check_yellow_coins_and_return_to_cl1("循环中", "隐秘海域"):
+                    return
+            
+            # 如果 ForceRun=False，任务完成后禁用任务
+            if not self.config.OpsiObscure_ForceRun:
+                logger.info('隐秘海域任务完成，禁用任务')
+                self.config.cross_set(keys='OpsiObscure.Scheduler.Enable', value=False)
                 break
+            
+            self.config.check_task_switch()
+            continue
