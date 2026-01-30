@@ -177,7 +177,7 @@ class Coalition(CoalitionCombat, CampaignEvent):
             self.coalition_map_exit(event)
             raise
 
-        if self.triggered_stop_condition(oil_check=True):
+        if self._coalition_has_oil_icon and self.triggered_stop_condition(oil_check=True):
             self.coalition_map_exit(event)
             raise ScriptEnd
 
@@ -224,6 +224,7 @@ class Coalition(CoalitionCombat, CampaignEvent):
             self.device.stuck_record_clear()
             self.device.click_record_clear()
             self.ui_goto_coalition()
+            self.disable_event_on_raid()
             self.coalition_ensure_mode(event, 'battle')
 
             # End

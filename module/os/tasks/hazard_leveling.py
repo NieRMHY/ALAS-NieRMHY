@@ -202,9 +202,21 @@ class OpsiHazard1Leveling(OSMap):
                         logger.info(f'行动力充足 ({self._action_point_total}), 切换到黄币补充任务获取黄币')
                         _previous_coins_ap_insufficient = False
                         
-                        # 收集可用的黄币补充任务（短猫、隐秘海域、深渊海域、塞壬要塞）
-                        # 智能调度功能要求：自动启用所有黄币补充任务
-                        all_coin_tasks = ['OpsiMeowfficerFarming', 'OpsiObscure', 'OpsiAbyssal', 'OpsiStronghold']
+                        # 检查黄币阈值适用范围配置
+                        # 如果关闭，只启用短猫相接；如果开启，启用所有黄币补充任务
+                        apply_to_all = self.config.cross_get(
+                            keys='OpsiHazard1Leveling.OpsiScheduling.OperationCoinsReturnThresholdApplyToAllCoinTasks',
+                            default=None
+                        )
+                        # 如果cross_get返回None，尝试直接属性访问
+                        if apply_to_all is None:
+                            if hasattr(self.config, 'OpsiScheduling_OperationCoinsReturnThresholdApplyToAllCoinTasks'):
+                                apply_to_all = self.config.OpsiScheduling_OperationCoinsReturnThresholdApplyToAllCoinTasks
+                            else:
+                                # 如果属性也不存在，使用默认值True
+                                apply_to_all = True
+                        logger.info(f'【智能调度】黄币阈值适用范围配置读取: {apply_to_all}')
+                        
                         task_names = {
                             'OpsiMeowfficerFarming': '短猫相接',
                             'OpsiObscure': '隐秘海域',
@@ -212,7 +224,17 @@ class OpsiHazard1Leveling(OSMap):
                             'OpsiStronghold': '塞壬要塞'
                         }
                         
-                        # 自动启用所有黄币补充任务的调度器
+                        # 根据配置决定启用哪些任务
+                        if apply_to_all:
+                            # 开启：启用所有黄币补充任务（短猫、隐秘海域、深渊海域、塞壬要塞）
+                            all_coin_tasks = ['OpsiMeowfficerFarming', 'OpsiObscure', 'OpsiAbyssal', 'OpsiStronghold']
+                            logger.info('黄币阈值适用范围：四任务，将启用所有黄币补充任务')
+                        else:
+                            # 关闭：仅启用短猫相接
+                            all_coin_tasks = ['OpsiMeowfficerFarming']
+                            logger.info('黄币阈值适用范围：仅短猫，将只启用短猫相接任务')
+                        
+                        # 自动启用黄币补充任务的调度器
                         enabled_tasks = []
                         auto_enabled_tasks = []
                         with self.config.multi_set():
@@ -248,16 +270,16 @@ class OpsiHazard1Leveling(OSMap):
                         )
 
                         with self.config.multi_set():
+                            # 启用所有可用的黄币补充任务
+                            for task in available_tasks:
+                                self.config.task_call(task)
+                            
                             cd = self.nearest_task_cooling_down
                             if cd is not None:
                                 # 有冷却任务时，同时延迟侵蚀1任务到冷却任务之后
                                 # 避免侵蚀1在黄币补充任务被延迟后立即再次运行导致无限循环
                                 logger.info(f'有冷却任务 {cd.command}，延迟侵蚀1到 {cd.next_run}')
                                 self.config.task_delay(target=cd.next_run)
-                            else:
-                                # 启用所有可用的黄币补充任务
-                                for task in available_tasks:
-                                    self.config.task_call(task)
                         self.config.task_stop()
                     self.config.OpsiHazard1_PreviousCoinsApInsufficient = _previous_coins_ap_insufficient
             else:
@@ -323,7 +345,13 @@ class OpsiHazard1Leveling(OSMap):
             search_completed = self.run_strategic_search()
 
             # 只有战略搜索正常完成时才执行重扫（被中断时不执行）
-            if search_completed:
+            # [Antigravity Fix] 即使 search_completed 为 False ()，
+            # 也尝试后续的重扫和定点巡逻，以确保任务不被跳过。
+            if True: 
+                if not search_completed and search_completed is not None:
+                    # search_completed could be None if run_strategic_search returns nothing (though it returns bool)
+                     logger.warning("Strategic search returned False, but proceeding with rescan/patrol anyway.")
+
                 # ===== 第一次重扫：战略搜索后的完整镜头重扫 =====
                 self._solved_map_event = set()
                 self._solved_fleet_mechanism = False

@@ -12,7 +12,7 @@ import re
 from datetime import datetime, timedelta
 from pathlib import Path
 from functools import partial
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any
 
 # Import fake module before import pywebio to avoid importing unnecessary module PIL
 from module.webui.fake_pil_module import import_fake_pil_module
@@ -44,7 +44,7 @@ from pywebio.output import (
     use_scope,
 )
 from pywebio.pin import pin, pin_on_change
-from pywebio.session import download, go_app, info, local, register_thread, run_js, set_env
+from pywebio.session import download, go_app, info, local, register_thread, run_js, set_env, eval_js
 
 import module.webui.lang as lang
 from module.config.config import AzurLaneConfig, Function
@@ -2145,7 +2145,7 @@ class AlasGUI(Frame):
                 return shown.indexOf(announcementId) !== -1;
             };
 
-            window.alasShowAnnouncement = function(title, content, announcementId) {
+            window.alasShowAnnouncement = function(title, content, announcementId, url) {
                 if (window.alasHasBeenShown(announcementId) || document.getElementById('alas-announcement-modal')) {
                     return;
                 }
@@ -2157,32 +2157,53 @@ class AlasGUI(Frame):
 
                 // Create modal content
                 var modal = document.createElement('div');
-                modal.style.cssText = 'background:#fff;border-radius:12px;padding:24px;max-width:500px;width:90%;max-height:80vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,0.3);';
+                var isWeb = !!url;
+                
+                if (isWeb) {
+                    // Web page style: larger, fixed height
+                    modal.style.cssText = 'background:#fff;border-radius:12px;padding:16px;width:95%;max-width:1200px;height:85vh;display:flex;flex-direction:column;box-shadow:0 8px 32px rgba(0,0,0,0.3);';
+                } else {
+                    // Text style: automatic height, narrower
+                    modal.style.cssText = 'background:#fff;border-radius:12px;padding:24px;max-width:500px;width:90%;max-height:80vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,0.3);';
+                }
 
                 // Title
                 var titleEl = document.createElement('h3');
                 titleEl.textContent = title;
-                titleEl.style.cssText = 'margin:0 0 16px 0;font-size:1.25rem;color:#333;border-bottom:2px solid #4fc3f7;padding-bottom:8px;';
+                titleEl.style.cssText = 'margin:0 0 12px 0;font-size:1.25rem;color:#333;border-bottom:2px solid #4fc3f7;padding-bottom:8px;flex-shrink:0;';
 
-                // Content
-                var contentEl = document.createElement('div');
-                contentEl.textContent = content;
-                contentEl.style.cssText = 'font-size:1rem;color:#555;line-height:1.6;margin-bottom:20px;white-space:pre-wrap;';
+                modal.appendChild(titleEl);
 
-                // Close button
+                // Content (Text or Iframe)
+                if (isWeb) {
+                    var iframe = document.createElement('iframe');
+                    iframe.src = url;
+                    iframe.style.cssText = 'flex:1;border:none;width:100%;background:#f5f5f5;border-radius:4px;';
+                    modal.appendChild(iframe);
+                } else {
+                    var contentEl = document.createElement('div');
+                    contentEl.textContent = content;
+                    contentEl.style.cssText = 'font-size:1rem;color:#555;line-height:1.6;margin-bottom:20px;white-space:pre-wrap;';
+                    modal.appendChild(contentEl);
+                }
+
+                // Close button area
+                var btnContainer = document.createElement('div');
+                btnContainer.style.cssText = 'margin-top:16px;text-align:center;flex-shrink:0;';
+                
                 var closeBtn = document.createElement('button');
                 closeBtn.textContent = '确认';
-                closeBtn.style.cssText = 'background:linear-gradient(90deg,#00b894,#0984e3);color:#fff;border:none;padding:10px 32px;border-radius:6px;cursor:pointer;font-size:1rem;display:block;margin:0 auto;';
+                closeBtn.style.cssText = 'background:linear-gradient(90deg,#00b894,#0984e3);color:#fff;border:none;padding:10px 32px;border-radius:6px;cursor:pointer;font-size:1rem;display:inline-block;';
                 closeBtn.onmouseover = function(){ closeBtn.style.opacity = '0.9'; };
                 closeBtn.onmouseout = function(){ closeBtn.style.opacity = '1'; };
                 closeBtn.onclick = function(){
                     window.alasMarkAnnouncementShown(announcementId);
                     overlay.remove();
                 };
-
-                modal.appendChild(titleEl);
-                modal.appendChild(contentEl);
-                modal.appendChild(closeBtn);
+                
+                btnContainer.appendChild(closeBtn);
+                modal.appendChild(btnContainer);
+                
                 overlay.appendChild(modal);
 
                 // Close on overlay click
@@ -2203,7 +2224,11 @@ class AlasGUI(Frame):
                     if (isDark) {
                         modal.style.background = '#2d3436';
                         titleEl.style.color = '#dfe6e9';
-                        contentEl.style.color = '#b2bec3';
+                        if (!isWeb) {
+                             // contentEl only exists in text mode
+                             var c = modal.querySelector('div[style*="font-size:1rem"]');
+                             if(c) c.style.color = '#b2bec3';
+                        }
                     }
                 } catch (e) {}
             };
@@ -2295,60 +2320,69 @@ class AlasGUI(Frame):
         self.task_handler.add(self.set_aside_status, 2)
         self.task_handler.add(visibility_state_switch.g(), 15)
         self.task_handler.add(update_switch.g(), 1)
-        self.task_handler.start()
-
-        # Announcement check function - fetches from API and pushes to frontend
-        self._last_announcement_id = None
-        self._announcement_queue = queue.Queue()
+        self.task_handler.add(update_switch.g(), 1)
         
-        def _fetch_announcement_async():
-            """Background thread function to fetch announcement from API"""
-            try:
-                from module.base.api_client import ApiClient
-                # 使用ApiClient的双域名故障转移机制
-                data = ApiClient.get_announcement(timeout=10)
-                if data:
-                    # Put the data in queue for main thread to process
-                    self._announcement_queue.put(data)
-            except Exception as e:
-                logger.debug(f"Announcement fetch failed: {e}")
-
+        # 公告检查功能
+        self._last_announcement_id = None
         
         def check_and_push_announcement():
-            """Start async fetch and process any queued announcements"""
-            # Start a new fetch in background thread
-            thread = threading.Thread(target=_fetch_announcement_async, daemon=True)
-            thread.start()
-            
-            # Process any announcements that have been fetched
+            """检查公告并推送到前端"""
+            logger.info("开始检查公告...")  # DEBUG
             try:
-                while True:
-                    data = self._announcement_queue.get_nowait()
-                    announcement_id = data['announcementId']
-                    # Only push if ID is different from the last one or not pushed yet
-                    if announcement_id != self._last_announcement_id:
-                        title_json = json.dumps(data['title'])
-                        content_json = json.dumps(data['content'])
-                        announcement_id_json = json.dumps(announcement_id)
-                        run_js(f"window.alasShowAnnouncement({title_json}, {content_json}, {announcement_id_json});")
-                        self._last_announcement_id = announcement_id
-            except queue.Empty:
-                pass
+                from module.base.api_client import ApiClient
+                data = ApiClient.get_announcement(timeout=10)
+                logger.info(f"API返回数据: {bool(data)}") # DEBUG
+                
+                if data:
+                    announcement_id = data.get('announcementId')
+                    logger.info(f"公告ID: {announcement_id}, 上次ID: {self._last_announcement_id}") # DEBUG
+                    
+                    # 只有当ID不同时才推送
+                    if announcement_id and announcement_id != self._last_announcement_id:
+                        # 检查浏览器是否已看过
+                        try:
+                            announcement_id_json = json.dumps(announcement_id)
+                            has_shown = eval_js(f"window.alasHasBeenShown({announcement_id_json})")
+                            logger.info(f"浏览器是否已看过: {has_shown}") # DEBUG
+                            if has_shown:
+                                self._last_announcement_id = announcement_id
+                                return
+                        except Exception as e:
+                            logger.error(f"JS检查失败: {e}") # DEBUG
+                            pass
 
-        # Periodic announcement check generator
+                        title_json = json.dumps(data.get('title', ''))
+                        content_json = json.dumps(data.get('content', ''))
+                        announcement_id_json = json.dumps(announcement_id)
+                        url_json = json.dumps(data.get('url', ''))
+                        
+                        logger.info(f"准备推送公告: {data.get('title')}") # DEBUG
+                        run_js(f"window.alasShowAnnouncement({title_json}, {content_json}, {announcement_id_json}, {url_json});")
+                        self._last_announcement_id = announcement_id
+            except Exception as e:
+                logger.error(f"公告检查异常: {e}")
+                import traceback
+                traceback.print_exc()
+
+        # 定期公告检查生成器
         def announcement_checker():
-            th = yield  # Initial yield to get task handler reference
-            # First check - happens after initial delay (5 seconds)
+            logger.info("公告检查任务启动") # DEBUG
+            th = yield  # 获取任务处理器引用
+            # 首次检查
             check_and_push_announcement()
-            # After first check, set delay to 30 seconds for subsequent checks
+            # 设置后续检查间隔为30秒
             th._task.delay = 30
             yield
             while True:
+                logger.info("执行定期公告检查") # DEBUG
                 check_and_push_announcement()
                 yield
 
-        # Add announcement checker task (initial delay 30 seconds)
-        self.task_handler.add(announcement_checker(), delay=30)
+        # 添加公告检查任务（初始延迟5秒）
+        self.task_handler.add(announcement_checker(), delay=5)
+        
+        # 启动任务处理器
+        self.task_handler.start()
 
         # Return to previous page
 

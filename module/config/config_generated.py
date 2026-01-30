@@ -702,6 +702,7 @@ class GeneratedConfig:
     OpsiScheduling_EnableSmartScheduling = False
     OpsiScheduling_ActionPointNotifyLevels = '500,1000,2000,3000'
     OpsiScheduling_OperationCoinsReturnThreshold = 30000
+    OpsiScheduling_OperationCoinsReturnThresholdApplyToAllCoinTasks = True  # True, False
 
     # Group `IslandSeasonTask`
     IslandSeasonTask_TaskDict = None

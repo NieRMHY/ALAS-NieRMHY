@@ -95,6 +95,10 @@ class ApiClient:
         return False, 0, last_error or 'Unknown error'
     
     @classmethod
+    def _post_with_fallback(cls, path: str, json_data: Dict[str, Any], timeout: int = 5) -> Tuple[bool, int, str]:
+        return cls._request_with_fallback('POST', path, json_data=json_data, timeout=timeout)
+    
+    @classmethod
     def _get_with_fallback(cls, path: str, params: Dict[str, Any] = None, timeout: int = 10) -> Tuple[bool, int, str]:
         """
         使用故障转移机制发送GET请求
@@ -121,13 +125,21 @@ class ApiClient:
                 domain_type = "主域名" if i == 0 else "备用域名"
                 logger.debug(f'尝试使用{domain_type}: {endpoint}')
                 
-                response = requests.get(
-                    endpoint,
-                    params=params,
-                    timeout=timeout
-                )
+                if method == 'GET':
+                    response = requests.get(
+                        endpoint,
+                        params=params,
+                        timeout=timeout
+                    )
+                else:
+                    response = requests.post(
+                        endpoint,
+                        json=json_data,
+                        timeout=timeout,
+                        headers={'Content-Type': 'application/json'}
+                    )
                 
-                if response.status_code == 200:
+                if response.status_code in success_codes:
                     if i > 0:
                         logger.info(f'✓ 使用{domain_type}请求成功')
                     return True, response.status_code, response.text
@@ -251,15 +263,16 @@ class ApiClient:
         ).start()
     
     @classmethod
-    def get_announcement(cls, timeout: int = 10) -> Dict[str, Any]:
+    def get_announcement(cls, timeout: int = 10, current_id: int = None) -> Optional[Dict[str, Any]]:
         """
         获取公告信息（同步）
         
         Args:
             timeout: 请求超时时间（秒），默认10秒
+            current_id: 当前公告ID，如果提供，用于增量检查
             
         Returns:
-            公告数据字典，失败时返回空字典
+            公告数据字典，如果为None表示无更新或获取失败
         """
         if not cls.ENABLE_REPORT:
             return {}
@@ -268,26 +281,53 @@ class ApiClient:
             # 添加时间戳参数以绕过缓存
             timestamp = int(time.time())
             params = {'t': timestamp}
+            if current_id is not None:
+                params['id'] = current_id
             
-            success, status_code, response_text = cls._get_with_fallback(
+            logger.info(f'正在获取公告, params={params}')
+            
+            # 允许 200 (OK) 和 304 (Not Modified)
+            success, status_code, response_text = cls._request_with_fallback(
+                'GET',
                 cls.ANNOUNCEMENT_PATH,
                 params=params,
-                timeout=timeout
+                timeout=timeout,
+                success_codes=[200, 304]
             )
             
+            logger.info(f'公告请求结果: success={success}, status={status_code}, response={response_text[:200] if response_text else "empty"}')
+            
             if success:
+                # 304 或空内容表示无更新
+                if status_code == 304 or not response_text.strip():
+                    logger.info('公告无更新 (304 或空响应)')
+                    return None
+                    
                 import json
-                data = json.loads(response_text)
-                if data and data.get('announcementId') and data.get('title') and data.get('content'):
-                    return data
-                else:
-                    logger.debug('Announcement data is incomplete')
-                    return {}
+                try:
+                    data = json.loads(response_text)
+                    logger.info(f'解析公告数据: {data}')
+                    
+                    # 如果返回空字典或无ID，也视为无更新
+                    if not data or not data.get('announcementId'):
+                        logger.info('公告数据为空或无ID')
+                        return None
+                        
+                    # 只要有标题，且有内容 OR 链接，就是有效公告
+                    if data.get('title') and (data.get('content') or data.get('url')):
+                        logger.info(f'获取到有效公告: id={data.get("announcementId")}, title={data.get("title")}')
+                        return data
+                    else:
+                        logger.info(f'公告数据不完整: title={data.get("title")}, content={bool(data.get("content"))}, url={bool(data.get("url"))}')
+                        return None
+                except json.JSONDecodeError as e:
+                    logger.warning(f'解析公告JSON失败: {e}, response={response_text[:100]}')
+                    return None
             else:
-                logger.debug(f'Failed to get announcement: {response_text}')
-                return {}
+                logger.warning(f'获取公告失败: {response_text}')
+                return None
                 
         except Exception as e:
-            logger.debug(f'Failed to get announcement: {e}')
-            return {}
+            logger.warning(f'获取公告异常: {e}')
+            return None
 

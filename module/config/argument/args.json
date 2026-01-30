@@ -11404,6 +11404,14 @@
       "OperationCoinsReturnThreshold": {
         "type": "input",
         "value": 30000
+      },
+      "OperationCoinsReturnThresholdApplyToAllCoinTasks": {
+        "type": "checkbox",
+        "value": true,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "Storage": {

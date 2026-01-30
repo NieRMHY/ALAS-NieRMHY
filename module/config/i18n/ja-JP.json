@@ -4374,6 +4374,12 @@
     "OperationCoinsReturnThreshold": {
       "name": "OpsiScheduling.OperationCoinsReturnThreshold.name",
       "help": "OpsiScheduling.OperationCoinsReturnThreshold.help"
+    },
+    "OperationCoinsReturnThresholdApplyToAllCoinTasks": {
+      "name": "OpsiScheduling.OperationCoinsReturnThresholdApplyToAllCoinTasks.name",
+      "help": "OpsiScheduling.OperationCoinsReturnThresholdApplyToAllCoinTasks.help",
+      "True": "True",
+      "False": "False"
     }
   },
   "IslandSeasonTask": {

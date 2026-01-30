@@ -1111,6 +1111,10 @@ OpsiScheduling:
     value: "500,1000,2000,3000"
     valuetype: str
   OperationCoinsReturnThreshold: 30000
+  OperationCoinsReturnThresholdApplyToAllCoinTasks:
+    type: checkbox
+    value: true
+    option: [true, false]
 
 # =================== Island ====================
 IslandSeasonTask:
