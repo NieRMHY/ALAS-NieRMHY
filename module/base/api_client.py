@@ -5,7 +5,7 @@ API 客户端模块
 支持主域名(nanoda.work)和备用域名(xf-sama.xyz)的自动故障转移
 """
 import threading
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Tuple, Optional
 
 from module.base.device_id import get_device_id
 from module.logger import logger
@@ -95,10 +95,6 @@ class ApiClient:
         return False, 0, last_error or 'Unknown error'
     
     @classmethod
-    def _post_with_fallback(cls, path: str, json_data: Dict[str, Any], timeout: int = 5) -> Tuple[bool, int, str]:
-        return cls._request_with_fallback('POST', path, json_data=json_data, timeout=timeout)
-    
-    @classmethod
     def _get_with_fallback(cls, path: str, params: Dict[str, Any] = None, timeout: int = 10) -> Tuple[bool, int, str]:
         """
         使用故障转移机制发送GET请求
@@ -125,21 +121,13 @@ class ApiClient:
                 domain_type = "主域名" if i == 0 else "备用域名"
                 logger.debug(f'尝试使用{domain_type}: {endpoint}')
                 
-                if method == 'GET':
-                    response = requests.get(
-                        endpoint,
-                        params=params,
-                        timeout=timeout
-                    )
-                else:
-                    response = requests.post(
-                        endpoint,
-                        json=json_data,
-                        timeout=timeout,
-                        headers={'Content-Type': 'application/json'}
-                    )
+                response = requests.get(
+                    endpoint,
+                    params=params,
+                    timeout=timeout
+                )
                 
-                if response.status_code in success_codes:
+                if response.status_code == 200:
                     if i > 0:
                         logger.info(f'✓ 使用{domain_type}请求成功')
                     return True, response.status_code, response.text
