@@ -7,6 +7,7 @@ and need to check yellow coin thresholds to return to CL1.
 from datetime import datetime, timedelta
 
 from module.logger import logger
+from module.os.tasks.smart_scheduling_utils import is_smart_scheduling_enabled
 
 
 class CoinTaskMixin:
@@ -46,7 +47,7 @@ class CoinTaskMixin:
             - Title will be formatted as "[Alas <instance_name>] original_title"
         """
         # Check if smart scheduling is enabled
-        if not self.config.OpsiScheduling_EnableSmartScheduling:
+        if not is_smart_scheduling_enabled(self.config):
             return
         # Check if Opsi mail notification is enabled
         if not self.config.OpsiGeneral_NotifyOpsiMail:
@@ -223,7 +224,7 @@ class CoinTaskMixin:
 
         # Only perform yellow coin check when smart scheduling is enabled
         # When smart scheduling is disabled, tasks should run independently
-        smart_enabled = getattr(self.config, 'OpsiScheduling_EnableSmartScheduling', False)
+        smart_enabled = is_smart_scheduling_enabled(self.config)
         if not smart_enabled:
             logger.info('智能调度未启用，跳过黄币检查，任务独立运行')
             return False
@@ -331,7 +332,7 @@ class CoinTaskMixin:
         if task_display_name is None:
             task_display_name = task_name
         
-        smart_enabled = getattr(self.config, 'OpsiScheduling_EnableSmartScheduling', False)
+        smart_enabled = is_smart_scheduling_enabled(self.config)
         
         if smart_enabled:
             # 智能调度开启：关闭任务，由智能调度统一管理
@@ -396,7 +397,7 @@ class CoinTaskMixin:
         
         # Check if we should try other tasks (yellow coins insufficient, only when smart scheduling enabled)
         should_try_other = False
-        smart_enabled = getattr(self.config, 'OpsiScheduling_EnableSmartScheduling', False)
+        smart_enabled = is_smart_scheduling_enabled(self.config)
         if self.is_cl1_enabled and smart_enabled:
             yellow_coins = self.get_yellow_coins()
             cl1_preserve = self.config.cross_get(
