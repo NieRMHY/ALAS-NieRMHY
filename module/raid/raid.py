@@ -16,7 +16,7 @@ from module.ocr.ocr import Digit, DigitCounter
 from module.raid.assets import *
 from module.raid.combat import RaidCombat
 from module.ui.assets import RAID_CHECK
-from module.ui.page import page_rpg_stage
+from module.ui.page import page_rpg_stage, page_campaign_menu
 from module.log_res import LogRes
 
 
@@ -231,7 +231,8 @@ class Raid(MapOperation, RaidCombat, CampaignEvent):
             if self.appear(BATTLE_PREPARATION, offset=(30, 20)):
                 if self.handle_combat_automation_set(auto=auto == 'combat_auto'):
                     continue
-                check_oil()
+                if not self.is_raid_rpg():
+                    check_oil()
                 check_coin()
             if self.handle_raid_ticket_use():
                 continue
@@ -332,6 +333,49 @@ class Raid(MapOperation, RaidCombat, CampaignEvent):
             )
 
         self.emotion.check_reduce(1)
+
+        self.raid_enter(mode=mode, raid=raid)
+        self.combat(balance_hp=False, expected_end=self.raid_expected_end)
+
+        if mode == 'ex':
+            backup.recover()
+
+        logger.hr('Raid End')
+
+    def raid_execute_once_with_oil_check(self, mode, raid):
+        """
+        Execute raid once with oil check before entering battle.
+        For raid_20240328, get oil before entering battle to avoid UI issues.
+
+        Args:
+            mode:
+            raid:
+
+        Returns:
+            in: page_raid
+            out: page_raid
+        """
+        logger.hr('Raid Execute')
+        self.config.override(
+            Campaign_Name=f'{raid}_{mode}',
+            Campaign_UseAutoSearch=False,
+            Fleet_FleetOrder='fleet1_all_fleet2_standby'
+        )
+
+        if mode == 'ex':
+            backup = self.config.temporary(
+                Submarine_Fleet=1,
+                Submarine_Mode='every_combat'
+            )
+
+        self.emotion.check_reduce(1)
+
+        if self.is_raid_rpg():
+            logger.info('RPG raid: get oil before entering battle')
+            self.ui_ensure(page_campaign_menu)
+            CampaignEvent.get_oil(self, skip_first_screenshot=True, update=False)
+            self.ui_ensure(page_rpg_stage)
+            self.raid_rpg_swipe()
 
         self.raid_enter(mode=mode, raid=raid)
         self.combat(balance_hp=False, expected_end=self.raid_expected_end)
