@@ -563,7 +563,7 @@ class UI(InfoHandler):
 
         # RPG event (raid_20240328)
         if self.appear_then_click(RPG_STATUS_POPUP, offset=(30, 30), interval=3):
-             return True
+            return True
         # Hospital event (20250327)
         # if self.appear_then_click(HOSIPITAL_CLUE_CHECK, offset=(20, 20), interval=2):
         #     return True

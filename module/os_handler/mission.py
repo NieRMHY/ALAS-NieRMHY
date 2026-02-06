@@ -198,6 +198,10 @@ class MissionHandler(GlobeOperation, ZoneManager):
                       offset=(200, 20), retry_wait=3, additional=self.handle_manjuu,
                       skip_first_screenshot=True)
 
+        timeout = 5
+        accept_button_timer = Timer(timeout)
+        self.interval_timer[MISSION_OVERVIEW_ACCEPT_SINGLE.name] = accept_button_timer
+        self.interval_timer[MISSION_OVERVIEW_ACCEPT.name] = accept_button_timer
         # MISSION_OVERVIEW_CHECK
         success = True
         while 1:

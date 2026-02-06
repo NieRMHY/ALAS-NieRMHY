@@ -1,12 +1,6 @@
-# --------------------
-# Define argument group of tasks.
-# --------------------
-
-# ==================== Alas ====================
-
 Alas:
-  menu: "collapse"
-  page: "setting"
+  menu: collapse
+  page: setting
   tasks:
     Alas:
       - Emulator
@@ -22,12 +16,9 @@ Alas:
       - YukikazeTaskManager
     Restart:
       - Scheduler
-
-# ==================== Farm ====================
-
 Farm:
-  menu: "collapse"
-  page: "setting"
+  menu: collapse
+  page: setting
   tasks:
     Main:
       - Scheduler
@@ -64,12 +55,9 @@ Farm:
       - Fleet
       - Submarine
       - Emotion
-
-# ==================== Event ====================
-
 Event:
-  menu: "collapse"
-  page: "setting"
+  menu: collapse
+  page: setting
   tasks:
     EventGeneral:
       - EventGeneral
@@ -109,7 +97,6 @@ Event:
       - Coalition
       - StopCondition
       - Emotion
-
     MaritimeEscort:
       - Scheduler
       - MaritimeEscort
@@ -125,12 +112,9 @@ Event:
       - Emotion
       - HpControl
       - EnemyPriority
-
-# ==================== EventDaily ====================
-
 EventDaily:
-  menu: "collapse"
-  page: "setting"
+  menu: collapse
+  page: setting
   tasks:
     CoalitionSp:
       - Scheduler
@@ -197,8 +181,8 @@ EventDaily:
 # ==================== Reward ====================
 
 Reward:
-  menu: "collapse"
-  page: "setting"
+  menu: collapse
+  page: setting
   tasks:
     Commission:
       - Scheduler
@@ -247,12 +231,9 @@ Reward:
       - Island13
       - Island14
       - Island15
-
-# ==================== DailyMission ====================
-
 DailyMission:
-  menu: "collapse"
-  page: "setting"
+  menu: collapse
+  page: setting
   tasks:
     Daily:
       - Scheduler
@@ -290,12 +271,9 @@ DailyMission:
     PrivateQuarters:
       - Scheduler
       - PrivateQuarters
-
-# ==================== Opsi ====================
-
 Opsi:
-  menu: "collapse"
-  page: "setting"
+  menu: collapse
+  page: setting
   tasks:
     OpsiGeneral:
       - OpsiGeneral
@@ -348,7 +326,9 @@ Opsi:
       - OpsiSirenBug
       - OpsiFleet
       - OpsiCheckLeveling
-      - OpsiScheduling
+    OpsiScheduling:
+      - Scheduler
+      - SmartScheduling
     OpsiCrossMonth:
       - Scheduler
 
@@ -366,8 +346,8 @@ Island:
 # ==================== Tool ====================
 
 Tool:
-  menu: "collapse"
-  page: "tool"
+  menu: collapse
+  page: tool
   tasks:
     Daemon:
       - Daemon
@@ -383,11 +363,8 @@ Tool:
       - AzurLaneUncensored
     GameManager:
       - GameManager
-
-# ==================== Dashboard ====================
-
 Dashboard:
-  page: "dashboard"
+  page: dashboard
   tasks:
     Dashboard:
       - Oil

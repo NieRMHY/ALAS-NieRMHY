@@ -11,6 +11,7 @@ from module.os.map import OSMap
 from module.os.ship_exp import ship_info_get_level_exp
 from module.os.ship_exp_data import LIST_SHIP_EXP
 from module.os.tasks.smart_scheduling_utils import is_smart_scheduling_enabled
+from module.os.tasks.scheduling import CoinTaskMixin
 from module.os_handler.action_point import ActionPointLimit
 
 
@@ -146,13 +147,20 @@ class OpsiHazard1Leveling(OSMap):
         #if not self.config.is_task_enabled('OpsiMeowfficerFarming'):
         #    self.config.cross_set(keys='OpsiMeowfficerFarming.Scheduler.Enable', value=True)
         while True:
-            try:
-                self.config.OS_ACTION_POINT_PRESERVE = int(self.config.cross_get(
-                    keys='OpsiHazard1Leveling.OpsiHazard1Leveling.MinimumActionPointReserve',
-                    default=200
-                ))
-            except Exception:
-                self.config.OS_ACTION_POINT_PRESERVE = 200
+            # 使用 config_generated.py 中生成的属性来读取行动力保留值
+            self.config.OS_ACTION_POINT_PRESERVE = int(getattr(
+                self.config, 'OpsiHazard1Leveling_MinimumActionPointReserve', 200
+            ))
+
+            # ===== 智能调度: 行动力保留覆盖 =====
+            # 如果启用了智能调度且设置了行动力保留值，优先使用智能调度的配置
+            if is_smart_scheduling_enabled(self.config):
+                if hasattr(self, '_get_smart_scheduling_action_point_preserve'):
+                    smart_ap_preserve = self._get_smart_scheduling_action_point_preserve()
+                    if smart_ap_preserve > 0:
+                        logger.info(f'【智能调度】行动力保留使用智能调度配置: {smart_ap_preserve} (原配置: {self.config.OS_ACTION_POINT_PRESERVE})')
+                        self.config.OS_ACTION_POINT_PRESERVE = smart_ap_preserve
+
             if self.config.is_task_enabled('OpsiAshBeacon') \
                     and not self._ash_fully_collected \
                     and self.config.OpsiAshBeacon_EnsureFullyCollected:
@@ -166,8 +174,13 @@ class OpsiHazard1Leveling(OSMap):
             yellow_coins = self.get_yellow_coins()
             if is_smart_scheduling_enabled(self.config):
                 # 启用了智能调度
-                if yellow_coins < self.config.OpsiHazard1Leveling_OperationCoinsPreserve:
-                    logger.info(f'【智能调度】黄币不足 ({yellow_coins} < {self.config.OpsiHazard1Leveling_OperationCoinsPreserve}), 需要执行短猫相接')
+                # 使用智能调度配置的黄币保留值（如果设置了的话）
+                if hasattr(self, '_get_smart_scheduling_operation_coins_preserve'):
+                    cl1_preserve = self._get_smart_scheduling_operation_coins_preserve()
+                else:
+                    cl1_preserve = self.config.OpsiHazard1Leveling_OperationCoinsPreserve
+                if yellow_coins < cl1_preserve:
+                    logger.info(f'【智能调度】黄币不足 ({yellow_coins} < {cl1_preserve}), 需要执行短猫相接')
 
                     # 先获取当前行动力数据（包含箱子里的行动力）
                     # 需要先进入行动力界面才能读取数据
@@ -181,6 +194,12 @@ class OpsiHazard1Leveling(OSMap):
                         default=1000
                     ))
 
+                    # 获取智能调度配置的行动力保留值
+                    if hasattr(self, '_get_smart_scheduling_action_point_preserve'):
+                        smart_ap_preserve = self._get_smart_scheduling_action_point_preserve()
+                        if smart_ap_preserve > 0:
+                            meow_ap_preserve = smart_ap_preserve
+
                     # 检查行动力是否足够执行短猫相接
                     _previous_coins_ap_insufficient = getattr(self.config, 'OpsiHazard1_PreviousCoinsApInsufficient', False)
                     if self._action_point_total < meow_ap_preserve:
@@ -191,7 +210,7 @@ class OpsiHazard1Leveling(OSMap):
                             _previous_coins_ap_insufficient = True
                             self.notify_push(
                                 title="[Alas] 侵蚀1 - 黄币与行动力双重不足",
-                                content=f"黄币 {yellow_coins} 低于保留值 {self.config.OpsiHazard1Leveling_OperationCoinsPreserve}\n行动力 {self._action_point_total} 不足 (需要 {meow_ap_preserve})\n推迟任务"
+                                content=f"黄币 {yellow_coins} 低于保留值 {cl1_preserve}\n行动力 {self._action_point_total} 不足 (需要 {meow_ap_preserve})\n推迟任务"
                             )
                         else:
                             logger.info('上次检查行动力不足，跳过推送邮件')
@@ -205,18 +224,22 @@ class OpsiHazard1Leveling(OSMap):
                         _previous_coins_ap_insufficient = False
                         
                         # 检查黄币阈值适用范围配置
-                        # 如果关闭，只启用短猫相接；如果开启，启用所有黄币补充任务
+                        # 默认值定义在 args.json (value: false)，表示仅短猫相接任务会应用黄币返回阈值
                         apply_to_all = self.config.cross_get(
-                            keys='OpsiHazard1Leveling.OpsiScheduling.OperationCoinsReturnThresholdApplyToAllCoinTasks',
+                            keys='OpsiScheduling.SmartScheduling.OperationCoinsReturnThresholdApplyToAllCoinTasks',
                             default=None
                         )
-                        # 如果cross_get返回None，尝试直接属性访问
+                        # 如果cross_get返回None（表示用户未在配置文件中设置此值），尝试兼容旧配置路径
+                        if apply_to_all is None:
+                            legacy_path = 'OpsiHazard1Leveling.OpsiScheduling.OperationCoinsReturnThresholdApplyToAllCoinTasks'
+                            apply_to_all = self.config.cross_get(keys=legacy_path, default=None)
+                        # 如果所有路径都无法获取值，最终回退到 args.json 中定义的默认值 False
                         if apply_to_all is None:
                             if hasattr(self.config, 'OpsiScheduling_OperationCoinsReturnThresholdApplyToAllCoinTasks'):
                                 apply_to_all = self.config.OpsiScheduling_OperationCoinsReturnThresholdApplyToAllCoinTasks
                             else:
-                                # 如果属性也不存在，使用默认值True
-                                apply_to_all = True
+                                # 回退到 args.json 中定义的默认值 false（仅启用短猫）
+                                apply_to_all = False
                         logger.info(f'【智能调度】黄币阈值适用范围配置读取: {apply_to_all}')
                         
                         task_names = {
@@ -268,7 +291,7 @@ class OpsiHazard1Leveling(OSMap):
                         task_names_str = '、'.join([task_names.get(task, task) for task in available_tasks])
                         self.notify_push(
                             title="[Alas] 侵蚀1 - 切换至黄币补充任务",
-                            content=f"黄币 {yellow_coins} 低于保留值 {self.config.OpsiHazard1Leveling_OperationCoinsPreserve}\n行动力: {self._action_point_total} (需要 {meow_ap_preserve})\n切换至{task_names_str}获取黄币"
+                            content=f"黄币 {yellow_coins} 低于保留值 {cl1_preserve}\n行动力: {self._action_point_total} (需要 {meow_ap_preserve})\n切换至{task_names_str}获取黄币"
                         )
 
                         with self.config.multi_set():
@@ -285,17 +308,11 @@ class OpsiHazard1Leveling(OSMap):
                         self.config.task_stop()
                     self.config.OpsiHazard1_PreviousCoinsApInsufficient = _previous_coins_ap_insufficient
             else:
-                # 未启用智能调度，保持原有逻辑
-                if yellow_coins < self.config.OpsiHazard1Leveling_OperationCoinsPreserve:
-                    logger.info(f'Reach the limit of yellow coins, preserve={self.config.OpsiHazard1Leveling_OperationCoinsPreserve}')
-                    with self.config.multi_set():
-                        self.config.task_delay(server_update=True)
-                        if not self.is_in_opsi_explore():
-                            cd = self.nearest_task_cooling_down
-                            if cd is None:
-                                for task in ['OpsiAbyssal', 'OpsiStronghold', 'OpsiObscure', 'OpsiMeowfficerFarming']:
-                                    if self.config.is_task_enabled(task):
-                                        self.config.task_call(task)
+                # 未启用智能调度时，黄币不足推迟任务
+                cl1_preserve = self.config.OpsiHazard1Leveling_OperationCoinsPreserve
+                if yellow_coins < cl1_preserve:
+                    logger.info(f'黄币不足 ({yellow_coins} < {cl1_preserve})，推迟侵蚀1任务至服务器刷新')
+                    self.config.task_delay(server_update=True)
                     self.config.task_stop()
 
             # 获取当前区域
@@ -312,29 +329,35 @@ class OpsiHazard1Leveling(OSMap):
             # 在设置行动力后检查是否跨越阈值并推送通知
             self.check_and_notify_action_point_threshold()
 
-            # ===== 智能调度: 最低行动力保留检查 =====
+            # ===== 最低行动力保留检查 =====
             # 检查当前行动力是否低于最低保留值
-            if is_smart_scheduling_enabled(self.config):
-                min_reserve = self.config.OpsiHazard1Leveling_MinimumActionPointReserve
-                if self._action_point_total < min_reserve:
-                    logger.warning(f'【智能调度】行动力低于最低保留 ({self._action_point_total} < {min_reserve})')
+            # 使用 OS_ACTION_POINT_PRESERVE，因为它已经包含了智能调度覆盖的逻辑
 
-                    _previous_ap_insufficient = getattr(self.config, 'OpsiHazard1_PreviousApInsufficient', False)
-                    if _previous_ap_insufficient == False:
-                        _previous_ap_insufficient = True
-                        self.notify_push(
-                            title="[Alas] 侵蚀1 - 行动力低于最低保留",
-                            content=f"当前行动力 {self._action_point_total} 低于最低保留 {min_reserve}，推迟任务"
-                        )
-                    else:
-                        logger.info('上次检查行动力低于最低保留，跳过推送邮件')
+            # 先获取当前行动力数据（包含箱子里的行动力）
+            self.action_point_enter()
+            self.action_point_safe_get()
+            self.action_point_quit()
 
-                    logger.info('推迟侵蚀1任务1小时')
-                    self.config.task_delay(minute=60)
-                    self.config.task_stop()
+            min_reserve = self.config.OS_ACTION_POINT_PRESERVE
+            if self._action_point_total < min_reserve:
+                logger.warning(f'行动力低于最低保留 ({self._action_point_total} < {min_reserve})')
+
+                _previous_ap_insufficient = getattr(self.config, 'OpsiHazard1_PreviousApInsufficient', False)
+                if _previous_ap_insufficient == False:
+                    _previous_ap_insufficient = True
+                    self.notify_push(
+                        title="[Alas] 侵蚀1 - 行动力低于最低保留",
+                        content=f"当前行动力 {self._action_point_total} 低于最低保留 {min_reserve}，推迟任务"
+                    )
                 else:
-                    _previous_ap_insufficient = False
-                self.config.OpsiHazard1_PreviousApInsufficient = _previous_ap_insufficient
+                    logger.info('上次检查行动力低于最低保留，跳过推送邮件')
+
+                logger.info('推迟侵蚀1任务1小时')
+                self.config.task_delay(minute=60)
+                self.config.task_stop()
+            else:
+                _previous_ap_insufficient = False
+            self.config.OpsiHazard1_PreviousApInsufficient = _previous_ap_insufficient
 
             if self.config.OpsiHazard1Leveling_TargetZone != 0:
                 zone = self.config.OpsiHazard1Leveling_TargetZone
