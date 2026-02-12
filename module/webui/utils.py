@@ -460,7 +460,14 @@ def parse_pin_value(val, valuetype: str = None):
     select return its option (str or int)
     checkbox return [] or [True] (define in put_checkbox_)
     """
-    if isinstance(val, list):
+    # Handle dict type - extract 'value' if exists and recursively parse
+    if isinstance(val, dict):
+        if 'value' in val:
+            return parse_pin_value(val['value'], valuetype)
+        else:
+            # Return dict as-is if no 'value' key
+            return val
+    elif isinstance(val, list):
         if len(val) == 0:
             return False
         else:

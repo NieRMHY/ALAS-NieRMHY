@@ -68,75 +68,20 @@ class OpsiHazard1Leveling(OSMap):
 
     def check_and_notify_action_point_threshold(self):
         """
-        检查行动力是否跨越阈值并发送推送通知
-        
-        应在每次执行 action_point_set() 后调用此方法
-        
-        功能说明:
-            1. 从配置中读取阈值列表（如 500, 1000, 2000, 3000）
-            2. 判断当前行动力所在的阈值区间
-            3. 如果跨越了新的阈值区间，发送推送通知
-            4. 记录上次通知的阈值，避免重复推送
-            
-        示例:
-            - 行动力从 400 升至 600，会推送"升至500+"
-            - 行动力从 1200 降至 900，会推送"降至1000以下"
+        发送行动力推送通知（每次调用都发送）
         """
         # 检查是否启用智能调度
-        if not is_smart_scheduling_enabled(self.config):
-            return
+        # if not is_smart_scheduling_enabled(self.config):
+        #     return
                     
         # 获取当前行动力总量
         current_ap = self._action_point_total
         
-        # 解析配置的阈值列表
-        try:
-            levels_str = getattr(self.config, 'OpsiScheduling_ActionPointNotifyLevels', '500, 1000, 2000, 3000')
-            thresholds = [int(x.strip()) for x in levels_str.split(',')]
-        except Exception as e:
-            logger.warning(f"解析行动力阈值配置失败: {e}")
-            return
-        
-        # 确定当前所在的阈值区间
-        # 从高到低遍历阈值，找到第一个小于等于当前行动力的阈值
-        current_threshold = None
-        for threshold in sorted(thresholds, reverse=True):
-            if current_ap >= threshold:
-                current_threshold = threshold
-                break
-
-        # 查询是否为首次调用
-        if not hasattr(self, '_last_notified_ap_threshold'):
-            # 更新上次通知的阈值记录
-            self._last_notified_ap_threshold = current_threshold
-            return
-        
-        # 如果跨越了阈值区间，发送推送通知
-        if current_threshold != self._last_notified_ap_threshold:
-            if current_threshold is not None:
-                # 判断是升至还是降至该阈值
-                if self._last_notified_ap_threshold is None:
-                    direction = "升至"
-                elif self._last_notified_ap_threshold < current_threshold:
-                    # 行动力增加，升至更高阈值
-                    direction = "升至"
-                else:
-                    # 行动力减少，降至较低阈值
-                    direction = "降至"
-                
-                self.notify_push(
-                    title="[Alas] 行动力阈值变化",
-                    content=f"行动力{direction}{current_threshold}+ (当前: {current_ap})"
-                )
-            else:
-                # 降到最低阈值以下
-                lowest = min(thresholds)
-                self.notify_push(
-                    title="[Alas] 行动力阈值变化", 
-                    content=f"行动力降至{lowest}以下 (当前: {current_ap})"
-                )
-            # 更新上次通知的阈值记录
-            self._last_notified_ap_threshold = current_threshold
+        # 直接发送推送通知
+        self.notify_push(
+            title="[Alas] 行动力通知",
+            content=f"当前行动力: {current_ap}"
+        )
 
     def os_hazard1_leveling(self):
         logger.hr('OS hazard 1 leveling', level=1)
@@ -151,15 +96,6 @@ class OpsiHazard1Leveling(OSMap):
             self.config.OS_ACTION_POINT_PRESERVE = int(getattr(
                 self.config, 'OpsiHazard1Leveling_MinimumActionPointReserve', 200
             ))
-
-            # ===== 智能调度: 行动力保留覆盖 =====
-            # 如果启用了智能调度且设置了行动力保留值，优先使用智能调度的配置
-            if is_smart_scheduling_enabled(self.config):
-                if hasattr(self, '_get_smart_scheduling_action_point_preserve'):
-                    smart_ap_preserve = self._get_smart_scheduling_action_point_preserve()
-                    if smart_ap_preserve > 0:
-                        logger.info(f'【智能调度】行动力保留使用智能调度配置: {smart_ap_preserve} (原配置: {self.config.OS_ACTION_POINT_PRESERVE})')
-                        self.config.OS_ACTION_POINT_PRESERVE = smart_ap_preserve
 
             if self.config.is_task_enabled('OpsiAshBeacon') \
                     and not self._ash_fully_collected \
@@ -223,24 +159,25 @@ class OpsiHazard1Leveling(OSMap):
                         logger.info(f'行动力充足 ({self._action_point_total}), 切换到黄币补充任务获取黄币')
                         _previous_coins_ap_insufficient = False
                         
-                        # 检查黄币阈值适用范围配置
-                        # 默认值定义在 args.json (value: false)，表示仅短猫相接任务会应用黄币返回阈值
-                        apply_to_all = self.config.cross_get(
-                            keys='OpsiScheduling.SmartScheduling.OperationCoinsReturnThresholdApplyToAllCoinTasks',
-                            default=None
-                        )
-                        # 如果cross_get返回None（表示用户未在配置文件中设置此值），尝试兼容旧配置路径
-                        if apply_to_all is None:
-                            legacy_path = 'OpsiHazard1Leveling.OpsiScheduling.OperationCoinsReturnThresholdApplyToAllCoinTasks'
-                            apply_to_all = self.config.cross_get(keys=legacy_path, default=None)
-                        # 如果所有路径都无法获取值，最终回退到 args.json 中定义的默认值 False
-                        if apply_to_all is None:
-                            if hasattr(self.config, 'OpsiScheduling_OperationCoinsReturnThresholdApplyToAllCoinTasks'):
-                                apply_to_all = self.config.OpsiScheduling_OperationCoinsReturnThresholdApplyToAllCoinTasks
-                            else:
-                                # 回退到 args.json 中定义的默认值 false（仅启用短猫）
-                                apply_to_all = False
-                        logger.info(f'【智能调度】黄币阈值适用范围配置读取: {apply_to_all}')
+                        # 读取四个独立任务开关配置
+                        task_enable_config = {
+                            'OpsiMeowfficerFarming': self.config.cross_get(
+                                keys='OpsiScheduling.OpsiScheduling.EnableMeowfficerFarming',
+                                default=True
+                            ),
+                            'OpsiObscure': self.config.cross_get(
+                                keys='OpsiScheduling.OpsiScheduling.EnableObscure',
+                                default=False
+                            ),
+                            'OpsiAbyssal': self.config.cross_get(
+                                keys='OpsiScheduling.OpsiScheduling.EnableAbyssal',
+                                default=False
+                            ),
+                            'OpsiStronghold': self.config.cross_get(
+                                keys='OpsiScheduling.OpsiScheduling.EnableStronghold',
+                                default=False
+                            ),
+                        }
                         
                         task_names = {
                             'OpsiMeowfficerFarming': '短猫相接',
@@ -249,15 +186,15 @@ class OpsiHazard1Leveling(OSMap):
                             'OpsiStronghold': '塞壬要塞'
                         }
                         
-                        # 根据配置决定启用哪些任务
-                        if apply_to_all:
-                            # 开启：启用所有黄币补充任务（短猫、隐秘海域、深渊海域、塞壬要塞）
-                            all_coin_tasks = ['OpsiMeowfficerFarming', 'OpsiObscure', 'OpsiAbyssal', 'OpsiStronghold']
-                            logger.info('黄币阈值适用范围：四任务，将启用所有黄币补充任务')
-                        else:
-                            # 关闭：仅启用短猫相接
+                        # 获取智能调度中启用的任务列表
+                        all_coin_tasks = [task for task, enabled in task_enable_config.items() if enabled]
+                        
+                        if not all_coin_tasks:
+                            logger.warning('智能调度中没有启用任何黄币补充任务，默认启用短猫相接')
                             all_coin_tasks = ['OpsiMeowfficerFarming']
-                            logger.info('黄币阈值适用范围：仅短猫，将只启用短猫相接任务')
+                        
+                        enabled_names = '、'.join([task_names.get(task, task) for task in all_coin_tasks])
+                        logger.info(f'【智能调度】启用的黄币补充任务: {enabled_names}')
                         
                         # 自动启用黄币补充任务的调度器
                         enabled_tasks = []

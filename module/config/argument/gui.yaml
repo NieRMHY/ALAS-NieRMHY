@@ -160,3 +160,14 @@ Text:
   Clear:
   EnterPassword:
   ChooseFile:
+
+OpsiScheduling:
+  UseSmartSchedulingOperationCoinsPreserve:
+  OperationCoinsPreserve:
+  ActionPointPreserve:
+
+  OperationCoinsReturnThreshold:
+  EnableMeowfficerFarming:
+  EnableObscure:
+  EnableAbyssal:
+  EnableStronghold:

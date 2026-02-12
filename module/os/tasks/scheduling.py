@@ -57,16 +57,21 @@ class CoinTaskMixin:
     ALL_COIN_TASKS = ['OpsiObscure', 'OpsiAbyssal', 'OpsiStronghold', 'OpsiMeowfficerFarming']
     
     # 配置路径常量
-    CONFIG_PATH_CL1_PRESERVE = 'OpsiHazard1Leveling.OperationCoinsPreserve'
-    CONFIG_PATH_RETURN_THRESHOLD = 'OpsiScheduling.SmartScheduling.OperationCoinsReturnThreshold'
-    CONFIG_PATH_RETURN_THRESHOLD_APPLY_ALL = 'OpsiScheduling.SmartScheduling.OperationCoinsReturnThresholdApplyToAllCoinTasks'
+    CONFIG_PATH_CL1_PRESERVE = 'OpsiHazard1Leveling.OpsiHazard1Leveling.OperationCoinsPreserve'
+    CONFIG_PATH_RETURN_THRESHOLD = 'OpsiScheduling.OpsiScheduling.OperationCoinsReturnThreshold'
+    # 四个独立任务开关的配置路径
+    CONFIG_PATH_ENABLE_MEOWFFICER = 'OpsiScheduling.OpsiScheduling.EnableMeowfficerFarming'
+    CONFIG_PATH_ENABLE_OBSCURE = 'OpsiScheduling.OpsiScheduling.EnableObscure'
+    CONFIG_PATH_ENABLE_ABYSSAL = 'OpsiScheduling.OpsiScheduling.EnableAbyssal'
+    CONFIG_PATH_ENABLE_STRONGHOLD = 'OpsiScheduling.OpsiScheduling.EnableStronghold'
     # 智能调度新增配置路径
-    CONFIG_PATH_SMART_CL1_PRESERVE = 'OpsiScheduling.SmartScheduling.OperationCoinsPreserve'
-    CONFIG_PATH_SMART_AP_PRESERVE = 'OpsiScheduling.SmartScheduling.ActionPointPreserve'
+    CONFIG_PATH_USE_SMART_CL1_PRESERVE = 'OpsiScheduling.OpsiScheduling.UseSmartSchedulingOperationCoinsPreserve'
+    CONFIG_PATH_SMART_CL1_PRESERVE = 'OpsiScheduling.OpsiScheduling.OperationCoinsPreserve'
+    CONFIG_PATH_SMART_AP_PRESERVE = 'OpsiScheduling.OpsiScheduling.ActionPointPreserve'
     
     # 各任务的配置路径常量（集中管理，避免硬编码）
-    CONFIG_PATH_MEOW_AP_PRESERVE = 'OpsiMeowfficerFarming.ActionPointPreserve'
-    CONFIG_PATH_CL1_MIN_AP_RESERVE = 'OpsiHazard1Leveling.MinimumActionPointReserve'
+    CONFIG_PATH_MEOW_AP_PRESERVE = 'OpsiMeowfficerFarming.OpsiMeowfficerFarming.ActionPointPreserve'
+    CONFIG_PATH_CL1_MIN_AP_RESERVE = 'OpsiHazard1Leveling.OpsiHazard1Leveling.MinimumActionPointReserve'
     
     # 短猫相接任务名称
     TASK_NAME_MEOWFFICER_FARMING = 'OpsiMeowfficerFarming'
@@ -164,44 +169,34 @@ class CoinTaskMixin:
         if not self.is_cl1_enabled:
             return None, None
 
-        # 未启用智能调度时：禁用黄币返回检查（补黄币任务独立运行到行动力不足才停止）
-        # 但仍返回侵蚀1自身的保留值用于日志/复用
-        if not is_smart_scheduling_enabled(self.config):
-            cl1_preserve = self.config.cross_get(
-                keys=self.CONFIG_PATH_CL1_PRESERVE,
-                default=100000
-            )
-            logger.info('智能调度未启用，禁用 OperationCoinsReturnThreshold 黄币返回检查')
+        # 如果未启用智能调度，或者未开启黄币控制开关，则禁用黄币返回检查
+        # 此时任务会一直运行到行动力不足（即传统模式）
+        smart_enabled = is_smart_scheduling_enabled(self.config)
+        use_smart_preserve = self.config.cross_get(
+            keys=self.CONFIG_PATH_USE_SMART_CL1_PRESERVE
+        )
+        
+        # 获取并缓存 CL1 保留值
+        cl1_preserve = self._get_smart_scheduling_operation_coins_preserve()
+
+        if not (smart_enabled and use_smart_preserve):
+            logger.info('未开启智能调度黄币控制，禁用 OperationCoinsReturnThreshold 黄币返回检查')
             return None, cl1_preserve
         
         # 检查适用范围开关
         if not self._is_operation_coins_return_threshold_applicable():
-            cl1_preserve = self._get_smart_scheduling_operation_coins_preserve()
             logger.info('OperationCoinsReturnThreshold 适用范围开关关闭：仅短猫相接启用；当前任务跳过黄币返回检查')
             return None, cl1_preserve
 
-        # 获取并缓存 CL1 保留值（优先使用智能调度配置）
-        cl1_preserve = self._get_smart_scheduling_operation_coins_preserve()
-
         # 从 OpsiScheduling 配置读取黄币返回阈值
         return_threshold_config = self.config.cross_get(
-            keys=self.CONFIG_PATH_RETURN_THRESHOLD,
-            default=None
+            keys=self.CONFIG_PATH_RETURN_THRESHOLD
         )
 
         logger.info(f'OperationCoinsReturnThreshold 配置值: {return_threshold_config}, CL1保留值: {cl1_preserve}')
         
-        # 如果值为 0，禁用黄币检查
-        if return_threshold_config == 0:
-            logger.info('OperationCoinsReturnThreshold 为 0，禁用黄币检查')
-            return None, cl1_preserve
-        
-        # 如果值为 None，使用默认值（等于 cl1_preserve，即 2 倍阈值）
-        if return_threshold_config is None:
-            return_threshold_config = cl1_preserve
-        
         # 计算最终阈值：CL1 保留值 + 返回阈值
-        return_threshold = cl1_preserve + return_threshold_config
+        return_threshold = (cl1_preserve or 0) + (return_threshold_config or 0)
         
         return return_threshold, cl1_preserve
     
@@ -210,23 +205,32 @@ class CoinTaskMixin:
         获取智能调度模式下的侵蚀1黄币保留值
 
         Returns:
-            int: 保留的黄币数量，如果为 0 则使用原配置
+            int: 保留的黄币数量
         """
-        preserve = self.config.cross_get(
-            keys=self.CONFIG_PATH_SMART_CL1_PRESERVE,
-            default=0
+        # 检查是否启用智能调度黄币保留配置
+        use_smart_preserve = self.config.cross_get(
+            keys=self.CONFIG_PATH_USE_SMART_CL1_PRESERVE
         )
-        if preserve == 0:
-            # 使用原配置
+        
+        if not use_smart_preserve:
+            # 开关未开启，回退到侵蚀1原配置
             cl1_preserve_original = self.config.cross_get(
-                keys=self.CONFIG_PATH_CL1_PRESERVE,
-                default=100000
+                keys=self.CONFIG_PATH_CL1_PRESERVE
             )
-            logger.info(f'【智能调度】黄币保留使用原配置: {cl1_preserve_original} (智能调度配置为0或不生效)')
-            preserve = cl1_preserve_original
+            # 保证返回 int 以免后续比较报错
+            if cl1_preserve_original is None:
+                cl1_preserve_original = 0
+            logger.info(f'【智能调度】黄币保留使用原配置: {cl1_preserve_original} (智能调度开关未启用)')
+            return cl1_preserve_original
         else:
-            logger.info(f'【智能调度】黄币保留使用智能调度配置: {preserve}')
-        return preserve
+            # 开关开启，使用智能调度自己的配置，允许为 0
+            preserve = self.config.cross_get(
+                keys=self.CONFIG_PATH_SMART_CL1_PRESERVE
+            )
+            if preserve is None:
+                preserve = 0
+            logger.info(f'【智能调度】黄币保留使用智能调度配置: {preserve} (开关已开启)')
+            return preserve
     
     def _get_smart_scheduling_action_point_preserve(self):
         """
@@ -240,10 +244,9 @@ class CoinTaskMixin:
             int: 智能调度行动力保留覆盖值（0 表示不覆盖）
         """
         preserve = self.config.cross_get(
-            keys=self.CONFIG_PATH_SMART_AP_PRESERVE,
-            default=0
+            keys=self.CONFIG_PATH_SMART_AP_PRESERVE
         )
-        return preserve
+        return preserve or 0
     
     def _get_current_coin_task_name(self):
         """
@@ -256,22 +259,42 @@ class CoinTaskMixin:
             return self.config.task.command
         return self.__class__.__name__
     
+    def _get_enabled_coin_tasks(self):
+        """
+        获取智能调度中启用的黄币补充任务列表
+        
+        Returns:
+            list: 启用的任务名称列表
+        """
+        enabled_tasks = []
+        
+        # 检查每个任务的独立开关
+        task_config_map = {
+            'OpsiMeowfficerFarming': self.CONFIG_PATH_ENABLE_MEOWFFICER,
+            'OpsiObscure': self.CONFIG_PATH_ENABLE_OBSCURE,
+            'OpsiAbyssal': self.CONFIG_PATH_ENABLE_ABYSSAL,
+            'OpsiStronghold': self.CONFIG_PATH_ENABLE_STRONGHOLD,
+        }
+        
+        for task_name, config_path in task_config_map.items():
+            if self.config.cross_get(keys=config_path):
+                enabled_tasks.append(task_name)
+        
+        return enabled_tasks
+    
     def _is_operation_coins_return_threshold_applicable(self):
         """
         判断当前任务是否应该应用黄币返回阈值
         
         Config:
-            OpsiScheduling.SmartScheduling.OperationCoinsReturnThresholdApplyToAllCoinTasks (bool)
-                - True: 适用于所有黄币补充任务
-                - False: 仅适用于 OpsiMeowfficerFarming（短猫相接）
+            OpsiScheduling.EnableMeowfficerFarming (bool) - 启用短猫相接
+            OpsiScheduling.EnableObscure (bool) - 启用隐秘海域
+            OpsiScheduling.EnableAbyssal (bool) - 启用深渊海域
+            OpsiScheduling.EnableStronghold (bool) - 启用塞壬要塞
         """
-        apply_all = self.config.cross_get(
-            keys=self.CONFIG_PATH_RETURN_THRESHOLD_APPLY_ALL,
-            default=True
-        )
-        if apply_all:
-            return True
-        return self._get_current_coin_task_name() == self.TASK_NAME_MEOWFFICER_FARMING
+        enabled_tasks = self._get_enabled_coin_tasks()
+        current_task = self._get_current_coin_task_name()
+        return current_task in enabled_tasks
     
     def _check_yellow_coins_and_return_to_cl1(self, context="循环中", task_display_name=None):
         """
@@ -451,10 +474,7 @@ class CoinTaskMixin:
         smart_enabled = is_smart_scheduling_enabled(self.config)
         if self.is_cl1_enabled and smart_enabled:
             yellow_coins = self.get_yellow_coins()
-            cl1_preserve = self.config.cross_get(
-                keys=self.CONFIG_PATH_CL1_PRESERVE,
-                default=100000
-            )
+            cl1_preserve = self._get_smart_scheduling_operation_coins_preserve()
             if yellow_coins < cl1_preserve:
                 should_try_other = True
                 logger.info(f'黄币不足 ({yellow_coins} < {cl1_preserve})，尝试其他黄币补充任务')
@@ -525,11 +545,8 @@ class OpsiScheduling(CoinTaskMixin, OSMap):
         # 获取当前黄币数量
         yellow_coins = self.get_yellow_coins()
         
-        # 获取侵蚀1任务的黄币保留值
-        cl1_preserve = self.config.cross_get(
-            keys=self.CONFIG_PATH_CL1_PRESERVE,
-            default=100000
-        )
+        # 获取黄币保留值（根据开关决定使用原配置还是智能调度配置）
+        cl1_preserve = self._get_smart_scheduling_operation_coins_preserve()
         
         # 获取行动力
         self.action_point_enter()
@@ -547,9 +564,8 @@ class OpsiScheduling(CoinTaskMixin, OSMap):
             
             # 获取短猫相接的行动力保留值
             meow_ap_preserve = self.config.cross_get(
-                keys=self.CONFIG_PATH_MEOW_AP_PRESERVE,
-                default=1000
-            )
+                keys=self.CONFIG_PATH_MEOW_AP_PRESERVE
+            ) or 1000
             
             if current_ap < meow_ap_preserve:
                 # 行动力也不足，推迟任务
@@ -570,9 +586,8 @@ class OpsiScheduling(CoinTaskMixin, OSMap):
         
         # 获取侵蚀1的最低行动力保留值
         min_ap_reserve = self.config.cross_get(
-            keys=self.CONFIG_PATH_CL1_MIN_AP_RESERVE,
-            default=200
-        )
+            keys=self.CONFIG_PATH_CL1_MIN_AP_RESERVE
+        ) or 200
         
         if current_ap < min_ap_reserve:
             logger.warning(f'行动力低于最低保留 ({current_ap} < {min_ap_reserve})')
@@ -644,15 +659,6 @@ class OpsiScheduling(CoinTaskMixin, OSMap):
         """
         切换到黄币补充任务
         """
-        # 检查黄币阈值适用范围配置
-        # 默认值定义在 args.json (value: false)，表示仅短猫相接任务会应用黄币返回阈值
-        apply_to_all = self.config.cross_get(
-            keys='OpsiScheduling.SmartScheduling.OperationCoinsReturnThresholdApplyToAllCoinTasks',
-            default=False
-        )
-        
-        logger.info(f'【智能调度】黄币阈值适用范围配置: {apply_to_all}')
-        
         task_names = {
             'OpsiMeowfficerFarming': '短猫相接',
             'OpsiObscure': '隐秘海域',
@@ -660,13 +666,15 @@ class OpsiScheduling(CoinTaskMixin, OSMap):
             'OpsiStronghold': '塞壬要塞'
         }
         
-        # 根据配置决定启用哪些任务
-        if apply_to_all:
-            all_coin_tasks = ['OpsiMeowfficerFarming', 'OpsiObscure', 'OpsiAbyssal', 'OpsiStronghold']
-            logger.info('黄币阈值适用范围：四任务，将启用所有黄币补充任务')
-        else:
+        # 获取智能调度中启用的任务列表
+        all_coin_tasks = self._get_enabled_coin_tasks()
+        
+        if not all_coin_tasks:
+            logger.warning('智能调度中没有启用任何黄币补充任务，默认启用短猫相接')
             all_coin_tasks = ['OpsiMeowfficerFarming']
-            logger.info('黄币阈值适用范围：仅短猫，将只启用短猫相接任务')
+        
+        enabled_names = '、'.join([task_names.get(task, task) for task in all_coin_tasks])
+        logger.info(f'【智能调度】启用的黄币补充任务: {enabled_names}')
         
         # 自动启用黄币补充任务的调度器
         enabled_tasks = []

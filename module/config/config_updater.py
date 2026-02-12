@@ -786,6 +786,23 @@ class ConfigUpdater:
             key = key.split(".")
             key[-1] = key[-1].replace("Value", "Record")
             yield ".".join(key), datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        
+        # 智能调度与侵蚀1配置双向同步
+        # 当修改智能调度的黄币保留时，同步到侵蚀1
+        if key == 'OpsiScheduling.OpsiScheduling.OperationCoinsPreserve':
+            yield 'OpsiHazard1Leveling.OpsiHazard1Leveling.OperationCoinsPreserve', value
+        # 当修改侵蚀1的黄币保留时，同步到智能调度
+        elif key == 'OpsiHazard1Leveling.OpsiHazard1Leveling.OperationCoinsPreserve':
+            yield 'OpsiScheduling.OpsiScheduling.OperationCoinsPreserve', value
+        
+        # 智能调度与短猫行动力保留双向同步
+        # 只有当值 > 0 时才同步（值为0表示不覆盖，使用各任务自己的配置）
+        if key == 'OpsiScheduling.OpsiScheduling.ActionPointPreserve':
+            if value and int(value) > 0:
+                yield 'OpsiMeowfficerFarming.OpsiMeowfficerFarming.ActionPointPreserve', value
+        elif key == 'OpsiMeowfficerFarming.OpsiMeowfficerFarming.ActionPointPreserve':
+            if value and int(value) > 0:
+                yield 'OpsiScheduling.OpsiScheduling.ActionPointPreserve', value
         # Oh no, dynamic dropdown update can only be used on pywebio > 1.8.0
         # elif key == 'Alas.Emulator.ScreenshotMethod' and value == 'nemu_ipc':
         #     yield 'Alas.Emulator.ControlMethod', 'nemu_ipc'

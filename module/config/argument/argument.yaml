@@ -1106,14 +1106,32 @@ OpsiCheckLeveling:
   LastRun: 2020-01-01 00:00:00
   DelayAfterFull: false
 OpsiScheduling:
-  EnableSmartScheduling: false
-  ActionPointNotifyLevels:
-    value: "500,1000,2000,3000"
-    valuetype: str
-  OperationCoinsReturnThreshold: 30000
-  OperationCoinsReturnThresholdApplyToAllCoinTasks:
+  UseSmartSchedulingOperationCoinsPreserve:
+    type: checkbox
+    value: false
+    option: [true, false]
+  OperationCoinsPreserve:
+    value: 0
+  ActionPointPreserve:
+    value: 500
+
+  OperationCoinsReturnThreshold:
+    value: 0
+  EnableMeowfficerFarming:
     type: checkbox
     value: true
+    option: [true, false]
+  EnableObscure:
+    type: checkbox
+    value: false
+    option: [true, false]
+  EnableAbyssal:
+    type: checkbox
+    value: false
+    option: [true, false]
+  EnableStronghold:
+    type: checkbox
+    value: false
     option: [true, false]
 
 # =================== Island ====================
@@ -2815,25 +2833,6 @@ OpsiCheckLeveling:
   TargetLevel: 0
   LastRun: 2020-01-01 00:00:00
   DelayAfterFull: false
-OpsiScheduling:
-  SmartScheduling:
-    ActionPointNotifyLevels:
-      type: input
-      value: 500,1000,2000,3000
-      valuetype: str
-    OperationCoinsReturnThreshold:
-      type: input
-      value: 30000
-    OperationCoinsReturnThresholdApplyToAllCoinTasks:
-      type: checkbox
-      value: true
-      option:
-      - true
-      - false
-    OperationCoinsPreserve:
-      value: 100000
-    ActionPointPreserve:
-      value: 500
 IslandSeasonTask:
   TaskDict:
     type: textarea

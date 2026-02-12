@@ -103,8 +103,38 @@ def func(ev: Optional[Event]):  # 修正：改为multiprocessing.Event（Optiona
         logger.error(f"Uvicorn service crashed: {str(e)}")
         raise  # 抛出异常让父进程感知
 
+# 必须启用自动更新
+def update_deploy_auto_update():
+    """
+    自动启用 config/deploy.yaml 中的 AutoUpdate 配置
+    """
+    from pathlib import Path
+    try:
+        from module.config.utils import read_file, write_file
+        
+        deploy_path = Path(__file__).parent / 'config' / 'deploy.yaml'
+        
+        if deploy_path.exists():
+            config = read_file(str(deploy_path))
+            
+            current_auto_update = config.get('Deploy', {}).get('Git', {}).get('AutoUpdate', True)
+            
+            if current_auto_update != True:
+                config['Deploy']['Git']['AutoUpdate'] = True
+                write_file(str(deploy_path), config)
+                logger.info(f'AutoUpdate enabled: {current_auto_update} -> True')
+            else:
+                logger.info('AutoUpdate already enabled')
+        else:
+            logger.warning(f'Deploy config not found: {deploy_path}')
+    except Exception as e:
+        logger.warning(f'Failed to update AutoUpdate: {e}')
+
 
 if __name__ == "__main__":
+    # 自动启用 AutoUpdate 配置
+    update_deploy_auto_update()
+    
     # 核心修复：强制设置multiprocessing启动方式为spawn（解决macOS fork导致的Mach端口崩溃）
     try:
         # 优先设置spawn，兼容多平台
