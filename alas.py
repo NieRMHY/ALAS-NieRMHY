@@ -162,6 +162,11 @@ class AzurLaneAutoScript:
         except GameNotRunningError as e:
             # 可恢复错误：游戏未运行，重启即可
             logger.warning(e)
+            handle_notify(
+                self.config.Error_OnePushConfig,
+                title=f"Alas <{self.config_name}> 警告",
+                content=f"<{self.config_name}> 游戏未运行 - 将自动重启游戏",
+            )
             self.config.task_call('Restart')
             return 'recoverable'
         except (GameStuckError, GameTooManyClickError) as e:
@@ -170,6 +175,11 @@ class AzurLaneAutoScript:
             self.save_error_log()
             logger.warning(f'Game stuck, {self.device.package} will be restarted in 10 seconds')
             logger.warning('If you are playing by hand, please stop Alas')
+            handle_notify(
+                self.config.Error_OnePushConfig,
+                title=f"Alas <{self.config_name}> 警告",
+                content=f"<{self.config_name}> 游戏卡住 - 将自动重启游戏",
+            )
             self.config.task_call('Restart')  # modfiy by MHY
             # self.config.task_call('Restart', force_call=False)  # 禁用强制重启
             self.device.sleep(10)
@@ -180,6 +190,11 @@ class AzurLaneAutoScript:
             self.save_error_log()
             logger.warning('An error has occurred in Azur Lane game client, Alas is unable to handle')
             logger.warning(f'Restarting {self.device.package} to fix it')
+            handle_notify(
+                self.config.Error_OnePushConfig,
+                title=f"Alas <{self.config_name}> 警告",
+                content=f"<{self.config_name}> 游戏客户端错误 - 将自动重启游戏",
+            )
             self.config.task_call('Restart')  # modfiy by MHY
             # self.config.task_call('Restart', force_call=False)  # 禁用强制重启
             self.device.sleep(10)
