@@ -4,11 +4,11 @@ details {
     margin-bottom: .25rem !important;
 }
 
-details[open] > summary {
+details[open]>summary {
     border-bottom: unset !important;
 }
 
-details[open] > div {
+details[open]>div {
     margin-left: 0.625rem;
 }
 
@@ -201,7 +201,7 @@ button.btn.dropdown-toggle {
     display: none;
 }
 
-.bootstrap-select > select {
+.bootstrap-select>select {
     position: unset !important;
     bottom: unset !important;
     left: unset !important;
@@ -229,7 +229,7 @@ button.btn.dropdown-toggle {
 }
 
 .alas-icon,
-.alas-icon > image {
+.alas-icon>image {
     width: 42px;
     height: 42px;
 }
@@ -311,7 +311,7 @@ pre.rich-traceback-code {
     margin: auto;
 }
 
-#pywebio-scope-header_title > p {
+#pywebio-scope-header_title>p {
     font-size: 1.2rem;
     margin: auto;
     overflow: hidden;
@@ -324,7 +324,7 @@ pre.rich-traceback-code {
     margin-bottom: auto;
 }
 
-#pywebio-scope-header_status > div > div + div + p {
+#pywebio-scope-header_status>div>div+div+p {
     margin: 0;
 }
 
@@ -352,7 +352,7 @@ pre.rich-traceback-code {
     grid-template-columns: 1fr minmax(25rem, 5fr) 2fr;
 }
 
-#pywebio-scope-group__info > p {
+#pywebio-scope-group__info>p {
     font-size: .80rem !important;
     font-weight: 400;
 }
@@ -363,13 +363,13 @@ pre.rich-traceback-code {
     padding: 1rem;
 }
 
-[id^="pywebio-scope-group_"] > p {
+[id^="pywebio-scope-group_"]>p {
     font-size: 1.25rem;
     font-weight: 500;
     margin: 0 .25rem 0 .25rem !important;
 }
 
-[id^="pywebio-scope-group_"] > p + p {
+[id^="pywebio-scope-group_"]>p+p {
     font-size: .80rem;
     margin: .2rem .25rem .1rem .25rem !important;
 }
@@ -388,13 +388,13 @@ pre.rich-traceback-code {
     column-gap: 5%
 }
 
-[id^="pywebio-scope-group_Island"] > [id*="Enable"],
-[id^="pywebio-scope-group_Island"] > [id*="Receive"] {
+[id^="pywebio-scope-group_Island"]>[id*="Enable"],
+[id^="pywebio-scope-group_Island"]>[id*="Receive"] {
     display: grid;
     grid-column: 1 / -1;
 }
 
-[id^="pywebio-scope-group_Island"] > [id^="pywebio-scope-arg_container-"]:not([id*="Enable"]):not([id*="Receive"]) {
+[id^="pywebio-scope-group_Island"]>[id^="pywebio-scope-arg_container-"]:not([id*="Enable"]):not([id*="Receive"]) {
     display: grid;
     grid-template-columns: 1fr 1fr;
 }
@@ -455,10 +455,10 @@ pre.rich-traceback-code {
     width: 100%;
     display: grid;
     grid-auto-flow: row;
-    grid-template-columns: repeat(auto-fit,minmax(10rem,1fr));
+    grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
 }
 
-#pywebio-scope-dashboard .form-control{
+#pywebio-scope-dashboard .form-control {
     padding: 0 0 0;
 }
 
@@ -478,9 +478,9 @@ pre.rich-traceback-code {
     overflow: visible;
 }
 
-#pywebio-scope-running > p,
-#pywebio-scope-pending > p,
-#pywebio-scope-waiting > p {
+#pywebio-scope-running>p,
+#pywebio-scope-pending>p,
+#pywebio-scope-waiting>p {
     font-size: 1.25rem;
     font-weight: 500;
     margin: 0 0.625rem 0 !important;
@@ -612,8 +612,8 @@ pre.rich-traceback-code {
     font-weight: 400;
     margin: 0 0 0 0.6rem !important;
     font-family:
-             "Arial",
-             serif;
+        "Arial",
+        serif;
 }
 
 *[style*="--dashboard-total--"] {
@@ -621,16 +621,16 @@ pre.rich-traceback-code {
     font-weight: 400;
     margin: 0 0 0 0.15rem !important;
     font-family:
-             "Arial",
-             serif;
+        "Arial",
+        serif;
 }
 
 *[style*="--dashboard-help--"] {
     font-size: .8rem;
     margin: 0 0 0 0.6rem !important;
     font-family:
-             "Arial",
-             serif;
+        "Arial",
+        serif;
 }
 
 *[style*="--dashboard-limit--"] {
@@ -640,8 +640,8 @@ pre.rich-traceback-code {
     vertical-align: text-bottom;
     overflow-wrap: normal;
     font-family:
-             "Arial",
-             serif;
+        "Arial",
+        serif;
 }
 
 .alas-force-text,
@@ -667,4 +667,53 @@ pre.rich-traceback-code {
 #pywebio-scope-updater_detail * {
     background: var(--alas-content-bg) !important;
     color: var(--alas-content-text) !important;
+}
+
+/* Watermark for Device ID */
+
+/* Watermark for Device ID */
+#pywebio-scope-log-container {
+    position: relative;
+    overflow: hidden !important;
+    display: flex;
+    flex-direction: column;
+}
+
+#pywebio-scope-log {
+    position: relative;
+    overflow-y: auto;
+    height: 100%;
+    flex: 1;
+}
+
+#pywebio-scope-log-container::before {
+    content: var(--version);
+    position: absolute;
+    bottom: 1.4rem;
+    right: 8px;
+    font-size: 1.2rem;
+    font-weight: normal;
+    color: #676767;
+    opacity: 0.5;
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: 999;
+    font-family: monospace;
+    line-height: 1;
+}
+
+#pywebio-scope-log-container::after {
+    content: var(--device-id);
+    position: absolute;
+    bottom: 4px;
+    right: 8px;
+    font-size: 1.2rem;
+    font-weight: normal;
+    color: #676767;
+    opacity: 0.5;
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: 999;
+    font-family: monospace;
+    line-height: 1;
 }

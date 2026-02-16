@@ -641,25 +641,19 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
         try:
             is_cl1_task = self.config.task.command == 'OpsiHazard1Leveling'
             is_cl1_enabled = self.config.is_task_enabled('OpsiHazard1Leveling')
-            logger.attr('is_cl1_task', is_cl1_task)
-            logger.attr('is_cl1_enabled', is_cl1_enabled)
-        except Exception as e:
-            logger.warning(f'Failed to check CL1 status: {e}')
+        except Exception:
             is_cl1_task = False
             is_cl1_enabled = False
         
         if is_cl1_task and is_cl1_enabled:
             try:
-                try:
-                    self._cl1_auto_search_battle_count += 1
-                except Exception:
-                    self._cl1_auto_search_battle_count = 1
+                self._cl1_auto_search_battle_count += 1
                 logger.attr('cl1_battle_count', self._cl1_auto_search_battle_count)
-                try:
-                    self._cl1_increment_monthly(1)
-                    logger.info('Successfully incremented CL1 monthly battle count')
-                except Exception:
-                    logger.exception('Failed to persist monthly CL1 battle increment')
+                # 使用数据库增加计数
+                from module.statistics.cl1_database import db as cl1_db
+                instance_name = getattr(self.config, 'config_name', 'default')
+                cl1_db.increment_battle_count(instance_name)
+                logger.info('Successfully incremented CL1 battle count in DB')
             except Exception:
                 logger.exception('Failed to update cl1 battle counter')
 
@@ -672,63 +666,17 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
     def get_current_cl1_battle_count(self):
         return int(getattr(self, '_cl1_auto_search_battle_count', 0))
 
-    def _cl1_month_key(self, year: int = None, month: int = None) -> str:
-        from datetime import datetime
-        now = datetime.now()
-        if year is None:
-            year = now.year
-        if month is None:
-            month = now.month
-        return f"{year:04d}-{month:02d}"
-
-    def _cl1_monthly_file(self):
-        from pathlib import Path
-        project_root = Path(__file__).resolve().parents[2]
-        # 使用实例名作为子目录
-        instance_name = getattr(self.config, 'config_name', 'default') if hasattr(self, 'config') else 'default'
-        cl1_dir = project_root / 'log' / 'cl1' / instance_name
-        try:
-            cl1_dir.mkdir(parents=True, exist_ok=True)
-            return cl1_dir / 'cl1_monthly.json'
-        except Exception:
-            log_dir = project_root / 'log' / 'cl1' / 'default'
-            log_dir.mkdir(parents=True, exist_ok=True)
-            return log_dir / 'cl1_monthly.json'
-
-    def _load_cl1_monthly(self):
-        import json
-        f = self._cl1_monthly_file()
-        if not f.exists():
-            return {}
-        try:
-            with f.open('r', encoding='utf-8') as fh:
-                return json.load(fh)
-        except Exception:
-            logger.exception('Failed to load CL1 monthly file, resetting data')
-            return {}
-
-    def _save_cl1_monthly(self, data):
-        import json
-        f = self._cl1_monthly_file()
-        try:
-            with f.open('w', encoding='utf-8') as fh:
-                json.dump(data, fh, ensure_ascii=False, indent=2)
-        except Exception:
-            logger.exception('Failed to save CL1 monthly file')
-
-    def _cl1_increment_monthly(self, delta: int = 1, year: int = None, month: int = None):
-        key = self._cl1_month_key(year=year, month=month)
-        data = self._load_cl1_monthly()
-        try:
-            data[key] = int(data.get(key, 0)) + int(delta)
-        except Exception:
-            data[key] = int(delta)
-        self._save_cl1_monthly(data)
-
     def get_monthly_cl1_battle_count(self, year: int = None, month: int = None):
-        key = self._cl1_month_key(year=year, month=month)
-        data = self._load_cl1_monthly()
-        return int(data.get(key, 0))
+        from module.statistics.cl1_database import db as cl1_db
+        instance_name = getattr(self.config, 'config_name', 'default')
+        if year is None or month is None:
+            from datetime import datetime
+            month_key = datetime.now().strftime('%Y-%m')
+        else:
+            month_key = f"{year:04d}-{month:02d}"
+        
+        data = cl1_db.get_stats(instance_name, month_key)
+        return int(data.get('battle_count', 0))
     
     def os_auto_search_daemon(self, drop=None, strategic=False, interrupt=None, skip_first_screenshot=True):
         """

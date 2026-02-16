@@ -118,51 +118,20 @@ class OSShop(PortShop, AkashiShop):
 
                         if is_cl1 or record_non_cl1:
                             source = 'cl1_akashi' if is_cl1 else 'akashi'
-
-                            from pathlib import Path as _Path
-                            project_root = _Path(__file__).resolve().parents[2]
-                            # 使用实例名作为子目录
-                            instance_name = getattr(self.config, 'config_name', 'default') if hasattr(self, 'config') else 'default'
-                            cl1_dir = project_root / 'log' / 'cl1' / instance_name
+                            instance_name = getattr(self.config, 'config_name', 'default')
+                            
                             try:
-                                cl1_dir.mkdir(parents=True, exist_ok=True)
-                                fpath = cl1_dir / 'cl1_monthly.json'
+                                from module.statistics.cl1_database import db as cl1_db
+                                cl1_db.add_akashi_ap_entry(
+                                    instance=instance_name,
+                                    amount=int(bought_ap),
+                                    base=int(base),
+                                    count=int(amount),
+                                    source=source
+                                )
+                                logger.info(f'Successfully recorded Akashi AP purchase to DB for instance: {instance_name}')
                             except Exception:
-                                log_dir = project_root / 'log' / 'cl1' / 'default'
-                                log_dir.mkdir(parents=True, exist_ok=True)
-                                fpath = log_dir / 'cl1_monthly.json'
-
-                            try:
-                                data = json.loads(fpath.read_text(encoding='utf-8')) if fpath.exists() else {}
-                            except Exception:
-                                data = {}
-
-                            key_prefix = datetime.now().strftime('%Y-%m')
-                            entries_key = f"{key_prefix}-akashi-ap-entries"
-                            ap_key = f"{key_prefix}-akashi-ap"
-
-                            entries = data.get(entries_key) if isinstance(data.get(entries_key), list) else []
-                            entries.append({
-                                'ts': datetime.now().isoformat(),
-                                'amount': int(bought_ap),
-                                'base': int(base),
-                                'count': int(amount),
-                                'source': source  # cl1_akashi 或 akashi
-                            })
-                            data[entries_key] = entries
-
-                            prev = int(data.get(ap_key, 0) or 0)
-                            data[ap_key] = prev + int(bought_ap)
-
-                            tmp = fpath.with_suffix('.tmp')
-                            try:
-                                tmp.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding='utf-8')
-                                tmp.replace(fpath)
-                            except Exception:
-                                try:
-                                    fpath.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding='utf-8')
-                                except Exception:
-                                    logger.exception('Failed to persist akashi ap purchase to cl1_monthly.json')
+                                logger.exception('Failed to record akashi purchase to DB')
                         else:
                              logger.info('Skipping akashi AP record because not in CL1 task and RecordNonCL1AP is disabled')
                 except Exception:

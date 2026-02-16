@@ -18,6 +18,7 @@ import requests
 from module.base.device_id import get_device_id
 from module.base.api_client import ApiClient
 from module.logger import logger
+from module.statistics.cl1_database import db as cl1_db
 
 
 class Cl1DataSubmitter:
@@ -37,8 +38,12 @@ class Cl1DataSubmitter:
         # 获取项目根目录
         self.project_root = Path(__file__).resolve().parents[2]
         self._instance_name = instance_name or 'default'
-        self.cl1_dir = self.project_root / 'log' / 'cl1' / self._instance_name
-        self.cl1_file = self.cl1_dir / 'cl1_monthly.json'
+        
+        # 自动执行迁移
+        old_dir = self.project_root / 'log' / 'cl1' / self._instance_name
+        old_file = old_dir / 'cl1_monthly.json'
+        if old_file.exists():
+            cl1_db.migrate_from_json(old_file, self._instance_name)
     
     @property
     def device_id(self) -> str:
@@ -64,44 +69,14 @@ class Cl1DataSubmitter:
         
         month_key = f"{year:04d}-{month:02d}"
         
-        # 读取cl1_monthly.json
-        try:
-            if not self.cl1_file.exists():
-                logger.warning('CL1 monthly file does not exist')
-                return self._empty_data(month_key)
-            
-            with self.cl1_file.open('r', encoding='utf-8') as f:
-                data = json.load(f)
-                if not isinstance(data, dict):
-                    logger.warning('CL1 monthly file is not a dict')
-                    return self._empty_data(month_key)
-        except Exception as e:
-            logger.exception(f'Failed to load CL1 monthly file: {e}')
-            return self._empty_data(month_key)
-        
-        # 提取数据
-        battle_count = int(data.get(month_key, 0))
-        akashi_encounters = int(data.get(f"{month_key}-akashi", 0))
-        akashi_ap = int(data.get(f"{month_key}-akashi-ap", 0))
-        
-        # 如果没有明确的akashi-ap字段,尝试从entries计算
-        if akashi_ap == 0:
-            entries = data.get(f"{month_key}-akashi-ap-entries", [])
-            if isinstance(entries, list):
-                for entry in entries:
-                    try:
-                        if isinstance(entry, dict):
-                            akashi_ap += int(entry.get('amount', 0))
-                        else:
-                            akashi_ap += int(entry)
-                    except Exception:
-                        continue
+        # 从数据库读取加密存储的统计数据
+        data = cl1_db.get_stats(self._instance_name, month_key)
         
         return {
             'month': month_key,
-            'battle_count': battle_count,
-            'akashi_encounters': akashi_encounters,
-            'akashi_ap': akashi_ap,
+            'battle_count': int(data.get('battle_count', 0)),
+            'akashi_encounters': int(data.get('akashi_encounters', 0)),
+            'akashi_ap': int(data.get('akashi_ap', 0)),
         }
     
     def _empty_data(self, month_key: str) -> Dict[str, Any]:

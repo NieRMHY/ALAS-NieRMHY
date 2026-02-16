@@ -335,14 +335,12 @@ class OpsiHazard1Leveling(OSMap):
             solved_events = getattr(self, '_solved_map_event', set())
             if 'is_akashi' in solved_events:
                 try:
-                    from datetime import datetime
-                    key = f"{datetime.now():%Y-%m}-akashi"
-                    data = self._load_cl1_monthly()
-                    data[key] = int(data.get(key, 0)) + 1
-                    self._save_cl1_monthly(data)
-                    logger.attr('cl1_akashi_monthly', data[key])
+                    from module.statistics.cl1_database import db as cl1_db
+                    instance_name = getattr(self.config, 'config_name', 'default')
+                    cl1_db.increment_akashi_encounter(instance_name)
+                    logger.info('Successfully incremented CL1 akashi encounter in DB')
                 except Exception:
-                    logger.exception('Failed to persist CL1 akashi monthly count')
+                    logger.exception('Failed to persist CL1 akashi encounter to DB')
 
 
             # 每次循环结束后提交CL1数据
