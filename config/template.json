@@ -132,7 +132,7 @@
       "RetireAmount": "retire_all"
     },
     "YukikazeTaskManager": {
-      "TaskPriorityAdjustment": "Restart\n> OpsiCrossMonth\n> Commission > Tactical > Research\n> Exercise\n> Dorm > Meowfficer > Guild > Gacha\n> Reward\n> ShopFrequent > ShopOnce > Shipyard > Freebies > Island\n> PrivateQuarters\n> OpsiExplore\n> Minigame > Awaken\n> OpsiAshBeacon\n> OpsiDaily > OpsiShop > OpsiVoucher\n> OpsiAbyssal > OpsiStronghold > OpsiObscure > OpsiArchive\n> Daily > Hard > OpsiAshBeacon > OpsiAshAssist > OpsiMonthBoss\n> Sos > EventSp > EventA > EventB > EventC > EventD\n> RaidDaily > CoalitionSp > WarArchives > MaritimeEscort\n> Event > Event2 > Raid > Hospital > HospitalEvent > Coalition > Main > Main2 > Main3\n> OpsiMeowfficerFarming\n> GemsFarming\n> OpsiHazard1Leveling"
+      "TaskPriorityAdjustment": "Restart\n> OpsiCrossMonth\n> Commission > Tactical > Research\n> Exercise\n> Dorm > Meowfficer > Guild > Gacha\n> Reward\n> ShopFrequent > ShopOnce > Shipyard > Freebies > Island\n> PrivateQuarters\n> OpsiExplore\n> Minigame > Awaken\n> OpsiAshBeacon\n> OpsiDaily > OpsiShop > OpsiVoucher\n> OpsiAbyssal > OpsiStronghold > OpsiObscure > OpsiArchive\n> Daily > Hard > OpsiAshBeacon > OpsiAshAssist > OpsiMonthBoss\n> Sos > EventSp > EventA > EventB > EventC > EventD\n> RaidDaily > CoalitionSp > WarArchives > MaritimeEscort\n> Event > Event2 > Raid > Hospital > HospitalEvent > Coalition > Main > Main2 > Main3\n> OpsiMeowfficerFarming\n> GemsFarming\n> OpsiHazard1Leveling\n> ThreeOilLowCost"
     },
     "Storage": {
       "Storage": {}
@@ -384,6 +384,82 @@
       "Enable": false,
       "NextRun": "2020-01-01 00:00:00",
       "Command": "GemsFarming",
+      "SuccessInterval": 0,
+      "FailureInterval": 120,
+      "ServerUpdate": "00:00"
+    },
+    "GemsFarming": {
+      "ChangeFlagship": "ship_equip",
+      "CommonCV": "any",
+      "CommonCVFilter": "bogue > ranger > langley > hermes",
+      "ChangeVanguard": "ship_equip",
+      "CommonDD": "any",
+      "CommonDDFilter": "z20 > z21 > aulick > foote > cassin > downes",
+      "EquipmentCode": "DD: null\nbogue: null\nhermes: null\nlangley: null\nranger: null",
+      "ALLowHighFlagshipLevel": false,
+      "ALLowLowVanguardLevel": false,
+      "DelayTaskIFNoFlagship": false,
+      "CommissionLimit": false
+    },
+    "Campaign": {
+      "Name": "12-4",
+      "Event": "campaign_main",
+      "Mode": "normal",
+      "UseClearMode": true,
+      "UseFleetLock": true,
+      "UseAutoSearch": true,
+      "Use2xBook": false,
+      "AmbushEvade": true
+    },
+    "StopCondition": {
+      "OilLimit": 1000,
+      "RunCount": 0,
+      "MapAchievement": "non_stop",
+      "StageIncrease": false,
+      "GetNewShip": false,
+      "ReachLevel": 0
+    },
+    "Fleet": {
+      "Fleet1": 1,
+      "Fleet1Formation": "double_line",
+      "Fleet1Mode": "combat_auto",
+      "Fleet1Step": 3,
+      "Fleet2": 2,
+      "Fleet2Formation": "double_line",
+      "Fleet2Mode": "combat_auto",
+      "Fleet2Step": 2,
+      "FleetOrder": "fleet1_all_fleet2_standby"
+    },
+    "Submarine": {
+      "Fleet": 0,
+      "Mode": "do_not_use",
+      "AutoSearchMode": "sub_standby",
+      "DistanceToBoss": "use_open_ocean_support"
+    },
+    "Emotion": {
+      "Mode": "calculate_ignore",
+      "Fleet1Value": 119,
+      "Fleet1Record": "2020-01-01 00:00:00",
+      "Fleet1Control": "prevent_red_face",
+      "Fleet1Recover": "not_in_dormitory",
+      "Fleet1Oath": false,
+      "Fleet1Onsen": false,
+      "Fleet2Value": 119,
+      "Fleet2Record": "2020-01-01 00:00:00",
+      "Fleet2Control": "prevent_red_face",
+      "Fleet2Recover": "not_in_dormitory",
+      "Fleet2Oath": false,
+      "Fleet2Onsen": false
+    },
+    "Storage": {
+      "Storage": {}
+    }
+  },
+  "ThreeOilLowCost": {
+    "Scheduler": {
+      "Enable": true,
+      "NextRun": "2020-01-01 00:00:00",
+      "Command": "ThreeOilLowCost",
       "SuccessInterval": 0,
       "FailureInterval": 120,
       "ServerUpdate": "00:00"
@@ -871,56 +947,6 @@
       "Storage": {}
     }
   },
-  "CoalitionSp": {
-    "Scheduler": {
-      "Enable": false,
-      "NextRun": "2020-01-01 00:00:00",
-      "Command": "CoalitionSp",
-      "SuccessInterval": 30,
-      "FailureInterval": 30,
-      "ServerUpdate": "00:00"
-    },
-    "Campaign": {
-      "Name": "sp",
-      "Event": "campaign_main",
-      "Mode": "normal",
-      "UseClearMode": true,
-      "UseFleetLock": true,
-      "UseAutoSearch": false,
-      "Use2xBook": false,
-      "AmbushEvade": true
-    },
-    "Coalition": {
-      "Mode": "hard",
-      "Fleet": "single"
-    },
-    "StopCondition": {
-      "OilLimit": 1000,
-      "RunCount": 0,
-      "MapAchievement": "non_stop",
-      "StageIncrease": false,
-      "GetNewShip": false,
-      "ReachLevel": 0
-    },
-    "Emotion": {
-      "Mode": "calculate",
-      "Fleet1Value": 119,
-      "Fleet1Record": "2020-01-01 00:00:00",
-      "Fleet1Control": "prevent_yellow_face",
-      "Fleet1Recover": "not_in_dormitory",
-      "Fleet1Oath": false,
-      "Fleet1Onsen": false,
-      "Fleet2Value": 119,
-      "Fleet2Record": "2020-01-01 00:00:00",
-      "Fleet2Control": "prevent_yellow_face",
-      "Fleet2Recover": "not_in_dormitory",
-      "Fleet2Oath": false,
-      "Fleet2Onsen": false
-    },
-    "Storage": {
-      "Storage": {}
-    }
-  },
   "EventA": {
     "Scheduler": {
       "Enable": false,
@@ -1338,6 +1364,56 @@
       "UseAutoSearch": false,
       "Use2xBook": false,
       "AmbushEvade": true
+    },
+    "StopCondition": {
+      "OilLimit": 1000,
+      "RunCount": 0,
+      "MapAchievement": "non_stop",
+      "StageIncrease": false,
+      "GetNewShip": false,
+      "ReachLevel": 0
+    },
+    "Emotion": {
+      "Mode": "calculate",
+      "Fleet1Value": 119,
+      "Fleet1Record": "2020-01-01 00:00:00",
+      "Fleet1Control": "prevent_yellow_face",
+      "Fleet1Recover": "not_in_dormitory",
+      "Fleet1Oath": false,
+      "Fleet1Onsen": false,
+      "Fleet2Value": 119,
+      "Fleet2Record": "2020-01-01 00:00:00",
+      "Fleet2Control": "prevent_yellow_face",
+      "Fleet2Recover": "not_in_dormitory",
+      "Fleet2Oath": false,
+      "Fleet2Onsen": false
+    },
+    "Storage": {
+      "Storage": {}
+    }
+  },
+  "CoalitionSp": {
+    "Scheduler": {
+      "Enable": false,
+      "NextRun": "2020-01-01 00:00:00",
+      "Command": "CoalitionSp",
+      "SuccessInterval": 30,
+      "FailureInterval": 30,
+      "ServerUpdate": "00:00"
+    },
+    "Campaign": {
+      "Name": "sp",
+      "Event": "campaign_main",
+      "Mode": "normal",
+      "UseClearMode": true,
+      "UseFleetLock": true,
+      "UseAutoSearch": false,
+      "Use2xBook": false,
+      "AmbushEvade": true
+    },
+    "Coalition": {
+      "Mode": "hard",
+      "Fleet": "single"
     },
     "StopCondition": {
       "OilLimit": 1000,

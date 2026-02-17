@@ -126,7 +126,7 @@ class GeneratedConfig:
     Retirement_RetireMode = 'one_click_retire'  # one_click_retire, enhance, old_retire
 
     # Group `YukikazeTaskManager`
-    YukikazeTaskManager_TaskPriorityAdjustment = 'Restart\n> OpsiCrossMonth\n> Commission > Tactical > Research\n> Exercise\n> Dorm > Meowfficer > Guild > Gacha\n> Reward\n> ShopFrequent > ShopOnce > Shipyard > Freebies > Island\n> PrivateQuarters\n> OpsiExplore\n> Minigame > Awaken\n> OpsiAshBeacon\n> OpsiDaily > OpsiShop > OpsiVoucher\n> OpsiAbyssal > OpsiStronghold > OpsiObscure > OpsiArchive\n> Daily > Hard > OpsiAshBeacon > OpsiAshAssist > OpsiMonthBoss\n> Sos > EventSp > EventA > EventB > EventC > EventD\n> RaidDaily > CoalitionSp > WarArchives > MaritimeEscort\n> Event > Event2 > Raid > Hospital > HospitalEvent > Coalition > Main > Main2 > Main3\n> OpsiMeowfficerFarming\n> GemsFarming\n> OpsiHazard1Leveling'
+    YukikazeTaskManager_TaskPriorityAdjustment = 'Restart\n> OpsiCrossMonth\n> Commission > Tactical > Research\n> Exercise\n> Dorm > Meowfficer > Guild > Gacha\n> Reward\n> ShopFrequent > ShopOnce > Shipyard > Freebies > Island\n> PrivateQuarters\n> OpsiExplore\n> Minigame > Awaken\n> OpsiAshBeacon\n> OpsiDaily > OpsiShop > OpsiVoucher\n> OpsiAbyssal > OpsiStronghold > OpsiObscure > OpsiArchive\n> Daily > Hard > OpsiAshBeacon > OpsiAshAssist > OpsiMonthBoss\n> Sos > EventSp > EventA > EventB > EventC > EventD\n> RaidDaily > CoalitionSp > WarArchives > MaritimeEscort\n> Event > Event2 > Raid > Hospital > HospitalEvent > Coalition > Main > Main2 > Main3\n> OpsiMeowfficerFarming\n> GemsFarming\n> OpsiHazard1Leveling\n> ThreeOilLowCost'
 
     # Group `OneClickRetire`
     OneClickRetire_KeepLimitBreak = 'keep_limit_break'  # keep_limit_break, do_not_keep
@@ -741,6 +741,19 @@ class GeneratedConfig:
 
     # Group `GameManager`
     GameManager_AutoRestart = True
+
+    # Group `ThreeOilLowCost`
+    ThreeOilLowCost_ChangeFlagship = 'ship_equip'  # ship, ship_equip
+    ThreeOilLowCost_CommonCV = 'any'  # custom, any, eagle, langley, bogue, ranger, hermes
+    ThreeOilLowCost_CommonCVFilter = 'bogue > ranger > langley > hermes'
+    ThreeOilLowCost_ChangeVanguard = 'ship_equip'  # disabled, ship, ship_equip
+    ThreeOilLowCost_CommonDD = 'any'  # custom, any, favourite, aulick_or_foote, cassin_or_downes, z20_or_z21, DDG
+    ThreeOilLowCost_CommonDDFilter = 'z20 > z21 > aulick > foote > cassin > downes'
+    ThreeOilLowCost_EquipmentCode = 'DD: null\nbogue: null\nhermes: null\nlangley: null\nranger: null'
+    ThreeOilLowCost_ALLowHighFlagshipLevel = False
+    ThreeOilLowCost_ALLowLowVanguardLevel = False
+    ThreeOilLowCost_DelayTaskIFNoFlagship = False
+    ThreeOilLowCost_CommissionLimit = False
 
     # Group `Storage`
     Storage_Storage = {}
