@@ -34,4 +34,4 @@ EventD:
 # ==================== Opsi ====================
 ThreeOilLowCost:
   Scheduler:
-    Enable: true
+    Enable: false
