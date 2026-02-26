@@ -98,7 +98,8 @@
       "OpsiMeowfficerFarming",
       "OpsiHazard1Leveling",
       "OpsiScheduling",
-      "OpsiCrossMonth"
+      "OpsiCrossMonth",
+      "OpsiDailyDelay"
     ]
   },
   "Island": {

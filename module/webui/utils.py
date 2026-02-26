@@ -443,6 +443,9 @@ class Icon:
     RUN = _load_icon("run")
     DEVELOP = _load_icon("develop")
     ADD = _load_icon("add")
+    RUNNING = _read(filepath_icon("status_running"))
+    ERROR = _read(filepath_icon("status_error"))
+    UPDATE = _read(filepath_icon("status_update"))
 
 
 str2type = {

@@ -10,6 +10,7 @@ Alas:
       - DropRecord
       - EmulatorManagement
     General:
+      - Log
       - Retirement
       - OneClickRetire
       - Enhance
@@ -250,6 +251,7 @@ Reward:
       - Island13
       - Island14
       - Island15
+      - Island16
 DailyMission:
   menu: collapse
   page: setting
@@ -350,6 +352,9 @@ Opsi:
       - OpsiScheduling
     OpsiCrossMonth:
       - Scheduler
+    OpsiDailyDelay:
+      - Scheduler
+      - OpsiDailyDelay
 
 # =================== Island ===================
 Island:

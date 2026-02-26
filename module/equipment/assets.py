@@ -1,5 +1,3 @@
-# 此文件由工具自动生成，定义了装备管理相关的 UI 资源。
-# 包含了各个功能的按钮（Button）和识别模板（Template），用于在装备详情或变更界面进行图像匹配。
 from module.base.button import Button
 from module.base.template import Template
 

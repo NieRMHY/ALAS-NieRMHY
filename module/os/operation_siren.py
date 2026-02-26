@@ -4,6 +4,7 @@ from module.os.tasks.abyssal import OpsiAbyssal
 from module.os.tasks.archive import OpsiArchive
 from module.os.tasks.cross_month import OpsiCrossMonth
 from module.os.tasks.daily import OpsiDaily
+from module.os.tasks.daily_delay import OpsiDailyDelay
 from module.os.tasks.explore import OpsiExplore
 from module.os.tasks.hazard_leveling import OpsiHazard1Leveling
 from module.os.tasks.meowfficer_farming import OpsiMeowfficerFarming
@@ -29,6 +30,7 @@ class OperationSiren(
     OpsiMonthBoss,
     OpsiExplore,
     OpsiCrossMonth,
+    OpsiDailyDelay,
 ):
     """
     Operation Siren main class that combines all task modules.

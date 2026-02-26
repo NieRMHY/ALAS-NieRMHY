@@ -278,6 +278,10 @@
       "name": "跨月无缝衔接",
       "help": "    基于毫秒级时间同步，Alas将在重置前10分钟介入，通过驻留进程实现跨月无缝流转。自动完成跨周期的高价值任务链（每日/隐秘/深渊/短猫）以最大化金菜产出。\n    核心提示：系统执行跨月驻留协议期间，请勿进行人工干预，以免破坏进程保活。"
     },
+    "OpsiDailyDelay": {
+      "name": "Task.OpsiDailyDelay.name",
+      "help": "Task.OpsiDailyDelay.help"
+    },
     "IslandInfo": {
       "name": "Task.IslandInfo.name",
       "help": "Task.IslandInfo.help"
@@ -537,6 +541,10 @@
       "name": "Error.StrictRestart.name",
       "help": "Error.StrictRestart.help"
     },
+    "SaveErrorCount": {
+      "name": "Error.SaveErrorCount.name",
+      "help": "Error.SaveErrorCount.help"
+    },
     "OnePushConfig": {
       "name": "全场景消息推送",
       "help": "触发不可逆异常时，通过 Onepush 中台分发告警信息。配置指南：https://..."
@@ -657,6 +665,31 @@
     "BugReport": {
       "name": "DropRecord.BugReport.name",
       "help": "DropRecord.BugReport.help"
+    }
+  },
+  "Log": {
+    "_info": {
+      "name": "Log._info.name",
+      "help": "Log._info.help"
+    },
+    "LogKeepCount": {
+      "name": "Log.LogKeepCount.name",
+      "help": "Log.LogKeepCount.help"
+    },
+    "LogBackUpMethod": {
+      "name": "Log.LogBackUpMethod.name",
+      "help": "Log.LogBackUpMethod.help",
+      "delete": "delete",
+      "zip": "zip",
+      "copy": "copy"
+    },
+    "ZipMethod": {
+      "name": "Log.ZipMethod.name",
+      "help": "Log.ZipMethod.help",
+      "bz2": "bz2",
+      "gzip": "gzip",
+      "xz": "xz",
+      "zip": "zip"
     }
   },
   "Retirement": {
@@ -1678,6 +1711,10 @@
     "FeedFilter": {
       "name": "Dorm.FeedFilter.name",
       "help": "Dorm.FeedFilter.help"
+    },
+    "BuyFood": {
+      "name": "Dorm.BuyFood.name",
+      "help": "Dorm.BuyFood.help"
     }
   },
   "BuyFurniture": {
@@ -1836,52 +1873,6 @@
       "help": "Awaken.Favourite.help"
     }
   },
-  "IslandTransport": {
-    "_info": {
-      "name": "IslandTransport._info.name",
-      "help": "IslandTransport._info.help"
-    },
-    "SubmitCarrot": {
-      "name": "IslandTransport.SubmitCarrot.name",
-      "help": "IslandTransport.SubmitCarrot.help"
-    },
-    "SubmitCotton": {
-      "name": "IslandTransport.SubmitCotton.name",
-      "help": "IslandTransport.SubmitCotton.help"
-    },
-    "SubmitFlex": {
-      "name": "IslandTransport.SubmitFlex.name",
-      "help": "IslandTransport.SubmitFlex.help"
-    },
-    "SubmitFreshMeat": {
-      "name": "IslandTransport.SubmitFreshMeat.name",
-      "help": "IslandTransport.SubmitFreshMeat.help"
-    },
-    "SubmitManjuu": {
-      "name": "IslandTransport.SubmitManjuu.name",
-      "help": "IslandTransport.SubmitManjuu.help"
-    },
-    "SubmitMilk": {
-      "name": "IslandTransport.SubmitMilk.name",
-      "help": "IslandTransport.SubmitMilk.help"
-    },
-    "SubmitNapaCabbage": {
-      "name": "IslandTransport.SubmitNapaCabbage.name",
-      "help": "IslandTransport.SubmitNapaCabbage.help"
-    },
-    "SubmitOnion": {
-      "name": "IslandTransport.SubmitOnion.name",
-      "help": "IslandTransport.SubmitOnion.help"
-    },
-    "SubmitPoultry": {
-      "name": "IslandTransport.SubmitPoultry.name",
-      "help": "IslandTransport.SubmitPoultry.help"
-    },
-    "SubmitStrawberries": {
-      "name": "IslandTransport.SubmitStrawberries.name",
-      "help": "IslandTransport.SubmitStrawberries.help"
-    }
-  },
   "Island1": {
     "_info": {
       "name": "Island1._info.name",
@@ -1916,9 +1907,14 @@
       "akashi": "akashi",
       "ying_swei": "ying_swei",
       "chao_ho": "chao_ho",
+      "william_d_porter": "william_d_porter",
+      "chen_hai": "chen_hai",
       "unicorn": "unicorn",
       "cheshire": "cheshire",
-      "amagi_chan": "amagi_chan"
+      "amagi_chan": "amagi_chan",
+      "helena": "helena",
+      "atago": "atago",
+      "friedrich_der_grobe": "friedrich_der_grobe"
     },
     "Option2": {
       "name": "Island1.Option2.name",
@@ -1945,9 +1941,14 @@
       "akashi": "akashi",
       "ying_swei": "ying_swei",
       "chao_ho": "chao_ho",
+      "william_d_porter": "william_d_porter",
+      "chen_hai": "chen_hai",
       "unicorn": "unicorn",
       "cheshire": "cheshire",
-      "amagi_chan": "amagi_chan"
+      "amagi_chan": "amagi_chan",
+      "helena": "helena",
+      "atago": "atago",
+      "friedrich_der_grobe": "friedrich_der_grobe"
     },
     "Option3": {
       "name": "Island1.Option3.name",
@@ -1974,9 +1975,14 @@
       "akashi": "akashi",
       "ying_swei": "ying_swei",
       "chao_ho": "chao_ho",
+      "william_d_porter": "william_d_porter",
+      "chen_hai": "chen_hai",
       "unicorn": "unicorn",
       "cheshire": "cheshire",
-      "amagi_chan": "amagi_chan"
+      "amagi_chan": "amagi_chan",
+      "helena": "helena",
+      "atago": "atago",
+      "friedrich_der_grobe": "friedrich_der_grobe"
     },
     "Option4": {
       "name": "Island1.Option4.name",
@@ -2003,9 +2009,14 @@
       "akashi": "akashi",
       "ying_swei": "ying_swei",
       "chao_ho": "chao_ho",
+      "william_d_porter": "william_d_porter",
+      "chen_hai": "chen_hai",
       "unicorn": "unicorn",
       "cheshire": "cheshire",
-      "amagi_chan": "amagi_chan"
+      "amagi_chan": "amagi_chan",
+      "helena": "helena",
+      "atago": "atago",
+      "friedrich_der_grobe": "friedrich_der_grobe"
     }
   },
   "Island2": {
@@ -2035,9 +2046,14 @@
       "akashi": "akashi",
       "ying_swei": "ying_swei",
       "chao_ho": "chao_ho",
+      "william_d_porter": "william_d_porter",
+      "chen_hai": "chen_hai",
       "unicorn": "unicorn",
       "cheshire": "cheshire",
-      "amagi_chan": "amagi_chan"
+      "amagi_chan": "amagi_chan",
+      "helena": "helena",
+      "atago": "atago",
+      "friedrich_der_grobe": "friedrich_der_grobe"
     },
     "Option2": {
       "name": "Island2.Option2.name",
@@ -2057,9 +2073,14 @@
       "akashi": "akashi",
       "ying_swei": "ying_swei",
       "chao_ho": "chao_ho",
+      "william_d_porter": "william_d_porter",
+      "chen_hai": "chen_hai",
       "unicorn": "unicorn",
       "cheshire": "cheshire",
-      "amagi_chan": "amagi_chan"
+      "amagi_chan": "amagi_chan",
+      "helena": "helena",
+      "atago": "atago",
+      "friedrich_der_grobe": "friedrich_der_grobe"
     },
     "Option3": {
       "name": "Island2.Option3.name",
@@ -2079,9 +2100,14 @@
       "akashi": "akashi",
       "ying_swei": "ying_swei",
       "chao_ho": "chao_ho",
+      "william_d_porter": "william_d_porter",
+      "chen_hai": "chen_hai",
       "unicorn": "unicorn",
       "cheshire": "cheshire",
-      "amagi_chan": "amagi_chan"
+      "amagi_chan": "amagi_chan",
+      "helena": "helena",
+      "atago": "atago",
+      "friedrich_der_grobe": "friedrich_der_grobe"
     },
     "Option4": {
       "name": "Island2.Option4.name",
@@ -2101,9 +2127,14 @@
       "akashi": "akashi",
       "ying_swei": "ying_swei",
       "chao_ho": "chao_ho",
+      "william_d_porter": "william_d_porter",
+      "chen_hai": "chen_hai",
       "unicorn": "unicorn",
       "cheshire": "cheshire",
-      "amagi_chan": "amagi_chan"
+      "amagi_chan": "amagi_chan",
+      "helena": "helena",
+      "atago": "atago",
+      "friedrich_der_grobe": "friedrich_der_grobe"
     }
   },
   "Island3": {
@@ -2124,7 +2155,17 @@
       "3": "3",
       "4": "4",
       "5": "5",
-      "6": "6"
+      "6": "6",
+      "7": "7",
+      "8": "8",
+      "9": "9",
+      "10": "10",
+      "11": "11",
+      "12": "12",
+      "13": "13",
+      "14": "14",
+      "15": "15",
+      "16": "16"
     },
     "Character1": {
       "name": "Island3.Character1.name",
@@ -2138,9 +2179,14 @@
       "akashi": "akashi",
       "ying_swei": "ying_swei",
       "chao_ho": "chao_ho",
+      "william_d_porter": "william_d_porter",
+      "chen_hai": "chen_hai",
       "unicorn": "unicorn",
       "cheshire": "cheshire",
-      "amagi_chan": "amagi_chan"
+      "amagi_chan": "amagi_chan",
+      "helena": "helena",
+      "atago": "atago",
+      "friedrich_der_grobe": "friedrich_der_grobe"
     },
     "Option2": {
       "name": "Island3.Option2.name",
@@ -2151,7 +2197,17 @@
       "3": "3",
       "4": "4",
       "5": "5",
-      "6": "6"
+      "6": "6",
+      "7": "7",
+      "8": "8",
+      "9": "9",
+      "10": "10",
+      "11": "11",
+      "12": "12",
+      "13": "13",
+      "14": "14",
+      "15": "15",
+      "16": "16"
     },
     "Character2": {
       "name": "Island3.Character2.name",
@@ -2165,9 +2221,14 @@
       "akashi": "akashi",
       "ying_swei": "ying_swei",
       "chao_ho": "chao_ho",
+      "william_d_porter": "william_d_porter",
+      "chen_hai": "chen_hai",
       "unicorn": "unicorn",
       "cheshire": "cheshire",
-      "amagi_chan": "amagi_chan"
+      "amagi_chan": "amagi_chan",
+      "helena": "helena",
+      "atago": "atago",
+      "friedrich_der_grobe": "friedrich_der_grobe"
     },
     "Option3": {
       "name": "Island3.Option3.name",
@@ -2178,7 +2239,17 @@
       "3": "3",
       "4": "4",
       "5": "5",
-      "6": "6"
+      "6": "6",
+      "7": "7",
+      "8": "8",
+      "9": "9",
+      "10": "10",
+      "11": "11",
+      "12": "12",
+      "13": "13",
+      "14": "14",
+      "15": "15",
+      "16": "16"
     },
     "Character3": {
       "name": "Island3.Character3.name",
@@ -2192,36 +2263,14 @@
       "akashi": "akashi",
       "ying_swei": "ying_swei",
       "chao_ho": "chao_ho",
+      "william_d_porter": "william_d_porter",
+      "chen_hai": "chen_hai",
       "unicorn": "unicorn",
       "cheshire": "cheshire",
-      "amagi_chan": "amagi_chan"
-    },
-    "Option4": {
-      "name": "Island3.Option4.name",
-      "help": "Island3.Option4.help",
-      "0": "0",
-      "1": "1",
-      "2": "2",
-      "3": "3",
-      "4": "4",
-      "5": "5",
-      "6": "6"
-    },
-    "Character4": {
-      "name": "Island3.Character4.name",
-      "help": "Island3.Character4.help",
-      "manjuu": "manjuu",
-      "saratoga": "saratoga",
-      "new_jersey": "new_jersey",
-      "tashkent": "tashkent",
-      "lemalin": "lemalin",
-      "shimakaze": "shimakaze",
-      "akashi": "akashi",
-      "ying_swei": "ying_swei",
-      "chao_ho": "chao_ho",
-      "unicorn": "unicorn",
-      "cheshire": "cheshire",
-      "amagi_chan": "amagi_chan"
+      "amagi_chan": "amagi_chan",
+      "helena": "helena",
+      "atago": "atago",
+      "friedrich_der_grobe": "friedrich_der_grobe"
     }
   },
   "Island4": {
@@ -2240,7 +2289,9 @@
       "1": "1",
       "2": "2",
       "3": "3",
-      "4": "4"
+      "4": "4",
+      "5": "5",
+      "6": "6"
     },
     "Character1": {
       "name": "Island4.Character1.name",
@@ -2254,9 +2305,14 @@
       "akashi": "akashi",
       "ying_swei": "ying_swei",
       "chao_ho": "chao_ho",
+      "william_d_porter": "william_d_porter",
+      "chen_hai": "chen_hai",
       "unicorn": "unicorn",
       "cheshire": "cheshire",
-      "amagi_chan": "amagi_chan"
+      "amagi_chan": "amagi_chan",
+      "helena": "helena",
+      "atago": "atago",
+      "friedrich_der_grobe": "friedrich_der_grobe"
     },
     "Option2": {
       "name": "Island4.Option2.name",
@@ -2265,7 +2321,9 @@
       "1": "1",
       "2": "2",
       "3": "3",
-      "4": "4"
+      "4": "4",
+      "5": "5",
+      "6": "6"
     },
     "Character2": {
       "name": "Island4.Character2.name",
@@ -2279,9 +2337,14 @@
       "akashi": "akashi",
       "ying_swei": "ying_swei",
       "chao_ho": "chao_ho",
+      "william_d_porter": "william_d_porter",
+      "chen_hai": "chen_hai",
       "unicorn": "unicorn",
       "cheshire": "cheshire",
-      "amagi_chan": "amagi_chan"
+      "amagi_chan": "amagi_chan",
+      "helena": "helena",
+      "atago": "atago",
+      "friedrich_der_grobe": "friedrich_der_grobe"
     },
     "Option3": {
       "name": "Island4.Option3.name",
@@ -2290,7 +2353,9 @@
       "1": "1",
       "2": "2",
       "3": "3",
-      "4": "4"
+      "4": "4",
+      "5": "5",
+      "6": "6"
     },
     "Character3": {
       "name": "Island4.Character3.name",
@@ -2304,9 +2369,14 @@
       "akashi": "akashi",
       "ying_swei": "ying_swei",
       "chao_ho": "chao_ho",
+      "william_d_porter": "william_d_porter",
+      "chen_hai": "chen_hai",
       "unicorn": "unicorn",
       "cheshire": "cheshire",
-      "amagi_chan": "amagi_chan"
+      "amagi_chan": "amagi_chan",
+      "helena": "helena",
+      "atago": "atago",
+      "friedrich_der_grobe": "friedrich_der_grobe"
     },
     "Option4": {
       "name": "Island4.Option4.name",
@@ -2315,7 +2385,9 @@
       "1": "1",
       "2": "2",
       "3": "3",
-      "4": "4"
+      "4": "4",
+      "5": "5",
+      "6": "6"
     },
     "Character4": {
       "name": "Island4.Character4.name",
@@ -2329,9 +2401,14 @@
       "akashi": "akashi",
       "ying_swei": "ying_swei",
       "chao_ho": "chao_ho",
+      "william_d_porter": "william_d_porter",
+      "chen_hai": "chen_hai",
       "unicorn": "unicorn",
       "cheshire": "cheshire",
-      "amagi_chan": "amagi_chan"
+      "amagi_chan": "amagi_chan",
+      "helena": "helena",
+      "atago": "atago",
+      "friedrich_der_grobe": "friedrich_der_grobe"
     }
   },
   "Island5": {
@@ -2350,12 +2427,7 @@
       "1": "1",
       "2": "2",
       "3": "3",
-      "4": "4",
-      "5": "5",
-      "6": "6",
-      "7": "7",
-      "8": "8",
-      "9": "9"
+      "4": "4"
     },
     "Character1": {
       "name": "Island5.Character1.name",
@@ -2369,9 +2441,14 @@
       "akashi": "akashi",
       "ying_swei": "ying_swei",
       "chao_ho": "chao_ho",
+      "william_d_porter": "william_d_porter",
+      "chen_hai": "chen_hai",
       "unicorn": "unicorn",
       "cheshire": "cheshire",
-      "amagi_chan": "amagi_chan"
+      "amagi_chan": "amagi_chan",
+      "helena": "helena",
+      "atago": "atago",
+      "friedrich_der_grobe": "friedrich_der_grobe"
     },
     "Option2": {
       "name": "Island5.Option2.name",
@@ -2380,12 +2457,7 @@
       "1": "1",
       "2": "2",
       "3": "3",
-      "4": "4",
-      "5": "5",
-      "6": "6",
-      "7": "7",
-      "8": "8",
-      "9": "9"
+      "4": "4"
     },
     "Character2": {
       "name": "Island5.Character2.name",
@@ -2399,9 +2471,14 @@
       "akashi": "akashi",
       "ying_swei": "ying_swei",
       "chao_ho": "chao_ho",
+      "william_d_porter": "william_d_porter",
+      "chen_hai": "chen_hai",
       "unicorn": "unicorn",
       "cheshire": "cheshire",
-      "amagi_chan": "amagi_chan"
+      "amagi_chan": "amagi_chan",
+      "helena": "helena",
+      "atago": "atago",
+      "friedrich_der_grobe": "friedrich_der_grobe"
     },
     "Option3": {
       "name": "Island5.Option3.name",
@@ -2410,12 +2487,7 @@
       "1": "1",
       "2": "2",
       "3": "3",
-      "4": "4",
-      "5": "5",
-      "6": "6",
-      "7": "7",
-      "8": "8",
-      "9": "9"
+      "4": "4"
     },
     "Character3": {
       "name": "Island5.Character3.name",
@@ -2429,9 +2501,14 @@
       "akashi": "akashi",
       "ying_swei": "ying_swei",
       "chao_ho": "chao_ho",
+      "william_d_porter": "william_d_porter",
+      "chen_hai": "chen_hai",
       "unicorn": "unicorn",
       "cheshire": "cheshire",
-      "amagi_chan": "amagi_chan"
+      "amagi_chan": "amagi_chan",
+      "helena": "helena",
+      "atago": "atago",
+      "friedrich_der_grobe": "friedrich_der_grobe"
     },
     "Option4": {
       "name": "Island5.Option4.name",
@@ -2440,12 +2517,7 @@
       "1": "1",
       "2": "2",
       "3": "3",
-      "4": "4",
-      "5": "5",
-      "6": "6",
-      "7": "7",
-      "8": "8",
-      "9": "9"
+      "4": "4"
     },
     "Character4": {
       "name": "Island5.Character4.name",
@@ -2459,9 +2531,14 @@
       "akashi": "akashi",
       "ying_swei": "ying_swei",
       "chao_ho": "chao_ho",
+      "william_d_porter": "william_d_porter",
+      "chen_hai": "chen_hai",
       "unicorn": "unicorn",
       "cheshire": "cheshire",
-      "amagi_chan": "amagi_chan"
+      "amagi_chan": "amagi_chan",
+      "helena": "helena",
+      "atago": "atago",
+      "friedrich_der_grobe": "friedrich_der_grobe"
     }
   },
   "Island6": {
@@ -2497,9 +2574,14 @@
       "akashi": "akashi",
       "ying_swei": "ying_swei",
       "chao_ho": "chao_ho",
+      "william_d_porter": "william_d_porter",
+      "chen_hai": "chen_hai",
       "unicorn": "unicorn",
       "cheshire": "cheshire",
-      "amagi_chan": "amagi_chan"
+      "amagi_chan": "amagi_chan",
+      "helena": "helena",
+      "atago": "atago",
+      "friedrich_der_grobe": "friedrich_der_grobe"
     },
     "Option2": {
       "name": "Island6.Option2.name",
@@ -2525,9 +2607,80 @@
       "akashi": "akashi",
       "ying_swei": "ying_swei",
       "chao_ho": "chao_ho",
+      "william_d_porter": "william_d_porter",
+      "chen_hai": "chen_hai",
       "unicorn": "unicorn",
       "cheshire": "cheshire",
-      "amagi_chan": "amagi_chan"
+      "amagi_chan": "amagi_chan",
+      "helena": "helena",
+      "atago": "atago",
+      "friedrich_der_grobe": "friedrich_der_grobe"
+    },
+    "Option3": {
+      "name": "Island6.Option3.name",
+      "help": "Island6.Option3.help",
+      "0": "0",
+      "1": "1",
+      "2": "2",
+      "3": "3",
+      "4": "4",
+      "5": "5",
+      "6": "6",
+      "7": "7"
+    },
+    "Character3": {
+      "name": "Island6.Character3.name",
+      "help": "Island6.Character3.help",
+      "manjuu": "manjuu",
+      "saratoga": "saratoga",
+      "new_jersey": "new_jersey",
+      "tashkent": "tashkent",
+      "lemalin": "lemalin",
+      "shimakaze": "shimakaze",
+      "akashi": "akashi",
+      "ying_swei": "ying_swei",
+      "chao_ho": "chao_ho",
+      "william_d_porter": "william_d_porter",
+      "chen_hai": "chen_hai",
+      "unicorn": "unicorn",
+      "cheshire": "cheshire",
+      "amagi_chan": "amagi_chan",
+      "helena": "helena",
+      "atago": "atago",
+      "friedrich_der_grobe": "friedrich_der_grobe"
+    },
+    "Option4": {
+      "name": "Island6.Option4.name",
+      "help": "Island6.Option4.help",
+      "0": "0",
+      "1": "1",
+      "2": "2",
+      "3": "3",
+      "4": "4",
+      "5": "5",
+      "6": "6",
+      "7": "7"
+    },
+    "Character4": {
+      "name": "Island6.Character4.name",
+      "help": "Island6.Character4.help",
+      "manjuu": "manjuu",
+      "saratoga": "saratoga",
+      "new_jersey": "new_jersey",
+      "tashkent": "tashkent",
+      "lemalin": "lemalin",
+      "shimakaze": "shimakaze",
+      "akashi": "akashi",
+      "ying_swei": "ying_swei",
+      "chao_ho": "chao_ho",
+      "william_d_porter": "william_d_porter",
+      "chen_hai": "chen_hai",
+      "unicorn": "unicorn",
+      "cheshire": "cheshire",
+      "amagi_chan": "amagi_chan",
+      "helena": "helena",
+      "atago": "atago",
+      "friedrich_der_grobe": "friedrich_der_grobe"
     }
   },
   "Island7": {
@@ -2565,9 +2718,14 @@
       "akashi": "akashi",
       "ying_swei": "ying_swei",
       "chao_ho": "chao_ho",
+      "william_d_porter": "william_d_porter",
+      "chen_hai": "chen_hai",
       "unicorn": "unicorn",
       "cheshire": "cheshire",
-      "amagi_chan": "amagi_chan"
+      "amagi_chan": "amagi_chan",
+      "helena": "helena",
+      "atago": "atago",
+      "friedrich_der_grobe": "friedrich_der_grobe"
     },
     "Option2": {
       "name": "Island7.Option2.name",
@@ -2595,9 +2753,14 @@
       "akashi": "akashi",
       "ying_swei": "ying_swei",
       "chao_ho": "chao_ho",
+      "william_d_porter": "william_d_porter",
+      "chen_hai": "chen_hai",
       "unicorn": "unicorn",
       "cheshire": "cheshire",
-      "amagi_chan": "amagi_chan"
+      "amagi_chan": "amagi_chan",
+      "helena": "helena",
+      "atago": "atago",
+      "friedrich_der_grobe": "friedrich_der_grobe"
     }
   },
   "Island8": {
@@ -2623,7 +2786,8 @@
       "8": "8",
       "9": "9",
       "10": "10",
-      "11": "11"
+      "11": "11",
+      "12": "12"
     },
     "Character1": {
       "name": "Island8.Character1.name",
@@ -2637,9 +2801,14 @@
       "akashi": "akashi",
       "ying_swei": "ying_swei",
       "chao_ho": "chao_ho",
+      "william_d_porter": "william_d_porter",
+      "chen_hai": "chen_hai",
       "unicorn": "unicorn",
       "cheshire": "cheshire",
-      "amagi_chan": "amagi_chan"
+      "amagi_chan": "amagi_chan",
+      "helena": "helena",
+      "atago": "atago",
+      "friedrich_der_grobe": "friedrich_der_grobe"
     },
     "Option2": {
       "name": "Island8.Option2.name",
@@ -2655,7 +2824,8 @@
       "8": "8",
       "9": "9",
       "10": "10",
-      "11": "11"
+      "11": "11",
+      "12": "12"
     },
     "Character2": {
       "name": "Island8.Character2.name",
@@ -2669,9 +2839,14 @@
       "akashi": "akashi",
       "ying_swei": "ying_swei",
       "chao_ho": "chao_ho",
+      "william_d_porter": "william_d_porter",
+      "chen_hai": "chen_hai",
       "unicorn": "unicorn",
       "cheshire": "cheshire",
-      "amagi_chan": "amagi_chan"
+      "amagi_chan": "amagi_chan",
+      "helena": "helena",
+      "atago": "atago",
+      "friedrich_der_grobe": "friedrich_der_grobe"
     }
   },
   "Island9": {
@@ -2695,7 +2870,9 @@
       "6": "6",
       "7": "7",
       "8": "8",
-      "9": "9"
+      "9": "9",
+      "10": "10",
+      "11": "11"
     },
     "Character1": {
       "name": "Island9.Character1.name",
@@ -2709,9 +2886,14 @@
       "akashi": "akashi",
       "ying_swei": "ying_swei",
       "chao_ho": "chao_ho",
+      "william_d_porter": "william_d_porter",
+      "chen_hai": "chen_hai",
       "unicorn": "unicorn",
       "cheshire": "cheshire",
-      "amagi_chan": "amagi_chan"
+      "amagi_chan": "amagi_chan",
+      "helena": "helena",
+      "atago": "atago",
+      "friedrich_der_grobe": "friedrich_der_grobe"
     },
     "Option2": {
       "name": "Island9.Option2.name",
@@ -2725,7 +2907,9 @@
       "6": "6",
       "7": "7",
       "8": "8",
-      "9": "9"
+      "9": "9",
+      "10": "10",
+      "11": "11"
     },
     "Character2": {
       "name": "Island9.Character2.name",
@@ -2739,9 +2923,14 @@
       "akashi": "akashi",
       "ying_swei": "ying_swei",
       "chao_ho": "chao_ho",
+      "william_d_porter": "william_d_porter",
+      "chen_hai": "chen_hai",
       "unicorn": "unicorn",
       "cheshire": "cheshire",
-      "amagi_chan": "amagi_chan"
+      "amagi_chan": "amagi_chan",
+      "helena": "helena",
+      "atago": "atago",
+      "friedrich_der_grobe": "friedrich_der_grobe"
     }
   },
   "Island10": {
@@ -2763,7 +2952,10 @@
       "4": "4",
       "5": "5",
       "6": "6",
-      "7": "7"
+      "7": "7",
+      "8": "8",
+      "9": "9",
+      "10": "10"
     },
     "Character1": {
       "name": "Island10.Character1.name",
@@ -2777,9 +2969,14 @@
       "akashi": "akashi",
       "ying_swei": "ying_swei",
       "chao_ho": "chao_ho",
+      "william_d_porter": "william_d_porter",
+      "chen_hai": "chen_hai",
       "unicorn": "unicorn",
       "cheshire": "cheshire",
-      "amagi_chan": "amagi_chan"
+      "amagi_chan": "amagi_chan",
+      "helena": "helena",
+      "atago": "atago",
+      "friedrich_der_grobe": "friedrich_der_grobe"
     },
     "Option2": {
       "name": "Island10.Option2.name",
@@ -2791,7 +2988,10 @@
       "4": "4",
       "5": "5",
       "6": "6",
-      "7": "7"
+      "7": "7",
+      "8": "8",
+      "9": "9",
+      "10": "10"
     },
     "Character2": {
       "name": "Island10.Character2.name",
@@ -2805,9 +3005,14 @@
       "akashi": "akashi",
       "ying_swei": "ying_swei",
       "chao_ho": "chao_ho",
+      "william_d_porter": "william_d_porter",
+      "chen_hai": "chen_hai",
       "unicorn": "unicorn",
       "cheshire": "cheshire",
-      "amagi_chan": "amagi_chan"
+      "amagi_chan": "amagi_chan",
+      "helena": "helena",
+      "atago": "atago",
+      "friedrich_der_grobe": "friedrich_der_grobe"
     }
   },
   "Island11": {
@@ -2827,7 +3032,11 @@
       "2": "2",
       "3": "3",
       "4": "4",
-      "5": "5"
+      "5": "5",
+      "6": "6",
+      "7": "7",
+      "8": "8",
+      "9": "9"
     },
     "Character1": {
       "name": "Island11.Character1.name",
@@ -2841,9 +3050,14 @@
       "akashi": "akashi",
       "ying_swei": "ying_swei",
       "chao_ho": "chao_ho",
+      "william_d_porter": "william_d_porter",
+      "chen_hai": "chen_hai",
       "unicorn": "unicorn",
       "cheshire": "cheshire",
-      "amagi_chan": "amagi_chan"
+      "amagi_chan": "amagi_chan",
+      "helena": "helena",
+      "atago": "atago",
+      "friedrich_der_grobe": "friedrich_der_grobe"
     },
     "Option2": {
       "name": "Island11.Option2.name",
@@ -2853,7 +3067,11 @@
       "2": "2",
       "3": "3",
       "4": "4",
-      "5": "5"
+      "5": "5",
+      "6": "6",
+      "7": "7",
+      "8": "8",
+      "9": "9"
     },
     "Character2": {
       "name": "Island11.Character2.name",
@@ -2867,9 +3085,14 @@
       "akashi": "akashi",
       "ying_swei": "ying_swei",
       "chao_ho": "chao_ho",
+      "william_d_porter": "william_d_porter",
+      "chen_hai": "chen_hai",
       "unicorn": "unicorn",
       "cheshire": "cheshire",
-      "amagi_chan": "amagi_chan"
+      "amagi_chan": "amagi_chan",
+      "helena": "helena",
+      "atago": "atago",
+      "friedrich_der_grobe": "friedrich_der_grobe"
     }
   },
   "Island12": {
@@ -2904,9 +3127,14 @@
       "akashi": "akashi",
       "ying_swei": "ying_swei",
       "chao_ho": "chao_ho",
+      "william_d_porter": "william_d_porter",
+      "chen_hai": "chen_hai",
       "unicorn": "unicorn",
       "cheshire": "cheshire",
-      "amagi_chan": "amagi_chan"
+      "amagi_chan": "amagi_chan",
+      "helena": "helena",
+      "atago": "atago",
+      "friedrich_der_grobe": "friedrich_der_grobe"
     },
     "Option2": {
       "name": "Island12.Option2.name",
@@ -2931,9 +3159,14 @@
       "akashi": "akashi",
       "ying_swei": "ying_swei",
       "chao_ho": "chao_ho",
+      "william_d_porter": "william_d_porter",
+      "chen_hai": "chen_hai",
       "unicorn": "unicorn",
       "cheshire": "cheshire",
-      "amagi_chan": "amagi_chan"
+      "amagi_chan": "amagi_chan",
+      "helena": "helena",
+      "atago": "atago",
+      "friedrich_der_grobe": "friedrich_der_grobe"
     }
   },
   "Island13": {
@@ -2952,7 +3185,9 @@
       "1": "1",
       "2": "2",
       "3": "3",
-      "4": "4"
+      "4": "4",
+      "5": "5",
+      "6": "6"
     },
     "Character1": {
       "name": "Island13.Character1.name",
@@ -2966,9 +3201,14 @@
       "akashi": "akashi",
       "ying_swei": "ying_swei",
       "chao_ho": "chao_ho",
+      "william_d_porter": "william_d_porter",
+      "chen_hai": "chen_hai",
       "unicorn": "unicorn",
       "cheshire": "cheshire",
-      "amagi_chan": "amagi_chan"
+      "amagi_chan": "amagi_chan",
+      "helena": "helena",
+      "atago": "atago",
+      "friedrich_der_grobe": "friedrich_der_grobe"
     },
     "Option2": {
       "name": "Island13.Option2.name",
@@ -2977,7 +3217,9 @@
       "1": "1",
       "2": "2",
       "3": "3",
-      "4": "4"
+      "4": "4",
+      "5": "5",
+      "6": "6"
     },
     "Character2": {
       "name": "Island13.Character2.name",
@@ -2991,9 +3233,14 @@
       "akashi": "akashi",
       "ying_swei": "ying_swei",
       "chao_ho": "chao_ho",
+      "william_d_porter": "william_d_porter",
+      "chen_hai": "chen_hai",
       "unicorn": "unicorn",
       "cheshire": "cheshire",
-      "amagi_chan": "amagi_chan"
+      "amagi_chan": "amagi_chan",
+      "helena": "helena",
+      "atago": "atago",
+      "friedrich_der_grobe": "friedrich_der_grobe"
     }
   },
   "Island14": {
@@ -3012,12 +3259,7 @@
       "1": "1",
       "2": "2",
       "3": "3",
-      "4": "4",
-      "5": "5",
-      "6": "6",
-      "7": "7",
-      "8": "8",
-      "9": "9"
+      "4": "4"
     },
     "Character1": {
       "name": "Island14.Character1.name",
@@ -3031,9 +3273,14 @@
       "akashi": "akashi",
       "ying_swei": "ying_swei",
       "chao_ho": "chao_ho",
+      "william_d_porter": "william_d_porter",
+      "chen_hai": "chen_hai",
       "unicorn": "unicorn",
       "cheshire": "cheshire",
-      "amagi_chan": "amagi_chan"
+      "amagi_chan": "amagi_chan",
+      "helena": "helena",
+      "atago": "atago",
+      "friedrich_der_grobe": "friedrich_der_grobe"
     },
     "Option2": {
       "name": "Island14.Option2.name",
@@ -3042,12 +3289,7 @@
       "1": "1",
       "2": "2",
       "3": "3",
-      "4": "4",
-      "5": "5",
-      "6": "6",
-      "7": "7",
-      "8": "8",
-      "9": "9"
+      "4": "4"
     },
     "Character2": {
       "name": "Island14.Character2.name",
@@ -3061,9 +3303,14 @@
       "akashi": "akashi",
       "ying_swei": "ying_swei",
       "chao_ho": "chao_ho",
+      "william_d_porter": "william_d_porter",
+      "chen_hai": "chen_hai",
       "unicorn": "unicorn",
       "cheshire": "cheshire",
-      "amagi_chan": "amagi_chan"
+      "amagi_chan": "amagi_chan",
+      "helena": "helena",
+      "atago": "atago",
+      "friedrich_der_grobe": "friedrich_der_grobe"
     }
   },
   "Island15": {
@@ -3101,9 +3348,14 @@
       "akashi": "akashi",
       "ying_swei": "ying_swei",
       "chao_ho": "chao_ho",
+      "william_d_porter": "william_d_porter",
+      "chen_hai": "chen_hai",
       "unicorn": "unicorn",
       "cheshire": "cheshire",
-      "amagi_chan": "amagi_chan"
+      "amagi_chan": "amagi_chan",
+      "helena": "helena",
+      "atago": "atago",
+      "friedrich_der_grobe": "friedrich_der_grobe"
     },
     "Option2": {
       "name": "Island15.Option2.name",
@@ -3131,9 +3383,94 @@
       "akashi": "akashi",
       "ying_swei": "ying_swei",
       "chao_ho": "chao_ho",
+      "william_d_porter": "william_d_porter",
+      "chen_hai": "chen_hai",
       "unicorn": "unicorn",
       "cheshire": "cheshire",
-      "amagi_chan": "amagi_chan"
+      "amagi_chan": "amagi_chan",
+      "helena": "helena",
+      "atago": "atago",
+      "friedrich_der_grobe": "friedrich_der_grobe"
+    }
+  },
+  "Island16": {
+    "_info": {
+      "name": "Island16._info.name",
+      "help": "Island16._info.help"
+    },
+    "Receive": {
+      "name": "Island16.Receive.name",
+      "help": "Island16.Receive.help"
+    },
+    "Option1": {
+      "name": "Island16.Option1.name",
+      "help": "Island16.Option1.help",
+      "0": "0",
+      "1": "1",
+      "2": "2",
+      "3": "3",
+      "4": "4",
+      "5": "5",
+      "6": "6",
+      "7": "7",
+      "8": "8",
+      "9": "9"
+    },
+    "Character1": {
+      "name": "Island16.Character1.name",
+      "help": "Island16.Character1.help",
+      "manjuu": "manjuu",
+      "saratoga": "saratoga",
+      "new_jersey": "new_jersey",
+      "tashkent": "tashkent",
+      "lemalin": "lemalin",
+      "shimakaze": "shimakaze",
+      "akashi": "akashi",
+      "ying_swei": "ying_swei",
+      "chao_ho": "chao_ho",
+      "william_d_porter": "william_d_porter",
+      "chen_hai": "chen_hai",
+      "unicorn": "unicorn",
+      "cheshire": "cheshire",
+      "amagi_chan": "amagi_chan",
+      "helena": "helena",
+      "atago": "atago",
+      "friedrich_der_grobe": "friedrich_der_grobe"
+    },
+    "Option2": {
+      "name": "Island16.Option2.name",
+      "help": "Island16.Option2.help",
+      "0": "0",
+      "1": "1",
+      "2": "2",
+      "3": "3",
+      "4": "4",
+      "5": "5",
+      "6": "6",
+      "7": "7",
+      "8": "8",
+      "9": "9"
+    },
+    "Character2": {
+      "name": "Island16.Character2.name",
+      "help": "Island16.Character2.help",
+      "manjuu": "manjuu",
+      "saratoga": "saratoga",
+      "new_jersey": "new_jersey",
+      "tashkent": "tashkent",
+      "lemalin": "lemalin",
+      "shimakaze": "shimakaze",
+      "akashi": "akashi",
+      "ying_swei": "ying_swei",
+      "chao_ho": "chao_ho",
+      "william_d_porter": "william_d_porter",
+      "chen_hai": "chen_hai",
+      "unicorn": "unicorn",
+      "cheshire": "cheshire",
+      "amagi_chan": "amagi_chan",
+      "helena": "helena",
+      "atago": "atago",
+      "friedrich_der_grobe": "friedrich_der_grobe"
     }
   },
   "GeneralShop": {
@@ -4084,6 +4421,32 @@
     "APPreserveUntilReset": {
       "name": "OpsiMeowfficerFarming.APPreserveUntilReset.name",
       "help": "OpsiMeowfficerFarming.APPreserveUntilReset.help"
+    },
+    "SirenDetectorSearch_Enable": {
+      "name": "OpsiMeowfficerFarming.SirenDetectorSearch_Enable.name",
+      "help": "OpsiMeowfficerFarming.SirenDetectorSearch_Enable.help"
+    },
+    "SirenDetectorSearch_HazardLevel": {
+      "name": "OpsiMeowfficerFarming.SirenDetectorSearch_HazardLevel.name",
+      "help": "OpsiMeowfficerFarming.SirenDetectorSearch_HazardLevel.help",
+      "5": "5",
+      "6": "6"
+    },
+    "SirenDetectorSearch_FleetForBlock": {
+      "name": "OpsiMeowfficerFarming.SirenDetectorSearch_FleetForBlock.name",
+      "help": "OpsiMeowfficerFarming.SirenDetectorSearch_FleetForBlock.help",
+      "1": "1",
+      "2": "2",
+      "3": "3",
+      "4": "4"
+    },
+    "SirenDetectorSearch_StopAfterFound": {
+      "name": "OpsiMeowfficerFarming.SirenDetectorSearch_StopAfterFound.name",
+      "help": "OpsiMeowfficerFarming.SirenDetectorSearch_StopAfterFound.help"
+    },
+    "SirenDetectorSearch_FoundZones": {
+      "name": "OpsiMeowfficerFarming.SirenDetectorSearch_FoundZones.name",
+      "help": "OpsiMeowfficerFarming.SirenDetectorSearch_FoundZones.help"
     }
   },
   "OpsiHazard1Leveling": {
@@ -4142,6 +4505,10 @@
       "name": "OpsiSirenBug.SirenBug_Zone.name",
       "help": "OpsiSirenBug.SirenBug_Zone.help"
     },
+    "SirenBug_Grid": {
+      "name": "OpsiSirenBug.SirenBug_Grid.name",
+      "help": "OpsiSirenBug.SirenBug_Grid.help"
+    },
     "DisableTaskSwitchDuringBug": {
       "name": "OpsiSirenBug.DisableTaskSwitchDuringBug.name",
       "help": "OpsiSirenBug.DisableTaskSwitchDuringBug.help",
@@ -4159,6 +4526,14 @@
     "SirenBug_CountLimit": {
       "name": "OpsiSirenBug.SirenBug_CountLimit.name",
       "help": "OpsiSirenBug.SirenBug_CountLimit.help"
+    },
+    "SirenBug_CrossDay": {
+      "name": "OpsiSirenBug.SirenBug_CrossDay.name",
+      "help": "OpsiSirenBug.SirenBug_CrossDay.help"
+    },
+    "SirenBug_AutoDisable": {
+      "name": "OpsiSirenBug.SirenBug_AutoDisable.name",
+      "help": "OpsiSirenBug.SirenBug_AutoDisable.help"
     }
   },
   "OpsiCheckLeveling": {
@@ -4225,6 +4600,31 @@
       "help": "OpsiScheduling.EnableStronghold.help",
       "True": "True",
       "False": "False"
+    }
+  },
+  "OpsiDailyDelay": {
+    "_info": {
+      "name": "OpsiDailyDelay._info.name",
+      "help": "OpsiDailyDelay._info.help"
+    },
+    "TriggerMinutesBeforeReset": {
+      "name": "OpsiDailyDelay.TriggerMinutesBeforeReset.name",
+      "help": "OpsiDailyDelay.TriggerMinutesBeforeReset.help",
+      "1": "1",
+      "2": "2",
+      "3": "3",
+      "4": "4",
+      "5": "5",
+      "6": "6",
+      "7": "7",
+      "8": "8",
+      "9": "9",
+      "10": "10",
+      "15": "15",
+      "20": "20",
+      "30": "30",
+      "45": "45",
+      "60": "60"
     }
   },
   "IslandSeasonTask": {

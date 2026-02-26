@@ -128,6 +128,25 @@ class ShipExpStats:
         
         self._save()
     
+    def record_round_time(self, round_duration: float) -> None:
+        """记录单轮侵蚀1时间到样本"""
+        if 'round_times' not in self.data:
+            self.data['round_times'] = {'samples': [], 'average': 120.0}
+        
+        samples = self.data['round_times']['samples']
+        samples.append(round(round_duration, 2))
+        
+        # 只保留最近100个样本
+        if len(samples) > 100:
+            self.data['round_times']['samples'] = samples[-100:]
+            samples = self.data['round_times']['samples']
+        
+        # 更新平均值
+        if samples:
+            self.data['round_times']['average'] = round(sum(samples) / len(samples), 2)
+        
+        self._save()
+    
     # ========== 每日经验效率统计 ==========
     
     def _update_daily_stats(self, exp_gained: int, battle_duration: float) -> None:
@@ -176,6 +195,12 @@ class ShipExpStats:
     def get_average_battle_time(self) -> float:
         """获取平均每场战斗时间(秒)"""
         return self.data.get('battle_times', {}).get('average', 52.0)
+    
+    def get_average_round_time(self) -> float:
+        """获取平均每轮侵蚀1时间(秒)"""
+        if 'round_times' in self.data and self.data['round_times'].get('samples'):
+            return self.data['round_times']['average']
+        return self.get_average_battle_time() * 2 + 15
     
     def get_exp_per_hour(self) -> float:
         """

@@ -14,6 +14,7 @@ from module.exception import CampaignEnd, GameTooManyClickError, MapWalkError, R
 from module.handler.login import LoginHandler, MAINTENANCE_ANNOUNCE
 from module.logger import logger
 from module.map.map import Map
+from module.map.utils import location_ensure
 from module.os.assets import FLEET_EMP_DEBUFF, MAP_GOTO_GLOBE_FOG
 from module.handler.assets import POPUP_CONFIRM
 from module.os.fleet import OSFleet, BossFleet
@@ -23,6 +24,7 @@ from module.os_handler.assets import AUTO_SEARCH_OS_MAP_OPTION_OFF, AUTO_SEARCH_
     AUTO_SEARCH_OS_MAP_OPTION_ON, AUTO_SEARCH_REWARD, REWARD_BOX_THIRD_OPTION
 from module.os_handler.storage import StorageHandler
 from module.os_handler.strategic import StrategicSearchHandler
+from module.os.tasks.smart_scheduling_utils import is_smart_scheduling_enabled
 from module.ui.assets import GOTO_MAIN, BACK_ARROW
 from module.ui.page import page_os
 
@@ -97,6 +99,19 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
         if self.is_in_special_zone():
             logger.warning('OS is in a special zone type, while SAFE and DANGEROUS are acceptable')
             self.map_exit()
+
+        # 如果当前海域是塞壬Bug利用海域，回到最近港口
+        siren_bug_zone = getattr(self.config, 'OpsiSirenBug_SirenBug_Zone', 0)
+        if siren_bug_zone:
+            try:
+                siren_bug_zone = self.name_to_zone(siren_bug_zone)
+            except Exception:
+                logger.warning(f'无法解析SirenBug目标区域: {siren_bug_zone}')
+            else:
+                if self.zone == siren_bug_zone:
+                    logger.info('检测到当前海域为塞壬Bug利用海域，回到最近港口')
+                    self.globe_goto(self.zone_nearest_azur_port(self.zone), types=('SAFE', 'DANGEROUS'), refresh=False)
+                    return
 
         # Clear current zone
         if self.zone.zone_id in [22, 44]:
@@ -621,6 +636,11 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
         """
         Keeping enough startup AP to run CL1.
         """
+        # 检查智能调度是否启用，如果启用则由智能调度模块统一管理任务切换
+        # 这里不应该直接切换到 CL1
+        if is_smart_scheduling_enabled(self.config):
+            return
+        
         if self.is_cl1_enabled and get_os_reset_remain() > 2 and self.cl1_enough_yellow_coins:
             preserve = self.config.cross_get(keys='OpsiMeowfficerFarming.OpsiMeowfficerFarming.ActionPointPreserve')
             logger.info(f'Keep {preserve} AP when CL1 available')
@@ -665,6 +685,14 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
                 if self._auto_search_round_timer:
                     cost = round(time.time() - self._auto_search_round_timer, 2)
                     logger.attr('CL1 time cost', f'{cost}s/round')
+                    
+                    if is_cl1_task and is_cl1_enabled:
+                        try:
+                            from module.statistics.ship_exp_stats import get_ship_exp_stats
+                            get_ship_exp_stats(instance_name=instance_name).record_round_time(cost)
+                        except Exception:
+                            logger.exception('Failed to record cl1 round time')
+                            
                 self._auto_search_round_timer = time.time()
 
     def get_current_cl1_battle_count(self):
@@ -1650,6 +1678,14 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
 
 
     def _handle_siren_bug_reinteract(self, drop=None):
+        # 23:55 - 00:05 跳过处理
+        if getattr(self.config, 'OpsiSirenBug_SirenBug_CrossDay', False):
+            from datetime import time as dt_time
+            now = datetime.now()
+            if now.time() >= dt_time(23, 55) or now.time() <= dt_time(0, 5):
+                logger.info(f'当前时间: {now.strftime("%H:%M")}, 跳过塞壬研究装置BUG利用')
+                return
+        
         # 侵蚀一塞壬研究装置处理后，跳转指定高侵蚀区域触发塞壬研究装置消耗两次紫币，最后返回侵蚀一自律   
         try:
             siren_research_enable = self.config.cross_get(keys="OpsiHazard1Leveling.OpsiSirenBug.SirenResearch_Enable")
@@ -1722,107 +1758,95 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
                     time.sleep(SirenBug_DailyCount)
 
                 self.map_init(map_=None)
-                camera_queue = self.map.camera_data
 
-                find_device_timer = Timer(30, count=1).start()
-                self._solved_map_event = set()
+                target_grid = getattr(self.config, 'OpsiSirenBug_SirenBug_Grid', None)
+                
                 device_handled = False
 
-                while find_device_timer.reached() is False and not device_handled:
-                    # 遍历相机视角，滑动地图
-                    if len(camera_queue) == 0:
-                        camera_queue = self.map.camera_data
-                    camera_queue = camera_queue.sort_by_camera_distance(self.camera)
-                    target_camera = camera_queue[0]
-                    camera_queue = camera_queue[1:]
-
-                    # 滑动到目标视角
-                    self.focus_to(target_camera, swipe_limit=(6, 5))
-                    self.focus_to_grid_center(0.3)
-                    self.device.screenshot()
-                    self.update()
-
-                    # 寻找塞壬研究装置
-                    grids = self.view.select(is_scanning_device=True)
-                    if grids and grids[0].is_scanning_device and 'is_scanning_device' not in self._solved_map_event:
-                        grid = grids[0]
-                        logger.info(f'找到塞壬研究装置: {grid}')
-
-                        # 移动舰队至塞壬研究装置，触发剧情
-                        self.device.click(grid)
+                if target_grid:
+                    try:
+                        target_grid = target_grid.upper()
+                        target_loc = location_ensure(target_grid)
                         
-                        # 等待剧情选项出现（表示舰队已到达装置并触发剧情）
-                        option_wait_timer = Timer(10, count=20).start()
-                        options_found = False
-                        while not option_wait_timer.reached():
-                            self.device.screenshot()
-                            options = self._story_option_buttons_2()
-                            if len(options) >= 3:
-                                logger.info(f'检测到剧情选项，开始处理Bug利用')
-                                options_found = True
-                                break
-                            time.sleep(0.5)
-                        
-                        if not options_found:
-                            logger.warning(f'等待剧情选项超时，跳过后续操作')
-                            continue
-                        
-                        # 找到选项，处理剧情
-                        with self.config.temporary(STORY_ALLOW_SKIP=False):
-                            self._solved_map_event.add('is_scanning_device')
+                        logger.info(f'指定了塞壬研究装置位置: {target_grid}，直接处理')
 
-                            # 首先检测是否遇到的是柱子
-                            if self.appear_then_click(REWARD_BOX_THIRD_OPTION, offset=(20, 20), interval=3):
-                                logger.warning('[Bug利用] 检测到宝箱选项，重新开始寻找装置')
+                        # 滑动到目标视角
+                        self.focus_to(target_loc, swipe_limit=(6, 5))
+                        self.focus_to_grid_center(0.3)
+                        self.device.screenshot()
+                        self.update()
+
+                        if target_loc in self.map:
+                            grid = self.convert_global_to_local(target_loc)
+                            self._solved_map_event = set()
+                            find_device_timer = Timer(30, count=1).start()
+                            while not find_device_timer.reached() and not device_handled:
+                                if self._handle_siren_bug_device(grid):
+                                    device_handled = True
+                                    break
+                                
+                                # 寻路中断，重新寻路
                                 find_device_timer.reset()
-                                camera_queue = self.map.camera_data
-                                self._solved_map_event.remove('is_scanning_device')
                                 time.sleep(1.0)
-                                continue  
+                                
+                                self.focus_to(target_loc, swipe_limit=(6, 5))
+                                self.focus_to_grid_center(0.3)
+                                self.device.screenshot()
+                                self.update()
+                                grid = self.convert_global_to_local(target_loc)
+                        else:
+                            logger.warning(f'目标 {target_grid} 不在地图中')
 
-                            # 第1次：选择第2个选项
-                            logger.info('[Bug利用] 等待第1组选项（选择第2个）')
-                            time.sleep(1.5)
-                            if self._select_story_option_by_index(target_index=1, options_count=3):
-                                logger.info('[Bug利用] 第1组选项点击成功')
-                                time.sleep(0.5)
-                                if self._click_story_confirm_button():
-                                    logger.info('[Bug利用] 第1组确认成功')
-                            else:
-                                logger.warning('[Bug利用] 第1组选项点击失败')
-                                raise RuntimeError('第1组选项点击失败，跳过后续操作')
-                            
-                            # 第2次：选择第2个选项
-                            logger.info('[Bug利用] 等待第2组选项（选择第2个）')
-                            time.sleep(2.0)
-                            if self._select_story_option_by_index(target_index=1, options_count=3):
-                                logger.info('[Bug利用] 第2组选项点击成功')
-                                time.sleep(0.5)
-                                if self._click_story_confirm_button():
-                                    logger.info('[Bug利用] 第2组确认成功')
-                            else:
-                                logger.warning('[Bug利用] 第2组选项点击失败')
-                                raise RuntimeError('第2组选项点击失败，跳过后续操作')
-                            
-                            # 第3次：选择第3个选项
-                            logger.info('[Bug利用] 等待第3组选项（选择第3个）')
-                            time.sleep(2.0)
-                            if self._select_story_option_by_index(target_index=2, options_count=3):
-                                logger.info('[Bug利用] 第3组选项点击成功')
-                                time.sleep(0.5)
-                                if self._click_story_confirm_button():
-                                    logger.info('[Bug利用] 第3组确认成功')
-                            else:
-                                logger.warning('[Bug利用] 第3组选项点击失败')
-                                raise RuntimeError('第3组选项点击失败，跳过后续操作')
-
-                            device_handled = True
-                            logger.info('[Bug利用] 所有选项处理完成')
-                    time.sleep(0.5)
+                    except Exception as e:
+                        logger.error(f'处理指定塞壬研究装置位置时出错: {e}', exc_info=True)
+                        logger.warning('将回退到全图扫描模式')
 
                 if not device_handled:
-                    logger.warning(f'区域{siren_bug_zone}未找到塞壬研究装置，跳过后续操作')
-                    raise RuntimeError('未找到塞壬研究装置')
+                    camera_queue = self.map.camera_data
+                    find_device_timer = Timer(30, count=1).start()
+                    self._solved_map_event = set()
+
+                    while find_device_timer.reached() is False and not device_handled:
+                        # 遍历相机视角，滑动地图
+                        if len(camera_queue) == 0:
+                            camera_queue = self.map.camera_data
+                        camera_queue = camera_queue.sort_by_camera_distance(self.camera)
+                        target_camera = camera_queue[0]
+                        camera_queue = camera_queue[1:]
+
+                        # 滑动到目标视角
+                        self.focus_to(target_camera, swipe_limit=(6, 5))
+                        self.focus_to_grid_center(0.3)
+                        self.device.screenshot()
+                        self.update()
+
+                        # 寻找塞壬研究装置
+                        grids = self.view.select(is_scanning_device=True)
+                        if grids and grids[0].is_scanning_device and 'is_scanning_device' not in self._solved_map_event:
+                            grid = grids[0]
+                            logger.info(f'找到塞壬研究装置: {grid}')
+
+                            try:
+                                if self._handle_siren_bug_device(grid):
+                                    device_handled = True
+                                    break
+                            except Exception:
+                                raise
+
+                            find_device_timer.reset()
+                            camera_queue = self.map.camera_data
+                            time.sleep(1.0)
+
+                        time.sleep(0.5)
+
+                    if not device_handled:
+                        logger.warning(f'区域{siren_bug_zone}未找到塞壬研究装置，跳过后续操作')
+
+                        # 没找到吊机自动关闭bug利用
+                        if getattr(self.config, 'OpsiSirenBug_SirenBug_AutoDisable', False):
+                            self.config.OpsiSirenBug_SirenBug_Enable = False
+
+                        raise RuntimeError('未找到塞壬研究装置')
 
             # Increase bug count
             self.config.OpsiSirenBug_SirenBug_DailyCount += 1
@@ -1907,3 +1931,82 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
                 logger.error(f'返回侵蚀一失败: {return_err}')
         finally:
             pass
+
+    def _handle_siren_bug_device(self, grid):
+        """
+        Args:
+            grid:
+
+        Returns:
+            bool: True if handled successfully.
+                  False if pathfinding interrupted and needs to be restarted.
+        """
+        # 移动舰队至塞壬研究装置，触发剧情
+        self.device.click(grid)
+        
+        # 等待剧情选项出现（表示舰队已到达装置并触发剧情）
+        option_wait_timer = Timer(10, count=20).start()
+        options_found = False
+        while not option_wait_timer.reached():
+            self.device.screenshot()
+            options = self._story_option_buttons_2()
+            if len(options) >= 3:
+                logger.info(f'检测到剧情选项，开始处理Bug利用')
+                options_found = True
+                break
+            time.sleep(0.5)
+        
+        if not options_found:
+            logger.warning(f'等待剧情选项超时，跳过后续操作')
+            raise RuntimeError('等待剧情选项超时，跳过后续操作')
+        
+        # 找到选项，处理剧情
+        with self.config.temporary(STORY_ALLOW_SKIP=False):
+            self._solved_map_event.add('is_scanning_device')
+
+            # 首先检测是否遇到的是柱子
+            if self.appear_then_click(REWARD_BOX_THIRD_OPTION, offset=(20, 20), interval=3):
+                logger.warning('[Bug利用] 检测到宝箱选项，重新开始寻找装置')
+                if 'is_scanning_device' in self._solved_map_event:
+                    self._solved_map_event.remove('is_scanning_device')
+                return False  
+
+            # 第1次：选择第2个选项
+            logger.info('[Bug利用] 等待第1组选项（选择第2个）')
+            time.sleep(1.5)
+            if self._select_story_option_by_index(target_index=1, options_count=3):
+                logger.info('[Bug利用] 第1组选项点击成功')
+                time.sleep(0.5)
+                if self._click_story_confirm_button():
+                    logger.info('[Bug利用] 第1组确认成功')
+            else:
+                logger.warning('[Bug利用] 第1组选项点击失败')
+                raise RuntimeError('第1组选项点击失败，跳过后续操作')
+            
+            # 第2次：选择第2个选项
+            logger.info('[Bug利用] 等待第2组选项（选择第2个）')
+            time.sleep(2.0)
+            if self._select_story_option_by_index(target_index=1, options_count=3):
+                logger.info('[Bug利用] 第2组选项点击成功')
+                time.sleep(0.5)
+                if self._click_story_confirm_button():
+                    logger.info('[Bug利用] 第2组确认成功')
+            else:
+                logger.warning('[Bug利用] 第2组选项点击失败')
+                raise RuntimeError('第2组选项点击失败，跳过后续操作')
+            
+            # 第3次：选择第3个选项
+            logger.info('[Bug利用] 等待第3组选项（选择第3个）')
+            time.sleep(2.0)
+            if self._select_story_option_by_index(target_index=2, options_count=3):
+                logger.info('[Bug利用] 第3组选项点击成功')
+                time.sleep(0.5)
+                if self._click_story_confirm_button():
+                    logger.info('[Bug利用] 第3组确认成功')
+            else:
+                logger.warning('[Bug利用] 第3组选项点击失败')
+                raise RuntimeError('第3组选项点击失败，跳过后续操作')
+
+            logger.info('[Bug利用] 所有选项处理完成')
+            
+        return True

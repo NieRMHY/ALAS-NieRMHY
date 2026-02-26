@@ -20,7 +20,7 @@ class Cl1Database:
     def __init__(self, db_path: Optional[Path] = None):
         if db_path is None:
             project_root = Path(__file__).resolve().parents[2]
-            self.db_dir = project_root / 'log' / 'cl1'
+            self.db_dir = project_root / 'config'
             self.db_path = self.db_dir / 'cl1_data.db'
         else:
             self.db_path = db_path
@@ -217,12 +217,24 @@ class Cl1Database:
         """
         初始化时自动扫描 log/cl1 下的所有实例并迁移旧数据
         """
-        if not self.db_dir.exists():
+        project_root = Path(__file__).resolve().parents[2]
+        old_db_dir = project_root / 'log' / 'cl1'
+        old_db_path = old_db_dir / 'cl1_data.db'
+
+        if old_db_path.exists() and not self.db_path.exists():
+            import shutil
+            try:
+                shutil.move(str(old_db_path), str(self.db_path))
+                logger.info(f"Moved old CL1 database from {old_db_path} to {self.db_path}")
+            except Exception as e:
+                logger.error(f"Failed to move old CL1 database: {e}")
+
+        if not old_db_dir.exists():
             return
             
-        # logger.info(f"Scanning for legacy CL1 data in {self.db_dir}...")
+        # logger.info(f"Scanning for legacy CL1 data in {old_db_dir}...")
         try:
-            for instance_dir in self.db_dir.iterdir():
+            for instance_dir in old_db_dir.iterdir():
                 if instance_dir.is_dir():
                     json_file = instance_dir / 'cl1_monthly.json'
                     if json_file.exists():

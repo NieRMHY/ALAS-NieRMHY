@@ -66,8 +66,34 @@ class Updater(DeployConfig, GitManager, PipManager):
         else:
             return logs
 
+    def _check_cloud_update(self) -> bool:
+        """检查云端更新开关"""
+        try:
+            resp = requests.get("https://alas-apiv2.nanoda.work/api/updata", timeout=5)
+            if resp.status_code == 200:
+                data = resp.text.strip().lower()
+                if data == 'true':
+                    return True
+                elif data == 'false':
+                    return False
+                else:
+                    try:
+                        import json
+                        res = json.loads(data)
+                        if isinstance(res, bool):
+                            return res
+                    except:
+                        pass
+        except Exception as e:
+            logger.warning(f"Failed to fetch cloud update flag: {e}")
+        return False
+
     def _check_update(self) -> bool:
         self.state = "checking"
+
+        if not self._check_cloud_update():
+            logger.info("Cloud update flag is false, skip update check")
+            return False
 
         if State.deploy_config.GitOverCdn:
             status = self.goc_client.get_status()
@@ -137,6 +163,7 @@ class Updater(DeployConfig, GitManager, PipManager):
                 base + f"{owner}/{repo}/branches/{self.Branch}",
                 headers=headers,
                 params=para,
+                timeout=15,
             )
         except Exception as e:
             logger.exception(e)
@@ -164,6 +191,7 @@ class Updater(DeployConfig, GitManager, PipManager):
                 base + f"{owner}/{repo}/commits/" + local_sha,
                 headers=headers,
                 params=para,
+                timeout=15,
             )
         except Exception as e:
             logger.exception(e)
@@ -180,9 +208,22 @@ class Updater(DeployConfig, GitManager, PipManager):
         logger.info(f"Update {sha[:8]} available")
         return 1
 
+    def _check_update_thread(self):
+        """在后台线程中执行更新检查"""
+        try:
+            result = self._check_update()
+            self.state = result
+        except Exception as e:
+            logger.exception(e)
+            self.state = 0
+
     def check_update(self):
         if self.state in (0, "failed", "finish"):
-            self.state = self._check_update()
+            self.state = "checking"
+            threading.Thread(
+                target=self._check_update_thread,
+                daemon=True
+            ).start()
 
     @retry(ExecutionError, tries=3, delay=5, logger=None)
     def git_install(self):

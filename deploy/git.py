@@ -97,8 +97,30 @@ class GitManager(DeployConfig):
     def git_install(self):
         logger.hr('Update Alas', 0)
 
-        if not self.AutoUpdate:
-            logger.info('AutoUpdate is disabled, skip')
+        # 检查云端更新端点
+        cloud_allow = False
+        try:
+            import requests
+            resp = requests.get("https://alas-apiv2.nanoda.work/api/updata", timeout=5)
+            if resp.status_code == 200:
+                data = resp.text.strip().lower()
+                if data == 'true':
+                    cloud_allow = True
+                elif data == 'false':
+                    cloud_allow = False
+                else:
+                    try:
+                        import json
+                        res = json.loads(data)
+                        if isinstance(res, bool):
+                            cloud_allow = res
+                    except:
+                        pass
+        except Exception as e:
+            logger.warning(f"Failed to fetch cloud update flag: {e}")
+        
+        if not cloud_allow:
+            logger.info("Cloud update flag is false, skip update")
             return
 
         if self.GitOverCdn:
