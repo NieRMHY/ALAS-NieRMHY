@@ -251,6 +251,7 @@ Campaign:
   UseAutoSearch: true
   Use2xBook: false
   AmbushEvade: true
+  UseRecommendFleet: false
 StopCondition:
   OilLimit: 1000
   RunCount: 0
@@ -585,7 +586,8 @@ Dorm:
   FeedFilter: 20000 > 10000 > 5000 > 3000 > 2000 > 1000
   BuyFood:
     value: false
-    display: disabled
+    display: hide
+
 BuyFurniture:
   Enable: false
   BuyOption:

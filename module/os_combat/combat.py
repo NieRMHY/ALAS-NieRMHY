@@ -4,6 +4,8 @@ from module.logger import logger
 from module.os_combat.assets import *
 from module.os_handler.assets import *
 from module.os_handler.map_event import MapEventHandler
+from module.base.timer import Timer
+from module.exception import GameBugError
 
 
 class ContinuousCombat(Exception):
@@ -247,6 +249,8 @@ class Combat(Combat_, MapEventHandler):
         except Exception:
             pass
         
+        cl1_combat_timer = Timer(300, count=300)
+        
         logger.info('Auto search combat loading')
         self.device.stuck_record_clear()
         self.device.click_record_clear()
@@ -275,9 +279,16 @@ class Combat(Combat_, MapEventHandler):
         if self.config.Submarine_Fleet:
             submarine_mode = self.config.Submarine_Mode
 
+        if _is_cl1_battle:
+            cl1_combat_timer.start()
+
         success = True
         while 1:
             self.device.screenshot()
+
+            if _is_cl1_battle and cl1_combat_timer.reached():
+                logger.warning('CL1 combat timeout (5 minutes limit reached)')
+                raise GameBugError('CL1 combat timeout')
 
             if self.handle_submarine_call(submarine_mode):
                 continue

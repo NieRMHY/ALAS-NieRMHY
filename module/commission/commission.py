@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 from scipy import signal
 
 from module.base.timer import Timer
+import time
 from module.base.utils import *
 from module.combat.assets import *
 from module.commission.assets import *
@@ -491,21 +492,11 @@ class RewardCommission(UI, InfoHandler):
             logger.info('No commission chose')
 
     def commission_receive(self, skip_first_screenshot=True):
-        """
-        Args:
-            skip_first_screenshot:
-
-        Returns:
-            bool: If rewarded.
-
-        Pages:
-            in: page_reward
-            out: page_commission
-        """
         logger.hr('Reward receive')
 
         reward = False
         click_timer = Timer(1)
+
         with self.stat.new(
                 'commission', method=self.config.DropRecord_CommissionRecord
         ) as drop:
@@ -515,10 +506,7 @@ class RewardCommission(UI, InfoHandler):
                 else:
                     self.device.screenshot()
 
-                # End
                 if self.ui_page_appear(page_commission, offset=(20, 20)):
-                    # Leaving at page_commission
-                    # Commission rewards may appear too slow, causing stuck in UI switching
                     break
 
                 for button in [EXP_INFO_S_REWARD, GET_ITEMS_1, GET_ITEMS_2, GET_ITEMS_3]:
@@ -551,17 +539,30 @@ class RewardCommission(UI, InfoHandler):
                     continue
                 if self.ui_main_appear_then_click(page_reward, interval=3):
                     self.interval_reset(GET_SHIP)
-                    # no need to reset click_timer, just instant click REWARD_1
-                    # click_timer.reset()
                     continue
-                if self.appear(FUEL_MAXED):
-                    logger.info("Fuel maxed, skip reward receive")
-                    self.config.cross_set('Dorm.Dorm.BuyFood', True)
-                    self.config.task_call('Dorm')
-                    self.config.task_delay(minute=1)
-                    self.config.task_stop()
-                    break
-                # Check GET_SHIP at last to handle random white background at page_main
+
+                if self.appear(FUEL_MAXED, offset=(20, 20), interval=1):
+                    from module.ocr.ocr import Ocr
+                    ocr = Ocr(FUEL_MAXED, letter=FUEL_MAXED.color, threshold=64)
+                    text = ocr.ocr(self.device.image)
+                    logger.info(f"FUEL_MAXED OCR text: {text}")
+                    if '石油' in text:
+                        logger.info("Fuel maxed confirmed by OCR, skip reward receive")
+                        
+                        import os
+                        import time
+                        from PIL import Image
+                        os.makedirs('log/error', exist_ok=True)
+                        debug_image_path = f"log/error/FUEL_MAXED_debug_{int(time.time())}.png"
+                        Image.fromarray(self.device.image).save(debug_image_path)
+                        logger.info(f"Saved OCR-confirmed triggering frame to {debug_image_path}")
+                        
+                        self.config.cross_set('Dorm.Dorm.BuyFood', True)
+                        self.config.task_call('Dorm')
+                        self.config.task_delay(minute=1)
+                        self.config.task_stop()
+                        break
+
                 for button in [GET_SHIP]:
                     if click_timer.reached() and self.appear(button, interval=1):
                         self.ensure_no_info_bar(timeout=1)

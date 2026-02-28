@@ -1101,6 +1101,7 @@
       "event_20250912_cn": "A Dance for Amahara Above",
       "event_20251023_cn": "Tempesta and Islas de Libertád",
       "event_20251218_cn": "A Note Through the Firmament",
+      "event_20260226_cn": "Springtide Inn Online",
       "raid_20200624": "Air Raid Drills with Essex Rerun",
       "raid_20210708": "Cross Wave rerun",
       "raid_20220127": "Mystery Investigation",
@@ -1182,6 +1183,10 @@
     "AmbushEvade": {
       "name": "Evade Ambush(es)",
       "help": ""
+    },
+    "UseRecommendFleet": {
+      "name": "Campaign.UseRecommendFleet.name",
+      "help": "Campaign.UseRecommendFleet.help"
     }
   },
   "StopCondition": {
