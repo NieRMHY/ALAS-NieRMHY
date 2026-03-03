@@ -114,38 +114,8 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
                     return
 
         # Clear current zone
-        if self.zone.zone_id in [22, 44]:
-            logger.info('In zone 22, 44, run first auto search')
-            is_hazard1_task = self.config.task.command == 'OpsiHazard1Leveling'
-            if is_hazard1_task:
-                OpsiFleet_Fleet = self.config.OpsiFleet_Fleet
-                self.config.override(OpsiFleet_Fleet=self.config.cross_get('OpsiHazard1Leveling.OpsiFleet.Fleet'))
-                self.fleet_set(self.config.OpsiFleet_Fleet)
-                # [Antigravity Fix] 改用计划作战 -> 扫描全图 -> 没怪则强制移动 -> 再扫图
-                self.run_strategic_search()
-    
-                # 第一次重扫：检查是否还有事件
-                self._solved_map_event = set()
-                self._solved_fleet_mechanism = False
-                self.map_rescan()
-    
-                # 强制移动逻辑：仅在 OpsiHazard1Leveling 且配置开启时生效
-                if self.config.OpsiHazard1Leveling_ExecuteFixedPatrolScan:
-                    # 只有在第一次重扫没有发现事件时才执行舰队移动
-                    if not self._solved_map_event:
-                        # _execute_fixed_patrol_scan 内部会再次检查 ExecuteFixedPatrolScan 的配置
-                        # 这里强制传入 True 以确保逻辑被调用（只要外层配置开启了）
-                        self._execute_fixed_patrol_scan(ExecuteFixedPatrolScan=True)
-                        
-                        # 第二次重扫：舰队移动后再次重扫
-                        self._solved_map_event = set()
-                        self.map_rescan()
-    
-                self.handle_after_auto_search()
-                self.config.override(OpsiFleet_Fleet=OpsiFleet_Fleet)
-            else:
-                self.run_auto_search(rescan=False)
-                self.handle_after_auto_search()
+        if self.zone.zone_id in [22, 44] and self.config.task.command == 'OpsiHazard1Leveling':
+            pass
         elif self.zone.zone_id == 154:
             logger.info('In zone 154, skip running first auto search')
             self.handle_ash_beacon_attack()
@@ -664,39 +634,32 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
     def on_auto_search_battle_count_add(self):
         self._auto_search_battle_count += 1
         logger.attr('battle_count', self._auto_search_battle_count)
-        
-        # Check if CL1 tracking should be enabled
-        try:
-            is_cl1_task = self.config.task.command == 'OpsiHazard1Leveling'
-            is_cl1_enabled = self.config.is_task_enabled('OpsiHazard1Leveling')
-        except Exception:
-            is_cl1_task = False
-            is_cl1_enabled = False
-        
-        if is_cl1_task and is_cl1_enabled:
+        if getattr(self, 'is_in_task_cl1_leveling', False) and getattr(self, 'is_cl1_enabled', False):
             try:
-                self._cl1_auto_search_battle_count += 1
+                try:
+                    self._cl1_auto_search_battle_count += 1
+                except Exception:
+                    self._cl1_auto_search_battle_count = 1
                 logger.attr('cl1_battle_count', self._cl1_auto_search_battle_count)
-                # 使用数据库增加计数
-                from module.statistics.cl1_database import db as cl1_db
-                instance_name = getattr(self.config, 'config_name', 'default')
-                cl1_db.increment_battle_count(instance_name)
-                logger.info('Successfully incremented CL1 battle count in DB')
+                try:
+                    from module.statistics.cl1_database import db as cl1_db
+                    instance_name = getattr(self.config, 'config_name', 'default')
+                    cl1_db.increment_battle_count(instance_name)
+                except Exception:
+                    logger.debug('Failed to persist monthly CL1 battle increment', exc_info=True)
             except Exception:
-                logger.exception('Failed to update cl1 battle counter')
+                logger.debug('Failed to update cl1 battle counter', exc_info=True)
 
             if self._auto_search_battle_count % 2 == 1:
                 if self._auto_search_round_timer:
                     cost = round(time.time() - self._auto_search_round_timer, 2)
                     logger.attr('CL1 time cost', f'{cost}s/round')
-                    
-                    if is_cl1_task and is_cl1_enabled:
-                        try:
-                            from module.statistics.ship_exp_stats import get_ship_exp_stats
-                            get_ship_exp_stats(instance_name=instance_name).record_round_time(cost)
-                        except Exception:
-                            logger.exception('Failed to record cl1 round time')
-                            
+                    try:
+                        from module.statistics.ship_exp_stats import get_ship_exp_stats
+                        instance_name = getattr(self.config, 'config_name', 'default')
+                        get_ship_exp_stats(instance_name=instance_name).record_round_time(cost)
+                    except Exception:
+                        logger.exception('Failed to record cl1 round time')
                 self._auto_search_round_timer = time.time()
 
     def get_current_cl1_battle_count(self):
@@ -1772,10 +1735,24 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
                         target_grid = target_grid.upper()
                         target_loc = location_ensure(target_grid)
                         
-                        logger.info(f'指定了塞壬研究装置位置: {target_grid}，直接处理')
+                        # 避免目标在地图边缘导致 focus_to 死循环
+                        # 如果目标在边缘，则聚焦到向内一格的位置
+                        focus_loc = list(target_loc)
+                        shape = self.map.shape
+                        if focus_loc[0] <= 0:
+                            focus_loc[0] = 1
+                        elif focus_loc[0] >= shape[0]:
+                            focus_loc[0] = shape[0] - 1
+                        if focus_loc[1] <= 0:
+                            focus_loc[1] = 1
+                        elif focus_loc[1] >= shape[1]:
+                            focus_loc[1] = shape[1] - 1
+                        focus_loc = tuple(focus_loc)
+
+                        logger.info(f'指定了塞壬研究装置位置: {target_grid}，聚焦位置: {focus_loc}，直接处理')
 
                         # 滑动到目标视角
-                        self.focus_to(target_loc, swipe_limit=(6, 5))
+                        self.focus_to(focus_loc, swipe_limit=(6, 5))
                         self.focus_to_grid_center(0.3)
                         self.device.screenshot()
                         self.update()
@@ -1792,12 +1769,16 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
                                 # 寻路中断，重新寻路
                                 find_device_timer.reset()
                                 time.sleep(1.0)
+                                self.device.screenshot()
+                                self.update()
                                 
-                                self.focus_to(target_loc, swipe_limit=(6, 5))
+                                self.focus_to(focus_loc, swipe_limit=(6, 5))
                                 self.focus_to_grid_center(0.3)
                                 self.device.screenshot()
                                 self.update()
                                 grid = self.convert_global_to_local(target_loc)
+
+                                time.sleep(0.5)
                         else:
                             logger.warning(f'目标 {target_grid} 不在地图中')
 
@@ -1840,6 +1821,8 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
                             find_device_timer.reset()
                             camera_queue = self.map.camera_data
                             time.sleep(1.0)
+                            self.device.screenshot()
+                            self.update()
 
                         time.sleep(0.5)
 
@@ -1950,7 +1933,7 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
         self.device.click(grid)
         
         # 等待剧情选项出现（表示舰队已到达装置并触发剧情）
-        option_wait_timer = Timer(10, count=20).start()
+        option_wait_timer = Timer(20, count=40).start()
         options_found = False
         while not option_wait_timer.reached():
             self.device.screenshot()
