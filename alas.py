@@ -246,11 +246,12 @@ class AzurLaneAutoScript:
 
             logger.warning(f'Game stuck, {self.device.package} will be restarted in 10 seconds')
             logger.warning('If you are playing by hand, please stop Alas')
-            handle_notify(
-                self.config.Error_OnePushConfig,
-                title=f"Alas <{self.config_name}> 警告",
-                content=f"<{self.config_name}> 游戏卡住 - 将自动重启游戏",
-            )
+            # 按需重启但不再推送“游戏卡住”通知，避免频繁打扰
+            # handle_notify(
+            #     self.config.Error_OnePushConfig,
+            #     title=f"Alas <{self.config_name}> 警告",
+            #     content=f"<{self.config_name}> 游戏卡住 - 将自动重启游戏",
+            # )
             self.config.task_call('Restart')  # modfiy by MHY
             # self.config.task_call('Restart', force_call=False)  # 禁用强制重启
             self.device.sleep(10)
