@@ -134,7 +134,7 @@ class OpsiHazard1Leveling(CoinTaskMixin, OSMap):
                     self.config.task_stop()
                     self.config.OpsiHazard1_PreviousCoinsApInsufficient = _previous_coins_ap_insufficient
                     return
-                
+
                 task_names_str = '、'.join([task_names.get(task, task) for task in available_tasks])
                 self.notify_push(
                     title="[Alas info] 智能调度 - 切换至凭证补充任务",
@@ -144,7 +144,7 @@ class OpsiHazard1Leveling(CoinTaskMixin, OSMap):
                 with self.config.multi_set():
                     for task in available_tasks:
                         self.config.task_call(task)
-                    
+
                     cd = self.nearest_task_cooling_down
                     if cd is not None:
                         logger.info(f'[智能调度] 检测到冷却中的任务 {cd.command}，延迟侵蚀 1 任务至 {cd.next_run}')

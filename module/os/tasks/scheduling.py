@@ -312,7 +312,7 @@ class CoinTaskMixin:
                 enabled_tasks.append(task_name)
         
         return enabled_tasks
-    
+
     def _is_operation_coins_return_threshold_applicable(self):
         """
         判断当前任务是否应该应用黄币返回阈值
@@ -739,7 +739,7 @@ class OpsiScheduling(CoinTaskMixin, OSMap):
         with self.config.multi_set():
             for task in available_tasks:
                 self.config.task_call(task)
-            
+
             cd = self.nearest_task_cooling_down
             if cd is not None:
                 logger.info(f'有冷却任务 {cd.command}，延迟智能调度到 {cd.next_run}')
