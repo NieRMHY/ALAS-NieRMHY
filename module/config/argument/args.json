@@ -2061,7 +2061,6 @@
         "type": "select",
         "value": "campaign_main",
         "option": [
-          "event_20220526_cn",
           "event_20260226_cn"
         ],
         "display": "hide",
@@ -2075,10 +2074,9 @@
           "event_20260226_cn"
         ],
         "option_tw": [
-          "event_20220526_cn"
+          "event_20260226_cn"
         ],
         "option_bold": [
-          "event_20220526_cn",
           "event_20260226_cn"
         ]
       },
@@ -2513,7 +2511,6 @@
         "type": "select",
         "value": "campaign_main",
         "option": [
-          "event_20220526_cn",
           "event_20260226_cn"
         ],
         "display": "hide",
@@ -2527,10 +2524,9 @@
           "event_20260226_cn"
         ],
         "option_tw": [
-          "event_20220526_cn"
+          "event_20260226_cn"
         ],
         "option_bold": [
-          "event_20220526_cn",
           "event_20260226_cn"
         ]
       },
@@ -2933,7 +2929,6 @@
         "type": "state",
         "value": "campaign_main",
         "option": [
-          "event_20220526_cn",
           "event_20260226_cn"
         ],
         "option_cn": [
@@ -2946,10 +2941,9 @@
           "event_20260226_cn"
         ],
         "option_tw": [
-          "event_20220526_cn"
+          "event_20260226_cn"
         ],
         "option_bold": [
-          "event_20220526_cn",
           "event_20260226_cn"
         ]
       },
@@ -3341,7 +3335,6 @@
         "type": "state",
         "value": "campaign_main",
         "option": [
-          "event_20220526_cn",
           "event_20260226_cn"
         ],
         "option_cn": [
@@ -3354,10 +3347,9 @@
           "event_20260226_cn"
         ],
         "option_tw": [
-          "event_20220526_cn"
+          "event_20260226_cn"
         ],
         "option_bold": [
-          "event_20220526_cn",
           "event_20260226_cn"
         ]
       },
@@ -5657,7 +5649,6 @@
         "type": "state",
         "value": "campaign_main",
         "option": [
-          "event_20220526_cn",
           "event_20260226_cn"
         ],
         "option_cn": [
@@ -5670,10 +5661,9 @@
           "event_20260226_cn"
         ],
         "option_tw": [
-          "event_20220526_cn"
+          "event_20260226_cn"
         ],
         "option_bold": [
-          "event_20220526_cn",
           "event_20260226_cn"
         ]
       },
@@ -6082,7 +6072,6 @@
         "type": "state",
         "value": "campaign_main",
         "option": [
-          "event_20220526_cn",
           "event_20260226_cn"
         ],
         "option_cn": [
@@ -6095,10 +6084,9 @@
           "event_20260226_cn"
         ],
         "option_tw": [
-          "event_20220526_cn"
+          "event_20260226_cn"
         ],
         "option_bold": [
-          "event_20220526_cn",
           "event_20260226_cn"
         ]
       },
@@ -6507,7 +6495,6 @@
         "type": "state",
         "value": "campaign_main",
         "option": [
-          "event_20220526_cn",
           "event_20260226_cn"
         ],
         "option_cn": [
@@ -6520,10 +6507,9 @@
           "event_20260226_cn"
         ],
         "option_tw": [
-          "event_20220526_cn"
+          "event_20260226_cn"
         ],
         "option_bold": [
-          "event_20220526_cn",
           "event_20260226_cn"
         ]
       },
@@ -6932,7 +6918,6 @@
         "type": "state",
         "value": "campaign_main",
         "option": [
-          "event_20220526_cn",
           "event_20260226_cn"
         ],
         "option_cn": [
@@ -6945,10 +6930,9 @@
           "event_20260226_cn"
         ],
         "option_tw": [
-          "event_20220526_cn"
+          "event_20260226_cn"
         ],
         "option_bold": [
-          "event_20220526_cn",
           "event_20260226_cn"
         ]
       },
@@ -7347,7 +7331,6 @@
         "type": "state",
         "value": "campaign_main",
         "option": [
-          "event_20220526_cn",
           "event_20260226_cn"
         ],
         "option_cn": [
@@ -7360,10 +7343,9 @@
           "event_20260226_cn"
         ],
         "option_tw": [
-          "event_20220526_cn"
+          "event_20260226_cn"
         ],
         "option_bold": [
-          "event_20220526_cn",
           "event_20260226_cn"
         ]
       },
@@ -8552,7 +8534,7 @@
       "BuyFood": {
         "type": "checkbox",
         "value": false,
-        "display": "hide"
+        "display": "disabled"
       }
     },
     "BuyFurniture": {
@@ -11023,6 +11005,10 @@
       }
     },
     "GeneralShop": {
+      "Enable": {
+        "type": "checkbox",
+        "value": true
+      },
       "UseGems": {
         "type": "checkbox",
         "value": false
@@ -11090,6 +11076,10 @@
       }
     },
     "GuildShop": {
+      "Enable": {
+        "type": "checkbox",
+        "value": true
+      },
       "Refresh": {
         "type": "checkbox",
         "value": true
@@ -11223,6 +11213,10 @@
       }
     },
     "MedalShop2": {
+      "Enable": {
+        "type": "checkbox",
+        "value": true
+      },
       "Filter": {
         "type": "textarea",
         "value": "DR > PR\n> BookRedT3 > BookYellowT3 > BookBlueT3\n> BookRedT2 > BookYellowT2 > BookBlueT2\n> RetrofitT3\n> FoodT6 > FoodT5\n> PlateGeneralT3 > PlateWildT3"
@@ -11292,6 +11286,10 @@
       }
     },
     "MeritShop": {
+      "Enable": {
+        "type": "checkbox",
+        "value": true
+      },
       "Refresh": {
         "type": "checkbox",
         "value": false
@@ -11302,6 +11300,10 @@
       }
     },
     "CoreShop": {
+      "Enable": {
+        "type": "checkbox",
+        "value": true
+      },
       "Filter": {
         "type": "textarea",
         "value": "Array"
@@ -12621,6 +12623,69 @@
         "value": ""
       }
     },
+    "OpsiSirenBug": {
+      "SirenResearch_Enable": {
+        "type": "checkbox",
+        "value": false
+      },
+      "SirenBug_Enable": {
+        "type": "checkbox",
+        "value": false
+      },
+      "SirenBug_Type": {
+        "type": "select",
+        "value": "dangerous",
+        "option": [
+          "dangerous",
+          "safe"
+        ]
+      },
+      "SirenBug_Zone": {
+        "type": "input",
+        "value": 0
+      },
+      "SirenBug_Grid": {
+        "type": "input",
+        "value": null
+      },
+      "SirenBug_SyncDailyCount": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "DisableTaskSwitchDuringBug": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "SirenBug_DailyCount": {
+        "type": "input",
+        "value": 0
+      },
+      "SirenBug_DailyCountRecord": {
+        "type": "datetime",
+        "value": "2020-01-01 00:00:00",
+        "validate": "datetime"
+      },
+      "SirenBug_CountLimit": {
+        "type": "input",
+        "value": 0
+      },
+      "SirenBug_CrossDay": {
+        "type": "checkbox",
+        "value": false
+      },
+      "SirenBug_AutoDisable": {
+        "type": "checkbox",
+        "value": false
+      }
+    },
     "OpsiFleet": {
       "Fleet": {
         "type": "select",
@@ -12737,6 +12802,14 @@
       "SirenBug_Grid": {
         "type": "input",
         "value": null
+      },
+      "SirenBug_SyncDailyCount": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       },
       "DisableTaskSwitchDuringBug": {
         "type": "checkbox",
@@ -12898,6 +12971,19 @@
           true,
           false
         ]
+      },
+      "MeowStartEarlyMode": {
+        "type": "select",
+        "value": "balanced",
+        "option": [
+          "aggressive",
+          "balanced",
+          "conservative"
+        ]
+      },
+      "MeowStartEarlyEnable": {
+        "type": "checkbox",
+        "value": false
       }
     },
     "Storage": {

@@ -133,6 +133,56 @@ def timedelta_to_text(delta=None):
     return time_delta_display + t(time_delta_name)
 
 
+def read_webapp_template(filename: str) -> str:
+    template_path = Path(os.getcwd()) / 'webapp' / filename
+    with open(template_path, 'r', encoding='utf-8') as f:
+        return f.read()
+
+
+def build_title_block(title: str, margin_top: int = 12, margin_bottom: int = 8, font_weight: int = 600) -> str:
+    tpl = read_webapp_template('title_block.html')
+    return tpl.format(
+        title=title,
+        margin_top=margin_top,
+        margin_bottom=margin_bottom,
+        font_weight=font_weight,
+    )
+
+
+def build_muted_notice(text: str) -> str:
+    tpl = read_webapp_template('muted_notice.html')
+    return tpl.format(text=text)
+
+
+def build_simple_table(headers, rows, extra_style: str = '') -> str:
+    tpl = read_webapp_template('simple_table.html')
+    thead_cells = ''.join([f'<th style="text-align:left;padding:6px">{h}</th>' for h in headers])
+    tbody_rows = ''.join([
+        '<tr>' + ''.join([f'<td style="text-align:center;padding:6px">{v}</td>' for v in row]) + '</tr>'
+        for row in rows
+    ])
+    return tpl.format(
+        thead_cells=thead_cells,
+        tbody_rows=tbody_rows,
+        extra_style=extra_style,
+    )
+
+
+def build_recommendation_box(text: str) -> str:
+    tpl = read_webapp_template('recommendation_box.html')
+    return tpl.format(text=text)
+
+
+def build_copyable_device_id(device_id: str) -> str:
+    tpl = read_webapp_template('copyable_device_id.html')
+    return tpl.format(device_id=device_id)
+
+
+def build_app_manage_title(title: str) -> str:
+    tpl = read_webapp_template('app_manage_title.html')
+    return tpl.format(title=title)
+
+
 class AlasGUI(Frame):
     ALAS_MENU: Dict[str, Dict[str, List[str]]]
     ALAS_ARGS: Dict[str, Dict[str, Dict[str, Dict[str, str]]]]
@@ -353,19 +403,66 @@ class AlasGUI(Frame):
         self.init_menu(name=task)
         self.set_title(t(f"Task.{task}.name"))
 
-        if task in ("OpsiHazard1Leveling",):
+        # 智能调度显示所有统计，侵蚀1练级只显示每日经验检测
+        if task in ("OpsiScheduling", "OpsiHazard1Leveling"):
             def _render_opsi_stats():
                 try:
-                    from module.statistics.opsi_month import get_opsi_stats, compute_monthly_cl1_akashi_ap
-                    # 使用当前实例名称获取统计数据
+                    from module.statistics.opsi_month import get_opsi_stats, compute_monthly_cl1_akashi_ap, get_ap_timeline
+                    from module.statistics.cl1_database import db as cl1_db
+                    from module.statistics.ship_exp_stats import get_ship_exp_stats
+                    # 使用当前实例名称获取统计数据，确保不为空
                     instance_name = self.alas_name if hasattr(self, 'alas_name') and self.alas_name else None
+                    if not instance_name:
+                        # 使用第一个可用的实例
+                        from module.config.utils import alas_instance
+                        all_instances = alas_instance()
+                        instance_name = all_instances[0] if all_instances else None
                     s = get_opsi_stats(instance_name=instance_name).summary()
                 except Exception as e:
                     with use_scope("opsi_stats", clear=True):
                         put_text(f"Failed to load OpSi stats: {e}")
                     return
 
-                labels = ["月份", "战斗场次", "战斗轮次", "出击消耗", "遇见明石次数", "遇见明石概率", "平均体力", "净赚体力", "循环效率"]
+                # 侵蚀1练级只显示每日经验检测
+                if task == "OpsiHazard1Leveling":
+                    try:
+                        exp_stats = get_ship_exp_stats(instance_name=instance_name)
+                        exp_data = exp_stats.data
+                        ships_data = exp_data.get("ships", []) if exp_data else []
+                        target_level = exp_data.get("target_level", 125) if exp_data else 125
+                        last_check_time = exp_data.get("last_check_time", "-") if exp_data else "-"
+                    except Exception as e:
+                        with use_scope("opsi_stats", clear=True):
+                            put_text(f"Failed to load exp stats: {e}")
+                        return
+
+                    with use_scope("opsi_stats", clear=True):
+                        put_html(build_title_block('每日经验检测'))
+                        put_row([put_text(f"检测时间: {last_check_time}"), put_text(f"目标等级: {target_level}")])
+                        if ships_data:
+                            exp_labels = ["舰位", "等级", "当前经验(本级)", "总经验", "距目标经验", "还需出击", "预计时间"]
+                            exp_rows = []
+                            from module.statistics.opsi_month import get_opsi_stats as get_opsi_stats_inner
+                            current_battles = get_opsi_stats_inner(instance_name=instance_name).summary().get('total_battles', 0)
+                            for ship in ships_data:
+                                progress = exp_stats.calculate_progress(ship, target_level, current_battles)
+                                exp_rows.append([
+                                    progress['position'],
+                                    progress['level'],
+                                    progress['current_exp'],
+                                    progress['total_exp'],
+                                    progress['exp_needed'] if progress['exp_needed'] > 0 else "-",
+                                    progress['battles_needed'] if progress['battles_needed'] > 0 else "-",
+                                    progress['time_needed']
+                                ])
+
+                            put_html(build_simple_table(exp_labels, exp_rows))
+                        else:
+                            put_html(build_muted_notice('暂无经验数据，运行侵蚀1练级后将自动记录'))
+                    return
+
+                # 智能调度显示所有统计
+                labels = ["月份", "战斗场次", "战斗轮次", "出击消耗", "遇见明石次数", "遇见明石概率", "平均体力", "净赚体力", "循环效率", "平均战斗时间", "平均一轮时长"]
                 month = s.get("month", "-")
                 total = s.get("total_battles", "-")
                 try:
@@ -423,18 +520,119 @@ class AlasGUI(Frame):
                 except Exception:
                     loop_eff = "-"
 
-                values = [month, tb, rounds, sortie_cost, ak, akashi_rate, avg_ap, net_ap, loop_eff]
+                # 获取侵蚀1的平均时长
+                try:
+                    exp_stats = get_ship_exp_stats(instance_name=instance_name)
+                    avg_cl1_battle_time = exp_stats.get_average_battle_time()
+                    avg_cl1_round_time = exp_stats.get_average_round_time()
+                    exp_per_hour = exp_stats.get_exp_per_hour()
+                    today_stats = exp_stats.get_today_stats()
+                    
+                    # 今日统计
+                    if today_stats:
+                        today_battles = today_stats.get('battle_count', 0)
+                        today_exp = today_stats.get('total_exp_gained', 0)
+                        today_run_time = int(today_stats.get('total_run_time', 0) // 60)
+                        today_exp_str = f"{today_exp:,}"
+                        today_run_str = f"{today_run_time}分钟"
+                    else:
+                        today_battles = 0
+                        today_exp_str = "-"
+                        today_run_str = "-"
+                    
+                    avg_cl1_battle_str = f"{avg_cl1_battle_time:.1f}秒"
+                    avg_cl1_round_str = f"{avg_cl1_round_time:.1f}秒"
+                    exp_per_hour_str = f"{exp_per_hour:.0f}/小时"
+                except Exception:
+                    avg_cl1_battle_str = "-"
+                    avg_cl1_round_str = "-"
+                    exp_per_hour_str = "-"
+                    today_battles = 0
+                    today_exp_str = "-"
+                    today_run_str = "-"
+
+                labels = ["月份", "战斗场次", "战斗轮次", "出击消耗", "遇见明石次数", "遇见明石概率", "平均体力", "净赚体力", "循环效率", "经验效率", "平均战斗时间", "平均一轮时长", "今日战斗", "今日经验", "今日运行"]
+
+                values = [month, tb, rounds, sortie_cost, ak, akashi_rate, avg_ap, net_ap, loop_eff, exp_per_hour_str, avg_cl1_battle_str, avg_cl1_round_str, today_battles, today_exp_str, today_run_str]
 
                 table = [labels, values]
 
                 with use_scope("opsi_stats", clear=True):
-                    put_html('<div style="margin-top:12px; margin-bottom:8px; font-weight:600">雪风大人的侵蚀一数据收集</div>')
+                    put_html(build_title_block('雪风大人的侵蚀一数据收集'))
                     put_row([put_text(f"当月购买体力: {ap_bought}")])
-                    html = '<table style="width:100%; border-collapse:collapse;">'
-                    html += '<thead><tr>' + ''.join([f'<th style="text-align:left;padding:6px">{l}</th>' for l in labels]) + '</tr></thead>'
-                    html += '<tbody><tr>' + ''.join([f'<td style="text-align:center;padding:6px">{v}</td>' for v in values]) + '</tr></tbody>'
-                    html += '</table>'
-                    put_html(html)
+                    put_html(build_simple_table(labels, [values]))
+
+                    # ========== 短猫统计数据 ==========
+                    try:
+                        from datetime import datetime
+                        now = datetime.now()
+                        meow_data = cl1_db.get_meow_stats(instance_name or "default", now.year, now.month)
+                    except Exception as e:
+                        meow_data = {}
+
+                    meow_round_times = meow_data.get("round_times", [])
+                    meow_battle_count = meow_data.get("battle_count", 0)
+                    meow_avg_time = meow_data.get("avg_round_time", 0.0)
+                    meow_avg_battle_time = meow_data.get("avg_battle_time", 0.0)
+
+                    try:
+                        meow_rounds = len(meow_round_times) if meow_round_times else 0
+                    except Exception:
+                        meow_rounds = 0
+
+                    if meow_round_times:
+                        avg_time_str = f"{meow_avg_time:.1f}秒"
+                    else:
+                        avg_time_str = "-"
+
+                    if meow_avg_battle_time > 0:
+                        avg_battle_time_str = f"{meow_avg_battle_time:.1f}秒"
+                    else:
+                        avg_battle_time_str = "-"
+
+                    meow_values = [
+                        meow_data.get("month", "-"),
+                        meow_battle_count,
+                        meow_rounds,
+                        avg_battle_time_str,  # 平均单场战斗时间
+                        avg_time_str,         # 平均一轮短猫时长
+                    ]
+                    meow_labels = ["月份", "战斗场次", "出击轮次", "平均战斗时间", "平均一轮短猫时长"]
+
+                    put_html(build_title_block('短猫相接数据收集', margin_top=20, margin_bottom=8))
+                    put_html(build_simple_table(meow_labels, [meow_values]))
+
+                    # ========== 短猫提前开始建议 ==========
+                    try:
+                        from module.os.tasks.scheduling import OpsiScheduling
+                        # 创建临时实例来调用计算方法
+                        scheduling = OpsiScheduling(self.config, task='OpsiScheduling')
+                        advance_calc = scheduling.get_meow_advance_calculation()
+                    except Exception as e:
+                        advance_calc = {}
+
+                    if advance_calc:
+                        mode_name = advance_calc.get('mode_name', '-')
+                        current_ap = advance_calc.get('current_ap', '-')
+                        meow_round_ap = advance_calc.get('meow_round_ap', '-')
+                        avg_meow_round_time = advance_calc.get('avg_meow_round_time', 0)
+                        available_rounds = advance_calc.get('available_rounds', 0)
+                        hours_ahead = advance_calc.get('hours_ahead', 0)
+                        recommendation = advance_calc.get('recommendation', '-')
+
+                        put_html(build_title_block('短猫提前开始建议', margin_top=20, margin_bottom=8))
+                        put_row([
+                            put_text(f"当前AP: {current_ap}"),
+                            put_text(f"每轮消耗: {meow_round_ap} AP"),
+                            put_text(f"可运行轮数: {available_rounds:.1f}轮"),
+                        ])
+                        put_row([
+                            put_text(f"平均每轮耗时: {avg_meow_round_time:.1f}秒"),
+                            put_text(f"当前模式: {mode_name}"),
+                            put_text(f"建议提前: {hours_ahead:.1f}小时"),
+                        ])
+                        put_html(build_recommendation_box(recommendation))
+
                     def export_opsi_csv(save_to_desktop: bool = True):
                         import io
                         try:
@@ -547,6 +745,10 @@ class AlasGUI(Frame):
                 try:
                     from module.statistics.opsi_month import get_ap_timeline
                     instance_name = self.alas_name if hasattr(self, 'alas_name') and self.alas_name else None
+                    if not instance_name:
+                        from module.config.utils import alas_instance
+                        all_instances = alas_instance()
+                        instance_name = all_instances[0] if all_instances else None
                     timeline = get_ap_timeline(instance_name=instance_name)
                 except Exception as e:
                     with use_scope("ap_chart", clear=True):
@@ -555,7 +757,7 @@ class AlasGUI(Frame):
 
                 if not timeline:
                     with use_scope("ap_chart", clear=True):
-                        put_html('<div style="color:#888; margin:12px 0">暂无体力变化数据，运行侵蚀1任务后将自动记录</div>')
+                        put_html(build_muted_notice('暂无体力变化数据，运行侵蚀1任务后将自动记录'))
                         put_button("刷新", onclick=_render_ap_chart, color="off")
                     return
 
@@ -573,7 +775,7 @@ class AlasGUI(Frame):
 
                 if not raw_points:
                     with use_scope("ap_chart", clear=True):
-                        put_html('<div style="color:#888; margin:12px 0">暂无有效体力数据</div>')
+                        put_html(build_muted_notice('暂无有效体力数据'))
                     return
 
                 raw_points.sort(key=lambda p: p['dt'])
@@ -628,7 +830,7 @@ class AlasGUI(Frame):
                         
                     if not candles:
                         with use_scope("ap_chart", clear=True):
-                            put_html('<div style="color:#888; margin:12px 0">无法聚合K线数据</div>')
+                            put_html(build_muted_notice('无法聚合K线数据'))
                             put_button("分时", onclick=lambda: (setattr(self, '_ap_chart_view', 'line'), _render_ap_chart()), color="off")
                         return
                     for k, v in candles.items():
@@ -655,343 +857,33 @@ class AlasGUI(Frame):
 
                 chart_id = f"ap_cv_{id(self)}"
 
-                html = '<div style="margin-top:16px; margin-bottom:8px;">'
-                html += f'<div style="font-weight:600; font-size:14px; margin-bottom:8px;">体力变化 - {view_title}</div>'
-                html += '<div style="display:flex; flex-wrap:wrap; gap:16px; margin-bottom:8px; font-size:13px; color:#aaa;">'
-                html += f'<span>当前: <b style="color:#e0e0e0">{ap_cur}</b></span>'
-                html += f'<span>变化: <b style="color:{change_color}">{change_sign}{ap_change}</b></span>'
-                html += f'<span>最高: <b style="color:#ef5350">{ap_max}</b></span>'
-                html += f'<span>最低: <b style="color:#26a69a">{ap_min}</b></span>'
-                html += f'<span>均值: <b style="color:#e0e0e0">{ap_avg}</b></span>'
-                html += f'<span style="color:#666">{data_points_text}</span>'
-                html += '</div></div>'
-                html += f'<div style="position:relative;background:#1a1a2e;border-radius:8px;border:1px solid #333;padding:4px;">'
-                html += f'<canvas id="{chart_id}" style="width:100%;height:360px;display:block;cursor:crosshair;"></canvas>'
-                html += f'<canvas id="{chart_id}_ov" style="position:absolute;top:4px;left:4px;width:100%;height:360px;pointer-events:none;"></canvas>'
-                html += f'<div id="{chart_id}_tip" style="display:none;position:absolute;pointer-events:none;'
-                html += 'background:rgba(22,22,40,0.95);border:1px solid #555;border-radius:6px;padding:8px 12px;'
-                html += 'font-size:12px;color:#ddd;z-index:10;white-space:nowrap;"></div>'
-                html += '</div>'
+                html_tpl = read_webapp_template('ap_chart_panel.html')
+                html = html_tpl.format(
+                    chart_id=chart_id,
+                    view_title=view_title,
+                    ap_cur=ap_cur,
+                    change_color=change_color,
+                    change_sign=change_sign,
+                    ap_change=ap_change,
+                    ap_max=ap_max,
+                    ap_min=ap_min,
+                    ap_avg=ap_avg,
+                    data_points_text=data_points_text,
+                )
 
-                js_code = '''
-(function() {
-    var chartType = "''' + current_view + '''";
-    var labels = ''' + _json.dumps(labels, ensure_ascii=False) + ''';
-    var opens  = ''' + _json.dumps(opens) + ''';
-    var highs  = ''' + _json.dumps(highs) + ''';
-    var lows   = ''' + _json.dumps(lows) + ''';
-    var closes = ''' + _json.dumps(closes) + ''';
-    var counts = ''' + _json.dumps(counts) + ''';
-    var ap = ''' + _json.dumps(ap_list) + ''';
-    var avg = ''' + str(ap_avg) + ''';
-    var nn = chartType === 'line' ? ap.length : labels.length;
-    if (nn < 1) return;
-
-    var cv = document.getElementById("''' + chart_id + '''");
-    if (!cv) return;
-    var tipEl = document.getElementById("''' + chart_id + '''_tip");
-    var ovCv = document.getElementById("''' + chart_id + '''_ov");
-
-    var dpr = window.devicePixelRatio || 1;
-    var W = cv.clientWidth, H = cv.clientHeight;
-    cv.width = W * dpr; cv.height = H * dpr;
-    ovCv.width = W * dpr; ovCv.height = H * dpr;
-    ovCv.style.width = W + "px"; ovCv.style.height = H + "px";
-
-    var ctx = cv.getContext("2d");
-    ctx.scale(dpr, dpr);
-    var oc = ovCv.getContext("2d");
-
-    var pad = {t: 20, r: 20, b: 52, l: 52};
-    var gW = W - pad.l - pad.r, gH = H - pad.t - pad.b;
-
-    var allMin = Infinity, allMax = -Infinity;
-    if (chartType === 'line') {
-        for (var i = 0; i < nn; i++) {
-            if (ap[i] < allMin) allMin = ap[i];
-            if (ap[i] > allMax) allMax = ap[i];
-        }
-    } else {
-        for (var i = 0; i < nn; i++) {
-            if (lows[i] < allMin) allMin = lows[i];
-            if (highs[i] > allMax) allMax = highs[i];
-        }
-    }
-    var rng = allMax - allMin || 1;
-    allMin -= rng * 0.08;
-    allMax += rng * 0.08;
-
-    function xOfLine(i) { return pad.l + (i / Math.max(nn - 1, 1)) * gW; }
-    function yOf(v) { return pad.t + gH - (v - allMin) / (allMax - allMin) * gH; }
-
-    var candleSpace = gW / nn;
-    var candleW = Math.max(3, Math.min(candleSpace * 0.6, 30));
-    function xCenter(i) { return pad.l + candleSpace * (i + 0.5); }
-
-    ctx.fillStyle = "#1a1a2e";
-    ctx.fillRect(0, 0, W, H);
-
-    ctx.strokeStyle = "#2a2a3e";
-    ctx.lineWidth = 1;
-    ctx.fillStyle = "#666";
-    ctx.font = "11px -apple-system, sans-serif";
-    ctx.textAlign = "right";
-    ctx.textBaseline = "middle";
-    for (var i = 0; i <= 5; i++) {
-        var v = allMin + (allMax - allMin) * (i / 5);
-        var y = yOf(v);
-        ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(W - pad.r, y); ctx.stroke();
-        ctx.fillText(Math.round(v), pad.l - 8, y);
-    }
-
-    var avgY = yOf(avg);
-    ctx.save();
-    ctx.strokeStyle = "#ff9800";
-    ctx.lineWidth = 1;
-    ctx.setLineDash([6, 4]);
-    ctx.beginPath(); ctx.moveTo(pad.l, avgY); ctx.lineTo(W - pad.r, avgY); ctx.stroke();
-    ctx.restore();
-    ctx.fillStyle = "#ff9800";
-    ctx.font = "10px -apple-system, sans-serif";
-    ctx.textAlign = "right";
-    ctx.fillText("均值:" + avg, W - pad.r - 4, avgY - 8);
-
-    ctx.fillStyle = "#666";
-    ctx.font = "10px -apple-system, sans-serif";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "top";
-    if (chartType === 'line') {
-        var labelStep = Math.max(1, Math.floor(nn / 8));
-        for (var i = 0; i < nn; i += labelStep) {
-            ctx.save();
-            ctx.translate(xOfLine(i), H - pad.b + 8);
-            ctx.rotate(0.4);
-            ctx.fillText(labels[i], 0, 0);
-            ctx.restore();
-        }
-    } else {
-        var labelStep = Math.max(1, Math.floor(nn / 12));
-        for (var i = 0; i < nn; i += labelStep) {
-            ctx.fillText(labels[i], xCenter(i), H - pad.b + 8);
-        }
-    }
-
-    if (chartType === 'line') {
-        var grad = ctx.createLinearGradient(0, pad.t, 0, pad.t + gH);
-        grad.addColorStop(0, "rgba(100,120,160,0.18)");
-        grad.addColorStop(1, "rgba(100,120,160,0.02)");
-        ctx.beginPath();
-        ctx.moveTo(xOfLine(0), yOf(ap[0]));
-        for (var i = 1; i < nn; i++) {
-            if (nn < 30) {
-                var x0 = xOfLine(i-1), y0 = yOf(ap[i-1]), x1 = xOfLine(i), y1 = yOf(ap[i]);
-                var cpx = (x0 + x1) / 2;
-                ctx.bezierCurveTo(cpx, y0, cpx, y1, x1, y1);
-            } else {
-                ctx.lineTo(xOfLine(i), yOf(ap[i]));
-            }
-        }
-        ctx.lineTo(xOfLine(nn-1), pad.t + gH);
-        ctx.lineTo(xOfLine(0), pad.t + gH);
-        ctx.closePath();
-        ctx.fillStyle = grad;
-        ctx.fill();
-
-        ctx.lineWidth = 2;
-        ctx.lineJoin = "round";
-        for (var i = 1; i < nn; i++) {
-            ctx.beginPath();
-            ctx.moveTo(xOfLine(i-1), yOf(ap[i-1]));
-            var segmentColor = ap[i] >= ap[i-1] ? "#ef5350" : "#26a69a";
-            ctx.strokeStyle = segmentColor;
-            if (nn < 30) {
-                var x0 = xOfLine(i-1), y0 = yOf(ap[i-1]), x1 = xOfLine(i), y1 = yOf(ap[i]);
-                var cpx = (x0 + x1) / 2;
-                ctx.bezierCurveTo(cpx, y0, cpx, y1, x1, y1);
-            } else {
-                ctx.lineTo(xOfLine(i), yOf(ap[i]));
-            }
-            ctx.stroke();
-        }
-        if (nn < 60) {
-            for (var i = 0; i < nn; i++) {
-                ctx.beginPath();
-                ctx.arc(xOfLine(i), yOf(ap[i]), 3.5, 0, Math.PI * 2);
-                var dotColor = (i > 0 && ap[i] < ap[i-1]) ? "#26a69a" : "#ef5350";
-                ctx.fillStyle = dotColor;
-                ctx.fill();
-                ctx.strokeStyle = "#1a1a2e";
-                ctx.lineWidth = 1.5;
-                ctx.stroke();
-            }
-        }
-    } else {
-        // 绘制K线
-        for (var i = 0; i < nn; i++) {
-        var cx = xCenter(i);
-        var o = opens[i], h = highs[i], l = lows[i], c = closes[i];
-        
-        // A股红绿规则：收盘价 > 开盘价 为涨(红)，收盘价 < 开盘价 为跌(绿)
-        var isUp = c > o;
-        var isDown = c < o;
-        var isFlat = c === o;
-        var color = isFlat ? "#888" : (isUp ? "#ef5350" : "#26a69a");
-        
-        ctx.strokeStyle = color;
-        ctx.lineWidth = 1.5;
-        // 上下影线
-        ctx.beginPath();
-        ctx.moveTo(cx, yOf(h));
-        ctx.lineTo(cx, yOf(l));
-        ctx.stroke();
-
-        var bodyTop = yOf(Math.max(o, c));
-        var bodyBot = yOf(Math.min(o, c));
-        var bodyH = Math.max(bodyBot - bodyTop, 1);
-
-        if (isUp) {
-            // 实心红柱
-            ctx.fillStyle = color;
-            ctx.fillRect(cx - candleW / 2, bodyTop, candleW, bodyH);
-        } else if (isDown) {
-            // 实体为实心绿柱
-            ctx.fillStyle = color;
-            ctx.fillRect(cx - candleW / 2, bodyTop, candleW, bodyH);
-        } else {
-            // 十字星
-            ctx.beginPath();
-            ctx.moveTo(cx - candleW / 2, yOf(o));
-            ctx.lineTo(cx + candleW / 2, yOf(o));
-            ctx.stroke();
-        }
-    }
-        
-    // MA Lines (移动平均线)
-    function drawMA(days, maColor) {
-        if (nn < days) return;
-        ctx.beginPath();
-        ctx.lineWidth = 1.5;
-        ctx.strokeStyle = maColor;
-        var started = false;
-        for (var i = days - 1; i < nn; i++) {
-            var sum = 0;
-            for (var j = 0; j < days; j++) sum += closes[i - j];
-            var maVal = sum / days;
-            var x = xCenter(i), y = yOf(maVal);
-            if (!started) { ctx.moveTo(x, y); started = true; }
-            else { ctx.lineTo(x, y); }
-        }
-        ctx.stroke();
-    }
-    drawMA(5, "#ffeb3b"); // MA5 Yellow
-    drawMA(10, "#e91e63"); // MA10 Pink
-}
-
-cv.addEventListener("mousemove", function(e) {
-    var rect = cv.getBoundingClientRect();
-    var mx_ = e.clientX - rect.left;
-    var my_ = e.clientY - rect.top;
-
-    oc.setTransform(1, 0, 0, 1, 0, 0);
-    oc.clearRect(0, 0, ovCv.width, ovCv.height);
-
-    if (mx_ < pad.l || mx_ > W - pad.r || my_ < pad.t || my_ > pad.t + gH) {
-        tipEl.style.display = "none";
-        return;
-    }
-
-    oc.scale(dpr, dpr);
-
-    if (chartType === 'line') {
-        var ratio = (mx_ - pad.l) / gW;
-        var idx = Math.round(ratio * (nn - 1));
-        idx = Math.max(0, Math.min(nn - 1, idx));
-        var px = xOfLine(idx), py = yOf(ap[idx]);
-
-        oc.strokeStyle = "rgba(255,255,255,0.18)";
-        oc.lineWidth = 1;
-        oc.setLineDash([4, 3]);
-        oc.beginPath(); oc.moveTo(px, pad.t); oc.lineTo(px, pad.t + gH); oc.stroke();
-        oc.beginPath(); oc.moveTo(pad.l, py); oc.lineTo(W - pad.r, py); oc.stroke();
-        oc.setLineDash([]);
-        
-        oc.beginPath(); oc.arc(px, py, 6, 0, Math.PI * 2);
-        oc.fillStyle = "rgba(100,181,246,0.3)"; oc.fill();
-        oc.beginPath(); oc.arc(px, py, 4, 0, Math.PI * 2);
-        oc.fillStyle = "#64b5f6"; oc.fill();
-        oc.strokeStyle = "#fff"; oc.lineWidth = 2; oc.stroke();
-        oc.setTransform(1, 0, 0, 1, 0, 0);
-
-        var diff = idx > 0 ? (ap[idx] - ap[idx - 1]) : 0;
-        var isUp = diff >= 0;
-        var dc = isUp ? "#ef5350" : "#26a69a";
-        var ds = (isUp ? "+" : "") + diff;
-        tipEl.innerHTML = '<div style="color:#888;margin-bottom:4px;font-weight:600">' + labels[idx] + '</div>'
-            + '<div>体力: <b style="color:#64b5f6">' + ap[idx] + '</b></div>'
-            + '<div>单次变化: <b style="color:' + dc + '">' + ds + '</b></div>';
-    } else {
-        var idx = Math.floor((mx_ - pad.l) / candleSpace);
-        idx = Math.max(0, Math.min(nn - 1, idx));
-        var cx = xCenter(idx);
-
-        oc.strokeStyle = "rgba(255,255,255,0.18)";
-        oc.lineWidth = 1;
-        oc.setLineDash([4, 3]);
-        oc.beginPath(); oc.moveTo(cx, pad.t); oc.lineTo(cx, pad.t + gH); oc.stroke();
-        oc.beginPath(); oc.moveTo(pad.l, my_); oc.lineTo(W - pad.r, my_); oc.stroke();
-        oc.setLineDash([]);
-
-        oc.strokeStyle = "#fff";
-        oc.lineWidth = 1;
-        oc.globalAlpha = 0.15;
-        oc.fillStyle = "#fff";
-        oc.fillRect(cx - candleW / 2 - 2, pad.t, candleW + 4, gH);
-        oc.globalAlpha = 1.0;
-        oc.setTransform(1, 0, 0, 1, 0, 0);
-
-        var o = opens[idx], h = highs[idx], l = lows[idx], c_ = closes[idx];
-        var chg = c_ - o;
-        var chgPct = o !== 0 ? ((chg / o) * 100).toFixed(1) : "0.0";
-        var isUp = c_ >= o;
-        var dc = isUp ? "#ef5350" : "#26a69a";
-        var chgSign = chg >= 0 ? "+" : "";
-        
-        var ma5Val = "-";
-        if (idx >= 4) {
-            var sum5 = 0; for(var j=0; j<5; j++) sum5+=closes[idx-j];
-            ma5Val = (sum5/5).toFixed(1);
-        }
-        var ma10Val = "-";
-        if (idx >= 9) {
-            var sum10 = 0; for(var j=0; j<10; j++) sum10+=closes[idx-j];
-            ma10Val = (sum10/10).toFixed(1);
-        }
-        
-        tipEl.innerHTML = '<div style="color:#888;margin-bottom:4px;font-weight:600">' + labels[idx] + '</div>'
-            + '<div>开盘: <b>' + o + '</b> <span style="margin-left:8px;color:#ffeb3b">MA5(5期平均): ' + ma5Val + '</span></div>'
-            + '<div>收盘: <b style="color:' + dc + '">' + c_ + '</b> <span style="margin-left:8px;color:#e91e63">MA10(10期平均): ' + ma10Val + '</span></div>'
-            + '<div>最高: <b style="color:#ef5350">' + h + '</b></div>'
-            + '<div>最低: <b style="color:#26a69a">' + l + '</b></div>'
-            + '<div>涨跌: <b style="color:' + dc + '">' + chgSign + chg + ' (' + chgSign + chgPct + '%)</b></div>'
-            + '<div style="color:#666;margin-top:4px">数据点密度: ' + counts[idx] + '</div>';
-    }
-    
-    tipEl.style.display = "block";
-    var tx = (chartType === 'line' ? px : cx) + 18;  
-    var ty = my_ - 60;
-    if (tx + 180 > W) tx = (chartType === 'line' ? px : cx) - 200;
-    if (ty < 8) ty = my_ + 18;
-    tipEl.style.left = tx + "px";
-    tipEl.style.top = ty + "px";
-});
-
-    cv.addEventListener("mouseleave", function() {
-        tipEl.style.display = "none";
-        oc.setTransform(1, 0, 0, 1, 0, 0);
-        oc.clearRect(0, 0, ovCv.width, ovCv.height);
-    });
-})();
-'''
+                js_tpl = read_webapp_template('ap_chart.js')
+                js_code = (js_tpl
+                    .replace('__CHART_TYPE__', current_view)
+                    .replace('__LABELS__', _json.dumps(labels, ensure_ascii=False))
+                    .replace('__OPENS__', _json.dumps(opens))
+                    .replace('__HIGHS__', _json.dumps(highs))
+                    .replace('__LOWS__', _json.dumps(lows))
+                    .replace('__CLOSES__', _json.dumps(closes))
+                    .replace('__COUNTS__', _json.dumps(counts))
+                    .replace('__AP__', _json.dumps(ap_list))
+                    .replace('__AVG__', str(ap_avg))
+                    .replace('__CHART_ID__', chart_id)
+                )
                 from pywebio.session import run_js
                 with use_scope("ap_chart", clear=True):
                     put_html(html)
@@ -1006,21 +898,28 @@ cv.addEventListener("mousemove", function(e) {
                         put_button("刷新", onclick=_render_ap_chart, color="off"),
                     ], size="auto")
 
-            put_scope("ap_chart", [])
-            _render_ap_chart()
-            self.task_handler.add(_render_ap_chart, 60, True)
+            # 只在 OpsiScheduling 任务下显示体力K线图
+            if task == "OpsiScheduling":
+                put_scope("ap_chart", [])
+                _render_ap_chart()
+                self.task_handler.add(_render_ap_chart, 60, True)
 
             # ========== 舰船经验检测表格 ==========
             def _render_ship_exp():
                 try:
                     from module.statistics.ship_exp_stats import get_ship_exp_stats
                     from module.statistics.opsi_month import get_opsi_stats as get_opsi_stats_func
-                    # 使用当前实例名称获取统计数据
+                    # 使用当前实例名称获取统计数据，确保不为空
                     instance_name = self.alas_name if hasattr(self, 'alas_name') and self.alas_name else None
+                    if not instance_name:
+                        # 使用第一个可用的实例
+                        from module.config.utils import alas_instance
+                        all_instances = alas_instance()
+                        instance_name = all_instances[0] if all_instances else None
                     stats = get_ship_exp_stats(instance_name=instance_name)
                     if not stats.data or not stats.data.get('ships'):
                         with use_scope("ship_exp_table", clear=True):
-                            put_html('<div style="color:#888; margin:12px 0">暂无舰船经验数据，请先运行"每日经验检测"任务</div>')
+                            put_html(build_muted_notice('暂无舰船经验数据，请先运行"每日经验检测"任务'))
                         return
                     
                     current_battles = get_opsi_stats_func(instance_name=instance_name).summary().get('total_battles', 0)
@@ -1053,7 +952,7 @@ cv.addEventListener("mousemove", function(e) {
                         ])
                     
                     with use_scope("ship_exp_table", clear=True):
-                        put_html('<div style="margin-top:16px; margin-bottom:8px; font-weight:600">每日经验检测：识别到的舰娘等级与升级进度</div>')
+                        put_html(build_title_block('每日经验检测：识别到的舰娘等级与升级进度', margin_top=16, margin_bottom=8))
                         put_text(f"上次检查时间: {stats.data.get('last_check_time', '-')}")
                         
                         # 显示效率统计
@@ -1071,23 +970,20 @@ cv.addEventListener("mousemove", function(e) {
                                 put_text(f"今日经验: {today_stats.get('total_exp_gained', 0)}"),
                                 put_text(f"今日运行: {run_minutes}分钟"),
                             ])
+                        else:
+                            put_text("暂无今日战斗数据，运行战斗后将自动更新")
                         
-                        html = '<table style="width:100%; border-collapse:collapse; margin-top:8px;">'
-                        html += '<thead><tr>' + ''.join([f'<th style="text-align:left;padding:6px;border-bottom:1px solid #ddd">{l}</th>' for l in labels]) + '</tr></thead>'
-                        html += '<tbody>'
-                        for row in rows:
-                            html += '<tr>' + ''.join([f'<td style="text-align:center;padding:6px;border-bottom:1px solid #eee">{v}</td>' for v in row]) + '</tr>'
-                        html += '</tbody></table>'
-                        put_html(html)
+                        put_html(build_simple_table(labels, rows, extra_style=' margin-top:8px;'))
                         
                         put_button("刷新", onclick=_render_ship_exp, color="off")
                 except Exception as e:
                     with use_scope("ship_exp_table", clear=True):
                         put_text(f"加载舰船经验数据失败: {e}")
 
-            put_scope("ship_exp_table", [])
-            _render_ship_exp()
-            self.task_handler.add(_render_ship_exp, 60, True)
+                if task == "OpsiScheduling":
+                    put_scope("ship_exp_table", [])
+                    _render_ship_exp()
+                    self.task_handler.add(_render_ship_exp, 60, True)
 
         put_scope("_groups", [put_none(), put_scope("groups"), put_scope("navigator")])
 
@@ -1178,19 +1074,7 @@ cv.addEventListener("mousemove", function(e) {
             # 在掉落记录组中显示可复制的设备ID
             if group_name == "DropRecord":
                 device_id = get_device_id()
-                put_html(
-                    f'<div style="display:grid; margin:.125rem 0;">'
-                    f'<span style="font-size:1rem; font-weight:500; margin:0 .25rem;">设备ID (Device ID)</span>'
-                    f'<input type="text" value="{device_id}" readonly '
-                    f'style="font-family:monospace; font-size:0.9rem; padding:0.25rem 0.5rem; '
-                    f'margin-top:0.25rem; border:1px solid #ccc; border-radius:4px; '
-                    f'background:transparent; cursor:pointer; width:100%;" '
-                    f'onclick="this.select(); document.execCommand(\'copy\'); '
-                    f'this.style.borderColor=\'#28a745\'; '
-                    f'setTimeout(()=>this.style.borderColor=\'#ccc\', 1000);" '
-                    f'title="点击复制">'
-                    f'</div>'
-                )
+                put_html(build_copyable_device_id(device_id))
 
         return len(output_list)
 
@@ -1518,6 +1402,35 @@ cv.addEventListener("mousemove", function(e) {
                         deep_set(config, set_key, set_value)
                         valid.append(set_key)
                         pin["_".join(set_key.split("."))] = to_pin_value(set_value)
+                    # ==================== 自定义弹窗逻辑 ====================
+                    # 当保存侵蚀1兑换凭证保留值为 0 时弹出提示
+                    if k in [
+                        "OpsiHazard1Leveling.OpsiHazard1Leveling.OperationCoinsPreserve",
+                        "OpsiScheduling.OpsiScheduling.OperationCoinsPreserve"
+                    ] and int(v) == 0:
+                        from pywebio.output import popup, put_html, PopupSize
+                        popup("你在干什么？", [put_html('<div style="line-height:1.8;font-size:14px;">'
+                            '任务帮助文本这里都写了，你是完全不看啊，写了跟白写了一样还问问问我就要我偏不，你就是找骂<br><br>'
+                            '为什么保留黄币没有暴露在前端，因为那是用来防呆的，防的就是像你一样的脑瘫自以为是71魔怔人，盲目地将保留数量改成0，然后没有黄币买不起行动力，然后跑跑跑黄币和行动力全亏完又回来瞎鸡巴乱叫，像你妈的个弱智睁大你的马眼看看猫商店的行动力箱子是要用黄币买的，没黄币你买鸡巴还做春秋大梦赚行动力<br><br>'
+                            '为什么 Alas社区准则 不允许讨论71，就是因为像你一样的71魔怔人太多了，然后大魔怔人带小魔怔人，跟苍蝇吃屎一样一生生一窝，我不骂你那不知道的还以为你这是主流玩法，我是不知道你从哪里看的狗屎攻略还是民科搞发明创造出来的，你只需要打开功能开始运行就能获得顶尖玩家的决策水平，但是有现成的功能你不用，十足超人高中生发现了世界的真理，只有你是聪明逼剩余都是傻逼<br><br>'
+                            '我来告诉你71怎么刷，那就是帮助文本里写的可惜你没看，告诉你答案你不服气我就要改，改改改改你妈了个臭嗨改，能力没有皮是比包皮还皮，能耐得飞起比性无能还能，说白了你不是来寻求最大收益的，你是来砸场子的，你非要Alas对着你那收益屌差的游戏玩法去设计，连同全体Alas用户跟着运行<br><br>'
+                            '我来告诉你71魔怔人是怎么样的魔怔，首先第一个就是打死不留黄币，第二大就是打死不短猫<br><br>'
+                            '1.打死不留黄币，完全不知道71要消耗黄币，觉得自己很多黄币以为行动力是无中生有超级摸牌<br>'
+                            '2.打死不短猫，完全不知道黄币靠短猫回，屯几千行动力当天地银元留给亲妈下葬<br>'
+                            '3.打死不带奶，带一摞低级船不带输出不带奶贪经验贪到死，打一回合死一百万人修一百万次<br>'
+                            '4.幻想当赌神，年轻人第一次网络菠菜，行动力亏没了不仅大声叫还要继续刷，裤衩子亏没了还要梭哈<br>'
+                            '5.幻想刷委托，跑图又慢概率又低，觉得能无限打怪当2-4代餐<br>'
+                            '6.幻想有魔法，什么只留蓝箱子能提高猫商店刷新概率，哇说出这话的人不枪毙两小时概率论老师真是死不瞑目<br><br>'
+                            '反正我讲了这么多我知道你是肯定不会听的，你的内心肯定是屌你妈逼臭傻逼，完全听不进去，但是我还是要把整个71的玩法再念叨一遍，不是讲给你听的，是讲给看我骂你的人听的<br><br>'
+                            '1.71的收益是经验和金菜金材料，以及让你的Alas一直运行虽然不知道在干什么但是感觉很爽。71的经验是每10w黄币73w（单个角色没有心情加成）就像天上掉金子一样稍微接点就够发一辈子的那种。如果你的帐号进入游戏末期，经验没用因为卡心智那收益就是每10w黄币换9.36金菜，石油就2-4刷委托这样能获得经验物资魔方金菜钻石等等所有的游戏资源<br>'
+                            '2.71的收益来源是黄币，行动力是催化剂，71大量消耗黄币获取行动力，短猫消耗多余行动力补充部分黄币，二者是相辅相成的，Alas会自动保持他们之间的动态平衡。20小时71能消耗10w黄币多884行动力，再短猫4小时返还3.5w，每月能获取的黄币是有限的因此71的收益也是有限的<br>'
+                            '3.运行71的前提是你能完成大世界每日商店深渊隐秘balabala全部来获得金彩材料，多余的黄币再来运行71，否则就是本末倒置<br>'
+                            '4.千万不要买紫币，紫币的主要来源是要塞，白票的主要来源是月度boss，只要你大世界用Alas全勤紫币和白票都是不缺的，猫商店紫币多20%那是多20%白票，但在71里白票的价值体系直接作废所有东西用黄币来衡量，买紫币相当于用稀缺资源兑换溢出资源<br>'
+                            '5.71本质是赛博菠菜，消耗5行动力赌5%猫商店刷新，外加两个装置各4%其中一个拆了能爆点行动力，赌赢了你别笑赌输了你别叫，没有抽卡保底就是嗯roll， 猫商店刷新权重 解包都有也没有玄学，只能说从数学期望的角度是赚的，但没保底的随机是真的恶心。有1000行动力本钱就是90%概率不翻车，2000就是98%，已经边际效应了再高不能了不如赶紧转换为黄币<br>'
+                            '6.建议行动力买满，这样玩输了还有加仓的机会能再次转起来，丢10000油进71产出的经验也比丢主线图高出一个数量级<br>'
+                            '7.开启71的任务后Alas的运行逻辑会发生变化，用来提高收益和减少呆瓜，包括前面说的71短猫动态平衡，全局不买紫币，还有最少留100行动力防止明天不够做每日，月初用赚来的行动力做隐秘深渊要塞防止行动力被秒吸干转不起来，月底停71防止浪费'
+                            '</div>')], size=PopupSize.LARGE)
+                    # ========================================================
                 else:
                     modified.pop(k)
                     invalid.append(k)
@@ -2808,7 +2721,7 @@ def app_manage():
     set_env(title="Alas", output_animation=False)
     run_js("$('head').append('<style>.footer{display:none}</style>')")
 
-    put_html(f"<h2>{t('Gui.AppManage.PageTitle')}</h2>")
+    put_html(build_app_manage_title(t('Gui.AppManage.PageTitle')))
     put_scope("config_table")
     put_buttons(
         buttons=[

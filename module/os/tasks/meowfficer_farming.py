@@ -242,12 +242,20 @@ class OpsiMeowfficerFarming(CoinTaskMixin, OSMap):
             logger.hr(f'OS meowfficer farming, zone_id={zone.zone_id}', level=1)
             self.globe_goto(zone, types='SAFE', refresh=True)
             self.fleet_set(self.config.OpsiFleet_Fleet)
+            # 开始短猫搜索计时
+            self._meow_searching_active = True
+            self._meow_time_recording_enabled = True
+            import time as time_module
+            self._meow_battle_timer = time_module.time()
+            self.on_meow_search_start()
             if self.run_strategic_search():
                 self._solved_map_event = set()
                 self._solved_fleet_mechanism = False
                 self.clear_question()
                 self.map_rescan()
             self.handle_after_auto_search()
+            # 结束短猫搜索计时
+            self.on_meow_search_end()
             self.config.check_task_switch()
 
     def _meow_handle_stay_in_zone(self):
@@ -274,7 +282,14 @@ class OpsiMeowfficerFarming(CoinTaskMixin, OSMap):
         self.action_point_set(cost=120, keep_current_ap=keep_current_ap, check_rest_ap=True)
         self.fleet_set(self.config.OpsiFleet_Fleet)
         self.os_order_execute(recon_scan=False, submarine_call=self.config.OpsiFleet_Submarine)
-        
+
+        # 开始短猫搜索计时
+        self._meow_searching_active = True
+        self._meow_time_recording_enabled = True
+        import time as time_module
+        self._meow_battle_timer = time_module.time()
+        self.on_meow_search_start()
+
         search_completed = False
         try:
             search_completed = self.run_strategic_search()
@@ -293,6 +308,9 @@ class OpsiMeowfficerFarming(CoinTaskMixin, OSMap):
             self.handle_after_auto_search()
         except Exception:
             logger.exception('handle_after_auto_search 发生异常')
+
+        # 结束短猫搜索计时
+        self.on_meow_search_end()
 
         self.config.check_task_switch()
         
@@ -326,7 +344,6 @@ class OpsiMeowfficerFarming(CoinTaskMixin, OSMap):
             .delete(SelectedGrids(self.zones.select(is_port=True))) \
             .delete(SelectedGrids(excluded_zones)) \
             .sort_by_clock_degree(center=(1252, 1012), start=self.zone.location)
-        
         if not zones:
             logger.warning(f'探测装置搜索模式：未找到符合条件的海域 (侵蚀等级 {hazard_level})')
             return False
@@ -340,10 +357,9 @@ class OpsiMeowfficerFarming(CoinTaskMixin, OSMap):
         self.os_order_execute(recon_scan=False, submarine_call=self.config.OpsiFleet_Submarine)
         
         # 步骤 1. 临时配置：禁用塞壬研究
-        self._original_siren_research_enable = self.config.cross_get(
-            keys="OpsiHazard1Leveling.OpsiSirenBug.SirenResearch_Enable", default=False)
-        self.config.cross_set(
-            keys="OpsiHazard1Leveling.OpsiSirenBug.SirenResearch_Enable", value=False)
+        # 设计说明：这里按“覆盖式临时状态”处理，后续会显式恢复原值。
+        self._original_siren_research_enable = self.config.OpsiSirenBug_SirenResearch_Enable
+        self.config.OpsiSirenBug_SirenResearch_Enable = False
         logger.info('探测装置搜索：临时禁用塞壬研究')
         
         self.config._disable_siren_research = True
@@ -363,11 +379,15 @@ class OpsiMeowfficerFarming(CoinTaskMixin, OSMap):
         # 步骤 3. 主队自律：换回主队执行短猫逻辑
         self.fleet_set(self.config.OpsiFleet_Fleet)
         if hasattr(self, '_original_siren_research_enable'):
-            self.config.cross_set(
-                keys="OpsiHazard1Leveling.OpsiSirenBug.SirenResearch_Enable",
-                value=self._original_siren_research_enable)
+            self.config.OpsiSirenBug_SirenResearch_Enable = self._original_siren_research_enable
         
         logger.info('探测装置搜索：换回主队执行自律')
+        # 开始短猫搜索计时
+        self._meow_searching_active = True
+        self._meow_time_recording_enabled = True
+        import time as time_module
+        self._meow_battle_timer = time_module.time()
+        self.on_meow_search_start()
         self.run_auto_search()
         logger.info(f'探测装置搜索：自律完成，标记事件: {self._solved_map_event}')
         
@@ -409,9 +429,7 @@ class OpsiMeowfficerFarming(CoinTaskMixin, OSMap):
                 self.config.OpsiMeowfficerFarming_SirenDetectorSearch_Enable = False
                 
                 if hasattr(self, '_original_siren_research_enable'):
-                    self.config.cross_set(
-                        keys="OpsiHazard1Leveling.OpsiSirenBug.SirenResearch_Enable",
-                        value=self._original_siren_research_enable)
+                    self.config.OpsiSirenBug_SirenResearch_Enable = self._original_siren_research_enable
                 
                 if hasattr(self.config, '_disable_siren_research'):
                     delattr(self.config, '_disable_siren_research')
@@ -420,6 +438,8 @@ class OpsiMeowfficerFarming(CoinTaskMixin, OSMap):
                     self.config.OpsiMeowfficerFarming_StayInZone = self._original_stay_in_zone
                 
                 self.handle_after_auto_search()
+                # 结束短猫搜索计时
+                self.on_meow_search_end()
                 self.config.check_task_switch()
                 return True
         
@@ -433,16 +453,20 @@ class OpsiMeowfficerFarming(CoinTaskMixin, OSMap):
         
         # 状态清理
         if hasattr(self, '_original_siren_research_enable'):
-            self.config.cross_set(
-                keys="OpsiHazard1Leveling.OpsiSirenBug.SirenResearch_Enable",
-                value=self._original_siren_research_enable)
-        
+            self.config.OpsiSirenBug_SirenResearch_Enable = self._original_siren_research_enable
+            logger.info(f'探测装置搜索：恢复塞壬研究开关为 {self._original_siren_research_enable}')
+
         if hasattr(self.config, '_disable_siren_research'):
             delattr(self.config, '_disable_siren_research')
-        
+            logger.info('探测装置搜索：已清理 _disable_siren_research 标志')
+
         if hasattr(self, '_original_stay_in_zone'):
             self.config.OpsiMeowfficerFarming_StayInZone = self._original_stay_in_zone
-            
+            logger.info(f'探测装置搜索：恢复 StayInZone={self._original_stay_in_zone}')
+
+        # 结束短猫搜索计时
+        self.on_meow_search_end()
+
         return False
         
     def _meow_handle_normal_search(self):
@@ -452,16 +476,31 @@ class OpsiMeowfficerFarming(CoinTaskMixin, OSMap):
             .delete(SelectedGrids(self.zones.select(is_port=True))) \
             .sort_by_clock_degree(center=(1252, 1012), start=self.zone.location)
 
+        if not zones:
+            logger.warning(f'普通搜索模式：未找到符合条件的海域 (侵蚀等级 {hazard_level})')
+            return
+
         logger.hr(f'OS meowfficer farming, zone_id={zones[0].zone_id}', level=1)
-        
+
         self.globe_goto(zones[0])
-            
+
         self.fleet_set(self.config.OpsiFleet_Fleet)
         self.os_order_execute(recon_scan=False, submarine_call=self.config.OpsiFleet_Submarine)
-        
+
+        # 开始短猫搜索计时
+        self._meow_searching_active = True
+        self._meow_time_recording_enabled = True
+        import time as time_module
+        self._meow_battle_timer = time_module.time()
+        self.on_meow_search_start()
+
         self.run_auto_search()
-        
+
         self.handle_after_auto_search()
+
+        # 结束短猫搜索计时
+        self.on_meow_search_end()
+
         self.config.check_task_switch()
         
     def os_meowfficer_farming(self):
@@ -533,12 +572,15 @@ class OpsiMeowfficerFarming(CoinTaskMixin, OSMap):
 
             # ===== 塞壬探测装置搜索 / 普通短猫搜索主逻辑 =====
             if siren_search_enabled:
-                if self._meow_handle_siren_detector_search():
-                    # 恢复 StayInZone 设置
+                if not self._meow_handle_siren_detector_search():
+                    # 未找到符合条件的海域，执行普通短猫搜索
+                    logger.info('探测装置搜索未找到目标海域，切换到普通短猫搜索')
+                    self._meow_handle_normal_search()
+                else:
+                    # 找到装置，恢复 StayInZone 设置
                     if self._original_stay_in_zone:
                         self.config.OpsiMeowfficerFarming_StayInZone = True
                         logger.info('探测装置搜索完成：恢复指定海域计划作战')
-                    continue
             else:
                 self._meow_handle_normal_search()
             

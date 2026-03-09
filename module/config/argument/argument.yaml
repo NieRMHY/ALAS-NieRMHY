@@ -611,8 +611,7 @@ Dorm:
   FeedFilter: 20000 > 10000 > 5000 > 3000 > 2000 > 1000
   BuyFood:
     value: false
-    display: hide
-
+    display: disabled
 BuyFurniture:
   Enable: false
   BuyOption:
@@ -837,6 +836,7 @@ Island16:
   Option2: *IslandOption9
   Character2: *IslandCharacter
 GeneralShop:
+  Enable: true
   UseGems: false
   Refresh: false
   BuySkinBox: false
@@ -846,6 +846,7 @@ GeneralShop:
     > Cube
     > FoodT6 > FoodT5
 GuildShop:
+  Enable: true
   Refresh: true
   Filter: |-
     PlateT4 > BookT3 > PR > CatT3 > Chip > BookT2 > Retrofit > FoodT6 > FoodT5 > CatT2 > BoxT4
@@ -886,6 +887,7 @@ GuildShop:
     value: cheshire
     option: [cheshire, mainz, odin, champagne]
 MedalShop2:
+  Enable: true
   Filter: |-
     DR > PR
     > BookRedT3 > BookYellowT3 > BookBlueT3
@@ -912,10 +914,12 @@ MedalShop2:
     value: general
     option: [general, gun, torpedo, antiair, plane]
 MeritShop:
+  Enable: true
   Refresh: false
   Filter: |-
     Cube
 CoreShop:
+  Enable: true
   Filter: |-
     Array
 ShipyardDr:
@@ -1166,6 +1170,10 @@ OpsiSirenBug:
     option: [dangerous, safe]
   SirenBug_Zone: 0
   SirenBug_Grid: null
+  SirenBug_SyncDailyCount:
+    type: checkbox
+    value: false
+    option: [true, false]
   DisableTaskSwitchDuringBug:
     type: checkbox
     value: false
@@ -1208,6 +1216,19 @@ OpsiScheduling:
     type: checkbox
     value: false
     option: [true, false]
+
+  # 短猫提前开始模式
+  MeowStartEarlyMode:
+    # 激进模式: 0.8倍提前时间, 均衡模式: 1.2倍, 保守模式: 1.5倍
+    value: balanced
+    option:
+      - aggressive
+      - balanced
+      - conservative
+  MeowStartEarlyEnable:
+    # 是否启用短猫提前开始功能
+    value: false
+    type: checkbox
 
 OpsiDailyDelay:
   TriggerMinutesBeforeReset:

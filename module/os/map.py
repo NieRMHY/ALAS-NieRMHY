@@ -30,6 +30,97 @@ from module.ui.page import page_os
 
 
 class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
+    SIREN_BUG_TASKS = ('OpsiHazard1Leveling', 'OpsiMeowfficerFarming')
+
+    def _get_siren_bug_task_pair(self):
+        task = self.config.task.command if self.config.task.command in self.SIREN_BUG_TASKS else 'OpsiHazard1Leveling'
+        peer_task = 'OpsiMeowfficerFarming' if task == 'OpsiHazard1Leveling' else 'OpsiHazard1Leveling'
+        return task, peer_task
+
+    def _get_siren_bug_zone(self, task):
+        return self.config.cross_get(keys=f"{task}.OpsiSirenBug.SirenBug_Zone", default=0)
+
+    def _normalize_siren_bug_zone(self, task, zone=None, log_invalid=False):
+        zone = self._get_siren_bug_zone(task) if zone is None else zone
+        if not zone:
+            return None
+        try:
+            return self.name_to_zone(zone)
+        except Exception:
+            if log_invalid:
+                logger.warning(f'SirenBug海域配置无法解析，跳过同步: task={task}, zone={zone}')
+            return None
+
+    def _get_siren_bug_sync_state(self):
+        task, peer_task = self._get_siren_bug_task_pair()
+        task_sync_enabled = bool(self.config.cross_get(keys=f"{task}.OpsiSirenBug.SirenBug_SyncDailyCount", default=False))
+        peer_sync_enabled = bool(self.config.cross_get(keys=f"{peer_task}.OpsiSirenBug.SirenBug_SyncDailyCount", default=False))
+        if not (task_sync_enabled and peer_sync_enabled):
+            return {
+                'task': task,
+                'peer_task': peer_task,
+                'enabled': False,
+                'zone': None,
+                'peer_zone': None,
+            }
+
+        zone = self._normalize_siren_bug_zone(task, log_invalid=True)
+        peer_zone = self._normalize_siren_bug_zone(peer_task, log_invalid=True)
+        if zone is None or peer_zone is None:
+            return {
+                'task': task,
+                'peer_task': peer_task,
+                'enabled': False,
+                'zone': zone,
+                'peer_zone': peer_zone,
+            }
+
+        if zone.zone_id != peer_zone.zone_id:
+            logger.info(f'SirenBug共享次数已启用但海域不同，跳过同步: {task}={zone}, {peer_task}={peer_zone}')
+            return {
+                'task': task,
+                'peer_task': peer_task,
+                'enabled': False,
+                'zone': zone,
+                'peer_zone': peer_zone,
+            }
+
+        logger.info(f'SirenBug共享次数已启用且海域一致，使用共享次数: zone={zone}, tasks={task}/{peer_task}')
+        return {
+            'task': task,
+            'peer_task': peer_task,
+            'enabled': True,
+            'zone': zone,
+            'peer_zone': peer_zone,
+        }
+
+    def _get_siren_bug_effective_daily_count(self):
+        sync_state = self._get_siren_bug_sync_state()
+        task = sync_state['task']
+        count = self.config.cross_get(keys=f"{task}.OpsiSirenBug.SirenBug_DailyCount", default=0)
+        if sync_state['enabled']:
+            peer_task = sync_state['peer_task']
+            peer_count = self.config.cross_get(keys=f"{peer_task}.OpsiSirenBug.SirenBug_DailyCount", default=0)
+            if count != peer_count:
+                logger.info(f'SirenBug共享次数发现不一致，自动归一: {task}={count}, {peer_task}={peer_count}')
+            count = max(count, peer_count)
+            self._set_siren_bug_daily_count(count, sync_state=sync_state)
+        return count, sync_state
+
+    def _set_siren_bug_daily_count(self, count, record=None, sync_state=None):
+        sync_state = self._get_siren_bug_sync_state() if sync_state is None else sync_state
+        task = sync_state['task']
+        record = datetime.now() if record is None else record
+        self.config.cross_set(keys=f"{task}.OpsiSirenBug.SirenBug_DailyCount", value=count)
+        self.config.cross_set(keys=f"{task}.OpsiSirenBug.SirenBug_DailyCountRecord", value=record)
+        if sync_state['enabled']:
+            peer_task = sync_state['peer_task']
+            self.config.cross_set(keys=f"{peer_task}.OpsiSirenBug.SirenBug_DailyCount", value=count)
+            self.config.cross_set(keys=f"{peer_task}.OpsiSirenBug.SirenBug_DailyCountRecord", value=record)
+
+    def _reset_siren_bug_daily_count(self, sync_state=None):
+        self._set_siren_bug_daily_count(0, sync_state=sync_state)
+
     def os_init(self):
         """
         Call this method before doing any Operation functions.
@@ -101,7 +192,8 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
             self.map_exit()
 
         # 如果当前海域是塞壬Bug利用海域，回到最近港口
-        siren_bug_zone = self.config.cross_get(keys="OpsiHazard1Leveling.OpsiSirenBug.SirenBug_Zone", default=0)
+        task, _ = self._get_siren_bug_task_pair()
+        siren_bug_zone = self.config.cross_get(keys=f"{task}.OpsiSirenBug.SirenBug_Zone", default=0)
         if siren_bug_zone:
             try:
                 siren_bug_zone = self.name_to_zone(siren_bug_zone)
@@ -109,7 +201,7 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
                 logger.warning(f'无法解析SirenBug目标区域: {siren_bug_zone}')
             else:
                 if self.zone == siren_bug_zone:
-                    siren_bug_type = self.config.cross_get(keys="OpsiHazard1Leveling.OpsiSirenBug.SirenBug_Type", default='dangerous')
+                    siren_bug_type = self.config.cross_get(keys=f"{task}.OpsiSirenBug.SirenBug_Type", default='dangerous')
                     is_safe_zone = self.is_zone_name_hidden
                     if (siren_bug_type == 'safe' and is_safe_zone) or (siren_bug_type == 'dangerous' and not is_safe_zone):
                         logger.info('检测到当前海域为塞壬Bug利用海域，回到最近港口')
@@ -677,10 +769,13 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
     _auto_search_battle_count = 0
     _auto_search_round_timer = 0
     _cl1_auto_search_battle_count = 0
+    _meow_auto_search_battle_count = 0
 
     def on_auto_search_battle_count_reset(self):
         self._auto_search_battle_count = 0
         self._auto_search_round_timer = 0
+        self._cl1_auto_search_battle_count = 0
+        self._meow_auto_search_battle_count = 0
 
     def on_auto_search_battle_count_add(self):
         self._auto_search_battle_count += 1
@@ -712,6 +807,127 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
                     except Exception:
                         logger.exception('Failed to record cl1 round time')
                 self._auto_search_round_timer = time.time()
+
+        # 短猫任务数据收集
+        if getattr(self, '_meow_searching_active', False) and getattr(self, '_meow_time_recording_enabled', False):
+            try:
+                try:
+                    self._meow_auto_search_battle_count += 1
+                except Exception:
+                    self._meow_auto_search_battle_count = 1
+                logger.attr('meow_battle_count', self._meow_auto_search_battle_count)
+                try:
+                    from module.statistics.cl1_database import db as cl1_db
+                    instance_name = getattr(self.config, 'config_name', 'default')
+                    cl1_db.increment_meow_battle_count(instance_name)
+                except Exception:
+                    logger.debug('Failed to persist monthly meow battle increment', exc_info=True)
+
+                # 记录单场战斗时间（每次战斗结束都记录）
+                if getattr(self, '_meow_battle_timer', None):
+                    battle_duration = round(time.time() - self._meow_battle_timer, 2)
+                    # 过滤异常值（太短或太长的战斗）
+                    if 5 < battle_duration < 600:  # 5秒~10分钟
+                        logger.attr('Meow battle duration', f'{battle_duration:.1f}s')
+                        try:
+                            from module.statistics.cl1_database import db as cl1_db
+                            instance_name = getattr(self.config, 'config_name', 'default')
+                            cl1_db.add_meow_battle_time(instance_name, battle_duration)
+                        except Exception:
+                            logger.debug('Failed to record meow battle time', exc_info=True)
+                    else:
+                        logger.debug(f'Meow battle duration {battle_duration:.1f}s out of range, not recorded')
+                # 重置计时器
+                self._meow_battle_timer = time.time()
+
+            except Exception:
+                logger.debug('Failed to update meow battle counter', exc_info=True)
+
+    def on_meow_search_start(self):
+        """
+        短猫任务：每次开始新海域搜索时调用
+        记录搜索开始时间和行动力
+        """
+        if not (getattr(self, '_meow_searching_active', False) and getattr(self, '_meow_time_recording_enabled', False)):
+            return
+
+        # 记录开始时的行动力
+        try:
+            self.get_current_ap()
+            self._meow_search_start_ap = self._action_point_total
+            logger.debug(f'Meow search started, AP: {self._meow_search_start_ap}')
+        except Exception:
+            self._meow_search_start_ap = None
+            logger.debug('Failed to get start action point')
+
+        # 开始新的搜索计时
+        self._meow_search_start_time = time.time()
+        logger.debug('Meow search started, timer reset')
+
+    def on_meow_search_end(self):
+        """
+        短猫任务：每次完成海域搜索后调用
+        通过行动力变化计算实际轮数，记录单轮时间
+        """
+        if not (getattr(self, '_meow_searching_active', False) and getattr(self, '_meow_time_recording_enabled', False)):
+            return
+
+        start_time = getattr(self, '_meow_search_start_time', None)
+        if start_time is None:
+            logger.debug('Meow search start time not recorded, skip')
+            return
+
+        # 记录结束时的行动力
+        try:
+            self.get_current_ap()
+            end_ap = self._action_point_total
+        except Exception:
+            logger.debug('Failed to get end action point')
+            end_ap = None
+
+        duration = time.time() - start_time
+
+        # 根据侵蚀等级获取每轮战斗次数，计算真正的单轮时间
+        # 侵蚀2、3：每轮2次战斗；侵蚀4、5、6：每轮3次战斗
+        battles_per_round = 2  # 默认值
+        try:
+            if hasattr(self, 'zone') and hasattr(self.zone, 'hazard_level'):
+                hazard_level = self.zone.hazard_level
+                # 根据侵蚀等级确定每轮战斗次数
+                if hazard_level in [2, 3]:
+                    battles_per_round = 2
+                elif hazard_level in [4, 5, 6]:
+                    battles_per_round = 3
+                logger.debug(f'Hazard level: {hazard_level}, battles per round: {battles_per_round}')
+        except Exception:
+            logger.debug('Failed to get hazard level, using default battles per round')
+
+        # 计算单轮时间
+        battle_count = getattr(self, '_meow_auto_search_battle_count', 0)
+        if battle_count > 0:
+            # 单轮时间 = 总时间 / (战斗次数 / 每轮战斗次数) = 总时间 * 每轮战斗次数 / 战斗次数
+            rounds = battle_count / battles_per_round
+            duration = duration / rounds
+            logger.debug(f'Meow search total duration: {time.time() - start_time:.1f}s, '
+                         f'battles: {battle_count}, rounds: {rounds}, per round: {duration:.1f}s')
+
+        # 过滤异常值（太短或太长的搜索）
+        if duration < 1 or duration > 1800:  # 1秒~30分钟
+            logger.debug(f'Meow search duration {duration:.1f}s out of range, not recorded')
+            self._meow_search_start_time = None
+            self._meow_search_start_ap = None
+            return
+
+        logger.attr('Meow search duration', f'{duration:.1f}s')
+        try:
+            from module.statistics.cl1_database import db as cl1_db
+            instance_name = getattr(self.config, 'config_name', 'default')
+            cl1_db.add_meow_round_time(instance_name, duration)
+        except Exception:
+            logger.debug('Failed to record meow search duration', exc_info=True)
+
+        self._meow_search_start_time = None
+        self._meow_search_start_ap = None
 
     def get_current_cl1_battle_count(self):
         return int(getattr(self, '_cl1_auto_search_battle_count', 0))
@@ -1059,7 +1275,8 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
         Returns:
             bool: True if enabled, False otherwise
         """
-        return self.config.cross_get(keys="OpsiHazard1Leveling.OpsiSirenBug.SirenResearch_Enable")
+        task, _ = self._get_siren_bug_task_pair()
+        return self.config.cross_get(keys=f"{task}.OpsiSirenBug.SirenResearch_Enable")
 
     def _should_skip_siren_research(self, grid):
         """
@@ -1154,7 +1371,8 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
                 logger.info(f'[地图检测] 移动结果: {result}')
 
                 # ========== 配置检查 ==========
-                siren_research_enabled = self.config.cross_get(keys="OpsiHazard1Leveling.OpsiSirenBug.SirenResearch_Enable")
+                task, _ = self._get_siren_bug_task_pair()
+                siren_research_enabled = self.config.cross_get(keys=f"{task}.OpsiSirenBug.SirenResearch_Enable")
                 if not siren_research_enabled:
                     logger.warning('[配置检查] 塞壬研究装置功能已禁用,标记但不处理')
                     self._solved_map_event.add('is_scanning_device')
@@ -1255,17 +1473,23 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
         self.handle_ash_beacon_attack()
 
         logger.hr('Run strategy search', level=2)
-        try:
-            self.os_auto_search_run(strategic=True)
-            self.hp_reset()
-            self.hp_get()
-            return True  # 正常完成
-        except TaskEnd:
-            # 任务切换，让异常继续向上传播
-            raise
-        except Exception as e:
-            logger.warning(f'Strategic search interrupted: {e}')
-            return False  # 被中断
+
+        with self.stat.new(
+                genre=inflection.underscore(self.config.task.command),
+                method=self.config.DropRecord_OpsiRecord
+        ) as drop:
+            try:
+                self.os_auto_search_run(drop, strategic=True)
+                drop.add(self.device.image)
+                self.hp_reset()
+                self.hp_get()
+                return True  # 正常完成
+            except TaskEnd:
+                # 任务切换，让异常继续向上传播
+                raise
+            except Exception as e:
+                logger.warning(f'Strategic search interrupted: {e}')
+                return False  # 被中断
 
     def map_rescan_current(self, drop=None, clicked_grids=None):
         """
@@ -1477,10 +1701,19 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
         return False
 
     def safe_swipe(self, start, end, duration=0.5, retries=2):
-        """
-        在多次滑动/重试场景下的安全滑动：
-         - 清理设备的卡住/点击历史记录
-         - 使用较长时长与间隔，减少被识别为无效滑动的概率
+        """执行带重试的安全滑动。
+
+        在多次滑动场景中，先尝试清理设备卡住记录，再执行滑动，
+        通过重试提升滑动成功率。
+
+        Args:
+            start (tuple[int, int]): 滑动起点坐标。
+            end (tuple[int, int]): 滑动终点坐标。
+            duration (float, optional): 单次滑动时长（秒）。默认值为 0.5。
+            retries (int, optional): 最大重试次数。默认值为 2。
+
+        Returns:
+            bool: 任一重试成功返回 True；全部失败返回 False。
         """
         for attempt in range(1, retries + 1):
             try:
@@ -1492,22 +1725,30 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
                 time.sleep(0.45)
                 return True
             except Exception as e:
-                logger.warning(f'safe_swipe attempt {attempt} failed: {e}')
+                logger.warning(f'安全滑动第 {attempt} 次尝试失败: {e}')
                 time.sleep(0.4)
                 continue
         return False
 
     # 基于ShaddockNH3极致侵蚀一的个人修改
     def _execute_fixed_patrol_scan(self, ExecuteFixedPatrolScan: bool = False, **kwargs):
-        """
-        该函数在指挥每支舰队移动前，都会先执行一次强制的视角复位，
-        然后精确指挥1-4号舰队前往预设的网格坐标，并在所有舰队
-        移动到位后，执行一次清除了残留状态的全图扫描。
+        """执行定点巡逻扫描并触发全图重扫。
+
+        在每支舰队移动前执行视角复位，按预设坐标依次移动 1~4 号舰队，
+        全部移动后执行全图重扫，并补一次自律寻敌以清理残留装置。
+
+        Args:
+            ExecuteFixedPatrolScan (bool, optional): 是否启用定点巡逻扫描。
+                为 False 时直接跳过。默认值为 False。
+            **kwargs: 预留参数，当前未使用。
+
+        Returns:
+            None
         """
         logger.hr('执行定点巡逻扫描')
 
         if not ExecuteFixedPatrolScan:
-            logger.info('ExecuteFixedPatrolScan 未启用，跳过定点巡逻。')
+            logger.info('ExecuteFixedPatrolScan 未启用，跳过定点巡逻扫描。')
             return
         logger.attr('ExecuteFixedPatrolScan', True)
 
@@ -1668,7 +1909,18 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
             logger.warning(f'自律寻敌过程出现异常: {e}')
 
     def _select_story_option_by_index(self, target_index, options_count=3):
-        # 手动选择剧情选项
+        """按索引点击剧情选项按钮。
+
+        在限定时间内识别剧情选项并尝试点击目标索引；当目标索引越界时，
+        回退点击第一个选项。
+
+        Args:
+            target_index (int): 目标选项索引（从 0 开始）。
+            options_count (int, optional): 期望识别到的选项数量。默认值为 3。
+
+        Returns:
+            bool: 点击目标索引成功返回 True；回退点击或超时返回 False。
+        """
         option_confirm_timer = Timer(1.5, count=3).start()
         while option_confirm_timer.reached() is False:
             self.device.screenshot()
@@ -1689,7 +1941,13 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
         return False
 
     def _click_story_confirm_button(self):
-        # 点击剧情确认按钮POPUP_CONFIRM
+        """点击剧情确认按钮。
+
+        在限定时间内轮询确认弹窗，出现后点击确认。
+
+        Returns:
+            bool: 成功点击确认返回 True；超时未出现返回 False。
+        """
         confirm_timer = Timer(3, count=6).start()
         while confirm_timer.reached() is False:
             self.device.screenshot()
@@ -1700,24 +1958,34 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
             time.sleep(0.3)
         return False
 
-
-
     def _handle_siren_bug_reinteract(self, drop=None):
+        """执行塞壬研究装置二次交互流程。
+
+        在满足配置与区域前置条件时，跳转到目标海域处理塞壬研究装置，
+        成功后统计次数并返回原海域；失败时执行回退与恢复处理。
+
+        Args:
+            drop: 掉落统计对象，透传给下游移动/事件处理逻辑。
+
+        Returns:
+            None
+        """
         # 23:55 - 00:05 跳过处理
-        if self.config.cross_get(keys="OpsiHazard1Leveling.OpsiSirenBug.SirenBug_CrossDay", default=False):
+        task, _ = self._get_siren_bug_task_pair()
+        if self.config.cross_get(keys=f"{task}.OpsiSirenBug.SirenBug_CrossDay", default=False):
             from datetime import time as dt_time
             now = datetime.now()
             if now.time() >= dt_time(23, 55) or now.time() <= dt_time(0, 5):
                 logger.info(f'当前时间: {now.strftime("%H:%M")}, 跳过塞壬研究装置BUG利用')
                 return
         
-        # 侵蚀一塞壬研究装置处理后，跳转指定高侵蚀区域触发塞壬研究装置消耗两次紫币，最后返回侵蚀一自律   
+        # 塞壬研究装置处理后，跳转指定高侵蚀区域触发塞壬研究装置消耗两次紫币，最后返回自律海域   
         try:
-            siren_research_enable = self.config.cross_get(keys="OpsiHazard1Leveling.OpsiSirenBug.SirenResearch_Enable")
-            siren_bug_enable = self.config.cross_get(keys="OpsiHazard1Leveling.OpsiSirenBug.SirenBug_Enable", default=False)
-            siren_bug_zone = self.config.cross_get(keys="OpsiHazard1Leveling.OpsiSirenBug.SirenBug_Zone", default=0)
-            siren_bug_type = self.config.cross_get(keys="OpsiHazard1Leveling.OpsiSirenBug.SirenBug_Type", default='dangerous')
-            disable_task_switch = self.config.cross_get(keys="OpsiHazard1Leveling.OpsiSirenBug.DisableTaskSwitchDuringBug", default=False)
+            siren_research_enable = self.config.cross_get(keys=f"{task}.OpsiSirenBug.SirenResearch_Enable")
+            siren_bug_enable = self.config.cross_get(keys=f"{task}.OpsiSirenBug.SirenBug_Enable", default=False)
+            siren_bug_zone = self.config.cross_get(keys=f"{task}.OpsiSirenBug.SirenBug_Zone", default=0)
+            siren_bug_type = self.config.cross_get(keys=f"{task}.OpsiSirenBug.SirenBug_Type", default='dangerous')
+            disable_task_switch = self.config.cross_get(keys=f"{task}.OpsiSirenBug.DisableTaskSwitchDuringBug", default=False)
         except Exception as e:
             logger.warning(f'读取SirenBug配置失败: {e}，跳过塞壬研究装置BUG利用')
             return
@@ -1734,9 +2002,11 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
             return
 
         # 如果启用了禁用任务切换选项，设置标志
+        # 设计说明：这里有意直接覆盖为 True，不保存旧值。
+        # 该流程视为“独占执行段”，退出时统一恢复 False，确保本次 Bug 利用期间不被切任务打断。
         if disable_task_switch:
             self.config._disable_task_switch = True
-            logger.info('【塞壬Bug利用】禁用任务切换')
+            logger.info('【塞壬Bug利用】禁用任务切换（设计为独占执行段，退出时统一恢复）')
 
         if not siren_bug_zone:
             logger.info('SirenBug功能前置条件不满足（SirenBug_Zone 未设置），跳过塞壬研究装置BUG利用')
@@ -1746,16 +2016,18 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
             return
 
         current_zone_id = self.zone.zone_id
-        if current_zone_id not in (22, 44):
+        if task == 'OpsiHazard1Leveling' and current_zone_id not in (22, 44):
             logger.warning(f'当前区域{current_zone_id}非侵蚀一，跳过塞壬研究装置BUG利用')
             # Ensure the flag is cleared if we return early
             if disable_task_switch:
                 self.config._disable_task_switch = False
             return
         
-        erosion_one_zone = self.name_to_zone(current_zone_id)
+        # 设计说明：source_zone 在主流程前解析，若失败视为不可恢复前置条件失败，
+        # 由上层任务循环重新拉起，不在此处继续兜底推进。
+        source_zone = self.name_to_zone(current_zone_id)
         
-        logger.hr(f'RUN SIREN BUG EXPLOITATION')
+        logger.hr('塞壬研究装置 BUG 利用流程')
         
         try:
             # 解析目标区域
@@ -1768,8 +2040,9 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
                     self.config._disable_task_switch = False
                 return
             
-            logger.info(f'当前区域: {erosion_one_zone}, 目标区域: {target_zone}')
-            
+            logger.info(f'当前区域: {source_zone}, 目标区域: {target_zone}')
+            count, sync_state = self._get_siren_bug_effective_daily_count()
+
             # 跳转至指定高侵蚀区域
             with self.config.temporary(STORY_ALLOW_SKIP=False):
                 self.os_map_goto_globe(unpin=False)
@@ -1777,12 +2050,12 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
                 self.zone_init()
 
                 # Siren bug count sleep
-                SirenBug_DailyCount = self.config.cross_get(keys="OpsiHazard1Leveling.OpsiSirenBug.SirenBug_DailyCount", default=0)
-                if SirenBug_DailyCount > 0:
-                    logger.info(f'Siren bug usage count: {SirenBug_DailyCount}, sleep {SirenBug_DailyCount}s before auto search')
-                    time.sleep(SirenBug_DailyCount)
+                if count > 0:
+                    logger.info(f'塞壬 Bug 今日已使用 {count} 次，自律前等待 {count} 秒')
+                    logger.info('【设计说明】等待秒数与当日计数绑定，用于节奏控制与行为可观测性')
+                    time.sleep(count)
 
-                target_grid = self.config.cross_get(keys="OpsiHazard1Leveling.OpsiSirenBug.SirenBug_Grid", default=None)
+                target_grid = self.config.cross_get(keys=f"{task}.OpsiSirenBug.SirenBug_Grid", default=None)
                 device_handled = False
 
                 if target_grid:
@@ -1820,6 +2093,8 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
                                     break
                                 
                                 # 寻路中断，重新寻路
+                                # 设计说明：这里有意重置计时器，允许在路径持续可恢复时长期尝试，
+                                # 避免因固定超时提前放弃。
                                 find_device_timer.reset()
                                 time.sleep(1.0)
                                 
@@ -1862,6 +2137,8 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
                                 device_handled = True
                                 break
 
+                            # 设计说明：命中装置但处理未完成时重置计时器，
+                            # 该流程按“可恢复优先”策略持续重试。
                             find_device_timer.reset()
                             time.sleep(1.0)
                             
@@ -1874,17 +2151,16 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
                         logger.warning(f'区域{siren_bug_zone}未找到塞壬研究装置，跳过后续操作')
 
                         # 没找到吊机自动关闭bug利用
-                        if self.config.cross_get(keys="OpsiHazard1Leveling.OpsiSirenBug.SirenBug_AutoDisable", default=False):
-                            self.config.cross_set(keys="OpsiHazard1Leveling.OpsiSirenBug.SirenBug_Enable", value=False)
+                        if self.config.cross_get(keys=f"{task}.OpsiSirenBug.SirenBug_AutoDisable", default=False):
+                            self.config.cross_set(keys=f"{task}.OpsiSirenBug.SirenBug_Enable", value=False)
 
                         raise RuntimeError('未找到塞壬研究装置')
 
             # Increase bug count
-            count = self.config.cross_get(keys="OpsiHazard1Leveling.OpsiSirenBug.SirenBug_DailyCount", default=0)
             count += 1
-            self.config.cross_set(keys="OpsiHazard1Leveling.OpsiSirenBug.SirenBug_DailyCount", value=count)
-            self.config.cross_set(keys="OpsiHazard1Leveling.OpsiSirenBug.SirenBug_DailyCountRecord", value=datetime.now())
-            logger.info(f'Siren bug exploitation successful, daily count: {count}')
+            record_time = datetime.now()
+            self._set_siren_bug_daily_count(count, record=record_time, sync_state=sync_state)
+            logger.info(f'塞壬 Bug 利用成功，今日累计次数: {count}')
 
             # 发送成功通知
             try:
@@ -1897,7 +2173,7 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
             except Exception as notify_err:
                 logger.debug(f'发送成功通知失败: {notify_err}')
             
-            count_limit = self.config.cross_get(keys="OpsiHazard1Leveling.OpsiSirenBug.SirenBug_CountLimit", default=0)
+            count_limit = self.config.cross_get(keys=f"{task}.OpsiSirenBug.SirenBug_CountLimit", default=0)
             if count_limit > 0 and count >= count_limit:
                 logger.info(f'已达到塞壬Bug自动处理阈值 ({count_limit}次)，开始自动收菜')
                 # 禁用塞壬研究装置的处理
@@ -1908,7 +2184,7 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
                     self.fleet_set(1 if self.config.OpsiFleet_Fleet != 1 else 2)
                 self.os_auto_search_run()
                 self.fleet_set(self.config.OpsiFleet_Fleet)
-                self.config.cross_set(keys="OpsiHazard1Leveling.OpsiSirenBug.SirenBug_DailyCount", value=0)
+                self._reset_siren_bug_daily_count(sync_state=sync_state)
                 # 恢复塞壬研究装置的处理
                 self.config._disable_siren_research = False
                 logger.info('自动收菜完成，返回正常任务流程')
@@ -1925,15 +2201,22 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
             if disable_task_switch and hasattr(self.config, '_disable_task_switch'):
                 self.config._disable_task_switch = False
                 logger.info('【塞壬Bug利用】核心操作完成，恢复任务切换')
+            logger.info(f'【塞壬Bug利用】状态快照: disable_task_switch={getattr(self.config, "_disable_task_switch", None)}, '
+                        f'disable_siren_research={getattr(self.config, "_disable_siren_research", None)}, '
+                        f'daily_count={count}')
 
-            # 返回侵蚀一区域
-            logger.info('【塞壬Bug利用】返回侵蚀一区域')
+            # 返回原区域
+            logger.info(f'【塞壬Bug利用】返回原区域: {source_zone}')
             self.os_map_goto_globe(unpin=False)
-            self.globe_goto(erosion_one_zone, types=('SAFE', 'DANGEROUS'), refresh=True)
-            logger.info('【塞壬Bug利用】返回侵蚀一区域完成')
+            self.globe_goto(source_zone, types=('SAFE', 'DANGEROUS'), refresh=True)
+            logger.info('【塞壬Bug利用】返回原区域完成')
 
         except (RuntimeError, Exception) as e:
             logger.error(f'塞壬研究装置BUG利用失败: {e}', exc_info=True)
+            failed_count, _ = self._get_siren_bug_effective_daily_count()
+            logger.info(f'【塞壬Bug利用】异常前状态: disable_task_switch={getattr(self.config, "_disable_task_switch", None)}, '
+                        f'disable_siren_research={getattr(self.config, "_disable_siren_research", None)}, '
+                        f'daily_count={failed_count}')
             
             # 异常时清除标志
             if disable_task_switch and hasattr(self.config, '_disable_task_switch'):
@@ -1954,24 +2237,30 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
             if self._select_story_option_by_index(target_index=2, options_count=3):
                 logger.info('异常处理：已尝试选择最后一个选项退出剧情')
 
-            # 尝试返回侵蚀一
+            # 尝试返回原海域
             try:
                 self.os_map_goto_globe(unpin=False)
-                self.globe_goto(erosion_one_zone, types=('SAFE', 'DANGEROUS'), refresh=True)
-                logger.info('异常处理：返回侵蚀一区域')
+                self.globe_goto(source_zone, types=('SAFE', 'DANGEROUS'), refresh=True)
+                logger.info(f'异常处理：返回原区域: {source_zone}')
             except Exception as return_err:
-                logger.error(f'返回侵蚀一失败: {return_err}')
+                logger.error(f'返回原海域失败: {return_err}')
         finally:
             pass
 
     def _handle_siren_bug_device(self, grid, drop=None):
-        """
+        """处理单个塞壬研究装置交互。
+
+        点击目标格后等待行走与事件触发，依据是否确认处理成功返回结果。
+
         Args:
-            grid:
+            grid: 目标装置所在的可点击网格对象。
+            drop: 掉落统计对象，透传给 ``wait_until_walk_stable``。
 
         Returns:
-            bool: True if handled successfully.
-                  False if pathfinding interrupted and needs to be restarted.
+            bool: 处理成功返回 True；需要重新寻路返回 False。
+
+        Raises:
+            RuntimeError: 未触发事件时抛出。
         """
         self.is_siren_device_confirmed = False
         

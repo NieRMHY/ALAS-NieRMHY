@@ -1,15 +1,15 @@
 {
   "Menu": {
     "Alas": {
-      "name": "智慧港区",
+      "name": "智慧港区+",
       "help": ""
     },
     "Farm": {
-      "name": "出击",
+      "name": "出击+",
       "help": ""
     },
     "Event": {
-      "name": "活动",
+      "name": "活动+",
       "help": ""
     },
     "EventDaily": {
@@ -25,7 +25,7 @@
       "help": ""
     },
     "Opsi": {
-      "name": "大世界",
+      "name": "大世界+",
       "help": ""
     },
     "Island": {
@@ -33,7 +33,7 @@
       "help": ""
     },
     "Tool": {
-      "name": "工具",
+      "name": "工具+",
       "help": ""
     }
   },
@@ -51,23 +51,23 @@
       "help": ""
     },
     "Main": {
-      "name": "主线图-1",
+      "name": "主线图-1+",
       "help": ""
     },
     "Main2": {
-      "name": "主线图-2",
+      "name": "主线图-2+",
       "help": ""
     },
     "Main3": {
-      "name": "主线图-3",
+      "name": "主线图+",
       "help": ""
     },
     "GemsFarming": {
-      "name": "紧急委托",
+      "name": "紧急委托+",
       "help": ""
     },
     "ThreeOilLowCost": {
-      "name": "三油低耗",
+      "name": "三油低耗+",
       "help": "使用三油低耗阵容进行战斗，在旗舰达到32级时自动更换旗舰并退役。"
     },
     "EventGeneral": {
@@ -75,19 +75,19 @@
       "help": ""
     },
     "Event": {
-      "name": "活动图-1",
+      "name": "活动图-1+",
       "help": ""
     },
     "Event2": {
-      "name": "活动图-2",
+      "name": "活动图-2+",
       "help": ""
     },
     "Raid": {
-      "name": "共斗活动",
+      "name": "共斗活动+",
       "help": ""
     },
     "RaidScuttle": {
-      "name": "共斗沉船",
+      "name": "共斗沉船+",
       "help": ""
     },
     "Hospital": {
@@ -227,11 +227,11 @@
       "help": ""
     },
     "OpsiExplore": {
-      "name": "每月开荒",
+      "name": "每月开荒+",
       "help": ""
     },
     "OpsiShop": {
-      "name": "大世界商店",
+      "name": "大世界商店+",
       "help": ""
     },
     "OpsiVoucher": {
@@ -239,7 +239,7 @@
       "help": ""
     },
     "OpsiDaily": {
-      "name": "大世界-每日",
+      "name": "大世界-每日+",
       "help": ""
     },
     "OpsiObscure": {
@@ -263,15 +263,15 @@
       "help": ""
     },
     "OpsiMeowfficerFarming": {
-      "name": "短猫相接",
+      "name": "短猫相接+",
       "help": ""
     },
     "OpsiHazard1Leveling": {
-      "name": "侵蚀1练级",
+      "name": "侵蚀1练级+",
       "help": ""
     },
     "OpsiScheduling": {
-      "name": "智能调度",
+      "name": "智能调度+",
       "help": "大世界智能调度功能，用于协调侵蚀1练级与黄币补充任务之间的切换\n启用后将根据黄币和行动力自动在不同任务之间切换并发送推送通知"
     },
     "OpsiCrossMonth": {
@@ -279,7 +279,7 @@
       "help": "    Alas将在大世界跨月重置之前10分钟进入大世界，等待大世界重置但不退出大世界，然后完成新一天的大世界每日、隐秘海域、深渊海域和短猫相接，以获得额外的金菜。运行大世界每日时，按\"大世界每日\"任务设置运行，其余同理。\n    重要：Alas等待跨月期间，请不要操作游戏。"
     },
     "OpsiDailyDelay": {
-      "name": "大世界任务延后",
+      "name": "大世界任务延后+",
       "help": "    在每日0点服务器重启前的可配置时间段内（默认为5分钟，即23:55触发），将当前进行中的侵蚀一和短猫任务自动延后至次日0点重启完成后再执行   "
     },
     "IslandInfo": {
@@ -1993,8 +1993,8 @@
       "help": "一般不需要修改"
     },
     "BuyFood": {
-      "name": "Dorm.BuyFood.name",
-      "help": "Dorm.BuyFood.help"
+      "name": "自动购买食物",
+      "help": "仅作状态显示 禁止设置 不要询问此开关的任何事情"
     }
   },
   "BuyFurniture": {
@@ -3758,6 +3758,10 @@
       "name": "军火商（通用商店）",
       "help": ""
     },
+    "Enable": {
+      "name": "商店开关",
+      "help": "开启后才会执行该商店，关闭后会在任务中跳过该商店"
+    },
     "UseGems": {
       "name": "使用钻石",
       "help": ""
@@ -3783,6 +3787,10 @@
     "_info": {
       "name": "舰队商店",
       "help": ""
+    },
+    "Enable": {
+      "name": "商店开关",
+      "help": "开启后才会执行该商店，关闭后会在任务中跳过该商店"
     },
     "Refresh": {
       "name": "刷新商店",
@@ -3897,6 +3905,10 @@
       "name": "功勋商店（退役兑换）",
       "help": ""
     },
+    "Enable": {
+      "name": "商店开关",
+      "help": "开启后才会执行该商店，关闭后会在任务中跳过该商店"
+    },
     "Filter": {
       "name": "商店过滤器",
       "help": ""
@@ -3958,6 +3970,10 @@
       "name": "军需商店（演习商店）",
       "help": ""
     },
+    "Enable": {
+      "name": "商店开关",
+      "help": "开启后才会执行该商店，关闭后会在任务中跳过该商店"
+    },
     "Refresh": {
       "name": "刷新商店",
       "help": "刷新需要消耗20钻石"
@@ -3971,6 +3987,10 @@
     "_info": {
       "name": "核心兑换",
       "help": ""
+    },
+    "Enable": {
+      "name": "商店开关",
+      "help": "开启后才会执行该商店，关闭后会在任务中跳过该商店"
     },
     "Filter": {
       "name": "商店过滤器",
@@ -4678,7 +4698,7 @@
     },
     "ActionPointPreserve": {
       "name": "保留 X 点行动力",
-      "help": "行动力低于 X 后停止，自动打开行动力箱子，X 包含箱子中的行动力，建议保留1000行动力给侵蚀1练级\n这个值将在大世界重置前3天自动减少至200点，如果启用侵蚀1练级则改为1000点，并在最后一天自动减少至0点"
+      "help": "行动力低于 X 后停止，自动打开行动力箱子，X 包含箱子中的行动力，建议保留3000行动力给侵蚀1练级\n这个值将在大世界重置前3天自动减少至200点，如果启用侵蚀1练级则改为1000点，并在最后一天自动减少至0点"
     },
     "HazardLevel": {
       "name": "侵蚀等级",
@@ -4732,7 +4752,7 @@
   "OpsiHazard1Leveling": {
     "_info": {
       "name": "侵蚀1练级",
-      "help": "消耗作战补给凭证以获取大量经验和少量行动力\n推荐携带1-2艘预装填航母以获取最高的时均收益\n\n为了避免无法购买港口商店的商品，Alas会保留100000作战补给凭证\n由于在神秘商店购买行动力需要大量作战补给凭证，启用本功能后会使用溢出行动力运行短猫相接来补充"
+      "help": "消耗作战补给凭证以获取大量经验和少量行动力\n推荐携带1-2艘预装填航母以获取最高的时均收益\n\n原版 Alas 的一些防呆限制已被解除，请谨慎设置参数"
     },
     "TargetZone": {
       "name": "指定海域",
@@ -4769,7 +4789,7 @@
     },
     "SirenResearch_Enable": {
       "name": "启用塞壬研究装置",
-      "help": "雪风大人提醒：消耗紫币换黄币，一个月没有几十万海里慎用 nanoda！"
+      "help": "启用后使用紫币通过塞壬研究装置转换为黄币\n需要足够的海里数支撑紫币消耗"
     },
     "SirenBug_Enable": {
       "name": "启用塞壬研究装置 Bug 利用",
@@ -4786,26 +4806,32 @@
       "help": "指定已刷出塞壬研究装置的高侵蚀区域\n支持海域ID、国服/国际服/日服/台服海域名称，例如 \"51\", \"NA海域东南E\", \"NA Ocean SE Sector E\"\n填入默认值 0，或者清空数值即可取消指定"
     },
     "SirenBug_Grid": {
-      "name": "装置所在的地图格子坐标",
-      "help": "指定塞壬研究装置在地图中的格子，若为空则执行扫图寻找\n格子格式为一个大写字母代表列号加一个阿拉伯数字代表行号，如 \"B10\" 代表第二列第十行\n地图左上角格子为第一列第一行，即 \"A1\"，每往右一格列数加一，往下一格行数加一\n简单来说，从左上角开始，先往右数字母，再往下数数字"
+      "name": "装置所在的地图坐标",
+      "help": "指定塞壬研究装置在地图中的坐标，若为空则执行扫图寻找\n坐标格式为一个大写字母代表列号加一个阿拉伯数字代表行号，如 \"B10\" 代表第二列第十行\n地图左上角格子为第一列第一行，即 \"A1\"，每往右一格列数加一，往下一格行数加一\n简单来说，从左上角开始，先往右数字母，再往下数数字"
+    },
+    "SirenBug_SyncDailyCount": {
+      "name": "同步每日利用次数",
+      "help": "同步每日已利用塞壬研究装置 Bug 的次数",
+      "True": "是",
+      "False": "否"
     },
     "DisableTaskSwitchDuringBug": {
-      "name": "Bug 利用期间禁止调度器切换任务",
-      "help": "实验性功能\nBug 利用期间临时禁用调度器的任务切换检查，避免被委托、日常等任务打断\n如果 Bug 利用过程中经常被其他到时任务中断，可以启用此选项",
+      "name": "塞壬研究装置 Bug 利用期间禁止调度器切换任务",
+      "help": "Bug 利用期间临时禁用调度器的任务切换检查，避免被委托、日常等任务打断\n如果 Bug 利用过程中经常被其他到时任务中断，可以启用此选项",
       "True": "是",
       "False": "否"
     },
     "SirenBug_DailyCount": {
-      "name": "今日已利用 Bug 的次数",
-      "help": "已经利用塞壬 Bug 的次数，每次扫图前会根据此数值等待对应的秒数"
+      "name": "已利用 塞壬研究装置 Bug 利用 次数",
+      "help": "已经利用塞壬研究装置 Bug 利用的次数，每次扫图前会根据此数值等待对应的秒数"
     },
     "SirenBug_DailyCountRecord": {
-      "name": "上次记录 Bug 次数的时间 (自动记录)",
+      "name": "上次塞壬研究装置 Bug 利用的时间",
       "help": ""
     },
     "SirenBug_CountLimit": {
       "name": "当利用 Bug 次数达到此数值时自动收菜 (0为不启用)",
-      "help": "实验性功能，可能导致把塞壬研究装置刷没，刷没后果自负\n当利用 Bug 次数达到设置的数值时，使用当前舰队卡住敌舰并使用另一舰队收菜"
+      "help": "注意：可能导致把塞壬研究装置刷没，刷没后果自负\n当利用 Bug 次数达到设置的数值时，使用当前舰队卡住敌舰并使用另一舰队收菜"
     },
     "SirenBug_CrossDay": {
       "name": "跨日期间 (23:55-00:05) 暂停 Bug 利用",
@@ -4837,7 +4863,7 @@
   "OpsiScheduling": {
     "_info": {
       "name": "智能调度",
-      "help": "大世界智能调度功能，用于协调侵蚀1练级与黄币补充任务之间的切换\n启用后将根据黄币和行动力自动在不同任务之间切换并发送推送通知"
+      "help": "大世界智能调度功能，用于协调侵蚀1练级与黄币补充任务之间的切换\n启用后将根据黄币和行动力自动在不同任务之间切换并发送推送通知\n\n原版 Alas 的一些防呆限制已被解除，请谨慎设置参数"
     },
     "UseSmartSchedulingOperationCoinsPreserve": {
       "name": "获取 X 个作战补给凭证",
@@ -4880,6 +4906,17 @@
       "help": "智能调度中是否启用塞壬要塞任务来补充黄币",
       "True": "已启用",
       "False": "未启用"
+    },
+    "MeowStartEarlyMode": {
+      "name": "月末行动力自动清理模式",
+      "help": "激进模式(×0.8)：少提前，节省行动力但可能错过刷新；均衡模式(×1.2)：正常提前，平衡安全与效率；保守模式(×1.5)：多提前，安全优先但可能浪费行动力",
+      "aggressive": "激进模式",
+      "balanced": "均衡模式",
+      "conservative": "保守模式"
+    },
+    "MeowStartEarlyEnable": {
+      "name": "启用月末行动力自动清理",
+      "help": "根据历史AP消耗速率，自动判断是否需要提前开始短猫任务来清理月末过剩的行动力"
     }
   },
   "OpsiDailyDelay": {
@@ -5229,7 +5266,8 @@
       "EnableMeowfficerFarming": "Gui.OpsiScheduling.EnableMeowfficerFarming",
       "EnableObscure": "Gui.OpsiScheduling.EnableObscure",
       "EnableAbyssal": "Gui.OpsiScheduling.EnableAbyssal",
-      "EnableStronghold": "Gui.OpsiScheduling.EnableStronghold"
+      "EnableStronghold": "Gui.OpsiScheduling.EnableStronghold",
+      "MeowStartEarlyMode": "Gui.OpsiScheduling.MeowStartEarlyMode"
     }
   }
 }
