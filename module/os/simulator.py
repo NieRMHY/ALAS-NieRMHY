@@ -75,6 +75,7 @@ class OSSimulator:
         self.logger.info(f'每日任务获得黄币: {self.daily_reward}')
     
     def get_paras(self):
+        self.config.load()
         self.samples = self.config.cross_get('OpsiSimulator.OpsiSimulatorParameters.Samples')
         self.logger.info(f'样本数: {self.samples}')
         self.meow_hazard_level = 5
