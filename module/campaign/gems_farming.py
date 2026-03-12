@@ -438,18 +438,23 @@ class GemsFarming(CampaignRun, FleetEquipment, GemsEquipmentHandler, Retirement)
 
         logger.hr('FINDING VANGUARD')
 
-        if self.config.SERVER in ['cn']:
-            max_level = 100
-        else:
-            max_level = 70
-        if self.config.GemsFarming_CommonDD == 'DDG':
-            max_level = 125
-        if self.config.GemsFarming_ALLowLowVanguardLevel:
-            min_level = 30
-        else:
-            min_level = max_level
-        if self.hard_mode:
-            min_level = max(min_level, 70)
+        min_level, max_level = self.config.GemsFarming_VanguardLevelMin, self.config.GemsFarming_VanguardLevelMax
+        
+        # Fallback to legacy logic if new settings are kept at absolute defaults (1, 125)
+        # to prevent breaking existing GemsFarming setups that implicitly relied on 100/70.
+        if min_level <= 1 and max_level >= 125:
+            if self.config.SERVER in ['cn']:
+                max_level = 100
+            else:
+                max_level = 70
+            if getattr(self.config, 'GemsFarming_CommonDD', '') == 'DDG':
+                max_level = 125
+            if getattr(self.config, 'GemsFarming_ALLowLowVanguardLevel', False):
+                min_level = 30
+            else:
+                min_level = max_level
+            if self.hard_mode:
+                min_level = max(min_level, 70)
         emotion_lower_bound = 0 if emotion == 0 else self.emotion_lower_bound
         scanner = ShipScanner(level=(min_level, max_level), emotion=(emotion_lower_bound, 150),
                               fleet=[0, self.fleet_to_attack], status='free')

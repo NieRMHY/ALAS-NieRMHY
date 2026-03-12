@@ -810,6 +810,14 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
 
         # 短猫任务数据收集
         if getattr(self, '_meow_searching_active', False) and getattr(self, '_meow_time_recording_enabled', False):
+            # 获取侵蚀等级用于换算有效战斗轮数
+            hazard_level = None
+            try:
+                if hasattr(self, 'zone') and hasattr(self.zone, 'hazard_level'):
+                    hazard_level = self.zone.hazard_level
+            except Exception:
+                logger.debug('Failed to get hazard level for battle count')
+
             try:
                 try:
                     self._meow_auto_search_battle_count += 1
@@ -819,7 +827,7 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
                 try:
                     from module.statistics.cl1_database import db as cl1_db
                     instance_name = getattr(self.config, 'config_name', 'default')
-                    cl1_db.increment_meow_battle_count(instance_name)
+                    cl1_db.increment_meow_battle_count(instance_name, hazard_level)
                 except Exception:
                     logger.debug('Failed to persist monthly meow battle increment', exc_info=True)
 
@@ -922,7 +930,9 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
         try:
             from module.statistics.cl1_database import db as cl1_db
             instance_name = getattr(self.config, 'config_name', 'default')
-            cl1_db.add_meow_round_time(instance_name, duration)
+            # 获取侵蚀等级用于计算出击轮次
+            hazard_level = getattr(getattr(self, 'zone', None), 'hazard_level', None)
+            cl1_db.add_meow_round_time(instance_name, duration, hazard_level)
         except Exception:
             logger.debug('Failed to record meow search duration', exc_info=True)
 
@@ -1357,7 +1367,7 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
             self.device.click(grid)
             with self.config.temporary(STORY_ALLOW_SKIP=False, OS_SIREN_DEVICE_USAGE='use_until_destroyed'):
                 result = self.wait_until_walk_stable(
-                    drop=drop, walk_out_of_step=False, confirm_timer=Timer(1.5, count=4))
+                    drop=drop, walk_out_of_step=False, confirm_timer=Timer(3, count=4))
             if 'akashi' in result:
                 self._solved_map_event.add('is_akashi')
                 return True
@@ -1436,7 +1446,6 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
                 combat = self.os_auto_search_run(drop, interrupt=interrupt)
                 finished_combat += combat
 
-                # Record current zone, skip this if no rewards from auto search.
                 drop.add(self.device.image)
 
                 self.hp_reset()
@@ -1448,17 +1457,19 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
                             self.globe_goto(prev, types='DANGEROUS')
                             continue
                 break
-
-            # Rescan
-            self._solved_map_event = set()
-            self._solved_fleet_mechanism = False
-            if question:
-                self.clear_question(drop=drop)
-            if rescan:
-                self.map_rescan(rescan_mode=rescan, drop=drop)
-
-            if drop.count == 1:
+            
+            if drop.count <= 1:
                 drop.clear()
+
+            drop.set_combat_count(self._auto_search_battle_count)
+
+        # Rescan
+        self._solved_map_event = set()
+        self._solved_fleet_mechanism = False
+        if question:
+            self.clear_question(drop=drop)
+        if rescan:
+            self.map_rescan(rescan_mode=rescan, drop=drop)
 
         return finished_combat
 
@@ -1479,7 +1490,8 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
                 method=self.config.DropRecord_OpsiRecord
         ) as drop:
             try:
-                self.os_auto_search_run(drop, strategic=True)
+                combat = self.os_auto_search_run(drop, strategic=True)
+                drop.set_combat_count(combat)
                 drop.add(self.device.image)
                 self.hp_reset()
                 self.hp_get()
@@ -1490,6 +1502,11 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
             except Exception as e:
                 logger.warning(f'Strategic search interrupted: {e}')
                 return False  # 被中断
+            finally:
+                if drop.count <= 1:
+                    drop.clear()
+                
+                drop.set_combat_count(self._auto_search_battle_count)
 
     def map_rescan_current(self, drop=None, clicked_grids=None):
         """
@@ -1567,34 +1584,36 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
             # 重置标志位
             self.is_siren_device_confirmed = False
             
-            # wait_until_walk_stable 会调用 handle_story_skip 处理选项
+            # wait_until_walk_stable 会调用 handle_story_skip 处理选项。
+            # 将 use_until_destroyed 作用域覆盖到整个原海域处理链，
+            # 避免后续自律接管未关闭的剧情框时退回默认 never，误点第 3 个选项离开。
             logger.info('[移动装置] 等待移动稳定...')
             with self.config.temporary(STORY_ALLOW_SKIP=False, OS_SIREN_DEVICE_USAGE='use_until_destroyed'):
                 result = self.wait_until_walk_stable(
                     drop=drop, walk_out_of_step=False, confirm_timer=Timer(1.5, count=4))
-            logger.info(f'[移动装置] 移动完成,结果: {result}')
-            
-            if getattr(self, 'is_siren_device_confirmed', False):
-                # 保存标志状态，因为二次重扫可能会重置它
-                siren_confirmed = True
-                
-                # 执行自律寻敌
-                logger.info('[装置处理] 执行自律寻敌')
-                self.os_auto_search_run(drop=drop)
+                logger.info(f'[移动装置] 移动完成,结果: {result}')
 
-                # 先标记为已处理，防止二次重扫时再次处理塞壬装置
-                self._solved_map_event.add('is_scanning_device')
+                if getattr(self, 'is_siren_device_confirmed', False):
+                    # 保存标志状态，因为二次重扫可能会重置它
+                    siren_confirmed = True
 
-                # 二次重扫，防止出现意外情况导致装置处理失败
-                logger.info('[装置处理] 执行二次重扫')
-                self.map_rescan_current(drop=drop)
-                
-                # 使用保存的标志状态，而不是重新检查（因为二次重扫可能会重置它）
-                if siren_confirmed:
-                    logger.info('[装置处理] 已确认为塞壬研究装置，检查是否需要执行Bug利用')
-                    self._handle_siren_bug_reinteract(drop=drop)
-                else:
-                    logger.info('[装置处理] 未确认为塞壬研究装置，跳过Bug利用')
+                    # 执行自律寻敌
+                    logger.info('[装置处理] 执行自律寻敌')
+                    self.os_auto_search_run(drop=drop)
+
+                    # 先标记为已处理，防止二次重扫时再次处理塞壬装置
+                    self._solved_map_event.add('is_scanning_device')
+
+                    # 二次重扫，防止出现意外情况导致装置处理失败
+                    logger.info('[装置处理] 执行二次重扫')
+                    self.map_rescan_current(drop=drop)
+
+                    # 使用保存的标志状态，而不是重新检查（因为二次重扫可能会重置它）
+                    if siren_confirmed:
+                        logger.info('[装置处理] 已确认为塞壬研究装置，检查是否需要执行Bug利用')
+                        self._handle_siren_bug_reinteract(drop=drop)
+                    else:
+                        logger.info('[装置处理] 未确认为塞壬研究装置，跳过Bug利用')
             
             return True
 
@@ -2048,7 +2067,7 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
                 self.os_map_goto_globe(unpin=False)
                 self.globe_goto(target_zone, types=(siren_bug_type.upper(),), refresh=True)
                 self.zone_init()
-
+                
                 # Siren bug count sleep
                 if count > 0:
                     logger.info(f'塞壬 Bug 今日已使用 {count} 次，自律前等待 {count} 秒')

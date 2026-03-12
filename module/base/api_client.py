@@ -24,6 +24,7 @@ class ApiClient:
     CL1_DATA_PATH = '/api/telemetry'
     ANNOUNCEMENT_PATH = '/api/get/announcement'
     STAMINA_REPORT_PATH = '/api/stamina/report'
+    AZURSTAT_PATH = '/api/azurstat'
     
     @classmethod
     def _get_endpoints(cls, path: str) -> List[str]:
@@ -43,57 +44,7 @@ class ApiClient:
     
     @classmethod
     def _post_with_fallback(cls, path: str, json_data: Dict[str, Any], timeout: int = 5) -> Tuple[bool, int, str]:
-        """
-        使用故障转移机制发送POST请求
-        
-        Args:
-            path: API路径
-            json_data: 要发送的JSON数据
-            timeout: 超时时间（秒）
-            
-        Returns:
-            (是否成功, HTTP状态码, 响应文本)
-        """
-        if not cls.ENABLE_REPORT:
-            return False, 0, 'report disabled'
-        try:
-            import requests  # type: ignore
-        except Exception:
-            return False, 0, 'requests not available'
-        endpoints = cls._get_endpoints(path)
-        last_error = None
-        
-        for i, endpoint in enumerate(endpoints):
-            try:
-                domain_type = "主域名" if i == 0 else "备用域名"
-                logger.debug(f'尝试使用{domain_type}: {endpoint}')
-                
-                response = requests.post(
-                    endpoint,
-                    json=json_data,
-                    timeout=timeout,
-                    headers={'Content-Type': 'application/json'}
-                )
-                
-                if response.status_code == 200:
-                    if i > 0:
-                        logger.info(f'✓ 使用{domain_type}请求成功')
-                    return True, response.status_code, response.text
-                else:
-                    logger.warning(f'{domain_type}返回错误状态: {response.status_code}')
-                    last_error = f'HTTP {response.status_code}'
-                    
-            except requests.exceptions.Timeout:
-                logger.warning(f'{domain_type if i > 0 else "主域名"}请求超时')
-                last_error = 'Timeout'
-            except requests.exceptions.RequestException as e:
-                logger.warning(f'{domain_type if i > 0 else "主域名"}请求失败: {e}')
-                last_error = str(e)
-            except Exception as e:
-                logger.warning(f'{domain_type if i > 0 else "主域名"}发生异常: {e}')
-                last_error = str(e)
-        
-        return False, 0, last_error or 'Unknown error'
+        return cls._request_with_fallback('POST', path, json_data=json_data, timeout=timeout)
     
     @classmethod
     def _get_with_fallback(cls, path: str, params: Dict[str, Any] = None, timeout: int = 10) -> Tuple[bool, int, str]:
@@ -250,6 +201,55 @@ class ApiClient:
             args=(data, timeout),
             daemon=True
         ).start()
+
+    @staticmethod
+    def _submit_azurstat(task, body, timeout: int):
+        """
+        内部方法：提交Azurstat数据
+        
+        Args:
+            task: 任务名
+            body: 数据
+            timeout: 请求超时时间（秒），默认10秒
+        """
+        try:
+            data = {
+                'device_id': get_device_id(),
+                'task': task,
+                'body': body
+            }
+
+            logger.info('Submitting azurstat data...')
+            
+            success, status_code, response_text = ApiClient._post_with_fallback(
+                ApiClient.AZURSTAT_PATH,
+                data,
+                timeout=timeout
+            )
+            
+            if success:
+                logger.info('✓ Azurstat data submitted successfully')
+            else:
+                logger.warning(f'✗ Azurstat data submission failed: {response_text}')
+        
+        except Exception as e:
+            logger.exception(f'Unexpected error during azurstat data submission: {e}')
+    
+    @classmethod
+    def submit_azurstat(cls, task, body, timeout: int = 10):
+        """
+        提交AzurStat统计数据（异步）
+        
+        Args:
+            task: 任务名
+            body: 数据
+            timeout: 请求超时时间（秒），默认10秒
+        """
+        threading.Thread(
+            target=cls._submit_azurstat,
+            args=(task, body, timeout),
+            daemon=True
+        ).start()
     
     @staticmethod
     def _report_stamina(stamina: float, timeout: int):
@@ -354,4 +354,3 @@ class ApiClient:
         except Exception as e:
             logger.warning(f'获取公告异常: {e}')
             return None
-

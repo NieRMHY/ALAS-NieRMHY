@@ -22,6 +22,7 @@ Button:
   ClickToUpdate:
   RetryUpdate:
   CancelUpdate:
+  Open:
 
 Toast:
   DisableTranslateMode:
@@ -74,6 +75,7 @@ Overview:
   Pending:
   Waiting:
   NoTask:
+  Stat:
 
 Dashboard:
   TimeError:
@@ -162,6 +164,94 @@ Text:
   EnterPassword:
   ChooseFile:
 
+Stat:
+  LoadApDataFailed:
+  NoApData:
+  Refresh:
+  NoValidApData:
+  ViewTitleLine:
+  ViewTitleDay:
+  ViewTitleMonth:
+  CannotAggregateKline:
+  ViewLineShort:
+  DataPointsCount:
+  CandlesCount:
+  ViewLineButton:
+  ViewDayButton:
+  ViewMonthButton:
+  LoadOpsiStatsFailed:
+  LoadExpStatsFailed:
+  DailyExpCheckTitle:
+  CheckTime:
+  TargetLevel:
+  ShipSlot:
+  Level:
+  CurrentExpThisLevel:
+  TotalExp:
+  ExpToTarget:
+  SortiesNeeded:
+  EstimatedTime:
+  NoExpData:
+  Month:
+  BattleCount:
+  BattleRounds:
+  SortieCost:
+  AkashiEncounters:
+  AkashiRate:
+  AverageAP:
+  NetAP:
+  LoopEfficiency:
+  ExpEfficiency:
+  ExpEfficiencyHeader:
+  AvgBattleTime:
+  AvgBattleTimeHeader:
+  AvgRoundTime:
+  TodayBattles:
+  TodayBattlesHeader:
+  TodayExp:
+  TodayExpHeader:
+  TodayRun:
+  TodayRunHeader:
+  OpsiDataCollectionTitle:
+  MonthlyPurchasedAP:
+  MeowDataCollectionTitle:
+  MeowRounds:
+  AvgMeowRoundTime:
+  MeowLootTitle:
+  NoMeowDataNotice:
+  MeowAdvanceAdviceTitle:
+  CurrentAP:
+  ApPerRound:
+  AvailableRounds:
+  AvgRoundDuration:
+  CurrentMode:
+  RecommendAhead:
+  RoundUnit:
+  SecondUnit:
+  HourUnit:
+  MinuteUnit:
+  ExportModuleLoadFailed:
+  CsvHeaderAkashiRate:
+  CsvHeaderLoopEfficiency:
+  CsvHeaderMonthlyPurchasedAP:
+  CsvFilenameTemplate:
+  SavedToDesktop:
+  SaveDesktopFailed:
+  ExportAndSaveDesktop:
+  NoShipExpData:
+  ShipExpProgressTitle:
+  LastCheckTime:
+  AvgOpsiRoundTime:
+  TodayBattleUnit:
+  NoTodayBattleData:
+  LoadShipExpFailed:
+  TargetExpRequired:
+  BattlesCompleted:
+  ExpRemaining:
+  StartCleanupTime:
+  NextOsReset:
+  MeowAutoCleanupStatus:
+
 OpsiScheduling:
   UseSmartSchedulingOperationCoinsPreserve:
   OperationCoinsPreserve:
@@ -174,3 +264,7 @@ OpsiScheduling:
   EnableStronghold:
   MeowStartEarlyMode:
     
+Misc:
+  Enabled:
+  Disabled:
+

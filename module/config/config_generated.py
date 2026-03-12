@@ -121,7 +121,7 @@ class GeneratedConfig:
     DropRecord_ResearchRecord = 'do_not'  # do_not, save, upload, save_and_upload
     DropRecord_CommissionRecord = 'do_not'  # do_not, save, upload, save_and_upload
     DropRecord_CombatRecord = 'do_not'  # do_not, save
-    DropRecord_OpsiRecord = 'do_not'  # do_not, save, upload, save_and_upload
+    DropRecord_OpsiRecord = 'upload'  # do_not, save, upload, save_and_upload
     DropRecord_MeowfficerBuy = 'do_not'  # do_not, save
     DropRecord_MeowfficerTalent = 'do_not'  # do_not, save, upload, save_and_upload
     DropRecord_TelemetryReport = True
@@ -146,7 +146,7 @@ class GeneratedConfig:
     PublicEmotion_FleetOnsen = False
 
     # Group `YukikazeTaskManager`
-    YukikazeTaskManager_TaskPriorityAdjustment = 'Restart\n> OpsiCrossMonth > OpsiDailyDelay\n> Commission > Tactical > Research\n> Exercise\n> Dorm > Meowfficer > Guild > Gacha\n> Reward\n> ShopFrequent > ShopOnce > Shipyard > Freebies > Island\n> PrivateQuarters\n> OpsiExplore\n> Minigame > Awaken\n> OpsiAshBeacon\n> OpsiDaily > OpsiShop > OpsiVoucher\n> OpsiAbyssal > OpsiStronghold > OpsiObscure > OpsiArchive\n> Daily > Hard > OpsiAshBeacon > OpsiAshAssist > OpsiMonthBoss\n> Sos > EventSp > EventA > EventB > EventC > EventD\n> RaidDaily > CoalitionSp > WarArchives > MaritimeEscort\n> Event > Event2 > Raid > Hospital > HospitalEvent > Coalition > RaidScuttle > Main > Main2 > Main3\n> OpsiMeowfficerFarming\n> GemsFarming\n> OpsiHazard1Leveling\n> ThreeOilLowCost'
+    YukikazeTaskManager_TaskPriorityAdjustment = 'Restart\n> OpsiCrossMonth > OpsiDailyDelay\n> Commission > Tactical > Research\n> Exercise\n> Dorm > Meowfficer > Guild > Gacha\n> Reward\n> ShopFrequent > ShopOnce > Shipyard > Freebies > Island\n> PrivateQuarters\n> OpsiExplore\n> Minigame > Awaken\n> OpsiAshBeacon\n> OpsiDaily > OpsiShop > OpsiVoucher\n> OpsiAbyssal > OpsiStronghold > OpsiObscure > OpsiArchive\n> Daily > Hard > OpsiAshBeacon > OpsiAshAssist > OpsiMonthBoss\n> Sos > EventSp > EventA > EventB > EventC > EventD\n> RaidDaily > CoalitionSp > WarArchives > MaritimeEscort\n> Event > Event2 > Raid > Hospital > HospitalEvent > Coalition > RaidScuttle > Main > Main2 > Main3\n> OpsiMeowfficerFarming\n> GemsFarming\n> Ambush11\n> OpsiHazard1Leveling\n> ThreeOilLowCost'
 
     # Group `OneClickRetire`
     OneClickRetire_KeepLimitBreak = 'keep_limit_break'  # keep_limit_break, do_not_keep
@@ -253,6 +253,8 @@ class GeneratedConfig:
     GemsFarming_ALLowLowVanguardLevel = False
     GemsFarming_DelayTaskIFNoFlagship = False
     GemsFarming_CommissionLimit = False
+    GemsFarming_VanguardLevelMin = 1
+    GemsFarming_VanguardLevelMax = 125
 
     # Group `EventGeneral`
     EventGeneral_PtLimit = 0
@@ -704,7 +706,7 @@ class GeneratedConfig:
     OpsiMeowfficerFarming_SirenDetectorSearch_Enable = False
     OpsiMeowfficerFarming_SirenDetectorSearch_HazardLevel = 5  # 5, 6
     OpsiMeowfficerFarming_SirenDetectorSearch_FleetForBlock = 2  # 1, 2, 3, 4
-    OpsiMeowfficerFarming_SirenDetectorSearch_StopAfterFound = 0
+    OpsiMeowfficerFarming_SirenDetectorSearch_StopAfterFound = 1
     OpsiMeowfficerFarming_SirenDetectorSearch_FoundZones = None
 
     # Group `OpsiHazard1Leveling`
@@ -786,6 +788,9 @@ class GeneratedConfig:
     # Group `EmulatorManagement`
     EmulatorManagement_ScheduledEmulatorRestart = False
     EmulatorManagement_RestartIntervalHours = 4
+
+    # Group `OpsiSimulatorParameters`
+    OpsiSimulatorParameters_Samples = 1000
 
     # Group `Storage`
     Storage_Storage = {}

@@ -320,6 +320,9 @@ html {
 #pywebio-scope-running,
 #pywebio-scope-pending,
 #pywebio-scope-waiting,
+#pywebio-scope-scheduler-bar,
+#pywebio-scope-stat-bar,
+#pywebio-scope-image-container,
 #pywebio-scope-log-bar,
 #pywebio-scope-log,
 .container-log,
@@ -1007,12 +1010,6 @@ select {
 
 #pywebio-scope-ship_exp_table {
 	animation-delay: 0.15s;
-}
-
-#pywebio-scope-opsi_stats:hover,
-#pywebio-scope-ap_chart:hover,
-#pywebio-scope-ship_exp_table:hover {
-	transform: translateY(-3px) !important;
 }
 
 /* === 导航器按钮弹性动画 === */

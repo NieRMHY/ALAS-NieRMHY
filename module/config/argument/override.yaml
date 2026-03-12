@@ -107,6 +107,38 @@ ThreeOilLowCost:
     AutoSearchMode: sub_standby
     DistanceToBoss: use_open_ocean_support
 
+Ambush11:
+  Campaign:
+    Event:
+      value: campaign_main
+    Mode: normal
+    UseClearMode: false
+    UseFleetLock: true
+    UseAutoSearch: false
+    Use2xBook: false
+    AmbushEvade: true
+  StopCondition:
+    RunCount: 0
+    MapAchievement: non_stop
+    StageIncrease: false
+    GetNewShip: false
+    ReachLevel: 0
+  Fleet:
+    FleetOrder:
+      display: display
+      value: fleet1_all_fleet2_standby
+      option: [fleet1_all_fleet2_standby, fleet1_standby_fleet2_all]
+  Submarine:
+    Mode:
+      display: display
+      value: do_not_use
+      option: [do_not_use, hunt_only]
+    AutoSearchMode: sub_standby
+    DistanceToBoss: use_open_ocean_support
+  GemsFarming:
+    VanguardLevelMin: 1
+    VanguardLevelMax: 28
+
 # ==================== Event ====================
 
 Event:

@@ -103,7 +103,15 @@ class Filter:
         for attr, value in zip(self.attr, filter):
             if not value:
                 continue
-            if str(obj.__getattribute__(attr)).lower() != str(value):
+
+            obj_val = obj.__getattribute__(attr)
+            
+            # Allow generic items (e.g. PlateT3 without specific sub_genre) 
+            # to match filter rules with specific sub_genres.
+            if attr == 'sub_genre' and obj_val is None:
+                continue
+
+            if str(obj_val).lower() != str(value):
                 return False
 
         return True

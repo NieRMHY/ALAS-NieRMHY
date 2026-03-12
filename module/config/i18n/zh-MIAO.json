@@ -70,6 +70,10 @@
       "name": "⛽ 三油低耗极限挑战",
       "help": "勤俭持家喵！使用三油低耗阵容战斗，旗舰达到32级时会自动更换并送她退役休息哦喵~"
     },
+    "Ambush11": {
+      "name": "Task.Ambush11.name",
+      "help": "Task.Ambush11.help"
+    },
     "EventGeneral": {
       "name": "🏮 活动通用配置",
       "help": "不管什么活动，照着这个准没错喵！"
@@ -281,6 +285,10 @@
     "OpsiDailyDelay": {
       "name": "💤 零点避风港计划",
       "help": "    在服务器零点重启前的几分钟（默认23:55），人会把正在进行的侵蚀一和短猫任务按暂停，等重启完了再继续，真是个聪明的决策喵！"
+    },
+    "OpsiSimulator": {
+      "name": "Task.OpsiSimulator.name",
+      "help": "Task.OpsiSimulator.help"
     },
     "IslandInfo": {
       "name": "📊 岛屿情报板(未完工)",
@@ -1416,6 +1424,14 @@
     "CommissionLimit": {
       "name": "🚫 防爆仓 (控制委托数量)",
       "help": "一直刷的话，紧急委托会把日常委托挤爆的！开这个防止做不完日常喵~"
+    },
+    "VanguardLevelMin": {
+      "name": "GemsFarming.VanguardLevelMin.name",
+      "help": "GemsFarming.VanguardLevelMin.help"
+    },
+    "VanguardLevelMax": {
+      "name": "GemsFarming.VanguardLevelMax.name",
+      "help": "GemsFarming.VanguardLevelMax.help"
     }
   },
   "EventGeneral": {
@@ -4858,6 +4874,16 @@
       "help": "每隔几个小时让模拟器去充电（重启）一次喵？"
     }
   },
+  "OpsiSimulatorParameters": {
+    "_info": {
+      "name": "OpsiSimulatorParameters._info.name",
+      "help": "OpsiSimulatorParameters._info.help"
+    },
+    "Samples": {
+      "name": "OpsiSimulatorParameters.Samples.name",
+      "help": "OpsiSimulatorParameters.Samples.help"
+    }
+  },
   "Storage": {
     "_info": {
       "name": "📋 任务记事本",
@@ -4889,7 +4915,8 @@
       "CheckUpdate": "🔍 寻找新伙伴",
       "ClickToUpdate": "🚀 马上登场",
       "RetryUpdate": "🔄 再试一次喵",
-      "CancelUpdate": "🛑 先别更新"
+      "CancelUpdate": "🛑 先别更新",
+      "Open": "🧭 打开喵"
     },
     "Toast": {
       "DisableTranslateMode": "点击这里关闭翻译模式喵",
@@ -4941,7 +4968,8 @@
       "Running": "🏃‍♀️ 在忙喵",
       "Pending": "⏳ 等一下喵",
       "Waiting": "💤 待命中",
-      "NoTask": "🕊️ 没事喵"
+      "NoTask": "🕊️ 没事喵",
+      "Stat": "📈 统计喵"
     },
     "Dashboard": {
       "TimeError": "❓ 时空错乱",
@@ -5030,6 +5058,94 @@
       "EnterPassword": "输入秘密口令喵",
       "ChooseFile": "挑选档案喵"
     },
+    "Stat": {
+      "LoadApDataFailed": "加载体力数据失败: {e}",
+      "NoApData": "暂无体力变化数据，运行侵蚀1任务后将自动记录",
+      "Refresh": "刷新",
+      "NoValidApData": "暂无有效体力数据",
+      "ViewTitleLine": "分时曲线 (详细波动)",
+      "ViewTitleDay": "天视图 ({day} 小时K线)",
+      "ViewTitleMonth": "月视图 (日K线)",
+      "CannotAggregateKline": "无法聚合K线数据",
+      "ViewLineShort": "分时",
+      "DataPointsCount": "共 {count} 个点",
+      "CandlesCount": "共 {count} 根K线",
+      "ViewLineButton": "分时(详细波动)",
+      "ViewDayButton": "天视图(小时K)",
+      "ViewMonthButton": "月视图(日K)",
+      "LoadOpsiStatsFailed": "加载 OpSi 统计失败: {e}",
+      "LoadExpStatsFailed": "加载经验统计失败: {e}",
+      "DailyExpCheckTitle": "每日经验检测",
+      "CheckTime": "检测时间: {value}",
+      "TargetLevel": "目标等级: {value}",
+      "ShipSlot": "舰位",
+      "Level": "等级",
+      "CurrentExpThisLevel": "当前经验(本级)",
+      "TotalExp": "总经验",
+      "ExpToTarget": "距目标经验",
+      "SortiesNeeded": "还需出击",
+      "EstimatedTime": "预计时间",
+      "NoExpData": "暂无经验数据，运行侵蚀1练级后将自动记录",
+      "Month": "月份",
+      "BattleCount": "战斗场次",
+      "BattleRounds": "战斗轮次",
+      "SortieCost": "出击消耗",
+      "AkashiEncounters": "遇见明石次数",
+      "AkashiRate": "遇见明石概率",
+      "AverageAP": "平均体力",
+      "NetAP": "净赚体力",
+      "LoopEfficiency": "循环效率",
+      "ExpEfficiency": "经验效率: {value}/{unit}",
+      "ExpEfficiencyHeader": "经验效率",
+      "AvgBattleTime": "平均战斗时间: {value}{unit}",
+      "AvgBattleTimeHeader": "平均战斗时间",
+      "AvgRoundTime": "平均一轮时长",
+      "TodayBattles": "今日战斗: {value}{unit}",
+      "TodayBattlesHeader": "今日战斗",
+      "TodayExp": "今日经验: {value}",
+      "TodayExpHeader": "今日经验",
+      "TodayRun": "今日运行: {value}{unit}",
+      "TodayRunHeader": "今日运行",
+      "OpsiDataCollectionTitle": "雪风大人的侵蚀一数据收集",
+      "MonthlyPurchasedAP": "当月购买体力: {value}",
+      "MeowDataCollectionTitle": "短猫相接数据收集",
+      "MeowRounds": "出击轮次",
+      "AvgMeowRoundTime": "平均一轮短猫时长",
+      "MeowLootTitle": "短猫相接收获",
+      "NoMeowDataNotice": "暂无数据，请将\"大世界掉落截图\"设置为\"上传\"",
+      "MeowAdvanceAdviceTitle": "短猫提前开始建议",
+      "CurrentAP": "当前AP: {value}",
+      "ApPerRound": "每轮消耗: {value} AP",
+      "AvailableRounds": "可运行轮数: {value}{unit}",
+      "AvgRoundDuration": "平均每轮耗时: {value}{unit}",
+      "CurrentMode": "当前模式: {value}",
+      "RecommendAhead": "建议提前: {value}{unit}",
+      "RoundUnit": "轮",
+      "SecondUnit": "秒",
+      "HourUnit": "小时",
+      "MinuteUnit": "分钟",
+      "ExportModuleLoadFailed": "导出失败：无法加载统计模块：{e}",
+      "CsvHeaderAkashiRate": "遇见明石概率(%)",
+      "CsvHeaderLoopEfficiency": "循环效率(%)",
+      "CsvHeaderMonthlyPurchasedAP": "当月购买体力",
+      "CsvFilenameTemplate": "侵蚀1练级_{month}_详细数据.csv",
+      "SavedToDesktop": "已保存至桌面：{path}",
+      "SaveDesktopFailed": "保存桌面失败：{e}",
+      "ExportAndSaveDesktop": "导出并保存到桌面",
+      "NoShipExpData": "暂无舰船经验数据，请先运行\"每日经验检测\"任务",
+      "ShipExpProgressTitle": "每日经验检测：识别到的舰娘等级与升级进度",
+      "LastCheckTime": "上次检查时间: {value}",
+      "AvgOpsiRoundTime": "平均一轮侵蚀1时长: {value}{unit}",
+      "TodayBattleUnit": "场",
+      "NoTodayBattleData": "暂无今日战斗数据，运行战斗后将自动更新",
+      "LoadShipExpFailed": "加载舰船经验数据失败: {e}",
+      "TargetExpRequired": "目标等级所需经验",
+      "BattlesCompleted": "已战斗场次",
+      "ExpRemaining": "还需经验",
+      "StartCleanupTime": "建议开始清理时间: {value}",
+      "NextOsReset": "下次大世界重置: {value}",
+      "MeowAutoCleanupStatus": "自动提前清理: {value}"
+    },
     "OpsiScheduling": {
       "UseSmartSchedulingOperationCoinsPreserve": "🧠 天才智能切换开关",
       "OperationCoinsPreserve": "💰 黄币工资保底线",
@@ -5040,6 +5156,10 @@
       "EnableAbyssal": "🐙 挑战大怪兽",
       "EnableStronghold": "🏰 目标：塞壬要塞",
       "MeowStartEarlyMode": "Gui.OpsiScheduling.MeowStartEarlyMode"
+    },
+    "Misc": {
+      "Enabled": "已开启",
+      "Disabled": "未开启"
     }
   }
 }

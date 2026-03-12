@@ -67,6 +67,14 @@ Farm:
       - Fleet
       - Submarine
       - Emotion
+    Ambush11:
+      - Scheduler
+      - GemsFarming
+      - Campaign
+      - StopCondition
+      - Fleet
+      - Submarine
+      - Emotion
 Event:
   menu: collapse
   page: setting
@@ -357,6 +365,8 @@ Opsi:
     OpsiDailyDelay:
       - Scheduler
       - OpsiDailyDelay
+    OpsiSimulator:
+      - OpsiSimulatorParameters
 
 # =================== Island ===================
 Island:

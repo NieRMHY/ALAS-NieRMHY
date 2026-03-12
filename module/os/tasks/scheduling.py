@@ -914,7 +914,7 @@ class OpsiScheduling(CoinTaskMixin, OSMap):
                 return (False, "数据不足")
 
             # 获取模式
-            mode = self._get_meow_start_early_mode()
+            mode = self._get_meow_monthly_cleanup_mode()
             multiplier_map = {
                 'aggressive': 0.8,
                 'balanced': 1.2,
@@ -944,26 +944,21 @@ class OpsiScheduling(CoinTaskMixin, OSMap):
                 # 行动力不足，应该开始
                 return (True, "行动力不足，需要现在开始短猫")
 
-            # 获取当前时间
-            from datetime import datetime, timedelta
+            # 以“下个月大世界刷新时间”为基准，而不是每日服务器刷新时间
+            from datetime import datetime
+            from module.config.utils import get_os_next_reset
+
             now = datetime.now()
-            reset_hour = 4  # 碧蓝航线服务器刷新时间是4点
-
-            # 计算到服务器刷新的时间
-            if now.hour >= reset_hour:
-                next_reset = datetime(now.year, now.month, now.day, reset_hour) + timedelta(days=1)
-            else:
-                next_reset = datetime(now.year, now.month, now.day, reset_hour)
-
+            next_reset = get_os_next_reset()
             hours_to_reset = (next_reset - now).total_seconds() / 3600
 
-            # 如果距离刷新时间小于需要提前的时间，说明应该开始短猫了
+            # 如果距离大世界重置时间小于需要提前的时间，说明应该开始短猫了
             if hours_to_reset < advance_hours:
-                reason = f"距离刷新还有{hours_to_reset:.1f}小时，需要提前{advance_hours:.1f}小时开始"
+                reason = f"距离大世界重置还有{hours_to_reset:.1f}小时，需要提前{advance_hours:.1f}小时开始"
                 return (True, reason)
 
             # 正常情况
-            return (False, f"预计{hours_to_reset:.1f}小时后行动力耗尽，无需提前")
+            return (False, f"距离大世界重置还有{hours_to_reset:.1f}小时，无需提前")
 
         except Exception as e:
             logger.debug(f"判断短猫提前开始失败: {e}")
@@ -986,9 +981,11 @@ class OpsiScheduling(CoinTaskMixin, OSMap):
             - avg_meow_round_time: 平均每轮短猫耗时(秒)
             - available_rounds: 当前AP可运行轮数
             - hours_ahead: 建议提前小时数
+            - start_cleanup_time: 建议开始清理时间（格式: MM-DD HH:MM）
+            - next_os_reset_time: 下次大世界重置时间（格式: MM-DD HH:MM）
             - recommendation: 建议文本
         """
-        from datetime import datetime
+        from module.config.utils import get_os_next_reset
 
         # 获取当前模式
         mode = self.config.cross_get(
@@ -1006,8 +1003,23 @@ class OpsiScheduling(CoinTaskMixin, OSMap):
         # 每轮短猫消耗的AP（固定30）
         meow_round_ap = MEOW_ROUND_AP_COST
 
-        # 获取当前行动力
-        current_ap = self.get_action_point()
+        # 获取当前行动力：优先实时读取，失败时回退到数据库快照
+        current_ap = 0
+        ap_source = 'none'
+        try:
+            current_ap = int(self.get_action_point())
+            ap_source = 'realtime'
+        except Exception:
+            try:
+                from module.statistics.opsi_month import get_ap_timeline
+                instance_name = getattr(self.config, 'config_name', 'default')
+                ap_timeline = get_ap_timeline(instance_name=instance_name)
+                if ap_timeline:
+                    current_ap = int(ap_timeline[-1].get('ap', 0) or 0)
+                    ap_source = 'snapshot'
+            except Exception:
+                current_ap = 0
+                ap_source = 'none'
 
         # 获取平均每轮短猫耗时
         try:
@@ -1037,6 +1049,19 @@ class OpsiScheduling(CoinTaskMixin, OSMap):
         # 限制最小和最大值
         advance_hours = max(0, min(advance_hours, 168))  # 最多提前7天
 
+        # 计算建议开始清理时间（以大世界下次重置时间为基准）
+        now = datetime.now()
+        try:
+            next_reset = get_os_next_reset()
+            start_cleanup_dt = next_reset - timedelta(hours=advance_hours)
+            if start_cleanup_dt < now:
+                start_cleanup_dt = now
+            start_cleanup_time = start_cleanup_dt.strftime('%m-%d %H:%M')
+            next_os_reset_time = next_reset.strftime('%m-%d %H:%M')
+        except Exception:
+            start_cleanup_time = '-'
+            next_os_reset_time = '-'
+
         # 模式名称映射
         mode_names = {
             'aggressive': '激进',
@@ -1056,6 +1081,16 @@ class OpsiScheduling(CoinTaskMixin, OSMap):
                 f"{'，建议提前开始' if advance_hours > 24 else ''}"
             )
 
+        if ap_source == 'snapshot':
+            recommendation = f"{recommendation}（AP来自最近快照）"
+        elif ap_source == 'none':
+            recommendation = f"{recommendation}（未获取到AP，按0计算）"
+
+        if start_cleanup_time != '-' and next_os_reset_time != '-':
+            recommendation = (
+                f"{recommendation}；建议开始清理时间：{start_cleanup_time}（下次大世界重置：{next_os_reset_time}）"
+            )
+
         return {
             'mode': mode,
             'mode_name': mode_names.get(mode, '均衡'),
@@ -1065,5 +1100,7 @@ class OpsiScheduling(CoinTaskMixin, OSMap):
             'avg_meow_round_time': round(avg_meow_round_time, 1) if avg_meow_round_time else 0,
             'available_rounds': round(available_rounds, 1),
             'hours_ahead': round(advance_hours, 1),
+            'start_cleanup_time': start_cleanup_time,
+            'next_os_reset_time': next_os_reset_time,
             'recommendation': recommendation,
         }

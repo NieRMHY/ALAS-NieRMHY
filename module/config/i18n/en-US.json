@@ -70,6 +70,10 @@
       "name": "3-Oil Low Cost+",
       "help": "Use a 3-oil low-cost fleet to fight. Automatically replaces and retires the flagship when it reaches level 32."
     },
+    "Ambush11": {
+      "name": "Task.Ambush11.name",
+      "help": "Task.Ambush11.help"
+    },
     "EventGeneral": {
       "name": "Event General",
       "help": ""
@@ -281,6 +285,10 @@
     "OpsiDailyDelay": {
       "name": "OpSi Task Delay+",
       "help": "    Within a configurable time period before the daily server restart at 0:00 (default is 5 minutes, triggered at 23:55), automatically delays the currently running Corrosion 1 and Meowfficer Farming tasks until after the restart at 0:00 the next day."
+    },
+    "OpsiSimulator": {
+      "name": "Task.OpsiSimulator.name",
+      "help": "Task.OpsiSimulator.help"
     },
     "IslandInfo": {
       "name": "Island Info (Incomplete)",
@@ -1644,6 +1652,14 @@
     "CommissionLimit": {
       "name": "Prevent the number of emergency commissions from being too large",
       "help": "To prevent the number of emergency orders from being too large and unable to complete daily orders when running 7x24, it is recommended to select only short-term high-yield orders in the order filter."
+    },
+    "VanguardLevelMin": {
+      "name": "GemsFarming.VanguardLevelMin.name",
+      "help": "GemsFarming.VanguardLevelMin.help"
+    },
+    "VanguardLevelMax": {
+      "name": "GemsFarming.VanguardLevelMax.name",
+      "help": "GemsFarming.VanguardLevelMax.help"
     }
   },
   "EventGeneral": {
@@ -4909,14 +4925,14 @@
     },
     "MeowStartEarlyMode": {
       "name": "Month-End AP Auto-Cleanup Mode",
-      "help": "Aggressive (×0.8): Start later, saves AP but may miss refresh; Balanced (×1.2): Normal advance, balances safety and efficiency; Conservative (×1.5): Start earlier, prioritizes safety but may waste AP",
+      "help": "Advance hours = (Current AP / 30 × historical average time per Meow run) × mode multiplier, then compared with time remaining until next month Operation Siren reset; Aggressive (×0.8) starts less in advance, Balanced (×1.2) is neutral, Conservative (×1.5) starts more in advance",
       "aggressive": "Aggressive",
       "balanced": "Balanced",
       "conservative": "Conservative"
     },
     "MeowStartEarlyEnable": {
       "name": "Enable Month-End AP Auto-Cleanup",
-      "help": "Based on historical AP consumption rate, automatically determine whether to start the Meowfficer Farming task early to clean up excess AP at month-end."
+      "help": "Automatically decides whether to start Meowfficer Farming early for month-end AP cleanup based on historical Meow timing and current AP; the decision target is the next month Operation Siren reset time, not daily server refresh."
     }
   },
   "OpsiDailyDelay": {
@@ -5086,6 +5102,16 @@
       "help": "Automatically restart the simulator every few hours."
     }
   },
+  "OpsiSimulatorParameters": {
+    "_info": {
+      "name": "OpsiSimulatorParameters._info.name",
+      "help": "OpsiSimulatorParameters._info.help"
+    },
+    "Samples": {
+      "name": "OpsiSimulatorParameters.Samples.name",
+      "help": "OpsiSimulatorParameters.Samples.help"
+    }
+  },
   "Storage": {
     "_info": {
       "name": "Task status",
@@ -5117,7 +5143,8 @@
       "CheckUpdate": "Check for Updates",
       "ClickToUpdate": "Update Now",
       "RetryUpdate": "Retry Update",
-      "CancelUpdate": "Cancel Update"
+      "CancelUpdate": "Cancel Update",
+      "Open": "Open"
     },
     "Toast": {
       "DisableTranslateMode": "Click here to turn off translation mode",
@@ -5169,7 +5196,8 @@
       "Running": "Running",
       "Pending": "in queue",
       "Waiting": "Waiting",
-      "NoTask": "No tasks"
+      "NoTask": "No tasks",
+      "Stat": "Statistics"
     },
     "Dashboard": {
       "TimeError": "time error",
@@ -5258,6 +5286,94 @@
       "EnterPassword": "Enter password",
       "ChooseFile": "Select file"
     },
+    "Stat": {
+      "LoadApDataFailed": "Failed to load AP data: {e}",
+      "NoApData": "No AP change data yet. Data will be recorded after running OpSi-1.",
+      "Refresh": "Refresh",
+      "NoValidApData": "No valid AP data available.",
+      "ViewTitleLine": "Intraday Line (Detailed Fluctuation)",
+      "ViewTitleDay": "Day View ({day} Hourly Candles)",
+      "ViewTitleMonth": "Month View (Daily Candles)",
+      "CannotAggregateKline": "Unable to aggregate candle data.",
+      "ViewLineShort": "Line",
+      "DataPointsCount": "{count} data points",
+      "CandlesCount": "{count} candles",
+      "ViewLineButton": "Intraday (Detailed)",
+      "ViewDayButton": "Day View (Hourly K)",
+      "ViewMonthButton": "Month View (Daily K)",
+      "LoadOpsiStatsFailed": "Failed to load OpSi stats: {e}",
+      "LoadExpStatsFailed": "Failed to load EXP stats: {e}",
+      "DailyExpCheckTitle": "Daily EXP Check",
+      "CheckTime": "Check time: {value}",
+      "TargetLevel": "Target level: {value}",
+      "ShipSlot": "Slot",
+      "Level": "Level",
+      "CurrentExpThisLevel": "Current EXP (Level)",
+      "TotalExp": "Total EXP",
+      "ExpToTarget": "EXP to target",
+      "SortiesNeeded": "Sorties needed",
+      "EstimatedTime": "Estimated time",
+      "NoExpData": "No EXP data yet. Data will be recorded after OpSi-1 leveling.",
+      "Month": "Month",
+      "BattleCount": "Battles",
+      "BattleRounds": "Rounds",
+      "SortieCost": "Sortie Cost",
+      "AkashiEncounters": "Akashi Encounters",
+      "AkashiRate": "Akashi Rate",
+      "AverageAP": "Average AP",
+      "NetAP": "Net AP",
+      "LoopEfficiency": "Loop Efficiency",
+      "ExpEfficiency": "EXP efficiency: {value}/{unit}",
+      "ExpEfficiencyHeader": "EXP Efficiency",
+      "AvgBattleTime": "Avg battle time: {value}{unit}",
+      "AvgBattleTimeHeader": "Avg battle time",
+      "AvgRoundTime": "Avg round time",
+      "TodayBattles": "Today battles: {value}{unit}",
+      "TodayBattlesHeader": "Today battles",
+      "TodayExp": "Today EXP: {value}",
+      "TodayExpHeader": "Today EXP",
+      "TodayRun": "Today run: {value}{unit}",
+      "TodayRunHeader": "Today run",
+      "OpsiDataCollectionTitle": "Yukikaze OpSi-1 Data Collection",
+      "MonthlyPurchasedAP": "Monthly purchased AP: {value}",
+      "MeowDataCollectionTitle": "Meow Session Data",
+      "MeowRounds": "Meow Rounds",
+      "AvgMeowRoundTime": "Avg Meow Round Time",
+      "MeowLootTitle": "Meow Session Loot",
+      "NoMeowDataNotice": "No data yet. Set \"OpSi drop screenshot\" to \"Upload\" first.",
+      "MeowAdvanceAdviceTitle": "Meow Early Start Advice",
+      "CurrentAP": "Current AP: {value}",
+      "ApPerRound": "AP per round: {value} AP",
+      "AvailableRounds": "Available rounds: {value}{unit}",
+      "AvgRoundDuration": "Avg round duration: {value}{unit}",
+      "CurrentMode": "Current mode: {value}",
+      "RecommendAhead": "Recommended lead time: {value}{unit}",
+      "RoundUnit": " rounds",
+      "SecondUnit": "s",
+      "HourUnit": "h",
+      "MinuteUnit": "m",
+      "ExportModuleLoadFailed": "Export failed: cannot load stats module: {e}",
+      "CsvHeaderAkashiRate": "Akashi Rate (%)",
+      "CsvHeaderLoopEfficiency": "Loop Efficiency (%)",
+      "CsvHeaderMonthlyPurchasedAP": "Monthly Purchased AP",
+      "CsvFilenameTemplate": "opsi1_leveling_{month}_details.csv",
+      "SavedToDesktop": "Saved to desktop: {path}",
+      "SaveDesktopFailed": "Failed to save to desktop: {e}",
+      "ExportAndSaveDesktop": "Export and Save to Desktop",
+      "NoShipExpData": "No ship EXP data. Run \"Daily EXP Check\" first.",
+      "ShipExpProgressTitle": "Daily EXP Check: Detected Ship Levels and Progress",
+      "LastCheckTime": "Last check time: {value}",
+      "AvgOpsiRoundTime": "Avg OpSi-1 round time: {value}{unit}",
+      "TodayBattleUnit": "",
+      "NoTodayBattleData": "No battle data for today yet. It will update automatically after battles.",
+      "LoadShipExpFailed": "Failed to load ship EXP data: {e}",
+      "TargetExpRequired": "EXP required for target level",
+      "BattlesCompleted": "Battles completed",
+      "ExpRemaining": "EXP remaining",
+      "StartCleanupTime": "Suggested cleanup start: {value}",
+      "NextOsReset": "Next OS reset: {value}",
+      "MeowAutoCleanupStatus": "Auto early cleanup: {value}"
+    },
     "OpsiScheduling": {
       "UseSmartSchedulingOperationCoinsPreserve": "Gui.OpsiScheduling.UseSmartSchedulingOperationCoinsPreserve",
       "OperationCoinsPreserve": "Gui.OpsiScheduling.OperationCoinsPreserve",
@@ -5268,6 +5384,10 @@
       "EnableAbyssal": "Gui.OpsiScheduling.EnableAbyssal",
       "EnableStronghold": "Gui.OpsiScheduling.EnableStronghold",
       "MeowStartEarlyMode": "Gui.OpsiScheduling.MeowStartEarlyMode"
+    },
+    "Misc": {
+      "Enabled": "Enabled",
+      "Disabled": "Disabled"
     }
   }
 }

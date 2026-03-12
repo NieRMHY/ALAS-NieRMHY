@@ -172,7 +172,7 @@ DropRecord:
     value: do_not
     option: [do_not, save]
   OpsiRecord:
-    value: do_not
+    value: upload
     option: [do_not, save, upload, save_and_upload]
   MeowfficerBuy:
     value: do_not
@@ -240,6 +240,7 @@ YukikazeTaskManager:
       > Event > Event2 > Raid > Hospital > HospitalEvent > Coalition > RaidScuttle > Main > Main2 > Main3
       > OpsiMeowfficerFarming
       > GemsFarming
+      > Ambush11
       > OpsiHazard1Leveling
       > ThreeOilLowCost
 OneClickRetire:
@@ -447,6 +448,12 @@ GemsFarming:
   ALLowLowVanguardLevel: false
   DelayTaskIFNoFlagship: false
   CommissionLimit: false
+  VanguardLevelMin:
+    value: 1
+    validate: [1, 125]
+  VanguardLevelMax:
+    value: 125
+    validate: [1, 125]
 
 # ==================== Event ====================
 
@@ -1148,7 +1155,8 @@ OpsiMeowfficerFarming:
     value: 2
     option: [ 1, 2, 3, 4 ]
   SirenDetectorSearch_StopAfterFound:
-    value: 0
+    value: 1
+    validate: ^[1-4]$
   SirenDetectorSearch_FoundZones:
     type: textarea
     value: ""
@@ -1289,3 +1297,5 @@ EmulatorManagement:
   RestartIntervalHours:
     value: 4
     validate: [1, 24]
+OpsiSimulatorParameters:
+  Samples: 1000

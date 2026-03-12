@@ -16,7 +16,8 @@
       "Main2",
       "Main3",
       "GemsFarming",
-      "ThreeOilLowCost"
+      "ThreeOilLowCost",
+      "Ambush11"
     ]
   },
   "Event": {
@@ -99,7 +100,8 @@
       "OpsiHazard1Leveling",
       "OpsiScheduling",
       "OpsiCrossMonth",
-      "OpsiDailyDelay"
+      "OpsiDailyDelay",
+      "OpsiSimulator"
     ]
   },
   "Island": {

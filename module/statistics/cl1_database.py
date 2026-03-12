@@ -271,20 +271,46 @@ class Cl1Database:
 
     # ========== 短猫数据记录方法 ==========
 
-    def increment_meow_battle_count(self, instance: str, delta: int = 1):
-        """增加短猫战斗次数"""
+    def increment_meow_battle_count(self, instance: str, hazard_level: int = None, delta: float = None):
+        """增加短猫有效战斗轮数
+
+        Args:
+            instance: 实例名称
+            hazard_level: 侵蚀等级，用于换算有效战斗轮数（2-3: 每轮2次, 4-6: 每轮3次）
+            delta: 直接指定增加的有效轮数，用于向后兼容。如果提供此参数，则忽略 hazard_level
+        """
+        # 根据侵蚀等级换算有效战斗轮数
+        # 侵蚀2-3: 每轮2次战斗 -> 有效轮数 = 战斗次数 / 2
+        # 侵蚀4-6: 每轮3次战斗 -> 有效轮数 = 战斗次数 / 3
+        if delta is not None:
+            # 直接使用 delta，保持向后兼容
+            pass
+        elif hazard_level is not None and hazard_level in [2, 3, 4, 5, 6]:
+            if hazard_level in [2, 3]:
+                delta = 0.5  # 2次战斗算1轮
+            else:  # 4, 5, 6
+                delta = 1 / 3  # 3次战斗算1轮
+        else:
+            delta = 1  # 默认直接加1
+
         month = datetime.now().strftime('%Y-%m')
         data = self.get_stats(instance, month)
         data['meow_battle_count'] = data.get('meow_battle_count', 0) + delta
         self.save_stats(instance, month, data)
 
-    def add_meow_round_time(self, instance: str, duration: float):
+    def add_meow_round_time(self, instance: str, duration: float, hazard_level: int = None):
         """记录短猫单轮战斗时间
 
         Args:
             instance: 实例名称
             duration: 战斗耗时（秒）
+            hazard_level: 侵蚀等级，用于计算出击轮次（2-6）
         """
+        # 验证 hazard_level 是否在有效范围内
+        if hazard_level is not None and hazard_level not in [2, 3, 4, 5, 6]:
+            logger.debug(f'Invalid hazard_level {hazard_level}, ignoring')
+            hazard_level = None
+
         month = datetime.now().strftime('%Y-%m')
         data = self.get_stats(instance, month)
 
@@ -292,13 +318,28 @@ class Cl1Database:
             data['meow_round_times'] = []
 
         times = data['meow_round_times']
-        times.append(round(duration, 2))
+
+        # 迁移旧数据：将浮点数转换为字典格式
+        normalized_times = []
+        for entry in times:
+            if isinstance(entry, dict) and 'duration' in entry:
+                normalized_times.append(entry)
+            elif isinstance(entry, (int, float)):
+                # 旧格式：裸浮点数，转换为新格式
+                normalized_times.append({'duration': float(entry), 'hazard_level': None})
+
+        # 保存为字典，包含时长和侵蚀等级
+        new_entry = {
+            'duration': round(duration, 2),
+            'hazard_level': hazard_level
+        }
+        normalized_times.append(new_entry)
 
         # 只保留最近100个样本
-        if len(times) > 100:
-            times = times[-100:]
+        if len(normalized_times) > 100:
+            normalized_times = normalized_times[-100:]
 
-        data['meow_round_times'] = times
+        data['meow_round_times'] = normalized_times
         self.save_stats(instance, month, data)
 
     def add_meow_battle_time(self, instance: str, duration: float):
@@ -343,14 +384,23 @@ class Cl1Database:
 
         data = self.get_stats(instance, key)
 
-        battle_count = int(data.get('meow_battle_count', 0))
+        battle_count = round(data.get('meow_battle_count', 0))
         round_times = data.get('meow_round_times', [])
         battle_times = data.get('meow_battle_times', [])
 
+        # 提取时长数据（兼容旧格式：浮点数和新格式：字典）
+        round_durations = []
+        for entry in round_times:
+            if isinstance(entry, dict) and 'duration' in entry:
+                round_durations.append(entry['duration'])
+            elif isinstance(entry, (int, float)):
+                # 兼容旧格式：裸浮点数
+                round_durations.append(float(entry))
+
         # 计算平均每轮时间
         avg_round_time = 0.0
-        if round_times:
-            avg_round_time = round(sum(round_times) / len(round_times), 2)
+        if round_durations:
+            avg_round_time = round(sum(round_durations) / len(round_durations), 2)
 
         # 计算平均单场战斗时间
         avg_battle_time = 0.0

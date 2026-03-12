@@ -70,6 +70,10 @@
       "name": "三油低耗+",
       "help": "使用三油低耗阵容进行战斗，在旗舰达到32级时自动更换旗舰并退役。"
     },
+    "Ambush11": {
+      "name": "1-1刷伏击(尚不完善)",
+      "help": "在1-1不打boss刷伏击获得物资等，支持按紧急委托流程自动换船。"
+    },
     "EventGeneral": {
       "name": "活动通用",
       "help": ""
@@ -281,6 +285,10 @@
     "OpsiDailyDelay": {
       "name": "大世界任务延后+",
       "help": "    在每日0点服务器重启前的可配置时间段内（默认为5分钟，即23:55触发），将当前进行中的侵蚀一和短猫任务自动延后至次日0点重启完成后再执行   "
+    },
+    "OpsiSimulator": {
+      "name": "大世界模拟器 Alpha",
+      "help": "使用蒙特卡洛算法估算在当前状态下持续进行侵蚀循环一段时间后的结果，该功能不会影响Alas正常运行\n模型所用参数均取自Alas配置和统计，请确保正确配置了智能调度等大世界设置\n目前为测试版本，短猫只支持侵蚀5，结果不具备太多参考价值"
     },
     "IslandInfo": {
       "name": "岛屿信息(未完成)",
@@ -1579,7 +1587,7 @@
   },
   "GemsFarming": {
     "_info": {
-      "name": "刷紧急委托",
+      "name": "1-1刷伏击配置",
       "help": "警告: 这个功能可以让玩家获取少量的钻石，但不是一个能高效获取钻石的方法\n玩碧蓝航线不久的玩家, 很容易迷信零破和低耗等, 而忽视了角色养成\n运行这个功能只会让你自己感觉很充实, 而你的帐号实际零提升\n这个功能的主要用途，是让阵容成型的玩家获取额外的魔方，请理性地把钻石当作副产物\n\n这个功能将在旗舰32级之后更换旗舰\n关于紧急委托刷新机制, 可阅读 https://bbs.nga.cn/read.php?tid=27134956\n委托油耗比: A3 > A1 > 2-4 > 2-1, 有活动图时建议选活动图, 2-1会拣问号有更多物资\n一队会完成所有的战斗, 前排应当为百级零破驱逐带输出装, 后排应该为33级及以下白皮零破航母\n二队应提供跨队支援（跨队弹幕、跨队辅助）\n\n无法设置舰队职能时，以以下方式停止任务以免跨队队伍出击，石油被大量消耗：\n若设置了错误推送则推送任务停止的消息并停止该任务。\n若没有设置错误推送，则直接停止Alas。"
     },
     "ChangeFlagship": {
@@ -1644,6 +1652,14 @@
     "CommissionLimit": {
       "name": "防止紧急委托数量过多",
       "help": "在7x24运行时防止紧急委托数量过多做不完每日委托，建议在委托过滤器仅选择短时长高收益委托"
+    },
+    "VanguardLevelMin": {
+      "name": "前排最低等级",
+      "help": "用于筛选符合条件的白皮前排，默认为1。"
+    },
+    "VanguardLevelMax": {
+      "name": "前排最高等级",
+      "help": "用于筛选符合条件的白皮前排，默认为125。"
     }
   },
   "EventGeneral": {
@@ -4742,11 +4758,11 @@
     },
     "SirenDetectorSearch_StopAfterFound": {
       "name": "寻找 X 个塞壬探测装置后停止",
-      "help": "寻找并记录到指定数量的塞壬探测装置后，停止搜索并回到正常短猫流程（ 实际上找了x个装置的数量是由下面的记录表决定的，如果记录表为空，则找x个装置后停止）记录中有y个装置，则找x-y个装置后停止\n设置为 0 表示不限制，会一直搜索直到行动力不足"
+      "help": "寻找并记录到指定数量的塞壬探测装置后，停止搜索并回到正常短猫流程。\n统计和停止条件按当前所选侵蚀等级（5级/6级）分别计算，不会混算。\n警告：此项最小值为 1，不可填写 0。\n中心海域中 5 级海域有 4 个，6 级海域有 4 个。填写数量不能大于当前所选侵蚀等级的实际海域数量（最大 4）。"
     },
     "SirenDetectorSearch_FoundZones": {
       "name": "已找到的塞壬探测装置海域",
-      "help": "已找到的塞壬探测装置海域，如果对应海域的塞壬探测装置已经被使用，则可以手动删除对应海域的记录"
+      "help": "已找到的塞壬探测装置海域，会按侵蚀等级分开记录并分开排除。若对应海域的塞壬探测装置已经被使用，可手动删除该海域记录。"
     }
   },
   "OpsiHazard1Leveling": {
@@ -4909,14 +4925,14 @@
     },
     "MeowStartEarlyMode": {
       "name": "月末行动力自动清理模式",
-      "help": "激进模式(×0.8)：少提前，节省行动力但可能错过刷新；均衡模式(×1.2)：正常提前，平衡安全与效率；保守模式(×1.5)：多提前，安全优先但可能浪费行动力",
+      "help": "提前小时数 = (当前行动力/30 × 历史平均每轮短猫耗时) × 模式系数，并与“下个月大世界重置剩余时间”比较；激进(×0.8)少提前，均衡(×1.2)平衡，保守(×1.5)多提前",
       "aggressive": "激进模式",
       "balanced": "均衡模式",
       "conservative": "保守模式"
     },
     "MeowStartEarlyEnable": {
       "name": "启用月末行动力自动清理",
-      "help": "根据历史AP消耗速率，自动判断是否需要提前开始短猫任务来清理月末过剩的行动力"
+      "help": "根据历史短猫耗时与当前行动力，自动判断是否需要提前开始短猫来清理月末过剩行动力；判断基准为“下个月大世界重置时间”，不是每日服务器刷新时间"
     }
   },
   "OpsiDailyDelay": {
@@ -5086,6 +5102,16 @@
       "help": "每隔多少小时自动重启一次模拟器。"
     }
   },
+  "OpsiSimulatorParameters": {
+    "_info": {
+      "name": "参数设置",
+      "help": ""
+    },
+    "Samples": {
+      "name": "采样数",
+      "help": "理论上越大模拟越精准但是更消耗性能"
+    }
+  },
   "Storage": {
     "_info": {
       "name": "任务状态",
@@ -5117,7 +5143,8 @@
       "CheckUpdate": "检查更新",
       "ClickToUpdate": "进行更新",
       "RetryUpdate": "重试更新",
-      "CancelUpdate": "取消更新"
+      "CancelUpdate": "取消更新",
+      "Open": "打开"
     },
     "Toast": {
       "DisableTranslateMode": "点击这里关闭翻译模式",
@@ -5169,7 +5196,8 @@
       "Running": "运行中",
       "Pending": "队列中",
       "Waiting": "等待中",
-      "NoTask": "无任务"
+      "NoTask": "无任务",
+      "Stat": "统计界面"
     },
     "Dashboard": {
       "TimeError": "时间错误",
@@ -5258,6 +5286,94 @@
       "EnterPassword": "输入密码",
       "ChooseFile": "选择文件"
     },
+    "Stat": {
+      "LoadApDataFailed": "加载体力数据失败: {e}",
+      "NoApData": "暂无体力变化数据，运行侵蚀1任务后将自动记录",
+      "Refresh": "刷新",
+      "NoValidApData": "暂无有效体力数据",
+      "ViewTitleLine": "分时曲线 (详细波动)",
+      "ViewTitleDay": "天视图 ({day} 小时K线)",
+      "ViewTitleMonth": "月视图 (日K线)",
+      "CannotAggregateKline": "无法聚合K线数据",
+      "ViewLineShort": "分时",
+      "DataPointsCount": "共 {count} 个点",
+      "CandlesCount": "共 {count} 根K线",
+      "ViewLineButton": "分时(详细波动)",
+      "ViewDayButton": "天视图(小时K)",
+      "ViewMonthButton": "月视图(日K)",
+      "LoadOpsiStatsFailed": "加载 OpSi 统计失败: {e}",
+      "LoadExpStatsFailed": "加载经验统计失败: {e}",
+      "DailyExpCheckTitle": "每日经验检测",
+      "CheckTime": "检测时间: {value}",
+      "TargetLevel": "目标等级: {value}",
+      "ShipSlot": "舰位",
+      "Level": "等级",
+      "CurrentExpThisLevel": "当前经验(本级)",
+      "TotalExp": "总经验",
+      "ExpToTarget": "距目标经验",
+      "SortiesNeeded": "还需出击",
+      "EstimatedTime": "预计时间",
+      "NoExpData": "暂无经验数据，运行侵蚀1练级后将自动记录",
+      "Month": "月份",
+      "BattleCount": "战斗场次",
+      "BattleRounds": "战斗轮次",
+      "SortieCost": "出击消耗",
+      "AkashiEncounters": "遇见明石次数",
+      "AkashiRate": "遇见明石概率",
+      "AverageAP": "平均体力",
+      "NetAP": "净赚体力",
+      "LoopEfficiency": "循环效率",
+      "ExpEfficiency": "经验效率: {value}/{unit}",
+      "ExpEfficiencyHeader": "经验效率",
+      "AvgBattleTime": "平均战斗时间: {value}{unit}",
+      "AvgBattleTimeHeader": "平均战斗时间",
+      "AvgRoundTime": "平均一轮时长",
+      "TodayBattles": "今日战斗: {value}{unit}",
+      "TodayBattlesHeader": "今日战斗",
+      "TodayExp": "今日经验: {value}",
+      "TodayExpHeader": "今日经验",
+      "TodayRun": "今日运行: {value}{unit}",
+      "TodayRunHeader": "今日运行",
+      "OpsiDataCollectionTitle": "雪风大人的侵蚀一数据收集",
+      "MonthlyPurchasedAP": "当月购买体力: {value}",
+      "MeowDataCollectionTitle": "短猫相接数据收集",
+      "MeowRounds": "出击轮次",
+      "AvgMeowRoundTime": "平均一轮短猫时长",
+      "MeowLootTitle": "短猫相接收获",
+      "NoMeowDataNotice": "暂无数据，请将\"大世界掉落截图\"设置为\"上传\"",
+      "MeowAdvanceAdviceTitle": "短猫提前开始建议",
+      "CurrentAP": "当前AP: {value}",
+      "ApPerRound": "每轮消耗: {value} AP",
+      "AvailableRounds": "可运行轮数: {value}{unit}",
+      "AvgRoundDuration": "平均每轮耗时: {value}{unit}",
+      "CurrentMode": "当前模式: {value}",
+      "RecommendAhead": "建议提前: {value}{unit}",
+      "RoundUnit": "轮",
+      "SecondUnit": "秒",
+      "HourUnit": "小时",
+      "MinuteUnit": "分钟",
+      "ExportModuleLoadFailed": "导出失败：无法加载统计模块：{e}",
+      "CsvHeaderAkashiRate": "遇见明石概率(%)",
+      "CsvHeaderLoopEfficiency": "循环效率(%)",
+      "CsvHeaderMonthlyPurchasedAP": "当月购买体力",
+      "CsvFilenameTemplate": "侵蚀1练级_{month}_详细数据.csv",
+      "SavedToDesktop": "已保存至桌面：{path}",
+      "SaveDesktopFailed": "保存桌面失败：{e}",
+      "ExportAndSaveDesktop": "导出并保存到桌面",
+      "NoShipExpData": "暂无舰船经验数据，请先运行\"每日经验检测\"任务",
+      "ShipExpProgressTitle": "每日经验检测：识别到的舰娘等级与升级进度",
+      "LastCheckTime": "上次检查时间: {value}",
+      "AvgOpsiRoundTime": "平均一轮侵蚀1时长: {value}{unit}",
+      "TodayBattleUnit": "场",
+      "NoTodayBattleData": "暂无今日战斗数据，运行战斗后将自动更新",
+      "LoadShipExpFailed": "加载舰船经验数据失败: {e}",
+      "TargetExpRequired": "目标等级所需经验",
+      "BattlesCompleted": "已战斗场次",
+      "ExpRemaining": "还需经验",
+      "StartCleanupTime": "建议开始清理时间: {value}",
+      "NextOsReset": "下次大世界重置: {value}",
+      "MeowAutoCleanupStatus": "自动提前清理: {value}"
+    },
     "OpsiScheduling": {
       "UseSmartSchedulingOperationCoinsPreserve": "Gui.OpsiScheduling.UseSmartSchedulingOperationCoinsPreserve",
       "OperationCoinsPreserve": "Gui.OpsiScheduling.OperationCoinsPreserve",
@@ -5268,6 +5384,10 @@
       "EnableAbyssal": "Gui.OpsiScheduling.EnableAbyssal",
       "EnableStronghold": "Gui.OpsiScheduling.EnableStronghold",
       "MeowStartEarlyMode": "Gui.OpsiScheduling.MeowStartEarlyMode"
+    },
+    "Misc": {
+      "Enabled": "已开启",
+      "Disabled": "未开启"
     }
   }
 }

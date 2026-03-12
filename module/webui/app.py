@@ -16,6 +16,8 @@ from typing import Dict, List, Optional, Any
 
 # Import fake module before import pywebio to avoid importing unnecessary module PIL
 from module.webui.fake_pil_module import import_fake_pil_module
+from module.statistics.azurstats import AzurStats
+from module.os.simulator import OSSimulator
 
 import_fake_pil_module()
 
@@ -211,6 +213,7 @@ class AlasGUI(Frame):
         # rendered state cache
         self.rendered_cache = []
         self.inst_cache = []
+        self._overview_snapshot = None
         self.load_home = False
         self.af_flag = False
         self.last_displayed_screenshot_base64 = None
@@ -218,6 +221,8 @@ class AlasGUI(Frame):
         self._announcement_result = None
         self._announcement_fetching = False
         self._announcement_force = False
+        self.simulator = OSSimulator()
+        self._simulator_logger_pm = None
 
 
 
@@ -396,594 +401,716 @@ class AlasGUI(Frame):
         self.alas_overview()
 
     @use_scope("content", clear=True)
+    def alas_set_stat(self):
+        self.init_menu(name='Stat')
+        self.set_title(t("Gui.Overview.Stat"))
+
+        # ========== 体力K线图 ==========
+        # 当前视图状态: 'month' 或 'day' 或 'line'
+        if not hasattr(self, '_ap_chart_view'):
+            self._ap_chart_view = 'line'
+
+        def _render_ap_chart():
+            try:
+                from module.statistics.opsi_month import get_ap_timeline
+                instance_name = self.alas_name if hasattr(self, 'alas_name') and self.alas_name else None
+                if not instance_name:
+                    from module.config.utils import alas_instance
+                    all_instances = alas_instance()
+                    instance_name = all_instances[0] if all_instances else None
+                timeline = get_ap_timeline(instance_name=instance_name)
+            except Exception as e:
+                with use_scope("ap_chart", clear=True):
+                    put_text(t("Gui.Stat.LoadApDataFailed", e=e))
+                return
+
+            if not timeline:
+                with use_scope("ap_chart", clear=True):
+                    put_html(build_muted_notice(t("Gui.Stat.NoApData")))
+                    put_button(t("Gui.Stat.Refresh"), onclick=_render_ap_chart, color="off")
+                return
+
+            # 解析原始数据点
+            from datetime import datetime as _dt
+            import json as _json
+            raw_points = []
+            for pt in timeline:
+                ts_raw = pt.get('ts', '')
+                try:
+                    dt = _dt.fromisoformat(ts_raw)
+                except Exception:
+                    continue
+                raw_points.append({'dt': dt, 'ap': int(pt.get('ap', 0))})
+
+            if not raw_points:
+                with use_scope("ap_chart", clear=True):
+                    put_html(build_muted_notice(t("Gui.Stat.NoValidApData")))
+                return
+
+            raw_points.sort(key=lambda p: p['dt'])
+            current_view = getattr(self, '_ap_chart_view', 'line')
+
+            labels = []
+            opens = []
+            highs = []
+            lows = []
+            closes = []
+            counts = []
+            ap_list = []
+
+            if current_view == 'line':
+                for p in raw_points:
+                    labels.append(p['dt'].strftime('%m-%d %H:%M'))
+                    ap_list.append(p['ap'])
+                view_title = t("Gui.Stat.ViewTitleLine")
+            else:
+                from collections import OrderedDict
+                candles = OrderedDict()
+                if current_view == 'day':
+                    today = _dt.now().date()
+                    today_points = [p for p in raw_points if p['dt'].date() == today]
+                    if not today_points:
+                        last_date = raw_points[-1]['dt'].date()
+                        today_points = [p for p in raw_points if p['dt'].date() == last_date]
+                        today = last_date
+                    for p in today_points:
+                        hour_key = p['dt'].strftime('%H:00')
+                        if hour_key not in candles:
+                            candles[hour_key] = {'open': p['ap'], 'high': p['ap'], 'low': p['ap'], 'close': p['ap'], 'count': 1}
+                        else:
+                            c = candles[hour_key]
+                            c['high'] = max(c['high'], p['ap'])
+                            c['low'] = min(c['low'], p['ap'])
+                            c['close'] = p['ap']
+                            c['count'] += 1
+                    view_title = t("Gui.Stat.ViewTitleDay", day=today.strftime('%m-%d'))
+                else:
+                    for p in raw_points:
+                        day_key = p['dt'].strftime('%m-%d')
+                        if day_key not in candles:
+                            candles[day_key] = {'open': p['ap'], 'high': p['ap'], 'low': p['ap'], 'close': p['ap'], 'count': 1}
+                        else:
+                            c = candles[day_key]
+                            c['high'] = max(c['high'], p['ap'])
+                            c['low'] = min(c['low'], p['ap'])
+                            c['close'] = p['ap']
+                            c['count'] += 1
+                    view_title = t("Gui.Stat.ViewTitleMonth")
+                    
+                if not candles:
+                    with use_scope("ap_chart", clear=True):
+                        put_html(build_muted_notice(t("Gui.Stat.CannotAggregateKline")))
+                        put_button(t("Gui.Stat.ViewLineShort"), onclick=lambda: (setattr(self, '_ap_chart_view', 'line'), _render_ap_chart()), color="off")
+                    return
+                for k, v in candles.items():
+                    labels.append(k)
+                    opens.append(v['open'])
+                    highs.append(v['high'])
+                    lows.append(v['low'])
+                    closes.append(v['close'])
+                    counts.append(v['count'])
+
+            all_ap = [p['ap'] for p in raw_points]
+            ap_max = max(all_ap)
+            ap_min = min(all_ap)
+            ap_avg = int(sum(all_ap) / len(all_ap))
+            ap_cur = all_ap[-1]
+            if current_view == 'line':
+                ap_change = ap_list[-1] - ap_list[0] if len(ap_list) >= 2 else 0
+                data_points_text = t("Gui.Stat.DataPointsCount", count=len(labels))
+            else:
+                ap_change = closes[-1] - opens[0] if len(closes) > 0 else 0
+                data_points_text = t("Gui.Stat.CandlesCount", count=len(labels))
+            change_color = '#ef5350' if ap_change >= 0 else '#26a69a'
+            change_sign = '+' if ap_change >= 0 else ''
+
+            chart_id = f"ap_cv_{id(self)}"
+
+            html_tpl = read_webapp_template('ap_chart_panel.html')
+            html = html_tpl.format(
+                chart_id=chart_id,
+                view_title=view_title,
+                ap_cur=ap_cur,
+                change_color=change_color,
+                change_sign=change_sign,
+                ap_change=ap_change,
+                ap_max=ap_max,
+                ap_min=ap_min,
+                ap_avg=ap_avg,
+                data_points_text=data_points_text,
+            )
+
+            js_tpl = read_webapp_template('ap_chart.js')
+            js_code = (js_tpl
+                .replace('__CHART_TYPE__', current_view)
+                .replace('__LABELS__', _json.dumps(labels, ensure_ascii=False))
+                .replace('__OPENS__', _json.dumps(opens))
+                .replace('__HIGHS__', _json.dumps(highs))
+                .replace('__LOWS__', _json.dumps(lows))
+                .replace('__CLOSES__', _json.dumps(closes))
+                .replace('__COUNTS__', _json.dumps(counts))
+                .replace('__AP__', _json.dumps(ap_list))
+                .replace('__AVG__', str(ap_avg))
+                .replace('__CHART_ID__', chart_id)
+            )
+            from pywebio.session import run_js
+            with use_scope("ap_chart", clear=True):
+                put_html(html)
+                run_js(js_code)
+                def _switch_view(v):
+                    self._ap_chart_view = v
+                    _render_ap_chart()
+                put_row([
+                    put_button(t("Gui.Stat.ViewLineButton"), onclick=lambda: _switch_view('line'), color="off" if current_view!='line' else "primary"),
+                    put_button(t("Gui.Stat.ViewDayButton"), onclick=lambda: _switch_view('day'), color="off" if current_view!='day' else "primary"),
+                    put_button(t("Gui.Stat.ViewMonthButton"), onclick=lambda: _switch_view('month'), color="off" if current_view!='month' else "primary"),
+                    put_button(t("Gui.Stat.Refresh"), onclick=_render_ap_chart, color="off"),
+                ], size="auto")
+
+        put_scope("ap_chart", [])
+        _render_ap_chart()
+        self.task_handler.add(_render_ap_chart, 60, True)
+
+        def _render_opsi_stats():
+            try:
+                from module.statistics.opsi_month import get_opsi_stats, compute_monthly_cl1_akashi_ap, get_ap_timeline
+                from module.statistics.cl1_database import db as cl1_db
+                from module.statistics.ship_exp_stats import get_ship_exp_stats
+                # 使用当前实例名称获取统计数据，确保不为空
+                instance_name = self.alas_name if hasattr(self, 'alas_name') and self.alas_name else None
+                if not instance_name:
+                    # 使用第一个可用的实例
+                    from module.config.utils import alas_instance
+                    all_instances = alas_instance()
+                    instance_name = all_instances[0] if all_instances else None
+                s = get_opsi_stats(instance_name=instance_name).summary()
+            except Exception as e:
+                with use_scope("opsi_stats", clear=True):
+                    put_text(t("Gui.Stat.LoadOpsiStatsFailed", e=e))
+                return
+
+            # ====================每日经验检测====================
+            try:
+                exp_stats = get_ship_exp_stats(instance_name=instance_name)
+                exp_data = exp_stats.data
+                ships_data = exp_data.get("ships", []) if exp_data else []
+                target_level = exp_data.get("target_level", 125) if exp_data else 125
+                last_check_time = exp_data.get("last_check_time", "-") if exp_data else "-"
+            except Exception as e:
+                with use_scope("opsi_stats", clear=True):
+                    put_text(t("Gui.Stat.LoadExpStatsFailed", e=e))
+                return
+
+            with use_scope("opsi_stats", clear=True):
+                put_html(build_title_block(t("Gui.Stat.DailyExpCheckTitle")))
+                put_row([put_text(t("Gui.Stat.CheckTime", value=last_check_time)), put_text(t("Gui.Stat.TargetLevel", value=target_level))])
+                if ships_data:
+                    exp_labels = [t("Gui.Stat.ShipSlot"), t("Gui.Stat.Level"), t("Gui.Stat.CurrentExpThisLevel"), t("Gui.Stat.TotalExp"), t("Gui.Stat.ExpToTarget"), t("Gui.Stat.SortiesNeeded"), t("Gui.Stat.EstimatedTime")]
+                    exp_rows = []
+                    from module.statistics.opsi_month import get_opsi_stats as get_opsi_stats_inner
+                    current_battles = get_opsi_stats_inner(instance_name=instance_name).summary().get('total_battles', 0)
+                    for ship in ships_data:
+                        progress = exp_stats.calculate_progress(ship, target_level, current_battles)
+                        exp_rows.append([
+                            progress['position'],
+                            progress['level'],
+                            progress['current_exp'],
+                            progress['total_exp'],
+                            progress['exp_needed'] if progress['exp_needed'] > 0 else "-",
+                            progress['battles_needed'] if progress['battles_needed'] > 0 else "-",
+                            progress['time_needed']
+                        ])
+
+                    put_html(build_simple_table(exp_labels, exp_rows))
+                else:
+                    put_html(build_muted_notice(t("Gui.Stat.NoExpData")))
+
+            # ====================侵蚀1统计====================
+            labels = [t("Gui.Stat.Month"), t("Gui.Stat.BattleCount"), t("Gui.Stat.BattleRounds"), t("Gui.Stat.SortieCost"), t("Gui.Stat.AkashiEncounters"), t("Gui.Stat.AkashiRate"), t("Gui.Stat.AverageAP"), t("Gui.Stat.NetAP"), t("Gui.Stat.LoopEfficiency"), t("Gui.Stat.AvgBattleTimeHeader"), t("Gui.Stat.AvgRoundTime")]
+            month = s.get("month", "-")
+            total = s.get("total_battles", "-")
+            try:
+                tb = int(total)
+                rounds = (tb + 1) // 2
+                sortie_cost = rounds * 5
+            except Exception:
+                tb = total
+                rounds = "-"
+                sortie_cost = "-"
+
+            akashi = s.get("akashi_encounters", 0)
+            try:
+                ak = int(akashi)
+            except Exception:
+                ak = akashi
+
+            try:
+                if isinstance(rounds, int) and rounds > 0:
+                    rate = float(ak) / float(rounds)
+                    akashi_rate = f"{rate * 100:.2f}%"
+                else:
+                    akashi_rate = "-"
+            except Exception:
+                akashi_rate = "-"
+
+            try:
+                ap_bought = compute_monthly_cl1_akashi_ap(instance_name=instance_name)
+            except Exception:
+                ap_bought = "-"
+
+            try:
+                if isinstance(ap_bought, (int, float)) and isinstance(ak, int) and ak > 0:
+                    avg_ap = int(float(ap_bought) / ak + 0.5)
+                else:
+                    try:
+                        ap_tmp = int(ap_bought)
+                        if isinstance(ak, int) and ak > 0:
+                            avg_ap = int(ap_tmp / ak + 0.5)
+                        else:
+                            avg_ap = "-"
+                    except Exception:
+                        avg_ap = "-"
+            except Exception:
+                avg_ap = "-"
+
+            try:
+                net_ap = int(ap_bought) - int(sortie_cost)
+            except Exception:
+                net_ap = "-"
+
+            try:
+                eff = int(net_ap) / int(sortie_cost) * 100
+                loop_eff = f"{eff:.2f}%"
+            except Exception:
+                loop_eff = "-"
+
+            # 获取侵蚀1的平均时长
+            try:
+                exp_stats = get_ship_exp_stats(instance_name=instance_name)
+                avg_cl1_battle_time = exp_stats.get_average_battle_time()
+                avg_cl1_round_time = exp_stats.get_average_round_time()
+                exp_per_hour = exp_stats.get_exp_per_hour()
+                today_stats = exp_stats.get_today_stats()
+                
+                # 今日统计
+                if today_stats:
+                    today_battles = today_stats.get('battle_count', 0)
+                    today_exp = today_stats.get('total_exp_gained', 0)
+                    today_run_time = int(today_stats.get('total_run_time', 0) // 60)
+                    today_exp_str = f"{today_exp:,}"
+                    today_run_str = f"{today_run_time}{t('Gui.Stat.MinuteUnit')}"
+                else:
+                    today_battles = 0
+                    today_exp_str = "-"
+                    today_run_str = "-"
+                
+                avg_cl1_battle_str = f"{avg_cl1_battle_time:.1f}{t('Gui.Stat.SecondUnit')}"
+                avg_cl1_round_str = f"{avg_cl1_round_time:.1f}{t('Gui.Stat.SecondUnit')}"
+                exp_per_hour_str = f"{exp_per_hour:.0f}/{t('Gui.Stat.HourUnit')}"
+            except Exception:
+                avg_cl1_battle_str = "-"
+                avg_cl1_round_str = "-"
+                exp_per_hour_str = "-"
+                today_battles = 0
+                today_exp_str = "-"
+                today_run_str = "-"
+
+            labels = [t("Gui.Stat.Month"), t("Gui.Stat.BattleCount"), t("Gui.Stat.BattleRounds"), t("Gui.Stat.SortieCost"), t("Gui.Stat.AkashiEncounters"), t("Gui.Stat.AkashiRate"), t("Gui.Stat.AverageAP"), t("Gui.Stat.NetAP"), t("Gui.Stat.LoopEfficiency"), t("Gui.Stat.ExpEfficiencyHeader"), t("Gui.Stat.AvgBattleTimeHeader"), t("Gui.Stat.AvgRoundTime"), t("Gui.Stat.TodayBattlesHeader"), t("Gui.Stat.TodayExpHeader"), t("Gui.Stat.TodayRunHeader")]
+
+            values = [month, tb, rounds, sortie_cost, ak, akashi_rate, avg_ap, net_ap, loop_eff, exp_per_hour_str, avg_cl1_battle_str, avg_cl1_round_str, today_battles, today_exp_str, today_run_str]
+
+            table = [labels, values]
+
+            with use_scope("opsi_stats", clear=True):
+                put_html(build_title_block(t("Gui.Stat.OpsiDataCollectionTitle")))
+                put_row([put_text(t("Gui.Stat.MonthlyPurchasedAP", value=ap_bought))])
+                put_html(build_simple_table(labels, [values]))
+
+                # ========== 短猫统计数据 ==========
+                try:
+                    from datetime import datetime
+                    now = datetime.now()
+                    meow_data = cl1_db.get_meow_stats(instance_name or "default", now.year, now.month)
+                except Exception as e:
+                    meow_data = {}
+
+                meow_round_times = meow_data.get("round_times", [])
+                meow_battle_count = round(meow_data.get("battle_count", 0))
+                meow_avg_time = meow_data.get("avg_round_time", 0.0)
+                meow_avg_battle_time = meow_data.get("avg_battle_time", 0.0)
+
+                try:
+                    meow_rounds = len(meow_round_times) if meow_round_times else 0
+                except Exception:
+                    meow_rounds = 0
+
+                if meow_round_times:
+                    avg_time_str = f"{meow_avg_time:.1f}{t('Gui.Stat.SecondUnit')}"
+                else:
+                    avg_time_str = "-"
+
+                if meow_avg_battle_time > 0:
+                    avg_battle_time_str = f"{meow_avg_battle_time:.1f}{t('Gui.Stat.SecondUnit')}"
+                else:
+                    avg_battle_time_str = "-"
+
+                meow_values = [
+                    meow_data.get("month", "-"),
+                    meow_battle_count,
+                    meow_rounds,
+                    avg_battle_time_str,  # 平均单场战斗时间
+                    avg_time_str,         # 平均一轮短猫时长
+                ]
+                meow_labels = [t("Gui.Stat.Month"), t("Gui.Stat.BattleCount"), t("Gui.Stat.MeowRounds"), t("Gui.Stat.AvgBattleTimeHeader"), t("Gui.Stat.AvgMeowRoundTime")]
+
+                put_html(build_title_block(t("Gui.Stat.MeowDataCollectionTitle"), margin_top=20, margin_bottom=8))
+                put_html(build_simple_table(meow_labels, [meow_values]))
+
+                # ========== 短猫相接收获 ==========
+                all_data = AzurStats.load_meowofficer_farming()
+                meow_rows = []
+                for row in all_data:
+                    if row[1] > 0:
+                        meow_row = [
+                            int(row[0]),
+                            datetime.fromtimestamp(row[1]).strftime('%Y-%m-%d %H:%M:%S'),
+                            int(row[2])
+                        ] + list(row[3:])
+
+                        meow_rows.append(meow_row)
+
+                put_html(build_title_block(t("Gui.Stat.MeowLootTitle"), margin_top=20, margin_bottom=8))
+                if meow_rows:
+                    put_html(build_simple_table(AzurStats.meowofficer_farming_labels, meow_rows))
+                else:
+                    put_html(build_muted_notice(t("Gui.Stat.NoMeowDataNotice")))
+
+                # ========== 短猫提前开始建议 ==========
+                try:
+                    from module.os.tasks.scheduling import OpsiScheduling
+                    # 创建临时实例来调用计算方法
+                    config_for_stat = self.alas_config if hasattr(self, 'alas_config') else None
+                    if config_for_stat is not None:
+                        scheduling = OpsiScheduling(config_for_stat, task='OpsiScheduling')
+                        advance_calc = scheduling.get_meow_advance_calculation()
+                    else:
+                        advance_calc = {}
+                except Exception as e:
+                    logger.warning(f"短猫提前建议计算失败，使用WebUI兜底计算: {e}")
+                    advance_calc = {}
+
+                # 兜底：即使调度实例初始化失败，也尽量从统计快照计算建议，避免显示全为空
+                if not advance_calc:
+                    try:
+                        from datetime import datetime, timedelta
+                        from module.config.utils import get_os_next_reset
+                        from module.statistics.cl1_database import db as cl1_db
+                        from module.statistics.opsi_month import get_ap_timeline
+
+                        config_for_stat = self.alas_config if hasattr(self, 'alas_config') else None
+                        mode = 'balanced'
+                        if config_for_stat is not None and hasattr(config_for_stat, 'cross_get'):
+                            mode = config_for_stat.cross_get(
+                                keys='OpsiScheduling.OpsiScheduling.MeowStartEarlyMode'
+                            ) or 'balanced'
+
+                        mode_names = {
+                            'aggressive': '激进',
+                            'balanced': '均衡',
+                            'conservative': '保守',
+                        }
+                        multiplier_map = {
+                            'aggressive': 0.8,
+                            'balanced': 1.2,
+                            'conservative': 1.5,
+                        }
+                        multiplier = multiplier_map.get(mode, 1.2)
+
+                        instance_name_stat = self.alas_name if hasattr(self, 'alas_name') and self.alas_name else None
+                        if not instance_name_stat:
+                            from module.config.utils import alas_instance
+                            _all_instances = alas_instance()
+                            instance_name_stat = _all_instances[0] if _all_instances else 'default'
+                        meow_data_fallback = cl1_db.get_meow_stats(instance_name_stat)
+                        avg_meow_round_time = float(meow_data_fallback.get('avg_round_time', 0) or 0)
+
+                        ap_timeline = get_ap_timeline(instance_name=instance_name_stat)
+                        current_ap = int(ap_timeline[-1].get('ap', 0)) if ap_timeline else 0
+
+                        meow_round_ap = 30
+                        available_rounds = (current_ap / meow_round_ap) if meow_round_ap else 0
+                        base_hours_ahead = (available_rounds * avg_meow_round_time) / 3600 if avg_meow_round_time > 0 else 0
+                        hours_ahead = max(0, min(base_hours_ahead * multiplier, 168))
+
+                        now = datetime.now()
+                        next_reset = get_os_next_reset()
+                        start_cleanup_dt = next_reset - timedelta(hours=hours_ahead)
+                        if start_cleanup_dt < now:
+                            start_cleanup_dt = now
+
+                        if avg_meow_round_time == 0:
+                            recommendation = '数据不足，无法计算建议'
+                        elif current_ap < meow_round_ap:
+                            recommendation = '行动力不足一轮短猫消耗'
+                        else:
+                            recommendation = (
+                                f"当前AP {current_ap} 可运行 {available_rounds:.1f} 轮短猫，"
+                                f"约 {base_hours_ahead:.1f} 小时"
+                            )
+
+                        advance_calc = {
+                            'mode': mode,
+                            'mode_name': mode_names.get(mode, '均衡'),
+                            'multiplier': multiplier,
+                            'current_ap': current_ap,
+                            'meow_round_ap': meow_round_ap,
+                            'avg_meow_round_time': round(avg_meow_round_time, 1) if avg_meow_round_time else 0,
+                            'available_rounds': round(available_rounds, 1),
+                            'hours_ahead': round(hours_ahead, 1),
+                            'start_cleanup_time': start_cleanup_dt.strftime('%m-%d %H:%M'),
+                            'next_os_reset_time': next_reset.strftime('%m-%d %H:%M'),
+                            'recommendation': f"{recommendation}（WebUI兜底计算）",
+                        }
+                    except Exception as e:
+                        logger.warning(f"WebUI兜底计算短猫建议失败: {e}")
+                        advance_calc = {}
+
+                config_for_stat = self.alas_config if hasattr(self, 'alas_config') else None
+                meow_advance_enable = False
+                if config_for_stat is not None and hasattr(config_for_stat, 'cross_get'):
+                    meow_advance_enable = config_for_stat.cross_get(
+                        keys='OpsiScheduling.OpsiScheduling.MeowStartEarlyEnable'
+                    ) or False
+                mode_name = advance_calc.get('mode_name', '-')
+                current_ap = advance_calc.get('current_ap', '-')
+                meow_round_ap = advance_calc.get('meow_round_ap', '-')
+                avg_meow_round_time = advance_calc.get('avg_meow_round_time', 0)
+                available_rounds = advance_calc.get('available_rounds', 0)
+                hours_ahead = advance_calc.get('hours_ahead', 0)
+                start_cleanup_time = advance_calc.get('start_cleanup_time', '-')
+                next_os_reset_time = advance_calc.get('next_os_reset_time', '-')
+                recommendation = advance_calc.get('recommendation', '数据不足，无法计算建议')
+
+                if not meow_advance_enable:
+                    recommendation = f"{recommendation}（当前未开启自动提前清理，仅供参考）"
+
+                put_html(build_title_block(t("Gui.Stat.MeowAdvanceAdviceTitle"), margin_top=20, margin_bottom=8))
+                put_row([
+                    put_text(t("Gui.Stat.CurrentAP", value=current_ap)),
+                    put_text(t("Gui.Stat.ApPerRound", value=meow_round_ap)),
+                    put_text(t("Gui.Stat.AvailableRounds", value=f"{available_rounds:.1f}", unit=t("Gui.Stat.RoundUnit"))),
+                ])
+                put_row([
+                    put_text(t("Gui.Stat.AvgRoundDuration", value=f"{avg_meow_round_time:.1f}", unit=t("Gui.Stat.SecondUnit"))),
+                    put_text(t("Gui.Stat.CurrentMode", value=mode_name)),
+                    put_text(t("Gui.Stat.RecommendAhead", value=f"{hours_ahead:.1f}", unit=t("Gui.Stat.HourUnit"))),
+                ])
+                put_row([
+                    put_text(t("Gui.Stat.StartCleanupTime", value=start_cleanup_time)),
+                    put_text(t("Gui.Stat.NextOsReset", value=next_os_reset_time)),
+                    put_text(t("Gui.Stat.MeowAutoCleanupStatus",
+                               value=t("Gui.Misc.Enabled") if meow_advance_enable else t("Gui.Misc.Disabled"))),
+                ])
+                put_html(build_recommendation_box(recommendation))
+
+                def export_opsi_csv(save_to_desktop: bool = True):
+                    import io
+                    try:
+                        from module.statistics.opsi_month import get_opsi_stats, compute_monthly_cl1_akashi_ap
+                    except Exception as e:
+                        toast(t("Gui.Stat.ExportModuleLoadFailed", e=e), color="error")
+                        return
+
+                    try:
+                        instance_name_local = self.alas_name if hasattr(self, 'alas_name') and self.alas_name else None
+                        s_local = get_opsi_stats(instance_name=instance_name_local).summary() or {}
+                    except Exception:
+                        s_local = {}
+
+                    month_local = s_local.get("month") or datetime.now().strftime("%Y-%m")
+                    total_battles_local = int(s_local.get("total_battles") or 0)
+                    total_rounds_local = int(s_local.get("total_rounds") or ((total_battles_local + 1) // 2))
+                    ap_spent_local = int(s_local.get("ap_spent") or (total_rounds_local * 5))
+                    akashi_count_local = int(s_local.get("akashi_encounters") or s_local.get("akashi_count") or 0)
+
+                    if "akashi_percent" in s_local:
+                        try:
+                            akashi_percent_local = float(s_local.get("akashi_percent") or 0)
+                        except Exception:
+                            akashi_percent_local = 0.0
+                    elif total_rounds_local > 0:
+                        akashi_percent_local = (akashi_count_local / total_rounds_local) * 100
+                    else:
+                        akashi_percent_local = 0.0
+
+                    try:
+                        purchased_local = compute_monthly_cl1_akashi_ap(instance_name=instance_name_local) or 0
+                    except Exception:
+                        purchased_local = 0
+
+                    if akashi_count_local > 0:
+                        try:
+                            avg_ap_local = int(float(purchased_local) / akashi_count_local + 0.5)
+                        except Exception:
+                            avg_ap_local = "-"
+                    else:
+                        avg_ap_local = "-"
+
+                    try:
+                        net_ap_local = int((purchased_local or 0) - ap_spent_local)
+                    except Exception:
+                        net_ap_local = "-"
+
+                    if isinstance(net_ap_local, (int, float)) and ap_spent_local:
+                        try:
+                            eff_local = (net_ap_local / ap_spent_local) * 100
+                        except Exception:
+                            eff_local = "-"
+                    else:
+                        eff_local = "-"
+
+                    labels_local = [t("Gui.Stat.Month"), t("Gui.Stat.BattleCount"), t("Gui.Stat.BattleRounds"), t("Gui.Stat.SortieCost"), t("Gui.Stat.AkashiEncounters"), t("Gui.Stat.CsvHeaderAkashiRate"), t("Gui.Stat.AverageAP"), t("Gui.Stat.NetAP"), t("Gui.Stat.CsvHeaderLoopEfficiency"), t("Gui.Stat.CsvHeaderMonthlyPurchasedAP")]
+                    values_local = [
+                        month_local,
+                        total_battles_local,
+                        total_rounds_local,
+                        ap_spent_local,
+                        akashi_count_local,
+                        f"{akashi_percent_local:.2f}" if isinstance(akashi_percent_local, (int, float)) else akashi_percent_local,
+                        avg_ap_local,
+                        net_ap_local,
+                        f"{eff_local:.2f}" if isinstance(eff_local, (int, float)) else eff_local,
+                        purchased_local,
+                    ]
+
+                    output = io.StringIO()
+                    output.write(','.join(labels_local) + "\n")
+                    def _escape(cell):
+                        s = str(cell)
+                        if ',' in s or '"' in s or '\n' in s:
+                            s = '"' + s.replace('"', '""') + '"'
+                        return s
+                    output.write(','.join([_escape(c) for c in values_local]) + "\n")
+                    csv_bytes = output.getvalue().encode('utf-8-sig')
+
+                    filename_local = t("Gui.Stat.CsvFilenameTemplate", month=month_local)
+
+                    if save_to_desktop:
+                        try:
+                            desktop_local = Path.home() / 'Desktop'
+                            desktop_local.mkdir(parents=True, exist_ok=True)
+                            fpath = desktop_local / filename_local
+                            with open(fpath, 'wb') as _f:
+                                _f.write(csv_bytes)
+                            toast(t("Gui.Stat.SavedToDesktop", path=fpath), color="success")
+                        except Exception as e:
+                            logger.exception(e)
+                            toast(t("Gui.Stat.SaveDesktopFailed", e=e), color="error")
+
+                put_row([
+                    put_button(t("Gui.Stat.Refresh"), onclick=_render_opsi_stats, color="off"),
+                    put_button(t("Gui.Stat.ExportAndSaveDesktop"), onclick=lambda: export_opsi_csv(True), color="off"),
+                ], size="auto")
+
+        put_scope("opsi_stats", [])
+        _render_opsi_stats()
+        self.task_handler.add(_render_opsi_stats, 60, True)
+
+        # ========== 舰船经验检测表格 ==========
+        def _render_ship_exp():
+            try:
+                from module.statistics.ship_exp_stats import get_ship_exp_stats
+                from module.statistics.opsi_month import get_opsi_stats as get_opsi_stats_func
+                # 使用当前实例名称获取统计数据，确保不为空
+                instance_name = self.alas_name if hasattr(self, 'alas_name') and self.alas_name else None
+                if not instance_name:
+                    # 使用第一个可用的实例
+                    from module.config.utils import alas_instance
+                    all_instances = alas_instance()
+                    instance_name = all_instances[0] if all_instances else None
+                stats = get_ship_exp_stats(instance_name=instance_name)
+                if not stats.data or not stats.data.get('ships'):
+                    with use_scope("ship_exp_table", clear=True):
+                        put_html(build_muted_notice(t("Gui.Stat.NoShipExpData")))
+                    return
+                
+                current_battles = get_opsi_stats_func(instance_name=instance_name).summary().get('total_battles', 0)
+                target_level = stats.data.get('target_level', 125)
+                avg_battle_time = stats.get_average_battle_time()
+                exp_per_hour = stats.get_exp_per_hour()
+                today_stats = stats.get_today_stats()
+                
+                # 从daily_stats获取今日战斗场次
+                today_battles = today_stats.get('battle_count', 0) if today_stats else 0
+                
+                labels = [
+                    t("Gui.Stat.ShipSlot"),
+                    t("Gui.Stat.Level"),
+                    t("Gui.Stat.CurrentExpThisLevel"),
+                    t("Gui.Stat.TotalExp"),
+                    t("Gui.Stat.TargetExpRequired"),
+                    t("Gui.Stat.BattlesCompleted"),
+                    t("Gui.Stat.ExpRemaining"),
+                    t("Gui.Stat.SortiesNeeded"),
+                    t("Gui.Stat.EstimatedTime"),
+                ]
+                
+                rows = []
+                for ship in stats.data.get('ships', []):
+                    progress = stats.calculate_progress(ship, target_level, current_battles)
+                    # 使用今日daily_stats的battle_count作为已战斗场次
+                    rows.append([
+                        progress['position'],
+                        progress['level'],
+                        progress['current_exp'],
+                        progress['total_exp'],
+                        progress['target_exp'],
+                        today_battles,  # 使用今日battle_count而非计算值
+                        progress['exp_needed'],
+                        progress['battles_needed'],
+                        progress['time_needed']
+                    ])
+                
+                with use_scope("ship_exp_table", clear=True):
+                    put_html(build_title_block(t("Gui.Stat.ShipExpProgressTitle"), margin_top=16, margin_bottom=8))
+                    put_text(t("Gui.Stat.LastCheckTime", value=stats.data.get('last_check_time', '-')))
+                    
+                    # 显示效率统计
+                    put_row([
+                        put_text(t("Gui.Stat.AvgBattleTime", value=f"{avg_battle_time:.1f}", unit=t("Gui.Stat.SecondUnit"))),
+                        put_text(t("Gui.Stat.AvgOpsiRoundTime", value=f"{stats.get_average_round_time():.1f}", unit=t("Gui.Stat.SecondUnit"))),
+                        put_text(t("Gui.Stat.ExpEfficiency", value=f"{exp_per_hour:.0f}", unit=t("Gui.Stat.HourUnit"))),
+                    ])
+                    
+                    # 显示今日统计
+                    if today_stats:
+                        run_minutes = int(today_stats.get('total_run_time', 0) // 60)
+                        put_row([
+                            put_text(t("Gui.Stat.TodayBattles", value=today_stats.get('battle_count', 0), unit=t("Gui.Stat.TodayBattleUnit"))),
+                            put_text(t("Gui.Stat.TodayExp", value=today_stats.get('total_exp_gained', 0))),
+                            put_text(t("Gui.Stat.TodayRun", value=run_minutes, unit=t("Gui.Stat.MinuteUnit"))),
+                        ])
+                    else:
+                        put_text(t("Gui.Stat.NoTodayBattleData"))
+                    
+                    put_html(build_simple_table(labels, rows, extra_style=' margin-top:8px;'))
+                    
+                    put_button(t("Gui.Stat.Refresh"), onclick=_render_ship_exp, color="off")
+            except Exception as e:
+                with use_scope("ship_exp_table", clear=True):
+                    put_text(t("Gui.Stat.LoadShipExpFailed", e=e))
+
+        put_scope("ship_exp_table", [])
+        _render_ship_exp()
+        self.task_handler.add(_render_ship_exp, 60, True)
+
+    @use_scope("content", clear=True)
     def alas_set_group(self, task: str) -> None:
         """
         Set arg groups from dict
         """
         self.init_menu(name=task)
         self.set_title(t(f"Task.{task}.name"))
-
-        # 智能调度显示所有统计，侵蚀1练级只显示每日经验检测
-        if task in ("OpsiScheduling", "OpsiHazard1Leveling"):
-            def _render_opsi_stats():
-                try:
-                    from module.statistics.opsi_month import get_opsi_stats, compute_monthly_cl1_akashi_ap, get_ap_timeline
-                    from module.statistics.cl1_database import db as cl1_db
-                    from module.statistics.ship_exp_stats import get_ship_exp_stats
-                    # 使用当前实例名称获取统计数据，确保不为空
-                    instance_name = self.alas_name if hasattr(self, 'alas_name') and self.alas_name else None
-                    if not instance_name:
-                        # 使用第一个可用的实例
-                        from module.config.utils import alas_instance
-                        all_instances = alas_instance()
-                        instance_name = all_instances[0] if all_instances else None
-                    s = get_opsi_stats(instance_name=instance_name).summary()
-                except Exception as e:
-                    with use_scope("opsi_stats", clear=True):
-                        put_text(f"Failed to load OpSi stats: {e}")
-                    return
-
-                # 侵蚀1练级只显示每日经验检测
-                if task == "OpsiHazard1Leveling":
-                    try:
-                        exp_stats = get_ship_exp_stats(instance_name=instance_name)
-                        exp_data = exp_stats.data
-                        ships_data = exp_data.get("ships", []) if exp_data else []
-                        target_level = exp_data.get("target_level", 125) if exp_data else 125
-                        last_check_time = exp_data.get("last_check_time", "-") if exp_data else "-"
-                    except Exception as e:
-                        with use_scope("opsi_stats", clear=True):
-                            put_text(f"Failed to load exp stats: {e}")
-                        return
-
-                    with use_scope("opsi_stats", clear=True):
-                        put_html(build_title_block('每日经验检测'))
-                        put_row([put_text(f"检测时间: {last_check_time}"), put_text(f"目标等级: {target_level}")])
-                        if ships_data:
-                            exp_labels = ["舰位", "等级", "当前经验(本级)", "总经验", "距目标经验", "还需出击", "预计时间"]
-                            exp_rows = []
-                            from module.statistics.opsi_month import get_opsi_stats as get_opsi_stats_inner
-                            current_battles = get_opsi_stats_inner(instance_name=instance_name).summary().get('total_battles', 0)
-                            for ship in ships_data:
-                                progress = exp_stats.calculate_progress(ship, target_level, current_battles)
-                                exp_rows.append([
-                                    progress['position'],
-                                    progress['level'],
-                                    progress['current_exp'],
-                                    progress['total_exp'],
-                                    progress['exp_needed'] if progress['exp_needed'] > 0 else "-",
-                                    progress['battles_needed'] if progress['battles_needed'] > 0 else "-",
-                                    progress['time_needed']
-                                ])
-
-                            put_html(build_simple_table(exp_labels, exp_rows))
-                        else:
-                            put_html(build_muted_notice('暂无经验数据，运行侵蚀1练级后将自动记录'))
-                    return
-
-                # 智能调度显示所有统计
-                labels = ["月份", "战斗场次", "战斗轮次", "出击消耗", "遇见明石次数", "遇见明石概率", "平均体力", "净赚体力", "循环效率", "平均战斗时间", "平均一轮时长"]
-                month = s.get("month", "-")
-                total = s.get("total_battles", "-")
-                try:
-                    tb = int(total)
-                    rounds = (tb + 1) // 2
-                    sortie_cost = rounds * 5
-                except Exception:
-                    tb = total
-                    rounds = "-"
-                    sortie_cost = "-"
-
-                akashi = s.get("akashi_encounters", 0)
-                try:
-                    ak = int(akashi)
-                except Exception:
-                    ak = akashi
-
-                try:
-                    if isinstance(rounds, int) and rounds > 0:
-                        rate = float(ak) / float(rounds)
-                        akashi_rate = f"{rate * 100:.2f}%"
-                    else:
-                        akashi_rate = "-"
-                except Exception:
-                    akashi_rate = "-"
-
-                try:
-                    ap_bought = compute_monthly_cl1_akashi_ap(instance_name=instance_name)
-                except Exception:
-                    ap_bought = "-"
-
-                try:
-                    if isinstance(ap_bought, (int, float)) and isinstance(ak, int) and ak > 0:
-                        avg_ap = int(float(ap_bought) / ak + 0.5)
-                    else:
-                        try:
-                            ap_tmp = int(ap_bought)
-                            if isinstance(ak, int) and ak > 0:
-                                avg_ap = int(ap_tmp / ak + 0.5)
-                            else:
-                                avg_ap = "-"
-                        except Exception:
-                            avg_ap = "-"
-                except Exception:
-                    avg_ap = "-"
-
-                try:
-                    net_ap = int(ap_bought) - int(sortie_cost)
-                except Exception:
-                    net_ap = "-"
-
-                try:
-                    eff = int(net_ap) / int(sortie_cost) * 100
-                    loop_eff = f"{eff:.2f}%"
-                except Exception:
-                    loop_eff = "-"
-
-                # 获取侵蚀1的平均时长
-                try:
-                    exp_stats = get_ship_exp_stats(instance_name=instance_name)
-                    avg_cl1_battle_time = exp_stats.get_average_battle_time()
-                    avg_cl1_round_time = exp_stats.get_average_round_time()
-                    exp_per_hour = exp_stats.get_exp_per_hour()
-                    today_stats = exp_stats.get_today_stats()
-                    
-                    # 今日统计
-                    if today_stats:
-                        today_battles = today_stats.get('battle_count', 0)
-                        today_exp = today_stats.get('total_exp_gained', 0)
-                        today_run_time = int(today_stats.get('total_run_time', 0) // 60)
-                        today_exp_str = f"{today_exp:,}"
-                        today_run_str = f"{today_run_time}分钟"
-                    else:
-                        today_battles = 0
-                        today_exp_str = "-"
-                        today_run_str = "-"
-                    
-                    avg_cl1_battle_str = f"{avg_cl1_battle_time:.1f}秒"
-                    avg_cl1_round_str = f"{avg_cl1_round_time:.1f}秒"
-                    exp_per_hour_str = f"{exp_per_hour:.0f}/小时"
-                except Exception:
-                    avg_cl1_battle_str = "-"
-                    avg_cl1_round_str = "-"
-                    exp_per_hour_str = "-"
-                    today_battles = 0
-                    today_exp_str = "-"
-                    today_run_str = "-"
-
-                labels = ["月份", "战斗场次", "战斗轮次", "出击消耗", "遇见明石次数", "遇见明石概率", "平均体力", "净赚体力", "循环效率", "经验效率", "平均战斗时间", "平均一轮时长", "今日战斗", "今日经验", "今日运行"]
-
-                values = [month, tb, rounds, sortie_cost, ak, akashi_rate, avg_ap, net_ap, loop_eff, exp_per_hour_str, avg_cl1_battle_str, avg_cl1_round_str, today_battles, today_exp_str, today_run_str]
-
-                table = [labels, values]
-
-                with use_scope("opsi_stats", clear=True):
-                    put_html(build_title_block('雪风大人的侵蚀一数据收集'))
-                    put_row([put_text(f"当月购买体力: {ap_bought}")])
-                    put_html(build_simple_table(labels, [values]))
-
-                    # ========== 短猫统计数据 ==========
-                    try:
-                        from datetime import datetime
-                        now = datetime.now()
-                        meow_data = cl1_db.get_meow_stats(instance_name or "default", now.year, now.month)
-                    except Exception as e:
-                        meow_data = {}
-
-                    meow_round_times = meow_data.get("round_times", [])
-                    meow_battle_count = meow_data.get("battle_count", 0)
-                    meow_avg_time = meow_data.get("avg_round_time", 0.0)
-                    meow_avg_battle_time = meow_data.get("avg_battle_time", 0.0)
-
-                    try:
-                        meow_rounds = len(meow_round_times) if meow_round_times else 0
-                    except Exception:
-                        meow_rounds = 0
-
-                    if meow_round_times:
-                        avg_time_str = f"{meow_avg_time:.1f}秒"
-                    else:
-                        avg_time_str = "-"
-
-                    if meow_avg_battle_time > 0:
-                        avg_battle_time_str = f"{meow_avg_battle_time:.1f}秒"
-                    else:
-                        avg_battle_time_str = "-"
-
-                    meow_values = [
-                        meow_data.get("month", "-"),
-                        meow_battle_count,
-                        meow_rounds,
-                        avg_battle_time_str,  # 平均单场战斗时间
-                        avg_time_str,         # 平均一轮短猫时长
-                    ]
-                    meow_labels = ["月份", "战斗场次", "出击轮次", "平均战斗时间", "平均一轮短猫时长"]
-
-                    put_html(build_title_block('短猫相接数据收集', margin_top=20, margin_bottom=8))
-                    put_html(build_simple_table(meow_labels, [meow_values]))
-
-                    # ========== 短猫提前开始建议 ==========
-                    try:
-                        from module.os.tasks.scheduling import OpsiScheduling
-                        # 创建临时实例来调用计算方法
-                        scheduling = OpsiScheduling(self.config, task='OpsiScheduling')
-                        advance_calc = scheduling.get_meow_advance_calculation()
-                    except Exception as e:
-                        advance_calc = {}
-
-                    if advance_calc:
-                        mode_name = advance_calc.get('mode_name', '-')
-                        current_ap = advance_calc.get('current_ap', '-')
-                        meow_round_ap = advance_calc.get('meow_round_ap', '-')
-                        avg_meow_round_time = advance_calc.get('avg_meow_round_time', 0)
-                        available_rounds = advance_calc.get('available_rounds', 0)
-                        hours_ahead = advance_calc.get('hours_ahead', 0)
-                        recommendation = advance_calc.get('recommendation', '-')
-
-                        put_html(build_title_block('短猫提前开始建议', margin_top=20, margin_bottom=8))
-                        put_row([
-                            put_text(f"当前AP: {current_ap}"),
-                            put_text(f"每轮消耗: {meow_round_ap} AP"),
-                            put_text(f"可运行轮数: {available_rounds:.1f}轮"),
-                        ])
-                        put_row([
-                            put_text(f"平均每轮耗时: {avg_meow_round_time:.1f}秒"),
-                            put_text(f"当前模式: {mode_name}"),
-                            put_text(f"建议提前: {hours_ahead:.1f}小时"),
-                        ])
-                        put_html(build_recommendation_box(recommendation))
-
-                    def export_opsi_csv(save_to_desktop: bool = True):
-                        import io
-                        try:
-                            from module.statistics.opsi_month import get_opsi_stats, compute_monthly_cl1_akashi_ap
-                        except Exception as e:
-                            toast(f"导出失败：无法加载统计模块：{e}", color="error")
-                            return
-
-                        try:
-                            instance_name_local = self.alas_name if hasattr(self, 'alas_name') and self.alas_name else None
-                            s_local = get_opsi_stats(instance_name=instance_name_local).summary() or {}
-                        except Exception:
-                            s_local = {}
-
-                        month_local = s_local.get("month") or datetime.now().strftime("%Y-%m")
-                        total_battles_local = int(s_local.get("total_battles") or 0)
-                        total_rounds_local = int(s_local.get("total_rounds") or ((total_battles_local + 1) // 2))
-                        ap_spent_local = int(s_local.get("ap_spent") or (total_rounds_local * 5))
-                        akashi_count_local = int(s_local.get("akashi_encounters") or s_local.get("akashi_count") or 0)
-
-                        if "akashi_percent" in s_local:
-                            try:
-                                akashi_percent_local = float(s_local.get("akashi_percent") or 0)
-                            except Exception:
-                                akashi_percent_local = 0.0
-                        elif total_rounds_local > 0:
-                            akashi_percent_local = (akashi_count_local / total_rounds_local) * 100
-                        else:
-                            akashi_percent_local = 0.0
-
-                        try:
-                            purchased_local = compute_monthly_cl1_akashi_ap(instance_name=instance_name_local) or 0
-                        except Exception:
-                            purchased_local = 0
-
-                        if akashi_count_local > 0:
-                            try:
-                                avg_ap_local = int(float(purchased_local) / akashi_count_local + 0.5)
-                            except Exception:
-                                avg_ap_local = "-"
-                        else:
-                            avg_ap_local = "-"
-
-                        try:
-                            net_ap_local = int((purchased_local or 0) - ap_spent_local)
-                        except Exception:
-                            net_ap_local = "-"
-
-                        if isinstance(net_ap_local, (int, float)) and ap_spent_local:
-                            try:
-                                eff_local = (net_ap_local / ap_spent_local) * 100
-                            except Exception:
-                                eff_local = "-"
-                        else:
-                            eff_local = "-"
-
-                        labels_local = ["月份", "战斗场次", "战斗轮次", "出击消耗", "遇见明石次数", "遇见明石概率(%)", "平均体力", "净赚体力", "循环效率(%)", "当月购买体力"]
-                        values_local = [
-                            month_local,
-                            total_battles_local,
-                            total_rounds_local,
-                            ap_spent_local,
-                            akashi_count_local,
-                            f"{akashi_percent_local:.2f}" if isinstance(akashi_percent_local, (int, float)) else akashi_percent_local,
-                            avg_ap_local,
-                            net_ap_local,
-                            f"{eff_local:.2f}" if isinstance(eff_local, (int, float)) else eff_local,
-                            purchased_local,
-                        ]
-
-                        output = io.StringIO()
-                        output.write(','.join(labels_local) + "\n")
-                        def _escape(cell):
-                            s = str(cell)
-                            if ',' in s or '"' in s or '\n' in s:
-                                s = '"' + s.replace('"', '""') + '"'
-                            return s
-                        output.write(','.join([_escape(c) for c in values_local]) + "\n")
-                        csv_bytes = output.getvalue().encode('utf-8-sig')
-
-                        filename_local = f"侵蚀1练级_{month_local}_详细数据.csv"
-
-                        if save_to_desktop:
-                            try:
-                                desktop_local = Path.home() / 'Desktop'
-                                desktop_local.mkdir(parents=True, exist_ok=True)
-                                fpath = desktop_local / filename_local
-                                with open(fpath, 'wb') as _f:
-                                    _f.write(csv_bytes)
-                                toast(f"已保存至桌面：{fpath}", color="success")
-                            except Exception as e:
-                                logger.exception(e)
-                                toast(f"保存桌面失败：{e}", color="error")
-
-                    put_row([
-                        put_button("刷新", onclick=_render_opsi_stats, color="off"),
-                        put_button("导出并保存到桌面", onclick=lambda: export_opsi_csv(True), color="off"),
-                    ], size="auto")
-
-            put_scope("opsi_stats", [])
-            _render_opsi_stats()
-            self.task_handler.add(_render_opsi_stats, 60, True)
-
-            # ========== 体力K线图 ==========
-            # 当前视图状态: 'month' 或 'day' 或 'line'
-            if not hasattr(self, '_ap_chart_view'):
-                self._ap_chart_view = 'line'
-
-            def _render_ap_chart():
-                try:
-                    from module.statistics.opsi_month import get_ap_timeline
-                    instance_name = self.alas_name if hasattr(self, 'alas_name') and self.alas_name else None
-                    if not instance_name:
-                        from module.config.utils import alas_instance
-                        all_instances = alas_instance()
-                        instance_name = all_instances[0] if all_instances else None
-                    timeline = get_ap_timeline(instance_name=instance_name)
-                except Exception as e:
-                    with use_scope("ap_chart", clear=True):
-                        put_text(f"加载体力数据失败: {e}")
-                    return
-
-                if not timeline:
-                    with use_scope("ap_chart", clear=True):
-                        put_html(build_muted_notice('暂无体力变化数据，运行侵蚀1任务后将自动记录'))
-                        put_button("刷新", onclick=_render_ap_chart, color="off")
-                    return
-
-                # 解析原始数据点
-                from datetime import datetime as _dt
-                import json as _json
-                raw_points = []
-                for pt in timeline:
-                    ts_raw = pt.get('ts', '')
-                    try:
-                        dt = _dt.fromisoformat(ts_raw)
-                    except Exception:
-                        continue
-                    raw_points.append({'dt': dt, 'ap': int(pt.get('ap', 0))})
-
-                if not raw_points:
-                    with use_scope("ap_chart", clear=True):
-                        put_html(build_muted_notice('暂无有效体力数据'))
-                    return
-
-                raw_points.sort(key=lambda p: p['dt'])
-                current_view = getattr(self, '_ap_chart_view', 'line')
-
-                labels = []
-                opens = []
-                highs = []
-                lows = []
-                closes = []
-                counts = []
-                ap_list = []
-
-                if current_view == 'line':
-                    for p in raw_points:
-                        labels.append(p['dt'].strftime('%m-%d %H:%M'))
-                        ap_list.append(p['ap'])
-                    view_title = "分时曲线 (详细波动)"
-                else:
-                    from collections import OrderedDict
-                    candles = OrderedDict()
-                    if current_view == 'day':
-                        today = _dt.now().date()
-                        today_points = [p for p in raw_points if p['dt'].date() == today]
-                        if not today_points:
-                            last_date = raw_points[-1]['dt'].date()
-                            today_points = [p for p in raw_points if p['dt'].date() == last_date]
-                            today = last_date
-                        for p in today_points:
-                            hour_key = p['dt'].strftime('%H:00')
-                            if hour_key not in candles:
-                                candles[hour_key] = {'open': p['ap'], 'high': p['ap'], 'low': p['ap'], 'close': p['ap'], 'count': 1}
-                            else:
-                                c = candles[hour_key]
-                                c['high'] = max(c['high'], p['ap'])
-                                c['low'] = min(c['low'], p['ap'])
-                                c['close'] = p['ap']
-                                c['count'] += 1
-                        view_title = f"天视图 ({today.strftime('%m-%d')} 小时K线)"
-                    else:
-                        for p in raw_points:
-                            day_key = p['dt'].strftime('%m-%d')
-                            if day_key not in candles:
-                                candles[day_key] = {'open': p['ap'], 'high': p['ap'], 'low': p['ap'], 'close': p['ap'], 'count': 1}
-                            else:
-                                c = candles[day_key]
-                                c['high'] = max(c['high'], p['ap'])
-                                c['low'] = min(c['low'], p['ap'])
-                                c['close'] = p['ap']
-                                c['count'] += 1
-                        view_title = "月视图 (日K线)"
-                        
-                    if not candles:
-                        with use_scope("ap_chart", clear=True):
-                            put_html(build_muted_notice('无法聚合K线数据'))
-                            put_button("分时", onclick=lambda: (setattr(self, '_ap_chart_view', 'line'), _render_ap_chart()), color="off")
-                        return
-                    for k, v in candles.items():
-                        labels.append(k)
-                        opens.append(v['open'])
-                        highs.append(v['high'])
-                        lows.append(v['low'])
-                        closes.append(v['close'])
-                        counts.append(v['count'])
-
-                all_ap = [p['ap'] for p in raw_points]
-                ap_max = max(all_ap)
-                ap_min = min(all_ap)
-                ap_avg = int(sum(all_ap) / len(all_ap))
-                ap_cur = all_ap[-1]
-                if current_view == 'line':
-                    ap_change = ap_list[-1] - ap_list[0] if len(ap_list) >= 2 else 0
-                    data_points_text = f"共 {len(labels)} 个点"
-                else:
-                    ap_change = closes[-1] - opens[0] if len(closes) > 0 else 0
-                    data_points_text = f"共 {len(labels)} 根K线"
-                change_color = '#ef5350' if ap_change >= 0 else '#26a69a'
-                change_sign = '+' if ap_change >= 0 else ''
-
-                chart_id = f"ap_cv_{id(self)}"
-
-                html_tpl = read_webapp_template('ap_chart_panel.html')
-                html = html_tpl.format(
-                    chart_id=chart_id,
-                    view_title=view_title,
-                    ap_cur=ap_cur,
-                    change_color=change_color,
-                    change_sign=change_sign,
-                    ap_change=ap_change,
-                    ap_max=ap_max,
-                    ap_min=ap_min,
-                    ap_avg=ap_avg,
-                    data_points_text=data_points_text,
-                )
-
-                js_tpl = read_webapp_template('ap_chart.js')
-                js_code = (js_tpl
-                    .replace('__CHART_TYPE__', current_view)
-                    .replace('__LABELS__', _json.dumps(labels, ensure_ascii=False))
-                    .replace('__OPENS__', _json.dumps(opens))
-                    .replace('__HIGHS__', _json.dumps(highs))
-                    .replace('__LOWS__', _json.dumps(lows))
-                    .replace('__CLOSES__', _json.dumps(closes))
-                    .replace('__COUNTS__', _json.dumps(counts))
-                    .replace('__AP__', _json.dumps(ap_list))
-                    .replace('__AVG__', str(ap_avg))
-                    .replace('__CHART_ID__', chart_id)
-                )
-                from pywebio.session import run_js
-                with use_scope("ap_chart", clear=True):
-                    put_html(html)
-                    run_js(js_code)
-                    def _switch_view(v):
-                        self._ap_chart_view = v
-                        _render_ap_chart()
-                    put_row([
-                        put_button("分时(详细波动)", onclick=lambda: _switch_view('line'), color="off" if current_view!='line' else "primary"),
-                        put_button("天视图(小时K)", onclick=lambda: _switch_view('day'), color="off" if current_view!='day' else "primary"),
-                        put_button("月视图(日K)", onclick=lambda: _switch_view('month'), color="off" if current_view!='month' else "primary"),
-                        put_button("刷新", onclick=_render_ap_chart, color="off"),
-                    ], size="auto")
-
-            # 只在 OpsiScheduling 任务下显示体力K线图
-            if task == "OpsiScheduling":
-                put_scope("ap_chart", [])
-                _render_ap_chart()
-                self.task_handler.add(_render_ap_chart, 60, True)
-
-            # ========== 舰船经验检测表格 ==========
-            def _render_ship_exp():
-                try:
-                    from module.statistics.ship_exp_stats import get_ship_exp_stats
-                    from module.statistics.opsi_month import get_opsi_stats as get_opsi_stats_func
-                    # 使用当前实例名称获取统计数据，确保不为空
-                    instance_name = self.alas_name if hasattr(self, 'alas_name') and self.alas_name else None
-                    if not instance_name:
-                        # 使用第一个可用的实例
-                        from module.config.utils import alas_instance
-                        all_instances = alas_instance()
-                        instance_name = all_instances[0] if all_instances else None
-                    stats = get_ship_exp_stats(instance_name=instance_name)
-                    if not stats.data or not stats.data.get('ships'):
-                        with use_scope("ship_exp_table", clear=True):
-                            put_html(build_muted_notice('暂无舰船经验数据，请先运行"每日经验检测"任务'))
-                        return
-                    
-                    current_battles = get_opsi_stats_func(instance_name=instance_name).summary().get('total_battles', 0)
-                    target_level = stats.data.get('target_level', 125)
-                    avg_battle_time = stats.get_average_battle_time()
-                    exp_per_hour = stats.get_exp_per_hour()
-                    today_stats = stats.get_today_stats()
-                    
-                    # 从daily_stats获取今日战斗场次
-                    today_battles = today_stats.get('battle_count', 0) if today_stats else 0
-                    
-                    labels = ["舰位", "等级", "当前经验(本级)", "总经验", 
-                              "目标等级所需经验", "已战斗场次", "还需经验", 
-                              "还需出击", "预计时间"]
-                    
-                    rows = []
-                    for ship in stats.data.get('ships', []):
-                        progress = stats.calculate_progress(ship, target_level, current_battles)
-                        # 使用今日daily_stats的battle_count作为已战斗场次
-                        rows.append([
-                            progress['position'],
-                            progress['level'],
-                            progress['current_exp'],
-                            progress['total_exp'],
-                            progress['target_exp'],
-                            today_battles,  # 使用今日battle_count而非计算值
-                            progress['exp_needed'],
-                            progress['battles_needed'],
-                            progress['time_needed']
-                        ])
-                    
-                    with use_scope("ship_exp_table", clear=True):
-                        put_html(build_title_block('每日经验检测：识别到的舰娘等级与升级进度', margin_top=16, margin_bottom=8))
-                        put_text(f"上次检查时间: {stats.data.get('last_check_time', '-')}")
-                        
-                        # 显示效率统计
-                        put_row([
-                            put_text(f"平均战斗时间: {avg_battle_time:.1f}秒"),
-                            put_text(f"平均一轮侵蚀1时长: {stats.get_average_round_time():.1f}秒"),
-                            put_text(f"经验效率: {exp_per_hour:.0f}/小时"),
-                        ])
-                        
-                        # 显示今日统计
-                        if today_stats:
-                            run_minutes = int(today_stats.get('total_run_time', 0) // 60)
-                            put_row([
-                                put_text(f"今日战斗: {today_stats.get('battle_count', 0)}场"),
-                                put_text(f"今日经验: {today_stats.get('total_exp_gained', 0)}"),
-                                put_text(f"今日运行: {run_minutes}分钟"),
-                            ])
-                        else:
-                            put_text("暂无今日战斗数据，运行战斗后将自动更新")
-                        
-                        put_html(build_simple_table(labels, rows, extra_style=' margin-top:8px;'))
-                        
-                        put_button("刷新", onclick=_render_ship_exp, color="off")
-                except Exception as e:
-                    with use_scope("ship_exp_table", clear=True):
-                        put_text(f"加载舰船经验数据失败: {e}")
-
-                if task == "OpsiScheduling":
-                    put_scope("ship_exp_table", [])
-                    _render_ship_exp()
-                    self.task_handler.add(_render_ship_exp, 60, True)
 
         put_scope("_groups", [put_none(), put_scope("groups"), put_scope("navigator")])
 
@@ -995,10 +1122,107 @@ class AlasGUI(Frame):
                 content=[put_text(task_help).style("font-size: 1rem")],
             )
 
+        if task == 'OpsiSimulator':
+            with use_scope("groups"):
+                self._os_simulator()
+
         config = self.alas_config.read_file(self.alas_name)
         for group, arg_dict in deep_iter(self.ALAS_ARGS[task], depth=1):
             if self.set_group(group, arg_dict, config, task):
                 self.set_navigator(group)
+                
+    def _os_simulator(self):
+        self.simulator.set_config(self.alas_config)
+
+        if self._simulator_logger_pm is None:
+            class SimulatorLogger:
+                def __init__(self):
+                    self.renderables = []
+                    self.renderables_max_length = 2000
+                    self.renderables_reduce_length = 1000
+            self._simulator_logger_pm = SimulatorLogger()
+
+        pm = self._simulator_logger_pm
+        import logging
+        class ListHandler(logging.Handler):
+            def emit(self, record):
+                msg = self.format(record)
+                pm.renderables.append(msg + '\n')
+                if len(pm.renderables) > pm.renderables_max_length:
+                    del pm.renderables[:pm.renderables_reduce_length]
+
+        # Remove existing handlers to avoid duplication on page refresh
+        for h in self.simulator.logger.handlers[:]:
+            if getattr(h, 'is_webui_simulator_handler', False):
+                self.simulator.logger.removeHandler(h)
+
+        handler = ListHandler()
+        handler.setFormatter(logging.Formatter(
+            fmt='%(asctime)s.%(msecs)03d | %(levelname)s | %(message)s',
+            datefmt='%Y-%m-%d %H:%M:%S'
+        ))
+        handler.is_webui_simulator_handler = True
+        self.simulator.logger.addHandler(handler)
+
+        put_scope(
+            "scheduler-bar",
+            [
+                put_text(t("Task.OpsiSimulator.name")).style(
+                    "font-size: 1.25rem; margin: auto .5rem auto;"
+                ),
+                put_scope("scheduler_btn"),
+            ]
+        )
+        put_scope(
+            "logs",
+            [
+                put_scope(
+                    "log-bar",
+                    [
+                        put_text(t("Gui.Overview.Log")).style(
+                            "font-size: 1.25rem; margin: auto .5rem auto;"
+                        ),
+                        put_scope(
+                            "log-bar-btns",
+                            [
+                                put_scope("log_scroll_btn"),
+                            ],
+                        ),
+                    ],
+                ),
+                put_scope("log-container", [
+                    put_scope("log", [put_html("")])
+                ])
+            ]
+        )
+
+        switch_scheduler = BinarySwitchButton(
+            label_on=t("Gui.Button.Stop"),
+            label_off=t("Gui.Button.Start"),
+            onclick_on=self.simulator.interrupt,
+            onclick_off=self.simulator.start,
+            get_state=lambda: self.simulator.is_running,
+            color_on="off",
+            color_off="on",
+            scope="scheduler_btn",
+        )
+        self.task_handler.add(switch_scheduler.g(), 1, True)
+
+        log = RichLog("log")
+        log.console.width = log.get_width()
+        switch_log_scroll = BinarySwitchButton(
+            label_on=t("Gui.Button.ScrollON"),
+            label_off=t("Gui.Button.ScrollOFF"),
+            onclick_on=lambda: log.set_scroll(False),
+            onclick_off=lambda: log.set_scroll(True),
+            get_state=lambda: log.keep_bottom,
+            color_on="on",
+            color_off="off",
+            scope="log_scroll_btn",
+        )
+        self.task_handler.add(switch_log_scroll.g(), 1, True)
+
+        self.task_handler.add(log.put_log(pm), 0.25, True)
 
     @use_scope("groups")
 
@@ -1096,6 +1320,7 @@ class AlasGUI(Frame):
     def alas_overview(self) -> None:
         self.init_menu(name="Overview")
         self.set_title(t(f"Gui.MenuAlas.Overview"))
+        self._overview_snapshot = None
 
         put_scope("overview", [put_scope("schedulers"), put_scope("logs")])
 
@@ -1119,6 +1344,19 @@ class AlasGUI(Frame):
                         "font-size: 1.25rem; margin: auto .5rem auto;"
                     ),
                     put_scope("scheduler_btn"),
+                ],
+            )
+            put_scope(
+                "stat-bar",
+                [
+                    put_text(t("Gui.Overview.Stat")).style(
+                        "font-size: 1.25rem; margin: auto .5rem auto;"
+                    ),
+                    put_button(
+                        label=t("Gui.Button.Open"),
+                        onclick=self.alas_set_stat,
+                        color="on",
+                    )
                 ],
             )
             put_scope(
@@ -1469,6 +1707,16 @@ class AlasGUI(Frame):
             pending = []
         waiting = self.alas_config.waiting_task
 
+        snapshot = {
+            "running": tuple((task.command, task.next_run) for task in running),
+            "pending": tuple((task.command, task.next_run) for task in pending),
+            "waiting": tuple((task.command, task.next_run) for task in waiting),
+            "alive": self.alas.alive,
+        }
+        if self._overview_snapshot == snapshot:
+            return
+        self._overview_snapshot = snapshot
+
         def put_task(func: Function):
             with use_scope(f"overview-task_{func.command}"):
                 put_column(
@@ -1808,6 +2056,7 @@ class AlasGUI(Frame):
                 "daemon-overview",
                 [
                     put_scope("scheduler-bar"),
+                    put_scope("stat-bar"),
                     put_scope("groups"),
                     put_scope("log-bar"),
                     put_scope("log", [put_html("")]),
@@ -1840,6 +2089,16 @@ class AlasGUI(Frame):
                 "font-size: 1.25rem; margin: auto .5rem auto;"
             )
             put_scope("scheduler_btn")
+
+        with use_scope("stat-bar"):
+            put_text(t("Gui.Overview.Stat")).style(
+                "font-size: 1.25rem; margin: auto .5rem auto;"
+            )
+            put_button(
+                label=t("Gui.Button.Open"),
+                onclick=self.alas_set_stat,
+                color="on",
+            )
 
         switch_scheduler = BinarySwitchButton(
             label_on=t("Gui.Button.Stop"),
@@ -2562,7 +2821,6 @@ class AlasGUI(Frame):
         self.task_handler.add(self.state_switch.g(), 2)
         self.task_handler.add(self.set_aside_status, 2)
         self.task_handler.add(visibility_state_switch.g(), 15)
-        self.task_handler.add(update_switch.g(), 1)
         self.task_handler.add(update_switch.g(), 1)
         
         # 公告检查功能（非阻塞）

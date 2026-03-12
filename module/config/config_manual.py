@@ -47,6 +47,7 @@ class ManualConfig:
     > Event > Event2 > Raid > Hospital > HospitalEvent > Coalition > RaidScuttle > Main > Main2 > Main3
     > OpsiMeowfficerFarming
     > GemsFarming
+    > Ambush11
     > OpsiHazard1Leveling
     > ThreeOilLowCost
     """
