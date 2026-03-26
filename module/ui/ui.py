@@ -223,10 +223,7 @@ class UI(InfoHandler):
         logger.warning("Starting from current page is not supported")
         logger.warning(f"Supported page: {[str(page) for page in Page.iter_pages()]}")
         logger.warning('Supported page: Any page with a "HOME" button on the upper-right')
-        logger.critical("你是不是没长脑子？连主界面都进不去，Alas 是你爹，但不是你妈，没义务处理你这种巨婴行为。")
-        logger.critical("听好了，废物：要么滚去【主界面、出击、编队、演习、每日、活动、任务】这些正常的界面启动，"
-                        "要么找个带『一键回港』按钮的界面再按开始。这游戏大部分地方都有，你要是连这都找不到，建议直接把号删了止损。"
-                        "看懂了吗？傻逼？别在这儿浪费老子的算力了，赶紧去改！")
+        logger.critical("Please switch to a supported page within 10 seconds, or the script will try to restart the game automatically")
         
         # 未知页面自动重启
         logger.warning("Unknown page detected, try to restart game")
