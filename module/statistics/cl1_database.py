@@ -4,7 +4,7 @@ import json
 import os
 from pathlib import Path
 from datetime import datetime
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List, Optional, Tuple
 from Crypto.Cipher import AES
 from Crypto.Protocol.KDF import PBKDF2
 from Crypto.Hash import SHA256
@@ -115,10 +115,167 @@ class Cl1Database:
             'akashi_ap': 0,
             'akashi_ap_entries': [],
             # 短猫数据
+            'meow_battle_raw_count': 0,
             'meow_battle_count': 0,
             'meow_round_times': [],
             'meow_battle_times': [],  # 短猫单场战斗时间
         }
+
+    def _normalize_meow_round_times(self, round_times: List[Any]) -> List[Dict[str, Any]]:
+        """兼容旧格式短猫轮次样本，统一为字典结构。"""
+        normalized_times = []
+        for entry in round_times:
+            if isinstance(entry, dict) and 'duration' in entry:
+                normalized_times.append(entry)
+            elif isinstance(entry, (int, float)):
+                normalized_times.append({'duration': float(entry), 'hazard_level': None})
+
+        return normalized_times
+
+    def _extract_meow_round_durations(self, round_times: List[Any]) -> List[float]:
+        """提取短猫轮次耗时，兼容旧格式浮点样本。"""
+        return [entry['duration'] for entry in self._normalize_meow_round_times(round_times)]
+
+    def _infer_meow_battles_per_round(self, round_times: List[Any]) -> Tuple[Optional[int], Optional[float]]:
+        """从短猫样本推断每轮战斗数。"""
+        hazard_levels = []
+        for entry in round_times:
+            if isinstance(entry, dict):
+                hazard_level = entry.get('hazard_level')
+                if hazard_level in [2, 3, 4, 5, 6]:
+                    hazard_levels.append(hazard_level)
+
+        if not hazard_levels:
+            return None, None
+
+        battles_per_round_samples = [2 if hazard_level in [2, 3] else 3 for hazard_level in hazard_levels]
+        inferred_battles_per_round = sum(battles_per_round_samples) / len(battles_per_round_samples)
+        inferred_divisor = 2 if inferred_battles_per_round < 2.5 else 3
+        return inferred_divisor, inferred_battles_per_round
+
+    def _estimate_meow_raw_battle_count(self, effective_rounds: float, inferred_battles_per_round: Optional[float]) -> Optional[int]:
+        """由等效轮次反推真实战斗场次。"""
+        if effective_rounds <= 0:
+            return None
+        if inferred_battles_per_round is not None:
+            return int(round(effective_rounds * inferred_battles_per_round))
+        return int(round(effective_rounds * 3))
+
+    def _reconcile_meow_counts(
+        self,
+        data: Dict[str, Any],
+        effective_rounds: float,
+        round_times: List[Any],
+        battle_times: List[Any],
+        instance: Optional[str] = None,
+        month_key: Optional[str] = None,
+        persist: bool = False,
+    ) -> Tuple[int, float, bool]:
+        """兼容旧数据并修正短猫真实战斗场次与等效轮次。"""
+        inferred_divisor, inferred_battles_per_round = self._infer_meow_battles_per_round(round_times)
+        estimated_from_rounds = self._estimate_meow_raw_battle_count(effective_rounds, inferred_battles_per_round)
+
+        raw_battle_count = data.get('meow_battle_raw_count')
+        current_raw = int(raw_battle_count) if raw_battle_count is not None else 0
+        by_battle_times = len(battle_times) if battle_times else 0
+        should_save = False
+
+        need_backfill = raw_battle_count is None
+        if estimated_from_rounds is not None and current_raw > 0:
+            if current_raw < int(estimated_from_rounds * 0.85):
+                need_backfill = True
+
+        if need_backfill:
+            candidates = [candidate for candidate in [current_raw, estimated_from_rounds, by_battle_times] if candidate is not None]
+            raw_battle_count = max(candidates) if candidates else int(round(effective_rounds))
+            data['meow_battle_raw_count'] = int(raw_battle_count)
+            should_save = True
+
+            if inferred_divisor in [2, 3] and effective_rounds > 0:
+                data['meow_battle_count'] = round(int(raw_battle_count) / inferred_divisor, 2)
+                effective_rounds = float(data['meow_battle_count'])
+        else:
+            raw_battle_count = current_raw
+
+        if int(raw_battle_count) > 0 and effective_rounds > 0:
+            ratio = float(raw_battle_count) / float(effective_rounds)
+            if ratio > 5:
+                divisor_for_fix = inferred_divisor if inferred_divisor in [2, 3] else 3
+                fixed_rounds = round(int(raw_battle_count) / divisor_for_fix, 2)
+                if abs(fixed_rounds - effective_rounds) > 0.01:
+                    data['meow_battle_count'] = fixed_rounds
+                    effective_rounds = float(fixed_rounds)
+                    should_save = True
+
+        if should_save and persist and instance and month_key:
+            self.save_stats(instance, month_key, data)
+
+        return int(raw_battle_count), effective_rounds, should_save
+
+    def _list_stats_rows(self, instance: Optional[str] = None) -> List[Tuple[str, str]]:
+        """列出数据库中已有的实例与月份。"""
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.cursor()
+                if instance:
+                    cursor.execute(
+                        "SELECT instance, month FROM cl1_data WHERE instance = ? ORDER BY month",
+                        (instance,),
+                    )
+                else:
+                    cursor.execute("SELECT instance, month FROM cl1_data ORDER BY instance, month")
+                return [(row[0], row[1]) for row in cursor.fetchall()]
+        except Exception as e:
+            logger.error(f"Failed to list stats rows: {e}")
+            return []
+
+    def backfill_meow_stats(self, instance: str, year: int = None, month: int = None) -> bool:
+        """显式回填指定月份的短猫统计。
+
+        仅在主动调用时落盘，避免读取统计时产生写入副作用。
+        """
+        if year is None or month is None:
+            now = datetime.now()
+            year = now.year
+            month = now.month
+
+        month_key = f"{year:04d}-{month:02d}"
+        data = self.get_stats(instance, month_key)
+        round_times = data.get('meow_round_times', [])
+        battle_times = data.get('meow_battle_times', [])
+        effective_rounds = float(data.get('meow_battle_count', 0) or 0)
+
+        _, _, changed = self._reconcile_meow_counts(
+            data=data,
+            effective_rounds=effective_rounds,
+            round_times=round_times,
+            battle_times=battle_times,
+            instance=instance,
+            month_key=month_key,
+            persist=True,
+        )
+        return changed
+
+    def backfill_all_meow_stats(self, instance: Optional[str] = None) -> Dict[str, int]:
+        """批量回填数据库内已有月份的短猫统计。"""
+        rows = self._list_stats_rows(instance=instance)
+        result = {'checked': 0, 'updated': 0}
+
+        for row_instance, month_key in rows:
+            if len(month_key) != 7 or month_key[4] != '-':
+                continue
+
+            try:
+                year = int(month_key[:4])
+                month = int(month_key[5:7])
+            except ValueError:
+                continue
+
+            result['checked'] += 1
+            if self.backfill_meow_stats(row_instance, year, month):
+                result['updated'] += 1
+
+        return result
 
     def save_stats(self, instance: str, month: str, data: Dict[str, Any]):
         """保存统计数据"""
@@ -295,6 +452,7 @@ class Cl1Database:
 
         month = datetime.now().strftime('%Y-%m')
         data = self.get_stats(instance, month)
+        data['meow_battle_raw_count'] = data.get('meow_battle_raw_count', 0) + 1
         data['meow_battle_count'] = data.get('meow_battle_count', 0) + delta
         self.save_stats(instance, month, data)
 
@@ -314,19 +472,7 @@ class Cl1Database:
         month = datetime.now().strftime('%Y-%m')
         data = self.get_stats(instance, month)
 
-        if 'meow_round_times' not in data:
-            data['meow_round_times'] = []
-
-        times = data['meow_round_times']
-
-        # 迁移旧数据：将浮点数转换为字典格式
-        normalized_times = []
-        for entry in times:
-            if isinstance(entry, dict) and 'duration' in entry:
-                normalized_times.append(entry)
-            elif isinstance(entry, (int, float)):
-                # 旧格式：裸浮点数，转换为新格式
-                normalized_times.append({'duration': float(entry), 'hazard_level': None})
+        normalized_times = self._normalize_meow_round_times(data.get('meow_round_times', []))
 
         # 保存为字典，包含时长和侵蚀等级
         new_entry = {
@@ -384,18 +530,21 @@ class Cl1Database:
 
         data = self.get_stats(instance, key)
 
-        battle_count = round(data.get('meow_battle_count', 0))
         round_times = data.get('meow_round_times', [])
         battle_times = data.get('meow_battle_times', [])
 
-        # 提取时长数据（兼容旧格式：浮点数和新格式：字典）
-        round_durations = []
-        for entry in round_times:
-            if isinstance(entry, dict) and 'duration' in entry:
-                round_durations.append(entry['duration'])
-            elif isinstance(entry, (int, float)):
-                # 兼容旧格式：裸浮点数
-                round_durations.append(float(entry))
+        effective_rounds = float(data.get('meow_battle_count', 0) or 0)
+        battle_count, effective_rounds, _ = self._reconcile_meow_counts(
+            data=data,
+            effective_rounds=effective_rounds,
+            round_times=round_times,
+            battle_times=battle_times,
+            instance=instance,
+            month_key=key,
+            persist=True,
+        )
+
+        round_durations = self._extract_meow_round_durations(round_times)
 
         # 计算平均每轮时间
         avg_round_time = 0.0
@@ -410,12 +559,53 @@ class Cl1Database:
         return {
             'month': key,
             'battle_count': battle_count,
+            'effective_rounds': round(effective_rounds, 2),
             'round_times': round_times,
             'avg_round_time': avg_round_time,
             'battle_times': battle_times,
             'avg_battle_time': avg_battle_time,
         }
+    def async_get_stats(self, instance: str, month: str):
+        from module.base.async_executor import async_executor
+        return async_executor.submit(self.get_stats, instance, month)
+
+    def async_save_stats(self, instance: str, month: str, data: Dict[str, Any]):
+        from module.base.async_executor import async_executor
+        return async_executor.submit(self.save_stats, instance, month, data)
+
+    def async_increment_battle_count(self, instance: str, delta: int = 1):
+        from module.base.async_executor import async_executor
+        return async_executor.submit(self.increment_battle_count, instance, delta)
+
+    def async_increment_akashi_encounter(self, instance: str):
+        from module.base.async_executor import async_executor
+        return async_executor.submit(self.increment_akashi_encounter, instance)
+
+    def async_add_akashi_ap_entry(self, instance: str, amount: int, base: int, count: int, source: str):
+        from module.base.async_executor import async_executor
+        return async_executor.submit(self.add_akashi_ap_entry, instance, amount, base, count, source)
+
+    def async_add_ap_snapshot(self, instance: str, ap_current: int, source: str = 'cl1'):
+        from module.base.async_executor import async_executor
+        return async_executor.submit(self.add_ap_snapshot, instance, ap_current, source)
+
+    def async_increment_meow_battle_count(self, instance: str, hazard_level: int = None, delta: float = None):
+        from module.base.async_executor import async_executor
+        return async_executor.submit(self.increment_meow_battle_count, instance, hazard_level, delta)
+
+    def async_add_meow_round_time(self, instance: str, duration: float, hazard_level: int = None):
+        from module.base.async_executor import async_executor
+        return async_executor.submit(self.add_meow_round_time, instance, duration, hazard_level)
+
+    def async_add_meow_battle_time(self, instance: str, duration: float):
+        from module.base.async_executor import async_executor
+        return async_executor.submit(self.add_meow_battle_time, instance, duration)
+
+    def async_get_meow_stats(self, instance: str, year: int = None, month: int = None):
+        from module.base.async_executor import async_executor
+        return async_executor.submit(self.get_meow_stats, instance, year, month)
 
 
 # 单例实例
 db = Cl1Database()
+

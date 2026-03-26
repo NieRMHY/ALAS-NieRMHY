@@ -20,6 +20,8 @@ config/reloadflag
 config/reloadalas
 test.py
 test/
+debug_ocr/
+PaddleOCR
 
 # Created by .ignore support plugin (hsz.mobi)
 
@@ -248,7 +250,7 @@ $RECYCLE.BIN/
 *.lnk
 adb_port.txt
 adb_port.ini
-*.exe
+alas.exe
 !popup.exe
 *.zip
 console.bat

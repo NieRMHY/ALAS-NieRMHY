@@ -24,7 +24,6 @@ class ApiClient:
     CL1_DATA_PATH = '/api/telemetry'
     ANNOUNCEMENT_PATH = '/api/get/announcement'
     STAMINA_REPORT_PATH = '/api/stamina/report'
-    AZURSTAT_PATH = '/api/azurstat'
     
     @classmethod
     def _get_endpoints(cls, path: str) -> List[str]:
@@ -143,11 +142,8 @@ class ApiClient:
         """
         if not enabled or not cls.ENABLE_REPORT:
             return
-        threading.Thread(
-            target=cls._submit_bug_log,
-            args=(content, log_type),
-            daemon=True
-        ).start()
+        from module.base.async_executor import async_executor
+        async_executor.submit(cls._submit_bug_log, content, log_type)
     
     @staticmethod
     def _submit_cl1_data(data: Dict[str, Any], timeout: int):
@@ -194,62 +190,8 @@ class ApiClient:
             data: 包含device_id和统计数据的字典
             timeout: 请求超时时间（秒），默认10秒
         """
-        if not cls.ENABLE_REPORT:
-            return
-        threading.Thread(
-            target=cls._submit_cl1_data,
-            args=(data, timeout),
-            daemon=True
-        ).start()
-
-    @staticmethod
-    def _submit_azurstat(task, body, timeout: int):
-        """
-        内部方法：提交Azurstat数据
-        
-        Args:
-            task: 任务名
-            body: 数据
-            timeout: 请求超时时间（秒），默认10秒
-        """
-        try:
-            data = {
-                'device_id': get_device_id(),
-                'task': task,
-                'body': body
-            }
-
-            logger.info('Submitting azurstat data...')
-            
-            success, status_code, response_text = ApiClient._post_with_fallback(
-                ApiClient.AZURSTAT_PATH,
-                data,
-                timeout=timeout
-            )
-            
-            if success:
-                logger.info('✓ Azurstat data submitted successfully')
-            else:
-                logger.warning(f'✗ Azurstat data submission failed: {response_text}')
-        
-        except Exception as e:
-            logger.exception(f'Unexpected error during azurstat data submission: {e}')
-    
-    @classmethod
-    def submit_azurstat(cls, task, body, timeout: int = 10):
-        """
-        提交AzurStat统计数据（异步）
-        
-        Args:
-            task: 任务名
-            body: 数据
-            timeout: 请求超时时间（秒），默认10秒
-        """
-        threading.Thread(
-            target=cls._submit_azurstat,
-            args=(task, body, timeout),
-            daemon=True
-        ).start()
+        from module.base.async_executor import async_executor
+        async_executor.submit(cls._submit_cl1_data, data, timeout)
     
     @staticmethod
     def _report_stamina(stamina: float, timeout: int):
@@ -290,11 +232,8 @@ class ApiClient:
             stamina: 当前体力值
             timeout: 请求超时时间（秒），默认5秒
         """
-        threading.Thread(
-            target=cls._report_stamina,
-            args=(stamina, timeout),
-            daemon=True
-        ).start()
+        from module.base.async_executor import async_executor
+        async_executor.submit(cls._report_stamina, stamina, timeout)
     
     @classmethod
     def get_announcement(cls, timeout: int = 1, current_id: int = None) -> Optional[Dict[str, Any]]:
@@ -354,3 +293,4 @@ class ApiClient:
         except Exception as e:
             logger.warning(f'获取公告异常: {e}')
             return None
+

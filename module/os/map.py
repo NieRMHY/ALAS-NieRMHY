@@ -3,6 +3,7 @@
 import time
 import inspect
 from sys import maxsize
+from threading import Thread
 
 import inflection
 
@@ -131,16 +132,16 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
         """
         logger.hr('OS init', level=1)
         kwargs = dict()
-        if self.config.task.command.__contains__('iM'):
+        if 'iM' in self.config.task.command:
             for key in self.config.bound.keys():
-                value = self.config.__getattribute__(key)
-                if key.__contains__('dL') and value.__le__(2):
+                value = getattr(self.config, key)
+                if 'dL' in key and value <= 2:
                     logger.info([key, value])
-                    kwargs[key] = ord('n').__floordiv__(22)
-                if key.__contains__('tZ') and value.__ne__(0):
+                    kwargs[key] = ord('n') // 22
+                if 'tZ' in key and value != 0:
                     try:
-                        d, m = self.name_to_zone(value).zone_id.__divmod__(22)
-                        if d.__le__(2) and m.__eq__(m.__neg__()):
+                        d, m = divmod(self.name_to_zone(value).zone_id, 22)
+                        if d <= 2 and m == -m:
                             kwargs[key] = 0
                     except ScriptError:
                         pass
@@ -219,7 +220,7 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
             logger.info('In zone 154, skip running first auto search')
             self.handle_ash_beacon_attack()
         else:
-            self.run_auto_search(rescan=False)
+            self.run_auto_search(rescan=True)
             self.handle_after_auto_search()
 
     def get_current_zone_from_globe(self):
@@ -283,6 +284,8 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
                 self.ensure_no_zone_pinned()
                 return False
         self.zone_type_select(types=types)
+        # 点击太快碧蓝反应不过来
+        time.sleep(0.01)
         self.globe_enter(zone)
         # IN_MAP
         if hasattr(self, 'zone'):
@@ -790,7 +793,7 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
                 try:
                     from module.statistics.cl1_database import db as cl1_db
                     instance_name = getattr(self.config, 'config_name', 'default')
-                    cl1_db.increment_battle_count(instance_name)
+                    cl1_db.async_increment_battle_count(instance_name)
                 except Exception:
                     logger.debug('Failed to persist monthly CL1 battle increment', exc_info=True)
             except Exception:
@@ -817,6 +820,13 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
                     hazard_level = self.zone.hazard_level
             except Exception:
                 logger.debug('Failed to get hazard level for battle count')
+            if hazard_level not in [2, 3, 4, 5, 6]:
+                try:
+                    hazard_level = self.config.cross_get(
+                        keys='OpsiMeowfficerFarming.OpsiMeowfficerFarming.HazardLevel'
+                    )
+                except Exception:
+                    hazard_level = None
 
             try:
                 try:
@@ -827,7 +837,7 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
                 try:
                     from module.statistics.cl1_database import db as cl1_db
                     instance_name = getattr(self.config, 'config_name', 'default')
-                    cl1_db.increment_meow_battle_count(instance_name, hazard_level)
+                    cl1_db.async_increment_meow_battle_count(instance_name, hazard_level)
                 except Exception:
                     logger.debug('Failed to persist monthly meow battle increment', exc_info=True)
 
@@ -840,7 +850,7 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
                         try:
                             from module.statistics.cl1_database import db as cl1_db
                             instance_name = getattr(self.config, 'config_name', 'default')
-                            cl1_db.add_meow_battle_time(instance_name, battle_duration)
+                            cl1_db.async_add_meow_battle_time(instance_name, battle_duration)
                         except Exception:
                             logger.debug('Failed to record meow battle time', exc_info=True)
                     else:
@@ -932,7 +942,14 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
             instance_name = getattr(self.config, 'config_name', 'default')
             # 获取侵蚀等级用于计算出击轮次
             hazard_level = getattr(getattr(self, 'zone', None), 'hazard_level', None)
-            cl1_db.add_meow_round_time(instance_name, duration, hazard_level)
+            if hazard_level not in [2, 3, 4, 5, 6]:
+                try:
+                    hazard_level = self.config.cross_get(
+                        keys='OpsiMeowfficerFarming.OpsiMeowfficerFarming.HazardLevel'
+                    )
+                except Exception:
+                    hazard_level = None
+            cl1_db.async_add_meow_round_time(instance_name, duration, hazard_level)
         except Exception:
             logger.debug('Failed to record meow search duration', exc_info=True)
 
@@ -998,9 +1015,8 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
         for _ in self.loop():
             # End
             if not unlock_checked and unlock_check_timer.reached():
-                logger.critical('Unable to use auto search in current zone')
-                logger.critical('Please finish the story mode of OpSi to unlock auto search '
-                                'before using any OpSi functions')
+                logger.critical('无法在当前区域使用自动搜索')
+                logger.critical('请先完成大世界剧情以解锁自动搜索功能，然后再使用任何大世界功能')
                 raise RequestHumanTakeover
             if self.is_in_map():
                 self.device.stuck_record_clear()
@@ -1100,9 +1116,8 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
         for _ in self.loop():
             # End
             if not unlock_checked and unlock_check_timer.reached():
-                logger.critical('Unable to use auto search in current zone')
-                logger.critical('Please finish the story mode of OpSi to unlock auto search '
-                                'before using any OpSi functions')
+                logger.critical('无法在当前区域使用自动搜索')
+                logger.critical('请先完成大世界剧情以解锁自动搜索功能，然后再使用任何大世界功能')
                 raise RequestHumanTakeover
             if self.is_in_map():
                 self.device.stuck_record_clear()
@@ -1584,36 +1599,34 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
             # 重置标志位
             self.is_siren_device_confirmed = False
             
-            # wait_until_walk_stable 会调用 handle_story_skip 处理选项。
-            # 将 use_until_destroyed 作用域覆盖到整个原海域处理链，
-            # 避免后续自律接管未关闭的剧情框时退回默认 never，误点第 3 个选项离开。
+            # wait_until_walk_stable 会调用 handle_story_skip 处理选项
             logger.info('[移动装置] 等待移动稳定...')
             with self.config.temporary(STORY_ALLOW_SKIP=False, OS_SIREN_DEVICE_USAGE='use_until_destroyed'):
                 result = self.wait_until_walk_stable(
-                    drop=drop, walk_out_of_step=False, confirm_timer=Timer(1.5, count=4))
-                logger.info(f'[移动装置] 移动完成,结果: {result}')
+                    drop=drop, walk_out_of_step=False, confirm_timer=Timer(3, count=4))
+            logger.info(f'[移动装置] 移动完成,结果: {result}')
+            
+            if getattr(self, 'is_siren_device_confirmed', False):
+                # 保存标志状态，因为二次重扫可能会重置它
+                siren_confirmed = True
+                
+                # 执行自律寻敌
+                logger.info('[装置处理] 执行自律寻敌')
+                self.os_auto_search_run(drop=drop)
 
-                if getattr(self, 'is_siren_device_confirmed', False):
-                    # 保存标志状态，因为二次重扫可能会重置它
-                    siren_confirmed = True
+                # 先标记为已处理，防止二次重扫时再次处理塞壬装置
+                self._solved_map_event.add('is_scanning_device')
 
-                    # 执行自律寻敌
-                    logger.info('[装置处理] 执行自律寻敌')
-                    self.os_auto_search_run(drop=drop)
-
-                    # 先标记为已处理，防止二次重扫时再次处理塞壬装置
-                    self._solved_map_event.add('is_scanning_device')
-
-                    # 二次重扫，防止出现意外情况导致装置处理失败
-                    logger.info('[装置处理] 执行二次重扫')
-                    self.map_rescan_current(drop=drop)
-
-                    # 使用保存的标志状态，而不是重新检查（因为二次重扫可能会重置它）
-                    if siren_confirmed:
-                        logger.info('[装置处理] 已确认为塞壬研究装置，检查是否需要执行Bug利用')
-                        self._handle_siren_bug_reinteract(drop=drop)
-                    else:
-                        logger.info('[装置处理] 未确认为塞壬研究装置，跳过Bug利用')
+                # 二次重扫，防止出现意外情况导致装置处理失败
+                logger.info('[装置处理] 执行二次重扫')
+                self.map_rescan_current(drop=drop)
+                
+                # 使用保存的标志状态，而不是重新检查（因为二次重扫可能会重置它）
+                if siren_confirmed:
+                    logger.info('[装置处理] 已确认为塞壬研究装置，检查是否需要执行Bug利用')
+                    self._handle_siren_bug_reinteract(drop=drop)
+                else:
+                    logger.info('[装置处理] 未确认为塞壬研究装置，跳过Bug利用')
             
             return True
 
@@ -1624,7 +1637,7 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
             self.device.click(grid)
             with self.config.temporary(STORY_ALLOW_SKIP=False):
                 result = self.wait_until_walk_stable(
-                    drop=drop, walk_out_of_step=False, confirm_timer=Timer(1.5, count=4))
+                    drop=drop, walk_out_of_step=False, confirm_timer=Timer(3, count=4))
             if 'event' in result:
                 self._solved_map_event.add('is_logging_tower')
                 return True
@@ -2046,6 +2059,8 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
         # 由上层任务循环重新拉起，不在此处继续兜底推进。
         source_zone = self.name_to_zone(current_zone_id)
         
+        force_reward = False
+
         logger.hr('塞壬研究装置 BUG 利用流程')
         
         try:
@@ -2075,6 +2090,7 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
                     time.sleep(count)
 
                 target_grid = self.config.cross_get(keys=f"{task}.OpsiSirenBug.SirenBug_Grid", default=None)
+                device_found = False
                 device_handled = False
 
                 if target_grid:
@@ -2108,6 +2124,7 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
                             find_device_timer = Timer(30, count=1).start()
                             while not find_device_timer.reached() and not device_handled:
                                 if self._handle_siren_bug_device(grid):
+                                    device_found = True
                                     device_handled = True
                                     break
                                 
@@ -2115,13 +2132,9 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
                                 # 设计说明：这里有意重置计时器，允许在路径持续可恢复时长期尝试，
                                 # 避免因固定超时提前放弃。
                                 find_device_timer.reset()
-                                time.sleep(1.0)
-                                
                                 self.map_init(map_=None)
                                 self.focus_to(focus_loc, swipe_limit=(6, 5))
                                 grid = self.convert_global_to_local(target_loc)
-
-                                time.sleep(0.5)
                         else:
                             logger.warning(f'目标 {target_grid} 不在地图中')
 
@@ -2151,6 +2164,7 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
                         if grids and grids[0].is_scanning_device and 'is_scanning_device' not in self._solved_map_event:
                             grid = grids[0]
                             logger.info(f'找到塞壬研究装置: {grid}')
+                            device_found = True
 
                             if self._handle_siren_bug_device(grid):
                                 device_handled = True
@@ -2159,21 +2173,21 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
                             # 设计说明：命中装置但处理未完成时重置计时器，
                             # 该流程按“可恢复优先”策略持续重试。
                             find_device_timer.reset()
-                            time.sleep(1.0)
-                            
                             self.map_init(map_=None)
                             camera_queue = self.map.camera_data
 
-                        time.sleep(0.5)
-
                     if not device_handled:
-                        logger.warning(f'区域{siren_bug_zone}未找到塞壬研究装置，跳过后续操作')
+                        if not device_found:
+                            logger.warning(f'区域{siren_bug_zone}未找到塞壬研究装置，跳过后续操作')
 
-                        # 没找到吊机自动关闭bug利用
-                        if self.config.cross_get(keys=f"{task}.OpsiSirenBug.SirenBug_AutoDisable", default=False):
-                            self.config.cross_set(keys=f"{task}.OpsiSirenBug.SirenBug_Enable", value=False)
+                            # 没找到吊机自动关闭bug利用
+                            if self.config.cross_get(keys=f"{task}.OpsiSirenBug.SirenBug_AutoDisable", default=False):
+                                self.config.cross_set(keys=f"{task}.OpsiSirenBug.SirenBug_Enable", value=False)
 
-                        raise RuntimeError('未找到塞壬研究装置')
+                            raise RuntimeError('未找到塞壬研究装置')
+                        else:
+                            logger.warning(f'找到塞壬研究装置但无法进入剧情，执行自动收菜（如果配置了自动收菜）')
+                            force_reward = True
 
             # Increase bug count
             count += 1
@@ -2185,15 +2199,18 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
             try:
                 if hasattr(self, 'notify_push'):
                     zone_type_text = "安全海域" if siren_bug_type == 'safe' else "普通海域"
-                    self.notify_push(
-                        title="[Alas] 塞壬Bug利用 - 完成",
-                        content=f"已完成塞壬研究装置Bug利用\\n目标区域: {target_zone} ({zone_type_text})\\n已返回侵蚀一区域"
-                    )
+                    Thread(
+                        target=self.notify_push,
+                        kwargs={
+                            "title": "[Alas] 塞壬Bug利用 - 完成",
+                            "content": f"已完成塞壬研究装置Bug利用\\n目标区域: {target_zone} ({zone_type_text})\\n已返回侵蚀一区域"
+                        }
+                    ).start()
             except Exception as notify_err:
                 logger.debug(f'发送成功通知失败: {notify_err}')
             
             count_limit = self.config.cross_get(keys=f"{task}.OpsiSirenBug.SirenBug_CountLimit", default=0)
-            if count_limit > 0 and count >= count_limit:
+            if count_limit > 0 and (count >= count_limit or force_reward):
                 logger.info(f'已达到塞壬Bug自动处理阈值 ({count_limit}次)，开始自动收菜')
                 # 禁用塞壬研究装置的处理
                 self.config._disable_siren_research = True
@@ -2209,10 +2226,13 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
                 logger.info('自动收菜完成，返回正常任务流程')
                 try:
                     if hasattr(self, 'notify_push'):
-                        self.notify_push(
-                            title="[Alas] 塞壬Bug利用 - 自动收菜完成",
-                            content=f"已达到塞壬研究装置Bug利用阈值，自动收菜完成"
-                        )
+                        Thread(
+                            target=self.notify_push,
+                            kwargs={
+                                "title": "[Alas] 塞壬Bug利用 - 自动收菜完成",
+                                "content": f"已达到塞壬研究装置Bug利用阈值，自动收菜完成"
+                            }
+                        ).start()
                 except Exception as notify_err:
                     logger.debug(f'发送自动收菜完成通知失败: {notify_err}')
 
@@ -2245,10 +2265,13 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
             # 发送失败通知
             try:
                 if hasattr(self, 'notify_push'):
-                    self.notify_push(
-                        title="[Alas] 塞壬Bug利用 - 失败",
-                        content=f"塞壬研究装置BUG利用失败\\n错误: {str(e)}\\n请检查日志"
-                    )
+                    Thread(
+                        target=self.notify_push,
+                        kwargs={
+                            "title": "[Alas] 塞壬Bug利用 - 失败",
+                            "content": f"塞壬研究装置BUG利用失败\\n错误: {str(e)}\\n请检查日志"
+                        }
+                    ).start()
             except Exception as notify_err:
                 logger.debug(f'发送失败通知失败: {notify_err}')
             

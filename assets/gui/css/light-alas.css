@@ -151,6 +151,7 @@ pre.rich-traceback-code {
 #pywebio-scope-daemon-overview #pywebio-scope-groups {
     background-color: white;
     border: 1px solid lightgrey;
+    font-family: 'JetBrains Mono NL', monospace !important;
 }
 
 #pywebio-scope-header {

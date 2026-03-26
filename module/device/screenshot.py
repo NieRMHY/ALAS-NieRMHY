@@ -202,16 +202,16 @@ class Screenshot(Adb, WSA, DroidCast, AScreenCap, Scrcpy, NemuIpc, LDOpenGL):
         """
         if interval is None:
             origin = self.config.Optimization_ScreenshotInterval
-            interval = limit_in(origin, 0.1, 0.3)
+            interval = limit_in(origin, 0.001, 0.3)
             if interval != origin:
                 logger.warning(f'Optimization.ScreenshotInterval {origin} is revised to {interval}')
                 self.config.Optimization_ScreenshotInterval = interval
             # Allow nemu_ipc to have a lower default
             if self.config.Emulator_ScreenshotMethod in ['nemu_ipc', 'ldopengl']:
-                interval = limit_in(origin, 0.1, 0.2)
+                interval = limit_in(origin, 0.001, 0.2)
         elif interval == 'combat':
             origin = self.config.Optimization_CombatScreenshotInterval
-            interval = limit_in(origin, 0.3, 1.0)
+            interval = limit_in(origin, 0.001, 1.0)
             if interval != origin:
                 logger.warning(f'Optimization.CombatScreenshotInterval {origin} is revised to {interval}')
                 self.config.Optimization_CombatScreenshotInterval = interval
@@ -274,9 +274,8 @@ class Screenshot(Adb, WSA, DroidCast, AScreenCap, Scrcpy, NemuIpc, LDOpenGL):
                 logger.warning('Received orientated screenshot, game not running')
                 return True
             else:
-                logger.critical(f'Resolution not supported: {width}x{height}')
-                logger.critical('Please set emulator resolution to 1280x720')
-                logger.critical('不支持的分辨率，Alas 需要在 1280x720 下运行。')
+                logger.critical(f'傻逼你看着分辨率对吗: {width}x{height}')
+                logger.critical('给我他妈的改成 1280x720')
                 raise RequestHumanTakeover
 
     def check_screen_black(self):

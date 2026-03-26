@@ -439,8 +439,8 @@ class Uiautomator2(Connection):
         if width == 720 and height == 1280:
             return (width, height)
 
-        logger.critical(f'Resolution not supported: {width}x{height}')
-        logger.critical('Please set emulator resolution to 1280x720')
+        logger.critical(f'傻逼你自己看这分辨率对吗: {width}x{height}')
+        logger.critical('给我他妈的改成 1280x720')
         raise RequestHumanTakeover
 
     @retry

@@ -318,6 +318,10 @@
       "name": "效能測試",
       "help": ""
     },
+    "OcrBenchmark": {
+      "name": "Task.OcrBenchmark.name",
+      "help": "Task.OcrBenchmark.help"
+    },
     "AzurLaneUncensored": {
       "name": "反和諧",
       "help": ""
@@ -813,13 +817,17 @@
       "name": "最佳化設定",
       "help": ""
     },
+    "UseOcrGpuAcceleration": {
+      "name": "啟用 GPU 加速",
+      "help": "使用 GPU 加速來大幅提升文字辨識速度。如果遇到不相容導致閃退或報錯，請關閉。"
+    },
     "ScreenshotInterval": {
       "name": "放慢截圖速度至 X 秒一張",
-      "help": "執行兩次截圖之間的最小間隔，限制在 0.1 ~ 0.3，對於高配置電腦能降低 CPU 佔用"
+      "help": "執行兩次截圖之間的最小間隔，限制在 0.001 ~ 0.3，對於高配置電腦能降低 CPU 佔用"
     },
     "CombatScreenshotInterval": {
       "name": "戰鬥中放慢截圖速度至 X 秒一張",
-      "help": "執行兩次截圖之間的最小間隔，限制在 0.3 ~ 1.0，能降低戰鬥時的 CPU 佔用"
+      "help": "執行兩次截圖之間的最小間隔，限制在 0.001 ~ 1.0，能降低戰鬥時的 CPU 佔用"
     },
     "TaskHoardingDuration": {
       "name": "囤積任務 X 分鍾",
@@ -1125,7 +1133,7 @@
       "event_20220414_cn": "復刻-永夜幻光",
       "event_20220428_cn": "復刻虹彩的終幕曲",
       "event_20220526_cn": "泠誓光庭",
-      "event_20220728_cn": "雄鷹的敘事歌",
+      "event_20220728_cn": "復刻雄鷹的敘事歌",
       "event_20220818_cn": "遠匯點作戰",
       "event_20220915_cn": "紫絳槿嵐",
       "event_20221124_cn": "復刻鍊金術士與秘密遺跡群島",
@@ -1308,7 +1316,8 @@
       "combat_auto": "自律戰鬥",
       "combat_manual": "手操",
       "stand_still_in_the_middle": "中路站樁",
-      "hide_in_bottom_left": "躲左下角"
+      "hide_in_bottom_left": "躲左下角",
+      "hide_in_upper_left": "躲左上角"
     },
     "Fleet1Step": {
       "name": "一隊步長",
@@ -1342,7 +1351,8 @@
       "combat_auto": "自律戰鬥",
       "combat_manual": "手操",
       "stand_still_in_the_middle": "中路站樁",
-      "hide_in_bottom_left": "躲左下角"
+      "hide_in_bottom_left": "躲左下角",
+      "hide_in_upper_left": "躲左上角"
     },
     "Fleet2Step": {
       "name": "二隊步長",
@@ -5110,6 +5120,75 @@
     "Samples": {
       "name": "OpsiSimulatorParameters.Samples.name",
       "help": "OpsiSimulatorParameters.Samples.help"
+    },
+    "Draw": {
+      "name": "OpsiSimulatorParameters.Draw.name",
+      "help": "OpsiSimulatorParameters.Draw.help",
+      "do_not": "do_not",
+      "single_sample": "single_sample",
+      "multi_sample": "multi_sample"
+    },
+    "TotalTime": {
+      "name": "OpsiSimulatorParameters.TotalTime.name",
+      "help": "OpsiSimulatorParameters.TotalTime.help"
+    },
+    "TimeUseRatio": {
+      "name": "OpsiSimulatorParameters.TimeUseRatio.name",
+      "help": "OpsiSimulatorParameters.TimeUseRatio.help"
+    },
+    "InitialAp": {
+      "name": "OpsiSimulatorParameters.InitialAp.name",
+      "help": "OpsiSimulatorParameters.InitialAp.help"
+    },
+    "InitialCoin": {
+      "name": "OpsiSimulatorParameters.InitialCoin.name",
+      "help": "OpsiSimulatorParameters.InitialCoin.help"
+    },
+    "MeowHazardLevel": {
+      "name": "OpsiSimulatorParameters.MeowHazardLevel.name",
+      "help": "OpsiSimulatorParameters.MeowHazardLevel.help",
+      "level3": "level3",
+      "level5": "level5"
+    },
+    "CrossWeek": {
+      "name": "OpsiSimulatorParameters.CrossWeek.name",
+      "help": "OpsiSimulatorParameters.CrossWeek.help"
+    },
+    "BuyAp": {
+      "name": "OpsiSimulatorParameters.BuyAp.name",
+      "help": "OpsiSimulatorParameters.BuyAp.help"
+    },
+    "Cl1Coin": {
+      "name": "OpsiSimulatorParameters.Cl1Coin.name",
+      "help": "OpsiSimulatorParameters.Cl1Coin.help"
+    },
+    "Meow3Coin": {
+      "name": "OpsiSimulatorParameters.Meow3Coin.name",
+      "help": "OpsiSimulatorParameters.Meow3Coin.help"
+    },
+    "Meow5Coin": {
+      "name": "OpsiSimulatorParameters.Meow5Coin.name",
+      "help": "OpsiSimulatorParameters.Meow5Coin.help"
+    },
+    "AkashiProbability": {
+      "name": "OpsiSimulatorParameters.AkashiProbability.name",
+      "help": "OpsiSimulatorParameters.AkashiProbability.help"
+    },
+    "Cl1Time": {
+      "name": "OpsiSimulatorParameters.Cl1Time.name",
+      "help": "OpsiSimulatorParameters.Cl1Time.help"
+    },
+    "Meow3Time": {
+      "name": "OpsiSimulatorParameters.Meow3Time.name",
+      "help": "OpsiSimulatorParameters.Meow3Time.help"
+    },
+    "Meow5Time": {
+      "name": "OpsiSimulatorParameters.Meow5Time.name",
+      "help": "OpsiSimulatorParameters.Meow5Time.help"
+    },
+    "Deterministic": {
+      "name": "OpsiSimulatorParameters.Deterministic.name",
+      "help": "OpsiSimulatorParameters.Deterministic.help"
     }
   },
   "Storage": {

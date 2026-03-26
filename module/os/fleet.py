@@ -208,7 +208,7 @@ class OSFleet(OSCamera, Combat, Fleet, OSAsh):
         super().hp_get()
         ship_icon = self._hp_grid().crop((-29, -165, 106, -30))
         has_ship = [not TEMPLATE_STORAGE_SHIP_EMPTY.match(
-                    self.image_crop(button, copy=False)) for button in ship_icon.buttons]
+                    self.image_crop(button, copy=False), similarity=0.5) for button in ship_icon.buttons]
         need_repair = [not repair for repair in self.hp_has_ship]
         for index, repair in enumerate(need_repair):
             if repair:
@@ -870,7 +870,7 @@ class OSFleet(OSCamera, Combat, Fleet, OSAsh):
                         drop.add(self.device.image)
                     break
 
-        logger.critical('Unable to clear boss, fleets exhausted')
+        logger.critical('无法击败boss，舰队已耗尽')
         return False
 
     def run_abyssal(self):

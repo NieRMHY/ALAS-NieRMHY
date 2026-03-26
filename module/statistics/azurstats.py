@@ -11,13 +11,12 @@ from requests.adapters import HTTPAdapter
 import numpy as np
 
 from module.base.utils import save_image
-from module.base.api_client import ApiClient
 from module.config.config import AzurLaneConfig
 from module.config.deep import deep_get
 from module.exception import ScriptError
 from module.logger import logger
 from module.statistics.utils import pack
-from AzurStats.azurstats import AzurStatsOpsi
+from module.base.device_id import get_device_id
 
 
 class DropImage:
@@ -75,23 +74,20 @@ class DropImage:
         return len(self.images)
 
     def __bool__(self):
-        # Uncomment these if stats service re-run in the future
-        # return self.save or self.upload
-
-        return self.save
+        return self.save or self.upload
 
     def __enter__(self):
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if self:
-            logger.info('[Azurstat] 停止记录截图并提交')
             self.stat.commit(images=self.images, genre=self.genre,
-                             save=self.save, upload=self.upload, info=self.info,
-                             combat_count=self.combat_count)
+                             save=self.save, upload=self.upload, info=self.info, combat_count=self.combat_count)
 
 
 class AzurStats:
+    TIMEOUT = 20
+
     def __init__(self, config):
         """
         Args:
@@ -99,10 +95,6 @@ class AzurStats:
         """
         self.config = config
 
-    @property
-    def _user_agent(self):
-        return f'Alas ({str(self.config.DropRecord_AzurStatsID)})'
-    
     meowofficer_farming_labels = ['侵蚀等级', '上次记录时间', '有效战斗轮数', '平均黄币/轮', '平均金菜/轮', '平均深渊/轮', '平均隐秘/轮']
     meowofficer_farming_map = [
         'OperationCoin',
@@ -110,7 +102,15 @@ class AzurStats:
         'CoordinateAbyssal',
         'CoordinateObscure'
     ]
-    
+    unit_combat_count = {
+        1: 2,
+        2: 2,
+        3: 2,
+        4: 3,
+        5: 3,
+        6: 3
+    }
+
     @staticmethod
     def load_meowofficer_farming():
         """
@@ -129,44 +129,86 @@ class AzurStats:
             data = np.loadtxt('./log/azurstat_meowofficer_farming.csv', delimiter=',', dtype=float, skiprows=1, encoding='utf-8')
         finally:
             return data
-    
-    def _save_meowofficer_farming(self, filename, items, hazard_level, delta_combat_count):
-        all_data = self.load_meowofficer_farming()
+        
+    @staticmethod
+    def get_meowofficer_farming():
+        session = requests.Session()
+        session.trust_env = False
+        session.mount('http://', HTTPAdapter(max_retries=5))
+        session.mount('https://', HTTPAdapter(max_retries=5))
+        
+        device_id = get_device_id()
+        base_url = f'https://alas-statsapi.nanoda.work/api/data/opsi_items?device_id={device_id}&genre=opsi_meowfficer_farming'
+        
+        all_data = []
+        limit = 1000
+        offset = 0
+        
+        while True:
+            try:
+                resp = session.get(f'{base_url}&limit={limit}&offset={offset}', timeout=AzurStats.TIMEOUT)
+                resp.raise_for_status()
+                result = resp.json()
+                data = result.get('data', [])
+                all_data.extend(data)
+                
+                if len(data) < limit:
+                    break
+                offset += limit
+            except Exception as e:
+                logger.warning(f'拉取数据失败, {e}')
+                return
 
-        # Get view of the specific row
-        row = all_data[hazard_level - 1]
-        combat_count = int(row[2])
-        data = row[3:]  # View of the stats part
+        out_data = np.zeros((6, len(AzurStats.meowofficer_farming_labels)))
+        img_combat_counts = {}
+        
+        for row in all_data:
+            imgid = row.get('imgid')
+            h_level = row.get('hazard_level')
+            if not h_level or h_level < 1 or h_level > 6:
+                continue
+                
+            combat_count = row.get('combat_count', 0)
+            if imgid not in img_combat_counts:
+                img_combat_counts[imgid] = combat_count
+                out_data[h_level - 1, 2] += combat_count
+            
+            item_name = row.get('item')
+            amount = row.get('amount', 0)
+            
+            for i, item_prefix in enumerate(AzurStats.meowofficer_farming_map):
+                if item_name.startswith(item_prefix):
+                    out_data[h_level - 1, 3 + i] += amount
+                    break
+        current_time = int(datetime.timestamp(datetime.now()))
+        
+        for i in range(6):
+            h = i + 1
+            out_data[i, 0] = h
+            out_data[i, 1] = current_time
+            out_data[i, 2] /= AzurStats.unit_combat_count[h]
 
-        new_combat_count = combat_count + delta_combat_count
+            if out_data[i, 2] > 0:
+                for j in range(3, len(AzurStats.meowofficer_farming_labels)):
+                    out_data[i, j] /= out_data[i, 2]
+                    
+        header = ','.join(AzurStats.meowofficer_farming_labels)
+        np.savetxt('./log/azurstat_meowofficer_farming.csv', out_data, delimiter=',', header=header, comments='', fmt='%f', encoding='utf-8')
+        logger.info('拉取并更新数据成功: azurstat_meowofficer_farming.csv')
 
-        if new_combat_count <= 0:
-            return
-
-        # Convert average to total
-        data[:] = np.round(data * combat_count)
-
-        # Add new items
-        for item in items:
-            for i, template in enumerate(AzurStats.meowofficer_farming_map):
-                if item['item'].startswith(template):
-                    data[i] += item['amount']
-
-        # Convert total to new average
-        data /= new_combat_count
-
-        # Update metadata
-        row[1] = int(datetime.now().timestamp())
-        row[2] = new_combat_count
-
-        logger.info(f'[Azurstat] [{filename}] 更新行数据: {row}')
-
-        try:
-            header = ','.join(AzurStats.meowofficer_farming_labels)
-            np.savetxt('./log/azurstat_meowofficer_farming.csv', all_data, delimiter=',', header=header, comments='', fmt='%f', encoding='utf-8')
-            logger.info(f'[Azurstat] [{filename}] 成功保存数据')
-        except Exception as e:
-            logger.error(f'Failed to save meowofficer farming data: {e}')
+    @property
+    def _api(self):
+        # method = self.config.DropRecord_API
+        # if method == 'default':
+        #     return 'https://azurstats.lyoko.io/api/upload/'
+        # elif method == 'cn_gz_reverse_proxy':
+        #     return 'https://image.tyy.akagiyui.com/api/upload'
+        # elif method == 'cn_sh_reverse_proxy':
+        #     return 'https://image.tyy.akagiyui.com/api/upload'
+        # else:
+        #     logger.critical('Invalid upload API, please check your settings')
+        #     raise ScriptError('Invalid upload API')
+        return 'https://alas-statsapi.nanoda.work/api/upload'
 
     def _upload(self, image, genre, filename, combat_count):
         """
@@ -178,69 +220,37 @@ class AzurStats:
         Returns:
             bool: If success
         """
-        allowed_genre = ['opsi_hazard1_leveling', 'opsi_meowfficer_farming']
-        unit_combat_count = {
-            1: 2,
-            2: 2,
-            3: 2,
-            4: 3,
-            5: 3,
-            6: 3
-        }
-        limits = {
-            'OperationCoin': 20000,
-            'Coins': 500,
-        }
-
-        if genre not in allowed_genre:
-            return False
-
-        results = AzurStatsOpsi(image)
-        record = results.DataParseRecords[0]
-        if record.error or record.scene != 'OpsiItems':
-            logger.info(f'[Azurstat] [{filename}] 该截图不包含有效信息')
+        if genre not in ['opsi_meowfficer_farming']:
             return False
         
-        item = results.DataOpsiItems[0]
-
-        logger.info(f'[Azurstat] [{filename}] 记录的战斗数: {combat_count}')
-        if combat_count % unit_combat_count[item.hazard_level]:
-            logger.info(f'[Azurstat] [{filename}] 此轮战斗不完整，忽略')
-            return False
-        
-        combat_count //= unit_combat_count[item.hazard_level]
-        
-        items = [
-            {
-                'item': d.item,
-                'amount': d.amount,
-                'is_meow': d.tag == 'meow'
-            } for d in results.DataOpsiItems
-        ]
-        
-        for item in items:
-            limit = limits.get(item['item'], 100)
-            if item['amount'] > limit:
-                logger.info(f'[Azurstat] [{filename}] 数据异常')
-                return False
-                
-
-        logger.info(f'[Azurstat] [{filename}] items: {items}')
-        
-        if genre == 'opsi_meowfficer_farming':
-            self._save_meowofficer_farming(filename, items, item.hazard_level, combat_count)
-
-        body = {
-            'zone': item.zone,
-            'zone_type': item.zone_type,
-            'zone_id': item.zone_id,
-            'hazard_level': item.hazard_level,
-            'combat_count': combat_count,
-            'items': items
+        output = io.BytesIO()
+        Image.fromarray(image, mode='RGB').save(output, format='png')
+        output.seek(0)
+        files = {
+            'file': (filename, output, 'image/png')
         }
+        data = {
+            'device_id': get_device_id(),
+            'genre': genre,
+            'combat_count': combat_count
+        }
+        session = requests.Session()
+        session.trust_env = False
+        session.mount('http://', HTTPAdapter(max_retries=5))
+        session.mount('https://', HTTPAdapter(max_retries=5))
+        try:
+            resp = session.post(self._api, files=files, data=data, timeout=self.TIMEOUT)
+        except Exception as e:
+            logger.warning(f'Image upload failed, {e}')
+            return False
 
-        ApiClient.submit_azurstat(genre, body)
-        return True
+        if resp.status_code == 200:
+            logger.info(f'Image upload success')
+            return True
+
+        logger.warning(f'Image upload failed, unexpected server returns, '
+                       f'status_code: {resp.status_code}, returns: {resp.text[:500]}')
+        return False
 
     def _save(self, image, genre, filename):
         """
@@ -265,7 +275,7 @@ class AzurStats:
 
         return False
 
-    def commit(self, images, genre, save=False, upload=False, info='', combat_count=-1):
+    def commit(self, images, genre, save=False, upload=False, info='', combat_count=0):
         """
         Args:
             images (list): List of images in numpy array.
@@ -273,8 +283,6 @@ class AzurStats:
             save (bool): If save image to local file system.
             upload (bool): If upload image to Azur Stats.
             info (str): Extra info append to filename.
-            combat_count (int): Combat count.
-
 
         Returns:
             bool: If commit.
@@ -305,7 +313,7 @@ class AzurStats:
 
         return True
 
-    def new(self, genre, method='do_not', info=''):
+    def new(self, genre, method='upload', info=''):
         """
         Args:
             genre (str):
@@ -315,7 +323,6 @@ class AzurStats:
         Returns:
             DropImage:
         """
-        logger.info('[Azurstat] 开始记录截图')
         save = 'save' in method
         upload = 'upload' in method
         return DropImage(stat=self, genre=genre, save=save, upload=upload, info=info)

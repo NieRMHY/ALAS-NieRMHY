@@ -1,3 +1,4 @@
+import time
 from module.base.timer import Timer
 from module.base.utils import *
 from module.logger import logger
@@ -174,6 +175,8 @@ class GlobeOperation(ActionPointHandler):
         """
         self.ui_click(ZONE_SWITCH, appear_button=self.is_zone_pinned, check_button=self.is_in_zone_select,
                       skip_first_screenshot=True)
+        # 点击太快碧蓝反应不过来
+        time.sleep(0.015)
 
     def zone_select_execute(self, button):
         """
@@ -242,14 +245,13 @@ class GlobeOperation(ActionPointHandler):
                 logger.warning(
                     f'Zone type {requested_type} not found in selection, '
                     f'available types: {available_types}, '
-                    f'fallback to first available type'
+                    f'fallback to default (SAFE > DANGEROUS)'
                 )
-                # 回退到第一个可用的类型，然后重新调用 get_button 获取正确的按钮对象
-                if selection:
-                    types = (self.pinned_to_name(selection[0]),)
-                    button = get_button(selection)
-                    logger.info(f'Fallback to first available type: {self.pinned_to_name(selection[0])}')
-                else:
+                # 回退到安全的默认优先级，而不是选择列表中的第一个
+                # 这样在有深渊海域时不会错误地进入深渊而是选择安全海域
+                types = ('SAFE', 'DANGEROUS')
+                button = get_button(selection)
+                if button is None:
                     logger.warning('No zone type selection available')
                     return False
 
@@ -385,6 +387,8 @@ class GlobeOperation(ActionPointHandler):
                     logger.warning(f'Unable to enter zone {zone}, neighbouring zones may not have been explored')
                     raise OSExploreError
                 if click_timer.reached():
+                    # 点太快会进不去 浪费时间
+                    time.sleep(0.2)
                     self.device.click(ZONE_ENTRANCE)
                     click_count += 1
                     click_timer.reset()

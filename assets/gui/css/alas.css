@@ -1,3 +1,17 @@
+@font-face {
+    font-family: 'MiSans';
+    src: url('/static/assets/spa/MiSans-Demibold.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'JetBrains Mono NL';
+    src: url('/static/assets/spa/JetBrainsMonoNL-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
 details {
     border: unset !important;
     padding-bottom: unset !important;
@@ -17,7 +31,12 @@ summary {
     font-weight: 500;
 }
 
+body *:not(#pywebio-scope-log):not(#pywebio-scope-log *):not(.CodeMirror-line):not(pre.rich-traceback-code) {
+    font-family: 'MiSans', "Microsoft YaHei", sans-serif !important;
+}
+
 body {
+    font-family: 'MiSans', "Microsoft YaHei", sans-serif !important;
     margin-top: 0;
     margin-bottom: 0;
 }
@@ -221,7 +240,7 @@ button.btn.dropdown-toggle {
 }
 
 .CodeMirror-line {
-    font-family: SFMono-Regular, SF Mono, Menlo, Consolas, Liberation Mono, monospace !important;
+    font-family: 'JetBrains Mono NL', SFMono-Regular, SF Mono, Menlo, Consolas, Liberation Mono, monospace !important;
 }
 
 .form-group {
@@ -252,7 +271,7 @@ code.rich-traceback {
 pre.rich-traceback-code {
     padding-top: 0;
     padding-bottom: 0;
-    font-family: Menlo, consolas, DejaVu Sans Mono, Courier New, monospace;
+    font-family: 'JetBrains Mono NL', Menlo, consolas, DejaVu Sans Mono, Courier New, monospace !important;
     font-size: 0.85rem;
     line-height: 1.2;
 }
@@ -475,7 +494,7 @@ pre.rich-traceback-code {
 #pywebio-scope-log {
     line-height: 1.2;
     font-size: 0.85rem;
-    font-family: Menlo, consolas, DejaVu Sans Mono, Courier New, monospace;
+    font-family: 'JetBrains Mono NL', Menlo, consolas, DejaVu Sans Mono, Courier New, monospace !important;
     white-space: pre;
 }
 
@@ -621,26 +640,20 @@ pre.rich-traceback-code {
     font-size: 1.2rem;
     font-weight: 400;
     margin: 0 0 0 0.6rem !important;
-    font-family:
-        "Arial",
-        serif;
+    font-family: 'MiSans', "Arial", serif !important;
 }
 
 *[style*="--dashboard-total--"] {
     font-size: 1.2rem;
     font-weight: 400;
     margin: 0 0 0 0.15rem !important;
-    font-family:
-        "Arial",
-        serif;
+    font-family: 'MiSans', "Arial", serif !important;
 }
 
 *[style*="--dashboard-help--"] {
     font-size: .8rem;
     margin: 0 0 0 0.6rem !important;
-    font-family:
-        "Arial",
-        serif;
+    font-family: 'MiSans', "Arial", serif !important;
 }
 
 *[style*="--dashboard-limit--"] {
@@ -649,9 +662,7 @@ pre.rich-traceback-code {
     margin: 0 0 0 0 !important;
     vertical-align: text-bottom;
     overflow-wrap: normal;
-    font-family:
-        "Arial",
-        serif;
+    font-family: 'MiSans', "Arial", serif !important;
 }
 
 .alas-force-text,
@@ -708,7 +719,7 @@ pre.rich-traceback-code {
     white-space: nowrap;
     pointer-events: none;
     z-index: 999;
-    font-family: monospace;
+    font-family: 'JetBrains Mono NL', monospace;
     line-height: 1;
 }
 
@@ -724,6 +735,6 @@ pre.rich-traceback-code {
     white-space: nowrap;
     pointer-events: none;
     z-index: 999;
-    font-family: monospace;
+    font-family: 'JetBrains Mono NL', monospace;
     line-height: 1;
 }

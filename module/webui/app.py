@@ -9,6 +9,7 @@ import requests
 import threading
 import time
 import re
+import base64
 from datetime import datetime, timedelta
 from pathlib import Path
 from functools import partial
@@ -17,7 +18,7 @@ from typing import Dict, List, Optional, Any
 # Import fake module before import pywebio to avoid importing unnecessary module PIL
 from module.webui.fake_pil_module import import_fake_pil_module
 from module.statistics.azurstats import AzurStats
-from module.os.simulator import OSSimulator
+from module.os_simulator.simulator import OSSimulator
 
 import_fake_pil_module()
 
@@ -169,15 +170,14 @@ def build_simple_table(headers, rows, extra_style: str = '') -> str:
         extra_style=extra_style,
     )
 
+def build_copyable_device_id(device_id: str) -> str:
+    tpl = read_webapp_template('copyable_device_id.html')
+    return tpl.format(device_id=device_id)
+
 
 def build_recommendation_box(text: str) -> str:
     tpl = read_webapp_template('recommendation_box.html')
     return tpl.format(text=text)
-
-
-def build_copyable_device_id(device_id: str) -> str:
-    tpl = read_webapp_template('copyable_device_id.html')
-    return tpl.format(device_id=device_id)
 
 
 def build_app_manage_title(title: str) -> str:
@@ -223,8 +223,6 @@ class AlasGUI(Frame):
         self._announcement_force = False
         self.simulator = OSSimulator()
         self._simulator_logger_pm = None
-
-
 
     @use_scope("aside", clear=True)
     def set_aside(self) -> None:
@@ -275,7 +273,6 @@ class AlasGUI(Frame):
                 )
             return rendered_state
 
-
         if not len(self.rendered_cache) or self.load_home:
             # Reload when add/delete new instance | first start app.py | go to HomePage (HomePage load call force reload)
             flag = False
@@ -298,7 +295,6 @@ class AlasGUI(Frame):
             # Redraw lost focus, now focus on aside button
             aside_name = get_localstorage("aside")
             self.active_button("aside", aside_name)
-
 
         return
 
@@ -734,17 +730,26 @@ class AlasGUI(Frame):
                 except Exception as e:
                     meow_data = {}
 
-                meow_round_times = meow_data.get("round_times", [])
-                meow_battle_count = round(meow_data.get("battle_count", 0))
+                # 防缓存: 每次渲染生成唯一时间戳，确保前端不会复用旧表格 DOM。
+                meow_refresh_token = int(time.time() * 1000)
+
+                meow_battle_count = int(meow_data.get("battle_count", 0) or 0)
+                meow_effective_rounds = float(meow_data.get("effective_rounds", 0) or 0)
+
                 meow_avg_time = meow_data.get("avg_round_time", 0.0)
-                meow_avg_battle_time = meow_data.get("avg_battle_time", 0.0)
+                try:
+                    meow_avg_battle_time = exp_stats.get_average_meow_battle_time()
+                except Exception:
+                    meow_avg_battle_time = meow_data.get("avg_battle_time", 0.0)
 
                 try:
-                    meow_rounds = len(meow_round_times) if meow_round_times else 0
+                    meow_rounds = round(meow_effective_rounds, 1)
+                    if abs(meow_rounds - int(meow_rounds)) < 1e-6:
+                        meow_rounds = int(meow_rounds)
                 except Exception:
                     meow_rounds = 0
 
-                if meow_round_times:
+                if meow_data.get("round_times"):
                     avg_time_str = f"{meow_avg_time:.1f}{t('Gui.Stat.SecondUnit')}"
                 else:
                     avg_time_str = "-"
@@ -764,26 +769,39 @@ class AlasGUI(Frame):
                 meow_labels = [t("Gui.Stat.Month"), t("Gui.Stat.BattleCount"), t("Gui.Stat.MeowRounds"), t("Gui.Stat.AvgBattleTimeHeader"), t("Gui.Stat.AvgMeowRoundTime")]
 
                 put_html(build_title_block(t("Gui.Stat.MeowDataCollectionTitle"), margin_top=20, margin_bottom=8))
+                put_html(f"<!-- meow-stats-refresh-token:{meow_refresh_token} -->")
                 put_html(build_simple_table(meow_labels, [meow_values]))
 
                 # ========== 短猫相接收获 ==========
-                all_data = AzurStats.load_meowofficer_farming()
-                meow_rows = []
-                for row in all_data:
-                    if row[1] > 0:
-                        meow_row = [
-                            int(row[0]),
-                            datetime.fromtimestamp(row[1]).strftime('%Y-%m-%d %H:%M:%S'),
-                            int(row[2])
-                        ] + list(row[3:])
+                put_scope("meow_loot_scope")
 
-                        meow_rows.append(meow_row)
+                def _refresh_meowofficer_farming():
+                    AzurStats.get_meowofficer_farming()
+                    _render_meowofficer_farming()
 
-                put_html(build_title_block(t("Gui.Stat.MeowLootTitle"), margin_top=20, margin_bottom=8))
-                if meow_rows:
-                    put_html(build_simple_table(AzurStats.meowofficer_farming_labels, meow_rows))
-                else:
-                    put_html(build_muted_notice(t("Gui.Stat.NoMeowDataNotice")))
+                def _render_meowofficer_farming():
+                    with use_scope("meow_loot_scope", clear=True):
+                        all_data = AzurStats.load_meowofficer_farming()
+                        meow_rows = []
+                        for row in all_data:
+                            if row[2] > 0:
+                                meow_row = [
+                                    int(row[0]),
+                                    datetime.fromtimestamp(row[1]).strftime('%Y-%m-%d %H:%M:%S'),
+                                    int(row[2])
+                                ] + list(row[3:])
+
+                                meow_rows.append(meow_row)
+
+                        put_html(build_title_block(t("Gui.Stat.MeowLootTitle"), margin_top=20, margin_bottom=8))
+                        if meow_rows:
+                            put_html(build_simple_table(AzurStats.meowofficer_farming_labels, meow_rows))
+                        else:
+                            put_html(build_muted_notice(t("Gui.Stat.NoMeowDataNotice")))
+
+                        put_button(t("Gui.Stat.Refresh"), onclick=_refresh_meowofficer_farming, color="off")
+
+                _render_meowofficer_farming()
 
                 # ========== 短猫提前开始建议 ==========
                 try:
@@ -911,7 +929,7 @@ class AlasGUI(Frame):
                     put_text(t("Gui.Stat.MeowAutoCleanupStatus",
                                value=t("Gui.Misc.Enabled") if meow_advance_enable else t("Gui.Misc.Disabled"))),
                 ])
-                put_html(build_recommendation_box(recommendation))
+                put_text(recommendation)
 
                 def export_opsi_csv(save_to_desktop: bool = True):
                     import io
@@ -1133,6 +1151,7 @@ class AlasGUI(Frame):
                 
     def _os_simulator(self):
         self.simulator.set_config(self.alas_config)
+        self._last_os_simulator_figure = None
 
         if self._simulator_logger_pm is None:
             class SimulatorLogger:
@@ -1173,6 +1192,9 @@ class AlasGUI(Frame):
                 put_scope("scheduler_btn"),
             ]
         )
+        
+        put_scope("figure_display")
+        
         put_scope(
             "logs",
             [
@@ -1221,6 +1243,32 @@ class AlasGUI(Frame):
             scope="log_scroll_btn",
         )
         self.task_handler.add(switch_log_scroll.g(), 1, True)
+
+        def _update_simulator_figure():
+            # Prevent flicker by checking if figure has changed
+            last_figure = getattr(self, '_last_os_simulator_figure', None)
+            if self.simulator.figure == last_figure:
+                return
+
+            figure_path = self.simulator.figure
+            self._last_os_simulator_figure = figure_path
+
+            if figure_path:
+                try:
+                    with open(figure_path, 'rb') as f:
+                        img_b64 = base64.b64encode(f.read()).decode('utf-8')
+                    with use_scope('figure_display', clear=True):
+                        put_html(f'<img src="data:image/png;base64,{img_b64}" style="max-width: 100%; height: auto; display: block; margin: 0 auto;">')
+                except FileNotFoundError:
+                    # This can happen if the figure is deleted before it's read
+                    with use_scope('figure_display', clear=True):
+                        pass # Clear the image
+                except Exception as e:
+                    logger.warning(f"Failed to update simulator figure: {e}")
+            else:
+                with use_scope('figure_display', clear=True):
+                    pass # Clear the image
+        self.task_handler.add(_update_simulator_figure, 0.5, True)
 
         self.task_handler.add(log.put_log(pm), 0.25, True)
 
@@ -2822,6 +2870,29 @@ class AlasGUI(Frame):
         self.task_handler.add(self.set_aside_status, 2)
         self.task_handler.add(visibility_state_switch.g(), 15)
         self.task_handler.add(update_switch.g(), 1)
+
+        def handle_update_click():
+            close_popup()
+            goto_update()
+
+        def update_popup_checker():
+            th = yield
+            th._task.delay = 1
+            yield
+            while True:
+                if updater.state == 1:
+                    with use_scope("ROOT"):
+                        popup(t("Gui.Toast.ClickToUpdate"), [
+                            put_html('<h1 style="color: red; font-size: 3em; text-align: center; margin: 20px 0;">更新提醒</h1>'),
+                            put_html('<h2 style="text-align: center;">发现新版本，请立即更新以获取最新功能和修复喵！</h2>'),
+                            put_buttons([{"label": "立即更新", "value": "update", "color": "danger"}], onclick=[handle_update_click]).style("text-align: center; margin-top: 30px; transform: scale(1.5); padding-bottom: 20px;")
+                        ], size="large", implicit_close=True)
+                    th._task.delay = 30
+                else:
+                    th._task.delay = 2
+                yield
+
+        self.task_handler.add(update_popup_checker(), delay=5)
         
         # 公告检查功能（非阻塞）
         def announcement_checker():

@@ -150,6 +150,7 @@ Error:
     value: 3
     validate: [1, 10]
 Optimization:
+  UseOcrGpuAcceleration: true
   ScreenshotInterval: 0.3
   CombatScreenshotInterval: 1.0
   TaskHoardingDuration: 0
@@ -296,13 +297,7 @@ Fleet:
     option: [line_ahead, double_line, diamond]
   Fleet1Mode:
     value: combat_auto
-    option:
-      [
-        combat_auto,
-        combat_manual,
-        stand_still_in_the_middle,
-        hide_in_bottom_left,
-      ]
+    option: [ combat_auto, combat_manual, stand_still_in_the_middle, hide_in_bottom_left, hide_in_upper_left ]
   Fleet1Step:
     value: 3
     option: [2, 3, 4, 5]
@@ -314,13 +309,7 @@ Fleet:
     option: [line_ahead, double_line, diamond]
   Fleet2Mode:
     value: combat_auto
-    option:
-      [
-        combat_auto,
-        combat_manual,
-        stand_still_in_the_middle,
-        hide_in_bottom_left,
-      ]
+    option: [ combat_auto, combat_manual, stand_still_in_the_middle, hide_in_bottom_left, hide_in_upper_left ]
   Fleet2Step:
     value: 2
     option: [2, 3, 4, 5]
@@ -1298,4 +1287,28 @@ EmulatorManagement:
     value: 4
     validate: [1, 24]
 OpsiSimulatorParameters:
-  Samples: 1000
+  Samples: 100000
+  Draw:
+    value: do_not
+    option: [do_not, single_sample, multi_sample]
+  TotalTime: 0
+  TimeUseRatio:
+    value: 0.8
+    validate: [0, 1]
+  InitialAp: 0
+  InitialCoin: 0
+  MeowHazardLevel:
+    value: level5
+    option:
+      level3: 3
+      level5: 5
+  CrossWeek: true
+  BuyAp: true
+  Cl1Coin: 170
+  Meow3Coin: 750
+  Meow5Coin: 1700
+  AkashiProbability: 0.05
+  Cl1Time: 0
+  Meow3Time: 0
+  Meow5Time: 0
+  Deterministic: false

@@ -109,6 +109,7 @@ class GeneratedConfig:
     Error_AdbOfflineThreshold = 3
 
     # Group `Optimization`
+    Optimization_UseOcrGpuAcceleration = True
     Optimization_ScreenshotInterval = 0.3
     Optimization_CombatScreenshotInterval = 1.0
     Optimization_TaskHoardingDuration = 0
@@ -185,11 +186,11 @@ class GeneratedConfig:
     # Group `Fleet`
     Fleet_Fleet1 = 1  # 1, 2, 3, 4, 5, 6
     Fleet_Fleet1Formation = 'double_line'  # line_ahead, double_line, diamond
-    Fleet_Fleet1Mode = 'combat_auto'  # combat_auto, combat_manual, stand_still_in_the_middle, hide_in_bottom_left
+    Fleet_Fleet1Mode = 'combat_auto'  # combat_auto, combat_manual, stand_still_in_the_middle, hide_in_bottom_left, hide_in_upper_left
     Fleet_Fleet1Step = 3  # 2, 3, 4, 5
     Fleet_Fleet2 = 2  # 0, 1, 2, 3, 4, 5, 6
     Fleet_Fleet2Formation = 'double_line'  # line_ahead, double_line, diamond
-    Fleet_Fleet2Mode = 'combat_auto'  # combat_auto, combat_manual, stand_still_in_the_middle, hide_in_bottom_left
+    Fleet_Fleet2Mode = 'combat_auto'  # combat_auto, combat_manual, stand_still_in_the_middle, hide_in_bottom_left, hide_in_upper_left
     Fleet_Fleet2Step = 2  # 2, 3, 4, 5
     Fleet_FleetOrder = 'fleet1_mob_fleet2_boss'  # fleet1_mob_fleet2_boss, fleet1_boss_fleet2_mob, fleet1_all_fleet2_standby, fleet1_standby_fleet2_all
 
@@ -790,7 +791,23 @@ class GeneratedConfig:
     EmulatorManagement_RestartIntervalHours = 4
 
     # Group `OpsiSimulatorParameters`
-    OpsiSimulatorParameters_Samples = 1000
+    OpsiSimulatorParameters_Samples = 100000
+    OpsiSimulatorParameters_Draw = 'do_not'  # do_not, single_sample, multi_sample
+    OpsiSimulatorParameters_TotalTime = 0
+    OpsiSimulatorParameters_TimeUseRatio = 0.8
+    OpsiSimulatorParameters_InitialAp = 0
+    OpsiSimulatorParameters_InitialCoin = 0
+    OpsiSimulatorParameters_MeowHazardLevel = 'level5'  # level3, level5
+    OpsiSimulatorParameters_CrossWeek = True
+    OpsiSimulatorParameters_BuyAp = True
+    OpsiSimulatorParameters_Cl1Coin = 170
+    OpsiSimulatorParameters_Meow3Coin = 750
+    OpsiSimulatorParameters_Meow5Coin = 1700
+    OpsiSimulatorParameters_AkashiProbability = 0.05
+    OpsiSimulatorParameters_Cl1Time = 0
+    OpsiSimulatorParameters_Meow3Time = 0
+    OpsiSimulatorParameters_Meow5Time = 0
+    OpsiSimulatorParameters_Deterministic = False
 
     # Group `Storage`
     Storage_Storage = {}

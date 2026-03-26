@@ -743,7 +743,7 @@ def rgb2hsv(image):
         np.ndarray: Hue (0~360), Saturation (0~100), Value (0~100).
     """
     image = cv2.cvtColor(image, cv2.COLOR_RGB2HSV).astype(float)
-    cv2.multiply(image, (360 / 180, 100 / 255, 100 / 255, 0), dst=image)
+    cv2.multiply(image, (360 / 180, 100 / 255, 100 / 255), dst=image)
     return image
 
 
@@ -1024,12 +1024,12 @@ def color_similarity_2d(image, color):
     # r, g, b = cv2.split(cv2.subtract((*color, 0), image))
     # negative = cv2.max(cv2.max(r, g), b)
     # return cv2.subtract(255, cv2.add(positive, negative))
-    diff = cv2.subtract(image, (*color, 0))
+    diff = cv2.subtract(image, color)
     r, g, b = cv2.split(diff)
     cv2.max(r, g, dst=r)
     cv2.max(r, b, dst=r)
     positive = r
-    cv2.subtract((*color, 0), image, dst=diff)
+    cv2.subtract(color, image, dst=diff)
     r, g, b = cv2.split(diff)
     cv2.max(r, g, dst=r)
     cv2.max(r, b, dst=r)
@@ -1072,12 +1072,12 @@ def extract_letters(image, letter=(255, 255, 255), threshold=128):
     # r, g, b = cv2.split(cv2.subtract((*letter, 0), image))
     # negative = cv2.max(cv2.max(r, g), b)
     # return cv2.multiply(cv2.add(positive, negative), 255.0 / threshold)
-    diff = cv2.subtract(image, (*letter, 0))
+    diff = cv2.subtract(image, letter)
     r, g, b = cv2.split(diff)
     cv2.max(r, g, dst=r)
     cv2.max(r, b, dst=r)
     positive = r
-    cv2.subtract((*letter, 0), image, dst=diff)
+    cv2.subtract(letter, image, dst=diff)
     r, g, b = cv2.split(diff)
     cv2.max(r, g, dst=r)
     cv2.max(r, b, dst=r)
@@ -1102,7 +1102,7 @@ def extract_white_letters(image, threshold=128):
     # minimum = cv2.min(cv2.min(r, g), b)
     # maximum = cv2.max(cv2.max(r, g), b)
     # return cv2.multiply(cv2.add(maximum, cv2.subtract(maximum, minimum)), 255.0 / threshold)
-    r, g, b = cv2.split(cv2.subtract((255, 255, 255, 0), image))
+    r, g, b = cv2.split(cv2.subtract((255, 255, 255), image))
     maximum = cv2.max(r, g)
     cv2.min(r, g, dst=r)
     cv2.max(maximum, b, dst=maximum)
@@ -1117,6 +1117,45 @@ def extract_white_letters(image, threshold=128):
         cv2.convertScaleAbs(maximum, alpha=255.0 / threshold, dst=maximum)
     return maximum
 
+
+
+def crop_to_text_width(image, threshold=200, padding=2):
+    """Crop image width to tightly fit text content, keeping full height.
+
+    Designed for OCR-preprocessed grayscale images (output of extract_letters),
+    where text pixels have low values and background pixels are 255.
+    Finds the leftmost and rightmost columns that contain text, then crops
+    the image to that range with a small safety padding to ensure no text
+    is ever cut off.
+
+    Args:
+        image (np.ndarray): Grayscale image, shape (height, width).
+            Pixel values should be 0~255, where lower values indicate text.
+        threshold (int): Pixels with value < threshold are considered text.
+            Default 200 to safely capture anti-aliased edges.
+        padding (int): Extra pixels to keep on each side as safety margin.
+            Default 2. Increase if text appears clipped.
+
+    Returns:
+        np.ndarray: Width-cropped image with the same height.
+            Returns the original image if no text is detected.
+    """
+    h, w = image.shape[:2]
+
+    # Column-wise minimum: each column's darkest pixel
+    col_min = np.min(image, axis=0)
+    # Flatten to 1D if image has extra dimensions
+    if col_min.ndim > 1:
+        col_min = np.min(col_min, axis=-1)
+
+    text_cols = np.where(col_min < threshold)[0]
+    if len(text_cols) == 0:
+        return image
+
+    left = max(text_cols[0] - padding, 0)
+    right = min(text_cols[-1] + padding + 1, w)
+
+    return image[:, left:right]
 
 
 def color_mapping(image, max_multiply=2):

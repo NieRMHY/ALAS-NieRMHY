@@ -257,8 +257,8 @@ class AzurLaneConfig(ConfigUpdater, ManualConfig, GeneratedConfig, ConfigWatcher
             logger.attr("Task", task)
             return task
         else:
-            logger.critical("No task waiting or pending")
-            logger.critical("Please enable at least one task")
+            logger.critical("没有等待或待处理的任务")
+            logger.critical("请启用至少一个任务")
             raise RequestHumanTakeover
 
     def save(self, mod_name='alas'):
@@ -582,6 +582,12 @@ class AzurLaneConfig(ConfigUpdater, ManualConfig, GeneratedConfig, ConfigWatcher
         Raises:
             TaskEnd:
         """
+        try:
+            from module.base.async_executor import async_executor
+            async_executor.flush(timeout=2.0)
+        except Exception:
+            pass
+
         if message:
             raise TaskEnd(message)
         else:

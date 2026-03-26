@@ -55,7 +55,15 @@ class ActionPointItem(Item):
 
 ACTION_POINT_GRID = ButtonGrid(
     origin=(323, 274), delta=(173, 0), button_shape=(115, 115), grid_shape=(4, 1), name='ACTION_POINT_GRID')
-ACTION_POINT_ITEMS = ItemGrid(ACTION_POINT_GRID, templates={}, amount_area=(43, 89, 113, 113))
+
+class GridSlice:
+    def __init__(self, buttons):
+        self.buttons = buttons
+
+OIL_ITEM = ItemGrid(GridSlice([ACTION_POINT_GRID.buttons[0]]), templates={}, amount_area=(43, 91, 111, 113))
+OIL_ITEM.item_class = ActionPointItem
+
+ACTION_POINT_ITEMS = ItemGrid(GridSlice(ACTION_POINT_GRID.buttons[1:]), templates={}, amount_area=(75, 91, 111, 113))
 ACTION_POINT_ITEMS.item_class = ActionPointItem
 ACTION_POINTS_COST = {
     1: 5,
@@ -132,8 +140,9 @@ class ActionPointHandler(UI, MapEventHandler):
         Returns:
             int: Total action points, including ap boxes.
         """
+        oil = OIL_ITEM.predict(self.device.image, name=False, amount=True)
         items = ACTION_POINT_ITEMS.predict(self.device.image, name=False, amount=True)
-        box = [item.amount for item in items]
+        box = [item.amount for item in oil] + [item.amount for item in items]
         current = OCR_ACTION_POINT_REMAIN.ocr(self.device.image)
         total = current
         if self.config.OS_ACTION_POINT_BOX_USE:

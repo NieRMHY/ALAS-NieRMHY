@@ -103,7 +103,7 @@ class AzurLaneAutoScript:
             config = AzurLaneConfig(config_name=self.config_name)
             return config
         except RequestHumanTakeover:
-            logger.critical('Request human takeover')
+            logger.critical('错误 请求人类接管')
             exit(1)
         except Exception as e:
             logger.exception(e)
@@ -116,7 +116,7 @@ class AzurLaneAutoScript:
             device = Device(config=self.config, screenshot_queue=self.screenshot_queue, screenshot_enabled=self.screenshot_enabled)
             return device
         except RequestHumanTakeover:
-            logger.critical('Request human takeover')
+            logger.critical('错误 请求人类接管')
             exit(1)
         except Exception as e:
             logger.exception(e)
@@ -628,6 +628,10 @@ class AzurLaneAutoScript:
     def benchmark(self):
         from module.daemon.benchmark import run_benchmark
         run_benchmark(config=self.config)
+
+    def ocr_benchmark(self):
+        from module.daemon.ocr_benchmark import run_ocr_benchmark
+        run_ocr_benchmark(config=self.config)
 
     def game_manager(self):
         from module.daemon.game_manager import GameManager

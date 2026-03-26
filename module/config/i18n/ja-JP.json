@@ -318,6 +318,10 @@
       "name": "パフォーマンステスト",
       "help": ""
     },
+    "OcrBenchmark": {
+      "name": "Task.OcrBenchmark.name",
+      "help": "Task.OcrBenchmark.help"
+    },
     "AzurLaneUncensored": {
       "name": "検閲解除",
       "help": ""
@@ -812,6 +816,10 @@
     "_info": {
       "name": "最適化設定",
       "help": ""
+    },
+    "UseOcrGpuAcceleration": {
+      "name": "启用 GPU 加速",
+      "help": "开启GPU加速"
     },
     "ScreenshotInterval": {
       "name": "スクリーンショット速度をX秒に1枚に減速",
@@ -1308,7 +1316,8 @@
       "combat_auto": "自動戦闘",
       "combat_manual": "手動操作",
       "stand_still_in_the_middle": "中央で待機",
-      "hide_in_bottom_left": "左下隅に隠れる"
+      "hide_in_bottom_left": "左下隅に隠れる",
+      "hide_in_upper_left": "hide_in_upper_left"
     },
     "Fleet1Step": {
       "name": "第一艦隊ステップ",
@@ -1342,7 +1351,8 @@
       "combat_auto": "自動戦闘",
       "combat_manual": "手動操作",
       "stand_still_in_the_middle": "中央で待機",
-      "hide_in_bottom_left": "左下隅に隠れる"
+      "hide_in_bottom_left": "左下隅に隠れる",
+      "hide_in_upper_left": "hide_in_upper_left"
     },
     "Fleet2Step": {
       "name": "第二艦隊ステップ",
@@ -5110,6 +5120,75 @@
     "Samples": {
       "name": "OpsiSimulatorParameters.Samples.name",
       "help": "OpsiSimulatorParameters.Samples.help"
+    },
+    "Draw": {
+      "name": "OpsiSimulatorParameters.Draw.name",
+      "help": "OpsiSimulatorParameters.Draw.help",
+      "do_not": "do_not",
+      "single_sample": "single_sample",
+      "multi_sample": "multi_sample"
+    },
+    "TotalTime": {
+      "name": "OpsiSimulatorParameters.TotalTime.name",
+      "help": "OpsiSimulatorParameters.TotalTime.help"
+    },
+    "TimeUseRatio": {
+      "name": "OpsiSimulatorParameters.TimeUseRatio.name",
+      "help": "OpsiSimulatorParameters.TimeUseRatio.help"
+    },
+    "InitialAp": {
+      "name": "OpsiSimulatorParameters.InitialAp.name",
+      "help": "OpsiSimulatorParameters.InitialAp.help"
+    },
+    "InitialCoin": {
+      "name": "OpsiSimulatorParameters.InitialCoin.name",
+      "help": "OpsiSimulatorParameters.InitialCoin.help"
+    },
+    "MeowHazardLevel": {
+      "name": "OpsiSimulatorParameters.MeowHazardLevel.name",
+      "help": "OpsiSimulatorParameters.MeowHazardLevel.help",
+      "level3": "level3",
+      "level5": "level5"
+    },
+    "CrossWeek": {
+      "name": "OpsiSimulatorParameters.CrossWeek.name",
+      "help": "OpsiSimulatorParameters.CrossWeek.help"
+    },
+    "BuyAp": {
+      "name": "OpsiSimulatorParameters.BuyAp.name",
+      "help": "OpsiSimulatorParameters.BuyAp.help"
+    },
+    "Cl1Coin": {
+      "name": "OpsiSimulatorParameters.Cl1Coin.name",
+      "help": "OpsiSimulatorParameters.Cl1Coin.help"
+    },
+    "Meow3Coin": {
+      "name": "OpsiSimulatorParameters.Meow3Coin.name",
+      "help": "OpsiSimulatorParameters.Meow3Coin.help"
+    },
+    "Meow5Coin": {
+      "name": "OpsiSimulatorParameters.Meow5Coin.name",
+      "help": "OpsiSimulatorParameters.Meow5Coin.help"
+    },
+    "AkashiProbability": {
+      "name": "OpsiSimulatorParameters.AkashiProbability.name",
+      "help": "OpsiSimulatorParameters.AkashiProbability.help"
+    },
+    "Cl1Time": {
+      "name": "OpsiSimulatorParameters.Cl1Time.name",
+      "help": "OpsiSimulatorParameters.Cl1Time.help"
+    },
+    "Meow3Time": {
+      "name": "OpsiSimulatorParameters.Meow3Time.name",
+      "help": "OpsiSimulatorParameters.Meow3Time.help"
+    },
+    "Meow5Time": {
+      "name": "OpsiSimulatorParameters.Meow5Time.name",
+      "help": "OpsiSimulatorParameters.Meow5Time.help"
+    },
+    "Deterministic": {
+      "name": "OpsiSimulatorParameters.Deterministic.name",
+      "help": "OpsiSimulatorParameters.Deterministic.help"
     }
   },
   "Storage": {

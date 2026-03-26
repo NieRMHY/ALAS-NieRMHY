@@ -212,6 +212,9 @@ class ProcessManager:
         # Remove fake PIL module, because subprocess will use it
         remove_fake_pil_module()
 
+        # Set environment variable so eager modules (like al_ocr.py) can read the configuration early
+        os.environ['ALAS_CONFIG_NAME'] = config_name
+
         AzurLaneConfig.stop_event = e
         try:
             # Run alas
@@ -240,7 +243,7 @@ class ProcessManager:
             elif func in get_available_mod_func():
                 getattr(load_mod(get_func_mod(func)), inflection.underscore(func))(config_name)
             else:
-                logger.critical(f"No function matched: {func}")
+                logger.critical(f"未找到对应的功能模块: {func}")
             logger.info(f"[{config_name}] exited. Reason: Finish\n")
         except Exception as e:
             logger.exception(e)
