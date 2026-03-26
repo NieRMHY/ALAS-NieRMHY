@@ -1024,6 +1024,8 @@ def color_similarity_2d(image, color):
     # r, g, b = cv2.split(cv2.subtract((*color, 0), image))
     # negative = cv2.max(cv2.max(r, g), b)
     # return cv2.subtract(255, cv2.add(positive, negative))
+    if isinstance(color, tuple) and len(color) == 3:
+        color = (*color, 0)
     diff = cv2.subtract(image, color)
     r, g, b = cv2.split(diff)
     cv2.max(r, g, dst=r)
@@ -1118,44 +1120,48 @@ def extract_white_letters(image, threshold=128):
     return maximum
 
 
-
-def crop_to_text_width(image, threshold=200, padding=2):
-    """Crop image width to tightly fit text content, keeping full height.
+def crop_to_text(image, threshold=120, padding=2):
+    """Crop image width and height to tightly fit text content.
 
     Designed for OCR-preprocessed grayscale images (output of extract_letters),
     where text pixels have low values and background pixels are 255.
-    Finds the leftmost and rightmost columns that contain text, then crops
-    the image to that range with a small safety padding to ensure no text
-    is ever cut off.
+    Finds the leftmost, rightmost, topmost and bottommost rows/columns that contain text,
+    then crops the image to that range with a small safety padding.
 
     Args:
         image (np.ndarray): Grayscale image, shape (height, width).
             Pixel values should be 0~255, where lower values indicate text.
         threshold (int): Pixels with value < threshold are considered text.
-            Default 200 to safely capture anti-aliased edges.
+            Default 120 to safely capture anti-aliased edges.
         padding (int): Extra pixels to keep on each side as safety margin.
             Default 2. Increase if text appears clipped.
 
     Returns:
-        np.ndarray: Width-cropped image with the same height.
+        np.ndarray: Cropped image.
             Returns the original image if no text is detected.
     """
-    h, w = image.shape[:2]
+    # Create mask of text pixels (value < threshold)
+    # Detects text in grayscale (2D) or multi-channel (3D) images
+    mask = np.any(image < threshold, axis=2) if image.ndim == 3 else image < threshold
 
-    # Column-wise minimum: each column's darkest pixel
-    col_min = np.min(image, axis=0)
-    # Flatten to 1D if image has extra dimensions
-    if col_min.ndim > 1:
-        col_min = np.min(col_min, axis=-1)
+    # Find active rows and columns
+    rows = np.any(mask, axis=1)
+    cols = np.any(mask, axis=0)
 
-    text_cols = np.where(col_min < threshold)[0]
-    if len(text_cols) == 0:
+    if not rows.any() or not cols.any():
         return image
 
-    left = max(text_cols[0] - padding, 0)
-    right = min(text_cols[-1] + padding + 1, w)
+    # Boundary indices
+    row_idx = np.where(rows)[0]
+    col_idx = np.where(cols)[0]
 
-    return image[:, left:right]
+    h, w = image.shape[:2]
+    top = max(row_idx[0] - padding, 0)
+    bottom = min(row_idx[-1] + padding + 1, h)
+    left = max(col_idx[0] - padding, 0)
+    right = min(col_idx[-1] + padding + 1, w)
+
+    return image[top:bottom, left:right]
 
 
 def color_mapping(image, max_multiply=2):

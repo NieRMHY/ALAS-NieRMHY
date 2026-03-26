@@ -23,7 +23,7 @@ cfg = AzurLaneConfig('alas').merge(OSConfig())
 # Folder to save temp images
 folder = './screenshots/relative_crop'
 # Put Screenshot here
-file = ''
+file = './screenshots/123.png'
 
 i = load_image(file)
 grids = View(cfg)

@@ -563,16 +563,33 @@ def show():
     # Line below exception
 
 
-def error_convert(func):
-    def error_wrapper(msg, *args, **kwargs):
+def aggressive_convert(func, level='error'):
+    def aggressive_wrapper(msg, *args, **kwargs):
         if isinstance(msg, Exception):
             msg = f'{type(msg).__name__}: {msg}'
+        
+        if isinstance(msg, str) and any('\u4e00' <= char <= '\u9fff' for char in msg):
+            # Already aggressive or has special characters, don't double stack
+            if '他妈' in msg or '傻逼' in msg or '眼瞎' in msg or '没长眼' in msg:
+                return func(msg, *args, **kwargs)
+            
+            # Add some "pressure" according to Yerkes-Dodson Law
+            if level == 'critical':
+                prefixes = ["出大事了！", "没长眼吗？", "你会不会用？", "赶紧给爷起开：", "甚至连这个都报错："]
+                import random
+                msg = f"{random.choice(prefixes)}{msg}"
+                if not msg.endswith(('？', '！', '。')):
+                    msg += "！别他妈在这装死！"
+            elif level == 'error':
+                msg = f"废物报错：{msg}"
+                
         return func(msg, *args, **kwargs)
 
-    return error_wrapper
+    return aggressive_wrapper
 
 
-logger.error = error_convert(logger.error)
+logger.error = aggressive_convert(logger.error, level='error')
+logger.critical = aggressive_convert(logger.critical, level='critical')
 logger.hr = hr
 logger.attr = attr
 logger.attr_align = attr_align

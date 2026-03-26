@@ -103,7 +103,7 @@ class AzurLaneAutoScript:
             config = AzurLaneConfig(config_name=self.config_name)
             return config
         except RequestHumanTakeover:
-            logger.critical('错误 请求人类接管')
+            logger.critical('废物！连这点事都办不好？赶紧滚回来接管！')
             exit(1)
         except Exception as e:
             logger.exception(e)
@@ -116,7 +116,7 @@ class AzurLaneAutoScript:
             device = Device(config=self.config, screenshot_queue=self.screenshot_queue, screenshot_enabled=self.screenshot_enabled)
             return device
         except RequestHumanTakeover:
-            logger.critical('错误 请求人类接管')
+            logger.critical('废物！连这点事都办不好？赶紧滚回来接管！')
             exit(1)
         except Exception as e:
             logger.exception(e)
@@ -209,7 +209,7 @@ class AzurLaneAutoScript:
             logger.info('游戏服务器可能正在维护或网络连接中断，正在检查服务器状态')
             self.checker.check_now()
             if self.checker.is_available():
-                logger.critical('游戏页面未知')
+                logger.critical('你这游戏进的是什么鬼地方？Alas他妈的根本不认识这破页面！')
                 self.save_error_log()
                 handle_notify(
                     self.config.Error_OnePushConfig,
@@ -222,7 +222,7 @@ class AzurLaneAutoScript:
                 return False
         except ScriptError as e:
             logger.exception(e)
-            logger.critical('这可能是开发者的错误，但有时只是随机问题')
+            logger.critical('虽然可能是开发者的锅，但更大概率是你人品太差触发了诡异Bug！')
             handle_notify(
                 self.config.Error_OnePushConfig,
                 title=f"Alas <{self.config_name}> 崩溃",
@@ -245,7 +245,7 @@ class AzurLaneAutoScript:
                 return 'recoverable'
             else:
                 # 重启失败或未启用，终止程序
-                logger.critical('模拟器未运行且自动重启失败或已禁用')
+                logger.critical('模拟器都死透了你还在那看？赶紧手动去救它啊，蠢货！')
                 handle_notify(
                     self.config.Error_OnePushConfig,
                     title=f"Alas <{self.config_name}> 崩溃",
@@ -253,7 +253,7 @@ class AzurLaneAutoScript:
                 )
                 exit(1)
         except RequestHumanTakeover:
-            logger.critical('请求人工接管')
+            logger.critical('你行你上啊，在那瞎看什么？赶紧滚过来接管！')
             handle_notify(
                 self.config.Error_OnePushConfig,
                 title=f"Alas <{self.config_name}> 崩溃",
@@ -261,8 +261,8 @@ class AzurLaneAutoScript:
             )
             exit(1)
         except AutoSearchSetError:
-            logger.critical('自动搜索无法正确设置。可能是困难模式下的舰船发生了变化。')
-            logger.critical('请求人工接管。')
+            logger.critical('连自动搜索都设不明白，你是把船都卖了吗？赶紧去看看你的困难编队！')
+            logger.critical('看懂了吗？滚过来接管。')
             exit(1)
         except Exception as e:
             logger.exception(e)
@@ -845,11 +845,11 @@ class AzurLaneAutoScript:
                 # 检查是否达到重试上限
                 if consecutive_global_failures >= MAX_GLOBAL_FAILURES:
                     logger.critical(
-                        f"已达到最大连续全局失败次数 ({MAX_GLOBAL_FAILURES})。"
+                        f"连续崩了 {MAX_GLOBAL_FAILURES} 次！Alas 已经被你气死了！"
                     )
-                    logger.critical("错误似乎是致命的，无法通过重启恢复。")
+                    logger.critical("这错误没救了，重启一百次也没用。")
                     self.save_error_log()
-                    logger.critical("调度器正在终止。需要人工干预。")
+                    logger.critical("调度器罢工了！赶紧滚过来人工救场！")
                     logger.warning("遇到无法恢复的致命错误，正在上报错误日志...")
                     ApiClient.submit_bug_log(f"Alas <{self.config_name}> 调度器终止。\n已达到最大全局失败次数 ({MAX_GLOBAL_FAILURES})。\n{traceback.format_exc()}")
                     exit(1)   # 达到上限，强制终止程序

@@ -11,7 +11,9 @@ try:
     from rapidocr import RapidOCR, OCRVersion
 except Exception as e:
     logger.critical(f'Failed to load OCR dependencies: {e}')
-    logger.critical('无法加载 OCR 依赖，如错误信息包含 DLL load failed while 请安装微软 C++ 运行库 https://aka.ms/vs/17/release/vc_redist.x64.exe')
+    logger.critical('无法加载 OCR 依赖，请安装微软 C++ 运行库 https://aka.ms/vs/17/release/vc_redist.x64.exe')
+    logger.critical('也有可能是 GPU 不支持加速引起，请尝试关闭 GPU 加速')
+    logger.critical('如果上述方法都无法解决，请加群获取支持')
     raise RequestHumanTakeover
 
 USE_GPU = False
@@ -75,15 +77,59 @@ class AlOcr:
         if not self._model_loaded:
             self.init()
 
+    def _save_debug_image(self, img, result):
+        folder = 'ocr_debug'
+        if not os.path.exists(folder):
+            os.makedirs(folder)
+
+        # Get current time for filename uniqueness and sorting
+        import time
+        now = int(time.time() * 1000)
+        # Clean result for filename
+        res_clean = str(result).replace('\n', ' ').replace('\r', ' ').strip()
+        # Remove invalid filename characters, keep some safe ones
+        res_clean = "".join([c for c in res_clean if c.isalnum() or c in (' ', '_', '-')]).strip()
+        if not res_clean:
+            res_clean = 'empty'
+        
+        filename = f"{self.name}_{res_clean}_{now}.png"
+        filepath = os.path.join(folder, filename)
+
+        try:
+            if isinstance(img, np.ndarray):
+                cv2.imwrite(filepath, img)
+            elif isinstance(img, Image.Image):
+                img.save(filepath)
+            elif isinstance(img, str) and os.path.exists(img):
+                import shutil
+                shutil.copy(img, filepath)
+            
+            # Limit count to 100
+            files = [os.path.join(folder, f) for f in os.listdir(folder) if os.path.isfile(os.path.join(folder, f))]
+            if len(files) > 100:
+                files.sort(key=os.path.getmtime)
+                # Keep the last 100
+                for f in files[:-100]:
+                    try:
+                        os.remove(f)
+                    except:
+                        pass
+        except Exception as e:
+            # We don't want to crash the main process due to debug saving failure
+            logger.warning(f'Failed to save OCR debug image: {e}')
+
     def ocr(self, img_fp):
         logger.info(f"[VERBOSE] AlOcr.ocr: Ensure loaded...")
         self._ensure_loaded()
             
         try:
             res = self.model(img_fp)
+            txt = ""
             if hasattr(res, 'txts') and res.txts:
-                return res.txts[0]
-            return ""
+                txt = res.txts[0]
+            
+            self._save_debug_image(img_fp, txt)
+            return txt
         except Exception as e:
             logger.error(f"AlOcr.ocr exception: {e}")
             raise
@@ -97,10 +143,12 @@ class AlOcr:
         for i, img in enumerate(img_list):
             try:
                 res = self.model(img)
+                txt = ""
                 if hasattr(res, 'txts') and res.txts:
-                    results.append(res.txts[0])
-                else:
-                    results.append("")
+                    txt = res.txts[0]
+                
+                results.append(txt)
+                self._save_debug_image(img, txt)
             except Exception as e:
                 logger.error(f"AlOcr.ocr_for_single_lines exception on image {i}: {e}")
                 raise

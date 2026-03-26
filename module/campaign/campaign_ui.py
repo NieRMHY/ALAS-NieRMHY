@@ -38,6 +38,11 @@ ASIDE_SWITCH_20241219.add_state('ex', CHAPTER_20241219_EX)
 # because of game bug that aside indicator will be missing after campaign retreat or finish
 ASIDE_SWITCH_20241219.set_unknown_timer = Timer(0.6, count=2)
 
+ASIDE_SWITCH_20260326 = ModeSwitch('Aside_switch_20260326', is_selector=True, offset=(30, 30))
+ASIDE_SWITCH_20260326.add_state('part1', CHAPTER_20260326_PART1)
+ASIDE_SWITCH_20260326.add_state('sp', CHAPTER_20260326_SP)
+ASIDE_SWITCH_20260326.set_unknown_timer = Timer(0.6, count=2)
+
 
 def is_digit_chapter(chapter):
     """
@@ -171,6 +176,18 @@ class CampaignUI(MapOperation, CampaignEvent, CampaignOcr):
             ASIDE_SWITCH_20241219.set('sp', main=self)
         elif chapter in ['ex', 'ex_ex']:
             ASIDE_SWITCH_20241219.set('ex', main=self)
+        else:
+            logger.warning(f'Unknown campaign aside: {chapter}')
+
+    def campaign_ensure_aside_20260326(self, chapter):
+        """
+        Args:
+            chapter: 'part1', 'sp'
+        """
+        if chapter in ['part1', 't', 'ht']:
+            ASIDE_SWITCH_20260326.set('part1', main=self)
+        elif chapter in ['sp', 'ex_sp']:
+            ASIDE_SWITCH_20260326.set('sp', main=self)
         else:
             logger.warning(f'Unknown campaign aside: {chapter}')
 
@@ -330,6 +347,27 @@ class CampaignUI(MapOperation, CampaignEvent, CampaignOcr):
                 return True
         return False
 
+    def campaign_set_chapter_20260326(self, chapter, stage, mode='combat'):
+        if self.config.MAP_CHAPTER_SWITCH_20260326:
+            if self._campaign_name_is_hard(f'{chapter}{stage}'):
+                self.config.override(Campaign_Mode='hard')
+            if mode == 'story':
+                self.campaign_ensure_mode_20241219('story')
+                return True
+            if chapter in ['t', 'ht']:
+                self.ui_goto_event()
+                self.campaign_ensure_mode_20241219('combat')
+                self.campaign_ensure_aside_20260326('part1')
+                self.campaign_ensure_chapter(chapter)
+                return True
+            if chapter in ['ex_sp']:
+                self.ui_goto_event()
+                self.campaign_ensure_mode_20241219('combat')
+                self.campaign_ensure_aside_20260326('sp')
+                self.campaign_ensure_chapter(chapter)
+                return True
+        return False
+
     def campaign_set_chapter(self, name, mode='normal'):
         """
         Args:
@@ -344,6 +382,8 @@ class CampaignUI(MapOperation, CampaignEvent, CampaignOcr):
         chapter, stage = self._campaign_separate_name(chapter_name)
 
         if self.campaign_set_chapter_main(chapter, mode):
+            pass
+        elif self.campaign_set_chapter_20260326(chapter, stage, mode):
             pass
         elif self.campaign_set_chapter_20241219(chapter, stage, mode):
             pass

@@ -11,6 +11,7 @@ from module.handler.assets import *
 from module.logger import logger
 from module.os_handler.assets import CLICK_SAFE_AREA as OS_CLICK_SAFE_AREA
 from module.ui_white.assets import POPUP_CANCEL_WHITE, POPUP_CONFIRM_WHITE, POPUP_SINGLE_WHITE
+from module.base.decorator import cached_property
 from module.ocr.ocr import Ocr
 
 
@@ -389,15 +390,24 @@ class InfoHandler(ModuleBase):
 
         return False
     
+
+    @cached_property
+    def siren_ocr(self):
+        # Siren research device OCR.
+        # Since options are dynamically detected, we initialize with empty buttons and update them on the fly.
+        return Ocr([], lang='cnocr', name='SIREN_DEVICE_OCR')
+
     def _is_siren_device(self, options):
         templates = ['消耗1个塞壬能源存储器尝试探测隐藏的敌人', '消耗2个特别兑换凭证尝试探测隐藏的资源']
 
-        # 第三个选项过短，不做判断
-        for i in range(2):
-            option = options[i]
-            template = templates[i]
+        self.siren_ocr.buttons = options[:2]
+        results = self.siren_ocr.ocr(self.device.image)
+        if not isinstance(results, list):
+            results = [results]
 
-            text = Ocr(option, lang='cnocr').ocr(self.device.image)
+        # 第三个选项过短，不做判断
+        for i, text in enumerate(results):
+            template = templates[i]
 
             # 删除特殊字符
             text = re.sub(r'[^\u4e00-\u9fa5a-zA-Z0-9]', '', text)
@@ -407,7 +417,7 @@ class InfoHandler(ModuleBase):
                 logger.info(f'[Story] 相似度: {similarity}，不认为是塞壬研究装置')
                 return False
             logger.info(f'[Story] 相似度: {similarity}，选项{i}验证通过')
-        
+
         logger.info('[Story] 通过所有验证，认为是塞壬研究装置')
         return True
 

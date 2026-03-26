@@ -1015,8 +1015,8 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
         for _ in self.loop():
             # End
             if not unlock_checked and unlock_check_timer.reached():
-                logger.critical('无法在当前区域使用自动搜索')
-                logger.critical('请先完成大世界剧情以解锁自动搜索功能，然后再使用任何大世界功能')
+                logger.critical('这海域没法自律，你瞎吗？还是没通关剧情？')
+                logger.critical('赶紧去把大世界剧情推了解锁自律，不然在这挂机挂尼玛呢！')
                 raise RequestHumanTakeover
             if self.is_in_map():
                 self.device.stuck_record_clear()
@@ -1116,8 +1116,8 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
         for _ in self.loop():
             # End
             if not unlock_checked and unlock_check_timer.reached():
-                logger.critical('无法在当前区域使用自动搜索')
-                logger.critical('请先完成大世界剧情以解锁自动搜索功能，然后再使用任何大世界功能')
+                logger.critical('这海域没法自律，你瞎吗？还是没通关剧情？')
+                logger.critical('赶紧去把大世界剧情推了解锁自律，不然在这挂机挂尼玛呢！')
                 raise RequestHumanTakeover
             if self.is_in_map():
                 self.device.stuck_record_clear()
