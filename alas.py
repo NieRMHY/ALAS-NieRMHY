@@ -844,10 +844,11 @@ class AzurLaneAutoScript:
                 # 检查是否达到重试上限
                 if consecutive_global_failures >= MAX_GLOBAL_FAILURES:
                     logger.critical(
-                        f"连续 {MAX_GLOBAL_FAILURES} 次全局重试失败！"
+                        f"已达到最大连续全局失败次数 ({MAX_GLOBAL_FAILURES})。"
                     )
+                    logger.critical("错误似乎是致命的，无法通过重启恢复。")
                     self.save_error_log()
-                    logger.critical("EmulatorNotRunningError: 模拟器离线且无法自动重启，程序将终止")
+                    logger.critical("调度器正在终止。需要人工干预。")
                     logger.warning("遇到无法恢复的致命错误，正在上报错误日志...")
                     ApiClient.submit_bug_log(f"Alas <{self.config_name}> 调度器终止。\n已达到最大全局失败次数 ({MAX_GLOBAL_FAILURES})。\n{traceback.format_exc()}")
                     exit(1)   # 达到上限，强制终止程序
