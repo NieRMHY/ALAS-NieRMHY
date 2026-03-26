@@ -448,9 +448,9 @@ class UI(InfoHandler):
         # - Open exchange shop? handle_popup_confirm() click confirm
         # - EXCHANGE_CHECK, click BACK_ARROW
         if self._opsi_reset_fleet_preparation_click >= 5:
-            logger.critical("无法确认大世界出击舰队，RESET_FLEET_PREPARATION 点你大爷点！别他妈按了！")
-            logger.critical("没长眼吗？ #1: 建议检查您是否在大世界中设置了舰队")
-            logger.critical("没长眼吗？ #2: 建议检查您的舰队准入门槛（等级限制）")
+            logger.critical("无法确认大世界出击舰队，RESET_FLEET_PREPARATION 点击次数过多")
+            logger.critical("可能原因 #1: 您尚未在大世界中设置任何舰队")
+            logger.critical("可能原因 #2: 您的舰队尚未满足大世界的等级限制")
             raise RequestHumanTakeover
         if self.appear_then_click(RESET_TICKET_POPUP, offset=(30, 30), interval=3):
             return True

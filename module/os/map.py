@@ -1015,8 +1015,8 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
         for _ in self.loop():
             # End
             if not unlock_checked and unlock_check_timer.reached():
-                logger.critical('这海域没法自律，你瞎吗？还是没通关剧情？')
-                logger.critical('赶紧去把大世界剧情推了解锁自律，不然在这挂机挂尼玛呢！')
+                logger.critical('无法在当前区域使用自动搜索')
+                logger.critical('请先完成大世界剧情以解锁自动搜索功能，然后再使用任何大世界功能')
                 raise RequestHumanTakeover
             if self.is_in_map():
                 self.device.stuck_record_clear()
@@ -1116,8 +1116,8 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
         for _ in self.loop():
             # End
             if not unlock_checked and unlock_check_timer.reached():
-                logger.critical('这海域没法自律，你瞎吗？还是没通关剧情？')
-                logger.critical('赶紧去把大世界剧情推了解锁自律，不然在这挂机挂尼玛呢！')
+                logger.critical('无法在当前区域使用自动搜索')
+                logger.critical('请先完成大世界剧情以解锁自动搜索功能，然后再使用任何大世界功能')
                 raise RequestHumanTakeover
             if self.is_in_map():
                 self.device.stuck_record_clear()
@@ -1791,7 +1791,7 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
 
         solved = getattr(self, '_solved_map_event', set())
         if any(k in solved for k in ('is_akashi', 'is_scanning_device', 'is_logging_tower')):
-            logger.info('彩蛋：雪风大人保佑你，本次舰队移动已跳过')
+            logger.info('本次舰队移动已跳过')
             return
 
         patrol_locations = [(2, 0), (3, 0), (4, 0), (5, 0)]  # 对应 C1, D1, E1, F1

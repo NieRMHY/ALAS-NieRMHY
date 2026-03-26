@@ -4,6 +4,7 @@ import json
 import logging
 import multiprocessing
 import os
+import random
 import shutil
 import sys
 import tarfile
@@ -563,33 +564,34 @@ def show():
     # Line below exception
 
 
-def aggressive_convert(func, level='error'):
-    def aggressive_wrapper(msg, *args, **kwargs):
+def professional_convert(func, level='error'):
+    error_prefix = '错误：'
+    critical_prefixes = ('严重错误：', '关键错误：', '请检查：', '处理失败：')
+    existing_prefixes = (error_prefix, *critical_prefixes)
+
+    def professional_wrapper(msg, *args, **kwargs):
         if isinstance(msg, Exception):
             msg = f'{type(msg).__name__}: {msg}'
-        
+
         if isinstance(msg, str) and any('\u4e00' <= char <= '\u9fff' for char in msg):
-            # Already aggressive or has special characters, don't double stack
-            if '他妈' in msg or '傻逼' in msg or '眼瞎' in msg or '没长眼' in msg:
+            # Avoid stacking the same prefix repeatedly.
+            if msg.startswith(existing_prefixes):
                 return func(msg, *args, **kwargs)
-            
-            # Add some "pressure" according to Yerkes-Dodson Law
+
             if level == 'critical':
-                prefixes = ["出大事了！", "没长眼吗？", "你会不会用？", "赶紧给爷起开：", "甚至连这个都报错："]
-                import random
-                msg = f"{random.choice(prefixes)}{msg}"
+                msg = f"{random.choice(critical_prefixes)}{msg}"
                 if not msg.endswith(('？', '！', '。')):
-                    msg += "！别他妈在这装死！"
+                    msg += '。'
             elif level == 'error':
-                msg = f"废物报错：{msg}"
-                
+                msg = f'{error_prefix}{msg}'
+
         return func(msg, *args, **kwargs)
 
-    return aggressive_wrapper
+    return professional_wrapper
 
 
-logger.error = aggressive_convert(logger.error, level='error')
-logger.critical = aggressive_convert(logger.critical, level='critical')
+logger.error = professional_convert(logger.error, level='error')
+logger.critical = professional_convert(logger.critical, level='critical')
 logger.hr = hr
 logger.attr = attr
 logger.attr_align = attr_align
