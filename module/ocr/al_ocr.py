@@ -35,9 +35,11 @@ class CnModel:
             "Det.model_path": None,
             "Cls.model_path": None,
             "Rec.ocr_version": OCRVersion.PPOCRV5,
-            "Rec.model_path": "bin/ocr_models/zh-CN/alocr-zh-cn-v2.5.dtk.onnx",
+            "Rec.model_path": "bin/ocr_models/zh-CN/alocr-zh-cn-v3.dtk.onnx",
             "Rec.rec_keys_path": "bin/ocr_models/zh-CN/cn.txt",
-            "EngineConfig.onnxruntime.use_dml": USE_GPU
+            "EngineConfig.onnxruntime.use_dml": USE_GPU,
+            # 设置为 1 (ORT_ENABLE_BASIC) 以规避 DirectML 在开启高级优化时的识别精度损失
+            "EngineConfig.onnxruntime.graph_optimization_level": 1 if USE_GPU else 99,
         }
         self.model = RapidOCR(params=self.params)
 
@@ -49,9 +51,11 @@ class EnModel:
             "Det.model_path": None,
             "Cls.model_path": None,
             "Rec.ocr_version": OCRVersion.PPOCRV4,
-            "Rec.model_path": "bin/ocr_models/en-US/alocr-en-us-v2.0.nvc.onnx",
+            "Rec.model_path": "bin/ocr_models/en-US/alocr-en-us-v2.6.nvc.onnx",
             "Rec.rec_keys_path": "bin/ocr_models/en-US/en.txt",
-            "EngineConfig.onnxruntime.use_dml": USE_GPU
+            "EngineConfig.onnxruntime.use_dml": USE_GPU,
+            # 设置为 1 (ORT_ENABLE_BASIC) 以规避 DirectML 在开启高级优化时的识别精度损失
+            "EngineConfig.onnxruntime.graph_optimization_level": 1 if USE_GPU else 99,
         }
         self.model = RapidOCR(params=self.params)
 

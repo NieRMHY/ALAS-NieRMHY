@@ -582,6 +582,22 @@
     "AdbOfflineThreshold": {
       "name": "⏳ 找回联络员等待期限",
       "help": "连续找不见多少次后就放弃并重启喵？"
+    },
+    "LlmAnalysis": {
+      "name": "Error.LlmAnalysis.name",
+      "help": "Error.LlmAnalysis.help"
+    },
+    "LlmApiKey": {
+      "name": "Error.LlmApiKey.name",
+      "help": "Error.LlmApiKey.help"
+    },
+    "LlmApiBase": {
+      "name": "Error.LlmApiBase.name",
+      "help": "Error.LlmApiBase.help"
+    },
+    "LlmModel": {
+      "name": "Error.LlmModel.name",
+      "help": "Error.LlmModel.help"
     }
   },
   "Optimization": {
@@ -937,7 +953,7 @@
       "event_20251023_cn": "Tempesta and Islas de Libertád",
       "event_20251218_cn": "A Note Through the Firmament",
       "event_20260226_cn": "Springtide Inn Online",
-      "event_20260326_cn": "Wanderer Recruitment Program",
+      "event_20260326_cn": "The Vagabond’s Recruitment Plan",
       "raid_20200624": "Air Raid Drills with Essex Rerun",
       "raid_20210708": "Cross Wave rerun",
       "raid_20220127": "Mystery Investigation",
@@ -4426,6 +4442,10 @@
     "MissionZones": {
       "name": "🧹 月底大扫除清单",
       "help": "这是人家留着月底一次性清理的海域，它是自动记录的喵~"
+    },
+    "CollectTargetReward": {
+      "name": "OpsiDaily.CollectTargetReward.name",
+      "help": "OpsiDaily.CollectTargetReward.help"
     }
   },
   "OpsiObscure": {
@@ -4546,6 +4566,24 @@
     "SirenDetectorSearch_FoundZones": {
       "name": "📖已找到的探测器小本本",
       "help": "这里记录了所有找到的塞壬探测装置海域坐标哦~\n如果指挥官偷偷把某个海域的装置用掉了，记得手动在这里把记录擦掉呀(づ￣ 3￣)づ"
+    }
+  },
+  "OpsiTarget": {
+    "_info": {
+      "name": "OpsiTarget._info.name",
+      "help": "OpsiTarget._info.help"
+    },
+    "TargetFarming": {
+      "name": "OpsiTarget.TargetFarming.name",
+      "help": "OpsiTarget.TargetFarming.help"
+    },
+    "TargetZone": {
+      "name": "OpsiTarget.TargetZone.name",
+      "help": "OpsiTarget.TargetZone.help"
+    },
+    "LastRun": {
+      "name": "OpsiTarget.LastRun.name",
+      "help": "OpsiTarget.LastRun.help"
     }
   },
   "OpsiHazard1Leveling": {

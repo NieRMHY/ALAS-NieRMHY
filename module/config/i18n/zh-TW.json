@@ -810,6 +810,22 @@
     "AdbOfflineThreshold": {
       "name": "檢測不到裝置重啟閾值",
       "help": "連續檢測不到裝置多少次後觸發重啟。"
+    },
+    "LlmAnalysis": {
+      "name": "Error.LlmAnalysis.name",
+      "help": "Error.LlmAnalysis.help"
+    },
+    "LlmApiKey": {
+      "name": "Error.LlmApiKey.name",
+      "help": "Error.LlmApiKey.help"
+    },
+    "LlmApiBase": {
+      "name": "Error.LlmApiBase.name",
+      "help": "Error.LlmApiBase.help"
+    },
+    "LlmModel": {
+      "name": "Error.LlmModel.name",
+      "help": "Error.LlmModel.help"
     }
   },
   "Optimization": {
@@ -1165,7 +1181,7 @@
       "event_20251023_cn": "颶風與自由群島",
       "event_20251218_cn": "響徹於天穹之音",
       "event_20260226_cn": "春滿客棧Online",
-      "event_20260326_cn": "漫游者招募计划",
+      "event_20260326_cn": "The Vagabond’s Recruitment Plan",
       "raid_20200624": "特別演習埃塞克斯級(復刻)",
       "raid_20210708": "復刻穿越彼方的水線",
       "raid_20220127": "演習神秘事件調查",
@@ -4645,7 +4661,7 @@
     },
     "SkipSirenResearchMission": {
       "name": "不做塞壬研究任務",
-      "help": "開啟後，將跳過“塞壬研究·I”與“塞壬研究·II”兩個任務\n塞壬研究任務使用黃幣兌換紫幣"
+      "help": "開啟後，將跳過 塞壬研究·I 與 塞壬研究·II 兩個任務\n塞壬研究任務使用黃幣兌換紫幣"
     },
     "KeepMissionZone": {
       "name": "保留海域不清理",
@@ -4654,6 +4670,10 @@
     "MissionZones": {
       "name": "月底需要清理的海域",
       "help": "這個數值是自動記錄的，一般不需要修改"
+    },
+    "CollectTargetReward": {
+      "name": "領取成就獎勵",
+      "help": ""
     }
   },
   "OpsiObscure": {
@@ -4738,42 +4758,60 @@
       "10": "中心海域"
     },
     "TargetZone": {
-      "name": "指定海域",
-      "help": "僅出擊指定的海域，可以用來獲取大世界成就星星\n支援海域ID、國服/國際服/日服/臺服海域名稱，例如 \"51\", \"NA海域東南E\", \"NA Ocean SE Sector E\"\n填入預設值0，或者刪除數值即可取消指定"
+      "name": "OpsiMeowfficerFarming.TargetZone.name",
+      "help": "OpsiMeowfficerFarming.TargetZone.help"
     },
     "StayInZone": {
-      "name": "指定海域計劃作戰",
-      "help": "雪風大人溫馨提示:開啟這個功能並指定海域後，將會在指定海域進行計劃作戰，不會再回到港口nanoda!侵蝕三推薦NA海域東南B，侵蝕五推薦卡利比安海B或者C nanoda!"
+      "name": "OpsiMeowfficerFarming.StayInZone.name",
+      "help": "OpsiMeowfficerFarming.StayInZone.help"
     },
     "APPreserveUntilReset": {
-      "name": "保留行動力直到月底",
-      "help": "'保留 X 點行動力' 設定不會在大世界重置前幾天減少\n注意：開啟後只會在跨月每日任務中消耗這些行動力，未啟用跨月每日任務時該設定無效，這意味著你需要手動使用這些行動力以獲得更高的收益"
+      "name": "OpsiMeowfficerFarming.APPreserveUntilReset.name",
+      "help": "OpsiMeowfficerFarming.APPreserveUntilReset.help"
     },
     "SirenDetectorSearch_Enable": {
-      "name": "自動尋找塞壬探測裝置",
-      "help": "在短貓相接任務中自動尋找塞壬探測裝置，並記錄找到的海域\n僅在中心海域（region 5）中尋找，不會在其他區域尋找"
+      "name": "OpsiMeowfficerFarming.SirenDetectorSearch_Enable.name",
+      "help": "OpsiMeowfficerFarming.SirenDetectorSearch_Enable.help"
     },
     "SirenDetectorSearch_HazardLevel": {
-      "name": "塞壬探測裝置侵蝕等級",
-      "help": "在中心海域中按順時針出擊特定侵蝕等級的海域來尋找塞壬探測裝置\n中心海域只有五和六級海域\n注意：只在中心海域（region 5）中選擇，不會選擇其他區域的海域",
+      "name": "OpsiMeowfficerFarming.SirenDetectorSearch_HazardLevel.name",
+      "help": "OpsiMeowfficerFarming.SirenDetectorSearch_HazardLevel.help",
       "5": "5",
       "6": "6"
     },
     "SirenDetectorSearch_FleetForBlock": {
-      "name": "卡位艦隊",
-      "help": "用於卡住敵人的艦隊，以免搜尋時被敵人打斷，請選擇和短貓任務不同的艦隊",
+      "name": "OpsiMeowfficerFarming.SirenDetectorSearch_FleetForBlock.name",
+      "help": "OpsiMeowfficerFarming.SirenDetectorSearch_FleetForBlock.help",
       "1": "1",
       "2": "2",
       "3": "3",
       "4": "4"
     },
     "SirenDetectorSearch_StopAfterFound": {
-      "name": "尋找 X 個塞壬探測裝置後停止",
-      "help": "尋找並記錄到指定數量的塞壬探測裝置後，停止搜尋並回到正常短貓流程（ 實際上找了x個裝置的數量是由下面的記錄表決定的，如果記錄表為空，則找x個裝置後停止）記錄中有y個裝置，則找x-y個裝置後停止\n設定為 0 表示不限制，會一直搜尋直到行動力不足"
+      "name": "OpsiMeowfficerFarming.SirenDetectorSearch_StopAfterFound.name",
+      "help": "OpsiMeowfficerFarming.SirenDetectorSearch_StopAfterFound.help"
     },
     "SirenDetectorSearch_FoundZones": {
-      "name": "已找到的塞壬探測裝置海域",
-      "help": "已找到的塞壬探測裝置海域，如果對應海域的塞壬探測裝置已經被使用，則可以手動刪除對應海域的記錄"
+      "name": "OpsiMeowfficerFarming.SirenDetectorSearch_FoundZones.name",
+      "help": "OpsiMeowfficerFarming.SirenDetectorSearch_FoundZones.help"
+    }
+  },
+  "OpsiTarget": {
+    "_info": {
+      "name": "海域成就",
+      "help": ""
+    },
+    "TargetFarming": {
+      "name": "刷取安全海域成就",
+      "help": ""
+    },
+    "TargetZone": {
+      "name": "指定海域",
+      "help": "僅出擊指定的海域，可以用來獲取大世界成就星星\n自動更新的數值，填0可重置進度，重置後自動跳過已開荒的海域\n支援海域ID、國服/國際服/日服/台服海域名稱，例如 \"51\", \"NA海域東南E\", \"NA Ocean SE Sector E\"\n填入默認值0，或者刪除數值即可取消指定"
+    },
+    "LastRun": {
+      "name": "上一次領取時間",
+      "help": "這個數值是自動記錄的，一般不需要修改"
     }
   },
   "OpsiHazard1Leveling": {

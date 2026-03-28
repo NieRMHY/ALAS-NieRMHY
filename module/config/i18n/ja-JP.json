@@ -810,6 +810,22 @@
     "AdbOfflineThreshold": {
       "name": "デバイスの再起動しきい値が検出されない",
       "help": "デバイスが連続して検出できなかった回数に応じて、再起動がトリガーされます。"
+    },
+    "LlmAnalysis": {
+      "name": "LLM 错误分析を有効にする",
+      "help": "未処理の例外が発生した際、LLM を使用してエラーの原因分析と改善提案を自動的に行います。"
+    },
+    "LlmApiKey": {
+      "name": "LLM API キー",
+      "help": "OpenAI 互換インターフェースの API キー。"
+    },
+    "LlmApiBase": {
+      "name": "LLM API ベース URL",
+      "help": "OpenAI 互換インターフェースのベース URL。"
+    },
+    "LlmModel": {
+      "name": "LLM モデル",
+      "help": "使用する LLM モデル名（例：gpt-4o-mini）。"
     }
   },
   "Optimization": {
@@ -1165,7 +1181,7 @@
       "event_20251023_cn": "テンペスタと自由群島",
       "event_20251218_cn": "天穹に響く音謡",
       "event_20260226_cn": "春色旅籠Online",
-      "event_20260326_cn": "漫游者招募计划",
+      "event_20260326_cn": "ワンダラー募集計画",
       "raid_20200624": "特別演習超空強襲波（復刻）",
       "raid_20210708": "交錯する新たな波 (復刻)",
       "raid_20220127": "秘密事件調査",
@@ -4654,6 +4670,10 @@
     "MissionZones": {
       "name": "月末に清掃が必要な海域",
       "help": "この値は自動的に記録されるため、通常は変更する必要はありません。"
+    },
+    "CollectTargetReward": {
+      "name": "OpsiDaily.CollectTargetReward.name",
+      "help": "OpsiDaily.CollectTargetReward.help"
     }
   },
   "OpsiObscure": {
@@ -4774,6 +4794,24 @@
     "SirenDetectorSearch_FoundZones": {
       "name": "サイレン探知装置の海域を発見",
       "help": "サイレン探知装置が海域で発見された。該当海域のサイレン探知装置が使用されている場合、該当海域の記録を手動で削除することができます。"
+    }
+  },
+  "OpsiTarget": {
+    "_info": {
+      "name": "OpsiTarget._info.name",
+      "help": "OpsiTarget._info.help"
+    },
+    "TargetFarming": {
+      "name": "OpsiTarget.TargetFarming.name",
+      "help": "OpsiTarget.TargetFarming.help"
+    },
+    "TargetZone": {
+      "name": "OpsiTarget.TargetZone.name",
+      "help": "OpsiTarget.TargetZone.help"
+    },
+    "LastRun": {
+      "name": "OpsiTarget.LastRun.name",
+      "help": "OpsiTarget.LastRun.help"
     }
   },
   "OpsiHazard1Leveling": {

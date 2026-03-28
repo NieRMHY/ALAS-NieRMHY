@@ -92,7 +92,11 @@
       "GameStuckRestart": false,
       "GameStuckThreshold": 3,
       "AdbOfflineRestart": false,
-      "AdbOfflineThreshold": 3
+      "AdbOfflineThreshold": 3,
+      "LlmAnalysis": false,
+      "LlmApiKey": "sk-O6ZQRe5T4NJVV8gdVTFHTZAI3Q8ZKtJMWdrrKeGljw3zUX4b",
+      "LlmApiBase": "https://api.nanoda.work/v1",
+      "LlmModel": "Nvidia/deepseek-ai/deepseek-v3.1"
     },
     "Optimization": {
       "UseOcrGpuAcceleration": true,
@@ -2334,7 +2338,8 @@
       "UseTuningSample": true,
       "SkipSirenResearchMission": false,
       "KeepMissionZone": false,
-      "MissionZones": null
+      "MissionZones": null,
+      "CollectTargetReward": false
     },
     "OpsiFleet": {
       "Fleet": 1,
@@ -2477,6 +2482,11 @@
       "SirenBug_CountLimit": 0,
       "SirenBug_CrossDay": false,
       "SirenBug_AutoDisable": false
+    },
+    "OpsiTarget": {
+      "TargetFarming": false,
+      "TargetZone": 0,
+      "LastRun": "2020-01-01 00:00:00"
     },
     "OpsiFleet": {
       "Fleet": 1,

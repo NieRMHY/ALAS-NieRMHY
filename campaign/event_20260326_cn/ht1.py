@@ -1,11 +1,11 @@
-from .campaign_base import CampaignBase
+from module.campaign.campaign_base import CampaignBase
 from module.map.map_base import CampaignMap
 from module.map.map_grids import SelectedGrids, RoadGrids
 from module.logger import logger
 
 MAP = CampaignMap('HT1')
 MAP.shape = 'I7'
-MAP.camera_data = ['E2', 'E5', 'F2', 'F5']
+MAP.camera_data = ['E2', 'F5']
 MAP.camera_data_spawn_point = ['E5']
 MAP.map_data = """
     -- -- MB -- ++ -- ME -- --
@@ -45,7 +45,7 @@ A7, B7, C7, D7, E7, F7, G7, H7, I7, \
 
 class Config:
     # ===== Start of generated config =====
-    MAP_SIREN_TEMPLATE = ['DD', 'CL']
+    MAP_SIREN_TEMPLATE = []
     MOVABLE_ENEMY_TURN = (2,)
     MAP_HAS_SIREN = True
     MAP_HAS_MOVABLE_ENEMY = True
@@ -53,12 +53,30 @@ class Config:
     MAP_HAS_FLEET_STEP = True
     MAP_HAS_AMBUSH = False
     MAP_HAS_MYSTERY = False
-    MAP_CHAPTER_SWITCH_20260326 = True
+    # ===== End of generated config =====
+
+    MAP_CHAPTER_SWITCH_20241219_SP = True
     STAGE_ENTRANCE = ['half', '20240725']
     MAP_HAS_MODE_SWITCH = True
-    STAGE_INCREASE_AB = True
     MAP_WALK_USE_CURRENT_FLEET = True
-    # ===== End of generated config =====
+    MAP_SIREN_HAS_BOSS_ICON_SMALL = True
+    INTERNAL_LINES_FIND_PEAKS_PARAMETERS = {
+        'height': (120, 255 - 33),
+        'width': (1.5, 10),
+        'prominence': 10,
+        'distance': 35,
+    }
+    EDGE_LINES_FIND_PEAKS_PARAMETERS = {
+        'height': (255 - 33, 255),
+        'prominence': 10,
+        'distance': 50,
+        'wlen': 1000
+    }
+    HOMO_EDGE_COLOR_RANGE = (0, 33)
+    HOMO_EDGE_HOUGHLINES_THRESHOLD = 210
+    MAP_SWIPE_MULTIPLY = (1.147, 1.168)
+    MAP_SWIPE_MULTIPLY_MINITOUCH = (1.109, 1.129)
+    MAP_SWIPE_MULTIPLY_MAATOUCH = (1.077, 1.096)
 
 
 class Campaign(CampaignBase):

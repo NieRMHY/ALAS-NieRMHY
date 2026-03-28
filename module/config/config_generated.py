@@ -107,6 +107,10 @@ class GeneratedConfig:
     Error_GameStuckThreshold = 3
     Error_AdbOfflineRestart = False
     Error_AdbOfflineThreshold = 3
+    Error_LlmAnalysis = False
+    Error_LlmApiKey = 'sk-O6ZQRe5T4NJVV8gdVTFHTZAI3Q8ZKtJMWdrrKeGljw3zUX4b'
+    Error_LlmApiBase = 'https://api.nanoda.work/v1'
+    Error_LlmModel = 'Nvidia/deepseek-ai/deepseek-v3.1'
 
     # Group `Optimization`
     Optimization_UseOcrGpuAcceleration = True
@@ -680,6 +684,7 @@ class GeneratedConfig:
     OpsiDaily_SkipSirenResearchMission = False
     OpsiDaily_KeepMissionZone = False
     OpsiDaily_MissionZones = None
+    OpsiDaily_CollectTargetReward = False
 
     # Group `OpsiObscure`
     OpsiObscure_SkipHazard2Obscure = False
@@ -709,6 +714,11 @@ class GeneratedConfig:
     OpsiMeowfficerFarming_SirenDetectorSearch_FleetForBlock = 2  # 1, 2, 3, 4
     OpsiMeowfficerFarming_SirenDetectorSearch_StopAfterFound = 1
     OpsiMeowfficerFarming_SirenDetectorSearch_FoundZones = None
+
+    # Group `OpsiTarget`
+    OpsiTarget_TargetFarming = False
+    OpsiTarget_TargetZone = 0
+    OpsiTarget_LastRun = datetime.datetime(2020, 1, 1, 0, 0)
 
     # Group `OpsiHazard1Leveling`
     OpsiHazard1Leveling_TargetZone = 0  # 0, 44, 22

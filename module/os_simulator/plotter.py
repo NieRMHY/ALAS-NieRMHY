@@ -9,7 +9,12 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 
-plt.rcParams['font.sans-serif'] = ['Microsoft YaHei', 'SimHei', 'SimSun', 'Arial'] 
+plt.rcParams['font.sans-serif'] = [
+    'Microsoft YaHei', 'SimHei',  # Windows
+    'PingFang SC', 'STHeiti', 'Heiti SC',  # macOS
+    'Noto Sans CJK SC', 'Source Han Sans SC', 'WenQuanYi Micro Hei',  # Linux
+    'Droid Sans Fallback'  # Fallback
+]
 plt.rcParams['axes.unicode_minus'] = False
 
 class OSSimulatorPlotter:

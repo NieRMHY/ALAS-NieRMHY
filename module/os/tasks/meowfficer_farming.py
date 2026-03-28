@@ -626,6 +626,13 @@ class OpsiMeowfficerFarming(CoinTaskMixin, OSMap):
             self.config.task_delay(server_update=True)
             self.config.task_stop()
 
+        if self.config.OpsiTarget_TargetFarming:
+            if self.config.SERVER in ['cn', 'jp']:
+                if hasattr(self, '_os_target'):
+                    self._os_target()
+            else:
+                logger.info(f'Server {self.config.SERVER} does not support OpsiTarget yet, please contact the developers.')
+
         ap_checked = False
         while True:
             ap_checked = self._meow_ap_and_scheduling_check(preserve, ap_checked)

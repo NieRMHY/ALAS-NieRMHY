@@ -441,6 +441,23 @@
           1,
           10
         ]
+      },
+      "LlmAnalysis": {
+        "type": "checkbox",
+        "value": false
+      },
+      "LlmApiKey": {
+        "type": "textarea",
+        "value": "sk-O6ZQRe5T4NJVV8gdVTFHTZAI3Q8ZKtJMWdrrKeGljw3zUX4b"
+      },
+      "LlmApiBase": {
+        "type": "textarea",
+        "value": "https://api.nanoda.work/v1"
+      },
+      "LlmModel": {
+        "type": "input",
+        "value": "Nvidia/qwen/qwen2.5-coder-32b-instruct",
+        "valuetype": "str"
       }
     },
     "Optimization": {
@@ -2087,6 +2104,7 @@
         "type": "select",
         "value": "campaign_main",
         "option": [
+          "event_20220728_cn",
           "event_20260326_cn"
         ],
         "display": "hide",
@@ -2100,9 +2118,10 @@
           "event_20260326_cn"
         ],
         "option_tw": [
-          "event_20260326_cn"
+          "event_20220728_cn"
         ],
         "option_bold": [
+          "event_20220728_cn",
           "event_20260326_cn"
         ]
       },
@@ -2555,6 +2574,7 @@
         "type": "select",
         "value": "campaign_main",
         "option": [
+          "event_20220728_cn",
           "event_20260326_cn"
         ],
         "display": "hide",
@@ -2568,9 +2588,10 @@
           "event_20260326_cn"
         ],
         "option_tw": [
-          "event_20260326_cn"
+          "event_20220728_cn"
         ],
         "option_bold": [
+          "event_20220728_cn",
           "event_20260326_cn"
         ]
       },
@@ -3424,6 +3445,7 @@
         "type": "state",
         "value": "campaign_main",
         "option": [
+          "event_20220728_cn",
           "event_20260326_cn"
         ],
         "option_cn": [
@@ -3436,9 +3458,10 @@
           "event_20260326_cn"
         ],
         "option_tw": [
-          "event_20260326_cn"
+          "event_20220728_cn"
         ],
         "option_bold": [
+          "event_20220728_cn",
           "event_20260326_cn"
         ]
       },
@@ -3832,6 +3855,7 @@
         "type": "state",
         "value": "campaign_main",
         "option": [
+          "event_20220728_cn",
           "event_20260326_cn"
         ],
         "option_cn": [
@@ -3844,9 +3868,10 @@
           "event_20260326_cn"
         ],
         "option_tw": [
-          "event_20260326_cn"
+          "event_20220728_cn"
         ],
         "option_bold": [
+          "event_20220728_cn",
           "event_20260326_cn"
         ]
       },
@@ -6152,6 +6177,7 @@
         "type": "state",
         "value": "campaign_main",
         "option": [
+          "event_20220728_cn",
           "event_20260326_cn"
         ],
         "option_cn": [
@@ -6164,9 +6190,10 @@
           "event_20260326_cn"
         ],
         "option_tw": [
-          "event_20260326_cn"
+          "event_20220728_cn"
         ],
         "option_bold": [
+          "event_20220728_cn",
           "event_20260326_cn"
         ]
       },
@@ -6577,6 +6604,7 @@
         "type": "state",
         "value": "campaign_main",
         "option": [
+          "event_20220728_cn",
           "event_20260326_cn"
         ],
         "option_cn": [
@@ -6589,9 +6617,10 @@
           "event_20260326_cn"
         ],
         "option_tw": [
-          "event_20260326_cn"
+          "event_20220728_cn"
         ],
         "option_bold": [
+          "event_20220728_cn",
           "event_20260326_cn"
         ]
       },
@@ -7002,6 +7031,7 @@
         "type": "state",
         "value": "campaign_main",
         "option": [
+          "event_20220728_cn",
           "event_20260326_cn"
         ],
         "option_cn": [
@@ -7014,9 +7044,10 @@
           "event_20260326_cn"
         ],
         "option_tw": [
-          "event_20260326_cn"
+          "event_20220728_cn"
         ],
         "option_bold": [
+          "event_20220728_cn",
           "event_20260326_cn"
         ]
       },
@@ -7427,6 +7458,7 @@
         "type": "state",
         "value": "campaign_main",
         "option": [
+          "event_20220728_cn",
           "event_20260326_cn"
         ],
         "option_cn": [
@@ -7439,9 +7471,10 @@
           "event_20260326_cn"
         ],
         "option_tw": [
-          "event_20260326_cn"
+          "event_20220728_cn"
         ],
         "option_bold": [
+          "event_20220728_cn",
           "event_20260326_cn"
         ]
       },
@@ -7842,6 +7875,7 @@
         "type": "state",
         "value": "campaign_main",
         "option": [
+          "event_20220728_cn",
           "event_20260326_cn"
         ],
         "option_cn": [
@@ -7854,9 +7888,10 @@
           "event_20260326_cn"
         ],
         "option_tw": [
-          "event_20260326_cn"
+          "event_20220728_cn"
         ],
         "option_bold": [
+          "event_20220728_cn",
           "event_20260326_cn"
         ]
       },
@@ -12689,6 +12724,10 @@
         "type": "stored",
         "value": null,
         "display": "hide"
+      },
+      "CollectTargetReward": {
+        "type": "checkbox",
+        "value": false
       }
     },
     "OpsiFleet": {
@@ -13198,6 +13237,21 @@
       "SirenBug_AutoDisable": {
         "type": "checkbox",
         "value": false
+      }
+    },
+    "OpsiTarget": {
+      "TargetFarming": {
+        "type": "checkbox",
+        "value": false
+      },
+      "TargetZone": {
+        "type": "input",
+        "value": 0
+      },
+      "LastRun": {
+        "type": "datetime",
+        "value": "2020-01-01 00:00:00",
+        "validate": "datetime"
       }
     },
     "OpsiFleet": {

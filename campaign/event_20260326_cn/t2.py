@@ -1,4 +1,4 @@
-from .campaign_base import CampaignBase
+from module.campaign.campaign_base import CampaignBase
 from module.map.map_base import CampaignMap
 from module.map.map_grids import SelectedGrids, RoadGrids
 from module.logger import logger
@@ -6,8 +6,8 @@ from .t1 import Config as ConfigBase
 
 MAP = CampaignMap('T2')
 MAP.shape = 'I7'
-MAP.camera_data = ['D2', 'D5', 'F2', 'F5']
-MAP.camera_data_spawn_point = ['F2', 'D2']
+MAP.camera_data = ['D2', 'D5', 'F5']
+MAP.camera_data_spawn_point = ['F2']
 MAP.map_data = """
     -- -- ++ ++ SP -- SP ++ --
     ME ME ++ ++ -- -- -- ++ --
@@ -45,7 +45,7 @@ A7, B7, C7, D7, E7, F7, G7, H7, I7, \
 
 class Config(ConfigBase):
     # ===== Start of generated config =====
-    MAP_SIREN_TEMPLATE = ['DD', 'CL']
+    MAP_SIREN_TEMPLATE = []
     MOVABLE_ENEMY_TURN = (2,)
     MAP_HAS_SIREN = True
     MAP_HAS_MOVABLE_ENEMY = True
@@ -53,11 +53,6 @@ class Config(ConfigBase):
     MAP_HAS_FLEET_STEP = True
     MAP_HAS_AMBUSH = False
     MAP_HAS_MYSTERY = False
-    MAP_CHAPTER_SWITCH_20260326 = True
-    STAGE_ENTRANCE = ['half', '20240725']
-    MAP_HAS_MODE_SWITCH = True
-    STAGE_INCREASE_AB = True
-    MAP_WALK_USE_CURRENT_FLEET = True
     # ===== End of generated config =====
 
 

@@ -350,6 +350,7 @@ Opsi:
       - Scheduler
       - OpsiMeowfficerFarming
       - OpsiSirenBug
+      - OpsiTarget
       - OpsiFleet
     OpsiHazard1Leveling:
       - Scheduler

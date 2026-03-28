@@ -810,6 +810,22 @@
     "AdbOfflineThreshold": {
       "name": "检测不到设备重启阈值",
       "help": "连续检测不到设备多少次后触发重启。"
+    },
+    "LlmAnalysis": {
+      "name": "启用 LLM 错误分析",
+      "help": "在发生无法处理的异常时，自动调用 LLM 分析错误原因并提供改进建议。"
+    },
+    "LlmApiKey": {
+      "name": "LLM API Key",
+      "help": "OpenAI 兼容接口的 API Key。"
+    },
+    "LlmApiBase": {
+      "name": "LLM API Base",
+      "help": "OpenAI 兼容接口的 Base URL。"
+    },
+    "LlmModel": {
+      "name": "LLM 模型",
+      "help": "使用的 LLM 模型名称，例如 gpt-4o-mini。"
     }
   },
   "Optimization": {
@@ -4645,7 +4661,7 @@
     },
     "SkipSirenResearchMission": {
       "name": "不做塞壬研究任务",
-      "help": "开启后，将跳过“塞壬研究·I”与“塞壬研究·II”两个任务\n塞壬研究任务使用黄币兑换紫币"
+      "help": "开启后，将跳过 塞壬研究·I 与 塞壬研究·II 两个任务\n塞壬研究任务使用黄币兑换紫币"
     },
     "KeepMissionZone": {
       "name": "保留海域不清理",
@@ -4654,6 +4670,10 @@
     "MissionZones": {
       "name": "月底需要清理的海域",
       "help": "这个数值是自动记录的，一般不需要修改"
+    },
+    "CollectTargetReward": {
+      "name": "领取成就奖励",
+      "help": ""
     }
   },
   "OpsiObscure": {
@@ -4739,19 +4759,19 @@
     },
     "TargetZone": {
       "name": "指定海域",
-      "help": "仅出击指定的海域，可以用来获取大世界成就星星\n支持海域ID、国服/国际服/日服/台服海域名称，例如 \"51\", \"NA海域东南E\", \"NA Ocean SE Sector E\"\n填入默认值0，或者删除数值即可取消指定"
+      "help": "仅出击指定的海域，支持海域ID或名称。填0跳转至默认逻辑（按侵蚀等级搜索）。"
     },
     "StayInZone": {
-      "name": "指定海域计划作战",
-      "help": "雪风大人温馨提示:打开这个功能并指定海域后，将会在指定海域进行计划作战，不会再回到港口nanoda!侵蚀三推荐NA海域东南B，侵蚀五推荐卡利比安海B或者C nanoda!"
+      "name": "循环出击指定海域",
+      "help": "开启后，将一直停留在“指定海域”内运行，不再循环其他海域。仅在指定海域不为0时生效。"
     },
     "APPreserveUntilReset": {
-      "name": "保留行动力直到月底",
-      "help": "'保留 X 点行动力' 设置不会在大世界重置前几天减少\n注意：开启后只会在跨月每日任务中消耗这些行动力，未启用跨月每日任务时该设置无效，这意味着你需要手动使用这些行动力以获得更高的收益"
+      "name": "月底重置强制消耗行动力",
+      "help": "在大世界重置前，自动将保留行动力设为0，以确保存余行动力被消耗。建议配合侵蚀1练级使用。"
     },
     "SirenDetectorSearch_Enable": {
       "name": "自动寻找塞壬探测装置",
-      "help": "在短猫相接任务中自动寻找塞壬探测装置，并记录找到的海域\n仅在中心海域（region 5）中寻找，不会在其他区域寻找"
+      "help": "在短猫相接任务中自动寻找塞壬探测装置，并记录找到的海域\n仅在中心海域中寻找，不会在其他区域寻找"
     },
     "SirenDetectorSearch_HazardLevel": {
       "name": "塞壬探测装置侵蚀等级",
@@ -4774,6 +4794,24 @@
     "SirenDetectorSearch_FoundZones": {
       "name": "已找到的塞壬探测装置海域",
       "help": "已找到的塞壬探测装置海域，会按侵蚀等级分开记录并分开排除。若对应海域的塞壬探测装置已经被使用，可手动删除该海域记录。"
+    }
+  },
+  "OpsiTarget": {
+    "_info": {
+      "name": "海域成就",
+      "help": ""
+    },
+    "TargetFarming": {
+      "name": "刷取安全海域成就",
+      "help": ""
+    },
+    "TargetZone": {
+      "name": "指定海域",
+      "help": "仅出击指定的海域，可以用来获取大世界成就星星\n支持海域ID、国服/国际服/日服/台服海域名称，例如 \"51\", \"NA海域东南E\", \"NA Ocean SE Sector E\"\n填入默认值0，或者删除数值即可取消指定"
+    },
+    "LastRun": {
+      "name": "上一次领取时间",
+      "help": "这个数值是自动记录的，一般不需要修改"
     }
   },
   "OpsiHazard1Leveling": {

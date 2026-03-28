@@ -149,6 +149,16 @@ Error:
   AdbOfflineThreshold:
     value: 3
     validate: [1, 10]
+  LlmAnalysis: false
+  LlmApiKey:
+    type: textarea
+    value: "sk-O6ZQRe5T4NJVV8gdVTFHTZAI3Q8ZKtJMWdrrKeGljw3zUX4b"
+  LlmApiBase:
+    type: textarea
+    value: "https://api.nanoda.work/v1"
+  LlmModel:
+    value: "Nvidia/deepseek-ai/deepseek-v3.1"
+    valuetype: str
 Optimization:
   UseOcrGpuAcceleration: true
   ScreenshotInterval: 0.3
@@ -1109,6 +1119,7 @@ OpsiDaily:
     type: stored
     value: null
     display: hide
+  CollectTargetReward: false
 OpsiObscure:
   SkipHazard2Obscure: false
   ForceRun: false
@@ -1149,6 +1160,11 @@ OpsiMeowfficerFarming:
   SirenDetectorSearch_FoundZones:
     type: textarea
     value: ""
+OpsiTarget:
+  TargetFarming: false
+  TargetZone:
+    value: 0
+  LastRun: 2020-01-01 00:00:00
 OpsiHazard1Leveling:
   TargetZone:
     value: 0

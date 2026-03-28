@@ -1,4 +1,4 @@
-from .campaign_base import CampaignBase
+from module.campaign.campaign_base import CampaignBase
 from module.map.map_base import CampaignMap
 from module.map.map_grids import SelectedGrids, RoadGrids
 from module.logger import logger
@@ -50,7 +50,7 @@ A8, B8, C8, D8, E8, F8, G8, \
 
 class Config:
     # ===== Start of generated config =====
-    MAP_SIREN_TEMPLATE = ['DD', 'CL']
+    MAP_SIREN_TEMPLATE = []
     MOVABLE_ENEMY_TURN = (2,)
     MAP_HAS_SIREN = True
     MAP_HAS_MOVABLE_ENEMY = True
@@ -58,20 +58,47 @@ class Config:
     MAP_HAS_FLEET_STEP = False
     MAP_HAS_AMBUSH = False
     MAP_HAS_MYSTERY = False
-    MAP_CHAPTER_SWITCH_20260326 = True
-    STAGE_ENTRANCE = ['half', '20240725']
-    MAP_HAS_MODE_SWITCH = True
-    STAGE_INCREASE_AB = True
-    MAP_WALK_USE_CURRENT_FLEET = True
     STAR_REQUIRE_1 = 0
     STAR_REQUIRE_2 = 0
     STAR_REQUIRE_3 = 0
     # ===== End of generated config =====
 
+    MAP_CHAPTER_SWITCH_20241219_SP = True
+    STAGE_ENTRANCE = ['half', '20240725']
+    MAP_WALK_USE_CURRENT_FLEET = True
+    MAP_SIREN_HAS_BOSS_ICON_SMALL = True
+    INTERNAL_LINES_FIND_PEAKS_PARAMETERS = {
+        'height': (120, 255 - 33),
+        'width': (1.5, 10),
+        'prominence': 10,
+        'distance': 35,
+    }
+    EDGE_LINES_FIND_PEAKS_PARAMETERS = {
+        'height': (255 - 33, 255),
+        'prominence': 10,
+        'distance': 50,
+        'wlen': 1000
+    }
+    HOMO_EDGE_COLOR_RANGE = (0, 33)
+    HOMO_EDGE_HOUGHLINES_THRESHOLD = 210
+    HOMO_STORAGE = ((7, 6), [(135.178, 83.137), (919.07, 83.137), (-16.807, 613.173), (1000.053, 613.173)])
+    MAP_ENSURE_EDGE_INSIGHT_CORNER = 'bottom'
+    MAP_IS_ONE_TIME_STAGE = True
+
+    MAP_SWIPE_MULTIPLY = (1.127, 1.148)
+    MAP_SWIPE_MULTIPLY_MINITOUCH = (1.090, 1.110)
+    MAP_SWIPE_MULTIPLY_MAATOUCH = (1.058, 1.077)
+
 
 class Campaign(CampaignBase):
     MAP = MAP
     ENEMY_FILTER = '1L > 1M > 1E > 1C > 2L > 2M > 2E > 2C > 3L > 3M > 3E > 3C'
+
+    def map_data_init(self, map_):
+        super().map_data_init(map_)
+        C1.is_siren = True
+        D2.is_siren = True
+        E1.is_siren = True
 
     def battle_0(self):
         if self.clear_siren():
