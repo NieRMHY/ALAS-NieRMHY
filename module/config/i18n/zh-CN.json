@@ -810,22 +810,6 @@
     "AdbOfflineThreshold": {
       "name": "检测不到设备重启阈值",
       "help": "连续检测不到设备多少次后触发重启。"
-    },
-    "LlmAnalysis": {
-      "name": "启用 LLM 错误分析",
-      "help": "在发生无法处理的异常时，自动调用 LLM 分析错误原因并提供改进建议。"
-    },
-    "LlmApiKey": {
-      "name": "LLM API Key",
-      "help": "OpenAI 兼容接口的 API Key。"
-    },
-    "LlmApiBase": {
-      "name": "LLM API Base",
-      "help": "OpenAI 兼容接口的 Base URL。"
-    },
-    "LlmModel": {
-      "name": "LLM 模型",
-      "help": "使用的 LLM 模型名称，例如 gpt-4o-mini。"
     }
   },
   "Optimization": {
