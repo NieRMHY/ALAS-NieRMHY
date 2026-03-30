@@ -109,7 +109,7 @@ class GeneratedConfig:
     Error_AdbOfflineThreshold = 3
 
     # Group `Optimization`
-    Optimization_UseOcrGpuAcceleration = True
+    Optimization_OcrDevice = 'auto'  # auto, cpu, gpu
     Optimization_ScreenshotInterval = 0.3
     Optimization_CombatScreenshotInterval = 1.0
     Optimization_TaskHoardingDuration = 0

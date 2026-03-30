@@ -101,7 +101,7 @@ class OSMapOperation(MapOrderHandler, MissionHandler, PortHandler, StorageHandle
         if 'セ' in name:
             name = name.split('セ')[0]
         # Remove '安全海域' or '秘密海域' at the end of jp ocr.
-        name = name.rstrip('安全秘密異常要塞海域')
+        name = name.rstrip('安全秘密異常要塞海域-')
         # Kanji '一', '力' and '卜' are not used, while Katakana 'ー', 'カ' and 'ト' are misread as Kanji sometimes.
         # Katakana 'ペ' may be misread as Hiragana 'ぺ'.
         name = name.replace('一', 'ー').replace('力', 'カ').replace('卜', 'ト').replace('ぺ', 'ペ')
@@ -125,7 +125,7 @@ class OSMapOperation(MapOrderHandler, MissionHandler, PortHandler, StorageHandle
         if '塞' in name:
             name = name.split('塞')[0]
         # Remove '安全海域', '隱秘海域', '深淵海域' at the end of tw ocr.
-        name = name.rstrip('安全隱秘塞壬要塞深淵海域一')
+        name = name.rstrip('安全隱秘塞壬要塞深淵海域一-')
         return name
 
     @Config.when(SERVER=None)

@@ -444,9 +444,14 @@
       }
     },
     "Optimization": {
-      "UseOcrGpuAcceleration": {
-        "type": "checkbox",
-        "value": true
+      "OcrDevice": {
+        "type": "select",
+        "value": "auto",
+        "option": [
+          "auto",
+          "cpu",
+          "gpu"
+        ]
       },
       "ScreenshotInterval": {
         "type": "input",

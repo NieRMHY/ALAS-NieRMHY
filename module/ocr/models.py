@@ -9,7 +9,7 @@ class OcrModel:
 
     @cached_property
     def azur_lane_jp(self):
-        return AlOcr(name='en')
+        return AlOcr(name='jp')
 
     @cached_property
     def cnocr(self):
@@ -17,11 +17,11 @@ class OcrModel:
 
     @cached_property
     def jp(self):
-        return AlOcr(name='en')
+        return AlOcr(name='jp')
 
     @cached_property
     def tw(self):
-        return AlOcr(name='zhcn')
+        return AlOcr(name='tw')
 
 OCR_MODEL = OcrModel()
 

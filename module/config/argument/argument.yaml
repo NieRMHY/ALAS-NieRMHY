@@ -150,7 +150,9 @@ Error:
     value: 3
     validate: [1, 10]
 Optimization:
-  UseOcrGpuAcceleration: true
+  OcrDevice: 
+    value: auto
+    option: [auto, cpu, gpu]
   ScreenshotInterval: 0.3
   CombatScreenshotInterval: 1.0
   TaskHoardingDuration: 0
