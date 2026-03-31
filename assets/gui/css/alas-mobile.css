@@ -45,16 +45,6 @@
     overflow: hidden;
 }
 
-/* dashboard */
-#pywebio-scope-dashboard {
-    font-weight: 400;
-    width: 100%;
-    display: grid;
-    grid-auto-flow: row;
-    grid-template-columns: repeat(auto-fit,minmax(6rem,1fr));
-    overflow: hidden;
-}
-
 #pywebio-scope-_groups {
     grid-template-columns: 0fr 1fr;
 }

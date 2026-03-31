@@ -460,12 +460,6 @@ pre.rich-traceback-code {
     justify-content: space-between;
 }
 
-#pywebio-scope-image-container {
-    display: flex;
-    align-items: center;
-    justify-content: center; /* 占位图/截图居中 */
-}
-
 #pywebio-scope-log-bar {
     flex-wrap: wrap;
 }
@@ -498,13 +492,12 @@ pre.rich-traceback-code {
     white-space: pre;
 }
 
-/* 调度区三块采用块级流式，避免固定网格导致重叠或背景截断 */
 #pywebio-scope-running,
 #pywebio-scope-pending,
 #pywebio-scope-waiting {
-    display: block;
-    height: auto;
-    overflow: visible;
+    display: grid;
+    grid-auto-flow: row;
+    grid-template-rows: auto auto 1fr;
 }
 
 #pywebio-scope-running>p,
@@ -518,20 +511,8 @@ pre.rich-traceback-code {
 #pywebio-scope-running_tasks,
 #pywebio-scope-pending_tasks,
 #pywebio-scope-waiting_tasks {
-    display: block;
-    overflow: visible;
-    height: auto;
-}
-
-#pywebio-scope-pending {
-    height: auto;
-    overflow: visible;
-}
-
-#pywebio-scope-pending_tasks {
-    height: auto;
-    max-height: none;
-    overflow: visible;
+    overflow-y: auto;
+    height: 100%;
 }
 
 #pywebio-scope-logs {
@@ -563,11 +544,8 @@ pre.rich-traceback-code {
     padding: 0.3125rem;
 }
 
-/* 整个调度容器改为纵向 flex，确保子块顺序堆叠并留出间距 */
 #pywebio-scope-schedulers {
-    display: flex;
-    flex-direction: column;
-    gap: .375rem;
+    display: grid;
 }
 
 .bs-title-option {

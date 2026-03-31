@@ -367,10 +367,9 @@ def get_generator(func: Callable):
 def filepath_css(filename):
     return f"./assets/gui/css/{filename}.css"
 
-# def filepath_icon(filename):
-#     return f"./assets/gui/icon/{filename}.svg"
-def filepath_icon(filename, ext: str = "svg"):
-    return f"./assets/gui/icon/{filename}.{ext}"
+
+def filepath_icon(filename):
+    return f"./assets/gui/icon/{filename}.svg"
 
 
 def add_css(filepath):
@@ -403,46 +402,17 @@ def _read(path):
     with open(path, "r") as f:
         return f.read()
 
-# Modified by NieRMHY 修改头图
-def _load_icon(name: str) -> str:
-    """
-    优先使用同名 PNG，若不存在或读取失败则回退到 SVG。
-    PNG 以 data URI 形式嵌入，可避免静态路径问题；设置固定尺寸保证展示一致。
-    """
-    png_path = filepath_icon(name, "png")
-    if os.path.exists(png_path):
-        try:
-            with open(png_path, "rb") as f:
-                data = base64.b64encode(f.read()).decode("ascii")
-            return (
-                f'<img src="data:image/png;base64,{data}" alt="{name}" '
-                'style="width:2.4rem;height:2.4rem;display:block;" />'
-            )
-        except Exception as e:
-            logger.warning("读取 PNG 图标失败，回退 SVG: %s", e)
-
-    svg_path = filepath_icon(name, "svg")
-    try:
-        return _read(svg_path)
-    except Exception as e:
-        logger.error("读取 SVG 图标失败: %s", e)
-        return ""
-
 
 class Icon:
     """
     Storage html of icon.
     """
-    # ALAS = _read(filepath_icon("alas"))
-    # SETTING = _read(filepath_icon("setting"))
-    # RUN = _read(filepath_icon("run"))
-    # DEVELOP = _read(filepath_icon("develop"))
-    # ADD = _read(filepath_icon("add"))
-    ALAS = _load_icon("alas")
-    SETTING = _load_icon("setting")
-    RUN = _load_icon("run")
-    DEVELOP = _load_icon("develop")
-    ADD = _load_icon("add")
+
+    ALAS = _read(filepath_icon("alas"))
+    SETTING = _read(filepath_icon("setting"))
+    RUN = _read(filepath_icon("run"))
+    DEVELOP = _read(filepath_icon("develop"))
+    ADD = _read(filepath_icon("add"))
     RUNNING = _read(filepath_icon("status_running"))
     ERROR = _read(filepath_icon("status_error"))
     UPDATE = _read(filepath_icon("status_update"))
