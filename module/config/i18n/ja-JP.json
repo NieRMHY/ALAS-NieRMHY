@@ -66,10 +66,6 @@
       "name": "イベント共通設定",
       "help": ""
     },
-    "Coalition": {
-      "name": "特集写真-撮影進行中",
-      "help": ""
-    },
     "Event": {
       "name": "イベント海域",
       "help": ""
@@ -86,16 +82,16 @@
       "name": "病院探訪",
       "help": ""
     },
+    "Coalition": {
+      "name": "特集写真-撮影進行中",
+      "help": ""
+    },
     "MaritimeEscort": {
       "name": "Maritime Escort",
       "help": ""
     },
     "WarArchives": {
       "name": "作戦履歴",
-      "help": ""
-    },
-    "CoalitionSp": {
-      "name": "特集写真-撮影進行中SP",
       "help": ""
     },
     "EventA": {
@@ -120,6 +116,10 @@
     },
     "RaidDaily": {
       "name": "Raid Daily",
+      "help": ""
+    },
+    "CoalitionSp": {
+      "name": "特集写真-撮影進行中SP",
       "help": ""
     },
     "Commission": {
@@ -606,6 +606,7 @@
       "cn_android-25": "[国服] 水仙行动",
       "cn_android-26": "[国服] 冬月计划",
       "cn_android-27": "[国服] 长弓计划",
+      "cn_android-28": "[国服] 裁决协议",
       "cn_ios-0": "[国服] 夏威夷",
       "cn_ios-1": "[国服] 珊瑚海",
       "cn_ios-2": "[国服] 中途岛",
@@ -697,6 +698,7 @@
       "LDPlayer3": "LDPlayer3",
       "LDPlayer4": "LDPlayer4",
       "LDPlayer9": "LDPlayer9",
+      "LDPlayer14": "LDPlayer14",
       "MuMuPlayer": "MuMuPlayer",
       "MuMuPlayerX": "MuMuPlayerX",
       "MuMuPlayer12": "MuMuPlayer12",
@@ -975,7 +977,7 @@
       "event_20231026_cn": "テンペスタと若返りの泉",
       "event_20231123_cn": "蒼閃忍法帖",
       "event_20231221_cn": "光追う星の海（復刻）",
-      "event_20240229_cn": "銀界遊廻",
+      "event_20240229_cn": "銀界遊廻（復刻）",
       "event_20240425_cn": "共鳴のパッション",
       "event_20240521_cn": "赫輝のマルティリウム",
       "event_20240725_cn": "夢幻の間奏曲",
@@ -993,6 +995,8 @@
       "event_20250912_cn": "アマハラに舞い奉れ",
       "event_20251023_cn": "テンペスタと自由群島",
       "event_20251218_cn": "天穹に響く音謡",
+      "event_20260226_cn": "春色旅籠Online",
+      "event_20260326_cn": "ワンダラー募集計画",
       "raid_20200624": "特別演習超空強襲波（復刻）",
       "raid_20210708": "交錯する新たな波 (復刻)",
       "raid_20220127": "秘密事件調査",
@@ -1001,8 +1005,9 @@
       "raid_20230118": "冬の案内人",
       "raid_20230629": "緑地伽話",
       "raid_20240130": "新春宴会狂騒曲",
-      "raid_20240328": "ゼロから頑張る魔王討伐",
+      "raid_20240328": "ゼロから頑張る魔王討伐（復刻）",
       "raid_20250116": "新春華裳協奏曲",
+      "raid_20260212": "新春玉逸品会",
       "war_archives_20180607_cn": "檔案 墨染まりし鋼の桜",
       "war_archives_20180726_cn": "檔案 光と影のアイリス",
       "war_archives_20181020_en": "檔案 努力希望と計画",
@@ -1138,7 +1143,8 @@
       "combat_auto": "combat_auto",
       "combat_manual": "combat_manual",
       "stand_still_in_the_middle": "stand_still_in_the_middle",
-      "hide_in_bottom_left": "hide_in_bottom_left"
+      "hide_in_bottom_left": "hide_in_bottom_left",
+      "hide_in_upper_left": "hide_in_upper_left"
     },
     "Fleet1Step": {
       "name": "Fleet.Fleet1Step.name",
@@ -1172,7 +1178,8 @@
       "combat_auto": "combat_auto",
       "combat_manual": "combat_manual",
       "stand_still_in_the_middle": "stand_still_in_the_middle",
-      "hide_in_bottom_left": "hide_in_bottom_left"
+      "hide_in_bottom_left": "hide_in_bottom_left",
+      "hide_in_upper_left": "hide_in_upper_left"
     },
     "Fleet2Step": {
       "name": "Fleet.Fleet2Step.name",
@@ -1638,6 +1645,10 @@
     },
     "Favorite": {
       "name": "好ましい選択",
+      "help": ""
+    },
+    "MinLevel": {
+      "name": "レベルがX以上のキャラクターのみを追加してください。",
       "help": ""
     }
   },
@@ -2114,7 +2125,8 @@
       "help": "ShipyardDr.ResearchSeries.help",
       "2": "2",
       "3": "3",
-      "4": "4"
+      "4": "4",
+      "5": "5"
     },
     "ShipIndex": {
       "name": "ShipyardDr.ShipIndex.name",
@@ -2148,7 +2160,8 @@
       "2": "2",
       "3": "3",
       "4": "4",
-      "5": "5"
+      "5": "5",
+      "6": "6"
     },
     "ShipIndex": {
       "name": "Shipyard.ShipIndex.name",
