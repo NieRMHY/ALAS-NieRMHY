@@ -1127,40 +1127,42 @@ class AlasGUI(Frame):
         """
         Set arg groups from dict
         """
-        config = self.alas_config.read_file(self.alas_name)
+        # config = self.alas_config.read_file(self.alas_name)   # Modify by NieRMHY: 避免在此处频繁读取配置文件
 
-        # 侵蚀1练级密码验证
-        auth_file = './config/data/webui_auth.json'
-        if task == 'OpsiHazard1Leveling':
-            unlocked = False
-            if os.path.exists(auth_file):
-                try:
-                    with open(auth_file, 'r', encoding='utf-8') as f:
-                        unlocked = json.load(f).get('OpsiHazard1Leveling', False)
-                except Exception:
-                    pass
+# Modify by NieRMHY
+        # # 侵蚀1练级密码验证
+        # auth_file = './config/data/webui_auth.json'
+        # if task == 'OpsiHazard1Leveling':
+        #     unlocked = False
+        #     if os.path.exists(auth_file):
+        #         try:
+        #             with open(auth_file, 'r', encoding='utf-8') as f:
+        #                 unlocked = json.load(f).get('OpsiHazard1Leveling', False)
+        #         except Exception:
+        #             pass
             
-            if not unlocked:
-                pwd = input(label=_t("Task.OpsiHazard1Leveling.name"), type='text', 
-                            placeholder="请输入解锁Key", help_text="请观看猛蓝视频 https://www.bilibili.com/video/BV1bkroBLEi7 找到结语部分的第一行红色字体部分 不包含标点符号")
-                if pwd == '溢出的黄币本质上其实可以当成另一种石油':
-                    auth_data = {}
-                    os.makedirs(os.path.dirname(auth_file), exist_ok=True)
-                    if os.path.exists(auth_file):
-                        try:
-                            with open(auth_file, 'r', encoding='utf-8') as f:
-                                auth_data = json.load(f)
-                        except Exception:
-                            pass
-                    auth_data['OpsiHazard1Leveling'] = True
-                    with open(auth_file, 'w', encoding='utf-8') as f:
-                        json.dump(auth_data, f)
-                    toast("解锁成功", color='success')
-                else:
-                    if pwd is not None:
-                        toast("密码错误", color='error')
-                    self.alas_overview()
-                    return
+        #     if not unlocked:
+        #         pwd = input(label=_t("Task.OpsiHazard1Leveling.name"), type='text', 
+        #                     placeholder="请输入解锁Key", help_text="请观看猛蓝视频 https://www.bilibili.com/video/BV1bkroBLEi7 找到结语部分的第一行红色字体部分 不包含标点符号")
+        #         if pwd == '溢出的黄币本质上其实可以当成另一种石油':
+        #             auth_data = {}
+        #             os.makedirs(os.path.dirname(auth_file), exist_ok=True)
+        #             if os.path.exists(auth_file):
+        #                 try:
+        #                     with open(auth_file, 'r', encoding='utf-8') as f:
+        #                         auth_data = json.load(f)
+        #                 except Exception:
+        #                     pass
+        #             auth_data['OpsiHazard1Leveling'] = True
+        #             with open(auth_file, 'w', encoding='utf-8') as f:
+        #                 json.dump(auth_data, f)
+        #             toast("解锁成功", color='success')
+        #         else:
+        #             if pwd is not None:
+        #                 toast("密码错误", color='error')
+        #             self.alas_overview()
+        #             return
+# Modify end
 
         self.init_menu(name=task)
         self.set_title(t(f"Task.{task}.name"))
@@ -1178,7 +1180,8 @@ class AlasGUI(Frame):
         if task == 'OpsiSimulator':
             with use_scope("groups"):
                 self._os_simulator()
-
+        
+        config = self.alas_config.read_file(self.alas_name)     # Add by NieRMHY: 在设置参数组之前读取配置文件，确保获取到最新的配置数据
         for group, arg_dict in deep_iter(self.ALAS_ARGS[task], depth=1):
             if self.set_group(group, arg_dict, config, task):
                 self.set_navigator(group)
