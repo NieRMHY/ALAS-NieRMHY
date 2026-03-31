@@ -1936,7 +1936,11 @@
       "help": ""
     },
     "Favorite": {
-      "name": "Prioritize common",
+      "name": "Use Favorite Filter",
+      "help": "During student selection apply the favorite filter\nThereby, giving priority to certain ship girls\nApply the favorite status to a ship girl in-game"
+    },
+    "MinLevel": {
+      "name": "Add Students with Level >= X Only",
       "help": ""
     }
   },

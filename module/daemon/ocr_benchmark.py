@@ -54,8 +54,14 @@ class OcrBenchmark(DaemonBase):
         if avg_ms < 300.0:  return 'Very Slow', 'red'
         return 'Ultra Slow', 'bold red'
 
-    def _run_single(self, model_name, dataset_prefix, subfolder):
+    def _run_single(self, model_name, dataset_prefix, subfolder, use_gpu=None):
         logger.hr(f'Benchmark: {model_name.upper()} model  |  dataset: {dataset_prefix}', level=2)
+
+        # --- Dynamic GPU config ---
+        if use_gpu is not None:
+            self.config.override(Optimization_OcrDevice='gpu' if use_gpu else 'cpu')
+            from module.ocr.al_ocr import reset_ocr_model
+            reset_ocr_model()
 
         # --- Init model ---
         ocr = AlOcr(name=model_name)
@@ -82,7 +88,9 @@ class OcrBenchmark(DaemonBase):
             # --- Accuracy ---
             correct = 0
             total = len(test_cases)
-            for img_input, expected in test_cases:
+            log_step = max(1, total // 20)  # 每 5% 打一次进度
+
+            for idx, (img_input, expected) in enumerate(test_cases, 1):
                 try:
                     result = ocr.ocr(img_input)
                     if result.strip().upper() == expected.strip().upper():
@@ -93,16 +101,19 @@ class OcrBenchmark(DaemonBase):
                 except Exception as e:
                     logger.error(f'OCR error on {img_input}: {e}')
 
+                if idx % log_step == 0 or idx == total:
+                    pct = idx / total * 100
+                    logger.info(f'[{model_name}] Accuracy progress: {idx}/{total} ({pct:.0f}%)')
+
             accuracy = (correct / total) * 100 if total > 0 else 0
-            
-            # Color logic for accuracy
+
             if accuracy >= 100.0:
                 acc_color = 'bright_green'
             elif accuracy >= 90.0:
                 acc_color = 'yellow'
             else:
                 acc_color = 'red'
-            
+
             logger.info(
                 f"[{model_name}] Accuracy: [{acc_color}]{accuracy:.2f}% ({correct}/{total})[/{acc_color}]",
                 extra={"markup": True}
@@ -112,9 +123,11 @@ class OcrBenchmark(DaemonBase):
             benchmark_img = cv2.imread(test_cases[0][0])
             count = 100
 
+            logger.info(f'[{model_name}] Warming up...')
             for _ in range(3):
                 ocr.ocr(benchmark_img)
 
+            logger.info(f'[{model_name}] Running {count} inferences...')
             start = time.time()
             for i in range(1, count + 1):
                 try:
@@ -122,6 +135,8 @@ class OcrBenchmark(DaemonBase):
                 except Exception as e:
                     logger.error(f'[{model_name}] Error on iteration {i}: {e}')
                     break
+                if i % 5 == 0 or i == count:
+                    logger.info(f'[{model_name}] Speed progress: {i}/{count}')
 
             cost = time.time() - start
             avg_ms = cost * 1000 / count if cost > 0 else 0
@@ -197,6 +212,21 @@ class OcrBenchmark(DaemonBase):
         logger.print(table, justify='center')
         logger.info('如果您的 Status 显示 Error 或 Warning，请使用 CPU 运行 OCR')
 
+    def run_simple_ocr_benchmark(self):
+        """
+        Returns:
+            str: 'gpu' if accuracy is 100% on a simple test set, else 'cpu'.
+        """
+        logger.hr('Simple OCR Benchmark', level=1)
+        logger.info('Testing OCR with GPU...')
+        res = self._run_single('en', 'sets_num', 'sets_num', use_gpu=True)
+
+        if res and res['accuracy'] >= 100.0:
+            logger.info('OCR accuracy is 100% with GPU, use GPU.')
+            return 'gpu'
+        else:
+            logger.info('OCR accuracy is not 100% with GPU or test failed, fallback to CPU.')
+            return 'cpu'
 
 
 def run_ocr_benchmark(config):

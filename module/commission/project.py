@@ -205,6 +205,8 @@ class Commission:
         result = result.replace('鑑', '艦').replace('盤', '艦')
         # 支援土蒙爾島
         result = result.replace('土蒙爾', '土豪爾')
+        # fix 资源原
+        result = result.replace('源原', '源')
         self.name = result
         self.genre = self.commission_name_parse(self.name)
 
@@ -250,6 +252,8 @@ class Commission:
         ocr = Ocr(button, lang='cnocr', threshold=256)
         self.button = button
         result = ocr.ocr(self.image).upper()
+        # fix 资源原
+        result = result.replace('源原', '源')
         self.name = result
         self.genre = self.commission_name_parse(self.name)
 

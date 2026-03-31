@@ -123,6 +123,9 @@ class Device(Screenshot, Control, AppControl, Input):
         # Auto-select the fastest screenshot method
         if not self.config.is_template_config and self.config.Emulator_ScreenshotMethod == 'auto':
             self.run_simple_screenshot_benchmark()
+        # Auto-select the OCR device
+        if not self.config.is_template_config and self.config.Optimization_OcrDevice == 'auto':
+            self.run_simple_ocr_benchmark()
 
         # Early init
         if self.config.is_actual_task:
@@ -188,6 +191,24 @@ class Device(Screenshot, Control, AppControl, Input):
             self.config.Emulator_ScreenshotMethod = method
             # if method == 'nemu_ipc':
             #     self.config.Emulator_ControlMethod = 'nemu_ipc'
+
+    def run_simple_ocr_benchmark(self):
+        """
+        Perform an OCR accuracy test on GPU first.
+        Accuracy 100% -> 'gpu', else 'cpu'.
+        """
+        logger.info('run_simple_ocr_benchmark')
+        from module.daemon.ocr_benchmark import OcrBenchmark
+        bench = OcrBenchmark(config=self.config, device=self)
+        device = bench.run_simple_ocr_benchmark()
+        # Set
+        with self.config.multi_set():
+            self.config.Optimization_OcrDevice = device
+            # Need to redo reset_ocr_model() after finally choosing and SETTING the config.
+            # Because run_simple_ocr_benchmark() overrides and calls reset internally, 
+            # we need to ensure the LAST state is consistent with the config we just saved.
+            from module.ocr.al_ocr import reset_ocr_model
+            reset_ocr_model()
 
     def method_check(self):
         """

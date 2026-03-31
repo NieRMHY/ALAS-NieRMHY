@@ -1127,6 +1127,41 @@ class AlasGUI(Frame):
         """
         Set arg groups from dict
         """
+        config = self.alas_config.read_file(self.alas_name)
+
+        # 侵蚀1练级密码验证
+        auth_file = './config/data/webui_auth.json'
+        if task == 'OpsiHazard1Leveling':
+            unlocked = False
+            if os.path.exists(auth_file):
+                try:
+                    with open(auth_file, 'r', encoding='utf-8') as f:
+                        unlocked = json.load(f).get('OpsiHazard1Leveling', False)
+                except Exception:
+                    pass
+            
+            if not unlocked:
+                pwd = input(label=_t("Task.OpsiHazard1Leveling.name"), type='text', 
+                            placeholder="请输入解锁Key", help_text="请观看猛蓝视频 https://www.bilibili.com/video/BV1bkroBLEi7 找到结语部分的第一行红色字体部分 不包含标点符号")
+                if pwd == '溢出的黄币本质上其实可以当成另一种石油':
+                    auth_data = {}
+                    os.makedirs(os.path.dirname(auth_file), exist_ok=True)
+                    if os.path.exists(auth_file):
+                        try:
+                            with open(auth_file, 'r', encoding='utf-8') as f:
+                                auth_data = json.load(f)
+                        except Exception:
+                            pass
+                    auth_data['OpsiHazard1Leveling'] = True
+                    with open(auth_file, 'w', encoding='utf-8') as f:
+                        json.dump(auth_data, f)
+                    toast("解锁成功", color='success')
+                else:
+                    if pwd is not None:
+                        toast("密码错误", color='error')
+                    self.alas_overview()
+                    return
+
         self.init_menu(name=task)
         self.set_title(t(f"Task.{task}.name"))
 
@@ -1144,7 +1179,6 @@ class AlasGUI(Frame):
             with use_scope("groups"):
                 self._os_simulator()
 
-        config = self.alas_config.read_file(self.alas_name)
         for group, arg_dict in deep_iter(self.ALAS_ARGS[task], depth=1):
             if self.set_group(group, arg_dict, config, task):
                 self.set_navigator(group)
@@ -2429,6 +2463,7 @@ class AlasGUI(Frame):
         self.init_menu(name="Utils")
         self.set_title(t("Gui.MenuDevelop.Utils"))
         put_button(label=t("GUI测试 抛出异常事件"), onclick=raise_exception)
+        put_button(label=t("预览更新弹窗"), onclick=self._preview_update_popup)
 
         def _force_restart():
             if State.restart_event is not None:
@@ -2502,6 +2537,36 @@ class AlasGUI(Frame):
         )
 
         self.task_handler.add(remote_switch.g(), delay=1, pending_delete=True)
+
+    def _preview_update_popup(self) -> None:
+        from pywebio.output import toast, close_popup
+        def handle_preview_click():
+            close_popup()
+            toast("success", color="success")
+            
+        with use_scope("ROOT"):
+            popup("更新提醒", [
+                put_html(f'''
+                    <div style="text-align: center; padding: 15px 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+                        <div style="margin-bottom: 20px;">
+                            <div style="width: 50px; height: 50px; background: #fff0f0; border-radius: 25px; margin: 0 auto; display: flex; align-items: center; justify-content: center;">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#e03131" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                            </div>
+                        </div>
+                        <div style="font-size: 1.8rem; font-weight: 800; color: #343a40; margin-bottom: 10px;">有可用更新！</div>
+                        <div style="font-size: 0.95rem; color: #868e96; margin-bottom: 25px; line-height: 1.5;">发现新版本，建议立即更新以<br>获得最佳的脚本运行体验。</div>
+                        
+                        <div style="background: #f8f9fa; border-radius: 10px; padding: 15px; margin: 0 15px 25px; text-align: left; border: 1px solid #dee2e6;">
+                            <div style="font-weight: 700; color: #495057; margin-bottom: 5px;">✨ 温馨提示:</div>
+                            <div style="font-size: 0.85rem; color: #495057;">
+                                • 为确保脚本稳定性和安全性，请及时进行更新。<br>
+                            </div>
+                        </div>
+                    </div>
+                '''),
+                put_buttons([{"label": "立即更新 / Update Now", "value": "update", "color": "danger"}], 
+                           onclick=[handle_preview_click]).style("text-align: center; width: 100%; padding-bottom: 20px; border-top: none;")
+            ], size="large", implicit_close=True)
 
     def ui_develop(self) -> None:
         if not self.is_mobile:
@@ -2883,9 +2948,18 @@ class AlasGUI(Frame):
                 if updater.state == 1:
                     with use_scope("ROOT"):
                         popup(t("Gui.Toast.ClickToUpdate"), [
-                            put_html('<h1 style="color: red; font-size: 3em; text-align: center; margin: 20px 0;">更新提醒</h1>'),
-                            put_html('<h2 style="text-align: center;">发现新版本，请立即更新以获取最新功能和修复喵！</h2>'),
-                            put_buttons([{"label": "立即更新", "value": "update", "color": "danger"}], onclick=[handle_update_click]).style("text-align: center; margin-top: 30px; transform: scale(1.5); padding-bottom: 20px;")
+                            put_html('''
+                                <div style="text-align: center; padding: 20px 10px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+                                    <div style="font-size: 3.5rem; font-weight: 800; background: linear-gradient(135deg, #6c5ce7, #a29bfe); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 15px; letter-spacing: -1px;">
+                                        New Update
+                                    </div>
+                                    <div style="font-size: 1.1rem; color: #636e72; line-height: 1.6; margin-bottom: 25px; padding: 0 20px;">
+                                        发现新版本，多项功能已完成优化优化。请立即更新以获取最新功能和修复喵！
+                                    </div>
+                                </div>
+                            '''),
+                            put_buttons([{"label": "立即更新 / Update Now", "value": "update", "color": "primary"}], 
+                                       onclick=[handle_update_click]).style("text-align: center; margin-top: -10px; padding-bottom: 30px;")
                         ], size="large", implicit_close=True)
                     th._task.delay = 30
                 else:

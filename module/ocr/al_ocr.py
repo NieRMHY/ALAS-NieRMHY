@@ -88,6 +88,15 @@ en_model = EnModel()
 jp_model = JpModel()
 tw_model = TwModel()
 
+def reset_ocr_model():
+    global cn_model, en_model, jp_model, tw_model, USE_GPU
+    USE_GPU = config.ocr_device == 'gpu'
+    logger.info(f"Resetting OCR models, USE_GPU={USE_GPU}")
+    cn_model = CnModel()
+    en_model = EnModel()
+    jp_model = JpModel()
+    tw_model = TwModel()
+
 
 class AlOcr:
     def __init__(self, **kwargs):
@@ -100,6 +109,8 @@ class AlOcr:
         )
 
     def init(self):
+        # We fetch the current global instance instead of assigning a fixed one at construction.
+        # This allows reset_ocr_model() to work for objects initialized AFTER reset.
         if self.name in ["cn", "zhcn"]:
             self.model = cn_model.model
         elif self.name == "jp":
