@@ -1480,6 +1480,56 @@ class AlasGUI(Frame):
             scope="scheduler_btn",
         )
 
+        # April Fools: runaway start button
+        if getattr(self, "af_flag", False):
+            run_js("""
+(function(){
+    var surrendered = false;
+    var bar = document.getElementById('pywebio-scope-scheduler-bar');
+    if (!bar) return;
+    bar.style.position = 'relative';
+    bar.style.overflow = 'hidden';
+
+    var flag = document.createElement('button');
+    flag.textContent = '🏳️';
+    flag.title = 'I give up...';
+    flag.style.cssText = 'border:none;background:transparent;font-size:1.1rem;cursor:pointer;padding:0 4px;margin:auto 2px;opacity:0.45;transition:opacity .2s;flex-shrink:0;';
+    flag.onmouseenter = function(){ flag.style.opacity='1'; };
+    flag.onmouseleave = function(){ flag.style.opacity='0.45'; };
+    flag.onclick = function(){
+        surrendered = true;
+        flag.style.display = 'none';
+        var b = bar.querySelector('.btn-on');
+        if(b){ b.style.transition='transform .35s cubic-bezier(.34,1.56,.64,1)'; b.style.transform=''; }
+    };
+    bar.appendChild(flag);
+
+    bar.addEventListener('mousemove', function(e){
+        if (surrendered) return;
+        var btn = bar.querySelector('.btn-on');
+        if (!btn) return;
+        var r = btn.getBoundingClientRect();
+        var bx = r.left + r.width/2, by = r.top + r.height/2;
+        var dx = bx - e.clientX, dy = by - e.clientY;
+        var dist = Math.sqrt(dx*dx + dy*dy);
+        if (dist < 100 && dist > 1) {
+            var pr = bar.getBoundingClientRect();
+            var push = 100 - dist;
+            var nx = dx/dist * push, ny = dy/dist * push * 0.3;
+            var cur = btn.style.transform.match(/translate\\(([^,]+)px,\\s*([^)]+)px\\)/);
+            var ox = cur ? parseFloat(cur[1]) : 0, oy = cur ? parseFloat(cur[2]) : 0;
+            var tx = ox + nx, ty = oy + ny;
+            var maxX = (pr.width - r.width) / 2 - 4;
+            var maxY = (pr.height - r.height) / 2;
+            tx = Math.max(-maxX, Math.min(maxX, tx));
+            ty = Math.max(-maxY, Math.min(maxY, ty));
+            btn.style.transition = 'transform .13s ease-out';
+            btn.style.transform = 'translate('+tx+'px,'+ty+'px)';
+        }
+    });
+})();
+""")
+
         log = RichLog("log")
         self._log = log
         self._log.dashboard_arg_group = LogRes(self.alas_config).groups
@@ -2712,7 +2762,30 @@ class AlasGUI(Frame):
                 ],
                 onclick=lambda t: set_theme(t),
             ).style("text-align: center")
+            # show something
+            put_markdown(
+                """
+            Alas 是一款免费开源软件，如果你在任何渠道付费购买了 Alas，请退款。
+            Alas is free and open-source software. If you paid for Alas through any channel, please request a refund.
+            Alasは無料のオープンソースソフトウェアです。Alasをいずれかのチャネルから購入された場合は、返金をリクエストしてください。
+            Alas는 무료 오픈 소스 소프트웨어입니다. 어떤 경로로든 Alas를 유료로 구매하셨다면 환불을 요청해 주세요.
+            Alas 是一款免費開源軟體，如果您透過任何管道付費購買了 Alas，請申請退款。
 
+            官方项目地址 / Official project address / 公式プロジェクトアドレス / 공식 프로젝트 주소 / 官方專案位址：`https://github.com/LmeSzinc/AzurLaneAutoScript`
+
+            您当前使用的不是官方版本 / You are not currently using the official version / 現在、公式バージョンをご利用ではありません。 / 현재 공식 버전을 사용하고 있지 않습니다. / 您目前使用的不是官方版本。
+
+            您使用的是修改版，请联系修改版的作者获取支持。 / You are using a modified version. Please contact the author of the modified version for support. / 改変版をご利用中です。サポートが必要な場合は、改変版の作者にお問い合わせください。 / 수정된 버전을 사용 중입니다. 지원이 필요하면 수정 버전의 작성자에게 문의해 주세요. / 您使用的是修改版，請聯繫修改版作者取得支援。
+
+            修改版项目地址 / Modified project address /変更後のプロジェクトアドレス / 수정된 프로젝트 주소 / 修改版專案位址：`https://github.com/wess09/AzurLaneAutoScript`
+
+            修改版问题请联系：
+            For issues related to the revised version, please contact:
+            改訂版に関する問題については、こちらへお問い合わせください。
+            수정 버전 관련 문의는 아래로 연락해 주세요.
+            修改版問題請聯絡：`https://addgroup.nanoda.work/`
+            """
+           ).style("text-align: center")
 
 
 
@@ -2952,19 +3025,27 @@ class AlasGUI(Frame):
                     with use_scope("ROOT"):
                         popup(t("Gui.Toast.ClickToUpdate"), [
                             put_html('''
-                                <div style="text-align: center; padding: 20px 10px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
-                                    <div style="font-size: 3.5rem; font-weight: 800; background: linear-gradient(135deg, #6c5ce7, #a29bfe); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 15px; letter-spacing: -1px;">
-                                        New Update
+                                <div style="text-align: center; padding: 15px 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+                                    <div style="margin-bottom: 20px;">
+                                        <div style="width: 50px; height: 50px; background: #fff0f0; border-radius: 25px; margin: 0 auto; display: flex; align-items: center; justify-content: center;">
+                                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#e03131" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                                        </div>
                                     </div>
-                                    <div style="font-size: 1.1rem; color: #636e72; line-height: 1.6; margin-bottom: 25px; padding: 0 20px;">
-                                        发现新版本，多项功能已完成优化优化。请立即更新以获取最新功能和修复喵！
+                                    <div style="font-size: 1.8rem; font-weight: 800; color: #343a40; margin-bottom: 10px;">有可用更新！</div>
+                                    <div style="font-size: 0.95rem; color: #868e96; margin-bottom: 25px; line-height: 1.5;">发现新版本，建议立即更新以获得最佳的脚本运行体验。</div>
+                                    
+                                    <div style="background: #f8f9fa; border-radius: 10px; padding: 15px; margin: 0 15px 25px; text-align: left; border: 1px solid #dee2e6;">
+                                        <div style="font-weight: 700; color: #495057; margin-bottom: 5px;">✨ 温馨提示:</div>
+                                        <div style="font-size: 0.85rem; color: #495057;">
+                                            • 为确保脚本稳定性和安全性，请及时进行更新。<br>
+                                        </div>
                                     </div>
                                 </div>
                             '''),
-                            put_buttons([{"label": "立即更新 / Update Now", "value": "update", "color": "primary"}], 
-                                       onclick=[handle_update_click]).style("text-align: center; margin-top: -10px; padding-bottom: 30px;")
+                            put_buttons([{"label": "立即更新 / Update Now", "value": "update", "color": "danger"}], 
+                                       onclick=[handle_update_click]).style("text-align: center; width: 100%; padding-bottom: 20px; border-top: none;")
                         ], size="large", implicit_close=True)
-                    th._task.delay = 30
+                    th._task.delay = 60
                 else:
                     th._task.delay = 2
                 yield

@@ -86,6 +86,10 @@
       "name": "Event Map-2+",
       "help": ""
     },
+    "Event3": {
+      "name": "Event Map-3+",
+      "help": ""
+    },
     "Raid": {
       "name": "Raid Event+",
       "help": ""

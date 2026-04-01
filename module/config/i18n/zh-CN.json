@@ -86,6 +86,10 @@
       "name": "活动图-2+",
       "help": ""
     },
+    "Event3": {
+      "name": "活动图-3+",
+      "help": ""
+    },
     "Raid": {
       "name": "共斗活动+",
       "help": ""
@@ -231,15 +235,15 @@
       "help": ""
     },
     "OpsiExplore": {
-      "name": "每月开荒+",
+      "name": "每年开荒+",
       "help": ""
     },
     "OpsiShop": {
-      "name": "大世界商店+",
+      "name": "小世界商店+",
       "help": ""
     },
     "OpsiVoucher": {
-      "name": "白票商店",
+      "name": "黑票商店",
       "help": ""
     },
     "OpsiDaily": {
@@ -247,39 +251,39 @@
       "help": ""
     },
     "OpsiObscure": {
-      "name": "隐秘海域",
+      "name": "非常秘密的海域",
       "help": ""
     },
     "OpsiAbyssal": {
-      "name": "深渊海域",
+      "name": "向着星辰与深渊",
       "help": ""
     },
     "OpsiArchive": {
-      "name": "档案坐标",
+      "name": "碧蓝档案",
       "help": "从白票商店购买档案坐标并运行，档案海域不消耗行动力\n使用此功能前必须满足以下条件：\n- 通关大世界主线并完成模拟战+塞壬试验场\n- 启用大世界开荒任务或使用战役信息记录仪（5000油道具）"
     },
     "OpsiStronghold": {
-      "name": "塞壬要塞",
+      "name": "要塞塞壬",
       "help": ""
     },
     "OpsiMonthBoss": {
-      "name": "月度Boss",
+      "name": "日度Boss",
       "help": ""
     },
     "OpsiMeowfficerFarming": {
-      "name": "短猫相接+",
+      "name": "长猫相接+",
       "help": ""
     },
     "OpsiHazard1Leveling": {
-      "name": "侵蚀1练级+",
-      "help": ""
+      "name": "侵蚀1降级+",
+      "help": "使用本功能前务必观看教程视频，否则后果自负"
     },
     "OpsiScheduling": {
-      "name": "智能调度+",
+      "name": "大聪明调度+",
       "help": "大世界智能调度功能，用于协调侵蚀1练级与黄币补充任务之间的切换\n启用后将根据黄币和行动力自动在不同任务之间切换并发送推送通知"
     },
     "OpsiCrossMonth": {
-      "name": "跨月每日",
+      "name": "跨日每月",
       "help": "    Alas将在大世界跨月重置之前10分钟进入大世界，等待大世界重置但不退出大世界，然后完成新一天的大世界每日、隐秘海域、深渊海域和短猫相接，以获得额外的金菜。运行大世界每日时，按\"大世界每日\"任务设置运行，其余同理。\n    重要：Alas等待跨月期间，请不要操作游戏。"
     },
     "OpsiDailyDelay": {
@@ -750,7 +754,6 @@
       "LDPlayer3": "雷电模拟器3",
       "LDPlayer4": "雷电模拟器4",
       "LDPlayer9": "雷电模拟器9",
-      "LDPlayer14": "雷电模拟器14",
       "MuMuPlayer": "MuMu模拟器",
       "MuMuPlayerX": "MuMu模拟器X",
       "MuMuPlayer12": "MuMu模拟器12",
@@ -5278,10 +5281,7 @@
       "Announcement": "公告",
       "Update": "更新器",
       "Remote": "远程控制",
-      "Utils": "工具",
-      "PreviewUpdatePopup": "预览更新弹窗",
-      "RaiseException": "抛出异常",
-      "RestartAlas": "重启Alas"
+      "Utils": "工具"
     },
     "Overview": {
       "Scheduler": "调度器",

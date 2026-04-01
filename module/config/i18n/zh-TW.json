@@ -86,6 +86,10 @@
       "name": "活動圖-2+",
       "help": ""
     },
+    "Event3": {
+      "name": "活動圖-3+",
+      "help": ""
+    },
     "Raid": {
       "name": "共鬥活動+",
       "help": ""
@@ -750,7 +754,6 @@
       "LDPlayer3": "雷電模擬器3",
       "LDPlayer4": "雷電模擬器4",
       "LDPlayer9": "雷電模擬器9",
-      "LDPlayer14": "雷電模擬器14",
       "MuMuPlayer": "MuMu模擬器",
       "MuMuPlayerX": "MuMu模擬器X",
       "MuMuPlayer12": "MuMu模擬器12",

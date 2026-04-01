@@ -33,7 +33,7 @@ ARCHIVES_PREFIX = {
     'tw': '檔案 '
 }
 MAINS = ['Main', 'Main2', 'Main3']
-EVENTS = ['Event', 'Event2', 'EventA', 'EventB', 'EventC', 'EventD', 'EventSp']
+EVENTS = ['Event', 'Event2', 'Event3', 'EventA', 'EventB', 'EventC', 'EventD', 'EventSp']
 GEMS_FARMINGS = ['GemsFarming', 'ThreeOilLowCost']
 RAIDS = ['Raid', 'RaidDaily', 'RaidScuttle']
 WAR_ARCHIVES = ['WarArchives']
@@ -242,6 +242,12 @@ class ConfigGenerator:
             if deep_get(data, keys=f'{task}.Scheduler.Command'):
                 deep_set(data, keys=f'{task}.Scheduler.Command.value', value=task)
                 deep_set(data, keys=f'{task}.Scheduler.Command.display', value='hide')
+
+        # Hide Campaign.Mode for non-main tasks (Mode only applies to main maps)
+        for task in list(data.keys()):
+            if task not in MAINS:
+                if deep_get(data, keys=f'{task}.Campaign.Mode') is not None:
+                    deep_set(data, keys=f'{task}.Campaign.Mode.display', value='hide')
 
         return data
 

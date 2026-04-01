@@ -86,6 +86,10 @@
       "name": "🚩 活动图-2",
       "help": "更大的挑战正在后面等着指挥官哦~"
     },
+    "Event3": {
+      "name": "🚩 活动图-3",
+      "help": "庆典的第一阶段，冲呀！"
+    },
     "Raid": {
       "name": "🤝 全服共斗作战",
       "help": "大家齐心协力，塞壬什么的根本不在话下nanoda！"
@@ -1710,6 +1714,10 @@
     "Favorite": {
       "name": "❤️ 优先抓眼熟的 (常用船)",
       "help": "先让指挥官最喜欢的常用主力去补习喵！"
+    },
+    "MinLevel": {
+      "name": "AddNewStudent.MinLevel.name",
+      "help": "AddNewStudent.MinLevel.help"
     }
   },
   "Research": {
