@@ -100,6 +100,15 @@ Event:
       - Emotion
       - HpControl
       - EnemyPriority
+    Event3:
+      - Scheduler
+      - Campaign
+      - StopCondition
+      - Fleet
+      - Submarine
+      - Emotion
+      - HpControl
+      - EnemyPriority
     Raid:
       - Scheduler
       - Raid
@@ -363,9 +372,6 @@ Opsi:
       - OpsiScheduling
     OpsiCrossMonth:
       - Scheduler
-    OpsiDailyDelay:
-      - Scheduler
-      - OpsiDailyDelay
     OpsiSimulator:
       - OpsiSimulatorParameters
 

@@ -27,6 +27,7 @@
       "EventGeneral",
       "Event",
       "Event2",
+      "Event3",
       "Raid",
       "RaidScuttle",
       "Hospital",
@@ -100,7 +101,6 @@
       "OpsiHazard1Leveling",
       "OpsiScheduling",
       "OpsiCrossMonth",
-      "OpsiDailyDelay",
       "OpsiSimulator"
     ]
   },

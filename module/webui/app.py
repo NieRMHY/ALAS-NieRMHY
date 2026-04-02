@@ -227,6 +227,11 @@ class AlasGUI(Frame):
     @use_scope("aside", clear=True)
     def set_aside(self) -> None:
         # TODO: update put_icon_buttons()
+
+        current_date = datetime.now().date()
+        if current_date.month == 4 and current_date.day == 1:
+            self.af_flag = True
+
         put_icon_buttons(
             Icon.DEVELOP,
             "false",
@@ -251,9 +256,6 @@ class AlasGUI(Frame):
             onclick=[lambda: go_app("manage", new_window=False)],
         )
 
-        current_date = datetime.now().date()
-        if current_date.month == 4 and current_date.day == 1:
-            self.af_flag = True
 
     @use_scope("aside_instance")
     def set_aside_status(self) -> None:
@@ -1122,6 +1124,204 @@ class AlasGUI(Frame):
         _render_ship_exp()
         self.task_handler.add(_render_ship_exp, 60, True)
 
+        # ========== 委托收益统计 ==========
+        if not hasattr(self, '_commission_income_period'):
+            self._commission_income_period = 'day'
+
+        def _render_commission_income():
+            try:
+                from datetime import datetime
+                from module.statistics.commission_income_stats import (
+                    get_commission_income_summary,
+                    get_recent_commission_entries,
+                    COMMISSION_ITEM_META,
+                    COMMISSION_ITEM_NAME_MAP,
+                    COMMISSION_TRACKED_ITEMS,
+                )
+                instance_name = self.alas_name if hasattr(self, 'alas_name') and self.alas_name else None
+                if not instance_name:
+                    from module.config.utils import alas_instance
+                    all_instances = alas_instance()
+                    instance_name = all_instances[0] if all_instances else None
+                if not instance_name:
+                    with use_scope("commission_income", clear=True):
+                        put_text(t("Gui.Stat.CommissionIncomeNoData"))
+                    return
+
+                item_name_map = {
+                    'Gem': t("Gui.Stat.CommissionIncomeItemGem"),
+                    'Cube': t("Gui.Stat.CommissionIncomeItemCube"),
+                    'Chip': t("Gui.Stat.CommissionIncomeItemChip"),
+                    'Oil': t("Gui.Stat.CommissionIncomeItemOil"),
+                    'Coin': t("Gui.Stat.CommissionIncomeItemCoin"),
+                }
+                item_icon_map = {
+                    'Gem': 'static/assets/gui/icon/icon_1.png',
+                    'Cube': 'static/assets/gui/icon/icon_2.png',
+                    'Chip': 'static/assets/gui/icon/icon_3.png',
+                    'Oil': 'static/assets/gui/icon/icon_4.png',
+                    'Coin': 'static/assets/gui/icon/icon_5.png',
+                }
+
+                period = self._commission_income_period
+                summary = get_commission_income_summary(instance_name, period=period)
+                recent = get_recent_commission_entries(instance_name, limit=10)
+
+                with use_scope("commission_income", clear=True):
+                    html = '''
+                    <style>
+                        #commission_income_container > div,
+                        #commission_income_container table {
+                            width: 100% !important;
+                            max-width: 100% !important;
+                        }
+                        #commission_income_container img {
+                            background: transparent !important;
+                            border: none !important;
+                            box-shadow: none !important;
+                            margin: 0 !important;
+                            padding: 0 !important;
+                        }
+                    </style>
+                    <div id="commission_income_container" style="padding: 0; width: 100%; box-sizing: border-box;">
+                    '''
+
+                    html += f'<div style="font-size: 1rem; font-weight: 500; color: #333; margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid #eee;">{t("Gui.Stat.CommissionIncomeTitle")}</div>'
+
+                    rows = summary.get('detail_rows', [])
+                    has_data = rows and not all(r['total'] == 0 for r in rows)
+
+                    html += '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr)); gap: 12px; margin-bottom: 20px; width: 100%;">'
+                    for row in rows:
+                        display_name = item_name_map.get(row['name'], row['name'])
+                        icon_path = item_icon_map.get(row['name'], '')
+                        total_str = f'+{row["total"]:,}' if row['total'] > 0 else '0'
+                        
+                        icon_html = (
+                            f'<div style="width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; background: {row["color"]}1a; border-radius: 8px; flex-shrink: 0;">'
+                            f'<img src="{icon_path}" style="width: 24px; height: 24px; object-fit: contain;">'
+                            f'</div>'
+                        ) if icon_path else f'<div style="width: 12px; height: 12px; border-radius: 50%; background: {row["color"]}; flex-shrink: 0;"></div>'
+                        
+                        html += f'''
+                        <div style="display: flex; align-items: center; gap: 10px; padding: 12px 14px; background: #fafafa; border-radius: 6px; border: 1px solid #eee;">
+                            {icon_html}
+                            <div style="display: flex; flex-direction: column; gap: 1px;">
+                                <span style="font-size: 0.78rem; color: #888;">{display_name}</span>
+                                <span style="font-size: 1.15rem; font-weight: 400; color: #333;">{total_str}</span>
+                            </div>
+                        </div>'''
+                    html += '</div>'
+
+                    put_html(html)
+
+                    def on_period_click(p):
+                        self._commission_income_period = p
+                        _render_commission_income()
+
+                    put_buttons([
+                        {'label': t("Gui.Stat.CommissionIncomeDay"), 'value': 'day', 'color': 'primary' if period == 'day' else 'secondary'},
+                        {'label': t("Gui.Stat.CommissionIncomeWeek"), 'value': 'week', 'color': 'primary' if period == 'week' else 'secondary'},
+                        {'label': t("Gui.Stat.CommissionIncomeMonth"), 'value': 'month', 'color': 'primary' if period == 'month' else 'secondary'},
+                    ], onclick=on_period_click, small=True, scope="commission_income")
+
+                    html2 = '<div style="width: 100% !important; max-width: none !important; display: block !important; box-sizing: border-box;">'
+                    if not has_data:
+                        html2 += f'<p style="margin: 12px 0; color: #999; font-size: 13px;">{t("Gui.Stat.CommissionIncomeNoData")}</p>'
+                    else:
+                        html2 += '<table style="width: 100% !important; max-width: none !important; border-collapse: collapse; font-size: 0.85rem; table-layout: fixed; display: table;">'
+                        html2 += '<colgroup><col style="width: 40%;"><col style="width: 20%;"><col style="width: 20%;"><col style="width: 20%;"></colgroup>'
+                        html2 += '<thead><tr>'
+                        html2 += f'<th style="text-align: left; padding: 8px 10px; background: #f7f7f7; border-bottom: 1px solid #e0e0e0; font-weight: 500; color: #555; font-size: 0.8rem;">{t("Gui.Stat.CommissionIncomeHeaderItem")}</th>'
+                        html2 += f'<th style="text-align: right; padding: 8px 10px; background: #f7f7f7; border-bottom: 1px solid #e0e0e0; font-weight: 500; color: #555; font-size: 0.8rem;">{t("Gui.Stat.CommissionIncomeHeaderTotal")}</th>'
+                        html2 += f'<th style="text-align: right; padding: 8px 10px; background: #f7f7f7; border-bottom: 1px solid #e0e0e0; font-weight: 500; color: #555; font-size: 0.8rem;">{t("Gui.Stat.CommissionIncomeHeaderCount")}</th>'
+                        html2 += f'<th style="text-align: right; padding: 8px 10px; background: #f7f7f7; border-bottom: 1px solid #e0e0e0; font-weight: 500; color: #555; font-size: 0.8rem;">{t("Gui.Stat.CommissionIncomeHeaderAvg")}</th>'
+                        html2 += '</tr></thead><tbody>'
+
+                        for row in rows:
+                            if row['total'] == 0:
+                                continue
+                            display_name = item_name_map.get(row['name'], row['name'])
+                            icon_path = item_icon_map.get(row['name'], '')
+                            
+                            icon_html = (
+                                f'<div style="width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; background: {row["color"]}1a; border-radius: 4px; flex-shrink: 0;">'
+                                f'<img src="{icon_path}" style="width: 18px; height: 18px; object-fit: contain;">'
+                                f'</div>'
+                            ) if icon_path else f'<div style="width: 8px; height: 8px; border-radius: 50%; background: {row["color"]}; flex-shrink: 0;"></div>'
+                            
+                            html2 += '<tr style="border-bottom: 1px solid #f0f0f0;">'
+                            html2 += f'<td style="padding: 7px 10px;"><div style="display: flex; align-items: center; gap: 6px;">{icon_html}{display_name}</div></td>'
+                            html2 += f'<td style="padding: 7px 10px; text-align: right; font-family: monospace;">{row["total"]:,}</td>'
+                            html2 += f'<td style="padding: 7px 10px; text-align: right; font-family: monospace; color: #666;">{row["count"]}</td>'
+                            html2 += f'<td style="padding: 7px 10px; text-align: right; font-family: monospace; color: #666;">{row["avg"]}</td>'
+                            html2 += '</tr>'
+
+                        html2 += '</tbody></table>'
+
+                    put_html(html2, scope="commission_income")
+
+                    put_button(t("Gui.Stat.Refresh"), onclick=_render_commission_income, color="secondary", small=True, scope="commission_income")
+
+                    html3 = '<div style="width: 100% !important; max-width: none !important; display: block !important; box-sizing: border-box;">'
+                    if recent:
+                        html3 += f'<div style="height: 1px; background: #eee; margin: 24px 0;"></div>'
+                        html3 += f'<div style="font-size: 0.9rem; font-weight: 500; color: #333; margin-bottom: 10px;">{t("Gui.Stat.CommissionIncomeRecentTitle")}</div>'
+                        html3 += '<div style="font-size: 13px; width: 100%;">'
+                        for entry in recent:
+                            ts = entry.get('ts', '')
+                            try:
+                                dt = datetime.fromisoformat(ts)
+                                time_str = dt.strftime('%m-%d %H:%M')
+                            except Exception:
+                                time_str = ts[:16] if ts else '--'
+                            items = entry.get('items', {})
+                            item_parts = []
+                            for raw_name, amount in items.items():
+                                if not amount or int(amount) <= 0:
+                                    continue
+                                mapped_name = COMMISSION_ITEM_NAME_MAP.get(raw_name, raw_name)
+                                if mapped_name not in COMMISSION_TRACKED_ITEMS:
+                                    continue
+                                meta = COMMISSION_ITEM_META.get(mapped_name, {'color': '#888'})
+                                icon_path = item_icon_map.get(mapped_name, '')
+                                display = item_name_map.get(mapped_name, mapped_name)
+                                
+                                icon_html = (
+                                    f'<div style="width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; background: {meta["color"]}1a; border-radius: 4px; margin-right: 6px; vertical-align: middle;">'
+                                    f'<img src="{icon_path}" style="width: 16px; height: 16px; object-fit: contain;">'
+                                    f'</div>'
+                                ) if icon_path else f'<span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: {meta["color"]}; margin-right: 4px;"></span>'
+                                
+                                item_parts.append(
+                                    f'<span style="display: inline-flex; align-items: center; margin-right: 12px; height: 24px;">'
+                                    f'{icon_html}'
+                                    f'<span style="color: #444;">{display}</span>'
+                                    f'<span style="color: #888; margin-left: 2px;">x{int(amount)}</span>'
+                                    f'</span>'
+                                )
+                            items_str = ''.join(item_parts) if item_parts else '<span style="color: #999;">--</span>'
+                            html3 += (
+                                f'<div style="display: flex; align-items: center; padding: 6px 0; border-bottom: 1px solid #f0f0f0;">'
+                                f'<span style="color: #888; min-width: 80px; font-size: 12px;">{time_str}</span>'
+                                f'<span style="flex: 1;">{items_str}</span>'
+                                f'</div>'
+                            )
+                        html3 += '</div>'
+
+                    html3 += f'<p style="font-size: 0.75rem; color: #aaa; margin-top: 10px;">{t("Gui.Stat.CommissionIncomeTotalCommissions", value=summary["total_commissions"])}</p>'
+                    html3 += '</div>'
+                    put_html(html3, scope="commission_income")
+
+            except Exception as e:
+                with use_scope("commission_income", clear=True):
+                    put_text(t("Gui.Stat.CommissionIncomeNoData"))
+                    logger.warning(f'Commission income render failed: {e}')
+
+        put_scope("commission_income", [])
+        _render_commission_income()
+        self.task_handler.add(_render_commission_income, 60, True)
+
     @use_scope("content", clear=True)
     def alas_set_group(self, task: str) -> None:
         """
@@ -1479,6 +1679,56 @@ class AlasGUI(Frame):
             color_off="on",
             scope="scheduler_btn",
         )
+
+        # April Fools: runaway start button
+        if getattr(self, "af_flag", False):
+            run_js("""
+(function(){
+    var surrendered = false;
+    var bar = document.getElementById('pywebio-scope-scheduler-bar');
+    if (!bar) return;
+    bar.style.position = 'relative';
+    bar.style.overflow = 'hidden';
+
+    var flag = document.createElement('button');
+    flag.textContent = '🏳️';
+    flag.title = 'I give up...';
+    flag.style.cssText = 'border:none;background:transparent;font-size:1.1rem;cursor:pointer;padding:0 4px;margin:auto 2px;opacity:0.45;transition:opacity .2s;flex-shrink:0;';
+    flag.onmouseenter = function(){ flag.style.opacity='1'; };
+    flag.onmouseleave = function(){ flag.style.opacity='0.45'; };
+    flag.onclick = function(){
+        surrendered = true;
+        flag.style.display = 'none';
+        var b = bar.querySelector('.btn-on');
+        if(b){ b.style.transition='transform .35s cubic-bezier(.34,1.56,.64,1)'; b.style.transform=''; }
+    };
+    bar.appendChild(flag);
+
+    bar.addEventListener('mousemove', function(e){
+        if (surrendered) return;
+        var btn = bar.querySelector('.btn-on');
+        if (!btn) return;
+        var r = btn.getBoundingClientRect();
+        var bx = r.left + r.width/2, by = r.top + r.height/2;
+        var dx = bx - e.clientX, dy = by - e.clientY;
+        var dist = Math.sqrt(dx*dx + dy*dy);
+        if (dist < 100 && dist > 1) {
+            var pr = bar.getBoundingClientRect();
+            var push = 100 - dist;
+            var nx = dx/dist * push, ny = dy/dist * push * 0.3;
+            var cur = btn.style.transform.match(/translate\\(([^,]+)px,\\s*([^)]+)px\\)/);
+            var ox = cur ? parseFloat(cur[1]) : 0, oy = cur ? parseFloat(cur[2]) : 0;
+            var tx = ox + nx, ty = oy + ny;
+            var maxX = (pr.width - r.width) / 2 - 4;
+            var maxY = (pr.height - r.height) / 2;
+            tx = Math.max(-maxX, Math.min(maxX, tx));
+            ty = Math.max(-maxY, Math.min(maxY, ty));
+            btn.style.transition = 'transform .13s ease-out';
+            btn.style.transform = 'translate('+tx+'px,'+ty+'px)';
+        }
+    });
+})();
+""")
 
         log = RichLog("log")
         self._log = log
@@ -2712,7 +2962,30 @@ class AlasGUI(Frame):
                 ],
                 onclick=lambda t: set_theme(t),
             ).style("text-align: center")
+            # show something
+            put_markdown(
+                """
+            Alas 是一款免费开源软件，如果你在任何渠道付费购买了 Alas，请退款。
+            Alas is free and open-source software. If you paid for Alas through any channel, please request a refund.
+            Alasは無料のオープンソースソフトウェアです。Alasをいずれかのチャネルから購入された場合は、返金をリクエストしてください。
+            Alas는 무료 오픈 소스 소프트웨어입니다. 어떤 경로로든 Alas를 유료로 구매하셨다면 환불을 요청해 주세요.
+            Alas 是一款免費開源軟體，如果您透過任何管道付費購買了 Alas，請申請退款。
 
+            官方项目地址 / Official project address / 公式プロジェクトアドレス / 공식 프로젝트 주소 / 官方專案位址：`https://github.com/LmeSzinc/AzurLaneAutoScript`
+
+            您当前使用的不是官方版本 / You are not currently using the official version / 現在、公式バージョンをご利用ではありません。 / 현재 공식 버전을 사용하고 있지 않습니다. / 您目前使用的不是官方版本。
+
+            您使用的是修改版，请联系修改版的作者获取支持。 / You are using a modified version. Please contact the author of the modified version for support. / 改変版をご利用中です。サポートが必要な場合は、改変版の作者にお問い合わせください。 / 수정된 버전을 사용 중입니다. 지원이 필요하면 수정 버전의 작성자에게 문의해 주세요. / 您使用的是修改版，請聯繫修改版作者取得支援。
+
+            修改版项目地址 / Modified project address /変更後のプロジェクトアドレス / 수정된 프로젝트 주소 / 修改版專案位址：`https://github.com/wess09/AzurLaneAutoScript`
+
+            修改版问题请联系：
+            For issues related to the revised version, please contact:
+            改訂版に関する問題については、こちらへお問い合わせください。
+            수정 버전 관련 문의는 아래로 연락해 주세요.
+            修改版問題請聯絡：`https://addgroup.nanoda.work/`
+            """
+           ).style("text-align: center")
 
 
 
@@ -2952,19 +3225,27 @@ class AlasGUI(Frame):
                     with use_scope("ROOT"):
                         popup(t("Gui.Toast.ClickToUpdate"), [
                             put_html('''
-                                <div style="text-align: center; padding: 20px 10px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
-                                    <div style="font-size: 3.5rem; font-weight: 800; background: linear-gradient(135deg, #6c5ce7, #a29bfe); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 15px; letter-spacing: -1px;">
-                                        New Update
+                                <div style="text-align: center; padding: 15px 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+                                    <div style="margin-bottom: 20px;">
+                                        <div style="width: 50px; height: 50px; background: #fff0f0; border-radius: 25px; margin: 0 auto; display: flex; align-items: center; justify-content: center;">
+                                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#e03131" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                                        </div>
                                     </div>
-                                    <div style="font-size: 1.1rem; color: #636e72; line-height: 1.6; margin-bottom: 25px; padding: 0 20px;">
-                                        发现新版本，多项功能已完成优化优化。请立即更新以获取最新功能和修复喵！
+                                    <div style="font-size: 1.8rem; font-weight: 800; color: #343a40; margin-bottom: 10px;">有可用更新！</div>
+                                    <div style="font-size: 0.95rem; color: #868e96; margin-bottom: 25px; line-height: 1.5;">发现新版本，建议立即更新以获得最佳的脚本运行体验。</div>
+                                    
+                                    <div style="background: #f8f9fa; border-radius: 10px; padding: 15px; margin: 0 15px 25px; text-align: left; border: 1px solid #dee2e6;">
+                                        <div style="font-weight: 700; color: #495057; margin-bottom: 5px;">✨ 温馨提示:</div>
+                                        <div style="font-size: 0.85rem; color: #495057;">
+                                            • 为确保脚本稳定性和安全性，请及时进行更新。<br>
+                                        </div>
                                     </div>
                                 </div>
                             '''),
-                            put_buttons([{"label": "立即更新 / Update Now", "value": "update", "color": "primary"}], 
-                                       onclick=[handle_update_click]).style("text-align: center; margin-top: -10px; padding-bottom: 30px;")
+                            put_buttons([{"label": "立即更新 / Update Now", "value": "update", "color": "danger"}], 
+                                       onclick=[handle_update_click]).style("text-align: center; width: 100%; padding-bottom: 20px; border-top: none;")
                         ], size="large", implicit_close=True)
-                    th._task.delay = 30
+                    th._task.delay = 60
                 else:
                     th._task.delay = 2
                 yield

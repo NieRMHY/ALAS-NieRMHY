@@ -51,6 +51,7 @@ class CampaignStatus(UI):
         """
         pt = OCR_PT.ocr(self.device.image)
 
+        # 首选匹配带前缀 X 的格式（历史上部分活动使用 ‘X1234’）
         res = re.search(r'X(\d+)', pt)
         if res:
             pt = int(res.group(1))
@@ -63,8 +64,17 @@ class CampaignStatus(UI):
             LogRes(self.config).Pt = pt
 # add end
         else:
-            logger.warning(f'Invalid pt result: {pt}')
-            pt = 0
+            # 回退：若 OCR 返回纯数字也接受（保留警告以便回溯）
+            res2 = re.search(r'(\d+)', pt)
+            if res2:
+                num = int(res2.group(1))
+                logger.warning(f"Invalid pt result format (missing 'X'): {pt}; fallback to digits: {num}")
+                logger.attr('Event_PT_fallback', num)
+                LogRes(self.config).Pt = num
+                pt = num
+            else:
+                logger.warning(f'Invalid pt result: {pt}')
+                pt = 0
         if update:
             self.config.update()
         return pt
