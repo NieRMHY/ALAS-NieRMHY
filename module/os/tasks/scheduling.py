@@ -30,6 +30,8 @@ from datetime import datetime, timedelta
 
 # 短猫每轮消耗的行动力（以侵蚀5为标准）
 MEOW_ROUND_AP_COST = 30
+# 短猫每轮平均耗时默认值（秒）。当统计模块不可用时用于兜底计算。
+MEOW_ROUND_TIME_DEFAULT_SECONDS = 120
 
 from module.logger import logger
 from module.os.map import OSMap
@@ -368,6 +370,45 @@ class CoinTaskMixin:
         if not self.is_cl1_enabled:
             return False
 
+        # 在月末跨月清理模式下，忽略智能调度的黄币返回逻辑，
+        # 避免在跨月清里时被黄币阈值判定切换回侵蚀1（保留执行月末清理任务）
+        try:
+            # 如果启用跨月清理或启用月末行动力自动清理（提前开始短猫），跳过黄币返回检查
+            cross_month_enabled = False
+            try:
+                cross_month_enabled = self.config.is_task_enabled('OpsiCrossMonth')
+            except Exception:
+                cross_month_enabled = False
+
+            # 仅在实际需要提前开始短猫时才视为 "meow_start_early"
+            meow_start_early_enabled = False
+            try:
+                meow_start_early_enabled = bool(self.config.cross_get(keys='OpsiScheduling.OpsiScheduling.MeowStartEarlyEnable'))
+            except Exception:
+                meow_start_early_enabled = False
+
+            meow_start_early = False
+            if meow_start_early_enabled:
+                try:
+                    # 获取当前行动力用于判断是否应提前开始短猫
+                    try:
+                        current_ap = int(self.get_action_point())
+                    except Exception:
+                        # 如果无法实时获取，则尝试使用缓存或快照
+                        current_ap = getattr(self, '_action_point_total', 0) or 0
+
+                    should_meow, _ = self._should_start_meow_early(current_ap)
+                    meow_start_early = bool(should_meow)
+                except Exception:
+                    meow_start_early = False
+
+            if cross_month_enabled or meow_start_early:
+                logger.info(f'OpsiCrossMonth={cross_month_enabled}, MeowStartEarlyActive={meow_start_early}: skip OperationCoinsReturnThreshold yellow coin return check')
+                return False
+        except Exception:
+            # 配置接口异常时继续执行默认逻辑
+            pass
+
         # 获取智能调度配置
         return_threshold, cl1_preserve = self._get_operation_coins_return_threshold()
         # return_threshold 为 None 表示禁用黄币检查（OperationCoinsReturnThreshold=0 或其他禁用条件）
@@ -652,14 +693,24 @@ class OpsiScheduling(CoinTaskMixin, OSMap):
             should_meow, reason = self._should_start_meow_early(current_ap)
             if should_meow:
                 logger.info(f'根据AP消耗速率分析: {reason}')
-                logger.info('切换到黄币补充任务（短猫）')
+                logger.info('月末行动力清理触发，强制开启并调度短猫相接')
                 # 获取短猫相接的行动力保留值
                 meow_ap_preserve = self.config.cross_get(
                     keys=self.CONFIG_PATH_MEOW_AP_PRESERVE
                 ) or 1000
                 
                 if current_ap >= meow_ap_preserve:
-                    self._switch_to_coin_task(yellow_coins, current_ap, cl1_preserve, meow_ap_preserve)
+                    # 月末清理场景下强制开启短猫，避免受黄币补充任务开关组合影响。
+                    with self.config.multi_set():
+                        self.config.cross_set(keys='OpsiMeowfficerFarming.Scheduler.Enable', value=True)
+                        self.config.cross_set(keys=self.CONFIG_PATH_ENABLE_MEOWFFICER, value=True)
+                        self.config.task_call('OpsiMeowfficerFarming')
+
+                    self.notify_push(
+                        title='[Alas] 月末行动力清理 - 强制短猫',
+                        content=f'触发条件: {reason}\n当前行动力: {current_ap}\n已强制开启并调度短猫相接'
+                    )
+                    self.config.task_stop()
                     return
                 else:
                     logger.warning(f'行动力不足以执行短猫 ({current_ap} < {meow_ap_preserve})')
@@ -882,6 +933,46 @@ class OpsiScheduling(CoinTaskMixin, OSMap):
 
     # ========== 短猫提前开始计算 ==========
 
+    def _get_current_action_point_value(self) -> tuple[int, str]:
+        """获取当前行动力，避免依赖统计模块。
+
+        Returns:
+            tuple[int, str]: (行动力数值, 数据来源)
+            - 数据来源: realtime / cache / none
+        """
+        try:
+            return int(self.get_action_point()), 'realtime'
+        except Exception:
+            cached_ap = getattr(self, '_action_point_total', None)
+            if cached_ap is None:
+                return 0, 'none'
+            try:
+                return int(cached_ap), 'cache'
+            except Exception:
+                return 0, 'none'
+
+    def _get_meow_avg_round_time_seconds(self) -> tuple[float, str]:
+        """获取短猫平均每轮耗时（秒）。
+
+        优先读取统计数据；若统计模块或依赖不可用，则回退内置默认值。
+
+        Returns:
+            tuple[float, str]: (平均秒数, 数据来源)
+            - 数据来源: stats / default
+        """
+        try:
+            from module.statistics.cl1_database import db as cl1_db
+            instance_name = getattr(self.config, 'config_name', 'default')
+            stats = cl1_db.get_meow_stats(instance_name)
+            avg_round_time = float(stats.get('avg_round_time', 0) or 0)
+            if avg_round_time > 0:
+                return avg_round_time, 'stats'
+        except Exception as e:
+            logger.debug(f'读取短猫统计耗时失败，回退默认值: {e}')
+
+        # 兜底值：保证缺少统计依赖时该功能仍可运行。
+        return float(MEOW_ROUND_TIME_DEFAULT_SECONDS), 'default'
+
     def _get_meow_monthly_cleanup_mode(self) -> str:
         """获取月末行动力自动清理模式
 
@@ -902,17 +993,6 @@ class OpsiScheduling(CoinTaskMixin, OSMap):
             (是否应该开始, 原因说明)
         """
         try:
-            from module.statistics.cl1_database import db as cl1_db
-            instance_name = getattr(self.config, 'config_name', 'default')
-
-            # 获取短猫统计数据
-            stats = cl1_db.get_meow_stats(instance_name)
-            battle_count = stats.get('battle_count', 0)
-
-            # 如果没有足够数据，正常检查黄币
-            if battle_count < 5:
-                return (False, "数据不足")
-
             # 获取模式
             mode = self._get_meow_monthly_cleanup_mode()
             multiplier_map = {
@@ -923,19 +1003,16 @@ class OpsiScheduling(CoinTaskMixin, OSMap):
             multiplier = multiplier_map.get(mode, 1.2)
 
             # 每轮短猫消耗AP（固定30）
-            meow_round_ap = 30
+            meow_round_ap = MEOW_ROUND_AP_COST
 
             # 计算当前AP可运行轮数
             available_rounds = current_ap / meow_round_ap
 
-            # 获取平均每轮耗时
-            avg_round_time = stats.get('avg_round_time', 0)
+            # 获取平均每轮耗时（优先统计数据，失败回退默认值）
+            avg_round_time, round_time_source = self._get_meow_avg_round_time_seconds()
 
             # 计算需要的时间（小时）
-            if avg_round_time > 0:
-                base_hours = (available_rounds * avg_round_time) / 3600
-            else:
-                base_hours = 0
+            base_hours = (available_rounds * avg_round_time) / 3600 if avg_round_time > 0 else 0
 
             # 根据模式计算提前开始的小时数
             advance_hours = base_hours * multiplier
@@ -954,11 +1031,13 @@ class OpsiScheduling(CoinTaskMixin, OSMap):
 
             # 如果距离大世界重置时间小于需要提前的时间，说明应该开始短猫了
             if hours_to_reset < advance_hours:
-                reason = f"距离大世界重置还有{hours_to_reset:.1f}小时，需要提前{advance_hours:.1f}小时开始"
+                source_note = '（使用默认耗时）' if round_time_source == 'default' else ''
+                reason = f"距离大世界重置还有{hours_to_reset:.1f}小时，需要提前{advance_hours:.1f}小时开始{source_note}"
                 return (True, reason)
 
             # 正常情况
-            return (False, f"距离大世界重置还有{hours_to_reset:.1f}小时，无需提前")
+            source_note = '（使用默认耗时）' if round_time_source == 'default' else ''
+            return (False, f"距离大世界重置还有{hours_to_reset:.1f}小时，无需提前{source_note}")
 
         except Exception as e:
             logger.debug(f"判断短猫提前开始失败: {e}")
@@ -1003,32 +1082,11 @@ class OpsiScheduling(CoinTaskMixin, OSMap):
         # 每轮短猫消耗的AP（固定30）
         meow_round_ap = MEOW_ROUND_AP_COST
 
-        # 获取当前行动力：优先实时读取，失败时回退到数据库快照
-        current_ap = 0
-        ap_source = 'none'
-        try:
-            current_ap = int(self.get_action_point())
-            ap_source = 'realtime'
-        except Exception:
-            try:
-                from module.statistics.opsi_month import get_ap_timeline
-                instance_name = getattr(self.config, 'config_name', 'default')
-                ap_timeline = get_ap_timeline(instance_name=instance_name)
-                if ap_timeline:
-                    current_ap = int(ap_timeline[-1].get('ap', 0) or 0)
-                    ap_source = 'snapshot'
-            except Exception:
-                current_ap = 0
-                ap_source = 'none'
+        # 获取当前行动力（不依赖统计模块）
+        current_ap, ap_source = self._get_current_action_point_value()
 
-        # 获取平均每轮短猫耗时
-        try:
-            from module.statistics.cl1_database import db as cl1_db
-            instance_name = getattr(self.config, 'config_name', 'default')
-            meow_data = cl1_db.get_meow_stats(instance_name)
-            avg_meow_round_time = meow_data.get('avg_round_time', 0)  # 秒
-        except Exception:
-            avg_meow_round_time = 0
+        # 获取平均每轮短猫耗时（统计不可用时自动回退默认值）
+        avg_meow_round_time, round_time_source = self._get_meow_avg_round_time_seconds()
 
         # 计算当前AP可运行轮数
         if meow_round_ap > 0:
@@ -1070,9 +1128,7 @@ class OpsiScheduling(CoinTaskMixin, OSMap):
         }
 
         # 生成建议文本
-        if avg_meow_round_time == 0:
-            recommendation = "数据不足，无法计算建议"
-        elif current_ap < meow_round_ap:
+        if current_ap < meow_round_ap:
             recommendation = "行动力不足一轮短猫消耗"
         else:
             recommendation = (
@@ -1081,10 +1137,13 @@ class OpsiScheduling(CoinTaskMixin, OSMap):
                 f"{'，建议提前开始' if advance_hours > 24 else ''}"
             )
 
-        if ap_source == 'snapshot':
-            recommendation = f"{recommendation}（AP来自最近快照）"
+        if ap_source == 'cache':
+            recommendation = f"{recommendation}（AP来自缓存）"
         elif ap_source == 'none':
             recommendation = f"{recommendation}（未获取到AP，按0计算）"
+
+        if round_time_source == 'default':
+            recommendation = f"{recommendation}（短猫耗时使用默认值）"
 
         if start_cleanup_time != '-' and next_os_reset_time != '-':
             recommendation = (
