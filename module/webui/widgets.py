@@ -305,15 +305,11 @@ def put_icon_buttons(
 
     put_column(
         [
-            put_row(
-                [
-                    output(put_html(icon_html)).style(
-                        "z-index: 1; margin-left: 8px;text-align: center; grid-column: 1 / 3; grid-row: 1 / 2"
-                    ),
-                    output(put_html(status_html)).style(
-                        "z-index: 1; margin-left: 8px;text-align: center; grid-column: 2 / 3; grid-row: 1 / 2"
-                    ),
-                ]
+            put_html(
+                f'<div style="position: relative; width: 4rem; display: flex; justify-content: center; pointer-events: none;">'
+                f'<div style="z-index: 3;">{icon_html}</div>'
+                f'<div style="z-index: 4; position: absolute; margin-left: 24px;">{status_html}</div>'
+                f'</div>'
             ),
             put_buttons(buttons, onclick).style(f"z-index: 2; --aside-{value}--;"),
         ],

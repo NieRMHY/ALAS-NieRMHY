@@ -191,6 +191,16 @@ class ProcessManager:
     def run_process(
         config_name, func: str, q: queue.Queue, screenshot_q: queue.Queue, e: threading.Event = None, screenshot_enabled=None
     ) -> None:
+        import sys
+        if sys.platform != "win32":
+            import resource
+            try:
+                _soft, _hard = resource.getrlimit(resource.RLIMIT_NOFILE)
+                _target = 65536 if _hard == resource.RLIM_INFINITY else min(65536, _hard)
+                if _soft < _target:
+                    resource.setrlimit(resource.RLIMIT_NOFILE, (_target, _hard))
+            except Exception:
+                pass
         parser = argparse.ArgumentParser()
         parser.add_argument(
             "--electron", action="store_true", help="Runs by electron client."

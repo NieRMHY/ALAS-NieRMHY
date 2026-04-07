@@ -50,54 +50,57 @@ footer {
 }
 
 .btn-menu {
-    font-weight: 400;
+    font-weight: 500;
     background-color: transparent;
-    padding: .0625rem .75rem;
-    border-radius: 0;
-    border: 0 solid;
-    transition: border .05s ease-in-out, padding .05s ease-in-out;
+    padding: .5rem 1rem;
+    border-radius: 100px;
+    border: none;
+    transition: background-color .2s ease-in-out, color .2s ease-in-out;
     white-space: pre-wrap;
     text-align: left;
+    margin: .125rem .5rem;
 }
 
 .btn-menu:hover,
 .btn-menu-active {
     font-weight: bold;
-    border-left: .125rem solid;
-    padding-right: .625rem;
-    border-left: 3px solid;
 }
 
 .btn-aside {
     width: 4rem;
-    font-weight: 400;
+    font-weight: 500;
     font-size: .8rem;
     background-color: transparent;
-    padding: 32px 0 0 7px;
-    border-radius: 0;
-    border: 0 solid;
-    transition: border .1s ease-in-out, padding .1s ease-in-out
+    padding: 32px 0 0 0;
+    border-radius: 16px;
+    border: none;
+    transition: background-color .2s ease-in-out, color .2s ease-in-out;
+    margin: 0;
+    text-align: center;
 }
 
 .btn-aside:hover,
 .btn-aside-active {
-    border-left: 4px solid;
-    padding-left: 3px;
     font-weight: bold;
 }
 
 .btn-off,
 .btn-on {
-    border-radius: 0;
-    margin: 0;
+    border-radius: 100px;
+    margin: .125rem .25rem;
+    padding: .375rem 1rem;
+    font-weight: 500;
+    transition: background-color .2s ease, color .2s ease, box-shadow .2s ease;
 }
 
 .btn-navigator {
-    border-radius: 0;
-    margin: 0 !important;
-    width: 100%;
+    border-radius: 12px;
+    margin: .25rem !important;
+    padding: .75rem 1rem;
+    width: calc(100% - .5rem);
     text-align: left;
-    transition: color 0s ease-in-out;
+    transition: background-color .2s ease, color .2s ease;
+    border: none;
 }
 
 .btn-navigator:hover {
@@ -177,11 +180,12 @@ label {
 
 .form-control {
     background-color: unset;
-    border-radius: initial !important;
+    border-radius: 4px 4px 0 0 !important;
     border-width: 0;
-    padding: 0 .5rem 0;
+    padding: .5rem .75rem .25rem;
     margin-top: .125rem;
     height: auto !important;
+    transition: background-color .2s, border-bottom-color .2s;
 }
 
 .form-control[readonly] {
@@ -259,7 +263,7 @@ button.btn.dropdown-toggle {
 }
 
 .container-log {
-    border-radius: 0 !important;
+    border-radius: 16px !important;
     margin: .375rem !important;
     padding: 1rem !important;
 }
@@ -387,6 +391,7 @@ pre.rich-traceback-code {
     margin-top: .5rem;
     margin-bottom: .5rem;
     padding: 1rem;
+    border-radius: 16px;
 }
 
 [id^="pywebio-scope-group_"]>p {
@@ -429,6 +434,7 @@ pre.rich-traceback-code {
     margin: .5rem 1rem .5rem;
     height: min-content;
     max-width: 15rem;
+    border-radius: 16px;
 }
 
 #pywebio-scope-overview {
@@ -449,6 +455,7 @@ pre.rich-traceback-code {
     font-weight: 500;
     margin: 0.3125rem;
     padding: 0.625rem;
+    border-radius: 16px;
 }
 
 #pywebio-scope-scheduler-bar,

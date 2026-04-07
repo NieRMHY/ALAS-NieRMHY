@@ -492,6 +492,13 @@ class RewardCommission(UI, InfoHandler):
             logger.info('No commission chose')
 
     def _record_commission_income(self):
+        """
+        Record the income (items) from commission rewards.
+
+        This function analyzes screenshots collected in `_commission_reward_images` during reward collection,
+        identifies specific items (Gems, Cubes, Chips, Oil, Coins), aggregates their counts, and
+        saves the statistics to the database.
+        """
         try:
             from module.statistics.get_items import (
                 GetItemsStatistics, ITEM_GRIDS_1_ODD, ITEM_GRIDS_1_EVEN,
