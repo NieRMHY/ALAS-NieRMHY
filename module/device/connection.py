@@ -223,8 +223,17 @@ class Connection(ConnectionAttr):
         if stream:
             result = self.adb.shell(cmd, stream=stream, timeout=timeout, rstrip=rstrip)
             if recvall:
-                # bytes
-                return recv_all(result)
+                try:
+                    # bytes
+                    return recv_all(result)
+                finally:
+                    try:
+                        if hasattr(result, 'close'):
+                            result.close()
+                        elif hasattr(result, 'conn') and hasattr(result.conn, 'close'):
+                            result.conn.close()
+                    except Exception:
+                        pass
             else:
                 # socket
                 return result
@@ -550,19 +559,43 @@ class Connection(ConnectionAttr):
         # <command> | nc 127.0.0.1 {port}
         cmd += ["|", *self.nc_command, *self._nc_server_host_port[2:]]
         stream = self.adb_shell(cmd, stream=True, recvall=False)
+
+        def _safe_close(s):
+            try:
+                # AdbConnection may expose close or hold `conn`
+                if hasattr(s, 'close'):
+                    s.close()
+                    return
+                if hasattr(s, 'conn') and hasattr(s.conn, 'close'):
+                    s.conn.close()
+                    return
+                if isinstance(s, socket.socket):
+                    s.close()
+            except Exception:
+                pass
+
         try:
             # Server accept connection
             conn, conn_port = server.accept()
         except socket.timeout:
-            output = recv_all(stream, chunk_size=chunk_size)
-            logger.warning(str(output))
+            try:
+                output = recv_all(stream, chunk_size=chunk_size)
+                logger.warning(str(output))
+            finally:
+                _safe_close(stream)
             raise AdbTimeout('reverse server accept timeout')
 
-        # Server receive data
-        data = recv_all(conn, chunk_size=chunk_size, recv_interval=0.001)
+        try:
+            # Server receive data
+            data = recv_all(conn, chunk_size=chunk_size, recv_interval=0.001)
+        finally:
+            # Server close connection and also close adb stream resource
+            try:
+                conn.close()
+            except Exception:
+                pass
+            _safe_close(stream)
 
-        # Server close connection
-        conn.close()
         return data
 
     def adb_exec_out(self, cmd, serial=None):

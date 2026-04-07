@@ -370,17 +370,11 @@ class CoinTaskMixin:
         if not self.is_cl1_enabled:
             return False
 
-        # 在月末跨月清理模式下，忽略智能调度的黄币返回逻辑，
-        # 避免在跨月清里时被黄币阈值判定切换回侵蚀1（保留执行月末清理任务）
+        # 仅当"月末行动力自动清理"功能启用，且 _should_start_meow_early 计算出当前确实
+        # 需要提前开始短猫时，才跳过黄币返回检查。
+        # 不以 OpsiCrossMonth 任务开关是否开启作为判断依据：任务开关开启不代表当前满足
+        # 月末清理条件（距 OS 重置可能还有很久），用该开关做过滤会导致黄币检查被长期跳过。
         try:
-            # 如果启用跨月清理或启用月末行动力自动清理（提前开始短猫），跳过黄币返回检查
-            cross_month_enabled = False
-            try:
-                cross_month_enabled = self.config.is_task_enabled('OpsiCrossMonth')
-            except Exception:
-                cross_month_enabled = False
-
-            # 仅在实际需要提前开始短猫时才视为 "meow_start_early"
             meow_start_early_enabled = False
             try:
                 meow_start_early_enabled = bool(self.config.cross_get(keys='OpsiScheduling.OpsiScheduling.MeowStartEarlyEnable'))
@@ -390,20 +384,23 @@ class CoinTaskMixin:
             meow_start_early = False
             if meow_start_early_enabled:
                 try:
-                    # 获取当前行动力用于判断是否应提前开始短猫
-                    try:
-                        current_ap = int(self.get_action_point())
-                    except Exception:
-                        # 如果无法实时获取，则尝试使用缓存或快照
-                        current_ap = getattr(self, '_action_point_total', 0) or 0
-
-                    should_meow, _ = self._should_start_meow_early(current_ap)
-                    meow_start_early = bool(should_meow)
+                    # 优先使用实例缓存的行动力；为 0（任务刚启动未读 AP）时
+                    # 回退到 Dashboard 保存的最近一次值，以保证判断有效。
+                    current_ap = getattr(self, '_action_point_total', 0) or 0
+                    if current_ap == 0:
+                        try:
+                            dashboard_ap = self.config.cross_get(keys='Dashboard.ActionPoint.Total', default=0)
+                            current_ap = int(dashboard_ap) if dashboard_ap else 0
+                        except Exception:
+                            pass
+                    if current_ap > 0:
+                        should_meow, _ = self._should_start_meow_early(current_ap)
+                        meow_start_early = bool(should_meow)
                 except Exception:
                     meow_start_early = False
 
-            if cross_month_enabled or meow_start_early:
-                logger.info(f'OpsiCrossMonth={cross_month_enabled}, MeowStartEarlyActive={meow_start_early}: skip OperationCoinsReturnThreshold yellow coin return check')
+            if meow_start_early:
+                logger.info(f'MeowStartEarlyActive=True: skip OperationCoinsReturnThreshold yellow coin return check')
                 return False
         except Exception:
             # 配置接口异常时继续执行默认逻辑
@@ -1018,8 +1015,8 @@ class OpsiScheduling(CoinTaskMixin, OSMap):
             advance_hours = base_hours * multiplier
 
             if advance_hours <= 0:
-                # 行动力不足，应该开始
-                return (True, "行动力不足，需要现在开始短猫")
+                # advance_hours 为 0 说明行动力为 0（无需清理），或计算结果异常，不应触发提前开始
+                return (False, "行动力不足或计算结果为0，无需提前开始短猫")
 
             # 以“下个月大世界刷新时间”为基准，而不是每日服务器刷新时间
             from datetime import datetime

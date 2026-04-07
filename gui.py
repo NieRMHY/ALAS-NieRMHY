@@ -4,6 +4,16 @@ import threading
 from multiprocessing import Event, Process, set_start_method
 from typing import Optional
 
+if sys.platform != "win32":
+    import resource
+    try:
+        _soft, _hard = resource.getrlimit(resource.RLIMIT_NOFILE)
+        _target = 65536 if _hard == resource.RLIM_INFINITY else min(65536, _hard)
+        if _soft < _target:
+            resource.setrlimit(resource.RLIMIT_NOFILE, (_target, _hard))
+    except Exception:
+        pass
+
 from module.logger import logger
 from module.webui.setting import State
 

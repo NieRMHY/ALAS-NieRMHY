@@ -4,24 +4,31 @@
 
 .btn-menu:hover,
 .btn-menu-active {
-    border-color: #7a77bb;
-    color: #7a77bb;
+    background-color: #3e3b6a;
+    color: #dfdcfb;
 }
 
 .btn-aside:hover,
 .btn-aside-active {
-    border-color: #7a77bb;
-    color: #7a77bb;
+    background-color: #3e3b6a;
+    color: #dfdcfb;
 }
 
 .btn-off {
-    background-color: #36393f;
-    border: 1px solid #202225;
+    background-color: #2f3136;
+    border: 1px solid #938f99;
+    color: #dfdcfb;
 }
 
 .btn-on {
     background-color: #7a77bb;
-    border: 1px solid #202225;
+    border: 1px solid #7a77bb;
+    color: #1a1861;
+}
+
+.btn-on:hover {
+    box-shadow: 0 1px 3px 1px rgba(0,0,0,0.15), 0 1px 2px 0 rgba(0,0,0,0.3);
+    background-color: #928fcf;
 }
 
 .btn-navigator {
@@ -29,7 +36,8 @@
 }
 
 .btn-navigator:hover {
-    color: #7a77bb;
+    background-color: #3e3b6a;
+    color: #dfdcfb;
 }
 
 .hr-group {
@@ -46,13 +54,14 @@
 
 .form-control,
 .bootstrap-select > select {
-    border-bottom: .125rem solid #7a77bb;
+    border-bottom: 1px solid #938f99;
+    background-color: #36393f !important;
 }
 
 .form-control:focus {
-    background-color: #2f3136;
-    border-color: #7a77bb;
-    box-shadow: 0 0.06rem 0 #7a77bb;
+    background-color: #2b2d31 !important;
+    border-bottom: 2px solid #7a77bb;
+    box-shadow: none;
 }
 
 input[type="checkbox"] {
@@ -96,8 +105,9 @@ textarea {
 }
 
 .container-log {
-    background-color: #2f3136 !important;
-    border: 1px solid #21262d;
+    background-color: #2b2d31 !important;
+    border: 1px solid #1e1f22;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.2);
 }
 
 pre.rich-traceback-code {
@@ -110,12 +120,14 @@ pre.rich-traceback-code {
 }
 
 [id^="pywebio-scope-group_"] {
-    background-color: #2f3136;
-    border: 1px solid #21262d;
+    background-color: #2b2d31;
+    border: 1px solid #1e1f22;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.2);
 }
 
 #pywebio-scope-daemon-overview [id^="pywebio-scope-group_"] {
     border: 0;
+    box-shadow: none;
 }
 
 #pywebio-scope-aside {
@@ -129,8 +141,10 @@ pre.rich-traceback-code {
 }
 
 #pywebio-scope-navigator {
-    border: 1px solid #21262d;
+    border: 1px solid #1e1f22;
     color: #c9d1d9;
+    background-color: #2b2d31;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.2);
 }
 
 #pywebio-scope-scheduler-bar,
@@ -142,8 +156,9 @@ pre.rich-traceback-code {
 #pywebio-scope-waiting,
 #pywebio-scope-image-container,
 #pywebio-scope-daemon-overview #pywebio-scope-groups {
-    background-color: #2f3136;
-    border: 1px solid #21262d;
+    background-color: #2b2d31;
+    border: 1px solid #1e1f22;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.2);
     font-family: 'JetBrains Mono NL', monospace !important;
 }
 
@@ -153,7 +168,7 @@ pre.rich-traceback-code {
 }
 
 #pywebio-scope-dashboard input {
-    background-color: #2f3136 !important;
+    background-color: #36393f !important;
 }
 
 *[style*="--arg-help--"],
