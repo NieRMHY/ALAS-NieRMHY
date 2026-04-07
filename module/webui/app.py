@@ -2965,25 +2965,15 @@ class AlasGUI(Frame):
             # show something
             put_markdown(
                 """
-            Alas 是一款免费开源软件，如果你在任何渠道付费购买了 Alas，那你一定是个大傻逼。
-            Alas is free and open-source software. If you paid for Alas through any channel, please request a refund.
-            Alasは無料のオープンソースソフトウェアです。Alasをいずれかのチャネルから購入された場合は、返金をリクエストしてください。
-            Alas는 무료 오픈 소스 소프트웨어입니다. 어떤 경로로든 Alas를 유료로 구매하셨다면 환불을 요청해 주세요.
-            Alas 是一款免費開源軟體，如果您透過任何管道付費購買了 Alas，請申請退款。
+            官方项目地址 ：`https://github.com/LmeSzinc/AzurLaneAutoScript`
 
-            官方项目地址 / Official project address / 公式プロジェクトアドレス / 공식 프로젝트 주소 / 官方專案位址：`https://github.com/LmeSzinc/AzurLaneAutoScript`
+            您当前使用的不是官方版本 不是官方版本。
 
-            您当前使用的不是官方版本 / You are not currently using the official version / 現在、公式バージョンをご利用ではありません。 / 현재 공식 버전을 사용하고 있지 않습니다. / 您目前使用的不是官方版本。
+            您使用的是修改版，请联系修改版的作者获取支持。
 
-            您使用的是修改版，请联系修改版的作者获取支持。 / You are using a modified version. Please contact the author of the modified version for support. / 改変版をご利用中です。サポートが必要な場合は、改変版の作者にお問い合わせください。 / 수정된 버전을 사용 중입니다. 지원이 필요하면 수정 버전의 작성자에게 문의해 주세요. / 您使用的是修改版，請聯繫修改版作者取得支援。
+            修改版项目地址 ：`https://github.com/wess09/AzurLaneAutoScript`
 
-            修改版项目地址 / Modified project address /変更後のプロジェクトアドレス / 수정된 프로젝트 주소 / 修改版專案位址：`https://github.com/wess09/AzurLaneAutoScript`
-
-            修改版问题请联系：
-            For issues related to the revised version, please contact:
-            改訂版に関する問題については、こちらへお問い合わせください。
-            수정 버전 관련 문의는 아래로 연락해 주세요.
-            修改版問題請聯絡：`https://addgroup.nanoda.work/`
+            修改版问题请联系：`https://addgroup.nanoda.work/`
             """
            ).style("text-align: center")
 
