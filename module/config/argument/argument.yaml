@@ -160,6 +160,37 @@ Optimization:
   WhenTaskQueueEmpty:
     value: goto_main
     option: [stay_there, goto_main, close_game]
+# Modify by NieRMHY: 游戏更新窗口基础设置。
+GameUpdate:
+  Enable: false
+  StopBeforeHours: 2
+  StartTime: 2020-01-01 00:00:00
+  EndTime: 2020-01-01 00:00:00
+# Add end
+# Modify by NieRMHY: 维护期间保留任务改为显式复选框，避免自由文本难以维护。
+GameUpdateTasks:
+  KeepCommission: false
+  KeepTactical: false
+  KeepResearch: false
+  KeepDorm: false
+  KeepMeowfficer: false
+  KeepGuild: false
+  KeepReward: false
+  KeepAwaken: false
+  KeepIsland: false
+  KeepExercise: false
+  KeepShopFrequent: false
+  KeepShopOnce: false
+  KeepShipyard: false
+  KeepGacha: false
+  KeepFreebies: false
+  KeepMinigame: false
+  KeepPrivateQuarters: false
+  KeepEventShop: false
+  KeepOpsiShop: false
+  KeepOpsiVoucher: false
+  KeepOpsiAshAssist: false
+# Add end
 DropRecord:
   SaveFolder: ./screenshots
   AzurStatsID: null

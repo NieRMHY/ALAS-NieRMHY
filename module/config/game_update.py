@@ -1,0 +1,118 @@
+# Modify by NieRMHY: 将游戏更新窗口逻辑独立成模块，降低主调度器的合并冲突概率。
+from datetime import datetime, timedelta
+
+from module.config.deep import deep_get
+from module.config.utils import DEFAULT_TIME
+from module.logger import logger
+
+
+# Modify by NieRMHY: 维护窗口中允许继续运行的任务列表，使用显式复选框配置，便于后续维护与合并。
+GAME_UPDATE_KEEP_TASKS = (
+    ('Commission', 'GameUpdateTasks_KeepCommission'),
+    ('Tactical', 'GameUpdateTasks_KeepTactical'),
+    ('Research', 'GameUpdateTasks_KeepResearch'),
+    ('Dorm', 'GameUpdateTasks_KeepDorm'),
+    ('Meowfficer', 'GameUpdateTasks_KeepMeowfficer'),
+    ('Guild', 'GameUpdateTasks_KeepGuild'),
+    ('Reward', 'GameUpdateTasks_KeepReward'),
+    ('Awaken', 'GameUpdateTasks_KeepAwaken'),
+    ('Island', 'GameUpdateTasks_KeepIsland'),
+    ('Exercise', 'GameUpdateTasks_KeepExercise'),
+    ('ShopFrequent', 'GameUpdateTasks_KeepShopFrequent'),
+    ('ShopOnce', 'GameUpdateTasks_KeepShopOnce'),
+    ('Shipyard', 'GameUpdateTasks_KeepShipyard'),
+    ('Gacha', 'GameUpdateTasks_KeepGacha'),
+    ('Freebies', 'GameUpdateTasks_KeepFreebies'),
+    ('Minigame', 'GameUpdateTasks_KeepMinigame'),
+    ('PrivateQuarters', 'GameUpdateTasks_KeepPrivateQuarters'),
+    ('EventShop', 'GameUpdateTasks_KeepEventShop'),
+    ('OpsiShop', 'GameUpdateTasks_KeepOpsiShop'),
+    ('OpsiVoucher', 'GameUpdateTasks_KeepOpsiVoucher'),
+    ('OpsiAshAssist', 'GameUpdateTasks_KeepOpsiAshAssist'),
+)
+
+
+class GameUpdateManager:
+    # Modify by NieRMHY: 维护前置停止时长的兜底值，当前端配置缺失或非法时使用。
+    DEFAULT_DELAY_HOURS = 2
+
+    @classmethod
+    def get_allowed_tasks(cls, config):
+        # Modify by NieRMHY: 从独立复选框配置中收集维护期间允许继续运行的任务。
+        allowed_tasks = set()
+        for task_name, attr_name in GAME_UPDATE_KEEP_TASKS:
+            if getattr(config, attr_name, False):
+                allowed_tasks.add(task_name)
+        return allowed_tasks
+
+    @classmethod
+    def get_delay_hours(cls, config):
+        # Modify by NieRMHY: 允许前端配置提前进入维护模式的小时数，同时兼容旧配置与异常值。
+        delay_hours = getattr(config, 'GameUpdate_StopBeforeHours', cls.DEFAULT_DELAY_HOURS)
+        try:
+            delay_hours = float(delay_hours)
+        except (TypeError, ValueError):
+            return cls.DEFAULT_DELAY_HOURS
+
+        return delay_hours if delay_hours >= 0 else cls.DEFAULT_DELAY_HOURS
+
+    @classmethod
+    def get_state(cls, config):
+        # Modify by NieRMHY: 统一计算维护窗口状态，供调度器在取任务前复用。
+        if not getattr(config, 'GameUpdate_Enable', False):
+            return None
+
+        start_time = getattr(config, 'GameUpdate_StartTime', DEFAULT_TIME)
+        end_time = getattr(config, 'GameUpdate_EndTime', DEFAULT_TIME)
+        if not isinstance(start_time, datetime) or not isinstance(end_time, datetime):
+            return None
+        if end_time <= start_time:
+            return None
+
+        now = datetime.now().replace(microsecond=0)
+        delay_hours = cls.get_delay_hours(config)
+        window_start = (start_time - timedelta(hours=delay_hours)).replace(microsecond=0)
+        if now < window_start or now >= end_time:
+            return None
+
+        return {
+            'delay_hours': delay_hours,
+            'window_start': window_start,
+            'start': start_time.replace(microsecond=0),
+            'end': end_time.replace(microsecond=0),
+            'allowed_tasks': cls.get_allowed_tasks(config),
+        }
+
+    @classmethod
+    def apply(cls, config):
+        # Modify by NieRMHY: 在维护窗口内将未勾选的任务推迟到维护结束，结束后自动恢复正常调度。
+        state = cls.get_state(config)
+        if state is None:
+            return None
+
+        end_time = state['end']
+        allowed_tasks = state['allowed_tasks']
+        delayed_tasks = []
+
+        for task_data in config.data.values():
+            if not deep_get(task_data, keys='Scheduler.Enable', default=False):
+                continue
+
+            command = deep_get(task_data, keys='Scheduler.Command', default='Unknown')
+            if command in allowed_tasks:
+                continue
+
+            next_run = deep_get(task_data, keys='Scheduler.NextRun', default=DEFAULT_TIME)
+            if isinstance(next_run, datetime) and next_run >= end_time:
+                continue
+
+            logger.info(f'游戏更新窗口已生效，推迟任务 `{command}` 到 {end_time}')
+            config.modified[f'{command}.Scheduler.NextRun'] = end_time
+            delayed_tasks.append(command)
+
+        if delayed_tasks:
+            kept = sorted(allowed_tasks)
+            logger.info(f'游戏更新窗口期间保留任务: {kept if kept else "无"}')
+            config.save()
+
+        return state

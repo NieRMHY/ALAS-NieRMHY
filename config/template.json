@@ -163,6 +163,40 @@
       "Storage": {}
     }
   },
+  "UpdateDate": {
+    "GameUpdate": {
+      "Enable": false,
+      "StopBeforeHours": 2,
+      "StartTime": "2020-01-01 00:00:00",
+      "EndTime": "2020-01-01 00:00:00"
+    },
+    "GameUpdateTasks": {
+      "KeepCommission": false,
+      "KeepTactical": false,
+      "KeepResearch": false,
+      "KeepDorm": false,
+      "KeepMeowfficer": false,
+      "KeepGuild": false,
+      "KeepReward": false,
+      "KeepAwaken": false,
+      "KeepIsland": false,
+      "KeepExercise": false,
+      "KeepShopFrequent": false,
+      "KeepShopOnce": false,
+      "KeepShipyard": false,
+      "KeepGacha": false,
+      "KeepFreebies": false,
+      "KeepMinigame": false,
+      "KeepPrivateQuarters": false,
+      "KeepEventShop": false,
+      "KeepOpsiShop": false,
+      "KeepOpsiVoucher": false,
+      "KeepOpsiAshAssist": false
+    },
+    "Storage": {
+      "Storage": {}
+    }
+  },
   "Restart": {
     "Scheduler": {
       "Enable": true,

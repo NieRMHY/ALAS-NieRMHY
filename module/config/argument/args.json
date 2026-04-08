@@ -734,6 +734,122 @@
       }
     }
   },
+  "UpdateDate": {
+    "GameUpdate": {
+      "Enable": {
+        "type": "checkbox",
+        "value": false
+      },
+      "StopBeforeHours": {
+        "type": "input",
+        "value": 2
+      },
+      "StartTime": {
+        "type": "datetime",
+        "value": "2020-01-01 00:00:00",
+        "validate": "datetime"
+      },
+      "EndTime": {
+        "type": "datetime",
+        "value": "2020-01-01 00:00:00",
+        "validate": "datetime"
+      }
+    },
+    "GameUpdateTasks": {
+      "KeepCommission": {
+        "type": "checkbox",
+        "value": false
+      },
+      "KeepTactical": {
+        "type": "checkbox",
+        "value": false
+      },
+      "KeepResearch": {
+        "type": "checkbox",
+        "value": false
+      },
+      "KeepDorm": {
+        "type": "checkbox",
+        "value": false
+      },
+      "KeepMeowfficer": {
+        "type": "checkbox",
+        "value": false
+      },
+      "KeepGuild": {
+        "type": "checkbox",
+        "value": false
+      },
+      "KeepReward": {
+        "type": "checkbox",
+        "value": false
+      },
+      "KeepAwaken": {
+        "type": "checkbox",
+        "value": false
+      },
+      "KeepIsland": {
+        "type": "checkbox",
+        "value": false
+      },
+      "KeepExercise": {
+        "type": "checkbox",
+        "value": false
+      },
+      "KeepShopFrequent": {
+        "type": "checkbox",
+        "value": false
+      },
+      "KeepShopOnce": {
+        "type": "checkbox",
+        "value": false
+      },
+      "KeepShipyard": {
+        "type": "checkbox",
+        "value": false
+      },
+      "KeepGacha": {
+        "type": "checkbox",
+        "value": false
+      },
+      "KeepFreebies": {
+        "type": "checkbox",
+        "value": false
+      },
+      "KeepMinigame": {
+        "type": "checkbox",
+        "value": false
+      },
+      "KeepPrivateQuarters": {
+        "type": "checkbox",
+        "value": false
+      },
+      "KeepEventShop": {
+        "type": "checkbox",
+        "value": false
+      },
+      "KeepOpsiShop": {
+        "type": "checkbox",
+        "value": false
+      },
+      "KeepOpsiVoucher": {
+        "type": "checkbox",
+        "value": false
+      },
+      "KeepOpsiAshAssist": {
+        "type": "checkbox",
+        "value": false
+      }
+    },
+    "Storage": {
+      "Storage": {
+        "type": "storage",
+        "value": {},
+        "valuetype": "ignore",
+        "display": "disabled"
+      }
+    }
+  },
   "Restart": {
     "Scheduler": {
       "Enable": {

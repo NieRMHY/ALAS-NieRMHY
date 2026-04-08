@@ -7,6 +7,7 @@ import pywebio
 
 from module.base.filter import Filter
 from module.config.config_generated import GeneratedConfig
+from module.config.game_update import GameUpdateManager     # Modify by NieRMHY: 将维护窗口相关逻辑独立到game_update.py，保持config.py的清晰和专注
 from module.config.config_manual import ManualConfig, OutputConfig
 from module.config.config_updater import ConfigUpdater, ensure_time, get_server_next_update, nearest_future
 from module.config.deep import deep_get, deep_set
@@ -212,6 +213,7 @@ class AzurLaneConfig(ConfigUpdater, ManualConfig, GeneratedConfig, ConfigWatcher
         """
         Calculate tasks, set pending_task and waiting_task
         """
+        GameUpdateManager.apply(self)   # Modify by NieRMHY: 在统一调度入口应用维护窗口规则，避免改动散落到各任务实现中。
         pending = []
         waiting = []
         error = []
