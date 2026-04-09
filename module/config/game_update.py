@@ -37,18 +37,29 @@ class GameUpdateManager:
     DEFAULT_DELAY_HOURS = 2
 
     @classmethod
+    def _get_update_value(cls, config, group, key, fallback=None):
+        # Modify by NieRMHY: 维护窗口配置存放在 UpdateDate 任务下，不能依赖当前绑定任务读取。
+        return deep_get(config.data, keys=f'UpdateDate.{group}.{key}', default=fallback)
+
+    @classmethod
     def get_allowed_tasks(cls, config):
         # Modify by NieRMHY: 从独立复选框配置中收集维护期间允许继续运行的任务。
         allowed_tasks = set()
         for task_name, attr_name in GAME_UPDATE_KEEP_TASKS:
-            if getattr(config, attr_name, False):
+            option_name = attr_name.replace('GameUpdateTasks_', '', 1)
+            if cls._get_update_value(config, 'GameUpdateTasks', option_name, getattr(config, attr_name, False)):
                 allowed_tasks.add(task_name)
         return allowed_tasks
 
     @classmethod
     def get_delay_hours(cls, config):
         # Modify by NieRMHY: 允许前端配置提前进入维护模式的小时数，同时兼容旧配置与异常值。
-        delay_hours = getattr(config, 'GameUpdate_StopBeforeHours', cls.DEFAULT_DELAY_HOURS)
+        delay_hours = cls._get_update_value(
+            config,
+            'GameUpdate',
+            'StopBeforeHours',
+            getattr(config, 'GameUpdate_StopBeforeHours', cls.DEFAULT_DELAY_HOURS),
+        )
         try:
             delay_hours = float(delay_hours)
         except (TypeError, ValueError):
@@ -59,11 +70,21 @@ class GameUpdateManager:
     @classmethod
     def get_state(cls, config):
         # Modify by NieRMHY: 统一计算维护窗口状态，供调度器在取任务前复用。
-        if not getattr(config, 'GameUpdate_Enable', False):
+        if not cls._get_update_value(config, 'GameUpdate', 'Enable', getattr(config, 'GameUpdate_Enable', False)):
             return None
 
-        start_time = getattr(config, 'GameUpdate_StartTime', DEFAULT_TIME)
-        end_time = getattr(config, 'GameUpdate_EndTime', DEFAULT_TIME)
+        start_time = cls._get_update_value(
+            config,
+            'GameUpdate',
+            'StartTime',
+            getattr(config, 'GameUpdate_StartTime', DEFAULT_TIME),
+        )
+        end_time = cls._get_update_value(
+            config,
+            'GameUpdate',
+            'EndTime',
+            getattr(config, 'GameUpdate_EndTime', DEFAULT_TIME),
+        )
         if not isinstance(start_time, datetime) or not isinstance(end_time, datetime):
             return None
         if end_time <= start_time:
@@ -94,7 +115,7 @@ class GameUpdateManager:
         allowed_tasks = state['allowed_tasks']
         delayed_tasks = []
 
-        for task_data in config.data.values():
+        for task_name, task_data in config.data.items():
             if not deep_get(task_data, keys='Scheduler.Enable', default=False):
                 continue
 
@@ -107,7 +128,7 @@ class GameUpdateManager:
                 continue
 
             logger.info(f'游戏更新窗口已生效，推迟任务 `{command}` 到 {end_time}')
-            config.modified[f'{command}.Scheduler.NextRun'] = end_time
+            config.modified[f'{task_name}.Scheduler.NextRun'] = end_time
             delayed_tasks.append(command)
 
         if delayed_tasks:
