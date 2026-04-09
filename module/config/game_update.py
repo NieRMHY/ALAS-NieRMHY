@@ -49,6 +49,24 @@ class GameUpdateManager:
         return None
 
     @classmethod
+    def _matches_target_time(cls, value, target_time):
+        # Modify by NieRMHY: 即使时间字符串解析失败，只要文本上已等于目标时间，也视为无需重复保存。
+        parsed_value = cls._ensure_datetime(value)
+        if parsed_value is not None:
+            return parsed_value >= target_time
+
+        if isinstance(value, str):
+            normalized = value.strip()
+            target_candidates = {
+                str(target_time),
+                target_time.isoformat(sep=' '),
+                target_time.isoformat(),
+            }
+            return normalized in target_candidates
+
+        return False
+
+    @classmethod
     def _get_update_value(cls, config, group, key, fallback=None):
         # Modify by NieRMHY: 维护窗口配置存放在 UpdateDate 任务下，不能依赖当前绑定任务读取。
         return deep_get(config.data, keys=f'UpdateDate.{group}.{key}', default=fallback)
@@ -137,8 +155,8 @@ class GameUpdateManager:
             if command in allowed_tasks:
                 continue
 
-            next_run = cls._ensure_datetime(deep_get(task_data, keys='Scheduler.NextRun', default=DEFAULT_TIME))
-            if next_run is not None and next_run >= end_time:
+            next_run = deep_get(task_data, keys='Scheduler.NextRun', default=DEFAULT_TIME)
+            if cls._matches_target_time(next_run, end_time):
                 continue
 
             logger.info(f'游戏更新窗口已生效，推迟任务 `{command}` 到 {end_time}')
