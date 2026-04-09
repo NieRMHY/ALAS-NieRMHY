@@ -37,6 +37,18 @@ class GameUpdateManager:
     DEFAULT_DELAY_HOURS = 2
 
     @classmethod
+    def _ensure_datetime(cls, value):
+        # Modify by NieRMHY: 配置文件中的时间可能是字符串，统一转换后再参与维护窗口判断。
+        if isinstance(value, datetime):
+            return value
+        if isinstance(value, str):
+            try:
+                return datetime.fromisoformat(value)
+            except ValueError:
+                return None
+        return None
+
+    @classmethod
     def _get_update_value(cls, config, group, key, fallback=None):
         # Modify by NieRMHY: 维护窗口配置存放在 UpdateDate 任务下，不能依赖当前绑定任务读取。
         return deep_get(config.data, keys=f'UpdateDate.{group}.{key}', default=fallback)
@@ -85,7 +97,9 @@ class GameUpdateManager:
             'EndTime',
             getattr(config, 'GameUpdate_EndTime', DEFAULT_TIME),
         )
-        if not isinstance(start_time, datetime) or not isinstance(end_time, datetime):
+        start_time = cls._ensure_datetime(start_time)
+        end_time = cls._ensure_datetime(end_time)
+        if start_time is None or end_time is None:
             return None
         if end_time <= start_time:
             return None
@@ -123,8 +137,8 @@ class GameUpdateManager:
             if command in allowed_tasks:
                 continue
 
-            next_run = deep_get(task_data, keys='Scheduler.NextRun', default=DEFAULT_TIME)
-            if isinstance(next_run, datetime) and next_run >= end_time:
+            next_run = cls._ensure_datetime(deep_get(task_data, keys='Scheduler.NextRun', default=DEFAULT_TIME))
+            if next_run is not None and next_run >= end_time:
                 continue
 
             logger.info(f'游戏更新窗口已生效，推迟任务 `{command}` 到 {end_time}')
