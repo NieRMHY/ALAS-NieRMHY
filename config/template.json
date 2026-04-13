@@ -124,9 +124,9 @@
   },
   "General": {
     "Log": {
-      "LogKeepCount": 7,
-      "LogBackUpMethod": "delete",
-      "ZipMethod": "bz2"
+      "LogKeepCount": 3,
+      "LogBackUpMethod": "zip",
+      "ZipMethod": "zip"
     },
     "Retirement": {
       "RetireMode": "one_click_retire"
@@ -663,13 +663,13 @@
       "Mode": "calculate",
       "Fleet1Value": 119,
       "Fleet1Record": "2020-01-01 00:00:00",
-      "Fleet1Control": "prevent_yellow_face",
+      "Fleet1Control": "prevent_green_face",
       "Fleet1Recover": "not_in_dormitory",
       "Fleet1Oath": false,
       "Fleet1Onsen": false,
       "Fleet2Value": 119,
       "Fleet2Record": "2020-01-01 00:00:00",
-      "Fleet2Control": "prevent_yellow_face",
+      "Fleet2Control": "prevent_green_face",
       "Fleet2Recover": "not_in_dormitory",
       "Fleet2Oath": false,
       "Fleet2Onsen": false
@@ -895,13 +895,13 @@
       "Mode": "calculate",
       "Fleet1Value": 119,
       "Fleet1Record": "2020-01-01 00:00:00",
-      "Fleet1Control": "prevent_yellow_face",
+      "Fleet1Control": "prevent_green_face",
       "Fleet1Recover": "not_in_dormitory",
       "Fleet1Oath": false,
       "Fleet1Onsen": false,
       "Fleet2Value": 119,
       "Fleet2Record": "2020-01-01 00:00:00",
-      "Fleet2Control": "prevent_yellow_face",
+      "Fleet2Control": "prevent_green_face",
       "Fleet2Recover": "not_in_dormitory",
       "Fleet2Oath": false,
       "Fleet2Onsen": false
@@ -2388,7 +2388,8 @@
       "ForceRun": false,
       "IfSkipSirenResearch": 0,
       "SkipedSirenResearch": null,
-      "LastZone": 0
+      "LastZone": 0,
+      "ExploreProgress": null
     },
     "OpsiFleet": {
       "Fleet": 1,

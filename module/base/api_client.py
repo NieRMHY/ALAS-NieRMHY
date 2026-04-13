@@ -23,7 +23,7 @@ class ApiClient:
     
     # 主域名和备用域名列表
     PRIMARY_DOMAIN = 'https://alas-apiv2.nanoda.work'
-    FALLBACK_DOMAIN = 'https://alas-apiv2.xf-sama.xyz'
+    FALLBACK_DOMAIN = 'https://alas-apiv2.nanoda.work'
     # ENABLE_REPORT = False     # --------Modify by NieRMHY, 是否启用数据上报，已废弃，改为 ENABLE_THIRD_PARTY_API 统一控制
     
     # API端点路径

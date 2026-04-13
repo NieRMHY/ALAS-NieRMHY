@@ -162,9 +162,9 @@ class GeneratedConfig:
     DropRecord_BugReport = True
 
     # Group `Log`
-    Log_LogKeepCount = 7
-    Log_LogBackUpMethod = 'delete'  # delete, zip, copy
-    Log_ZipMethod = 'bz2'  # bz2, gzip, xz, zip
+    Log_LogKeepCount = 3
+    Log_LogBackUpMethod = 'zip'  # delete, zip, copy
+    Log_ZipMethod = 'zip'  # bz2, gzip, xz, zip
 
     # Group `Retirement`
     Retirement_RetireMode = 'one_click_retire'  # one_click_retire, enhance, old_retire
@@ -699,6 +699,7 @@ class GeneratedConfig:
     OpsiExplore_IfSkipSirenResearch = 0  # 0, 6, 65, 654
     OpsiExplore_SkipedSirenResearch = None
     OpsiExplore_LastZone = 0
+    OpsiExplore_ExploreProgress = None
 
     # Group `OpsiShop`
     OpsiShop_PresetFilter = 'max_benefit_meta'  # max_benefit, max_benefit_meta, no_meta, all, custom

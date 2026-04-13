@@ -585,11 +585,11 @@
     "Log": {
       "LogKeepCount": {
         "type": "input",
-        "value": 7
+        "value": 3
       },
       "LogBackUpMethod": {
         "type": "select",
-        "value": "delete",
+        "value": "zip",
         "option": [
           "delete",
           "zip",
@@ -598,7 +598,7 @@
       },
       "ZipMethod": {
         "type": "select",
-        "value": "bz2",
+        "value": "zip",
         "option": [
           "bz2",
           "gzip",
@@ -2677,7 +2677,6 @@
         "type": "select",
         "value": "campaign_main",
         "option": [
-          "event_20220728_cn",
           "event_20260326_cn"
         ],
         "display": "hide",
@@ -2691,10 +2690,9 @@
           "event_20260326_cn"
         ],
         "option_tw": [
-          "event_20220728_cn"
+          "event_20260326_cn"
         ],
         "option_bold": [
-          "event_20220728_cn",
           "event_20260326_cn"
         ]
       },
@@ -3389,7 +3387,7 @@
       },
       "Fleet1Control": {
         "type": "select",
-        "value": "prevent_yellow_face",
+        "value": "prevent_green_face",
         "option": [
           "keep_exp_bonus",
           "prevent_green_face",
@@ -3426,7 +3424,7 @@
       },
       "Fleet2Control": {
         "type": "select",
-        "value": "prevent_yellow_face",
+        "value": "prevent_green_face",
         "option": [
           "keep_exp_bonus",
           "prevent_green_face",
@@ -4364,7 +4362,6 @@
         "type": "select",
         "value": "campaign_main",
         "option": [
-          "event_20220728_cn",
           "event_20260326_cn"
         ],
         "option_cn": [
@@ -4377,10 +4374,9 @@
           "event_20260326_cn"
         ],
         "option_tw": [
-          "event_20220728_cn"
+          "event_20260326_cn"
         ],
         "option_bold": [
-          "event_20220728_cn",
           "event_20260326_cn"
         ]
       },
@@ -4611,7 +4607,7 @@
       },
       "Fleet1Control": {
         "type": "select",
-        "value": "prevent_yellow_face",
+        "value": "prevent_green_face",
         "option": [
           "keep_exp_bonus",
           "prevent_green_face",
@@ -4648,7 +4644,7 @@
       },
       "Fleet2Control": {
         "type": "select",
-        "value": "prevent_yellow_face",
+        "value": "prevent_green_face",
         "option": [
           "keep_exp_bonus",
           "prevent_green_face",
@@ -9240,8 +9236,7 @@
       },
       "Fleet2Onsen": {
         "type": "checkbox",
-        "value": false,
-        "display": "hide"
+        "value": false
       }
     },
     "Storage": {
@@ -13025,6 +13020,11 @@
       "LastZone": {
         "type": "input",
         "value": 0
+      },
+      "ExploreProgress": {
+        "type": "textarea",
+        "value": "",
+        "display": "disabled"
       }
     },
     "OpsiFleet": {

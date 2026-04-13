@@ -1886,29 +1886,29 @@
   },
   "EventShop": {
     "_info": {
-      "name": "event store",
+      "name": "Event Shop Settings",
       "help": ""
     },
     "UnlockSSRShip": {
-      "name": "Unlock SSR ships",
+      "name": "Unlock SSR Ship",
       "help": ""
     },
     "BuyURShip": {
-      "name": "Purchase X UR ships",
+      "name": "Buy X UR Ship(s)",
       "help": "",
       "0": "0",
       "1": "1",
       "2": "2"
     },
     "PresetFilter": {
-      "name": "Active store filter",
-      "help": "Generally, the default is to buy all",
-      "all": "all",
-      "custom": "Customize"
+      "name": "Event Shop Filter",
+      "help": "Generally does not need to be modified.",
+      "all": "All",
+      "custom": "Custom"
     },
     "CustomFilter": {
-      "name": "Custom filters",
-      "help": "To use a custom filter, you need to set the \"Activity Store Filter\" to \"Custom\" and read https://github.com/LmeSzinc/AzurLaneAutoScript/wiki/filter_string_cn"
+      "name": "Custom Filter",
+      "help": "To use your own filter, set \"Event Shop Filter\" to \"Custom\". All options have been defined at <https://github.com/LmeSzinc/AzurLaneAutoScript/wiki/filter_string_en>"
     }
   },
   "Commission": {
@@ -4656,6 +4656,10 @@
     "LastZone": {
       "name": "Last completed zone",
       "help": "Automatically updated value. Fill in 0 to reset progress. After reset, already explored sea zones will be automatically skipped.\nSupports sea zone ID, CN/EN/JP/TW server zone names, e.g. \"51\", \"NA Ocean SE Sector E\""
+    },
+    "ExploreProgress": {
+      "name": "OpsiExplore.ExploreProgress.name",
+      "help": "OpsiExplore.ExploreProgress.help"
     }
   },
   "OpsiShop": {
