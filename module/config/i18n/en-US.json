@@ -46,6 +46,10 @@
       "name": "General settings",
       "help": ""
     },
+    "UpdateDate": {
+      "name": "Update Window",
+      "help": "Set the maintenance window manually. Alas will enter maintenance mode before the start time and restore full scheduling after the end time."
+    },
     "Restart": {
       "name": "Restart settings",
       "help": ""
@@ -844,6 +848,55 @@
       "goto_main": "Go to Main Menu",
       "close_game": "Close Game"
     }
+  },
+  "GameUpdate": {
+    "_info": {
+      "name": "Game Update",
+      "help": "Use this to set a maintenance window manually. Between the configured lead time before the start and the end time, Alas will postpone all non-retained tasks to the maintenance end time and resume automatically afterwards."
+    },
+    "Enable": {
+      "name": "Enable Maintenance Window",
+      "help": "Disable this to turn the feature off completely."
+    },
+    "StopBeforeHours": {
+      "name": "Lead Time Before Maintenance",
+      "help": "How many hours before maintenance Alas should enter maintenance mode. Default is 2. Integer and decimal values are both supported."
+    },
+    "StartTime": {
+      "name": "Maintenance Start Time",
+      "help": "The official maintenance start time. Alas will enter maintenance mode this many hours earlier based on your setting."
+    },
+    "EndTime": {
+      "name": "Maintenance End Time",
+      "help": "After this time, postponed tasks will resume automatically."
+    }
+  },
+  "GameUpdateTasks": {
+    "_info": {
+      "name": "Tasks Kept During Maintenance",
+      "help": "Checked tasks will continue to be scheduled inside the maintenance window. It is usually safer to keep only commissions, research, shops, and other low-risk tasks enabled."
+    },
+    "KeepCommission": {"name": "Commission", "help": ""},
+    "KeepTactical": {"name": "Tactical Academy", "help": ""},
+    "KeepResearch": {"name": "Research", "help": ""},
+    "KeepDorm": {"name": "Backyard", "help": ""},
+    "KeepMeowfficer": {"name": "Meowfficer", "help": ""},
+    "KeepGuild": {"name": "Guild", "help": ""},
+    "KeepReward": {"name": "Reward", "help": ""},
+    "KeepAwaken": {"name": "Cognitive Awakening", "help": ""},
+    "KeepIsland": {"name": "Island Plan", "help": ""},
+    "KeepExercise": {"name": "Exercise", "help": ""},
+    "KeepShopFrequent": {"name": "Munitions Shop", "help": ""},
+    "KeepShopOnce": {"name": "Other Shops", "help": ""},
+    "KeepShipyard": {"name": "Development Dock", "help": ""},
+    "KeepGacha": {"name": "Daily Gacha", "help": ""},
+    "KeepFreebies": {"name": "Free Rewards", "help": ""},
+    "KeepMinigame": {"name": "Mini Game", "help": ""},
+    "KeepPrivateQuarters": {"name": "Dormitory Plan", "help": ""},
+    "KeepEventShop": {"name": "Event Shop", "help": ""},
+    "KeepOpsiShop": {"name": "OpSi Shop", "help": ""},
+    "KeepOpsiVoucher": {"name": "Voucher Shop", "help": ""},
+    "KeepOpsiAshAssist": {"name": "META Support", "help": ""}
   },
   "DropRecord": {
     "_info": {
@@ -1833,29 +1886,29 @@
   },
   "EventShop": {
     "_info": {
-      "name": "event store",
+      "name": "Event Shop Settings",
       "help": ""
     },
     "UnlockSSRShip": {
-      "name": "Unlock SSR ships",
+      "name": "Unlock SSR Ship",
       "help": ""
     },
     "BuyURShip": {
-      "name": "Purchase X UR ships",
+      "name": "Buy X UR Ship(s)",
       "help": "",
       "0": "0",
       "1": "1",
       "2": "2"
     },
     "PresetFilter": {
-      "name": "Active store filter",
-      "help": "Generally, the default is to buy all",
-      "all": "all",
-      "custom": "Customize"
+      "name": "Event Shop Filter",
+      "help": "Generally does not need to be modified.",
+      "all": "All",
+      "custom": "Custom"
     },
     "CustomFilter": {
-      "name": "Custom filters",
-      "help": "To use a custom filter, you need to set the \"Activity Store Filter\" to \"Custom\" and read https://github.com/LmeSzinc/AzurLaneAutoScript/wiki/filter_string_cn"
+      "name": "Custom Filter",
+      "help": "To use your own filter, set \"Event Shop Filter\" to \"Custom\". All options have been defined at <https://github.com/LmeSzinc/AzurLaneAutoScript/wiki/filter_string_en>"
     }
   },
   "Commission": {
@@ -4603,6 +4656,10 @@
     "LastZone": {
       "name": "Last completed zone",
       "help": "Automatically updated value. Fill in 0 to reset progress. After reset, already explored sea zones will be automatically skipped.\nSupports sea zone ID, CN/EN/JP/TW server zone names, e.g. \"51\", \"NA Ocean SE Sector E\""
+    },
+    "ExploreProgress": {
+      "name": "OpsiExplore.ExploreProgress.name",
+      "help": "OpsiExplore.ExploreProgress.help"
     }
   },
   "OpsiShop": {

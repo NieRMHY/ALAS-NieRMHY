@@ -223,6 +223,8 @@ class AlasGUI(Frame):
         self._announcement_force = False
         self.simulator = OSSimulator()
         self._simulator_logger_pm = None
+        self._overview_log = None
+        self._overview_log_config_name = None
 
     @use_scope("aside", clear=True)
     def set_aside(self) -> None:
@@ -1396,6 +1398,7 @@ class AlasGUI(Frame):
                     self.renderables = []
                     self.renderables_max_length = 2000
                     self.renderables_reduce_length = 1000
+                    self.renderables_total = 0
             self._simulator_logger_pm = SimulatorLogger()
 
         pm = self._simulator_logger_pm
@@ -1404,6 +1407,7 @@ class AlasGUI(Frame):
             def emit(self, record):
                 msg = self.format(record)
                 pm.renderables.append(msg + '\n')
+                pm.renderables_total += 1
                 if len(pm.renderables) > pm.renderables_max_length:
                     del pm.renderables[:pm.renderables_reduce_length]
 
@@ -1730,7 +1734,14 @@ class AlasGUI(Frame):
 })();
 """)
 
-        log = RichLog("log")
+        if self._overview_log is None or self._overview_log_config_name != self.alas_name:
+            self._overview_log = RichLog("log")
+            self._overview_log_config_name = self.alas_name
+        else:
+            self._overview_log.scope = "log"
+        log = self._overview_log
+        log.first_display = True
+        log.last_display_time = {}
         self._log = log
         self._log.dashboard_arg_group = LogRes(self.alas_config).groups
 
@@ -1805,6 +1816,7 @@ class AlasGUI(Frame):
         self.task_handler.add(self.alas_update_overview_task, 10, True)
         if 'Maa' not in self.ALAS_ARGS:
             self.task_handler.add(self.alas_update_dashboard, 10, True)
+            self.alas_update_dashboard(True)
         if hasattr(self, 'alas') and self.alas is not None:
             self.task_handler.add(log.put_log(self.alas), 0.25, True)
             self.task_handler.add(self.update_screenshot_display, 0.1, True)
@@ -2129,8 +2141,6 @@ class AlasGUI(Frame):
 
             if group_name not in self._log.last_display_time.keys():
                 self._log.last_display_time[group_name] = ''
-            if self._log.last_display_time[group_name] == delta and not self._log.first_display:
-                continue
             self._log.last_display_time[group_name] = delta
 
             # if self._log.first_display:
@@ -3527,6 +3537,7 @@ def app():
             return
         app_manage()
 
+    from mcp_server_sse import app as mcp_app
     app = asgi_app(
         applications=[index, manage],
         cdn=cdn,
@@ -3540,5 +3551,6 @@ def app():
         ],
         on_shutdown=[clearup],
     )
+    app.mount("/mcp", mcp_app)
 
     return app

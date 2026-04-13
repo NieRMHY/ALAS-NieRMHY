@@ -46,6 +46,10 @@
       "name": "通用设置",
       "help": ""
     },
+    "UpdateDate": {
+      "name": "更新日期",
+      "help": "手动填写游戏维护时间窗口，ALAS 会提前自动进入维护模式，并在结束时间后恢复完整调度。"
+    },
     "Restart": {
       "name": "重启设置",
       "help": ""
@@ -271,7 +275,7 @@
       "help": ""
     },
     "OpsiMeowfficerFarming": {
-      "name": "耄耋相接+",
+      "name": "短猫相接+",
       "help": ""
     },
     "OpsiHazard1Leveling": {
@@ -844,6 +848,55 @@
       "goto_main": "前往主界面",
       "close_game": "关闭游戏"
     }
+  },
+  "GameUpdate": {
+    "_info": {
+      "name": "游戏更新",
+      "help": "用于手动设定维护窗口。进入开始前设定小时数到结束时间之间的时段后，ALAS 会把未保留任务的下次运行时间统一推迟到结束时间，维护结束后自动恢复。"
+    },
+    "Enable": {
+      "name": "启用维护窗口",
+      "help": "关闭时不生效。开启后会根据开始时间和结束时间控制任务调度。"
+    },
+    "StopBeforeHours": {
+      "name": "提前停止小时数",
+      "help": "在维护开始前多少小时进入维护模式。默认 2，可填写整数或小数。"
+    },
+    "StartTime": {
+      "name": "维护开始时间",
+      "help": "游戏维护正式开始的时间。ALAS 会从这个时间点往前推你设置的小时数进入维护模式。"
+    },
+    "EndTime": {
+      "name": "维护结束时间",
+      "help": "维护结束后，之前被推迟的任务会在这个时间点后自动恢复调度。"
+    }
+  },
+  "GameUpdateTasks": {
+    "_info": {
+      "name": "维护期间保留任务",
+      "help": "勾选后，该任务在维护窗口期间仍会继续参与调度。一般只建议保留委托、科研、商店等低风险任务。"
+    },
+    "KeepCommission": {"name": "委托", "help": ""},
+    "KeepTactical": {"name": "战术学院", "help": ""},
+    "KeepResearch": {"name": "科研", "help": ""},
+    "KeepDorm": {"name": "后宅", "help": ""},
+    "KeepMeowfficer": {"name": "指挥喵", "help": ""},
+    "KeepGuild": {"name": "大舰队", "help": ""},
+    "KeepReward": {"name": "收获", "help": ""},
+    "KeepAwaken": {"name": "认知觉醒", "help": ""},
+    "KeepIsland": {"name": "岛屿计划", "help": ""},
+    "KeepExercise": {"name": "演习", "help": ""},
+    "KeepShopFrequent": {"name": "军火商商店", "help": ""},
+    "KeepShopOnce": {"name": "其他商店", "help": ""},
+    "KeepShipyard": {"name": "开发船坞", "help": ""},
+    "KeepGacha": {"name": "每日抽卡", "help": ""},
+    "KeepFreebies": {"name": "白嫖奖励", "help": ""},
+    "KeepMinigame": {"name": "小游戏", "help": ""},
+    "KeepPrivateQuarters": {"name": "宿舍计划", "help": ""},
+    "KeepEventShop": {"name": "活动商店", "help": ""},
+    "KeepOpsiShop": {"name": "大世界商店", "help": ""},
+    "KeepOpsiVoucher": {"name": "白票商店", "help": ""},
+    "KeepOpsiAshAssist": {"name": "META支援", "help": ""}
   },
   "DropRecord": {
     "_info": {

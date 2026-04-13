@@ -585,11 +585,11 @@
     "Log": {
       "LogKeepCount": {
         "type": "input",
-        "value": 7
+        "value": 3
       },
       "LogBackUpMethod": {
         "type": "select",
-        "value": "delete",
+        "value": "zip",
         "option": [
           "delete",
           "zip",
@@ -598,7 +598,7 @@
       },
       "ZipMethod": {
         "type": "select",
-        "value": "bz2",
+        "value": "zip",
         "option": [
           "bz2",
           "gzip",
@@ -723,6 +723,122 @@
       "TaskPriorityAdjustment": {
         "type": "textarea",
         "value": "Restart\n> OpsiCrossMonth\n> Commission > Tactical > Research\n> Exercise\n> Dorm > Meowfficer > Guild > Gacha\n> Reward\n> ShopFrequent > ShopOnce > Shipyard > Freebies > Island\n> PrivateQuarters\n> OpsiExplore\n> Minigame > Awaken\n> OpsiAshBeacon\n> OpsiDaily > OpsiShop > OpsiVoucher\n> OpsiAbyssal > OpsiStronghold > OpsiObscure > OpsiArchive\n> Daily > Hard > OpsiAshBeacon > OpsiAshAssist > OpsiMonthBoss\n> Sos > EventSp > EventA > EventB > EventC > EventD\n> RaidDaily > CoalitionSp > WarArchives > MaritimeEscort\n> Event > Event2 > Event3 > Raid > Hospital > HospitalEvent > Coalition > RaidScuttle > Main > Main2 > Main3\n> OpsiMeowfficerFarming\n> GemsFarming\n> Ambush11\n> OpsiHazard1Leveling\n> ThreeOilLowCost"
+      }
+    },
+    "Storage": {
+      "Storage": {
+        "type": "storage",
+        "value": {},
+        "valuetype": "ignore",
+        "display": "disabled"
+      }
+    }
+  },
+  "UpdateDate": {
+    "GameUpdate": {
+      "Enable": {
+        "type": "checkbox",
+        "value": false
+      },
+      "StopBeforeHours": {
+        "type": "input",
+        "value": 2
+      },
+      "StartTime": {
+        "type": "datetime",
+        "value": "2020-01-01 00:00:00",
+        "validate": "datetime"
+      },
+      "EndTime": {
+        "type": "datetime",
+        "value": "2020-01-01 00:00:00",
+        "validate": "datetime"
+      }
+    },
+    "GameUpdateTasks": {
+      "KeepCommission": {
+        "type": "checkbox",
+        "value": false
+      },
+      "KeepTactical": {
+        "type": "checkbox",
+        "value": false
+      },
+      "KeepResearch": {
+        "type": "checkbox",
+        "value": false
+      },
+      "KeepDorm": {
+        "type": "checkbox",
+        "value": false
+      },
+      "KeepMeowfficer": {
+        "type": "checkbox",
+        "value": false
+      },
+      "KeepGuild": {
+        "type": "checkbox",
+        "value": false
+      },
+      "KeepReward": {
+        "type": "checkbox",
+        "value": false
+      },
+      "KeepAwaken": {
+        "type": "checkbox",
+        "value": false
+      },
+      "KeepIsland": {
+        "type": "checkbox",
+        "value": false
+      },
+      "KeepExercise": {
+        "type": "checkbox",
+        "value": false
+      },
+      "KeepShopFrequent": {
+        "type": "checkbox",
+        "value": false
+      },
+      "KeepShopOnce": {
+        "type": "checkbox",
+        "value": false
+      },
+      "KeepShipyard": {
+        "type": "checkbox",
+        "value": false
+      },
+      "KeepGacha": {
+        "type": "checkbox",
+        "value": false
+      },
+      "KeepFreebies": {
+        "type": "checkbox",
+        "value": false
+      },
+      "KeepMinigame": {
+        "type": "checkbox",
+        "value": false
+      },
+      "KeepPrivateQuarters": {
+        "type": "checkbox",
+        "value": false
+      },
+      "KeepEventShop": {
+        "type": "checkbox",
+        "value": false
+      },
+      "KeepOpsiShop": {
+        "type": "checkbox",
+        "value": false
+      },
+      "KeepOpsiVoucher": {
+        "type": "checkbox",
+        "value": false
+      },
+      "KeepOpsiAshAssist": {
+        "type": "checkbox",
+        "value": false
       }
     },
     "Storage": {
@@ -2561,7 +2677,6 @@
         "type": "select",
         "value": "campaign_main",
         "option": [
-          "event_20220728_cn",
           "event_20260326_cn"
         ],
         "display": "hide",
@@ -2575,10 +2690,9 @@
           "event_20260326_cn"
         ],
         "option_tw": [
-          "event_20220728_cn"
+          "event_20260326_cn"
         ],
         "option_bold": [
-          "event_20220728_cn",
           "event_20260326_cn"
         ]
       },
@@ -3273,7 +3387,7 @@
       },
       "Fleet1Control": {
         "type": "select",
-        "value": "prevent_yellow_face",
+        "value": "prevent_green_face",
         "option": [
           "keep_exp_bonus",
           "prevent_green_face",
@@ -3310,7 +3424,7 @@
       },
       "Fleet2Control": {
         "type": "select",
-        "value": "prevent_yellow_face",
+        "value": "prevent_green_face",
         "option": [
           "keep_exp_bonus",
           "prevent_green_face",
@@ -4248,7 +4362,6 @@
         "type": "select",
         "value": "campaign_main",
         "option": [
-          "event_20220728_cn",
           "event_20260326_cn"
         ],
         "option_cn": [
@@ -4261,10 +4374,9 @@
           "event_20260326_cn"
         ],
         "option_tw": [
-          "event_20220728_cn"
+          "event_20260326_cn"
         ],
         "option_bold": [
-          "event_20220728_cn",
           "event_20260326_cn"
         ]
       },
@@ -4495,7 +4607,7 @@
       },
       "Fleet1Control": {
         "type": "select",
-        "value": "prevent_yellow_face",
+        "value": "prevent_green_face",
         "option": [
           "keep_exp_bonus",
           "prevent_green_face",
@@ -4532,7 +4644,7 @@
       },
       "Fleet2Control": {
         "type": "select",
-        "value": "prevent_yellow_face",
+        "value": "prevent_green_face",
         "option": [
           "keep_exp_bonus",
           "prevent_green_face",
@@ -9124,8 +9236,7 @@
       },
       "Fleet2Onsen": {
         "type": "checkbox",
-        "value": false,
-        "display": "hide"
+        "value": false
       }
     },
     "Storage": {
@@ -12909,6 +13020,11 @@
       "LastZone": {
         "type": "input",
         "value": 0
+      },
+      "ExploreProgress": {
+        "type": "textarea",
+        "value": "",
+        "display": "disabled"
       }
     },
     "OpsiFleet": {

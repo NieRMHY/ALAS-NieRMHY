@@ -17,6 +17,11 @@ Alas:
       - OldRetire
       - PublicEmotion
       - YukikazeTaskManager
+# Modify by NieRMHY: 独立维护窗口页面，减少与原有设置页的冲突面。
+    UpdateDate:
+      - GameUpdate
+      - GameUpdateTasks
+# Add end
     Restart:
       - Scheduler
       - Restart

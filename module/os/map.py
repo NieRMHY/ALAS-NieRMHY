@@ -1563,7 +1563,7 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
                     self._solved_map_event.add('is_akashi')
                     return True
                 else:
-                    logger.info('无法到达明石位置，执行定点巡逻扫描')
+                    logger.info('无法到达明石位置，执行强制移动')
                     self._execute_fixed_patrol_scan(ExecuteFixedPatrolScan=True)
                     return False
             else:
@@ -1767,31 +1767,178 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
                 continue
         return False
 
+    def _get_fixed_patrol_candidate_grids(self, target_loc, occupied_locations=None):
+        """为强制移动生成候选落点，主目标失败后尝试移动到附近空位。"""
+        occupied = set(occupied_locations or [])
+        offsets = [
+            (0, 0),
+            (0, 1),
+            (0, 2),
+            (-1, 1),
+            (1, 1),
+            (-1, 2),
+            (1, 2),
+            (-1, 0),
+            (1, 0),
+            (0, 3),
+        ]
+        absolute_fallback_rows = (11, 12)  # 对应地图显示中的第 12、13 行
+        candidates = []
+        seen = set()
+        for dx, dy in offsets:
+            loc = (target_loc[0] + dx, target_loc[1] + dy)
+            if loc in seen or loc not in self.map or loc in occupied:
+                continue
+            seen.add(loc)
+            grid = self.map[loc]
+            if grid.is_land or grid.is_enemy or grid.is_siren or grid.is_boss or grid.is_fortress:
+                continue
+            if getattr(grid, 'is_mechanism_block', False) or getattr(grid, 'is_fleet', False):
+                continue
+            candidates.append(grid)
+
+        for row in absolute_fallback_rows:
+            loc = (target_loc[0], row)
+            if loc in seen or loc not in self.map or loc in occupied:
+                continue
+            seen.add(loc)
+            grid = self.map[loc]
+            if grid.is_land or grid.is_enemy or grid.is_siren or grid.is_boss or grid.is_fortress:
+                continue
+            if getattr(grid, 'is_mechanism_block', False) or getattr(grid, 'is_fleet', False):
+                continue
+            candidates.append(grid)
+        return candidates
+
+    def _try_fixed_patrol_move(self, fleet_index, target_grid, primary_target):
+        """尝试将指定舰队移动到候选落点。"""
+        self.focus_to(target_grid.location)
+        self.update()
+        try:
+            clickable_grid = self.convert_global_to_local(target_grid.location)
+        except KeyError:
+            logger.warning(f'已将视角移动到 {target_grid.location}，但在视野中找不到可点击的格子。')
+            return False
+
+        for try_idx in range(2):
+            try:
+                try:
+                    self.device.stuck_record_clear()
+                except Exception:
+                    pass
+                time.sleep(0.1)
+                self.device.click(clickable_grid)
+                self.wait_until_walk_stable(confirm_timer=Timer(1.5, count=4))
+                if target_grid.location == primary_target:
+                    logger.info(f'舰队 {fleet_index} 已到达 {target_grid}。')
+                else:
+                    logger.info(f'舰队 {fleet_index} 主目标 {self.map[primary_target]} 失败，已改停靠至备用点 {target_grid}。')
+                return True
+            except (MapWalkError, GameTooManyClickError) as e:
+                if isinstance(e, MapWalkError) and str(e) == 'walk_out_of_step':
+                    logger.warning(f'舰队 {fleet_index} 前往 {target_grid} 超出移动范围，放弃当前候选点并尝试其他落点')
+                    return False
+                logger.warning(f'舰队移动异常: {e}，尝试强制恢复（{try_idx + 1}/2）')
+                recovered = False
+                try:
+                    recovered = self._force_move_recover(target_zone=self.zone if self.zone else None)
+                except Exception:
+                    recovered = False
+                if recovered:
+                    time.sleep(0.5)
+                    self.focus_to(target_grid.location)
+                    self.update()
+                    try:
+                        clickable_grid = self.convert_global_to_local(target_grid.location)
+                    except KeyError:
+                        clickable_grid = None
+                    if clickable_grid:
+                        continue
+                logger.warning('尝试软恢复（back / screenshot / rebuild view）')
+                try:
+                    for _ in range(3):
+                        try:
+                            self.device.back()
+                        except Exception:
+                            pass
+                    self.device.screenshot()
+                    try:
+                        self.ui_ensure(page_os)
+                        self.map_init(map_=None)
+                        self.update()
+                    except Exception:
+                        logger.debug('重建视图失败（soft recovery）', exc_info=True)
+                    try:
+                        clickable_grid = self.convert_global_to_local(target_grid.location)
+                    except KeyError:
+                        clickable_grid = None
+                    if clickable_grid:
+                        logger.info('软恢复后找到格子，重试点击')
+                        try:
+                            time.sleep(0.3)
+                            self.device.click(clickable_grid)
+                            self.wait_until_walk_stable(confirm_timer=Timer(1.5, count=4))
+                            logger.info('软恢复成功，舰队已到达')
+                            return True
+                        except Exception:
+                            logger.debug('软恢复重试点击失败', exc_info=True)
+                except Exception as rec_e:
+                    logger.debug(f'软恢复过程出现异常: {rec_e}')
+                if try_idx == 1:
+                    logger.warning('软恢复失败，尝试重启应用以恢复状态')
+                    try:
+                        self.device.app_stop()
+                        time.sleep(1.0)
+                        self.device.app_start()
+                        LoginHandler(self.config, self.device).handle_app_login()
+                        self.ui_ensure(page_os)
+                        time.sleep(0.8)
+                        try:
+                            self.map_init(map_=None)
+                            self.update()
+                        except Exception:
+                            logger.debug('重建地图数据失败（app restart）', exc_info=True)
+                        try:
+                            clickable_grid = self.convert_global_to_local(target_grid.location)
+                        except KeyError:
+                            clickable_grid = None
+                        if clickable_grid:
+                            time.sleep(0.3)
+                            self.device.click(clickable_grid)
+                            self.wait_until_walk_stable(confirm_timer=Timer(1.5, count=4))
+                            logger.info('重启应用后恢复成功，舰队已到达')
+                            return True
+                    except Exception:
+                        logger.error('应用重启恢复失败，当前候选点移动失败', exc_info=True)
+                time.sleep(0.5)
+
+        return False
+
     # 基于ShaddockNH3极致侵蚀一的个人修改
     def _execute_fixed_patrol_scan(self, ExecuteFixedPatrolScan: bool = False, **kwargs):
-        """执行定点巡逻扫描并触发全图重扫。
+        """执行强制移动并触发全图重扫。
 
         在每支舰队移动前执行视角复位，按预设坐标依次移动 1~4 号舰队，
         全部移动后执行全图重扫，并补一次自律寻敌以清理残留装置。
 
         Args:
-            ExecuteFixedPatrolScan (bool, optional): 是否启用定点巡逻扫描。
+            ExecuteFixedPatrolScan (bool, optional): 是否启用强制移动。
                 为 False 时直接跳过。默认值为 False。
             **kwargs: 预留参数，当前未使用。
 
         Returns:
             None
         """
-        logger.hr('执行定点巡逻扫描')
+        logger.hr('执行强制移动')
 
         if not ExecuteFixedPatrolScan:
-            logger.info('ExecuteFixedPatrolScan 未启用，跳过定点巡逻扫描。')
+            logger.info('ExecuteFixedPatrolScan 未启用，跳过强制移动。')
             return
         logger.attr('ExecuteFixedPatrolScan', True)
 
         self.map_init(map_=None)
         if not hasattr(self, 'map') or not self.map.grids:
-            logger.warning('无法获取当前地图网格数据，已跳过定点巡逻。')
+            logger.warning('无法获取当前地图网格数据，已跳过强制移动。')
             return
 
         solved = getattr(self, '_solved_map_event', set())
@@ -1800,21 +1947,30 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
             return
 
         patrol_locations = [(2, 0), (3, 0), (4, 0), (5, 0)]  # 对应 C1, D1, E1, F1
+        progress = {}
 
         for i, target_loc in enumerate(patrol_locations):
             fleet_index = i + 1
+            if fleet_index in progress:
+                logger.info(f'舰队 {fleet_index} 已在本轮强制移动中完成停靠 ({self.map[progress[fleet_index]]})，跳过重复移动。')
+                continue
 
             target_grid_group = self.map.select(location=target_loc)
             if not target_grid_group:
                 logger.warning(f'在地图上找不到坐标为 {target_loc} 的格子，跳过舰队 {fleet_index} 的移动。')
                 continue
             target_grid = target_grid_group[0]
+            occupied_locations = set(progress.values())
+            candidate_grids = self._get_fixed_patrol_candidate_grids(target_loc, occupied_locations=occupied_locations)
+            if not candidate_grids:
+                logger.warning(f'舰队 {fleet_index} 在 {target_grid} 附近找不到可用落点，跳过本次移动。')
+                continue
 
-            logger.hr(f'定点巡逻: 指挥舰队 {fleet_index} 前往 {target_grid}', level=2)
+            logger.hr(f'强制移动: 指挥舰队 {fleet_index} 前往 {target_grid}', level=2)
 
             self.fleet_set(fleet_index)
 
-            logger.info('执行视角复位，强制滑动到地图顶端...')
+            logger.info('视角复位...')
 
             top_point = (640, 150)
             bottom_point = (640, 600)
@@ -1829,102 +1985,39 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
 
             if not quick_ok:
                 if not self.safe_swipe(top_point, bottom_point, duration=0.55, retries=2):
-                    logger.warning('视角复位（安全滑动）失败，继续尝试下一步')
+                    logger.warning('视角复位失败，继续尝试下一步')
                 else:
-                    logger.info('视角复位（安全滑动）完成。')
+                    logger.info('视角复位完成。')
             else:
                 logger.info('快速滑动复位完成。')
             time.sleep(0.45)
 
-            self.focus_to(target_grid.location)
-            self.update()
-            try:
-                clickable_grid = self.convert_global_to_local(target_loc)
-            except KeyError:
-                logger.warning(f'已将视角移动到 {target_loc}，但在视野中找不到可点击的格子。')
-                continue
+            moved = False
+            fallback_location = None
+            for candidate_index, candidate_grid in enumerate(candidate_grids[:4]):
+                if candidate_index > 0:
+                    logger.info(f'舰队 {fleet_index} 改用备用落点 {candidate_grid}（原目标 {target_grid}）')
+                if self._try_fixed_patrol_move(fleet_index, candidate_grid, target_loc):
+                    if candidate_grid.location == target_loc:
+                        progress[fleet_index] = candidate_grid.location
+                        moved = True
+                        break
 
-            for try_idx in range(2):
-                try:
-                    try:
-                        self.device.stuck_record_clear()
-                    except Exception:
-                        pass
-                    time.sleep(0.1)
-                    self.device.click(clickable_grid)
-                    self.wait_until_walk_stable(confirm_timer=Timer(1.5, count=4))
-                    logger.info(f'舰队 {fleet_index} 已到达 {target_grid}。')
-                    break
-                except (MapWalkError, GameTooManyClickError) as e:
-                    logger.warning(f'舰队移动异常: {e}，尝试强制恢复（{try_idx + 1}/2）')
-                    recovered = False
-                    try:
-                        recovered = self._force_move_recover(target_zone=self.zone if self.zone else None)
-                    except Exception:
-                        recovered = False
-                    if recovered:
-                        time.sleep(0.5)
-                        continue
-                    logger.warning('尝试软恢复（back / screenshot / rebuild view）')
-                    try:
-                        for _ in range(3):
-                            try:
-                                self.device.back()
-                            except Exception:
-                                pass
-                        self.device.screenshot()
-                        try:
-                            self.ui_ensure(page_os)
-                            self.map_init(map_=None)
-                            self.update()
-                        except Exception:
-                            logger.debug('重建视图失败（soft recovery）', exc_info=True)
-                        try:
-                            clickable_grid = self.convert_global_to_local(target_loc)
-                        except KeyError:
-                            clickable_grid = None
-                        if clickable_grid:
-                            logger.info('软恢复后找到格子，重试点击')
-                            try:
-                                time.sleep(0.3)
-                                self.device.click(clickable_grid)
-                                self.wait_until_walk_stable(confirm_timer=Timer(1.5, count=4))
-                                logger.info('软恢复成功，舰队已到达')
-                                break
-                            except Exception:
-                                logger.debug('软恢复重试点击失败', exc_info=True)
-                    except Exception as rec_e:
-                        logger.debug(f'软恢复过程出现异常: {rec_e}')
-                    if try_idx == 1:
-                        logger.warning('软恢复失败，尝试重启应用以恢复状态')
-                        try:
-                            self.device.app_stop()
-                            time.sleep(1.0)
-                            self.device.app_start()
-                            LoginHandler(self.config, self.device).handle_app_login()
-                            # 确保回到 OS 页并重建地图数据
-                            self.ui_ensure(page_os)
-                            time.sleep(0.8)
-                            try:
-                                self.map_init(map_=None)
-                                self.update()
-                            except Exception:
-                                logger.debug('重建地图数据失败（app restart）', exc_info=True)
-                            try:
-                                clickable_grid = self.convert_global_to_local(target_loc)
-                            except KeyError:
-                                clickable_grid = None
-                            if clickable_grid:
-                                time.sleep(0.3)
-                                self.device.click(clickable_grid)
-                                self.wait_until_walk_stable(confirm_timer=Timer(1.5, count=4))
-                                logger.info('重启应用后恢复成功，舰队已到达')
-                                break
-                        except Exception:
-                            logger.error('应用重启恢复失败，跳过该舰队并继续下一步', exc_info=True)
-                            # 不要求人工接管，继续后续流程（让外层循环接着处理下一个舰队或最终重扫）
-                            recovered = False
-                    time.sleep(0.5)
+                    fallback_location = candidate_grid.location
+                    logger.info(f'舰队 {fleet_index} 已停靠备用点 {candidate_grid}，尝试返回真正目标 {target_grid}')
+                    if self._try_fixed_patrol_move(fleet_index, target_grid, target_loc):
+                        progress[fleet_index] = target_loc
+                        moved = True
+                        logger.info(f'舰队 {fleet_index} 已从备用点返回真正目标 {target_grid}')
+                        break
+
+                    logger.warning(f'舰队 {fleet_index} 从备用点 {candidate_grid} 返回真正目标 {target_grid} 失败，继续尝试其他候选点')
+            if not moved:
+                if fallback_location is not None:
+                    progress[fleet_index] = fallback_location
+                    logger.warning(f'舰队 {fleet_index} 无法回到真正目标 {target_grid}，暂时停靠在备用点 {self.map[fallback_location]}。')
+                else:
+                    logger.warning(f'舰队 {fleet_index} 在 {target_grid} 及其备用落点均移动失败，继续后续流程。')
 
         backup = self.config.temporary(OpsiGeneral_RepairThreshold=-1, Campaign_UseAutoSearch=False)
         try:

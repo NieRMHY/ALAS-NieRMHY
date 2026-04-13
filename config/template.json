@@ -124,9 +124,9 @@
   },
   "General": {
     "Log": {
-      "LogKeepCount": 7,
-      "LogBackUpMethod": "delete",
-      "ZipMethod": "bz2"
+      "LogKeepCount": 3,
+      "LogBackUpMethod": "zip",
+      "ZipMethod": "zip"
     },
     "Retirement": {
       "RetireMode": "one_click_retire"
@@ -158,6 +158,40 @@
     },
     "YukikazeTaskManager": {
       "TaskPriorityAdjustment": "Restart\n> OpsiCrossMonth\n> Commission > Tactical > Research\n> Exercise\n> Dorm > Meowfficer > Guild > Gacha\n> Reward\n> ShopFrequent > ShopOnce > Shipyard > Freebies > Island\n> PrivateQuarters\n> OpsiExplore\n> Minigame > Awaken\n> OpsiAshBeacon\n> OpsiDaily > OpsiShop > OpsiVoucher\n> OpsiAbyssal > OpsiStronghold > OpsiObscure > OpsiArchive\n> Daily > Hard > OpsiAshBeacon > OpsiAshAssist > OpsiMonthBoss\n> Sos > EventSp > EventA > EventB > EventC > EventD\n> RaidDaily > CoalitionSp > WarArchives > MaritimeEscort\n> Event > Event2 > Event3 > Raid > Hospital > HospitalEvent > Coalition > RaidScuttle > Main > Main2 > Main3\n> OpsiMeowfficerFarming\n> GemsFarming\n> Ambush11\n> OpsiHazard1Leveling\n> ThreeOilLowCost"
+    },
+    "Storage": {
+      "Storage": {}
+    }
+  },
+  "UpdateDate": {
+    "GameUpdate": {
+      "Enable": false,
+      "StopBeforeHours": 2,
+      "StartTime": "2020-01-01 00:00:00",
+      "EndTime": "2020-01-01 00:00:00"
+    },
+    "GameUpdateTasks": {
+      "KeepCommission": false,
+      "KeepTactical": false,
+      "KeepResearch": false,
+      "KeepDorm": false,
+      "KeepMeowfficer": false,
+      "KeepGuild": false,
+      "KeepReward": false,
+      "KeepAwaken": false,
+      "KeepIsland": false,
+      "KeepExercise": false,
+      "KeepShopFrequent": false,
+      "KeepShopOnce": false,
+      "KeepShipyard": false,
+      "KeepGacha": false,
+      "KeepFreebies": false,
+      "KeepMinigame": false,
+      "KeepPrivateQuarters": false,
+      "KeepEventShop": false,
+      "KeepOpsiShop": false,
+      "KeepOpsiVoucher": false,
+      "KeepOpsiAshAssist": false
     },
     "Storage": {
       "Storage": {}
@@ -629,13 +663,13 @@
       "Mode": "calculate",
       "Fleet1Value": 119,
       "Fleet1Record": "2020-01-01 00:00:00",
-      "Fleet1Control": "prevent_yellow_face",
+      "Fleet1Control": "prevent_green_face",
       "Fleet1Recover": "not_in_dormitory",
       "Fleet1Oath": false,
       "Fleet1Onsen": false,
       "Fleet2Value": 119,
       "Fleet2Record": "2020-01-01 00:00:00",
-      "Fleet2Control": "prevent_yellow_face",
+      "Fleet2Control": "prevent_green_face",
       "Fleet2Recover": "not_in_dormitory",
       "Fleet2Oath": false,
       "Fleet2Onsen": false
@@ -861,13 +895,13 @@
       "Mode": "calculate",
       "Fleet1Value": 119,
       "Fleet1Record": "2020-01-01 00:00:00",
-      "Fleet1Control": "prevent_yellow_face",
+      "Fleet1Control": "prevent_green_face",
       "Fleet1Recover": "not_in_dormitory",
       "Fleet1Oath": false,
       "Fleet1Onsen": false,
       "Fleet2Value": 119,
       "Fleet2Record": "2020-01-01 00:00:00",
-      "Fleet2Control": "prevent_yellow_face",
+      "Fleet2Control": "prevent_green_face",
       "Fleet2Recover": "not_in_dormitory",
       "Fleet2Oath": false,
       "Fleet2Onsen": false
@@ -2354,7 +2388,8 @@
       "ForceRun": false,
       "IfSkipSirenResearch": 0,
       "SkipedSirenResearch": null,
-      "LastZone": 0
+      "LastZone": 0,
+      "ExploreProgress": null
     },
     "OpsiFleet": {
       "Fleet": 1,
