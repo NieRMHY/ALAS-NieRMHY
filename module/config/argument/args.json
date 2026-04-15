@@ -13695,6 +13695,14 @@
           "safe"
         ]
       },
+      "SirenBug_Mode": {
+        "type": "select",
+        "value": "resource",
+        "option": [
+          "resource",
+          "enemy"
+        ]
+      },
       "SirenBug_Zone": {
         "type": "input",
         "value": 0
@@ -13863,6 +13871,14 @@
         "option": [
           "dangerous",
           "safe"
+        ]
+      },
+      "SirenBug_Mode": {
+        "type": "select",
+        "value": "resource",
+        "option": [
+          "resource",
+          "enemy"
         ]
       },
       "SirenBug_Zone": {
