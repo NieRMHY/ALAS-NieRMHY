@@ -573,6 +573,7 @@ def professional_convert(func, level='error'):
         if isinstance(msg, Exception):
             msg = f'{type(msg).__name__}: {msg}'
 
+
         if isinstance(msg, str) and any('\u4e00' <= char <= '\u9fff' for char in msg):
             # Avoid stacking the same prefix repeatedly.
             if msg.startswith(existing_prefixes):

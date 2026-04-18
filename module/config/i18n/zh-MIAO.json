@@ -942,6 +942,7 @@
       "event_20251218_cn": "A Note Through the Firmament",
       "event_20260226_cn": "Springtide Inn Online",
       "event_20260326_cn": "The Vagabond’s Recruitment Plan",
+      "event_20260417_cn": "Vacation Lane – Beachside Brilliance",
       "raid_20200624": "Air Raid Drills with Essex Rerun",
       "raid_20210708": "Cross Wave rerun",
       "raid_20220127": "Mystery Investigation",
@@ -4546,14 +4547,6 @@
       "help": "要在多危险的海域寻找呢？人家会顺时针去中心海域探险哦~\n中心海域只有5级和6级两种危险度啦，选错的话人家可找不到哦！\n⚠️注意：依然只在中心海域（region 5）里转悠，不会去其他区域的！",
       "5": "5级海域喵！",
       "6": "6级海域喵！"
-    },
-    "SirenDetectorSearch_FleetForBlock": {
-      "name": "🛡️挡路卡位舰队",
-      "help": "出击！用一队舰船去死死拖住塞壬坏女人，这样搜索小队就不会被打断啦！\n请务必选择和短猫任务不一样的舰队哦，不然就乱套啦(*/ω＼*)",
-      "1": "第一舰队！",
-      "2": "第二舰队！",
-      "3": "第三舰队！",
-      "4": "第四舰队！"
     },
     "SirenDetectorSearch_StopAfterFound": {
       "name": "🛑寻找 X 个探测器后乖乖回家",
