@@ -17,12 +17,13 @@ from module.handler.info_handler import InfoHandler
 from module.logger import logger
 from module.map.map_grids import SelectedGrids
 from module.retire.assets import DOCK_CHECK
-from module.ui.assets import BACK_ARROW, COMMISSION_CHECK, REWARD_GOTO_COMMISSION
-from module.ui.page import page_reward, page_commission
+from module.ui.assets import BACK_ARROW, REWARD_GOTO_COMMISSION
+from module.ui.page import page_commission, page_reward
 from module.ui.scroll import Scroll
 from module.ui.switch import Switch
 from module.ui.ui import UI
 from module.ui_white.assets import REWARD_1_WHITE, REWARD_GOTO_COMMISSION_WHITE
+from datetime import timedelta
 
 COMMISSION_SWITCH = Switch('Commission_switch', is_selector=True)
 COMMISSION_SWITCH.add_state('daily', COMMISSION_DAILY)
@@ -129,8 +130,8 @@ class RewardCommission(UI, InfoHandler):
         for comm in total:
             if comm.genre == 'daily_event':
                 self.max_commission = 5
-        running_count = int(
-            np.sum([1 for c in total if c.status == 'running']))
+        running_list = [c for c in total if c.status == 'running']
+        running_count = len(running_list)
         logger.attr('Running', f'{running_count}/{self.max_commission}')
 
         # Load filter string
@@ -167,6 +168,29 @@ class RewardCommission(UI, InfoHandler):
                 logger.attr('Filter_sort', ' > '.join([str(c) for c in run]))
             else:
                 logger.info('Not enough commissions to run')
+
+        # 优先处理快过期重要委托
+        if 'expire' in run:
+            logger.info('尝试提前快过期委托')
+
+            valid_runs = [c for c in run if isinstance(c, Commission)]
+            queue = running_list + valid_runs[:self.max_commission - running_count]
+
+            if queue:
+                min_duration_time = queue[0].duration
+                for c in queue:
+                    if c.duration < min_duration_time:
+                        min_duration_time = c.duration
+            else:
+                min_duration_time = timedelta(seconds=0)
+            logger.attr('Min Duration Time', min_duration_time)
+
+            expire_index = run.grids.index('expire')
+            important = run[:expire_index].filter(lambda c: isinstance(c, Commission) and c.expire)
+            priority = [c for c in important if c.expire < min_duration_time]
+            run = run.delete(SelectedGrids(['expire']))
+            run = SelectedGrids(priority).add_by_eq(run)
+            logger.attr('Filter_sort', ' > '.join([str(c) for c in run]))
 
         self.comm_choose = run
         if running_count >= self.max_commission:
@@ -612,7 +636,10 @@ class RewardCommission(UI, InfoHandler):
                 for button in [EXP_INFO_S_REWARD, GET_ITEMS_1, GET_ITEMS_2, GET_ITEMS_3]:
                     if self.appear(button, interval=1):
                         self.ensure_no_info_bar(timeout=1)
-                        drop.add(self.device.image)
+
+                        if drop:
+                            drop.add(self.device.image)
+
                         if button is EXP_INFO_S_REWARD:
                             if self._commission_reward_images:
                                 self._record_commission_income()

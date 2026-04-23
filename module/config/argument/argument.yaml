@@ -267,8 +267,8 @@ YukikazeTaskManager:
       > OpsiExplore
       > Minigame > Awaken
       > OpsiAshBeacon
-      > OpsiDaily > OpsiShop > OpsiVoucher
-      > OpsiAbyssal > OpsiStronghold > OpsiObscure > OpsiArchive
+      > OpsiDaily > OpsiShop > OpsiVoucher > EventShop
+      > OpsiAbyssal > OpsiStronghold > OpsiObscure > OpsiArchive 
       > Daily > Hard > OpsiAshBeacon > OpsiAshAssist > OpsiMonthBoss
       > Sos > EventSp > EventA > EventB > EventC > EventD
       > RaidDaily > CoalitionSp > WarArchives > MaritimeEscort
@@ -548,6 +548,7 @@ Commission:
     > UrgentCube-2:15 > UrgentCube-4
     > ExtraDrill-1 > UrgentCube-6 > ExtraCube-1:30
     > ExtraDrill-2:40 > ExtraDrill-0:20
+    > expire
     > Major > DailyChip > DailyResource
     > ExtraPart-0:30 > ExtraOil-1 > UrgentBox-6
     > ExtraCube-3 > ExtraPart-1 > UrgentBox-3
@@ -1168,9 +1169,6 @@ OpsiMeowfficerFarming:
   SirenDetectorSearch_HazardLevel:
     value: 5
     option: [5, 6]
-  SirenDetectorSearch_FleetForBlock:
-    value: 2
-    option: [ 1, 2, 3, 4 ]
   SirenDetectorSearch_StopAfterFound:
     value: 1
     validate: ^[1-4]$

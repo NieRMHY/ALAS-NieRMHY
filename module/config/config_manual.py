@@ -44,7 +44,7 @@ class ManualConfig:
     > Daily > Hard > OpsiAshBeacon > OpsiAshAssist > OpsiMonthBoss
     > Sos > EventSp > EventA > EventB > EventC > EventD
     > RaidDaily > CoalitionSp > WarArchives > MaritimeEscort
-    > Event > Event2 > Raid > Hospital > HospitalEvent > Coalition > RaidScuttle > Main > Main2 > Main3
+    > Event > Event2 > Event3 > Raid > Hospital > HospitalEvent > Coalition > RaidScuttle > Main > Main2 > Main3
     > OpsiMeowfficerFarming
     > GemsFarming
     > Ambush11
@@ -163,6 +163,7 @@ class ManualConfig:
     # Events from 20240725 to 20241219 introduced new chapter switches
     MAP_CHAPTER_SWITCH_20241219 = False
     MAP_CHAPTER_SWITCH_20241219_SP = False
+    MAP_CHAPTER_SWITCH_20241219_SPEX = False
     MAP_CHAPTER_SWITCH_20260326 = False
     # Since event_20241219_cn chapter B unlocks event startup
     # which means chapter AB are continuous

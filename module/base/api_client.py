@@ -38,6 +38,9 @@ class ApiClient:
         return ENABLE_THIRD_PARTY_API
 # Add end
     
+    # 公告检查间隔（秒），1.5分钟 = 90秒
+    ANNOUNCEMENT_CHECK_INTERVAL = 90
+    
     @classmethod
     def _get_endpoints(cls, path: str) -> List[str]:
         """

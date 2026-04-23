@@ -13,6 +13,44 @@
 
 - 注：之前fork了[原版雪风源](https://gitee.com/wqeaxc/AzurLaneAutoScriptyukikaze21)你可以在这个仓库查看雪风的提交 下面的雪风源也是 fork 版
 
+## 修改游戏设置
+
+使用前**必须**对照这个表格修改游戏内的设置，~~正常玩过游戏的都这么设置~~。
+
+> 对着改的意思是，这是统一的标准，照着给定的内容执行，不要问为什么，不允许有不一样的。
+
+主界面 => 右下角：设置 => 左侧边栏：选项
+
+| 设置名称                            | 值   |
+| ----------------------------------- | ---- |
+| 帧数设置                            | 60帧 |
+| 大型作战设置 - 减少TB引导           | 开   |
+| 大型作战设置 - 自律时自动提交道具   | 开   |
+| 大型作战设置 - 安全海域默认开启自律 | 关   |
+| 剧情自动播放                        | 开启 |
+| 剧情自动播放速度调整                | 特快 |
+| 待机模式设置 - 启用待机模式         | 关    |
+| 其他设置 - 重复角色获得提示         | 关   |
+| 其他设置 - 快速更换二次确认界面     | 关   |
+| 其他设置 - 展示结算角色             | 关   |
+
+大世界 => 右上角：雷达 => 指令模块(order)：潜艇支援：
+| 设置名称                                                 | 值               |
+| -------------------------------------------------------- | ---------------- |
+| X 消耗时潜艇出击  |取消勾选|
+
+主界面 => 右下角：建造 => 左侧边栏： 退役 => 左侧齿轮图标：一键退役设置：
+
+| 设置名称                                                 | 值               |
+| -------------------------------------------------------- | ---------------- |
+| 选择优先级1                                              | R                |
+| 选择优先级2                                              | SR               |
+| 选择优先级3                                              | N                |
+| 「拥有」满星的同名舰船时，保留几艘符合退役条件的同名舰船 | 不保留           |
+| 「没有」满星的同名舰船时，保留几艘符合退役条件的同名舰船 | 满星所需或不保留 |
+
+将角色设备的装备外观移除，以免影响图像识别
+
 ## 添加了
 
 1. 智能调度
@@ -27,6 +65,12 @@
 10. 迁移至 Python 3.14
 11. 更换 OCR 模型 支持 GPU 加速推理
 12. Alas MCP 服务
+
+## 多平台启动器说明
+
+启动器项目 https://github.com/wess09/alas-launcher fork于 https://github.com/swordfeng/alas-launcher 进行了部分修改
+
+严格遵守上游许可证延续使用 GPL-3 协议开源
 
 ## MCP 服务
 
@@ -89,12 +133,6 @@
 *侵蚀1功能：大部分来自下面
 ## 部分功能（大部分）来自[Zuosizhu(仪表盘等)](https://github.com/Zuosizhu/Alas-with-Dashboard)，[guoh064(大世界等)](https://github.com/guoh064/AzurLaneAutoScript)，[sui-feng-cb(岛屿等)](https://github.com/sui-feng-cb/AzurLaneAutoScript), [雪风源](https://gitee.com/wqeaxc/AzurLaneAutoScriptyukikaze21)
 
-## 感谢某不知名 AI IDE
-
-注：本项目大量使用 **AI生成** 代码质量极其垃圾 **可能存在未知Bug**
-
-~~因为本来是自用来着 没想公开~~
-
  [有任何问题请加 QQ 群](https://addgroup.nanoda.work/#/)
 
  # OCR 模型
@@ -131,3 +169,46 @@ v2.5 zh-cn
 异构加速卡BW 64G
 NVIDIA Tesla A800 80G
 训练时间: 5h
+
+## 感谢
+感谢以下开发者对本项目做出的贡献
+
+
+<a href="https://github.com/wess09/AzurPilot/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=wess09/AzurPilot&max=1000" />
+</a>
+
+感谢以下开发者对启动器项目做出的贡献
+
+<a href="https://github.com/wess09/alas-launcher/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=wess09/alas-launcher&max=1000" />
+</a>
+
+## 感谢某不知名 AI IDE
+
+注：本项目大量使用 **AI生成** 代码质量极其垃圾 **可能存在未知Bug**
+
+~~因为本来是自用来着 没想公开~~
+
+
+## 感谢以下 AI 模型
+
+Gemini 3 Flash
+
+Gemini 3.1Pro
+
+Claude Opus 4.5
+
+Claude Sonnet 4.5
+
+GPT 5.4
+
+GPT 5.3-codex
+
+Qwen 3 Max
+
+DeepSeek v3.2
+
+Kimi K2.5
+
+GLM 4.7

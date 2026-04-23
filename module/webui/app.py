@@ -265,13 +265,21 @@ class AlasGUI(Frame):
 
         def update(name, seq):
             with use_scope(f"alas-instance-{seq}", clear=True):
-                icon_html = Icon.RUN
                 rendered_state = ProcessManager.get_manager(name).state
+                if rendered_state == 1:
+                    icon_html = Icon.RUNNING
+                elif rendered_state == 3:
+                    icon_html = Icon.ERROR
+                elif rendered_state == 4:
+                    icon_html = Icon.UPDATE
+                else:
+                    icon_html = Icon.RUN
+                status_signal = "false" if rendered_state in (1, 3, 4) else "true"
                 if rendered_state == 1 and getattr(self, "af_flag", False):
                     icon_html = icon_html[:31] + ' anim-rotate' + icon_html[31:]
-                rendered_state = put_icon_buttons(
+                put_icon_buttons(
                     icon_html,
-                    "true",
+                    status_signal,
                     buttons=[{"label": name, "value": name, "color": "aside"}],
                     onclick=self.ui_alas,
                 )
@@ -2741,6 +2749,50 @@ class AlasGUI(Frame):
         put_button(label=t("GUI测试 抛出异常事件"), onclick=raise_exception)
         put_button(label=t("预览更新弹窗"), onclick=self._preview_update_popup)
 
+        def _get_debug_target_instance() -> Optional[str]:
+            if getattr(self, "alas_name", ""):
+                return self.alas_name
+            all_instances = alas_instance()
+            if all_instances:
+                return all_instances[0]
+            return None
+
+        def _refresh_debug_status():
+            self.set_aside_status()
+            if hasattr(self, "state_switch"):
+                try:
+                    self.state_switch.switch()
+                except Exception:
+                    pass
+
+        def _mock_icon_state(state: int, seconds: int = 10):
+            target = _get_debug_target_instance()
+            if not target:
+                toast("未找到可用实例，无法模拟图标状态", color="warning")
+                return
+            ProcessManager.get_manager(target).set_state_override(state, duration=seconds)
+            _refresh_debug_status()
+            toast(f"已为 {target} 模拟状态 {state}（{seconds}s）", color="info")
+
+        def _clear_mock_icon_state():
+            target = _get_debug_target_instance()
+            if not target:
+                toast("未找到可用实例，无法清除模拟状态", color="warning")
+                return
+            ProcessManager.get_manager(target).clear_state_override()
+            _refresh_debug_status()
+            toast(f"已清除 {target} 的图标状态模拟", color="success")
+
+        put_buttons(
+            buttons=[
+                {"label": "模拟运行图标(10s)", "value": 1, "color": "success"},
+                {"label": "模拟错误图标(10s)", "value": 3, "color": "danger"},
+                {"label": "模拟更新图标(10s)", "value": 4, "color": "warning"},
+            ],
+            onclick=lambda state: _mock_icon_state(state, 10),
+        )
+        put_button(label="清除图标模拟状态", onclick=_clear_mock_icon_state, color="secondary")
+
         def _force_restart():
             if State.restart_event is not None:
                 toast(t("Gui.Toast.AlasRestart"), duration=0, color="error")
@@ -3267,11 +3319,12 @@ class AlasGUI(Frame):
         
         # 公告检查功能（非阻塞）
         def announcement_checker():
+            from module.base.api_client import ApiClient
             logger.info("公告检查任务启动")
             th = yield  # 获取任务处理器引用
             # 首次检查：触发异步获取
             self._start_announcement_fetch(force=False)
-            next_periodic_check = time.time() + 5
+            next_periodic_check = time.time() + ApiClient.ANNOUNCEMENT_CHECK_INTERVAL
             th._task.delay = 0.1   # 始终保持短间隔轮询
             yield
             while True:
@@ -3280,7 +3333,7 @@ class AlasGUI(Frame):
                 # 定期触发新的异步获取
                 if not self._announcement_fetching and time.time() >= next_periodic_check:
                     self._start_announcement_fetch(force=False)
-                    next_periodic_check = time.time() + 5
+                    next_periodic_check = time.time() + ApiClient.ANNOUNCEMENT_CHECK_INTERVAL
                 yield
 
         # 添加公告检查任务（初始延迟5秒）
