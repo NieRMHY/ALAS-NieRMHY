@@ -114,7 +114,7 @@ def load_screencap(data):
         # ValueError: cannot reshape array of size 0 into shape (720,1280,4)
         raise ImageTruncated(str(e))
 
-    image = cv2.cvtColor(image, cv2.COLOR_BGRA2BGR)
+    image = cv2.cvtColor(image, cv2.COLOR_RGBA2RGB)
     if image is None:
         raise ImageTruncated('Empty image after cv2.cvtColor')
 

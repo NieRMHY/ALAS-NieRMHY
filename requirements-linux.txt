@@ -95,6 +95,8 @@ idna==3.7
     #   requests
 imageio==2.26.0
     # via -r requirements-in.txt
+imageio-ffmpeg==0.6.0
+    # via -r requirements-in.txt
 importlib-metadata==8.0.0
     # via -r requirements-in.txt
 importlib-resources==6.0.0

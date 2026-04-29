@@ -1,3 +1,5 @@
+import shutil
+
 from deploy.config import DeployConfig
 from deploy.git_over_cdn.client import GitOverCdnClient
 from deploy.logger import logger
@@ -22,10 +24,64 @@ class GitManager(DeployConfig):
         except FileNotFoundError:
             logger.info(f'File not found: {file}')
 
+    def git_repository_check(self):
+        """
+        检查 .git 目录是否存在且未损坏。
+
+        Returns:
+            bool: True 表示仓库正常，False 表示缺失或损坏需要修复。
+        """
+        if not os.path.isdir('./.git'):
+            logger.warning('.git directory does not exist')
+            return False
+
+        head_file = './.git/HEAD'
+        if not os.path.exists(head_file):
+            logger.warning('.git/HEAD does not exist, repository may be corrupted')
+            return False
+
+        try:
+            with open(head_file, 'r', encoding='utf-8') as f:
+                content = f.read().strip()
+            if not content:
+                logger.warning('.git/HEAD is empty, repository may be corrupted')
+                return False
+        except Exception as e:
+            logger.warning(f'.git/HEAD is unreadable: {e}')
+            return False
+
+        if not self.execute(f'"{self.git}" status', allow_failure=True, output=False):
+            logger.warning('git status failed, repository may be corrupted')
+            return False
+
+        return True
+
+    def git_repository_repair(self, repo, source='origin', branch='master'):
+        """
+        .git 缺失或损坏时，删除 .git 目录并重新 clone 仓库。
+        """
+        logger.hr('Git Repository Repair', 1)
+        logger.warning('Attempting to repair git repository by re-cloning')
+
+        if os.path.isdir('./.git'):
+            logger.info('Removing corrupted .git directory')
+            try:
+                shutil.rmtree('./.git')
+                logger.info('Removed .git directory')
+            except Exception as e:
+                logger.error(f'Failed to remove .git directory: {e}')
+                raise
+
+        logger.info(f'Re-cloning repository: {repo} branch: {branch}')
+        self.execute(f'"{self.git}" clone --branch {branch} --single-branch {repo} .')
+
     def git_repository_init(
             self, repo, source='origin', branch='master',
             proxy='', ssl_verify=True, keep_changes=False
     ):
+        if not self.git_repository_check():
+            self.git_repository_repair(repo, source=source, branch=branch)
+
         logger.hr('Git Init', 1)
         if not self.execute(f'"{self.git}" init', allow_failure=True):
             self.remove('./.git/config')

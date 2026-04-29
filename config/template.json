@@ -959,7 +959,7 @@
       "Mode": "calculate",
       "Fleet1Value": 119,
       "Fleet1Record": "2020-01-01 00:00:00",
-      "Fleet1Control": "prevent_green_face",
+      "Fleet1Control": "prevent_yellow_face",
       "Fleet1Recover": "not_in_dormitory",
       "Fleet1Oath": false,
       "Fleet1Onsen": false,
@@ -996,7 +996,7 @@
       "Mode": "normal",
       "UseClearMode": true,
       "UseFleetLock": true,
-      "UseAutoSearch": false,
+      "UseAutoSearch": true,
       "Use2xBook": false,
       "AmbushEvade": true,
       "UseRecommendFleet": false
@@ -1017,8 +1017,8 @@
       "Fleet2": 2,
       "Fleet2Formation": "double_line",
       "Fleet2Mode": "combat_auto",
-      "Fleet2Step": 3,
-      "FleetOrder": "fleet1_all_fleet2_standby"
+      "Fleet2Step": 2,
+      "FleetOrder": "fleet1_mob_fleet2_boss"
     },
     "Submarine": {
       "Fleet": 0,
@@ -1030,13 +1030,13 @@
       "Mode": "calculate",
       "Fleet1Value": 119,
       "Fleet1Record": "2020-01-01 00:00:00",
-      "Fleet1Control": "prevent_yellow_face",
+      "Fleet1Control": "prevent_green_face",
       "Fleet1Recover": "not_in_dormitory",
       "Fleet1Oath": false,
       "Fleet1Onsen": false,
       "Fleet2Value": 119,
       "Fleet2Record": "2020-01-01 00:00:00",
-      "Fleet2Control": "prevent_yellow_face",
+      "Fleet2Control": "prevent_green_face",
       "Fleet2Recover": "not_in_dormitory",
       "Fleet2Oath": false,
       "Fleet2Onsen": false
