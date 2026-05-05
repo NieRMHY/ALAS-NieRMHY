@@ -193,22 +193,16 @@ NVIDIA Tesla A800 80G
 
 ## 感谢以下 AI 模型
 
-Gemini 3 Flash
+|                   |               |                 |
+| :---------------: | :-----------: | :-------------: |
+|  Gemini 3 Flash   | Gemini 3.1Pro | Claude Opus 4.5 |
+| Claude Sonnet 4.5 | MiMo V2.5 Pro |     GPT 5.4     |
+|   GPT 5.3-codex   |  Qwen 3 Max   |  DeepSeek v3.2  |
+|     Kimi K2.5     |    GLM 4.7    |     MiMo V2.5   |
 
-Gemini 3.1Pro
+## IDE
 
-Claude Opus 4.5
+|                   |               |                 |  |
+| :---------------: | :-----------: | :-------------: | :-------------: |
+|  Claude Code  | Codex | Cursor | Antigravity |
 
-Claude Sonnet 4.5
-
-GPT 5.4
-
-GPT 5.3-codex
-
-Qwen 3 Max
-
-DeepSeek v3.2
-
-Kimi K2.5
-
-GLM 4.7

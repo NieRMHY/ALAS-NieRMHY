@@ -78,3 +78,22 @@ def handle_notify(_config: str, **kwargs) -> bool:
 
     logger.info("Push notify success")
     return True
+
+
+def notify_webui(instance: str, title: str, content: str) -> bool:
+    """推送通知到 WebUI 本地端口，供启动器接收"""
+    try:
+        from module.webui.setting import State
+        port = int(State.deploy_config.WebuiPort) or 22267
+    except Exception:
+        port = 22267
+    try:
+        import requests
+        requests.post(
+            f"http://127.0.0.1:{port}/api/notify",
+            json={"instance": instance, "title": title, "content": content},
+            timeout=2,
+        )
+        return True
+    except Exception:
+        return False

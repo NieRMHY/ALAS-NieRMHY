@@ -100,8 +100,14 @@ class GitManager(DeployConfig):
                 logger.error(f'Failed to remove .git directory: {e}')
                 raise
 
-        logger.info(f'Re-cloning repository: {repo} branch: {branch}')
-        self.execute(f'"{self.git}" clone --branch {branch} --single-branch {repo} .')
+        logger.info(f'Initializing repository: {repo} branch: {branch}')
+        self.execute(f'"{self.git}" init')
+        # Check if remote exists before adding
+        self.execute(f'"{self.git}" remote add "{source}" "{repo}"', allow_failure=True)
+        # Set remote URL just in case it already exists
+        self.execute(f'"{self.git}" remote set-url "{source}" "{repo}"')
+        self.execute(f'"{self.git}" fetch "{source}" "{branch}"')
+        self.execute(f'"{self.git}" reset --hard "{source}/{branch}"')
 
     def git_repository_init(
             self, repo, source='origin', branch='master',
@@ -122,9 +128,9 @@ class GitManager(DeployConfig):
         logger.hr('Set Git Proxy', 1)
         if proxy:
             if not self.git_config.check('http', 'proxy', value=proxy):
-                self.execute(f'"{self.git}" config --local http.proxy {proxy}')
+                self.execute(f'"{self.git}" config --local http.proxy "{proxy}"')
             if not self.git_config.check('https', 'proxy', value=proxy):
-                self.execute(f'"{self.git}" config --local https.proxy {proxy}')
+                self.execute(f'"{self.git}" config --local https.proxy "{proxy}"')
         else:
             if not self.git_config.check('http', 'proxy', value=None):
                 self.execute(f'"{self.git}" config --local --unset http.proxy', allow_failure=True)
@@ -141,12 +147,12 @@ class GitManager(DeployConfig):
 
         logger.hr('Set Git Repository', 1)
         if not self.git_config.check(f'remote "{source}"', 'url', value=repo):
-            if not self.execute(f'"{self.git}" remote set-url {source} {repo}', allow_failure=True):
-                self.execute(f'"{self.git}" remote add {source} {repo}')
+            if not self.execute(f'"{self.git}" remote set-url "{source}" "{repo}"', allow_failure=True):
+                self.execute(f'"{self.git}" remote add "{source}" "{repo}"')
         Progress.GitSetRepo()
 
         logger.hr('Fetch Repository Branch', 1)
-        self.execute(f'"{self.git}" fetch {source} {branch}')
+        self.execute(f'"{self.git}" fetch "{source}" "{branch}"')
         Progress.GitFetch()
 
         logger.hr('Pull Repository Branch', 1)
@@ -161,7 +167,7 @@ class GitManager(DeployConfig):
                 os.remove(lock_file)
         if keep_changes:
             if self.execute(f'"{self.git}" stash', allow_failure=True):
-                self.execute(f'"{self.git}" pull --ff-only {source} {branch}')
+                self.execute(f'"{self.git}" pull --ff-only "{source}" "{branch}"')
                 if self.execute(f'"{self.git}" stash pop', allow_failure=True):
                     pass
                 else:
@@ -169,14 +175,14 @@ class GitManager(DeployConfig):
                     logger.info('Stash pop failed, there seems to be no local changes, skip instead')
             else:
                 logger.info('Stash failed, this may be the first installation, drop changes instead')
-                self.execute(f'"{self.git}" reset --hard {source}/{branch}')
-                self.execute(f'"{self.git}" pull --ff-only {source} {branch}')
+                self.execute(f'"{self.git}" reset --hard "{source}/{branch}"')
+                self.execute(f'"{self.git}" pull --ff-only "{source}" "{branch}"')
         else:
-            self.execute(f'"{self.git}" reset --hard {source}/{branch}')
+            self.execute(f'"{self.git}" reset --hard "{source}/{branch}"')
             Progress.GitReset()
             # Since `git fetch` is already called, checkout is faster
-            if not self.execute(f'"{self.git}" checkout {branch}', allow_failure=True):
-                self.execute(f'"{self.git}" pull --ff-only {source} {branch}')
+            if not self.execute(f'"{self.git}" checkout "{branch}"', allow_failure=True):
+                self.execute(f'"{self.git}" pull --ff-only "{source}" "{branch}"')
             Progress.GitCheckout()
 
         logger.hr('Show Version', 1)

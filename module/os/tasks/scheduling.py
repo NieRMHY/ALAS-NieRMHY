@@ -201,14 +201,6 @@ class CoinTaskMixin:
         except Exception:
             logger.exception('Failed to save AP snapshot')
 
-        # 上报体力到大盘（异步，不阻塞主流程）
-        try:
-            from module.base.api_client import ApiClient
-            ApiClient.report_stamina(current_ap)
-        except Exception:
-            logger.exception('Failed to report stamina')
-
-
         if self._can_send_ap_notification('_last_ap_notification_time'):
             previous_ap = None
             try:

@@ -2841,6 +2841,18 @@ class AlasGUI(Frame):
 
         put_button(label=t("重启Alas"), onclick=_force_restart)
 
+        def _test_notify():
+            from module.webui.api import _notification_queue
+            instance = getattr(self, "alas_name", "alas")
+            _notification_queue.put_nowait({
+                "instance": instance,
+                "title": f"测试喵~ {instance} 测试~",
+                "content": f"这是一条测试通知喵~",
+            })
+            toast("已发送测试通知", color="success")
+
+        put_button(label="消息推送测试", onclick=_test_notify)
+
     @use_scope("content", clear=True)
     def dev_remote(self) -> None:
         self.init_menu(name="Remote")

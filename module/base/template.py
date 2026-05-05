@@ -53,7 +53,7 @@ class Template(Resource):
                         image = image[:, :, 0].copy()
 
                     image = self.pre_process(image)
-                    self._image += [image, cv2.flip(image, 1)]
+                    self._image.append(image)
             else:
                 self._image = self.pre_process(load_image(self.file))
 
@@ -81,11 +81,25 @@ class Template(Resource):
                 self._image_luma = []
                 for image in self.image:
                     luma = rgb2luma(image)
-                    self.image_luma.append(luma)
+                    self._image_luma.append(luma)
             else:
                 self._image_luma = rgb2luma(self.image)
 
         return self._image_luma
+
+    @staticmethod
+    def _match_gif(image, templates, similarity):
+        """GIF 模板匹配，对每帧同时尝试原图和水平翻转。"""
+        for template in templates:
+            res = cv2.matchTemplate(image, template, cv2.TM_CCOEFF_NORMED)
+            _, sim, _, _ = cv2.minMaxLoc(res)
+            if sim > similarity:
+                return True
+            res = cv2.matchTemplate(image, cv2.flip(template, 1), cv2.TM_CCOEFF_NORMED)
+            _, sim, _, _ = cv2.minMaxLoc(res)
+            if sim > similarity:
+                return True
+        return False
 
     @image.setter
     def image(self, value):
@@ -132,7 +146,10 @@ class Template(Resource):
             for template in self.image:
                 res = cv2.matchTemplate(image, template, cv2.TM_CCOEFF_NORMED)
                 _, sim, _, _ = cv2.minMaxLoc(res)
-                # print(self.file, sim)
+                if sim > similarity:
+                    return True
+                res = cv2.matchTemplate(image, cv2.flip(template, 1), cv2.TM_CCOEFF_NORMED)
+                _, sim, _, _ = cv2.minMaxLoc(res)
                 if sim > similarity:
                     return True
 
@@ -141,7 +158,6 @@ class Template(Resource):
         else:
             res = cv2.matchTemplate(image, self.image, cv2.TM_CCOEFF_NORMED)
             _, sim, _, _ = cv2.minMaxLoc(res)
-            # print(self.file, sim)
             return sim > similarity
 
     def match_binary(self, image, similarity=0.85):
@@ -160,15 +176,7 @@ class Template(Resource):
             image_gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
             # binarization
             _, image_binary = cv2.threshold(image_gray, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
-            for template in self.image_binary:
-                # template matching
-                res = cv2.matchTemplate(template, image_binary, cv2.TM_CCOEFF_NORMED)
-                _, sim, _, _ = cv2.minMaxLoc(res)
-                # print(self.file, sim)
-                if sim > similarity:
-                    return True
-
-            return False
+            return self._match_gif(image_binary, self.image_binary, similarity)
 
         else:
             # graying
@@ -178,25 +186,16 @@ class Template(Resource):
             # template matching
             res = cv2.matchTemplate(self.image_binary, image_binary, cv2.TM_CCOEFF_NORMED)
             _, sim, _, _ = cv2.minMaxLoc(res)
-            # print(self.file, sim)
             return sim > similarity
 
     def match_luma(self, image, similarity=0.85):
         if self.is_gif:
             image = rgb2luma(image)
-            for template in self.image_luma:
-                res = cv2.matchTemplate(image, template, cv2.TM_CCOEFF_NORMED)
-                _, sim, _, _ = cv2.minMaxLoc(res)
-                # print(self.file, sim)
-                if sim > similarity:
-                    return True
-
-            return False
+            return self._match_gif(image, self.image_luma, similarity)
 
         else:
             res = cv2.matchTemplate(image, self.image, cv2.TM_CCOEFF_NORMED)
             _, sim, _, _ = cv2.minMaxLoc(res)
-            # print(self.file, sim)
             return sim > similarity
 
     def _point_to_button(self, point, image=None, name=None):
@@ -264,8 +263,9 @@ class Template(Resource):
             result = []
             for template in self.image:
                 res = cv2.matchTemplate(image, template, cv2.TM_CCOEFF_NORMED)
-                res = np.array(np.where(res > similarity)).T[:, ::-1].tolist()
-                result += res
+                result += np.array(np.where(res > similarity)).T[:, ::-1].tolist()
+                res = cv2.matchTemplate(image, cv2.flip(template, 1), cv2.TM_CCOEFF_NORMED)
+                result += np.array(np.where(res > similarity)).T[:, ::-1].tolist()
             result = np.array(result)
         else:
             result = cv2.matchTemplate(image, self.image, cv2.TM_CCOEFF_NORMED)

@@ -14,9 +14,7 @@ deb-src https://mirrors.aliyun.com/debian/ bullseye main non-free contrib\n\
 deb https://mirrors.aliyun.com/debian-security/ bullseye-security main\n\
 deb-src https://mirrors.aliyun.com/debian-security/ bullseye-security main\n\
 deb https://mirrors.aliyun.com/debian/ bullseye-updates main non-free contrib\n\
-deb-src https://mirrors.aliyun.com/debian/ bullseye-updates main non-free contrib\n\
-deb https://mirrors.aliyun.com/debian/ bullseye-backports main non-free contrib\n\
-deb-src https://mirrors.aliyun.com/debian/ bullseye-backports main non-free contrib" \
+deb-src https://mirrors.aliyun.com/debian/ bullseye-updates main non-free contrib" \
 > /etc/apt/sources.list \
  && apt update \
  && apt install -y git adb libgomp1 libgl1-mesa-glx libglib2.0-0 openssh-client \
@@ -24,6 +22,8 @@ deb-src https://mirrors.aliyun.com/debian/ bullseye-backports main non-free cont
  && ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime \
  && echo 'Asia/Shanghai' > /etc/timezone \
  && pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple \
+ && pip install Cython==0.29.37 \
+ && pip install av==10.0.0 --no-build-isolation \
  && pip install -r /tmp/requirements.txt \
  && rm /tmp/requirements.txt \
  && rm -r ~/.cache/pip

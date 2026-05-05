@@ -8,7 +8,7 @@ import threading
 import time
 
 import cv2
-from starlette.responses import JSONResponse, HTMLResponse
+from starlette.responses import JSONResponse, HTMLResponse, StreamingResponse
 from starlette.routing import Route, WebSocketRoute
 from starlette.websockets import WebSocketDisconnect
 from module.logger import logger
@@ -292,9 +292,44 @@ async def ws_live_screenshot(websocket):
             except Exception:
                 pass
 
+_notification_queue = asyncio.Queue()
+
+
+async def api_notify(request):
+    """POST /api/notify — 接收通知推送到 SSE"""
+    data = await request.json()
+    await _notification_queue.put({
+        'instance': data.get('instance', ''),
+        'title': data.get('title', ''),
+        'content': data.get('content', ''),
+    })
+    return JSONResponse({'success': True})
+
+
+async def api_notify_stream(request):
+    """GET /api/notify_stream — SSE 端点，启动器订阅接收通知"""
+    async def event_generator():
+        while True:
+            if await request.is_disconnected():
+                break
+            try:
+                n = await asyncio.wait_for(_notification_queue.get(), timeout=30)
+                yield f"data: {json.dumps(n, ensure_ascii=False)}\n\n"
+            except asyncio.TimeoutError:
+                yield ": keepalive\n\n"
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
+
+
 api_routes = [
     Route("/api/cl1_stats", api_cl1_stats),
     Route("/api/ap_timeline", api_ap_timeline),
+    Route("/api/notify", api_notify, methods=["POST"]),
+    Route("/api/notify_stream", api_notify_stream),
     Route("/obs", serve_obs_overlay),
     WebSocketRoute("/ws/live_screenshot", ws_live_screenshot),
 ]

@@ -650,6 +650,8 @@ class RewardCommission(UI, InfoHandler):
 
                         REWARD_SAVE_CLICK.name = button.name
                         self.device.click(REWARD_SAVE_CLICK)
+                        if button is EXP_INFO_S_REWARD:
+                            self.device.sleep(0.3)
                         click_timer.reset()
                         reward = True
                         continue

@@ -197,7 +197,8 @@ class DeployConfig(ConfigModel):
         if not output:
             command = command + ' >nul 2>nul'
         logger.info(command)
-        error_code = os.system(command)
+        # Using subprocess.call instead of os.system to better handle quoted paths with spaces on Windows
+        error_code = subprocess.call(command, shell=True)
         if error_code:
             if allow_failure:
                 logger.info(f"[ allowed failure ], error_code: {error_code}")
