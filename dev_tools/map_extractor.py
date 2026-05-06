@@ -605,7 +605,7 @@ class MapData:
         lines.append(f'    MAP_HAS_FLEET_STEP = {self.MAP_HAS_FLEET_STEP}')
         lines.append(f'    MAP_HAS_AMBUSH = {self.MAP_HAS_AMBUSH}')
         lines.append(f'    MAP_HAS_MYSTERY = {self.MAP_HAS_MYSTERY}')
-        lines.append(f'    MAP_CHAPTER_SWITCH_20241219 = True')
+        lines.append(f'    MAP_CHAPTER_SWITCH_20260326 = True')
         lines.append(f"    STAGE_ENTRANCE = ['half', '20240725']")
         lines.append(f'    MAP_HAS_MODE_SWITCH = True')
         lines.append(f'    STAGE_INCREASE_AB = True')
@@ -784,8 +784,8 @@ Arguments:
                      adapted for war_archives usage
 """
 FILE = '../AzurLaneLuaScripts'
-FOLDER = './campaign/event_20260417_cn'
-KEYWORD = '2020001'
+FOLDER = './campaign/event_20260430_cn'
+KEYWORD = '1910001'
 SELECT = True
 OVERWRITE = True
 IS_WAR_ARCHIVES = False

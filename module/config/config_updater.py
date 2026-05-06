@@ -456,9 +456,9 @@ class ConfigGenerator:
                 date1 = str(date1)
             if isinstance(date2, int):
                 date2 = str(date2)
-            year1, week1, _ = datetime.strptime(date1, '%Y%m%d').isocalendar()
-            year2, week2, _ = datetime.strptime(date2, '%Y%m%d').isocalendar()
-            return year1 == year2 and week1 == week2
+            d1 = datetime.strptime(date1, '%Y%m%d')
+            d2 = datetime.strptime(date2, '%Y%m%d')
+            return abs((d1 - d2).days) <= 30
 
         for server in ARCHIVES_PREFIX.keys():
             for event in self.event:

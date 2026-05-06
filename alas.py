@@ -19,7 +19,7 @@ from module.config.config import AzurLaneConfig, TaskEnd
 from module.config.deep import deep_get, deep_set
 from module.exception import *
 from module.logger import logger
-from module.notify import handle_notify
+from module.notify import handle_notify, notify_webui
 
 
 RESTART_SENSITIVE_TASKS = ['Commission', 'Research']
@@ -160,6 +160,11 @@ class AzurLaneAutoScript:
                 title=f"Alas <{self.config_name}> 警告",
                 content=f"<{self.config_name}> 游戏未运行 - 将自动重启游戏",
             )
+            notify_webui(
+                self.config_name,
+                title=f" <{self.config_name}> 发出了警告喵！",
+                content=f"<{self.config_name}> 游戏未运行喵 将自动重启游戏喵~",
+            )
             self.config.task_call('Restart')
             return 'recoverable'
         except (GameStuckError, GameTooManyClickError) as e:
@@ -180,11 +185,11 @@ class AzurLaneAutoScript:
 
             logger.warning(f'Game stuck, {self.device.package} will be restarted in 10 seconds')
             logger.warning('If you are playing by hand, please stop Alas')
-            # 按需重启但不再推送“游戏卡住”通知，避免频繁打扰
+            # 按需重启但不再推送”游戏卡住”通知，避免频繁打扰
             # handle_notify(
             #     self.config.Error_OnePushConfig,
-            #     title=f"Alas <{self.config_name}> 警告",
-            #     content=f"<{self.config_name}> 游戏卡住 - 将自动重启游戏",
+            #     title=f”Alas <{self.config_name}> 警告”,
+            #     content=f”<{self.config_name}> 游戏卡住 - 将自动重启游戏”,
             # )
             self.config.task_call('Restart')  # modfiy by MHY
             # self.config.task_call('Restart', force_call=False)  # 禁用强制重启
@@ -216,6 +221,11 @@ class AzurLaneAutoScript:
                     title=f"Alas <{self.config_name}> 崩溃",
                     content=f"<{self.config_name}> GamePageUnknownError",
                 )
+                notify_webui(
+                    self.config_name,
+                    title=f"出大问题了喵！{self.config_name} 崩溃了喵！",
+                    content=f"因为 GamePageUnknownError 喵！",
+                )
                 exit(1)
             else:
                 self.checker.wait_until_available()
@@ -227,6 +237,11 @@ class AzurLaneAutoScript:
                 self.config.Error_OnePushConfig,
                 title=f"Alas <{self.config_name}> 崩溃",
                 content=f"<{self.config_name}> ScriptError",
+            )
+            notify_webui(
+                self.config_name,
+                title=f"出大问题了喵！{self.config_name}崩溃了喵！",
+                content=f"因为 ScriptError 喵！",
             )
             # exit(1)
             raise
@@ -242,6 +257,11 @@ class AzurLaneAutoScript:
                     title=f"Alas <{self.config_name}> 警告",
                     content=f"<{self.config_name}> 模拟器离线 - 已自动重启模拟器",
                 )
+                notify_webui(
+                    self.config_name,
+                    title=f"{self.config_name} 出了点小问题喵~",
+                    content=f"模拟器离线喵 所以重启了喵",
+                )
                 return 'recoverable'
             else:
                 # 重启失败或未启用，终止程序
@@ -251,6 +271,11 @@ class AzurLaneAutoScript:
                     title=f"Alas <{self.config_name}> 崩溃",
                     content=f"<{self.config_name}> EmulatorNotRunningError",
                 )
+                notify_webui(
+                    self.config_name,
+                    title=f"出大问题了喵！{self.config_name}崩溃了喵！",
+                    content=f"因为 模拟器出问题了 喵！",
+                )
                 exit(1)
         except RequestHumanTakeover:
             logger.critical('RequestHumanTakeover')
@@ -258,6 +283,11 @@ class AzurLaneAutoScript:
                 self.config.Error_OnePushConfig,
                 title=f"Alas <{self.config_name}> 崩溃",
                 content=f"<{self.config_name}> RequestHumanTakeover",
+            )
+            notify_webui(
+                self.config_name,
+                title=f"出大问题了喵！{self.config_name}崩溃了喵！",
+                content=f"因为 需要人工介入 喵！",
             )
             exit(1)
         except AutoSearchSetError:
@@ -270,6 +300,11 @@ class AzurLaneAutoScript:
                 self.config.Error_OnePushConfig,
                 title=f"Alas <{self.config_name}> 崩溃",
                 content=f"<{self.config_name}> 发生异常",
+            )
+            notify_webui(
+                self.config_name,
+                title=f"出大问题了喵！{self.config_name}崩溃了喵！",
+                content=f"因为 发生异常 喵！",
             )
             # exit(1)
             raise
@@ -815,6 +850,11 @@ class AzurLaneAutoScript:
                         self.config.Error_OnePushConfig,
                         title=f"Alas <{self.config_name}> crashed",
                         content=f"<{self.config_name}> RequestHumanTakeover\nTask `{task}` failed {failed} or more times.",
+                    )
+                    notify_webui(
+                        self.config_name,
+                        title=f"诶呀！{self.config_name}出现了问题喵！",
+                        content=f"因为 {task} 任务失败次数过多喵！",
                     )
                     logger.warning("任务连续失败次数过多，正在上报错误日志...")
                     ApiClient.submit_bug_log(f"Alas <{self.config_name}> crashed\nTask `{task}` failed {failed} or more times.")

@@ -46,6 +46,10 @@
       "name": "一般設定",
       "help": ""
     },
+    "UpdateDate": {
+      "name": "Task.UpdateDate.name",
+      "help": "Task.UpdateDate.help"
+    },
     "Restart": {
       "name": "再起動設定",
       "help": ""
@@ -329,234 +333,6 @@
     "GameManager": {
       "name": "ゲームマネージャー (未完成)",
       "help": ""
-    }
-  },
-  "Oil": {
-    "_info": {
-      "name": "Oil._info.name",
-      "help": "Oil._info.help"
-    },
-    "Value": {
-      "name": "Oil.Value.name",
-      "help": "Oil.Value.help"
-    },
-    "Limit": {
-      "name": "Oil.Limit.name",
-      "help": "Oil.Limit.help"
-    },
-    "Color": {
-      "name": "Oil.Color.name",
-      "help": "Oil.Color.help"
-    },
-    "Record": {
-      "name": "Oil.Record.name",
-      "help": "Oil.Record.help"
-    }
-  },
-  "Coin": {
-    "_info": {
-      "name": "Coin._info.name",
-      "help": "Coin._info.help"
-    },
-    "Value": {
-      "name": "Coin.Value.name",
-      "help": "Coin.Value.help"
-    },
-    "Limit": {
-      "name": "Coin.Limit.name",
-      "help": "Coin.Limit.help"
-    },
-    "Color": {
-      "name": "Coin.Color.name",
-      "help": "Coin.Color.help"
-    },
-    "Record": {
-      "name": "Coin.Record.name",
-      "help": "Coin.Record.help"
-    }
-  },
-  "Gem": {
-    "_info": {
-      "name": "Gem._info.name",
-      "help": "Gem._info.help"
-    },
-    "Value": {
-      "name": "Gem.Value.name",
-      "help": "Gem.Value.help"
-    },
-    "Color": {
-      "name": "Gem.Color.name",
-      "help": "Gem.Color.help"
-    },
-    "Record": {
-      "name": "Gem.Record.name",
-      "help": "Gem.Record.help"
-    }
-  },
-  "Pt": {
-    "_info": {
-      "name": "Pt._info.name",
-      "help": "Pt._info.help"
-    },
-    "Value": {
-      "name": "Pt.Value.name",
-      "help": "Pt.Value.help"
-    },
-    "Color": {
-      "name": "Pt.Color.name",
-      "help": "Pt.Color.help"
-    },
-    "Record": {
-      "name": "Pt.Record.name",
-      "help": "Pt.Record.help"
-    }
-  },
-  "YellowCoin": {
-    "_info": {
-      "name": "YellowCoin._info.name",
-      "help": "YellowCoin._info.help"
-    },
-    "Value": {
-      "name": "YellowCoin.Value.name",
-      "help": "YellowCoin.Value.help"
-    },
-    "Color": {
-      "name": "YellowCoin.Color.name",
-      "help": "YellowCoin.Color.help"
-    },
-    "Record": {
-      "name": "YellowCoin.Record.name",
-      "help": "YellowCoin.Record.help"
-    }
-  },
-  "PurpleCoin": {
-    "_info": {
-      "name": "PurpleCoin._info.name",
-      "help": "PurpleCoin._info.help"
-    },
-    "Value": {
-      "name": "PurpleCoin.Value.name",
-      "help": "PurpleCoin.Value.help"
-    },
-    "Color": {
-      "name": "PurpleCoin.Color.name",
-      "help": "PurpleCoin.Color.help"
-    },
-    "Record": {
-      "name": "PurpleCoin.Record.name",
-      "help": "PurpleCoin.Record.help"
-    }
-  },
-  "ActionPoint": {
-    "_info": {
-      "name": "ActionPoint._info.name",
-      "help": "ActionPoint._info.help"
-    },
-    "Value": {
-      "name": "ActionPoint.Value.name",
-      "help": "ActionPoint.Value.help"
-    },
-    "Total": {
-      "name": "ActionPoint.Total.name",
-      "help": "ActionPoint.Total.help"
-    },
-    "Color": {
-      "name": "ActionPoint.Color.name",
-      "help": "ActionPoint.Color.help"
-    },
-    "Record": {
-      "name": "ActionPoint.Record.name",
-      "help": "ActionPoint.Record.help"
-    }
-  },
-  "Merit": {
-    "_info": {
-      "name": "Merit._info.name",
-      "help": "Merit._info.help"
-    },
-    "Value": {
-      "name": "Merit.Value.name",
-      "help": "Merit.Value.help"
-    },
-    "Color": {
-      "name": "Merit.Color.name",
-      "help": "Merit.Color.help"
-    },
-    "Record": {
-      "name": "Merit.Record.name",
-      "help": "Merit.Record.help"
-    }
-  },
-  "Cube": {
-    "_info": {
-      "name": "Cube._info.name",
-      "help": "Cube._info.help"
-    },
-    "Value": {
-      "name": "Cube.Value.name",
-      "help": "Cube.Value.help"
-    },
-    "Color": {
-      "name": "Cube.Color.name",
-      "help": "Cube.Color.help"
-    },
-    "Record": {
-      "name": "Cube.Record.name",
-      "help": "Cube.Record.help"
-    }
-  },
-  "Core": {
-    "_info": {
-      "name": "Core._info.name",
-      "help": "Core._info.help"
-    },
-    "Value": {
-      "name": "Core.Value.name",
-      "help": "Core.Value.help"
-    },
-    "Color": {
-      "name": "Core.Color.name",
-      "help": "Core.Color.help"
-    },
-    "Record": {
-      "name": "Core.Record.name",
-      "help": "Core.Record.help"
-    }
-  },
-  "Medal": {
-    "_info": {
-      "name": "Medal._info.name",
-      "help": "Medal._info.help"
-    },
-    "Value": {
-      "name": "Medal.Value.name",
-      "help": "Medal.Value.help"
-    },
-    "Color": {
-      "name": "Medal.Color.name",
-      "help": "Medal.Color.help"
-    },
-    "Record": {
-      "name": "Medal.Record.name",
-      "help": "Medal.Record.help"
-    }
-  },
-  "GuildCoin": {
-    "_info": {
-      "name": "GuildCoin._info.name",
-      "help": "GuildCoin._info.help"
-    },
-    "Value": {
-      "name": "GuildCoin.Value.name",
-      "help": "GuildCoin.Value.help"
-    },
-    "Color": {
-      "name": "GuildCoin.Color.name",
-      "help": "GuildCoin.Color.help"
-    },
-    "Record": {
-      "name": "GuildCoin.Record.name",
-      "help": "GuildCoin.Record.help"
     }
   },
   "Scheduler": {
@@ -843,6 +619,118 @@
       "stay_there": "その場で待機",
       "goto_main": "メイン画面に移動",
       "close_game": "ゲームを閉じる"
+    }
+  },
+  "GameUpdate": {
+    "_info": {
+      "name": "GameUpdate._info.name",
+      "help": "GameUpdate._info.help"
+    },
+    "Enable": {
+      "name": "GameUpdate.Enable.name",
+      "help": "GameUpdate.Enable.help"
+    },
+    "StopBeforeHours": {
+      "name": "GameUpdate.StopBeforeHours.name",
+      "help": "GameUpdate.StopBeforeHours.help"
+    },
+    "StartTime": {
+      "name": "GameUpdate.StartTime.name",
+      "help": "GameUpdate.StartTime.help"
+    },
+    "EndTime": {
+      "name": "GameUpdate.EndTime.name",
+      "help": "GameUpdate.EndTime.help"
+    }
+  },
+  "GameUpdateTasks": {
+    "_info": {
+      "name": "GameUpdateTasks._info.name",
+      "help": "GameUpdateTasks._info.help"
+    },
+    "KeepCommission": {
+      "name": "GameUpdateTasks.KeepCommission.name",
+      "help": "GameUpdateTasks.KeepCommission.help"
+    },
+    "KeepTactical": {
+      "name": "GameUpdateTasks.KeepTactical.name",
+      "help": "GameUpdateTasks.KeepTactical.help"
+    },
+    "KeepResearch": {
+      "name": "GameUpdateTasks.KeepResearch.name",
+      "help": "GameUpdateTasks.KeepResearch.help"
+    },
+    "KeepDorm": {
+      "name": "GameUpdateTasks.KeepDorm.name",
+      "help": "GameUpdateTasks.KeepDorm.help"
+    },
+    "KeepMeowfficer": {
+      "name": "GameUpdateTasks.KeepMeowfficer.name",
+      "help": "GameUpdateTasks.KeepMeowfficer.help"
+    },
+    "KeepGuild": {
+      "name": "GameUpdateTasks.KeepGuild.name",
+      "help": "GameUpdateTasks.KeepGuild.help"
+    },
+    "KeepReward": {
+      "name": "GameUpdateTasks.KeepReward.name",
+      "help": "GameUpdateTasks.KeepReward.help"
+    },
+    "KeepAwaken": {
+      "name": "GameUpdateTasks.KeepAwaken.name",
+      "help": "GameUpdateTasks.KeepAwaken.help"
+    },
+    "KeepIsland": {
+      "name": "GameUpdateTasks.KeepIsland.name",
+      "help": "GameUpdateTasks.KeepIsland.help"
+    },
+    "KeepExercise": {
+      "name": "GameUpdateTasks.KeepExercise.name",
+      "help": "GameUpdateTasks.KeepExercise.help"
+    },
+    "KeepShopFrequent": {
+      "name": "GameUpdateTasks.KeepShopFrequent.name",
+      "help": "GameUpdateTasks.KeepShopFrequent.help"
+    },
+    "KeepShopOnce": {
+      "name": "GameUpdateTasks.KeepShopOnce.name",
+      "help": "GameUpdateTasks.KeepShopOnce.help"
+    },
+    "KeepShipyard": {
+      "name": "GameUpdateTasks.KeepShipyard.name",
+      "help": "GameUpdateTasks.KeepShipyard.help"
+    },
+    "KeepGacha": {
+      "name": "GameUpdateTasks.KeepGacha.name",
+      "help": "GameUpdateTasks.KeepGacha.help"
+    },
+    "KeepFreebies": {
+      "name": "GameUpdateTasks.KeepFreebies.name",
+      "help": "GameUpdateTasks.KeepFreebies.help"
+    },
+    "KeepMinigame": {
+      "name": "GameUpdateTasks.KeepMinigame.name",
+      "help": "GameUpdateTasks.KeepMinigame.help"
+    },
+    "KeepPrivateQuarters": {
+      "name": "GameUpdateTasks.KeepPrivateQuarters.name",
+      "help": "GameUpdateTasks.KeepPrivateQuarters.help"
+    },
+    "KeepEventShop": {
+      "name": "GameUpdateTasks.KeepEventShop.name",
+      "help": "GameUpdateTasks.KeepEventShop.help"
+    },
+    "KeepOpsiShop": {
+      "name": "GameUpdateTasks.KeepOpsiShop.name",
+      "help": "GameUpdateTasks.KeepOpsiShop.help"
+    },
+    "KeepOpsiVoucher": {
+      "name": "GameUpdateTasks.KeepOpsiVoucher.name",
+      "help": "GameUpdateTasks.KeepOpsiVoucher.help"
+    },
+    "KeepOpsiAshAssist": {
+      "name": "GameUpdateTasks.KeepOpsiAshAssist.name",
+      "help": "GameUpdateTasks.KeepOpsiAshAssist.help"
     }
   },
   "DropRecord": {
@@ -1161,7 +1049,7 @@
       "event_20241121_cn": "危険発明接近中",
       "event_20241219_cn": "星降る夕影の残光",
       "event_20250227_cn": "籠檻に囚われし神光",
-      "event_20250424_cn": "チュリッパの海へ",
+      "event_20250424_cn": "チュリッパの海へ（復刻）",
       "event_20250520_cn": "高い塔の薔薇",
       "event_20250724_cn": "錬金術士と天空邂逅の塔",
       "event_20250814_cn": "淵層界の秘密",
@@ -1873,6 +1761,10 @@
       "chip_24h": "ダイヤ>メンタルユニット>キューブ（7x24委託周回）",
       "oil": "ダイヤ>燃料>キューブ",
       "custom": "カスタム"
+    },
+    "AddShortest": {
+      "name": "最短デイリー委託を自動的に選択する",
+      "help": "設定されたカスタム委託フィルターに選択可能な委託が存在しない場合、最も短い処理時間のデイリー委託を自動的に取得します。"
     },
     "CustomFilter": {
       "name": "カスタム委託フィルター",
@@ -4914,6 +4806,20 @@
     "LastRun": {
       "name": "エクスペリエンスが最後にチェックされた時間 (自動的に記録されます)",
       "help": "タスクが繰り返し実行されるのを防ぐために、最後のチェック時刻が記録されます。チェック間隔は 1 日です。この値は自動的に記録されるため、通常は手動で変更する必要はありません。"
+    },
+    "CheckInterval": {
+      "name": "OpsiCheckLeveling.CheckInterval.name",
+      "help": "OpsiCheckLeveling.CheckInterval.help"
+    },
+    "EnableCustomCheck": {
+      "name": "OpsiCheckLeveling.EnableCustomCheck.name",
+      "help": "OpsiCheckLeveling.EnableCustomCheck.help",
+      "True": "True",
+      "False": "False"
+    },
+    "CustomCheckPositions": {
+      "name": "OpsiCheckLeveling.CustomCheckPositions.name",
+      "help": "OpsiCheckLeveling.CustomCheckPositions.help"
     },
     "DelayAfterFull": {
       "name": "目標レベルに達するまでミッションは延期されます",

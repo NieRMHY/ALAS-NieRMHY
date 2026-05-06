@@ -308,9 +308,7 @@ async def call_tool(name: str, arguments: Dict[str, Any]) -> List[TextContent]:
                 config = AzurLaneConfig(inst)
                 device = Device(config)
                 image = device.screenshot()
-                # ALAS uses BGR (OpenCV format), convert to RGB for PIL
-                image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-                image_pil = Image.fromarray(image_rgb)
+                image_pil = Image.fromarray(image)
                 
                 buffered = BytesIO()
                 image_pil.save(buffered, format="JPEG")

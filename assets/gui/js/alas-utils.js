@@ -172,6 +172,260 @@
 })();
 
 // ============================================================
+// 实时截图预览（H264/H265 over fragmented MP4 WebSocket）
+// ============================================================
+(function () {
+    var state = {
+        socket: null,
+        mediaSource: null,
+        sourceBuffer: null,
+        queue: [],
+        objectUrl: '',
+        instance: 'alas',
+        codec: localStorage.getItem('alas_live_preview_codec') || 'h264',
+        open: false,
+        transportId: 0
+    };
+
+    function sanitizeText(text) {
+        return String(text || '').replace(/[<>&]/g, function (ch) {
+            return ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' })[ch];
+        });
+    }
+
+    function ensurePanel() {
+        var panel = document.getElementById('alas-live-preview');
+        if (panel) return panel;
+
+        panel = document.createElement('div');
+        panel.id = 'alas-live-preview';
+        panel.innerHTML = [
+            '<div class="alas-live-preview-head">',
+            '<span class="alas-live-preview-title">实时截图</span>',
+            '<select class="alas-live-preview-codec" title="编码">',
+            '<option value="h264">H264</option>',
+            '<option value="h265">H265</option>',
+            '</select>',
+            '<button class="alas-live-preview-close" type="button" title="关闭">×</button>',
+            '</div>',
+            '<video class="alas-live-preview-video" muted autoplay playsinline></video>',
+            '<div class="alas-live-preview-status">连接中</div>'
+        ].join('');
+
+        var style = document.createElement('style');
+        style.textContent = [
+            '#alas-live-preview{position:fixed;right:18px;bottom:18px;width:min(560px,calc(100vw - 36px));background:#101418;border:1px solid rgba(255,255,255,.14);border-radius:8px;box-shadow:0 12px 36px rgba(0,0,0,.35);z-index:99990;overflow:hidden;display:none;}',
+            '.alas-live-preview-head{height:38px;display:flex;align-items:center;gap:8px;padding:0 8px 0 12px;background:#1b222b;color:#f2f5f8;font-size:14px;}',
+            '.alas-live-preview-title{font-weight:600;margin-right:auto;}',
+            '.alas-live-preview-codec{height:26px;border-radius:4px;border:1px solid rgba(255,255,255,.2);background:#111820;color:#f2f5f8;padding:0 6px;}',
+            '.alas-live-preview-close{width:28px;height:28px;border:0;background:transparent;color:#f2f5f8;font-size:24px;line-height:24px;cursor:pointer;}',
+            '.alas-live-preview-video{display:block;width:100%;aspect-ratio:16/9;background:#000;object-fit:contain;}',
+            '.alas-live-preview-status{position:absolute;left:12px;bottom:10px;max-width:calc(100% - 24px);padding:4px 8px;border-radius:4px;background:rgba(0,0,0,.58);color:#fff;font-size:12px;line-height:1.35;pointer-events:none;}'
+        ].join('');
+        document.head.appendChild(style);
+        document.body.appendChild(panel);
+
+        panel.querySelector('.alas-live-preview-close').onclick = function () {
+            window.alasStopLivePreview();
+        };
+        panel.querySelector('.alas-live-preview-codec').onchange = function (e) {
+            state.codec = e.target.value;
+            localStorage.setItem('alas_live_preview_codec', state.codec);
+            if (state.open) start(state.instance, state.codec);
+        };
+
+        return panel;
+    }
+
+    function setStatus(text) {
+        var panel = ensurePanel();
+        var status = panel.querySelector('.alas-live-preview-status');
+        status.innerHTML = sanitizeText(text);
+        status.style.display = text ? 'block' : 'none';
+    }
+
+    function cleanupTransport() {
+        state.transportId += 1;
+        if (state.socket) {
+            state.socket.onclose = null;
+            state.socket.onerror = null;
+            state.socket.onmessage = null;
+            try { state.socket.close(); } catch (e) { }
+            state.socket = null;
+        }
+        if (state.sourceBuffer) {
+            state.sourceBuffer.onupdateend = null;
+            state.sourceBuffer = null;
+        }
+        if (state.mediaSource) {
+            try {
+                if (state.mediaSource.readyState === 'open') state.mediaSource.endOfStream();
+            } catch (e) { }
+            state.mediaSource = null;
+        }
+        if (state.objectUrl) {
+            URL.revokeObjectURL(state.objectUrl);
+            state.objectUrl = '';
+        }
+        state.queue = [];
+    }
+
+    function appendNext(transportId) {
+        if (transportId !== state.transportId) return;
+        var sb = state.sourceBuffer;
+        if (!sb || sb.updating || !state.queue.length) return;
+        try {
+            sb.appendBuffer(state.queue.shift());
+        } catch (e) {
+            if (transportId !== state.transportId) return;
+            setStatus(e.message || e);
+        }
+    }
+
+    function attachMedia(socket, codec, mime, transportId) {
+        var panel = ensurePanel();
+        var video = panel.querySelector('.alas-live-preview-video');
+        if (!state.open || transportId !== state.transportId) {
+            try { socket.close(); } catch (e) { }
+            return;
+        }
+
+        state.socket = socket;
+        state.mediaSource = new MediaSource();
+        state.objectUrl = URL.createObjectURL(state.mediaSource);
+        video.src = state.objectUrl;
+
+        state.mediaSource.addEventListener('sourceopen', function () {
+            if (!state.open || transportId !== state.transportId || state.socket !== socket) {
+                return;
+            }
+            if (!MediaSource.isTypeSupported(mime)) {
+                setStatus(codec.toUpperCase() + ' 当前浏览器不支持');
+                cleanupTransport();
+                return;
+            }
+            state.sourceBuffer = state.mediaSource.addSourceBuffer(mime);
+            state.sourceBuffer.mode = 'segments';
+            state.sourceBuffer.onupdateend = function () {
+                appendNext(transportId);
+            };
+            state.socket.onmessage = function (event) {
+                if (!state.open || transportId !== state.transportId || state.socket !== socket) return;
+                if (typeof event.data === 'string') {
+                    try {
+                        var msg = JSON.parse(event.data);
+                        if (msg.type === 'error') setStatus(msg.message);
+                    } catch (e) { }
+                    return;
+                }
+                state.queue.push(event.data);
+                setStatus('');
+                appendNext(transportId);
+            };
+            state.socket.onerror = function () {
+                if (transportId === state.transportId) setStatus('实时截图连接错误');
+            };
+            state.socket.onclose = function () {
+                if (state.open && transportId === state.transportId) setStatus('实时截图已断开');
+            };
+        }, { once: true });
+    }
+
+    function getSocketCandidates() {
+        var scheme = location.protocol === 'https:' ? 'wss://' : 'ws://';
+        var query = '?instance=' + encodeURIComponent(state.instance) +
+            '&codec=' + encodeURIComponent(state.codec) + '&fps=5&width=640';
+        var candidates = [scheme + location.host + '/ws/live_screenshot' + query];
+        var pathParts = location.pathname.split('/').filter(Boolean);
+        var firstPart = pathParts.length ? pathParts[0] : '';
+
+        // Alas 远程访问入口通常是 /{sock_name}/...，其中 sock_name 为 8+ 位小写字母数字。
+        if (/^[a-z0-9]{8,}$/.test(firstPart)) {
+            candidates.unshift(scheme + location.host + '/' + firstPart + '/ws/live_screenshot' + query);
+        }
+
+        return candidates;
+    }
+
+    function start(instance, codec) {
+        var panel = ensurePanel();
+        cleanupTransport();
+        state.open = true;
+        state.instance = instance || 'alas';
+        state.codec = codec || state.codec || 'h264';
+        panel.style.display = 'block';
+        panel.querySelector('.alas-live-preview-codec').value = state.codec;
+        setStatus('连接中');
+        var transportId = state.transportId;
+        var candidates = getSocketCandidates();
+        var attempt = 0;
+
+        function connectNext() {
+            if (!state.open || transportId !== state.transportId) return;
+            if (attempt >= candidates.length) {
+                setStatus('实时截图连接失败');
+                return;
+            }
+
+            var socket = new WebSocket(candidates[attempt++]);
+            var ready = false;
+            var advanced = false;
+            function advance() {
+                if (advanced) return;
+                advanced = true;
+                connectNext();
+            }
+            socket.binaryType = 'arraybuffer';
+            socket.onmessage = function (event) {
+                if (transportId !== state.transportId) return;
+                if (typeof event.data !== 'string') return;
+                var msg;
+                try { msg = JSON.parse(event.data); } catch (e) { return; }
+                if (msg.type === 'ready') {
+                    ready = true;
+                    attachMedia(socket, state.codec, msg.mime, transportId);
+                } else if (msg.type === 'error') {
+                    setStatus(msg.message);
+                    socket.close();
+                }
+            };
+            socket.onerror = function () {
+                if (!ready) advance();
+            };
+            socket.onclose = function () {
+                if (!state.open || transportId !== state.transportId) return;
+                if (!ready && !state.socket) {
+                    advance();
+                } else if (ready && state.socket === socket) {
+                    setStatus('实时截图已断开');
+                }
+            };
+        }
+
+        connectNext();
+    }
+
+    window.alasStartLivePreview = function (instance, codec) {
+        start(instance, codec);
+    };
+
+    window.alasStopLivePreview = function () {
+        state.open = false;
+        cleanupTransport();
+        var panel = ensurePanel();
+        panel.style.display = 'none';
+    };
+
+    window.alasToggleLivePreview = function (instance) {
+        if (state.open) {
+            window.alasStopLivePreview();
+        } else {
+            window.alasStartLivePreview(instance, state.codec);
+        }
+    };
+})();
+
+// ============================================================
 // 公告系统
 // ============================================================
 (function () {

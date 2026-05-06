@@ -157,17 +157,20 @@ class RewardCommission(UI, InfoHandler):
         run = SelectedGrids(run)
 
         # Add shortest
-        no_shortest = run.delete(SelectedGrids(['shortest']))
-        if no_shortest.count + running_count < self.max_commission:
-            if daily.count:
-                logger.info('Not enough commissions to run, add shortest daily commissions')
-                COMMISSION_FILTER.load(SHORTEST_FILTER)
-                shortest = COMMISSION_FILTER.apply(daily[::-1], func=self._commission_check)
-                # Reverse the daily list to choose better commissions
-                run = no_shortest.add_by_eq(SelectedGrids(shortest))
-                logger.attr('Filter_sort', ' > '.join([str(c) for c in run]))
-            else:
-                logger.info('Not enough commissions to run')
+        if self.config.Commission_AddShortest == False and preset == 'custom':
+            logger.info('Not enough commissions to run')
+        else:
+            no_shortest = run.delete(SelectedGrids(['shortest']))
+            if no_shortest.count + running_count < self.max_commission:
+                if daily.count:
+                    logger.info('Not enough commissions to run, add shortest daily commissions')
+                    COMMISSION_FILTER.load(SHORTEST_FILTER)
+                    shortest = COMMISSION_FILTER.apply(daily[::-1], func=self._commission_check)
+                    # Reverse the daily list to choose better commissions
+                    run = no_shortest.add_by_eq(SelectedGrids(shortest))
+                    logger.attr('Filter_sort', ' > '.join([str(c) for c in run]))
+                else:
+                    logger.info('Not enough commissions to run')
 
         # 优先处理快过期重要委托
         if 'expire' in run:
@@ -650,6 +653,8 @@ class RewardCommission(UI, InfoHandler):
 
                         REWARD_SAVE_CLICK.name = button.name
                         self.device.click(REWARD_SAVE_CLICK)
+                        if button is EXP_INFO_S_REWARD:
+                            self.device.sleep(0.3)
                         click_timer.reset()
                         reward = True
                         continue

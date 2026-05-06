@@ -256,6 +256,11 @@ alas.exe
 console.bat
 .vscode/*
 
+# IDE / tool configs (local only, not for sync)
+.claude/
+.cursor/
+docs/
+
 # Pylance configuration file
 pyrightconfig.json
 

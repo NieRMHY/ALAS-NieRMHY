@@ -84,7 +84,7 @@ class Device(Screenshot, Control, AppControl, Input):
 
         for trial in range(4):
             try:
-                super().__init__(*args, screenshot_queue=screenshot_queue, screenshot_enabled=screenshot_enabled, **kwargs)
+                super().__init__(screenshot_queue=screenshot_queue, screenshot_enabled=screenshot_enabled, *args, **kwargs)  # Modify by MHY, 修复 *args 中 config 与 screenshot_queue 参数冲突
                 break
             except EmulatorNotRunningError:
                 if trial >= 3:

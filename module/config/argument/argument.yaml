@@ -160,14 +160,14 @@ Optimization:
   WhenTaskQueueEmpty:
     value: goto_main
     option: [stay_there, goto_main, close_game]
-# Modify by NieRMHY: 游戏更新窗口基础设置。
+# Add by MHY: 游戏更新窗口基础设置，在维护窗口前自动暂停任务
 GameUpdate:
   Enable: false
   StopBeforeHours: 2
   StartTime: 2020-01-01 00:00:00
   EndTime: 2020-01-01 00:00:00
 # Add end
-# Modify by NieRMHY: 维护期间保留任务改为显式复选框，避免自由文本难以维护。
+# Add by MHY: 维护期间保留任务改为显式复选框，避免自由文本难以维护
 GameUpdateTasks:
   KeepCommission: false
   KeepTactical: false
@@ -541,6 +541,7 @@ Commission:
       - chip_24h
       - oil
       - custom
+  AddShortest: True
   CustomFilter: |-
     DailyEvent > Gem-4 > Gem-2 > Gem-8 > ExtraCube-0:30
     > UrgentCube-1:30 > UrgentCube-1:45 > UrgentCube-3
@@ -1218,6 +1219,13 @@ OpsiSirenBug:
 OpsiCheckLeveling:
   TargetLevel: 0
   LastRun: 2020-01-01 00:00:00
+  CheckInterval: 24
+  EnableCustomCheck:
+    type: checkbox
+    value: false
+    option: [true, false]
+  CustomCheckPositions:
+    value: ''
   DelayAfterFull: false
 OpsiScheduling:
   UseSmartSchedulingOperationCoinsPreserve:

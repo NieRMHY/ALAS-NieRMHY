@@ -251,6 +251,35 @@ class GitOverCdnClient:
         self.logger.info('Current repo is behind remote')
         return 'behind'
 
+    def git_repository_check(self):
+        """
+        检查 .git 目录是否存在且基本完整。
+
+        Returns:
+            bool: True 表示仓库正常，False 表示缺失或损坏。
+        """
+        git_dir = os.path.join(self.folder, '.git')
+        if not os.path.isdir(git_dir):
+            self.logger.warning('.git directory does not exist')
+            return False
+
+        head_file = os.path.join(git_dir, 'HEAD')
+        if not os.path.exists(head_file):
+            self.logger.warning('.git/HEAD does not exist, repository may be corrupted')
+            return False
+
+        try:
+            with open(head_file, 'r', encoding='utf-8') as f:
+                content = f.read().strip()
+            if not content:
+                self.logger.warning('.git/HEAD is empty, repository may be corrupted')
+                return False
+        except Exception as e:
+            self.logger.warning(f'.git/HEAD is unreadable: {e}')
+            return False
+
+        return True
+
     def update(self, keep_changes=False):
         """
         Args:
@@ -259,6 +288,10 @@ class GitOverCdnClient:
         Returns:
             bool: If repo is up-to-date
         """
+        if not self.git_repository_check():
+            self.logger.error('.git is missing or corrupted, fallback to full git clone')
+            return False
+
         _ = self.current_commit
         _ = self.latest_commit
         if not self.current_commit:

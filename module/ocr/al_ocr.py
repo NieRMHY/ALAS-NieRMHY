@@ -19,93 +19,111 @@ def handle_ocr_error(e):
 
 try:
     from rapidocr import RapidOCR, OCRVersion
+    from rapidocr.ch_ppocr_rec import TextRecognizer
+    from rapidocr.cal_rec_boxes import CalRecBoxes
+    from rapidocr.utils.load_image import LoadImage
 except Exception as e:
     handle_ocr_error(e)
 
 
 config_name = os.environ.get("ALAS_CONFIG_NAME")
 config = AzurLaneConfig(config_name)
-USE_GPU = config.ocr_device == 'gpu'
-
-class CnModel:
-    def __init__(self):
-        self.params = {
-            "Global.use_det": False,
-            "Global.use_cls": False,
-            "Det.model_path": None,
-            "Cls.model_path": None,
-            "Rec.ocr_version": OCRVersion.PPOCRV5,
-            "Rec.model_path": "bin/ocr_models/zh-CN/alocr-zh-cn-v3.dtk.onnx",
-            "Rec.rec_keys_path": "bin/ocr_models/zh-CN/cn.txt",
-            "EngineConfig.onnxruntime.use_dml": USE_GPU
-        }
-        self.model = RapidOCR(params=self.params)
 
 
-class EnModel:
-    def __init__(self):
-        self.params = {
-            "Global.use_det": False,
-            "Global.use_cls": False,
-            "Det.model_path": None,
-            "Cls.model_path": None,
-            "Rec.ocr_version": OCRVersion.PPOCRV4,
-            "Rec.model_path": "bin/ocr_models/en-US/alocr-en-us-v2.6.nvc.onnx",
-            "Rec.rec_keys_path": "bin/ocr_models/en-US/en.txt",
-            "EngineConfig.onnxruntime.use_dml": USE_GPU
-        }
-        self.model = RapidOCR(params=self.params)
+class RecOnlyOCR(RapidOCR):
+    """只加载识别模型，跳过 det 和 cls 的 ONNX 模型加载。"""
+
+    def _initialize(self, cfg):
+        self.text_score = cfg.Global.text_score
+        self.min_height = cfg.Global.min_height
+        self.width_height_ratio = cfg.Global.width_height_ratio
+
+        self.use_det = False
+        self.text_det = None
+
+        self.use_cls = False
+        self.text_cls = None
+
+        self.use_rec = cfg.Global.use_rec
+        cfg.Rec.engine_cfg = cfg.EngineConfig[cfg.Rec.engine_type.value]
+        cfg.Rec.font_path = cfg.Global.font_path
+        self.text_rec = TextRecognizer(cfg.Rec)
+
+        self.load_img = LoadImage()
+        self.max_side_len = cfg.Global.max_side_len
+        self.min_side_len = cfg.Global.min_side_len
+
+        self.cal_rec_boxes = CalRecBoxes()
+        self.return_word_box = cfg.Global.return_word_box
+        self.return_single_char_box = cfg.Global.return_single_char_box
+        self.cfg = cfg
 
 
-class JpModel:
-    def __init__(self):
-        self.params = {
-            "Global.use_det": False,
-            "Global.use_cls": False,
-            "Det.model_path": None,
-            "Cls.model_path": None,
-            "Rec.ocr_version": OCRVersion.PPOCRV5,
-            "Rec.model_path": "bin/ocr_models/JP/JP.onnx",
-            "Rec.rec_keys_path": "bin/ocr_models/JP/ppocrv5_dict.txt",
-            "EngineConfig.onnxruntime.use_dml": USE_GPU
-        }
-        self.model = RapidOCR(params=self.params)
+def _create_ocr(model_path, rec_keys_path, ocr_version):
+    use_gpu = config.ocr_device == 'gpu'
+    params = {
+        "Global.use_det": False,
+        "Global.use_cls": False,
+        "Det.model_path": None,
+        "Cls.model_path": None,
+        "Rec.ocr_version": ocr_version,
+        "Rec.model_path": model_path,
+        "Rec.rec_keys_path": rec_keys_path,
+        "EngineConfig.onnxruntime.use_dml": use_gpu,
+    }
+    return RecOnlyOCR(params=params)
 
 
-class TwModel:
-    def __init__(self):
-        self.params = {
-            "Global.use_det": False,
-            "Global.use_cls": False,
-            "Det.model_path": None,
-            "Cls.model_path": None,
-            "Rec.ocr_version": OCRVersion.PPOCRV5,
-            "Rec.model_path": "bin/ocr_models/TW/TW.onnx",
-            "Rec.rec_keys_path": "bin/ocr_models/TW/ppocrv5_dict.txt",
-            "EngineConfig.onnxruntime.use_dml": USE_GPU
-        }
-        self.model = RapidOCR(params=self.params)
+# 懒加载：模块级不再创建模型，首次 init() 时才加载
+_cn_model = None
+_en_model = None
+_jp_model = None
+_tw_model = None
 
 
-try:
-    cn_model = CnModel()
-    en_model = EnModel()
-    jp_model = JpModel()
-    tw_model = TwModel()
-except Exception as e:
-    handle_ocr_error(e)
+def _get_model(name):
+    global _cn_model, _en_model, _jp_model, _tw_model
+    if name in ("cn", "zhcn"):
+        if _cn_model is None:
+            _cn_model = _create_ocr(
+                "bin/ocr_models/zh-CN/alocr-zh-cn-v3.dtk.onnx",
+                "bin/ocr_models/zh-CN/cn.txt",
+                OCRVersion.PPOCRV5,
+            )
+        return _cn_model
+    elif name == "jp":
+        if _jp_model is None:
+            _jp_model = _create_ocr(
+                "bin/ocr_models/JP/JP.onnx",
+                "bin/ocr_models/JP/ppocrv5_dict.txt",
+                OCRVersion.PPOCRV5,
+            )
+        return _jp_model
+    elif name == "tw":
+        if _tw_model is None:
+            _tw_model = _create_ocr(
+                "bin/ocr_models/TW/TW.onnx",
+                "bin/ocr_models/TW/ppocrv5_dict.txt",
+                OCRVersion.PPOCRV5,
+            )
+        return _tw_model
+    else:
+        if _en_model is None:
+            _en_model = _create_ocr(
+                "bin/ocr_models/en-US/alocr-en-us-v2.6.nvc.onnx",
+                "bin/ocr_models/en-US/en.txt",
+                OCRVersion.PPOCRV4,
+            )
+        return _en_model
+
 
 def reset_ocr_model():
-    global cn_model, en_model, jp_model, tw_model, USE_GPU
-    USE_GPU = config.ocr_device == 'gpu'
-    logger.info(f"Resetting OCR models, USE_GPU={USE_GPU}")
-    try:
-        cn_model = CnModel()
-        en_model = EnModel()
-        jp_model = JpModel()
-        tw_model = TwModel()
-    except Exception as e:
-        handle_ocr_error(e)
+    global _cn_model, _en_model, _jp_model, _tw_model
+    logger.info("Resetting OCR models")
+    _cn_model = None
+    _en_model = None
+    _jp_model = None
+    _tw_model = None
 
 
 class AlOcr:
@@ -119,16 +137,7 @@ class AlOcr:
         )
 
     def init(self):
-        # We fetch the current global instance instead of assigning a fixed one at construction.
-        # This allows reset_ocr_model() to work for objects initialized AFTER reset.
-        if self.name in ["cn", "zhcn"]:
-            self.model = cn_model.model
-        elif self.name == "jp":
-            self.model = jp_model.model
-        elif self.name == "tw":
-            self.model = tw_model.model
-        else:
-            self.model = en_model.model
+        self.model = _get_model(self.name)
         self._model_loaded = True
 
     def _ensure_loaded(self):

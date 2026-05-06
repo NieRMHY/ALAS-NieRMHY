@@ -3,6 +3,7 @@ scipy
 pillow
 opencv-python>=4.8.0
 imageio
+imageio-ffmpeg
 adbutils
 uiautomator2
 uiautomator2cache
@@ -30,7 +31,8 @@ typing_extensions>=4.8.0
 pydantic>=2.5.0
 rapidocr
 onnxruntime-directml>=1.24.4; sys_platform == "win32"
-onnxruntime>=1.24.4; sys_platform != "win32"
+onnxruntime>=1.24.4; sys_platform == "linux"
+onnxruntime @ https://files.pythonhosted.org/packages/fb/aa/04530bd38e31e26970fa1212346d76cf81705dc16a8ee5e6f4fb24634c11/onnxruntime-1.25.1-cp314-cp314-macosx_14_0_arm64.whl; sys_platform == "darwin" and platform_machine == "arm64"
 watchdog>=2.0.0
 numba
 pip

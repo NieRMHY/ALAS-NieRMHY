@@ -24,7 +24,7 @@ decorator==5.1.1          # via retry
 deprecated==1.2.13        # via uiautomator2
 deprecation==2.1.0        # via adbutils
 distro==1.9.0             # via openai
-filelock==3.20.3           # via uiautomator2
+filelock==3.20.3          # via uiautomator2
 flatbuffers==25.12.19     # via onnxruntime-directml
 fonttools==4.62.1         # via matplotlib
 future==0.18.3            # via zerorpc
@@ -37,6 +37,7 @@ httpx==0.28.1             # via mcp, openai
 httpx-sse==0.4.3          # via mcp
 idna==3.7                 # via anyio, httpx, requests
 imageio==2.26.0           # via -r requirements-in.txt
+imageio-ffmpeg==0.6.0     # via -r requirements-in.txt
 importlib-metadata==8.0.0  # via -r requirements-in.txt
 importlib-resources==6.0.0  # via -r requirements-in.txt
 inflection==0.5.1         # via -r requirements-in.txt

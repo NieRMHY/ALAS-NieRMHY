@@ -335,234 +335,6 @@
       "help": ""
     }
   },
-  "Oil": {
-    "_info": {
-      "name": "Oil._info.name",
-      "help": "Oil._info.help"
-    },
-    "Value": {
-      "name": "Oil.Value.name",
-      "help": "Oil.Value.help"
-    },
-    "Limit": {
-      "name": "Oil.Limit.name",
-      "help": "Oil.Limit.help"
-    },
-    "Color": {
-      "name": "Oil.Color.name",
-      "help": "Oil.Color.help"
-    },
-    "Record": {
-      "name": "Oil.Record.name",
-      "help": "Oil.Record.help"
-    }
-  },
-  "Coin": {
-    "_info": {
-      "name": "Coin._info.name",
-      "help": "Coin._info.help"
-    },
-    "Value": {
-      "name": "Coin.Value.name",
-      "help": "Coin.Value.help"
-    },
-    "Limit": {
-      "name": "Coin.Limit.name",
-      "help": "Coin.Limit.help"
-    },
-    "Color": {
-      "name": "Coin.Color.name",
-      "help": "Coin.Color.help"
-    },
-    "Record": {
-      "name": "Coin.Record.name",
-      "help": "Coin.Record.help"
-    }
-  },
-  "Gem": {
-    "_info": {
-      "name": "Gem._info.name",
-      "help": "Gem._info.help"
-    },
-    "Value": {
-      "name": "Gem.Value.name",
-      "help": "Gem.Value.help"
-    },
-    "Color": {
-      "name": "Gem.Color.name",
-      "help": "Gem.Color.help"
-    },
-    "Record": {
-      "name": "Gem.Record.name",
-      "help": "Gem.Record.help"
-    }
-  },
-  "Pt": {
-    "_info": {
-      "name": "Pt._info.name",
-      "help": "Pt._info.help"
-    },
-    "Value": {
-      "name": "Pt.Value.name",
-      "help": "Pt.Value.help"
-    },
-    "Color": {
-      "name": "Pt.Color.name",
-      "help": "Pt.Color.help"
-    },
-    "Record": {
-      "name": "Pt.Record.name",
-      "help": "Pt.Record.help"
-    }
-  },
-  "YellowCoin": {
-    "_info": {
-      "name": "YellowCoin._info.name",
-      "help": "YellowCoin._info.help"
-    },
-    "Value": {
-      "name": "YellowCoin.Value.name",
-      "help": "YellowCoin.Value.help"
-    },
-    "Color": {
-      "name": "YellowCoin.Color.name",
-      "help": "YellowCoin.Color.help"
-    },
-    "Record": {
-      "name": "YellowCoin.Record.name",
-      "help": "YellowCoin.Record.help"
-    }
-  },
-  "PurpleCoin": {
-    "_info": {
-      "name": "PurpleCoin._info.name",
-      "help": "PurpleCoin._info.help"
-    },
-    "Value": {
-      "name": "PurpleCoin.Value.name",
-      "help": "PurpleCoin.Value.help"
-    },
-    "Color": {
-      "name": "PurpleCoin.Color.name",
-      "help": "PurpleCoin.Color.help"
-    },
-    "Record": {
-      "name": "PurpleCoin.Record.name",
-      "help": "PurpleCoin.Record.help"
-    }
-  },
-  "ActionPoint": {
-    "_info": {
-      "name": "ActionPoint._info.name",
-      "help": "ActionPoint._info.help"
-    },
-    "Value": {
-      "name": "ActionPoint.Value.name",
-      "help": "ActionPoint.Value.help"
-    },
-    "Total": {
-      "name": "ActionPoint.Total.name",
-      "help": "ActionPoint.Total.help"
-    },
-    "Color": {
-      "name": "ActionPoint.Color.name",
-      "help": "ActionPoint.Color.help"
-    },
-    "Record": {
-      "name": "ActionPoint.Record.name",
-      "help": "ActionPoint.Record.help"
-    }
-  },
-  "Merit": {
-    "_info": {
-      "name": "Merit._info.name",
-      "help": "Merit._info.help"
-    },
-    "Value": {
-      "name": "Merit.Value.name",
-      "help": "Merit.Value.help"
-    },
-    "Color": {
-      "name": "Merit.Color.name",
-      "help": "Merit.Color.help"
-    },
-    "Record": {
-      "name": "Merit.Record.name",
-      "help": "Merit.Record.help"
-    }
-  },
-  "Cube": {
-    "_info": {
-      "name": "Cube._info.name",
-      "help": "Cube._info.help"
-    },
-    "Value": {
-      "name": "Cube.Value.name",
-      "help": "Cube.Value.help"
-    },
-    "Color": {
-      "name": "Cube.Color.name",
-      "help": "Cube.Color.help"
-    },
-    "Record": {
-      "name": "Cube.Record.name",
-      "help": "Cube.Record.help"
-    }
-  },
-  "Core": {
-    "_info": {
-      "name": "Core._info.name",
-      "help": "Core._info.help"
-    },
-    "Value": {
-      "name": "Core.Value.name",
-      "help": "Core.Value.help"
-    },
-    "Color": {
-      "name": "Core.Color.name",
-      "help": "Core.Color.help"
-    },
-    "Record": {
-      "name": "Core.Record.name",
-      "help": "Core.Record.help"
-    }
-  },
-  "Medal": {
-    "_info": {
-      "name": "Medal._info.name",
-      "help": "Medal._info.help"
-    },
-    "Value": {
-      "name": "Medal.Value.name",
-      "help": "Medal.Value.help"
-    },
-    "Color": {
-      "name": "Medal.Color.name",
-      "help": "Medal.Color.help"
-    },
-    "Record": {
-      "name": "Medal.Record.name",
-      "help": "Medal.Record.help"
-    }
-  },
-  "GuildCoin": {
-    "_info": {
-      "name": "GuildCoin._info.name",
-      "help": "GuildCoin._info.help"
-    },
-    "Value": {
-      "name": "GuildCoin.Value.name",
-      "help": "GuildCoin.Value.help"
-    },
-    "Color": {
-      "name": "GuildCoin.Color.name",
-      "help": "GuildCoin.Color.help"
-    },
-    "Record": {
-      "name": "GuildCoin.Record.name",
-      "help": "GuildCoin.Record.help"
-    }
-  },
   "Scheduler": {
     "_info": {
       "name": "任务设置",
@@ -876,27 +648,90 @@
       "name": "维护期间保留任务",
       "help": "勾选后，该任务在维护窗口期间仍会继续参与调度。一般只建议保留委托、科研、商店等低风险任务。"
     },
-    "KeepCommission": {"name": "委托", "help": ""},
-    "KeepTactical": {"name": "战术学院", "help": ""},
-    "KeepResearch": {"name": "科研", "help": ""},
-    "KeepDorm": {"name": "后宅", "help": ""},
-    "KeepMeowfficer": {"name": "指挥喵", "help": ""},
-    "KeepGuild": {"name": "大舰队", "help": ""},
-    "KeepReward": {"name": "收获", "help": ""},
-    "KeepAwaken": {"name": "认知觉醒", "help": ""},
-    "KeepIsland": {"name": "岛屿计划", "help": ""},
-    "KeepExercise": {"name": "演习", "help": ""},
-    "KeepShopFrequent": {"name": "军火商商店", "help": ""},
-    "KeepShopOnce": {"name": "其他商店", "help": ""},
-    "KeepShipyard": {"name": "开发船坞", "help": ""},
-    "KeepGacha": {"name": "每日抽卡", "help": ""},
-    "KeepFreebies": {"name": "白嫖奖励", "help": ""},
-    "KeepMinigame": {"name": "小游戏", "help": ""},
-    "KeepPrivateQuarters": {"name": "宿舍计划", "help": ""},
-    "KeepEventShop": {"name": "活动商店", "help": ""},
-    "KeepOpsiShop": {"name": "大世界商店", "help": ""},
-    "KeepOpsiVoucher": {"name": "白票商店", "help": ""},
-    "KeepOpsiAshAssist": {"name": "META支援", "help": ""}
+    "KeepCommission": {
+      "name": "委托",
+      "help": ""
+    },
+    "KeepTactical": {
+      "name": "战术学院",
+      "help": ""
+    },
+    "KeepResearch": {
+      "name": "科研",
+      "help": ""
+    },
+    "KeepDorm": {
+      "name": "后宅",
+      "help": ""
+    },
+    "KeepMeowfficer": {
+      "name": "指挥喵",
+      "help": ""
+    },
+    "KeepGuild": {
+      "name": "大舰队",
+      "help": ""
+    },
+    "KeepReward": {
+      "name": "收获",
+      "help": ""
+    },
+    "KeepAwaken": {
+      "name": "认知觉醒",
+      "help": ""
+    },
+    "KeepIsland": {
+      "name": "岛屿计划",
+      "help": ""
+    },
+    "KeepExercise": {
+      "name": "演习",
+      "help": ""
+    },
+    "KeepShopFrequent": {
+      "name": "军火商商店",
+      "help": ""
+    },
+    "KeepShopOnce": {
+      "name": "其他商店",
+      "help": ""
+    },
+    "KeepShipyard": {
+      "name": "开发船坞",
+      "help": ""
+    },
+    "KeepGacha": {
+      "name": "每日抽卡",
+      "help": ""
+    },
+    "KeepFreebies": {
+      "name": "白嫖奖励",
+      "help": ""
+    },
+    "KeepMinigame": {
+      "name": "小游戏",
+      "help": ""
+    },
+    "KeepPrivateQuarters": {
+      "name": "宿舍计划",
+      "help": ""
+    },
+    "KeepEventShop": {
+      "name": "活动商店",
+      "help": ""
+    },
+    "KeepOpsiShop": {
+      "name": "大世界商店",
+      "help": ""
+    },
+    "KeepOpsiVoucher": {
+      "name": "白票商店",
+      "help": ""
+    },
+    "KeepOpsiAshAssist": {
+      "name": "META支援",
+      "help": ""
+    }
   },
   "DropRecord": {
     "_info": {
@@ -1214,7 +1049,7 @@
       "event_20241121_cn": "危险发明迫近中",
       "event_20241219_cn": "星光下的余晖",
       "event_20250227_cn": "樊笼内的神光",
-      "event_20250424_cn": "扬起郁金之旗",
+      "event_20250424_cn": "复刻扬起郁金之旗",
       "event_20250520_cn": "高塔上的蔷薇",
       "event_20250724_cn": "优米雅的炼金工房",
       "event_20250814_cn": "奇渊下的秘密",
@@ -1909,7 +1744,7 @@
     },
     "CustomFilter": {
       "name": "自定义过滤器",
-      "help": "使用自定义过滤器需将“活动商店过滤器”设置为“自定义”，并阅读 https://github.com/LmeSzinc/AzurLaneAutoScript/wiki/filter_string_cn"
+      "help": "使用自定义过滤器需将“活动商店过滤器”设置为“自定义”，并阅读 https://github.com/LmeSzinc/AzurLaneAutoScript/wiki/filter_string_cn，自己瞎几把设置过滤器出问题了别叫"
     }
   },
   "Commission": {
@@ -1927,9 +1762,13 @@
       "oil": "钻石>石油>魔方",
       "custom": "自定义"
     },
+    "AddShortest": {
+      "name": "自动接取耗时最短的每日委托",
+      "help": "当配置的自定义委托过滤器无委托可选时，自动接取耗时最短的每日委托。该设置不会影响任何内置的委托策略。"
+    },
     "CustomFilter": {
       "name": "自定义委托过滤器",
-      "help": "使用自定义过滤器需将 \"委托过滤器\" 设置为 \"自定义\"，并阅读 https://github.com/LmeSzinc/AzurLaneAutoScript/wiki/filter_string_cn"
+      "help": "使用自定义过滤器需将 \"委托过滤器\" 设置为 \"自定义\"，并阅读 https://github.com/LmeSzinc/AzurLaneAutoScript/wiki/filter_string_cn ，自己瞎几把设置过滤器漏委托了别叫"
     },
     "DoMajorCommission": {
       "name": "做主要委托（1200油/1000油委托）",
@@ -2034,7 +1873,7 @@
     },
     "PresetFilter": {
       "name": "科研过滤器",
-      "help": "科研掉落和项目刷新见 https://azur-stats.lyoko.io/，对这些没有基本了解的人不建议编写自定义过滤器，建议使用预优化科研过滤器",
+      "help": "科研掉落和项目刷新见 https://azur-stats.lyoko.io/，对这些没有基本了解的人不建议编写自定义过滤器，建议使用预优化科研过滤器，自己瞎几把设置过滤器出问题了别叫",
       "custom": "自定义",
       "series_8_blueprint_305": "八期 蓝图+305",
       "series_8_blueprint_only": "八期 仅蓝图",
@@ -2061,7 +1900,7 @@
     },
     "CustomFilter": {
       "name": "自定义科研过滤器",
-      "help": "使用自定义过滤器需将 \"科研过滤器\" 设置为 \"自定义\"，并阅读 https://github.com/LmeSzinc/AzurLaneAutoScript/wiki/filter_string_cn"
+      "help": "使用自定义过滤器需将 \"科研过滤器\" 设置为 \"自定义\"，并阅读 https://github.com/LmeSzinc/AzurLaneAutoScript/wiki/filter_string_cn ，自己瞎几把设置过滤器出问题了别叫"
     }
   },
   "Dorm": {
@@ -4679,7 +4518,7 @@
     },
     "CustomFilter": {
       "name": "自定义过滤器",
-      "help": "使用自定义过滤器需将 \"港口商店过滤器\" 设置为 \"自定义\"，并阅读 https://github.com/LmeSzinc/AzurLaneAutoScript/wiki/filter_string_cn"
+      "help": "使用自定义过滤器需将 \"港口商店过滤器\" 设置为 \"自定义\"，并阅读 https://github.com/LmeSzinc/AzurLaneAutoScript/wiki/filter_string_cn ，自己瞎几把设置过滤器出问题了别叫"
     },
     "DisableBeforeDate": {
       "name": "每月 X 号前，不购买大世界商店",
@@ -4958,7 +4797,7 @@
   "OpsiCheckLeveling": {
     "_info": {
       "name": "大世界舰队经验检测",
-      "help": "检测出击舰队所有船是否已经获取满经验，是的话则发送一条推送消息\n需要先在 Alas 设置中配置好“错误推送设置”"
+      "help": "检测出击舰队所有船是否已经获取满经验，是的话则发送一条推送消息\n需要先在 Alas 设置中配置好“错误推送设置”\n没成功检测经验会重新检测，建议上满六艘舰船不然就将检测时间调大，连续3次失败会推送并延时"
     },
     "TargetLevel": {
       "name": "当所有舰船经验可升至此等级时推送 (0为不限制)",
@@ -4966,7 +4805,21 @@
     },
     "LastRun": {
       "name": "上次检查经验的时间 (自动记录)",
-      "help": "记录上一次检查的时间以防止任务重复运行，检查间隔为 1 天。这个数值是自动记录的，一般不需要手动修改"
+      "help": "记录上一次检查的时间以防止任务重复运行。这个数值是自动记录的，一般不需要手动修改"
+    },
+    "CheckInterval": {
+      "name": "检测间隔 (小时)",
+      "help": "每隔多少小时进行一次经验检测，默认24小时"
+    },
+    "EnableCustomCheck": {
+      "name": "启用自定义舰船检测",
+      "help": "启用后仅检测指定的舰船是否达到目标等级，而非全部舰船",
+      "True": "已启用",
+      "False": "未启用"
+    },
+    "CustomCheckPositions": {
+      "name": "自定义检测舰位",
+      "help": "填写需要检测的舰位编号(1-6)，多个舰位用英文逗号分隔（如：4,5）\n留空则检测所有舰船"
     },
     "DelayAfterFull": {
       "name": "到达目标等级后将推迟该任务",

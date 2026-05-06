@@ -959,7 +959,7 @@
       "Mode": "calculate",
       "Fleet1Value": 119,
       "Fleet1Record": "2020-01-01 00:00:00",
-      "Fleet1Control": "prevent_green_face",
+      "Fleet1Control": "prevent_yellow_face",
       "Fleet1Recover": "not_in_dormitory",
       "Fleet1Oath": false,
       "Fleet1Onsen": false,
@@ -996,7 +996,7 @@
       "Mode": "normal",
       "UseClearMode": true,
       "UseFleetLock": true,
-      "UseAutoSearch": false,
+      "UseAutoSearch": true,
       "Use2xBook": false,
       "AmbushEvade": true,
       "UseRecommendFleet": false
@@ -1017,8 +1017,8 @@
       "Fleet2": 2,
       "Fleet2Formation": "double_line",
       "Fleet2Mode": "combat_auto",
-      "Fleet2Step": 3,
-      "FleetOrder": "fleet1_all_fleet2_standby"
+      "Fleet2Step": 2,
+      "FleetOrder": "fleet1_mob_fleet2_boss"
     },
     "Submarine": {
       "Fleet": 0,
@@ -1030,13 +1030,13 @@
       "Mode": "calculate",
       "Fleet1Value": 119,
       "Fleet1Record": "2020-01-01 00:00:00",
-      "Fleet1Control": "prevent_yellow_face",
+      "Fleet1Control": "prevent_green_face",
       "Fleet1Recover": "not_in_dormitory",
       "Fleet1Oath": false,
       "Fleet1Onsen": false,
       "Fleet2Value": 119,
       "Fleet2Record": "2020-01-01 00:00:00",
-      "Fleet2Control": "prevent_yellow_face",
+      "Fleet2Control": "prevent_green_face",
       "Fleet2Recover": "not_in_dormitory",
       "Fleet2Oath": false,
       "Fleet2Onsen": false
@@ -1760,6 +1760,7 @@
     },
     "Commission": {
       "PresetFilter": "cube",
+      "AddShortest": true,
       "CustomFilter": "DailyEvent > Gem-4 > Gem-2 > Gem-8 > ExtraCube-0:30\n> UrgentCube-1:30 > UrgentCube-1:45 > UrgentCube-3\n> ExtraDrill-5:20 > ExtraDrill-2 > ExtraDrill-3:20\n> UrgentCube-2:15 > UrgentCube-4\n> ExtraDrill-1 > UrgentCube-6 > ExtraCube-1:30\n> ExtraDrill-2:40 > ExtraDrill-0:20\n> expire\n> Major > DailyChip > DailyResource\n> ExtraPart-0:30 > ExtraOil-1 > UrgentBox-6\n> ExtraCube-3 > ExtraPart-1 > UrgentBox-3\n> ExtraCube-4 > ExtraPart-1:30 > ExtraOil-4\n> UrgentBox-1 > ExtraCube-5 > UrgentBox-1\n> ExtraCube-8 > ExtraOil-8\n> UrgentDrill-4 > UrgentDrill-2:40 > UrgentDrill-2\n> UrgentDrill-1 > UrgentDrill-1:30 > UrgentDrill-1:10\n> Extra-0:20 > Extra-0:30 > Extra-1:00 > Extra-1:30 > Extra-2:00\n> shortest",
       "DoMajorCommission": false
     },
@@ -2644,6 +2645,9 @@
     "OpsiCheckLeveling": {
       "TargetLevel": 0,
       "LastRun": "2020-01-01 00:00:00",
+      "CheckInterval": 24,
+      "EnableCustomCheck": false,
+      "CustomCheckPositions": null,
       "DelayAfterFull": false
     },
     "Storage": {

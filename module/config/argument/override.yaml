@@ -243,28 +243,6 @@ Raid:
     StageIncrease: false
     GetNewShip: false
     ReachLevel: 0
-  Emotion:
-    Fleet2Value: 119
-    Fleet2Record: 2020-01-01 00:00:00
-    Fleet2Control: prevent_yellow_face
-    Fleet2Recover: not_in_dormitory
-    Fleet2Oath: false
-RaidScuttle:
-  Campaign:
-    Name: dynamic
-    Event:
-      type: state
-    Mode: normal
-    UseClearMode: true
-    UseFleetLock: true
-    UseAutoSearch: false
-    Use2xBook: false
-    AmbushEvade: true
-  StopCondition:
-    MapAchievement: non_stop
-    StageIncrease: false
-    GetNewShip: false
-    ReachLevel: 0
   Fleet:
     Fleet1: 1
     Fleet1Formation: double_line
@@ -283,6 +261,12 @@ RaidScuttle:
     Fleet2Control: prevent_yellow_face
     Fleet2Recover: not_in_dormitory
     Fleet2Oath: false
+
+RaidScuttle:
+  Campaign:
+    Name: dynamic
+    Event:
+      type: state
 Hospital:
   StopCondition:
     RunCount: 0
@@ -354,6 +338,34 @@ Coalition:
     Name: dynamic
     Event:
       type: state
+    Mode: normal
+    UseClearMode: true
+    UseFleetLock: true
+    UseAutoSearch: false
+    Use2xBook: false
+    AmbushEvade: true
+#  Coalition:
+#    Mode:
+#      option: [ easy, normal, hard, ex ]
+  StopCondition:
+    MapAchievement: non_stop
+    StageIncrease: false
+    GetNewShip: false
+    ReachLevel: 0
+  Emotion:
+    Fleet2Value: 119
+    Fleet2Record: 2020-01-01 00:00:00
+    Fleet2Control: prevent_yellow_face
+    Fleet2Recover: not_in_dormitory
+    Fleet2Oath: false
+
+CoalitionSp:
+  Scheduler:
+    SuccessInterval: 30
+    FailureInterval: 30
+    ServerUpdate: 00:00
+  Campaign:
+    Name: sp
     Mode: normal
     UseClearMode: true
     UseFleetLock: true
