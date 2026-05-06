@@ -46,6 +46,10 @@
       "name": "⚙️ 通用常规设置",
       "help": "一些基础的小事就交给人家吧！"
     },
+    "UpdateDate": {
+      "name": "Task.UpdateDate.name",
+      "help": "Task.UpdateDate.help"
+    },
     "Restart": {
       "name": "🔄 休息后重新启航",
       "help": "累了就稍微歇一歇，重启之后又是精神满满喵！"
@@ -615,6 +619,118 @@
       "stay_there": "原地待命喵",
       "goto_main": "回主界面发呆喵",
       "close_game": "关掉游戏睡个好觉喵"
+    }
+  },
+  "GameUpdate": {
+    "_info": {
+      "name": "GameUpdate._info.name",
+      "help": "GameUpdate._info.help"
+    },
+    "Enable": {
+      "name": "GameUpdate.Enable.name",
+      "help": "GameUpdate.Enable.help"
+    },
+    "StopBeforeHours": {
+      "name": "GameUpdate.StopBeforeHours.name",
+      "help": "GameUpdate.StopBeforeHours.help"
+    },
+    "StartTime": {
+      "name": "GameUpdate.StartTime.name",
+      "help": "GameUpdate.StartTime.help"
+    },
+    "EndTime": {
+      "name": "GameUpdate.EndTime.name",
+      "help": "GameUpdate.EndTime.help"
+    }
+  },
+  "GameUpdateTasks": {
+    "_info": {
+      "name": "GameUpdateTasks._info.name",
+      "help": "GameUpdateTasks._info.help"
+    },
+    "KeepCommission": {
+      "name": "GameUpdateTasks.KeepCommission.name",
+      "help": "GameUpdateTasks.KeepCommission.help"
+    },
+    "KeepTactical": {
+      "name": "GameUpdateTasks.KeepTactical.name",
+      "help": "GameUpdateTasks.KeepTactical.help"
+    },
+    "KeepResearch": {
+      "name": "GameUpdateTasks.KeepResearch.name",
+      "help": "GameUpdateTasks.KeepResearch.help"
+    },
+    "KeepDorm": {
+      "name": "GameUpdateTasks.KeepDorm.name",
+      "help": "GameUpdateTasks.KeepDorm.help"
+    },
+    "KeepMeowfficer": {
+      "name": "GameUpdateTasks.KeepMeowfficer.name",
+      "help": "GameUpdateTasks.KeepMeowfficer.help"
+    },
+    "KeepGuild": {
+      "name": "GameUpdateTasks.KeepGuild.name",
+      "help": "GameUpdateTasks.KeepGuild.help"
+    },
+    "KeepReward": {
+      "name": "GameUpdateTasks.KeepReward.name",
+      "help": "GameUpdateTasks.KeepReward.help"
+    },
+    "KeepAwaken": {
+      "name": "GameUpdateTasks.KeepAwaken.name",
+      "help": "GameUpdateTasks.KeepAwaken.help"
+    },
+    "KeepIsland": {
+      "name": "GameUpdateTasks.KeepIsland.name",
+      "help": "GameUpdateTasks.KeepIsland.help"
+    },
+    "KeepExercise": {
+      "name": "GameUpdateTasks.KeepExercise.name",
+      "help": "GameUpdateTasks.KeepExercise.help"
+    },
+    "KeepShopFrequent": {
+      "name": "GameUpdateTasks.KeepShopFrequent.name",
+      "help": "GameUpdateTasks.KeepShopFrequent.help"
+    },
+    "KeepShopOnce": {
+      "name": "GameUpdateTasks.KeepShopOnce.name",
+      "help": "GameUpdateTasks.KeepShopOnce.help"
+    },
+    "KeepShipyard": {
+      "name": "GameUpdateTasks.KeepShipyard.name",
+      "help": "GameUpdateTasks.KeepShipyard.help"
+    },
+    "KeepGacha": {
+      "name": "GameUpdateTasks.KeepGacha.name",
+      "help": "GameUpdateTasks.KeepGacha.help"
+    },
+    "KeepFreebies": {
+      "name": "GameUpdateTasks.KeepFreebies.name",
+      "help": "GameUpdateTasks.KeepFreebies.help"
+    },
+    "KeepMinigame": {
+      "name": "GameUpdateTasks.KeepMinigame.name",
+      "help": "GameUpdateTasks.KeepMinigame.help"
+    },
+    "KeepPrivateQuarters": {
+      "name": "GameUpdateTasks.KeepPrivateQuarters.name",
+      "help": "GameUpdateTasks.KeepPrivateQuarters.help"
+    },
+    "KeepEventShop": {
+      "name": "GameUpdateTasks.KeepEventShop.name",
+      "help": "GameUpdateTasks.KeepEventShop.help"
+    },
+    "KeepOpsiShop": {
+      "name": "GameUpdateTasks.KeepOpsiShop.name",
+      "help": "GameUpdateTasks.KeepOpsiShop.help"
+    },
+    "KeepOpsiVoucher": {
+      "name": "GameUpdateTasks.KeepOpsiVoucher.name",
+      "help": "GameUpdateTasks.KeepOpsiVoucher.help"
+    },
+    "KeepOpsiAshAssist": {
+      "name": "GameUpdateTasks.KeepOpsiAshAssist.name",
+      "help": "GameUpdateTasks.KeepOpsiAshAssist.help"
     }
   },
   "DropRecord": {

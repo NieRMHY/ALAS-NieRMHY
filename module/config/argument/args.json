@@ -853,11 +853,10 @@
   "Restart": {
     "Scheduler": {
       "Enable": {
-        "type": "checkbox",
+        "type": "state",
         "value": true,
         "option": [
-          true,
-          false
+          true
         ],
         "option_bold": [
           true

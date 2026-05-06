@@ -115,15 +115,12 @@ class GeneratedConfig:
     Optimization_TaskHoardingDuration = 0
     Optimization_WhenTaskQueueEmpty = 'goto_main'  # stay_there, goto_main, close_game
 
-# Modify by NieRMHY: 游戏更新窗口基础配置。
     # Group `GameUpdate`
     GameUpdate_Enable = False
     GameUpdate_StopBeforeHours = 2
     GameUpdate_StartTime = datetime.datetime(2020, 1, 1, 0, 0)
     GameUpdate_EndTime = datetime.datetime(2020, 1, 1, 0, 0)
-# Add end
 
-# Modify by NieRMHY: 维护期间保留任务的显式复选框。
     # Group `GameUpdateTasks`
     GameUpdateTasks_KeepCommission = False
     GameUpdateTasks_KeepTactical = False
@@ -146,7 +143,6 @@ class GeneratedConfig:
     GameUpdateTasks_KeepOpsiShop = False
     GameUpdateTasks_KeepOpsiVoucher = False
     GameUpdateTasks_KeepOpsiAshAssist = False
-# Add end
 
     # Group `DropRecord`
     DropRecord_SaveFolder = './screenshots'
