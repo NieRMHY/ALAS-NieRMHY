@@ -3327,45 +3327,48 @@ class AlasGUI(Frame):
         self.task_handler.add(visibility_state_switch.g(), 15)
         self.task_handler.add(update_switch.g(), 1)
 
-        def handle_update_click():
-            close_popup()
-            goto_update()
+        # --------Modify by MHY, 取消全屏更新弹窗，handle_update_click 不再使用
+        # def handle_update_click():
+        #     close_popup()
+        #     goto_update()
 
-        def update_popup_checker():
-            th = yield
-            th._task.delay = 1
-            yield
-            while True:
-                if updater.state == 1:
-                    with use_scope("ROOT"):
-                        popup(t("Gui.Toast.ClickToUpdate"), [
-                            put_html('''
-                                <div style="text-align: center; padding: 15px 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
-                                    <div style="margin-bottom: 20px;">
-                                        <div style="width: 50px; height: 50px; background: rgba(240, 62, 62, 0.1); border-radius: 25px; margin: 0 auto; display: flex; align-items: center; justify-content: center;">
-                                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#e03131" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                                        </div>
-                                    </div>
-                                    <div style="font-size: 1.8rem; font-weight: 800; color: inherit; margin-bottom: 10px;">有可用更新！</div>
-                                    <div style="font-size: 0.95rem; opacity: 0.8; margin-bottom: 25px; line-height: 1.5;">发现新版本，建议立即更新以获得最佳的脚本运行体验。</div>
-                                    
-                                    <div style="background: rgba(128, 128, 128, 0.05); border-radius: 10px; padding: 15px; margin: 0 15px 25px; text-align: left; border: 1px solid rgba(128, 128, 128, 0.15);">
-                                        <div style="font-weight: 700; color: inherit; margin-bottom: 5px;">✨ 温馨提示:</div>
-                                        <div style="font-size: 0.85rem; color: inherit;">
-                                            • 为确保脚本稳定性和安全性，请及时进行更新。<br>
-                                        </div>
-                                    </div>
-                                </div>
-                            '''),
-                            put_buttons([{"label": "立即更新 / Update Now", "value": "update", "color": "danger"}], 
-                                       onclick=[handle_update_click]).style("text-align: center; width: 100%; padding-bottom: 20px; border-top: none;")
-                        ], size="large", implicit_close=True)
-                    th._task.delay = 60
-                else:
-                    th._task.delay = 2
-                yield
+        # --------Modify by MHY, 取消全屏更新弹窗，仅保留右上角角标提示
+        # def update_popup_checker():
+        #     th = yield
+        #     th._task.delay = 1
+        #     yield
+        #     while True:
+        #         if updater.state == 1:
+        #             with use_scope("ROOT"):
+        #                 popup(t("Gui.Toast.ClickToUpdate"), [
+        #                     put_html('''
+        #                         <div style="text-align: center; padding: 15px 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+        #                             <div style="margin-bottom: 20px;">
+        #                                 <div style="width: 50px; height: 50px; background: rgba(240, 62, 62, 0.1); border-radius: 25px; margin: 0 auto; display: flex; align-items: center; justify-content: center;">
+        #                                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#e03131" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+        #                                 </div>
+        #                             </div>
+        #                             <div style="font-size: 1.8rem; font-weight: 800; color: inherit; margin-bottom: 10px;">有可用更新！</div>
+        #                             <div style="font-size: 0.95rem; opacity: 0.8; margin-bottom: 25px; line-height: 1.5;">发现新版本，建议立即更新以获得最佳的脚本运行体验。</div>
+        #
+        #                             <div style="background: rgba(128, 128, 128, 0.05); border-radius: 10px; padding: 15px; margin: 0 15px 25px; text-align: left; border: 1px solid rgba(128, 128, 128, 0.15);">
+        #                                 <div style="font-weight: 700; color: inherit; margin-bottom: 5px;">✨ 温馨提示:</div>
+        #                                 <div style="font-size: 0.85rem; color: inherit;">
+        #                                     • 为确保脚本稳定性和安全性，请及时进行更新。<br>
+        #                                 </div>
+        #                             </div>
+        #                         </div>
+        #                     '''),
+        #                     put_buttons([{"label": "立即更新 / Update Now", "value": "update", "color": "danger"}],
+        #                                onclick=[handle_update_click]).style("text-align: center; width: 100%; padding-bottom: 20px; border-top: none;")
+        #                 ], size="large", implicit_close=True)
+        #             th._task.delay = 60
+        #         else:
+        #             th._task.delay = 2
+        #         yield
 
-        self.task_handler.add(update_popup_checker(), delay=5)
+        # --------Modify by MHY, 取消全屏更新弹窗任务注册
+        # self.task_handler.add(update_popup_checker(), delay=5)
         
         # 公告检查功能（非阻塞）
         def announcement_checker():
