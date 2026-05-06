@@ -1762,6 +1762,10 @@
       "oil": "Diamond>Oil>Cubes",
       "custom": "Customize"
     },
+    "AddShortest": {
+      "name": "Automatically choose the shortest daily commission",
+      "help": "Choose the shortest daily commission when there are not enough commissions in your custom delegate filter."
+    },
     "CustomFilter": {
       "name": "Custom delegate filter",
       "help": "To use a custom filter, you need to set \"Delegated Filter\" to \"Custom\" and read https://github.com/LmeSzinc/AzurLaneAutoScript/wiki/filter_string_cn"
@@ -4802,6 +4806,20 @@
     "LastRun": {
       "name": "Last EXP Check Time (auto-recorded)",
       "help": "Records the time of last check to prevent repeated runs, check interval is 1 day. This value is auto-recorded and generally does not need manual modification."
+    },
+    "CheckInterval": {
+      "name": "OpsiCheckLeveling.CheckInterval.name",
+      "help": "OpsiCheckLeveling.CheckInterval.help"
+    },
+    "EnableCustomCheck": {
+      "name": "OpsiCheckLeveling.EnableCustomCheck.name",
+      "help": "OpsiCheckLeveling.EnableCustomCheck.help",
+      "True": "True",
+      "False": "False"
+    },
+    "CustomCheckPositions": {
+      "name": "OpsiCheckLeveling.CustomCheckPositions.name",
+      "help": "OpsiCheckLeveling.CustomCheckPositions.help"
     },
     "DelayAfterFull": {
       "name": "Delay Task After Reaching Target Level",

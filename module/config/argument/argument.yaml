@@ -541,6 +541,7 @@ Commission:
       - chip_24h
       - oil
       - custom
+  AddShortest: True
   CustomFilter: |-
     DailyEvent > Gem-4 > Gem-2 > Gem-8 > ExtraCube-0:30
     > UrgentCube-1:30 > UrgentCube-1:45 > UrgentCube-3
@@ -1218,6 +1219,13 @@ OpsiSirenBug:
 OpsiCheckLeveling:
   TargetLevel: 0
   LastRun: 2020-01-01 00:00:00
+  CheckInterval: 24
+  EnableCustomCheck:
+    type: checkbox
+    value: false
+    option: [true, false]
+  CustomCheckPositions:
+    value: ''
   DelayAfterFull: false
 OpsiScheduling:
   UseSmartSchedulingOperationCoinsPreserve:

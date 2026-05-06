@@ -358,7 +358,13 @@ class OpsiHazard1Leveling(CoinTaskMixin, OSMap):
         """检查大世界阵容练级进度。"""
         logger.hr("OS check leveling", level=1)
         logger.attr("OpsiCheckLeveling_LastRun", self.config.OpsiCheckLeveling_LastRun)
-        time_run = self.config.OpsiCheckLeveling_LastRun + timedelta(days=1)
+        
+        check_interval = self.config.OpsiCheckLeveling_CheckInterval
+        if not isinstance(check_interval, int) or check_interval < 1:
+            check_interval = 24
+            logger.warning(f"检测间隔无效，使用默认值 24 小时")
+        
+        time_run = self.config.OpsiCheckLeveling_LastRun + timedelta(hours=check_interval)
         logger.info(f"练级检查下次运行时间: {time_run}")
         if datetime.now().replace(microsecond=0) < time_run:
             logger.info("未到运行时间，跳过")
@@ -372,37 +378,41 @@ class OpsiHazard1Leveling(CoinTaskMixin, OSMap):
             return
 
         logger.attr("待检查舰队", self.config.OpsiFleet_Fleet)
-        self.fleet_set(self.config.OpsiFleet_Fleet)
-        self.equip_enter(FLEET_FLAGSHIP)
-        all_full_exp = True
-
-        ship_data_list = []
-        position = 1
-
-        while True:
-            self.device.screenshot()
-            level, exp = ship_info_get_level_exp(main=self)
-            total_exp = LIST_SHIP_EXP[level - 1] + exp
-            logger.info(
-                f"位置: {position}, 等级: {level}, 经验: {exp}, 总经验: {total_exp}, 目标经验: {LIST_SHIP_EXP[target_level - 1]}"
+        
+        enable_custom_check = self.config.OpsiCheckLeveling_EnableCustomCheck
+        custom_positions_value = self.config.OpsiCheckLeveling_CustomCheckPositions
+        custom_positions_str = str(custom_positions_value) if custom_positions_value is not None else ''
+        custom_positions = []
+        if enable_custom_check and custom_positions_str.strip():
+            try:
+                custom_positions = [int(p.strip()) for p in custom_positions_str.split(',') if p.strip()]
+                invalid_positions = [p for p in custom_positions if p < 1 or p > 6]
+                if invalid_positions:
+                    logger.warning(f"自定义舰位包含无效值: {invalid_positions}，有效范围为1-6，将检测所有舰船")
+                    custom_positions = []
+                else:
+                    logger.info(f"自定义检测舰位: {custom_positions}")
+            except (ValueError, AttributeError) as e:
+                logger.warning(f"自定义舰位格式错误: {custom_positions_str}，将检测所有舰船")
+                custom_positions = []
+        
+        ship_data_list = self._collect_ship_data_with_retry(target_level)
+        if ship_data_list['ships'] is None:
+            error_msg = ship_data_list['error'] or "未知错误"
+            logger.error(f"舰船数据收集失败: {error_msg}")
+            report = self._format_check_report(
+                None, target_level, self.config.OpsiFleet_Fleet, error_msg=error_msg
             )
-
-            ship_data_list.append(
-                {
-                    "position": position,
-                    "level": level,
-                    "current_exp": exp,
-                    "total_exp": total_exp,
-                }
+            self.notify_push(
+                title="舰船经验检测失败",
+                content=f"<{self.config.config_name}>\n\n{report}",
             )
-
-            if total_exp < LIST_SHIP_EXP[target_level - 1]:
-                all_full_exp = False
-
-            if not self.equip_view_next():
-                break
-            position += 1
-
+            self.config.OpsiCheckLeveling_LastRun = datetime.now().replace(microsecond=0)
+            logger.info("检测失败，下次检测时间设为24小时后")
+            return
+        
+        ships = ship_data_list['ships']
+        
         try:
             from module.statistics.ship_exp_stats import save_ship_exp_data
             from module.statistics.opsi_month import get_opsi_stats
@@ -418,26 +428,304 @@ class OpsiHazard1Leveling(CoinTaskMixin, OSMap):
             )
 
             save_ship_exp_data(
-                ships=ship_data_list,
+                ships=ships,
                 target_level=target_level,
                 fleet_index=self.config.OpsiFleet_Fleet,
                 battle_count_at_check=current_battles,
-                instance_name=instance_name,  # 指定实例名称保存数据
+                instance_name=instance_name,
             )
         except Exception as e:
             logger.warning(f"保存舰船经验数据失败: {e}")
 
-        if all_full_exp:
+        report = self._format_check_report(
+            ships, target_level, self.config.OpsiFleet_Fleet
+        )
+        self.notify_push(
+            title="舰船经验检测报告",
+            content=f"<{self.config.config_name}>\n\n{report}",
+        )
+
+        if enable_custom_check and custom_positions:
+            self._check_custom_positions_full_exp(
+                ships, target_level, custom_positions
+            )
+        else:
+            all_full_exp = all(
+                ship['total_exp'] >= LIST_SHIP_EXP[target_level - 1]
+                for ship in ships
+            )
+            if all_full_exp:
+                logger.info(
+                    f"舰队 {self.config.OpsiFleet_Fleet} 的所有舰船均已满经验（等级 {target_level} 或更高）"
+                )
+                self.notify_push(
+                    title="练级检查通过",
+                    content=f"<{self.config.config_name}> {self.config.task} 已达到等级限制 {target_level}。",
+                )
+                if self.config.OpsiCheckLeveling_DelayAfterFull:
+                    logger.info("所有舰船满经验后延迟任务")
+                    self.config.task_delay(server_update=True)
+                    self.config.task_stop()
+        
+        self.config.OpsiCheckLeveling_LastRun = datetime.now().replace(microsecond=0)
+
+    def _format_check_report(self, ship_data_list, target_level, fleet_index, error_msg=None):
+        """
+        格式化检测报告，用于推送通知
+        
+        Args:
+            ship_data_list: 舰船数据列表，失败时为None
+            target_level: 目标等级
+            fleet_index: 舰队索引
+            error_msg: 错误信息，成功时为None
+            
+        Returns:
+            str: 格式化的报告文本
+        """
+        lines = []
+        lines.append("【舰船经验检测报告】")
+        lines.append("")
+        
+        if error_msg:
+            lines.append(f"检测状态: 失败")
+            lines.append(f"错误信息: {error_msg}")
+            return "\n".join(lines)
+        
+        lines.append(f"检测状态: 成功")
+        lines.append(f"检测舰队: 第 {fleet_index} 舰队")
+        lines.append(f"目标等级: Lv.{target_level}")
+        lines.append("")
+        
+        target_exp = LIST_SHIP_EXP[target_level - 1] if 1 <= target_level <= 125 else 0
+        
+        try:
+            from module.statistics.ship_exp_stats import get_ship_exp_stats
+            stats = get_ship_exp_stats(
+                instance_name=self.config.config_name if hasattr(self.config, 'config_name') else None
+            )
+            exp_per_hour = stats.get_exp_per_hour()
+        except Exception:
+            exp_per_hour = 22000.0
+        
+        for ship in ship_data_list:
+            position = ship.get('position', 0)
+            level = ship.get('level', 0)
+            current_exp = ship.get('current_exp', 0)
+            total_exp = ship.get('total_exp', 0)
+            
+            if target_exp > 0:
+                progress = min(100, total_exp / target_exp * 100)
+                progress_str = f"{progress:.1f}%"
+            else:
+                progress_str = "100%"
+            
+            if total_exp >= target_exp:
+                status = "已满"
+                time_str = "0分钟"
+            else:
+                status = progress_str
+                exp_needed = target_exp - total_exp
+                if exp_per_hour > 0:
+                    hours_needed = exp_needed / exp_per_hour
+                    time_seconds = hours_needed * 3600
+                    hours = int(time_seconds // 3600)
+                    minutes = int((time_seconds % 3600) // 60)
+                    if hours > 0:
+                        time_str = f"{hours}小时{minutes}分钟"
+                    else:
+                        time_str = f"{minutes}分钟"
+                else:
+                    time_str = "未知"
+            
+            lines.append(f"舰位{position}: Lv.{level} | 经验：{current_exp:,} | 进度：{status} │ 预计时间：{time_str}")
+            lines.append("")
+        
+        all_full = all(ship.get('total_exp', 0) >= target_exp for ship in ship_data_list)
+        if all_full:
+            lines.append("★ 所有舰船已满经验！")
+        else:
+            not_full = [s for s in ship_data_list if s.get('total_exp', 0) < target_exp]
+            lines.append(f"未满经验舰位: {len(not_full)} 艘")
+        
+        lines.append(f"检测时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        
+        return "\n".join(lines)
+
+    def _collect_ship_data_with_retry(self, target_level):
+        """
+        收集舰船数据，带重试机制
+        
+        Args:
+            target_level: 目标等级
+            
+        Returns:
+            dict: {'ships': list, 'error': str} 
+                  ships为舰船数据列表，失败时为None
+                  error为错误信息，成功时为None
+        """
+        max_retry = 3
+        non_standard_retry_count = 0
+        last_non_standard_data = None
+        for attempt in range(max_retry):
+            logger.info(f"开始收集舰船数据 (尝试 {attempt + 1}/{max_retry})")
+            
+            self.fleet_set(self.config.OpsiFleet_Fleet)
+            self.equip_enter(FLEET_FLAGSHIP)
+            
+            ship_data_list = []
+            position = 1
+            
+            while True:
+                self.device.screenshot()
+                level, exp = ship_info_get_level_exp(main=self)
+                total_exp = LIST_SHIP_EXP[level - 1] + exp
+                logger.info(
+                    f"位置: {position}, 等级: {level}, 经验: {exp}, 总经验: {total_exp}, 目标经验: {LIST_SHIP_EXP[target_level - 1]}"
+                )
+
+                ship_data_list.append(
+                    {
+                        "position": position,
+                        "level": level,
+                        "current_exp": exp,
+                        "total_exp": total_exp,
+                    }
+                )
+
+                if not self.equip_view_next():
+                    break
+                position += 1
+            
+            self.ui_back(appear_button=EQUIPMENT_OPEN, check_button=self.is_in_map)
+            
+            validation_result = self._validate_ship_data(ship_data_list)
+            if validation_result['valid']:
+                if validation_result.get('need_retry', False):
+                    current_ship_count = len(ship_data_list)
+                    non_standard_retry_count += 1
+                    last_non_standard_data = ship_data_list
+                    
+                    if non_standard_retry_count >= 3:
+                        logger.info(f"非标准舰船数量({current_ship_count}艘)已重试3次，使用当前检测结果")
+                        return {'ships': ship_data_list, 'error': None}
+                    
+                    logger.warning(f"舰船数量非标准({current_ship_count}艘)，重试确认 ({non_standard_retry_count}/3)")
+                    if attempt < max_retry - 1:
+                        logger.info("等待1秒后重试...")
+                        self.device.click_record_clear()
+                        import time
+                        time.sleep(1)
+                    else:
+                        logger.info(f"已达到最大重试次数，使用当前检测结果({current_ship_count}艘)")
+                        return {'ships': ship_data_list, 'error': None}
+                else:
+                    logger.info("舰船数据验证通过")
+                    return {'ships': ship_data_list, 'error': None}
+            else:
+                logger.warning(f"舰船数据验证失败: {validation_result['reason']}")
+                last_error = validation_result['reason']
+                if attempt < max_retry - 1:
+                    logger.info("等待1秒后重试...")
+                    self.device.click_record_clear()
+                    import time
+                    time.sleep(1)
+                else:
+                    logger.error("已达到最大重试次数，舰船数据收集失败")
+                    return {'ships': None, 'error': f"验证失败: {last_error}"}
+        
+        return {'ships': None, 'error': "未知错误"}
+
+    def _validate_ship_data(self, ship_data_list):
+        """
+        验证舰船数据有效性
+        
+        Args:
+            ship_data_list: 舰船数据列表
+            
+        Returns:
+            dict: {'valid': bool, 'reason': str}
+        """
+        if not ship_data_list:
+            return {'valid': False, 'reason': '舰船数据为空'}
+        
+        ship_count = len(ship_data_list)
+        if ship_count < 1 or ship_count > 6:
+            return {
+                'valid': False, 
+                'reason': f'舰船数量异常: {ship_count}，应为1-6艘'
+            }
+        
+        positions = [ship['position'] for ship in ship_data_list]
+        if len(positions) != len(set(positions)):
+            return {
+                'valid': False, 
+                'reason': f'存在重复的舰船位置: {positions}'
+            }
+        
+        for ship in ship_data_list:
+            if ship['level'] < 1 or ship['level'] > 125:
+                return {
+                    'valid': False, 
+                    'reason': f"舰船等级异常: {ship['level']}"
+                }
+        
+        if ship_count != 6:
+            return {
+                'valid': True, 
+                'reason': f'舰船数量为{ship_count}，非标准6艘',
+                'need_retry': True
+            }
+        
+        return {'valid': True, 'reason': ''}
+
+    def _check_custom_positions_full_exp(self, ship_data_list, target_level, custom_positions):
+        """
+        检查自定义舰位是否满经验
+        
+        Args:
+            ship_data_list: 舰船数据列表
+            target_level: 目标等级
+            custom_positions: 自定义舰位列表，如 [4, 5]
+        """
+        target_exp = LIST_SHIP_EXP[target_level - 1]
+        
+        detected_positions = [ship['position'] for ship in ship_data_list]
+        positions_full = []
+        positions_not_full = []
+        positions_not_exist = []
+        
+        for position in custom_positions:
+            if position not in detected_positions:
+                logger.warning(f"舰位 {position} 不存在于当前舰队中，已检测到的舰位: {detected_positions}")
+                positions_not_exist.append(str(position))
+                continue
+            
+            for ship in ship_data_list:
+                if ship['position'] == position:
+                    if ship['total_exp'] >= target_exp:
+                        positions_full.append(str(position))
+                        logger.info(f"舰位 {position} 已满经验")
+                    else:
+                        positions_not_full.append(str(position))
+                        logger.info(f"舰位 {position} 未满经验")
+                    break
+        
+        if positions_not_exist:
+            logger.warning(f"以下舰位不存在: {', '.join(positions_not_exist)}")
+        
+        if positions_not_full:
             logger.info(
-                f"舰队 {self.config.OpsiFleet_Fleet} 的所有舰船均已满经验（等级 {target_level} 或更高）"
+                f"自定义舰位未满经验: {', '.join(positions_not_full)}"
+            )
+        else:
+            logger.info(
+                f"所有自定义舰位均已满经验: {', '.join(positions_full)}"
             )
             self.notify_push(
-                title="练级检查通过",
-                content=f"<{self.config.config_name}> {self.config.task} 已达到等级限制 {target_level}。",
+                title="自定义舰位练级检查通过",
+                content=f"<{self.config.config_name}> 自定义舰位 {', '.join(positions_full)} 已达到等级限制 {target_level}。",
             )
-        self.ui_back(appear_button=EQUIPMENT_OPEN, check_button=self.is_in_map)
-        self.config.OpsiCheckLeveling_LastRun = datetime.now().replace(microsecond=0)
-        if all_full_exp and self.config.OpsiCheckLeveling_DelayAfterFull:
-            logger.info("所有舰船满经验后延迟任务")
-            self.config.task_delay(server_update=True)
-            self.config.task_stop()
+            if self.config.OpsiCheckLeveling_DelayAfterFull:
+                logger.info("自定义舰位满经验后延迟任务")
+                self.config.task_delay(server_update=True)
+                self.config.task_stop()

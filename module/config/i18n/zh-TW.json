@@ -1762,6 +1762,10 @@
       "oil": "鑽石>石油>魔方",
       "custom": "自定義"
     },
+    "AddShortest": {
+      "name": "自動接取耗時最短的每日委託",
+      "help": "當設定的自定義委託過濾器沒有可選委託時，系統會自動接取耗時最短的每日委託。此設定不會影響任何內建的委託策略。"
+    },
     "CustomFilter": {
       "name": "自定義委託過濾器",
       "help": "使用自定義過濾器需將 \"委託過濾器\" 設定為 \"自定義\"，並閱讀 https://github.com/LmeSzinc/AzurLaneAutoScript/wiki/filter_string_cn"
@@ -4802,6 +4806,20 @@
     "LastRun": {
       "name": "上次檢查經驗的時間 (自動記錄)",
       "help": "記錄上一次檢查的時間以防止任務重復執行，檢查間隔為 1 天。這個數值是自動記錄的，一般不需要手動修改"
+    },
+    "CheckInterval": {
+      "name": "OpsiCheckLeveling.CheckInterval.name",
+      "help": "OpsiCheckLeveling.CheckInterval.help"
+    },
+    "EnableCustomCheck": {
+      "name": "OpsiCheckLeveling.EnableCustomCheck.name",
+      "help": "OpsiCheckLeveling.EnableCustomCheck.help",
+      "True": "True",
+      "False": "False"
+    },
+    "CustomCheckPositions": {
+      "name": "OpsiCheckLeveling.CustomCheckPositions.name",
+      "help": "OpsiCheckLeveling.CustomCheckPositions.help"
     },
     "DelayAfterFull": {
       "name": "到達目標等級後將推遲該任務",
