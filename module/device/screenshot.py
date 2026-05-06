@@ -27,7 +27,7 @@ from module.logger import logger
 
 class Screenshot(Adb, WSA, DroidCast, AScreenCap, Scrcpy, NemuIpc, LDOpenGL):
     
-    def __init__(self, screenshot_queue=None, screenshot_enabled=None, *args, **kwargs):
+    def __init__(self, *args, screenshot_queue=None, screenshot_enabled=None, **kwargs):  # Modify by MHY, screenshot_queue/enabled 改为 keyword-only 避免 Device 传参冲突
         self._screenshot_enabled = screenshot_enabled
         super().__init__(*args, **kwargs)
         self.screenshot_queue = screenshot_queue
