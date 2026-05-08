@@ -200,6 +200,8 @@ class Adb(Connection):
 
     @retry
     def click_adb(self, x, y):
+        # Add by MHY, ADB input tap 使用物理坐标，非720p屏幕需映射；minitouch等已有内置映射的后端不做此处理
+        x, y = self._map_coord(x, y)
         start = time.time()
         self.adb_shell(['input', 'tap', x, y])
         if time.time() - start <= 0.05:
@@ -207,6 +209,9 @@ class Adb(Connection):
 
     @retry
     def swipe_adb(self, p1, p2, duration=0.1):
+        # Add by MHY, ADB input swipe 使用物理坐标，非720p屏幕需映射
+        p1 = self._map_coord(*p1)
+        p2 = self._map_coord(*p2)
         duration = int(duration * 1000)
         self.adb_shell(['input', 'swipe', *p1, *p2, duration])
 

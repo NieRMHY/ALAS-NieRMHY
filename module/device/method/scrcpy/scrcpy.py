@@ -113,6 +113,8 @@ class Scrcpy(ScrcpyCore, Uiautomator2):
 
     @retry
     def click_scrcpy(self, x, y):
+        # Add by MHY, scrcpy 发送原始像素坐标，非720p屏幕需映射
+        x, y = self._map_coord(x, y)
         self.scrcpy_ensure_running()
 
         with self._scrcpy_control_socket_lock:
@@ -122,6 +124,8 @@ class Scrcpy(ScrcpyCore, Uiautomator2):
 
     @retry
     def long_click_scrcpy(self, x, y, duration=1.0):
+        # Add by MHY, scrcpy 发送原始像素坐标，非720p屏幕需映射
+        x, y = self._map_coord(x, y)
         self.scrcpy_ensure_running()
 
         with self._scrcpy_control_socket_lock:
@@ -132,6 +136,9 @@ class Scrcpy(ScrcpyCore, Uiautomator2):
 
     @retry
     def swipe_scrcpy(self, p1, p2):
+        # Add by MHY, scrcpy 发送原始像素坐标，非720p屏幕需映射
+        p1 = self._map_coord(*p1)
+        p2 = self._map_coord(*p2)
         self.scrcpy_ensure_running()
 
         with self._scrcpy_control_socket_lock:
@@ -150,6 +157,9 @@ class Scrcpy(ScrcpyCore, Uiautomator2):
 
     @retry
     def drag_scrcpy(self, p1, p2, point_random=(-10, -10, 10, 10)):
+        # Add by MHY, scrcpy 发送原始像素坐标，非720p屏幕需映射
+        p1 = self._map_coord(*p1)
+        p2 = self._map_coord(*p2)
         self.scrcpy_ensure_running()
 
         with self._scrcpy_control_socket_lock:
