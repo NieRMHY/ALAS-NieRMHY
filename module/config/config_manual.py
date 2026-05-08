@@ -378,7 +378,7 @@ class ManualConfig:
     OS_GLOBE_SWIPE_MULTIPLY = (1.91, 2.21)
 
     # 塞壬装置处理方法
-    # 'never', 'use_until_destroyed', 'use_twice', 'use_once'
+    # 'never', 'use_until_destroyed'
     OS_SIREN_DEVICE_USAGE = 'never'
 
     """

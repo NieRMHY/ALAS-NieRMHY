@@ -1,13 +1,10 @@
 # 此文件处理大世界（Operation Siren）模式下的地图导航与海域管理。
 # 包括全球地图切换、海域初始化、处理各种地图减益状态以及海域自动搜索的守护逻辑。
 import time
-import inspect
 from sys import maxsize
-from threading import Thread
 
 import inflection
 
-from datetime import datetime
 from module.base.timer import Timer
 from module.config.config import TaskEnd
 from module.config.utils import get_os_reset_remain
@@ -15,7 +12,6 @@ from module.exception import CampaignEnd, GameTooManyClickError, MapWalkError, R
 from module.handler.login import LoginHandler, MAINTENANCE_ANNOUNCE
 from module.logger import logger
 from module.map.map import Map
-from module.map.utils import location_ensure
 from module.os.assets import FLEET_EMP_DEBUFF, MAP_GOTO_GLOBE_FOG
 from module.handler.assets import POPUP_CONFIRM
 from module.os.fleet import OSFleet, BossFleet
@@ -31,97 +27,6 @@ from module.ui.page import page_os
 
 
 class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
-    SIREN_BUG_TASKS = ('OpsiHazard1Leveling', 'OpsiMeowfficerFarming')
-
-    def _get_siren_bug_task_pair(self):
-        task = self.config.task.command if self.config.task.command in self.SIREN_BUG_TASKS else 'OpsiHazard1Leveling'
-        peer_task = 'OpsiMeowfficerFarming' if task == 'OpsiHazard1Leveling' else 'OpsiHazard1Leveling'
-        return task, peer_task
-
-    def _get_siren_bug_zone(self, task):
-        return self.config.cross_get(keys=f"{task}.OpsiSirenBug.SirenBug_Zone", default=0)
-
-    def _normalize_siren_bug_zone(self, task, zone=None, log_invalid=False):
-        zone = self._get_siren_bug_zone(task) if zone is None else zone
-        if not zone:
-            return None
-        try:
-            return self.name_to_zone(zone)
-        except Exception:
-            if log_invalid:
-                logger.warning(f'SirenBug海域配置无法解析，跳过同步: task={task}, zone={zone}')
-            return None
-
-    def _get_siren_bug_sync_state(self):
-        task, peer_task = self._get_siren_bug_task_pair()
-        task_sync_enabled = bool(self.config.cross_get(keys=f"{task}.OpsiSirenBug.SirenBug_SyncDailyCount", default=False))
-        peer_sync_enabled = bool(self.config.cross_get(keys=f"{peer_task}.OpsiSirenBug.SirenBug_SyncDailyCount", default=False))
-        if not (task_sync_enabled and peer_sync_enabled):
-            return {
-                'task': task,
-                'peer_task': peer_task,
-                'enabled': False,
-                'zone': None,
-                'peer_zone': None,
-            }
-
-        zone = self._normalize_siren_bug_zone(task, log_invalid=True)
-        peer_zone = self._normalize_siren_bug_zone(peer_task, log_invalid=True)
-        if zone is None or peer_zone is None:
-            return {
-                'task': task,
-                'peer_task': peer_task,
-                'enabled': False,
-                'zone': zone,
-                'peer_zone': peer_zone,
-            }
-
-        if zone.zone_id != peer_zone.zone_id:
-            logger.info(f'SirenBug共享次数已启用但海域不同，跳过同步: {task}={zone}, {peer_task}={peer_zone}')
-            return {
-                'task': task,
-                'peer_task': peer_task,
-                'enabled': False,
-                'zone': zone,
-                'peer_zone': peer_zone,
-            }
-
-        logger.info(f'SirenBug共享次数已启用且海域一致，使用共享次数: zone={zone}, tasks={task}/{peer_task}')
-        return {
-            'task': task,
-            'peer_task': peer_task,
-            'enabled': True,
-            'zone': zone,
-            'peer_zone': peer_zone,
-        }
-
-    def _get_siren_bug_effective_daily_count(self):
-        sync_state = self._get_siren_bug_sync_state()
-        task = sync_state['task']
-        count = self.config.cross_get(keys=f"{task}.OpsiSirenBug.SirenBug_DailyCount", default=0)
-        if sync_state['enabled']:
-            peer_task = sync_state['peer_task']
-            peer_count = self.config.cross_get(keys=f"{peer_task}.OpsiSirenBug.SirenBug_DailyCount", default=0)
-            if count != peer_count:
-                logger.info(f'SirenBug共享次数发现不一致，自动归一: {task}={count}, {peer_task}={peer_count}')
-            count = max(count, peer_count)
-            self._set_siren_bug_daily_count(count, sync_state=sync_state)
-        return count, sync_state
-
-    def _set_siren_bug_daily_count(self, count, record=None, sync_state=None):
-        sync_state = self._get_siren_bug_sync_state() if sync_state is None else sync_state
-        task = sync_state['task']
-        record = datetime.now() if record is None else record
-        self.config.cross_set(keys=f"{task}.OpsiSirenBug.SirenBug_DailyCount", value=count)
-        self.config.cross_set(keys=f"{task}.OpsiSirenBug.SirenBug_DailyCountRecord", value=record)
-        if sync_state['enabled']:
-            peer_task = sync_state['peer_task']
-            self.config.cross_set(keys=f"{peer_task}.OpsiSirenBug.SirenBug_DailyCount", value=count)
-            self.config.cross_set(keys=f"{peer_task}.OpsiSirenBug.SirenBug_DailyCountRecord", value=record)
-
-    def _reset_siren_bug_daily_count(self, sync_state=None):
-        self._set_siren_bug_daily_count(0, sync_state=sync_state)
-
     def os_init(self):
         """
         Call this method before doing any Operation functions.
@@ -191,23 +96,6 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
         if self.is_in_special_zone():
             logger.warning('OS is in a special zone type, while SAFE and DANGEROUS are acceptable')
             self.map_exit()
-
-        # 如果当前海域是塞壬Bug利用海域，回到最近港口
-        task, _ = self._get_siren_bug_task_pair()
-        siren_bug_zone = self.config.cross_get(keys=f"{task}.OpsiSirenBug.SirenBug_Zone", default=0)
-        if siren_bug_zone:
-            try:
-                siren_bug_zone = self.name_to_zone(siren_bug_zone)
-            except Exception:
-                logger.warning(f'无法解析SirenBug目标区域: {siren_bug_zone}')
-            else:
-                if self.zone == siren_bug_zone:
-                    siren_bug_type = self.config.cross_get(keys=f"{task}.OpsiSirenBug.SirenBug_Type", default='dangerous')
-                    is_safe_zone = self.is_zone_name_hidden
-                    if (siren_bug_type == 'safe' and is_safe_zone) or (siren_bug_type == 'dangerous' and not is_safe_zone):
-                        logger.info('检测到当前海域为塞壬Bug利用海域，回到最近港口')
-                        self.globe_goto(self.zone_nearest_azur_port(self.zone), types=('SAFE', 'DANGEROUS'), refresh=False)
-                        return
 
         # Clear current zone
         leveling_zone = self.config.cross_get(keys="OpsiHazard1Leveling.OpsiHazard1Leveling.TargetZone", default=0)
@@ -1305,8 +1193,12 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
         Returns:
             bool: True if enabled, False otherwise
         """
-        task, _ = self._get_siren_bug_task_pair()
-        return self.config.cross_get(keys=f"{task}.OpsiSirenBug.SirenResearch_Enable")
+        if getattr(self.config, '_disable_siren_research', False):
+            return False
+        task = self.config.task.command
+        if task not in ('OpsiHazard1Leveling', 'OpsiMeowfficerFarming'):
+            task = 'OpsiHazard1Leveling'
+        return self.config.cross_get(keys=f"{task}.OpsiSirenBug.SirenResearch_Enable", default=True)
 
     def _should_skip_siren_research(self, grid):
         """
@@ -1416,9 +1308,7 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
                     logger.warning(f'【方案B】装置判断过程出现异常: {e}')
 
                 # ========== 配置检查 ==========
-                task, _ = self._get_siren_bug_task_pair()
-                siren_research_enabled = self.config.cross_get(keys=f"{task}.OpsiSirenBug.SirenResearch_Enable")
-                if not siren_research_enabled:
+                if not self._is_siren_research_enabled:
                     logger.warning('[配置检查] 塞壬研究装置功能已禁用,标记但不处理')
                     self._solved_map_event.add('is_scanning_device')
                     return True
@@ -1432,10 +1322,6 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
                 
                 # 标记处理
                 self._solved_map_event.add('is_scanning_device')
-                
-                # Bug利用
-                logger.info('[装置处理] 步骤2: 检查是否需要执行Bug利用')
-                self._handle_siren_bug_reinteract(drop=drop)
                 
                 return True
 
@@ -1645,13 +1531,6 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
                 logger.info('[装置处理] 执行二次重扫')
                 self.map_rescan_current(drop=drop)
                 
-                # 使用保存的标志状态，而不是重新检查（因为二次重扫可能会重置它）
-                if siren_confirmed:
-                    logger.info('[装置处理] 已确认为塞壬研究装置，检查是否需要执行Bug利用')
-                    self._handle_siren_bug_reinteract(drop=drop)
-                else:
-                    logger.info('[装置处理] 未确认为塞壬研究装置，跳过Bug利用')
-            
             return True
 
         grids = self.view.select(is_logging_tower=True)
@@ -2107,386 +1986,3 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
             time.sleep(0.3)
         return False
 
-    def _handle_siren_bug_reinteract(self, drop=None):
-        """执行塞壬研究装置二次交互流程。
-
-        在满足配置与区域前置条件时，跳转到目标海域处理塞壬研究装置，
-        成功后统计次数并返回原海域；失败时执行回退与恢复处理。
-
-        Args:
-            drop: 掉落统计对象，透传给下游移动/事件处理逻辑。
-
-        Returns:
-            None
-        """
-        # 23:55 - 00:05 跳过处理
-        task, _ = self._get_siren_bug_task_pair()
-        if self.config.cross_get(keys=f"{task}.OpsiSirenBug.SirenBug_CrossDay", default=False):
-            from datetime import time as dt_time
-            now = datetime.now()
-            if now.time() >= dt_time(23, 55) or now.time() <= dt_time(0, 5):
-                logger.info(f'当前时间: {now.strftime("%H:%M")}, 跳过塞壬研究装置BUG利用')
-                return
-        
-        # 塞壬研究装置处理后，跳转指定高侵蚀区域触发塞壬研究装置消耗两次紫币，最后返回自律海域   
-        try:
-            siren_research_enable = self.config.cross_get(keys=f"{task}.OpsiSirenBug.SirenResearch_Enable")
-            siren_bug_enable = self.config.cross_get(keys=f"{task}.OpsiSirenBug.SirenBug_Enable", default=False)
-            siren_bug_zone = self.config.cross_get(keys=f"{task}.OpsiSirenBug.SirenBug_Zone", default=0)
-            siren_bug_type = self.config.cross_get(keys=f"{task}.OpsiSirenBug.SirenBug_Type", default='dangerous')
-            disable_task_switch = self.config.cross_get(keys=f"{task}.OpsiSirenBug.DisableTaskSwitchDuringBug", default=False)
-        except Exception as e:
-            logger.warning(f'读取SirenBug配置失败: {e}，跳过塞壬研究装置BUG利用')
-            return
-
-        # SirenBug_Zone 预处理：嘗試轉换為 int
-        try:
-            siren_bug_zone = int(siren_bug_zone)
-        except (ValueError, TypeError):
-            pass  # 保持原值，如果是字符串（海域名称）则后续处理
-
-        # 前置条件校验
-        if not siren_research_enable or not siren_bug_enable:
-            logger.info('SirenBug功能前置条件不满足（SirenResearch_Enable 或 SirenBug_Enable 为 False），跳过塞壬研究装置BUG利用')
-            return
-
-        # 如果启用了禁用任务切换选项，设置标志
-        # 设计说明：这里有意直接覆盖为 True，不保存旧值。
-        # 该流程视为“独占执行段”，退出时统一恢复 False，确保本次 Bug 利用期间不被切任务打断。
-        if disable_task_switch:
-            self.config._disable_task_switch = True
-            logger.info('【塞壬Bug利用】禁用任务切换（设计为独占执行段，退出时统一恢复）')
-
-        if not siren_bug_zone:
-            logger.info('SirenBug功能前置条件不满足（SirenBug_Zone 未设置），跳过塞壬研究装置BUG利用')
-            # Ensure the flag is cleared if we return early
-            if disable_task_switch:
-                self.config._disable_task_switch = False
-            return
-
-        current_zone_id = self.zone.zone_id
-        if task == 'OpsiHazard1Leveling' and current_zone_id not in (22, 44):
-            logger.warning(f'当前区域{current_zone_id}非侵蚀一，跳过塞壬研究装置BUG利用')
-            # Ensure the flag is cleared if we return early
-            if disable_task_switch:
-                self.config._disable_task_switch = False
-            return
-        
-        # 设计说明：source_zone 在主流程前解析，若失败视为不可恢复前置条件失败，
-        # 由上层任务循环重新拉起，不在此处继续兜底推进。
-        source_zone = self.name_to_zone(current_zone_id)
-        
-        force_reward = False
-
-        logger.hr('塞壬研究装置 BUG 利用流程')
-        
-        try:
-            # 解析目标区域
-            try:
-                target_zone = self.name_to_zone(siren_bug_zone)
-            except Exception:
-                logger.warning(f'无法解析SirenBug目标区域: {siren_bug_zone}，跳过塞壬研究装置BUG利用')
-                # Ensure the flag is cleared if we return early
-                if disable_task_switch:
-                    self.config._disable_task_switch = False
-                return
-            
-            logger.info(f'当前区域: {source_zone}, 目标区域: {target_zone}')
-            count, sync_state = self._get_siren_bug_effective_daily_count()
-            
-            # 读取探测策略
-            siren_bug_mode = self.config.cross_get(
-                keys=f"{task}.OpsiSirenBug.SirenBug_Mode",
-                default='resource'
-            )
-
-            # 跳转至指定高侵蚀区域
-            with self.config.temporary(STORY_ALLOW_SKIP=False):
-                self.os_map_goto_globe(unpin=False)
-                self.globe_goto(target_zone, types=(siren_bug_type.upper(),), refresh=True)
-                self.zone_init()
-                
-                # Siren bug count sleep - 仅在探测资源模式时生效
-                if count > 0 and siren_bug_mode == 'resource':
-                    logger.info(f'塞壬 Bug 今日已使用 {count} 次，自律前等待 {count} 秒')
-                    logger.info('【设计说明】等待秒数与当日计数绑定，用于节奏控制与行为可观测性')
-                    logger.info('【模式说明】此等待仅在探测资源模式时生效')
-                    time.sleep(count)
-                elif count > 0:
-                    logger.info(f'塞壬 Bug 今日已使用 {count} 次，当前模式为探测敌人，跳过等待')
-
-                target_grid = self.config.cross_get(keys=f"{task}.OpsiSirenBug.SirenBug_Grid", default=None)
-                device_found = False
-                device_handled = False
-
-                if target_grid:
-                    try:
-                        target_grid = target_grid.upper()
-                        target_loc = location_ensure(target_grid)
-                        self.map_init(map_=None)
-                        
-                        # 避免目标在地图边缘导致 focus_to 死循环
-                        # 如果目标在边缘，则聚焦到向内一格的位置
-                        focus_loc = list(target_loc)
-                        shape = self.map.shape
-                        if focus_loc[0] <= 0:
-                            focus_loc[0] = 1
-                        elif focus_loc[0] >= shape[0]:
-                            focus_loc[0] = shape[0] - 1
-                        if focus_loc[1] <= 0:
-                            focus_loc[1] = 1
-                        elif focus_loc[1] >= shape[1]:
-                            focus_loc[1] = shape[1] - 1
-                        focus_loc = tuple(focus_loc)
-
-                        logger.info(f'指定了塞壬研究装置位置: {target_grid}，聚焦位置: {focus_loc}，直接处理')
-
-                        # 滑动到目标视角
-                        self.focus_to(focus_loc, swipe_limit=(6, 5))
-
-                        if target_loc in self.map:
-                            grid = self.convert_global_to_local(target_loc)
-                            self._solved_map_event = set()
-                            find_device_timer = Timer(30, count=1).start()
-                            while not find_device_timer.reached() and not device_handled:
-                                if self._handle_siren_bug_device(grid):
-                                    device_found = True
-                                    device_handled = True
-                                    break
-                                
-                                # 寻路中断，重新寻路
-                                # 设计说明：这里有意重置计时器，允许在路径持续可恢复时长期尝试，
-                                # 避免因固定超时提前放弃。
-                                find_device_timer.reset()
-                                self.map_init(map_=None)
-                                self.focus_to(focus_loc, swipe_limit=(6, 5))
-                                grid = self.convert_global_to_local(target_loc)
-                        else:
-                            logger.warning(f'目标 {target_grid} 不在地图中')
-
-                    except Exception as e:
-                        logger.error(f'处理指定塞壬研究装置位置时出错: {e}', exc_info=True)
-                        logger.warning('将回退到全图扫描模式')
-
-                if not device_handled:
-                    self.map_init(map_=None)
-                    camera_queue = self.map.camera_data
-                    find_device_timer = Timer(30, count=1).start()
-                    self._solved_map_event = set()
-
-                    while find_device_timer.reached() is False and not device_handled:
-                        # 遍历相机视角，滑动地图
-                        if len(camera_queue) == 0:
-                            camera_queue = self.map.camera_data
-                        camera_queue = camera_queue.sort_by_camera_distance(self.camera)
-                        target_camera = camera_queue[0]
-                        camera_queue = camera_queue[1:]
-
-                        # 滑动到目标视角
-                        self.focus_to(target_camera, swipe_limit=(6, 5))
-
-                        # 寻找塞壬研究装置
-                        grids = self.view.select(is_scanning_device=True)
-                        if grids and grids[0].is_scanning_device and 'is_scanning_device' not in self._solved_map_event:
-                            grid = grids[0]
-                            logger.info(f'找到塞壬研究装置: {grid}')
-                            device_found = True
-
-                            if self._handle_siren_bug_device(grid):
-                                device_handled = True
-                                break
-
-                            # 设计说明：命中装置但处理未完成时重置计时器，
-                            # 该流程按“可恢复优先”策略持续重试。
-                            find_device_timer.reset()
-                            self.map_init(map_=None)
-                            camera_queue = self.map.camera_data
-
-                    if not device_handled:
-                        if not device_found:
-                            logger.warning(f'区域{siren_bug_zone}未找到塞壬研究装置，跳过后续操作')
-
-                            # 没找到吊机自动关闭bug利用
-                            if self.config.cross_get(keys=f"{task}.OpsiSirenBug.SirenBug_AutoDisable", default=False):
-                                self.config.cross_set(keys=f"{task}.OpsiSirenBug.SirenBug_Enable", value=False)
-
-                            raise RuntimeError('未找到塞壬研究装置')
-                        else:
-                            logger.warning(f'找到塞壬研究装置但无法进入剧情，执行自动收菜（如果配置了自动收菜）')
-                            force_reward = True
-
-            # Increase bug count
-            count += 1
-            record_time = datetime.now()
-            self._set_siren_bug_daily_count(count, record=record_time, sync_state=sync_state)
-            logger.info(f'塞壬 Bug 利用成功，今日累计次数: {count}')
-
-            # 发送成功通知
-            try:
-                if hasattr(self, 'notify_push'):
-                    zone_type_text = "安全海域" if siren_bug_type == 'safe' else "普通海域"
-                    Thread(
-                        target=self.notify_push,
-                        kwargs={
-                            "title": "[Alas] 塞壬Bug利用 - 完成",
-                            "content": f"已完成塞壬研究装置Bug利用\\n目标区域: {target_zone} ({zone_type_text})\\n已返回侵蚀一区域"
-                        }
-                    ).start()
-            except Exception as notify_err:
-                logger.debug(f'发送成功通知失败: {notify_err}')
-            
-            count_limit = self.config.cross_get(keys=f"{task}.OpsiSirenBug.SirenBug_CountLimit", default=0)
-            if count_limit > 0 and (count >= count_limit or force_reward):
-                logger.info(f'已达到塞壬Bug自动处理阈值 ({count_limit}次)，开始自动收菜')
-                # 禁用塞壬研究装置的处理
-                self.config._disable_siren_research = True
-                
-                # 术语说明：
-                # - 主舰队（主舰队卡位舰队）：OpsiFleet_Fleet，用于探测敌人和卡位
-                # - 收菜舰队：与主舰队不同的舰队，用于清理战斗和收菜
-                main_fleet = self.config.OpsiFleet_Fleet
-                harvest_fleet = 1 if main_fleet != 1 else 2
-                
-                if siren_bug_type == 'safe':
-                    logger.info(f'[安全海域收菜] 步骤1: 主舰队({main_fleet})探测敌人进行卡位')
-                    # 使用主舰队卡位敌人
-                    self.os_auto_search_daemon_until_combat()
-                    logger.info(f'[安全海域收菜] 步骤2: 遇到敌舰，卡位完成')
-                    
-                    # 切换到收菜舰队进行收菜
-                    logger.info(f'[安全海域收菜] 步骤3: 切换到收菜舰队({harvest_fleet})进行收菜')
-                    self.fleet_set(harvest_fleet)
-                    self.os_auto_search_run()
-                    
-                    # 切换回主舰队
-                    logger.info(f'[安全海域收菜] 步骤4: 切换回主舰队({main_fleet})')
-                    self.fleet_set(main_fleet)
-                else:
-                    logger.info(f'[普通海域收菜] 步骤1: 切换到收菜舰队({harvest_fleet})进行收菜')
-                    # 普通海域切换到收菜舰队进行收菜
-                    self.fleet_set(harvest_fleet)
-                    self.os_auto_search_run()
-                    
-                    # 切换回主舰队
-                    logger.info(f'[普通海域收菜] 步骤2: 切换回主舰队({main_fleet})')
-                    self.fleet_set(main_fleet)
-                
-                self._reset_siren_bug_daily_count(sync_state=sync_state)
-                # 恢复塞壬研究装置的处理
-                self.config._disable_siren_research = False
-                logger.info('自动收菜完成，返回正常任务流程')
-                try:
-                    if hasattr(self, 'notify_push'):
-                        Thread(
-                            target=self.notify_push,
-                            kwargs={
-                                "title": "[Alas] 塞壬Bug利用 - 自动收菜完成",
-                                "content": f"已达到塞壬研究装置Bug利用阈值，自动收菜完成"
-                            }
-                        ).start()
-                except Exception as notify_err:
-                    logger.debug(f'发送自动收菜完成通知失败: {notify_err}')
-
-            # Bug利用核心操作完成，清除禁用任务切换标志
-            if disable_task_switch and hasattr(self.config, '_disable_task_switch'):
-                self.config._disable_task_switch = False
-                logger.info('【塞壬Bug利用】核心操作完成，恢复任务切换')
-            logger.info(f'【塞壬Bug利用】状态快照: disable_task_switch={getattr(self.config, "_disable_task_switch", None)}, '
-                        f'disable_siren_research={getattr(self.config, "_disable_siren_research", None)}, '
-                        f'daily_count={count}')
-
-            # 返回原区域
-            logger.info(f'【塞壬Bug利用】返回原区域: {source_zone}')
-            self.os_map_goto_globe(unpin=False)
-            self.globe_goto(source_zone, types=('SAFE', 'DANGEROUS'), refresh=True)
-            logger.info('【塞壬Bug利用】返回原区域完成')
-
-        except (RuntimeError, Exception) as e:
-            logger.error(f'塞壬研究装置BUG利用失败: {e}', exc_info=True)
-            failed_count, _ = self._get_siren_bug_effective_daily_count()
-            logger.info(f'【塞壬Bug利用】异常前状态: disable_task_switch={getattr(self.config, "_disable_task_switch", None)}, '
-                        f'disable_siren_research={getattr(self.config, "_disable_siren_research", None)}, '
-                        f'daily_count={failed_count}')
-            
-            # 异常时清除标志
-            if disable_task_switch and hasattr(self.config, '_disable_task_switch'):
-                self.config._disable_task_switch = False
-                logger.info('【塞壬Bug利用】异常退出，恢复任务切换')
-            
-            # 发送失败通知
-            try:
-                if hasattr(self, 'notify_push'):
-                    Thread(
-                        target=self.notify_push,
-                        kwargs={
-                            "title": "[Alas] 塞壬Bug利用 - 失败",
-                            "content": f"塞壬研究装置BUG利用失败\\n错误: {str(e)}\\n请检查日志"
-                        }
-                    ).start()
-            except Exception as notify_err:
-                logger.debug(f'发送失败通知失败: {notify_err}')
-            
-            # 为避免卡在选项中，尝试选择最后一个选项退出
-            if self._select_story_option_by_index(target_index=2, options_count=3):
-                logger.info('异常处理：已尝试选择最后一个选项退出剧情')
-
-            # 尝试返回原海域
-            try:
-                self.os_map_goto_globe(unpin=False)
-                self.globe_goto(source_zone, types=('SAFE', 'DANGEROUS'), refresh=True)
-                logger.info(f'异常处理：返回原区域: {source_zone}')
-            except Exception as return_err:
-                logger.error(f'返回原海域失败: {return_err}')
-        finally:
-            pass
-
-    def _handle_siren_bug_device(self, grid, drop=None):
-        """处理单个塞壬研究装置交互。
-
-        点击目标格后等待行走与事件触发，依据是否确认处理成功返回结果。
-        根据 SirenBug_Mode 配置选择探测策略：
-        - 'enemy': 探测隐藏的敌人（两次第1选项）
-        - 'resource': 探测隐藏的资源（两次第2选项，默认）
-
-        Args:
-            grid: 目标装置所在的可点击网格对象。
-            drop: 掉落统计对象，透传给 ``wait_until_walk_stable``。
-
-        Returns:
-            bool: 处理成功返回 True；需要重新寻路返回 False。
-
-        Raises:
-            RuntimeError: 未触发事件时抛出。
-        """
-        self.is_siren_device_confirmed = False
-        
-        # 移动舰队至塞壬研究装置，触发剧情
-        self.device.click(grid)
-
-        # 根据 SirenBug_Mode 配置选择探测策略
-        task, _ = self._get_siren_bug_task_pair()
-        siren_bug_mode = self.config.cross_get(
-            keys=f"{task}.OpsiSirenBug.SirenBug_Mode",
-            default='resource'
-        )
-        # 根据策略选择状态值
-        usage_value = 'use_first_twice' if siren_bug_mode == 'enemy' else 'use_twice'
-        logger.info(f'[塞壬Bug装置] 选择探测策略: {siren_bug_mode} (状态值: {usage_value})')
-
-        with self.config.temporary(STORY_ALLOW_SKIP=False, OS_SIREN_DEVICE_USAGE=usage_value):
-            result = self.wait_until_walk_stable(
-                drop=drop, walk_out_of_step=False, confirm_timer=Timer(3, count=4))
-            
-        if not result or 'event' not in result:
-            logger.error('未触发事件，可能塞壬研究装置位置错误')
-            logger.warning('若指定了吊机位置，请确认吊机位置是否正确。若未指定，请尝试指定吊机位置')
-            raise RuntimeError('处理塞壬研究装置未触发事件')
-            
-        if self.is_siren_device_confirmed:
-            log_msg = '(策略: 探测敌人)' if siren_bug_mode == 'enemy' else '(策略: 探测资源)'
-            logger.info(f'已成功到达并处理塞壬研究装置 {log_msg}')
-            self._solved_map_event.add('is_scanning_device')
-            return True
-        
-        logger.info('未成功到达塞壬研究装置，需要重新寻路')
-        return False

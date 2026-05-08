@@ -1,0 +1,111 @@
+name: Sync Fork with Upstream
+
+on:
+  schedule:
+    - cron: '0 */12 * * *'
+  workflow_dispatch:
+  push:
+    branches:
+      - dev
+    paths-ignore:
+      - '.github/workflows/**'
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          ref: dev
+
+      - name: Configure Git
+        run: |
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
+          git config pull.rebase false
+
+      - name: Add upstream repository
+        run: |
+          if ! git remote | grep -q upstream; then
+            git remote add upstream https://github.com/LmeSzinc/AzurLaneAutoScript.git
+          fi
+
+      - name: Fetch upstream changes
+        run: git fetch upstream master
+
+      - name: Check if merge is needed
+        id: check
+        run: |
+          git log HEAD..upstream/master --oneline > commits.txt
+          if [ -s commits.txt ]; then
+            echo "new_commits=true" >> $GITHUB_OUTPUT
+            echo "commit_count=$(wc -l < commits.txt)" >> $GITHUB_OUTPUT
+            echo "commits=$(cat commits.txt | head -5 | tr '\n' '; ')" >> $GITHUB_OUTPUT
+          else
+            echo "new_commits=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Merge upstream into dev
+        if: steps.check.outputs.new_commits == 'true'
+        id: merge_dev
+        run: |
+          echo "CONFLICT_DETECTED=false" >> $GITHUB_ENV
+
+          if git merge upstream/master --no-edit; then
+            echo "upstream -> dev 合并成功"
+          else
+            echo "upstream -> dev 检测到冲突"
+            echo "CONFLICT_DETECTED=true" >> $GITHUB_ENV
+            git diff --name-only --diff-filter=U > conflict_files.txt
+            git merge --abort
+          fi
+
+      - name: Merge dev into master
+        if: steps.check.outputs.new_commits == 'true' && env.CONFLICT_DETECTED == 'false'
+        id: merge_master
+        run: |
+          echo "MASTER_CONFLICT=false" >> $GITHUB_ENV
+
+          git checkout master
+          if git merge dev --no-edit; then
+            echo "dev -> master 合并成功"
+          else
+            echo "dev -> master 检测到冲突"
+            echo "MASTER_CONFLICT=true" >> $GITHUB_ENV
+            git diff --name-only --diff-filter=U > master_conflict_files.txt
+            git merge --abort
+          fi
+
+      - name: Push both branches
+        if: steps.check.outputs.new_commits == 'true' && env.CONFLICT_DETECTED == 'false' && env.MASTER_CONFLICT == 'false'
+        run: |
+          git push origin dev
+          git push origin master
+
+          echo "## 同步成功" >> $GITHUB_STEP_SUMMARY
+          echo "upstream -> dev -> master 全部合并完成" >> $GITHUB_STEP_SUMMARY
+          echo "同步了 ${{ steps.check.outputs.commit_count }} 个提交" >> $GITHUB_STEP_SUMMARY
+          echo "最近的提交：" >> $GITHUB_STEP_SUMMARY
+          echo "${{ steps.check.outputs.commits }}" | sed 's/; /\n- /g' | sed 's/^/- /' >> $GITHUB_STEP_SUMMARY
+
+      - name: Summary for upstream -> dev conflict
+        if: steps.check.outputs.new_commits == 'true' && env.CONFLICT_DETECTED == 'true'
+        run: |
+          echo "## 同步失败 - upstream 与 dev 冲突" >> $GITHUB_STEP_SUMMARY
+          echo "### 冲突文件：" >> $GITHUB_STEP_SUMMARY
+          cat conflict_files.txt >> $GITHUB_STEP_SUMMARY
+          echo "::error::upstream -> dev 合并冲突，需要手动解决"
+
+      - name: Summary for dev -> master conflict
+        if: steps.check.outputs.new_commits == 'true' && env.CONFLICT_DETECTED == 'false' && env.MASTER_CONFLICT == 'true'
+        run: |
+          echo "## dev -> master 合并冲突" >> $GITHUB_STEP_SUMMARY
+          echo "upstream -> dev 已成功，但 dev -> master 有冲突" >> $GITHUB_STEP_SUMMARY
+          echo "### 冲突文件：" >> $GITHUB_STEP_SUMMARY
+          cat master_conflict_files.txt >> $GITHUB_STEP_SUMMARY
+          echo "::warning::dev -> master 合并冲突，需要手动解决"

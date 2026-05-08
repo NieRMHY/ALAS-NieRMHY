@@ -48,7 +48,7 @@ def bp_redirect(value):
 FILTER_REGEX_VOUCHER = re.compile(
     '(logger)'
 
-    '(archive|unlock)?'
+    '(archive)?'
 
     '(t[1-6])?',
     flags=re.IGNORECASE)
