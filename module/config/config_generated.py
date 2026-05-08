@@ -206,6 +206,7 @@ class GeneratedConfig:
 
     # Group `StopCondition`
     StopCondition_OilLimit = 1000
+    StopCondition_CoinLimit = 0
     StopCondition_RunCount = 0
     StopCondition_MapAchievement = 'non_stop'  # non_stop, non_stop_clear_all, 100_percent_clear, map_3_stars, threat_safe, threat_safe_without_3_stars
     StopCondition_StageIncrease = False
@@ -749,26 +750,14 @@ class GeneratedConfig:
 
     # Group `OpsiHazard1Leveling`
     OpsiHazard1Leveling_TargetZone = 0  # 0, 44, 22
-    OpsiHazard1Leveling_OperationCoinsPreserve = 100000
+    OpsiHazard1Leveling_OperationCoinsPreserve = 40000
     OpsiHazard1Leveling_MinimumActionPointReserve = 200
-    OpsiHazard1Leveling_ExecuteFixedPatrolScan = False
+    OpsiHazard1Leveling_ExecuteFixedPatrolScan = True
     OpsiHazard1Leveling_Cl1Filter = 'ActionPoint'
     OpsiHazard1Leveling_RecordNonCL1AP = True
 
     # Group `OpsiSirenBug`
-    OpsiSirenBug_SirenResearch_Enable = False
-    OpsiSirenBug_SirenBug_Enable = False
-    OpsiSirenBug_SirenBug_Type = 'dangerous'  # dangerous, safe
-    OpsiSirenBug_SirenBug_Mode = 'resource'  # resource, enemy
-    OpsiSirenBug_SirenBug_Zone = 0
-    OpsiSirenBug_SirenBug_Grid = None
-    OpsiSirenBug_SirenBug_SyncDailyCount = False  # True, False
-    OpsiSirenBug_DisableTaskSwitchDuringBug = False  # True, False
-    OpsiSirenBug_SirenBug_DailyCount = 0
-    OpsiSirenBug_SirenBug_DailyCountRecord = datetime.datetime(2020, 1, 1, 0, 0)
-    OpsiSirenBug_SirenBug_CountLimit = 0
-    OpsiSirenBug_SirenBug_CrossDay = False
-    OpsiSirenBug_SirenBug_AutoDisable = False
+    OpsiSirenBug_SirenResearch_Enable = True
 
     # Group `OpsiCheckLeveling`
     OpsiCheckLeveling_TargetLevel = 0
@@ -779,10 +768,10 @@ class GeneratedConfig:
     OpsiCheckLeveling_DelayAfterFull = False
 
     # Group `OpsiScheduling`
-    OpsiScheduling_UseSmartSchedulingOperationCoinsPreserve = False  # True, False
-    OpsiScheduling_OperationCoinsPreserve = 0
-    OpsiScheduling_ActionPointPreserve = 500
-    OpsiScheduling_OperationCoinsReturnThreshold = 0
+    OpsiScheduling_UseSmartSchedulingOperationCoinsPreserve = True  # True, False
+    OpsiScheduling_OperationCoinsPreserve = 40000
+    OpsiScheduling_ActionPointPreserve = 200
+    OpsiScheduling_OperationCoinsReturnThreshold = 20000
     OpsiScheduling_EnableMeowfficerFarming = True  # True, False
     OpsiScheduling_EnableObscure = False  # True, False
     OpsiScheduling_EnableAbyssal = False  # True, False

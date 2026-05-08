@@ -984,6 +984,10 @@
         "type": "input",
         "value": 1000
       },
+      "CoinLimit": {
+        "type": "input",
+        "value": 0
+      },
       "RunCount": {
         "type": "input",
         "value": 0
@@ -1376,6 +1380,10 @@
         "type": "input",
         "value": 1000
       },
+      "CoinLimit": {
+        "type": "input",
+        "value": 0
+      },
       "RunCount": {
         "type": "input",
         "value": 0
@@ -1767,6 +1775,10 @@
       "OilLimit": {
         "type": "input",
         "value": 1000
+      },
+      "CoinLimit": {
+        "type": "input",
+        "value": 0
       },
       "RunCount": {
         "type": "input",
@@ -2291,6 +2303,10 @@
         "type": "input",
         "value": 1000
       },
+      "CoinLimit": {
+        "type": "input",
+        "value": 0
+      },
       "RunCount": {
         "type": "input",
         "value": 0,
@@ -2781,6 +2797,10 @@
         "type": "input",
         "value": 1000
       },
+      "CoinLimit": {
+        "type": "input",
+        "value": 0
+      },
       "RunCount": {
         "type": "input",
         "value": 0,
@@ -3237,6 +3257,10 @@
         "type": "input",
         "value": 1000
       },
+      "CoinLimit": {
+        "type": "input",
+        "value": 0
+      },
       "RunCount": {
         "type": "input",
         "value": 0,
@@ -3668,6 +3692,10 @@
         "type": "input",
         "value": 1000
       },
+      "CoinLimit": {
+        "type": "input",
+        "value": 0
+      },
       "RunCount": {
         "type": "input",
         "value": 0
@@ -4098,6 +4126,10 @@
         "type": "input",
         "value": 1000
       },
+      "CoinLimit": {
+        "type": "input",
+        "value": 0
+      },
       "RunCount": {
         "type": "input",
         "value": 0
@@ -4526,6 +4558,10 @@
       "OilLimit": {
         "type": "input",
         "value": 1000
+      },
+      "CoinLimit": {
+        "type": "input",
+        "value": 0
       },
       "RunCount": {
         "type": "input",
@@ -4961,6 +4997,10 @@
         "type": "input",
         "value": 1000
       },
+      "CoinLimit": {
+        "type": "input",
+        "value": 0
+      },
       "RunCount": {
         "type": "input",
         "value": 0
@@ -5227,6 +5267,10 @@
       "OilLimit": {
         "type": "input",
         "value": 1000
+      },
+      "CoinLimit": {
+        "type": "input",
+        "value": 0
       },
       "RunCount": {
         "type": "input",
@@ -5535,6 +5579,10 @@
         "type": "input",
         "value": 1000
       },
+      "CoinLimit": {
+        "type": "input",
+        "value": 0
+      },
       "RunCount": {
         "type": "input",
         "value": 0,
@@ -5799,6 +5847,10 @@
       "OilLimit": {
         "type": "input",
         "value": 1000
+      },
+      "CoinLimit": {
+        "type": "input",
+        "value": 0
       },
       "RunCount": {
         "type": "input",
@@ -6415,6 +6467,10 @@
         "type": "input",
         "value": 1000
       },
+      "CoinLimit": {
+        "type": "input",
+        "value": 0
+      },
       "RunCount": {
         "type": "input",
         "value": 0
@@ -6856,6 +6912,10 @@
       "OilLimit": {
         "type": "input",
         "value": 1000
+      },
+      "CoinLimit": {
+        "type": "input",
+        "value": 0
       },
       "RunCount": {
         "type": "input",
@@ -7304,6 +7364,10 @@
         "type": "input",
         "value": 1000
       },
+      "CoinLimit": {
+        "type": "input",
+        "value": 0
+      },
       "RunCount": {
         "type": "input",
         "value": 0,
@@ -7750,6 +7814,10 @@
       "OilLimit": {
         "type": "input",
         "value": 1000
+      },
+      "CoinLimit": {
+        "type": "input",
+        "value": 0
       },
       "RunCount": {
         "type": "input",
@@ -8198,6 +8266,10 @@
         "type": "input",
         "value": 1000
       },
+      "CoinLimit": {
+        "type": "input",
+        "value": 0
+      },
       "RunCount": {
         "type": "input",
         "value": 0,
@@ -8635,6 +8707,10 @@
         "type": "input",
         "value": 1000
       },
+      "CoinLimit": {
+        "type": "input",
+        "value": 0
+      },
       "RunCount": {
         "type": "input",
         "value": 0,
@@ -9065,6 +9141,10 @@
         "type": "input",
         "value": 1000
       },
+      "CoinLimit": {
+        "type": "input",
+        "value": 0
+      },
       "RunCount": {
         "type": "input",
         "value": 0,
@@ -9326,6 +9406,10 @@
       "OilLimit": {
         "type": "input",
         "value": 1000
+      },
+      "CoinLimit": {
+        "type": "input",
+        "value": 0
       },
       "RunCount": {
         "type": "input",
@@ -13885,72 +13969,7 @@
     "OpsiSirenBug": {
       "SirenResearch_Enable": {
         "type": "checkbox",
-        "value": false
-      },
-      "SirenBug_Enable": {
-        "type": "checkbox",
-        "value": false
-      },
-      "SirenBug_Type": {
-        "type": "select",
-        "value": "dangerous",
-        "option": [
-          "dangerous",
-          "safe"
-        ]
-      },
-      "SirenBug_Mode": {
-        "type": "select",
-        "value": "resource",
-        "option": [
-          "resource",
-          "enemy"
-        ]
-      },
-      "SirenBug_Zone": {
-        "type": "input",
-        "value": 0
-      },
-      "SirenBug_Grid": {
-        "type": "input",
-        "value": null
-      },
-      "SirenBug_SyncDailyCount": {
-        "type": "checkbox",
-        "value": false,
-        "option": [
-          true,
-          false
-        ]
-      },
-      "DisableTaskSwitchDuringBug": {
-        "type": "checkbox",
-        "value": false,
-        "option": [
-          true,
-          false
-        ]
-      },
-      "SirenBug_DailyCount": {
-        "type": "input",
-        "value": 0
-      },
-      "SirenBug_DailyCountRecord": {
-        "type": "datetime",
-        "value": "2020-01-01 00:00:00",
-        "validate": "datetime"
-      },
-      "SirenBug_CountLimit": {
-        "type": "input",
-        "value": 0
-      },
-      "SirenBug_CrossDay": {
-        "type": "checkbox",
-        "value": false
-      },
-      "SirenBug_AutoDisable": {
-        "type": "checkbox",
-        "value": false
+        "value": true
       }
     },
     "OpsiTarget": {
@@ -14041,7 +14060,7 @@
       },
       "OperationCoinsPreserve": {
         "type": "input",
-        "value": 100000
+        "value": 40000
       },
       "MinimumActionPointReserve": {
         "type": "input",
@@ -14049,7 +14068,7 @@
       },
       "ExecuteFixedPatrolScan": {
         "type": "checkbox",
-        "value": false
+        "value": true
       },
       "Cl1Filter": {
         "type": "textarea",
@@ -14063,72 +14082,7 @@
     "OpsiSirenBug": {
       "SirenResearch_Enable": {
         "type": "checkbox",
-        "value": false
-      },
-      "SirenBug_Enable": {
-        "type": "checkbox",
-        "value": false
-      },
-      "SirenBug_Type": {
-        "type": "select",
-        "value": "dangerous",
-        "option": [
-          "dangerous",
-          "safe"
-        ]
-      },
-      "SirenBug_Mode": {
-        "type": "select",
-        "value": "resource",
-        "option": [
-          "resource",
-          "enemy"
-        ]
-      },
-      "SirenBug_Zone": {
-        "type": "input",
-        "value": 0
-      },
-      "SirenBug_Grid": {
-        "type": "input",
-        "value": null
-      },
-      "SirenBug_SyncDailyCount": {
-        "type": "checkbox",
-        "value": false,
-        "option": [
-          true,
-          false
-        ]
-      },
-      "DisableTaskSwitchDuringBug": {
-        "type": "checkbox",
-        "value": false,
-        "option": [
-          true,
-          false
-        ]
-      },
-      "SirenBug_DailyCount": {
-        "type": "input",
-        "value": 0
-      },
-      "SirenBug_DailyCountRecord": {
-        "type": "datetime",
-        "value": "2020-01-01 00:00:00",
-        "validate": "datetime"
-      },
-      "SirenBug_CountLimit": {
-        "type": "input",
-        "value": 0
-      },
-      "SirenBug_CrossDay": {
-        "type": "checkbox",
-        "value": false
-      },
-      "SirenBug_AutoDisable": {
-        "type": "checkbox",
-        "value": false
+        "value": true
       }
     },
     "OpsiFleet": {
@@ -14228,7 +14182,7 @@
     "OpsiScheduling": {
       "UseSmartSchedulingOperationCoinsPreserve": {
         "type": "checkbox",
-        "value": false,
+        "value": true,
         "option": [
           true,
           false
@@ -14236,15 +14190,15 @@
       },
       "OperationCoinsPreserve": {
         "type": "input",
-        "value": 0
+        "value": 40000
       },
       "ActionPointPreserve": {
         "type": "input",
-        "value": 500
+        "value": 200
       },
       "OperationCoinsReturnThreshold": {
         "type": "input",
-        "value": 0
+        "value": 20000
       },
       "EnableMeowfficerFarming": {
         "type": "checkbox",

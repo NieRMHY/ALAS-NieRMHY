@@ -306,29 +306,17 @@ class OpsiMeowfficerFarming(CoinTaskMixin, OSMap):
         hazard_level = self.config.OpsiMeowfficerFarming_SirenDetectorSearch_HazardLevel
         logger.hr(f'探测装置搜索模式，当前侵蚀等级: {hazard_level} (仅中心海域)', level=1)
 
-        # 步骤 0. 临时配置：禁用塞壬研究（做一次即可，后续会显式恢复原值）
-        # 设计说明：这里按"覆盖式临时状态"处理，后续会显式恢复原值。
-        self._original_siren_research_enable = self.config.OpsiSirenBug_SirenResearch_Enable
-        self.config.OpsiSirenBug_SirenResearch_Enable = False
-        logger.info('探测装置搜索：临时禁用塞壬研究')
-        
+        # 步骤 0. 临时禁用塞壬研究（后续会显式恢复）
         self.config._disable_siren_research = True
         logger.info('探测装置搜索：已设置离开标志，遇到装置选项时将选择离开')
 
         def _restore_siren_search_state():
-            if hasattr(self, '_original_siren_research_enable'):
-                self.config.OpsiSirenBug_SirenResearch_Enable = self._original_siren_research_enable
             if hasattr(self.config, '_disable_siren_research'):
                 delattr(self.config, '_disable_siren_research')
             # 清理忽略标记（不修改配置本身）
             if hasattr(self, '_siren_search_ignore_stay_in_zone'):
                 try:
                     delattr(self, '_siren_search_ignore_stay_in_zone')
-                except Exception:
-                    pass
-            if hasattr(self, '_original_siren_research_enable'):
-                try:
-                    delattr(self, '_original_siren_research_enable')
                 except Exception:
                     pass
 

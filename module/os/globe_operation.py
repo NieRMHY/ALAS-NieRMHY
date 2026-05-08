@@ -25,7 +25,7 @@ class GlobeOperation(ActionPointHandler):
     _zone_unpin_interval = Timer(0.5)
 
     def is_in_globe(self):
-        return self.appear(GLOBE_GOTO_MAP, offset=(20, 20))
+        return self.appear(GLOBE_GOTO_MAP, offset=(20, 20), similarity=0.75)
 
     def get_zone_pinned(self):
         """
@@ -33,7 +33,7 @@ class GlobeOperation(ActionPointHandler):
             Button:
         """
         for zone in ZONE_TYPES:
-            if self.appear(zone, offset=(20, 20)):
+            if self.appear(zone, offset=(20, 20), similarity=0.75):
                 for button in ASSETS_PINNED_ZONE:
                     button.load_offset(zone)
 

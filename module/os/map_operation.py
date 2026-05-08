@@ -238,7 +238,7 @@ class OSMapOperation(MapOrderHandler, MissionHandler, PortHandler, StorageHandle
         Returns:
             bool: If in an obscure zone, abyssal zone, or stronghold.
         """
-        return self.appear(MAP_EXIT, offset=(20, 20))
+        return self.appear(MAP_EXIT, offset=(20, 20), similarity=0.75)
 
     def map_exit(self):
         """

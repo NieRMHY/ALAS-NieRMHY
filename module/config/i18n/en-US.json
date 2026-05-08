@@ -1155,6 +1155,10 @@
       "name": "Delay When Oil Falls Below X",
       "help": "Delay the task when oil is too low, continue sortie when oil is sufficient"
     },
+    "CoinLimit": {
+      "name": "Stop When Coins Are Above X",
+      "help": "Stop the current task when coins are found to be above this number\n0 means no coin limit"
+    },
     "RunCount": {
       "name": "Stop After Sortie Count Exceeds X",
       "help": "Each run decreases the count by one, task stops when it reaches zero\n0 means no limit"
@@ -4730,68 +4734,12 @@
   },
   "OpsiSirenBug": {
     "_info": {
-      "name": "Siren Research Device Bug Exploit Beta",
-      "help": "Options for configuring the Siren Research Device and its bug exploits"
+      "name": "Siren Research Device",
+      "help": "Basic options for handling Siren Research Devices"
     },
     "SirenResearch_Enable": {
       "name": "Enable Siren Research Device",
       "help": "After enabling, use purple coins to convert to yellow coins through the Siren Research Device\nSufficient nautical miles are needed to sustain the purple coin consumption"
-    },
-    "SirenBug_Enable": {
-      "name": "Enable Siren Research Device Bug Exploit",
-      "help": "Use the Siren Research Device bug to unlimitedly obtain Siren Research Device resources in high-Corrosion zones\nBefore enabling this function, you need to enable the \"Siren Research Device\" function first, otherwise it will not take effect."
-    },
-    "SirenBug_Type": {
-      "name": "Target Zone Type",
-      "help": "Choose whether the target zone is a safe zone or a normal zone.",
-      "dangerous": "Normal Zone",
-      "safe": "Safe Zone"
-    },
-    "SirenBug_Mode": {
-      "name": "Detection Method for Siren Research Device",
-      "help": "Choose the detection method for Siren Research Device. When detecting hidden resources, the second option is selected. When detecting hidden enemies, the first option is selected",
-      "resource": "Detect Hidden Resources",
-      "enemy": "Detect Hidden Enemies"
-    },
-    "SirenBug_Zone": {
-      "name": "Bug Exploit Zone Name or ID",
-      "help": "Designate high-Corrosion zones where Siren Research Devices have spawned\nSupports zone ID, CN/EN/JP/TW zone names, e.g. \"51\", \"NA Ocean SE Sector E\"\nFill in default value 0, or clear the value to cancel"
-    },
-    "SirenBug_Grid": {
-      "name": "Map Coordinates of the Device",
-      "help": "Specify the coordinates of the Siren Research Device on the map. If empty, will scan the map to find it.\nCoordinate format is an uppercase letter for column + Arabic numeral for row, e.g. \"B10\" means column 2, row 10.\nThe top-left grid is \"A1\". Column increases by one moving right, row increases by one moving down."
-    },
-    "SirenBug_SyncDailyCount": {
-      "name": "同步每日利用次数",
-      "help": "同步每日已利用塞壬研究装置 Bug 的次数",
-      "True": "是",
-      "False": "否"
-    },
-    "DisableTaskSwitchDuringBug": {
-      "name": "Disable Scheduler Task Switching During Bug Exploit",
-      "help": "Temporarily disable the scheduler's task switching check during bug exploitation to avoid being interrupted by commission, daily and other tasks.\nEnable this option if the bug exploit process is often interrupted by other due tasks.",
-      "True": "Yes",
-      "False": "No"
-    },
-    "SirenBug_DailyCount": {
-      "name": "Siren Research Device Bug Exploit Count",
-      "help": "The number of times the Siren Research Device bug has been exploited. A corresponding number of seconds will be waited based on this value before each scan."
-    },
-    "SirenBug_DailyCountRecord": {
-      "name": "Last Siren Research Device Bug Exploit Time",
-      "help": ""
-    },
-    "SirenBug_CountLimit": {
-      "name": "Auto-collect when bug exploit count reaches this value (0 to disable)",
-      "help": "Note: This may cause the Siren Research Device to disappear. You bear the consequences if it disappears.\nWhen the bug exploit count reaches the set value, use the current fleet to block enemy ships and use another fleet to collect resources."
-    },
-    "SirenBug_CrossDay": {
-      "name": "Pause Bug Exploit During Day Change (23:55-00:05)",
-      "help": "Bug exploitation is paused from 23:55 to 00:05 the next day to avoid crashes caused by day-change resets/disconnections."
-    },
-    "SirenBug_AutoDisable": {
-      "name": "Auto-Disable Bug Exploit When No Research Device Found",
-      "help": "In case the device disappears, the auto-disable function avoids wasting Action Points by repeatedly entering the zone."
     }
   },
   "OpsiCheckLeveling": {
