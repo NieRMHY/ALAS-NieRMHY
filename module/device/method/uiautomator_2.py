@@ -154,14 +154,21 @@ class Uiautomator2(Connection):
 
     @retry
     def click_uiautomator2(self, x, y):
+        # Add by MHY, uiautomator2 底层使用 input tap，非720p屏幕需映射
+        x, y = self._map_coord(x, y)
         self.u2.click(x, y)
 
     @retry
     def long_click_uiautomator2(self, x, y, duration=(1, 1.2)):
+        # Add by MHY, uiautomator2 底层使用 input swipe，非720p屏幕需映射
+        x, y = self._map_coord(x, y)
         self.u2.long_click(x, y, duration=duration)
 
     @retry
     def swipe_uiautomator2(self, p1, p2, duration=0.1):
+        # Add by MHY, uiautomator2 底层使用 input swipe，非720p屏幕需映射
+        p1 = self._map_coord(*p1)
+        p2 = self._map_coord(*p2)
         self.u2.swipe(*p1, *p2, duration=duration)
 
     @retry

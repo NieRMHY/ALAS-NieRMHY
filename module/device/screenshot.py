@@ -47,6 +47,8 @@ class Screenshot(Adb, WSA, DroidCast, AScreenCap, Scrcpy, NemuIpc, LDOpenGL):
     _screenshot_interval = Timer(0.1)
     _last_save_time = {}
     _resize_method_idx = 0
+    _screen_scale_x = 1.0   # Add by MHY, 非720p屏幕的坐标缩放因子，click/swipe前反向映射使用
+    _screen_scale_y = 1.0
     image: np.ndarray
 
     cv_interpolation_methods = [cv2.INTER_LANCZOS4, cv2.INTER_AREA]
@@ -117,6 +119,10 @@ class Screenshot(Adb, WSA, DroidCast, AScreenCap, Scrcpy, NemuIpc, LDOpenGL):
 
             width, height = image_size(self.image)
             if width != 1280 or height != 720:
+                # Add by MHY, 记录原始分辨率→720p的缩放因子，供click/swipe等坐标反向映射
+                # 后续上游如果提供完整的坐标映射方案，可对比后选择采用上游方案或保留当前方案
+                self._screen_scale_x = width / 1280.0
+                self._screen_scale_y = height / 720.0
                 method_type, interp = self.get_next_resize_method()
                 if method_type == 'cv':
                     self.image = cv2.resize(self.image, (1280, 720), interpolation=interp)
