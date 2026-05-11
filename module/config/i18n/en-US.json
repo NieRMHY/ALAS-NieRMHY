@@ -587,22 +587,6 @@
     "AdbOfflineThreshold": {
       "name": "Device restart threshold not detected",
       "help": "The number of times the device cannot be detected in a row triggers a restart."
-    },
-    "LlmAnalysis": {
-      "name": "Error.LlmAnalysis.name",
-      "help": "Error.LlmAnalysis.help"
-    },
-    "LlmApiKey": {
-      "name": "LLM API Key",
-      "help": "Purchase model service and get an API key from https://platform.deepseek.com/ or https://platform.xiaomimimo.com/."
-    },
-    "LlmApiBase": {
-      "name": "LLM API Base",
-      "help": "Enter the provider's OpenAI-compatible Base URL. Refer to https://platform.deepseek.com/ or https://platform.xiaomimimo.com/ for setup instructions."
-    },
-    "LlmModel": {
-      "name": "LLM Model",
-      "help": "Enter a model name supported by your purchased service, as shown on https://platform.deepseek.com/ or https://platform.xiaomimimo.com/."
     }
   },
   "Optimization": {

@@ -587,22 +587,6 @@
     "AdbOfflineThreshold": {
       "name": "デバイスの再起動しきい値が検出されない",
       "help": "デバイスが連続して検出できなかった回数に応じて、再起動がトリガーされます。"
-    },
-    "LlmAnalysis": {
-      "name": "LLM 错误分析を有効にする",
-      "help": "未処理の例外が発生した際、LLM を使用してエラーの原因分析と改善提案を自動的に行います。"
-    },
-    "LlmApiKey": {
-      "name": "LLM API キー",
-      "help": "https://platform.deepseek.com/ または https://platform.xiaomimimo.com/ でモデルサービスを購入し、API キーを取得してください。"
-    },
-    "LlmApiBase": {
-      "name": "LLM API ベース URL",
-      "help": "モデルサービス提供元の OpenAI 互換 Base URL を入力してください。接続方法は https://platform.deepseek.com/ または https://platform.xiaomimimo.com/ の説明を参照してください。"
-    },
-    "LlmModel": {
-      "name": "LLM モデル",
-      "help": "購入済みサービスで利用できるモデル名を入力してください。利用可能な名称は https://platform.deepseek.com/ または https://platform.xiaomimimo.com/ の表示に従ってください。"
     }
   },
   "Optimization": {

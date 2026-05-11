@@ -587,22 +587,6 @@
     "AdbOfflineThreshold": {
       "name": "检测不到设备重启阈值 (。-`ω´-)",
       "help": "连续多少次触发重启喵。"
-    },
-    "LlmAnalysis": {
-      "name": "启用 LLM 错误分析喵 (´⊙ω⊙`)",
-      "help": "发生异常时调用LLM分析原因给建议喵~"
-    },
-    "LlmApiKey": {
-      "name": "LLM 的 API Key (。・ω・。)",
-      "help": "请自行前往 https://platform.deepseek.com/ 或 https://platform.xiaomimimo.com/ 购买模型服务并获取 API Key 喵。"
-    },
-    "LlmApiBase": {
-      "name": "LLM API Base (・ω・｀)",
-      "help": "填写模型服务提供商的 OpenAI 兼容 Base URL，可参考 https://platform.deepseek.com/ 或 https://platform.xiaomimimo.com/ 的接入说明喵。"
-    },
-    "LlmModel": {
-      "name": "LLM 模型选择 (∩・ω・)∩",
-      "help": "填写已购买服务支持的模型名称，请以 https://platform.deepseek.com/ 或 https://platform.xiaomimimo.com/ 平台展示为准喵。"
     }
   },
   "Optimization": {

@@ -587,22 +587,6 @@
     "AdbOfflineThreshold": {
       "name": "檢測不到裝置重啟閾值",
       "help": "連續檢測不到裝置多少次後觸發重啟。"
-    },
-    "LlmAnalysis": {
-      "name": "Error.LlmAnalysis.name",
-      "help": "Error.LlmAnalysis.help"
-    },
-    "LlmApiKey": {
-      "name": "LLM API Key",
-      "help": "請自行前往 https://platform.deepseek.com/ 或 https://platform.xiaomimimo.com/ 購買模型服務並取得 API Key。"
-    },
-    "LlmApiBase": {
-      "name": "LLM API Base",
-      "help": "填寫模型服務提供商的 OpenAI 相容 Base URL，可參考 https://platform.deepseek.com/ 或 https://platform.xiaomimimo.com/ 的接入說明。"
-    },
-    "LlmModel": {
-      "name": "LLM 模型",
-      "help": "填寫已購買服務支援的模型名稱，請以 https://platform.deepseek.com/ 或 https://platform.xiaomimimo.com/ 平台展示為準。"
     }
   },
   "Optimization": {
