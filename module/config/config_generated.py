@@ -354,6 +354,7 @@ class GeneratedConfig:
 
     # Group `Research`
     Research_UseCube = 'only_05_hour'  # always_use, only_05_hour, only_no_project, do_not_use
+    Research_CubePreserve = 0
     Research_UseCoin = 'always_use'  # always_use, only_05_hour, only_no_project, do_not_use
     Research_UsePart = 'always_use'  # always_use, only_05_hour, only_no_project, do_not_use
     Research_AllowDelay = True
@@ -675,6 +676,9 @@ class GeneratedConfig:
     OpsiGeneral_DoRandomMapEvent = True
     OpsiGeneral_AkashiShopFilter = 'ActionPoint'
     OpsiGeneral_NotifyOpsiMail = True
+    OpsiGeneral_LauncherPush = True
+    OpsiGeneral_IndependentPush = False
+    OpsiGeneral_OpsiOnePushConfig = 'provider: null'
 
     # Group `OpsiAshBeacon`
     OpsiAshBeacon_AttackMode = 'current'  # current, current_dossier
@@ -694,8 +698,6 @@ class GeneratedConfig:
     # Group `OpsiExplore`
     OpsiExplore_SpecialRadar = False
     OpsiExplore_ForceRun = False
-    OpsiExplore_IfSkipSirenResearch = 0  # 0, 6, 65, 654
-    OpsiExplore_SkipedSirenResearch = None
     OpsiExplore_LastZone = 0
     OpsiExplore_ExploreProgress = None
 
@@ -738,10 +740,6 @@ class GeneratedConfig:
     OpsiMeowfficerFarming_TargetZone = 0
     OpsiMeowfficerFarming_StayInZone = False
     OpsiMeowfficerFarming_APPreserveUntilReset = False
-    OpsiMeowfficerFarming_SirenDetectorSearch_Enable = False
-    OpsiMeowfficerFarming_SirenDetectorSearch_HazardLevel = 5  # 5, 6
-    OpsiMeowfficerFarming_SirenDetectorSearch_StopAfterFound = 1
-    OpsiMeowfficerFarming_SirenDetectorSearch_FoundZones = None
 
     # Group `OpsiTarget`
     OpsiTarget_TargetFarming = False
@@ -758,6 +756,8 @@ class GeneratedConfig:
 
     # Group `OpsiSirenBug`
     OpsiSirenBug_SirenResearch_Enable = True
+    OpsiSirenBug_Siren_Mode = 'resource'  # resource, enemy
+    OpsiSirenBug_Siren_Fleet = 0  # 0, 1, 2, 3, 4
 
     # Group `OpsiCheckLeveling`
     OpsiCheckLeveling_TargetLevel = 0

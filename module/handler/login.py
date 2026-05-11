@@ -1,13 +1,15 @@
 # 基于原版 login.py 增加了智能的游戏重启逻辑
 # 用于处理登录流程中的各种弹窗、公告以及在应用崩溃时执行重启恢复操作。
 # Last Updated: 2025-08-25 20:41
-from typing import Union
-
 import numpy as np
 from scipy.signal import find_peaks
+# Patch pkg_resources before importing adbutils and uiautomator2.
+from module.device.pkg_resources import get_distribution
 from uiautomator2 import UiObject
 from uiautomator2.exceptions import XPathElementNotFoundError
 from uiautomator2.xpath import XPath, XPathSelector
+
+_ = get_distribution
 
 import module.config.server as server
 from module.base.button import Button
@@ -287,7 +289,7 @@ class LoginHandler(UI):
                 peaks = (peaks[0] + peaks[1]) / 2
             start_pos = [(start_padding_results[2] + start_margin_results[2]) / 2, float(peaks)]
             end_pos = [(start_padding_results[2] + start_margin_results[2]) / 2, area_wait_results[3]]
-            logger.info("user agreement position find result: " + ', '.join('%.2f' % _ for _ in start_pos))
+            logger.info("user agreement position find result: " + ', '.join(f'{pos:.2f}' for pos in start_pos))
             logger.info("user agreement area expect:          " + 'x:963-973, y:259-279')
 
             self.device.drag(start_pos, end_pos, segments=2, shake=(0, 25), point_random=(0, 0, 0, 0),
@@ -308,7 +310,7 @@ class LoginHandler(UI):
             return True
 
     @staticmethod
-    def get_for_any_ele(list_u2_path: list) -> Union[bool, tuple]:
+    def get_for_any_ele(list_u2_path: list) -> bool | tuple:
         """
         Args:
             list_u2_path (list): [UiObject or XPathSelector]  In this case, len(list_u2_path) >= 1

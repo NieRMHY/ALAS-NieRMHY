@@ -2,7 +2,7 @@ import numpy as np
 
 from module.base.button import ButtonGrid
 from module.base.timer import Timer
-from module.base.utils import rgb2gray
+from module.base.utils import rgb2gray, lower_template_match_similarity
 from module.combat.assets import GET_ITEMS_1, GET_ITEMS_2
 from module.exception import ScriptError
 from module.logger import logger
@@ -226,7 +226,7 @@ class StorageHandler(StorageUI):
 
             image = rgb2gray(self.device.image)
             sim, box_button = self._storage_box_template(rarity).match_result(image)
-            if sim > 0.9:
+            if sim > lower_template_match_similarity(0.9):
                 used += self._storage_use_one_box(box_button, amount)
                 continue
             else:

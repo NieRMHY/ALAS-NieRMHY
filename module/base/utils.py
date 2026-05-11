@@ -6,6 +6,26 @@ import numpy as np
 from PIL import Image
 
 REGEX_NODE = re.compile(r'(-?[A-Za-z]+)(-?\d+)')
+TEMPLATE_MATCH_NON_NATIVE_720P = False
+TEMPLATE_MATCH_NON_NATIVE_720P_THRESHOLD = 0.75
+
+
+def set_template_match_non_native_720p(enabled):
+    global TEMPLATE_MATCH_NON_NATIVE_720P
+    TEMPLATE_MATCH_NON_NATIVE_720P = bool(enabled)
+
+
+def lower_template_match_similarity(similarity):
+    """
+    Loosen template matching for screenshots normalized from non-native 720p.
+
+    `similarity` is a 0~1 cv2.TM_CCOEFF_NORMED threshold. When the current
+    screenshot was not captured as 1280x720, cap strict thresholds at 0.75.
+    """
+    similarity = float(similarity)
+    if TEMPLATE_MATCH_NON_NATIVE_720P:
+        return min(similarity, TEMPLATE_MATCH_NON_NATIVE_720P_THRESHOLD)
+    return similarity
 
 
 def random_normal_distribution_int(a, b, n=3):

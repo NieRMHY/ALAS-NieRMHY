@@ -61,7 +61,7 @@ class FleetSelector:
             if np.std(mean, ddof=1) > self.FLEET_BAR_ACTIVE_STD:
                 result.append(4 - index)
 
-        logger.info('Current selected: %s' % str(result))
+        logger.info(f'Current selected: {result}')
         return result
 
     def selected(self):
@@ -91,7 +91,7 @@ class FleetSelector:
         ), offset=(self._bar.area[0:2]))
         area = area_pad(area, pad=3)
         index = numbers - index
-        return Button(area=(), color=(), button=area, name='%s_INDEX_%s' % (str(self._bar), str(index)))
+        return Button(area=(), color=(), button=area, name=f'{self._bar}_INDEX_{index}')
 
     def open(self):
         """

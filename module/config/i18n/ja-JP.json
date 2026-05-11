@@ -587,6 +587,22 @@
     "AdbOfflineThreshold": {
       "name": "デバイスの再起動しきい値が検出されない",
       "help": "デバイスが連続して検出できなかった回数に応じて、再起動がトリガーされます。"
+    },
+    "LlmAnalysis": {
+      "name": "LLM 错误分析を有効にする",
+      "help": "未処理の例外が発生した際、LLM を使用してエラーの原因分析と改善提案を自動的に行います。"
+    },
+    "LlmApiKey": {
+      "name": "LLM API キー",
+      "help": "https://platform.deepseek.com/ または https://platform.xiaomimimo.com/ でモデルサービスを購入し、API キーを取得してください。"
+    },
+    "LlmApiBase": {
+      "name": "LLM API ベース URL",
+      "help": "モデルサービス提供元の OpenAI 互換 Base URL を入力してください。接続方法は https://platform.deepseek.com/ または https://platform.xiaomimimo.com/ の説明を参照してください。"
+    },
+    "LlmModel": {
+      "name": "LLM モデル",
+      "help": "購入済みサービスで利用できるモデル名を入力してください。利用可能な名称は https://platform.deepseek.com/ または https://platform.xiaomimimo.com/ の表示に従ってください。"
     }
   },
   "Optimization": {
@@ -1854,6 +1870,10 @@
       "only_05_hour": "0.5時間＋実行可能なプロジェクトがない場合",
       "only_no_project": "実行可能なプロジェクトがない場合",
       "do_not_use": "使用しない"
+    },
+    "CubePreserve": {
+      "name": "X個のキューブを保持",
+      "help": "現在のキューブ数がこの値以下の場合、研究ではキューブを消費するプロジェクトを一時的に選択しません。\n0で無効。"
     },
     "UseCoin": {
       "name": "資金を使用する",
@@ -4409,7 +4429,19 @@
     },
     "NotifyOpsiMail": {
       "name": "セイレーン作戦関連情報をプッシュ",
-      "help": "侵食1とショートキャットの情報をプッシュするには、同時に「エラープッシュ」機能をオンにする必要があります。情報量が多いので騒がしいかもしれません。"
+      "help": "侵食1とショートキャットの情報を OnePush で通知します。ランチャー通知は「ランチャー通知」で個別に制御します。情報量が多いため騒がしい場合があります。"
+    },
+    "LauncherPush": {
+      "name": "ランチャー通知",
+      "help": "セイレーン作戦関連情報をランチャーと Windows 通知へ送信します。オフにしても OnePush 通知には影響しません。"
+    },
+    "IndependentPush": {
+      "name": "セイレーン作戦情報の独立プッシュ",
+      "help": "「セイレーン作戦関連情報のプッシュ通知」機能を同時に有効にする必要があります。\nオフの場合は、スマート港湾エリア設定 —> デバッグ設定 —> エラープッシュ設定を使用し、「エラープッシュ」機能を同時に有効にする必要があります。\nオンの場合は、セイレーン作戦プッシュ設定を使用し、プッシュ内容を分離する必要がある場合はこの機能を有効にしてください"
+    },
+    "OpsiOnePushConfig": {
+      "name": "セイレーン作戦プッシュ通知設定",
+      "help": "「塞壬行動信息獨立推送」功能開啟時設置才生效。Onepushを使用して、侵食1と短毛猫に関する情報を1つプッシュします。設定方法はドキュメントを参照してください：https://github.com/LmeSzinc/AzurLaneAutoScript/wiki/Onepush-configuration-%5BCN%5D"
     }
   },
   "OpsiAshBeacon": {
@@ -4484,18 +4516,6 @@
     "ForceRun": {
       "name": "実行間隔に関係なく強制実行",
       "help": "オンにすると、追加の行動力が消費されます。通常はオンにする必要はなく、のんびりプレイしてください。"
-    },
-    "IfSkipSirenResearch": {
-      "name": "セイレーン研究装置をスキップ",
-      "help": "オンにすると、座標レベルに対応するセイレーン研究装置をスキップし、バグ回避を容易にします。\n一部の海域でテスト済みですが、毎月の完全開拓は未完了のため、未知の問題が存在する可能性があります。",
-      "0": "スキップしない",
-      "6": "レベル6のみスキップ",
-      "65": "レベル6とレベル5をスキップ",
-      "654": "レベル6、レベル5、レベル4をスキップ"
-    },
-    "SkipedSirenResearch": {
-      "name": "セイレーン研究装置をスキップした海域",
-      "help": "この値は自動的に記録されるため、手動で変更する必要はありません。\n月初めに開拓を行うか、「最後に完了した海域」を0にして再度月次開拓を実行するとリセットされます。"
     },
     "LastZone": {
       "name": "最後に完了した海域",
@@ -4661,24 +4681,6 @@
     "APPreserveUntilReset": {
       "name": "月末までアクティブに過ごしましょう",
       "help": "「X アクション ポイントを保持」設定で、オーバーワールド リセットまでの日数が減らなくなりました\n注: これらのアクションは、オンにすると、月をまたぐ日次タスクでのみ使用されます。この設定は、月をまたぐ日次タスクが有効になっていない場合は無効です。つまり、より高いメリットを得るには、これらのアクションを手動で使用する必要があります。"
-    },
-    "SirenDetectorSearch_Enable": {
-      "name": "サイレン自動検知装置",
-      "help": "ショートキャット接続ミッション中にサイレン探知装置を自動検索し、発見した海域を記録します\n中部海域（海域5）のみを探索し、その他の海域は探索しない"
-    },
-    "SirenDetectorSearch_HazardLevel": {
-      "name": "サイレン検知装置の侵食レベル",
-      "help": "中部海域では特定の浸食レベルの海域を時計回りに分類し、サイレン探知装置を見つけます。\n中部海域にはレベル5海域とレベル6海域しかありません。\n注：中部海域（地域5）のみが選択されており、他の地域の海域は選択されません。",
-      "5": "5",
-      "6": "6"
-    },
-    "SirenDetectorSearch_StopAfterFound": {
-      "name": "Xサイレン検知装置を見つけたら停止",
-      "help": "指定された数のサイレン検出デバイスを見つけて記録した後、検索を停止し、通常の short cat プロセスに戻ります (実際には、見つかった x 個のデバイスの数は、以下の記録テーブルによって決まります。記録テーブルが空の場合は、x 個のデバイスを見つけた後に停止します)。レコード内に y 個のデバイスがある場合、x-y デバイスが見つかった後に停止します。\n制限がないことを示すには 0 に設定すると、移動性が不十分になるまで検索が継続されます。"
-    },
-    "SirenDetectorSearch_FoundZones": {
-      "name": "サイレン探知装置の海域を発見",
-      "help": "サイレン探知装置が海域で発見された。該当海域のサイレン探知装置が使用されている場合、該当海域の記録を手動で削除することができます。"
     }
   },
   "OpsiTarget": {
@@ -4740,6 +4742,21 @@
     "SirenResearch_Enable": {
       "name": "セイレーン研究装置を有効化",
       "help": "有効化すると、セイレーン研究装置で紫コインを黄コインに変換します\n紫コイン消費を維持するには十分な海里数が必要です"
+    },
+    "Siren_Mode": {
+      "name": "セイレーン探知装置との対話方法",
+      "help": "セイレーン装置との対話方法を選択。資源探知はパープルコイン（特別交換券）を消費し、敵探知はセイレーンエネルギー貯蔵器を消費します",
+      "resource": "隠された資源の探知を繰り返し試みる",
+      "enemy": "隠された敵の探知を繰り返し試みる"
+    },
+    "Siren_Fleet": {
+      "name": "敵探知に使用する艦隊",
+      "help": "隠された敵を探知する際に使用する艦隊を選択。0は現在の艦隊を使用、1-4は指定した艦隊を使用",
+      "0": "現在の艦隊を使用",
+      "1": "艦隊1",
+      "2": "艦隊2",
+      "3": "艦隊3",
+      "4": "艦隊4"
     }
   },
   "OpsiCheckLeveling": {
@@ -5262,6 +5279,9 @@
       "SortieCost": "Sortie Cost",
       "AkashiEncounters": "Akashi Encounters",
       "AkashiRate": "Akashi Rate",
+      "SirenResearchDevices": "Siren Research Devices",
+      "SirenResearchRate": "Siren Research Rate",
+      "HazardLevel": "Corrosion Level",
       "AverageAP": "Average AP",
       "NetAP": "Net AP",
       "LoopEfficiency": "Loop Efficiency",
@@ -5282,7 +5302,7 @@
       "MeowRounds": "Meow Rounds",
       "AvgMeowRoundTime": "Avg Meow Round Time",
       "MeowLootTitle": "Meow Session Loot",
-      "NoMeowDataNotice": "No data yet. Set \"OpSi drop screenshot\" to \"Upload\" first.",
+      "NoMeowDataNotice": "No local Meowfficer farming loot data yet. It will be generated automatically after a run.",
       "MeowAdvanceAdviceTitle": "Meow Early Start Advice",
       "CurrentAP": "Current AP: {value}",
       "ApPerRound": "AP per round: {value} AP",

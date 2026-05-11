@@ -377,16 +377,53 @@ class InfoHandler(ModuleBase):
 
     def _is_story_black(self):
         color = get_color(self.device.image, area=STORY_LETTER_BLACK.area)
-        # Story with dark background and a few rows of letters
-        # STORY_LETTER_BLACK.color is (16, 20, 16)
         if color_similar(color, STORY_LETTER_BLACK.color, threshold=10):
             return True
-        # Story with black and a few rows of letters
         if color_similar(color, (0, 0, 0), threshold=10):
             return True
 
         return False
-    
+
+    def _identify_siren_device_option(self, options):
+        """
+        Identify siren device options by the fixed 5-option sequence.
+        
+        Args:
+            options (list[Button]): List of detected story options
+            
+        Returns:
+            Button: The button to click, or None if not a siren device
+        """
+        if len(options) != 5:
+            return None
+
+        task = self.config.task.command
+        if task not in ('OpsiHazard1Leveling', 'OpsiMeowfficerFarming'):
+            task = 'OpsiHazard1Leveling'
+
+        siren_research_enabled = self.config.cross_get(
+            keys=f'{task}.OpsiSirenBug.SirenResearch_Enable',
+            default=False
+        )
+
+        if not siren_research_enabled:
+            logger.info('[Story] 塞壬研究装置未启用，选择离开')
+            self.siren_device_mode = None
+            return options[-1]
+
+        siren_mode = self.config.cross_get(
+            keys=f'{task}.OpsiSirenBug.Siren_Mode',
+            default='resource'
+        )
+
+        if siren_mode == 'enemy':
+            logger.info('[Story] 选择反复尝试探测隐藏的敌人')
+            self.siren_device_mode = 'enemy'
+            return options[2]
+        else:
+            logger.info('[Story] 选择反复尝试探测隐藏的资源')
+            self.siren_device_mode = 'resource'
+            return options[3]
 
     def story_skip(self, drop=None):
         """
@@ -414,27 +451,12 @@ class InfoHandler(ModuleBase):
                 self._story_option_confirm.reset()
             elif options_count == self._story_option_record:
                 if self._story_option_confirm.reached():
-                    # 当前塞壬研究装置固定为 5 个选项
-                    is_siren_device = options_count == 5
+                    select = self._identify_siren_device_option(options)
                     
-                    # 设置标志位供外部检查 (map.py)
+                    is_siren_device = select is not None
                     self.is_siren_device_confirmed = is_siren_device
                     
-                    # 根据检测结果选择点击哪个选项
-                    if is_siren_device:
-                        usage = self.config.OS_SIREN_DEVICE_USAGE
-                        logger.attr('OS_SIREN_DEVICE_USAGE', usage)
-                        if usage == 'never':
-                            select = options[-1]
-                            logger.info(f'[Story] 点击第{options_count}个选项')
-                        elif usage == 'use_until_destroyed' and options_count >= 4:
-                            select = options[3]
-                            logger.info('[Story] 点击第4个选项')
-                        else:
-                            select = options[-1]
-                            logger.info(f'[Story] 未知塞壬装置处理方法，点击第{options_count}个选项')
-                    else:
-                        # 普通剧情:按配置的索引点击
+                    if not is_siren_device:
                         try:
                             select = options[self.config.STORY_OPTION]
                         except IndexError:

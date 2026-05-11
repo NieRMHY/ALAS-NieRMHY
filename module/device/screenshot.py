@@ -2,7 +2,6 @@ import os
 import time
 from collections import deque
 from datetime import datetime
-from itertools import zip_longest
 from PIL import Image
 # 此文件定义了截图处理逻辑。
 # 管理各种截图捕获方式，并包含后台编码线程用于将图像序列化并通过 Base64 供 WebUI 实时渲染预览。
@@ -15,7 +14,7 @@ import numpy as np
 
 from module.base.decorator import cached_property
 from module.base.timer import Timer
-from module.base.utils import get_color, image_size, limit_in, save_image
+from module.base.utils import get_color, image_size, limit_in, save_image, set_template_match_non_native_720p
 from module.device.method.adb import Adb
 from module.device.method.ascreencap import AScreenCap
 from module.device.method.droidcast import DroidCast
@@ -50,26 +49,6 @@ class Screenshot(Adb, WSA, DroidCast, AScreenCap, Scrcpy, NemuIpc, LDOpenGL):
     _screen_scale_x = 1.0   # Add by MHY, 非720p屏幕的坐标缩放因子，click/swipe前反向映射使用
     _screen_scale_y = 1.0
     image: np.ndarray
-
-    cv_interpolation_methods = [cv2.INTER_LANCZOS4, cv2.INTER_AREA]
-    pillow_interpolation_methods = [Image.LANCZOS, Image.BICUBIC]
-
-    @cached_property
-    def _resize_methods_list(self):
-        cv_methods = [('cv', m) for m in self.cv_interpolation_methods]
-        pillow_methods = [('pillow', m) for m in self.pillow_interpolation_methods]
-        result = []
-        for cv_method, pillow_method in zip_longest(cv_methods, pillow_methods, fillvalue=None):
-            if cv_method:
-                result.append(cv_method)
-            if pillow_method:
-                result.append(pillow_method)
-        return result
-
-    def get_next_resize_method(self):
-        method_type, interp = self._resize_methods_list[self._resize_method_idx]
-        self._resize_method_idx = (self._resize_method_idx + 1) % len(self._resize_methods_list)
-        return method_type, interp
 
     @cached_property
     def screenshot_methods(self):
@@ -118,6 +97,7 @@ class Screenshot(Adb, WSA, DroidCast, AScreenCap, Scrcpy, NemuIpc, LDOpenGL):
             self.image = method()
 
             width, height = image_size(self.image)
+            set_template_match_non_native_720p(width != 1280 or height != 720)
             if width != 1280 or height != 720:
                 # Add by MHY, 记录原始分辨率→720p的缩放因子，供click/swipe等坐标反向映射
                 # 后续上游如果提供完整的坐标映射方案，可对比后选择采用上游方案或保留当前方案
@@ -154,6 +134,19 @@ class Screenshot(Adb, WSA, DroidCast, AScreenCap, Scrcpy, NemuIpc, LDOpenGL):
                 continue
 
         return self.image
+
+    @staticmethod
+    def resize_screenshot_to_720p(image):
+        """
+        Normalize screenshots into Alas' 1280x720 asset space.
+
+        Tested against real MuMu screenshots in 1600x900, 1920x1080,
+        2560x1440 and 3840x2160. Cubic downsampling with a small blur blend
+        was closest to native 720p overall.
+        """
+        image = cv2.resize(image, (1280, 720), interpolation=cv2.INTER_CUBIC)
+        blur = cv2.GaussianBlur(image, (0, 0), sigmaX=1.0, sigmaY=1.0)
+        return cv2.addWeighted(image, 0.90, blur, 0.10, 0)
 
     @property
     def has_cached_image(self):
@@ -353,6 +346,7 @@ class Screenshot(Adb, WSA, DroidCast, AScreenCap, Scrcpy, NemuIpc, LDOpenGL):
         else:
             self._screen_black_checked = True
             return True
+
 
     def _encoder_worker(self):
         """后台编码线程：只编码最新帧并把 base64 放入 self.screenshot_queue

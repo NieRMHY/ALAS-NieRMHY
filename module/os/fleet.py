@@ -200,7 +200,7 @@ class OSFleet(OSCamera, Combat, Fleet, OSAsh):
 
             logger.attr('HP', ' '.join(
                 [str(int(data * 100)).rjust(3) + '%' if use else '____'
-                 for data, use in zip(self.hp, self.hp_has_ship)]))
+                 for data, use in zip(self.hp, self.hp_has_ship, strict=False)]))
 
         return self.hp
 
@@ -215,11 +215,11 @@ class OSFleet(OSCamera, Combat, Fleet, OSAsh):
                 self._hp[self.fleet_current_index][index] = 0
         for index, ship in enumerate(has_ship):
             self._hp_has_ship[self.fleet_current_index][index] = ship
-        self.need_repair = [all(repair) for repair in zip(need_repair, has_ship)]
+        self.need_repair = [all(repair) for repair in zip(need_repair, has_ship, strict=False)]
         logger.attr('Repair icon', self.need_repair)
         logger.attr('HP', ' '.join(
             [str(int(data * 100)).rjust(3) + '%' if use else '____'
-            for data, use in zip(self.hp, self.hp_has_ship)]))
+            for data, use in zip(self.hp, self.hp_has_ship, strict=False)]))
 
     def storage_hp_get(self):
         """
@@ -957,7 +957,7 @@ class OSFleet(OSCamera, Combat, Fleet, OSAsh):
         else:
             grids = np.array([
                 (0, -3), (0, 3), (-3, 0), (3, 0),
-                (2, -2), (2, 2), (-2, 2), (2, 2),
+                (2, -2), (2, 2), (-2, 2), (-2, -2),
             ])
         degree = np.sum(grids * outside, axis=1) / np.linalg.norm(grids, axis=1) / np.linalg.norm(outside)
         return grids[np.argmax(degree)]

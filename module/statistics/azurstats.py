@@ -1,37 +1,32 @@
 import threading
-import io
-import json
 import os
+import sqlite3
 import time
+import uuid
 from datetime import datetime
+from dataclasses import asdict
 
-import requests
-from PIL import Image
-from requests.adapters import HTTPAdapter
 import numpy as np
 
 from module.base.utils import save_image
-from module.config.config import AzurLaneConfig
-from module.config.deep import deep_get
-from module.exception import ScriptError
 from module.logger import logger
 from module.statistics.utils import pack
 from module.base.device_id import get_device_id
 
 
 class DropImage:
-    def __init__(self, stat, genre, save, upload, info=''):
+    def __init__(self, stat, genre, save, local, info=''):
         """
         Args:
             stat (AzurStats):
             genre:
             save:
-            upload:
+            local:
         """
         self.stat = stat
         self.genre = str(genre)
         self.save = bool(save)
-        self.upload = bool(upload)
+        self.local = bool(local)
         self.info = info
         self.images = []
         self.combat_count = 0
@@ -74,7 +69,7 @@ class DropImage:
         return len(self.images)
 
     def __bool__(self):
-        return self.save or self.upload
+        return self.save or self.local
 
     def __enter__(self):
         return self
@@ -82,16 +77,21 @@ class DropImage:
     def __exit__(self, exc_type, exc_val, exc_tb):
         if self:
             self.stat.commit(images=self.images, genre=self.genre,
-                             save=self.save, upload=self.upload, info=self.info, combat_count=self.combat_count)
+                             save=self.save, local=self.local, info=self.info, combat_count=self.combat_count)
 
 
 class AzurStats:
     TIMEOUT = 20
+    LOCAL_DB = './config/azurstats_local.db'
+    LOCAL_MEOW_CSV = './log/azurstat_meowofficer_farming.csv'
+    LOCAL_GENRES = {'opsi_meowfficer_farming'}
+    _local_lock = threading.Lock()
+    _record_lock = threading.Lock()
 
     def __init__(self, config):
         """
         Args:
-            config (AzurLaneConfig):
+            config:
         """
         self.config = config
 
@@ -118,50 +118,105 @@ class AzurStats:
             np.ndarray: Stats.
         """
         try:
-            data = np.loadtxt('./log/azurstat_meowofficer_farming.csv', delimiter=',', dtype=float, skiprows=1, encoding='utf-8')
+            data = np.loadtxt(AzurStats.LOCAL_MEOW_CSV, delimiter=',', dtype=float, skiprows=1, encoding='utf-8')
             if data.shape[0] != 6:
                 raise IndexError
         except Exception:
             data = np.zeros((6, len(AzurStats.meowofficer_farming_labels)))
             data[:, 0] = np.arange(1, 7)
             header = ','.join(AzurStats.meowofficer_farming_labels)
-            np.savetxt('./log/azurstat_meowofficer_farming.csv', data, delimiter=',', header=header, comments='', fmt='%f', encoding='utf-8')
-            data = np.loadtxt('./log/azurstat_meowofficer_farming.csv', delimiter=',', dtype=float, skiprows=1, encoding='utf-8')
-        finally:
-            return data
-        
+            os.makedirs(os.path.dirname(AzurStats.LOCAL_MEOW_CSV), exist_ok=True)
+            np.savetxt(AzurStats.LOCAL_MEOW_CSV, data, delimiter=',', header=header, comments='', fmt='%f', encoding='utf-8')
+            data = np.loadtxt(AzurStats.LOCAL_MEOW_CSV, delimiter=',', dtype=float, skiprows=1, encoding='utf-8')
+        return data
+
+    @staticmethod
+    def _ensure_local_db():
+        os.makedirs(os.path.dirname(AzurStats.LOCAL_DB), exist_ok=True)
+        with sqlite3.connect(AzurStats.LOCAL_DB) as conn:
+            conn.execute('''
+                CREATE TABLE IF NOT EXISTS opsi_items (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    imgid TEXT NOT NULL,
+                    server TEXT,
+                    zone TEXT,
+                    zone_type TEXT,
+                    zone_id INTEGER,
+                    hazard_level INTEGER,
+                    item TEXT,
+                    amount INTEGER,
+                    tag TEXT,
+                    device_id TEXT,
+                    genre TEXT,
+                    combat_count INTEGER,
+                    created_at INTEGER
+                )
+            ''')
+            conn.execute('CREATE INDEX IF NOT EXISTS idx_opsi_items_device_genre ON opsi_items(device_id, genre)')
+            conn.execute('CREATE INDEX IF NOT EXISTS idx_opsi_items_imgid ON opsi_items(imgid)')
+            conn.commit()
+
+    @staticmethod
+    def _insert_local_opsi_items(rows):
+        if not rows:
+            return 0
+
+        AzurStats._ensure_local_db()
+        with AzurStats._local_lock:
+            with sqlite3.connect(AzurStats.LOCAL_DB) as conn:
+                conn.executemany('''
+                    INSERT INTO opsi_items (
+                        imgid, server, zone, zone_type, zone_id, hazard_level,
+                        item, amount, tag, device_id, genre, combat_count, created_at
+                    ) VALUES (
+                        :imgid, :server, :zone, :zone_type, :zone_id, :hazard_level,
+                        :item, :amount, :tag, :device_id, :genre, :combat_count, :created_at
+                    )
+                ''', rows)
+                conn.commit()
+        return len(rows)
+
+    @staticmethod
+    def _load_local_opsi_items(device_id=None, genre='opsi_meowfficer_farming'):
+        AzurStats._ensure_local_db()
+        query = 'SELECT * FROM opsi_items WHERE 1=1'
+        params = []
+        if device_id:
+            query += ' AND device_id = ?'
+            params.append(device_id)
+        if genre:
+            query += ' AND genre = ?'
+            params.append(genre)
+        query += ' ORDER BY id ASC'
+
+        with sqlite3.connect(AzurStats.LOCAL_DB) as conn:
+            conn.row_factory = sqlite3.Row
+            rows = conn.execute(query, params).fetchall()
+            return [dict(row) for row in rows]
+
+    @staticmethod
+    def _write_meowofficer_farming(data):
+        header = ','.join(AzurStats.meowofficer_farming_labels)
+        os.makedirs(os.path.dirname(AzurStats.LOCAL_MEOW_CSV), exist_ok=True)
+        np.savetxt(
+            AzurStats.LOCAL_MEOW_CSV,
+            data,
+            delimiter=',',
+            header=header,
+            comments='',
+            fmt='%f',
+            encoding='utf-8',
+        )
+
     @staticmethod
     def get_meowofficer_farming():
-        session = requests.Session()
-        session.trust_env = False
-        session.mount('http://', HTTPAdapter(max_retries=5))
-        session.mount('https://', HTTPAdapter(max_retries=5))
-        
-        device_id = get_device_id()
-        base_url = f'https://alas-statsapi.nanoda.work/api/data/opsi_items?device_id={device_id}&genre=opsi_meowfficer_farming'
-        
-        all_data = []
-        limit = 1000
-        offset = 0
-        
-        while True:
-            try:
-                resp = session.get(f'{base_url}&limit={limit}&offset={offset}', timeout=AzurStats.TIMEOUT)
-                resp.raise_for_status()
-                result = resp.json()
-                data = result.get('data', [])
-                all_data.extend(data)
-                
-                if len(data) < limit:
-                    break
-                offset += limit
-            except Exception as e:
-                logger.warning(f'拉取数据失败, {e}')
-                return
-
+        all_data = AzurStats._load_local_opsi_items(
+            device_id=get_device_id(),
+            genre='opsi_meowfficer_farming',
+        )
         out_data = np.zeros((6, len(AzurStats.meowofficer_farming_labels)))
         img_combat_counts = {}
-        
+
         for row in all_data:
             imgid = row.get('imgid')
             h_level = row.get('hazard_level')
@@ -181,7 +236,7 @@ class AzurStats:
                     out_data[h_level - 1, 3 + i] += amount
                     break
         current_time = int(datetime.timestamp(datetime.now()))
-        
+
         for i in range(6):
             h = i + 1
             out_data[i, 0] = h
@@ -191,66 +246,53 @@ class AzurStats:
             if out_data[i, 2] > 0:
                 for j in range(3, len(AzurStats.meowofficer_farming_labels)):
                     out_data[i, j] /= out_data[i, 2]
-                    
-        header = ','.join(AzurStats.meowofficer_farming_labels)
-        np.savetxt('./log/azurstat_meowofficer_farming.csv', out_data, delimiter=',', header=header, comments='', fmt='%f', encoding='utf-8')
-        logger.info('拉取并更新数据成功: azurstat_meowofficer_farming.csv')
 
-    @property
-    def _api(self):
-        # method = self.config.DropRecord_API
-        # if method == 'default':
-        #     return 'https://azurstats.lyoko.io/api/upload/'
-        # elif method == 'cn_gz_reverse_proxy':
-        #     return 'https://image.tyy.akagiyui.com/api/upload'
-        # elif method == 'cn_sh_reverse_proxy':
-        #     return 'https://image.tyy.akagiyui.com/api/upload'
-        # else:
-        #     logger.critical('Invalid upload API, please check your settings')
-        #     raise ScriptError('Invalid upload API')
-        return 'https://alas-statsapi.nanoda.work/api/upload'
+        AzurStats._write_meowofficer_farming(out_data)
+        logger.info('本地统计数据更新成功: azurstat_meowofficer_farming.csv')
 
-    def _upload(self, image, genre, filename, combat_count):
-        """
-        Args:
-            image: Image to upload.
-            genre (str):
-            filename (str): 'xxx.png'
+    @staticmethod
+    def _ensure_local_parser():
+        from module.azur_stats.scene.operation_siren import SceneOperationSiren
+        return SceneOperationSiren
 
-        Returns:
-            bool: If success
-        """
+    @staticmethod
+    def _parse_local_opsi_items(image, imgid, genre, combat_count):
+        SceneOperationSiren = AzurStats._ensure_local_parser()
+        scene = SceneOperationSiren()
+        scene.load_file(image)
+        scene.__dict__['imgid'] = imgid
+        rows = []
+        created_at = int(time.time())
+        device_id = get_device_id()
+
+        for item in scene.parse_scene():
+            row = asdict(item)
+            row['imgid'] = imgid
+            row['device_id'] = device_id
+            row['genre'] = genre
+            row['combat_count'] = int(combat_count or 0)
+            row['created_at'] = created_at
+            rows.append(row)
+
+        return rows
+
+    def _record_local(self, image, genre, filename, combat_count):
         if genre not in ['opsi_meowfficer_farming']:
             return False
-        
-        output = io.BytesIO()
-        Image.fromarray(image, mode='RGB').save(output, format='png')
-        output.seek(0)
-        files = {
-            'file': (filename, output, 'image/png')
-        }
-        data = {
-            'device_id': get_device_id(),
-            'genre': genre,
-            'combat_count': combat_count
-        }
-        session = requests.Session()
-        session.trust_env = False
-        session.mount('http://', HTTPAdapter(max_retries=5))
-        session.mount('https://', HTTPAdapter(max_retries=5))
+
+        imgid = f"{os.path.splitext(os.path.basename(filename))[0][:8]}{uuid.uuid4().hex[:8]}"
         try:
-            resp = session.post(self._api, files=files, data=data, timeout=self.TIMEOUT)
-        except Exception as e:
-            logger.warning(f'Image upload failed, {e}')
-            return False
-
-        if resp.status_code == 200:
-            logger.info(f'Image upload success')
+            rows = self._parse_local_opsi_items(image, imgid, genre, combat_count)
+            if not rows:
+                logger.warning('Local AzurStats parse skipped, no opsi item rows extracted')
+                return False
+            inserted = self._insert_local_opsi_items(rows)
+            self.get_meowofficer_farming()
+            logger.info(f'Local AzurStats parse success, rows={inserted}')
             return True
-
-        logger.warning(f'Image upload failed, unexpected server returns, '
-                       f'status_code: {resp.status_code}, returns: {resp.text[:500]}')
-        return False
+        except Exception as e:
+            logger.warning(f'Local AzurStats parse failed, {e}')
+            return False
 
     def _save(self, image, genre, filename):
         """
@@ -275,13 +317,13 @@ class AzurStats:
 
         return False
 
-    def commit(self, images, genre, save=False, upload=False, info='', combat_count=0):
+    def commit(self, images, genre, save=False, local=False, info='', combat_count=0):
         """
         Args:
             images (list): List of images in numpy array.
             genre (str):
             save (bool): If save image to local file system.
-            upload (bool): If upload image to Azur Stats.
+            local (bool): If parse image into local AzurStats storage.
             info (str): Extra info append to filename.
 
         Returns:
@@ -290,9 +332,9 @@ class AzurStats:
         if len(images) == 0:
             return False
 
-        save, upload = bool(save), bool(upload)
+        save, local = bool(save), bool(local)
         logger.info(
-            f'Drop record commit, genre={genre}, amount={len(images)}, save={save}, upload={upload}')
+            f'Drop record commit, genre={genre}, amount={len(images)}, save={save}, local={local}')
         image = pack(images)
         now = int(time.time() * 1000)
 
@@ -306,23 +348,35 @@ class AzurStats:
                 target=self._save, args=(image, genre, filename))
             save_thread.start()
 
-        if upload:
-            upload_thread = threading.Thread(
-                target=self._upload, args=(image, genre, filename, combat_count))
-            upload_thread.start()
+        if local:
+            logger.info(f'Local AzurStats parse start, genre={genre}')
+            with self._record_lock:
+                self._record_local(image, genre, filename, combat_count)
 
         return True
 
-    def new(self, genre, method='upload', info=''):
+    def new(self, genre, method=None, save=False, local=None, info=''):
         """
         Args:
             genre (str):
             method (str): The method about save and upload image.
+            save (bool): Whether to save the image.
+            local (bool): Whether to use local processing. If None, determined by genre.
             info (str): Extra info append to filename.
 
         Returns:
             DropImage:
         """
-        save = 'save' in method
-        upload = 'upload' in method
-        return DropImage(stat=self, genre=genre, save=save, upload=upload, info=info)
+        method_value = None
+        if isinstance(method, bool):
+            save = save or method
+            method = None
+        if method is not None:
+            method_value = str(method)
+            save = save or 'save' in method_value
+        if local is None:
+            if method_value is None:
+                local = genre in self.LOCAL_GENRES
+            else:
+                local = 'upload' in method_value and genre in self.LOCAL_GENRES
+        return DropImage(stat=self, genre=genre, save=save, local=local, info=info)

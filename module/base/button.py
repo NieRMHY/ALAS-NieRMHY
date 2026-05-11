@@ -213,6 +213,7 @@ class Button(Resource):
         Returns:
             bool.
         """
+        similarity = lower_template_match_similarity(similarity)
         self.ensure_template()
 
         if isinstance(offset, tuple):
@@ -250,6 +251,7 @@ class Button(Resource):
         Returns:
             bool.
         """
+        similarity = lower_template_match_similarity(similarity)
         self.ensure_template()
         self.ensure_binary_template()
 
@@ -298,6 +300,7 @@ class Button(Resource):
         Returns:
             bool.
         """
+        similarity = lower_template_match_similarity(similarity)
         self.ensure_template()
         self.ensure_luma_template()
 

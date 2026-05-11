@@ -1,5 +1,5 @@
 from module.base.timer import Timer
-from module.base.utils import rgb2gray
+from module.base.utils import rgb2gray, lower_template_match_similarity
 from module.campaign.campaign_ui import CampaignUI
 from module.combat.combat import Combat
 from module.eventstory.assets import *
@@ -57,13 +57,13 @@ class EventStory(CampaignUI, Combat, LoginHandler):
         image = self.image_crop(area, copy=False)
         image = rgb2gray(image)
         sim, button = TEMPLATE_ALCHEMIST_STORY.match_result(image)
-        if sim >= 0.85:
+        if sim >= lower_template_match_similarity(0.85):
             button = button.move(area[:2])
             # move down to click the text
             button = button.move((0, 44))
             return button
         sim, button = TEMPLATE_ALCHEMIST_BATTLE.match_result(image)
-        if sim >= 0.85:
+        if sim >= lower_template_match_similarity(0.85):
             button = button.move(area[:2])
             # move down to click the text
             button = button.move((0, 44))

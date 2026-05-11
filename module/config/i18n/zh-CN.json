@@ -587,6 +587,22 @@
     "AdbOfflineThreshold": {
       "name": "检测不到设备重启阈值",
       "help": "连续检测不到设备多少次后触发重启。"
+    },
+    "LlmAnalysis": {
+      "name": "启用 LLM 错误分析",
+      "help": "在发生无法处理的异常时，自动调用 LLM 分析错误原因并提供改进建议。"
+    },
+    "LlmApiKey": {
+      "name": "LLM API Key",
+      "help": "请自行前往 https://platform.deepseek.com/ 或 https://platform.xiaomimimo.com/ 购买模型服务并获取 API Key。"
+    },
+    "LlmApiBase": {
+      "name": "LLM API Base",
+      "help": "填写模型服务提供商的 OpenAI 兼容 Base URL，可参考 https://platform.deepseek.com/ 或 https://platform.xiaomimimo.com/ 的接入说明。"
+    },
+    "LlmModel": {
+      "name": "LLM 模型",
+      "help": "填写已购买服务支持的模型名称，请以 https://platform.deepseek.com/ 或 https://platform.xiaomimimo.com/ 平台展示为准。"
     }
   },
   "Optimization": {
@@ -1854,6 +1870,10 @@
       "only_05_hour": "0.5小时+无项目可做时",
       "only_no_project": "无项目可做时",
       "do_not_use": "不使用"
+    },
+    "CubePreserve": {
+      "name": "保留 X 个魔方",
+      "help": "当当前魔方数量小于等于该值时，科研暂时不选择消耗魔方的项目。\n0 表示关闭。"
     },
     "UseCoin": {
       "name": "使用物资",
@@ -4409,7 +4429,19 @@
     },
     "NotifyOpsiMail": {
       "name": "推送大世界相关信息",
-      "help": "推送关于侵蚀1和短猫的信息，需要同时开启“错误推送”功能，由于信息较多，可能会比较吵"
+      "help": "使用 OnePush 推送关于侵蚀1和短猫的信息。启动器推送由“启动器推送”单独控制。由于信息较多，可能会比较吵"
+    },
+    "LauncherPush": {
+      "name": "启动器推送",
+      "help": "将大世界相关信息推送到启动器和 Windows 通知。关闭后仅影响启动器推送，不影响 OnePush 推送。"
+    },
+    "IndependentPush": {
+      "name": "大世界信息独立推送",
+      "help": "需要同时开启“推送大世界相关信息”功能。\n关闭时使用智慧港区设置 —> 调试设置 —> 错误推送设置，需要同时开启“错误推送”功能。\n开启时使用大世界推送设置，需要分离推送内容时请开启此功能"
+    },
+    "OpsiOnePushConfig": {
+      "name": "大世界推送设置",
+      "help": "“大世界信息独立推送”功能开启时设置才生效。使用 Onepush 推送一条关于侵蚀1和短猫的信息。配置方法见文档：https://github.com/LmeSzinc/AzurLaneAutoScript/wiki/Onepush-configuration-%5BCN%5D"
     }
   },
   "OpsiAshBeacon": {
@@ -4484,18 +4516,6 @@
     "ForceRun": {
       "name": "无视运行间隔强制运行",
       "help": "开启后将带来额外的行动力消耗，一般不用打开，慢慢打就好"
-    },
-    "IfSkipSirenResearch": {
-      "name": "跳过塞壬研究装置",
-      "help": "开启后，将跳过对应坐标等级的塞壬研究装置,以方便卡bug\n经过了几个海域的初步测试，但未完成一次完整的月度开荒，可能存在未知问题",
-      "0": "不跳过",
-      "6": "仅跳过6级",
-      "65": "跳过6级和5级",
-      "654": "跳过6级、5级和4级"
-    },
-    "SkipedSirenResearch": {
-      "name": "已经跳过塞壬研究装置的海域",
-      "help": "这个数值是自动记录的，不需要手动修改。\n月初重新开荒时会重置，或者修改\"上一次完成的区域\"为0并重新运行月度开荒来重置"
     },
     "LastZone": {
       "name": "上一次完成的区域",
@@ -4661,24 +4681,6 @@
     "APPreserveUntilReset": {
       "name": "月底重置强制消耗行动力",
       "help": "在大世界重置前，自动将保留行动力设为0，以确保存余行动力被消耗。建议配合侵蚀1练级使用。"
-    },
-    "SirenDetectorSearch_Enable": {
-      "name": "自动寻找塞壬探测装置",
-      "help": "在短猫相接任务中自动寻找塞壬探测装置，并记录找到的海域\n仅在中心海域中寻找，不会在其他区域寻找"
-    },
-    "SirenDetectorSearch_HazardLevel": {
-      "name": "塞壬探测装置侵蚀等级",
-      "help": "在中心海域中按顺时针出击特定侵蚀等级的海域来寻找塞壬探测装置\n中心海域只有五和六级海域\n注意：只在中心海域（region 5）中选择，不会选择其他区域的海域",
-      "5": "5",
-      "6": "6"
-    },
-    "SirenDetectorSearch_StopAfterFound": {
-      "name": "寻找 X 个塞壬探测装置后停止",
-      "help": "寻找并记录到指定数量的塞壬探测装置后，停止搜索并回到正常短猫流程。\n统计和停止条件按当前所选侵蚀等级（5级/6级）分别计算，不会混算。\n警告：此项最小值为 1，不可填写 0。\n中心海域中 5 级海域有 4 个，6 级海域有 4 个。填写数量不能大于当前所选侵蚀等级的实际海域数量（最大 4）。"
-    },
-    "SirenDetectorSearch_FoundZones": {
-      "name": "已找到的塞壬探测装置海域",
-      "help": "已找到的塞壬探测装置海域，会按侵蚀等级分开记录并分开排除。若对应海域的塞壬探测装置已经被使用，可手动删除该海域记录。"
     }
   },
   "OpsiTarget": {
@@ -4740,6 +4742,21 @@
     "SirenResearch_Enable": {
       "name": "启用塞壬研究装置",
       "help": "启用后使用紫币通过塞壬研究装置转换为黄币\n需要足够的海里数支撑紫币消耗"
+    },
+    "Siren_Mode": {
+      "name": "与塞壬探测装置的互动方式",
+      "help": "选择与塞壬装置的互动方式。探测资源消耗紫币（特别兑换凭证），探测敌人消耗塞壬能源存储器",
+      "resource": "反复尝试探测隐藏的资源",
+      "enemy": "反复尝试探测隐藏的敌人"
+    },
+    "Siren_Fleet": {
+      "name": "探测敌人使用的舰队",
+      "help": "选择探测隐藏敌人时使用的舰队",
+      "0": "使用当前舰队",
+      "1": "1",
+      "2": "2",
+      "3": "3",
+      "4": "4"
     }
   },
   "OpsiCheckLeveling": {
@@ -5262,6 +5279,9 @@
       "SortieCost": "出击消耗",
       "AkashiEncounters": "遇见明石次数",
       "AkashiRate": "遇见明石概率",
+      "SirenResearchDevices": "吊机次数",
+      "SirenResearchRate": "吊机概率",
+      "HazardLevel": "侵蚀等级",
       "AverageAP": "平均体力",
       "NetAP": "净赚体力",
       "LoopEfficiency": "循环效率",
@@ -5282,7 +5302,7 @@
       "MeowRounds": "出击轮次",
       "AvgMeowRoundTime": "平均一轮短猫时长",
       "MeowLootTitle": "短猫相接收获",
-      "NoMeowDataNotice": "暂无数据，请将\"大世界掉落截图\"设置为\"上传\"",
+      "NoMeowDataNotice": "暂无本地短猫收获数据，完成一次短猫相接后会自动生成",
       "MeowAdvanceAdviceTitle": "短猫提前开始建议",
       "CurrentAP": "当前AP: {value}",
       "ApPerRound": "每轮消耗: {value} AP",

@@ -190,7 +190,7 @@ class OSGridPredictor(GridPredictor):
         area = area_pad((48, 48, 48 + 46, 48 + 46), pad=5)
         res = cv2.matchTemplate(ASSETS.tile_center_image, crop(self.image_homo, area=area, copy=False), cv2.TM_CCOEFF_NORMED)
         _, sim, _, _ = cv2.minMaxLoc(res)
-        if sim > 0.8:
+        if sim > lower_template_match_similarity(0.8):
             return True
 
         # tile = 135
@@ -219,12 +219,12 @@ class OSGridPredictor(GridPredictor):
     def predict_enemy_genre(self):
         image = rgb2gray(self.relative_crop((-0.5, -1, 0.5, 0), shape=(60, 60)))
         for name, template in self._os_template_enemy.items():
-            if template.match(image, similarity=0.9):
+            if template.match(image, similarity=0.9, direct_match=True):
                 return name
 
         image = rgb2gray(self.relative_crop((-0.5, -2, 0.5, -1), shape=(60, 60)))
         for name, template in self._os_template_enemy_upper.items():
-            if template.match(image, similarity=0.9):
+            if template.match(image, similarity=0.9, direct_match=True):
                 return name
 
         return None
@@ -257,20 +257,20 @@ class OSGridPredictor(GridPredictor):
 
     def predict_resource(self):
         image = rgb2gray(self.relative_crop((-0.5, -1, 0.5, 0), shape=(60, 60)))
-        return TEMPLATE_OS_Resource.match(image, similarity=0.85)
+        return TEMPLATE_OS_Resource.match(image, similarity=0.85, direct_match=True)
 
     def predict_meowfficer(self):
         image = rgb2gray(self.image_trans)
-        return TEMPLATE_OS_Meowfficer.match(image, similarity=0.85)
+        return TEMPLATE_OS_Meowfficer.match(image, similarity=0.85, direct_match=True)
 
     def predict_ally(self):
         # Ally cargo ship in daily mission
         image = rgb2gray(self.relative_crop((-0.5, -0.5, 0.5, 0.5), shape=(60, 60)))
-        return TEMPLATE_OS_AllyCargo.match(image, similarity=0.85)
+        return TEMPLATE_OS_AllyCargo.match(image, similarity=0.85, direct_match=True)
 
     def predict_akashi(self):
         image = rgb2gray(self.relative_crop((-0.5, -1, 0.5, 0), shape=(60, 60)))
-        return TEMPLATE_SIREN_Akashi.match(image, similarity=0.85)
+        return TEMPLATE_SIREN_Akashi.match(image, similarity=0.85, direct_match=True)
 
     def predict_caught_by_siren(self):
         # Detect the red slash background of `In action`.
@@ -318,7 +318,7 @@ class OSGridPredictor(GridPredictor):
         sim, button = TEMPLATE_FleetMechanism.match_result(image)
         point = (53, 37)
         distance = np.linalg.norm(np.subtract(button.area[:2], point))
-        if distance > 5 or sim < 0.3:
+        if distance > 5 or sim < lower_template_match_similarity(0.3):
             return False
 
         return True

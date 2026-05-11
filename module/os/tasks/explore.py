@@ -72,7 +72,6 @@ class OpsiExplore(OSMap):
             order = full_order
             self.config.OpsiExplore_ExploreProgress = '已完成百分之0.00'
             logger.info(f'First run, next zone: {order[:1]}')
-            self.config.OpsiExplore_SkipedSirenResearch = ''
         else:
             raise ScriptError(f'Invalid last_zone: {last_zone}')
 

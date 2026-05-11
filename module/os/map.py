@@ -8,7 +8,7 @@ import inflection
 from module.base.timer import Timer
 from module.config.config import TaskEnd
 from module.config.utils import get_os_reset_remain
-from module.exception import CampaignEnd, GameTooManyClickError, MapWalkError, RequestHumanTakeover, ScriptError
+from module.exception import CampaignEnd, GameTooManyClickError, MapDetectionError, MapWalkError, RequestHumanTakeover, ScriptError
 from module.handler.login import LoginHandler, MAINTENANCE_ANNOUNCE
 from module.logger import logger
 from module.map.map import Map
@@ -18,11 +18,18 @@ from module.os.fleet import OSFleet, BossFleet
 from module.os.globe_camera import GlobeCamera
 from module.os.globe_operation import RewardUncollectedError
 from module.os_handler.assets import AUTO_SEARCH_OS_MAP_OPTION_OFF, AUTO_SEARCH_OS_MAP_OPTION_OFF_DISABLED, \
-    AUTO_SEARCH_OS_MAP_OPTION_ON, AUTO_SEARCH_REWARD, REWARD_BOX_THIRD_OPTION
+    AUTO_SEARCH_OS_MAP_OPTION_ON, AUTO_SEARCH_REWARD
 from module.os_handler.storage import StorageHandler
 from module.os_handler.strategic import StrategicSearchHandler
+from module.statistics.opsi_runtime import (
+    finish_meow_search_timer,
+    record_cl1_auto_search_battle,
+    record_meow_auto_search_battle,
+    record_siren_research_device,
+    start_meow_search_timer,
+)
 from module.os.tasks.smart_scheduling_utils import is_smart_scheduling_enabled
-from module.ui.assets import GOTO_MAIN, BACK_ARROW
+from module.ui.assets import GOTO_MAIN
 from module.ui.page import page_os
 
 
@@ -283,7 +290,7 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
 
         self.hp_get()
         check = [round(data, 2) <= trigger_threshold if use else False
-                 for data, use in zip(self.hp, self.hp_has_ship)]
+                 for data, use in zip(self.hp, self.hp_has_ship, strict=False)]
         if any(check):
             logger.info('At least one ship is below threshold '
                         f'{str(int(trigger_threshold * 100))}%, '
@@ -320,7 +327,7 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
         self.storage_hp_get()
         hp_grids = self._storage_hp_grid()
         check = [round(data, 2) <= threshold if use else False
-                for data, use in zip(self.hp, self.hp_has_ship)]
+                for data, use in zip(self.hp, self.hp_has_ship, strict=False)]
         if any(check):
             logger.info(f'At least one ship in fleet {fleet_index} is below threshold '
                         f'{str(int(threshold * 100))}%, '
@@ -678,79 +685,29 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
         logger.attr('battle_count', self._auto_search_battle_count)
         if getattr(self, 'is_in_task_cl1_leveling', False) and getattr(self, 'is_cl1_enabled', False):
             try:
-                try:
-                    self._cl1_auto_search_battle_count += 1
-                except Exception:
-                    self._cl1_auto_search_battle_count = 1
+                self._cl1_auto_search_battle_count += 1
                 logger.attr('cl1_battle_count', self._cl1_auto_search_battle_count)
-                try:
-                    from module.statistics.cl1_database import db as cl1_db
-                    instance_name = getattr(self.config, 'config_name', 'default')
-                    cl1_db.async_increment_battle_count(instance_name)
-                except Exception:
-                    logger.debug('Failed to persist monthly CL1 battle increment', exc_info=True)
+                # CL1 round timing uses its own counter, not the shared
+                # auto-search counter, because other tasks can reuse this loop.
+                self._auto_search_round_timer = record_cl1_auto_search_battle(
+                    self.config,
+                    self._cl1_auto_search_battle_count,
+                    self._auto_search_round_timer,
+                )
             except Exception:
                 logger.debug('Failed to update cl1 battle counter', exc_info=True)
 
-            if self._auto_search_battle_count % 2 == 1:
-                if self._auto_search_round_timer:
-                    cost = round(time.time() - self._auto_search_round_timer, 2)
-                    logger.attr('CL1 time cost', f'{cost}s/round')
-                    try:
-                        from module.statistics.ship_exp_stats import get_ship_exp_stats
-                        instance_name = getattr(self.config, 'config_name', 'default')
-                        get_ship_exp_stats(instance_name=instance_name).record_round_time(cost)
-                    except Exception:
-                        logger.exception('Failed to record cl1 round time')
-                self._auto_search_round_timer = time.time()
-
         # 短猫任务数据收集
         if getattr(self, '_meow_searching_active', False) and getattr(self, '_meow_time_recording_enabled', False):
-            # 获取侵蚀等级用于换算有效战斗轮数
-            hazard_level = None
             try:
-                if hasattr(self, 'zone') and hasattr(self.zone, 'hazard_level'):
-                    hazard_level = self.zone.hazard_level
-            except Exception:
-                logger.debug('Failed to get hazard level for battle count')
-            if hazard_level not in [2, 3, 4, 5, 6]:
-                try:
-                    hazard_level = self.config.cross_get(
-                        keys='OpsiMeowfficerFarming.OpsiMeowfficerFarming.HazardLevel'
-                    )
-                except Exception:
-                    hazard_level = None
-
-            try:
-                try:
-                    self._meow_auto_search_battle_count += 1
-                except Exception:
-                    self._meow_auto_search_battle_count = 1
+                self._meow_auto_search_battle_count += 1
                 logger.attr('meow_battle_count', self._meow_auto_search_battle_count)
-                try:
-                    from module.statistics.cl1_database import db as cl1_db
-                    instance_name = getattr(self.config, 'config_name', 'default')
-                    cl1_db.async_increment_meow_battle_count(instance_name, hazard_level)
-                except Exception:
-                    logger.debug('Failed to persist monthly meow battle increment', exc_info=True)
-
-                # 记录单场战斗时间（每次战斗结束都记录）
-                if getattr(self, '_meow_battle_timer', None):
-                    battle_duration = round(time.time() - self._meow_battle_timer, 2)
-                    # 过滤异常值（太短或太长的战斗）
-                    if 5 < battle_duration < 600:  # 5秒~10分钟
-                        logger.attr('Meow battle duration', f'{battle_duration:.1f}s')
-                        try:
-                            from module.statistics.cl1_database import db as cl1_db
-                            instance_name = getattr(self.config, 'config_name', 'default')
-                            cl1_db.async_add_meow_battle_time(instance_name, battle_duration)
-                        except Exception:
-                            logger.debug('Failed to record meow battle time', exc_info=True)
-                    else:
-                        logger.debug(f'Meow battle duration {battle_duration:.1f}s out of range, not recorded')
-                # 重置计时器
-                self._meow_battle_timer = time.time()
-
+                # Short-meow records both raw battles and normalized rounds; the
+                # metrics helper owns the hazard-level conversion.
+                self._meow_battle_timer = record_meow_auto_search_battle(
+                    self,
+                    getattr(self, '_meow_battle_timer', None),
+                )
             except Exception:
                 logger.debug('Failed to update meow battle counter', exc_info=True)
 
@@ -762,18 +719,22 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
         if not (getattr(self, '_meow_searching_active', False) and getattr(self, '_meow_time_recording_enabled', False)):
             return
 
-        # 记录开始时的行动力
-        try:
-            self.get_current_ap()
-            self._meow_search_start_ap = self._action_point_total
-            logger.debug(f'Meow search started, AP: {self._meow_search_start_ap}')
-        except Exception:
-            self._meow_search_start_ap = None
-            logger.debug('Failed to get start action point')
+        # Store the timer on the map object because the matching end hook may be
+        # reached after auto-search, rescans, or event handling.
+        self._meow_search_start_time, self._meow_search_start_ap = start_meow_search_timer(self)
 
-        # 开始新的搜索计时
-        self._meow_search_start_time = time.time()
-        logger.debug('Meow search started, timer reset')
+    def meow_search_metrics_start(self):
+        """
+        Enable short-meow metrics for one zone search.
+
+        The active flags are scoped here so later CL1 auto-search loops cannot
+        accidentally keep writing into short-meow statistics.
+        """
+        self._meow_searching_active = True
+        self._meow_time_recording_enabled = True
+        self._meow_auto_search_battle_count = 0
+        self._meow_battle_timer = time.time()
+        self.on_meow_search_start()
 
     def on_meow_search_end(self):
         """
@@ -788,66 +749,26 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
             logger.debug('Meow search start time not recorded, skip')
             return
 
-        # 记录结束时的行动力
-        try:
-            self.get_current_ap()
-            end_ap = self._action_point_total
-        except Exception:
-            logger.debug('Failed to get end action point')
-            end_ap = None
-
-        duration = time.time() - start_time
-
-        # 根据侵蚀等级获取每轮战斗次数，计算真正的单轮时间
-        # 侵蚀2、3：每轮2次战斗；侵蚀4、5、6：每轮3次战斗
-        battles_per_round = 2  # 默认值
-        try:
-            if hasattr(self, 'zone') and hasattr(self.zone, 'hazard_level'):
-                hazard_level = self.zone.hazard_level
-                # 根据侵蚀等级确定每轮战斗次数
-                if hazard_level in [2, 3]:
-                    battles_per_round = 2
-                elif hazard_level in [4, 5, 6]:
-                    battles_per_round = 3
-                logger.debug(f'Hazard level: {hazard_level}, battles per round: {battles_per_round}')
-        except Exception:
-            logger.debug('Failed to get hazard level, using default battles per round')
-
-        # 计算单轮时间
-        battle_count = getattr(self, '_meow_auto_search_battle_count', 0)
-        if battle_count > 0:
-            # 单轮时间 = 总时间 / (战斗次数 / 每轮战斗次数) = 总时间 * 每轮战斗次数 / 战斗次数
-            rounds = battle_count / battles_per_round
-            duration = duration / rounds
-            logger.debug(f'Meow search total duration: {time.time() - start_time:.1f}s, '
-                         f'battles: {battle_count}, rounds: {rounds}, per round: {duration:.1f}s')
-
-        # 过滤异常值（太短或太长的搜索）
-        if duration < 1 or duration > 1800:  # 1秒~30分钟
-            logger.debug(f'Meow search duration {duration:.1f}s out of range, not recorded')
-            self._meow_search_start_time = None
-            self._meow_search_start_ap = None
-            return
-
-        logger.attr('Meow search duration', f'{duration:.1f}s')
-        try:
-            from module.statistics.cl1_database import db as cl1_db
-            instance_name = getattr(self.config, 'config_name', 'default')
-            # 获取侵蚀等级用于计算出击轮次
-            hazard_level = getattr(getattr(self, 'zone', None), 'hazard_level', None)
-            if hazard_level not in [2, 3, 4, 5, 6]:
-                try:
-                    hazard_level = self.config.cross_get(
-                        keys='OpsiMeowfficerFarming.OpsiMeowfficerFarming.HazardLevel'
-                    )
-                except Exception:
-                    hazard_level = None
-            cl1_db.async_add_meow_round_time(instance_name, duration, hazard_level)
-        except Exception:
-            logger.debug('Failed to record meow search duration', exc_info=True)
+        # Convert the whole search duration into a per-round sample before it
+        # reaches the database.
+        finish_meow_search_timer(
+            self,
+            start_time,
+            getattr(self, '_meow_auto_search_battle_count', 0),
+        )
 
         self._meow_search_start_time = None
         self._meow_search_start_ap = None
+
+    def meow_search_metrics_end(self):
+        """Flush and disable short-meow metrics for the current zone search."""
+        try:
+            self.on_meow_search_end()
+        finally:
+            self._meow_searching_active = False
+            self._meow_time_recording_enabled = False
+            self._meow_battle_timer = 0
+            self._meow_auto_search_battle_count = 0
 
     def get_current_cl1_battle_count(self):
         return int(getattr(self, '_cl1_auto_search_battle_count', 0))
@@ -1218,31 +1139,6 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
                 logger.info(f'[预检查] 格子 {grid} 是塞壬研究装置,功能已开启,继续处理')
         return False
 
-    def _should_skip_siren_research_for_explore(self):
-
-        # 检查是否由月度开荒调用
-        is_explore = getattr(self, 'is_in_task_explore', False)
-        if not is_explore:
-            return False
-
-        # 检查月度开荒是否配置跳过塞壬研究装置
-        skip_level = self.config.cross_get(keys="OpsiExplore.OpsiExplore.IfSkipSirenResearch")
-        if skip_level == 0:
-            return False
-        
-        # 根据海域难度决定是否跳过
-        hazard_level = self.zone.hazard_level
-        if skip_level == 6 and hazard_level == 6:
-            logger.info(f'[月度开荒] 海域危险度 {hazard_level} = 6, 跳过塞壬研究装置')
-            return True
-        if skip_level == 65 and hazard_level >= 5:
-            logger.info(f'[月度开荒] 海域危险度 {hazard_level} >= 5, 跳过塞壬研究装置')
-            return True
-        if skip_level == 654 and hazard_level >= 4:
-            logger.info(f'[月度开荒] 海域危险度 {hazard_level} >= 4, 跳过塞壬研究装置')
-            return True
-        return False
-
     def clear_question(self, drop=None):
         """
         Clear nearly (and 3 grids from above) question marks on radar.
@@ -1272,6 +1168,7 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
             
             # ========== 移动前检查：是否为塞壬研究装置且功能未开启 ==========
             if self._should_skip_siren_research(grid):
+                record_siren_research_device(self)
                 self._solved_map_event.add('is_scanning_device')
                 return True
             
@@ -1291,21 +1188,7 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
                 logger.hr('检测到扫描装置,开始处理', level=2)
                 logger.info(f'[地图检测] 格子 {grid} 被识别为扫描装置 (grid.is_scanning_device=True)')
                 logger.info(f'[地图检测] 移动结果: {result}')
-
-                # ========== 方案 B: 装置类型判断（仅在支持的模式下） ==========
-                # 检查是否在 Meowfficer 搜索模式下，并进行装置类型判断
-                try:
-                    if hasattr(self, 'config') and hasattr(self.config, 'OpsiMeowfficerFarming_SirenDetectorSearch_Enable'):
-                        if self.config.OpsiMeowfficerFarming_SirenDetectorSearch_Enable:
-                            if hasattr(self, 'handle_siren_device_interaction_result'):
-                                logger.hr('【方案B】装置类型判断开始', level=2)
-                                device_type = self.handle_siren_device_interaction_result(result)
-                                if device_type == 'reconnaissance':
-                                    logger.info('【方案B】装置已判定为信息收集装置，不进行搜索记录')
-                                elif device_type == 'detection':
-                                    logger.info('【方案B】装置已判定为探测装置，已进行搜索记录')
-                except Exception as e:
-                    logger.warning(f'【方案B】装置判断过程出现异常: {e}')
+                record_siren_research_device(self)
 
                 # ========== 配置检查 ==========
                 if not self._is_siren_research_enabled:
@@ -1316,9 +1199,57 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
                 # ========== 装置处理 ==========
                 # 选项点击已由 wait_until_walk_stable -> info_handler.story_skip 处理
                 
-                # 执行自律寻敌
-                logger.info('[装置处理] 步骤1: 执行自律寻敌')
-                self.os_auto_search_run(drop=drop)
+                # 检测选择的模式
+                siren_mode = getattr(self, 'siren_device_mode', None)
+                logger.attr('Siren_device_mode', siren_mode)
+                
+                # 如果选择了敌人模式
+                if siren_mode == 'enemy':
+                    logger.info('[装置处理] 检测到敌人模式，执行特殊处理')
+                    
+                    # 获取配置的舰队
+                    task = self.config.task.command
+                    if task not in ('OpsiHazard1Leveling', 'OpsiMeowfficerFarming'):
+                        task = 'OpsiHazard1Leveling'
+                    siren_fleet = self.config.cross_get(
+                        keys=f'{task}.OpsiSirenBug.Siren_Fleet',
+                        default=0
+                    )
+                    
+                    # 记录当前舰队
+                    current_fleet = self.fleet_selector.get()
+                    logger.info(f'[装置处理] 当前舰队: {current_fleet}')
+                    
+                    # 如果配置了指定舰队，切换到指定舰队
+                    if siren_fleet > 0:
+                        logger.info(f'[装置处理] 切换到指定舰队: {siren_fleet}')
+                        self.fleet_set(siren_fleet)
+                    else:
+                        logger.info('[装置处理] 使用当前舰队')
+                    
+                    # 执行三次自律寻敌
+                    for i in range(3):
+                        logger.info(f'[装置处理] 执行第 {i + 1}/3 次自律寻敌')
+                        self.os_auto_search_run(drop=drop)
+                    
+                    # 如果切换了舰队，切换回原舰队
+                    if siren_fleet > 0:
+                        logger.info(f'[装置处理] 切换回原舰队: {current_fleet}')
+                        self.fleet_set(current_fleet)
+                
+                # 如果选择了资源模式
+                elif siren_mode == 'resource':
+                    logger.info('[装置处理] 检测到资源模式，执行标准处理')
+                    # 执行一次自律寻敌
+                    logger.info('[装置处理] 执行自律寻敌')
+                    self.os_auto_search_run(drop=drop)
+                
+                # 未知模式或资源不足
+                else:
+                    logger.info('[装置处理] 未知模式或资源不足，执行标准处理')
+                    # 执行一次自律寻敌
+                    logger.info('[装置处理] 执行自律寻敌')
+                    self.os_auto_search_run(drop=drop)
                 
                 # 标记处理
                 self._solved_map_event.add('is_scanning_device')
@@ -1378,19 +1309,20 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
                             self.globe_goto(prev, types='DANGEROUS')
                             continue
                 break
-            
-            if drop.count <= 1:
-                drop.clear()
 
             drop.set_combat_count(self._auto_search_battle_count)
 
-        # Rescan
-        self._solved_map_event = set()
-        self._solved_fleet_mechanism = False
-        if question:
-            self.clear_question(drop=drop)
-        if rescan:
-            self.map_rescan(rescan_mode=rescan, drop=drop)
+            # Rescan needs to stay inside the drop context. Some OpSi rewards
+            # appear only while clearing question marks or rescanning the map.
+            self._solved_map_event = set()
+            self._solved_fleet_mechanism = False
+            if question:
+                self.clear_question(drop=drop)
+            if rescan:
+                self.map_rescan(rescan_mode=rescan, drop=drop)
+
+            if drop.count <= 1:
+                drop.clear()
 
         return finished_combat
 
@@ -1480,28 +1412,13 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
             # ========== 地图选择:发现研究装置 ==========
             logger.hr('发现研究装置,开始处理', level=2)
             logger.info(f'[地图选择] 在 {grid} 位置发现研究装置')
+            record_siren_research_device(self)
             
             if not self._is_siren_research_enabled:
                 logger.warning('[配置检查] 塞壬研究装置功能已禁用,跳过处理')
                 self._solved_map_event.add('is_scanning_device')
                 return True
-            
-            if self._should_skip_siren_research_for_explore():
-                # 记录已跳过的海域
-                zone_str = f'{self.zone};\n'
-                current_str = self.config.OpsiExplore_SkipedSirenResearch
-                if current_str is None:
-                    self.config.OpsiExplore_SkipedSirenResearch = zone_str
-                else:
-                    self.config.OpsiExplore_SkipedSirenResearch = str(current_str) + zone_str
-                logger.info(f'[月度开荒] 已记录跳过塞壬研究装置的海域: {self.config.OpsiExplore_SkipedSirenResearch}')
-                self._solved_map_event.add('is_scanning_device')
-                return True
 
-            if self.config.task.command == 'OpsiMeowfficerFarming' and self.config.OpsiMeowfficerFarming_SirenDetectorSearch_Enable:
-                self._solved_map_event.add('is_scanning_device')
-                return True
-            
             # ========== 移动并处理 ==========
             logger.info(f'[移动装置] 开始移动到装置位置: {grid}')
             self.device.click(grid)
@@ -1517,12 +1434,61 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
             logger.info(f'[移动装置] 移动完成,结果: {result}')
             
             if getattr(self, 'is_siren_device_confirmed', False):
+
                 # 保存标志状态，因为二次重扫可能会重置它
                 siren_confirmed = True
                 
-                # 执行自律寻敌
-                logger.info('[装置处理] 执行自律寻敌')
-                self.os_auto_search_run(drop=drop)
+                # 检测选择的模式
+                siren_mode = getattr(self, 'siren_device_mode', None)
+                logger.attr('Siren_device_mode', siren_mode)
+                
+                # 如果选择了敌人模式
+                if siren_mode == 'enemy':
+                    logger.info('[装置处理] 敌人模式，执行特殊处理')
+                    
+                    # 获取配置的舰队
+                    task = self.config.task.command
+                    if task not in ('OpsiHazard1Leveling', 'OpsiMeowfficerFarming'):
+                        task = 'OpsiHazard1Leveling'
+                    siren_fleet = self.config.cross_get(
+                        keys=f'{task}.OpsiSirenBug.Siren_Fleet',
+                        default=0
+                    )
+                    
+                    # 记录当前舰队
+                    current_fleet = self.fleet_selector.get()
+                    logger.info(f'[装置处理] 当前舰队: {current_fleet}')
+                    
+                    # 如果配置了指定舰队，切换到指定舰队
+                    if siren_fleet > 0:
+                        logger.info(f'[装置处理] 切换到指定舰队: {siren_fleet}')
+                        self.fleet_set(siren_fleet)
+                    else:
+                        logger.info('[装置处理] 使用当前舰队')
+                    
+                    # 执行三次自律寻敌
+                    for i in range(3):
+                        logger.info(f'[装置处理] 执行第 {i + 1}/3 次自律寻敌')
+                        self.os_auto_search_run(drop=drop)
+                    
+                    # 如果切换了舰队，切换回原舰队
+                    if siren_fleet > 0:
+                        logger.info(f'[装置处理] 切换回原舰队: {current_fleet}')
+                        self.fleet_set(current_fleet)
+                
+                # 如果选择了资源模式
+                elif siren_mode == 'resource':
+                    logger.info('[装置处理] 检测到资源模式，执行标准处理')
+                    # 执行一次自律寻敌
+                    logger.info('[装置处理] 执行自律寻敌')
+                    self.os_auto_search_run(drop=drop)
+                
+                # 未知模式或资源不足
+                else:
+                    logger.info('[装置处理] 未知模式或资源不足，执行标准处理')
+                    # 执行一次自律寻敌
+                    logger.info('[装置处理] 执行自律寻敌')
+                    self.os_auto_search_run(drop=drop)
 
                 # 先标记为已处理，防止二次重扫时再次处理塞壬装置
                 self._solved_map_event.add('is_scanning_device')
@@ -1567,7 +1533,7 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
                 self._solved_fleet_mechanism = True
                 return True
 
-        logger.info(f'No map event')
+        logger.info('No map event')
         return False
 
     def map_rescan_once(self, rescan_mode='full', drop=None):
@@ -1586,7 +1552,13 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
         logger.hr('Map rescan current', level=2)
         self.map_data_init(map_=None)
         self.handle_info_bar()
-        self.update()
+        try:
+            self.update()
+        except MapDetectionError:
+            # Map is likely cleared, homography cannot detect valid tiles
+            logger.warning('MAP RESCAN CURRENT Homography failed (score below 0.8), '
+                           'map may be cleared or detection is unstable, unhandled events may be missed')
+            return False
         if self.map_rescan_current(drop=drop):
             logger.info(f'Map rescan once end, result={True}')
             return True
@@ -1985,4 +1957,3 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
                 return True
             time.sleep(0.3)
         return False
-

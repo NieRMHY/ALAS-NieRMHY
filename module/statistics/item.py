@@ -305,6 +305,7 @@ class ItemGrid:
         """
         if similarity is None:
             similarity = self.similarity
+        similarity = lower_template_match_similarity(similarity)
         color = cv2.mean(crop(image, self.template_area))[:3]
         # Match frequently hit templates first
         names = np.array(list(self.templates.keys()))[np.argsort(list(self.templates_hit.values()))][::-1]
@@ -366,11 +367,12 @@ class ItemGrid:
             str: Template name.
         """
         image = item.crop(self.cost_area)
+        cost_similarity = lower_template_match_similarity(self.cost_similarity)
         names = np.array(list(self.cost_templates.keys()))[np.argsort(list(self.cost_templates_hit.values()))][::-1]
         for name in names:
             res = cv2.matchTemplate(image, self.cost_templates[name], cv2.TM_CCOEFF_NORMED)
             _, similarity, _, _ = cv2.minMaxLoc(res)
-            if similarity > self.cost_similarity:
+            if similarity > cost_similarity:
                 self.cost_templates_hit[name] += 1
                 return name
 

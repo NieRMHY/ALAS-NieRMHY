@@ -2247,6 +2247,7 @@
         ],
         "option_tw": [
           "event_20260417_cn",
+          "event_20201126_cn",
           "event_20220915_cn",
           "event_20260326_cn",
           "event_20220728_cn"
@@ -2741,6 +2742,7 @@
         ],
         "option_tw": [
           "event_20260417_cn",
+          "event_20201126_cn",
           "event_20220915_cn",
           "event_20260326_cn",
           "event_20220728_cn"
@@ -3639,6 +3641,7 @@
         ],
         "option_tw": [
           "event_20260417_cn",
+          "event_20201126_cn",
           "event_20220915_cn",
           "event_20260326_cn",
           "event_20220728_cn"
@@ -4073,6 +4076,7 @@
         ],
         "option_tw": [
           "event_20260417_cn",
+          "event_20201126_cn",
           "event_20220915_cn",
           "event_20260326_cn",
           "event_20220728_cn"
@@ -4507,6 +4511,7 @@
         ],
         "option_tw": [
           "event_20260417_cn",
+          "event_20201126_cn",
           "event_20220915_cn",
           "event_20260326_cn",
           "event_20220728_cn"
@@ -6859,6 +6864,7 @@
         ],
         "option_tw": [
           "event_20260417_cn",
+          "event_20201126_cn",
           "event_20220915_cn",
           "event_20260326_cn",
           "event_20220728_cn"
@@ -7310,6 +7316,7 @@
         ],
         "option_tw": [
           "event_20260417_cn",
+          "event_20201126_cn",
           "event_20220915_cn",
           "event_20260326_cn",
           "event_20220728_cn"
@@ -7761,6 +7768,7 @@
         ],
         "option_tw": [
           "event_20260417_cn",
+          "event_20201126_cn",
           "event_20220915_cn",
           "event_20260326_cn",
           "event_20220728_cn"
@@ -8212,6 +8220,7 @@
         ],
         "option_tw": [
           "event_20260417_cn",
+          "event_20201126_cn",
           "event_20220915_cn",
           "event_20260326_cn",
           "event_20220728_cn"
@@ -8653,6 +8662,7 @@
         ],
         "option_tw": [
           "event_20260417_cn",
+          "event_20201126_cn",
           "event_20220915_cn",
           "event_20260326_cn",
           "event_20220728_cn"
@@ -9756,6 +9766,14 @@
           "only_05_hour",
           "only_no_project",
           "do_not_use"
+        ]
+      },
+      "CubePreserve": {
+        "type": "input",
+        "value": 0,
+        "validate": [
+          0,
+          999999
         ]
       },
       "UseCoin": {
@@ -13118,6 +13136,19 @@
       "NotifyOpsiMail": {
         "type": "checkbox",
         "value": true
+      },
+      "LauncherPush": {
+        "type": "checkbox",
+        "value": true
+      },
+      "IndependentPush": {
+        "type": "checkbox",
+        "value": false
+      },
+      "OpsiOnePushConfig": {
+        "type": "textarea",
+        "value": "provider: null",
+        "mode": "yaml"
       }
     },
     "Storage": {
@@ -13299,21 +13330,6 @@
       "ForceRun": {
         "type": "checkbox",
         "value": false
-      },
-      "IfSkipSirenResearch": {
-        "type": "select",
-        "value": 0,
-        "option": [
-          0,
-          6,
-          65,
-          654
-        ]
-      },
-      "SkipedSirenResearch": {
-        "type": "textarea",
-        "value": "",
-        "display": "disabled"
       },
       "LastZone": {
         "type": "input",
@@ -13943,33 +13959,31 @@
       "APPreserveUntilReset": {
         "type": "checkbox",
         "value": false
-      },
-      "SirenDetectorSearch_Enable": {
-        "type": "checkbox",
-        "value": false
-      },
-      "SirenDetectorSearch_HazardLevel": {
-        "type": "select",
-        "value": 5,
-        "option": [
-          5,
-          6
-        ]
-      },
-      "SirenDetectorSearch_StopAfterFound": {
-        "type": "input",
-        "value": 1,
-        "validate": "^[1-4]$"
-      },
-      "SirenDetectorSearch_FoundZones": {
-        "type": "textarea",
-        "value": ""
       }
     },
     "OpsiSirenBug": {
       "SirenResearch_Enable": {
         "type": "checkbox",
         "value": true
+      },
+      "Siren_Mode": {
+        "type": "select",
+        "value": "resource",
+        "option": [
+          "resource",
+          "enemy"
+        ]
+      },
+      "Siren_Fleet": {
+        "type": "select",
+        "value": 0,
+        "option": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ]
       }
     },
     "OpsiTarget": {
@@ -14083,6 +14097,25 @@
       "SirenResearch_Enable": {
         "type": "checkbox",
         "value": true
+      },
+      "Siren_Mode": {
+        "type": "select",
+        "value": "resource",
+        "option": [
+          "resource",
+          "enemy"
+        ]
+      },
+      "Siren_Fleet": {
+        "type": "select",
+        "value": 0,
+        "option": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ]
       }
     },
     "OpsiFleet": {

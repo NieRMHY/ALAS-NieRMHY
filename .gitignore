@@ -268,3 +268,5 @@ pyrightconfig.json
 .DS_Store
 /ocr_debug
 /Alasio
+/f
+/workers

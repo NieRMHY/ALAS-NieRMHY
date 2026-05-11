@@ -1,5 +1,6 @@
 # 此文件用于管理大世界（Operation Siren）模式下的状态信息。
 # 负责海域代币（黄币/紫币）的数值追踪、任务类型识别以及子任务冷却（CD）状态的实时计算。
+import threading
 import typing as t
 from datetime import datetime, timedelta
 
@@ -25,6 +26,8 @@ OCR_OS_SHOP_PURPLE_COINS = Digit(OS_SHOP_PURPLE_COINS, letter=(255, 255, 255), n
 class OSStatus(UI):
     _shop_yellow_coins = 0
     _shop_purple_coins = 0
+    _cache_lock = threading.Lock()
+    _last_yellow_coins = 0
 
     @property
     def is_in_task_explore(self) -> bool:
@@ -80,20 +83,41 @@ class OSStatus(UI):
 
     def get_yellow_coins(self) -> int:
         yellow_coins = 0
-        timeout = Timer(2, count=3).start()
+        timeout = Timer(5, count=10).start()  # 增加超时时间和重试次数
+        last_valid_value = None
+        
         for _ in self.loop():
             # End
-            yellow_coins = OCR_SHOP_YELLOW_COINS.ocr(self.device.image)
+            current_value = OCR_SHOP_YELLOW_COINS.ocr(self.device.image)
             if timeout.reached():
                 logger.warning('Get yellow coins timeout')
                 break
 
-            if yellow_coins < 100:
+            if current_value < 100:
                 # OCR may get 0 or 1 when amount is not immediately loaded
-                logger.info('Yellow coins less than 100, assuming it is an ocr error')
+                logger.info(f'Yellow coins less than 100 ({current_value}), assuming it is an ocr error')
                 continue
             else:
-                break
+                # 验证识别稳定性：连续两次识别相同才确认
+                if last_valid_value is None:
+                    last_valid_value = current_value
+                    self.device.sleep(0.2)  # 短暂等待后再次验证
+                elif last_valid_value == current_value:
+                    yellow_coins = current_value
+                    break
+                else:
+                    last_valid_value = current_value
+                    self.device.sleep(0.2)
+        
+        # 如果最终仍未获取到有效数值，使用上次缓存的值（线程安全）
+        with self._cache_lock:
+            if yellow_coins == 0:
+                logger.info(f'Using cached yellow coins value: {self._last_yellow_coins}')
+                yellow_coins = self._last_yellow_coins
+            
+            # 缓存当前值用于降级
+            self._last_yellow_coins = yellow_coins
+        
         LogRes(self.config).YellowCoin = yellow_coins
         logger.info(f'Yellow coins: {yellow_coins}')
 

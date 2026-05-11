@@ -7,6 +7,7 @@ from module.raid.assets import *
 from module.retire.assets import DOCK_CHECK
 from module.ui.assets import *
 from module.ui_white.assets import *
+import module.config.server as server
 
 
 class Page:
@@ -122,6 +123,8 @@ page_event.link(button=GOTO_MAIN, destination=page_main)
 page_event.link(button=BACK_ARROW, destination=page_campaign)
 page_campaign_menu.link(button=CAMPAIGN_MENU_GOTO_EVENT, destination=page_event)
 page_campaign.link(button=CAMPAIGN_GOTO_EVENT, destination=page_event)
+if server.server == 'tw':
+    page_main.link(button=EVENT_20260430_ENTRANCE_TEMP, destination=page_event)
 
 # SP
 page_sp = Page(SP_CHECK)

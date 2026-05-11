@@ -94,7 +94,7 @@ retrying==1.3.4           # via -r requirements-in.txt
 rich==11.2.0              # via -r requirements-in.txt
 rpds-py==0.30.0           # via jsonschema, referencing
 scipy==1.17.1             # via -r requirements-in.txt
-setuptools==82.0.1        # via zope-event, zope-interface, -r requirements-in.txt
+setuptools==75.8.2        # via zope-event, zope-interface, -r requirements-in.txt
 shapely==2.1.2            # via rapidocr
 six==1.16.0               # via adbutils, python-dateutil, rapidocr, retrying, uiautomator2
 sniffio==1.3.0            # via openai

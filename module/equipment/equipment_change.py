@@ -145,7 +145,7 @@ class EquipmentChange(Equipment):
             self.equip_list[index]), cv2.TM_CCOEFF_NORMED)
         _, sim, _, point = cv2.minMaxLoc(res)
 
-        if sim > SIM_VALUE:
+        if sim > lower_template_match_similarity(SIM_VALUE):
             self._equip_equipment(point)
             return
 
@@ -164,7 +164,7 @@ class EquipmentChange(Equipment):
                 self.equip_list[index]), cv2.TM_CCOEFF_NORMED)
             _, sim, _, point = cv2.minMaxLoc(res)
 
-            if sim > SIM_VALUE:
+            if sim > lower_template_match_similarity(SIM_VALUE):
                 self._equip_equipment(point)
                 break
             if self.appear(EQUIPMENT_SCROLL_BOTTOM):

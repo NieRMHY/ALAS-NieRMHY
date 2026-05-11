@@ -587,6 +587,22 @@
     "AdbOfflineThreshold": {
       "name": "Device restart threshold not detected",
       "help": "The number of times the device cannot be detected in a row triggers a restart."
+    },
+    "LlmAnalysis": {
+      "name": "Error.LlmAnalysis.name",
+      "help": "Error.LlmAnalysis.help"
+    },
+    "LlmApiKey": {
+      "name": "LLM API Key",
+      "help": "Purchase model service and get an API key from https://platform.deepseek.com/ or https://platform.xiaomimimo.com/."
+    },
+    "LlmApiBase": {
+      "name": "LLM API Base",
+      "help": "Enter the provider's OpenAI-compatible Base URL. Refer to https://platform.deepseek.com/ or https://platform.xiaomimimo.com/ for setup instructions."
+    },
+    "LlmModel": {
+      "name": "LLM Model",
+      "help": "Enter a model name supported by your purchased service, as shown on https://platform.deepseek.com/ or https://platform.xiaomimimo.com/."
     }
   },
   "Optimization": {
@@ -1854,6 +1870,10 @@
       "only_05_hour": "0.5 hour + when no project available",
       "only_no_project": "When no project available",
       "do_not_use": "Do not use"
+    },
+    "CubePreserve": {
+      "name": "Preserve X Cubes",
+      "help": "When current cubes are less than or equal to this value, Research will temporarily skip projects that consume cubes.\n0 disables this protection."
     },
     "UseCoin": {
       "name": "Use Coins",
@@ -4409,7 +4429,19 @@
     },
     "NotifyOpsiMail": {
       "name": "Push Operation Siren notifications",
-      "help": "Push notifications about Corrosion 1 and Meowfficer farming. Requires the \"Error Push\" function to be enabled. May be noisy due to high volume of messages."
+      "help": "Send notifications about Corrosion 1 and Meowfficer farming through OnePush. Launcher notifications are controlled separately by \"Launcher notifications\". May be noisy due to high message volume."
+    },
+    "LauncherPush": {
+      "name": "Launcher notifications",
+      "help": "Send Operation Siren notifications to the launcher and Windows notification channel. Disabling this only affects launcher notifications and does not affect OnePush."
+    },
+    "IndependentPush": {
+      "name": "Independent push of Siren Operation information",
+      "help": "The \"Push Siren Operation Related Information\" function needs to be enabled simultaneously.\nTo disable it, navigate to Smart Port Settings > Debug Settings > Error Push Settings, and the \"Error Push\" function needs to be enabled simultaneously.\nTo enable it, use the Siren Action Push Settings. If you need to separate the pushed content, please enable this function"
+    },
+    "OpsiOnePushConfig": {
+      "name": "Operation Siren notifications push settings",
+      "help": "The settings will take effect only when the \"Siren Operation Information Independent Push\" function is enabled. Use Onepush to push a message about Erosion 1 and Short Cat. See the document for configuration method: https://github.com/LmeSzinc/AzurLaneAutoScript/wiki/Onepush-configuration-%5BCN%5D"
     }
   },
   "OpsiAshBeacon": {
@@ -4484,18 +4516,6 @@
     "ForceRun": {
       "name": "Force run regardless of run interval",
       "help": "When enabled, it will consume additional AP. Generally not needed, just take it slowly."
-    },
-    "IfSkipSirenResearch": {
-      "name": "Skip Siren Research Device",
-      "help": "When enabled, Siren Research Devices of the corresponding coordinate level will be skipped to facilitate bug exploitation.\nPreliminary testing in several sea zones has been done, but a full monthly exploration has not been completed. Unknown issues may exist.",
-      "0": "Don't skip",
-      "6": "Skip level 6 only",
-      "65": "Skip level 6 and level 5",
-      "654": "Skip level 6, 5 and 4"
-    },
-    "SkipedSirenResearch": {
-      "name": "Sea zones with skipped Siren Research Devices",
-      "help": "This value is automatically recorded and does not need to be modified manually.\nIt will be reset when exploring at the beginning of the month, or when \"Last completed zone\" is changed to 0 and monthly exploration is run again."
     },
     "LastZone": {
       "name": "Last completed zone",
@@ -4661,24 +4681,6 @@
     "APPreserveUntilReset": {
       "name": "Preserve Action Points Until End of Month",
       "help": "'Preserve X Action Points' setting will no longer decrease before Operation Siren reset.\nNote: Once enabled, these AP will only be consumed in cross-month daily tasks. This setting is invalid when cross-month daily tasks are not enabled, which means you need to manually use these AP to obtain higher benefits."
-    },
-    "SirenDetectorSearch_Enable": {
-      "name": "Auto Search Siren Detection Device",
-      "help": "Automatically search for Siren Detection Devices during the Meowfficer Farming mission and record found zones\nOnly searches in the Central Sea Zone (region 5), not in other regions"
-    },
-    "SirenDetectorSearch_HazardLevel": {
-      "name": "Siren Detection Device Corrosion Level",
-      "help": "In the Central Sea Zone, search zones with specific Corrosion levels clockwise to find Siren Detection Devices.\nThe Central Sea Zone only has Level 5 and Level 6 zones.\nNote: Only selects Central Sea Zone (region 5), zones in other regions will not be selected.",
-      "5": "5",
-      "6": "6"
-    },
-    "SirenDetectorSearch_StopAfterFound": {
-      "name": "Stop After Finding X Siren Detection Devices",
-      "help": "After finding and recording the specified number of Siren Detection Devices, stop the search and return to the normal Meowfficer Farming process. (The actual count is determined by the record table below. If the record table is empty, stops after finding X devices. If there are Y devices in the record, stops after finding X-Y devices.)\nSet to 0 for no limit, search will continue until AP is insufficient."
-    },
-    "SirenDetectorSearch_FoundZones": {
-      "name": "Found Siren Detection Device Zones",
-      "help": "Zones where Siren Detection Devices have been found. If the device in a zone has been used, you can manually delete that zone's record."
     }
   },
   "OpsiTarget": {
@@ -4740,6 +4742,21 @@
     "SirenResearch_Enable": {
       "name": "Enable Siren Research Device",
       "help": "After enabling, use purple coins to convert to yellow coins through the Siren Research Device\nSufficient nautical miles are needed to sustain the purple coin consumption"
+    },
+    "Siren_Mode": {
+      "name": "Interaction Mode with Siren Detection Device",
+      "help": "Choose how to interact with Siren devices. Detecting resources costs purple coins (Special Exchange Vouchers), detecting enemies costs Siren Energy Storage",
+      "resource": "Repeatedly attempt to detect hidden resources",
+      "enemy": "Repeatedly attempt to detect hidden enemies"
+    },
+    "Siren_Fleet": {
+      "name": "Fleet for Enemy Detection",
+      "help": "Select the fleet to use when detecting hidden enemies. 0 means use current fleet, 1-4 means use specified fleet",
+      "0": "Use current fleet",
+      "1": "Fleet 1",
+      "2": "Fleet 2",
+      "3": "Fleet 3",
+      "4": "Fleet 4"
     }
   },
   "OpsiCheckLeveling": {
@@ -5262,6 +5279,9 @@
       "SortieCost": "Sortie Cost",
       "AkashiEncounters": "Akashi Encounters",
       "AkashiRate": "Akashi Rate",
+      "SirenResearchDevices": "Siren Research Devices",
+      "SirenResearchRate": "Siren Research Rate",
+      "HazardLevel": "Corrosion Level",
       "AverageAP": "Average AP",
       "NetAP": "Net AP",
       "LoopEfficiency": "Loop Efficiency",
@@ -5282,7 +5302,7 @@
       "MeowRounds": "Meow Rounds",
       "AvgMeowRoundTime": "Avg Meow Round Time",
       "MeowLootTitle": "Meow Session Loot",
-      "NoMeowDataNotice": "No data yet. Set \"OpSi drop screenshot\" to \"Upload\" first.",
+      "NoMeowDataNotice": "No local Meowfficer farming loot data yet. It will be generated automatically after a run.",
       "MeowAdvanceAdviceTitle": "Meow Early Start Advice",
       "CurrentAP": "Current AP: {value}",
       "ApPerRound": "AP per round: {value} AP",
