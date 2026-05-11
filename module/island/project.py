@@ -8,7 +8,7 @@ import module.config.server as server
 
 from module.base.button import Button, ButtonGrid
 from module.base.timer import Timer
-from module.base.utils import color_similarity_2d, crop, random_rectangle_vector, rgb2gray
+from module.base.utils import color_similarity_2d, crop, random_rectangle_vector, rgb2gray, lower_template_match_similarity
 from module.config.deep import deep_get, deep_values
 from module.island.assets import *
 from module.island.project_data import *
@@ -522,7 +522,7 @@ class IslandProjectRun(IslandUI):
 
             image = self.image_crop((0, 0, 910, 1280), copy=False)
             sim, click_button = self.get_character_template(character).match_result(image)
-            if sim > 0.9:
+            if sim > lower_template_match_similarity(0.9):
                 check_button = self.get_character_check_button(character)
                 return self._project_character_select(click_button, check_button)
             else:

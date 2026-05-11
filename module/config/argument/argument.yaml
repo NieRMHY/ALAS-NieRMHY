@@ -587,6 +587,9 @@ Research:
   UseCube:
     value: only_05_hour
     option: [always_use, only_05_hour, only_no_project, do_not_use]
+  CubePreserve:
+    value: 0
+    validate: [0, 999999]
   UseCoin:
     value: always_use
     option: [always_use, only_05_hour, only_no_project, do_not_use]
@@ -1080,6 +1083,12 @@ OpsiGeneral:
   AkashiShopFilter: |-
     ActionPoint
   NotifyOpsiMail: true
+  LauncherPush: true
+  IndependentPush: false
+  OpsiOnePushConfig:
+    type: textarea
+    mode: yaml
+    value: "provider: null"
 OpsiAshBeacon:
   AttackMode:
     value: current
@@ -1100,13 +1109,6 @@ OpsiFleet:
 OpsiExplore:
   SpecialRadar: false
   ForceRun: false
-  IfSkipSirenResearch:
-    value: 0
-    option: [ 0, 6, 65, 654 ]
-  SkipedSirenResearch:
-    type: textarea
-    display: disabled
-    value: ""
   LastZone: 0
   ExploreProgress:
     type: textarea
@@ -1167,16 +1169,6 @@ OpsiMeowfficerFarming:
     value: 0
   StayInZone: false
   APPreserveUntilReset: false
-  SirenDetectorSearch_Enable: false
-  SirenDetectorSearch_HazardLevel:
-    value: 5
-    option: [5, 6]
-  SirenDetectorSearch_StopAfterFound:
-    value: 1
-    validate: ^[1-4]$
-  SirenDetectorSearch_FoundZones:
-    type: textarea
-    value: ""
 OpsiTarget:
   TargetFarming: false
   TargetZone:
@@ -1194,6 +1186,12 @@ OpsiHazard1Leveling:
   RecordNonCL1AP: true
 OpsiSirenBug:
   SirenResearch_Enable: true
+  Siren_Mode:
+    value: resource
+    option: [resource, enemy]
+  Siren_Fleet:
+    value: 0
+    option: [0, 1, 2, 3, 4]
 
 OpsiCheckLeveling:
   TargetLevel: 0

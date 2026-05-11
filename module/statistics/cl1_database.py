@@ -169,14 +169,75 @@ class Cl1Database:
             'akashi_encounters': 0,
             'akashi_ap': 0,
             'akashi_ap_entries': [],
+            # 塞壬研究装置（吊机）数据，按 CL1 与短猫侵蚀等级拆分。
+            'siren_research_devices': self._empty_siren_research_devices(),
+            'siren_research_device_entries': [],
             # 短猫数据
             'meow_battle_raw_count': 0,
             'meow_battle_count': 0,
             'meow_round_times': [],
             'meow_battle_times': [],  # 短猫单场战斗时间
+            'meow_hazard_stats': {},
             # 委托收益数据
             'commission_income_entries': [],
         }
+
+    def _empty_siren_research_devices(self) -> Dict[str, Any]:
+        return {
+            'cl1': 0,
+            'meow': {},
+        }
+
+    def _normalize_siren_research_devices(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        devices = data.get('siren_research_devices')
+        if not isinstance(devices, dict):
+            devices = self._empty_siren_research_devices()
+
+        try:
+            devices['cl1'] = int(devices.get('cl1', 0) or 0)
+        except (TypeError, ValueError):
+            devices['cl1'] = 0
+
+        meow = devices.get('meow')
+        if not isinstance(meow, dict):
+            meow = {}
+        normalized_meow = {}
+        for key, value in meow.items():
+            try:
+                normalized_meow[str(int(key))] = int(value or 0)
+            except (TypeError, ValueError):
+                continue
+        devices['meow'] = normalized_meow
+        data['siren_research_devices'] = devices
+        return devices
+
+    def _empty_meow_hazard_stats(self) -> Dict[str, Any]:
+        return {
+            'battle_raw_count': 0,
+            'effective_rounds': 0.0,
+            'round_times': [],
+            'battle_times': [],
+        }
+
+    def _get_meow_hazard_bucket(self, data: Dict[str, Any], hazard_level: int, create: bool = True) -> Dict[str, Any]:
+        hazard_key = str(int(hazard_level))
+        buckets = data.get('meow_hazard_stats')
+        if not isinstance(buckets, dict):
+            buckets = {}
+            data['meow_hazard_stats'] = buckets
+
+        bucket = buckets.get(hazard_key)
+        if not isinstance(bucket, dict):
+            if not create:
+                return self._empty_meow_hazard_stats()
+            bucket = self._empty_meow_hazard_stats()
+            buckets[hazard_key] = bucket
+
+        bucket.setdefault('battle_raw_count', 0)
+        bucket.setdefault('effective_rounds', 0.0)
+        bucket.setdefault('round_times', [])
+        bucket.setdefault('battle_times', [])
+        return bucket
 
     def _normalize_meow_round_times(self, round_times: List[Any]) -> List[Dict[str, Any]]:
         """兼容旧格式短猫轮次样本，统一为字典结构。"""
@@ -192,6 +253,19 @@ class Cl1Database:
     def _extract_meow_round_durations(self, round_times: List[Any]) -> List[float]:
         """提取短猫轮次耗时，兼容旧格式浮点样本。"""
         return [entry['duration'] for entry in self._normalize_meow_round_times(round_times)]
+
+    def _extract_meow_battle_durations(self, battle_times: List[Any]) -> List[float]:
+        """提取短猫单场耗时，兼容旧格式浮点样本。"""
+        durations = []
+        for entry in battle_times:
+            if isinstance(entry, dict) and 'duration' in entry:
+                try:
+                    durations.append(float(entry['duration']))
+                except (TypeError, ValueError):
+                    continue
+            elif isinstance(entry, (int, float)):
+                durations.append(float(entry))
+        return durations
 
     def _infer_meow_battles_per_round(self, round_times: List[Any]) -> Tuple[Optional[int], Optional[float]]:
         """从短猫样本推断每轮战斗数。"""
@@ -540,6 +614,10 @@ class Cl1Database:
         data = self.get_stats(instance, month)
         data['meow_battle_raw_count'] = data.get('meow_battle_raw_count', 0) + 1
         data['meow_battle_count'] = data.get('meow_battle_count', 0) + delta
+        if hazard_level in [2, 3, 4, 5, 6]:
+            bucket = self._get_meow_hazard_bucket(data, hazard_level)
+            bucket['battle_raw_count'] = int(bucket.get('battle_raw_count', 0) or 0) + 1
+            bucket['effective_rounds'] = float(bucket.get('effective_rounds', 0) or 0) + delta
         self.save_stats(instance, month, data)
 
     def add_meow_round_time(self, instance: str, duration: float, hazard_level: int = None):
@@ -572,14 +650,22 @@ class Cl1Database:
             normalized_times = normalized_times[-100:]
 
         data['meow_round_times'] = normalized_times
+        if hazard_level in [2, 3, 4, 5, 6]:
+            bucket = self._get_meow_hazard_bucket(data, hazard_level)
+            bucket_times = self._normalize_meow_round_times(bucket.get('round_times', []))
+            bucket_times.append(new_entry)
+            if len(bucket_times) > 100:
+                bucket_times = bucket_times[-100:]
+            bucket['round_times'] = bucket_times
         self.save_stats(instance, month, data)
 
-    def add_meow_battle_time(self, instance: str, duration: float):
+    def add_meow_battle_time(self, instance: str, duration: float, hazard_level: int = None):
         """记录短猫单场战斗时间
 
         Args:
             instance: 实例名称
             duration: 战斗耗时（秒）
+            hazard_level: 侵蚀等级，用于分桶统计（2-6）
         """
         month = datetime.now().strftime('%Y-%m')
         data = self.get_stats(instance, month)
@@ -595,15 +681,57 @@ class Cl1Database:
             times = times[-100:]
 
         data['meow_battle_times'] = times
+        if hazard_level in [2, 3, 4, 5, 6]:
+            bucket = self._get_meow_hazard_bucket(data, hazard_level)
+            bucket_times = self._extract_meow_battle_durations(bucket.get('battle_times', []))
+            bucket_times.append(round(duration, 2))
+            if len(bucket_times) > 100:
+                bucket_times = bucket_times[-100:]
+            bucket['battle_times'] = bucket_times
         self.save_stats(instance, month, data)
 
-    def get_meow_stats(self, instance: str, year: int = None, month: int = None) -> Dict[str, Any]:
+    def add_siren_research_device(self, instance: str, source: str = 'cl1', hazard_level: int = None):
+        """记录塞壬研究装置（吊机）出现次数。"""
+        month = datetime.now().strftime('%Y-%m')
+        data = self.get_stats(instance, month)
+        devices = self._normalize_siren_research_devices(data)
+
+        if source == 'meow':
+            if hazard_level not in [2, 3, 4, 5, 6]:
+                hazard_level = None
+            if hazard_level is not None:
+                key = str(int(hazard_level))
+                devices['meow'][key] = int(devices['meow'].get(key, 0) or 0) + 1
+        else:
+            devices['cl1'] = int(devices.get('cl1', 0) or 0) + 1
+
+        entries = data.get('siren_research_device_entries', [])
+        entries.append({
+            'ts': datetime.now().isoformat(),
+            'source': 'meow' if source == 'meow' else 'cl1',
+            'hazard_level': hazard_level,
+        })
+        if len(entries) > 5000:
+            entries = entries[-5000:]
+        data['siren_research_device_entries'] = entries
+        self.save_stats(instance, month, data)
+
+    def get_siren_research_device_count(self, data: Dict[str, Any], source: str = 'cl1', hazard_level: int = None) -> int:
+        devices = self._normalize_siren_research_devices(data)
+        if source == 'meow':
+            if hazard_level is None:
+                return sum(int(value or 0) for value in devices.get('meow', {}).values())
+            return int(devices.get('meow', {}).get(str(int(hazard_level)), 0) or 0)
+        return int(devices.get('cl1', 0) or 0)
+
+    def get_meow_stats(self, instance: str, year: int = None, month: int = None, hazard_level: int = None) -> Dict[str, Any]:
         """获取短猫统计数据
 
         Args:
             instance: 实例名称
             year: 年份，默认当前年
             month: 月份，默认当前月
+            hazard_level: 指定侵蚀等级时，只返回该等级分桶数据
 
         Returns:
             短猫统计数据字典
@@ -616,21 +744,29 @@ class Cl1Database:
 
         data = self.get_stats(instance, key)
 
-        round_times = data.get('meow_round_times', [])
-        battle_times = data.get('meow_battle_times', [])
+        if hazard_level in [2, 3, 4, 5, 6]:
+            bucket = self._get_meow_hazard_bucket(data, hazard_level, create=False)
+            round_times = bucket.get('round_times', [])
+            battle_times = bucket.get('battle_times', [])
+            battle_count = int(bucket.get('battle_raw_count', 0) or 0)
+            effective_rounds = float(bucket.get('effective_rounds', 0) or 0)
+        else:
+            round_times = data.get('meow_round_times', [])
+            battle_times = data.get('meow_battle_times', [])
 
-        effective_rounds = float(data.get('meow_battle_count', 0) or 0)
-        battle_count, effective_rounds, _ = self._reconcile_meow_counts(
-            data=data,
-            effective_rounds=effective_rounds,
-            round_times=round_times,
-            battle_times=battle_times,
-            instance=instance,
-            month_key=key,
-            persist=True,
-        )
+            effective_rounds = float(data.get('meow_battle_count', 0) or 0)
+            battle_count, effective_rounds, _ = self._reconcile_meow_counts(
+                data=data,
+                effective_rounds=effective_rounds,
+                round_times=round_times,
+                battle_times=battle_times,
+                instance=instance,
+                month_key=key,
+                persist=True,
+            )
 
         round_durations = self._extract_meow_round_durations(round_times)
+        battle_durations = self._extract_meow_battle_durations(battle_times)
 
         # 计算平均每轮时间
         avg_round_time = 0.0
@@ -639,17 +775,29 @@ class Cl1Database:
 
         # 计算平均单场战斗时间
         avg_battle_time = 0.0
-        if battle_times:
-            avg_battle_time = round(sum(battle_times) / len(battle_times), 2)
+        if battle_durations:
+            avg_battle_time = round(sum(battle_durations) / len(battle_durations), 2)
+
+        siren_research_devices = self.get_siren_research_device_count(
+            data,
+            source='meow',
+            hazard_level=hazard_level if hazard_level in [2, 3, 4, 5, 6] else None,
+        )
+        siren_research_rate = 0.0
+        if effective_rounds > 0:
+            siren_research_rate = round(siren_research_devices / effective_rounds, 4)
 
         return {
             'month': key,
+            'hazard_level': hazard_level,
             'battle_count': battle_count,
             'effective_rounds': round(effective_rounds, 2),
             'round_times': round_times,
             'avg_round_time': avg_round_time,
             'battle_times': battle_times,
             'avg_battle_time': avg_battle_time,
+            'siren_research_devices': siren_research_devices,
+            'siren_research_rate': siren_research_rate,
         }
     def async_get_stats(self, instance: str, month: str):
         from module.base.async_executor import async_executor
@@ -687,13 +835,17 @@ class Cl1Database:
         from module.base.async_executor import async_executor
         return async_executor.submit(self.add_meow_round_time, instance, duration, hazard_level)
 
-    def async_add_meow_battle_time(self, instance: str, duration: float):
+    def async_add_meow_battle_time(self, instance: str, duration: float, hazard_level: int = None):
         from module.base.async_executor import async_executor
-        return async_executor.submit(self.add_meow_battle_time, instance, duration)
+        return async_executor.submit(self.add_meow_battle_time, instance, duration, hazard_level)
 
-    def async_get_meow_stats(self, instance: str, year: int = None, month: int = None):
+    def async_get_meow_stats(self, instance: str, year: int = None, month: int = None, hazard_level: int = None):
         from module.base.async_executor import async_executor
-        return async_executor.submit(self.get_meow_stats, instance, year, month)
+        return async_executor.submit(self.get_meow_stats, instance, year, month, hazard_level)
+
+    def async_add_siren_research_device(self, instance: str, source: str = 'cl1', hazard_level: int = None):
+        from module.base.async_executor import async_executor
+        return async_executor.submit(self.add_siren_research_device, instance, source, hazard_level)
 
     # ========== 委托收益数据记录方法 ==========
 

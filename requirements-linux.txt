@@ -254,7 +254,7 @@ rpds-py==0.30.0
     #   referencing
 scipy==1.17.1
     # via -r requirements-in.txt
-setuptools==82.0.1
+setuptools==75.8.2
     # via
     #   -r requirements-in.txt
     #   zope-event

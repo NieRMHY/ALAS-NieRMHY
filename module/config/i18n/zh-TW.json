@@ -995,7 +995,7 @@
       "event_20201002_en": "Counterattack Within the Fjord",
       "event_20201012_cn": "復刻劃破海空之翼",
       "event_20201029_cn": "激唱的UNIVERSE",
-      "event_20201126_cn": "假日航線",
+      "event_20201126_cn": "復刻假日航線",
       "event_20201229_cn": "復刻-負象限作戰",
       "event_20210121_cn": "復刻神聖的悲喜劇",
       "event_20210225_cn": "復刻破曉冰華",
@@ -1854,6 +1854,10 @@
       "only_05_hour": "0.5小時+無專案可做時",
       "only_no_project": "無專案可做時",
       "do_not_use": "不使用"
+    },
+    "CubePreserve": {
+      "name": "保留 X 個魔方",
+      "help": "當目前魔方數量小於等於該值時，科研暫時不選擇消耗魔方的專案。\n0 表示關閉。"
     },
     "UseCoin": {
       "name": "使用物資",
@@ -4409,7 +4413,19 @@
     },
     "NotifyOpsiMail": {
       "name": "推送大世界相關資訊",
-      "help": "推送關於侵蝕1和短貓的資訊，需要同時開啟“錯誤推送”功能，由於資訊較多，可能會比較吵"
+      "help": "使用 OnePush 推送關於侵蝕1和短貓的資訊。啟動器推送由「啟動器推送」單獨控制。由於資訊較多，可能會比較吵"
+    },
+    "LauncherPush": {
+      "name": "啟動器推送",
+      "help": "將大世界相關資訊推送到啟動器和 Windows 通知。關閉後僅影響啟動器推送，不影響 OnePush 推送。"
+    },
+    "IndependentPush": {
+      "name": "大世界信息獨立推送",
+      "help": "需要同時開啟「推送大世界相關資訊」功能。\n關閉時使用智慧港區設定 —> 調試設定 —> 錯誤推送設定，需要同時開啟「錯誤推送」功能。\n開啟時使用大世界推送設定，需要分離推送內容時請開啟此功能"
+    },
+    "OpsiOnePushConfig": {
+      "name": "大世界推送設定",
+      "help": "“大世界信息獨立推送”功能開啟時設定才生效。使用 Onepush 推送一條關於侵蝕1和短貓的資訊。配置方法見文檔：https://github.com/LmeSzinc/AzurLaneAutoScript/wiki/Onepush-configuration-%5BCN%5D"
     }
   },
   "OpsiAshBeacon": {
@@ -4484,18 +4500,6 @@
     "ForceRun": {
       "name": "無視執行間隔強制執行",
       "help": "開啟後將帶來額外的行動力消耗，一般不用開啟，慢慢打就好"
-    },
-    "IfSkipSirenResearch": {
-      "name": "跳過塞壬研究裝置",
-      "help": "開啟後，將跳過對應坐標等級的塞壬研究裝置,以方便卡bug\n經過了幾個海域的初步測試，但未完成一次完整的月度開荒，可能存在未知問題",
-      "0": "不跳過",
-      "6": "僅跳過6級",
-      "65": "跳過6級和5級",
-      "654": "跳過6級、5級和4級"
-    },
-    "SkipedSirenResearch": {
-      "name": "已經跳過塞壬研究裝置的海域",
-      "help": "這個數值是自動記錄的，不需要手動修改。\n月初重新開荒時會重置，或者修改\"上一次完成的區域\"為0並重新執行月度開荒來重置"
     },
     "LastZone": {
       "name": "上一次完成的區域",
@@ -4661,24 +4665,6 @@
     "APPreserveUntilReset": {
       "name": "OpsiMeowfficerFarming.APPreserveUntilReset.name",
       "help": "OpsiMeowfficerFarming.APPreserveUntilReset.help"
-    },
-    "SirenDetectorSearch_Enable": {
-      "name": "OpsiMeowfficerFarming.SirenDetectorSearch_Enable.name",
-      "help": "OpsiMeowfficerFarming.SirenDetectorSearch_Enable.help"
-    },
-    "SirenDetectorSearch_HazardLevel": {
-      "name": "OpsiMeowfficerFarming.SirenDetectorSearch_HazardLevel.name",
-      "help": "OpsiMeowfficerFarming.SirenDetectorSearch_HazardLevel.help",
-      "5": "5",
-      "6": "6"
-    },
-    "SirenDetectorSearch_StopAfterFound": {
-      "name": "OpsiMeowfficerFarming.SirenDetectorSearch_StopAfterFound.name",
-      "help": "OpsiMeowfficerFarming.SirenDetectorSearch_StopAfterFound.help"
-    },
-    "SirenDetectorSearch_FoundZones": {
-      "name": "OpsiMeowfficerFarming.SirenDetectorSearch_FoundZones.name",
-      "help": "OpsiMeowfficerFarming.SirenDetectorSearch_FoundZones.help"
     }
   },
   "OpsiTarget": {
@@ -4740,6 +4726,21 @@
     "SirenResearch_Enable": {
       "name": "啟用塞壬研究裝置",
       "help": "啟用後使用紫幣透過塞壬研究裝置轉換為黃幣\n需要足夠的海里數支撐紫幣消耗"
+    },
+    "Siren_Mode": {
+      "name": "與塞壬探測裝置的互動方式",
+      "help": "選擇與塞壬裝置的互動方式。探測資源消耗紫幣（特別兌換憑證），探測敵人消耗塞壬能源存儲器",
+      "resource": "反覆嘗試探測隱藏的資源",
+      "enemy": "反覆嘗試探測隱藏的敵人"
+    },
+    "Siren_Fleet": {
+      "name": "探測敵人使用的艦隊",
+      "help": "選擇探測隱藏敵人時使用的艦隊。0表示使用當前艦隊，1-4表示使用指定艦隊",
+      "0": "使用當前艦隊",
+      "1": "艦隊1",
+      "2": "艦隊2",
+      "3": "艦隊3",
+      "4": "艦隊4"
     }
   },
   "OpsiCheckLeveling": {
@@ -5262,6 +5263,9 @@
       "SortieCost": "出击消耗",
       "AkashiEncounters": "遇见明石次数",
       "AkashiRate": "遇见明石概率",
+      "SirenResearchDevices": "吊机次数",
+      "SirenResearchRate": "吊机概率",
+      "HazardLevel": "侵蚀等级",
       "AverageAP": "平均体力",
       "NetAP": "净赚体力",
       "LoopEfficiency": "循环效率",
@@ -5282,7 +5286,7 @@
       "MeowRounds": "出击轮次",
       "AvgMeowRoundTime": "平均一轮短猫时长",
       "MeowLootTitle": "短猫相接收获",
-      "NoMeowDataNotice": "暂无数据，请将\"大世界掉落截图\"设置为\"上传\"",
+      "NoMeowDataNotice": "暫無本地短貓收穫數據，完成一次短貓相接後會自動生成",
       "MeowAdvanceAdviceTitle": "短猫提前开始建议",
       "CurrentAP": "当前AP: {value}",
       "ApPerRound": "每轮消耗: {value} AP",

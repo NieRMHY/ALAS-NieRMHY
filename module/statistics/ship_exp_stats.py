@@ -8,7 +8,7 @@ import time
 import json
 from pathlib import Path
 from datetime import datetime, date
-from typing import Dict, Any, Optional, List
+from typing import Any
 
 from module.os.ship_exp_data import LIST_SHIP_EXP
 from module.logger import logger
@@ -31,7 +31,7 @@ class ShipExpStats:
     MAX_BATTLE_TIME_SAMPLES = 100  # 保留最近100场战斗时间样本
     MAX_DAILY_STATS_DAYS = 30      # 保留最近30天的统计
     
-    def __init__(self, path: Optional[Path] = None, instance_name: Optional[str] = None):
+    def __init__(self, path: Path | None = None, instance_name: str | None = None):
         if path is None:
             project_root = Path(__file__).resolve().parents[2]
             instance_dir = instance_name or "default"
@@ -42,9 +42,9 @@ class ShipExpStats:
         self.data = self._load()
         
         # 当前战斗的开始时间
-        self._battle_start_time: Optional[float] = None
+        self._battle_start_time: float | None = None
     
-    def _load(self) -> Dict[str, Any]:
+    def _load(self) -> dict[str, Any]:
         """加载数据文件"""
         if not self._path.exists():
             return {}
@@ -75,7 +75,7 @@ class ShipExpStats:
         """战斗开始时调用（侵蚀1 / 短猫等统一入口）"""
         self._battle_start_time = time.time()
     
-    def on_battle_end(self, fleet_index: int = 1, source: str = "cl1") -> Optional[float]:
+    def on_battle_end(self, fleet_index: int = 1, source: str = "cl1") -> float | None:
         """
         战斗结束时调用
         
@@ -101,16 +101,18 @@ class ShipExpStats:
             return duration
         
         # 记录战斗时间（根据来源分别统计）
+        source = "meow" if source == "meow" else "cl1"
         self._record_battle_time(duration, source=source)
         
         # 计算本场经验 (使用平均值，因为每个位置经验不同)
         # 旗舰 431 + 其他位置 288*5 = 1871, 平均 312
         avg_exp = 312
         
-        # 更新每日统计
-        self._update_daily_stats(exp_gained=avg_exp, battle_duration=duration)
-        
-        logger.info(f'Battle recorded: {duration:.1f}s, exp: {avg_exp}')
+        # 每日经验效率用于侵蚀1练级预估，避免被短猫耗时混入。
+        if source == "cl1":
+            self._update_daily_stats(exp_gained=avg_exp, battle_duration=duration)
+
+        logger.info(f'{source.upper()} battle recorded: {duration:.1f}s, exp: {avg_exp}')
         return duration
     
     def _record_battle_time(self, duration: float, source: str = "cl1") -> None:
@@ -262,7 +264,7 @@ class ShipExpStats:
         
         return 22000.0  # 默认值
     
-    def get_today_stats(self) -> Optional[Dict[str, Any]]:
+    def get_today_stats(self) -> dict[str, Any] | None:
         """获取今日统计数据"""
         today = date.today().isoformat()
         if 'daily_stats' not in self.data:
@@ -273,7 +275,7 @@ class ShipExpStats:
     
     def save_ship_data(
         self,
-        ships: List[Dict[str, Any]],
+        ships: list[dict[str, Any]],
         target_level: int,
         fleet_index: int,
         battle_count_at_check: int
@@ -297,10 +299,10 @@ class ShipExpStats:
     
     def calculate_progress(
         self,
-        ship: Dict[str, Any],
+        ship: dict[str, Any],
         target_level: int,
         current_battle_count: int
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         计算单艘舰船的升级进度
         
@@ -351,7 +353,7 @@ class ShipExpStats:
             'time_needed': self._format_time(time_seconds)
         }
     
-    def get_all_progress(self, current_battle_count: int) -> List[Dict[str, Any]]:
+    def get_all_progress(self, current_battle_count: int) -> list[dict[str, Any]]:
         """
         获取所有舰船的升级进度
         
@@ -385,10 +387,10 @@ class ShipExpStats:
 
 # ========== 单例模式和便捷函数 ==========
 
-_stats_instances: Dict[str, ShipExpStats] = {}
+_stats_instances: dict[str, ShipExpStats] = {}
 
 
-def get_ship_exp_stats(instance_name: Optional[str] = None) -> ShipExpStats:
+def get_ship_exp_stats(instance_name: str | None = None) -> ShipExpStats:
     """获取 ShipExpStats 实例"""
     global _stats_instances
     key = instance_name or "default"
@@ -401,11 +403,11 @@ def get_ship_exp_stats(instance_name: Optional[str] = None) -> ShipExpStats:
 
 
 def save_ship_exp_data(
-    ships: List[Dict[str, Any]],
+    ships: list[dict[str, Any]],
     target_level: int,
     fleet_index: int,
     battle_count_at_check: int,
-    instance_name: Optional[str] = None
+    instance_name: str | None = None
 ) -> None:
     """便捷函数: 保存舰船经验检测数据"""
     get_ship_exp_stats(instance_name=instance_name).save_ship_data(

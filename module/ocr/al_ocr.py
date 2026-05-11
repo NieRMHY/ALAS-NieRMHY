@@ -1,4 +1,6 @@
 import os
+import queue
+import threading
 import numpy as np
 import cv2
 from PIL import Image
@@ -26,8 +28,70 @@ except Exception as e:
     handle_ocr_error(e)
 
 
-config_name = os.environ.get("ALAS_CONFIG_NAME")
+config_name = os.environ.get("ALAS_CONFIG_NAME") or "alas"
 config = AzurLaneConfig(config_name)
+
+
+class _OcrJob:
+    def __init__(self, func, args, kwargs):
+        self.func = func
+        self.args = args
+        self.kwargs = kwargs
+        self.done = threading.Event()
+        self.result = None
+        self.exc_info = None
+
+    def run(self):
+        try:
+            self.result = self.func(*self.args, **self.kwargs)
+        except BaseException as e:
+            self.exc_info = (e, e.__traceback__)
+        finally:
+            self.done.set()
+
+
+_ocr_queue = queue.Queue()
+_ocr_worker = None
+_ocr_worker_lock = threading.Lock()
+_ocr_worker_ident = None
+
+
+def _ocr_worker_loop():
+    global _ocr_worker_ident
+    _ocr_worker_ident = threading.get_ident()
+    while True:
+        job = _ocr_queue.get()
+        try:
+            job.run()
+        finally:
+            _ocr_queue.task_done()
+
+
+def _ensure_ocr_worker():
+    global _ocr_worker
+    with _ocr_worker_lock:
+        if _ocr_worker is None or not _ocr_worker.is_alive():
+            _ocr_worker = threading.Thread(
+                target=_ocr_worker_loop,
+                name='AlOcrQueue',
+                daemon=True,
+            )
+            _ocr_worker.start()
+
+
+def _run_ocr_queued(func, *args, **kwargs):
+    if threading.get_ident() == _ocr_worker_ident:
+        return func(*args, **kwargs)
+
+    _ensure_ocr_worker()
+    job = _OcrJob(func, args, kwargs)
+    _ocr_queue.put(job)
+    job.done.wait()
+
+    if job.exc_info is not None:
+        exc, traceback = job.exc_info
+        raise exc.with_traceback(traceback)
+    return job.result
 
 
 class RecOnlyOCR(RapidOCR):
@@ -118,12 +182,15 @@ def _get_model(name):
 
 
 def reset_ocr_model():
-    global _cn_model, _en_model, _jp_model, _tw_model
-    logger.info("Resetting OCR models")
-    _cn_model = None
-    _en_model = None
-    _jp_model = None
-    _tw_model = None
+    def _reset():
+        global _cn_model, _en_model, _jp_model, _tw_model
+        logger.info("Resetting OCR models")
+        _cn_model = None
+        _en_model = None
+        _jp_model = None
+        _tw_model = None
+
+    return _run_ocr_queued(_reset)
 
 
 class AlOcr:
@@ -193,7 +260,7 @@ class AlOcr:
             # We don't want to crash the main process due to debug saving failure
             logger.warning(f"Failed to save OCR debug image: {e}")
 
-    def ocr(self, img_fp):
+    def _ocr_direct(self, img_fp):
         logger.debug(f"[VERBOSE] AlOcr.ocr: Ensure loaded...")
         self._ensure_loaded()
 
@@ -209,10 +276,13 @@ class AlOcr:
             logger.error(f"AlOcr.ocr exception: {e}")
             raise
 
+    def ocr(self, img_fp):
+        return _run_ocr_queued(self._ocr_direct, img_fp)
+
     def ocr_for_single_line(self, img_fp):
         return self.ocr(img_fp)
 
-    def ocr_for_single_lines(self, img_list):
+    def _ocr_for_single_lines_direct(self, img_list):
         self._ensure_loaded()
         results = []
         for i, img in enumerate(img_list):
@@ -228,6 +298,9 @@ class AlOcr:
                 logger.error(f"AlOcr.ocr_for_single_lines exception on image {i}: {e}")
                 raise
         return results
+
+    def ocr_for_single_lines(self, img_list):
+        return _run_ocr_queued(self._ocr_for_single_lines_direct, img_list)
 
     def set_cand_alphabet(self, cand_alphabet):
         pass

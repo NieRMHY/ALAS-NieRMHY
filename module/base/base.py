@@ -443,6 +443,8 @@ class ModuleBase:
         elif isinstance(value, str):
             value = load_image(value)
 
+        width, height = image_size(value)
+        set_template_match_non_native_720p(width != 1280 or height != 720)
         self.device.image = value
 
     def set_server(self, server):

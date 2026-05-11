@@ -198,6 +198,9 @@ Stat:
   SortieCost:
   AkashiEncounters:
   AkashiRate:
+  SirenResearchDevices:
+  SirenResearchRate:
+  HazardLevel:
   AverageAP:
   NetAP:
   LoopEfficiency:
@@ -283,4 +286,3 @@ OpsiScheduling:
 Misc:
   Enabled:
   Disabled:
-

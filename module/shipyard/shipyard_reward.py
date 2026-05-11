@@ -26,6 +26,10 @@ class RewardShipyard(ShipyardUI):
     _shipyard_bp_rarity = 'PR'
     _coin_count = 0
 
+    @staticmethod
+    def _shipyard_task_enabled(index, count):
+        return index > 0 and count > 0
+
     def _shipyard_get_cost(self, amount, rarity=None):
         """
         Args:
@@ -181,6 +185,10 @@ class RewardShipyard(ShipyardUI):
                   then did not run
         """
         if count <= 0:
+            logger.info('Shipyard buy amount is 0, skip')
+            return False
+        if index <= 0:
+            logger.info('Shipyard ship index is 0, skip')
             return False
 
         # Gold difficult to Ocr in page_shipyard
@@ -221,13 +229,23 @@ class RewardShipyard(ShipyardUI):
             in: Any page
             out: page_shipyard
         """
-        if self.config.Shipyard_BuyAmount <= 0 and self.config.ShipyardDr_BuyAmount <= 0:
+        dr_enabled = self._shipyard_task_enabled(
+            self.config.ShipyardDr_ShipIndex,
+            self.config.ShipyardDr_BuyAmount,
+        )
+        pr_enabled = self._shipyard_task_enabled(
+            self.config.Shipyard_ShipIndex,
+            self.config.Shipyard_BuyAmount,
+        )
+        if not dr_enabled and not pr_enabled:
             self.config.Scheduler_Enable = False
             self.config.task_stop()
 
         logger.hr('Shipyard DR', level=1)
         logger.attr('ShipyardDr_LastRun', self.config.ShipyardDr_LastRun)
-        if self.config.ShipyardDr_LastRun > get_server_last_update('04:00'):
+        if not dr_enabled:
+            logger.info('Task Shipyard DR is not configured, skip')
+        elif self.config.ShipyardDr_LastRun > get_server_last_update('04:00'):
             logger.warning('Task Shipyard DR has already been run today, skip')
         else:
             self._shipyard_bp_rarity = 'DR'
@@ -237,7 +255,9 @@ class RewardShipyard(ShipyardUI):
 
         logger.hr('Shipyard PR', level=1)
         logger.attr('Shipyard_LastRun', self.config.Shipyard_LastRun)
-        if self.config.Shipyard_LastRun > get_server_last_update('04:00'):
+        if not pr_enabled:
+            logger.info('Task Shipyard PR is not configured, skip')
+        elif self.config.Shipyard_LastRun > get_server_last_update('04:00'):
             logger.warning('Task Shipyard PR has already been run today, stop')
             self.config.task_delay(server_update=True)
             self.config.task_stop()

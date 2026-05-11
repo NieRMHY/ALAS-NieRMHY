@@ -155,9 +155,8 @@ class OSCamera(OSMapOperation, Camera):
             center = self.view.center_loca
             local = self.view[np.add(location, center)]
 
-        logger.info('Radar %s -> Local %s (fleet=%s)' % (
-            str(location),
-            location2node(local.location),
-            location2node(center)
-        ))
+        logger.info(
+            f'Radar {location} -> Local {location2node(local.location)} '
+            f'(fleet={location2node(center)})'
+        )
         return local

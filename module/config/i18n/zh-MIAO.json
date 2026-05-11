@@ -585,8 +585,8 @@
       "help": "ADB离线连续达到次数后重启模拟器喵。"
     },
     "AdbOfflineThreshold": {
-      "name": "⏳ 找回联络员等待期限",
-      "help": "连续找不见多少次后就放弃并重启喵？"
+      "name": "检测不到设备重启阈值 (。-`ω´-)",
+      "help": "连续多少次触发重启喵。"
     }
   },
   "Optimization": {
@@ -1854,6 +1854,10 @@
       "only_05_hour": "0.5小时+无项目可做时喵",
       "only_no_project": "无项目可做时喵",
       "do_not_use": "不使用喵"
+    },
+    "CubePreserve": {
+      "name": "保留 X 个魔方喵",
+      "help": "当当前魔方数量小于等于该值时，科研暂时不选择消耗魔方的项目喵。\n0 表示关闭喵。"
     },
     "UseCoin": {
       "name": "使用物资喵",
@@ -4409,7 +4413,19 @@
     },
     "NotifyOpsiMail": {
       "name": "推送大世界相关信息 (｀・ω・´)っ",
-      "help": "推送侵蚀1和短猫信息，需同时开启错误推送，信息较多可能较吵喵。"
+      "help": "使用 OnePush 推送侵蚀1和短猫信息喵。启动器推送由“启动器推送”单独控制喵。信息较多可能较吵喵。"
+    },
+    "LauncherPush": {
+      "name": "启动器推送 (｀・ω・´)っ",
+      "help": "将大世界相关信息推送到启动器和 Windows 通知喵。关闭后仅影响启动器推送，不影响 OnePush 推送喵。"
+    },
+    "IndependentPush": {
+      "name": "大世界信息独立推送 (。・ω・。)",
+      "help": "发需要同时开启“推送大世界相关信息”功能喵。\n关闭时使用智慧港区设置 —> 调试设置 —> 错误推送设置，需要同时开启“错误推送”功能喵。\n开启时使用大世界推送设置，需要分离推送内容时请开启此功能喵。"
+    },
+    "OpsiOnePushConfig": {
+      "name": "大世界推送设置 (｀・ω・´)っ",
+      "help": "“大世界信息独立推送”功能开启时设置才生效喵。使用 Onepush 推送一条关于侵蚀1和短猫的信息喵。配置方法见文档喵：https://github.com/LmeSzinc/AzurLaneAutoScript/wiki/Onepush-configuration-%5BCN%5D"
     }
   },
   "OpsiAshBeacon": {
@@ -4484,18 +4500,6 @@
     "ForceRun": {
       "name": "无视运行间隔强制运行 (｀ε´)",
       "help": "带来额外行动力消耗，一般不用开喵。"
-    },
-    "IfSkipSirenResearch": {
-      "name": "跳过塞壬研究装置 (´・ω・`)",
-      "help": "开启则跳过对应等级的研究装置以卡bug，初步测试但未完成完整开荒，可能存在问题喵。",
-      "0": "不跳过喵",
-      "6": "仅跳过6级喵",
-      "65": "跳过6和5级喵",
-      "654": "跳过6、5、4级喵"
-    },
-    "SkipedSirenResearch": {
-      "name": "已跳过研究装置的海域 (自动记录) (´・ω・`)",
-      "help": "自动记录，月初重置或改\"上一次完成区域\"为0重运行来重置喵。"
     },
     "LastZone": {
       "name": "上一次完成的区域 (自动更新) (・ω・)ノ",
@@ -4661,24 +4665,6 @@
     "APPreserveUntilReset": {
       "name": "月底重置强制消耗行动力 (´⊙ω⊙`)",
       "help": "重置前自动将保留行动力设为0，确保积余被消耗。建议配合侵蚀1练级喵。"
-    },
-    "SirenDetectorSearch_Enable": {
-      "name": "自动寻找塞壬探测装置 (´・ω・`)つ",
-      "help": "在短猫任务中自动寻找探测装置，记录找到海域，仅中心海域寻找喵。"
-    },
-    "SirenDetectorSearch_HazardLevel": {
-      "name": "塞壬探测装置侵蚀等级 (;ﾟ∇ﾟ)",
-      "help": "中心海域按顺时针出击特定侵蚀等级寻装置。中心只有5和6级。注意只在region 5选择。",
-      "5": "5喵",
-      "6": "6喵"
-    },
-    "SirenDetectorSearch_StopAfterFound": {
-      "name": "寻X个塞壬探测装置后停止 (´⊙ω⊙`)",
-      "help": "达指定数量后停止搜索回正常短猫流程。统计和停止按所选侵蚀等级分别计算。最小值1，不能0。中心5级有4个，6级有4个，数量不能大于实际数(最大4)喵。"
-    },
-    "SirenDetectorSearch_FoundZones": {
-      "name": "已找到的塞壬探测装置海域 (自动记录) (´・ω・`)",
-      "help": "按侵蚀等级分开记录并排除。若装置已被使用，可手动删除记录喵。"
     }
   },
   "OpsiTarget": {
@@ -4740,6 +4726,21 @@
     "SirenResearch_Enable": {
       "name": "启用塞壬研究装置",
       "help": "启用后使用紫币通过塞壬研究装置转换为黄币\n需要足够的海里数支撑紫币消耗喵。"
+    },
+    "Siren_Mode": {
+      "name": "与塞壬探测装置的互动方式喵",
+      "help": "选择与塞壬装置的互动方式喵。探测资源消耗紫币（特别兑换凭证），探测敌人消耗塞壬能源存储器喵。",
+      "resource": "反复尝试探测隐藏的资源喵",
+      "enemy": "反复尝试探测隐藏的敌人喵"
+    },
+    "Siren_Fleet": {
+      "name": "探测敌人使用的舰队喵",
+      "help": "选择探测隐藏敌人时使用的舰队喵。0表示使用当前舰队，1-4表示使用指定舰队喵。",
+      "0": "使用当前舰队喵",
+      "1": "舰队1喵",
+      "2": "舰队2喵",
+      "3": "舰队3喵",
+      "4": "舰队4喵"
     }
   },
   "OpsiCheckLeveling": {
@@ -5262,6 +5263,9 @@
       "SortieCost": "出击消耗喵",
       "AkashiEncounters": "遇见明石次数喵",
       "AkashiRate": "遇见明石概率喵",
+      "SirenResearchDevices": "吊机次数喵",
+      "SirenResearchRate": "吊机概率喵",
+      "HazardLevel": "侵蚀等级喵",
       "AverageAP": "平均体力喵",
       "NetAP": "净赚体力喵",
       "LoopEfficiency": "循环效率喵",
@@ -5282,7 +5286,7 @@
       "MeowRounds": "出击轮次喵",
       "AvgMeowRoundTime": "平均一轮短猫时长喵",
       "MeowLootTitle": "短猫相接收获喵",
-      "NoMeowDataNotice": "暂无数据，请将\"大世界掉落截图\"设置为\"上传\"喵",
+      "NoMeowDataNotice": "暂无本地短猫收获数据，完成一次短猫相接后会自动生成喵",
       "MeowAdvanceAdviceTitle": "短猫提前开始建议喵",
       "CurrentAP": "当前AP: {value}",
       "ApPerRound": "每轮消耗: {value} AP",

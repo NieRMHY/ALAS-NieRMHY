@@ -104,7 +104,8 @@
 
 #pywebio-scope-opsi_stats,
 #pywebio-scope-ap_chart,
-#pywebio-scope-ship_exp_table {
+#pywebio-scope-ship_exp_table,
+#pywebio-scope-commission_income {
     width: 100% !important;
     max-width: 100% !important;
     min-width: 0 !important;
@@ -114,7 +115,8 @@
 
 #pywebio-scope-opsi_stats .pywebio-row,
 #pywebio-scope-ap_chart .pywebio-row,
-#pywebio-scope-ship_exp_table .pywebio-row {
+#pywebio-scope-ship_exp_table .pywebio-row,
+#pywebio-scope-commission_income .pywebio-row {
     display: grid !important;
     grid-auto-flow: row !important;
     grid-template-columns: minmax(0, 1fr) !important;
@@ -122,14 +124,16 @@
 
 #pywebio-scope-opsi_stats .pywebio-row > *,
 #pywebio-scope-ap_chart .pywebio-row > *,
-#pywebio-scope-ship_exp_table .pywebio-row > * {
+#pywebio-scope-ship_exp_table .pywebio-row > *,
+#pywebio-scope-commission_income .pywebio-row > * {
     min-width: 0 !important;
     width: 100% !important;
 }
 
 #pywebio-scope-ap_chart .btn,
 #pywebio-scope-opsi_stats .btn,
-#pywebio-scope-ship_exp_table .btn {
+#pywebio-scope-ship_exp_table .btn,
+#pywebio-scope-commission_income .btn {
     width: 100% !important;
     min-width: 0 !important;
     white-space: normal !important;
@@ -141,6 +145,13 @@
 }
 
 #pywebio-scope-opsi_stats table,
-#pywebio-scope-ship_exp_table table {
+#pywebio-scope-ship_exp_table table,
+#pywebio-scope-commission_income table {
     font-size: .85rem;
+}
+
+#pywebio-scope-commission_income .commission-income-recent-row {
+    align-items: flex-start !important;
+    gap: .35rem !important;
+    flex-wrap: wrap !important;
 }

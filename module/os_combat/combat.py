@@ -6,6 +6,7 @@ from module.os_handler.assets import *
 from module.os_handler.map_event import MapEventHandler
 from module.base.timer import Timer
 from module.exception import GameBugError
+from module.statistics.opsi_runtime import finish_battle_timer, start_battle_timer
 
 
 class ContinuousCombat(Exception):
@@ -86,13 +87,13 @@ class Combat(Combat_, MapEventHandler):
                 #     self.emotion.reduce(fleet_index)
                 break
 
+    def _get_exp_info_sleep(self):
+        return (1.5, 2) if self.__os_combat_drop else (0.25, 0.5)
+
     def handle_exp_info(self):
         if self.is_combat_executing():
             return False
-        if self.__os_combat_drop:
-            sleep = (1.5, 2)
-        else:
-            sleep = (0.25, 0.5)
+        sleep = self._get_exp_info_sleep()
         if self.appear_then_click(EXP_INFO_S):
             self.device.sleep(sleep)
             return True
@@ -192,36 +193,38 @@ class Combat(Combat_, MapEventHandler):
                 logger.info('Continuous combat detected')
                 continue
 
-    def handle_auto_search_battle_status(self, drop=None):
-        if self.appear(BATTLE_STATUS_C, interval=self.battle_status_click_interval):
-            logger.warning('Battle Status C')
-            # raise GameStuckError('Battle status C')
+    def _handle_single_battle_status(self, status_button, status_letter, drop):
+        if self.appear(status_button, interval=self.battle_status_click_interval):
+            if status_letter == 'S':
+                logger.info(f'Battle Status {status_letter}')
+            else:
+                logger.warning(f'Battle Status {status_letter}')
             if drop:
                 drop.handle_add(self)
             else:
                 self.device.sleep((0.25, 0.5))
-            self.device.click(BATTLE_STATUS_C)
+            self.device.click(status_button)
             return True
-        if self.appear(BATTLE_STATUS_D, interval=self.battle_status_click_interval):
-            logger.warning('Battle Status D')
-            # raise GameStuckError('Battle Status D')
-            if drop:
-                drop.handle_add(self)
-            else:
-                self.device.sleep((0.25, 0.5))
-            self.device.click(BATTLE_STATUS_D)
-            return True
+        return False
 
+    def handle_auto_search_battle_status(self, drop=None):
+        for status_button, status_letter in [
+            (BATTLE_STATUS_S, 'S'),
+            (BATTLE_STATUS_A, 'A'),
+            (BATTLE_STATUS_B, 'B'),
+            (BATTLE_STATUS_C, 'C'),
+            (BATTLE_STATUS_D, 'D'),
+        ]:
+            if self._handle_single_battle_status(status_button, status_letter, drop):
+                return True
         return False
 
     def handle_auto_search_exp_info(self):
-        if self.appear_then_click(EXP_INFO_C):
-            self.device.sleep((0.25, 0.5))
-            return True
-        if self.appear_then_click(EXP_INFO_D):
-            self.device.sleep((0.25, 0.5))
-            return True
-
+        sleep = self._get_exp_info_sleep()
+        for exp_info_button in [EXP_INFO_S, EXP_INFO_A, EXP_INFO_B, EXP_INFO_C, EXP_INFO_D]:
+            if self.appear_then_click(exp_info_button):
+                self.device.sleep(sleep)
+                return True
         return False
 
     def auto_search_combat(self, drop=None):
@@ -236,26 +239,9 @@ class Combat(Combat_, MapEventHandler):
             in: is_combat_loading()
             out: combat status
         """
-        # 记录战斗开始时间用于统计 (侵蚀1 / 短猫任务)
-        _is_cl1_battle = False
-        _is_meow_battle = False
-        _instance_name = None
-        try:
-            if hasattr(self, 'config') and hasattr(self.config, 'task'):
-                task_cmd = self.config.task.command
-                if task_cmd == 'OpsiHazard1Leveling':
-                    _is_cl1_battle = True
-                    _instance_name = self.config.config_name if hasattr(self.config, 'config_name') else None
-                    from module.statistics.ship_exp_stats import get_ship_exp_stats
-                    get_ship_exp_stats(instance_name=_instance_name).on_battle_start()
-                elif task_cmd == 'OpsiMeowfficerFarming':
-                    _is_meow_battle = True
-                    _instance_name = self.config.config_name if hasattr(self.config, 'config_name') else None
-                    from module.statistics.ship_exp_stats import get_ship_exp_stats
-                    # 短猫战斗开始计时
-                    get_ship_exp_stats(instance_name=_instance_name).on_battle_start()
-        except Exception:
-            pass
+        # Keep combat focused on state transitions; the metrics layer decides
+        # whether this task should produce CL1/short-meow timing samples.
+        battle_timer_source = start_battle_timer(self.config)
         
         cl1_combat_timer = Timer(300, count=300)
         
@@ -287,14 +273,14 @@ class Combat(Combat_, MapEventHandler):
         if self.config.Submarine_Fleet:
             submarine_mode = self.config.Submarine_Mode
 
-        if _is_cl1_battle:
+        if battle_timer_source == 'cl1':
             cl1_combat_timer.start()
 
         success = True
         while 1:
             self.device.screenshot()
 
-            if _is_cl1_battle and cl1_combat_timer.reached():
+            if battle_timer_source == 'cl1' and cl1_combat_timer.reached():
                 logger.warning('CL1 combat timeout (5 minutes limit reached)')
                 raise GameBugError('CL1 combat timeout')
 
@@ -322,13 +308,8 @@ class Combat(Combat_, MapEventHandler):
             
         logger.info('Combat end.')
         
-        # 记录战斗结束，统计耗时 (侵蚀1 / 短猫)
-        try:
-            if _is_cl1_battle or _is_meow_battle:
-                from module.statistics.ship_exp_stats import get_ship_exp_stats
-                source = "cl1" if _is_cl1_battle else "meow"
-                get_ship_exp_stats(instance_name=_instance_name).on_battle_end(source=source)
-        except Exception:
-            pass
+        # Finish through the same metrics source so CL1 and short-meow samples
+        # cannot accidentally share a storage key.
+        finish_battle_timer(self.config, battle_timer_source)
         
         return success

@@ -1,7 +1,7 @@
 import numpy as np
 
 from module.base.timer import Timer
-from module.base.utils import color_similar, get_color
+from module.base.utils import color_similar, get_color, lower_template_match_similarity
 from module.base.api_client import ApiClient
 from module.combat.assets import *
 from module.combat.combat_auto import CombatAuto
@@ -70,7 +70,7 @@ class Combat(Level, HPBalancer, Retirement, SubmarineCall, CombatAuto, CombatMan
         image = self.image_crop((0, 620, 1280, 690), copy=False)
         # note that CN/EN/TW are the same, but JP character is smaller
         similarity, button = TEMPLATE_COMBAT_LOADING.match_luma_result(image)
-        if similarity > 0.85:
+        if similarity > lower_template_match_similarity(0.85):
             loading = (button.area[0] + 38 - LOADING_BAR.area[0]) / (LOADING_BAR.area[2] - LOADING_BAR.area[0])
             logger.attr('Loading', f'{int(loading * 100)}%')
             return True

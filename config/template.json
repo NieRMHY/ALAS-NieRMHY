@@ -1829,6 +1829,7 @@
     },
     "Research": {
       "UseCube": "only_05_hour",
+      "CubePreserve": 0,
       "UseCoin": "always_use",
       "UsePart": "always_use",
       "AllowDelay": true,
@@ -2353,7 +2354,10 @@
       "RepairPackThreshold": 0.9,
       "DoRandomMapEvent": true,
       "AkashiShopFilter": "ActionPoint",
-      "NotifyOpsiMail": true
+      "NotifyOpsiMail": true,
+      "LauncherPush": true,
+      "IndependentPush": false,
+      "OpsiOnePushConfig": "provider: null"
     },
     "Storage": {
       "Storage": {}
@@ -2408,8 +2412,6 @@
     "OpsiExplore": {
       "SpecialRadar": false,
       "ForceRun": false,
-      "IfSkipSirenResearch": 0,
-      "SkipedSirenResearch": null,
       "LastZone": 0,
       "ExploreProgress": null
     },
@@ -2593,14 +2595,12 @@
       "HazardLevel": 5,
       "TargetZone": 0,
       "StayInZone": false,
-      "APPreserveUntilReset": false,
-      "SirenDetectorSearch_Enable": false,
-      "SirenDetectorSearch_HazardLevel": 5,
-      "SirenDetectorSearch_StopAfterFound": 1,
-      "SirenDetectorSearch_FoundZones": null
+      "APPreserveUntilReset": false
     },
     "OpsiSirenBug": {
-      "SirenResearch_Enable": true
+      "SirenResearch_Enable": true,
+      "Siren_Mode": "resource",
+      "Siren_Fleet": 0
     },
     "OpsiTarget": {
       "TargetFarming": false,
@@ -2633,7 +2633,9 @@
       "RecordNonCL1AP": true
     },
     "OpsiSirenBug": {
-      "SirenResearch_Enable": true
+      "SirenResearch_Enable": true,
+      "Siren_Mode": "resource",
+      "Siren_Fleet": 0
     },
     "OpsiFleet": {
       "Fleet": 1,

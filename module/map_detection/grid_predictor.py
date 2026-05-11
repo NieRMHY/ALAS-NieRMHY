@@ -292,7 +292,7 @@ class GridPredictor:
         area = area_pad((48, 48, 48 + 46, 48 + 46), pad=5)
         res = cv2.matchTemplate(ASSETS.tile_center_image, crop(self.image_homo, area=area, copy=False), cv2.TM_CCOEFF_NORMED)
         _, sim, _, _ = cv2.minMaxLoc(res)
-        if sim > 0.8:
+        if sim > lower_template_match_similarity(0.8):
             return True
 
         tile = 135
@@ -302,7 +302,7 @@ class GridPredictor:
         for area, template in zip(corner[::-1], ASSETS.tile_corner_image_list[::-1]):
             res = cv2.matchTemplate(template, crop(self.image_homo, area=area, copy=False), cv2.TM_CCOEFF_NORMED)
             _, sim, _, _ = cv2.minMaxLoc(res)
-            if sim > 0.8:
+            if sim > lower_template_match_similarity(0.8):
                 return True
 
         return False
@@ -348,4 +348,4 @@ class GridPredictor:
         piece_2 = grid._image_similar_full
         res = cv2.matchTemplate(piece_2, piece_1, cv2.TM_CCOEFF_NORMED)
         _, sim, _, point = cv2.minMaxLoc(res)
-        return sim > similarity
+        return sim > lower_template_match_similarity(similarity)

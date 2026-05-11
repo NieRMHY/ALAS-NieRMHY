@@ -229,6 +229,8 @@ class Homography:
         Returns:
             bool: If success.
         """
+        threshold_good = lower_template_match_similarity(threshold_good)
+        threshold = lower_template_match_similarity(threshold)
         result = cv2.matchTemplate(image, ASSETS.tile_center_image, cv2.TM_CCOEFF_NORMED)
         _, similarity, _, loca = cv2.minMaxLoc(result)
         if similarity > threshold_good:
@@ -262,6 +264,7 @@ class Homography:
         Returns:
             bool: If success.
         """
+        threshold = lower_template_match_similarity(threshold)
         similarity = 0
         location = np.array([])
         for index in range(4):

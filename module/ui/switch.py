@@ -35,13 +35,14 @@ class Switch:
         self.set_click_timer = Timer(1, count=2)
         self.wait_timeout = Timer(2, count=4)
 
-    def add_state(self, state, check_button, click_button=None, offset=0):
+    def add_state(self, state, check_button, click_button=None, offset=0, similarity=0.85):
         """
         Args:
             state (str): State name but cannot use 'unknown' as state name
             check_button (Button):
             click_button (Button):
             offset (bool, int, tuple):
+            similarity (float): Template match threshold when offset is used.
         """
         if state == 'unknown':
             raise ScriptError(f'Cannot use "unknown" as state name')
@@ -49,7 +50,8 @@ class Switch:
             'state': state,
             'check_button': check_button,
             'click_button': click_button if click_button is not None else check_button,
-            'offset': offset if offset else self._offset
+            'offset': offset if offset else self._offset,
+            'similarity': similarity,
         })
 
     @property
@@ -81,7 +83,7 @@ class Switch:
             str: state name or 'unknown'.
         """
         for data in self.state_list:
-            if main.appear(data['check_button'], offset=data['offset']):
+            if main.appear(data['check_button'], offset=data['offset'], similarity=data['similarity']):
                 return data['state']
 
         return 'unknown'

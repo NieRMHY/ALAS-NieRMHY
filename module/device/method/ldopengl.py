@@ -344,16 +344,12 @@ class LDOpenGL(Platform):
     def screenshot_ldopengl(self):
         image = self.ldopengl.screenshot()
 
-        # flip image, also copy image array (no dst=image)
-        if self.orientation == 2:
-            # You may randomly get orientation=2 on ldplayer, but emulators can't be upside-down
-            # If device is upside-down, image is 180 degree rotated (flipped both vertically and horizontally)
-            # plus the different pixel order, we only need to flip it horizontally
-            image = cv2.flip(image, 1)
-        else:
-            # Normal case
-            # Pointer data has different pixel order (positive y-axis upwards)
-            # we need to flip it vertically to the image pixel order (positive y-axis downwards)
-            image = cv2.flip(image, 0)
+        # Pointer data has different pixel order (positive y-axis upwards)
+        # we need to flip it vertically first
+        image = cv2.flip(image, 0)
+
+        # 方向处理已统一在screenshot.py的_handle_orientated_image()方法中处理，避免重复旋转
+
+        # Convert color space from BGR to RGB
         cv2.cvtColor(image, cv2.COLOR_BGR2RGB, dst=image)
         return image

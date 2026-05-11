@@ -145,9 +145,9 @@ class OpsiCrossMonth(OSMap):
             if self.config.OpsiMeowfficerFarming_TargetZone != 0:
                 try:
                     zone = self.name_to_zone(self.config.OpsiMeowfficerFarming_TargetZone)
-                except ScriptError:
+                except ScriptError as e:
                     logger.warning(f'wrong zone_id input:{self.config.OpsiMeowfficerFarming_TargetZone}')
-                    raise RequestHumanTakeover('wrong input, task stopped')
+                    raise RequestHumanTakeover('wrong input, task stopped') from e
                 else:
                     logger.hr(f'OS meowfficer farming, zone_id={zone.zone_id}', level=1)
                     self.globe_goto(zone, types='SAFE', refresh=True)

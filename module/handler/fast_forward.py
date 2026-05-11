@@ -8,10 +8,9 @@ from module.handler.auto_search import AutoSearchHandler
 from module.logger import logger
 from module.ui.switch import Switch
 
-# FAST_FORWARD = Switch('Fast_Forward')
 FAST_FORWARD = Switch('Fast_Forward', offset=(5, 5))    # fixed by mihongyu 起舞于天原之上，周回按钮偏移
-FAST_FORWARD.add_state('on', check_button=FAST_FORWARD_ON)
-FAST_FORWARD.add_state('off', check_button=FAST_FORWARD_OFF)
+FAST_FORWARD.add_state('on', check_button=FAST_FORWARD_ON, similarity=0.6)
+FAST_FORWARD.add_state('off', check_button=FAST_FORWARD_OFF, similarity=0.6)
 FLEET_LOCK = Switch('Fleet_Lock', offset=(5, 20))
 FLEET_LOCK.add_state('on', check_button=FLEET_LOCKED)
 FLEET_LOCK.add_state('off', check_button=FLEET_UNLOCKED)
@@ -271,15 +270,62 @@ class FastForwardHandler(AutoSearchHandler):
         # if not self.map_is_clear_mode:
         #     return False
 
-        if not AUTO_SEARCH.appear(main=self):
+        current = AUTO_SEARCH.get(main=self)
+        logger.attr('Auto_Search', current)
+        if current == 'unknown':
             logger.info('No auto search option.')
-            self.map_is_auto_search = False
             return False
 
+        if self.config.Campaign_UseAutoSearch and not self.map_is_auto_search:
+            logger.warning('Auto search is enabled but clear mode state was not confirmed, keep auto search enabled')
+            self.map_is_auto_search = True
+
         state = 'on' if self.map_is_auto_search else 'off'
-        changed = AUTO_SEARCH.set(state, main=self)
+        changed = self._auto_search_set(state, current=current)
 
         return changed
+
+    def _auto_search_set(self, state, current='unknown', skip_first_screenshot=True):
+        """
+        Set the auto-search switch only when its current state is known.
+
+        AUTO_SEARCH_ON and AUTO_SEARCH_OFF share the same click area. If the
+        switch is already ON but template matching temporarily returns
+        ``unknown``, clicking the target ON area would actually toggle it OFF.
+        """
+        logger.info(f'Auto_Search set to {state}')
+        timeout = Timer(2, count=4).start()
+        click_timer = Timer(1, count=2).clear()
+        changed = False
+
+        while 1:
+            if current == 'unknown':
+                if skip_first_screenshot:
+                    skip_first_screenshot = False
+                else:
+                    self.device.screenshot()
+                current = AUTO_SEARCH.get(main=self)
+
+            logger.attr('Auto_Search', current)
+
+            if current == state:
+                return changed
+
+            if current == 'unknown':
+                if timeout.reached():
+                    logger.warning('Auto search switch state unknown, keep current state')
+                    return changed
+                continue
+            else:
+                timeout.reset()
+
+            if click_timer.reached():
+                AUTO_SEARCH.click(current, main=self)
+                changed = True
+                click_timer.reset()
+
+            self.device.screenshot()
+            current = AUTO_SEARCH.get(main=self)
 
     def handle_auto_search_setting(self):
         """

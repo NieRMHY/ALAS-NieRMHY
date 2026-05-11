@@ -1,14 +1,23 @@
 from module.base.decorator import cached_property
 from module.base.timer import Timer
 from module.base.utils import area_pad
-from module.campaign.campaign_status import OCR_COIN
+import module.config.server as server
+from module.campaign.assets import OCR_COIN as CAMPAIGN_OCR_COIN
 from module.handler.assets import LOGIN_ANNOUNCE
 from module.logger import logger
+from module.ocr.ocr import Digit
 from module.shipyard.ui_globals import *
 from module.ui.assets import SHIPYARD_CHECK
 from module.ui.navbar import Navbar
 from module.ui.page import page_main_white
 from module.ui.ui import UI
+
+OCR_COIN = Digit(
+    CAMPAIGN_OCR_COIN,
+    name='OCR_COIN',
+    letter=(201, 201, 201) if server.server == 'jp' else (239, 239, 239),
+    threshold=128,
+)
 
 
 class ShipyardNavbar(Navbar):

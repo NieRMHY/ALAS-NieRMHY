@@ -662,6 +662,19 @@ class AlasGUI(Frame):
                 akashi_rate = "-"
 
             try:
+                siren_research = int(s.get("siren_research_devices", 0) or 0)
+            except Exception:
+                siren_research = 0
+
+            try:
+                if isinstance(rounds, int) and rounds > 0:
+                    siren_research_rate = f"{siren_research / float(rounds) * 100:.2f}%"
+                else:
+                    siren_research_rate = "-"
+            except Exception:
+                siren_research_rate = "-"
+
+            try:
                 ap_bought = compute_monthly_cl1_akashi_ap(instance_name=instance_name)
             except Exception:
                 ap_bought = "-"
@@ -723,66 +736,62 @@ class AlasGUI(Frame):
                 today_exp_str = "-"
                 today_run_str = "-"
 
-            labels = [t("Gui.Stat.Month"), t("Gui.Stat.BattleCount"), t("Gui.Stat.BattleRounds"), t("Gui.Stat.SortieCost"), t("Gui.Stat.AkashiEncounters"), t("Gui.Stat.AkashiRate"), t("Gui.Stat.AverageAP"), t("Gui.Stat.NetAP"), t("Gui.Stat.LoopEfficiency"), t("Gui.Stat.ExpEfficiencyHeader"), t("Gui.Stat.AvgBattleTimeHeader"), t("Gui.Stat.AvgRoundTime"), t("Gui.Stat.TodayBattlesHeader"), t("Gui.Stat.TodayExpHeader"), t("Gui.Stat.TodayRunHeader")]
+            labels = [t("Gui.Stat.Month"), t("Gui.Stat.BattleCount"), t("Gui.Stat.BattleRounds"), t("Gui.Stat.SortieCost"), t("Gui.Stat.AkashiEncounters"), t("Gui.Stat.AkashiRate"), t("Gui.Stat.SirenResearchDevices"), t("Gui.Stat.SirenResearchRate"), t("Gui.Stat.AverageAP"), t("Gui.Stat.NetAP"), t("Gui.Stat.LoopEfficiency"), t("Gui.Stat.ExpEfficiencyHeader"), t("Gui.Stat.AvgBattleTimeHeader"), t("Gui.Stat.AvgRoundTime"), t("Gui.Stat.TodayBattlesHeader"), t("Gui.Stat.TodayExpHeader"), t("Gui.Stat.TodayRunHeader")]
 
-            values = [month, tb, rounds, sortie_cost, ak, akashi_rate, avg_ap, net_ap, loop_eff, exp_per_hour_str, avg_cl1_battle_str, avg_cl1_round_str, today_battles, today_exp_str, today_run_str]
-
-            table = [labels, values]
+            values = [month, tb, rounds, sortie_cost, ak, akashi_rate, siren_research, siren_research_rate, avg_ap, net_ap, loop_eff, exp_per_hour_str, avg_cl1_battle_str, avg_cl1_round_str, today_battles, today_exp_str, today_run_str]
 
             with use_scope("opsi_stats", clear=True):
                 put_html(build_title_block(t("Gui.Stat.OpsiDataCollectionTitle")))
                 put_row([put_text(t("Gui.Stat.MonthlyPurchasedAP", value=ap_bought))])
                 put_html(build_simple_table(labels, [values]))
 
-                # ========== 短猫统计数据 ==========
-                try:
-                    from datetime import datetime
-                    now = datetime.now()
-                    meow_data = cl1_db.get_meow_stats(instance_name or "default", now.year, now.month)
-                except Exception as e:
-                    meow_data = {}
-
                 # 防缓存: 每次渲染生成唯一时间戳，确保前端不会复用旧表格 DOM。
                 meow_refresh_token = int(time.time() * 1000)
 
-                meow_battle_count = int(meow_data.get("battle_count", 0) or 0)
-                meow_effective_rounds = float(meow_data.get("effective_rounds", 0) or 0)
-
-                meow_avg_time = meow_data.get("avg_round_time", 0.0)
+                # ========== 短猫统计数据 ==========
+                meow_rows = []
                 try:
-                    meow_avg_battle_time = exp_stats.get_average_meow_battle_time()
+                    from datetime import datetime
+                    now = datetime.now()
+                    for hazard_level in (3, 5):
+                        meow_data = cl1_db.get_meow_stats(
+                            instance_name or "default",
+                            now.year,
+                            now.month,
+                            hazard_level=hazard_level,
+                        )
+                        meow_effective_rounds = float(meow_data.get("effective_rounds", 0) or 0)
+                        meow_rounds = round(meow_effective_rounds, 1)
+                        if abs(meow_rounds - int(meow_rounds)) < 1e-6:
+                            meow_rounds = int(meow_rounds)
+
+                        meow_avg_time = float(meow_data.get("avg_round_time", 0.0) or 0)
+                        meow_avg_battle_time = float(meow_data.get("avg_battle_time", 0.0) or 0)
+                        siren_count = int(meow_data.get("siren_research_devices", 0) or 0)
+                        siren_rate = float(meow_data.get("siren_research_rate", 0.0) or 0)
+
+                        avg_time_str = f"{meow_avg_time:.1f}{t('Gui.Stat.SecondUnit')}" if meow_avg_time > 0 else "-"
+                        avg_battle_time_str = f"{meow_avg_battle_time:.1f}{t('Gui.Stat.SecondUnit')}" if meow_avg_battle_time > 0 else "-"
+                        siren_rate_str = f"{siren_rate * 100:.2f}%" if meow_effective_rounds > 0 else "-"
+
+                        meow_rows.append([
+                            meow_data.get("month", "-"),
+                            hazard_level,
+                            int(meow_data.get("battle_count", 0) or 0),
+                            meow_rounds,
+                            avg_battle_time_str,
+                            avg_time_str,
+                            siren_count,
+                            siren_rate_str,
+                        ])
                 except Exception:
-                    meow_avg_battle_time = meow_data.get("avg_battle_time", 0.0)
+                    meow_rows = []
 
-                try:
-                    meow_rounds = round(meow_effective_rounds, 1)
-                    if abs(meow_rounds - int(meow_rounds)) < 1e-6:
-                        meow_rounds = int(meow_rounds)
-                except Exception:
-                    meow_rounds = 0
-
-                if meow_data.get("round_times"):
-                    avg_time_str = f"{meow_avg_time:.1f}{t('Gui.Stat.SecondUnit')}"
-                else:
-                    avg_time_str = "-"
-
-                if meow_avg_battle_time > 0:
-                    avg_battle_time_str = f"{meow_avg_battle_time:.1f}{t('Gui.Stat.SecondUnit')}"
-                else:
-                    avg_battle_time_str = "-"
-
-                meow_values = [
-                    meow_data.get("month", "-"),
-                    meow_battle_count,
-                    meow_rounds,
-                    avg_battle_time_str,  # 平均单场战斗时间
-                    avg_time_str,         # 平均一轮短猫时长
-                ]
-                meow_labels = [t("Gui.Stat.Month"), t("Gui.Stat.BattleCount"), t("Gui.Stat.MeowRounds"), t("Gui.Stat.AvgBattleTimeHeader"), t("Gui.Stat.AvgMeowRoundTime")]
+                meow_labels = [t("Gui.Stat.Month"), t("Gui.Stat.HazardLevel"), t("Gui.Stat.BattleCount"), t("Gui.Stat.MeowRounds"), t("Gui.Stat.AvgBattleTimeHeader"), t("Gui.Stat.AvgMeowRoundTime"), t("Gui.Stat.SirenResearchDevices"), t("Gui.Stat.SirenResearchRate")]
 
                 put_html(build_title_block(t("Gui.Stat.MeowDataCollectionTitle"), margin_top=20, margin_bottom=8))
                 put_html(f"<!-- meow-stats-refresh-token:{meow_refresh_token} -->")
-                put_html(build_simple_table(meow_labels, [meow_values]))
+                put_html(build_simple_table(meow_labels, meow_rows))
 
                 # ========== 短猫相接收获 ==========
                 put_scope("meow_loot_scope")
@@ -1193,7 +1202,7 @@ class AlasGUI(Frame):
                             padding: 0 !important;
                         }
                     </style>
-                    <div id="commission_income_container" style="padding: 0; width: 100%; box-sizing: border-box;">
+                    <div id="commission_income_container" class="commission-income-summary" style="padding: 0; width: 100%; box-sizing: border-box;">
                     '''
 
                     html += f'<div style="font-size: 1rem; font-weight: 500; color: inherit; margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid rgba(128, 128, 128, 0.2);">{t("Gui.Stat.CommissionIncomeTitle")}</div>'
@@ -1214,7 +1223,7 @@ class AlasGUI(Frame):
                         ) if icon_path else f'<div style="width: 12px; height: 12px; border-radius: 50%; background: {row["color"]}; flex-shrink: 0;"></div>'
                         
                         html += f'''
-                        <div style="display: flex; align-items: center; gap: 10px; padding: 12px 14px; background: rgba(128, 128, 128, 0.05); border-radius: 6px; border: 1px solid rgba(128, 128, 128, 0.15);">
+                        <div class="commission-income-metric-card" style="display: flex; align-items: center; gap: 10px; padding: 12px 14px; background: rgba(128, 128, 128, 0.05); border-radius: 6px; border: 1px solid rgba(128, 128, 128, 0.15);">
                             {icon_html}
                             <div style="display: flex; flex-direction: column; gap: 1px;">
                                 <span style="font-size: 0.78rem; opacity: 0.65;">{display_name}</span>
@@ -1235,11 +1244,11 @@ class AlasGUI(Frame):
                         {'label': t("Gui.Stat.CommissionIncomeMonth"), 'value': 'month', 'color': 'primary' if period == 'month' else 'secondary'},
                     ], onclick=on_period_click, small=True, scope="commission_income")
 
-                    html2 = '<div style="width: 100% !important; max-width: none !important; display: block !important; box-sizing: border-box;">'
+                    html2 = '<div class="commission-income-table-wrap" style="width: 100% !important; max-width: none !important; display: block !important; box-sizing: border-box;">'
                     if not has_data:
                         html2 += f'<p style="margin: 12px 0; opacity: 0.6; font-size: 13px;">{t("Gui.Stat.CommissionIncomeNoData")}</p>'
                     else:
-                        html2 += '<table style="width: 100% !important; max-width: none !important; border-collapse: collapse; font-size: 0.85rem; table-layout: fixed; display: table;">'
+                        html2 += '<table class="commission-income-table" style="width: 100% !important; max-width: none !important; border-collapse: collapse; font-size: 0.85rem; table-layout: fixed; display: table;">'
                         html2 += '<colgroup><col style="width: 40%;"><col style="width: 20%;"><col style="width: 20%;"><col style="width: 20%;"></colgroup>'
                         html2 += '<thead><tr>'
                         html2 += f'<th style="text-align: left; padding: 8px 10px; background: rgba(128, 128, 128, 0.1); border-bottom: 1px solid rgba(128, 128, 128, 0.2); font-weight: 500; opacity: 0.8; font-size: 0.8rem;">{t("Gui.Stat.CommissionIncomeHeaderItem")}</th>'
@@ -1273,7 +1282,7 @@ class AlasGUI(Frame):
 
                     put_button(t("Gui.Stat.Refresh"), onclick=_render_commission_income, color="secondary", small=True, scope="commission_income")
 
-                    html3 = '<div style="width: 100% !important; max-width: none !important; display: block !important; box-sizing: border-box;">'
+                    html3 = '<div class="commission-income-recent" style="width: 100% !important; max-width: none !important; display: block !important; box-sizing: border-box;">'
                     if recent:
                         html3 += f'<div style="height: 1px; background: rgba(128, 128, 128, 0.2); margin: 24px 0;"></div>'
                         html3 += f'<div style="font-size: 0.9rem; font-weight: 500; color: inherit; margin-bottom: 10px;">{t("Gui.Stat.CommissionIncomeRecentTitle")}</div>'
@@ -1312,7 +1321,7 @@ class AlasGUI(Frame):
                                 )
                             items_str = ''.join(item_parts) if item_parts else '<span style="opacity: 0.6;">--</span>'
                             html3 += (
-                                f'<div style="display: flex; align-items: center; padding: 6px 0; border-bottom: 1px solid rgba(128, 128, 128, 0.1);">'
+                                f'<div class="commission-income-recent-row" style="display: flex; align-items: center; padding: 6px 0; border-bottom: 1px solid rgba(128, 128, 128, 0.1);">'
                                 f'<span style="opacity: 0.65; min-width: 80px; font-size: 12px;">{time_str}</span>'
                                 f'<span style="flex: 1;">{items_str}</span>'
                                 f'</div>'

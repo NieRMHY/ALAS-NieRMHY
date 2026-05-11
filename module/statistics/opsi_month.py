@@ -27,8 +27,15 @@ class OpsiMonthStats:
         
         total = int(data.get('battle_count', 0))
         akashi = int(data.get('akashi_encounters', 0))
+        siren_research_devices = cl1_db.get_siren_research_device_count(data, source='cl1')
 
-        return {"month": key, "total_battles": total, "akashi_encounters": akashi, "raw": data}
+        return {
+            "month": key,
+            "total_battles": total,
+            "akashi_encounters": akashi,
+            "siren_research_devices": siren_research_devices,
+            "raw": data,
+        }
 
     def get_detailed_summary(self, year: int | None = None, month: int | None = None) -> Dict[str, Any]:
         """
@@ -48,12 +55,14 @@ class OpsiMonthStats:
         battle_count = int(data.get('battle_count', 0))
         akashi_encounters = int(data.get('akashi_encounters', 0))
         akashi_ap = int(data.get('akashi_ap', 0))
+        siren_research_devices = cl1_db.get_siren_research_device_count(data, source='cl1')
         
         # 计算衍生指标
         battle_rounds = battle_count // 2
         sortie_cost = battle_rounds * 120
         
         akashi_probability = round(akashi_encounters / battle_rounds, 4) if battle_rounds > 0 else 0.0
+        siren_research_probability = round(siren_research_devices / battle_rounds, 4) if battle_rounds > 0 else 0.0
         average_stamina = round(akashi_ap / akashi_encounters, 2) if akashi_encounters > 0 else 0.0
         
         return {
@@ -63,6 +72,8 @@ class OpsiMonthStats:
             "sortie_cost": sortie_cost,
             "akashi_encounters": akashi_encounters,
             "akashi_probability": akashi_probability,
+            "siren_research_devices": siren_research_devices,
+            "siren_research_probability": siren_research_probability,
             "average_stamina": average_stamina,
             "net_stamina_gain": akashi_ap,
         }

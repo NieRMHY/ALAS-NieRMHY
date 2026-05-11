@@ -3,15 +3,13 @@ from datetime import datetime, timedelta
 from module.equipment.assets import EQUIPMENT_OPEN
 from module.exception import MapDetectionError, ScriptError
 from module.logger import logger
-from module.map.map_grids import SelectedGrids
-from module.notify import handle_notify as notify_handle_notify
 from module.os.assets import FLEET_FLAGSHIP
 from module.os.map import OSMap
 from module.os.ship_exp import ship_info_get_level_exp
 from module.os.ship_exp_data import LIST_SHIP_EXP
 from module.os.tasks.smart_scheduling_utils import is_smart_scheduling_enabled
 from module.os.tasks.scheduling import CoinTaskMixin
-from module.os_handler.action_point import ActionPointLimit
+from module.statistics.opsi_runtime import record_cl1_akashi_encounter
 
 
 class OpsiHazard1Leveling(CoinTaskMixin, OSMap):
@@ -78,6 +76,9 @@ class OpsiHazard1Leveling(CoinTaskMixin, OSMap):
 
                 logger.info("推迟任务 50 分钟")
                 self.config.task_delay(minute=50)
+                self.config.OpsiHazard1_PreviousCoinsApInsufficient = (
+                    _previous_coins_ap_insufficient
+                )
                 self.config.task_stop()
             else:
                 # 行动力充足，切换到预设计的补充任务
@@ -156,10 +157,10 @@ class OpsiHazard1Leveling(CoinTaskMixin, OSMap):
                 if not available_tasks:
                     logger.error("[智能调度] 无法启用任何补充任务，处于异常状态")
                     self.config.task_delay(minute=60)
-                    self.config.task_stop()
                     self.config.OpsiHazard1_PreviousCoinsApInsufficient = (
                         _previous_coins_ap_insufficient
                     )
+                    self.config.task_stop()
                     return
 
                 task_names_str = "、".join(
@@ -211,6 +212,7 @@ class OpsiHazard1Leveling(CoinTaskMixin, OSMap):
 
             logger.info("[智能调度] 推迟侵蚀 1 任务 50 分钟")
             self.config.task_delay(minute=50)
+            self.config.OpsiHazard1_PreviousApInsufficient = _previous_ap_insufficient
             self.config.task_stop()
         else:
             _previous_ap_insufficient = False
@@ -249,17 +251,9 @@ class OpsiHazard1Leveling(CoinTaskMixin, OSMap):
         # 明石遭遇记录
         solved_events = getattr(self, "_solved_map_event", set())
         if "is_akashi" in solved_events:
-            try:
-                from module.statistics.cl1_database import db as cl1_db
-
-                instance_name = getattr(self.config, "config_name", "default")
-                cl1_db.async_increment_akashi_encounter(instance_name)
-                month_key = datetime.now().strftime("%Y-%m")
-                future = cl1_db.async_get_stats(instance_name, month_key)
-                data = future.result(timeout=5.0)
-                logger.attr("cl1_akashi_monthly", data.get("akashi_encounters", 0))
-            except Exception:
-                logger.exception("Failed to persist CL1 akashi monthly count")
+            # Akashi encounter counting belongs with the other runtime metrics;
+            # the task only reports that an Akashi event was solved.
+            record_cl1_akashi_encounter(self.config)
 
     def _cl1_handle_telemetry(self):
         """处理遥测数据提交"""
@@ -362,7 +356,7 @@ class OpsiHazard1Leveling(CoinTaskMixin, OSMap):
         check_interval = self.config.OpsiCheckLeveling_CheckInterval
         if not isinstance(check_interval, int) or check_interval < 1:
             check_interval = 24
-            logger.warning(f"检测间隔无效，使用默认值 24 小时")
+            logger.warning("检测间隔无效，使用默认值 24 小时")
         
         time_run = self.config.OpsiCheckLeveling_LastRun + timedelta(hours=check_interval)
         logger.info(f"练级检查下次运行时间: {time_run}")
@@ -392,7 +386,7 @@ class OpsiHazard1Leveling(CoinTaskMixin, OSMap):
                     custom_positions = []
                 else:
                     logger.info(f"自定义检测舰位: {custom_positions}")
-            except (ValueError, AttributeError) as e:
+            except (ValueError, AttributeError):
                 logger.warning(f"自定义舰位格式错误: {custom_positions_str}，将检测所有舰船")
                 custom_positions = []
         
@@ -487,11 +481,11 @@ class OpsiHazard1Leveling(CoinTaskMixin, OSMap):
         lines.append("")
         
         if error_msg:
-            lines.append(f"检测状态: 失败")
+            lines.append("检测状态: 失败")
             lines.append(f"错误信息: {error_msg}")
             return "\n".join(lines)
         
-        lines.append(f"检测状态: 成功")
+        lines.append("检测状态: 成功")
         lines.append(f"检测舰队: 第 {fleet_index} 舰队")
         lines.append(f"目标等级: Lv.{target_level}")
         lines.append("")
@@ -565,7 +559,6 @@ class OpsiHazard1Leveling(CoinTaskMixin, OSMap):
         """
         max_retry = 3
         non_standard_retry_count = 0
-        last_non_standard_data = None
         for attempt in range(max_retry):
             logger.info(f"开始收集舰船数据 (尝试 {attempt + 1}/{max_retry})")
             
@@ -578,6 +571,20 @@ class OpsiHazard1Leveling(CoinTaskMixin, OSMap):
             while True:
                 self.device.screenshot()
                 level, exp = ship_info_get_level_exp(main=self)
+                if level < 1 or level > len(LIST_SHIP_EXP):
+                    logger.warning(f"舰船等级识别异常: {level}")
+                    ship_data_list.append(
+                        {
+                            "position": position,
+                            "level": level,
+                            "current_exp": exp,
+                            "total_exp": 0,
+                        }
+                    )
+                    if not self.equip_view_next():
+                        break
+                    position += 1
+                    continue
                 total_exp = LIST_SHIP_EXP[level - 1] + exp
                 logger.info(
                     f"位置: {position}, 等级: {level}, 经验: {exp}, 总经验: {total_exp}, 目标经验: {LIST_SHIP_EXP[target_level - 1]}"
@@ -603,7 +610,6 @@ class OpsiHazard1Leveling(CoinTaskMixin, OSMap):
                 if validation_result.get('need_retry', False):
                     current_ship_count = len(ship_data_list)
                     non_standard_retry_count += 1
-                    last_non_standard_data = ship_data_list
                     
                     if non_standard_retry_count >= 3:
                         logger.info(f"非标准舰船数量({current_ship_count}艘)已重试3次，使用当前检测结果")
@@ -717,6 +723,8 @@ class OpsiHazard1Leveling(CoinTaskMixin, OSMap):
             logger.info(
                 f"自定义舰位未满经验: {', '.join(positions_not_full)}"
             )
+        elif positions_not_exist:
+            logger.warning("存在未检测到的自定义舰位，本次不判定为满经验")
         else:
             logger.info(
                 f"所有自定义舰位均已满经验: {', '.join(positions_full)}"
