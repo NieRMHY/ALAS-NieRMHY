@@ -451,7 +451,8 @@
         "option": [
           "auto",
           "cpu",
-          "gpu"
+          "gpu",
+          "ane"
         ]
       },
       "ScreenshotInterval": {
@@ -977,6 +978,10 @@
       "UseRecommendFleet": {
         "type": "checkbox",
         "value": false
+      },
+      "DefeatWithdraw": {
+        "type": "checkbox",
+        "value": true
       }
     },
     "StopCondition": {
@@ -1373,6 +1378,10 @@
       "UseRecommendFleet": {
         "type": "checkbox",
         "value": false
+      },
+      "DefeatWithdraw": {
+        "type": "checkbox",
+        "value": true
       }
     },
     "StopCondition": {
@@ -1769,6 +1778,10 @@
       "UseRecommendFleet": {
         "type": "checkbox",
         "value": false
+      },
+      "DefeatWithdraw": {
+        "type": "checkbox",
+        "value": true
       }
     },
     "StopCondition": {
@@ -2246,8 +2259,8 @@
           "event_20260326_cn"
         ],
         "option_tw": [
-          "event_20260417_cn",
           "event_20201126_cn",
+          "event_20260417_cn",
           "event_20220915_cn",
           "event_20260326_cn",
           "event_20220728_cn"
@@ -2297,6 +2310,10 @@
       "UseRecommendFleet": {
         "type": "checkbox",
         "value": false
+      },
+      "DefeatWithdraw": {
+        "type": "checkbox",
+        "value": true
       }
     },
     "StopCondition": {
@@ -2741,8 +2758,8 @@
           "event_20260326_cn"
         ],
         "option_tw": [
-          "event_20260417_cn",
           "event_20201126_cn",
+          "event_20260417_cn",
           "event_20220915_cn",
           "event_20260326_cn",
           "event_20220728_cn"
@@ -2792,6 +2809,10 @@
       "UseRecommendFleet": {
         "type": "checkbox",
         "value": false
+      },
+      "DefeatWithdraw": {
+        "type": "checkbox",
+        "value": true
       }
     },
     "StopCondition": {
@@ -3252,6 +3273,10 @@
       "UseRecommendFleet": {
         "type": "checkbox",
         "value": false
+      },
+      "DefeatWithdraw": {
+        "type": "checkbox",
+        "value": true
       }
     },
     "StopCondition": {
@@ -3640,8 +3665,8 @@
           "event_20260326_cn"
         ],
         "option_tw": [
-          "event_20260417_cn",
           "event_20201126_cn",
+          "event_20260417_cn",
           "event_20220915_cn",
           "event_20260326_cn",
           "event_20220728_cn"
@@ -3688,6 +3713,10 @@
       "UseRecommendFleet": {
         "type": "checkbox",
         "value": false
+      },
+      "DefeatWithdraw": {
+        "type": "checkbox",
+        "value": true
       }
     },
     "StopCondition": {
@@ -4075,8 +4104,8 @@
           "event_20260326_cn"
         ],
         "option_tw": [
-          "event_20260417_cn",
           "event_20201126_cn",
+          "event_20260417_cn",
           "event_20220915_cn",
           "event_20260326_cn",
           "event_20220728_cn"
@@ -4123,6 +4152,10 @@
       "UseRecommendFleet": {
         "type": "checkbox",
         "value": false
+      },
+      "DefeatWithdraw": {
+        "type": "checkbox",
+        "value": true
       }
     },
     "StopCondition": {
@@ -4510,8 +4543,8 @@
           "event_20260326_cn"
         ],
         "option_tw": [
-          "event_20260417_cn",
           "event_20201126_cn",
+          "event_20260417_cn",
           "event_20220915_cn",
           "event_20260326_cn",
           "event_20220728_cn"
@@ -4557,6 +4590,10 @@
       "UseRecommendFleet": {
         "type": "checkbox",
         "value": false
+      },
+      "DefeatWithdraw": {
+        "type": "checkbox",
+        "value": true
       }
     },
     "StopCondition": {
@@ -4995,6 +5032,10 @@
       "UseRecommendFleet": {
         "type": "checkbox",
         "value": false
+      },
+      "DefeatWithdraw": {
+        "type": "checkbox",
+        "value": true
       }
     },
     "StopCondition": {
@@ -5266,6 +5307,10 @@
       "UseRecommendFleet": {
         "type": "checkbox",
         "value": false
+      },
+      "DefeatWithdraw": {
+        "type": "checkbox",
+        "value": true
       }
     },
     "StopCondition": {
@@ -5826,6 +5871,10 @@
       "UseRecommendFleet": {
         "type": "checkbox",
         "value": false
+      },
+      "DefeatWithdraw": {
+        "type": "checkbox",
+        "value": true
       }
     },
     "Coalition": {
@@ -6196,12 +6245,16 @@
           "war_archives_20220428_cn",
           "war_archives_20220526_cn",
           "war_archives_20220728_cn",
+          "war_archives_20220818_cn",
           "war_archives_20220915_cn",
           "war_archives_20221222_cn",
           "war_archives_20230223_cn",
+          "war_archives_20230803_cn",
           "war_archives_20231026_cn"
         ],
         "option_cn": [
+          "war_archives_20230803_cn",
+          "war_archives_20220818_cn",
           "war_archives_20230223_cn",
           "war_archives_20221222_cn",
           "war_archives_20220915_cn",
@@ -6248,6 +6301,8 @@
           "war_archives_20181020_en"
         ],
         "option_en": [
+          "war_archives_20230803_cn",
+          "war_archives_20220818_cn",
           "war_archives_20230223_cn",
           "war_archives_20221222_cn",
           "war_archives_20220915_cn",
@@ -6294,6 +6349,8 @@
           "war_archives_20181020_en"
         ],
         "option_jp": [
+          "war_archives_20230803_cn",
+          "war_archives_20220818_cn",
           "war_archives_20230223_cn",
           "war_archives_20221222_cn",
           "war_archives_20220915_cn",
@@ -6340,6 +6397,8 @@
           "war_archives_20181020_en"
         ],
         "option_tw": [
+          "war_archives_20230803_cn",
+          "war_archives_20220818_cn",
           "war_archives_20230223_cn",
           "war_archives_20221222_cn",
           "war_archives_20220915_cn",
@@ -6426,9 +6485,11 @@
           "war_archives_20220428_cn",
           "war_archives_20220526_cn",
           "war_archives_20220728_cn",
+          "war_archives_20220818_cn",
           "war_archives_20220915_cn",
           "war_archives_20221222_cn",
           "war_archives_20230223_cn",
+          "war_archives_20230803_cn",
           "war_archives_20231026_cn"
         ]
       },
@@ -6465,6 +6526,10 @@
       "UseRecommendFleet": {
         "type": "checkbox",
         "value": false
+      },
+      "DefeatWithdraw": {
+        "type": "checkbox",
+        "value": true
       }
     },
     "StopCondition": {
@@ -6863,8 +6928,8 @@
           "event_20260326_cn"
         ],
         "option_tw": [
-          "event_20260417_cn",
           "event_20201126_cn",
+          "event_20260417_cn",
           "event_20220915_cn",
           "event_20260326_cn",
           "event_20220728_cn"
@@ -6912,6 +6977,10 @@
       "UseRecommendFleet": {
         "type": "checkbox",
         "value": false
+      },
+      "DefeatWithdraw": {
+        "type": "checkbox",
+        "value": true
       }
     },
     "StopCondition": {
@@ -7315,8 +7384,8 @@
           "event_20260326_cn"
         ],
         "option_tw": [
-          "event_20260417_cn",
           "event_20201126_cn",
+          "event_20260417_cn",
           "event_20220915_cn",
           "event_20260326_cn",
           "event_20220728_cn"
@@ -7364,6 +7433,10 @@
       "UseRecommendFleet": {
         "type": "checkbox",
         "value": false
+      },
+      "DefeatWithdraw": {
+        "type": "checkbox",
+        "value": true
       }
     },
     "StopCondition": {
@@ -7767,8 +7840,8 @@
           "event_20260326_cn"
         ],
         "option_tw": [
-          "event_20260417_cn",
           "event_20201126_cn",
+          "event_20260417_cn",
           "event_20220915_cn",
           "event_20260326_cn",
           "event_20220728_cn"
@@ -7816,6 +7889,10 @@
       "UseRecommendFleet": {
         "type": "checkbox",
         "value": false
+      },
+      "DefeatWithdraw": {
+        "type": "checkbox",
+        "value": true
       }
     },
     "StopCondition": {
@@ -8219,8 +8296,8 @@
           "event_20260326_cn"
         ],
         "option_tw": [
-          "event_20260417_cn",
           "event_20201126_cn",
+          "event_20260417_cn",
           "event_20220915_cn",
           "event_20260326_cn",
           "event_20220728_cn"
@@ -8268,6 +8345,10 @@
       "UseRecommendFleet": {
         "type": "checkbox",
         "value": false
+      },
+      "DefeatWithdraw": {
+        "type": "checkbox",
+        "value": true
       }
     },
     "StopCondition": {
@@ -8661,8 +8742,8 @@
           "event_20260326_cn"
         ],
         "option_tw": [
-          "event_20260417_cn",
           "event_20201126_cn",
+          "event_20260417_cn",
           "event_20220915_cn",
           "event_20260326_cn",
           "event_20220728_cn"
@@ -8710,6 +8791,10 @@
       "UseRecommendFleet": {
         "type": "checkbox",
         "value": false
+      },
+      "DefeatWithdraw": {
+        "type": "checkbox",
+        "value": true
       }
     },
     "StopCondition": {
@@ -9144,6 +9229,10 @@
       "UseRecommendFleet": {
         "type": "checkbox",
         "value": false
+      },
+      "DefeatWithdraw": {
+        "type": "checkbox",
+        "value": true
       }
     },
     "StopCondition": {
@@ -9389,6 +9478,10 @@
       "UseRecommendFleet": {
         "type": "checkbox",
         "value": false
+      },
+      "DefeatWithdraw": {
+        "type": "checkbox",
+        "value": true
       }
     },
     "Coalition": {
@@ -14084,6 +14177,14 @@
         "type": "checkbox",
         "value": true
       },
+      "SkipHpCheck": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
       "Cl1Filter": {
         "type": "textarea",
         "value": "ActionPoint"
@@ -14164,6 +14265,31 @@
       "DelayAfterFull": {
         "type": "checkbox",
         "value": false
+      }
+    },
+    "OpsiFleetAutoChange": {
+      "Enable": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "CooldownHours": {
+        "type": "select",
+        "value": 24,
+        "option": [
+          12,
+          24,
+          48,
+          72
+        ]
+      },
+      "LastRun": {
+        "type": "datetime",
+        "value": "2020-01-01 00:00:00",
+        "validate": "datetime"
       }
     },
     "Storage": {

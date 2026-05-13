@@ -595,11 +595,12 @@
       "help": ""
     },
     "OcrDevice": {
-      "name": "Optimization.OcrDevice.name",
-      "help": "Optimization.OcrDevice.help",
-      "auto": "auto",
-      "cpu": "cpu",
-      "gpu": "gpu"
+      "name": "OCR设备选择",
+      "help": "",
+      "auto": "自動",
+      "cpu": "CPU",
+      "gpu": "GPU",
+      "ane": "ANE (Apple)"
     },
     "ScreenshotInterval": {
       "name": "スクリーンショット速度をX秒に1枚に減速",
@@ -1110,9 +1111,11 @@
       "war_archives_20220428_cn": "檔案 吟ずる瑠璃の楽章",
       "war_archives_20220526_cn": "檔案 诚閃の剣 搖光の城",
       "war_archives_20220728_cn": "檔案 鋼鷲の冒険譚",
+      "war_archives_20220818_cn": "檔案 結像点作戦",
       "war_archives_20220915_cn": "檔案 赫の涙月 菫の暁風",
       "war_archives_20221222_cn": "檔案 積重なる事象の幻界",
       "war_archives_20230223_cn": "檔案 黙示の遺構",
+      "war_archives_20230803_cn": "檔案 燃ゆる聖都の回想曲",
       "war_archives_20231026_cn": "檔案 テンペスタと若返りの泉"
     },
     "Mode": {
@@ -1144,6 +1147,10 @@
     "UseRecommendFleet": {
       "name": "自動編成",
       "help": "ゲーム内蔵の推奨編成を使用してハードステージの編成を自動的に完了します"
+    },
+    "DefeatWithdraw": {
+      "name": "道中での戦闘で敗北し撤退",
+      "help": "道中戦闘で敗北した際の処理方法。オンの場合は海域から直接退出し、オフの場合は別のチームが引き継いで後続の戦闘を試みる。"
     }
   },
   "StopCondition": {
@@ -4709,6 +4716,12 @@
       "name": "艦隊の強制移動",
       "help": "雪風様からの温かいリマインダー: スイッチをオンにすると、艦隊は明石の発見を防ぐために強制的に移動します。指揮官、アカシが見つからないからといってナノダを墜落させたくないんですか？この機能をオンにすると、nanoda を使用して月あたり 500,000 海里を簡単に達成できます。何を待っていますか、指揮官？"
     },
+    "SkipHpCheck": {
+      "name": "HPチェックをスキップ",
+      "help": "戦闘後のHPチェックをスキップします。艦船が撃沈されても練級を続行します。",
+      "True": "True",
+      "False": "False"
+    },
     "Cl1Filter": {
       "name": "明石購入フィルター",
       "help": "デフォルトでは体力ナノダのみ購入されます。パープルコインも同時に購入したい場合は「ActionPoint > PurpleCoins」に設定してください"
@@ -4773,6 +4786,30 @@
     "DelayAfterFull": {
       "name": "目標レベルに達するまでミッションは延期されます",
       "help": "完全な経験が検出されると、このタスクは指定された時間延期されます。"
+    }
+  },
+  "OpsiFleetAutoChange": {
+    "_info": {
+      "name": "OpsiFleetAutoChange._info.name",
+      "help": "OpsiFleetAutoChange._info.help"
+    },
+    "Enable": {
+      "name": "OpsiFleetAutoChange.Enable.name",
+      "help": "OpsiFleetAutoChange.Enable.help",
+      "True": "True",
+      "False": "False"
+    },
+    "CooldownHours": {
+      "name": "OpsiFleetAutoChange.CooldownHours.name",
+      "help": "OpsiFleetAutoChange.CooldownHours.help",
+      "12": "12",
+      "24": "24",
+      "48": "48",
+      "72": "72"
+    },
+    "LastRun": {
+      "name": "OpsiFleetAutoChange.LastRun.name",
+      "help": "OpsiFleetAutoChange.LastRun.help"
     }
   },
   "OpsiScheduling": {
@@ -5241,9 +5278,15 @@
       "ViewLineShort": "Line",
       "DataPointsCount": "{count} data points",
       "CandlesCount": "{count} candles",
+      "ViewLabel": "📊 View:",
+      "DetailLabel": "📈 Detail:",
       "ViewLineButton": "Intraday (Detailed)",
       "ViewDayButton": "Day View (Hourly K)",
       "ViewMonthButton": "Month View (Daily K)",
+      "DetailChartTitle": "Daily AP Fluctuation Detail (24h)",
+      "ToggleDetailChart": "Detail Chart",
+      "DetailChartOn": "✓ On",
+      "DetailChartOff": "○ Off",
       "LoadOpsiStatsFailed": "Failed to load OpSi stats: {e}",
       "LoadExpStatsFailed": "Failed to load EXP stats: {e}",
       "DailyExpCheckTitle": "Daily EXP Check",

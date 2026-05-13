@@ -228,7 +228,8 @@
       "UseAutoSearch": true,
       "Use2xBook": false,
       "AmbushEvade": true,
-      "UseRecommendFleet": false
+      "UseRecommendFleet": false,
+      "DefeatWithdraw": true
     },
     "StopCondition": {
       "OilLimit": 1000,
@@ -306,7 +307,8 @@
       "UseAutoSearch": true,
       "Use2xBook": false,
       "AmbushEvade": true,
-      "UseRecommendFleet": false
+      "UseRecommendFleet": false,
+      "DefeatWithdraw": true
     },
     "StopCondition": {
       "OilLimit": 1000,
@@ -384,7 +386,8 @@
       "UseAutoSearch": true,
       "Use2xBook": false,
       "AmbushEvade": true,
-      "UseRecommendFleet": false
+      "UseRecommendFleet": false,
+      "DefeatWithdraw": true
     },
     "StopCondition": {
       "OilLimit": 1000,
@@ -477,7 +480,8 @@
       "UseAutoSearch": true,
       "Use2xBook": false,
       "AmbushEvade": true,
-      "UseRecommendFleet": false
+      "UseRecommendFleet": false,
+      "DefeatWithdraw": true
     },
     "StopCondition": {
       "OilLimit": 1000,
@@ -557,7 +561,8 @@
       "UseAutoSearch": true,
       "Use2xBook": false,
       "AmbushEvade": true,
-      "UseRecommendFleet": false
+      "UseRecommendFleet": false,
+      "DefeatWithdraw": true
     },
     "StopCondition": {
       "OilLimit": 1000,
@@ -637,7 +642,8 @@
       "UseAutoSearch": false,
       "Use2xBook": false,
       "AmbushEvade": true,
-      "UseRecommendFleet": false
+      "UseRecommendFleet": false,
+      "DefeatWithdraw": true
     },
     "StopCondition": {
       "OilLimit": 1000,
@@ -716,7 +722,8 @@
       "UseAutoSearch": true,
       "Use2xBook": false,
       "AmbushEvade": true,
-      "UseRecommendFleet": false
+      "UseRecommendFleet": false,
+      "DefeatWithdraw": true
     },
     "StopCondition": {
       "OilLimit": 1000,
@@ -794,7 +801,8 @@
       "UseAutoSearch": true,
       "Use2xBook": false,
       "AmbushEvade": true,
-      "UseRecommendFleet": false
+      "UseRecommendFleet": false,
+      "DefeatWithdraw": true
     },
     "StopCondition": {
       "OilLimit": 1000,
@@ -872,7 +880,8 @@
       "UseAutoSearch": true,
       "Use2xBook": false,
       "AmbushEvade": true,
-      "UseRecommendFleet": false
+      "UseRecommendFleet": false,
+      "DefeatWithdraw": true
     },
     "StopCondition": {
       "OilLimit": 1000,
@@ -954,7 +963,8 @@
       "UseAutoSearch": false,
       "Use2xBook": false,
       "AmbushEvade": true,
-      "UseRecommendFleet": false
+      "UseRecommendFleet": false,
+      "DefeatWithdraw": true
     },
     "StopCondition": {
       "OilLimit": 1000,
@@ -1009,7 +1019,8 @@
       "UseAutoSearch": true,
       "Use2xBook": false,
       "AmbushEvade": true,
-      "UseRecommendFleet": false
+      "UseRecommendFleet": false,
+      "DefeatWithdraw": true
     },
     "StopCondition": {
       "OilLimit": 1000,
@@ -1114,7 +1125,8 @@
       "UseAutoSearch": false,
       "Use2xBook": false,
       "AmbushEvade": true,
-      "UseRecommendFleet": false
+      "UseRecommendFleet": false,
+      "DefeatWithdraw": true
     },
     "Coalition": {
       "Mode": "hard",
@@ -1194,14 +1206,15 @@
     },
     "Campaign": {
       "Name": "D3",
-      "Event": "war_archives_20230223_cn",
+      "Event": "war_archives_20230803_cn",
       "Mode": "normal",
       "UseClearMode": true,
       "UseFleetLock": true,
       "UseAutoSearch": true,
       "Use2xBook": false,
       "AmbushEvade": true,
-      "UseRecommendFleet": false
+      "UseRecommendFleet": false,
+      "DefeatWithdraw": true
     },
     "StopCondition": {
       "OilLimit": 1000,
@@ -1283,7 +1296,8 @@
       "UseAutoSearch": true,
       "Use2xBook": false,
       "AmbushEvade": true,
-      "UseRecommendFleet": false
+      "UseRecommendFleet": false,
+      "DefeatWithdraw": true
     },
     "StopCondition": {
       "OilLimit": 1000,
@@ -1365,7 +1379,8 @@
       "UseAutoSearch": true,
       "Use2xBook": false,
       "AmbushEvade": true,
-      "UseRecommendFleet": false
+      "UseRecommendFleet": false,
+      "DefeatWithdraw": true
     },
     "StopCondition": {
       "OilLimit": 1000,
@@ -1447,7 +1462,8 @@
       "UseAutoSearch": true,
       "Use2xBook": false,
       "AmbushEvade": true,
-      "UseRecommendFleet": false
+      "UseRecommendFleet": false,
+      "DefeatWithdraw": true
     },
     "StopCondition": {
       "OilLimit": 1000,
@@ -1529,7 +1545,8 @@
       "UseAutoSearch": true,
       "Use2xBook": false,
       "AmbushEvade": true,
-      "UseRecommendFleet": false
+      "UseRecommendFleet": false,
+      "DefeatWithdraw": true
     },
     "StopCondition": {
       "OilLimit": 1000,
@@ -1607,7 +1624,8 @@
       "UseAutoSearch": true,
       "Use2xBook": false,
       "AmbushEvade": true,
-      "UseRecommendFleet": false
+      "UseRecommendFleet": false,
+      "DefeatWithdraw": true
     },
     "StopCondition": {
       "OilLimit": 1000,
@@ -1688,7 +1706,8 @@
       "UseAutoSearch": false,
       "Use2xBook": false,
       "AmbushEvade": true,
-      "UseRecommendFleet": false
+      "UseRecommendFleet": false,
+      "DefeatWithdraw": true
     },
     "StopCondition": {
       "OilLimit": 1000,
@@ -1736,7 +1755,8 @@
       "UseAutoSearch": false,
       "Use2xBook": false,
       "AmbushEvade": true,
-      "UseRecommendFleet": false
+      "UseRecommendFleet": false,
+      "DefeatWithdraw": true
     },
     "Coalition": {
       "Mode": "hard",
@@ -2629,6 +2649,7 @@
       "OperationCoinsPreserve": 40000,
       "MinimumActionPointReserve": 200,
       "ExecuteFixedPatrolScan": true,
+      "SkipHpCheck": false,
       "Cl1Filter": "ActionPoint",
       "RecordNonCL1AP": true
     },
@@ -2648,6 +2669,11 @@
       "EnableCustomCheck": false,
       "CustomCheckPositions": null,
       "DelayAfterFull": false
+    },
+    "OpsiFleetAutoChange": {
+      "Enable": false,
+      "CooldownHours": 24,
+      "LastRun": "2020-01-01 00:00:00"
     },
     "Storage": {
       "Storage": {}

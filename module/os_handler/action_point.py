@@ -1,5 +1,6 @@
 # 此文件处理大世界（Operation Siren）模式下的行动力（Action Point, AP）管理。
 # 包含行动力数值 OCR 识别、药剂（AP Box）库存解析以及自动购买或使用补给的交互逻辑。
+import os
 from datetime import datetime
 from datetime import timedelta
 
@@ -161,7 +162,34 @@ class ActionPointHandler(UI, MapEventHandler):
         oil = OIL_ITEM.predict(self.device.image, name=False, amount=True)
         items = ACTION_POINT_ITEMS.predict(self.device.image, name=False, amount=True)
         box = [item.amount for item in oil] + [item.amount for item in items]
+        
+        now_str = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+        # 保存行动力箱子 (AP Box) 的识别截图
+        from module.statistics.item import AMOUNT_OCR
+        for i, item in enumerate(oil):
+            crop_img = item.crop(OIL_ITEM.amount_area)
+            pre = AMOUNT_OCR.pre_process(crop_img)
+            pre = crop_to_text(pre)
+            save_image(pre, f'debug_img/ap_box_oil_{i}_{now_str}.png')
+            logger.info(f'[Debug] AP Box Oil {i} amount: {item.amount}')
+        for i, item in enumerate(items):
+            crop_img = item.crop(ACTION_POINT_ITEMS.amount_area)
+            pre = AMOUNT_OCR.pre_process(crop_img)
+            pre = crop_to_text(pre)
+            save_image(pre, f'debug_img/ap_box_item_{i}_{now_str}.png')
+            logger.info(f'[Debug] AP Box Item {i} amount: {item.amount}')
         current = OCR_ACTION_POINT_REMAIN.ocr(self.device.image)
+        logger.info(f'[Debug] OCR_ACTION_POINT_REMAIN: {current}')
+        if not os.path.exists('debug_img'):
+            os.makedirs('debug_img')
+        
+        # 保存原始全屏截图
+        save_image(self.device.image, f'debug_img/ap_{now_str}_orig.png')
+        # 保存传给 OCR 的预处理截图
+        for i, area in enumerate(OCR_ACTION_POINT_REMAIN.buttons):
+            pre = OCR_ACTION_POINT_REMAIN.pre_process(crop(self.device.image, area))
+            pre = crop_to_text(pre)
+            save_image(pre, f'debug_img/ap_{now_str}_ocr_{i}.png')
         total = current
         if self.config.OS_ACTION_POINT_BOX_USE:
             total += np.sum(np.array(box) * tuple(ACTION_POINT_BOX.values()))

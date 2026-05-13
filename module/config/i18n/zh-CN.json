@@ -596,10 +596,11 @@
     },
     "OcrDevice": {
       "name": "OCR设备",
-      "help": "选择OCR设备，不推荐任何没有独立显卡的用户使用GPU，除非你知道自己在做什么\n非Windows系统目前不支持GPU\n自动选择：当显存超过1G时使用GPU，否则使用CPU",
+      "help": "选择OCR设备，不推荐任何没有独立显卡的用户使用GPU，除非你知道自己在做什么\nGPU 仅用于 Windows DirectML，ANE 仅用于 macOS Apple Neural Engine\n自动选择：Apple Silicon Mac 使用 ANE，Windows 显存超过1G时使用GPU，否则使用CPU",
       "auto": "自动选择",
       "cpu": "CPU",
-      "gpu": "GPU"
+      "gpu": "GPU",
+      "ane": "ANE (Apple)"
     },
     "ScreenshotInterval": {
       "name": "放慢截图速度至 X 秒一张",
@@ -1110,9 +1111,11 @@
       "war_archives_20220428_cn": "档案 虹彩的终幕曲",
       "war_archives_20220526_cn": "档案 泠誓光庭",
       "war_archives_20220728_cn": "档案 雄鹰的叙事歌",
+      "war_archives_20220818_cn": "档案 远汇点作战",
       "war_archives_20220915_cn": "档案 紫绛槿岚",
       "war_archives_20221222_cn": "档案 定向折叠",
       "war_archives_20230223_cn": "档案 湮烬尘墟",
+      "war_archives_20230803_cn": "档案 奏响鸢尾之歌",
       "war_archives_20231026_cn": "档案 飓风与青春之泉"
     },
     "Mode": {
@@ -1144,6 +1147,10 @@
     "UseRecommendFleet": {
       "name": "自动配队",
       "help": "使用游戏内置的推荐阵容自动完成困难图配队"
+    },
+    "DefeatWithdraw": {
+      "name": "道中战斗失败撤退",
+      "help": "道中战斗战败时的处理方式。开启时直接退出海域，关闭时尝试由另一队接管后续战斗。"
     }
   },
   "StopCondition": {
@@ -4709,6 +4716,12 @@
       "name": "舰队强制移动",
       "help": "雪风大人温馨提示：开启后，将强制移动舰队以免找不到明石，指挥官你也不想因为找不到明石导致坠机nanoda？打开这个功能轻轻松松达到50万海里每月nanoda，指挥官还在等什么nanoda!"
     },
+    "SkipHpCheck": {
+      "name": "献祭流跳过血量检测",
+      "help": "开启后跳过战斗后的血量检测，即使船沉了也不会停止练级",
+      "True": "True",
+      "False": "False"
+    },
     "Cl1Filter": {
       "name": "明石购买筛选",
       "help": "默认只购买体力nanoda。如果要同时购买紫币，设置为 'ActionPoint > PurpleCoins'"
@@ -4773,6 +4786,30 @@
     "DelayAfterFull": {
       "name": "到达目标等级后将推迟该任务",
       "help": "当检测到满经验后，将本任务推迟指定的时间"
+    }
+  },
+  "OpsiFleetAutoChange": {
+    "_info": {
+      "name": "侵蚀一舰队自动配队",
+      "help": "自动更换已满经验的舰船\n当经验检测发现指定舰位已满经验时，自动进入船坞选择替换舰船\n使用大世界经验检测的目标等级和自定义检测舰位配置\n使用前必须将所有常用舰船全部取消，只能留下练级舰船，必须启用自定义舰船检测并设置舰位\n原理：每次大世界经验检测后，大世界自动配队运行时会将满经验的指定舰船的常用标记取消，回到港区后会从常用舰船里替换指定舰船"
+    },
+    "Enable": {
+      "name": "启用自动配队",
+      "help": "开启后将自动更换已满经验的舰船",
+      "True": "已启用",
+      "False": "未启用"
+    },
+    "CooldownHours": {
+      "name": "冷却时间(小时)",
+      "help": "每次自动配队后的冷却时间，避免频繁触发",
+      "12": "12",
+      "24": "24",
+      "48": "48",
+      "72": "72"
+    },
+    "LastRun": {
+      "name": "上次运行时间 (自动记录)",
+      "help": "记录上一次自动配队的时间以防止任务重复运行。这个数值是自动记录的，一般不需要手动修改"
     }
   },
   "OpsiScheduling": {
@@ -5241,9 +5278,15 @@
       "ViewLineShort": "分时",
       "DataPointsCount": "共 {count} 个点",
       "CandlesCount": "共 {count} 根K线",
+      "ViewLabel": "📊 视图:",
+      "DetailLabel": "📈 详情:",
       "ViewLineButton": "分时(详细波动)",
       "ViewDayButton": "天视图(小时K)",
       "ViewMonthButton": "月视图(日K)",
+      "DetailChartTitle": "单日体力波动详情 (24小时)",
+      "ToggleDetailChart": "详情图",
+      "DetailChartOn": "✓ 开启",
+      "DetailChartOff": "○ 关闭",
       "LoadOpsiStatsFailed": "加载 OpSi 统计失败: {e}",
       "LoadExpStatsFailed": "加载经验统计失败: {e}",
       "DailyExpCheckTitle": "每日经验检测",

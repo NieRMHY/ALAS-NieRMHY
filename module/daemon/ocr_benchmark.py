@@ -1,22 +1,32 @@
 import os
+import platform
 import shutil
+import sys
 import time
 import cv2
 from rich.table import Table
 from rich.text import Text
 
-from module.daemon.daemon_base import DaemonBase
+from module.config.config import AzurLaneConfig
 from module.exception import RequestHumanTakeover
 from module.logger import logger
 from module.ocr.al_ocr import AlOcr
 
 
-class OcrBenchmark(DaemonBase):
+class OcrBenchmark:
     # Each entry: (model_name, dataset_prefix, subfolder_name)
     BENCHMARKS = [
         ('en', 'sets_num', 'sets_num'),
         ('cn', 'sets_zhcn', 'sets_zhcn'),
     ]
+
+    def __init__(self, config, device=None, task=None):
+        if isinstance(config, AzurLaneConfig):
+            self.config = config
+            if task is not None:
+                self.config.init_task(task)
+        else:
+            self.config = AzurLaneConfig(config, task=task)
 
     def _find_archive(self, prefix):
         for ext in ['.zip', '.tar', '.tar.xz', '.tar.gz']:
@@ -54,12 +64,14 @@ class OcrBenchmark(DaemonBase):
         if avg_ms < 300.0:  return 'Very Slow', 'red'
         return 'Ultra Slow', 'bold red'
 
-    def _run_single(self, model_name, dataset_prefix, subfolder, use_gpu=None):
+    def _run_single(self, model_name, dataset_prefix, subfolder, use_gpu=None, ocr_device=None):
         logger.hr(f'Benchmark: {model_name.upper()} model  |  dataset: {dataset_prefix}', level=2)
 
-        # --- Dynamic GPU config ---
-        if use_gpu is not None:
-            self.config.override(Optimization_OcrDevice='gpu' if use_gpu else 'cpu')
+        # --- Dynamic OCR device config ---
+        if ocr_device is None and use_gpu is not None:
+            ocr_device = 'gpu' if use_gpu else 'cpu'
+        if ocr_device is not None:
+            self.config.override(Optimization_OcrDevice=ocr_device)
             from module.ocr.al_ocr import reset_ocr_model
             reset_ocr_model()
 
@@ -215,17 +227,22 @@ class OcrBenchmark(DaemonBase):
     def run_simple_ocr_benchmark(self):
         """
         Returns:
-            str: 'gpu' if accuracy is 100% on a simple test set, else 'cpu'.
+            str: Best OCR device for this machine.
         """
         logger.hr('Simple OCR Benchmark', level=1)
-        logger.info('Testing OCR with GPU...')
-        res = self._run_single('en', 'sets_num', 'sets_num', use_gpu=True)
+        if sys.platform == 'darwin' and platform.machine() == 'arm64':
+            logger.info('Testing OCR with ANE...')
+            device = 'ane'
+        else:
+            logger.info('Testing OCR with GPU...')
+            device = 'gpu'
+        res = self._run_single('en', 'sets_num', 'sets_num', ocr_device=device)
 
         if res and res['accuracy'] >= 100.0:
-            logger.info('OCR accuracy is 100% with GPU, use GPU.')
-            return 'gpu'
+            logger.info(f'OCR accuracy is 100% with {device.upper()}, use {device.upper()}.')
+            return device
         else:
-            logger.info('OCR accuracy is not 100% with GPU or test failed, fallback to CPU.')
+            logger.info(f'OCR accuracy is not 100% with {device.upper()} or test failed, fallback to CPU.')
             return 'cpu'
 
 

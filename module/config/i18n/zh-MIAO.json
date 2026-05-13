@@ -596,10 +596,11 @@
     },
     "OcrDevice": {
       "name": "OCR设备选择 (´・ω・`)",
-      "help": "OCR跑在CPU或GPU上。没独显别选GPU喵。自动：显存>1G用GPU否则CPU。非Windows无GPU。",
+      "help": "OCR跑在CPU/GPU/ANE上。GPU仅用于Windows DirectML，ANE仅用于macOS Apple Neural Engine。自动：Apple Silicon Mac用ANE，Windows显存>1G用GPU，否则CPU。",
       "auto": "自动判断 (｀・ω・´)",
       "cpu": "CPU喵",
-      "gpu": "GPU喵"
+      "gpu": "GPU喵",
+      "ane": "ANE (Apple)喵"
     },
     "ScreenshotInterval": {
       "name": "放慢截图至 X 秒一张 (´-ω-`)zzz",
@@ -1110,9 +1111,11 @@
       "war_archives_20220428_cn": "archives Rondo at Rainbows End",
       "war_archives_20220526_cn": "archives Pledge of the Radiant Court",
       "war_archives_20220728_cn": "archives Aquilifers Ballade",
+      "war_archives_20220818_cn": "archives Operation Convergence",
       "war_archives_20220915_cn": "archives Violet Tempest Blooming Lycoris",
       "war_archives_20221222_cn": "archives Parallel Superimposition",
       "war_archives_20230223_cn": "archives Revelations of Dust",
+      "war_archives_20230803_cn": "archives Anthem of Remembrance",
       "war_archives_20231026_cn": "archives Tempesta and the Fountain of Youth"
     },
     "Mode": {
@@ -1144,6 +1147,10 @@
     "UseRecommendFleet": {
       "name": "自动配队困难图 (｀・ω・´)ゞ",
       "help": "使用游戏推荐阵容自动完成困难配队喵~"
+    },
+    "DefeatWithdraw": {
+      "name": "道中战斗失败撤退 (｀・ω・´)",
+      "help": "道中战斗战败时的处理方式喵。开启时直接退出海域，关闭时尝试由另一队接管后续战斗喵。"
     }
   },
   "StopCondition": {
@@ -4709,6 +4716,12 @@
       "name": "舰队强制移动 (雪风温馨提示) (ฅ´ω`ฅ)",
       "help": "开启后强制移动舰队以免找不到明石，不想坠机就打开喵，轻松达到50万海里每月喵！"
     },
+    "SkipHpCheck": {
+      "name": "献祭流跳过血量检测",
+      "help": "开启后跳过战斗后的血量检测，即使船沉了也不会停止练级nanoda",
+      "True": "True",
+      "False": "False"
+    },
     "Cl1Filter": {
       "name": "明石购买筛选 (｀ω´)",
       "help": "默认只买体力喵。同时买紫币设为 'ActionPoint > PurpleCoins'。"
@@ -4773,6 +4786,30 @@
     "DelayAfterFull": {
       "name": "到达目标等级后推迟该任务 (｡•̀ᴗ-)✧",
       "help": "检测到满经验后将本任务推迟指定时间喵。"
+    }
+  },
+  "OpsiFleetAutoChange": {
+    "_info": {
+      "name": "OpsiFleetAutoChange._info.name",
+      "help": "OpsiFleetAutoChange._info.help"
+    },
+    "Enable": {
+      "name": "OpsiFleetAutoChange.Enable.name",
+      "help": "OpsiFleetAutoChange.Enable.help",
+      "True": "True",
+      "False": "False"
+    },
+    "CooldownHours": {
+      "name": "OpsiFleetAutoChange.CooldownHours.name",
+      "help": "OpsiFleetAutoChange.CooldownHours.help",
+      "12": "12",
+      "24": "24",
+      "48": "48",
+      "72": "72"
+    },
+    "LastRun": {
+      "name": "OpsiFleetAutoChange.LastRun.name",
+      "help": "OpsiFleetAutoChange.LastRun.help"
     }
   },
   "OpsiScheduling": {
@@ -5241,9 +5278,15 @@
       "ViewLineShort": "分时喵",
       "DataPointsCount": "共 {count} 个点",
       "CandlesCount": "共 {count} 根K线",
+      "ViewLabel": "📊 視圖喵:",
+      "DetailLabel": "📈 詳情喵:",
       "ViewLineButton": "分时(详细波动)喵",
       "ViewDayButton": "天视图(小时K)喵",
       "ViewMonthButton": "月视图(日K)喵",
+      "DetailChartTitle": "单日体力波动详情 (24小时) 喵~",
+      "ToggleDetailChart": "详情图喵",
+      "DetailChartOn": "✓ 开启喵",
+      "DetailChartOff": "○ 关闭喵",
       "LoadOpsiStatsFailed": "加载 OpSi 统计失败: {e}",
       "LoadExpStatsFailed": "加载经验统计失败: {e}",
       "DailyExpCheckTitle": "每日经验检测喵",

@@ -390,9 +390,17 @@ class OpsiHazard1Leveling(CoinTaskMixin, OSMap):
                 logger.warning(f"自定义舰位格式错误: {custom_positions_str}，将检测所有舰船")
                 custom_positions = []
         
-        ship_data_list = self._collect_ship_data_with_retry(target_level)
-        if ship_data_list['ships'] is None:
-            error_msg = ship_data_list['error'] or "未知错误"
+        if not self._check_auto_change_prerequisite(enable_custom_check, custom_positions):
+            logger.info("自动配队前置条件不满足，禁用自动配队")
+            self.config.OpsiFleetAutoChange_Enable = False
+        
+        if enable_custom_check and custom_positions:
+            ship_data_result = self._collect_custom_positions_data(target_level, custom_positions)
+        else:
+            ship_data_result = self._collect_ship_data_with_retry(target_level)
+        
+        if ship_data_result['ships'] is None:
+            error_msg = ship_data_result['error'] or "未知错误"
             logger.error(f"舰船数据收集失败: {error_msg}")
             report = self._format_check_report(
                 None, target_level, self.config.OpsiFleet_Fleet, error_msg=error_msg
@@ -405,7 +413,7 @@ class OpsiHazard1Leveling(CoinTaskMixin, OSMap):
             logger.info("检测失败，下次检测时间设为24小时后")
             return
         
-        ships = ship_data_list['ships']
+        ships = ship_data_result['ships']
         
         try:
             from module.statistics.ship_exp_stats import save_ship_exp_data
@@ -432,7 +440,7 @@ class OpsiHazard1Leveling(CoinTaskMixin, OSMap):
             logger.warning(f"保存舰船经验数据失败: {e}")
 
         report = self._format_check_report(
-            ships, target_level, self.config.OpsiFleet_Fleet
+            ships, target_level, self.config.OpsiFleet_Fleet, custom_positions=custom_positions if enable_custom_check else None
         )
         self.notify_push(
             title="舰船经验检测报告",
@@ -456,6 +464,17 @@ class OpsiHazard1Leveling(CoinTaskMixin, OSMap):
                     title="练级检查通过",
                     content=f"<{self.config.config_name}> {self.config.task} 已达到等级限制 {target_level}。",
                 )
+                
+                if self.config.OpsiFleetAutoChange_Enable:
+                    logger.info("检测到自动配队已启用，开始执行自动配队")
+                    try:
+                        from module.os.tasks.fleet_auto_change import OpsiFleetAutoChange
+                        auto_change = OpsiFleetAutoChange(config=self.config, device=self.device)
+                        auto_change.run()
+                        logger.info("自动配队执行完成")
+                    except Exception as e:
+                        logger.error(f"自动配队执行失败: {e}")
+                
                 if self.config.OpsiCheckLeveling_DelayAfterFull:
                     logger.info("所有舰船满经验后延迟任务")
                     self.config.task_delay(server_update=True)
@@ -463,7 +482,32 @@ class OpsiHazard1Leveling(CoinTaskMixin, OSMap):
         
         self.config.OpsiCheckLeveling_LastRun = datetime.now().replace(microsecond=0)
 
-    def _format_check_report(self, ship_data_list, target_level, fleet_index, error_msg=None):
+    def _check_auto_change_prerequisite(self, enable_custom_check, custom_positions):
+        """
+        检查自动配队前置条件
+        
+        Args:
+            enable_custom_check: 是否启用自定义舰船检测
+            custom_positions: 自定义舰位列表
+            
+        Returns:
+            bool: 是否满足前置条件
+        """
+        if not self.config.OpsiFleetAutoChange_Enable:
+            return True
+        
+        if not enable_custom_check:
+            logger.warning("自动配队需要启用自定义舰船检测，将禁用自动配队")
+            return False
+        
+        if not custom_positions:
+            logger.warning("自动配队需要有效的自定义舰位配置，将禁用自动配队")
+            return False
+        
+        logger.info(f"自动配队前置条件满足: 启用自定义检测，舰位 {custom_positions}")
+        return True
+
+    def _format_check_report(self, ship_data_list, target_level, fleet_index, error_msg=None, custom_positions=None):
         """
         格式化检测报告，用于推送通知
         
@@ -472,6 +516,7 @@ class OpsiHazard1Leveling(CoinTaskMixin, OSMap):
             target_level: 目标等级
             fleet_index: 舰队索引
             error_msg: 错误信息，成功时为None
+            custom_positions: 自定义舰位列表，None时显示所有舰船
             
         Returns:
             str: 格式化的报告文本
@@ -488,6 +533,8 @@ class OpsiHazard1Leveling(CoinTaskMixin, OSMap):
         lines.append("检测状态: 成功")
         lines.append(f"检测舰队: 第 {fleet_index} 舰队")
         lines.append(f"目标等级: Lv.{target_level}")
+        if custom_positions:
+            lines.append(f"检测舰位: {', '.join(map(str, custom_positions))}")
         lines.append("")
         
         target_exp = LIST_SHIP_EXP[target_level - 1] if 1 <= target_level <= 125 else 0
@@ -501,7 +548,11 @@ class OpsiHazard1Leveling(CoinTaskMixin, OSMap):
         except Exception:
             exp_per_hour = 22000.0
         
-        for ship in ship_data_list:
+        ships_to_report = ship_data_list
+        if custom_positions:
+            ships_to_report = [s for s in ship_data_list if s.get('position') in custom_positions]
+        
+        for ship in ships_to_report:
             position = ship.get('position', 0)
             level = ship.get('level', 0)
             current_exp = ship.get('current_exp', 0)
@@ -534,16 +585,98 @@ class OpsiHazard1Leveling(CoinTaskMixin, OSMap):
             lines.append(f"舰位{position}: Lv.{level} | 经验：{current_exp:,} | 进度：{status} │ 预计时间：{time_str}")
             lines.append("")
         
-        all_full = all(ship.get('total_exp', 0) >= target_exp for ship in ship_data_list)
+        all_full = all(ship.get('total_exp', 0) >= target_exp for ship in ships_to_report)
         if all_full:
-            lines.append("★ 所有舰船已满经验！")
+            if custom_positions:
+                lines.append(f"★ 指定舰位 {', '.join(map(str, custom_positions))} 已满经验！")
+            else:
+                lines.append("★ 所有舰船已满经验！")
         else:
-            not_full = [s for s in ship_data_list if s.get('total_exp', 0) < target_exp]
+            not_full = [s for s in ships_to_report if s.get('total_exp', 0) < target_exp]
             lines.append(f"未满经验舰位: {len(not_full)} 艘")
         
         lines.append(f"检测时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         
         return "\n".join(lines)
+
+    def _collect_custom_positions_data(self, target_level, custom_positions):
+        """
+        收集指定舰位的舰船数据
+        
+        Args:
+            target_level: 目标等级
+            custom_positions: 自定义舰位列表，如 [1, 3, 6]
+            
+        Returns:
+            dict: {'ships': list, 'error': str} 
+                  ships为舰船数据列表，失败时为None
+                  error为错误信息，成功时为None
+        """
+        from module.os_handler.assets import (
+            OS_FLEET_SLOT_NAV_1_BUTTON,
+            OS_FLEET_SLOT_NAV_2_BUTTON,
+            OS_FLEET_SLOT_NAV_3_BUTTON,
+            OS_FLEET_SLOT_NAV_4_BUTTON,
+            OS_FLEET_SLOT_NAV_5_BUTTON,
+            OS_FLEET_SLOT_NAV_6_BUTTON,
+        )
+        
+        logger.info(f"开始收集指定舰位数据: {custom_positions}")
+        
+        slot_buttons = {
+            1: OS_FLEET_SLOT_NAV_1_BUTTON,
+            2: OS_FLEET_SLOT_NAV_2_BUTTON,
+            3: OS_FLEET_SLOT_NAV_3_BUTTON,
+            4: OS_FLEET_SLOT_NAV_4_BUTTON,
+            5: OS_FLEET_SLOT_NAV_5_BUTTON,
+            6: OS_FLEET_SLOT_NAV_6_BUTTON,
+        }
+        
+        ship_data_list = []
+        
+        self.fleet_set(self.config.OpsiFleet_Fleet)
+        
+        for position in sorted(custom_positions):
+            button = slot_buttons.get(position)
+            if not button:
+                logger.warning(f"无效的舰位: {position}")
+                continue
+            
+            logger.info(f"检测舰位 {position}")
+            
+            self.equip_enter(button, check_button=EQUIPMENT_OPEN, long_click=True)
+            
+            self.device.screenshot()
+            level, exp = ship_info_get_level_exp(main=self)
+            
+            if level < 1 or level > len(LIST_SHIP_EXP):
+                logger.warning(f"舰位 {position} 等级识别异常: {level}")
+                ship_data_list.append({
+                    "position": position,
+                    "level": level,
+                    "current_exp": exp,
+                    "total_exp": 0,
+                })
+            else:
+                total_exp = LIST_SHIP_EXP[level - 1] + exp
+                logger.info(
+                    f"舰位 {position}: 等级 {level}, 经验 {exp}, 总经验 {total_exp}"
+                )
+                ship_data_list.append({
+                    "position": position,
+                    "level": level,
+                    "current_exp": exp,
+                    "total_exp": total_exp,
+                })
+            
+            self.ui_back(check_button=self.is_in_map)
+            self.device.sleep(0.5)
+        
+        if not ship_data_list:
+            return {'ships': None, 'error': '未收集到任何舰船数据'}
+        
+        logger.info(f"指定舰位数据收集完成，共 {len(ship_data_list)} 艘")
+        return {'ships': ship_data_list, 'error': None}
 
     def _collect_ship_data_with_retry(self, target_level):
         """
@@ -733,6 +866,17 @@ class OpsiHazard1Leveling(CoinTaskMixin, OSMap):
                 title="自定义舰位练级检查通过",
                 content=f"<{self.config.config_name}> 自定义舰位 {', '.join(positions_full)} 已达到等级限制 {target_level}。",
             )
+            
+            if self.config.OpsiFleetAutoChange_Enable:
+                logger.info("检测到自动配队已启用，开始执行自动配队")
+                try:
+                    from module.os.tasks.fleet_auto_change import OpsiFleetAutoChange
+                    auto_change = OpsiFleetAutoChange(config=self.config, device=self.device)
+                    auto_change.run()
+                    logger.info("自动配队执行完成")
+                except Exception as e:
+                    logger.error(f"自动配队执行失败: {e}")
+            
             if self.config.OpsiCheckLeveling_DelayAfterFull:
                 logger.info("自定义舰位满经验后延迟任务")
                 self.config.task_delay(server_update=True)

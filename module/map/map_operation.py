@@ -378,6 +378,8 @@ class MapOperation(MysteryHandler, FleetPreparation, Retirement, FastForwardHand
             else:
                 self.device.screenshot()
 
+            if self.appear_then_click(FLEET_SWITCH_CONFIRM, offset=(30, 30)):
+                continue
             if self.handle_popup_confirm('WITHDRAW'):
                 continue
             if self.appear_then_click(WITHDRAW, interval=5):

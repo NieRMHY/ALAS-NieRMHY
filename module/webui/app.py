@@ -221,6 +221,7 @@ class AlasGUI(Frame):
         self._announcement_result = None
         self._announcement_fetching = False
         self._announcement_force = False
+        self._update_notified = False
         self.simulator = OSSimulator()
         self._simulator_logger_pm = None
         self._overview_log = None
@@ -420,13 +421,14 @@ class AlasGUI(Frame):
 
         def _render_ap_chart():
             try:
-                from module.statistics.opsi_month import get_ap_timeline
+                from module.statistics.opsi_month import get_ap_timeline, get_coins_timeline
                 instance_name = self.alas_name if hasattr(self, 'alas_name') and self.alas_name else None
                 if not instance_name:
                     from module.config.utils import alas_instance
                     all_instances = alas_instance()
                     instance_name = all_instances[0] if all_instances else None
                 timeline = get_ap_timeline(instance_name=instance_name)
+                coins_timeline = get_coins_timeline(instance_name=instance_name)
             except Exception as e:
                 with use_scope("ap_chart", clear=True):
                     put_text(t("Gui.Stat.LoadApDataFailed", e=e))
@@ -438,7 +440,6 @@ class AlasGUI(Frame):
                     put_button(t("Gui.Stat.Refresh"), onclick=_render_ap_chart, color="off")
                 return
 
-            # 解析原始数据点
             from datetime import datetime as _dt
             import json as _json
             raw_points = []
@@ -448,7 +449,11 @@ class AlasGUI(Frame):
                     dt = _dt.fromisoformat(ts_raw)
                 except Exception:
                     continue
-                raw_points.append({'dt': dt, 'ap': int(pt.get('ap', 0))})
+                raw_points.append({
+                    'dt': dt,
+                    'ap': int(pt.get('ap', 0)),
+                    'source': pt.get('source', '-')
+                })
 
             if not raw_points:
                 with use_scope("ap_chart", clear=True):
@@ -465,23 +470,45 @@ class AlasGUI(Frame):
             closes = []
             counts = []
             ap_list = []
+            detail_sources = []
+            chart_points = []
+            is_detail_mode = False
 
-            if current_view == 'line':
+            today = _dt.now().date()
+            today_points = [p for p in raw_points if p['dt'].date() == today]
+            if not today_points and raw_points:
+                last_date = raw_points[-1]['dt'].date()
+                today_points = [p for p in raw_points if p['dt'].date() == last_date]
+                today = last_date
+
+            if current_view == 'detail':
+                is_detail_mode = True
+                if today_points:
+                    for p in today_points:
+                        labels.append(p['dt'].strftime('%H:%M'))
+                        ap_list.append(p['ap'])
+                        detail_sources.append(p.get('source', '-'))
+                        chart_points.append(p)
+                    view_title = t("Gui.Stat.DetailChartTitle")
+                else:
+                    for p in raw_points:
+                        labels.append(p['dt'].strftime('%m-%d %H:%M'))
+                        ap_list.append(p['ap'])
+                        chart_points.append(p)
+                    view_title = t("Gui.Stat.ViewTitleLine")
+                    is_detail_mode = False
+                    current_view = 'line'
+            elif current_view == 'line':
                 for p in raw_points:
                     labels.append(p['dt'].strftime('%m-%d %H:%M'))
                     ap_list.append(p['ap'])
+                    chart_points.append(p)
                 view_title = t("Gui.Stat.ViewTitleLine")
             else:
                 from collections import OrderedDict
                 candles = OrderedDict()
                 if current_view == 'day':
-                    today = _dt.now().date()
-                    today_points = [p for p in raw_points if p['dt'].date() == today]
-                    if not today_points:
-                        last_date = raw_points[-1]['dt'].date()
-                        today_points = [p for p in raw_points if p['dt'].date() == last_date]
-                        today = last_date
-                    for p in today_points:
+                    for p in today_points if today_points else raw_points[:24]:
                         hour_key = p['dt'].strftime('%H:00')
                         if hour_key not in candles:
                             candles[hour_key] = {'open': p['ap'], 'high': p['ap'], 'low': p['ap'], 'close': p['ap'], 'count': 1}
@@ -523,7 +550,7 @@ class AlasGUI(Frame):
             ap_min = min(all_ap)
             ap_avg = int(sum(all_ap) / len(all_ap))
             ap_cur = all_ap[-1]
-            if current_view == 'line':
+            if current_view in ('line', 'detail'):
                 ap_change = ap_list[-1] - ap_list[0] if len(ap_list) >= 2 else 0
                 data_points_text = t("Gui.Stat.DataPointsCount", count=len(labels))
             else:
@@ -532,7 +559,72 @@ class AlasGUI(Frame):
             change_color = '#ef5350' if ap_change >= 0 else '#26a69a'
             change_sign = '+' if ap_change >= 0 else ''
 
+            yellow_coins_list = []
+            purple_coins_list = []
+            coins_sources_list = []
+            show_coins = False
+            coins_stats_html = ''
+            coins_legend_html = ''
+
+            if coins_timeline and chart_points and current_view in ('line', 'detail'):
+                coins_raw_points = []
+                for pt in coins_timeline:
+                    ts_raw = pt.get('ts', '')
+                    try:
+                        dt = _dt.fromisoformat(ts_raw)
+                    except Exception:
+                        continue
+                    coins_raw_points.append({
+                        'dt': dt,
+                        'yellow_coins': int(pt.get('yellow_coins', 0)),
+                        'purple_coins': int(pt.get('purple_coins', 0)),
+                        'source': pt.get('source', '-')
+                    })
+
+                if coins_raw_points:
+                    coins_raw_points.sort(key=lambda p: p['dt'])
+                    coins_idx = 0
+                    coins_last = len(coins_raw_points) - 1
+                    for p in chart_points:
+                        while coins_idx < coins_last:
+                            cur_delta = abs((coins_raw_points[coins_idx]['dt'] - p['dt']).total_seconds())
+                            next_delta = abs((coins_raw_points[coins_idx + 1]['dt'] - p['dt']).total_seconds())
+                            if next_delta > cur_delta:
+                                break
+                            coins_idx += 1
+                        coins_point = coins_raw_points[coins_idx]
+                        yellow_coins_list.append(coins_point['yellow_coins'])
+                        purple_coins_list.append(coins_point['purple_coins'])
+                        coins_sources_list.append(coins_point.get('source', '-'))
+
+                    valid_yellow_coins = [v for v in yellow_coins_list if v is not None]
+                    valid_purple_coins = [v for v in purple_coins_list if v is not None]
+                    show_coins = bool(valid_yellow_coins or valid_purple_coins)
+
+                    if valid_yellow_coins:
+                        yc_cur = valid_yellow_coins[-1]
+                        yc_change = valid_yellow_coins[-1] - valid_yellow_coins[0] if len(valid_yellow_coins) >= 2 else 0
+                        yc_change_color = '#ef5350' if yc_change >= 0 else '#26a69a'
+                        yc_change_sign = '+' if yc_change >= 0 else ''
+                        yc_max = max(valid_yellow_coins)
+                        yc_min = min(valid_yellow_coins)
+
+                        coins_stats_html += f'<div style="display:flex; flex-wrap:wrap; gap:12px; margin-bottom:4px; font-size:12px; color:#aaa;"><span>黄币: <b style="color:#ffd54f">{yc_cur}</b></span><span>变化: <b style="color:{yc_change_color}">{yc_change_sign}{yc_change}</b></span><span>最高: <b style="color:#ef5350">{yc_max}</b></span><span>最低: <b style="color:#26a69a">{yc_min}</b></span></div>'
+                        coins_legend_html += '<span style="display:flex; align-items:center; gap:4px;"><span style="width:12px; height:2px; background:#ffd54f; border-radius:1px; border-top:1px dashed #ffd54f;"></span>黄币</span>'
+
+                    if valid_purple_coins:
+                        pc_cur = valid_purple_coins[-1]
+                        pc_change = valid_purple_coins[-1] - valid_purple_coins[0] if len(valid_purple_coins) >= 2 else 0
+                        pc_change_color = '#ef5350' if pc_change >= 0 else '#26a69a'
+                        pc_change_sign = '+' if pc_change >= 0 else ''
+                        pc_max = max(valid_purple_coins)
+                        pc_min = min(valid_purple_coins)
+
+                        coins_stats_html += f'<div style="display:flex; flex-wrap:wrap; gap:12px; margin-bottom:4px; font-size:12px; color:#aaa;"><span>紫币: <b style="color:#ce93d8">{pc_cur}</b></span><span>变化: <b style="color:{pc_change_color}">{pc_change_sign}{pc_change}</b></span><span>最高: <b style="color:#ef5350">{pc_max}</b></span><span>最低: <b style="color:#26a69a">{pc_min}</b></span></div>'
+                        coins_legend_html += '<span style="display:flex; align-items:center; gap:4px;"><span style="width:12px; height:2px; background:#ce93d8; border-radius:1px; border-top:1px dashed #ce93d8;"></span>紫币</span>'
+
             chart_id = f"ap_cv_{id(self)}"
+            detail_controls_display = 'display:flex;' if current_view in ('line', 'detail') else 'display:none;'
 
             html_tpl = read_webapp_template('ap_chart_panel.html')
             html = html_tpl.format(
@@ -546,11 +638,14 @@ class AlasGUI(Frame):
                 ap_min=ap_min,
                 ap_avg=ap_avg,
                 data_points_text=data_points_text,
+                detail_controls_display=detail_controls_display,
+                coins_stats_html=coins_stats_html,
+                coins_legend_html=coins_legend_html,
             )
 
             js_tpl = read_webapp_template('ap_chart.js')
             js_code = (js_tpl
-                .replace('__CHART_TYPE__', current_view)
+                .replace('__CHART_TYPE__', 'line' if is_detail_mode else current_view)
                 .replace('__LABELS__', _json.dumps(labels, ensure_ascii=False))
                 .replace('__OPENS__', _json.dumps(opens))
                 .replace('__HIGHS__', _json.dumps(highs))
@@ -560,20 +655,238 @@ class AlasGUI(Frame):
                 .replace('__AP__', _json.dumps(ap_list))
                 .replace('__AVG__', str(ap_avg))
                 .replace('__CHART_ID__', chart_id)
+                .replace('__IS_DETAIL_MODE__', 'true' if is_detail_mode else 'false')
+                .replace('__SOURCES__', _json.dumps(detail_sources if is_detail_mode else []))
+                .replace('__YELLOW_COINS__', _json.dumps(yellow_coins_list))
+                .replace('__PURPLE_COINS__', _json.dumps(purple_coins_list))
+                .replace('__COINS_SOURCES__', _json.dumps(coins_sources_list))
+                .replace('__SHOW_COINS__', 'true' if show_coins else 'false')
             )
             from pywebio.session import run_js
             with use_scope("ap_chart", clear=True):
                 put_html(html)
                 run_js(js_code)
+
                 def _switch_view(v):
                     self._ap_chart_view = v
                     _render_ap_chart()
-                put_row([
-                    put_button(t("Gui.Stat.ViewLineButton"), onclick=lambda: _switch_view('line'), color="off" if current_view!='line' else "primary"),
-                    put_button(t("Gui.Stat.ViewDayButton"), onclick=lambda: _switch_view('day'), color="off" if current_view!='day' else "primary"),
-                    put_button(t("Gui.Stat.ViewMonthButton"), onclick=lambda: _switch_view('month'), color="off" if current_view!='month' else "primary"),
-                    put_button(t("Gui.Stat.Refresh"), onclick=_render_ap_chart, color="off"),
-                ], size="auto")
+
+                md3_colors = {
+                    "toolbar_border": "rgba(103, 80, 164, .18)",
+                    "toolbar_bg": "rgba(255, 251, 254, .96)",
+                    "toolbar_shadow": "0 1px 3px rgba(30, 27, 32, .10)",
+                    "segment_border": "rgba(121, 116, 126, .42)",
+                    "segment_divider": "rgba(121, 116, 126, .32)",
+                    "segment_outline": "rgba(121, 116, 126, .22)",
+                    "segment_bg": "#fffbfe",
+                    "text": "#49454f",
+                    "label": "#625b71",
+                    "hover": "rgba(103, 80, 164, .08)",
+                    "selected_bg": "#eaddff",
+                    "selected_text": "#21005d",
+                    "selected_outline": "rgba(103, 80, 164, .18)",
+                    "refresh_text": "#6750a4",
+                }
+                if self.theme == "dark":
+                    md3_colors.update({
+                        "toolbar_border": "rgba(122, 119, 187, .30)",
+                        "toolbar_bg": "rgba(47, 49, 54, .96)",
+                        "toolbar_shadow": "0 1px 3px rgba(0, 0, 0, .38)",
+                        "segment_border": "rgba(147, 143, 153, .50)",
+                        "segment_divider": "rgba(147, 143, 153, .34)",
+                        "segment_outline": "rgba(147, 143, 153, .28)",
+                        "segment_bg": "#2f3136",
+                        "text": "#dfdcfb",
+                        "label": "#c9d1d9",
+                        "hover": "rgba(122, 119, 187, .18)",
+                        "selected_bg": "#3e3b6a",
+                        "selected_text": "#dfdcfb",
+                        "selected_outline": "rgba(122, 119, 187, .46)",
+                        "refresh_text": "#dfdcfb",
+                    })
+                elif self.theme == "socialism":
+                    md3_colors.update({
+                        "toolbar_border": "rgba(242, 199, 110, .72)",
+                        "toolbar_bg": "rgba(255, 251, 240, .96)",
+                        "toolbar_shadow": "0 2px 8px rgba(217, 54, 62, .14)",
+                        "segment_border": "rgba(217, 54, 62, .42)",
+                        "segment_divider": "rgba(217, 54, 62, .30)",
+                        "segment_outline": "rgba(242, 199, 110, .58)",
+                        "segment_bg": "#fffaf0",
+                        "text": "#5d2525",
+                        "label": "#8b4513",
+                        "hover": "rgba(217, 54, 62, .08)",
+                        "selected_bg": "#d9363e",
+                        "selected_text": "#f2c76e",
+                        "selected_outline": "rgba(242, 199, 110, .82)",
+                        "refresh_text": "#d9363e",
+                    })
+                elif self.theme == "apple":
+                    md3_colors.update({
+                        "toolbar_border": "rgba(255, 255, 255, .46)",
+                        "toolbar_bg": "rgba(255, 255, 255, .72)",
+                        "toolbar_shadow": "0 2px 8px rgba(0, 0, 0, .06)",
+                        "segment_border": "rgba(0, 0, 0, .14)",
+                        "segment_divider": "rgba(0, 0, 0, .10)",
+                        "segment_outline": "rgba(0, 0, 0, .08)",
+                        "segment_bg": "rgba(255, 255, 255, .62)",
+                        "text": "#1d1d1f",
+                        "label": "#6e6e73",
+                        "hover": "rgba(0, 122, 255, .08)",
+                        "selected_bg": "rgba(0, 122, 255, .14)",
+                        "selected_text": "#007aff",
+                        "selected_outline": "rgba(0, 122, 255, .26)",
+                        "refresh_text": "#007aff",
+                    })
+
+                put_html(f'''
+                <style>
+                [style*="--ap-chart-md3-toolbar-{chart_id}"] {{
+                    margin-top: 12px !important;
+                    padding: 10px 12px !important;
+                    border: 1px solid {md3_colors["toolbar_border"]} !important;
+                    border-radius: 16px !important;
+                    background: {md3_colors["toolbar_bg"]} !important;
+                    box-shadow: {md3_colors["toolbar_shadow"]} !important;
+                    align-items: center !important;
+                    column-gap: 10px !important;
+                }}
+                [style*="--ap-chart-md3-segment-{chart_id}"] {{
+                    display: inline-flex !important;
+                    width: auto !important;
+                    max-width: 100% !important;
+                    margin: 0 !important;
+                }}
+                [style*="--ap-chart-md3-segment-{chart_id}"] .btn-group {{
+                    display: inline-flex !important;
+                    flex-wrap: nowrap !important;
+                    width: auto !important;
+                    overflow: hidden !important;
+                    border: 1px solid {md3_colors["segment_border"]} !important;
+                    border-radius: 12px !important;
+                    background: {md3_colors["segment_bg"]} !important;
+                    box-shadow: none !important;
+                }}
+                [style*="--ap-chart-md3-segment-{chart_id}"] .btn {{
+                    min-width: 112px !important;
+                    margin: 0 !important;
+                    padding: 7px 16px !important;
+                    border: 0 !important;
+                    border-left: 1px solid {md3_colors["segment_divider"]} !important;
+                    border-radius: 0 !important;
+                    background: transparent !important;
+                    color: {md3_colors["text"]} !important;
+                    box-shadow: inset 0 0 0 1px {md3_colors["segment_outline"]} !important;
+                    font-size: 12px !important;
+                    font-weight: 600 !important;
+                    line-height: 20px !important;
+                    white-space: nowrap !important;
+                }}
+                [style*="--ap-chart-md3-segment-{chart_id}"] .btn:first-child {{
+                    border-left: 0 !important;
+                }}
+                [style*="--ap-chart-md3-segment-{chart_id}"] .btn:first-child {{
+                    border-top-left-radius: 11px !important;
+                    border-bottom-left-radius: 11px !important;
+                }}
+                [style*="--ap-chart-md3-segment-{chart_id}"] .btn:last-child {{
+                    border-top-right-radius: 11px !important;
+                    border-bottom-right-radius: 11px !important;
+                }}
+                [style*="--ap-chart-md3-segment-{chart_id}"] .btn:hover {{
+                    background: {md3_colors["hover"]} !important;
+                }}
+                [style*="--ap-chart-md3-segment-{chart_id}"] .btn-primary {{
+                    background: {md3_colors["selected_bg"]} !important;
+                    color: {md3_colors["selected_text"]} !important;
+                    box-shadow: inset 0 0 0 1px {md3_colors["selected_outline"]} !important;
+                }}
+                [style*="--ap-chart-md3-segment-{chart_id}"] .btn-secondary {{
+                    background: transparent !important;
+                    color: {md3_colors["text"]} !important;
+                    box-shadow: inset 0 0 0 1px {md3_colors["segment_outline"]} !important;
+                }}
+                [style*="--ap-chart-md3-refresh-{chart_id}"] {{
+                    margin: 0 !important;
+                    padding: 0 !important;
+                    border: 0 !important;
+                    background: transparent !important;
+                    box-shadow: none !important;
+                }}
+                [style*="--ap-chart-md3-refresh-{chart_id}"].btn,
+                [style*="--ap-chart-md3-refresh-{chart_id}"] .btn {{
+                    margin: 0 !important;
+                    padding: 7px 16px !important;
+                    border: 1px solid {md3_colors["segment_border"]} !important;
+                    border-radius: 12px !important;
+                    background: {md3_colors["segment_bg"]} !important;
+                    color: {md3_colors["refresh_text"]} !important;
+                    box-shadow: none !important;
+                    font-size: 12px !important;
+                    font-weight: 600 !important;
+                    line-height: 20px !important;
+                    white-space: nowrap !important;
+                    transform: none !important;
+                }}
+                [style*="--ap-chart-md3-refresh-{chart_id}"].btn:hover,
+                [style*="--ap-chart-md3-refresh-{chart_id}"] .btn:hover {{
+                    background: {md3_colors["hover"]} !important;
+                    transform: none !important;
+                }}
+                [style*="--ap-chart-md3-refresh-{chart_id}"].btn:active,
+                [style*="--ap-chart-md3-refresh-{chart_id}"] .btn:active {{
+                    transform: none !important;
+                }}
+                @media (max-width: 720px) {{
+                    [style*="--ap-chart-md3-toolbar-{chart_id}"] {{
+                        grid-template-columns: 1fr !important;
+                        row-gap: 8px !important;
+                    }}
+                    [style*="--ap-chart-md3-segment-{chart_id}"] .btn-group {{
+                        width: 100% !important;
+                    }}
+                    [style*="--ap-chart-md3-segment-{chart_id}"] .btn {{
+                        min-width: 0 !important;
+                        flex: 1 1 0 !important;
+                        padding-left: 8px !important;
+                        padding-right: 8px !important;
+                    }}
+                }}
+                </style>
+                ''')
+
+                view_options = [
+                    (t("Gui.Stat.ViewLineButton"), "line"),
+                    (t("Gui.Stat.ViewDayButton"), "day"),
+                    (t("Gui.Stat.ViewMonthButton"), "month"),
+                    (t("Gui.Stat.ToggleDetailChart"), "detail"),
+                ]
+                view_buttons = [
+                    {
+                        "label": label,
+                        "value": value,
+                        "color": "primary" if current_view == value else "secondary",
+                    }
+                    for label, value in view_options
+                ]
+                put_row(
+                    [
+                        put_html(
+                            f'<span style="display:inline-flex;align-items:center;gap:6px;'
+                            f'font-size:12px;font-weight:600;color:{md3_colors["label"]};white-space:nowrap;">'
+                            f'{t("Gui.Stat.ViewLabel")}</span>'
+                        ),
+                        put_buttons(view_buttons, onclick=_switch_view, small=True, group=True).style(
+                            f"--ap-chart-md3-segment-{chart_id}:1;"
+                        ),
+                        put_button(t("Gui.Stat.Refresh"), onclick=_render_ap_chart, color="secondary", small=True, outline=True).style(
+                            f"--ap-chart-md3-refresh-{chart_id}:1; justify-self:end;"
+                        ),
+                    ],
+                    size="auto auto 1fr",
+                ).style(
+                    f"--ap-chart-md3-toolbar-{chart_id}:1;"
+                )
 
         put_scope("ap_chart", [])
         _render_ap_chart()
@@ -2584,6 +2897,12 @@ class AlasGUI(Frame):
             color="menu",
         ).style(f"--menu-HomePage--")
 
+        put_button(
+            label="导入旧数据",
+            onclick=self.ui_import_legacy,
+            color="menu",
+        ).style(f"--menu-Import--")
+
         # put_button(
         #     label=t("Gui.MenuDevelop.Translate"),
         #     onclick=self.dev_translate,
@@ -2850,17 +3169,35 @@ class AlasGUI(Frame):
 
         put_button(label=t("重启Alas"), onclick=_force_restart)
 
-        def _test_notify():
-            from module.webui.api import _notification_queue
+        def _test_notify_update():
+            from module.notify.notify import notify_webui
             instance = getattr(self, "alas_name", "alas")
-            _notification_queue.put_nowait({
-                "instance": instance,
-                "title": f"测试喵~ {instance} 测试~",
-                "content": f"这是一条测试通知喵~",
-            })
-            toast("已发送测试通知", color="success")
+            notify_webui(
+                instance=instance,
+                title="发现更新喵！",
+                content="测试更新推送逻辑，启动器应显示专用标题。",
+                update=True
+            )
+            toast("已发送更新测试通知", color="success")
 
-        put_button(label="消息推送测试", onclick=_test_notify)
+        def _test_notify_announcement():
+            from module.notify.notify import notify_webui
+            instance = getattr(self, "alas_name", "alas")
+            notify_webui(
+                instance=instance,
+                title="新公告喵！",
+                content="测试公告推送逻辑，启动器应显示专用标题。",
+                updata=False
+            )
+            toast("已发送公告测试通知", color="info")
+
+        put_buttons(
+            buttons=[
+                {"label": "测试更新推送 (updata=True)", "value": "update", "color": "danger"},
+                {"label": "测试公告推送 (updata=False)", "value": "announcement", "color": "info"},
+            ],
+            onclick=[_test_notify_update, _test_notify_announcement]
+        )
 
     @use_scope("content", clear=True)
     def dev_remote(self) -> None:
@@ -3053,6 +3390,112 @@ class AlasGUI(Frame):
 
             put()
 
+    @use_scope("content", clear=True)
+    def ui_import_legacy(self) -> None:
+        """Develop 菜单：导入旧 AzurPilot 数据"""
+        self.init_menu(name="Import")
+        self.set_title("导入旧数据")
+        from pywebio.output import put_markdown, put_html, put_buttons, put_scope
+        import json
+
+        # 检查上一轮导入的结果（通过 sessionStorage 跨刷新传递）
+        try:
+            raw = eval_js("(function(){var r=sessionStorage.getItem('import_msg');if(r){sessionStorage.removeItem('import_msg');return r;}return null;})()")
+            if raw:
+                info = json.loads(raw)
+                if info.get("ok"):
+                    d = info["data"]
+                    parts = []
+                    toast("导入成功", color="success", duration=10)
+                else:
+                    toast("导入失败：" + info.get("error", "未知错误"), color="error", duration=10)
+        except Exception:
+            pass
+
+        def import_legacy_upload():
+            toast("请在弹出的窗口中选择旧 AzurPilot/ALAS 根目录", color="info", duration=0)
+            run_js("""
+            (function(){
+                var input = document.createElement('input');
+                input.type = 'file';
+                input.setAttribute('webkitdirectory', '');
+                input.setAttribute('multiple', '');
+                input.style.display = 'none';
+
+                input.addEventListener('change', async function(e) {
+                    var files = e.target.files;
+                    document.body.removeChild(input);
+                    if (!files || files.length === 0) return;
+
+                    var formData = new FormData();
+                    var matched = 0, skipped = 0, total = files.length;
+
+                    for (var i = 0; i < total; i++) {
+                        var file = files[i];
+                        var relPath = '/' + file.webkitRelativePath.replace(/\\\\/g, '/');
+                        var name = relPath.split('/').pop().toLowerCase();
+
+                        var pp = relPath.split('/');
+                        var si = 1;
+                        if (pp.length >= 3 && pp[1] !== 'config' && pp[1] !== 'log') si = 2;
+                        var subPath = pp.slice(si).join('/');
+
+                        var ok = false;
+                        if (subPath.startsWith('config/')) {
+                            if ((name.endsWith('.json') || name.endsWith('.db')) && !name.startsWith('template')) ok = true;
+                        } else if (subPath.startsWith('log/cl1/')) {
+                            ok = true;
+                        } else if (subPath === 'log/azurstat_meowofficer_farming.csv') {
+                            ok = true;
+                        }
+
+                        if (!ok) { skipped++; continue; }
+                        matched++;
+                        formData.append('file', file, relPath);
+                    }
+
+                    if (matched === 0) {
+                        sessionStorage.setItem('import_msg', JSON.stringify({ok:false, error:'所选文件夹中没有找到 config/ 或 log/cl1/ 下的匹配文件'}));
+                        location.reload();
+                        return;
+                    }
+
+                    try {
+                        var resp = await fetch('/api/import_legacy_upload', { method: 'POST', body: formData });
+                        var result = await resp.json();
+                        if (result.success) {
+                            result.data.total = total;
+                            sessionStorage.setItem('import_msg', JSON.stringify({ok:true, data:result.data, total:total}));
+                        } else {
+                            sessionStorage.setItem('import_msg', JSON.stringify({ok:false, error:result.error || '未知错误'}));
+                        }
+                    } catch (err) {
+                        sessionStorage.setItem('import_msg', JSON.stringify({ok:false, error:'上传请求失败: ' + err.message}));
+                    }
+                    location.reload();
+                });
+
+                document.body.appendChild(input);
+                input.click();
+            })();
+            """)
+
+        put_html(build_title_block("导入旧 AzurPilot/ALAS 数据", margin_top=12, margin_bottom=8))
+        put_markdown(
+            "选择旧 AzurPilot/ALAS 根目录后，自动将以下数据导入到当前项目：\n\n"
+            "**配置 数据文件等**\n\n"
+            "> 同名文件将被覆盖，建议先备份当前项目。"
+        )
+
+        put_scope("import_btn")
+        with use_scope("import_btn"):
+            put_buttons(
+                [
+                    {"label": "选择旧 AzurPilot/ALAS 文件夹", "value": "upload", "color": "primary"},
+                ],
+                onclick=[import_legacy_upload],
+            )
+
     def show(self) -> None:
         self._show()
         self.load_home = True
@@ -3205,6 +3648,10 @@ class AlasGUI(Frame):
 
             logger.info(f"Pushing announcement: {data.get('title')}")
             run_js(f"window.alasShowAnnouncement({title_json}, {content_json}, {announcement_id_json}, {url_json}, {force_json});")
+            
+            # Pushing to launcher
+            from module.notify.notify import notify_webui
+            notify_webui(instance='Alas', title=data.get('title', ''), content=data.get('content', ''), updata=False)
 
             self._last_announcement_id = announcement_id
 
@@ -3292,6 +3739,18 @@ class AlasGUI(Frame):
             self.dev_update()
 
         def show_update_toast():
+            if self._update_notified:
+                return
+            self._update_notified = True
+
+            from module.notify.notify import notify_webui
+            notify_webui(
+                instance='Alas', 
+                title=t("Gui.Toast.ClickToUpdate"), 
+                content="检测到了新更新喵~ 指挥官快来更新喵~",
+                updata=True
+            )
+
             gradient = 'linear-gradient(90deg, #00b894, #0984e3)'
             toast(t("Gui.Toast.ClickToUpdate"), duration=0, position="right", color=gradient, onclick=goto_update)
 

@@ -597,9 +597,10 @@
     "OcrDevice": {
       "name": "Optimization.OcrDevice.name",
       "help": "Optimization.OcrDevice.help",
-      "auto": "auto",
-      "cpu": "cpu",
-      "gpu": "gpu"
+      "auto": "Auto",
+      "cpu": "CPU",
+      "gpu": "GPU",
+      "ane": "ANE (Apple)"
     },
     "ScreenshotInterval": {
       "name": "Slow Down Screenshot Speed to X Seconds per Frame",
@@ -1110,9 +1111,11 @@
       "war_archives_20220428_cn": "archives Rondo at Rainbows End",
       "war_archives_20220526_cn": "archives Pledge of the Radiant Court",
       "war_archives_20220728_cn": "archives Aquilifers Ballade",
+      "war_archives_20220818_cn": "archives Operation Convergence",
       "war_archives_20220915_cn": "archives Violet Tempest Blooming Lycoris",
       "war_archives_20221222_cn": "archives Parallel Superimposition",
       "war_archives_20230223_cn": "archives Revelations of Dust",
+      "war_archives_20230803_cn": "archives Anthem of Remembrance",
       "war_archives_20231026_cn": "archives Tempesta and the Fountain of Youth"
     },
     "Mode": {
@@ -1144,6 +1147,10 @@
     "UseRecommendFleet": {
       "name": "Auto Fleet Composition",
       "help": "Use the game's built-in recommended fleet to automatically compose hard mode fleets"
+    },
+    "DefeatWithdraw": {
+      "name": "Retreat after defeat in Mob",
+      "help": "The handling method for defeat in Mob during the journey. Upon initiation, exit the sea area directly; upon termination, attempt to have another team take over the subsequent battle."
     }
   },
   "StopCondition": {
@@ -4709,6 +4716,12 @@
       "name": "Forced Fleet Movement",
       "help": "Warm reminder from Yukikaze-sama: After enabling, the fleet will be forced to move to prevent not finding Akashi. Commander, you don’t want to crash because you can’t find Akashi nanoda? Enable this function and easily reach 500,000 nautical miles per month nanoda. What are you waiting for, Commander?"
     },
+    "SkipHpCheck": {
+      "name": "Sacrifice run: skip HP check",
+      "help": "Skip HP check after combat. Fleet will continue even if ships are sunk.",
+      "True": "True",
+      "False": "False"
+    },
     "Cl1Filter": {
       "name": "Akashi Purchase Filter",
       "help": "By default, only Action Points are purchased nanoda. If you want to also buy purple coins, set it to ‘ActionPoint > PurpleCoins’"
@@ -4773,6 +4786,30 @@
     "DelayAfterFull": {
       "name": "Delay Task After Reaching Target Level",
       "help": "When full experience is detected, this task will be delayed for the specified duration."
+    }
+  },
+  "OpsiFleetAutoChange": {
+    "_info": {
+      "name": "OpsiFleetAutoChange._info.name",
+      "help": "OpsiFleetAutoChange._info.help"
+    },
+    "Enable": {
+      "name": "OpsiFleetAutoChange.Enable.name",
+      "help": "OpsiFleetAutoChange.Enable.help",
+      "True": "True",
+      "False": "False"
+    },
+    "CooldownHours": {
+      "name": "OpsiFleetAutoChange.CooldownHours.name",
+      "help": "OpsiFleetAutoChange.CooldownHours.help",
+      "12": "12",
+      "24": "24",
+      "48": "48",
+      "72": "72"
+    },
+    "LastRun": {
+      "name": "OpsiFleetAutoChange.LastRun.name",
+      "help": "OpsiFleetAutoChange.LastRun.help"
     }
   },
   "OpsiScheduling": {
@@ -5241,9 +5278,15 @@
       "ViewLineShort": "Line",
       "DataPointsCount": "{count} data points",
       "CandlesCount": "{count} candles",
+      "ViewLabel": "📊 View:",
+      "DetailLabel": "📈 Detail:",
       "ViewLineButton": "Intraday (Detailed)",
       "ViewDayButton": "Day View (Hourly K)",
       "ViewMonthButton": "Month View (Daily K)",
+      "DetailChartTitle": "Daily AP Fluctuation Detail (24h)",
+      "ToggleDetailChart": "Detail Chart",
+      "DetailChartOn": "✓ On",
+      "DetailChartOff": "○ Off",
       "LoadOpsiStatsFailed": "Failed to load OpSi stats: {e}",
       "LoadExpStatsFailed": "Failed to load EXP stats: {e}",
       "DailyExpCheckTitle": "Daily EXP Check",

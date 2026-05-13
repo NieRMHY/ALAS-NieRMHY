@@ -1,10 +1,11 @@
 import os
 import re
+import subprocess
 import typing as t
 from dataclasses import dataclass
 from urllib.parse import urlparse
 
-from deploy.Windows.config import DeployConfig
+from deploy.Windows.config import DeployConfig, ExecutionError
 from deploy.Windows.logger import logger, Progress
 from deploy.Windows.utils import cached_property
 
@@ -44,6 +45,19 @@ class PipManager(DeployConfig):
     @cached_property
     def pip(self):
         return f'"{self.python}" -m pip'
+
+    def execute_pip(self, args):
+        cmd = [self.python, '-m', 'pip'] + list(map(str, args))
+        command = subprocess.list2cmdline(cmd)
+        logger.info(command)
+        process = subprocess.Popen(cmd, shell=False)
+        process.communicate()
+        if process.returncode:
+            logger.info(f"[ failure ], error_code: {process.returncode}")
+            self.show_error(command)
+            raise ExecutionError
+        logger.info(f"[ success ]")
+        return True
 
     @cached_property
     def python_site_packages(self):
@@ -127,6 +141,5 @@ class PipManager(DeployConfig):
         arg += ['--disable-pip-version-check']
 
         logger.hr('Update Dependencies', 1)
-        arg = ' ' + ' '.join(arg) if arg else ''
-        self.execute(f'{self.pip} install -r "{self.requirements_file}"{arg}')
+        self.execute_pip(['install', '-r', self.requirements_file] + arg)
         Progress.UpdateDependency()

@@ -12,7 +12,8 @@ from module.commission.preset import DICT_FILTER_PRESET, SHORTEST_FILTER
 from module.commission.project import COMMISSION_FILTER, Commission
 from module.config.config_generated import GeneratedConfig
 from module.config.utils import get_server_last_update, get_server_next_update, nearest_future
-from module.exception import GameStuckError
+from module.dorm.dorm import RewardDorm
+from module.exception import GameStuckError, OilMaxed, RequestHumanTakeover
 from module.handler.info_handler import InfoHandler
 from module.logger import logger
 from module.map.map_grids import SelectedGrids
@@ -617,7 +618,7 @@ class RewardCommission(UI, InfoHandler):
         except Exception as e:
             logger.warning(f'Commission income recording failed: {e}')
 
-    def commission_receive(self, skip_first_screenshot=True):
+    def _commission_receive(self, skip_first_screenshot=True):
         logger.hr('Reward receive')
 
         reward = False
@@ -680,23 +681,9 @@ class RewardCommission(UI, InfoHandler):
                     self.interval_reset(GET_SHIP)
                     continue
 
-                if self.appear(FUEL_MAXED, offset=(20, 20), interval=1):
-                    logger.info("Fuel maxed, skip reward receive")
-                
-                    # Force-write buy-food flag to config file.
-                    # This avoids losing the flag when multiple config updates happen in one loop.
-                    self.config.modified['Dorm.Dorm.BuyFood'] = True
-                    self.config.save()
-                    self.config.task_call('Dorm')
-                    self.config.task_delay(minute=1)
-                    # Write again after task_delay(), because it triggers an immediate update().
-                    self.config.modified['Dorm.Dorm.BuyFood'] = True
-                    self.config.save()
-                    logger.info(
-                        f"Dorm buy-food flag set to: {self.config.cross_get('Dorm.Dorm.BuyFood')}"
-                    )
-                    self.config.task_stop()
-                    break
+                if self.config.SERVER in ['cn']:
+                    if self.appear(OIL_MAXED, offset=(20, 20), interval=3):
+                        raise OilMaxed
 
                 for button in [GET_SHIP]:
                     if click_timer.reached() and self.appear(button, interval=1):
@@ -716,6 +703,26 @@ class RewardCommission(UI, InfoHandler):
             self._record_commission_income()
 
         return reward
+
+    def commission_receive(self):
+        """
+        Returns:
+            bool: If rewarded.
+
+        Pages:
+            in: page_reward
+            out: page_commission
+        """
+        for _ in range(3):
+            try:
+                return self._commission_receive()
+            except OilMaxed:
+                logger.info("Oil maxed, buy food to consume oil")
+                RewardDorm(self.config, self.device).dorm_food_run(amount=10)
+                self.ui_ensure(page_reward)
+
+        logger.critical(f'Failed to handle oil maxed after 3 trial')
+        raise RequestHumanTakeover
 
     def run(self):
         """

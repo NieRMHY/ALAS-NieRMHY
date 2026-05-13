@@ -22,6 +22,7 @@ test.py
 test/
 debug_ocr/
 PaddleOCR
+.trae
 
 # Created by .ignore support plugin (hsz.mobi)
 
@@ -270,3 +271,4 @@ pyrightconfig.json
 /Alasio
 /f
 /workers
+/debug_img

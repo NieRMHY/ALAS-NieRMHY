@@ -111,6 +111,7 @@ class RecOnlyOCR(RapidOCR):
         self.use_rec = cfg.Global.use_rec
         cfg.Rec.engine_cfg = cfg.EngineConfig[cfg.Rec.engine_type.value]
         cfg.Rec.font_path = cfg.Global.font_path
+        cfg.Rec.model_root_dir = cfg.Global.get("model_root_dir", os.getcwd())
         self.text_rec = TextRecognizer(cfg.Rec)
 
         self.load_img = LoadImage()
@@ -124,7 +125,9 @@ class RecOnlyOCR(RapidOCR):
 
 
 def _create_ocr(model_path, rec_keys_path, ocr_version):
-    use_gpu = config.ocr_device == 'gpu'
+    ocr_device = config.ocr_device
+    use_dml = os.name == 'nt' and ocr_device == 'gpu'
+    use_coreml = ocr_device == 'ane'
     params = {
         "Global.use_det": False,
         "Global.use_cls": False,
@@ -133,7 +136,9 @@ def _create_ocr(model_path, rec_keys_path, ocr_version):
         "Rec.ocr_version": ocr_version,
         "Rec.model_path": model_path,
         "Rec.rec_keys_path": rec_keys_path,
-        "EngineConfig.onnxruntime.use_dml": use_gpu,
+        "EngineConfig.onnxruntime.use_dml": use_dml,
+        "EngineConfig.onnxruntime.use_coreml": use_coreml,
+        "EngineConfig.onnxruntime.coreml_ep_cfg.MLComputeUnits": "CPUAndNeuralEngine",
     }
     return RecOnlyOCR(params=params)
 
