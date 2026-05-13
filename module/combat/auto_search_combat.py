@@ -5,7 +5,7 @@ from module.combat.combat import Combat
 from module.exception import CampaignEnd
 from module.handler.assets import AUTO_SEARCH_MAP_OPTION_ON, GET_MISSION
 from module.logger import logger
-from module.map.assets import WITHDRAW
+from module.map.assets import WITHDRAW, SWITCH_OVER, FLEET_WITHDRAW, FLEET_SWITCH_CONFIRM
 from module.map.map_operation import MapOperation
 
 
@@ -285,15 +285,23 @@ class AutoSearchCombat(MapOperation, Combat, CampaignStatus):
             if self.handle_get_ship():
                 continue
             if self.appear_then_click(OPTS_INFO_D, offset=(30, 30), interval=2):
+                if emotion_reduce:
+                    self.emotion.reduce(fleet_index, shipwreck=True)
                 self._withdraw = True
-                continue
+                break
             if confirm_timer.reached():
                 self._withdraw = True
                 self.device.click(OPTS_INFO_D)
+                if emotion_reduce:
+                    self.emotion.reduce(fleet_index, shipwreck=True)
                 confirm_timer.reset()
-                continue
-            if self.appear(BATTLE_STATUS_S) or self.appear(BATTLE_STATUS_A) or self.appear(BATTLE_STATUS_B) \
-                    or self.appear(EXP_INFO_S) or self.appear(EXP_INFO_A) or self.appear(EXP_INFO_B) \
+                break
+            if self.appear(BATTLE_STATUS_A) or self.appear(BATTLE_STATUS_B) \
+                    or self.appear(EXP_INFO_A) or self.appear(EXP_INFO_B):
+                if emotion_reduce:
+                    self.emotion.reduce(fleet_index, shipwreck=True)
+                break
+            if self.appear(BATTLE_STATUS_S) or self.appear(EXP_INFO_S) \
                     or self.appear(GET_MISSION) or self.is_auto_search_running():
                 self.device.screenshot_interval_set()
                 break
@@ -325,10 +333,29 @@ class AutoSearchCombat(MapOperation, Combat, CampaignStatus):
                 raise CampaignEnd
 
             # Withdraw
-            if self._withdraw and get_urgent_commission and self.appear(WITHDRAW, offset=(30, 30)):
+            if self._withdraw:
+                if self.appear_then_click(FLEET_SWITCH_CONFIRM, offset=(30, 30)):
+                    continue
+                if not self.appear(WITHDRAW, offset=(30, 30)):
+                    continue
+
+                logger.info(f'fleet_alive_multiple: {self.fleet_alive_multiple}')
                 self._withdraw = False
-                self.withdraw()
-                break
+                if self.config.Campaign_DefeatWithdraw or not self.fleet_alive_multiple:
+                    self.withdraw()
+                    break
+                elif get_urgent_commission:
+                    self.fleet_alive_multiple = False
+                    continue
+                else:
+                    while True:
+                        self.device.screenshot()
+                        if self.appear_then_click(FLEET_WITHDRAW, offset=(30, 30)):
+                            break
+                        if self.appear_then_click(SWITCH_OVER, interval=2):
+                            continue
+                    self.fleet_alive_multiple = False
+                    continue
 
             # Combat status
             if self.handle_get_ship():

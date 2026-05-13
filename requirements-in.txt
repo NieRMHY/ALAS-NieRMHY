@@ -2,23 +2,23 @@ numpy
 scipy
 pillow
 opencv-python>=4.8.0
-imageio
+imageio==2.26.0
 imageio-ffmpeg
-adbutils
-uiautomator2
+adbutils==0.11.0
+uiautomator2==2.16.17
 uiautomator2cache
 wrapt
 retrying
 jellyfish
 pyyaml
 inflection
-pywebio
+pywebio==1.7.1
 starlette==0.49.1
 anyio
 uvicorn[standard]
 aiofiles
 pypresence
-rich
+rich==11.2.0
 zerorpc
 pyzmq
 onepush
@@ -31,8 +31,8 @@ typing_extensions>=4.8.0
 pydantic>=2.5.0
 rapidocr
 onnxruntime-directml>=1.24.4; sys_platform == "win32"
-onnxruntime>=1.24.4; sys_platform == "linux"
-onnxruntime @ https://files.pythonhosted.org/packages/fb/aa/04530bd38e31e26970fa1212346d76cf81705dc16a8ee5e6f4fb24634c11/onnxruntime-1.25.1-cp314-cp314-macosx_14_0_arm64.whl; sys_platform == "darwin" and platform_machine == "arm64"
+onnxruntime==1.26.0; sys_platform == "linux"
+onnxruntime @ https://files.pythonhosted.org/packages/40/89/17546c1c20f6bfc3ae41c22152378a26edfea918af3129e2139dcd7c99f3/onnxruntime-1.26.0-cp314-cp314-macosx_14_0_arm64.whl; sys_platform == "darwin" and platform_machine == "arm64"
 watchdog>=2.0.0
 numba
 pip

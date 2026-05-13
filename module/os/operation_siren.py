@@ -9,6 +9,7 @@ from module.os.tasks.shop import OpsiShop
 from module.os.tasks.voucher import OpsiVoucher
 from module.os.tasks.meowfficer_farming import OpsiMeowfficerFarming
 from module.os.tasks.hazard_leveling import OpsiHazard1Leveling
+from module.os.tasks.fleet_auto_change import OpsiFleetAutoChange
 from module.os.tasks.scheduling import OpsiScheduling
 from module.os.tasks.obscure import OpsiObscure
 from module.os.tasks.abyssal import OpsiAbyssal
@@ -21,7 +22,7 @@ from module.os.tasks.cross_month import OpsiCrossMonth
 
 class OperationSiren(
     OpsiDaily, OpsiShop, OpsiVoucher, OpsiMeowfficerFarming,
-    OpsiHazard1Leveling, OpsiScheduling, OpsiObscure, OpsiAbyssal,
+    OpsiHazard1Leveling, OpsiFleetAutoChange, OpsiScheduling, OpsiObscure, OpsiAbyssal,
     OpsiArchive, OpsiStronghold, OpsiMonthBoss, OpsiExplore,
     OpsiCrossMonth,
 ):

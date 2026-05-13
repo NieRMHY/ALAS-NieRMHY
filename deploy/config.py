@@ -1,11 +1,12 @@
 import copy
-import os
-import subprocess
-import sys
 from typing import Optional, Union
 
 from deploy.logger import logger
 from deploy.utils import *
+
+
+GIT_OVER_CDN_REPOSITORY = 'git://git.pull/AzurPilot'
+GIT_OVER_CDN_FALLBACK_REPOSITORY = 'https://gitcode.com/ddl2/AzurLaneAutoScript'
 
 
 class ExecutionError(Exception):
@@ -14,13 +15,12 @@ class ExecutionError(Exception):
 
 class ConfigModel:
     # Git
-    Repository: str = "https://gitee.com/wqeaxc/AzurLaneAutoScript1"
+    Repository: str = "https://github.com/wess09/AzurPilot"
     Branch: str = "master"
     GitExecutable: str = "./toolkit/Git/mingw64/bin/git.exe"
     GitProxy: Optional[str] = None
     SSLVerify: bool = False
     AutoUpdate: bool = True
-    KeepLocalChanges: bool = False
 
     # Python
     PythonExecutable: str = "./toolkit/python.exe"
@@ -49,9 +49,9 @@ class ConfigModel:
     DiscordRichPresence: bool = False
 
     # Remote Access
-    EnableRemoteAccess: bool = True
+    EnableRemoteAccess: bool = False
     SSHUser: Optional[str] = None
-    SSHServer: Optional[str] = "app.hk1.azurlane.cloud:10022"
+    SSHServer: Optional[str] = None
     SSHExecutable: Optional[str] = None
 
     # Webui
@@ -62,7 +62,7 @@ class ConfigModel:
     Language: str = "en-US"
     Theme: str = "default"
     DpiScaling: bool = True
-    Password: Optional[str] = "123456"
+    Password: Optional[str] = None
     CDN: Union[str, bool] = False
     Run: Optional[str] = None
 
@@ -125,9 +125,17 @@ class DeployConfig(ConfigModel):
             'https://e.coding.net/llop18870/alas/AzurLaneAutoScript.git',
             'https://e.coding.net/saarcenter/alas/AzurLaneAutoScript.git',
             'https://git.saarcenter.com/LmeSzinc/AzurLaneAutoScript.git',
+            'git://git.lyoko.io/AzurLaneAutoScript',
+            'https://gitcode.com/ddl2/AzurLaneAutoScript',
+            'https://gitcode.com/ZhangMusan/AzurLaneAutoScript',
+            'https://gitcode.com/nerom/AzurLaneAutoScript',
+            'https://gitee.com/wqeaxc/AzurLaneAutoScript1',
+            'https://git.nanoda.work/git/AzurLaneAutoScript',
+            'https://git.nanoda.work/git/AzurPilot',
+            'https://git.nanoda.work',
         ]:
-            self.Repository = 'git://git.lyoko.io/AzurLaneAutoScript'
-            self.config['Repository'] = 'git://git.lyoko.io/AzurLaneAutoScript'
+            self.Repository = GIT_OVER_CDN_REPOSITORY
+            self.config['Repository'] = GIT_OVER_CDN_REPOSITORY
         if self.PypiMirror in [
             'https://pypi.tuna.tsinghua.edu.cn/simple'
         ]:
@@ -138,12 +146,14 @@ class DeployConfig(ConfigModel):
         # Don't write these into deploy.yaml
         super().__setattr__(
             'GitOverCdn',
-            self.Repository == 'git://git.lyoko.io/AzurLaneAutoScript' and self.Branch == 'master'
+            self.Repository == GIT_OVER_CDN_REPOSITORY and self.Branch == 'master'
         )
+        if self.Repository == GIT_OVER_CDN_REPOSITORY:
+            super().__setattr__('Repository', GIT_OVER_CDN_FALLBACK_REPOSITORY)
         if self.Repository in ['global']:
-            super().__setattr__('Repository', 'https://github.com/LmeSzinc/AzurLaneAutoScript')
+            super().__setattr__('Repository', 'https://github.com/wess09/AzurPilot')
         if self.Repository in ['cn']:
-            super().__setattr__('Repository', 'git://git.lyoko.io/AzurLaneAutoScript')
+            super().__setattr__('Repository', GIT_OVER_CDN_REPOSITORY)
 
     def filepath(self, key):
         """
@@ -184,8 +194,7 @@ class DeployConfig(ConfigModel):
         if not output:
             command = command + ' >nul 2>nul'
         logger.info(command)
-        # Using subprocess.call instead of os.system to better handle quoted paths with spaces on Windows
-        error_code = subprocess.call(command, shell=True)
+        error_code = os.system(command)
         if error_code:
             if allow_failure:
                 logger.info(f"[ allowed failure ], error_code: {error_code}")

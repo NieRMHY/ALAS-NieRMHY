@@ -248,6 +248,10 @@ class Emotion:
             return 4
         else:
             return 2
+    
+    @property
+    def reduce_shipwreck(self):
+        return 10
 
     def _check_reduce(self, battle):
         """
@@ -339,7 +343,7 @@ class Emotion:
                 logger.attr('Wait until', recovered)
                 sleep(60)
 
-    def reduce(self, fleet_index):
+    def reduce(self, fleet_index, shipwreck=False):
         """
         Reduce emotion of specific fleet.
         Should be called after battle executing.
@@ -347,6 +351,7 @@ class Emotion:
 
         Args:
             fleet_index (int): 1 or 2.
+            shipwreck (bool): Whether the fleet is at shipwreck.
         """
         logger.hr('Emotion reduce')
         self.update()
@@ -356,8 +361,12 @@ class Emotion:
         else:
             fleet = self.fleets[fleet_index - 1]
 
-        fleet.current -= self.reduce_per_battle
-        self.total_reduced += self.reduce_per_battle
+        if not shipwreck:
+            fleet.current -= self.reduce_per_battle
+            self.total_reduced += self.reduce_per_battle
+        else:
+            fleet.current -= self.reduce_shipwreck
+            self.total_reduced += self.reduce_shipwreck
         self.record()
         self.show()
 

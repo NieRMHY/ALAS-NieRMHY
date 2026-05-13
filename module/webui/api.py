@@ -298,11 +298,7 @@ _notification_queue = asyncio.Queue()
 async def api_notify(request):
     """POST /api/notify — 接收通知推送到 SSE"""
     data = await request.json()
-    await _notification_queue.put({
-        'instance': data.get('instance', ''),
-        'title': data.get('title', ''),
-        'content': data.get('content', ''),
-    })
+    await _notification_queue.put(data)
     return JSONResponse({'success': True})
 
 
@@ -325,11 +321,96 @@ async def api_notify_stream(request):
     )
 
 
+async def api_import_legacy_upload(request):
+    """
+    接收浏览器上传的旧 ALAS 文件夹内容，写入本项目对应位置。
+    前端使用 webkitdirectory 选择文件夹后上传。
+    """
+    from pathlib import Path
+
+    try:
+        form = await request.form()
+        current_root = Path(os.getcwd()).resolve()
+
+        result = {
+            "config": 0,
+            "db": 0,
+            "cl1": 0,
+            "azurstat": 0,
+            "skipped": 0,
+            "errors": 0,
+        }
+
+        for file in form.getlist('file'):
+            if not hasattr(file, 'filename') or not file.filename:
+                continue
+
+            relative_path = file.filename.replace("\\", "/")
+            filename = Path(relative_path).name
+
+            # 提取根级相对路径：跳过前导 / 和可能的文件夹名前缀
+            parts = relative_path.split("/")
+            # parts[0]='' (前导 /), parts[1]可能是文件夹名或 config/log
+            start_idx = 1
+            if len(parts) >= 3 and parts[1] not in ("config", "log"):
+                start_idx = 2  # parts[1] 是文件夹名，跳过
+            sub_path = "/".join(parts[start_idx:])
+
+            # 判断是否需要处理该文件
+            rel_target = None
+
+            # 只匹配 根目录/config/ 下的 .json/.db（排除 template*）
+            if sub_path.startswith("config/"):
+                ext = Path(filename).suffix.lower()
+                if ext in (".json", ".db") and not filename.lower().startswith("template"):
+                    rel_target = sub_path
+
+            # 只匹配 根目录/log/cl1/ 下的所有文件
+            if sub_path.startswith("log/cl1/"):
+                rel_target = sub_path
+
+            # 只匹配 根目录/log/azurstat_meowofficer_farming.csv
+            if sub_path == "log/azurstat_meowofficer_farming.csv":
+                rel_target = sub_path
+
+            if rel_target is None:
+                result["skipped"] += 1
+                continue
+
+            target = current_root / rel_target
+
+            try:
+                target.parent.mkdir(parents=True, exist_ok=True)
+                content = await file.read()
+                target.write_bytes(content)
+
+                if rel_target.startswith("config/"):
+                    ext = Path(filename).suffix.lower()
+                    if ext == ".json":
+                        result["config"] += 1
+                    else:
+                        result["db"] += 1
+                elif rel_target.startswith("log/cl1/"):
+                    result["cl1"] += 1
+                elif "azurstat" in rel_target:
+                    result["azurstat"] += 1
+            except Exception as e:
+                logger.error(f"写入失败 {target}: {e}")
+                result["errors"] += 1
+
+        logger.info(f"导入完成: {result}")
+        return JSONResponse({"success": True, "data": result})
+    except Exception as e:
+        logger.error(f"导入API错误: {e}")
+        return JSONResponse({"success": False, "error": str(e)}, status_code=500)
+
+
 api_routes = [
     Route("/api/cl1_stats", api_cl1_stats),
     Route("/api/ap_timeline", api_ap_timeline),
     Route("/api/notify", api_notify, methods=["POST"]),
     Route("/api/notify_stream", api_notify_stream),
+    Route("/api/import_legacy_upload", api_import_legacy_upload, methods=["POST"]),
     Route("/obs", serve_obs_overlay),
     WebSocketRoute("/ws/live_screenshot", ws_live_screenshot),
 ]

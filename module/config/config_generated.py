@@ -109,7 +109,7 @@ class GeneratedConfig:
     Error_AdbOfflineThreshold = 3
 
     # Group `Optimization`
-    Optimization_OcrDevice = 'auto'  # auto, cpu, gpu
+    Optimization_OcrDevice = 'auto'  # auto, cpu, gpu, ane
     Optimization_ScreenshotInterval = 0.3
     Optimization_CombatScreenshotInterval = 1.0
     Optimization_TaskHoardingDuration = 0
@@ -203,6 +203,7 @@ class GeneratedConfig:
     Campaign_Use2xBook = False
     Campaign_AmbushEvade = True
     Campaign_UseRecommendFleet = False
+    Campaign_DefeatWithdraw = True
 
     # Group `StopCondition`
     StopCondition_OilLimit = 1000
@@ -751,6 +752,7 @@ class GeneratedConfig:
     OpsiHazard1Leveling_OperationCoinsPreserve = 40000
     OpsiHazard1Leveling_MinimumActionPointReserve = 200
     OpsiHazard1Leveling_ExecuteFixedPatrolScan = True
+    OpsiHazard1Leveling_SkipHpCheck = False  # True, False
     OpsiHazard1Leveling_Cl1Filter = 'ActionPoint'
     OpsiHazard1Leveling_RecordNonCL1AP = True
 
@@ -766,6 +768,11 @@ class GeneratedConfig:
     OpsiCheckLeveling_EnableCustomCheck = False  # True, False
     OpsiCheckLeveling_CustomCheckPositions = None
     OpsiCheckLeveling_DelayAfterFull = False
+
+    # Group `OpsiFleetAutoChange`
+    OpsiFleetAutoChange_Enable = False  # True, False
+    OpsiFleetAutoChange_CooldownHours = 24  # 12, 24, 48, 72
+    OpsiFleetAutoChange_LastRun = datetime.datetime(2020, 1, 1, 0, 0)
 
     # Group `OpsiScheduling`
     OpsiScheduling_UseSmartSchedulingOperationCoinsPreserve = True  # True, False

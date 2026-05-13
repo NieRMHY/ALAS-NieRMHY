@@ -44,7 +44,6 @@ class OSCampaignRun(OSMapOperation):
     def opsi_meowfficer_farming(self):
         try:
             campaign = self.load_campaign()
-            campaign.os_check_leveling()
             campaign.os_meowfficer_farming()
         except ActionPointLimit:
             if get_os_reset_remain() > 0:

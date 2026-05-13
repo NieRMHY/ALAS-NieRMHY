@@ -876,7 +876,7 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
                     finished_combat += 1
                 else:
                     self.hp_get()
-                    if any(self.need_repair):
+                    if any(self.need_repair) and not self.config.OpsiHazard1Leveling_SkipHpCheck:
                         success = False
                         logger.warning('Fleet died, stop auto search')
                         continue

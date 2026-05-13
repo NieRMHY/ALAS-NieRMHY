@@ -180,6 +180,8 @@ class Cl1Database:
             'meow_hazard_stats': {},
             # 委托收益数据
             'commission_income_entries': [],
+            # 凭证快照数据（作战补给凭证/特别兑换凭证）
+            'coins_snapshots': [],
         }
 
     def _empty_siren_research_devices(self) -> Dict[str, Any]:
@@ -479,6 +481,43 @@ class Cl1Database:
         snapshots = data.get('ap_snapshots', [])
         snapshots.append(snapshot)
         data['ap_snapshots'] = snapshots
+        self.save_stats(instance, month, data)
+
+    def add_coins_snapshot(self, instance: str, yellow_coins: int, purple_coins: int = 0, source: str = 'cl1'):
+        """记录凭证快照（作战补给凭证/特别兑换凭证）
+
+        Args:
+            instance: 实例名称
+            yellow_coins: 当前作战补给凭证（黄币）数量
+            purple_coins: 当前特别兑换凭证（紫币）数量
+            source: 数据来源标记 (cl1 / meow 等)
+        """
+        month = datetime.now().strftime('%Y-%m')
+        data = self.get_stats(instance, month)
+
+        snapshot = {
+            'ts': datetime.now().isoformat(),
+            'yellow_coins': int(yellow_coins),
+            'purple_coins': int(purple_coins),
+            'source': source,
+        }
+
+        snapshots = data.get('coins_snapshots', [])
+        if snapshots:
+            last = snapshots[-1]
+            try:
+                same_yellow = int(last.get('yellow_coins', -1)) == snapshot['yellow_coins']
+                same_purple = int(last.get('purple_coins', -1)) == snapshot['purple_coins']
+                if same_yellow and same_purple and last.get('source') == source:
+                    return
+            except (TypeError, ValueError):
+                pass
+
+        snapshots.append(snapshot)
+        # 保留最近 500 条记录，避免数据过大
+        if len(snapshots) > 500:
+            snapshots = snapshots[-500:]
+        data['coins_snapshots'] = snapshots
         self.save_stats(instance, month, data)
 
     def get_last_ap_notification(self, instance: str) -> Optional[Dict[str, Any]]:

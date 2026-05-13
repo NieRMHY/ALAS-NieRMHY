@@ -147,4 +147,45 @@ def get_ap_timeline(year: int | None = None, month: int | None = None, instance_
     return snapshots_sorted
 
 
-__all__ = ["get_opsi_stats", "OpsiMonthStats", "compute_monthly_cl1_akashi_ap", "get_ap_timeline"]
+def get_coins_timeline(year: int | None = None, month: int | None = None, instance_name: str | None = None) -> list:
+    """
+    获取凭证变化时间序列数据（作战补给凭证/特别兑换凭证），用于绘制凭证变化曲线。
+
+    返回按时间排序的数据点列表，每个数据点包含:
+    - ts: ISO 格式时间戳
+    - yellow_coins: 当时的作战补给凭证（黄币）数量
+    - purple_coins: 当时的特别兑换凭证（紫币）数量
+    - source: 数据来源 (cl1 / meow / other)
+
+    Args:
+        year: 年份，默认当前年
+        month: 月份，默认当前月
+        instance_name: 实例名称
+
+    Returns:
+        list[dict]: 时间序列数据点
+    """
+    now = datetime.now()
+    if year is None:
+        year = now.year
+    if month is None:
+        month = now.month
+    key_prefix = f"{year:04d}-{month:02d}"
+
+    instance_name = instance_name or "default"
+    data = cl1_db.get_stats(instance_name, key_prefix)
+
+    snapshots = data.get('coins_snapshots', [])
+    if not snapshots:
+        return []
+
+    # 按时间排序
+    try:
+        snapshots_sorted = sorted(snapshots, key=lambda e: e.get('ts', ''))
+    except Exception:
+        snapshots_sorted = snapshots
+
+    return snapshots_sorted
+
+
+__all__ = ["get_opsi_stats", "OpsiMonthStats", "compute_monthly_cl1_akashi_ap", "get_ap_timeline", "get_coins_timeline"]

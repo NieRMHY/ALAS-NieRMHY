@@ -133,6 +133,7 @@ class CampaignBase(CampaignUI, Map, AutoSearchCombat):
         else:
             self.map = self.MAP
             self.battle_count = 0
+            self.fleet_alive_multiple = self.config.Fleet_Fleet2 != 0
             self.lv_reset()
             self.lv_get()
 

@@ -210,7 +210,7 @@ class GitOverCdnClient:
             self.logger.warning(f'TimeoutExpired when calling {cmd}, stdout={stdout}, stderr={stderr}')
         return stdout.decode()
 
-    def git_reset(self, keep_changes=False):
+    def git_reset(self):
         """
         git reset --hard <commit>
         """
@@ -223,12 +223,7 @@ class GitOverCdnClient:
             if os.path.exists(lock_file):
                 self.logger.info(f'Lock file {lock_file} exists, removing')
                 os.remove(lock_file)
-        if keep_changes:
-            self.git_command('stash')
-            self.git_command('reset', '--hard', f'{self.source}/{self.branch}')
-            self.git_command('stash', 'pop')
-        else:
-            self.git_command('reset', '--hard', f'{self.source}/{self.branch}')
+        self.git_command('reset', '--hard', f'{self.source}/{self.branch}')
 
     def get_status(self):
         """
@@ -251,47 +246,11 @@ class GitOverCdnClient:
         self.logger.info('Current repo is behind remote')
         return 'behind'
 
-    def git_repository_check(self):
+    def update(self):
         """
-        检查 .git 目录是否存在且基本完整。
-
-        Returns:
-            bool: True 表示仓库正常，False 表示缺失或损坏。
-        """
-        git_dir = os.path.join(self.folder, '.git')
-        if not os.path.isdir(git_dir):
-            self.logger.warning('.git directory does not exist')
-            return False
-
-        head_file = os.path.join(git_dir, 'HEAD')
-        if not os.path.exists(head_file):
-            self.logger.warning('.git/HEAD does not exist, repository may be corrupted')
-            return False
-
-        try:
-            with open(head_file, 'r', encoding='utf-8') as f:
-                content = f.read().strip()
-            if not content:
-                self.logger.warning('.git/HEAD is empty, repository may be corrupted')
-                return False
-        except Exception as e:
-            self.logger.warning(f'.git/HEAD is unreadable: {e}')
-            return False
-
-        return True
-
-    def update(self, keep_changes=False):
-        """
-        Args:
-            keep_changes:
-
         Returns:
             bool: If repo is up-to-date
         """
-        if not self.git_repository_check():
-            self.logger.error('.git is missing or corrupted, fallback to full git clone')
-            return False
-
         _ = self.current_commit
         _ = self.latest_commit
         if not self.current_commit:
@@ -302,13 +261,13 @@ class GitOverCdnClient:
             return False
         if self.current_commit == self.latest_commit:
             self.logger.info('Already up to date')
-            self.git_reset(keep_changes=keep_changes)
+            self.git_reset()
             return True
 
         if not self.download_pack():
             return False
         if not self.update_refs():
             return False
-        self.git_reset(keep_changes=keep_changes)
+        self.git_reset()
         self.logger.info('Update success')
         return True

@@ -80,7 +80,7 @@ def handle_notify(_config: str, **kwargs) -> bool:
     return True
 
 
-def notify_webui(instance: str, title: str, content: str) -> bool:
+def notify_webui(instance: str, title: str, content: str, **kwargs) -> bool:
     """推送通知到 WebUI 本地端口，供启动器接收"""
     try:
         from module.webui.setting import State
@@ -89,9 +89,11 @@ def notify_webui(instance: str, title: str, content: str) -> bool:
         port = 22267
     try:
         import requests
+        payload = {"instance": instance, "title": title, "content": content}
+        payload.update(kwargs)
         requests.post(
             f"http://127.0.0.1:{port}/api/notify",
-            json={"instance": instance, "title": title, "content": content},
+            json=payload,
             timeout=2,
         )
         return True

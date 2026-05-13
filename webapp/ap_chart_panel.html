@@ -8,12 +8,22 @@
     <span>均值: <b style="color:#ff9800">{ap_avg}</b></span>
     <span style="color:#666">{data_points_text}</span>
   </div>
+  {coins_stats_html}
 </div>
-<div style="position:relative;background:#1a1a2e;border-radius:8px;border:1px solid #333;padding:4px;">
+<div style="display:flex; flex-wrap:wrap; gap:12px; margin-bottom:8px; font-size:12px; color:#888;">
+  <span style="display:flex; align-items:center; gap:4px;"><span style="width:12px; height:3px; background:#64b5f6; border-radius:1px;"></span>体力</span>
+  {coins_legend_html}
+</div>
+<div id="{chart_id}_container" style="position:relative;background:#1a1a2e;border-radius:16px;border:1px solid #333;padding:6px;transition:opacity 0.3s ease;">
   <canvas id="{chart_id}" style="width:100%;height:360px;display:block;cursor:crosshair;"></canvas>
   <canvas id="{chart_id}_ov"
-    style="position:absolute;top:4px;left:4px;width:calc(100% - 8px);height:360px;pointer-events:none;"></canvas>
+    style="position:absolute;top:6px;left:6px;width:calc(100% - 12px);height:360px;pointer-events:none;"></canvas>
   <div id="{chart_id}_tip"
-    style="display:none;position:absolute;pointer-events:none;background:rgba(22,22,40,0.95);border:1px solid #555;border-radius:6px;padding:8px 12px;font-size:12px;color:#ddd;z-index:10;white-space:nowrap;">
+    style="display:none;position:absolute;pointer-events:none;background:#39394ef2;border:1px solid #555;border-radius:12px;padding:8px 12px;font-size:12px;color:#ddd;z-index:10;white-space:nowrap;">
+  </div>
+  <div id="{chart_id}_controls" style="position:absolute;top:8px;right:12px;display:flex;gap:4px;{detail_controls_display}">
+    <button id="{chart_id}_zoom_in" style="background:#333;border:1px solid #555;border-radius:10px;padding:2px 8px;font-size:11px;color:#aaa;cursor:pointer;">+</button>
+    <button id="{chart_id}_zoom_out" style="background:#333;border:1px solid #555;border-radius:10px;padding:2px 8px;font-size:11px;color:#aaa;cursor:pointer;">-</button>
+    <button id="{chart_id}_reset" style="background:#333;border:1px solid #555;border-radius:10px;padding:2px 8px;font-size:11px;color:#aaa;cursor:pointer;">重置</button>
   </div>
 </div>

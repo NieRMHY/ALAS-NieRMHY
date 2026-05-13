@@ -187,6 +187,10 @@ class OSFleet(OSCamera, Combat, Fleet, OSAsh):
         Calculate current HP, also detects the wrench (Ship died, need to repair)
         """
         super().hp_get()
+        if self.config.OpsiHazard1Leveling_SkipHpCheck:
+            self.need_repair = [False, False, False, False, False, False]
+            return
+
         ship_icon = self._hp_grid().crop((0, -67, 67, 0))
         need_repair = [TEMPLATE_EMPTY_HP.match(self.image_crop(button, copy=False)) for button in ship_icon.buttons]
         self.need_repair = need_repair
