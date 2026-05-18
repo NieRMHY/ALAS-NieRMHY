@@ -47,7 +47,16 @@ from pywebio.output import (
     use_scope,
 )
 from pywebio.pin import pin, pin_on_change
-from pywebio.session import download, go_app, info, local, register_thread, run_js, set_env, eval_js
+from pywebio.session import (
+    download,
+    go_app,
+    info,
+    local,
+    register_thread,
+    run_js,
+    set_env,
+    eval_js,
+)
 
 import module.webui.lang as lang
 from module.config.config import AzurLaneConfig, Function
@@ -60,6 +69,7 @@ from module.config.utils import (
     dict_to_kv,
     filepath_args,
     filepath_config,
+    is_oobe_needed,
     read_file,
     readable_time,
 )
@@ -74,7 +84,11 @@ from module.webui.base import Frame
 from module.webui.discord_presence import close_discord_rpc, init_discord_rpc
 from module.webui.fastapi import asgi_app
 from module.webui.lang import _t, t
-from module.webui.patch import fix_py37_subprocess_communicate, patch_executor, patch_mimetype
+from module.webui.patch import (
+    fix_py37_subprocess_communicate,
+    patch_executor,
+    patch_mimetype,
+)
 from module.webui.pin import put_input, put_select
 from module.webui.process_manager import ProcessManager
 from module.webui.remote_access import RemoteAccess
@@ -105,6 +119,7 @@ from module.webui.widgets import (
     put_none,
     put_output,
 )
+from module.webui.dashboard_utils import get_dashboard_scope_id, get_group_scope_id
 from module.base.device_id import get_device_id
 
 patch_executor()
@@ -115,16 +130,16 @@ task_handler = TaskHandler()
 
 def timedelta_to_text(delta=None):
     time_delta_name_suffix_dict = {
-        'Y': 'YearsAgo',
-        'M': 'MonthsAgo',
-        'D': 'DaysAgo',
-        'h': 'HoursAgo',
-        'm': 'MinutesAgo',
-        's': 'SecondsAgo',
+        "Y": "YearsAgo",
+        "M": "MonthsAgo",
+        "D": "DaysAgo",
+        "h": "HoursAgo",
+        "m": "MinutesAgo",
+        "s": "SecondsAgo",
     }
-    time_delta_name_prefix = 'Gui.Dashboard.'
-    time_delta_name_suffix = 'NoData'
-    time_delta_display = ''
+    time_delta_name_prefix = "Gui.Dashboard."
+    time_delta_name_suffix = "NoData"
+    time_delta_display = ""
     if isinstance(delta, dict):
         for _key in delta:
             if delta[_key]:
@@ -137,13 +152,15 @@ def timedelta_to_text(delta=None):
 
 
 def read_webapp_template(filename: str) -> str:
-    template_path = Path(os.getcwd()) / 'webapp' / filename
-    with open(template_path, 'r', encoding='utf-8') as f:
+    template_path = Path(os.getcwd()) / "webapp" / filename
+    with open(template_path, "r", encoding="utf-8") as f:
         return f.read()
 
 
-def build_title_block(title: str, margin_top: int = 12, margin_bottom: int = 8, font_weight: int = 600) -> str:
-    tpl = read_webapp_template('title_block.html')
+def build_title_block(
+    title: str, margin_top: int = 12, margin_bottom: int = 8, font_weight: int = 600
+) -> str:
+    tpl = read_webapp_template("title_block.html")
     return tpl.format(
         title=title,
         margin_top=margin_top,
@@ -153,35 +170,44 @@ def build_title_block(title: str, margin_top: int = 12, margin_bottom: int = 8, 
 
 
 def build_muted_notice(text: str) -> str:
-    tpl = read_webapp_template('muted_notice.html')
+    tpl = read_webapp_template("muted_notice.html")
     return tpl.format(text=text)
 
 
-def build_simple_table(headers, rows, extra_style: str = '') -> str:
-    tpl = read_webapp_template('simple_table.html')
-    thead_cells = ''.join([f'<th style="text-align:left;padding:6px">{h}</th>' for h in headers])
-    tbody_rows = ''.join([
-        '<tr>' + ''.join([f'<td style="text-align:center;padding:6px">{v}</td>' for v in row]) + '</tr>'
-        for row in rows
-    ])
+def build_simple_table(headers, rows, extra_style: str = "") -> str:
+    tpl = read_webapp_template("simple_table.html")
+    thead_cells = "".join(
+        [f'<th style="text-align:left;padding:6px">{h}</th>' for h in headers]
+    )
+    tbody_rows = "".join(
+        [
+            "<tr>"
+            + "".join(
+                [f'<td style="text-align:center;padding:6px">{v}</td>' for v in row]
+            )
+            + "</tr>"
+            for row in rows
+        ]
+    )
     return tpl.format(
         thead_cells=thead_cells,
         tbody_rows=tbody_rows,
         extra_style=extra_style,
     )
 
+
 def build_copyable_device_id(device_id: str) -> str:
-    tpl = read_webapp_template('copyable_device_id.html')
+    tpl = read_webapp_template("copyable_device_id.html")
     return tpl.format(device_id=device_id)
 
 
 def build_recommendation_box(text: str) -> str:
-    tpl = read_webapp_template('recommendation_box.html')
+    tpl = read_webapp_template("recommendation_box.html")
     return tpl.format(text=text)
 
 
 def build_app_manage_title(title: str) -> str:
-    tpl = read_webapp_template('app_manage_title.html')
+    tpl = read_webapp_template("app_manage_title.html")
     return tpl.format(title=title)
 
 
@@ -241,10 +267,13 @@ class AlasGUI(Frame):
             buttons=[{"label": t("Gui.Aside.Home"), "value": "Home", "color": "aside"}],
             onclick=[self.ui_develop],
         )
-        put_scope("aside_instance", [
-            put_scope(f"alas-instance-{i}", [])
-            for i, _ in enumerate(alas_instance())
-        ])
+        put_scope(
+            "aside_instance",
+            [
+                put_scope(f"alas-instance-{i}", [])
+                for i, _ in enumerate(alas_instance())
+            ],
+        )
         self.set_aside_status()
         put_icon_buttons(
             Icon.SETTING,
@@ -258,7 +287,6 @@ class AlasGUI(Frame):
             ],
             onclick=[lambda: go_app("manage", new_window=False)],
         )
-
 
     @use_scope("aside_instance")
     def set_aside_status(self) -> None:
@@ -277,7 +305,7 @@ class AlasGUI(Frame):
                     icon_html = Icon.RUN
                 status_signal = "false" if rendered_state in (1, 3, 4) else "true"
                 if rendered_state == 1 and getattr(self, "af_flag", False):
-                    icon_html = icon_html[:31] + ' anim-rotate' + icon_html[31:]
+                    icon_html = icon_html[:31] + " anim-rotate" + icon_html[31:]
                 put_icon_buttons(
                     icon_html,
                     status_signal,
@@ -393,7 +421,7 @@ class AlasGUI(Frame):
                     '<span class="hr-task-group-line"></span>'
                     f'<span class="hr-task-group-text">{title}</span>'
                     '<span class="hr-task-group-line"></span>'
-                    '</div>'
+                    "</div>"
                 )
                 for task in task_data.get("tasks", []):
                     put_buttons(
@@ -411,24 +439,37 @@ class AlasGUI(Frame):
 
     @use_scope("content", clear=True)
     def alas_set_stat(self):
-        self.init_menu(name='Stat')
+        self.init_menu(name="Stat")
         self.set_title(t("Gui.Overview.Stat"))
 
         # ========== 体力K线图 ==========
         # 当前视图状态: 'month' 或 'day' 或 'line'
-        if not hasattr(self, '_ap_chart_view'):
-            self._ap_chart_view = 'line'
+        if not hasattr(self, "_ap_chart_view"):
+            self._ap_chart_view = "line"
 
         def _render_ap_chart():
             try:
-                from module.statistics.opsi_month import get_ap_timeline, get_coins_timeline
-                instance_name = self.alas_name if hasattr(self, 'alas_name') and self.alas_name else None
+                from module.statistics.opsi_month import (
+                    get_ap_timeline,
+                    get_coins_timeline,
+                    get_virtual_asset_timeline,
+                )
+
+                instance_name = (
+                    self.alas_name
+                    if hasattr(self, "alas_name") and self.alas_name
+                    else None
+                )
                 if not instance_name:
                     from module.config.utils import alas_instance
+
                     all_instances = alas_instance()
                     instance_name = all_instances[0] if all_instances else None
                 timeline = get_ap_timeline(instance_name=instance_name)
                 coins_timeline = get_coins_timeline(instance_name=instance_name)
+                virtual_asset_timeline = get_virtual_asset_timeline(
+                    instance_name=instance_name
+                )
             except Exception as e:
                 with use_scope("ap_chart", clear=True):
                     put_text(t("Gui.Stat.LoadApDataFailed", e=e))
@@ -437,31 +478,36 @@ class AlasGUI(Frame):
             if not timeline:
                 with use_scope("ap_chart", clear=True):
                     put_html(build_muted_notice(t("Gui.Stat.NoApData")))
-                    put_button(t("Gui.Stat.Refresh"), onclick=_render_ap_chart, color="off")
+                    put_button(
+                        t("Gui.Stat.Refresh"), onclick=_render_ap_chart, color="off"
+                    )
                 return
 
             from datetime import datetime as _dt
             import json as _json
+
             raw_points = []
             for pt in timeline:
-                ts_raw = pt.get('ts', '')
+                ts_raw = pt.get("ts", "")
                 try:
                     dt = _dt.fromisoformat(ts_raw)
                 except Exception:
                     continue
-                raw_points.append({
-                    'dt': dt,
-                    'ap': int(pt.get('ap', 0)),
-                    'source': pt.get('source', '-')
-                })
+                raw_points.append(
+                    {
+                        "dt": dt,
+                        "ap": int(pt.get("ap", 0)),
+                        "source": pt.get("source", "-"),
+                    }
+                )
 
             if not raw_points:
                 with use_scope("ap_chart", clear=True):
                     put_html(build_muted_notice(t("Gui.Stat.NoValidApData")))
                 return
 
-            raw_points.sort(key=lambda p: p['dt'])
-            current_view = getattr(self, '_ap_chart_view', 'line')
+            raw_points.sort(key=lambda p: p["dt"])
+            current_view = getattr(self, "_ap_chart_view", "line")
 
             labels = []
             opens = []
@@ -470,142 +516,187 @@ class AlasGUI(Frame):
             closes = []
             counts = []
             ap_list = []
+            ap_ts = []
             detail_sources = []
             chart_points = []
             is_detail_mode = False
 
             today = _dt.now().date()
-            today_points = [p for p in raw_points if p['dt'].date() == today]
+            today_points = [p for p in raw_points if p["dt"].date() == today]
             if not today_points and raw_points:
-                last_date = raw_points[-1]['dt'].date()
-                today_points = [p for p in raw_points if p['dt'].date() == last_date]
+                last_date = raw_points[-1]["dt"].date()
+                today_points = [p for p in raw_points if p["dt"].date() == last_date]
                 today = last_date
 
-            if current_view == 'detail':
+            if current_view == "detail":
                 is_detail_mode = True
                 if today_points:
                     for p in today_points:
-                        labels.append(p['dt'].strftime('%H:%M'))
-                        ap_list.append(p['ap'])
-                        detail_sources.append(p.get('source', '-'))
+                        labels.append(p["dt"].strftime("%H:%M"))
+                        ap_list.append(p["ap"])
+                        ap_ts.append(int(p["dt"].timestamp() * 1000))
+                        detail_sources.append(p.get("source", "-"))
                         chart_points.append(p)
                     view_title = t("Gui.Stat.DetailChartTitle")
                 else:
                     for p in raw_points:
-                        labels.append(p['dt'].strftime('%m-%d %H:%M'))
-                        ap_list.append(p['ap'])
+                        labels.append(p["dt"].strftime("%m-%d %H:%M"))
+                        ap_list.append(p["ap"])
+                        ap_ts.append(int(p["dt"].timestamp() * 1000))
                         chart_points.append(p)
                     view_title = t("Gui.Stat.ViewTitleLine")
                     is_detail_mode = False
-                    current_view = 'line'
-            elif current_view == 'line':
+                    current_view = "line"
+            elif current_view == "line":
                 for p in raw_points:
-                    labels.append(p['dt'].strftime('%m-%d %H:%M'))
-                    ap_list.append(p['ap'])
+                    labels.append(p["dt"].strftime("%m-%d %H:%M"))
+                    ap_list.append(p["ap"])
+                    ap_ts.append(int(p["dt"].timestamp() * 1000))
                     chart_points.append(p)
                 view_title = t("Gui.Stat.ViewTitleLine")
             else:
                 from collections import OrderedDict
+
                 candles = OrderedDict()
-                if current_view == 'day':
+                if current_view == "day":
                     for p in today_points if today_points else raw_points[:24]:
-                        hour_key = p['dt'].strftime('%H:00')
+                        hour_key = p["dt"].strftime("%H:00")
                         if hour_key not in candles:
-                            candles[hour_key] = {'open': p['ap'], 'high': p['ap'], 'low': p['ap'], 'close': p['ap'], 'count': 1}
+                            candles[hour_key] = {
+                                "open": p["ap"],
+                                "high": p["ap"],
+                                "low": p["ap"],
+                                "close": p["ap"],
+                                "count": 1,
+                            }
                         else:
                             c = candles[hour_key]
-                            c['high'] = max(c['high'], p['ap'])
-                            c['low'] = min(c['low'], p['ap'])
-                            c['close'] = p['ap']
-                            c['count'] += 1
-                    view_title = t("Gui.Stat.ViewTitleDay", day=today.strftime('%m-%d'))
+                            c["high"] = max(c["high"], p["ap"])
+                            c["low"] = min(c["low"], p["ap"])
+                            c["close"] = p["ap"]
+                            c["count"] += 1
+                    view_title = t("Gui.Stat.ViewTitleDay", day=today.strftime("%m-%d"))
                 else:
                     for p in raw_points:
-                        day_key = p['dt'].strftime('%m-%d')
+                        day_key = p["dt"].strftime("%m-%d")
                         if day_key not in candles:
-                            candles[day_key] = {'open': p['ap'], 'high': p['ap'], 'low': p['ap'], 'close': p['ap'], 'count': 1}
+                            candles[day_key] = {
+                                "open": p["ap"],
+                                "high": p["ap"],
+                                "low": p["ap"],
+                                "close": p["ap"],
+                                "count": 1,
+                            }
                         else:
                             c = candles[day_key]
-                            c['high'] = max(c['high'], p['ap'])
-                            c['low'] = min(c['low'], p['ap'])
-                            c['close'] = p['ap']
-                            c['count'] += 1
+                            c["high"] = max(c["high"], p["ap"])
+                            c["low"] = min(c["low"], p["ap"])
+                            c["close"] = p["ap"]
+                            c["count"] += 1
                     view_title = t("Gui.Stat.ViewTitleMonth")
-                    
+
                 if not candles:
                     with use_scope("ap_chart", clear=True):
                         put_html(build_muted_notice(t("Gui.Stat.CannotAggregateKline")))
-                        put_button(t("Gui.Stat.ViewLineShort"), onclick=lambda: (setattr(self, '_ap_chart_view', 'line'), _render_ap_chart()), color="off")
+                        put_button(
+                            t("Gui.Stat.ViewLineShort"),
+                            onclick=lambda: (
+                                setattr(self, "_ap_chart_view", "line"),
+                                _render_ap_chart(),
+                            ),
+                            color="off",
+                        )
                     return
                 for k, v in candles.items():
                     labels.append(k)
-                    opens.append(v['open'])
-                    highs.append(v['high'])
-                    lows.append(v['low'])
-                    closes.append(v['close'])
-                    counts.append(v['count'])
+                    opens.append(v["open"])
+                    highs.append(v["high"])
+                    lows.append(v["low"])
+                    closes.append(v["close"])
+                    counts.append(v["count"])
 
-            all_ap = [p['ap'] for p in raw_points]
+            all_ap = [p["ap"] for p in raw_points]
             ap_max = max(all_ap)
             ap_min = min(all_ap)
             ap_avg = int(sum(all_ap) / len(all_ap))
             ap_cur = all_ap[-1]
-            if current_view in ('line', 'detail'):
+            if current_view in ("line", "detail"):
                 ap_change = ap_list[-1] - ap_list[0] if len(ap_list) >= 2 else 0
                 data_points_text = t("Gui.Stat.DataPointsCount", count=len(labels))
             else:
                 ap_change = closes[-1] - opens[0] if len(closes) > 0 else 0
                 data_points_text = t("Gui.Stat.CandlesCount", count=len(labels))
-            change_color = '#ef5350' if ap_change >= 0 else '#26a69a'
-            change_sign = '+' if ap_change >= 0 else ''
+            change_color = "#ef5350" if ap_change >= 0 else "#26a69a"
+            change_sign = "+" if ap_change >= 0 else ""
 
             yellow_coins_list = []
             purple_coins_list = []
             coins_sources_list = []
-            show_coins = False
-            coins_stats_html = ''
-            coins_legend_html = ''
 
-            if coins_timeline and chart_points and current_view in ('line', 'detail'):
+            virtual_asset_list = []
+            virtual_asset_ts_list = []
+            asset_list = []
+            asset_ts_list = []
+            show_coins = False
+            coins_stats_html = ""
+            coins_legend_html = ""
+
+            if coins_timeline and chart_points and current_view in ("line", "detail"):
                 coins_raw_points = []
                 for pt in coins_timeline:
-                    ts_raw = pt.get('ts', '')
+                    ts_raw = pt.get("ts", "")
                     try:
                         dt = _dt.fromisoformat(ts_raw)
                     except Exception:
                         continue
-                    coins_raw_points.append({
-                        'dt': dt,
-                        'yellow_coins': int(pt.get('yellow_coins', 0)),
-                        'purple_coins': int(pt.get('purple_coins', 0)),
-                        'source': pt.get('source', '-')
-                    })
+                    coins_raw_points.append(
+                        {
+                            "dt": dt,
+                            "yellow_coins": int(pt.get("yellow_coins", 0)),
+                            "purple_coins": int(pt.get("purple_coins", 0)),
+                            "source": pt.get("source", "-"),
+                        }
+                    )
 
                 if coins_raw_points:
-                    coins_raw_points.sort(key=lambda p: p['dt'])
+                    coins_raw_points.sort(key=lambda p: p["dt"])
                     coins_idx = 0
                     coins_last = len(coins_raw_points) - 1
                     for p in chart_points:
                         while coins_idx < coins_last:
-                            cur_delta = abs((coins_raw_points[coins_idx]['dt'] - p['dt']).total_seconds())
-                            next_delta = abs((coins_raw_points[coins_idx + 1]['dt'] - p['dt']).total_seconds())
+                            cur_delta = abs(
+                                (
+                                    coins_raw_points[coins_idx]["dt"] - p["dt"]
+                                ).total_seconds()
+                            )
+                            next_delta = abs(
+                                (
+                                    coins_raw_points[coins_idx + 1]["dt"] - p["dt"]
+                                ).total_seconds()
+                            )
                             if next_delta > cur_delta:
                                 break
                             coins_idx += 1
                         coins_point = coins_raw_points[coins_idx]
-                        yellow_coins_list.append(coins_point['yellow_coins'])
-                        purple_coins_list.append(coins_point['purple_coins'])
-                        coins_sources_list.append(coins_point.get('source', '-'))
+                        yellow_coins_list.append(coins_point["yellow_coins"])
+                        purple_coins_list.append(coins_point["purple_coins"])
+                        coins_sources_list.append(coins_point.get("source", "-"))
 
                     valid_yellow_coins = [v for v in yellow_coins_list if v is not None]
                     valid_purple_coins = [v for v in purple_coins_list if v is not None]
-                    show_coins = bool(valid_yellow_coins or valid_purple_coins)
+                    show_coins = bool(
+                        valid_yellow_coins or valid_purple_coins or virtual_asset_list
+                    )
 
                     if valid_yellow_coins:
                         yc_cur = valid_yellow_coins[-1]
-                        yc_change = valid_yellow_coins[-1] - valid_yellow_coins[0] if len(valid_yellow_coins) >= 2 else 0
-                        yc_change_color = '#ef5350' if yc_change >= 0 else '#26a69a'
-                        yc_change_sign = '+' if yc_change >= 0 else ''
+                        yc_change = (
+                            valid_yellow_coins[-1] - valid_yellow_coins[0]
+                            if len(valid_yellow_coins) >= 2
+                            else 0
+                        )
+                        yc_change_color = "#ef5350" if yc_change >= 0 else "#26a69a"
+                        yc_change_sign = "+" if yc_change >= 0 else ""
                         yc_max = max(valid_yellow_coins)
                         yc_min = min(valid_yellow_coins)
 
@@ -614,19 +705,86 @@ class AlasGUI(Frame):
 
                     if valid_purple_coins:
                         pc_cur = valid_purple_coins[-1]
-                        pc_change = valid_purple_coins[-1] - valid_purple_coins[0] if len(valid_purple_coins) >= 2 else 0
-                        pc_change_color = '#ef5350' if pc_change >= 0 else '#26a69a'
-                        pc_change_sign = '+' if pc_change >= 0 else ''
+                        pc_change = (
+                            valid_purple_coins[-1] - valid_purple_coins[0]
+                            if len(valid_purple_coins) >= 2
+                            else 0
+                        )
+                        pc_change_color = "#ef5350" if pc_change >= 0 else "#26a69a"
+                        pc_change_sign = "+" if pc_change >= 0 else ""
                         pc_max = max(valid_purple_coins)
                         pc_min = min(valid_purple_coins)
 
                         coins_stats_html += f'<div style="display:flex; flex-wrap:wrap; gap:12px; margin-bottom:4px; font-size:12px; color:#aaa;"><span>紫币: <b style="color:#ce93d8">{pc_cur}</b></span><span>变化: <b style="color:{pc_change_color}">{pc_change_sign}{pc_change}</b></span><span>最高: <b style="color:#ef5350">{pc_max}</b></span><span>最低: <b style="color:#26a69a">{pc_min}</b></span></div>'
                         coins_legend_html += '<span style="display:flex; align-items:center; gap:4px;"><span style="width:12px; height:2px; background:#ce93d8; border-radius:1px; border-top:1px dashed #ce93d8;"></span>紫币</span>'
 
-            chart_id = f"ap_cv_{id(self)}"
-            detail_controls_display = 'display:flex;' if current_view in ('line', 'detail') else 'display:none;'
+            # Process virtual asset timeline
+            if virtual_asset_timeline and current_view in ("line", "detail"):
+                for pt in virtual_asset_timeline:
+                    ts_raw = pt.get("ts", "")
+                    va_val = pt.get("virtual_asset")
+                    a_val = pt.get("asset")
+                    if ts_raw and va_val is not None:
+                        try:
+                            va_val = float(va_val)
+                            va_dt = _dt.fromisoformat(ts_raw)
+                            virtual_asset_list.append(va_val)
+                            virtual_asset_ts_list.append(int(va_dt.timestamp() * 1000))
+                            # 从同一条快照中提取 asset
+                            if a_val is not None:
+                                asset_list.append(float(a_val))
+                                asset_ts_list.append(int(va_dt.timestamp() * 1000))
+                        except (TypeError, ValueError, Exception):
+                            continue
 
-            html_tpl = read_webapp_template('ap_chart_panel.html')
+                if virtual_asset_list:
+                    valid_va = [v for v in virtual_asset_list if v is not None]
+                    if valid_va:
+                        va_cur = valid_va[-1]
+                        va_change = (
+                            valid_va[-1] - valid_va[0] if len(valid_va) >= 2 else 0
+                        )
+                        va_change_color = "#ef5350" if va_change >= 0 else "#26a69a"
+                        va_change_sign = "+" if va_change >= 0 else ""
+                        va_max = max(valid_va)
+                        va_min = min(valid_va)
+
+                        coins_stats_html += f'<div style="display:flex; flex-wrap:wrap; gap:12px; margin-bottom:4px; font-size:12px; color:#aaa;"><span>虚拟资产: <b style="color:#06b6d4">{va_cur:.1f}</b></span><span>变化: <b style="color:{va_change_color}">{va_change_sign}{va_change:.1f}</b></span><span>最高: <b style="color:#ef5350">{va_max:.1f}</b></span><span>最低: <b style="color:#26a69a">{va_min:.1f}</b></span></div>'
+                        coins_legend_html += '<span style="display:flex; align-items:center; gap:4px;"><span style="width:12px; height:2px; background:#06b6d4; border-radius:1px; border-top:1px dashed #06b6d4;"></span>虚拟资产</span>'
+
+            # Process asset timeline (from same ap_snapshots)
+            if asset_list:
+                valid_asset = [v for v in asset_list if v is not None]
+                if valid_asset:
+                    a_cur = valid_asset[-1]
+                    a_change = (
+                        valid_asset[-1] - valid_asset[0] if len(valid_asset) >= 2 else 0
+                    )
+                    a_change_color = "#ef5350" if a_change >= 0 else "#26a69a"
+                    a_change_sign = "+" if a_change >= 0 else ""
+                    a_max = max(valid_asset)
+                    a_min = min(valid_asset)
+
+                    coins_stats_html += f'<div style="display:flex; flex-wrap:wrap; gap:12px; margin-bottom:4px; font-size:12px; color:#aaa;"><span>资产: <b style="color:#22d3ee">{a_cur:.1f}</b></span><span>变化: <b style="color:{a_change_color}">{a_change_sign}{a_change:.1f}</b></span><span>最高: <b style="color:#ef5350">{a_max:.1f}</b></span><span>最低: <b style="color:#26a69a">{a_min:.1f}</b></span></div>'
+                    coins_legend_html += '<span style="display:flex; align-items:center; gap:4px;"><span style="width:12px; height:2px; background:#22d3ee; border-radius:1px;"></span>资产</span>'
+
+            # 确保 show_coins 在资产/虚拟资产存在时也为 True，以启用右轴绘制
+            if not show_coins and (
+                virtual_asset_list
+                or asset_list
+                or yellow_coins_list
+                or purple_coins_list
+            ):
+                show_coins = True
+
+            chart_id = f"ap_cv_{id(self)}"
+            detail_controls_display = (
+                "display:flex;"
+                if current_view in ("line", "detail")
+                else "display:none;"
+            )
+
+            html_tpl = read_webapp_template("ap_chart_panel.html")
             html = html_tpl.format(
                 chart_id=chart_id,
                 view_title=view_title,
@@ -643,26 +801,36 @@ class AlasGUI(Frame):
                 coins_legend_html=coins_legend_html,
             )
 
-            js_tpl = read_webapp_template('ap_chart.js')
-            js_code = (js_tpl
-                .replace('__CHART_TYPE__', 'line' if is_detail_mode else current_view)
-                .replace('__LABELS__', _json.dumps(labels, ensure_ascii=False))
-                .replace('__OPENS__', _json.dumps(opens))
-                .replace('__HIGHS__', _json.dumps(highs))
-                .replace('__LOWS__', _json.dumps(lows))
-                .replace('__CLOSES__', _json.dumps(closes))
-                .replace('__COUNTS__', _json.dumps(counts))
-                .replace('__AP__', _json.dumps(ap_list))
-                .replace('__AVG__', str(ap_avg))
-                .replace('__CHART_ID__', chart_id)
-                .replace('__IS_DETAIL_MODE__', 'true' if is_detail_mode else 'false')
-                .replace('__SOURCES__', _json.dumps(detail_sources if is_detail_mode else []))
-                .replace('__YELLOW_COINS__', _json.dumps(yellow_coins_list))
-                .replace('__PURPLE_COINS__', _json.dumps(purple_coins_list))
-                .replace('__COINS_SOURCES__', _json.dumps(coins_sources_list))
-                .replace('__SHOW_COINS__', 'true' if show_coins else 'false')
+            js_tpl = read_webapp_template("ap_chart.js")
+            js_code = (
+                js_tpl.replace(
+                    "__CHART_TYPE__", "line" if is_detail_mode else current_view
+                )
+                .replace("__LABELS__", _json.dumps(labels, ensure_ascii=False))
+                .replace("__OPENS__", _json.dumps(opens))
+                .replace("__HIGHS__", _json.dumps(highs))
+                .replace("__LOWS__", _json.dumps(lows))
+                .replace("__CLOSES__", _json.dumps(closes))
+                .replace("__COUNTS__", _json.dumps(counts))
+                .replace("__AP__", _json.dumps(ap_list))
+                .replace("__AP_TS__", _json.dumps(ap_ts))
+                .replace("__AVG__", str(ap_avg))
+                .replace("__CHART_ID__", chart_id)
+                .replace("__IS_DETAIL_MODE__", "true" if is_detail_mode else "false")
+                .replace(
+                    "__SOURCES__", _json.dumps(detail_sources if is_detail_mode else [])
+                )
+                .replace("__YELLOW_COINS__", _json.dumps(yellow_coins_list))
+                .replace("__PURPLE_COINS__", _json.dumps(purple_coins_list))
+                .replace("__COINS_SOURCES__", _json.dumps(coins_sources_list))
+                .replace("__VIRTUAL_ASSET__", _json.dumps(virtual_asset_list))
+                .replace("__VIRTUAL_ASSET_TS__", _json.dumps(virtual_asset_ts_list))
+                .replace("__ASSET__", _json.dumps(asset_list))
+                .replace("__ASSET_TS__", _json.dumps(asset_ts_list))
+                .replace("__SHOW_COINS__", "true" if show_coins else "false")
             )
             from pywebio.session import run_js
+
             with use_scope("ap_chart", clear=True):
                 put_html(html)
                 run_js(js_code)
@@ -688,58 +856,64 @@ class AlasGUI(Frame):
                     "refresh_text": "#6750a4",
                 }
                 if self.theme == "dark":
-                    md3_colors.update({
-                        "toolbar_border": "rgba(122, 119, 187, .30)",
-                        "toolbar_bg": "rgba(47, 49, 54, .96)",
-                        "toolbar_shadow": "0 1px 3px rgba(0, 0, 0, .38)",
-                        "segment_border": "rgba(147, 143, 153, .50)",
-                        "segment_divider": "rgba(147, 143, 153, .34)",
-                        "segment_outline": "rgba(147, 143, 153, .28)",
-                        "segment_bg": "#2f3136",
-                        "text": "#dfdcfb",
-                        "label": "#c9d1d9",
-                        "hover": "rgba(122, 119, 187, .18)",
-                        "selected_bg": "#3e3b6a",
-                        "selected_text": "#dfdcfb",
-                        "selected_outline": "rgba(122, 119, 187, .46)",
-                        "refresh_text": "#dfdcfb",
-                    })
+                    md3_colors.update(
+                        {
+                            "toolbar_border": "rgba(122, 119, 187, .30)",
+                            "toolbar_bg": "rgba(47, 49, 54, .96)",
+                            "toolbar_shadow": "0 1px 3px rgba(0, 0, 0, .38)",
+                            "segment_border": "rgba(147, 143, 153, .50)",
+                            "segment_divider": "rgba(147, 143, 153, .34)",
+                            "segment_outline": "rgba(147, 143, 153, .28)",
+                            "segment_bg": "#2f3136",
+                            "text": "#dfdcfb",
+                            "label": "#c9d1d9",
+                            "hover": "rgba(122, 119, 187, .18)",
+                            "selected_bg": "#3e3b6a",
+                            "selected_text": "#dfdcfb",
+                            "selected_outline": "rgba(122, 119, 187, .46)",
+                            "refresh_text": "#dfdcfb",
+                        }
+                    )
                 elif self.theme == "socialism":
-                    md3_colors.update({
-                        "toolbar_border": "rgba(242, 199, 110, .72)",
-                        "toolbar_bg": "rgba(255, 251, 240, .96)",
-                        "toolbar_shadow": "0 2px 8px rgba(217, 54, 62, .14)",
-                        "segment_border": "rgba(217, 54, 62, .42)",
-                        "segment_divider": "rgba(217, 54, 62, .30)",
-                        "segment_outline": "rgba(242, 199, 110, .58)",
-                        "segment_bg": "#fffaf0",
-                        "text": "#5d2525",
-                        "label": "#8b4513",
-                        "hover": "rgba(217, 54, 62, .08)",
-                        "selected_bg": "#d9363e",
-                        "selected_text": "#f2c76e",
-                        "selected_outline": "rgba(242, 199, 110, .82)",
-                        "refresh_text": "#d9363e",
-                    })
+                    md3_colors.update(
+                        {
+                            "toolbar_border": "rgba(242, 199, 110, .72)",
+                            "toolbar_bg": "rgba(255, 251, 240, .96)",
+                            "toolbar_shadow": "0 2px 8px rgba(217, 54, 62, .14)",
+                            "segment_border": "rgba(217, 54, 62, .42)",
+                            "segment_divider": "rgba(217, 54, 62, .30)",
+                            "segment_outline": "rgba(242, 199, 110, .58)",
+                            "segment_bg": "#fffaf0",
+                            "text": "#5d2525",
+                            "label": "#8b4513",
+                            "hover": "rgba(217, 54, 62, .08)",
+                            "selected_bg": "#d9363e",
+                            "selected_text": "#f2c76e",
+                            "selected_outline": "rgba(242, 199, 110, .82)",
+                            "refresh_text": "#d9363e",
+                        }
+                    )
                 elif self.theme == "apple":
-                    md3_colors.update({
-                        "toolbar_border": "rgba(255, 255, 255, .46)",
-                        "toolbar_bg": "rgba(255, 255, 255, .72)",
-                        "toolbar_shadow": "0 2px 8px rgba(0, 0, 0, .06)",
-                        "segment_border": "rgba(0, 0, 0, .14)",
-                        "segment_divider": "rgba(0, 0, 0, .10)",
-                        "segment_outline": "rgba(0, 0, 0, .08)",
-                        "segment_bg": "rgba(255, 255, 255, .62)",
-                        "text": "#1d1d1f",
-                        "label": "#6e6e73",
-                        "hover": "rgba(0, 122, 255, .08)",
-                        "selected_bg": "rgba(0, 122, 255, .14)",
-                        "selected_text": "#007aff",
-                        "selected_outline": "rgba(0, 122, 255, .26)",
-                        "refresh_text": "#007aff",
-                    })
+                    md3_colors.update(
+                        {
+                            "toolbar_border": "rgba(255, 255, 255, .46)",
+                            "toolbar_bg": "rgba(255, 255, 255, .72)",
+                            "toolbar_shadow": "0 2px 8px rgba(0, 0, 0, .06)",
+                            "segment_border": "rgba(0, 0, 0, .14)",
+                            "segment_divider": "rgba(0, 0, 0, .10)",
+                            "segment_outline": "rgba(0, 0, 0, .08)",
+                            "segment_bg": "rgba(255, 255, 255, .62)",
+                            "text": "#1d1d1f",
+                            "label": "#6e6e73",
+                            "hover": "rgba(0, 122, 255, .08)",
+                            "selected_bg": "rgba(0, 122, 255, .14)",
+                            "selected_text": "#007aff",
+                            "selected_outline": "rgba(0, 122, 255, .26)",
+                            "refresh_text": "#007aff",
+                        }
+                    )
 
-                put_html(f'''
+                put_html(f"""
                 <style>
                 [style*="--ap-chart-md3-toolbar-{chart_id}"] {{
                     margin-top: 12px !important;
@@ -839,21 +1013,45 @@ class AlasGUI(Frame):
                 }}
                 @media (max-width: 720px) {{
                     [style*="--ap-chart-md3-toolbar-{chart_id}"] {{
-                        grid-template-columns: 1fr !important;
-                        row-gap: 8px !important;
+                        grid-template-columns: 1fr auto !important;
+                        column-gap: 6px !important;
+                        padding: 6px 8px !important;
+                    }}
+                    [style*="--ap-chart-md3-toolbar-{chart_id}"] > :first-child {{
+                        display: none !important;
+                    }}
+                    [style*="--ap-chart-md3-segment-{chart_id}"] {{
+                        max-width: none !important;
+                        width: 100% !important;
+                        overflow-x: auto !important;
+                        -webkit-overflow-scrolling: touch !important;
                     }}
                     [style*="--ap-chart-md3-segment-{chart_id}"] .btn-group {{
-                        width: 100% !important;
+                        width: max-content !important;
+                        flex-wrap: nowrap !important;
+                        overflow: visible !important;
                     }}
                     [style*="--ap-chart-md3-segment-{chart_id}"] .btn {{
-                        min-width: 0 !important;
-                        flex: 1 1 0 !important;
-                        padding-left: 8px !important;
-                        padding-right: 8px !important;
+                        flex: 0 0 auto !important;
+                        padding: 6px 12px !important;
+                        font-size: 12px !important;
+                        white-space: nowrap !important;
+                    }}
+                    [style*="--ap-chart-md3-segment-{chart_id}"]::-webkit-scrollbar {{
+                        height: 3px !important;
+                    }}
+                    [style*="--ap-chart-md3-segment-{chart_id}"]::-webkit-scrollbar-thumb {{
+                        background: {md3_colors["segment_border"]} !important;
+                        border-radius: 2px !important;
+                    }}
+                    [style*="--ap-chart-md3-refresh-{chart_id}"] .btn {{
+                        padding: 6px 12px !important;
+                        font-size: 12px !important;
+                        white-space: nowrap !important;
                     }}
                 }}
                 </style>
-                ''')
+                """)
 
                 view_options = [
                     (t("Gui.Stat.ViewLineButton"), "line"),
@@ -874,19 +1072,23 @@ class AlasGUI(Frame):
                         put_html(
                             f'<span style="display:inline-flex;align-items:center;gap:6px;'
                             f'font-size:12px;font-weight:600;color:{md3_colors["label"]};white-space:nowrap;">'
-                            f'{t("Gui.Stat.ViewLabel")}</span>'
+                            f"{t('Gui.Stat.ViewLabel')}</span>"
                         ),
-                        put_buttons(view_buttons, onclick=_switch_view, small=True, group=True).style(
-                            f"--ap-chart-md3-segment-{chart_id}:1;"
-                        ),
-                        put_button(t("Gui.Stat.Refresh"), onclick=_render_ap_chart, color="secondary", small=True, outline=True).style(
+                        put_buttons(
+                            view_buttons, onclick=_switch_view, small=True, group=True
+                        ).style(f"--ap-chart-md3-segment-{chart_id}:1;"),
+                        put_button(
+                            t("Gui.Stat.Refresh"),
+                            onclick=_render_ap_chart,
+                            color="secondary",
+                            small=True,
+                            outline=True,
+                        ).style(
                             f"--ap-chart-md3-refresh-{chart_id}:1; justify-self:end;"
                         ),
                     ],
                     size="auto auto 1fr",
-                ).style(
-                    f"--ap-chart-md3-toolbar-{chart_id}:1;"
-                )
+                ).style(f"--ap-chart-md3-toolbar-{chart_id}:1;")
 
         put_scope("ap_chart", [])
         _render_ap_chart()
@@ -894,14 +1096,24 @@ class AlasGUI(Frame):
 
         def _render_opsi_stats():
             try:
-                from module.statistics.opsi_month import get_opsi_stats, compute_monthly_cl1_akashi_ap, get_ap_timeline
+                from module.statistics.opsi_month import (
+                    get_opsi_stats,
+                    compute_monthly_cl1_akashi_ap,
+                    get_ap_timeline,
+                )
                 from module.statistics.cl1_database import db as cl1_db
                 from module.statistics.ship_exp_stats import get_ship_exp_stats
+
                 # 使用当前实例名称获取统计数据，确保不为空
-                instance_name = self.alas_name if hasattr(self, 'alas_name') and self.alas_name else None
+                instance_name = (
+                    self.alas_name
+                    if hasattr(self, "alas_name") and self.alas_name
+                    else None
+                )
                 if not instance_name:
                     # 使用第一个可用的实例
                     from module.config.utils import alas_instance
+
                     all_instances = alas_instance()
                     instance_name = all_instances[0] if all_instances else None
                 s = get_opsi_stats(instance_name=instance_name).summary()
@@ -916,7 +1128,9 @@ class AlasGUI(Frame):
                 exp_data = exp_stats.data
                 ships_data = exp_data.get("ships", []) if exp_data else []
                 target_level = exp_data.get("target_level", 125) if exp_data else 125
-                last_check_time = exp_data.get("last_check_time", "-") if exp_data else "-"
+                last_check_time = (
+                    exp_data.get("last_check_time", "-") if exp_data else "-"
+                )
             except Exception as e:
                 with use_scope("opsi_stats", clear=True):
                     put_text(t("Gui.Stat.LoadExpStatsFailed", e=e))
@@ -924,30 +1138,70 @@ class AlasGUI(Frame):
 
             with use_scope("opsi_stats", clear=True):
                 put_html(build_title_block(t("Gui.Stat.DailyExpCheckTitle")))
-                put_row([put_text(t("Gui.Stat.CheckTime", value=last_check_time)), put_text(t("Gui.Stat.TargetLevel", value=target_level))])
+                put_row(
+                    [
+                        put_text(t("Gui.Stat.CheckTime", value=last_check_time)),
+                        put_text(t("Gui.Stat.TargetLevel", value=target_level)),
+                    ]
+                )
                 if ships_data:
-                    exp_labels = [t("Gui.Stat.ShipSlot"), t("Gui.Stat.Level"), t("Gui.Stat.CurrentExpThisLevel"), t("Gui.Stat.TotalExp"), t("Gui.Stat.ExpToTarget"), t("Gui.Stat.SortiesNeeded"), t("Gui.Stat.EstimatedTime")]
+                    exp_labels = [
+                        t("Gui.Stat.ShipSlot"),
+                        t("Gui.Stat.Level"),
+                        t("Gui.Stat.CurrentExpThisLevel"),
+                        t("Gui.Stat.TotalExp"),
+                        t("Gui.Stat.ExpToTarget"),
+                        t("Gui.Stat.SortiesNeeded"),
+                        t("Gui.Stat.EstimatedTime"),
+                    ]
                     exp_rows = []
-                    from module.statistics.opsi_month import get_opsi_stats as get_opsi_stats_inner
-                    current_battles = get_opsi_stats_inner(instance_name=instance_name).summary().get('total_battles', 0)
+                    from module.statistics.opsi_month import (
+                        get_opsi_stats as get_opsi_stats_inner,
+                    )
+
+                    current_battles = (
+                        get_opsi_stats_inner(instance_name=instance_name)
+                        .summary()
+                        .get("total_battles", 0)
+                    )
                     for ship in ships_data:
-                        progress = exp_stats.calculate_progress(ship, target_level, current_battles)
-                        exp_rows.append([
-                            progress['position'],
-                            progress['level'],
-                            progress['current_exp'],
-                            progress['total_exp'],
-                            progress['exp_needed'] if progress['exp_needed'] > 0 else "-",
-                            progress['battles_needed'] if progress['battles_needed'] > 0 else "-",
-                            progress['time_needed']
-                        ])
+                        progress = exp_stats.calculate_progress(
+                            ship, target_level, current_battles
+                        )
+                        exp_rows.append(
+                            [
+                                progress["position"],
+                                progress["level"],
+                                progress["current_exp"],
+                                progress["total_exp"],
+                                progress["exp_needed"]
+                                if progress["exp_needed"] > 0
+                                else "-",
+                                progress["battles_needed"]
+                                if progress["battles_needed"] > 0
+                                else "-",
+                                progress["time_needed"],
+                            ]
+                        )
 
                     put_html(build_simple_table(exp_labels, exp_rows))
                 else:
                     put_html(build_muted_notice(t("Gui.Stat.NoExpData")))
 
             # ====================侵蚀1统计====================
-            labels = [t("Gui.Stat.Month"), t("Gui.Stat.BattleCount"), t("Gui.Stat.BattleRounds"), t("Gui.Stat.SortieCost"), t("Gui.Stat.AkashiEncounters"), t("Gui.Stat.AkashiRate"), t("Gui.Stat.AverageAP"), t("Gui.Stat.NetAP"), t("Gui.Stat.LoopEfficiency"), t("Gui.Stat.AvgBattleTimeHeader"), t("Gui.Stat.AvgRoundTime")]
+            labels = [
+                t("Gui.Stat.Month"),
+                t("Gui.Stat.BattleCount"),
+                t("Gui.Stat.BattleRounds"),
+                t("Gui.Stat.SortieCost"),
+                t("Gui.Stat.AkashiEncounters"),
+                t("Gui.Stat.AkashiRate"),
+                t("Gui.Stat.AverageAP"),
+                t("Gui.Stat.NetAP"),
+                t("Gui.Stat.LoopEfficiency"),
+                t("Gui.Stat.AvgBattleTimeHeader"),
+                t("Gui.Stat.AvgRoundTime"),
+            ]
             month = s.get("month", "-")
             total = s.get("total_battles", "-")
             try:
@@ -993,7 +1247,11 @@ class AlasGUI(Frame):
                 ap_bought = "-"
 
             try:
-                if isinstance(ap_bought, (int, float)) and isinstance(ak, int) and ak > 0:
+                if (
+                    isinstance(ap_bought, (int, float))
+                    and isinstance(ak, int)
+                    and ak > 0
+                ):
                     avg_ap = int(float(ap_bought) / ak + 0.5)
                 else:
                     try:
@@ -1025,21 +1283,25 @@ class AlasGUI(Frame):
                 avg_cl1_round_time = exp_stats.get_average_round_time()
                 exp_per_hour = exp_stats.get_exp_per_hour()
                 today_stats = exp_stats.get_today_stats()
-                
+
                 # 今日统计
                 if today_stats:
-                    today_battles = today_stats.get('battle_count', 0)
-                    today_exp = today_stats.get('total_exp_gained', 0)
-                    today_run_time = int(today_stats.get('total_run_time', 0) // 60)
+                    today_battles = today_stats.get("battle_count", 0)
+                    today_exp = today_stats.get("total_exp_gained", 0)
+                    today_run_time = int(today_stats.get("total_run_time", 0) // 60)
                     today_exp_str = f"{today_exp:,}"
                     today_run_str = f"{today_run_time}{t('Gui.Stat.MinuteUnit')}"
                 else:
                     today_battles = 0
                     today_exp_str = "-"
                     today_run_str = "-"
-                
-                avg_cl1_battle_str = f"{avg_cl1_battle_time:.1f}{t('Gui.Stat.SecondUnit')}"
-                avg_cl1_round_str = f"{avg_cl1_round_time:.1f}{t('Gui.Stat.SecondUnit')}"
+
+                avg_cl1_battle_str = (
+                    f"{avg_cl1_battle_time:.1f}{t('Gui.Stat.SecondUnit')}"
+                )
+                avg_cl1_round_str = (
+                    f"{avg_cl1_round_time:.1f}{t('Gui.Stat.SecondUnit')}"
+                )
                 exp_per_hour_str = f"{exp_per_hour:.0f}/{t('Gui.Stat.HourUnit')}"
             except Exception:
                 avg_cl1_battle_str = "-"
@@ -1049,9 +1311,45 @@ class AlasGUI(Frame):
                 today_exp_str = "-"
                 today_run_str = "-"
 
-            labels = [t("Gui.Stat.Month"), t("Gui.Stat.BattleCount"), t("Gui.Stat.BattleRounds"), t("Gui.Stat.SortieCost"), t("Gui.Stat.AkashiEncounters"), t("Gui.Stat.AkashiRate"), t("Gui.Stat.SirenResearchDevices"), t("Gui.Stat.SirenResearchRate"), t("Gui.Stat.AverageAP"), t("Gui.Stat.NetAP"), t("Gui.Stat.LoopEfficiency"), t("Gui.Stat.ExpEfficiencyHeader"), t("Gui.Stat.AvgBattleTimeHeader"), t("Gui.Stat.AvgRoundTime"), t("Gui.Stat.TodayBattlesHeader"), t("Gui.Stat.TodayExpHeader"), t("Gui.Stat.TodayRunHeader")]
+            labels = [
+                t("Gui.Stat.Month"),
+                t("Gui.Stat.BattleCount"),
+                t("Gui.Stat.BattleRounds"),
+                t("Gui.Stat.SortieCost"),
+                t("Gui.Stat.AkashiEncounters"),
+                t("Gui.Stat.AkashiRate"),
+                t("Gui.Stat.SirenResearchDevices"),
+                t("Gui.Stat.SirenResearchRate"),
+                t("Gui.Stat.AverageAP"),
+                t("Gui.Stat.NetAP"),
+                t("Gui.Stat.LoopEfficiency"),
+                t("Gui.Stat.ExpEfficiencyHeader"),
+                t("Gui.Stat.AvgBattleTimeHeader"),
+                t("Gui.Stat.AvgRoundTime"),
+                t("Gui.Stat.TodayBattlesHeader"),
+                t("Gui.Stat.TodayExpHeader"),
+                t("Gui.Stat.TodayRunHeader"),
+            ]
 
-            values = [month, tb, rounds, sortie_cost, ak, akashi_rate, siren_research, siren_research_rate, avg_ap, net_ap, loop_eff, exp_per_hour_str, avg_cl1_battle_str, avg_cl1_round_str, today_battles, today_exp_str, today_run_str]
+            values = [
+                month,
+                tb,
+                rounds,
+                sortie_cost,
+                ak,
+                akashi_rate,
+                siren_research,
+                siren_research_rate,
+                avg_ap,
+                net_ap,
+                loop_eff,
+                exp_per_hour_str,
+                avg_cl1_battle_str,
+                avg_cl1_round_str,
+                today_battles,
+                today_exp_str,
+                today_run_str,
+            ]
 
             with use_scope("opsi_stats", clear=True):
                 put_html(build_title_block(t("Gui.Stat.OpsiDataCollectionTitle")))
@@ -1065,6 +1363,7 @@ class AlasGUI(Frame):
                 meow_rows = []
                 try:
                     from datetime import datetime
+
                     now = datetime.now()
                     for hazard_level in (3, 5):
                         meow_data = cl1_db.get_meow_stats(
@@ -1073,36 +1372,73 @@ class AlasGUI(Frame):
                             now.month,
                             hazard_level=hazard_level,
                         )
-                        meow_effective_rounds = float(meow_data.get("effective_rounds", 0) or 0)
+                        meow_effective_rounds = float(
+                            meow_data.get("effective_rounds", 0) or 0
+                        )
                         meow_rounds = round(meow_effective_rounds, 1)
                         if abs(meow_rounds - int(meow_rounds)) < 1e-6:
                             meow_rounds = int(meow_rounds)
 
                         meow_avg_time = float(meow_data.get("avg_round_time", 0.0) or 0)
-                        meow_avg_battle_time = float(meow_data.get("avg_battle_time", 0.0) or 0)
-                        siren_count = int(meow_data.get("siren_research_devices", 0) or 0)
-                        siren_rate = float(meow_data.get("siren_research_rate", 0.0) or 0)
+                        meow_avg_battle_time = float(
+                            meow_data.get("avg_battle_time", 0.0) or 0
+                        )
+                        siren_count = int(
+                            meow_data.get("siren_research_devices", 0) or 0
+                        )
+                        siren_rate = float(
+                            meow_data.get("siren_research_rate", 0.0) or 0
+                        )
 
-                        avg_time_str = f"{meow_avg_time:.1f}{t('Gui.Stat.SecondUnit')}" if meow_avg_time > 0 else "-"
-                        avg_battle_time_str = f"{meow_avg_battle_time:.1f}{t('Gui.Stat.SecondUnit')}" if meow_avg_battle_time > 0 else "-"
-                        siren_rate_str = f"{siren_rate * 100:.2f}%" if meow_effective_rounds > 0 else "-"
+                        avg_time_str = (
+                            f"{meow_avg_time:.1f}{t('Gui.Stat.SecondUnit')}"
+                            if meow_avg_time > 0
+                            else "-"
+                        )
+                        avg_battle_time_str = (
+                            f"{meow_avg_battle_time:.1f}{t('Gui.Stat.SecondUnit')}"
+                            if meow_avg_battle_time > 0
+                            else "-"
+                        )
+                        siren_rate_str = (
+                            f"{siren_rate * 100:.2f}%"
+                            if meow_effective_rounds > 0
+                            else "-"
+                        )
 
-                        meow_rows.append([
-                            meow_data.get("month", "-"),
-                            hazard_level,
-                            int(meow_data.get("battle_count", 0) or 0),
-                            meow_rounds,
-                            avg_battle_time_str,
-                            avg_time_str,
-                            siren_count,
-                            siren_rate_str,
-                        ])
+                        meow_rows.append(
+                            [
+                                meow_data.get("month", "-"),
+                                hazard_level,
+                                int(meow_data.get("battle_count", 0) or 0),
+                                meow_rounds,
+                                avg_battle_time_str,
+                                avg_time_str,
+                                siren_count,
+                                siren_rate_str,
+                            ]
+                        )
                 except Exception:
                     meow_rows = []
 
-                meow_labels = [t("Gui.Stat.Month"), t("Gui.Stat.HazardLevel"), t("Gui.Stat.BattleCount"), t("Gui.Stat.MeowRounds"), t("Gui.Stat.AvgBattleTimeHeader"), t("Gui.Stat.AvgMeowRoundTime"), t("Gui.Stat.SirenResearchDevices"), t("Gui.Stat.SirenResearchRate")]
+                meow_labels = [
+                    t("Gui.Stat.Month"),
+                    t("Gui.Stat.HazardLevel"),
+                    t("Gui.Stat.BattleCount"),
+                    t("Gui.Stat.MeowRounds"),
+                    t("Gui.Stat.AvgBattleTimeHeader"),
+                    t("Gui.Stat.AvgMeowRoundTime"),
+                    t("Gui.Stat.SirenResearchDevices"),
+                    t("Gui.Stat.SirenResearchRate"),
+                ]
 
-                put_html(build_title_block(t("Gui.Stat.MeowDataCollectionTitle"), margin_top=20, margin_bottom=8))
+                put_html(
+                    build_title_block(
+                        t("Gui.Stat.MeowDataCollectionTitle"),
+                        margin_top=20,
+                        margin_bottom=8,
+                    )
+                )
                 put_html(f"<!-- meow-stats-refresh-token:{meow_refresh_token} -->")
                 put_html(build_simple_table(meow_labels, meow_rows))
 
@@ -1121,29 +1457,50 @@ class AlasGUI(Frame):
                             if row[2] > 0:
                                 meow_row = [
                                     int(row[0]),
-                                    datetime.fromtimestamp(row[1]).strftime('%Y-%m-%d %H:%M:%S'),
-                                    int(row[2])
+                                    datetime.fromtimestamp(row[1]).strftime(
+                                        "%Y-%m-%d %H:%M:%S"
+                                    ),
+                                    int(row[2]),
                                 ] + list(row[3:])
 
                                 meow_rows.append(meow_row)
 
-                        put_html(build_title_block(t("Gui.Stat.MeowLootTitle"), margin_top=20, margin_bottom=8))
+                        put_html(
+                            build_title_block(
+                                t("Gui.Stat.MeowLootTitle"),
+                                margin_top=20,
+                                margin_bottom=8,
+                            )
+                        )
                         if meow_rows:
-                            put_html(build_simple_table(AzurStats.meowofficer_farming_labels, meow_rows))
+                            put_html(
+                                build_simple_table(
+                                    AzurStats.meowofficer_farming_labels, meow_rows
+                                )
+                            )
                         else:
                             put_html(build_muted_notice(t("Gui.Stat.NoMeowDataNotice")))
 
-                        put_button(t("Gui.Stat.Refresh"), onclick=_refresh_meowofficer_farming, color="off")
+                        put_button(
+                            t("Gui.Stat.Refresh"),
+                            onclick=_refresh_meowofficer_farming,
+                            color="off",
+                        )
 
                 _render_meowofficer_farming()
 
                 # ========== 短猫提前开始建议 ==========
                 try:
                     from module.os.tasks.scheduling import OpsiScheduling
+
                     # 创建临时实例来调用计算方法
-                    config_for_stat = self.alas_config if hasattr(self, 'alas_config') else None
+                    config_for_stat = (
+                        self.alas_config if hasattr(self, "alas_config") else None
+                    )
                     if config_for_stat is not None:
-                        scheduling = OpsiScheduling(config_for_stat, task='OpsiScheduling')
+                        scheduling = OpsiScheduling(
+                            config_for_stat, task="OpsiScheduling"
+                        )
                         advance_calc = scheduling.get_meow_advance_calculation()
                     else:
                         advance_calc = {}
@@ -1159,39 +1516,63 @@ class AlasGUI(Frame):
                         from module.statistics.cl1_database import db as cl1_db
                         from module.statistics.opsi_month import get_ap_timeline
 
-                        config_for_stat = self.alas_config if hasattr(self, 'alas_config') else None
-                        mode = 'balanced'
-                        if config_for_stat is not None and hasattr(config_for_stat, 'cross_get'):
-                            mode = config_for_stat.cross_get(
-                                keys='OpsiScheduling.OpsiScheduling.MeowStartEarlyMode'
-                            ) or 'balanced'
+                        config_for_stat = (
+                            self.alas_config if hasattr(self, "alas_config") else None
+                        )
+                        mode = "balanced"
+                        if config_for_stat is not None and hasattr(
+                            config_for_stat, "cross_get"
+                        ):
+                            mode = (
+                                config_for_stat.cross_get(
+                                    keys="OpsiScheduling.OpsiScheduling.MeowStartEarlyMode"
+                                )
+                                or "balanced"
+                            )
 
                         mode_names = {
-                            'aggressive': '激进',
-                            'balanced': '均衡',
-                            'conservative': '保守',
+                            "aggressive": "激进",
+                            "balanced": "均衡",
+                            "conservative": "保守",
                         }
                         multiplier_map = {
-                            'aggressive': 0.8,
-                            'balanced': 1.2,
-                            'conservative': 1.5,
+                            "aggressive": 0.8,
+                            "balanced": 1.2,
+                            "conservative": 1.5,
                         }
                         multiplier = multiplier_map.get(mode, 1.2)
 
-                        instance_name_stat = self.alas_name if hasattr(self, 'alas_name') and self.alas_name else None
+                        instance_name_stat = (
+                            self.alas_name
+                            if hasattr(self, "alas_name") and self.alas_name
+                            else None
+                        )
                         if not instance_name_stat:
                             from module.config.utils import alas_instance
+
                             _all_instances = alas_instance()
-                            instance_name_stat = _all_instances[0] if _all_instances else 'default'
+                            instance_name_stat = (
+                                _all_instances[0] if _all_instances else "default"
+                            )
                         meow_data_fallback = cl1_db.get_meow_stats(instance_name_stat)
-                        avg_meow_round_time = float(meow_data_fallback.get('avg_round_time', 0) or 0)
+                        avg_meow_round_time = float(
+                            meow_data_fallback.get("avg_round_time", 0) or 0
+                        )
 
                         ap_timeline = get_ap_timeline(instance_name=instance_name_stat)
-                        current_ap = int(ap_timeline[-1].get('ap', 0)) if ap_timeline else 0
+                        current_ap = (
+                            int(ap_timeline[-1].get("ap", 0)) if ap_timeline else 0
+                        )
 
                         meow_round_ap = 30
-                        available_rounds = (current_ap / meow_round_ap) if meow_round_ap else 0
-                        base_hours_ahead = (available_rounds * avg_meow_round_time) / 3600 if avg_meow_round_time > 0 else 0
+                        available_rounds = (
+                            (current_ap / meow_round_ap) if meow_round_ap else 0
+                        )
+                        base_hours_ahead = (
+                            (available_rounds * avg_meow_round_time) / 3600
+                            if avg_meow_round_time > 0
+                            else 0
+                        )
                         hours_ahead = max(0, min(base_hours_ahead * multiplier, 168))
 
                         now = datetime.now()
@@ -1201,9 +1582,9 @@ class AlasGUI(Frame):
                             start_cleanup_dt = now
 
                         if avg_meow_round_time == 0:
-                            recommendation = '数据不足，无法计算建议'
+                            recommendation = "数据不足，无法计算建议"
                         elif current_ap < meow_round_ap:
-                            recommendation = '行动力不足一轮短猫消耗'
+                            recommendation = "行动力不足一轮短猫消耗"
                         else:
                             recommendation = (
                                 f"当前AP {current_ap} 可运行 {available_rounds:.1f} 轮短猫，"
@@ -1211,98 +1592,183 @@ class AlasGUI(Frame):
                             )
 
                         advance_calc = {
-                            'mode': mode,
-                            'mode_name': mode_names.get(mode, '均衡'),
-                            'multiplier': multiplier,
-                            'current_ap': current_ap,
-                            'meow_round_ap': meow_round_ap,
-                            'avg_meow_round_time': round(avg_meow_round_time, 1) if avg_meow_round_time else 0,
-                            'available_rounds': round(available_rounds, 1),
-                            'hours_ahead': round(hours_ahead, 1),
-                            'start_cleanup_time': start_cleanup_dt.strftime('%m-%d %H:%M'),
-                            'next_os_reset_time': next_reset.strftime('%m-%d %H:%M'),
-                            'recommendation': f"{recommendation}（WebUI兜底计算）",
+                            "mode": mode,
+                            "mode_name": mode_names.get(mode, "均衡"),
+                            "multiplier": multiplier,
+                            "current_ap": current_ap,
+                            "meow_round_ap": meow_round_ap,
+                            "avg_meow_round_time": round(avg_meow_round_time, 1)
+                            if avg_meow_round_time
+                            else 0,
+                            "available_rounds": round(available_rounds, 1),
+                            "hours_ahead": round(hours_ahead, 1),
+                            "start_cleanup_time": start_cleanup_dt.strftime(
+                                "%m-%d %H:%M"
+                            ),
+                            "next_os_reset_time": next_reset.strftime("%m-%d %H:%M"),
+                            "recommendation": f"{recommendation}（WebUI兜底计算）",
                         }
                     except Exception as e:
                         logger.warning(f"WebUI兜底计算短猫建议失败: {e}")
                         advance_calc = {}
 
-                config_for_stat = self.alas_config if hasattr(self, 'alas_config') else None
+                config_for_stat = (
+                    self.alas_config if hasattr(self, "alas_config") else None
+                )
                 meow_advance_enable = False
-                if config_for_stat is not None and hasattr(config_for_stat, 'cross_get'):
-                    meow_advance_enable = config_for_stat.cross_get(
-                        keys='OpsiScheduling.OpsiScheduling.MeowStartEarlyEnable'
-                    ) or False
-                mode_name = advance_calc.get('mode_name', '-')
-                current_ap = advance_calc.get('current_ap', '-')
-                meow_round_ap = advance_calc.get('meow_round_ap', '-')
-                avg_meow_round_time = advance_calc.get('avg_meow_round_time', 0)
-                available_rounds = advance_calc.get('available_rounds', 0)
-                hours_ahead = advance_calc.get('hours_ahead', 0)
-                start_cleanup_time = advance_calc.get('start_cleanup_time', '-')
-                next_os_reset_time = advance_calc.get('next_os_reset_time', '-')
-                recommendation = advance_calc.get('recommendation', '数据不足，无法计算建议')
+                if config_for_stat is not None and hasattr(
+                    config_for_stat, "cross_get"
+                ):
+                    meow_advance_enable = (
+                        config_for_stat.cross_get(
+                            keys="OpsiScheduling.OpsiScheduling.MeowStartEarlyEnable"
+                        )
+                        or False
+                    )
+                mode_name = advance_calc.get("mode_name", "-")
+                current_ap = advance_calc.get("current_ap", "-")
+                meow_round_ap = advance_calc.get("meow_round_ap", "-")
+                avg_meow_round_time = advance_calc.get("avg_meow_round_time", 0)
+                available_rounds = advance_calc.get("available_rounds", 0)
+                hours_ahead = advance_calc.get("hours_ahead", 0)
+                start_cleanup_time = advance_calc.get("start_cleanup_time", "-")
+                next_os_reset_time = advance_calc.get("next_os_reset_time", "-")
+                recommendation = advance_calc.get(
+                    "recommendation", "数据不足，无法计算建议"
+                )
 
                 if not meow_advance_enable:
-                    recommendation = f"{recommendation}（当前未开启自动提前清理，仅供参考）"
+                    recommendation = (
+                        f"{recommendation}（当前未开启自动提前清理，仅供参考）"
+                    )
 
-                put_html(build_title_block(t("Gui.Stat.MeowAdvanceAdviceTitle"), margin_top=20, margin_bottom=8))
-                put_row([
-                    put_text(t("Gui.Stat.CurrentAP", value=current_ap)),
-                    put_text(t("Gui.Stat.ApPerRound", value=meow_round_ap)),
-                    put_text(t("Gui.Stat.AvailableRounds", value=f"{available_rounds:.1f}", unit=t("Gui.Stat.RoundUnit"))),
-                ])
-                put_row([
-                    put_text(t("Gui.Stat.AvgRoundDuration", value=f"{avg_meow_round_time:.1f}", unit=t("Gui.Stat.SecondUnit"))),
-                    put_text(t("Gui.Stat.CurrentMode", value=mode_name)),
-                    put_text(t("Gui.Stat.RecommendAhead", value=f"{hours_ahead:.1f}", unit=t("Gui.Stat.HourUnit"))),
-                ])
-                put_row([
-                    put_text(t("Gui.Stat.StartCleanupTime", value=start_cleanup_time)),
-                    put_text(t("Gui.Stat.NextOsReset", value=next_os_reset_time)),
-                    put_text(t("Gui.Stat.MeowAutoCleanupStatus",
-                               value=t("Gui.Misc.Enabled") if meow_advance_enable else t("Gui.Misc.Disabled"))),
-                ])
+                put_html(
+                    build_title_block(
+                        t("Gui.Stat.MeowAdvanceAdviceTitle"),
+                        margin_top=20,
+                        margin_bottom=8,
+                    )
+                )
+                put_row(
+                    [
+                        put_text(t("Gui.Stat.CurrentAP", value=current_ap)),
+                        put_text(t("Gui.Stat.ApPerRound", value=meow_round_ap)),
+                        put_text(
+                            t(
+                                "Gui.Stat.AvailableRounds",
+                                value=f"{available_rounds:.1f}",
+                                unit=t("Gui.Stat.RoundUnit"),
+                            )
+                        ),
+                    ]
+                )
+                put_row(
+                    [
+                        put_text(
+                            t(
+                                "Gui.Stat.AvgRoundDuration",
+                                value=f"{avg_meow_round_time:.1f}",
+                                unit=t("Gui.Stat.SecondUnit"),
+                            )
+                        ),
+                        put_text(t("Gui.Stat.CurrentMode", value=mode_name)),
+                        put_text(
+                            t(
+                                "Gui.Stat.RecommendAhead",
+                                value=f"{hours_ahead:.1f}",
+                                unit=t("Gui.Stat.HourUnit"),
+                            )
+                        ),
+                    ]
+                )
+                put_row(
+                    [
+                        put_text(
+                            t("Gui.Stat.StartCleanupTime", value=start_cleanup_time)
+                        ),
+                        put_text(t("Gui.Stat.NextOsReset", value=next_os_reset_time)),
+                        put_text(
+                            t(
+                                "Gui.Stat.MeowAutoCleanupStatus",
+                                value=t("Gui.Misc.Enabled")
+                                if meow_advance_enable
+                                else t("Gui.Misc.Disabled"),
+                            )
+                        ),
+                    ]
+                )
                 put_text(recommendation)
 
                 def export_opsi_csv(save_to_desktop: bool = True):
                     import io
+
                     try:
-                        from module.statistics.opsi_month import get_opsi_stats, compute_monthly_cl1_akashi_ap
+                        from module.statistics.opsi_month import (
+                            get_opsi_stats,
+                            compute_monthly_cl1_akashi_ap,
+                        )
                     except Exception as e:
                         toast(t("Gui.Stat.ExportModuleLoadFailed", e=e), color="error")
                         return
 
                     try:
-                        instance_name_local = self.alas_name if hasattr(self, 'alas_name') and self.alas_name else None
-                        s_local = get_opsi_stats(instance_name=instance_name_local).summary() or {}
+                        instance_name_local = (
+                            self.alas_name
+                            if hasattr(self, "alas_name") and self.alas_name
+                            else None
+                        )
+                        s_local = (
+                            get_opsi_stats(instance_name=instance_name_local).summary()
+                            or {}
+                        )
                     except Exception:
                         s_local = {}
 
-                    month_local = s_local.get("month") or datetime.now().strftime("%Y-%m")
+                    month_local = s_local.get("month") or datetime.now().strftime(
+                        "%Y-%m"
+                    )
                     total_battles_local = int(s_local.get("total_battles") or 0)
-                    total_rounds_local = int(s_local.get("total_rounds") or ((total_battles_local + 1) // 2))
-                    ap_spent_local = int(s_local.get("ap_spent") or (total_rounds_local * 5))
-                    akashi_count_local = int(s_local.get("akashi_encounters") or s_local.get("akashi_count") or 0)
+                    total_rounds_local = int(
+                        s_local.get("total_rounds") or ((total_battles_local + 1) // 2)
+                    )
+                    ap_spent_local = int(
+                        s_local.get("ap_spent") or (total_rounds_local * 5)
+                    )
+                    akashi_count_local = int(
+                        s_local.get("akashi_encounters")
+                        or s_local.get("akashi_count")
+                        or 0
+                    )
 
                     if "akashi_percent" in s_local:
                         try:
-                            akashi_percent_local = float(s_local.get("akashi_percent") or 0)
+                            akashi_percent_local = float(
+                                s_local.get("akashi_percent") or 0
+                            )
                         except Exception:
                             akashi_percent_local = 0.0
                     elif total_rounds_local > 0:
-                        akashi_percent_local = (akashi_count_local / total_rounds_local) * 100
+                        akashi_percent_local = (
+                            akashi_count_local / total_rounds_local
+                        ) * 100
                     else:
                         akashi_percent_local = 0.0
 
                     try:
-                        purchased_local = compute_monthly_cl1_akashi_ap(instance_name=instance_name_local) or 0
+                        purchased_local = (
+                            compute_monthly_cl1_akashi_ap(
+                                instance_name=instance_name_local
+                            )
+                            or 0
+                        )
                     except Exception:
                         purchased_local = 0
 
                     if akashi_count_local > 0:
                         try:
-                            avg_ap_local = int(float(purchased_local) / akashi_count_local + 0.5)
+                            avg_ap_local = int(
+                                float(purchased_local) / akashi_count_local + 0.5
+                            )
                         except Exception:
                             avg_ap_local = "-"
                     else:
@@ -1321,48 +1787,81 @@ class AlasGUI(Frame):
                     else:
                         eff_local = "-"
 
-                    labels_local = [t("Gui.Stat.Month"), t("Gui.Stat.BattleCount"), t("Gui.Stat.BattleRounds"), t("Gui.Stat.SortieCost"), t("Gui.Stat.AkashiEncounters"), t("Gui.Stat.CsvHeaderAkashiRate"), t("Gui.Stat.AverageAP"), t("Gui.Stat.NetAP"), t("Gui.Stat.CsvHeaderLoopEfficiency"), t("Gui.Stat.CsvHeaderMonthlyPurchasedAP")]
+                    labels_local = [
+                        t("Gui.Stat.Month"),
+                        t("Gui.Stat.BattleCount"),
+                        t("Gui.Stat.BattleRounds"),
+                        t("Gui.Stat.SortieCost"),
+                        t("Gui.Stat.AkashiEncounters"),
+                        t("Gui.Stat.CsvHeaderAkashiRate"),
+                        t("Gui.Stat.AverageAP"),
+                        t("Gui.Stat.NetAP"),
+                        t("Gui.Stat.CsvHeaderLoopEfficiency"),
+                        t("Gui.Stat.CsvHeaderMonthlyPurchasedAP"),
+                    ]
                     values_local = [
                         month_local,
                         total_battles_local,
                         total_rounds_local,
                         ap_spent_local,
                         akashi_count_local,
-                        f"{akashi_percent_local:.2f}" if isinstance(akashi_percent_local, (int, float)) else akashi_percent_local,
+                        f"{akashi_percent_local:.2f}"
+                        if isinstance(akashi_percent_local, (int, float))
+                        else akashi_percent_local,
                         avg_ap_local,
                         net_ap_local,
-                        f"{eff_local:.2f}" if isinstance(eff_local, (int, float)) else eff_local,
+                        f"{eff_local:.2f}"
+                        if isinstance(eff_local, (int, float))
+                        else eff_local,
                         purchased_local,
                     ]
 
                     output = io.StringIO()
-                    output.write(','.join(labels_local) + "\n")
+                    output.write(",".join(labels_local) + "\n")
+
                     def _escape(cell):
                         s = str(cell)
-                        if ',' in s or '"' in s or '\n' in s:
+                        if "," in s or '"' in s or "\n" in s:
                             s = '"' + s.replace('"', '""') + '"'
                         return s
-                    output.write(','.join([_escape(c) for c in values_local]) + "\n")
-                    csv_bytes = output.getvalue().encode('utf-8-sig')
 
-                    filename_local = t("Gui.Stat.CsvFilenameTemplate", month=month_local)
+                    output.write(",".join([_escape(c) for c in values_local]) + "\n")
+                    csv_bytes = output.getvalue().encode("utf-8-sig")
+
+                    filename_local = t(
+                        "Gui.Stat.CsvFilenameTemplate", month=month_local
+                    )
 
                     if save_to_desktop:
                         try:
-                            desktop_local = Path.home() / 'Desktop'
+                            desktop_local = Path.home() / "Desktop"
                             desktop_local.mkdir(parents=True, exist_ok=True)
                             fpath = desktop_local / filename_local
-                            with open(fpath, 'wb') as _f:
+                            with open(fpath, "wb") as _f:
                                 _f.write(csv_bytes)
-                            toast(t("Gui.Stat.SavedToDesktop", path=fpath), color="success")
+                            toast(
+                                t("Gui.Stat.SavedToDesktop", path=fpath),
+                                color="success",
+                            )
                         except Exception as e:
                             logger.exception(e)
                             toast(t("Gui.Stat.SaveDesktopFailed", e=e), color="error")
 
-                put_row([
-                    put_button(t("Gui.Stat.Refresh"), onclick=_render_opsi_stats, color="off"),
-                    put_button(t("Gui.Stat.ExportAndSaveDesktop"), onclick=lambda: export_opsi_csv(True), color="off"),
-                ], size="auto")
+                put_row(
+                    [
+                        put_button(
+                            t("Gui.Stat.Refresh"),
+                            onclick=_render_opsi_stats,
+                            color="off",
+                        ),
+                        put_button(
+                            t("Gui.Stat.ExportAndSaveDesktop"),
+                            onclick=lambda: export_opsi_csv(True),
+                            color="off",
+                        ),
+                    ],
+                    size="auto",
+                )
 
         put_scope("opsi_stats", [])
         _render_opsi_stats()
@@ -1372,29 +1871,41 @@ class AlasGUI(Frame):
         def _render_ship_exp():
             try:
                 from module.statistics.ship_exp_stats import get_ship_exp_stats
-                from module.statistics.opsi_month import get_opsi_stats as get_opsi_stats_func
+                from module.statistics.opsi_month import (
+                    get_opsi_stats as get_opsi_stats_func,
+                )
+
                 # 使用当前实例名称获取统计数据，确保不为空
-                instance_name = self.alas_name if hasattr(self, 'alas_name') and self.alas_name else None
+                instance_name = (
+                    self.alas_name
+                    if hasattr(self, "alas_name") and self.alas_name
+                    else None
+                )
                 if not instance_name:
                     # 使用第一个可用的实例
                     from module.config.utils import alas_instance
+
                     all_instances = alas_instance()
                     instance_name = all_instances[0] if all_instances else None
                 stats = get_ship_exp_stats(instance_name=instance_name)
-                if not stats.data or not stats.data.get('ships'):
+                if not stats.data or not stats.data.get("ships"):
                     with use_scope("ship_exp_table", clear=True):
                         put_html(build_muted_notice(t("Gui.Stat.NoShipExpData")))
                     return
-                
-                current_battles = get_opsi_stats_func(instance_name=instance_name).summary().get('total_battles', 0)
-                target_level = stats.data.get('target_level', 125)
+
+                current_battles = (
+                    get_opsi_stats_func(instance_name=instance_name)
+                    .summary()
+                    .get("total_battles", 0)
+                )
+                target_level = stats.data.get("target_level", 125)
                 avg_battle_time = stats.get_average_battle_time()
                 exp_per_hour = stats.get_exp_per_hour()
                 today_stats = stats.get_today_stats()
-                
+
                 # 从daily_stats获取今日战斗场次
-                today_battles = today_stats.get('battle_count', 0) if today_stats else 0
-                
+                today_battles = today_stats.get("battle_count", 0) if today_stats else 0
+
                 labels = [
                     t("Gui.Stat.ShipSlot"),
                     t("Gui.Stat.Level"),
@@ -1406,48 +1917,106 @@ class AlasGUI(Frame):
                     t("Gui.Stat.SortiesNeeded"),
                     t("Gui.Stat.EstimatedTime"),
                 ]
-                
+
                 rows = []
-                for ship in stats.data.get('ships', []):
-                    progress = stats.calculate_progress(ship, target_level, current_battles)
+                for ship in stats.data.get("ships", []):
+                    progress = stats.calculate_progress(
+                        ship, target_level, current_battles
+                    )
                     # 使用今日daily_stats的battle_count作为已战斗场次
-                    rows.append([
-                        progress['position'],
-                        progress['level'],
-                        progress['current_exp'],
-                        progress['total_exp'],
-                        progress['target_exp'],
-                        today_battles,  # 使用今日battle_count而非计算值
-                        progress['exp_needed'],
-                        progress['battles_needed'],
-                        progress['time_needed']
-                    ])
-                
+                    rows.append(
+                        [
+                            progress["position"],
+                            progress["level"],
+                            progress["current_exp"],
+                            progress["total_exp"],
+                            progress["target_exp"],
+                            today_battles,  # 使用今日battle_count而非计算值
+                            progress["exp_needed"],
+                            progress["battles_needed"],
+                            progress["time_needed"],
+                        ]
+                    )
+
                 with use_scope("ship_exp_table", clear=True):
-                    put_html(build_title_block(t("Gui.Stat.ShipExpProgressTitle"), margin_top=16, margin_bottom=8))
-                    put_text(t("Gui.Stat.LastCheckTime", value=stats.data.get('last_check_time', '-')))
-                    
+                    put_html(
+                        build_title_block(
+                            t("Gui.Stat.ShipExpProgressTitle"),
+                            margin_top=16,
+                            margin_bottom=8,
+                        )
+                    )
+                    put_text(
+                        t(
+                            "Gui.Stat.LastCheckTime",
+                            value=stats.data.get("last_check_time", "-"),
+                        )
+                    )
+
                     # 显示效率统计
-                    put_row([
-                        put_text(t("Gui.Stat.AvgBattleTime", value=f"{avg_battle_time:.1f}", unit=t("Gui.Stat.SecondUnit"))),
-                        put_text(t("Gui.Stat.AvgOpsiRoundTime", value=f"{stats.get_average_round_time():.1f}", unit=t("Gui.Stat.SecondUnit"))),
-                        put_text(t("Gui.Stat.ExpEfficiency", value=f"{exp_per_hour:.0f}", unit=t("Gui.Stat.HourUnit"))),
-                    ])
-                    
+                    put_row(
+                        [
+                            put_text(
+                                t(
+                                    "Gui.Stat.AvgBattleTime",
+                                    value=f"{avg_battle_time:.1f}",
+                                    unit=t("Gui.Stat.SecondUnit"),
+                                )
+                            ),
+                            put_text(
+                                t(
+                                    "Gui.Stat.AvgOpsiRoundTime",
+                                    value=f"{stats.get_average_round_time():.1f}",
+                                    unit=t("Gui.Stat.SecondUnit"),
+                                )
+                            ),
+                            put_text(
+                                t(
+                                    "Gui.Stat.ExpEfficiency",
+                                    value=f"{exp_per_hour:.0f}",
+                                    unit=t("Gui.Stat.HourUnit"),
+                                )
+                            ),
+                        ]
+                    )
+
                     # 显示今日统计
                     if today_stats:
-                        run_minutes = int(today_stats.get('total_run_time', 0) // 60)
-                        put_row([
-                            put_text(t("Gui.Stat.TodayBattles", value=today_stats.get('battle_count', 0), unit=t("Gui.Stat.TodayBattleUnit"))),
-                            put_text(t("Gui.Stat.TodayExp", value=today_stats.get('total_exp_gained', 0))),
-                            put_text(t("Gui.Stat.TodayRun", value=run_minutes, unit=t("Gui.Stat.MinuteUnit"))),
-                        ])
+                        run_minutes = int(today_stats.get("total_run_time", 0) // 60)
+                        put_row(
+                            [
+                                put_text(
+                                    t(
+                                        "Gui.Stat.TodayBattles",
+                                        value=today_stats.get("battle_count", 0),
+                                        unit=t("Gui.Stat.TodayBattleUnit"),
+                                    )
+                                ),
+                                put_text(
+                                    t(
+                                        "Gui.Stat.TodayExp",
+                                        value=today_stats.get("total_exp_gained", 0),
+                                    )
+                                ),
+                                put_text(
+                                    t(
+                                        "Gui.Stat.TodayRun",
+                                        value=run_minutes,
+                                        unit=t("Gui.Stat.MinuteUnit"),
+                                    )
+                                ),
+                            ]
+                        )
                     else:
                         put_text(t("Gui.Stat.NoTodayBattleData"))
-                    
-                    put_html(build_simple_table(labels, rows, extra_style=' margin-top:8px;'))
-                    
-                    put_button(t("Gui.Stat.Refresh"), onclick=_render_ship_exp, color="off")
+
+                    put_html(
+                        build_simple_table(labels, rows, extra_style=" margin-top:8px;")
+                    )
+
+                    put_button(
+                        t("Gui.Stat.Refresh"), onclick=_render_ship_exp, color="off"
+                    )
             except Exception as e:
                 with use_scope("ship_exp_table", clear=True):
                     put_text(t("Gui.Stat.LoadShipExpFailed", e=e))
@@ -1457,8 +2026,8 @@ class AlasGUI(Frame):
         self.task_handler.add(_render_ship_exp, 60, True)
 
         # ========== 委托收益统计 ==========
-        if not hasattr(self, '_commission_income_period'):
-            self._commission_income_period = 'day'
+        if not hasattr(self, "_commission_income_period"):
+            self._commission_income_period = "day"
 
         def _render_commission_income():
             try:
@@ -1470,9 +2039,15 @@ class AlasGUI(Frame):
                     COMMISSION_ITEM_NAME_MAP,
                     COMMISSION_TRACKED_ITEMS,
                 )
-                instance_name = self.alas_name if hasattr(self, 'alas_name') and self.alas_name else None
+
+                instance_name = (
+                    self.alas_name
+                    if hasattr(self, "alas_name") and self.alas_name
+                    else None
+                )
                 if not instance_name:
                     from module.config.utils import alas_instance
+
                     all_instances = alas_instance()
                     instance_name = all_instances[0] if all_instances else None
                 if not instance_name:
@@ -1481,18 +2056,18 @@ class AlasGUI(Frame):
                     return
 
                 item_name_map = {
-                    'Gem': t("Gui.Stat.CommissionIncomeItemGem"),
-                    'Cube': t("Gui.Stat.CommissionIncomeItemCube"),
-                    'Chip': t("Gui.Stat.CommissionIncomeItemChip"),
-                    'Oil': t("Gui.Stat.CommissionIncomeItemOil"),
-                    'Coin': t("Gui.Stat.CommissionIncomeItemCoin"),
+                    "Gem": t("Gui.Stat.CommissionIncomeItemGem"),
+                    "Cube": t("Gui.Stat.CommissionIncomeItemCube"),
+                    "Chip": t("Gui.Stat.CommissionIncomeItemChip"),
+                    "Oil": t("Gui.Stat.CommissionIncomeItemOil"),
+                    "Coin": t("Gui.Stat.CommissionIncomeItemCoin"),
                 }
                 item_icon_map = {
-                    'Gem': 'static/assets/gui/icon/icon_1.png',
-                    'Cube': 'static/assets/gui/icon/icon_2.png',
-                    'Chip': 'static/assets/gui/icon/icon_3.png',
-                    'Oil': 'static/assets/gui/icon/icon_4.png',
-                    'Coin': 'static/assets/gui/icon/icon_5.png',
+                    "Gem": "static/assets/gui/icon/icon_1.png",
+                    "Cube": "static/assets/gui/icon/icon_2.png",
+                    "Chip": "static/assets/gui/icon/icon_3.png",
+                    "Oil": "static/assets/gui/icon/icon_4.png",
+                    "Coin": "static/assets/gui/icon/icon_5.png",
                 }
 
                 period = self._commission_income_period
@@ -1500,7 +2075,7 @@ class AlasGUI(Frame):
                 recent = get_recent_commission_entries(instance_name, limit=10)
 
                 with use_scope("commission_income", clear=True):
-                    html = '''
+                    html = """
                     <style>
                         #commission_income_container > div,
                         #commission_income_container table {
@@ -1516,34 +2091,38 @@ class AlasGUI(Frame):
                         }
                     </style>
                     <div id="commission_income_container" class="commission-income-summary" style="padding: 0; width: 100%; box-sizing: border-box;">
-                    '''
+                    """
 
                     html += f'<div style="font-size: 1rem; font-weight: 500; color: inherit; margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid rgba(128, 128, 128, 0.2);">{t("Gui.Stat.CommissionIncomeTitle")}</div>'
 
-                    rows = summary.get('detail_rows', [])
-                    has_data = rows and not all(r['total'] == 0 for r in rows)
+                    rows = summary.get("detail_rows", [])
+                    has_data = rows and not all(r["total"] == 0 for r in rows)
 
                     html += '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr)); gap: 12px; margin-bottom: 20px; width: 100%;">'
                     for row in rows:
-                        display_name = item_name_map.get(row['name'], row['name'])
-                        icon_path = item_icon_map.get(row['name'], '')
-                        total_str = f'+{row["total"]:,}' if row['total'] > 0 else '0'
-                        
+                        display_name = item_name_map.get(row["name"], row["name"])
+                        icon_path = item_icon_map.get(row["name"], "")
+                        total_str = f"+{row['total']:,}" if row["total"] > 0 else "0"
+
                         icon_html = (
-                            f'<div style="width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; background: {row["color"]}1a; border-radius: 8px; flex-shrink: 0;">'
-                            f'<img src="{icon_path}" style="width: 24px; height: 24px; object-fit: contain; background: transparent;">'
-                            f'</div>'
-                        ) if icon_path else f'<div style="width: 12px; height: 12px; border-radius: 50%; background: {row["color"]}; flex-shrink: 0;"></div>'
-                        
-                        html += f'''
+                            (
+                                f'<div style="width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; background: {row["color"]}1a; border-radius: 8px; flex-shrink: 0;">'
+                                f'<img src="{icon_path}" style="width: 24px; height: 24px; object-fit: contain; background: transparent;">'
+                                f"</div>"
+                            )
+                            if icon_path
+                            else f'<div style="width: 12px; height: 12px; border-radius: 50%; background: {row["color"]}; flex-shrink: 0;"></div>'
+                        )
+
+                        html += f"""
                         <div class="commission-income-metric-card" style="display: flex; align-items: center; gap: 10px; padding: 12px 14px; background: rgba(128, 128, 128, 0.05); border-radius: 6px; border: 1px solid rgba(128, 128, 128, 0.15);">
                             {icon_html}
                             <div style="display: flex; flex-direction: column; gap: 1px;">
                                 <span style="font-size: 0.78rem; opacity: 0.65;">{display_name}</span>
                                 <span style="font-size: 1.15rem; font-weight: 400; color: inherit;">{total_str}</span>
                             </div>
-                        </div>'''
-                    html += '</div>'
+                        </div>"""
+                    html += "</div>"
 
                     put_html(html)
 
@@ -1551,11 +2130,30 @@ class AlasGUI(Frame):
                         self._commission_income_period = p
                         _render_commission_income()
 
-                    put_buttons([
-                        {'label': t("Gui.Stat.CommissionIncomeDay"), 'value': 'day', 'color': 'primary' if period == 'day' else 'secondary'},
-                        {'label': t("Gui.Stat.CommissionIncomeWeek"), 'value': 'week', 'color': 'primary' if period == 'week' else 'secondary'},
-                        {'label': t("Gui.Stat.CommissionIncomeMonth"), 'value': 'month', 'color': 'primary' if period == 'month' else 'secondary'},
-                    ], onclick=on_period_click, small=True, scope="commission_income")
+                    put_buttons(
+                        [
+                            {
+                                "label": t("Gui.Stat.CommissionIncomeDay"),
+                                "value": "day",
+                                "color": "primary" if period == "day" else "secondary",
+                            },
+                            {
+                                "label": t("Gui.Stat.CommissionIncomeWeek"),
+                                "value": "week",
+                                "color": "primary" if period == "week" else "secondary",
+                            },
+                            {
+                                "label": t("Gui.Stat.CommissionIncomeMonth"),
+                                "value": "month",
+                                "color": "primary"
+                                if period == "month"
+                                else "secondary",
+                            },
+                        ],
+                        onclick=on_period_click,
+                        small=True,
+                        scope="commission_income",
+                    )
 
                     html2 = '<div class="commission-income-table-wrap" style="width: 100% !important; max-width: none !important; display: block !important; box-sizing: border-box;">'
                     if not has_data:
@@ -1563,37 +2161,47 @@ class AlasGUI(Frame):
                     else:
                         html2 += '<table class="commission-income-table" style="width: 100% !important; max-width: none !important; border-collapse: collapse; font-size: 0.85rem; table-layout: fixed; display: table;">'
                         html2 += '<colgroup><col style="width: 40%;"><col style="width: 20%;"><col style="width: 20%;"><col style="width: 20%;"></colgroup>'
-                        html2 += '<thead><tr>'
+                        html2 += "<thead><tr>"
                         html2 += f'<th style="text-align: left; padding: 8px 10px; background: rgba(128, 128, 128, 0.1); border-bottom: 1px solid rgba(128, 128, 128, 0.2); font-weight: 500; opacity: 0.8; font-size: 0.8rem;">{t("Gui.Stat.CommissionIncomeHeaderItem")}</th>'
                         html2 += f'<th style="text-align: right; padding: 8px 10px; background: rgba(128, 128, 128, 0.1); border-bottom: 1px solid rgba(128, 128, 128, 0.2); font-weight: 500; opacity: 0.8; font-size: 0.8rem;">{t("Gui.Stat.CommissionIncomeHeaderTotal")}</th>'
                         html2 += f'<th style="text-align: right; padding: 8px 10px; background: rgba(128, 128, 128, 0.1); border-bottom: 1px solid rgba(128, 128, 128, 0.2); font-weight: 500; opacity: 0.8; font-size: 0.8rem;">{t("Gui.Stat.CommissionIncomeHeaderCount")}</th>'
                         html2 += f'<th style="text-align: right; padding: 8px 10px; background: rgba(128, 128, 128, 0.1); border-bottom: 1px solid rgba(128, 128, 128, 0.2); font-weight: 500; opacity: 0.8; font-size: 0.8rem;">{t("Gui.Stat.CommissionIncomeHeaderAvg")}</th>'
-                        html2 += '</tr></thead><tbody>'
+                        html2 += "</tr></thead><tbody>"
 
                         for row in rows:
-                            if row['total'] == 0:
+                            if row["total"] == 0:
                                 continue
-                            display_name = item_name_map.get(row['name'], row['name'])
-                            icon_path = item_icon_map.get(row['name'], '')
-                            
+                            display_name = item_name_map.get(row["name"], row["name"])
+                            icon_path = item_icon_map.get(row["name"], "")
+
                             icon_html = (
-                                f'<div style="width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; background: {row["color"]}1a; border-radius: 4px; flex-shrink: 0;">'
-                                f'<img src="{icon_path}" style="width: 18px; height: 18px; object-fit: contain; background: transparent;">'
-                                f'</div>'
-                            ) if icon_path else f'<div style="width: 8px; height: 8px; border-radius: 50%; background: {row["color"]}; flex-shrink: 0;"></div>'
-                            
+                                (
+                                    f'<div style="width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; background: {row["color"]}1a; border-radius: 4px; flex-shrink: 0;">'
+                                    f'<img src="{icon_path}" style="width: 18px; height: 18px; object-fit: contain; background: transparent;">'
+                                    f"</div>"
+                                )
+                                if icon_path
+                                else f'<div style="width: 8px; height: 8px; border-radius: 50%; background: {row["color"]}; flex-shrink: 0;"></div>'
+                            )
+
                             html2 += '<tr style="border-bottom: 1px solid rgba(128, 128, 128, 0.1);">'
                             html2 += f'<td style="padding: 7px 10px;"><div style="display: flex; align-items: center; gap: 6px;">{icon_html}{display_name}</div></td>'
                             html2 += f'<td style="padding: 7px 10px; text-align: right; font-family: monospace;">{row["total"]:,}</td>'
                             html2 += f'<td style="padding: 7px 10px; text-align: right; font-family: monospace; opacity: 0.7;">{row["count"]}</td>'
                             html2 += f'<td style="padding: 7px 10px; text-align: right; font-family: monospace; opacity: 0.7;">{row["avg"]}</td>'
-                            html2 += '</tr>'
+                            html2 += "</tr>"
 
-                        html2 += '</tbody></table>'
+                        html2 += "</tbody></table>"
 
                     put_html(html2, scope="commission_income")
 
-                    put_button(t("Gui.Stat.Refresh"), onclick=_render_commission_income, color="secondary", small=True, scope="commission_income")
+                    put_button(
+                        t("Gui.Stat.Refresh"),
+                        onclick=_render_commission_income,
+                        color="secondary",
+                        small=True,
+                        scope="commission_income",
+                    )
 
                     html3 = '<div class="commission-income-recent" style="width: 100% !important; max-width: none !important; display: block !important; box-sizing: border-box;">'
                     if recent:
@@ -1601,54 +2209,66 @@ class AlasGUI(Frame):
                         html3 += f'<div style="font-size: 0.9rem; font-weight: 500; color: inherit; margin-bottom: 10px;">{t("Gui.Stat.CommissionIncomeRecentTitle")}</div>'
                         html3 += '<div style="font-size: 13px; width: 100%;">'
                         for entry in recent:
-                            ts = entry.get('ts', '')
+                            ts = entry.get("ts", "")
                             try:
                                 dt = datetime.fromisoformat(ts)
-                                time_str = dt.strftime('%m-%d %H:%M')
+                                time_str = dt.strftime("%m-%d %H:%M")
                             except Exception:
-                                time_str = ts[:16] if ts else '--'
-                            items = entry.get('items', {})
+                                time_str = ts[:16] if ts else "--"
+                            items = entry.get("items", {})
                             item_parts = []
                             for raw_name, amount in items.items():
                                 if not amount or int(amount) <= 0:
                                     continue
-                                mapped_name = COMMISSION_ITEM_NAME_MAP.get(raw_name, raw_name)
+                                mapped_name = COMMISSION_ITEM_NAME_MAP.get(
+                                    raw_name, raw_name
+                                )
                                 if mapped_name not in COMMISSION_TRACKED_ITEMS:
                                     continue
-                                meta = COMMISSION_ITEM_META.get(mapped_name, {'color': '#888'})
-                                icon_path = item_icon_map.get(mapped_name, '')
+                                meta = COMMISSION_ITEM_META.get(
+                                    mapped_name, {"color": "#888"}
+                                )
+                                icon_path = item_icon_map.get(mapped_name, "")
                                 display = item_name_map.get(mapped_name, mapped_name)
-                                
+
                                 icon_html = (
-                                    f'<div style="width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; background: {meta["color"]}1a; border-radius: 4px; margin-right: 6px; vertical-align: middle;">'
-                                    f'<img src="{icon_path}" style="width: 16px; height: 16px; object-fit: contain; background: transparent;">'
-                                    f'</div>'
-                                ) if icon_path else f'<span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: {meta["color"]}; margin-right: 4px;"></span>'
-                                
+                                    (
+                                        f'<div style="width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; background: {meta["color"]}1a; border-radius: 4px; margin-right: 6px; vertical-align: middle;">'
+                                        f'<img src="{icon_path}" style="width: 16px; height: 16px; object-fit: contain; background: transparent;">'
+                                        f"</div>"
+                                    )
+                                    if icon_path
+                                    else f'<span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: {meta["color"]}; margin-right: 4px;"></span>'
+                                )
+
                                 item_parts.append(
                                     f'<span style="display: inline-flex; align-items: center; margin-right: 12px; height: 24px;">'
-                                    f'{icon_html}'
+                                    f"{icon_html}"
                                     f'<span style="color: inherit;">{display}</span>'
                                     f'<span style="opacity: 0.65; margin-left: 2px;">x{int(amount)}</span>'
-                                    f'</span>'
+                                    f"</span>"
                                 )
-                            items_str = ''.join(item_parts) if item_parts else '<span style="opacity: 0.6;">--</span>'
+                            items_str = (
+                                "".join(item_parts)
+                                if item_parts
+                                else '<span style="opacity: 0.6;">--</span>'
+                            )
                             html3 += (
                                 f'<div class="commission-income-recent-row" style="display: flex; align-items: center; padding: 6px 0; border-bottom: 1px solid rgba(128, 128, 128, 0.1);">'
                                 f'<span style="opacity: 0.65; min-width: 80px; font-size: 12px;">{time_str}</span>'
                                 f'<span style="flex: 1;">{items_str}</span>'
-                                f'</div>'
+                                f"</div>"
                             )
-                        html3 += '</div>'
+                        html3 += "</div>"
 
                     html3 += f'<p style="font-size: 0.75rem; opacity: 0.5; margin-top: 10px;">{t("Gui.Stat.CommissionIncomeTotalCommissions", value=summary["total_commissions"])}</p>'
-                    html3 += '</div>'
+                    html3 += "</div>"
                     put_html(html3, scope="commission_income")
 
             except Exception as e:
                 with use_scope("commission_income", clear=True):
                     put_text(t("Gui.Stat.CommissionIncomeNoData"))
-                    logger.warning(f'Commission income render failed: {e}')
+                    logger.warning(f"Commission income render failed: {e}")
 
         put_scope("commission_income", [])
         _render_commission_income()
@@ -1709,7 +2329,7 @@ class AlasGUI(Frame):
                 content=[put_text(task_help).style("font-size: 1rem")],
             )
 
-        if task == 'OpsiSimulator':
+        if task == "OpsiSimulator":
             with use_scope("groups"):
                 self._os_simulator()
         
@@ -1717,40 +2337,45 @@ class AlasGUI(Frame):
         for group, arg_dict in deep_iter(self.ALAS_ARGS[task], depth=1):
             if self.set_group(group, arg_dict, config, task):
                 self.set_navigator(group)
-                
+
     def _os_simulator(self):
         self.simulator.set_config(self.alas_config)
         self._last_os_simulator_figure = None
 
         if self._simulator_logger_pm is None:
+
             class SimulatorLogger:
                 def __init__(self):
                     self.renderables = []
                     self.renderables_max_length = 2000
                     self.renderables_reduce_length = 1000
                     self.renderables_total = 0
+
             self._simulator_logger_pm = SimulatorLogger()
 
         pm = self._simulator_logger_pm
         import logging
+
         class ListHandler(logging.Handler):
             def emit(self, record):
                 msg = self.format(record)
-                pm.renderables.append(msg + '\n')
+                pm.renderables.append(msg + "\n")
                 pm.renderables_total += 1
                 if len(pm.renderables) > pm.renderables_max_length:
-                    del pm.renderables[:pm.renderables_reduce_length]
+                    del pm.renderables[: pm.renderables_reduce_length]
 
         # Remove existing handlers to avoid duplication on page refresh
         for h in self.simulator.logger.handlers[:]:
-            if getattr(h, 'is_webui_simulator_handler', False):
+            if getattr(h, "is_webui_simulator_handler", False):
                 self.simulator.logger.removeHandler(h)
 
         handler = ListHandler()
-        handler.setFormatter(logging.Formatter(
-            fmt='%(asctime)s.%(msecs)03d | %(levelname)s | %(message)s',
-            datefmt='%Y-%m-%d %H:%M:%S'
-        ))
+        handler.setFormatter(
+            logging.Formatter(
+                fmt="%(asctime)s.%(msecs)03d | %(levelname)s | %(message)s",
+                datefmt="%Y-%m-%d %H:%M:%S",
+            )
+        )
         handler.is_webui_simulator_handler = True
         self.simulator.logger.addHandler(handler)
 
@@ -1761,11 +2386,11 @@ class AlasGUI(Frame):
                     "font-size: 1.25rem; margin: auto .5rem auto;"
                 ),
                 put_scope("scheduler_btn"),
-            ]
+            ],
         )
-        
+
         put_scope("figure_display")
-        
+
         put_scope(
             "logs",
             [
@@ -1790,10 +2415,8 @@ class AlasGUI(Frame):
                         ),
                     ],
                 ),
-                put_scope("log-container", [
-                    put_scope("log", [put_html("")])
-                ])
-            ]
+                put_scope("log-container", [put_scope("log", [put_html("")])]),
+            ],
         )
 
         switch_scheduler = BinarySwitchButton(
@@ -1824,7 +2447,7 @@ class AlasGUI(Frame):
 
         def _update_simulator_figure():
             # Prevent flicker by checking if figure has changed
-            last_figure = getattr(self, '_last_os_simulator_figure', None)
+            last_figure = getattr(self, "_last_os_simulator_figure", None)
             if self.simulator.figure == last_figure:
                 return
 
@@ -1833,25 +2456,27 @@ class AlasGUI(Frame):
 
             if figure_path:
                 try:
-                    with open(figure_path, 'rb') as f:
-                        img_b64 = base64.b64encode(f.read()).decode('utf-8')
-                    with use_scope('figure_display', clear=True):
-                        put_html(f'<img src="data:image/png;base64,{img_b64}" style="max-width: 100%; height: auto; display: block; margin: 0 auto;">')
+                    with open(figure_path, "rb") as f:
+                        img_b64 = base64.b64encode(f.read()).decode("utf-8")
+                    with use_scope("figure_display", clear=True):
+                        put_html(
+                            f'<img src="data:image/png;base64,{img_b64}" style="max-width: 100%; height: auto; display: block; margin: 0 auto;">'
+                        )
                 except FileNotFoundError:
                     # This can happen if the figure is deleted before it's read
-                    with use_scope('figure_display', clear=True):
-                        pass # Clear the image
+                    with use_scope("figure_display", clear=True):
+                        pass  # Clear the image
                 except Exception as e:
                     logger.warning(f"Failed to update simulator figure: {e}")
             else:
-                with use_scope('figure_display', clear=True):
-                    pass # Clear the image
+                with use_scope("figure_display", clear=True):
+                    pass  # Clear the image
+
         self.task_handler.add(_update_simulator_figure, 0.5, True)
 
         self.task_handler.add(log.put_log(pm), 0.25, True)
 
     @use_scope("groups")
-
     def set_group(self, group, arg_dict, config, task):
         group_name = group[0]
         server = to_server(deep_get(config, "Alas.Emulator.PackageName", "cn"))
@@ -1886,13 +2511,19 @@ class AlasGUI(Frame):
             output_kwargs["value"] = value
             # Options
             options = output_kwargs.pop("option", [])
-            server = to_server(deep_get(config, 'Alas.Emulator.PackageName', 'cn'))
-            available_events = deep_get(self.ALAS_ARGS, keys=f'{task}.{group_name}.{arg_name}.option_{server}')
+            server = to_server(deep_get(config, "Alas.Emulator.PackageName", "cn"))
+            available_events = deep_get(
+                self.ALAS_ARGS, keys=f"{task}.{group_name}.{arg_name}.option_{server}"
+            )
             if available_events is not None:
                 options = [opt for opt in options if opt in available_events]
-            
+
             server_options = output_kwargs.get(f"option_{server}")
-            if output_kwargs["widget_type"] == "select" and isinstance(server_options, list) and server_options:
+            if (
+                output_kwargs["widget_type"] == "select"
+                and isinstance(server_options, list)
+                and server_options
+            ):
                 options = server_options
             output_kwargs["options"] = options
             if (
@@ -2009,7 +2640,7 @@ class AlasGUI(Frame):
                         label=t("Gui.Button.Open"),
                         onclick=self.alas_set_stat,
                         color="on",
-                    )
+                    ),
                 ],
             )
             put_scope(
@@ -2098,7 +2729,10 @@ class AlasGUI(Frame):
 })();
 """)
 
-        if self._overview_log is None or self._overview_log_config_name != self.alas_name:
+        if (
+            self._overview_log is None
+            or self._overview_log_config_name != self.alas_name
+        ):
             self._overview_log = RichLog("log")
             self._overview_log_config_name = self.alas_name
         else:
@@ -2110,21 +2744,23 @@ class AlasGUI(Frame):
         self._log.dashboard_arg_group = LogRes(self.alas_config).groups
 
         with use_scope("logs"):
-            if 'Maa' in self.ALAS_ARGS:
-                put_scope(
-                    "log-bar",
-                    [
-                        put_text(t("Gui.Overview.Log")).style(
-                            "font-size: 1.25rem; margin: auto .5rem auto;"
-                        ),
-                        put_scope(
-                            "log-bar-btns",
-                            [
-                                put_scope("log_scroll_btn"),
-                            ],
-                        ),
-                    ],
-                ),
+            if "Maa" in self.ALAS_ARGS:
+                (
+                    put_scope(
+                        "log-bar",
+                        [
+                            put_text(t("Gui.Overview.Log")).style(
+                                "font-size: 1.25rem; margin: auto .5rem auto;"
+                            ),
+                            put_scope(
+                                "log-bar-btns",
+                                [
+                                    put_scope("log_scroll_btn"),
+                                ],
+                            ),
+                        ],
+                    ),
+                )
             else:
                 put_scope(
                     "log-bar",
@@ -2150,13 +2786,13 @@ class AlasGUI(Frame):
                         put_html('<hr class="hr-group">'),
                         put_scope("dashboard"),
                     ],
-                ),
+                )
             # version
             local_commit = updater.get_commit(short_sha1=True)
             version = local_commit[0] if local_commit and local_commit[0] else "Unknown"
-            put_scope("log-container", [
-                put_scope("log", [put_html("")])
-            ]).style(f"--device-id: '{get_device_id()}'; --version: 'Ver.{version}';")
+            put_scope("log-container", [put_scope("log", [put_html("")])]).style(
+                f"--device-id: '{get_device_id()}'; --version: 'Ver.{version}';"
+            )
 
         log.console.width = log.get_width()
 
@@ -2182,13 +2818,13 @@ class AlasGUI(Frame):
         )
         self.task_handler.add(switch_scheduler.g(), 1, True)
         self.task_handler.add(switch_log_scroll.g(), 1, True)
-        if 'Maa' not in self.ALAS_ARGS:
+        if "Maa" not in self.ALAS_ARGS:
             self.task_handler.add(switch_dashboard.g(), 1, True)
         self.task_handler.add(self.alas_update_overview_task, 10, True)
-        if 'Maa' not in self.ALAS_ARGS:
+        if "Maa" not in self.ALAS_ARGS:
             self.task_handler.add(self.alas_update_dashboard, 10, True)
             self.alas_update_dashboard(True)
-        if hasattr(self, 'alas') and self.alas is not None:
+        if hasattr(self, "alas") and self.alas is not None:
             self.task_handler.add(log.put_log(self.alas), 0.25, True)
             self.task_handler.add(self.update_screenshot_display, 0.1, True)
         else:
@@ -2323,10 +2959,10 @@ class AlasGUI(Frame):
                     break
 
     def _save_config(
-            self,
-            modified: Dict[str, str],
-            config_name: str,
-            config_updater: AzurLaneConfig = State.config_updater,
+        self,
+        modified: Dict[str, str],
+        config_name: str,
+        config_updater: AzurLaneConfig = State.config_updater,
     ) -> None:
         if os.environ.get("DEMO") == "1":
             return
@@ -2338,9 +2974,9 @@ class AlasGUI(Frame):
             config = config_updater.read_file(config_name)
             n = datetime.now()
             for p, v in deep_iter(config, depth=3):
-                if p[-1].endswith('un') and not isinstance(v, bool):
+                if p[-1].endswith("un") and not isinstance(v, bool):
                     if (v - n).days >= 31:
-                        deep_set(config, p, '')
+                        deep_set(config, p, "")
             for k, v in modified.copy().items():
                 valuetype = deep_get(self.ALAS_ARGS, k + ".valuetype")
                 v = parse_pin_value(v, valuetype)
@@ -2363,32 +2999,45 @@ class AlasGUI(Frame):
                         pin["_".join(set_key.split("."))] = to_pin_value(set_value)
                     # ==================== 自定义弹窗逻辑 ====================
                     # 当保存侵蚀1兑换凭证保留值为 0 时弹出提示
-                    if k in [
-                        "OpsiHazard1Leveling.OpsiHazard1Leveling.OperationCoinsPreserve",
-                        "OpsiScheduling.OpsiScheduling.OperationCoinsPreserve"
-                    ] and int(v) == 0:
+                    if (
+                        k
+                        in [
+                            "OpsiHazard1Leveling.OpsiHazard1Leveling.OperationCoinsPreserve",
+                            "OpsiScheduling.OpsiScheduling.OperationCoinsPreserve",
+                        ]
+                        and int(v) == 0
+                    ):
                         from pywebio.output import popup, put_html, PopupSize
-                        popup("你在干什么？", [put_html('<div style="line-height:1.8;font-size:14px;">'
-                            '任务帮助文本这里都写了，你是完全不看啊，写了跟白写了一样还问问问我就要我偏不，你就是找骂<br><br>'
-                            '为什么保留黄币没有暴露在前端，因为那是用来防呆的，防的就是像你一样的脑瘫自以为是71魔怔人，盲目地将保留数量改成0，然后没有黄币买不起行动力，然后跑跑跑黄币和行动力全亏完又回来瞎鸡巴乱叫，像你妈的个弱智睁大你的马眼看看猫商店的行动力箱子是要用黄币买的，没黄币你买鸡巴还做春秋大梦赚行动力<br><br>'
-                            '为什么 Alas社区准则 不允许讨论71，就是因为像你一样的71魔怔人太多了，然后大魔怔人带小魔怔人，跟苍蝇吃屎一样一生生一窝，我不骂你那不知道的还以为你这是主流玩法，我是不知道你从哪里看的狗屎攻略还是民科搞发明创造出来的，你只需要打开功能开始运行就能获得顶尖玩家的决策水平，但是有现成的功能你不用，十足超人高中生发现了世界的真理，只有你是聪明逼剩余都是傻逼<br><br>'
-                            '我来告诉你71怎么刷，那就是帮助文本里写的可惜你没看，告诉你答案你不服气我就要改，改改改改你妈了个臭嗨改，能力没有皮是比包皮还皮，能耐得飞起比性无能还能，说白了你不是来寻求最大收益的，你是来砸场子的，你非要Alas对着你那收益屌差的游戏玩法去设计，连同全体Alas用户跟着运行<br><br>'
-                            '我来告诉你71魔怔人是怎么样的魔怔，首先第一个就是打死不留黄币，第二大就是打死不短猫<br><br>'
-                            '1.打死不留黄币，完全不知道71要消耗黄币，觉得自己很多黄币以为行动力是无中生有超级摸牌<br>'
-                            '2.打死不短猫，完全不知道黄币靠短猫回，屯几千行动力当天地银元留给亲妈下葬<br>'
-                            '3.打死不带奶，带一摞低级船不带输出不带奶贪经验贪到死，打一回合死一百万人修一百万次<br>'
-                            '4.幻想当赌神，年轻人第一次网络菠菜，行动力亏没了不仅大声叫还要继续刷，裤衩子亏没了还要梭哈<br>'
-                            '5.幻想刷委托，跑图又慢概率又低，觉得能无限打怪当2-4代餐<br>'
-                            '6.幻想有魔法，什么只留蓝箱子能提高猫商店刷新概率，哇说出这话的人不枪毙两小时概率论老师真是死不瞑目<br><br>'
-                            '反正我讲了这么多我知道你是肯定不会听的，你的内心肯定是屌你妈逼臭傻逼，完全听不进去，但是我还是要把整个71的玩法再念叨一遍，不是讲给你听的，是讲给看我骂你的人听的<br><br>'
-                            '1.71的收益是经验和金菜金材料，以及让你的Alas一直运行虽然不知道在干什么但是感觉很爽。71的经验是每10w黄币73w（单个角色没有心情加成）就像天上掉金子一样稍微接点就够发一辈子的那种。如果你的帐号进入游戏末期，经验没用因为卡心智那收益就是每10w黄币换9.36金菜，石油就2-4刷委托这样能获得经验物资魔方金菜钻石等等所有的游戏资源<br>'
-                            '2.71的收益来源是黄币，行动力是催化剂，71大量消耗黄币获取行动力，短猫消耗多余行动力补充部分黄币，二者是相辅相成的，Alas会自动保持他们之间的动态平衡。20小时71能消耗10w黄币多884行动力，再短猫4小时返还3.5w，每月能获取的黄币是有限的因此71的收益也是有限的<br>'
-                            '3.运行71的前提是你能完成大世界每日商店深渊隐秘balabala全部来获得金彩材料，多余的黄币再来运行71，否则就是本末倒置<br>'
-                            '4.千万不要买紫币，紫币的主要来源是要塞，白票的主要来源是月度boss，只要你大世界用Alas全勤紫币和白票都是不缺的，猫商店紫币多20%那是多20%白票，但在71里白票的价值体系直接作废所有东西用黄币来衡量，买紫币相当于用稀缺资源兑换溢出资源<br>'
-                            '5.71本质是赛博菠菜，消耗5行动力赌5%猫商店刷新，外加两个装置各4%其中一个拆了能爆点行动力，赌赢了你别笑赌输了你别叫，没有抽卡保底就是嗯roll， 猫商店刷新权重 解包都有也没有玄学，只能说从数学期望的角度是赚的，但没保底的随机是真的恶心。有1000行动力本钱就是90%概率不翻车，2000就是98%，已经边际效应了再高不能了不如赶紧转换为黄币<br>'
-                            '6.建议行动力买满，这样玩输了还有加仓的机会能再次转起来，丢10000油进71产出的经验也比丢主线图高出一个数量级<br>'
-                            '7.开启71的任务后Alas的运行逻辑会发生变化，用来提高收益和减少呆瓜，包括前面说的71短猫动态平衡，全局不买紫币，还有最少留100行动力防止明天不够做每日，月初用赚来的行动力做隐秘深渊要塞防止行动力被秒吸干转不起来，月底停71防止浪费'
-                            '</div>')], size=PopupSize.LARGE)
+
+                        popup(
+                            "你在干什么？",
+                            [
+                                put_html(
+                                    '<div style="line-height:1.8;font-size:14px;">'
+                                    "任务帮助文本这里都写了，你是完全不看啊，写了跟白写了一样还问问问我就要我偏不，你就是找骂<br><br>"
+                                    "为什么保留黄币没有暴露在前端，因为那是用来防呆的，防的就是像你一样的脑瘫自以为是71魔怔人，盲目地将保留数量改成0，然后没有黄币买不起行动力，然后跑跑跑黄币和行动力全亏完又回来瞎鸡巴乱叫，像你妈的个弱智睁大你的马眼看看猫商店的行动力箱子是要用黄币买的，没黄币你买鸡巴还做春秋大梦赚行动力<br><br>"
+                                    "为什么 Alas社区准则 不允许讨论71，就是因为像你一样的71魔怔人太多了，然后大魔怔人带小魔怔人，跟苍蝇吃屎一样一生生一窝，我不骂你那不知道的还以为你这是主流玩法，我是不知道你从哪里看的狗屎攻略还是民科搞发明创造出来的，你只需要打开功能开始运行就能获得顶尖玩家的决策水平，但是有现成的功能你不用，十足超人高中生发现了世界的真理，只有你是聪明逼剩余都是傻逼<br><br>"
+                                    "我来告诉你71怎么刷，那就是帮助文本里写的可惜你没看，告诉你答案你不服气我就要改，改改改改你妈了个臭嗨改，能力没有皮是比包皮还皮，能耐得飞起比性无能还能，说白了你不是来寻求最大收益的，你是来砸场子的，你非要Alas对着你那收益屌差的游戏玩法去设计，连同全体Alas用户跟着运行<br><br>"
+                                    "我来告诉你71魔怔人是怎么样的魔怔，首先第一个就是打死不留黄币，第二大就是打死不短猫<br><br>"
+                                    "1.打死不留黄币，完全不知道71要消耗黄币，觉得自己很多黄币以为行动力是无中生有超级摸牌<br>"
+                                    "2.打死不短猫，完全不知道黄币靠短猫回，屯几千行动力当天地银元留给亲妈下葬<br>"
+                                    "3.打死不带奶，带一摞低级船不带输出不带奶贪经验贪到死，打一回合死一百万人修一百万次<br>"
+                                    "4.幻想当赌神，年轻人第一次网络菠菜，行动力亏没了不仅大声叫还要继续刷，裤衩子亏没了还要梭哈<br>"
+                                    "5.幻想刷委托，跑图又慢概率又低，觉得能无限打怪当2-4代餐<br>"
+                                    "6.幻想有魔法，什么只留蓝箱子能提高猫商店刷新概率，哇说出这话的人不枪毙两小时概率论老师真是死不瞑目<br><br>"
+                                    "反正我讲了这么多我知道你是肯定不会听的，你的内心肯定是屌你妈逼臭傻逼，完全听不进去，但是我还是要把整个71的玩法再念叨一遍，不是讲给你听的，是讲给看我骂你的人听的<br><br>"
+                                    "1.71的收益是经验和金菜金材料，以及让你的Alas一直运行虽然不知道在干什么但是感觉很爽。71的经验是每10w黄币73w（单个角色没有心情加成）就像天上掉金子一样稍微接点就够发一辈子的那种。如果你的帐号进入游戏末期，经验没用因为卡心智那收益就是每10w黄币换9.36金菜，石油就2-4刷委托这样能获得经验物资魔方金菜钻石等等所有的游戏资源<br>"
+                                    "2.71的收益来源是黄币，行动力是催化剂，71大量消耗黄币获取行动力，短猫消耗多余行动力补充部分黄币，二者是相辅相成的，Alas会自动保持他们之间的动态平衡。20小时71能消耗10w黄币多884行动力，再短猫4小时返还3.5w，每月能获取的黄币是有限的因此71的收益也是有限的<br>"
+                                    "3.运行71的前提是你能完成大世界每日商店深渊隐秘balabala全部来获得金彩材料，多余的黄币再来运行71，否则就是本末倒置<br>"
+                                    "4.千万不要买紫币，紫币的主要来源是要塞，白票的主要来源是月度boss，只要你大世界用Alas全勤紫币和白票都是不缺的，猫商店紫币多20%那是多20%白票，但在71里白票的价值体系直接作废所有东西用黄币来衡量，买紫币相当于用稀缺资源兑换溢出资源<br>"
+                                    "5.71本质是赛博菠菜，消耗5行动力赌5%猫商店刷新，外加两个装置各4%其中一个拆了能爆点行动力，赌赢了你别笑赌输了你别叫，没有抽卡保底就是嗯roll， 猫商店刷新权重 解包都有也没有玄学，只能说从数学期望的角度是赚的，但没保底的随机是真的恶心。有1000行动力本钱就是90%概率不翻车，2000就是98%，已经边际效应了再高不能了不如赶紧转换为黄币<br>"
+                                    "6.建议行动力买满，这样玩输了还有加仓的机会能再次转起来，丢10000油进71产出的经验也比丢主线图高出一个数量级<br>"
+                                    "7.开启71的任务后Alas的运行逻辑会发生变化，用来提高收益和减少呆瓜，包括前面说的71短猫动态平衡，全局不买紫币，还有最少留100行动力防止明天不够做每日，月初用赚来的行动力做隐秘深渊要塞防止行动力被秒吸干转不起来，月底停71防止浪费"
+                                    "</div>"
+                                )
+                            ],
+                            size=PopupSize.LARGE,
+                        )
                     # ========================================================
                 else:
                     modified.pop(k)
@@ -2478,86 +3127,110 @@ class AlasGUI(Frame):
     def _update_dashboard(self, num=None, groups_to_display=None):
         x = 0
         _num = 10000 if num is None else num
-        _arg_group = self._log.dashboard_arg_group if groups_to_display is None else groups_to_display
+        _arg_group = (
+            self._log.dashboard_arg_group
+            if groups_to_display is None
+            else groups_to_display
+        )
         time_now = datetime.now().replace(microsecond=0)
         for group_name in _arg_group:
             group = LogRes(self.alas_config).group(group_name)
             if group is None:
                 continue
 
-            value = str(group['Value'])
-            if 'Limit' in group.keys():
-                value_limit = f' / {group["Limit"]}'
-                value_total = ''
-            elif 'Total' in group.keys():
-                value_total = f' ({group["Total"]})'
-                value_limit = ''
-            elif group_name == 'Pt':
-                value_limit = ' / ' + re.sub(r'[,.\'"，。]', '',
-                                             str(deep_get(self.alas_config.data, 'EventGeneral.EventGeneral.PtLimit')))
-                if value_limit == ' / 0':
-                    value_limit = ''
+            value = str(group["Value"])
+            if "Limit" in group.keys():
+                value_limit = f" / {group['Limit']}"
+                value_total = ""
+            elif "Total" in group.keys():
+                value_total = f" ({group['Total']})"
+                value_limit = ""
+            elif group_name == "Pt":
+                value_limit = " / " + re.sub(
+                    r'[,.\'"，。]',
+                    "",
+                    str(
+                        deep_get(
+                            self.alas_config.data, "EventGeneral.EventGeneral.PtLimit"
+                        )
+                    ),
+                )
+                if value_limit == " / 0":
+                    value_limit = ""
             else:
-                value_limit = ''
-                value_total = ''
+                value_limit = ""
+                value_total = ""
 
-
-            value_time = group['Record']
+            value_time = group["Record"]
             if value_time is None or value_time == datetime(2020, 1, 1, 0, 0, 0):
                 value_time = datetime(2023, 1, 1, 0, 0, 0)
 
             # Handle time delta
             if value_time == datetime(2023, 1, 1, 0, 0, 0):
-                value = 'None'
+                value = "None"
                 delta = timedelta_to_text()
             else:
                 delta = timedelta_to_text(time_delta(value_time - time_now))
 
             if group_name not in self._log.last_display_time.keys():
-                self._log.last_display_time[group_name] = ''
+                self._log.last_display_time[group_name] = ""
             self._log.last_display_time[group_name] = delta
 
             # if self._log.first_display:
             # Handle width
             # value_width = len(value) * 0.7 + 0.6 if value != 'None' else 4.5
             # value_width = str(value_width/1.12) + 'rem' if self.is_mobile else str(value_width) + 'rem'
-            value_limit = '' if value == 'None' else value_limit
+            value_limit = "" if value == "None" else value_limit
             # limit_width = len(value_limit) * 0.7
             # limit_width = str(limit_width) + 'rem'
-            value_total = '' if value == 'None' else value_total
-            limit_style = '--dashboard-limit--' if value_limit else '--dashboard-total--'
+            value_total = "" if value == "None" else value_total
+            limit_style = (
+                "--dashboard-limit--" if value_limit else "--dashboard-total--"
+            )
             value_limit = value_limit if value_limit else value_total
             # Handle dot color
-            _color = f"""background-color:{deep_get(group, 'Color').replace('^', '#')}"""
+            _color = (
+                f"""background-color:{deep_get(group, "Color").replace("^", "#")}"""
+            )
             color = f'<div class="status-point" style={_color}>'
-            with use_scope(group_name, clear=True):
-                put_row(
-                    [
-                        put_html(color),
-                        put_scope(
-                            f"{group_name}_group",
-                            [
-                                put_column(
-                                    [
-                                        put_row(
-                                            [
-                                                put_text(value
-                                                         ).style(f'--dashboard-value--'),
-                                                put_text(value_limit
-                                                         ).style(limit_style),
-                                            ],
-                                        ).style('grid-template-columns:min-content auto;align-items: baseline;'),
-                                        put_text(
-                                            t(f"Gui.Dashboard.{group_name}") + " - " + delta
-                                        ).style('---dashboard-help--')
-                                    ],
-                                    size="auto auto",
-                                ),
-                            ],
-                        ),
-                    ],
-                    size="20px 1fr"
-                ).style("height: 1fr"),
+            # 使用集中管理的辅助函数生成 scope_id，确保命名一致性和安全性
+            scope_id = get_dashboard_scope_id(group_name)
+            with use_scope(scope_id, clear=True):
+                (
+                    put_row(
+                        [
+                            put_html(color),
+                            put_scope(
+                                get_group_scope_id(group_name),
+                                [
+                                    put_column(
+                                        [
+                                            put_row(
+                                                [
+                                                    put_text(value).style(
+                                                        f"--dashboard-value--"
+                                                    ),
+                                                    put_text(value_limit).style(
+                                                        limit_style
+                                                    ),
+                                                ],
+                                            ).style(
+                                                "grid-template-columns:min-content auto;align-items: baseline;"
+                                            ),
+                                            put_text(
+                                                t(f"Gui.Dashboard.{group_name}")
+                                                + " - "
+                                                + delta
+                                            ).style("---dashboard-help--"),
+                                        ],
+                                        size="auto auto",
+                                    ),
+                                ],
+                            ),
+                        ],
+                        size="20px 1fr",
+                    ).style("height: 1fr"),
+                )
             x += 1
             if x >= _num:
                 break
@@ -2569,7 +3242,9 @@ class AlasGUI(Frame):
             return
         with use_scope("dashboard", clear=_clear):
             if not self._log.display_dashboard:
-                self._update_dashboard(num=4, groups_to_display=['Oil', 'Coin', 'Gem', 'Pt'])
+                self._update_dashboard(
+                    num=4, groups_to_display=["Oil", "Coin", "Gem", "Pt"]
+                )
             elif self._log.display_dashboard:
                 self._update_dashboard()
 
@@ -2884,7 +3559,7 @@ class AlasGUI(Frame):
 
         self.task_handler.add(switch_scheduler.g(), 1, True)
         self.task_handler.add(switch_log_scroll.g(), 1, True)
-        if hasattr(self, 'alas') and self.alas is not None:
+        if hasattr(self, "alas") and self.alas is not None:
             self.task_handler.add(log.put_log(self.alas), 0.25, True)
 
     @use_scope("menu", clear=True)
@@ -3136,7 +3811,9 @@ class AlasGUI(Frame):
             if not target:
                 toast("未找到可用实例，无法模拟图标状态", color="warning")
                 return
-            ProcessManager.get_manager(target).set_state_override(state, duration=seconds)
+            ProcessManager.get_manager(target).set_state_override(
+                state, duration=seconds
+            )
             _refresh_debug_status()
             toast(f"已为 {target} 模拟状态 {state}（{seconds}s）", color="info")
 
@@ -3157,7 +3834,9 @@ class AlasGUI(Frame):
             ],
             onclick=lambda state: _mock_icon_state(state, 10),
         )
-        put_button(label="清除图标模拟状态", onclick=_clear_mock_icon_state, color="secondary")
+        put_button(
+            label="清除图标模拟状态", onclick=_clear_mock_icon_state, color="secondary"
+        )
 
         def _force_restart():
             if State.restart_event is not None:
@@ -3171,32 +3850,42 @@ class AlasGUI(Frame):
 
         def _test_notify_update():
             from module.notify.notify import notify_webui
+
             instance = getattr(self, "alas_name", "alas")
             notify_webui(
                 instance=instance,
                 title="发现更新喵！",
                 content="测试更新推送逻辑，启动器应显示专用标题。",
-                update=True
+                update=True,
             )
             toast("已发送更新测试通知", color="success")
 
         def _test_notify_announcement():
             from module.notify.notify import notify_webui
+
             instance = getattr(self, "alas_name", "alas")
             notify_webui(
                 instance=instance,
                 title="新公告喵！",
                 content="测试公告推送逻辑，启动器应显示专用标题。",
-                updata=False
+                updata=False,
             )
             toast("已发送公告测试通知", color="info")
 
         put_buttons(
             buttons=[
-                {"label": "测试更新推送 (updata=True)", "value": "update", "color": "danger"},
-                {"label": "测试公告推送 (updata=False)", "value": "announcement", "color": "info"},
+                {
+                    "label": "测试更新推送 (updata=True)",
+                    "value": "update",
+                    "color": "danger",
+                },
+                {
+                    "label": "测试公告推送 (updata=False)",
+                    "value": "announcement",
+                    "color": "info",
+                },
             ],
-            onclick=[_test_notify_update, _test_notify_announcement]
+            onclick=[_test_notify_update, _test_notify_announcement],
         )
 
     @use_scope("content", clear=True)
@@ -3235,9 +3924,8 @@ class AlasGUI(Frame):
                 put_loading("border", "secondary", "remote_loading").style(
                     "--loading-border-fill--"
                 )
-                if (
-                        State.deploy_config.EnableRemoteAccess
-                        and (State.deploy_config.Password or os.environ.get("DEMO") == "1")
+                if State.deploy_config.EnableRemoteAccess and (
+                    State.deploy_config.Password or os.environ.get("DEMO") == "1"
                 ):
                     put_text(t("Gui.Remote.NotRunning"), scope="remote_state")
                 else:
@@ -3264,13 +3952,16 @@ class AlasGUI(Frame):
 
     def _preview_update_popup(self) -> None:
         from pywebio.output import toast, close_popup
+
         def handle_preview_click():
             close_popup()
             toast("success", color="success")
-            
+
         with use_scope("ROOT"):
-            popup("更新提醒", [
-                put_html(f'''
+            popup(
+                "更新提醒",
+                [
+                    put_html(f"""
                     <div style="text-align: center; padding: 15px 0; font-family: \'Segoe UI\', Tahoma, Geneva, Verdana, sans-serif;">
                         <div style="margin-bottom: 20px;">
                             <div style="width: 50px; height: 50px; background: rgba(240, 62, 62, 0.1); border-radius: 25px; margin: 0 auto; display: flex; align-items: center; justify-content: center;">
@@ -3287,10 +3978,23 @@ class AlasGUI(Frame):
                             </div>
                         </div>
                     </div>
-                '''),
-                put_buttons([{"label": "立即更新 / Update Now", "value": "update", "color": "danger"}], 
-                           onclick=[handle_preview_click]).style("text-align: center; width: 100%; padding-bottom: 20px; border-top: none;")
-            ], size="large", implicit_close=True)
+                """),
+                    put_buttons(
+                        [
+                            {
+                                "label": "立即更新 / Update Now",
+                                "value": "update",
+                                "color": "danger",
+                            }
+                        ],
+                        onclick=[handle_preview_click],
+                    ).style(
+                        "text-align: center; width: 100%; padding-bottom: 20px; border-top: none;"
+                    ),
+                ],
+                size="large",
+                implicit_close=True,
+            )
 
     def ui_develop(self) -> None:
         if not self.is_mobile:
@@ -3302,7 +4006,7 @@ class AlasGUI(Frame):
         self.alas_name = ""
         if hasattr(self, "alas"):
             del self.alas
-        if hasattr(self, 'state_switch'):
+        if hasattr(self, "state_switch"):
             try:
                 self.state_switch.switch()
             except Exception:
@@ -3318,7 +4022,7 @@ class AlasGUI(Frame):
         self.alas_mod = get_config_mod(config_name)
         self.alas = ProcessManager.get_manager(config_name)
         self.alas_config = load_config(config_name)
-        if hasattr(self, 'state_switch'):
+        if hasattr(self, "state_switch"):
             try:
                 self.state_switch.switch()
             except Exception:
@@ -3533,7 +4237,6 @@ class AlasGUI(Frame):
                 [
                     {"label": "Light", "value": "default", "color": "light"},
                     {"label": "Dark", "value": "dark", "color": "dark"},
-
                     {"label": "新春 ", "value": "socialism", "color": "danger"},
                     {"label": "Apple", "value": "apple", "color": "primary"},
                 ],
@@ -3552,9 +4255,7 @@ class AlasGUI(Frame):
 
             修改版问题请联系：`https://addgroup.nanoda.work/`
             """
-           ).style("text-align: center")
-
-
+            ).style("text-align: center")
 
         if lang.TRANSLATE_MODE:
             lang.reload()
@@ -3576,6 +4277,7 @@ class AlasGUI(Frame):
         """
         try:
             from module.base.api_client import ApiClient
+
             data = ApiClient.get_announcement(timeout=10)
             self._announcement_result = (data, force)
         except Exception as e:
@@ -3594,9 +4296,7 @@ class AlasGUI(Frame):
         self._announcement_force = force
         self._announcement_result = None
         threading.Thread(
-            target=self._fetch_announcement_thread,
-            args=(force,),
-            daemon=True
+            target=self._fetch_announcement_thread, args=(force,), daemon=True
         ).start()
 
     def _process_announcement_result(self):
@@ -3623,7 +4323,7 @@ class AlasGUI(Frame):
         data, force = result
 
         if data:
-            announcement_id = data.get('announcementId')
+            announcement_id = data.get("announcementId")
 
             # If force is False, check if we need to update
             if not force:
@@ -3633,25 +4333,35 @@ class AlasGUI(Frame):
                 # Check if browser has seen it (only if not forced)
                 try:
                     announcement_id_json = json.dumps(announcement_id)
-                    has_shown = eval_js(f"window.alasHasBeenShown({announcement_id_json})")
+                    has_shown = eval_js(
+                        f"window.alasHasBeenShown({announcement_id_json})"
+                    )
                     if has_shown:
                         self._last_announcement_id = announcement_id
                         return True
                 except Exception:
                     pass
 
-            title_json = json.dumps(data.get('title', ''))
-            content_json = json.dumps(data.get('content', ''))
+            title_json = json.dumps(data.get("title", ""))
+            content_json = json.dumps(data.get("content", ""))
             announcement_id_json = json.dumps(announcement_id)
-            url_json = json.dumps(data.get('url', ''))
+            url_json = json.dumps(data.get("url", ""))
             force_json = "true" if force else "false"
 
             logger.info(f"Pushing announcement: {data.get('title')}")
-            run_js(f"window.alasShowAnnouncement({title_json}, {content_json}, {announcement_id_json}, {url_json}, {force_json});")
-            
+            run_js(
+                f"window.alasShowAnnouncement({title_json}, {content_json}, {announcement_id_json}, {url_json}, {force_json});"
+            )
+
             # Pushing to launcher
             from module.notify.notify import notify_webui
-            notify_webui(instance='Alas', title=data.get('title', ''), content=data.get('content', ''), updata=False)
+
+            notify_webui(
+                instance="Alas",
+                title=data.get("title", ""),
+                content=data.get("content", ""),
+                updata=False,
+            )
 
             self._last_announcement_id = announcement_id
 
@@ -3674,7 +4384,9 @@ class AlasGUI(Frame):
     def run(self) -> None:
         # setup gui
         set_env(title="Alas", output_animation=False)
-        run_js('document.head.append(Object.assign(document.createElement(\'link\'), { rel: \'manifest\', href: \'/static/assets/spa/manifest.json\' }))')
+        run_js(
+            "document.head.append(Object.assign(document.createElement('link'), { rel: 'manifest', href: '/static/assets/spa/manifest.json' }))"
+        )
         add_css(filepath_css("alas"))
         if self.is_mobile:
             add_css(filepath_css("alas-mobile"))
@@ -3695,11 +4407,17 @@ class AlasGUI(Frame):
             "var s=document.createElement('script');"
             "s.src='/static/assets/gui/js/alas-utils.js';"
             "document.head.appendChild(s);"
-        
         )
 
-
         aside = get_localstorage("aside")
+
+        # OOBE 初次设置向导：无用户配置时引导完成基本设置
+        if is_oobe_needed():
+            from module.webui.oobe import OOBEWizard
+
+            OOBEWizard(self).start()
+            return
+
         self.show()
 
         # init config watcher
@@ -3714,9 +4432,11 @@ class AlasGUI(Frame):
             status={
                 True: [
                     lambda: self.__setattr__("visible", True),
-                    lambda: self.alas_update_overview_task()
-                    if self.page == "Overview"
-                    else 0,
+                    lambda: (
+                        self.alas_update_overview_task()
+                        if self.page == "Overview"
+                        else 0
+                    ),
                     lambda: self.task_handler._task.__setattr__("delay", 15),
                 ],
                 False: [
@@ -3744,15 +4464,22 @@ class AlasGUI(Frame):
             self._update_notified = True
 
             from module.notify.notify import notify_webui
+
             notify_webui(
-                instance='Alas', 
-                title=t("Gui.Toast.ClickToUpdate"), 
+                instance="Alas",
+                title=t("Gui.Toast.ClickToUpdate"),
                 content="检测到了新更新喵~ 指挥官快来更新喵~",
-                updata=True
+                updata=True,
             )
 
-            gradient = 'linear-gradient(90deg, #00b894, #0984e3)'
-            toast(t("Gui.Toast.ClickToUpdate"), duration=0, position="right", color=gradient, onclick=goto_update)
+            gradient = "linear-gradient(90deg, #00b894, #0984e3)"
+            toast(
+                t("Gui.Toast.ClickToUpdate"),
+                duration=0,
+                position="right",
+                color=gradient,
+                onclick=goto_update,
+            )
 
             run_js(r"""
                 setTimeout(function(){
@@ -3783,9 +4510,7 @@ class AlasGUI(Frame):
             """)
 
         update_switch = Switch(
-            status={
-                1: show_update_toast
-            },
+            status={1: show_update_toast},
             get_state=lambda: updater.state,
             name="update_state",
         )
@@ -3837,29 +4562,35 @@ class AlasGUI(Frame):
 
         # --------Modify by MHY, 取消全屏更新弹窗任务注册
         # self.task_handler.add(update_popup_checker(), delay=5)
-        
+
         # 公告检查功能（非阻塞）
         def announcement_checker():
             from module.base.api_client import ApiClient
+
             logger.info("公告检查任务启动")
             th = yield  # 获取任务处理器引用
             # 首次检查：触发异步获取
             self._start_announcement_fetch(force=False)
             next_periodic_check = time.time() + ApiClient.ANNOUNCEMENT_CHECK_INTERVAL
-            th._task.delay = 0.1   # 始终保持短间隔轮询
+            th._task.delay = 0.1  # 始终保持短间隔轮询
             yield
             while True:
                 # 处理已有结果（来自定期检查或手动点击）
                 self._process_announcement_result()
                 # 定期触发新的异步获取
-                if not self._announcement_fetching and time.time() >= next_periodic_check:
+                if (
+                    not self._announcement_fetching
+                    and time.time() >= next_periodic_check
+                ):
                     self._start_announcement_fetch(force=False)
-                    next_periodic_check = time.time() + ApiClient.ANNOUNCEMENT_CHECK_INTERVAL
+                    next_periodic_check = (
+                        time.time() + ApiClient.ANNOUNCEMENT_CHECK_INTERVAL
+                    )
                 yield
 
         # 添加公告检查任务（初始延迟5秒）
         self.task_handler.add(announcement_checker(), delay=5)
-        
+
         # 启动任务处理器
         self.task_handler.start()
 
@@ -3995,7 +4726,7 @@ def app_manage():
     set_env(title="Alas", output_animation=False)
     run_js("$('head').append('<style>.footer{display:none}</style>')")
 
-    put_html(build_app_manage_title(t('Gui.AppManage.PageTitle')))
+    put_html(build_app_manage_title(t("Gui.AppManage.PageTitle")))
     put_scope("config_table")
     put_buttons(
         buttons=[
@@ -4039,9 +4770,8 @@ def startup():
         init_discord_rpc()
     if State.deploy_config.StartOcrServer:
         start_ocr_server_process(State.deploy_config.OcrServerPort)
-    if (
-            State.deploy_config.EnableRemoteAccess
-            and (State.deploy_config.Password is not None or os.environ.get("DEMO") == "1")
+    if State.deploy_config.EnableRemoteAccess and (
+        State.deploy_config.Password is not None or os.environ.get("DEMO") == "1"
     ):
         task_handler.add(RemoteAccess.keep_ssh_alive(), 60)
 
@@ -4102,7 +4832,8 @@ def app():
     logger.attr("IS_ON_PHONE_CLOUD", IS_ON_PHONE_CLOUD)
 
     from deploy.atomic import atomic_failure_cleanup
-    atomic_failure_cleanup('./config')
+
+    atomic_failure_cleanup("./config")
 
     static_path = os.getcwd()
 
@@ -4125,6 +4856,7 @@ def app():
         app_manage()
 
     from mcp_server_sse import app as mcp_app
+
     app = asgi_app(
         applications=[index, manage],
         cdn=cdn,

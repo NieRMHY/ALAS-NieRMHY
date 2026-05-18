@@ -676,6 +676,121 @@ class AzurLaneAutoScript:
         from module.daemon.game_manager import GameManager
         GameManager(config=self.config, device=self.device, task="GameManager").run()
 
+    def emulator_manager(self):
+        import subprocess
+        # Use deep_get to handle potential nesting
+        # Prioritize EmulatorInfo settings if enabled
+        if getattr(self.config, 'EmulatorInfo_EnableRemoteSSH', False):
+            host = getattr(self.config, 'EmulatorInfo_RemoteSSHHost', '')
+            port = getattr(self.config, 'EmulatorInfo_RemoteSSHPort', 22)
+            user = getattr(self.config, 'EmulatorInfo_RemoteSSHUser', '')
+            command = getattr(self.config, 'EmulatorInfo_RemoteStartCommand', '')
+            key = getattr(self.config, 'EmulatorInfo_RemoteSSHPublicKey', '')
+        else:
+            # Use deep_get to handle potential nesting
+            enable = deep_get(self.config.data, 'EmulatorManager.EmulatorManager.EnableRemoteSSH', False)
+            if not enable:
+                logger.warning('Remote SSH is not enabled in EmulatorManager settings.')
+                return
+
+            host = deep_get(self.config.data, 'EmulatorManager.EmulatorManager.RemoteSSHHost', '')
+            port = deep_get(self.config.data, 'EmulatorManager.EmulatorManager.RemoteSSHPort', 22)
+            user = deep_get(self.config.data, 'EmulatorManager.EmulatorManager.RemoteSSHUser', '')
+            command = deep_get(self.config.data, 'EmulatorManager.EmulatorManager.RemoteStartCommand', '')
+            if not command:
+                command = deep_get(self.config.data, 'EmulatorManager.EmulatorManager.RemoteCommand', '')
+            key = deep_get(self.config.data, 'EmulatorManager.EmulatorManager.RemoteSSHPublicKey', '')
+
+        if not host or not command:
+            logger.warning(f'RemoteSSHHost ({host}) or RemoteStartCommand ({command}) is empty, skip remote SSH command')
+            return
+
+        logger.hr('Remote SSH Command', level=1)
+        target = f'{user}@{host}' if user else host
+        # -n: Redirects stdin from /dev/null
+        # -T: Disable pseudo-terminal allocation
+        # BatchMode to avoid hanging on password prompts
+        cmd = ['ssh', '-n', '-T', '-p', str(port), '-o', 'StrictHostKeyChecking=no', '-o', 'BatchMode=yes', '-o', 'ConnectTimeout=10']
+        
+        key_file = None
+        if key and len(key) > 50:
+            import tempfile
+            import os
+            try:
+                fd, key_file = tempfile.mkstemp()
+                with os.fdopen(fd, 'w') as f:
+                    f.write(key.strip() + '\n')
+                
+                if os.name == 'nt':
+                    import subprocess
+                    user_env = os.environ.get('USERNAME')
+                    subprocess.run(['icacls', key_file, '/reset'], capture_output=True)
+                    subprocess.run(['icacls', key_file, '/inheritance:r'], capture_output=True)
+                    subprocess.run(['icacls', key_file, '/grant:r', f'{user_env}:F'], capture_output=True)
+                else:
+                    os.chmod(key_file, 0o600)
+
+                cmd += ['-i', key_file]
+                logger.info(f'Using provided private key for authentication')
+            except Exception as e:
+                logger.error(f'Failed to create or secure temporary key file: {e}')
+
+        cmd += [target, command]
+        logger.info(f'Executing remote command: {" ".join(cmd)}')
+
+        try:
+            process = subprocess.Popen(
+                cmd, 
+                stdout=subprocess.PIPE, 
+                stderr=subprocess.PIPE, 
+                text=True, 
+                bufsize=1,
+                creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0
+            )
+
+            # Store stderr to show only if it fails
+            stderr_content = []
+            import threading
+            
+            def collect_stderr():
+                for line in process.stderr:
+                    stderr_content.append(line.strip())
+            
+            def collect_stdout():
+                for line in process.stdout:
+                    logger.info(f'Remote: {line.strip()}')
+            
+            stderr_thread = threading.Thread(target=collect_stderr)
+            stdout_thread = threading.Thread(target=collect_stdout)
+            stderr_thread.start()
+            stdout_thread.start()
+
+            try:
+                # Main thread waits for the process to exit
+                process.wait(timeout=30)
+            except subprocess.TimeoutExpired:
+                process.kill()
+                logger.error('Remote SSH command timed out after 30 seconds')
+                return
+            finally:
+                stderr_thread.join(timeout=5)
+                stdout_thread.join(timeout=5)
+
+            if process.returncode == 0:
+                logger.info('Remote command executed successfully')
+            else:
+                logger.error(f'Remote command failed with return code {process.returncode}')
+                for line in stderr_content:
+                    logger.error(f'Remote Error: {line}')
+        except Exception as e:
+            logger.error(f'Failed to execute remote SSH command: {e}')
+        finally:
+            if key_file and os.path.exists(key_file):
+                try:
+                    os.remove(key_file)
+                except:
+                    pass
+
     def wait_until(self, future):
         """
         等待直到特定时间。
@@ -762,6 +877,19 @@ class AzurLaneAutoScript:
     def loop(self):
         logger.set_file_logger(self.config_name)
         logger.info(f'启动调度器循环: {self.config_name}')
+
+        from module.config.utils import is_oobe_needed
+
+        if is_oobe_needed():
+            logger.critical(
+                "未检测到配置文件。\n"
+                "请先运行 WebUI 完成初次设置:\n"
+                "    python gui.py\n"
+                "No configuration files detected.\n"
+                "Please run the WebUI first:\n"
+                "    python gui.py"
+            )
+            exit(1)
 
         # 初始化计数器
         consecutive_global_failures = 0

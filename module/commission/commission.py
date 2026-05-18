@@ -19,6 +19,7 @@ from module.logger import logger
 from module.map.map_grids import SelectedGrids
 from module.retire.assets import DOCK_CHECK
 from module.ui.assets import BACK_ARROW, REWARD_GOTO_COMMISSION
+from module.tactical.assets import TACTICAL_CLASS_START, TACTICAL_CLASS_CANCEL
 from module.ui.page import page_commission, page_reward
 from module.ui.scroll import Scroll
 from module.ui.switch import Switch
@@ -730,6 +731,14 @@ class RewardCommission(UI, InfoHandler):
             in: Any
             out: page_commission
         """
+        # Fix: If stuck in TACTICAL_CLASS_START (skill book selection), click cancel to exit
+        # TACTICAL_CHECK is falsely detected in TACTICAL_CLASS_START, causing A* navigation
+        # to choose BACK_ARROW which does not lead to page_reward from this page
+        self.device.screenshot()
+        if self.appear(TACTICAL_CLASS_START, offset=(30, 30)):
+            logger.info('Detected TACTICAL_CLASS_START, clicking cancel to exit')
+            self.device.click(TACTICAL_CLASS_CANCEL)
+            self.device.sleep((0.5, 1.0))
         self.ui_ensure(page_reward)
         self.commission_receive()
 

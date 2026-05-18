@@ -21,11 +21,15 @@ def handle_ocr_error(e):
 
 try:
     from rapidocr import RapidOCR, OCRVersion
+    from rapidocr.utils.output import RapidOCROutput
     from rapidocr.ch_ppocr_rec import TextRecognizer
     from rapidocr.cal_rec_boxes import CalRecBoxes
     from rapidocr.utils.load_image import LoadImage
 except Exception as e:
     handle_ocr_error(e)
+
+
+DET_DEBUG = False
 
 
 config_name = os.environ.get("ALAS_CONFIG_NAME") or "alas"
@@ -186,6 +190,47 @@ def _get_model(name):
         return _en_model
 
 
+DET_MODEL_PATH = "bin/ocr_models/det/PP-OCRv5_mobile_det.onnx"
+
+_det_model_cache = {}
+
+
+def _create_det_ocr(model_path, rec_keys_path, ocr_version):
+    ocr_device = config.ocr_device
+    use_dml = os.name == 'nt' and ocr_device == 'gpu'
+    use_coreml = ocr_device == 'ane'
+    params = {
+        "Global.use_det": True,
+        "Global.use_cls": False,
+        "Det.model_path": DET_MODEL_PATH,
+        "Cls.model_path": None,
+        "Rec.ocr_version": ocr_version,
+        "Rec.model_path": model_path,
+        "Rec.rec_keys_path": rec_keys_path,
+        "EngineConfig.onnxruntime.use_dml": use_dml,
+        "EngineConfig.onnxruntime.use_coreml": use_coreml,
+        "EngineConfig.onnxruntime.coreml_ep_cfg.MLComputeUnits": "CPUAndNeuralEngine",
+    }
+    return RapidOCR(params=params)
+
+
+def _get_det_model(name):
+    global _det_model_cache
+    if name not in _det_model_cache:
+        if name in ("cn", "zhcn"):
+            _det_model_cache[name] = _create_det_ocr(
+                "bin/ocr_models/zh-CN/alocr-zh-cn-v3.dtk.onnx",
+                "bin/ocr_models/zh-CN/cn.txt",
+                OCRVersion.PPOCRV5,
+            )
+        else:
+            _det_model_cache[name] = _create_det_ocr(
+                "bin/ocr_models/en-US/alocr-en-us-v2.6.nvc.onnx",
+                "bin/ocr_models/en-US/en.txt",
+                OCRVersion.PPOCRV4,
+            )
+    return _det_model_cache[name]
+
 def reset_ocr_model():
     def _reset():
         global _cn_model, _en_model, _jp_model, _tw_model
@@ -194,6 +239,7 @@ def reset_ocr_model():
         _en_model = None
         _jp_model = None
         _tw_model = None
+        _det_model_cache.clear()
 
     return _run_ocr_queued(_reset)
 
@@ -204,6 +250,8 @@ class AlOcr:
         self.name = kwargs.get("name", "en")
         self.params = {}
         self._model_loaded = False
+        self._det_model = None
+        self._det_loaded = False
         logger.info(
             f"Created AlOcr instance: name='{self.name}', kwargs={kwargs}, PID={os.getpid()}"
         )
@@ -215,6 +263,11 @@ class AlOcr:
     def _ensure_loaded(self):
         if not self._model_loaded:
             self.init()
+
+    def _ensure_det_loaded(self):
+        if not self._det_loaded:
+            self._det_model = _get_det_model(self.name)
+            self._det_loaded = True
 
     def _save_debug_image(self, img, result):
         folder = "ocr_debug"
@@ -283,6 +336,87 @@ class AlOcr:
 
     def ocr(self, img_fp):
         return _run_ocr_queued(self._ocr_direct, img_fp)
+
+    def _det_direct(self, img_fp):
+        self._ensure_loaded()
+        self._ensure_det_loaded()
+
+        try:
+            res = self._det_model(img_fp, use_det=True, use_rec=True)
+            if isinstance(res, RapidOCROutput) and res.boxes is not None:
+                results = []
+                txts = res.txts if res.txts is not None else ("",) * len(res.boxes)
+                scores = res.scores if res.scores is not None else (0.0,) * len(res.boxes)
+                for box, txt, score in zip(res.boxes, txts, scores):
+                    results.append((txt, box.tolist(), float(score)))
+
+                if DET_DEBUG:
+                    self._save_det_debug(img_fp, results)
+
+                return results
+            return []
+        except Exception as e:
+            logger.error(f"AlOcr.det exception: {e}")
+            raise
+
+    def _save_det_debug(self, img, results):
+        import cv2 as cv
+        import time
+        from PIL import Image as PILImage
+
+        # Convert to numpy if needed
+        if isinstance(img, PILImage.Image):
+            img = np.array(img.convert("RGB"))
+            img = cv.cvtColor(img, cv.COLOR_RGB2BGR)
+        elif isinstance(img, str):
+            img = cv.imread(img)
+            if img is None:
+                return
+
+        if not isinstance(img, np.ndarray):
+            return
+
+        draw = img.copy()
+        for txt, box, score in results:
+            pts = np.array(box, dtype=np.int32).reshape((-1, 1, 2))
+            cv.polylines(draw, [pts], True, (0, 255, 0), 2)
+            cx, cy = int(sum(p[0] for p in box) / len(box)), int(sum(p[1] for p in box) / len(box))
+            label = f"{txt} {score:.2f}"
+            cv.putText(draw, label, (cx - 20, cy - 10),
+                       cv.FONT_HERSHEY_SIMPLEX, 0.45, (0, 255, 0), 1)
+
+        folder = "ocr_debug"
+        os.makedirs(folder, exist_ok=True)
+        now = int(time.time() * 1000)
+        filename = f"det_{self.name}_{now}.png"
+        filepath = os.path.join(folder, filename)
+        cv.imwrite(filepath, draw)
+
+        # Limit to 100 files
+        files = [os.path.join(folder, f) for f in os.listdir(folder) if f.endswith(".png")]
+        if len(files) > 100:
+            files.sort(key=os.path.getmtime)
+            for f in files[:-100]:
+                try:
+                    os.remove(f)
+                except Exception:
+                    pass
+
+    def det(self, img_fp):
+        """
+        Run text detection + recognition and return results with position coordinates.
+
+        Args:
+            img_fp: Image input (numpy array, PIL Image, or file path string)
+
+        Returns:
+            list of (text, box, score) tuples:
+                - text (str): Recognized text
+                - box (list): 4 corner points [[x1,y1],[x2,y2],[x3,y3],[x4,y4]]
+                - score (float): Confidence score (0.0-1.0)
+            Empty list if nothing detected.
+        """
+        return _run_ocr_queued(self._det_direct, img_fp)
 
     def ocr_for_single_line(self, img_fp):
         return self.ocr(img_fp)

@@ -65,8 +65,7 @@ def main():
         latest_dir.mkdir(parents=True, exist_ok=True)
         build_pack(latest=latest, old=old, output_dir=latest_dir)
 
-    print(f"Latest commit: {latest}")
-    print(f"Generated {len(old_commits)} pack zip(s) in {output}")
+    print("*" * 20)
 
 
 if __name__ == "__main__":

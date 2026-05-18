@@ -1,8 +1,6 @@
 # 此文件用于管理大世界（Operation Siren）模式下的状态信息。
 # 负责海域代币（黄币/紫币）的数值追踪、任务类型识别以及子任务冷却（CD）状态的实时计算。
-import os
 import threading
-
 import typing as t
 from datetime import datetime, timedelta
 
@@ -13,10 +11,11 @@ from module.config.utils import get_server_next_update
 from module.logger import logger
 from module.map.map_grids import SelectedGrids
 from module.ocr.ocr import Digit
+from module.combat.assets import GET_ITEMS_1, GET_ITEMS_2, GET_SHIP
 from module.os_shop.assets import OS_SHOP_CHECK, OS_SHOP_PURPLE_COINS, SHOP_PURPLE_COINS, SHOP_YELLOW_COINS
 from module.ui.ui import UI
 from module.log_res.log_res import LogRes
-from module.base.utils import crop, crop_to_text, save_image
+
 
 if server.server != 'jp':
     OCR_SHOP_YELLOW_COINS = Digit(SHOP_YELLOW_COINS, letter=(239, 239, 239), threshold=160, name='OCR_SHOP_YELLOW_COINS')
@@ -91,26 +90,25 @@ class OSStatus(UI):
         
         for _ in self.loop():
             # End
+            if self.appear_then_click(GET_ITEMS_1, offset=True, interval=1):
+                timeout.reset()
+                continue
+            if self.appear_then_click(GET_ITEMS_2, offset=True, interval=1):
+                timeout.reset()
+                continue
+            if self.appear_then_click(GET_SHIP, interval=1):
+                timeout.reset()
+                continue
+
             current_value = OCR_SHOP_YELLOW_COINS.ocr(self.device.image)
-            logger.info(f'[Debug] OCR_SHOP_YELLOW_COINS: {current_value}')
-            if not os.path.exists('debug_img'):
-                os.makedirs('debug_img')
-            
-            now_str = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
-            # 保存原始全屏截图
-            save_image(self.device.image, f'debug_img/yellow_coins_{now_str}_orig.png')
-            # 保存传给 OCR 的预处理截图（裁剪、提取文字、并去除边缘空白后）
-            for i, area in enumerate(OCR_SHOP_YELLOW_COINS.buttons):
-                pre = OCR_SHOP_YELLOW_COINS.pre_process(crop(self.device.image, area))
-                pre = crop_to_text(pre)
-                save_image(pre, f'debug_img/yellow_coins_{now_str}_ocr_{i}.png')
             if timeout.reached():
                 logger.warning('Get yellow coins timeout')
                 break
 
-            if current_value < 100:
-                # OCR may get 0 or 1 when amount is not immediately loaded
-                logger.info(f'Yellow coins less than 100 ({current_value}), assuming it is an ocr error')
+            if current_value == 0:
+                # OCR may get 0 when amount is not immediately loaded
+                # Or when popups are obscuring the top bar
+                logger.info(f'Yellow coins is 0, assuming it is an ocr error or UI not loaded')
                 continue
             else:
                 # 验证识别稳定性：连续两次识别相同才确认

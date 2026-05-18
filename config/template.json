@@ -80,7 +80,14 @@
     "EmulatorInfo": {
       "Emulator": "auto",
       "name": null,
-      "path": null
+      "path": null,
+      "EnableRemoteSSH": false,
+      "RemoteSSHHost": null,
+      "RemoteSSHPort": 22,
+      "RemoteSSHUser": "root",
+      "RemoteSSHPublicKey": null,
+      "RemoteStartCommand": null,
+      "RemoteStopCommand": null
     },
     "Error": {
       "HandleError": true,
@@ -1819,8 +1826,11 @@
       "ServerUpdate": "00:00"
     },
     "Tactical": {
-      "TacticalFilter": "SameT4 > SameT3 > SameT2 > SameT1\n> BlueT2 > YellowT2 > RedT2\n> BlueT3 > YellowT3 > RedT3\n> BlueT4 > YellowT4 > RedT4\n> BlueT1 > YellowT1 > RedT1\n> first",
-      "RapidTrainingSlot": "do_not_use"
+      "TacticalFilter": "SameT4 > SameT3 > SameT2 > SameT1\n> BlueT3 > YellowT3 > RedT3\n> BlueT2 > YellowT2 > RedT2\n> BlueT4 > YellowT4 > RedT4\n> BlueT1 > YellowT1 > RedT1\n> first",
+      "RapidTrainingSlot": "do_not_use",
+      "SkillAutoSwitch": true,
+      "RedToBlue": false,
+      "NoT4": false
     },
     "ControlExpOverflow": {
       "Enable": true,
@@ -1983,137 +1993,137 @@
     },
     "Island1": {
       "Receive": false,
-      "Option1": 0,
-      "Character1": "manjuu",
-      "Option2": 0,
-      "Character2": "manjuu",
-      "Option3": 0,
-      "Character3": "manjuu",
-      "Option4": 0,
-      "Character4": "manjuu"
+      "Option1": null,
+      "Character1": "工作啾",
+      "Option2": null,
+      "Character2": "工作啾",
+      "Option3": null,
+      "Character3": "工作啾",
+      "Option4": null,
+      "Character4": "工作啾"
     },
     "Island2": {
       "Receive": false,
       "Option1": 0,
-      "Character1": "manjuu",
+      "Character1": "工作啾",
       "Option2": 0,
-      "Character2": "manjuu",
+      "Character2": "工作啾",
       "Option3": 0,
-      "Character3": "manjuu",
+      "Character3": "工作啾",
       "Option4": 0,
-      "Character4": "manjuu"
+      "Character4": "工作啾"
     },
     "Island3": {
       "Receive": false,
-      "Option1": 0,
-      "Character1": "manjuu",
-      "Option2": 0,
-      "Character2": "manjuu",
-      "Option3": 0,
-      "Character3": "manjuu"
+      "Option1": null,
+      "Character1": "工作啾",
+      "Option2": null,
+      "Character2": "工作啾",
+      "Option3": null,
+      "Character3": "工作啾"
     },
     "Island4": {
       "Receive": false,
-      "Option1": 0,
-      "Character1": "manjuu",
-      "Option2": 0,
-      "Character2": "manjuu",
-      "Option3": 0,
-      "Character3": "manjuu",
-      "Option4": 0,
-      "Character4": "manjuu"
+      "Option1": null,
+      "Character1": "工作啾",
+      "Option2": null,
+      "Character2": "工作啾",
+      "Option3": null,
+      "Character3": "工作啾",
+      "Option4": null,
+      "Character4": "工作啾"
     },
     "Island5": {
       "Receive": false,
-      "Option1": 0,
-      "Character1": "manjuu",
-      "Option2": 0,
-      "Character2": "manjuu",
-      "Option3": 0,
-      "Character3": "manjuu",
-      "Option4": 0,
-      "Character4": "manjuu"
+      "Option1": null,
+      "Character1": "工作啾",
+      "Option2": null,
+      "Character2": "工作啾",
+      "Option3": null,
+      "Character3": "工作啾",
+      "Option4": null,
+      "Character4": "工作啾"
     },
     "Island6": {
       "Receive": false,
-      "Option1": 0,
-      "Character1": "manjuu",
-      "Option2": 0,
-      "Character2": "manjuu",
-      "Option3": 0,
-      "Character3": "manjuu",
-      "Option4": 0,
-      "Character4": "manjuu"
+      "Option1": null,
+      "Character1": "工作啾",
+      "Option2": null,
+      "Character2": "工作啾",
+      "Option3": null,
+      "Character3": "工作啾",
+      "Option4": null,
+      "Character4": "工作啾"
     },
     "Island7": {
       "Receive": false,
-      "Option1": 0,
-      "Character1": "manjuu",
-      "Option2": 0,
-      "Character2": "manjuu"
+      "Option1": null,
+      "Character1": "工作啾",
+      "Option2": null,
+      "Character2": "工作啾"
     },
     "Island8": {
       "Receive": false,
-      "Option1": 0,
-      "Character1": "manjuu",
-      "Option2": 0,
-      "Character2": "manjuu"
+      "Option1": null,
+      "Character1": "工作啾",
+      "Option2": null,
+      "Character2": "工作啾"
     },
     "Island9": {
       "Receive": false,
-      "Option1": 0,
-      "Character1": "manjuu",
-      "Option2": 0,
-      "Character2": "manjuu"
+      "Option1": null,
+      "Character1": "工作啾",
+      "Option2": null,
+      "Character2": "工作啾"
     },
     "Island10": {
       "Receive": false,
-      "Option1": 0,
-      "Character1": "manjuu",
-      "Option2": 0,
-      "Character2": "manjuu"
+      "Option1": null,
+      "Character1": "工作啾",
+      "Option2": null,
+      "Character2": "工作啾"
     },
     "Island11": {
       "Receive": false,
-      "Option1": 0,
-      "Character1": "manjuu",
-      "Option2": 0,
-      "Character2": "manjuu"
+      "Option1": null,
+      "Character1": "工作啾",
+      "Option2": null,
+      "Character2": "工作啾"
     },
     "Island12": {
       "Receive": false,
-      "Option1": 0,
-      "Character1": "manjuu",
-      "Option2": 0,
-      "Character2": "manjuu"
+      "Option1": null,
+      "Character1": "工作啾",
+      "Option2": null,
+      "Character2": "工作啾"
     },
     "Island13": {
       "Receive": false,
-      "Option1": 0,
-      "Character1": "manjuu",
-      "Option2": 0,
-      "Character2": "manjuu"
+      "Option1": null,
+      "Character1": "工作啾",
+      "Option2": null,
+      "Character2": "工作啾"
     },
     "Island14": {
       "Receive": false,
-      "Option1": 0,
-      "Character1": "manjuu",
-      "Option2": 0,
-      "Character2": "manjuu"
+      "Option1": null,
+      "Character1": "工作啾",
+      "Option2": null,
+      "Character2": "工作啾"
     },
     "Island15": {
       "Receive": false,
-      "Option1": 0,
-      "Character1": "manjuu",
-      "Option2": 0,
-      "Character2": "manjuu"
+      "Option1": null,
+      "Character1": "工作啾",
+      "Option2": null,
+      "Character2": "工作啾"
     },
     "Island16": {
       "Receive": false,
-      "Option1": 0,
-      "Character1": "manjuu",
-      "Option2": 0,
-      "Character2": "manjuu"
+      "Option1": null,
+      "Character1": "工作啾",
+      "Option2": null,
+      "Character2": "工作啾"
     },
     "Storage": {
       "Storage": {}
@@ -2372,6 +2382,7 @@
       "RepairThreshold": 0.4,
       "UseRepairPack": false,
       "RepairPackThreshold": 0.9,
+      "RepairPackThresholdHazard1": 0.5,
       "DoRandomMapEvent": true,
       "AkashiShopFilter": "ActionPoint",
       "NotifyOpsiMail": true,
@@ -2651,7 +2662,8 @@
       "ExecuteFixedPatrolScan": true,
       "SkipHpCheck": false,
       "Cl1Filter": "ActionPoint",
-      "RecordNonCL1AP": true
+      "RecordNonCL1AP": true,
+      "PreserveVirtualAsset": 0
     },
     "OpsiSirenBug": {
       "SirenResearch_Enable": true,
@@ -2698,7 +2710,8 @@
       "EnableAbyssal": false,
       "EnableStronghold": false,
       "MeowStartEarlyMode": "balanced",
-      "MeowStartEarlyEnable": false
+      "MeowStartEarlyEnable": false,
+      "VirtualAssetPreserve": 0
     },
     "Storage": {
       "Storage": {}
@@ -2828,6 +2841,20 @@
   "GameManager": {
     "GameManager": {
       "AutoRestart": true
+    },
+    "Storage": {
+      "Storage": {}
+    }
+  },
+  "EmulatorManager": {
+    "EmulatorManager": {
+      "EnableRemoteSSH": false,
+      "RemoteSSHHost": null,
+      "RemoteSSHPort": 22,
+      "RemoteSSHUser": null,
+      "RemoteSSHPublicKey": null,
+      "RemoteStartCommand": null,
+      "RemoteStopCommand": null
     },
     "Storage": {
       "Storage": {}

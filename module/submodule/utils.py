@@ -23,6 +23,7 @@ def get_available_func():
         'Benchmark',
         'OcrBenchmark',
         'GameManager',
+        'EmulatorManager',
     )
 
 def get_available_mod():

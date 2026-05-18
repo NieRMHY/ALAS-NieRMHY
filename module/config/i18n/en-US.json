@@ -333,6 +333,10 @@
     "GameManager": {
       "name": "Game Manager (Incomplete)",
       "help": ""
+    },
+    "EmulatorManager": {
+      "name": "Task.EmulatorManager.name",
+      "help": "Task.EmulatorManager.help"
     }
   },
   "Scheduler": {
@@ -532,7 +536,8 @@
       "MuMuPlayer12": "MuMu Emulator 12",
       "MEmuPlayer": "MEmu emulator",
       "BlueStacksAir": "BlueStacksAir",
-      "MuMuPro": "MuMuPro"
+      "MuMuPro": "MuMuPro",
+      "SSH": "SSH"
     },
     "name": {
       "name": "Simulator instance name",
@@ -541,6 +546,36 @@
     "path": {
       "name": "Simulator installation path",
       "help": ""
+    },
+    "EnableRemoteSSH": {
+      "name": "Enable Remote SSH Management",
+      "help": "Execute specific commands (e.g., restart Docker containers) on a remote server via SSH before restarting the emulator.",
+      "True": "True",
+      "False": "False"
+    },
+    "RemoteSSHHost": {
+      "name": "Remote Server Address",
+      "help": "IP address or domain of the remote server, e.g., 192.168.1.100"
+    },
+    "RemoteSSHPort": {
+      "name": "Port Number",
+      "help": "SSH service port, default 22"
+    },
+    "RemoteSSHUser": {
+      "name": "SSH Username",
+      "help": "Username to login via SSH, e.g., root"
+    },
+    "RemoteSSHPublicKey": {
+      "name": "SSH Private Key",
+      "help": "The private key content for SSH authentication (if needed)"
+    },
+    "RemoteStartCommand": {
+      "name": "Remote Start Command",
+      "help": "SSH command to start the emulator/service (e.g., docker start)"
+    },
+    "RemoteStopCommand": {
+      "name": "Remote Stop Command",
+      "help": "SSH command to stop the emulator/service (e.g., docker stop)"
     }
   },
   "Error": {
@@ -896,7 +931,7 @@
     },
     "TaskPriorityAdjustment": {
       "name": "Task priority adjustment",
-      "help": "Restart # Restart the game\n> OpsiCrossMonth # Operation Siren Cross-Month Daily\n> Commission > Tactical > Research # Commission > Tactical Academy > Research\n> Exercise # Exercise\n> Dorm > Meowfficer > Guild > Gacha # Backyard > Meowfficer > Guild > Daily Gacha\n> Reward # Rewards\n> ShopFrequent > ShopOnce > Shipyard > Freebies > Island # General Shop > Other Shops > Development Shipyard > Freebie Rewards > Island Plan\n> PrivateQuarters # Quarters Plan\n> OpsiExplore # Monthly Exploration\n> Minigame > Awaken # Minigame > Cognitive Awakening\n> OpsiAshBeacon # META Combat\n> OpsiDaily > OpsiShop > OpsiVoucher # Operation Siren Daily > Port Shop > Exchange Shop\n> OpsiAbyssal > OpsiStronghold > OpsiObscure > OpsiArchive # Abyssal Zone > Siren Stronghold > Obscured Zone > Archive Coordinates\n> Daily > Hard > OpsiAshBeacon > OpsiAshAssist > OpsiMonthBoss # Daily Challenge > Hard Mode > META Combat > META Assist > Monthly Boss\n> Sos > EventSp > EventA > EventB > EventC > EventD # SOS > Event Daily SP > Event Daily A > Event Daily B > Event Daily C > Event Daily D\n> RaidDaily > CoalitionSp > WarArchives > MaritimeEscort # Raid Daily > Coalition SP > War Archives > Maritime Escort\n> Event > Event2 > Raid > Hospital > HospitalEvent > Coalition > RaidScuttle > Main > Main2 > Main3 # Event Map > Event Map 2 > Raid > Hospital Event > Raid > Raid Scuttle > Main Campaign > Main Campaign 2 > Main Campaign 3\n> OpsiMeowfficerFarming # Meowfficer Farming\n> GemsFarming # Gems Farming\n> OpsiHazard1Leveling # Corrosion 1 Leveling\n> ThreeOilLowCost # 3-Oil Low Cost"
+      "help": "Format: task names only, connected with `>` (left = higher priority).\nDo not use `#` comments, because comments will break task-name matching.\n\nExample:\nRestart\n> OpsiCrossMonth\n> Commission > Tactical > Research\n> Exercise\n> ...\n\nLeave empty to use the built-in default priority."
     }
   },
   "OneClickRetire": {
@@ -1803,6 +1838,24 @@
       "slot_2": "Used in position 2",
       "slot_3": "Used in position 3",
       "slot_4": "Used in position 4"
+    },
+    "SkillAutoSwitch": {
+      "name": "Auto Switch Skill",
+      "help": "Automatically switch to the next unlearned skill for training",
+      "True": "On",
+      "False": "Off"
+    },
+    "RedToBlue": {
+      "name": "Replace Red with Blue",
+      "help": "Replace Red books with Blue books in the tactical filter",
+      "True": "On",
+      "False": "Off"
+    },
+    "NoT4": {
+      "name": "Do not use T4 books",
+      "help": "Remove T4 rainbow books from selection",
+      "True": "On",
+      "False": "Off"
     }
   },
   "ControlExpOverflow": {
@@ -2107,139 +2160,35 @@
     },
     "Option1": {
       "name": "Slot 1 production item",
-      "help": "",
-      "0": "Not producing",
-      "1": "Wheat",
-      "2": "Corn",
-      "3": "Grass",
-      "4": "Coffee Beans",
-      "5": "Rice",
-      "6": "Cabbage",
-      "7": "Potato",
-      "8": "Soybean"
+      "help": ""
     },
     "Character1": {
       "name": "Slot 1 character",
-      "help": "",
-      "manjuu": "Manjuu",
-      "saratoga": "Saratoga",
-      "new_jersey": "New Jersey",
-      "tashkent": "Tashkent",
-      "lemalin": "Le Malin",
-      "shimakaze": "Shimakaze",
-      "akashi": "Akashi",
-      "ying_swei": "Ying Swei",
-      "chao_ho": "Chao Ho",
-      "william_d_porter": "William D. Porter",
-      "chen_hai": "Chen Hai",
-      "unicorn": "Unicorn",
-      "cheshire": "Cheshire",
-      "amagi_chan": "Amagi-chan",
-      "helena": "Helena",
-      "atago": "Atago",
-      "friedrich_der_grobe": "Friedrich der Große"
+      "help": ""
     },
     "Option2": {
       "name": "Slot 2 production item",
-      "help": "",
-      "0": "Not producing",
-      "1": "Wheat",
-      "2": "Corn",
-      "3": "Grass",
-      "4": "Coffee Beans",
-      "5": "Rice",
-      "6": "Cabbage",
-      "7": "Potato",
-      "8": "Soybean"
+      "help": ""
     },
     "Character2": {
       "name": "Slot 2 character",
-      "help": "",
-      "manjuu": "Manjuu",
-      "saratoga": "Saratoga",
-      "new_jersey": "New Jersey",
-      "tashkent": "Tashkent",
-      "lemalin": "Le Malin",
-      "shimakaze": "Shimakaze",
-      "akashi": "Akashi",
-      "ying_swei": "Ying Swei",
-      "chao_ho": "Chao Ho",
-      "william_d_porter": "William D. Porter",
-      "chen_hai": "Chen Hai",
-      "unicorn": "Unicorn",
-      "cheshire": "Cheshire",
-      "amagi_chan": "Amagi-chan",
-      "helena": "Helena",
-      "atago": "Atago",
-      "friedrich_der_grobe": "Friedrich der Große"
+      "help": ""
     },
     "Option3": {
       "name": "Slot 3 production item",
-      "help": "",
-      "0": "Not producing",
-      "1": "Wheat",
-      "2": "Corn",
-      "3": "Grass",
-      "4": "Coffee Beans",
-      "5": "Rice",
-      "6": "Cabbage",
-      "7": "Potato",
-      "8": "Soybean"
+      "help": ""
     },
     "Character3": {
       "name": "Slot 3 character",
-      "help": "",
-      "manjuu": "Manjuu",
-      "saratoga": "Saratoga",
-      "new_jersey": "New Jersey",
-      "tashkent": "Tashkent",
-      "lemalin": "Le Malin",
-      "shimakaze": "Shimakaze",
-      "akashi": "Akashi",
-      "ying_swei": "Ying Swei",
-      "chao_ho": "Chao Ho",
-      "william_d_porter": "William D. Porter",
-      "chen_hai": "Chen Hai",
-      "unicorn": "Unicorn",
-      "cheshire": "Cheshire",
-      "amagi_chan": "Amagi-chan",
-      "helena": "Helena",
-      "atago": "Atago",
-      "friedrich_der_grobe": "Friedrich der Große"
+      "help": ""
     },
     "Option4": {
       "name": "Slot 4 production item",
-      "help": "",
-      "0": "Not producing",
-      "1": "Wheat",
-      "2": "Corn",
-      "3": "Grass",
-      "4": "Coffee Beans",
-      "5": "Rice",
-      "6": "Cabbage",
-      "7": "Potato",
-      "8": "Soybean"
+      "help": ""
     },
     "Character4": {
       "name": "Slot 4 character",
-      "help": "",
-      "manjuu": "Manjuu",
-      "saratoga": "Saratoga",
-      "new_jersey": "New Jersey",
-      "tashkent": "Tashkent",
-      "lemalin": "Le Malin",
-      "shimakaze": "Shimakaze",
-      "akashi": "Akashi",
-      "ying_swei": "Ying Swei",
-      "chao_ho": "Chao Ho",
-      "william_d_porter": "William D. Porter",
-      "chen_hai": "Chen Hai",
-      "unicorn": "Unicorn",
-      "cheshire": "Cheshire",
-      "amagi_chan": "Amagi-chan",
-      "helena": "Helena",
-      "atago": "Atago",
-      "friedrich_der_grobe": "Friedrich der Große"
+      "help": ""
     }
   },
   "Island2": {
@@ -2259,24 +2208,7 @@
     },
     "Character1": {
       "name": "Slot 1 character",
-      "help": "",
-      "manjuu": "Manjuu",
-      "saratoga": "Saratoga",
-      "new_jersey": "New Jersey",
-      "tashkent": "Tashkent",
-      "lemalin": "Le Malin",
-      "shimakaze": "Shimakaze",
-      "akashi": "Akashi",
-      "ying_swei": "Ying Swei",
-      "chao_ho": "Chao Ho",
-      "william_d_porter": "William D. Porter",
-      "chen_hai": "Chen Hai",
-      "unicorn": "Unicorn",
-      "cheshire": "Cheshire",
-      "amagi_chan": "Amagi-chan",
-      "helena": "Helena",
-      "atago": "Atago",
-      "friedrich_der_grobe": "Friedrich der Große"
+      "help": ""
     },
     "Option2": {
       "name": "Slot 2 production item",
@@ -2286,24 +2218,7 @@
     },
     "Character2": {
       "name": "Slot 2 character",
-      "help": "",
-      "manjuu": "Manjuu",
-      "saratoga": "Saratoga",
-      "new_jersey": "New Jersey",
-      "tashkent": "Tashkent",
-      "lemalin": "Le Malin",
-      "shimakaze": "Shimakaze",
-      "akashi": "Akashi",
-      "ying_swei": "Ying Swei",
-      "chao_ho": "Chao Ho",
-      "william_d_porter": "William D. Porter",
-      "chen_hai": "Chen Hai",
-      "unicorn": "Unicorn",
-      "cheshire": "Cheshire",
-      "amagi_chan": "Amagi-chan",
-      "helena": "Helena",
-      "atago": "Atago",
-      "friedrich_der_grobe": "Friedrich der Große"
+      "help": ""
     },
     "Option3": {
       "name": "Slot 3 production item",
@@ -2313,24 +2228,7 @@
     },
     "Character3": {
       "name": "Slot 3 character",
-      "help": "",
-      "manjuu": "Manjuu",
-      "saratoga": "Saratoga",
-      "new_jersey": "New Jersey",
-      "tashkent": "Tashkent",
-      "lemalin": "Le Malin",
-      "shimakaze": "Shimakaze",
-      "akashi": "Akashi",
-      "ying_swei": "Ying Swei",
-      "chao_ho": "Chao Ho",
-      "william_d_porter": "William D. Porter",
-      "chen_hai": "Chen Hai",
-      "unicorn": "Unicorn",
-      "cheshire": "Cheshire",
-      "amagi_chan": "Amagi-chan",
-      "helena": "Helena",
-      "atago": "Atago",
-      "friedrich_der_grobe": "Friedrich der Große"
+      "help": ""
     },
     "Option4": {
       "name": "Slot 4 production item",
@@ -2340,24 +2238,7 @@
     },
     "Character4": {
       "name": "Slot 4 character",
-      "help": "",
-      "manjuu": "Manjuu",
-      "saratoga": "Saratoga",
-      "new_jersey": "New Jersey",
-      "tashkent": "Tashkent",
-      "lemalin": "Le Malin",
-      "shimakaze": "Shimakaze",
-      "akashi": "Akashi",
-      "ying_swei": "Ying Swei",
-      "chao_ho": "Chao Ho",
-      "william_d_porter": "William D. Porter",
-      "chen_hai": "Chen Hai",
-      "unicorn": "Unicorn",
-      "cheshire": "Cheshire",
-      "amagi_chan": "Amagi-chan",
-      "helena": "Helena",
-      "atago": "Atago",
-      "friedrich_der_grobe": "Friedrich der Große"
+      "help": ""
     }
   },
   "Island3": {
@@ -2371,129 +2252,27 @@
     },
     "Option1": {
       "name": "Slot 1 production item",
-      "help": "",
-      "0": "Not producing",
-      "1": "Shellfish",
-      "2": "Catfish",
-      "3": "Carp",
-      "4": "Crucian Carp",
-      "5": "River Shrimp",
-      "6": "Crayfish",
-      "7": "Sea Bass",
-      "8": "Crab",
-      "9": "Squid",
-      "10": "Spanish Mackerel",
-      "11": "Tuna",
-      "12": "Salmon",
-      "13": "Red Snapper",
-      "14": "Black Snapper",
-      "15": "Yellowfin Tuna",
-      "16": "Sea Cucumber"
+      "help": ""
     },
     "Character1": {
       "name": "Slot 1 character",
-      "help": "",
-      "manjuu": "Manjuu",
-      "saratoga": "Saratoga",
-      "new_jersey": "New Jersey",
-      "tashkent": "Tashkent",
-      "lemalin": "Le Malin",
-      "shimakaze": "Shimakaze",
-      "akashi": "Akashi",
-      "ying_swei": "Ying Swei",
-      "chao_ho": "Chao Ho",
-      "william_d_porter": "William D. Porter",
-      "chen_hai": "Chen Hai",
-      "unicorn": "Unicorn",
-      "cheshire": "Cheshire",
-      "amagi_chan": "Amagi-chan",
-      "helena": "Helena",
-      "atago": "Atago",
-      "friedrich_der_grobe": "Friedrich der Große"
+      "help": ""
     },
     "Option2": {
       "name": "Slot 2 production item",
-      "help": "",
-      "0": "Not producing",
-      "1": "Shellfish",
-      "2": "Catfish",
-      "3": "Carp",
-      "4": "Crucian Carp",
-      "5": "River Shrimp",
-      "6": "Crayfish",
-      "7": "Sea Bass",
-      "8": "Crab",
-      "9": "Squid",
-      "10": "Spanish Mackerel",
-      "11": "Tuna",
-      "12": "Salmon",
-      "13": "Red Snapper",
-      "14": "Black Snapper",
-      "15": "Yellowfin Tuna",
-      "16": "Sea Cucumber"
+      "help": ""
     },
     "Character2": {
       "name": "Slot 2 character",
-      "help": "",
-      "manjuu": "Manjuu",
-      "saratoga": "Saratoga",
-      "new_jersey": "New Jersey",
-      "tashkent": "Tashkent",
-      "lemalin": "Le Malin",
-      "shimakaze": "Shimakaze",
-      "akashi": "Akashi",
-      "ying_swei": "Ying Swei",
-      "chao_ho": "Chao Ho",
-      "william_d_porter": "William D. Porter",
-      "chen_hai": "Chen Hai",
-      "unicorn": "Unicorn",
-      "cheshire": "Cheshire",
-      "amagi_chan": "Amagi-chan",
-      "helena": "Helena",
-      "atago": "Atago",
-      "friedrich_der_grobe": "Friedrich der Große"
+      "help": ""
     },
     "Option3": {
       "name": "Slot 3 production item",
-      "help": "",
-      "0": "Not producing",
-      "1": "Shellfish",
-      "2": "Catfish",
-      "3": "Carp",
-      "4": "Crucian Carp",
-      "5": "River Shrimp",
-      "6": "Crayfish",
-      "7": "Sea Bass",
-      "8": "Crab",
-      "9": "Squid",
-      "10": "Spanish Mackerel",
-      "11": "Tuna",
-      "12": "Salmon",
-      "13": "Red Snapper",
-      "14": "Black Snapper",
-      "15": "Yellowfin Tuna",
-      "16": "Sea Cucumber"
+      "help": ""
     },
     "Character3": {
       "name": "Slot 3 character",
-      "help": "",
-      "manjuu": "Manjuu",
-      "saratoga": "Saratoga",
-      "new_jersey": "New Jersey",
-      "tashkent": "Tashkent",
-      "lemalin": "Le Malin",
-      "shimakaze": "Shimakaze",
-      "akashi": "Akashi",
-      "ying_swei": "Ying Swei",
-      "chao_ho": "Chao Ho",
-      "william_d_porter": "William D. Porter",
-      "chen_hai": "Chen Hai",
-      "unicorn": "Unicorn",
-      "cheshire": "Cheshire",
-      "amagi_chan": "Amagi-chan",
-      "helena": "Helena",
-      "atago": "Atago",
-      "friedrich_der_grobe": "Friedrich der Große"
+      "help": ""
     }
   },
   "Island4": {
@@ -2507,131 +2286,35 @@
     },
     "Option1": {
       "name": "Slot 1 production item",
-      "help": "",
-      "0": "Not producing",
-      "1": "Coal",
-      "2": "Copper Ore",
-      "3": "Aluminum Ore",
-      "4": "Iron Ore",
-      "5": "Sulfur Ore",
-      "6": "Silver Ore"
+      "help": ""
     },
     "Character1": {
       "name": "Slot 1 character",
-      "help": "",
-      "manjuu": "Manjuu",
-      "saratoga": "Saratoga",
-      "new_jersey": "New Jersey",
-      "tashkent": "Tashkent",
-      "lemalin": "Le Malin",
-      "shimakaze": "Shimakaze",
-      "akashi": "Akashi",
-      "ying_swei": "Ying Swei",
-      "chao_ho": "Chao Ho",
-      "william_d_porter": "William D. Porter",
-      "chen_hai": "Chen Hai",
-      "unicorn": "Unicorn",
-      "cheshire": "Cheshire",
-      "amagi_chan": "Amagi-chan",
-      "helena": "Helena",
-      "atago": "Atago",
-      "friedrich_der_grobe": "Friedrich der Große"
+      "help": ""
     },
     "Option2": {
       "name": "Slot 2 production item",
-      "help": "",
-      "0": "Not producing",
-      "1": "Coal",
-      "2": "Copper Ore",
-      "3": "Aluminum Ore",
-      "4": "Iron Ore",
-      "5": "Sulfur Ore",
-      "6": "Silver Ore"
+      "help": ""
     },
     "Character2": {
       "name": "Slot 2 character",
-      "help": "",
-      "manjuu": "Manjuu",
-      "saratoga": "Saratoga",
-      "new_jersey": "New Jersey",
-      "tashkent": "Tashkent",
-      "lemalin": "Le Malin",
-      "shimakaze": "Shimakaze",
-      "akashi": "Akashi",
-      "ying_swei": "Ying Swei",
-      "chao_ho": "Chao Ho",
-      "william_d_porter": "William D. Porter",
-      "chen_hai": "Chen Hai",
-      "unicorn": "Unicorn",
-      "cheshire": "Cheshire",
-      "amagi_chan": "Amagi-chan",
-      "helena": "Helena",
-      "atago": "Atago",
-      "friedrich_der_grobe": "Friedrich der Große"
+      "help": ""
     },
     "Option3": {
       "name": "Slot 3 production item",
-      "help": "",
-      "0": "Not producing",
-      "1": "Coal",
-      "2": "Copper Ore",
-      "3": "Aluminum Ore",
-      "4": "Iron Ore",
-      "5": "Sulfur Ore",
-      "6": "Silver Ore"
+      "help": ""
     },
     "Character3": {
       "name": "Slot 3 character",
-      "help": "",
-      "manjuu": "Manjuu",
-      "saratoga": "Saratoga",
-      "new_jersey": "New Jersey",
-      "tashkent": "Tashkent",
-      "lemalin": "Le Malin",
-      "shimakaze": "Shimakaze",
-      "akashi": "Akashi",
-      "ying_swei": "Ying Swei",
-      "chao_ho": "Chao Ho",
-      "william_d_porter": "William D. Porter",
-      "chen_hai": "Chen Hai",
-      "unicorn": "Unicorn",
-      "cheshire": "Cheshire",
-      "amagi_chan": "Amagi-chan",
-      "helena": "Helena",
-      "atago": "Atago",
-      "friedrich_der_grobe": "Friedrich der Große"
+      "help": ""
     },
     "Option4": {
       "name": "Slot 4 production item",
-      "help": "",
-      "0": "Not producing",
-      "1": "Coal",
-      "2": "Copper Ore",
-      "3": "Aluminum Ore",
-      "4": "Iron Ore",
-      "5": "Sulfur Ore",
-      "6": "Silver Ore"
+      "help": ""
     },
     "Character4": {
       "name": "Slot 4 character",
-      "help": "",
-      "manjuu": "Manjuu",
-      "saratoga": "Saratoga",
-      "new_jersey": "New Jersey",
-      "tashkent": "Tashkent",
-      "lemalin": "Le Malin",
-      "shimakaze": "Shimakaze",
-      "akashi": "Akashi",
-      "ying_swei": "Ying Swei",
-      "chao_ho": "Chao Ho",
-      "william_d_porter": "William D. Porter",
-      "chen_hai": "Chen Hai",
-      "unicorn": "Unicorn",
-      "cheshire": "Cheshire",
-      "amagi_chan": "Amagi-chan",
-      "helena": "Helena",
-      "atago": "Atago",
-      "friedrich_der_grobe": "Friedrich der Große"
+      "help": ""
     }
   },
   "Island5": {
@@ -2645,123 +2328,35 @@
     },
     "Option1": {
       "name": "Slot 1 production item",
-      "help": "",
-      "0": "Not producing",
-      "1": "Natural Wood",
-      "2": "Practical Wood",
-      "3": "Selected Wood",
-      "4": "Elegant Wood"
+      "help": ""
     },
     "Character1": {
       "name": "Slot 1 character",
-      "help": "",
-      "manjuu": "Manjuu",
-      "saratoga": "Saratoga",
-      "new_jersey": "New Jersey",
-      "tashkent": "Tashkent",
-      "lemalin": "Le Malin",
-      "shimakaze": "Shimakaze",
-      "akashi": "Akashi",
-      "ying_swei": "Ying Swei",
-      "chao_ho": "Chao Ho",
-      "william_d_porter": "William D. Porter",
-      "chen_hai": "Chen Hai",
-      "unicorn": "Unicorn",
-      "cheshire": "Cheshire",
-      "amagi_chan": "Amagi-chan",
-      "helena": "Helena",
-      "atago": "Atago",
-      "friedrich_der_grobe": "Friedrich der Große"
+      "help": ""
     },
     "Option2": {
       "name": "Slot 2 production item",
-      "help": "",
-      "0": "Not producing",
-      "1": "Natural Wood",
-      "2": "Practical Wood",
-      "3": "Selected Wood",
-      "4": "Elegant Wood"
+      "help": ""
     },
     "Character2": {
       "name": "Slot 2 character",
-      "help": "",
-      "manjuu": "Manjuu",
-      "saratoga": "Saratoga",
-      "new_jersey": "New Jersey",
-      "tashkent": "Tashkent",
-      "lemalin": "Le Malin",
-      "shimakaze": "Shimakaze",
-      "akashi": "Akashi",
-      "ying_swei": "Ying Swei",
-      "chao_ho": "Chao Ho",
-      "william_d_porter": "William D. Porter",
-      "chen_hai": "Chen Hai",
-      "unicorn": "Unicorn",
-      "cheshire": "Cheshire",
-      "amagi_chan": "Amagi-chan",
-      "helena": "Helena",
-      "atago": "Atago",
-      "friedrich_der_grobe": "Friedrich der Große"
+      "help": ""
     },
     "Option3": {
       "name": "Slot 3 production item",
-      "help": "",
-      "0": "Not producing",
-      "1": "Natural Wood",
-      "2": "Practical Wood",
-      "3": "Selected Wood",
-      "4": "Elegant Wood"
+      "help": ""
     },
     "Character3": {
       "name": "Slot 3 character",
-      "help": "",
-      "manjuu": "Manjuu",
-      "saratoga": "Saratoga",
-      "new_jersey": "New Jersey",
-      "tashkent": "Tashkent",
-      "lemalin": "Le Malin",
-      "shimakaze": "Shimakaze",
-      "akashi": "Akashi",
-      "ying_swei": "Ying Swei",
-      "chao_ho": "Chao Ho",
-      "william_d_porter": "William D. Porter",
-      "chen_hai": "Chen Hai",
-      "unicorn": "Unicorn",
-      "cheshire": "Cheshire",
-      "amagi_chan": "Amagi-chan",
-      "helena": "Helena",
-      "atago": "Atago",
-      "friedrich_der_grobe": "Friedrich der Große"
+      "help": ""
     },
     "Option4": {
       "name": "Slot 4 production item",
-      "help": "",
-      "0": "Not producing",
-      "1": "Natural Wood",
-      "2": "Practical Wood",
-      "3": "Selected Wood",
-      "4": "Elegant Wood"
+      "help": ""
     },
     "Character4": {
       "name": "Slot 4 character",
-      "help": "",
-      "manjuu": "Manjuu",
-      "saratoga": "Saratoga",
-      "new_jersey": "New Jersey",
-      "tashkent": "Tashkent",
-      "lemalin": "Le Malin",
-      "shimakaze": "Shimakaze",
-      "akashi": "Akashi",
-      "ying_swei": "Ying Swei",
-      "chao_ho": "Chao Ho",
-      "william_d_porter": "William D. Porter",
-      "chen_hai": "Chen Hai",
-      "unicorn": "Unicorn",
-      "cheshire": "Cheshire",
-      "amagi_chan": "Amagi-chan",
-      "helena": "Helena",
-      "atago": "Atago",
-      "friedrich_der_grobe": "Friedrich der Große"
+      "help": ""
     }
   },
   "Island6": {
@@ -2775,135 +2370,35 @@
     },
     "Option1": {
       "name": "Slot 1 production item",
-      "help": "",
-      "0": "Not producing",
-      "1": "Apple",
-      "2": "Tangerine",
-      "3": "Banana",
-      "4": "Mango",
-      "5": "Lemon",
-      "6": "Avocado",
-      "7": "Rubber"
+      "help": ""
     },
     "Character1": {
       "name": "Slot 1 character",
-      "help": "",
-      "manjuu": "Manjuu",
-      "saratoga": "Saratoga",
-      "new_jersey": "New Jersey",
-      "tashkent": "Tashkent",
-      "lemalin": "Le Malin",
-      "shimakaze": "Shimakaze",
-      "akashi": "Akashi",
-      "ying_swei": "Ying Swei",
-      "chao_ho": "Chao Ho",
-      "william_d_porter": "William D. Porter",
-      "chen_hai": "Chen Hai",
-      "unicorn": "Unicorn",
-      "cheshire": "Cheshire",
-      "amagi_chan": "Amagi-chan",
-      "helena": "Helena",
-      "atago": "Atago",
-      "friedrich_der_grobe": "Friedrich der Große"
+      "help": ""
     },
     "Option2": {
       "name": "Slot 2 production item",
-      "help": "",
-      "0": "Not producing",
-      "1": "Apple",
-      "2": "Tangerine",
-      "3": "Banana",
-      "4": "Mango",
-      "5": "Lemon",
-      "6": "Avocado",
-      "7": "Rubber"
+      "help": ""
     },
     "Character2": {
       "name": "Slot 2 character",
-      "help": "",
-      "manjuu": "Manjuu",
-      "saratoga": "Saratoga",
-      "new_jersey": "New Jersey",
-      "tashkent": "Tashkent",
-      "lemalin": "Le Malin",
-      "shimakaze": "Shimakaze",
-      "akashi": "Akashi",
-      "ying_swei": "Ying Swei",
-      "chao_ho": "Chao Ho",
-      "william_d_porter": "William D. Porter",
-      "chen_hai": "Chen Hai",
-      "unicorn": "Unicorn",
-      "cheshire": "Cheshire",
-      "amagi_chan": "Amagi-chan",
-      "helena": "Helena",
-      "atago": "Atago",
-      "friedrich_der_grobe": "Friedrich der Große"
+      "help": ""
     },
     "Option3": {
       "name": "Slot 3 production item",
-      "help": "",
-      "0": "Not producing",
-      "1": "Apple",
-      "2": "Tangerine",
-      "3": "Banana",
-      "4": "Mango",
-      "5": "Lemon",
-      "6": "Avocado",
-      "7": "Rubber"
+      "help": ""
     },
     "Character3": {
       "name": "Slot 3 character",
-      "help": "",
-      "manjuu": "Manjuu",
-      "saratoga": "Saratoga",
-      "new_jersey": "New Jersey",
-      "tashkent": "Tashkent",
-      "lemalin": "Le Malin",
-      "shimakaze": "Shimakaze",
-      "akashi": "Akashi",
-      "ying_swei": "Ying Swei",
-      "chao_ho": "Chao Ho",
-      "william_d_porter": "William D. Porter",
-      "chen_hai": "Chen Hai",
-      "unicorn": "Unicorn",
-      "cheshire": "Cheshire",
-      "amagi_chan": "Amagi-chan",
-      "helena": "Helena",
-      "atago": "Atago",
-      "friedrich_der_grobe": "Friedrich der Große"
+      "help": ""
     },
     "Option4": {
       "name": "Slot 4 production item",
-      "help": "",
-      "0": "Not producing",
-      "1": "Apple",
-      "2": "Tangerine",
-      "3": "Banana",
-      "4": "Mango",
-      "5": "Lemon",
-      "6": "Avocado",
-      "7": "Rubber"
+      "help": ""
     },
     "Character4": {
       "name": "Slot 4 character",
-      "help": "",
-      "manjuu": "Manjuu",
-      "saratoga": "Saratoga",
-      "new_jersey": "New Jersey",
-      "tashkent": "Tashkent",
-      "lemalin": "Le Malin",
-      "shimakaze": "Shimakaze",
-      "akashi": "Akashi",
-      "ying_swei": "Ying Swei",
-      "chao_ho": "Chao Ho",
-      "william_d_porter": "William D. Porter",
-      "chen_hai": "Chen Hai",
-      "unicorn": "Unicorn",
-      "cheshire": "Cheshire",
-      "amagi_chan": "Amagi-chan",
-      "helena": "Helena",
-      "atago": "Atago",
-      "friedrich_der_grobe": "Friedrich der Große"
+      "help": ""
     }
   },
   "Island7": {
@@ -2917,73 +2412,19 @@
     },
     "Option1": {
       "name": "Slot 1 production item",
-      "help": "",
-      "0": "Not producing",
-      "1": "Asparagus",
-      "2": "Pineapple",
-      "3": "Flax",
-      "4": "Strawberry",
-      "5": "Cotton",
-      "6": "Tea",
-      "7": "Lavender",
-      "8": "Carrot",
-      "9": "Onion"
+      "help": ""
     },
     "Character1": {
       "name": "Slot 1 character",
-      "help": "",
-      "manjuu": "Manjuu",
-      "saratoga": "Saratoga",
-      "new_jersey": "New Jersey",
-      "tashkent": "Tashkent",
-      "lemalin": "Le Malin",
-      "shimakaze": "Shimakaze",
-      "akashi": "Akashi",
-      "ying_swei": "Ying Swei",
-      "chao_ho": "Chao Ho",
-      "william_d_porter": "William D. Porter",
-      "chen_hai": "Chen Hai",
-      "unicorn": "Unicorn",
-      "cheshire": "Cheshire",
-      "amagi_chan": "Amagi-chan",
-      "helena": "Helena",
-      "atago": "Atago",
-      "friedrich_der_grobe": "Friedrich der Große"
+      "help": ""
     },
     "Option2": {
       "name": "Slot 2 production item",
-      "help": "",
-      "0": "Not producing",
-      "1": "Asparagus",
-      "2": "Pineapple",
-      "3": "Flax",
-      "4": "Strawberry",
-      "5": "Cotton",
-      "6": "Tea",
-      "7": "Lavender",
-      "8": "Carrot",
-      "9": "Onion"
+      "help": ""
     },
     "Character2": {
       "name": "Slot 2 character",
-      "help": "",
-      "manjuu": "Manjuu",
-      "saratoga": "Saratoga",
-      "new_jersey": "New Jersey",
-      "tashkent": "Tashkent",
-      "lemalin": "Le Malin",
-      "shimakaze": "Shimakaze",
-      "akashi": "Akashi",
-      "ying_swei": "Ying Swei",
-      "chao_ho": "Chao Ho",
-      "william_d_porter": "William D. Porter",
-      "chen_hai": "Chen Hai",
-      "unicorn": "Unicorn",
-      "cheshire": "Cheshire",
-      "amagi_chan": "Amagi-chan",
-      "helena": "Helena",
-      "atago": "Atago",
-      "friedrich_der_grobe": "Friedrich der Große"
+      "help": ""
     }
   },
   "Island8": {
@@ -2997,79 +2438,19 @@
     },
     "Option1": {
       "name": "Slot 1 production item",
-      "help": "",
-      "0": "Not producing",
-      "1": "Cold Double Bamboo Shoots",
-      "2": "Stir-fried Asparagus with Shrimp",
-      "3": "Tofu",
-      "4": "Braised Tofu with Minced Meat",
-      "5": "Omurice",
-      "6": "Cabbage Tofu Soup",
-      "7": "Vegetable Salad",
-      "8": "Fish and Chips",
-      "9": "Steamed Fish with Onions",
-      "10": "Buddha Jumps Over the Wall",
-      "11": "Classic Tofu Set",
-      "12": "Mianyu Set Meal"
+      "help": ""
     },
     "Character1": {
       "name": "Slot 1 character",
-      "help": "",
-      "manjuu": "Manjuu",
-      "saratoga": "Saratoga",
-      "new_jersey": "New Jersey",
-      "tashkent": "Tashkent",
-      "lemalin": "Le Malin",
-      "shimakaze": "Shimakaze",
-      "akashi": "Akashi",
-      "ying_swei": "Ying Swei",
-      "chao_ho": "Chao Ho",
-      "william_d_porter": "William D. Porter",
-      "chen_hai": "Chen Hai",
-      "unicorn": "Unicorn",
-      "cheshire": "Cheshire",
-      "amagi_chan": "Amagi-chan",
-      "helena": "Helena",
-      "atago": "Atago",
-      "friedrich_der_grobe": "Friedrich der Große"
+      "help": ""
     },
     "Option2": {
       "name": "Slot 2 production item",
-      "help": "",
-      "0": "Not producing",
-      "1": "Cold Double Bamboo Shoots",
-      "2": "Stir-fried Asparagus with Shrimp",
-      "3": "Tofu",
-      "4": "Braised Tofu with Minced Meat",
-      "5": "Omurice",
-      "6": "Cabbage Tofu Soup",
-      "7": "Vegetable Salad",
-      "8": "Fish and Chips",
-      "9": "Steamed Fish with Onions",
-      "10": "Buddha Jumps Over the Wall",
-      "11": "Classic Tofu Set",
-      "12": "Mianyu Set Meal"
+      "help": ""
     },
     "Character2": {
       "name": "Slot 2 character",
-      "help": "",
-      "manjuu": "Manjuu",
-      "saratoga": "Saratoga",
-      "new_jersey": "New Jersey",
-      "tashkent": "Tashkent",
-      "lemalin": "Le Malin",
-      "shimakaze": "Shimakaze",
-      "akashi": "Akashi",
-      "ying_swei": "Ying Swei",
-      "chao_ho": "Chao Ho",
-      "william_d_porter": "William D. Porter",
-      "chen_hai": "Chen Hai",
-      "unicorn": "Unicorn",
-      "cheshire": "Cheshire",
-      "amagi_chan": "Amagi-chan",
-      "helena": "Helena",
-      "atago": "Atago",
-      "friedrich_der_grobe": "Friedrich der Große"
+      "help": ""
     }
   },
   "Island9": {
@@ -3083,77 +2464,19 @@
     },
     "Option1": {
       "name": "Slot 1 production item",
-      "help": "",
-      "0": "Not producing",
-      "1": "Fresh Pineapple Juice",
-      "2": "Winter Jasmine Tea",
-      "3": "Apple Juice",
-      "4": "Banana Mango Juice",
-      "5": "Honey Lemonade",
-      "6": "Strawberry Honey Nectar",
-      "7": "Lavender Tea",
-      "8": "Strawberry Honey Smoothie",
-      "9": "Sunshine Honey Water",
-      "10": "Floral Fruit Tea",
-      "11": "Colorful Fruit Paradise"
+      "help": ""
     },
     "Character1": {
       "name": "Slot 1 character",
-      "help": "",
-      "manjuu": "Manjuu",
-      "saratoga": "Saratoga",
-      "new_jersey": "New Jersey",
-      "tashkent": "Tashkent",
-      "lemalin": "Le Malin",
-      "shimakaze": "Shimakaze",
-      "akashi": "Akashi",
-      "ying_swei": "Ying Swei",
-      "chao_ho": "Chao Ho",
-      "william_d_porter": "William D. Porter",
-      "chen_hai": "Chen Hai",
-      "unicorn": "Unicorn",
-      "cheshire": "Cheshire",
-      "amagi_chan": "Amagi-chan",
-      "helena": "Helena",
-      "atago": "Atago",
-      "friedrich_der_grobe": "Friedrich der Große"
+      "help": ""
     },
     "Option2": {
       "name": "Slot 2 production item",
-      "help": "",
-      "0": "Not producing",
-      "1": "Fresh Pineapple Juice",
-      "2": "Winter Jasmine Tea",
-      "3": "Apple Juice",
-      "4": "Banana Mango Juice",
-      "5": "Honey Lemonade",
-      "6": "Strawberry Honey Nectar",
-      "7": "Lavender Tea",
-      "8": "Strawberry Honey Smoothie",
-      "9": "Sunshine Honey Water",
-      "10": "Floral Fruit Tea",
-      "11": "Colorful Fruit Paradise"
+      "help": ""
     },
     "Character2": {
       "name": "Slot 2 character",
-      "help": "",
-      "manjuu": "Manjuu",
-      "saratoga": "Saratoga",
-      "new_jersey": "New Jersey",
-      "tashkent": "Tashkent",
-      "lemalin": "Le Malin",
-      "shimakaze": "Shimakaze",
-      "akashi": "Akashi",
-      "ying_swei": "Ying Swei",
-      "chao_ho": "Chao Ho",
-      "william_d_porter": "William D. Porter",
-      "chen_hai": "Chen Hai",
-      "unicorn": "Unicorn",
-      "cheshire": "Cheshire",
-      "amagi_chan": "Amagi-chan",
-      "helena": "Helena",
-      "atago": "Atago",
-      "friedrich_der_grobe": "Friedrich der Große"
+      "help": ""
     }
   },
   "Island10": {
@@ -3167,75 +2490,19 @@
     },
     "Option1": {
       "name": "Slot 1 production item",
-      "help": "",
-      "0": "Not producing",
-      "1": "Corn Cup",
-      "2": "Apple Pie",
-      "3": "Orange Pie",
-      "4": "Mango Sticky Rice",
-      "5": "Banana Crepe",
-      "6": "Strawberry Charlotte",
-      "7": "Paella",
-      "8": "Sweet and Savory Combo",
-      "9": "Orchard Duo",
-      "10": "Berry Orange Dessert Set"
+      "help": ""
     },
     "Character1": {
       "name": "Slot 1 character",
-      "help": "",
-      "manjuu": "Manjuu",
-      "saratoga": "Saratoga",
-      "new_jersey": "New Jersey",
-      "tashkent": "Tashkent",
-      "lemalin": "Le Malin",
-      "shimakaze": "Shimakaze",
-      "akashi": "Akashi",
-      "ying_swei": "Ying Swei",
-      "chao_ho": "Chao Ho",
-      "william_d_porter": "William D. Porter",
-      "chen_hai": "Chen Hai",
-      "unicorn": "Unicorn",
-      "cheshire": "Cheshire",
-      "amagi_chan": "Amagi-chan",
-      "helena": "Helena",
-      "atago": "Atago",
-      "friedrich_der_grobe": "Friedrich der Große"
+      "help": ""
     },
     "Option2": {
       "name": "Slot 2 production item",
-      "help": "",
-      "0": "Not producing",
-      "1": "Corn Cup",
-      "2": "Apple Pie",
-      "3": "Orange Pie",
-      "4": "Mango Sticky Rice",
-      "5": "Banana Crepe",
-      "6": "Strawberry Charlotte",
-      "7": "Paella",
-      "8": "Sweet and Savory Combo",
-      "9": "Orchard Duo",
-      "10": "Berry Orange Dessert Set"
+      "help": ""
     },
     "Character2": {
       "name": "Slot 2 character",
-      "help": "",
-      "manjuu": "Manjuu",
-      "saratoga": "Saratoga",
-      "new_jersey": "New Jersey",
-      "tashkent": "Tashkent",
-      "lemalin": "Le Malin",
-      "shimakaze": "Shimakaze",
-      "akashi": "Akashi",
-      "ying_swei": "Ying Swei",
-      "chao_ho": "Chao Ho",
-      "william_d_porter": "William D. Porter",
-      "chen_hai": "Chen Hai",
-      "unicorn": "Unicorn",
-      "cheshire": "Cheshire",
-      "amagi_chan": "Amagi-chan",
-      "helena": "Helena",
-      "atago": "Atago",
-      "friedrich_der_grobe": "Friedrich der Große"
+      "help": ""
     }
   },
   "Island11": {
@@ -3249,73 +2516,19 @@
     },
     "Option1": {
       "name": "Slot 1 production item",
-      "help": "",
-      "0": "Not producing",
-      "1": "Charcoal grilled skewers",
-      "2": "Poultry and potato platter",
-      "3": "Stir-fried poultry",
-      "4": "Carrot Thick Egg Omelette",
-      "5": "Hamburger rice",
-      "6": "Lemon Shrimp",
-      "7": "Stir-fried crayfish",
-      "8": "BBQ carnival",
-      "9": "Energy Double Package"
+      "help": ""
     },
     "Character1": {
       "name": "Slot 1 character",
-      "help": "",
-      "manjuu": "Manjuu",
-      "saratoga": "Saratoga",
-      "new_jersey": "New Jersey",
-      "tashkent": "Tashkent",
-      "lemalin": "Le Malin",
-      "shimakaze": "Shimakaze",
-      "akashi": "Akashi",
-      "ying_swei": "Ying Swei",
-      "chao_ho": "Chao Ho",
-      "william_d_porter": "William D. Porter",
-      "chen_hai": "Chen Hai",
-      "unicorn": "Unicorn",
-      "cheshire": "Cheshire",
-      "amagi_chan": "Amagi-chan",
-      "helena": "Helena",
-      "atago": "Atago",
-      "friedrich_der_grobe": "Friedrich der Große"
+      "help": ""
     },
     "Option2": {
       "name": "Slot 2 production item",
-      "help": "",
-      "0": "Not producing",
-      "1": "Charcoal grilled skewers",
-      "2": "Poultry and potato platter",
-      "3": "Stir-fried poultry",
-      "4": "Carrot Thick Egg Omelette",
-      "5": "Hamburger rice",
-      "6": "Lemon Shrimp",
-      "7": "Stir-fried crayfish",
-      "8": "BBQ carnival",
-      "9": "Energy Double Package"
+      "help": ""
     },
     "Character2": {
       "name": "Slot 2 character",
-      "help": "",
-      "manjuu": "Manjuu",
-      "saratoga": "Saratoga",
-      "new_jersey": "New Jersey",
-      "tashkent": "Tashkent",
-      "lemalin": "Le Malin",
-      "shimakaze": "Shimakaze",
-      "akashi": "Akashi",
-      "ying_swei": "Ying Swei",
-      "chao_ho": "Chao Ho",
-      "william_d_porter": "William D. Porter",
-      "chen_hai": "Chen Hai",
-      "unicorn": "Unicorn",
-      "cheshire": "Cheshire",
-      "amagi_chan": "Amagi-chan",
-      "helena": "Helena",
-      "atago": "Atago",
-      "friedrich_der_grobe": "Friedrich der Große"
+      "help": ""
     }
   },
   "Island12": {
@@ -3329,67 +2542,19 @@
     },
     "Option1": {
       "name": "Slot 1 production item",
-      "help": "",
-      "0": "Not producing",
-      "1": "Paper",
-      "2": "Notepad",
-      "3": "Tables and Chairs",
-      "4": "Selected Barrels",
-      "5": "Filing Cabinet",
-      "6": "Decorative Painting"
+      "help": ""
     },
     "Character1": {
       "name": "Slot 1 character",
-      "help": "",
-      "manjuu": "Manjuu",
-      "saratoga": "Saratoga",
-      "new_jersey": "New Jersey",
-      "tashkent": "Tashkent",
-      "lemalin": "Le Malin",
-      "shimakaze": "Shimakaze",
-      "akashi": "Akashi",
-      "ying_swei": "Ying Swei",
-      "chao_ho": "Chao Ho",
-      "william_d_porter": "William D. Porter",
-      "chen_hai": "Chen Hai",
-      "unicorn": "Unicorn",
-      "cheshire": "Cheshire",
-      "amagi_chan": "Amagi-chan",
-      "helena": "Helena",
-      "atago": "Atago",
-      "friedrich_der_grobe": "Friedrich der Große"
+      "help": ""
     },
     "Option2": {
       "name": "Slot 2 production item",
-      "help": "",
-      "0": "Not producing",
-      "1": "Paper",
-      "2": "Notepad",
-      "3": "Tables and Chairs",
-      "4": "Selected Barrels",
-      "5": "Filing Cabinet",
-      "6": "Decorative Painting"
+      "help": ""
     },
     "Character2": {
       "name": "Slot 2 character",
-      "help": "",
-      "manjuu": "Manjuu",
-      "saratoga": "Saratoga",
-      "new_jersey": "New Jersey",
-      "tashkent": "Tashkent",
-      "lemalin": "Le Malin",
-      "shimakaze": "Shimakaze",
-      "akashi": "Akashi",
-      "ying_swei": "Ying Swei",
-      "chao_ho": "Chao Ho",
-      "william_d_porter": "William D. Porter",
-      "chen_hai": "Chen Hai",
-      "unicorn": "Unicorn",
-      "cheshire": "Cheshire",
-      "amagi_chan": "Amagi-chan",
-      "helena": "Helena",
-      "atago": "Atago",
-      "friedrich_der_grobe": "Friedrich der Große"
+      "help": ""
     }
   },
   "Island13": {
@@ -3403,67 +2568,19 @@
     },
     "Option1": {
       "name": "Slot 1 production item",
-      "help": "",
-      "0": "Not producing",
-      "1": "Charcoal",
-      "2": "Cable",
-      "3": "Nails",
-      "4": "Sulfuric Acid",
-      "5": "Gunpowder",
-      "6": "Cutlery"
+      "help": ""
     },
     "Character1": {
       "name": "Slot 1 character",
-      "help": "",
-      "manjuu": "Manjuu",
-      "saratoga": "Saratoga",
-      "new_jersey": "New Jersey",
-      "tashkent": "Tashkent",
-      "lemalin": "Le Malin",
-      "shimakaze": "Shimakaze",
-      "akashi": "Akashi",
-      "ying_swei": "Ying Swei",
-      "chao_ho": "Chao Ho",
-      "william_d_porter": "William D. Porter",
-      "chen_hai": "Chen Hai",
-      "unicorn": "Unicorn",
-      "cheshire": "Cheshire",
-      "amagi_chan": "Amagi-chan",
-      "helena": "Helena",
-      "atago": "Atago",
-      "friedrich_der_grobe": "Friedrich der Große"
+      "help": ""
     },
     "Option2": {
       "name": "Slot 2 production item",
-      "help": "",
-      "0": "Not producing",
-      "1": "Charcoal",
-      "2": "Cable",
-      "3": "Nails",
-      "4": "Sulfuric Acid",
-      "5": "Gunpowder",
-      "6": "Cutlery"
+      "help": ""
     },
     "Character2": {
       "name": "Slot 2 character",
-      "help": "",
-      "manjuu": "Manjuu",
-      "saratoga": "Saratoga",
-      "new_jersey": "New Jersey",
-      "tashkent": "Tashkent",
-      "lemalin": "Le Malin",
-      "shimakaze": "Shimakaze",
-      "akashi": "Akashi",
-      "ying_swei": "Ying Swei",
-      "chao_ho": "Chao Ho",
-      "william_d_porter": "William D. Porter",
-      "chen_hai": "Chen Hai",
-      "unicorn": "Unicorn",
-      "cheshire": "Cheshire",
-      "amagi_chan": "Amagi-chan",
-      "helena": "Helena",
-      "atago": "Atago",
-      "friedrich_der_grobe": "Friedrich der Große"
+      "help": ""
     }
   },
   "Island14": {
@@ -3477,63 +2594,19 @@
     },
     "Option1": {
       "name": "Slot 1 production item",
-      "help": "",
-      "0": "Not producing",
-      "1": "Ink Cartridge",
-      "2": "Clock",
-      "3": "Battery",
-      "4": "Water Purification Filter"
+      "help": ""
     },
     "Character1": {
       "name": "Slot 1 character",
-      "help": "",
-      "manjuu": "Manjuu",
-      "saratoga": "Saratoga",
-      "new_jersey": "New Jersey",
-      "tashkent": "Tashkent",
-      "lemalin": "Le Malin",
-      "shimakaze": "Shimakaze",
-      "akashi": "Akashi",
-      "ying_swei": "Ying Swei",
-      "chao_ho": "Chao Ho",
-      "william_d_porter": "William D. Porter",
-      "chen_hai": "Chen Hai",
-      "unicorn": "Unicorn",
-      "cheshire": "Cheshire",
-      "amagi_chan": "Amagi-chan",
-      "helena": "Helena",
-      "atago": "Atago",
-      "friedrich_der_grobe": "Friedrich der Große"
+      "help": ""
     },
     "Option2": {
       "name": "Slot 2 production item",
-      "help": "",
-      "0": "Not producing",
-      "1": "Ink Cartridge",
-      "2": "Clock",
-      "3": "Battery",
-      "4": "Water Purification Filter"
+      "help": ""
     },
     "Character2": {
       "name": "Slot 2 character",
-      "help": "",
-      "manjuu": "Manjuu",
-      "saratoga": "Saratoga",
-      "new_jersey": "New Jersey",
-      "tashkent": "Tashkent",
-      "lemalin": "Le Malin",
-      "shimakaze": "Shimakaze",
-      "akashi": "Akashi",
-      "ying_swei": "Ying Swei",
-      "chao_ho": "Chao Ho",
-      "william_d_porter": "William D. Porter",
-      "chen_hai": "Chen Hai",
-      "unicorn": "Unicorn",
-      "cheshire": "Cheshire",
-      "amagi_chan": "Amagi-chan",
-      "helena": "Helena",
-      "atago": "Atago",
-      "friedrich_der_grobe": "Friedrich der Große"
+      "help": ""
     }
   },
   "Island15": {
@@ -3547,73 +2620,19 @@
     },
     "Option1": {
       "name": "Slot 1 production item",
-      "help": "",
-      "0": "Not producing",
-      "1": "Dried Herbs Pack",
-      "2": "Spring Bouquet",
-      "3": "Cloth",
-      "4": "Leather",
-      "5": "Rope",
-      "6": "Gloves",
-      "7": "Sachet",
-      "8": "Shoes",
-      "9": "Bandage"
+      "help": ""
     },
     "Character1": {
       "name": "Slot 1 character",
-      "help": "",
-      "manjuu": "Manjuu",
-      "saratoga": "Saratoga",
-      "new_jersey": "New Jersey",
-      "tashkent": "Tashkent",
-      "lemalin": "Le Malin",
-      "shimakaze": "Shimakaze",
-      "akashi": "Akashi",
-      "ying_swei": "Ying Swei",
-      "chao_ho": "Chao Ho",
-      "william_d_porter": "William D. Porter",
-      "chen_hai": "Chen Hai",
-      "unicorn": "Unicorn",
-      "cheshire": "Cheshire",
-      "amagi_chan": "Amagi-chan",
-      "helena": "Helena",
-      "atago": "Atago",
-      "friedrich_der_grobe": "Friedrich der Große"
+      "help": ""
     },
     "Option2": {
       "name": "Slot 2 production item",
-      "help": "",
-      "0": "Not producing",
-      "1": "Dried shepherd's purse in bags",
-      "2": "spring bouquet",
-      "3": "cloth",
-      "4": "leather",
-      "5": "rope",
-      "6": "Gloves",
-      "7": "sachet",
-      "8": "shoes",
-      "9": "bandage"
+      "help": ""
     },
     "Character2": {
       "name": "Slot 2 character",
-      "help": "",
-      "manjuu": "Manjuu",
-      "saratoga": "Saratoga",
-      "new_jersey": "New Jersey",
-      "tashkent": "Tashkent",
-      "lemalin": "Le Malin",
-      "shimakaze": "Shimakaze",
-      "akashi": "Akashi",
-      "ying_swei": "Ying Swei",
-      "chao_ho": "Chao Ho",
-      "william_d_porter": "William D. Porter",
-      "chen_hai": "Chen Hai",
-      "unicorn": "Unicorn",
-      "cheshire": "Cheshire",
-      "amagi_chan": "Amagi-chan",
-      "helena": "Helena",
-      "atago": "Atago",
-      "friedrich_der_grobe": "Friedrich der Große"
+      "help": ""
     }
   },
   "Island16": {
@@ -3627,73 +2646,19 @@
     },
     "Option1": {
       "name": "Slot 1 production item",
-      "help": "",
-      "0": "Not producing",
-      "1": "Omelet",
-      "2": "iced coffee",
-      "3": "Cheese",
-      "4": "latté",
-      "5": "citrus coffee",
-      "6": "Strawberry milk green",
-      "7": "Morning vitality combination",
-      "8": "Wake up package",
-      "9": "Fruity Double Cup"
+      "help": ""
     },
     "Character1": {
       "name": "Slot 2 character",
-      "help": "",
-      "manjuu": "Manjuu",
-      "saratoga": "Saratoga",
-      "new_jersey": "New Jersey",
-      "tashkent": "Tashkent",
-      "lemalin": "Le Malin",
-      "shimakaze": "Shimakaze",
-      "akashi": "Akashi",
-      "ying_swei": "Ying Swei",
-      "chao_ho": "Chao Ho",
-      "william_d_porter": "William D. Porter",
-      "chen_hai": "Chen Hai",
-      "unicorn": "Unicorn",
-      "cheshire": "Cheshire",
-      "amagi_chan": "Amagi-chan",
-      "helena": "Helena",
-      "atago": "Atago",
-      "friedrich_der_grobe": "Friedrich der Große"
+      "help": ""
     },
     "Option2": {
       "name": "Slot 2 production item",
-      "help": "",
-      "0": "Not producing",
-      "1": "Omelet",
-      "2": "iced coffee",
-      "3": "Cheese",
-      "4": "latté",
-      "5": "citrus coffee",
-      "6": "Strawberry milk green",
-      "7": "Morning vitality combination",
-      "8": "Wake up package",
-      "9": "Fruity Double Cup"
+      "help": ""
     },
     "Character2": {
       "name": "Slot 2 character",
-      "help": "",
-      "manjuu": "Manjuu",
-      "saratoga": "Saratoga",
-      "new_jersey": "New Jersey",
-      "tashkent": "Tashkent",
-      "lemalin": "Le Malin",
-      "shimakaze": "Shimakaze",
-      "akashi": "Akashi",
-      "ying_swei": "Ying Swei",
-      "chao_ho": "Chao Ho",
-      "william_d_porter": "William D. Porter",
-      "chen_hai": "Chen Hai",
-      "unicorn": "Unicorn",
-      "cheshire": "Cheshire",
-      "amagi_chan": "Amagi-chan",
-      "helena": "Helena",
-      "atago": "Atago",
-      "friedrich_der_grobe": "Friedrich der Große"
+      "help": ""
     }
   },
   "GeneralShop": {
@@ -4410,6 +3375,10 @@
       "name": "Use Repair Toolkit when any ship HP is below X",
       "help": "Only takes effect when \"Use Repair Toolkit to repair ships\" is enabled.\nOnly attempts repair after defeating Abyssal, Siren Stronghold, and Monthly Boss.\n0.0 ~ 1.0"
     },
+    "RepairPackThresholdHazard1": {
+      "name": "Use Repair Toolkit when any ship HP is below X (Corrosion 1)",
+      "help": "Only takes effect when \"Use Repair Toolkit to repair ships\" is enabled.\nOnly attempts repair during Corrosion 1 Leveling+.\n0.0 ~ 1.0"
+    },
     "DoRandomMapEvent": {
       "name": "Complete random map events",
       "help": "After completing Auto-Search, scan the map again to purchase from Akashi Shop, use Siren information collection device, use Siren detection device, and unlock two-fleet mechanisms."
@@ -4729,6 +3698,10 @@
     "RecordNonCL1AP": {
       "name": "Record Non-Corrosion 1 AP Sources",
       "help": "When enabled, AP acquisition data from all sources (such as Akashi shop purchases) will be recorded. When disabled, AP data will only be recorded during Corrosion 1 Leveling tasks, ignoring AP gained during other tasks or manual operations."
+    },
+    "PreserveVirtualAsset": {
+      "name": "Preserve X Virtual Asset",
+      "help": "Virtual Asset = AP × 1700/30 + Yellow Coins + (Time to Month End / 10 minutes) × 1700/30\nWhen virtual asset drops below X, yellow coin replenishment task will run. 0 means no limit."
     }
   },
   "OpsiSirenBug": {
@@ -4869,6 +3842,10 @@
     "MeowStartEarlyEnable": {
       "name": "Enable Month-End AP Auto-Cleanup",
       "help": "Automatically decides whether to start Meowfficer Farming early for month-end AP cleanup based on historical Meow timing and current AP; the decision target is the next month Operation Siren reset time, not daily server refresh."
+    },
+    "VirtualAssetPreserve": {
+      "name": "Erosion 1 Leveling: Preserve X Virtual Asset",
+      "help": "Yellow coin replenishment runs when virtual asset drops below X. Virtual Asset = AP × 1700/30 + Yellow Coins + (Time to Month End / 10 min) × 1700/30"
     }
   },
   "IslandSeasonTask": {
@@ -5011,6 +3988,42 @@
     "RestartIntervalHours": {
       "name": "Restart interval (hours)",
       "help": "Automatically restart the simulator every few hours."
+    }
+  },
+  "EmulatorManager": {
+    "_info": {
+      "name": "Emulator Manager",
+      "help": "Provides manual emulator restart entry"
+    },
+    "EnableRemoteSSH": {
+      "name": "EmulatorManager.EnableRemoteSSH.name",
+      "help": "EmulatorManager.EnableRemoteSSH.help",
+      "True": "True",
+      "False": "False"
+    },
+    "RemoteSSHHost": {
+      "name": "Remote Server Address",
+      "help": "IP address or domain of remote server, e.g.: 192.168.1.100"
+    },
+    "RemoteSSHPort": {
+      "name": "Port",
+      "help": "SSH service port, default 22"
+    },
+    "RemoteSSHUser": {
+      "name": "SSH Username",
+      "help": "Username for SSH login, e.g.: root"
+    },
+    "RemoteSSHPublicKey": {
+      "name": "Public Key",
+      "help": "Public key content for SSH login (if needed)"
+    },
+    "RemoteStartCommand": {
+      "name": "EmulatorManager.RemoteStartCommand.name",
+      "help": "EmulatorManager.RemoteStartCommand.help"
+    },
+    "RemoteStopCommand": {
+      "name": "EmulatorManager.RemoteStopCommand.name",
+      "help": "EmulatorManager.RemoteStopCommand.help"
     }
   },
   "OpsiSimulatorParameters": {
@@ -5379,6 +4392,11 @@
       "CommissionIncomeTotalCommissions": "Total commissions: {value}",
       "CommissionIncomeRecentTitle": "Recent Commissions"
     },
+    "Tactical": {
+      "SkillAutoSwitch": "Gui.Tactical.SkillAutoSwitch",
+      "RedToBlue": "Gui.Tactical.RedToBlue",
+      "NoT4": "Gui.Tactical.NoT4"
+    },
     "OpsiScheduling": {
       "UseSmartSchedulingOperationCoinsPreserve": "Gui.OpsiScheduling.UseSmartSchedulingOperationCoinsPreserve",
       "OperationCoinsPreserve": "Gui.OpsiScheduling.OperationCoinsPreserve",
@@ -5393,6 +4411,28 @@
     "Misc": {
       "Enabled": "Enabled",
       "Disabled": "Disabled"
+    },
+    "OOBE": {
+      "WelcomeTitle": "Welcome to AzurPilot",
+      "WelcomeDescription": "Let's set up your first instance.",
+      "WelcomeSelectLanguage": "Select your language",
+      "ServerTitle": "Select Server",
+      "ServerCN": "CN Server",
+      "ServerEN": "EN Server",
+      "ServerJP": "JP Server",
+      "ServerTW": "TW Server",
+      "EmulatorTitle": "Emulator Setup",
+      "EmulatorSerial": "Emulator Serial / Address",
+      "EmulatorPackage": "Package Name",
+      "ReviewTitle": "Review & Create",
+      "ReviewConfigName": "Config Name",
+      "ReviewLanguage": "Language",
+      "ReviewServer": "Server",
+      "ReviewSerial": "Serial",
+      "ReviewPackage": "Package",
+      "ButtonNext": "Next",
+      "ButtonBack": "Back",
+      "ButtonCreate": "Create & Finish"
     }
   }
 }

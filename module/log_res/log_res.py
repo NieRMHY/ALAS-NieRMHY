@@ -29,6 +29,13 @@ class LogRes:
                     _time = datetime.now().replace(microsecond=0)
                     _key_time = _key_group + f'.Record'
                     self.config.modified[_key_time] = _time
+                    if key == 'YellowCoin':
+                        try:
+                            from module.statistics.cl1_database import db as cl1_db
+                            instance_name = getattr(self.config, 'config_name', 'default')
+                            cl1_db.async_add_yellow_coin_snapshot(instance_name, int(value), source='dashboard')
+                        except Exception:
+                            logger.exception('Failed to save yellow coin snapshot')
             elif isinstance(value, dict):
                 for value_name, _value in value.items():
                     if _value == original[value_name]:

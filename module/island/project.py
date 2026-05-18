@@ -3,6 +3,8 @@ import cv2
 import re
 import numpy as np
 from scipy import signal
+import os
+import time
 
 import module.config.server as server
 
@@ -16,6 +18,7 @@ from module.island.ui import IslandUI
 from module.logger import logger
 from module.map.map_grids import SelectedGrids
 from module.ocr.ocr import Duration, Ocr
+from module.ocr.al_ocr import AlOcr
 from module.ui.switch import Switch
 
 
@@ -187,12 +190,14 @@ class ItemNameOcr(Ocr):
     def after_process(self, result):
         result = super().after_process(result)
         if server.server == 'cn':
-            result = result.replace('蛮', '蜜').replace('茉', '末').replace('汗', '汁').replace('纠', '组').replace('离', '禽')
+            result = result.replace('蛮', '蜜').replace('汗', '汁').replace('纠', '组').replace('离', '禽').replace('莱', '菜').replace('内', '肉').replace('克', '苋')
             result = re.sub(r'[^\u4e00-\u9fff]', '', result)
             if '冰咖' in result:
                 result = '冰咖啡'
             if '莓果香橙' in result:
                 result = '莓果香橙甜点组'
+            if '莉精油' in result:
+                result = '茉莉精油'
         elif server.server == 'en':
             result = re.sub(r"[\s'-]+", "", result)
             result = result.lower()
@@ -326,6 +331,7 @@ class ProductItem:
 
 
 class IslandProjectRun(IslandUI):
+    DEBUG_ISLAND_PROJECT = False
     project = SelectedGrids([])
     total = SelectedGrids([])
     character: str
@@ -472,24 +478,22 @@ class IslandProjectRun(IslandUI):
 
         return success
 
-    def _project_character_select(self, click_button, check_button):
+    def _project_character_select(self, click_button, check_button=None):
         """
         Select a specific character for an island project.
+        Click character, wait for confirm, re-click if confirm doesn't appear.
 
         Args:
             click_button (Button): character button to click
-            check_button (Button):
+            check_button: (unused, kept for compatibility)
         """
-        for _ in self.loop():
-            if self.appear(check_button, offset=(20, 20)):
-                break
-            if self.appear(ROLE_SELECT_CONFIRM, offset=(20, 20), interval=2):
-                self.device.click(click_button)
-                continue
-
-        self.interval_clear(ROLE_SELECT_CONFIRM)
+        click_timeout = Timer(1.5).start()
+        confirm_clicked = False
+        self.device.click(click_button)
+        self.device.sleep(0.5)  # wait for UI to settle
 
         for _ in self.loop():
+            self.device.screenshot()  # force fresh screenshot
             # End
             if self.appear(ISLAND_AMOUNT_MAX, offset=(20, 20)):
                 return True
@@ -497,8 +501,19 @@ class IslandProjectRun(IslandUI):
             if self.island_in_management():
                 return False
 
-            if self.appear_then_click(ROLE_SELECT_CONFIRM, offset=(20, 20), interval=2):
-                self.interval_clear(ISLAND_MANAGEMENT_CHECK)
+            if self.appear(ROLE_SELECT_CONFIRM, offset=(20, 20)):
+                if not confirm_clicked:
+                    self.device.sleep(0.3)
+                    self.device.click(ROLE_SELECT_CONFIRM)
+                    confirm_clicked = True
+                    self.interval_clear(ISLAND_MANAGEMENT_CHECK)
+                continue
+
+            if not confirm_clicked and click_timeout.reached():
+                logger.info('ROLE_SELECT_CONFIRM not appeared, re-clicking character')
+                self.device.click(click_button)
+                self.device.sleep(0.5)
+                click_timeout.reset()
                 continue
 
     def project_character_select(self, character='manjuu'):
@@ -512,32 +527,68 @@ class IslandProjectRun(IslandUI):
             bool: if selected
         """
         logger.info('Island select role')
-        ROLE_SORTING.set('Descending', main=self)
         timeout = Timer(5, count=3).start()
-        count = 0
+        swipe_count = 0
+        target_name = CHARACTER_NAME_MAP.get(character, {}).get(server.server,
+                       CHARACTER_NAME_MAP.get(character, {}).get('cn', character))
+        det_ocr = AlOcr(name='zhcn' if server.server == 'cn' else 'en')
         for _ in self.loop():
             if timeout.reached():
                 self.ui_ensure_management_page()
                 return False
 
             image = self.image_crop((0, 0, 910, 1280), copy=False)
-            sim, click_button = self.get_character_template(character).match_result(image)
-            if sim > lower_template_match_similarity(0.9):
-                check_button = self.get_character_check_button(character)
-                return self._project_character_select(click_button, check_button)
-            else:
-                name = ' '.join(map(lambda x: x.capitalize(), character.split('_')))
-                # retry 2 times for character select
-                if 1 <= count < 3:
-                    logger.info(f'No character {name} was found, try reversed order')
-                    ROLE_SORTING.set('Ascending', main=self)
-                # select manjuu after 4 trials
-                elif count >= 3:
-                    logger.info(f'No character {name} was found, use manjuu')
-                    ROLE_SORTING.set('Ascending', main=self)
+            det_results = det_ocr.det(image)
+            if det_results:
+                # Group results into character cards to identify "Working" status
+                cards = self._group_character_cards(det_results)
+
+                # Check debug switch
+                if self.DEBUG_ISLAND_PROJECT:
+                    self._save_island_debug(image, cards)
+
+                found_busy = False
+                for card in cards:
+                    if target_name in card['name'] or card['name'] in target_name:
+                        if card['working']:
+                            logger.info(f'Character {card["name"]} is working')
+                            found_busy = True
+                            continue
+                        stamina = card.get('stamina')
+                        if stamina is not None and stamina < 40:
+                            logger.info(f'Character {card["name"]} stamina {stamina} < 40')
+                            found_busy = True
+                            continue
+
+                        box = card['name_box']
+                        cx = int(sum(p[0] for p in box) / len(box))
+                        cy = int(sum(p[1] for p in box) / len(box))
+                        click_button = Button(area=(cx, cy, cx, cy), color=(), button=(cx, cy, cx, cy), name=f'CHAR_{character}')
+                        return self._project_character_select(click_button)
+
+                if found_busy:
+                    logger.info(f'{target_name} unavailable, use manjuu')
                     character = 'manjuu'
-                count += 1
-                continue
+                    target_name = CHARACTER_NAME_MAP.get(character, {}).get(server.server,
+                                   CHARACTER_NAME_MAP.get(character, {}).get('cn', character))
+                    self.drag_page((0, -300), (200, 300, 700, 550), 0.3)
+                    self.device.sleep(0.5)
+                    continue
+
+            name = ' '.join(map(lambda x: x.capitalize(), character.split('_')))
+            if swipe_count < 5:
+                logger.info(f'No character {name} found, swiping down ({swipe_count + 1}/5)')
+                self.drag_page((0, -250), (200, 300, 700, 550), 0.6)
+                self.device.sleep(0.5)
+                swipe_count += 1
+            else:
+                logger.info(f'No character {name} was found, use manjuu')
+                character = 'manjuu'
+                target_name = CHARACTER_NAME_MAP.get(character, {}).get(server.server,
+                               CHARACTER_NAME_MAP.get(character, {}).get('cn', character))
+                self.drag_page((0, -300), (200, 300, 700, 550), 0.3)
+                self.device.sleep(0.5)
+            continue
 
     @staticmethod
     def get_character_template(character):
@@ -546,6 +597,101 @@ class IslandProjectRun(IslandUI):
     @staticmethod
     def get_character_check_button(character):
         return globals().get(f'PROJECT_{character.upper()}_CHECK', PRODUCT_MANJUU_CHECK)
+
+    def _group_character_cards(self, det_results):
+        working_label = '工作中'
+        working_boxes = []
+        stamina_boxes = []
+        others = []
+        for txt, box, score in det_results:
+            if working_label in txt:
+                working_boxes.append(box)
+            elif re.search(r'\d+/\d+', txt):
+                stamina_boxes.append((txt, box))
+            else:
+                others.append({'txt': txt, 'box': box, 'score': score})
+
+        cards = []
+        used_working = set()
+        used_stamina = set()
+        others.sort(key=lambda x: (np.mean(x['box'], axis=0)[1], np.mean(x['box'], axis=0)[0]))
+
+        for item in others:
+            txt, box = item['txt'], item['box']
+            bc = np.mean(box, axis=0)
+
+            associated_working = None
+            for i, w_box in enumerate(working_boxes):
+                if i in used_working: continue
+                wc = np.mean(w_box, axis=0)
+                if abs(wc[0] - bc[0]) < 60 and 30 < bc[1] - wc[1] < 150:
+                    associated_working = w_box
+                    used_working.add(i)
+                    break
+
+            stamina = None
+            for i, (stxt, sbox) in enumerate(stamina_boxes):
+                if i in used_stamina: continue
+                sc = np.mean(sbox, axis=0)
+                if abs(sc[0] - bc[0]) < 100 and abs(sc[1] - bc[1]) < 80:
+                    m = re.search(r'(\d+)/(\d+)', stxt)
+                    if m:
+                        stamina = int(m.group(1))
+                        used_stamina.add(i)
+                        break
+
+            if associated_working:
+                all_pts = np.array(box + associated_working)
+                x_min, y_min = np.min(all_pts, axis=0)
+                x_max, y_max = np.max(all_pts, axis=0)
+                card_box = [[x_min - 10, y_min - 20], [x_max + 10, y_min - 20], [x_max + 10, y_max + 10], [x_min - 10, y_max + 10]]
+                working = True
+            else:
+                x_min, y_min = np.min(box, axis=0)
+                x_max, y_max = np.max(box, axis=0)
+                card_box = [[x_min - 10, y_min - 100], [x_max + 10, y_min - 100], [x_max + 10, y_max + 10], [x_min - 10, y_max + 10]]
+                working = False
+
+            cards.append({
+                'name': txt,
+                'name_box': box,
+                'card_box': card_box,
+                'working': working,
+                'stamina': stamina,
+            })
+        return cards
+
+    def _save_island_debug(self, image, cards):
+        """
+        Save debug image with merged character card boxes.
+        """
+        folder = 'debug_img'
+        if not os.path.exists(folder):
+            os.makedirs(folder)
+
+        draw = image.copy()
+        if len(draw.shape) == 2:
+            draw = cv2.cvtColor(draw, cv2.COLOR_GRAY2BGR)
+        elif draw.shape[2] == 3:
+            # ALAS uses RGB internally, cv2 needs BGR for saving
+            draw = cv2.cvtColor(draw, cv2.COLOR_RGB2BGR)
+
+        for card in cards:
+            pts = np.array(card['card_box'], dtype=np.int32).reshape((-1, 1, 2))
+            # BGR: Red if working, Green if free
+            color = (0, 0, 255) if card['working'] else (0, 255, 0)
+            cv2.polylines(draw, [pts], True, color, 2)
+
+            name = card['name']
+            label = f"{name}{'(BUSY)' if card['working'] else ''}"
+            # Draw text
+            x, y = int(pts[0][0][0]), int(pts[0][0][1])
+            cv2.putText(draw, label, (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 1)
+
+        now = int(time.time() * 1000)
+        save_path = os.path.join(folder, f'island_card_{now}.png')
+        cv2.imwrite(save_path, draw)
+        logger.info(f'Island debug image saved: {save_path}')
 
     def get_current_product(self, project_id):
         """
@@ -727,10 +873,13 @@ class IslandProjectRun(IslandUI):
         proj_id = project.id
         for proj_slot in range(1, project.slot + 1):
             option = self.config.__getattribute__(f'Island{proj_id}_Option{proj_slot}')
-            if option == 0:
+            if not option or option == 0 or option == '不生产':
                 slot_option.append(None)
                 continue
-            slot_option.append(deep_get(items_data, [proj_id, option]))
+            if isinstance(option, int):
+                slot_option.append(deep_get(items_data, [proj_id, option]))
+            else:
+                slot_option.append(option)
         return slot_option
 
     def island_project_run(self, names, trial=2):

@@ -1,3 +1,4 @@
+from __future__ import annotations
 import ctypes
 import re
 import subprocess
@@ -7,7 +8,6 @@ import psutil
 from deploy.Windows.utils import DataProcessInfo
 from module.base.decorator import run_once
 from module.base.timer import Timer
-from module.device.connection import AdbDeviceWithStatus
 from module.device.connection_attr import ConnectionAttr
 from module.device.platform.platform_base import PlatformBase
 from module.device.platform.emulator_windows import Emulator, EmulatorInstance, EmulatorManager
@@ -135,6 +135,9 @@ class PlatformWindows(PlatformBase, EmulatorManager):
         elif instance == Emulator.MEmuPlayer:
             # MEmu.exe MEmu_0
             self.execute(f'"{exe}" {instance.name}')
+        elif instance.type == 'SSH':
+            logger.info('Starting SSH emulator via remote command')
+            self.run_remote_ssh_command(getattr(self.config, 'EmulatorInfo_RemoteStartCommand', ''))
         else:
             raise EmulatorUnknown(f'Cannot start an unknown emulator instance: {instance}')
 
@@ -197,6 +200,9 @@ class PlatformWindows(PlatformBase, EmulatorManager):
         elif instance == Emulator.MEmuPlayer:
             # F:\Program Files\Microvirt\MEmu\memuc.exe stop -n MEmu_0
             self.execute(f'"{Emulator.single_to_console(exe)}" stop -n {instance.name}')
+        elif instance.type == 'SSH':
+            logger.info('Stopping SSH emulator via remote command')
+            self.run_remote_ssh_command(getattr(self.config, 'EmulatorInfo_RemoteStopCommand', ''))
         else:
             raise EmulatorUnknown(f'Cannot stop an unknown emulator instance: {instance}')
 
@@ -285,7 +291,7 @@ class PlatformWindows(PlatformBase, EmulatorManager):
                 devices = self.list_device().select(serial=serial)
                 # logger.info(devices)
                 if devices:
-                    device: AdbDeviceWithStatus = devices.first_or_none()
+                    device = devices.first_or_none()
                     if device.status == 'device':
                         # Emulator online
                         pass

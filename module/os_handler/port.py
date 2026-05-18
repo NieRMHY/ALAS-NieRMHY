@@ -3,6 +3,7 @@ from module.logger import logger
 from module.os_handler.assets import *
 from module.os_shop.assets import PORT_SUPPLY_CHECK
 from module.os_shop.shop import OSShop
+from module.ui.assets import BACK_ARROW
 
 # Azur Lane ports have PORT_GOTO_MISSION, PORT_GOTO_SUPPLY, PORT_GOTO_DOCK.
 # Red axis ports have PORT_GOTO_SUPPLY.
@@ -93,13 +94,59 @@ class PortHandler(OSShop):
         self.device.sleep(0.5)
         self.device.screenshot()
 
-    def port_shop_quit(self):
+    def port_shop_quit(self, skip_first_screenshot=True):
         """
         Pages:
             in: PORT_SUPPLY_CHECK
             out: PORT_CHECK
         """
-        self.ui_back(appear_button=PORT_SUPPLY_CHECK, check_button=PORT_CHECK, skip_first_screenshot=True)
+        logger.info('Port shop quit')
+        
+        self.interval_clear([PORT_SUPPLY_CHECK, PORT_CHECK, ORDER_CHECK])
+        
+        # 超时保护：Timer(10, count=30) 限制最多 10 秒 / 30 次 reached() 调用
+        timeout = Timer(10, count=30).start()
+        order_quit_used = False
+        
+        while True:
+            # 超时保护：同时满足时间超过 10 秒且 reached() 调用超过 30 次
+            if timeout.reached():
+                logger.warning('port_shop_quit timeout, trying fallback ui_back')
+                self.ui_back(appear_button=PORT_SUPPLY_CHECK, check_button=PORT_CHECK, skip_first_screenshot=True)
+                break
+            
+            if skip_first_screenshot:
+                skip_first_screenshot = False
+            else:
+                self.device.screenshot()
+
+            # 成功返回到港口界面
+            if self.appear(PORT_CHECK, offset=(20, 20)):
+                logger.info('Arrive PORT_CHECK')
+                break
+
+            # 意外进入情报界面（作战总览），用 order_quit 正确关闭
+            if self.appear(ORDER_CHECK, offset=(20, 20)):
+                logger.warning('Unexpected enter order page, executing order_quit')
+                self.order_quit()
+                order_quit_used = True
+                self.interval_clear([PORT_SUPPLY_CHECK, PORT_CHECK, ORDER_CHECK])
+                timeout.reset()
+                continue
+
+            # 从情报界面退出后可能落在大地图，重新进入港口
+            if order_quit_used and self.is_in_map():
+                logger.info('On map after order_quit, re-entering port')
+                self.port_enter()
+                order_quit_used = False
+                self.interval_reset(PORT_CHECK)
+                continue
+
+            # 正常点击返回箭头
+            if self.appear(PORT_SUPPLY_CHECK, offset=(20, 20), interval=3):
+                self.device.click(BACK_ARROW)
+                self.interval_reset(PORT_SUPPLY_CHECK)
+                continue
 
     def port_dock_repair(self):
         """

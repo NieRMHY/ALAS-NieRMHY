@@ -52,6 +52,31 @@ class ManualConfig:
     > ThreeOilLowCost
     """
 
+    @staticmethod
+    def _normalize_scheduler_priority(value: str | None) -> str:
+        """
+        Normalize user-defined scheduler priority text.
+
+        - Remove inline `# ...` comments from each line.
+        - Drop empty lines.
+        - Keep only raw task expressions joined by newlines.
+        - Strip trailing `>` to prevent accidental token concatenation.
+        """
+        if not value:
+            return ""
+
+        cleaned_lines = []
+        for raw_line in str(value).splitlines():
+            line = raw_line.split("#", 1)[0].strip()
+            if not line:
+                continue
+            cleaned_lines.append(line)
+
+        cleaned = "\n".join(cleaned_lines).strip()
+        while cleaned.endswith(">"):
+            cleaned = cleaned[:-1].rstrip()
+        return cleaned
+
     @property
     def SCHEDULER_PRIORITY(self) -> str:
         if TYPE_CHECKING:
@@ -69,10 +94,16 @@ class ManualConfig:
         if not task_adj:
             task_adj = getattr(self, "YukikazeTaskManager_TaskPriorityAdjustment", None)
 
-        default_priority = getattr(self, "_DEFAULT_SCHEDULER_PRIORITY", "")
-        if task_adj:
-            return str(task_adj) + "\n" + (default_priority or "")
-        return default_priority
+        default_priority = self._normalize_scheduler_priority(
+            getattr(self, "_DEFAULT_SCHEDULER_PRIORITY", "")
+        )
+        custom_priority = self._normalize_scheduler_priority(task_adj)
+
+        if custom_priority and default_priority:
+            # Always insert an explicit separator so the last custom token
+            # cannot merge with the first default token.
+            return f"{custom_priority}\n>\n{default_priority}"
+        return custom_priority or default_priority
 
     """
     module.assets

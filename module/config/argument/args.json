@@ -381,7 +381,8 @@
           "MuMuPlayer12",
           "MEmuPlayer",
           "BlueStacksAir",
-          "MuMuPro"
+          "MuMuPro",
+          "SSH"
         ]
       },
       "name": {
@@ -391,6 +392,38 @@
       "path": {
         "type": "textarea",
         "value": null
+      },
+      "EnableRemoteSSH": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "RemoteSSHHost": {
+        "type": "input",
+        "value": null
+      },
+      "RemoteSSHPort": {
+        "type": "input",
+        "value": 22
+      },
+      "RemoteSSHUser": {
+        "type": "input",
+        "value": "root"
+      },
+      "RemoteSSHPublicKey": {
+        "type": "textarea",
+        "value": null
+      },
+      "RemoteStartCommand": {
+        "type": "textarea",
+        "value": ""
+      },
+      "RemoteStopCommand": {
+        "type": "textarea",
+        "value": ""
       }
     },
     "Error": {
@@ -2234,8 +2267,8 @@
         "value": "campaign_main",
         "option": [
           "event_20201126_cn",
-          "event_20220728_cn",
           "event_20220915_cn",
+          "event_20221222_cn",
           "event_20250424_cn",
           "event_20260326_cn",
           "event_20260417_cn"
@@ -2259,16 +2292,15 @@
           "event_20260326_cn"
         ],
         "option_tw": [
+          "event_20221222_cn",
           "event_20201126_cn",
           "event_20260417_cn",
-          "event_20220915_cn",
-          "event_20260326_cn",
-          "event_20220728_cn"
+          "event_20220915_cn"
         ],
         "option_bold": [
           "event_20201126_cn",
-          "event_20220728_cn",
           "event_20220915_cn",
+          "event_20221222_cn",
           "event_20250424_cn",
           "event_20260326_cn",
           "event_20260417_cn"
@@ -2732,8 +2764,8 @@
         "value": "campaign_main",
         "option": [
           "event_20201126_cn",
-          "event_20220728_cn",
           "event_20220915_cn",
+          "event_20221222_cn",
           "event_20250424_cn",
           "event_20260326_cn",
           "event_20260417_cn"
@@ -2758,16 +2790,15 @@
           "event_20260326_cn"
         ],
         "option_tw": [
+          "event_20221222_cn",
           "event_20201126_cn",
           "event_20260417_cn",
-          "event_20220915_cn",
-          "event_20260326_cn",
-          "event_20220728_cn"
+          "event_20220915_cn"
         ],
         "option_bold": [
           "event_20201126_cn",
-          "event_20220728_cn",
           "event_20220915_cn",
+          "event_20221222_cn",
           "event_20250424_cn",
           "event_20260326_cn",
           "event_20260417_cn"
@@ -3640,8 +3671,8 @@
         "value": "campaign_main",
         "option": [
           "event_20201126_cn",
-          "event_20220728_cn",
           "event_20220915_cn",
+          "event_20221222_cn",
           "event_20250424_cn",
           "event_20260326_cn",
           "event_20260417_cn"
@@ -3665,16 +3696,15 @@
           "event_20260326_cn"
         ],
         "option_tw": [
+          "event_20221222_cn",
           "event_20201126_cn",
           "event_20260417_cn",
-          "event_20220915_cn",
-          "event_20260326_cn",
-          "event_20220728_cn"
+          "event_20220915_cn"
         ],
         "option_bold": [
           "event_20201126_cn",
-          "event_20220728_cn",
           "event_20220915_cn",
+          "event_20221222_cn",
           "event_20250424_cn",
           "event_20260326_cn",
           "event_20260417_cn"
@@ -4079,8 +4109,8 @@
         "value": "campaign_main",
         "option": [
           "event_20201126_cn",
-          "event_20220728_cn",
           "event_20220915_cn",
+          "event_20221222_cn",
           "event_20250424_cn",
           "event_20260326_cn",
           "event_20260417_cn"
@@ -4104,16 +4134,15 @@
           "event_20260326_cn"
         ],
         "option_tw": [
+          "event_20221222_cn",
           "event_20201126_cn",
           "event_20260417_cn",
-          "event_20220915_cn",
-          "event_20260326_cn",
-          "event_20220728_cn"
+          "event_20220915_cn"
         ],
         "option_bold": [
           "event_20201126_cn",
-          "event_20220728_cn",
           "event_20220915_cn",
+          "event_20221222_cn",
           "event_20250424_cn",
           "event_20260326_cn",
           "event_20260417_cn"
@@ -4518,8 +4547,8 @@
         "value": "campaign_main",
         "option": [
           "event_20201126_cn",
-          "event_20220728_cn",
           "event_20220915_cn",
+          "event_20221222_cn",
           "event_20250424_cn",
           "event_20260326_cn",
           "event_20260417_cn"
@@ -4543,16 +4572,15 @@
           "event_20260326_cn"
         ],
         "option_tw": [
+          "event_20221222_cn",
           "event_20201126_cn",
           "event_20260417_cn",
-          "event_20220915_cn",
-          "event_20260326_cn",
-          "event_20220728_cn"
+          "event_20220915_cn"
         ],
         "option_bold": [
           "event_20201126_cn",
-          "event_20220728_cn",
           "event_20220915_cn",
+          "event_20221222_cn",
           "event_20250424_cn",
           "event_20260326_cn",
           "event_20260417_cn"
@@ -6903,8 +6931,8 @@
         "value": "campaign_main",
         "option": [
           "event_20201126_cn",
-          "event_20220728_cn",
           "event_20220915_cn",
+          "event_20221222_cn",
           "event_20250424_cn",
           "event_20260326_cn",
           "event_20260417_cn"
@@ -6928,16 +6956,15 @@
           "event_20260326_cn"
         ],
         "option_tw": [
+          "event_20221222_cn",
           "event_20201126_cn",
           "event_20260417_cn",
-          "event_20220915_cn",
-          "event_20260326_cn",
-          "event_20220728_cn"
+          "event_20220915_cn"
         ],
         "option_bold": [
           "event_20201126_cn",
-          "event_20220728_cn",
           "event_20220915_cn",
+          "event_20221222_cn",
           "event_20250424_cn",
           "event_20260326_cn",
           "event_20260417_cn"
@@ -7359,8 +7386,8 @@
         "value": "campaign_main",
         "option": [
           "event_20201126_cn",
-          "event_20220728_cn",
           "event_20220915_cn",
+          "event_20221222_cn",
           "event_20250424_cn",
           "event_20260326_cn",
           "event_20260417_cn"
@@ -7384,16 +7411,15 @@
           "event_20260326_cn"
         ],
         "option_tw": [
+          "event_20221222_cn",
           "event_20201126_cn",
           "event_20260417_cn",
-          "event_20220915_cn",
-          "event_20260326_cn",
-          "event_20220728_cn"
+          "event_20220915_cn"
         ],
         "option_bold": [
           "event_20201126_cn",
-          "event_20220728_cn",
           "event_20220915_cn",
+          "event_20221222_cn",
           "event_20250424_cn",
           "event_20260326_cn",
           "event_20260417_cn"
@@ -7815,8 +7841,8 @@
         "value": "campaign_main",
         "option": [
           "event_20201126_cn",
-          "event_20220728_cn",
           "event_20220915_cn",
+          "event_20221222_cn",
           "event_20250424_cn",
           "event_20260326_cn",
           "event_20260417_cn"
@@ -7840,16 +7866,15 @@
           "event_20260326_cn"
         ],
         "option_tw": [
+          "event_20221222_cn",
           "event_20201126_cn",
           "event_20260417_cn",
-          "event_20220915_cn",
-          "event_20260326_cn",
-          "event_20220728_cn"
+          "event_20220915_cn"
         ],
         "option_bold": [
           "event_20201126_cn",
-          "event_20220728_cn",
           "event_20220915_cn",
+          "event_20221222_cn",
           "event_20250424_cn",
           "event_20260326_cn",
           "event_20260417_cn"
@@ -8271,8 +8296,8 @@
         "value": "campaign_main",
         "option": [
           "event_20201126_cn",
-          "event_20220728_cn",
           "event_20220915_cn",
+          "event_20221222_cn",
           "event_20250424_cn",
           "event_20260326_cn",
           "event_20260417_cn"
@@ -8296,16 +8321,15 @@
           "event_20260326_cn"
         ],
         "option_tw": [
+          "event_20221222_cn",
           "event_20201126_cn",
           "event_20260417_cn",
-          "event_20220915_cn",
-          "event_20260326_cn",
-          "event_20220728_cn"
+          "event_20220915_cn"
         ],
         "option_bold": [
           "event_20201126_cn",
-          "event_20220728_cn",
           "event_20220915_cn",
+          "event_20221222_cn",
           "event_20250424_cn",
           "event_20260326_cn",
           "event_20260417_cn"
@@ -8717,8 +8741,8 @@
         "value": "campaign_main",
         "option": [
           "event_20201126_cn",
-          "event_20220728_cn",
           "event_20220915_cn",
+          "event_20221222_cn",
           "event_20250424_cn",
           "event_20260326_cn",
           "event_20260417_cn"
@@ -8742,16 +8766,15 @@
           "event_20260326_cn"
         ],
         "option_tw": [
+          "event_20221222_cn",
           "event_20201126_cn",
           "event_20260417_cn",
-          "event_20220915_cn",
-          "event_20260326_cn",
-          "event_20220728_cn"
+          "event_20220915_cn"
         ],
         "option_bold": [
           "event_20201126_cn",
-          "event_20220728_cn",
           "event_20220915_cn",
+          "event_20221222_cn",
           "event_20250424_cn",
           "event_20260326_cn",
           "event_20260417_cn"
@@ -9755,7 +9778,7 @@
     "Tactical": {
       "TacticalFilter": {
         "type": "textarea",
-        "value": "SameT4 > SameT3 > SameT2 > SameT1\n> BlueT2 > YellowT2 > RedT2\n> BlueT3 > YellowT3 > RedT3\n> BlueT4 > YellowT4 > RedT4\n> BlueT1 > YellowT1 > RedT1\n> first"
+        "value": "SameT4 > SameT3 > SameT2 > SameT1\n> BlueT3 > YellowT3 > RedT3\n> BlueT2 > YellowT2 > RedT2\n> BlueT4 > YellowT4 > RedT4\n> BlueT1 > YellowT1 > RedT1\n> first"
       },
       "RapidTrainingSlot": {
         "type": "select",
@@ -9766,6 +9789,30 @@
           "slot_2",
           "slot_3",
           "slot_4"
+        ]
+      },
+      "SkillAutoSwitch": {
+        "type": "checkbox",
+        "value": true,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "RedToBlue": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "NoT4": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
         ]
       }
     },
@@ -10357,156 +10404,36 @@
         "value": false
       },
       "Option1": {
-        "type": "select",
-        "value": 0,
-        "option": [
-          0,
-          1,
-          2,
-          3,
-          4,
-          5,
-          6,
-          7,
-          8
-        ]
+        "type": "input",
+        "value": ""
       },
       "Character1": {
-        "type": "select",
-        "value": "manjuu",
-        "option": [
-          "manjuu",
-          "saratoga",
-          "new_jersey",
-          "tashkent",
-          "lemalin",
-          "shimakaze",
-          "akashi",
-          "ying_swei",
-          "chao_ho",
-          "william_d_porter",
-          "chen_hai",
-          "unicorn",
-          "cheshire",
-          "amagi_chan",
-          "helena",
-          "atago",
-          "friedrich_der_grobe"
-        ]
+        "type": "input",
+        "value": "工作啾"
       },
       "Option2": {
-        "type": "select",
-        "value": 0,
-        "option": [
-          0,
-          1,
-          2,
-          3,
-          4,
-          5,
-          6,
-          7,
-          8
-        ]
+        "type": "input",
+        "value": ""
       },
       "Character2": {
-        "type": "select",
-        "value": "manjuu",
-        "option": [
-          "manjuu",
-          "saratoga",
-          "new_jersey",
-          "tashkent",
-          "lemalin",
-          "shimakaze",
-          "akashi",
-          "ying_swei",
-          "chao_ho",
-          "william_d_porter",
-          "chen_hai",
-          "unicorn",
-          "cheshire",
-          "amagi_chan",
-          "helena",
-          "atago",
-          "friedrich_der_grobe"
-        ]
+        "type": "input",
+        "value": "工作啾"
       },
       "Option3": {
-        "type": "select",
-        "value": 0,
-        "option": [
-          0,
-          1,
-          2,
-          3,
-          4,
-          5,
-          6,
-          7,
-          8
-        ]
+        "type": "input",
+        "value": ""
       },
       "Character3": {
-        "type": "select",
-        "value": "manjuu",
-        "option": [
-          "manjuu",
-          "saratoga",
-          "new_jersey",
-          "tashkent",
-          "lemalin",
-          "shimakaze",
-          "akashi",
-          "ying_swei",
-          "chao_ho",
-          "william_d_porter",
-          "chen_hai",
-          "unicorn",
-          "cheshire",
-          "amagi_chan",
-          "helena",
-          "atago",
-          "friedrich_der_grobe"
-        ]
+        "type": "input",
+        "value": "工作啾"
       },
       "Option4": {
-        "type": "select",
-        "value": 0,
-        "option": [
-          0,
-          1,
-          2,
-          3,
-          4,
-          5,
-          6,
-          7,
-          8
-        ]
+        "type": "input",
+        "value": ""
       },
       "Character4": {
-        "type": "select",
-        "value": "manjuu",
-        "option": [
-          "manjuu",
-          "saratoga",
-          "new_jersey",
-          "tashkent",
-          "lemalin",
-          "shimakaze",
-          "akashi",
-          "ying_swei",
-          "chao_ho",
-          "william_d_porter",
-          "chen_hai",
-          "unicorn",
-          "cheshire",
-          "amagi_chan",
-          "helena",
-          "atago",
-          "friedrich_der_grobe"
-        ]
+        "type": "input",
+        "value": "工作啾"
       }
     },
     "Island2": {
@@ -10523,27 +10450,8 @@
         ]
       },
       "Character1": {
-        "type": "select",
-        "value": "manjuu",
-        "option": [
-          "manjuu",
-          "saratoga",
-          "new_jersey",
-          "tashkent",
-          "lemalin",
-          "shimakaze",
-          "akashi",
-          "ying_swei",
-          "chao_ho",
-          "william_d_porter",
-          "chen_hai",
-          "unicorn",
-          "cheshire",
-          "amagi_chan",
-          "helena",
-          "atago",
-          "friedrich_der_grobe"
-        ]
+        "type": "input",
+        "value": "工作啾"
       },
       "Option2": {
         "type": "select",
@@ -10554,27 +10462,8 @@
         ]
       },
       "Character2": {
-        "type": "select",
-        "value": "manjuu",
-        "option": [
-          "manjuu",
-          "saratoga",
-          "new_jersey",
-          "tashkent",
-          "lemalin",
-          "shimakaze",
-          "akashi",
-          "ying_swei",
-          "chao_ho",
-          "william_d_porter",
-          "chen_hai",
-          "unicorn",
-          "cheshire",
-          "amagi_chan",
-          "helena",
-          "atago",
-          "friedrich_der_grobe"
-        ]
+        "type": "input",
+        "value": "工作啾"
       },
       "Option3": {
         "type": "select",
@@ -10585,27 +10474,8 @@
         ]
       },
       "Character3": {
-        "type": "select",
-        "value": "manjuu",
-        "option": [
-          "manjuu",
-          "saratoga",
-          "new_jersey",
-          "tashkent",
-          "lemalin",
-          "shimakaze",
-          "akashi",
-          "ying_swei",
-          "chao_ho",
-          "william_d_porter",
-          "chen_hai",
-          "unicorn",
-          "cheshire",
-          "amagi_chan",
-          "helena",
-          "atago",
-          "friedrich_der_grobe"
-        ]
+        "type": "input",
+        "value": "工作啾"
       },
       "Option4": {
         "type": "select",
@@ -10616,27 +10486,8 @@
         ]
       },
       "Character4": {
-        "type": "select",
-        "value": "manjuu",
-        "option": [
-          "manjuu",
-          "saratoga",
-          "new_jersey",
-          "tashkent",
-          "lemalin",
-          "shimakaze",
-          "akashi",
-          "ying_swei",
-          "chao_ho",
-          "william_d_porter",
-          "chen_hai",
-          "unicorn",
-          "cheshire",
-          "amagi_chan",
-          "helena",
-          "atago",
-          "friedrich_der_grobe"
-        ]
+        "type": "input",
+        "value": "工作啾"
       }
     },
     "Island3": {
@@ -10645,142 +10496,28 @@
         "value": false
       },
       "Option1": {
-        "type": "select",
-        "value": 0,
-        "option": [
-          0,
-          1,
-          2,
-          3,
-          4,
-          5,
-          6,
-          7,
-          8,
-          9,
-          10,
-          11,
-          12,
-          13,
-          14,
-          15,
-          16
-        ]
+        "type": "input",
+        "value": ""
       },
       "Character1": {
-        "type": "select",
-        "value": "manjuu",
-        "option": [
-          "manjuu",
-          "saratoga",
-          "new_jersey",
-          "tashkent",
-          "lemalin",
-          "shimakaze",
-          "akashi",
-          "ying_swei",
-          "chao_ho",
-          "william_d_porter",
-          "chen_hai",
-          "unicorn",
-          "cheshire",
-          "amagi_chan",
-          "helena",
-          "atago",
-          "friedrich_der_grobe"
-        ]
+        "type": "input",
+        "value": "工作啾"
       },
       "Option2": {
-        "type": "select",
-        "value": 0,
-        "option": [
-          0,
-          1,
-          2,
-          3,
-          4,
-          5,
-          6,
-          7,
-          8,
-          9,
-          10,
-          11,
-          12,
-          13,
-          14,
-          15,
-          16
-        ]
+        "type": "input",
+        "value": ""
       },
       "Character2": {
-        "type": "select",
-        "value": "manjuu",
-        "option": [
-          "manjuu",
-          "saratoga",
-          "new_jersey",
-          "tashkent",
-          "lemalin",
-          "shimakaze",
-          "akashi",
-          "ying_swei",
-          "chao_ho",
-          "william_d_porter",
-          "chen_hai",
-          "unicorn",
-          "cheshire",
-          "amagi_chan",
-          "helena",
-          "atago",
-          "friedrich_der_grobe"
-        ]
+        "type": "input",
+        "value": "工作啾"
       },
       "Option3": {
-        "type": "select",
-        "value": 0,
-        "option": [
-          0,
-          1,
-          2,
-          3,
-          4,
-          5,
-          6,
-          7,
-          8,
-          9,
-          10,
-          11,
-          12,
-          13,
-          14,
-          15,
-          16
-        ]
+        "type": "input",
+        "value": ""
       },
       "Character3": {
-        "type": "select",
-        "value": "manjuu",
-        "option": [
-          "manjuu",
-          "saratoga",
-          "new_jersey",
-          "tashkent",
-          "lemalin",
-          "shimakaze",
-          "akashi",
-          "ying_swei",
-          "chao_ho",
-          "william_d_porter",
-          "chen_hai",
-          "unicorn",
-          "cheshire",
-          "amagi_chan",
-          "helena",
-          "atago",
-          "friedrich_der_grobe"
-        ]
+        "type": "input",
+        "value": "工作啾"
       }
     },
     "Island4": {
@@ -10789,148 +10526,36 @@
         "value": false
       },
       "Option1": {
-        "type": "select",
-        "value": 0,
-        "option": [
-          0,
-          1,
-          2,
-          3,
-          4,
-          5,
-          6
-        ]
+        "type": "input",
+        "value": ""
       },
       "Character1": {
-        "type": "select",
-        "value": "manjuu",
-        "option": [
-          "manjuu",
-          "saratoga",
-          "new_jersey",
-          "tashkent",
-          "lemalin",
-          "shimakaze",
-          "akashi",
-          "ying_swei",
-          "chao_ho",
-          "william_d_porter",
-          "chen_hai",
-          "unicorn",
-          "cheshire",
-          "amagi_chan",
-          "helena",
-          "atago",
-          "friedrich_der_grobe"
-        ]
+        "type": "input",
+        "value": "工作啾"
       },
       "Option2": {
-        "type": "select",
-        "value": 0,
-        "option": [
-          0,
-          1,
-          2,
-          3,
-          4,
-          5,
-          6
-        ]
+        "type": "input",
+        "value": ""
       },
       "Character2": {
-        "type": "select",
-        "value": "manjuu",
-        "option": [
-          "manjuu",
-          "saratoga",
-          "new_jersey",
-          "tashkent",
-          "lemalin",
-          "shimakaze",
-          "akashi",
-          "ying_swei",
-          "chao_ho",
-          "william_d_porter",
-          "chen_hai",
-          "unicorn",
-          "cheshire",
-          "amagi_chan",
-          "helena",
-          "atago",
-          "friedrich_der_grobe"
-        ]
+        "type": "input",
+        "value": "工作啾"
       },
       "Option3": {
-        "type": "select",
-        "value": 0,
-        "option": [
-          0,
-          1,
-          2,
-          3,
-          4,
-          5,
-          6
-        ]
+        "type": "input",
+        "value": ""
       },
       "Character3": {
-        "type": "select",
-        "value": "manjuu",
-        "option": [
-          "manjuu",
-          "saratoga",
-          "new_jersey",
-          "tashkent",
-          "lemalin",
-          "shimakaze",
-          "akashi",
-          "ying_swei",
-          "chao_ho",
-          "william_d_porter",
-          "chen_hai",
-          "unicorn",
-          "cheshire",
-          "amagi_chan",
-          "helena",
-          "atago",
-          "friedrich_der_grobe"
-        ]
+        "type": "input",
+        "value": "工作啾"
       },
       "Option4": {
-        "type": "select",
-        "value": 0,
-        "option": [
-          0,
-          1,
-          2,
-          3,
-          4,
-          5,
-          6
-        ]
+        "type": "input",
+        "value": ""
       },
       "Character4": {
-        "type": "select",
-        "value": "manjuu",
-        "option": [
-          "manjuu",
-          "saratoga",
-          "new_jersey",
-          "tashkent",
-          "lemalin",
-          "shimakaze",
-          "akashi",
-          "ying_swei",
-          "chao_ho",
-          "william_d_porter",
-          "chen_hai",
-          "unicorn",
-          "cheshire",
-          "amagi_chan",
-          "helena",
-          "atago",
-          "friedrich_der_grobe"
-        ]
+        "type": "input",
+        "value": "工作啾"
       }
     },
     "Island5": {
@@ -10939,140 +10564,36 @@
         "value": false
       },
       "Option1": {
-        "type": "select",
-        "value": 0,
-        "option": [
-          0,
-          1,
-          2,
-          3,
-          4
-        ]
+        "type": "input",
+        "value": ""
       },
       "Character1": {
-        "type": "select",
-        "value": "manjuu",
-        "option": [
-          "manjuu",
-          "saratoga",
-          "new_jersey",
-          "tashkent",
-          "lemalin",
-          "shimakaze",
-          "akashi",
-          "ying_swei",
-          "chao_ho",
-          "william_d_porter",
-          "chen_hai",
-          "unicorn",
-          "cheshire",
-          "amagi_chan",
-          "helena",
-          "atago",
-          "friedrich_der_grobe"
-        ]
+        "type": "input",
+        "value": "工作啾"
       },
       "Option2": {
-        "type": "select",
-        "value": 0,
-        "option": [
-          0,
-          1,
-          2,
-          3,
-          4
-        ]
+        "type": "input",
+        "value": ""
       },
       "Character2": {
-        "type": "select",
-        "value": "manjuu",
-        "option": [
-          "manjuu",
-          "saratoga",
-          "new_jersey",
-          "tashkent",
-          "lemalin",
-          "shimakaze",
-          "akashi",
-          "ying_swei",
-          "chao_ho",
-          "william_d_porter",
-          "chen_hai",
-          "unicorn",
-          "cheshire",
-          "amagi_chan",
-          "helena",
-          "atago",
-          "friedrich_der_grobe"
-        ]
+        "type": "input",
+        "value": "工作啾"
       },
       "Option3": {
-        "type": "select",
-        "value": 0,
-        "option": [
-          0,
-          1,
-          2,
-          3,
-          4
-        ]
+        "type": "input",
+        "value": ""
       },
       "Character3": {
-        "type": "select",
-        "value": "manjuu",
-        "option": [
-          "manjuu",
-          "saratoga",
-          "new_jersey",
-          "tashkent",
-          "lemalin",
-          "shimakaze",
-          "akashi",
-          "ying_swei",
-          "chao_ho",
-          "william_d_porter",
-          "chen_hai",
-          "unicorn",
-          "cheshire",
-          "amagi_chan",
-          "helena",
-          "atago",
-          "friedrich_der_grobe"
-        ]
+        "type": "input",
+        "value": "工作啾"
       },
       "Option4": {
-        "type": "select",
-        "value": 0,
-        "option": [
-          0,
-          1,
-          2,
-          3,
-          4
-        ]
+        "type": "input",
+        "value": ""
       },
       "Character4": {
-        "type": "select",
-        "value": "manjuu",
-        "option": [
-          "manjuu",
-          "saratoga",
-          "new_jersey",
-          "tashkent",
-          "lemalin",
-          "shimakaze",
-          "akashi",
-          "ying_swei",
-          "chao_ho",
-          "william_d_porter",
-          "chen_hai",
-          "unicorn",
-          "cheshire",
-          "amagi_chan",
-          "helena",
-          "atago",
-          "friedrich_der_grobe"
-        ]
+        "type": "input",
+        "value": "工作啾"
       }
     },
     "Island6": {
@@ -11081,152 +10602,36 @@
         "value": false
       },
       "Option1": {
-        "type": "select",
-        "value": 0,
-        "option": [
-          0,
-          1,
-          2,
-          3,
-          4,
-          5,
-          6,
-          7
-        ]
+        "type": "input",
+        "value": ""
       },
       "Character1": {
-        "type": "select",
-        "value": "manjuu",
-        "option": [
-          "manjuu",
-          "saratoga",
-          "new_jersey",
-          "tashkent",
-          "lemalin",
-          "shimakaze",
-          "akashi",
-          "ying_swei",
-          "chao_ho",
-          "william_d_porter",
-          "chen_hai",
-          "unicorn",
-          "cheshire",
-          "amagi_chan",
-          "helena",
-          "atago",
-          "friedrich_der_grobe"
-        ]
+        "type": "input",
+        "value": "工作啾"
       },
       "Option2": {
-        "type": "select",
-        "value": 0,
-        "option": [
-          0,
-          1,
-          2,
-          3,
-          4,
-          5,
-          6,
-          7
-        ]
+        "type": "input",
+        "value": ""
       },
       "Character2": {
-        "type": "select",
-        "value": "manjuu",
-        "option": [
-          "manjuu",
-          "saratoga",
-          "new_jersey",
-          "tashkent",
-          "lemalin",
-          "shimakaze",
-          "akashi",
-          "ying_swei",
-          "chao_ho",
-          "william_d_porter",
-          "chen_hai",
-          "unicorn",
-          "cheshire",
-          "amagi_chan",
-          "helena",
-          "atago",
-          "friedrich_der_grobe"
-        ]
+        "type": "input",
+        "value": "工作啾"
       },
       "Option3": {
-        "type": "select",
-        "value": 0,
-        "option": [
-          0,
-          1,
-          2,
-          3,
-          4,
-          5,
-          6,
-          7
-        ]
+        "type": "input",
+        "value": ""
       },
       "Character3": {
-        "type": "select",
-        "value": "manjuu",
-        "option": [
-          "manjuu",
-          "saratoga",
-          "new_jersey",
-          "tashkent",
-          "lemalin",
-          "shimakaze",
-          "akashi",
-          "ying_swei",
-          "chao_ho",
-          "william_d_porter",
-          "chen_hai",
-          "unicorn",
-          "cheshire",
-          "amagi_chan",
-          "helena",
-          "atago",
-          "friedrich_der_grobe"
-        ]
+        "type": "input",
+        "value": "工作啾"
       },
       "Option4": {
-        "type": "select",
-        "value": 0,
-        "option": [
-          0,
-          1,
-          2,
-          3,
-          4,
-          5,
-          6,
-          7
-        ]
+        "type": "input",
+        "value": ""
       },
       "Character4": {
-        "type": "select",
-        "value": "manjuu",
-        "option": [
-          "manjuu",
-          "saratoga",
-          "new_jersey",
-          "tashkent",
-          "lemalin",
-          "shimakaze",
-          "akashi",
-          "ying_swei",
-          "chao_ho",
-          "william_d_porter",
-          "chen_hai",
-          "unicorn",
-          "cheshire",
-          "amagi_chan",
-          "helena",
-          "atago",
-          "friedrich_der_grobe"
-        ]
+        "type": "input",
+        "value": "工作啾"
       }
     },
     "Island7": {
@@ -11235,82 +10640,20 @@
         "value": false
       },
       "Option1": {
-        "type": "select",
-        "value": 0,
-        "option": [
-          0,
-          1,
-          2,
-          3,
-          4,
-          5,
-          6,
-          7,
-          8,
-          9
-        ]
+        "type": "input",
+        "value": ""
       },
       "Character1": {
-        "type": "select",
-        "value": "manjuu",
-        "option": [
-          "manjuu",
-          "saratoga",
-          "new_jersey",
-          "tashkent",
-          "lemalin",
-          "shimakaze",
-          "akashi",
-          "ying_swei",
-          "chao_ho",
-          "william_d_porter",
-          "chen_hai",
-          "unicorn",
-          "cheshire",
-          "amagi_chan",
-          "helena",
-          "atago",
-          "friedrich_der_grobe"
-        ]
+        "type": "input",
+        "value": "工作啾"
       },
       "Option2": {
-        "type": "select",
-        "value": 0,
-        "option": [
-          0,
-          1,
-          2,
-          3,
-          4,
-          5,
-          6,
-          7,
-          8,
-          9
-        ]
+        "type": "input",
+        "value": ""
       },
       "Character2": {
-        "type": "select",
-        "value": "manjuu",
-        "option": [
-          "manjuu",
-          "saratoga",
-          "new_jersey",
-          "tashkent",
-          "lemalin",
-          "shimakaze",
-          "akashi",
-          "ying_swei",
-          "chao_ho",
-          "william_d_porter",
-          "chen_hai",
-          "unicorn",
-          "cheshire",
-          "amagi_chan",
-          "helena",
-          "atago",
-          "friedrich_der_grobe"
-        ]
+        "type": "input",
+        "value": "工作啾"
       }
     },
     "Island8": {
@@ -11319,88 +10662,20 @@
         "value": false
       },
       "Option1": {
-        "type": "select",
-        "value": 0,
-        "option": [
-          0,
-          1,
-          2,
-          3,
-          4,
-          5,
-          6,
-          7,
-          8,
-          9,
-          10,
-          11,
-          12
-        ]
+        "type": "input",
+        "value": ""
       },
       "Character1": {
-        "type": "select",
-        "value": "manjuu",
-        "option": [
-          "manjuu",
-          "saratoga",
-          "new_jersey",
-          "tashkent",
-          "lemalin",
-          "shimakaze",
-          "akashi",
-          "ying_swei",
-          "chao_ho",
-          "william_d_porter",
-          "chen_hai",
-          "unicorn",
-          "cheshire",
-          "amagi_chan",
-          "helena",
-          "atago",
-          "friedrich_der_grobe"
-        ]
+        "type": "input",
+        "value": "工作啾"
       },
       "Option2": {
-        "type": "select",
-        "value": 0,
-        "option": [
-          0,
-          1,
-          2,
-          3,
-          4,
-          5,
-          6,
-          7,
-          8,
-          9,
-          10,
-          11,
-          12
-        ]
+        "type": "input",
+        "value": ""
       },
       "Character2": {
-        "type": "select",
-        "value": "manjuu",
-        "option": [
-          "manjuu",
-          "saratoga",
-          "new_jersey",
-          "tashkent",
-          "lemalin",
-          "shimakaze",
-          "akashi",
-          "ying_swei",
-          "chao_ho",
-          "william_d_porter",
-          "chen_hai",
-          "unicorn",
-          "cheshire",
-          "amagi_chan",
-          "helena",
-          "atago",
-          "friedrich_der_grobe"
-        ]
+        "type": "input",
+        "value": "工作啾"
       }
     },
     "Island9": {
@@ -11409,86 +10684,20 @@
         "value": false
       },
       "Option1": {
-        "type": "select",
-        "value": 0,
-        "option": [
-          0,
-          1,
-          2,
-          3,
-          4,
-          5,
-          6,
-          7,
-          8,
-          9,
-          10,
-          11
-        ]
+        "type": "input",
+        "value": ""
       },
       "Character1": {
-        "type": "select",
-        "value": "manjuu",
-        "option": [
-          "manjuu",
-          "saratoga",
-          "new_jersey",
-          "tashkent",
-          "lemalin",
-          "shimakaze",
-          "akashi",
-          "ying_swei",
-          "chao_ho",
-          "william_d_porter",
-          "chen_hai",
-          "unicorn",
-          "cheshire",
-          "amagi_chan",
-          "helena",
-          "atago",
-          "friedrich_der_grobe"
-        ]
+        "type": "input",
+        "value": "工作啾"
       },
       "Option2": {
-        "type": "select",
-        "value": 0,
-        "option": [
-          0,
-          1,
-          2,
-          3,
-          4,
-          5,
-          6,
-          7,
-          8,
-          9,
-          10,
-          11
-        ]
+        "type": "input",
+        "value": ""
       },
       "Character2": {
-        "type": "select",
-        "value": "manjuu",
-        "option": [
-          "manjuu",
-          "saratoga",
-          "new_jersey",
-          "tashkent",
-          "lemalin",
-          "shimakaze",
-          "akashi",
-          "ying_swei",
-          "chao_ho",
-          "william_d_porter",
-          "chen_hai",
-          "unicorn",
-          "cheshire",
-          "amagi_chan",
-          "helena",
-          "atago",
-          "friedrich_der_grobe"
-        ]
+        "type": "input",
+        "value": "工作啾"
       }
     },
     "Island10": {
@@ -11497,84 +10706,20 @@
         "value": false
       },
       "Option1": {
-        "type": "select",
-        "value": 0,
-        "option": [
-          0,
-          1,
-          2,
-          3,
-          4,
-          5,
-          6,
-          7,
-          8,
-          9,
-          10
-        ]
+        "type": "input",
+        "value": ""
       },
       "Character1": {
-        "type": "select",
-        "value": "manjuu",
-        "option": [
-          "manjuu",
-          "saratoga",
-          "new_jersey",
-          "tashkent",
-          "lemalin",
-          "shimakaze",
-          "akashi",
-          "ying_swei",
-          "chao_ho",
-          "william_d_porter",
-          "chen_hai",
-          "unicorn",
-          "cheshire",
-          "amagi_chan",
-          "helena",
-          "atago",
-          "friedrich_der_grobe"
-        ]
+        "type": "input",
+        "value": "工作啾"
       },
       "Option2": {
-        "type": "select",
-        "value": 0,
-        "option": [
-          0,
-          1,
-          2,
-          3,
-          4,
-          5,
-          6,
-          7,
-          8,
-          9,
-          10
-        ]
+        "type": "input",
+        "value": ""
       },
       "Character2": {
-        "type": "select",
-        "value": "manjuu",
-        "option": [
-          "manjuu",
-          "saratoga",
-          "new_jersey",
-          "tashkent",
-          "lemalin",
-          "shimakaze",
-          "akashi",
-          "ying_swei",
-          "chao_ho",
-          "william_d_porter",
-          "chen_hai",
-          "unicorn",
-          "cheshire",
-          "amagi_chan",
-          "helena",
-          "atago",
-          "friedrich_der_grobe"
-        ]
+        "type": "input",
+        "value": "工作啾"
       }
     },
     "Island11": {
@@ -11583,82 +10728,20 @@
         "value": false
       },
       "Option1": {
-        "type": "select",
-        "value": 0,
-        "option": [
-          0,
-          1,
-          2,
-          3,
-          4,
-          5,
-          6,
-          7,
-          8,
-          9
-        ]
+        "type": "input",
+        "value": ""
       },
       "Character1": {
-        "type": "select",
-        "value": "manjuu",
-        "option": [
-          "manjuu",
-          "saratoga",
-          "new_jersey",
-          "tashkent",
-          "lemalin",
-          "shimakaze",
-          "akashi",
-          "ying_swei",
-          "chao_ho",
-          "william_d_porter",
-          "chen_hai",
-          "unicorn",
-          "cheshire",
-          "amagi_chan",
-          "helena",
-          "atago",
-          "friedrich_der_grobe"
-        ]
+        "type": "input",
+        "value": "工作啾"
       },
       "Option2": {
-        "type": "select",
-        "value": 0,
-        "option": [
-          0,
-          1,
-          2,
-          3,
-          4,
-          5,
-          6,
-          7,
-          8,
-          9
-        ]
+        "type": "input",
+        "value": ""
       },
       "Character2": {
-        "type": "select",
-        "value": "manjuu",
-        "option": [
-          "manjuu",
-          "saratoga",
-          "new_jersey",
-          "tashkent",
-          "lemalin",
-          "shimakaze",
-          "akashi",
-          "ying_swei",
-          "chao_ho",
-          "william_d_porter",
-          "chen_hai",
-          "unicorn",
-          "cheshire",
-          "amagi_chan",
-          "helena",
-          "atago",
-          "friedrich_der_grobe"
-        ]
+        "type": "input",
+        "value": "工作啾"
       }
     },
     "Island12": {
@@ -11667,76 +10750,20 @@
         "value": false
       },
       "Option1": {
-        "type": "select",
-        "value": 0,
-        "option": [
-          0,
-          1,
-          2,
-          3,
-          4,
-          5,
-          6
-        ]
+        "type": "input",
+        "value": ""
       },
       "Character1": {
-        "type": "select",
-        "value": "manjuu",
-        "option": [
-          "manjuu",
-          "saratoga",
-          "new_jersey",
-          "tashkent",
-          "lemalin",
-          "shimakaze",
-          "akashi",
-          "ying_swei",
-          "chao_ho",
-          "william_d_porter",
-          "chen_hai",
-          "unicorn",
-          "cheshire",
-          "amagi_chan",
-          "helena",
-          "atago",
-          "friedrich_der_grobe"
-        ]
+        "type": "input",
+        "value": "工作啾"
       },
       "Option2": {
-        "type": "select",
-        "value": 0,
-        "option": [
-          0,
-          1,
-          2,
-          3,
-          4,
-          5,
-          6
-        ]
+        "type": "input",
+        "value": ""
       },
       "Character2": {
-        "type": "select",
-        "value": "manjuu",
-        "option": [
-          "manjuu",
-          "saratoga",
-          "new_jersey",
-          "tashkent",
-          "lemalin",
-          "shimakaze",
-          "akashi",
-          "ying_swei",
-          "chao_ho",
-          "william_d_porter",
-          "chen_hai",
-          "unicorn",
-          "cheshire",
-          "amagi_chan",
-          "helena",
-          "atago",
-          "friedrich_der_grobe"
-        ]
+        "type": "input",
+        "value": "工作啾"
       }
     },
     "Island13": {
@@ -11745,76 +10772,20 @@
         "value": false
       },
       "Option1": {
-        "type": "select",
-        "value": 0,
-        "option": [
-          0,
-          1,
-          2,
-          3,
-          4,
-          5,
-          6
-        ]
+        "type": "input",
+        "value": ""
       },
       "Character1": {
-        "type": "select",
-        "value": "manjuu",
-        "option": [
-          "manjuu",
-          "saratoga",
-          "new_jersey",
-          "tashkent",
-          "lemalin",
-          "shimakaze",
-          "akashi",
-          "ying_swei",
-          "chao_ho",
-          "william_d_porter",
-          "chen_hai",
-          "unicorn",
-          "cheshire",
-          "amagi_chan",
-          "helena",
-          "atago",
-          "friedrich_der_grobe"
-        ]
+        "type": "input",
+        "value": "工作啾"
       },
       "Option2": {
-        "type": "select",
-        "value": 0,
-        "option": [
-          0,
-          1,
-          2,
-          3,
-          4,
-          5,
-          6
-        ]
+        "type": "input",
+        "value": ""
       },
       "Character2": {
-        "type": "select",
-        "value": "manjuu",
-        "option": [
-          "manjuu",
-          "saratoga",
-          "new_jersey",
-          "tashkent",
-          "lemalin",
-          "shimakaze",
-          "akashi",
-          "ying_swei",
-          "chao_ho",
-          "william_d_porter",
-          "chen_hai",
-          "unicorn",
-          "cheshire",
-          "amagi_chan",
-          "helena",
-          "atago",
-          "friedrich_der_grobe"
-        ]
+        "type": "input",
+        "value": "工作啾"
       }
     },
     "Island14": {
@@ -11823,72 +10794,20 @@
         "value": false
       },
       "Option1": {
-        "type": "select",
-        "value": 0,
-        "option": [
-          0,
-          1,
-          2,
-          3,
-          4
-        ]
+        "type": "input",
+        "value": ""
       },
       "Character1": {
-        "type": "select",
-        "value": "manjuu",
-        "option": [
-          "manjuu",
-          "saratoga",
-          "new_jersey",
-          "tashkent",
-          "lemalin",
-          "shimakaze",
-          "akashi",
-          "ying_swei",
-          "chao_ho",
-          "william_d_porter",
-          "chen_hai",
-          "unicorn",
-          "cheshire",
-          "amagi_chan",
-          "helena",
-          "atago",
-          "friedrich_der_grobe"
-        ]
+        "type": "input",
+        "value": "工作啾"
       },
       "Option2": {
-        "type": "select",
-        "value": 0,
-        "option": [
-          0,
-          1,
-          2,
-          3,
-          4
-        ]
+        "type": "input",
+        "value": ""
       },
       "Character2": {
-        "type": "select",
-        "value": "manjuu",
-        "option": [
-          "manjuu",
-          "saratoga",
-          "new_jersey",
-          "tashkent",
-          "lemalin",
-          "shimakaze",
-          "akashi",
-          "ying_swei",
-          "chao_ho",
-          "william_d_porter",
-          "chen_hai",
-          "unicorn",
-          "cheshire",
-          "amagi_chan",
-          "helena",
-          "atago",
-          "friedrich_der_grobe"
-        ]
+        "type": "input",
+        "value": "工作啾"
       }
     },
     "Island15": {
@@ -11897,82 +10816,20 @@
         "value": false
       },
       "Option1": {
-        "type": "select",
-        "value": 0,
-        "option": [
-          0,
-          1,
-          2,
-          3,
-          4,
-          5,
-          6,
-          7,
-          8,
-          9
-        ]
+        "type": "input",
+        "value": ""
       },
       "Character1": {
-        "type": "select",
-        "value": "manjuu",
-        "option": [
-          "manjuu",
-          "saratoga",
-          "new_jersey",
-          "tashkent",
-          "lemalin",
-          "shimakaze",
-          "akashi",
-          "ying_swei",
-          "chao_ho",
-          "william_d_porter",
-          "chen_hai",
-          "unicorn",
-          "cheshire",
-          "amagi_chan",
-          "helena",
-          "atago",
-          "friedrich_der_grobe"
-        ]
+        "type": "input",
+        "value": "工作啾"
       },
       "Option2": {
-        "type": "select",
-        "value": 0,
-        "option": [
-          0,
-          1,
-          2,
-          3,
-          4,
-          5,
-          6,
-          7,
-          8,
-          9
-        ]
+        "type": "input",
+        "value": ""
       },
       "Character2": {
-        "type": "select",
-        "value": "manjuu",
-        "option": [
-          "manjuu",
-          "saratoga",
-          "new_jersey",
-          "tashkent",
-          "lemalin",
-          "shimakaze",
-          "akashi",
-          "ying_swei",
-          "chao_ho",
-          "william_d_porter",
-          "chen_hai",
-          "unicorn",
-          "cheshire",
-          "amagi_chan",
-          "helena",
-          "atago",
-          "friedrich_der_grobe"
-        ]
+        "type": "input",
+        "value": "工作啾"
       }
     },
     "Island16": {
@@ -11981,82 +10838,20 @@
         "value": false
       },
       "Option1": {
-        "type": "select",
-        "value": 0,
-        "option": [
-          0,
-          1,
-          2,
-          3,
-          4,
-          5,
-          6,
-          7,
-          8,
-          9
-        ]
+        "type": "input",
+        "value": ""
       },
       "Character1": {
-        "type": "select",
-        "value": "manjuu",
-        "option": [
-          "manjuu",
-          "saratoga",
-          "new_jersey",
-          "tashkent",
-          "lemalin",
-          "shimakaze",
-          "akashi",
-          "ying_swei",
-          "chao_ho",
-          "william_d_porter",
-          "chen_hai",
-          "unicorn",
-          "cheshire",
-          "amagi_chan",
-          "helena",
-          "atago",
-          "friedrich_der_grobe"
-        ]
+        "type": "input",
+        "value": "工作啾"
       },
       "Option2": {
-        "type": "select",
-        "value": 0,
-        "option": [
-          0,
-          1,
-          2,
-          3,
-          4,
-          5,
-          6,
-          7,
-          8,
-          9
-        ]
+        "type": "input",
+        "value": ""
       },
       "Character2": {
-        "type": "select",
-        "value": "manjuu",
-        "option": [
-          "manjuu",
-          "saratoga",
-          "new_jersey",
-          "tashkent",
-          "lemalin",
-          "shimakaze",
-          "akashi",
-          "ying_swei",
-          "chao_ho",
-          "william_d_porter",
-          "chen_hai",
-          "unicorn",
-          "cheshire",
-          "amagi_chan",
-          "helena",
-          "atago",
-          "friedrich_der_grobe"
-        ]
+        "type": "input",
+        "value": "工作啾"
       }
     },
     "Storage": {
@@ -13218,6 +12013,10 @@
         "type": "input",
         "value": 0.9
       },
+      "RepairPackThresholdHazard1": {
+        "type": "input",
+        "value": 0.5
+      },
       "DoRandomMapEvent": {
         "type": "checkbox",
         "value": true
@@ -14192,6 +12991,10 @@
       "RecordNonCL1AP": {
         "type": "checkbox",
         "value": true
+      },
+      "PreserveVirtualAsset": {
+        "type": "input",
+        "value": 0
       }
     },
     "OpsiSirenBug": {
@@ -14403,6 +13206,10 @@
       "MeowStartEarlyEnable": {
         "type": "checkbox",
         "value": false
+      },
+      "VirtualAssetPreserve": {
+        "type": "input",
+        "value": 0
       }
     },
     "Storage": {
@@ -14777,6 +13584,50 @@
       "AutoRestart": {
         "type": "checkbox",
         "value": true
+      }
+    },
+    "Storage": {
+      "Storage": {
+        "type": "storage",
+        "value": {},
+        "valuetype": "ignore",
+        "display": "disabled"
+      }
+    }
+  },
+  "EmulatorManager": {
+    "EmulatorManager": {
+      "EnableRemoteSSH": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "RemoteSSHHost": {
+        "type": "input",
+        "value": ""
+      },
+      "RemoteSSHPort": {
+        "type": "input",
+        "value": 22
+      },
+      "RemoteSSHUser": {
+        "type": "input",
+        "value": ""
+      },
+      "RemoteSSHPublicKey": {
+        "type": "textarea",
+        "value": ""
+      },
+      "RemoteStartCommand": {
+        "type": "input",
+        "value": ""
+      },
+      "RemoteStopCommand": {
+        "type": "input",
+        "value": ""
       }
     },
     "Storage": {

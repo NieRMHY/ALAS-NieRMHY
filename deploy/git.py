@@ -113,13 +113,13 @@ class GitManager(DeployConfig):
         logger.info(f'Cloud update control is inaccessible: {text}')
         return None
 
-    def cloud_update_access_failed(self):
+    def cloud_update_access_failed(self, fatal=True):
         logger.hr('Cloud Update Control Failed', 0)
-        logger.warning('Failed to access cloud update control, stopping startup')
-        alas_kill = getattr(self, 'alas_kill', None)
-        if callable(alas_kill):
-            alas_kill()
-        raise ExecutionError
+        if fatal:
+            logger.warning('Failed to access cloud update control, stopping startup')
+            raise ExecutionError
+        else:
+            logger.warning('Failed to access cloud update control, skip update check')
 
     def git_install(self):
         logger.hr('Update Alas', 0)

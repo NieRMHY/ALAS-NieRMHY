@@ -169,6 +169,7 @@ class EmulatorBase:
     BlueStacksAir = 'BlueStacksAir'
     MuMuPro = 'MuMuPro'
     MacEmulatorFamily = [BlueStacksAir, MuMuPro]
+    SSH = 'SSH'
 
     @classmethod
     def path_to_type(cls, path: str) -> str:

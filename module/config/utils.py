@@ -149,6 +149,23 @@ def iter_folder(folder, is_dir=False, ext=None):
             yield os.path.join(folder, file).replace('\\\\', '/').replace('\\', '/')
 
 
+def is_oobe_needed():
+    """
+    检查是否需要 OOBE 初次设置向导。
+    config/ 目录下不存在任何非 template 开头的 .json 配置文件时返回 True。
+
+    Returns:
+        bool:
+    """
+    if not os.path.exists('./config'):
+        return True
+    for file in os.listdir('./config'):
+        name, ext = os.path.splitext(file)
+        if ext == '.json' and not name.startswith('template'):
+            return False
+    return True
+
+
 def alas_template():
     """
         Returns:

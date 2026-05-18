@@ -1,25 +1,30 @@
-# First arm64 version
-FROM continuumio/anaconda3:2021.11
+# ARM64 Dockerfile for AzurLaneAutoScript
+# Build: docker build -t alas-arm64 -f dev_tools/arm64/Dockerfile .
+# Run:   docker run -v ${PWD}:/app/AzurLaneAutoScript -p 22267:22267 --name alas -it --rm alas-arm64
 
-# Set remote and local dirs
-WORKDIR /app
+FROM python:3.14-slim-bookworm
 
-# Install the base conda environment
-# Cannot find python 3.7.6 for arm64, so use 3.7.10
-ENV PYROOT=/app/pyroot
-RUN conda create --prefix $PYROOT python==3.7.10 -y
+WORKDIR /app/AzurLaneAutoScript
 
-# CV2 requires libGL.so.1
-RUN apt-get update && apt-get install -y libgl1 adb libatlas-base-dev libopencv-dev build-essential && rm -rf /var/lib/apt/lists/*
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+COPY deploy/docker/requirements.txt /tmp/requirements.txt
 
-# Install the requriements to the conda environment
-COPY ./requirements.txt /app/requirements.txt
-RUN $PYROOT/bin/pip install -r /app/requirements.txt
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        git \
+        adb \
+        libgomp1 \
+        libgl1 \
+        libglib2.0-0 \
+        openssh-client && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
-RUN wget https://raw.githubusercontent.com/binss/python-wheel/main/mxnet-1.9.1-py3-none-any.whl -P /app/
-RUN $PYROOT/bin/pip uninstall mxnet -y && $PYROOT/bin/pip install /app/mxnet-1.9.1-py3-none-any.whl
+RUN git config --global --add safe.directory '*'
 
-ENV LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:/app/pyroot/mxnet/"
+RUN uv pip install --system --upgrade pip && \
+    uv pip install --system -r /tmp/requirements.txt && \
+    rm /tmp/requirements.txt && \
+    rm -rf /root/.cache/uv
 
-# When running the image, mount the ALAS folder into the container
-CMD $PYROOT/bin/python /app/AzurLaneAutoScript/gui.py
+CMD ["python", "gui.py"]

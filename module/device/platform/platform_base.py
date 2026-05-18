@@ -1,5 +1,7 @@
+import os
 import sys
 import typing as t
+import subprocess
 
 from pydantic import BaseModel
 
@@ -79,6 +81,108 @@ class PlatformBase(Connection, EmulatorManagerBase):
         Stop a emulator.
         """
         logger.info(f'Current platform {sys.platform} does not support emulator_stop, skip')
+
+    def run_remote_ssh_command(self, command=None):
+        if not getattr(self.config, 'EmulatorInfo_EnableRemoteSSH', False):
+            logger.info('Remote SSH is not enabled (EnableRemoteSSH=False), skip')
+            return
+
+        host = self.config.EmulatorInfo_RemoteSSHHost
+        port = self.config.EmulatorInfo_RemoteSSHPort
+        user = self.config.EmulatorInfo_RemoteSSHUser
+        key = getattr(self.config, 'EmulatorInfo_RemoteSSHPublicKey', '')
+
+        if not command:
+            logger.warning('No SSH command provided, skip')
+            return
+
+        if not host:
+            logger.warning(f'RemoteSSHHost is empty, skip remote SSH command: {command}')
+            return
+
+        logger.hr('Remote SSH Command', level=1)
+        target = f'{user}@{host}' if user else host
+        # -n: Redirects stdin from /dev/null
+        # -T: Disable pseudo-terminal allocation
+        # BatchMode to avoid hanging on password prompts
+        cmd = ['ssh', '-n', '-T', '-p', str(port), '-o', 'StrictHostKeyChecking=no', '-o', 'BatchMode=yes', '-o', 'ConnectTimeout=10']
+
+        key_file = None
+        if key and len(key) > 50:
+            import tempfile
+            try:
+                fd, key_file = tempfile.mkstemp()
+                with os.fdopen(fd, 'w') as f:
+                    f.write(key.strip() + '\n')
+
+                if os.name == 'nt':
+                    user_env = os.environ.get('USERNAME')
+                    subprocess.run(['icacls', key_file, '/reset'], capture_output=True)
+                    subprocess.run(['icacls', key_file, '/inheritance:r'], capture_output=True)
+                    subprocess.run(['icacls', key_file, '/grant:r', f'{user_env}:F'], capture_output=True)
+                else:
+                    os.chmod(key_file, 0o600)
+
+                cmd += ['-i', key_file]
+                logger.info(f'Using provided private key for authentication')
+            except Exception as e:
+                logger.error(f'Failed to create or secure temporary key file: {e}')
+
+        cmd += [target, command]
+        logger.info(f'Executing remote command: {" ".join(cmd)}')
+
+        try:
+            process = subprocess.Popen(
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                bufsize=1,
+                creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0
+            )
+
+            # Store stderr to show only if it fails
+            stderr_content = []
+
+            import threading
+
+            def collect_stderr():
+                for line in process.stderr:
+                    stderr_content.append(line.strip())
+
+            def collect_stdout():
+                for line in process.stdout:
+                    logger.info(f'Remote: {line.strip()}')
+
+            stderr_thread = threading.Thread(target=collect_stderr)
+            stdout_thread = threading.Thread(target=collect_stdout)
+            stderr_thread.start()
+            stdout_thread.start()
+
+            try:
+                # Main thread waits for the process to exit
+                process.wait(timeout=30)
+            except subprocess.TimeoutExpired:
+                process.kill()
+                logger.error('Remote SSH command timed out after 30 seconds')
+            finally:
+                stderr_thread.join(timeout=5)
+                stdout_thread.join(timeout=5)
+
+            if process.returncode == 0:
+                logger.info('Remote command executed successfully')
+            else:
+                logger.error(f'Remote command failed with return code {process.returncode}')
+                for line in stderr_content:
+                    logger.error(f'Remote Error: {line}')
+        except Exception as e:
+            logger.error(f'Failed to execute remote SSH command: {e}')
+        finally:
+            if key_file and os.path.exists(key_file):
+                try:
+                    os.remove(key_file)
+                except Exception as e:
+                    logger.error(f'Failed to remove temporary key file: {e}')
 
     @cached_property
     def emulator_info(self) -> EmulatorInfo:
@@ -163,6 +267,18 @@ class PlatformBase(Connection, EmulatorManagerBase):
             EmulatorInstance: Emulator instance or None if no instances not found.
         """
         logger.hr('Find emulator instance', level=2)
+        if emulator == 'SSH':
+            instance = EmulatorInstanceBase(
+                serial=serial,
+                name=name or '',
+                path=path or '',
+            )
+            # Monkey patch type for SSH instance
+            instance.__dict__['type'] = 'SSH'
+            logger.hr('Emulator instance', level=2)
+            logger.info(f'Found emulator instance (SSH): {instance}')
+            return instance
+
         instances = SelectedGrids(self.all_emulator_instances)
         for instance in instances:
             logger.info(instance)

@@ -92,9 +92,16 @@ class GeneratedConfig:
     Emulator_AdbRestart = False
 
     # Group `EmulatorInfo`
-    EmulatorInfo_Emulator = 'auto'  # auto, NoxPlayer, NoxPlayer64, BlueStacks4, BlueStacks5, BlueStacks4HyperV, BlueStacks5HyperV, LDPlayer3, LDPlayer4, LDPlayer9, LDPlayer14, MuMuPlayer, MuMuPlayerX, MuMuPlayer12, MEmuPlayer, BlueStacksAir, MuMuPro
+    EmulatorInfo_Emulator = 'auto'  # auto, NoxPlayer, NoxPlayer64, BlueStacks4, BlueStacks5, BlueStacks4HyperV, BlueStacks5HyperV, LDPlayer3, LDPlayer4, LDPlayer9, LDPlayer14, MuMuPlayer, MuMuPlayerX, MuMuPlayer12, MEmuPlayer, BlueStacksAir, MuMuPro, SSH
     EmulatorInfo_name = None
     EmulatorInfo_path = None
+    EmulatorInfo_EnableRemoteSSH = False  # True, False
+    EmulatorInfo_RemoteSSHHost = None
+    EmulatorInfo_RemoteSSHPort = 22
+    EmulatorInfo_RemoteSSHUser = 'root'
+    EmulatorInfo_RemoteSSHPublicKey = None
+    EmulatorInfo_RemoteStartCommand = None
+    EmulatorInfo_RemoteStopCommand = None
 
     # Group `Error`
     Error_HandleError = True
@@ -338,8 +345,11 @@ class GeneratedConfig:
     Commission_DoMajorCommission = False
 
     # Group `Tactical`
-    Tactical_TacticalFilter = 'SameT4 > SameT3 > SameT2 > SameT1\n> BlueT2 > YellowT2 > RedT2\n> BlueT3 > YellowT3 > RedT3\n> BlueT4 > YellowT4 > RedT4\n> BlueT1 > YellowT1 > RedT1\n> first'
+    Tactical_TacticalFilter = 'SameT4 > SameT3 > SameT2 > SameT1\n> BlueT3 > YellowT3 > RedT3\n> BlueT2 > YellowT2 > RedT2\n> BlueT4 > YellowT4 > RedT4\n> BlueT1 > YellowT1 > RedT1\n> first'
     Tactical_RapidTrainingSlot = 'do_not_use'  # do_not_use, slot_1, slot_2, slot_3, slot_4
+    Tactical_SkillAutoSwitch = True  # True, False
+    Tactical_RedToBlue = False  # True, False
+    Tactical_NoT4 = False  # True, False
 
     # Group `ControlExpOverflow`
     ControlExpOverflow_Enable = True
@@ -411,137 +421,137 @@ class GeneratedConfig:
 
     # Group `Island1`
     Island1_Receive = False
-    Island1_Option1 = 0  # 0, 1, 2, 3, 4, 5, 6, 7, 8
-    Island1_Character1 = 'manjuu'  # manjuu, saratoga, new_jersey, tashkent, lemalin, shimakaze, akashi, ying_swei, chao_ho, william_d_porter, chen_hai, unicorn, cheshire, amagi_chan, helena, atago, friedrich_der_grobe
-    Island1_Option2 = 0  # 0, 1, 2, 3, 4, 5, 6, 7, 8
-    Island1_Character2 = 'manjuu'  # manjuu, saratoga, new_jersey, tashkent, lemalin, shimakaze, akashi, ying_swei, chao_ho, william_d_porter, chen_hai, unicorn, cheshire, amagi_chan, helena, atago, friedrich_der_grobe
-    Island1_Option3 = 0  # 0, 1, 2, 3, 4, 5, 6, 7, 8
-    Island1_Character3 = 'manjuu'  # manjuu, saratoga, new_jersey, tashkent, lemalin, shimakaze, akashi, ying_swei, chao_ho, william_d_porter, chen_hai, unicorn, cheshire, amagi_chan, helena, atago, friedrich_der_grobe
-    Island1_Option4 = 0  # 0, 1, 2, 3, 4, 5, 6, 7, 8
-    Island1_Character4 = 'manjuu'  # manjuu, saratoga, new_jersey, tashkent, lemalin, shimakaze, akashi, ying_swei, chao_ho, william_d_porter, chen_hai, unicorn, cheshire, amagi_chan, helena, atago, friedrich_der_grobe
+    Island1_Option1 = None
+    Island1_Character1 = '工作啾'
+    Island1_Option2 = None
+    Island1_Character2 = '工作啾'
+    Island1_Option3 = None
+    Island1_Character3 = '工作啾'
+    Island1_Option4 = None
+    Island1_Character4 = '工作啾'
 
     # Group `Island2`
     Island2_Receive = False
     Island2_Option1 = 0  # 0, 1
-    Island2_Character1 = 'manjuu'  # manjuu, saratoga, new_jersey, tashkent, lemalin, shimakaze, akashi, ying_swei, chao_ho, william_d_porter, chen_hai, unicorn, cheshire, amagi_chan, helena, atago, friedrich_der_grobe
+    Island2_Character1 = '工作啾'
     Island2_Option2 = 0  # 0, 2
-    Island2_Character2 = 'manjuu'  # manjuu, saratoga, new_jersey, tashkent, lemalin, shimakaze, akashi, ying_swei, chao_ho, william_d_porter, chen_hai, unicorn, cheshire, amagi_chan, helena, atago, friedrich_der_grobe
+    Island2_Character2 = '工作啾'
     Island2_Option3 = 0  # 0, 3
-    Island2_Character3 = 'manjuu'  # manjuu, saratoga, new_jersey, tashkent, lemalin, shimakaze, akashi, ying_swei, chao_ho, william_d_porter, chen_hai, unicorn, cheshire, amagi_chan, helena, atago, friedrich_der_grobe
+    Island2_Character3 = '工作啾'
     Island2_Option4 = 0  # 0, 4
-    Island2_Character4 = 'manjuu'  # manjuu, saratoga, new_jersey, tashkent, lemalin, shimakaze, akashi, ying_swei, chao_ho, william_d_porter, chen_hai, unicorn, cheshire, amagi_chan, helena, atago, friedrich_der_grobe
+    Island2_Character4 = '工作啾'
 
     # Group `Island3`
     Island3_Receive = False
-    Island3_Option1 = 0  # 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16
-    Island3_Character1 = 'manjuu'  # manjuu, saratoga, new_jersey, tashkent, lemalin, shimakaze, akashi, ying_swei, chao_ho, william_d_porter, chen_hai, unicorn, cheshire, amagi_chan, helena, atago, friedrich_der_grobe
-    Island3_Option2 = 0  # 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16
-    Island3_Character2 = 'manjuu'  # manjuu, saratoga, new_jersey, tashkent, lemalin, shimakaze, akashi, ying_swei, chao_ho, william_d_porter, chen_hai, unicorn, cheshire, amagi_chan, helena, atago, friedrich_der_grobe
-    Island3_Option3 = 0  # 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16
-    Island3_Character3 = 'manjuu'  # manjuu, saratoga, new_jersey, tashkent, lemalin, shimakaze, akashi, ying_swei, chao_ho, william_d_porter, chen_hai, unicorn, cheshire, amagi_chan, helena, atago, friedrich_der_grobe
+    Island3_Option1 = None
+    Island3_Character1 = '工作啾'
+    Island3_Option2 = None
+    Island3_Character2 = '工作啾'
+    Island3_Option3 = None
+    Island3_Character3 = '工作啾'
 
     # Group `Island4`
     Island4_Receive = False
-    Island4_Option1 = 0  # 0, 1, 2, 3, 4, 5, 6
-    Island4_Character1 = 'manjuu'  # manjuu, saratoga, new_jersey, tashkent, lemalin, shimakaze, akashi, ying_swei, chao_ho, william_d_porter, chen_hai, unicorn, cheshire, amagi_chan, helena, atago, friedrich_der_grobe
-    Island4_Option2 = 0  # 0, 1, 2, 3, 4, 5, 6
-    Island4_Character2 = 'manjuu'  # manjuu, saratoga, new_jersey, tashkent, lemalin, shimakaze, akashi, ying_swei, chao_ho, william_d_porter, chen_hai, unicorn, cheshire, amagi_chan, helena, atago, friedrich_der_grobe
-    Island4_Option3 = 0  # 0, 1, 2, 3, 4, 5, 6
-    Island4_Character3 = 'manjuu'  # manjuu, saratoga, new_jersey, tashkent, lemalin, shimakaze, akashi, ying_swei, chao_ho, william_d_porter, chen_hai, unicorn, cheshire, amagi_chan, helena, atago, friedrich_der_grobe
-    Island4_Option4 = 0  # 0, 1, 2, 3, 4, 5, 6
-    Island4_Character4 = 'manjuu'  # manjuu, saratoga, new_jersey, tashkent, lemalin, shimakaze, akashi, ying_swei, chao_ho, william_d_porter, chen_hai, unicorn, cheshire, amagi_chan, helena, atago, friedrich_der_grobe
+    Island4_Option1 = None
+    Island4_Character1 = '工作啾'
+    Island4_Option2 = None
+    Island4_Character2 = '工作啾'
+    Island4_Option3 = None
+    Island4_Character3 = '工作啾'
+    Island4_Option4 = None
+    Island4_Character4 = '工作啾'
 
     # Group `Island5`
     Island5_Receive = False
-    Island5_Option1 = 0  # 0, 1, 2, 3, 4
-    Island5_Character1 = 'manjuu'  # manjuu, saratoga, new_jersey, tashkent, lemalin, shimakaze, akashi, ying_swei, chao_ho, william_d_porter, chen_hai, unicorn, cheshire, amagi_chan, helena, atago, friedrich_der_grobe
-    Island5_Option2 = 0  # 0, 1, 2, 3, 4
-    Island5_Character2 = 'manjuu'  # manjuu, saratoga, new_jersey, tashkent, lemalin, shimakaze, akashi, ying_swei, chao_ho, william_d_porter, chen_hai, unicorn, cheshire, amagi_chan, helena, atago, friedrich_der_grobe
-    Island5_Option3 = 0  # 0, 1, 2, 3, 4
-    Island5_Character3 = 'manjuu'  # manjuu, saratoga, new_jersey, tashkent, lemalin, shimakaze, akashi, ying_swei, chao_ho, william_d_porter, chen_hai, unicorn, cheshire, amagi_chan, helena, atago, friedrich_der_grobe
-    Island5_Option4 = 0  # 0, 1, 2, 3, 4
-    Island5_Character4 = 'manjuu'  # manjuu, saratoga, new_jersey, tashkent, lemalin, shimakaze, akashi, ying_swei, chao_ho, william_d_porter, chen_hai, unicorn, cheshire, amagi_chan, helena, atago, friedrich_der_grobe
+    Island5_Option1 = None
+    Island5_Character1 = '工作啾'
+    Island5_Option2 = None
+    Island5_Character2 = '工作啾'
+    Island5_Option3 = None
+    Island5_Character3 = '工作啾'
+    Island5_Option4 = None
+    Island5_Character4 = '工作啾'
 
     # Group `Island6`
     Island6_Receive = False
-    Island6_Option1 = 0  # 0, 1, 2, 3, 4, 5, 6, 7
-    Island6_Character1 = 'manjuu'  # manjuu, saratoga, new_jersey, tashkent, lemalin, shimakaze, akashi, ying_swei, chao_ho, william_d_porter, chen_hai, unicorn, cheshire, amagi_chan, helena, atago, friedrich_der_grobe
-    Island6_Option2 = 0  # 0, 1, 2, 3, 4, 5, 6, 7
-    Island6_Character2 = 'manjuu'  # manjuu, saratoga, new_jersey, tashkent, lemalin, shimakaze, akashi, ying_swei, chao_ho, william_d_porter, chen_hai, unicorn, cheshire, amagi_chan, helena, atago, friedrich_der_grobe
-    Island6_Option3 = 0  # 0, 1, 2, 3, 4, 5, 6, 7
-    Island6_Character3 = 'manjuu'  # manjuu, saratoga, new_jersey, tashkent, lemalin, shimakaze, akashi, ying_swei, chao_ho, william_d_porter, chen_hai, unicorn, cheshire, amagi_chan, helena, atago, friedrich_der_grobe
-    Island6_Option4 = 0  # 0, 1, 2, 3, 4, 5, 6, 7
-    Island6_Character4 = 'manjuu'  # manjuu, saratoga, new_jersey, tashkent, lemalin, shimakaze, akashi, ying_swei, chao_ho, william_d_porter, chen_hai, unicorn, cheshire, amagi_chan, helena, atago, friedrich_der_grobe
+    Island6_Option1 = None
+    Island6_Character1 = '工作啾'
+    Island6_Option2 = None
+    Island6_Character2 = '工作啾'
+    Island6_Option3 = None
+    Island6_Character3 = '工作啾'
+    Island6_Option4 = None
+    Island6_Character4 = '工作啾'
 
     # Group `Island7`
     Island7_Receive = False
-    Island7_Option1 = 0  # 0, 1, 2, 3, 4, 5, 6, 7, 8, 9
-    Island7_Character1 = 'manjuu'  # manjuu, saratoga, new_jersey, tashkent, lemalin, shimakaze, akashi, ying_swei, chao_ho, william_d_porter, chen_hai, unicorn, cheshire, amagi_chan, helena, atago, friedrich_der_grobe
-    Island7_Option2 = 0  # 0, 1, 2, 3, 4, 5, 6, 7, 8, 9
-    Island7_Character2 = 'manjuu'  # manjuu, saratoga, new_jersey, tashkent, lemalin, shimakaze, akashi, ying_swei, chao_ho, william_d_porter, chen_hai, unicorn, cheshire, amagi_chan, helena, atago, friedrich_der_grobe
+    Island7_Option1 = None
+    Island7_Character1 = '工作啾'
+    Island7_Option2 = None
+    Island7_Character2 = '工作啾'
 
     # Group `Island8`
     Island8_Receive = False
-    Island8_Option1 = 0  # 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12
-    Island8_Character1 = 'manjuu'  # manjuu, saratoga, new_jersey, tashkent, lemalin, shimakaze, akashi, ying_swei, chao_ho, william_d_porter, chen_hai, unicorn, cheshire, amagi_chan, helena, atago, friedrich_der_grobe
-    Island8_Option2 = 0  # 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12
-    Island8_Character2 = 'manjuu'  # manjuu, saratoga, new_jersey, tashkent, lemalin, shimakaze, akashi, ying_swei, chao_ho, william_d_porter, chen_hai, unicorn, cheshire, amagi_chan, helena, atago, friedrich_der_grobe
+    Island8_Option1 = None
+    Island8_Character1 = '工作啾'
+    Island8_Option2 = None
+    Island8_Character2 = '工作啾'
 
     # Group `Island9`
     Island9_Receive = False
-    Island9_Option1 = 0  # 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11
-    Island9_Character1 = 'manjuu'  # manjuu, saratoga, new_jersey, tashkent, lemalin, shimakaze, akashi, ying_swei, chao_ho, william_d_porter, chen_hai, unicorn, cheshire, amagi_chan, helena, atago, friedrich_der_grobe
-    Island9_Option2 = 0  # 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11
-    Island9_Character2 = 'manjuu'  # manjuu, saratoga, new_jersey, tashkent, lemalin, shimakaze, akashi, ying_swei, chao_ho, william_d_porter, chen_hai, unicorn, cheshire, amagi_chan, helena, atago, friedrich_der_grobe
+    Island9_Option1 = None
+    Island9_Character1 = '工作啾'
+    Island9_Option2 = None
+    Island9_Character2 = '工作啾'
 
     # Group `Island10`
     Island10_Receive = False
-    Island10_Option1 = 0  # 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10
-    Island10_Character1 = 'manjuu'  # manjuu, saratoga, new_jersey, tashkent, lemalin, shimakaze, akashi, ying_swei, chao_ho, william_d_porter, chen_hai, unicorn, cheshire, amagi_chan, helena, atago, friedrich_der_grobe
-    Island10_Option2 = 0  # 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10
-    Island10_Character2 = 'manjuu'  # manjuu, saratoga, new_jersey, tashkent, lemalin, shimakaze, akashi, ying_swei, chao_ho, william_d_porter, chen_hai, unicorn, cheshire, amagi_chan, helena, atago, friedrich_der_grobe
+    Island10_Option1 = None
+    Island10_Character1 = '工作啾'
+    Island10_Option2 = None
+    Island10_Character2 = '工作啾'
 
     # Group `Island11`
     Island11_Receive = False
-    Island11_Option1 = 0  # 0, 1, 2, 3, 4, 5, 6, 7, 8, 9
-    Island11_Character1 = 'manjuu'  # manjuu, saratoga, new_jersey, tashkent, lemalin, shimakaze, akashi, ying_swei, chao_ho, william_d_porter, chen_hai, unicorn, cheshire, amagi_chan, helena, atago, friedrich_der_grobe
-    Island11_Option2 = 0  # 0, 1, 2, 3, 4, 5, 6, 7, 8, 9
-    Island11_Character2 = 'manjuu'  # manjuu, saratoga, new_jersey, tashkent, lemalin, shimakaze, akashi, ying_swei, chao_ho, william_d_porter, chen_hai, unicorn, cheshire, amagi_chan, helena, atago, friedrich_der_grobe
+    Island11_Option1 = None
+    Island11_Character1 = '工作啾'
+    Island11_Option2 = None
+    Island11_Character2 = '工作啾'
 
     # Group `Island12`
     Island12_Receive = False
-    Island12_Option1 = 0  # 0, 1, 2, 3, 4, 5, 6
-    Island12_Character1 = 'manjuu'  # manjuu, saratoga, new_jersey, tashkent, lemalin, shimakaze, akashi, ying_swei, chao_ho, william_d_porter, chen_hai, unicorn, cheshire, amagi_chan, helena, atago, friedrich_der_grobe
-    Island12_Option2 = 0  # 0, 1, 2, 3, 4, 5, 6
-    Island12_Character2 = 'manjuu'  # manjuu, saratoga, new_jersey, tashkent, lemalin, shimakaze, akashi, ying_swei, chao_ho, william_d_porter, chen_hai, unicorn, cheshire, amagi_chan, helena, atago, friedrich_der_grobe
+    Island12_Option1 = None
+    Island12_Character1 = '工作啾'
+    Island12_Option2 = None
+    Island12_Character2 = '工作啾'
 
     # Group `Island13`
     Island13_Receive = False
-    Island13_Option1 = 0  # 0, 1, 2, 3, 4, 5, 6
-    Island13_Character1 = 'manjuu'  # manjuu, saratoga, new_jersey, tashkent, lemalin, shimakaze, akashi, ying_swei, chao_ho, william_d_porter, chen_hai, unicorn, cheshire, amagi_chan, helena, atago, friedrich_der_grobe
-    Island13_Option2 = 0  # 0, 1, 2, 3, 4, 5, 6
-    Island13_Character2 = 'manjuu'  # manjuu, saratoga, new_jersey, tashkent, lemalin, shimakaze, akashi, ying_swei, chao_ho, william_d_porter, chen_hai, unicorn, cheshire, amagi_chan, helena, atago, friedrich_der_grobe
+    Island13_Option1 = None
+    Island13_Character1 = '工作啾'
+    Island13_Option2 = None
+    Island13_Character2 = '工作啾'
 
     # Group `Island14`
     Island14_Receive = False
-    Island14_Option1 = 0  # 0, 1, 2, 3, 4
-    Island14_Character1 = 'manjuu'  # manjuu, saratoga, new_jersey, tashkent, lemalin, shimakaze, akashi, ying_swei, chao_ho, william_d_porter, chen_hai, unicorn, cheshire, amagi_chan, helena, atago, friedrich_der_grobe
-    Island14_Option2 = 0  # 0, 1, 2, 3, 4
-    Island14_Character2 = 'manjuu'  # manjuu, saratoga, new_jersey, tashkent, lemalin, shimakaze, akashi, ying_swei, chao_ho, william_d_porter, chen_hai, unicorn, cheshire, amagi_chan, helena, atago, friedrich_der_grobe
+    Island14_Option1 = None
+    Island14_Character1 = '工作啾'
+    Island14_Option2 = None
+    Island14_Character2 = '工作啾'
 
     # Group `Island15`
     Island15_Receive = False
-    Island15_Option1 = 0  # 0, 1, 2, 3, 4, 5, 6, 7, 8, 9
-    Island15_Character1 = 'manjuu'  # manjuu, saratoga, new_jersey, tashkent, lemalin, shimakaze, akashi, ying_swei, chao_ho, william_d_porter, chen_hai, unicorn, cheshire, amagi_chan, helena, atago, friedrich_der_grobe
-    Island15_Option2 = 0  # 0, 1, 2, 3, 4, 5, 6, 7, 8, 9
-    Island15_Character2 = 'manjuu'  # manjuu, saratoga, new_jersey, tashkent, lemalin, shimakaze, akashi, ying_swei, chao_ho, william_d_porter, chen_hai, unicorn, cheshire, amagi_chan, helena, atago, friedrich_der_grobe
+    Island15_Option1 = None
+    Island15_Character1 = '工作啾'
+    Island15_Option2 = None
+    Island15_Character2 = '工作啾'
 
     # Group `Island16`
     Island16_Receive = False
-    Island16_Option1 = 0  # 0, 1, 2, 3, 4, 5, 6, 7, 8, 9
-    Island16_Character1 = 'manjuu'  # manjuu, saratoga, new_jersey, tashkent, lemalin, shimakaze, akashi, ying_swei, chao_ho, william_d_porter, chen_hai, unicorn, cheshire, amagi_chan, helena, atago, friedrich_der_grobe
-    Island16_Option2 = 0  # 0, 1, 2, 3, 4, 5, 6, 7, 8, 9
-    Island16_Character2 = 'manjuu'  # manjuu, saratoga, new_jersey, tashkent, lemalin, shimakaze, akashi, ying_swei, chao_ho, william_d_porter, chen_hai, unicorn, cheshire, amagi_chan, helena, atago, friedrich_der_grobe
+    Island16_Option1 = None
+    Island16_Character1 = '工作啾'
+    Island16_Option2 = None
+    Island16_Character2 = '工作啾'
 
     # Group `GeneralShop`
     GeneralShop_Enable = True
@@ -674,6 +684,7 @@ class GeneratedConfig:
     OpsiGeneral_RepairThreshold = 0.4
     OpsiGeneral_UseRepairPack = False
     OpsiGeneral_RepairPackThreshold = 0.9
+    OpsiGeneral_RepairPackThresholdHazard1 = 0.5
     OpsiGeneral_DoRandomMapEvent = True
     OpsiGeneral_AkashiShopFilter = 'ActionPoint'
     OpsiGeneral_NotifyOpsiMail = True
@@ -755,6 +766,7 @@ class GeneratedConfig:
     OpsiHazard1Leveling_SkipHpCheck = False  # True, False
     OpsiHazard1Leveling_Cl1Filter = 'ActionPoint'
     OpsiHazard1Leveling_RecordNonCL1AP = True
+    OpsiHazard1Leveling_PreserveVirtualAsset = 0
 
     # Group `OpsiSirenBug`
     OpsiSirenBug_SirenResearch_Enable = True
@@ -785,6 +797,7 @@ class GeneratedConfig:
     OpsiScheduling_EnableStronghold = False  # True, False
     OpsiScheduling_MeowStartEarlyMode = 'balanced'  # aggressive, balanced, conservative
     OpsiScheduling_MeowStartEarlyEnable = False
+    OpsiScheduling_VirtualAssetPreserve = 0
 
     # Group `IslandSeasonTask`
     IslandSeasonTask_TaskDict = None
@@ -823,6 +836,15 @@ class GeneratedConfig:
     # Group `EmulatorManagement`
     EmulatorManagement_ScheduledEmulatorRestart = False
     EmulatorManagement_RestartIntervalHours = 4
+
+    # Group `EmulatorManager`
+    EmulatorManager_EnableRemoteSSH = False  # True, False
+    EmulatorManager_RemoteSSHHost = None
+    EmulatorManager_RemoteSSHPort = 22
+    EmulatorManager_RemoteSSHUser = None
+    EmulatorManager_RemoteSSHPublicKey = None
+    EmulatorManager_RemoteStartCommand = None
+    EmulatorManager_RemoteStopCommand = None
 
     # Group `OpsiSimulatorParameters`
     OpsiSimulatorParameters_Samples = 100000
