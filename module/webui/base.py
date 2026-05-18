@@ -1,3 +1,5 @@
+import threading
+
 from pywebio.output import clear, put_html, put_scope, put_text, use_scope
 from pywebio.session import defer_call, info, run_js
 
@@ -24,6 +26,7 @@ class Frame(Base):
     def __init__(self) -> None:
         super().__init__()
         self.page = "Home"
+        self._page_lock = threading.Lock()
 
     def init_aside(self, expand_menu: bool = True, name: str = None) -> None:
         """
@@ -51,7 +54,8 @@ class Frame(Base):
         self.visible = True
         self.page = name
         self.task_handler.remove_pending_task()
-        clear("content")
+        with self._page_lock:
+            clear("content")
         if collapse_menu:
             self.collapse_menu()
         if name:

@@ -136,12 +136,20 @@
 #pywebio-scope-commission_income .btn {
     width: 100% !important;
     min-width: 0 !important;
-    white-space: normal !important;
     word-break: break-word;
     line-height: 1.35 !important;
     height: auto !important;
-    padding: .7rem .8rem !important;
+    padding: .45rem .6rem !important;
     text-align: center !important;
+    font-size: .8rem !important;
+}
+
+#pywebio-scope-ap_chart .btn-group .btn {
+    padding: 6px 12px !important;
+    font-size: 12px !important;
+    white-space: nowrap !important;
+    width: auto !important;
+    flex: 0 0 auto !important;
 }
 
 #pywebio-scope-opsi_stats table,

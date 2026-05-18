@@ -1,4 +1,4 @@
-name: Git over CDN 123pan
+name: Git over CDN
 
 on:
   workflow_dispatch:
@@ -6,7 +6,7 @@ on:
       history:
         description: "How many old commits to build packs for"
         required: false
-        default: "1"
+        default: "5"
       parent_file_id:
         description: "123pan parent folder fileID, defaults to PAN123_PARENT_FILE_ID secret or azur folder"
         required: false
@@ -39,7 +39,7 @@ jobs:
         run: |
           uv run python .github/scripts/build_git_over_cdn.py \
             --branch master \
-            --history "${{ github.event.inputs.history || '1' }}" \
+            --history "${{ github.event.inputs.history || '5' }}" \
             --output dist/git-over-cdn
 
       - name: Upload to 123pan
@@ -50,15 +50,11 @@ jobs:
           PAN123_PARENT_FILE_ID_INPUT: ${{ github.event.inputs.parent_file_id }}
           PAN123_REMOTE_PREFIX_INPUT: ${{ github.event.inputs.remote_prefix }}
         run: |
+          echo "::add-mask::${{ github.repository }}"
+          echo "::add-mask::${{ github.sha }}"
           PAN123_PARENT_FILE_ID="${PAN123_PARENT_FILE_ID_INPUT:-${PAN123_PARENT_FILE_ID_SECRET:-31540282}}"
           PAN123_REMOTE_PREFIX="${PAN123_REMOTE_PREFIX_INPUT:-AzurPilot_master}"
           uv run --with requests python .github/scripts/upload_123pan.py \
             --source dist/git-over-cdn \
             --parent-file-id "$PAN123_PARENT_FILE_ID" \
             --remote-prefix "$PAN123_REMOTE_PREFIX"
-
-      - name: Summary
-        run: |
-          echo "## git-over-cdn uploaded" >> "$GITHUB_STEP_SUMMARY"
-          echo "Files:" >> "$GITHUB_STEP_SUMMARY"
-          find dist/git-over-cdn -type f | sort >> "$GITHUB_STEP_SUMMARY"

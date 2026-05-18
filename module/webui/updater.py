@@ -79,7 +79,8 @@ class Updater(DeployConfig, GitManager, PipManager):
 
         cloud_update = self._check_cloud_update()
         if cloud_update is None:
-            self.cloud_update_access_failed()
+            self.cloud_update_access_failed(fatal=False)
+            return False
         if not cloud_update:
             logger.info("Cloud update flag is false, skip update check")
             return False

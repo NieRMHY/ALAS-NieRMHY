@@ -1,5 +1,6 @@
 import copy
 import operator
+import os
 import platform
 import sys
 import threading
@@ -108,6 +109,13 @@ class AzurLaneConfig(ConfigUpdater, ManualConfig, GeneratedConfig, ConfigWatcher
             logger.info("Using template config, which is read only")
             self.auto_update = False
             self.task = name_to_function("template")
+        elif not os.path.exists(filepath_config(config_name)):
+            from module.config.utils import is_oobe_needed
+            if is_oobe_needed():
+                logger.warning(
+                    "No configuration files found. "
+                    "Run 'python gui.py' to complete initial setup."
+                )
         self._disable_task_switch = False
         self.init_task(task)
 

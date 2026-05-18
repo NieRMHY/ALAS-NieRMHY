@@ -808,6 +808,12 @@ class ConfigUpdater:
         elif key == 'OpsiHazard1Leveling.OpsiHazard1Leveling.OperationCoinsPreserve':
             yield 'OpsiScheduling.OpsiScheduling.OperationCoinsPreserve', value
         
+        # 智能调度与侵蚀1虚拟资产保留双向同步
+        if key == 'OpsiScheduling.OpsiScheduling.VirtualAssetPreserve':
+            yield 'OpsiHazard1Leveling.OpsiHazard1Leveling.PreserveVirtualAsset', value
+        elif key == 'OpsiHazard1Leveling.OpsiHazard1Leveling.PreserveVirtualAsset':
+            yield 'OpsiScheduling.OpsiScheduling.VirtualAssetPreserve', value
+        
         # 智能调度与短猫行动力保留双向同步
         # 只有当值 > 0 时才同步（值为0表示不覆盖，使用各任务自己的配置）
         if key == 'OpsiScheduling.OpsiScheduling.ActionPointPreserve':

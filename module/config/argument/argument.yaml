@@ -125,6 +125,7 @@ EmulatorInfo:
         MEmuPlayer,
         BlueStacksAir,
         MuMuPro,
+        SSH,
       ]
   name:
     value: null
@@ -132,6 +133,25 @@ EmulatorInfo:
   path:
     value: null
     type: textarea
+  EnableRemoteSSH:
+    type: checkbox
+    value: false
+    option: [true, false]
+  RemoteSSHHost:
+    value: 
+  RemoteSSHPort:
+    value: 22
+  RemoteSSHUser:
+    value: root
+  RemoteSSHPublicKey:
+    type: textarea
+    value: null
+  RemoteStartCommand:
+    type: textarea
+    value: ""
+  RemoteStopCommand:
+    type: textarea
+    value: ""
 Error:
   HandleError: true
   SaveError: true
@@ -566,14 +586,26 @@ Commission:
 Tactical:
   TacticalFilter: |-
     SameT4 > SameT3 > SameT2 > SameT1
-    > BlueT2 > YellowT2 > RedT2
     > BlueT3 > YellowT3 > RedT3
+    > BlueT2 > YellowT2 > RedT2
     > BlueT4 > YellowT4 > RedT4
     > BlueT1 > YellowT1 > RedT1
     > first
   RapidTrainingSlot:
     value: do_not_use
     option: [do_not_use, slot_1, slot_2, slot_3, slot_4]
+  SkillAutoSwitch:
+    type: checkbox
+    value: true
+    option: [true, false]
+  RedToBlue:
+    type: checkbox
+    value: false
+    option: [true, false]
+  NoT4:
+    type: checkbox
+    value: false
+    option: [true, false]
 ControlExpOverflow:
   Enable: true
   T4Allow: 100
@@ -686,55 +718,27 @@ Awaken:
     value: false
 _Island:
   IslandOption4: &IslandOption4
-    value: 0
-    option: [ 0, 1, 2, 3, 4]
+    value: ""
   IslandOption5: &IslandOption5
-    value: 0
-    option: [ 0, 1, 2, 3, 4, 5]
+    value: ""
   IslandOption6: &IslandOption6
-    value: 0
-    option: [ 0, 1, 2, 3, 4, 5, 6]
+    value: ""
   IslandOption7: &IslandOption7
-    value: 0
-    option: [ 0, 1, 2, 3, 4, 5, 6, 7]
+    value: ""
   IslandOption8: &IslandOption8
-    value: 0
-    option: [ 0, 1, 2, 3, 4, 5, 6, 7, 8 ]
+    value: ""
   IslandOption9: &IslandOption9
-    value: 0
-    option: [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 ]
+    value: ""
   IslandOption10: &IslandOption10
-    value: 0
-    option: [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ]
+    value: ""
   IslandOption11: &IslandOption11
-    value: 0
-    option: [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 ]
+    value: ""
   IslandOption12: &IslandOption12
-    value: 0
-    option: [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 ]
+    value: ""
   IslandOption16: &IslandOption16
-    value: 0
-    option: [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 ]
+    value: ""
   IslandCharacter: &IslandCharacter
-    value: manjuu
-    option:
-      - manjuu
-      - saratoga
-      - new_jersey
-      - tashkent
-      - lemalin
-      - shimakaze
-      - akashi
-      - ying_swei
-      - chao_ho
-      - william_d_porter
-      - chen_hai
-      - unicorn
-      - cheshire
-      - amagi_chan
-      - helena
-      - atago
-      - friedrich_der_grobe
+    value: 工作啾
 Island1:
   Receive: false
   Option1: *IslandOption8
@@ -1080,6 +1084,7 @@ OpsiGeneral:
   RepairThreshold: 0.4
   UseRepairPack: false
   RepairPackThreshold: 0.9
+  RepairPackThresholdHazard1: 0.5
   DoRandomMapEvent: true
   AkashiShopFilter: |-
     ActionPoint
@@ -1190,6 +1195,7 @@ OpsiHazard1Leveling:
   Cl1Filter: |-
     ActionPoint
   RecordNonCL1AP: true
+  PreserveVirtualAsset: 0
 OpsiSirenBug:
   SirenResearch_Enable: true
   Siren_Mode:
@@ -1260,6 +1266,7 @@ OpsiScheduling:
     # 是否启用短猫提前开始功能
     value: false
     type: checkbox
+  VirtualAssetPreserve: 0
 
 # =================== Island ====================
 IslandSeasonTask:
@@ -1315,6 +1322,24 @@ EmulatorManagement:
   RestartIntervalHours:
     value: 4
     validate: [1, 24]
+EmulatorManager:
+  EnableRemoteSSH:
+    type: checkbox
+    value: false
+    option: [true, false]
+  RemoteSSHHost:
+    value: ""
+  RemoteSSHPort:
+    value: 22
+  RemoteSSHUser:
+    value: ""
+  RemoteSSHPublicKey:
+    type: textarea
+    value: ""
+  RemoteStartCommand:
+    value: ""
+  RemoteStopCommand:
+    value: ""
 OpsiSimulatorParameters:
   Samples: 100000
   Draw:

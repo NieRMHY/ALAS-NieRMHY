@@ -1,3 +1,4 @@
+from __future__ import annotations
 import os
 import re
 import subprocess
@@ -7,7 +8,6 @@ import psutil
 
 from module.base.decorator import run_once
 from module.base.timer import Timer
-from module.device.connection import AdbDeviceWithStatus
 from module.device.platform.platform_base import PlatformBase
 from module.device.platform.emulator_mac import (
     EmulatorMac,
@@ -272,7 +272,7 @@ class PlatformMac(PlatformBase, EmulatorManagerMac):
                 # Check device connection
                 devices = self.list_device().select(serial=serial)
                 if devices:
-                    device: AdbDeviceWithStatus = devices.first_or_none()
+                    device = devices.first_or_none()
                     if device.status == 'device':
                         pass
                     if device.status == 'offline':
@@ -315,6 +315,7 @@ class PlatformMac(PlatformBase, EmulatorManagerMac):
 
     def emulator_start(self):
         logger.hr('Emulator start', level=1)
+        self.run_remote_ssh_command()
         for _ in range(3):
             # Stop
             if not self._emulator_function_wrapper(self._emulator_stop):

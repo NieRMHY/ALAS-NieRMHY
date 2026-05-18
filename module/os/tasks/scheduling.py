@@ -75,6 +75,8 @@ class CoinTaskMixin:
     CONFIG_PATH_USE_SMART_CL1_PRESERVE = 'OpsiScheduling.OpsiScheduling.UseSmartSchedulingOperationCoinsPreserve'
     CONFIG_PATH_SMART_CL1_PRESERVE = 'OpsiScheduling.OpsiScheduling.OperationCoinsPreserve'
     CONFIG_PATH_SMART_AP_PRESERVE = 'OpsiScheduling.OpsiScheduling.ActionPointPreserve'
+    # 虚拟资产保留配置路径
+    CONFIG_PATH_VIRTUAL_ASSET_PRESERVE = 'OpsiScheduling.OpsiScheduling.VirtualAssetPreserve'
     
     # 各任务的配置路径常量（集中管理，避免硬编码）
     CONFIG_PATH_MEOW_AP_PRESERVE = 'OpsiMeowfficerFarming.OpsiMeowfficerFarming.ActionPointPreserve'
@@ -388,6 +390,66 @@ class CoinTaskMixin:
             keys=self.CONFIG_PATH_SMART_AP_PRESERVE
         )
         return preserve or 0
+    
+    def _calculate_virtual_asset(self, current_ap, current_yellow_coins):
+        """
+        计算虚拟资产值
+        
+        虚拟资产公式：虚拟资产 = 体力 × CL5_efficiency + 黄币 + (到月底时间/10分钟) × CL5_efficiency
+        
+        Args:
+            current_ap: 当前行动力
+            current_yellow_coins: 当前黄币
+            
+        Returns:
+            float: 虚拟资产值
+        """
+        from calendar import monthrange
+        
+        # 获取 CL5 效率（黄币/30分钟）
+        CL5_efficiency = 1700.0 / 30.0
+        try:
+            meow5_coin = self.config.cross_get('OpsiSimulator.OpsiSimulatorParameters.Meow5Coin')
+            if meow5_coin is not None:
+                meow5_coin_float = float(meow5_coin)
+                if meow5_coin_float > 0:
+                    CL5_efficiency = meow5_coin_float / 30.0
+        except Exception:
+            pass
+        
+        # 计算当前时间到月底的剩余时间（秒）
+        now = datetime.now()
+        year, month = now.year, now.month
+        last_day = monthrange(year, month)[1]
+        month_end = datetime(year, month, last_day, 23, 59, 59)
+        time_to_month_end_sec = (month_end - now).total_seconds()
+        
+        # 如果已经过了月底，虚拟资产增益为 0
+        if time_to_month_end_sec < 0:
+            time_to_month_end_sec = 0
+        
+        # 虚拟资产 = 体力 × CL5_efficiency + 黄币 + (到月底时间/10分钟) × CL5_efficiency
+        # 其中 10分钟 = 600秒
+        virtual_asset_added = (time_to_month_end_sec / 600.0) * CL5_efficiency
+        virtual_asset = current_ap * CL5_efficiency + current_yellow_coins + virtual_asset_added
+        
+        return virtual_asset
+    
+    def _get_virtual_asset_preserve(self):
+        """
+        获取虚拟资产保留值
+        
+        值为 0 时不启用。智能调度与侵蚀1练级的配置已通过 config_updater 双向同步。
+        
+        Returns:
+            int: 虚拟资产保留值（0 表示不启用）
+        """
+        preserve = self.config.cross_get(
+            keys=self.CONFIG_PATH_VIRTUAL_ASSET_PRESERVE
+        )
+        if preserve is None:
+            preserve = 0
+        return int(preserve)
     
     def _get_current_coin_task_name(self):
         """
@@ -734,6 +796,34 @@ class OpsiScheduling(CoinTaskMixin, OSMap):
         
         logger.info(f'【智能调度初始检查】黄币: {yellow_coins}, 保留值: {cl1_preserve}')
         logger.info(f'【智能调度初始检查】行动力: {current_ap}')
+        
+        # 检查虚拟资产保留逻辑
+        virtual_asset_preserve = self._get_virtual_asset_preserve()
+        if virtual_asset_preserve > 0:
+            virtual_asset = self._calculate_virtual_asset(current_ap, yellow_coins)
+            logger.info(f'【智能调度虚拟资产检查】虚拟资产: {virtual_asset:.0f}, 保留值: {virtual_asset_preserve}')
+            
+            if virtual_asset < virtual_asset_preserve:
+                logger.info(f'虚拟资产不足 ({virtual_asset:.0f} < {virtual_asset_preserve})，需要执行黄币补充任务')
+                
+                # 获取短猫相接的行动力保留值
+                meow_ap_preserve = self.config.cross_get(
+                    keys=self.CONFIG_PATH_MEOW_AP_PRESERVE
+                ) or 1000
+                
+                if current_ap < meow_ap_preserve:
+                    # 行动力也不足，推迟任务
+                    logger.warning(f'行动力不足以执行短猫 ({current_ap} < {meow_ap_preserve})')
+                    self._notify_coins_ap_insufficient(yellow_coins, current_ap, virtual_asset_preserve, meow_ap_preserve)
+                    
+                    logger.info('推迟智能调度任务1小时')
+                    self.config.task_delay(minute=60)
+                    self.config.task_stop()
+                    return
+                
+                # 行动力充足，切换到黄币补充任务
+                self._switch_to_coin_task(yellow_coins, current_ap, virtual_asset_preserve, meow_ap_preserve)
+                return
         
         # 检查是否需要执行黄币补充任务
         if yellow_coins < cl1_preserve:

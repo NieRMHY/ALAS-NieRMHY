@@ -292,8 +292,25 @@ class GlobeOperation(ActionPointHandler):
             in: is_in_globe
             out: is_in_map
         """
-        return self.ui_click(GLOBE_GOTO_MAP, check_button=self.is_in_map, offset=(20, 20),
-                             retry_wait=3, skip_first_screenshot=skip_first_screenshot)
+        # Handle accidentally entering port
+        for _ in self.loop():
+            if skip_first_screenshot:
+                skip_first_screenshot = False
+            else:
+                self.device.screenshot()
+
+            if self.is_in_map():
+                break
+
+            if self.appear(PORT_CHECK, offset=(20, 20), interval=3):
+                logger.info('Accidentally entered port, exiting')
+                self.device.click(BACK_ARROW)
+                self.interval_reset(GLOBE_GOTO_MAP)
+                continue
+            if self.appear_then_click(GLOBE_GOTO_MAP, offset=(20, 20), interval=3):
+                continue
+
+        return True
 
     def os_map_goto_globe(self, unpin=True):
         """

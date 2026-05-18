@@ -27,6 +27,8 @@ class ShipExpStats:
         1: 431,  # 旗舰
         2: 288, 3: 288, 4: 288, 5: 288, 6: 288  # 其他位置
     }
+    AVG_EXP_PER_BATTLE = 312  # 平均每场经验
+    BATTLES_PER_ROUND = 2     # 侵蚀1每轮默认2场战斗
     
     MAX_BATTLE_TIME_SAMPLES = 100  # 保留最近100场战斗时间样本
     MAX_DAILY_STATS_DAYS = 30      # 保留最近30天的统计
@@ -106,7 +108,7 @@ class ShipExpStats:
         
         # 计算本场经验 (使用平均值，因为每个位置经验不同)
         # 旗舰 431 + 其他位置 288*5 = 1871, 平均 312
-        avg_exp = 312
+        avg_exp = self.AVG_EXP_PER_BATTLE
         
         # 每日经验效率用于侵蚀1练级预估，避免被短猫耗时混入。
         if source == "cl1":
@@ -228,40 +230,18 @@ class ShipExpStats:
     def get_exp_per_hour(self) -> float:
         """
         获取经验效率 (经验/小时)
-        优先使用今日数据，否则计算最近7天平均
+        使用公式估算：平均每场经验 * 2 / 平均一轮时长
         """
-        if 'daily_stats' not in self.data or not self.data['daily_stats']:
-            # 无统计数据，使用理论值估算
-            avg_battle_time = self.get_average_battle_time()
-            avg_exp_per_battle = 312  # 平均每场经验
-            if avg_battle_time > 0:
-                battles_per_hour = 3600 / avg_battle_time
-                return battles_per_hour * avg_exp_per_battle
-            return 22000.0  # 默认值
-        
-        today = date.today().isoformat()
-        
-        # 优先使用今日数据 (如果今日战斗超过10场)
-        if today in self.data['daily_stats']:
-            today_stats = self.data['daily_stats'][today]
-            if today_stats.get('battle_count', 0) >= 10:
-                exp_per_hour = today_stats.get('exp_per_hour', 0)
-                if exp_per_hour > 0:
-                    return exp_per_hour
-        
-        # 计算最近7天的平均效率
-        dates = sorted(self.data['daily_stats'].keys(), reverse=True)[:7]
-        total_exp = 0
-        total_time = 0.0
-        for d in dates:
-            stats = self.data['daily_stats'][d]
-            total_exp += stats.get('total_exp_gained', 0)
-            total_time += stats.get('total_run_time', 0)
-        
-        if total_time > 0:
-            hours = total_time / 3600
-            return round(total_exp / hours, 2)
-        
+        avg_round_time = self.get_average_round_time()
+        if avg_round_time > 0:
+            exp_per_hour = (
+                self.AVG_EXP_PER_BATTLE
+                * self.BATTLES_PER_ROUND
+                * 3600
+                / avg_round_time
+            )
+            return round(exp_per_hour, 2)
+
         return 22000.0  # 默认值
     
     def get_today_stats(self) -> dict[str, Any] | None:
@@ -333,10 +313,16 @@ class ShipExpStats:
         battle_count_at_check = self.data.get('battle_count_at_check', 0)
         battles_done = max(0, current_battle_count - battle_count_at_check)
         
-        # 计算预估时间 (使用经验效率)
-        exp_per_hour = self.get_exp_per_hour()
-        if exp_per_hour > 0 and exp_needed > 0:
-            hours_needed = exp_needed / exp_per_hour
+        # 计算预估时间 (经验值*2/平均一轮时长)
+        avg_round_time = self.get_average_round_time()
+        if avg_round_time > 0 and exp_needed > 0 and exp_per_battle > 0:
+            ship_exp_per_hour = (
+                exp_per_battle
+                * self.BATTLES_PER_ROUND
+                * 3600
+                / avg_round_time
+            )
+            hours_needed = exp_needed / ship_exp_per_hour
             time_seconds = hours_needed * 3600
         else:
             time_seconds = 0

@@ -125,6 +125,8 @@ class PortShop(OSStatus, OSShopUI, Selector, MapEventHandler):
             list[Item]:
         """
         items = []
+        # 使用 set 记录已扫描物品的键，实现 O(1) 去重
+        scanned_keys = set()
         self.device.click_record.clear()
 
         for i in range(4):
@@ -148,7 +150,11 @@ class PortShop(OSStatus, OSShopUI, Selector, MapEventHandler):
                         break
                 # always add items, even if last item list contains unknown items
                 # so any known items can be scanned
-                items += _items
+                for item in _items:
+                    key = (item.name, item.price, item.shop_index)
+                    if key not in scanned_keys:
+                        scanned_keys.add(key)
+                        items.append(item)
 
                 if OS_SHOP_SCROLL.at_bottom(main=self):
                     logger.info('OS shop reach bottom, stop')

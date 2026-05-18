@@ -124,7 +124,8 @@
       "Benchmark",
       "OcrBenchmark",
       "AzurLaneUncensored",
-      "GameManager"
+      "GameManager",
+      "EmulatorManager"
     ]
   }
 }

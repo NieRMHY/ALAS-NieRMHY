@@ -414,6 +414,8 @@ Tool:
       - AzurLaneUncensored
     GameManager:
       - GameManager
+    EmulatorManager:
+      - EmulatorManager
 Dashboard:
   page: dashboard
   tasks:

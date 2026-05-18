@@ -184,7 +184,7 @@
     },
     "Island": {
       "name": "岛屿计划",
-      "help": "需要岛屿等级18级并解锁集成管理面板后使用"
+      "help": "需要岛屿等级18级并解锁集成管理面板后使用\n可用角色：工作啾、萨拉托加、新泽西、塔什干、恶毒、岛风、明石、应瑞、肇和、威廉·D·波特、镇海、独角兽、柴郡、小天城、海伦娜、爱宕、腓特烈大帝、拉菲、标枪、胡德、高雄、大凤、欧根亲王、奥古斯特·冯·帕塞瓦尔、飞云、逸仙、莱昂纳多·达·芬奇、领洋者-娜比娅、领航员-TB、探索者-艾普洛\n注意：物品栏输入\"不生产\"（或留空）会自动跳过该槽位"
     },
     "Daily": {
       "name": "每日任务",
@@ -333,6 +333,10 @@
     "GameManager": {
       "name": "游戏管理器(未完成)",
       "help": ""
+    },
+    "EmulatorManager": {
+      "name": "模拟器管理器",
+      "help": "提供手动重启模拟器的入口"
     }
   },
   "Scheduler": {
@@ -532,7 +536,8 @@
       "MuMuPlayer12": "MuMu模拟器12",
       "MEmuPlayer": "逍遥模拟器",
       "BlueStacksAir": "BlueStacksAir",
-      "MuMuPro": "MuMuPro"
+      "MuMuPro": "MuMuPro",
+      "SSH": "SSH"
     },
     "name": {
       "name": "模拟器实例名称",
@@ -541,6 +546,36 @@
     "path": {
       "name": "模拟器安装路径",
       "help": ""
+    },
+    "EnableRemoteSSH": {
+      "name": "启用远程 SSH 管理",
+      "help": "在重启模拟器之前，通过 SSH 在远程服务器上执行特定指令（如重启 Docker 容器）。",
+      "True": "True",
+      "False": "False"
+    },
+    "RemoteSSHHost": {
+      "name": "远程服务器地址",
+      "help": "远程服务器的 IP 地址或域名，例如: 192.168.1.100"
+    },
+    "RemoteSSHPort": {
+      "name": "端口号",
+      "help": "SSH 服务端口，默认 22"
+    },
+    "RemoteSSHUser": {
+      "name": "SSH 用户名",
+      "help": "登录 SSH 的用户名，例如: root"
+    },
+    "RemoteSSHPublicKey": {
+      "name": "SSH 公钥",
+      "help": "SSH 登录所需的公钥内容（如果需要）"
+    },
+    "RemoteStartCommand": {
+      "name": "远程启动指令",
+      "help": "在重启模拟器时执行的启动 SSH 指令（如启动 Docker 容器）"
+    },
+    "RemoteStopCommand": {
+      "name": "远程停止指令",
+      "help": "在重启模拟器时执行的停止 SSH 指令（如停止 Docker 容器）"
     }
   },
   "Error": {
@@ -896,7 +931,7 @@
     },
     "TaskPriorityAdjustment": {
       "name": "任务优先级调整",
-      "help": "Restart    # 重启游戏\n> OpsiCrossMonth    # 大世界跨月每日\n> Commission > Tactical > Research    # 委托 > 战术学院 > 科研\n> Exercise    # 演习\n> Dorm > Meowfficer > Guild > Gacha    # 后宅 > 指挥喵 > 大舰队 > 每日抽卡\n> Reward    # 收获\n> ShopFrequent > ShopOnce > Shipyard > Freebies > Island    # 通用商店 > 其他商店 > 开发船坞 > 白嫖奖励 > 岛屿计划\n> PrivateQuarters    # 宿舍计划\n> OpsiExplore    # 每月开荒\n> Minigame > Awaken    # 小游戏 > 认知觉醒\n> OpsiAshBeacon    # meta作战\n> OpsiDaily > OpsiShop > OpsiVoucher    # 大世界日常 > 港口商店 > 兑换商店 > 兑换商店\n> OpsiAbyssal > OpsiStronghold > OpsiObscure > OpsiArchive > EventShop   # 深渊海域 > 塞壬要塞 > 隐秘海域 > 档案坐标\n> Daily > Hard > OpsiAshBeacon > OpsiAshAssist > OpsiMonthBoss     # 每日挑战 > 困难图 > meta作战 > meta支援 > 月度boss\n> Sos > EventSp > EventA > EventB > EventC > EventD    # Sos > 活动每日SP > 活动每日A > 活动每日B > 活动每日C > 活动每日D\n> RaidDaily > CoalitionSp > WarArchives > MaritimeEscort    # 共斗活动每日 > 共斗活动sp > 作战档案 > 商船护航\n> Event > Event2 > Event3 > Raid > Hospital > HospitalEvent > Coalition > RaidScuttle > Main > Main2 > Main3    # 活动图 > 活动图2 > 活动图3 > 共斗活动 > 医院活动 > 共斗活动 > 共斗沉船 > 主线 > 主线2 > 主线3\n> OpsiMeowfficerFarming    # 短猫相接\n> GemsFarming    # 刷紧急委托\n> OpsiHazard1Leveling    # 侵蚀一练级\n> ThreeOilLowCost    # 三油低耗"
+      "help": "格式：每行只写任务名，用 `>` 连接优先级（越靠前优先级越高）。\n不要写 `#` 注释，注释会导致任务名匹配失败。\n\n示例：\nRestart\n> OpsiCrossMonth\n> Commission > Tactical > Research\n> Exercise\n> ...\n\n留空可使用内置默认优先级。"
     }
   },
   "OneClickRetire": {
@@ -1803,6 +1838,24 @@
       "slot_2": "使用于2号位",
       "slot_3": "使用于3号位",
       "slot_4": "使用于4号位"
+    },
+    "SkillAutoSwitch": {
+      "name": "自动切换技能",
+      "help": "自动切换到下一个尚未学习的技能进行学习",
+      "True": "开启",
+      "False": "关闭"
+    },
+    "RedToBlue": {
+      "name": "蓝书代替红书使用",
+      "help": "开启后将战术学院过滤器中的蓝书代替红书使用",
+      "True": "开启",
+      "False": "关闭"
+    },
+    "NoT4": {
+      "name": "不使用T4教材",
+      "help": "从选择中排除T4彩色教材",
+      "True": "开启",
+      "False": "关闭"
     }
   },
   "ControlExpOverflow": {
@@ -2099,7 +2152,7 @@
   "Island1": {
     "_info": {
       "name": "丰壤农田",
-      "help": ""
+      "help": "可生产：小麦、玉米、牧草、咖啡豆、大米、白菜、土豆、大豆"
     },
     "Receive": {
       "name": "收获丰壤农田",
@@ -2107,145 +2160,41 @@
     },
     "Option1": {
       "name": "第 1 格生产物品",
-      "help": "",
-      "0": "不生产",
-      "1": "小麦",
-      "2": "玉米",
-      "3": "牧草",
-      "4": "咖啡豆",
-      "5": "大米",
-      "6": "白菜",
-      "7": "土豆",
-      "8": "大豆"
+      "help": ""
     },
     "Character1": {
       "name": "第 1 格使用角色",
-      "help": "",
-      "manjuu": "工作啾",
-      "saratoga": "萨拉托加",
-      "new_jersey": "新泽西",
-      "tashkent": "塔什干",
-      "lemalin": "恶毒",
-      "shimakaze": "岛风",
-      "akashi": "明石",
-      "ying_swei": "应瑞",
-      "chao_ho": "肇和",
-      "william_d_porter": "威廉·D·波特",
-      "chen_hai": "镇海",
-      "unicorn": "独角兽",
-      "cheshire": "柴郡",
-      "amagi_chan": "小天城",
-      "helena": "海伦娜",
-      "atago": "爱宕",
-      "friedrich_der_grobe": "腓特烈大帝"
+      "help": ""
     },
     "Option2": {
       "name": "第 2 格生产物品",
-      "help": "",
-      "0": "不生产",
-      "1": "小麦",
-      "2": "玉米",
-      "3": "牧草",
-      "4": "咖啡豆",
-      "5": "大米",
-      "6": "白菜",
-      "7": "土豆",
-      "8": "大豆"
+      "help": ""
     },
     "Character2": {
       "name": "第 2 格使用角色",
-      "help": "",
-      "manjuu": "工作啾",
-      "saratoga": "萨拉托加",
-      "new_jersey": "新泽西",
-      "tashkent": "塔什干",
-      "lemalin": "恶毒",
-      "shimakaze": "岛风",
-      "akashi": "明石",
-      "ying_swei": "应瑞",
-      "chao_ho": "肇和",
-      "william_d_porter": "威廉·D·波特",
-      "chen_hai": "镇海",
-      "unicorn": "独角兽",
-      "cheshire": "柴郡",
-      "amagi_chan": "小天城",
-      "helena": "海伦娜",
-      "atago": "爱宕",
-      "friedrich_der_grobe": "腓特烈大帝"
+      "help": ""
     },
     "Option3": {
       "name": "第 3 格生产物品",
-      "help": "",
-      "0": "不生产",
-      "1": "小麦",
-      "2": "玉米",
-      "3": "牧草",
-      "4": "咖啡豆",
-      "5": "大米",
-      "6": "白菜",
-      "7": "土豆",
-      "8": "大豆"
+      "help": ""
     },
     "Character3": {
       "name": "第 3 格使用角色",
-      "help": "",
-      "manjuu": "工作啾",
-      "saratoga": "萨拉托加",
-      "new_jersey": "新泽西",
-      "tashkent": "塔什干",
-      "lemalin": "恶毒",
-      "shimakaze": "岛风",
-      "akashi": "明石",
-      "ying_swei": "应瑞",
-      "chao_ho": "肇和",
-      "william_d_porter": "威廉·D·波特",
-      "chen_hai": "镇海",
-      "unicorn": "独角兽",
-      "cheshire": "柴郡",
-      "amagi_chan": "小天城",
-      "helena": "海伦娜",
-      "atago": "爱宕",
-      "friedrich_der_grobe": "腓特烈大帝"
+      "help": ""
     },
     "Option4": {
       "name": "第 4 格生产物品",
-      "help": "",
-      "0": "不生产",
-      "1": "小麦",
-      "2": "玉米",
-      "3": "牧草",
-      "4": "咖啡豆",
-      "5": "大米",
-      "6": "白菜",
-      "7": "土豆",
-      "8": "大豆"
+      "help": ""
     },
     "Character4": {
       "name": "第 4 格使用角色",
-      "help": "",
-      "manjuu": "工作啾",
-      "saratoga": "萨拉托加",
-      "new_jersey": "新泽西",
-      "tashkent": "塔什干",
-      "lemalin": "恶毒",
-      "shimakaze": "岛风",
-      "akashi": "明石",
-      "ying_swei": "应瑞",
-      "chao_ho": "肇和",
-      "william_d_porter": "威廉·D·波特",
-      "chen_hai": "镇海",
-      "unicorn": "独角兽",
-      "cheshire": "柴郡",
-      "amagi_chan": "小天城",
-      "helena": "海伦娜",
-      "atago": "爱宕",
-      "friedrich_der_grobe": "腓特烈大帝"
+      "help": ""
     }
   },
   "Island2": {
     "_info": {
       "name": "悠然牧场",
-      "help": ""
+      "help": "可生产：鸡蛋、鲜肉、牛奶、羊毛"
     },
     "Receive": {
       "name": "收获悠然牧场",
@@ -2259,24 +2208,7 @@
     },
     "Character1": {
       "name": "第 1 格使用角色",
-      "help": "",
-      "manjuu": "工作啾",
-      "saratoga": "萨拉托加",
-      "new_jersey": "新泽西",
-      "tashkent": "塔什干",
-      "lemalin": "恶毒",
-      "shimakaze": "岛风",
-      "akashi": "明石",
-      "ying_swei": "应瑞",
-      "chao_ho": "肇和",
-      "william_d_porter": "威廉·D·波特",
-      "chen_hai": "镇海",
-      "unicorn": "独角兽",
-      "cheshire": "柴郡",
-      "amagi_chan": "小天城",
-      "helena": "海伦娜",
-      "atago": "爱宕",
-      "friedrich_der_grobe": "腓特烈大帝"
+      "help": ""
     },
     "Option2": {
       "name": "第 2 格生产物品",
@@ -2286,24 +2218,7 @@
     },
     "Character2": {
       "name": "第 2 格使用角色",
-      "help": "",
-      "manjuu": "工作啾",
-      "saratoga": "萨拉托加",
-      "new_jersey": "新泽西",
-      "tashkent": "塔什干",
-      "lemalin": "恶毒",
-      "shimakaze": "岛风",
-      "akashi": "明石",
-      "ying_swei": "应瑞",
-      "chao_ho": "肇和",
-      "william_d_porter": "威廉·D·波特",
-      "chen_hai": "镇海",
-      "unicorn": "独角兽",
-      "cheshire": "柴郡",
-      "amagi_chan": "小天城",
-      "helena": "海伦娜",
-      "atago": "爱宕",
-      "friedrich_der_grobe": "腓特烈大帝"
+      "help": ""
     },
     "Option3": {
       "name": "第 3 格生产物品",
@@ -2313,24 +2228,7 @@
     },
     "Character3": {
       "name": "第 3 格使用角色",
-      "help": "",
-      "manjuu": "工作啾",
-      "saratoga": "萨拉托加",
-      "new_jersey": "新泽西",
-      "tashkent": "塔什干",
-      "lemalin": "恶毒",
-      "shimakaze": "岛风",
-      "akashi": "明石",
-      "ying_swei": "应瑞",
-      "chao_ho": "肇和",
-      "william_d_porter": "威廉·D·波特",
-      "chen_hai": "镇海",
-      "unicorn": "独角兽",
-      "cheshire": "柴郡",
-      "amagi_chan": "小天城",
-      "helena": "海伦娜",
-      "atago": "爱宕",
-      "friedrich_der_grobe": "腓特烈大帝"
+      "help": ""
     },
     "Option4": {
       "name": "第 4 格生产物品",
@@ -2340,30 +2238,13 @@
     },
     "Character4": {
       "name": "第 4 格使用角色",
-      "help": "",
-      "manjuu": "工作啾",
-      "saratoga": "萨拉托加",
-      "new_jersey": "新泽西",
-      "tashkent": "塔什干",
-      "lemalin": "恶毒",
-      "shimakaze": "岛风",
-      "akashi": "明石",
-      "ying_swei": "应瑞",
-      "chao_ho": "肇和",
-      "william_d_porter": "威廉·D·波特",
-      "chen_hai": "镇海",
-      "unicorn": "独角兽",
-      "cheshire": "柴郡",
-      "amagi_chan": "小天城",
-      "helena": "海伦娜",
-      "atago": "爱宕",
-      "friedrich_der_grobe": "腓特烈大帝"
+      "help": ""
     }
   },
   "Island3": {
     "_info": {
       "name": "啾啾渔场",
-      "help": ""
+      "help": "可生产：贝类、鲶鱼、鲤鱼、鲫鱼、小河虾、小龙虾、鲈鱼、螃蟹、鱿鱼、马鲛鱼、金枪鱼、三文鱼、红鲷鱼、黑鲷鱼、黄鳍金枪鱼、海参"
     },
     "Receive": {
       "name": "收获啾啾渔场",
@@ -2371,135 +2252,33 @@
     },
     "Option1": {
       "name": "第 1 格生产物品",
-      "help": "",
-      "0": "不生产",
-      "1": "贝类",
-      "2": "鲶鱼",
-      "3": "鲤鱼",
-      "4": "鲫鱼",
-      "5": "小河虾",
-      "6": "小龙虾",
-      "7": "鲈鱼",
-      "8": "螃蟹",
-      "9": "鱿鱼",
-      "10": "马鲛鱼",
-      "11": "金枪鱼",
-      "12": "三文鱼",
-      "13": "红鲷鱼",
-      "14": "黑鲷鱼",
-      "15": "黄鳍金枪鱼",
-      "16": "海参"
+      "help": ""
     },
     "Character1": {
       "name": "第 1 格使用角色",
-      "help": "",
-      "manjuu": "工作啾",
-      "saratoga": "萨拉托加",
-      "new_jersey": "新泽西",
-      "tashkent": "塔什干",
-      "lemalin": "恶毒",
-      "shimakaze": "岛风",
-      "akashi": "明石",
-      "ying_swei": "应瑞",
-      "chao_ho": "肇和",
-      "william_d_porter": "威廉·D·波特",
-      "chen_hai": "镇海",
-      "unicorn": "独角兽",
-      "cheshire": "柴郡",
-      "amagi_chan": "小天城",
-      "helena": "海伦娜",
-      "atago": "爱宕",
-      "friedrich_der_grobe": "腓特烈大帝"
+      "help": ""
     },
     "Option2": {
       "name": "第 2 格生产物品",
-      "help": "",
-      "0": "不生产",
-      "1": "贝类",
-      "2": "鲶鱼",
-      "3": "鲤鱼",
-      "4": "鲫鱼",
-      "5": "小河虾",
-      "6": "小龙虾",
-      "7": "鲈鱼",
-      "8": "螃蟹",
-      "9": "鱿鱼",
-      "10": "马鲛鱼",
-      "11": "金枪鱼",
-      "12": "三文鱼",
-      "13": "红鲷鱼",
-      "14": "黑鲷鱼",
-      "15": "黄鳍金枪鱼",
-      "16": "海参"
+      "help": ""
     },
     "Character2": {
       "name": "第 2 格使用角色",
-      "help": "",
-      "manjuu": "工作啾",
-      "saratoga": "萨拉托加",
-      "new_jersey": "新泽西",
-      "tashkent": "塔什干",
-      "lemalin": "恶毒",
-      "shimakaze": "岛风",
-      "akashi": "明石",
-      "ying_swei": "应瑞",
-      "chao_ho": "肇和",
-      "william_d_porter": "威廉·D·波特",
-      "chen_hai": "镇海",
-      "unicorn": "独角兽",
-      "cheshire": "柴郡",
-      "amagi_chan": "小天城",
-      "helena": "海伦娜",
-      "atago": "爱宕",
-      "friedrich_der_grobe": "腓特烈大帝"
+      "help": ""
     },
     "Option3": {
       "name": "第 3 格生产物品",
-      "help": "",
-      "0": "不生产",
-      "1": "贝类",
-      "2": "鲶鱼",
-      "3": "鲤鱼",
-      "4": "鲫鱼",
-      "5": "小河虾",
-      "6": "小龙虾",
-      "7": "鲈鱼",
-      "8": "螃蟹",
-      "9": "鱿鱼",
-      "10": "马鲛鱼",
-      "11": "金枪鱼",
-      "12": "三文鱼",
-      "13": "红鲷鱼",
-      "14": "黑鲷鱼",
-      "15": "黄鳍金枪鱼",
-      "16": "海参"
+      "help": ""
     },
     "Character3": {
       "name": "第 3 格使用角色",
-      "help": "",
-      "manjuu": "工作啾",
-      "saratoga": "萨拉托加",
-      "new_jersey": "新泽西",
-      "tashkent": "塔什干",
-      "lemalin": "恶毒",
-      "shimakaze": "岛风",
-      "akashi": "明石",
-      "ying_swei": "应瑞",
-      "chao_ho": "肇和",
-      "william_d_porter": "威廉·D·波特",
-      "chen_hai": "镇海",
-      "unicorn": "独角兽",
-      "cheshire": "柴郡",
-      "amagi_chan": "小天城",
-      "helena": "海伦娜",
-      "atago": "爱宕",
-      "friedrich_der_grobe": "腓特烈大帝"
+      "help": ""
     }
   },
   "Island4": {
     "_info": {
       "name": "沉石矿山",
-      "help": ""
+      "help": "可生产：煤炭、铜矿、铝矿、铁矿、硫矿、银矿"
     },
     "Receive": {
       "name": "收获沉石矿山",
@@ -2507,137 +2286,41 @@
     },
     "Option1": {
       "name": "第 1 格生产物品",
-      "help": "",
-      "0": "不生产",
-      "1": "煤炭",
-      "2": "铜矿",
-      "3": "铝矿",
-      "4": "铁矿",
-      "5": "硫矿",
-      "6": "银矿"
+      "help": ""
     },
     "Character1": {
       "name": "第 1 格使用角色",
-      "help": "",
-      "manjuu": "工作啾",
-      "saratoga": "萨拉托加",
-      "new_jersey": "新泽西",
-      "tashkent": "塔什干",
-      "lemalin": "恶毒",
-      "shimakaze": "岛风",
-      "akashi": "明石",
-      "ying_swei": "应瑞",
-      "chao_ho": "肇和",
-      "william_d_porter": "威廉·D·波特",
-      "chen_hai": "镇海",
-      "unicorn": "独角兽",
-      "cheshire": "柴郡",
-      "amagi_chan": "小天城",
-      "helena": "海伦娜",
-      "atago": "爱宕",
-      "friedrich_der_grobe": "腓特烈大帝"
+      "help": ""
     },
     "Option2": {
       "name": "第 2 格生产物品",
-      "help": "",
-      "0": "不生产",
-      "1": "煤炭",
-      "2": "铜矿",
-      "3": "铝矿",
-      "4": "铁矿",
-      "5": "硫矿",
-      "6": "银矿"
+      "help": ""
     },
     "Character2": {
       "name": "第 2 格使用角色",
-      "help": "",
-      "manjuu": "工作啾",
-      "saratoga": "萨拉托加",
-      "new_jersey": "新泽西",
-      "tashkent": "塔什干",
-      "lemalin": "恶毒",
-      "shimakaze": "岛风",
-      "akashi": "明石",
-      "ying_swei": "应瑞",
-      "chao_ho": "肇和",
-      "william_d_porter": "威廉·D·波特",
-      "chen_hai": "镇海",
-      "unicorn": "独角兽",
-      "cheshire": "柴郡",
-      "amagi_chan": "小天城",
-      "helena": "海伦娜",
-      "atago": "爱宕",
-      "friedrich_der_grobe": "腓特烈大帝"
+      "help": ""
     },
     "Option3": {
       "name": "第 3 格生产物品",
-      "help": "",
-      "0": "不生产",
-      "1": "煤炭",
-      "2": "铜矿",
-      "3": "铝矿",
-      "4": "铁矿",
-      "5": "硫矿",
-      "6": "银矿"
+      "help": ""
     },
     "Character3": {
       "name": "第 3 格使用角色",
-      "help": "",
-      "manjuu": "工作啾",
-      "saratoga": "萨拉托加",
-      "new_jersey": "新泽西",
-      "tashkent": "塔什干",
-      "lemalin": "恶毒",
-      "shimakaze": "岛风",
-      "akashi": "明石",
-      "ying_swei": "应瑞",
-      "chao_ho": "肇和",
-      "william_d_porter": "威廉·D·波特",
-      "chen_hai": "镇海",
-      "unicorn": "独角兽",
-      "cheshire": "柴郡",
-      "amagi_chan": "小天城",
-      "helena": "海伦娜",
-      "atago": "爱宕",
-      "friedrich_der_grobe": "腓特烈大帝"
+      "help": ""
     },
     "Option4": {
       "name": "第 4 格生产物品",
-      "help": "",
-      "0": "不生产",
-      "1": "煤炭",
-      "2": "铜矿",
-      "3": "铝矿",
-      "4": "铁矿",
-      "5": "硫矿",
-      "6": "银矿"
+      "help": ""
     },
     "Character4": {
       "name": "第 4 格使用角色",
-      "help": "",
-      "manjuu": "工作啾",
-      "saratoga": "萨拉托加",
-      "new_jersey": "新泽西",
-      "tashkent": "塔什干",
-      "lemalin": "恶毒",
-      "shimakaze": "岛风",
-      "akashi": "明石",
-      "ying_swei": "应瑞",
-      "chao_ho": "肇和",
-      "william_d_porter": "威廉·D·波特",
-      "chen_hai": "镇海",
-      "unicorn": "独角兽",
-      "cheshire": "柴郡",
-      "amagi_chan": "小天城",
-      "helena": "海伦娜",
-      "atago": "爱宕",
-      "friedrich_der_grobe": "腓特烈大帝"
+      "help": ""
     }
   },
   "Island5": {
     "_info": {
       "name": "翠土林场",
-      "help": ""
+      "help": "可生产：自然之木、实用之木、精选之木、典雅之木"
     },
     "Receive": {
       "name": "收获翠土林场",
@@ -2645,129 +2328,41 @@
     },
     "Option1": {
       "name": "第 1 格生产物品",
-      "help": "",
-      "0": "不生产",
-      "1": "自然之木",
-      "2": "实用之木",
-      "3": "精选之木",
-      "4": "典雅之木"
+      "help": ""
     },
     "Character1": {
       "name": "第 1 格使用角色",
-      "help": "",
-      "manjuu": "工作啾",
-      "saratoga": "萨拉托加",
-      "new_jersey": "新泽西",
-      "tashkent": "塔什干",
-      "lemalin": "恶毒",
-      "shimakaze": "岛风",
-      "akashi": "明石",
-      "ying_swei": "应瑞",
-      "chao_ho": "肇和",
-      "william_d_porter": "威廉·D·波特",
-      "chen_hai": "镇海",
-      "unicorn": "独角兽",
-      "cheshire": "柴郡",
-      "amagi_chan": "小天城",
-      "helena": "海伦娜",
-      "atago": "爱宕",
-      "friedrich_der_grobe": "腓特烈大帝"
+      "help": ""
     },
     "Option2": {
       "name": "第 2 格生产物品",
-      "help": "",
-      "0": "不生产",
-      "1": "自然之木",
-      "2": "实用之木",
-      "3": "精选之木",
-      "4": "典雅之木"
+      "help": ""
     },
     "Character2": {
       "name": "第 2 格使用角色",
-      "help": "",
-      "manjuu": "工作啾",
-      "saratoga": "萨拉托加",
-      "new_jersey": "新泽西",
-      "tashkent": "塔什干",
-      "lemalin": "恶毒",
-      "shimakaze": "岛风",
-      "akashi": "明石",
-      "ying_swei": "应瑞",
-      "chao_ho": "肇和",
-      "william_d_porter": "威廉·D·波特",
-      "chen_hai": "镇海",
-      "unicorn": "独角兽",
-      "cheshire": "柴郡",
-      "amagi_chan": "小天城",
-      "helena": "海伦娜",
-      "atago": "爱宕",
-      "friedrich_der_grobe": "腓特烈大帝"
+      "help": ""
     },
     "Option3": {
       "name": "第 3 格生产物品",
-      "help": "",
-      "0": "不生产",
-      "1": "自然之木",
-      "2": "实用之木",
-      "3": "精选之木",
-      "4": "典雅之木"
+      "help": ""
     },
     "Character3": {
       "name": "第 3 格使用角色",
-      "help": "",
-      "manjuu": "工作啾",
-      "saratoga": "萨拉托加",
-      "new_jersey": "新泽西",
-      "tashkent": "塔什干",
-      "lemalin": "恶毒",
-      "shimakaze": "岛风",
-      "akashi": "明石",
-      "ying_swei": "应瑞",
-      "chao_ho": "肇和",
-      "william_d_porter": "威廉·D·波特",
-      "chen_hai": "镇海",
-      "unicorn": "独角兽",
-      "cheshire": "柴郡",
-      "amagi_chan": "小天城",
-      "helena": "海伦娜",
-      "atago": "爱宕",
-      "friedrich_der_grobe": "腓特烈大帝"
+      "help": ""
     },
     "Option4": {
       "name": "第 4 格生产物品",
-      "help": "",
-      "0": "不生产",
-      "1": "自然之木",
-      "2": "实用之木",
-      "3": "精选之木",
-      "4": "典雅之木"
+      "help": ""
     },
     "Character4": {
       "name": "第 4 格使用角色",
-      "help": "",
-      "manjuu": "工作啾",
-      "saratoga": "萨拉托加",
-      "new_jersey": "新泽西",
-      "tashkent": "塔什干",
-      "lemalin": "恶毒",
-      "shimakaze": "岛风",
-      "akashi": "明石",
-      "ying_swei": "应瑞",
-      "chao_ho": "肇和",
-      "william_d_porter": "威廉·D·波特",
-      "chen_hai": "镇海",
-      "unicorn": "独角兽",
-      "cheshire": "柴郡",
-      "amagi_chan": "小天城",
-      "helena": "海伦娜",
-      "atago": "爱宕",
-      "friedrich_der_grobe": "腓特烈大帝"
+      "help": ""
     }
   },
   "Island6": {
     "_info": {
       "name": "坠香果园",
-      "help": ""
+      "help": "可生产：苹果、柑橘、香蕉、芒果、柠檬、牛油果、橡胶"
     },
     "Receive": {
       "name": "收获坠香果园",
@@ -2775,141 +2370,41 @@
     },
     "Option1": {
       "name": "第 1 格生产物品",
-      "help": "",
-      "0": "不生产",
-      "1": "苹果",
-      "2": "柑橘",
-      "3": "香蕉",
-      "4": "芒果",
-      "5": "柠檬",
-      "6": "牛油果",
-      "7": "橡胶"
+      "help": ""
     },
     "Character1": {
       "name": "第 1 格使用角色",
-      "help": "",
-      "manjuu": "工作啾",
-      "saratoga": "萨拉托加",
-      "new_jersey": "新泽西",
-      "tashkent": "塔什干",
-      "lemalin": "恶毒",
-      "shimakaze": "岛风",
-      "akashi": "明石",
-      "ying_swei": "应瑞",
-      "chao_ho": "肇和",
-      "william_d_porter": "威廉·D·波特",
-      "chen_hai": "镇海",
-      "unicorn": "独角兽",
-      "cheshire": "柴郡",
-      "amagi_chan": "小天城",
-      "helena": "海伦娜",
-      "atago": "爱宕",
-      "friedrich_der_grobe": "腓特烈大帝"
+      "help": ""
     },
     "Option2": {
       "name": "第 2 格生产物品",
-      "help": "",
-      "0": "不生产",
-      "1": "苹果",
-      "2": "柑橘",
-      "3": "香蕉",
-      "4": "芒果",
-      "5": "柠檬",
-      "6": "牛油果",
-      "7": "橡胶"
+      "help": ""
     },
     "Character2": {
       "name": "第 2 格使用角色",
-      "help": "",
-      "manjuu": "工作啾",
-      "saratoga": "萨拉托加",
-      "new_jersey": "新泽西",
-      "tashkent": "塔什干",
-      "lemalin": "恶毒",
-      "shimakaze": "岛风",
-      "akashi": "明石",
-      "ying_swei": "应瑞",
-      "chao_ho": "肇和",
-      "william_d_porter": "威廉·D·波特",
-      "chen_hai": "镇海",
-      "unicorn": "独角兽",
-      "cheshire": "柴郡",
-      "amagi_chan": "小天城",
-      "helena": "海伦娜",
-      "atago": "爱宕",
-      "friedrich_der_grobe": "腓特烈大帝"
+      "help": ""
     },
     "Option3": {
       "name": "第 3 格生产物品",
-      "help": "",
-      "0": "不生产",
-      "1": "苹果",
-      "2": "柑橘",
-      "3": "香蕉",
-      "4": "芒果",
-      "5": "柠檬",
-      "6": "牛油果",
-      "7": "橡胶"
+      "help": ""
     },
     "Character3": {
       "name": "第 3 格使用角色",
-      "help": "",
-      "manjuu": "工作啾",
-      "saratoga": "萨拉托加",
-      "new_jersey": "新泽西",
-      "tashkent": "塔什干",
-      "lemalin": "恶毒",
-      "shimakaze": "岛风",
-      "akashi": "明石",
-      "ying_swei": "应瑞",
-      "chao_ho": "肇和",
-      "william_d_porter": "威廉·D·波特",
-      "chen_hai": "镇海",
-      "unicorn": "独角兽",
-      "cheshire": "柴郡",
-      "amagi_chan": "小天城",
-      "helena": "海伦娜",
-      "atago": "爱宕",
-      "friedrich_der_grobe": "腓特烈大帝"
+      "help": ""
     },
     "Option4": {
       "name": "第 4 格生产物品",
-      "help": "",
-      "0": "不生产",
-      "1": "苹果",
-      "2": "柑橘",
-      "3": "香蕉",
-      "4": "芒果",
-      "5": "柠檬",
-      "6": "牛油果",
-      "7": "橡胶"
+      "help": ""
     },
     "Character4": {
       "name": "第 4 格使用角色",
-      "help": "",
-      "manjuu": "工作啾",
-      "saratoga": "萨拉托加",
-      "new_jersey": "新泽西",
-      "tashkent": "塔什干",
-      "lemalin": "恶毒",
-      "shimakaze": "岛风",
-      "akashi": "明石",
-      "ying_swei": "应瑞",
-      "chao_ho": "肇和",
-      "william_d_porter": "威廉·D·波特",
-      "chen_hai": "镇海",
-      "unicorn": "独角兽",
-      "cheshire": "柴郡",
-      "amagi_chan": "小天城",
-      "helena": "海伦娜",
-      "atago": "爱宕",
-      "friedrich_der_grobe": "腓特烈大帝"
+      "help": ""
     }
   },
   "Island7": {
     "_info": {
       "name": "青芽苗圃",
-      "help": ""
+      "help": "可生产：番茄、黄瓜、亚麻、草莓、棉花、茶叶、薰衣草、胡萝卜、洋葱"
     },
     "Receive": {
       "name": "收获青芽苗圃",
@@ -2917,79 +2412,25 @@
     },
     "Option1": {
       "name": "第 1 格生产物品",
-      "help": "",
-      "0": "不生产",
-      "1": "芦笋",
-      "2": "凤梨",
-      "3": "亚麻",
-      "4": "草莓",
-      "5": "棉花",
-      "6": "茶叶",
-      "7": "薰衣草",
-      "8": "胡萝卜",
-      "9": "洋葱"
+      "help": ""
     },
     "Character1": {
       "name": "第 1 格使用角色",
-      "help": "",
-      "manjuu": "工作啾",
-      "saratoga": "萨拉托加",
-      "new_jersey": "新泽西",
-      "tashkent": "塔什干",
-      "lemalin": "恶毒",
-      "shimakaze": "岛风",
-      "akashi": "明石",
-      "ying_swei": "应瑞",
-      "chao_ho": "肇和",
-      "william_d_porter": "威廉·D·波特",
-      "chen_hai": "镇海",
-      "unicorn": "独角兽",
-      "cheshire": "柴郡",
-      "amagi_chan": "小天城",
-      "helena": "海伦娜",
-      "atago": "爱宕",
-      "friedrich_der_grobe": "腓特烈大帝"
+      "help": ""
     },
     "Option2": {
       "name": "第 2 格生产物品",
-      "help": "",
-      "0": "不生产",
-      "1": "芦笋",
-      "2": "凤梨",
-      "3": "亚麻",
-      "4": "草莓",
-      "5": "棉花",
-      "6": "茶叶",
-      "7": "薰衣草",
-      "8": "胡萝卜",
-      "9": "洋葱"
+      "help": ""
     },
     "Character2": {
       "name": "第 2 格使用角色",
-      "help": "",
-      "manjuu": "工作啾",
-      "saratoga": "萨拉托加",
-      "new_jersey": "新泽西",
-      "tashkent": "塔什干",
-      "lemalin": "恶毒",
-      "shimakaze": "岛风",
-      "akashi": "明石",
-      "ying_swei": "应瑞",
-      "chao_ho": "肇和",
-      "william_d_porter": "威廉·D·波特",
-      "chen_hai": "镇海",
-      "unicorn": "独角兽",
-      "cheshire": "柴郡",
-      "amagi_chan": "小天城",
-      "helena": "海伦娜",
-      "atago": "爱宕",
-      "friedrich_der_grobe": "腓特烈大帝"
+      "help": ""
     }
   },
   "Island8": {
     "_info": {
       "name": "有鱼餐馆",
-      "help": ""
+      "help": "可生产：苋菜饭团、番茄炒蛋、豆腐、肉末烧豆腐、蛋包饭、白菜豆腐汤、蔬菜沙拉、炸鱼薯条、洋葱蒸鱼、佛跳墙、经典豆腐套餐、绵玉定食"
     },
     "Receive": {
       "name": "收获有鱼餐馆",
@@ -2997,85 +2438,25 @@
     },
     "Option1": {
       "name": "第 1 格生产物品",
-      "help": "",
-      "0": "不生产",
-      "1": "凉拌双笋",
-      "2": "芦笋炒虾仁",
-      "3": "豆腐",
-      "4": "肉末烧豆腐",
-      "5": "蛋包饭",
-      "6": "白菜豆腐汤",
-      "7": "蔬菜沙拉",
-      "8": "炸鱼薯条",
-      "9": "洋葱蒸鱼",
-      "10": "佛跳墙",
-      "11": "经典豆腐套餐",
-      "12": "绵玉定食"
+      "help": ""
     },
     "Character1": {
       "name": "第 1 格使用角色",
-      "help": "",
-      "manjuu": "工作啾",
-      "saratoga": "萨拉托加",
-      "new_jersey": "新泽西",
-      "tashkent": "塔什干",
-      "lemalin": "恶毒",
-      "shimakaze": "岛风",
-      "akashi": "明石",
-      "ying_swei": "应瑞",
-      "chao_ho": "肇和",
-      "william_d_porter": "威廉·D·波特",
-      "chen_hai": "镇海",
-      "unicorn": "独角兽",
-      "cheshire": "柴郡",
-      "amagi_chan": "小天城",
-      "helena": "海伦娜",
-      "atago": "爱宕",
-      "friedrich_der_grobe": "腓特烈大帝"
+      "help": ""
     },
     "Option2": {
       "name": "第 2 格生产物品",
-      "help": "",
-      "0": "不生产",
-      "1": "凉拌双笋",
-      "2": "芦笋炒虾仁",
-      "3": "豆腐",
-      "4": "肉末烧豆腐",
-      "5": "蛋包饭",
-      "6": "白菜豆腐汤",
-      "7": "蔬菜沙拉",
-      "8": "炸鱼薯条",
-      "9": "洋葱蒸鱼",
-      "10": "佛跳墙",
-      "11": "经典豆腐套餐",
-      "12": "绵玉定食"
+      "help": ""
     },
     "Character2": {
       "name": "第 2 格使用角色",
-      "help": "",
-      "manjuu": "工作啾",
-      "saratoga": "萨拉托加",
-      "new_jersey": "新泽西",
-      "tashkent": "塔什干",
-      "lemalin": "恶毒",
-      "shimakaze": "岛风",
-      "akashi": "明石",
-      "ying_swei": "应瑞",
-      "chao_ho": "肇和",
-      "william_d_porter": "威廉·D·波特",
-      "chen_hai": "镇海",
-      "unicorn": "独角兽",
-      "cheshire": "柴郡",
-      "amagi_chan": "小天城",
-      "helena": "海伦娜",
-      "atago": "爱宕",
-      "friedrich_der_grobe": "腓特烈大帝"
+      "help": ""
     }
   },
   "Island9": {
     "_info": {
       "name": "白熊饮品",
-      "help": ""
+      "help": "可生产：黄瓜汁、西瓜汁、苹果汁、香蕉芒果汁、蜂蜜柠檬水、草莓蜜沁、薰衣草茶、草莓蜂蜜冰沙、花香果韵、缤纷果乐园、阳光蜜水"
     },
     "Receive": {
       "name": "收获白熊饮品",
@@ -3083,83 +2464,25 @@
     },
     "Option1": {
       "name": "第 1 格生产物品",
-      "help": "",
-      "0": "不生产",
-      "1": "鲜榨菠萝汁",
-      "2": "迎春花茶",
-      "3": "苹果汁",
-      "4": "香蕉芒果汁",
-      "5": "蜂蜜柠檬水",
-      "6": "草莓蜜沁",
-      "7": "薰衣草茶",
-      "8": "草莓蜂蜜冰沙",
-      "9": "阳光蜜水",
-      "10": "花香果韵",
-      "11": "缤纷果乐园"
+      "help": ""
     },
     "Character1": {
       "name": "第 1 格使用角色",
-      "help": "",
-      "manjuu": "工作啾",
-      "saratoga": "萨拉托加",
-      "new_jersey": "新泽西",
-      "tashkent": "塔什干",
-      "lemalin": "恶毒",
-      "shimakaze": "岛风",
-      "akashi": "明石",
-      "ying_swei": "应瑞",
-      "chao_ho": "肇和",
-      "william_d_porter": "威廉·D·波特",
-      "chen_hai": "镇海",
-      "unicorn": "独角兽",
-      "cheshire": "柴郡",
-      "amagi_chan": "小天城",
-      "helena": "海伦娜",
-      "atago": "爱宕",
-      "friedrich_der_grobe": "腓特烈大帝"
+      "help": ""
     },
     "Option2": {
       "name": "第 2 格生产物品",
-      "help": "",
-      "0": "不生产",
-      "1": "鲜榨菠萝汁",
-      "2": "迎春花茶",
-      "3": "苹果汁",
-      "4": "香蕉芒果汁",
-      "5": "蜂蜜柠檬水",
-      "6": "草莓蜜沁",
-      "7": "薰衣草茶",
-      "8": "草莓蜂蜜冰沙",
-      "9": "阳光蜜水",
-      "10": "花香果韵",
-      "11": "缤纷果乐园"
+      "help": ""
     },
     "Character2": {
       "name": "第 2 格使用角色",
-      "help": "",
-      "manjuu": "工作啾",
-      "saratoga": "萨拉托加",
-      "new_jersey": "新泽西",
-      "tashkent": "塔什干",
-      "lemalin": "恶毒",
-      "shimakaze": "岛风",
-      "akashi": "明石",
-      "ying_swei": "应瑞",
-      "chao_ho": "肇和",
-      "william_d_porter": "威廉·D·波特",
-      "chen_hai": "镇海",
-      "unicorn": "独角兽",
-      "cheshire": "柴郡",
-      "amagi_chan": "小天城",
-      "helena": "海伦娜",
-      "atago": "爱宕",
-      "friedrich_der_grobe": "腓特烈大帝"
+      "help": ""
     }
   },
   "Island10": {
     "_info": {
       "name": "啾啾简餐",
-      "help": ""
+      "help": "可生产：玉米杯、苹果派、香橙派、芒果糯米饭、香蕉可丽饼、草莓夏洛特、海鲜饭、香甜组合、果园二重奏、莓果香橙甜点组"
     },
     "Receive": {
       "name": "收获啾啾简餐",
@@ -3167,81 +2490,25 @@
     },
     "Option1": {
       "name": "第 1 格生产物品",
-      "help": "",
-      "0": "不生产",
-      "1": "玉米杯",
-      "2": "苹果派",
-      "3": "香橙派",
-      "4": "芒果糯米饭",
-      "5": "香蕉可丽饼",
-      "6": "草莓夏洛特",
-      "7": "海鲜饭",
-      "8": "香甜组合",
-      "9": "果园二重奏",
-      "10": "莓果香橙甜点组"
+      "help": ""
     },
     "Character1": {
       "name": "第 1 格使用角色",
-      "help": "",
-      "manjuu": "工作啾",
-      "saratoga": "萨拉托加",
-      "new_jersey": "新泽西",
-      "tashkent": "塔什干",
-      "lemalin": "恶毒",
-      "shimakaze": "岛风",
-      "akashi": "明石",
-      "ying_swei": "应瑞",
-      "chao_ho": "肇和",
-      "william_d_porter": "威廉·D·波特",
-      "chen_hai": "镇海",
-      "unicorn": "独角兽",
-      "cheshire": "柴郡",
-      "amagi_chan": "小天城",
-      "helena": "海伦娜",
-      "atago": "爱宕",
-      "friedrich_der_grobe": "腓特烈大帝"
+      "help": ""
     },
     "Option2": {
       "name": "第 2 格生产物品",
-      "help": "",
-      "0": "不生产",
-      "1": "玉米杯",
-      "2": "苹果派",
-      "3": "香橙派",
-      "4": "芒果糯米饭",
-      "5": "香蕉可丽饼",
-      "6": "草莓夏洛特",
-      "7": "海鲜饭",
-      "8": "香甜组合",
-      "9": "果园二重奏",
-      "10": "莓果香橙甜点组"
+      "help": ""
     },
     "Character2": {
       "name": "第 2 格使用角色",
-      "help": "",
-      "manjuu": "工作啾",
-      "saratoga": "萨拉托加",
-      "new_jersey": "新泽西",
-      "tashkent": "塔什干",
-      "lemalin": "恶毒",
-      "shimakaze": "岛风",
-      "akashi": "明石",
-      "ying_swei": "应瑞",
-      "chao_ho": "肇和",
-      "william_d_porter": "威廉·D·波特",
-      "chen_hai": "镇海",
-      "unicorn": "独角兽",
-      "cheshire": "柴郡",
-      "amagi_chan": "小天城",
-      "helena": "海伦娜",
-      "atago": "爱宕",
-      "friedrich_der_grobe": "腓特烈大帝"
+      "help": ""
     }
   },
   "Island11": {
     "_info": {
       "name": "乌鱼烤肉",
-      "help": ""
+      "help": "可生产：炭烤肉串、禽肉土豆拼盘、爆炒禽肉、胡萝卜厚蛋烧、汉堡肉饭、柠檬虾、爆炒小龙虾、烤肉狂欢、能量双拼套餐"
     },
     "Receive": {
       "name": "收获乌鱼烤肉",
@@ -3249,79 +2516,25 @@
     },
     "Option1": {
       "name": "第 1 格生产物品",
-      "help": "",
-      "0": "不生产",
-      "1": "炭烤肉串",
-      "2": "禽肉土豆拼盘",
-      "3": "爆炒禽肉",
-      "4": "胡萝卜厚蛋烧",
-      "5": "汉堡肉饭",
-      "6": "柠檬虾",
-      "7": "爆炒小龙虾",
-      "8": "烤肉狂欢",
-      "9": "能量双拼套餐"
+      "help": ""
     },
     "Character1": {
       "name": "第 1 格使用角色",
-      "help": "",
-      "manjuu": "工作啾",
-      "saratoga": "萨拉托加",
-      "new_jersey": "新泽西",
-      "tashkent": "塔什干",
-      "lemalin": "恶毒",
-      "shimakaze": "岛风",
-      "akashi": "明石",
-      "ying_swei": "应瑞",
-      "chao_ho": "肇和",
-      "william_d_porter": "威廉·D·波特",
-      "chen_hai": "镇海",
-      "unicorn": "独角兽",
-      "cheshire": "柴郡",
-      "amagi_chan": "小天城",
-      "helena": "海伦娜",
-      "atago": "爱宕",
-      "friedrich_der_grobe": "腓特烈大帝"
+      "help": ""
     },
     "Option2": {
       "name": "第 2 格生产物品",
-      "help": "",
-      "0": "不生产",
-      "1": "炭烤肉串",
-      "2": "禽肉土豆拼盘",
-      "3": "爆炒禽肉",
-      "4": "胡萝卜厚蛋烧",
-      "5": "汉堡肉饭",
-      "6": "柠檬虾",
-      "7": "爆炒小龙虾",
-      "8": "烤肉狂欢",
-      "9": "能量双拼套餐"
+      "help": ""
     },
     "Character2": {
       "name": "第 2 格使用角色",
-      "help": "",
-      "manjuu": "工作啾",
-      "saratoga": "萨拉托加",
-      "new_jersey": "新泽西",
-      "tashkent": "塔什干",
-      "lemalin": "恶毒",
-      "shimakaze": "岛风",
-      "akashi": "明石",
-      "ying_swei": "应瑞",
-      "chao_ho": "肇和",
-      "william_d_porter": "威廉·D·波特",
-      "chen_hai": "镇海",
-      "unicorn": "独角兽",
-      "cheshire": "柴郡",
-      "amagi_chan": "小天城",
-      "helena": "海伦娜",
-      "atago": "爱宕",
-      "friedrich_der_grobe": "腓特烈大帝"
+      "help": ""
     }
   },
   "Island12": {
     "_info": {
       "name": "木料加工设备",
-      "help": ""
+      "help": "可生产：纸张、记事本、桌椅、精选木桶、文件柜、装饰画"
     },
     "Receive": {
       "name": "收获木料加工设备",
@@ -3329,73 +2542,25 @@
     },
     "Option1": {
       "name": "第 1 格生产物品",
-      "help": "",
-      "0": "不生产",
-      "1": "纸张",
-      "2": "记事本",
-      "3": "桌椅",
-      "4": "精选木桶",
-      "5": "文件柜",
-      "6": "装饰画"
+      "help": ""
     },
     "Character1": {
       "name": "第 1 格使用角色",
-      "help": "",
-      "manjuu": "工作啾",
-      "saratoga": "萨拉托加",
-      "new_jersey": "新泽西",
-      "tashkent": "塔什干",
-      "lemalin": "恶毒",
-      "shimakaze": "岛风",
-      "akashi": "明石",
-      "ying_swei": "应瑞",
-      "chao_ho": "肇和",
-      "william_d_porter": "威廉·D·波特",
-      "chen_hai": "镇海",
-      "unicorn": "独角兽",
-      "cheshire": "柴郡",
-      "amagi_chan": "小天城",
-      "helena": "海伦娜",
-      "atago": "爱宕",
-      "friedrich_der_grobe": "腓特烈大帝"
+      "help": ""
     },
     "Option2": {
       "name": "第 2 格生产物品",
-      "help": "",
-      "0": "不生产",
-      "1": "纸张",
-      "2": "记事本",
-      "3": "桌椅",
-      "4": "精选木桶",
-      "5": "文件柜",
-      "6": "装饰画"
+      "help": ""
     },
     "Character2": {
       "name": "第 2 格使用角色",
-      "help": "",
-      "manjuu": "工作啾",
-      "saratoga": "萨拉托加",
-      "new_jersey": "新泽西",
-      "tashkent": "塔什干",
-      "lemalin": "恶毒",
-      "shimakaze": "岛风",
-      "akashi": "明石",
-      "ying_swei": "应瑞",
-      "chao_ho": "肇和",
-      "william_d_porter": "威廉·D·波特",
-      "chen_hai": "镇海",
-      "unicorn": "独角兽",
-      "cheshire": "柴郡",
-      "amagi_chan": "小天城",
-      "helena": "海伦娜",
-      "atago": "爱宕",
-      "friedrich_der_grobe": "腓特烈大帝"
+      "help": ""
     }
   },
   "Island13": {
     "_info": {
       "name": "工业生产设备",
-      "help": ""
+      "help": "可生产：炭笔、电缆、铁钉、硫酸、火药、刀叉餐具"
     },
     "Receive": {
       "name": "收获工业生产设备",
@@ -3403,73 +2568,25 @@
     },
     "Option1": {
       "name": "第 1 格生产物品",
-      "help": "",
-      "0": "不生产",
-      "1": "炭笔",
-      "2": "电缆",
-      "3": "铁钉",
-      "4": "硫酸",
-      "5": "火药",
-      "6": "刀叉餐具"
+      "help": ""
     },
     "Character1": {
       "name": "第 1 格使用角色",
-      "help": "",
-      "manjuu": "工作啾",
-      "saratoga": "萨拉托加",
-      "new_jersey": "新泽西",
-      "tashkent": "塔什干",
-      "lemalin": "恶毒",
-      "shimakaze": "岛风",
-      "akashi": "明石",
-      "ying_swei": "应瑞",
-      "chao_ho": "肇和",
-      "william_d_porter": "威廉·D·波特",
-      "chen_hai": "镇海",
-      "unicorn": "独角兽",
-      "cheshire": "柴郡",
-      "amagi_chan": "小天城",
-      "helena": "海伦娜",
-      "atago": "爱宕",
-      "friedrich_der_grobe": "腓特烈大帝"
+      "help": ""
     },
     "Option2": {
       "name": "第 2 格生产物品",
-      "help": "",
-      "0": "不生产",
-      "1": "炭笔",
-      "2": "电缆",
-      "3": "铁钉",
-      "4": "硫酸",
-      "5": "火药",
-      "6": "刀叉餐具"
+      "help": ""
     },
     "Character2": {
       "name": "第 2 格使用角色",
-      "help": "",
-      "manjuu": "工作啾",
-      "saratoga": "萨拉托加",
-      "new_jersey": "新泽西",
-      "tashkent": "塔什干",
-      "lemalin": "恶毒",
-      "shimakaze": "岛风",
-      "akashi": "明石",
-      "ying_swei": "应瑞",
-      "chao_ho": "肇和",
-      "william_d_porter": "威廉·D·波特",
-      "chen_hai": "镇海",
-      "unicorn": "独角兽",
-      "cheshire": "柴郡",
-      "amagi_chan": "小天城",
-      "helena": "海伦娜",
-      "atago": "爱宕",
-      "friedrich_der_grobe": "腓特烈大帝"
+      "help": ""
     }
   },
   "Island14": {
     "_info": {
       "name": "电子加工设备",
-      "help": ""
+      "help": "可生产：墨盒、钟表、蓄电池、净水滤芯"
     },
     "Receive": {
       "name": "收获电子加工设备",
@@ -3477,69 +2594,25 @@
     },
     "Option1": {
       "name": "第 1 格生产物品",
-      "help": "",
-      "0": "不生产",
-      "1": "墨盒",
-      "2": "钟表",
-      "3": "蓄电池",
-      "4": "净水滤芯"
+      "help": ""
     },
     "Character1": {
       "name": "第 1 格使用角色",
-      "help": "",
-      "manjuu": "工作啾",
-      "saratoga": "萨拉托加",
-      "new_jersey": "新泽西",
-      "tashkent": "塔什干",
-      "lemalin": "恶毒",
-      "shimakaze": "岛风",
-      "akashi": "明石",
-      "ying_swei": "应瑞",
-      "chao_ho": "肇和",
-      "william_d_porter": "威廉·D·波特",
-      "chen_hai": "镇海",
-      "unicorn": "独角兽",
-      "cheshire": "柴郡",
-      "amagi_chan": "小天城",
-      "helena": "海伦娜",
-      "atago": "爱宕",
-      "friedrich_der_grobe": "腓特烈大帝"
+      "help": ""
     },
     "Option2": {
       "name": "第 2 格生产物品",
-      "help": "",
-      "0": "不生产",
-      "1": "墨盒",
-      "2": "钟表",
-      "3": "蓄电池",
-      "4": "净水滤芯"
+      "help": ""
     },
     "Character2": {
       "name": "第 2 格使用角色",
-      "help": "",
-      "manjuu": "工作啾",
-      "saratoga": "萨拉托加",
-      "new_jersey": "新泽西",
-      "tashkent": "塔什干",
-      "lemalin": "恶毒",
-      "shimakaze": "岛风",
-      "akashi": "明石",
-      "ying_swei": "应瑞",
-      "chao_ho": "肇和",
-      "william_d_porter": "威廉·D·波特",
-      "chen_hai": "镇海",
-      "unicorn": "独角兽",
-      "cheshire": "柴郡",
-      "amagi_chan": "小天城",
-      "helena": "海伦娜",
-      "atago": "爱宕",
-      "friedrich_der_grobe": "腓特烈大帝"
+      "help": ""
     }
   },
   "Island15": {
     "_info": {
       "name": "手工制作设备",
-      "help": ""
+      "help": "可生产：茉莉精油、夏季花束、布料、皮革、绳索、手套、香囊、鞋靴、绷带"
     },
     "Receive": {
       "name": "收获手工制作设备",
@@ -3547,79 +2620,25 @@
     },
     "Option1": {
       "name": "第 1 格生产物品",
-      "help": "",
-      "0": "不生产",
-      "1": "袋装荠菜干",
-      "2": "春季花束",
-      "3": "布料",
-      "4": "皮革",
-      "5": "绳索",
-      "6": "手套",
-      "7": "香囊",
-      "8": "鞋靴",
-      "9": "绷带"
+      "help": ""
     },
     "Character1": {
       "name": "第 1 格使用角色",
-      "help": "",
-      "manjuu": "工作啾",
-      "saratoga": "萨拉托加",
-      "new_jersey": "新泽西",
-      "tashkent": "塔什干",
-      "lemalin": "恶毒",
-      "shimakaze": "岛风",
-      "akashi": "明石",
-      "ying_swei": "应瑞",
-      "chao_ho": "肇和",
-      "william_d_porter": "威廉·D·波特",
-      "chen_hai": "镇海",
-      "unicorn": "独角兽",
-      "cheshire": "柴郡",
-      "amagi_chan": "小天城",
-      "helena": "海伦娜",
-      "atago": "爱宕",
-      "friedrich_der_grobe": "腓特烈大帝"
+      "help": ""
     },
     "Option2": {
       "name": "第 2 格生产物品",
-      "help": "",
-      "0": "不生产",
-      "1": "袋装荠菜干",
-      "2": "春季花束",
-      "3": "布料",
-      "4": "皮革",
-      "5": "绳索",
-      "6": "手套",
-      "7": "香囊",
-      "8": "鞋靴",
-      "9": "绷带"
+      "help": ""
     },
     "Character2": {
       "name": "第 2 格使用角色",
-      "help": "",
-      "manjuu": "工作啾",
-      "saratoga": "萨拉托加",
-      "new_jersey": "新泽西",
-      "tashkent": "塔什干",
-      "lemalin": "恶毒",
-      "shimakaze": "岛风",
-      "akashi": "明石",
-      "ying_swei": "应瑞",
-      "chao_ho": "肇和",
-      "william_d_porter": "威廉·D·波特",
-      "chen_hai": "镇海",
-      "unicorn": "独角兽",
-      "cheshire": "柴郡",
-      "amagi_chan": "小天城",
-      "helena": "海伦娜",
-      "atago": "爱宕",
-      "friedrich_der_grobe": "腓特烈大帝"
+      "help": ""
     }
   },
   "Island16": {
     "_info": {
       "name": "啾咖啡",
-      "help": ""
+      "help": "可生产：欧姆蛋、冰咖啡、芝士、拿铁、柑橘咖啡、草莓奶绿、晨光活力组合、醒神套餐、果香双杯乐"
     },
     "Receive": {
       "name": "收获啾咖啡",
@@ -3627,73 +2646,19 @@
     },
     "Option1": {
       "name": "第 1 格生产物品",
-      "help": "",
-      "0": "不生产",
-      "1": "欧姆蛋",
-      "2": "冰咖啡",
-      "3": "芝士",
-      "4": "拿铁",
-      "5": "柑橘咖啡",
-      "6": "草莓奶绿",
-      "7": "晨光活力组合",
-      "8": "醒神套餐",
-      "9": "果香双杯乐"
+      "help": ""
     },
     "Character1": {
       "name": "第 2 格使用角色",
-      "help": "",
-      "manjuu": "工作啾",
-      "saratoga": "萨拉托加",
-      "new_jersey": "新泽西",
-      "tashkent": "塔什干",
-      "lemalin": "恶毒",
-      "shimakaze": "岛风",
-      "akashi": "明石",
-      "ying_swei": "应瑞",
-      "chao_ho": "肇和",
-      "william_d_porter": "威廉·D·波特",
-      "chen_hai": "镇海",
-      "unicorn": "独角兽",
-      "cheshire": "柴郡",
-      "amagi_chan": "小天城",
-      "helena": "海伦娜",
-      "atago": "爱宕",
-      "friedrich_der_grobe": "腓特烈大帝"
+      "help": ""
     },
     "Option2": {
       "name": "第 2 格生产物品",
-      "help": "",
-      "0": "不生产",
-      "1": "欧姆蛋",
-      "2": "冰咖啡",
-      "3": "芝士",
-      "4": "拿铁",
-      "5": "柑橘咖啡",
-      "6": "草莓奶绿",
-      "7": "晨光活力组合",
-      "8": "醒神套餐",
-      "9": "果香双杯乐"
+      "help": ""
     },
     "Character2": {
       "name": "第 2 格使用角色",
-      "help": "",
-      "manjuu": "工作啾",
-      "saratoga": "萨拉托加",
-      "new_jersey": "新泽西",
-      "tashkent": "塔什干",
-      "lemalin": "恶毒",
-      "shimakaze": "岛风",
-      "akashi": "明石",
-      "ying_swei": "应瑞",
-      "chao_ho": "肇和",
-      "william_d_porter": "威廉·D·波特",
-      "chen_hai": "镇海",
-      "unicorn": "独角兽",
-      "cheshire": "柴郡",
-      "amagi_chan": "小天城",
-      "helena": "海伦娜",
-      "atago": "爱宕",
-      "friedrich_der_grobe": "腓特烈大帝"
+      "help": ""
     }
   },
   "GeneralShop": {
@@ -4410,6 +3375,10 @@
       "name": "任意舰船血量低于 X 后，使用维修箱修理",
       "help": "仅在开启“使用维修箱修船”时生效\n仅在打完深渊海域、塞壬要塞、月度Boss后尝试维修\n0.0 ~ 1.0"
     },
+    "RepairPackThresholdHazard1": {
+      "name": "任意舰船血量低于 X 后，使用维修箱修理（侵蚀1）",
+      "help": "仅在开启“使用维修箱修船”时生效\n仅在“侵蚀1练级+”任务中尝试维修\n0.0 ~ 1.0"
+    },
     "DoRandomMapEvent": {
       "name": "完成地图随机事件",
       "help": "在自律寻敌完成后重新扫描一遍地图，购买明石商店，使用塞壬信息收集装置、使用塞壬探测装置、解锁两舰队机关"
@@ -4729,6 +3698,10 @@
     "RecordNonCL1AP": {
       "name": "统计非侵蚀1来源体力",
       "help": "开启后，将统计所有来源的体力获取数据（如明石商店购买）。关闭后，仅在侵蚀1练级任务中统计体力数据，忽略其他任务或手动操作时的体力获取。"
+    },
+    "PreserveVirtualAsset": {
+      "name": "保留 X 点虚拟资产",
+      "help": "虚拟资产 = 体力 × 1700/30 + 黄币 + (到月底时间/10分钟) × 1700/30\n虚拟资产低于 X 时运行黄币补充任务，0 为不限制"
     }
   },
   "OpsiSirenBug": {
@@ -4869,6 +3842,10 @@
     "MeowStartEarlyEnable": {
       "name": "启用月末行动力自动清理",
       "help": "根据历史短猫耗时与当前行动力，自动判断是否需要提前开始短猫来清理月末过剩行动力；判断基准为“下个月大世界重置时间”，不是每日服务器刷新时间"
+    },
+    "VirtualAssetPreserve": {
+      "name": "侵蚀1练级 保留 X 点虚拟资产",
+      "help": "虚拟资产低于 X 时运行黄币补充任务，虚拟资产 = 体力 × 1700/30 + 黄币 + (到月底时间/10分钟) × 1700/30"
     }
   },
   "IslandSeasonTask": {
@@ -5013,6 +3990,42 @@
       "help": "每隔多少小时自动重启一次模拟器。"
     }
   },
+  "EmulatorManager": {
+    "_info": {
+      "name": "模拟器管理器",
+      "help": "提供手动重启模拟器的入口"
+    },
+    "EnableRemoteSSH": {
+      "name": "启用远程 SSH 管理",
+      "help": "在重启模拟器之前，通过 SSH 在远程服务器上执行特定指令（如重启 Docker 容器）。",
+      "True": "True",
+      "False": "False"
+    },
+    "RemoteSSHHost": {
+      "name": "远程服务器地址",
+      "help": "远程服务器的 IP 地址或域名，例如: 192.168.1.100"
+    },
+    "RemoteSSHPort": {
+      "name": "端口号",
+      "help": "SSH 服务端口，默认 22"
+    },
+    "RemoteSSHUser": {
+      "name": "SSH 用户名",
+      "help": "登录 SSH 的用户名，例如: root"
+    },
+    "RemoteSSHPublicKey": {
+      "name": "访问公钥",
+      "help": "SSH 登录所需的公钥内容（如果需要）"
+    },
+    "RemoteStartCommand": {
+      "name": "EmulatorManager.RemoteStartCommand.name",
+      "help": "EmulatorManager.RemoteStartCommand.help"
+    },
+    "RemoteStopCommand": {
+      "name": "EmulatorManager.RemoteStopCommand.name",
+      "help": "EmulatorManager.RemoteStopCommand.help"
+    }
+  },
   "OpsiSimulatorParameters": {
     "_info": {
       "name": "参数设置",
@@ -5065,7 +4078,7 @@
     },
     "Meow3Coin": {
       "name": "短3黄币期望",
-      "help": "每轮侵蚀3猫任务平均获得多少黄币，暂时配置为750。"
+      "help": "每轮侵蚀3猫任务平均获得多少黄币，推荐配置为600。"
     },
     "Meow5Coin": {
       "name": "短5黄币期望",
@@ -5379,6 +4392,11 @@
       "CommissionIncomeTotalCommissions": "委托总次数: {value}",
       "CommissionIncomeRecentTitle": "最近委托记录"
     },
+    "Tactical": {
+      "SkillAutoSwitch": "Gui.Tactical.SkillAutoSwitch",
+      "RedToBlue": "Gui.Tactical.RedToBlue",
+      "NoT4": "Gui.Tactical.NoT4"
+    },
     "OpsiScheduling": {
       "UseSmartSchedulingOperationCoinsPreserve": "Gui.OpsiScheduling.UseSmartSchedulingOperationCoinsPreserve",
       "OperationCoinsPreserve": "Gui.OpsiScheduling.OperationCoinsPreserve",
@@ -5393,6 +4411,28 @@
     "Misc": {
       "Enabled": "已开启",
       "Disabled": "未开启"
+    },
+    "OOBE": {
+      "WelcomeTitle": "欢迎使用 AzurPilot",
+      "WelcomeDescription": "让我们完成初次设置。",
+      "WelcomeSelectLanguage": "选择语言",
+      "ServerTitle": "选择服务器",
+      "ServerCN": "国服",
+      "ServerEN": "国际服 (EN)",
+      "ServerJP": "日服 (JP)",
+      "ServerTW": "台服 (TW)",
+      "EmulatorTitle": "模拟器设置",
+      "EmulatorSerial": "模拟器ID",
+      "EmulatorPackage": "包名",
+      "ReviewTitle": "确认并创建",
+      "ReviewConfigName": "配置名称",
+      "ReviewLanguage": "语言",
+      "ReviewServer": "服务器",
+      "ReviewSerial": "序列号",
+      "ReviewPackage": "包名",
+      "ButtonNext": "下一步",
+      "ButtonBack": "上一步",
+      "ButtonCreate": "创建并完成"
     }
   }
 }

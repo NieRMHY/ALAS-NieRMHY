@@ -321,7 +321,7 @@ class AutoSearchCombat(MapOperation, Combat, CampaignStatus):
         self.device.stuck_record_clear()
         self.device.click_record_clear()
         exp_info = False  # This is for the white screen bug in game
-        get_urgent_commission = False
+        withdraw_stable_timer = Timer(2)
 
         for _ in self.loop():
 
@@ -335,18 +335,21 @@ class AutoSearchCombat(MapOperation, Combat, CampaignStatus):
             # Withdraw
             if self._withdraw:
                 if self.appear_then_click(FLEET_SWITCH_CONFIRM, offset=(30, 30)):
+                    self.fleet_alive_multiple = False
+                    self._withdraw = False
                     continue
+                
+                if self.appear(WITHDRAW, offset=(30, 30)):
+                    if not withdraw_stable_timer.reached():
+                        continue
                 if not self.appear(WITHDRAW, offset=(30, 30)):
+                    withdraw_stable_timer.reset()
                     continue
 
-                logger.info(f'fleet_alive_multiple: {self.fleet_alive_multiple}')
                 self._withdraw = False
                 if self.config.Campaign_DefeatWithdraw or not self.fleet_alive_multiple:
                     self.withdraw()
                     break
-                elif get_urgent_commission:
-                    self.fleet_alive_multiple = False
-                    continue
                 else:
                     while True:
                         self.device.screenshot()
@@ -367,7 +370,6 @@ class AutoSearchCombat(MapOperation, Combat, CampaignStatus):
             if self.handle_popup_confirm('AUTO_SEARCH_COMBAT_STATUS'):
                 continue
             if self.handle_urgent_commission():
-                get_urgent_commission = True
                 continue
             if self.handle_story_skip():
                 continue

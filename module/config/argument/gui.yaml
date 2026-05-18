@@ -277,6 +277,11 @@ Stat:
   CommissionIncomeTotalCommissions:
   CommissionIncomeRecentTitle:
 
+Tactical:
+  SkillAutoSwitch:
+  RedToBlue:
+  NoT4:
+
 OpsiScheduling:
   UseSmartSchedulingOperationCoinsPreserve:
   OperationCoinsPreserve:
@@ -292,3 +297,25 @@ OpsiScheduling:
 Misc:
   Enabled:
   Disabled:
+
+OOBE:
+  WelcomeTitle:
+  WelcomeDescription:
+  WelcomeSelectLanguage:
+  ServerTitle:
+  ServerCN:
+  ServerEN:
+  ServerJP:
+  ServerTW:
+  EmulatorTitle:
+  EmulatorSerial:
+  EmulatorPackage:
+  ReviewTitle:
+  ReviewConfigName:
+  ReviewLanguage:
+  ReviewServer:
+  ReviewSerial:
+  ReviewPackage:
+  ButtonNext:
+  ButtonBack:
+  ButtonCreate:
