@@ -15,9 +15,10 @@ on:
         description: "Remote folder name under parent folder"
         required: false
         default: "AzurPilot_master"
-  push:
-    branches:
-      - master
+  # --------Modify by MHY, 禁用自动推送到第三方123云盘，仅保留手动触发
+  # push:
+  #   branches:
+  #     - master
 
 jobs:
   build-and-upload:
