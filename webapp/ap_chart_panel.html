@@ -1,17 +1,16 @@
 <div style="margin-top:16px; margin-bottom:8px;">
   <div style="font-weight:600; font-size:14px; margin-bottom:8px;">体力变化 - {view_title}</div>
-  <div style="display:flex; flex-wrap:wrap; gap:16px; margin-bottom:8px; font-size:13px; color:#aaa;">
-    <span>当前: <b style="color:#64b5f6">{ap_cur}</b></span>
+  <div style="display:grid; grid-template-columns:150px 100px 90px 90px 90px; gap:8px; margin-bottom:2px; font-size:12px; color:#aaa;">
+    <span>行动力: <b style="color:#64b5f6">{ap_cur}</b></span>
     <span>变化: <b style="color:{change_color}">{change_sign}{ap_change}</b></span>
     <span>最高: <b style="color:#ef5350">{ap_max}</b></span>
     <span>最低: <b style="color:#26a69a">{ap_min}</b></span>
     <span>均值: <b style="color:#ff9800">{ap_avg}</b></span>
-    <span style="color:#666">{data_points_text}</span>
   </div>
   {coins_stats_html}
 </div>
-<div style="display:flex; flex-wrap:wrap; gap:12px; margin-bottom:8px; font-size:12px; color:#888;">
-  <span style="display:flex; align-items:center; gap:4px;"><span style="width:12px; height:3px; background:#64b5f6; border-radius:1px;"></span>体力</span>
+<div id="{chart_id}_legend" style="display:flex; flex-wrap:wrap; gap:12px; margin-bottom:8px; font-size:12px; color:#888;">
+  <span class="ap-legend-item" data-series="0" style="display:flex; align-items:center; gap:4px;cursor:pointer;opacity:1;"><span style="width:12px; height:3px; background:#64b5f6; border-radius:1px;"></span>体力</span>
   {coins_legend_html}
 </div>
 <div id="{chart_id}_container" style="position:relative;background:#1a1a2e;border-radius:16px;border:1px solid #333;padding:6px;transition:opacity 0.3s ease;">

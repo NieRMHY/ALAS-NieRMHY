@@ -1095,6 +1095,7 @@
       "event_20260226_cn": "Springtide Inn Online",
       "event_20260326_cn": "The Vagabond’s Recruitment Plan",
       "event_20260417_cn": "Vacation Lane – Beachside Brilliance",
+      "event_20260520_cn": "Alliance Before the Sacred Seal",
       "raid_20200624": "Air Raid Drills with Essex Rerun",
       "raid_20210708": "Cross Wave rerun",
       "raid_20220127": "Mystery Investigation",
@@ -3702,6 +3703,12 @@
     "PreserveVirtualAsset": {
       "name": "OpsiHazard1Leveling.PreserveVirtualAsset.name",
       "help": "OpsiHazard1Leveling.PreserveVirtualAsset.help"
+    },
+    "RecordSeaMiles": {
+      "name": "海里数记录",
+      "help": "每次侵蚀1练级循环后记录海里数到统计",
+      "True": "开启",
+      "False": "关闭"
     }
   },
   "OpsiSirenBug": {

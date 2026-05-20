@@ -2,6 +2,7 @@ import argparse
 import json
 import os
 import shutil
+import stat
 import subprocess
 import zipfile
 from pathlib import Path
@@ -39,6 +40,22 @@ def build_pack(latest, old, output_dir):
     return zip_path
 
 
+def remove_readonly(func, path, _):
+    os.chmod(path, stat.S_IWRITE)
+    func(path)
+
+
+def remove_tree(path):
+    shutil.rmtree(path, onerror=remove_readonly)
+
+
+def cleanup_pack_artifacts(output_dir):
+    for pattern in ("pack-*.pack", "pack-*.idx", "pack-*.rev"):
+        for path in output_dir.glob(pattern):
+            path.chmod(stat.S_IWRITE)
+            path.unlink()
+
+
 def main():
     parser = argparse.ArgumentParser(description="Build git-over-cdn update packs.")
     parser.add_argument("--branch", default="master")
@@ -48,7 +65,7 @@ def main():
 
     output = Path(args.output)
     if output.exists():
-        shutil.rmtree(output)
+        remove_tree(output)
     output.mkdir(parents=True)
 
     latest = run_git("rev-parse", args.branch)
@@ -64,6 +81,7 @@ def main():
     for old in old_commits:
         latest_dir.mkdir(parents=True, exist_ok=True)
         build_pack(latest=latest, old=old, output_dir=latest_dir)
+    cleanup_pack_artifacts(latest_dir)
 
     print("*" * 20)
 

@@ -112,6 +112,12 @@ class MapEventHandler(EnemySearchingHandler):
         Returns:
             str: Event that handled
         """
+        # 优先处理阻塞性确认弹窗,避免卡住状态循环
+        # 处理指挥猫搜寻时退出海域的确认弹窗 (issue #100)
+        # 这类弹窗会阻止其他操作,必须优先处理
+        # handle_popup_confirm 的 name 参数仅用于日志记录,实际识别使用通用的 POPUP_CONFIRM 按钮
+        if self.handle_popup_confirm('DEPART_CONFIRM'):
+            return 'depart_confirm'
         if self.handle_map_get_items(drop=drop):
             return 'map_get_items'
         if self.handle_os_game_tips():

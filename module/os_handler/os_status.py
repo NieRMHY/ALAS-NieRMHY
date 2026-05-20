@@ -160,6 +160,8 @@ class OSStatus(UI):
                 self._shop_purple_coins,
                 source=source
             )
+            # LogRes 已将值写入 config.modified，在此持久化
+            self.config.save()
         except Exception:
             logger.exception('Failed to record coins snapshot')
 

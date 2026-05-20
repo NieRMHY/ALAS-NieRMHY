@@ -6,7 +6,7 @@ on:
       history:
         description: "How many old commits to build packs for"
         required: false
-        default: "5"
+        default: "15"
       parent_file_id:
         description: "123pan parent folder fileID, defaults to PAN123_PARENT_FILE_ID secret or azur folder"
         required: false
@@ -40,7 +40,7 @@ jobs:
         run: |
           uv run python .github/scripts/build_git_over_cdn.py \
             --branch master \
-            --history "${{ github.event.inputs.history || '5' }}" \
+            --history "${{ github.event.inputs.history || '15' }}" \
             --output dist/git-over-cdn
 
       - name: Upload to 123pan
@@ -58,4 +58,5 @@ jobs:
           uv run --with requests python .github/scripts/upload_123pan.py \
             --source dist/git-over-cdn \
             --parent-file-id "$PAN123_PARENT_FILE_ID" \
-            --remote-prefix "$PAN123_REMOTE_PREFIX"
+            --remote-prefix "$PAN123_REMOTE_PREFIX" \
+            --keep-versions 1

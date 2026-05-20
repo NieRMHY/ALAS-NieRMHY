@@ -62,6 +62,12 @@
     var lineAsset = __ASSET__;
     var lineAssetTs = __ASSET_TS__;
     var hasAssetSeries = lineAsset && lineAsset.length > 0;
+    var lineDistance = __DISTANCE__;
+    var hasDistanceSeries = lineDistance && lineDistance.length > 0;
+
+    var seriesVisible = [true, true, true, true, true, true];
+    var seriesColors = ["#64b5f6", "#ce93d8", "#ffd54f", "#06b6d4", "#22d3ee", "#1565c0"];
+    var seriesNames = ["体力", "紫币", "黄币", "虚拟资产", "资产", "海里数"];
 
     var nn = chartType === 'line' ? ap.length : labels.length;
     if (nn < 1) return;
@@ -151,7 +157,7 @@
         // ---- 紫币独立轴 ----
         var hasPurpleAxis = showCoins && chartType === 'line' && hasPurpleCoins;
         // ---- 组合轴（黄币 + 虚拟资产 + 资产共用） ----
-        var hasCombined = showCoins && chartType === 'line' && (hasYellowCoins || hasVirtualAssetSeries || hasAssetSeries);
+        var hasCombined = showCoins && chartType === 'line' && (hasYellowCoins || hasVirtualAssetSeries || hasAssetSeries || hasDistanceSeries);
         var hasExtra = hasPurpleAxis || hasCombined;
         var combinedMin = 0, combinedMax = -Infinity;
         function scanRange(arr) {
@@ -164,6 +170,7 @@
             if (hasYellowCoins) scanRange(yellowCoins);
             if (hasVirtualAssetSeries) scanRange(lineVirtualAsset);
             if (hasAssetSeries) scanRange(lineAsset);
+            if (hasDistanceSeries) scanRange(lineDistance);
             if (combinedMax === -Infinity) combinedMax = 1000;
             var combinedRng = combinedMax - combinedMin || 1;
             combinedMax += combinedRng * 0.08;
@@ -182,10 +189,11 @@
 
         // 系列绘制配置（所有线都要画，虚拟/资产用时间戳）
         var SERIES_DRAW = [
-            { has: hasPurpleCoins, data: purpleCoins, yFn: yOfPurple, dash: [4, 2] },
-            { has: hasYellowCoins, data: yellowCoins, yFn: yOfCombined, dash: [4, 2] },
-            { has: hasVirtualAssetSeries, data: lineVirtualAsset, ts: lineVirtualAssetTs, yFn: yOfCombined, dash: [5, 3] },
-            { has: hasAssetSeries, data: lineAsset, ts: lineAssetTs, yFn: yOfCombined, dash: [5, 3] }
+            { has: hasPurpleCoins, data: purpleCoins, yFn: yOfPurple, dash: [] },
+            { has: hasYellowCoins, data: yellowCoins, yFn: yOfCombined, dash: [] },
+            { has: hasVirtualAssetSeries, data: lineVirtualAsset, ts: lineVirtualAssetTs, yFn: yOfCombined, dash: [] },
+            { has: hasAssetSeries, data: lineAsset, ts: lineAssetTs, yFn: yOfCombined, dash: [] },
+            { has: hasDistanceSeries, data: lineDistance, yFn: yOfCombined, dash: [] },
         ];
 
         // Y 坐标映射
@@ -198,11 +206,6 @@
 
         // 时间感知的 x 坐标映射
         function xOfLine(i) {
-            if (chartType === 'line' && apTs && apTs.length === nn && nn > 1) {
-                var minT = apTs[0], maxT = apTs[nn - 1];
-                var tr = maxT - minT || 1;
-                return pad.l + ((apTs[i] - minT) / tr) * gW;
-            }
             return pad.l + (i / Math.max(nn - 1, 1)) * gW;
         }
 
@@ -227,34 +230,20 @@
             for (var ci = 0; ci < SERIES_DRAW.length; ci++) {
                 var sd = SERIES_DRAW[ci];
                 if (!sd.has) continue;
+                if (!seriesVisible[ci + 1]) continue;
 
-                ctx.lineWidth = 1.5;
+                ctx.lineWidth = 1;
                 ctx.lineJoin = "round";
                 ctx.setLineDash(sd.dash);
-                ctx.strokeStyle = ["#ce93d8", "#ffd54f", "#4fc3f7", "#81c784"][ci];
+                ctx.strokeStyle = ["#ce93d8", "#ffd54f", "#4fc3f7", "#81c784", "#1565c0"][ci];
                 ctx.beginPath();
                 var started = false;
 
-                if (sd.ts && apTs && apTs.length === nn && nn > 1) {
-                    var minT = apTs[Math.max(0, start)];
-                    var maxT = apTs[Math.max(0, Math.min(nn - 1, end - 1))];
-                    var tr = maxT - minT || 1;
-                    for (var j = 0; j < sd.ts.length; j++) {
-                        if (sd.ts[j] < minT || sd.ts[j] > maxT) continue;
-                        var dv = sd.data[j];
-                        if (dv === null || dv === undefined) { started = false; continue; }
-                        var px = pad.l + ((sd.ts[j] - minT) / tr) * gW;
-                        var py = sd.yFn(dv);
-                        if (!started) { ctx.moveTo(px, py); started = true; }
-                        else { ctx.lineTo(px, py); }
-                    }
-                } else {
-                    for (var i = start; i < end && i < sd.data.length; i++) {
-                        if (sd.data[i] === null || sd.data[i] === undefined) { started = false; continue; }
-                        var x = xOf(i), y = sd.yFn(sd.data[i]);
-                        if (!started) { ctx.moveTo(x, y); started = true; }
-                        else { ctx.lineTo(x, y); }
-                    }
+                for (var i = start; i < end && i < sd.data.length; i++) {
+                    if (sd.data[i] === null || sd.data[i] === undefined) { started = false; continue; }
+                    var x = xOf(i), y = sd.yFn(sd.data[i]);
+                    if (!started) { ctx.moveTo(x, y); started = true; }
+                    else { ctx.lineTo(x, y); }
                 }
                 ctx.stroke();
             }
@@ -316,56 +305,26 @@
             }
         }
 
-        if (chartType === 'line') {
-            var grad = ctx.createLinearGradient(0, pad.t, 0, pad.t + gH);
-            grad.addColorStop(0, "rgba(100,120,160,0.18)");
-            grad.addColorStop(1, "rgba(100,120,160,0.02)");
-            ctx.beginPath();
-            ctx.moveTo(xOfLine(0), yOf(ap[0]));
-            for (var i = 1; i < nn; i++) {
-                if (nn < 30) {
-                    var x0 = xOfLine(i - 1), y0 = yOf(ap[i - 1]), x1 = xOfLine(i), y1 = yOf(ap[i]);
-                    var cpx = (x0 + x1) / 2;
-                    ctx.bezierCurveTo(cpx, y0, cpx, y1, x1, y1);
-                } else {
-                    ctx.lineTo(xOfLine(i), yOf(ap[i]));
-                }
-            }
-            ctx.lineTo(xOfLine(nn - 1), pad.t + gH);
-            ctx.lineTo(xOfLine(0), pad.t + gH);
-            ctx.closePath();
-            ctx.fillStyle = grad;
-            ctx.fill();
-
-            ctx.lineWidth = 2;
+        if (chartType === 'line' && seriesVisible[0]) {
+            ctx.lineWidth = 1;
             ctx.lineJoin = "round";
             for (var i = 1; i < nn; i++) {
                 ctx.beginPath();
                 ctx.moveTo(xOfLine(i - 1), yOf(ap[i - 1]));
-                var segmentColor = ap[i] >= ap[i - 1] ? "#ef5350" : "#26a69a";
-                ctx.strokeStyle = segmentColor;
-                if (nn < 30) {
-                    var x0 = xOfLine(i - 1), y0 = yOf(ap[i - 1]), x1 = xOfLine(i), y1 = yOf(ap[i]);
-                    var cpx = (x0 + x1) / 2;
-                    ctx.bezierCurveTo(cpx, y0, cpx, y1, x1, y1);
-                } else {
-                    ctx.lineTo(xOfLine(i), yOf(ap[i]));
-                }
+                ctx.strokeStyle = ap[i] >= ap[i - 1] ? "#ef5350" : "#26a69a";
+                ctx.lineTo(xOfLine(i), yOf(ap[i]));
                 ctx.stroke();
             }
             if (nn < 60) {
                 for (var i = 0; i < nn; i++) {
                     ctx.beginPath();
-                    ctx.arc(xOfLine(i), yOf(ap[i]), 3.5, 0, Math.PI * 2);
+                    ctx.arc(xOfLine(i), yOf(ap[i]), 1.5, 0, Math.PI * 2);
                     var dotColor = (i > 0 && ap[i] < ap[i - 1]) ? "#26a69a" : "#ef5350";
                     ctx.fillStyle = dotColor;
                     ctx.fill();
-                    ctx.strokeStyle = "#1a1a2e";
-                    ctx.lineWidth = 1.5;
-                    ctx.stroke();
                 }
             }
-        } else {
+        } else if (seriesVisible[0]) {
             for (var i = 0; i < nn; i++) {
                 var cx = xCenter(i);
                 var o = opens[i], h = highs[i], l = lows[i], c = closes[i];
@@ -451,34 +410,13 @@
 
                 var xScale = gW / Math.max(visibleNn - 1, 1);
 
-                // 时间感知的鼠标索引定位
-                var idx = 0;
-                if (apTs && apTs.length === nn && visibleEnd > visibleStart) {
-                    var ratio = (mx_ - pad.l) / gW;
-                    var minT = apTs[visibleStart];
-                    var maxT = apTs[Math.max(0, visibleEnd - 1)];
-                    var targetTs = minT + ratio * (maxT - minT);
-                    var closestDist = Infinity;
-                    idx = visibleStart;
-                    for (var i = visibleStart; i < visibleEnd; i++) {
-                        var dist = Math.abs(apTs[i] - targetTs);
-                        if (dist < closestDist) { closestDist = dist; idx = i; }
-                    }
-                } else {
-                    idx = Math.round(visibleStart + (mx_ - pad.l) / xScale);
-                }
+                // 等距索引定位（与 xOfLine 视觉渲染一致）
+                var idx = Math.round(visibleStart + (mx_ - pad.l) / gW * (visibleNn - 1));
                 idx = Math.max(0, Math.min(nn - 1, idx));
 
-                // 时间感知的十字线 x 位置
-                var px;
-                if (apTs && apTs.length === nn && visibleEnd > visibleStart) {
-                    var minT = apTs[visibleStart];
-                    var maxT = apTs[Math.max(0, visibleEnd - 1)];
-                    var tr = maxT - minT || 1;
-                    px = pad.l + ((apTs[idx] - minT) / tr) * gW;
-                } else {
-                    px = pad.l + (idx - visibleStart) * xScale;
-                }
+                // 等距索引的十字线 x 位置
+                var px = pad.l + ((idx - visibleStart) / Math.max(visibleNn - 1, 1)) * gW;
+                if (seriesVisible[0]) {
                 var py = yScale(ap[idx], dMin, dMax);
 
                 oc.strokeStyle = "rgba(255,255,255,0.18)";
@@ -493,6 +431,7 @@
                 oc.beginPath(); oc.arc(px, py, 4, 0, Math.PI * 2);
                 oc.fillStyle = "#64b5f6"; oc.fill();
                 oc.strokeStyle = "#fff"; oc.lineWidth = 2; oc.stroke();
+                }
 
                 // ---- 滚珠：紫币（独立轴）+ 黄币/虚拟资产/资产（共用轴） ----
                 function hexToRgba(hex, alpha) {
@@ -509,39 +448,33 @@
                     oc.fillStyle = color; oc.fill();
                     oc.strokeStyle = "#fff"; oc.lineWidth = 1.5; oc.stroke();
                 }
-                if (hasPurpleCoins && idx < purpleCoinsLen && purpleCoins[idx] !== null && purpleCoins[idx] !== undefined)
+                if (hasPurpleCoins && idx < purpleCoinsLen && purpleCoins[idx] !== null && purpleCoins[idx] !== undefined && seriesVisible[1])
                     drawBead(purpleCoins[idx], "#ce93d8", yOfPurple);
-                if (hasYellowCoins && idx < yellowCoinsLen && yellowCoins[idx] !== null && yellowCoins[idx] !== undefined)
+                if (hasYellowCoins && idx < yellowCoinsLen && yellowCoins[idx] !== null && yellowCoins[idx] !== undefined && seriesVisible[2])
                     drawBead(yellowCoins[idx], "#ffd54f", yOfCombined);
 
-                if (hasVirtualAssetSeries) {
-                    var minT_va = apTs[visibleStart];
-                    var maxT_va = apTs[Math.max(0, visibleEnd - 1)];
-                    var tr_va = maxT_va - minT_va || 1;
+                if (seriesVisible[3] && hasVirtualAssetSeries) {
                     var closestIdx_va = -1, closestDist_va = 600000;
                     for (var j = 0; j < lineVirtualAssetTs.length; j++) {
-                        if (lineVirtualAssetTs[j] < minT_va || lineVirtualAssetTs[j] > maxT_va) continue;
-                        var xj = pad.l + ((lineVirtualAssetTs[j] - minT_va) / tr_va) * gW;
-                        var dist = Math.abs(mx_ - xj);
+                        var dist = Math.abs(idx - j);
                         if (dist < closestDist_va) { closestDist_va = dist; closestIdx_va = j; }
                     }
-                    if (closestIdx_va !== -1 && closestDist_va < 600000)
+                    if (closestIdx_va !== -1 && closestDist_va < 5)
                         drawBead(lineVirtualAsset[closestIdx_va], "#4fc3f7", yOfCombined);
                 }
-                if (hasAssetSeries) {
-                    var minT_a = apTs[visibleStart];
-                    var maxT_a = apTs[Math.max(0, visibleEnd - 1)];
-                    var tr_a = maxT_a - minT_a || 1;
+                if (seriesVisible[4] && hasAssetSeries) {
                     var closestIdx_a = -1, closestDist_a = 600000;
                     for (var j = 0; j < lineAssetTs.length; j++) {
-                        if (lineAssetTs[j] < minT_a || lineAssetTs[j] > maxT_a) continue;
-                        var xj = pad.l + ((lineAssetTs[j] - minT_a) / tr_a) * gW;
-                        var dist = Math.abs(mx_ - xj);
+                        var dist = Math.abs(idx - j);
                         if (dist < closestDist_a) { closestDist_a = dist; closestIdx_a = j; }
                     }
-                    if (closestIdx_a !== -1 && closestDist_a < 600000)
+                    if (closestIdx_a !== -1 && closestDist_a < 5)
                         drawBead(lineAsset[closestIdx_a], "#81c784", yOfCombined);
                 }
+
+                // 海里数 bead
+                if (hasDistanceSeries && idx < lineDistance.length && lineDistance[idx] !== null && lineDistance[idx] !== undefined && seriesVisible[5])
+                    drawBead(lineDistance[idx], "#1565c0", yOfCombined);
 
                 oc.setTransform(1, 0, 0, 1, 0, 0);
 
@@ -551,9 +484,11 @@
                 var ds = (isUp ? "+" : "") + diff;
                 var tooltipRows = [
                     { style: { color: "#888", marginBottom: "4px", fontWeight: "600" }, parts: [{ type: 'text', value: labels[idx] }] },
-                    { parts: [{ type: 'text', value: "体力: " }, { type: 'bold', value: String(ap[idx]), style: { color: "#64b5f6" } }] },
-                    { parts: [{ type: 'text', value: "单次变化: " }, { type: 'bold', value: ds, style: { color: dc } }] }
                 ];
+                if (seriesVisible[0]) {
+                tooltipRows.push({ parts: [{ type: 'text', value: "体力: " }, { type: 'bold', value: String(ap[idx]), style: { color: "#64b5f6" } }] },
+                    { parts: [{ type: 'text', value: "单次变化: " }, { type: 'bold', value: ds, style: { color: dc } }] });
+                }
 
                 if (isDetailMode) {
                     var source = sources && sources[idx] ? sources[idx] : '-';
@@ -562,7 +497,7 @@
                 }
 
                 // 黄币 tooltip
-                if (hasYellowCoins && idx < yellowCoinsLen && yellowCoins[idx] !== null && yellowCoins[idx] !== undefined) {
+                if (seriesVisible[2] && hasYellowCoins && idx < yellowCoinsLen && yellowCoins[idx] !== null && yellowCoins[idx] !== undefined) {
                     var yc = yellowCoins[idx];
                     var ycDiff = idx > 0 && yellowCoins[idx - 1] !== null && yellowCoins[idx - 1] !== undefined ? (yc - yellowCoins[idx - 1]) : 0;
                     var ycColor = ycDiff >= 0 ? "#ef5350" : "#26a69a";
@@ -571,7 +506,7 @@
                 }
 
                 // 紫币 tooltip
-                if (hasPurpleCoins && idx < purpleCoinsLen && purpleCoins[idx] !== null && purpleCoins[idx] !== undefined) {
+                if (seriesVisible[1] && hasPurpleCoins && idx < purpleCoinsLen && purpleCoins[idx] !== null && purpleCoins[idx] !== undefined) {
                     var pc = purpleCoins[idx];
                     var pcDiff = idx > 0 && purpleCoins[idx - 1] !== null && purpleCoins[idx - 1] !== undefined ? (pc - purpleCoins[idx - 1]) : 0;
                     var pcColor = pcDiff >= 0 ? "#ef5350" : "#26a69a";
@@ -579,38 +514,37 @@
                     tooltipRows.push({ parts: [{ type: 'text', value: "紫币: " }, { type: 'bold', value: String(pc), style: { color: "#ce93d8" } }, { type: 'text', value: " (" + pcDiffStr + ")", style: { color: pcColor } }] });
                 }
 
-                // 虚拟资产 tooltip（时间戳匹配）
-                if (hasVirtualAssetSeries) {
-                    var ratio = (mx_ - pad.l) / gW;
-                    var minT_va = apTs[visibleStart];
-                    var maxT_va = apTs[Math.max(0, visibleEnd - 1)];
-                    var targetTs = minT_va + ratio * (maxT_va - minT_va);
-                    var closestIdx = -1, closestDist = Infinity;
+                // 虚拟资产 tooltip
+                if (seriesVisible[3] && hasVirtualAssetSeries) {
+                    var closestIdx = -1, closestDist = 600000;
                     for (var j = 0; j < lineVirtualAssetTs.length; j++) {
-                        if (lineVirtualAssetTs[j] < minT_va || lineVirtualAssetTs[j] > maxT_va) continue;
-                        var dist = Math.abs(lineVirtualAssetTs[j] - targetTs);
+                        var dist = Math.abs(idx - j);
                         if (dist < closestDist) { closestDist = dist; closestIdx = j; }
                     }
-                    if (closestIdx !== -1 && closestDist < 600000) {
+                    if (closestIdx !== -1 && closestDist < 5) {
                         tooltipRows.push({ parts: [{ type: 'text', value: "虚拟资产: " }, { type: 'bold', value: lineVirtualAsset[closestIdx].toFixed(1), style: { color: "#4fc3f7" } }] });
                     }
                 }
 
-                // 资产 tooltip（时间戳匹配）
-                if (hasAssetSeries) {
-                    var ratio = (mx_ - pad.l) / gW;
-                    var minT_a = apTs[visibleStart];
-                    var maxT_a = apTs[Math.max(0, visibleEnd - 1)];
-                    var targetTs = minT_a + ratio * (maxT_a - minT_a);
-                    var closestIdx = -1, closestDist = Infinity;
+                // 资产 tooltip
+                if (seriesVisible[4] && hasAssetSeries) {
+                    var closestIdx = -1, closestDist = 600000;
                     for (var j = 0; j < lineAssetTs.length; j++) {
-                        if (lineAssetTs[j] < minT_a || lineAssetTs[j] > maxT_a) continue;
-                        var dist = Math.abs(lineAssetTs[j] - targetTs);
+                        var dist = Math.abs(idx - j);
                         if (dist < closestDist) { closestDist = dist; closestIdx = j; }
                     }
-                    if (closestIdx !== -1 && closestDist < 600000) {
+                    if (closestIdx !== -1 && closestDist < 5) {
                         tooltipRows.push({ parts: [{ type: 'text', value: "资产: " }, { type: 'bold', value: lineAsset[closestIdx].toFixed(1), style: { color: "#81c784" } }] });
                     }
+                }
+
+                // 海里数 tooltip
+                if (seriesVisible[5] && hasDistanceSeries && idx < lineDistance.length && lineDistance[idx] !== null && lineDistance[idx] !== undefined) {
+                    var d = lineDistance[idx];
+                    var dDiff = idx > 0 && lineDistance[idx - 1] !== null && lineDistance[idx - 1] !== undefined ? (d - lineDistance[idx - 1]) : 0;
+                    var dColor = dDiff >= 0 ? "#ef5350" : "#26a69a";
+                    var dDiffStr = (dDiff >= 0 ? "+" : "") + dDiff;
+                    tooltipRows.push({ parts: [{ type: 'text', value: "海里数: " }, { type: 'bold', value: String(d), style: { color: "#1565c0" } }, { type: 'text', value: " (" + dDiffStr + ")", style: { color: dColor } }] });
                 }
 
                 setTooltipContent(tipEl, tooltipRows);
@@ -691,6 +625,40 @@
             oc.clearRect(0, 0, ovCv.width, ovCv.height);
         });
 
+        // ======== 图例点击切换曲线 ========
+        var legendId = chartId + "_legend";
+        var legendEl = document.getElementById(legendId);
+        if (legendEl) {
+            if (legendEl._legendHandler) {
+                legendEl.removeEventListener("click", legendEl._legendHandler);
+            }
+            legendEl._legendHandler = function (e) {
+                var item = e.target.closest(".ap-legend-item");
+                if (!item) return;
+                var idx = parseInt(item.getAttribute("data-series"), 10);
+                if (isNaN(idx) || idx < 0 || idx >= seriesVisible.length) return;
+                var only = true;
+                for (var si = 0; si < seriesVisible.length; si++) {
+                    if (si !== idx && seriesVisible[si]) { only = false; break; }
+                }
+                if (only && seriesVisible[idx]) {
+                    for (var si = 0; si < seriesVisible.length; si++) seriesVisible[si] = true;
+                } else {
+                    for (var si = 0; si < seriesVisible.length; si++) seriesVisible[si] = (si === idx);
+                }
+                legendEl.querySelectorAll(".ap-legend-item").forEach(function (li, i) {
+                    var si = parseInt(li.getAttribute("data-series"), 10);
+                    li.style.opacity = seriesVisible[si] ? "1" : "0.35";
+                });
+                (chartType === 'line' && typeof renderDetailChart === 'function' ? renderDetailChart : initChart)();
+            };
+            legendEl.addEventListener("click", legendEl._legendHandler);
+            legendEl.querySelectorAll(".ap-legend-item").forEach(function (li, i) {
+                var si = parseInt(li.getAttribute("data-series"), 10);
+                li.style.opacity = seriesVisible[si] ? "1" : "0.35";
+            });
+        }
+
         // ======== 缩放/平移（仅 line 图） ========
         if (chartType === 'line') {
             var zoomLevel = 1.0;
@@ -730,35 +698,15 @@
 
                 var xScale = gW / Math.max(visibleNn - 1, 1);
                 function dxOf(i) {
-                    if (apTs && apTs.length === nn && visibleEnd > visibleStart) {
-                        var minT = apTs[visibleStart];
-                        var maxT = apTs[Math.max(0, visibleEnd - 1)];
-                        var tr = maxT - minT || 1;
-                        return pad.l + ((apTs[i] - minT) / tr) * gW;
-                    }
                     return pad.l + (i - visibleStart) * xScale;
                 }
                 function dyOf(v) { return yScale(v, dMin, dMax); }
 
                 drawAssetTicks(ctx, dyOf, dMin, dMax);
 
-                // Ap 渐变填充
-                var dgrad = ctx.createLinearGradient(0, pad.t, 0, pad.t + gH);
-                dgrad.addColorStop(0, "rgba(100,181,246,0.15)");
-                dgrad.addColorStop(1, "rgba(100,181,246,0.02)");
-                ctx.beginPath();
-                ctx.moveTo(dxOf(visibleStart), dyOf(ap[visibleStart]));
-                for (var i = visibleStart + 1; i < visibleEnd; i++) {
-                    ctx.lineTo(dxOf(i), dyOf(ap[i]));
-                }
-                ctx.lineTo(dxOf(visibleEnd - 1), pad.t + gH);
-                ctx.lineTo(dxOf(visibleStart), pad.t + gH);
-                ctx.closePath();
-                ctx.fillStyle = dgrad;
-                ctx.fill();
-
                 // Ap 线
-                ctx.lineWidth = 1.5;
+                if (seriesVisible[0]) {
+                ctx.lineWidth = 1;
                 ctx.lineJoin = "round";
                 for (var i = visibleStart + 1; i < visibleEnd; i++) {
                     ctx.beginPath();
@@ -772,10 +720,11 @@
                 var dotInterval = Math.max(1, Math.floor(visibleNn / 50));
                 for (var i = visibleStart; i < visibleEnd; i += dotInterval) {
                     ctx.beginPath();
-                    ctx.arc(dxOf(i), dyOf(ap[i]), 2.5, 0, Math.PI * 2);
+                    ctx.arc(dxOf(i), dyOf(ap[i]), 1.5, 0, Math.PI * 2);
                     var dotColor = (i > visibleStart && ap[i] < ap[i - 1]) ? "#26a69a" : "#ef5350";
                     ctx.fillStyle = dotColor;
                     ctx.fill();
+                }
                 }
 
                 // 绘制额外系列线

@@ -28,7 +28,6 @@ OpsiScheduling - 智能调度模块
 import re
 from datetime import datetime, timedelta
 
-from module.statistics.opsi_runtime import record_ap_snapshot
 
 # 短猫每轮消耗的行动力（以侵蚀5为标准）
 MEOW_ROUND_AP_COST = 30
@@ -248,7 +247,7 @@ class CoinTaskMixin:
     
     def check_and_notify_action_point_threshold(self):
         """
-        发送行动力变化推送通知，并保存体力快照数据。
+        发送行动力变化推送通知。
         需要类中包含 _action_point_total 属性。
         """
         if not hasattr(self, '_action_point_total'):
@@ -256,13 +255,8 @@ class CoinTaskMixin:
             
         current_ap = self._action_point_total
 
-        # 保存体力快照到数据库（用于 WebUI 体力变化曲线图）
         instance_name = getattr(self.config, 'config_name', 'default')
-        # AP snapshots feed the WebUI timeline; keep the source decision here,
-        # and leave storage details to the runtime metrics layer.
-        source = 'cl1' if getattr(self, 'is_in_task_cl1_leveling', False) else 'meow'
-        record_ap_snapshot(self.config, current_ap, source=source)
-
+        # AP 快照由各任务模块自行管理（如 _record_ap_and_coins），此处仅保留推送逻辑。
         if self._can_send_ap_notification('_last_ap_notification_time'):
             previous_ap = None
             try:

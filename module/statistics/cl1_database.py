@@ -50,6 +50,43 @@ class Cl1Database:
             return int(devices.get("meow", {}).get(str(int(hazard_level)), 0) or 0)
         return int(devices.get("cl1", 0) or 0)
 
+    def add_siren_research_device(
+        self, instance: str, source: str = "cl1", hazard_level: int = None
+    ) -> None:
+        """记录一次塞壬研究装置（吊机）出现。
+
+        Args:
+            instance: 实例名称
+            source: 数据来源 (cl1 / meow)
+            hazard_level: 侵蚀等级（短猫专用）
+        """
+        month = datetime.now().strftime("%Y-%m")
+        data = self.get_stats(instance, month)
+
+        devices = self._normalize_siren_research_devices(data)
+        if source == "cl1":
+            devices["cl1"] = devices.get("cl1", 0) + 1
+        elif source == "meow":
+            meow = devices.get("meow", {})
+            key = str(int(hazard_level or 0))
+            meow[key] = int(meow.get(key, 0) or 0) + 1
+            devices["meow"] = meow
+        data["siren_research_devices"] = devices
+
+        entries = data.get("siren_research_device_entries", [])
+        if not isinstance(entries, list):
+            entries = []
+        entries.append({
+            "ts": datetime.now().isoformat(),
+            "source": source,
+            "hazard_level": int(hazard_level or 0) if source == "meow" else None,
+        })
+        if len(entries) > 5000:
+            entries = entries[-5000:]
+        data["siren_research_device_entries"] = entries
+
+        self.save_stats(instance, month, data)
+
     """
     CL1 数据加密 SQLite 数据库管理类。
     所有实例共享一个数据库文件，但数据经过 AES-GCM 加密，并由 device_id 保护。
@@ -221,6 +258,9 @@ class Cl1Database:
             "meow_round_times": [],
             "meow_battle_times": [],  # 短猫单场战斗时间
             "meow_hazard_stats": {},  # 按侵蚀等级拆分统计
+            # 塞壬研究装置（吊机）
+            "siren_research_devices": {"cl1": 0, "meow": {}},
+            "siren_research_device_entries": [],
             # 委托收益数据
             "commission_income_entries": [],
         }
@@ -557,13 +597,15 @@ class Cl1Database:
         data["akashi_ap"] = data.get("akashi_ap", 0) + amount
         self.save_stats(instance, month, data)
 
-    def add_ap_snapshot(self, instance: str, ap_current: int, source: str = "cl1"):
+    def add_ap_snapshot(self, instance: str, ap_current: int, source: str = "cl1", distance: int = None, ap_total: int = None):
         """记录行动力快照（真实剩余体力），并计算虚拟资产
 
         Args:
             instance: 实例名称
             ap_current: 当前行动力剩余
             source: 数据来源标记 (cl1 / meow 等)
+            distance: 海里数（可选）
+            ap_total: 总体力（含行动力箱子）
         """
         month = datetime.now().strftime("%Y-%m")
         data = self.get_stats(instance, month)
@@ -604,6 +646,10 @@ class Cl1Database:
             "virtual_asset": round(virtual_asset, 2),
             "source": source,
         }
+        if distance is not None:
+            snapshot["distance"] = int(distance)
+        if ap_total is not None:
+            snapshot["ap_total"] = int(ap_total)
 
         snapshots = data.get("ap_snapshots", [])
         snapshots.append(snapshot)
@@ -673,7 +719,7 @@ class Cl1Database:
         self,
         instance: str,
         yellow_coins: int,
-        purple_coins: int = 0,
+        purple_coins: int = None,
         source: str = "cl1",
     ):
         """记录凭证快照（作战补给凭证/特别兑换凭证）
@@ -681,7 +727,7 @@ class Cl1Database:
         Args:
             instance: 实例名称
             yellow_coins: 当前作战补给凭证（黄币）数量
-            purple_coins: 当前特别兑换凭证（紫币）数量
+            purple_coins: 当前特别兑换凭证（紫币）数量，None 表示不记录（如 hazard 循环不知道真实值）
             source: 数据来源标记 (cl1 / meow 等)
         """
         month = datetime.now().strftime("%Y-%m")
@@ -690,18 +736,22 @@ class Cl1Database:
         snapshot = {
             "ts": datetime.now().isoformat(),
             "yellow_coins": int(yellow_coins),
-            "purple_coins": int(purple_coins),
             "source": source,
         }
+        if purple_coins is not None:
+            snapshot["purple_coins"] = int(purple_coins)
 
         snapshots = data.get("coins_snapshots", [])
         if snapshots:
             try:
                 last = snapshots[-1]
-                if int(last.get("yellow_coins", -1)) == int(yellow_coins) and int(
-                    last.get("purple_coins", -1)
-                ) == int(purple_coins):
-                    return
+                if int(last.get("yellow_coins", -1)) == int(yellow_coins):
+                    if purple_coins is not None and int(
+                        last.get("purple_coins", -1)
+                    ) == int(purple_coins):
+                        return
+                    if purple_coins is None and "purple_coins" not in last:
+                        return
             except Exception:
                 pass
         snapshots.append(snapshot)
@@ -715,10 +765,12 @@ class Cl1Database:
         self,
         instance: str,
         yellow_coins: int,
-        purple_coins: int = 0,
+        purple_coins: int = None,
         source: str = "cl1",
     ):
         """异步记录凭证快照"""
+        from module.base.async_executor import async_executor
+
         return async_executor.submit(
             self.add_coins_snapshot, instance, yellow_coins, purple_coins, source
         )
@@ -938,7 +990,8 @@ class Cl1Database:
         self.save_stats(instance, month, data)
 
     def get_meow_stats(
-        self, instance: str, year: int = None, month: int = None
+        self, instance: str, year: int = None, month: int = None,
+        hazard_level: int = None,
     ) -> Dict[str, Any]:
         """获取短猫统计数据
 
@@ -946,6 +999,7 @@ class Cl1Database:
             instance: 实例名称
             year: 年份，默认当前年
             month: 月份，默认当前月
+            hazard_level: 侵蚀等级，传入时只返回对应等级的数据
 
         Returns:
             短猫统计数据字典
@@ -990,15 +1044,15 @@ class Cl1Database:
         hazard_sample_total = 0
         hazard_round_samples: Dict[int, List[float]] = {3: [], 5: []}
         for entry in normalized_round_times:
-            hazard_level = entry.get("hazard_level")
-            if hazard_level in [2, 3, 4, 5, 6]:
+            hl = entry.get("hazard_level")
+            if hl in [2, 3, 4, 5, 6]:
                 hazard_sample_total += 1
-            if hazard_level in [3, 5]:
-                hazard_round_samples[hazard_level].append(entry["duration"])
+            if hl in [3, 5]:
+                hazard_round_samples[hl].append(entry["duration"])
 
         by_hazard: Dict[str, Dict[str, Any]] = {}
-        for hazard_level in [3, 5]:
-            key_name = str(hazard_level)
+        for hl in [3, 5]:
+            key_name = str(hl)
             bucket = hazard_stats.get(key_name, {})
 
             try:
@@ -1020,7 +1074,7 @@ class Cl1Database:
                 float(v) for v in hz_round_times if isinstance(v, (int, float))
             ]
             if not hz_round_times:
-                hz_round_times = hazard_round_samples[hazard_level]
+                hz_round_times = hazard_round_samples[hl]
 
             hz_battle_times = (
                 bucket.get("battle_times", [])
@@ -1037,14 +1091,14 @@ class Cl1Database:
                     round(
                         battle_count
                         * (
-                            len(hazard_round_samples[hazard_level])
+                            len(hazard_round_samples[hl])
                             / hazard_sample_total
                         )
                     )
                 )
                 estimated = True
 
-            battles_per_round = self._get_meow_battles_per_round(hazard_level) or 1
+            battles_per_round = self._get_meow_battles_per_round(hl) or 1
             if hz_effective_rounds <= 0 and hz_battle_count > 0:
                 hz_effective_rounds = hz_battle_count / battles_per_round
                 estimated = True
@@ -1072,7 +1126,7 @@ class Cl1Database:
                 source = "none"
 
             by_hazard[key_name] = {
-                "hazard_level": hazard_level,
+                "hazard_level": hl,
                 "battle_count": hz_battle_count,
                 "effective_rounds": round(hz_effective_rounds, 2),
                 "avg_round_time": hz_avg_round_time,
@@ -1081,7 +1135,20 @@ class Cl1Database:
                 "source": source,
             }
 
-        return {
+        # 计算塞壬研究装置（吊机）数据
+        siren_research_devices = self.get_siren_research_device_count(
+            data, source="meow", hazard_level=hazard_level
+        )
+        siren_research_rate = 0.0
+        target_rounds = effective_rounds
+        if hazard_level is not None:
+            hl_key = str(hazard_level)
+            if hl_key in by_hazard:
+                target_rounds = float(by_hazard[hl_key].get("effective_rounds", 0) or 0)
+        if target_rounds > 0:
+            siren_research_rate = round(siren_research_devices / target_rounds, 4)
+
+        result = {
             "month": key,
             "battle_count": battle_count,
             "effective_rounds": round(effective_rounds, 2),
@@ -1089,8 +1156,22 @@ class Cl1Database:
             "avg_round_time": avg_round_time,
             "battle_times": battle_times,
             "avg_battle_time": avg_battle_time,
+            "siren_research_devices": siren_research_devices,
+            "siren_research_rate": siren_research_rate,
             "by_hazard": by_hazard,
         }
+
+        # 请求指定侵蚀等级时，将该等级数据提升到顶层
+        if hazard_level is not None:
+            hl_key = str(hazard_level)
+            if hl_key in by_hazard:
+                hl_data = by_hazard[hl_key]
+                result["battle_count"] = hl_data["battle_count"]
+                result["effective_rounds"] = hl_data["effective_rounds"]
+                result["avg_round_time"] = hl_data["avg_round_time"]
+                result["avg_battle_time"] = hl_data["avg_battle_time"]
+
+        return result
 
     def async_get_stats(self, instance: str, month: str):
         from module.base.async_executor import async_executor
@@ -1122,11 +1203,11 @@ class Cl1Database:
         )
 
     def async_add_ap_snapshot(
-        self, instance: str, ap_current: int, source: str = "cl1"
+        self, instance: str, ap_current: int, source: str = "cl1", distance: int = None, ap_total: int = None
     ):
         from module.base.async_executor import async_executor
 
-        return async_executor.submit(self.add_ap_snapshot, instance, ap_current, source)
+        return async_executor.submit(self.add_ap_snapshot, instance, ap_current, source, distance, ap_total)
 
     def async_set_last_ap_notification(self, instance: str, ap_current: int):
         from module.base.async_executor import async_executor
@@ -1171,10 +1252,19 @@ class Cl1Database:
             self.add_meow_battle_time, instance, duration, hazard_level
         )
 
-    def async_get_meow_stats(self, instance: str, year: int = None, month: int = None):
+    def async_get_meow_stats(self, instance: str, year: int = None, month: int = None, hazard_level: int = None):
         from module.base.async_executor import async_executor
 
-        return async_executor.submit(self.get_meow_stats, instance, year, month)
+        return async_executor.submit(self.get_meow_stats, instance, year, month, hazard_level)
+
+    def async_add_siren_research_device(
+        self, instance: str, source: str = "cl1", hazard_level: int = None
+    ):
+        from module.base.async_executor import async_executor
+
+        return async_executor.submit(
+            self.add_siren_research_device, instance, source, hazard_level
+        )
 
     # ========== 委托收益数据记录方法 ==========
 

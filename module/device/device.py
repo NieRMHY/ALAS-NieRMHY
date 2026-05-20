@@ -4,6 +4,7 @@ import collections
 import sys
 from datetime import datetime
 
+import cv2
 from lxml import etree
 
 from module.device.env import IS_WINDOWS, IS_MACINTOSH
@@ -77,6 +78,8 @@ class Device(Screenshot, Control, AppControl, Input):
     stuck_timer = Timer(60, count=60).start()
     stuck_timer_long = Timer(195, count=195).start()
     stuck_long_wait_list = ['BATTLE_STATUS_S', 'PAUSE', 'LOGIN_CHECK', 'TEMPLATE_MANJUU']
+    _prev_fingerprint = None
+    _stuck_image_timer = Timer(30, count=0)
 
     def __init__(self, *args, screenshot_queue=None, screenshot_enabled=None, **kwargs):
         # Initialize platform attribute for emulator control
@@ -286,6 +289,7 @@ class Device(Screenshot, Control, AppControl, Input):
         if self.handle_night_commission():
             super().screenshot()
 
+        self._check_image_stuck()
         return self.image
 
     def dump_hierarchy(self) -> etree._Element:
@@ -317,6 +321,28 @@ class Device(Screenshot, Control, AppControl, Input):
         self.detect_record = set()
         self.stuck_timer.reset()
         self.stuck_timer_long.reset()
+        self._stuck_image_timer.clear()
+
+    def _check_image_stuck(self):
+        if self.image is None:
+            return
+
+        small = cv2.resize(self.image, (16, 16))
+        fp = hash(small.tobytes())
+
+        if self._prev_fingerprint is not None and fp == self._prev_fingerprint:
+            self._stuck_image_timer.start()
+            if self._stuck_image_timer.reached():
+                show_function_call()
+                logger.warning(f'Screenshot unchanged for over {self._stuck_image_timer.limit}s')
+                self.stuck_record_clear()
+                if self.app_is_running():
+                    raise GameStuckError('Screenshot not changing')
+                else:
+                    raise GameNotRunningError('Game died')
+        else:
+            self._prev_fingerprint = fp
+            self._stuck_image_timer.clear()
 
     def stuck_record_check(self):
         """

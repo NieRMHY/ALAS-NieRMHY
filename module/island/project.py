@@ -420,6 +420,7 @@ class IslandProjectRun(IslandUI):
                              GET_ITEMS_ISLAND, ROLE_SELECT_ENTER])
         success = False
         click_timer = Timer(5, count=10).start()
+        _stuck_get_items_count = 0
         for _ in self.loop():
             # UI additional
             if self.island_in_management(interval=5):
@@ -440,24 +441,30 @@ class IslandProjectRun(IslandUI):
             if self.is_in_enter_page() and \
                     self.appear_then_click(ROLE_SELECT_ENTER, threshold=10, interval=2):
                 success = True
+                _stuck_get_items_count = 0
                 self.interval_clear(GET_ITEMS_ISLAND)
                 click_timer.reset()
                 continue
 
             if self.appear_then_click(PROJECT_COMPLETE, offset=(20, 20), interval=1):
                 success = True
+                _stuck_get_items_count = 0
                 self.interval_clear(GET_ITEMS_ISLAND)
                 self.interval_reset(ROLE_SELECT_ENTER)
                 click_timer.reset()
                 continue
 
             if self.handle_get_items():
+                _stuck_get_items_count = 0
                 self.interval_clear(ROLE_SELECT_ENTER)
                 click_timer.reset()
                 continue
 
             # handle island level up
             if click_timer.reached():
+                _stuck_get_items_count += 1
+                if _stuck_get_items_count >= 3:
+                    break
                 self.device.click(GET_ITEMS_ISLAND)
                 self.device.sleep(0.3)
                 click_timer.reset()
