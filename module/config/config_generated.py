@@ -767,6 +767,7 @@ class GeneratedConfig:
     OpsiHazard1Leveling_Cl1Filter = 'ActionPoint'
     OpsiHazard1Leveling_RecordNonCL1AP = True
     OpsiHazard1Leveling_PreserveVirtualAsset = 0
+    OpsiHazard1Leveling_RecordSeaMiles = True  # True, False
 
     # Group `OpsiSirenBug`
     OpsiSirenBug_SirenResearch_Enable = True

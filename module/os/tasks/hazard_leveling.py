@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 from calendar import monthrange
 
+from module.base.timer import Timer
 from module.equipment.assets import EQUIPMENT_OPEN
 from module.exception import MapDetectionError, ScriptError
 from module.logger import logger
@@ -11,6 +12,8 @@ from module.os.ship_exp_data import LIST_SHIP_EXP
 from module.os.tasks.smart_scheduling_utils import is_smart_scheduling_enabled
 from module.os.tasks.scheduling import CoinTaskMixin
 from module.statistics.opsi_runtime import record_cl1_akashi_encounter
+from module.os.sea_miles_ocr import OCR_SEA_MILES_DIGIT
+from module.os_handler.assets import MISSION_ENTER, MISSION_CHECK, MISSION_QUIT
 
 
 class OpsiHazard1Leveling(CoinTaskMixin, OSMap):
@@ -57,10 +60,6 @@ class OpsiHazard1Leveling(CoinTaskMixin, OSMap):
             
             # 检查虚拟资产保留值（如果配置了）
             if virtual_asset_preserve > 0:
-                self.action_point_enter()
-                self.action_point_safe_get()
-                self.action_point_quit()
-                
                 virtual_asset = self._calculate_virtual_asset(self._action_point_total, yellow_coins)
                 if virtual_asset < virtual_asset_preserve:
                     logger.info(
@@ -76,12 +75,6 @@ class OpsiHazard1Leveling(CoinTaskMixin, OSMap):
         else:
             cl1_preserve = self.config.OpsiHazard1Leveling_OperationCoinsPreserve
 
-        # 进入行动力界面读取当前行动力数据
-        self.action_point_enter()
-        self.action_point_safe_get()
-        self.action_point_quit()
-        
-        # 计算虚拟资产
         virtual_asset = self._calculate_virtual_asset(self._action_point_total, yellow_coins) if virtual_asset_preserve > 0 else 0
         
         if virtual_asset_preserve > 0 and virtual_asset < virtual_asset_preserve:
@@ -245,10 +238,6 @@ class OpsiHazard1Leveling(CoinTaskMixin, OSMap):
 
     def _cl1_ap_check(self):
         """最低行动力保留检查"""
-        self.action_point_enter()
-        self.action_point_safe_get()
-        self.action_point_quit()
-
         min_reserve = self.config.OS_ACTION_POINT_PRESERVE
         if self._action_point_total < min_reserve:
             logger.warning(
@@ -276,15 +265,7 @@ class OpsiHazard1Leveling(CoinTaskMixin, OSMap):
         self.config.OpsiHazard1_PreviousApInsufficient = _previous_ap_insufficient
 
     def _cl1_run_battle(self):
-        """执行侵蚀 1 实际战斗逻辑"""
-        if self.config.OpsiHazard1Leveling_TargetZone != 0:
-            zone = self.config.OpsiHazard1Leveling_TargetZone
-        else:
-            zone = 22
-        logger.hr(f"OS hazard 1 leveling, zone_id={zone}", level=1)
-        if self.zone.zone_id != zone or not self.is_zone_name_hidden:
-            self.globe_goto(self.name_to_zone(zone), types="SAFE", refresh=True)
-        self.fleet_set(self.config.OpsiFleet_Fleet)
+        """执行侵蚀 1 战后的战略搜索与扫荡逻辑"""
         search_completed = self.run_strategic_search()
 
         if not search_completed and search_completed is not None:
@@ -371,10 +352,6 @@ class OpsiHazard1Leveling(CoinTaskMixin, OSMap):
                 "OS_ACTION_POINT_PRESERVE", self.config.OS_ACTION_POINT_PRESERVE
             )
 
-            # ===== 智能调度：黄币检查与任务切换 =====
-            yellow_coins = self.get_yellow_coins()
-            self._cl1_smart_scheduling_check(yellow_coins)
-
             # 获取当前区域
             try:
                 self.get_current_zone()
@@ -391,13 +368,41 @@ class OpsiHazard1Leveling(CoinTaskMixin, OSMap):
                 cost=120, keep_current_ap=keep_current_ap, check_rest_ap=True
             )
 
+            # ===== 智能调度：黄币检查与任务切换 =====
+            yellow_coins = self.get_yellow_coins()
+            self._cl1_smart_scheduling_check(yellow_coins)
+
             # ===== 智能调度：行动力阈值推送检查 =====
             self.check_and_notify_action_point_threshold()
 
-            # ===== 最低行动力保留检查 =====
+            # ===== 最低行动力保留检查（复用 action_point_set 缓存值）=====
             self._cl1_ap_check()
 
-            # ===== 执行侵蚀 1 实际战斗逻辑 =====
+            # ===== 确保在安全海域地图上（战前导航）=====
+            if self.config.OpsiHazard1Leveling_TargetZone != 0:
+                zone = self.config.OpsiHazard1Leveling_TargetZone
+                if self.zone.zone_id != zone or not self.is_zone_name_hidden:
+                    self.globe_goto(self.name_to_zone(zone), types="SAFE", refresh=True)
+            elif self.zone.hazard_level > 5 or not self.is_zone_name_hidden:
+                self.globe_goto(self.name_to_zone(22), types="SAFE", refresh=True)
+            self.fleet_set(self.config.OpsiFleet_Fleet)
+
+            # ===== 海里数记录（可开关）=====
+            sea_miles = None
+            if self.config.OpsiHazard1Leveling_RecordSeaMiles:
+                try:
+                    sea_miles = self.detect_and_record_sea_miles()
+                    if sea_miles is not None:
+                        logger.info(f"海里数检测完成: {sea_miles}")
+                    else:
+                        logger.warning("海里数检测失败，但不影响后续流程")
+                except Exception as e:
+                    logger.error(f"海里数检测异常: {e}，但不影响后续流程")
+
+            # ===== 货币与体力记录（始终执行，包含海里数）=====
+            self._record_ap_and_coins(sea_miles=sea_miles)
+
+            # ===== 执行侵蚀 1 战略搜索与战后处理 =====
             self._cl1_run_battle()
 
             # ===== 处理遥测数据提交 =====
@@ -938,3 +943,110 @@ class OpsiHazard1Leveling(CoinTaskMixin, OSMap):
                 logger.info("自定义舰位满经验后延迟任务")
                 self.config.task_delay(server_update=True)
                 self.config.task_stop()
+
+    def _record_ap_and_coins(self, sea_miles=None):
+        """记录体力和货币到 Dashboard（始终执行）。
+
+        Args:
+            sea_miles: 海里数（可选），由 detect_and_record_sea_miles 传入
+        """
+        try:
+            if self._action_point_current > 0:
+                from module.statistics.opsi_runtime import record_ap_snapshot
+                record_ap_snapshot(
+                    config=self.config,
+                    ap_current=self._action_point_current,
+                    ap_total=self._action_point_total,
+                    source='hazard1',
+                    distance=sea_miles,
+                )
+
+            logger.info("读取当前货币")
+            yellow_coins = self.get_yellow_coins()
+            from module.statistics.cl1_database import db as cl1_db
+            from module.statistics.opsi_month import get_coins_timeline
+            instance_name = getattr(self.config, 'config_name', 'default')
+            # 从 DB 查找上次已知紫币值（商店写入），保持图表连续
+            purple_coins_val = None
+            try:
+                coin_timeline = get_coins_timeline(instance_name=instance_name)
+                for pt in reversed(coin_timeline):
+                    if "purple_coins" in pt and pt["purple_coins"] > 0:
+                        purple_coins_val = int(pt["purple_coins"])
+                        break
+            except Exception:
+                pass
+            cl1_db.async_add_coins_snapshot(
+                instance_name, yellow_coins, purple_coins=purple_coins_val, source='hazard1'
+            )
+            self.config.save()
+        except Exception as e:
+            logger.error(f"体力/货币记录异常: {e}")
+
+    def detect_and_record_sea_miles(self):
+        """
+        检测海里数
+        
+        Returns:
+            int: 海里数，失败时返回None
+        """
+        logger.info("开始海里数检测")
+        
+        try:
+            logger.info("确保在大世界地图上")
+            if not self.is_in_map():
+                logger.info("当前不在大世界地图，返回大世界地图")
+                self.ui_back(check_button=self.is_in_map)
+            
+            logger.info("进入情报页面")
+            skip_first_screenshot = True
+            confirm_timer = Timer(3, count=6).start()
+            while 1:
+                if skip_first_screenshot:
+                    skip_first_screenshot = False
+                else:
+                    self.device.screenshot()
+                
+                if self.appear(MISSION_CHECK, offset=(20, 20)):
+                    break
+                
+                if confirm_timer.reached():
+                    logger.warning("进入情报页面超时")
+                    return None
+                
+                if self.appear_then_click(MISSION_ENTER, offset=(200, 5), interval=3):
+                    continue
+            
+            logger.info("识别海里数")
+            self.device.screenshot()
+            sea_miles = OCR_SEA_MILES_DIGIT.ocr(self.device.image)
+            
+            if sea_miles <= 0:
+                logger.warning(f"海里数识别异常: {sea_miles}")
+                return None
+            
+            logger.info(f"海里数识别成功: {sea_miles}")
+
+            logger.info("退出情报页面")
+            self.ui_click(
+                MISSION_QUIT,
+                check_button=self.is_in_map,
+                offset=(20, 20),
+                skip_first_screenshot=True
+            )
+
+            return sea_miles
+            
+        except Exception as e:
+            logger.error(f"海里数检测失败: {e}")
+            try:
+                if self.appear(MISSION_CHECK, offset=(20, 20)):
+                    self.ui_click(
+                        MISSION_QUIT, 
+                        check_button=self.is_in_map,
+                        offset=(20, 20),
+                        skip_first_screenshot=True
+                    )
+            except Exception:
+                pass
+            return None

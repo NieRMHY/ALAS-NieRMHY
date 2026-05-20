@@ -1196,6 +1196,10 @@ OpsiHazard1Leveling:
     ActionPoint
   RecordNonCL1AP: true
   PreserveVirtualAsset: 0
+  RecordSeaMiles:
+    type: checkbox
+    value: true
+    option: [true, false]
 OpsiSirenBug:
   SirenResearch_Enable: true
   Siren_Mode:

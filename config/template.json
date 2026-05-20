@@ -2663,7 +2663,8 @@
       "SkipHpCheck": false,
       "Cl1Filter": "ActionPoint",
       "RecordNonCL1AP": true,
-      "PreserveVirtualAsset": 0
+      "PreserveVirtualAsset": 0,
+      "RecordSeaMiles": true
     },
     "OpsiSirenBug": {
       "SirenResearch_Enable": true,

@@ -12,7 +12,8 @@ API_BASE = "https://open-api.123pan.com"
 PLATFORM = "open_platform"
 MAX_WORKERS = 8
 SINGLE_UPLOAD_MAX_BYTES = 100 * 1024 * 1024  # 100MB — use single-step upload below this
-RETRY_MAX = 5
+RETRY_MAX = 10
+RETRY_BACKOFF_MAX = 500
 
 
 class Pan123Error(RuntimeError):
@@ -50,7 +51,7 @@ def request_with_retry(session, method, url, attempts=RETRY_MAX, timeout=(30, 60
             last_error = e
             if attempt == attempts:
                 break
-            wait = min(2 ** attempt, 30)
+            wait = min(2 ** attempt, RETRY_BACKOFF_MAX)
             time.sleep(wait)
     raise last_error
 
@@ -131,7 +132,7 @@ def _upload_one_slice(session, server, token, preupload_id, slice_no, chunk_data
         except Exception:
             if attempt == RETRY_MAX:
                 raise
-            time.sleep(min(2 ** attempt, 30))
+            time.sleep(min(2 ** attempt, RETRY_BACKOFF_MAX))
 
 
 def upload_slices_parallel(token, create_data, path):
@@ -222,15 +223,24 @@ def single_upload(session, token, parent_file_id, remote_path, path):
         "duplicate": "2",
     }
     t0 = time.time()
-    result = api_json(
-        session,
-        "POST",
-        f"{server}/upload/v2/file/single/create",
-        token=token,
-        data=data,
-        files=files,
-        timeout=(30, 600),
-    )
+    for attempt in range(1, RETRY_MAX + 1):
+        try:
+            result = api_json(
+                session,
+                "POST",
+                f"{server}/upload/v2/file/single/create",
+                token=token,
+                data=data,
+                files=files,
+                timeout=(30, 600),
+            )
+            break
+        except Exception as e:
+            if attempt == RETRY_MAX:
+                raise
+            wait = min(2 ** attempt, RETRY_BACKOFF_MAX)
+            info(f"  single upload attempt {attempt} failed ({e}), retrying in {wait}s...")
+            time.sleep(wait)
     elapsed = time.time() - t0
     info(f"  done in {elapsed:.1f}s ({fmt_size(len(file_bytes))}/s)")
     if result.get("completed") and result.get("fileID"):
@@ -292,7 +302,7 @@ def trash_files(session, token, file_ids):
         )
 
 
-def cleanup_old_versions(session, token, parent_file_id, remote_prefix, keep_count=5):
+def cleanup_old_versions(session, token, parent_file_id, remote_prefix, keep_count=1):
     """Keep only the `keep_count` most recent version directories, trash the rest."""
     prefix = remote_prefix.strip("/")
     # Find the prefix directory first
@@ -333,7 +343,10 @@ def main():
     parser.add_argument("--source", default="dist/git-over-cdn")
     parser.add_argument("--parent-file-id", type=int, default=int(os.environ.get("PAN123_PARENT_FILE_ID", "0")))
     parser.add_argument("--remote-prefix", default=os.environ.get("PAN123_REMOTE_PREFIX", "AzurPilot_master"))
+    parser.add_argument("--keep-versions", type=int, default=int(os.environ.get("PAN123_KEEP_VERSIONS", "1")))
     args = parser.parse_args()
+    if args.keep_versions < 1:
+        parser.error("--keep-versions must be at least 1")
 
     client_id = os.environ["PAN123_CLIENT_ID"]
     client_secret = os.environ["PAN123_CLIENT_SECRET"]
@@ -354,14 +367,21 @@ def main():
             f"[{idx}/{total}] "
             f"{fmt_size(path.stat().st_size)}"
         )
-        try:
-            upload_file(session, token, args.parent_file_id, source, path, args.remote_prefix)
-        except Exception as e:
-            info(f"FAIL: {type(e).__name__}")
-            raise
+        for attempt in range(1, RETRY_MAX + 1):
+            try:
+                upload_file(session, token, args.parent_file_id, source, path, args.remote_prefix)
+                break
+            except Exception as e:
+                info(f"  attempt {attempt} failed: {e}")
+                if attempt == RETRY_MAX:
+                    info(f"FAIL: {type(e).__name__}")
+                    raise
+                wait = min(2 ** attempt, RETRY_BACKOFF_MAX)
+                info(f"  retrying in {wait}s...")
+                time.sleep(wait)
 
     info("cleanup old versions...")
-    cleanup_old_versions(session, token, args.parent_file_id, args.remote_prefix)
+    cleanup_old_versions(session, token, args.parent_file_id, args.remote_prefix, keep_count=args.keep_versions)
 
 
 if __name__ == "__main__":
