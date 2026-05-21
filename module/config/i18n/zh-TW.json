@@ -1857,6 +1857,10 @@
       "help": "從選擇中排除T4彩色教材",
       "True": "開啟",
       "False": "關閉"
+    },
+    "RapidTrainingSkipFilter": {
+      "name": "指定學習槽位跳過",
+      "help": "指定哪些學習槽位跳過「藍書代替紅書」和「不使用T4教材」過濾，多個用逗號分隔，如 1,3，置空不跳過"
     }
   },
   "ControlExpOverflow": {
@@ -4402,7 +4406,8 @@
     "Tactical": {
       "SkillAutoSwitch": "Gui.Tactical.SkillAutoSwitch",
       "RedToBlue": "Gui.Tactical.RedToBlue",
-      "NoT4": "Gui.Tactical.NoT4"
+      "NoT4": "Gui.Tactical.NoT4",
+      "RapidTrainingSkipFilter": "Gui.Tactical.RapidTrainingSkipFilter"
     },
     "OpsiScheduling": {
       "UseSmartSchedulingOperationCoinsPreserve": "Gui.OpsiScheduling.UseSmartSchedulingOperationCoinsPreserve",

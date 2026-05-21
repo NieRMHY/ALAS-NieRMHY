@@ -1830,7 +1830,8 @@
       "RapidTrainingSlot": "do_not_use",
       "SkillAutoSwitch": true,
       "RedToBlue": false,
-      "NoT4": false
+      "NoT4": false,
+      "RapidTrainingSkipFilter": null
     },
     "ControlExpOverflow": {
       "Enable": true,

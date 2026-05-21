@@ -606,6 +606,7 @@ Tactical:
     type: checkbox
     value: false
     option: [true, false]
+  RapidTrainingSkipFilter: ''
 ControlExpOverflow:
   Enable: true
   T4Allow: 100

@@ -350,6 +350,7 @@ class GeneratedConfig:
     Tactical_SkillAutoSwitch = True  # True, False
     Tactical_RedToBlue = False  # True, False
     Tactical_NoT4 = False  # True, False
+    Tactical_RapidTrainingSkipFilter = None
 
     # Group `ControlExpOverflow`
     ControlExpOverflow_Enable = True
