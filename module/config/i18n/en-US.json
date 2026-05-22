@@ -1845,18 +1845,6 @@
       "help": "Automatically switch to the next unlearned skill for training",
       "True": "On",
       "False": "Off"
-    },
-    "RedToBlue": {
-      "name": "Replace Red with Blue",
-      "help": "Replace Red books with Blue books in the tactical filter",
-      "True": "On",
-      "False": "Off"
-    },
-    "NoT4": {
-      "name": "Do not use T4 books",
-      "help": "Remove T4 rainbow books from selection",
-      "True": "On",
-      "False": "Off"
     }
   },
   "ControlExpOverflow": {
@@ -3255,6 +3243,44 @@
       "help": "",
       "1": "1",
       "2": "2"
+    },
+    "HardNewMode": {
+      "name": "Balanced Mode",
+      "help": "Rotate stages by blueprint type across days, disable for fixed stage",
+      "True": "On",
+      "False": "Off"
+    },
+    "HardNewChapter": {
+      "name": "Chapter",
+      "help": "Hard mode chapter number, e.g. 13, 14"
+    },
+    "HardNewDD": {
+      "name": "DD Blueprint",
+      "help": "Stage X-1, drops DD retrofit blueprints",
+      "True": "On",
+      "False": "Off"
+    },
+    "HardNewCL": {
+      "name": "CL Blueprint",
+      "help": "Stage X-2, drops CL retrofit blueprints",
+      "True": "On",
+      "False": "Off"
+    },
+    "HardNewBB": {
+      "name": "BB Blueprint",
+      "help": "Stage X-3, drops BB retrofit blueprints",
+      "True": "On",
+      "False": "Off"
+    },
+    "HardNewCV": {
+      "name": "CV Blueprint",
+      "help": "Stage X-4, drops CV retrofit blueprints",
+      "True": "On",
+      "False": "Off"
+    },
+    "HardNewCursor": {
+      "name": "Round-robin Cursor",
+      "help": "Cross-day cursor, auto-managed"
     }
   },
   "Exercise": {
@@ -4400,9 +4426,7 @@
       "CommissionIncomeRecentTitle": "Recent Commissions"
     },
     "Tactical": {
-      "SkillAutoSwitch": "Gui.Tactical.SkillAutoSwitch",
-      "RedToBlue": "Gui.Tactical.RedToBlue",
-      "NoT4": "Gui.Tactical.NoT4"
+      "SkillAutoSwitch": "Gui.Tactical.SkillAutoSwitch"
     },
     "OpsiScheduling": {
       "UseSmartSchedulingOperationCoinsPreserve": "Gui.OpsiScheduling.UseSmartSchedulingOperationCoinsPreserve",
@@ -4420,18 +4444,35 @@
       "Disabled": "Disabled"
     },
     "OOBE": {
+      "ImportTitle": "Import Existing Data",
+      "ImportHint": "If you used AzurPilot or ALAS before, import your old config and continue from there.",
+      "ImportCardTitle": "Keep Your Settings",
+      "ImportCardText": "Import reads an old JSON config, migrates it to the current version, and writes config/alas.json.",
+      "ImportDetected": "Detected Configs",
+      "ImportManual": "Enter path manually",
+      "ImportPath": "Old Config Path",
+      "ImportButton": "Import & Continue",
+      "ImportSkip": "Skip Import",
+      "ImportErrorEmpty": "Select or enter an old config path",
+      "ImportErrorInvalid": "This is not a valid AzurPilot/ALAS config",
+      "ImportErrorFailed": "Import failed",
+      "ImportErrorNoMatch": "No matching files were found under config/ or log/cl1/ in the selected folder",
       "WelcomeTitle": "Welcome to AzurPilot",
       "WelcomeDescription": "Let's set up your first instance.",
       "WelcomeSelectLanguage": "Select your language",
+      "WelcomeHint": "Choose a UI language. AzurPilot will pick a matching default server, and you can still adjust it later.",
       "ServerTitle": "Select Server",
+      "ServerHint": "Choose the Azur Lane server you use so the default package name can be filled in.",
       "ServerCN": "CN Server",
       "ServerEN": "EN Server",
       "ServerJP": "JP Server",
       "ServerTW": "TW Server",
       "EmulatorTitle": "Emulator Setup",
+      "EmulatorHint": "Enter the ADB serial and game package name. The defaults fit common local emulators and can be changed later.",
       "EmulatorSerial": "Emulator Serial / Address",
       "EmulatorPackage": "Package Name",
       "ReviewTitle": "Review & Create",
+      "ReviewHint": "Confirm the details below. After creation, AzurPilot will open the main interface.",
       "ReviewConfigName": "Config Name",
       "ReviewLanguage": "Language",
       "ReviewServer": "Server",

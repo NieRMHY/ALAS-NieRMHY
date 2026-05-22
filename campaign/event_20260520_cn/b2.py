@@ -62,8 +62,7 @@ class Config(ConfigBase):
     MAP_HAS_MODE_SWITCH = True
     STAGE_INCREASE_AB = True
     MAP_WALK_USE_CURRENT_FLEET = True
-    MAP_SIREN_HAS_BOSS_ICON_SMALL = True
-
+    # ===== End of generated config =====
 
 
 class Campaign(CampaignBase):

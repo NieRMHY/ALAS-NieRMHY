@@ -1841,20 +1841,8 @@
       "slot_4": "4番目で使用"
     },
     "SkillAutoSwitch": {
-      "name": "自動スイッチスキル",
-      "help": "未学習のスキルに自動的に切り替えて学習する",
-      "True": "オン",
-      "False": "オフ"
-    },
-    "RedToBlue": {
-      "name": "赤本を青本に置き換え",
-      "help": "戦術学院フィルターの赤本(Red)をすべて青本(Blue)に置き換える",
-      "True": "オン",
-      "False": "オフ"
-    },
-    "NoT4": {
-      "name": "T4教材を使用しない",
-      "help": "T4虹色教材を選択から除外する",
+      "name": "自動スキル切替",
+      "help": "次の未学習スキルに自動的に切り替えて学習します",
       "True": "オン",
       "False": "オフ"
     }
@@ -3255,6 +3243,44 @@
       "help": "",
       "1": "1",
       "2": "2"
+    },
+    "HardNewMode": {
+      "name": "均衡モード",
+      "help": "オンにすると設計図タイプに応じてステージを日替わりローテーション",
+      "True": "オン",
+      "False": "オフ"
+    },
+    "HardNewChapter": {
+      "name": "海域",
+      "help": "ハードモード海域番号、例: 13、14"
+    },
+    "HardNewDD": {
+      "name": "駆逐設計図",
+      "help": "X-1 駆逐艦改造設計図",
+      "True": "オン",
+      "False": "オフ"
+    },
+    "HardNewCL": {
+      "name": "巡洋設計図",
+      "help": "X-2 巡洋艦改造設計図",
+      "True": "オン",
+      "False": "オフ"
+    },
+    "HardNewBB": {
+      "name": "戦列設計図",
+      "help": "X-3 戦列艦改造設計図",
+      "True": "オン",
+      "False": "オフ"
+    },
+    "HardNewCV": {
+      "name": "空母設計図",
+      "help": "X-4 空母改造設計図",
+      "True": "オン",
+      "False": "オフ"
+    },
+    "HardNewCursor": {
+      "name": "ローテーションカウンター",
+      "help": "日替わりローテーション用、自動管理"
     }
   },
   "Exercise": {
@@ -4400,9 +4426,7 @@
       "CommissionIncomeRecentTitle": "Gui.Stat.CommissionIncomeRecentTitle"
     },
     "Tactical": {
-      "SkillAutoSwitch": "Gui.Tactical.SkillAutoSwitch",
-      "RedToBlue": "Gui.Tactical.RedToBlue",
-      "NoT4": "Gui.Tactical.NoT4"
+      "SkillAutoSwitch": "Gui.Tactical.SkillAutoSwitch"
     },
     "OpsiScheduling": {
       "UseSmartSchedulingOperationCoinsPreserve": "Gui.OpsiScheduling.UseSmartSchedulingOperationCoinsPreserve",
@@ -4420,18 +4444,35 @@
       "Disabled": "Disabled"
     },
     "OOBE": {
+      "ImportTitle": "旧データをインポート",
+      "ImportHint": "以前にAzurPilotまたはALASを使っていた場合、旧設定をインポートして続行できます。",
+      "ImportCardTitle": "設定を引き継ぐ",
+      "ImportCardText": "旧JSON設定を読み込み、現在のバージョンへ移行して config/alas.json に保存します。",
+      "ImportDetected": "検出された設定",
+      "ImportManual": "パスを手動入力",
+      "ImportPath": "旧設定のパス",
+      "ImportButton": "インポートして続行",
+      "ImportSkip": "インポートせず続行",
+      "ImportErrorEmpty": "旧設定のパスを選択または入力してください",
+      "ImportErrorInvalid": "有効なAzurPilot/ALAS設定ではありません",
+      "ImportErrorFailed": "インポートに失敗しました",
+      "ImportErrorNoMatch": "選択したフォルダの config/ または log/cl1/ に一致するファイルが見つかりません",
       "WelcomeTitle": "AzurPilotへようこそ",
       "WelcomeDescription": "初期設定を完了しましょう。",
       "WelcomeSelectLanguage": "言語を選択",
+      "WelcomeHint": "UI言語を選択すると、既定のサーバーが自動で設定されます。後から変更できます。",
       "ServerTitle": "サーバーを選択",
+      "ServerHint": "使用しているアズールレーンのサーバーを選択し、既定のパッケージ名を設定します。",
       "ServerCN": "中国大陸版 (CN)",
       "ServerEN": "グローバル版 (EN)",
       "ServerJP": "日本版 (JP)",
       "ServerTW": "台湾版 (TW)",
       "EmulatorTitle": "エミュレータ設定",
+      "EmulatorHint": "ADBシリアル番号とゲームのパッケージ名を入力します。既定値は一般的なローカルエミュレータ向けで、後から変更できます。",
       "EmulatorSerial": "シリアル番号 / アドレス",
       "EmulatorPackage": "パッケージ名",
       "ReviewTitle": "確認して作成",
+      "ReviewHint": "下記の内容を確認してください。作成後、AzurPilotのメイン画面を開きます。",
       "ReviewConfigName": "設定名",
       "ReviewLanguage": "言語",
       "ReviewServer": "サーバー",

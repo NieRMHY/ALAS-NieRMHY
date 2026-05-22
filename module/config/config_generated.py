@@ -345,11 +345,9 @@ class GeneratedConfig:
     Commission_DoMajorCommission = False
 
     # Group `Tactical`
-    Tactical_TacticalFilter = 'SameT4 > SameT3 > SameT2 > SameT1\n> BlueT3 > YellowT3 > RedT3\n> BlueT2 > YellowT2 > RedT2\n> BlueT4 > YellowT4 > RedT4\n> BlueT1 > YellowT1 > RedT1\n> first'
+    Tactical_TacticalFilter = 'SameT4 > SameT3 > SameT2 > SameT1\n> BlueT2 > YellowT2 > RedT2\n> BlueT3 > YellowT3 > RedT3\n> BlueT4 > YellowT4 > RedT4\n> BlueT1 > YellowT1 > RedT1\n> first'
     Tactical_RapidTrainingSlot = 'do_not_use'  # do_not_use, slot_1, slot_2, slot_3, slot_4
     Tactical_SkillAutoSwitch = True  # True, False
-    Tactical_RedToBlue = False  # True, False
-    Tactical_NoT4 = False  # True, False
 
     # Group `ControlExpOverflow`
     ControlExpOverflow_Enable = True
@@ -660,6 +658,13 @@ class GeneratedConfig:
     # Group `Hard`
     Hard_HardStage = '11-4'
     Hard_HardFleet = 1  # 1, 2
+    Hard_HardNewMode = False  # True, False
+    Hard_HardNewChapter = 14
+    Hard_HardNewDD = True  # True, False
+    Hard_HardNewCL = True  # True, False
+    Hard_HardNewBB = True  # True, False
+    Hard_HardNewCV = True  # True, False
+    Hard_HardNewCursor = 0
 
     # Group `Exercise`
     Exercise_DelayUntilHoursBeforeNextUpdate = 12  # 1, 2, 3, 4, 5, 12

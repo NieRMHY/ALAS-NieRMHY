@@ -1845,18 +1845,6 @@
       "help": "自动切换到下一个尚未学习的技能进行学习",
       "True": "开启",
       "False": "关闭"
-    },
-    "RedToBlue": {
-      "name": "蓝书代替红书使用",
-      "help": "开启后将战术学院过滤器中的蓝书代替红书使用",
-      "True": "开启",
-      "False": "关闭"
-    },
-    "NoT4": {
-      "name": "不使用T4教材",
-      "help": "从选择中排除T4彩色教材",
-      "True": "开启",
-      "False": "关闭"
     }
   },
   "ControlExpOverflow": {
@@ -3255,6 +3243,44 @@
       "help": "",
       "1": "1",
       "2": "2"
+    },
+    "HardNewMode": {
+      "name": "均衡模式",
+      "help": "开启后按图纸类型跨天轮转刷图，关闭则固定单关",
+      "True": "开启",
+      "False": "关闭"
+    },
+    "HardNewChapter": {
+      "name": "海域",
+      "help": "困难图海域编号，如 13、14"
+    },
+    "HardNewDD": {
+      "name": "驱逐图纸",
+      "help": "X-1 关卡，产出驱逐改造图纸",
+      "True": "开启",
+      "False": "关闭"
+    },
+    "HardNewCL": {
+      "name": "巡洋图纸",
+      "help": "X-2 关卡，产出巡洋改造图纸",
+      "True": "开启",
+      "False": "关闭"
+    },
+    "HardNewBB": {
+      "name": "战列图纸",
+      "help": "X-3 关卡，产出战列改造图纸",
+      "True": "开启",
+      "False": "关闭"
+    },
+    "HardNewCV": {
+      "name": "航母图纸",
+      "help": "X-4 关卡，产出航母改造图纸",
+      "True": "开启",
+      "False": "关闭"
+    },
+    "HardNewCursor": {
+      "name": "轮次指针",
+      "help": "跨天轮转指针，自动管理无需手动修改"
     }
   },
   "Exercise": {
@@ -4400,9 +4426,7 @@
       "CommissionIncomeRecentTitle": "最近委托记录"
     },
     "Tactical": {
-      "SkillAutoSwitch": "Gui.Tactical.SkillAutoSwitch",
-      "RedToBlue": "Gui.Tactical.RedToBlue",
-      "NoT4": "Gui.Tactical.NoT4"
+      "SkillAutoSwitch": "Gui.Tactical.SkillAutoSwitch"
     },
     "OpsiScheduling": {
       "UseSmartSchedulingOperationCoinsPreserve": "Gui.OpsiScheduling.UseSmartSchedulingOperationCoinsPreserve",
@@ -4420,18 +4444,35 @@
       "Disabled": "未开启"
     },
     "OOBE": {
+      "ImportTitle": "导入旧数据",
+      "ImportHint": "如果你以前使用过 AzurPilot 或 ALAS，可以直接导入旧配置继续使用。",
+      "ImportCardTitle": "保留旧设置",
+      "ImportCardText": "导入会读取旧的 JSON 配置，迁移到当前版本后写入 config/alas.json。",
+      "ImportDetected": "检测到的旧配置",
+      "ImportManual": "手动输入路径",
+      "ImportPath": "旧配置路径",
+      "ImportButton": "导入并继续",
+      "ImportSkip": "不导入，继续设置",
+      "ImportErrorEmpty": "请选择或填写旧配置路径",
+      "ImportErrorInvalid": "这不是有效的 AzurPilot/ALAS 配置",
+      "ImportErrorFailed": "导入失败",
+      "ImportErrorNoMatch": "所选文件夹中没有找到 config/ 或 log/cl1/ 下的匹配文件",
       "WelcomeTitle": "欢迎使用 AzurPilot",
       "WelcomeDescription": "让我们完成初次设置。",
       "WelcomeSelectLanguage": "选择语言",
+      "WelcomeHint": "选择界面语言后会自动匹配默认服务器，后续仍可调整。",
       "ServerTitle": "选择服务器",
+      "ServerHint": "选择你正在运行的碧蓝航线服务器，用于写入默认包名。",
       "ServerCN": "国服",
       "ServerEN": "国际服 (EN)",
       "ServerJP": "日服 (JP)",
       "ServerTW": "台服 (TW)",
       "EmulatorTitle": "模拟器设置",
+      "EmulatorHint": "填写 ADB 序列号和游戏包名。默认值适合常见本地模拟器，可之后在设置中修改。",
       "EmulatorSerial": "模拟器ID",
       "EmulatorPackage": "包名",
       "ReviewTitle": "确认并创建",
+      "ReviewHint": "确认下面的信息，创建后会进入 AzurPilot 主界面。",
       "ReviewConfigName": "配置名称",
       "ReviewLanguage": "语言",
       "ReviewServer": "服务器",

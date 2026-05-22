@@ -7,11 +7,12 @@ MAP = CampaignMap('SP')
 MAP.shape = 'I10'
 MAP.camera_data = ['D6', 'D8']
 MAP.camera_data_spawn_point = ['D6']
+# Big pillar at E4, block D4 F4 to block the upper part of map
 MAP.map_data = """
     -- -- -- ++ ++ ++ -- -- --
     -- ++ -- -- -- -- -- ++ --
     -- -- -- -- -- -- -- -- --
-    ++ ++ ++ -- ++ -- ++ ++ ++
+    ++ ++ ++ ++ ++ ++ ++ ++ ++
     -- -- ME SP -- SP ME -- --
     -- -- -- -- __ -- -- -- --
     -- -- ME -- MS -- ME -- --
@@ -64,18 +65,24 @@ class Config:
     MAP_HAS_FLEET_STEP = True
     MAP_HAS_AMBUSH = False
     MAP_HAS_MYSTERY = False
-    STAR_REQUIRE_1 = 0
-    STAR_REQUIRE_2 = 0
-    STAR_REQUIRE_3 = 0
-    # ===== End of generated config =====
-
     MAP_CHAPTER_SWITCH_20241219 = True
     STAGE_ENTRANCE = ['half', '20240725']
     MAP_HAS_MODE_SWITCH = False
     STAGE_INCREASE_AB = True
     MAP_WALK_USE_CURRENT_FLEET = True
+    STAR_REQUIRE_1 = 0
+    STAR_REQUIRE_2 = 0
+    STAR_REQUIRE_3 = 0
+    # ===== End of generated config =====
+
     MAP_IS_ONE_TIME_STAGE = True
     MAP_SIREN_HAS_BOSS_ICON_SMALL = True
+    HOMO_STORAGE = ((8, 6), [(137.405, 104.804), (1046.044, 104.804), (-12.171, 652.093), (1166.717, 652.093)])
+    HOMO_EDGE_HOUGHLINES_THRESHOLD = 210
+    MAP_ENSURE_EDGE_INSIGHT_CORNER = 'bottom'
+    MAP_SWIPE_MULTIPLY = (1.071, 1.091)
+    MAP_SWIPE_MULTIPLY_MINITOUCH = (1.036, 1.055)
+    MAP_SWIPE_MULTIPLY_MAATOUCH = (1.006, 1.024)
 
 
 class Campaign(CampaignBase):

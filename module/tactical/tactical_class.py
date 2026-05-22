@@ -405,22 +405,8 @@ class RewardTacticalClass(Dock):
             self._tactical_books_filter_exp()
 
             # Apply configuration filter, does not modify self.books
-            tactical_filter = self.config.Tactical_TacticalFilter
-            if self.config.Tactical_RedToBlue:
-                logger.info('Replacing Red with Blue in tactical filter')
-                tactical_filter = tactical_filter.replace('Red', 'Blue')
-            BOOK_FILTER.load(tactical_filter)
+            BOOK_FILTER.load(self.config.Tactical_TacticalFilter)
             books = BOOK_FILTER.apply(self.books.grids)
-            if self.config.Tactical_RedToBlue:
-                before = len(books)
-                books = [b for b in books if not hasattr(b, 'genre_str') or b.genre_str != 'Red']
-                if len(books) < before:
-                    logger.info(f'Removed {before - len(books)} Red book(s) from selection')
-            if self.config.Tactical_NoT4:
-                before = len(books)
-                books = [b for b in books if not hasattr(b, 'tier_str') or b.tier_str != 'T4']
-                if len(books) < before:
-                    logger.info(f'Removed {before - len(books)} T4 book(s) from selection')
             logger.attr('Book_sort', ' > '.join([str(book) for book in books]))
 
             # Choose applicable book if any

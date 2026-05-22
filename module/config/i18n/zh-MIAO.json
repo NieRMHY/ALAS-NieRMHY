@@ -1841,22 +1841,10 @@
       "slot_4": "使用于4号位喵"
     },
     "SkillAutoSwitch": {
-      "name": "自动切换技能",
-      "help": "自动切换到下一个尚未学习的技能进行学习",
-      "True": "开启",
-      "False": "关闭"
-    },
-    "RedToBlue": {
-      "name": "蓝书代替红书使用",
-      "help": "开启后将战术学院过滤器中的蓝书代替红书使用",
-      "True": "开启",
-      "False": "关闭"
-    },
-    "NoT4": {
-      "name": "不使用T4教材",
-      "help": "从选择中排除T4彩色教材",
-      "True": "开启",
-      "False": "关闭"
+      "name": "自动换技能喵",
+      "help": "自动换到下一个还没学完的技能继续学喵",
+      "True": "开启喵",
+      "False": "关闭喵"
     }
   },
   "ControlExpOverflow": {
@@ -3255,6 +3243,44 @@
       "help": "",
       "1": "1喵",
       "2": "2喵"
+    },
+    "HardNewMode": {
+      "name": "均衡模式",
+      "help": "开启后按图纸类型跨天轮转刷图，关闭则固定单关喵",
+      "True": "开启",
+      "False": "关闭"
+    },
+    "HardNewChapter": {
+      "name": "海域",
+      "help": "困难图海域编号，如 13、14"
+    },
+    "HardNewDD": {
+      "name": "驱逐图纸",
+      "help": "X-1 关卡，产出驱逐改造图纸喵",
+      "True": "开启",
+      "False": "关闭"
+    },
+    "HardNewCL": {
+      "name": "巡洋图纸",
+      "help": "X-2 关卡，产出巡洋改造图纸喵",
+      "True": "开启",
+      "False": "关闭"
+    },
+    "HardNewBB": {
+      "name": "战列图纸",
+      "help": "X-3 关卡，产出战列改造图纸喵",
+      "True": "开启",
+      "False": "关闭"
+    },
+    "HardNewCV": {
+      "name": "航母图纸",
+      "help": "X-4 关卡，产出航母改造图纸喵",
+      "True": "开启",
+      "False": "关闭"
+    },
+    "HardNewCursor": {
+      "name": "轮次指针",
+      "help": "跨天轮转指针，自动管理无需手动修改喵"
     }
   },
   "Exercise": {
@@ -4400,9 +4426,7 @@
       "CommissionIncomeRecentTitle": "最近委托记录喵"
     },
     "Tactical": {
-      "SkillAutoSwitch": "Gui.Tactical.SkillAutoSwitch",
-      "RedToBlue": "Gui.Tactical.RedToBlue",
-      "NoT4": "Gui.Tactical.NoT4"
+      "SkillAutoSwitch": "Gui.Tactical.SkillAutoSwitch"
     },
     "OpsiScheduling": {
       "UseSmartSchedulingOperationCoinsPreserve": "获取X个凭证喵",
@@ -4420,18 +4444,35 @@
       "Disabled": "未开启喵"
     },
     "OOBE": {
+      "ImportTitle": "导入旧数据喵",
+      "ImportHint": "如果以前用过 AzurPilot 或 ALAS，可以直接导入旧配置继续用喵。",
+      "ImportCardTitle": "保留旧设置喵",
+      "ImportCardText": "会读取旧 JSON 配置，迁移到当前版本后写入 config/alas.json 喵。",
+      "ImportDetected": "检测到的旧配置喵",
+      "ImportManual": "手动输入路径喵",
+      "ImportPath": "旧配置路径喵",
+      "ImportButton": "导入并继续喵",
+      "ImportSkip": "不导入，继续设置喵",
+      "ImportErrorEmpty": "请选择或填写旧配置路径喵",
+      "ImportErrorInvalid": "这不是有效的 AzurPilot/ALAS 配置喵",
+      "ImportErrorFailed": "导入失败喵",
+      "ImportErrorNoMatch": "所选文件夹中没有找到 config/ 或 log/cl1/ 下的匹配文件喵",
       "WelcomeTitle": "欢迎使用 ALAS 喵！(｡>﹏<｡)",
       "WelcomeDescription": "指挥官，快来和雪风一起完成初次设置喵~ (ฅ´ω`ฅ)",
       "WelcomeSelectLanguage": "选择哪种语言喵？(･ω･)ﾉ",
+      "WelcomeHint": "选好语言后会自动匹配默认服务器喵，后面还能再改喵~",
       "ServerTitle": "选择要去的服务器喵 (=^･ω･^=)",
+      "ServerHint": "选择正在玩的碧蓝航线服务器喵，会帮你填好默认包名喵。",
       "ServerCN": "国服喵 (｀・ω・´)",
       "ServerEN": "国际服 (EN) 喵",
       "ServerJP": "日服 (JP) 喵",
       "ServerTW": "台服 (TW) 喵",
       "EmulatorTitle": "模拟器设置板板 (´-ω-`)",
+      "EmulatorHint": "填上 ADB 序列号和游戏包名喵，默认值适合常见本地模拟器喵。",
       "EmulatorSerial": "模拟器序列号 / 地址喵 (。・ω・。)",
       "EmulatorPackage": "包名选择喵",
       "ReviewTitle": "确认并创建喵！(๑•̀ㅂ•́)و✧",
+      "ReviewHint": "确认下面的信息喵，创建完成后就进入 AzurPilot 主界面喵。",
       "ReviewConfigName": "配置名称喵",
       "ReviewLanguage": "语言喵",
       "ReviewServer": "服务器喵",
