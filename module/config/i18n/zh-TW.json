@@ -1845,22 +1845,6 @@
       "help": "自動切換到下一個尚未學習的技能進行學習",
       "True": "開啟",
       "False": "關閉"
-    },
-    "RedToBlue": {
-      "name": "藍書代替紅書使用",
-      "help": "開啟後將戰術學院過濾器中的藍書代替紅書使用",
-      "True": "開啟",
-      "False": "關閉"
-    },
-    "NoT4": {
-      "name": "不使用T4教材",
-      "help": "從選擇中排除T4彩色教材",
-      "True": "開啟",
-      "False": "關閉"
-    },
-    "RapidTrainingSkipFilter": {
-      "name": "指定學習槽位跳過",
-      "help": "指定哪些學習槽位跳過「藍書代替紅書」和「不使用T4教材」過濾，多個用逗號分隔，如 1,3，置空不跳過"
     }
   },
   "ControlExpOverflow": {
@@ -4404,10 +4388,7 @@
       "CommissionIncomeRecentTitle": "Gui.Stat.CommissionIncomeRecentTitle"
     },
     "Tactical": {
-      "SkillAutoSwitch": "Gui.Tactical.SkillAutoSwitch",
-      "RedToBlue": "Gui.Tactical.RedToBlue",
-      "NoT4": "Gui.Tactical.NoT4",
-      "RapidTrainingSkipFilter": "Gui.Tactical.RapidTrainingSkipFilter"
+      "SkillAutoSwitch": "Gui.Tactical.SkillAutoSwitch"
     },
     "OpsiScheduling": {
       "UseSmartSchedulingOperationCoinsPreserve": "Gui.OpsiScheduling.UseSmartSchedulingOperationCoinsPreserve",
@@ -4425,18 +4406,35 @@
       "Disabled": "未開啟"
     },
     "OOBE": {
+      "ImportTitle": "匯入舊資料",
+      "ImportHint": "如果你以前使用過 AzurPilot 或 ALAS，可以直接匯入舊設定繼續使用。",
+      "ImportCardTitle": "保留舊設定",
+      "ImportCardText": "匯入會讀取舊的 JSON 設定，遷移到目前版本後寫入 config/alas.json。",
+      "ImportDetected": "偵測到的舊設定",
+      "ImportManual": "手動輸入路徑",
+      "ImportPath": "舊設定路徑",
+      "ImportButton": "匯入並繼續",
+      "ImportSkip": "不匯入，繼續設定",
+      "ImportErrorEmpty": "請選擇或填寫舊設定路徑",
+      "ImportErrorInvalid": "這不是有效的 AzurPilot/ALAS 設定",
+      "ImportErrorFailed": "匯入失敗",
+      "ImportErrorNoMatch": "所選資料夾中沒有找到 config/ 或 log/cl1/ 下的匹配檔案",
       "WelcomeTitle": "歡迎使用 AzurPilot",
       "WelcomeDescription": "讓我們完成初次設定。",
       "WelcomeSelectLanguage": "選擇語言",
+      "WelcomeHint": "選擇介面語言後會自動匹配預設伺服器，之後仍可調整。",
       "ServerTitle": "選擇伺服器",
+      "ServerHint": "選擇你正在執行的碧藍航線伺服器，用於寫入預設包名。",
       "ServerCN": "國服",
       "ServerEN": "國際服 (EN)",
       "ServerJP": "日服 (JP)",
       "ServerTW": "台服 (TW)",
       "EmulatorTitle": "模擬器設定",
+      "EmulatorHint": "填寫 ADB 序號和遊戲包名。預設值適合常見本機模擬器，可之後在設定中修改。",
       "EmulatorSerial": "模擬器序號 / 位址",
       "EmulatorPackage": "包名",
       "ReviewTitle": "確認並建立",
+      "ReviewHint": "確認下方資訊，建立後會進入 AzurPilot 主介面。",
       "ReviewConfigName": "設定名稱",
       "ReviewLanguage": "語言",
       "ReviewServer": "伺服器",

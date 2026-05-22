@@ -154,7 +154,7 @@ const createWindow = async () => {
       }
     }
   ]);
-  tray.setToolTip('Alas');
+  tray.setToolTip('AzurPilot');
   tray.setContextMenu(contextMenu);
   tray.on('click', () => {
     mainWindow?.isVisible() ? mainWindow?.hide() : mainWindow?.show()

@@ -9668,7 +9668,7 @@
     "Tactical": {
       "TacticalFilter": {
         "type": "textarea",
-        "value": "SameT4 > SameT3 > SameT2 > SameT1\n> BlueT3 > YellowT3 > RedT3\n> BlueT2 > YellowT2 > RedT2\n> BlueT4 > YellowT4 > RedT4\n> BlueT1 > YellowT1 > RedT1\n> first"
+        "value": "SameT4 > SameT3 > SameT2 > SameT1\n> BlueT2 > YellowT2 > RedT2\n> BlueT3 > YellowT3 > RedT3\n> BlueT4 > YellowT4 > RedT4\n> BlueT1 > YellowT1 > RedT1\n> first"
       },
       "RapidTrainingSlot": {
         "type": "select",
@@ -9688,26 +9688,6 @@
           true,
           false
         ]
-      },
-      "RedToBlue": {
-        "type": "checkbox",
-        "value": false,
-        "option": [
-          true,
-          false
-        ]
-      },
-      "NoT4": {
-        "type": "checkbox",
-        "value": false,
-        "option": [
-          true,
-          false
-        ]
-      },
-      "RapidTrainingSkipFilter": {
-        "type": "textarea",
-        "value": ""
       }
     },
     "ControlExpOverflow": {

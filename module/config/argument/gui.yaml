@@ -279,9 +279,6 @@ Stat:
 
 Tactical:
   SkillAutoSwitch:
-  RedToBlue:
-  NoT4:
-  RapidTrainingSkipFilter:
 
 OpsiScheduling:
   UseSmartSchedulingOperationCoinsPreserve:
@@ -300,18 +297,35 @@ Misc:
   Disabled:
 
 OOBE:
+  ImportTitle:
+  ImportHint:
+  ImportCardTitle:
+  ImportCardText:
+  ImportDetected:
+  ImportManual:
+  ImportPath:
+  ImportButton:
+  ImportSkip:
+  ImportErrorEmpty:
+  ImportErrorInvalid:
+  ImportErrorFailed:
+  ImportErrorNoMatch:
   WelcomeTitle:
   WelcomeDescription:
   WelcomeSelectLanguage:
+  WelcomeHint:
   ServerTitle:
+  ServerHint:
   ServerCN:
   ServerEN:
   ServerJP:
   ServerTW:
   EmulatorTitle:
+  EmulatorHint:
   EmulatorSerial:
   EmulatorPackage:
   ReviewTitle:
+  ReviewHint:
   ReviewConfigName:
   ReviewLanguage:
   ReviewServer:

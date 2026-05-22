@@ -586,8 +586,8 @@ Commission:
 Tactical:
   TacticalFilter: |-
     SameT4 > SameT3 > SameT2 > SameT1
-    > BlueT3 > YellowT3 > RedT3
     > BlueT2 > YellowT2 > RedT2
+    > BlueT3 > YellowT3 > RedT3
     > BlueT4 > YellowT4 > RedT4
     > BlueT1 > YellowT1 > RedT1
     > first
@@ -598,15 +598,6 @@ Tactical:
     type: checkbox
     value: true
     option: [true, false]
-  RedToBlue:
-    type: checkbox
-    value: false
-    option: [true, false]
-  NoT4:
-    type: checkbox
-    value: false
-    option: [true, false]
-  RapidTrainingSkipFilter: ''
 ControlExpOverflow:
   Enable: true
   T4Allow: 100

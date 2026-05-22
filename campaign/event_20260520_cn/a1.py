@@ -6,7 +6,7 @@ from module.logger import logger
 MAP = CampaignMap('A1')
 MAP.shape = 'I8'
 MAP.camera_data = ['D2', 'D6', 'F2', 'F6']
-MAP.camera_data_spawn_point = ['D2', 'F2']
+MAP.camera_data_spawn_point = ['D2']
 MAP.map_data = """
     -- -- -- SP -- SP -- -- --
     -- ME ++ -- -- -- -- ME --
@@ -60,8 +60,13 @@ class Config:
     MAP_HAS_MODE_SWITCH = True
     STAGE_INCREASE_AB = True
     MAP_WALK_USE_CURRENT_FLEET = True
-    MAP_SIREN_HAS_BOSS_ICON_SMALL = True
+    # ===== End of generated config =====
 
+    MAP_SIREN_HAS_BOSS_ICON_SMALL = True
+    HOMO_EDGE_HOUGHLINES_THRESHOLD = 210
+    MAP_SWIPE_MULTIPLY = (1.238, 1.261)
+    MAP_SWIPE_MULTIPLY_MINITOUCH = (1.197, 1.219)
+    MAP_SWIPE_MULTIPLY_MAATOUCH = (1.162, 1.183)
 
 
 class Campaign(CampaignBase):

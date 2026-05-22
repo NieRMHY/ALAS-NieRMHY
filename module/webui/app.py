@@ -4440,7 +4440,7 @@ class AlasGUI(Frame):
 
     def run(self) -> None:
         # setup gui
-        set_env(title="Alas", output_animation=False)
+        set_env(title="AzurPilot", output_animation=False)
         run_js(
             "document.head.append(Object.assign(document.createElement('link'), { rel: 'manifest', href: '/static/assets/spa/manifest.json' }))"
         )
@@ -4780,7 +4780,7 @@ def app_manage():
             scope="config_table",
         )
 
-    set_env(title="Alas", output_animation=False)
+    set_env(title="AzurPilot", output_animation=False)
     run_js("$('head').append('<style>.footer{display:none}</style>')")
 
     put_html(build_app_manage_title(t("Gui.AppManage.PageTitle")))

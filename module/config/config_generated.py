@@ -345,12 +345,9 @@ class GeneratedConfig:
     Commission_DoMajorCommission = False
 
     # Group `Tactical`
-    Tactical_TacticalFilter = 'SameT4 > SameT3 > SameT2 > SameT1\n> BlueT3 > YellowT3 > RedT3\n> BlueT2 > YellowT2 > RedT2\n> BlueT4 > YellowT4 > RedT4\n> BlueT1 > YellowT1 > RedT1\n> first'
+    Tactical_TacticalFilter = 'SameT4 > SameT3 > SameT2 > SameT1\n> BlueT2 > YellowT2 > RedT2\n> BlueT3 > YellowT3 > RedT3\n> BlueT4 > YellowT4 > RedT4\n> BlueT1 > YellowT1 > RedT1\n> first'
     Tactical_RapidTrainingSlot = 'do_not_use'  # do_not_use, slot_1, slot_2, slot_3, slot_4
     Tactical_SkillAutoSwitch = True  # True, False
-    Tactical_RedToBlue = False  # True, False
-    Tactical_NoT4 = False  # True, False
-    Tactical_RapidTrainingSkipFilter = None
 
     # Group `ControlExpOverflow`
     ControlExpOverflow_Enable = True
