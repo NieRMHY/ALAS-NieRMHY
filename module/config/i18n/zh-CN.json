@@ -3243,6 +3243,44 @@
       "help": "",
       "1": "1",
       "2": "2"
+    },
+    "HardNewMode": {
+      "name": "均衡模式",
+      "help": "开启后按图纸类型跨天轮转刷图，关闭则固定单关",
+      "True": "开启",
+      "False": "关闭"
+    },
+    "HardNewChapter": {
+      "name": "海域",
+      "help": "困难图海域编号，如 13、14"
+    },
+    "HardNewDD": {
+      "name": "驱逐图纸",
+      "help": "X-1 关卡，产出驱逐改造图纸",
+      "True": "开启",
+      "False": "关闭"
+    },
+    "HardNewCL": {
+      "name": "巡洋图纸",
+      "help": "X-2 关卡，产出巡洋改造图纸",
+      "True": "开启",
+      "False": "关闭"
+    },
+    "HardNewBB": {
+      "name": "战列图纸",
+      "help": "X-3 关卡，产出战列改造图纸",
+      "True": "开启",
+      "False": "关闭"
+    },
+    "HardNewCV": {
+      "name": "航母图纸",
+      "help": "X-4 关卡，产出航母改造图纸",
+      "True": "开启",
+      "False": "关闭"
+    },
+    "HardNewCursor": {
+      "name": "轮次指针",
+      "help": "跨天轮转指针，自动管理无需手动修改"
     }
   },
   "Exercise": {

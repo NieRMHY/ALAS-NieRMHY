@@ -1043,6 +1043,28 @@ Hard:
   HardFleet:
     value: 1
     option: [1, 2]
+  HardNewMode:                 # Add by MHY, 困难图均衡模式开关
+    type: checkbox
+    value: false
+    option: [true, false]
+  HardNewChapter: 14           # Add by MHY, 均衡模式海域选择
+  HardNewDD:                   # Add by MHY, 驱逐改造图纸
+    type: checkbox
+    value: true
+    option: [true, false]
+  HardNewCL:                   # Add by MHY, 巡洋改造图纸
+    type: checkbox
+    value: true
+    option: [true, false]
+  HardNewBB:                   # Add by MHY, 战列改造图纸
+    type: checkbox
+    value: true
+    option: [true, false]
+  HardNewCV:                   # Add by MHY, 航母改造图纸
+    type: checkbox
+    value: true
+    option: [true, false]
+  HardNewCursor: 0             # Add by MHY, 跨天轮次指针(自动管理)
 Exercise:
   DelayUntilHoursBeforeNextUpdate:
     value: 12

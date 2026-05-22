@@ -14,7 +14,7 @@
 | 来源 | 说明 |
 | --- | --- |
 | [LmeSzinc/AzurLaneAutoScript](https://github.com/LmeSzinc/AzurLaneAutoScript) | 官方原项目 |
-| [wess09/AzurLaneAutoScript](https://github.com/wess09/AzurLaneAutoScript) | 上游 AzurPilot 分支 |
+| [wess09/AzurPilot](https://github.com/wess09/AzurPilot) | 上游 AzurPilot 分支 |
 | [雪风源](https://gitee.com/wqeaxc/AzurLaneAutoScriptyukikaze21) | 雪风分支 |
 | [nanoda](https://alas.nanoda.work/download.html) | AzurPilot 发布分支 |
 | [Alas-with-Dashboard](https://github.com/Zuosizhu/Alas-with-Dashboard) | WebUI 面板部分功能 |
@@ -30,6 +30,7 @@
 - **截图预览修复** — 修复 Device 初始化时 `screenshot_queue` 参数冲突导致截图预览失败
 - **LLM 分析移除** — 移除 LLM 错误分析功能，禁用不必要的外部 API 连接
 - **PT 识别兼容** — 适配「×PT」样式的活动点数识别
+- **困难图均衡模式** — 新增均衡刷图开关，支持按图纸类型（驱逐/巡洋/战列/航母）选择关卡，跨天轮转分配每日3次困难次数，避免单一图纸偏科
 
 ## 许可证
 

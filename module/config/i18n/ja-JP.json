@@ -3243,6 +3243,44 @@
       "help": "",
       "1": "1",
       "2": "2"
+    },
+    "HardNewMode": {
+      "name": "均衡モード",
+      "help": "オンにすると設計図タイプに応じてステージを日替わりローテーション",
+      "True": "オン",
+      "False": "オフ"
+    },
+    "HardNewChapter": {
+      "name": "海域",
+      "help": "ハードモード海域番号、例: 13、14"
+    },
+    "HardNewDD": {
+      "name": "駆逐設計図",
+      "help": "X-1 駆逐艦改造設計図",
+      "True": "オン",
+      "False": "オフ"
+    },
+    "HardNewCL": {
+      "name": "巡洋設計図",
+      "help": "X-2 巡洋艦改造設計図",
+      "True": "オン",
+      "False": "オフ"
+    },
+    "HardNewBB": {
+      "name": "戦列設計図",
+      "help": "X-3 戦列艦改造設計図",
+      "True": "オン",
+      "False": "オフ"
+    },
+    "HardNewCV": {
+      "name": "空母設計図",
+      "help": "X-4 空母改造設計図",
+      "True": "オン",
+      "False": "オフ"
+    },
+    "HardNewCursor": {
+      "name": "ローテーションカウンター",
+      "help": "日替わりローテーション用、自動管理"
     }
   },
   "Exercise": {

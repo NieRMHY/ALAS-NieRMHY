@@ -10976,6 +10976,54 @@
           1,
           2
         ]
+      },
+      "HardNewMode": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "HardNewChapter": {
+        "type": "input",
+        "value": 14
+      },
+      "HardNewDD": {
+        "type": "checkbox",
+        "value": true,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "HardNewCL": {
+        "type": "checkbox",
+        "value": true,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "HardNewBB": {
+        "type": "checkbox",
+        "value": true,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "HardNewCV": {
+        "type": "checkbox",
+        "value": true,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "HardNewCursor": {
+        "type": "input",
+        "value": 0
       }
     },
     "Storage": {

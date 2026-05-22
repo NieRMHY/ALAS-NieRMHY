@@ -3243,6 +3243,44 @@
       "help": "",
       "1": "1",
       "2": "2"
+    },
+    "HardNewMode": {
+      "name": "Balanced Mode",
+      "help": "Rotate stages by blueprint type across days, disable for fixed stage",
+      "True": "On",
+      "False": "Off"
+    },
+    "HardNewChapter": {
+      "name": "Chapter",
+      "help": "Hard mode chapter number, e.g. 13, 14"
+    },
+    "HardNewDD": {
+      "name": "DD Blueprint",
+      "help": "Stage X-1, drops DD retrofit blueprints",
+      "True": "On",
+      "False": "Off"
+    },
+    "HardNewCL": {
+      "name": "CL Blueprint",
+      "help": "Stage X-2, drops CL retrofit blueprints",
+      "True": "On",
+      "False": "Off"
+    },
+    "HardNewBB": {
+      "name": "BB Blueprint",
+      "help": "Stage X-3, drops BB retrofit blueprints",
+      "True": "On",
+      "False": "Off"
+    },
+    "HardNewCV": {
+      "name": "CV Blueprint",
+      "help": "Stage X-4, drops CV retrofit blueprints",
+      "True": "On",
+      "False": "Off"
+    },
+    "HardNewCursor": {
+      "name": "Round-robin Cursor",
+      "help": "Cross-day cursor, auto-managed"
     }
   },
   "Exercise": {

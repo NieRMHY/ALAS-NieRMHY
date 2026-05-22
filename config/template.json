@@ -2167,7 +2167,14 @@
     },
     "Hard": {
       "HardStage": "11-4",
-      "HardFleet": 1
+      "HardFleet": 1,
+      "HardNewMode": false,
+      "HardNewChapter": 14,
+      "HardNewDD": true,
+      "HardNewCL": true,
+      "HardNewBB": true,
+      "HardNewCV": true,
+      "HardNewCursor": 0
     },
     "Storage": {
       "Storage": {}

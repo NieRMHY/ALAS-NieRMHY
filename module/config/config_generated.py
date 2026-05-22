@@ -658,6 +658,13 @@ class GeneratedConfig:
     # Group `Hard`
     Hard_HardStage = '11-4'
     Hard_HardFleet = 1  # 1, 2
+    Hard_HardNewMode = False  # True, False
+    Hard_HardNewChapter = 14
+    Hard_HardNewDD = True  # True, False
+    Hard_HardNewCL = True  # True, False
+    Hard_HardNewBB = True  # True, False
+    Hard_HardNewCV = True  # True, False
+    Hard_HardNewCursor = 0
 
     # Group `Exercise`
     Exercise_DelayUntilHoursBeforeNextUpdate = 12  # 1, 2, 3, 4, 5, 12
