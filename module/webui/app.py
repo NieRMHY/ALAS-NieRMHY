@@ -486,6 +486,29 @@ class AlasGUI(Frame):
             from datetime import datetime as _dt
             import json as _json
 
+            def _get_cl5_efficiency():
+                default = 1700.0 / 30.0
+                try:
+                    config = getattr(self, "alas_config", None)
+                    if config is None or not hasattr(config, "cross_get"):
+                        return default
+                    meow5_coin = config.cross_get(
+                        "OpsiSimulator.OpsiSimulatorParameters.Meow5Coin"
+                    )
+                    if meow5_coin is not None:
+                        meow5_coin_float = float(meow5_coin)
+                        if meow5_coin_float > 0:
+                            return meow5_coin_float / 30.0
+                except (AttributeError, TypeError, ValueError):
+                    pass
+                return default
+
+            def _snapshot_float(point, key):
+                value = point.get(key)
+                if value is None:
+                    return None
+                return float(value)
+
             raw_points = []
             for pt in timeline:
                 ts_raw = pt.get("ts", "")
@@ -775,21 +798,39 @@ class AlasGUI(Frame):
 
             # Process virtual asset timeline
             if virtual_asset_timeline and current_view in ("line", "detail"):
+                from calendar import monthrange as _monthrange
+
                 for pt in virtual_asset_timeline:
                     ts_raw = pt.get("ts", "")
-                    va_val = pt.get("virtual_asset")
-                    a_val = pt.get("asset")
-                    if ts_raw and va_val is not None:
+                    if ts_raw:
                         try:
-                            va_val = float(va_val)
                             va_dt = _dt.fromisoformat(ts_raw)
-                            virtual_asset_list.append(va_val)
+                            asset_value = _snapshot_float(pt, "asset")
+                            virtual_asset_value = _snapshot_float(pt, "virtual_asset")
+                            if asset_value is None:
+                                ap_for_asset = int(pt.get("ap_total", pt.get("ap", 0)) or 0)
+                                yellow_coin_for_asset = int(pt.get("yellow_coin", 0) or 0)
+                                asset_value = (
+                                    ap_for_asset * _get_cl5_efficiency()
+                                    + yellow_coin_for_asset
+                                )
+                            if virtual_asset_value is None:
+                                month_end = va_dt.replace(
+                                    day=_monthrange(va_dt.year, va_dt.month)[1],
+                                    hour=23,
+                                    minute=59,
+                                    second=59,
+                                    microsecond=0,
+                                )
+                                virtual_asset_value = asset_value + max(
+                                    0,
+                                    (month_end - va_dt).total_seconds(),
+                                ) / 600.0 * _get_cl5_efficiency()
+                            virtual_asset_list.append(virtual_asset_value)
                             virtual_asset_ts_list.append(int(va_dt.timestamp() * 1000))
-                            # 从同一条快照中提取 asset
-                            if a_val is not None:
-                                asset_list.append(float(a_val))
-                                asset_ts_list.append(int(va_dt.timestamp() * 1000))
-                        except (TypeError, ValueError, Exception):
+                            asset_list.append(asset_value)
+                            asset_ts_list.append(int(va_dt.timestamp() * 1000))
+                        except (TypeError, ValueError):
                             continue
 
                 if virtual_asset_list:
@@ -1618,7 +1659,9 @@ class AlasGUI(Frame):
 
                         ap_timeline = get_ap_timeline(instance_name=instance_name_stat)
                         current_ap = (
-                            int(ap_timeline[-1].get("ap", 0)) if ap_timeline else 0
+                            int(ap_timeline[-1].get("ap_total", ap_timeline[-1].get("ap", 0)))
+                            if ap_timeline
+                            else 0
                         )
 
                         meow_round_ap = 30
@@ -3231,6 +3274,8 @@ class AlasGUI(Frame):
 
             if group_name not in self._log.last_display_time.keys():
                 self._log.last_display_time[group_name] = ""
+            if self._log.last_display_time[group_name] == delta and not self._log.first_display:
+                continue
             self._log.last_display_time[group_name] = delta
 
             # if self._log.first_display:
