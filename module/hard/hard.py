@@ -94,27 +94,41 @@ class CampaignHard(CampaignRun):
         # 加载战役模块
         self.load_campaign(name='campaign_hard', folder='campaign_hard')
 
-        # 获取剩余次数
+        cursor = self.config.Hard_HardNewCursor
+        first_stage = stages[cursor % len(stages)]
+
+        # 先导航到第一个关卡再OCR剩余次数
+        map_name = to_map_file_name(first_stage)
+        module = importlib.import_module('.' + map_name, 'campaign.campaign_main')
+        self.campaign.MAP = module.MAP
         self.device.screenshot()
+        self.campaign.device.image = self.device.image
+        self.campaign.ensure_campaign_ui(name=first_stage, mode='hard')
         remain = OCR_HARD_REMAIN.ocr(self.device.image)
         logger.attr('Remain', remain)
 
-        cursor = self.config.Hard_HardNewCursor
-        for i in range(remain):
+        if remain == 0:
+            self.campaign.ensure_auto_search_exit()
+            self.config.task_delay(server_update=True)
+            self.config.task_call('Reward', force_call=False)
+            return
+
+        # 第一天关已导航好，直接打
+        self.campaign.run()
+        cursor += 1
+
+        for i in range(remain - 1):
             stage = stages[cursor % len(stages)]
             logger.attr('CurrentStage', stage)
 
-            # 加载当前关卡的地图数据
             map_name = to_map_file_name(stage)
             module = importlib.import_module('.' + map_name, 'campaign.campaign_main')
             self.campaign.MAP = module.MAP
 
-            # 导航到当前关卡
             self.device.screenshot()
             self.campaign.device.image = self.device.image
             self.campaign.ensure_campaign_ui(name=stage, mode='hard')
 
-            # 执行战斗
             self.campaign.run()
             cursor += 1
 
