@@ -1,3 +1,5 @@
+from typing import Tuple, Union
+
 from module.base.button import Button
 from module.base.decorator import cached_property
 # 此文件定义了 Alas 逻辑模块的最高基类 ModuleBase。
@@ -185,7 +187,7 @@ class ModuleBase:
                 self.device.dump_hierarchy()
             yield self.device.image, self.device.hierarchy
 
-    def appear(self, button, offset=0, interval=0, similarity=0.85, threshold=10):
+    def appear(self, button, offset: Union[bool, int, Tuple[int, int]] = 0, interval=0, similarity=0.85, threshold=10):
         """
         Args:
             button (Button, Template, HierarchyButton, str):
@@ -269,7 +271,8 @@ class ModuleBase:
 
         return appear
 
-    def appear_then_click(self, button, screenshot=False, genre='items', offset=0, interval=0, similarity=0.85,
+    def appear_then_click(self, button, screenshot=False, genre='items',
+                          offset: Union[bool, int, Tuple[int, int]] = 0, interval=0, similarity=0.85,
                           threshold=30):
         button = self.ensure_button(button)
         appear = self.appear(button, offset=offset, interval=interval, similarity=similarity, threshold=threshold)

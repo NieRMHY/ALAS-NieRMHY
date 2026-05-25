@@ -513,24 +513,21 @@ class ConfigGenerator:
             'Language': 'zh-CN',
         }
         aidlux = {
-            'GitExecutable': '/usr/bin/git',
-            'PythonExecutable': '/usr/bin/python',
-            'RequirementsFile': './deploy/AidLux/0.92/requirements.txt',
-            'AdbExecutable': '/usr/bin/adb',
+            'GitExecutable': './.venv/bin/git',
+            'PythonExecutable': './.venv/bin/python',
+            'AdbExecutable': './.venv/bin/adb',
         }
 
         docker = {
-            'GitExecutable': '/usr/bin/git',
-            'PythonExecutable': '/usr/local/bin/python',
-            'RequirementsFile': './deploy/docker/requirements.txt',
-            'AdbExecutable': '/usr/bin/adb',
+            'GitExecutable': './.venv/bin/git',
+            'PythonExecutable': './.venv/bin/python',
+            'AdbExecutable': './.venv/bin/adb',
         }
 
         linux = {
-            'GitExecutable': '/usr/bin/git',
-            'PythonExecutable': 'python',
-            'RequirementsFile': './deploy/headless/requirements.txt',
-            'AdbExecutable': '/usr/bin/adb',
+            'GitExecutable': './.venv/bin/git',
+            'PythonExecutable': './.venv/bin/python',
+            'AdbExecutable': './.venv/bin/adb',
             'SSHExecutable': '/usr/bin/ssh',
             'ReplaceAdb': 'false'
         }

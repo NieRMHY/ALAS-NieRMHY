@@ -14,6 +14,8 @@ class ContinuousCombat(Exception):
 
 
 class Combat(Combat_, MapEventHandler):
+    battle_status_s_autoclick_delay = 20
+
     def combat_appear(self):
         """
         Returns:
@@ -38,6 +40,43 @@ class Combat(Combat_, MapEventHandler):
             return True
 
         return False
+
+    def _battle_status_s_timer(self):
+        try:
+            timer = self._os_battle_status_s_timer
+        except AttributeError:
+            timer = Timer(self.battle_status_s_autoclick_delay)
+            self._os_battle_status_s_timer = timer
+        if timer.limit != self.battle_status_s_autoclick_delay:
+            timer = Timer(self.battle_status_s_autoclick_delay)
+            self._os_battle_status_s_timer = timer
+        return timer
+
+    def _clear_battle_status_s_timer(self):
+        self._battle_status_s_timer().clear()
+
+    def _handle_auto_battle_status_s(self, drop=None, timer=None):
+        """
+        Wait before clicking BATTLE_STATUS_S in OS auto mode.
+
+        Auto-search usually advances from the S result page on its own. This is
+        only a late fallback for cases where the client really gets stuck.
+
+        Returns:
+            tuple: (appeared, clicked)
+        """
+        timer = timer or self._battle_status_s_timer()
+        if not self.appear(BATTLE_STATUS_S):
+            timer.clear()
+            return False, False
+
+        timer.start()
+        if not timer.reached():
+            return True, False
+
+        handled = self._handle_single_battle_status(BATTLE_STATUS_S, 'S', drop)
+        timer.clear()
+        return True, handled
 
     def combat_preparation(self, balance_hp=False, emotion_reduce=False, auto='combat_auto', fleet_index=1):
         """
@@ -95,18 +134,23 @@ class Combat(Combat_, MapEventHandler):
             return False
         sleep = self._get_exp_info_sleep()
         if self.appear_then_click(EXP_INFO_S):
+            self._clear_battle_status_s_timer()
             self.device.sleep(sleep)
             return True
         if self.appear_then_click(EXP_INFO_A):
+            self._clear_battle_status_s_timer()
             self.device.sleep(sleep)
             return True
         if self.appear_then_click(EXP_INFO_B):
+            self._clear_battle_status_s_timer()
             self.device.sleep(sleep)
             return True
         if self.appear_then_click(EXP_INFO_C):
+            self._clear_battle_status_s_timer()
             self.device.sleep(sleep)
             return True
         if self.appear_then_click(EXP_INFO_D):
+            self._clear_battle_status_s_timer()
             self.device.sleep(sleep)
             return True
 
@@ -128,6 +172,7 @@ class Combat(Combat_, MapEventHandler):
             if drop:
                 drop.handle_add(self, before=2)
             self.device.click(CLICK_SAFE_AREA)
+            self._clear_battle_status_s_timer()
             self.interval_reset(BATTLE_STATUS_S)
             self.interval_reset(BATTLE_STATUS_A)
             self.interval_reset(BATTLE_STATUS_B)
@@ -136,6 +181,7 @@ class Combat(Combat_, MapEventHandler):
             if drop:
                 drop.handle_add(self, before=2)
             self.device.click(CLICK_SAFE_AREA)
+            self._clear_battle_status_s_timer()
             self.interval_reset(BATTLE_STATUS_S)
             self.interval_reset(BATTLE_STATUS_A)
             self.interval_reset(BATTLE_STATUS_B)
@@ -144,6 +190,7 @@ class Combat(Combat_, MapEventHandler):
             if drop:
                 drop.handle_add(self, before=2)
             self.device.click(CLICK_SAFE_AREA)
+            self._clear_battle_status_s_timer()
             self.interval_reset(BATTLE_STATUS_S)
             self.interval_reset(BATTLE_STATUS_A)
             self.interval_reset(BATTLE_STATUS_B)
@@ -183,6 +230,7 @@ class Combat(Combat_, MapEventHandler):
         This function inherits it and detect the second combat.
         """
         for count in range(3):
+            self._clear_battle_status_s_timer()
             if count >= 2:
                 logger.warning('Too many continuous combat')
 
@@ -192,6 +240,8 @@ class Combat(Combat_, MapEventHandler):
             except ContinuousCombat:
                 logger.info('Continuous combat detected')
                 continue
+            finally:
+                self._clear_battle_status_s_timer()
 
     def _handle_single_battle_status(self, status_button, status_letter, drop):
         if self.appear(status_button, interval=self.battle_status_click_interval):
@@ -207,9 +257,35 @@ class Combat(Combat_, MapEventHandler):
             return True
         return False
 
-    def handle_auto_search_battle_status(self, drop=None):
+    def handle_battle_status(self, drop=None):
+        if self.is_combat_executing():
+            self._clear_battle_status_s_timer()
+            return False
+
+        appeared, clicked = self._handle_auto_battle_status_s(drop=drop)
+        if clicked:
+            return True
+        if appeared:
+            return True
+
         for status_button, status_letter in [
-            (BATTLE_STATUS_S, 'S'),
+            (BATTLE_STATUS_A, 'A'),
+            (BATTLE_STATUS_B, 'B'),
+            (BATTLE_STATUS_C, 'C'),
+            (BATTLE_STATUS_D, 'D'),
+        ]:
+            if self._handle_single_battle_status(status_button, status_letter, drop):
+                return True
+        return False
+
+    def handle_auto_search_battle_status(self, drop=None, battle_status_s_timer=None):
+        _, clicked = self._handle_auto_battle_status_s(
+            drop=drop, timer=battle_status_s_timer
+        )
+        if clicked:
+            return True
+
+        for status_button, status_letter in [
             (BATTLE_STATUS_A, 'A'),
             (BATTLE_STATUS_B, 'B'),
             (BATTLE_STATUS_C, 'C'),
@@ -223,6 +299,7 @@ class Combat(Combat_, MapEventHandler):
         sleep = self._get_exp_info_sleep()
         for exp_info_button in [EXP_INFO_S, EXP_INFO_A, EXP_INFO_B, EXP_INFO_C, EXP_INFO_D]:
             if self.appear_then_click(exp_info_button):
+                self._clear_battle_status_s_timer()
                 self.device.sleep(sleep)
                 return True
         return False
@@ -257,6 +334,7 @@ class Combat(Combat_, MapEventHandler):
 
             # End
             if self.handle_os_auto_search_map_option(drop=drop):
+                self._clear_battle_status_s_timer()
                 break
             pause = self.is_combat_executing()
             if pause:
@@ -277,6 +355,7 @@ class Combat(Combat_, MapEventHandler):
             cl1_combat_timer.start()
 
         success = True
+        battle_status_s_timer = Timer(self.battle_status_s_autoclick_delay)
         while 1:
             self.device.screenshot()
 
@@ -289,6 +368,7 @@ class Combat(Combat_, MapEventHandler):
             # Don't change auto search option if failed
             enable = success if success is not None else None
             if self.handle_os_auto_search_map_option(drop=drop, enable=enable):
+                battle_status_s_timer.clear()
                 continue
 
             # End
@@ -296,14 +376,17 @@ class Combat(Combat_, MapEventHandler):
                 self.device.screenshot_interval_set()
                 break
             if self.is_combat_executing():
-                continue
-            if self.handle_auto_search_battle_status():
-                success = None
+                battle_status_s_timer.clear()
                 continue
             if self.config.OpsiGeneral_RepairThreshold > 0 and self.handle_auto_search_exp_info():
+                battle_status_s_timer.clear()
+                success = None
+                continue
+            if self.handle_auto_search_battle_status(drop=drop, battle_status_s_timer=battle_status_s_timer):
                 success = None
                 continue
             if self.handle_map_event():
+                battle_status_s_timer.clear()
                 continue
             
         logger.info('Combat end.')

@@ -8,10 +8,9 @@ from deploy.Windows.logger import Progress, logger
 def show_fix_tip(module):
     logger.info(f"""
     To fix this:
-    1. Open console.bat
-    2. Execute the following commands:
-        pip uninstall -y {module}
-        pip install --no-cache-dir {module}
+    1. Re-run the launcher so uv can refresh the local .venv
+    2. If the problem persists, run:
+        ./.venv/Scripts/uv.exe sync --frozen --no-dev --no-install-project --reinstall-package {module}
     3. Re-open Alas.exe
     """)
 

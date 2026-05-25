@@ -1,7 +1,28 @@
 import os
 import re
+import subprocess
 
 from deploy.Windows.logger import logger
+from deploy.uv import venv_python
+
+
+def site_package_file(*parts):
+    python = venv_python()
+    if not python.exists():
+        return None
+    try:
+        root = subprocess.check_output(
+            [
+                str(python),
+                "-c",
+                "import site; print(next(p for p in site.getsitepackages() if p.endswith('site-packages')))",
+            ],
+            text=True,
+        ).strip()
+    except Exception as exc:
+        logger.info(f'Unable to query .venv site-packages: {exc}')
+        return None
+    return os.path.join(root, *parts).replace("\\", "/")
 
 
 def patch_trust_env(file):
@@ -88,8 +109,8 @@ def patch_uiautomator2():
     to
         'arm64-v8a': 'atx-agent_{v}_linux_arm64.tar.gz',
     """
-    init_file = './toolkit/Lib/site-packages/uiautomator2/init.py'
-    cache_dir = './toolkit/Lib/site-packages/uiautomator2cache/cache'
+    init_file = site_package_file('uiautomator2', 'init.py')
+    cache_dir = site_package_file('uiautomator2cache', 'cache')
     appdir = "os.path.join(__file__, '../../uiautomator2cache')"
 
     modified = False
@@ -121,7 +142,7 @@ def patch_uiautomator2():
         logger.info(f'{init_file} atx_agent_url no need to patch')
 
     # Patch appdir
-    if os.path.exists(cache_dir):
+    if cache_dir and os.path.exists(cache_dir):
         res = re.search(r'appdir ?=(.*)\n', content)
         if res:
             prev = res.group(1).strip()
@@ -148,7 +169,10 @@ def patch_apkutils2():
     `adbutils/mixin.py` `ShellMixin.install` imports `apkutils2`, but `apkutils2` does not provide wheel files,
     it may failed to install for unknown reasons. Since we never used that method, we just remove the import.
     """
-    mixin = './toolkit/Lib/site-packages/adbutils/mixin.py'
+    mixin = site_package_file('adbutils', 'mixin.py')
+    if not mixin:
+        logger.info('adbutils is not installed skip patching')
+        return
 
     try:
         with open(mixin, 'r', encoding='utf-8') as f:
@@ -169,10 +193,6 @@ def patch_apkutils2():
 
 def pre_checks():
     check_running_directory()
-
-    # patch_trust_env
-    patch_trust_env('./toolkit/Lib/site-packages/requests/sessions.py')
-    patch_trust_env('./toolkit/Lib/site-packages/pip/_vendor/requests/sessions.py')
 
     patch_uiautomator2()
     patch_apkutils2()

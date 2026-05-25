@@ -288,6 +288,8 @@ class GeneratedConfig:
     GemsFarming_CommonDD = 'any'  # custom, any, favourite, aulick_or_foote, cassin_or_downes, z20_or_z21, DDG
     GemsFarming_CommonDDFilter = 'z20 > z21 > aulick > foote > cassin > downes'
     GemsFarming_EquipmentCode = 'DD: null\nbogue: null\nhermes: null\nlangley: null\nranger: null'
+    GemsFarming_UseEmotionFirst = False
+    GemsFarming_IgnoreEmotionWarning = False
     GemsFarming_ALLowHighFlagshipLevel = False
     GemsFarming_ALLowLowVanguardLevel = False
     GemsFarming_DelayTaskIFNoFlagship = False
@@ -384,6 +386,7 @@ class GeneratedConfig:
     # Group `Meowfficer`
     Meowfficer_BuyAmount = 1
     Meowfficer_FortChoreMeowfficer = True
+    Meowfficer_OverflowCoins = -1
 
     # Group `MeowfficerTrain`
     MeowfficerTrain_Enable = False

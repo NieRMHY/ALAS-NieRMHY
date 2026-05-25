@@ -85,7 +85,7 @@ class CampaignEvent(CampaignStatus):
     def coin_limit_triggered(self):
         """
         Returns:
-            bool: If coin amount is greater than StopCondition.CoinLimit
+            bool: If coin amount reaches StopCondition.CoinLimit
         """
         limit = int(
             re.sub(r'[,.\'"，。]', '', str(self.config.StopCondition_CoinLimit))
@@ -100,15 +100,14 @@ class CampaignEvent(CampaignStatus):
             return False
 
         logger.attr('Coin_limit', f'{coin}/{limit}')
-        if coin > limit:
+        if coin >= limit:
             logger.hr(f'Reach coin limit: {limit}')
-            self.config.Scheduler_Enable = False
-            if self.config.OpsiGeneral_NotifyOpsiMail:
-                handle_notify(
-                    self.config.OpsiGeneral_OpsiOnePushConfig if self.config.OpsiGeneral_IndependentPush else self.config.Error_OnePushConfig,
-                    title=f"Alas <{self.config.config_name}> campaign finished",
-                    content=f"<{self.config.config_name}> {self.config.Campaign_Name} reached coin limit"
-                )
+            self.config.task_delay(minute=(120, 240))
+            handle_notify(
+                self.config.Error_OnePushConfig,
+                title=f"Alas <{self.config.config_name}> campaign delayed",
+                content=f"<{self.config.config_name}> {self.config.Campaign_Name} reached coin limit"
+            )
             return True
         else:
             return False

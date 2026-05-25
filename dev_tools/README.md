@@ -30,5 +30,5 @@
 
 ### 维护工具
 - **`war_archives_update.py`**: 每当官方将以往活动加入常驻“作战档案（War Archives）”时，该脚本可一键将 ALAS 旧的活动代码挪并批量修正命名路径。
-- **`requirements_updater.py`**: 一键规范化修复 Python 依赖文件 (`requirements.txt`) 的格式，避免环境快速安装时出错。
+- **`requirements_updater.py`**: 已停用；依赖统一维护在 `pyproject.toml` 和 `uv.lock`。
 - **`Flatten_generator.py`**: 快速将直观的网格字符串转换为坐标拼接代码的小工具。

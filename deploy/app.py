@@ -8,7 +8,7 @@ from deploy.utils import *
 
 class AppManager(DeployConfig):
     @staticmethod
-    def app_asar_replace(folder, path='./toolkit/WebApp/resources/app.asar'):
+    def app_asar_replace(folder, path='./.venv/WebApp/resources/app.asar'):
         """
         Args:
             folder (str): Path to AzurLaneAutoScript

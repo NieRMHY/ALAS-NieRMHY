@@ -1199,8 +1199,8 @@
       "help": "石油過低時推遲任務，石油充足後繼續出擊"
     },
     "CoinLimit": {
-      "name": "物資大於 X 後停止",
-      "help": "物資大於該數值後停止當前任務\n0 表示不限制物資"
+      "name": "物資達到 X 後推遲",
+      "help": "物資達到該數值後推遲當前任務，物資低於上限後繼續出擊\n0 表示不限制物資"
     },
     "RunCount": {
       "name": "出擊次數大於 X 後停止",
@@ -1587,6 +1587,14 @@
     "EquipmentCode": {
       "name": "裝備碼",
       "help": "僅當選擇“更換艦船 + 裝備”時生效。\n在換下艦船時，若設定裡當前艦船裝備碼為null則會匯出；在換上艦船時，若設定裡當前艦船裝備碼為null則會使用上一艘艦船匯出的裝備碼，否則使用設定裡的裝備碼\n藍疊模擬器使用者需要先開啟虛擬鍵盤，詳見https://support.bluestacks.com/hc/zh-tw/articles/360061968892-%E5%A6%82%E4%BD%95%E5%9C%A8-BlueStacks-5-%E4%B8%8A%E4%BD%BF%E7%94%A8%E5%B0%8F%E9%8D%B5%E7%9B%A4-%E8%99%9B%E6%93%AC%E9%8D%B5%E7%9B%A4\nDD：前排驅逐    bogue：博格    hermes：競技神    langley：蘭利    ranger：突擊者"
+    },
+    "UseEmotionFirst": {
+      "name": "GemsFarming.UseEmotionFirst.name",
+      "help": "GemsFarming.UseEmotionFirst.help"
+    },
+    "IgnoreEmotionWarning": {
+      "name": "GemsFarming.IgnoreEmotionWarning.name",
+      "help": "GemsFarming.IgnoreEmotionWarning.help"
     },
     "ALLowHighFlagshipLevel": {
       "name": "僅更換滿級後排",
@@ -2014,6 +2022,10 @@
     "FortChoreMeowfficer": {
       "name": "喵窩互動",
       "help": "清掃、餵食和逗貓"
+    },
+    "OverflowCoins": {
+      "name": "金幣溢出時購買貓箱",
+      "help": "當金幣高於此值時，繼續購買貓箱直至金幣降至此值或貓箱售罄；-1 關閉"
     }
   },
   "MeowfficerTrain": {

@@ -1,4 +1,4 @@
-# docker build -t hgjazhgj/alas:latest .
+# docker build -t hgjazhgj/alas:latest -f deploy/docker/Dockerfile .
 # docker run -v ${PWD}:/app/AzurLaneAutoScript -p 22267:22267 --name alas -it --rm hgjazhgj/alas
 
 FROM python:3.14-slim-bookworm
@@ -17,18 +17,17 @@ ENV HTTP_PROXY=${HTTP_PROXY}
 ENV HTTPS_PROXY=${HTTPS_PROXY}
 ENV no_proxy=${NO_PROXY}
 ENV NO_PROXY=${NO_PROXY}
+ENV PATH=/app/AzurLaneAutoScript/.venv/bin:${PATH}
 
 WORKDIR /app/AzurLaneAutoScript
 
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
-COPY requirements.txt /tmp/requirements.txt
+COPY pyproject.toml uv.lock ./
 
-# Configure apt proxy if needed
 RUN if [ -n "$HTTP_PROXY" ]; then \
     printf 'Acquire::http::Proxy "%s";\nAcquire::https::Proxy "%s";\n' "$HTTP_PROXY" "$HTTPS_PROXY" > /etc/apt/apt.conf.d/99proxy; \
     fi
 
-# Install system dependencies
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     git \
@@ -40,17 +39,19 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# Configure git
 RUN git config --global --add safe.directory '*' && \
     if [ -n "$HTTP_PROXY" ]; then \
         git config --global http.proxy "$HTTP_PROXY" && \
         git config --global https.proxy "$HTTPS_PROXY"; \
     fi
 
-# Install Python dependencies
-RUN uv pip install --system --upgrade pip && \
-    uv pip install --system -r /tmp/requirements.txt && \
-    rm /tmp/requirements.txt && \
+RUN uv venv --relocatable --python /usr/local/bin/python .venv && \
+    uv sync --frozen --no-dev --no-install-project && \
+    cp /usr/local/bin/uv .venv/bin/uv && \
+    cp /usr/bin/adb .venv/bin/adb && \
+    cp /usr/bin/git .venv/bin/git && \
     rm -rf /root/.cache/uv
 
-CMD ["python", "gui.py"]
+COPY . .
+
+CMD [".venv/bin/python", "gui.py"]

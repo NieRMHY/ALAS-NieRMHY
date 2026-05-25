@@ -15,13 +15,15 @@ IGNORE_SERIAL = [
 
 
 def show_fix_tip(module):
+    from deploy.uv import venv_uv
+
+    uv = venv_uv()
     logger.info(f"""
     To fix this:
-    1. Open console.bat
-    2. Execute the following commands:
-        pip uninstall -y {module}
-        pip install --no-cache-dir {module}
-    3. Re-open Alas.exe
+    1. Re-run the launcher so uv can refresh the local .venv
+    2. If the problem persists, run:
+        "{uv}" sync --frozen --no-dev --no-install-project --reinstall-package {module}
+    3. Re-open AzurPilot
     """)
 
 

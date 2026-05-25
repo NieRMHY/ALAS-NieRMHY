@@ -86,7 +86,7 @@ class EnemySearchingHandler(InfoHandler):
         """
         return False
 
-    def handle_auto_search_exit(self, drop=None):
+    def handle_auto_search_exit(self, drop=None) -> bool:
         """
         A placeholder, will be override in AutoSearchHandler.
         AutoSearchHandler inherits EnemySearchingHandler,

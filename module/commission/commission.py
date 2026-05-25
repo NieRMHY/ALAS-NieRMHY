@@ -765,17 +765,9 @@ class RewardCommission(UI, InfoHandler):
             filtered_extra = self.comm_choose.intersect_by_eq(self.daily.select(category_str='extra', status='pending')).count
             logger.info(f'Daily commission: {daily}, filtered_urgent: {filtered_urgent}, filtered_extra: {filtered_extra}')
             future = nearest_future(future_finish) if len(future_finish) else None
-            night = get_server_next_update('21:00')
-            update = get_server_next_update(self.config.Scheduler_ServerUpdate)
-            now = datetime.now()
-            if daily + filtered_urgent + filtered_extra >= 2:
-                logger.info('Having enough commissions to do, delay task `GemsFarming`')
+            if daily > 0 and filtered_urgent >= 1:
+                logger.info('Having daily commissions to do, delay task `GemsFarming`')
                 self.config.task_delay(minute=None if future else 120, target=future, task='GemsFarming')
-            elif future and future >= night and now < night:
-                logger.info('Waiting for night commissions, delay task `GemsFarming`')
-                self.config.task_delay(target=future, task='GemsFarming')
-            elif future and future >= update:
-                logger.info('Waiting for daily commissions, delay task `GemsFarming`')
-                self.config.task_delay(target=future, task='GemsFarming')
-            elif future and future - now >= timedelta(hours=1):
-                self.config.task_delay(target=future - timedelta(hours=1), task='GemsFarming')
+            elif filtered_urgent >= 4:
+                logger.info('Having too many urgent commissions, delay task `GemsFarming`')
+                self.config.task_delay(minute=None if future else 120, target=future, task='GemsFarming')

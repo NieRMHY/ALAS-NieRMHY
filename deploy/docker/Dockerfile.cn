@@ -1,14 +1,16 @@
-# docker build -t hgjazhgj/alas:latest .
+# docker build -t hgjazhgj/alas:latest -f deploy/docker/Dockerfile.cn .
 # docker run -v ${PWD}:/app/AzurLaneAutoScript -p 22267:22267 --name alas -it --rm hgjazhgj/alas
 
 FROM python:3.14-slim-bookworm
 
+ENV UV_INDEX_URL=https://pypi.tuna.tsinghua.edu.cn/simple
+ENV PATH=/app/AzurLaneAutoScript/.venv/bin:${PATH}
+
 WORKDIR /app/AzurLaneAutoScript
 
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
-COPY requirements.txt /tmp/requirements.txt
+COPY pyproject.toml uv.lock ./
 
-# Debian 12 (bookworm) apt sources from Aliyun mirrors
 RUN echo "\
 deb https://mirrors.aliyun.com/debian/ bookworm main non-free contrib\n\
 deb-src https://mirrors.aliyun.com/debian/ bookworm main non-free contrib\n\
@@ -22,9 +24,13 @@ deb-src https://mirrors.aliyun.com/debian/ bookworm-updates main non-free contri
  && git config --global --add safe.directory '*' \
  && ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime \
  && echo 'Asia/Shanghai' > /etc/timezone \
- && UV_INDEX_URL=https://pypi.tuna.tsinghua.edu.cn/simple uv pip install --system --upgrade pip \
- && UV_INDEX_URL=https://pypi.tuna.tsinghua.edu.cn/simple uv pip install --system -r /tmp/requirements.txt \
- && rm /tmp/requirements.txt \
+ && uv venv --relocatable --python /usr/local/bin/python .venv \
+ && uv sync --frozen --no-dev --no-install-project \
+ && cp /usr/local/bin/uv .venv/bin/uv \
+ && cp /usr/bin/adb .venv/bin/adb \
+ && cp /usr/bin/git .venv/bin/git \
  && rm -rf /root/.cache/uv
 
-CMD ["python", "gui.py"]
+COPY . .
+
+CMD [".venv/bin/python", "gui.py"]

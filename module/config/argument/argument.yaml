@@ -477,6 +477,8 @@ GemsFarming:
       hermes: null
       langley: null
       ranger: null
+  UseEmotionFirst: false
+  IgnoreEmotionWarning: false
   ALLowHighFlagshipLevel: false
   ALLowLowVanguardLevel: false
   DelayTaskIFNoFlagship: false
@@ -672,6 +674,7 @@ BuyFurniture:
 Meowfficer:
   BuyAmount: 1
   FortChoreMeowfficer: true
+  OverflowCoins: -1
 MeowfficerTrain:
   Enable: false
   Mode:

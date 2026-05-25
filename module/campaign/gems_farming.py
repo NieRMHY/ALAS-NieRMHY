@@ -26,7 +26,7 @@ from module.retire.scanner import ShipScanner
 from module.ui.assets import BACK_ARROW, FLEET_CHECK
 from module.ui.page import page_fleet
 
-SIM_VALUE = 0.92
+SIM_VALUE = 0.9
 
 
 class GemsEmotion(Emotion):
@@ -61,11 +61,13 @@ class GemsCampaignOverride(CampaignBase):
         Overwrite info_handler.handle_combat_low_emotion()
         If change vanguard is enabled, withdraw combat and change flagship and vanguard
         """
-        if self.config.GemsFarming_ChangeVanguard == 'disabled':
+        if self.config.GemsFarming_IgnoreEmotionWarning or self.config.GemsFarming_ChangeVanguard == 'disabled':
             result = self.handle_popup_confirm('IGNORE_LOW_EMOTION')
             if result:
                 # Avoid clicking AUTO_SEARCH_MAP_OPTION_OFF
                 self.interval_reset(AUTO_SEARCH_MAP_OPTION_OFF)
+                if self.config.GemsFarming_IgnoreEmotionWarning and self.config.GemsFarming_ChangeVanguard != 'disabled':
+                    self.config.GEMS_EMOTION_TRIGGERED = True
             return result
 
         if self.handle_popup_cancel('IGNORE_LOW_EMOTION'):
@@ -189,18 +191,6 @@ class GemsFarming(CampaignRun, FleetEquipment, GemsEquipmentHandler, Retirement)
     @property
     def emotion_lower_bound(self):
         return 4 + self.campaign._map_battle * 2
-
-    def get_emotion(self):
-        if self.config.Fleet_FleetOrder == 'fleet1_standby_fleet2_all':
-            return self.campaign.config.Emotion_Fleet2Value
-        else:
-            return self.campaign.config.Emotion_Fleet1Value
-
-    def set_emotion(self, emotion):
-        if self.config.Fleet_FleetOrder == 'fleet1_standby_fleet2_all':
-            self.campaign.config.set_record(Emotion_Fleet2Value=emotion)
-        else:
-            self.campaign.config.set_record(Emotion_Fleet1Value=emotion)
 
     @property
     def change_flagship(self):
@@ -361,6 +351,36 @@ class GemsFarming(CampaignRun, FleetEquipment, GemsEquipmentHandler, Retirement)
             min_level = 1
         emotion_lower_bound = 0 if emotion == 0 else self.emotion_lower_bound
         fleet = [0, self.fleet_to_attack] if self.config.GemsFarming_ALLowHighFlagshipLevel else self.fleet_to_attack
+
+        if self.config.GemsFarming_UseEmotionFirst:
+            scanner = ShipScanner(
+                level=(min_level, max_level), emotion=(emotion_lower_bound, 150), fleet=[0, self.fleet_to_attack], status='free')
+            scanner.disable('rarity')
+
+            if self.config.GemsFarming_CommonCV in ['custom', 'any', 'eagle']:
+                if self.config.GemsFarming_CommonCV == 'custom':
+                    filter_string = self.config.GemsFarming_CommonCVFilter
+                else:
+                    filter_string = self.config.COMMON_CV_FILTER
+                common_ship = self.get_common_ship_filter(filter_string, ship_type='cv')
+            else:
+                common_ship = [self.config.GemsFarming_CommonCV]
+
+            if common_ship is not None:
+                candidates = self.find_all_backline_candidates(scanner, common_ship)
+                if candidates:
+                    return [candidates[0]]
+
+                logger.info('No specific CV was found, try reversed order.')
+                self.dock_sort_method_dsc_set(True)
+                candidates = self.find_all_backline_candidates(scanner, common_ship)
+                if candidates:
+                    return [candidates[0]]
+
+                # Revert sort method since we changed it and found nothing
+                self.dock_sort_method_dsc_set(False)
+            logger.info('UseEmotionFirst found no candidates, falling back to original selection method.')
+
         scanner = ShipScanner(
             level=(min_level, max_level), emotion=(emotion_lower_bound, 150), fleet=fleet, status='free')
         scanner.disable('rarity')
@@ -460,6 +480,39 @@ class GemsFarming(CampaignRun, FleetEquipment, GemsEquipmentHandler, Retirement)
                               fleet=[0, self.fleet_to_attack], status='free')
         scanner.disable('rarity')
 
+        if self.config.GemsFarming_UseEmotionFirst:
+            if self.config.GemsFarming_CommonDD == 'custom':
+                filter_string = self.config.GemsFarming_CommonDDFilter
+                common_ship = self.get_common_ship_filter(filter_string, ship_type='dd')
+            elif self.config.GemsFarming_CommonDD == 'any':
+                filter_string = self.config.COMMON_DD_FILTER
+                common_ship = self.get_common_ship_filter(filter_string, ship_type='dd')
+            elif self.config.GemsFarming_CommonDD == 'cassin_or_downes':
+                common_ship = ['cassin', 'downes']
+            elif self.config.GemsFarming_CommonDD == 'aulick_or_foote':
+                common_ship = ['aulick', 'foote']
+            elif self.config.GemsFarming_CommonDD == 'z20_or_z21':
+                common_ship = ['z20', 'z21']
+            else:
+                common_ship = None
+
+            if common_ship is not None:
+                candidates = self.find_all_vanguard_candidates(scanner, common_ship)
+                if candidates:
+                    return candidates
+
+                logger.info('No specific DD was found, try reversed order.')
+                self.dock_sort_method_dsc_set(False)
+                candidates = self.find_all_vanguard_candidates(scanner, common_ship)
+                if not candidates and self.config.GemsFarming_CommonDD == 'custom':
+                    return scanner.scan(self.device.image, output=False)
+                return candidates
+            else:
+                candidates = scanner.scan(self.device.image, output=False)
+                if candidates:
+                    candidates.sort(key=lambda s: s.emotion, reverse=True)
+                    return candidates
+
         if self.config.GemsFarming_CommonDD in ['any', 'favourite', 'z20_or_z21', 'DDG']:
             # Change to any ship
             return scanner.scan(self.device.image)
@@ -486,6 +539,49 @@ class GemsFarming(CampaignRun, FleetEquipment, GemsEquipmentHandler, Retirement)
             # Change specific ship
             candidates = self.find_candidates(self.get_templates(self.config.GemsFarming_CommonDD), scanner)
             return candidates
+
+    def match_ship_to_template(self, ship, template):
+        if isinstance(template, list):
+            return any(item.match(self.image_crop(ship.button, copy=False), similarity=SIM_VALUE) for item in template)
+        else:
+            return template.match(self.image_crop(ship.button, copy=False), similarity=SIM_VALUE)
+
+    def find_all_vanguard_candidates(self, scanner, common_ship):
+        """
+        Scan and find all matching candidates for the common_ship list,
+        returning a list of Ship objects sorted by (emotion, -priority_index) descending.
+        """
+        templates_list = [TEMPLATE_COMMON_DD[name.upper()] for name in common_ship]
+        all_ships = scanner.scan(self.device.image, output=False)
+        matched_candidates = []
+        for ship in all_ships:
+            for i, template in enumerate(templates_list):
+                if self.match_ship_to_template(ship, template):
+                    matched_candidates.append((ship, i))
+                    break
+        # Sort by emotion (descending) and priority index (ascending)
+        matched_candidates.sort(key=lambda x: (x[0].emotion, -x[1]), reverse=True)
+        return [x[0] for x in matched_candidates]
+
+    def find_all_backline_candidates(self, scanner, common_ship):
+        """
+        Scan and find all matching candidates for the common_ship list,
+        returning a list of Ship objects sorted by:
+        1. Emotion (descending)
+        2. Level (ascending)
+        3. Priority index (ascending)
+        """
+        templates_list = [TEMPLATE_COMMON_CV[name.upper()] for name in common_ship]
+        all_ships = scanner.scan(self.device.image, output=False)
+        matched_candidates = []
+        for ship in all_ships:
+            for i, template in enumerate(templates_list):
+                if self.match_ship_to_template(ship, template):
+                    matched_candidates.append((ship, i))
+                    break
+        # Sort by emotion (descending), level (ascending), and priority index (ascending)
+        matched_candidates.sort(key=lambda x: (x[0].emotion, -x[0].level, -x[1]), reverse=True)
+        return [x[0] for x in matched_candidates]
 
     def find_custom_candidates(self, scanner, ship_type='cv'):
         """
@@ -604,7 +700,9 @@ class GemsFarming(CampaignRun, FleetEquipment, GemsEquipmentHandler, Retirement)
         Change flagship and calculate emotion
         """
         target_ship = max(ship, key=lambda s: (s.level, s.emotion))
-        if self.config.GemsFarming_ALLowHighFlagshipLevel:
+        if self.change_vanguard:
+            self.set_emotion(min(self.get_emotion(), target_ship.emotion))
+        elif self.config.GemsFarming_ALLowHighFlagshipLevel:
             self.set_emotion(target_ship.emotion)
         self._ship_change_confirm(target_ship.button)
 
@@ -651,9 +749,7 @@ class GemsFarming(CampaignRun, FleetEquipment, GemsEquipmentHandler, Retirement)
         Change vanguard and calculate emotion
         """
         target_ship = max(ship, key=lambda s: s.emotion)
-        if self.config.GemsFarming_ALLowHighFlagshipLevel:
-            self.set_emotion(min(self.get_emotion(), target_ship.emotion))
-        else:
+        if self.change_vanguard:
             self.set_emotion(target_ship.emotion)
         self._ship_change_confirm(target_ship.button)
 
@@ -763,8 +859,8 @@ class GemsFarming(CampaignRun, FleetEquipment, GemsEquipmentHandler, Retirement)
                 try:
                     if e.args[0] == 'Hard not satisfied' and self.change_flagship and self.change_vanguard:
                         self.hard_mode_override()
-                        self.flagship_change()
                         self.vanguard_change()
+                        self.flagship_change()
                     else:
                         raise RequestHumanTakeover
                 except RequestHumanTakeover as e:
@@ -778,12 +874,15 @@ class GemsFarming(CampaignRun, FleetEquipment, GemsEquipmentHandler, Retirement)
                 success = True
                 self.hard_mode_override()
                 emotion = self.get_emotion()
-                if self.change_flagship:
-                    success = self.flagship_change()
-                if self.change_vanguard and success:
-                    success = self.vanguard_change()
-                    if not success and self.config.GemsFarming_ALLowHighFlagshipLevel:
+                vanguard_success = True
+                flagship_success = True
+                if self.change_vanguard:
+                    vanguard_success = self.vanguard_change()
+                if self.change_flagship and (vanguard_success or self._trigger_lv32):
+                    flagship_success = self.flagship_change()
+                    if not flagship_success and self.config.GemsFarming_ALLowHighFlagshipLevel:
                         self.set_emotion(emotion)
+                success = vanguard_success and flagship_success
 
                 if is_limit and self.config.StopCondition_RunCount <= 0:
                     logger.hr('Triggered stop condition: Run count')
@@ -804,7 +903,7 @@ class GemsFarming(CampaignRun, FleetEquipment, GemsEquipmentHandler, Retirement)
                         or self._trigger_emotion):
                     self._trigger_emotion = False
                     self.campaign.ensure_auto_search_exit()
-                    self.config.task_delay(minute=30)
+                    self.config.task_delay(minute=60)
                     self.config.task_stop()
 
                 self._trigger_emotion = False

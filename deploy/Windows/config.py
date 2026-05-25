@@ -20,19 +20,18 @@ class ConfigModel:
     # Git
     Repository: str = "https://github.com/wess09/AzurPilot"
     Branch: str = "master"
-    GitExecutable: str = "./toolkit/Git/mingw64/bin/git.exe"
+    GitExecutable: str = "./.venv/Scripts/git/cmd/git.exe"
     GitProxy: Optional[str] = None
     SSLVerify: bool = False
     AutoUpdate: bool = True
 
     # Python
-    PythonExecutable: str = "./toolkit/python.exe"
+    PythonExecutable: str = "./.venv/Scripts/python.exe"
     PypiMirror: Optional[str] = None
     InstallDependencies: bool = True
-    RequirementsFile: str = "requirements.txt"
 
     # Adb
-    AdbExecutable: str = "./toolkit/Lib/site-packages/adbutils/binaries/adb.exe"
+    AdbExecutable: str = "./.venv/Scripts/adb.exe"
     ReplaceAdb: bool = True
     AutoConnect: bool = True
     InstallUiautomator2: bool = True
@@ -179,13 +178,6 @@ class DeployConfig(ConfigModel):
         current = sys.executable.replace("\\", "/")
         logger.warning(f'PythonExecutable: {exe} does not exist, use current python instead: {current}')
         return current
-
-    @cached_property
-    def requirements_file(self) -> str:
-        if self.RequirementsFile == 'requirements.txt':
-            return 'requirements.txt'
-        else:
-            return self.filepath(self.RequirementsFile)
 
     def execute(self, command, allow_failure=False, output=True):
         """

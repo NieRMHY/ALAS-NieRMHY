@@ -8,10 +8,8 @@ Deploy:
     # [Developer] Use 'dev', 'app', etc, to try new features
     # [Other] Use 'master', the stable branch
     Branch: 'master'
-    # Filepath of git executable `git.exe`
-    # [Easy installer] Use './toolkit/Git/mingw64/bin/git.exe'
-    # [Other] Use you own git
-    GitExecutable: './toolkit/Git/mingw64/bin/git.exe'
+    # Filepath of git executable.
+    GitExecutable: './.venv/Scripts/git/cmd/git.exe'
     # Set git proxy
     # [CN user] Use your local http proxy (http://127.0.0.1:{port}) or socks5 proxy (socks5://127.0.0.1:{port})
     # [Other] Use null
@@ -25,10 +23,8 @@ Deploy:
     AutoUpdate: true
 
   Python:
-    # Filepath of python executable `python.exe`
-    # [Easy installer] Use './toolkit/python.exe'
-    # [Other] Use you own python, and its version should be 3.7.6 64bit
-    PythonExecutable: './toolkit/python.exe'
+    # Filepath of python executable.
+    PythonExecutable: './.venv/Scripts/python.exe'
     # URL of pypi mirror
     # [CN user] Use 'https://mirrors.aliyun.com/pypi/simple' for faster and more stable download
     # [Other] Use null
@@ -36,16 +32,10 @@ Deploy:
     # Install dependencies at startup
     # [In most cases] Use true
     InstallDependencies: true
-    # Path to requirements.txt
-    # [In most cases] Use 'requirements.txt'
-    # [In AidLux] Use './deploy/AidLux/{version}/requirements.txt', version is default to 0.92
-    RequirementsFile: 'requirements.txt'
 
   Adb:
-    # Filepath of ADB executable `adb.exe`
-    # [Easy installer] Use './toolkit/Lib/site-packages/adbutils/binaries/adb.exe'
-    # [Other] Use you own latest ADB, but not the ADB in your emulator
-    AdbExecutable: './toolkit/Lib/site-packages/adbutils/binaries/adb.exe'
+    # Filepath of ADB executable.
+    AdbExecutable: './.venv/Scripts/adb.exe'
     # Whether to replace ADB
     # Chinese emulators (NoxPlayer, LDPlayer, MemuPlayer, MuMuPlayer) use their own ADB, instead of the latest.
     # Different ADB servers will terminate each other at startup, resulting in disconnection.

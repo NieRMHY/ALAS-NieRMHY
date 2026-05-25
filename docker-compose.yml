@@ -3,9 +3,9 @@ services:
         container_name: "alas"
         image: "alas:py314"
         build:
-            context: ./deploy/docker
-            dockerfile: ./Dockerfile
-            # dockerfile: ./Dockerfile.cn
+            context: .
+            dockerfile: ./deploy/docker/Dockerfile
+            # dockerfile: ./deploy/docker/Dockerfile.cn
             args:
                 UV_INDEX_URL: ${UV_INDEX_URL:-https://pypi.org/simple}
                 UV_EXTRA_INDEX_URL: ${UV_EXTRA_INDEX_URL:-}
@@ -19,16 +19,20 @@ services:
             PYTHONUNBUFFERED: "1"
         volumes:
             - '.:/app/AzurLaneAutoScript:rw'
+            - 'alas-venv:/app/AzurLaneAutoScript/.venv'
             # - '../MAA:/app/MAA:rw'
             - '/etc/localtime:/etc/localtime:ro'
-        command: ["python", "gui.py"]
+        command: [".venv/bin/python", "gui.py"]
         healthcheck:
             test:
                 [
                     "CMD-SHELL",
-                    "python -c \"import socket; s=socket.create_connection(('127.0.0.1', 22267), 3); s.close()\"",
+                    ".venv/bin/python -c \"import socket; s=socket.create_connection(('127.0.0.1', 22267), 3); s.close()\"",
                 ]
             interval: 30s
             timeout: 5s
             retries: 6
             start_period: 90s
+
+volumes:
+    alas-venv:

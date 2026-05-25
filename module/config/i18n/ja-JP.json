@@ -1199,8 +1199,8 @@
       "help": "燃料が少なすぎる場合はタスクを延期し、燃料が十分になったら出撃を続行します"
     },
     "CoinLimit": {
-      "name": "資金がXを超えたら停止",
-      "help": "資金がこの数値を超えていることが確認された場合、現在のタスクを停止します。\n0は制限なしを意味します"
+      "name": "StopCondition.CoinLimit.name",
+      "help": "StopCondition.CoinLimit.help"
     },
     "RunCount": {
       "name": "出撃回数がXを超えると停止する",
@@ -1587,6 +1587,14 @@
     "EquipmentCode": {
       "name": "装備コード",
       "help": "「艦船+装備を交換する」を選択した場合のみ有効です。\n艦船を交換する際、設定内の現在の艦船装備コードがnullの場合、コードがエクスポートされます。艦船を交換する際、設定の現在の艦船装備コードがnullの場合は、前の艦船からエクスポートされた装備コードが使用されます。それ以外の場合は、設定の装備コードが使用されます。\nBlueStacksエミュレータのユーザーは、最初に仮想キーボードを有効にする必要があります。\nDD：前衛駆逐    bogue：ボーグ    hermes：ハーミーズ    langley：ラングレー    ranger：レンジャー"
+    },
+    "UseEmotionFirst": {
+      "name": "GemsFarming.UseEmotionFirst.name",
+      "help": "GemsFarming.UseEmotionFirst.help"
+    },
+    "IgnoreEmotionWarning": {
+      "name": "GemsFarming.IgnoreEmotionWarning.name",
+      "help": "GemsFarming.IgnoreEmotionWarning.help"
     },
     "ALLowHighFlagshipLevel": {
       "name": "満レベル後列のみ交換する",
@@ -2014,6 +2022,10 @@
     "FortChoreMeowfficer": {
       "name": "ニャ窩インタラクション",
       "help": "掃除、給食、ネコじゃらし"
+    },
+    "OverflowCoins": {
+      "name": "金貨が余ったら猫用トイレを買う",
+      "help": "金貨がこの値を超えている間は、金貨がこの値まで下がるか、猫箱が売り切れるまで猫箱を買い続けてください。-1 閉じる"
     }
   },
   "MeowfficerTrain": {

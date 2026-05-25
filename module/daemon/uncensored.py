@@ -34,7 +34,7 @@ class AzurLaneUncensored(LoginHandler):
             self.config.AzurLaneUncensored_Repository = 'https://e.coding.net/llop18870/alas/AzurLaneUncensored.git'
 
         repo = self.config.AzurLaneUncensored_Repository
-        folder = './toolkit/AzurLaneUncensored'
+        folder = './.venv/AzurLaneUncensored'
 
         logger.hr('Update AzurLaneUncensored', level=1)
         logger.info('This will take a while at first use')
@@ -44,7 +44,7 @@ class AzurLaneUncensored(LoginHandler):
         os.makedirs(folder, exist_ok=True)
         prev = os.getcwd()
 
-        # Running in ./toolkit/AzurLaneUncensored
+        # Running in ./.venv/AzurLaneUncensored
         os.chdir(folder)
         # Monkey patch `print()` build-in to show logs.
         self.create_level1_uncensored()

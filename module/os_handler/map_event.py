@@ -1,3 +1,5 @@
+from typing import Optional
+
 from module.base.timer import Timer
 from module.combat.assets import *
 from module.exception import CampaignEnd
@@ -243,7 +245,7 @@ class MapEventHandler(EnemySearchingHandler):
 
         return cleared
 
-    def handle_os_auto_search_map_option(self, drop=None, enable=True):
+    def handle_os_auto_search_map_option(self, drop=None, enable: Optional[bool] = True):
         """
         Args:
             drop (DropImage):

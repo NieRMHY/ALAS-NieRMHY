@@ -419,8 +419,9 @@ async def call_tool(name: str, arguments: Dict[str, Any]) -> List[TextContent]:
                 if not adb_path or not os.path.exists(adb_path):
                     # Fallback to connection_attr logic
                     adb_search_list = [
+                        './.venv/Scripts/adb.exe',
+                        './.venv/bin/adb',
                         './bin/adb/adb.exe',
-                        './toolkit/Lib/site-packages/adbutils/binaries/adb.exe',
                     ]
                     for path in adb_search_list:
                         if os.path.exists(path):

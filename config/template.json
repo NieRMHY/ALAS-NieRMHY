@@ -471,6 +471,8 @@
       "CommonDD": "any",
       "CommonDDFilter": "z20 > z21 > aulick > foote > cassin > downes",
       "EquipmentCode": "DD: null\nbogue: null\nhermes: null\nlangley: null\nranger: null",
+      "UseEmotionFirst": false,
+      "IgnoreEmotionWarning": false,
       "ALLowHighFlagshipLevel": false,
       "ALLowLowVanguardLevel": false,
       "DelayTaskIFNoFlagship": false,
@@ -552,6 +554,8 @@
       "CommonDD": "any",
       "CommonDDFilter": "z20 > z21 > aulick > foote > cassin > downes",
       "EquipmentCode": "DD: null\nbogue: null\nhermes: null\nlangley: null\nranger: null",
+      "UseEmotionFirst": false,
+      "IgnoreEmotionWarning": false,
       "ALLowHighFlagshipLevel": false,
       "ALLowLowVanguardLevel": false,
       "DelayTaskIFNoFlagship": false,
@@ -633,6 +637,8 @@
       "CommonDD": "any",
       "CommonDDFilter": "z20 > z21 > aulick > foote > cassin > downes",
       "EquipmentCode": "DD: null\nbogue: null\nhermes: null\nlangley: null\nranger: null",
+      "UseEmotionFirst": false,
+      "IgnoreEmotionWarning": false,
       "ALLowHighFlagshipLevel": false,
       "ALLowLowVanguardLevel": false,
       "DelayTaskIFNoFlagship": false,
@@ -1903,7 +1909,8 @@
     },
     "Meowfficer": {
       "BuyAmount": 1,
-      "FortChoreMeowfficer": true
+      "FortChoreMeowfficer": true,
+      "OverflowCoins": -1
     },
     "MeowfficerTrain": {
       "Enable": false,

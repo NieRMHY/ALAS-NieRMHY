@@ -4,6 +4,9 @@ This directory holds the Alas installer.
 
 Install Alas by running `python -m deploy.installer` in Alas root folder.
 
+This entry point bootstraps the project-local `.venv` with `uv` and syncs
+dependencies from `pyproject.toml` and `uv.lock` before continuing. It does not
+install packages into the system Python environment.
 
 
 # Launcher
