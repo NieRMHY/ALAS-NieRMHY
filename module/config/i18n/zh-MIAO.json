@@ -350,6 +350,12 @@
       "True": "开启中 (=^･ω･^=)",
       "False": "关闭中 (´;ω;`)"
     },
+    "PushNotification": {
+      "name": "推送通知",
+      "help": "启用后，任务完成时会通过 OnePush 推送成功或失败通知喵",
+      "True": "已启用",
+      "False": "关闭"
+    },
     "NextRun": {
       "name": "下次运行时机 (´・ω・`)",
       "help": "自动计算的时间喵，不用手改。清空则立刻奔跑喵~"
@@ -631,11 +637,18 @@
     },
     "OcrDevice": {
       "name": "OCR设备选择 (´・ω・`)",
-      "help": "OCR跑在CPU/GPU/ANE上。GPU仅用于Windows DirectML，ANE仅用于macOS Apple Neural Engine。自动：Apple Silicon Mac用ANE，Windows显存>1G用GPU，否则CPU。",
+      "help": "OCR跑在CPU/GPU/ANE上。GPU用Windows DirectML，ANE用macOS Neural Engine。自动：Apple Silicon选ANE，Windows显存>1G选GPU，否则CPU。",
       "auto": "自动判断 (｀・ω・´)",
       "cpu": "CPU喵",
       "gpu": "GPU喵",
-      "ane": "ANE (Apple)喵"
+      "ane": "ANE喵 (Apple)"
+    },
+    "OcrBackend": {
+      "name": "OCR后端喵 (≧∇≦)ﾉ",
+      "help": "选OCR推理引擎喵。onnxruntime用ONNX Runtime，ncnn用ncnn Vulkan后端喵。自动默认onnxruntime喵。",
+      "auto": "自动 (onnxruntime) 喵",
+      "onnxruntime": "ONNX Runtime 喵",
+      "ncnn": "ncnn (Vulkan) 喵"
     },
     "ScreenshotInterval": {
       "name": "放慢截图至 X 秒一张 (´-ω-`)zzz",
@@ -4435,7 +4448,11 @@
       "CommissionIncomeHeaderCount": "委托次数喵",
       "CommissionIncomeHeaderAvg": "平均/次喵",
       "CommissionIncomeTotalCommissions": "委托总次数: {value}喵",
-      "CommissionIncomeRecentTitle": "最近委托记录喵"
+      "CommissionIncomeRecentTitle": "最近委托记录喵",
+      "ResourceChartTitle": "全资源变化趋势喵",
+      "LoadResourceDataFailed": "加载资源数据失败喵: {e}",
+      "NoResourceData": "暂无资源变化数据喵，运行脚本后将自动记录喵",
+      "NoValidResourceData": "暂无有效资源数据喵"
     },
     "Tactical": {
       "SkillAutoSwitch": "Gui.Tactical.SkillAutoSwitch"

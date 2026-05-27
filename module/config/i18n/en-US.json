@@ -350,6 +350,12 @@
       "True": "Enabled",
       "False": "False"
     },
+    "PushNotification": {
+      "name": "Push Notification",
+      "help": "Send push notification via OnePush when a task completes, including success or failure status",
+      "True": "Enabled",
+      "False": "Disabled"
+    },
     "NextRun": {
       "name": "Next run time",
       "help": "The value is automatically calculated and does not need to be modified manually. Will run immediately after clearing"
@@ -630,12 +636,19 @@
       "help": ""
     },
     "OcrDevice": {
-      "name": "Optimization.OcrDevice.name",
-      "help": "Optimization.OcrDevice.help",
+      "name": "OCR Device",
+      "help": "Choose the OCR device. GPU uses Windows DirectML, ANE uses macOS Apple Neural Engine. Auto: Apple Silicon Mac uses ANE, GPU when VRAM > 1GB on Windows, otherwise CPU.",
       "auto": "Auto",
       "cpu": "CPU",
       "gpu": "GPU",
       "ane": "ANE (Apple)"
+    },
+    "OcrBackend": {
+      "name": "OCR Backend",
+      "help": "Choose the OCR inference engine. ONNX Runtime uses the ONNX Runtime backend, ncnn uses the ncnn Vulkan backend. Auto defaults to ONNX Runtime.",
+      "auto": "Auto (ONNX Runtime)",
+      "onnxruntime": "ONNX Runtime",
+      "ncnn": "ncnn (Vulkan)"
     },
     "ScreenshotInterval": {
       "name": "Slow Down Screenshot Speed to X Seconds per Frame",
@@ -4435,7 +4448,11 @@
       "CommissionIncomeHeaderCount": "Commissions",
       "CommissionIncomeHeaderAvg": "Avg/Run",
       "CommissionIncomeTotalCommissions": "Total commissions: {value}",
-      "CommissionIncomeRecentTitle": "Recent Commissions"
+      "CommissionIncomeRecentTitle": "Recent Commissions",
+      "ResourceChartTitle": "All Resources Trend",
+      "LoadResourceDataFailed": "Failed to load resource data: {e}",
+      "NoResourceData": "No resource data yet. It will be recorded automatically when the script runs.",
+      "NoValidResourceData": "No valid resource data"
     },
     "Tactical": {
       "SkillAutoSwitch": "Gui.Tactical.SkillAutoSwitch"

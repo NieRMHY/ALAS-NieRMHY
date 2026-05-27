@@ -62,6 +62,10 @@ Scheduler:
     type: checkbox
     value: false
     option: [true, false]
+  PushNotification:
+    type: checkbox
+    value: false
+    option: [true, false]
   NextRun: 2020-01-01 00:00:00
   Command: Alas
   SuccessInterval:
@@ -171,9 +175,12 @@ Error:
     value: 3
     validate: [1, 10]
 Optimization:
-  OcrDevice: 
+  OcrDevice:
     value: auto
     option: [auto, cpu, gpu, ane]
+  OcrBackend:
+    value: auto
+    option: [auto, onnxruntime, ncnn]
   ScreenshotInterval: 0.3
   CombatScreenshotInterval: 1.0
   TaskHoardingDuration: 0

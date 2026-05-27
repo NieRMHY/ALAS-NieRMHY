@@ -76,6 +76,7 @@ class GeneratedConfig:
 
     # Group `Scheduler`
     Scheduler_Enable = False  # True, False
+    Scheduler_PushNotification = False  # True, False
     Scheduler_NextRun = datetime.datetime(2020, 1, 1, 0, 0)
     Scheduler_Command = 'Alas'
     Scheduler_SuccessInterval = 0
@@ -117,6 +118,7 @@ class GeneratedConfig:
 
     # Group `Optimization`
     Optimization_OcrDevice = 'auto'  # auto, cpu, gpu, ane
+    Optimization_OcrBackend = 'auto'  # auto, onnxruntime, ncnn
     Optimization_ScreenshotInterval = 0.3
     Optimization_CombatScreenshotInterval = 1.0
     Optimization_TaskHoardingDuration = 0
