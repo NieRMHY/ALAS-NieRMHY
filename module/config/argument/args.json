@@ -937,6 +937,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "Storage": {
@@ -990,6 +998,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "Campaign": {
@@ -1398,6 +1414,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "Campaign": {
@@ -1806,6 +1830,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "Campaign": {
@@ -2214,6 +2246,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "GemsFarming": {
@@ -2323,10 +2363,8 @@
         "type": "select",
         "value": "campaign_main",
         "option": [
-          "event_20201126_cn",
-          "event_20220915_cn",
+          "event_20220818_cn",
           "event_20221222_cn",
-          "event_20260417_cn",
           "event_20260520_cn"
         ],
         "option_cn": [
@@ -2339,16 +2377,12 @@
           "event_20260520_cn"
         ],
         "option_tw": [
-          "event_20221222_cn",
-          "event_20201126_cn",
-          "event_20260417_cn",
-          "event_20220915_cn"
+          "event_20220818_cn",
+          "event_20221222_cn"
         ],
         "option_bold": [
-          "event_20201126_cn",
-          "event_20220915_cn",
+          "event_20220818_cn",
           "event_20221222_cn",
-          "event_20260417_cn",
           "event_20260520_cn"
         ]
       },
@@ -2716,6 +2750,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "GemsFarming": {
@@ -2825,10 +2867,8 @@
         "type": "select",
         "value": "campaign_main",
         "option": [
-          "event_20201126_cn",
-          "event_20220915_cn",
+          "event_20220818_cn",
           "event_20221222_cn",
-          "event_20260417_cn",
           "event_20260520_cn"
         ],
         "display": "hide",
@@ -2842,16 +2882,12 @@
           "event_20260520_cn"
         ],
         "option_tw": [
-          "event_20221222_cn",
-          "event_20201126_cn",
-          "event_20260417_cn",
-          "event_20220915_cn"
+          "event_20220818_cn",
+          "event_20221222_cn"
         ],
         "option_bold": [
-          "event_20201126_cn",
-          "event_20220915_cn",
+          "event_20220818_cn",
           "event_20221222_cn",
-          "event_20260417_cn",
           "event_20260520_cn"
         ]
       },
@@ -3219,6 +3255,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "GemsFarming": {
@@ -3734,6 +3778,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "Campaign": {
@@ -3745,10 +3797,8 @@
         "type": "select",
         "value": "campaign_main",
         "option": [
-          "event_20201126_cn",
-          "event_20220915_cn",
+          "event_20220818_cn",
           "event_20221222_cn",
-          "event_20260417_cn",
           "event_20260520_cn"
         ],
         "option_cn": [
@@ -3761,16 +3811,12 @@
           "event_20260520_cn"
         ],
         "option_tw": [
-          "event_20221222_cn",
-          "event_20201126_cn",
-          "event_20260417_cn",
-          "event_20220915_cn"
+          "event_20220818_cn",
+          "event_20221222_cn"
         ],
         "option_bold": [
-          "event_20201126_cn",
-          "event_20220915_cn",
+          "event_20220818_cn",
           "event_20221222_cn",
-          "event_20260417_cn",
           "event_20260520_cn"
         ]
       },
@@ -4169,6 +4215,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "Campaign": {
@@ -4180,10 +4234,8 @@
         "type": "select",
         "value": "campaign_main",
         "option": [
-          "event_20201126_cn",
-          "event_20220915_cn",
+          "event_20220818_cn",
           "event_20221222_cn",
-          "event_20260417_cn",
           "event_20260520_cn"
         ],
         "option_cn": [
@@ -4196,16 +4248,12 @@
           "event_20260520_cn"
         ],
         "option_tw": [
-          "event_20221222_cn",
-          "event_20201126_cn",
-          "event_20260417_cn",
-          "event_20220915_cn"
+          "event_20220818_cn",
+          "event_20221222_cn"
         ],
         "option_bold": [
-          "event_20201126_cn",
-          "event_20220915_cn",
+          "event_20220818_cn",
           "event_20221222_cn",
-          "event_20260417_cn",
           "event_20260520_cn"
         ]
       },
@@ -4604,6 +4652,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "Campaign": {
@@ -4615,10 +4671,8 @@
         "type": "select",
         "value": "campaign_main",
         "option": [
-          "event_20201126_cn",
-          "event_20220915_cn",
+          "event_20220818_cn",
           "event_20221222_cn",
-          "event_20260417_cn",
           "event_20260520_cn"
         ],
         "option_cn": [
@@ -4631,16 +4685,12 @@
           "event_20260520_cn"
         ],
         "option_tw": [
-          "event_20221222_cn",
-          "event_20201126_cn",
-          "event_20260417_cn",
-          "event_20220915_cn"
+          "event_20220818_cn",
+          "event_20221222_cn"
         ],
         "option_bold": [
-          "event_20201126_cn",
-          "event_20220915_cn",
+          "event_20220818_cn",
           "event_20221222_cn",
-          "event_20260417_cn",
           "event_20260520_cn"
         ]
       },
@@ -5038,6 +5088,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "Raid": {
@@ -5315,6 +5373,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "RaidScuttle": {
@@ -5726,6 +5792,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "Hospital": {
@@ -5922,6 +5996,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "Campaign": {
@@ -6197,6 +6279,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "MaritimeEscort": {
@@ -6256,6 +6346,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "EventShop": {
@@ -6336,6 +6434,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "Campaign": {
@@ -7030,6 +7136,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "EventDaily": {
@@ -7052,10 +7166,8 @@
         "type": "select",
         "value": "campaign_main",
         "option": [
-          "event_20201126_cn",
-          "event_20220915_cn",
+          "event_20220818_cn",
           "event_20221222_cn",
-          "event_20260417_cn",
           "event_20260520_cn"
         ],
         "option_cn": [
@@ -7068,16 +7180,12 @@
           "event_20260520_cn"
         ],
         "option_tw": [
-          "event_20221222_cn",
-          "event_20201126_cn",
-          "event_20260417_cn",
-          "event_20220915_cn"
+          "event_20220818_cn",
+          "event_20221222_cn"
         ],
         "option_bold": [
-          "event_20201126_cn",
-          "event_20220915_cn",
+          "event_20220818_cn",
           "event_20221222_cn",
-          "event_20260417_cn",
           "event_20260520_cn"
         ]
       },
@@ -7482,6 +7590,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "EventDaily": {
@@ -7504,10 +7620,8 @@
         "type": "select",
         "value": "campaign_main",
         "option": [
-          "event_20201126_cn",
-          "event_20220915_cn",
+          "event_20220818_cn",
           "event_20221222_cn",
-          "event_20260417_cn",
           "event_20260520_cn"
         ],
         "option_cn": [
@@ -7520,16 +7634,12 @@
           "event_20260520_cn"
         ],
         "option_tw": [
-          "event_20221222_cn",
-          "event_20201126_cn",
-          "event_20260417_cn",
-          "event_20220915_cn"
+          "event_20220818_cn",
+          "event_20221222_cn"
         ],
         "option_bold": [
-          "event_20201126_cn",
-          "event_20220915_cn",
+          "event_20220818_cn",
           "event_20221222_cn",
-          "event_20260417_cn",
           "event_20260520_cn"
         ]
       },
@@ -7934,6 +8044,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "EventDaily": {
@@ -7956,10 +8074,8 @@
         "type": "select",
         "value": "campaign_main",
         "option": [
-          "event_20201126_cn",
-          "event_20220915_cn",
+          "event_20220818_cn",
           "event_20221222_cn",
-          "event_20260417_cn",
           "event_20260520_cn"
         ],
         "option_cn": [
@@ -7972,16 +8088,12 @@
           "event_20260520_cn"
         ],
         "option_tw": [
-          "event_20221222_cn",
-          "event_20201126_cn",
-          "event_20260417_cn",
-          "event_20220915_cn"
+          "event_20220818_cn",
+          "event_20221222_cn"
         ],
         "option_bold": [
-          "event_20201126_cn",
-          "event_20220915_cn",
+          "event_20220818_cn",
           "event_20221222_cn",
-          "event_20260417_cn",
           "event_20260520_cn"
         ]
       },
@@ -8386,6 +8498,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "EventDaily": {
@@ -8408,10 +8528,8 @@
         "type": "select",
         "value": "campaign_main",
         "option": [
-          "event_20201126_cn",
-          "event_20220915_cn",
+          "event_20220818_cn",
           "event_20221222_cn",
-          "event_20260417_cn",
           "event_20260520_cn"
         ],
         "option_cn": [
@@ -8424,16 +8542,12 @@
           "event_20260520_cn"
         ],
         "option_tw": [
-          "event_20221222_cn",
-          "event_20201126_cn",
-          "event_20260417_cn",
-          "event_20220915_cn"
+          "event_20220818_cn",
+          "event_20221222_cn"
         ],
         "option_bold": [
-          "event_20201126_cn",
-          "event_20220915_cn",
+          "event_20220818_cn",
           "event_20221222_cn",
-          "event_20260417_cn",
           "event_20260520_cn"
         ]
       },
@@ -8838,6 +8952,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "Campaign": {
@@ -8850,10 +8972,8 @@
         "type": "select",
         "value": "campaign_main",
         "option": [
-          "event_20201126_cn",
-          "event_20220915_cn",
+          "event_20220818_cn",
           "event_20221222_cn",
-          "event_20260417_cn",
           "event_20260520_cn"
         ],
         "option_cn": [
@@ -8866,16 +8986,12 @@
           "event_20260520_cn"
         ],
         "option_tw": [
-          "event_20221222_cn",
-          "event_20201126_cn",
-          "event_20260417_cn",
-          "event_20220915_cn"
+          "event_20220818_cn",
+          "event_20221222_cn"
         ],
         "option_bold": [
-          "event_20201126_cn",
-          "event_20220915_cn",
+          "event_20220818_cn",
           "event_20221222_cn",
-          "event_20260417_cn",
           "event_20260520_cn"
         ]
       },
@@ -9281,6 +9397,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "RaidDaily": {
@@ -9549,6 +9673,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "Campaign": {
@@ -9825,6 +9957,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "Commission": {
@@ -9904,6 +10044,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "Tactical": {
@@ -10018,6 +10166,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "Research": {
@@ -10148,6 +10304,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "Dorm": {
@@ -10239,6 +10403,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "Meowfficer": {
@@ -10336,6 +10508,14 @@
         "type": "input",
         "value": "00:00, 06:00, 12:00, 18:00, 21:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "GuildLogistics": {
@@ -10429,6 +10609,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "Reward": {
@@ -10504,6 +10692,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "Awaken": {
@@ -10571,6 +10767,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "Island1": {
@@ -11080,6 +11284,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "Daily": {
@@ -11279,6 +11491,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "Hard": {
@@ -11394,6 +11614,14 @@
         "type": "input",
         "value": "00:00, 12:00, 18:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "Exercise": {
@@ -11506,6 +11734,14 @@
         "type": "input",
         "value": "00:00, 12:00, 18:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "GeneralShop": {
@@ -11585,6 +11821,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "GuildShop": {
@@ -11872,6 +12116,14 @@
         "type": "input",
         "value": "04:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "ShipyardDr": {
@@ -11996,6 +12248,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "Gacha": {
@@ -12086,6 +12346,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "BattlePass": {
@@ -12192,6 +12460,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "Storage": {
@@ -12245,6 +12521,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "PrivateQuarters": {
@@ -12397,6 +12681,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "OpsiAshBeacon": {
@@ -12405,7 +12697,8 @@
         "value": "current",
         "option": [
           "current",
-          "current_dossier"
+          "current_dossier",
+          "current_dossier_only"
         ]
       },
       "OneHitMode": {
@@ -12480,6 +12773,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "OpsiAshAssist": {
@@ -12539,6 +12840,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "OpsiExplore": {
@@ -12627,6 +12936,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "OpsiShop": {
@@ -12701,6 +13018,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "OpsiVoucher": {
@@ -12760,6 +13085,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "OpsiDaily": {
@@ -12856,6 +13189,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": true,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "OpsiObscure": {
@@ -12935,6 +13276,14 @@
         "type": "input",
         "value": "00:00, 12:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": true,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "OpsiAbyssal": {
@@ -13000,6 +13349,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "OpsiFleet": {
@@ -13069,6 +13426,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "OpsiStronghold": {
@@ -13143,6 +13508,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "OpsiMonthBoss": {
@@ -13220,6 +13593,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "OpsiMeowfficerFarming": {
@@ -13359,6 +13740,14 @@
         "type": "input",
         "value": "00:00, 12:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "OpsiHazard1Leveling": {
@@ -13562,6 +13951,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "OpsiScheduling": {
@@ -13686,6 +14083,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": true,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "Storage": {
@@ -13854,6 +14259,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "Storage": {

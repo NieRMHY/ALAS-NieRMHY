@@ -213,7 +213,8 @@
       "Command": "Restart",
       "SuccessInterval": 0,
       "FailureInterval": 0,
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "Storage": {
       "Storage": {}
@@ -227,7 +228,8 @@
       "Command": "Main",
       "SuccessInterval": 0,
       "FailureInterval": 120,
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "Campaign": {
       "Name": "12-4",
@@ -307,7 +309,8 @@
       "Command": "Main2",
       "SuccessInterval": 0,
       "FailureInterval": 120,
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "Campaign": {
       "Name": "12-4",
@@ -387,7 +390,8 @@
       "Command": "Main3",
       "SuccessInterval": 0,
       "FailureInterval": 120,
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "Campaign": {
       "Name": "12-4",
@@ -467,7 +471,8 @@
       "Command": "GemsFarming",
       "SuccessInterval": 0,
       "FailureInterval": 120,
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "GemsFarming": {
       "ChangeFlagship": "ship_equip",
@@ -551,7 +556,8 @@
       "Command": "ThreeOilLowCost",
       "SuccessInterval": 0,
       "FailureInterval": 120,
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "GemsFarming": {
       "ChangeFlagship": "ship_equip",
@@ -635,7 +641,8 @@
       "Command": "Ambush11",
       "SuccessInterval": 0,
       "FailureInterval": 120,
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "GemsFarming": {
       "ChangeFlagship": "ship_equip",
@@ -733,7 +740,8 @@
       "Command": "Event",
       "SuccessInterval": 0,
       "FailureInterval": 120,
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "Campaign": {
       "Name": "D3",
@@ -813,7 +821,8 @@
       "Command": "Event2",
       "SuccessInterval": 0,
       "FailureInterval": 120,
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "Campaign": {
       "Name": "D3",
@@ -893,7 +902,8 @@
       "Command": "Event3",
       "SuccessInterval": 0,
       "FailureInterval": 120,
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "Campaign": {
       "Name": "D3",
@@ -973,7 +983,8 @@
       "Command": "Raid",
       "SuccessInterval": 0,
       "FailureInterval": 120,
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "Raid": {
       "Mode": "hard",
@@ -1027,7 +1038,8 @@
       "Command": "RaidScuttle",
       "SuccessInterval": 0,
       "FailureInterval": 120,
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "RaidScuttle": {
       "Sacrifice": "vanguard"
@@ -1101,7 +1113,8 @@
       "Command": "Hospital",
       "SuccessInterval": 0,
       "FailureInterval": 120,
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "Hospital": {
       "UseRecommendFleet": true
@@ -1142,7 +1155,8 @@
       "Command": "Coalition",
       "SuccessInterval": 30,
       "FailureInterval": 30,
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "Campaign": {
       "Name": "dynamic",
@@ -1196,7 +1210,8 @@
       "Command": "MaritimeEscort",
       "SuccessInterval": 30,
       "FailureInterval": 30,
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "MaritimeEscort": {
       "Enable": true
@@ -1213,7 +1228,8 @@
       "Command": "EventShop",
       "SuccessInterval": 30,
       "FailureInterval": 30,
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "EventShop": {
       "UnlockSSRShip": true,
@@ -1233,7 +1249,8 @@
       "Command": "WarArchives",
       "SuccessInterval": 30,
       "FailureInterval": 30,
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "Campaign": {
       "Name": "D3",
@@ -1313,7 +1330,8 @@
       "Command": "EventA",
       "SuccessInterval": 30,
       "FailureInterval": 30,
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "EventDaily": {
       "StageFilter": "A1 > A2 > A3",
@@ -1397,7 +1415,8 @@
       "Command": "EventB",
       "SuccessInterval": 30,
       "FailureInterval": 30,
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "EventDaily": {
       "StageFilter": "B1 > B2 > B3",
@@ -1481,7 +1500,8 @@
       "Command": "EventC",
       "SuccessInterval": 30,
       "FailureInterval": 30,
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "EventDaily": {
       "StageFilter": "C1 > C2 > C3",
@@ -1565,7 +1585,8 @@
       "Command": "EventD",
       "SuccessInterval": 30,
       "FailureInterval": 30,
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "EventDaily": {
       "StageFilter": "D1 > D2 > D3",
@@ -1649,7 +1670,8 @@
       "Command": "EventSp",
       "SuccessInterval": 30,
       "FailureInterval": 30,
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "Campaign": {
       "Name": "sp",
@@ -1729,7 +1751,8 @@
       "Command": "RaidDaily",
       "SuccessInterval": 30,
       "FailureInterval": 30,
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "RaidDaily": {
       "StageFilter": "hard > normal > easy"
@@ -1782,7 +1805,8 @@
       "Command": "CoalitionSp",
       "SuccessInterval": 30,
       "FailureInterval": 30,
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "Campaign": {
       "Name": "sp",
@@ -1836,7 +1860,8 @@
       "Command": "Commission",
       "SuccessInterval": "30-60",
       "FailureInterval": "30-60",
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "Commission": {
       "PresetFilter": "cube",
@@ -1856,7 +1881,8 @@
       "Command": "Tactical",
       "SuccessInterval": "30-60",
       "FailureInterval": "120-240",
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "Tactical": {
       "TacticalFilter": "SameT4 > SameT3 > SameT2 > SameT1\n> BlueT2 > YellowT2 > RedT2\n> BlueT3 > YellowT3 > RedT3\n> BlueT4 > YellowT4 > RedT4\n> BlueT1 > YellowT1 > RedT1\n> first",
@@ -1887,7 +1913,8 @@
       "Command": "Research",
       "SuccessInterval": "30-60",
       "FailureInterval": "30-60",
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "Research": {
       "UseCube": "only_05_hour",
@@ -1910,7 +1937,8 @@
       "Command": "Dorm",
       "SuccessInterval": 278,
       "FailureInterval": 278,
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "Dorm": {
       "Collect": true,
@@ -1935,7 +1963,8 @@
       "Command": "Meowfficer",
       "SuccessInterval": 30,
       "FailureInterval": 30,
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "Meowfficer": {
       "BuyAmount": 1,
@@ -1962,7 +1991,8 @@
       "Command": "Guild",
       "SuccessInterval": 30,
       "FailureInterval": 30,
-      "ServerUpdate": "00:00, 06:00, 12:00, 18:00, 21:00"
+      "ServerUpdate": "00:00, 06:00, 12:00, 18:00, 21:00",
+      "Sensitive": false
     },
     "GuildLogistics": {
       "Enable": true,
@@ -1989,7 +2019,8 @@
       "Command": "Reward",
       "SuccessInterval": "120-240",
       "FailureInterval": "120-240",
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "Reward": {
       "CollectOil": true,
@@ -2010,7 +2041,8 @@
       "Command": "Awaken",
       "SuccessInterval": 0,
       "FailureInterval": 120,
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "Awaken": {
       "LevelCap": "level120",
@@ -2028,7 +2060,8 @@
       "Command": "Island",
       "SuccessInterval": 0,
       "FailureInterval": 120,
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "Island1": {
       "Receive": false,
@@ -2176,7 +2209,8 @@
       "Command": "Daily",
       "SuccessInterval": 30,
       "FailureInterval": 30,
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "Daily": {
       "UseDailySkip": true,
@@ -2206,7 +2240,8 @@
       "Command": "Hard",
       "SuccessInterval": 30,
       "FailureInterval": 30,
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "Hard": {
       "HardStage": "11-4",
@@ -2231,7 +2266,8 @@
       "Command": "Exercise",
       "SuccessInterval": 30,
       "FailureInterval": 30,
-      "ServerUpdate": "00:00, 12:00, 18:00"
+      "ServerUpdate": "00:00, 12:00, 18:00",
+      "Sensitive": false
     },
     "Exercise": {
       "DelayUntilHoursBeforeNextUpdate": 12,
@@ -2255,7 +2291,8 @@
       "Command": "ShopFrequent",
       "SuccessInterval": 30,
       "FailureInterval": 30,
-      "ServerUpdate": "00:00, 12:00, 18:00"
+      "ServerUpdate": "00:00, 12:00, 18:00",
+      "Sensitive": false
     },
     "GeneralShop": {
       "Enable": true,
@@ -2277,7 +2314,8 @@
       "Command": "ShopOnce",
       "SuccessInterval": 30,
       "FailureInterval": 30,
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "GuildShop": {
       "Enable": true,
@@ -2327,7 +2365,8 @@
       "Command": "Shipyard",
       "SuccessInterval": 30,
       "FailureInterval": 30,
-      "ServerUpdate": "04:00"
+      "ServerUpdate": "04:00",
+      "Sensitive": false
     },
     "ShipyardDr": {
       "ResearchSeries": 2,
@@ -2353,7 +2392,8 @@
       "Command": "Gacha",
       "SuccessInterval": 30,
       "FailureInterval": 30,
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "Gacha": {
       "Pool": "light",
@@ -2373,7 +2413,8 @@
       "Command": "Freebies",
       "SuccessInterval": 30,
       "FailureInterval": 30,
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "BattlePass": {
       "Collect": true
@@ -2404,7 +2445,8 @@
       "Command": "Minigame",
       "SuccessInterval": 0,
       "FailureInterval": 120,
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "Storage": {
       "Storage": {}
@@ -2418,7 +2460,8 @@
       "Command": "PrivateQuarters",
       "SuccessInterval": 30,
       "FailureInterval": 30,
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "PrivateQuarters": {
       "BuyRoses": true,
@@ -2458,7 +2501,8 @@
       "Command": "OpsiAshBeacon",
       "SuccessInterval": 30,
       "FailureInterval": 30,
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "OpsiAshBeacon": {
       "AttackMode": "current",
@@ -2480,7 +2524,8 @@
       "Command": "OpsiAshAssist",
       "SuccessInterval": 30,
       "FailureInterval": 30,
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "OpsiAshAssist": {
       "Tier": 15
@@ -2497,7 +2542,8 @@
       "Command": "OpsiExplore",
       "SuccessInterval": 0,
       "FailureInterval": 0,
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "OpsiExplore": {
       "SpecialRadar": false,
@@ -2521,7 +2567,8 @@
       "Command": "OpsiShop",
       "SuccessInterval": 30,
       "FailureInterval": 30,
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "OpsiShop": {
       "PresetFilter": "max_benefit_meta",
@@ -2540,7 +2587,8 @@
       "Command": "OpsiVoucher",
       "SuccessInterval": 30,
       "FailureInterval": 30,
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "OpsiVoucher": {
       "Filter": "LoggerAbyssal > LoggerObscure > Book > Coin > Fragment"
@@ -2557,7 +2605,8 @@
       "Command": "OpsiDaily",
       "SuccessInterval": 30,
       "FailureInterval": 30,
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "OpsiDaily": {
       "DoMission": true,
@@ -2583,7 +2632,8 @@
       "Command": "OpsiObscure",
       "SuccessInterval": 60,
       "FailureInterval": 60,
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": true
     },
     "OpsiObscure": {
       "SkipHazard2Obscure": false,
@@ -2605,7 +2655,8 @@
       "Command": "OpsiAbyssal",
       "SuccessInterval": 60,
       "FailureInterval": 60,
-      "ServerUpdate": "00:00, 12:00"
+      "ServerUpdate": "00:00, 12:00",
+      "Sensitive": true
     },
     "OpsiAbyssal": {
       "ForceRun": false
@@ -2625,7 +2676,8 @@
       "Command": "OpsiArchive",
       "SuccessInterval": 60,
       "FailureInterval": 60,
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "OpsiFleet": {
       "Fleet": 1,
@@ -2643,7 +2695,8 @@
       "Command": "OpsiStronghold",
       "SuccessInterval": 60,
       "FailureInterval": 60,
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "OpsiStronghold": {
       "SubmarineEveryCombat": false,
@@ -2665,7 +2718,8 @@
       "Command": "OpsiMonthBoss",
       "SuccessInterval": 0,
       "FailureInterval": 120,
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "OpsiMonthBoss": {
       "Mode": "normal",
@@ -2687,7 +2741,8 @@
       "Command": "OpsiMeowfficerFarming",
       "SuccessInterval": 30,
       "FailureInterval": 30,
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "OpsiMeowfficerFarming": {
       "ActionPointPreserve": 1000,
@@ -2722,7 +2777,8 @@
       "Command": "OpsiHazard1Leveling",
       "SuccessInterval": 30,
       "FailureInterval": 60,
-      "ServerUpdate": "00:00, 12:00"
+      "ServerUpdate": "00:00, 12:00",
+      "Sensitive": false
     },
     "OpsiHazard1Leveling": {
       "TargetZone": 0,
@@ -2769,7 +2825,8 @@
       "Command": "OpsiScheduling",
       "SuccessInterval": 0,
       "FailureInterval": 120,
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "OpsiScheduling": {
       "UseSmartSchedulingOperationCoinsPreserve": true,
@@ -2796,7 +2853,8 @@
       "Command": "OpsiCrossMonth",
       "SuccessInterval": 0,
       "FailureInterval": 120,
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": true
     },
     "Storage": {
       "Storage": {}
@@ -2845,7 +2903,8 @@
       "Command": "IslandSeasonTask",
       "SuccessInterval": 0,
       "FailureInterval": 120,
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "Storage": {
       "Storage": {}

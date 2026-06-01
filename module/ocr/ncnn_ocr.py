@@ -103,7 +103,7 @@ _gpu_instance_registered = False
 
 
 def _destroy_gpu_instance():
-    """atexit handler: destroy the global ncnn GPU instance cleanly."""
+    """atexit 处理函数：安全销毁全局 ncnn GPU 实例。"""
     global _gpu_instance_created, _gpu_instance_registered
     try:
         ncnn = _load_ncnn()
@@ -288,8 +288,8 @@ class NcnnRecOCR:
         line_results, _ = self.decoder(preds)
         text = line_results[0][0]
 
-        # The configured output is pre-softmax logits. CTC argmax is identical,
-        # but confidence is not calibrated after skipping Softmax for latency.
+        # 输出为 Softmax 前的 logits。CTC argmax 结果相同，
+        # 但为降低延迟跳过 Softmax 后置信度未经校准。
         score = 1.0 if text else 0.0
         return TextRecOutput(
             imgs=[img],

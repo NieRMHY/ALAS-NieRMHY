@@ -133,7 +133,15 @@ def _run_ocr_queued(func, *args, **kwargs):
 
 
 def _get_onnx_model_params(name):
-    """Return (model_path, rec_keys_path, ocr_version) for the given language."""
+    """
+    返回指定语言的 ONNX 模型参数。
+
+    Args:
+        name: 语言名称，如 'cn'、'jp'、'tw'、'en'。
+
+    Returns:
+        (model_path, rec_keys_path, ocr_version) 三元组。
+    """
     if name in ("cn", "zhcn"):
         return (
             "bin/ocr_models/zh-CN/alocr-zh-cn-v3.dtk.onnx",
@@ -219,7 +227,7 @@ _det_model_cache = {}
 
 
 class DetOnlyOCR(RapidOCR):
-    """Load RapidOCR detector only; recognition is handled by ncnn."""
+    """仅加载 RapidOCR 检测模型，识别部分由 ncnn 处理。"""
 
     def _initialize(self, cfg):
         self.text_score = cfg.Global.text_score
@@ -246,7 +254,7 @@ class DetOnlyOCR(RapidOCR):
 
 
 def _create_det_ocr_for_onnx(name):
-    """Create full RapidOCR instance (det + rec) for ONNX backend."""
+    """为 ONNX 后端创建完整的 RapidOCR 实例（检测 + 识别）。"""
     ocr_device = config.ocr_device
     use_dml = os.name == 'nt' and ocr_device == 'gpu'
     use_coreml = ocr_device == 'ane'
@@ -267,7 +275,7 @@ def _create_det_ocr_for_onnx(name):
 
 
 def _create_det_ocr_for_ncnn():
-    """Create DetOnlyOCR for ncnn backend."""
+    """为 ncnn 后端创建 DetOnlyOCR 实例。"""
     params = {
         "Global.use_det": True,
         "Global.use_cls": False,
@@ -280,7 +288,12 @@ def _create_det_ocr_for_ncnn():
 
 
 def _get_det_model(name):
-    """Get detection model. For ONNX, keyed by language; for ncnn, single shared."""
+    """
+    获取检测模型。
+
+    Args:
+        name: 语言名称。ONNX 后端按语言缓存，ncnn 后端共享单一实例。
+    """
     backend = config.ocr_backend
     if backend == 'ncnn':
         key = "det"
@@ -340,13 +353,13 @@ class AlOcr:
         if not os.path.exists(folder):
             os.makedirs(folder)
 
-        # Get current time for filename uniqueness and sorting
+        # 获取当前时间用于文件名唯一性和排序
         import time
 
         now = int(time.time() * 1000)
-        # Clean result for filename
+        # 清理结果文本用于文件名
         res_clean = str(result).replace("\n", " ").replace("\r", " ").strip()
-        # Remove invalid filename characters, keep some safe ones
+        # 移除无效文件名字符，仅保留安全字符
         res_clean = "".join(
             [c for c in res_clean if c.isalnum() or c in (" ", "_", "-")]
         ).strip()
@@ -366,7 +379,7 @@ class AlOcr:
 
                 shutil.copy(img, filepath)
 
-            # Limit count to 100
+            # 限制文件数量为 100
             files = [
                 os.path.join(folder, f)
                 for f in os.listdir(folder)
@@ -374,14 +387,14 @@ class AlOcr:
             ]
             if len(files) > 100:
                 files.sort(key=os.path.getmtime)
-                # Keep the last 100
+                # 保留最新的 100 个文件
                 for f in files[:-100]:
                     try:
                         os.remove(f)
                     except:
                         pass
         except Exception as e:
-            # We don't want to crash the main process due to debug saving failure
+            # 不应因调试图片保存失败而崩溃主进程
             logger.warning(f"Failed to save OCR debug image: {e}")
 
     def _ocr_direct(self, img_fp):
@@ -433,7 +446,7 @@ class AlOcr:
 
                 return results
             else:
-                # ONNX: full RapidOCR pipeline (det + rec in one call)
+                # ONNX：完整 RapidOCR 流水线（检测 + 识别一次调用）
                 res = self._det_model(img_fp, use_det=True, use_rec=True)
                 if isinstance(res, RapidOCROutput) and res.boxes is not None:
                     results = []
@@ -456,7 +469,7 @@ class AlOcr:
         import time
         from PIL import Image as PILImage
 
-        # Convert to numpy if needed
+        # 根据需要转换为 numpy 数组
         if isinstance(img, PILImage.Image):
             img = np.array(img.convert("RGB"))
             img = cv.cvtColor(img, cv.COLOR_RGB2BGR)
@@ -484,7 +497,7 @@ class AlOcr:
         filepath = os.path.join(folder, filename)
         cv.imwrite(filepath, draw)
 
-        # Limit to 100 files
+        # 限制文件数量为 100
         files = [os.path.join(folder, f) for f in os.listdir(folder) if f.endswith(".png")]
         if len(files) > 100:
             files.sort(key=os.path.getmtime)
@@ -496,17 +509,17 @@ class AlOcr:
 
     def det(self, img_fp):
         """
-        Run text detection + recognition and return results with position coordinates.
+        运行文本检测 + 识别，返回带位置坐标的结果。
 
         Args:
-            img_fp: Image input (numpy array, PIL Image, or file path string)
+            img_fp: 图像输入（numpy 数组、PIL Image 或文件路径字符串）。
 
         Returns:
-            list of (text, box, score) tuples:
-                - text (str): Recognized text
-                - box (list): 4 corner points [[x1,y1],[x2,y2],[x3,y3],[x4,y4]]
-                - score (float): Confidence score (0.0-1.0)
-            Empty list if nothing detected.
+            (text, box, score) 元组列表：
+                - text (str): 识别文本。
+                - box (list): 4 个角点 [[x1,y1],[x2,y2],[x3,y3],[x4,y4]]。
+                - score (float): 置信度分数 (0.0-1.0)。
+            未检测到内容时返回空列表。
         """
         return _run_ocr_queued(self._det_direct, img_fp)
 

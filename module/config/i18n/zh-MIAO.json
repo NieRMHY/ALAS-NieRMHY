@@ -375,6 +375,12 @@
     "ServerUpdate": {
       "name": "服务器刷新时刻 (๑•̀ㅂ•́)و✧",
       "help": "有些任务完成后等到服务器刷新再跑，自动换算时区喵~"
+    },
+    "Sensitive": {
+      "name": "敏感任务 (╥﹏╥)",
+      "help": "出错的时候不让重启游戏喵！直接停止 AzurPilot 运行喵！跨月每日、隐秘海域、深渊海域这种关键时刻的任务才需要开喵~",
+      "True": "True",
+      "False": "False"
     }
   },
   "Emulator": {
@@ -1108,7 +1114,7 @@
       "event_20260226_cn": "Springtide Inn Online",
       "event_20260326_cn": "The Vagabond’s Recruitment Plan",
       "event_20260417_cn": "Vacation Lane – Beachside Brilliance",
-      "event_20260520_cn": "Alliance Before the Sacred Seal",
+      "event_20260520_cn": "Alliance Before the Hagiobull",
       "raid_20200624": "Air Raid Drills with Essex Rerun",
       "raid_20210708": "Cross Wave rerun",
       "raid_20220127": "Mystery Investigation",
@@ -3465,7 +3471,8 @@
       "name": "META作战模式喵",
       "help": "",
       "current": "当期喵",
-      "current_dossier": "当期+档案喵"
+      "current_dossier": "当期+档案喵",
+      "current_dossier_only": "档案喵"
     },
     "OneHitMode": {
       "name": "一击即走战术 (・ω<)",
@@ -4308,19 +4315,19 @@
       "UpToDate": "已是最新喵 (。-`ω´-)",
       "HaveUpdate": "有新版本可用喵！",
       "UpdateStart": "开始更新喵",
-      "UpdateWait": "等待所有 Alas 完成当前任务喵",
+      "UpdateWait": "等待所有 AzurPilot 完成当前任务喵",
       "UpdateRun": "更新中喵",
       "UpdateSuccess": "更新成功，正在重启喵",
       "UpdateFailed": "更新失败，日志在 ./log/*_gui.txt 喵",
       "UpdateChecking": "检查更新中喵",
-      "UpdateCancel": "取消更新，重启 Alas 喵",
+      "UpdateCancel": "取消更新，重启 AzurPilot 喵",
       "UpdateFinish": "更新成功，请手动重启喵",
       "Local": "本地喵",
       "Upstream": "上游仓库喵",
       "Author": "作者喵",
       "Time": "提交时间喵",
       "Message": "提交信息喵",
-      "DisabledWarn": "更新模块未启用，需手动重启 Alas 更新喵",
+      "DisabledWarn": "更新模块未启用，需手动重启 AzurPilot 更新喵",
       "DetailedHistory": "详细提交历史喵"
     },
     "Remote": {
@@ -4486,7 +4493,7 @@
       "ImportErrorInvalid": "这不是有效的 AzurPilot/ALAS 配置喵",
       "ImportErrorFailed": "导入失败喵",
       "ImportErrorNoMatch": "所选文件夹中没有找到 config/ 或 log/cl1/ 下的匹配文件喵",
-      "WelcomeTitle": "欢迎使用 ALAS 喵！(｡>﹏<｡)",
+      "WelcomeTitle": "欢迎使用 AzurPilot 喵！(｡>﹏<｡)",
       "WelcomeDescription": "指挥官，快来和雪风一起完成初次设置喵~ (ฅ´ω`ฅ)",
       "WelcomeSelectLanguage": "选择哪种语言喵？(･ω･)ﾉ",
       "WelcomeHint": "选好语言后会自动匹配默认服务器喵，后面还能再改喵~",

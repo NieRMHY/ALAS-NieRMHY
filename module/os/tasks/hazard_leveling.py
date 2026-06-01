@@ -289,8 +289,7 @@ class OpsiHazard1Leveling(CoinTaskMixin, OSMap):
         # 明石遭遇记录
         solved_events = getattr(self, "_solved_map_event", set())
         if "is_akashi" in solved_events:
-            # Akashi encounter counting belongs with the other runtime metrics;
-            # the task only reports that an Akashi event was solved.
+            # 明石遭遇计数归入运行时指标，任务仅报告明石事件已解决
             record_cl1_akashi_encounter(self.config)
 
     def _cl1_handle_telemetry(self):

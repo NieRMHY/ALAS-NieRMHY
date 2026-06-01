@@ -16,28 +16,29 @@ from module.ui_white.assets import POPUP_CANCEL_WHITE, POPUP_CONFIRM_WHITE
 
 
 class IslandTransport:
-    # index of transport commission
+    # 运输委托索引
     index: int
-    # If success to parse transport commission
+    # 是否成功解析运输委托
     valid: bool
-    # If the commission is locked
+    # 委托是否被锁定
     locked: bool
-    # Duration to run this transport commission
+    # 运输委托持续时间
     duration: timedelta
-    # Status of transport commission
-    # Value: finished, running, pending, refreshing, unknown
+    # 运输委托状态：finished, running, pending, refreshing, unknown
     status: str
-    # If the transprt commission need to start
+    # 委托是否需要开始
     start: bool
-    # If the transprt commission need to refresh
+    # 委托是否需要刷新
     refresh: bool
 
     def __init__(self, main, index, blacklist):
         """
+        初始化运输委托对象。
+
         Args:
-            main:
-            index (int):
-            blacklist (list[Template]): a blacklist of templates of items to submit
+            main: 主处理器实例
+            index (int): 委托索引
+            blacklist (list[Template]): 需要提交物品的黑名单模板列表
         """
         self.index = index
         self.blacklist = blacklist
@@ -58,7 +59,7 @@ class IslandTransport:
         delta = 176
         self.offset = area_offset(offset, (0, delta * self.index))
 
-        # commission locked
+        # 检查委托是否锁定
         lock_offset = area_offset(offset, (0, delta * (self.index - 1)))
         if self.index >= 1 and main.appear(TRANSPORT_LOCKED, lock_offset):
             self.locked = True
@@ -76,7 +77,7 @@ class IslandTransport:
                 self.valid = False
                 return
 
-            # items info
+            # 解析物品信息
             origin_y = 174 + delta * self.index
             grids = ButtonGrid(origin=(481, origin_y), delta=(105, 0), 
                                button_shape=(86, 86), grid_shape=(3, 1), name='ITEMS')
@@ -86,7 +87,7 @@ class IslandTransport:
             self.refresh = main.appear(TRANSPORT_REFRESH, offset=self.offset) and \
                            bool(self.items.select(refresh=True).count)
 
-            # detect items first because we need to get refresh info
+            # 先检测物品以获取刷新信息
             if not main.match_template_color(TRANSPORT_START, offset=self.offset):
                 self.start = False
         elif self.status == 'running':
@@ -157,17 +158,19 @@ class IslandTransport:
 
 
 class TransportItem:
-    # If the item is enough to submit and not in blacklist
+    # 物品是否足够提交且不在黑名单中
     load: bool
-    # If the item is in blacklist
+    # 物品是否在黑名单中
     refresh: bool
 
     def __init__(self, image, button, blacklist):
         """
+        初始化运输物品对象。
+
         Args:
-            image:
-            button:
-            blacklist:
+            image: 截图图像
+            button: 物品按钮区域
+            blacklist: 黑名单模板列表
         """
         self.image_raw = image
         self.button = button
@@ -178,9 +181,9 @@ class TransportItem:
         self.load = self.predict_load()
 
     def predict_valid(self):
-        # gray item means an empty item
+        # 灰色物品表示空物品
         mean = np.mean(np.max(self.image, axis=2) > 234)
-        # blue bar on top of the item means already loaded
+        # 物品顶部的蓝色条表示已加载
         blue_bar_check = image_color_count(self.image[:10, :, :], color=(90, 201, 255), threshold=221, count=500)
         return mean > 0.3 and not blue_bar_check
 
@@ -196,10 +199,10 @@ class TransportItem:
 
     def handle_blacklist_items(self):
         """
-        Check if current item is a blacklist item.
+        检查当前物品是否为黑名单物品。
 
         Returns:
-            bool: if any blacklist item
+            bool: 是否存在黑名单物品
         """
         for template in self.blacklist:
             if template.match(self.image):
@@ -228,10 +231,10 @@ class IslandTransportRun(IslandUI):
 
     def _transport_detect(self):
         """
-        Get all commissions from self.device.image.
+        从当前截图中检测所有运输委托。
 
         Returns:
-            SelectedGrids:
+            SelectedGrids: 检测到的委托列表
         """
         logger.hr('Transport Commission detect')
         commission = []
@@ -245,14 +248,14 @@ class IslandTransportRun(IslandUI):
 
     def transport_detect(self, trial=1, skip_first_screenshot=True):
         """
-        Get all transport missions from self.device.image.
+        检测所有运输委托，支持重试。
 
         Args:
-            trial (int): Retry if has one invalid commission.
-            skip_first_screenshot (bool):
+            trial (int): 检测到无效委托时的重试次数
+            skip_first_screenshot (bool): 是否跳过首次截图
 
         Returns:
-            SelectedGrids:
+            SelectedGrids: 有效委托列表
         """
         commissions = SelectedGrids([])
         for _ in range(trial):
@@ -276,10 +279,10 @@ class IslandTransportRun(IslandUI):
 
     def transport_receive(self):
         """
-        Receive all transport missions from transport page.
+        领取运输页面上所有已完成的运输委托。
 
         Returns:
-            bool: if received
+            bool: 是否成功领取
         """
         logger.hr('Island Transport', level=2)
         self.device.click_record_clear()
@@ -310,7 +313,7 @@ class IslandTransportRun(IslandUI):
                 confirm_timer.reset()
                 continue
 
-            # handle island level up
+            # 处理岛屿升级弹窗
             if click_timer.reached():
                 success = True
                 self.device.click(GET_ITEMS_ISLAND)
@@ -330,13 +333,13 @@ class IslandTransportRun(IslandUI):
 
     def transport_refresh(self, comm):
         """
-        Refresh the specific transport mission from transport page.
+        刷新指定的运输委托。
 
         Args:
-            comm (IslandTransport): the commission to refresh
+            comm (IslandTransport): 需要刷新的委托
 
         Returns:
-            bool: if success
+            bool: 是否成功刷新
         """
         logger.info('Transport commission refresh')
         self.interval_clear([TRANSPORT_REFRESH, POPUP_CONFIRM_WHITE])
@@ -360,13 +363,13 @@ class IslandTransportRun(IslandUI):
 
     def transport_start(self, comm):
         """
-        Start the specific transport mission from transport page.
+        启动指定的运输委托。
 
         Args:
-            comm (IslandTransport): the commission to start
+            comm (IslandTransport): 需要启动的委托
 
         Returns:
-            bool: if success
+            bool: 是否成功启动
         """
         logger.info('Transport commission start')
         self.interval_clear([GET_ITEMS_ISLAND, TRANSPORT_START, POPUP_CANCEL_WHITE])
@@ -396,10 +399,10 @@ class IslandTransportRun(IslandUI):
 
     def island_transport_run(self):
         """
-        Execute island run to receive and start transport commissions.
+        执行岛屿运输流程：领取已完成的委托，刷新和启动新委托。
 
         Returns:
-            list[timedelta]: future finish timedelta
+            list[timedelta]: 未来完成时间列表
         """
         logger.hr('Island Transport Run', level=1)
         future_finish = []

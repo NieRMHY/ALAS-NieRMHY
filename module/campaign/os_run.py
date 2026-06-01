@@ -109,6 +109,10 @@ class OSCampaignRun(OSMapOperation):
         except ActionPointLimit as e:
             self.delay_opsi_tasks_after_ap_limit(e)
 
+    def opsi_scheduling(self):
+        campaign = self.load_campaign()
+        campaign.run_smart_scheduling()
+
     def opsi_cross_month(self):
         campaign = self.load_campaign()
         try:
