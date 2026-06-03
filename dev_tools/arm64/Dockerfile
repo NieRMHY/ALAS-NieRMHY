@@ -4,10 +4,12 @@
 
 FROM python:3.14-slim-bookworm
 
+ENV PATH=/app/AzurLaneAutoScript/.venv/bin:${PATH}
+
 WORKDIR /app/AzurLaneAutoScript
 
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
-COPY deploy/docker/requirements.txt /tmp/requirements.txt
+COPY pyproject.toml uv.lock ./
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
@@ -22,9 +24,13 @@ RUN apt-get update && \
 
 RUN git config --global --add safe.directory '*'
 
-RUN uv pip install --system --upgrade pip && \
-    uv pip install --system -r /tmp/requirements.txt && \
-    rm /tmp/requirements.txt && \
+RUN uv venv --relocatable --python /usr/local/bin/python .venv && \
+    uv sync --frozen --no-dev --no-install-project && \
+    cp /usr/local/bin/uv .venv/bin/uv && \
+    cp /usr/bin/adb .venv/bin/adb && \
+    cp /usr/bin/git .venv/bin/git && \
     rm -rf /root/.cache/uv
 
-CMD ["python", "gui.py"]
+COPY . .
+
+CMD [".venv/bin/python", "gui.py"]

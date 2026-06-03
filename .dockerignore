@@ -1,0 +1,15 @@
+.git
+.github
+.venv
+__pycache__
+*.pyc
+.ruff_cache
+.vscode
+.cursor
+.agents
+.claude
+log
+dist
+debug_img
+ocr_debug
+toolkit

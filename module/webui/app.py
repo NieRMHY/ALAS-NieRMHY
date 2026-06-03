@@ -15,7 +15,7 @@ from pathlib import Path
 from functools import partial
 from typing import Dict, List, Optional, Any
 
-# Import fake module before import pywebio to avoid importing unnecessary module PIL
+# 在导入 pywebio 之前导入伪造模块，避免加载不必要的 PIL 模块
 from module.webui.fake_pil_module import import_fake_pil_module
 from module.statistics.azurstats import AzurStats
 from module.os_simulator.simulator import OSSimulator
@@ -89,7 +89,7 @@ from module.webui.patch import (
     patch_executor,
     patch_mimetype,
 )
-from module.webui.pin import put_input, put_select
+from module.webui.pin import put_checkbox, put_input, put_select
 from module.webui.process_manager import ProcessManager
 from module.webui.remote_access import RemoteAccess
 from module.webui.setting import State
@@ -120,6 +120,12 @@ from module.webui.widgets import (
     put_output,
 )
 from module.webui.dashboard_utils import get_dashboard_scope_id, get_group_scope_id
+from module.webui.event_calculator import (
+    build_error_html,
+    build_event_calculator_html,
+    build_event_calculator_js,
+    load_event_calculator,
+)
 from module.base.device_id import get_device_id
 
 patch_executor()
@@ -229,14 +235,14 @@ class AlasGUI(Frame):
 
     def __init__(self) -> None:
         super().__init__()
-        # modified keys, return values of pin_wait_change()
+        # 已修改的配置键，来自 pin_wait_change() 的返回值
         self.modified_config_queue = queue.Queue()
-        # alas config name
+        # 当前 Alas 配置名称
         self.alas_name = ""
         self.alas_mod = "alas"
         self.alas_config = AzurLaneConfig("template")
         self.initial()
-        # rendered state cache
+        # 已渲染的状态缓存
         self.rendered_cache = []
         self.inst_cache = []
         self._overview_snapshot = None
@@ -255,7 +261,7 @@ class AlasGUI(Frame):
 
     @use_scope("aside", clear=True)
     def set_aside(self) -> None:
-        # TODO: update put_icon_buttons()
+        # TODO: 更新 put_icon_buttons()
 
         current_date = datetime.now().date()
         if current_date.month == 4 and current_date.day == 1:
@@ -315,13 +321,13 @@ class AlasGUI(Frame):
             return rendered_state
 
         if not len(self.rendered_cache) or self.load_home:
-            # Reload when add/delete new instance | first start app.py | go to HomePage (HomePage load call force reload)
+            # 添加/删除新实例时重新加载 | 首次启动 app.py | 返回主页（主页加载时强制重新加载）
             flag = False
             self.inst_cache.clear()
             self.inst_cache = alas_instance()
         if flag:
             for index, inst in enumerate(self.inst_cache):
-                # Check for state change
+                # 检查状态变化
                 state = ProcessManager.get_manager(inst).state
                 if state != self.rendered_cache[index]:
                     self.rendered_cache[index] = update(inst, index)
@@ -333,7 +339,7 @@ class AlasGUI(Frame):
                 self.rendered_cache.append(update(inst, index))
             self.load_home = False
         if not flag:
-            # Redraw lost focus, now focus on aside button
+            # 重新绘制失去焦点的侧边栏按钮，聚焦当前激活的按钮
             aside_name = get_localstorage("aside")
             self.active_button("aside", aside_name)
 
@@ -373,6 +379,8 @@ class AlasGUI(Frame):
         if theme == "socialism":
             pywebio_theme = "default"
         if theme == "apple":
+            pywebio_theme = "default"
+        if theme == "children":
             pywebio_theme = "default"
 
         webconfig(theme=pywebio_theme)
@@ -455,11 +463,7 @@ class AlasGUI(Frame):
                     get_virtual_asset_timeline,
                 )
 
-                instance_name = (
-                    self.alas_name
-                    if hasattr(self, "alas_name") and self.alas_name
-                    else None
-                )
+                instance_name = getattr(self, "alas_name", None)
                 if not instance_name:
                     from module.config.utils import alas_instance
 
@@ -482,9 +486,6 @@ class AlasGUI(Frame):
                         t("Gui.Stat.Refresh"), onclick=_render_ap_chart, color="off"
                     )
                 return
-
-            from datetime import datetime as _dt
-            import json as _json
 
             def _get_cl5_efficiency():
                 default = 1700.0 / 30.0
@@ -513,7 +514,7 @@ class AlasGUI(Frame):
             for pt in timeline:
                 ts_raw = pt.get("ts", "")
                 try:
-                    dt = _dt.fromisoformat(ts_raw)
+                    dt = datetime.fromisoformat(ts_raw)
                 except Exception:
                     continue
                 raw_points.append(
@@ -544,7 +545,7 @@ class AlasGUI(Frame):
             chart_points = []
             is_detail_mode = False
 
-            today = _dt.now().date()
+            today = datetime.now().date()
             today_points = [p for p in raw_points if p["dt"].date() == today]
             if not today_points and raw_points:
                 last_date = raw_points[-1]["dt"].date()
@@ -673,7 +674,7 @@ class AlasGUI(Frame):
                     if distance_val is not None:
                         ts_raw = pt.get("ts", "")
                         try:
-                            distance_dt = _dt.fromisoformat(ts_raw)
+                            distance_dt = datetime.fromisoformat(ts_raw)
                             distance_raw_points.append({
                                 "dt": distance_dt,
                                 "distance": int(distance_val),
@@ -686,7 +687,7 @@ class AlasGUI(Frame):
                 for pt in coins_timeline:
                     ts_raw = pt.get("ts", "")
                     try:
-                        dt = _dt.fromisoformat(ts_raw)
+                        dt = datetime.fromisoformat(ts_raw)
                     except Exception:
                         continue
                     coins_raw_points.append(
@@ -758,7 +759,7 @@ class AlasGUI(Frame):
                         coins_stats_html += f'<div style="display:grid; grid-template-columns:150px 100px 90px 90px 90px; gap:8px; margin-bottom:2px; font-size:12px; color:#aaa;"><span>紫币: <b style="color:#ce93d8">{pc_cur}</b></span><span>变化: <b style="color:{pc_change_color}">{pc_change_sign}{pc_change}</b></span><span>最高: <b style="color:#ef5350">{pc_max}</b></span><span>最低: <b style="color:#26a69a">{pc_min}</b></span><span></span></div>'
                         coins_legend_html += '<span class="ap-legend-item" data-series="1" style="display:flex; align-items:center; gap:4px;cursor:pointer;opacity:1;"><span style="width:12px; height:2px; background:#ce93d8; border-radius:1px; border-top:1px dashed #ce93d8;"></span>紫币</span>'
 
-            # Process distance timeline (align with chart_points like coins)
+            # 处理海里数时间线（与金币等 chart_points 对齐）
             if distance_raw_points and chart_points and current_view in ("line", "detail"):
                 distance_raw_points.sort(key=lambda p: p["dt"])
                 distance_idx = 0
@@ -796,7 +797,7 @@ class AlasGUI(Frame):
                         coins_stats_html += f'<div style="display:grid; grid-template-columns:150px 100px 90px 90px 90px; gap:8px; margin-bottom:2px; font-size:12px; color:#aaa;"><span>海里数: <b style="color:#1565c0">{d_cur}</b></span><span>变化: <b style="color:{d_change_color}">{d_change_sign}{d_change}</b></span><span>最高: <b style="color:#ef5350">{d_max}</b></span><span>最低: <b style="color:#26a69a">{d_min}</b></span><span></span></div>'
                         coins_legend_html += '<span class="ap-legend-item" data-series="5" style="display:flex; align-items:center; gap:4px;cursor:pointer;opacity:1;"><span style="width:12px; height:2px; background:#1565c0; border-radius:1px;"></span>海里数</span>'
 
-            # Process virtual asset timeline
+            # 处理虚拟资产时间线
             if virtual_asset_timeline and current_view in ("line", "detail"):
                 from calendar import monthrange as _monthrange
 
@@ -804,7 +805,7 @@ class AlasGUI(Frame):
                     ts_raw = pt.get("ts", "")
                     if ts_raw:
                         try:
-                            va_dt = _dt.fromisoformat(ts_raw)
+                            va_dt = datetime.fromisoformat(ts_raw)
                             asset_value = _snapshot_float(pt, "asset")
                             virtual_asset_value = _snapshot_float(pt, "virtual_asset")
                             if asset_value is None:
@@ -848,7 +849,7 @@ class AlasGUI(Frame):
                         coins_stats_html += f'<div style="display:grid; grid-template-columns:150px 100px 90px 90px 90px; gap:8px; margin-bottom:2px; font-size:12px; color:#aaa;"><span>虚拟资产: <b style="color:#06b6d4">{va_cur:.1f}</b></span><span>变化: <b style="color:{va_change_color}">{va_change_sign}{va_change:.1f}</b></span><span>最高: <b style="color:#ef5350">{va_max:.1f}</b></span><span>最低: <b style="color:#26a69a">{va_min:.1f}</b></span><span></span></div>'
                         coins_legend_html += '<span class="ap-legend-item" data-series="3" style="display:flex; align-items:center; gap:4px;cursor:pointer;opacity:1;"><span style="width:12px; height:2px; background:#06b6d4; border-radius:1px; border-top:1px dashed #06b6d4;"></span>虚拟资产</span>'
 
-            # Process asset timeline (from same ap_snapshots)
+            # 处理资产时间线（来自相同的 ap_snapshots）
             if asset_list:
                 valid_asset = [v for v in asset_list if v is not None]
                 if valid_asset:
@@ -903,28 +904,28 @@ class AlasGUI(Frame):
                 js_tpl.replace(
                     "__CHART_TYPE__", "line" if is_detail_mode else current_view
                 )
-                .replace("__LABELS__", _json.dumps(labels, ensure_ascii=False))
-                .replace("__OPENS__", _json.dumps(opens))
-                .replace("__HIGHS__", _json.dumps(highs))
-                .replace("__LOWS__", _json.dumps(lows))
-                .replace("__CLOSES__", _json.dumps(closes))
-                .replace("__COUNTS__", _json.dumps(counts))
-                .replace("__AP__", _json.dumps(ap_list))
-                .replace("__AP_TS__", _json.dumps(ap_ts))
+                .replace("__LABELS__", json.dumps(labels, ensure_ascii=False))
+                .replace("__OPENS__", json.dumps(opens))
+                .replace("__HIGHS__", json.dumps(highs))
+                .replace("__LOWS__", json.dumps(lows))
+                .replace("__CLOSES__", json.dumps(closes))
+                .replace("__COUNTS__", json.dumps(counts))
+                .replace("__AP__", json.dumps(ap_list))
+                .replace("__AP_TS__", json.dumps(ap_ts))
                 .replace("__AVG__", str(ap_avg))
                 .replace("__CHART_ID__", chart_id)
                 .replace("__IS_DETAIL_MODE__", "true" if is_detail_mode else "false")
                 .replace(
-                    "__SOURCES__", _json.dumps(detail_sources if is_detail_mode else [])
+                    "__SOURCES__", json.dumps(detail_sources if is_detail_mode else [])
                 )
-                .replace("__YELLOW_COINS__", _json.dumps(yellow_coins_list))
-                .replace("__PURPLE_COINS__", _json.dumps(purple_coins_list))
-                .replace("__COINS_SOURCES__", _json.dumps(coins_sources_list))
-                .replace("__VIRTUAL_ASSET__", _json.dumps(virtual_asset_list))
-                .replace("__VIRTUAL_ASSET_TS__", _json.dumps(virtual_asset_ts_list))
-                .replace("__ASSET__", _json.dumps(asset_list))
-                .replace("__ASSET_TS__", _json.dumps(asset_ts_list))
-                .replace("__DISTANCE__", _json.dumps(distance_list))
+                .replace("__YELLOW_COINS__", json.dumps(yellow_coins_list))
+                .replace("__PURPLE_COINS__", json.dumps(purple_coins_list))
+                .replace("__COINS_SOURCES__", json.dumps(coins_sources_list))
+                .replace("__VIRTUAL_ASSET__", json.dumps(virtual_asset_list))
+                .replace("__VIRTUAL_ASSET_TS__", json.dumps(virtual_asset_ts_list))
+                .replace("__ASSET__", json.dumps(asset_list))
+                .replace("__ASSET_TS__", json.dumps(asset_ts_list))
+                .replace("__DISTANCE__", json.dumps(distance_list))
                 .replace("__SHOW_COINS__", "true" if show_coins else "false")
             )
             from pywebio.session import run_js
@@ -1010,6 +1011,26 @@ class AlasGUI(Frame):
                             "refresh_text": "#007aff",
                         }
                     )
+                elif self.theme == "children":
+                    md3_colors.update(
+                        {
+                            "toolbar_border": "rgba(255, 182, 193, .6)",
+                            "toolbar_bg": "rgba(255, 250, 240, .96)",
+                            "toolbar_shadow": "0 2px 8px rgba(255, 182, 193, .2)",
+                            "segment_border": "rgba(255, 160, 122, .4)",
+                            "segment_divider": "rgba(255, 160, 122, .2)",
+                            "segment_outline": "rgba(135, 206, 250, .4)",
+                            "segment_bg": "rgba(255, 255, 255, .8)",
+                            "text": "#6b5a59",
+                            "label": "#8e7877",
+                            "hover": "rgba(255, 192, 203, .2)",
+                            "selected_bg": "rgba(255, 182, 193, .3)",
+                            "selected_text": "#e05275",
+                            "selected_outline": "rgba(255, 182, 193, .5)",
+                            "refresh_text": "#e05275",
+                        }
+                    )
+
 
                 put_html(f"""
                 <style>
@@ -1192,6 +1213,153 @@ class AlasGUI(Frame):
         _render_ap_chart()
         self.task_handler.add(_render_ap_chart, 60, True)
 
+        # ========== 全资源趋势图 ==========
+        def _render_resource_chart():
+            try:
+                from module.statistics.opsi_month import get_resource_timeline
+
+                instance_name = getattr(self, "alas_name", None)
+                if not instance_name:
+                    from module.config.utils import alas_instance
+
+                    all_instances = alas_instance()
+                    instance_name = all_instances[0] if all_instances else None
+
+                timeline = get_resource_timeline(instance_name=instance_name, limit=500)
+            except Exception as e:
+                with use_scope("resource_chart", clear=True):
+                    put_text(t("Gui.Stat.LoadResourceDataFailed", e=e))
+                return
+
+            if not timeline:
+                with use_scope("resource_chart", clear=True):
+                    put_html(build_muted_notice(t("Gui.Stat.NoResourceData")))
+                    put_button(
+                        t("Gui.Stat.Refresh"), onclick=_render_resource_chart, color="off"
+                    )
+                return
+
+            labels = []
+            series_map = {
+                "Oil": {"name": t("Gui.Dashboard.Oil"), "color": "#ff8a65", "data": []},
+                "Coin": {"name": t("Gui.Dashboard.Coin"), "color": "#ffd54f", "data": []},
+                "Gem": {"name": t("Gui.Dashboard.Gem"), "color": "#ef5350", "data": []},
+                "Pt": {"name": t("Gui.Dashboard.Pt"), "color": "#4fc3f7", "data": []},
+                "Cube": {"name": t("Gui.Dashboard.Cube"), "color": "#4dd0e1", "data": []},
+                "Core": {"name": t("Gui.Dashboard.Core"), "color": "#b0bec5", "data": []},
+                "Medal": {"name": t("Gui.Dashboard.Medal"), "color": "#ffd740", "data": []},
+                "Merit": {"name": t("Gui.Dashboard.Merit"), "color": "#ffab00", "data": []},
+                "GuildCoin": {"name": t("Gui.Dashboard.GuildCoin"), "color": "#a1887f", "data": []},
+                "ActionPoint": {"name": t("Gui.Dashboard.ActionPoint"), "color": "#64b5f6", "data": []},
+                "YellowCoin": {"name": t("Gui.Dashboard.YellowCoin"), "color": "#ffa726", "data": []},
+                "PurpleCoin": {"name": t("Gui.Dashboard.PurpleCoin"), "color": "#ce93d8", "data": []},
+            }
+
+            key_map = {
+                "guildcoin": "guild_coin",
+                "actionpoint": "action_point",
+                "yellowcoin": "yellow_coin",
+                "purplecoin": "purple_coin",
+            }
+            for pt in timeline:
+                ts_raw = pt.get("ts", "")
+                try:
+                    dt = datetime.fromisoformat(ts_raw)
+                except Exception:
+                    continue
+                labels.append(dt.strftime("%m-%d %H:%M"))
+                for key in series_map:
+                    raw_val = pt.get(key.lower())
+                    if raw_val is None:
+                        col = key_map.get(key.lower())
+                        if col:
+                            raw_val = pt.get(col)
+                        else:
+                            raw_val = pt.get(key)
+                    if raw_val is not None:
+                        try:
+                            series_map[key]["data"].append(int(raw_val))
+                        except (TypeError, ValueError):
+                            series_map[key]["data"].append(None)
+                    else:
+                        series_map[key]["data"].append(None)
+
+            # 前向填充：用上一个有效值填补 None，避免折线图断点
+            for key in series_map:
+                prev = None
+                filled = []
+                for v in series_map[key]["data"]:
+                    if v is not None:
+                        prev = v
+                    filled.append(prev)
+                series_map[key]["data"] = filled
+
+            if not labels:
+                with use_scope("resource_chart", clear=True):
+                    put_html(build_muted_notice(t("Gui.Stat.NoValidResourceData")))
+                return
+
+            legend_html = ""
+            stats_html = ""
+            series_data = []
+            series_idx = 0
+            for key, meta in series_map.items():
+                valid_data = [v for v in meta["data"] if v is not None]
+                if valid_data:
+                    cur = valid_data[-1]
+                    change = valid_data[-1] - valid_data[0] if len(valid_data) >= 2 else 0
+                    change_color = "#ef5350" if change >= 0 else "#26a69a"
+                    change_sign = "+" if change >= 0 else ""
+                    stats_html += (
+                        f'<span style="white-space:nowrap;">{meta["name"]}: '
+                        f'<b style="color:{meta["color"]}">{cur:,}</b> '
+                        f'<span style="color:{change_color}">({change_sign}{change:,})</span></span>'
+                    )
+                else:
+                    stats_html += (
+                        f'<span style="white-space:nowrap;opacity:0.5;">{meta["name"]}: -</span>'
+                    )
+                legend_html += (
+                    f'<span class="rc-legend-item" data-series="{series_idx}" '
+                    f'style="display:flex;align-items:center;gap:4px;cursor:pointer;opacity:1;">'
+                    f'<span style="width:12px;height:3px;background:{meta["color"]};border-radius:1px;"></span>'
+                    f'{meta["name"]}</span>'
+                )
+                series_data.append({
+                    "key": key,
+                    "name": meta["name"],
+                    "color": meta["color"],
+                    "data": meta["data"],
+                })
+                series_idx += 1
+
+            chart_id = f"rc_{id(self)}"
+
+            html_tpl = read_webapp_template("resource_chart.html")
+            html = html_tpl.format(
+                chart_id=chart_id,
+                title=t("Gui.Stat.ResourceChartTitle"),
+                stats_html=stats_html,
+                legend_html=legend_html,
+            )
+
+            js_tpl = read_webapp_template("resource_chart.js")
+            js_code = (
+                js_tpl
+                .replace("__LABELS__", json.dumps(labels, ensure_ascii=False))
+                .replace("__SERIES_DATA__", json.dumps(series_data, ensure_ascii=False))
+                .replace("__CHART_ID__", chart_id)
+                .replace("__CHART_TITLE__", t("Gui.Stat.ResourceChartTitle"))
+            )
+
+            with use_scope("resource_chart", clear=True):
+                put_html(html)
+                run_js(js_code)
+
+        put_scope("resource_chart", [])
+        _render_resource_chart()
+        self.task_handler.add(_render_resource_chart, 60, True)
+
         def _render_opsi_stats():
             try:
                 from module.statistics.opsi_month import (
@@ -1203,11 +1371,7 @@ class AlasGUI(Frame):
                 from module.statistics.ship_exp_stats import get_ship_exp_stats
 
                 # 使用当前实例名称获取统计数据，确保不为空
-                instance_name = (
-                    self.alas_name
-                    if hasattr(self, "alas_name") and self.alas_name
-                    else None
-                )
+                instance_name = getattr(self, "alas_name", None)
                 if not instance_name:
                     # 使用第一个可用的实例
                     from module.config.utils import alas_instance
@@ -1640,11 +1804,7 @@ class AlasGUI(Frame):
                         }
                         multiplier = multiplier_map.get(mode, 1.2)
 
-                        instance_name_stat = (
-                            self.alas_name
-                            if hasattr(self, "alas_name") and self.alas_name
-                            else None
-                        )
+                        instance_name_stat = getattr(self, "alas_name", None)
                         if not instance_name_stat:
                             from module.config.utils import alas_instance
 
@@ -1812,11 +1972,7 @@ class AlasGUI(Frame):
                         return
 
                     try:
-                        instance_name_local = (
-                            self.alas_name
-                            if hasattr(self, "alas_name") and self.alas_name
-                            else None
-                        )
+                        instance_name_local = getattr(self, "alas_name", None)
                         s_local = (
                             get_opsi_stats(instance_name=instance_name_local).summary()
                             or {}
@@ -1976,11 +2132,7 @@ class AlasGUI(Frame):
                 )
 
                 # 使用当前实例名称获取统计数据，确保不为空
-                instance_name = (
-                    self.alas_name
-                    if hasattr(self, "alas_name") and self.alas_name
-                    else None
-                )
+                instance_name = getattr(self, "alas_name", None)
                 if not instance_name:
                     # 使用第一个可用的实例
                     from module.config.utils import alas_instance
@@ -2140,11 +2292,7 @@ class AlasGUI(Frame):
                     COMMISSION_TRACKED_ITEMS,
                 )
 
-                instance_name = (
-                    self.alas_name
-                    if hasattr(self, "alas_name") and self.alas_name
-                    else None
-                )
+                instance_name = getattr(self, "alas_name", None)
                 if not instance_name:
                     from module.config.utils import alas_instance
 
@@ -2437,6 +2585,227 @@ class AlasGUI(Frame):
         for group, arg_dict in deep_iter(self.ALAS_ARGS[task], depth=1):
             if self.set_group(group, arg_dict, config, task):
                 self.set_navigator(group)
+                if task == "EventGeneral" and group[0] == "EventGeneral":
+                    with use_scope("groups"):
+                        put_scope("group_EventCalculator")
+                    self._render_event_calculator(config)
+
+    def _event_calculator_scope_id(self) -> str:
+        name = re.sub(r"[^0-9A-Za-z_]", "_", self.alas_name)
+        return f"event_calculator_{name}"
+
+    def _event_calculator_state(self) -> Optional[Dict[str, Any]]:
+        scope_id = self._event_calculator_scope_id()
+        return eval_js(
+            """
+            (window.alasEventCalculator
+             && window.alasEventCalculator[scopeId]
+             && window.alasEventCalculator[scopeId].getState())
+             || null
+            """,
+            scopeId=scope_id,
+        )
+
+    @staticmethod
+    def _format_event_end_time(date_text: str) -> Optional[str]:
+        if not date_text:
+            return None
+        try:
+            date = datetime.fromisoformat(date_text.replace("/", "-")).date()
+        except ValueError:
+            return None
+        return f"{date.isoformat()} 00:00:00"
+
+    def _save_event_calculator_result(
+        self,
+        *,
+        save_target: bool,
+        save_time: bool,
+        save_shop_filter: bool = False,
+    ) -> None:
+        state = self._event_calculator_state()
+        if not state:
+            toast("活动计算器还没有加载完成", color="warning")
+            return
+
+        modified = {}
+        if save_target:
+            target = int(state.get("target") or 0)
+            modified["EventGeneral.EventGeneral.PtLimit"] = target
+        if save_time:
+            end_time = self._format_event_end_time(state.get("endDate") or "")
+            if end_time is None:
+                toast("活动结束日期无效", color="warning")
+                return
+            modified["EventGeneral.EventGeneral.TimeLimit"] = end_time
+        if save_shop_filter:
+            filters = state.get("shopFilter") or []
+            if not filters:
+                toast("没有可写入的商店过滤器项目", color="warning")
+                return
+            missing = state.get("shopFilterMissing") or []
+            modified["EventShop.EventShop.PresetFilter"] = "custom"
+            modified["EventShop.EventShop.CustomFilter"] = " > ".join(filters)
+            if missing:
+                toast(
+                    "以下兑换项暂未映射到过滤器：" + "、".join(missing),
+                    color="warning",
+                    duration=6,
+                )
+
+        if not modified:
+            return
+        self._save_config(modified, self.alas_name, self.alas_config)
+        for key, value in modified.items():
+            pin["_".join(key.split("."))] = to_pin_value(value)
+        self.alas_config.load()
+
+    @staticmethod
+    def _is_task_enabled(config: Dict[str, Any], task: str) -> bool:
+        return bool(deep_get(config, f"{task}.Scheduler.Enable", False))
+
+    @staticmethod
+    def _is_task_done_today(config: Dict[str, Any], task: str) -> bool:
+        next_run = deep_get(config, f"{task}.Scheduler.NextRun")
+        if not isinstance(next_run, datetime):
+            return False
+        return next_run.date() > datetime.now().date()
+
+    @staticmethod
+    def _split_stage_filter(value: Any) -> List[str]:
+        return [
+            item.strip().upper()
+            for item in str(value or "").replace("\n", ">").split(">")
+            if item.strip()
+        ]
+
+    def _event_calculator_defaults(
+        self, config: Dict[str, Any], wiki_data: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        daily = {}
+
+        def set_daily(name: str, will_do: bool, already: bool = False) -> None:
+            if name:
+                daily[name] = {"never": not will_do, "already": already}
+
+        gacha_amount = int(deep_get(config, "Gacha.Gacha.Amount", 0) or 0)
+        set_daily(
+            "建造3次",
+            self._is_task_enabled(config, "Gacha") and gacha_amount >= 3,
+            self._is_task_done_today(config, "Gacha"),
+        )
+        set_daily(
+            "出击胜利15次",
+            self._is_task_enabled(config, "Daily"),
+            self._is_task_done_today(config, "Daily"),
+        )
+        set_daily(
+            "通关1次困难关卡",
+            self._is_task_enabled(config, "Hard"),
+            self._is_task_done_today(config, "Hard"),
+        )
+
+        extra = {
+            item.get("name"): {"never": True, "already": False}
+            for item in wiki_data.get("extra", [])
+            if item.get("name")
+        }
+        for task in ("EventA", "EventB", "EventC", "EventD"):
+            enabled = self._is_task_enabled(config, task)
+            already = self._is_task_done_today(config, task)
+            for stage in self._split_stage_filter(
+                deep_get(config, f"{task}.EventDaily.StageFilter", "")
+            ):
+                if stage in extra:
+                    extra[stage] = {"never": not enabled, "already": already}
+        if "SP" in extra:
+            extra["SP"] = {
+                "never": not self._is_task_enabled(config, "EventSp"),
+                "already": self._is_task_done_today(config, "EventSp"),
+            }
+
+        return {"daily": daily, "extra": extra}
+
+    def _render_event_calculator(self, config: Dict[str, Any], force_refresh: bool = False) -> None:
+        scope_id = self._event_calculator_scope_id()
+        with use_scope("group_EventCalculator", clear=True):
+            put_text("活动计算器")
+            put_text("从碧蓝航线 Wiki 自动读取活动商店、结束日期和各图 PT，计算后可写回活动通用设置。")
+            put_html('<hr class="hr-group">')
+
+            data = load_event_calculator(force_refresh=force_refresh)
+            if data.get("error") and not data.get("shop_items"):
+                put_html(build_error_html(data["error"]))
+                put_button(
+                    label="重新从 Wiki 拉取",
+                    onclick=lambda: self._render_event_calculator(
+                        self.alas_config.read_file(self.alas_name), True
+                    ),
+                    color="warning",
+                )
+                return
+
+            target = deep_get(config, "EventGeneral.EventGeneral.PtLimit", 0) or 0
+            if not target:
+                target = data.get("shop_total", 0)
+            end_date = data.get("end_date", "")
+            current_time = deep_get(config, "EventGeneral.EventGeneral.TimeLimit")
+            if isinstance(current_time, datetime) and current_time.year > 2023:
+                end_date = current_time.date().isoformat()
+            elif isinstance(current_time, str) and current_time[:4] not in ("2020", "2023"):
+                end_date = current_time[:10]
+
+            initial = {
+                "target": target,
+                "owned": deep_get(config, "Dashboard.Pt.Value", 0) or 0,
+                "end_date": end_date,
+            }
+            initial.update(self._event_calculator_defaults(config, data))
+            put_html(build_event_calculator_html(scope_id))
+            run_js(build_event_calculator_js(scope_id, data, initial))
+            put_row(
+                [
+                    put_button(
+                        label="刷新 Wiki 数据",
+                        onclick=lambda: self._render_event_calculator(
+                            self.alas_config.read_file(self.alas_name), True
+                        ),
+                        color="off",
+                    ),
+                    put_button(
+                        label="写入目标 PT",
+                        onclick=lambda: self._save_event_calculator_result(
+                            save_target=True, save_time=False
+                        ),
+                        color="off",
+                    ),
+                    put_button(
+                        label="写入结束时间",
+                        onclick=lambda: self._save_event_calculator_result(
+                            save_target=False, save_time=True
+                        ),
+                        color="off",
+                    ),
+                    put_button(
+                        label="写入目标 PT 和结束时间",
+                        onclick=lambda: self._save_event_calculator_result(
+                            save_target=True, save_time=True
+                        ),
+                        color="off",
+                    ),
+                    put_button(
+                        label="写入商店过滤器",
+                        onclick=lambda: self._save_event_calculator_result(
+                            save_target=False,
+                            save_time=False,
+                            save_shop_filter=True,
+                        ),
+                        color="off",
+                    ),
+                ],
+                size="auto auto auto auto auto",
+                scope=f"{scope_id}_write_actions",
+            )
 
     def _os_simulator(self):
         self.simulator.set_config(self.alas_config)
@@ -3974,6 +4343,24 @@ class AlasGUI(Frame):
             )
             toast("已发送公告测试通知", color="info")
 
+        def _test_notify_error():
+            from module.notify import handle_notify
+
+            instance = _get_debug_target_instance()
+            if not instance:
+                toast("未找到可用实例，无法发送错误推送测试", color="warning")
+                return
+            config = load_config(instance)
+            success = handle_notify(
+                config.Error_OnePushConfig,
+                title=f"Alas <{instance}> 崩溃",
+                content=f"<{instance}> 开发者错误推送测试",
+            )
+            if success:
+                toast("已发送错误推送测试", color="success")
+            else:
+                toast("错误推送测试发送失败，请检查错误推送设置", color="error")
+
         put_buttons(
             buttons=[
                 {
@@ -3986,8 +4373,17 @@ class AlasGUI(Frame):
                     "value": "announcement",
                     "color": "info",
                 },
+                {
+                    "label": "测试错误推送",
+                    "value": "error",
+                    "color": "danger",
+                },
             ],
-            onclick=[_test_notify_update, _test_notify_announcement],
+            onclick=[
+                _test_notify_update,
+                _test_notify_announcement,
+                _test_notify_error,
+            ],
         )
 
     @use_scope("content", clear=True)
@@ -4341,21 +4737,17 @@ class AlasGUI(Frame):
                     {"label": "Dark", "value": "dark", "color": "dark"},
                     {"label": "新春 ", "value": "socialism", "color": "danger"},
                     {"label": "Apple", "value": "apple", "color": "primary"},
+                    {"label": "🧸 童趣", "value": "children", "color": "warning"},
                 ],
                 onclick=lambda t: set_theme(t),
             ).style("text-align: center")
             # show something
             put_markdown(
                 """
-            官方项目地址 ：`https://github.com/LmeSzinc/AzurLaneAutoScript`
+            本项目是 AzurLaneAutoScript 的个人修改版，基于 GPL-3.0 许可证免费开源。
 
-            您当前使用的不是官方版本 不是官方版本。
-
-            您使用的是修改版，请联系修改版的作者获取支持。
-
-            修改版项目地址 ：`https://github.com/wess09/AzurLaneAutoScript`
-
-            修改版问题请联系：`https://addgroup.nanoda.work/`
+            上游项目：`https://github.com/LmeSzinc/AzurLaneAutoScript`
+            本项目：`https://github.com/NieRMHY/ALAS-NieRMHY`
             """
             ).style("text-align: center")
 
@@ -4500,8 +4892,91 @@ class AlasGUI(Frame):
 
         elif self.theme == "socialism":
             add_css(filepath_css("socialism-alas"))
+        elif self.theme == "children":
+            add_css(filepath_css("children-alas"))
         else:
             add_css(filepath_css("light-alas"))
+
+        # 儿童节背景 Emoji 雨自动掉落逻辑（支持所有主题）
+        current_date = datetime.now().date()
+        is_children_day = (current_date.month == 6 and current_date.day == 1)
+        
+        EMOJI_RAIN_PREVIEW = False
+        
+        if is_children_day or EMOJI_RAIN_PREVIEW:
+            run_js("""
+            (function(){
+                if (window.alasEmojiRainActive) return;
+                window.alasEmojiRainActive = true;
+                
+                var style = document.createElement('style');
+                style.innerHTML = `
+                    @keyframes emoji-fall {
+                        0% {
+                            transform: translateY(-50px) rotate(0deg);
+                            opacity: 0;
+                        }
+                        15% {
+                            opacity: 0.38;
+                        }
+                        85% {
+                            opacity: 0.38;
+                        }
+                        100% {
+                            transform: translateY(calc(100vh + 50px)) rotate(360deg);
+                            opacity: 0;
+                        }
+                    }
+                    .cute-emoji-drop {
+                        position: fixed !important;
+                        z-index: 2 !important; /* 确保在背景层，隐藏在所有卡片和边栏下方 */
+                        pointer-events: none !important;
+                        user-select: none !important;
+                        animation: emoji-fall linear forwards;
+                    }
+                `;
+                document.head.appendChild(style);
+
+                // 精选儿童节超萌童趣 Emoji
+                var emojis = ['🧸', '💗', '🍬', '💗', '🌸', '🍒', '🌈', '🌸', '💗', '🌟', '🦄', '🌈', '🌸', '🌟', '🌸', '🌈'];
+                
+                setInterval(function(){
+                    // 若容器不存在，则停止产生新雨点
+                    if (!document.getElementById('pywebio-scope-content')) return;
+                    
+                    var emoji = emojis[Math.floor(Math.random() * emojis.length)];
+                    var span = document.createElement('span');
+                    span.className = 'cute-emoji-drop';
+                    span.textContent = emoji;
+                    
+                    // 随机横坐标位置 (0vw - 100vw)
+                    var left = Math.random() * 100;
+                    span.style.left = left + 'vw';
+                    span.style.top = '-50px';
+                    
+                    // 随机下落时间 (8秒 - 14秒)，悠闲舒适
+                    var duration = 8 + Math.random() * 6;
+                    span.style.animationDuration = duration + 's';
+                    
+                    // 随机大小 (18px - 32px)，远近有致
+                    var size = 18 + Math.random() * 14;
+                    span.style.fontSize = size + 'px';
+                    
+                    // 随机下落延时，更具随机美感
+                    var delay = Math.random() * 2;
+                    span.style.animationDelay = delay + 's';
+                    
+                    document.body.appendChild(span);
+                    
+                    // 下落结束移除元素，防止 DOM 膨胀
+                    setTimeout(function(){
+                        if (span.parentNode) {
+                            span.parentNode.removeChild(span);
+                        }
+                    }, (duration + delay) * 1000);
+                }, 650); // 每 650ms 飘落一个，密度适中且极其治愈
+            })();
+            """)
 
         # 加载静态 JS 工具文件（公告弹窗、截图查看器、自动刷新等）
         # 替代原来的多个 run_js() 运行时注入
@@ -4864,9 +5339,10 @@ def startup():
     State.init()
     lang.reload()
     updater.event = State.manager.Event()
-    if updater.delay > 0:
-        task_handler.add(updater.check_update, updater.delay)
-    task_handler.add(updater.schedule_update(), 86400)
+    if State.deploy_config.AutoUpdate:
+        if updater.delay > 0:
+            task_handler.add(updater.check_update, updater.delay)
+        task_handler.add(updater.schedule_update(), 86400)
     task_handler.start()
     if State.deploy_config.DiscordRichPresence:
         init_discord_rpc()
@@ -4913,7 +5389,17 @@ def app():
     args, _ = parser.parse_known_args()
 
     # Apply config
-    AlasGUI.set_theme(theme=State.deploy_config.Theme)
+    theme = State.deploy_config.Theme
+    from datetime import datetime
+    current_date = datetime.now().date()
+    if theme == "default" and (
+        (current_date.month == 6 and current_date.day == 1) or
+        (current_date.month == 5 and current_date.day == 31) or
+        (current_date.month == 6 and current_date.day == 2)
+    ):
+        theme = "children"
+
+    AlasGUI.set_theme(theme=theme)
     lang.LANG = State.deploy_config.Language
     key = args.key or State.deploy_config.Password
     cdn = args.cdn if args.cdn else State.deploy_config.CDN
@@ -4975,3 +5461,6 @@ def app():
     app.mount("/mcp", mcp_app)
 
     return app
+
+
+

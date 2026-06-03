@@ -350,6 +350,12 @@
       "True": "有効",
       "False": "False"
     },
+    "PushNotification": {
+      "name": "プッシュ通知",
+      "help": "有効にすると、タスク完了時に OnePush で成功・失敗通知を送信します",
+      "True": "有効",
+      "False": "無効"
+    },
     "NextRun": {
       "name": "次回実行時間",
       "help": "自動計算された値です。手動で変更する必要はありません。クリアすると即座に実行されます"
@@ -369,6 +375,12 @@
     "ServerUpdate": {
       "name": "サーバーリフレッシュ時間",
       "help": "一部のタスク実行成功後、次回実行をサーバーリフレッシュ時間まで延期します\nタイムゾーンは自動変換されるため、通常は変更不要です"
+    },
+    "Sensitive": {
+      "name": "センシティブ任務",
+      "help": "エラー発生時にゲームの再起動を禁止し、AzurPilot を直ちに停止します。越境デイリー、隠秘海域、深淵海域などの重要なタスクに適用。",
+      "True": "True",
+      "False": "False"
     }
   },
   "Emulator": {
@@ -630,12 +642,19 @@
       "help": ""
     },
     "OcrDevice": {
-      "name": "OCR设备选择",
-      "help": "",
+      "name": "OCR デバイス",
+      "help": "OCR デバイスを選択します。GPU は Windows DirectML、ANE は macOS Apple Neural Engine です。自動：Apple Silicon Mac は ANE、Windows VRAM > 1GB は GPU、それ以外は CPU。",
       "auto": "自動",
       "cpu": "CPU",
       "gpu": "GPU",
       "ane": "ANE (Apple)"
+    },
+    "OcrBackend": {
+      "name": "OCR バックエンド",
+      "help": "OCR 推論エンジンを選択します。onnxruntime は ONNX Runtime、ncnn は ncnn Vulkan バックエンドを使用します。自動では onnxruntime が使用されます。",
+      "auto": "自動 (onnxruntime)",
+      "onnxruntime": "ONNX Runtime",
+      "ncnn": "ncnn (Vulkan)"
     },
     "ScreenshotInterval": {
       "name": "スクリーンショット速度をX秒に1枚に減速",
@@ -1199,8 +1218,8 @@
       "help": "燃料が少なすぎる場合はタスクを延期し、燃料が十分になったら出撃を続行します"
     },
     "CoinLimit": {
-      "name": "資金がXを超えたら停止",
-      "help": "資金がこの数値を超えていることが確認された場合、現在のタスクを停止します。\n0は制限なしを意味します"
+      "name": "StopCondition.CoinLimit.name",
+      "help": "StopCondition.CoinLimit.help"
     },
     "RunCount": {
       "name": "出撃回数がXを超えると停止する",
@@ -1587,6 +1606,14 @@
     "EquipmentCode": {
       "name": "装備コード",
       "help": "「艦船+装備を交換する」を選択した場合のみ有効です。\n艦船を交換する際、設定内の現在の艦船装備コードがnullの場合、コードがエクスポートされます。艦船を交換する際、設定の現在の艦船装備コードがnullの場合は、前の艦船からエクスポートされた装備コードが使用されます。それ以外の場合は、設定の装備コードが使用されます。\nBlueStacksエミュレータのユーザーは、最初に仮想キーボードを有効にする必要があります。\nDD：前衛駆逐    bogue：ボーグ    hermes：ハーミーズ    langley：ラングレー    ranger：レンジャー"
+    },
+    "UseEmotionFirst": {
+      "name": "GemsFarming.UseEmotionFirst.name",
+      "help": "GemsFarming.UseEmotionFirst.help"
+    },
+    "IgnoreEmotionWarning": {
+      "name": "GemsFarming.IgnoreEmotionWarning.name",
+      "help": "GemsFarming.IgnoreEmotionWarning.help"
     },
     "ALLowHighFlagshipLevel": {
       "name": "満レベル後列のみ交換する",
@@ -2014,6 +2041,10 @@
     "FortChoreMeowfficer": {
       "name": "ニャ窩インタラクション",
       "help": "掃除、給食、ネコじゃらし"
+    },
+    "OverflowCoins": {
+      "name": "金貨が余ったら猫用トイレを買う",
+      "help": "金貨がこの値を超えている間は、金貨がこの値まで下がるか、猫箱が売り切れるまで猫箱を買い続けてください。-1 閉じる"
     }
   },
   "MeowfficerTrain": {
@@ -3440,7 +3471,8 @@
       "name": "メタ戦闘",
       "help": "",
       "current": "今期",
-      "current_dossier": "今期 + アーカイブ"
+      "current_dossier": "今期 + アーカイブ",
+      "current_dossier_only": "アーカイブ"
     },
     "OneHitMode": {
       "name": "一撃離脱",
@@ -3970,7 +4002,7 @@
   "Benchmark": {
     "_info": {
       "name": "パフォーマンステスト",
-      "help": "どちらのスクリーンショット スキームと制御スキームが速いかをテストします。速度はエミュレータとコンピュータの構成によって異なります。\nテストが完了したら、「Alas」-「シミュレーター設定」で最速のスクリーンショットと制御スキームを選択します。"
+      "help": "どちらのスクリーンショット スキームと制御スキームが速いかをテストします。速度はエミュレータとコンピュータの構成によって異なります。\nテストが完了したら、「AzurPilot」-「シミュレーター設定」で最速のスクリーンショットと制御スキームを選択します。"
     },
     "DeviceType": {
       "name": "デバイスの種類",
@@ -4423,7 +4455,11 @@
       "CommissionIncomeHeaderCount": "Gui.Stat.CommissionIncomeHeaderCount",
       "CommissionIncomeHeaderAvg": "Gui.Stat.CommissionIncomeHeaderAvg",
       "CommissionIncomeTotalCommissions": "Gui.Stat.CommissionIncomeTotalCommissions",
-      "CommissionIncomeRecentTitle": "Gui.Stat.CommissionIncomeRecentTitle"
+      "CommissionIncomeRecentTitle": "Gui.Stat.CommissionIncomeRecentTitle",
+      "ResourceChartTitle": "全リソース推移",
+      "LoadResourceDataFailed": "Gui.Stat.LoadResourceDataFailed",
+      "NoResourceData": "Gui.Stat.NoResourceData",
+      "NoValidResourceData": "Gui.Stat.NoValidResourceData"
     },
     "Tactical": {
       "SkillAutoSwitch": "Gui.Tactical.SkillAutoSwitch"

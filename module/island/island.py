@@ -12,11 +12,13 @@ class Island(IslandProjectRun, IslandTransportRun):
     @staticmethod
     def island_config_to_names(config):
         """
+        将岛屿配置布尔列表转换为对应的名称列表。
+
         Args:
-            config (list[bool]): list of config for island receive
-        
+            config (list[bool]): 岛屿收取配置，每个元素对应一个岛屿
+
         Returns:
-            list[str]: a list of name for island receive
+            list[str]: 需要收取的岛屿名称列表
         """
         if any(config):
             return [name for add, name in zip(config, list(name_to_slot.keys())) if add]
@@ -25,12 +27,12 @@ class Island(IslandProjectRun, IslandTransportRun):
 
     def island_run(self, transport=True, project=True, names=None):
         """
-        Execute island routine.
+        执行岛屿日常任务，包括货运委托和生产项目。
 
         Args:
-            transport (bool):
-            project (bool):
-            names (list[str]): a list of name for island receive
+            transport (bool): 是否执行货运委托
+            project (bool): 是否执行生产项目
+            names (list[str]): 需要收取的岛屿名称列表
         """
         future_finish = []
         if transport:
@@ -48,7 +50,7 @@ class Island(IslandProjectRun, IslandTransportRun):
                 self.config.Scheduler_Enable = False
                 return False
 
-        # task delay
+        # 任务延时，根据未来完成时间设置下次运行
         if len(future_finish):
             self.config.task_delay(target=future_finish)
         else:

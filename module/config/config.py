@@ -194,15 +194,24 @@ class AzurLaneConfig(ConfigUpdater, ManualConfig, GeneratedConfig, ConfigWatcher
 
 
     @property
+    def ocr_backend(self) -> str:
+        val = self.Optimization_OcrBackend
+        if val == 'auto':
+            return 'onnxruntime'
+        return val
+
+    @property
     def ocr_device(self) -> str:
         val = self.Optimization_OcrDevice
         if val == 'auto':
-            if sys.platform == 'darwin' and platform.machine() == 'arm64':
-                return 'ane'
-            return 'gpu' if is_good_gpu() else 'cpu'
-        if val == 'ane' and sys.platform != 'darwin':
-            logger.warning("当前系统非 macOS，不使用 Apple Neural Engine")
-            return 'cpu'
+            if self.ocr_backend == 'onnxruntime':
+                if sys.platform == 'darwin' and platform.machine() == 'arm64':
+                    return 'ane'
+                return 'gpu' if is_good_gpu() else 'cpu'
+            else:
+                # ncnn backend: check Vulkan GPU availability
+                from module.ocr.ncnn_ocr import has_ncnn_vulkan_gpu
+                return 'gpu' if has_ncnn_vulkan_gpu() else 'cpu'
         return val
 
     @property
@@ -454,7 +463,14 @@ class AzurLaneConfig(ConfigUpdater, ManualConfig, GeneratedConfig, ConfigWatcher
                 "Missing argument in delay_next_run, should set at least one"
             )
 
-    def opsi_task_delay(self, recon_scan=False, submarine_call=False, ap_limit=False, cl1_preserve=False):
+    def opsi_task_delay(
+            self,
+            recon_scan=False,
+            submarine_call=False,
+            ap_limit=False,
+            cl1_preserve=False,
+            ap_limit_minutes=None,
+    ):
         """
         Delay the NextRun of all OpSi tasks.
 
@@ -463,6 +479,7 @@ class AzurLaneConfig(ConfigUpdater, ManualConfig, GeneratedConfig, ConfigWatcher
             submarine_call (bool): True to delay all tasks requiring submarine call 60 min.
             ap_limit (bool): True to delay all tasks requiring action points 360 min.
             cl1_preserve (bool): True to delay tasks requiring massive action points 360 min.
+            ap_limit_minutes (int): AP recovery delay to use when known.
         """
         if not recon_scan and not submarine_call and not ap_limit and not cl1_preserve:
             return None
@@ -472,7 +489,9 @@ class AzurLaneConfig(ConfigUpdater, ManualConfig, GeneratedConfig, ConfigWatcher
                 "submarine_call": submarine_call,
                 "ap_limit": ap_limit,
                 "cl1_preserve": cl1_preserve,
-            }
+                "ap_limit_minutes": ap_limit_minutes,
+            },
+            allow_none=False,
         )
 
         def delay_tasks(task_list, minutes):
@@ -549,7 +568,9 @@ class AzurLaneConfig(ConfigUpdater, ManualConfig, GeneratedConfig, ConfigWatcher
                     "OpsiMeowfficerFarming",
                 ]
             )
-            if get_os_reset_remain() > 0:
+            if ap_limit_minutes is not None:
+                delay_tasks(tasks, minutes=ap_limit_minutes)
+            elif get_os_reset_remain() > 0:
                 delay_tasks(tasks, minutes=360)
             else:
                 logger.info("Just less than 1 day to OpSi reset, delay 2.5 hours")

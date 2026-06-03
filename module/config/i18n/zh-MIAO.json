@@ -350,6 +350,12 @@
       "True": "开启中 (=^･ω･^=)",
       "False": "关闭中 (´;ω;`)"
     },
+    "PushNotification": {
+      "name": "推送通知",
+      "help": "启用后，任务完成时会通过 OnePush 推送成功或失败通知喵",
+      "True": "已启用",
+      "False": "关闭"
+    },
     "NextRun": {
       "name": "下次运行时机 (´・ω・`)",
       "help": "自动计算的时间喵，不用手改。清空则立刻奔跑喵~"
@@ -369,6 +375,12 @@
     "ServerUpdate": {
       "name": "服务器刷新时刻 (๑•̀ㅂ•́)و✧",
       "help": "有些任务完成后等到服务器刷新再跑，自动换算时区喵~"
+    },
+    "Sensitive": {
+      "name": "敏感任务 (╥﹏╥)",
+      "help": "出错的时候不让重启游戏喵！直接停止 AzurPilot 运行喵！跨月每日、隐秘海域、深渊海域这种关键时刻的任务才需要开喵~",
+      "True": "True",
+      "False": "False"
     }
   },
   "Emulator": {
@@ -631,11 +643,18 @@
     },
     "OcrDevice": {
       "name": "OCR设备选择 (´・ω・`)",
-      "help": "OCR跑在CPU/GPU/ANE上。GPU仅用于Windows DirectML，ANE仅用于macOS Apple Neural Engine。自动：Apple Silicon Mac用ANE，Windows显存>1G用GPU，否则CPU。",
+      "help": "OCR跑在CPU/GPU/ANE上。GPU用Windows DirectML，ANE用macOS Neural Engine。自动：Apple Silicon选ANE，Windows显存>1G选GPU，否则CPU。",
       "auto": "自动判断 (｀・ω・´)",
       "cpu": "CPU喵",
       "gpu": "GPU喵",
-      "ane": "ANE (Apple)喵"
+      "ane": "ANE喵 (Apple)"
+    },
+    "OcrBackend": {
+      "name": "OCR后端喵 (≧∇≦)ﾉ",
+      "help": "选OCR推理引擎喵。onnxruntime用ONNX Runtime，ncnn用ncnn Vulkan后端喵。自动默认onnxruntime喵。",
+      "auto": "自动 (onnxruntime) 喵",
+      "onnxruntime": "ONNX Runtime 喵",
+      "ncnn": "ncnn (Vulkan) 喵"
     },
     "ScreenshotInterval": {
       "name": "放慢截图至 X 秒一张 (´-ω-`)zzz",
@@ -1095,7 +1114,7 @@
       "event_20260226_cn": "Springtide Inn Online",
       "event_20260326_cn": "The Vagabond’s Recruitment Plan",
       "event_20260417_cn": "Vacation Lane – Beachside Brilliance",
-      "event_20260520_cn": "Alliance Before the Sacred Seal",
+      "event_20260520_cn": "Alliance Before the Hagiobull",
       "raid_20200624": "Air Raid Drills with Essex Rerun",
       "raid_20210708": "Cross Wave rerun",
       "raid_20220127": "Mystery Investigation",
@@ -1588,6 +1607,14 @@
       "name": "装备码 (´・ω・`) つ ~",
       "help": "更换舰船+装备时生效。蓝叠需开虚拟键盘。DD, bogue, hermes, langley, ranger 各有装备码喵。"
     },
+    "UseEmotionFirst": {
+      "name": "GemsFarming.UseEmotionFirst.name",
+      "help": "GemsFarming.UseEmotionFirst.help"
+    },
+    "IgnoreEmotionWarning": {
+      "name": "GemsFarming.IgnoreEmotionWarning.name",
+      "help": "GemsFarming.IgnoreEmotionWarning.help"
+    },
     "ALLowHighFlagshipLevel": {
       "name": "仅更换满级后排 (｡•̀ᴗ-)✧",
       "help": "打开后只选100级白轻航。确保船坞有符合条件的船喵。"
@@ -2014,6 +2041,10 @@
     "FortChoreMeowfficer": {
       "name": "喵窝互动 (。・ω・。)",
       "help": "清扫、喂食、逗猫喵"
+    },
+    "OverflowCoins": {
+      "name": "金幣溢出時購買貓箱",
+      "help": "當金幣高於此值時，繼續購買貓箱直至金幣降至此值或貓箱售罄；-1 關閉"
     }
   },
   "MeowfficerTrain": {
@@ -3440,7 +3471,8 @@
       "name": "META作战模式喵",
       "help": "",
       "current": "当期喵",
-      "current_dossier": "当期+档案喵"
+      "current_dossier": "当期+档案喵",
+      "current_dossier_only": "档案喵"
     },
     "OneHitMode": {
       "name": "一击即走战术 (・ω<)",
@@ -4283,19 +4315,19 @@
       "UpToDate": "已是最新喵 (。-`ω´-)",
       "HaveUpdate": "有新版本可用喵！",
       "UpdateStart": "开始更新喵",
-      "UpdateWait": "等待所有 Alas 完成当前任务喵",
+      "UpdateWait": "等待所有 AzurPilot 完成当前任务喵",
       "UpdateRun": "更新中喵",
       "UpdateSuccess": "更新成功，正在重启喵",
       "UpdateFailed": "更新失败，日志在 ./log/*_gui.txt 喵",
       "UpdateChecking": "检查更新中喵",
-      "UpdateCancel": "取消更新，重启 Alas 喵",
+      "UpdateCancel": "取消更新，重启 AzurPilot 喵",
       "UpdateFinish": "更新成功，请手动重启喵",
       "Local": "本地喵",
       "Upstream": "上游仓库喵",
       "Author": "作者喵",
       "Time": "提交时间喵",
       "Message": "提交信息喵",
-      "DisabledWarn": "更新模块未启用，需手动重启 Alas 更新喵",
+      "DisabledWarn": "更新模块未启用，需手动重启 AzurPilot 更新喵",
       "DetailedHistory": "详细提交历史喵"
     },
     "Remote": {
@@ -4423,7 +4455,11 @@
       "CommissionIncomeHeaderCount": "委托次数喵",
       "CommissionIncomeHeaderAvg": "平均/次喵",
       "CommissionIncomeTotalCommissions": "委托总次数: {value}喵",
-      "CommissionIncomeRecentTitle": "最近委托记录喵"
+      "CommissionIncomeRecentTitle": "最近委托记录喵",
+      "ResourceChartTitle": "全资源变化趋势喵",
+      "LoadResourceDataFailed": "加载资源数据失败喵: {e}",
+      "NoResourceData": "暂无资源变化数据喵，运行脚本后将自动记录喵",
+      "NoValidResourceData": "暂无有效资源数据喵"
     },
     "Tactical": {
       "SkillAutoSwitch": "Gui.Tactical.SkillAutoSwitch"
@@ -4457,7 +4493,7 @@
       "ImportErrorInvalid": "这不是有效的 AzurPilot/ALAS 配置喵",
       "ImportErrorFailed": "导入失败喵",
       "ImportErrorNoMatch": "所选文件夹中没有找到 config/ 或 log/cl1/ 下的匹配文件喵",
-      "WelcomeTitle": "欢迎使用 ALAS 喵！(｡>﹏<｡)",
+      "WelcomeTitle": "欢迎使用 AzurPilot 喵！(｡>﹏<｡)",
       "WelcomeDescription": "指挥官，快来和雪风一起完成初次设置喵~ (ฅ´ω`ฅ)",
       "WelcomeSelectLanguage": "选择哪种语言喵？(･ω･)ﾉ",
       "WelcomeHint": "选好语言后会自动匹配默认服务器喵，后面还能再改喵~",

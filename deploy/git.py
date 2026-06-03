@@ -1,12 +1,7 @@
-import requests
-
 from deploy.config import DeployConfig, ExecutionError
 from deploy.git_over_cdn.client import GitOverCdnClient
 from deploy.logger import logger
 from deploy.utils import *
-
-
-CLOUD_UPDATE_CONTROL_URL = 'https://alas-apiv2.nanoda.work/api/updata'
 
 
 class GitManager(DeployConfig):
@@ -90,29 +85,9 @@ class GitManager(DeployConfig):
 
     @staticmethod
     def cloud_auto_update_enabled():
-        logger.info(f'Check cloud update control: {CLOUD_UPDATE_CONTROL_URL}')
-        try:
-            resp = requests.get(CLOUD_UPDATE_CONTROL_URL, timeout=5)
-            resp.raise_for_status()
-        except Exception as e:
-            logger.warning(f'Failed to check cloud update control: {e}')
-            return None
-
-        text = resp.text.strip()
-        try:
-            data = resp.json()
-        except ValueError:
-            data = text
-
-        if data is True or (isinstance(data, str) and data.lower() in ('true', 'ture')):
-            logger.info('Cloud update control is enabled')
-            return True
-        if data is False or (isinstance(data, str) and data.lower() in ('false', 'fales')):
-            logger.info('Cloud update control is disabled')
-            return False
-
-        logger.info(f'Cloud update control is inaccessible: {text}')
-        return None
+        # Modify by MHY, 禁用第三方云更新检测，始终允许从自有仓库更新
+        logger.info('Cloud update control disabled, using own repository')
+        return True
 
     def cloud_update_access_failed(self, fatal=True):
         logger.hr('Cloud Update Control Failed', 0)

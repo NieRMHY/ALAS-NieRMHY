@@ -120,7 +120,7 @@
     },
     "WarArchives": {
       "name": "作战档案",
-      "help": "由于作战档案缺少维护，开荒功能不一定能正常使用，如果发现Alas运行异常，请手动完成开荒后使用自律寻敌功能"
+      "help": "由于作战档案缺少维护，开荒功能不一定能正常使用，如果发现AzurPilot运行异常，请手动完成开荒后使用自律寻敌功能"
     },
     "EventA": {
       "name": "每日A图",
@@ -288,7 +288,7 @@
     },
     "OpsiCrossMonth": {
       "name": "跨月每日",
-      "help": "    Alas将在大世界跨月重置之前10分钟进入大世界，等待大世界重置但不退出大世界，然后完成新一天的大世界每日、隐秘海域、深渊海域和短猫相接，以获得额外的金菜。运行大世界每日时，按\"大世界每日\"任务设置运行，其余同理。\n    重要：Alas等待跨月期间，请不要操作游戏。"
+      "help": "    AzurPilot将在大世界跨月重置之前10分钟进入大世界，等待大世界重置但不退出大世界，然后完成新一天的大世界每日、隐秘海域、深渊海域和短猫相接，以获得额外的金菜。运行大世界每日时，按\"大世界每日\"任务设置运行，其余同理。\n    重要：AzurPilot等待跨月期间，请不要操作游戏。"
     },
     "OpsiSimulator": {
       "name": "大世界模拟器 Alpha",
@@ -350,6 +350,12 @@
       "True": "已启用",
       "False": "False"
     },
+    "PushNotification": {
+      "name": "推送通知",
+      "help": "启用后，任务完成时会通过 OnePush 推送成功或失败通知",
+      "True": "已启用",
+      "False": "关闭"
+    },
     "NextRun": {
       "name": "下一次运行时间",
       "help": "自动计算的数值，不需要手动修改。清空后将立即运行"
@@ -369,6 +375,12 @@
     "ServerUpdate": {
       "name": "服务器刷新时间",
       "help": "一些任务运行成功后，将推迟下一次运行至服务器刷新时间\n自动换算时区，一般不需要修改"
+    },
+    "Sensitive": {
+      "name": "敏感任务",
+      "help": "出错时禁止重启游戏，直接停止 AzurPilot 运行。适用于跨月每日、隐秘海域、深渊海域等关键时刻任务。",
+      "True": "True",
+      "False": "False"
     }
   },
   "Emulator": {
@@ -636,6 +648,13 @@
       "cpu": "CPU",
       "gpu": "GPU",
       "ane": "ANE (Apple)"
+    },
+    "OcrBackend": {
+      "name": "OCR后端",
+      "help": "选择OCR推理引擎。onnxruntime 使用 ONNX Runtime，ncnn 使用 ncnn Vulkan 后端。自动默认使用 onnxruntime。",
+      "auto": "自动 (onnxruntime)",
+      "onnxruntime": "ONNX Runtime",
+      "ncnn": "ncnn (Vulkan)"
     },
     "ScreenshotInterval": {
       "name": "放慢截图速度至 X 秒一张",
@@ -1199,8 +1218,8 @@
       "help": "石油过低时推迟任务，石油充足后继续出击"
     },
     "CoinLimit": {
-      "name": "物资大于 X 后停止",
-      "help": "物资大于该数值后停止当前任务\n0 表示不限制物资"
+      "name": "物资达到 X 后推迟",
+      "help": "物资达到该数值后推迟当前任务，物资低于上限后继续出击\n0 表示不限制物资"
     },
     "RunCount": {
       "name": "出击次数大于 X 后停止",
@@ -1588,6 +1607,14 @@
       "name": "装备码",
       "help": "仅当选择“更换舰船 + 装备”时生效。\n在换下舰船时，若设置里当前舰船装备码为null则会导出；在换上舰船时，若设置里当前舰船装备码为null则会使用上一艘舰船导出的装备码，否则使用设置里的装备码\n蓝叠模拟器用户需要先开启虚拟键盘，详见https://support.bluestacks.com/hc/zh-tw/articles/360061968892-%E5%A6%82%E4%BD%95%E5%9C%A8-BlueStacks-5-%E4%B8%8A%E4%BD%BF%E7%94%A8%E5%B0%8F%E9%8D%B5%E7%9B%A4-%E8%99%9B%E6%93%AC%E9%8D%B5%E7%9B%A4\nDD：前排驱逐    bogue：博格    hermes：竞技神    langley：兰利    ranger：突击者"
     },
+    "UseEmotionFirst": {
+      "name": "心情优先",
+      "help": "启用后会优先选择心情最高的舰船，心情一样则应用过滤器，后排会优先使用等级低的船"
+    },
+    "IgnoreEmotionWarning": {
+      "name": "忽略心情警告弹窗",
+      "help": "打开后，遇到心情警告弹窗将强制打完，打完后如开启更换前排会强制换船"
+    },
     "ALLowHighFlagshipLevel": {
       "name": "仅更换满级后排",
       "help": "打开后，更换旗舰时仅会选择100级的白皮轻航。\n使用时请保证船坞中有符合条件的舰船。"
@@ -1894,7 +1921,7 @@
   "Research": {
     "_info": {
       "name": "科研",
-      "help": "当过滤器和其他设置一起工作时，Alas 会寻找同时满足所有用户设置的项目。\n例如，你设置科研过滤器是 `H1 > D2.5 > shortest` （包含消耗魔方的科研），但又设置了不允许消耗魔方，最终的结果是 Alas 不会选择消耗魔方的科研。当你突然想切魔方的时候，只需打开消耗魔方，而不需要修改过滤器，这是比较方便的。"
+      "help": "当过滤器和其他设置一起工作时，AzurPilot 会寻找同时满足所有用户设置的项目。\n例如，你设置科研过滤器是 `H1 > D2.5 > shortest` （包含消耗魔方的科研），但又设置了不允许消耗魔方，最终的结果是 AzurPilot 不会选择消耗魔方的科研。当你突然想切魔方的时候，只需打开消耗魔方，而不需要修改过滤器，这是比较方便的。"
     },
     "UseCube": {
       "name": "使用魔方",
@@ -2014,6 +2041,10 @@
     "FortChoreMeowfficer": {
       "name": "喵窝互动",
       "help": "清扫、喂食和逗猫"
+    },
+    "OverflowCoins": {
+      "name": "金币溢出时购买猫箱",
+      "help": "当金币高于此值时，继续购买猫箱直至金币降至此值或猫箱售空；-1 关闭"
     }
   },
   "MeowfficerTrain": {
@@ -3440,7 +3471,8 @@
       "name": "META作战",
       "help": "",
       "current": "当期",
-      "current_dossier": "当期 + 档案"
+      "current_dossier": "当期 + 档案",
+      "current_dossier_only": "档案"
     },
     "OneHitMode": {
       "name": "一击即走",
@@ -3691,7 +3723,7 @@
   "OpsiHazard1Leveling": {
     "_info": {
       "name": "侵蚀1练级",
-      "help": "消耗作战补给凭证以获取大量经验和少量行动力\n推荐携带1-2艘预装填航母以获取最高的时均收益\n\n原版 Alas 的一些防呆限制已被解除，请谨慎设置参数"
+      "help": "消耗作战补给凭证以获取大量经验和少量行动力\n推荐携带1-2艘预装填航母以获取最高的时均收益\n\n原版 AzurPilot 的一些防呆限制已被解除，请谨慎设置参数"
     },
     "TargetZone": {
       "name": "指定海域",
@@ -3765,7 +3797,7 @@
   "OpsiCheckLeveling": {
     "_info": {
       "name": "大世界舰队经验检测",
-      "help": "检测出击舰队所有船是否已经获取满经验，是的话则发送一条推送消息\n需要先在 Alas 设置中配置好“错误推送设置”\n没成功检测经验会重新检测，建议上满六艘舰船不然就将检测时间调大，连续3次失败会推送并延时"
+      "help": "检测出击舰队所有船是否已经获取满经验，是的话则发送一条推送消息\n需要先在 AzurPilot 设置中配置好\"错误推送设置\"\n没成功检测经验会重新检测，建议上满六艘舰船不然就将检测时间调大，连续3次失败会推送并延时"
     },
     "TargetLevel": {
       "name": "当所有舰船经验可升至此等级时推送 (0为不限制)",
@@ -3821,7 +3853,7 @@
   "OpsiScheduling": {
     "_info": {
       "name": "智能调度",
-      "help": "大世界智能调度功能，用于协调侵蚀1练级与黄币补充任务之间的切换\n启用后将根据黄币和行动力自动在不同任务之间切换并发送推送通知\n\n原版 Alas 的一些防呆限制已被解除，请谨慎设置参数"
+      "help": "大世界智能调度功能，用于协调侵蚀1练级与黄币补充任务之间的切换\n启用后将根据黄币和行动力自动在不同任务之间切换并发送推送通知\n\n原版 AzurPilot 的一些防呆限制已被解除，请谨慎设置参数"
     },
     "UseSmartSchedulingOperationCoinsPreserve": {
       "name": "获取 X 个作战补给凭证",
@@ -3918,7 +3950,7 @@
     },
     "RepairShip": {
       "name": "靠近港口时自动修船",
-      "help": "手动把队伍移动至港口后，Alas将帮助修船\n修理完成后需要在30秒内将队伍移出港口，否则将再次修船"
+      "help": "手动把队伍移动至港口后，AzurPilot将帮助修船\n修理完成后需要在30秒内将队伍移出港口，否则将再次修船"
     },
     "SelectEnemy": {
       "name": "清理附近的敌人和物资",
@@ -3970,7 +4002,7 @@
   "Benchmark": {
     "_info": {
       "name": "性能测试",
-      "help": "测试哪个截图方案和控制方案速度更快，速度因模拟器和电脑配置而异\n测试完成后，在 \"Alas\" - \"模拟器设置\" 内选择最快的截图和控制方案"
+      "help": "测试哪个截图方案和控制方案速度更快，速度因模拟器和电脑配置而异\n测试完成后，在 \"AzurPilot\" - \"模拟器设置\" 内选择最快的截图和控制方案"
     },
     "DeviceType": {
       "name": "设备类型",
@@ -4283,19 +4315,19 @@
       "UpToDate": "已是最新版本",
       "HaveUpdate": "有新版本可用",
       "UpdateStart": "开始更新",
-      "UpdateWait": "等待所有 Alas 完成当前任务",
+      "UpdateWait": "等待所有 AzurPilot 完成当前任务",
       "UpdateRun": "更新中",
       "UpdateSuccess": "更新成功，正在重启",
       "UpdateFailed": "更新失败，可在./log/*_gui.txt中找到错误日志",
       "UpdateChecking": "检查更新中",
-      "UpdateCancel": "取消更新，重启 Alas 中",
+      "UpdateCancel": "取消更新，重启 AzurPilot 中",
       "UpdateFinish": "更新成功，请手动重启",
       "Local": "本地",
       "Upstream": "上游仓库",
       "Author": "作者",
       "Time": "提交时间",
       "Message": "提交信息",
-      "DisabledWarn": "更新模块未启用，你需要手动重启 Alas 进行更新",
+      "DisabledWarn": "更新模块未启用，你需要手动重启 AzurPilot 进行更新",
       "DetailedHistory": "详细提交历史"
     },
     "Remote": {
@@ -4423,7 +4455,11 @@
       "CommissionIncomeHeaderCount": "委托次数",
       "CommissionIncomeHeaderAvg": "平均/次",
       "CommissionIncomeTotalCommissions": "委托总次数: {value}",
-      "CommissionIncomeRecentTitle": "最近委托记录"
+      "CommissionIncomeRecentTitle": "最近委托记录",
+      "ResourceChartTitle": "全资源变化趋势",
+      "LoadResourceDataFailed": "加载资源数据失败: {e}",
+      "NoResourceData": "暂无资源变化数据，运行脚本后将自动记录",
+      "NoValidResourceData": "暂无有效资源数据"
     },
     "Tactical": {
       "SkillAutoSwitch": "Gui.Tactical.SkillAutoSwitch"

@@ -488,6 +488,15 @@
           "ane"
         ]
       },
+      "OcrBackend": {
+        "type": "select",
+        "value": "auto",
+        "option": [
+          "auto",
+          "onnxruntime",
+          "ncnn"
+        ]
+      },
       "ScreenshotInterval": {
         "type": "input",
         "value": 0.3
@@ -896,6 +905,14 @@
           true
         ]
       },
+      "PushNotification": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
       "NextRun": {
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
@@ -920,6 +937,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "Storage": {
@@ -934,6 +959,14 @@
   "Main": {
     "Scheduler": {
       "Enable": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "PushNotification": {
         "type": "checkbox",
         "value": false,
         "option": [
@@ -965,6 +998,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "Campaign": {
@@ -1341,6 +1382,14 @@
           false
         ]
       },
+      "PushNotification": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
       "NextRun": {
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
@@ -1365,6 +1414,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "Campaign": {
@@ -1741,6 +1798,14 @@
           false
         ]
       },
+      "PushNotification": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
       "NextRun": {
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
@@ -1765,6 +1830,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "Campaign": {
@@ -2141,6 +2214,14 @@
           false
         ]
       },
+      "PushNotification": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
       "NextRun": {
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
@@ -2165,6 +2246,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "GemsFarming": {
@@ -2224,6 +2313,14 @@
         "value": "DD: null\nbogue: null\nhermes: null\nlangley: null\nranger: null",
         "mode": "yaml"
       },
+      "UseEmotionFirst": {
+        "type": "checkbox",
+        "value": false
+      },
+      "IgnoreEmotionWarning": {
+        "type": "checkbox",
+        "value": false
+      },
       "ALLowHighFlagshipLevel": {
         "type": "checkbox",
         "value": false
@@ -2266,10 +2363,8 @@
         "type": "select",
         "value": "campaign_main",
         "option": [
-          "event_20201126_cn",
-          "event_20220915_cn",
+          "event_20220818_cn",
           "event_20221222_cn",
-          "event_20260417_cn",
           "event_20260520_cn"
         ],
         "option_cn": [
@@ -2282,16 +2377,12 @@
           "event_20260520_cn"
         ],
         "option_tw": [
-          "event_20221222_cn",
-          "event_20201126_cn",
-          "event_20260417_cn",
-          "event_20220915_cn"
+          "event_20220818_cn",
+          "event_20221222_cn"
         ],
         "option_bold": [
-          "event_20201126_cn",
-          "event_20220915_cn",
+          "event_20220818_cn",
           "event_20221222_cn",
-          "event_20260417_cn",
           "event_20260520_cn"
         ]
       },
@@ -2627,6 +2718,14 @@
           false
         ]
       },
+      "PushNotification": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
       "NextRun": {
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
@@ -2651,6 +2750,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "GemsFarming": {
@@ -2710,6 +2817,14 @@
         "value": "DD: null\nbogue: null\nhermes: null\nlangley: null\nranger: null",
         "mode": "yaml"
       },
+      "UseEmotionFirst": {
+        "type": "checkbox",
+        "value": false
+      },
+      "IgnoreEmotionWarning": {
+        "type": "checkbox",
+        "value": false
+      },
       "ALLowHighFlagshipLevel": {
         "type": "checkbox",
         "value": false
@@ -2752,10 +2867,8 @@
         "type": "select",
         "value": "campaign_main",
         "option": [
-          "event_20201126_cn",
-          "event_20220915_cn",
+          "event_20220818_cn",
           "event_20221222_cn",
-          "event_20260417_cn",
           "event_20260520_cn"
         ],
         "display": "hide",
@@ -2769,16 +2882,12 @@
           "event_20260520_cn"
         ],
         "option_tw": [
-          "event_20221222_cn",
-          "event_20201126_cn",
-          "event_20260417_cn",
-          "event_20220915_cn"
+          "event_20220818_cn",
+          "event_20221222_cn"
         ],
         "option_bold": [
-          "event_20201126_cn",
-          "event_20220915_cn",
+          "event_20220818_cn",
           "event_20221222_cn",
-          "event_20260417_cn",
           "event_20260520_cn"
         ]
       },
@@ -3114,6 +3223,14 @@
           false
         ]
       },
+      "PushNotification": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
       "NextRun": {
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
@@ -3138,6 +3255,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "GemsFarming": {
@@ -3196,6 +3321,14 @@
         "type": "textarea",
         "value": "DD: null\nbogue: null\nhermes: null\nlangley: null\nranger: null",
         "mode": "yaml"
+      },
+      "UseEmotionFirst": {
+        "type": "checkbox",
+        "value": false
+      },
+      "IgnoreEmotionWarning": {
+        "type": "checkbox",
+        "value": false
       },
       "ALLowHighFlagshipLevel": {
         "type": "checkbox",
@@ -3613,6 +3746,14 @@
           false
         ]
       },
+      "PushNotification": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
       "NextRun": {
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
@@ -3637,6 +3778,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "Campaign": {
@@ -3648,10 +3797,8 @@
         "type": "select",
         "value": "campaign_main",
         "option": [
-          "event_20201126_cn",
-          "event_20220915_cn",
+          "event_20220818_cn",
           "event_20221222_cn",
-          "event_20260417_cn",
           "event_20260520_cn"
         ],
         "option_cn": [
@@ -3664,16 +3811,12 @@
           "event_20260520_cn"
         ],
         "option_tw": [
-          "event_20221222_cn",
-          "event_20201126_cn",
-          "event_20260417_cn",
-          "event_20220915_cn"
+          "event_20220818_cn",
+          "event_20221222_cn"
         ],
         "option_bold": [
-          "event_20201126_cn",
-          "event_20220915_cn",
+          "event_20220818_cn",
           "event_20221222_cn",
-          "event_20260417_cn",
           "event_20260520_cn"
         ]
       },
@@ -4040,6 +4183,14 @@
           false
         ]
       },
+      "PushNotification": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
       "NextRun": {
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
@@ -4064,6 +4215,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "Campaign": {
@@ -4075,10 +4234,8 @@
         "type": "select",
         "value": "campaign_main",
         "option": [
-          "event_20201126_cn",
-          "event_20220915_cn",
+          "event_20220818_cn",
           "event_20221222_cn",
-          "event_20260417_cn",
           "event_20260520_cn"
         ],
         "option_cn": [
@@ -4091,16 +4248,12 @@
           "event_20260520_cn"
         ],
         "option_tw": [
-          "event_20221222_cn",
-          "event_20201126_cn",
-          "event_20260417_cn",
-          "event_20220915_cn"
+          "event_20220818_cn",
+          "event_20221222_cn"
         ],
         "option_bold": [
-          "event_20201126_cn",
-          "event_20220915_cn",
+          "event_20220818_cn",
           "event_20221222_cn",
-          "event_20260417_cn",
           "event_20260520_cn"
         ]
       },
@@ -4467,6 +4620,14 @@
           false
         ]
       },
+      "PushNotification": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
       "NextRun": {
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
@@ -4491,6 +4652,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "Campaign": {
@@ -4502,10 +4671,8 @@
         "type": "select",
         "value": "campaign_main",
         "option": [
-          "event_20201126_cn",
-          "event_20220915_cn",
+          "event_20220818_cn",
           "event_20221222_cn",
-          "event_20260417_cn",
           "event_20260520_cn"
         ],
         "option_cn": [
@@ -4518,16 +4685,12 @@
           "event_20260520_cn"
         ],
         "option_tw": [
-          "event_20221222_cn",
-          "event_20201126_cn",
-          "event_20260417_cn",
-          "event_20220915_cn"
+          "event_20220818_cn",
+          "event_20221222_cn"
         ],
         "option_bold": [
-          "event_20201126_cn",
-          "event_20220915_cn",
+          "event_20220818_cn",
           "event_20221222_cn",
-          "event_20260417_cn",
           "event_20260520_cn"
         ]
       },
@@ -4893,6 +5056,14 @@
           false
         ]
       },
+      "PushNotification": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
       "NextRun": {
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
@@ -4917,6 +5088,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "Raid": {
@@ -5162,6 +5341,14 @@
           false
         ]
       },
+      "PushNotification": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
       "NextRun": {
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
@@ -5186,6 +5373,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "RaidScuttle": {
@@ -5565,6 +5760,14 @@
           false
         ]
       },
+      "PushNotification": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
       "NextRun": {
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
@@ -5589,6 +5792,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "Hospital": {
@@ -5753,6 +5964,14 @@
           false
         ]
       },
+      "PushNotification": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
       "NextRun": {
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
@@ -5777,6 +5996,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "Campaign": {
@@ -6020,6 +6247,14 @@
           false
         ]
       },
+      "PushNotification": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
       "NextRun": {
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
@@ -6044,6 +6279,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "MaritimeEscort": {
@@ -6064,6 +6307,14 @@
   "EventShop": {
     "Scheduler": {
       "Enable": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "PushNotification": {
         "type": "checkbox",
         "value": false,
         "option": [
@@ -6095,6 +6346,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "EventShop": {
@@ -6143,6 +6402,14 @@
           false
         ]
       },
+      "PushNotification": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
       "NextRun": {
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
@@ -6167,6 +6434,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "Campaign": {
@@ -6829,6 +7104,14 @@
           false
         ]
       },
+      "PushNotification": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
       "NextRun": {
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
@@ -6853,6 +7136,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "EventDaily": {
@@ -6875,10 +7166,8 @@
         "type": "select",
         "value": "campaign_main",
         "option": [
-          "event_20201126_cn",
-          "event_20220915_cn",
+          "event_20220818_cn",
           "event_20221222_cn",
-          "event_20260417_cn",
           "event_20260520_cn"
         ],
         "option_cn": [
@@ -6891,16 +7180,12 @@
           "event_20260520_cn"
         ],
         "option_tw": [
-          "event_20221222_cn",
-          "event_20201126_cn",
-          "event_20260417_cn",
-          "event_20220915_cn"
+          "event_20220818_cn",
+          "event_20221222_cn"
         ],
         "option_bold": [
-          "event_20201126_cn",
-          "event_20220915_cn",
+          "event_20220818_cn",
           "event_20221222_cn",
-          "event_20260417_cn",
           "event_20260520_cn"
         ]
       },
@@ -7273,6 +7558,14 @@
           false
         ]
       },
+      "PushNotification": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
       "NextRun": {
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
@@ -7297,6 +7590,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "EventDaily": {
@@ -7319,10 +7620,8 @@
         "type": "select",
         "value": "campaign_main",
         "option": [
-          "event_20201126_cn",
-          "event_20220915_cn",
+          "event_20220818_cn",
           "event_20221222_cn",
-          "event_20260417_cn",
           "event_20260520_cn"
         ],
         "option_cn": [
@@ -7335,16 +7634,12 @@
           "event_20260520_cn"
         ],
         "option_tw": [
-          "event_20221222_cn",
-          "event_20201126_cn",
-          "event_20260417_cn",
-          "event_20220915_cn"
+          "event_20220818_cn",
+          "event_20221222_cn"
         ],
         "option_bold": [
-          "event_20201126_cn",
-          "event_20220915_cn",
+          "event_20220818_cn",
           "event_20221222_cn",
-          "event_20260417_cn",
           "event_20260520_cn"
         ]
       },
@@ -7717,6 +8012,14 @@
           false
         ]
       },
+      "PushNotification": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
       "NextRun": {
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
@@ -7741,6 +8044,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "EventDaily": {
@@ -7763,10 +8074,8 @@
         "type": "select",
         "value": "campaign_main",
         "option": [
-          "event_20201126_cn",
-          "event_20220915_cn",
+          "event_20220818_cn",
           "event_20221222_cn",
-          "event_20260417_cn",
           "event_20260520_cn"
         ],
         "option_cn": [
@@ -7779,16 +8088,12 @@
           "event_20260520_cn"
         ],
         "option_tw": [
-          "event_20221222_cn",
-          "event_20201126_cn",
-          "event_20260417_cn",
-          "event_20220915_cn"
+          "event_20220818_cn",
+          "event_20221222_cn"
         ],
         "option_bold": [
-          "event_20201126_cn",
-          "event_20220915_cn",
+          "event_20220818_cn",
           "event_20221222_cn",
-          "event_20260417_cn",
           "event_20260520_cn"
         ]
       },
@@ -8161,6 +8466,14 @@
           false
         ]
       },
+      "PushNotification": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
       "NextRun": {
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
@@ -8185,6 +8498,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "EventDaily": {
@@ -8207,10 +8528,8 @@
         "type": "select",
         "value": "campaign_main",
         "option": [
-          "event_20201126_cn",
-          "event_20220915_cn",
+          "event_20220818_cn",
           "event_20221222_cn",
-          "event_20260417_cn",
           "event_20260520_cn"
         ],
         "option_cn": [
@@ -8223,16 +8542,12 @@
           "event_20260520_cn"
         ],
         "option_tw": [
-          "event_20221222_cn",
-          "event_20201126_cn",
-          "event_20260417_cn",
-          "event_20220915_cn"
+          "event_20220818_cn",
+          "event_20221222_cn"
         ],
         "option_bold": [
-          "event_20201126_cn",
-          "event_20220915_cn",
+          "event_20220818_cn",
           "event_20221222_cn",
-          "event_20260417_cn",
           "event_20260520_cn"
         ]
       },
@@ -8605,6 +8920,14 @@
           false
         ]
       },
+      "PushNotification": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
       "NextRun": {
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
@@ -8629,6 +8952,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "Campaign": {
@@ -8641,10 +8972,8 @@
         "type": "select",
         "value": "campaign_main",
         "option": [
-          "event_20201126_cn",
-          "event_20220915_cn",
+          "event_20220818_cn",
           "event_20221222_cn",
-          "event_20260417_cn",
           "event_20260520_cn"
         ],
         "option_cn": [
@@ -8657,16 +8986,12 @@
           "event_20260520_cn"
         ],
         "option_tw": [
-          "event_20221222_cn",
-          "event_20201126_cn",
-          "event_20260417_cn",
-          "event_20220915_cn"
+          "event_20220818_cn",
+          "event_20221222_cn"
         ],
         "option_bold": [
-          "event_20201126_cn",
-          "event_20220915_cn",
+          "event_20220818_cn",
           "event_20221222_cn",
-          "event_20260417_cn",
           "event_20260520_cn"
         ]
       },
@@ -9040,6 +9365,14 @@
           false
         ]
       },
+      "PushNotification": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
       "NextRun": {
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
@@ -9064,6 +9397,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "RaidDaily": {
@@ -9300,6 +9641,14 @@
           false
         ]
       },
+      "PushNotification": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
       "NextRun": {
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
@@ -9324,6 +9673,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "Campaign": {
@@ -9568,6 +9925,14 @@
           false
         ]
       },
+      "PushNotification": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
       "NextRun": {
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
@@ -9592,6 +9957,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "Commission": {
@@ -9639,6 +10012,14 @@
           false
         ]
       },
+      "PushNotification": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
       "NextRun": {
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
@@ -9663,6 +10044,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "Tactical": {
@@ -9745,6 +10134,14 @@
           false
         ]
       },
+      "PushNotification": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
       "NextRun": {
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
@@ -9769,6 +10166,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "Research": {
@@ -9867,6 +10272,14 @@
           false
         ]
       },
+      "PushNotification": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
       "NextRun": {
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
@@ -9891,6 +10304,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "Dorm": {
@@ -9950,6 +10371,14 @@
           false
         ]
       },
+      "PushNotification": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
       "NextRun": {
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
@@ -9974,6 +10403,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "Meowfficer": {
@@ -9984,6 +10421,10 @@
       "FortChoreMeowfficer": {
         "type": "checkbox",
         "value": true
+      },
+      "OverflowCoins": {
+        "type": "input",
+        "value": -1
       }
     },
     "MeowfficerTrain": {
@@ -10035,6 +10476,14 @@
           false
         ]
       },
+      "PushNotification": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
       "NextRun": {
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
@@ -10059,6 +10508,14 @@
         "type": "input",
         "value": "00:00, 06:00, 12:00, 18:00, 21:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "GuildLogistics": {
@@ -10120,6 +10577,14 @@
           false
         ]
       },
+      "PushNotification": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
       "NextRun": {
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
@@ -10144,6 +10609,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "Reward": {
@@ -10187,6 +10660,14 @@
           false
         ]
       },
+      "PushNotification": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
       "NextRun": {
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
@@ -10211,6 +10692,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "Awaken": {
@@ -10246,6 +10735,14 @@
           false
         ]
       },
+      "PushNotification": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
       "NextRun": {
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
@@ -10270,6 +10767,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "Island1": {
@@ -10747,6 +11252,14 @@
           false
         ]
       },
+      "PushNotification": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
       "NextRun": {
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
@@ -10771,6 +11284,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "Daily": {
@@ -10938,6 +11459,14 @@
           false
         ]
       },
+      "PushNotification": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
       "NextRun": {
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
@@ -10962,6 +11491,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "Hard": {
@@ -11045,6 +11582,14 @@
           false
         ]
       },
+      "PushNotification": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
       "NextRun": {
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
@@ -11069,6 +11614,14 @@
         "type": "input",
         "value": "00:00, 12:00, 18:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "Exercise": {
@@ -11149,6 +11702,14 @@
           false
         ]
       },
+      "PushNotification": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
       "NextRun": {
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
@@ -11173,6 +11734,14 @@
         "type": "input",
         "value": "00:00, 12:00, 18:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "GeneralShop": {
@@ -11220,6 +11789,14 @@
           false
         ]
       },
+      "PushNotification": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
       "NextRun": {
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
@@ -11244,6 +11821,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "GuildShop": {
@@ -11499,6 +12084,14 @@
           false
         ]
       },
+      "PushNotification": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
       "NextRun": {
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
@@ -11523,6 +12116,14 @@
         "type": "input",
         "value": "04:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "ShipyardDr": {
@@ -11615,6 +12216,14 @@
           false
         ]
       },
+      "PushNotification": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
       "NextRun": {
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
@@ -11639,6 +12248,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "Gacha": {
@@ -11697,6 +12314,14 @@
           false
         ]
       },
+      "PushNotification": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
       "NextRun": {
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
@@ -11721,6 +12346,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "BattlePass": {
@@ -11795,6 +12428,14 @@
           false
         ]
       },
+      "PushNotification": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
       "NextRun": {
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
@@ -11819,6 +12460,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "Storage": {
@@ -11833,6 +12482,14 @@
   "PrivateQuarters": {
     "Scheduler": {
       "Enable": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "PushNotification": {
         "type": "checkbox",
         "value": false,
         "option": [
@@ -11864,6 +12521,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "PrivateQuarters": {
@@ -11984,6 +12649,14 @@
           false
         ]
       },
+      "PushNotification": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
       "NextRun": {
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
@@ -12008,6 +12681,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "OpsiAshBeacon": {
@@ -12016,7 +12697,8 @@
         "value": "current",
         "option": [
           "current",
-          "current_dossier"
+          "current_dossier",
+          "current_dossier_only"
         ]
       },
       "OneHitMode": {
@@ -12059,6 +12741,14 @@
           false
         ]
       },
+      "PushNotification": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
       "NextRun": {
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
@@ -12083,6 +12773,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "OpsiAshAssist": {
@@ -12103,6 +12801,14 @@
   "OpsiExplore": {
     "Scheduler": {
       "Enable": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "PushNotification": {
         "type": "checkbox",
         "value": false,
         "option": [
@@ -12134,6 +12840,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "OpsiExplore": {
@@ -12190,6 +12904,14 @@
           false
         ]
       },
+      "PushNotification": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
       "NextRun": {
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
@@ -12214,6 +12936,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "OpsiShop": {
@@ -12256,6 +12986,14 @@
           false
         ]
       },
+      "PushNotification": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
       "NextRun": {
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
@@ -12280,6 +13018,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "OpsiVoucher": {
@@ -12300,6 +13046,14 @@
   "OpsiDaily": {
     "Scheduler": {
       "Enable": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "PushNotification": {
         "type": "checkbox",
         "value": false,
         "option": [
@@ -12331,6 +13085,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "OpsiDaily": {
@@ -12395,6 +13157,14 @@
           false
         ]
       },
+      "PushNotification": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
       "NextRun": {
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
@@ -12419,6 +13189,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": true,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "OpsiObscure": {
@@ -12466,6 +13244,14 @@
           false
         ]
       },
+      "PushNotification": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
       "NextRun": {
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
@@ -12490,6 +13276,14 @@
         "type": "input",
         "value": "00:00, 12:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": true,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "OpsiAbyssal": {
@@ -12523,6 +13317,14 @@
           false
         ]
       },
+      "PushNotification": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
       "NextRun": {
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
@@ -12547,6 +13349,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "OpsiFleet": {
@@ -12584,6 +13394,14 @@
           false
         ]
       },
+      "PushNotification": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
       "NextRun": {
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
@@ -12608,6 +13426,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "OpsiStronghold": {
@@ -12650,6 +13476,14 @@
           false
         ]
       },
+      "PushNotification": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
       "NextRun": {
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
@@ -12674,6 +13508,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "OpsiMonthBoss": {
@@ -12719,6 +13561,14 @@
           false
         ]
       },
+      "PushNotification": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
       "NextRun": {
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
@@ -12743,6 +13593,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "OpsiMeowfficerFarming": {
@@ -12850,6 +13708,14 @@
           false
         ]
       },
+      "PushNotification": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
       "NextRun": {
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
@@ -12874,6 +13740,14 @@
         "type": "input",
         "value": "00:00, 12:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "OpsiHazard1Leveling": {
@@ -13044,6 +13918,14 @@
           false
         ]
       },
+      "PushNotification": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
       "NextRun": {
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
@@ -13069,6 +13951,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "OpsiScheduling": {
@@ -13161,6 +14051,14 @@
           false
         ]
       },
+      "PushNotification": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
       "NextRun": {
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
@@ -13185,6 +14083,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": true,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "Storage": {
@@ -13321,6 +14227,14 @@
           false
         ]
       },
+      "PushNotification": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
       "NextRun": {
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
@@ -13345,6 +14259,14 @@
         "type": "input",
         "value": "00:00",
         "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "Storage": {

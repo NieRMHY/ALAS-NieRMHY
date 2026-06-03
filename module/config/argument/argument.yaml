@@ -62,6 +62,10 @@ Scheduler:
     type: checkbox
     value: false
     option: [true, false]
+  PushNotification:
+    type: checkbox
+    value: false
+    option: [true, false]
   NextRun: 2020-01-01 00:00:00
   Command: Alas
   SuccessInterval:
@@ -73,6 +77,10 @@ Scheduler:
   ServerUpdate:
     value: 00:00
     display: hide
+  Sensitive:
+    type: checkbox
+    value: false
+    option: [true, false]
 Emulator:
   Serial:
     value: auto
@@ -171,9 +179,12 @@ Error:
     value: 3
     validate: [1, 10]
 Optimization:
-  OcrDevice: 
+  OcrDevice:
     value: auto
     option: [auto, cpu, gpu, ane]
+  OcrBackend:
+    value: auto
+    option: [auto, onnxruntime, ncnn]
   ScreenshotInterval: 0.3
   CombatScreenshotInterval: 1.0
   TaskHoardingDuration: 0
@@ -477,6 +488,8 @@ GemsFarming:
       hermes: null
       langley: null
       ranger: null
+  UseEmotionFirst: false
+  IgnoreEmotionWarning: false
   ALLowHighFlagshipLevel: false
   ALLowLowVanguardLevel: false
   DelayTaskIFNoFlagship: false
@@ -672,6 +685,7 @@ BuyFurniture:
 Meowfficer:
   BuyAmount: 1
   FortChoreMeowfficer: true
+  OverflowCoins: -1
 MeowfficerTrain:
   Enable: false
   Mode:
@@ -1112,7 +1126,7 @@ OpsiGeneral:
 OpsiAshBeacon:
   AttackMode:
     value: current
-    option: [current, current_dossier]
+    option: [current, current_dossier, current_dossier_only]
   OneHitMode: true
   DossierAutoAttackMode: false
   RequestAssist: true

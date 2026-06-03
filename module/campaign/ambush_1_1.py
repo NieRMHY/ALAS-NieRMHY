@@ -130,6 +130,39 @@ class Ambush11(GemsFarming):
                               fleet=[0, self.fleet_to_attack], status='free')
         scanner.disable('rarity')
 
+        if self.config.GemsFarming_UseEmotionFirst:
+            if self.config.GemsFarming_CommonDD == 'custom':
+                filter_string = self.config.GemsFarming_CommonDDFilter
+                common_ship = self.get_common_ship_filter(filter_string, ship_type='dd')
+            elif self.config.GemsFarming_CommonDD == 'any':
+                filter_string = self.config.COMMON_DD_FILTER
+                common_ship = self.get_common_ship_filter(filter_string, ship_type='dd')
+            elif self.config.GemsFarming_CommonDD == 'cassin_or_downes':
+                common_ship = ['cassin', 'downes']
+            elif self.config.GemsFarming_CommonDD == 'aulick_or_foote':
+                common_ship = ['aulick', 'foote']
+            elif self.config.GemsFarming_CommonDD == 'z20_or_z21':
+                common_ship = ['z20', 'z21']
+            else:
+                common_ship = None
+
+            if common_ship is not None:
+                candidates = self.find_all_vanguard_candidates(scanner, common_ship)
+                if candidates:
+                    return candidates
+
+                logger.info('No specific DD was found, try reversed order.')
+                self.dock_sort_method_dsc_set(False)
+                candidates = self.find_all_vanguard_candidates(scanner, common_ship)
+                if not candidates and self.config.GemsFarming_CommonDD == 'custom':
+                    return scanner.scan(self.device.image, output=False)
+                return candidates
+            else:
+                candidates = scanner.scan(self.device.image, output=False)
+                if candidates:
+                    candidates.sort(key=lambda s: s.emotion, reverse=True)
+                    return candidates
+
         if self.config.GemsFarming_CommonDD in ['any', 'favourite', 'z20_or_z21', 'DDG']:
             return scanner.scan(self.device.image)
         elif self.config.GemsFarming_CommonDD == 'custom':

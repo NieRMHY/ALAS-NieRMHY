@@ -103,6 +103,7 @@
     },
     "Optimization": {
       "OcrDevice": "auto",
+      "OcrBackend": "auto",
       "ScreenshotInterval": 0.3,
       "CombatScreenshotInterval": 1.0,
       "TaskHoardingDuration": 0,
@@ -207,11 +208,13 @@
   "Restart": {
     "Scheduler": {
       "Enable": true,
+      "PushNotification": false,
       "NextRun": "2020-01-01 00:00:00",
       "Command": "Restart",
       "SuccessInterval": 0,
       "FailureInterval": 0,
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "Storage": {
       "Storage": {}
@@ -220,11 +223,13 @@
   "Main": {
     "Scheduler": {
       "Enable": false,
+      "PushNotification": false,
       "NextRun": "2020-01-01 00:00:00",
       "Command": "Main",
       "SuccessInterval": 0,
       "FailureInterval": 120,
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "Campaign": {
       "Name": "12-4",
@@ -299,11 +304,13 @@
   "Main2": {
     "Scheduler": {
       "Enable": false,
+      "PushNotification": false,
       "NextRun": "2020-01-01 00:00:00",
       "Command": "Main2",
       "SuccessInterval": 0,
       "FailureInterval": 120,
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "Campaign": {
       "Name": "12-4",
@@ -378,11 +385,13 @@
   "Main3": {
     "Scheduler": {
       "Enable": false,
+      "PushNotification": false,
       "NextRun": "2020-01-01 00:00:00",
       "Command": "Main3",
       "SuccessInterval": 0,
       "FailureInterval": 120,
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "Campaign": {
       "Name": "12-4",
@@ -457,11 +466,13 @@
   "GemsFarming": {
     "Scheduler": {
       "Enable": false,
+      "PushNotification": false,
       "NextRun": "2020-01-01 00:00:00",
       "Command": "GemsFarming",
       "SuccessInterval": 0,
       "FailureInterval": 120,
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "GemsFarming": {
       "ChangeFlagship": "ship_equip",
@@ -471,6 +482,8 @@
       "CommonDD": "any",
       "CommonDDFilter": "z20 > z21 > aulick > foote > cassin > downes",
       "EquipmentCode": "DD: null\nbogue: null\nhermes: null\nlangley: null\nranger: null",
+      "UseEmotionFirst": false,
+      "IgnoreEmotionWarning": false,
       "ALLowHighFlagshipLevel": false,
       "ALLowLowVanguardLevel": false,
       "DelayTaskIFNoFlagship": false,
@@ -538,11 +551,13 @@
   "ThreeOilLowCost": {
     "Scheduler": {
       "Enable": false,
+      "PushNotification": false,
       "NextRun": "2020-01-01 00:00:00",
       "Command": "ThreeOilLowCost",
       "SuccessInterval": 0,
       "FailureInterval": 120,
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "GemsFarming": {
       "ChangeFlagship": "ship_equip",
@@ -552,6 +567,8 @@
       "CommonDD": "any",
       "CommonDDFilter": "z20 > z21 > aulick > foote > cassin > downes",
       "EquipmentCode": "DD: null\nbogue: null\nhermes: null\nlangley: null\nranger: null",
+      "UseEmotionFirst": false,
+      "IgnoreEmotionWarning": false,
       "ALLowHighFlagshipLevel": false,
       "ALLowLowVanguardLevel": false,
       "DelayTaskIFNoFlagship": false,
@@ -619,11 +636,13 @@
   "Ambush11": {
     "Scheduler": {
       "Enable": false,
+      "PushNotification": false,
       "NextRun": "2020-01-01 00:00:00",
       "Command": "Ambush11",
       "SuccessInterval": 0,
       "FailureInterval": 120,
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "GemsFarming": {
       "ChangeFlagship": "ship_equip",
@@ -633,6 +652,8 @@
       "CommonDD": "any",
       "CommonDDFilter": "z20 > z21 > aulick > foote > cassin > downes",
       "EquipmentCode": "DD: null\nbogue: null\nhermes: null\nlangley: null\nranger: null",
+      "UseEmotionFirst": false,
+      "IgnoreEmotionWarning": false,
       "ALLowHighFlagshipLevel": false,
       "ALLowLowVanguardLevel": false,
       "DelayTaskIFNoFlagship": false,
@@ -714,11 +735,13 @@
   "Event": {
     "Scheduler": {
       "Enable": false,
+      "PushNotification": false,
       "NextRun": "2020-01-01 00:00:00",
       "Command": "Event",
       "SuccessInterval": 0,
       "FailureInterval": 120,
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "Campaign": {
       "Name": "D3",
@@ -793,11 +816,13 @@
   "Event2": {
     "Scheduler": {
       "Enable": false,
+      "PushNotification": false,
       "NextRun": "2020-01-01 00:00:00",
       "Command": "Event2",
       "SuccessInterval": 0,
       "FailureInterval": 120,
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "Campaign": {
       "Name": "D3",
@@ -872,11 +897,13 @@
   "Event3": {
     "Scheduler": {
       "Enable": false,
+      "PushNotification": false,
       "NextRun": "2020-01-01 00:00:00",
       "Command": "Event3",
       "SuccessInterval": 0,
       "FailureInterval": 120,
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "Campaign": {
       "Name": "D3",
@@ -951,11 +978,13 @@
   "Raid": {
     "Scheduler": {
       "Enable": false,
+      "PushNotification": false,
       "NextRun": "2020-01-01 00:00:00",
       "Command": "Raid",
       "SuccessInterval": 0,
       "FailureInterval": 120,
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "Raid": {
       "Mode": "hard",
@@ -1004,11 +1033,13 @@
   "RaidScuttle": {
     "Scheduler": {
       "Enable": false,
+      "PushNotification": false,
       "NextRun": "2020-01-01 00:00:00",
       "Command": "RaidScuttle",
       "SuccessInterval": 0,
       "FailureInterval": 120,
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "RaidScuttle": {
       "Sacrifice": "vanguard"
@@ -1077,11 +1108,13 @@
   "Hospital": {
     "Scheduler": {
       "Enable": false,
+      "PushNotification": false,
       "NextRun": "2020-01-01 00:00:00",
       "Command": "Hospital",
       "SuccessInterval": 0,
       "FailureInterval": 120,
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "Hospital": {
       "UseRecommendFleet": true
@@ -1117,11 +1150,13 @@
   "Coalition": {
     "Scheduler": {
       "Enable": false,
+      "PushNotification": false,
       "NextRun": "2020-01-01 00:00:00",
       "Command": "Coalition",
       "SuccessInterval": 30,
       "FailureInterval": 30,
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "Campaign": {
       "Name": "dynamic",
@@ -1170,11 +1205,13 @@
   "MaritimeEscort": {
     "Scheduler": {
       "Enable": false,
+      "PushNotification": false,
       "NextRun": "2020-01-01 00:00:00",
       "Command": "MaritimeEscort",
       "SuccessInterval": 30,
       "FailureInterval": 30,
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "MaritimeEscort": {
       "Enable": true
@@ -1186,11 +1223,13 @@
   "EventShop": {
     "Scheduler": {
       "Enable": false,
+      "PushNotification": false,
       "NextRun": "2020-01-01 00:00:00",
       "Command": "EventShop",
       "SuccessInterval": 30,
       "FailureInterval": 30,
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "EventShop": {
       "UnlockSSRShip": true,
@@ -1205,11 +1244,13 @@
   "WarArchives": {
     "Scheduler": {
       "Enable": false,
+      "PushNotification": false,
       "NextRun": "2020-01-01 00:00:00",
       "Command": "WarArchives",
       "SuccessInterval": 30,
       "FailureInterval": 30,
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "Campaign": {
       "Name": "D3",
@@ -1284,11 +1325,13 @@
   "EventA": {
     "Scheduler": {
       "Enable": false,
+      "PushNotification": false,
       "NextRun": "2020-01-01 00:00:00",
       "Command": "EventA",
       "SuccessInterval": 30,
       "FailureInterval": 30,
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "EventDaily": {
       "StageFilter": "A1 > A2 > A3",
@@ -1367,11 +1410,13 @@
   "EventB": {
     "Scheduler": {
       "Enable": false,
+      "PushNotification": false,
       "NextRun": "2020-01-01 00:00:00",
       "Command": "EventB",
       "SuccessInterval": 30,
       "FailureInterval": 30,
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "EventDaily": {
       "StageFilter": "B1 > B2 > B3",
@@ -1450,11 +1495,13 @@
   "EventC": {
     "Scheduler": {
       "Enable": false,
+      "PushNotification": false,
       "NextRun": "2020-01-01 00:00:00",
       "Command": "EventC",
       "SuccessInterval": 30,
       "FailureInterval": 30,
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "EventDaily": {
       "StageFilter": "C1 > C2 > C3",
@@ -1533,11 +1580,13 @@
   "EventD": {
     "Scheduler": {
       "Enable": false,
+      "PushNotification": false,
       "NextRun": "2020-01-01 00:00:00",
       "Command": "EventD",
       "SuccessInterval": 30,
       "FailureInterval": 30,
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "EventDaily": {
       "StageFilter": "D1 > D2 > D3",
@@ -1616,11 +1665,13 @@
   "EventSp": {
     "Scheduler": {
       "Enable": false,
+      "PushNotification": false,
       "NextRun": "2020-01-01 00:00:00",
       "Command": "EventSp",
       "SuccessInterval": 30,
       "FailureInterval": 30,
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "Campaign": {
       "Name": "sp",
@@ -1695,11 +1746,13 @@
   "RaidDaily": {
     "Scheduler": {
       "Enable": false,
+      "PushNotification": false,
       "NextRun": "2020-01-01 00:00:00",
       "Command": "RaidDaily",
       "SuccessInterval": 30,
       "FailureInterval": 30,
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "RaidDaily": {
       "StageFilter": "hard > normal > easy"
@@ -1747,11 +1800,13 @@
   "CoalitionSp": {
     "Scheduler": {
       "Enable": false,
+      "PushNotification": false,
       "NextRun": "2020-01-01 00:00:00",
       "Command": "CoalitionSp",
       "SuccessInterval": 30,
       "FailureInterval": 30,
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "Campaign": {
       "Name": "sp",
@@ -1800,11 +1855,13 @@
   "Commission": {
     "Scheduler": {
       "Enable": false,
+      "PushNotification": false,
       "NextRun": "2020-01-01 00:00:00",
       "Command": "Commission",
       "SuccessInterval": "30-60",
       "FailureInterval": "30-60",
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "Commission": {
       "PresetFilter": "cube",
@@ -1819,11 +1876,13 @@
   "Tactical": {
     "Scheduler": {
       "Enable": false,
+      "PushNotification": false,
       "NextRun": "2020-01-01 00:00:00",
       "Command": "Tactical",
       "SuccessInterval": "30-60",
       "FailureInterval": "120-240",
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "Tactical": {
       "TacticalFilter": "SameT4 > SameT3 > SameT2 > SameT1\n> BlueT2 > YellowT2 > RedT2\n> BlueT3 > YellowT3 > RedT3\n> BlueT4 > YellowT4 > RedT4\n> BlueT1 > YellowT1 > RedT1\n> first",
@@ -1849,11 +1908,13 @@
   "Research": {
     "Scheduler": {
       "Enable": false,
+      "PushNotification": false,
       "NextRun": "2020-01-01 00:00:00",
       "Command": "Research",
       "SuccessInterval": "30-60",
       "FailureInterval": "30-60",
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "Research": {
       "UseCube": "only_05_hour",
@@ -1871,11 +1932,13 @@
   "Dorm": {
     "Scheduler": {
       "Enable": false,
+      "PushNotification": false,
       "NextRun": "2020-01-01 00:00:00",
       "Command": "Dorm",
       "SuccessInterval": 278,
       "FailureInterval": 278,
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "Dorm": {
       "Collect": true,
@@ -1895,15 +1958,18 @@
   "Meowfficer": {
     "Scheduler": {
       "Enable": false,
+      "PushNotification": false,
       "NextRun": "2020-01-01 00:00:00",
       "Command": "Meowfficer",
       "SuccessInterval": 30,
       "FailureInterval": 30,
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "Meowfficer": {
       "BuyAmount": 1,
-      "FortChoreMeowfficer": true
+      "FortChoreMeowfficer": true,
+      "OverflowCoins": -1
     },
     "MeowfficerTrain": {
       "Enable": false,
@@ -1920,11 +1986,13 @@
   "Guild": {
     "Scheduler": {
       "Enable": false,
+      "PushNotification": false,
       "NextRun": "2020-01-01 00:00:00",
       "Command": "Guild",
       "SuccessInterval": 30,
       "FailureInterval": 30,
-      "ServerUpdate": "00:00, 06:00, 12:00, 18:00, 21:00"
+      "ServerUpdate": "00:00, 06:00, 12:00, 18:00, 21:00",
+      "Sensitive": false
     },
     "GuildLogistics": {
       "Enable": true,
@@ -1946,11 +2014,13 @@
   "Reward": {
     "Scheduler": {
       "Enable": false,
+      "PushNotification": false,
       "NextRun": "2020-01-01 00:00:00",
       "Command": "Reward",
       "SuccessInterval": "120-240",
       "FailureInterval": "120-240",
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "Reward": {
       "CollectOil": true,
@@ -1966,11 +2036,13 @@
   "Awaken": {
     "Scheduler": {
       "Enable": false,
+      "PushNotification": false,
       "NextRun": "2020-01-01 00:00:00",
       "Command": "Awaken",
       "SuccessInterval": 0,
       "FailureInterval": 120,
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "Awaken": {
       "LevelCap": "level120",
@@ -1983,11 +2055,13 @@
   "Island": {
     "Scheduler": {
       "Enable": false,
+      "PushNotification": false,
       "NextRun": "2020-01-01 00:00:00",
       "Command": "Island",
       "SuccessInterval": 0,
       "FailureInterval": 120,
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "Island1": {
       "Receive": false,
@@ -2130,11 +2204,13 @@
   "Daily": {
     "Scheduler": {
       "Enable": false,
+      "PushNotification": false,
       "NextRun": "2020-01-01 00:00:00",
       "Command": "Daily",
       "SuccessInterval": 30,
       "FailureInterval": 30,
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "Daily": {
       "UseDailySkip": true,
@@ -2159,11 +2235,13 @@
   "Hard": {
     "Scheduler": {
       "Enable": false,
+      "PushNotification": false,
       "NextRun": "2020-01-01 00:00:00",
       "Command": "Hard",
       "SuccessInterval": 30,
       "FailureInterval": 30,
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "Hard": {
       "HardStage": "11-4",
@@ -2183,11 +2261,13 @@
   "Exercise": {
     "Scheduler": {
       "Enable": false,
+      "PushNotification": false,
       "NextRun": "2020-01-01 00:00:00",
       "Command": "Exercise",
       "SuccessInterval": 30,
       "FailureInterval": 30,
-      "ServerUpdate": "00:00, 12:00, 18:00"
+      "ServerUpdate": "00:00, 12:00, 18:00",
+      "Sensitive": false
     },
     "Exercise": {
       "DelayUntilHoursBeforeNextUpdate": 12,
@@ -2206,11 +2286,13 @@
   "ShopFrequent": {
     "Scheduler": {
       "Enable": false,
+      "PushNotification": false,
       "NextRun": "2020-01-01 00:00:00",
       "Command": "ShopFrequent",
       "SuccessInterval": 30,
       "FailureInterval": 30,
-      "ServerUpdate": "00:00, 12:00, 18:00"
+      "ServerUpdate": "00:00, 12:00, 18:00",
+      "Sensitive": false
     },
     "GeneralShop": {
       "Enable": true,
@@ -2227,11 +2309,13 @@
   "ShopOnce": {
     "Scheduler": {
       "Enable": false,
+      "PushNotification": false,
       "NextRun": "2020-01-01 00:00:00",
       "Command": "ShopOnce",
       "SuccessInterval": 30,
       "FailureInterval": 30,
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "GuildShop": {
       "Enable": true,
@@ -2276,11 +2360,13 @@
   "Shipyard": {
     "Scheduler": {
       "Enable": false,
+      "PushNotification": false,
       "NextRun": "2020-01-01 00:00:00",
       "Command": "Shipyard",
       "SuccessInterval": 30,
       "FailureInterval": 30,
-      "ServerUpdate": "04:00"
+      "ServerUpdate": "04:00",
+      "Sensitive": false
     },
     "ShipyardDr": {
       "ResearchSeries": 2,
@@ -2301,11 +2387,13 @@
   "Gacha": {
     "Scheduler": {
       "Enable": false,
+      "PushNotification": false,
       "NextRun": "2020-01-01 00:00:00",
       "Command": "Gacha",
       "SuccessInterval": 30,
       "FailureInterval": 30,
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "Gacha": {
       "Pool": "light",
@@ -2320,11 +2408,13 @@
   "Freebies": {
     "Scheduler": {
       "Enable": false,
+      "PushNotification": false,
       "NextRun": "2020-01-01 00:00:00",
       "Command": "Freebies",
       "SuccessInterval": 30,
       "FailureInterval": 30,
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "BattlePass": {
       "Collect": true
@@ -2350,11 +2440,13 @@
   "Minigame": {
     "Scheduler": {
       "Enable": false,
+      "PushNotification": false,
       "NextRun": "2020-01-01 00:00:00",
       "Command": "Minigame",
       "SuccessInterval": 0,
       "FailureInterval": 120,
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "Storage": {
       "Storage": {}
@@ -2363,11 +2455,13 @@
   "PrivateQuarters": {
     "Scheduler": {
       "Enable": false,
+      "PushNotification": false,
       "NextRun": "2020-01-01 00:00:00",
       "Command": "PrivateQuarters",
       "SuccessInterval": 30,
       "FailureInterval": 30,
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "PrivateQuarters": {
       "BuyRoses": true,
@@ -2402,11 +2496,13 @@
   "OpsiAshBeacon": {
     "Scheduler": {
       "Enable": false,
+      "PushNotification": false,
       "NextRun": "2020-01-01 00:00:00",
       "Command": "OpsiAshBeacon",
       "SuccessInterval": 30,
       "FailureInterval": 30,
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "OpsiAshBeacon": {
       "AttackMode": "current",
@@ -2423,11 +2519,13 @@
   "OpsiAshAssist": {
     "Scheduler": {
       "Enable": false,
+      "PushNotification": false,
       "NextRun": "2020-01-01 00:00:00",
       "Command": "OpsiAshAssist",
       "SuccessInterval": 30,
       "FailureInterval": 30,
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "OpsiAshAssist": {
       "Tier": 15
@@ -2439,11 +2537,13 @@
   "OpsiExplore": {
     "Scheduler": {
       "Enable": false,
+      "PushNotification": false,
       "NextRun": "2020-01-01 00:00:00",
       "Command": "OpsiExplore",
       "SuccessInterval": 0,
       "FailureInterval": 0,
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "OpsiExplore": {
       "SpecialRadar": false,
@@ -2462,11 +2562,13 @@
   "OpsiShop": {
     "Scheduler": {
       "Enable": false,
+      "PushNotification": false,
       "NextRun": "2020-01-01 00:00:00",
       "Command": "OpsiShop",
       "SuccessInterval": 30,
       "FailureInterval": 30,
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "OpsiShop": {
       "PresetFilter": "max_benefit_meta",
@@ -2480,11 +2582,13 @@
   "OpsiVoucher": {
     "Scheduler": {
       "Enable": false,
+      "PushNotification": false,
       "NextRun": "2020-01-01 00:00:00",
       "Command": "OpsiVoucher",
       "SuccessInterval": 30,
       "FailureInterval": 30,
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "OpsiVoucher": {
       "Filter": "LoggerAbyssal > LoggerObscure > Book > Coin > Fragment"
@@ -2496,11 +2600,13 @@
   "OpsiDaily": {
     "Scheduler": {
       "Enable": false,
+      "PushNotification": false,
       "NextRun": "2020-01-01 00:00:00",
       "Command": "OpsiDaily",
       "SuccessInterval": 30,
       "FailureInterval": 30,
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "OpsiDaily": {
       "DoMission": true,
@@ -2521,11 +2627,13 @@
   "OpsiObscure": {
     "Scheduler": {
       "Enable": false,
+      "PushNotification": false,
       "NextRun": "2020-01-01 00:00:00",
       "Command": "OpsiObscure",
       "SuccessInterval": 60,
       "FailureInterval": 60,
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": true
     },
     "OpsiObscure": {
       "SkipHazard2Obscure": false,
@@ -2542,11 +2650,13 @@
   "OpsiAbyssal": {
     "Scheduler": {
       "Enable": false,
+      "PushNotification": false,
       "NextRun": "2020-01-01 00:00:00",
       "Command": "OpsiAbyssal",
       "SuccessInterval": 60,
       "FailureInterval": 60,
-      "ServerUpdate": "00:00, 12:00"
+      "ServerUpdate": "00:00, 12:00",
+      "Sensitive": true
     },
     "OpsiAbyssal": {
       "ForceRun": false
@@ -2561,11 +2671,13 @@
   "OpsiArchive": {
     "Scheduler": {
       "Enable": false,
+      "PushNotification": false,
       "NextRun": "2020-01-01 00:00:00",
       "Command": "OpsiArchive",
       "SuccessInterval": 60,
       "FailureInterval": 60,
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "OpsiFleet": {
       "Fleet": 1,
@@ -2578,11 +2690,13 @@
   "OpsiStronghold": {
     "Scheduler": {
       "Enable": false,
+      "PushNotification": false,
       "NextRun": "2020-01-01 00:00:00",
       "Command": "OpsiStronghold",
       "SuccessInterval": 60,
       "FailureInterval": 60,
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "OpsiStronghold": {
       "SubmarineEveryCombat": false,
@@ -2599,11 +2713,13 @@
   "OpsiMonthBoss": {
     "Scheduler": {
       "Enable": false,
+      "PushNotification": false,
       "NextRun": "2020-01-01 00:00:00",
       "Command": "OpsiMonthBoss",
       "SuccessInterval": 0,
       "FailureInterval": 120,
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "OpsiMonthBoss": {
       "Mode": "normal",
@@ -2620,11 +2736,13 @@
   "OpsiMeowfficerFarming": {
     "Scheduler": {
       "Enable": false,
+      "PushNotification": false,
       "NextRun": "2020-01-01 00:00:00",
       "Command": "OpsiMeowfficerFarming",
       "SuccessInterval": 30,
       "FailureInterval": 30,
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "OpsiMeowfficerFarming": {
       "ActionPointPreserve": 1000,
@@ -2654,11 +2772,13 @@
   "OpsiHazard1Leveling": {
     "Scheduler": {
       "Enable": false,
+      "PushNotification": false,
       "NextRun": "2020-01-01 00:00:00",
       "Command": "OpsiHazard1Leveling",
       "SuccessInterval": 30,
       "FailureInterval": 60,
-      "ServerUpdate": "00:00, 12:00"
+      "ServerUpdate": "00:00, 12:00",
+      "Sensitive": false
     },
     "OpsiHazard1Leveling": {
       "TargetZone": 0,
@@ -2700,11 +2820,13 @@
   "OpsiScheduling": {
     "Scheduler": {
       "Enable": false,
+      "PushNotification": false,
       "NextRun": "2020-01-01 00:00:00",
       "Command": "OpsiScheduling",
       "SuccessInterval": 0,
       "FailureInterval": 120,
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "OpsiScheduling": {
       "UseSmartSchedulingOperationCoinsPreserve": true,
@@ -2726,11 +2848,13 @@
   "OpsiCrossMonth": {
     "Scheduler": {
       "Enable": false,
+      "PushNotification": false,
       "NextRun": "2020-01-01 00:00:00",
       "Command": "OpsiCrossMonth",
       "SuccessInterval": 0,
       "FailureInterval": 120,
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": true
     },
     "Storage": {
       "Storage": {}
@@ -2774,11 +2898,13 @@
   "IslandSeasonTask": {
     "Scheduler": {
       "Enable": false,
+      "PushNotification": false,
       "NextRun": "2020-01-01 00:00:00",
       "Command": "IslandSeasonTask",
       "SuccessInterval": 0,
       "FailureInterval": 120,
-      "ServerUpdate": "00:00"
+      "ServerUpdate": "00:00",
+      "Sensitive": false
     },
     "Storage": {
       "Storage": {}

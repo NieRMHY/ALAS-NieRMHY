@@ -19,8 +19,9 @@ class ConnectionAttr:
     serial: str
 
     adb_binary_list = [
+        './.venv/Scripts/adb.exe',
+        './.venv/bin/adb',
         './bin/adb/adb.exe',
-        './toolkit/Lib/site-packages/adbutils/binaries/adb.exe',
         '/usr/bin/adb'
     ]
 
@@ -302,7 +303,10 @@ class ConnectionAttr:
 
         # Try adb in python environment
         import sys
-        file = os.path.join(sys.executable, '../Lib/site-packages/adbutils/binaries/adb.exe')
+        if os.name == 'nt':
+            file = os.path.join(sys.executable, '../adb.exe')
+        else:
+            file = os.path.join(sys.executable, '../adb')
         file = os.path.abspath(file).replace('\\', '/')
         if os.path.exists(file):
             return file

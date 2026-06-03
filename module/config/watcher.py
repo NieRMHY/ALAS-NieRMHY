@@ -13,17 +13,16 @@ class ConfigWatcher:
         self.start_mtime = self.get_mtime()
 
     def get_mtime(self) -> datetime:
-        """
-        Last modify time of the file
-        """
+        """获取配置文件的最后修改时间。"""
         timestamp = os.stat(filepath_config(self.config_name)).st_mtime
         mtime = datetime.fromtimestamp(timestamp).replace(microsecond=0)
         return mtime
 
     def should_reload(self) -> bool:
-        """
+        """检查配置文件是否已被修改，需要重新加载。
+
         Returns:
-            bool: Whether the file has been modified and configs should reload
+            bool: 文件是否已修改。
         """
         mtime = self.get_mtime()
         if mtime > self.start_mtime:

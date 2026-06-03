@@ -7,23 +7,32 @@ from module.shop.ui import ShopUI
 
 
 class GeneralShop_250814(ShopClerk, ShopUI, ShopStatus):
+    """通用商店处理器 (2025-08-14 新 UI)。
+
+    Pages: in: page_shop (general shop tab)
+
+    支持金币和钻石两种货币购买，可配置是否允许使用钻石。
+    """
+
     gems = 0
     shop_template_folder = './assets/shop/general'
 
     @cached_property
     def shop_filter(self):
-        """
+        """获取通用商店过滤器。
+
         Returns:
-            str:
+            str: 过滤器字符串
         """
         return self.config.GeneralShop_Filter.strip()
 
-    # New UI in 2025-08-14
+    # 2025-08-14 新 UI
     @cached_property
     def shop_general_items(self):
-        """
+        """加载通用商店商品模板和配置。
+
         Returns:
-            ShopItemGrid:
+            ShopItemGrid_250814: 商店商品网格对象
         """
         shop_grid = self.shop_grid
 
@@ -40,28 +49,25 @@ class GeneralShop_250814(ShopClerk, ShopUI, ShopStatus):
         return shop_general_items
 
     def shop_items(self):
-        """
-        Shared alias for all shops
-        If there are server-lang
-        differences, reference
-        shop_guild/medal for @Config
-        example
+        """获取商店商品网格的统一接口。
+
+        所有商店共享相同的属性名。如存在服务器语言差异，
+        参考 shop_guild/medal 的 @Config 用法。
 
         Returns:
-            ShopItemGrid:
+            ShopItemGrid_250814: 商店商品网格
         """
         return self.shop_general_items
 
     currency_rechecked = 0
 
     def shop_currency(self):
-        """
-        Ocr shop guild currency if needed
-        (gold coins and gems)
-        Then return gold coin count
+        """OCR 识别通用商店货币数量（金币和钻石）。
+
+        通过状态检测获取当前金币和钻石余额并记录日志。
 
         Returns:
-            int: gold coin amount
+            int: 金币数量
         """
         while 1:
             self._currency = self.status_get_gold_coins()
@@ -72,31 +78,18 @@ class GeneralShop_250814(ShopClerk, ShopUI, ShopStatus):
                 logger.warning('Failed to handle fix currency bug in general shop, skip')
                 break
 
-            # if self._currency == 0 and self.gems == 0:
-            #     logger.info('Game bugged, coins and gems disappeared, switch between shops to reset')
-            #     self.currency_rechecked += 1
-            #
-            #     # 2022.06.01 General shop no longer at an expected location
-            #     # NavBar 'get_active' (0 index-based) and swap with its left
-            #     # adjacent neighbor then back (NavBar 'set' is 1 index-based)
-            #     index = self._shop_bottom_navbar.get_active(self)
-            #     self.shop_bottom_navbar_ensure(left=index)
-            #     self.shop_bottom_navbar_ensure(left=index + 1)
-            #     continue
-            # else:
-            #     break
-            # 2023.07.13 Shop UI changed entirely, remove all these
             break
 
         return self._currency
 
     def shop_check_item(self, item):
-        """
+        """检查商品是否可购买（基于货币余额）。
+
         Args:
-            item: Item to check
+            item: 待检查的商品对象
 
         Returns:
-            bool: whether item can be bought
+            bool: 是否可购买
         """
         if item.cost == 'Coins':
             if item.price > self._currency:
@@ -112,14 +105,16 @@ class GeneralShop_250814(ShopClerk, ShopUI, ShopStatus):
         return False
 
     def shop_check_custom_item(self, item):
-        """
-        Check a custom item that should be bought with specific option.
+        """检查自定义商品是否满足特定购买条件。
+
+        处理需要特殊判断的商品，如金币余额超过 550000 时
+        自动购买金币商品，或购买装备外观箱。
 
         Args:
-            item: Item to check
+            item: 待检查的商品对象
 
         Returns:
-            bool: whether item is custom
+            bool: 是否为满足条件的自定义商品
         """
         if self.config.GeneralShop_ConsumeCoins and self._currency >= 550000:
             if item.cost == 'Coins':
@@ -127,8 +122,7 @@ class GeneralShop_250814(ShopClerk, ShopUI, ShopStatus):
 
         if self.config.GeneralShop_BuySkinBox:
             if (not item.is_known_item()) and item.amount == 1 and item.cost == 'Coins' and item.price == 7000:
-                # check a custom item that cannot be template matched as color
-                # and design constantly changes i.e. equip skin box
+                # 装备外观箱无法通过模板匹配识别（颜色和外观持续变化）
                 logger.info(f'Item {item} is considered to be an equip skin box')
                 if self._currency >= item.price:
                     return True
@@ -136,19 +130,18 @@ class GeneralShop_250814(ShopClerk, ShopUI, ShopStatus):
         return False
 
     def run(self):
+        """运行通用商店购买流程。
+
+        Pages: in: page_shop (general shop tab)
+
+        按照过滤器配置购买通用商店商品，支持刷新。
         """
-        Run General Shop
-        """
-        # Base case; exit run if filter empty
         if not self.shop_filter:
             return
 
-        # When called, expected to be in
-        # corrected General Shop interface
         logger.hr('General Shop', level=1)
 
-        # Execute buy operations
-        # Refresh if enabled and available
+        # 执行购买操作，启用刷新时最多尝试 2 次
         refresh = self.config.GeneralShop_Refresh
         for _ in range(2):
             success = self.shop_buy()

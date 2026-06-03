@@ -120,7 +120,7 @@
     },
     "WarArchives": {
       "name": "作戰檔案",
-      "help": "由於作戰檔案缺少維護，開荒功能不一定能正常使用，如果發現Alas執行異常，請手動完成開荒後使用自律尋敵功能"
+      "help": "由於作戰檔案缺少維護，開荒功能不一定能正常使用，如果發現AzurPilot執行異常，請手動完成開荒後使用自律尋敵功能"
     },
     "EventA": {
       "name": "每日A圖",
@@ -288,7 +288,7 @@
     },
     "OpsiCrossMonth": {
       "name": "跨月每日",
-      "help": "    Alas將在大世界跨月重置之前10分鍾進入大世界，等待大世界重置但不退出大世界，然後完成新一天的大世界每日、隱秘海域、深淵海域和短貓相接，以獲得額外的金菜。執行大世界每日時，按\"大世界每日\"任務設定執行，其餘同理。\n    重要：Alas等待跨月期間，請不要操作遊戲。"
+      "help": "    AzurPilot將在大世界跨月重置之前10分鍾進入大世界，等待大世界重置但不退出大世界，然後完成新一天的大世界每日、隱秘海域、深淵海域和短貓相接，以獲得額外的金菜。執行大世界每日時，按\"大世界每日\"任務設定執行，其餘同理。\n    重要：AzurPilot等待跨月期間，請不要操作遊戲。"
     },
     "OpsiSimulator": {
       "name": "Task.OpsiSimulator.name",
@@ -350,6 +350,12 @@
       "True": "已啟用",
       "False": "False"
     },
+    "PushNotification": {
+      "name": "推送通知",
+      "help": "啟用後，任務完成時會通過 OnePush 推送成功或失敗通知",
+      "True": "已啟用",
+      "False": "關閉"
+    },
     "NextRun": {
       "name": "下一次執行時間",
       "help": "自動計算的數值，不需要手動修改。清空後將立即執行"
@@ -369,6 +375,12 @@
     "ServerUpdate": {
       "name": "伺服器重新整理時間",
       "help": "一些任務執行成功後，將推遲下一次執行至伺服器重新整理時間\n自動換算時區，一般不需要修改"
+    },
+    "Sensitive": {
+      "name": "敏感任務",
+      "help": "出錯時禁止重啟遊戲，直接停止 AzurPilot 運行。適用於跨月每日、隱秘海域、深淵海域等關鍵時刻任務。",
+      "True": "True",
+      "False": "False"
     }
   },
   "Emulator": {
@@ -630,12 +642,19 @@
       "help": ""
     },
     "OcrDevice": {
-      "name": "Optimization.OcrDevice.name",
-      "help": "Optimization.OcrDevice.help",
-      "auto": "auto",
+      "name": "OCR 裝置",
+      "help": "選擇 OCR 裝置。GPU 用 Windows DirectML，ANE 用 macOS Apple Neural Engine。自動：Apple Silicon Mac 使用 ANE，Windows VRAM > 1GB 用 GPU，否則 CPU。",
+      "auto": "自動選擇",
       "cpu": "CPU",
       "gpu": "GPU",
       "ane": "ANE (Apple)"
+    },
+    "OcrBackend": {
+      "name": "OCR 後端",
+      "help": "選擇 OCR 推理引擎。onnxruntime 使用 ONNX Runtime，ncnn 使用 ncnn Vulkan 後端。自動預設為 onnxruntime。",
+      "auto": "自動 (onnxruntime)",
+      "onnxruntime": "ONNX Runtime",
+      "ncnn": "ncnn (Vulkan)"
     },
     "ScreenshotInterval": {
       "name": "放慢截圖速度至 X 秒一張",
@@ -1062,7 +1081,7 @@
       "event_20220428_cn": "復刻虹彩的終幕曲",
       "event_20220526_cn": "泠誓光庭",
       "event_20220728_cn": "復刻雄鷹的敘事歌",
-      "event_20220818_cn": "遠匯點作戰",
+      "event_20220818_cn": "復刻遠匯點作戰",
       "event_20220915_cn": "復刻紫絳槿嵐",
       "event_20221124_cn": "復刻鍊金術士與秘密遺跡群島",
       "event_20221222_cn": "復刻定向折疊",
@@ -1095,7 +1114,7 @@
       "event_20260226_cn": "春滿客棧Online",
       "event_20260326_cn": "漫遊者招募計劃",
       "event_20260417_cn": "假日航線閃耀海濱",
-      "event_20260520_cn": "Alliance Before the Sacred Seal",
+      "event_20260520_cn": "Alliance Before the Hagiobull",
       "raid_20200624": "特別演習埃塞克斯級(復刻)",
       "raid_20210708": "復刻穿越彼方的水線",
       "raid_20220127": "演習神秘事件調查",
@@ -1199,8 +1218,8 @@
       "help": "石油過低時推遲任務，石油充足後繼續出擊"
     },
     "CoinLimit": {
-      "name": "物資大於 X 後停止",
-      "help": "物資大於該數值後停止當前任務\n0 表示不限制物資"
+      "name": "物資達到 X 後推遲",
+      "help": "物資達到該數值後推遲當前任務，物資低於上限後繼續出擊\n0 表示不限制物資"
     },
     "RunCount": {
       "name": "出擊次數大於 X 後停止",
@@ -1588,6 +1607,14 @@
       "name": "裝備碼",
       "help": "僅當選擇“更換艦船 + 裝備”時生效。\n在換下艦船時，若設定裡當前艦船裝備碼為null則會匯出；在換上艦船時，若設定裡當前艦船裝備碼為null則會使用上一艘艦船匯出的裝備碼，否則使用設定裡的裝備碼\n藍疊模擬器使用者需要先開啟虛擬鍵盤，詳見https://support.bluestacks.com/hc/zh-tw/articles/360061968892-%E5%A6%82%E4%BD%95%E5%9C%A8-BlueStacks-5-%E4%B8%8A%E4%BD%BF%E7%94%A8%E5%B0%8F%E9%8D%B5%E7%9B%A4-%E8%99%9B%E6%93%AC%E9%8D%B5%E7%9B%A4\nDD：前排驅逐    bogue：博格    hermes：競技神    langley：蘭利    ranger：突擊者"
     },
+    "UseEmotionFirst": {
+      "name": "GemsFarming.UseEmotionFirst.name",
+      "help": "GemsFarming.UseEmotionFirst.help"
+    },
+    "IgnoreEmotionWarning": {
+      "name": "GemsFarming.IgnoreEmotionWarning.name",
+      "help": "GemsFarming.IgnoreEmotionWarning.help"
+    },
     "ALLowHighFlagshipLevel": {
       "name": "僅更換滿級後排",
       "help": "開啟後，更換旗艦時僅會選擇100級的白皮輕航。\n使用時請保證船塢中有符合條件的艦船。"
@@ -1894,7 +1921,7 @@
   "Research": {
     "_info": {
       "name": "科研",
-      "help": "當過濾器和其他設定一起工作時，Alas 會尋找同時滿足所有使用者設定的專案。\n例如，你設定科研過濾器是 `H1 > D2.5 > shortest` （包含消耗魔方的科研），但又設定了不允許消耗魔方，最終的結果是 Alas 不會選擇消耗魔方的科研。當你突然想切魔方的時候，只需開啟消耗魔方，而不需要修改過濾器，這是比較方便的。"
+      "help": "當過濾器和其他設定一起工作時，AzurPilot 會尋找同時滿足所有使用者設定的專案。\n例如，你設定科研過濾器是 `H1 > D2.5 > shortest` （包含消耗魔方的科研），但又設定了不允許消耗魔方，最終的結果是 AzurPilot 不會選擇消耗魔方的科研。當你突然想切魔方的時候，只需開啟消耗魔方，而不需要修改過濾器，這是比較方便的。"
     },
     "UseCube": {
       "name": "使用魔方",
@@ -2014,6 +2041,10 @@
     "FortChoreMeowfficer": {
       "name": "喵窩互動",
       "help": "清掃、餵食和逗貓"
+    },
+    "OverflowCoins": {
+      "name": "金幣溢出時購買貓箱",
+      "help": "當金幣高於此值時，繼續購買貓箱直至金幣降至此值或貓箱售罄；-1 關閉"
     }
   },
   "MeowfficerTrain": {
@@ -3440,7 +3471,8 @@
       "name": "META作戰",
       "help": "",
       "current": "當期",
-      "current_dossier": "當期 + 檔案"
+      "current_dossier": "當期 + 檔案",
+      "current_dossier_only": "檔案"
     },
     "OneHitMode": {
       "name": "一擊即走",
@@ -3691,7 +3723,7 @@
   "OpsiHazard1Leveling": {
     "_info": {
       "name": "侵蝕1練級",
-      "help": "消耗作戰補給憑證以獲取大量經驗和少量行動力\n推薦攜帶1-2艘預裝填航母以獲取最高的時均收益\n\n原版 Alas 的一些防呆限制已被解除，請謹慎設定引數"
+      "help": "消耗作戰補給憑證以獲取大量經驗和少量行動力\n推薦攜帶1-2艘預裝填航母以獲取最高的時均收益\n\n原版 AzurPilot 的一些防呆限制已被解除，請謹慎設定引數"
     },
     "TargetZone": {
       "name": "指定海域",
@@ -3765,7 +3797,7 @@
   "OpsiCheckLeveling": {
     "_info": {
       "name": "大世界艦隊經驗檢測",
-      "help": "檢測出擊艦隊所有船是否已經獲取滿經驗，是的話則傳送一條推送訊息\n需要先在 Alas 設定中配置好“錯誤推送設定”"
+      "help": "檢測出擊艦隊所有船是否已經獲取滿經驗，是的話則傳送一條推送訊息\n需要先在 AzurPilot 設定中配置好\"錯誤推送設定\""
     },
     "TargetLevel": {
       "name": "當所有艦船經驗可升至此等級時推送 (0為不限制)",
@@ -3821,7 +3853,7 @@
   "OpsiScheduling": {
     "_info": {
       "name": "智慧排程",
-      "help": "大世界智慧排程功能，用於協調侵蝕1練級與黃幣補充任務之間的切換\n啟用後將根據黃幣和行動力自動在不同任務之間切換並傳送推送通知\n\n原版 Alas 的一些防呆限制已被解除，請謹慎設定引數"
+      "help": "大世界智慧排程功能，用於協調侵蝕1練級與黃幣補充任務之間的切換\n啟用後將根據黃幣和行動力自動在不同任務之間切換並傳送推送通知\n\n原版 AzurPilot 的一些防呆限制已被解除，請謹慎設定引數"
     },
     "UseSmartSchedulingOperationCoinsPreserve": {
       "name": "獲取 X 個作戰補給憑證",
@@ -3918,7 +3950,7 @@
     },
     "RepairShip": {
       "name": "靠近港口時自動修船",
-      "help": "手動把隊伍移動至港口後，Alas將幫助修船\n修理完成後需要在30秒內將隊伍移出港口，否則將再次修船"
+      "help": "手動把隊伍移動至港口後，AzurPilot將幫助修船\n修理完成後需要在30秒內將隊伍移出港口，否則將再次修船"
     },
     "SelectEnemy": {
       "name": "清理附近的敵人和物資",
@@ -3970,7 +4002,7 @@
   "Benchmark": {
     "_info": {
       "name": "效能測試",
-      "help": "測試哪個截圖方案和控制方案速度更快，速度因模擬器和電腦配置而異\n測試完成後，在 \"Alas\" - \"模擬器設定\" 內選擇最快的截圖和控制方案"
+      "help": "測試哪個截圖方案和控制方案速度更快，速度因模擬器和電腦配置而異\n測試完成後，在 \"AzurPilot\" - \"模擬器設定\" 內選擇最快的截圖和控制方案"
     },
     "DeviceType": {
       "name": "裝置型別",
@@ -4283,19 +4315,19 @@
       "UpToDate": "已是最新版本",
       "HaveUpdate": "有新版本可用",
       "UpdateStart": "開始更新",
-      "UpdateWait": "等待所有 Alas 完成當前任務",
+      "UpdateWait": "等待所有 AzurPilot 完成當前任務",
       "UpdateRun": "更新中",
       "UpdateSuccess": "更新成功，正在重啟",
       "UpdateFailed": "更新失敗，可在./log/*_gui.txt中找到錯誤日誌",
       "UpdateChecking": "檢查更新中",
-      "UpdateCancel": "取消更新，重啟 Alas 中",
+      "UpdateCancel": "取消更新，重啟 AzurPilot 中",
       "UpdateFinish": "更新成功，請手動重啟",
       "Local": "本地",
       "Upstream": "上遊倉庫",
       "Author": "作者",
       "Time": "提交時間",
       "Message": "提交資訊",
-      "DisabledWarn": "更新模組未啟用，你需要手動重啟 Alas 進行更新",
+      "DisabledWarn": "更新模組未啟用，你需要手動重啟 AzurPilot 進行更新",
       "DetailedHistory": "詳細提交歷史"
     },
     "Remote": {
@@ -4423,7 +4455,11 @@
       "CommissionIncomeHeaderCount": "Gui.Stat.CommissionIncomeHeaderCount",
       "CommissionIncomeHeaderAvg": "Gui.Stat.CommissionIncomeHeaderAvg",
       "CommissionIncomeTotalCommissions": "Gui.Stat.CommissionIncomeTotalCommissions",
-      "CommissionIncomeRecentTitle": "Gui.Stat.CommissionIncomeRecentTitle"
+      "CommissionIncomeRecentTitle": "Gui.Stat.CommissionIncomeRecentTitle",
+      "ResourceChartTitle": "全資源變化趨勢",
+      "LoadResourceDataFailed": "Gui.Stat.LoadResourceDataFailed",
+      "NoResourceData": "Gui.Stat.NoResourceData",
+      "NoValidResourceData": "Gui.Stat.NoValidResourceData"
     },
     "Tactical": {
       "SkillAutoSwitch": "Gui.Tactical.SkillAutoSwitch"
