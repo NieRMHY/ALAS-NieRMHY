@@ -1,4 +1,5 @@
 import time
+import module.base.utils as _base_utils
 from module.base.timer import Timer
 from module.base.utils import *
 from module.logger import logger
@@ -11,6 +12,45 @@ from module.ui.assets import BACK_ARROW
 ZONE_TYPES = [ZONE_DANGEROUS, ZONE_SAFE, ZONE_OBSCURE, ZONE_ABYSSAL, ZONE_STRONGHOLD, ZONE_ARCHIVE]
 ZONE_SELECT = [SELECT_DANGEROUS, SELECT_SAFE, SELECT_OBSCURE, SELECT_ABYSSAL, SELECT_STRONGHOLD, SELECT_ARCHIVE]
 ASSETS_PINNED_ZONE = ZONE_TYPES + [ZONE_ENTRANCE, ZONE_SWITCH, ZONE_PINNED]
+
+# Under a certain scene, the similarity are as follows:
+# 3840*2160 resolution, set to 0.65:
+# ZONE_DANGEROUS  0.711 -- wanted
+# ZONE_SAFE       0.405
+# ZONE_OBSCURE    0.424
+# ZONE_ABYSSAL    0.414
+# ZONE_STRONGHOLD 0.154
+# ZONE_ARCHIVE    0.426
+
+# 2560*1440 resolution, set to 0.72:
+# ZONE_DANGEROUS  0.799 -- wanted
+# ZONE_SAFE       0.456
+# ZONE_OBSCURE    0.474
+# ZONE_ABYSSAL    0.443
+# ZONE_STRONGHOLD 0.153
+# ZONE_ARCHIVE    0.494
+
+# 1920*1080 resolution, set to 0.70:
+# ZONE_DANGEROUS  0.772 -- wanted
+# ZONE_SAFE       0.423
+# ZONE_OBSCURE    0.469
+# ZONE_ABYSSAL    0.437
+# ZONE_STRONGHOLD 0.168
+# ZONE_ARCHIVE    0.462
+
+# Native 720p resolution use default 0.75
+# ZONE_DANGEROUS  0.975 -- wanted
+# ZONE_SAFE       0.549
+# ZONE_OBSCURE    0.569
+# ZONE_ABYSSAL    0.491
+# ZONE_STRONGHOLD 0.195
+# ZONE_ARCHIVE    0.581
+_ZONE_PINNED_SIMILARITY_THRESHOLDS = {
+    (1920, 1080): 0.70,
+    (2560, 1440): 0.72,
+    (3840, 2160): 0.65,
+}
+_ZONE_PINNED_SIMILARITY_DEFAULT = 0.75
 
 
 class OSExploreError(Exception):
@@ -32,8 +72,12 @@ class GlobeOperation(ActionPointHandler):
         Returns:
             Button: 当前固定的海域按钮，无则返回 None。
         """
+        similarity = _ZONE_PINNED_SIMILARITY_THRESHOLDS.get(
+            _base_utils.TEMPLATE_MATCH_NON_NATIVE_720P_RESOLUTION,
+            _ZONE_PINNED_SIMILARITY_DEFAULT,
+        )
         for zone in ZONE_TYPES:
-            if self.appear(zone, offset=(20, 20), similarity=0.75):
+            if self.appear(zone, offset=(20, 20), similarity=similarity):
                 for button in ASSETS_PINNED_ZONE:
                     button.load_offset(zone)
 

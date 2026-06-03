@@ -98,7 +98,7 @@ class Screenshot(Adb, WSA, DroidCast, AScreenCap, Scrcpy, NemuIpc, LDOpenGL):
             self.image = method()
 
             width, height = image_size(self.image)
-            set_template_match_non_native_720p(width != 1280 or height != 720)
+            set_template_match_non_native_720p(width != 1280 or height != 720, resolution=(width, height))
             if width != 1280 or height != 720:
                 # Add by MHY, 记录原始分辨率→720p的缩放因子，供click/swipe等坐标反向映射
                 # 后续上游如果提供完整的坐标映射方案，可对比后选择采用上游方案或保留当前方案

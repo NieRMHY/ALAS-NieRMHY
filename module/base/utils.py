@@ -8,11 +8,13 @@ from PIL import Image
 REGEX_NODE = re.compile(r'(-?[A-Za-z]+)(-?\d+)')
 TEMPLATE_MATCH_NON_NATIVE_720P = False
 TEMPLATE_MATCH_NON_NATIVE_720P_THRESHOLD = 0.75
+TEMPLATE_MATCH_NON_NATIVE_720P_RESOLUTION = (1280, 720)
 
 
-def set_template_match_non_native_720p(enabled):
-    global TEMPLATE_MATCH_NON_NATIVE_720P
+def set_template_match_non_native_720p(enabled, resolution=(1280, 720)):
+    global TEMPLATE_MATCH_NON_NATIVE_720P, TEMPLATE_MATCH_NON_NATIVE_720P_RESOLUTION
     TEMPLATE_MATCH_NON_NATIVE_720P = bool(enabled)
+    TEMPLATE_MATCH_NON_NATIVE_720P_RESOLUTION = resolution
 
 
 def lower_template_match_similarity(similarity):

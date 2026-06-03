@@ -236,7 +236,7 @@ class DetOnlyOCR(RapidOCR):
 
         self.use_det = True
         cfg.Det.engine_cfg = cfg.EngineConfig[cfg.Det.engine_type.value]
-        cfg.Det.model_root_dir = cfg.Global.model_root_dir
+        cfg.Det.model_root_dir = cfg.Global.get("model_root_dir", os.getcwd())
         self.text_det = TextDetector(cfg.Det)
 
         self.use_cls = False
