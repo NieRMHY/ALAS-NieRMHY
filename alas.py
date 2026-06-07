@@ -18,7 +18,7 @@ from module.base.decorator import del_cached_property
 from module.base.api_client import ApiClient
 from module.config.config import AzurLaneConfig, TaskEnd
 from module.config.deep import deep_get, deep_set
-from module.config.utils import filepath_i18n, read_file
+from module.config.utils import DEFAULT_CONFIG_NAME, filepath_i18n, read_file
 from module.exception import *
 from module.logger import logger
 from module.notify import handle_notify, notify_webui
@@ -59,7 +59,8 @@ RESTART_SENSITIVE_TASKS = ['Commission', 'Research']
 class AzurLaneAutoScript:
     stop_event: threading.Event = None
 
-    def __init__(self, config_name='alas', screenshot_queue=None, screenshot_enabled=None):
+    # Modify by MHY, 保留screenshot参数修复截图预览, 默认配置名跟随上游
+    def __init__(self, config_name=DEFAULT_CONFIG_NAME, screenshot_queue=None, screenshot_enabled=None):
         logger.hr('Start', level=0)
         self.config_name = config_name
         self.screenshot_queue = screenshot_queue
@@ -479,6 +480,58 @@ class AzurLaneAutoScript:
         from module.island.island import Island
         Island(config=self.config, device=self.device).run()
 
+    def island_mine_forest(self):
+        from module.island.island_mine_forest import IslandMineForest
+        IslandMineForest(config=self.config, device=self.device).run()
+
+    def island_farm(self):
+        from module.island.island_farm import IslandFarm
+        IslandFarm(config=self.config, device=self.device).run()
+
+    def island_rancher(self):
+        from module.island.island_rancher import IslandRancher
+        IslandRancher(config=self.config, device=self.device).run()
+
+    def island_fishery(self):
+        from module.island.island_fishery import IslandFishery
+        IslandFishery(config=self.config, device=self.device).run()
+
+    def island_grill(self):
+        from module.island.island_grill import IslandGrill
+        IslandGrill(config=self.config, device=self.device).run()
+
+    def island_teahouse(self):
+        from module.island.island_teahouse import IslandTeahouse
+        IslandTeahouse(config=self.config, device=self.device).run()
+
+    def island_restaurant(self):
+        from module.island.island_restaurant import IslandRestaurant
+        IslandRestaurant(config=self.config, device=self.device).run()
+
+    def island_juu_coffee(self):
+        from module.island.island_juu_coffee import IslandJuuCoffee
+        IslandJuuCoffee(config=self.config, device=self.device).run()
+
+    def island_juu_eatery(self):
+        from module.island.island_juu_eatery import IslandJuuEatery
+        IslandJuuEatery(config=self.config, device=self.device).run()
+
+    def island_daily_gather(self):
+        from module.island.island_daily_gather import IslandDailyGather
+        IslandDailyGather(config=self.config, device=self.device).run()
+
+    def island_manufacture(self):
+        from module.island.island_manufacture import IslandManufacture
+        IslandManufacture(config=self.config, device=self.device).run()
+
+    def island_air_drop(self):
+        from module.island.island_air_drop import IslandAirDrop
+        IslandAirDrop(config=self.config, device=self.device).run()
+
+    def island_business(self):
+        from module.island.island_business import IslandBusiness
+        IslandBusiness(config=self.config, device=self.device).run()
+
     def daily(self):
         from module.daily.daily import Daily
         Daily(config=self.config, device=self.device).run()
@@ -887,7 +940,6 @@ class AzurLaneAutoScript:
                         del_cached_property(self, 'config')
                         continue
                 elif method == 'stay_there':
-                    logger.info('等待期间停留在原地')
                     release_resources()
                     self.device.release_during_wait()
                     if not self.wait_until(task.next_run):
