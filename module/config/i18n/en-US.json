@@ -3628,45 +3628,42 @@
       "name": "IslandMine._info.name",
       "help": "IslandMine._info.help"
     },
-    "Mining1": {
-      "name": "IslandMine.Mining1.name",
-      "help": "IslandMine.Mining1.help",
-      "None": "None",
-      "Copper": "Copper",
-      "Aluminium": "Aluminium",
-      "Iron": "Iron",
-      "Sulphur": "Sulphur",
-      "Silver": "Silver"
+    "Positions": {
+      "name": "IslandMine.Positions.name",
+      "help": "IslandMine.Positions.help",
+      "1": "1",
+      "2": "2",
+      "3": "3",
+      "4": "4"
     },
-    "Mining2": {
-      "name": "IslandMine.Mining2.name",
-      "help": "IslandMine.Mining2.help",
-      "None": "None",
-      "Copper": "Copper",
-      "Aluminium": "Aluminium",
-      "Iron": "Iron",
-      "Sulphur": "Sulphur",
-      "Silver": "Silver"
+    "MineSilver": {
+      "name": "Silver Mining Slots",
+      "help": "Number of idle mine posts to produce Silver; remaining stay idle",
+      "0": "0",
+      "1": "1",
+      "2": "2",
+      "3": "3",
+      "4": "4"
     },
-    "Mining3": {
-      "name": "IslandMine.Mining3.name",
-      "help": "IslandMine.Mining3.help",
-      "None": "None",
-      "Copper": "Copper",
-      "Aluminium": "Aluminium",
-      "Iron": "Iron",
-      "Sulphur": "Sulphur",
-      "Silver": "Silver"
+    "MinCopper": {
+      "name": "Min Copper",
+      "help": "Minimum copper inventory threshold"
     },
-    "Mining4": {
-      "name": "IslandMine.Mining4.name",
-      "help": "IslandMine.Mining4.help",
-      "None": "None",
-      "Copper": "Copper",
-      "Aluminium": "Aluminium",
-      "Iron": "Iron",
-      "Sulphur": "Sulphur",
-      "Silver": "Silver"
+    "MinAluminium": {
+      "name": "Min Aluminium",
+      "help": "Minimum aluminium inventory threshold"
+    },
+    "MinIron": {
+      "name": "Min Iron",
+      "help": "Minimum iron inventory threshold"
+    },
+    "MinSulphur": {
+      "name": "Min Sulphur",
+      "help": "Minimum sulphur inventory threshold"
+    },
+    "MinSilver": {
+      "name": "Min Silver",
+      "help": "Minimum silver inventory threshold"
     }
   },
   "IslandForest": {
@@ -3674,37 +3671,34 @@
       "name": "IslandForest._info.name",
       "help": "IslandForest._info.help"
     },
-    "Felling1": {
-      "name": "IslandForest.Felling1.name",
-      "help": "IslandForest.Felling1.help",
-      "None": "None",
-      "Practical": "Practical",
-      "Selected": "Selected",
-      "Elegant": "Elegant"
+    "Positions": {
+      "name": "IslandForest.Positions.name",
+      "help": "IslandForest.Positions.help",
+      "1": "1",
+      "2": "2",
+      "3": "3",
+      "4": "4"
     },
-    "Felling2": {
-      "name": "IslandForest.Felling2.name",
-      "help": "IslandForest.Felling2.help",
-      "None": "None",
-      "Practical": "Practical",
-      "Selected": "Selected",
-      "Elegant": "Elegant"
+    "CutElegant": {
+      "name": "Elegant Wood Slots",
+      "help": "Number of idle forest posts to produce Elegant wood; remaining stay idle",
+      "0": "0",
+      "1": "1",
+      "2": "2",
+      "3": "3",
+      "4": "4"
     },
-    "Felling3": {
-      "name": "IslandForest.Felling3.name",
-      "help": "IslandForest.Felling3.help",
-      "None": "None",
-      "Practical": "Practical",
-      "Selected": "Selected",
-      "Elegant": "Elegant"
+    "MinElegant": {
+      "name": "Min Elegant Wood",
+      "help": "Minimum elegant wood inventory threshold"
     },
-    "Felling4": {
-      "name": "IslandForest.Felling4.name",
-      "help": "IslandForest.Felling4.help",
-      "None": "None",
-      "Practical": "Practical",
-      "Selected": "Selected",
-      "Elegant": "Elegant"
+    "MinPractical": {
+      "name": "Min Practical Wood",
+      "help": "Minimum practical wood inventory threshold"
+    },
+    "MinSelected": {
+      "name": "Min Selected Wood",
+      "help": "Minimum selected wood inventory threshold"
     }
   },
   "IslandRestaurant": {
@@ -3950,7 +3944,7 @@
       "fruit_paradise": "fruit_paradise",
       "lavender_tea": "lavender_tea",
       "sunny_honey": "sunny_honey",
-      "winter_jasmine_tea": "winter_jasmine_tea"
+      "spring_flower_tea": "spring_flower_tea"
     },
     "MealNumber1": {
       "name": "IslandTeahouse.MealNumber1.name",
@@ -3969,7 +3963,7 @@
       "fruit_paradise": "fruit_paradise",
       "lavender_tea": "lavender_tea",
       "sunny_honey": "sunny_honey",
-      "winter_jasmine_tea": "winter_jasmine_tea"
+      "spring_flower_tea": "spring_flower_tea"
     },
     "MealNumber2": {
       "name": "IslandTeahouse.MealNumber2.name",
@@ -3988,7 +3982,7 @@
       "fruit_paradise": "fruit_paradise",
       "lavender_tea": "lavender_tea",
       "sunny_honey": "sunny_honey",
-      "winter_jasmine_tea": "winter_jasmine_tea"
+      "spring_flower_tea": "spring_flower_tea"
     },
     "MealNumber3": {
       "name": "IslandTeahouse.MealNumber3.name",
@@ -4007,7 +4001,7 @@
       "fruit_paradise": "fruit_paradise",
       "lavender_tea": "lavender_tea",
       "sunny_honey": "sunny_honey",
-      "winter_jasmine_tea": "winter_jasmine_tea"
+      "spring_flower_tea": "spring_flower_tea"
     },
     "MealNumber4": {
       "name": "IslandTeahouse.MealNumber4.name",
@@ -4026,7 +4020,7 @@
       "fruit_paradise": "fruit_paradise",
       "lavender_tea": "lavender_tea",
       "sunny_honey": "sunny_honey",
-      "winter_jasmine_tea": "winter_jasmine_tea"
+      "spring_flower_tea": "spring_flower_tea"
     },
     "MealNumber5": {
       "name": "IslandTeahouse.MealNumber5.name",
@@ -4045,7 +4039,7 @@
       "fruit_paradise": "fruit_paradise",
       "lavender_tea": "lavender_tea",
       "sunny_honey": "sunny_honey",
-      "winter_jasmine_tea": "winter_jasmine_tea"
+      "spring_flower_tea": "spring_flower_tea"
     },
     "MealNumber6": {
       "name": "IslandTeahouse.MealNumber6.name",
@@ -4064,7 +4058,7 @@
       "fruit_paradise": "fruit_paradise",
       "lavender_tea": "lavender_tea",
       "sunny_honey": "sunny_honey",
-      "winter_jasmine_tea": "winter_jasmine_tea"
+      "spring_flower_tea": "spring_flower_tea"
     },
     "MealNumber7": {
       "name": "IslandTeahouse.MealNumber7.name",
@@ -4083,7 +4077,7 @@
       "fruit_paradise": "fruit_paradise",
       "lavender_tea": "lavender_tea",
       "sunny_honey": "sunny_honey",
-      "winter_jasmine_tea": "winter_jasmine_tea"
+      "spring_flower_tea": "spring_flower_tea"
     },
     "MealNumber8": {
       "name": "IslandTeahouse.MealNumber8.name",
@@ -4108,7 +4102,7 @@
       "fruit_paradise": "fruit_paradise",
       "lavender_tea": "lavender_tea",
       "sunny_honey": "sunny_honey",
-      "winter_jasmine_tea": "winter_jasmine_tea"
+      "spring_flower_tea": "spring_flower_tea"
     }
   },
   "IslandGrill": {
@@ -5291,11 +5285,7 @@
       "name": "Product 1",
       "help": "",
       "None": "None",
-      "iced_coffee": "Iced Coffee",
-      "omelette": "Omelette",
       "cheese": "Cheese",
-      "latte": "Latte",
-      "citrus_coffee": "Citrus Coffee",
       "strawberry_milkshake": "Strawberry Milkshake",
       "morning_light": "Morning Light",
       "wake_up_call": "Wake-up Call",
@@ -5305,11 +5295,7 @@
       "name": "Product 2",
       "help": "",
       "None": "None",
-      "iced_coffee": "Iced Coffee",
-      "omelette": "Omelette",
       "cheese": "Cheese",
-      "latte": "Latte",
-      "citrus_coffee": "Citrus Coffee",
       "strawberry_milkshake": "Strawberry Milkshake",
       "morning_light": "Morning Light",
       "wake_up_call": "Wake-up Call",
@@ -5319,11 +5305,7 @@
       "name": "Product 3",
       "help": "",
       "None": "None",
-      "iced_coffee": "Iced Coffee",
-      "omelette": "Omelette",
       "cheese": "Cheese",
-      "latte": "Latte",
-      "citrus_coffee": "Citrus Coffee",
       "strawberry_milkshake": "Strawberry Milkshake",
       "morning_light": "Morning Light",
       "wake_up_call": "Wake-up Call",
@@ -5333,11 +5315,7 @@
       "name": "Product 4",
       "help": "",
       "None": "None",
-      "iced_coffee": "Iced Coffee",
-      "omelette": "Omelette",
       "cheese": "Cheese",
-      "latte": "Latte",
-      "citrus_coffee": "Citrus Coffee",
       "strawberry_milkshake": "Strawberry Milkshake",
       "morning_light": "Morning Light",
       "wake_up_call": "Wake-up Call",
@@ -5347,11 +5325,7 @@
       "name": "Product 5",
       "help": "",
       "None": "None",
-      "iced_coffee": "Iced Coffee",
-      "omelette": "Omelette",
       "cheese": "Cheese",
-      "latte": "Latte",
-      "citrus_coffee": "Citrus Coffee",
       "strawberry_milkshake": "Strawberry Milkshake",
       "morning_light": "Morning Light",
       "wake_up_call": "Wake-up Call",

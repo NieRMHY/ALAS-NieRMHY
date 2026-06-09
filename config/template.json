@@ -2882,16 +2882,20 @@
       "Sensitive": false
     },
     "IslandMine": {
-      "Mining1": "Silver",
-      "Mining2": "Silver",
-      "Mining3": "Silver",
-      "Mining4": "Silver"
+      "Positions": 1,
+      "MineSilver": 1,
+      "MinCopper": 50,
+      "MinAluminium": 50,
+      "MinIron": 50,
+      "MinSulphur": 50,
+      "MinSilver": 50
     },
     "IslandForest": {
-      "Felling1": "Elegant",
-      "Felling2": "Elegant",
-      "Felling3": "Elegant",
-      "Felling4": "Elegant"
+      "Positions": 1,
+      "CutElegant": 1,
+      "MinElegant": 50,
+      "MinPractical": 50,
+      "MinSelected": 50
     },
     "Storage": {
       "Storage": {}

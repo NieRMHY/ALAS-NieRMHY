@@ -3628,45 +3628,42 @@
       "name": "IslandMine._info.name",
       "help": "IslandMine._info.help"
     },
-    "Mining1": {
-      "name": "IslandMine.Mining1.name",
-      "help": "IslandMine.Mining1.help",
-      "None": "None",
-      "Copper": "Copper",
-      "Aluminium": "Aluminium",
-      "Iron": "Iron",
-      "Sulphur": "Sulphur",
-      "Silver": "Silver"
+    "Positions": {
+      "name": "IslandMine.Positions.name",
+      "help": "IslandMine.Positions.help",
+      "1": "1",
+      "2": "2",
+      "3": "3",
+      "4": "4"
     },
-    "Mining2": {
-      "name": "IslandMine.Mining2.name",
-      "help": "IslandMine.Mining2.help",
-      "None": "None",
-      "Copper": "Copper",
-      "Aluminium": "Aluminium",
-      "Iron": "Iron",
-      "Sulphur": "Sulphur",
-      "Silver": "Silver"
+    "MineSilver": {
+      "name": "采银矿岗位数",
+      "help": "",
+      "0": "0",
+      "1": "1",
+      "2": "2",
+      "3": "3",
+      "4": "4"
     },
-    "Mining3": {
-      "name": "IslandMine.Mining3.name",
-      "help": "IslandMine.Mining3.help",
-      "None": "None",
-      "Copper": "Copper",
-      "Aluminium": "Aluminium",
-      "Iron": "Iron",
-      "Sulphur": "Sulphur",
-      "Silver": "Silver"
+    "MinCopper": {
+      "name": "IslandMine.MinCopper.name",
+      "help": "IslandMine.MinCopper.help"
     },
-    "Mining4": {
-      "name": "IslandMine.Mining4.name",
-      "help": "IslandMine.Mining4.help",
-      "None": "None",
-      "Copper": "Copper",
-      "Aluminium": "Aluminium",
-      "Iron": "Iron",
-      "Sulphur": "Sulphur",
-      "Silver": "Silver"
+    "MinAluminium": {
+      "name": "IslandMine.MinAluminium.name",
+      "help": "IslandMine.MinAluminium.help"
+    },
+    "MinIron": {
+      "name": "IslandMine.MinIron.name",
+      "help": "IslandMine.MinIron.help"
+    },
+    "MinSulphur": {
+      "name": "IslandMine.MinSulphur.name",
+      "help": "IslandMine.MinSulphur.help"
+    },
+    "MinSilver": {
+      "name": "IslandMine.MinSilver.name",
+      "help": "IslandMine.MinSilver.help"
     }
   },
   "IslandForest": {
@@ -3674,37 +3671,34 @@
       "name": "IslandForest._info.name",
       "help": "IslandForest._info.help"
     },
-    "Felling1": {
-      "name": "IslandForest.Felling1.name",
-      "help": "IslandForest.Felling1.help",
-      "None": "None",
-      "Practical": "Practical",
-      "Selected": "Selected",
-      "Elegant": "Elegant"
+    "Positions": {
+      "name": "IslandForest.Positions.name",
+      "help": "IslandForest.Positions.help",
+      "1": "1",
+      "2": "2",
+      "3": "3",
+      "4": "4"
     },
-    "Felling2": {
-      "name": "IslandForest.Felling2.name",
-      "help": "IslandForest.Felling2.help",
-      "None": "None",
-      "Practical": "Practical",
-      "Selected": "Selected",
-      "Elegant": "Elegant"
+    "CutElegant": {
+      "name": "伐典雅之木岗位数",
+      "help": "",
+      "0": "0",
+      "1": "1",
+      "2": "2",
+      "3": "3",
+      "4": "4"
     },
-    "Felling3": {
-      "name": "IslandForest.Felling3.name",
-      "help": "IslandForest.Felling3.help",
-      "None": "None",
-      "Practical": "Practical",
-      "Selected": "Selected",
-      "Elegant": "Elegant"
+    "MinElegant": {
+      "name": "IslandForest.MinElegant.name",
+      "help": "IslandForest.MinElegant.help"
     },
-    "Felling4": {
-      "name": "IslandForest.Felling4.name",
-      "help": "IslandForest.Felling4.help",
-      "None": "None",
-      "Practical": "Practical",
-      "Selected": "Selected",
-      "Elegant": "Elegant"
+    "MinPractical": {
+      "name": "IslandForest.MinPractical.name",
+      "help": "IslandForest.MinPractical.help"
+    },
+    "MinSelected": {
+      "name": "IslandForest.MinSelected.name",
+      "help": "IslandForest.MinSelected.help"
     }
   },
   "IslandRestaurant": {
@@ -3950,7 +3944,7 @@
       "fruit_paradise": "fruit_paradise",
       "lavender_tea": "lavender_tea",
       "sunny_honey": "sunny_honey",
-      "winter_jasmine_tea": "winter_jasmine_tea"
+      "spring_flower_tea": "spring_flower_tea"
     },
     "MealNumber1": {
       "name": "IslandTeahouse.MealNumber1.name",
@@ -3969,7 +3963,7 @@
       "fruit_paradise": "fruit_paradise",
       "lavender_tea": "lavender_tea",
       "sunny_honey": "sunny_honey",
-      "winter_jasmine_tea": "winter_jasmine_tea"
+      "spring_flower_tea": "spring_flower_tea"
     },
     "MealNumber2": {
       "name": "IslandTeahouse.MealNumber2.name",
@@ -3988,7 +3982,7 @@
       "fruit_paradise": "fruit_paradise",
       "lavender_tea": "lavender_tea",
       "sunny_honey": "sunny_honey",
-      "winter_jasmine_tea": "winter_jasmine_tea"
+      "spring_flower_tea": "spring_flower_tea"
     },
     "MealNumber3": {
       "name": "IslandTeahouse.MealNumber3.name",
@@ -4007,7 +4001,7 @@
       "fruit_paradise": "fruit_paradise",
       "lavender_tea": "lavender_tea",
       "sunny_honey": "sunny_honey",
-      "winter_jasmine_tea": "winter_jasmine_tea"
+      "spring_flower_tea": "spring_flower_tea"
     },
     "MealNumber4": {
       "name": "IslandTeahouse.MealNumber4.name",
@@ -4026,7 +4020,7 @@
       "fruit_paradise": "fruit_paradise",
       "lavender_tea": "lavender_tea",
       "sunny_honey": "sunny_honey",
-      "winter_jasmine_tea": "winter_jasmine_tea"
+      "spring_flower_tea": "spring_flower_tea"
     },
     "MealNumber5": {
       "name": "IslandTeahouse.MealNumber5.name",
@@ -4045,7 +4039,7 @@
       "fruit_paradise": "fruit_paradise",
       "lavender_tea": "lavender_tea",
       "sunny_honey": "sunny_honey",
-      "winter_jasmine_tea": "winter_jasmine_tea"
+      "spring_flower_tea": "spring_flower_tea"
     },
     "MealNumber6": {
       "name": "IslandTeahouse.MealNumber6.name",
@@ -4064,7 +4058,7 @@
       "fruit_paradise": "fruit_paradise",
       "lavender_tea": "lavender_tea",
       "sunny_honey": "sunny_honey",
-      "winter_jasmine_tea": "winter_jasmine_tea"
+      "spring_flower_tea": "spring_flower_tea"
     },
     "MealNumber7": {
       "name": "IslandTeahouse.MealNumber7.name",
@@ -4083,7 +4077,7 @@
       "fruit_paradise": "fruit_paradise",
       "lavender_tea": "lavender_tea",
       "sunny_honey": "sunny_honey",
-      "winter_jasmine_tea": "winter_jasmine_tea"
+      "spring_flower_tea": "spring_flower_tea"
     },
     "MealNumber8": {
       "name": "IslandTeahouse.MealNumber8.name",
@@ -4108,7 +4102,7 @@
       "fruit_paradise": "fruit_paradise",
       "lavender_tea": "lavender_tea",
       "sunny_honey": "sunny_honey",
-      "winter_jasmine_tea": "winter_jasmine_tea"
+      "spring_flower_tea": "spring_flower_tea"
     }
   },
   "IslandGrill": {
@@ -5291,11 +5285,7 @@
       "name": "商品1",
       "help": "",
       "None": "なし",
-      "iced_coffee": "アイスコーヒー",
-      "omelette": "オムレツ",
       "cheese": "チーズ",
-      "latte": "ラテ",
-      "citrus_coffee": "シトラスコーヒー",
       "strawberry_milkshake": "ストロベリーミルクセーキ",
       "morning_light": "モーニングライト",
       "wake_up_call": "ウェイクアップコール",
@@ -5305,11 +5295,7 @@
       "name": "商品2",
       "help": "",
       "None": "なし",
-      "iced_coffee": "アイスコーヒー",
-      "omelette": "オムレツ",
       "cheese": "チーズ",
-      "latte": "ラテ",
-      "citrus_coffee": "シトラスコーヒー",
       "strawberry_milkshake": "ストロベリーミルクセーキ",
       "morning_light": "モーニングライト",
       "wake_up_call": "ウェイクアップコール",
@@ -5319,11 +5305,7 @@
       "name": "商品3",
       "help": "",
       "None": "なし",
-      "iced_coffee": "アイスコーヒー",
-      "omelette": "オムレツ",
       "cheese": "チーズ",
-      "latte": "ラテ",
-      "citrus_coffee": "シトラスコーヒー",
       "strawberry_milkshake": "ストロベリーミルクセーキ",
       "morning_light": "モーニングライト",
       "wake_up_call": "ウェイクアップコール",
@@ -5333,11 +5315,7 @@
       "name": "商品4",
       "help": "",
       "None": "なし",
-      "iced_coffee": "アイスコーヒー",
-      "omelette": "オムレツ",
       "cheese": "チーズ",
-      "latte": "ラテ",
-      "citrus_coffee": "シトラスコーヒー",
       "strawberry_milkshake": "ストロベリーミルクセーキ",
       "morning_light": "モーニングライト",
       "wake_up_call": "ウェイクアップコール",
@@ -5347,11 +5325,7 @@
       "name": "商品5",
       "help": "",
       "None": "なし",
-      "iced_coffee": "アイスコーヒー",
-      "omelette": "オムレツ",
       "cheese": "チーズ",
-      "latte": "ラテ",
-      "citrus_coffee": "シトラスコーヒー",
       "strawberry_milkshake": "ストロベリーミルクセーキ",
       "morning_light": "モーニングライト",
       "wake_up_call": "ウェイクアップコール",

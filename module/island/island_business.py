@@ -1,4 +1,4 @@
-﻿import os
+import os
 from module.island.island import Island
 from module.island.assets import *
 from module.island_business.assets import *
@@ -38,10 +38,10 @@ BUSINESS_REWARD_SAFE_AREA = Button(
 
 class IslandBusiness(Island):
     BUSINESS_REVIEW_OFFSET_X = 150
-    
+
     def __init__(self, config, device=None, task=None):
         super().__init__(config, device=device, task=task)
-        
+
         # 商店定义及配置键前缀
         self.shops = [
             {'name': '有鱼餐馆', 'button': BUSINESS_SHOP_FISH_RESTAURANT, 'config_key': '1'},
@@ -50,7 +50,7 @@ class IslandBusiness(Island):
             {'name': '乌鱼烤肉', 'button': BUSINESS_SHOP_GRILL, 'config_key': '4'},
             {'name': '啾咖啡', 'button': BUSINESS_SHOP_JUU_COFFEE, 'config_key': '5'},
         ]
-        
+
         self.shop_products = {
             '有鱼餐馆': [
                 {'name': 'double_bamboo_shoots', 'button': TEMPLATE_BUSINESS_PRODUCT_RESTAURANT_DOUBLE_BAMBOO_SHOOTS},
@@ -92,25 +92,25 @@ class IslandBusiness(Island):
                 {'name': 'cheese', 'button': TEMPLATE_BUSINESS_PRODUCT_COFFEE_CHEESE},
             ],
         }
-        
+
         self._init_season_config()
         self.season = self.season_config.season
         logger.info(f"当前季节: {self.season_config.season_name}")
-        
+
         # 读取每个商店配置的角色和餐品
         self._load_shop_configs()
-        
+
         logger.info("经营模块初始化完成")
-        
-        
+
+
     def _init_season_config(self):
         """初始化季节配置（同 IslandShopBase）"""
         from module.island.island_season import get_global_season_config
         self.season_config = get_global_season_config(self.config)
         self.current_season = self.season_config.season
         self.season_name = self.season_config.season_name
-    
-   # 商店名到 season_config 模块key的映射
+
+    # 商店名到 season_config 模块key的映射
     SHOP_SEASON_MAP = {
         '有鱼餐馆': 'restaurant',
         '白熊饮品': 'teahouse',
@@ -118,23 +118,23 @@ class IslandBusiness(Island):
         '乌鱼烤肉': 'grill',
         '啾咖啡': 'juu_coffee',
     }
-    
+
     def _get_seasonal_items_for_shop(self, shop_name):
         """获取指定商店当前季节的限定物品列表"""
         module_key = self.SHOP_SEASON_MAP.get(shop_name)
         if module_key and hasattr(self, 'season_config') and self.season_config:
             return self.season_config.get_seasonal_items(module_key)
         return []
-    
+
     def _load_shop_configs(self):
         """从配置中读取每个商店选择的餐品（已按季节过滤）"""
         self.active_products = {}
-        
+
         for shop in self.shops:
             shop_name = shop['name']
             ck = shop['config_key']
             module_key = self.SHOP_SEASON_MAP.get(shop_name, '')
-            
+
             # 读取餐品配置（最多5个）
             products = []
             for i in range(1, 6):
@@ -150,7 +150,7 @@ class IslandBusiness(Island):
                     if other_season_item:
                         logger.info(f"{shop_name}: 跳过 {val}（非当前季节限定）")
                         continue
-                    
+
                     for p in self.shop_products.get(shop_name, []):
                         if p['name'] == val:
                             products.append(p)
@@ -158,7 +158,7 @@ class IslandBusiness(Island):
             if products:
                 self.active_products[shop_name] = products
                 logger.info(f"{shop_name}: 配置 {len(products)} 餐品")
-    
+
     def _load_shop_characters(self, shop):
         """为指定商店加载角色优先级列表"""
         ck = shop['config_key']
@@ -169,12 +169,12 @@ class IslandBusiness(Island):
                 chars.append(val)
         self.character_priority = chars if chars else ['WorkerJuu']
         logger.info(f"{shop['name']}: 角色优先级 {self.character_priority}")
-    
+
     def _all_product_names(self, shop_name):
         """获取商店所有可能的餐品名（含季节限定，全部显示）"""
         names = [p['name'] for p in self.shop_products.get(shop_name, [])]
         return names
-    
+
     def _get_review_button(self, button):
         """创建偏移150px的按钮用于检测（游戏截图向左偏移150px = 按钮向右偏移150px）"""
         if not button or not button.area:
@@ -191,7 +191,7 @@ class IslandBusiness(Island):
             new_button = new_area
         return Button(area=new_area, color=button.color,
                       button=new_button, file=button.file)
-    
+
     def _appear_at_positions(self, button, offset=30):
         """
         在正常位置和偏移位置（美食评审模式）检测按钮。
@@ -225,39 +225,46 @@ class IslandBusiness(Island):
             review_btn.clear_offset()
             return review_btn
         return None
-    
+
     def _parse_character_config(self, config_str):
         if isinstance(config_str, str):
             return [char.strip() for char in config_str.split('>')]
         return ['WorkerJuu']
-    
+
     def run(self):
         logger.info("=== 开始经营模块 ===")
         self.goto_postmanage()
         self.device.sleep(1)
+
+        # 处理每日首次进入可能出现的美食评审界面
+        # 必须在切换页签前处理，否则弹窗会阻挡页签按钮导致 post_manage_mode() 陷入死循环
+        self._handle_food_review()
+
         logger.info("切换到经营页签")
         self.post_manage_mode(POST_MANAGE_BUSINESS)
         self.device.sleep(3)
-        
+        self.device.sleep(1)
+
         # 处理每日首次进入可能出现的美食评审界面
+        # 切换页签后再次处理可能出现的弹窗
         self._handle_food_review()
-        
+
         # 标记本轮是否曾处理过蓝色开始经营按钮
         self._has_seen_blue = False
-        
+
         # 无限循环处理，直到所有商店处理完毕（灰色按钮/经营中状态会 return 退出）
         while True:
             logger.info("--- 处理商店 ---")
-            
+
             # 先检测开始经营按钮状态
             status = self._check_start_button_status()
-            
+
             if status == 'blue':
                 self._has_seen_blue = True
                 logger.info("检测到蓝色按钮，点击进入商店")
                 self.device.click(BUSINESS_START_BUTTON_BLUE)
                 self.device.sleep(1)
-                
+
                 # 进入商店后，检测商店标签确定当前是哪个商店
                 current_shop = self._detect_current_shop()
                 if current_shop:
@@ -312,11 +319,11 @@ class IslandBusiness(Island):
             else:
                 logger.info("按钮状态未知，跳过")
                 continue
-        
+
         self._trigger_shop_refill()
         self._set_task_delay()
         logger.info("=== 经营模块完成 ===")
-    
+
     # 商店标签到对应 Template 的映射
     SHOP_TEMPLATE_MAP = {
         '有鱼餐馆': TEMPLATE_BUSINESS_SHOP_FISH_RESTAURANT,
@@ -325,7 +332,7 @@ class IslandBusiness(Island):
         '乌鱼烤肉': TEMPLATE_BUSINESS_SHOP_GRILL,
         '啾咖啡': TEMPLATE_BUSINESS_SHOP_JUU_COFFEE,
     }
-    
+
     def _detect_current_shop(self):
         """进入商店后，用模板匹配检测商店标签确定当前是哪个商店（同时检查正常和偏移150px位置）"""
         self.device.screenshot()
@@ -333,7 +340,7 @@ class IslandBusiness(Island):
             (548, 90, 668, 125),           # 正常位置
             (698, 90, 818, 125),            # 偏移150px（美食评审模式）
         ]
-        
+
         best = (None, None, 0.0)  # (shop, button, similarity)
         for area in areas:
             area_img = crop(self.device.image, area)
@@ -344,12 +351,12 @@ class IslandBusiness(Island):
                 sim, _ = t.match_result(area_img)
                 if sim > best[2]:
                     best = (shop, None, sim)
-        
+
         if best[0] is not None and best[2] >= 0.7:
             logger.info(f"检测到商店: {best[0]['name']} (相似度: {best[2]:.2f})")
             return best[0]
         return None
-    
+
     def _handle_food_review(self):
         """
         处理每日首次进入经营页签时可能出现的美食评审界面
@@ -357,20 +364,20 @@ class IslandBusiness(Island):
         """
         logger.info("检测美食评审界面")
         self.device.screenshot()
-        
+
         # 如果经营页签按钮被遮挡，说明有弹窗
         if not self.appear(POST_MANAGE_BUSINESS, offset=30) and not self.appear(POST_MANAGE_PRODUCTION, offset=30):
             logger.info("检测到美食评审界面，点击安全区域关闭")
             self.device.click(BUSINESS_REVIEW_SAFE_AREA)
             self.device.sleep(1)
-            
+
             # 检测详情界面
             self.device.screenshot()
             if not self.appear(POST_MANAGE_BUSINESS, offset=30) and not self.appear(POST_MANAGE_PRODUCTION, offset=30):
                 logger.info("检测到美食评审详情界面，再次点击安全区域")
                 self.device.click(BUSINESS_REVIEW_SAFE_AREA)
                 self.device.sleep(1)
-            
+
             # 确保回到经营页签
             self.device.screenshot()
             if not self.appear(POST_MANAGE_BUSINESS, offset=30) and not self.appear(POST_MANAGE_PRODUCTION, offset=30):
@@ -378,19 +385,19 @@ class IslandBusiness(Island):
                 self.goto_postmanage()
                 self.post_manage_mode(POST_MANAGE_BUSINESS)
                 self.device.sleep(1)
-        
+
         logger.info("美食评审处理完成")
-    
+
     def _calculate_darkblue_delay(self):
         """计算深蓝（经营中）状态的延后检测时间"""
         now = datetime.now()
-        
+
         # 延后2小时
         delayed = now + timedelta(hours=2)
-        
+
         # 当天23:55
         today_2355 = now.replace(hour=23, minute=55, second=0, microsecond=0)
-        
+
         if now >= today_2355:
             # 如果当前时间已超过23:55，重置为第二天0点
             next_time = (now + timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
@@ -402,9 +409,9 @@ class IslandBusiness(Island):
         else:
             next_time = delayed
             logger.info(f"设定延后2小时检测")
-        
+
         return next_time
-    
+
     def _check_start_button_status(self):
         self.device.screenshot()
         if self.appear(BUSINESS_START_BUTTON_BLUE, offset=30):
@@ -415,10 +422,10 @@ class IslandBusiness(Island):
             return 'darkblue'
         # 三个可经营按钮都未识别到 → 视为灰色不可经营状态
         return 'gray'
-    
+
     def _claim_business_reward(self):
         logger.info("领取经营奖励")
-        # 第1步：点击黄色按钮进入结算界面
+        # 点击黄色按钮进入结算界面
         self.device.click(BUSINESS_START_BUTTON_YELLOW)
         self.device.sleep(1)
         # 如果黄色奖励按钮还在，继续点击直到消失
@@ -431,95 +438,58 @@ class IslandBusiness(Island):
                 self.device.screenshot()
             else:
                 break
-        
-        # 第2步：等待"经营结算"按钮出现并点击（未出现时点安全区域）
-        timeout = 0
+
+        # 统一截图-检测循环，处理从结算到回到经营界面的整个流程
+        # 每次循环检测当前界面状态，执行对应操作，直到回到经营页签
         self.device.sleep(1)
-        while not self.appear(BUSINESS_SETTLEMENT, offset=30):
-            timeout += 1
-            if timeout > 10:
-                logger.warning("等待经营结算按钮超时，跳过")
+        timeout = 0
+        while True:
+            if timeout > 40:
+                logger.warning("领取奖励流程超时，跳过")
                 return
-            self.device.click(BUSINESS_REWARD_SAFE_AREA)
-            self.device.sleep(0.5)
+
             self.device.screenshot()
-        logger.info("检测到经营结算按钮")
-        self.device.click(BUSINESS_SETTLEMENT)
-        self.device.sleep(1)
-        
-        # 第3步：等待"销售情况"出现，点击安全区域（未出现时点安全区域）
-        self.device.screenshot()
-        timeout = 0
-        while not self.appear(BUSINESS_SALES_STATUS, offset=30):
-            timeout += 1
-            if timeout > 10:
-                logger.warning("等待销售情况图片超时，跳过")
-                return
-            self.device.click(BUSINESS_REWARD_SAFE_AREA)
-            self.device.sleep(0.5)
-            self.device.screenshot()
-        logger.info("检测到销售情况")
-        self.device.click(BUSINESS_REWARD_SAFE_AREA)
-        self.device.sleep(1)
-        
-        # 第4步：等待"获得物品"出现，点击安全区域（同时检测是否已跳过此步或回到经营界面）
-        self.device.screenshot()
-        timeout = 0
-        obtained = False
-        while not self.appear(BUSINESS_OBTAINED_ITEMS, offset=30):
-            # 如果已经出现返回按钮，说明已跳过获得物品步骤，直接进入第5步
-            if self.appear(ISLAND_BACK, offset=30):
-                logger.info("检测到返回按钮，跳过获得物品步骤")
-                obtained = True
-                break
-            # 如果已经退出到经营界面，直接退出
+
+            # 已回到经营页签 → 退出
             if self.appear(POST_MANAGE_BUSINESS, offset=30) or self.appear(POST_MANAGE_PRODUCTION, offset=30):
                 logger.info("已回到经营界面，退出领取")
                 return
+
+            # 检测到"经营结算"按钮 → 优先处理结算（必须在 ISLAND_BACK 之前检测，
+            # 防止结算界面出现时返回按钮也被检测到而导致提前退出）
+            # 同时检测偏移150px位置（美食评审模式）
+            settlement = self._appear_at_positions(BUSINESS_SETTLEMENT)
+            if settlement:
+                logger.info("检测到经营结算按钮")
+                self.device.click(settlement)
+                self.device.sleep(1)
+
+            # 检测到"获得物品" → 点击安全区域
+            elif self.appear(BUSINESS_OBTAINED_ITEMS, offset=30):
+                logger.info("检测到获得物品")
+                self.device.click(BUSINESS_REWARD_SAFE_AREA)
+                self.device.sleep(1)
+
+            # 检测到"销售情况" → 点击安全区域
+            elif self.appear(BUSINESS_SALES_STATUS, offset=30):
+                logger.info("检测到销售情况")
+                self.device.click(BUSINESS_REWARD_SAFE_AREA)
+                self.device.sleep(1)
+
+            # 检测到返回按钮 → 点击返回
+            elif self.appear(ISLAND_BACK, offset=30):
+                logger.info("检测到返回按钮，点击返回")
+                self.device.click(ISLAND_BACK)
+                self.device.sleep(1)
+
+            # 无识别的界面元素，点击安全区域等待
+            else:
+                self.device.click(BUSINESS_REWARD_SAFE_AREA)
+                self.device.sleep(0.5)
+
+            # 统一在循环末尾递增 timeout，确保每次循环仅递增一次
             timeout += 1
-            if timeout > 10:
-                logger.warning("等待获得物品图片超时，跳过")
-                obtained = True
-                break
-            self.device.click(BUSINESS_REWARD_SAFE_AREA)
-            self.device.sleep(1)
-            self.device.screenshot()
-        if not obtained:
-            logger.info("检测到获得物品")
-            self.device.click(BUSINESS_REWARD_SAFE_AREA)
-            self.device.sleep(1)
-        
-        # 第5步：等待ISLAND_BACK出现并点击返回（同时检测是否已回到经营界面）
-        self.device.screenshot()
-        timeout = 0
-        while not self.appear(ISLAND_BACK, offset=30):
-            # 如果已经退出到经营界面，直接退出
-            if self.appear(POST_MANAGE_BUSINESS, offset=30) or self.appear(POST_MANAGE_PRODUCTION, offset=30):
-                logger.info("已回到经营界面，退出领取")
-                return
-            timeout += 1
-            if timeout > 10:
-                logger.warning("等待ISLAND_BACK超时，跳过")
-                return
-            self.device.click(BUSINESS_REWARD_SAFE_AREA)
-            self.device.sleep(1)
-            self.device.screenshot()
-        logger.info("检测到返回按钮，点击结束领取")
-        self.device.click(ISLAND_BACK)
-        self.device.sleep(1)
-        # 点完后确保回到经营页签，如果检测不到经营选中页签则继续点击返回按钮
-        self.device.screenshot()
-        confirm_timeout = 0
-        while not self.appear(POST_MANAGE_BUSINESS, offset=30):
-            confirm_timeout += 1
-            if confirm_timeout > 10:
-                logger.warning("返回后检测经营选中页签超时，跳过")
-                break
-            logger.info("未检测到经营选中页签，继续点击返回按钮")
-            self.device.click(ISLAND_BACK)
-            self.device.sleep(1)
-            self.device.screenshot()
-    
+
     def _select_business_characters(self):
         for slot_idx in range(2):
             btn = BUSINESS_PLUS_A if slot_idx == 0 else BUSINESS_PLUS_B
@@ -566,7 +536,7 @@ class IslandBusiness(Island):
                 logger.info(f"第{slot_idx + 1}个角色未找到，跳过")
                 self.device.click(SELECT_UI_BACK)
                 self.device.sleep(0.5)
-    
+
     def _wait_for_character_selection(self):
         from module.base.timer import Timer
         timer = Timer(5).start()
@@ -576,25 +546,25 @@ class IslandBusiness(Island):
                 return True
             self.device.sleep(0.3)
         return False
-    
+
     # 角色选择列表全区域坐标
     BUSINESS_CHARACTER_AREA = (55, 139, 878, 463)
-    
+
     def _stop_swipe_inertia(self):
         """滑动后点击安全区域消除惯性"""
         self.device.click(BUSINESS_REVIEW_SAFE_AREA)
         self.device.sleep(0.3)
-    
+
     # 角色选择页面滑动惯性消除安全区域
     BUSINESS_INERTIA_STOP_AREA = (462, 477, 473, 577)
-    
+
     def _swipe_down_short(self):
         """短距离向下滑动，滑动后立即点击安全区域消除惯性"""
         self.device.swipe_vector(vector=(0, -200), box=(58, 150, 838, 480),
                                  duration=(0.3, 0.5), name="BusinessCharSwipe")
         self.device.click(Button(area=(), color=(), button=self.BUSINESS_INERTIA_STOP_AREA, file={'cn': ''}))
         self.device.sleep(1.0)
-    
+
     def _swipe_up_reset(self):
         """向上滑动回到顶部，滑动后立即点击安全区域消除惯性"""
         self.device.swipe_vector(vector=(0, 500), box=(58, 150, 838, 480),
@@ -602,12 +572,12 @@ class IslandBusiness(Island):
         self.device.sleep(0.5)
         self.device.click(Button(area=(), color=(), button=self.BUSINESS_INERTIA_STOP_AREA, file={'cn': ''}))
         self.device.sleep(1.0)
-    
+
     def _find_and_select_character(self):
         """在角色选择界面中查找并选择角色（全区域模板匹配）"""
         # 进入角色选择界面后，先向上滑动500px回到顶部
         self._swipe_up_reset()
-        
+
         max_swipes = 5
         for attempt in range(max_swipes):
             self.device.screenshot()
@@ -620,12 +590,12 @@ class IslandBusiness(Island):
                 return char_name
             # 短距离向下滑动继续搜索
             self._swipe_down_short()
-        
+
         # 滑动多次未找到，切换排序后从头搜索
         self.select_character_filter()
         self.device.sleep(0.5)
         self._swipe_up_reset()
-        
+
         for attempt in range(max_swipes):
             self.device.screenshot()
             result = self._find_best_character()
@@ -636,9 +606,9 @@ class IslandBusiness(Island):
                 self.device.sleep(0.5)
                 return char_name
             self._swipe_down_short()
-        
+
         return False
-    
+
     def _find_best_character(self):
         """
         在全区域 (55, 139, 878, 563) 内进行模板匹配查找角色。
@@ -668,10 +638,10 @@ class IslandBusiness(Island):
         if best[0] is not None:
             return (best[0], best[1])
         return None
-    
+
     # 餐品图标检测区域（选完角色后餐品列表在此范围内）
     BUSINESS_PRODUCT_AREA = (580, 200, 1177, 400)
-    
+
     def _get_product_template_path(self, button):
         """从Button的file路径构造TEMPLATE小图路径"""
         fp = button.file
@@ -680,7 +650,7 @@ class IslandBusiness(Island):
         dir_name = os.path.dirname(fp)
         base_name = os.path.basename(fp)
         return os.path.join(dir_name, f'TEMPLATE_{base_name}')
-    
+
     def _select_business_product(self, shop_name=None):
         # 优先使用配置的产品列表，否则使用全部
         products = self.active_products.get(shop_name, self.shop_products.get(shop_name, []))
@@ -688,7 +658,7 @@ class IslandBusiness(Island):
             return
         # 等待界面稳定
         self.device.sleep(1.0)
-        
+
         # 逐个选择配置的餐品
         for p in products:
             b = p.get('button')
@@ -708,7 +678,7 @@ class IslandBusiness(Island):
                 logger.info(f"选择餐品: {p['name']} (相似度: {sim:.2f})")
                 self.device.click(offset_btn)
                 self.device.sleep(0.5)
-    
+
     def _confirm_business_start(self):
         start_button = self._appear_at_positions(BUSINESS_START_IN_SHOP)
         if start_button:
@@ -730,11 +700,11 @@ class IslandBusiness(Island):
                 self.goto_postmanage()
                 self.post_manage_mode(POST_MANAGE_BUSINESS)
                 self.device.sleep(1)
-    
+
     def _trigger_shop_refill(self):
         for t in ['IslandRestaurant', 'IslandTeahouse', 'IslandGrill', 'IslandJuuEatery', 'IslandJuuCoffee']:
             self.config.task_delay(minute=0, task=t)
-    
+
     def _set_task_delay(self):
         self.config.task_delay(minute=60 * 8)
 
