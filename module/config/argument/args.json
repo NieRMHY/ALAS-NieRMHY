@@ -765,7 +765,7 @@
     "YukikazeTaskManager": {
       "TaskPriorityAdjustment": {
         "type": "textarea",
-        "value": "Restart\n> OpsiCrossMonth\n> Commission > Tactical > Research\n> Exercise\n> Dorm > Meowfficer > Guild > Gacha\n> Reward\n> ShopFrequent > ShopOnce > Shipyard > Freebies > Island\n> PrivateQuarters\n> OpsiExplore\n> Minigame > Awaken\n> OpsiAshBeacon\n> OpsiDaily > OpsiShop > OpsiVoucher > EventShop\n> OpsiAbyssal > OpsiStronghold > OpsiObscure > OpsiArchive \n> Daily > Hard > OpsiAshBeacon > OpsiAshAssist > OpsiMonthBoss\n> Sos > EventSp > EventA > EventB > EventC > EventD\n> RaidDaily > CoalitionSp > WarArchives > MaritimeEscort\n> Event > Event2 > Event3 > Raid > Hospital > HospitalEvent > Coalition > RaidScuttle > Main > Main2 > Main3\n> OpsiMeowfficerFarming\n> GemsFarming\n> Ambush11\n> OpsiHazard1Leveling\n> ThreeOilLowCost"
+        "value": "Restart\n> OpsiCrossMonth\n> Commission > Tactical > Research\n> Exercise\n> Dorm > Meowfficer > Guild > Gacha\n> Reward\n> ShopFrequent > ShopOnce > Shipyard > Freebies\n> PrivateQuarters\n> OpsiExplore\n> Minigame > Awaken\n> OpsiAshBeacon\n> OpsiDaily > OpsiShop > OpsiVoucher > EventShop\n> OpsiAbyssal > OpsiStronghold > OpsiObscure > OpsiArchive\n> Daily > Hard > OpsiAshBeacon > OpsiAshAssist > OpsiMonthBoss\n> Sos > EventSp > EventA > EventB > EventC > EventD\n> RaidDaily > CoalitionSp > WarArchives > MaritimeEscort\n> IslandJuuEatery > IslandJuuCoffee > IslandGrill > IslandTeahouse > IslandRestaurant\n> IslandFarm > IslandRancher > IslandMineForest > IslandDailyGather > IslandManufacture\n> IslandAirDrop > IslandBusiness > IslandDailyOrder > IslandCargoPreparation\n> Event > Event2 > Event3 > Raid > Hospital > HospitalEvent > Coalition > RaidScuttle > Main > Main2 > Main3\n> OpsiMeowfficerFarming\n> GemsFarming\n> Ambush11\n> OpsiHazard1Leveling\n> ThreeOilLowCost"
       }
     },
     "Storage": {
@@ -2377,6 +2377,7 @@
           "event_20260520_cn"
         ],
         "option_tw": [
+          "event_20260520_cn",
           "event_20220818_cn",
           "event_20221222_cn"
         ],
@@ -2882,6 +2883,7 @@
           "event_20260520_cn"
         ],
         "option_tw": [
+          "event_20260520_cn",
           "event_20220818_cn",
           "event_20221222_cn"
         ],
@@ -3811,6 +3813,7 @@
           "event_20260520_cn"
         ],
         "option_tw": [
+          "event_20260520_cn",
           "event_20220818_cn",
           "event_20221222_cn"
         ],
@@ -4248,6 +4251,7 @@
           "event_20260520_cn"
         ],
         "option_tw": [
+          "event_20260520_cn",
           "event_20220818_cn",
           "event_20221222_cn"
         ],
@@ -4685,6 +4689,7 @@
           "event_20260520_cn"
         ],
         "option_tw": [
+          "event_20260520_cn",
           "event_20220818_cn",
           "event_20221222_cn"
         ],
@@ -7180,6 +7185,7 @@
           "event_20260520_cn"
         ],
         "option_tw": [
+          "event_20260520_cn",
           "event_20220818_cn",
           "event_20221222_cn"
         ],
@@ -7634,6 +7640,7 @@
           "event_20260520_cn"
         ],
         "option_tw": [
+          "event_20260520_cn",
           "event_20220818_cn",
           "event_20221222_cn"
         ],
@@ -8088,6 +8095,7 @@
           "event_20260520_cn"
         ],
         "option_tw": [
+          "event_20260520_cn",
           "event_20220818_cn",
           "event_20221222_cn"
         ],
@@ -8542,6 +8550,7 @@
           "event_20260520_cn"
         ],
         "option_tw": [
+          "event_20260520_cn",
           "event_20220818_cn",
           "event_20221222_cn"
         ],
@@ -8986,6 +8995,7 @@
           "event_20260520_cn"
         ],
         "option_tw": [
+          "event_20260520_cn",
           "event_20220818_cn",
           "event_20221222_cn"
         ],
@@ -10421,10 +10431,6 @@
       "FortChoreMeowfficer": {
         "type": "checkbox",
         "value": true
-      },
-      "OverflowCoins": {
-        "type": "input",
-        "value": -1
       }
     },
     "MeowfficerTrain": {
@@ -10714,523 +10720,6 @@
       "Favourite": {
         "type": "checkbox",
         "value": false
-      }
-    },
-    "Storage": {
-      "Storage": {
-        "type": "storage",
-        "value": {},
-        "valuetype": "ignore",
-        "display": "disabled"
-      }
-    }
-  },
-  "Island": {
-    "Scheduler": {
-      "Enable": {
-        "type": "checkbox",
-        "value": false,
-        "option": [
-          true,
-          false
-        ]
-      },
-      "PushNotification": {
-        "type": "checkbox",
-        "value": false,
-        "option": [
-          true,
-          false
-        ]
-      },
-      "NextRun": {
-        "type": "datetime",
-        "value": "2020-01-01 00:00:00",
-        "validate": "datetime"
-      },
-      "Command": {
-        "type": "input",
-        "value": "Island",
-        "display": "hide"
-      },
-      "SuccessInterval": {
-        "type": "input",
-        "value": 0,
-        "display": "hide"
-      },
-      "FailureInterval": {
-        "type": "input",
-        "value": 120,
-        "display": "hide"
-      },
-      "ServerUpdate": {
-        "type": "input",
-        "value": "00:00",
-        "display": "hide"
-      },
-      "Sensitive": {
-        "type": "checkbox",
-        "value": false,
-        "option": [
-          true,
-          false
-        ]
-      }
-    },
-    "Island1": {
-      "Receive": {
-        "type": "checkbox",
-        "value": false
-      },
-      "Option1": {
-        "type": "input",
-        "value": ""
-      },
-      "Character1": {
-        "type": "input",
-        "value": "工作啾"
-      },
-      "Option2": {
-        "type": "input",
-        "value": ""
-      },
-      "Character2": {
-        "type": "input",
-        "value": "工作啾"
-      },
-      "Option3": {
-        "type": "input",
-        "value": ""
-      },
-      "Character3": {
-        "type": "input",
-        "value": "工作啾"
-      },
-      "Option4": {
-        "type": "input",
-        "value": ""
-      },
-      "Character4": {
-        "type": "input",
-        "value": "工作啾"
-      }
-    },
-    "Island2": {
-      "Receive": {
-        "type": "checkbox",
-        "value": false
-      },
-      "Option1": {
-        "type": "select",
-        "value": 0,
-        "option": [
-          0,
-          1
-        ]
-      },
-      "Character1": {
-        "type": "input",
-        "value": "工作啾"
-      },
-      "Option2": {
-        "type": "select",
-        "value": 0,
-        "option": [
-          0,
-          2
-        ]
-      },
-      "Character2": {
-        "type": "input",
-        "value": "工作啾"
-      },
-      "Option3": {
-        "type": "select",
-        "value": 0,
-        "option": [
-          0,
-          3
-        ]
-      },
-      "Character3": {
-        "type": "input",
-        "value": "工作啾"
-      },
-      "Option4": {
-        "type": "select",
-        "value": 0,
-        "option": [
-          0,
-          4
-        ]
-      },
-      "Character4": {
-        "type": "input",
-        "value": "工作啾"
-      }
-    },
-    "Island3": {
-      "Receive": {
-        "type": "checkbox",
-        "value": false
-      },
-      "Option1": {
-        "type": "input",
-        "value": ""
-      },
-      "Character1": {
-        "type": "input",
-        "value": "工作啾"
-      },
-      "Option2": {
-        "type": "input",
-        "value": ""
-      },
-      "Character2": {
-        "type": "input",
-        "value": "工作啾"
-      },
-      "Option3": {
-        "type": "input",
-        "value": ""
-      },
-      "Character3": {
-        "type": "input",
-        "value": "工作啾"
-      }
-    },
-    "Island4": {
-      "Receive": {
-        "type": "checkbox",
-        "value": false
-      },
-      "Option1": {
-        "type": "input",
-        "value": ""
-      },
-      "Character1": {
-        "type": "input",
-        "value": "工作啾"
-      },
-      "Option2": {
-        "type": "input",
-        "value": ""
-      },
-      "Character2": {
-        "type": "input",
-        "value": "工作啾"
-      },
-      "Option3": {
-        "type": "input",
-        "value": ""
-      },
-      "Character3": {
-        "type": "input",
-        "value": "工作啾"
-      },
-      "Option4": {
-        "type": "input",
-        "value": ""
-      },
-      "Character4": {
-        "type": "input",
-        "value": "工作啾"
-      }
-    },
-    "Island5": {
-      "Receive": {
-        "type": "checkbox",
-        "value": false
-      },
-      "Option1": {
-        "type": "input",
-        "value": ""
-      },
-      "Character1": {
-        "type": "input",
-        "value": "工作啾"
-      },
-      "Option2": {
-        "type": "input",
-        "value": ""
-      },
-      "Character2": {
-        "type": "input",
-        "value": "工作啾"
-      },
-      "Option3": {
-        "type": "input",
-        "value": ""
-      },
-      "Character3": {
-        "type": "input",
-        "value": "工作啾"
-      },
-      "Option4": {
-        "type": "input",
-        "value": ""
-      },
-      "Character4": {
-        "type": "input",
-        "value": "工作啾"
-      }
-    },
-    "Island6": {
-      "Receive": {
-        "type": "checkbox",
-        "value": false
-      },
-      "Option1": {
-        "type": "input",
-        "value": ""
-      },
-      "Character1": {
-        "type": "input",
-        "value": "工作啾"
-      },
-      "Option2": {
-        "type": "input",
-        "value": ""
-      },
-      "Character2": {
-        "type": "input",
-        "value": "工作啾"
-      },
-      "Option3": {
-        "type": "input",
-        "value": ""
-      },
-      "Character3": {
-        "type": "input",
-        "value": "工作啾"
-      },
-      "Option4": {
-        "type": "input",
-        "value": ""
-      },
-      "Character4": {
-        "type": "input",
-        "value": "工作啾"
-      }
-    },
-    "Island7": {
-      "Receive": {
-        "type": "checkbox",
-        "value": false
-      },
-      "Option1": {
-        "type": "input",
-        "value": ""
-      },
-      "Character1": {
-        "type": "input",
-        "value": "工作啾"
-      },
-      "Option2": {
-        "type": "input",
-        "value": ""
-      },
-      "Character2": {
-        "type": "input",
-        "value": "工作啾"
-      }
-    },
-    "Island8": {
-      "Receive": {
-        "type": "checkbox",
-        "value": false
-      },
-      "Option1": {
-        "type": "input",
-        "value": ""
-      },
-      "Character1": {
-        "type": "input",
-        "value": "工作啾"
-      },
-      "Option2": {
-        "type": "input",
-        "value": ""
-      },
-      "Character2": {
-        "type": "input",
-        "value": "工作啾"
-      }
-    },
-    "Island9": {
-      "Receive": {
-        "type": "checkbox",
-        "value": false
-      },
-      "Option1": {
-        "type": "input",
-        "value": ""
-      },
-      "Character1": {
-        "type": "input",
-        "value": "工作啾"
-      },
-      "Option2": {
-        "type": "input",
-        "value": ""
-      },
-      "Character2": {
-        "type": "input",
-        "value": "工作啾"
-      }
-    },
-    "Island10": {
-      "Receive": {
-        "type": "checkbox",
-        "value": false
-      },
-      "Option1": {
-        "type": "input",
-        "value": ""
-      },
-      "Character1": {
-        "type": "input",
-        "value": "工作啾"
-      },
-      "Option2": {
-        "type": "input",
-        "value": ""
-      },
-      "Character2": {
-        "type": "input",
-        "value": "工作啾"
-      }
-    },
-    "Island11": {
-      "Receive": {
-        "type": "checkbox",
-        "value": false
-      },
-      "Option1": {
-        "type": "input",
-        "value": ""
-      },
-      "Character1": {
-        "type": "input",
-        "value": "工作啾"
-      },
-      "Option2": {
-        "type": "input",
-        "value": ""
-      },
-      "Character2": {
-        "type": "input",
-        "value": "工作啾"
-      }
-    },
-    "Island12": {
-      "Receive": {
-        "type": "checkbox",
-        "value": false
-      },
-      "Option1": {
-        "type": "input",
-        "value": ""
-      },
-      "Character1": {
-        "type": "input",
-        "value": "工作啾"
-      },
-      "Option2": {
-        "type": "input",
-        "value": ""
-      },
-      "Character2": {
-        "type": "input",
-        "value": "工作啾"
-      }
-    },
-    "Island13": {
-      "Receive": {
-        "type": "checkbox",
-        "value": false
-      },
-      "Option1": {
-        "type": "input",
-        "value": ""
-      },
-      "Character1": {
-        "type": "input",
-        "value": "工作啾"
-      },
-      "Option2": {
-        "type": "input",
-        "value": ""
-      },
-      "Character2": {
-        "type": "input",
-        "value": "工作啾"
-      }
-    },
-    "Island14": {
-      "Receive": {
-        "type": "checkbox",
-        "value": false
-      },
-      "Option1": {
-        "type": "input",
-        "value": ""
-      },
-      "Character1": {
-        "type": "input",
-        "value": "工作啾"
-      },
-      "Option2": {
-        "type": "input",
-        "value": ""
-      },
-      "Character2": {
-        "type": "input",
-        "value": "工作啾"
-      }
-    },
-    "Island15": {
-      "Receive": {
-        "type": "checkbox",
-        "value": false
-      },
-      "Option1": {
-        "type": "input",
-        "value": ""
-      },
-      "Character1": {
-        "type": "input",
-        "value": "工作啾"
-      },
-      "Option2": {
-        "type": "input",
-        "value": ""
-      },
-      "Character2": {
-        "type": "input",
-        "value": "工作啾"
-      }
-    },
-    "Island16": {
-      "Receive": {
-        "type": "checkbox",
-        "value": false
-      },
-      "Option1": {
-        "type": "input",
-        "value": ""
-      },
-      "Character1": {
-        "type": "input",
-        "value": "工作啾"
-      },
-      "Option2": {
-        "type": "input",
-        "value": ""
-      },
-      "Character2": {
-        "type": "input",
-        "value": "工作啾"
       }
     },
     "Storage": {
@@ -14195,17 +13684,17 @@
       }
     }
   },
-  "IslandInfo": {
-    "IslandSeasonTask": {
-      "TaskDict": {
-        "type": "textarea",
-        "value": ""
-      }
-    },
-    "IslandTechnology": {
-      "TechnologyStatus": {
-        "type": "textarea",
-        "value": ""
+  "IslandPlan": {
+    "IslandPlan": {
+      "Season": {
+        "type": "select",
+        "value": "spring",
+        "option": [
+          "spring",
+          "summer",
+          "autumn",
+          "winter"
+        ]
       }
     },
     "Storage": {
@@ -14217,7 +13706,7 @@
       }
     }
   },
-  "IslandSeasonTask": {
+  "IslandBusiness": {
     "Scheduler": {
       "Enable": {
         "type": "checkbox",
@@ -14242,7 +13731,7 @@
       },
       "Command": {
         "type": "input",
-        "value": "IslandSeasonTask",
+        "value": "IslandBusiness",
         "display": "hide"
       },
       "SuccessInterval": {
@@ -14267,6 +13756,2791 @@
           true,
           false
         ]
+      }
+    },
+    "IslandBusinessShop1": {
+      "Char1": {
+        "type": "select",
+        "value": "None",
+        "option": [
+          "None",
+          "WorkerJuu",
+          "Cheshire",
+          "YingSwei",
+          "Saratoga",
+          "Akashi",
+          "NewJersey",
+          "Tashkent",
+          "LeMalin",
+          "Shimakaze",
+          "Amagi_chan",
+          "Unicorn",
+          "ChaoHo",
+          "ChenHai",
+          "WilliamDPorter",
+          "Helena",
+          "Friedrich",
+          "Atago",
+          "Yixian",
+          "August",
+          "Eugen",
+          "Hood",
+          "Javelin",
+          "Laffey",
+          "Explorer",
+          "Navigator",
+          "OceanCrosser",
+          "FeiYun",
+          "Takao"
+        ]
+      },
+      "Char2": {
+        "type": "select",
+        "value": "None",
+        "option": [
+          "None",
+          "WorkerJuu",
+          "Cheshire",
+          "YingSwei",
+          "Saratoga",
+          "Akashi",
+          "NewJersey",
+          "Tashkent",
+          "LeMalin",
+          "Shimakaze",
+          "Amagi_chan",
+          "Unicorn",
+          "ChaoHo",
+          "ChenHai",
+          "WilliamDPorter",
+          "Helena",
+          "Friedrich",
+          "Atago",
+          "Yixian",
+          "August",
+          "Eugen",
+          "Hood",
+          "Javelin",
+          "Laffey",
+          "Explorer",
+          "Navigator",
+          "OceanCrosser",
+          "FeiYun",
+          "Takao"
+        ]
+      },
+      "Product1": {
+        "type": "select",
+        "value": "None",
+        "option": [
+          "None",
+          "double_bamboo_shoots",
+          "tofu_meat",
+          "tofu_combo",
+          "hearty_meal",
+          "fo_tiao",
+          "amaranth_rice_ball"
+        ]
+      },
+      "Product2": {
+        "type": "select",
+        "value": "None",
+        "option": [
+          "None",
+          "double_bamboo_shoots",
+          "tofu_meat",
+          "tofu_combo",
+          "hearty_meal",
+          "fo_tiao",
+          "amaranth_rice_ball"
+        ]
+      },
+      "Product3": {
+        "type": "select",
+        "value": "None",
+        "option": [
+          "None",
+          "double_bamboo_shoots",
+          "tofu_meat",
+          "tofu_combo",
+          "hearty_meal",
+          "fo_tiao",
+          "amaranth_rice_ball"
+        ]
+      },
+      "Product4": {
+        "type": "select",
+        "value": "None",
+        "option": [
+          "None",
+          "double_bamboo_shoots",
+          "tofu_meat",
+          "tofu_combo",
+          "hearty_meal",
+          "fo_tiao",
+          "amaranth_rice_ball"
+        ]
+      },
+      "Product5": {
+        "type": "select",
+        "value": "None",
+        "option": [
+          "None",
+          "double_bamboo_shoots",
+          "tofu_meat",
+          "tofu_combo",
+          "hearty_meal",
+          "fo_tiao",
+          "amaranth_rice_ball"
+        ]
+      }
+    },
+    "IslandBusinessShop2": {
+      "Char1": {
+        "type": "select",
+        "value": "None",
+        "option": [
+          "None",
+          "WorkerJuu",
+          "Cheshire",
+          "YingSwei",
+          "Saratoga",
+          "Akashi",
+          "NewJersey",
+          "Tashkent",
+          "LeMalin",
+          "Shimakaze",
+          "Amagi_chan",
+          "Unicorn",
+          "ChaoHo",
+          "ChenHai",
+          "WilliamDPorter",
+          "Helena",
+          "Friedrich",
+          "Atago",
+          "Yixian",
+          "August",
+          "Eugen",
+          "Hood",
+          "Javelin",
+          "Laffey",
+          "Explorer",
+          "Navigator",
+          "OceanCrosser",
+          "FeiYun",
+          "Takao"
+        ]
+      },
+      "Char2": {
+        "type": "select",
+        "value": "None",
+        "option": [
+          "None",
+          "WorkerJuu",
+          "Cheshire",
+          "YingSwei",
+          "Saratoga",
+          "Akashi",
+          "NewJersey",
+          "Tashkent",
+          "LeMalin",
+          "Shimakaze",
+          "Amagi_chan",
+          "Unicorn",
+          "ChaoHo",
+          "ChenHai",
+          "WilliamDPorter",
+          "Helena",
+          "Friedrich",
+          "Atago",
+          "Yixian",
+          "August",
+          "Eugen",
+          "Hood",
+          "Javelin",
+          "Laffey",
+          "Explorer",
+          "Navigator",
+          "OceanCrosser",
+          "FeiYun",
+          "Takao"
+        ]
+      },
+      "Product1": {
+        "type": "select",
+        "value": "None",
+        "option": [
+          "None",
+          "spring_flower_tea",
+          "strawberry_lemon",
+          "strawberry_honey",
+          "floral_fruity",
+          "fruit_paradise",
+          "lavender_tea",
+          "sunny_honey",
+          "watermelon_juice"
+        ]
+      },
+      "Product2": {
+        "type": "select",
+        "value": "None",
+        "option": [
+          "None",
+          "spring_flower_tea",
+          "strawberry_lemon",
+          "strawberry_honey",
+          "floral_fruity",
+          "fruit_paradise",
+          "lavender_tea",
+          "sunny_honey",
+          "watermelon_juice"
+        ]
+      },
+      "Product3": {
+        "type": "select",
+        "value": "None",
+        "option": [
+          "None",
+          "spring_flower_tea",
+          "strawberry_lemon",
+          "strawberry_honey",
+          "floral_fruity",
+          "fruit_paradise",
+          "lavender_tea",
+          "sunny_honey",
+          "watermelon_juice"
+        ]
+      },
+      "Product4": {
+        "type": "select",
+        "value": "None",
+        "option": [
+          "None",
+          "spring_flower_tea",
+          "strawberry_lemon",
+          "strawberry_honey",
+          "floral_fruity",
+          "fruit_paradise",
+          "lavender_tea",
+          "sunny_honey",
+          "watermelon_juice"
+        ]
+      },
+      "Product5": {
+        "type": "select",
+        "value": "None",
+        "option": [
+          "None",
+          "spring_flower_tea",
+          "strawberry_lemon",
+          "strawberry_honey",
+          "floral_fruity",
+          "fruit_paradise",
+          "lavender_tea",
+          "sunny_honey",
+          "watermelon_juice"
+        ]
+      }
+    },
+    "IslandBusinessShop3": {
+      "Char1": {
+        "type": "select",
+        "value": "None",
+        "option": [
+          "None",
+          "WorkerJuu",
+          "Cheshire",
+          "YingSwei",
+          "Saratoga",
+          "Akashi",
+          "NewJersey",
+          "Tashkent",
+          "LeMalin",
+          "Shimakaze",
+          "Amagi_chan",
+          "Unicorn",
+          "ChaoHo",
+          "ChenHai",
+          "WilliamDPorter",
+          "Helena",
+          "Friedrich",
+          "Atago",
+          "Yixian",
+          "August",
+          "Eugen",
+          "Hood",
+          "Javelin",
+          "Laffey",
+          "Explorer",
+          "Navigator",
+          "OceanCrosser",
+          "FeiYun",
+          "Takao"
+        ]
+      },
+      "Char2": {
+        "type": "select",
+        "value": "None",
+        "option": [
+          "None",
+          "WorkerJuu",
+          "Cheshire",
+          "YingSwei",
+          "Saratoga",
+          "Akashi",
+          "NewJersey",
+          "Tashkent",
+          "LeMalin",
+          "Shimakaze",
+          "Amagi_chan",
+          "Unicorn",
+          "ChaoHo",
+          "ChenHai",
+          "WilliamDPorter",
+          "Helena",
+          "Friedrich",
+          "Atago",
+          "Yixian",
+          "August",
+          "Eugen",
+          "Hood",
+          "Javelin",
+          "Laffey",
+          "Explorer",
+          "Navigator",
+          "OceanCrosser",
+          "FeiYun",
+          "Takao"
+        ]
+      },
+      "Product1": {
+        "type": "select",
+        "value": "None",
+        "option": [
+          "None",
+          "orchard_duo",
+          "succulently_sweet",
+          "berry_orange",
+          "strawberry_charlotte",
+          "seafood_rice"
+        ]
+      },
+      "Product2": {
+        "type": "select",
+        "value": "None",
+        "option": [
+          "None",
+          "orchard_duo",
+          "succulently_sweet",
+          "berry_orange",
+          "strawberry_charlotte",
+          "seafood_rice"
+        ]
+      },
+      "Product3": {
+        "type": "select",
+        "value": "None",
+        "option": [
+          "None",
+          "orchard_duo",
+          "succulently_sweet",
+          "berry_orange",
+          "strawberry_charlotte",
+          "seafood_rice"
+        ]
+      },
+      "Product4": {
+        "type": "select",
+        "value": "None",
+        "option": [
+          "None",
+          "orchard_duo",
+          "succulently_sweet",
+          "berry_orange",
+          "strawberry_charlotte",
+          "seafood_rice"
+        ]
+      },
+      "Product5": {
+        "type": "select",
+        "value": "None",
+        "option": [
+          "None",
+          "orchard_duo",
+          "succulently_sweet",
+          "berry_orange",
+          "strawberry_charlotte",
+          "seafood_rice"
+        ]
+      }
+    },
+    "IslandBusinessShop4": {
+      "Char1": {
+        "type": "select",
+        "value": "None",
+        "option": [
+          "None",
+          "WorkerJuu",
+          "Cheshire",
+          "YingSwei",
+          "Saratoga",
+          "Akashi",
+          "NewJersey",
+          "Tashkent",
+          "LeMalin",
+          "Shimakaze",
+          "Amagi_chan",
+          "Unicorn",
+          "ChaoHo",
+          "ChenHai",
+          "WilliamDPorter",
+          "Helena",
+          "Friedrich",
+          "Atago",
+          "Yixian",
+          "August",
+          "Eugen",
+          "Hood",
+          "Javelin",
+          "Laffey",
+          "Explorer",
+          "Navigator",
+          "OceanCrosser",
+          "FeiYun",
+          "Takao"
+        ]
+      },
+      "Char2": {
+        "type": "select",
+        "value": "None",
+        "option": [
+          "None",
+          "WorkerJuu",
+          "Cheshire",
+          "YingSwei",
+          "Saratoga",
+          "Akashi",
+          "NewJersey",
+          "Tashkent",
+          "LeMalin",
+          "Shimakaze",
+          "Amagi_chan",
+          "Unicorn",
+          "ChaoHo",
+          "ChenHai",
+          "WilliamDPorter",
+          "Helena",
+          "Friedrich",
+          "Atago",
+          "Yixian",
+          "August",
+          "Eugen",
+          "Hood",
+          "Javelin",
+          "Laffey",
+          "Explorer",
+          "Navigator",
+          "OceanCrosser",
+          "FeiYun",
+          "Takao"
+        ]
+      },
+      "Product1": {
+        "type": "select",
+        "value": "None",
+        "option": [
+          "None",
+          "roasted_skewer",
+          "stir_fried_chicken",
+          "steak_bowl",
+          "carnival",
+          "double_energy"
+        ]
+      },
+      "Product2": {
+        "type": "select",
+        "value": "None",
+        "option": [
+          "None",
+          "roasted_skewer",
+          "stir_fried_chicken",
+          "steak_bowl",
+          "carnival",
+          "double_energy"
+        ]
+      },
+      "Product3": {
+        "type": "select",
+        "value": "None",
+        "option": [
+          "None",
+          "roasted_skewer",
+          "stir_fried_chicken",
+          "steak_bowl",
+          "carnival",
+          "double_energy"
+        ]
+      },
+      "Product4": {
+        "type": "select",
+        "value": "None",
+        "option": [
+          "None",
+          "roasted_skewer",
+          "stir_fried_chicken",
+          "steak_bowl",
+          "carnival",
+          "double_energy"
+        ]
+      },
+      "Product5": {
+        "type": "select",
+        "value": "None",
+        "option": [
+          "None",
+          "roasted_skewer",
+          "stir_fried_chicken",
+          "steak_bowl",
+          "carnival",
+          "double_energy"
+        ]
+      }
+    },
+    "IslandBusinessShop5": {
+      "Char1": {
+        "type": "select",
+        "value": "None",
+        "option": [
+          "None",
+          "WorkerJuu",
+          "Cheshire",
+          "YingSwei",
+          "Saratoga",
+          "Akashi",
+          "NewJersey",
+          "Tashkent",
+          "LeMalin",
+          "Shimakaze",
+          "Amagi_chan",
+          "Unicorn",
+          "ChaoHo",
+          "ChenHai",
+          "WilliamDPorter",
+          "Helena",
+          "Friedrich",
+          "Atago",
+          "Yixian",
+          "August",
+          "Eugen",
+          "Hood",
+          "Javelin",
+          "Laffey",
+          "Explorer",
+          "Navigator",
+          "OceanCrosser",
+          "FeiYun",
+          "Takao"
+        ]
+      },
+      "Char2": {
+        "type": "select",
+        "value": "None",
+        "option": [
+          "None",
+          "WorkerJuu",
+          "Cheshire",
+          "YingSwei",
+          "Saratoga",
+          "Akashi",
+          "NewJersey",
+          "Tashkent",
+          "LeMalin",
+          "Shimakaze",
+          "Amagi_chan",
+          "Unicorn",
+          "ChaoHo",
+          "ChenHai",
+          "WilliamDPorter",
+          "Helena",
+          "Friedrich",
+          "Atago",
+          "Yixian",
+          "August",
+          "Eugen",
+          "Hood",
+          "Javelin",
+          "Laffey",
+          "Explorer",
+          "Navigator",
+          "OceanCrosser",
+          "FeiYun",
+          "Takao"
+        ]
+      },
+      "Product1": {
+        "type": "select",
+        "value": "None",
+        "option": [
+          "None",
+          "cheese",
+          "strawberry_milkshake",
+          "morning_light",
+          "wake_up_call",
+          "fruity_fruitier"
+        ]
+      },
+      "Product2": {
+        "type": "select",
+        "value": "None",
+        "option": [
+          "None",
+          "cheese",
+          "strawberry_milkshake",
+          "morning_light",
+          "wake_up_call",
+          "fruity_fruitier"
+        ]
+      },
+      "Product3": {
+        "type": "select",
+        "value": "None",
+        "option": [
+          "None",
+          "cheese",
+          "strawberry_milkshake",
+          "morning_light",
+          "wake_up_call",
+          "fruity_fruitier"
+        ]
+      },
+      "Product4": {
+        "type": "select",
+        "value": "None",
+        "option": [
+          "None",
+          "cheese",
+          "strawberry_milkshake",
+          "morning_light",
+          "wake_up_call",
+          "fruity_fruitier"
+        ]
+      },
+      "Product5": {
+        "type": "select",
+        "value": "None",
+        "option": [
+          "None",
+          "cheese",
+          "strawberry_milkshake",
+          "morning_light",
+          "wake_up_call",
+          "fruity_fruitier"
+        ]
+      }
+    },
+    "Storage": {
+      "Storage": {
+        "type": "storage",
+        "value": {},
+        "valuetype": "ignore",
+        "display": "disabled"
+      }
+    }
+  },
+  "IslandFarm": {
+    "Scheduler": {
+      "Enable": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "PushNotification": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "NextRun": {
+        "type": "datetime",
+        "value": "2020-01-01 00:00:00",
+        "validate": "datetime"
+      },
+      "Command": {
+        "type": "input",
+        "value": "IslandFarm",
+        "display": "hide"
+      },
+      "SuccessInterval": {
+        "type": "input",
+        "value": 0,
+        "display": "hide"
+      },
+      "FailureInterval": {
+        "type": "input",
+        "value": 120,
+        "display": "hide"
+      },
+      "ServerUpdate": {
+        "type": "input",
+        "value": "00:00",
+        "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      }
+    },
+    "IslandFarm": {
+      "Positions": {
+        "type": "select",
+        "value": 3,
+        "option": [
+          1,
+          2,
+          3,
+          4
+        ]
+      },
+      "MinFarm": {
+        "type": "input",
+        "value": 660
+      },
+      "PlantPotatoes": {
+        "type": "select",
+        "value": 4,
+        "option": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ]
+      }
+    },
+    "IslandOrchard": {
+      "Positions": {
+        "type": "select",
+        "value": 4,
+        "option": [
+          1,
+          2,
+          3,
+          4
+        ]
+      },
+      "MinOrchard": {
+        "type": "input",
+        "value": 300
+      },
+      "IgnoreAvocado": {
+        "type": "checkbox",
+        "value": true
+      },
+      "PlantRubber": {
+        "type": "select",
+        "value": 0,
+        "option": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ]
+      },
+      "AmagiChanRubber": {
+        "type": "checkbox",
+        "value": false
+      }
+    },
+    "IslandNursery": {
+      "Positions": {
+        "type": "select",
+        "value": 2,
+        "option": [
+          1,
+          2
+        ]
+      },
+      "MinNursery": {
+        "type": "input",
+        "value": 0
+      },
+      "IgnorePineapple": {
+        "type": "checkbox",
+        "value": true
+      },
+      "PlantLavender": {
+        "type": "select",
+        "value": 2,
+        "option": [
+          0,
+          1,
+          2
+        ]
+      }
+    },
+    "Storage": {
+      "Storage": {
+        "type": "storage",
+        "value": {},
+        "valuetype": "ignore",
+        "display": "disabled"
+      }
+    }
+  },
+  "IslandRancher": {
+    "Scheduler": {
+      "Enable": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "PushNotification": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "NextRun": {
+        "type": "datetime",
+        "value": "2020-01-01 00:00:00",
+        "validate": "datetime"
+      },
+      "Command": {
+        "type": "input",
+        "value": "IslandRancher",
+        "display": "hide"
+      },
+      "SuccessInterval": {
+        "type": "input",
+        "value": 0,
+        "display": "hide"
+      },
+      "FailureInterval": {
+        "type": "input",
+        "value": 120,
+        "display": "hide"
+      },
+      "ServerUpdate": {
+        "type": "input",
+        "value": "00:00",
+        "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      }
+    },
+    "IslandRancher": {
+      "MinChicken": {
+        "type": "input",
+        "value": 300
+      },
+      "MinPork": {
+        "type": "input",
+        "value": 300
+      },
+      "Milk": {
+        "type": "checkbox",
+        "value": true
+      },
+      "RancherFilter": {
+        "type": "textarea",
+        "value": "WorkerJuu"
+      },
+      "Wool": {
+        "type": "checkbox",
+        "value": true
+      }
+    },
+    "IslandFishery": {
+      "Positions": {
+        "type": "select",
+        "value": 3,
+        "option": [
+          1,
+          2,
+          3
+        ]
+      },
+      "MinBass": {
+        "type": "input",
+        "value": 50
+      },
+      "MinYellowfinTuna": {
+        "type": "input",
+        "value": 50
+      },
+      "MinShell": {
+        "type": "input",
+        "value": 50
+      },
+      "MinShrimp": {
+        "type": "input",
+        "value": 50
+      },
+      "MinCrab": {
+        "type": "input",
+        "value": 50
+      },
+      "MinSquid": {
+        "type": "input",
+        "value": 50
+      },
+      "MinSeaCucumber": {
+        "type": "input",
+        "value": 50
+      },
+      "PlantYellowfinTuna": {
+        "type": "select",
+        "value": 3,
+        "option": [
+          0,
+          1,
+          2,
+          3
+        ]
+      },
+      "RancherFilter": {
+        "type": "textarea",
+        "value": "WorkerJuu"
+      }
+    },
+    "Storage": {
+      "Storage": {
+        "type": "storage",
+        "value": {},
+        "valuetype": "ignore",
+        "display": "disabled"
+      }
+    }
+  },
+  "IslandMineForest": {
+    "Scheduler": {
+      "Enable": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "PushNotification": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "NextRun": {
+        "type": "datetime",
+        "value": "2020-01-01 00:00:00",
+        "validate": "datetime"
+      },
+      "Command": {
+        "type": "input",
+        "value": "IslandMineForest",
+        "display": "hide"
+      },
+      "SuccessInterval": {
+        "type": "input",
+        "value": 0,
+        "display": "hide"
+      },
+      "FailureInterval": {
+        "type": "input",
+        "value": 120,
+        "display": "hide"
+      },
+      "ServerUpdate": {
+        "type": "input",
+        "value": "00:00",
+        "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      }
+    },
+    "IslandMine": {
+      "Positions": {
+        "type": "select",
+        "value": 1,
+        "option": [
+          1,
+          2,
+          3,
+          4
+        ]
+      },
+      "MineSilver": {
+        "type": "select",
+        "value": 1,
+        "option": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ]
+      },
+      "MinCopper": {
+        "type": "input",
+        "value": 50
+      },
+      "MinAluminium": {
+        "type": "input",
+        "value": 50
+      },
+      "MinIron": {
+        "type": "input",
+        "value": 50
+      },
+      "MinSulphur": {
+        "type": "input",
+        "value": 50
+      },
+      "MinSilver": {
+        "type": "input",
+        "value": 50
+      }
+    },
+    "IslandForest": {
+      "Positions": {
+        "type": "select",
+        "value": 1,
+        "option": [
+          1,
+          2,
+          3,
+          4
+        ]
+      },
+      "CutElegant": {
+        "type": "select",
+        "value": 1,
+        "option": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ]
+      },
+      "MinElegant": {
+        "type": "input",
+        "value": 50
+      },
+      "MinPractical": {
+        "type": "input",
+        "value": 50
+      },
+      "MinSelected": {
+        "type": "input",
+        "value": 50
+      }
+    },
+    "Storage": {
+      "Storage": {
+        "type": "storage",
+        "value": {},
+        "valuetype": "ignore",
+        "display": "disabled"
+      }
+    }
+  },
+  "IslandRestaurant": {
+    "Scheduler": {
+      "Enable": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "PushNotification": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "NextRun": {
+        "type": "datetime",
+        "value": "2020-01-01 00:00:00",
+        "validate": "datetime"
+      },
+      "Command": {
+        "type": "input",
+        "value": "IslandRestaurant",
+        "display": "hide"
+      },
+      "SuccessInterval": {
+        "type": "input",
+        "value": 0,
+        "display": "hide"
+      },
+      "FailureInterval": {
+        "type": "input",
+        "value": 120,
+        "display": "hide"
+      },
+      "ServerUpdate": {
+        "type": "input",
+        "value": "00:00",
+        "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      }
+    },
+    "IslandRestaurant": {
+      "PostNumber": {
+        "type": "select",
+        "value": 2,
+        "option": [
+          1,
+          2
+        ]
+      },
+      "ChefFilter": {
+        "type": "textarea",
+        "value": "WorkerJuu"
+      },
+      "DoubleBambooShoots": {
+        "type": "checkbox",
+        "value": false
+      },
+      "Meal1": {
+        "type": "select",
+        "value": "tofu_meat",
+        "option": [
+          "None",
+          "tofu",
+          "omurice",
+          "cabbage_tofu",
+          "salad",
+          "tofu_meat",
+          "tofu_combo",
+          "hearty_meal",
+          "double_bamboo_shoots",
+          "asparagus_shrimp",
+          "fish_chip",
+          "fo_tiao",
+          "onion_fish"
+        ]
+      },
+      "MealNumber1": {
+        "type": "input",
+        "value": 6
+      },
+      "Meal2": {
+        "type": "select",
+        "value": "hearty_meal",
+        "option": [
+          "None",
+          "tofu",
+          "omurice",
+          "cabbage_tofu",
+          "salad",
+          "tofu_meat",
+          "tofu_combo",
+          "hearty_meal",
+          "double_bamboo_shoots",
+          "asparagus_shrimp",
+          "fish_chip",
+          "fo_tiao",
+          "onion_fish"
+        ]
+      },
+      "MealNumber2": {
+        "type": "input",
+        "value": 6
+      },
+      "Meal3": {
+        "type": "select",
+        "value": "omurice",
+        "option": [
+          "None",
+          "tofu",
+          "omurice",
+          "cabbage_tofu",
+          "salad",
+          "tofu_meat",
+          "tofu_combo",
+          "hearty_meal",
+          "double_bamboo_shoots",
+          "asparagus_shrimp",
+          "fish_chip",
+          "fo_tiao",
+          "onion_fish"
+        ]
+      },
+      "MealNumber3": {
+        "type": "input",
+        "value": 6
+      },
+      "Meal4": {
+        "type": "select",
+        "value": "None",
+        "option": [
+          "None",
+          "tofu",
+          "omurice",
+          "cabbage_tofu",
+          "salad",
+          "tofu_meat",
+          "tofu_combo",
+          "hearty_meal",
+          "double_bamboo_shoots",
+          "asparagus_shrimp",
+          "fish_chip",
+          "fo_tiao",
+          "onion_fish"
+        ]
+      },
+      "MealNumber4": {
+        "type": "input",
+        "value": 0
+      },
+      "Meal5": {
+        "type": "select",
+        "value": "None",
+        "option": [
+          "None",
+          "tofu",
+          "omurice",
+          "cabbage_tofu",
+          "salad",
+          "tofu_meat",
+          "tofu_combo",
+          "hearty_meal",
+          "double_bamboo_shoots",
+          "asparagus_shrimp",
+          "fish_chip",
+          "fo_tiao",
+          "onion_fish"
+        ]
+      },
+      "MealNumber5": {
+        "type": "input",
+        "value": 0
+      },
+      "Meal6": {
+        "type": "select",
+        "value": "None",
+        "option": [
+          "None",
+          "tofu",
+          "omurice",
+          "cabbage_tofu",
+          "salad",
+          "tofu_meat",
+          "tofu_combo",
+          "hearty_meal",
+          "double_bamboo_shoots",
+          "asparagus_shrimp",
+          "fish_chip",
+          "fo_tiao",
+          "onion_fish"
+        ]
+      },
+      "MealNumber6": {
+        "type": "input",
+        "value": 0
+      },
+      "Meal7": {
+        "type": "select",
+        "value": "None",
+        "option": [
+          "None",
+          "tofu",
+          "omurice",
+          "cabbage_tofu",
+          "salad",
+          "tofu_meat",
+          "tofu_combo",
+          "hearty_meal",
+          "double_bamboo_shoots",
+          "asparagus_shrimp",
+          "fish_chip",
+          "fo_tiao",
+          "onion_fish"
+        ]
+      },
+      "MealNumber7": {
+        "type": "input",
+        "value": 0
+      },
+      "Meal8": {
+        "type": "select",
+        "value": "None",
+        "option": [
+          "None",
+          "tofu",
+          "omurice",
+          "cabbage_tofu",
+          "salad",
+          "tofu_meat",
+          "tofu_combo",
+          "hearty_meal",
+          "double_bamboo_shoots",
+          "asparagus_shrimp",
+          "fish_chip",
+          "fo_tiao",
+          "onion_fish"
+        ]
+      },
+      "MealNumber8": {
+        "type": "input",
+        "value": 0
+      }
+    },
+    "IslandRestaurantNextTask": {
+      "AwayCook": {
+        "type": "select",
+        "value": "None",
+        "option": [
+          "None",
+          "tofu",
+          "omurice",
+          "cabbage_tofu",
+          "salad",
+          "tofu_meat",
+          "tofu_combo",
+          "hearty_meal",
+          "double_bamboo_shoots",
+          "asparagus_shrimp",
+          "fish_chip",
+          "fo_tiao",
+          "onion_fish"
+        ]
+      }
+    },
+    "Storage": {
+      "Storage": {
+        "type": "storage",
+        "value": {},
+        "valuetype": "ignore",
+        "display": "disabled"
+      }
+    }
+  },
+  "IslandTeahouse": {
+    "Scheduler": {
+      "Enable": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "PushNotification": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "NextRun": {
+        "type": "datetime",
+        "value": "2020-01-01 00:00:00",
+        "validate": "datetime"
+      },
+      "Command": {
+        "type": "input",
+        "value": "IslandTeahouse",
+        "display": "hide"
+      },
+      "SuccessInterval": {
+        "type": "input",
+        "value": 0,
+        "display": "hide"
+      },
+      "FailureInterval": {
+        "type": "input",
+        "value": 120,
+        "display": "hide"
+      },
+      "ServerUpdate": {
+        "type": "input",
+        "value": "00:00",
+        "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      }
+    },
+    "IslandTeahouse": {
+      "PostNumber": {
+        "type": "select",
+        "value": 2,
+        "option": [
+          1,
+          2
+        ]
+      },
+      "ChefFilter": {
+        "type": "textarea",
+        "value": "WorkerJuu"
+      },
+      "Seasonal": {
+        "type": "checkbox",
+        "value": false
+      },
+      "Meal1": {
+        "type": "select",
+        "value": "floral_fruity",
+        "option": [
+          "None",
+          "apple_juice",
+          "banana_mango",
+          "honey_lemon",
+          "strawberry_lemon",
+          "strawberry_honey",
+          "floral_fruity",
+          "fruit_paradise",
+          "lavender_tea",
+          "sunny_honey",
+          "spring_flower_tea"
+        ]
+      },
+      "MealNumber1": {
+        "type": "input",
+        "value": 6
+      },
+      "Meal2": {
+        "type": "select",
+        "value": "lavender_tea",
+        "option": [
+          "None",
+          "apple_juice",
+          "banana_mango",
+          "honey_lemon",
+          "strawberry_lemon",
+          "strawberry_honey",
+          "floral_fruity",
+          "fruit_paradise",
+          "lavender_tea",
+          "sunny_honey",
+          "spring_flower_tea"
+        ]
+      },
+      "MealNumber2": {
+        "type": "input",
+        "value": 6
+      },
+      "Meal3": {
+        "type": "select",
+        "value": "strawberry_lemon",
+        "option": [
+          "None",
+          "apple_juice",
+          "banana_mango",
+          "honey_lemon",
+          "strawberry_lemon",
+          "strawberry_honey",
+          "floral_fruity",
+          "fruit_paradise",
+          "lavender_tea",
+          "sunny_honey",
+          "spring_flower_tea"
+        ]
+      },
+      "MealNumber3": {
+        "type": "input",
+        "value": 6
+      },
+      "Meal4": {
+        "type": "select",
+        "value": "None",
+        "option": [
+          "None",
+          "apple_juice",
+          "banana_mango",
+          "honey_lemon",
+          "strawberry_lemon",
+          "strawberry_honey",
+          "floral_fruity",
+          "fruit_paradise",
+          "lavender_tea",
+          "sunny_honey",
+          "spring_flower_tea"
+        ]
+      },
+      "MealNumber4": {
+        "type": "input",
+        "value": 0
+      },
+      "Meal5": {
+        "type": "select",
+        "value": "None",
+        "option": [
+          "None",
+          "apple_juice",
+          "banana_mango",
+          "honey_lemon",
+          "strawberry_lemon",
+          "strawberry_honey",
+          "floral_fruity",
+          "fruit_paradise",
+          "lavender_tea",
+          "sunny_honey",
+          "spring_flower_tea"
+        ]
+      },
+      "MealNumber5": {
+        "type": "input",
+        "value": 0
+      },
+      "Meal6": {
+        "type": "select",
+        "value": "None",
+        "option": [
+          "None",
+          "apple_juice",
+          "banana_mango",
+          "honey_lemon",
+          "strawberry_lemon",
+          "strawberry_honey",
+          "floral_fruity",
+          "fruit_paradise",
+          "lavender_tea",
+          "sunny_honey",
+          "spring_flower_tea"
+        ]
+      },
+      "MealNumber6": {
+        "type": "input",
+        "value": 0
+      },
+      "Meal7": {
+        "type": "select",
+        "value": "None",
+        "option": [
+          "None",
+          "apple_juice",
+          "banana_mango",
+          "honey_lemon",
+          "strawberry_lemon",
+          "strawberry_honey",
+          "floral_fruity",
+          "fruit_paradise",
+          "lavender_tea",
+          "sunny_honey",
+          "spring_flower_tea"
+        ]
+      },
+      "MealNumber7": {
+        "type": "input",
+        "value": 0
+      },
+      "Meal8": {
+        "type": "select",
+        "value": "None",
+        "option": [
+          "None",
+          "apple_juice",
+          "banana_mango",
+          "honey_lemon",
+          "strawberry_lemon",
+          "strawberry_honey",
+          "floral_fruity",
+          "fruit_paradise",
+          "lavender_tea",
+          "sunny_honey",
+          "spring_flower_tea"
+        ]
+      },
+      "MealNumber8": {
+        "type": "input",
+        "value": 0
+      }
+    },
+    "IslandTeahouseNextTask": {
+      "AwayCook": {
+        "type": "select",
+        "value": "None",
+        "option": [
+          "None",
+          "apple_juice",
+          "banana_mango",
+          "honey_lemon",
+          "strawberry_lemon",
+          "strawberry_honey",
+          "floral_fruity",
+          "fruit_paradise",
+          "lavender_tea",
+          "sunny_honey",
+          "spring_flower_tea"
+        ]
+      }
+    },
+    "Storage": {
+      "Storage": {
+        "type": "storage",
+        "value": {},
+        "valuetype": "ignore",
+        "display": "disabled"
+      }
+    }
+  },
+  "IslandGrill": {
+    "Scheduler": {
+      "Enable": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "PushNotification": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "NextRun": {
+        "type": "datetime",
+        "value": "2020-01-01 00:00:00",
+        "validate": "datetime"
+      },
+      "Command": {
+        "type": "input",
+        "value": "IslandGrill",
+        "display": "hide"
+      },
+      "SuccessInterval": {
+        "type": "input",
+        "value": 0,
+        "display": "hide"
+      },
+      "FailureInterval": {
+        "type": "input",
+        "value": 120,
+        "display": "hide"
+      },
+      "ServerUpdate": {
+        "type": "input",
+        "value": "00:00",
+        "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      }
+    },
+    "IslandGrill": {
+      "PostNumber": {
+        "type": "select",
+        "value": 1,
+        "option": [
+          1,
+          2
+        ]
+      },
+      "ChefFilter": {
+        "type": "textarea",
+        "value": "WorkerJuu"
+      },
+      "Meal1": {
+        "type": "select",
+        "value": "double_energy",
+        "option": [
+          "None",
+          "roasted_skewer",
+          "chicken_potato",
+          "carrot_omelette",
+          "stir_fried_chicken",
+          "steak_bowl",
+          "carnival",
+          "double_energy"
+        ]
+      },
+      "MealNumber1": {
+        "type": "input",
+        "value": 6
+      },
+      "Meal2": {
+        "type": "select",
+        "value": "steak_bowl",
+        "option": [
+          "None",
+          "roasted_skewer",
+          "chicken_potato",
+          "carrot_omelette",
+          "stir_fried_chicken",
+          "steak_bowl",
+          "carnival",
+          "double_energy"
+        ]
+      },
+      "MealNumber2": {
+        "type": "input",
+        "value": 6
+      },
+      "Meal3": {
+        "type": "select",
+        "value": "stir_fried_chicken",
+        "option": [
+          "None",
+          "roasted_skewer",
+          "chicken_potato",
+          "carrot_omelette",
+          "stir_fried_chicken",
+          "steak_bowl",
+          "carnival",
+          "double_energy"
+        ]
+      },
+      "MealNumber3": {
+        "type": "input",
+        "value": 6
+      },
+      "Meal4": {
+        "type": "select",
+        "value": "None",
+        "option": [
+          "None",
+          "roasted_skewer",
+          "chicken_potato",
+          "carrot_omelette",
+          "stir_fried_chicken",
+          "steak_bowl",
+          "carnival",
+          "double_energy"
+        ]
+      },
+      "MealNumber4": {
+        "type": "input",
+        "value": 0
+      },
+      "Meal5": {
+        "type": "select",
+        "value": "None",
+        "option": [
+          "None",
+          "roasted_skewer",
+          "chicken_potato",
+          "carrot_omelette",
+          "stir_fried_chicken",
+          "steak_bowl",
+          "carnival",
+          "double_energy"
+        ]
+      },
+      "MealNumber5": {
+        "type": "input",
+        "value": 0
+      },
+      "Meal6": {
+        "type": "select",
+        "value": "None",
+        "option": [
+          "None",
+          "roasted_skewer",
+          "chicken_potato",
+          "carrot_omelette",
+          "stir_fried_chicken",
+          "steak_bowl",
+          "carnival",
+          "double_energy"
+        ]
+      },
+      "MealNumber6": {
+        "type": "input",
+        "value": 0
+      },
+      "Meal7": {
+        "type": "select",
+        "value": "None",
+        "option": [
+          "None",
+          "roasted_skewer",
+          "chicken_potato",
+          "carrot_omelette",
+          "stir_fried_chicken",
+          "steak_bowl",
+          "carnival",
+          "double_energy"
+        ]
+      },
+      "MealNumber7": {
+        "type": "input",
+        "value": 0
+      },
+      "Meal8": {
+        "type": "select",
+        "value": "None",
+        "option": [
+          "None",
+          "roasted_skewer",
+          "chicken_potato",
+          "carrot_omelette",
+          "stir_fried_chicken",
+          "steak_bowl",
+          "carnival",
+          "double_energy"
+        ]
+      },
+      "MealNumber8": {
+        "type": "input",
+        "value": 0
+      }
+    },
+    "IslandGrillNextTask": {
+      "AwayCook": {
+        "type": "select",
+        "value": "None",
+        "option": [
+          "None",
+          "roasted_skewer",
+          "chicken_potato",
+          "carrot_omelette",
+          "stir_fried_chicken",
+          "steak_bowl",
+          "carnival",
+          "double_energy"
+        ]
+      }
+    },
+    "Storage": {
+      "Storage": {
+        "type": "storage",
+        "value": {},
+        "valuetype": "ignore",
+        "display": "disabled"
+      }
+    }
+  },
+  "IslandJuuEatery": {
+    "Scheduler": {
+      "Enable": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "PushNotification": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "NextRun": {
+        "type": "datetime",
+        "value": "2020-01-01 00:00:00",
+        "validate": "datetime"
+      },
+      "Command": {
+        "type": "input",
+        "value": "IslandJuuEatery",
+        "display": "hide"
+      },
+      "SuccessInterval": {
+        "type": "input",
+        "value": 0,
+        "display": "hide"
+      },
+      "FailureInterval": {
+        "type": "input",
+        "value": 120,
+        "display": "hide"
+      },
+      "ServerUpdate": {
+        "type": "input",
+        "value": "00:00",
+        "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      }
+    },
+    "IslandJuuEatery": {
+      "PostNumber": {
+        "type": "select",
+        "value": 1,
+        "option": [
+          1,
+          2
+        ]
+      },
+      "ChefFilter": {
+        "type": "textarea",
+        "value": "WorkerJuu"
+      },
+      "Meal1": {
+        "type": "select",
+        "value": "berry_orange",
+        "option": [
+          "None",
+          "apple_pie",
+          "corn_cup",
+          "orange_pie",
+          "banana_crepe",
+          "orchard_duo",
+          "rice_mango",
+          "succulently_sweet",
+          "berry_orange",
+          "strawberry_charlotte",
+          "seafood_rice"
+        ]
+      },
+      "MealNumber1": {
+        "type": "input",
+        "value": 6
+      },
+      "Meal2": {
+        "type": "select",
+        "value": "succulently_sweet",
+        "option": [
+          "None",
+          "apple_pie",
+          "corn_cup",
+          "orange_pie",
+          "banana_crepe",
+          "orchard_duo",
+          "rice_mango",
+          "succulently_sweet",
+          "berry_orange",
+          "strawberry_charlotte",
+          "seafood_rice"
+        ]
+      },
+      "MealNumber2": {
+        "type": "input",
+        "value": 6
+      },
+      "Meal3": {
+        "type": "select",
+        "value": "rice_mango",
+        "option": [
+          "None",
+          "apple_pie",
+          "corn_cup",
+          "orange_pie",
+          "banana_crepe",
+          "orchard_duo",
+          "rice_mango",
+          "succulently_sweet",
+          "berry_orange",
+          "strawberry_charlotte",
+          "seafood_rice"
+        ]
+      },
+      "MealNumber3": {
+        "type": "input",
+        "value": 6
+      },
+      "Meal4": {
+        "type": "select",
+        "value": "None",
+        "option": [
+          "None",
+          "apple_pie",
+          "corn_cup",
+          "orange_pie",
+          "banana_crepe",
+          "orchard_duo",
+          "rice_mango",
+          "succulently_sweet",
+          "berry_orange",
+          "strawberry_charlotte",
+          "seafood_rice"
+        ]
+      },
+      "MealNumber4": {
+        "type": "input",
+        "value": 0
+      },
+      "Meal5": {
+        "type": "select",
+        "value": "None",
+        "option": [
+          "None",
+          "apple_pie",
+          "corn_cup",
+          "orange_pie",
+          "banana_crepe",
+          "orchard_duo",
+          "rice_mango",
+          "succulently_sweet",
+          "berry_orange",
+          "strawberry_charlotte",
+          "seafood_rice"
+        ]
+      },
+      "MealNumber5": {
+        "type": "input",
+        "value": 0
+      },
+      "Meal6": {
+        "type": "select",
+        "value": "None",
+        "option": [
+          "None",
+          "apple_pie",
+          "corn_cup",
+          "orange_pie",
+          "banana_crepe",
+          "orchard_duo",
+          "rice_mango",
+          "succulently_sweet",
+          "berry_orange",
+          "strawberry_charlotte",
+          "seafood_rice"
+        ]
+      },
+      "MealNumber6": {
+        "type": "input",
+        "value": 0
+      },
+      "Meal7": {
+        "type": "select",
+        "value": "None",
+        "option": [
+          "None",
+          "apple_pie",
+          "corn_cup",
+          "orange_pie",
+          "banana_crepe",
+          "orchard_duo",
+          "rice_mango",
+          "succulently_sweet",
+          "berry_orange",
+          "strawberry_charlotte",
+          "seafood_rice"
+        ]
+      },
+      "MealNumber7": {
+        "type": "input",
+        "value": 0
+      },
+      "Meal8": {
+        "type": "select",
+        "value": "None",
+        "option": [
+          "None",
+          "apple_pie",
+          "corn_cup",
+          "orange_pie",
+          "banana_crepe",
+          "orchard_duo",
+          "rice_mango",
+          "succulently_sweet",
+          "berry_orange",
+          "strawberry_charlotte",
+          "seafood_rice"
+        ]
+      },
+      "MealNumber8": {
+        "type": "input",
+        "value": 0
+      }
+    },
+    "IslandJuuEateryNextTask": {
+      "AwayCook": {
+        "type": "select",
+        "value": "None",
+        "option": [
+          "None",
+          "apple_pie",
+          "corn_cup",
+          "orange_pie",
+          "banana_crepe",
+          "orchard_duo",
+          "rice_mango",
+          "succulently_sweet",
+          "berry_orange",
+          "strawberry_charlotte",
+          "seafood_rice"
+        ]
+      }
+    },
+    "Storage": {
+      "Storage": {
+        "type": "storage",
+        "value": {},
+        "valuetype": "ignore",
+        "display": "disabled"
+      }
+    }
+  },
+  "IslandJuuCoffee": {
+    "Scheduler": {
+      "Enable": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "PushNotification": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "NextRun": {
+        "type": "datetime",
+        "value": "2020-01-01 00:00:00",
+        "validate": "datetime"
+      },
+      "Command": {
+        "type": "input",
+        "value": "IslandJuuCoffee",
+        "display": "hide"
+      },
+      "SuccessInterval": {
+        "type": "input",
+        "value": 0,
+        "display": "hide"
+      },
+      "FailureInterval": {
+        "type": "input",
+        "value": 120,
+        "display": "hide"
+      },
+      "ServerUpdate": {
+        "type": "input",
+        "value": "00:00",
+        "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      }
+    },
+    "IslandJuuCoffee": {
+      "PostNumber": {
+        "type": "select",
+        "value": 2,
+        "option": [
+          1,
+          2
+        ]
+      },
+      "ChefFilter": {
+        "type": "textarea",
+        "value": "WorkerJuu"
+      },
+      "Friedrich": {
+        "type": "checkbox",
+        "value": false
+      },
+      "Meal1": {
+        "type": "select",
+        "value": "wake_up_call",
+        "option": [
+          "None",
+          "iced_coffee",
+          "omelette",
+          "cheese",
+          "latte",
+          "citrus_coffee",
+          "strawberry_milkshake",
+          "morning_light",
+          "wake_up_call",
+          "fruity_fruitier"
+        ]
+      },
+      "MealNumber1": {
+        "type": "input",
+        "value": 6
+      },
+      "Meal2": {
+        "type": "select",
+        "value": "cheese",
+        "option": [
+          "None",
+          "iced_coffee",
+          "omelette",
+          "cheese",
+          "latte",
+          "citrus_coffee",
+          "strawberry_milkshake",
+          "morning_light",
+          "wake_up_call",
+          "fruity_fruitier"
+        ]
+      },
+      "MealNumber2": {
+        "type": "input",
+        "value": 6
+      },
+      "Meal3": {
+        "type": "select",
+        "value": "fruity_fruitier",
+        "option": [
+          "None",
+          "iced_coffee",
+          "omelette",
+          "cheese",
+          "latte",
+          "citrus_coffee",
+          "strawberry_milkshake",
+          "morning_light",
+          "wake_up_call",
+          "fruity_fruitier"
+        ]
+      },
+      "MealNumber3": {
+        "type": "input",
+        "value": 6
+      },
+      "Meal4": {
+        "type": "select",
+        "value": "None",
+        "option": [
+          "None",
+          "iced_coffee",
+          "omelette",
+          "cheese",
+          "latte",
+          "citrus_coffee",
+          "strawberry_milkshake",
+          "morning_light",
+          "wake_up_call",
+          "fruity_fruitier"
+        ]
+      },
+      "MealNumber4": {
+        "type": "input",
+        "value": 0
+      },
+      "Meal5": {
+        "type": "select",
+        "value": "None",
+        "option": [
+          "None",
+          "iced_coffee",
+          "omelette",
+          "cheese",
+          "latte",
+          "citrus_coffee",
+          "strawberry_milkshake",
+          "morning_light",
+          "wake_up_call",
+          "fruity_fruitier"
+        ]
+      },
+      "MealNumber5": {
+        "type": "input",
+        "value": 0
+      },
+      "Meal6": {
+        "type": "select",
+        "value": "None",
+        "option": [
+          "None",
+          "iced_coffee",
+          "omelette",
+          "cheese",
+          "latte",
+          "citrus_coffee",
+          "strawberry_milkshake",
+          "morning_light",
+          "wake_up_call",
+          "fruity_fruitier"
+        ]
+      },
+      "MealNumber6": {
+        "type": "input",
+        "value": 0
+      },
+      "Meal7": {
+        "type": "select",
+        "value": "None",
+        "option": [
+          "None",
+          "iced_coffee",
+          "omelette",
+          "cheese",
+          "latte",
+          "citrus_coffee",
+          "strawberry_milkshake",
+          "morning_light",
+          "wake_up_call",
+          "fruity_fruitier"
+        ]
+      },
+      "MealNumber7": {
+        "type": "input",
+        "value": 0
+      },
+      "Meal8": {
+        "type": "select",
+        "value": "None",
+        "option": [
+          "None",
+          "iced_coffee",
+          "omelette",
+          "cheese",
+          "latte",
+          "citrus_coffee",
+          "strawberry_milkshake",
+          "morning_light",
+          "wake_up_call",
+          "fruity_fruitier"
+        ]
+      },
+      "MealNumber8": {
+        "type": "input",
+        "value": 0
+      }
+    },
+    "IslandJuuCoffeeNextTask": {
+      "AwayCook": {
+        "type": "select",
+        "value": "None",
+        "option": [
+          "None",
+          "iced_coffee",
+          "omelette",
+          "cheese",
+          "latte",
+          "citrus_coffee",
+          "strawberry_milkshake",
+          "morning_light",
+          "wake_up_call",
+          "fruity_fruitier"
+        ]
+      }
+    },
+    "Storage": {
+      "Storage": {
+        "type": "storage",
+        "value": {},
+        "valuetype": "ignore",
+        "display": "disabled"
+      }
+    }
+  },
+  "IslandManufacture": {
+    "Scheduler": {
+      "Enable": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "PushNotification": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "NextRun": {
+        "type": "datetime",
+        "value": "2020-01-01 00:00:00",
+        "validate": "datetime"
+      },
+      "Command": {
+        "type": "input",
+        "value": "IslandManufacture",
+        "display": "hide"
+      },
+      "SuccessInterval": {
+        "type": "input",
+        "value": 0,
+        "display": "hide"
+      },
+      "FailureInterval": {
+        "type": "input",
+        "value": 120,
+        "display": "hide"
+      },
+      "ServerUpdate": {
+        "type": "input",
+        "value": "00:00",
+        "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      }
+    },
+    "WoodProcessing": {
+      "Positions": {
+        "type": "select",
+        "value": 2,
+        "option": [
+          0,
+          1,
+          2
+        ]
+      }
+    },
+    "ElectronicProcessing": {
+      "Positions": {
+        "type": "select",
+        "value": 2,
+        "option": [
+          0,
+          1,
+          2
+        ]
+      }
+    },
+    "Industrial": {
+      "Positions": {
+        "type": "select",
+        "value": 2,
+        "option": [
+          0,
+          1,
+          2
+        ]
+      }
+    },
+    "Handmade": {
+      "Positions": {
+        "type": "select",
+        "value": 2,
+        "option": [
+          0,
+          1,
+          2
+        ]
+      }
+    },
+    "Storage": {
+      "Storage": {
+        "type": "storage",
+        "value": {},
+        "valuetype": "ignore",
+        "display": "disabled"
+      }
+    }
+  },
+  "IslandDailyGather": {
+    "Scheduler": {
+      "Enable": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "PushNotification": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "NextRun": {
+        "type": "datetime",
+        "value": "2020-01-01 00:00:00",
+        "validate": "datetime"
+      },
+      "Command": {
+        "type": "input",
+        "value": "IslandDailyGather",
+        "display": "hide"
+      },
+      "SuccessInterval": {
+        "type": "input",
+        "value": 0,
+        "display": "hide"
+      },
+      "FailureInterval": {
+        "type": "input",
+        "value": 120,
+        "display": "hide"
+      },
+      "ServerUpdate": {
+        "type": "input",
+        "value": "00:00",
+        "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      }
+    },
+    "Storage": {
+      "Storage": {
+        "type": "storage",
+        "value": {},
+        "valuetype": "ignore",
+        "display": "disabled"
+      }
+    }
+  },
+  "IslandAirDrop": {
+    "Scheduler": {
+      "Enable": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "PushNotification": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "NextRun": {
+        "type": "datetime",
+        "value": "2020-01-01 00:00:00",
+        "validate": "datetime"
+      },
+      "Command": {
+        "type": "input",
+        "value": "IslandAirDrop",
+        "display": "hide"
+      },
+      "SuccessInterval": {
+        "type": "input",
+        "value": 0,
+        "display": "hide"
+      },
+      "FailureInterval": {
+        "type": "input",
+        "value": 120,
+        "display": "hide"
+      },
+      "ServerUpdate": {
+        "type": "input",
+        "value": "00:00",
+        "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      }
+    },
+    "IslandAirDrop": {
+      "LastSteal": {
+        "type": "datetime",
+        "value": "2020-01-01 00:00:00",
+        "validate": "datetime"
+      }
+    },
+    "Storage": {
+      "Storage": {
+        "type": "storage",
+        "value": {},
+        "valuetype": "ignore",
+        "display": "disabled"
+      }
+    }
+  },
+  "IslandCargoPreparation": {
+    "Scheduler": {
+      "Enable": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "PushNotification": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "NextRun": {
+        "type": "datetime",
+        "value": "2020-01-01 00:00:00",
+        "validate": "datetime"
+      },
+      "Command": {
+        "type": "input",
+        "value": "IslandCargoPreparation",
+        "display": "hide"
+      },
+      "SuccessInterval": {
+        "type": "input",
+        "value": 0,
+        "display": "hide"
+      },
+      "FailureInterval": {
+        "type": "input",
+        "value": 120,
+        "display": "hide"
+      },
+      "ServerUpdate": {
+        "type": "input",
+        "value": "00:00",
+        "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      }
+    },
+    "IslandCargoPreparation": {
+      "Blacklist": {
+        "type": "input",
+        "value": "Milk"
+      }
+    },
+    "Storage": {
+      "Storage": {
+        "type": "storage",
+        "value": {},
+        "valuetype": "ignore",
+        "display": "disabled"
+      }
+    }
+  },
+  "IslandDailyOrder": {
+    "Scheduler": {
+      "Enable": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "PushNotification": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "NextRun": {
+        "type": "datetime",
+        "value": "2020-01-01 00:00:00",
+        "validate": "datetime"
+      },
+      "Command": {
+        "type": "input",
+        "value": "IslandDailyOrder",
+        "display": "hide"
+      },
+      "SuccessInterval": {
+        "type": "input",
+        "value": 0,
+        "display": "hide"
+      },
+      "FailureInterval": {
+        "type": "input",
+        "value": 120,
+        "display": "hide"
+      },
+      "ServerUpdate": {
+        "type": "input",
+        "value": "00:00",
+        "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      }
+    },
+    "IslandDailyOrder": {
+      "RejectCount": {
+        "type": "input",
+        "value": 0
+      },
+      "RejectFilter": {
+        "type": "textarea",
+        "value": "Cheese > Tofu"
+      },
+      "UrgentDetectRefreshTime": {
+        "type": "input",
+        "value": "2020-01-01 00:00:00"
       }
     },
     "Storage": {

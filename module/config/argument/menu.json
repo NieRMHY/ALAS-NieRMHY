@@ -62,8 +62,7 @@
       "Meowfficer",
       "Guild",
       "Reward",
-      "Awaken",
-      "Island"
+      "Awaken"
     ]
   },
   "DailyMission": {
@@ -109,8 +108,21 @@
     "menu": "collapse",
     "page": "setting",
     "tasks": [
-      "IslandInfo",
-      "IslandSeasonTask"
+      "IslandPlan",
+      "IslandBusiness",
+      "IslandFarm",
+      "IslandRancher",
+      "IslandMineForest",
+      "IslandRestaurant",
+      "IslandTeahouse",
+      "IslandGrill",
+      "IslandJuuEatery",
+      "IslandJuuCoffee",
+      "IslandManufacture",
+      "IslandDailyGather",
+      "IslandAirDrop",
+      "IslandCargoPreparation",
+      "IslandDailyOrder"
     ]
   },
   "Tool": {
