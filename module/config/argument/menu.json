@@ -120,7 +120,9 @@
       "IslandJuuCoffee",
       "IslandManufacture",
       "IslandDailyGather",
-      "IslandAirDrop"
+      "IslandAirDrop",
+      "IslandCargoPreparation",
+      "IslandDailyOrder"
     ]
   },
   "Tool": {

@@ -342,6 +342,14 @@
       "name": "Task.IslandAirDrop.name",
       "help": "Task.IslandAirDrop.help"
     },
+    "IslandCargoPreparation": {
+      "name": "Task.IslandCargoPreparation.name",
+      "help": "Task.IslandCargoPreparation.help"
+    },
+    "IslandDailyOrder": {
+      "name": "Task.IslandDailyOrder.name",
+      "help": "Task.IslandDailyOrder.help"
+    },
     "Daemon": {
       "name": "半自動クリック",
       "help": ""
@@ -2081,10 +2089,6 @@
     "FortChoreMeowfficer": {
       "name": "ニャ窩インタラクション",
       "help": "掃除、給食、ネコじゃらし"
-    },
-    "OverflowCoins": {
-      "name": "金貨が余ったら猫用トイレを買う",
-      "help": "金貨がこの値を超えている間は、金貨がこの値まで下がるか、猫箱が売り切れるまで猫箱を買い続けてください。-1 閉じる"
     }
   },
   "MeowfficerTrain": {
@@ -4700,6 +4704,34 @@
     "LastSteal": {
       "name": "IslandAirDrop.LastSteal.name",
       "help": "IslandAirDrop.LastSteal.help"
+    }
+  },
+  "IslandDailyOrder": {
+    "_info": {
+      "name": "IslandDailyOrder._info.name",
+      "help": "IslandDailyOrder._info.help"
+    },
+    "RejectCount": {
+      "name": "IslandDailyOrder.RejectCount.name",
+      "help": "IslandDailyOrder.RejectCount.help"
+    },
+    "RejectFilter": {
+      "name": "IslandDailyOrder.RejectFilter.name",
+      "help": "IslandDailyOrder.RejectFilter.help"
+    },
+    "UrgentDetectRefreshTime": {
+      "name": "IslandDailyOrder.UrgentDetectRefreshTime.name",
+      "help": "IslandDailyOrder.UrgentDetectRefreshTime.help"
+    }
+  },
+  "IslandCargoPreparation": {
+    "_info": {
+      "name": "IslandCargoPreparation._info.name",
+      "help": "IslandCargoPreparation._info.help"
+    },
+    "Blacklist": {
+      "name": "IslandCargoPreparation.Blacklist.name",
+      "help": "IslandCargoPreparation.Blacklist.help"
     }
   },
   "IslandBusinessShop1": {
