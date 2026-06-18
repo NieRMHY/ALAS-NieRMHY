@@ -123,6 +123,7 @@
       "IslandAirDrop",
       "IslandCargoPreparation",
       "IslandDailyOrder",
+      "IslandDailyInteract",
       "IslandPearlSell"
     ]
   },
