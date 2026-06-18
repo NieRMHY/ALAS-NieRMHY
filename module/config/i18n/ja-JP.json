@@ -350,6 +350,10 @@
       "name": "Task.IslandDailyOrder.name",
       "help": "Task.IslandDailyOrder.help"
     },
+    "IslandPearlSell": {
+      "name": "Task.IslandPearlSell.name",
+      "help": "Task.IslandPearlSell.help"
+    },
     "Daemon": {
       "name": "半自動クリック",
       "help": ""
@@ -515,6 +519,7 @@
       "cn_channel-2": "[国服] 十字军行动",
       "cn_channel-3": "[国服] 龙骑兵行动",
       "cn_channel-4": "[国服] 冥王星行动",
+      "cn_channel-5": "[国服] 群岛计划",
       "en-0": "[EN] Avrora",
       "en-1": "[EN] Lexington",
       "en-2": "[EN] Sandy",
@@ -1143,7 +1148,7 @@
       "event_20231221_cn": "光追う星の海（復刻）",
       "event_20240229_cn": "銀界遊廻（復刻）",
       "event_20240425_cn": "共鳴のパッション",
-      "event_20240521_cn": "赫輝のマルティリウム",
+      "event_20240521_cn": "赫輝のマルティリウム （復刻）",
       "event_20240725_cn": "夢幻の間奏曲",
       "event_20240815_cn": "錬翼空翔",
       "event_20240829_cn": "徒花咲かす彼岸",
@@ -2237,6 +2242,10 @@
     "ConsumeCoins": {
       "name": "オーバーフロー供給品の消費",
       "help": "物資が550,000を超えたら、物資を消費するアイテムをすべて購入します。"
+    },
+    "OverflowCoins": {
+      "name": "GeneralShop.OverflowCoins.name",
+      "help": "GeneralShop.OverflowCoins.help"
     },
     "Filter": {
       "name": "ショップフィルター",
@@ -4704,6 +4713,10 @@
     "LastSteal": {
       "name": "IslandAirDrop.LastSteal.name",
       "help": "IslandAirDrop.LastSteal.help"
+    },
+    "VisitOtherIsland": {
+      "name": "IslandAirDrop.VisitOtherIsland.name",
+      "help": "IslandAirDrop.VisitOtherIsland.help"
     }
   },
   "IslandDailyOrder": {
@@ -4724,6 +4737,32 @@
       "help": "IslandDailyOrder.UrgentDetectRefreshTime.help"
     }
   },
+  "IslandPearlSell": {
+    "_info": {
+      "name": "IslandPearlSell._info.name",
+      "help": "IslandPearlSell._info.help"
+    },
+    "BuyPrice": {
+      "name": "IslandPearlSell.BuyPrice.name",
+      "help": "IslandPearlSell.BuyPrice.help"
+    },
+    "SellPrice": {
+      "name": "IslandPearlSell.SellPrice.name",
+      "help": "IslandPearlSell.SellPrice.help"
+    },
+    "BuyNextRun": {
+      "name": "IslandPearlSell.BuyNextRun.name",
+      "help": "IslandPearlSell.BuyNextRun.help"
+    },
+    "DailyPriceRefresh": {
+      "name": "IslandPearlSell.DailyPriceRefresh.name",
+      "help": "IslandPearlSell.DailyPriceRefresh.help"
+    },
+    "NextPearlTradeTime": {
+      "name": "IslandPearlSell.NextPearlTradeTime.name",
+      "help": "IslandPearlSell.NextPearlTradeTime.help"
+    }
+  },
   "IslandCargoPreparation": {
     "_info": {
       "name": "IslandCargoPreparation._info.name",
@@ -4732,6 +4771,46 @@
     "Blacklist": {
       "name": "IslandCargoPreparation.Blacklist.name",
       "help": "IslandCargoPreparation.Blacklist.help"
+    }
+  },
+  "IslandBusiness": {
+    "_info": {
+      "name": "IslandBusiness._info.name",
+      "help": "IslandBusiness._info.help"
+    },
+    "BatchEnabled": {
+      "name": "IslandBusiness.BatchEnabled.name",
+      "help": "IslandBusiness.BatchEnabled.help",
+      "True": "True",
+      "False": "False"
+    },
+    "Batch1Shops": {
+      "name": "IslandBusiness.Batch1Shops.name",
+      "help": "IslandBusiness.Batch1Shops.help",
+      "1": "1",
+      "2": "2",
+      "3": "3",
+      "4": "4",
+      "5": "5"
+    },
+    "Batch2Shops": {
+      "name": "IslandBusiness.Batch2Shops.name",
+      "help": "IslandBusiness.Batch2Shops.help",
+      "1": "1",
+      "2": "2",
+      "3": "3",
+      "4": "4",
+      "5": "5"
+    },
+    "SeasonalReplaceEnabled": {
+      "name": "IslandBusiness.SeasonalReplaceEnabled.name",
+      "help": "IslandBusiness.SeasonalReplaceEnabled.help",
+      "True": "True",
+      "False": "False"
+    },
+    "SeasonalThreshold": {
+      "name": "IslandBusiness.SeasonalThreshold.name",
+      "help": "IslandBusiness.SeasonalThreshold.help"
     }
   },
   "IslandBusinessShop1": {
@@ -4859,6 +4938,21 @@
       "hearty_meal": "hearty_meal",
       "fo_tiao": "fo_tiao",
       "amaranth_rice_ball": "amaranth_rice_ball"
+    },
+    "SeasonalFallback": {
+      "name": "IslandBusinessShop1.SeasonalFallback.name",
+      "help": "IslandBusinessShop1.SeasonalFallback.help",
+      "None": "None",
+      "double_bamboo_shoots": "double_bamboo_shoots",
+      "tofu_meat": "tofu_meat",
+      "tofu_combo": "tofu_combo",
+      "hearty_meal": "hearty_meal",
+      "fo_tiao": "fo_tiao",
+      "amaranth_rice_ball": "amaranth_rice_ball"
+    },
+    "BoostReplaceFilter": {
+      "name": "IslandBusinessShop1.BoostReplaceFilter.name",
+      "help": "IslandBusinessShop1.BoostReplaceFilter.help"
     }
   },
   "IslandBusinessShop2": {
@@ -4996,6 +5090,10 @@
       "lavender_tea": "lavender_tea",
       "sunny_honey": "sunny_honey",
       "watermelon_juice": "watermelon_juice"
+    },
+    "BoostReplaceFilter": {
+      "name": "IslandBusinessShop2.BoostReplaceFilter.name",
+      "help": "IslandBusinessShop2.BoostReplaceFilter.help"
     }
   },
   "IslandBusinessShop3": {
@@ -5118,6 +5216,10 @@
       "berry_orange": "berry_orange",
       "strawberry_charlotte": "strawberry_charlotte",
       "seafood_rice": "seafood_rice"
+    },
+    "BoostReplaceFilter": {
+      "name": "IslandBusinessShop3.BoostReplaceFilter.name",
+      "help": "IslandBusinessShop3.BoostReplaceFilter.help"
     }
   },
   "IslandBusinessShop4": {
@@ -5240,6 +5342,10 @@
       "steak_bowl": "ステーキ丼",
       "carnival": "カーニバル",
       "double_energy": "ダブルエナジー"
+    },
+    "BoostReplaceFilter": {
+      "name": "IslandBusinessShop4.BoostReplaceFilter.name",
+      "help": "IslandBusinessShop4.BoostReplaceFilter.help"
     }
   },
   "IslandBusinessShop5": {
@@ -5362,6 +5468,10 @@
       "morning_light": "モーニングライト",
       "wake_up_call": "ウェイクアップコール",
       "fruity_fruitier": "フルーティーフルーティエ"
+    },
+    "BoostReplaceFilter": {
+      "name": "IslandBusinessShop5.BoostReplaceFilter.name",
+      "help": "IslandBusinessShop5.BoostReplaceFilter.help"
     }
   },
   "Daemon": {
