@@ -245,8 +245,9 @@ class CampaignRun(CampaignEvent, ShopStatus):
             'event_20250814_cn',
             'event_20251023_cn',
             'event_20260326_cn',
-            'event_20260430_cn',
+            'war_archives_20230525_cn',
             'war_archives_20231026_cn',
+            'war_archives_20240725_cn',
         ]:
             name = convert.get(name, name)
         # 在 A/B/C/D 和 T/HT 之间转换
@@ -282,8 +283,9 @@ class CampaignRun(CampaignEvent, ShopStatus):
             'event_20250814_cn',
             'event_20251023_cn',
             'event_20260326_cn',
-            'event_20260430_cn',
+            'war_archives_20230525_cn',
             'war_archives_20231026_cn',
+            'war_archives_20240725_cn',
         ]:
             name = convert.get(name, name)
         else:
