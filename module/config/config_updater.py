@@ -669,7 +669,8 @@ class ConfigUpdater:
             value = deep_get(old, keys=keys, default=data['value'])
             typ = data['type']
             display = data.get('display')
-            if is_template or value is None or value == '' \
+            value_empty = value == '' and not data.get('preserve_empty')
+            if is_template or value is None or value_empty \
                     or typ in ['lock', 'state'] or (display == 'hide' and typ != 'stored'):
                 value = data['value']
             value = parse_value(value, data=data)
@@ -716,6 +717,22 @@ class ConfigUpdater:
 
         if not is_template:
             new = self.config_redirect(old, new)
+            old_priority = deep_get(old, 'General.YukikazeTaskManager.TaskPriorityAdjustment')
+            new_priority = deep_get(new, 'General.YukikazeTaskManager.TaskPriorityAdjustment')
+            template_priority = deep_get(
+                self.args, 'General.YukikazeTaskManager.TaskPriorityAdjustment.value'
+            )
+            if (
+                    isinstance(old_priority, str)
+                    and 'OpsiScheduling' not in old_priority
+                    and isinstance(new_priority, str)
+                    and new_priority == old_priority
+                    and old_priority.replace(
+                        '> OpsiCrossMonth\n> Commission > Tactical > Research',
+                        '> OpsiCrossMonth\n> OpsiScheduling\n> Commission > Tactical > Research',
+                    ) == template_priority
+            ):
+                deep_set(new, 'General.YukikazeTaskManager.TaskPriorityAdjustment', template_priority)
         new = self._override(new)
 
         return new

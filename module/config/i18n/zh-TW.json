@@ -1264,7 +1264,10 @@
     },
     "DefeatWithdraw": {
       "name": "道中戰鬥失敗撤退",
-      "help": "道中戰鬥戰敗時的處理方式。開啟時直接退出海域，關閉時嘗試由另一隊接管後續戰鬥。"
+      "help": "道中戰鬥戰敗時的處理方式。開啟時直接退出海域，關閉時嘗試由另一隊接管後續戰鬥。",
+      "withdraw_continue": "withdraw_continue",
+      "switch_fleet": "switch_fleet",
+      "withdraw_stop": "withdraw_stop"
     }
   },
   "StopCondition": {
@@ -1305,6 +1308,28 @@
     "ReachLevel": {
       "name": "艦船升至 X 級後停止",
       "help": "任意等級低於 X 的艦船升級至 X 級後停止\n0 表示不限制等級"
+    }
+  },
+  "WarArchives": {
+    "_info": {
+      "name": "WarArchives._info.name",
+      "help": "WarArchives._info.help"
+    },
+    "DailyRunCount": {
+      "name": "WarArchives.DailyRunCount.name",
+      "help": "WarArchives.DailyRunCount.help"
+    },
+    "DailyRunCountRemain": {
+      "name": "WarArchives.DailyRunCountRemain.name",
+      "help": "WarArchives.DailyRunCountRemain.help"
+    },
+    "DailyRunCountRecord": {
+      "name": "WarArchives.DailyRunCountRecord.name",
+      "help": "WarArchives.DailyRunCountRecord.help"
+    },
+    "DailyRunCountLimit": {
+      "name": "WarArchives.DailyRunCountLimit.name",
+      "help": "WarArchives.DailyRunCountLimit.help"
     }
   },
   "Fleet": {
@@ -3416,6 +3441,16 @@
       "name": "短貓相接 保留 X 點行動力",
       "help": "行動力低於 X 後停止，自動開啟行動力箱子，X 包含箱子中的行動力，建議保留1000行動力給侵蝕1練級"
     },
+    "ActionPointEarlyTriggerEnable": {
+      "name": "OpsiScheduling.ActionPointEarlyTriggerEnable.name",
+      "help": "OpsiScheduling.ActionPointEarlyTriggerEnable.help",
+      "True": "True",
+      "False": "False"
+    },
+    "ActionPointEarlyTriggerThreshold": {
+      "name": "OpsiScheduling.ActionPointEarlyTriggerThreshold.name",
+      "help": "OpsiScheduling.ActionPointEarlyTriggerThreshold.help"
+    },
     "OperationCoinsReturnThreshold": {
       "name": "獲取 X 個作戰補給憑證",
       "help": "在黃幣獲取任務時 共獲取(增加) X 個作戰補給憑證後返回侵蝕1練級"
@@ -3487,6 +3522,10 @@
       "3": "3",
       "4": "4"
     },
+    "WorkerFilter": {
+      "name": "IslandFarm.WorkerFilter.name",
+      "help": "IslandFarm.WorkerFilter.help"
+    },
     "MinFarm": {
       "name": "IslandFarm.MinFarm.name",
       "help": "IslandFarm.MinFarm.help"
@@ -3513,6 +3552,10 @@
       "2": "2",
       "3": "3",
       "4": "4"
+    },
+    "WorkerFilter": {
+      "name": "IslandOrchard.WorkerFilter.name",
+      "help": "IslandOrchard.WorkerFilter.help"
     },
     "MinOrchard": {
       "name": "IslandOrchard.MinOrchard.name",
@@ -3546,6 +3589,10 @@
       "help": "IslandNursery.Positions.help",
       "1": "1",
       "2": "2"
+    },
+    "WorkerFilter": {
+      "name": "IslandNursery.WorkerFilter.name",
+      "help": "IslandNursery.WorkerFilter.help"
     },
     "MinNursery": {
       "name": "IslandNursery.MinNursery.name",
@@ -3587,6 +3634,10 @@
     "Wool": {
       "name": "IslandRancher.Wool.name",
       "help": "IslandRancher.Wool.help"
+    },
+    "WoolWorkerFilter": {
+      "name": "IslandRancher.WoolWorkerFilter.name",
+      "help": "IslandRancher.WoolWorkerFilter.help"
     }
   },
   "IslandFishery": {
@@ -3616,6 +3667,10 @@
     "MinShrimp": {
       "name": "IslandFishery.MinShrimp.name",
       "help": "IslandFishery.MinShrimp.help"
+    },
+    "MinCrayfish": {
+      "name": "IslandFishery.MinCrayfish.name",
+      "help": "IslandFishery.MinCrayfish.help"
     },
     "MinCrab": {
       "name": "IslandFishery.MinCrab.name",
@@ -3664,6 +3719,10 @@
       "3": "3",
       "4": "4"
     },
+    "WorkerFilter": {
+      "name": "IslandMine.WorkerFilter.name",
+      "help": "IslandMine.WorkerFilter.help"
+    },
     "MinCopper": {
       "name": "IslandMine.MinCopper.name",
       "help": "IslandMine.MinCopper.help"
@@ -3707,6 +3766,10 @@
       "3": "3",
       "4": "4"
     },
+    "WorkerFilter": {
+      "name": "IslandForest.WorkerFilter.name",
+      "help": "IslandForest.WorkerFilter.help"
+    },
     "MinElegant": {
       "name": "IslandForest.MinElegant.name",
       "help": "IslandForest.MinElegant.help"
@@ -3718,6 +3781,16 @@
     "MinSelected": {
       "name": "IslandForest.MinSelected.name",
       "help": "IslandForest.MinSelected.help"
+    }
+  },
+  "IslandDailyGather": {
+    "_info": {
+      "name": "IslandDailyGather._info.name",
+      "help": "IslandDailyGather._info.help"
+    },
+    "WorkerFilter": {
+      "name": "IslandDailyGather.WorkerFilter.name",
+      "help": "IslandDailyGather.WorkerFilter.help"
     }
   },
   "IslandRestaurant": {
@@ -4148,6 +4221,7 @@
       "carrot_omelette": "carrot_omelette",
       "stir_fried_chicken": "stir_fried_chicken",
       "steak_bowl": "steak_bowl",
+      "crayfish_stir_fry": "crayfish_stir_fry",
       "carnival": "carnival",
       "double_energy": "double_energy"
     },
@@ -4164,6 +4238,7 @@
       "carrot_omelette": "carrot_omelette",
       "stir_fried_chicken": "stir_fried_chicken",
       "steak_bowl": "steak_bowl",
+      "crayfish_stir_fry": "crayfish_stir_fry",
       "carnival": "carnival",
       "double_energy": "double_energy"
     },
@@ -4180,6 +4255,7 @@
       "carrot_omelette": "carrot_omelette",
       "stir_fried_chicken": "stir_fried_chicken",
       "steak_bowl": "steak_bowl",
+      "crayfish_stir_fry": "crayfish_stir_fry",
       "carnival": "carnival",
       "double_energy": "double_energy"
     },
@@ -4196,6 +4272,7 @@
       "carrot_omelette": "carrot_omelette",
       "stir_fried_chicken": "stir_fried_chicken",
       "steak_bowl": "steak_bowl",
+      "crayfish_stir_fry": "crayfish_stir_fry",
       "carnival": "carnival",
       "double_energy": "double_energy"
     },
@@ -4212,6 +4289,7 @@
       "carrot_omelette": "carrot_omelette",
       "stir_fried_chicken": "stir_fried_chicken",
       "steak_bowl": "steak_bowl",
+      "crayfish_stir_fry": "crayfish_stir_fry",
       "carnival": "carnival",
       "double_energy": "double_energy"
     },
@@ -4228,6 +4306,7 @@
       "carrot_omelette": "carrot_omelette",
       "stir_fried_chicken": "stir_fried_chicken",
       "steak_bowl": "steak_bowl",
+      "crayfish_stir_fry": "crayfish_stir_fry",
       "carnival": "carnival",
       "double_energy": "double_energy"
     },
@@ -4244,6 +4323,7 @@
       "carrot_omelette": "carrot_omelette",
       "stir_fried_chicken": "stir_fried_chicken",
       "steak_bowl": "steak_bowl",
+      "crayfish_stir_fry": "crayfish_stir_fry",
       "carnival": "carnival",
       "double_energy": "double_energy"
     },
@@ -4260,6 +4340,7 @@
       "carrot_omelette": "carrot_omelette",
       "stir_fried_chicken": "stir_fried_chicken",
       "steak_bowl": "steak_bowl",
+      "crayfish_stir_fry": "crayfish_stir_fry",
       "carnival": "carnival",
       "double_energy": "double_energy"
     },
@@ -4282,6 +4363,7 @@
       "carrot_omelette": "carrot_omelette",
       "stir_fried_chicken": "stir_fried_chicken",
       "steak_bowl": "steak_bowl",
+      "crayfish_stir_fry": "crayfish_stir_fry",
       "carnival": "carnival",
       "double_energy": "double_energy"
     }
@@ -5318,6 +5400,7 @@
       "roasted_skewer": "烤肉串",
       "stir_fried_chicken": "炒雞丁",
       "steak_bowl": "牛排飯",
+      "crayfish_stir_fry": "crayfish_stir_fry",
       "carnival": "狂歡套餐",
       "double_energy": "雙倍能量"
     },
@@ -5328,6 +5411,7 @@
       "roasted_skewer": "烤肉串",
       "stir_fried_chicken": "炒雞丁",
       "steak_bowl": "牛排飯",
+      "crayfish_stir_fry": "crayfish_stir_fry",
       "carnival": "狂歡套餐",
       "double_energy": "雙倍能量"
     },
@@ -5338,6 +5422,7 @@
       "roasted_skewer": "烤肉串",
       "stir_fried_chicken": "炒雞丁",
       "steak_bowl": "牛排飯",
+      "crayfish_stir_fry": "crayfish_stir_fry",
       "carnival": "狂歡套餐",
       "double_energy": "雙倍能量"
     },
@@ -5348,6 +5433,7 @@
       "roasted_skewer": "烤肉串",
       "stir_fried_chicken": "炒雞丁",
       "steak_bowl": "牛排飯",
+      "crayfish_stir_fry": "crayfish_stir_fry",
       "carnival": "狂歡套餐",
       "double_energy": "雙倍能量"
     },
@@ -5358,6 +5444,7 @@
       "roasted_skewer": "烤肉串",
       "stir_fried_chicken": "炒雞丁",
       "steak_bowl": "牛排飯",
+      "crayfish_stir_fry": "crayfish_stir_fry",
       "carnival": "狂歡套餐",
       "double_energy": "雙倍能量"
     },
@@ -6027,6 +6114,8 @@
       "UseSmartSchedulingOperationCoinsPreserve": "Gui.OpsiScheduling.UseSmartSchedulingOperationCoinsPreserve",
       "OperationCoinsPreserve": "Gui.OpsiScheduling.OperationCoinsPreserve",
       "ActionPointPreserve": "Gui.OpsiScheduling.ActionPointPreserve",
+      "ActionPointEarlyTriggerEnable": "Gui.OpsiScheduling.ActionPointEarlyTriggerEnable",
+      "ActionPointEarlyTriggerThreshold": "Gui.OpsiScheduling.ActionPointEarlyTriggerThreshold",
       "OperationCoinsReturnThreshold": "Gui.OpsiScheduling.OperationCoinsReturnThreshold",
       "EnableMeowfficerFarming": "Gui.OpsiScheduling.EnableMeowfficerFarming",
       "EnableObscure": "Gui.OpsiScheduling.EnableObscure",

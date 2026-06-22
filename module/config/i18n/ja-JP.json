@@ -1264,7 +1264,10 @@
     },
     "DefeatWithdraw": {
       "name": "道中での戦闘で敗北し撤退",
-      "help": "道中戦闘で敗北した際の処理方法。オンの場合は海域から直接退出し、オフの場合は別のチームが引き継いで後続の戦闘を試みる。"
+      "help": "道中戦闘で敗北した際の処理方法。オンの場合は海域から直接退出し、オフの場合は別のチームが引き継いで後続の戦闘を試みる。",
+      "withdraw_continue": "withdraw_continue",
+      "switch_fleet": "switch_fleet",
+      "withdraw_stop": "withdraw_stop"
     }
   },
   "StopCondition": {
@@ -1305,6 +1308,28 @@
     "ReachLevel": {
       "name": "艦船がレベルXに達すると停止します",
       "help": "レベルX未満の艦船がレベルXに達すると停止します。\n0はレベル制限なしを意味します"
+    }
+  },
+  "WarArchives": {
+    "_info": {
+      "name": "WarArchives._info.name",
+      "help": "WarArchives._info.help"
+    },
+    "DailyRunCount": {
+      "name": "WarArchives.DailyRunCount.name",
+      "help": "WarArchives.DailyRunCount.help"
+    },
+    "DailyRunCountRemain": {
+      "name": "WarArchives.DailyRunCountRemain.name",
+      "help": "WarArchives.DailyRunCountRemain.help"
+    },
+    "DailyRunCountRecord": {
+      "name": "WarArchives.DailyRunCountRecord.name",
+      "help": "WarArchives.DailyRunCountRecord.help"
+    },
+    "DailyRunCountLimit": {
+      "name": "WarArchives.DailyRunCountLimit.name",
+      "help": "WarArchives.DailyRunCountLimit.help"
     }
   },
   "Fleet": {
@@ -3416,6 +3441,16 @@
       "name": "ショートキャットは X ポイントの可動性を接続して保持します",
       "help": "モビリティがX以下になると停止し、モビリティボックスが自動的に開きます。"
     },
+    "ActionPointEarlyTriggerEnable": {
+      "name": "OpsiScheduling.ActionPointEarlyTriggerEnable.name",
+      "help": "OpsiScheduling.ActionPointEarlyTriggerEnable.help",
+      "True": "True",
+      "False": "False"
+    },
+    "ActionPointEarlyTriggerThreshold": {
+      "name": "OpsiScheduling.ActionPointEarlyTriggerThreshold.name",
+      "help": "OpsiScheduling.ActionPointEarlyTriggerThreshold.help"
+    },
     "OperationCoinsReturnThreshold": {
       "name": "X 個の戦闘物資引換券を入手する",
       "help": "黄色のコイン獲得ミッション中に、戦闘補給券を合計 X 枚獲得 (増加) し、レベルを上げるために侵食 1 に戻ります。"
@@ -3487,6 +3522,10 @@
       "3": "3",
       "4": "4"
     },
+    "WorkerFilter": {
+      "name": "IslandFarm.WorkerFilter.name",
+      "help": "IslandFarm.WorkerFilter.help"
+    },
     "MinFarm": {
       "name": "IslandFarm.MinFarm.name",
       "help": "IslandFarm.MinFarm.help"
@@ -3513,6 +3552,10 @@
       "2": "2",
       "3": "3",
       "4": "4"
+    },
+    "WorkerFilter": {
+      "name": "IslandOrchard.WorkerFilter.name",
+      "help": "IslandOrchard.WorkerFilter.help"
     },
     "MinOrchard": {
       "name": "IslandOrchard.MinOrchard.name",
@@ -3546,6 +3589,10 @@
       "help": "IslandNursery.Positions.help",
       "1": "1",
       "2": "2"
+    },
+    "WorkerFilter": {
+      "name": "IslandNursery.WorkerFilter.name",
+      "help": "IslandNursery.WorkerFilter.help"
     },
     "MinNursery": {
       "name": "IslandNursery.MinNursery.name",
@@ -3587,6 +3634,10 @@
     "Wool": {
       "name": "IslandRancher.Wool.name",
       "help": "IslandRancher.Wool.help"
+    },
+    "WoolWorkerFilter": {
+      "name": "IslandRancher.WoolWorkerFilter.name",
+      "help": "IslandRancher.WoolWorkerFilter.help"
     }
   },
   "IslandFishery": {
@@ -3616,6 +3667,10 @@
     "MinShrimp": {
       "name": "IslandFishery.MinShrimp.name",
       "help": "IslandFishery.MinShrimp.help"
+    },
+    "MinCrayfish": {
+      "name": "IslandFishery.MinCrayfish.name",
+      "help": "IslandFishery.MinCrayfish.help"
     },
     "MinCrab": {
       "name": "IslandFishery.MinCrab.name",
@@ -3664,6 +3719,10 @@
       "3": "3",
       "4": "4"
     },
+    "WorkerFilter": {
+      "name": "IslandMine.WorkerFilter.name",
+      "help": "IslandMine.WorkerFilter.help"
+    },
     "MinCopper": {
       "name": "IslandMine.MinCopper.name",
       "help": "IslandMine.MinCopper.help"
@@ -3707,6 +3766,10 @@
       "3": "3",
       "4": "4"
     },
+    "WorkerFilter": {
+      "name": "IslandForest.WorkerFilter.name",
+      "help": "IslandForest.WorkerFilter.help"
+    },
     "MinElegant": {
       "name": "IslandForest.MinElegant.name",
       "help": "IslandForest.MinElegant.help"
@@ -3718,6 +3781,16 @@
     "MinSelected": {
       "name": "IslandForest.MinSelected.name",
       "help": "IslandForest.MinSelected.help"
+    }
+  },
+  "IslandDailyGather": {
+    "_info": {
+      "name": "IslandDailyGather._info.name",
+      "help": "IslandDailyGather._info.help"
+    },
+    "WorkerFilter": {
+      "name": "IslandDailyGather.WorkerFilter.name",
+      "help": "IslandDailyGather.WorkerFilter.help"
     }
   },
   "IslandRestaurant": {
@@ -4148,6 +4221,7 @@
       "carrot_omelette": "carrot_omelette",
       "stir_fried_chicken": "stir_fried_chicken",
       "steak_bowl": "steak_bowl",
+      "crayfish_stir_fry": "crayfish_stir_fry",
       "carnival": "carnival",
       "double_energy": "double_energy"
     },
@@ -4164,6 +4238,7 @@
       "carrot_omelette": "carrot_omelette",
       "stir_fried_chicken": "stir_fried_chicken",
       "steak_bowl": "steak_bowl",
+      "crayfish_stir_fry": "crayfish_stir_fry",
       "carnival": "carnival",
       "double_energy": "double_energy"
     },
@@ -4180,6 +4255,7 @@
       "carrot_omelette": "carrot_omelette",
       "stir_fried_chicken": "stir_fried_chicken",
       "steak_bowl": "steak_bowl",
+      "crayfish_stir_fry": "crayfish_stir_fry",
       "carnival": "carnival",
       "double_energy": "double_energy"
     },
@@ -4196,6 +4272,7 @@
       "carrot_omelette": "carrot_omelette",
       "stir_fried_chicken": "stir_fried_chicken",
       "steak_bowl": "steak_bowl",
+      "crayfish_stir_fry": "crayfish_stir_fry",
       "carnival": "carnival",
       "double_energy": "double_energy"
     },
@@ -4212,6 +4289,7 @@
       "carrot_omelette": "carrot_omelette",
       "stir_fried_chicken": "stir_fried_chicken",
       "steak_bowl": "steak_bowl",
+      "crayfish_stir_fry": "crayfish_stir_fry",
       "carnival": "carnival",
       "double_energy": "double_energy"
     },
@@ -4228,6 +4306,7 @@
       "carrot_omelette": "carrot_omelette",
       "stir_fried_chicken": "stir_fried_chicken",
       "steak_bowl": "steak_bowl",
+      "crayfish_stir_fry": "crayfish_stir_fry",
       "carnival": "carnival",
       "double_energy": "double_energy"
     },
@@ -4244,6 +4323,7 @@
       "carrot_omelette": "carrot_omelette",
       "stir_fried_chicken": "stir_fried_chicken",
       "steak_bowl": "steak_bowl",
+      "crayfish_stir_fry": "crayfish_stir_fry",
       "carnival": "carnival",
       "double_energy": "double_energy"
     },
@@ -4260,6 +4340,7 @@
       "carrot_omelette": "carrot_omelette",
       "stir_fried_chicken": "stir_fried_chicken",
       "steak_bowl": "steak_bowl",
+      "crayfish_stir_fry": "crayfish_stir_fry",
       "carnival": "carnival",
       "double_energy": "double_energy"
     },
@@ -4282,6 +4363,7 @@
       "carrot_omelette": "carrot_omelette",
       "stir_fried_chicken": "stir_fried_chicken",
       "steak_bowl": "steak_bowl",
+      "crayfish_stir_fry": "crayfish_stir_fry",
       "carnival": "carnival",
       "double_energy": "double_energy"
     }
@@ -5318,6 +5400,7 @@
       "roasted_skewer": "焼き串",
       "stir_fried_chicken": "鶏肉炒め",
       "steak_bowl": "ステーキ丼",
+      "crayfish_stir_fry": "crayfish_stir_fry",
       "carnival": "カーニバル",
       "double_energy": "ダブルエナジー"
     },
@@ -5328,6 +5411,7 @@
       "roasted_skewer": "焼き串",
       "stir_fried_chicken": "鶏肉炒め",
       "steak_bowl": "ステーキ丼",
+      "crayfish_stir_fry": "crayfish_stir_fry",
       "carnival": "カーニバル",
       "double_energy": "ダブルエナジー"
     },
@@ -5338,6 +5422,7 @@
       "roasted_skewer": "焼き串",
       "stir_fried_chicken": "鶏肉炒め",
       "steak_bowl": "ステーキ丼",
+      "crayfish_stir_fry": "crayfish_stir_fry",
       "carnival": "カーニバル",
       "double_energy": "ダブルエナジー"
     },
@@ -5348,6 +5433,7 @@
       "roasted_skewer": "焼き串",
       "stir_fried_chicken": "鶏肉炒め",
       "steak_bowl": "ステーキ丼",
+      "crayfish_stir_fry": "crayfish_stir_fry",
       "carnival": "カーニバル",
       "double_energy": "ダブルエナジー"
     },
@@ -5358,6 +5444,7 @@
       "roasted_skewer": "焼き串",
       "stir_fried_chicken": "鶏肉炒め",
       "steak_bowl": "ステーキ丼",
+      "crayfish_stir_fry": "crayfish_stir_fry",
       "carnival": "カーニバル",
       "double_energy": "ダブルエナジー"
     },
@@ -6027,6 +6114,8 @@
       "UseSmartSchedulingOperationCoinsPreserve": "Gui.OpsiScheduling.UseSmartSchedulingOperationCoinsPreserve",
       "OperationCoinsPreserve": "Gui.OpsiScheduling.OperationCoinsPreserve",
       "ActionPointPreserve": "Gui.OpsiScheduling.ActionPointPreserve",
+      "ActionPointEarlyTriggerEnable": "Gui.OpsiScheduling.ActionPointEarlyTriggerEnable",
+      "ActionPointEarlyTriggerThreshold": "Gui.OpsiScheduling.ActionPointEarlyTriggerThreshold",
       "OperationCoinsReturnThreshold": "Gui.OpsiScheduling.OperationCoinsReturnThreshold",
       "EnableMeowfficerFarming": "Gui.OpsiScheduling.EnableMeowfficerFarming",
       "EnableObscure": "Gui.OpsiScheduling.EnableObscure",
