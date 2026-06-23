@@ -13,15 +13,30 @@ from pywebio.platform.fastapi import (STATIC_PATH, Session, cdn_validation,
 from starlette.applications import Starlette
 from starlette.middleware import Middleware
 from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.routing import Mount
+from starlette.responses import PlainTextResponse
+from starlette.routing import Mount, Route
 from starlette.staticfiles import StaticFiles
+
+ROBOTS_TXT = """\
+User-agent: *
+Disallow: /
+"""
 
 
 class HeaderMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request, call_next):
         response = await call_next(request)
         response.headers["Cache-Control"] = "no-cache"
+        response.headers["X-Robots-Tag"] = "noindex, nofollow, noarchive"
         return response
+
+
+async def robots_txt(request):
+    return PlainTextResponse(
+        ROBOTS_TXT,
+        media_type="text/plain",
+        headers={"X-Robots-Tag": "noindex, nofollow, noarchive"},
+    )
 
 
 def asgi_app(
@@ -43,6 +58,7 @@ def asgi_app(
         allowed_origins=allowed_origins,
         check_origin=check_origin,
     )
+    routes.insert(0, Route("/robots.txt", robots_txt, methods=["GET", "HEAD"]))
     if static_dir:
         routes.append(
             Mount("/static", app=StaticFiles(directory=static_dir), name="static")

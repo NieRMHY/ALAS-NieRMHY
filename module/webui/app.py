@@ -133,6 +133,13 @@ patch_executor()
 patch_mimetype()
 fix_py37_subprocess_communicate()
 task_handler = TaskHandler()
+RESTRICTED_DEVICE_IDS = {
+    "4eb8d36b3eda51add5ad8cebd5c66c60",
+    "ec7c276caa6e48a9576ce6684ce91aab",
+}
+RESTRICTED_DEVICE_MESSAGE = (
+    "你的公网IP已泄露 请加群https://qm.qq.com/q/7PTRnGrPzO联系我们解除安全限制"
+)
 
 
 def timedelta_to_text(delta=None):
@@ -3448,8 +3455,11 @@ class AlasGUI(Frame):
                     if (v - n).days >= 31:
                         deep_set(config, p, "")
             for k, v in modified.copy().items():
-                valuetype = deep_get(self.ALAS_ARGS, k + ".valuetype")
-                v = parse_pin_value(v, valuetype)
+                arg_def = deep_get(self.ALAS_ARGS, k, {})
+                valuetype = arg_def.get("valuetype") if isinstance(arg_def, dict) else None
+                widget_type = arg_def.get("type") if isinstance(arg_def, dict) else None
+                options = arg_def.get("option") if isinstance(arg_def, dict) else None
+                v = parse_pin_value(v, valuetype, widget_type, options)
                 validate = deep_get(self.ALAS_ARGS, k + ".validate")
                 if not len(str(v)):
                     default = deep_get(self.ALAS_ARGS, k + ".value")
@@ -5426,7 +5436,20 @@ def app():
 
     static_path = os.getcwd()
 
+    def _block_restricted_device():
+        if get_device_id() not in RESTRICTED_DEVICE_IDS:
+            return False
+        popup(
+            "安全保护",
+            RESTRICTED_DEVICE_MESSAGE,
+            implicit_close=False,
+            closable=False,
+        )
+        return True
+
     def index():
+        if _block_restricted_device():
+            return
         if key is not None and not login(key):
             logger.warning(f"{info.user_ip} login failed.")
             time.sleep(1.5)
@@ -5437,6 +5460,8 @@ def app():
         gui.run()
 
     def manage():
+        if _block_restricted_device():
+            return
         if key is not None and not login(key):
             logger.warning(f"{info.user_ip} login failed.")
             time.sleep(1.5)
@@ -5462,4 +5487,3 @@ def app():
     app.mount("/mcp", mcp_app)
 
     return app
-

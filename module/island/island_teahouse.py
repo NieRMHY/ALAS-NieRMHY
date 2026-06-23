@@ -25,6 +25,7 @@ class IslandTeahouse(IslandShopBase):
         self.shop_type = "teahouse"
         self.time_prefix = "time_tea"
         self.chef_config = self.config.IslandTeahouse_ChefFilter
+        self.post_open_retry_swipe = True
 
         # === 初始化全局季节配置 ===
         self._init_season_config()
@@ -236,9 +237,13 @@ class IslandTeahouse(IslandShopBase):
                 if self.appear(ISLAND_SELECT_CHARACTER_CHECK, offset=1):
                     # 选择厨师
                     if self.select_character(character_list=self.chef_config):
-                        self.device.sleep(0.5)
-                        self.appear_then_click(SELECT_UI_CONFIRM)
-                        self.device.sleep(0.5)
+                        if not self.confirm_selected_character(f"{product}生产派遣"):
+                            self.back_to_postmanage_from_dispatch()
+                            return 0
+                    else:
+                        logger.warning(f"{product}生产派遣无可用角色: {self.chef_config}")
+                        self.back_to_postmanage_from_dispatch()
+                        return 0
                     continue
                 if self.appear(ISLAND_SELECT_PRODUCT_CHECK, offset=1):
                     # 在商品列表界面，点击固定位置，不检测图标
@@ -257,8 +262,7 @@ class IslandTeahouse(IslandShopBase):
                 self.device.sleep(0.5)
                 return 0
             else:
-                for _ in range(number - 1):
-                    self.device.click(POST_ADD_ONE)
+                self.post_add_one(number - 1)
                 self.device.sleep(0.5)
                 self.device.click(POST_ADD_ORDER)
                 self.device.sleep(0.5)
@@ -351,7 +355,7 @@ class IslandTeahouse(IslandShopBase):
                 drink_cn = self.seasonal_high_priority_drink['cn_name']
                 logger.info(f"阶段：高优先级季节饮品 — {drink_cn}")
                 temp_products = self.to_post_products.copy()
-                self.to_post_products = {drink_name: 6}
+                self.to_post_products = {drink_name: self.POST_PRODUCE_LIMIT}
                 logger.info(f"单独安排{drink_cn}生产: {self.to_post_products}")
 
                 self.schedule_production()
@@ -424,7 +428,7 @@ class IslandTeahouse(IslandShopBase):
                     post_num = post_id[-1]
                     time_var_name = f'{self.time_prefix}{post_num}'
                     logger.info(f"尝试生产常驻餐品 {away_cook}")
-                    batch_size = min(6, 9999)
+                    batch_size = self.POST_PRODUCE_LIMIT
                     batch_size = self.get_max_producible(away_cook, batch_size)
                     if batch_size > 0:
                         result = self.post_produce(

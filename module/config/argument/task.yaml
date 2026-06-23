@@ -150,6 +150,7 @@ Event:
       - Scheduler
       - Campaign
       - StopCondition
+      - WarArchives
       - Fleet
       - Submarine
       - Emotion
@@ -372,6 +373,7 @@ Island:
       - IslandPlan
     IslandBusiness:
       - Scheduler
+      - IslandBusiness
       - IslandBusinessShop1
       - IslandBusinessShop2
       - IslandBusinessShop3
@@ -428,6 +430,12 @@ Island:
     IslandDailyOrder:
       - Scheduler
       - IslandDailyOrder
+    IslandDailyInteract:
+      - Scheduler
+      - IslandDailyInteract
+    IslandPearlSell:
+      - Scheduler
+      - IslandPearlSell
 
 # ==================== Tool ====================
 

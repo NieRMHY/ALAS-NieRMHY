@@ -93,7 +93,7 @@ class Reward(UI):
                     click_interval.reset()
                     clicked = True
                     continue
-                if self.appear(MISSION_UNFINISH, offset=(20, 20)):
+                if self.appear(MISSION_UNFINISH, offset=(50, 200)):
                     return clicked
 
     def _reward_mission_claim_receive(self):
@@ -314,4 +314,4 @@ class Reward(UI):
         self.ui_goto(page_main)
         self.reward_mission(daily=self.config.Reward_CollectMission,
                             weekly=self.config.Reward_CollectWeeklyMission)
-        self.config.task_delay(success=True)
+        self.config.task_delay(server_update=True)

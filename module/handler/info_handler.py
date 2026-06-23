@@ -204,18 +204,12 @@ class InfoHandler(ModuleBase):
             return False
 
         if self.appear(USE_DATA_KEY, offset=(20, 20)):
-            skip_first_screenshot = True
-            while 1:
-                if skip_first_screenshot:
-                    skip_first_screenshot = False
-                else:
-                    self.device.screenshot()
-
+            # enable USE_DATA_KEY_NOTIFIED
+            for _ in self.loop():
                 enabled = self.image_color_count(
                     USE_DATA_KEY_NOTIFIED, color=(140, 207, 66), threshold=180, count=10)
                 if enabled:
                     break
-
                 if self.appear(USE_DATA_KEY, offset=(20, 20), interval=5):
                     self.device.click(USE_DATA_KEY_NOTIFIED)
                     continue
@@ -244,6 +238,24 @@ class InfoHandler(ModuleBase):
             是否处理了皮肤弹窗。
         """
         return self.appear_then_click(GET_SKIN, offset=(20, 20), interval=2)
+
+    def handle_get_items_ship(self, drop=None):
+        """
+        2026.06.12 added different GET_ITEMS popup when getting ship
+
+        Args:
+            drop (DropImage):
+
+        Returns:
+            bool:
+        """
+        if self.appear(GET_ITEMS_SHIP_1, offset=5, interval=2):
+            if drop:
+                drop.handle_add(self)
+            self.device.click(GET_ITEMS_SHIP_1)
+            return True
+
+        return False
 
     """
     大舰队弹窗

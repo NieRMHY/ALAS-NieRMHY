@@ -1,5 +1,8 @@
 from module.island_select_character.assets import *
 from module.base.button import *
+from module.base.utils import color_similar, color_similarity_2d, crop, get_color
+import numpy as np
+from module.ocr.ocr import DigitCounter
 from module.ui.ui import UI
 from module.logger import logger
 
@@ -18,11 +21,8 @@ class SelectCharacter(UI):
         # 定义状态检测区域（相对于每个角色按钮）
         self.character_area_relative = (25, 10, 125, 72)
         self.working_area_relative = (15, 65, 105, 95)
-        self.stamina_area_relative = (26, 139, 27, 140)
-        # (18, 139, 19, 140)>25
-        # (22, 139, 23, 140)>30
-        # (26, 139, 27, 140)>35
-        # (56, 139, 58, 152) 约75
+        self.stamina_area_relative = (18, 139, 58, 152)
+        self.stamina_ocr_area_relative = (0, 136, 80, 155)
         self.selected_area_relative = (86, 1, 119, 12)
 
         # 角色模板映射
@@ -97,16 +97,20 @@ class SelectCharacter(UI):
         if not target_templates:
             return results
 
+        remaining_templates = target_templates.copy()
         for row, col, button in self.select_character_grid.generate():
             character_status = self._recognize_character_status(
-                screenshot, button, character_targets=target_templates
+                screenshot, button, character_targets=remaining_templates
             )
             if character_status:
+                remaining_templates.pop(character_status["character_name"], None)
                 results.append({
                     "grid_position": (row, col),
                     "button_area": button.area,
                     **character_status
                 })
+                if not remaining_templates:
+                    break
 
         return results
 
@@ -129,8 +133,9 @@ class SelectCharacter(UI):
         # 2. 识别是否工作中
         is_working = self._check_working_status(screenshot, button)
 
-        # 3. 识别体力是否充沛
-        has_stamina = self._check_stamina_status(screenshot, button)
+        # 3. 识别当前体力值
+        stamina = self._get_stamina_value(screenshot, button)
+        has_stamina = stamina >= 35
 
         # 4. 识别是否已选中
         is_selected = self._check_selected_status(screenshot, button)
@@ -138,6 +143,7 @@ class SelectCharacter(UI):
         return {
             "character_name": character_name,
             "is_working": is_working,
+            "stamina": stamina,
             "has_stamina": has_stamina,
             "is_selected": is_selected
         }
@@ -181,9 +187,34 @@ class SelectCharacter(UI):
 
     def _check_stamina_status(self, screenshot, button):
         """检查体力是否充沛"""
-        stamina_area = self._get_absolute_area(button, self.stamina_area_relative)
+        stamina_area = self._get_absolute_area(button, (26, 139, 27, 140))
         stamina_color = get_color(screenshot, stamina_area)
         return color_similar(stamina_color, (18.0, 211.0, 186.0), 80)
+
+    def _get_stamina_value(self, screenshot, button):
+        """识别角色当前体力值。"""
+        stamina_area = self._get_absolute_area(button, self.stamina_ocr_area_relative)
+        ocr = DigitCounter(
+            stamina_area,
+            letter=(255, 255, 255),
+            threshold=128,
+            name='OCR_CHARACTER_STAMINA',
+        )
+        current, _, total = ocr.ocr(screenshot)
+        if total:
+            return current
+
+        return self._get_stamina_percentage_fallback(screenshot, button)
+
+    def _get_stamina_percentage_fallback(self, screenshot, button):
+        """OCR 失败时用体力条绿色长度估算体力。"""
+        stamina_area = self._get_absolute_area(button, self.stamina_area_relative)
+        stamina_image = crop(screenshot, stamina_area, copy=False)
+        similarity = color_similarity_2d(stamina_image, color=(18.0, 211.0, 186.0))
+        columns = np.where(np.any(similarity > 175, axis=0))[0]
+        if not columns.size:
+            return 0
+        return min(100, int(round((columns[-1] + 1) / stamina_image.shape[1] * 100)))
 
     def _check_selected_status(self, screenshot, button):
         """检查是否已选中"""
@@ -238,6 +269,23 @@ class SelectCharacter(UI):
             return True
         return False
 
+    @staticmethod
+    def parse_character_filter(character_list):
+        """
+        解析角色优先级配置。
+
+        Args:
+            character_list: 使用 > 分隔的字符串，或角色名列表。
+
+        Returns:
+            list[str]: 去除空项后的角色名列表，保留原始顺序。
+        """
+        if isinstance(character_list, str):
+            return [char.strip() for char in character_list.split(">") if char.strip()]
+        if character_list is None:
+            return []
+        return [str(char).strip() for char in character_list if str(char).strip()]
+
     def _select_first_available_character(self, character_list):
         """
         从指定角色列表中选择第一个空闲且体力充沛的角色
@@ -256,6 +304,13 @@ class SelectCharacter(UI):
                         char_info["has_stamina"]):
                     return char_info["grid_position"]
             return None
+
+        if character_list == ["WorkerJuu"]:
+            logger.info("仅选择 WorkerJuu，先应用体力排序")
+            if not self.select_character_filter():
+                return None
+            screenshot = self.device.screenshot()
+            return self.find_specific_character(screenshot, "WorkerJuu")
 
         # 计算需要识别的角色集合（包含列表角色+最终回退的WorkerJuu）
         target_names = list(character_list)
@@ -308,6 +363,58 @@ class SelectCharacter(UI):
 
         return None
 
+    def find_strict_available_character(self, character_list, min_stamina=35):
+        """
+        只从指定角色中寻找可选角色，不回退 WorkerJuu。
+
+        Args:
+            character_list: 使用 > 分隔的字符串，或角色名列表。
+            min_stamina: 最低体力阈值。
+
+        Returns:
+            dict | None: 可点击角色状态，找不到则返回 None。
+        """
+        characters = self.parse_character_filter(character_list)
+        if not characters:
+            return None
+
+        screenshot = self.device.screenshot()
+        target_characters = self.recognize_target_characters(screenshot, characters)
+        character_dict = {
+            char_info["character_name"]: char_info
+            for char_info in target_characters
+        }
+        logger.info(f"指定角色状态: {character_dict}")
+
+        for char_name in characters:
+            char_info = character_dict.get(char_name)
+            if not char_info:
+                continue
+            if char_info["is_working"] or char_info["is_selected"]:
+                continue
+            if char_info.get("stamina", 0) < min_stamina:
+                continue
+            return char_info
+
+        return None
+
+    def select_specific_character(self, character_list, min_stamina=35):
+        """
+        只尝试选择指定角色，不回退 WorkerJuu。
+
+        Returns:
+            bool: 成功选择角色返回 True，否则返回 False。
+        """
+        char_info = self.find_strict_available_character(character_list, min_stamina=min_stamina)
+        if not char_info:
+            return False
+
+        row, col = char_info["grid_position"]
+        button = self.select_character_grid[row, col]
+        self.device.click(button)
+        self.device.sleep(0.3)
+        return True
+
     def find_specific_character(self, screenshot, character_name="WorkerJuu"):
         """查找指定角色的位置信息，只检查目标角色的模板，不做全量匹配"""
         target_characters = self.recognize_target_characters(screenshot, [character_name])
@@ -329,12 +436,9 @@ class SelectCharacter(UI):
             bool: 成功选择角色返回True，无角色可选返回False
         """
         # 解析角色列表
-        if isinstance(character_list, str):
-            # 处理 "Cheshire > YingSwei" 格式
-            characters = [char.strip() for char in character_list.split(">")]
-        else:
-            # 假设传入的是列表
-            characters = character_list
+        characters = self.parse_character_filter(character_list)
+        if not characters:
+            characters = ["WorkerJuu"]
 
         position = self._select_first_available_character(characters)
 

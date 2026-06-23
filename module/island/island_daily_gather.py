@@ -10,6 +10,8 @@ ISLAND_GATHER_SAFE_AREA = Button(
     file={'cn': './assets/cn/island/ISLAND_GATHER_SAFE_AREA.png', 'en': './assets/cn/island/ISLAND_GATHER_SAFE_AREA.png', 'jp': './assets/cn/island/ISLAND_GATHER_SAFE_AREA.png', 'tw': './assets/cn/island/ISLAND_GATHER_SAFE_AREA.png'}
 )
 
+GATHER_STAMINA_THRESHOLD = 100
+
 
 class IslandDailyGather(Island):
     """
@@ -23,7 +25,7 @@ class IslandDailyGather(Island):
       4. 依次点击三个"+"按钮，每个点击后：
          a. 等待角色选择界面出现
          b. 对角色列表按"生活等级"升序排序
-         c. 选择第一个"非工作中"的角色
+         c. 优先选择体力达标且非工作中的角色
       5. 点击"出发"按钮完成采集
     """
 
@@ -92,19 +94,25 @@ class IslandDailyGather(Island):
         #    如果所有采集物已采集完毕，确定时会弹出提示弹窗
         logger.info("步骤4: 处理选择采集目标确认")
         if self._handle_target_selection():
+            worker_list = self._daily_gather_worker_list()
             # 如果成功选择了采集目标，继续后续流程
             # 5. 依次点击三个"+"按钮并选择角色
+            character_selected = True
             for i in range(3):
                 logger.info(f"步骤5-{i+1}: 点击第{i+1}个+按钮并选择角色")
-                self._click_plus_and_select_character(i)
+                if not self._click_plus_and_select_character(i, worker_list):
+                    logger.warning(f"第{i + 1}个槽位角色选择失败，终止本次采集派遣")
+                    character_selected = False
+                    break
 
-            # 6. 点击"出发"按钮
-            logger.info("步骤6: 点击出发按钮")
-            self._click_depart()
+            if character_selected:
+                # 6. 点击"出发"按钮
+                logger.info("步骤6: 点击出发按钮")
+                self._click_depart()
 
-            # 7. 处理采集完成页面
-            logger.info("步骤7: 等待采集完成并关闭完成页面")
-            self._handle_collection_complete()
+                # 7. 处理采集完成页面
+                logger.info("步骤7: 等待采集完成并关闭完成页面")
+                self._handle_collection_complete()
         else:
             logger.info("所有采集物已采集完毕，跳过后续步骤")
 
@@ -230,47 +238,95 @@ class IslandDailyGather(Island):
             self.device.sleep(0.3)
         return False
 
-    def _click_plus_and_select_character(self, index):
+    def _daily_gather_worker_list(self):
+        """
+        解析每日采集自定义角色配置。
+
+        每日采集界面没有 WorkerJuu，配置中出现时必须忽略。
+        """
+        config = self.config.IslandDailyGather_WorkerFilter
+        characters = self.parse_character_filter(config)
+        if not characters:
+            return []
+
+        filtered = []
+        ignored_worker = False
+        for character in characters:
+            if character == "WorkerJuu":
+                ignored_worker = True
+                continue
+            filtered.append(character)
+
+        if ignored_worker:
+            logger.warning("每日采集不能选择 WorkerJuu，已自动忽略")
+
+        if len(filtered) > 3:
+            logger.warning(f"每日采集最多指定 3 个有效角色，已忽略后续角色: {filtered[3:]}")
+            filtered = filtered[:3]
+
+        logger.info(f"每日采集自定义角色: {filtered}")
+        return filtered
+
+    def _click_plus_and_select_character(self, index, worker_list=None):
         """
         点击第index个"+"按钮并选择角色
 
         Args:
             index: 槽位索引 (0, 1, 2)
+            worker_list: 每日采集自定义角色列表。
         """
         plus_buttons = [ISLAND_GATHER_PLUS_A, ISLAND_GATHER_PLUS_B, ISLAND_GATHER_PLUS_C]
         plus_button = plus_buttons[index]
+        worker_list = worker_list or []
 
-        # 点击"+"按钮
-        logger.info(f"点击第{index + 1}个+按钮")
-        self.device.click(plus_button)
-        self.device.sleep(0.5)
-
-        # 等待角色选择界面出现
-        self._wait_for_character_select()
+        # 点击"+"按钮，若页面动画或点击未生效则重试，避免无限等待。
+        for attempt in range(3):
+            logger.info(f"点击第{index + 1}个+按钮")
+            self.device.click(plus_button)
+            if self._wait_for_character_select(timeout=6):
+                break
+            logger.warning(f"第{index + 1}个槽位角色选择界面未出现，重试 {attempt + 1}/3")
+        else:
+            logger.warning(f"第{index + 1}个槽位无法打开角色选择界面")
+            return False
 
         # 按"生活等级"进行升序排序
         self._sort_by_life_level()
 
-        # 选择第一个"非工作中"的角色
-        if not self._select_first_idle_character():
+        # 选择体力达标且非工作中的角色
+        selected = False
+        if index < len(worker_list):
+            character = worker_list[index]
+            logger.info(f"第{index + 1}个槽位尝试选择指定角色: {character}")
+            selected = self.select_specific_character(character, min_stamina=GATHER_STAMINA_THRESHOLD)
+            if not selected:
+                logger.warning(f"第{index + 1}个槽位指定角色不可用，回退旧逻辑: {character}")
+
+        if not selected and not self._select_character_with_stamina_check():
             logger.warning(f"第{index + 1}个槽位未找到可用角色，跳过")
+            self.device.click(SELECT_UI_BACK)
+            self.device.sleep(0.3)
+            return False
 
         # 点击确认按钮完成选择
         self.device.sleep(0.3)
-        self.appear_then_click(SELECT_UI_CONFIRM)
-        self.device.sleep(0.5)
+        if not self.confirm_selected_character_closed(f"每日采集第{index + 1}个槽位"):
+            self.device.click(SELECT_UI_BACK)
+            self.device.sleep(0.3)
+            return False
         logger.info(f"第{index + 1}个槽位角色选择完成")
+        return True
 
-    def _wait_for_character_select(self):
+    def _wait_for_character_select(self, timeout=8):
         """
         等待角色选择界面出现
         """
-        while True:
-            self.device.screenshot()
+        for _ in self.loop(timeout=timeout, skip_first=False):
             if self.appear(ISLAND_SELECT_CHARACTER_CHECK, offset=1):
                 logger.info("角色选择界面已出现")
-                break
-            self.device.sleep(0.3)
+                return True
+
+        return False
 
     def _sort_by_life_level(self):
         """
@@ -302,32 +358,87 @@ class IslandDailyGather(Island):
 
         logger.info("生活等级升序排序完成")
 
-    def _select_first_idle_character(self):
+    def _select_character_with_stamina_check(self):
         """
-        从当前角色列表中按网格位置顺序选择第一个"非工作中且非选中"的角色
+        从当前角色列表中选择体力达标且非工作中的角色。
+
+        若没有达到阈值的角色，则回退选择当前页体力最高的空闲角色，避免流程卡住。
         注：采集界面的角色选择没有黄鸡角色
 
         Returns:
             bool: 是否成功选择角色
         """
         screenshot = self.device.screenshot()
-        characters = self.recognize_all_characters(screenshot)
+        detected = False
+        available = []
 
-        if not characters:
+        for row, col, button in self.select_character_grid.generate():
+            character_status = self._recognize_character_status(screenshot, button)
+            if not character_status:
+                continue
+
+            detected = True
+            char_info = {
+                "grid_position": (row, col),
+                "button_area": button.area,
+                **character_status,
+            }
+            if char_info["is_working"] or char_info["is_selected"]:
+                continue
+
+            if char_info.get("stamina", 0) >= GATHER_STAMINA_THRESHOLD:
+                return self._click_character(char_info, f"体力达标 >= {GATHER_STAMINA_THRESHOLD}")
+
+            available.append(char_info)
+
+        if not detected:
             logger.warning("未检测到任何角色")
             return False
 
-        # 按网格位置排序，选择第一个非工作中且非选中的角色
+        if not available:
+            logger.warning("所有角色均在工作中或已被选中，无法选择空闲角色")
+            return False
+
+        best_char = max(available, key=lambda item: item.get("stamina", 0))
+        logger.warning(
+            f"未找到体力达标角色，回退选择当前页体力最高角色: "
+            f"{best_char['character_name']} ({best_char.get('stamina', 0)})"
+        )
+        return self._click_character(best_char, "体力最高回退")
+
+    def _click_character(self, char_info, reason):
+        """
+        点击角色选择网格。
+
+        Args:
+            char_info: recognize_all_characters() 返回的角色信息。
+            reason: 日志中的选择原因。
+
+        Returns:
+            bool: 是否成功点击。
+        """
+        row, col = char_info["grid_position"]
+        stamina = char_info.get("stamina", 0)
+        logger.info(
+            f"选择角色: {char_info['character_name']} "
+            f"(位置: {row},{col}, 体力: {stamina}, 原因: {reason})"
+        )
+        button = self.select_character_grid[row, col]
+        self.device.click(button)
+        self.device.sleep(0.3)
+        return True
+
+    def _select_first_idle_character(self):
+        """
+        兼容旧调用：选择第一个空闲角色。
+        """
+        screenshot = self.device.screenshot()
+        characters = self.recognize_all_characters(screenshot)
+
         for char_info in characters:
             if not char_info["is_working"] and not char_info["is_selected"]:
-                row, col = char_info["grid_position"]
-                logger.info(f"选择空闲且未选中角色: {char_info['character_name']} (位置: {row},{col})")
-                button = self.select_character_grid[row, col]
-                self.device.click(button)
-                self.device.sleep(0.3)
-                return True
+                return self._click_character(char_info, "空闲且未选中")
 
-        # 所有角色都在工作中或已被选中
         logger.warning("所有角色均在工作中或已被选中，无法选择空闲角色")
         return False
 

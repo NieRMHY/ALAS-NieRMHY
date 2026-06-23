@@ -350,6 +350,14 @@
       "name": "Task.IslandDailyOrder.name",
       "help": "Task.IslandDailyOrder.help"
     },
+    "IslandDailyInteract": {
+      "name": "每日/週任務",
+      "help": "處理島嶼摸貓、JUU速運、商區外送服務與每週照相任務。相關按鈕資源生成後可啟用。"
+    },
+    "IslandPearlSell": {
+      "name": "Task.IslandPearlSell.name",
+      "help": "Task.IslandPearlSell.help"
+    },
     "Daemon": {
       "name": "半自動點選",
       "help": ""
@@ -515,6 +523,7 @@
       "cn_channel-2": "[国服] 十字军行动",
       "cn_channel-3": "[国服] 龙骑兵行动",
       "cn_channel-4": "[国服] 冥王星行动",
+      "cn_channel-5": "[国服] 群岛计划",
       "en-0": "[EN] Avrora",
       "en-1": "[EN] Lexington",
       "en-2": "[EN] Sandy",
@@ -998,7 +1007,7 @@
     },
     "TaskPriorityAdjustment": {
       "name": "任務優先順序調整",
-      "help": "Restart    # 重啟遊戲\n> OpsiCrossMonth    # 大世界跨月每日\n> Commission > Tactical > Research    # 委託 > 戰術學院 > 科研\n> Exercise    # 演習\n> Dorm > Meowfficer > Guild > Gacha    # 後宅 > 指揮喵 > 大艦隊 > 每日抽卡\n> Reward    # 收獲\n> ShopFrequent > ShopOnce > Shipyard > Freebies > Island    # 通用商店 > 其他商店 > 開發船塢 > 白嫖獎勵 > 島嶼計劃\n> PrivateQuarters    # 宿舍計劃\n> OpsiExplore    # 每月開荒\n> Minigame > Awaken    # 小遊戲 > 認知覺醒\n> OpsiAshBeacon    # meta作戰\n> OpsiDaily > OpsiShop > OpsiVoucher    # 大世界日常 > 港口商店 > 兌換商店\n> OpsiAbyssal > OpsiStronghold > OpsiObscure > OpsiArchive    # 深淵海域 > 塞壬要塞 > 隱秘海域 > 檔案坐標\n> Daily > Hard > OpsiAshBeacon > OpsiAshAssist > OpsiMonthBoss     # 每日挑戰 > 困難圖 > meta作戰 > meta支援 > 月度boss\n> Sos > EventSp > EventA > EventB > EventC > EventD    # Sos > 活動每日SP > 活動每日A > 活動每日B > 活動每日C > 活動每日D\n> RaidDaily > CoalitionSp > WarArchives > MaritimeEscort    # 共鬥活動每日 > 共鬥活動sp > 作戰檔案 > 商船護航\n> Event > Event2 > Raid > Hospital > HospitalEvent > Coalition > RaidScuttle > Main > Main2 > Main3    # 活動圖 > 活動圖2 > 共鬥活動 > 醫院活動 > 共鬥活動 > 共鬥沉船 > 主線 > 主線2 > 主線3\n> OpsiMeowfficerFarming    # 短貓相接\n> GemsFarming    # 刷緊急委託\n> OpsiHazard1Leveling    # 侵蝕一練級\n> ThreeOilLowCost    # 三油低耗"
+      "help": "預設優先順序參考（# 後為說明，實際填寫時不要複製註解）：\nRestart    # 重啟遊戲\n> OpsiCrossMonth    # 大世界跨月每日\n> Commission > Tactical > Research    # 委託 > 戰術學院 > 科研\n> Exercise    # 演習\n> Dorm > Meowfficer > Guild > Gacha    # 後宅 > 指揮喵 > 大艦隊 > 每日抽卡\n> Reward    # 收獲\n> ShopFrequent > ShopOnce > Shipyard > Freebies    # 通用商店 > 其他商店 > 開發船塢 > 白嫖獎勵\n> PrivateQuarters    # 私人休息室\n> OpsiExplore    # 大世界每月開荒\n> Minigame > Awaken    # 小遊戲 > 認知覺醒\n> OpsiAshBeacon    # META信標作戰\n> OpsiDaily > OpsiShop > OpsiVoucher > EventShop    # 大世界日常 > 港口商店 > 兌換商店 > 活動商店\n> OpsiAbyssal > OpsiStronghold > OpsiObscure > OpsiArchive    # 深淵海域 > 塞壬要塞 > 隱秘海域 > 檔案坐標\n> Daily > Hard > OpsiAshBeacon > OpsiAshAssist > OpsiMonthBoss    # 每日挑戰 > 困難圖 > META作戰 > META支援 > 月度boss\n> Sos > EventSp > EventA > EventB > EventC > EventD    # SOS > 活動每日SP > 活動每日A > 活動每日B > 活動每日C > 活動每日D\n> RaidDaily > CoalitionSp > WarArchives > MaritimeEscort    # 共鬥活動每日 > 共鬥活動SP > 作戰檔案 > 商船護航\n> IslandJuuEatery > IslandJuuCoffee > IslandGrill > IslandTeahouse > IslandRestaurant    # 島嶼啾啾簡餐 > 啾咖啡 > 烏魚烤肉 > 白熊飲品 > 有魚餐館\n> IslandFarm > IslandRancher > IslandMineForest > IslandDailyGather > IslandManufacture    # 島嶼農田 > 牧場 > 礦山林場 > 每日採集 > 製造業\n> IslandAirDrop > IslandBusiness > IslandDailyOrder > IslandDailyInteract > IslandPearlSell > IslandCargoPreparation    # 島嶼每日補給 > 經營模組 > 每日訂單 > 每日/週任務 > 每週珍珠採購與售賣 > 貨物籌備\n> Event > Event2 > Event3 > Raid > Hospital > HospitalEvent > Coalition > RaidScuttle > Main > Main2 > Main3    # 活動圖1 > 活動圖2 > 活動圖3 > 共鬥活動 > 醫院活動 > 醫院活動事件 > 共鬥活動 > 共鬥沉船 > 主線 > 主線2 > 主線3\n> OpsiMeowfficerFarming    # 短貓相接\n> GemsFarming    # 刷緊急委託\n> Ambush11    # 1-1刷伏擊\n> OpsiHazard1Leveling    # 侵蝕一練級\n> ThreeOilLowCost    # 三油低耗\n\n格式：每行只寫任務名，用 `>` 連接優先順序（越靠前優先順序越高）。\n上面的 `#` 註解僅用於說明，寫入配置時不要保留註解，否則任務名匹配會失敗。\n任務名請使用英文設定任務名；不知道任務名時可切到英文介面查看。\n留空可使用內建預設優先順序。"
     }
   },
   "OneClickRetire": {
@@ -1218,8 +1227,10 @@
       "war_archives_20220915_cn": "檔案 紫絳槿嵐",
       "war_archives_20221222_cn": "檔案 定向折疊",
       "war_archives_20230223_cn": "檔案 湮燼塵墟",
+      "war_archives_20230525_cn": "檔案 空相交會點",
       "war_archives_20230803_cn": "檔案 奏響鳶尾之歌",
-      "war_archives_20231026_cn": "檔案 飓風與青春之泉"
+      "war_archives_20231026_cn": "檔案 飓風與青春之泉",
+      "war_archives_20240725_cn": "檔案 幻夢間奏曲"
     },
     "Mode": {
       "name": "關卡模式",
@@ -1253,7 +1264,10 @@
     },
     "DefeatWithdraw": {
       "name": "道中戰鬥失敗撤退",
-      "help": "道中戰鬥戰敗時的處理方式。開啟時直接退出海域，關閉時嘗試由另一隊接管後續戰鬥。"
+      "help": "道中戰鬥戰敗時的處理方式。開啟時直接退出海域，關閉時嘗試由另一隊接管後續戰鬥。",
+      "withdraw_continue": "withdraw_continue",
+      "switch_fleet": "switch_fleet",
+      "withdraw_stop": "withdraw_stop"
     }
   },
   "StopCondition": {
@@ -1294,6 +1308,28 @@
     "ReachLevel": {
       "name": "艦船升至 X 級後停止",
       "help": "任意等級低於 X 的艦船升級至 X 級後停止\n0 表示不限制等級"
+    }
+  },
+  "WarArchives": {
+    "_info": {
+      "name": "WarArchives._info.name",
+      "help": "WarArchives._info.help"
+    },
+    "DailyRunCount": {
+      "name": "WarArchives.DailyRunCount.name",
+      "help": "WarArchives.DailyRunCount.help"
+    },
+    "DailyRunCountRemain": {
+      "name": "WarArchives.DailyRunCountRemain.name",
+      "help": "WarArchives.DailyRunCountRemain.help"
+    },
+    "DailyRunCountRecord": {
+      "name": "WarArchives.DailyRunCountRecord.name",
+      "help": "WarArchives.DailyRunCountRecord.help"
+    },
+    "DailyRunCountLimit": {
+      "name": "WarArchives.DailyRunCountLimit.name",
+      "help": "WarArchives.DailyRunCountLimit.help"
     }
   },
   "Fleet": {
@@ -2237,6 +2273,10 @@
     "ConsumeCoins": {
       "name": "消耗溢位物資",
       "help": "物資超過550000時購買所有消耗物資的物品"
+    },
+    "OverflowCoins": {
+      "name": "GeneralShop.OverflowCoins.name",
+      "help": "GeneralShop.OverflowCoins.help"
     },
     "Filter": {
       "name": "商店過濾器",
@@ -3211,6 +3251,10 @@
       "name": "保留 X 點行動力",
       "help": "行動力低於 X 後停止，自動開啟行動力箱子，X 包含箱子中的行動力，建議保留3000行動力給侵蝕1練級\n這個值將在大世界重置前3天自動減少至200點，如果啟用侵蝕1練級則改為1000點，並在最後一天自動減少至0點"
     },
+    "SmartNaturalAPCleanup": {
+      "name": "OpsiMeowfficerFarming.SmartNaturalAPCleanup.name",
+      "help": "OpsiMeowfficerFarming.SmartNaturalAPCleanup.help"
+    },
     "HazardLevel": {
       "name": "侵蝕等級",
       "help": "按順時針出擊特定侵蝕等級的海域\n建議選 5 或 3，有更高的 貓點/行動力 比",
@@ -3401,6 +3445,16 @@
       "name": "短貓相接 保留 X 點行動力",
       "help": "行動力低於 X 後停止，自動開啟行動力箱子，X 包含箱子中的行動力，建議保留1000行動力給侵蝕1練級"
     },
+    "ActionPointEarlyTriggerEnable": {
+      "name": "OpsiScheduling.ActionPointEarlyTriggerEnable.name",
+      "help": "OpsiScheduling.ActionPointEarlyTriggerEnable.help",
+      "True": "True",
+      "False": "False"
+    },
+    "ActionPointEarlyTriggerThreshold": {
+      "name": "OpsiScheduling.ActionPointEarlyTriggerThreshold.name",
+      "help": "OpsiScheduling.ActionPointEarlyTriggerThreshold.help"
+    },
     "OperationCoinsReturnThreshold": {
       "name": "獲取 X 個作戰補給憑證",
       "help": "在黃幣獲取任務時 共獲取(增加) X 個作戰補給憑證後返回侵蝕1練級"
@@ -3472,6 +3526,10 @@
       "3": "3",
       "4": "4"
     },
+    "WorkerFilter": {
+      "name": "IslandFarm.WorkerFilter.name",
+      "help": "IslandFarm.WorkerFilter.help"
+    },
     "MinFarm": {
       "name": "IslandFarm.MinFarm.name",
       "help": "IslandFarm.MinFarm.help"
@@ -3498,6 +3556,10 @@
       "2": "2",
       "3": "3",
       "4": "4"
+    },
+    "WorkerFilter": {
+      "name": "IslandOrchard.WorkerFilter.name",
+      "help": "IslandOrchard.WorkerFilter.help"
     },
     "MinOrchard": {
       "name": "IslandOrchard.MinOrchard.name",
@@ -3531,6 +3593,10 @@
       "help": "IslandNursery.Positions.help",
       "1": "1",
       "2": "2"
+    },
+    "WorkerFilter": {
+      "name": "IslandNursery.WorkerFilter.name",
+      "help": "IslandNursery.WorkerFilter.help"
     },
     "MinNursery": {
       "name": "IslandNursery.MinNursery.name",
@@ -3572,6 +3638,10 @@
     "Wool": {
       "name": "IslandRancher.Wool.name",
       "help": "IslandRancher.Wool.help"
+    },
+    "WoolWorkerFilter": {
+      "name": "IslandRancher.WoolWorkerFilter.name",
+      "help": "IslandRancher.WoolWorkerFilter.help"
     }
   },
   "IslandFishery": {
@@ -3601,6 +3671,10 @@
     "MinShrimp": {
       "name": "IslandFishery.MinShrimp.name",
       "help": "IslandFishery.MinShrimp.help"
+    },
+    "MinCrayfish": {
+      "name": "IslandFishery.MinCrayfish.name",
+      "help": "IslandFishery.MinCrayfish.help"
     },
     "MinCrab": {
       "name": "IslandFishery.MinCrab.name",
@@ -3649,6 +3723,10 @@
       "3": "3",
       "4": "4"
     },
+    "WorkerFilter": {
+      "name": "IslandMine.WorkerFilter.name",
+      "help": "IslandMine.WorkerFilter.help"
+    },
     "MinCopper": {
       "name": "IslandMine.MinCopper.name",
       "help": "IslandMine.MinCopper.help"
@@ -3692,6 +3770,10 @@
       "3": "3",
       "4": "4"
     },
+    "WorkerFilter": {
+      "name": "IslandForest.WorkerFilter.name",
+      "help": "IslandForest.WorkerFilter.help"
+    },
     "MinElegant": {
       "name": "IslandForest.MinElegant.name",
       "help": "IslandForest.MinElegant.help"
@@ -3703,6 +3785,16 @@
     "MinSelected": {
       "name": "IslandForest.MinSelected.name",
       "help": "IslandForest.MinSelected.help"
+    }
+  },
+  "IslandDailyGather": {
+    "_info": {
+      "name": "IslandDailyGather._info.name",
+      "help": "IslandDailyGather._info.help"
+    },
+    "WorkerFilter": {
+      "name": "IslandDailyGather.WorkerFilter.name",
+      "help": "IslandDailyGather.WorkerFilter.help"
     }
   },
   "IslandRestaurant": {
@@ -4133,6 +4225,7 @@
       "carrot_omelette": "carrot_omelette",
       "stir_fried_chicken": "stir_fried_chicken",
       "steak_bowl": "steak_bowl",
+      "crayfish_stir_fry": "crayfish_stir_fry",
       "carnival": "carnival",
       "double_energy": "double_energy"
     },
@@ -4149,6 +4242,7 @@
       "carrot_omelette": "carrot_omelette",
       "stir_fried_chicken": "stir_fried_chicken",
       "steak_bowl": "steak_bowl",
+      "crayfish_stir_fry": "crayfish_stir_fry",
       "carnival": "carnival",
       "double_energy": "double_energy"
     },
@@ -4165,6 +4259,7 @@
       "carrot_omelette": "carrot_omelette",
       "stir_fried_chicken": "stir_fried_chicken",
       "steak_bowl": "steak_bowl",
+      "crayfish_stir_fry": "crayfish_stir_fry",
       "carnival": "carnival",
       "double_energy": "double_energy"
     },
@@ -4181,6 +4276,7 @@
       "carrot_omelette": "carrot_omelette",
       "stir_fried_chicken": "stir_fried_chicken",
       "steak_bowl": "steak_bowl",
+      "crayfish_stir_fry": "crayfish_stir_fry",
       "carnival": "carnival",
       "double_energy": "double_energy"
     },
@@ -4197,6 +4293,7 @@
       "carrot_omelette": "carrot_omelette",
       "stir_fried_chicken": "stir_fried_chicken",
       "steak_bowl": "steak_bowl",
+      "crayfish_stir_fry": "crayfish_stir_fry",
       "carnival": "carnival",
       "double_energy": "double_energy"
     },
@@ -4213,6 +4310,7 @@
       "carrot_omelette": "carrot_omelette",
       "stir_fried_chicken": "stir_fried_chicken",
       "steak_bowl": "steak_bowl",
+      "crayfish_stir_fry": "crayfish_stir_fry",
       "carnival": "carnival",
       "double_energy": "double_energy"
     },
@@ -4229,6 +4327,7 @@
       "carrot_omelette": "carrot_omelette",
       "stir_fried_chicken": "stir_fried_chicken",
       "steak_bowl": "steak_bowl",
+      "crayfish_stir_fry": "crayfish_stir_fry",
       "carnival": "carnival",
       "double_energy": "double_energy"
     },
@@ -4245,6 +4344,7 @@
       "carrot_omelette": "carrot_omelette",
       "stir_fried_chicken": "stir_fried_chicken",
       "steak_bowl": "steak_bowl",
+      "crayfish_stir_fry": "crayfish_stir_fry",
       "carnival": "carnival",
       "double_energy": "double_energy"
     },
@@ -4267,6 +4367,7 @@
       "carrot_omelette": "carrot_omelette",
       "stir_fried_chicken": "stir_fried_chicken",
       "steak_bowl": "steak_bowl",
+      "crayfish_stir_fry": "crayfish_stir_fry",
       "carnival": "carnival",
       "double_energy": "double_energy"
     }
@@ -4704,6 +4805,10 @@
     "LastSteal": {
       "name": "IslandAirDrop.LastSteal.name",
       "help": "IslandAirDrop.LastSteal.help"
+    },
+    "VisitOtherIsland": {
+      "name": "IslandAirDrop.VisitOtherIsland.name",
+      "help": "IslandAirDrop.VisitOtherIsland.help"
     }
   },
   "IslandDailyOrder": {
@@ -4724,6 +4829,44 @@
       "help": "IslandDailyOrder.UrgentDetectRefreshTime.help"
     }
   },
+  "IslandDailyInteract": {
+    "_info": {
+      "name": "每日/週任務",
+      "help": "控制島嶼每日與每週互動任務，包含晨露農場摸貓、開發計畫中的 JUU 速運、商區外送服務和每週照相任務。"
+    },
+    "WeeklyPhoto": {
+      "name": "每週照相任務",
+      "help": "從開發計畫頁面啟動每週照相任務，循環完成三輪照相與空閒選擇，直到任務圖標消失。",
+      "True": "True",
+      "False": "False"
+    }
+  },
+  "IslandPearlSell": {
+    "_info": {
+      "name": "IslandPearlSell._info.name",
+      "help": "IslandPearlSell._info.help"
+    },
+    "BuyPrice": {
+      "name": "IslandPearlSell.BuyPrice.name",
+      "help": "IslandPearlSell.BuyPrice.help"
+    },
+    "SellPrice": {
+      "name": "IslandPearlSell.SellPrice.name",
+      "help": "IslandPearlSell.SellPrice.help"
+    },
+    "BuyNextRun": {
+      "name": "IslandPearlSell.BuyNextRun.name",
+      "help": "IslandPearlSell.BuyNextRun.help"
+    },
+    "DailyPriceRefresh": {
+      "name": "IslandPearlSell.DailyPriceRefresh.name",
+      "help": "IslandPearlSell.DailyPriceRefresh.help"
+    },
+    "NextPearlTradeTime": {
+      "name": "IslandPearlSell.NextPearlTradeTime.name",
+      "help": "IslandPearlSell.NextPearlTradeTime.help"
+    }
+  },
   "IslandCargoPreparation": {
     "_info": {
       "name": "IslandCargoPreparation._info.name",
@@ -4732,6 +4875,46 @@
     "Blacklist": {
       "name": "IslandCargoPreparation.Blacklist.name",
       "help": "IslandCargoPreparation.Blacklist.help"
+    }
+  },
+  "IslandBusiness": {
+    "_info": {
+      "name": "IslandBusiness._info.name",
+      "help": "IslandBusiness._info.help"
+    },
+    "BatchEnabled": {
+      "name": "IslandBusiness.BatchEnabled.name",
+      "help": "IslandBusiness.BatchEnabled.help",
+      "True": "True",
+      "False": "False"
+    },
+    "Batch1Shops": {
+      "name": "IslandBusiness.Batch1Shops.name",
+      "help": "IslandBusiness.Batch1Shops.help",
+      "1": "1",
+      "2": "2",
+      "3": "3",
+      "4": "4",
+      "5": "5"
+    },
+    "Batch2Shops": {
+      "name": "IslandBusiness.Batch2Shops.name",
+      "help": "IslandBusiness.Batch2Shops.help",
+      "1": "1",
+      "2": "2",
+      "3": "3",
+      "4": "4",
+      "5": "5"
+    },
+    "SeasonalReplaceEnabled": {
+      "name": "IslandBusiness.SeasonalReplaceEnabled.name",
+      "help": "IslandBusiness.SeasonalReplaceEnabled.help",
+      "True": "True",
+      "False": "False"
+    },
+    "SeasonalThreshold": {
+      "name": "IslandBusiness.SeasonalThreshold.name",
+      "help": "IslandBusiness.SeasonalThreshold.help"
     }
   },
   "IslandBusinessShop1": {
@@ -4859,6 +5042,21 @@
       "hearty_meal": "hearty_meal",
       "fo_tiao": "fo_tiao",
       "amaranth_rice_ball": "amaranth_rice_ball"
+    },
+    "SeasonalFallback": {
+      "name": "IslandBusinessShop1.SeasonalFallback.name",
+      "help": "IslandBusinessShop1.SeasonalFallback.help",
+      "None": "None",
+      "double_bamboo_shoots": "double_bamboo_shoots",
+      "tofu_meat": "tofu_meat",
+      "tofu_combo": "tofu_combo",
+      "hearty_meal": "hearty_meal",
+      "fo_tiao": "fo_tiao",
+      "amaranth_rice_ball": "amaranth_rice_ball"
+    },
+    "BoostReplaceFilter": {
+      "name": "IslandBusinessShop1.BoostReplaceFilter.name",
+      "help": "IslandBusinessShop1.BoostReplaceFilter.help"
     }
   },
   "IslandBusinessShop2": {
@@ -4996,6 +5194,10 @@
       "lavender_tea": "lavender_tea",
       "sunny_honey": "sunny_honey",
       "watermelon_juice": "watermelon_juice"
+    },
+    "BoostReplaceFilter": {
+      "name": "IslandBusinessShop2.BoostReplaceFilter.name",
+      "help": "IslandBusinessShop2.BoostReplaceFilter.help"
     }
   },
   "IslandBusinessShop3": {
@@ -5118,6 +5320,10 @@
       "berry_orange": "berry_orange",
       "strawberry_charlotte": "strawberry_charlotte",
       "seafood_rice": "seafood_rice"
+    },
+    "BoostReplaceFilter": {
+      "name": "IslandBusinessShop3.BoostReplaceFilter.name",
+      "help": "IslandBusinessShop3.BoostReplaceFilter.help"
     }
   },
   "IslandBusinessShop4": {
@@ -5198,6 +5404,7 @@
       "roasted_skewer": "烤肉串",
       "stir_fried_chicken": "炒雞丁",
       "steak_bowl": "牛排飯",
+      "crayfish_stir_fry": "crayfish_stir_fry",
       "carnival": "狂歡套餐",
       "double_energy": "雙倍能量"
     },
@@ -5208,6 +5415,7 @@
       "roasted_skewer": "烤肉串",
       "stir_fried_chicken": "炒雞丁",
       "steak_bowl": "牛排飯",
+      "crayfish_stir_fry": "crayfish_stir_fry",
       "carnival": "狂歡套餐",
       "double_energy": "雙倍能量"
     },
@@ -5218,6 +5426,7 @@
       "roasted_skewer": "烤肉串",
       "stir_fried_chicken": "炒雞丁",
       "steak_bowl": "牛排飯",
+      "crayfish_stir_fry": "crayfish_stir_fry",
       "carnival": "狂歡套餐",
       "double_energy": "雙倍能量"
     },
@@ -5228,6 +5437,7 @@
       "roasted_skewer": "烤肉串",
       "stir_fried_chicken": "炒雞丁",
       "steak_bowl": "牛排飯",
+      "crayfish_stir_fry": "crayfish_stir_fry",
       "carnival": "狂歡套餐",
       "double_energy": "雙倍能量"
     },
@@ -5238,8 +5448,13 @@
       "roasted_skewer": "烤肉串",
       "stir_fried_chicken": "炒雞丁",
       "steak_bowl": "牛排飯",
+      "crayfish_stir_fry": "crayfish_stir_fry",
       "carnival": "狂歡套餐",
       "double_energy": "雙倍能量"
+    },
+    "BoostReplaceFilter": {
+      "name": "IslandBusinessShop4.BoostReplaceFilter.name",
+      "help": "IslandBusinessShop4.BoostReplaceFilter.help"
     }
   },
   "IslandBusinessShop5": {
@@ -5362,6 +5577,10 @@
       "morning_light": "晨光咖啡",
       "wake_up_call": "叫醒咖啡",
       "fruity_fruitier": "水果特飲"
+    },
+    "BoostReplaceFilter": {
+      "name": "IslandBusinessShop5.BoostReplaceFilter.name",
+      "help": "IslandBusinessShop5.BoostReplaceFilter.help"
     }
   },
   "Daemon": {
@@ -5899,6 +6118,8 @@
       "UseSmartSchedulingOperationCoinsPreserve": "Gui.OpsiScheduling.UseSmartSchedulingOperationCoinsPreserve",
       "OperationCoinsPreserve": "Gui.OpsiScheduling.OperationCoinsPreserve",
       "ActionPointPreserve": "Gui.OpsiScheduling.ActionPointPreserve",
+      "ActionPointEarlyTriggerEnable": "Gui.OpsiScheduling.ActionPointEarlyTriggerEnable",
+      "ActionPointEarlyTriggerThreshold": "Gui.OpsiScheduling.ActionPointEarlyTriggerThreshold",
       "OperationCoinsReturnThreshold": "Gui.OpsiScheduling.OperationCoinsReturnThreshold",
       "EnableMeowfficerFarming": "Gui.OpsiScheduling.EnableMeowfficerFarming",
       "EnableObscure": "Gui.OpsiScheduling.EnableObscure",

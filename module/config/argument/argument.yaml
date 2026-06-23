@@ -289,6 +289,7 @@ YukikazeTaskManager:
     value: |-
       Restart
       > OpsiCrossMonth
+      > OpsiScheduling
       > Commission > Tactical > Research
       > Exercise
       > Dorm > Meowfficer > Guild > Gacha
@@ -305,7 +306,7 @@ YukikazeTaskManager:
       > RaidDaily > CoalitionSp > WarArchives > MaritimeEscort
       > IslandJuuEatery > IslandJuuCoffee > IslandGrill > IslandTeahouse > IslandRestaurant
       > IslandFarm > IslandRancher > IslandMineForest > IslandDailyGather > IslandManufacture
-      > IslandAirDrop > IslandBusiness > IslandDailyOrder > IslandCargoPreparation
+      > IslandAirDrop > IslandBusiness > IslandDailyOrder > IslandDailyInteract > IslandPearlSell > IslandCargoPreparation
       > Event > Event2 > Event3 > Raid > Hospital > HospitalEvent > Coalition > RaidScuttle > Main > Main2 > Main3
       > OpsiMeowfficerFarming
       > GemsFarming
@@ -347,7 +348,9 @@ Campaign:
   Use2xBook: false
   AmbushEvade: true
   UseRecommendFleet: false
-  DefeatWithdraw: true
+  DefeatWithdraw:
+    value: withdraw_stop
+    option: [ withdraw_continue, switch_fleet, withdraw_stop ]
 StopCondition:
   OilLimit: 1000
   CoinLimit: 0
@@ -358,6 +361,20 @@ StopCondition:
   StageIncrease: false
   GetNewShip: false
   ReachLevel: 0
+WarArchives:
+  DailyRunCount: 0
+  DailyRunCountRemain:
+    type: stored
+    value: 0
+    display: hide
+  DailyRunCountRecord:
+    type: stored
+    value: 2020-01-01 00:00:00
+    display: hide
+  DailyRunCountLimit:
+    type: stored
+    value: 0
+    display: hide
 Fleet:
   Fleet1:
     value: 1
@@ -729,7 +746,8 @@ GeneralShop:
   UseGems: false
   Refresh: false
   BuySkinBox: false
-  ConsumeCoins: false
+  ConsumeCoins: 0
+  OverflowCoins: 0
   Filter: |-
     BookRedT3 > BookYellowT3 > BookBlueT3 > BookRedT2
     > Cube
@@ -1049,6 +1067,10 @@ OpsiMonthBoss:
   ForceRun: false
 OpsiMeowfficerFarming:
   ActionPointPreserve: 1000
+  SmartNaturalAPCleanup:
+    type: stored
+    value: false
+    display: hide
   HazardLevel:
     value: 5
     option: [ 2, 3, 4, 5, 6, 10 ]
@@ -1119,6 +1141,12 @@ OpsiScheduling:
     value: 40000
   ActionPointPreserve:
     value: 200
+  ActionPointEarlyTriggerEnable:
+    value: true
+    type: checkbox
+    option: [true, false]
+  ActionPointEarlyTriggerThreshold:
+    value: 200
 
   OperationCoinsReturnThreshold:
     value: 20000
@@ -1162,6 +1190,8 @@ IslandFarm:
   Positions:
     value: 3
     option: [ 1, 2, 3, 4 ]
+  WorkerFilter: |-
+    WorkerJuu
   MinFarm: 660
   PlantPotatoes:
     value: 4
@@ -1170,6 +1200,8 @@ IslandOrchard:
   Positions:
     value: 4
     option: [ 1, 2, 3, 4 ]
+  WorkerFilter: |-
+    WorkerJuu
   MinOrchard: 300
   IgnoreAvocado: true
   PlantRubber:
@@ -1180,6 +1212,8 @@ IslandNursery:
   Positions:
     value: 2
     option: [ 1, 2 ]
+  WorkerFilter: |-
+    WorkerJuu
   MinNursery: 0
   IgnorePineapple: true
   PlantLavender:
@@ -1192,6 +1226,8 @@ IslandRancher:
   RancherFilter: |-
     WorkerJuu
   Wool: true
+  WoolWorkerFilter: |-
+    WorkerJuu
 IslandFishery:
   Positions:
     value: 3
@@ -1200,6 +1236,7 @@ IslandFishery:
   MinYellowfinTuna: 50
   MinShell: 50
   MinShrimp: 50
+  MinCrayfish: 50
   MinCrab: 50
   MinSquid: 50
   MinSeaCucumber: 50
@@ -1215,6 +1252,8 @@ IslandMine:
   MineSilver:
     value: 1
     option: [ 0, 1, 2, 3, 4 ]
+  WorkerFilter: |-
+    WorkerJuu
   MinCopper:
     value: 50
   MinAluminium:
@@ -1232,12 +1271,18 @@ IslandForest:
   CutElegant:
     value: 1
     option: [ 0, 1, 2, 3, 4 ]
+  WorkerFilter: |-
+    WorkerJuu
   MinElegant:
     value: 50
   MinPractical:
     value: 50
   MinSelected:
     value: 50
+IslandDailyGather:
+  WorkerFilter:
+    value: ""
+    preserve_empty: true
 IslandRestaurant:
   PostNumber:
     value: 2
@@ -1249,17 +1294,17 @@ IslandRestaurant:
     value: tofu_meat
     option: [ None, tofu, omurice, cabbage_tofu, salad, tofu_meat, tofu_combo, hearty_meal , double_bamboo_shoots, asparagus_shrimp, fish_chip, fo_tiao, onion_fish]
   MealNumber1:
-    value: 6
+    value: 7
   Meal2:
     value: hearty_meal
     option: [ None, tofu, omurice, cabbage_tofu, salad, tofu_meat, tofu_combo, hearty_meal , double_bamboo_shoots, asparagus_shrimp, fish_chip, fo_tiao, onion_fish]
   MealNumber2:
-    value: 6
+    value: 7
   Meal3:
     value: omurice
     option: [ None, tofu, omurice, cabbage_tofu, salad, tofu_meat, tofu_combo, hearty_meal , double_bamboo_shoots, asparagus_shrimp, fish_chip, fo_tiao, onion_fish]
   MealNumber3:
-    value: 6
+    value: 7
   Meal4:
     value: None
     option: [ None, tofu, omurice, cabbage_tofu, salad, tofu_meat, tofu_combo, hearty_meal , double_bamboo_shoots, asparagus_shrimp, fish_chip, fo_tiao, onion_fish]
@@ -1300,17 +1345,17 @@ IslandTeahouse:
     value: floral_fruity
     option: [ None, apple_juice, banana_mango, honey_lemon, strawberry_lemon, strawberry_honey, floral_fruity, fruit_paradise, lavender_tea, sunny_honey, spring_flower_tea]
   MealNumber1:
-    value: 6
+    value: 7
   Meal2:
     value: lavender_tea
     option: [ None, apple_juice, banana_mango, honey_lemon, strawberry_lemon, strawberry_honey, floral_fruity, fruit_paradise, lavender_tea, sunny_honey, spring_flower_tea]
   MealNumber2:
-    value: 6
+    value: 7
   Meal3:
     value: strawberry_lemon
     option: [ None, apple_juice, banana_mango, honey_lemon, strawberry_lemon, strawberry_honey, floral_fruity, fruit_paradise, lavender_tea, sunny_honey, spring_flower_tea]
   MealNumber3:
-    value: 6
+    value: 7
   Meal4:
     value: None
     option: [ None, apple_juice, banana_mango, honey_lemon, strawberry_lemon, strawberry_honey, floral_fruity, fruit_paradise, lavender_tea, sunny_honey, spring_flower_tea]
@@ -1348,48 +1393,48 @@ IslandGrill:
     WorkerJuu
   Meal1:
     value: double_energy
-    option: [ None, roasted_skewer, chicken_potato, carrot_omelette, stir_fried_chicken, steak_bowl, carnival, double_energy  ]
+    option: [ None, roasted_skewer, chicken_potato, carrot_omelette, stir_fried_chicken, steak_bowl, crayfish_stir_fry, carnival, double_energy ]
   MealNumber1:
-    value: 6
+    value: 7
   Meal2:
     value: steak_bowl
-    option: [ None, roasted_skewer, chicken_potato, carrot_omelette, stir_fried_chicken, steak_bowl, carnival, double_energy ]
+    option: [ None, roasted_skewer, chicken_potato, carrot_omelette, stir_fried_chicken, steak_bowl, crayfish_stir_fry, carnival, double_energy ]
   MealNumber2:
-    value: 6
+    value: 7
   Meal3:
     value: stir_fried_chicken
-    option: [ None, roasted_skewer, chicken_potato, carrot_omelette, stir_fried_chicken, steak_bowl, carnival, double_energy ]
+    option: [ None, roasted_skewer, chicken_potato, carrot_omelette, stir_fried_chicken, steak_bowl, crayfish_stir_fry, carnival, double_energy ]
   MealNumber3:
-    value: 6
+    value: 7
   Meal4:
     value: None
-    option: [ None, roasted_skewer, chicken_potato, carrot_omelette, stir_fried_chicken, steak_bowl, carnival, double_energy ]
+    option: [ None, roasted_skewer, chicken_potato, carrot_omelette, stir_fried_chicken, steak_bowl, crayfish_stir_fry, carnival, double_energy ]
   MealNumber4:
     value: 0
   Meal5:
     value: None
-    option: [ None, roasted_skewer, chicken_potato, carrot_omelette, stir_fried_chicken, steak_bowl, carnival, double_energy ]
+    option: [ None, roasted_skewer, chicken_potato, carrot_omelette, stir_fried_chicken, steak_bowl, crayfish_stir_fry, carnival, double_energy ]
   MealNumber5:
     value: 0
   Meal6:
     value: None
-    option: [ None, roasted_skewer, chicken_potato, carrot_omelette, stir_fried_chicken, steak_bowl, carnival, double_energy ]
+    option: [ None, roasted_skewer, chicken_potato, carrot_omelette, stir_fried_chicken, steak_bowl, crayfish_stir_fry, carnival, double_energy ]
   MealNumber6:
     value: 0
   Meal7:
     value: None
-    option: [ None, roasted_skewer, chicken_potato, carrot_omelette, stir_fried_chicken, steak_bowl, carnival, double_energy ]
+    option: [ None, roasted_skewer, chicken_potato, carrot_omelette, stir_fried_chicken, steak_bowl, crayfish_stir_fry, carnival, double_energy ]
   MealNumber7:
     value: 0
   Meal8:
     value: None
-    option: [ None, roasted_skewer, chicken_potato, carrot_omelette, stir_fried_chicken, steak_bowl, carnival, double_energy ]
+    option: [ None, roasted_skewer, chicken_potato, carrot_omelette, stir_fried_chicken, steak_bowl, crayfish_stir_fry, carnival, double_energy ]
   MealNumber8:
     value: 0
 IslandGrillNextTask:
   AwayCook:
     value: None
-    option: [ None, roasted_skewer, chicken_potato, carrot_omelette, stir_fried_chicken, steak_bowl, carnival, double_energy ]
+    option: [ None, roasted_skewer, chicken_potato, carrot_omelette, stir_fried_chicken, steak_bowl, crayfish_stir_fry, carnival, double_energy ]
 IslandJuuEatery:
   PostNumber:
     value: 1
@@ -1400,17 +1445,17 @@ IslandJuuEatery:
     value: berry_orange
     option: [ None, apple_pie, corn_cup, orange_pie, banana_crepe, orchard_duo, rice_mango, succulently_sweet, berry_orange, strawberry_charlotte, seafood_rice ]
   MealNumber1:
-    value: 6
+    value: 7
   Meal2:
     value: succulently_sweet
     option: [ None, apple_pie, corn_cup, orange_pie, banana_crepe, orchard_duo, rice_mango, succulently_sweet, berry_orange, strawberry_charlotte, seafood_rice ]
   MealNumber2:
-    value: 6
+    value: 7
   Meal3:
     value: rice_mango
     option: [ None, apple_pie, corn_cup, orange_pie, banana_crepe, orchard_duo, rice_mango, succulently_sweet, berry_orange, strawberry_charlotte, seafood_rice ]
   MealNumber3:
-    value: 6
+    value: 7
   Meal4:
     value: None
     option: [ None, apple_pie, corn_cup, orange_pie, banana_crepe, orchard_duo, rice_mango, succulently_sweet, berry_orange, strawberry_charlotte, seafood_rice ]
@@ -1451,17 +1496,17 @@ IslandJuuCoffee:
     value: wake_up_call
     option: [ None, iced_coffee, omelette, cheese, latte, citrus_coffee, strawberry_milkshake, morning_light, wake_up_call, fruity_fruitier ]
   MealNumber1:
-    value: 6
+    value: 7
   Meal2:
     value: cheese
     option: [ None, iced_coffee, omelette, cheese, latte, citrus_coffee, strawberry_milkshake, morning_light, wake_up_call, fruity_fruitier ]
   MealNumber2:
-    value: 6
+    value: 7
   Meal3:
     value: fruity_fruitier
     option: [ None, iced_coffee, omelette, cheese, latte, citrus_coffee, strawberry_milkshake, morning_light, wake_up_call, fruity_fruitier ]
   MealNumber3:
-    value: 6
+    value: 7
   Meal4:
     value: None
     option: [ None, iced_coffee, omelette, cheese, latte, citrus_coffee, strawberry_milkshake, morning_light, wake_up_call, fruity_fruitier ]
@@ -1509,6 +1554,7 @@ Handmade:
     option: [ 0, 1, 2 ]
 IslandAirDrop:
   LastSteal: 2020-01-01 00:00:00
+  VisitOtherIsland: true
 
 IslandDailyOrder:
   RejectCount:
@@ -1518,9 +1564,48 @@ IslandDailyOrder:
   UrgentDetectRefreshTime:
     value: "2020-01-01 00:00:00"
 
+IslandDailyInteract:
+  WeeklyPhoto:
+    type: checkbox
+    value: true
+    option: [ true, false ]
+
+IslandPearlSell:
+  BuyPrice:
+    value: 200
+  SellPrice:
+    value: 1000
+  BuyNextRun:
+    value: 2020-01-01 00:00:00
+  DailyPriceRefresh:
+    value: false
+  NextPearlTradeTime:
+    value: 2020-01-01 00:00:00
+
 IslandCargoPreparation:
   Blacklist:
     value: "Milk"
+
+IslandBusiness:
+  BatchEnabled:
+    type: checkbox
+    value: true
+    option: [ true, false ]
+  Batch1Shops:
+    type: multiselect
+    value: [3, 1, 5]
+    option: [1, 2, 3, 4, 5]
+  Batch2Shops:
+    type: multiselect
+    value: [2, 4]
+    option: [1, 2, 3, 4, 5]
+  SeasonalReplaceEnabled:
+    type: checkbox
+    value: true
+    option: [ true, false ]
+  SeasonalThreshold:
+    type: input
+    value: 7
 
 # ---------- Island Business Shops ----------
 _IslandBusinessChar: &IslandBusinessChar
@@ -1602,6 +1687,7 @@ _IslandBusinessProduct4: &IslandBusinessProduct4
     - roasted_skewer
     - stir_fried_chicken
     - steak_bowl
+    - crayfish_stir_fry
     - carnival
     - double_energy
 
@@ -1631,6 +1717,20 @@ IslandBusinessShop1:
     <<: *IslandBusinessProduct1
   Product5:
     <<: *IslandBusinessProduct1
+  SeasonalFallback:
+    type: select
+    value: hearty_meal
+    option:
+      - None
+      - double_bamboo_shoots
+      - tofu_meat
+      - tofu_combo
+      - hearty_meal
+      - fo_tiao
+      - amaranth_rice_ball
+  BoostReplaceFilter:
+    value: |-
+      30 > 20 > 10
 
 IslandBusinessShop2:
   Char1:
@@ -1647,6 +1747,9 @@ IslandBusinessShop2:
     <<: *IslandBusinessProduct2
   Product5:
     <<: *IslandBusinessProduct2
+  BoostReplaceFilter:
+    value: |-
+      30 > 20 > strawberry_honey > fruit_paradise > 10
 
 IslandBusinessShop3:
   Char1:
@@ -1663,6 +1766,9 @@ IslandBusinessShop3:
     <<: *IslandBusinessProduct3
   Product5:
     <<: *IslandBusinessProduct3
+  BoostReplaceFilter:
+    value: |-
+      30 > 20 > succulently_sweet > 10
 
 IslandBusinessShop4:
   Char1:
@@ -1679,6 +1785,9 @@ IslandBusinessShop4:
     <<: *IslandBusinessProduct4
   Product5:
     <<: *IslandBusinessProduct4
+  BoostReplaceFilter:
+    value: |-
+      30 > 20 > 10
 
 IslandBusinessShop5:
   Char1:
@@ -1695,6 +1804,9 @@ IslandBusinessShop5:
     <<: *IslandBusinessProduct5
   Product5:
     <<: *IslandBusinessProduct5
+  BoostReplaceFilter:
+    value: |-
+      30 > 20 > cheese > 10
 
 # ==================== Tools ====================
 

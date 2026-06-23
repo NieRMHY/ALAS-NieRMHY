@@ -88,6 +88,11 @@ LIGHT_TERMINAL_THEME = TerminalTheme(
     ],
 )
 
+WEBUI_LOGIN_MAX_FAILURES = 5
+_webui_login_failure_count = 0
+_webui_login_forbidden = False
+_webui_login_lock = threading.Lock()
+
 
 class QueueHandler:
     def __init__(self, q: Queue) -> None:
@@ -468,38 +473,59 @@ str2type = {
 }
 
 
-def parse_pin_value(val, valuetype: str = None):
-    """
-    解析 pin 组件的值。
-
-    input/textarea 返回 str；select 返回其选项值（str 或 int）；
-    checkbox 返回 [] 或 [True]（在 put_checkbox_ 中定义）。
-    """
-    # 处理 dict 类型 - 提取 'value' 字段并递归解析
-    if isinstance(val, dict):
-        if 'value' in val:
-            return parse_pin_value(val['value'], valuetype)
-        else:
-            # 无 'value' 键时原样返回 dict
-            return val
-    elif isinstance(val, list):
-        if len(val) == 0:
-            return False
-        else:
-            return True
-    elif valuetype:
+def _parse_single_pin_value(val, valuetype: str = None):
+    if valuetype:
         return str2type[valuetype](val)
     elif isinstance(val, (int, float)):
         return val
     else:
         try:
             v = float(val)
-        except ValueError:
+        except (TypeError, ValueError):
             return val
         if v.is_integer():
             return int(v)
         else:
             return v
+
+
+def parse_pin_value(val, valuetype: str = None, widget_type: str = None, options=None):
+    """
+    解析 pin 组件的值。
+
+    input/textarea 返回 str；select 返回其选项值（str 或 int）；
+    checkbox 返回 [] 或 [True]（在 put_checkbox_ 中定义）；
+    multiselect 返回选项值列表（如 [3, 1, 5]）。
+    """
+    # 处理 dict 类型 - 提取 'value' 字段并递归解析
+    if isinstance(val, dict):
+        if 'value' in val:
+            return parse_pin_value(val['value'], valuetype, widget_type, options)
+        else:
+            # 无 'value' 键时原样返回 dict
+            return val
+    elif isinstance(val, list):
+        if widget_type == 'multiselect':
+            parsed = [_parse_single_pin_value(item, valuetype) for item in val]
+            if not options:
+                return parsed
+            option_map = {str(option): option for option in options}
+            return [option_map.get(str(item), item) for item in parsed]
+        if widget_type == 'checkbox':
+            return True in val
+        if valuetype == 'ignore':
+            if len(val) == 0:
+                return False
+            return val
+        if len(val) == 0:
+            return []
+        # 区分 checkbox ([True]) 和 multiselect ([3, 1, 5])
+        # checkbox 的值始终是 [True] 或 []，非空列表且不含 bool 之外的元素即为 multiselect
+        if all(isinstance(x, bool) for x in val):
+            return True
+        return val
+    else:
+        return _parse_single_pin_value(val, valuetype)
 
 
 def to_pin_value(val):
@@ -514,15 +540,46 @@ def to_pin_value(val):
         return val
 
 
+def is_login_forbidden():
+    with _webui_login_lock:
+        return _webui_login_forbidden
+
+
+def _record_login_failure():
+    global _webui_login_failure_count, _webui_login_forbidden
+    with _webui_login_lock:
+        _webui_login_failure_count += 1
+        if (
+            not _webui_login_forbidden
+            and _webui_login_failure_count >= WEBUI_LOGIN_MAX_FAILURES
+        ):
+            _webui_login_forbidden = True
+            logger.warning(
+                "密码错误次数过多，已禁止所有登录，重启后恢复。"
+            )
+        return _webui_login_failure_count
+
+
 def login(password):
+    if is_login_forbidden():
+        toast("密码错误次数过多，请重启后再试。", color="error")
+        return False
     if get_localstorage("password") == str(password):
         return True
     pwd = input(label="Please login below.", type=PASSWORD, placeholder="PASSWORD")
+    if is_login_forbidden():
+        toast("密码错误次数过多，请重启后再试。", color="error")
+        return False
     if str(pwd) == str(password):
         set_localstorage("password", str(pwd))
         return True
     else:
-        toast("Wrong password!", color="error")
+        count = _record_login_failure()
+        remaining = WEBUI_LOGIN_MAX_FAILURES - count
+        if remaining > 0:
+            toast(f"密码错误，还剩 {remaining} 次机会。", color="error")
+        else:
+            toast("密码错误次数过多，请重启后再试。", color="error")
         return False
 
 

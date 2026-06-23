@@ -1,9 +1,9 @@
-from module.logger import logger
-from module.campaign.campaign_base import CampaignBase
+from module.map.map_base import CampaignMap
 from module.map.map_grids import SelectedGrids, RoadGrids
+from module.logger import logger
 
-from .campaign_16_base import CampaignBase, CampaignMap
-from .campaign_16_base import Config as ConfigBase
+from .campaign_16_base_aircraft import CampaignBase
+from .campaign_16_base_aircraft import Config as ConfigBase
 
 MAP = CampaignMap('16-3')
 MAP.shape = 'K6'
@@ -56,27 +56,9 @@ road_main = RoadGrids([G4, H4])
 
 
 class Config(ConfigBase):
-    # ===== Start of generated config =====
     MAP_HAS_MAP_STORY = False
     MAP_HAS_FLEET_STEP = False
     MAP_HAS_AMBUSH = True
-    # ===== End of generated config =====
-
-    INTERNAL_LINES_FIND_PEAKS_PARAMETERS = {
-        'height': (120, 255 - 17),
-        'width': (0.9, 10),
-        'prominence': 10,
-        'distance': 35,
-    }
-    EDGE_LINES_FIND_PEAKS_PARAMETERS = {
-        'height': (255 - 50, 255),
-        'prominence': 10,
-        'distance': 50,
-        'wlen': 1000
-    }
-    INTERNAL_LINES_HOUGHLINES_THRESHOLD = 25
-    EDGE_LINES_HOUGHLINES_THRESHOLD = 25
-    MAP_WALK_USE_CURRENT_FLEET = True
 
     MAP_ENSURE_EDGE_INSIGHT_CORNER = 'bottom-left'
     MAP_SWIPE_MULTIPLY = (1.180, 1.202)
@@ -118,9 +100,6 @@ class Campaign(CampaignBase):
         return self.clear_chosen_enemy(F3)
 
     def battle_3(self):
-        if not self.map_is_clear_mode:
-            self.destroy_land_base(K6, J5, J6)
-
         boss = self.map.select(is_boss=True)
         if boss:
             if not self.check_accessibility(boss[0], fleet='boss'):
@@ -134,5 +113,4 @@ class Campaign(CampaignBase):
             return True
         if self.clear_any_enemy(genre=("Light",), strongest=True):
             return True
-        
         return self.battle_default()

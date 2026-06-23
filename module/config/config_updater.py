@@ -466,15 +466,6 @@ class ConfigGenerator:
                                   v
                    args.json -----+-----> args.json
         """
-        def is_concurrent_event(date1, date2):
-            if isinstance(date1, int):
-                date1 = str(date1)
-            if isinstance(date2, int):
-                date2 = str(date2)
-            d1 = datetime.strptime(date1, '%Y%m%d')
-            d2 = datetime.strptime(date2, '%Y%m%d')
-            return abs((d1 - d2).days) <= 30
-
         for server in ARCHIVES_PREFIX.keys():
             for event in self.event:
                 name = event.__getattribute__(server)
@@ -489,7 +480,7 @@ class ConfigGenerator:
                     if event.is_raid:
                         if not hasattr(self, f'_{server}_latest_raid_date'):
                             setattr(self, f'_{server}_latest_raid_date', int(event.date))
-                        if is_concurrent_event(int(event.date), getattr(self, f'_{server}_latest_raid_date')):
+                        if int(event.date) == getattr(self, f'_{server}_latest_raid_date'):
                             for task in RAIDS:
                                 insert(task)
                     elif event.is_war_archives:
@@ -498,13 +489,13 @@ class ConfigGenerator:
                     elif event.is_coalition:
                         if not hasattr(self, f'_{server}_latest_coalition_date'):
                             setattr(self, f'_{server}_latest_coalition_date', int(event.date))
-                        if is_concurrent_event(int(event.date), getattr(self, f'_{server}_latest_coalition_date')):
+                        if int(event.date) == getattr(self, f'_{server}_latest_coalition_date'):
                             for task in COALITIONS:
                                 insert(task)
                     else:
                         if not hasattr(self, f'_{server}_latest_event_date'):
                             setattr(self, f'_{server}_latest_event_date', int(event.date))
-                        if is_concurrent_event(int(event.date), getattr(self, f'_{server}_latest_event_date')):
+                        if int(event.date) == getattr(self, f'_{server}_latest_event_date'):
                             for task in EVENTS + GEMS_FARMINGS:
                                 insert(task)
 
@@ -678,7 +669,8 @@ class ConfigUpdater:
             value = deep_get(old, keys=keys, default=data['value'])
             typ = data['type']
             display = data.get('display')
-            if is_template or value is None or value == '' \
+            value_empty = value == '' and not data.get('preserve_empty')
+            if is_template or value is None or value_empty \
                     or typ in ['lock', 'state'] or (display == 'hide' and typ != 'stored'):
                 value = data['value']
             value = parse_value(value, data=data)
@@ -725,6 +717,22 @@ class ConfigUpdater:
 
         if not is_template:
             new = self.config_redirect(old, new)
+            old_priority = deep_get(old, 'General.YukikazeTaskManager.TaskPriorityAdjustment')
+            new_priority = deep_get(new, 'General.YukikazeTaskManager.TaskPriorityAdjustment')
+            template_priority = deep_get(
+                self.args, 'General.YukikazeTaskManager.TaskPriorityAdjustment.value'
+            )
+            if (
+                    isinstance(old_priority, str)
+                    and 'OpsiScheduling' not in old_priority
+                    and isinstance(new_priority, str)
+                    and new_priority == old_priority
+                    and old_priority.replace(
+                        '> OpsiCrossMonth\n> Commission > Tactical > Research',
+                        '> OpsiCrossMonth\n> OpsiScheduling\n> Commission > Tactical > Research',
+                    ) == template_priority
+            ):
+                deep_set(new, 'General.YukikazeTaskManager.TaskPriorityAdjustment', template_priority)
         new = self._override(new)
 
         return new

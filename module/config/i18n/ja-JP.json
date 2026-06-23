@@ -350,6 +350,14 @@
       "name": "Task.IslandDailyOrder.name",
       "help": "Task.IslandDailyOrder.help"
     },
+    "IslandDailyInteract": {
+      "name": "デイリー/週間任務",
+      "help": "島のふれあい、JUU速達、商区外送サービス、週間写真タスクを処理します。関連ボタンリソース生成後に有効化できます。"
+    },
+    "IslandPearlSell": {
+      "name": "Task.IslandPearlSell.name",
+      "help": "Task.IslandPearlSell.help"
+    },
     "Daemon": {
       "name": "半自動クリック",
       "help": ""
@@ -515,6 +523,7 @@
       "cn_channel-2": "[国服] 十字军行动",
       "cn_channel-3": "[国服] 龙骑兵行动",
       "cn_channel-4": "[国服] 冥王星行动",
+      "cn_channel-5": "[国服] 群岛计划",
       "en-0": "[EN] Avrora",
       "en-1": "[EN] Lexington",
       "en-2": "[EN] Sandy",
@@ -998,7 +1007,7 @@
     },
     "TaskPriorityAdjustment": {
       "name": "タスクの優先度の調整",
-      "help": "再起動 # ゲームを再起動します\n> OpsiCrossMonth # セイレーン作戦月跨ぎ\n> 委託 > 戦術 > 研究 # 委託 > 戦術学院 > 研究\n> 演習 # 演習\n> 後宅 > 指揮ニャ > 大艦隊 > ガチャ # 後宅 > 指揮ニャ > 大艦隊 > デイリー建造\n> 報酬 # 収穫\n> ShopFrequent > ShopOnce > 造船所 > 景品 > アイランド # よく使うショップ > その他のショップ > 開発ドック > 景品特典 > アイランドプラン\n> PrivateQuarters # ルームプラン\n> OpsiExplore # 毎月の探索\n> ミニゲーム > 覚醒 # ミニゲーム > 認知覚醒\n> OpsiAshBeacon # META戦闘\n> OpsiDaily > OpsiShop > OpsiVoucher # セイレーン作戦デイリー > 港湾ショップ > 引換ショップ\n> OpsiAbyssal > OpsiStronghold > OpsiObscure > OpsiArchive # 深淵 > セイレーン要塞 > 隠された海域 > アーカイブ座標\n> デイリー > ハード > OpsiAshBeacon > OpsiAshAssist > OpsiMonthBoss # デイリー > ハードマップ > META戦闘 > METAサポート > マンスリーボス\n> Sos > EventSp > EventA > EventB > EventC > EventD # Sos > イベントデイリーSP > イベントデイリーA > イベントデイリーB > イベントデイリーC > イベントデイリーD\n> RaidDaily > CoalitionSp > WarArchives > MaritimeEscort # 共闘デイリー > 共闘SP > 作戦アーカイブ > 商船護衛\n> イベント > イベント2 > 共闘 > Hospital > HospitalEvent > Coalition > RaidScuttle > メイン > メイン2 > メイン3 # イベントマップ > イベントマップ2 > 共闘 > 病院イベント > 共闘イベント > 連合 > 共闘沈船 > メインステージ > メインステージ2 > メインステージ3\n> OpsiMeowfficerFarming # 指揮ニャ収集\n> GemsFarming # 緊急委託周回\n> OpsiHazard1Leveling # 侵蝕1レベリング\n> ThreeOilLowCost # 3燃料低コスト"
+      "help": "既定の優先度参考（# 以降は説明です。実際の設定にはコメントをコピーしないでください）：\nRestart    # ゲーム再起動\n> OpsiCrossMonth    # セイレーン作戦の月跨ぎデイリー\n> Commission > Tactical > Research    # 委託 > 戦術学院 > 研究\n> Exercise    # 演習\n> Dorm > Meowfficer > Guild > Gacha    # 寮舎 > 指揮ニャ > 大艦隊 > デイリー建造\n> Reward    # 報酬受取\n> ShopFrequent > ShopOnce > Shipyard > Freebies    # 通常ショップ > 一回限りショップ > 開発ドック > 無料報酬\n> PrivateQuarters    # プライベートルーム\n> OpsiExplore    # セイレーン作戦の月次開拓\n> Minigame > Awaken    # ミニゲーム > 認知覚醒\n> OpsiAshBeacon    # METAビーコン戦\n> OpsiDaily > OpsiShop > OpsiVoucher > EventShop    # セイレーン作戦デイリー > 港ショップ > 交換ショップ > イベントショップ\n> OpsiAbyssal > OpsiStronghold > OpsiObscure > OpsiArchive    # 深淵海域 > セイレーン要塞 > 隠された海域 > アーカイブ座標\n> Daily > Hard > OpsiAshBeacon > OpsiAshAssist > OpsiMonthBoss    # デイリーチャレンジ > ハード海域 > META戦 > META支援 > 月度ボス\n> Sos > EventSp > EventA > EventB > EventC > EventD    # SOS > イベントデイリーSP > イベントデイリーA > イベントデイリーB > イベントデイリーC > イベントデイリーD\n> RaidDaily > CoalitionSp > WarArchives > MaritimeEscort    # 共闘デイリー > 共闘SP > 作戦アーカイブ > 商船護衛\n> IslandJuuEatery > IslandJuuCoffee > IslandGrill > IslandTeahouse > IslandRestaurant    # 島ジュウ簡餐 > ジュウコーヒー > イカ焼き > 白熊ドリンク > 有魚レストラン\n> IslandFarm > IslandRancher > IslandMineForest > IslandDailyGather > IslandManufacture    # 島農地 > 牧場 > 鉱山＆林場 > デイリー採集 > 製造業\n> IslandAirDrop > IslandBusiness > IslandDailyOrder > IslandDailyInteract > IslandPearlSell > IslandCargoPreparation    # 島デイリー補給 > 経営モジュール > デイリーオーダー > デイリー/週間任務 > 週間パール取引 > 貨物準備\n> Event > Event2 > Event3 > Raid > Hospital > HospitalEvent > Coalition > RaidScuttle > Main > Main2 > Main3    # イベントマップ1 > イベントマップ2 > イベントマップ3 > 共闘 > 病院 > 病院イベント > 連合 > 共闘沈船 > メイン > メイン2 > メイン3\n> OpsiMeowfficerFarming    # セイレーン作戦指揮ニャ収集\n> GemsFarming    # 緊急委託周回\n> Ambush11    # 1-1伏撃周回\n> OpsiHazard1Leveling    # 侵蝕1レベリング\n> ThreeOilLowCost    # 3燃料低コスト\n\n形式: 1 行にはタスク名だけを書き、`>` で優先度をつなぎます（左側ほど優先度が高い）。\n上記の `#` コメントは説明用です。実際の設定値にコメントを残すとタスク名の照合に失敗します。\nタスク名は英語の設定タスク名を使ってください。分からない場合は UI を英語に切り替えて確認してください。\n空欄にすると内蔵の既定優先度を使用します。"
     }
   },
   "OneClickRetire": {
@@ -1143,7 +1152,7 @@
       "event_20231221_cn": "光追う星の海（復刻）",
       "event_20240229_cn": "銀界遊廻（復刻）",
       "event_20240425_cn": "共鳴のパッション",
-      "event_20240521_cn": "赫輝のマルティリウム",
+      "event_20240521_cn": "赫輝のマルティリウム（復刻）",
       "event_20240725_cn": "夢幻の間奏曲",
       "event_20240815_cn": "錬翼空翔",
       "event_20240829_cn": "徒花咲かす彼岸",
@@ -1218,8 +1227,10 @@
       "war_archives_20220915_cn": "檔案 赫の涙月 菫の暁風",
       "war_archives_20221222_cn": "檔案 積重なる事象の幻界",
       "war_archives_20230223_cn": "檔案 黙示の遺構",
+      "war_archives_20230525_cn": "檔案 覆天せし万象の塵",
       "war_archives_20230803_cn": "檔案 燃ゆる聖都の回想曲",
-      "war_archives_20231026_cn": "檔案 テンペスタと若返りの泉"
+      "war_archives_20231026_cn": "檔案 テンペスタと若返りの泉",
+      "war_archives_20240725_cn": "檔案 夢幻の間奏曲"
     },
     "Mode": {
       "name": "ステージモード",
@@ -1253,7 +1264,10 @@
     },
     "DefeatWithdraw": {
       "name": "道中での戦闘で敗北し撤退",
-      "help": "道中戦闘で敗北した際の処理方法。オンの場合は海域から直接退出し、オフの場合は別のチームが引き継いで後続の戦闘を試みる。"
+      "help": "道中戦闘で敗北した際の処理方法。オンの場合は海域から直接退出し、オフの場合は別のチームが引き継いで後続の戦闘を試みる。",
+      "withdraw_continue": "withdraw_continue",
+      "switch_fleet": "switch_fleet",
+      "withdraw_stop": "withdraw_stop"
     }
   },
   "StopCondition": {
@@ -1294,6 +1308,28 @@
     "ReachLevel": {
       "name": "艦船がレベルXに達すると停止します",
       "help": "レベルX未満の艦船がレベルXに達すると停止します。\n0はレベル制限なしを意味します"
+    }
+  },
+  "WarArchives": {
+    "_info": {
+      "name": "WarArchives._info.name",
+      "help": "WarArchives._info.help"
+    },
+    "DailyRunCount": {
+      "name": "WarArchives.DailyRunCount.name",
+      "help": "WarArchives.DailyRunCount.help"
+    },
+    "DailyRunCountRemain": {
+      "name": "WarArchives.DailyRunCountRemain.name",
+      "help": "WarArchives.DailyRunCountRemain.help"
+    },
+    "DailyRunCountRecord": {
+      "name": "WarArchives.DailyRunCountRecord.name",
+      "help": "WarArchives.DailyRunCountRecord.help"
+    },
+    "DailyRunCountLimit": {
+      "name": "WarArchives.DailyRunCountLimit.name",
+      "help": "WarArchives.DailyRunCountLimit.help"
     }
   },
   "Fleet": {
@@ -2237,6 +2273,10 @@
     "ConsumeCoins": {
       "name": "オーバーフロー供給品の消費",
       "help": "物資が550,000を超えたら、物資を消費するアイテムをすべて購入します。"
+    },
+    "OverflowCoins": {
+      "name": "GeneralShop.OverflowCoins.name",
+      "help": "GeneralShop.OverflowCoins.help"
     },
     "Filter": {
       "name": "ショップフィルター",
@@ -3211,6 +3251,10 @@
       "name": "行動力をXポイント保留",
       "help": "行動力がX以下になると停止し、行動力ボックスを自動で開きます。\nこの値はセイレーン作戦リセット3日前に自動的に200ポイントに減ります。侵食1レベリングが有効な場合は1000ポイントに変更され、最終日には自動的に0ポイントに減ります。"
     },
+    "SmartNaturalAPCleanup": {
+      "name": "OpsiMeowfficerFarming.SmartNaturalAPCleanup.name",
+      "help": "OpsiMeowfficerFarming.SmartNaturalAPCleanup.help"
+    },
     "HazardLevel": {
       "name": "侵食レベル",
       "help": "指定した侵食レベルの海域を時計回りに攻撃します。\n指揮ニャポイント/行動力の比率が高い5または3を選択するのがおすすめです。",
@@ -3401,6 +3445,16 @@
       "name": "ショートキャットは X ポイントの可動性を接続して保持します",
       "help": "モビリティがX以下になると停止し、モビリティボックスが自動的に開きます。"
     },
+    "ActionPointEarlyTriggerEnable": {
+      "name": "OpsiScheduling.ActionPointEarlyTriggerEnable.name",
+      "help": "OpsiScheduling.ActionPointEarlyTriggerEnable.help",
+      "True": "True",
+      "False": "False"
+    },
+    "ActionPointEarlyTriggerThreshold": {
+      "name": "OpsiScheduling.ActionPointEarlyTriggerThreshold.name",
+      "help": "OpsiScheduling.ActionPointEarlyTriggerThreshold.help"
+    },
     "OperationCoinsReturnThreshold": {
       "name": "X 個の戦闘物資引換券を入手する",
       "help": "黄色のコイン獲得ミッション中に、戦闘補給券を合計 X 枚獲得 (増加) し、レベルを上げるために侵食 1 に戻ります。"
@@ -3472,6 +3526,10 @@
       "3": "3",
       "4": "4"
     },
+    "WorkerFilter": {
+      "name": "IslandFarm.WorkerFilter.name",
+      "help": "IslandFarm.WorkerFilter.help"
+    },
     "MinFarm": {
       "name": "IslandFarm.MinFarm.name",
       "help": "IslandFarm.MinFarm.help"
@@ -3498,6 +3556,10 @@
       "2": "2",
       "3": "3",
       "4": "4"
+    },
+    "WorkerFilter": {
+      "name": "IslandOrchard.WorkerFilter.name",
+      "help": "IslandOrchard.WorkerFilter.help"
     },
     "MinOrchard": {
       "name": "IslandOrchard.MinOrchard.name",
@@ -3531,6 +3593,10 @@
       "help": "IslandNursery.Positions.help",
       "1": "1",
       "2": "2"
+    },
+    "WorkerFilter": {
+      "name": "IslandNursery.WorkerFilter.name",
+      "help": "IslandNursery.WorkerFilter.help"
     },
     "MinNursery": {
       "name": "IslandNursery.MinNursery.name",
@@ -3572,6 +3638,10 @@
     "Wool": {
       "name": "IslandRancher.Wool.name",
       "help": "IslandRancher.Wool.help"
+    },
+    "WoolWorkerFilter": {
+      "name": "IslandRancher.WoolWorkerFilter.name",
+      "help": "IslandRancher.WoolWorkerFilter.help"
     }
   },
   "IslandFishery": {
@@ -3601,6 +3671,10 @@
     "MinShrimp": {
       "name": "IslandFishery.MinShrimp.name",
       "help": "IslandFishery.MinShrimp.help"
+    },
+    "MinCrayfish": {
+      "name": "IslandFishery.MinCrayfish.name",
+      "help": "IslandFishery.MinCrayfish.help"
     },
     "MinCrab": {
       "name": "IslandFishery.MinCrab.name",
@@ -3649,6 +3723,10 @@
       "3": "3",
       "4": "4"
     },
+    "WorkerFilter": {
+      "name": "IslandMine.WorkerFilter.name",
+      "help": "IslandMine.WorkerFilter.help"
+    },
     "MinCopper": {
       "name": "IslandMine.MinCopper.name",
       "help": "IslandMine.MinCopper.help"
@@ -3692,6 +3770,10 @@
       "3": "3",
       "4": "4"
     },
+    "WorkerFilter": {
+      "name": "IslandForest.WorkerFilter.name",
+      "help": "IslandForest.WorkerFilter.help"
+    },
     "MinElegant": {
       "name": "IslandForest.MinElegant.name",
       "help": "IslandForest.MinElegant.help"
@@ -3703,6 +3785,16 @@
     "MinSelected": {
       "name": "IslandForest.MinSelected.name",
       "help": "IslandForest.MinSelected.help"
+    }
+  },
+  "IslandDailyGather": {
+    "_info": {
+      "name": "IslandDailyGather._info.name",
+      "help": "IslandDailyGather._info.help"
+    },
+    "WorkerFilter": {
+      "name": "IslandDailyGather.WorkerFilter.name",
+      "help": "IslandDailyGather.WorkerFilter.help"
     }
   },
   "IslandRestaurant": {
@@ -4133,6 +4225,7 @@
       "carrot_omelette": "carrot_omelette",
       "stir_fried_chicken": "stir_fried_chicken",
       "steak_bowl": "steak_bowl",
+      "crayfish_stir_fry": "crayfish_stir_fry",
       "carnival": "carnival",
       "double_energy": "double_energy"
     },
@@ -4149,6 +4242,7 @@
       "carrot_omelette": "carrot_omelette",
       "stir_fried_chicken": "stir_fried_chicken",
       "steak_bowl": "steak_bowl",
+      "crayfish_stir_fry": "crayfish_stir_fry",
       "carnival": "carnival",
       "double_energy": "double_energy"
     },
@@ -4165,6 +4259,7 @@
       "carrot_omelette": "carrot_omelette",
       "stir_fried_chicken": "stir_fried_chicken",
       "steak_bowl": "steak_bowl",
+      "crayfish_stir_fry": "crayfish_stir_fry",
       "carnival": "carnival",
       "double_energy": "double_energy"
     },
@@ -4181,6 +4276,7 @@
       "carrot_omelette": "carrot_omelette",
       "stir_fried_chicken": "stir_fried_chicken",
       "steak_bowl": "steak_bowl",
+      "crayfish_stir_fry": "crayfish_stir_fry",
       "carnival": "carnival",
       "double_energy": "double_energy"
     },
@@ -4197,6 +4293,7 @@
       "carrot_omelette": "carrot_omelette",
       "stir_fried_chicken": "stir_fried_chicken",
       "steak_bowl": "steak_bowl",
+      "crayfish_stir_fry": "crayfish_stir_fry",
       "carnival": "carnival",
       "double_energy": "double_energy"
     },
@@ -4213,6 +4310,7 @@
       "carrot_omelette": "carrot_omelette",
       "stir_fried_chicken": "stir_fried_chicken",
       "steak_bowl": "steak_bowl",
+      "crayfish_stir_fry": "crayfish_stir_fry",
       "carnival": "carnival",
       "double_energy": "double_energy"
     },
@@ -4229,6 +4327,7 @@
       "carrot_omelette": "carrot_omelette",
       "stir_fried_chicken": "stir_fried_chicken",
       "steak_bowl": "steak_bowl",
+      "crayfish_stir_fry": "crayfish_stir_fry",
       "carnival": "carnival",
       "double_energy": "double_energy"
     },
@@ -4245,6 +4344,7 @@
       "carrot_omelette": "carrot_omelette",
       "stir_fried_chicken": "stir_fried_chicken",
       "steak_bowl": "steak_bowl",
+      "crayfish_stir_fry": "crayfish_stir_fry",
       "carnival": "carnival",
       "double_energy": "double_energy"
     },
@@ -4267,6 +4367,7 @@
       "carrot_omelette": "carrot_omelette",
       "stir_fried_chicken": "stir_fried_chicken",
       "steak_bowl": "steak_bowl",
+      "crayfish_stir_fry": "crayfish_stir_fry",
       "carnival": "carnival",
       "double_energy": "double_energy"
     }
@@ -4704,6 +4805,10 @@
     "LastSteal": {
       "name": "IslandAirDrop.LastSteal.name",
       "help": "IslandAirDrop.LastSteal.help"
+    },
+    "VisitOtherIsland": {
+      "name": "IslandAirDrop.VisitOtherIsland.name",
+      "help": "IslandAirDrop.VisitOtherIsland.help"
     }
   },
   "IslandDailyOrder": {
@@ -4724,6 +4829,44 @@
       "help": "IslandDailyOrder.UrgentDetectRefreshTime.help"
     }
   },
+  "IslandDailyInteract": {
+    "_info": {
+      "name": "デイリー/週間任務",
+      "help": "朝露農場のふれあい、開発計画の JUU 速達、商区外送サービス、週間写真タスクを含む島のデイリー・週間交流を制御します。"
+    },
+    "WeeklyPhoto": {
+      "name": "週間写真タスク",
+      "help": "開発計画から週間写真タスクを開始し、写真撮影と待機選択を3回繰り返し、タスクアイコンが消えるまで処理します。",
+      "True": "True",
+      "False": "False"
+    }
+  },
+  "IslandPearlSell": {
+    "_info": {
+      "name": "IslandPearlSell._info.name",
+      "help": "IslandPearlSell._info.help"
+    },
+    "BuyPrice": {
+      "name": "IslandPearlSell.BuyPrice.name",
+      "help": "IslandPearlSell.BuyPrice.help"
+    },
+    "SellPrice": {
+      "name": "IslandPearlSell.SellPrice.name",
+      "help": "IslandPearlSell.SellPrice.help"
+    },
+    "BuyNextRun": {
+      "name": "IslandPearlSell.BuyNextRun.name",
+      "help": "IslandPearlSell.BuyNextRun.help"
+    },
+    "DailyPriceRefresh": {
+      "name": "IslandPearlSell.DailyPriceRefresh.name",
+      "help": "IslandPearlSell.DailyPriceRefresh.help"
+    },
+    "NextPearlTradeTime": {
+      "name": "IslandPearlSell.NextPearlTradeTime.name",
+      "help": "IslandPearlSell.NextPearlTradeTime.help"
+    }
+  },
   "IslandCargoPreparation": {
     "_info": {
       "name": "IslandCargoPreparation._info.name",
@@ -4732,6 +4875,46 @@
     "Blacklist": {
       "name": "IslandCargoPreparation.Blacklist.name",
       "help": "IslandCargoPreparation.Blacklist.help"
+    }
+  },
+  "IslandBusiness": {
+    "_info": {
+      "name": "IslandBusiness._info.name",
+      "help": "IslandBusiness._info.help"
+    },
+    "BatchEnabled": {
+      "name": "IslandBusiness.BatchEnabled.name",
+      "help": "IslandBusiness.BatchEnabled.help",
+      "True": "True",
+      "False": "False"
+    },
+    "Batch1Shops": {
+      "name": "IslandBusiness.Batch1Shops.name",
+      "help": "IslandBusiness.Batch1Shops.help",
+      "1": "1",
+      "2": "2",
+      "3": "3",
+      "4": "4",
+      "5": "5"
+    },
+    "Batch2Shops": {
+      "name": "IslandBusiness.Batch2Shops.name",
+      "help": "IslandBusiness.Batch2Shops.help",
+      "1": "1",
+      "2": "2",
+      "3": "3",
+      "4": "4",
+      "5": "5"
+    },
+    "SeasonalReplaceEnabled": {
+      "name": "IslandBusiness.SeasonalReplaceEnabled.name",
+      "help": "IslandBusiness.SeasonalReplaceEnabled.help",
+      "True": "True",
+      "False": "False"
+    },
+    "SeasonalThreshold": {
+      "name": "IslandBusiness.SeasonalThreshold.name",
+      "help": "IslandBusiness.SeasonalThreshold.help"
     }
   },
   "IslandBusinessShop1": {
@@ -4859,6 +5042,21 @@
       "hearty_meal": "hearty_meal",
       "fo_tiao": "fo_tiao",
       "amaranth_rice_ball": "amaranth_rice_ball"
+    },
+    "SeasonalFallback": {
+      "name": "IslandBusinessShop1.SeasonalFallback.name",
+      "help": "IslandBusinessShop1.SeasonalFallback.help",
+      "None": "None",
+      "double_bamboo_shoots": "double_bamboo_shoots",
+      "tofu_meat": "tofu_meat",
+      "tofu_combo": "tofu_combo",
+      "hearty_meal": "hearty_meal",
+      "fo_tiao": "fo_tiao",
+      "amaranth_rice_ball": "amaranth_rice_ball"
+    },
+    "BoostReplaceFilter": {
+      "name": "IslandBusinessShop1.BoostReplaceFilter.name",
+      "help": "IslandBusinessShop1.BoostReplaceFilter.help"
     }
   },
   "IslandBusinessShop2": {
@@ -4996,6 +5194,10 @@
       "lavender_tea": "lavender_tea",
       "sunny_honey": "sunny_honey",
       "watermelon_juice": "watermelon_juice"
+    },
+    "BoostReplaceFilter": {
+      "name": "IslandBusinessShop2.BoostReplaceFilter.name",
+      "help": "IslandBusinessShop2.BoostReplaceFilter.help"
     }
   },
   "IslandBusinessShop3": {
@@ -5118,6 +5320,10 @@
       "berry_orange": "berry_orange",
       "strawberry_charlotte": "strawberry_charlotte",
       "seafood_rice": "seafood_rice"
+    },
+    "BoostReplaceFilter": {
+      "name": "IslandBusinessShop3.BoostReplaceFilter.name",
+      "help": "IslandBusinessShop3.BoostReplaceFilter.help"
     }
   },
   "IslandBusinessShop4": {
@@ -5198,6 +5404,7 @@
       "roasted_skewer": "焼き串",
       "stir_fried_chicken": "鶏肉炒め",
       "steak_bowl": "ステーキ丼",
+      "crayfish_stir_fry": "crayfish_stir_fry",
       "carnival": "カーニバル",
       "double_energy": "ダブルエナジー"
     },
@@ -5208,6 +5415,7 @@
       "roasted_skewer": "焼き串",
       "stir_fried_chicken": "鶏肉炒め",
       "steak_bowl": "ステーキ丼",
+      "crayfish_stir_fry": "crayfish_stir_fry",
       "carnival": "カーニバル",
       "double_energy": "ダブルエナジー"
     },
@@ -5218,6 +5426,7 @@
       "roasted_skewer": "焼き串",
       "stir_fried_chicken": "鶏肉炒め",
       "steak_bowl": "ステーキ丼",
+      "crayfish_stir_fry": "crayfish_stir_fry",
       "carnival": "カーニバル",
       "double_energy": "ダブルエナジー"
     },
@@ -5228,6 +5437,7 @@
       "roasted_skewer": "焼き串",
       "stir_fried_chicken": "鶏肉炒め",
       "steak_bowl": "ステーキ丼",
+      "crayfish_stir_fry": "crayfish_stir_fry",
       "carnival": "カーニバル",
       "double_energy": "ダブルエナジー"
     },
@@ -5238,8 +5448,13 @@
       "roasted_skewer": "焼き串",
       "stir_fried_chicken": "鶏肉炒め",
       "steak_bowl": "ステーキ丼",
+      "crayfish_stir_fry": "crayfish_stir_fry",
       "carnival": "カーニバル",
       "double_energy": "ダブルエナジー"
+    },
+    "BoostReplaceFilter": {
+      "name": "IslandBusinessShop4.BoostReplaceFilter.name",
+      "help": "IslandBusinessShop4.BoostReplaceFilter.help"
     }
   },
   "IslandBusinessShop5": {
@@ -5362,6 +5577,10 @@
       "morning_light": "モーニングライト",
       "wake_up_call": "ウェイクアップコール",
       "fruity_fruitier": "フルーティーフルーティエ"
+    },
+    "BoostReplaceFilter": {
+      "name": "IslandBusinessShop5.BoostReplaceFilter.name",
+      "help": "IslandBusinessShop5.BoostReplaceFilter.help"
     }
   },
   "Daemon": {
@@ -5899,6 +6118,8 @@
       "UseSmartSchedulingOperationCoinsPreserve": "Gui.OpsiScheduling.UseSmartSchedulingOperationCoinsPreserve",
       "OperationCoinsPreserve": "Gui.OpsiScheduling.OperationCoinsPreserve",
       "ActionPointPreserve": "Gui.OpsiScheduling.ActionPointPreserve",
+      "ActionPointEarlyTriggerEnable": "Gui.OpsiScheduling.ActionPointEarlyTriggerEnable",
+      "ActionPointEarlyTriggerThreshold": "Gui.OpsiScheduling.ActionPointEarlyTriggerThreshold",
       "OperationCoinsReturnThreshold": "Gui.OpsiScheduling.OperationCoinsReturnThreshold",
       "EnableMeowfficerFarming": "Gui.OpsiScheduling.EnableMeowfficerFarming",
       "EnableObscure": "Gui.OpsiScheduling.EnableObscure",

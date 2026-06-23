@@ -350,6 +350,14 @@
       "name": "每日订单",
       "help": "从岛屿手机页面进入每日订单界面，自动检测订单类型（紧急/挑战/轻松），根据物品条件交付或驳回。不支持\"标准\"类型订单。"
     },
+    "IslandDailyInteract": {
+      "name": "每日/周任务",
+      "help": "仅支持minitouch。处理岛屿摸猫、JUU速运、商区外送服务与每周照相任务。相关按钮资源生成后可启用。"
+    },
+    "IslandPearlSell": {
+      "name": "每周珍珠采购与售卖",
+      "help": "仅支持minitouch。每周二 01:00 自动处理珍珠：先采购本周珍珠，再售卖已有珍珠。金币一定要够购买200x220个这是最低要求能一次买光本周珍珠, 否则可能会报错."
+    },
     "Daemon": {
       "name": "半自动点击",
       "help": ""
@@ -515,6 +523,7 @@
       "cn_channel-2": "[国服] 十字军行动",
       "cn_channel-3": "[国服] 龙骑兵行动",
       "cn_channel-4": "[国服] 冥王星行动",
+      "cn_channel-5": "[国服] 群岛计划",
       "en-0": "[EN] Avrora",
       "en-1": "[EN] Lexington",
       "en-2": "[EN] Sandy",
@@ -998,7 +1007,7 @@
     },
     "TaskPriorityAdjustment": {
       "name": "任务优先级调整",
-      "help": "格式：每行只写任务名，用 `>` 连接优先级（越靠前优先级越高）。\n不要写 `#` 注释，注释会导致任务名匹配失败。\n\n示例：\nRestart\n> OpsiCrossMonth\n> Commission > Tactical > Research\n> Exercise\n> ...\n\n留空可使用内置默认优先级。"
+      "help": "默认优先级参考（# 后为说明，实际填写时不要复制注释）：\nRestart    # 重启游戏\n> OpsiCrossMonth    # 大世界跨月每日\n> Commission > Tactical > Research    # 委托 > 战术学院 > 科研\n> Exercise    # 演习\n> Dorm > Meowfficer > Guild > Gacha    # 后宅 > 指挥喵 > 大舰队 > 每日抽卡\n> Reward    # 收获\n> ShopFrequent > ShopOnce > Shipyard > Freebies    # 通用商店 > 其他商店 > 开发船坞 > 白嫖奖励\n> PrivateQuarters    # 私人休息室\n> OpsiExplore    # 大世界每月开荒\n> Minigame > Awaken    # 小游戏 > 认知觉醒\n> OpsiAshBeacon    # META信标作战\n> OpsiDaily > OpsiShop > OpsiVoucher > EventShop    # 大世界日常 > 港口商店 > 兑换商店 > 活动商店\n> OpsiAbyssal > OpsiStronghold > OpsiObscure > OpsiArchive    # 深渊海域 > 塞壬要塞 > 隐秘海域 > 档案坐标\n> Daily > Hard > OpsiAshBeacon > OpsiAshAssist > OpsiMonthBoss    # 每日挑战 > 困难图 > META作战 > META支援 > 月度boss\n> Sos > EventSp > EventA > EventB > EventC > EventD    # SOS > 活动每日SP > 活动每日A > 活动每日B > 活动每日C > 活动每日D\n> RaidDaily > CoalitionSp > WarArchives > MaritimeEscort    # 共斗活动每日 > 共斗活动SP > 作战档案 > 商船护航\n> IslandJuuEatery > IslandJuuCoffee > IslandGrill > IslandTeahouse > IslandRestaurant    # 岛屿啾啾简餐 > 啾咖啡 > 乌鱼烤肉 > 白熊饮品 > 有鱼餐馆\n> IslandFarm > IslandRancher > IslandMineForest > IslandDailyGather > IslandManufacture    # 岛屿农田 > 牧场 > 矿山林场 > 每日采集 > 制造业\n> IslandAirDrop > IslandBusiness > IslandDailyOrder > IslandDailyInteract > IslandPearlSell > IslandCargoPreparation    # 岛屿每日补给 > 经营模块 > 每日订单 > 每日/周任务 > 每周珍珠采购与售卖 > 货物筹备\n> Event > Event2 > Event3 > Raid > Hospital > HospitalEvent > Coalition > RaidScuttle > Main > Main2 > Main3    # 活动图1 > 活动图2 > 活动图3 > 共斗活动 > 医院活动 > 医院活动事件 > 共斗活动 > 共斗沉船 > 主线 > 主线2 > 主线3\n> OpsiMeowfficerFarming    # 短猫相接\n> GemsFarming    # 刷紧急委托\n> Ambush11    # 1-1刷伏击\n> OpsiHazard1Leveling    # 侵蚀一练级\n> ThreeOilLowCost    # 三油低耗\n\n格式：每行只写任务名，用 `>` 连接优先级（越靠前优先级越高）。\n上面的 `#` 注释仅用于说明，写入配置时不要保留注释，否则任务名匹配会失败。\n任务名请使用英文配置任务名；不知道任务名时可切到英文界面查看。\n留空可使用内置默认优先级。"
     }
   },
   "OneClickRetire": {
@@ -1143,7 +1152,7 @@
       "event_20231221_cn": "复刻星海逐光",
       "event_20240229_cn": "复刻雪境迷踪",
       "event_20240425_cn": "共鸣的PASSION",
-      "event_20240521_cn": "绽放于辉光之城",
+      "event_20240521_cn": "复刻绽放于辉光之城",
       "event_20240725_cn": "幻梦间奏曲",
       "event_20240815_cn": "铁翼擎风",
       "event_20240829_cn": "埋葬于彼岸之花",
@@ -1218,8 +1227,10 @@
       "war_archives_20220915_cn": "档案 紫绛槿岚",
       "war_archives_20221222_cn": "档案 定向折叠",
       "war_archives_20230223_cn": "档案 湮烬尘墟",
+      "war_archives_20230525_cn": "档案 空相交汇点",
       "war_archives_20230803_cn": "档案 奏响鸢尾之歌",
-      "war_archives_20231026_cn": "档案 飓风与青春之泉"
+      "war_archives_20231026_cn": "档案 飓风与青春之泉",
+      "war_archives_20240725_cn": "档案 幻梦间奏曲"
     },
     "Mode": {
       "name": "关卡模式",
@@ -1252,8 +1263,11 @@
       "help": "使用游戏内置的推荐阵容自动完成困难图配队"
     },
     "DefeatWithdraw": {
-      "name": "道中战斗失败撤退",
-      "help": "道中战斗战败时的处理方式。开启时直接退出海域，关闭时尝试由另一队接管后续战斗。"
+      "name": "道中失败处理",
+      "help": "道中战斗战败时的处理方式，撤退后关闭任务需连续3次战败才会关闭",
+      "withdraw_continue": "撤退后继续任务",
+      "switch_fleet": "切换队伍继续出击",
+      "withdraw_stop": "撤退后关闭任务"
     }
   },
   "StopCondition": {
@@ -1294,6 +1308,28 @@
     "ReachLevel": {
       "name": "舰船升至 X 级后停止",
       "help": "任意等级低于 X 的舰船升级至 X 级后停止\n0 表示不限制等级"
+    }
+  },
+  "WarArchives": {
+    "_info": {
+      "name": "作战档案",
+      "help": ""
+    },
+    "DailyRunCount": {
+      "name": "每日出击次数",
+      "help": "每天最多运行作战档案多少次。\n0 表示不限制。\n达到次数后会延迟到下一次服务器刷新，不会关闭任务。"
+    },
+    "DailyRunCountRemain": {
+      "name": "今日剩余出击次数",
+      "help": "脚本自动维护的今日剩余额度。"
+    },
+    "DailyRunCountRecord": {
+      "name": "每日出击次数记录时间",
+      "help": "脚本自动维护的额度记录时间，用于服务器刷新后重置。"
+    },
+    "DailyRunCountLimit": {
+      "name": "上次每日出击次数",
+      "help": "脚本自动维护的上次每日次数设置，用于调整额度。"
     }
   },
   "Fleet": {
@@ -2236,7 +2272,11 @@
     },
     "ConsumeCoins": {
       "name": "消耗溢出物资",
-      "help": "物资超过550000时购买所有消耗物资的物品"
+      "help": "物资超过指定阈值时购买所有消耗物资的物品，0表示关闭，范围1-600000"
+    },
+    "OverflowCoins": {
+      "name": "物资溢出购买猫箱",
+      "help": "物资超过指定阈值时自动购买猫箱消耗物资，0表示关闭，范围1-600000"
     },
     "Filter": {
       "name": "商店过滤器",
@@ -3211,6 +3251,10 @@
       "name": "保留 X 点行动力",
       "help": "行动力低于 X 后停止，自动打开行动力箱子，X 包含箱子中的行动力，建议保留3000行动力给侵蚀1练级\n这个值将在大世界重置前3天自动减少至200点，如果启用侵蚀1练级则改为1000点，并在最后一天自动减少至0点"
     },
+    "SmartNaturalAPCleanup": {
+      "name": "智能调度自然行动力清理",
+      "help": "智能调度拉起短猫清理自然恢复行动力时使用的一次性隐藏标记。"
+    },
     "HazardLevel": {
       "name": "侵蚀等级",
       "help": "按顺时针出击特定侵蚀等级的海域\n建议选 5 或 3，有更高的 猫点/行动力 比",
@@ -3401,6 +3445,16 @@
       "name": "短猫相接 保留 X 点行动力",
       "help": "行动力低于 X 后停止，自动打开行动力箱子，X 包含箱子中的行动力，建议保留1000行动力给侵蚀1练级"
     },
+    "ActionPointEarlyTriggerEnable": {
+      "name": "行动力提前调度",
+      "help": "启用后在侵蚀一或短猫结束时记录自然行动力，并按每 10 分钟回复 1 点行动力计算智能调度下次运行时间，避免自然行动力溢出。",
+      "True": "True",
+      "False": "False"
+    },
+    "ActionPointEarlyTriggerThreshold": {
+      "name": "提前调度行动力阈值",
+      "help": "自然行动力恢复到 X 时再次运行智能调度。默认 200，适合在行动力接近自然上限时重新决定执行侵蚀一或短猫。"
+    },
     "OperationCoinsReturnThreshold": {
       "name": "获取 X 个作战补给凭证",
       "help": "在黄币获取任务时 共获取(增加) X 个作战补给凭证后返回侵蚀1练级"
@@ -3472,6 +3526,10 @@
       "3": "3",
       "4": "4"
     },
+    "WorkerFilter": {
+      "name": "农田使用角色",
+      "help": "以>连接，例如肇和 新泽西 小天城：ChaoHo > NewJersey > Amagi_chan\n小加加：Saratoga > 明石：Akashi > 塔什干：Tashkent > 应瑞：YingSwei\n恶毒：LeMalin > 独角兽：Unicorn > 岛风：Shimakaze > 柴郡：Cheshire\n镇海：ChenHai > 威廉D波特：WilliamDPorter\n海伦娜：Helena > 大帝：Friedrich > 愛宕：Atago\n逸仙：Yixian > 奥古斯特：August > 欧根亲王：Eugen > 胡德：Hood > 标枪：Javelin > 拉菲：Laffey > 探索者：Explorer > 领航员：Navigator > 领洋者：OceanCrosser > 飞云：FeiYun > 高雄：Takao\n仅识别默认排序前两排；指定舰娘不可用时回退 WorkerJuu。"
+    },
     "MinFarm": {
       "name": "农田作物底线",
       "help": "建议660及以上"
@@ -3498,6 +3556,10 @@
       "2": "2",
       "3": "3",
       "4": "4"
+    },
+    "WorkerFilter": {
+      "name": "果园使用角色",
+      "help": "以>连接，例如肇和 新泽西 小天城：ChaoHo > NewJersey > Amagi_chan\n小加加：Saratoga > 明石：Akashi > 塔什干：Tashkent > 应瑞：YingSwei\n恶毒：LeMalin > 独角兽：Unicorn > 岛风：Shimakaze > 柴郡：Cheshire\n镇海：ChenHai > 威廉D波特：WilliamDPorter\n海伦娜：Helena > 大帝：Friedrich > 愛宕：Atago\n逸仙：Yixian > 奥古斯特：August > 欧根亲王：Eugen > 胡德：Hood > 标枪：Javelin > 拉菲：Laffey > 探索者：Explorer > 领航员：Navigator > 领洋者：OceanCrosser > 飞云：FeiYun > 高雄：Takao\n仅识别默认排序前两排；指定舰娘不可用时回退 WorkerJuu。"
     },
     "MinOrchard": {
       "name": "水果底线",
@@ -3531,6 +3593,10 @@
       "help": "",
       "1": "1",
       "2": "2"
+    },
+    "WorkerFilter": {
+      "name": "苗圃使用角色",
+      "help": "以>连接，例如肇和 新泽西 小天城：ChaoHo > NewJersey > Amagi_chan\n小加加：Saratoga > 明石：Akashi > 塔什干：Tashkent > 应瑞：YingSwei\n恶毒：LeMalin > 独角兽：Unicorn > 岛风：Shimakaze > 柴郡：Cheshire\n镇海：ChenHai > 威廉D波特：WilliamDPorter\n海伦娜：Helena > 大帝：Friedrich > 愛宕：Atago\n逸仙：Yixian > 奥古斯特：August > 欧根亲王：Eugen > 胡德：Hood > 标枪：Javelin > 拉菲：Laffey > 探索者：Explorer > 领航员：Navigator > 领洋者：OceanCrosser > 飞云：FeiYun > 高雄：Takao\n仅识别默认排序前两排；指定舰娘不可用时回退 WorkerJuu。"
     },
     "MinNursery": {
       "name": "苗圃作物底线",
@@ -3567,11 +3633,15 @@
     },
     "RancherFilter": {
       "name": "使用角色",
-      "help": "以>连接，例如肇和 新泽西 小天城：ChaoHo > NewJersey > Amagi_chan\n小加加：Saratoga > 明石：Akashi > 塔什干：Tashkent > 应瑞：YingSwei\n恶毒：LeMalin > 独角兽：Unicorn > 岛风：Shimakaze > 柴郡：Cheshire\n镇海：ChenHai > 威廉D波特：WilliamDPorter\n海伦娜：Helena > 大帝：Friedrich > 愛宕：Atago\n逸仙：Yixian > 奥古斯特：August > 欧根亲王：Eugen > 胡德：Hood > 标枪：Javelin > 拉菲：Laffey > 探索者：Explorer > 领航员：Navigator > 领洋者：OceanCrosser > 飞云：FeiYun > 高雄：Takao"
+      "help": "以>连接，例如肇和 新泽西 小天城：ChaoHo > NewJersey > Amagi_chan\n小加加：Saratoga > 明石：Akashi > 塔什干：Tashkent > 应瑞：YingSwei\n恶毒：LeMalin > 独角兽：Unicorn > 岛风：Shimakaze > 柴郡：Cheshire\n镇海：ChenHai > 威廉D波特：WilliamDPorter\n海伦娜：Helena > 大帝：Friedrich > 愛宕：Atago\n逸仙：Yixian > 奥古斯特：August > 欧根亲王：Eugen > 胡德：Hood > 标枪：Javelin > 拉菲：Laffey > 探索者：Explorer > 领航员：Navigator > 领洋者：OceanCrosser > 飞云：FeiYun > 高雄：Takao\n仅识别默认排序前两排；指定舰娘不可用时回退 WorkerJuu。"
     },
     "Wool": {
       "name": "养羊",
       "help": ""
+    },
+    "WoolWorkerFilter": {
+      "name": "养羊使用角色",
+      "help": "以>连接，例如肇和 新泽西 小天城：ChaoHo > NewJersey > Amagi_chan\n小加加：Saratoga > 明石：Akashi > 塔什干：Tashkent > 应瑞：YingSwei\n恶毒：LeMalin > 独角兽：Unicorn > 岛风：Shimakaze > 柴郡：Cheshire\n镇海：ChenHai > 威廉D波特：WilliamDPorter\n海伦娜：Helena > 大帝：Friedrich > 愛宕：Atago\n逸仙：Yixian > 奥古斯特：August > 欧根亲王：Eugen > 胡德：Hood > 标枪：Javelin > 拉菲：Laffey > 探索者：Explorer > 领航员：Navigator > 领洋者：OceanCrosser > 飞云：FeiYun > 高雄：Takao\n仅识别默认排序前两排；指定舰娘不可用时回退 WorkerJuu。"
     }
   },
   "IslandFishery": {
@@ -3602,6 +3672,10 @@
       "name": "小河虾底线",
       "help": ""
     },
+    "MinCrayfish": {
+      "name": "小龙虾底线",
+      "help": ""
+    },
     "MinCrab": {
       "name": "螃蟹底线",
       "help": ""
@@ -3615,7 +3689,7 @@
       "help": ""
     },
     "PlantYellowfinTuna": {
-      "name": "种黄鳍金枪鱼",
+      "name": "养黄鳍金枪鱼",
       "help": "",
       "0": "0",
       "1": "1",
@@ -3624,7 +3698,7 @@
     },
     "RancherFilter": {
       "name": "使用角色",
-      "help": "以>连接，例如肇和 新泽西 小天城：ChaoHo > NewJersey > Amagi_chan\n小加加：Saratoga > 明石：Akashi > 塔什干：Tashkent > 应瑞：YingSwei\n恶毒：LeMalin > 独角兽：Unicorn > 岛风：Shimakaze > 柴郡：Cheshire\n镇海：ChenHai > 威廉D波特：WilliamDPorter\n海伦娜：Helena > 大帝：Friedrich > 愛宕：Atago\n逸仙：Yixian > 奥古斯特：August > 欧根亲王：Eugen > 胡德：Hood > 标枪：Javelin > 拉菲：Laffey > 探索者：Explorer > 领航员：Navigator > 领洋者：OceanCrosser > 飞云：FeiYun > 高雄：Takao"
+      "help": "以>连接，例如肇和 新泽西 小天城：ChaoHo > NewJersey > Amagi_chan\n小加加：Saratoga > 明石：Akashi > 塔什干：Tashkent > 应瑞：YingSwei\n恶毒：LeMalin > 独角兽：Unicorn > 岛风：Shimakaze > 柴郡：Cheshire\n镇海：ChenHai > 威廉D波特：WilliamDPorter\n海伦娜：Helena > 大帝：Friedrich > 愛宕：Atago\n逸仙：Yixian > 奥古斯特：August > 欧根亲王：Eugen > 胡德：Hood > 标枪：Javelin > 拉菲：Laffey > 探索者：Explorer > 领航员：Navigator > 领洋者：OceanCrosser > 飞云：FeiYun > 高雄：Takao\n仅识别默认排序前两排；指定舰娘不可用时回退 WorkerJuu。"
     }
   },
   "IslandMine": {
@@ -3648,6 +3722,10 @@
       "2": "2",
       "3": "3",
       "4": "4"
+    },
+    "WorkerFilter": {
+      "name": "矿山使用角色",
+      "help": "以>连接，例如肇和 新泽西 小天城：ChaoHo > NewJersey > Amagi_chan\n小加加：Saratoga > 明石：Akashi > 塔什干：Tashkent > 应瑞：YingSwei\n恶毒：LeMalin > 独角兽：Unicorn > 岛风：Shimakaze > 柴郡：Cheshire\n镇海：ChenHai > 威廉D波特：WilliamDPorter\n海伦娜：Helena > 大帝：Friedrich > 愛宕：Atago\n逸仙：Yixian > 奥古斯特：August > 欧根亲王：Eugen > 胡德：Hood > 标枪：Javelin > 拉菲：Laffey > 探索者：Explorer > 领航员：Navigator > 领洋者：OceanCrosser > 飞云：FeiYun > 高雄：Takao\n仅识别默认排序前两排；指定舰娘不可用时回退 WorkerJuu。"
     },
     "MinCopper": {
       "name": "铜矿最低库存",
@@ -3692,6 +3770,10 @@
       "3": "3",
       "4": "4"
     },
+    "WorkerFilter": {
+      "name": "林场使用角色",
+      "help": "以>连接，例如肇和 新泽西 小天城：ChaoHo > NewJersey > Amagi_chan\n小加加：Saratoga > 明石：Akashi > 塔什干：Tashkent > 应瑞：YingSwei\n恶毒：LeMalin > 独角兽：Unicorn > 岛风：Shimakaze > 柴郡：Cheshire\n镇海：ChenHai > 威廉D波特：WilliamDPorter\n海伦娜：Helena > 大帝：Friedrich > 愛宕：Atago\n逸仙：Yixian > 奥古斯特：August > 欧根亲王：Eugen > 胡德：Hood > 标枪：Javelin > 拉菲：Laffey > 探索者：Explorer > 领航员：Navigator > 领洋者：OceanCrosser > 飞云：FeiYun > 高雄：Takao\n仅识别默认排序前两排；指定舰娘不可用时回退 WorkerJuu。"
+    },
     "MinElegant": {
       "name": "优雅木材最低库存",
       "help": "仓库中优雅木材数量低于此值时，林场岗位才会生产"
@@ -3703,6 +3785,16 @@
     "MinSelected": {
       "name": "精选木材最低库存",
       "help": "仓库中精选木材数量低于此值时，林场岗位才会生产"
+    }
+  },
+  "IslandDailyGather": {
+    "_info": {
+      "name": "每日采集",
+      "help": "通过管理界面采集页签，UI模拟点击完成每日采集。执行时间：凌晨3:10、下午6:00。流程：选择采集目标→切换开关→分配角色→出发"
+    },
+    "WorkerFilter": {
+      "name": "采集角色",
+      "help": "以>连接，最多填写3个角色，分别对应第1~3个采集槽位。\n以>连接，例如肇和 新泽西 小天城：ChaoHo > NewJersey > Amagi_chan\n小加加：Saratoga > 明石：Akashi > 塔什干：Tashkent > 应瑞：YingSwei\n恶毒：LeMalin > 独角兽：Unicorn > 岛风：Shimakaze > 柴郡：Cheshire\n镇海：ChenHai > 威廉D波特：WilliamDPorter\n海伦娜：Helena > 大帝：Friedrich > 愛宕：Atago\n逸仙：Yixian > 奥古斯特：August > 欧根亲王：Eugen > 胡德：Hood > 标枪：Javelin > 拉菲：Laffey > 探索者：Explorer > 领航员：Navigator > 领洋者：OceanCrosser > 飞云：FeiYun > 高雄：Takao\n每日采集不能选择 WorkerJuu，填写后会自动忽略。\n仅识别默认排序前两排；指定角色不可用时该槽位回退现有采集逻辑。"
     }
   },
   "IslandRestaurant": {
@@ -3718,7 +3810,7 @@
     },
     "ChefFilter": {
       "name": "厨师",
-      "help": "以>连接，例如肇和 新泽西 小天城：ChaoHo > NewJersey > Amagi_chan\n小加加：Saratoga > 明石：Akashi > 塔什干：Tashkent > 应瑞：YingSwei\n恶毒：LeMalin > 独角兽：Unicorn > 岛风：Shimakaze > 柴郡：Cheshire\n镇海：ChenHai > 威廉D波特：WilliamDPorter\n海伦娜：Helena > 大帝：Friedrich > 愛宕：Atago\n逸仙：Yixian > 奥古斯特：August > 欧根亲王：Eugen > 胡德：Hood > 标枪：Javelin > 拉菲：Laffey > 探索者：Explorer > 领航员：Navigator > 领洋者：OceanCrosser > 飞云：FeiYun > 高雄：Takao"
+      "help": "以>连接，例如肇和 新泽西 小天城：ChaoHo > NewJersey > Amagi_chan\n小加加：Saratoga > 明石：Akashi > 塔什干：Tashkent > 应瑞：YingSwei\n恶毒：LeMalin > 独角兽：Unicorn > 岛风：Shimakaze > 柴郡：Cheshire\n镇海：ChenHai > 威廉D波特：WilliamDPorter\n海伦娜：Helena > 大帝：Friedrich > 愛宕：Atago\n逸仙：Yixian > 奥古斯特：August > 欧根亲王：Eugen > 胡德：Hood > 标枪：Javelin > 拉菲：Laffey > 探索者：Explorer > 领航员：Navigator > 领洋者：OceanCrosser > 飞云：FeiYun > 高雄：Takao\n仅识别默认排序前两排；指定舰娘不可用时回退 WorkerJuu。"
     },
     "DoubleBambooShoots": {
       "name": "凉拌双笋",
@@ -3929,7 +4021,7 @@
     },
     "ChefFilter": {
       "name": "厨师",
-      "help": "以>连接，例如肇和 新泽西 小天城：ChaoHo > NewJersey > Amagi_chan\n小加加：Saratoga > 明石：Akashi > 塔什干：Tashkent > 应瑞：YingSwei\n恶毒：LeMalin > 独角兽：Unicorn > 岛风：Shimakaze > 柴郡：Cheshire\n镇海：ChenHai > 威廉D波特：WilliamDPorter\n海伦娜：Helena > 大帝：Friedrich > 愛宕：Atago\n逸仙：Yixian > 奥古斯特：August > 欧根亲王：Eugen > 胡德：Hood > 标枪：Javelin > 拉菲：Laffey > 探索者：Explorer > 领航员：Navigator > 领洋者：OceanCrosser > 飞云：FeiYun > 高雄：Takao"
+      "help": "以>连接，例如肇和 新泽西 小天城：ChaoHo > NewJersey > Amagi_chan\n小加加：Saratoga > 明石：Akashi > 塔什干：Tashkent > 应瑞：YingSwei\n恶毒：LeMalin > 独角兽：Unicorn > 岛风：Shimakaze > 柴郡：Cheshire\n镇海：ChenHai > 威廉D波特：WilliamDPorter\n海伦娜：Helena > 大帝：Friedrich > 愛宕：Atago\n逸仙：Yixian > 奥古斯特：August > 欧根亲王：Eugen > 胡德：Hood > 标枪：Javelin > 拉菲：Laffey > 探索者：Explorer > 领航员：Navigator > 领洋者：OceanCrosser > 飞云：FeiYun > 高雄：Takao\n仅识别默认排序前两排；指定舰娘不可用时回退 WorkerJuu。"
     },
     "Seasonal": {
       "name": "迎春花茶",
@@ -4122,7 +4214,7 @@
     },
     "ChefFilter": {
       "name": "厨师",
-      "help": "以>连接，例如肇和 新泽西 小天城：ChaoHo > NewJersey > Amagi_chan\n小加加：Saratoga > 明石：Akashi > 塔什干：Tashkent > 应瑞：YingSwei\n恶毒：LeMalin > 独角兽：Unicorn > 岛风：Shimakaze > 柴郡：Cheshire\n镇海：ChenHai > 威廉D波特：WilliamDPorter\n海伦娜：Helena > 大帝：Friedrich > 愛宕：Atago\n逸仙：Yixian > 奥古斯特：August > 欧根亲王：Eugen > 胡德：Hood > 标枪：Javelin > 拉菲：Laffey > 探索者：Explorer > 领航员：Navigator > 领洋者：OceanCrosser > 飞云：FeiYun > 高雄：Takao"
+      "help": "以>连接，例如肇和 新泽西 小天城：ChaoHo > NewJersey > Amagi_chan\n小加加：Saratoga > 明石：Akashi > 塔什干：Tashkent > 应瑞：YingSwei\n恶毒：LeMalin > 独角兽：Unicorn > 岛风：Shimakaze > 柴郡：Cheshire\n镇海：ChenHai > 威廉D波特：WilliamDPorter\n海伦娜：Helena > 大帝：Friedrich > 愛宕：Atago\n逸仙：Yixian > 奥古斯特：August > 欧根亲王：Eugen > 胡德：Hood > 标枪：Javelin > 拉菲：Laffey > 探索者：Explorer > 领航员：Navigator > 领洋者：OceanCrosser > 飞云：FeiYun > 高雄：Takao\n仅识别默认排序前两排；指定舰娘不可用时回退 WorkerJuu。"
     },
     "Meal1": {
       "name": "餐品1",
@@ -4133,6 +4225,7 @@
       "carrot_omelette": "胡萝卜厚蛋烧",
       "stir_fried_chicken": "爆炒禽肉",
       "steak_bowl": "汉堡肉饭",
+      "crayfish_stir_fry": "爆炒小龙虾",
       "carnival": "烤肉狂欢",
       "double_energy": "能量双拼套餐"
     },
@@ -4149,6 +4242,7 @@
       "carrot_omelette": "胡萝卜厚蛋烧",
       "stir_fried_chicken": "爆炒禽肉",
       "steak_bowl": "汉堡肉饭",
+      "crayfish_stir_fry": "爆炒小龙虾",
       "carnival": "烤肉狂欢",
       "double_energy": "能量双拼套餐"
     },
@@ -4165,6 +4259,7 @@
       "carrot_omelette": "胡萝卜厚蛋烧",
       "stir_fried_chicken": "爆炒禽肉",
       "steak_bowl": "汉堡肉饭",
+      "crayfish_stir_fry": "爆炒小龙虾",
       "carnival": "烤肉狂欢",
       "double_energy": "能量双拼套餐"
     },
@@ -4181,6 +4276,7 @@
       "carrot_omelette": "胡萝卜厚蛋烧",
       "stir_fried_chicken": "爆炒禽肉",
       "steak_bowl": "汉堡肉饭",
+      "crayfish_stir_fry": "爆炒小龙虾",
       "carnival": "烤肉狂欢",
       "double_energy": "能量双拼套餐"
     },
@@ -4197,6 +4293,7 @@
       "carrot_omelette": "胡萝卜厚蛋烧",
       "stir_fried_chicken": "爆炒禽肉",
       "steak_bowl": "汉堡肉饭",
+      "crayfish_stir_fry": "爆炒小龙虾",
       "carnival": "烤肉狂欢",
       "double_energy": "能量双拼套餐"
     },
@@ -4213,6 +4310,7 @@
       "carrot_omelette": "胡萝卜厚蛋烧",
       "stir_fried_chicken": "爆炒禽肉",
       "steak_bowl": "汉堡肉饭",
+      "crayfish_stir_fry": "爆炒小龙虾",
       "carnival": "烤肉狂欢",
       "double_energy": "能量双拼套餐"
     },
@@ -4229,6 +4327,7 @@
       "carrot_omelette": "胡萝卜厚蛋烧",
       "stir_fried_chicken": "爆炒禽肉",
       "steak_bowl": "汉堡肉饭",
+      "crayfish_stir_fry": "爆炒小龙虾",
       "carnival": "烤肉狂欢",
       "double_energy": "能量双拼套餐"
     },
@@ -4245,6 +4344,7 @@
       "carrot_omelette": "胡萝卜厚蛋烧",
       "stir_fried_chicken": "爆炒禽肉",
       "steak_bowl": "汉堡肉饭",
+      "crayfish_stir_fry": "爆炒小龙虾",
       "carnival": "烤肉狂欢",
       "double_energy": "能量双拼套餐"
     },
@@ -4267,6 +4367,7 @@
       "carrot_omelette": "胡萝卜厚蛋烧",
       "stir_fried_chicken": "爆炒禽肉",
       "steak_bowl": "汉堡肉饭",
+      "crayfish_stir_fry": "爆炒小龙虾",
       "carnival": "烤肉狂欢",
       "double_energy": "能量双拼套餐"
     }
@@ -4284,7 +4385,7 @@
     },
     "ChefFilter": {
       "name": "厨师",
-      "help": "以>连接，例如肇和 新泽西 小天城：ChaoHo > NewJersey > Amagi_chan\n小加加：Saratoga > 明石：Akashi > 塔什干：Tashkent > 应瑞：YingSwei\n恶毒：LeMalin > 独角兽：Unicorn > 岛风：Shimakaze > 柴郡：Cheshire\n镇海：ChenHai > 威廉D波特：WilliamDPorter\n海伦娜：Helena > 大帝：Friedrich > 愛宕：Atago\n逸仙：Yixian > 奥古斯特：August > 欧根亲王：Eugen > 胡德：Hood > 标枪：Javelin > 拉菲：Laffey > 探索者：Explorer > 领航员：Navigator > 领洋者：OceanCrosser > 飞云：FeiYun > 高雄：Takao"
+      "help": "以>连接，例如肇和 新泽西 小天城：ChaoHo > NewJersey > Amagi_chan\n小加加：Saratoga > 明石：Akashi > 塔什干：Tashkent > 应瑞：YingSwei\n恶毒：LeMalin > 独角兽：Unicorn > 岛风：Shimakaze > 柴郡：Cheshire\n镇海：ChenHai > 威廉D波特：WilliamDPorter\n海伦娜：Helena > 大帝：Friedrich > 愛宕：Atago\n逸仙：Yixian > 奥古斯特：August > 欧根亲王：Eugen > 胡德：Hood > 标枪：Javelin > 拉菲：Laffey > 探索者：Explorer > 领航员：Navigator > 领洋者：OceanCrosser > 飞云：FeiYun > 高雄：Takao\n仅识别默认排序前两排；指定舰娘不可用时回退 WorkerJuu。"
     },
     "Meal1": {
       "name": "餐品1",
@@ -4473,7 +4574,7 @@
     },
     "ChefFilter": {
       "name": "厨师",
-      "help": "以>连接，例如肇和 新泽西 小天城：ChaoHo > NewJersey > Amagi_chan\n小加加：Saratoga > 明石：Akashi > 塔什干：Tashkent > 应瑞：YingSwei\n恶毒：LeMalin > 独角兽：Unicorn > 岛风：Shimakaze > 柴郡：Cheshire\n镇海：ChenHai > 威廉D波特：WilliamDPorter\n海伦娜：Helena > 大帝：Friedrich > 愛宕：Atago\n逸仙：Yixian > 奥古斯特：August > 欧根亲王：Eugen > 胡德：Hood > 标枪：Javelin > 拉菲：Laffey > 探索者：Explorer > 领航员：Navigator > 领洋者：OceanCrosser > 飞云：FeiYun > 高雄：Takao"
+      "help": "以>连接，例如肇和 新泽西 小天城：ChaoHo > NewJersey > Amagi_chan\n小加加：Saratoga > 明石：Akashi > 塔什干：Tashkent > 应瑞：YingSwei\n恶毒：LeMalin > 独角兽：Unicorn > 岛风：Shimakaze > 柴郡：Cheshire\n镇海：ChenHai > 威廉D波特：WilliamDPorter\n海伦娜：Helena > 大帝：Friedrich > 愛宕：Atago\n逸仙：Yixian > 奥古斯特：August > 欧根亲王：Eugen > 胡德：Hood > 标枪：Javelin > 拉菲：Laffey > 探索者：Explorer > 领航员：Navigator > 领洋者：OceanCrosser > 飞云：FeiYun > 高雄：Takao\n仅识别默认排序前两排；指定舰娘不可用时回退 WorkerJuu。"
     },
     "Friedrich": {
       "name": "大帝",
@@ -4704,6 +4805,10 @@
     "LastSteal": {
       "name": "上次运行时间",
       "help": ""
+    },
+    "VisitOtherIsland": {
+      "name": "拜访其他玩家岛屿",
+      "help": "关闭后只收取自己岛屿的空中补给，不再前往其他玩家岛屿。"
     }
   },
   "IslandDailyOrder": {
@@ -4724,6 +4829,44 @@
       "help": "紧急委托检测的冷却时间。在此时间之前跳过紧急委托检测。格式: YYYY-MM-DD HH:mm:ss"
     }
   },
+  "IslandDailyInteract": {
+    "_info": {
+      "name": "每日/周任务",
+      "help": "仅支持minitouch。控制岛屿每日与每周互动任务，包含晨露农场摸猫、开发计划中的 JUU 速运、商区外送服务和每周照相任务。"
+    },
+    "WeeklyPhoto": {
+      "name": "每周照相任务",
+      "help": "从开发计划页面启动每周照相任务，循环完成三轮照相与空闲选择，直到任务图标消失。",
+      "True": "True",
+      "False": "False"
+    }
+  },
+  "IslandPearlSell": {
+    "_info": {
+      "name": "每周珍珠采购与售卖",
+      "help": "仅支持minitouch。每周二 01:00 自动处理珍珠：先按最高采购价采购本周珍珠，再按最低售卖价售卖已有珍珠。其他未完成流程会延迟到次日 01:00 重试。金币一定要够购买200x220个这是最低要求能一次买光本周珍珠, 否则可能会报错."
+    },
+    "BuyPrice": {
+      "name": "最高采购价格",
+      "help": "珍珠采购阶段允许的最高折算价格，范围 200~1000。"
+    },
+    "SellPrice": {
+      "name": "最低售卖价格",
+      "help": "珍珠售卖阶段要求的最低价格，范围 200~1000。"
+    },
+    "BuyNextRun": {
+      "name": "采购下次运行时间",
+      "help": ""
+    },
+    "DailyPriceRefresh": {
+      "name": "每日03:00刷新价格",
+      "help": "开启后每天03:00进入珍珠商店刷新价格显示，不执行采购或售卖操作。勾选后整体任务调度逻辑会变化。"
+    },
+    "NextPearlTradeTime": {
+      "name": "下次采购售卖时间",
+      "help": "记录下次执行采购售卖的时间。到达此时间前仅做价格刷新（如启用）。"
+    }
+  },
   "IslandCargoPreparation": {
     "_info": {
       "name": "货物筹备",
@@ -4732,6 +4875,46 @@
     "Blacklist": {
       "name": "货物黑名单",
       "help": "命中黑名单货物时更换委托。目前仅支持 Milk（牛奶）。"
+    }
+  },
+  "IslandBusiness": {
+    "_info": {
+      "name": "经营模块",
+      "help": "管理岛屿商店的经营运作，支持分批经营、季节限定替换和加成商品替换"
+    },
+    "BatchEnabled": {
+      "name": "启用分批经营",
+      "help": "将5个商店分成两批执行，避免共用经营人员的商店同批派出",
+      "True": "启用",
+      "False": "禁用"
+    },
+    "Batch1Shops": {
+      "name": "第一批经营商店",
+      "help": "选择第一批要经营的商店，默认配置为啾啾简餐、有鱼餐馆、啾咖啡",
+      "1": "有鱼餐馆",
+      "2": "白熊饮品",
+      "3": "啾啾简餐",
+      "4": "乌鱼烤肉",
+      "5": "啾咖啡"
+    },
+    "Batch2Shops": {
+      "name": "第二批经营商店",
+      "help": "选择第二批要经营的商店，默认配置为白熊饮品、乌鱼烤肉",
+      "1": "有鱼餐馆",
+      "2": "白熊饮品",
+      "3": "啾啾简餐",
+      "4": "乌鱼烤肉",
+      "5": "啾咖啡"
+    },
+    "SeasonalReplaceEnabled": {
+      "name": "启用季节限定替换",
+      "help": "季节限定菜品库存不足时自动替换为备用餐品",
+      "True": "启用",
+      "False": "禁用"
+    },
+    "SeasonalThreshold": {
+      "name": "季节限定替换阈值",
+      "help": "季节限定菜品库存低于此数量时触发替换"
     }
   },
   "IslandBusinessShop1": {
@@ -4859,6 +5042,21 @@
       "hearty_meal": "绵玉定食",
       "fo_tiao": "佛跳墙",
       "amaranth_rice_ball": "苋菜饭团"
+    },
+    "SeasonalFallback": {
+      "name": "季节餐品备用餐品",
+      "help": "有鱼餐馆当前季节餐品库存不足时替换成该餐品",
+      "None": "无",
+      "double_bamboo_shoots": "凉拌双笋",
+      "tofu_meat": "肉末烧豆腐",
+      "tofu_combo": "经典豆腐套餐",
+      "hearty_meal": "绵玉定食",
+      "fo_tiao": "佛跳墙",
+      "amaranth_rice_ball": "苋菜饭团"
+    },
+    "BoostReplaceFilter": {
+      "name": "有鱼餐馆加成替换过滤",
+      "help": "多个加成餐品时按过滤顺序优先替换第一个；替换槽位从餐品5→1倒查替换最后一个非空餐品\n可用餐品key对照：double_bamboo_shoots:凉拌双笋, tofu_meat:肉末烧豆腐, tofu_combo:经典豆腐套餐, hearty_meal:绵玉定食, fo_tiao:佛跳墙, amaranth_rice_ball:苋菜饭团\n示例：fo_tiao > hearty_meal > 30 > tofu_combo > tofu_meat > 20 > double_bamboo_shoots > 10"
     }
   },
   "IslandBusinessShop2": {
@@ -4996,6 +5194,10 @@
       "lavender_tea": "薰衣草茶",
       "sunny_honey": "阳光蜜水",
       "watermelon_juice": "西瓜汁"
+    },
+    "BoostReplaceFilter": {
+      "name": "白熊饮品加成替换过滤",
+      "help": "多个加成餐品时按过滤顺序优先替换第一个；替换槽位从餐品5→1倒查替换最后一个非空餐品\n可用餐品key对照：spring_flower_tea:迎春花茶, strawberry_lemon:草莓蜜沁, strawberry_honey:草莓蜂蜜冰沙, floral_fruity:花香果韵, fruit_paradise:缤纷果乐园, lavender_tea:薰衣草茶, sunny_honey:阳光蜜水, watermelon_juice:西瓜汁\n示例：fruit_paradise > floral_fruity > 30 > lavender_tea > sunny_honey > 20 > spring_flower_tea > 10"
     }
   },
   "IslandBusinessShop3": {
@@ -5118,6 +5320,10 @@
       "berry_orange": "莓果香橙甜点组",
       "strawberry_charlotte": "草莓夏洛特",
       "seafood_rice": "海鲜饭"
+    },
+    "BoostReplaceFilter": {
+      "name": "啾啾简餐加成替换过滤",
+      "help": "多个加成餐品时按过滤顺序优先替换第一个；替换槽位从餐品5→1倒查替换最后一个非空餐品\n可用餐品key对照：orchard_duo:果园二重奏, succulently_sweet:香甜组合, berry_orange:莓果香橙甜点组, strawberry_charlotte:草莓夏洛特, seafood_rice:海鲜饭\n示例：seafood_rice > strawberry_charlotte > 30 > berry_orange > succulently_sweet > 20 > orchard_duo > 10"
     }
   },
   "IslandBusinessShop4": {
@@ -5198,6 +5404,7 @@
       "roasted_skewer": "碳烤肉串",
       "stir_fried_chicken": "爆炒禽肉",
       "steak_bowl": "汉堡肉饭",
+      "crayfish_stir_fry": "爆炒小龙虾",
       "carnival": "烤肉狂欢",
       "double_energy": "能量双拼套餐"
     },
@@ -5208,6 +5415,7 @@
       "roasted_skewer": "碳烤肉串",
       "stir_fried_chicken": "爆炒禽肉",
       "steak_bowl": "汉堡肉饭",
+      "crayfish_stir_fry": "爆炒小龙虾",
       "carnival": "烤肉狂欢",
       "double_energy": "能量双拼套餐"
     },
@@ -5218,6 +5426,7 @@
       "roasted_skewer": "碳烤肉串",
       "stir_fried_chicken": "爆炒禽肉",
       "steak_bowl": "汉堡肉饭",
+      "crayfish_stir_fry": "爆炒小龙虾",
       "carnival": "烤肉狂欢",
       "double_energy": "能量双拼套餐"
     },
@@ -5228,6 +5437,7 @@
       "roasted_skewer": "碳烤肉串",
       "stir_fried_chicken": "爆炒禽肉",
       "steak_bowl": "汉堡肉饭",
+      "crayfish_stir_fry": "爆炒小龙虾",
       "carnival": "烤肉狂欢",
       "double_energy": "能量双拼套餐"
     },
@@ -5238,8 +5448,13 @@
       "roasted_skewer": "碳烤肉串",
       "stir_fried_chicken": "爆炒禽肉",
       "steak_bowl": "汉堡肉饭",
+      "crayfish_stir_fry": "爆炒小龙虾",
       "carnival": "烤肉狂欢",
       "double_energy": "能量双拼套餐"
+    },
+    "BoostReplaceFilter": {
+      "name": "乌鱼烤肉加成替换过滤",
+      "help": "多个加成餐品时按过滤顺序优先替换第一个；替换槽位从餐品5→1倒查替换最后一个非空餐品\n可用餐品key对照：roasted_skewer:碳烤肉串, stir_fried_chicken:爆炒禽肉, steak_bowl:汉堡肉饭, crayfish_stir_fry:爆炒小龙虾, carnival:烤肉狂欢, double_energy:能量双拼套餐\n示例：double_energy > carnival > 30 > crayfish_stir_fry > steak_bowl > stir_fried_chicken > 20 > roasted_skewer > 10"
     }
   },
   "IslandBusinessShop5": {
@@ -5362,6 +5577,10 @@
       "morning_light": "晨光活力组合",
       "wake_up_call": "醒神套餐",
       "fruity_fruitier": "果香双杯乐"
+    },
+    "BoostReplaceFilter": {
+      "name": "啾咖啡加成替换过滤",
+      "help": "多个加成餐品时按过滤顺序优先替换第一个；替换槽位从餐品5→1倒查替换最后一个非空餐品\n可用餐品key对照：cheese:芝士, strawberry_milkshake:草莓奶绿, morning_light:晨光活力组合, wake_up_call:醒神套餐, fruity_fruitier:果香双杯乐\n示例：fruity_fruitier > wake_up_call > 30 > morning_light > strawberry_milkshake > 20 > cheese > 10"
     }
   },
   "Daemon": {
@@ -5899,6 +6118,8 @@
       "UseSmartSchedulingOperationCoinsPreserve": "Gui.OpsiScheduling.UseSmartSchedulingOperationCoinsPreserve",
       "OperationCoinsPreserve": "Gui.OpsiScheduling.OperationCoinsPreserve",
       "ActionPointPreserve": "Gui.OpsiScheduling.ActionPointPreserve",
+      "ActionPointEarlyTriggerEnable": "行动力提前调度",
+      "ActionPointEarlyTriggerThreshold": "提前调度行动力阈值",
       "OperationCoinsReturnThreshold": "Gui.OpsiScheduling.OperationCoinsReturnThreshold",
       "EnableMeowfficerFarming": "Gui.OpsiScheduling.EnableMeowfficerFarming",
       "EnableObscure": "Gui.OpsiScheduling.EnableObscure",
