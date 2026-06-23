@@ -3251,6 +3251,10 @@
       "name": "Preserve X Action Points",
       "help": "Stop when Action Points are lower than X, and automatically open Action Point boxes. X includes Action Points in boxes. It is recommended to preserve 3000 AP for Corrosion 1 Leveling.\nThis value will be automatically reduced to 200 points 3 days before Operation Siren reset. If Corrosion 1 Leveling is enabled, it will be changed to 1000 points, and will be automatically reduced to 0 points on the last day."
     },
+    "SmartNaturalAPCleanup": {
+      "name": "OpsiMeowfficerFarming.SmartNaturalAPCleanup.name",
+      "help": "OpsiMeowfficerFarming.SmartNaturalAPCleanup.help"
+    },
     "HazardLevel": {
       "name": "Corrosion Level",
       "help": "Attack sea zones with specific Corrosion levels in clockwise order\nIt is recommended to choose 5 or 3, which has a higher cat point/AP ratio.",

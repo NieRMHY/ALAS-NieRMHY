@@ -286,20 +286,22 @@ class IslandFarm(Island, WarehouseOCR, LoginHandler):
         time_work = Duration(ISLAND_WORKING_TIME)
         selection = self.name_to_config[product]['selection']
         selection_check = self.name_to_config[product]['selection_check']
-        while 1:
-            self.device.screenshot()
+        for _ in self.loop(timeout=120, skip_first=False):
             if self.appear_then_click(ISLAND_POST_SELECT, offset=1):
                 self.device.sleep(0.5)
                 continue
             if self.appear(ISLAND_SELECT_CHARACTER_CHECK, offset=1):
+                character_filter = self.worker_filters.get(category, "WorkerJuu")
                 if product == 'rubber' and self.config.IslandOrchard_AmagiChanRubber:
-                    if self.select_character(character_list="Amagi_chan"):
-                        self.device.click(SELECT_UI_CONFIRM)
+                    character_filter = "Amagi_chan"
+                if self.select_character(character_list=character_filter):
+                    if not self.confirm_selected_character(f"{product}种植派遣"):
+                        self.back_to_postmanage_from_dispatch()
+                        return False
                 else:
-                    if self.select_character(character_list=self.worker_filters.get(category, "WorkerJuu")):
-                        self.device.sleep(0.5)
-                        self.device.click(SELECT_UI_CONFIRM)
-                        self.device.sleep(0.5)
+                    logger.warning(f"{product}种植派遣无可用角色: {character_filter}")
+                    self.back_to_postmanage_from_dispatch()
+                    return False
                 continue
             if self.appear(ISLAND_SELECT_PRODUCT_CHECK, offset=1):
                 if self.select_product(selection, selection_check):
@@ -318,6 +320,11 @@ class IslandFarm(Island, WarehouseOCR, LoginHandler):
                     break
                 else:
                     return self._handle_select_product_failure(product)
+        else:
+            logger.warning(f"{product}种植派遣超时")
+            self.back_to_postmanage_from_dispatch()
+            return False
+
         self.post_open(post_button)
         self.device.sleep(0.5)
         self.device.screenshot()

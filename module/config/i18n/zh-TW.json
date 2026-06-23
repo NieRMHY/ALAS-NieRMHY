@@ -3251,6 +3251,10 @@
       "name": "保留 X 點行動力",
       "help": "行動力低於 X 後停止，自動開啟行動力箱子，X 包含箱子中的行動力，建議保留3000行動力給侵蝕1練級\n這個值將在大世界重置前3天自動減少至200點，如果啟用侵蝕1練級則改為1000點，並在最後一天自動減少至0點"
     },
+    "SmartNaturalAPCleanup": {
+      "name": "OpsiMeowfficerFarming.SmartNaturalAPCleanup.name",
+      "help": "OpsiMeowfficerFarming.SmartNaturalAPCleanup.help"
+    },
     "HazardLevel": {
       "name": "侵蝕等級",
       "help": "按順時針出擊特定侵蝕等級的海域\n建議選 5 或 3，有更高的 貓點/行動力 比",

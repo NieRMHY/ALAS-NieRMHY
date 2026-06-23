@@ -13181,6 +13181,11 @@
         "type": "input",
         "value": 1000
       },
+      "SmartNaturalAPCleanup": {
+        "type": "stored",
+        "value": false,
+        "display": "hide"
+      },
       "HazardLevel": {
         "type": "select",
         "value": 5,
@@ -13500,7 +13505,7 @@
         ]
       },
       "NextRun": {
-        "type": "datetime",
+        "type": "stored",
         "value": "2020-01-01 00:00:00",
         "validate": "datetime",
         "display": "hide"
@@ -13512,12 +13517,12 @@
       },
       "SuccessInterval": {
         "type": "input",
-        "value": 60,
+        "value": 1440,
         "display": "hide"
       },
       "FailureInterval": {
         "type": "input",
-        "value": 60,
+        "value": 1440,
         "display": "hide"
       },
       "ServerUpdate": {

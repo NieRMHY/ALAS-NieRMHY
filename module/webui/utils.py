@@ -88,6 +88,11 @@ LIGHT_TERMINAL_THEME = TerminalTheme(
     ],
 )
 
+WEBUI_LOGIN_MAX_FAILURES = 5
+_webui_login_failure_count = 0
+_webui_login_forbidden = False
+_webui_login_lock = threading.Lock()
+
 
 class QueueHandler:
     def __init__(self, q: Queue) -> None:
@@ -535,15 +540,46 @@ def to_pin_value(val):
         return val
 
 
+def is_login_forbidden():
+    with _webui_login_lock:
+        return _webui_login_forbidden
+
+
+def _record_login_failure():
+    global _webui_login_failure_count, _webui_login_forbidden
+    with _webui_login_lock:
+        _webui_login_failure_count += 1
+        if (
+            not _webui_login_forbidden
+            and _webui_login_failure_count >= WEBUI_LOGIN_MAX_FAILURES
+        ):
+            _webui_login_forbidden = True
+            logger.warning(
+                "密码错误次数过多，已禁止所有登录，重启后恢复。"
+            )
+        return _webui_login_failure_count
+
+
 def login(password):
+    if is_login_forbidden():
+        toast("密码错误次数过多，请重启后再试。", color="error")
+        return False
     if get_localstorage("password") == str(password):
         return True
     pwd = input(label="Please login below.", type=PASSWORD, placeholder="PASSWORD")
+    if is_login_forbidden():
+        toast("密码错误次数过多，请重启后再试。", color="error")
+        return False
     if str(pwd) == str(password):
         set_localstorage("password", str(pwd))
         return True
     else:
-        toast("Wrong password!", color="error")
+        count = _record_login_failure()
+        remaining = WEBUI_LOGIN_MAX_FAILURES - count
+        if remaining > 0:
+            toast(f"密码错误，还剩 {remaining} 次机会。", color="error")
+        else:
+            toast("密码错误次数过多，请重启后再试。", color="error")
         return False
 
 

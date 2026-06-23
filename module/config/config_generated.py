@@ -631,6 +631,7 @@ class GeneratedConfig:
 
     # 配置组 `OpsiMeowfficerFarming`
     OpsiMeowfficerFarming_ActionPointPreserve = 1000
+    OpsiMeowfficerFarming_SmartNaturalAPCleanup = False
     OpsiMeowfficerFarming_HazardLevel = 5  # 2, 3, 4, 5, 6, 10
     OpsiMeowfficerFarming_TargetZone = 0
     OpsiMeowfficerFarming_StayInZone = False

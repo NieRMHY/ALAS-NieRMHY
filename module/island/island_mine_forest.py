@@ -316,10 +316,15 @@ class IslandMineForest(Island,LoginHandler):
                 continue
 
             if self.appear(ISLAND_SELECT_CHARACTER_CHECK, offset=1):
-                if self.select_character(character_list=self.worker_filters.get(category, "WorkerJuu")):
-                    self.device.sleep(0.3)
-                    self.appear_then_click(SELECT_UI_CONFIRM)
-                    self.device.sleep(0.3)
+                character_filter = self.worker_filters.get(category, "WorkerJuu")
+                if self.select_character(character_list=character_filter):
+                    if not self.confirm_selected_character(f"{product}生产派遣"):
+                        self.back_to_postmanage_from_dispatch()
+                        return False
+                else:
+                    logger.warning(f"{product}生产派遣无可用角色: {character_filter}")
+                    self.back_to_postmanage_from_dispatch()
+                    return False
                 continue
 
             if self.appear(ISLAND_SELECT_PRODUCT_CHECK, offset=1):

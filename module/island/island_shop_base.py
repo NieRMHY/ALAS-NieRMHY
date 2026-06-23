@@ -184,7 +184,7 @@ class IslandShopBase(Island, WarehouseOCR):
                 logger.info(f"{dish['name']}: {self.warehouse_counts[dish['name']]}")
         return self.warehouse_counts
     def select_special_character(self,product):
-        self.select_character(character_list=self.chef_config)
+        return self.select_character(character_list=self.chef_config)
     def produce_special_food(self):
         pass
     def post_produce(self, post_id, product, number, time_var_name,product2=None):
@@ -203,14 +203,19 @@ class IslandShopBase(Island, WarehouseOCR):
                 continue
             if self.appear(ISLAND_SELECT_CHARACTER_CHECK, offset=1):
                 if self.special_character:
-                    self.select_special_character(product)
-                    self.device.sleep(0.5)
-                    self.appear_then_click(SELECT_UI_CONFIRM)
-                    self.device.sleep(0.5)
-                elif self.select_character(character_list=self.chef_config):
-                    self.device.sleep(0.5)
-                    self.appear_then_click(SELECT_UI_CONFIRM)
-                    self.device.sleep(0.5)
+                    selected = self.select_special_character(product)
+                    character_filter = "special"
+                else:
+                    selected = self.select_character(character_list=self.chef_config)
+                    character_filter = self.chef_config
+                if selected:
+                    if not self.confirm_selected_character(f"{product}生产派遣"):
+                        self.back_to_postmanage_from_dispatch()
+                        return 0
+                else:
+                    logger.warning(f"{product}生产派遣无可用角色: {character_filter}")
+                    self.back_to_postmanage_from_dispatch()
+                    return 0
                 continue
             if self.appear(ISLAND_SELECT_PRODUCT_CHECK, offset=1):
                 if self.select_product(selection, selection_check):

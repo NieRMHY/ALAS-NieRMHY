@@ -3251,6 +3251,10 @@
       "name": "行動力をXポイント保留",
       "help": "行動力がX以下になると停止し、行動力ボックスを自動で開きます。\nこの値はセイレーン作戦リセット3日前に自動的に200ポイントに減ります。侵食1レベリングが有効な場合は1000ポイントに変更され、最終日には自動的に0ポイントに減ります。"
     },
+    "SmartNaturalAPCleanup": {
+      "name": "OpsiMeowfficerFarming.SmartNaturalAPCleanup.name",
+      "help": "OpsiMeowfficerFarming.SmartNaturalAPCleanup.help"
+    },
     "HazardLevel": {
       "name": "侵食レベル",
       "help": "指定した侵食レベルの海域を時計回りに攻撃します。\n指揮ニャポイント/行動力の比率が高い5または3を選択するのがおすすめです。",

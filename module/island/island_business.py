@@ -1714,11 +1714,13 @@ class IslandBusiness(Island):
             if result:
                 selected_name = result
                 logger.info(f"第{slot_idx + 1}个角色选择成功: {selected_name}")
+                if not self.confirm_selected_character_closed(f"经营第{slot_idx + 1}个角色"):
+                    self.device.click(SELECT_UI_BACK)
+                    self.device.sleep(0.5)
+                    continue
                 # 已选角色从优先级中移除，防止下个槽位重复选择
                 if selected_name in self.character_priority:
                     self.character_priority.remove(selected_name)
-                self.device.click(SELECT_UI_CONFIRM)
-                self.device.sleep(0.5)
                 # 确认后等待界面刷新，再检测第二个"+"按钮
                 self.device.screenshot()
                 self.device.sleep(1)

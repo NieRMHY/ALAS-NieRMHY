@@ -304,9 +304,9 @@ class IslandRancher(Island, WarehouseOCR, LoginHandler):
                     logger.warning(f"牧场岗位{post_id}无法选择补饲料用角色")
                     self.device.click(SELECT_UI_BACK)
                     return False
-                self.device.sleep(0.5)
-                self.appear_then_click(SELECT_UI_CONFIRM)
-                self.device.sleep(0.5)
+                if not self.confirm_selected_character(f"牧场岗位{post_id}补饲料派遣"):
+                    self.back_to_postmanage_from_dispatch()
+                    return False
                 continue
             if self.appear(ISLAND_SELECT_PRODUCT_CHECK, offset=1):
                 return self.goto_shop_from_select_product(shop_check=ISLAND_MILL_CHECK)
@@ -342,9 +342,13 @@ class IslandRancher(Island, WarehouseOCR, LoginHandler):
                 continue
             if self.appear(ISLAND_SELECT_CHARACTER_CHECK, offset=1):
                 if self.select_character(character):
-                    self.device.sleep(0.5)
-                    self.appear_then_click(SELECT_UI_CONFIRM)
-                    self.device.sleep(0.5)
+                    if not self.confirm_selected_character(f"牧场岗位{post_id}派遣"):
+                        self.back_to_postmanage_from_dispatch()
+                        return False
+                else:
+                    logger.warning(f"牧场岗位{post_id}派遣无可用角色: {character}")
+                    self.back_to_postmanage_from_dispatch()
+                    return False
                 continue
             if self.appear(ISLAND_SELECT_PRODUCT_CHECK, offset=1):
                 feed_item = self.ranch_feed_map.get(post_id)

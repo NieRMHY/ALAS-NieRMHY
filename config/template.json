@@ -2603,6 +2603,7 @@
     },
     "OpsiMeowfficerFarming": {
       "ActionPointPreserve": 1000,
+      "SmartNaturalAPCleanup": false,
       "HazardLevel": 5,
       "TargetZone": 0,
       "StayInZone": false,
@@ -2680,8 +2681,8 @@
       "PushNotification": false,
       "NextRun": "2020-01-01 00:00:00",
       "Command": "OpsiScheduling",
-      "SuccessInterval": 60,
-      "FailureInterval": 60,
+      "SuccessInterval": 1440,
+      "FailureInterval": 1440,
       "ServerUpdate": "00:00",
       "Sensitive": false
     },
