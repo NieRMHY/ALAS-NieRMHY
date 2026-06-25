@@ -60,6 +60,7 @@ class State:
     restart_event: threading.Event = None
     manager: SyncManager = None
     electron: bool = False
+    webui_host: str = None
     theme: str = "default"
     last_screenshot_base64: str = None
     placeholder_images: list = [
