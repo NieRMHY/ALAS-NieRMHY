@@ -156,6 +156,14 @@ if __name__ == "__main__":
     except RuntimeError:
         logger.warning("无法设置spawn启动方式，可能使用fork（macOS上不推荐）")
 
+    # 启动前无感同步依赖，使重启即更新（git pull 后重启自动 uv sync）  # Add by MHY
+    try:
+        from deploy.uv import sync_project_venv
+        logger.info('Sync dependencies (uv sync)')
+        sync_project_venv()
+    except Exception as e:
+        logger.warning(f'uv sync skipped: {e}')
+
     # 启用热重载模式
     if State.deploy_config.EnableReload:
         should_exit = False
