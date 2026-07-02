@@ -86,6 +86,7 @@ class GeneratedConfig:
 
     # 配置组 `Restart`
     Restart_RandomDelay = '5, 50'
+    Restart_ClearCache = False  # True, False
 
     # 配置组 `Emulator`
     Emulator_Serial = 'auto'
@@ -518,7 +519,7 @@ class GeneratedConfig:
     PrivateQuarters_BuyRoses = True
     PrivateQuarters_BuyCake = False
     PrivateQuarters_TargetInteract = True
-    PrivateQuarters_TargetShip = 'anchorage'  # anchorage, noshiro, sirius, new_jersey, taihou, aegir
+    PrivateQuarters_TargetShip = 'anchorage'  # anchorage, noshiro, sirius, new_jersey, taihou, aegir, nakhimov
 
     # 配置组 `Daily`
     Daily_UseDailySkip = True

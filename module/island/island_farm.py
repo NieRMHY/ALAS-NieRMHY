@@ -1,6 +1,6 @@
 from module.island_farm.assets import *
 from module.island.island import *
-from datetime import datetime
+from module.config.time_source import now as current_time
 from module.handler.login import LoginHandler
 from module.island.warehouse import *
 from module.logger import logger
@@ -269,7 +269,7 @@ class IslandFarm(Island, WarehouseOCR, LoginHandler):
             self.posts[post_id]['crop'] = product_name
             time_work = Duration(ISLAND_WORKING_TIME)
             time_value = time_work.ocr(self.device.image)
-            finish_time = datetime.now() + time_value
+            finish_time = current_time() + time_value
             setattr(self, time_var_name, finish_time)
             post_index = int(post_id[-1]) - 1
             if category in self.time_vars and post_index < len(self.time_vars[category]):
@@ -345,7 +345,7 @@ class IslandFarm(Island, WarehouseOCR, LoginHandler):
         self.device.sleep(0.5)
         self.device.screenshot()
         time_value = time_work.ocr(self.device.image)
-        finish_time = datetime.now() + time_value
+        finish_time = current_time() + time_value
         setattr(self, time_var_name, finish_time)
 
         # 更新岗位作物信息
@@ -553,7 +553,7 @@ class IslandFarm(Island, WarehouseOCR, LoginHandler):
                 if time_var is not None:
                     future_finish.append(time_var)
 
-        six_hours_later = datetime.now() + timedelta(hours=6)
+        six_hours_later = current_time() + timedelta(hours=6)
         future_finish.append(six_hours_later)
         future_finish.sort()
         self.config.task_delay(target=future_finish)

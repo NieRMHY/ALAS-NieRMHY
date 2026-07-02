@@ -1,4 +1,6 @@
-from datetime import datetime, timedelta
+from datetime import timedelta
+
+from module.config.time_source import now as current_time
 import cv2
 import re
 import numpy as np
@@ -162,7 +164,7 @@ class IslandProduct:
         if not self.duration.total_seconds():
             self.valid = False
 
-        self.create_time = datetime.now()
+        self.create_time = current_time()
 
     @property
     def finish_time(self):

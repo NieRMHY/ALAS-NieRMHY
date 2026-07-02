@@ -1,5 +1,7 @@
 from module.island.island import *
-from datetime import datetime, timedelta
+from datetime import timedelta
+
+from module.config.time_source import now as current_time
 from module.logger import logger
 
 # 采集安全区域（无截图，固定坐标点击用于关闭弹窗）
@@ -34,7 +36,7 @@ class IslandDailyGather(Island):
         任务入口：执行采集流程，并根据当前时间调度下次运行
         每日自动运行两次：凌晨3:10 和 下午6:00
         """
-        now = datetime.now()
+        now = current_time()
 
         # 无论何时运行，都执行采集
         logger.info(f"开始执行每日采集 (当前时间: {now.strftime('%H:%M')})")

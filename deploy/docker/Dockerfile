@@ -1,5 +1,5 @@
 # docker build -t hgjazhgj/alas:latest -f deploy/docker/Dockerfile .
-# docker run -v ${PWD}:/app/AzurLaneAutoScript -p 25548:25548 --name AzurPilot -it --rm hgjazhgj/alas
+# docker run -v ${PWD}:/app/AzurPilot -p 25548:25548 --name AzurPilot -it --rm hgjazhgj/alas
 
 FROM python:3.14-slim-bookworm
 
@@ -17,9 +17,9 @@ ENV HTTP_PROXY=${HTTP_PROXY}
 ENV HTTPS_PROXY=${HTTPS_PROXY}
 ENV no_proxy=${NO_PROXY}
 ENV NO_PROXY=${NO_PROXY}
-ENV PATH=/app/AzurLaneAutoScript/.venv/bin:${PATH}
+ENV PATH=/app/AzurPilot/.venv/bin:${PATH}
 
-WORKDIR /app/AzurLaneAutoScript
+WORKDIR /app/AzurPilot
 
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 COPY pyproject.toml uv.lock ./

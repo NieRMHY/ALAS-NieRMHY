@@ -1,6 +1,8 @@
 from module.island.island import *
 from collections import Counter
-from datetime import datetime, timedelta
+from datetime import timedelta
+
+from module.config.time_source import now as current_time
 from module.handler.login import LoginHandler
 from module.island.warehouse import *
 from module.logger import logger
@@ -153,7 +155,7 @@ class IslandShopBase(Island, WarehouseOCR):
             number = ocr_post_number.ocr(image)
             time_work = Duration(ISLAND_WORKING_TIME)
             time_value = time_work.ocr(self.device.image)
-            finish_time = datetime.now() + time_value
+            finish_time = current_time() + time_value
             setattr(self, time_var_name, finish_time)
             self.posts[post_id]['status'] = 'working'
             if product is not None:
@@ -313,7 +315,7 @@ class IslandShopBase(Island, WarehouseOCR):
                                 alphabet='0123456789')
         actual_number = ocr_post_number.ocr(image)
         time_value = time_work.ocr(self.device.image)
-        finish_time = datetime.now() + time_value
+        finish_time = current_time() + time_value
         setattr(self, time_var_name, finish_time)
         self.posts[post_id]['status'] = 'working'
         # 扣除前置材料（子类可覆盖）
@@ -617,7 +619,7 @@ class IslandShopBase(Island, WarehouseOCR):
             time_value = getattr(self, var)
             if time_value is not None:
                 finish_times.append(time_value)
-        hours_later = datetime.now() + timedelta(hours=6)
+        hours_later = current_time() + timedelta(hours=6)
         finish_times.append(hours_later)
         finish_times.sort()
         self.config.task_delay(target=finish_times)

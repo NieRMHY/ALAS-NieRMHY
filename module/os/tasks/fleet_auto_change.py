@@ -1,5 +1,6 @@
-from datetime import datetime, timedelta
+from datetime import timedelta
 
+from module.config.time_source import now as current_time
 from module.equipment.assets import EQUIPMENT_OPEN
 from module.exception import ScriptError
 from module.logger import logger
@@ -213,7 +214,7 @@ class OpsiFleetAutoChange(CoinTaskMixin, DockMixin, OSMap):
         cooldown_hours = self.config.OpsiFleetAutoChange_CooldownHours
         next_run_time = last_run + timedelta(hours=cooldown_hours)
         
-        return datetime.now() >= next_run_time
+        return current_time() >= next_run_time
     
     def _parse_custom_positions(self):
         """
@@ -464,7 +465,7 @@ class OpsiFleetAutoChange(CoinTaskMixin, DockMixin, OSMap):
     
     def _set_cooldown(self):
         """设置冷却时间"""
-        self.config.OpsiFleetAutoChange_LastRun = datetime.now().replace(microsecond=0)
+        self.config.OpsiFleetAutoChange_LastRun = current_time().replace(microsecond=0)
         logger.info(f"已设置冷却时间，下次可运行时间: {self.config.OpsiFleetAutoChange_LastRun}")
     
     def _collect_ship_data_with_retry(self, target_level):

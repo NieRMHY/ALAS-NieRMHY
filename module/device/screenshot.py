@@ -1,7 +1,6 @@
 import os
 import time
 from collections import deque
-from datetime import datetime
 from PIL import Image
 # 此文件定义了截图处理逻辑。
 # 管理各种截图捕获方式，并包含后台编码线程用于将图像序列化并通过 Base64 供 WebUI 实时渲染预览。
@@ -15,6 +14,7 @@ import numpy as np
 from module.base.decorator import cached_property
 from module.base.timer import Timer
 from module.base.utils import get_color, image_size, limit_in, save_image, set_template_match_non_native_720p
+from module.config.time_source import now as current_time
 from module.device.method.adb import Adb
 from module.device.method.ascreencap import AScreenCap
 from module.device.method.droidcast import DroidCast
@@ -118,7 +118,7 @@ class Screenshot(Adb, WSA, DroidCast, AScreenCap, Scrcpy, NemuIpc, LDOpenGL):
             self.image = self._handle_orientated_image(self.image)
 
             if self.config.Error_SaveError:
-                self.screenshot_deque.append({'time': datetime.now(), 'image': self.image})
+                self.screenshot_deque.append({'time': current_time(), 'image': self.image})
             if self.screenshot_queue is not None and self.image is not None:
                 try:
                     with self._encode_lock:

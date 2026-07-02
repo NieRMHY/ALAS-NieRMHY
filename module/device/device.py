@@ -2,7 +2,6 @@
 # 负责整合截图、点击、输入功能，并由于内置了防卡死检测和点击频率控制，能有效提高脚本自动化运行的稳定性。
 import collections
 import sys
-from datetime import datetime
 
 import cv2
 from lxml import etree
@@ -15,6 +14,7 @@ from module.device.pkg_resources import get_distribution
 _ = get_distribution
 
 from module.base.timer import Timer
+from module.config.time_source import now as current_time
 from module.config.utils import get_server_next_update
 from module.device.app_control import AppControl
 from module.device.control import Control
@@ -257,7 +257,7 @@ class Device(Screenshot, Control, AppControl, Input):
             bool: If handled.
         """
         update = get_server_next_update(daily_trigger=daily_trigger)
-        now = datetime.now()
+        now = current_time()
         diff = (update.timestamp() - now.timestamp()) % 86400
         if threshold < diff < 86400 - threshold:
             return False

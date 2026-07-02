@@ -1,9 +1,10 @@
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 from module.base.decorator import Config
 from module.base.filter import Filter
 from module.base.utils import *
 from module.commission.project_data import *
+from module.config.time_source import now as current_time
 from module.logger import logger
 from module.ocr.ocr import Duration, Ocr
 from module.reward.assets import *
@@ -133,7 +134,7 @@ class Commission:
         if not self.duration.total_seconds():
             self.valid = False
 
-        self.create_time = datetime.now()
+        self.create_time = current_time()
         self.repeat_count = 1
         self.category_str = 'unknown'
         self.genre_str = 'unknown'
@@ -597,7 +598,7 @@ class Commission:
         """将委托状态设为运行中，并将创建时间重置为当前时间。"""
         if self.valid:
             self.status = 'running'
-            self.create_time = datetime.now()
+            self.create_time = current_time()
 
     @property
     def finish_time(self):

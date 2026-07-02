@@ -3,7 +3,9 @@ from module.island_manufacture.assets import *
 from module.island.island_shop_base import IslandShopBase
 from module.island.assets import *
 from module.ui.page import *
-from datetime import datetime, timedelta
+from datetime import timedelta
+
+from module.config.time_source import now as current_time
 from module.logger import logger
 from module.base.button import Button
 
@@ -253,7 +255,7 @@ class IslandManufacture(IslandShopBase):
                     actual_number = ocr_post_number.ocr(image)
                     time_work = Duration(ISLAND_WORKING_TIME)
                     time_value = time_work.ocr(self.device.image)
-                    finish_time = datetime.now() + time_value
+                    finish_time = current_time() + time_value
 
                     # 设置时间变量
                     # 从post_id中提取数字
@@ -403,7 +405,7 @@ class IslandManufacture(IslandShopBase):
             time_value = getattr(self, var)
             if time_value is not None:
                 finish_times.append(time_value)
-        hours_later = datetime.now() + timedelta(hours=6)
+        hours_later = current_time() + timedelta(hours=6)
         finish_times.append(hours_later)
         finish_times.sort()
         self.config.task_delay(target=finish_times)

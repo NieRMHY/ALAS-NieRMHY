@@ -1,6 +1,7 @@
-﻿from datetime import datetime, timedelta
+﻿from datetime import timedelta
 
 from module.exception import RequestHumanTakeover
+from module.config.time_source import now as current_time
 from module.logger import logger
 from module.os.map import OSMap
 from module.os.tasks.scheduling import CoinTaskMixin
@@ -47,7 +48,7 @@ class OpsiAbyssal(CoinTaskMixin, OSMap):
         Returns:
             tuple: (是否冷却中, 冷却结束时间)
         """
-        now = datetime.now()
+        now = current_time()
         submarine_tasks = [
             'OpsiExplore', 'OpsiDaily', 'OpsiObscure', 'OpsiAbyssal',
             'OpsiArchive', 'OpsiStronghold', 'OpsiMeowfficerFarming', 'OpsiMonthBoss'
@@ -84,7 +85,7 @@ class OpsiAbyssal(CoinTaskMixin, OSMap):
         logger.info(f'潜艇冷却结束时间：{cooldown_end_time}')
         logger.info('延时深渊任务到潜艇冷却结束')
 
-        now = datetime.now()
+        now = current_time()
         delay_seconds = int((cooldown_end_time - now).total_seconds())
         delay_minutes = delay_seconds // 60
         if delay_minutes <= 0:

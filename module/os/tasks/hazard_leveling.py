@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 from calendar import monthrange
 
 from module.base.timer import Timer
+from module.config.time_source import now as current_time
 from module.equipment.assets import EQUIPMENT_OPEN
 from module.exception import MapDetectionError, ScriptError
 from module.logger import logger
@@ -26,7 +27,7 @@ class OpsiHazard1Leveling(CoinTaskMixin, OSMap):
         cl5_efficiency = 1700.0 / 30.0
         
         # 获取当前时间
-        now = datetime.now()
+        now = current_time()
         
         # 计算该月底24时的时间戳
         year, month = now.year, now.month
@@ -440,7 +441,7 @@ class OpsiHazard1Leveling(CoinTaskMixin, OSMap):
         
         time_run = self.config.OpsiCheckLeveling_LastRun + timedelta(hours=check_interval)
         logger.info(f"练级检查下次运行时间: {time_run}")
-        if datetime.now().replace(microsecond=0) < time_run:
+        if current_time().replace(microsecond=0) < time_run:
             logger.info("未到运行时间，跳过")
             return
         target_level = self.config.OpsiCheckLeveling_TargetLevel
@@ -489,7 +490,7 @@ class OpsiHazard1Leveling(CoinTaskMixin, OSMap):
                 title="舰船经验检测失败",
                 content=f"<{self.config.config_name}>\n\n{report}",
             )
-            self.config.OpsiCheckLeveling_LastRun = datetime.now().replace(microsecond=0)
+            self.config.OpsiCheckLeveling_LastRun = current_time().replace(microsecond=0)
             logger.info("检测失败，下次检测时间设为24小时后")
             return
         
@@ -560,7 +561,7 @@ class OpsiHazard1Leveling(CoinTaskMixin, OSMap):
                     self.config.task_delay(server_update=True)
                     self.config.task_stop()
         
-        self.config.OpsiCheckLeveling_LastRun = datetime.now().replace(microsecond=0)
+        self.config.OpsiCheckLeveling_LastRun = current_time().replace(microsecond=0)
 
     def _check_auto_change_prerequisite(self, enable_custom_check, custom_positions):
         """
@@ -675,7 +676,7 @@ class OpsiHazard1Leveling(CoinTaskMixin, OSMap):
             not_full = [s for s in ships_to_report if s.get('total_exp', 0) < target_exp]
             lines.append(f"未满经验舰位: {len(not_full)} 艘")
         
-        lines.append(f"检测时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        lines.append(f"检测时间: {current_time().strftime('%Y-%m-%d %H:%M:%S')}")
         
         return "\n".join(lines)
 

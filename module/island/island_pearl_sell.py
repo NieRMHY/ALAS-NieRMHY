@@ -1,5 +1,7 @@
 import re
-from datetime import datetime, timedelta
+from datetime import timedelta
+
+from module.config.time_source import now as current_time
 
 from module.base.button import Button
 from module.base.timer import Timer
@@ -28,6 +30,7 @@ class IslandPearlSell(Island):
     PRICE_RETRY = 3
     TRADE_COUNT_RETRY = 4
     TRADE_COUNT_MAX_CLICKS = 40
+    SELL_UNTIL_ZERO_MAX_ROUNDS = 5
     BUY_MAX_ATTEMPTS = 2
     RANK_FIXED_SWIPE_COUNT = 10
     RANK_FIXED_SWIPE_DISTANCE = 450
@@ -46,7 +49,7 @@ class IslandPearlSell(Island):
 
     def run(self):
         logger.hr("Island Pearl Sell Run", level=1)
-        now = datetime.now().replace(microsecond=0)
+        now = current_time().replace(microsecond=0)
 
         pearl_trade_time = self._get_next_pearl_trade_time(now=now)
 
@@ -259,7 +262,7 @@ class IslandPearlSell(Island):
         else:
             logger.info(f"本岛价格满足售卖要求: {sell_price}")
 
-        if not self.trade_pearl(action="sell", count=current_pearl):
+        if not self.sell_all_current_pearls(current_pearl):
             if in_friend_island:
                 self.back_to_pearl_shop_or_map()
                 self.exit_friend_island()
@@ -641,6 +644,24 @@ class IslandPearlSell(Island):
 
     # ==================== 交易数量与确认 ====================
 
+    def sell_all_current_pearls(self, current_pearl):
+        """售卖后复检珍珠数量，直到识别为 0 或达到最大轮次。"""
+        for round_index in range(1, self.SELL_UNTIL_ZERO_MAX_ROUNDS + 1):
+            logger.info(f"珍珠售卖轮次 {round_index}: {current_pearl}")
+            if current_pearl <= 0:
+                return True
+            if not self.trade_pearl(action="sell", count=current_pearl):
+                return False
+
+            current_pearl = self.ocr_current_pearl_count()
+            if current_pearl <= 0:
+                return True
+            if round_index < self.SELL_UNTIL_ZERO_MAX_ROUNDS:
+                logger.warning(f"珍珠售卖后剩余数量为 {current_pearl}，继续售卖")
+
+        logger.warning("珍珠售卖复检超过最大轮次，停止售卖")
+        return False
+
     def trade_pearl(self, action, count):
         """执行购买或售卖。"""
         if count <= 0:
@@ -771,7 +792,7 @@ class IslandPearlSell(Island):
 
     def _trade_due(self, now=None, next_time=None):
         """检查是否到了每周采购售卖的执行时间。"""
-        now = now or datetime.now().replace(microsecond=0)
+        now = now or current_time().replace(microsecond=0)
         next_time = next_time or self._get_next_pearl_trade_time(now=now)
         if now >= next_time:
             return True
@@ -781,7 +802,7 @@ class IslandPearlSell(Island):
         """检查是否到了每日价格刷新时间。"""
         if not self.config.IslandPearlSell_DailyPriceRefresh:
             return False
-        now = now or datetime.now().replace(microsecond=0)
+        now = now or current_time().replace(microsecond=0)
         today_refresh = now.replace(
             hour=self.DAILY_REFRESH_HOUR,
             minute=self.DAILY_REFRESH_MINUTE,
@@ -797,7 +818,7 @@ class IslandPearlSell(Island):
     def _get_next_pearl_trade_time(self, now=None):
         value = self.config.IslandPearlSell_NextPearlTradeTime
         if value in [None, ""]:
-            return now or datetime.now().replace(microsecond=0)
+            return now or current_time().replace(microsecond=0)
         return value
 
     def _get_buy_next_run(self):
@@ -808,7 +829,7 @@ class IslandPearlSell(Island):
 
     def _next_trade_run(self, now=None, base=None):
         """计算下一次真正采购售卖时间，不包含每日价格刷新。"""
-        now = now or datetime.now().replace(microsecond=0)
+        now = now or current_time().replace(microsecond=0)
         candidates = [base or self._get_next_pearl_trade_time(now=now)]
 
         buy_next_run = self._get_buy_next_run()
@@ -818,7 +839,7 @@ class IslandPearlSell(Island):
         return min(candidates)
 
     def _this_week_schedule(self, now=None):
-        now = now or datetime.now().replace(microsecond=0)
+        now = now or current_time().replace(microsecond=0)
         monday = (now - timedelta(days=now.weekday())).replace(
             hour=0, minute=0, second=0, microsecond=0
         )
@@ -829,7 +850,7 @@ class IslandPearlSell(Island):
         )
 
     def _nearest_future_schedule(self, now=None):
-        now = now or datetime.now().replace(microsecond=0)
+        now = now or current_time().replace(microsecond=0)
         target = self._this_week_schedule(now=now)
         if target <= now:
             target += timedelta(days=7)
@@ -837,7 +858,7 @@ class IslandPearlSell(Island):
 
     def _next_daily_refresh(self, now=None):
         """计算下一次每日价格刷新时间（今天的 03:00 或明天的 03:00）。"""
-        now = now or datetime.now().replace(microsecond=0)
+        now = now or current_time().replace(microsecond=0)
         today_refresh = now.replace(
             hour=self.DAILY_REFRESH_HOUR,
             minute=self.DAILY_REFRESH_MINUTE,
@@ -850,7 +871,7 @@ class IslandPearlSell(Island):
 
     def _next_run(self, now=None):
         """计算珍珠任务下一次运行时间。综合周循环、采购延时和每日刷新。"""
-        now = now or datetime.now().replace(microsecond=0)
+        now = now or current_time().replace(microsecond=0)
         candidates = [self._next_trade_run(now=now)]
 
         # 每日价格刷新
@@ -868,7 +889,7 @@ class IslandPearlSell(Island):
 
     @staticmethod
     def next_day_1am(now=None):
-        now = now or datetime.now().replace(microsecond=0)
+        now = now or current_time().replace(microsecond=0)
         return (now + timedelta(days=1)).replace(
             hour=1, minute=0, second=0, microsecond=0
         )
@@ -891,7 +912,7 @@ class IslandPearlSell(Island):
         value = self.config.IslandPearlSell_BuyNextRun
         if value in [None, ""]:
             return True
-        now = datetime.now().replace(microsecond=0)
+        now = current_time().replace(microsecond=0)
         return now >= value
 
     @staticmethod

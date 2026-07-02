@@ -3,7 +3,9 @@ from module.island.island_shop_base import IslandShopBase
 from module.island.assets import *
 from module.ui.page import *
 from collections import Counter
-from datetime import datetime, timedelta
+from datetime import timedelta
+
+from module.config.time_source import now as current_time
 from module.logger import logger
 from module.base.button import Button
 from module.island.island_season import SEASONAL_ITEMS
@@ -276,7 +278,7 @@ class IslandTeahouse(IslandShopBase):
                                     alphabet='0123456789')
             actual_number = ocr_post_number.ocr(image)
             time_value = time_work.ocr(self.device.image)
-            finish_time = datetime.now() + time_value
+            finish_time = current_time() + time_value
             setattr(self, time_var_name, finish_time)
             self.posts[post_id]['status'] = 'working'
             self.deduct_materials(product, actual_number)
@@ -452,7 +454,7 @@ class IslandTeahouse(IslandShopBase):
             time_value = getattr(self, var)
             if time_value is not None:
                 finish_times.append(time_value)
-        hours_later = datetime.now() + timedelta(hours=6)
+        hours_later = current_time() + timedelta(hours=6)
         finish_times.append(hours_later)
         finish_times.sort()
         self.config.task_delay(target=finish_times)

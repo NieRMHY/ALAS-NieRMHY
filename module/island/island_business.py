@@ -9,7 +9,9 @@ from module.base.button import Button
 from module.base.template import Template
 from module.base.utils import crop, get_color, color_similar
 from module.island.island_season import SEASONAL_ITEMS
-from datetime import datetime, timedelta
+from datetime import timedelta
+
+from module.config.time_source import now as current_time
 from module.ocr.ocr import Duration
 
 
@@ -966,7 +968,7 @@ class IslandBusiness(Island):
                 return
             elif status == 'gray':
                 logger.info("不可经营，延后至明天0点")
-                tomorrow = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
+                tomorrow = current_time().replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
                 self.config.task_delay(target=tomorrow)
                 return
             else:
@@ -994,7 +996,7 @@ class IslandBusiness(Island):
             logger.info("第一批未配置商店，跳过")
             logger.info("第二批未配置商店，跳过")
             logger.info("未配置任何经营商店，延后至明天0点")
-            tomorrow = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
+            tomorrow = current_time().replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
             self.config.task_delay(target=tomorrow)
             return
 
@@ -1397,7 +1399,7 @@ class IslandBusiness(Island):
         # 第一批全 gray 时让 _run_batch_mode 继续处理第二批
         if batch_shops == self._get_batch2_shops() or not self._get_batch2_shops():
             logger.info("批次内所有商店不可经营，延后至明天0点")
-            tomorrow = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
+            tomorrow = current_time().replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
             self.config.task_delay(target=tomorrow)
 
         return started_shop_names
@@ -1574,7 +1576,7 @@ class IslandBusiness(Island):
 
     def _calculate_darkblue_delay(self):
         """计算深蓝（经营中）状态的延后检测时间"""
-        now = datetime.now()
+        now = current_time()
 
         # 延后2小时
         delayed = now + timedelta(hours=2)

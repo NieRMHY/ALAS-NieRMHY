@@ -18,6 +18,7 @@ from module.base.decorator import del_cached_property
 from module.base.api_client import ApiClient
 from module.config.config import AzurLaneConfig, TaskEnd
 from module.config.deep import deep_get, deep_set
+from module.config.time_source import now as current_time
 from module.config.utils import (
     DEFAULT_CONFIG_NAME,
     ensure_time,
@@ -80,8 +81,8 @@ class AzurLaneAutoScript:
         # Restart counters
         self.consecutive_game_stuck = 0
         self.consecutive_adb_offline = 0
-        # Scheduled emulator restart
-        self.last_emulator_restart_time = time.time()
+        # 上次计划重启模拟器的时间戳
+        self.last_emulator_restart_time = time.monotonic()
 
     def _try_restart_emulator(self):
         """
@@ -434,7 +435,7 @@ class AzurLaneAutoScript:
             return False
 
         next_run = last_update + timedelta(minutes=delay)
-        if next_run <= datetime.now().replace(microsecond=0):
+        if next_run <= current_time().replace(microsecond=0):
             logger.info(f'每日重启随机延后 {delay} 分钟已到达，继续重启')
             return False
 
@@ -957,7 +958,7 @@ class AzurLaneAutoScript:
         future = future + timedelta(seconds=1)
         self.config.start_watching()
         while 1:
-            if datetime.now() > future:
+            if current_time() > future:
                 return True
             if self.stop_event is not None:
                 if self.stop_event.is_set():
@@ -984,7 +985,7 @@ class AzurLaneAutoScript:
             if self.config.task.command != 'Alas':
                 release_resources(next_task=task.command)
 
-            if task.next_run > datetime.now():
+            if task.next_run > current_time():
                 logger.info(f'等待直到 {task.next_run} 执行任务 `{task.command}`')
                 self.is_first_task = False
                 method = self.config.Optimization_WhenTaskQueueEmpty
@@ -1069,14 +1070,14 @@ class AzurLaneAutoScript:
                     self.config.task_call('Restart')
                 # 检查计划的模拟器重启（在任务之间，不会中断正在运行的任务）
                 if self.config.EmulatorManagement_ScheduledEmulatorRestart:
-                    elapsed_hours = (time.time() - self.last_emulator_restart_time) / 3600
+                    elapsed_hours = (time.monotonic() - self.last_emulator_restart_time) / 3600
                     interval = self.config.EmulatorManagement_RestartIntervalHours
                     if elapsed_hours >= interval:
                         logger.hr('计划的模拟器重启', level=1)
                         logger.info(f'模拟器已运行 {elapsed_hours:.1f} 小时, '
                                     f'计划重启间隔为 {interval} 小时')
                         if self._try_restart_emulator():
-                            self.last_emulator_restart_time = time.time()
+                            self.last_emulator_restart_time = time.monotonic()
                             self.config.task_call('Restart')
                             del_cached_property(self, 'config')
                             continue

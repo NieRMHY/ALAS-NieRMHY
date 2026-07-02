@@ -92,6 +92,8 @@ class LoginHandler(UI):
                 continue
             if self.appear_then_click(LOGIN_RETURN_INFO, offset=(30, 30), interval=5):
                 continue
+            if self.appear_then_click(AVATAR_EXPIRED, offset=(30, 30), interval=5):
+                continue
             # 弹窗处理
             if self.handle_popup_confirm('LOGIN'):
                 continue
@@ -184,9 +186,12 @@ class LoginHandler(UI):
 
         is_restart_success = False
 
+        clear_cache = getattr(self.config, 'Restart_ClearCache', False)
         for i in range(RESTART_TRIES):
             logger.info(f"App restart attempt {i + 1}/{RESTART_TRIES}...")
             self.device.app_stop()
+            if clear_cache:
+                self.device.app_clear()
             self.device.sleep(3)
             self.device.app_start()
             wait_seconds = FIRST_TRY_WAIT_SECONDS if i == 0 else SUBSEQUENT_TRY_WAIT_SECONDS

@@ -12,6 +12,7 @@ To add a new event, add a new row in here, and run `python -m module.config.conf
 
 **CN, EN, JP, TW** Event names in GUI. If an event is not aired on some servers, use `-`.
 
+
 | Aired Date | Directory                | Event Name                                   | CN                         | EN                                                 | JP                                   | TW                         |
 | :--------- | :----------------------- | :------------------------------------------- | :------------------------- | :------------------------------------------------- | :----------------------------------- | :------------------------- |
 | 20170607   | war archives 20181020 en | Strive, Wish, and Strategize                 | 努力、希望和计划           | Strive, Wish, and Strategize                       | 努力、希望と計画                     | 努力、希望和計劃           |
@@ -301,4 +302,5 @@ To add a new event, add a new row in here, and run `python -m module.config.conf
 | 20260528   | event 20220818 cn        | Operation Convergence                        | -                          | -                                                  | -                                    | 復刻遠匯點作戰             |
 | 20260605   | event 20260520 cn        | Alliance Before the Hagiobull                | -                          | -                                                  | -                                    | 聖印前的同盟               |
 | 20260618   | event 20240521 cn        | Light of the Martyrium Rerun                 | 复刻绽放于辉光之城         | Light of the Martyrium Rerun                       | 赫輝のマルティリウム（復刻）         | -                          |
-| 20260625   | event 20260625 cn        | Miracle by Midnight                          | 美梦巡演：奇妙夜            | -                                                  | 幻夢のカヴァルカード                 | -                          |
+| 20260625   | event 20230223 cn        | Revelations of Dust                          | -                          | -                                                  | -                                    | 復刻湮燼塵墟               |
+| 20260625   | event 20260625 cn        | Miracle by Midnight                          | 美梦巡演奇妙夜             | Miracle by Midnight                                | 幻夢のカヴァルカード                 | -                          |

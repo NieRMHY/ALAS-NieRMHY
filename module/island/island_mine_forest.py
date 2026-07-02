@@ -228,7 +228,7 @@ class IslandMineForest(Island,LoginHandler):
 
         time_work = Duration(ISLAND_WORKING_TIME)
         time_value = time_work.ocr(self.device.image)
-        finish_time = datetime.now() + time_value if time_value is not None else None
+        finish_time = current_time() + time_value if time_value is not None else None
         setattr(self, time_var_name, finish_time)
 
     def collect_and_detect_post(self, post_button, post_id, category, time_var_name):
@@ -367,7 +367,7 @@ class IslandMineForest(Island,LoginHandler):
         self.device.screenshot()
         time_work = Duration(ISLAND_WORKING_TIME)
         time_value = time_work.ocr(self.device.image)
-        finish_time = datetime.now() + time_value
+        finish_time = current_time() + time_value
         setattr(self, time_var_name, finish_time)
 
         # 更新岗位记录
@@ -538,7 +538,7 @@ class IslandMineForest(Island,LoginHandler):
                 if ft is not None:
                     future_finish.append(ft)
 
-        six_hours_later = datetime.now() + timedelta(hours=6)
+        six_hours_later = current_time() + timedelta(hours=6)
         future_finish.append(six_hours_later)
         future_finish.sort()
         self.config.task_delay(target=future_finish)

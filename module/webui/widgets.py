@@ -356,15 +356,19 @@ def get_title_help(kwargs: T_Output_Kwargs) -> Output:
 # 参数输入组件
 def put_arg_input(kwargs: T_Output_Kwargs) -> Output:
     name: str = kwargs["name"]
+    after: Optional[Output] = kwargs.pop("after", None)
     options: List = kwargs.get("options")
     if options is not None:
         kwargs.setdefault("datalist", options)
+    input_output = put_input(**kwargs).style("--input--")
+    if after is not None:
+        input_output = put_column([input_output, after], size="auto auto")
 
     return put_scope(
         f"arg_container-input-{name}",
         [
             get_title_help(kwargs),
-            put_input(**kwargs).style("--input--"),
+            input_output,
         ],
     )
 

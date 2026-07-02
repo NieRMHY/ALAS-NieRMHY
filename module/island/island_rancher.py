@@ -1,7 +1,9 @@
 from module.island_farm.assets import *
 from module.island_rancher.assets import *
 from module.island.island import *
-from datetime import datetime, timedelta
+from datetime import timedelta
+
+from module.config.time_source import now as current_time
 from module.handler.login import LoginHandler
 from module.island.warehouse import *
 from module.logger import logger
@@ -75,6 +77,11 @@ class IslandRancher(Island, WarehouseOCR, LoginHandler):
             'farm': {}
         }
         self.ranch_last_finish_time = None
+
+    def raise_if_island_error(self):
+        if self.island_error:
+            from module.exception import GameBugError
+            raise GameBugError("检测到岛屿ERROR1，需要重启")
 
     def process_mill_item(self, mill_item, quantity=None):
         mill_config = self.name_to_config[mill_item]
@@ -215,8 +222,7 @@ class IslandRancher(Island, WarehouseOCR, LoginHandler):
                     self.ui_page_appear(page_island_postmanage)
                     and not self.appear(ISLAND_SELECT_PRODUCT_CHECK, offset=1)
                     and not self.appear(ISLAND_SELECT_CHARACTER_CHECK, offset=1)
-                    and not self.appear(ISLAND_POST_CHECK, offset=1)
-                    and not self.appear(ISLAND_POST_VACANT_CHECK, offset=1)
+                    and not self.is_post_detail_visible()
             ):
                 return True
             if self.appear(ISLAND_SHOP_GET):
@@ -287,7 +293,9 @@ class IslandRancher(Island, WarehouseOCR, LoginHandler):
                 add_opened = True
                 continue
             in_vacant_post = self.appear(ISLAND_POST_VACANT_CHECK, offset=1)
-            if (add_opened or in_vacant_post) and self.appear_then_click(ISLAND_POST_SELECT, offset=1):
+            if self.appear_then_click(ISLAND_POST_SELECT, offset=1):
+                add_opened = True
+                logger.info(f"牧场岗位{post_id}进入派遣选择")
                 self.device.sleep(0.5)
                 continue
             if (
@@ -335,9 +343,13 @@ class IslandRancher(Island, WarehouseOCR, LoginHandler):
                 add_opened = True
                 continue
             in_vacant_post = self.appear(ISLAND_POST_VACANT_CHECK, offset=1)
-            if (add_opened or in_vacant_post) and self.appear_then_click(ISLAND_POST_SELECT, offset=1):
+            can_select_post = add_opened or in_vacant_post or not self.appear(ISLAND_WORKING)
+            if can_select_post and self.appear_then_click(ISLAND_POST_SELECT, offset=1):
                 if in_vacant_post and not add_opened:
                     logger.info(f"牧场岗位{post_id}为空闲岗位，直接进入派遣")
+                elif not add_opened:
+                    logger.info(f"牧场岗位{post_id}通过再次委派进入派遣")
+                add_opened = True
                 self.device.sleep(0.5)
                 continue
             if self.appear(ISLAND_SELECT_CHARACTER_CHECK, offset=1):
@@ -383,8 +395,7 @@ class IslandRancher(Island, WarehouseOCR, LoginHandler):
                 return True
             if (
                     self.appear(ISLAND_POSTMANAGE_CHECK, offset=1)
-                    and not self.appear(ISLAND_POST_CHECK)
-                    and not self.appear(ISLAND_POST_VACANT_CHECK, offset=1)
+                    and not self.is_post_detail_visible()
             ):
                 return True
         logger.warning(f"牧场岗位{post_id}收取并追加派遣超时")
@@ -420,7 +431,7 @@ class IslandRancher(Island, WarehouseOCR, LoginHandler):
                 return None
             time_value = time_work.ocr(self.device.image)
             if time_value.total_seconds() > 0:
-                finish_time = datetime.now() + time_value
+                finish_time = current_time() + time_value
                 logger.info(f"牧场岗位{post_id}当前队列最早剩余时间: {time_value}")
                 return finish_time
 
@@ -550,6 +561,7 @@ class IslandRancher(Island, WarehouseOCR, LoginHandler):
 
         logger.info("\n[3/5] 检查并补充牧场饲料和面粉...")
         processed_mill_items = self.process_mill_supplements(feed_target_quantity=50)
+        self.raise_if_island_error()
         if processed_mill_items:
             logger.info(f"本次运行补充了 {len(processed_mill_items)} 个磨坊项目: {processed_mill_items}")
         else:
@@ -580,7 +592,9 @@ class IslandRancher(Island, WarehouseOCR, LoginHandler):
                         break
 
                 if time_var_name:
-                    if not self.ranch_post(post_id, time_var_name):
+                    success = self.ranch_post(post_id, time_var_name)
+                    self.raise_if_island_error()
+                    if not success:
                         logger.warning(f"牧场岗位 {post_id} 执行失败，跳过")
                 else:
                     logger.warning(f"未找到岗位 {post_id} 对应的时间变量名")
@@ -588,7 +602,7 @@ class IslandRancher(Island, WarehouseOCR, LoginHandler):
             logger.info("没有需要执行的牧场岗位")
 
         finish_times = [getattr(self, var) for var in time_vars if getattr(self, var) is not None]
-        six_hours_later = datetime.now() + timedelta(hours=6)
+        six_hours_later = current_time() + timedelta(hours=6)
         finish_times.append(six_hours_later)
         finish_times.sort()
         logger.info(f'牧场任务完成，暂存 {len(finish_times)} 个计时器，最早结束时间: {finish_times[0]}')
@@ -603,9 +617,7 @@ class IslandRancher(Island, WarehouseOCR, LoginHandler):
             logger.error(f"渔场任务执行失败: {e}")
             raise
 
-        if self.island_error:
-            from module.exception import GameBugError
-            raise GameBugError("检测到岛屿ERROR1，需要重启")
+        self.raise_if_island_error()
 
 if __name__ == "__main__":
     az = IslandRancher('alas', task='Alas')

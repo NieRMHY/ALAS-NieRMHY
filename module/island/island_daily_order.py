@@ -8,6 +8,8 @@ from module.logger import logger
 from module.ocr.ocr import DigitCounter, Duration
 from datetime import datetime, timedelta
 
+from module.config.time_source import now as current_time
+
 class IslandDailyOrder(Island):
     """
     每日订单功能。
@@ -343,7 +345,7 @@ class IslandDailyOrder(Island):
         """
         # 检查刷新时间
         refresh_time = self._get_urgent_refresh_time()
-        if refresh_time and datetime.now() < refresh_time:
+        if refresh_time and current_time() < refresh_time:
             logger.info(f'紧急刷新时间未到 ({refresh_time})，跳到 ②')
             return 'next'
 
@@ -379,7 +381,7 @@ class IslandDailyOrder(Island):
                 cooldown = self._ocr_cooldown_below_urgent(mx, my, mw, mh)
             else:
                 cooldown = 8 * 3600
-            refresh = datetime.now() + timedelta(seconds=cooldown)
+            refresh = current_time() + timedelta(seconds=cooldown)
             self.config.IslandDailyOrder_UrgentDetectRefreshTime = \
                 refresh.replace(microsecond=0)
             logger.info(f'紧急冷却: {cooldown}秒，刷新时间: {refresh}')
@@ -537,7 +539,7 @@ class IslandDailyOrder(Island):
             logger.info('右侧有筹备中订单，OCR 等待时间')
             seconds = self._ocr_cooldown_seconds()
             if seconds and seconds > 0:
-                target = datetime.now() + timedelta(seconds=seconds)
+                target = current_time() + timedelta(seconds=seconds)
                 self.config.task_delay(target=target)
                 logger.info(f'筹备等待 {seconds}秒')
             else:
@@ -648,7 +650,7 @@ class IslandDailyOrder(Island):
 
     def _delay_to_next_day(self):
         """延时到第二天。"""
-        tomorrow = datetime.now().replace(
+        tomorrow = current_time().replace(
             hour=0, minute=0, second=0, microsecond=0
         ) + timedelta(days=1)
         self.config.task_delay(target=tomorrow)
@@ -715,7 +717,7 @@ class IslandDailyOrder(Island):
 
     @staticmethod
     def _next_weekday(target_weekday):
-        today = datetime.now()
+        today = current_time()
         days_ahead = target_weekday - today.weekday()
         if days_ahead <= 0:
             days_ahead += 7

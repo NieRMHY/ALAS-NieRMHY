@@ -1,6 +1,8 @@
-from time import time, sleep
-from datetime import datetime, timedelta
+from time import monotonic as time, sleep
+from datetime import timedelta
 from functools import wraps
+
+from module.config.time_source import now as current_time
 
 
 def timer(function):
@@ -27,8 +29,9 @@ def future_time(string):
         datetime.datetime: 未来最近的对应时分时刻。
     """
     hour, minute = [int(x) for x in string.split(':')]
-    future = datetime.now().replace(hour=hour, minute=minute, second=0, microsecond=0)
-    future = future + timedelta(days=1) if future < datetime.now() else future
+    now = current_time()
+    future = now.replace(hour=hour, minute=minute, second=0, microsecond=0)
+    future = future + timedelta(days=1) if future < now else future
     return future
 
 
@@ -42,8 +45,9 @@ def past_time(string):
         datetime.datetime: 过去最近的对应时分时刻。
     """
     hour, minute = [int(x) for x in string.split(':')]
-    past = datetime.now().replace(hour=hour, minute=minute, second=0, microsecond=0)
-    past = past - timedelta(days=1) if past > datetime.now() else past
+    now = current_time()
+    past = now.replace(hour=hour, minute=minute, second=0, microsecond=0)
+    past = past - timedelta(days=1) if past > now else past
     return past
 
 
@@ -71,7 +75,7 @@ def time_range_active(time_range):
     Returns:
         bool: 当前时间在范围内返回 True。
     """
-    return time_range[0] < datetime.now() < time_range[1]
+    return time_range[0] < current_time() < time_range[1]
 
 
 class Timer:

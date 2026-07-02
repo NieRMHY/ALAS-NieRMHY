@@ -1,5 +1,5 @@
 import copy
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 from scipy import signal
 
@@ -11,6 +11,7 @@ from module.commission.assets import *
 from module.commission.preset import DICT_FILTER_PRESET, SHORTEST_FILTER
 from module.commission.project import COMMISSION_FILTER, Commission
 from module.config.config_generated import GeneratedConfig
+from module.config.time_source import now as current_time
 from module.config.utils import get_server_last_update, get_server_next_update, nearest_future
 from module.dorm.dorm import RewardDorm
 from module.exception import GameStuckError, OilMaxed, RequestHumanTakeover
@@ -325,7 +326,7 @@ class RewardCommission(UI, InfoHandler):
 
             # 不在 21:00~03:00 时间段，但扫描到了夜间委托
             # 可能是过期委托，刷新即可解决
-            if datetime.now() - get_server_next_update('21:00') > timedelta(hours=6):
+            if current_time() - get_server_next_update('21:00') > timedelta(hours=6):
                 night = urgent.select(category_str='night')
                 if night:
                     logger.warning('Not in 21:00~03:00, but scanned night commissions')

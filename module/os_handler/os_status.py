@@ -2,11 +2,12 @@
 # 负责海域代币（黄币/紫币）的数值追踪、任务类型识别以及子任务冷却（CD）状态的实时计算。
 import threading
 import typing as t
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 import module.config.server as server
 from module.base.timer import Timer
 from module.config.config import Function
+from module.config.time_source import now as current_time
 from module.config.utils import get_server_next_update
 from module.logger import logger
 from module.map.map_grids import SelectedGrids
@@ -64,7 +65,7 @@ class OSStatus(UI):
         If having any tasks cooling down,
         such as recon scan cooldown and submarine call cooldown.
         """
-        now = datetime.now()
+        now = current_time()
         update = get_server_next_update('00:00')
         cd_tasks = [
             'OpsiObscure',

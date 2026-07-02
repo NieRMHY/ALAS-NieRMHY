@@ -3,7 +3,9 @@ from module.island.island_shop_base import IslandShopBase
 from module.island.assets import *
 from module.logger import logger
 from collections import Counter
-from datetime import datetime, timedelta
+from datetime import timedelta
+
+from module.config.time_source import now as current_time
 from module.base.button import Button
 from module.island.island_season import SEASONAL_ITEMS
 
@@ -482,7 +484,7 @@ class IslandRestaurant(IslandShopBase):
             time_value = getattr(self, var)
             if time_value is not None:
                 finish_times.append(time_value)
-        hours_later = datetime.now() + timedelta(hours=6)
+        hours_later = current_time() + timedelta(hours=6)
         finish_times.append(hours_later)
         finish_times.sort()
         self.config.task_delay(target=finish_times)

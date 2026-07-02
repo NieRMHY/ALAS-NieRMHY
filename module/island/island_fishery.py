@@ -26,7 +26,9 @@ from module.island_fishery.assets import (
     SHOP_FRY_SEA_CUCUMBER,
 )
 from module.island.warehouse import *
-from datetime import datetime, timedelta
+from datetime import timedelta
+
+from module.config.time_source import now as current_time
 from module.handler.login import LoginHandler
 from module.logger import logger
 
@@ -245,7 +247,7 @@ class IslandFishery(Island, WarehouseOCR, LoginHandler):
             # 记录正在工作中的岗位的完成时间
             time_work = Duration(ISLAND_WORKING_TIME)
             time_value = time_work.ocr(self.device.image)
-            finish_time = datetime.now() + time_value
+            finish_time = current_time() + time_value
             if post_index < len(self.fishery_times):
                 self.fishery_times[post_index] = finish_time
         elif self.appear(ISLAND_POST_SELECT, offset=1):
@@ -319,7 +321,7 @@ class IslandFishery(Island, WarehouseOCR, LoginHandler):
         # OCR并记录完成时间
         time_work = Duration(ISLAND_WORKING_TIME)
         time_value = time_work.ocr(self.device.image)
-        finish_time = datetime.now() + time_value
+        finish_time = current_time() + time_value
         ocr_post_number = Digit(OCR_POST_NUMBER, letter=(57, 58, 60), threshold=100,
                                 alphabet='0123456789')
         post_number = ocr_post_number.ocr(self.device.image) or 1
@@ -487,7 +489,7 @@ class IslandFishery(Island, WarehouseOCR, LoginHandler):
 
         # 设置下次运行时间：合并牧场和渔场的计时器，取最早的时间
         future_finish = []
-        six_hours_later = datetime.now() + timedelta(hours=6)
+        six_hours_later = current_time() + timedelta(hours=6)
         future_finish.append(six_hours_later)
         # 合并牧场的结束时间（如果传入了的话）
         if ranch_finish_times:

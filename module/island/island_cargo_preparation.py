@@ -1,4 +1,6 @@
-from datetime import datetime, timedelta
+from datetime import timedelta
+
+from module.config.time_source import now as current_time
 
 import numpy as np
 from cached_property import cached_property
@@ -54,7 +56,7 @@ class CargoPreparationTransport:
         self.parse_transport(main)
         if not self.valid:
             self.start = False
-        self.create_time = datetime.now()
+        self.create_time = current_time()
 
     def parse_transport(self, main):
         offset = (-20, -20, 20, 20)
@@ -141,7 +143,7 @@ class CargoPreparationTransport:
             self.status = 'running'
             self.start = False
             self.refresh = False
-            self.create_time = datetime.now()
+            self.create_time = current_time()
 
     @property
     def finish_time(self):
@@ -530,7 +532,7 @@ class IslandCargoPreparation(IslandUI):
 
         future_finish = [
             finish for finish in commissions.get('finish_time') or []
-            if finish is not None and finish > datetime.now()
+            if finish is not None and finish > current_time()
         ]
         if future_finish:
             target = max(future_finish)
@@ -557,7 +559,7 @@ class IslandCargoPreparation(IslandUI):
         )
 
     def _next_grey_retry_time(self):
-        now = datetime.now().replace(microsecond=0)
+        now = current_time().replace(microsecond=0)
         today_morning = now.replace(hour=self.EARLY_MORNING_DELAY_HOUR, minute=0, second=0)
         today_evening = now.replace(hour=self.EVENING_DELAY_HOUR, minute=0, second=0)
         tomorrow_morning = (now + timedelta(days=1)).replace(
