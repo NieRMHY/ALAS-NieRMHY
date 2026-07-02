@@ -1,6 +1,7 @@
 from module.island.island import *
 from time import sleep
 from module.ui.scroll import Scroll
+from module.config.time_source import now as current_time  # Add by MHY: 补上游 #446 遗漏的 current_time import
 
 
 class IslandAirDrop(Island):

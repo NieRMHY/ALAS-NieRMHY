@@ -4,6 +4,7 @@ from module.ui.page import *
 from module.handler.login import LoginHandler
 from module.config.utils import *
 from module.island.warehouse import *
+from module.config.time_source import now as current_time  # Add by MHY: 补上游 #446 遗漏的 current_time import
 
 
 class IslandMineForest(Island,LoginHandler):
