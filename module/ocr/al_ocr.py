@@ -139,7 +139,7 @@ def _get_onnx_model_params(name):
     返回指定语言的 ONNX 模型参数。
 
     Args:
-        name: 模型名称，如 'azur_lane'、'azur_lane_jp'、'cn'、'jp'、'tw'。
+        name: 模型名称，如 'azur_lane'、'azur_lane_jp'、'ppocr_v6'、'cn'、'jp'、'tw'。
 
     Returns:
         (model_path, rec_keys_path, ocr_version) 三元组。
@@ -154,6 +154,12 @@ def _get_onnx_model_params(name):
         return (
             "bin/ocr_models/azur_lane_jp/ap_azurlane_jp-v6_small_rec_nvidia.onnx",
             "bin/ocr_models/azur_lane_jp/ppocrv6_azurlane_jp_dict.txt",
+            OCRVersion.PPOCRV6,
+        )
+    elif name == "ppocr_v6":
+        return (
+            "bin/ocr_models/ppocr-v6/PP-OCRv6_small_rec.onnx",
+            "bin/ocr_models/ppocr-v6/ppocrv6_dict.txt",
             OCRVersion.PPOCRV6,
         )
     elif name == "cn":
@@ -215,7 +221,7 @@ def _get_model(name):
     return _model_cache[name]
 
 
-DET_MODEL_PATH = "bin/ocr_models/det/PP-OCRv5_mobile_det.onnx"
+DET_MODEL_PATH = "bin/ocr_models/det/PP-OCRv6_tiny_det.onnx"
 
 _det_model_cache = {}
 

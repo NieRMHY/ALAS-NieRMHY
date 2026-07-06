@@ -81,6 +81,11 @@ class OpsiAbyssal(CoinTaskMixin, OSMap):
         Args:
             cooldown_end_time: 潜艇冷却结束的时间。
         """
+        if self.is_running_smart_scheduling_task():
+            logger.info(f'智能调度代理执行中，深渊潜艇冷却至 {cooldown_end_time}，本轮跳过深渊')
+            self._smart_scheduling_no_content_task = 'OpsiAbyssal'
+            return
+
         logger.hr('Submarine cooldown detected', level=1)
         logger.info(f'潜艇冷却结束时间：{cooldown_end_time}')
         logger.info('延时深渊任务到潜艇冷却结束')
@@ -105,6 +110,10 @@ class OpsiAbyssal(CoinTaskMixin, OSMap):
         """
         if not submarine_enabled:
             logger.info('本轮深渊过滤器不包含 CallSubmarine，不延迟')
+            return
+
+        if self.is_running_smart_scheduling_task():
+            logger.info('智能调度代理执行中，跳过深渊任务延迟')
             return
 
         logger.info('本轮深渊过滤器包含 CallSubmarine，当前任务延迟 60 分钟后再运行')
@@ -139,7 +148,7 @@ class OpsiAbyssal(CoinTaskMixin, OSMap):
         with self.config.temporary(STORY_ALLOW_SKIP=False):
             result = self.storage_get_next_item('ABYSSAL', use_logger=self.config.OpsiGeneral_UseLogger)
         if not result:
-            if self._handle_no_content_and_try_other_tasks('深渊海域', '深渊海域没有可执行内容'):
+            if self._handle_coin_task_no_content('深渊海域', '深渊海域没有可执行内容'):
                 return False
 
         self.config.override(
@@ -160,19 +169,8 @@ class OpsiAbyssal(CoinTaskMixin, OSMap):
         return submarine_enabled
 
     def os_abyssal(self):
-        if self.is_cl1_enabled:
-            return_threshold, cl1_preserve = self._get_operation_coins_return_threshold()
-            if return_threshold is None:
-                logger.info('OperationCoinsReturnThreshold 为 0，禁用黄币检查，仅使用行动力阈值控制')
-            elif self._check_yellow_coins_and_return_to_cl1('任务开始前', '深渊海域'):
-                return
-
         while True:
             submarine_enabled = self.clear_abyssal()
-
-            if self.is_cl1_enabled:
-                if self._check_yellow_coins_and_return_to_cl1('循环中', '深渊海域'):
-                    return
 
             if not self.config.OpsiAbyssal_ForceRun and submarine_enabled:
                 self.delay_abyssal(result=True, submarine_enabled=True)

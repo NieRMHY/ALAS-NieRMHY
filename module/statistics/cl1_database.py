@@ -4,12 +4,12 @@ import json
 import os
 from contextlib import closing, suppress
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Dict, Any, List, Optional, Tuple
 from Crypto.Cipher import AES
 from Crypto.Protocol.KDF import PBKDF2
 from Crypto.Hash import SHA256
-
+from collections import defaultdict
 from module.base.device_id import get_device_id, get_old_device_id
 from module.logger import logger
 
@@ -675,7 +675,7 @@ class Cl1Database:
         self.save_stats(instance, month, data)
 
     def add_ap_snapshot(self, instance: str, ap_current: int, source: str = "cl1", distance: int = None, ap_total: int = None):
-        """记录行动力快照（真实剩余体力），并计算虚拟资产
+        """记录行动力快照（真实剩余体力），并计算资产
 
         Args:
             instance: 实例名称
@@ -688,18 +688,8 @@ class Cl1Database:
         data = self.get_stats(instance, month)
         now = datetime.now()
 
-        # 计算虚拟资产
-        # 虚拟资产 = AP × (1700/30) + YellowCoins + (到月底时间/10分钟) × (1700/30)
-        from calendar import monthrange
-
-        year, month_num = now.year, now.month
-        last_day = monthrange(year, month_num)[1]
-        month_end = datetime(year, month_num, last_day, 23, 59, 59)
-        time_to_month_end_sec = (month_end - now).total_seconds()
-
         # CL5 效率：1700 / 30 ≈ 56.67
         cl5_efficiency = 1700.0 / 30.0
-        virtual_asset_added = (time_to_month_end_sec / 600.0) * cl5_efficiency
 
         # 获取最近的黄币值
         yellow_coin = 0
@@ -714,15 +704,12 @@ class Cl1Database:
             ap_total = self._coerce_int(ap_total)
         ap_for_asset = ap_total if ap_total is not None else ap_current
         asset = ap_for_asset * cl5_efficiency + yellow_coin
-        # 虚拟资产 = 资产 + 时间加成
-        virtual_asset = asset + virtual_asset_added
 
         snapshot = {
             "ts": now.isoformat(),
             "ap": ap_current,
             "yellow_coin": yellow_coin,
             "asset": round(asset, 2),
-            "virtual_asset": round(virtual_asset, 2),
             "source": source,
         }
         if distance is not None:
@@ -1389,6 +1376,82 @@ class Cl1Database:
             entries = entries[-5000:]
         data["commission_income_entries"] = entries
         self.save_stats(instance, month, data)
+
+    def get_commission_reward_stats(self, instance: str):
+        """
+        获取委托奖励统计
+
+        Returns:
+            {
+                "today": {...},
+                "week": {...},
+                "month": {...},
+            }
+        """
+        now = datetime.now()
+        today = now.date()
+        week_start = today - timedelta(days=today.weekday())
+
+        entries = []
+
+        entries.extend(
+            self.get_commission_income(
+                instance,
+                year=now.year,
+                month=now.month,
+            )
+        )
+
+        # 周跨月
+        if week_start.month != now.month or week_start.year != now.year:
+            prev_month_date = now.replace(day=1) - timedelta(days=1)
+            entries.extend(
+                self.get_commission_income(
+                    instance,
+                    year=prev_month_date.year,
+                    month=prev_month_date.month,
+                )
+            )
+
+        result = {
+            "today": defaultdict(int),
+            "week": defaultdict(int),
+            "month": defaultdict(int),
+        }
+
+        for entry in entries:
+            try:
+                ts = datetime.fromisoformat(entry.get("ts", ""))
+                items = entry.get("items", {})
+
+                if not isinstance(items, dict):
+                    continue
+
+                for item, value in items.items():
+                    value = self._coerce_int(value)
+
+                    if ts.year == now.year and ts.month == now.month:
+                        result["month"][item] += value
+
+                    if ts.date() == today:
+                        result["today"][item] += value
+
+                    if week_start <= ts.date() <= today:
+                        result["week"][item] += value
+
+            except Exception:
+                continue
+
+        # 保留常用字段，兼容旧代码
+        for period in ("today", "week", "month"):
+            result[period].setdefault("Gem", 0)
+            result[period].setdefault("Cube", 0)
+
+        return {
+            "today": dict(result["today"]),
+            "week": dict(result["week"]),
+            "month": dict(result["month"]),
+        }
 
     def get_commission_income(
         self, instance: str, year: int = None, month: int = None

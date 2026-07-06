@@ -29,6 +29,14 @@ ROLE_SORTING.add_state('Ascending', check_button=ROLE_SORT_ASC, click_button=ROL
 ROLE_SORTING.add_state('Descending', check_button=ROLE_SORT_DESC, click_button=ROLE_SORTING_CLICK)
 
 
+def island_text_ocr_lang():
+    if server.server == 'cn':
+        return 'cnocr'
+    if server.server == 'en':
+        return 'ppocr_v6'
+    return server.server
+
+
 class ProjectNameOcr(Ocr):
     def after_process(self, result):
         result = super().after_process(result)
@@ -88,7 +96,7 @@ class IslandProject:
         dy = {'cn': 0, 'en': 2}[server.server]
         area = (self.x1 - 446, self.y1, self.x1 - dx, self.y2 + dy)
         button = Button(area=area, color=(), button=area, name='PROJECT_NAME')
-        ocr = ProjectNameOcr(button, lang='cnocr')
+        ocr = ProjectNameOcr(button, lang=island_text_ocr_lang())
         self.name = ocr.ocr(self.image)
         if not self.name:
             self.valid = False
@@ -264,7 +272,7 @@ class ProductItem:
     @classmethod
     def from_ocr_results(cls, image, parent_project_id, product_order):
         item = cls.empty(image, parent_project_id)
-        detector = AlOcr(name='zhcn' if server.server == 'cn' else 'en')
+        detector = AlOcr(name='cn' if server.server == 'cn' else 'ppocr_v6')
         try:
             det_results = detector.det(image)
         except Exception as e:
@@ -380,7 +388,7 @@ class ProductItem:
         """
         area = (300, y1 + 14, 440, y2 - 84)
         button = Button(area=area, color=(), button=area, name='ITEM_NAME')
-        ocr = ItemNameOcr(button, lang='cnocr', letter=(70, 70, 70))
+        ocr = ItemNameOcr(button, lang=island_text_ocr_lang(), letter=(70, 70, 70))
         self.name = ocr.ocr(self.image)
         if server.server == 'cn' and (not self.name or self.name not in deep_values(items_data, depth=2)):
             self.valid = False
@@ -637,7 +645,7 @@ class IslandProjectRun(IslandUI):
         target_name = CHARACTER_NAME_MAP.get(character, {}).get(server.server,
                        CHARACTER_NAME_MAP.get(character, {}).get('cn', character))
         target_name_orig = target_name
-        det_ocr = AlOcr(name='zhcn' if server.server == 'cn' else 'en')
+        det_ocr = AlOcr(name='cn' if server.server == 'cn' else 'ppocr_v6')
         for _ in self.loop():
             if timeout.reached():
                 self.ui_ensure_management_page()

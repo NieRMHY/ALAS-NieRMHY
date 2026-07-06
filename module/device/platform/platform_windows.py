@@ -378,8 +378,13 @@ class PlatformWindows(PlatformBase, EmulatorManager):
             # 再启动
             if self._emulator_function_wrapper(self._emulator_start):
                 # 成功
-                self.emulator_start_watch()
-                return True
+                if self.emulator_start_watch():
+                    return True
+                logger.warning('Emulator start watch failed, retrying')
+                if self._emulator_function_wrapper(self._emulator_stop):
+                    continue
+                else:
+                    return False
             else:
                 # 启动失败，停止后重试
                 if self._emulator_function_wrapper(self._emulator_stop):

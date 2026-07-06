@@ -40,12 +40,29 @@ from module.statistics.opsi_runtime import (
     record_siren_research_device,
     start_meow_search_timer,
 )
-from module.os.tasks.smart_scheduling_utils import is_smart_scheduling_enabled
 from module.ui.assets import GOTO_MAIN
 from module.ui.page import page_os
 
 
 class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
+    def is_smart_scheduling_enabled(self) -> bool:
+        """
+        统一判断是否启用了智能调度（侵蚀1与补黄币任务共享的开关逻辑）。
+        """
+        # 检测是否在开荒中，如果是，则停止智能调度
+        if self.is_in_opsi_explore():
+            return False
+
+        try:
+            scheduling_enabled = self.config.cross_get(
+                keys='OpsiScheduling.Scheduler.Enable',
+                default=False
+            )
+        except (AttributeError, KeyError):
+            scheduling_enabled = False
+
+        return scheduling_enabled
+
     def os_init(self):
         """
         执行任何大世界功能之前调用此方法。
@@ -86,23 +103,6 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
 
         # 初始化
         self.zone_init()
-        # CL1 危险等级练级预扫描
-        # try:
-        #    if getattr(self, "is_in_task_cl1_leveling", False) or getattr(self, "is_cl1_enabled", False):
-        #        logger.info("Detected CL1 leveling on enter: run auto-search then full map rescan to clear events")
-        #        try:
-        #            self.run_auto_search(question=True, rescan='full', after_auto_search=True)
-        #        except CampaignEnd:
-        #        except RequestHumanTakeover:
-        #            logger.warning("Require human takeover during CL1 pre-scan, aborting auto-scan")
-        #        except Exception as e:
-        #            logger.exception(e)
-        #        try:
-        #            self.map_rescan(rescan_mode='full')
-        #        except Exception as e:
-        #            logger.exception(e)
-        # except Exception:
-        #    logger.debug("CL1 pre-scan check skipped due to unexpected condition")
 
         # self.map_init()
         self.hp_reset()
@@ -736,7 +736,7 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
                     "set ActionPointPreserve to 0 temporarily"
                 )
                 return 0
-        elif self.is_cl1_enabled and remain <= 2:
+        elif self.is_cl1_mode_enabled and remain <= 2:
             logger.info(
                 "Just less than 3 days to OpSi reset, "
                 "set ActionPointPreserve to 2000 temporarily for hazard 1 leveling"
@@ -766,7 +766,7 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
         """
         # 检查智能调度是否启用，如果启用则由智能调度模块统一管理任务切换
         # 这里不应该直接切换到 CL1
-        if is_smart_scheduling_enabled(self.config):
+        if self.is_smart_scheduling_enabled():
             return
 
         if (
@@ -775,12 +775,12 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
             and self.cl1_enough_yellow_coins
         ):
             preserve = self.config.cross_get(
-                keys="OpsiMeowfficerFarming.OpsiMeowfficerFarming.ActionPointPreserve"
+                keys="OpsiHazard1Leveling.OpsiHazard1Leveling.MinimumActionPointReserve",
+                default=200,
             )
             logger.info(f"Keep {preserve} AP when CL1 available")
             if not self.action_point_check(preserve):
                 self.config.opsi_task_delay(cl1_preserve=True)
-                self.cl1_task_call()
                 self.config.task_stop()
 
     # 自动搜索战斗计数器
@@ -798,9 +798,7 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
     def on_auto_search_battle_count_add(self):
         self._auto_search_battle_count += 1
         logger.attr("battle_count", self._auto_search_battle_count)
-        if getattr(self, "is_in_task_cl1_leveling", False) and getattr(
-            self, "is_cl1_enabled", False
-        ):
+        if getattr(self, "is_running_cl1_leveling", False):
             try:
                 self._cl1_auto_search_battle_count += 1
                 logger.attr("cl1_battle_count", self._cl1_auto_search_battle_count)
@@ -995,11 +993,15 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
                 continue
             if self.combat_appear():
                 self.on_auto_search_battle_count_add()
-                if strategic and self.config.task_switched():
-                    stop_event = self.config.stop_event
-                    if stop_event is not None and stop_event.is_set():
-                        self.interrupt_auto_search()
-                    elif self.config.task.command == "OpsiMeowfficerFarming":
+                stop_event = self.config.stop_event
+                if strategic and stop_event is not None and stop_event.is_set():
+                    self.interrupt_auto_search()
+                elif (
+                    strategic
+                    and not getattr(self.config, '_disable_task_switch', False)
+                    and self.config.task_switched()
+                ):
+                    if self.config.task.command == "OpsiMeowfficerFarming":
                         logger.info("Short meow search is running, delay task switch until search finished")
                     else:
                         self.interrupt_auto_search()
@@ -1613,9 +1615,6 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
             logger.info(f"[移动装置] 移动完成,结果: {result}")
 
             if getattr(self, "is_siren_device_confirmed", False):
-                # 保存标志状态，因为二次重扫可能会重置它
-                siren_confirmed = True
-
                 # 检测选择的模式
                 siren_mode = getattr(self, "siren_device_mode", None)
                 logger.attr("Siren_device_mode", siren_mode)

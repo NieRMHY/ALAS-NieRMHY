@@ -12,6 +12,10 @@ class OcrModel:
         return AlOcr(name='azur_lane_jp')
 
     @cached_property
+    def ppocr_v6(self):
+        return AlOcr(name='ppocr_v6')
+
+    @cached_property
     def cnocr(self):
         return AlOcr(name='cn')
 

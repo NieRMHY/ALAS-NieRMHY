@@ -49,6 +49,14 @@ MODEL_SPECS = {
         output_name=OUTPUT_NAME,
         disable_fp16=True,
     ),
+    "ppocr_v6": NcnnRecModelSpec(
+        name="ppocr_v6",
+        param_path=MODEL_ROOT / "jp.param",
+        bin_path=MODEL_ROOT / "jp.bin",
+        keys_path=REPO_ROOT / "bin/ocr_models/ppocr-v6/ppocrv6_dict.txt",
+        output_name=OUTPUT_NAME,
+        disable_fp16=True,
+    ),
     "cn": NcnnRecModelSpec(
         name="cn",
         param_path=MODEL_ROOT / "cn.param",
@@ -76,6 +84,7 @@ MODEL_SPECS = {
 }
 
 MODEL_ALIASES = {
+    "ppocr-v6": "ppocr_v6",
     "cnocr": "cn",
     "en": "azur_lane",
     "zhcn": "cn",

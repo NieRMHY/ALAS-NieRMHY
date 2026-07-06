@@ -195,6 +195,10 @@ Optimization:
   ScreenshotInterval: 0.3
   CombatScreenshotInterval: 1.0
   TaskHoardingDuration: 0
+  CloseEmulatorDuringLongWait:
+    type: checkbox
+    value: true
+    option: [true, false]
   WhenTaskQueueEmpty:
     value: goto_main
     option: [stay_there, goto_main, close_game]
@@ -292,11 +296,10 @@ PublicEmotion:
   FleetOnsen: false
 YukikazeTaskManager:
   TaskPriorityAdjustment:
-    type: textarea
+    type: task_priority
     value: |-
       Restart
       > OpsiCrossMonth
-      > OpsiScheduling
       > Commission > Tactical > Research
       > Exercise
       > Dorm > Meowfficer > Guild > Gacha
@@ -304,6 +307,7 @@ YukikazeTaskManager:
       > ShopFrequent > ShopOnce > Shipyard > Freebies
       > PrivateQuarters
       > OpsiExplore
+      > OpsiPreventActionPointOverflow
       > Minigame > Awaken
       > OpsiAshBeacon
       > OpsiDaily > OpsiShop > OpsiVoucher > EventShop
@@ -315,6 +319,7 @@ YukikazeTaskManager:
       > IslandFarm > IslandRancher > IslandMineForest > IslandDailyGather > IslandManufacture
       > IslandAirDrop > IslandBusiness > IslandDailyOrder > IslandDailyInteract > IslandPearlSell > IslandCargoPreparation
       > Event > Event2 > Event3 > Raid > Hospital > HospitalEvent > Coalition > RaidScuttle > Main > Main2 > Main3
+      > OpsiScheduling
       > OpsiMeowfficerFarming
       > GemsFarming
       > Ambush11
@@ -623,6 +628,12 @@ Commission:
     > Extra-0:20 > Extra-0:30 > Extra-1:00 > Extra-1:30 > Extra-2:00
     > shortest
   DoMajorCommission: false
+  CommissionNotifyReward:
+    type: checkbox
+    value: false
+  CommissionNotifyRewardStatistics:
+    type: checkbox
+    value: true
 Tactical:
   TacticalFilter: |-
     SameT4 > SameT3 > SameT2 > SameT1
@@ -1022,6 +1033,7 @@ OpsiExplore:
   SpecialRadar: false
   ForceRun: false
   LastZone: 0
+  AllowHazard1Leveling: false
   ExploreProgress:
     type: textarea
     display: disabled
@@ -1074,10 +1086,6 @@ OpsiMonthBoss:
   ForceRun: false
 OpsiMeowfficerFarming:
   ActionPointPreserve: 1000
-  SmartNaturalAPCleanup:
-    type: stored
-    value: false
-    display: hide
   HazardLevel:
     value: 5
     option: [ 2, 3, 4, 5, 6, 10 ]
@@ -1105,7 +1113,6 @@ OpsiHazard1Leveling:
   Cl1Filter: |-
     ActionPoint
   RecordNonCL1AP: true
-  PreserveVirtualAsset: 0
   RecordSeaMiles:
     type: checkbox
     value: true
@@ -1148,13 +1155,6 @@ OpsiScheduling:
     value: 40000
   ActionPointPreserve:
     value: 200
-  ActionPointEarlyTriggerEnable:
-    value: true
-    type: checkbox
-    option: [true, false]
-  ActionPointEarlyTriggerThreshold:
-    value: 200
-
   OperationCoinsReturnThreshold:
     value: 20000
   EnableMeowfficerFarming:
@@ -1173,20 +1173,18 @@ OpsiScheduling:
     type: checkbox
     value: false
     option: [true, false]
-
-  # 短猫提前开始模式
-  MeowStartEarlyMode:
-    # 激进模式: 0.8倍提前时间, 均衡模式: 1.2倍, 保守模式: 1.5倍
-    value: balanced
+  TaskPriority:
+    type: textarea
+    value: OpsiStronghold > OpsiObscure > OpsiAbyssal > OpsiMeowfficerFarming
+OpsiPreventActionPointOverflow:
+  Task:
+    value: OpsiScheduling
     option:
-      - aggressive
-      - balanced
-      - conservative
-  MeowStartEarlyEnable:
-    # 是否启用短猫提前开始功能
-    value: false
-    type: checkbox
-  VirtualAssetPreserve: 0
+      - OpsiScheduling
+      - OpsiHazard1Leveling
+      - OpsiMeowfficerFarming
+  ActionPointUpperbound: 200
+  ActionPointLowerbound: 10
 
 # ==================== Island ====================
 IslandPlan:

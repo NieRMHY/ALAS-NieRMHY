@@ -44,7 +44,7 @@ v3 zh-cn
 
 ## ncnn
 `ncnn/` 目录保存从现有 ONNX 识别模型转换得到的运行时模型。
-当前 `azur_lane`、`azur_lane_jp`、`cn`、`jp`、`tw` 单行识别已迁移到
+当前 `azur_lane`、`azur_lane_jp`、`ppocr_v6`、`cn`、`jp`、`tw` 单行识别已迁移到
 ncnn CPU / Vulkan。模型通过 pnnx 从 ONNX 转换，固定输入 shape 为
 `[1,3,48,320]`，运行时输入 blob 为 `in0`，输出 blob 为 `out0`。
 

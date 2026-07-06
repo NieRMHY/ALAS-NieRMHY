@@ -7,7 +7,7 @@ from module.base.decorator import cached_property
 from module.base.timer import Timer
 from module.combat.assets import GET_ITEMS_1
 from module.config.utils import get_os_reset_remain
-from module.exception import GameStuckError, ScriptError
+from module.exception import ScriptError
 from module.logger import logger
 from module.os_shop.akashi_shop import AkashiShop
 from module.os_shop.assets import PORT_SUPPLY_CHECK, SHOP_BUY_CONFIRM
@@ -116,14 +116,13 @@ class OSShop(PortShop, AkashiShop):
             else:
                 self.os_shop_buy_execute(button)
                 try:
-                    if not (getattr(self, 'is_in_task_cl1_leveling', False) and getattr(self, 'is_cl1_enabled', False)):
-                        logger.debug('Skipping akashi AP record because CL1 leveling is not active and/or cl1 mode not enabled')
+                    if not getattr(self, 'is_running_cl1_leveling', False):
+                        logger.debug('Skipping akashi AP record because CL1 leveling is not active')
                     else:
                         name = str(getattr(button, 'name', '') or '')
                         name_l = name.lower()
                         if 'actionpoint' in name_l or ('action' in name_l and 'point' in name_l):
                             import re
-                            from datetime import datetime
 
                             m = re.search(r"(\d+)", name)
                             base = int(m.group(1)) if m else 0
@@ -140,7 +139,7 @@ class OSShop(PortShop, AkashiShop):
                                     count=int(amount),
                                     source='akashi'
                                 )
-                                logger.info(f'Successfully recorded Akashi AP purchase to DB')
+                                logger.info('Successfully recorded Akashi AP purchase to DB')
                             except Exception:
                                 logger.exception('Failed to persist akashi ap purchase')
                 except Exception:
@@ -332,7 +331,7 @@ class OSShop(PortShop, AkashiShop):
     @cached_property
     def yellow_coins_preserve(self):
         """获取黄币保留数量配置。"""
-        if self.is_cl1_enabled:
+        if self.is_cl1_mode_enabled:
             return self.config.OpsiHazard1Leveling_OperationCoinsPreserve
         else:
             return self.config.OS_NORMAL_YELLOW_COINS_PRESERVE

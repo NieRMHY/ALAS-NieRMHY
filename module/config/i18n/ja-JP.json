@@ -282,6 +282,10 @@
       "name": "スマートスケジューリング+",
       "help": "セイレーン作戦スマートスケジューリング機能。侵蝕1レベリングとゴールドコイン補充タスク間の切り替えを調整します。\n有効にすると、ゴールドコインと行動力に基づいて異なるタスク間を自動的に切り替え、プッシュ通知を送信します。"
     },
+    "OpsiPreventActionPointOverflow": {
+      "name": "行動力溢れ防止",
+      "help": "現在行動力が上限に達した時、セイレーン作戦任務を実行して行動力を消費します"
+    },
     "OpsiCrossMonth": {
       "name": "月跨ぎデイリー",
       "help": "    AzurPilotはセイレーン作戦の月跨ぎリセットの10分前にセイレーン作戦に入り、リセットを待ちますが退出しません。その後、新しい日のセイレーン作戦デイリー、隠秘海域、深淵海域と指揮ニャファームを完了して、追加の報酬を獲得します。セイレーン作戦デイリーを実行する場合は「セイレーン作戦-デイリー」タスク設定に従い、その他も同様です。\n    重要：AzurPilotが月跨ぎを待っている間は、ゲームを操作しないでください。"
@@ -741,6 +745,12 @@
       "name": "タスクをX分間蓄積する",
       "help": "報酬回収期間中のゲーム操作頻度を低減できます\nタスクがトリガーされた後、X分間待機してから蓄積されたタスクを一括実行します"
     },
+    "CloseEmulatorDuringLongWait": {
+      "name": "長時間待機中にエミュレーターを閉じる",
+      "help": "次のタスクまで 3 時間を超える場合、待機中にエミュレーターを閉じてメモリと CPU を節約します。",
+      "True": "True",
+      "False": "False"
+    },
     "WhenTaskQueueEmpty": {
       "name": "タスクキューが空になった時",
       "help": "タスクがない時にゲームを閉じると、報酬回収期間中のCPU使用率を低減できます",
@@ -1023,7 +1033,7 @@
     },
     "TaskPriorityAdjustment": {
       "name": "タスクの優先度の調整",
-      "help": "既定の優先度参考（# 以降は説明です。実際の設定にはコメントをコピーしないでください）：\nRestart    # ゲーム再起動\n> OpsiCrossMonth    # セイレーン作戦の月跨ぎデイリー\n> Commission > Tactical > Research    # 委託 > 戦術学院 > 研究\n> Exercise    # 演習\n> Dorm > Meowfficer > Guild > Gacha    # 寮舎 > 指揮ニャ > 大艦隊 > デイリー建造\n> Reward    # 報酬受取\n> ShopFrequent > ShopOnce > Shipyard > Freebies    # 通常ショップ > 一回限りショップ > 開発ドック > 無料報酬\n> PrivateQuarters    # プライベートルーム\n> OpsiExplore    # セイレーン作戦の月次開拓\n> Minigame > Awaken    # ミニゲーム > 認知覚醒\n> OpsiAshBeacon    # METAビーコン戦\n> OpsiDaily > OpsiShop > OpsiVoucher > EventShop    # セイレーン作戦デイリー > 港ショップ > 交換ショップ > イベントショップ\n> OpsiAbyssal > OpsiStronghold > OpsiObscure > OpsiArchive    # 深淵海域 > セイレーン要塞 > 隠された海域 > アーカイブ座標\n> Daily > Hard > OpsiAshBeacon > OpsiAshAssist > OpsiMonthBoss    # デイリーチャレンジ > ハード海域 > META戦 > META支援 > 月度ボス\n> Sos > EventSp > EventA > EventB > EventC > EventD    # SOS > イベントデイリーSP > イベントデイリーA > イベントデイリーB > イベントデイリーC > イベントデイリーD\n> RaidDaily > CoalitionSp > WarArchives > MaritimeEscort    # 共闘デイリー > 共闘SP > 作戦アーカイブ > 商船護衛\n> IslandJuuEatery > IslandJuuCoffee > IslandGrill > IslandTeahouse > IslandRestaurant    # 島ジュウ簡餐 > ジュウコーヒー > イカ焼き > 白熊ドリンク > 有魚レストラン\n> IslandFarm > IslandRancher > IslandMineForest > IslandDailyGather > IslandManufacture    # 島農地 > 牧場 > 鉱山＆林場 > デイリー採集 > 製造業\n> IslandAirDrop > IslandBusiness > IslandDailyOrder > IslandDailyInteract > IslandPearlSell > IslandCargoPreparation    # 島デイリー補給 > 経営モジュール > デイリーオーダー > デイリー/週間任務 > 週間パール取引 > 貨物準備\n> Event > Event2 > Event3 > Raid > Hospital > HospitalEvent > Coalition > RaidScuttle > Main > Main2 > Main3    # イベントマップ1 > イベントマップ2 > イベントマップ3 > 共闘 > 病院 > 病院イベント > 連合 > 共闘沈船 > メイン > メイン2 > メイン3\n> OpsiMeowfficerFarming    # セイレーン作戦指揮ニャ収集\n> GemsFarming    # 緊急委託周回\n> Ambush11    # 1-1伏撃周回\n> OpsiHazard1Leveling    # 侵蝕1レベリング\n> ThreeOilLowCost    # 3燃料低コスト\n\n形式: 1 行にはタスク名だけを書き、`>` で優先度をつなぎます（左側ほど優先度が高い）。\n上記の `#` コメントは説明用です。実際の設定値にコメントを残すとタスク名の照合に失敗します。\nタスク名は英語の設定タスク名を使ってください。分からない場合は UI を英語に切り替えて確認してください。\n空欄にすると内蔵の既定優先度を使用します。"
+      "help": "タスク行をドラッグしてスケジューラの優先度を調整します。上にあるタスクほど先に実行されます。新しいタスクは内蔵の既定優先度に従って適切な位置へ自動的に挿入されます。"
     }
   },
   "OneClickRetire": {
@@ -1948,6 +1958,14 @@
     "DoMajorCommission": {
       "name": "主要委託を実行する（1200燃料/1000燃料委託）",
       "help": "1200燃料委託は現在では廃止されており、収益が非常に低いです。オフにすることをお勧めします。"
+    },
+    "CommissionNotifyReward": {
+      "name": "Commission.CommissionNotifyReward.name",
+      "help": "Commission.CommissionNotifyReward.help"
+    },
+    "CommissionNotifyRewardStatistics": {
+      "name": "Commission.CommissionNotifyRewardStatistics.name",
+      "help": "Commission.CommissionNotifyRewardStatistics.help"
     }
   },
   "Tactical": {
@@ -3130,6 +3148,10 @@
       "name": "最後に完了した海域",
       "help": "自動的に更新される値。進行状況をリセットするには0を入力します。リセット後は開放済み海域は自動でスキップされます。\n海域ID、中国サーバー/グローバルサーバー/日本サーバー/台湾サーバーの海域名をサポート（例：「51」「NA Ocean SE Sector E」など）"
     },
+    "AllowHazard1Leveling": {
+      "name": "探索中の侵食1レベリングを許可",
+      "help": "有効にすると、侵食1レベリング任務を延期しなくなります。行動力が足りなくなってエリア開拓ができなくなる恐れがあるため、慎重に使用してください。"
+    },
     "ExploreProgress": {
       "name": "OpsiExplore.ExploreProgress.name",
       "help": "OpsiExplore.ExploreProgress.help"
@@ -3269,10 +3291,6 @@
       "name": "行動力をXポイント保留",
       "help": "行動力がX以下になると停止し、行動力ボックスを自動で開きます。\nこの値はセイレーン作戦リセット3日前に自動的に200ポイントに減ります。侵食1レベリングが有効な場合は1000ポイントに変更され、最終日には自動的に0ポイントに減ります。"
     },
-    "SmartNaturalAPCleanup": {
-      "name": "OpsiMeowfficerFarming.SmartNaturalAPCleanup.name",
-      "help": "OpsiMeowfficerFarming.SmartNaturalAPCleanup.help"
-    },
     "HazardLevel": {
       "name": "侵食レベル",
       "help": "指定した侵食レベルの海域を時計回りに攻撃します。\n指揮ニャポイント/行動力の比率が高い5または3を選択するのがおすすめです。",
@@ -3351,10 +3369,6 @@
     "RecordNonCL1AP": {
       "name": "統計非侵食 1 ソース体力",
       "help": "オンにすると、すべてのソース（明石店での購入など）のスタミナ獲得データがカウントされます。オフにすると侵食1レベリングタスクのみ体力データがカウントされ、他のタスクや手動操作で得た体力は無視されます。"
-    },
-    "PreserveVirtualAsset": {
-      "name": "X ポイントの仮想資産を保持",
-      "help": "仮想資産 = モビリティ × 1700/30 + 黄色のコイン + (月末までの時間/10分) × 1700/30\n仮想資産が X 未満の場合、黄色のコイン補給タスクが実行されます。0 は無制限を意味します。"
     },
     "RecordSeaMiles": {
       "name": "海里数記録",
@@ -3463,16 +3477,6 @@
       "name": "ショートキャットは X ポイントの可動性を接続して保持します",
       "help": "モビリティがX以下になると停止し、モビリティボックスが自動的に開きます。"
     },
-    "ActionPointEarlyTriggerEnable": {
-      "name": "OpsiScheduling.ActionPointEarlyTriggerEnable.name",
-      "help": "OpsiScheduling.ActionPointEarlyTriggerEnable.help",
-      "True": "True",
-      "False": "False"
-    },
-    "ActionPointEarlyTriggerThreshold": {
-      "name": "OpsiScheduling.ActionPointEarlyTriggerThreshold.name",
-      "help": "OpsiScheduling.ActionPointEarlyTriggerThreshold.help"
-    },
     "OperationCoinsReturnThreshold": {
       "name": "X 個の戦闘物資引換券を入手する",
       "help": "黄色のコイン獲得ミッション中に、戦闘補給券を合計 X 枚獲得 (増加) し、レベルを上げるために侵食 1 に戻ります。"
@@ -3501,20 +3505,30 @@
       "True": "有効",
       "False": "有効になっていません"
     },
-    "MeowStartEarlyMode": {
-      "name": "月末モビリティ自動掃除モード",
-      "help": "アグレッシブモード (×0.8): 前進が少なく、アクションパワーを節約しますが、リフレッシュを逃す可能性があります。バランスモード (×1.2): 通常前進、安全性と効率のバランス。保守モード（×1.5）：より前進、安全を優先しますが、行動力を無駄にする可能性があります",
-      "aggressive": "アグレッシブモード",
-      "balanced": "平衡モード",
-      "conservative": "保守的モード"
+    "TaskPriority": {
+      "name": "作戦コイン補充優先度",
+      "help": "作戦コイン（黄）が不足している場合、作戦コイン補充任務の実行優先順位。> で区切ります。"
+    }
+  },
+  "OpsiPreventActionPointOverflow": {
+    "_info": {
+      "name": "行動力溢れ防止",
+      "help": "現在行動力が上限に達した時、セイレーン作戦任務を実行して行動力を消費します\nスマートスケジューリングを選択した場合、行動力と作戦補給コインがどちらも不足して実行可能な任務がない時は、指揮ニャ周回を実行して現在行動力を消費します"
     },
-    "MeowStartEarlyEnable": {
-      "name": "月末にモビリティの自動クリーンアップを有効にする",
-      "help": "過去の AP 消費率に基づいて、月末に過剰なモビリティをクリーンアップするためにショート キャット タスクを事前に開始する必要があるかどうかを自動的に判断します。"
+    "Task": {
+      "name": "実行する任務",
+      "help": "専用処理があるスマートスケジューリングを推奨します",
+      "OpsiScheduling": "スマートスケジューリング（推奨）",
+      "OpsiHazard1Leveling": "侵蝕1レベリング",
+      "OpsiMeowfficerFarming": "指揮ニャ周回"
     },
-    "VirtualAssetPreserve": {
-      "name": "侵食1レベル X ポイント仮想資産を保持",
-      "help": "仮想資産 = モビリティ × 1700/30 + 黄色のコイン + (月末までの時間/10分) × 1700/30。仮想資産が X 未満の場合、黄色のコイン補給タスクが実行されます。"
+    "ActionPointUpperbound": {
+      "name": "現在行動力上限",
+      "help": "現在行動力がこの値に達した時、セイレーン作戦任務を開始します"
+    },
+    "ActionPointLowerbound": {
+      "name": "現在行動力下限",
+      "help": "現在行動力がこの値を下回るまで実行を続けます"
     }
   },
   "IslandPlan": {
@@ -6004,6 +6018,12 @@
       "NotRunning": "実行されていない、サーバーへの接続が失われた、またはサーバーがオフラインになっています",
       "NotEnable": "有効になっていません。deploy.yaml で webui パスワードを設定し、リモート コントロールを有効にしてください",
       "EntryPoint": "リモートアクセスURLアドレス:",
+      "StatusDirect": "P2P 直結",
+      "StatusTurn": "TURN リレー",
+      "StatusSsh": "SSH 転送",
+      "StatusSignaling": "P2P 接続待機中",
+      "StatusStarting": "接続中",
+      "StatusFailed": "接続失敗",
       "ConfigureHint": "構成チュートリアル:",
       "SSHNotInstall": "システムに ssh ツールがありません。チュートリアルを参照して ssh をダウンロードまたはインストールしてください。"
     },
@@ -6085,12 +6105,22 @@
       "DiscordRichPresenceHelp": "AzurPilot の実行状態を Discord に表示します。",
       "EnableRemoteAccess": "リモートアクセスを有効化",
       "EnableRemoteAccessHelp": "SSH リバーストンネルで WebUI を公開します。公開前に必ずパスワードを設定してください。",
+      "RemoteAccessMode": "リモートアクセスモード",
+      "RemoteAccessModeHelp": "auto は P2P/TURN を優先して SSH に戻します。webrtc は P2P 優先、ssh は従来の SSH 転送のみです。",
       "SSHUser": "SSH ユーザー",
       "SSHUserHelp": "リモートアクセス用のログインユーザー名です。空欄なら起動時に生成されます。",
       "SSHServer": "SSH サーバー",
       "SSHServerHelp": "リモートアクセス用サーバーです。形式は host:port です。",
       "SSHExecutable": "SSH 実行ファイル",
       "SSHExecutableHelp": "ssh.exe のパスです。空欄または ssh で PATH から探します。",
+      "SignalingServer": "WebRTC シグナリングサーバー",
+      "SignalingServerHelp": "空の場合は SSHServer から wss://host/signal を推定します。",
+      "StunServers": "STUN サーバー",
+      "StunServersHelp": "NAT 越え用の JSON 配列またはカンマ区切り文字列。",
+      "TurnServers": "TURN サーバー",
+      "TurnServersHelp": "P2P 失敗時のリレー用 JSON 配列またはカンマ区切り文字列。",
+      "TurnCredentialMode": "TURN 認証情報モード",
+      "TurnCredentialModeHelp": "現在は static をサポートします。ephemeral は短期認証情報用の予約値です。",
       "WebuiHost": "WebUI 待受アドレス",
       "WebuiHostHelp": "WebUI が待ち受けるホストです。例: 0.0.0.0、127.0.0.1、::。",
       "WebuiPort": "WebUI ポート",
@@ -6127,117 +6157,107 @@
       "ChooseFile": "ファイルを選択"
     },
     "Stat": {
-      "LoadApDataFailed": "Failed to load AP data: {e}",
-      "NoApData": "No AP change data yet. Data will be recorded after running OpSi-1.",
-      "Refresh": "Refresh",
-      "NoValidApData": "No valid AP data available.",
-      "ViewTitleLine": "Intraday Line (Detailed Fluctuation)",
-      "ViewTitleDay": "Day View ({day} Hourly Candles)",
-      "ViewTitleMonth": "Month View (Daily Candles)",
-      "CannotAggregateKline": "Unable to aggregate candle data.",
-      "ViewLineShort": "Line",
-      "DataPointsCount": "{count} data points",
-      "CandlesCount": "{count} candles",
-      "ViewLabel": "📊 View:",
-      "DetailLabel": "📈 Detail:",
-      "ViewLineButton": "Intraday (Detailed)",
-      "ViewDayButton": "Day View (Hourly K)",
-      "ViewMonthButton": "Month View (Daily K)",
-      "DetailChartTitle": "Daily AP Fluctuation Detail (24h)",
-      "ToggleDetailChart": "Detail Chart",
-      "DetailChartOn": "✓ On",
-      "DetailChartOff": "○ Off",
-      "LoadOpsiStatsFailed": "Failed to load OpSi stats: {e}",
-      "LoadExpStatsFailed": "Failed to load EXP stats: {e}",
-      "DailyExpCheckTitle": "Daily EXP Check",
-      "CheckTime": "Check time: {value}",
-      "TargetLevel": "Target level: {value}",
-      "ShipSlot": "Slot",
-      "Level": "Level",
-      "CurrentExpThisLevel": "Current EXP (Level)",
-      "TotalExp": "Total EXP",
-      "ExpToTarget": "EXP to target",
-      "SortiesNeeded": "Sorties needed",
-      "EstimatedTime": "Estimated time",
-      "NoExpData": "No EXP data yet. Data will be recorded after OpSi-1 leveling.",
-      "Month": "Month",
-      "BattleCount": "Battles",
-      "BattleRounds": "Rounds",
-      "SortieCost": "Sortie Cost",
-      "AkashiEncounters": "Akashi Encounters",
-      "AkashiRate": "Akashi Rate",
-      "SirenResearchDevices": "Siren Research Devices",
-      "SirenResearchRate": "Siren Research Rate",
-      "HazardLevel": "Corrosion Level",
-      "AverageAP": "Average AP",
-      "NetAP": "Net AP",
-      "LoopEfficiency": "Loop Efficiency",
-      "ExpEfficiency": "EXP efficiency: {value}/{unit}",
-      "ExpEfficiencyHeader": "EXP Efficiency",
-      "AvgBattleTime": "Avg battle time: {value}{unit}",
-      "AvgBattleTimeHeader": "Avg battle time",
-      "AvgRoundTime": "Avg round time",
-      "TodayBattles": "Today battles: {value}{unit}",
-      "TodayBattlesHeader": "Today battles",
-      "TodayExp": "Today EXP: {value}",
-      "TodayExpHeader": "Today EXP",
-      "TodayRun": "Today run: {value}{unit}",
-      "TodayRunHeader": "Today run",
-      "OpsiDataCollectionTitle": "Yukikaze OpSi-1 Data Collection",
-      "MonthlyPurchasedAP": "Monthly purchased AP: {value}",
-      "MeowDataCollectionTitle": "Meow Session Data",
-      "MeowRounds": "Meow Rounds",
-      "AvgMeowRoundTime": "Avg Meow Round Time",
-      "MeowLootTitle": "Meow Session Loot",
-      "NoMeowDataNotice": "No local Meowfficer farming loot data yet. It will be generated automatically after a run.",
-      "MeowAdvanceAdviceTitle": "Meow Early Start Advice",
-      "CurrentAP": "Current AP: {value}",
-      "ApPerRound": "AP per round: {value} AP",
-      "AvailableRounds": "Available rounds: {value}{unit}",
-      "AvgRoundDuration": "Avg round duration: {value}{unit}",
-      "CurrentMode": "Current mode: {value}",
-      "RecommendAhead": "Recommended lead time: {value}{unit}",
-      "RoundUnit": " rounds",
-      "SecondUnit": "s",
-      "HourUnit": "h",
-      "MinuteUnit": "m",
-      "ExportModuleLoadFailed": "Export failed: cannot load stats module: {e}",
-      "CsvHeaderAkashiRate": "Akashi Rate (%)",
-      "CsvHeaderLoopEfficiency": "Loop Efficiency (%)",
-      "CsvHeaderMonthlyPurchasedAP": "Monthly Purchased AP",
-      "CsvFilenameTemplate": "opsi1_leveling_{month}_details.csv",
-      "SavedToDesktop": "Saved to desktop: {path}",
-      "SaveDesktopFailed": "Failed to save to desktop: {e}",
-      "ExportAndSaveDesktop": "Export and Save to Desktop",
-      "NoShipExpData": "No ship EXP data. Run \"Daily EXP Check\" first.",
-      "ShipExpProgressTitle": "Daily EXP Check: Detected Ship Levels and Progress",
-      "LastCheckTime": "Last check time: {value}",
-      "AvgOpsiRoundTime": "Avg OpSi-1 round time: {value}{unit}",
-      "TodayBattleUnit": "",
-      "NoTodayBattleData": "No battle data for today yet. It will update automatically after battles.",
-      "LoadShipExpFailed": "Failed to load ship EXP data: {e}",
-      "TargetExpRequired": "EXP required for target level",
-      "BattlesCompleted": "Battles completed",
-      "ExpRemaining": "EXP remaining",
-      "StartCleanupTime": "Suggested cleanup start: {value}",
-      "NextOsReset": "Next OS reset: {value}",
-      "MeowAutoCleanupStatus": "Auto early cleanup: {value}",
-      "CommissionIncomeTitle": "Gui.Stat.CommissionIncomeTitle",
-      "CommissionIncomeMonth": "Gui.Stat.CommissionIncomeMonth",
-      "CommissionIncomeWeek": "Gui.Stat.CommissionIncomeWeek",
-      "CommissionIncomeDay": "Gui.Stat.CommissionIncomeDay",
-      "CommissionIncomeNoData": "Gui.Stat.CommissionIncomeNoData",
-      "CommissionIncomeItemGem": "Gui.Stat.CommissionIncomeItemGem",
-      "CommissionIncomeItemCube": "Gui.Stat.CommissionIncomeItemCube",
-      "CommissionIncomeItemChip": "Gui.Stat.CommissionIncomeItemChip",
-      "CommissionIncomeItemOil": "Gui.Stat.CommissionIncomeItemOil",
-      "CommissionIncomeItemCoin": "Gui.Stat.CommissionIncomeItemCoin",
-      "CommissionIncomeHeaderItem": "Gui.Stat.CommissionIncomeHeaderItem",
-      "CommissionIncomeHeaderTotal": "Gui.Stat.CommissionIncomeHeaderTotal",
-      "CommissionIncomeHeaderCount": "Gui.Stat.CommissionIncomeHeaderCount",
-      "CommissionIncomeHeaderAvg": "Gui.Stat.CommissionIncomeHeaderAvg",
-      "CommissionIncomeTotalCommissions": "Gui.Stat.CommissionIncomeTotalCommissions",
-      "CommissionIncomeRecentTitle": "Gui.Stat.CommissionIncomeRecentTitle",
+      "LoadApDataFailed": "APデータの読み込みに失敗しました: {e}",
+      "NoApData": "AP変動データがありません。侵蝕1タスク実行後に自動記録されます",
+      "Refresh": "更新",
+      "NoValidApData": "有効なAPデータがありません",
+      "ViewTitleLine": "分時チャート（詳細変動）",
+      "ViewTitleDay": "日表示（{day} 時間足）",
+      "ViewTitleMonth": "月表示（日足）",
+      "CannotAggregateKline": "K線データを集約できません",
+      "ViewLineShort": "分時",
+      "DataPointsCount": "{count} データポイント",
+      "CandlesCount": "{count} 本のK線",
+      "ViewLabel": "📊 表示:",
+      "DetailLabel": "📈 詳細:",
+      "ViewLineButton": "分時（詳細変動）",
+      "ViewDayButton": "日表示（時間足K線）",
+      "ViewMonthButton": "月表示（日足K線）",
+      "DetailChartTitle": "日別AP変動詳細（24時間）",
+      "ToggleDetailChart": "詳細チャート",
+      "DetailChartOn": "✓ オン",
+      "DetailChartOff": "○ オフ",
+      "LoadOpsiStatsFailed": "OpSi統計の読み込みに失敗しました: {e}",
+      "LoadExpStatsFailed": "経験値統計の読み込みに失敗しました: {e}",
+      "DailyExpCheckTitle": "日次経験値チェック",
+      "CheckTime": "チェック時間: {value}",
+      "TargetLevel": "目標レベル: {value}",
+      "ShipSlot": "艦位",
+      "Level": "レベル",
+      "CurrentExpThisLevel": "現在の経験値（今レベル）",
+      "TotalExp": "累計経験値",
+      "ExpToTarget": "目標までの経験値",
+      "SortiesNeeded": "必要出撃回数",
+      "EstimatedTime": "推定時間",
+      "NoExpData": "経験値データがありません。侵蝕1練級実行後に自動記録されます",
+      "Month": "月",
+      "BattleCount": "戦闘回数",
+      "BattleRounds": "戦闘ラウンド",
+      "SortieCost": "出撃消費",
+      "AkashiEncounters": "明石遭遇回数",
+      "AkashiRate": "明石遭遇率",
+      "SirenResearchDevices": "クレーン回数",
+      "SirenResearchRate": "クレーン確率",
+      "HazardLevel": "侵蝕レベル",
+      "AverageAP": "平均AP",
+      "NetAP": "純獲得AP",
+      "LoopEfficiency": "ループ効率",
+      "ExpEfficiency": "経験値効率: {value}/{unit}",
+      "ExpEfficiencyHeader": "経験値効率",
+      "AvgBattleTime": "平均戦闘時間: {value}{unit}",
+      "AvgBattleTimeHeader": "平均戦闘時間",
+      "AvgRoundTime": "平均ラウンド時間",
+      "TodayBattles": "今日の戦闘: {value}{unit}",
+      "TodayBattlesHeader": "今日の戦闘",
+      "TodayExp": "今日の経験値: {value}",
+      "TodayExpHeader": "今日の経験値",
+      "TodayRun": "今日の実行: {value}{unit}",
+      "TodayRunHeader": "今日の実行",
+      "OpsiDataCollectionTitle": "雪風様の侵蝕1データ収集",
+      "MonthlyPurchasedAP": "今月購入AP: {value}",
+      "MeowDataCollectionTitle": "短猫データ収集",
+      "MeowRounds": "短猫ラウンド数",
+      "AvgMeowRoundTime": "平均短猫ラウンド時間",
+      "MeowLootTitle": "短猫収穫",
+      "NoMeowDataNotice": "短猫収穫データがありません。1回実行後に自動生成されます",
+      "RoundUnit": " ラウンド",
+      "SecondUnit": "秒",
+      "HourUnit": "時間",
+      "MinuteUnit": "分",
+      "ExportModuleLoadFailed": "エクスポート失敗: 統計モジュールを読み込めません: {e}",
+      "CsvHeaderAkashiRate": "明石遭遇率(%)",
+      "CsvHeaderLoopEfficiency": "ループ効率(%)",
+      "CsvHeaderMonthlyPurchasedAP": "今月購入AP",
+      "CsvFilenameTemplate": "侵蝕1練級_{month}_詳細データ.csv",
+      "SavedToDesktop": "デスクトップに保存しました: {path}",
+      "SaveDesktopFailed": "デスクトップへの保存に失敗しました: {e}",
+      "ExportAndSaveDesktop": "デスクトップにエクスポートして保存",
+      "NoShipExpData": "艦船経験値データがありません。先に「日次経験値チェック」を実行してください",
+      "ShipExpProgressTitle": "日次経験値チェック: 検出された艦娘レベルと進捗",
+      "LastCheckTime": "前回チェック時間: {value}",
+      "AvgOpsiRoundTime": "平均侵蝕1ラウンド時間: {value}{unit}",
+      "TodayBattleUnit": "戦闘",
+      "NoTodayBattleData": "今日の戦闘データがありません。戦闘後に自動更新されます",
+      "LoadShipExpFailed": "艦船経験値データの読み込みに失敗しました: {e}",
+      "TargetExpRequired": "目標レベルに必要な経験値",
+      "BattlesCompleted": "完了戦闘数",
+      "ExpRemaining": "残り必要経験値",
+      "CommissionIncomeTitle": "委託収益統計",
+      "CommissionIncomeMonth": "今月",
+      "CommissionIncomeWeek": "今週",
+      "CommissionIncomeDay": "今日",
+      "CommissionIncomeNoData": "委託収益データがありません。委託実行後に自動更新されます",
+      "CommissionIncomeItemGem": "ダイヤ",
+      "CommissionIncomeItemCube": "キューブ",
+      "CommissionIncomeItemChip": "コグチップ",
+      "CommissionIncomeItemOil": "燃料",
+      "CommissionIncomeItemCoin": "資金",
+      "CommissionIncomeHeaderItem": "アイテム",
+      "CommissionIncomeHeaderTotal": "合計",
+      "CommissionIncomeHeaderCount": "委託回数",
+      "CommissionIncomeHeaderAvg": "平均/回",
+      "CommissionIncomeTotalCommissions": "委託総回数: {value}",
+      "CommissionIncomeRecentTitle": "最近の委託記録",
       "ResourceChartTitle": "全リソース推移",
       "LoadResourceDataFailed": "Gui.Stat.LoadResourceDataFailed",
       "NoResourceData": "Gui.Stat.NoResourceData",
@@ -6247,17 +6267,15 @@
       "SkillAutoSwitch": "Gui.Tactical.SkillAutoSwitch"
     },
     "OpsiScheduling": {
-      "UseSmartSchedulingOperationCoinsPreserve": "Gui.OpsiScheduling.UseSmartSchedulingOperationCoinsPreserve",
-      "OperationCoinsPreserve": "Gui.OpsiScheduling.OperationCoinsPreserve",
-      "ActionPointPreserve": "Gui.OpsiScheduling.ActionPointPreserve",
-      "ActionPointEarlyTriggerEnable": "Gui.OpsiScheduling.ActionPointEarlyTriggerEnable",
-      "ActionPointEarlyTriggerThreshold": "Gui.OpsiScheduling.ActionPointEarlyTriggerThreshold",
-      "OperationCoinsReturnThreshold": "Gui.OpsiScheduling.OperationCoinsReturnThreshold",
-      "EnableMeowfficerFarming": "Gui.OpsiScheduling.EnableMeowfficerFarming",
-      "EnableObscure": "Gui.OpsiScheduling.EnableObscure",
-      "EnableAbyssal": "Gui.OpsiScheduling.EnableAbyssal",
-      "EnableStronghold": "Gui.OpsiScheduling.EnableStronghold",
-      "MeowStartEarlyMode": "Gui.OpsiScheduling.MeowStartEarlyMode"
+      "UseSmartSchedulingOperationCoinsPreserve": "スマートスケジューリング作戦コイン保留",
+      "OperationCoinsPreserve": "作戦コイン保留",
+      "ActionPointPreserve": "行動力保留",
+      "OperationCoinsReturnThreshold": "作戦コイン戻り閾値",
+      "EnableMeowfficerFarming": "指揮ニャー収集を有効",
+      "EnableObscure": "隠秘海域を有効",
+      "EnableAbyssal": "深淵海域を有効",
+      "EnableStronghold": "セイレーン要塞を有効",
+      "TaskPriority": "任務優先度"
     },
     "Misc": {
       "Enabled": "Enabled",

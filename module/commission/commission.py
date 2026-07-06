@@ -17,6 +17,7 @@ from module.dorm.dorm import RewardDorm
 from module.exception import GameStuckError, OilMaxed, RequestHumanTakeover
 from module.handler.info_handler import InfoHandler
 from module.logger import logger
+from module.notify.notify import handle_notify, notify_webui
 from module.map.map_grids import SelectedGrids
 from module.retire.assets import DOCK_CHECK
 from module.ui.assets import BACK_ARROW, REWARD_GOTO_COMMISSION
@@ -614,6 +615,46 @@ class RewardCommission(UI, InfoHandler):
                 cl1_db.add_commission_income(instance, merged_items, commission_count=1)
                 item_str = ', '.join([f'{k}x{v}' for k, v in merged_items.items()])
                 logger.info(f'Commission income recorded: {item_str} (instance={instance})')
+                if self.config.Commission_CommissionNotifyReward:
+                    reward_stats = None
+                    if self.config.Commission_CommissionNotifyRewardStatistics:
+                        reward_stats = cl1_db.get_commission_reward_stats(instance)
+                    gem_count = merged_items.get("Gem", 0)
+                    tracked = []
+                    if gem_count > 0:
+                        text = f'本次获得钻石 * {gem_count}'
+                        if reward_stats:
+                            text += (
+                                f'\n\n今日累计: {reward_stats["today"].get("Gem", 0)}'
+                                f'\n本周累计: {reward_stats["week"].get("Gem", 0)}'
+                                f'\n本月累计: {reward_stats["month"].get("Gem", 0)}'
+                            )
+                        tracked.append(text)
+                    if tracked:
+
+                        msg = '\n'.join(tracked)
+                        webui_msg = msg.replace('\n\n', '\n')
+                        title = f"AzurPilot <{instance}> 委托获得奖励喵！"
+                        webui_title = f"AzurPilot <{instance}> 委托获得奖励喵！"
+                        if gem_count >= 50:
+                            title = f"AzurPilot <{instance}> 大成功！！！委托获得顶级奖励喵！"
+                            webui_title = f"AzurPilot <{instance}> 大成功！！！委托获得顶级奖励喵！"
+
+                        elif gem_count > 0:
+                            title = f"AzurPilot <{instance}> 委托获得顶级奖励喵！"
+                            webui_title = f"AzurPilot <{instance}> 委托获得顶级奖励喵！"
+                        handle_notify(
+                            self.config.Error_OnePushConfig,
+                            title=title,
+                            content=msg,
+                        )
+
+                        notify_webui(
+                            instance,
+                            title=webui_title,
+                            content=webui_msg,
+                        )
+
             else:
                 logger.info('Commission income: no known items recognized from all screenshots')
 

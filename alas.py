@@ -137,6 +137,36 @@ class AzurLaneAutoScript:
             logger.error(f'重启模拟器失败: {e}')
             return False
 
+    def _start_emulator_after_long_wait(self):
+        """
+        长时间等待关闭模拟器后，显式启动模拟器。
+
+        这是省资源功能的正常恢复路径，不受 ADB 离线重启开关和次数限制。
+
+        Returns:
+            bool: 启动成功返回 True，失败返回 False。
+        """
+        logger.hr('长时间等待后启动模拟器', level=1)
+        try:
+            from module.device.platform import Platform
+
+            platform = Platform(self.config, connect=False)
+            if platform.emulator_instance is None:
+                logger.warning('未找到模拟器实例，无法在长时间等待后启动模拟器')
+                return False
+
+            if platform.emulator_start():
+                logger.info('长时间等待后模拟器启动完成')
+                if 'device' in self.__dict__:
+                    del_cached_property(self, 'device')
+                return True
+
+            logger.warning('长时间等待后启动模拟器失败，继续调度恢复流程')
+            return False
+        except Exception as e:
+            logger.warning(f'长时间等待后启动模拟器失败，继续调度恢复流程: {e}')
+            return False
+
     @cached_property
     def config(self):
         try:
@@ -703,6 +733,14 @@ class AzurLaneAutoScript:
         from module.campaign.os_run import OSCampaignRun
         OSCampaignRun(config=self.config, device=self.device).opsi_hazard1_leveling()
 
+    def opsi_scheduling(self):
+        from module.campaign.os_run import OSCampaignRun
+        OSCampaignRun(config=self.config, device=self.device).opsi_scheduling()
+
+    def opsi_prevent_action_point_overflow(self):
+        from module.campaign.os_run import OSCampaignRun
+        OSCampaignRun(config=self.config, device=self.device).opsi_prevent_action_point_overflow()
+
     def opsi_cross_month(self):
         from module.campaign.os_run import OSCampaignRun
         OSCampaignRun(config=self.config, device=self.device).opsi_cross_month()
@@ -989,7 +1027,35 @@ class AzurLaneAutoScript:
                 logger.info(f'等待直到 {task.next_run} 执行任务 `{task.command}`')
                 self.is_first_task = False
                 method = self.config.Optimization_WhenTaskQueueEmpty
-                if method == 'close_game':
+                wait_duration = task.next_run - current_time()
+                if (
+                    self.config.Optimization_CloseEmulatorDuringLongWait
+                    and wait_duration > timedelta(hours=3)
+                ):
+                    logger.info(
+                        f'下一个任务 `{task.command}` 将在 {wait_duration} 后运行，'
+                        '等待期间关闭模拟器'
+                    )
+                    release_resources()
+                    self.device.release_during_wait()
+                    try:
+                        if self.device.emulator_stop():
+                            logger.info('等待期间已关闭模拟器')
+                        else:
+                            logger.warning('等待期间关闭模拟器失败，继续等待')
+                    except Exception as e:
+                        logger.warning(f'等待期间关闭模拟器失败，继续等待: {e}')
+                    if 'device' in self.__dict__:
+                        del_cached_property(self, 'device')
+                    if not self.wait_until(task.next_run):
+                        del_cached_property(self, 'config')
+                        continue
+                    self._start_emulator_after_long_wait()
+                    if task.command != 'Restart':
+                        self.config.task_call('Restart')
+                        del_cached_property(self, 'config')
+                        continue
+                elif method == 'close_game':
                     logger.info('等待期间关闭游戏')
                     self.device.app_stop()
                     release_resources()

@@ -157,14 +157,23 @@ class OpsiCrossMonth(MeowfficerTargetZoneMixin, OSMap):
                 else:
                     zone = traditional_zone
                     logger.hr(f'OS meowfficer farming, zone_id={zone.zone_id}', level=1)
-                self.globe_goto(zone, types='SAFE', refresh=True)
-                self.fleet_set(self.config.OpsiFleet_Fleet)
-                if self.run_strategic_search():
-                    self._solved_map_event = set()
-                    self._solved_fleet_mechanism = False
-                    self.clear_question()
-                    self.map_rescan()
-                self.handle_after_auto_search()
+                if len(target_zones) > 1:
+                    self.globe_goto(zone)
+                    self.fleet_set(self.config.OpsiFleet_Fleet)
+                    self.os_order_execute(
+                        recon_scan=False,
+                        submarine_call=False)
+                    self.run_auto_search()
+                    self.handle_after_auto_search()
+                else:
+                    self.globe_goto(zone, types='SAFE', refresh=True)
+                    self.fleet_set(self.config.OpsiFleet_Fleet)
+                    if self.run_strategic_search():
+                        self._solved_map_event = set()
+                        self._solved_fleet_mechanism = False
+                        self.clear_question()
+                        self.map_rescan()
+                    self.handle_after_auto_search()
             else:
                 zones = self.zone_select(hazard_level=OpsiMeowfficerFarming_HazardLevel) \
                     .delete(SelectedGrids([self.zone])) \

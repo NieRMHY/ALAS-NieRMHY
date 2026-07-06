@@ -171,6 +171,7 @@ class Emulator(EmulatorBase):
             yield exe.replace('MuMuMultiPlayer.exe', 'MuMuPlayer.exe')
         elif 'MuMuManager.exe' in exe:
             yield exe.replace('MuMuManager.exe', 'MuMuPlayer.exe')
+            yield exe.replace('MuMuManager.exe', 'MuMuNxMain.exe')
         elif 'MEmuConsole.exe' in exe:
             yield exe.replace('MEmuConsole.exe', 'MEmu.exe')
         else:
@@ -341,7 +342,7 @@ class Emulator(EmulatorBase):
                             name=name,
                             path=self.path,
                         )
-                        if instance.MuMuPlayer12_id:
+                        if instance.MuMuPlayer12_id is not None:
                             instance.serial = f'127.0.0.1:{16384 + 32 * instance.MuMuPlayer12_id}'
                             yield instance
         elif self == Emulator.MEmuPlayer:
@@ -595,9 +596,10 @@ class EmulatorManager(EmulatorManagerBase):
                 if Emulator.is_emulator(file) and os.path.exists(file):
                     exe.add(file)
             # MuMu 特定目录
-            for file in iter_folder(abspath(os.path.join(os.path.dirname(uninstall), 'EmulatorShell')), ext='.exe'):
-                if Emulator.is_emulator(file) and os.path.exists(file):
-                    exe.add(file)
+            for folder in ['EmulatorShell', 'nx_main']:
+                for file in iter_folder(abspath(os.path.join(os.path.dirname(uninstall), folder)), ext='.exe'):
+                    if Emulator.is_emulator(file) and os.path.exists(file):
+                        exe.add(file)
 
         # 正在运行的模拟器
         for file in EmulatorManager.iter_running_emulator():
