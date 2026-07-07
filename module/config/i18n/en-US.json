@@ -3073,7 +3073,6 @@
       "name": "Auto Search Time Limit",
       "help": "Unit: minutes. During auto search, the script will assume the game is stuck if no event is detected for this period."
     }
-    }
   },
   "OpsiAshBeacon": {
     "_info": {
