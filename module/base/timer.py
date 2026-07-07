@@ -109,7 +109,7 @@ class Timer:
         count = int(limit / speed)
         return cls(limit, count=count)
 
-    def start(self):
+    def start(self) -> Timer:
         """启动计时器。
 
         如果计时器未启动，reached() 始终返回 True，从而实现首次快速尝试：

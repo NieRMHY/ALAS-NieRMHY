@@ -3068,6 +3068,10 @@
     "OpsiOnePushConfig": {
       "name": "セイレーン作戦プッシュ通知設定",
       "help": "「塞壬行動信息獨立推送」功能開啟時設置才生效。Onepushを使用して、侵食1と短毛猫に関する情報を1つプッシュします。設定方法はドキュメントを参照してください：https://github.com/LmeSzinc/AzurLaneAutoScript/wiki/Onepush-configuration-%5BCN%5D"
+    },
+    "AutoSearchTimeLimit": {
+      "name": "自動探索時間制限",
+      "help": "単位：分。自動探索中にイベントが一定時間発生しない場合、フリーズと判定されます。"
     }
   },
   "OpsiAshBeacon": {

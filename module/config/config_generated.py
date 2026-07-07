@@ -581,6 +581,7 @@ class GeneratedConfig:
     OpsiGeneral_LauncherPush = True
     OpsiGeneral_IndependentPush = False
     OpsiGeneral_OpsiOnePushConfig = 'provider: null'
+    OpsiGeneral_AutoSearchTimeLimit = 5
 
     # 配置组 `OpsiAshBeacon`
     OpsiAshBeacon_AttackMode = 'current'  # current, current_dossier, current_dossier_only

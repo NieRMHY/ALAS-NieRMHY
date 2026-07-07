@@ -12,6 +12,7 @@ from module.config.utils import get_os_reset_remain
 from module.exception import (
     CampaignEnd,
     GameTooManyClickError,
+    GameStuckError,
     MapDetectionError,
     MapWalkError,
     RequestHumanTakeover,
@@ -954,6 +955,7 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
         finished_combat = 0
         died_timer = Timer(1.5, count=3)
         self.hp_reset()
+        auto_search_time_limit_timer = Timer(self.config.OpsiGeneral_AutoSearchTimeLimit * 60, count=1).start()
         for _ in self.loop():
             # 结束条件
             if not unlock_checked and unlock_check_timer.reached():
@@ -986,10 +988,12 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
 
             if self.handle_os_auto_search_map_option(drop=drop, enable=success):
                 unlock_checked = True
+                auto_search_time_limit_timer.reset()
                 continue
             if self.handle_retirement():
                 # 退役会中断自动搜索，需要重试
                 self.ash_popup_canceled = True
+                auto_search_time_limit_timer.reset()
                 continue
             if self.combat_appear():
                 self.on_auto_search_battle_count_add()
@@ -1018,102 +1022,15 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
                     ):
                         success = False
                         logger.warning("Fleet died, stop auto search")
+                        auto_search_time_limit_timer.reset()
                         continue
+                auto_search_time_limit_timer.reset()
             if self.handle_map_event():
                 # 自动搜索无法处理塞壬搜索装置。
+                auto_search_time_limit_timer.reset()
                 continue
-
-        return finished_combat
-
-    def os_auto_search_daemon_until_combat(
-        self, drop=None, strategic=False, interrupt=None, skip_first_screenshot=True
-    ):
-        """
-        自动寻敌，遇到第一次战斗就返回。
-
-        Args:
-            drop (DropRecord): 掉落记录对象。
-            strategic (bool): 是否运行战略搜索。
-            interrupt (callable): 中断回调函数。
-            skip_first_screenshot: 是否跳过第一次截图。
-
-        Returns:
-            int: 完成的战斗次数。
-
-        Raises:
-            CampaignEnd: 自动搜索结束时抛出。
-            RequestHumanTakeover: 没有自动搜索选项时抛出。
-
-        Pages:
-            in: AUTO_SEARCH_OS_MAP_OPTION_OFF
-            out: AUTO_SEARCH_OS_MAP_OPTION_OFF 且 info_bar_count() >= 2（地图上无可清理对象时）。
-                 AUTO_SEARCH_REWARD（获得自动搜索奖励时）。
-        """
-        logger.hr("OS auto search until combat", level=2)
-        self.on_auto_search_battle_count_reset()
-        unlock_checked = False
-        unlock_check_timer = Timer(5, count=10).start()
-        self.ash_popup_canceled = False
-
-        def false_func(*args, **kwargs):
-            return False
-
-        success = True
-        interrupt_confirm = False
-        if callable(interrupt):
-            is_interrupt, not_interrupt = interrupt, false_func
-        elif isinstance(interrupt, list) and len(interrupt) == 2:
-            is_interrupt = interrupt[0] if callable(interrupt[0]) else false_func
-            not_interrupt = interrupt[1] if callable(interrupt[1]) else false_func
-        else:
-            is_interrupt, not_interrupt = false_func, false_func
-        finished_combat = 0
-        died_timer = Timer(1.5, count=3)
-        self.hp_reset()
-        for _ in self.loop():
-            # 结束条件
-            if not unlock_checked and unlock_check_timer.reached():
-                logger.critical("当前海域未解锁自律，请先完成剧情任务。")
-                raise RequestHumanTakeover
-            if self.is_in_map():
-                self.device.stuck_record_clear()
-                if not success:
-                    if died_timer.reached():
-                        logger.warning("Fleet died confirm")
-                        break
-                else:
-                    if not interrupt_confirm and is_interrupt():
-                        interrupt_confirm = True
-                    if interrupt_confirm and not_interrupt():
-                        interrupt_confirm = False
-                    died_timer.reset()
-            else:
-                died_timer.reset()
-
-            if not unlock_checked:
-                if self.appear(AUTO_SEARCH_OS_MAP_OPTION_OFF, offset=(5, 120)):
-                    unlock_checked = True
-                elif self.appear(
-                    AUTO_SEARCH_OS_MAP_OPTION_OFF_DISABLED, offset=(5, 120)
-                ):
-                    unlock_checked = True
-                elif self.appear(AUTO_SEARCH_OS_MAP_OPTION_ON, offset=(5, 120)):
-                    unlock_checked = True
-
-            if self.handle_os_auto_search_map_option(drop=drop, enable=success):
-                unlock_checked = True
-                continue
-            if self.handle_retirement():
-                # 退役会中断自动搜索，需要重试
-                self.ash_popup_canceled = True
-                continue
-            if self.combat_appear():
-                self.on_auto_search_battle_count_add()
-                self.interrupt_auto_search(goto_main=False, end_task=False)
-                return finished_combat
-            if self.handle_map_event():
-                # 自动搜索无法处理塞壬搜索装置。
-                continue
+            if auto_search_time_limit_timer.reached():
+                raise GameStuckError('自律寻敌卡死')
 
         return finished_combat
 
@@ -1503,8 +1420,13 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
                 self.hp_reset()
                 self.hp_get()
                 return True
-            except TaskEnd:
-                # 任务切换，让异常继续向上传播
+            except (
+                TaskEnd,
+                GameStuckError,
+                GameTooManyClickError,
+                RequestHumanTakeover,
+            ):
+                # 任务切换和恢复型异常必须交给上层调度器处理。
                 raise
             except Exception as e:
                 logger.warning(f"Strategic search interrupted: {e}")
@@ -2141,6 +2063,13 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
             for _ in range(2):
                 try:
                     self.map_rescan(rescan_mode="full")
+                except (
+                    TaskEnd,
+                    GameStuckError,
+                    GameTooManyClickError,
+                    RequestHumanTakeover,
+                ):
+                    raise
                 except Exception as e:
                     logger.debug(f"最终全图重扫出现异常，继续重试: {e}", exc_info=True)
                     time.sleep(0.6)
@@ -2150,6 +2079,13 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
         logger.info("执行一次自律寻敌以清理可能的装置")
         try:
             self.run_auto_search(question=True, rescan=None, after_auto_search=True)
+        except (
+            TaskEnd,
+            GameStuckError,
+            GameTooManyClickError,
+            RequestHumanTakeover,
+        ):
+            raise
         except Exception as e:
             logger.warning(f"自律寻敌过程出现异常: {e}")
 

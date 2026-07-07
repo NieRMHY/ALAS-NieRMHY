@@ -2351,7 +2351,8 @@
       "NotifyOpsiMail": true,
       "LauncherPush": true,
       "IndependentPush": false,
-      "OpsiOnePushConfig": "provider: null"
+      "OpsiOnePushConfig": "provider: null",
+      "AutoSearchTimeLimit": 5
     },
     "Storage": {
       "Storage": {}

@@ -583,15 +583,21 @@ class WebRTCRemoteAccessProvider(RemoteAccessProvider):
         self.ssh_provider = ssh_provider
         self.thread: Optional[threading.Thread] = None
         self.stop_event = threading.Event()
+        self._lock = threading.Lock()
         self.info = RemoteAccessInfo(connection_state="stopped")
         self._missing_dependency = ""
 
     def start(self) -> None:
-        if not self.ssh_provider.is_alive():
-            self.ssh_provider.start()
+        with self._lock:
+            if self.thread is not None and self.thread.is_alive():
+                return
 
-        self.thread = threading.Thread(target=self._thread_main, daemon=False)
-        self.thread.start()
+            self.stop_event.clear()
+            if not self.ssh_provider.is_alive():
+                self.ssh_provider.start()
+
+            self.thread = threading.Thread(target=self._thread_main, daemon=False)
+            self.thread.start()
 
     def _wait_for_ssh_info(self) -> bool:
         started = time.time()
@@ -636,6 +642,7 @@ class WebRTCRemoteAccessProvider(RemoteAccessProvider):
         try:
             import aiohttp
             from aiortc import RTCConfiguration, RTCIceServer, RTCPeerConnection, RTCSessionDescription
+            from aiortc.sdp import candidate_from_sdp
         except ImportError as e:
             raise RemoteDependencyError("缺少 aiortc/aiohttp 依赖，已退回 SSH 转发") from e
 
@@ -658,6 +665,7 @@ class WebRTCRemoteAccessProvider(RemoteAccessProvider):
             )
         rtc_config = RTCConfiguration(iceServers=rtc_servers)
         peer_connections = set()
+        peer_connections_by_viewer = {}
 
         async with aiohttp.ClientSession() as session:
             async with session.ws_connect(signal_url, heartbeat=30) as ws:
@@ -686,6 +694,12 @@ class WebRTCRemoteAccessProvider(RemoteAccessProvider):
                             pc = RTCPeerConnection(configuration=rtc_config)
                             peer_connections.add(pc)
                             viewer_id = data.get("viewer_id")
+                            if viewer_id:
+                                old_pc = peer_connections_by_viewer.pop(viewer_id, None)
+                                if old_pc is not None:
+                                    peer_connections.discard(old_pc)
+                                    await old_pc.close()
+                                peer_connections_by_viewer[viewer_id] = pc
 
                             @pc.on("datachannel")
                             def on_datachannel(channel):
@@ -712,6 +726,8 @@ class WebRTCRemoteAccessProvider(RemoteAccessProvider):
                                     self.info.connection_state = "direct_p2p"
                                 elif pc.connectionState in ("failed", "closed", "disconnected"):
                                     peer_connections.discard(pc)
+                                    if viewer_id and peer_connections_by_viewer.get(viewer_id) is pc:
+                                        peer_connections_by_viewer.pop(viewer_id, None)
                                     await pc.close()
 
                             offer = RTCSessionDescription(sdp=data.get("sdp"), type=data.get("kind", "offer"))
@@ -725,6 +741,19 @@ class WebRTCRemoteAccessProvider(RemoteAccessProvider):
                                 "sdp": pc.localDescription.sdp,
                                 "kind": pc.localDescription.type,
                             })
+                        elif msg_type == "candidate":
+                            viewer_id = data.get("viewer_id")
+                            pc = peer_connections_by_viewer.get(viewer_id)
+                            if pc is None:
+                                continue
+                            raw_candidate = data.get("candidate")
+                            if not raw_candidate:
+                                await pc.addIceCandidate(None)
+                                continue
+                            candidate = candidate_from_sdp(raw_candidate.get("candidate", ""))
+                            candidate.sdpMid = raw_candidate.get("sdpMid")
+                            candidate.sdpMLineIndex = raw_candidate.get("sdpMLineIndex")
+                            await pc.addIceCandidate(candidate)
                         elif msg_type == "viewer_state":
                             state = data.get("state")
                             if state in ("direct_p2p", "turn_relay"):

@@ -1012,6 +1012,9 @@ OpsiGeneral:
     type: textarea
     mode: yaml
     value: "provider: null"
+  AutoSearchTimeLimit:
+    value: 5
+    validate: [1, 240]
 OpsiAshBeacon:
   AttackMode:
     value: current

@@ -979,6 +979,36 @@ CONTROL_ACTION_KEYCODES = {
 }
 
 
+def _create_live_ws_scrcpy_session(instance, fps, target_width, bitrate_scale):
+    return LiveWsScrcpySession(
+        instance,
+        fps=fps,
+        width=target_width,
+        bitrate_scale=bitrate_scale,
+    )
+
+
+def _acquire_live_scrcpy_session(instance, fps, target_width, bitrate_scale):
+    return LiveScrcpySession.acquire(
+        instance,
+        fps=fps,
+        width=target_width,
+        bitrate_scale=bitrate_scale,
+    )
+
+
+def _init_live_screenshot_fallback(instance):
+    from module.config.config import AzurLaneConfig
+    from module.device.device import Device
+
+    if "ALAS_CONFIG_NAME" not in os.environ:
+        os.environ["ALAS_CONFIG_NAME"] = instance
+
+    config = AzurLaneConfig(instance)
+    device = Device(config)
+    return device, device.screenshot()
+
+
 async def ws_live_screenshot(websocket):
     await websocket.accept()
     if is_demo_mode():
@@ -1046,7 +1076,13 @@ async def _ws_live_scrcpy(websocket, instance, fps, target_width, bitrate_scale)
 
 
 async def _ws_live_ws_scrcpy(websocket, instance, fps, target_width, bitrate_scale):
-    session = LiveWsScrcpySession(instance, fps=fps, width=target_width, bitrate_scale=bitrate_scale)
+    session = await asyncio.to_thread(
+        _create_live_ws_scrcpy_session,
+        instance,
+        fps,
+        target_width,
+        bitrate_scale,
+    )
     LiveWsScrcpySession.register(instance, session)
 
     try:
@@ -1116,7 +1152,13 @@ async def _ws_live_raw_scrcpy(websocket, instance, fps, target_width, bitrate_sc
     session = None
 
     try:
-        session = LiveScrcpySession.acquire(instance, fps=fps, width=target_width, bitrate_scale=bitrate_scale)
+        session = await asyncio.to_thread(
+            _acquire_live_scrcpy_session,
+            instance,
+            fps,
+            target_width,
+            bitrate_scale,
+        )
         width, height = session.resolution
         preroll = await asyncio.to_thread(_collect_h264_preroll, session, stop_event)
         if not preroll:
@@ -1153,7 +1195,7 @@ async def _ws_live_raw_scrcpy(websocket, instance, fps, target_width, bitrate_sc
         stop_event.set()
         # 预览关闭即停止 scrcpy，避免后台持续占用编码器。
         if session is not None:
-            LiveScrcpySession.release(instance, session=session)
+            await asyncio.to_thread(LiveScrcpySession.release, instance, session=session)
 
 
 async def _ws_live_screenshot_fallback(websocket, instance, codec, ffmpeg, fps, target_width, bitrate_scale):
@@ -1162,15 +1204,7 @@ async def _ws_live_screenshot_fallback(websocket, instance, codec, ffmpeg, fps, 
     proc = None
 
     try:
-        from module.config.config import AzurLaneConfig
-        from module.device.device import Device
-
-        if "ALAS_CONFIG_NAME" not in os.environ:
-            os.environ["ALAS_CONFIG_NAME"] = instance
-
-        config = AzurLaneConfig(instance)
-        device = Device(config)
-        first = device.screenshot()
+        device, first = await asyncio.to_thread(_init_live_screenshot_fallback, instance)
         src_height, src_width = first.shape[:2]
         target_height = int(round(target_width * src_height / src_width))
         if target_height % 2:

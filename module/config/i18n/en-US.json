@@ -3067,7 +3067,12 @@
     },
     "OpsiOnePushConfig": {
       "name": "Operation Siren notifications push settings",
-      "help": "The settings will take effect only when the \"Siren Operation Information Independent Push\" function is enabled. Use Onepush to push a message about Erosion 1 and Short Cat. See the document for configuration method: https://github.com/LmeSzinc/AzurLaneAutoScript/wiki/Onepush-configuration-%5BCN%5D"
+      "help": "The settings will take effect only when the \"Siren Operation Information Independent Push\" function is enabled. Use Onepush to push a message about Corrosion 1 and Short Cat. See the document for configuration method: https://github.com/LmeSzinc/AzurLaneAutoScript/wiki/Onepush-configuration-%5BCN%5D"
+    },
+    "AutoSearchTimeLimit": {
+      "name": "Auto Search Time Limit",
+      "help": "Unit: minutes. During auto search, the script will assume the game is stuck if no event is detected for this period."
+    }
     }
   },
   "OpsiAshBeacon": {

@@ -3068,6 +3068,10 @@
     "OpsiOnePushConfig": {
       "name": "大世界推送设置 (｀・ω・´)っ",
       "help": "“大世界信息独立推送”功能开启时设置才生效喵。使用 Onepush 推送一条关于侵蚀1和短猫的信息喵。配置方法见文档喵：https://github.com/LmeSzinc/AzurLaneAutoScript/wiki/Onepush-configuration-%5BCN%5D"
+    },
+    "AutoSearchTimeLimit": {
+      "name": "自律寻敌时间限制喵~",
+      "help": "单位：分钟。自律寻敌时连续多长时间没遇到事件会判定为游戏卡死喵~"
     }
   },
   "OpsiAshBeacon": {

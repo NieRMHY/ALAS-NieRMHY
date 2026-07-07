@@ -1,6 +1,11 @@
 from module.config.config import TaskEnd
 from module.config.utils import get_os_reset_remain
-from module.exception import RequestHumanTakeover, ScriptError
+from module.exception import (
+    GameStuckError,
+    GameTooManyClickError,
+    RequestHumanTakeover,
+    ScriptError,
+)
 from module.logger import logger
 from module.map.map_grids import SelectedGrids
 from module.os.map import OSMap
@@ -181,7 +186,7 @@ class OpsiMeowfficerFarming(MeowfficerTargetZoneMixin, CoinTaskMixin, OSMap):
         try:
             try:
                 search_completed = self.run_strategic_search()
-            except TaskEnd:
+            except (TaskEnd, GameStuckError, GameTooManyClickError, RequestHumanTakeover):
                 raise
             except Exception as e:
                 logger.warning(f'战略搜索异常: {e}')
@@ -194,6 +199,8 @@ class OpsiMeowfficerFarming(MeowfficerTargetZoneMixin, CoinTaskMixin, OSMap):
 
             try:
                 self.handle_after_auto_search()
+            except (TaskEnd, GameStuckError, GameTooManyClickError, RequestHumanTakeover):
+                raise
             except Exception:
                 logger.exception('handle_after_auto_search 发生异常')
         finally:
