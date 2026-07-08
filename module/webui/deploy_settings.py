@@ -82,6 +82,8 @@ DEPLOY_GROUPS: tuple[tuple[str, tuple[DeployField, ...]], ...] = (
             DeployField("SSHUser", "nullable_string"),
             DeployField("SSHServer", "nullable_string"),
             DeployField("SSHExecutable", "nullable_string"),
+            DeployField("AllowedRedirectHosts", "nullable_string"),
+            DeployField("MaxRedirects", "int"),
             DeployField("SignalingServer", "nullable_string"),
             DeployField("StunServers", "nullable_string"),
             DeployField("TurnServers", "nullable_string"),

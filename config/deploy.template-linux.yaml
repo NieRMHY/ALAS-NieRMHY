@@ -179,6 +179,12 @@ Deploy:
     # 如果没有，请安装 OpenSSH 或在此下载 (https://github.com/PowerShell/Win32-OpenSSH/releases)
     # If you don't have one, install OpenSSH or download it here (https://github.com/PowerShell/Win32-OpenSSH/releases)
     SSHExecutable: /usr/bin/ssh
+    # 允许 SSH 调度重定向的目标域名，JSON 数组或逗号分隔；留空时默认允许 SSHServer 同域和上级域通配符
+    # Allowed SSH redirect target hosts, JSON array or comma separated. Empty allows SSHServer domain and parent-domain wildcards.
+    AllowedRedirectHosts: null
+    # 单次远程访问启动最多跟随多少次 SSH 调度重定向
+    # Maximum SSH scheduling redirects followed during one startup
+    MaxRedirects: 2
     # WebRTC 信令服务器，留空时从 SSHServer 自动推导为 wss://host/signal
     # WebRTC signaling server, empty means deriving wss://host/signal from SSHServer
     SignalingServer: null

@@ -251,6 +251,10 @@ DeploySetting:
   SSHServerHelp:
   SSHExecutable:
   SSHExecutableHelp:
+  AllowedRedirectHosts:
+  AllowedRedirectHostsHelp:
+  MaxRedirects:
+  MaxRedirectsHelp:
   SignalingServer:
   SignalingServerHelp:
   StunServers:

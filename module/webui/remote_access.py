@@ -7,6 +7,8 @@ localshare 现有 SSH 反向隧道。`RemoteAccessMode=ssh` 时保持旧行为�
 
 import asyncio
 import base64
+import fnmatch
+import ipaddress
 import json
 import os
 import shlex
@@ -14,7 +16,7 @@ import threading
 import time
 from dataclasses import dataclass
 from subprocess import PIPE, Popen
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, List, Optional, Tuple
 from urllib.parse import urlsplit
 
 from module.config.utils import random_id
@@ -58,12 +60,67 @@ def am_i_the_only_thread() -> bool:
     return alive_none_daemonic_thread_cnt == 1
 
 
-def _parse_host_port(value: Optional[str]) -> tuple[str, int]:
+def _parse_host_port(value: Optional[str]) -> Tuple[str, int]:
     try:
-        server, port = str(value or "").split(":")
+        server, port = str(value or "").rsplit(":", 1)
         return server, int(port)
     except (TypeError, ValueError) as e:
         raise ParseError(f"Failed to parse SSH server [{value}]") from e
+
+
+def _parse_host_port_default(value: Optional[str], default_port: int) -> Tuple[str, int]:
+    text = str(value or "").strip()
+    if ":" not in text:
+        return text, default_port
+    return _parse_host_port(text)
+
+
+def _csv_or_json_list(value, default=None) -> List[str]:
+    if value in (None, ""):
+        return list(default or [])
+    if isinstance(value, list):
+        return [str(item).strip() for item in value if str(item).strip()]
+    text = str(value).strip()
+    try:
+        data = json.loads(text)
+        if isinstance(data, list):
+            return [str(item).strip() for item in data if str(item).strip()]
+    except json.JSONDecodeError:
+        pass
+    return [item.strip() for item in text.split(",") if item.strip()]
+
+
+def _default_redirect_hosts(primary_host: str) -> List[str]:
+    host = (primary_host or "").strip().lower()
+    if not host:
+        return []
+    parts = host.split(".")
+    hosts = [host]
+    if len(parts) >= 2:
+        base = ".".join(parts[-2:])
+        hosts.append(f"*.{base}")
+    if len(parts) >= 3:
+        base = ".".join(parts[-3:])
+        hosts.append(f"*.{base}")
+    return list(dict.fromkeys(hosts))
+
+
+def _is_private_redirect_host(host: str) -> bool:
+    value = (host or "").strip("[]").lower()
+    if value in ("localhost",):
+        return True
+    try:
+        ip = ipaddress.ip_address(value)
+    except ValueError:
+        return False
+    return any((
+        ip.is_private,
+        ip.is_loopback,
+        ip.is_link_local,
+        ip.is_multicast,
+        ip.is_reserved,
+        ip.is_unspecified,
+    ))
 
 
 def _local_host() -> str:
@@ -96,7 +153,7 @@ def _json_list(value, default=None) -> list:
         return [item.strip() for item in text.split(",") if item.strip()]
 
 
-def _configured_ice_servers(remote_servers=None) -> list[dict]:
+def _configured_ice_servers(remote_servers=None) -> List[dict]:
     if remote_servers:
         return remote_servers
 
@@ -154,15 +211,45 @@ class SSHRemoteAccessProvider(RemoteAccessProvider):
         self.notfound = False
         self.info = RemoteAccessInfo()
 
-    def _run(
+    def _max_redirects(self) -> int:
+        try:
+            return max(0, int(getattr(State.deploy_config, "MaxRedirects", 2) or 0))
+        except (TypeError, ValueError):
+            logger.warning("Invalid MaxRedirects, fallback to 2")
+            return 2
+
+    def _redirect_hosts(self, primary_host: str) -> List[str]:
+        configured = _csv_or_json_list(getattr(State.deploy_config, "AllowedRedirectHosts", None))
+        return configured or _default_redirect_hosts(primary_host)
+
+    def _validate_redirect_target(self, ssh_server: str, primary_host: str) -> Tuple[str, int]:
+        host, port = _parse_host_port_default(ssh_server, 1022)
+        host = host.strip().lower()
+        if not host:
+            raise ParseError("Redirect ssh_server host is empty")
+        if _is_private_redirect_host(host):
+            raise ParseError(f"Refuse redirect to private host [{host}]")
+        allowed_hosts = [item.lower() for item in self._redirect_hosts(primary_host)]
+        if allowed_hosts and not any(fnmatch.fnmatch(host, pattern) for pattern in allowed_hosts):
+            raise ParseError(f"Refuse redirect to untrusted host [{host}], allowed hosts: {allowed_hosts}")
+        return host, port
+
+    def _terminate_process(self) -> None:
+        if self.process and self.process.poll() is None:
+            self.process.kill()
+            try:
+                self.process.wait(timeout=3)
+            except Exception:
+                pass
+
+    def _start_ssh_process(
         self,
-        local_host="127.0.0.1",
-        local_port=25548,
-        server="app.pywebio.online",
-        server_port=1022,
-        remote_port="/",
-        setup_timeout=60,
-    ) -> None:
+        local_host: str,
+        local_port: int,
+        server: str,
+        server_port: int,
+        remote_port: str,
+    ) -> Optional[Popen]:
         bin_path = State.deploy_config.SSHExecutable
         known_hosts = os.devnull
         cmd = (
@@ -187,48 +274,105 @@ class SSHRemoteAccessProvider(RemoteAccessProvider):
             )
             self.notfound = True
             self.info.error = "ssh_not_found"
-            return
+            return None
 
         logger.info(f"remote access process pid: {self.process.pid}")
+        return self.process
+
+    def _run(
+        self,
+        local_host="127.0.0.1",
+        local_port=25548,
+        server="app.pywebio.online",
+        server_port=1022,
+        remote_port="/",
+        setup_timeout=60,
+    ) -> None:
+        primary_user, primary_host = server.rsplit("@", 1) if "@" in server else ("", server)
+        current_server = server
+        current_port = server_port
         success = False
+        redirects = 0
 
-        def timeout_killer(wait_sec):
-            time.sleep(wait_sec)
-            if not success and self.process and self.process.poll() is None:
-                logger.info("Connection timeout, kill ssh process")
-                self.process.kill()
+        while True:
+            process = self._start_ssh_process(
+                local_host=local_host,
+                local_port=local_port,
+                server=current_server,
+                server_port=current_port,
+                remote_port=remote_port,
+            )
+            if process is None:
+                return
 
-        threading.Thread(target=timeout_killer, args=(setup_timeout,), daemon=True).start()
+            def timeout_killer(wait_sec, target_process):
+                time.sleep(wait_sec)
+                if not success and target_process.poll() is None:
+                    logger.info("Connection timeout, kill ssh process")
+                    target_process.kill()
 
-        stdout = self.process.stdout.readline().decode("utf8")
-        logger.debug(f"ssh server stdout: {stdout}")
-        try:
-            connection_info = json.loads(stdout)
+            threading.Thread(
+                target=timeout_killer,
+                args=(setup_timeout, process),
+                daemon=True,
+            ).start()
+
+            stdout = process.stdout.readline().decode("utf8")
+            logger.debug(f"ssh server stdout: {stdout}")
+            try:
+                connection_info = json.loads(stdout)
+            except json.JSONDecodeError:
+                self.info.error = "invalid_provider_response"
+                if process.poll() is None:
+                    process.kill()
+                break
+
+            status = connection_info.get("status", "fail")
+            if status == "redirect":
+                redirects += 1
+                if redirects > self._max_redirects():
+                    self.info.error = "too_many_redirects"
+                    logger.error("Too many SSH redirect responses")
+                    self._terminate_process()
+                    break
+                ssh_server = connection_info.get("ssh_server")
+                try:
+                    redirect_host, redirect_port = self._validate_redirect_target(ssh_server, primary_host)
+                except ParseError as e:
+                    self.info.error = str(e)
+                    logger.error(str(e))
+                    self._terminate_process()
+                    break
+                redirect_user = connection_info.get("ssh_user") or primary_user or State.deploy_config.SSHUser
+                current_server = f"{redirect_user}@{redirect_host}" if redirect_user else redirect_host
+                current_port = redirect_port
+                logger.info(f"Remote access redirected to {redirect_host}:{redirect_port}")
+                self._terminate_process()
+                continue
+
             success = True
-        except json.JSONDecodeError:
-            connection_info = {}
-            if self.process and self.process.poll() is None:
-                self.process.kill()
-
-        if success:
-            if connection_info.get("status", "fail") != "success":
+            if status != "success":
+                message = connection_info.get("message", "")
+                self.info.error = message or status or "remote_access_failed"
                 logger.info(
                     "Failed to establish remote access, this is the error message "
-                    f"from service provider: {connection_info.get('message', '')}"
+                    f"from service provider: {message}"
                 )
                 new_username = connection_info.get("change_username", None)
                 if new_username:
                     logger.info(f"Server requested to change username, change it to: {new_username}")
                     State.deploy_config.SSHUser = new_username
-            else:
-                self.info.address = connection_info.get("address")
-                self.info.fallback_address = connection_info.get("fallback_address") or self.info.address
-                self.info.peer_id = connection_info.get("peer_id")
-                self.info.signal_url = connection_info.get("signal_url")
-                self.info.ice_servers = connection_info.get("ice_servers")
-                self.info.connection_state = "ssh_forward"
-                self.info.error = ""
-                logger.debug(f"Remote access url: {self.info.address}")
+                break
+
+            self.info.address = connection_info.get("address")
+            self.info.fallback_address = connection_info.get("fallback_address") or self.info.address
+            self.info.peer_id = connection_info.get("peer_id")
+            self.info.signal_url = connection_info.get("signal_url")
+            self.info.ice_servers = connection_info.get("ice_servers")
+            self.info.connection_state = "ssh_forward"
+            self.info.error = ""
+            logger.debug(f"Remote access url: {self.info.address}")
+            break
 
         while not am_i_the_only_thread() and self.process and self.process.poll() is None:
             time.sleep(1)
