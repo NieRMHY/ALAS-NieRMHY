@@ -139,7 +139,7 @@ Arguments:
     FILE:  Path to AzurLaneData, '<your_folder>/AzurLaneData'
     SAVE:  File to save, 'module/research/project_data.py'
 """
-FOLDER = ''
+FOLDER = '..\AzurLaneLuaScripts'
 SAVE = 'module/research/project_data.py'
 
 TechnologyTemplate().write(SAVE)

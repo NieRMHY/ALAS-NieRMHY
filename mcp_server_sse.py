@@ -511,5 +511,5 @@ app.mount("/", mcp_asgi_app)
 
 if __name__ == "__main__":
     import uvicorn
-    logger.info("启动 AzurPilot MCP 服务 (Port: 22268)")
+    logger.info("[MCP] 启动 AzurPilot MCP 服务 (Port: 22268)")
     uvicorn.run(app, host="0.0.0.0", port=22268)

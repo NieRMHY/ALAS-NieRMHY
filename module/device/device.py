@@ -91,7 +91,7 @@ class Device(Screenshot, Control, AppControl, Input):
                 break
             except EmulatorNotRunningError:
                 if trial >= 3:
-                    logger.critical('错误 3 次尝试后未能启动模拟器')
+                    logger.critical('[Device] 错误 3 次尝试后未能启动模拟器')
                     raise RequestHumanTakeover
                 # Try to start emulator
                 if self.emulator_instance is not None:
@@ -434,8 +434,8 @@ class Device(Screenshot, Control, AppControl, Input):
 
     def app_start(self):
         if not self.config.Error_HandleError:
-            logger.critical('错误 没有启动/停止应用，因为 HandleError 已禁用')
-            logger.critical('请启用 Alas.Error.HandleError 或手动登录碧蓝航线')
+            logger.critical('[Device] 错误 没有启动/停止应用，因为 HandleError 已禁用')
+            logger.critical('[Device] 请启用 Alas.Error.HandleError 或手动登录碧蓝航线')
             raise RequestHumanTakeover
         super().app_start()
         self.stuck_record_clear()
@@ -443,8 +443,8 @@ class Device(Screenshot, Control, AppControl, Input):
 
     def app_stop(self):
         if not self.config.Error_HandleError:
-            logger.critical('错误 没有启动/停止应用，因为 HandleError 已禁用')
-            logger.critical('请启用 Alas.Error.HandleError 或手动登录碧蓝航线')
+            logger.critical('[Device] 错误 没有启动/停止应用，因为 HandleError 已禁用')
+            logger.critical('[Device] 请启用 Alas.Error.HandleError 或手动登录碧蓝航线')
             raise RequestHumanTakeover
         super().app_stop()
         self.stuck_record_clear()

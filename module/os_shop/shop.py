@@ -46,6 +46,9 @@ class OSShop(PortShop, AkashiShop):
             SHOP_CLICK_SAFE_AREA
         ])
         set_amount_retry = 0
+        # 购买重试计数器，防止代币不足时无限重试点击商品和确认按钮
+        buy_retry = 0
+        buy_retry_limit = 3
 
         while True:
             if skip_first_screenshot:
@@ -83,6 +86,10 @@ class OSShop(PortShop, AkashiShop):
                 continue
 
             if not success and self.appear(PORT_SUPPLY_CHECK, offset=(20, 20), interval=5):
+                buy_retry += 1
+                if buy_retry > buy_retry_limit:
+                    logger.warning(f'Buy retry limit reached for {button.name}, likely not enough coins')
+                    break
                 amount_finish = False
                 self.device.click(button)
                 continue
@@ -211,7 +218,7 @@ class OSShop(PortShop, AkashiShop):
                 break
 
             if retry.reached():
-                logger.critical('OCR_SHOP_AMOUNT 识别结果错误，请检查资源文件')
+                logger.critical('[大世界商店] OCR_SHOP_AMOUNT 识别结果错误，请检查资源文件')
                 raise ScriptError
         retry.reset()
 
@@ -241,6 +248,9 @@ class OSShop(PortShop, AkashiShop):
             limit = 10
 
         self.interval_clear(AMOUNT_MAX)
+        # amount_max_stall: 记录AMOUNT_MAX点击后数量未变化的次数，防止按钮无效时死循环
+        amount_max_stall = 0
+        amount_max_stall_limit = 5
         while set_to_max:
             if skip_first_screenshot:
                 skip_first_screenshot = False
@@ -250,8 +260,23 @@ class OSShop(PortShop, AkashiShop):
             if self.appear_then_click(AMOUNT_MAX, offset=(50, 50), interval=3):
                 continue
 
-            if OCR_SHOP_AMOUNT.ocr(self.device.image) > 1:
+            current_amount = OCR_SHOP_AMOUNT.ocr(self.device.image)
+            if current_amount > 1:
                 break
+
+            # AMOUNT_MAX点击后数量仍为1，说明按钮可能被游戏禁用（如商品只能逐个购买）
+            amount_max_stall += 1
+            if amount_max_stall >= amount_max_stall_limit:
+                logger.info(f'AMOUNT_MAX clicked {amount_max_stall} times but amount still {current_amount}, '
+                            f'skipping to AMOUNT_PLUS')
+                break
+
+        # 仅在已点击AMOUNT_MAX且数量成功增加时，才能读取游戏端实际允许的最大数量
+        if set_to_max:
+            game_max = OCR_SHOP_AMOUNT.ocr(self.device.image)
+            if game_max > 1 and limit > game_max:
+                logger.info(f'Calculated limit {limit} exceeds game max {game_max}, using game max')
+                limit = game_max
 
         self.ui_ensure_index(limit, letter=OCR_SHOP_AMOUNT, prev_button=AMOUNT_MINUS, next_button=AMOUNT_PLUS,
                              skip_first_screenshot=True)

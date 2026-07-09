@@ -155,5 +155,5 @@ class OpsiStronghold(CoinTaskMixin, OSMap):
             else:
                 continue
 
-        logger.critical('无法击败boss，舰队已耗尽')
+        logger.critical('[大世界-塞壬要塞] 无法击败boss，舰队已耗尽')
         return False

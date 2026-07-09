@@ -135,7 +135,7 @@ def _remote_mode() -> str:
     mode = getattr(State.deploy_config, "RemoteAccessMode", "auto")
     mode = str(mode or "auto").strip().lower()
     if mode not in ("ssh", "webrtc", "auto"):
-        logger.warning(f"未知远程访问模式 [{mode}]，回退到 auto")
+        logger.warning(f"[WebUI] 未知远程访问模式 [{mode}]，回退到 auto")
         return "auto"
     return mode
 

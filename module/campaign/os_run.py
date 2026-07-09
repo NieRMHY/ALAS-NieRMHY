@@ -26,7 +26,7 @@ class OSCampaignRun(OSMapOperation):
         campaign = None
         prevent_enabled = self.config.is_task_enabled(self.PREVENT_AP_OVERFLOW_TASK)
         if prevent_enabled:
-            logger.info('临时关闭防止行动力溢出任务')
+            logger.info('[战役] 临时关闭防止行动力溢出任务')
             self.config.cross_set(keys=f'{self.PREVENT_AP_OVERFLOW_TASK}.Scheduler.Enable', value=False)
 
         try:

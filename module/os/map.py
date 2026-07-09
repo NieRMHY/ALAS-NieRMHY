@@ -959,7 +959,7 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
         for _ in self.loop():
             # 结束条件
             if not unlock_checked and unlock_check_timer.reached():
-                logger.critical("当前海域未解锁自律，请先完成剧情任务。")
+                logger.critical("[大世界] 当前海域未解锁自律，请先完成剧情任务。")
                 raise RequestHumanTakeover
             if self.is_in_map():
                 self.device.stuck_record_clear()
@@ -1195,9 +1195,9 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
         """
         if hasattr(grid, "is_scanning_device") and grid.is_scanning_device:
             if not self._is_siren_research_enabled:
-                logger.info(f"[预检查] 格子 {grid} 是塞壬研究装置,但功能未开启,跳过")
+                logger.info(f"[大世界] [预检查] 格子 {grid} 是塞壬研究装置,但功能未开启,跳过")
                 return True
-            logger.info(f"[预检查] 格子 {grid} 是塞壬研究装置,功能已开启,继续处理")
+            logger.info(f"[大世界] [预检查] 格子 {grid} 是塞壬研究装置,功能已开启,继续处理")
         return False
 
     def clear_question(self, drop=None):
@@ -1253,16 +1253,16 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
                 grid.is_scanning_device or self.is_siren_device_confirmed
             ):
                 # ========== 地图检测:检测到扫描装置 ==========
-                logger.hr("检测到扫描装置,开始处理", level=2)
+                logger.hr("[大世界] 检测到扫描装置,开始处理", level=2)
                 logger.info(
                     f"[地图检测] 格子 {grid} 被识别为扫描装置 (grid.is_scanning_device=True)"
                 )
-                logger.info(f"[地图检测] 移动结果: {result}")
+                logger.info(f"[大世界] [地图检测] 移动结果: {result}")
                 record_siren_research_device(self)
 
                 # ========== 配置检查 ==========
                 if not self._is_siren_research_enabled:
-                    logger.warning("[配置检查] 塞壬研究装置功能已禁用,标记但不处理")
+                    logger.warning("[大世界] [配置检查] 塞壬研究装置功能已禁用,标记但不处理")
                     self._solved_map_event.add("is_scanning_device")
                     return True
 
@@ -1275,7 +1275,7 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
 
                 # 如果选择了敌人模式
                 if siren_mode == "enemy":
-                    logger.info("[装置处理] 检测到敌人模式，执行特殊处理")
+                    logger.info("[大世界] [装置处理] 检测到敌人模式，执行特殊处理")
 
                     # 获取配置的舰队
                     task = self.config.task.command
@@ -1287,37 +1287,37 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
 
                     # 记录当前舰队
                     current_fleet = self.fleet_selector.get()
-                    logger.info(f"[装置处理] 当前舰队: {current_fleet}")
+                    logger.info(f"[大世界] [装置处理] 当前舰队: {current_fleet}")
 
                     # 如果配置了指定舰队，切换到指定舰队
                     if siren_fleet > 0:
-                        logger.info(f"[装置处理] 切换到指定舰队: {siren_fleet}")
+                        logger.info(f"[大世界] [装置处理] 切换到指定舰队: {siren_fleet}")
                         self.fleet_set(siren_fleet)
                     else:
-                        logger.info("[装置处理] 使用当前舰队")
+                        logger.info("[大世界] [装置处理] 使用当前舰队")
 
                     # 执行三次自律寻敌
                     for i in range(3):
-                        logger.info(f"[装置处理] 执行第 {i + 1}/3 次自律寻敌")
+                        logger.info(f"[大世界] [装置处理] 执行第 {i + 1}/3 次自律寻敌")
                         self.os_auto_search_run(drop=drop)
 
                     # 如果切换了舰队，切换回原舰队
                     if siren_fleet > 0:
-                        logger.info(f"[装置处理] 切换回原舰队: {current_fleet}")
+                        logger.info(f"[大世界] [装置处理] 切换回原舰队: {current_fleet}")
                         self.fleet_set(current_fleet)
 
                 # 如果选择了资源模式
                 elif siren_mode == "resource":
-                    logger.info("[装置处理] 检测到资源模式，执行标准处理")
+                    logger.info("[大世界] [装置处理] 检测到资源模式，执行标准处理")
                     # 执行一次自律寻敌
-                    logger.info("[装置处理] 执行自律寻敌")
+                    logger.info("[大世界] [装置处理] 执行自律寻敌")
                     self.os_auto_search_run(drop=drop)
 
                 # 未知模式或资源不足
                 else:
-                    logger.info("[装置处理] 未知模式或资源不足，执行标准处理")
+                    logger.info("[大世界] [装置处理] 未知模式或资源不足，执行标准处理")
                     # 执行一次自律寻敌
-                    logger.info("[装置处理] 执行自律寻敌")
+                    logger.info("[大世界] [装置处理] 执行自律寻敌")
                     self.os_auto_search_run(drop=drop)
 
                 # 标记处理
@@ -1489,7 +1489,7 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
                             self._solved_map_event.add("is_akashi")
                             return True
                         else:
-                            logger.info("无法到达明石位置，执行强制移动")
+                            logger.info("[大世界] 无法到达明石位置，执行强制移动")
                             self._execute_fixed_patrol_scan(ExecuteFixedPatrolScan=True)
                             return False
                     else:
@@ -1510,31 +1510,31 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
             grid = grids[0]
 
             # ========== 地图选择:发现研究装置 ==========
-            logger.hr("发现研究装置,开始处理", level=2)
-            logger.info(f"[地图选择] 在 {grid} 位置发现研究装置")
+            logger.hr("[大世界] 发现研究装置,开始处理", level=2)
+            logger.info(f"[大世界] [地图选择] 在 {grid} 位置发现研究装置")
             record_siren_research_device(self)
 
             if not self._is_siren_research_enabled:
-                logger.warning("[配置检查] 塞壬研究装置功能已禁用,跳过处理")
+                logger.warning("[大世界] [配置检查] 塞壬研究装置功能已禁用,跳过处理")
                 self._solved_map_event.add("is_scanning_device")
                 return True
 
             # ========== 移动并处理 ==========
-            logger.info(f"[移动装置] 开始移动到装置位置: {grid}")
+            logger.info(f"[大世界] [移动装置] 开始移动到装置位置: {grid}")
             self.device.click(grid)
 
             # 重置标志位
             self.is_siren_device_confirmed = False
 
             # wait_until_walk_stable 会调用 handle_story_skip 处理选项
-            logger.info("[移动装置] 等待移动稳定...")
+            logger.info("[大世界] [移动装置] 等待移动稳定...")
             with self.config.temporary(
                 STORY_ALLOW_SKIP=False, OS_SIREN_DEVICE_USAGE="use_until_destroyed"
             ):
                 result = self.wait_until_walk_stable(
                     drop=drop, walk_out_of_step=False, confirm_timer=Timer(3, count=4)
                 )
-            logger.info(f"[移动装置] 移动完成,结果: {result}")
+            logger.info(f"[大世界] [移动装置] 移动完成,结果: {result}")
 
             if getattr(self, "is_siren_device_confirmed", False):
                 # 检测选择的模式
@@ -1543,7 +1543,7 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
 
                 # 如果选择了敌人模式
                 if siren_mode == "enemy":
-                    logger.info("[装置处理] 敌人模式，执行特殊处理")
+                    logger.info("[大世界] [装置处理] 敌人模式，执行特殊处理")
 
                     # 获取配置的舰队
                     task = self.config.task.command
@@ -1555,44 +1555,44 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
 
                     # 记录当前舰队
                     current_fleet = self.fleet_selector.get()
-                    logger.info(f"[装置处理] 当前舰队: {current_fleet}")
+                    logger.info(f"[大世界] [装置处理] 当前舰队: {current_fleet}")
 
                     # 如果配置了指定舰队，切换到指定舰队
                     if siren_fleet > 0:
-                        logger.info(f"[装置处理] 切换到指定舰队: {siren_fleet}")
+                        logger.info(f"[大世界] [装置处理] 切换到指定舰队: {siren_fleet}")
                         self.fleet_set(siren_fleet)
                     else:
-                        logger.info("[装置处理] 使用当前舰队")
+                        logger.info("[大世界] [装置处理] 使用当前舰队")
 
                     # 执行三次自律寻敌
                     for i in range(3):
-                        logger.info(f"[装置处理] 执行第 {i + 1}/3 次自律寻敌")
+                        logger.info(f"[大世界] [装置处理] 执行第 {i + 1}/3 次自律寻敌")
                         self.os_auto_search_run(drop=drop)
 
                     # 如果切换了舰队，切换回原舰队
                     if siren_fleet > 0:
-                        logger.info(f"[装置处理] 切换回原舰队: {current_fleet}")
+                        logger.info(f"[大世界] [装置处理] 切换回原舰队: {current_fleet}")
                         self.fleet_set(current_fleet)
 
                 # 如果选择了资源模式
                 elif siren_mode == "resource":
-                    logger.info("[装置处理] 检测到资源模式，执行标准处理")
+                    logger.info("[大世界] [装置处理] 检测到资源模式，执行标准处理")
                     # 执行一次自律寻敌
-                    logger.info("[装置处理] 执行自律寻敌")
+                    logger.info("[大世界] [装置处理] 执行自律寻敌")
                     self.os_auto_search_run(drop=drop)
 
                 # 未知模式或资源不足
                 else:
-                    logger.info("[装置处理] 未知模式或资源不足，执行标准处理")
+                    logger.info("[大世界] [装置处理] 未知模式或资源不足，执行标准处理")
                     # 执行一次自律寻敌
-                    logger.info("[装置处理] 执行自律寻敌")
+                    logger.info("[大世界] [装置处理] 执行自律寻敌")
                     self.os_auto_search_run(drop=drop)
 
                 # 先标记为已处理，防止二次重扫时再次处理塞壬装置
                 self._solved_map_event.add("is_scanning_device")
 
                 # 二次重扫，防止出现意外情况导致装置处理失败
-                logger.info("[装置处理] 执行二次重扫")
+                logger.info("[大世界] [装置处理] 执行二次重扫")
                 self.map_rescan_current(drop=drop)
 
             return True
@@ -1736,7 +1736,7 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
                 time.sleep(0.45)
                 return True
             except Exception as e:
-                logger.warning(f"安全滑动第 {attempt} 次尝试失败: {e}")
+                logger.warning(f"[大世界] 安全滑动第 {attempt} 次尝试失败: {e}")
                 time.sleep(0.4)
                 continue
         return False
@@ -1820,7 +1820,7 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
                 self.device.click(clickable_grid)
                 self.wait_until_walk_stable(confirm_timer=Timer(1.5, count=4))
                 if target_grid.location == primary_target:
-                    logger.info(f"舰队 {fleet_index} 已到达 {target_grid}。")
+                    logger.info(f"[大世界] 舰队 {fleet_index} 已到达 {target_grid}。")
                 else:
                     logger.info(
                         f"舰队 {fleet_index} 主目标 {self.map[primary_target]} 失败，已改停靠至备用点 {target_grid}。"
@@ -1832,7 +1832,7 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
                         f"舰队 {fleet_index} 前往 {target_grid} 超出移动范围，放弃当前候选点并尝试其他落点"
                     )
                     return False
-                logger.warning(f"舰队移动异常: {e}，尝试强制恢复（{try_idx + 1}/2）")
+                logger.warning(f"[大世界] 舰队移动异常: {e}，尝试强制恢复（{try_idx + 1}/2）")
                 recovered = False
                 try:
                     recovered = self._force_move_recover(
@@ -1852,7 +1852,7 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
                         clickable_grid = None
                     if clickable_grid:
                         continue
-                logger.warning("尝试软恢复（back / screenshot / rebuild view）")
+                logger.warning("[大世界] 尝试软恢复（back / screenshot / rebuild view）")
                 try:
                     for _ in range(3):
                         with suppress(Exception):
@@ -1863,7 +1863,7 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
                         self.map_init(map_=None)
                         self.update()
                     except Exception:
-                        logger.debug("重建视图失败（soft recovery）", exc_info=True)
+                        logger.debug("[大世界] 重建视图失败（soft recovery）", exc_info=True)
                     try:
                         clickable_grid = self.convert_global_to_local(
                             target_grid.location
@@ -1871,21 +1871,21 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
                     except KeyError:
                         clickable_grid = None
                     if clickable_grid:
-                        logger.info("软恢复后找到格子，重试点击")
+                        logger.info("[大世界] 软恢复后找到格子，重试点击")
                         try:
                             time.sleep(0.3)
                             self.device.click(clickable_grid)
                             self.wait_until_walk_stable(
                                 confirm_timer=Timer(1.5, count=4)
                             )
-                            logger.info("软恢复成功，舰队已到达")
+                            logger.info("[大世界] 软恢复成功，舰队已到达")
                             return True
                         except Exception:
-                            logger.debug("软恢复重试点击失败", exc_info=True)
+                            logger.debug("[大世界] 软恢复重试点击失败", exc_info=True)
                 except Exception as rec_e:
-                    logger.debug(f"软恢复过程出现异常: {rec_e}")
+                    logger.debug(f"[大世界] 软恢复过程出现异常: {rec_e}")
                 if try_idx == 1:
-                    logger.warning("软恢复失败，尝试重启应用以恢复状态")
+                    logger.warning("[大世界] 软恢复失败，尝试重启应用以恢复状态")
                     try:
                         self.device.app_stop()
                         time.sleep(1.0)
@@ -1912,7 +1912,7 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
                             self.wait_until_walk_stable(
                                 confirm_timer=Timer(1.5, count=4)
                             )
-                            logger.info("重启应用后恢复成功，舰队已到达")
+                            logger.info("[大世界] 重启应用后恢复成功，舰队已到达")
                             return True
                     except Exception:
                         logger.error(
@@ -1939,23 +1939,23 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
         Returns:
             None
         """
-        logger.hr("执行强制移动")
+        logger.hr("[大世界] 执行强制移动")
 
         if not ExecuteFixedPatrolScan:
-            logger.info("ExecuteFixedPatrolScan 未启用，跳过强制移动。")
+            logger.info("[大世界] ExecuteFixedPatrolScan 未启用，跳过强制移动。")
             return
         logger.attr("ExecuteFixedPatrolScan", True)
 
         self.map_init(map_=None)
         if not hasattr(self, "map") or not self.map.grids:
-            logger.warning("无法获取当前地图网格数据，已跳过强制移动。")
+            logger.warning("[大世界] 无法获取当前地图网格数据，已跳过强制移动。")
             return
 
         solved = getattr(self, "_solved_map_event", set())
         if any(
             k in solved for k in ("is_akashi", "is_scanning_device", "is_logging_tower")
         ):
-            logger.info("彩蛋：雪风大人保佑你，本次舰队移动已跳过")
+            logger.info("[大世界] 彩蛋：雪风大人保佑你，本次舰队移动已跳过")
             return
 
         patrol_locations = [(2, 0), (3, 0), (4, 0), (5, 0)]  # 对应 C1, D1, E1, F1
@@ -1986,11 +1986,11 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
                 )
                 continue
 
-            logger.hr(f"强制移动: 指挥舰队 {fleet_index} 前往 {target_grid}", level=2)
+            logger.hr(f"[大世界] 强制移动: 指挥舰队 {fleet_index} 前往 {target_grid}", level=2)
 
             self.fleet_set(fleet_index)
 
-            logger.info("视角复位...")
+            logger.info("[大世界] 视角复位...")
 
             top_point = (640, 150)
             bottom_point = (640, 600)
@@ -2001,16 +2001,16 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
                     time.sleep(0.18)
             except Exception:
                 quick_ok = False
-                logger.debug("快速滑动复位遇到异常，尝试安全滑动")
+                logger.debug("[大世界] 快速滑动复位遇到异常，尝试安全滑动")
 
             if not quick_ok and not self.safe_swipe(
                 top_point, bottom_point, duration=0.55, retries=2
             ):
-                logger.warning("视角复位失败，继续尝试下一步")
+                logger.warning("[大世界] 视角复位失败，继续尝试下一步")
             elif not quick_ok:
-                logger.info("视角复位完成。")
+                logger.info("[大世界] 视角复位完成。")
             else:
-                logger.info("快速滑动复位完成。")
+                logger.info("[大世界] 快速滑动复位完成。")
             time.sleep(0.45)
 
             moved = False
@@ -2058,7 +2058,7 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
             OpsiGeneral_RepairThreshold=-1, Campaign_UseAutoSearch=False
         )
         try:
-            logger.info("所有舰队已定点，执行最终全图重扫（双遍检查）")
+            logger.info("[大世界] 所有舰队已定点，执行最终全图重扫（双遍检查）")
             self._solved_map_event = set()
             for _ in range(2):
                 try:
@@ -2071,12 +2071,12 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
                 ):
                     raise
                 except Exception as e:
-                    logger.debug(f"最终全图重扫出现异常，继续重试: {e}", exc_info=True)
+                    logger.debug(f"[大世界] 最终全图重扫出现异常，继续重试: {e}", exc_info=True)
                     time.sleep(0.6)
         finally:
             backup.recover()
 
-        logger.info("执行一次自律寻敌以清理可能的装置")
+        logger.info("[大世界] 执行一次自律寻敌以清理可能的装置")
         try:
             self.run_auto_search(question=True, rescan=None, after_auto_search=True)
         except (
@@ -2087,7 +2087,7 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
         ):
             raise
         except Exception as e:
-            logger.warning(f"自律寻敌过程出现异常: {e}")
+            logger.warning(f"[大世界] 自律寻敌过程出现异常: {e}")
 
     def _select_story_option_by_index(self, target_index, options_count=3):
         """按索引点击剧情选项按钮。

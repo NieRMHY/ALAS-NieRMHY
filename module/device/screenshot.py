@@ -305,8 +305,8 @@ class Screenshot(Adb, WSA, DroidCast, AScreenCap, Scrcpy, NemuIpc, LDOpenGL):
                 logger.warning('Received orientated screenshot, game not running')
                 return True
             else:
-                logger.critical(f"大叔，你看着分辨率对吗: {width}x{height}。真是个连分辨率都不会设的杂鱼呢❤")
-                logger.critical("乖乖给我改成 1280x720 哦，不然我可不理你了❤")
+                logger.critical(f"[Device] 大叔，你看着分辨率对吗: {width}x{height}。真是个连分辨率都不会设的杂鱼呢❤")
+                logger.critical("[Device] 乖乖给我改成 1280x720 哦，不然我可不理你了❤")
                 raise RequestHumanTakeover
 
     def check_screen_black(self):
@@ -327,7 +327,7 @@ class Screenshot(Adb, WSA, DroidCast, AScreenCap, Scrcpy, NemuIpc, LDOpenGL):
             elif self.config.Emulator_ScreenshotMethod == 'uiautomator2':
                 logger.warning(f'Received pure black screenshots from emulator, color: {color}')
                 logger.warning('Uninstall minicap and retry')
-                logger.warning('截图为纯黑色。通常是设备处于锁屏状态，或者当前模拟器不支持当前截图方式。')
+                logger.warning('[Device] 截图为纯黑色。通常是设备处于锁屏状态，或者当前模拟器不支持当前截图方式。')
                 self.uninstall_minicap()
                 self._screen_black_checked = False
                 return False

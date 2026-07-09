@@ -79,7 +79,7 @@ class IslandAirDrop(Island):
                             )
                             continue
                         else:
-                            logger.info("补给次数已用尽")
+                            logger.info("[岛屿-每日补给] 补给次数已用尽")
                             has_drops = False
                             break
                     else:
@@ -88,7 +88,7 @@ class IslandAirDrop(Island):
                     has_drops = False
                     break
         else:
-            logger.info("已禁用拜访其他玩家岛屿，跳过好友补给")
+            logger.info("[岛屿-每日补给] 已禁用拜访其他玩家岛屿，跳过好友补给")
             has_drops = False
         self.config.IslandAirDrop_LastSteal = current_time().replace(microsecond=0)
 
@@ -120,28 +120,28 @@ class IslandAirDrop(Island):
             )
 
             if not air_drop_buttons:
-                logger.info("在指定区域内未找到补给")
+                logger.info("[岛屿-每日补给] 在指定区域内未找到补给")
 
                 # 检查是否在底部
                 if VISIT_SCROLL.at_bottom(main=self) and last_attempt_swipe > 0:
                     last_attempt_swipe -= 1
-                    logger.info("滑动槽已在底部，最后尝试滑动")
+                    logger.info("[岛屿-每日补给] 滑动槽已在底部，最后尝试滑动")
                     continue
                 elif VISIT_SCROLL.at_bottom(main=self) and last_attempt_swipe <= 0:
-                    logger.info("滑动槽已在底部，停止搜索")
+                    logger.info("[岛屿-每日补给] 滑动槽已在底部，停止搜索")
                     return False
                 # 如果还有滑动次数，尝试滑动
                 if swipe_count < max_swipe_attempts:
-                    logger.info(f"滑动尝试 {swipe_count + 1}/{max_swipe_attempts}")
+                    logger.info(f"[岛屿-每日补给] 滑动尝试 {swipe_count + 1}/{max_swipe_attempts}")
                     self.visit_swipe(480)
                     swipe_count += 1
                     self.device.sleep(0.5)
                     continue
                 else:
-                    logger.info("达到最大滑动次数，停止搜索")
+                    logger.info("[岛屿-每日补给] 达到最大滑动次数，停止搜索")
                     return False
 
-            logger.info(f"找到 {len(air_drop_buttons)} 个补给目标")
+            logger.info(f"[岛屿-每日补给] 找到 {len(air_drop_buttons)} 个补给目标")
             air_drop_buttons.sort(key=lambda btn: btn.area[1])
 
             # 标记是否有至少一个可以点击的补给
@@ -156,10 +156,10 @@ class IslandAirDrop(Island):
                 )
                 result = self.check_visit(visit_button)
                 if result == "skip":
-                    logger.info("无法访问，跳过当前补给")
+                    logger.info("[岛屿-每日补给] 无法访问，跳过当前补给")
                     continue
                 elif result == "success":
-                    logger.info("成功进入拜访状态，返回True")
+                    logger.info("[岛屿-每日补给] 成功进入拜访状态，返回True")
                     return True
                 elif result == "timeout":
                     self.island_error = True
@@ -167,24 +167,24 @@ class IslandAirDrop(Island):
                 has_clickable_air_drop = True
             # 如果当前页面所有补给都不可用（全部skip或timeout）
             if not has_clickable_air_drop:
-                logger.info("当前页面没有可用补给目标")
+                logger.info("[岛屿-每日补给] 当前页面没有可用补给目标")
                 # 检查是否在底部
                 if VISIT_SCROLL.at_bottom(main=self) and last_attempt_swipe > 0:
                     last_attempt_swipe -= 1
-                    logger.info("滑动槽已在底部，最后尝试滑动")
+                    logger.info("[岛屿-每日补给] 滑动槽已在底部，最后尝试滑动")
                     continue
                 elif VISIT_SCROLL.at_bottom(main=self) and last_attempt_swipe <= 0:
-                    logger.info("滑动槽已在底部，停止搜索")
+                    logger.info("[岛屿-每日补给] 滑动槽已在底部，停止搜索")
                     return False
                 # 滑动继续查找
                 if swipe_count < max_swipe_attempts:
-                    logger.info(f"滑动尝试 {swipe_count + 1}/{max_swipe_attempts}")
+                    logger.info(f"[岛屿-每日补给] 滑动尝试 {swipe_count + 1}/{max_swipe_attempts}")
                     self.visit_swipe(480)
                     swipe_count += 1
                     self.device.sleep(0.5)
                     continue
                 else:
-                    logger.info("达到最大滑动次数，停止搜索")
+                    logger.info("[岛屿-每日补给] 达到最大滑动次数，停止搜索")
                     return False
 
             if swipe_count < max_swipe_attempts:
@@ -196,7 +196,7 @@ class IslandAirDrop(Island):
                 self.device.sleep(0.5)
                 continue
 
-        logger.info("未检测到可用补给")
+        logger.info("[岛屿-每日补给] 未检测到可用补给")
         return False
 
     def check_visit(self, visit_button):

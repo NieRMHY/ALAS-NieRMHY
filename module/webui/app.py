@@ -154,6 +154,85 @@ def is_demo_mode():
     return os.environ.get("DEMO") == "1"
 
 
+def is_public_webui_host(host):
+    """
+    判断 WebUI 是否监听所有网络接口。
+
+    Args:
+        host (str): WebUI 监听地址。
+
+    Returns:
+        bool: True 表示 WebUI 允许所有设备访问。
+    """
+    host = str(host or "").strip().lower()
+    return host in ("0.0.0.0", "::", "[::]")
+
+
+def is_webui_password_set(password):
+    """
+    判断 WebUI 密码是否有效设置。
+
+    Args:
+        password: WebUI 密码配置。
+
+    Returns:
+        bool: True 表示密码包含非空白字符。
+    """
+    return bool(str(password or "").strip())
+
+
+def generate_webui_password(length=32):
+    """
+    生成包含大小写字母和数字的 WebUI 密码。
+
+    Args:
+        length (int): 密码长度。
+
+    Returns:
+        str: 随机密码。
+    """
+    letters_upper = string.ascii_uppercase
+    letters_lower = string.ascii_lowercase
+    digits = string.digits
+    alphabet = letters_upper + letters_lower + digits
+    password = [
+        secrets.choice(letters_upper),
+        secrets.choice(letters_lower),
+        secrets.choice(digits),
+    ]
+    password.extend(secrets.choice(alphabet) for _ in range(length - len(password)))
+    secrets.SystemRandom().shuffle(password)
+    return "".join(password)
+
+
+def ensure_public_webui_password(key):
+    """
+    公网监听且未设置密码时自动生成密码。
+
+    Args:
+        key: 命令行或部署配置中的 WebUI 密码。
+
+    Returns:
+        tuple[str | None, str | None]: 有效密码和失败原因。
+    """
+    if is_demo_mode():
+        return key, None
+
+    host = State.webui_host or State.deploy_config.WebuiHost
+    if not is_public_webui_host(host) or is_webui_password_set(key):
+        return key, None
+
+    try:
+        password = generate_webui_password()
+        from deploy.atomic import atomic_write
+
+        atomic_write(WEBUI_AUTO_PASSWORD_FILE, f"{password}\n")
+        State.deploy_config.Password = password
+        logger.warning(f"[WebUI] WebUI 已自动生成密码，请在根目录 {WEBUI_AUTO_PASSWORD_FILE} 查看。")
+        return password, None
+    except Exception as e:
+        logger.exception(f"WebUI 自动生成密码失败: {e}")
+        return None, str(e)
 def timedelta_to_text(delta=None):
     time_delta_name_suffix_dict = {
         "Y": "YearsAgo",
@@ -2840,7 +2919,7 @@ class AlasGUI(Frame):
 
     def _simulator_start(self):
         if is_demo_mode():
-            logger.info("DEMO=1，跳过大世界模拟器启动。")
+            logger.info("[WebUI] DEMO=1，跳过大世界模拟器启动。")
             return
         self.simulator.start()
 
@@ -5463,7 +5542,7 @@ class AlasGUI(Frame):
         def announcement_checker():
             from module.base.api_client import ApiClient
 
-            logger.info("公告检查任务启动")
+            logger.info("[WebUI] 公告检查任务启动")
             th = yield  # 获取任务处理器引用
             # 首次检查：触发异步获取
             self._start_announcement_fetch(force=False)

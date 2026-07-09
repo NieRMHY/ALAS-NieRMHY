@@ -307,7 +307,7 @@ class IslandCargoPreparation(IslandUI):
                 continue
             return False
 
-        logger.warning('更换列表刷新后仍为空，返回货运界面')
+        logger.warning('[岛屿-货物筹备] 更换列表刷新后仍为空，返回货运界面')
         self._back_to_transport()
         return False
 
@@ -451,7 +451,7 @@ class IslandCargoPreparation(IslandUI):
             if self.ui_additional():
                 continue
 
-        logger.warning('进入更换委托页面超时')
+        logger.warning('[岛屿-货物筹备] 进入更换委托页面超时')
         return False
 
     def _confirm_first_replacement(self):
@@ -466,24 +466,24 @@ class IslandCargoPreparation(IslandUI):
                 continue
 
             if self.appear(EMPTY_LIST_CHECK, offset=(20, 20)):
-                logger.info('更换委托列表为空')
+                logger.info('[岛屿-货物筹备] 更换委托列表为空')
                 if self.appear_then_click(REFRESH_BUTTON_BLUE, offset=(20, 20), interval=2):
-                    logger.info('刷新更换委托列表')
+                    logger.info('[岛屿-货物筹备] 刷新更换委托列表')
                     self._wait_replace_refresh()
                     return 'empty_refreshed'
                 if self.appear(REFRESH_BUTTON_GREY, offset=(20, 20)):
-                    logger.info('更换委托列表为空且刷新不可用')
+                    logger.info('[岛屿-货物筹备] 更换委托列表为空且刷新不可用')
                     self._back_to_transport()
                     return 'empty_unavailable'
                 continue
 
             if self.appear_then_click(CARGO_PREPARATION_REPLACE_CONFIRM, offset=(20, 20), interval=2):
-                logger.info('确认更换默认选中的货运委托')
+                logger.info('[岛屿-货物筹备] 确认更换默认选中的货运委托')
                 if self._wait_transport_after_replace():
                     return 'success'
                 return 'failed'
 
-        logger.warning('确认更换委托超时')
+        logger.warning('[岛屿-货物筹备] 确认更换委托超时')
         self._back_to_transport()
         return 'failed'
 
@@ -507,7 +507,7 @@ class IslandCargoPreparation(IslandUI):
             else:
                 confirm_timer.reset()
 
-        logger.warning('更换委托后未回到货运界面')
+        logger.warning('[岛屿-货物筹备] 更换委托后未回到货运界面')
         self._back_to_transport()
         return False
 
@@ -526,7 +526,7 @@ class IslandCargoPreparation(IslandUI):
         """根据委托状态设置下次运行时间。"""
         if self._all_slots_inactive(commissions):
             target = self._next_grey_retry_time()
-            logger.info(f'所有货运栏位暂无可操作委托，下次检测: {target}')
+            logger.info(f'[岛屿-货物筹备] 所有货运栏位暂无可操作委托，下次检测: {target}')
             self.config.task_delay(target=target)
             return
 
@@ -536,17 +536,17 @@ class IslandCargoPreparation(IslandUI):
         ]
         if future_finish:
             target = max(future_finish)
-            logger.info(f'下次货物筹备检测（最晚完成）: {target}')
+            logger.info(f'[岛屿-货物筹备] 下次货物筹备检测（最晚完成）: {target}')
             self.config.task_delay(target=target)
             return
 
         if commissions.count and commissions.select(status='locked').count == commissions.count:
             target = self._next_grey_retry_time()
-            logger.info(f'所有货运栏位不可委托，下次检测: {target}')
+            logger.info(f'[岛屿-货物筹备] 所有货运栏位不可委托，下次检测: {target}')
             self.config.task_delay(target=target)
             return
 
-        logger.info('暂无可确认完成时间，2 小时后重新检测货物筹备')
+        logger.info('[岛屿-货物筹备] 暂无可确认完成时间，2 小时后重新检测货物筹备')
         self.config.task_delay(minute=self.DEFAULT_DELAY.total_seconds() / 60)
 
     def _all_slots_inactive(self, commissions):
@@ -572,7 +572,7 @@ class IslandCargoPreparation(IslandUI):
         return tomorrow_morning
 
     def _back_to_island_phone(self):
-        logger.info('返回岛屿手机页面')
+        logger.info('[岛屿-货物筹备] 返回岛屿手机页面')
         for _ in self.loop():
             if self.ui_page_appear(page_island_phone):
                 break

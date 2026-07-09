@@ -178,7 +178,7 @@ class RewardCommission(UI, InfoHandler):
 
         # 优先处理快过期重要委托
         if 'expire' in run:
-            logger.info('尝试提前快过期委托')
+            logger.info('[委托] 尝试提前快过期委托')
 
             valid_runs = [c for c in run if isinstance(c, Commission)]
             queue = running_list + valid_runs[:self.max_commission - running_count]

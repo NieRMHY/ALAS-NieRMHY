@@ -129,7 +129,7 @@ class Cl1Database:
         try:
             self.db_dir.mkdir(parents=True, exist_ok=True)
         except Exception as e:
-            logger.error(f"创建数据库目录失败: {e}")
+            logger.error(f"[Statistics] 创建数据库目录失败: {e}")
 
     def _init_db(self):
         """初始化数据库表，并兼容旧版 encrypted_blob 结构。"""
@@ -198,7 +198,7 @@ class Cl1Database:
                 if not rows:
                     return
 
-                logger.info(f"开始解密旧版 CL1 数据库，条目数: {len(rows)}")
+                logger.info(f"[Statistics] 开始解密旧版 CL1 数据库，条目数: {len(rows)}")
                 updated_rows = []
                 clear_rows = []
                 failed_rows = []
@@ -236,13 +236,13 @@ class Cl1Database:
 
                 migrated = len(updated_rows) + len(clear_rows)
                 if migrated:
-                    logger.info(f"旧版 CL1 数据库解密迁移完成，条目数: {migrated}")
+                    logger.info(f"[Statistics] 旧版 CL1 数据库解密迁移完成，条目数: {migrated}")
                 if failed_rows:
                     logger.warning(
-                        f"旧版 CL1 数据库有 {len(failed_rows)} 条记录解密失败"
+                        f"[Statistics] 旧版 CL1 数据库有 {len(failed_rows)} 条记录解密失败"
                     )
         except Exception as e:
-            logger.error(f"解密旧版 CL1 数据库失败: {e}")
+            logger.error(f"[Statistics] 解密旧版 CL1 数据库失败: {e}")
 
     def _move_legacy_db(self):
         """将旧位置的 CL1 数据库移动到 config 目录后再初始化表结构。"""
@@ -259,7 +259,7 @@ class Cl1Database:
                     f"已移动旧版 CL1 数据库: {old_db_path} -> {self.db_path}"
                 )
             except Exception as e:
-                logger.error(f"移动旧版 CL1 数据库失败: {e}")
+                logger.error(f"[Statistics] 移动旧版 CL1 数据库失败: {e}")
 
     def _serialize_data(self, data: Dict[str, Any]) -> str:
         """将统计数据序列化为明文 JSON。"""
@@ -272,7 +272,7 @@ class Cl1Database:
         try:
             data = json.loads(data_json)
         except Exception as e:
-            logger.warning(f"读取 CL1 明文 JSON 失败: {e}")
+            logger.warning(f"[Statistics] 读取 CL1 明文 JSON 失败: {e}")
             return None
         return data if isinstance(data, dict) else None
 
@@ -321,7 +321,7 @@ class Cl1Database:
                         self.save_stats(instance, month, data)
                         return data
         except Exception as e:
-            logger.error(f"查询统计数据失败 {instance} {month}: {e}")
+            logger.error(f"[Statistics] 查询统计数据失败 {instance} {month}: {e}")
 
         return self._empty_data(month)
 
@@ -565,7 +565,7 @@ class Cl1Database:
                     )
                 return [(row[0], row[1]) for row in cursor.fetchall()]
         except Exception as e:
-            logger.error(f"列出统计数据失败: {e}")
+            logger.error(f"[Statistics] 列出统计数据失败: {e}")
             return []
 
     def backfill_meow_stats(
@@ -636,7 +636,7 @@ class Cl1Database:
                 )
                 conn.commit()
         except Exception as e:
-            logger.error(f"保存统计数据失败 {instance} {month}: {e}")
+            logger.error(f"[Statistics] 保存统计数据失败 {instance} {month}: {e}")
 
     def increment_battle_count(self, instance: str, delta: int = 1):
         """增加战斗次数"""
@@ -865,7 +865,7 @@ class Cl1Database:
         if not json_path.exists():
             return
 
-        logger.info(f"开始从 JSON 迁移 CL1 数据: {json_path}, instance={instance}")
+        logger.info(f"[Statistics] 开始从 JSON 迁移 CL1 数据: {json_path}, instance={instance}")
         try:
             with json_path.open("r", encoding="utf-8") as f:
                 old_data = json.load(f)
@@ -891,7 +891,7 @@ class Cl1Database:
                     )
                     if c.fetchone():
                         logger.info(
-                            f"数据库中已存在 {instance} {month}，跳过迁移"
+                            f"[Statistics] 数据库中已存在 {instance} {month}，跳过迁移"
                         )
                         continue
 
@@ -904,12 +904,12 @@ class Cl1Database:
                 )
 
                 self.save_stats(instance, month, new_stats)
-                logger.info(f"已迁移 {instance} {month}")
+                logger.info(f"[Statistics] 已迁移 {instance} {month}")
 
             # 迁移成功后可以删除 JSON 或重命名 (此处建议重命名为 .bak 以防万一)
             bak_path = json_path.with_suffix(".json.bak")
             json_path.replace(bak_path)
-            logger.info(f"已将旧 JSON 重命名为 {bak_path}")
+            logger.info(f"[Statistics] 已将旧 JSON 重命名为 {bak_path}")
 
         except Exception as e:
             logger.exception(f"从 JSON 迁移 CL1 数据失败: {e}")

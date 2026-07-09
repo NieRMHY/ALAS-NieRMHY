@@ -193,7 +193,7 @@ class Dock(Equipment):
         setting.add_setting(
             setting='sort',
             option_buttons=ButtonGrid(
-                origin=(218, 65), delta=delta, button_shape=button_shape, grid_shape=(7, 1), name='FILTER_SORT'),
+                origin=(218, 37), delta=delta, button_shape=button_shape, grid_shape=(7, 1), name='FILTER_SORT'),
             # stat 选项有多余的网格，不值得处理
             option_names=['rarity', 'level', 'total', 'join', 'intimacy', 'mood', 'stat'],
             option_default='level'
@@ -201,7 +201,7 @@ class Dock(Equipment):
         setting.add_setting(
             setting='index',
             option_buttons=ButtonGrid(
-                origin=(218, 138), delta=delta, button_shape=button_shape, grid_shape=(7, 2), name='FILTER_INDEX'),
+                origin=(218, 109), delta=delta, button_shape=button_shape, grid_shape=(7, 2), name='FILTER_INDEX'),
             option_names=['all', 'vanguard', 'main', 'dd', 'cl', 'ca', 'bb',
                           'cv', 'repair', 'ss', 'others', 'not_available', 'not_available', 'not_available'],
             option_default='all'
@@ -209,22 +209,23 @@ class Dock(Equipment):
         setting.add_setting(
             setting='faction',
             option_buttons=ButtonGrid(
-                origin=(218, 268), delta=delta, button_shape=button_shape, grid_shape=(7, 2), name='FILTER_FACTION'),
+                origin=(218, 239), delta=delta, button_shape=button_shape, grid_shape=(7, 3), name='FILTER_FACTION'),
             option_names=['all', 'eagle', 'royal', 'sakura', 'iron', 'dragon', 'sardegna',
-                          'northern', 'iris', 'vichya', 'tulipa', 'meta', 'tempesta', 'other'],
+                          'northern', 'iris', 'vichya', 'tulipa', 'pedreria', 'meta', 'tempesta',
+                          'other'],
             option_default='all'
         )
         setting.add_setting(
             setting='rarity',
             option_buttons=ButtonGrid(
-                origin=(218, 398), delta=delta, button_shape=button_shape, grid_shape=(7, 1), name='FILTER_RARITY'),
+                origin=(218, 426), delta=delta, button_shape=button_shape, grid_shape=(7, 1), name='FILTER_RARITY'),
             option_names=['all', 'common', 'rare', 'elite', 'super_rare', 'ultra', 'not_available'],
             option_default='all'
         )
         setting.add_setting(
             setting='extra',
             option_buttons=ButtonGrid(
-                origin=(218, 471), delta=delta, button_shape=button_shape, grid_shape=(7, 2), name='FILTER_EXTRA'),
+                origin=(218, 498), delta=delta, button_shape=button_shape, grid_shape=(7, 2), name='FILTER_EXTRA'),
             option_names=['no_limit', 'has_skin', 'can_retrofit', 'enhanceable', 'can_limit_break', 'not_level_max', 'can_awaken',
                           'can_awaken_plus', 'special', 'oath_skin', 'unique_augment_module', 'wear_skin', 'oathed', 'not_available'],
             option_default='no_limit'
@@ -250,7 +251,7 @@ class Dock(Equipment):
             index: 舰种筛选，可选值：all, vanguard, main, dd, cl, ca, bb,
                 cv, repair, ss, others, not_available。
             faction: 阵营筛选，可选值：all, eagle, royal, sakura, iron, dragon, sardegna,
-                northern, iris, vichya, tulipa, meta, tempesta, other。
+                northern, iris, vichya, tulipa, pedreria, meta, tempesta, other。
             rarity: 稀有度筛选，可选值：all, common, rare, elite, super_rare, ultra, not_available。
             extra: 额外筛选，可选值：no_limit, has_skin, can_retrofit, enhanceable,
                 can_limit_break, not_level_max, can_awaken, can_awaken_plus,

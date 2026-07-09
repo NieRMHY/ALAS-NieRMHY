@@ -50,7 +50,7 @@ class MeowfficerTargetZoneMixin:
         raw_value = self.config.OpsiMeowfficerFarming_TargetZone
         if not tokens:
             if require_target:
-                logger.warning('已启用 StayInZone 但未设置 TargetZone，跳过本次任务')
+                logger.warning('[大世界-短猫相接] 已启用 StayInZone 但未设置 TargetZone，跳过本次任务')
                 self.config.task_delay(server_update=True)
                 self.config.task_stop()
             return []
@@ -126,7 +126,7 @@ class OpsiMeowfficerFarming(MeowfficerTargetZoneMixin, CoinTaskMixin, OSMap):
         if self.config.is_task_enabled('OpsiAshBeacon') \
                 and not self._ash_fully_collected \
                 and self.config.OpsiAshBeacon_EnsureFullyCollected:
-            logger.info('余烬信标未收集满，暂时忽略行动力限制')
+            logger.info('[大世界-短猫相接] 余烬信标未收集满，暂时忽略行动力限制')
             self.config.OS_ACTION_POINT_PRESERVE = 0
         logger.attr('OS_ACTION_POINT_PRESERVE', self.config.OS_ACTION_POINT_PRESERVE)
 
@@ -189,7 +189,7 @@ class OpsiMeowfficerFarming(MeowfficerTargetZoneMixin, CoinTaskMixin, OSMap):
             except (TaskEnd, GameStuckError, GameTooManyClickError, RequestHumanTakeover):
                 raise
             except Exception as e:
-                logger.warning(f'战略搜索异常: {e}')
+                logger.warning(f'[大世界-短猫相接] 战略搜索异常: {e}')
 
             if search_completed:
                 self._solved_map_event = set()
@@ -202,7 +202,7 @@ class OpsiMeowfficerFarming(MeowfficerTargetZoneMixin, CoinTaskMixin, OSMap):
             except (TaskEnd, GameStuckError, GameTooManyClickError, RequestHumanTakeover):
                 raise
             except Exception:
-                logger.exception('handle_after_auto_search 发生异常')
+                logger.exception('[大世界-短猫相接] handle_after_auto_search 发生异常')
         finally:
             self.meow_search_metrics_end()
 
@@ -234,7 +234,7 @@ class OpsiMeowfficerFarming(MeowfficerTargetZoneMixin, CoinTaskMixin, OSMap):
             .sort_by_clock_degree(center=(1252, 1012), start=self.zone.location)
 
         if not zones:
-            logger.warning(f'普通搜索模式：未找到符合条件的海域 (侵蚀等级 {hazard_level})')
+            logger.warning(f'[大世界-短猫相接] 普通搜索模式：未找到符合条件的海域 (侵蚀等级 {hazard_level})')
             return
 
         logger.hr(f'OS meowfficer farming, zone_id={zones[0].zone_id}', level=1)
@@ -262,7 +262,7 @@ class OpsiMeowfficerFarming(MeowfficerTargetZoneMixin, CoinTaskMixin, OSMap):
         logger.hr(f'OS meowfficer farming, hazard_level={self.config.OpsiMeowfficerFarming_HazardLevel}', level=1)
 
         if ap_preserve is None and self.is_cl1_mode_enabled and self.config.OpsiMeowfficerFarming_ActionPointPreserve < 500:
-            logger.info('启用侵蚀 1 练级时，最低行动力保留自动调整为 500')
+            logger.info('[大世界-短猫相接] 启用侵蚀 1 练级时，最低行动力保留自动调整为 500')
             self.config.OpsiMeowfficerFarming_ActionPointPreserve = 500
 
         if ap_preserve is None:
@@ -283,16 +283,16 @@ class OpsiMeowfficerFarming(MeowfficerTargetZoneMixin, CoinTaskMixin, OSMap):
                 OpsiFleet_Submarine=False,
             )
             cd = self.nearest_task_cooling_down
-            logger.attr('最近冷却中的任务', cd)
+            logger.attr('[大世界-短猫相接] 最近冷却中的任务', cd)
 
             remain = get_os_reset_remain()
             if cd is not None and remain > 0:
-                logger.info(f'存在冷却中的任务，延迟短猫任务至 {cd.next_run} 后执行')
+                logger.info(f'[大世界-短猫相接] 存在冷却中的任务，延迟短猫任务至 {cd.next_run} 后执行')
                 self.delay_opsi_active_task(target=cd.next_run)
                 self.config.task_stop()
 
         if self.is_in_opsi_explore():
-            logger.warning(f'大世界探索正在运行，无法执行 {self.config.task.command}')
+            logger.warning(f'[大世界-短猫相接] 大世界探索正在运行，无法执行 {self.config.task.command}')
             self.delay_opsi_active_task(server_update=True)
             self.config.task_stop()
 

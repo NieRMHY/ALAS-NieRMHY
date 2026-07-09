@@ -56,11 +56,11 @@ class ConnectionAttr:
         """
         url = platform_tools_url()
         if url is None:
-            logger.warning(f'当前平台不支持自动下载 ADB: {sys.platform}')
+            logger.warning(f'[Device] 当前平台不支持自动下载 ADB: {sys.platform}')
             return None
 
         if not target:
-            logger.warning('ADB 下载失败，目标路径为空')
+            logger.warning('[Device] ADB 下载失败，目标路径为空')
             return None
 
         target = Path(target).resolve()
@@ -73,13 +73,13 @@ class ConnectionAttr:
         source = tools_dir / executable
 
         logger.hr('Download ADB', level=2)
-        logger.warning(f'未找到 ADB，正在下载 Android platform-tools: {url}')
+        logger.warning(f'[Device] 未找到 ADB，正在下载 Android platform-tools: {url}')
         tools_dir.parent.mkdir(parents=True, exist_ok=True)
         try:
             urllib.request.urlretrieve(url, archive)
         except Exception as e:
             archive.unlink(missing_ok=True)
-            logger.warning(f'ADB 下载失败: {e}')
+            logger.warning(f'[Device] ADB 下载失败: {e}')
             return None
 
         if tools_dir.exists():
@@ -91,7 +91,7 @@ class ConnectionAttr:
             archive.unlink(missing_ok=True)
 
         if not source.exists():
-            logger.warning(f'ADB 下载失败，未找到 {source}')
+            logger.warning(f'[Device] ADB 下载失败，未找到 {source}')
             return None
 
         if os.name != 'nt':
@@ -107,7 +107,7 @@ class ConnectionAttr:
         else:
             target.chmod(target.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
 
-        logger.info(f'ADB 已安装: {target}')
+        logger.info(f'[Device] ADB 已安装: {target}')
         return str(target).replace('\\\\', '/').replace('\\', '/')
 
     def __init__(self, config):

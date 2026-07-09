@@ -225,7 +225,7 @@ class OcrBenchmark:
 
         logger.hr('OCR Benchmark Summary', level=1)
         logger.print(table, justify='center')
-        logger.info('如果您的 Status 显示 Error 或 Warning，请使用 CPU 运行 OCR')
+        logger.info('[Daemon] 如果您的 Status 显示 Error 或 Warning，请使用 CPU 运行 OCR')
 
     def run_simple_ocr_benchmark(self):
         """
@@ -267,5 +267,5 @@ def run_ocr_benchmark(config):
         OcrBenchmark(config, task='OcrBenchmark').run()
         return True
     except RequestHumanTakeover:
-        logger.critical('错误 请求人类接管')
+        logger.critical('[Daemon] 错误 请求人类接管')
         return False

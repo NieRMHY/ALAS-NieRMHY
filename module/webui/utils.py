@@ -271,9 +271,9 @@ class TaskHandler:
             if not self._thread.is_alive():
                 logger.info("Finish task handler")
             else:
-                logger.warning("任务处理器未在 2 秒内停止")
+                logger.warning("[WebUI] 任务处理器未在 2 秒内停止")
         else:
-            logger.info("任务处理器在其自身线程内调用了停止，跳过 join")
+            logger.info("[WebUI] 任务处理器在其自身线程内调用了停止，跳过 join")
 
 
 class WebIOTaskHandler(TaskHandler):

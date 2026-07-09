@@ -83,7 +83,7 @@ class IslandManufacture(IslandShopBase):
                  'var_name': 'shepherd_purse', 'selection': FIXED_SELECT_SHEPHERD_PURSE,
                  'selection_check': FIXED_SELECT_SHEPHERD_PURSE, 'post_action': POST_SHEPHERD_PURSE}
             )
-            logger.info("季节限定：荠菜干已添加到手工产品列表")
+            logger.info("[岛屿-制造业] 季节限定：荠菜干已添加到手工产品列表")
 
         # 根据配置初始化岗位按钮
         self.post_buttons = self._init_post_buttons()
@@ -183,7 +183,7 @@ class IslandManufacture(IslandShopBase):
                         self.back_to_postmanage_from_dispatch()
                         return None
                 else:
-                    logger.warning(f"{post_id}制造派遣无可用角色")
+                    logger.warning(f"[岛屿-制造业] {post_id}制造派遣无可用角色")
                     self.back_to_postmanage_from_dispatch()
                     return None
                 continue
@@ -193,7 +193,7 @@ class IslandManufacture(IslandShopBase):
                     product_name = product_info['name']
                     selection = product_info['selection']
                     selection_check = product_info['selection_check']
-                    logger.info(f"尝试选择产品: {product_name}")
+                    logger.info(f"[岛屿-制造业] 尝试选择产品: {product_name}")
 
                     # 点击产品选择按钮
                     self.select_product(selection, selection_check)
@@ -206,7 +206,7 @@ class IslandManufacture(IslandShopBase):
 
                     # 如果确认按钮是灰色（153, 156, 156），表示材料不足
                     if color_similar(color, (153, 156, 156), 80):
-                        logger.info(f"材料不足，跳过产品: {product_name}")
+                        logger.info(f"[岛屿-制造业] 材料不足，跳过产品: {product_name}")
                         continue
                     else:
                         selected_product = product_info
@@ -214,11 +214,11 @@ class IslandManufacture(IslandShopBase):
                         self.appear_then_click(POST_MAX)
                         # 点击确认生产
                         self.device.click(POST_ADD_ORDER)
-                        logger.info(f"选择产品成功: {product_name}")
+                        logger.info(f"[岛屿-制造业] 选择产品成功: {product_name}")
                         break  # 跳出产品选择循环
 
                 if not selected_product:
-                    logger.info("所有产品材料都不足，点击返回")
+                    logger.info("[岛屿-制造业] 所有产品材料都不足，点击返回")
                     self.device.click(SELECT_UI_BACK)
                     self.device.sleep(0.3)
 
@@ -237,7 +237,7 @@ class IslandManufacture(IslandShopBase):
                         time_var_name = f'{self.time_prefix}{post_num}'
                         if hasattr(self, time_var_name):
                             setattr(self, time_var_name, None)
-                            logger.info(f"清空岗位时间变量: {time_var_name}")
+                            logger.info(f"[岛屿-制造业] 清空岗位时间变量: {time_var_name}")
 
                 self.wait_until_appear(ISLAND_POSTMANAGE_CHECK)
                 self.device.sleep(0.5)
@@ -268,7 +268,7 @@ class IslandManufacture(IslandShopBase):
 
                     self.posts[post_id]['status'] = 'working'
 
-                    logger.info(f"已安排生产：{selected_product['name']} x{actual_number}")
+                    logger.info(f"[岛屿-制造业] 已安排生产：{selected_product['name']} x{actual_number}")
                     self.post_close()
                     return selected_product
 
@@ -383,7 +383,7 @@ class IslandManufacture(IslandShopBase):
         if idle_posts:
             self.get_warehouse_counts()
             # 如果有空闲岗位，重新进入岗位管理界面安排生产
-            logger.info(f"有 {len(idle_posts)} 个空闲岗位，开始安排生产")
+            logger.info(f"[岛屿-制造业] 有 {len(idle_posts)} 个空闲岗位，开始安排生产")
 
             # 重新进入岗位管理界面
             self.goto_postmanage()
@@ -397,7 +397,7 @@ class IslandManufacture(IslandShopBase):
             # 安排生产
             self.schedule_manufacture()
         else:
-            logger.info("没有空闲岗位，跳过生产安排")
+            logger.info("[岛屿-制造业] 没有空闲岗位，跳过生产安排")
 
         # 设置任务延迟
         finish_times = []
@@ -427,7 +427,7 @@ class IslandManufacture(IslandShopBase):
         """覆盖：制造业不需要常驻餐品模式"""
         # 制造业有自己的生产规则，不依赖常驻餐品
         self.to_post_products = {}
-        logger.info("制造业使用内置生产规则，不设置常驻餐品")
+        logger.info("[岛屿-制造业] 制造业使用内置生产规则，不设置常驻餐品")
 
     def get_max_producible(self, product, requested_quantity, skip_zero_materials=False):
         """覆盖：制造业的生产数量由材料检查决定"""

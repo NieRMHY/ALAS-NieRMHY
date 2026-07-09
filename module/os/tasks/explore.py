@@ -138,5 +138,5 @@ class OpsiExplore(OSMap):
         failed_zone = [self.name_to_zone(zone) for zone in self._os_explore_failed_zone]
         logger.error(f'OpsiExplore failed at these zones, please check you game settings '
                      f'and check if there is any unfinished event in them: {failed_zone}')
-        logger.critical('无法解锁该区域')
+        logger.critical('[大世界-开荒] 无法解锁该区域')
         raise GameStuckError

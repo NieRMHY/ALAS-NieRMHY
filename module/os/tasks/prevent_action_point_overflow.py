@@ -63,7 +63,7 @@ class OpsiPreventActionPointOverflow(OpsiScheduling):
             self.TASK_NAME_HAZARD1_LEVELING,
             self.TASK_NAME_MEOWFFICER_FARMING,
         ):
-            logger.warning(f'防止行动力溢出的执行任务无效: {task}，回退到智能调度')
+            logger.warning(f'[大世界-防溢出] 防止行动力溢出的执行任务无效: {task}，回退到智能调度')
             task = self.TASK_NAME_SCHEDULING
         return task
 
@@ -74,7 +74,7 @@ class OpsiPreventActionPointOverflow(OpsiScheduling):
         current = int(getattr(self, '_action_point_current', 0) or 0)
         total = int(getattr(self, '_action_point_total', 0) or 0)
         self.action_point_quit()
-        logger.info(f'防止行动力溢出检查：当前行动力={current}, 总行动力={total}')
+        logger.info(f'[大世界-防溢出] 防止行动力溢出检查：当前行动力={current}, 总行动力={total}')
         return current
 
     def update_prevent_action_point_overflow_schedule(self, current_ap=None, enable=True):
@@ -138,7 +138,7 @@ class OpsiPreventActionPointOverflow(OpsiScheduling):
     def _run_scheduled_coin_task_once(self, task_name, ap_preserve):
         """由防溢出上下文直接执行一轮补黄币任务。"""
         if self.is_running_prevent_action_point_overflow_task():
-            logger.info(f'【防溢出】直接执行一轮{self.TASK_NAMES.get(task_name, task_name)}')
+            logger.info(f'[大世界-防溢出] 直接执行一轮{self.TASK_NAMES.get(task_name, task_name)}')
         return super()._run_scheduled_coin_task_once(task_name, ap_preserve)
 
     def _run_prevent_action_point_overflow_target_once(self, task_name, lowerbound):
@@ -181,11 +181,11 @@ class OpsiPreventActionPointOverflow(OpsiScheduling):
             current_ap = self._get_current_action_point_for_overflow()
             if not started:
                 if current_ap < upperbound:
-                    logger.info(f'当前行动力未达到上限 ({current_ap} < {upperbound})，更新下次运行时间')
+                    logger.info(f'[大世界-防溢出] 当前行动力未达到上限 ({current_ap} < {upperbound})，更新下次运行时间')
                     self.update_prevent_action_point_overflow_schedule(current_ap=current_ap, enable=True)
                     self.config.task_stop()
             elif current_ap < lowerbound:
-                logger.info(f'当前行动力已低于下限 ({current_ap} < {lowerbound})，停止防溢出任务')
+                logger.info(f'[大世界-防溢出] 当前行动力已低于下限 ({current_ap} < {lowerbound})，停止防溢出任务')
                 self.update_prevent_action_point_overflow_schedule(current_ap=current_ap, enable=True)
                 self.config.task_stop()
 
@@ -196,13 +196,13 @@ class OpsiPreventActionPointOverflow(OpsiScheduling):
                 current = getattr(e, 'current', None)
                 if current is None:
                     current = current_ap
-                logger.info(f'当前行动力无法进入目标海域，停止防溢出任务: current={current}, error={e}')
+                logger.info(f'[大世界-防溢出] 当前行动力无法进入目标海域，停止防溢出任务: current={current}, error={e}')
                 self.update_prevent_action_point_overflow_schedule(current_ap=current, enable=True)
                 self.config.task_stop()
             except TaskEnd:
                 try:
                     current_ap = self._get_current_action_point_for_overflow()
                 except Exception:
-                    logger.debug('防溢出任务结束后刷新当前行动力失败，使用运行前数值', exc_info=True)
+                    logger.debug('[大世界-防溢出] 防溢出任务结束后刷新当前行动力失败，使用运行前数值', exc_info=True)
                 self.update_prevent_action_point_overflow_schedule(current_ap=current_ap, enable=True)
                 raise

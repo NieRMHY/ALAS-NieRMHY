@@ -73,7 +73,7 @@ class GemsCampaignOverride(CampaignBase):
 
         if self.handle_popup_cancel('IGNORE_LOW_EMOTION'):
             self.config.GEMS_EMOTION_TRIGGERED = True
-            logger.hr('情绪撤退')
+            logger.hr('[战役-紧急委托] 情绪撤退')
 
             while 1:
                 self.device.screenshot()
@@ -145,7 +145,7 @@ class GemsEquipmentHandler(EquipmentCodeHandler):
             if not self.appear(EMPTY_SHIP_R):
                 break
             else:
-                logger.info('等待舰船图标加载。')
+                logger.info('[战役-紧急委托] 等待舰船图标加载。')
 
         if TEMPLATE_BOGUE.match(self.device.image, scaling=1.46):  # image has rotation
             return 'bogue'
@@ -355,7 +355,7 @@ class GemsFarming(CampaignRun, FleetEquipment, GemsEquipmentHandler, Retirement)
         self.dock_filter_set(
             index='cv', rarity='common', faction=faction, extra=extra, sort='total')
 
-        logger.hr('查找旗舰')
+        logger.hr('[战役-紧急委托] 查找旗舰')
 
         if self.config.GemsFarming_ALLowHighFlagshipLevel:
             if self.config.SERVER in ['cn']:
@@ -388,7 +388,7 @@ class GemsFarming(CampaignRun, FleetEquipment, GemsEquipmentHandler, Retirement)
                 if candidates:
                     return [candidates[0]]
 
-                logger.info('未找到指定航母，尝试倒序排列。')
+                logger.info('[战役-紧急委托] 未找到指定航母，尝试倒序排列。')
                 self.dock_sort_method_dsc_set(True)
                 candidates = self.find_all_backline_candidates(scanner, common_ship)
                 if candidates:
@@ -396,7 +396,7 @@ class GemsFarming(CampaignRun, FleetEquipment, GemsEquipmentHandler, Retirement)
 
                 # 恢复排序方式，因为已更改但未找到结果
                 self.dock_sort_method_dsc_set(False)
-            logger.info('UseEmotionFirst 未找到候选舰船，回退到原始选择方法。')
+            logger.info('[战役-紧急委托] UseEmotionFirst 未找到候选舰船，回退到原始选择方法。')
 
         scanner = ShipScanner(
             level=(min_level, max_level), emotion=(emotion_lower_bound, 150), fleet=fleet, status='free')
@@ -430,7 +430,7 @@ class GemsFarming(CampaignRun, FleetEquipment, GemsEquipmentHandler, Retirement)
                 # 更换为指定舰船
                 return candidates
 
-            logger.info('未找到指定航母，尝试倒序排列。')
+            logger.info('[战役-紧急委托] 未找到指定航母，尝试倒序排列。')
             self.dock_sort_method_dsc_set(True)
 
             candidates = [ship for ship in scanner.scan(self.device.image)
@@ -473,7 +473,7 @@ class GemsFarming(CampaignRun, FleetEquipment, GemsEquipmentHandler, Retirement)
         self.dock_filter_set(
             index='dd', rarity=rarity, faction=faction, extra=extra)
 
-        logger.hr('查找先锋')
+        logger.hr('[战役-紧急委托] 查找先锋')
 
         min_level, max_level = self.config.GemsFarming_VanguardLevelMin, self.config.GemsFarming_VanguardLevelMax
         
@@ -518,7 +518,7 @@ class GemsFarming(CampaignRun, FleetEquipment, GemsEquipmentHandler, Retirement)
                 if candidates:
                     return candidates
 
-                logger.info('未找到指定驱逐舰，尝试倒序排列。')
+                logger.info('[战役-紧急委托] 未找到指定驱逐舰，尝试倒序排列。')
                 self.dock_sort_method_dsc_set(False)
                 candidates = self.find_all_vanguard_candidates(scanner, common_ship)
                 if not candidates and self.config.GemsFarming_CommonDD == 'custom':
@@ -550,7 +550,7 @@ class GemsFarming(CampaignRun, FleetEquipment, GemsEquipmentHandler, Retirement)
                 # 更换为指定舰船
                 return candidates
 
-            logger.info('未找到指定驱逐舰，尝试倒序排列。')
+            logger.info('[战役-紧急委托] 未找到指定驱逐舰，尝试倒序排列。')
             self.dock_sort_method_dsc_set(False)
 
             # 更换为指定舰船
@@ -611,7 +611,7 @@ class GemsFarming(CampaignRun, FleetEquipment, GemsEquipmentHandler, Retirement)
             return []
 
         ship_type = ship_type.upper()
-        logger.info(f'搜索普通 {ship_type}。')
+        logger.info(f'[战役-紧急委托] 搜索普通 {ship_type}。')
         if ship_type.lower() == 'cv' and self.config.GemsFarming_CommonCV != 'custom':
             filter_string = self.config.COMMON_CV_FILTER
         else:
@@ -634,7 +634,7 @@ class GemsFarming(CampaignRun, FleetEquipment, GemsEquipmentHandler, Retirement)
 
             common_ship_candidates[name] = candidates
 
-        logger.info(f'未找到合适的 {ship_type}，尝试倒序排列。')
+        logger.info(f'[战役-紧急委托] 未找到合适的 {ship_type}，尝试倒序排列。')
         self.dock_sort_method_dsc_set(not sort_dsc_first)
 
         for name in common_ship:
@@ -740,10 +740,10 @@ class GemsFarming(CampaignRun, FleetEquipment, GemsEquipmentHandler, Retirement)
         ship = self.get_common_rarity_cv()
         if ship:
             self.flagship_change_with_emotion(ship)
-            logger.info('更换旗舰成功')
+            logger.info('[战役-紧急委托] 更换旗舰成功')
             return True
         else:
-            logger.info('更换旗舰失败，没有普通稀有度航母。')
+            logger.info('[战役-紧急委托] 更换旗舰失败，没有普通稀有度航母。')
 
             if self.config.SERVER in ['cn']:
                 max_level = 100
@@ -789,10 +789,10 @@ class GemsFarming(CampaignRun, FleetEquipment, GemsEquipmentHandler, Retirement)
         ship = self.get_common_rarity_dd()
         if ship:
             self.vanguard_change_with_emotion(ship)
-            logger.info('更换先锋舰船成功')
+            logger.info('[战役-紧急委托] 更换先锋舰船成功')
             return True
         else:
-            logger.info('更换先锋舰船失败，没有普通稀有度驱逐舰。')
+            logger.info('[战役-紧急委托] 更换先锋舰船失败，没有普通稀有度驱逐舰。')
             ship = self.get_common_rarity_dd(emotion=0)
             if ship and self.hard_mode:
                 self.vanguard_change_with_emotion(ship)
