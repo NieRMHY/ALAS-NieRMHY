@@ -1222,7 +1222,7 @@
       "event_20241121_cn": "Dangerous Inventions Incoming",
       "event_20241219_cn": "Substellar Crepuscule",
       "event_20250227_cn": "Paradiso of Shackled Light",
-      "event_20250424_cn": "Toward Tulipa's Seas Rerun",
+      "event_20250424_cn": "Toward Tulipa’s Seas Rerun",
       "event_20250520_cn": "A Rose on the High Tower",
       "event_20250724_cn": "The Alchemist and the Tower of Horizons",
       "event_20250814_cn": "Secrets of the Abyss",
@@ -1230,7 +1230,7 @@
       "event_20251023_cn": "Tempesta and Islas de Libertád",
       "event_20251218_cn": "A Note Through the Firmament",
       "event_20260226_cn": "Springtide Inn Online",
-      "event_20260326_cn": "The Vagabond's Recruitment Plan",
+      "event_20260326_cn": "The Vagabond’s Recruitment Plan",
       "event_20260417_cn": "Vacation Lane – Beachside Brilliance",
       "event_20260520_cn": "Alliance Before the Hagiobull",
       "event_20260625_cn": "Miracle by Midnight",
@@ -3082,7 +3082,7 @@
     },
     "RepairPackThresholdHazard1": {
       "name": "任意舰船血量低于 X 后，使用维修箱修理（侵蚀1）",
-      "help": "仅在开启"使用维修箱修船"时生效\n仅在"侵蚀1练级+"任务中尝试维修\n0.0 ~ 1.0"
+      "help": "仅在开启“使用维修箱修船”时生效\n仅在“侵蚀1练级+”任务中尝试维修\n0.0 ~ 1.0"
     },
     "DoRandomMapEvent": {
       "name": "完成地图随机事件 (。・ω・。)",
@@ -3094,7 +3094,7 @@
     },
     "NotifyOpsiMail": {
       "name": "推送大世界相关信息 (｀・ω・´)っ",
-      "help": "使用 OnePush 推送侵蚀1和短猫信息喵。启动器推送由"启动器推送"单独控制喵。信息较多可能较吵喵。"
+      "help": "使用 OnePush 推送侵蚀1和短猫信息喵。启动器推送由“启动器推送”单独控制喵。信息较多可能较吵喵。"
     },
     "LauncherPush": {
       "name": "启动器推送 (｀・ω・´)っ",
@@ -3102,11 +3102,11 @@
     },
     "IndependentPush": {
       "name": "大世界信息独立推送 (。・ω・。)",
-      "help": "发需要同时开启"推送大世界相关信息"功能喵。\n关闭时使用智慧港区设置 —> 调试设置 —> 错误推送设置，需要同时开启"错误推送"功能喵。\n开启时使用大世界推送设置，需要分离推送内容时请开启此功能喵。"
+      "help": "发需要同时开启“推送大世界相关信息”功能喵。\n关闭时使用智慧港区设置 —> 调试设置 —> 错误推送设置，需要同时开启“错误推送”功能喵。\n开启时使用大世界推送设置，需要分离推送内容时请开启此功能喵。"
     },
     "OpsiOnePushConfig": {
       "name": "大世界推送设置 (｀・ω・´)っ",
-      "help": ""大世界信息独立推送"功能开启时设置才生效喵。使用 Onepush 推送一条关于侵蚀1和短猫的信息喵。配置方法见文档喵：https://github.com/LmeSzinc/AzurLaneAutoScript/wiki/Onepush-configuration-%5BCN%5D"
+      "help": "“大世界信息独立推送”功能开启时设置才生效喵。使用 Onepush 推送一条关于侵蚀1和短猫的信息喵。配置方法见文档喵：https://github.com/LmeSzinc/AzurLaneAutoScript/wiki/Onepush-configuration-%5BCN%5D"
     },
     "AutoSearchTimeLimit": {
       "name": "自律寻敌时间限制喵~",
@@ -3346,11 +3346,11 @@
     },
     "TargetZone": {
       "name": "指定海域",
-      "help": "仅出击指定海域，支持ID或名称。填0跳转默认逻辑喵。\n开启"循环出击指定海域"后，可填写多个海域并按顺序循环，例如 42,55,45、42, 55, 45、42，55，45。"
+      "help": "仅出击指定海域，支持ID或名称。填0跳转默认逻辑喵。\n开启“循环出击指定海域”后，可填写多个海域并按顺序循环，例如 42,55,45、42, 55, 45、42，55，45。"
     },
     "StayInZone": {
       "name": "循环出击指定海域",
-      "help": "开启后按"指定海域"配置运行。指定单个海域时一直留在该海域；指定多个海域时按填写顺序循环。仅在指定海域不为0时生效喵。"
+      "help": "开启后按“指定海域”配置运行。指定单个海域时一直留在该海域；指定多个海域时按填写顺序循环。仅在指定海域不为0时生效喵。"
     },
     "APPreserveUntilReset": {
       "name": "月底重置强制消耗行动力 (´⊙ω⊙`)",
