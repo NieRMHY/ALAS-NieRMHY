@@ -14,8 +14,9 @@ from queue import Queue
 from typing import Callable, Generator, List
 
 import pywebio
-from pywebio.input import PASSWORD, input
-from pywebio.output import PopupSize, popup, put_html, toast
+from pywebio.exceptions import SessionClosedException
+from pywebio.input import PASSWORD, actions, input, input_group
+from pywebio.output import PopupSize, popup, put_html, put_text, toast
 from pywebio.session import eval_js, info as session_info, register_thread, run_js
 from rich.console import Console
 from rich.terminal_theme import TerminalTheme
@@ -228,6 +229,9 @@ class TaskHandler:
                         # logger.debug(f'Start task {task.g.__name__}')
                         task.send(self)
                         # logger.debug(f'End task {task.g.__name__}')
+                    except SessionClosedException:
+                        logger.debug(f"WebIO 会话已关闭，停止任务 {task.name}")
+                        self.remove_task(task, nowait=True)
                     except Exception as e:
                         logger.exception(e)
                         self.remove_task(task, nowait=True)
@@ -267,9 +271,9 @@ class TaskHandler:
             if not self._thread.is_alive():
                 logger.info("Finish task handler")
             else:
-                logger.warning("任务处理器未在 2 秒内停止")
+                logger.warning("[WebUI] 任务处理器未在 2 秒内停止")
         else:
-            logger.info("任务处理器在其自身线程内调用了停止，跳过 join")
+            logger.info("[WebUI] 任务处理器在其自身线程内调用了停止，跳过 join")
 
 
 class WebIOTaskHandler(TaskHandler):
@@ -497,6 +501,9 @@ def parse_pin_value(val, valuetype: str = None, widget_type: str = None, options
     checkbox 返回 [] 或 [True]（在 put_checkbox_ 中定义）；
     multiselect 返回选项值列表（如 [3, 1, 5]）。
     """
+    if widget_type == 'task_priority':
+        return "" if val is None else str(val)
+
     # 处理 dict 类型 - 提取 'value' 字段并递归解析
     if isinstance(val, dict):
         if 'value' in val:
@@ -560,13 +567,47 @@ def _record_login_failure():
         return _webui_login_failure_count
 
 
+def _show_password_help(action):
+    if action == "new":
+        popup(
+            "没设置过密码？",
+            put_text("系统已自动生成密码，请到项目根目录 password.txt 查看。"),
+        )
+    elif action == "forgot":
+        popup(
+            "忘记密码？",
+            put_text("请到 config/deploy.yaml 的 Password 字段查看当前密码。"),
+        )
+
+
+def _input_webui_password():
+    while True:
+        data = input_group(inputs=[
+            input(
+                name="password",
+                label="请输入 WebUI 密码",
+                type=PASSWORD,
+                placeholder="PASSWORD",
+            ),
+            actions(name="action", buttons=[
+                {"label": "登录", "value": "login", "type": "submit", "color": "primary"},
+                {"label": "没设置过密码？", "value": "new", "type": "submit", "color": "secondary"},
+                {"label": "忘记密码？", "value": "forgot", "type": "submit", "color": "secondary"},
+            ]),
+        ])
+        action = data["action"]
+        if action == "login":
+            return data["password"]
+        _show_password_help(action)
+
+
 def login(password):
     if is_login_forbidden():
         toast("密码错误次数过多，请重启后再试。", color="error")
         return False
     if get_localstorage("password") == str(password):
         return True
-    pwd = input(label="Please login below.", type=PASSWORD, placeholder="PASSWORD")
+    pwd = _input_webui_password()
     if is_login_forbidden():
         toast("密码错误次数过多，请重启后再试。", color="error")
         return False

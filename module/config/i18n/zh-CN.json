@@ -280,7 +280,11 @@
     },
     "OpsiScheduling": {
       "name": "智能调度+",
-      "help": "大世界智能调度功能，用于协调侵蚀1练级与黄币补充任务之间的切换\n启用后将根据黄币和行动力自动在不同任务之间切换并发送推送通知"
+      "help": "大世界智能调度功能，开启后无需重复开启侵蚀1等任务，智能调度将全部接管"
+    },
+    "OpsiPreventActionPointOverflow": {
+      "name": "防止行动力溢出",
+      "help": "当前行动力达到上限时执行大世界任务消耗行动力\n非必要不开启，仅推荐在大世界坠机或者长时间刷委托等不刷大世界的情况下开启"
     },
     "OpsiCrossMonth": {
       "name": "跨月每日",
@@ -404,7 +408,7 @@
       "name": "启用该功能",
       "help": "将这个任务加入调度器\n委托、科研、收获任务是强制打开的",
       "True": "已启用",
-      "False": "False"
+      "False": "关闭"
     },
     "PushNotification": {
       "name": "推送通知",
@@ -435,8 +439,24 @@
     "Sensitive": {
       "name": "敏感任务",
       "help": "出错时禁止重启游戏，直接停止 AzurPilot 运行。适用于跨月每日、隐秘海域、深渊海域等关键时刻任务。",
-      "True": "True",
-      "False": "False"
+      "True": "是",
+      "False": "否"
+    }
+  },
+  "Restart": {
+    "_info": {
+      "name": "重启设置",
+      "help": ""
+    },
+    "RandomDelay": {
+      "name": "每日重启随机延后",
+      "help": "每天重启客户端时，在服务器刷新时间后随机延后 X 分钟再执行，用于错开多个客户端登录。\n支持单个数字或区间，例如 5, 50；填 0 可关闭。"
+    },
+    "ClearCache": {
+      "name": "重启时同时清理缓存",
+      "help": "重启客户端时，在强行停止应用后删除 /sdcard/Android/data/<包名>/cache/ 下的外部缓存文件。",
+      "True": "开启",
+      "False": "关闭"
     }
   },
   "Emulator": {
@@ -619,8 +639,8 @@
     "EnableRemoteSSH": {
       "name": "启用远程 SSH 管理",
       "help": "在重启模拟器之前，通过 SSH 在远程服务器上执行特定指令（如重启 Docker 容器）。",
-      "True": "True",
-      "False": "False"
+      "True": "开启",
+      "False": "关闭"
     },
     "RemoteSSHHost": {
       "name": "远程服务器地址",
@@ -713,6 +733,41 @@
       "onnxruntime": "ONNX Runtime",
       "ncnn": "ncnn (Vulkan)"
     },
+    "OcrModelVersionEnglish": {
+      "name": "OCR英文模型版本",
+      "help": "选择英文 OCR 模型版本。auto 使用英文推荐模型 850K。该项影响英文 Azur Lane 模型；ncnn 后端会忽略此选择。",
+      "auto": "自动推荐",
+      "alocr_en_900k": "alocr_en_900k",
+      "azur_lane_v6_6": "英文 v6.6 (Azur Lane)",
+      "azur_lane_v6_5": "英文 v6.5 (Azur Lane)",
+      "ppocr_v6": "通用 PP-OCRv6",
+      "alocr_en_v2_6": "英文 AlOCR v2.6",
+      "alocr_en_v2_0": "英文 AlOCR v2.0",
+      "alocr_en_v1_0": "英文 AlOCR v1.0"
+    },
+    "OcrModelVersionChinese": {
+      "name": "OCR中文模型版本",
+      "help": "选择简体中文 OCR 模型版本。auto 使用中文推荐模型 v6.1。该项影响 cnocr/中文模型；ncnn 后端会忽略此选择。",
+      "auto": "自动推荐",
+      "cn_v6_1": "中文 v6.1",
+      "cn_v6": "中文 v6",
+      "ppocr_v6": "通用 PP-OCRv6",
+      "alocr_cn_v3": "中文 AlOCR v3",
+      "alocr_cn_v2_5": "中文 AlOCR v2.5"
+    },
+    "OcrModelVersionJapanese": {
+      "name": "OCR日文模型版本",
+      "help": "选择日文 OCR 模型版本。auto 使用日文 Azur Lane v6。该项影响日文模型；ncnn 后端会忽略此选择。",
+      "auto": "自动推荐",
+      "azur_lane_jp_v6": "日文 v6 (Azur Lane JP)",
+      "ppocr_v6": "通用 PP-OCRv6"
+    },
+    "OcrModelVersionTraditionalChinese": {
+      "name": "OCR繁中模型版本",
+      "help": "选择繁体中文 OCR 模型版本。当前仅提供通用 PP-OCRv6，保留独立选项以便后续扩展。ncnn 后端会忽略此选择。",
+      "auto": "自动推荐",
+      "ppocr_v6": "通用 PP-OCRv6"
+    },
     "ScreenshotInterval": {
       "name": "放慢截图速度至 X 秒一张",
       "help": "执行两次截图之间的最小间隔，限制在 0.001 ~ 0.3，对于高配置电脑能降低 CPU 占用"
@@ -724,6 +779,12 @@
     "TaskHoardingDuration": {
       "name": "囤积任务 X 分钟",
       "help": "能在收菜期间降低操作游戏的频率\n任务触发后，等待 X 分钟，再一次性执行囤积的任务"
+    },
+    "CloseEmulatorDuringLongWait": {
+      "name": "长时间等待时关闭模拟器",
+      "help": "当下一个任务超过 3 小时后运行时，等待期间关闭模拟器以节省内存和 CPU。",
+      "True": "True",
+      "False": "False"
     },
     "WhenTaskQueueEmpty": {
       "name": "当任务队列清空后",
@@ -1007,7 +1068,7 @@
     },
     "TaskPriorityAdjustment": {
       "name": "任务优先级调整",
-      "help": "默认优先级参考（# 后为说明，实际填写时不要复制注释）：\nRestart    # 重启游戏\n> OpsiCrossMonth    # 大世界跨月每日\n> Commission > Tactical > Research    # 委托 > 战术学院 > 科研\n> Exercise    # 演习\n> Dorm > Meowfficer > Guild > Gacha    # 后宅 > 指挥喵 > 大舰队 > 每日抽卡\n> Reward    # 收获\n> ShopFrequent > ShopOnce > Shipyard > Freebies    # 通用商店 > 其他商店 > 开发船坞 > 白嫖奖励\n> PrivateQuarters    # 私人休息室\n> OpsiExplore    # 大世界每月开荒\n> Minigame > Awaken    # 小游戏 > 认知觉醒\n> OpsiAshBeacon    # META信标作战\n> OpsiDaily > OpsiShop > OpsiVoucher > EventShop    # 大世界日常 > 港口商店 > 兑换商店 > 活动商店\n> OpsiAbyssal > OpsiStronghold > OpsiObscure > OpsiArchive    # 深渊海域 > 塞壬要塞 > 隐秘海域 > 档案坐标\n> Daily > Hard > OpsiAshBeacon > OpsiAshAssist > OpsiMonthBoss    # 每日挑战 > 困难图 > META作战 > META支援 > 月度boss\n> Sos > EventSp > EventA > EventB > EventC > EventD    # SOS > 活动每日SP > 活动每日A > 活动每日B > 活动每日C > 活动每日D\n> RaidDaily > CoalitionSp > WarArchives > MaritimeEscort    # 共斗活动每日 > 共斗活动SP > 作战档案 > 商船护航\n> IslandJuuEatery > IslandJuuCoffee > IslandGrill > IslandTeahouse > IslandRestaurant    # 岛屿啾啾简餐 > 啾咖啡 > 乌鱼烤肉 > 白熊饮品 > 有鱼餐馆\n> IslandFarm > IslandRancher > IslandMineForest > IslandDailyGather > IslandManufacture    # 岛屿农田 > 牧场 > 矿山林场 > 每日采集 > 制造业\n> IslandAirDrop > IslandBusiness > IslandDailyOrder > IslandDailyInteract > IslandPearlSell > IslandCargoPreparation    # 岛屿每日补给 > 经营模块 > 每日订单 > 每日/周任务 > 每周珍珠采购与售卖 > 货物筹备\n> Event > Event2 > Event3 > Raid > Hospital > HospitalEvent > Coalition > RaidScuttle > Main > Main2 > Main3    # 活动图1 > 活动图2 > 活动图3 > 共斗活动 > 医院活动 > 医院活动事件 > 共斗活动 > 共斗沉船 > 主线 > 主线2 > 主线3\n> OpsiMeowfficerFarming    # 短猫相接\n> GemsFarming    # 刷紧急委托\n> Ambush11    # 1-1刷伏击\n> OpsiHazard1Leveling    # 侵蚀一练级\n> ThreeOilLowCost    # 三油低耗\n\n格式：每行只写任务名，用 `>` 连接优先级（越靠前优先级越高）。\n上面的 `#` 注释仅用于说明，写入配置时不要保留注释，否则任务名匹配会失败。\n任务名请使用英文配置任务名；不知道任务名时可切到英文界面查看。\n留空可使用内置默认优先级。"
+      "help": "拖动任务行调整调度优先级，越靠上越先执行。新增任务会按照内置默认优先级自动插入到合适位置。"
     }
   },
   "OneClickRetire": {
@@ -1172,6 +1233,7 @@
       "event_20260326_cn": "漫游者招募计划",
       "event_20260417_cn": "假日航线闪耀海滨",
       "event_20260520_cn": "圣印前的同盟",
+      "event_20260625_cn": "美梦巡演奇妙夜",
       "raid_20200624": "复刻特别演习埃塞克斯级",
       "raid_20210708": "复刻穿越彼方的水线",
       "raid_20220127": "演习神秘事件调查",
@@ -1444,7 +1506,7 @@
     },
     "DistanceToBoss": {
       "name": "BOSS战前将潜艇移动到BOSS附近",
-      "help": "仅在\"潜艇出击方案\"为\"仅BOSS战\"及\"狩猎及BOSS战\",时生效\n选择\"距离BOSS X格\"需要保证潜艇狩猎范围能覆盖到BOSS，距离使用曼哈顿距离计算，选择\"使用远洋支援\"需要潜艇队伍里有U522/达芬奇",
+      "help": "仅在\"潜艇出击方案\"为\"仅BOSS战\"及\"狩猎及BOSS战\"时生效\n选择\"距离BOSS X格\"需要保证潜艇狩猎范围能覆盖到BOSS，距离使用曼哈顿距离计算，选择\"使用远洋支援\"需要潜艇队伍里有U522/达芬奇",
       "to_boss_position": "至 BOSS 所在位置",
       "1_grid_to_boss": "距离 BOSS 1 格",
       "2_grid_to_boss": "距离 BOSS 2 格",
@@ -1589,7 +1651,7 @@
   },
   "C72MysteryFarming": {
     "_info": {
-      "name": "7-2 三站拣垃圾",
+      "name": "7-2 三战拣垃圾",
       "help": "打三战，拣完问号后撤退"
     },
     "StepOnA3": {
@@ -1866,10 +1928,11 @@
     "Mode": {
       "name": "难度",
       "help": "SP图需要使用活动每日SP运行",
-      "easy": "easy",
-      "normal": "normal",
-      "hard": "hard",
-      "sp": "sp"
+      "tc1": "tc1",
+      "tc2": "tc2",
+      "tc3": "tc3",
+      "sp": "sp",
+      "ex": "ex"
     },
     "Fleet": {
       "name": "出击队伍",
@@ -1902,7 +1965,7 @@
     },
     "CustomFilter": {
       "name": "自定义过滤器",
-      "help": "使用自定义过滤器需将“活动商店过滤器”设置为“自定义”，并阅读 https://github.com/LmeSzinc/AzurLaneAutoScript/wiki/filter_string_cn，自己瞎几把设置过滤器出问题了别叫"
+      "help": "使用自定义过滤器需将“活动商店过滤器”设置为“自定义”，并使用 https://filter.nanoda.work/ 生成过滤器，自己瞎几把设置过滤器出问题了别叫"
     }
   },
   "Commission": {
@@ -1926,11 +1989,19 @@
     },
     "CustomFilter": {
       "name": "自定义委托过滤器",
-      "help": "使用自定义过滤器需将 \"委托过滤器\" 设置为 \"自定义\"，并阅读 https://github.com/LmeSzinc/AzurLaneAutoScript/wiki/filter_string_cn ，自己瞎几把设置过滤器漏委托了别叫"
+      "help": "使用自定义过滤器需将 \"委托过滤器\" 设置为 \"自定义\"，并使用 https://filter.nanoda.work/ 生成过滤器 ，自己瞎几把设置过滤器漏委托了别叫"
     },
     "DoMajorCommission": {
       "name": "做主要委托（1200油/1000油委托）",
       "help": "1200油委托现在已经过时，收益很低，建议关闭"
+    },
+    "CommissionNotifyReward": {
+      "name": "Commission.CommissionNotifyReward.name",
+      "help": "Commission.CommissionNotifyReward.help"
+    },
+    "CommissionNotifyRewardStatistics": {
+      "name": "Commission.CommissionNotifyRewardStatistics.name",
+      "help": "Commission.CommissionNotifyRewardStatistics.help"
     }
   },
   "Tactical": {
@@ -1994,7 +2065,7 @@
       "help": ""
     },
     "Favorite": {
-      "name": "优先选择常用",
+      "name": "仅选择常用角色",
       "help": ""
     },
     "MinLevel": {
@@ -2043,6 +2114,9 @@
       "name": "科研过滤器",
       "help": "科研掉落和项目刷新见 https://azur-stats.lyoko.io/，对这些没有基本了解的人不建议编写自定义过滤器，建议使用预优化科研过滤器，自己瞎几把设置过滤器出问题了别叫",
       "custom": "自定义",
+      "series_9_blueprint_ta152": "九期 蓝图+Ta152",
+      "series_9_blueprint_only": "九期 仅蓝图",
+      "series_9_ta152_only": "九期 仅Ta152",
       "series_8_blueprint_305": "八期 蓝图+305",
       "series_8_blueprint_only": "八期 仅蓝图",
       "series_8_305_only": "八期 仅305",
@@ -2068,7 +2142,7 @@
     },
     "CustomFilter": {
       "name": "自定义科研过滤器",
-      "help": "使用自定义过滤器需将 \"科研过滤器\" 设置为 \"自定义\"，并阅读 https://github.com/LmeSzinc/AzurLaneAutoScript/wiki/filter_string_cn ，自己瞎几把设置过滤器出问题了别叫"
+      "help": "使用自定义过滤器需将 \"科研过滤器\" 设置为 \"自定义\"，并使用 https://filter.nanoda.work/ 生成过滤器 ，自己瞎几把设置过滤器出问题了别叫"
     }
   },
   "Dorm": {
@@ -2138,7 +2212,7 @@
     },
     "Mode": {
       "name": "训练模式",
-      "help": "无缝练猫将每隔 2.5 ~ 3.5 小时收取指挥猫\n每天收一只意思是每天收一只，周日收全部、强化并重新填充队列，以完成每周任务",
+      "help": "无缝练猫将每隔 2.5 ~ 3.5 小时收取指挥喵\n每天收一只意思是每天收一只，周日收全部、强化并重新填充队列，以完成每周任务",
       "seamlessly": "无缝练猫",
       "once_a_day": "每天收一只"
     },
@@ -2268,7 +2342,7 @@
     },
     "BuySkinBox": {
       "name": "买外观装备箱",
-      "help": "为降低维护成本，过滤器中的外观箱选择器不会随游戏更新，但Alas会将任何未知的，数量为1的，消耗7000物资的物品视为外观箱，并购买"
+      "help": "为降低维护成本，过滤器中的外观箱选择器不会随游戏更新，但AzurPilot会将任何未知的，数量为1的，消耗7000物资的物品视为外观箱，并购买"
     },
     "ConsumeCoins": {
       "name": "消耗溢出物资",
@@ -2705,7 +2779,8 @@
       "sirius": "天狼星",
       "new_jersey": "新泽西",
       "taihou": "鹩",
-      "aegir": "埃吉尔"
+      "aegir": "埃吉尔",
+      "nakhimov": "纳希莫夫"
     }
   },
   "Daily": {
@@ -3032,6 +3107,10 @@
     "OpsiOnePushConfig": {
       "name": "大世界推送设置",
       "help": "“大世界信息独立推送”功能开启时设置才生效。使用 Onepush 推送一条关于侵蚀1和短猫的信息。配置方法见文档：https://github.com/LmeSzinc/AzurLaneAutoScript/wiki/Onepush-configuration-%5BCN%5D"
+    },
+    "AutoSearchTimeLimit": {
+      "name": "自律寻敌时间限制",
+      "help": "单位：分钟。自律寻敌时连续多长时间没遇到事件会判定为游戏卡死"
     }
   },
   "OpsiAshBeacon": {
@@ -3112,6 +3191,10 @@
       "name": "上一次完成的区域",
       "help": "自动更新的数值，填0可重置进度，重置后自动跳过已开荒的海域\n支持海域ID、国服/国际服/日服/台服海域名称，例如 \"51\", \"NA海域东南E\", \"NA Ocean SE Sector E\""
     },
+    "AllowHazard1Leveling": {
+      "name": "允许开荒期间运行侵蚀1练级",
+      "help": "开启后将不会推迟侵蚀1练级任务，慎用，没体力开荒就老实了。"
+    },
     "ExploreProgress": {
       "name": "每月开荒进度",
       "help": "显示当前每月开荒的完成百分比"
@@ -3133,7 +3216,7 @@
     },
     "CustomFilter": {
       "name": "自定义过滤器",
-      "help": "使用自定义过滤器需将 \"港口商店过滤器\" 设置为 \"自定义\"，并阅读 https://github.com/LmeSzinc/AzurLaneAutoScript/wiki/filter_string_cn ，自己瞎几把设置过滤器出问题了别叫"
+      "help": "使用自定义过滤器需将 \"港口商店过滤器\" 设置为 \"自定义\"，并使用 https://filter.nanoda.work/ 生成过滤器，自己瞎几把设置过滤器出问题了别叫"
     },
     "DisableBeforeDate": {
       "name": "每月 X 号前，不购买大世界商店",
@@ -3218,8 +3301,8 @@
       "help": "开启后将带来额外的行动力消耗，一般不用打开，慢慢打就好"
     },
     "HasStronghold": {
-      "name": "OpsiStronghold.HasStronghold.name",
-      "help": "OpsiStronghold.HasStronghold.help"
+      "name": "塞壬要塞",
+      "help": "检测到塞壬要塞时执行"
     }
   },
   "OpsiMonthBoss": {
@@ -3251,10 +3334,6 @@
       "name": "保留 X 点行动力",
       "help": "行动力低于 X 后停止，自动打开行动力箱子，X 包含箱子中的行动力，建议保留3000行动力给侵蚀1练级\n这个值将在大世界重置前3天自动减少至200点，如果启用侵蚀1练级则改为1000点，并在最后一天自动减少至0点"
     },
-    "SmartNaturalAPCleanup": {
-      "name": "智能调度自然行动力清理",
-      "help": "智能调度拉起短猫清理自然恢复行动力时使用的一次性隐藏标记。"
-    },
     "HazardLevel": {
       "name": "侵蚀等级",
       "help": "按顺时针出击特定侵蚀等级的海域\n建议选 5 或 3，有更高的 猫点/行动力 比",
@@ -3267,11 +3346,11 @@
     },
     "TargetZone": {
       "name": "指定海域",
-      "help": "仅出击指定的海域，支持海域ID或名称。填0跳转至默认逻辑（按侵蚀等级搜索）。"
+      "help": "仅出击指定的海域，支持海域ID或名称。填0跳转至默认逻辑（按侵蚀等级搜索）。\n开启“循环出击指定海域”后，可填写多个海域并按顺序循环，例如 42,55,45、42, 55, 45、42，55，45。"
     },
     "StayInZone": {
       "name": "循环出击指定海域",
-      "help": "开启后，将一直停留在“指定海域”内运行，不再循环其他海域。仅在指定海域不为0时生效。"
+      "help": "开启后，将按“指定海域”配置运行。指定单个海域时一直停留在该海域；指定多个海域时按填写顺序循环。仅在指定海域不为0时生效。"
     },
     "APPreserveUntilReset": {
       "name": "月底重置强制消耗行动力",
@@ -3323,8 +3402,8 @@
     "SkipHpCheck": {
       "name": "献祭流跳过血量检测",
       "help": "开启后跳过战斗后的血量检测，即使船沉了也不会停止练级",
-      "True": "True",
-      "False": "False"
+      "True": "开启",
+      "False": "关闭"
     },
     "Cl1Filter": {
       "name": "明石购买筛选",
@@ -3333,10 +3412,6 @@
     "RecordNonCL1AP": {
       "name": "统计非侵蚀1来源体力",
       "help": "开启后，将统计所有来源的体力获取数据（如明石商店购买）。关闭后，仅在侵蚀1练级任务中统计体力数据，忽略其他任务或手动操作时的体力获取。"
-    },
-    "PreserveVirtualAsset": {
-      "name": "保留 X 点虚拟资产",
-      "help": "虚拟资产 = 体力 × 1700/30 + 黄币 + (到月底时间/10分钟) × 1700/30\n虚拟资产低于 X 时运行黄币补充任务，0 为不限制"
     },
     "RecordSeaMiles": {
       "name": "海里数记录",
@@ -3429,13 +3504,13 @@
   "OpsiScheduling": {
     "_info": {
       "name": "智能调度",
-      "help": "大世界智能调度功能，用于协调侵蚀1练级与黄币补充任务之间的切换\n启用后将根据黄币和行动力自动在不同任务之间切换并发送推送通知\n\n原版 AzurPilot 的一些防呆限制已被解除，请谨慎设置参数"
+      "help": "智能调度相关配置"
     },
     "UseSmartSchedulingOperationCoinsPreserve": {
       "name": "获取 X 个作战补给凭证",
-      "help": "启用后将使用下方设置的 获取 X 个作战补给凭证 的配置，禁用则使用侵蚀1练级 黄币保留配置\n关闭后将使用行动力控制\n打开后使用黄币控制",
-      "True": "True",
-      "False": "False"
+      "help": "启用后将使用下方设置的 获取 X 个作战补给凭证 的配置，禁用则使用侵蚀1练级 黄币保留配置",
+      "True": "开启",
+      "False": "关闭"
     },
     "OperationCoinsPreserve": {
       "name": "侵蚀1练级 保留 X 个作战补给凭证",
@@ -3444,16 +3519,6 @@
     "ActionPointPreserve": {
       "name": "短猫相接 保留 X 点行动力",
       "help": "行动力低于 X 后停止，自动打开行动力箱子，X 包含箱子中的行动力，建议保留1000行动力给侵蚀1练级"
-    },
-    "ActionPointEarlyTriggerEnable": {
-      "name": "行动力提前调度",
-      "help": "启用后在侵蚀一或短猫结束时记录自然行动力，并按每 10 分钟回复 1 点行动力计算智能调度下次运行时间，避免自然行动力溢出。",
-      "True": "True",
-      "False": "False"
-    },
-    "ActionPointEarlyTriggerThreshold": {
-      "name": "提前调度行动力阈值",
-      "help": "自然行动力恢复到 X 时再次运行智能调度。默认 200，适合在行动力接近自然上限时重新决定执行侵蚀一或短猫。"
     },
     "OperationCoinsReturnThreshold": {
       "name": "获取 X 个作战补给凭证",
@@ -3483,20 +3548,30 @@
       "True": "已启用",
       "False": "未启用"
     },
-    "MeowStartEarlyMode": {
-      "name": "月末行动力自动清理模式",
-      "help": "提前小时数 = (当前行动力/30 × 历史平均每轮短猫耗时) × 模式系数，并与“下个月大世界重置剩余时间”比较；激进(×0.8)少提前，均衡(×1.2)平衡，保守(×1.5)多提前",
-      "aggressive": "激进模式",
-      "balanced": "均衡模式",
-      "conservative": "保守模式"
+    "TaskPriority": {
+      "name": "补充黄币任务优先级",
+      "help": "黄币不足时，执行补充黄币任务的优先级顺序。使用 > 分隔。"
+    }
+  },
+  "OpsiPreventActionPointOverflow": {
+    "_info": {
+      "name": "防止行动力溢出",
+      "help": "当前行动力达到上限时执行大世界任务消耗行动力\n选择智能调度时，如果行动力和黄币都不足导致没有可运行任务，将运行短猫清理当前行动力"
     },
-    "MeowStartEarlyEnable": {
-      "name": "启用月末行动力自动清理",
-      "help": "根据历史短猫耗时与当前行动力，自动判断是否需要提前开始短猫来清理月末过剩行动力；判断基准为“下个月大世界重置时间”，不是每日服务器刷新时间"
+    "Task": {
+      "name": "执行任务",
+      "help": "推荐选择智能调度，防溢出任务对此有专门处理",
+      "OpsiScheduling": "智能调度（推荐）",
+      "OpsiHazard1Leveling": "侵蚀1练级",
+      "OpsiMeowfficerFarming": "短猫相接"
     },
-    "VirtualAssetPreserve": {
-      "name": "侵蚀1练级 保留 X 点虚拟资产",
-      "help": "虚拟资产低于 X 时运行黄币补充任务，虚拟资产 = 体力 × 1700/30 + 黄币 + (到月底时间/10分钟) × 1700/30"
+    "ActionPointUpperbound": {
+      "name": "当前行动力上限",
+      "help": "当前行动力达到此值时开始执行大世界任务"
+    },
+    "ActionPointLowerbound": {
+      "name": "当前行动力下限",
+      "help": "防溢出任务会持续运行，直到当前行动力低于此值"
     }
   },
   "IslandPlan": {
@@ -3813,8 +3888,8 @@
       "help": "以>连接，例如肇和 新泽西 小天城：ChaoHo > NewJersey > Amagi_chan\n小加加：Saratoga > 明石：Akashi > 塔什干：Tashkent > 应瑞：YingSwei\n恶毒：LeMalin > 独角兽：Unicorn > 岛风：Shimakaze > 柴郡：Cheshire\n镇海：ChenHai > 威廉D波特：WilliamDPorter\n海伦娜：Helena > 大帝：Friedrich > 愛宕：Atago\n逸仙：Yixian > 奥古斯特：August > 欧根亲王：Eugen > 胡德：Hood > 标枪：Javelin > 拉菲：Laffey > 探索者：Explorer > 领航员：Navigator > 领洋者：OceanCrosser > 飞云：FeiYun > 高雄：Takao\n仅识别默认排序前两排；指定舰娘不可用时回退 WorkerJuu。"
     },
     "DoubleBambooShoots": {
-      "name": "凉拌双笋",
-      "help": "在基础餐品之前优先制作（最高优先级）"
+      "name": "季节餐优先制作",
+      "help": "开启后按当前季节选择餐馆季节餐，并在基础餐品之前优先制作。春季为凉拌双笋，夏季为苋菜饭团；秋冬无餐馆季节餐时不额外制作。"
     },
     "Meal1": {
       "name": "餐品1",
@@ -4024,8 +4099,8 @@
       "help": "以>连接，例如肇和 新泽西 小天城：ChaoHo > NewJersey > Amagi_chan\n小加加：Saratoga > 明石：Akashi > 塔什干：Tashkent > 应瑞：YingSwei\n恶毒：LeMalin > 独角兽：Unicorn > 岛风：Shimakaze > 柴郡：Cheshire\n镇海：ChenHai > 威廉D波特：WilliamDPorter\n海伦娜：Helena > 大帝：Friedrich > 愛宕：Atago\n逸仙：Yixian > 奥古斯特：August > 欧根亲王：Eugen > 胡德：Hood > 标枪：Javelin > 拉菲：Laffey > 探索者：Explorer > 领航员：Navigator > 领洋者：OceanCrosser > 飞云：FeiYun > 高雄：Takao\n仅识别默认排序前两排；指定舰娘不可用时回退 WorkerJuu。"
     },
     "Seasonal": {
-      "name": "迎春花茶",
-      "help": "在常驻餐品之前检查并制作"
+      "name": "季节饮品优先制作",
+      "help": "开启后按当前季节选择白熊饮品的季节饮品，并在基础饮品之前优先制作。春季为迎春花茶，夏季为西瓜汁；秋冬无白熊饮品季节饮品时不额外制作。"
     },
     "Meal1": {
       "name": "餐品1",
@@ -4837,8 +4912,8 @@
     "WeeklyPhoto": {
       "name": "每周照相任务",
       "help": "从开发计划页面启动每周照相任务，循环完成三轮照相与空闲选择，直到任务图标消失。",
-      "True": "True",
-      "False": "False"
+      "True": "开启",
+      "False": "关闭"
     }
   },
   "IslandPearlSell": {
@@ -5616,7 +5691,7 @@
       "name": "杀游戏跳过战斗",
       "help": "",
       "True": "已启用",
-      "False": "False"
+      "False": "关闭"
     }
   },
   "BoxDisassemble": {
@@ -5713,8 +5788,8 @@
     "EnableRemoteSSH": {
       "name": "启用远程 SSH 管理",
       "help": "在重启模拟器之前，通过 SSH 在远程服务器上执行特定指令（如重启 Docker 容器）。",
-      "True": "True",
-      "False": "False"
+      "True": "开启",
+      "False": "关闭"
     },
     "RemoteSSHHost": {
       "name": "远程服务器地址",
@@ -5733,12 +5808,12 @@
       "help": "SSH 登录所需的公钥内容（如果需要）"
     },
     "RemoteStartCommand": {
-      "name": "EmulatorManager.RemoteStartCommand.name",
-      "help": "EmulatorManager.RemoteStartCommand.help"
+      "name": "远程启动命令",
+      "help": "模拟器远程启动时执行的命令"
     },
     "RemoteStopCommand": {
-      "name": "EmulatorManager.RemoteStopCommand.name",
-      "help": "EmulatorManager.RemoteStopCommand.help"
+      "name": "远程关闭命令",
+      "help": "模拟器远程关闭时执行的命令"
     }
   },
   "OpsiSimulatorParameters": {
@@ -5826,8 +5901,8 @@
       "help": "存放任务内部状态，任务异常时可以手动清除"
     },
     "Storage": {
-      "name": "Storage.Storage.name",
-      "help": "Storage.Storage.help"
+      "name": "存储空间",
+      "help": "清除任务内部存储的状态数据"
     }
   },
   "Gui": {
@@ -5876,30 +5951,31 @@
       "Announcement": "公告",
       "Update": "更新器",
       "Remote": "远程控制",
+      "Setting": "设置",
       "Utils": "开发者工具"
     },
     "Overview": {
       "Scheduler": "调度器",
       "Dashboard": "仪表盘",
-      "SecondsAgo": "Gui.Overview.SecondsAgo",
-      "MinutesAgo": "Gui.Overview.MinutesAgo",
-      "HoursAgo": "Gui.Overview.HoursAgo",
-      "DaysAgo": "Gui.Overview.DaysAgo",
-      "MonthsAgo": "Gui.Overview.MonthsAgo",
-      "YearsAgo": "Gui.Overview.YearsAgo",
-      "NoData": "Gui.Overview.NoData",
-      "Oil": "Gui.Overview.Oil",
-      "Coin": "Gui.Overview.Coin",
-      "Gem": "Gui.Overview.Gem",
-      "Cube": "Gui.Overview.Cube",
-      "Pt": "Gui.Overview.Pt",
-      "YellowCoin": "Gui.Overview.YellowCoin",
-      "PurpleCoin": "Gui.Overview.PurpleCoin",
-      "ActionPoint": "Gui.Overview.ActionPoint",
-      "Merit": "Gui.Overview.Merit",
-      "Medal": "Gui.Overview.Medal",
-      "Core": "Gui.Overview.Core",
-      "GuildCoin": "Gui.Overview.GuildCoin",
+      "SecondsAgo": "秒前",
+      "MinutesAgo": "分钟前",
+      "HoursAgo": "小时前",
+      "DaysAgo": "天前",
+      "MonthsAgo": "月前",
+      "YearsAgo": "年前",
+      "NoData": "无数据",
+      "Oil": "石油",
+      "Coin": "物资",
+      "Gem": "钻石",
+      "Cube": "魔方",
+      "Pt": "活动PT",
+      "YellowCoin": "大世界黄币",
+      "PurpleCoin": "大世界紫币",
+      "ActionPoint": "行动力",
+      "Merit": "功勋",
+      "Medal": "勋章",
+      "Core": "核心数据",
+      "GuildCoin": "舰队币",
       "Log": "日志",
       "Running": "运行中",
       "Pending": "队列中",
@@ -5985,8 +6061,141 @@
       "NotRunning": "未运行，与服务器的连接断开或服务器离线",
       "NotEnable": "未启用，在 deploy.yaml 中设置 webui 密码并启用远程控制",
       "EntryPoint": "远程访问 url 地址:",
+      "StatusDirect": "P2P 直连",
+      "StatusTurn": "TURN 中继",
+      "StatusSsh": "SSH 转发",
+      "StatusSignaling": "等待 P2P 连接",
+      "StatusStarting": "正在连接",
+      "StatusFailed": "连接失败",
       "ConfigureHint": "配置教程：",
       "SSHNotInstall": "系统中没有 ssh 工具，请参考教程下载或安装 ssh"
+    },
+    "Launcher": {
+      "StartupTitle": "启动器设置",
+      "AutoStart": "Windows 开机自启动",
+      "AutoStartHelp": "开启后，启动器会在登录 Windows 时自动启动，并默认最小化到托盘。",
+      "Loading": "正在读取启动器状态...",
+      "Connected": "启动器已连接",
+      "Disconnected": "启动器未连接，请通过启动器打开 AzurPilot",
+      "RemoteUnavailable": "开机自启动只能在本机 WebUI 中设置",
+      "Unsupported": "当前平台不支持开机自启动",
+      "Enabled": "已开启",
+      "Disabled": "已关闭",
+      "Setting": "正在设置...",
+      "Failed": "设置失败"
+    },
+    "DeploySetting": {
+      "Title": "部署设置",
+      "RestartNotice": "设置会立即写入 config/deploy.yaml，部分配置需要重启 AzurPilot 后生效。",
+      "Loading": "正在读取部署设置...",
+      "Refresh": "重新读取",
+      "Save": "保存设置",
+      "Saving": "正在保存...",
+      "Saved": "已保存到 config/deploy.yaml，部分配置将在下次启动后生效。",
+      "Failed": "操作失败",
+      "Enabled": "启用",
+      "Disabled": "禁用",
+      "DemoDisabled": "演示模式下不能修改部署设置。",
+      "GroupGit": "Git 配置",
+      "GroupPython": "Python 配置",
+      "GroupAdb": "ADB 配置",
+      "GroupOcr": "OCR 配置",
+      "GroupUpdate": "更新配置",
+      "GroupMisc": "其他配置",
+      "GroupRemoteAccess": "远程访问",
+      "GroupWebui": "WebUI 配置",
+      "Repository": "AzurPilot 仓库地址",
+      "RepositoryHelp": "用于更新和安装的 Git 仓库地址。国内用户可使用 git://git.pull/AzurPilot。",
+      "Branch": "分支",
+      "BranchHelp": "稳定版通常使用 master，开发或测试可填写 dev、app 等分支。",
+      "GitExecutable": "Git 可执行文件",
+      "GitExecutableHelp": "git.exe 路径，通常保持默认即可。",
+      "GitProxy": "Git 代理",
+      "GitProxyHelp": "HTTP 或 SOCKS5 代理地址，留空表示不使用代理。",
+      "SSLVerify": "Git SSL 验证",
+      "SSLVerifyHelp": "连接可信网络时建议开启。",
+      "AutoUpdate": "启动时自动更新",
+      "AutoUpdateHelp": "启动 AzurPilot 时自动检查并更新代码。",
+      "PythonExecutable": "Python 可执行文件",
+      "PythonExecutableHelp": "用于运行 AzurPilot 的 Python 路径。",
+      "PypiMirror": "PyPI 镜像",
+      "PypiMirrorHelp": "安装依赖使用的镜像地址，留空使用默认源。",
+      "InstallDependencies": "启动时安装依赖",
+      "InstallDependenciesHelp": "启动时自动检查并安装 Python 依赖。",
+      "AdbExecutable": "ADB 可执行文件",
+      "AdbExecutableHelp": "adb.exe 路径。",
+      "ReplaceAdb": "替换模拟器 ADB",
+      "ReplaceAdbHelp": "兼容国产模拟器时建议开启。",
+      "AutoConnect": "自动连接模拟器",
+      "AutoConnectHelp": "启动时尝试连接可用模拟器实例。",
+      "InstallUiautomator2": "重装 uiautomator2",
+      "InstallUiautomator2Help": "启动时检查并重新安装 uiautomator2。",
+      "UseOcrServer": "使用 OCR 服务器",
+      "UseOcrServerHelp": "让实例连接独立 OCR 服务以减少内存占用。",
+      "StartOcrServer": "启动 GUI 时启动 OCR 服务器",
+      "StartOcrServerHelp": "启动 WebUI 时同时启动 OCR 服务进程。",
+      "OcrServerPort": "OCR 服务器端口",
+      "OcrServerPortHelp": "WebUI 启动的 OCR 服务监听端口。",
+      "OcrClientAddress": "OCR 客户端地址",
+      "OcrClientAddressHelp": "实例连接 OCR 服务时使用的地址。",
+      "EnableReload": "启用内置更新和重载",
+      "EnableReloadHelp": "允许 WebUI 使用内置更新和自动重启能力。",
+      "CheckUpdateInterval": "检查更新间隔",
+      "CheckUpdateIntervalHelp": "每隔多少分钟检查一次更新，0 表示禁用。",
+      "AutoRestartTime": "定时重启时间",
+      "AutoRestartTimeHelp": "有更新时每天自动重启的时间，留空表示禁用。",
+      "DiscordRichPresence": "Discord 富状态",
+      "DiscordRichPresenceHelp": "在 Discord 中展示 AzurPilot 运行状态。",
+      "EnableRemoteAccess": "启用远程访问",
+      "EnableRemoteAccessHelp": "通过 SSH 反向隧道暴露 WebUI。公网使用前请务必设置密码。",
+      "RemoteAccessMode": "远程访问模式",
+      "RemoteAccessModeHelp": "auto 优先 P2P/TURN 并回退 SSH；webrtc 优先 P2P；ssh 仅使用旧 SSH 转发。",
+      "SSHUser": "SSH 用户",
+      "SSHUserHelp": "远程访问服务登录用户名，留空时启动时生成。",
+      "SSHServer": "SSH 服务器",
+      "SSHServerHelp": "远程访问连接的服务器，格式为 host:port。",
+      "SSHExecutable": "SSH 可执行文件",
+      "SSHExecutableHelp": "ssh.exe 路径，留空或使用 ssh 表示从 PATH 查找。",
+      "AllowedRedirectHosts": "允许重定向域名",
+      "AllowedRedirectHostsHelp": "SSH 调度重定向的可信目标域名，JSON 数组或逗号分隔。留空时默认允许 SSHServer 同域和上级域通配符。",
+      "MaxRedirects": "最大重定向次数",
+      "MaxRedirectsHelp": "单次远程访问启动最多跟随多少次 SSH 调度重定向。",
+      "SignalingServer": "WebRTC 信令服务器",
+      "SignalingServerHelp": "留空时从 SSHServer 自动推导为 wss://host/signal。",
+      "StunServers": "STUN 服务器",
+      "StunServersHelp": "JSON 数组或逗号分隔字符串，用于 NAT 打洞。",
+      "TurnServers": "TURN 服务器",
+      "TurnServersHelp": "JSON 数组或逗号分隔字符串，P2P 失败时作为中继。",
+      "TurnCredentialMode": "TURN 凭证模式",
+      "TurnCredentialModeHelp": "当前支持 static，ephemeral 为后续短期凭证预留。",
+      "WebuiHost": "WebUI 监听地址",
+      "WebuiHostHelp": "WebUI 监听的主机地址，例如 0.0.0.0、127.0.0.1 或 ::。",
+      "WebuiPort": "WebUI 端口",
+      "WebuiPortHelp": "WebUI 监听端口。",
+      "Language": "WebUI 语言",
+      "LanguageHelp": "WebUI 使用的显示语言。",
+      "Theme": "WebUI 主题",
+      "ThemeHelp": "WebUI 使用的视觉主题。",
+      "DpiScaling": "跟随系统 DPI 缩放",
+      "DpiScalingHelp": "跟随系统 DPI 缩放界面尺寸。",
+      "Password": "WebUI 密码",
+      "PasswordHelp": "访问 WebUI 使用的密码。留空表示不设置密码。",
+      "CDN": "PyWebIO CDN",
+      "CDNHelp": "可填写 true、false 或自定义 CDN 地址。",
+      "WebuiSSLKey": "SSL 密钥文件",
+      "WebuiSSLKeyHelp": "WebUI HTTPS 使用的 SSL 密钥路径，需和证书同时设置。",
+      "WebuiSSLCert": "SSL 证书文件",
+      "WebuiSSLCertHelp": "WebUI HTTPS 使用的 SSL 证书路径，需和密钥同时设置。"
+    },
+    "StartupRun": {
+      "Title": "启动时自动运行",
+      "Description": "开启后，WebUI 或启动器启动 AzurPilot 时会自动运行当前实例；只影响下次启动。",
+      "Loading": "正在读取启动策略...",
+      "Enabled": "已加入启动时自动运行列表",
+      "Disabled": "未加入启动时自动运行列表",
+      "Setting": "正在写入 deploy.yaml...",
+      "Failed": "设置失败",
+      "Unavailable": "当前无法读取启动时自动运行设置"
     },
     "Text": {
       "InvalidFeedBack": "格式错误。 示例：{0}",
@@ -6058,13 +6267,6 @@
       "AvgMeowRoundTime": "平均一轮短猫时长",
       "MeowLootTitle": "短猫相接收获",
       "NoMeowDataNotice": "暂无本地短猫收获数据，完成一次短猫相接后会自动生成",
-      "MeowAdvanceAdviceTitle": "短猫提前开始建议",
-      "CurrentAP": "当前AP: {value}",
-      "ApPerRound": "每轮消耗: {value} AP",
-      "AvailableRounds": "可运行轮数: {value}{unit}",
-      "AvgRoundDuration": "平均每轮耗时: {value}{unit}",
-      "CurrentMode": "当前模式: {value}",
-      "RecommendAhead": "建议提前: {value}{unit}",
       "RoundUnit": "轮",
       "SecondUnit": "秒",
       "HourUnit": "小时",
@@ -6087,9 +6289,6 @@
       "TargetExpRequired": "目标等级所需经验",
       "BattlesCompleted": "已战斗场次",
       "ExpRemaining": "还需经验",
-      "StartCleanupTime": "建议开始清理时间: {value}",
-      "NextOsReset": "下次大世界重置: {value}",
-      "MeowAutoCleanupStatus": "自动提前清理: {value}",
       "CommissionIncomeTitle": "委托收益统计",
       "CommissionIncomeMonth": "本月",
       "CommissionIncomeWeek": "本周",
@@ -6112,20 +6311,18 @@
       "NoValidResourceData": "暂无有效资源数据"
     },
     "Tactical": {
-      "SkillAutoSwitch": "Gui.Tactical.SkillAutoSwitch"
+      "SkillAutoSwitch": "技能自动切换"
     },
     "OpsiScheduling": {
-      "UseSmartSchedulingOperationCoinsPreserve": "Gui.OpsiScheduling.UseSmartSchedulingOperationCoinsPreserve",
-      "OperationCoinsPreserve": "Gui.OpsiScheduling.OperationCoinsPreserve",
-      "ActionPointPreserve": "Gui.OpsiScheduling.ActionPointPreserve",
-      "ActionPointEarlyTriggerEnable": "行动力提前调度",
-      "ActionPointEarlyTriggerThreshold": "提前调度行动力阈值",
-      "OperationCoinsReturnThreshold": "Gui.OpsiScheduling.OperationCoinsReturnThreshold",
-      "EnableMeowfficerFarming": "Gui.OpsiScheduling.EnableMeowfficerFarming",
-      "EnableObscure": "Gui.OpsiScheduling.EnableObscure",
-      "EnableAbyssal": "Gui.OpsiScheduling.EnableAbyssal",
-      "EnableStronghold": "Gui.OpsiScheduling.EnableStronghold",
-      "MeowStartEarlyMode": "Gui.OpsiScheduling.MeowStartEarlyMode"
+      "UseSmartSchedulingOperationCoinsPreserve": "智能调度作战补给凭证保留",
+      "OperationCoinsPreserve": "作战补给凭证保留",
+      "ActionPointPreserve": "行动力保留",
+      "OperationCoinsReturnThreshold": "作战补给凭证回退阈值",
+      "EnableMeowfficerFarming": "启用指挥喵刷取",
+      "EnableObscure": "启用隐秘海域",
+      "EnableAbyssal": "启用深渊海域",
+      "EnableStronghold": "启用塞壬要塞",
+      "TaskPriority": "任务优先级"
     },
     "Misc": {
       "Enabled": "已开启",

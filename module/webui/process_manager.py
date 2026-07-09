@@ -206,6 +206,8 @@ class ProcessManager:
                 if update_tail_hit:
                     return 4
                 return 2
+            elif "此版本为演示用途" in s:
+                return 2
             elif update_tail_hit:
                 return 4
             else:
@@ -279,10 +281,20 @@ class ProcessManager:
         set_file_logger(name=config_name)
         if State.electron:
             # 参考 https://github.com/LmeSzinc/AzurLaneAutoScript/issues/2051
-            logger.info("检测到 Electron 环境，移除标准输出日志处理器")
+            logger.info("[WebUI] 检测到 Electron 环境，移除标准输出日志处理器")
             from module.logger import console_hdlr
             logger.removeHandler(console_hdlr)
         set_func_logger(func=q.put)
+
+        if os.environ.get("DEMO") == "1":
+            logger.info("Log3")
+            time.sleep(1)
+            logger.info("Log2")
+            time.sleep(1)
+            logger.info("Log1")
+            time.sleep(1)
+            logger.info("[WebUI] 此版本为演示用途")
+            return
 
         from module.config.config import AzurLaneConfig
 
@@ -320,7 +332,7 @@ class ProcessManager:
             elif func in get_available_mod_func():
                 getattr(load_mod(get_func_mod(func)), inflection.underscore(func))(config_name)
             else:
-                logger.critical(f"杂鱼大叔，连功能模块都找不到吗？{func} 这种东西根本不存在啦~")
+                logger.critical(f"[WebUI] 杂鱼大叔，连功能模块都找不到吗？{func} 这种东西根本不存在啦~")
             if e is not None and e.is_set():
                 logger.info(f"[{config_name}] exited. Reason: Update\n")
             else:

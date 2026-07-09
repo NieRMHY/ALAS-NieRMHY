@@ -46,6 +46,7 @@ MenuDevelop:
   Announcement:
   Update:
   Remote:
+  Setting:
   Utils:
 
 Overview:
@@ -155,8 +156,141 @@ Remote:
   NotRunning:
   NotEnable:
   EntryPoint:
+  StatusDirect:
+  StatusTurn:
+  StatusSsh:
+  StatusSignaling:
+  StatusStarting:
+  StatusFailed:
   ConfigureHint:
   SSHNotInstall:
+
+Launcher:
+  StartupTitle:
+  AutoStart:
+  AutoStartHelp:
+  Loading:
+  Connected:
+  Disconnected:
+  RemoteUnavailable:
+  Unsupported:
+  Enabled:
+  Disabled:
+  Setting:
+  Failed:
+
+DeploySetting:
+  Title:
+  RestartNotice:
+  Loading:
+  Refresh:
+  Save:
+  Saving:
+  Saved:
+  Failed:
+  Enabled:
+  Disabled:
+  DemoDisabled:
+  GroupGit:
+  GroupPython:
+  GroupAdb:
+  GroupOcr:
+  GroupUpdate:
+  GroupMisc:
+  GroupRemoteAccess:
+  GroupWebui:
+  Repository:
+  RepositoryHelp:
+  Branch:
+  BranchHelp:
+  GitExecutable:
+  GitExecutableHelp:
+  GitProxy:
+  GitProxyHelp:
+  SSLVerify:
+  SSLVerifyHelp:
+  AutoUpdate:
+  AutoUpdateHelp:
+  PythonExecutable:
+  PythonExecutableHelp:
+  PypiMirror:
+  PypiMirrorHelp:
+  InstallDependencies:
+  InstallDependenciesHelp:
+  AdbExecutable:
+  AdbExecutableHelp:
+  ReplaceAdb:
+  ReplaceAdbHelp:
+  AutoConnect:
+  AutoConnectHelp:
+  InstallUiautomator2:
+  InstallUiautomator2Help:
+  UseOcrServer:
+  UseOcrServerHelp:
+  StartOcrServer:
+  StartOcrServerHelp:
+  OcrServerPort:
+  OcrServerPortHelp:
+  OcrClientAddress:
+  OcrClientAddressHelp:
+  EnableReload:
+  EnableReloadHelp:
+  CheckUpdateInterval:
+  CheckUpdateIntervalHelp:
+  AutoRestartTime:
+  AutoRestartTimeHelp:
+  DiscordRichPresence:
+  DiscordRichPresenceHelp:
+  EnableRemoteAccess:
+  EnableRemoteAccessHelp:
+  RemoteAccessMode:
+  RemoteAccessModeHelp:
+  SSHUser:
+  SSHUserHelp:
+  SSHServer:
+  SSHServerHelp:
+  SSHExecutable:
+  SSHExecutableHelp:
+  AllowedRedirectHosts:
+  AllowedRedirectHostsHelp:
+  MaxRedirects:
+  MaxRedirectsHelp:
+  SignalingServer:
+  SignalingServerHelp:
+  StunServers:
+  StunServersHelp:
+  TurnServers:
+  TurnServersHelp:
+  TurnCredentialMode:
+  TurnCredentialModeHelp:
+  WebuiHost:
+  WebuiHostHelp:
+  WebuiPort:
+  WebuiPortHelp:
+  Language:
+  LanguageHelp:
+  Theme:
+  ThemeHelp:
+  DpiScaling:
+  DpiScalingHelp:
+  Password:
+  PasswordHelp:
+  CDN:
+  CDNHelp:
+  WebuiSSLKey:
+  WebuiSSLKeyHelp:
+  WebuiSSLCert:
+  WebuiSSLCertHelp:
+
+StartupRun:
+  Title:
+  Description:
+  Loading:
+  Enabled:
+  Disabled:
+  Setting:
+  Failed:
+  Unavailable:
 
 Text:
   InvalidFeedBack:
@@ -228,13 +362,6 @@ Stat:
   AvgMeowRoundTime:
   MeowLootTitle:
   NoMeowDataNotice:
-  MeowAdvanceAdviceTitle:
-  CurrentAP:
-  ApPerRound:
-  AvailableRounds:
-  AvgRoundDuration:
-  CurrentMode:
-  RecommendAhead:
   RoundUnit:
   SecondUnit:
   HourUnit:
@@ -257,9 +384,6 @@ Stat:
   TargetExpRequired:
   BattlesCompleted:
   ExpRemaining:
-  StartCleanupTime:
-  NextOsReset:
-  MeowAutoCleanupStatus:
   CommissionIncomeTitle:
   CommissionIncomeMonth:
   CommissionIncomeWeek:
@@ -288,15 +412,13 @@ OpsiScheduling:
   UseSmartSchedulingOperationCoinsPreserve:
   OperationCoinsPreserve:
   ActionPointPreserve:
-  ActionPointEarlyTriggerEnable:
-  ActionPointEarlyTriggerThreshold:
 
   OperationCoinsReturnThreshold:
   EnableMeowfficerFarming:
   EnableObscure:
   EnableAbyssal:
   EnableStronghold:
-  MeowStartEarlyMode:
+  TaskPriority:
     
 Misc:
   Enabled:

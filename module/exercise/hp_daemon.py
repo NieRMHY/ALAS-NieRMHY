@@ -6,6 +6,7 @@ from module.base.utils import color_bar_percentage
 from module.combat_ui.assets import *
 from module.exercise.assets import *
 from module.logger import logger
+from module.config.time_source import now as current_time  # Add by MHY: 补上游 #446 遗漏的 current_time import
 
 
 class HpDaemon(ModuleBase):

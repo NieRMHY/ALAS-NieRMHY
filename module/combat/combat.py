@@ -81,7 +81,7 @@ class Combat(Level, HPBalancer, Retirement, SubmarineCall, CombatAuto, CombatMan
             logger.attr('Loading', f'{int(loading * 100)}%')
             return True
         if self.is_combat_executing():
-            logger.warning('检测到战斗状态但未检测到加载条')
+            logger.warning('[战斗] 检测到战斗状态但未检测到加载条')
             return True
         return False
 
@@ -649,7 +649,7 @@ class Combat(Level, HPBalancer, Retirement, SubmarineCall, CombatAuto, CombatMan
             if self.handle_story_skip(drop=drop):
                 continue
             # 处理战斗结算画面
-            if not exp_info and self.handle_get_ship(drop=drop):
+            if self.handle_get_ship(drop=drop):
                 continue
             if self.handle_get_items(drop=drop):
                 continue

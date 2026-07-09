@@ -10,13 +10,14 @@ import threading
 import time
 import re
 import base64
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from functools import partial
 from typing import Dict, List, Optional, Any
 
 # 在导入 pywebio 之前导入伪造模块，避免加载不必要的 PIL 模块
 from module.webui.fake_pil_module import import_fake_pil_module
+from module.config.time_source import now as current_time, status as time_source_status
 from module.statistics.azurstats import AzurStats
 from module.os_simulator.simulator import OSSimulator
 
@@ -140,8 +141,98 @@ RESTRICTED_DEVICE_IDS = {
 RESTRICTED_DEVICE_MESSAGE = (
     "你的公网IP已泄露 请加群https://qm.qq.com/q/7PTRnGrPzO联系我们解除安全限制"
 )
+DEMO_DEVICE_ID_TEXT = "此程序是为了演示用途构建的版本/This application is a version built for demonstration purposes."
 
 
+def is_demo_mode():
+    """
+    判断是否处于演示环境。
+
+    Returns:
+        bool: True 表示 DEMO=1。
+    """
+    return os.environ.get("DEMO") == "1"
+
+
+def is_public_webui_host(host):
+    """
+    判断 WebUI 是否监听所有网络接口。
+
+    Args:
+        host (str): WebUI 监听地址。
+
+    Returns:
+        bool: True 表示 WebUI 允许所有设备访问。
+    """
+    host = str(host or "").strip().lower()
+    return host in ("0.0.0.0", "::", "[::]")
+
+
+def is_webui_password_set(password):
+    """
+    判断 WebUI 密码是否有效设置。
+
+    Args:
+        password: WebUI 密码配置。
+
+    Returns:
+        bool: True 表示密码包含非空白字符。
+    """
+    return bool(str(password or "").strip())
+
+
+def generate_webui_password(length=32):
+    """
+    生成包含大小写字母和数字的 WebUI 密码。
+
+    Args:
+        length (int): 密码长度。
+
+    Returns:
+        str: 随机密码。
+    """
+    letters_upper = string.ascii_uppercase
+    letters_lower = string.ascii_lowercase
+    digits = string.digits
+    alphabet = letters_upper + letters_lower + digits
+    password = [
+        secrets.choice(letters_upper),
+        secrets.choice(letters_lower),
+        secrets.choice(digits),
+    ]
+    password.extend(secrets.choice(alphabet) for _ in range(length - len(password)))
+    secrets.SystemRandom().shuffle(password)
+    return "".join(password)
+
+
+def ensure_public_webui_password(key):
+    """
+    公网监听且未设置密码时自动生成密码。
+
+    Args:
+        key: 命令行或部署配置中的 WebUI 密码。
+
+    Returns:
+        tuple[str | None, str | None]: 有效密码和失败原因。
+    """
+    if is_demo_mode():
+        return key, None
+
+    host = State.webui_host or State.deploy_config.WebuiHost
+    if not is_public_webui_host(host) or is_webui_password_set(key):
+        return key, None
+
+    try:
+        password = generate_webui_password()
+        from deploy.atomic import atomic_write
+
+        atomic_write(WEBUI_AUTO_PASSWORD_FILE, f"{password}\n")
+        State.deploy_config.Password = password
+        logger.warning(f"[WebUI] WebUI 已自动生成密码，请在根目录 {WEBUI_AUTO_PASSWORD_FILE} 查看。")
+        return password, None
+    except Exception as e:
+        logger.exception(f"WebUI 自动生成密码失败: {e}")
+        return None, str(e)
 def timedelta_to_text(delta=None):
     time_delta_name_suffix_dict = {
         "Y": "YearsAgo",
@@ -271,7 +362,7 @@ class AlasGUI(Frame):
     def set_aside(self) -> None:
         # TODO: 更新 put_icon_buttons()
 
-        current_date = datetime.now().date()
+        current_date = current_time().date()
         if current_date.month == 4 and current_date.day == 1:
             self.af_flag = True
 
@@ -378,6 +469,26 @@ class AlasGUI(Frame):
         elif state == 4:
             put_loading_text(t("Gui.Status.Updating"), shape="grow", color="success")
 
+    @staticmethod
+    def _format_tz_offset(offset: timedelta) -> str:
+        seconds = int(offset.total_seconds())
+        sign = '+' if seconds >= 0 else '-'
+        seconds = abs(seconds)
+        hours, seconds = divmod(seconds, 3600)
+        minutes = seconds // 60
+        return f'UTC{sign}{hours:02d}:{minutes:02d}'
+
+    def _time_status_text(self) -> str:
+        data = time_source_status()
+        local_offset = current_time(timezone.utc).astimezone().utcoffset()
+        local_tz = self._format_tz_offset(local_offset or timedelta(0))
+        sync_text = '已同步' if data['synced'] else '本机时间'
+        enabled_text = 'NTP' if data['enabled'] else 'NTP关闭'
+        return (
+            f"{enabled_text} {sync_text} · 偏移 {data['offset']:+.3f}s · "
+            f"本机 {local_tz}"
+        )
+
     @classmethod
     def set_theme(cls, theme="default") -> None:
         cls.theme = theme
@@ -467,8 +578,8 @@ class AlasGUI(Frame):
             try:
                 from module.statistics.opsi_month import (
                     get_ap_timeline,
+                    get_asset_timeline,
                     get_coins_timeline,
-                    get_virtual_asset_timeline,
                 )
 
                 instance_name = getattr(self, "alas_name", None)
@@ -479,9 +590,7 @@ class AlasGUI(Frame):
                     instance_name = all_instances[0] if all_instances else None
                 timeline = get_ap_timeline(instance_name=instance_name)
                 coins_timeline = get_coins_timeline(instance_name=instance_name)
-                virtual_asset_timeline = get_virtual_asset_timeline(
-                    instance_name=instance_name
-                )
+                asset_timeline = get_asset_timeline(instance_name=instance_name)
             except Exception as e:
                 with use_scope("ap_chart", clear=True):
                     put_text(t("Gui.Stat.LoadApDataFailed", e=e))
@@ -494,23 +603,6 @@ class AlasGUI(Frame):
                         t("Gui.Stat.Refresh"), onclick=_render_ap_chart, color="off"
                     )
                 return
-
-            def _get_cl5_efficiency():
-                default = 1700.0 / 30.0
-                try:
-                    config = getattr(self, "alas_config", None)
-                    if config is None or not hasattr(config, "cross_get"):
-                        return default
-                    meow5_coin = config.cross_get(
-                        "OpsiSimulator.OpsiSimulatorParameters.Meow5Coin"
-                    )
-                    if meow5_coin is not None:
-                        meow5_coin_float = float(meow5_coin)
-                        if meow5_coin_float > 0:
-                            return meow5_coin_float / 30.0
-                except (AttributeError, TypeError, ValueError):
-                    pass
-                return default
 
             def _snapshot_float(point, key):
                 value = point.get(key)
@@ -553,7 +645,7 @@ class AlasGUI(Frame):
             chart_points = []
             is_detail_mode = False
 
-            today = datetime.now().date()
+            today = current_time().date()
             today_points = [p for p in raw_points if p["dt"].date() == today]
             if not today_points and raw_points:
                 last_date = raw_points[-1]["dt"].date()
@@ -667,8 +759,6 @@ class AlasGUI(Frame):
 
             distance_list = []
 
-            virtual_asset_list = []
-            virtual_asset_ts_list = []
             asset_list = []
             asset_ts_list = []
             show_coins = False
@@ -733,9 +823,7 @@ class AlasGUI(Frame):
 
                     valid_yellow_coins = [v for v in yellow_coins_list if v is not None]
                     valid_purple_coins = [v for v in purple_coins_list if v is not None and v > 0]
-                    show_coins = bool(
-                        valid_yellow_coins or valid_purple_coins or virtual_asset_list
-                    )
+                    show_coins = bool(valid_yellow_coins or valid_purple_coins)
 
                     if valid_yellow_coins:
                         yc_cur = valid_yellow_coins[-1]
@@ -803,61 +891,23 @@ class AlasGUI(Frame):
                         d_min = min(valid_distance)
 
                         coins_stats_html += f'<div style="display:grid; grid-template-columns:150px 100px 90px 90px 90px; gap:8px; margin-bottom:2px; font-size:12px; color:#aaa;"><span>海里数: <b style="color:#1565c0">{d_cur}</b></span><span>变化: <b style="color:{d_change_color}">{d_change_sign}{d_change}</b></span><span>最高: <b style="color:#ef5350">{d_max}</b></span><span>最低: <b style="color:#26a69a">{d_min}</b></span><span></span></div>'
-                        coins_legend_html += '<span class="ap-legend-item" data-series="5" style="display:flex; align-items:center; gap:4px;cursor:pointer;opacity:1;"><span style="width:12px; height:2px; background:#1565c0; border-radius:1px;"></span>海里数</span>'
+                        coins_legend_html += '<span class="ap-legend-item" data-series="4" style="display:flex; align-items:center; gap:4px;cursor:pointer;opacity:1;"><span style="width:12px; height:2px; background:#1565c0; border-radius:1px;"></span>海里数</span>'
 
-            # 处理虚拟资产时间线
-            if virtual_asset_timeline and current_view in ("line", "detail"):
-                from calendar import monthrange as _monthrange
-
-                for pt in virtual_asset_timeline:
+            # 处理资产时间线
+            if asset_timeline and current_view in ("line", "detail"):
+                for pt in asset_timeline:
                     ts_raw = pt.get("ts", "")
                     if ts_raw:
                         try:
                             va_dt = datetime.fromisoformat(ts_raw)
                             asset_value = _snapshot_float(pt, "asset")
-                            virtual_asset_value = _snapshot_float(pt, "virtual_asset")
                             if asset_value is None:
-                                ap_for_asset = int(pt.get("ap_total", pt.get("ap", 0)) or 0)
-                                yellow_coin_for_asset = int(pt.get("yellow_coin", 0) or 0)
-                                asset_value = (
-                                    ap_for_asset * _get_cl5_efficiency()
-                                    + yellow_coin_for_asset
-                                )
-                            if virtual_asset_value is None:
-                                month_end = va_dt.replace(
-                                    day=_monthrange(va_dt.year, va_dt.month)[1],
-                                    hour=23,
-                                    minute=59,
-                                    second=59,
-                                    microsecond=0,
-                                )
-                                virtual_asset_value = asset_value + max(
-                                    0,
-                                    (month_end - va_dt).total_seconds(),
-                                ) / 600.0 * _get_cl5_efficiency()
-                            virtual_asset_list.append(virtual_asset_value)
-                            virtual_asset_ts_list.append(int(va_dt.timestamp() * 1000))
+                                continue
                             asset_list.append(asset_value)
                             asset_ts_list.append(int(va_dt.timestamp() * 1000))
                         except (TypeError, ValueError):
                             continue
 
-                if virtual_asset_list:
-                    valid_va = [v for v in virtual_asset_list if v is not None]
-                    if valid_va:
-                        va_cur = valid_va[-1]
-                        va_change = (
-                            valid_va[-1] - valid_va[0] if len(valid_va) >= 2 else 0
-                        )
-                        va_change_color = "#ef5350" if va_change >= 0 else "#26a69a"
-                        va_change_sign = "+" if va_change >= 0 else ""
-                        va_max = max(valid_va)
-                        va_min = min(valid_va)
-
-                        coins_stats_html += f'<div style="display:grid; grid-template-columns:150px 100px 90px 90px 90px; gap:8px; margin-bottom:2px; font-size:12px; color:#aaa;"><span>虚拟资产: <b style="color:#06b6d4">{va_cur:.1f}</b></span><span>变化: <b style="color:{va_change_color}">{va_change_sign}{va_change:.1f}</b></span><span>最高: <b style="color:#ef5350">{va_max:.1f}</b></span><span>最低: <b style="color:#26a69a">{va_min:.1f}</b></span><span></span></div>'
-                        coins_legend_html += '<span class="ap-legend-item" data-series="3" style="display:flex; align-items:center; gap:4px;cursor:pointer;opacity:1;"><span style="width:12px; height:2px; background:#06b6d4; border-radius:1px; border-top:1px dashed #06b6d4;"></span>虚拟资产</span>'
-
-            # 处理资产时间线（来自相同的 ap_snapshots）
             if asset_list:
                 valid_asset = [v for v in asset_list if v is not None]
                 if valid_asset:
@@ -871,12 +921,11 @@ class AlasGUI(Frame):
                     a_min = min(valid_asset)
 
                     coins_stats_html += f'<div style="display:grid; grid-template-columns:150px 100px 90px 90px 90px; gap:8px; margin-bottom:2px; font-size:12px; color:#aaa;"><span>资产: <b style="color:#22d3ee">{a_cur:.1f}</b></span><span>变化: <b style="color:{a_change_color}">{a_change_sign}{a_change:.1f}</b></span><span>最高: <b style="color:#ef5350">{a_max:.1f}</b></span><span>最低: <b style="color:#26a69a">{a_min:.1f}</b></span><span></span></div>'
-                    coins_legend_html += '<span class="ap-legend-item" data-series="4" style="display:flex; align-items:center; gap:4px;cursor:pointer;opacity:1;"><span style="width:12px; height:2px; background:#22d3ee; border-radius:1px;"></span>资产</span>'
+                    coins_legend_html += '<span class="ap-legend-item" data-series="3" style="display:flex; align-items:center; gap:4px;cursor:pointer;opacity:1;"><span style="width:12px; height:2px; background:#22d3ee; border-radius:1px;"></span>资产</span>'
 
-            # 确保 show_coins 在资产/虚拟资产存在时也为 True，以启用右轴绘制
+            # 确保 show_coins 在资产存在时也为 True，以启用右轴绘制
             if not show_coins and (
-                virtual_asset_list
-                or asset_list
+                asset_list
                 or yellow_coins_list
                 or purple_coins_list
                 or distance_list
@@ -929,8 +978,6 @@ class AlasGUI(Frame):
                 .replace("__YELLOW_COINS__", json.dumps(yellow_coins_list))
                 .replace("__PURPLE_COINS__", json.dumps(purple_coins_list))
                 .replace("__COINS_SOURCES__", json.dumps(coins_sources_list))
-                .replace("__VIRTUAL_ASSET__", json.dumps(virtual_asset_list))
-                .replace("__VIRTUAL_ASSET_TS__", json.dumps(virtual_asset_ts_list))
                 .replace("__ASSET__", json.dumps(asset_list))
                 .replace("__ASSET_TS__", json.dumps(asset_ts_list))
                 .replace("__DISTANCE__", json.dumps(distance_list))
@@ -1634,7 +1681,7 @@ class AlasGUI(Frame):
                 try:
                     from datetime import datetime
 
-                    now = datetime.now()
+                    now = current_time()
                     for hazard_level in (3, 5):
                         meow_data = cl1_db.get_meow_stats(
                             instance_name or "default",
@@ -1759,214 +1806,6 @@ class AlasGUI(Frame):
 
                 _render_meowofficer_farming()
 
-                # ========== 短猫提前开始建议 ==========
-                try:
-                    from module.os.tasks.scheduling import OpsiScheduling
-
-                    # 创建临时实例来调用计算方法
-                    config_for_stat = (
-                        self.alas_config if hasattr(self, "alas_config") else None
-                    )
-                    if config_for_stat is not None:
-                        scheduling = OpsiScheduling(
-                            config_for_stat, task="OpsiScheduling"
-                        )
-                        advance_calc = scheduling.get_meow_advance_calculation()
-                    else:
-                        advance_calc = {}
-                except Exception as e:
-                    logger.warning(f"短猫提前建议计算失败，使用WebUI兜底计算: {e}")
-                    advance_calc = {}
-
-                # 兜底：即使调度实例初始化失败，也尽量从统计快照计算建议，避免显示全为空
-                if not advance_calc:
-                    try:
-                        from datetime import datetime, timedelta
-                        from module.config.utils import get_os_next_reset
-                        from module.statistics.cl1_database import db as cl1_db
-                        from module.statistics.opsi_month import get_ap_timeline
-
-                        config_for_stat = (
-                            self.alas_config if hasattr(self, "alas_config") else None
-                        )
-                        mode = "balanced"
-                        if config_for_stat is not None and hasattr(
-                            config_for_stat, "cross_get"
-                        ):
-                            mode = (
-                                config_for_stat.cross_get(
-                                    keys="OpsiScheduling.OpsiScheduling.MeowStartEarlyMode"
-                                )
-                                or "balanced"
-                            )
-
-                        mode_names = {
-                            "aggressive": "激进",
-                            "balanced": "均衡",
-                            "conservative": "保守",
-                        }
-                        multiplier_map = {
-                            "aggressive": 0.8,
-                            "balanced": 1.2,
-                            "conservative": 1.5,
-                        }
-                        multiplier = multiplier_map.get(mode, 1.2)
-
-                        instance_name_stat = getattr(self, "alas_name", None)
-                        if not instance_name_stat:
-                            from module.config.utils import alas_instance
-
-                            _all_instances = alas_instance()
-                            instance_name_stat = (
-                                _all_instances[0] if _all_instances else "default"
-                            )
-                        meow_data_fallback = cl1_db.get_meow_stats(instance_name_stat)
-                        avg_meow_round_time = float(
-                            meow_data_fallback.get("avg_round_time", 0) or 0
-                        )
-
-                        ap_timeline = get_ap_timeline(instance_name=instance_name_stat)
-                        current_ap = (
-                            int(ap_timeline[-1].get("ap_total", ap_timeline[-1].get("ap", 0)))
-                            if ap_timeline
-                            else 0
-                        )
-
-                        meow_round_ap = 30
-                        available_rounds = (
-                            (current_ap / meow_round_ap) if meow_round_ap else 0
-                        )
-                        base_hours_ahead = (
-                            (available_rounds * avg_meow_round_time) / 3600
-                            if avg_meow_round_time > 0
-                            else 0
-                        )
-                        hours_ahead = max(0, min(base_hours_ahead * multiplier, 168))
-
-                        now = datetime.now()
-                        next_reset = get_os_next_reset()
-                        start_cleanup_dt = next_reset - timedelta(hours=hours_ahead)
-                        if start_cleanup_dt < now:
-                            start_cleanup_dt = now
-
-                        if avg_meow_round_time == 0:
-                            recommendation = "数据不足，无法计算建议"
-                        elif current_ap < meow_round_ap:
-                            recommendation = "行动力不足一轮短猫消耗"
-                        else:
-                            recommendation = (
-                                f"当前AP {current_ap} 可运行 {available_rounds:.1f} 轮短猫，"
-                                f"约 {base_hours_ahead:.1f} 小时"
-                            )
-
-                        advance_calc = {
-                            "mode": mode,
-                            "mode_name": mode_names.get(mode, "均衡"),
-                            "multiplier": multiplier,
-                            "current_ap": current_ap,
-                            "meow_round_ap": meow_round_ap,
-                            "avg_meow_round_time": round(avg_meow_round_time, 1)
-                            if avg_meow_round_time
-                            else 0,
-                            "available_rounds": round(available_rounds, 1),
-                            "hours_ahead": round(hours_ahead, 1),
-                            "start_cleanup_time": start_cleanup_dt.strftime(
-                                "%m-%d %H:%M"
-                            ),
-                            "next_os_reset_time": next_reset.strftime("%m-%d %H:%M"),
-                            "recommendation": f"{recommendation}（WebUI兜底计算）",
-                        }
-                    except Exception as e:
-                        logger.warning(f"WebUI兜底计算短猫建议失败: {e}")
-                        advance_calc = {}
-
-                config_for_stat = (
-                    self.alas_config if hasattr(self, "alas_config") else None
-                )
-                meow_advance_enable = False
-                if config_for_stat is not None and hasattr(
-                    config_for_stat, "cross_get"
-                ):
-                    meow_advance_enable = (
-                        config_for_stat.cross_get(
-                            keys="OpsiScheduling.OpsiScheduling.MeowStartEarlyEnable"
-                        )
-                        or False
-                    )
-                mode_name = advance_calc.get("mode_name", "-")
-                current_ap = advance_calc.get("current_ap", "-")
-                meow_round_ap = advance_calc.get("meow_round_ap", "-")
-                avg_meow_round_time = advance_calc.get("avg_meow_round_time", 0)
-                available_rounds = advance_calc.get("available_rounds", 0)
-                hours_ahead = advance_calc.get("hours_ahead", 0)
-                start_cleanup_time = advance_calc.get("start_cleanup_time", "-")
-                next_os_reset_time = advance_calc.get("next_os_reset_time", "-")
-                recommendation = advance_calc.get(
-                    "recommendation", "数据不足，无法计算建议"
-                )
-
-                if not meow_advance_enable:
-                    recommendation = (
-                        f"{recommendation}（当前未开启自动提前清理，仅供参考）"
-                    )
-
-                put_html(
-                    build_title_block(
-                        t("Gui.Stat.MeowAdvanceAdviceTitle"),
-                        margin_top=20,
-                        margin_bottom=8,
-                    )
-                )
-                put_row(
-                    [
-                        put_text(t("Gui.Stat.CurrentAP", value=current_ap)),
-                        put_text(t("Gui.Stat.ApPerRound", value=meow_round_ap)),
-                        put_text(
-                            t(
-                                "Gui.Stat.AvailableRounds",
-                                value=f"{available_rounds:.1f}",
-                                unit=t("Gui.Stat.RoundUnit"),
-                            )
-                        ),
-                    ]
-                )
-                put_row(
-                    [
-                        put_text(
-                            t(
-                                "Gui.Stat.AvgRoundDuration",
-                                value=f"{avg_meow_round_time:.1f}",
-                                unit=t("Gui.Stat.SecondUnit"),
-                            )
-                        ),
-                        put_text(t("Gui.Stat.CurrentMode", value=mode_name)),
-                        put_text(
-                            t(
-                                "Gui.Stat.RecommendAhead",
-                                value=f"{hours_ahead:.1f}",
-                                unit=t("Gui.Stat.HourUnit"),
-                            )
-                        ),
-                    ]
-                )
-                put_row(
-                    [
-                        put_text(
-                            t("Gui.Stat.StartCleanupTime", value=start_cleanup_time)
-                        ),
-                        put_text(t("Gui.Stat.NextOsReset", value=next_os_reset_time)),
-                        put_text(
-                            t(
-                                "Gui.Stat.MeowAutoCleanupStatus",
-                                value=t("Gui.Misc.Enabled")
-                                if meow_advance_enable
-                                else t("Gui.Misc.Disabled"),
-                            )
-                        ),
-                    ]
-                )
-                put_text(recommendation)
-
                 def export_opsi_csv(save_to_desktop: bool = True):
                     import io
 
@@ -1988,7 +1827,7 @@ class AlasGUI(Frame):
                     except Exception:
                         s_local = {}
 
-                    month_local = s_local.get("month") or datetime.now().strftime(
+                    month_local = s_local.get("month") or current_time().strftime(
                         "%Y-%m"
                     )
                     total_battles_local = int(s_local.get("total_battles") or 0)
@@ -2585,6 +2424,10 @@ class AlasGUI(Frame):
                 content=[put_text(task_help).style("font-size: 1rem")],
             )
 
+        if task == "Alas":
+            with use_scope("groups"):
+                self._render_startup_run_setting()
+
         if task == "OpsiSimulator":
             with use_scope("groups"):
                 self._os_simulator()
@@ -2677,7 +2520,7 @@ class AlasGUI(Frame):
         next_run = deep_get(config, f"{task}.Scheduler.NextRun")
         if not isinstance(next_run, datetime):
             return False
-        return next_run.date() > datetime.now().date()
+        return next_run.date() > current_time().date()
 
     @staticmethod
     def _split_stage_filter(value: Any) -> List[str]:
@@ -3025,6 +2868,10 @@ class AlasGUI(Frame):
             if arg_help == "" or not arg_help:
                 arg_help = None
             output_kwargs["help"] = arg_help
+            if group_name == "Scheduler" and arg_name == "NextRun":
+                output_kwargs["after"] = put_text(self._time_status_text()).style(
+                    "font-size: .75rem; opacity: .68; margin: .2rem .25rem 0;"
+                )
             # Invalid feedback
             output_kwargs["invalid_feedback"] = t("Gui.Text.InvalidFeedBack", value)
 
@@ -3048,7 +2895,7 @@ class AlasGUI(Frame):
 
             # 在掉落记录组中显示可复制的设备ID
             if group_name == "DropRecord":
-                device_id = get_device_id()
+                device_id = DEMO_DEVICE_ID_TEXT if is_demo_mode() else get_device_id()
                 put_html(build_copyable_device_id(device_id))
 
         return len(output_list)
@@ -3069,13 +2916,12 @@ class AlasGUI(Frame):
 
     def _alas_start(self):
         self.alas.start(None, updater.event)
-        if os.environ.get("DEMO") == "1":
-            threading.Timer(5, self.alas.stop).start()
 
     def _simulator_start(self):
+        if is_demo_mode():
+            logger.info("[WebUI] DEMO=1，跳过大世界模拟器启动。")
+            return
         self.simulator.start()
-        if os.environ.get("DEMO") == "1":
-            threading.Timer(5, self.simulator.interrupt).start()
 
     @use_scope("content", clear=True)
     def alas_overview(self) -> None:
@@ -3267,8 +3113,9 @@ class AlasGUI(Frame):
             # version
             local_commit = updater.get_commit(short_sha1=True)
             version = local_commit[0] if local_commit and local_commit[0] else "Unknown"
+            device_id = DEMO_DEVICE_ID_TEXT if is_demo_mode() else get_device_id()
             put_scope("log-container", [put_scope("log", [put_html("")])]).style(
-                f"--device-id: '{get_device_id()}'; --version: 'Ver.{version}';"
+                f"--device-id: '{device_id}'; --version: 'Ver.{version}';"
             )
 
         log.console.width = log.get_width()
@@ -3449,7 +3296,7 @@ class AlasGUI(Frame):
             valid = []
             invalid = []
             config = config_updater.read_file(config_name)
-            n = datetime.now()
+            n = current_time()
             for p, v in deep_iter(config, depth=3):
                 if p[-1].endswith("un") and not isinstance(v, bool):
                     if (v - n).days >= 31:
@@ -3612,7 +3459,7 @@ class AlasGUI(Frame):
             if groups_to_display is None
             else groups_to_display
         )
-        time_now = datetime.now().replace(microsecond=0)
+        time_now = current_time().replace(microsecond=0)
         for group_name in _arg_group:
             group = LogRes(self.alas_config).group(group_name)
             if group is None:
@@ -4079,6 +3926,12 @@ class AlasGUI(Frame):
         ).style(f"--menu-Remote--")
 
         put_button(
+            label=t("Gui.MenuDevelop.Setting"),
+            onclick=self.dev_setting,
+            color="menu",
+        ).style(f"--menu-Setting--")
+
+        put_button(
             label=t("Gui.MenuDevelop.Announcement"),
             onclick=lambda: self.ui_check_announcement(force=True),
             color="menu",
@@ -4265,6 +4118,523 @@ class AlasGUI(Frame):
 
         updater.check_update()
 
+    def _render_startup_run_setting(self) -> None:
+        instance = self.alas_name or DEFAULT_CONFIG_NAME
+        scope_id = re.sub(r"[^0-9A-Za-z_]", "_", instance)
+        switch_id = f"startup-run-switch-{scope_id}"
+        status_id = f"startup-run-status-{scope_id}"
+        put_html(
+            f"""
+            <div class="startup-run-panel">
+              <div class="startup-run-row">
+                <div>
+                  <div class="startup-run-title">{t("Gui.StartupRun.Title")}</div>
+                  <div class="startup-run-desc">{t("Gui.StartupRun.Description")}</div>
+                </div>
+                <label class="launcher-switch" title="{t("Gui.StartupRun.Title")}">
+                  <input id="{switch_id}" type="checkbox" disabled>
+                  <span class="launcher-slider"></span>
+                </label>
+              </div>
+              <div id="{status_id}" class="startup-run-status">{t("Gui.StartupRun.Loading")}</div>
+            </div>
+            <style>
+              .startup-run-panel {{
+                margin: 0 0 14px;
+                padding: 14px 16px;
+                border: 1px solid rgba(128, 128, 128, .22);
+                border-radius: 8px;
+                background: var(--alas-content-bg, rgba(255,255,255,.72));
+              }}
+              .startup-run-row {{
+                display: grid;
+                grid-template-columns: minmax(0, 1fr) auto;
+                gap: 16px;
+                align-items: center;
+              }}
+              .startup-run-title {{
+                font-size: 1rem;
+                font-weight: 700;
+                margin-bottom: 4px;
+              }}
+              .startup-run-desc,
+              .startup-run-status {{
+                color: var(--alas-muted-text, rgba(96, 96, 96, .9));
+                line-height: 1.55;
+              }}
+              .startup-run-status {{
+                margin-top: 10px;
+                font-size: .92rem;
+              }}
+            </style>
+            """
+        )
+        run_js(
+            f"""
+            (function(){{
+              const instance = {json.dumps(instance)};
+              const switchEl = document.getElementById({json.dumps(switch_id)});
+              const statusEl = document.getElementById({json.dumps(status_id)});
+              const text = {{
+                loading: {json.dumps(t("Gui.StartupRun.Loading"))},
+                enabled: {json.dumps(t("Gui.StartupRun.Enabled"))},
+                disabled: {json.dumps(t("Gui.StartupRun.Disabled"))},
+                setting: {json.dumps(t("Gui.StartupRun.Setting"))},
+                failed: {json.dumps(t("Gui.StartupRun.Failed"))},
+                unavailable: {json.dumps(t("Gui.StartupRun.Unavailable"))}
+              }};
+
+              async function refresh() {{
+                switchEl.disabled = true;
+                statusEl.textContent = text.loading;
+                try {{
+                  const resp = await fetch('/api/deploy/startup-run?instance=' + encodeURIComponent(instance), {{cache: 'no-store'}});
+                  const result = await resp.json();
+                  if (!result.success) {{
+                    throw new Error(result.error || 'unknown error');
+                  }}
+                  switchEl.checked = result.data.enabled === true;
+                  switchEl.disabled = false;
+                  statusEl.textContent = result.data.enabled ? text.enabled : text.disabled;
+                }} catch (err) {{
+                  statusEl.textContent = text.unavailable + ': ' + (err.message || err);
+                }}
+              }}
+
+              switchEl.addEventListener('change', async function() {{
+                const target = switchEl.checked;
+                switchEl.disabled = true;
+                statusEl.textContent = text.setting;
+                try {{
+                  const resp = await fetch('/api/deploy/startup-run', {{
+                    method: 'POST',
+                    headers: {{'Content-Type': 'application/json'}},
+                    body: JSON.stringify({{instance, enabled: target}})
+                  }});
+                  const result = await resp.json();
+                  if (!result.success) {{
+                    throw new Error(result.error || 'unknown error');
+                  }}
+                  switchEl.checked = result.data.enabled === true;
+                  statusEl.textContent = result.data.enabled ? text.enabled : text.disabled;
+                }} catch (err) {{
+                  switchEl.checked = !target;
+                  statusEl.textContent = text.failed + ': ' + (err.message || err);
+                  setTimeout(refresh, 1600);
+                  return;
+                }}
+                switchEl.disabled = false;
+              }});
+
+              refresh();
+            }})();
+            """
+        )
+
+    @use_scope("content", clear=True)
+    def dev_setting(self) -> None:
+        self.init_menu(name="Setting")
+        self.set_title(t("Gui.MenuDevelop.Setting"))
+        put_html(build_title_block(t("Gui.Launcher.StartupTitle"), margin_top=12, margin_bottom=8))
+        put_html(
+            f"""
+            <div class="launcher-setting-panel">
+              <div class="launcher-setting-row">
+                <div>
+                  <div class="launcher-setting-title">{t("Gui.Launcher.AutoStart")}</div>
+                  <div class="launcher-setting-desc">{t("Gui.Launcher.AutoStartHelp")}</div>
+                </div>
+                <label class="launcher-switch" title="{t("Gui.Launcher.AutoStart")}">
+                  <input id="launcher-autostart-switch" type="checkbox" disabled>
+                  <span class="launcher-slider"></span>
+                </label>
+              </div>
+              <div id="launcher-status" class="launcher-setting-status">{t("Gui.Launcher.Loading")}</div>
+            </div>
+            <style>
+              .launcher-setting-panel {{
+                max-width: 760px;
+                margin: 12px auto 0;
+                padding: 16px 18px;
+                border: 1px solid rgba(128, 128, 128, .22);
+                border-radius: 8px;
+                background: var(--alas-content-bg, rgba(255,255,255,.72));
+              }}
+              .launcher-setting-row {{
+                display: grid;
+                grid-template-columns: minmax(0, 1fr) auto;
+                gap: 16px;
+                align-items: center;
+              }}
+              .launcher-setting-title {{
+                font-size: 1rem;
+                font-weight: 700;
+                margin-bottom: 4px;
+              }}
+              .launcher-setting-desc {{
+                color: var(--alas-muted-text, rgba(96, 96, 96, .9));
+                line-height: 1.55;
+              }}
+              .launcher-setting-status {{
+                margin-top: 12px;
+                font-size: .92rem;
+                color: var(--alas-muted-text, rgba(96, 96, 96, .9));
+              }}
+              .launcher-switch {{
+                position: relative;
+                display: inline-block;
+                width: 52px;
+                height: 30px;
+              }}
+              .launcher-switch input {{
+                opacity: 0;
+                width: 0;
+                height: 0;
+              }}
+              .launcher-slider {{
+                position: absolute;
+                cursor: pointer;
+                inset: 0;
+                background: #adb5bd;
+                border-radius: 999px;
+                transition: .2s;
+              }}
+              .launcher-slider:before {{
+                position: absolute;
+                content: "";
+                width: 24px;
+                height: 24px;
+                left: 3px;
+                bottom: 3px;
+                background: #fff;
+                border-radius: 50%;
+                transition: .2s;
+                box-shadow: 0 2px 8px rgba(0,0,0,.18);
+              }}
+              .launcher-switch input:checked + .launcher-slider {{
+                background: #4dabf7;
+              }}
+              .launcher-switch input:checked + .launcher-slider:before {{
+                transform: translateX(22px);
+              }}
+              .launcher-switch input:disabled + .launcher-slider {{
+                cursor: not-allowed;
+                opacity: .55;
+              }}
+              .deploy-setting-panel {{
+                max-width: 960px;
+                margin: 12px auto 0;
+                padding: 16px 18px;
+                border: 1px solid rgba(128, 128, 128, .22);
+                border-radius: 8px;
+                background: var(--alas-content-bg, rgba(255,255,255,.72));
+              }}
+              .deploy-setting-toolbar {{
+                display: grid;
+                grid-template-columns: minmax(0, 1fr) auto;
+                gap: 12px;
+                align-items: center;
+                margin-bottom: 12px;
+              }}
+              .deploy-setting-notice,
+              .deploy-setting-status {{
+                color: var(--alas-muted-text, rgba(96, 96, 96, .9));
+                line-height: 1.55;
+                font-size: .92rem;
+              }}
+              .deploy-setting-group {{
+                margin-top: 12px;
+                padding-top: 12px;
+                border-top: 1px solid rgba(128, 128, 128, .18);
+              }}
+              .deploy-setting-group-title {{
+                font-weight: 700;
+                margin-bottom: 10px;
+              }}
+              .deploy-setting-field {{
+                display: grid;
+                grid-template-columns: minmax(180px, 260px) minmax(0, 1fr);
+                gap: 14px;
+                align-items: center;
+                padding: 8px 0;
+              }}
+              .deploy-setting-field label {{
+                font-weight: 600;
+                margin-bottom: 2px;
+              }}
+              .deploy-setting-help {{
+                color: var(--alas-muted-text, rgba(96, 96, 96, .9));
+                font-size: .84rem;
+                line-height: 1.45;
+              }}
+              .deploy-setting-input,
+              .deploy-setting-select {{
+                width: 100%;
+                min-height: 36px;
+                padding: 6px 10px;
+                border: 1px solid rgba(128, 128, 128, .32);
+                border-radius: 6px;
+                background: rgba(255, 255, 255, .92);
+              }}
+              .deploy-setting-actions {{
+                display: flex;
+                gap: 8px;
+                justify-content: flex-end;
+                margin-top: 14px;
+              }}
+              .deploy-setting-button {{
+                min-height: 34px;
+                padding: 6px 14px;
+                border: 1px solid rgba(128, 128, 128, .35);
+                border-radius: 6px;
+                cursor: pointer;
+              }}
+              .deploy-setting-button.primary {{
+                color: #fff;
+                background: #228be6;
+                border-color: #228be6;
+              }}
+              .deploy-setting-button:disabled {{
+                cursor: not-allowed;
+                opacity: .6;
+              }}
+              @media (max-width: 760px) {{
+                .deploy-setting-toolbar,
+                .deploy-setting-field {{
+                  grid-template-columns: 1fr;
+                }}
+                .deploy-setting-actions {{
+                  justify-content: stretch;
+                }}
+                .deploy-setting-button {{
+                  width: 100%;
+                }}
+              }}
+            </style>
+            """
+        )
+        run_js(
+            f"""
+            (function(){{
+              const statusEl = document.getElementById('launcher-status');
+              const switchEl = document.getElementById('launcher-autostart-switch');
+              const text = {{
+                loading: {json.dumps(t("Gui.Launcher.Loading"))},
+                connected: {json.dumps(t("Gui.Launcher.Connected"))},
+                disconnected: {json.dumps(t("Gui.Launcher.Disconnected"))},
+                remote: {json.dumps(t("Gui.Launcher.RemoteUnavailable"))},
+                unsupported: {json.dumps(t("Gui.Launcher.Unsupported"))},
+                enabled: {json.dumps(t("Gui.Launcher.Enabled"))},
+                disabled: {json.dumps(t("Gui.Launcher.Disabled"))},
+                setting: {json.dumps(t("Gui.Launcher.Setting"))},
+                failed: {json.dumps(t("Gui.Launcher.Failed"))}
+              }};
+
+              async function refresh() {{
+                switchEl.disabled = true;
+                statusEl.textContent = text.loading;
+                try {{
+                  const resp = await fetch('/api/launcher/status', {{cache: 'no-store'}});
+                  const data = await resp.json();
+                  const enabled = data.autostart_enabled === true;
+                  switchEl.checked = enabled;
+                  if (!data.request_local) {{
+                    statusEl.textContent = text.remote;
+                    return;
+                  }}
+                  if (!data.autostart_supported) {{
+                    statusEl.textContent = text.unsupported;
+                    return;
+                  }}
+                  if (!data.launcher_connected) {{
+                    statusEl.textContent = text.disconnected;
+                    return;
+                  }}
+                  switchEl.disabled = false;
+                  if (data.autostart_enabled === null) {{
+                    statusEl.textContent = text.connected + ' · ' + text.loading;
+                  }} else {{
+                    statusEl.textContent = text.connected + ' · ' + (enabled ? text.enabled : text.disabled);
+                  }}
+                }} catch (err) {{
+                  statusEl.textContent = text.failed + ': ' + err;
+                }}
+              }}
+
+              switchEl.addEventListener('change', async function() {{
+                const target = switchEl.checked;
+                switchEl.disabled = true;
+                statusEl.textContent = text.setting;
+                try {{
+                  const resp = await fetch('/api/launcher/startup', {{
+                    method: 'POST',
+                    headers: {{'Content-Type': 'application/json'}},
+                    body: JSON.stringify({{enabled: target}})
+                  }});
+                  const result = await resp.json();
+                  if (!result.success) {{
+                    throw new Error(result.error || 'unknown error');
+                  }}
+                }} catch (err) {{
+                  switchEl.checked = !target;
+                  statusEl.textContent = text.failed + ': ' + err.message;
+                  setTimeout(refresh, 1600);
+                  return;
+                }}
+                await refresh();
+              }});
+
+              refresh();
+            }})();
+            """
+        )
+        put_html(build_title_block(t("Gui.DeploySetting.Title"), margin_top=20, margin_bottom=8))
+        put_html(
+            f"""
+            <div id="deploy-setting-root" class="deploy-setting-panel">
+              <div class="deploy-setting-toolbar">
+                <div>
+                  <div class="launcher-setting-title">{t("Gui.DeploySetting.Title")}</div>
+                  <div id="deploy-setting-notice" class="deploy-setting-notice">{t("Gui.DeploySetting.Loading")}</div>
+                </div>
+                <button id="deploy-setting-refresh" class="deploy-setting-button" type="button">{t("Gui.DeploySetting.Refresh")}</button>
+              </div>
+              <div id="deploy-setting-fields"></div>
+              <div class="deploy-setting-actions">
+                <button id="deploy-setting-save" class="deploy-setting-button primary" type="button" disabled>{t("Gui.DeploySetting.Save")}</button>
+              </div>
+              <div id="deploy-setting-status" class="deploy-setting-status"></div>
+            </div>
+            """
+        )
+        run_js(
+            f"""
+            (function(){{
+              const fieldsEl = document.getElementById('deploy-setting-fields');
+              const noticeEl = document.getElementById('deploy-setting-notice');
+              const statusEl = document.getElementById('deploy-setting-status');
+              const saveBtn = document.getElementById('deploy-setting-save');
+              const refreshBtn = document.getElementById('deploy-setting-refresh');
+              const text = {{
+                loading: {json.dumps(t("Gui.DeploySetting.Loading"))},
+                save: {json.dumps(t("Gui.DeploySetting.Save"))},
+                saving: {json.dumps(t("Gui.DeploySetting.Saving"))},
+                saved: {json.dumps(t("Gui.DeploySetting.Saved"))},
+                failed: {json.dumps(t("Gui.DeploySetting.Failed"))},
+                yes: {json.dumps(t("Gui.DeploySetting.Enabled"))},
+                no: {json.dumps(t("Gui.DeploySetting.Disabled"))},
+                demo: {json.dumps(t("Gui.DeploySetting.DemoDisabled"))}
+              }};
+              let schema = null;
+
+              function escapeHtml(value) {{
+                return String(value == null ? '' : value)
+                  .replace(/&/g, '&amp;')
+                  .replace(/</g, '&lt;')
+                  .replace(/>/g, '&gt;')
+                  .replace(/"/g, '&quot;');
+              }}
+
+              function fieldHtml(field) {{
+                const value = field.value == null ? '' : field.value;
+                let input = '';
+                if (field.type === 'bool') {{
+                  input = `<label class="launcher-switch"><input data-deploy-key="${{escapeHtml(field.key)}}" type="checkbox" ${{value === true ? 'checked' : ''}}><span class="launcher-slider"></span></label>`;
+                }} else if (field.type === 'select') {{
+                  const options = (field.options || []).map(opt => `<option value="${{escapeHtml(opt)}}" ${{String(opt) === String(value) ? 'selected' : ''}}>${{escapeHtml(opt)}}</option>`).join('');
+                  input = `<select class="deploy-setting-select" data-deploy-key="${{escapeHtml(field.key)}}">${{options}}</select>`;
+                }} else if (field.type === 'int') {{
+                  input = `<input class="deploy-setting-input" data-deploy-key="${{escapeHtml(field.key)}}" type="number" min="0" value="${{escapeHtml(value)}}">`;
+                }} else {{
+                  input = `<input class="deploy-setting-input" data-deploy-key="${{escapeHtml(field.key)}}" type="text" value="${{escapeHtml(value)}}">`;
+                }}
+                return `
+                  <div class="deploy-setting-field">
+                    <div>
+                      <label>${{escapeHtml(field.label)}}</label>
+                      <div class="deploy-setting-help">${{escapeHtml(field.help)}}</div>
+                    </div>
+                    <div>${{input}}</div>
+                  </div>
+                `;
+              }}
+
+              function render(data) {{
+                schema = data;
+                noticeEl.textContent = data.notice || '';
+                fieldsEl.innerHTML = (data.groups || []).map(group => `
+                  <div class="deploy-setting-group">
+                    <div class="deploy-setting-group-title">${{escapeHtml(group.label)}}</div>
+                    ${{(group.fields || []).map(fieldHtml).join('')}}
+                  </div>
+                `).join('');
+                saveBtn.disabled = !!data.demo;
+                statusEl.textContent = data.demo ? text.demo : '';
+              }}
+
+              function collectValues() {{
+                const values = {{}};
+                fieldsEl.querySelectorAll('[data-deploy-key]').forEach(el => {{
+                  const key = el.getAttribute('data-deploy-key');
+                  if (el.type === 'checkbox') {{
+                    values[key] = el.checked;
+                  }} else if (el.type === 'number') {{
+                    values[key] = el.value;
+                  }} else {{
+                    values[key] = el.value;
+                  }}
+                }});
+                return values;
+              }}
+
+              async function refresh() {{
+                saveBtn.disabled = true;
+                statusEl.textContent = text.loading;
+                try {{
+                  const resp = await fetch('/api/deploy/settings', {{cache: 'no-store'}});
+                  const result = await resp.json();
+                  if (!result.success) {{
+                    throw new Error(result.error || 'unknown error');
+                  }}
+                  render(result.data);
+                  statusEl.textContent = '';
+                }} catch (err) {{
+                  statusEl.textContent = text.failed + ': ' + (err.message || err);
+                }}
+              }}
+
+              async function save() {{
+                if (!schema || saveBtn.disabled) return;
+                saveBtn.disabled = true;
+                saveBtn.textContent = text.saving;
+                statusEl.textContent = text.saving;
+                try {{
+                  const resp = await fetch('/api/deploy/settings', {{
+                    method: 'POST',
+                    headers: {{'Content-Type': 'application/json'}},
+                    body: JSON.stringify({{values: collectValues()}})
+                  }});
+                  const result = await resp.json();
+                  if (!result.success) {{
+                    throw new Error(result.error || 'unknown error');
+                  }}
+                  await refresh();
+                  statusEl.textContent = text.saved;
+                }} catch (err) {{
+                  statusEl.textContent = text.failed + ': ' + (err.message || err);
+                }} finally {{
+                  saveBtn.textContent = text.save;
+                  saveBtn.disabled = schema && schema.demo;
+                }}
+              }}
+
+              refreshBtn.addEventListener('click', refresh);
+              saveBtn.addEventListener('click', save);
+              refresh();
+            }})();
+            """
+        )
+
     @use_scope("content", clear=True)
     def dev_utils(self) -> None:
         self.init_menu(name="Utils")
@@ -4410,6 +4780,16 @@ class AlasGUI(Frame):
         def u(state):
             if state == -1:
                 return
+            status_map = {
+                "direct_p2p": t("Gui.Remote.StatusDirect"),
+                "turn_relay": t("Gui.Remote.StatusTurn"),
+                "ssh_forward": t("Gui.Remote.StatusSsh"),
+                "waiting_peer": t("Gui.Remote.StatusSignaling"),
+                "signaling": t("Gui.Remote.StatusSignaling"),
+                "starting": t("Gui.Remote.StatusStarting"),
+                "dependency_missing": t("Gui.Remote.StatusSsh"),
+                "failed": t("Gui.Remote.StatusFailed"),
+            }
             clear("remote_loading")
             clear("remote_state")
             clear("remote_info")
@@ -4417,7 +4797,11 @@ class AlasGUI(Frame):
                 put_loading("grow", "success", "remote_loading").style(
                     "--loading-grow--"
                 )
-                put_text(t("Gui.Remote.Running"), scope="remote_state")
+                remote_status = RemoteAccess.get_connection_state()
+                put_text(
+                    f"{t('Gui.Remote.Running')} · {status_map.get(remote_status, remote_status)}",
+                    scope="remote_state",
+                )
                 put_text(t("Gui.Remote.EntryPoint"), scope="remote_info")
                 entrypoint = RemoteAccess.get_entry_point()
                 if entrypoint:
@@ -4429,7 +4813,10 @@ class AlasGUI(Frame):
                         put_link(name=entrypoint, url=entrypoint, scope="remote_info")
                 else:
                     put_text("Loading...", scope="remote_info")
-            elif state in (0, 3):
+                remote_error = RemoteAccess.get_error()
+                if remote_error and remote_status in ("dependency_missing", "failed"):
+                    put_warning(remote_error, closable=False, scope="remote_info")
+            elif state in (0, 3, 4):
                 put_loading("border", "secondary", "remote_loading").style(
                     "--loading-border-fill--"
                 )
@@ -4909,7 +5296,7 @@ class AlasGUI(Frame):
             add_css(filepath_css("light-alas"))
 
         # 儿童节背景 Emoji 雨自动掉落逻辑（支持所有主题）
-        current_date = datetime.now().date()
+        current_date = current_time().date()
         is_children_day = (current_date.month == 6 and current_date.day == 1)
         
         EMOJI_RAIN_PREVIEW = False
@@ -5155,7 +5542,7 @@ class AlasGUI(Frame):
         def announcement_checker():
             from module.base.api_client import ApiClient
 
-            logger.info("公告检查任务启动")
+            logger.info("[WebUI] 公告检查任务启动")
             th = yield  # 获取任务处理器引用
             # 首次检查：触发异步获取
             self._start_announcement_fetch(force=False)
@@ -5357,7 +5744,7 @@ def startup():
     task_handler.start()
     if State.deploy_config.DiscordRichPresence:
         init_discord_rpc()
-    if State.deploy_config.StartOcrServer:
+    if State.deploy_config.StartOcrServer and not is_demo_mode():
         start_ocr_server_process(State.deploy_config.OcrServerPort)
     if State.deploy_config.EnableRemoteAccess and (
         State.deploy_config.Password is not None or os.environ.get("DEMO") == "1"
@@ -5401,8 +5788,7 @@ def app():
 
     # Apply config
     theme = State.deploy_config.Theme
-    from datetime import datetime
-    current_date = datetime.now().date()
+    current_date = current_time().date()
     if theme == "default" and (
         (current_date.month == 6 and current_date.day == 1) or
         (current_date.month == 5 and current_date.day == 31) or
@@ -5437,6 +5823,8 @@ def app():
     static_path = os.getcwd()
 
     def _block_restricted_device():
+        if is_demo_mode():
+            return False
         if get_device_id() not in RESTRICTED_DEVICE_IDS:
             return False
         popup(

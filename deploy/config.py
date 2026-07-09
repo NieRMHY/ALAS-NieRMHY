@@ -50,13 +50,18 @@ class ConfigModel:
 
     # 远程访问
     EnableRemoteAccess: bool = False
+    RemoteAccessMode: str = "auto"
     SSHUser: Optional[str] = None
     SSHServer: Optional[str] = None
     SSHExecutable: Optional[str] = None
+    SignalingServer: Optional[str] = None
+    StunServers: Optional[str] = '["stun:stun.l.google.com:19302"]'
+    TurnServers: Optional[str] = None
+    TurnCredentialMode: str = "static"
 
     # WebUI 配置
     WebuiHost: str = "0.0.0.0"
-    WebuiPort: int = 22267
+    WebuiPort: int = 25548
     WebuiSSLKey: Optional[str] = None
     WebuiSSLCert: Optional[str] = None
     Language: str = "en-US"
