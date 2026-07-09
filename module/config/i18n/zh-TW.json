@@ -1751,7 +1751,7 @@
     },
     "EquipmentCode": {
       "name": "裝備碼",
-      "help": "僅當選擇“更換艦船 + 裝備”時生效。\n在換下艦船時，若設定裡當前艦船裝備碼為null則會匯出；在換上艦船時，若設定裡當前艦船裝備碼為null則會使用上一艘艦船匯出的裝備碼，否則使用設定裡的裝備碼\n藍疊模擬器使用者需要先開啟虛擬鍵盤，詳見https://support.bluestacks.com/hc/zh-tw/articles/360061968892-%E5%A6%82%E4%BD%95%E5%9C%A8-BlueStacks-5-%E4%B8%8A%E4%BD%BF%E7%94%A8%E5%B0%8F%E9%8D%B5%E7%9B%A4-%E8%99%9B%E6%93%AC%E9%8D%B5%E7%9B%A4\nDD：前排驅逐    bogue：博格    hermes：競技神    langley：蘭利    ranger：突擊者"
+      "help": "僅當選擇"更換艦船 + 裝備"時生效。\n在換下艦船時，若設定裡當前艦船裝備碼為null則會匯出；在換上艦船時，若設定裡當前艦船裝備碼為null則會使用上一艘艦船匯出的裝備碼，否則使用設定裡的裝備碼\n藍疊模擬器使用者需要先開啟虛擬鍵盤，詳見https://support.bluestacks.com/hc/zh-tw/articles/360061968892-%E5%A6%82%E4%BD%95%E5%9C%A8-BlueStacks-5-%E4%B8%8A%E4%BD%BF%E7%94%A8%E5%B0%8F%E9%8D%B5%E7%9B%A4-%E8%99%9B%E6%93%AC%E9%8D%B5%E7%9B%A4\nDD：前排驅逐    bogue：博格    hermes：競技神    langley：蘭利    ranger：突擊者"
     },
     "UseEmotionFirst": {
       "name": "GemsFarming.UseEmotionFirst.name",
@@ -3078,11 +3078,11 @@
     },
     "RepairPackThreshold": {
       "name": "任意艦船血量低於 X 後，使用維修箱修理",
-      "help": "僅在開啟“使用維修箱修船”時生效\n僅在打完深淵海域、塞壬要塞、月度Boss後嘗試維修\n0.0 ~ 1.0"
+      "help": "僅在開啟"使用維修箱修船"時生效\n僅在打完深淵海域、塞壬要塞、月度Boss後嘗試維修\n0.0 ~ 1.0"
     },
     "RepairPackThresholdHazard1": {
       "name": "任意艦船血量低於 X 後，使用維修箱修理（侵蝕1）",
-      "help": "僅在開啟“使用維修箱修船”時生效\n僅在「侵蝕1練級+」任務中嘗試維修\n0.0 ~ 1.0"
+      "help": "僅在開啟"使用維修箱修船"時生效\n僅在「侵蝕1練級+」任務中嘗試維修\n0.0 ~ 1.0"
     },
     "DoRandomMapEvent": {
       "name": "完成地圖隨機事件",
@@ -3106,7 +3106,7 @@
     },
     "OpsiOnePushConfig": {
       "name": "大世界推送設定",
-      "help": "”大世界資訊獨立推送”功能開啟時設定才生效。使用 Onepush 推送一條關於侵蝕1和短貓的資訊。配置方法見文檔：https://github.com/LmeSzinc/AzurLaneAutoScript/wiki/Onepush-configuration-%5BCN%5D"
+      "help": ""大世界資訊獨立推送"功能開啟時設定才生效。使用 Onepush 推送一條關於侵蝕1和短貓的資訊。配置方法見文檔：https://github.com/LmeSzinc/AzurLaneAutoScript/wiki/Onepush-configuration-%5BCN%5D"
     },
     "AutoSearchTimeLimit": {
       "name": "自律尋敵時間限制",

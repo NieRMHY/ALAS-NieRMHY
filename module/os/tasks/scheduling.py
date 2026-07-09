@@ -362,7 +362,7 @@ class CoinTaskMixin:
     
     def _get_smart_scheduling_action_point_preserve(self):
         """
-        获取智能调度模式下的行动力保留“覆盖值”。
+        获取智能调度模式下的行动力保留"覆盖值"。
 
         注意：此处不做回退。
         - 返回值 > 0：表示启用智能调度覆盖值（由调用方决定覆盖哪个任务的阀值）
@@ -395,7 +395,7 @@ class CoinTaskMixin:
         """
         获取智能调度补黄币阶段的回补增量。
 
-        进入补黄币阶段后，黄币需要达到“侵蚀 1 保留值 + 此阈值”，才允许回到侵蚀 1。
+        进入补黄币阶段后，黄币需要达到"侵蚀 1 保留值 + 此阈值"，才允许回到侵蚀 1。
         """
         threshold = self.config.cross_get(
             keys=self.CONFIG_PATH_SMART_COIN_RETURN_THRESHOLD,

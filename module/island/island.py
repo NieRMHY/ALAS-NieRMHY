@@ -28,7 +28,7 @@ OCR_SELECT_PRODUCT_MATERIAL_AMOUNT = Button(
     file={'cn': '', 'en': '', 'jp': '', 'tw': ''}
 )
 
-# 同一张材料卡片中“当前库存/”所在的左侧前缀区域。
+# 同一张材料卡片中"当前库存/"所在的左侧前缀区域。
 # 完整宽区域容易把 0/9 识别成 09、把 110/(2+6) 识别成 1102，
 # 因此当前库存优先从斜杠左侧前缀读取。
 OCR_SELECT_PRODUCT_MATERIAL_CURRENT_AREAS = (

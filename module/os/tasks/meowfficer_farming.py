@@ -57,7 +57,7 @@ class MeowfficerTargetZoneMixin:
 
         if len(tokens) > 1 and not allow_multiple:
             self._meow_target_zone_error(
-                f'短猫指定海域填写了多海域列表 "{raw_value}"，需要开启“循环出击指定海域”后才能使用'
+                f'短猫指定海域填写了多海域列表 "{raw_value}"，需要开启"循环出击指定海域"后才能使用'
             )
 
         empty_tokens = [index + 1 for index, token in enumerate(tokens) if token == '']

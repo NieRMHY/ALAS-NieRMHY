@@ -55,7 +55,7 @@ class CampaignStatus(UI):
         """
         pt = OCR_PT.ocr(self.device.image)
 
-        # 首选匹配带前缀 X 的格式（历史上部分活动使用 ‘X1234’）
+        # 首选匹配带前缀 X 的格式（历史上部分活动使用 'X1234'）
         res = re.search(r'X(\d+)', pt)
         if res:
             pt = int(res.group(1))

@@ -287,13 +287,13 @@ class AzurLaneAutoScript:
             logger.warning('If you are playing by hand, please stop Alas')
             handle_notify(
                 self.config.Error_OnePushConfig,
-                title=f”Alas <{self.config_name}> 警告”,
-                content=f”<{self.config_name}> 游戏卡住 - 将自动重启游戏”,
+                title=f"Alas <{self.config_name}> 警告",
+                content=f"<{self.config_name}> 游戏卡住 - 将自动重启游戏",
             )
             notify_webui(
                 self.config_name,
-                title=f”<{self.config_name}> 发出了警告喵！”,
-                content=f”<{self.config_name}> 游戏卡住 将自动重启游戏喵~”,
+                title=f"<{self.config_name}> 发出了警告喵！",
+                content=f"<{self.config_name}> 游戏卡住 将自动重启游戏喵~",
             )
             self.config.task_call('Restart')  # modfiy by MHY
             self.device.sleep(10)
@@ -307,8 +307,8 @@ class AzurLaneAutoScript:
             logger.warning(f'正在重启 {self.device.package} 以修复问题')
             handle_notify(
                 self.config.Error_OnePushConfig,
-                title=f”Alas <{self.config_name}> 警告”,
-                content=f”<{self.config_name}> 游戏客户端错误 - 将自动重启游戏”,
+                title=f"Alas <{self.config_name}> 警告",
+                content=f"<{self.config_name}> 游戏客户端错误 - 将自动重启游戏",
             )
             self.config.task_call('Restart')  # modfiy by MHY
             # self.config.task_call('Restart', force_call=False)  # 禁用强制重启
@@ -322,13 +322,13 @@ class AzurLaneAutoScript:
                 self.save_error_log()
                 handle_notify(
                     self.config.Error_OnePushConfig,
-                    title=f”Alas <{self.config_name}> 崩溃”,
-                    content=f”<{self.config_name}> GamePageUnknownError”,
+                    title=f"Alas <{self.config_name}> 崩溃",
+                    content=f"<{self.config_name}> GamePageUnknownError",
                 )
                 notify_webui(
                     self.config_name,
-                    title=f”出大问题了喵！{self.config_name} 崩溃了喵！”,
-                    content=f”因为 GamePageUnknownError 喵！”,
+                    title=f"出大问题了喵！{self.config_name} 崩溃了喵！",
+                    content=f"因为 GamePageUnknownError 喵！",
                 )
                 exit(1)
             else:
@@ -339,13 +339,13 @@ class AzurLaneAutoScript:
             logger.critical('ScriptError: Maybe due to unknown game page or unexpected UI changes, which requires script update to fix')
             handle_notify(
                 self.config.Error_OnePushConfig,
-                title=f”Alas <{self.config_name}> 崩溃”,
-                content=f”<{self.config_name}> ScriptError”,
+                title=f"Alas <{self.config_name}> 崩溃",
+                content=f"<{self.config_name}> ScriptError",
             )
             notify_webui(
                 self.config_name,
-                title=f”出大问题了喵！{self.config_name}崩溃了喵！”,
-                content=f”因为 ScriptError 喵！”,
+                title=f"出大问题了喵！{self.config_name}崩溃了喵！",
+                content=f"因为 ScriptError 喵！",
             )
             # exit(1)
             raise
@@ -358,13 +358,13 @@ class AzurLaneAutoScript:
                 self.config.task_call('Restart')
                 handle_notify(
                     self.config.Error_OnePushConfig,
-                    title=f”Alas <{self.config_name}> 警告”,
-                    content=f”<{self.config_name}> 模拟器离线 - 已自动重启模拟器”,
+                    title=f"Alas <{self.config_name}> 警告",
+                    content=f"<{self.config_name}> 模拟器离线 - 已自动重启模拟器",
                 )
                 notify_webui(
                     self.config_name,
-                    title=f”{self.config_name} 出了点小问题喵~”,
-                    content=f”模拟器离线喵 所以重启了喵”,
+                    title=f"{self.config_name} 出了点小问题喵~",
+                    content=f"模拟器离线喵 所以重启了喵",
                 )
                 return 'recoverable'
             else:
@@ -372,26 +372,26 @@ class AzurLaneAutoScript:
                 logger.critical('EmulatorNotRunningError: 模拟器离线且无法自动重启，程序将终止')
                 handle_notify(
                     self.config.Error_OnePushConfig,
-                    title=f”Alas <{self.config_name}> 崩溃”,
-                    content=f”<{self.config_name}> EmulatorNotRunningError”,
+                    title=f"Alas <{self.config_name}> 崩溃",
+                    content=f"<{self.config_name}> EmulatorNotRunningError",
                 )
                 notify_webui(
                     self.config_name,
-                    title=f”出大问题了喵！{self.config_name}崩溃了喵！”,
-                    content=f”因为 模拟器出问题了 喵！”,
+                    title=f"出大问题了喵！{self.config_name}崩溃了喵！",
+                    content=f"因为 模拟器出问题了 喵！",
                 )
                 exit(1)
         except RequestHumanTakeover:
             logger.critical('RequestHumanTakeover')
             handle_notify(
                 self.config.Error_OnePushConfig,
-                title=f”Alas <{self.config_name}> 崩溃”,
-                content=f”<{self.config_name}> RequestHumanTakeover”,
+                title=f"Alas <{self.config_name}> 崩溃",
+                content=f"<{self.config_name}> RequestHumanTakeover",
             )
             notify_webui(
                 self.config_name,
-                title=f”出大问题了喵！{self.config_name}崩溃了喵！”,
-                content=f”因为 需要人工介入 喵！”,
+                title=f"出大问题了喵！{self.config_name}崩溃了喵！",
+                content=f"因为 需要人工介入 喵！",
             )
             exit(1)
         except AutoSearchSetError:

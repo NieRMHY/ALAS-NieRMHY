@@ -563,7 +563,7 @@ class IslandPearlSell(Island):
         return None
 
     def ocr_weekly_purchase_count(self):
-        """OCR 本周可采购数量，识别“本周可采购数量xxx/200”中的 xxx。"""
+        """OCR 本周可采购数量，识别"本周可采购数量xxx/200"中的 xxx。"""
         for _ in range(self.PRICE_RETRY):
             self.device.screenshot()
             text = self._ocr_counter_text(
