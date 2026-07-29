@@ -1,4 +1,4 @@
-"""AzurPilot 系统托盘启动器（无窗口后台运行）。
+"""ALAS 系统托盘启动器（无窗口后台运行）。
 
 由 pythonw 启动，拉起 gui.py WebUI 子进程，在系统托盘显示图标，
 菜单可「打开 WebUI / 退出」。退出时终止整个 gui.py 进程树
@@ -44,6 +44,18 @@ def _kill_tree(pid):
 
 
 def main():
+    # Modify by MHY, 单实例锁：重复双击启动时若已有实例运行，直接打开浏览器，
+    # 避免拉起多个 gui.py（worker bind 端口失败但仍开网页，导致出现两个网页）。
+    # 用 Windows 命名互斥量，无启动窗口期，比端口检测更可靠。
+    if sys.platform == "win32":
+        try:
+            import win32event, win32api, winerror
+            _mutex = win32event.CreateMutex(None, False, "Global\\ALAS-Launcher")
+            if win32api.GetLastError() == winerror.ERROR_ALREADY_EXISTS:
+                webbrowser.open(WEBUI_URL)
+                return
+        except Exception:
+            pass
     py = _venv_python()
     # Modify by MHY, CREATE_NEW_CONSOLE 给 gui.py 一个新 console，其 worker 继承有效的
     # console 句柄（pythonw 无 console 会导致 worker spawn 崩溃）；SW_HIDE 让窗口创建即
@@ -75,9 +87,9 @@ def main():
 
     menu = pystray.Menu(
         pystray.MenuItem("打开 WebUI", on_open, default=True),
-        pystray.MenuItem("退出 AzurPilot", on_quit),
+        pystray.MenuItem("退出 ALAS", on_quit),
     )
-    icon = pystray.Icon("AzurPilot", image, "AzurPilot WebUI", menu)
+    icon = pystray.Icon("ALAS", image, "ALAS WebUI", menu)
     icon.run()
 
 
