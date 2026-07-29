@@ -17,8 +17,10 @@ ROOT = os.path.dirname(os.path.abspath(__file__))
 WEBUI_URL = "http://127.0.0.1:22267"
 
 
-def _venv_pythonw():
-    for rel in (".venv/Scripts/pythonw.exe", ".venv/Scripts/python.exe"):
+def _venv_python():
+    # Modify by MHY, gui.py 的 multiprocessing worker spawn 需要有效的 console
+    # 句柄，pythonw（无控制台）下 worker 会立即崩溃，故优先用 python.exe
+    for rel in (".venv/Scripts/python.exe", ".venv/Scripts/pythonw.exe"):
         p = os.path.join(ROOT, *rel.split("/"))
         if os.path.exists(p):
             return p
@@ -42,12 +44,20 @@ def _kill_tree(pid):
 
 
 def main():
-    py = _venv_pythonw()
+    py = _venv_python()
+    # Modify by MHY, CREATE_NEW_CONSOLE 给 gui.py 一个新 console，其 worker 继承有效的
+    # console 句柄（pythonw 无 console 会导致 worker spawn 崩溃）；SW_HIDE 让窗口创建即
+    # 隐藏，实现无窗口后台运行。不重定向 stdout/stderr，保留 worker 继承的 console 句柄。
+    popen_kwargs = {"cwd": ROOT}
+    if sys.platform == "win32":
+        si = subprocess.STARTUPINFO()
+        si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+        si.wShowWindow = 0  # SW_HIDE
+        popen_kwargs["startupinfo"] = si
+        popen_kwargs["creationflags"] = subprocess.CREATE_NEW_CONSOLE
     gui_proc = subprocess.Popen(
         [py, os.path.join(ROOT, "gui.py")],
-        cwd=ROOT,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
+        **popen_kwargs,
     )
 
     icon_path = os.path.join(ROOT, "deploy", "launcher", "icon.ico")
