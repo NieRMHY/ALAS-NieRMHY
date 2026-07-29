@@ -1,19 +1,11 @@
 Deploy:
   Git:
-    # AzurPilot 仓库地址
-    # URL of AzurPilot repository
-    # [国内用户] 使用 'git://git.pull/AzurPilot' 获得更快更稳定的下载
-    # [CN user] Use 'git://git.pull/AzurPilot' for faster and more stable download
-    # [其他用户] 使用 'https://github.com/wess09/AzurPilot'
-    # [Other] Use 'https://github.com/wess09/AzurPilot'
-    Repository: https://github.com/wess09/AzurPilot
-    # AzurPilot 分支
-    # Branch of AzurPilot
-    # [开发者] 使用 'dev'、'app' 等分支体验新功能
-    # [Developer] Use 'dev', 'app', etc, to try new features
-    # [其他用户] 使用 'master'，稳定分支
-    # [Other] Use 'master', the stable branch
-    Branch: master
+    # 仓库地址
+    # URL of repository
+    Repository: https://github.com/NieRMHY/ALAS-NieRMHY
+    # 分支
+    # Branch
+    Branch: dev_essex
     # Git 可执行文件路径
     # Filepath of git executable.
     GitExecutable: ./.venv/Scripts/git/cmd/git.exe
@@ -146,7 +138,7 @@ Deploy:
     # ! You need to set Password below to enable remote access since everyone can access to your ap if they have your url.
     # 详情请参阅 https://app.azurlane.cloud/
     # See here (http://app.azurlane.cloud/en.html) for more infomation.
-    EnableRemoteAccess: true
+    EnableRemoteAccess: false
     # 远程访问模式
     # Remote access mode
     # [自动] auto（优先 P2P/TURN，失败回退 SSH 转发）
@@ -165,7 +157,7 @@ Deploy:
     # [Default] null
     # [格式] host:port
     # [Format] host:port
-    SSHServer: remote.nanoda.work:1022
+    SSHServer: null
     # SSH 可执行文件 `ssh.exe` 的路径
     # Filepath of SSH executable `ssh.exe`
     # [默认] ssh（在系统 PATH 中查找）
@@ -217,7 +209,7 @@ Deploy:
     # 'ja-JP' for Japanese
     # 'zh-TW' 繁體中文
     # 'zh-TW' for Chinese traditional
-    Language: en-US
+    Language: zh-CN
     # WebUI 主题
     # Theme of web ui
     # 'default' 亮色主题

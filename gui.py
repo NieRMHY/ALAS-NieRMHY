@@ -6,6 +6,7 @@ import subprocess
 import sys
 import threading
 import time
+import webbrowser
 from multiprocessing import Event, Process, Queue, set_start_method
 from typing import Optional
 
@@ -216,6 +217,14 @@ def func(
         logger.error("[GUI] 提供了SSL密钥但未提供证书。请同时提供SSL密钥和证书。")
     elif ssl_key is None and ssl_cert is not None:
         logger.error("[GUI] 提供了SSL证书但未提供密钥。请同时提供SSL密钥和证书。")
+
+    # Modify by MHY, 非 Electron 模式下 uvicorn 就绪后自动打开默认浏览器
+    if not State.electron:
+        def _open_browser_when_ready():
+            if ready_event is not None:
+                ready_event.wait(timeout=30)
+            webbrowser.open(f"http://127.0.0.1:{port}")
+        threading.Thread(target=_open_browser_when_ready, daemon=True, name="webui-browser").start()
 
     # 通配地址显式创建两个 socket，避免 Windows 将 IPv6 wildcard 作为仅 IPv6 监听。
     try:
