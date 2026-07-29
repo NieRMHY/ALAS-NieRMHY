@@ -38,8 +38,24 @@ from module.webui.deploy_settings import (
     save_deploy_settings,
     set_startup_run,
 )
-from module.webui.launcher import is_local_request, launcher_control
 from module.webui.lang import t
+
+# Modify by MHY, 删除 nanoda 启动器(launcher_control)，仅保留本机请求校验供部署 API 使用
+LOCAL_HOSTS = {"127.0.0.1", "::1", "localhost"}
+
+
+def is_local_request(request) -> bool:
+    client = getattr(request, "client", None)
+    host = getattr(client, "host", "") if client is not None else ""
+    header_host = _normalize_host(request.headers.get("host", ""))
+    return host in LOCAL_HOSTS and header_host in LOCAL_HOSTS
+
+
+def _normalize_host(host: str) -> str:
+    host = str(host or "").strip().lower()
+    if host.startswith("["):
+        return host[1:].split("]", maxsplit=1)[0]
+    return host.split(":", maxsplit=1)[0]
 
 
 def is_demo_mode():
@@ -1429,83 +1445,6 @@ async def api_notify_stream(request):
     )
 
 
-async def api_launcher_status(request):
-    """GET /api/launcher/status — 查询启动器连接和开机自启动状态"""
-    request_local = is_local_request(request)
-    return JSONResponse(launcher_control.status(request_local=request_local))
-
-
-async def api_launcher_startup(request):
-    """POST /api/launcher/startup — 请求启动器设置 Windows 开机自启动"""
-    if not is_local_request(request):
-        return JSONResponse(
-            {"success": False, "error": "开机自启动只能从本机 WebUI 设置"},
-            status_code=403,
-        )
-
-    try:
-        data = await request.json()
-    except Exception:
-        return JSONResponse({"success": False, "error": "请求体不是有效 JSON"}, status_code=400)
-
-    if "enabled" not in data:
-        return JSONResponse({"success": False, "error": "缺少 enabled 字段"}, status_code=400)
-    if not isinstance(data.get("enabled"), bool):
-        return JSONResponse({"success": False, "error": "enabled 必须是布尔值"}, status_code=400)
-
-    result = await launcher_control.set_autostart(data["enabled"])
-    status = 200 if result.get("success") else 500
-    return JSONResponse(result, status_code=status)
-
-
-async def api_launcher_stream(request):
-    """GET /api/launcher/stream — 启动器订阅的本地命令流"""
-    if not is_local_request(request):
-        return JSONResponse(
-            {"success": False, "error": "启动器命令流只允许本机连接"},
-            status_code=403,
-        )
-
-    async def event_generator():
-        await launcher_control.mark_connected()
-        try:
-            while True:
-                if await request.is_disconnected():
-                    break
-                try:
-                    command = await asyncio.wait_for(launcher_control.next_command(), timeout=30)
-                    launcher_control.keep_alive()
-                    yield launcher_control.event(command)
-                except asyncio.TimeoutError:
-                    launcher_control.keep_alive()
-                    yield launcher_control.keepalive_event()
-        finally:
-            launcher_control.mark_disconnected()
-
-    return StreamingResponse(
-        event_generator(),
-        media_type="text/event-stream",
-        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
-    )
-
-
-async def api_launcher_report(request):
-    """POST /api/launcher/report — 启动器回报命令执行结果"""
-    if not is_local_request(request):
-        return JSONResponse(
-            {"success": False, "error": "启动器回报只允许本机连接"},
-            status_code=403,
-        )
-
-    try:
-        data = await request.json()
-    except Exception:
-        return JSONResponse({"success": False, "error": "请求体不是有效 JSON"}, status_code=400)
-
-    result = await launcher_control.report(data)
-    return JSONResponse(result)
-
-
 async def api_deploy_settings(request):
     """GET /api/deploy/settings — 查询 deploy.yaml 可视化配置。"""
     if not is_local_request(request):
@@ -1681,10 +1620,6 @@ api_routes = [
     Route("/api/ap_timeline", api_ap_timeline),
     Route("/api/notify", api_notify, methods=["POST"]),
     Route("/api/notify_stream", api_notify_stream),
-    Route("/api/launcher/status", api_launcher_status),
-    Route("/api/launcher/startup", api_launcher_startup, methods=["POST"]),
-    Route("/api/launcher/stream", api_launcher_stream),
-    Route("/api/launcher/report", api_launcher_report, methods=["POST"]),
     Route("/api/deploy/settings", api_deploy_settings),
     Route("/api/deploy/settings", api_deploy_settings_save, methods=["POST"]),
     Route("/api/deploy/startup-run", api_deploy_startup_run),
