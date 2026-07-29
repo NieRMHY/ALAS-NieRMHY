@@ -1,7 +1,7 @@
 """
 API 客户端模块
 负责与 API 服务器进行所有HTTP交互
-包括Bug日志上报、CL1数据提交和公告获取
+包括公告获取
 支持主域名(nanoda.work)和备用域名(xf-sama.xyz)的自动故障转移
 """
 import threading
@@ -21,8 +21,6 @@ class ApiClient:
     FALLBACK_DOMAIN = 'https://alas-apiv2.nanoda.work'
     
     # API端点路径
-    BUG_LOG_PATH = '/api/post/bug'
-    CL1_DATA_PATH = '/api/telemetry'
     ANNOUNCEMENT_PATH = '/api/get/announcement'
 
     # 公告检查间隔（秒），1.5分钟 = 90秒
@@ -119,98 +117,7 @@ class ApiClient:
         
         return False, 0, last_error or 'Unknown error'
     
-    @staticmethod
-    def _submit_bug_log(content: str, log_type: str):
-        """
-        内部方法：提交Bug日志
-        注：此方法基本没用了 服务端API废弃
-        Args:
-            content: 日志内容
-            log_type: 日志类型
-        """
-        try:
-            device_id = get_device_id()
-            data = {
-                'device_id': device_id,
-                'log_type': log_type,
-                'log_content': content,
-            }
-            
-            success, status_code, response_text = ApiClient._post_with_fallback(
-                ApiClient.BUG_LOG_PATH,
-                data,
-                timeout=5
-            )
-            
-            if success:
-                logger.info(f'[基础-API] Bug日志已提交: {content[:50]}...')
-            else:
-                logger.warning(f'[基础-API] 提交Bug日志失败: {response_text}')
-        except Exception as e:
-            logger.warning(f'[基础-API] 提交Bug日志失败: {e}')
-    
-    @classmethod
-    def submit_bug_log(cls, content: str, log_type: str = 'warning', enabled: bool = True):
-        """
-        提交Bug日志（异步）
-        
-        Args:
-            content: 日志内容
-            log_type: 日志类型，默认为'warning'
-            enabled: 是否启用上报，可传入 config.DropRecord_BugReport 配置值
-        """
-        if not enabled:
-            return
-        from module.base.async_executor import async_executor
-        async_executor.submit(cls._submit_bug_log, content, log_type)
-    
-    @staticmethod
-    def _submit_cl1_data(data: Dict[str, Any], timeout: int):
-        """
-        内部方法：提交CL1数据
-        
-        Args:
-            data: 数据字典
-            timeout: 超时时间（秒）
-        """
-        try:
-            # 如果没有任何战斗数据,不提交
-            if data.get('battle_count', 0) == 0:
-                logger.info('无CL1战斗数据可提交')
-                return
-            
-            logger.info(f'[基础-API] 提交CL1数据 {data.get("month", "unknown")}...')
-            logger.attr('战斗次数', data.get('battle_count', 0))
-            logger.attr('明石遭遇次数', data.get('akashi_encounters', 0))
-            logger.attr('明石出现概率', f"{data.get('akashi_probability', 0):.2%}")
-            
-            success, status_code, response_text = ApiClient._post_with_fallback(
-                ApiClient.CL1_DATA_PATH,
-                data,
-                timeout=timeout
-            )
-            
-            if success:
-                logger.info('[基础-API] CL1 数据提交成功')
-            else:
-                logger.warning(f'[基础-API] CL1 数据提交失败: {response_text}')
-
-        except Exception as e:
-            logger.exception(f'[基础-API] CL1 数据提交异常: {e}')
-    
-    @classmethod
-    def submit_cl1_data(cls, data: Dict[str, Any], timeout: int = 10):
-        """
-        提交CL1统计数据（异步）
-        只包含哈希化的设备ID 不TM包含原始硬件信息 如果你是傻逼，可以认为服务端收集了你的设备信息
-        不喜欢自己关 我TM又没留后门
-        Args:
-            data: 包含device_id和统计数据的字典
-            timeout: 请求超时时间（秒），默认10秒
-        """
-        from module.base.async_executor import async_executor
-        async_executor.submit(cls._submit_cl1_data, data, timeout)
-
+    # Modify by MHY, 移除 nanoda Bug日志/CL1数据上报外联，保留公告获取
     @classmethod
     def get_announcement(cls, timeout: int = 1, current_id: int = None) -> Optional[Dict[str, Any]]:
         """
