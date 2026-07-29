@@ -13,15 +13,11 @@ from module.webui.app_dependencies import (
     Frame,
     IS_ON_PHONE_CLOUD,
     List,
-    PUBLIC_WEBUI_PASSWORD_GENERATE_FAILED_MESSAGE,
     ProcessManager,
-    RESTRICTED_DEVICE_IDS,
-    RESTRICTED_DEVICE_MESSAGE,
     RichLog,
     State,
     argparse,
     asgi_app,
-    get_device_id,
     get_localstorage_values,
     info,
     lang,
@@ -30,7 +26,6 @@ from module.webui.app_dependencies import (
     logger,
     login,
     os,
-    popup,
     run_js,
     set_env,
     task_handler,
@@ -44,17 +39,11 @@ from module.webui.app_developer_tools import DeveloperToolsMixin
 from module.webui.app_developer_update import DeveloperUpdateMixin
 from module.webui.app_event_tools import EventToolsMixin
 from module.webui.app_helpers import (
-    DEMO_DEVICE_ID_TEXT,
-    WEBUI_AUTO_PASSWORD_FILE,
     build_copyable_device_id,
     build_muted_notice,
     build_recommendation_box,
     build_simple_table,
     build_title_block,
-    ensure_public_webui_password,
-    generate_webui_password,
-    is_demo_mode,
-    is_public_webui_host,
     is_webui_password_set,
     read_webapp_template,
     timedelta_to_text,
@@ -145,7 +134,6 @@ def app():
     AlasGUI.set_theme(theme=State.deploy_config.Theme)
     lang.LANG = State.deploy_config.Language
     key = args.key if is_webui_password_set(args.key) else State.deploy_config.Password
-    key, password_error = ensure_public_webui_password(key)
     cdn: str | bool = args.cdn if args.cdn else State.deploy_config.CDN
     runs: List[str] | None = None
     if args.run:
@@ -169,30 +157,6 @@ def app():
     atomic_failure_cleanup("./config")
     static_path = os.getcwd()
 
-    def _block_restricted_device() -> bool:
-        if is_demo_mode():
-            return False
-        if get_device_id() not in RESTRICTED_DEVICE_IDS:
-            return False
-        popup(
-            "安全保护",
-            RESTRICTED_DEVICE_MESSAGE,
-            implicit_close=False,
-            closable=False,
-        )
-        return True
-
-    def _block_public_webui_password_error() -> bool:
-        if is_demo_mode() or password_error is None:
-            return False
-        popup(
-            "安全保护",
-            PUBLIC_WEBUI_PASSWORD_GENERATE_FAILED_MESSAGE,
-            implicit_close=False,
-            closable=False,
-        )
-        return True
-
     def _run_gui(initial_page: str = "home") -> None:
         set_env(title="AzurPilot", output_animation=False)
         load_webui_styles(
@@ -200,8 +164,6 @@ def app():
             is_mobile=info.user_agent.is_mobile,
             preloaded_styles=("alas",),
         )
-        if _block_restricted_device() or _block_public_webui_password_error():
-            return
         localstorage = None
         if is_webui_password_set(key):
             localstorage = get_localstorage_values(
