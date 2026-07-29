@@ -8,11 +8,11 @@ set "_pyBin=%_root%\.venv\Scripts"
 set "_gitBin=%_root%\.venv\Scripts\git\cmd"
 set "PATH=%_pyBin%;%_gitBin%;%PATH%"
 
-title AzurPilot WebUI
+title ALAS WebUI
 color F0
 
 echo ============================================
-echo   AzurPilot WebUI
+echo   ALAS WebUI
 echo   浏览器将自动打开，关闭本窗口即停止服务
 echo ============================================
 echo.
