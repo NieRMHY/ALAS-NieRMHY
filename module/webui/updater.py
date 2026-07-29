@@ -80,42 +80,8 @@ class Updater(DeployConfig, GitManager):
         else:
             return logs
 
-    def _check_cloud_update(self) -> bool:
-        """检查云端更新开关"""
-        return self.cloud_auto_update_enabled()
-
-    def _check_cloud_force_update(self) -> bool:
-        """检查云端强制更新开关。"""
-        return self.cloud_force_update_enabled()
-
     def _check_update(self) -> bool:
         self.state = "checking"
-
-        cloud_update = self._check_cloud_update()
-        if cloud_update is None:
-            self.cloud_update_access_failed(fatal=False)
-            return False
-        if not cloud_update:
-            self.force_update = False
-            logger.info("云更新标志为false，跳过更新检查")
-            return False
-
-        force_update = self._check_cloud_force_update()
-        self.force_update = force_update is True
-        if force_update is None:
-            logger.warning("强制更新开关不可访问，按关闭处理")
-
-        if State.deploy_config.GitOverCdn:
-            status = self.goc_client.get_status()
-            if status == "uptodate":
-                logger.info(f"无更新")
-                return False
-            elif status == "behind":
-                logger.info(f"有新更新可用")
-                return True
-            else:
-                # failed, should fallback to `git pull`
-                pass
 
         source = "origin"
         for _ in range(3):
@@ -223,30 +189,9 @@ class Updater(DeployConfig, GitManager):
         try:
             result = self._check_update()
             self.state = result
-            if result and self.force_update:
-                logger.info("强制更新开关已开启，立即执行更新")
-                self.run_update()
         except Exception as e:
             logger.exception(e)
             self.state = 0
-
-    def _check_force_update_thread(self):
-        """已有更新时，仅检查强制更新开关以保留前端状态。"""
-        try:
-            cloud_update = self._check_cloud_update()
-            if cloud_update is not True:
-                self.force_update = False
-                return
-
-            force_update = self._check_cloud_force_update()
-            self.force_update = force_update is True
-            if self.force_update:
-                logger.info("强制更新开关已开启，立即执行已检测到的更新")
-                self.run_update()
-        except Exception as e:
-            logger.exception(e)
-        finally:
-            self._force_update_checking = False
 
     def check_update(self):
         if self.state in (0, "failed", "finish"):
@@ -254,12 +199,6 @@ class Updater(DeployConfig, GitManager):
             threading.Thread(
                 target=self._check_update_thread,
                 daemon=True
-            ).start()
-        elif self.state == 1 and not self._force_update_checking:
-            self._force_update_checking = True
-            threading.Thread(
-                target=self._check_force_update_thread,
-                daemon=True,
             ).start()
 
     def check_update_loop(self) -> Generator:
