@@ -559,23 +559,6 @@ class AzurLaneAutoScript:
         from module.handler.sensitive_info import (handle_sensitive_image,
                                                    handle_sensitive_logs)
                                                    
-        # LLM 错误分析放在最前面，避免后续截图保存时二次崩溃导致分析未执行
-        try:
-            if hasattr(self, 'config') and getattr(self.config, 'Error_LlmAnalysis', False):
-                from module.llm import analyze_exception
-                import sys
-                _, exc_value, _ = sys.exc_info()
-                if exc_value is not None:
-                    analyze_exception(self.config, exc_value)
-        except Exception as e:
-            logger.exception_context(
-                title='LLM 错误分析失败',
-                exc=e,
-                impact='不影响任务恢复，但本次错误不会生成 LLM 分析结果。',
-                action='检查 LLM API 配置、网络和配额；直接根据错误现场排查。',
-                level=30,
-            )
-
         if getattr(self.config, 'Error_SaveError', False):
             config_folder = pathlib.Path(f"./log/error/{self.config_name}")
             folder = config_folder.joinpath(str(int(time.time() * 1000)))
@@ -1450,14 +1433,6 @@ class AzurLaneAutoScript:
                     action='关注下方堆栈；若连续发生，请检查设备连接、配置和最近更新的资源。',
                 )
                 
-                # 即使没有达到重启或失败上限，也第一时间自动请求分析崩溃原因
-                try:
-                    if hasattr(self, 'config') and getattr(self.config, 'Error_LlmAnalysis', False):
-                        from module.llm import analyze_exception
-                        analyze_exception(self.config, e)
-                except Exception as ex:
-                    logger.error(f'[Alas] LLM错误分析失败: {ex}')
-
                 logger.warning(
                     f">>> 这是第 {consecutive_global_failures} 次连续全局失败，共 {MAX_GLOBAL_FAILURES} 次。"
                 )
