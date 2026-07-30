@@ -106,7 +106,7 @@ class Frame(Base):
             "header",
             [
                 put_html(Icon.ALAS).style("--header-icon--"),
-                put_text("港区OA").style("--header-text--"),
+                put_text("ESSEX Secretary").style("--header-text--"),  # Modify by MHY, ESSEX 主题标题
                 put_scope("header_status"),
                 put_scope("header_title"),
             ],

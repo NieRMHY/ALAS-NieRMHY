@@ -6023,9 +6023,9 @@
       "ClickToUpdate": "有可用更新!"
     },
     "Status": {
-      "Running": "秘書艦正在處理",
-      "Inactive": "茗正在偷走你的箱子",
-      "Warning": "發生錯誤",
+      "Running": "秘書艦代理中",
+      "Inactive": "港區假期",
+      "Warning": "塞壬來襲",
       "Updating": "等待更新"
     },
     "MenuAlas": {

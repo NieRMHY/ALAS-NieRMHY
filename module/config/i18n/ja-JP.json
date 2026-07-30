@@ -6023,9 +6023,9 @@
       "ClickToUpdate": "利用可能なアップデートがあります!"
     },
     "Status": {
-      "Running": "秘書艦が処理中です",
-      "Inactive": "ミンがあなたの箱を盗んでいます",
-      "Warning": "エラーが発生しました",
+      "Running": "秘書艦代理中",
+      "Inactive": "港区休暇",
+      "Warning": "セイレーン襲来",
       "Updating": "更新を待っています"
     },
     "MenuAlas": {

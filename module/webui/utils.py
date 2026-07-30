@@ -399,8 +399,9 @@ def filepath_css(filename):
     return f"./assets/gui/css/{filename}.css"
 
 
-def filepath_icon(filename):
-    return f"./assets/gui/icon/{filename}.svg"
+# Modify by MHY, 支持 ext 参数以加载 PNG 头图（参考 essex 分支）
+def filepath_icon(filename, ext: str = "svg"):
+    return f"./assets/gui/icon/{filename}.{ext}"
 
 
 def add_css_files(filepaths):
@@ -488,16 +489,39 @@ def _read(path):
         return f.read()
 
 
+# Modify by MHY, 引入 PNG 头图：PNG 以 base64 内嵌避免静态路径问题，缺失则回退 SVG
+def _load_icon(name: str) -> str:
+    """优先读同名 PNG，缺失或失败则回退 SVG。"""
+    png_path = filepath_icon(name, "png")
+    if os.path.exists(png_path):
+        try:
+            with open(png_path, "rb") as f:
+                data = base64.b64encode(f.read()).decode("ascii")
+            return (
+                f'<img src="data:image/png;base64,{data}" alt="{name}" '
+                'style="width:2.4rem;height:2.4rem;display:block;" />'
+            )
+        except Exception as e:
+            logger.warning("读取 PNG 图标失败，回退 SVG: %s", e)
+
+    svg_path = filepath_icon(name, "svg")
+    try:
+        return _read(svg_path)
+    except Exception as e:
+        logger.error("读取 SVG 图标失败: %s", e)
+        return ""
+
+
 class Icon:
     """
     存储图标的 HTML 内容。
     """
 
-    ALAS = _read(filepath_icon("alas"))
-    SETTING = _read(filepath_icon("setting"))
-    RUN = _read(filepath_icon("run"))
-    DEVELOP = _read(filepath_icon("develop"))
-    ADD = _read(filepath_icon("add"))
+    ALAS = _load_icon("alas")
+    SETTING = _load_icon("setting")
+    RUN = _load_icon("run")
+    DEVELOP = _load_icon("develop")
+    ADD = _load_icon("add")
     RUNNING = _read(filepath_icon("status_running"))
     ERROR = _read(filepath_icon("status_error"))
     UPDATE = _read(filepath_icon("status_update"))
