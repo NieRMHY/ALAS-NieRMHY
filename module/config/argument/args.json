@@ -485,23 +485,6 @@
           1,
           10
         ]
-      },
-      "LlmAnalysis": {
-        "type": "checkbox",
-        "value": true
-      },
-      "LlmApiKey": {
-        "type": "textarea",
-        "value": ""
-      },
-      "LlmApiBase": {
-        "type": "textarea",
-        "value": "https://api.xiaomimimo.com/v1"
-      },
-      "LlmModel": {
-        "type": "input",
-        "value": "mimo-v2.5-pro",
-        "valuetype": "str"
       }
     },
     "Optimization": {

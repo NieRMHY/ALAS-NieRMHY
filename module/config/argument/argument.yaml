@@ -189,16 +189,6 @@ Error:
   AdbOfflineThreshold:
     value: 3
     validate: [1, 10]
-  LlmAnalysis: true
-  LlmApiKey:
-    type: textarea
-    value: ""
-  LlmApiBase:
-    type: textarea
-    value: "https://api.xiaomimimo.com/v1"
-  LlmModel:
-    value: "mimo-v2.5-pro"
-    valuetype: str
 Optimization:
   OcrDevice:
     value: auto

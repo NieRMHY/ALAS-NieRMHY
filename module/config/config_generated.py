@@ -121,10 +121,6 @@ class GeneratedConfig:
     Error_GameStuckThreshold = 3
     Error_AdbOfflineRestart = False
     Error_AdbOfflineThreshold = 3
-    Error_LlmAnalysis = True
-    Error_LlmApiKey = None
-    Error_LlmApiBase = 'https://api.xiaomimimo.com/v1'
-    Error_LlmModel = 'mimo-v2.5-pro'
 
     # 配置组 `Optimization`
     Optimization_OcrDevice = 'auto'  # auto, qnn_npu, openvino_npu, openvino_gpu, gpu, openvino_cpu, cpu, ane

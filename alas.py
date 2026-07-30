@@ -551,8 +551,6 @@ class AzurLaneAutoScript:
     def save_error_log(self):
         """
         保存错误现场：最近截图和日志文件到 ./log/error/<config-name>/<timestamp>/。
-
-        同时触发 LLM 错误分析（如果启用）。
         """
         import pathlib
         from module.base.utils import save_image
