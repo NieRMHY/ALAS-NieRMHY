@@ -59,7 +59,7 @@ def handle_ocr_error(e):
         "[OCR] 无法加载 OCR 依赖，请安装微软 C++ 运行库 https://aka.ms/vs/17/release/vc_redist.x64.exe"
     )
     logger.critical("[OCR] 也有可能是 GPU 不支持加速引起，请尝试关闭 GPU 加速")
-    logger.critical("[OCR] 如果上述方法都无法解决，请加群获取支持")
+    logger.critical("[OCR] 如果上述方法都无法解决，请在 GitHub Issues 反馈：https://github.com/NieRMHY/ALAS-NieRMHY/issues")
     raise RequestHumanTakeover
 
 
