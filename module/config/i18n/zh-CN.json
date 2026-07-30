@@ -1892,7 +1892,7 @@
     },
     "CustomFilter": {
       "name": "自定义过滤器",
-      "help": "使用自定义过滤器需将“活动商店过滤器”设置为“自定义”，并使用过滤器语法生成过滤器；过滤器设置不当可能导致异常，请参考过滤器语法文档"
+      "help": "使用自定义过滤器需将“活动商店过滤器”设置为“自定义”，并使用过滤器语法生成过滤器；过滤器设置不当可能导致异常，请阅读 https://github.com/LmeSzinc/AzurLaneAutoScript/wiki/filter_string_cn"
     }
   },
   "Commission": {
@@ -1916,7 +1916,7 @@
     },
     "CustomFilter": {
       "name": "自定义委托过滤器",
-      "help": "使用自定义过滤器需将 \"委托过滤器\" 设置为 \"自定义\"，并使用过滤器语法生成过滤器；过滤器设置不当可能漏接委托，请参考过滤器语法文档"
+      "help": "使用自定义过滤器需将 \"委托过滤器\" 设置为 \"自定义\"，并使用过滤器语法生成过滤器；过滤器设置不当可能漏接委托，请阅读 https://github.com/LmeSzinc/AzurLaneAutoScript/wiki/filter_string_cn"
     },
     "DoMajorCommission": {
       "name": "做主要委托（1200油/1000油委托）",
@@ -2043,7 +2043,7 @@
     },
     "PresetFilter": {
       "name": "科研过滤器",
-      "help": "科研掉落和项目刷新见 https://azur-stats.lyoko.io/，对这些没有基本了解的人不建议编写自定义过滤器，建议使用预优化科研过滤器；过滤器设置不当可能导致异常，请参考过滤器语法文档",
+      "help": "科研掉落和项目刷新见 https://azur-stats.lyoko.io/，对这些没有基本了解的人不建议编写自定义过滤器，建议使用预优化科研过滤器；过滤器设置不当可能导致异常，请阅读 https://github.com/LmeSzinc/AzurLaneAutoScript/wiki/filter_string_cn",
       "custom": "自定义",
       "series_9_blueprint_ta152": "九期 蓝图+Ta152",
       "series_9_blueprint_only": "九期 仅蓝图",
@@ -2073,7 +2073,7 @@
     },
     "CustomFilter": {
       "name": "自定义科研过滤器",
-      "help": "使用自定义过滤器需将 \"科研过滤器\" 设置为 \"自定义\"，并使用过滤器语法生成过滤器；过滤器设置不当可能导致异常，请参考过滤器语法文档"
+      "help": "使用自定义过滤器需将 \"科研过滤器\" 设置为 \"自定义\"，并使用过滤器语法生成过滤器；过滤器设置不当可能导致异常，请阅读 https://github.com/LmeSzinc/AzurLaneAutoScript/wiki/filter_string_cn"
     }
   },
   "Dorm": {
@@ -3109,7 +3109,7 @@
     },
     "CustomFilter": {
       "name": "自定义过滤器",
-      "help": "使用自定义过滤器需将 \"港口商店过滤器\" 设置为 \"自定义\"，并使用过滤器语法生成过滤器；过滤器设置不当可能导致异常，请参考过滤器语法文档"
+      "help": "使用自定义过滤器需将 \"港口商店过滤器\" 设置为 \"自定义\"，并使用过滤器语法生成过滤器；过滤器设置不当可能导致异常，请阅读 https://github.com/LmeSzinc/AzurLaneAutoScript/wiki/filter_string_cn"
     },
     "DisableBeforeDate": {
       "name": "每月 X 号前，不购买大世界商店Plus",
