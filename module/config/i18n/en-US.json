@@ -880,7 +880,7 @@
     },
     "TelemetryReport": {
       "name": "Telemetry Data Reporting",
-      "help": "After being enabled, CL1 statistics (anonymous data such as the number of battles and Akashi encounter probability) will be reported anonymously to the server on a regular basis. For details on ID generation, please see the source code. For statistical information https://alas.nanoda.work/"
+      "help": "After being enabled, CL1 statistics (anonymous data such as the number of battles and Akashi encounter probability) will be reported anonymously to the server on a regular basis. For details on ID generation, please see the source code."
     },
     "BugReport": {
       "name": "Bug Log Reporting",
@@ -5866,7 +5866,7 @@
       "DisableTranslateMode": "Click here to turn off translation mode",
       "ConfigSaved": "Settings saved",
       "AlasIsRunning": "Scheduler is already running",
-      "ClickToUpdate": "Updates available nanoda!"
+      "ClickToUpdate": "Updates available!"
     },
     "Status": {
       "Running": "Secretary ship is processing",

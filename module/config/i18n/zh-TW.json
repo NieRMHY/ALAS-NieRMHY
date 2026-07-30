@@ -880,7 +880,7 @@
     },
     "TelemetryReport": {
       "name": "遙測資料上報",
-      "help": "啟用後將定期向伺服器匿名上報 CL1 統計資料（戰鬥次數、明石遇見機率等匿名資料）ID生成詳見原始碼，統計資訊 https://alas.nanoda.work/"
+      "help": "啟用後將定期向伺服器匿名上報 CL1 統計資料（戰鬥次數、明石遇見機率等匿名資料），ID生成詳見原始碼"
     },
     "BugReport": {
       "name": "Bug 日誌上報",
@@ -5866,7 +5866,7 @@
       "DisableTranslateMode": "點選這裡關閉翻譯模式",
       "ConfigSaved": "設定已儲存",
       "AlasIsRunning": "排程器已在執行中",
-      "ClickToUpdate": "有可用更新nanoda!"
+      "ClickToUpdate": "有可用更新!"
     },
     "Status": {
       "Running": "秘書艦正在處理",
