@@ -47,8 +47,8 @@
       "help": ""
     },
     "UpdateDate": {
-      "name": "Task.UpdateDate.name",
-      "help": "Task.UpdateDate.help"
+      "name": "維護窗口",
+      "help": "手動填寫遊戲維護時間窗口，ALAS 會提前自動進入維護模式，並在結束時間後恢復完整排程。"
     },
     "Restart": {
       "name": "重啟設定",
@@ -821,114 +821,114 @@
   },
   "GameUpdate": {
     "_info": {
-      "name": "GameUpdate._info.name",
-      "help": "GameUpdate._info.help"
+      "name": "遊戲更新",
+      "help": "用於手動設定維護窗口。進入開始前設定小時數到結束時間之間的時段後，ALAS 會把未保留任務的下一次執行時間統一延後到結束時間，維護結束後自動恢復。"
     },
     "Enable": {
-      "name": "GameUpdate.Enable.name",
-      "help": "GameUpdate.Enable.help"
+      "name": "啟用維護窗口",
+      "help": "關閉時不生效。開啟後會根據開始時間和結束時間控制任務排程。"
     },
     "StopBeforeHours": {
-      "name": "GameUpdate.StopBeforeHours.name",
-      "help": "GameUpdate.StopBeforeHours.help"
+      "name": "提前停止小時數",
+      "help": "在維護開始前多少小時進入維護模式。預設 2，可填寫整數或小數。"
     },
     "StartTime": {
-      "name": "GameUpdate.StartTime.name",
-      "help": "GameUpdate.StartTime.help"
+      "name": "維護開始時間",
+      "help": "遊戲維護正式開始的時間。ALAS 會從這個時間點往前推你設定的小時數進入維護模式。"
     },
     "EndTime": {
-      "name": "GameUpdate.EndTime.name",
-      "help": "GameUpdate.EndTime.help"
+      "name": "維護結束時間",
+      "help": "維護結束後，之前被延後的任務會在這個時間點後自動恢復排程。"
     }
   },
   "GameUpdateTasks": {
     "_info": {
-      "name": "GameUpdateTasks._info.name",
-      "help": "GameUpdateTasks._info.help"
+      "name": "維護期間保留任務",
+      "help": "勾選後，該任務在維護窗口期間仍會繼續參與排程。一般只建議保留委託、科研、商店等低風險任務。"
     },
     "KeepCommission": {
-      "name": "GameUpdateTasks.KeepCommission.name",
-      "help": "GameUpdateTasks.KeepCommission.help"
+      "name": "委託",
+      "help": ""
     },
     "KeepTactical": {
-      "name": "GameUpdateTasks.KeepTactical.name",
-      "help": "GameUpdateTasks.KeepTactical.help"
+      "name": "戰術學院",
+      "help": ""
     },
     "KeepResearch": {
-      "name": "GameUpdateTasks.KeepResearch.name",
-      "help": "GameUpdateTasks.KeepResearch.help"
+      "name": "科研",
+      "help": ""
     },
     "KeepDorm": {
-      "name": "GameUpdateTasks.KeepDorm.name",
-      "help": "GameUpdateTasks.KeepDorm.help"
+      "name": "後宅",
+      "help": ""
     },
     "KeepMeowfficer": {
-      "name": "GameUpdateTasks.KeepMeowfficer.name",
-      "help": "GameUpdateTasks.KeepMeowfficer.help"
+      "name": "指揮喵",
+      "help": ""
     },
     "KeepGuild": {
-      "name": "GameUpdateTasks.KeepGuild.name",
-      "help": "GameUpdateTasks.KeepGuild.help"
+      "name": "大艦隊",
+      "help": ""
     },
     "KeepReward": {
-      "name": "GameUpdateTasks.KeepReward.name",
-      "help": "GameUpdateTasks.KeepReward.help"
+      "name": "收穫",
+      "help": ""
     },
     "KeepAwaken": {
-      "name": "GameUpdateTasks.KeepAwaken.name",
-      "help": "GameUpdateTasks.KeepAwaken.help"
+      "name": "認知覺醒",
+      "help": ""
     },
     "KeepIsland": {
-      "name": "GameUpdateTasks.KeepIsland.name",
-      "help": "GameUpdateTasks.KeepIsland.help"
+      "name": "島嶼計劃",
+      "help": ""
     },
     "KeepExercise": {
-      "name": "GameUpdateTasks.KeepExercise.name",
-      "help": "GameUpdateTasks.KeepExercise.help"
+      "name": "演習",
+      "help": ""
     },
     "KeepShopFrequent": {
-      "name": "GameUpdateTasks.KeepShopFrequent.name",
-      "help": "GameUpdateTasks.KeepShopFrequent.help"
+      "name": "軍火商商店",
+      "help": ""
     },
     "KeepShopOnce": {
-      "name": "GameUpdateTasks.KeepShopOnce.name",
-      "help": "GameUpdateTasks.KeepShopOnce.help"
+      "name": "其他商店",
+      "help": ""
     },
     "KeepShipyard": {
-      "name": "GameUpdateTasks.KeepShipyard.name",
-      "help": "GameUpdateTasks.KeepShipyard.help"
+      "name": "開發船塢",
+      "help": ""
     },
     "KeepGacha": {
-      "name": "GameUpdateTasks.KeepGacha.name",
-      "help": "GameUpdateTasks.KeepGacha.help"
+      "name": "每日抽卡",
+      "help": ""
     },
     "KeepFreebies": {
-      "name": "GameUpdateTasks.KeepFreebies.name",
-      "help": "GameUpdateTasks.KeepFreebies.help"
+      "name": "免費獎勵",
+      "help": ""
     },
     "KeepMinigame": {
-      "name": "GameUpdateTasks.KeepMinigame.name",
-      "help": "GameUpdateTasks.KeepMinigame.help"
+      "name": "小遊戲",
+      "help": ""
     },
     "KeepPrivateQuarters": {
-      "name": "GameUpdateTasks.KeepPrivateQuarters.name",
-      "help": "GameUpdateTasks.KeepPrivateQuarters.help"
+      "name": "宿舍計劃",
+      "help": ""
     },
     "KeepEventShop": {
-      "name": "GameUpdateTasks.KeepEventShop.name",
-      "help": "GameUpdateTasks.KeepEventShop.help"
+      "name": "活動商店",
+      "help": ""
     },
     "KeepOpsiShop": {
-      "name": "GameUpdateTasks.KeepOpsiShop.name",
-      "help": "GameUpdateTasks.KeepOpsiShop.help"
+      "name": "大世界商店",
+      "help": ""
     },
     "KeepOpsiVoucher": {
-      "name": "GameUpdateTasks.KeepOpsiVoucher.name",
-      "help": "GameUpdateTasks.KeepOpsiVoucher.help"
+      "name": "白票商店",
+      "help": ""
     },
     "KeepOpsiAshAssist": {
-      "name": "GameUpdateTasks.KeepOpsiAshAssist.name",
-      "help": "GameUpdateTasks.KeepOpsiAshAssist.help"
+      "name": "META支援",
+      "help": ""
     }
   },
   "DropRecord": {
@@ -2970,42 +2970,42 @@
       "2": "2"
     },
     "HardNewMode": {
-      "name": "Hard.HardNewMode.name",
-      "help": "Hard.HardNewMode.help",
-      "True": "True",
-      "False": "False"
+      "name": "均衡模式",
+      "help": "開啟後按圖紙類型跨天輪替刷圖，關閉則固定單關",
+      "True": "開啟",
+      "False": "關閉"
     },
     "HardNewChapter": {
-      "name": "Hard.HardNewChapter.name",
-      "help": "Hard.HardNewChapter.help"
+      "name": "海域",
+      "help": "困難圖海域編號，如 13、14"
     },
     "HardNewDD": {
-      "name": "Hard.HardNewDD.name",
-      "help": "Hard.HardNewDD.help",
-      "True": "True",
-      "False": "False"
+      "name": "驅逐圖紙",
+      "help": "X-1 關卡，產出驅逐改造圖紙",
+      "True": "開啟",
+      "False": "關閉"
     },
     "HardNewCL": {
-      "name": "Hard.HardNewCL.name",
-      "help": "Hard.HardNewCL.help",
-      "True": "True",
-      "False": "False"
+      "name": "巡洋圖紙",
+      "help": "X-2 關卡，產出巡洋改造圖紙",
+      "True": "開啟",
+      "False": "關閉"
     },
     "HardNewBB": {
-      "name": "Hard.HardNewBB.name",
-      "help": "Hard.HardNewBB.help",
-      "True": "True",
-      "False": "False"
+      "name": "戰列圖紙",
+      "help": "X-3 關卡，產出戰列改造圖紙",
+      "True": "開啟",
+      "False": "關閉"
     },
     "HardNewCV": {
-      "name": "Hard.HardNewCV.name",
-      "help": "Hard.HardNewCV.help",
-      "True": "True",
-      "False": "False"
+      "name": "航母圖紙",
+      "help": "X-4 關卡，產出航母改造圖紙",
+      "True": "開啟",
+      "False": "關閉"
     },
     "HardNewCursor": {
-      "name": "Hard.HardNewCursor.name",
-      "help": "Hard.HardNewCursor.help"
+      "name": "輪替指標",
+      "help": "跨天輪替指標，自動管理無需手動修改"
     }
   },
   "Exercise": {

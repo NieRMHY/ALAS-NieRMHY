@@ -47,8 +47,8 @@
       "help": ""
     },
     "UpdateDate": {
-      "name": "Task.UpdateDate.name",
-      "help": "Task.UpdateDate.help"
+      "name": "メンテナンスウィンドウ",
+      "help": "ゲームのメンテナンス時間帯を手動で設定します。ALAS は事前に自動的にメンテナンスモードへ移行し、終了時刻後に通常のスケジュールを再開します。"
     },
     "Restart": {
       "name": "再起動設定",
@@ -821,114 +821,114 @@
   },
   "GameUpdate": {
     "_info": {
-      "name": "GameUpdate._info.name",
-      "help": "GameUpdate._info.help"
+      "name": "ゲーム更新",
+      "help": "メンテナンスウィンドウを手動で設定します。(開始時刻 − 停止までの時間)から終了時刻までの間、ALAS は保留タスク以外の次回実行時刻を終了時刻へ一括延期し、メンテナンス終了後に自動的に再開します。"
     },
     "Enable": {
-      "name": "GameUpdate.Enable.name",
-      "help": "GameUpdate.Enable.help"
+      "name": "メンテナンスウィンドウを有効化",
+      "help": "オフの場合は無効です。オンにすると、開始時刻と終了時刻に基づいてタスクのスケジュールを制御します。"
     },
     "StopBeforeHours": {
-      "name": "GameUpdate.StopBeforeHours.name",
-      "help": "GameUpdate.StopBeforeHours.help"
+      "name": "メンテナンス前停止時間",
+      "help": "メンテナンス開始の何時間前にメンテナンスモードへ移行するか。デフォルトは 2、整数または小数で入力できます。"
     },
     "StartTime": {
-      "name": "GameUpdate.StartTime.name",
-      "help": "GameUpdate.StartTime.help"
+      "name": "メンテナンス開始時刻",
+      "help": "ゲームメンテナンスの正式な開始時刻。ALAS はこの時刻から設定した時間だけ遡ってメンテナンスモードへ移行します。"
     },
     "EndTime": {
-      "name": "GameUpdate.EndTime.name",
-      "help": "GameUpdate.EndTime.help"
+      "name": "メンテナンス終了時刻",
+      "help": "メンテナンス終了後、延期されていたタスクはこの時刻以降に自動的にスケジュールを再開します。"
     }
   },
   "GameUpdateTasks": {
     "_info": {
-      "name": "GameUpdateTasks._info.name",
-      "help": "GameUpdateTasks._info.help"
+      "name": "メンテナンス中に保持するタスク",
+      "help": "チェックを入れたタスクは、メンテナンスウィンドウ中もスケジュールへ参加し続けます。通常は委託・科学研究・ショップなど低リスクなタスクのみ保持することを推奨します。"
     },
     "KeepCommission": {
-      "name": "GameUpdateTasks.KeepCommission.name",
-      "help": "GameUpdateTasks.KeepCommission.help"
+      "name": "委託",
+      "help": ""
     },
     "KeepTactical": {
-      "name": "GameUpdateTasks.KeepTactical.name",
-      "help": "GameUpdateTasks.KeepTactical.help"
+      "name": "戦術教室",
+      "help": ""
     },
     "KeepResearch": {
-      "name": "GameUpdateTasks.KeepResearch.name",
-      "help": "GameUpdateTasks.KeepResearch.help"
+      "name": "科学研究",
+      "help": ""
     },
     "KeepDorm": {
-      "name": "GameUpdateTasks.KeepDorm.name",
-      "help": "GameUpdateTasks.KeepDorm.help"
+      "name": "寮舎",
+      "help": ""
     },
     "KeepMeowfficer": {
-      "name": "GameUpdateTasks.KeepMeowfficer.name",
-      "help": "GameUpdateTasks.KeepMeowfficer.help"
+      "name": "オフニャ",
+      "help": ""
     },
     "KeepGuild": {
-      "name": "GameUpdateTasks.KeepGuild.name",
-      "help": "GameUpdateTasks.KeepGuild.help"
+      "name": "大艦隊",
+      "help": ""
     },
     "KeepReward": {
-      "name": "GameUpdateTasks.KeepReward.name",
-      "help": "GameUpdateTasks.KeepReward.help"
+      "name": "収穫",
+      "help": ""
     },
     "KeepAwaken": {
-      "name": "GameUpdateTasks.KeepAwaken.name",
-      "help": "GameUpdateTasks.KeepAwaken.help"
+      "name": "認知覚醒",
+      "help": ""
     },
     "KeepIsland": {
-      "name": "GameUpdateTasks.KeepIsland.name",
-      "help": "GameUpdateTasks.KeepIsland.help"
+      "name": "アイランド",
+      "help": ""
     },
     "KeepExercise": {
-      "name": "GameUpdateTasks.KeepExercise.name",
-      "help": "GameUpdateTasks.KeepExercise.help"
+      "name": "演習",
+      "help": ""
     },
     "KeepShopFrequent": {
-      "name": "GameUpdateTasks.KeepShopFrequent.name",
-      "help": "GameUpdateTasks.KeepShopFrequent.help"
+      "name": "武器商人ショップ",
+      "help": ""
     },
     "KeepShopOnce": {
-      "name": "GameUpdateTasks.KeepShopOnce.name",
-      "help": "GameUpdateTasks.KeepShopOnce.help"
+      "name": "その他ショップ",
+      "help": ""
     },
     "KeepShipyard": {
-      "name": "GameUpdateTasks.KeepShipyard.name",
-      "help": "GameUpdateTasks.KeepShipyard.help"
+      "name": "開発ドック",
+      "help": ""
     },
     "KeepGacha": {
-      "name": "GameUpdateTasks.KeepGacha.name",
-      "help": "GameUpdateTasks.KeepGacha.help"
+      "name": "デイリーガチャ",
+      "help": ""
     },
     "KeepFreebies": {
-      "name": "GameUpdateTasks.KeepFreebies.name",
-      "help": "GameUpdateTasks.KeepFreebies.help"
+      "name": "無料報酬",
+      "help": ""
     },
     "KeepMinigame": {
-      "name": "GameUpdateTasks.KeepMinigame.name",
-      "help": "GameUpdateTasks.KeepMinigame.help"
+      "name": "ミニゲーム",
+      "help": ""
     },
     "KeepPrivateQuarters": {
-      "name": "GameUpdateTasks.KeepPrivateQuarters.name",
-      "help": "GameUpdateTasks.KeepPrivateQuarters.help"
+      "name": "ドルミトリー",
+      "help": ""
     },
     "KeepEventShop": {
-      "name": "GameUpdateTasks.KeepEventShop.name",
-      "help": "GameUpdateTasks.KeepEventShop.help"
+      "name": "イベント商店",
+      "help": ""
     },
     "KeepOpsiShop": {
-      "name": "GameUpdateTasks.KeepOpsiShop.name",
-      "help": "GameUpdateTasks.KeepOpsiShop.help"
+      "name": "セイレーン作戦ショップ",
+      "help": ""
     },
     "KeepOpsiVoucher": {
-      "name": "GameUpdateTasks.KeepOpsiVoucher.name",
-      "help": "GameUpdateTasks.KeepOpsiVoucher.help"
+      "name": "バウチャーショップ",
+      "help": ""
     },
     "KeepOpsiAshAssist": {
-      "name": "GameUpdateTasks.KeepOpsiAshAssist.name",
-      "help": "GameUpdateTasks.KeepOpsiAshAssist.help"
+      "name": "META支援",
+      "help": ""
     }
   },
   "DropRecord": {
@@ -2970,42 +2970,42 @@
       "2": "2"
     },
     "HardNewMode": {
-      "name": "Hard.HardNewMode.name",
-      "help": "Hard.HardNewMode.help",
-      "True": "True",
-      "False": "False"
+      "name": "均衡モード",
+      "help": "オンにすると図面の種類に応じて日をまたいでステージを輪替し、オフにすると単一の固定ステージを周回します。",
+      "True": "オン",
+      "False": "オフ"
     },
     "HardNewChapter": {
-      "name": "Hard.HardNewChapter.name",
-      "help": "Hard.HardNewChapter.help"
+      "name": "海域",
+      "help": "ハード図の海域番号、例: 13、14"
     },
     "HardNewDD": {
-      "name": "Hard.HardNewDD.name",
-      "help": "Hard.HardNewDD.help",
-      "True": "True",
-      "False": "False"
+      "name": "駆逐図面",
+      "help": "X-1 ステージ、駆逐艦改造図面がドロップ",
+      "True": "オン",
+      "False": "オフ"
     },
     "HardNewCL": {
-      "name": "Hard.HardNewCL.name",
-      "help": "Hard.HardNewCL.help",
-      "True": "True",
-      "False": "False"
+      "name": "巡洋図面",
+      "help": "X-2 ステージ、巡洋艦改造図面がドロップ",
+      "True": "オン",
+      "False": "オフ"
     },
     "HardNewBB": {
-      "name": "Hard.HardNewBB.name",
-      "help": "Hard.HardNewBB.help",
-      "True": "True",
-      "False": "False"
+      "name": "戦艦図面",
+      "help": "X-3 ステージ、戦艦改造図面がドロップ",
+      "True": "オン",
+      "False": "オフ"
     },
     "HardNewCV": {
-      "name": "Hard.HardNewCV.name",
-      "help": "Hard.HardNewCV.help",
-      "True": "True",
-      "False": "False"
+      "name": "空母図面",
+      "help": "X-4 ステージ、空母改造図面がドロップ",
+      "True": "オン",
+      "False": "オフ"
     },
     "HardNewCursor": {
-      "name": "Hard.HardNewCursor.name",
-      "help": "Hard.HardNewCursor.help"
+      "name": "輪替ポインタ",
+      "help": "日をまたぐ輪替ポインタ、自動で管理されるため手動変更の必要はありません"
     }
   },
   "Exercise": {
