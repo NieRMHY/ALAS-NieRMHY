@@ -8,17 +8,13 @@ from deploy.Windows.logger import logger
 from deploy.Windows.utils import DEPLOY_CONFIG, DEPLOY_TEMPLATE, cached_property, poor_yaml_read, poor_yaml_write
 
 
-GIT_OVER_CDN_REPOSITORY = 'git://git.pull/AzurPilot'
-GIT_OVER_CDN_FALLBACK_REPOSITORY = 'https://gitcode.com/ddl2/AzurLaneAutoScript'
-
-
 class ExecutionError(Exception):
     pass
 
 
 class ConfigModel:
     # Git 配置
-    Repository: str = "https://github.com/wess09/AzurPilot"
+    Repository: str = "https://github.com/NieRMHY/ALAS-NieRMHY.git"
     Branch: str = "master"
     GitExecutable: str = "./.venv/Scripts/git/cmd/git.exe"
     GitProxy: Optional[str] = None
@@ -72,9 +68,6 @@ class ConfigModel:
     AppAsarUpdate: bool = True
     NoSandbox: bool = True
 
-    # 动态配置
-    GitOverCdn: bool = False
-
 
 class DeployConfig(ConfigModel):
     def __init__(self, file=DEPLOY_CONFIG):
@@ -124,13 +117,16 @@ class DeployConfig(ConfigModel):
 
         每次 `read()` 之后必须调用。
         """
+        # Modify by MHY, 移除 git_over_cdn 机制，旧源与 global/cn 别名统一迁移到自有源（纯 git pull）
         self.config.pop('AutoUpdate', None)
-        # 绕过 webui.config.DeployConfig.__setattr__()，不写入 deploy.yaml
-        super().__setattr__('GitOverCdn', self.Repository in ['cn', GIT_OVER_CDN_REPOSITORY])
-        if self.Repository in ['global']:
-            super().__setattr__('Repository', 'https://github.com/wess09/AzurPilot')
-        if self.Repository in ['cn', GIT_OVER_CDN_REPOSITORY]:
-            super().__setattr__('Repository', GIT_OVER_CDN_FALLBACK_REPOSITORY)
+        if self.Repository in [
+            'https://github.com/wess09/AzurPilot',
+            'https://github.com/LmeSzinc/AzurLaneAutoScript',
+            'global',
+            'cn',
+        ]:
+            super().__setattr__('Repository', 'https://github.com/NieRMHY/ALAS-NieRMHY.git')
+            self.config['Repository'] = 'https://github.com/NieRMHY/ALAS-NieRMHY.git'
 
     def filepath(self, path):
         """获取绝对文件路径。
