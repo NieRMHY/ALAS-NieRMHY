@@ -1,11 +1,15 @@
 Deploy:
   Git:
-    # 仓库地址
-    # URL of repository
-    Repository: https://github.com/NieRMHY/ALAS-NieRMHY
-    # 分支
-    # Branch
-    Branch: dev_essex
+    # ALAS 仓库地址
+    # URL of ALAS repository
+    Repository: https://github.com/NieRMHY/ALAS-NieRMHY.git
+    # AzurPilot 分支
+    # Branch of AzurPilot
+    # [开发者] 使用 'dev'、'app' 等分支体验新功能
+    # [Developer] Use 'dev', 'app', etc, to try new features
+    # [其他用户] 使用 'master'，稳定分支
+    # [Other] Use 'master', the stable branch
+    Branch: master
     # Git 可执行文件路径
     # Filepath of git executable.
     GitExecutable: ./.venv/Scripts/git/cmd/git.exe
@@ -104,8 +108,8 @@ Deploy:
   Update:
     # 启用自动更新和内置更新功能
     # Use auto update and builtin updater feature
-    # 可能会引发问题 https://github.com/wess09/AzurPilot/issues/876
-    # This may cause problem https://github.com/wess09/AzurPilot/issues/876
+    # 可能会引发问题 https://github.com/NieRMHY/ALAS-NieRMHY/issues
+    # This may cause problem https://github.com/NieRMHY/ALAS-NieRMHY/issues
     EnableReload: true
     # 每隔 X 分钟检查更新
     # Check update every X minute
@@ -138,7 +142,7 @@ Deploy:
     # ! You need to set Password below to enable remote access since everyone can access to your ap if they have your url.
     # 详情请参阅 https://app.azurlane.cloud/
     # See here (http://app.azurlane.cloud/en.html) for more infomation.
-    EnableRemoteAccess: false
+    EnableRemoteAccess: true
     # 远程访问模式
     # Remote access mode
     # [自动] auto（优先 P2P/TURN，失败回退 SSH 转发）
@@ -209,7 +213,7 @@ Deploy:
     # 'ja-JP' for Japanese
     # 'zh-TW' 繁體中文
     # 'zh-TW' for Chinese traditional
-    Language: zh-CN
+    Language: en-US
     # WebUI 主题
     # Theme of web ui
     # 'default' 亮色主题

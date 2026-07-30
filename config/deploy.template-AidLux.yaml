@@ -1,12 +1,8 @@
 Deploy:
   Git:
-    # AzurPilot 仓库地址
-    # URL of AzurPilot repository
-    # [国内用户] 使用 'git://git.pull/AzurPilot' 获得更快更稳定的下载
-    # [CN user] Use 'git://git.pull/AzurPilot' for faster and more stable download
-    # [其他用户] 使用 'https://github.com/wess09/AzurPilot'
-    # [Other] Use 'https://github.com/wess09/AzurPilot'
-    Repository: https://github.com/wess09/AzurPilot
+    # ALAS 仓库地址
+    # URL of ALAS repository
+    Repository: https://github.com/NieRMHY/ALAS-NieRMHY.git
     # AzurPilot 分支
     # Branch of AzurPilot
     # [开发者] 使用 'dev'、'app' 等分支体验新功能
@@ -112,8 +108,8 @@ Deploy:
   Update:
     # 启用自动更新和内置更新功能
     # Use auto update and builtin updater feature
-    # 可能会引发问题 https://github.com/wess09/AzurPilot/issues/876
-    # This may cause problem https://github.com/wess09/AzurPilot/issues/876
+    # 可能会引发问题 https://github.com/NieRMHY/ALAS-NieRMHY/issues
+    # This may cause problem https://github.com/NieRMHY/ALAS-NieRMHY/issues
     EnableReload: true
     # 每隔 X 分钟检查更新
     # Check update every X minute
@@ -165,7 +161,7 @@ Deploy:
     # [Default] null
     # [格式] host:port
     # [Format] host:port
-    SSHServer: remote.nanoda.work:1022
+    SSHServer: null
     # SSH 可执行文件 `ssh.exe` 的路径
     # Filepath of SSH executable `ssh.exe`
     # [默认] ssh（在系统 PATH 中查找）
