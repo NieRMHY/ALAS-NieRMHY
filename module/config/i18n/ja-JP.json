@@ -46,6 +46,10 @@
       "name": "一般設定",
       "help": ""
     },
+    "UpdateDate": {
+      "name": "Task.UpdateDate.name",
+      "help": "Task.UpdateDate.help"
+    },
     "Restart": {
       "name": "再起動設定",
       "help": ""
@@ -813,6 +817,118 @@
       "stay_there": "その場で待機",
       "goto_main": "メイン画面に移動",
       "close_game": "ゲームを閉じる"
+    }
+  },
+  "GameUpdate": {
+    "_info": {
+      "name": "GameUpdate._info.name",
+      "help": "GameUpdate._info.help"
+    },
+    "Enable": {
+      "name": "GameUpdate.Enable.name",
+      "help": "GameUpdate.Enable.help"
+    },
+    "StopBeforeHours": {
+      "name": "GameUpdate.StopBeforeHours.name",
+      "help": "GameUpdate.StopBeforeHours.help"
+    },
+    "StartTime": {
+      "name": "GameUpdate.StartTime.name",
+      "help": "GameUpdate.StartTime.help"
+    },
+    "EndTime": {
+      "name": "GameUpdate.EndTime.name",
+      "help": "GameUpdate.EndTime.help"
+    }
+  },
+  "GameUpdateTasks": {
+    "_info": {
+      "name": "GameUpdateTasks._info.name",
+      "help": "GameUpdateTasks._info.help"
+    },
+    "KeepCommission": {
+      "name": "GameUpdateTasks.KeepCommission.name",
+      "help": "GameUpdateTasks.KeepCommission.help"
+    },
+    "KeepTactical": {
+      "name": "GameUpdateTasks.KeepTactical.name",
+      "help": "GameUpdateTasks.KeepTactical.help"
+    },
+    "KeepResearch": {
+      "name": "GameUpdateTasks.KeepResearch.name",
+      "help": "GameUpdateTasks.KeepResearch.help"
+    },
+    "KeepDorm": {
+      "name": "GameUpdateTasks.KeepDorm.name",
+      "help": "GameUpdateTasks.KeepDorm.help"
+    },
+    "KeepMeowfficer": {
+      "name": "GameUpdateTasks.KeepMeowfficer.name",
+      "help": "GameUpdateTasks.KeepMeowfficer.help"
+    },
+    "KeepGuild": {
+      "name": "GameUpdateTasks.KeepGuild.name",
+      "help": "GameUpdateTasks.KeepGuild.help"
+    },
+    "KeepReward": {
+      "name": "GameUpdateTasks.KeepReward.name",
+      "help": "GameUpdateTasks.KeepReward.help"
+    },
+    "KeepAwaken": {
+      "name": "GameUpdateTasks.KeepAwaken.name",
+      "help": "GameUpdateTasks.KeepAwaken.help"
+    },
+    "KeepIsland": {
+      "name": "GameUpdateTasks.KeepIsland.name",
+      "help": "GameUpdateTasks.KeepIsland.help"
+    },
+    "KeepExercise": {
+      "name": "GameUpdateTasks.KeepExercise.name",
+      "help": "GameUpdateTasks.KeepExercise.help"
+    },
+    "KeepShopFrequent": {
+      "name": "GameUpdateTasks.KeepShopFrequent.name",
+      "help": "GameUpdateTasks.KeepShopFrequent.help"
+    },
+    "KeepShopOnce": {
+      "name": "GameUpdateTasks.KeepShopOnce.name",
+      "help": "GameUpdateTasks.KeepShopOnce.help"
+    },
+    "KeepShipyard": {
+      "name": "GameUpdateTasks.KeepShipyard.name",
+      "help": "GameUpdateTasks.KeepShipyard.help"
+    },
+    "KeepGacha": {
+      "name": "GameUpdateTasks.KeepGacha.name",
+      "help": "GameUpdateTasks.KeepGacha.help"
+    },
+    "KeepFreebies": {
+      "name": "GameUpdateTasks.KeepFreebies.name",
+      "help": "GameUpdateTasks.KeepFreebies.help"
+    },
+    "KeepMinigame": {
+      "name": "GameUpdateTasks.KeepMinigame.name",
+      "help": "GameUpdateTasks.KeepMinigame.help"
+    },
+    "KeepPrivateQuarters": {
+      "name": "GameUpdateTasks.KeepPrivateQuarters.name",
+      "help": "GameUpdateTasks.KeepPrivateQuarters.help"
+    },
+    "KeepEventShop": {
+      "name": "GameUpdateTasks.KeepEventShop.name",
+      "help": "GameUpdateTasks.KeepEventShop.help"
+    },
+    "KeepOpsiShop": {
+      "name": "GameUpdateTasks.KeepOpsiShop.name",
+      "help": "GameUpdateTasks.KeepOpsiShop.help"
+    },
+    "KeepOpsiVoucher": {
+      "name": "GameUpdateTasks.KeepOpsiVoucher.name",
+      "help": "GameUpdateTasks.KeepOpsiVoucher.help"
+    },
+    "KeepOpsiAshAssist": {
+      "name": "GameUpdateTasks.KeepOpsiAshAssist.name",
+      "help": "GameUpdateTasks.KeepOpsiAshAssist.help"
     }
   },
   "DropRecord": {
@@ -2852,6 +2968,44 @@
       "help": "",
       "1": "1",
       "2": "2"
+    },
+    "HardNewMode": {
+      "name": "Hard.HardNewMode.name",
+      "help": "Hard.HardNewMode.help",
+      "True": "True",
+      "False": "False"
+    },
+    "HardNewChapter": {
+      "name": "Hard.HardNewChapter.name",
+      "help": "Hard.HardNewChapter.help"
+    },
+    "HardNewDD": {
+      "name": "Hard.HardNewDD.name",
+      "help": "Hard.HardNewDD.help",
+      "True": "True",
+      "False": "False"
+    },
+    "HardNewCL": {
+      "name": "Hard.HardNewCL.name",
+      "help": "Hard.HardNewCL.help",
+      "True": "True",
+      "False": "False"
+    },
+    "HardNewBB": {
+      "name": "Hard.HardNewBB.name",
+      "help": "Hard.HardNewBB.help",
+      "True": "True",
+      "False": "False"
+    },
+    "HardNewCV": {
+      "name": "Hard.HardNewCV.name",
+      "help": "Hard.HardNewCV.help",
+      "True": "True",
+      "False": "False"
+    },
+    "HardNewCursor": {
+      "name": "Hard.HardNewCursor.name",
+      "help": "Hard.HardNewCursor.help"
     }
   },
   "Exercise": {

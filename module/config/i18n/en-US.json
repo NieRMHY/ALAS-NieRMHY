@@ -46,6 +46,10 @@
       "name": "General settings",
       "help": ""
     },
+    "UpdateDate": {
+      "name": "Maintenance Window",
+      "help": "Manually set the game maintenance time window. ALAS will automatically enter maintenance mode in advance and resume full scheduling after the end time."
+    },
     "Restart": {
       "name": "Restart settings",
       "help": ""
@@ -813,6 +817,118 @@
       "stay_there": "Stay in Place",
       "goto_main": "Go to Main Menu",
       "close_game": "Close Game"
+    }
+  },
+  "GameUpdate": {
+    "_info": {
+      "name": "Game Update",
+      "help": "Manually define a maintenance window. Between (start - StopBeforeHours) and the end time, ALAS postpones all non-kept tasks' NextRun to the end time, and automatically resumes after maintenance ends."
+    },
+    "Enable": {
+      "name": "Enable Maintenance Window",
+      "help": "Inactive when off. When enabled, task scheduling is controlled by the start and end times."
+    },
+    "StopBeforeHours": {
+      "name": "Stop Before Hours",
+      "help": "How many hours before maintenance starts to enter maintenance mode. Default 2, accepts integers or decimals."
+    },
+    "StartTime": {
+      "name": "Maintenance Start Time",
+      "help": "The official game maintenance start time. ALAS enters maintenance mode this many hours before this time point."
+    },
+    "EndTime": {
+      "name": "Maintenance End Time",
+      "help": "After maintenance ends, postponed tasks automatically resume scheduling at this time point."
+    }
+  },
+  "GameUpdateTasks": {
+    "_info": {
+      "name": "Tasks Kept During Maintenance",
+      "help": "When checked, the task still participates in scheduling during the maintenance window. Generally only low-risk tasks like commission, research, and shops are recommended."
+    },
+    "KeepCommission": {
+      "name": "Commission",
+      "help": ""
+    },
+    "KeepTactical": {
+      "name": "Tactical",
+      "help": ""
+    },
+    "KeepResearch": {
+      "name": "Research",
+      "help": ""
+    },
+    "KeepDorm": {
+      "name": "Dorm",
+      "help": ""
+    },
+    "KeepMeowfficer": {
+      "name": "Meowfficer",
+      "help": ""
+    },
+    "KeepGuild": {
+      "name": "Guild",
+      "help": ""
+    },
+    "KeepReward": {
+      "name": "Reward",
+      "help": ""
+    },
+    "KeepAwaken": {
+      "name": "Awaken",
+      "help": ""
+    },
+    "KeepIsland": {
+      "name": "Island",
+      "help": ""
+    },
+    "KeepExercise": {
+      "name": "Exercise",
+      "help": ""
+    },
+    "KeepShopFrequent": {
+      "name": "Frequent Shop",
+      "help": ""
+    },
+    "KeepShopOnce": {
+      "name": "One-time Shop",
+      "help": ""
+    },
+    "KeepShipyard": {
+      "name": "Shipyard",
+      "help": ""
+    },
+    "KeepGacha": {
+      "name": "Daily Build",
+      "help": ""
+    },
+    "KeepFreebies": {
+      "name": "Freebies",
+      "help": ""
+    },
+    "KeepMinigame": {
+      "name": "Minigame",
+      "help": ""
+    },
+    "KeepPrivateQuarters": {
+      "name": "Private Quarters",
+      "help": ""
+    },
+    "KeepEventShop": {
+      "name": "Event Shop",
+      "help": ""
+    },
+    "KeepOpsiShop": {
+      "name": "OpSi Shop",
+      "help": ""
+    },
+    "KeepOpsiVoucher": {
+      "name": "OpSi Voucher Shop",
+      "help": ""
+    },
+    "KeepOpsiAshAssist": {
+      "name": "META Ash Assist",
+      "help": ""
     }
   },
   "DropRecord": {
@@ -2852,6 +2968,44 @@
       "help": "",
       "1": "1",
       "2": "2"
+    },
+    "HardNewMode": {
+      "name": "Balanced Mode",
+      "help": "When enabled, rotates across stages by blueprint type over multiple days. When disabled, runs a single fixed stage.",
+      "True": "On",
+      "False": "Off"
+    },
+    "HardNewChapter": {
+      "name": "Chapter",
+      "help": "Hard stage chapter number, e.g. 13, 14"
+    },
+    "HardNewDD": {
+      "name": "DD Blueprint",
+      "help": "X-1 stage, drops destroyer retrofit blueprints",
+      "True": "On",
+      "False": "Off"
+    },
+    "HardNewCL": {
+      "name": "CL Blueprint",
+      "help": "X-2 stage, drops cruiser retrofit blueprints",
+      "True": "On",
+      "False": "Off"
+    },
+    "HardNewBB": {
+      "name": "BB Blueprint",
+      "help": "X-3 stage, drops battleship retrofit blueprints",
+      "True": "On",
+      "False": "Off"
+    },
+    "HardNewCV": {
+      "name": "CV Blueprint",
+      "help": "X-4 stage, drops carrier retrofit blueprints",
+      "True": "On",
+      "False": "Off"
+    },
+    "HardNewCursor": {
+      "name": "Rotation Cursor",
+      "help": "Cross-day rotation cursor, auto-managed, no manual change needed"
     }
   },
   "Exercise": {

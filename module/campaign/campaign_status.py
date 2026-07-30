@@ -77,18 +77,14 @@ class CampaignStatus(UI):
             pt = int(res.group(1))
             logger.attr('活动PT', pt)
             LogRes(self.config).Pt = pt
+        elif re.fullmatch(r'\d+', pt.strip()):
+            # Modify by MHY, 恢复 ×PT 纯数字识别（backup 定制）：OCR 漏掉 X 前缀时直接接受纯数字
+            pt = int(pt.strip())
+            logger.attr('活动PT', pt)
+            LogRes(self.config).Pt = pt
         else:
-            # 回退：若 OCR 返回纯数字也接受（保留警告以便回溯）
-            res2 = re.search(r'(\d+)', pt)
-            if res2:
-                num = int(res2.group(1))
-                logger.warning(f"无效的PT结果格式 (missing 'X'): {pt}; fallback to digits: {num}")
-                logger.attr('活动PT_回退', num)
-                LogRes(self.config).Pt = num
-                pt = num
-            else:
-                logger.warning(f'无效的PT结果: {pt}')
-                pt = 0
+            logger.warning(f'无效的PT结果: {pt}')
+            pt = 0
         if update:
             self.config.update()
         return pt

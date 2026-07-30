@@ -136,6 +136,35 @@ class GeneratedConfig:
     Optimization_CloseEmulatorDuringLongWait = True  # True, False
     Optimization_WhenTaskQueueEmpty = 'goto_main'  # stay_there, goto_main, close_game
 
+    # 配置组 `GameUpdate`
+    GameUpdate_Enable = False
+    GameUpdate_StopBeforeHours = 2
+    GameUpdate_StartTime = datetime.datetime(2020, 1, 1, 0, 0)
+    GameUpdate_EndTime = datetime.datetime(2020, 1, 1, 0, 0)
+
+    # 配置组 `GameUpdateTasks`
+    GameUpdateTasks_KeepCommission = False
+    GameUpdateTasks_KeepTactical = False
+    GameUpdateTasks_KeepResearch = False
+    GameUpdateTasks_KeepDorm = False
+    GameUpdateTasks_KeepMeowfficer = False
+    GameUpdateTasks_KeepGuild = False
+    GameUpdateTasks_KeepReward = False
+    GameUpdateTasks_KeepAwaken = False
+    GameUpdateTasks_KeepIsland = False
+    GameUpdateTasks_KeepExercise = False
+    GameUpdateTasks_KeepShopFrequent = False
+    GameUpdateTasks_KeepShopOnce = False
+    GameUpdateTasks_KeepShipyard = False
+    GameUpdateTasks_KeepGacha = False
+    GameUpdateTasks_KeepFreebies = False
+    GameUpdateTasks_KeepMinigame = False
+    GameUpdateTasks_KeepPrivateQuarters = False
+    GameUpdateTasks_KeepEventShop = False
+    GameUpdateTasks_KeepOpsiShop = False
+    GameUpdateTasks_KeepOpsiVoucher = False
+    GameUpdateTasks_KeepOpsiAshAssist = False
+
     # 配置组 `DropRecord`
     DropRecord_SaveFolder = './screenshots'
     DropRecord_AzurStatsID = None
@@ -525,6 +554,13 @@ class GeneratedConfig:
     # 配置组 `Hard`
     Hard_HardStage = '11-4'
     Hard_HardFleet = 1  # 1, 2
+    Hard_HardNewMode = False  # True, False
+    Hard_HardNewChapter = 14
+    Hard_HardNewDD = True  # True, False
+    Hard_HardNewCL = True  # True, False
+    Hard_HardNewBB = True  # True, False
+    Hard_HardNewCV = True  # True, False
+    Hard_HardNewCursor = 0
 
     # 配置组 `Exercise`
     Exercise_DelayUntilHoursBeforeNextUpdate = 12  # 1, 2, 3, 4, 5, 12

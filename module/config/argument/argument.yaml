@@ -240,6 +240,37 @@ Optimization:
   WhenTaskQueueEmpty:
     value: goto_main
     option: [stay_there, goto_main, close_game]
+# Add by MHY: 游戏更新窗口基础设置，在维护窗口前自动暂停任务
+GameUpdate:
+  Enable: false
+  StopBeforeHours: 2
+  StartTime: 2020-01-01 00:00:00
+  EndTime: 2020-01-01 00:00:00
+# Add end
+# Add by MHY: 维护期间保留任务改为显式复选框，避免自由文本难以维护
+GameUpdateTasks:
+  KeepCommission: false
+  KeepTactical: false
+  KeepResearch: false
+  KeepDorm: false
+  KeepMeowfficer: false
+  KeepGuild: false
+  KeepReward: false
+  KeepAwaken: false
+  KeepIsland: false
+  KeepExercise: false
+  KeepShopFrequent: false
+  KeepShopOnce: false
+  KeepShipyard: false
+  KeepGacha: false
+  KeepFreebies: false
+  KeepMinigame: false
+  KeepPrivateQuarters: false
+  KeepEventShop: false
+  KeepOpsiShop: false
+  KeepOpsiVoucher: false
+  KeepOpsiAshAssist: false
+# Add end
 DropRecord:
   SaveFolder: ./screenshots
   AzurStatsID: null
@@ -960,6 +991,28 @@ Hard:
   HardFleet:
     value: 1
     option: [1, 2]
+  HardNewMode:                 # Add by MHY, 困难图均衡模式开关
+    type: checkbox
+    value: false
+    option: [true, false]
+  HardNewChapter: 14           # Add by MHY, 均衡模式海域选择
+  HardNewDD:                   # Add by MHY, 驱逐改造图纸
+    type: checkbox
+    value: true
+    option: [true, false]
+  HardNewCL:                   # Add by MHY, 巡洋改造图纸
+    type: checkbox
+    value: true
+    option: [true, false]
+  HardNewBB:                   # Add by MHY, 战列改造图纸
+    type: checkbox
+    value: true
+    option: [true, false]
+  HardNewCV:                   # Add by MHY, 航母改造图纸
+    type: checkbox
+    value: true
+    option: [true, false]
+  HardNewCursor: 0             # Add by MHY, 跨天轮次指针(自动管理)
 Exercise:
   DelayUntilHoursBeforeNextUpdate:
     value: 12
