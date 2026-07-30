@@ -111,8 +111,8 @@ def main():
             + "\n".join(original_imports)
             + "\n\npatch_executor()\npatch_mimetype()\nfix_py37_subprocess_communicate()\n\n"
             + "task_handler = TaskHandler()\n"
-            + 'RESTRICTED_DEVICE_IDS = {"1", "2"}\n'
-            + 'RESTRICTED_DEVICE_MESSAGE = "你的公网IP已泄露 请加群https://join.nanoda.work/#/join联系我们解除安全限制"\n'
+            # Modify by MHY, 移除 nanoda 加群安全戏（设备黑名单 RESTRICTED_DEVICE_IDS +
+            # 「公网IP已泄露 请加群」威胁文案），运行时本就未生成这些常量，清理源以防重新注入
             + 'PUBLIC_WEBUI_PASSWORD_GENERATE_FAILED_MESSAGE = "当前配置允许所有设备访问，但自动生成密码失败，请手动在 config/deploy.yaml 设置 Password 后重启。"\n'
         )
     elif args.mode == "helpers":
