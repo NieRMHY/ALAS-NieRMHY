@@ -241,14 +241,6 @@ class HomeMixin(WebUIMixinBase):
         run_js(
             "(function() {"
             "function load() {"
-            "if (!document.getElementById('microsoft-clarity-script')) {"
-            "(function(c,l,a,r,i,t,y){"
-            "c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};"
-            "t=l.createElement(r);t.id='microsoft-clarity-script';t.async=1;"
-            "t.src='https://www.clarity.ms/tag/'+i;"
-            "y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);"
-            "})(window,document,'clarity','script','xszl2nrp3q');"
-            "}"
             "if (!document.querySelector('link[rel=\"manifest\"]')) {"
             "var manifest=document.createElement('link');"
             "manifest.rel='manifest';manifest.href='/static/assets/spa/manifest.json';"
@@ -272,10 +264,9 @@ class HomeMixin(WebUIMixinBase):
         set_env(title="AzurPilot", output_animation=False)
         load_webui_styles(theme=self.theme, is_mobile=self.is_mobile)
         if localstorage is None:
-            localstorage = get_localstorage_values(("clarity_notice_shown", "aside"))
+            localstorage = get_localstorage_values(("aside",))
         aside = localstorage.get("aside")
         self._stored_aside = aside
-        show_clarity_notice = localstorage.get("clarity_notice_shown") != "1"
 
         # OOBE 初次设置向导：无用户配置时引导完成基本设置
         if is_oobe_needed():
@@ -386,13 +377,6 @@ class HomeMixin(WebUIMixinBase):
         if restore_instance:
             self.ui_alas(aside)
 
-        if show_clarity_notice:
-            set_localstorage("clarity_notice_shown", "1")
-            toast(
-                "本 WebUI 使用 Microsoft Clarity 收集页面访问、点击交互和性能数据，用于分析并改进使用体验。",
-                color="info",
-                duration=12,
-            )
         self._load_deferred_client_assets()
 
         # 启动任务处理器
