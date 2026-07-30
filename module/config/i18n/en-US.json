@@ -3137,7 +3137,7 @@
     },
     "AkashiShopFilter": {
       "name": "Shop Filter",
-      "help": "By default, only Action Points are purchased nanoda. If you want to buy purple coins, set to 'ActionPoint > PurpleCoins'"
+      "help": "By default, only Action Points are purchased. If you want to buy purple coins, set to 'ActionPoint > PurpleCoins'"
     },
     "NotifyOpsiMail": {
       "name": "Push Operation Siren notifications",
@@ -3440,11 +3440,11 @@
     },
     "MinimumActionPointReserve": {
       "name": "Preserve X Action Points",
-      "help": "Give it a try, the bicycle turns into a motorcycle. Yukikaze-sama has given the luck to Commander nanoda, go for it nanoda!"
+      "help": "Give it a try, the bicycle turns into a motorcycle. Yukikaze-sama has given the luck to Commander, go for it!"
     },
     "ExecuteFixedPatrolScan": {
       "name": "Forced Fleet Movement",
-      "help": "Warm reminder from Yukikaze-sama: After enabling, the fleet will be forced to move to prevent not finding Akashi. Commander, you don’t want to crash because you can’t find Akashi nanoda? Enable this function and easily reach 500,000 nautical miles per month nanoda. What are you waiting for, Commander?"
+      "help": "Warm reminder from Yukikaze-sama: After enabling, the fleet will be forced to move to prevent not finding Akashi. Commander, you don’t want to crash because you can’t find Akashi, do you? Enable this function and easily reach 500,000 nautical miles per month. What are you waiting for, Commander?"
     },
     "SkipHpCheck": {
       "name": "Sacrifice run: skip HP check",
@@ -3454,7 +3454,7 @@
     },
     "Cl1Filter": {
       "name": "Akashi Purchase Filter",
-      "help": "By default, only Action Points are purchased nanoda. If you want to also buy purple coins, set it to ‘ActionPoint > PurpleCoins’"
+      "help": "By default, only Action Points are purchased. If you want to also buy purple coins, set it to ‘ActionPoint > PurpleCoins’"
     },
     "RecordNonCL1AP": {
       "name": "Record Non-Corrosion 1 AP Sources",

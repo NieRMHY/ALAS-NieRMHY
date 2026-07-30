@@ -3137,7 +3137,7 @@
     },
     "AkashiShopFilter": {
       "name": "商店過濾器",
-      "help": "預設只購買體力nanoda。如果要購買紫幣，設定為 'ActionPoint > PurpleCoins'"
+      "help": "預設只購買體力。如果要購買紫幣，設定為 'ActionPoint > PurpleCoins'"
     },
     "NotifyOpsiMail": {
       "name": "推送大世界相關資訊",
@@ -3440,11 +3440,11 @@
     },
     "MinimumActionPointReserve": {
       "name": "保留 X 點行動力",
-      "help": "搏一搏，單車變摩託，雪風大人已經把幸運分給指揮官了nanoda，上吧nanoda！"
+      "help": "搏一搏，單車變摩託，雪風大人已經把幸運分給指揮官了，上吧！"
     },
     "ExecuteFixedPatrolScan": {
       "name": "艦隊強制移動",
-      "help": "雪風大人溫馨提示：開啟後，將強制移動艦隊以免找不到明石，指揮官你也不想因為找不到明石導致墜機nanoda？開啟這個功能輕輕鬆鬆達到50萬海裡每月nanoda，指揮官還在等什麼nanoda!"
+      "help": "雪風大人溫馨提示：開啟後，將強制移動艦隊以免找不到明石，指揮官你也不想因為找不到明石導致墜機吧？開啟這個功能輕輕鬆鬆達到50萬海裡每月，指揮官還在等什麼！"
     },
     "SkipHpCheck": {
       "name": "獻祭流跳過血量檢測",
@@ -3454,7 +3454,7 @@
     },
     "Cl1Filter": {
       "name": "明石購買篩選",
-      "help": "預設只購買體力nanoda。如果要同時購買紫幣，設定為 'ActionPoint > PurpleCoins'"
+      "help": "預設只購買體力。如果要同時購買紫幣，設定為 'ActionPoint > PurpleCoins'"
     },
     "RecordNonCL1AP": {
       "name": "統計非侵蝕1來源體力",

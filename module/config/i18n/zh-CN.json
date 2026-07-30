@@ -3137,7 +3137,7 @@
     },
     "AkashiShopFilter": {
       "name": "商店过滤器",
-      "help": "默认只购买体力nanoda。如果要购买紫币，设置为 'ActionPoint > PurpleCoins'"
+      "help": "默认只购买体力。如果要购买紫币，设置为 'ActionPoint > PurpleCoins'"
     },
     "NotifyOpsiMail": {
       "name": "推送大世界相关信息",
@@ -3440,11 +3440,11 @@
     },
     "MinimumActionPointReserve": {
       "name": "保留 X 点行动力",
-      "help": "搏一搏，单车变摩托，雪风大人已经把幸运分给指挥官了nanoda，上吧nanoda！"
+      "help": "搏一搏，单车变摩托，雪风大人已经把幸运分给指挥官了，上吧！"
     },
     "ExecuteFixedPatrolScan": {
       "name": "舰队强制移动",
-      "help": "雪风大人温馨提示：开启后，将强制移动舰队以免找不到明石，指挥官你也不想因为找不到明石导致坠机nanoda？打开这个功能轻轻松松达到50万海里每月nanoda，指挥官还在等什么nanoda!"
+      "help": "雪风大人温馨提示：开启后，将强制移动舰队以免找不到明石，指挥官你也不想因为找不到明石导致坠机吧？打开这个功能轻轻松松达到50万海里每月，指挥官还在等什么！"
     },
     "SkipHpCheck": {
       "name": "献祭流跳过血量检测",
@@ -3454,7 +3454,7 @@
     },
     "Cl1Filter": {
       "name": "明石购买筛选",
-      "help": "默认只购买体力nanoda。如果要同时购买紫币，设置为 'ActionPoint > PurpleCoins'"
+      "help": "默认只购买体力。如果要同时购买紫币，设置为 'ActionPoint > PurpleCoins'"
     },
     "RecordNonCL1AP": {
       "name": "统计非侵蚀1来源体力",
