@@ -270,8 +270,8 @@ class AzurLaneAutoScript:
         )
         notify_webui(
             self.config_name,
-            title=f"敏感任务 {task_name} 出错喵！AzurPilot 已停止喵！",
-            content=f"因为 {task_name} 是敏感任务，出错后不会重启喵~\n{error}",
+            title=f"敏感任务 {task_name} 出错，AzurPilot 已停止",  # Modify by MHY, 去傲娇语
+            content=f"{task_name} 是敏感任务，出错后不会自动重启\n{error}",
         )
         exit(1)
 
@@ -321,8 +321,8 @@ class AzurLaneAutoScript:
             )
             notify_webui(
                 self.config_name,
-                title=f" <{self.config_name}> 发出了警告喵！",
-                content=f"<{self.config_name}> 游戏未运行喵 将自动重启游戏喵~",
+                title=f"<{self.config_name}> 警告",  # Modify by MHY, 去傲娇语
+                content=f"<{self.config_name}> 游戏未运行，将自动重启游戏",
             )
             self.config.task_call('Restart')
             return 'recoverable'
@@ -358,8 +358,8 @@ class AzurLaneAutoScript:
             )
             notify_webui(
                 self.config_name,
-                title=f"<{self.config_name}> 发出了警告喵！",
-                content=f"<{self.config_name}> 游戏卡住 将自动重启游戏喵~",
+                title=f"<{self.config_name}> 警告",  # Modify by MHY, 去傲娇语
+                content=f"<{self.config_name}> 游戏卡住，将自动重启游戏",
             )
             self.config.task_call('Restart')
             self.device.sleep(10)
@@ -384,8 +384,8 @@ class AzurLaneAutoScript:
             )
             notify_webui(
                 self.config_name,
-                title=f"<{self.config_name}> 发出了警告喵！",
-                content=f"<{self.config_name}> 游戏客户端错误 将自动重启游戏喵~",
+                title=f"<{self.config_name}> 警告",  # Modify by MHY, 去傲娇语
+                content=f"<{self.config_name}> 游戏客户端错误，将自动重启游戏",
             )
             self.config.task_call('Restart')
             self.device.sleep(10)
@@ -410,8 +410,8 @@ class AzurLaneAutoScript:
                 )
                 notify_webui(
                     self.config_name,
-                    title=f"出大问题了喵！{self.config_name} 崩溃了喵！",
-                    content=f"因为 GamePageUnknownError 喵！",
+                    title=f"{self.config_name} 崩溃",  # Modify by MHY, 去傲娇语
+                    content=f"原因: GamePageUnknownError",
                 )
                 exit(1)
             else:
@@ -431,8 +431,8 @@ class AzurLaneAutoScript:
             )
             notify_webui(
                 self.config_name,
-                title=f"出大问题了喵！{self.config_name}崩溃了喵！",
-                content=f"因为 ScriptError 喵！",
+                title=f"{self.config_name} 崩溃",  # Modify by MHY, 去傲娇语
+                content=f"原因: ScriptError",
             )
             raise
         except EmulatorNotRunningError as e:
@@ -456,8 +456,8 @@ class AzurLaneAutoScript:
                 )
                 notify_webui(
                     self.config_name,
-                    title=f"{self.config_name} 出了点小问题喵~",
-                    content=f"模拟器离线喵 所以重启了喵",
+                    title=f"{self.config_name} 模拟器离线",  # Modify by MHY, 去傲娇语
+                    content=f"模拟器离线，已自动重启",
                 )
                 return 'recoverable'
             else:
@@ -476,8 +476,8 @@ class AzurLaneAutoScript:
                 )
                 notify_webui(
                     self.config_name,
-                    title=f"出大问题了喵！{self.config_name}崩溃了喵！",
-                    content=f"因为 模拟器出问题了 喵！",
+                    title=f"{self.config_name} 崩溃",  # Modify by MHY, 去傲娇语
+                    content=f"原因: 模拟器异常",
                 )
                 exit(1)
         except RequestHumanTakeover:
@@ -495,8 +495,8 @@ class AzurLaneAutoScript:
             )
             notify_webui(
                 self.config_name,
-                title=f"出大问题了喵！{self.config_name}崩溃了喵！",
-                content=f"因为 需要人工介入 喵！",
+                title=f"{self.config_name} 崩溃",  # Modify by MHY, 去傲娇语
+                content=f"原因: 需要人工介入",
             )
             exit(1)
         except AutoSearchSetError as e:
@@ -524,8 +524,8 @@ class AzurLaneAutoScript:
             )
             notify_webui(
                 self.config_name,
-                title=f"出大问题了喵！{self.config_name}崩溃了喵！",
-                content=f"因为 发生异常 喵！",
+                title=f"{self.config_name} 崩溃",  # Modify by MHY, 去傲娇语
+                content=f"原因: 发生异常",
             )
             raise
 
@@ -1397,8 +1397,8 @@ class AzurLaneAutoScript:
                     )
                     notify_webui(
                         self.config_name,
-                        title=f"诶呀！{self.config_name}出现了问题喵！",
-                        content=f"因为 {task} 任务失败次数过多喵！",
+                        title=f"{self.config_name} 任务失败",  # Modify by MHY, 去傲娇语
+                        content=f"{task} 任务连续失败次数过多",
                     )
                     logger.warning("[Alas] 任务连续失败次数过多，已停止调度")
                     exit(1)

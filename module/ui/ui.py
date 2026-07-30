@@ -262,10 +262,8 @@ class UI(InfoHandler):
         logger.warning("[UI] 不支持从当前页面启动")
         logger.warning(f"[UI] 支持的页面: {[str(page) for page in Page.iter_pages()]}")
         logger.warning('[UI] 支持的页面: 任何右上角有"HOME"按钮的页面')
-        logger.critical("[UI] 杂鱼大叔~ 这么大个人了连主界面都进不去吗？噗噗，简直像个迷路的小宝宝❤")
-        logger.critical("[UI] 听好了，笨蛋大叔：要么滚去正常的界面启动，"
-                        "要么找个带『一键回港』按钮的界面再求我。你要是连这都找不到，建议直接把号删了止损。")
-        logger.critical("[UI] 看懂了吗？废材？不要再浪费我的算力了，赶紧去改！")
+        logger.critical("[UI] 无法进入主界面")  # Modify by MHY, 去傲娇语
+        logger.critical("[UI] 请从支持的页面启动 AzurPilot，或先在游戏内使用『一键回港』回到主界面")
         
         # 未知页面自动重启
         logger.warning("[UI] 检测到未知页面，尝试重启游戏")
@@ -508,9 +506,9 @@ class UI(InfoHandler):
         # - 是否打开兑换商店？handle_popup_confirm() 点击确认
         # - EXCHANGE_CHECK 页面，点击返回箭头
         if self._opsi_reset_fleet_preparation_click >= 5:
-            logger.critical("[UI] 无法确认大世界出击舰队，大叔你还点？是在玩打地鼠吗？真是逊毙了！")
-            logger.critical("[UI] 哎呀呀，大叔是眼花了还是没长脑子？ #1: 建议检查您是否在大世界中设置了舰队")
-            logger.critical("[UI] 笨——蛋——大叔！ #2: 建议检查您的舰队准入门槛（等级限制）")
+            logger.critical("[UI] 无法确认大世界出击舰队")  # Modify by MHY, 去傲娇语
+            logger.critical("[UI] #1: 建议检查您是否在大世界中设置了舰队")
+            logger.critical("[UI] #2: 建议检查您的舰队准入门槛（等级限制）")
             raise RequestHumanTakeover
         if self.appear_then_click(RESET_TICKET_POPUP, offset=(30, 30), interval=3):
             return True

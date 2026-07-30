@@ -289,23 +289,21 @@ class CoinTaskMixin:
             plain_title = '大世界有新消息'
 
         if '行动力出现变化' in plain_title:
-            launcher_title = f"{instance_name} 行动力动了一下喵~"
+            launcher_title = f"{instance_name} 行动力出现变化"
         elif '行动力不足' in plain_title or '行动力低于最低保留' in plain_title:
-            launcher_title = f"{instance_name} 大世界行动力不够喵~"
+            launcher_title = f"{instance_name} 大世界行动力不足"
         elif '黄币与行动力双重不足' in plain_title:
-            launcher_title = f"{instance_name} 大世界补给和行动力都告急喵~"
+            launcher_title = f"{instance_name} 大世界补给与行动力告急"
         elif '代理执行' in plain_title:
-            launcher_title = f"{instance_name} 大世界要换个活干喵~"
+            launcher_title = f"{instance_name} 大世界需要切换代理执行"
         elif '黄币充足' in plain_title or '凭证' in plain_title:
-            launcher_title = f"{instance_name} 大世界补给有消息喵~"
+            launcher_title = f"{instance_name} 大世界补给有消息"
         elif '检测' in plain_title or '报告' in plain_title or '检查' in plain_title:
-            launcher_title = f"{instance_name} 大世界检查报告来啦喵~"
+            launcher_title = f"{instance_name} 大世界检查报告"
         else:
-            launcher_title = f"{instance_name} 的大世界小铃铛响了喵~"
+            launcher_title = f"{instance_name} 大世界有新消息"
 
         launcher_content = f"{plain_title}\n{content}".strip()
-        if not launcher_content.endswith(('喵', '喵~', '。', '！', '~')):
-            launcher_content = f"{launcher_content} 喵~"
         return launcher_title, launcher_content
     
     def _is_push_config_valid(self, push_config):

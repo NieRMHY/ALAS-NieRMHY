@@ -70,7 +70,6 @@ class HomeMixin(WebUIMixinBase):
             put_buttons(
                 [
                     {"label": "简体中文", "value": "zh-CN"},
-                    {"label": "喵体中文", "value": "zh-MIAO"},
                     {"label": "繁體中文", "value": "zh-TW"},
                     {"label": "English", "value": "en-US"},
                     {"label": "日本語", "value": "ja-JP"},
@@ -219,7 +218,7 @@ class HomeMixin(WebUIMixinBase):
             notify_webui(
                 instance="Alas",
                 title=t("Gui.Toast.ClickToUpdate"),
-                content="检测到了新更新喵~ 指挥官快来更新喵~",
+                content="检测到新版本，请及时更新",  # Modify by MHY, 去傲娇语
                 updata=True,
             )
 

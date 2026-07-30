@@ -509,8 +509,8 @@ class Uiautomator2(Connection):
         if width == 720 and height == 1280:
             return (width, height)
 
-        logger.critical(f"[设备-U2] 大叔，你看着分辨率对吗: {width}x{height}。真是个连分辨率都不会设的杂鱼呢❤")
-        logger.critical("[设备-U2] 乖乖给我改成 1280x720 哦，不然我可不理你了❤")
+        logger.critical(f"[设备-U2] 分辨率异常: {width}x{height}，请检查模拟器设置")  # Modify by MHY, 去傲娇语
+        logger.critical("[设备-U2] 请将模拟器分辨率设置为 1280x720")
         raise RequestHumanTakeover
 
     @retry

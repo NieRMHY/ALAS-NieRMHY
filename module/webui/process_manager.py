@@ -692,7 +692,7 @@ class ProcessManager:
                 )
             else:
                 logger.critical(
-                    f"[WebUI] 杂鱼大叔，连功能模块都找不到吗？{func} 这种东西根本不存在啦~"
+                    f"[WebUI] 功能模块不存在: {func}"  # Modify by MHY, 去傲娇语
                 )
             if e is not None and e.is_set():
                 logger.info(f"[{config_name}] exited. Reason: Update\n")

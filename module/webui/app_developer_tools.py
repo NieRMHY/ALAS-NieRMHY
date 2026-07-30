@@ -185,7 +185,7 @@ class DeveloperToolsMixin(WebUIMixinBase):
             instance = getattr(self, "alas_name", DEFAULT_CONFIG_NAME)
             notify_webui(
                 instance=instance,
-                title="发现更新喵！",
+                title="发现更新（测试）",  # Modify by MHY, 去傲娇语
                 content="测试更新推送逻辑，启动器应显示专用标题。",
                 update=True,
             )
@@ -197,7 +197,7 @@ class DeveloperToolsMixin(WebUIMixinBase):
             instance = getattr(self, "alas_name", DEFAULT_CONFIG_NAME)
             notify_webui(
                 instance=instance,
-                title="新公告喵！",
+                title="新公告（测试）",  # Modify by MHY, 去傲娇语
                 content="测试公告推送逻辑，启动器应显示专用标题。",
                 updata=False,
             )

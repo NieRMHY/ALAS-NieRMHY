@@ -711,15 +711,15 @@ class RewardCommission(UI, InfoHandler):
 
                         msg = '\n'.join(tracked)
                         webui_msg = msg.replace('\n\n', '\n')
-                        title = f"AzurPilot <{instance}> 委托获得奖励喵！"
-                        webui_title = f"AzurPilot <{instance}> 委托获得奖励喵！"
+                        title = f"AzurPilot <{instance}> 委托获得奖励"  # Modify by MHY, 去傲娇语
+                        webui_title = f"AzurPilot <{instance}> 委托获得奖励"
                         if gem_count >= 50:
-                            title = f"AzurPilot <{instance}> 大成功！！！委托获得顶级奖励喵！"
-                            webui_title = f"AzurPilot <{instance}> 大成功！！！委托获得顶级奖励喵！"
+                            title = f"AzurPilot <{instance}> 大成功！委托获得顶级奖励"
+                            webui_title = f"AzurPilot <{instance}> 大成功！委托获得顶级奖励"
 
                         elif gem_count > 0:
-                            title = f"AzurPilot <{instance}> 委托获得顶级奖励喵！"
-                            webui_title = f"AzurPilot <{instance}> 委托获得顶级奖励喵！"
+                            title = f"AzurPilot <{instance}> 委托获得顶级奖励"
+                            webui_title = f"AzurPilot <{instance}> 委托获得顶级奖励"
                         handle_notify(
                             self.config.Error_OnePushConfig,
                             title=title,
