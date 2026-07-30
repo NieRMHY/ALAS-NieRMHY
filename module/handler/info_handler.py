@@ -524,7 +524,7 @@ class InfoHandler(ModuleBase):
                 self._story_option_confirm.reset()
         if self.appear(STORY_SKIP_3, offset=(20, 20), interval=2):
             # 确认是剧情画面
-            # 当剧情播放速度为"非常快"时，AzurPilot 可能点击了跳过但剧情已消失
+            # 当剧情播放速度为"非常快"时，ALAS 可能点击了跳过但剧情已消失
             # 此点击会打断自动搜索
             self.interval_reset([STORY_SKIP_3])
             if self._story_confirm.reached():

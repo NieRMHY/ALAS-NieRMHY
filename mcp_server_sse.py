@@ -40,7 +40,7 @@ logger = logging.getLogger("azurpilot-mcp")
 helper = McpConfigHelper()
 
 # 初始化 MCP 服务器
-mcp_server = Server("AzurPilot-MCP")
+mcp_server = Server("ALAS-MCP")
 
 ToolResponse = List[TextContent | ImageContent]
 
@@ -49,12 +49,12 @@ async def list_tools() -> List[Tool]:
     return [
         Tool(
             name="list_instances",
-            description="列出所有已配置的 AzurPilot 实例名称",
+            description="列出所有已配置的 ALAS 实例名称",
             inputSchema={"type": "object", "properties": {}}
         ),
         Tool(
             name="get_status",
-            description="获取所有 AzurPilot 实例的运行状态及详细状态 (state)",
+            description="获取所有 ALAS 实例的运行状态及详细状态 (state)",
             inputSchema={"type": "object", "properties": {}}
         ),
         Tool(
@@ -135,7 +135,7 @@ async def list_tools() -> List[Tool]:
         ),
         Tool(
             name="start_instance",
-            description="启动 AzurPilot 实例的运行过程",
+            description="启动 ALAS 实例的运行过程",
             inputSchema={
                 "type": "object",
                 "properties": {
@@ -146,7 +146,7 @@ async def list_tools() -> List[Tool]:
         ),
         Tool(
             name="stop_instance",
-            description="强制停止运行中的 AzurPilot 实例",
+            description="强制停止运行中的 ALAS 实例",
             inputSchema={
                 "type": "object",
                 "properties": {
@@ -192,7 +192,7 @@ async def list_tools() -> List[Tool]:
         ),
         Tool(
             name="update_alas",
-            description="触发 AzurPilot 的 Git Pull 和依赖更新，让大模型能帮你做日常的程序维护。",
+            description="触发 ALAS 的 Git Pull 和依赖更新，让大模型能帮你做日常的程序维护。",
             inputSchema={"type": "object", "properties": {}}
         ),
     ]
@@ -254,7 +254,7 @@ async def _tool_get_recent_logs(arguments: Dict[str, Any]) -> ToolResponse:
     inst = arguments["instance"]
     lines_count = arguments.get("lines", 50)
 
-    # AzurPilot 日志命名规则通常是 YYYY-MM-DD_实例名.txt
+    # ALAS 日志命名规则通常是 YYYY-MM-DD_实例名.txt
     date_str = datetime.date.today().strftime("%Y-%m-%d")
     log_file = f"./log/{date_str}_{inst}.txt"
 
@@ -345,7 +345,7 @@ async def _tool_get_current_running_task(arguments: Dict[str, Any]) -> ToolRespo
                 lines = f.readlines()
                 for line in reversed(lines):
                     import re
-                    # 适配现代 AzurPilot 日志格式: 调度器: 开始任务 `TaskName`
+                    # 适配现代 ALAS 日志格式: 调度器: 开始任务 `TaskName`
                     m = re.search(r"调度器: 开始任务\s*[`'\" ](.*?)[`'\" ]", line)
                     if not m:
                         # 适配旧版或特殊格式: <<< Run task TaskName >>>
@@ -458,7 +458,7 @@ async def _tool_update_alas(arguments: Dict[str, Any]) -> ToolResponse:
             updater.update()
 
         threading.Thread(target=do_update).start()
-        return [TextContent(type="text", text="Success: Triggered AzurPilot update in background.")]
+        return [TextContent(type="text", text="Success: Triggered ALAS update in background.")]
     except Exception as e:
         return [TextContent(type="text", text=f"Error: {str(e)}")]
 
@@ -570,5 +570,5 @@ app.mount("/", mcp_asgi_app)
 
 if __name__ == "__main__":
     import uvicorn
-    logger.info("[MCP] 启动 AzurPilot MCP 服务 (Port: 22268)")
+    logger.info("[MCP] 启动 ALAS MCP 服务 (Port: 22268)")
     uvicorn.run(app, host="0.0.0.0", port=22268)

@@ -263,7 +263,7 @@ class UI(InfoHandler):
         logger.warning(f"[UI] 支持的页面: {[str(page) for page in Page.iter_pages()]}")
         logger.warning('[UI] 支持的页面: 任何右上角有"HOME"按钮的页面')
         logger.critical("[UI] 无法进入主界面")  # Modify by MHY, 去傲娇语
-        logger.critical("[UI] 请从支持的页面启动 AzurPilot，或先在游戏内使用『一键回港』回到主界面")
+        logger.critical("[UI] 请从支持的页面启动 ALAS，或先在游戏内使用『一键回港』回到主界面")
         
         # 未知页面自动重启
         logger.warning("[UI] 检测到未知页面，尝试重启游戏")

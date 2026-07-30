@@ -228,7 +228,7 @@ class Updater(DeployConfig, GitManager):
             logger.exception_context(
                 title='更新执行异常',
                 exc=exc,
-                impact='更新已中止，已暂停的 AzurPilot 实例将恢复运行。',
+                impact='更新已中止，已暂停的 ALAS 实例将恢复运行。',
                 action='检查 Git 更新日志和网络连接后重试。',
                 level=50,
             )
@@ -332,7 +332,7 @@ class Updater(DeployConfig, GitManager):
                 logger.exception_context(
                     title='无法持久化更新恢复计划',
                     exc=exc,
-                    impact='Git 更新尚未开始，已停止的 AzurPilot 实例将恢复运行。',
+                    impact='Git 更新尚未开始，已停止的 ALAS 实例将恢复运行。',
                     action='检查 config 目录写入权限后重试更新。',
                     level=50,
                 )

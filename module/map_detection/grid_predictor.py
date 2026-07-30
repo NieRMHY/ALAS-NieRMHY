@@ -216,7 +216,7 @@ class GridPredictor:
                 logger.warning(f'[MapDetection] 敌人识别模板未找到: {name}')
                 logger.warning('[MapDetection] 请使用 dev_tools/relative_record.py 或 dev_tools/relative_crop.py 创建模板，'
                                '然后放置到 ./assets/<server>/template 目录下')
-                logger.warning('[MapDetection] 未找到精英敌人的识别模板。通常是活动地图还未完全适配，请等待 AzurPilot 更新。')
+                logger.warning('[MapDetection] 未找到精英敌人的识别模板。通常是活动地图还未完全适配，请等待 ALAS 更新。')
                 raise ScriptError(f'敌人识别模板未找到: {name}')
 
             short_name = name[6:] if name.startswith('Siren_') else name

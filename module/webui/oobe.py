@@ -714,7 +714,7 @@ class OOBEWizard:
 
     @use_scope("ROOT", clear=True)
     def start(self):
-        set_env(title="AzurPilot - Setup", output_animation=False)
+        set_env(title="ALAS - Setup", output_animation=False)  # Modify by MHY, 网页标题改 ALAS
         load_webui_styles(theme=self.gui.theme, is_mobile=self.gui.is_mobile)
 
         put_html(f"<style>{CSS}</style>")

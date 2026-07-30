@@ -66,7 +66,7 @@ def voucher_redirect(value):
     from using banned strings i.e. Logger, LoggerT[1-6],
     LoggerArchive, or LoggerArchiveT[1-6]
     Banned strings are used for special circumstances
-    handled by AzurPilot
+    handled by ALAS
     """
     matches = re.findall(FILTER_REGEX_VOUCHER, value)
     if not matches:

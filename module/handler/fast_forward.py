@@ -359,7 +359,7 @@ class FastForwardHandler(AutoSearchHandler):
             from module.notify import handle_notify
             if not handle_notify(
                 self.config.Error_OnePushConfig,
-                title=f"AzurPilot <{self.config.config_name}> crashed",
+                title=f"ALAS <{self.config.config_name}> crashed",
                 content=f"<{self.config.config_name}> RequestHumanTakeover\n"
                         f"Task GemsFarming could not set auto search settings",
                                     ):

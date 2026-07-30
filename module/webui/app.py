@@ -1,4 +1,4 @@
-"""AzurPilot WebUI 的兼容入口和 ASGI 应用工厂。
+"""ALAS WebUI 的兼容入口和 ASGI 应用工厂。
 
 提供 WebUI 的主应用类，通过多个 Mixin 组合实现各功能页面：
 仪表盘（Dashboard）、开发者菜单、开发者设置、开发者工具、
@@ -158,7 +158,7 @@ def app():
     static_path = os.getcwd()
 
     def _run_gui(initial_page: str = "home") -> None:
-        set_env(title="AzurPilot", output_animation=False)
+        set_env(title="ALAS", output_animation=False)  # Modify by MHY, 网页标题改 ALAS
         load_webui_styles(
             theme=AlasGUI.theme,
             is_mobile=info.user_agent.is_mobile,

@@ -45,7 +45,7 @@ def prepare_webui_restart() -> bool:
         logger.exception_context(
             title='无法准备 WebUI 手动重启',
             exc=exc,
-            impact='继续重启会导致当前运行的 AzurPilot 实例无法自动恢复。',
+            impact='继续重启会导致当前运行的 ALAS 实例无法自动恢复。',
             action='检查 config 目录写入权限后重试。',
             level=50,
         )
@@ -213,7 +213,7 @@ class DeveloperToolsMixin(WebUIMixinBase):
             config = load_config(instance)
             success = handle_notify(
                 config.Error_OnePushConfig,
-                title=f"AzurPilot <{instance}> 崩溃",
+                title=f"ALAS <{instance}> 崩溃",
                 content=f"<{instance}> 开发者错误推送测试",
             )
             if success:

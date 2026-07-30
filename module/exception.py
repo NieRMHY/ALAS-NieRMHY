@@ -1,6 +1,6 @@
 """异常层次结构。
 
-定义 AzurPilot 的所有自定义异常。异常按严重程度和可恢复性分为以下层次：
+定义 ALAS 的所有自定义异常。异常按严重程度和可恢复性分为以下层次：
 
 正常战役结束（可预期的流程终止）：
     - CampaignEnd: 战役正常结束（回到关卡选择页面）
@@ -121,7 +121,7 @@ class GameStuckError(Exception):
 
 
 class GameBugError(Exception):
-    """碧蓝航线游戏客户端发生错误，AzurPilot 无法自行处理。
+    """碧蓝航线游戏客户端发生错误，ALAS 无法自行处理。
 
     通常重启游戏即可恢复。
     """
@@ -164,7 +164,7 @@ class GamePageUnknownError(Exception):
 class RequestHumanTakeover(Exception):
     """请求人工接管。
 
-    AzurPilot 无法处理此类错误，可能是由于配置错误导致。
+    ALAS 无法处理此类错误，可能是由于配置错误导致。
     需要用户手动检查并修正问题。
     """
     pass

@@ -644,7 +644,7 @@ def _input_webui_password():
     try:
         while True:
             data = input_group(
-                label="AzurPilot",
+                label="ALAS",  # Modify by MHY, 密码页标题改 ALAS
                 inputs=[
                     input(
                         name="password",

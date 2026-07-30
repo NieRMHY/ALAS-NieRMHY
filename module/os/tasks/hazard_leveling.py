@@ -55,7 +55,7 @@ class OpsiHazard1Leveling(CoinTaskMixin, OSMap):
             if not _previous_ap_insufficient:
                 _previous_ap_insufficient = True
                 self.notify_push(
-                    title="[AzurPilot info] 侵蚀 1 - 行动力低于最低保留",
+                    title="[ALAS info] 侵蚀 1 - 行动力低于最低保留",
                     content=f"总行动力 {self._action_point_total} 低于最低保留 {min_reserve}，已推迟任务",
                 )
             else:

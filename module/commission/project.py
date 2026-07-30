@@ -139,7 +139,7 @@ class Commission:
         Args:
             image: 游戏截图。
             y: 委托条目底部的 y 坐标。
-            config: AzurPilot 配置对象。
+            config: ALAS 配置对象。
         """
         self.config = config
         self.y = y

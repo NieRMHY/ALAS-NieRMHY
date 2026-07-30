@@ -2,7 +2,7 @@
 
 为 MCP (Model Context Protocol) 服务器提供配置数据的结构化访问。
 MCP 服务器通过此模块获取任务列表、任务详情和配置信息，
-供外部 AI 助手查询和修改 AzurPilot 的配置。
+供外部 AI 助手查询和修改 ALAS 的配置。
 
 主要功能：
 - get_tasks(): 获取所有可调度任务的名称列表
@@ -59,7 +59,7 @@ class McpConfigHelper:
 
         # 参数的国际化数据通常位于 i18n_data[task_name] 的顶层，
         # 或位于 Task[task_name]（通用任务描述符）。
-        # AzurPilot 按任务级键组织国际化数据。
+        # ALAS 按任务级键组织国际化数据。
         spec_i18n = self.i18n_data.get(task_name, {})
 
         for group_name, group_data in task_args.items():

@@ -16,7 +16,7 @@ from module.config.utils import LANGUAGES, filepath_i18n, read_file, write_file
 
 def translate():
     """
-    启动 AzurPilot 翻译编辑器。
+    启动 ALAS 翻译编辑器。
 
     提供交互式界面，用于逐条编辑各语言（zh-CN、zh-TW、en-US、ja-JP）的翻译文本。
     """

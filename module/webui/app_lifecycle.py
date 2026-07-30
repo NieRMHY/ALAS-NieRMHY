@@ -76,7 +76,7 @@ def clearup() -> bool:
             logger.exception_context(
                 title='WebUI 清理失败: 枚举运行实例',
                 exc=exc,
-                impact='无法确认所有 AzurPilot 工作进程是否已停止。',
+                impact='无法确认所有 ALAS 工作进程是否已停止。',
                 action='检查 WebUI 进程注册表和 Manager 服务状态。',
                 level=40,
             )
@@ -84,7 +84,7 @@ def clearup() -> bool:
             success = False
 
         for alas in instances:
-            success = _clearup_step(f"AzurPilot 实例 {alas.config_name}", alas.stop) and success
+            success = _clearup_step(f"ALAS 实例 {alas.config_name}", alas.stop) and success
 
         if success:
             try:

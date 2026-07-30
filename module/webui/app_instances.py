@@ -125,7 +125,7 @@ class InstanceMixin(WebUIMixinBase):
 
     @use_scope("content", clear=True)
     def ui_import_legacy(self) -> None:
-        """管理菜单：导入旧 AzurPilot 数据。"""
+        """管理菜单：导入旧 ALAS 数据。"""
         self.init_menu(name="ManageImportLegacy")
         self.set_title(t("Gui.AppManage.ImportLegacy"))
 

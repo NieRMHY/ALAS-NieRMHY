@@ -663,7 +663,7 @@ class ProcessManager:
         if e is not None:
             AzurLaneConfig.stop_event = e
         try:
-            # 运行 AzurPilot
+            # 运行 ALAS
             if func == "alas":
                 from alas import AzurLaneAutoScript
 
@@ -715,7 +715,7 @@ class ProcessManager:
         ev: threading.Event | None = None,
     ) -> None:
         """
-        更新重载后（或更新失败时），重启所有更新前正在运行的 AzurPilot 实例。
+        更新重载后（或更新失败时），重启所有更新前正在运行的 ALAS 实例。
 
         Args:
             instances: 需要重启的实例列表，元素为 ProcessManager 或配置名称字符串。

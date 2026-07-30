@@ -124,7 +124,7 @@
     },
     "WarArchives": {
       "name": "作战档案",
-      "help": "由于作战档案缺少维护，开荒功能不一定能正常使用，如果发现AzurPilot运行异常，请手动完成开荒后使用自律寻敌功能"
+      "help": "由于作战档案缺少维护，开荒功能不一定能正常使用，如果发现ALAS运行异常，请手动完成开荒后使用自律寻敌功能"
     },
     "EventA": {
       "name": "每日A图",
@@ -292,11 +292,11 @@
     },
     "OpsiCrossMonth": {
       "name": "跨月每日",
-      "help": "    AzurPilot将在大世界跨月重置之前10分钟进入大世界，等待大世界重置但不退出大世界，然后完成新一天的大世界每日Plus、隐秘海域、深渊坐标和耄耋相接，以获得额外的金菜。运行大世界每日Plus时，按\"大世界每日Plus\"任务设置运行，其余同理。\n    重要：AzurPilot等待跨月期间，请不要操作游戏。"
+      "help": "    ALAS将在大世界跨月重置之前10分钟进入大世界，等待大世界重置但不退出大世界，然后完成新一天的大世界每日Plus、隐秘海域、深渊坐标和耄耋相接，以获得额外的金菜。运行大世界每日Plus时，按\"大世界每日Plus\"任务设置运行，其余同理。\n    重要：ALAS等待跨月期间，请不要操作游戏。"
     },
     "OpsiSimulator": {
       "name": "大世界模拟器 Alpha",
-      "help": "使用蒙特卡洛算法估算在当前状态下持续进行侵蚀循环一段时间后的结果，该功能不会影响AzurPilot正常运行\n模型所用参数均取自AzurPilot配置和统计，请确保正确配置了智能调度Plus等大世界设置\n目前为测试版本，结果不具备太多参考价值\n关于奸商售卖行动力的模型无足够充分的证据支撑。具体来讲，这里认为奸商卖6种行动力箱子满足超几何分布X~H(6,6,24)\n关于坠机：这里坠机是指整个模拟流程中行动力低于智能调度Plus中设置的行动力保留阈值至少一次。若低于该阈值，模拟器将停止侵蚀循环等待行动力自然回复"
+      "help": "使用蒙特卡洛算法估算在当前状态下持续进行侵蚀循环一段时间后的结果，该功能不会影响ALAS正常运行\n模型所用参数均取自ALAS配置和统计，请确保正确配置了智能调度Plus等大世界设置\n目前为测试版本，结果不具备太多参考价值\n关于奸商售卖行动力的模型无足够充分的证据支撑。具体来讲，这里认为奸商卖6种行动力箱子满足超几何分布X~H(6,6,24)\n关于坠机：这里坠机是指整个模拟流程中行动力低于智能调度Plus中设置的行动力保留阈值至少一次。若低于该阈值，模拟器将停止侵蚀循环等待行动力自然回复"
     },
     "IslandPlan": {
       "name": "全局配置",
@@ -446,7 +446,7 @@
     },
     "Sensitive": {
       "name": "敏感任务",
-      "help": "出错时禁止重启游戏，直接停止 AzurPilot 运行。适用于跨月每日、隐秘海域、深渊坐标等关键时刻任务。",
+      "help": "出错时禁止重启游戏，直接停止 ALAS 运行。适用于跨月每日、隐秘海域、深渊坐标等关键时刻任务。",
       "True": "是",
       "False": "否"
     }
@@ -697,7 +697,7 @@
     },
     "StrictRestart": {
       "name": "敏感任务出错时禁止重启",
-      "help": "运行敏感任务出错时停止AzurPilot，而不是重启游戏\n敏感任务包含隐秘海域、深渊坐标、跨月每日"
+      "help": "运行敏感任务出错时停止ALAS，而不是重启游戏\n敏感任务包含隐秘海域、深渊坐标、跨月每日"
     },
     "SaveErrorCount": {
       "name": "最多保存 X 个错误日志",
@@ -1734,7 +1734,7 @@
   "GemsFarming": {
     "_info": {
       "name": "1-1刷伏击配置",
-      "help": "警告: 这个功能可以让玩家获取少量的钻石，但不是一个能高效获取钻石的方法\n玩碧蓝航线不久的玩家, 很容易迷信零破和低耗等, 而忽视了角色养成\n运行这个功能只会让你自己感觉很充实, 而你的帐号实际零提升\n这个功能的主要用途，是让阵容成型的玩家获取额外的魔方，请理性地把钻石当作副产物\n\n这个功能将在旗舰32级之后更换旗舰\n关于紧急委托刷新机制, 可阅读 https://bbs.nga.cn/read.php?tid=27134956\n委托油耗比: A3 > A1 > 2-4 > 2-1, 有活动图时建议选活动图, 2-1会拣问号有更多物资\n一队会完成所有的战斗, 前排应当为百级零破驱逐带输出装, 后排应该为33级及以下白皮零破航母\n二队应提供跨队支援（跨队弹幕、跨队辅助）\n\n无法设置舰队职能时，以以下方式停止任务以免跨队队伍出击，石油被大量消耗：\n若设置了错误推送则推送任务停止的消息并停止该任务。\n若没有设置错误推送，则直接停止AzurPilot。"
+      "help": "警告: 这个功能可以让玩家获取少量的钻石，但不是一个能高效获取钻石的方法\n玩碧蓝航线不久的玩家, 很容易迷信零破和低耗等, 而忽视了角色养成\n运行这个功能只会让你自己感觉很充实, 而你的帐号实际零提升\n这个功能的主要用途，是让阵容成型的玩家获取额外的魔方，请理性地把钻石当作副产物\n\n这个功能将在旗舰32级之后更换旗舰\n关于紧急委托刷新机制, 可阅读 https://bbs.nga.cn/read.php?tid=27134956\n委托油耗比: A3 > A1 > 2-4 > 2-1, 有活动图时建议选活动图, 2-1会拣问号有更多物资\n一队会完成所有的战斗, 前排应当为百级零破驱逐带输出装, 后排应该为33级及以下白皮零破航母\n二队应提供跨队支援（跨队弹幕、跨队辅助）\n\n无法设置舰队职能时，以以下方式停止任务以免跨队队伍出击，石油被大量消耗：\n若设置了错误推送则推送任务停止的消息并停止该任务。\n若没有设置错误推送，则直接停止ALAS。"
     },
     "ChangeFlagship": {
       "name": "更换旗舰",
@@ -2119,7 +2119,7 @@
   "Research": {
     "_info": {
       "name": "科研",
-      "help": "当过滤器和其他设置一起工作时，AzurPilot 会寻找同时满足所有用户设置的项目。\n例如，你设置科研过滤器是 `H1 > D2.5 > shortest` （包含消耗魔方的科研），但又设置了不允许消耗魔方，最终的结果是 AzurPilot 不会选择消耗魔方的科研。当你突然想切魔方的时候，只需打开消耗魔方，而不需要修改过滤器，这是比较方便的。"
+      "help": "当过滤器和其他设置一起工作时，ALAS 会寻找同时满足所有用户设置的项目。\n例如，你设置科研过滤器是 `H1 > D2.5 > shortest` （包含消耗魔方的科研），但又设置了不允许消耗魔方，最终的结果是 ALAS 不会选择消耗魔方的科研。当你突然想切魔方的时候，只需打开消耗魔方，而不需要修改过滤器，这是比较方便的。"
     },
     "UseCube": {
       "name": "使用魔方",
@@ -2147,7 +2147,7 @@
     },
     "AllowDelay": {
       "name": "资源不足时延迟科研",
-      "help": "资源不足时AzurPilot会延迟科研直到满足条件或科研队列即将清空，不会导致科研停转\n如果长期保持资源不足或运行AzurPilot的时间不够长，可以取消本选项以保持科研队列装满"
+      "help": "资源不足时ALAS会延迟科研直到满足条件或科研队列即将清空，不会导致科研停转\n如果长期保持资源不足或运行ALAS的时间不够长，可以取消本选项以保持科研队列装满"
     },
     "AllowGenreT": {
       "name": "允许做T类科研",
@@ -2389,7 +2389,7 @@
     },
     "BuySkinBox": {
       "name": "买外观装备箱",
-      "help": "为降低维护成本，过滤器中的外观箱选择器不会随游戏更新，但AzurPilot会将任何未知的，数量为1的，消耗7000物资的物品视为外观箱，并购买"
+      "help": "为降低维护成本，过滤器中的外观箱选择器不会随游戏更新，但ALAS会将任何未知的，数量为1的，消耗7000物资的物品视为外观箱，并购买"
     },
     "ConsumeCoins": {
       "name": "消耗溢出物资",
@@ -3425,7 +3425,7 @@
   "OpsiHazard1Leveling": {
     "_info": {
       "name": "侵蚀1练级",
-      "help": "消耗作战补给凭证以获取大量经验和少量行动力\n推荐携带1-2艘预装填航母以获取最高的时均收益\n\n原版 AzurPilot 的一些防呆限制已被解除，请谨慎设置参数"
+      "help": "消耗作战补给凭证以获取大量经验和少量行动力\n推荐携带1-2艘预装填航母以获取最高的时均收益\n\n原版 ALAS 的一些防呆限制已被解除，请谨慎设置参数"
     },
     "TargetZone": {
       "name": "指定海域",
@@ -3495,7 +3495,7 @@
   "OpsiCheckLeveling": {
     "_info": {
       "name": "大世界舰队经验检测",
-      "help": "检测出击舰队所有船是否已经获取满经验，是的话则发送一条推送消息\n需要先在 AzurPilot 设置中配置好\"错误推送设置\"\n没成功检测经验会重新检测，建议上满六艘舰船不然就将检测时间调大，连续3次失败会推送并延时"
+      "help": "检测出击舰队所有船是否已经获取满经验，是的话则发送一条推送消息\n需要先在 ALAS 设置中配置好\"错误推送设置\"\n没成功检测经验会重新检测，建议上满六艘舰船不然就将检测时间调大，连续3次失败会推送并延时"
     },
     "TargetLevel": {
       "name": "当所有舰船经验可升至此等级时推送 (0为不限制)",
@@ -5708,7 +5708,7 @@
   "Daemon": {
     "_info": {
       "name": "半自动点击",
-      "help": "在出击未适配的关卡时有用，能减少大量人工操作\nAzurPilot 将帮助点击战斗准备，点击战斗结算，跳过剧情，自动退役，关闭各种弹窗。你只需要手动选择敌人。"
+      "help": "在出击未适配的关卡时有用，能减少大量人工操作\nALAS 将帮助点击战斗准备，点击战斗结算，跳过剧情，自动退役，关闭各种弹窗。你只需要手动选择敌人。"
     },
     "EnterMap": {
       "name": "自动点击进图准备",
@@ -5718,11 +5718,11 @@
   "OpsiDaemon": {
     "_info": {
       "name": "大世界半自动",
-      "help": "在出击大世界深渊坐标（红宝箱图）或完成大世界主线时有用，能减少大量人工操作\nAzurPilot 将帮助点击战斗准备，点击战斗结算，跳过剧情，关闭各种弹窗。你只需要手动选择敌人和手动切换海域。"
+      "help": "在出击大世界深渊坐标（红宝箱图）或完成大世界主线时有用，能减少大量人工操作\nALAS 将帮助点击战斗准备，点击战斗结算，跳过剧情，关闭各种弹窗。你只需要手动选择敌人和手动切换海域。"
     },
     "RepairShip": {
       "name": "靠近港口时自动修船",
-      "help": "手动把队伍移动至港口后，AzurPilot将帮助修船\n修理完成后需要在30秒内将队伍移出港口，否则将再次修船"
+      "help": "手动把队伍移动至港口后，ALAS将帮助修船\n修理完成后需要在30秒内将队伍移出港口，否则将再次修船"
     },
     "SelectEnemy": {
       "name": "清理附近的敌人和物资",
@@ -5814,7 +5814,7 @@
   "Benchmark": {
     "_info": {
       "name": "性能测试",
-      "help": "测试哪个截图方案和控制方案速度更快，速度因模拟器和电脑配置而异\n测试完成后，在 \"AzurPilot\" - \"模拟器设置\" 内选择最快的截图和控制方案"
+      "help": "测试哪个截图方案和控制方案速度更快，速度因模拟器和电脑配置而异\n测试完成后，在 \"ALAS\" - \"模拟器设置\" 内选择最快的截图和控制方案"
     },
     "DeviceType": {
       "name": "选择设备类型",
@@ -6116,12 +6116,12 @@
       "New": "添加配置",
       "Import": "导入配置",
       "ImportLegacy": "导入旧数据",
-      "ImportLegacyTitle": "导入旧 AzurPilot/ALAS 数据",
-      "ImportLegacyHint": "选择旧 AzurPilot/ALAS 根目录后，将自动导入以下数据。",
+      "ImportLegacyTitle": "导入旧 ALAS 数据",
+      "ImportLegacyHint": "选择旧 ALAS 根目录后，将自动导入以下数据。",
       "ImportLegacyContent": "配置文件、数据库和日志统计",
       "ImportLegacyWarning": "同名文件会被覆盖，建议先备份当前项目。",
-      "ImportLegacyChoose": "选择旧 AzurPilot/ALAS 文件夹",
-      "ImportLegacySelecting": "请在弹出的窗口中选择旧 AzurPilot/ALAS 根目录",
+      "ImportLegacyChoose": "选择旧 ALAS 文件夹",
+      "ImportLegacySelecting": "请在弹出的窗口中选择旧 ALAS 根目录",
       "ImportLegacySuccess": "旧数据导入成功",
       "ImportLegacyFailed": "旧数据导入失败：{error}",
       "ImportLegacyNoMatch": "所选文件夹中未找到 config/ 或 log/cl1/ 下的匹配文件",
@@ -6150,19 +6150,19 @@
       "UpToDate": "已是最新版本",
       "HaveUpdate": "有新版本可用",
       "UpdateStart": "开始更新",
-      "UpdateWait": "等待所有 AzurPilot 完成当前任务",
+      "UpdateWait": "等待所有 ALAS 完成当前任务",
       "UpdateRun": "更新中",
       "UpdateSuccess": "更新成功，正在重启",
       "UpdateFailed": "更新失败，可在./log/*_gui.txt中找到错误日志",
       "UpdateChecking": "检查更新中",
-      "UpdateCancel": "取消更新，重启 AzurPilot 中",
+      "UpdateCancel": "取消更新，重启 ALAS 中",
       "UpdateFinish": "更新成功，请手动重启",
       "Local": "本地",
       "Upstream": "上游仓库",
       "Author": "作者",
       "Time": "提交时间",
       "Message": "提交信息",
-      "DisabledWarn": "更新模块未启用，你需要手动重启 AzurPilot 进行更新",
+      "DisabledWarn": "更新模块未启用，你需要手动重启 ALAS 进行更新",
       "DetailedHistory": "详细提交历史"
     },
     "Remote": {
@@ -6185,7 +6185,7 @@
       "AutoStartHelp": "开启后，启动器会在登录 Windows 时自动启动，并默认最小化到托盘。",
       "Loading": "正在读取启动器状态...",
       "Connected": "启动器已连接",
-      "Disconnected": "启动器未连接，请通过启动器打开 AzurPilot",
+      "Disconnected": "启动器未连接，请通过启动器打开 ALAS",
       "RemoteUnavailable": "开机自启动只能在本机 WebUI 中设置",
       "Unsupported": "当前平台不支持开机自启动",
       "Enabled": "已开启",
@@ -6195,7 +6195,7 @@
     },
     "DeploySetting": {
       "Title": "部署设置",
-      "RestartNotice": "设置会立即写入 config/deploy.yaml，部分配置需要重启 AzurPilot 后生效。",
+      "RestartNotice": "设置会立即写入 config/deploy.yaml，部分配置需要重启 ALAS 后生效。",
       "Loading": "正在读取部署设置...",
       "Refresh": "重新读取",
       "Save": "保存设置",
@@ -6213,7 +6213,7 @@
       "GroupMisc": "其他配置",
       "GroupRemoteAccess": "远程访问",
       "GroupWebui": "WebUI 配置",
-      "Repository": "AzurPilot 仓库地址",
+      "Repository": "ALAS 仓库地址",
       "RepositoryHelp": "用于更新和安装的 Git 仓库地址。国内用户可使用 git://git.pull/AzurPilot。",
       "Branch": "分支",
       "BranchHelp": "稳定版通常使用 master，开发或测试可填写 dev、app 等分支。",
@@ -6224,7 +6224,7 @@
       "SSLVerify": "Git SSL 验证",
       "SSLVerifyHelp": "连接可信网络时建议开启。",
       "PythonExecutable": "Python 可执行文件",
-      "PythonExecutableHelp": "用于运行 AzurPilot 的 Python 路径。",
+      "PythonExecutableHelp": "用于运行 ALAS 的 Python 路径。",
       "PypiMirror": "PyPI 镜像",
       "PypiMirrorHelp": "安装依赖使用的镜像地址，留空使用默认源。",
       "InstallDependencies": "启动时安装依赖",
@@ -6252,7 +6252,7 @@
       "AutoRestartTime": "定时重启时间",
       "AutoRestartTimeHelp": "有更新时每天自动重启的时间，留空表示禁用。",
       "DiscordRichPresence": "Discord 富状态",
-      "DiscordRichPresenceHelp": "在 Discord 中展示 AzurPilot 运行状态。",
+      "DiscordRichPresenceHelp": "在 Discord 中展示 ALAS 运行状态。",
       "EnableRemoteAccess": "启用远程访问",
       "EnableRemoteAccessHelp": "通过 SSH 反向隧道暴露 WebUI。公网使用前请务必设置密码。",
       "RemoteAccessMode": "远程访问模式",
@@ -6296,7 +6296,7 @@
     },
     "StartupRun": {
       "Title": "启动时自动运行",
-      "Description": "开启后，WebUI 或启动器启动 AzurPilot 时会自动运行当前实例；只影响下次启动。",
+      "Description": "开启后，WebUI 或启动器启动 ALAS 时会自动运行当前实例；只影响下次启动。",
       "Loading": "正在读取启动策略...",
       "Enabled": "已加入启动时自动运行列表",
       "Disabled": "未加入启动时自动运行列表",
@@ -6437,7 +6437,7 @@
     },
     "OOBE": {
       "ImportTitle": "导入旧数据",
-      "ImportHint": "如果你以前使用过 AzurPilot 或 ALAS，可以直接导入旧配置继续使用。",
+      "ImportHint": "如果你以前使用过 ALAS 或 ALAS，可以直接导入旧配置继续使用。",
       "ImportCardTitle": "保留旧设置",
       "ImportCardText": "导入会读取旧的 JSON 配置，迁移到当前版本后写入 config/ap.json。",
       "ImportDetected": "检测到的旧配置",
@@ -6446,10 +6446,10 @@
       "ImportButton": "导入并继续",
       "ImportSkip": "不导入，继续设置",
       "ImportErrorEmpty": "请选择或填写旧配置路径",
-      "ImportErrorInvalid": "这不是有效的 AzurPilot/ALAS 配置",
+      "ImportErrorInvalid": "这不是有效的 ALAS 配置",
       "ImportErrorFailed": "导入失败",
       "ImportErrorNoMatch": "所选文件夹中没有找到 config/ 或 log/cl1/ 下的匹配文件",
-      "WelcomeTitle": "欢迎使用 AzurPilot",
+      "WelcomeTitle": "欢迎使用 ALAS",
       "WelcomeDescription": "让我们完成初次设置。",
       "WelcomeSelectLanguage": "选择语言",
       "WelcomeHint": "选择界面语言后会自动匹配默认服务器，后续仍可调整。",
@@ -6464,7 +6464,7 @@
       "EmulatorSerial": "模拟器ID",
       "EmulatorPackage": "包名",
       "ReviewTitle": "确认并创建",
-      "ReviewHint": "确认下面的信息，创建后会进入 AzurPilot 主界面。",
+      "ReviewHint": "确认下面的信息，创建后会进入 ALAS 主界面。",
       "ReviewConfigName": "配置名称",
       "ReviewLanguage": "语言",
       "ReviewServer": "服务器",

@@ -1533,7 +1533,7 @@ async def api_deploy_startup_run_save(request):
 
 async def api_import_legacy_upload(request):
     """
-    接收浏览器上传的旧 AzurPilot 文件夹内容，写入本项目对应位置。
+    接收浏览器上传的旧 ALAS 文件夹内容，写入本项目对应位置。
     前端使用 webkitdirectory 选择文件夹后上传。
     """
     from pathlib import Path

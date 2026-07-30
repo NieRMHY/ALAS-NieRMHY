@@ -269,7 +269,7 @@ class Enhancement(Dock):
         of types listed in ENHANCE_ORDER_STRING
 
         Invalid types are treated as requesting
-        from AzurPilot to choose a valid one at random
+        from ALAS to choose a valid one at random
 
         Pages:
             in: page_dock

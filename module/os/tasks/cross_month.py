@@ -43,7 +43,7 @@ class OpsiCrossMonth(MeowfficerTargetZoneMixin, OSMap):
 
         # 距离大世界重置还有 10 分钟
         logger.hr('跨月每日等待大世界重置', level=1)
-        logger.warning('AzurPilot 正在等待下次大世界重置，等待期间请不要操作游戏')
+        logger.warning('ALAS 正在等待下次大世界重置，等待期间请不要操作游戏')
         while True:
             logger.info(f'等待到 {next_reset}')
             now = current_time()

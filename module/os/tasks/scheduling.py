@@ -201,7 +201,7 @@ class CoinTaskMixin:
         Notes:
             - 仅在启用智能调度+时生效
             - 启动器推送和 OnePush 推送分别由各自配置控制
-            - 标题会自动格式化为 "[AzurPilot <实例名>] 原标题" 的形式
+            - 标题会自动格式化为 "[ALAS <实例名>] 原标题" 的形式
 
         Returns:
             bool: True 表示推送成功发送，False 表示未发送或发送失败
@@ -216,17 +216,17 @@ class CoinTaskMixin:
             return False
 
         # 获取实例名称并格式化标题
-        instance_name = getattr(self.config, 'config_name', 'AzurPilot')
-        if title.startswith('[AzurPilot]'):
-            formatted_title = f"[AzurPilot <{instance_name}>]{title[len('[AzurPilot]'):]}"
-        elif title.startswith('[AzurPilot info]'):
-            formatted_title = f"[AzurPilot <{instance_name}>]{title[len('[AzurPilot info]'):]}"
+        instance_name = getattr(self.config, 'config_name', 'ALAS')
+        if title.startswith('[ALAS]'):
+            formatted_title = f"[ALAS <{instance_name}>]{title[len('[ALAS]'):]}"
+        elif title.startswith('[ALAS info]'):
+            formatted_title = f"[ALAS <{instance_name}>]{title[len('[ALAS info]'):]}"
         elif title.startswith('[Alas]'):
-            formatted_title = f"[AzurPilot <{instance_name}>]{title[len('[Alas]'):]}"
+            formatted_title = f"[ALAS <{instance_name}>]{title[len('[Alas]'):]}"
         elif title.startswith('[Alas info]'):
-            formatted_title = f"[AzurPilot <{instance_name}>]{title[len('[Alas info]'):]}"
+            formatted_title = f"[ALAS <{instance_name}>]{title[len('[Alas info]'):]}"
         else:
-            formatted_title = f"[AzurPilot <{instance_name}>] {title}"
+            formatted_title = f"[ALAS <{instance_name}>] {title}"
 
         webui_success = False
         if launcher_enabled:
@@ -257,7 +257,7 @@ class CoinTaskMixin:
             else self.config.Error_OnePushConfig
         )
         if not self._is_push_config_valid(push_config):
-            logger.warning("[大世界-智能调度+] 推送配置未设置或 provider 为 null，跳过 OnePush 推送。请在 AzurPilot 设置 -> 错误处理 -> OnePush 配置中设置有效的推送渠道。")
+            logger.warning("[大世界-智能调度+] 推送配置未设置或 provider 为 null，跳过 OnePush 推送。请在 ALAS 设置 -> 错误处理 -> OnePush 配置中设置有效的推送渠道。")
             return webui_success
 
         try:
@@ -281,7 +281,7 @@ class CoinTaskMixin:
         启动器通知走更轻一点的本地文案，OnePush 仍保留原始标题和正文。
         """
         plain_title = title.strip()
-        for prefix in ('[AzurPilot info]', '[AzurPilot]', '[Alas info]', '[Alas]'):
+        for prefix in ('[ALAS info]', '[ALAS]', '[Alas info]', '[Alas]'):
             if plain_title.startswith(prefix):
                 plain_title = plain_title[len(prefix):].strip()
                 break
@@ -391,7 +391,7 @@ class CoinTaskMixin:
             return
 
         pushed = self.notify_push(
-            title="[AzurPilot] 行动力出现变化！",
+            title="[ALAS] 行动力出现变化！",
             content=content
         )
         if pushed:
@@ -834,7 +834,7 @@ class OpsiScheduling(CoinTaskMixin, OSMap):
             self.handle_first_auto_search(run=True)
             if self._run_scheduled_coin_task_once(self.TASK_NAME_MEOWFFICER_FARMING, 0):
                 self.notify_push(
-                    title='[AzurPilot] 防止行动力溢出 - 已执行耄耋相接',
+                    title='[ALAS] 防止行动力溢出 - 已执行耄耋相接',
                     content=(
                         f'{coin_status}\n'
                         f'总行动力 {total_ap} 低于补黄币保留 {meow_ap_preserve}\n'
@@ -1053,7 +1053,7 @@ class OpsiScheduling(CoinTaskMixin, OSMap):
             return
         
         pushed = self.notify_push(
-            title="[AzurPilot] 智能调度+ - 黄币与行动力双重不足",
+            title="[ALAS] 智能调度+ - 黄币与行动力双重不足",
             content=(
                 f"黄币: {yellow_coins}，补黄币阈值: {coin_target}\n"
                 f"总行动力 {total_ap} 不足 (需要 {meow_ap_preserve})\n推迟任务"
@@ -1073,7 +1073,7 @@ class OpsiScheduling(CoinTaskMixin, OSMap):
             return
         
         pushed = self.notify_push(
-            title="[AzurPilot] 智能调度+ - 行动力不足",
+            title="[ALAS] 智能调度+ - 行动力不足",
             content=f"总行动力 {total_ap} 低于最低保留 {min_reserve}，推迟任务"
         )
         if pushed:
@@ -1089,7 +1089,7 @@ class OpsiScheduling(CoinTaskMixin, OSMap):
         if not all_coin_tasks:
             logger.error('[大世界-智能调度+] 没有启用任何黄币补充任务，停止智能调度+')
             self.notify_push(
-                title='[AzurPilot] 智能调度+ - 未启用黄币补充任务',
+                title='[ALAS] 智能调度+ - 未启用黄币补充任务',
                 content='请至少启用耄耋相接、隐秘海域、深渊坐标或塞壬要塞中的一项',
             )
             self._delay_smart_scheduling_to_server_update('未启用黄币补充任务')
@@ -1140,7 +1140,7 @@ class OpsiScheduling(CoinTaskMixin, OSMap):
 
         task_display = self.TASK_NAMES.get(task_name, task_name)
         pushed = self.notify_push(
-            title="[AzurPilot] 智能调度+ - 已代理执行黄币补充任务",
+            title="[ALAS] 智能调度+ - 已代理执行黄币补充任务",
             content=(f"黄币: {yellow_coins}，补黄币阈值: {coin_target}\n"
                      f"总行动力: {total_ap} (需要 {meow_ap_preserve})\n"
                      f"已代理执行一轮{task_display}获取黄币")
