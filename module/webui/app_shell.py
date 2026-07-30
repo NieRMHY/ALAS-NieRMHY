@@ -54,10 +54,6 @@ class AppShellMixin(WebUIMixinBase):
         self._stored_aside = None
         self._overview_snapshot = None
         self.af_flag = False
-        self._last_announcement_id = None
-        self._announcement_result = None
-        self._announcement_fetching = False
-        self._announcement_force = False
         self._update_notified = False
         self._simulator = None
         self._simulator_logger_pm = None

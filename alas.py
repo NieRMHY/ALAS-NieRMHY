@@ -10,7 +10,6 @@ import inflection
 from cached_property import cached_property
 
 from module.base.decorator import del_cached_property
-from module.base.api_client import ApiClient
 from module.base.ssh import clear_ssh_host_key
 from module.config.config import AzurLaneConfig, TaskEnd
 from module.config.deep import deep_get, deep_set
@@ -1401,8 +1400,7 @@ class AzurLaneAutoScript:
                         title=f"诶呀！{self.config_name}出现了问题喵！",
                         content=f"因为 {task} 任务失败次数过多喵！",
                     )
-                    logger.warning("[Alas] 任务连续失败次数过多，正在上报错误日志...")
-                    ApiClient.submit_bug_log(f"AzurPilot <{self.config_name}> crashed\nTask `{task}` failed {failed} or more times.")
+                    logger.warning("[Alas] 任务连续失败次数过多，已停止调度")
                     exit(1)
 
                 if success == True:
@@ -1446,8 +1444,7 @@ class AzurLaneAutoScript:
                         level=50,
                     )
                     self.save_error_log()
-                    logger.warning("[Alas] 遇到无法恢复的致命错误，正在上报错误日志...")
-                    ApiClient.submit_bug_log(f"AzurPilot <{self.config_name}> 调度器终止。\n已达到最大全局失败次数 ({MAX_GLOBAL_FAILURES})。\n{traceback.format_exc()}")
+                    logger.warning("[Alas] 遇到无法恢复的致命错误，已停止调度")
                     exit(1)
 
                 # 尝试重启
