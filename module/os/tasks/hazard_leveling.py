@@ -477,8 +477,8 @@ class OpsiHazard1Leveling(CoinTaskMixin, OSMap):
             
             logger.info(f"[大世界-侵蚀1练级] 检测舰位 {position}")
             
-            # Add by MHY, 空舰位保护：长按 5 次未进入装备页视为空舰位，跳过并继续后续舰位，不发通知
-            if not self.equip_enter(button, check_button=EQUIPMENT_OPEN, long_click=True, retry=5):
+            # Add by MHY, 空舰位保护：长按 3 次未进入装备页视为空舰位，跳过并继续后续舰位，不发通知
+            if not self.equip_enter(button, check_button=EQUIPMENT_OPEN, long_click=True, retry=3):
                 logger.warning(f"[大世界-侵蚀1练级] 舰位 {position} 为空或无法进入，跳过")
                 continue
             
