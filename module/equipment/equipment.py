@@ -105,8 +105,9 @@ class Equipment(EquipmentCodeHandler):
     def ship_view_prev(self, check_button=EQUIPMENT_OPEN):
         return self._ship_view_swipe(distance=SWIPE_DISTANCE, check_button=check_button)
 
-    def ship_info_enter(self, click_button, check_button=EQUIPMENT_OPEN, long_click=True, skip_first_screenshot=True):
+    def ship_info_enter(self, click_button, check_button=EQUIPMENT_OPEN, long_click=True, skip_first_screenshot=True, retry=None):
         enter_timer = Timer(10)
+        retry_count = 0
 
         while 1:
             if skip_first_screenshot:
@@ -125,6 +126,11 @@ class Equipment(EquipmentCodeHandler):
                     self.device.click(BACK_ARROW)
                     continue
             if enter_timer.reached():
+                retry_count += 1
+                # Modify by MHY, 空舰位保护：重试超限返回 False，避免空舰位一直长按卡死触发 GameTooManyClickError
+                if retry is not None and retry_count > retry:
+                    logger.warning(f'[装备-穿戴] 长按 {click_button.name} 未进入装备页，可能为空舰位')
+                    return False
                 if long_click:
                     self.device.long_click(click_button, duration=(1.5, 1.7))
                 else:
@@ -132,6 +138,8 @@ class Equipment(EquipmentCodeHandler):
                 enter_timer.reset()
             if self.handle_game_tips():
                 continue
+
+        return True
 
     @cached_property
     def _ship_side_navbar(self):
@@ -203,12 +211,13 @@ class Equipment(EquipmentCodeHandler):
     def equip_view_prev(self, check_button=EQUIPMENT_OPEN):
         return self.ship_view_prev(check_button=check_button)
 
-    def equip_enter(self, click_button, check_button=EQUIPMENT_OPEN, long_click=True, skil_first_screenshot=True):
+    def equip_enter(self, click_button, check_button=EQUIPMENT_OPEN, long_click=True, skil_first_screenshot=True, retry=None):
         return self.ship_info_enter(
             click_button=click_button,
             check_button=check_button,
             long_click=long_click,
-            skip_first_screenshot=skil_first_screenshot
+            skip_first_screenshot=skil_first_screenshot,
+            retry=retry,
         )
 
     def equip_side_navbar_ensure(self, upper=None, bottom=None):
