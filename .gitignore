@@ -316,3 +316,6 @@ cursor-helper/**/review/reports/files/
 
 AGENTS.md
 RTK.md
+
+# Add by MHY, agent 配置目录本地化：不纳入 git 管理，上游合并时不采用上游版本
+.claude/

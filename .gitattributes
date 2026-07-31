@@ -14,3 +14,6 @@
 *.yaml text eol=lf
 *.json text eol=lf
 *.html text eol=lf
+
+# Add by MHY, agent 配置合并时保持本地版本，不采用上游
+.claude/** merge=ours
