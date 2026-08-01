@@ -1,5 +1,6 @@
-"""联盟活动沉船刷分模块，专门处理联盟沉船战斗的结算逻辑。
-针对 D 评价沉船场景进行优化，控制心情扣减和战斗结束判定，
+"""连战刷好感战斗模块（联盟连战玩法），处理编队1/2刷好感、第3编队沉船的结算逻辑。
+
+针对牺牲编队 D 评价沉船场景进行优化，控制心情扣减、好感度累加和战斗结束判定，
 并处理沉船专用的结算弹窗与确认操作。"""
 
 from module.combat.assets import (
@@ -16,7 +17,7 @@ from module.ui.page import page_coalition
 
 
 class CoalitionScuttleCombat(CoalitionCombat):
-    """联盟沉船战斗结算处理，优先识别沉船专用结算按钮并处理确认弹窗。"""
+    """连战刷好感战斗结算处理，优先识别沉船专用结算按钮并处理确认弹窗。"""
 
     triggered_normal_end = False
     _is_shipwreck = False  # 当前战斗是否为沉船D评价
@@ -24,9 +25,9 @@ class CoalitionScuttleCombat(CoalitionCombat):
 
     def auto_search_combat_execute(self, emotion_reduce=True, fleet_index=1, expected_end=None):
         """
-        重写自动搜索战斗执行，联盟沉船编队1/2胜利各扣2心情，第3编队（牺牲）沉船不扣。
+        重写自动搜索战斗执行，连战刷好感编队1/2胜利各扣2心情，第3编队（牺牲）沉船不扣。
 
-        联盟沉船3个编队依次接敌，前2个编队胜利扣减2心情并累加好感度，
+        连战刷好感3个编队依次接敌，前2个编队胜利扣减2心情并累加好感度，
         第3编队（牺牲）沉船不追踪心情。胜利结算时由 _affection_add 累加好感度。
 
         Args:
@@ -121,7 +122,7 @@ class CoalitionScuttleCombat(CoalitionCombat):
 
     def coalition_combat(self):
         """
-        联盟沉船战斗执行，编队1/2胜利各扣2心情，第3编队（牺牲）沉船不扣。
+        连战刷好感战斗执行，编队1/2胜利各扣2心情，第3编队（牺牲）沉船不扣。
 
         3个编队依次接敌：编队1/2 各扣减2点心情并累加好感度，
         第3编队（牺牲）沉船不追踪心情。
@@ -169,7 +170,7 @@ class CoalitionScuttleCombat(CoalitionCombat):
 
     def handle_battle_status(self, drop=None):
         """
-        处理联盟沉船的战斗结算画面，优先识别沉船专用结算按钮。
+        处理连战刷好感的战斗结算画面，优先识别沉船专用结算按钮。
 
         沉船结算流程：BATTLE_STATUS_D → OPTS_INFO_D → SCUTTLE_CONFIRM → 父类结算。
         识别到标准结算（非D类）时标记 triggered_normal_end 表示舰船被完全击沉。
@@ -208,7 +209,7 @@ class CoalitionScuttleCombat(CoalitionCombat):
 
     def handle_exp_info(self):
         """
-        处理联盟沉船的经验结算画面。
+        处理连战刷好感的经验结算画面。
 
         Returns:
             bool: 是否成功识别并处理了经验结算。
@@ -225,7 +226,7 @@ class CoalitionScuttleCombat(CoalitionCombat):
 
     def coalition_combat_re_enter(self, skip_first_screenshot=True):
         """
-        联盟沉船重新进入战斗，在原有逻辑基础上增加确认按钮处理。
+        连战刷好感重新进入战斗，在原有逻辑基础上增加确认按钮处理。
 
         Pages:
             in: battle_status
@@ -274,7 +275,7 @@ class CoalitionScuttleCombat(CoalitionCombat):
 
 
 class CoalitionScuttleRun(Coalition, CoalitionScuttleCombat):
-    """联盟沉船主循环，编队1/2 各扣2点心情并累加好感度，第3编队沉船不追踪。"""
+    """连战刷好感主循环，编队1/2 各扣2点心情并累加好感度，第3编队沉船不追踪。"""
 
     def handle_combat_low_emotion(self):
         """
@@ -285,10 +286,10 @@ class CoalitionScuttleRun(Coalition, CoalitionScuttleCombat):
         return self.handle_popup_confirm('IGNORE_LOW_EMOTION')
 
     def coalition_execute_once(self, event, stage, fleet):
-        """执行一次联盟沉船战斗。
+        """执行一次连战刷好感战斗。
 
         覆盖父类方法，心情预估按编队1/2各1场（各扣2点）。
-        联盟沉船内部分3个编队依次接敌，前2个编队胜利各扣2点心情，第3编队（牺牲）沉船不追踪。
+        连战刷好感内部分3个编队依次接敌，前2个编队胜利各扣2点心情，第3编队（牺牲）沉船不追踪。
 
         Args:
             event: 活动名称。
@@ -326,7 +327,7 @@ class CoalitionScuttleRun(Coalition, CoalitionScuttleCombat):
         """
         检查是否触发了停止条件。
 
-        联盟沉船不因 triggered_normal_end（舰船被击沉）而停止任务，
+        连战刷好感不因 triggered_normal_end（舰船被击沉）而停止任务，
         由 RunCount 控制何时停止。D评价和非D评价都算1次有效战斗。
 
         Returns:
@@ -343,13 +344,13 @@ class CoalitionScuttleRun(Coalition, CoalitionScuttleCombat):
         a1 = float(self.config.CoalitionScuttle_Fleet1Affection or 0)
         a2 = float(self.config.CoalitionScuttle_Fleet2Affection or 0)
         if a1 >= 100 or a2 >= 100:
-            logger.hr('好感度已满，停止联盟沉船任务')
+            logger.hr('好感度已满，停止连战刷好感任务')
             logger.info(f'编队1好感: {a1:.2f}，编队2好感: {a2:.2f}')
             self.config.task_stop()
 
     def run(self, event='', mode='', fleet='', total=0):
         """
-        运行联盟沉船主循环，编队1/2 扣减心情并累加好感度，满100暂停。
+        运行连战刷好感主循环，编队1/2 扣减心情并累加好感度，满100暂停。
 
         SP关卡特殊逻辑：
         - D评价（沉船）：视为未通过，继续出击

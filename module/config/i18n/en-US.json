@@ -111,8 +111,8 @@
       "help": ""
     },
     "CoalitionScuttle": {
-      "name": "Coalition Scuttle Plus",
-      "help": "Farm affinity by having ships sunk in Coalition events. Recommend sortie with multiple fleets; the first fleet sinks. Refer to tutorials for details."
+      "name": "Chain Battle Affection Plus",
+      "help": "Chain battle affection farming: fleets 1/2 win to gain affection, fleet 3 sinks to fail the stage with minimal loss. Recommend multiple fleets."
     },
     "MaritimeEscort": {
       "name": "Trade Convoy Plus",
@@ -1973,8 +1973,8 @@
   },
   "CoalitionScuttle": {
     "_info": {
-      "name": "Coalition Scuttle",
-      "help": "Coalition event scuttle settings. Select the position of ships to be sunk."
+      "name": "Chain Battle Affection Plus",
+      "help": "Chain battle affection settings. Select the sacrifice fleet position."
     },
     "Sacrifice": {
       "name": "Sacrificial Ship Position",
