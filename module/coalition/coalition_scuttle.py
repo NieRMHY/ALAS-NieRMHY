@@ -24,15 +24,14 @@ class CoalitionScuttleCombat(CoalitionCombat):
 
     def auto_search_combat_execute(self, emotion_reduce=True, fleet_index=1, expected_end=None):
         """
-        重写自动搜索战斗执行，联盟沉船不额外扣减心情。
+        重写自动搜索战斗执行，联盟沉船编队1/2胜利各扣2心情，第3编队（牺牲）沉船不扣。
 
-        联盟沉船中一个关卡包含多次战斗（1/2/3/4队），
-        但游戏只在整个关卡进入时扣1次2点心情，不按内部战斗次数扣减。
-        D评价也不执行 shipwreck=True 的额外扣减。
+        联盟沉船3个编队依次接敌，前2个编队胜利扣减2心情并累加好感度，
+        第3编队（牺牲）沉船不追踪心情。胜利结算时由 _affection_add 累加好感度。
 
         Args:
-            emotion_reduce (bool): 是否扣减心情（仅在第一场战斗时为True）。
-            fleet_index (int): 舰队编号。
+            emotion_reduce (bool): 是否扣减心情（第3编队牺牲时为False）。
+            fleet_index (int): 编队编号，1/2为刷好感编队，3为牺牲编队。
             expected_end (callable): 自定义结束条件。
         """
         from module.base.timer import Timer
@@ -43,11 +42,11 @@ class CoalitionScuttleCombat(CoalitionCombat):
         self.device.stuck_record_clear()
         self.device.click_record_clear()
 
-        # 联盟沉船仅在第一场战斗时扣减2心情（关卡进入代价）
-        # 后续战斗（2/3/4队）不再扣减，与游戏服务端行为一致
+        # 编队1/2胜利各扣2心情，第3编队（牺牲）沉船不扣心情
         if emotion_reduce:
             self.emotion.reduce(fleet_index)
 
+        # fleet_index>=2（含牺牲编队）统一使用 Fleet2 战斗模式
         auto = self.config.Fleet_Fleet1Mode if fleet_index == 1 else self.config.Fleet_Fleet2Mode
         confirm_timer = Timer(10)
         confirm_timer.start()
@@ -84,7 +83,7 @@ class CoalitionScuttleCombat(CoalitionCombat):
             if self.handle_get_ship():
                 continue
 
-            # D评价沉船：不额外扣减心情
+            # D评价沉船：第3编队（牺牲）不追踪心情
             if self.appear_then_click(OPTS_INFO_D, offset=(30, 30), interval=2):
                 self._withdraw = True
                 self._is_shipwreck = True
@@ -101,16 +100,17 @@ class CoalitionScuttleCombat(CoalitionCombat):
                 confirm_timer.reset()
                 break
 
-            # A/B/S评价：联盟沉船中不额外扣减心情
-            # 游戏服务端只在整个关卡进入时扣1次2点，不按战斗结算类型扣减
+            # A/B评价：胜利，编队1/2 累加好感度（牺牲编队不参与）
             if self.appear(BATTLE_STATUS_A) or self.appear(BATTLE_STATUS_B) \
                     or self.appear(EXP_INFO_A) or self.appear(EXP_INFO_B):
+                self._affection_add(fleet_index)
                 break
 
             # S评价或自动搜索运行中
             if self.appear(BATTLE_STATUS_S) or self.appear(EXP_INFO_S) \
                     or self.is_auto_search_running():
                 self._is_s_rank = True
+                self._affection_add(fleet_index)
                 self.device.screenshot_interval_set()
                 break
 
@@ -121,10 +121,10 @@ class CoalitionScuttleCombat(CoalitionCombat):
 
     def coalition_combat(self):
         """
-        联盟沉船战斗执行，仅在第一场战斗扣减2心情。
+        联盟沉船战斗执行，编队1/2胜利各扣2心情，第3编队（牺牲）沉船不扣。
 
-        联盟沉船一个关卡包含多次战斗（1/2/3/4队），
-        但游戏只在整个关卡进入时扣1次2点心情，后续战斗不再扣减。
+        3个编队依次接敌：编队1/2 各扣减2点心情并累加好感度，
+        第3编队（牺牲）沉船不追踪心情。
         """
         from module.exception import CampaignEnd
 
@@ -136,16 +136,36 @@ class CoalitionScuttleCombat(CoalitionCombat):
                 logger.hr(f'{self.FUNCTION_NAME_BASE}{self.battle_count}', level=2)
                 self._is_shipwreck = False
                 self._is_s_rank = False
-                # 仅第一场战斗扣减2心情（关卡进入代价），后续战斗不再扣减
+                # Modify by MHY, 编队1/2依次接敌各扣2心情，第3编队（牺牲）沉船不扣心情
                 self.auto_search_combat_execute(
-                    emotion_reduce=self.battle_count == 0,
-                    fleet_index=1,
+                    emotion_reduce=self.battle_count < 2,
+                    fleet_index=self.battle_count + 1,
                     expected_end=self.auto_search_combat_end
                 )
                 self.coalition_combat_re_enter()
                 self.battle_count += 1
         except CampaignEnd:
             logger.info('联动战斗结束。')
+
+    # Add by MHY, 好感度追踪：编队1/2 胜利且出击时心情≥40 累加 0.07
+    def _affection_add(self, fleet_index):
+        """胜利时累加编队好感度。
+
+        仅编队1/2参与；出击时心情≥40（正常状态）才累加 0.07。
+        好感度写回配置自动持久化，满100由 check_affection_stop 暂停任务。
+        """
+        if fleet_index not in (1, 2):
+            return
+        fleet = self.emotion.fleets[fleet_index - 1]
+        # reduce() 已把扣减后心情写入配置，+reduce_per_battle 重建出击前心情
+        if fleet.value + self.emotion.reduce_per_battle < 40:
+            logger.info(f'[好感度] 编队{fleet_index}出击时心情不足40，不计好感')
+            return
+        key = 'Fleet1Affection' if fleet_index == 1 else 'Fleet2Affection'
+        current = float(getattr(self.config, f'CoalitionScuttle_{key}') or 0)
+        new = min(round(current + 0.07, 2), 100.0)
+        setattr(self.config, f'CoalitionScuttle_{key}', new)
+        logger.attr(f'好感度-编队{fleet_index}', f'{new:.2f}/100')
 
     def handle_battle_status(self, drop=None):
         """
@@ -254,7 +274,7 @@ class CoalitionScuttleCombat(CoalitionCombat):
 
 
 class CoalitionScuttleRun(Coalition, CoalitionScuttleCombat):
-    """联盟沉船主循环，沉船任务进入关卡只扣1次2点心情。"""
+    """联盟沉船主循环，编队1/2 各扣2点心情并累加好感度，第3编队沉船不追踪。"""
 
     def handle_combat_low_emotion(self):
         """
@@ -267,8 +287,8 @@ class CoalitionScuttleRun(Coalition, CoalitionScuttleCombat):
     def coalition_execute_once(self, event, stage, fleet):
         """执行一次联盟沉船战斗。
 
-        覆盖父类方法，将心情预估从多场战斗改为1场（整个关卡只扣1次2点）。
-        联盟沉船虽然内部有多次战斗（1/2/3/4队），但游戏只在整个关卡进入时扣1次心情。
+        覆盖父类方法，心情预估按编队1/2各1场（各扣2点）。
+        联盟沉船内部分3个编队依次接敌，前2个编队胜利各扣2点心情，第3编队（牺牲）沉船不追踪。
 
         Args:
             event: 活动名称。
@@ -278,7 +298,8 @@ class CoalitionScuttleRun(Coalition, CoalitionScuttleCombat):
         self.config.override(
             Campaign_Name=f'{event}_{stage}',
             Campaign_UseAutoSearch=False,
-            Fleet_FleetOrder='fleet1_all_fleet2_standby',
+            # Modify by MHY, fleet1_mob_fleet2_boss 使 check_reduce 按 (battle-1, 1) 预估到编队1/2
+            Fleet_FleetOrder='fleet1_mob_fleet2_boss',
         )
         if self.config.Coalition_Fleet == 'single' and self.config.Emotion_Fleet1Control == 'prevent_red_face':
             logger.warning('AL does not allow single coalition with emotion < 30, '
@@ -287,9 +308,9 @@ class CoalitionScuttleRun(Coalition, CoalitionScuttleCombat):
         if stage == 'sp':
             self.config.override(Coalition_Fleet='multi')
 
-        # 联盟沉船：整个关卡只扣1次2点心情，不按内部战斗次数预估
+        # Modify by MHY, 编队1/2各扣1场2点心情，第3编队（牺牲）不预估
         try:
-            self.emotion.check_reduce(battle=1)
+            self.emotion.check_reduce(battle=2)
         except ScriptEnd:
             self.coalition_map_exit(event)
             raise
@@ -316,9 +337,19 @@ class CoalitionScuttleRun(Coalition, CoalitionScuttleCombat):
 
         return False
 
+    # Add by MHY, 好感度满100暂停任务
+    def check_affection_stop(self):
+        """任一编队好感度达到100时停止任务（抛 TaskEnd 由调度器捕获）。"""
+        a1 = float(self.config.CoalitionScuttle_Fleet1Affection or 0)
+        a2 = float(self.config.CoalitionScuttle_Fleet2Affection or 0)
+        if a1 >= 100 or a2 >= 100:
+            logger.hr('好感度已满，停止联盟沉船任务')
+            logger.info(f'编队1好感: {a1:.2f}，编队2好感: {a2:.2f}')
+            self.config.task_stop()
+
     def run(self, event='', mode='', fleet='', total=0):
         """
-        运行联盟沉船主循环，沉船任务不扣减心情。
+        运行联盟沉船主循环，编队1/2 扣减心情并累加好感度，满100暂停。
 
         SP关卡特殊逻辑：
         - D评价（沉船）：视为未通过，继续出击
@@ -346,6 +377,8 @@ class CoalitionScuttleRun(Coalition, CoalitionScuttleCombat):
                 break
             if self.event_time_limit_triggered():
                 self.config.task_stop()
+            # Add by MHY, 好感度满100暂停任务
+            self.check_affection_stop()
 
             # 日志输出
             logger.hr(f'{event}_{mode}', level=2)
