@@ -1235,7 +1235,9 @@
       "Sensitive": false
     },
     "CoalitionScuttle": {
-      "Sacrifice": "vanguard"
+      "Sacrifice": "vanguard",
+      "Fleet1Affection": 0.0,
+      "Fleet2Affection": 0.0
     },
     "Campaign": {
       "Name": "dynamic",

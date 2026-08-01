@@ -6453,6 +6453,22 @@
           "flagship",
           "vanguard_flagship"
         ]
+      },
+      "Fleet1Affection": {
+        "type": "input",
+        "value": 0.0,
+        "validate": [
+          0,
+          100
+        ]
+      },
+      "Fleet2Affection": {
+        "type": "input",
+        "value": 0.0,
+        "validate": [
+          0,
+          100
+        ]
       }
     },
     "Campaign": {

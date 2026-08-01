@@ -1982,6 +1982,14 @@
       "vanguard": "Vanguard",
       "flagship": "Flagship",
       "vanguard_flagship": "Vanguard + Flagship"
+    },
+    "Fleet1Affection": {
+      "name": "Fleet 1 Affection",
+      "help": "Current affection of fleet 1. +0.07 per win when morale ≥ 40 at sortie; pauses at 100"
+    },
+    "Fleet2Affection": {
+      "name": "Fleet 2 Affection",
+      "help": "Current affection of fleet 2. +0.07 per win when morale ≥ 40 at sortie; pauses at 100"
     }
   },
   "EventShop": {

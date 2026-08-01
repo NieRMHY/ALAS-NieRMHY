@@ -1982,6 +1982,14 @@
       "vanguard": "前排",
       "flagship": "旗艦",
       "vanguard_flagship": "前排+旗艦"
+    },
+    "Fleet1Affection": {
+      "name": "編隊1好感度",
+      "help": "編隊1當前好感度。每場勝利且出擊時心情≥40 增加 0.07；達到 100 後暫停任務"
+    },
+    "Fleet2Affection": {
+      "name": "編隊2好感度",
+      "help": "編隊2當前好感度。每場勝利且出擊時心情≥40 增加 0.07；達到 100 後暫停任務"
     }
   },
   "EventShop": {

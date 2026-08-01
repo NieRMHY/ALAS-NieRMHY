@@ -357,6 +357,8 @@ class GeneratedConfig:
 
     # 配置组 `CoalitionScuttle`
     CoalitionScuttle_Sacrifice = 'vanguard'  # vanguard, flagship, vanguard_flagship
+    CoalitionScuttle_Fleet1Affection = 0.0
+    CoalitionScuttle_Fleet2Affection = 0.0
 
     # 配置组 `EventShop`
     EventShop_UnlockSSRShip = True
