@@ -1,3 +1,8 @@
+"""岛屿矿山与林场模块。
+
+管理矿山和林场的自动化资源采集，包括铜、铝、铁、硫、银等矿产及林木资源。
+配置工人筛选与库存管理，支持登录重连与仓库 OCR 数量检测。
+"""
 from module.island.island import *
 from module.island_mine_forest.assets import *
 from module.ui.page import *
@@ -125,7 +130,7 @@ class IslandMineForest(Island,LoginHandler):
             ty2 = self.OCR_TEXT_BASE[3]
             text_area = (tx1, ty1, tx2, ty2)
             text_btn = Button(area=text_area, color=(), button=text_area, name=f'TEXT_POS{idx}')
-            ocr = Ocr(text_btn, lang='cnocr')
+            ocr = Ocr(text_btn, lang='ppocr_v6')
             text = ocr.ocr(image)
 
             if not text:

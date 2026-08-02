@@ -1,9 +1,7 @@
 Deploy:
   Git:
     # URL of AzurPilot repository
-    # [CN user] Use 'cn' to get update from git-over-cdn service
-    # [Other] Use 'global' to get update from https://github.com/LmeSzinc/StarRailCopilot
-    Repository: 'global'
+    Repository: 'https://github.com/NieRMHY/ALAS-NieRMHY.git'
     # Branch of AzurPilot
     # [Developer] Use 'dev', 'app', etc, to try new features
     # [Other] Use 'master', the stable branch
@@ -19,10 +17,6 @@ Deploy:
     # [In most cases] Use true
     # [Other] Use false to when connected to an untrusted network
     SSLVerify: true
-    # Update AzurPilot at startup
-    # [In most cases] Use true
-    AutoUpdate: true
-
   Python:
     # Filepath of python executable `python.exe`
     # [Other] Use you own python, and its version should be 3.14.x 64bit
@@ -124,7 +118,8 @@ Deploy:
 
   Webui:
     # --host. Host to listen
-    # [Use IPv6] '::'
+    # [0.0.0.0 或 :: 均支持 IPv4/IPv6 双栈]
+    # [Both 0.0.0.0 and :: support IPv4/IPv6 dual stack]
     # [In most cases] Default to '0.0.0.0'
     WebuiHost: 0.0.0.0
     # --port. Port to listen

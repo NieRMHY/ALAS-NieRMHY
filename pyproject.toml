@@ -1,7 +1,7 @@
 [project]
 name = "azurpilot"
 version = "0.0.0"
-requires-python = ">=3.14,<3.15"
+requires-python = ">=3.14,<3.15"  # Modify by MHY, 放宽下限以兼容 3.14.x 任意 patch（Windows .venv 为 3.14.3），避免 dependency_sync 的 uv sync --frozen 因解释器不满足而卡死
 dependencies = [
     "numpy==2.4.6",
     "scipy==1.18.0",
@@ -37,13 +37,15 @@ dependencies = [
     "pydantic>=2.12.5",
     "rapidocr==3.9.0",
     "ncnn>=1.0.20260114",
-    "onnxruntime-directml==1.24.4; sys_platform == 'win32'",
+    "onnxruntime-windowsml==1.27.1.202607110137; sys_platform == 'win32'",
+    "windowsml==2.1.74; sys_platform == 'win32'",
     "onnxruntime==1.27.0; sys_platform == 'linux'",
     "onnxruntime==1.27.0; sys_platform == 'darwin' and platform_machine == 'arm64'",
     "watchdog>=6.0.0",
     "numba==0.66.0",
-    "uv==0.10.2",
+    "uv==0.11.32",
     "lz4==4.4.5",
+    "packaging==24.2",
     "setuptools==75.8.2",
     "importlib-resources==6.0.0",
     "importlib-metadata==8.0.0",
@@ -52,6 +54,7 @@ dependencies = [
     "sse-starlette==3.0.3",
     "pygments==2.20.0",
     "pip==26.0.1",
+    "pystray>=0.19.5",
 ]
 
 [dependency-groups]
@@ -61,23 +64,16 @@ dev = [
 
 [tool.uv]
 index = [
-    # 云厂商镜像（可靠性高，商业运营）
+    # 云厂商镜像
     { url = "https://mirrors.aliyun.com/pypi/simple/" },
     { url = "https://mirrors.cloud.tencent.com/pypi/simple/" },
     { url = "https://repo.huaweicloud.com/repository/pypi/simple/" },
-    # 教育网镜像（按知名度排序）
-    { url = "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple" },
-    { url = "https://pypi.tuna.tsinghua.edu.cn/simple/" },
-    { url = "https://mirrors.ustc.edu.cn/pypi/web/simple" },
-    { url = "https://pypi.mirrors.ustc.edu.cn/simple/" },
-    { url = "https://mirrors.pku.edu.cn/pypi/web/simple" },
-    { url = "https://mirror.nju.edu.cn/pypi/web/simple" },
-    { url = "https://mirrors.hust.edu.cn/pypi/web/simple" },
-    { url = "https://mirrors.sustech.edu.cn/pypi/web/simple" },
-    { url = "https://mirrors.jlu.edu.cn/pypi/web/simple" },
-    { url = "https://mirrors.njtech.edu.cn/pypi/web/simple" },
-    { url = "https://mirrors.bfsu.edu.cn/pypi/web/simple" },
-]
+    ]
 index-url = "https://pypi.org/simple/"
 package = false
 index-strategy = "unsafe-best-match"
+override-dependencies = [
+    # uiautomator2 2.16.17 declares packaging~=20.3, whose 20.9 release
+    # imports the removed stdlib distutils module on Python 3.14.
+    "packaging==24.2",
+]

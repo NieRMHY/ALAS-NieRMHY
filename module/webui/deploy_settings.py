@@ -1,3 +1,10 @@
+"""
+Web界面部署设置定义。
+
+定义部署设置的数据结构、主题选项、远程访问模式等配置字段。
+提供设置的序列化、反序列化及启动运行项管理功能。
+"""
+
 import json
 from dataclasses import dataclass
 from typing import Any
@@ -6,7 +13,13 @@ from module.config.utils import LANGUAGES, alas_instance
 from module.webui.setting import State
 
 
-THEME_OPTIONS = ["default", "dark", "light", "socialism", "apple", "children"]
+THEME_OPTIONS = [
+    "default",
+    "dark",
+    "light",
+    "advanced_material",
+    "dark_advanced_material",
+]
 REMOTE_ACCESS_MODE_OPTIONS = ["auto", "webrtc", "ssh"]
 TURN_CREDENTIAL_MODE_OPTIONS = ["static", "ephemeral"]
 INVALID_INSTANCE_CHARS = set(".\\/:*?\"'<>|")
@@ -36,7 +49,6 @@ DEPLOY_GROUPS: tuple[tuple[str, tuple[DeployField, ...]], ...] = (
             DeployField("GitExecutable"),
             DeployField("GitProxy", "nullable_string"),
             DeployField("SSLVerify", "bool"),
-            DeployField("AutoUpdate", "bool"),
         ),
     ),
     (

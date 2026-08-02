@@ -1,3 +1,7 @@
+"""WebUI 翻译编辑器，提供交互式界面逐条编辑各语言的翻译文本。
+支持 zh-CN、zh-TW、en-US、ja-JP 四种语言，
+可筛选未翻译项并批量提交。"""
+
 # 此模块提供 WebUI 内的 i18n 翻译编辑功能。
 # 通过交互式表单逐条编辑各语言的翻译条目，支持筛选未翻译项。
 from pywebio.input import (actions, checkbox, input, input_group, input_update,
@@ -12,7 +16,7 @@ from module.config.utils import LANGUAGES, filepath_i18n, read_file, write_file
 
 def translate():
     """
-    启动 AzurPilot 翻译编辑器。
+    启动 ALAS 翻译编辑器。
 
     提供交互式界面，用于逐条编辑各语言（zh-CN、zh-TW、en-US、ja-JP）的翻译文本。
     """

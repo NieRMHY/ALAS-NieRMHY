@@ -1,3 +1,15 @@
+"""大世界侵蚀 1 等级提升模块。
+
+在危险等级 1 的海域中反复战斗以提升舰船等级，包括：
+- 独立运行和智能调度两种模式
+- 作战补给凭证（代币）资源保护检查
+- 舰船经验检测和等级追踪
+- 海域里程 OCR 记录
+
+继承自 CoinTaskMixin 和 OSMap，提供代币保护和地图导航能力，
+是大世界中最常用的舰船经验 farming 方式。
+"""
+
 from datetime import timedelta
 
 from module.base.timer import Timer
@@ -43,7 +55,7 @@ class OpsiHazard1Leveling(CoinTaskMixin, OSMap):
             if not _previous_ap_insufficient:
                 _previous_ap_insufficient = True
                 self.notify_push(
-                    title="[AzurPilot info] 侵蚀 1 - 行动力低于最低保留",
+                    title="[ALAS info] 侵蚀 1 - 行动力低于最低保留",
                     content=f"总行动力 {self._action_point_total} 低于最低保留 {min_reserve}，已推迟任务",
                 )
             else:
@@ -85,44 +97,14 @@ class OpsiHazard1Leveling(CoinTaskMixin, OSMap):
             # 明石遭遇计数归入运行时指标，任务仅报告明石事件已解决
             record_cl1_akashi_encounter(self.config)
 
-    def _cl1_handle_telemetry(self):
-        """处理遥测数据提交"""
-        try:
-            if not getattr(self.config, "DropRecord_TelemetryReport", True):
-                logger.info("[大世界-侵蚀1练级] [错误] 遥测上报已关闭")
-            else:
-
-                def run_telemetry():
-                    try:
-                        from module.statistics.cl1_data_submitter import (
-                            get_cl1_submitter,
-                        )
-
-                        instance_name = getattr(self.config, "config_name", None)
-                        submitter = get_cl1_submitter(instance_name=instance_name)
-                        raw_data = submitter.collect_data()
-                        if raw_data.get("battle_count", 0) > 0:
-                            metrics = submitter.calculate_metrics(raw_data)
-                            submitter.submit_data(metrics)
-                            logger.info(
-                                f"侵蚀 1 数据提交已排队，实例名称: {instance_name}"
-                            )
-                    except Exception as e:
-                        logger.debug(f"[大世界-侵蚀1练级] 侵蚀 1 数据提交后台执行失败: {e}")
-
-                from module.base.async_executor import async_executor
-
-                async_executor.submit(run_telemetry)
-        except Exception as e:
-            logger.debug(f"[大世界-侵蚀1练级] 侵蚀 1 数据提交触发失败: {e}")
-
+    # Modify by MHY, 移除侵蚀1遥测上传（本地 cl1_database 统计保留）
     def os_hazard1_leveling(self):
         """侵蚀 1 练级任务入口。"""
         self.run_hazard1_leveling()
 
     def run_hazard1_leveling(self):
         """执行大世界侵蚀 1 练级任务。"""
-        logger.hr("OS hazard 1 leveling", level=1)
+        logger.hr("大世界-侵蚀1练级", level=1)
 
         while True:
             self.run_hazard1_leveling_once()
@@ -161,7 +143,7 @@ class OpsiHazard1Leveling(CoinTaskMixin, OSMap):
             logger.error(f"[大世界-侵蚀1练级] OCR识别错误: {e}")
             raise
 
-        # 侵蚀 1 练级时，行动力优先用于此任务，而非短猫。
+        # 侵蚀 1 练级时，行动力优先用于此任务，而非耄耋相接。
         self.action_point_set(
             cost=120, keep_current_ap=True, check_rest_ap=True
         )
@@ -199,13 +181,10 @@ class OpsiHazard1Leveling(CoinTaskMixin, OSMap):
         # ===== 执行侵蚀 1 战略搜索与战后处理 =====
         self._cl1_run_battle()
 
-        # ===== 处理遥测数据提交 =====
-        self._cl1_handle_telemetry()
-
     def os_check_leveling(self):
         """检查大世界阵容练级进度。"""
-        logger.hr("OS check leveling", level=1)
-        logger.attr("OpsiCheckLeveling_LastRun", self.config.OpsiCheckLeveling_LastRun)
+        logger.hr("大世界-侵蚀1练级检查", level=1)
+        logger.attr("大世界危险海域上次运行", self.config.OpsiCheckLeveling_LastRun)
         
         check_interval = self.config.OpsiCheckLeveling_CheckInterval
         if not isinstance(check_interval, int) or check_interval < 1:
@@ -498,7 +477,10 @@ class OpsiHazard1Leveling(CoinTaskMixin, OSMap):
             
             logger.info(f"[大世界-侵蚀1练级] 检测舰位 {position}")
             
-            self.equip_enter(button, check_button=EQUIPMENT_OPEN, long_click=True)
+            # Add by MHY, 空舰位保护：长按 3 次未进入装备页视为空舰位，跳过并继续后续舰位，不发通知
+            if not self.equip_enter(button, check_button=EQUIPMENT_OPEN, long_click=True, retry=3):
+                logger.warning(f"[大世界-侵蚀1练级] 舰位 {position} 为空或无法进入，跳过")
+                continue
             
             self.device.screenshot()
             level, exp = ship_info_get_level_exp(main=self)

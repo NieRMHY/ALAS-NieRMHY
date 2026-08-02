@@ -1,3 +1,9 @@
+"""设备截图模块。
+
+管理所有截图捕获后端（ADB、ADB_nc、uiautomator2、aScreenCap、DroidCast、
+scrcpy、nemu_ipc、ldopengl），提供截图、分辨率校验、黑屏检测、截图保存等功能。
+包含后台编码线程，用于将图像序列化并通过 Base64 供 WebUI 实时渲染预览。
+"""
 import os
 import time
 from collections import deque
@@ -26,32 +32,36 @@ from module.exception import RequestHumanTakeover, ScriptError
 from module.logger import logger
 
 class Screenshot(Adb, WSA, DroidCast, AScreenCap, Scrcpy, NemuIpc, LDOpenGL):
-    
-    def __init__(self, *args, screenshot_queue=None, screenshot_enabled=None, **kwargs):  # Modify by MHY, screenshot_queue/enabled 改为 keyword-only 避免 Device 传参冲突
-        self._screenshot_enabled = screenshot_enabled
+    """设备截图管理器。
+
+    通过多重继承组合所有截图后端，根据用户配置的 Emulator_ScreenshotMethod
+    自动分发到对应后端。提供截图获取、分辨率归一化、去抖动、黑屏检测、
+    截图保存和间隔控制等统一接口。
+
+    Attributes:
+        image (np.ndarray): 最近一次截取的屏幕图像，格式为 BGR numpy 数组。
+        _screen_size_checked (bool): 屏幕分辨率是否已通过检查。
+        _screen_black_checked (bool): 黑屏检测是否已通过。
+        _screenshot_interval (Timer): 截图间隔计时器。
+    """
+
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.screenshot_queue = screenshot_queue
-        self._latest_frames = deque(maxlen=2)  
-        self._encoder_stop = False
-        self._encode_lock = threading.Lock()
-        self._encoder_thread = threading.Thread(target=self._encoder_worker, daemon=True, name='ScreenshotEncoder')
-        self._encoder_thread.start()
-        self._encoder_paused = False
-        self._screenshot_drop_count = 0
-        self._last_queue_warn_time = 0.0
-        self._queue_full_since = 0.0
     _screen_size_checked = False
     _screen_black_checked = False
     _minicap_uninstalled = False
     _screenshot_interval = Timer(0.1)
     _last_save_time = {}
-    _resize_method_idx = 0
-    _screen_scale_x = 1.0   # Add by MHY, 非720p屏幕的坐标缩放因子，click/swipe前反向映射使用
-    _screen_scale_y = 1.0
     image: np.ndarray
 
     @cached_property
     def screenshot_methods(self):
+        """返回截图方法名到截图实现的映射字典。
+
+        Returns:
+            dict[str, Callable]: 键为截图方法名（如 'ADB'、'DroidCast'），
+                值为对应的截图方法。
+        """
         return {
             'ADB': self.screenshot_adb,
             'ADB_nc': self.screenshot_adb_nc,
@@ -67,6 +77,11 @@ class Screenshot(Adb, WSA, DroidCast, AScreenCap, Scrcpy, NemuIpc, LDOpenGL):
 
     @cached_property
     def screenshot_method_override(self) -> str:
+        """覆盖截图方法，子类可重写此属性以强制使用特定截图方式。
+
+        Returns:
+            str: 覆盖的截图方法名，空字符串表示使用配置中的方法。
+        """
         return ''
 
     def screenshot(self):
@@ -85,32 +100,12 @@ class Screenshot(Adb, WSA, DroidCast, AScreenCap, Scrcpy, NemuIpc, LDOpenGL):
                 method = self.config.Emulator_ScreenshotMethod
             method = self.screenshot_methods.get(method, self.screenshot_adb)
 
-            if self.screenshot_queue is not None:
-                try:
-                    queue_size = self.screenshot_queue.qsize()
-                except NotImplementedError:
-                    # macOS 不支持 qsize()，此处跳过队列大小检查（或根据需求调整）
-                    queue_size = 0  # 假设队列未满
-                if queue_size >= 10:
-                    logger.warning('截图队列已满，跳过本次抓图以避免编码开销')
-                    continue
-
             self.image = method()
 
             width, height = image_size(self.image)
             set_template_match_non_native_720p(width != 1280 or height != 720, resolution=(width, height))
             if width != 1280 or height != 720:
-                # Add by MHY, 记录原始分辨率→720p的缩放因子，供click/swipe等坐标反向映射
-                # 后续上游如果提供完整的坐标映射方案，可对比后选择采用上游方案或保留当前方案
-                self._screen_scale_x = width / 1280.0
-                self._screen_scale_y = height / 720.0
-                method_type, interp = self.get_next_resize_method()
-                if method_type == 'cv':
-                    self.image = cv2.resize(self.image, (1280, 720), interpolation=interp)
-                else:
-                    self.image = np.array(
-                        Image.fromarray(self.image).resize((1280, 720), resample=interp)
-                    )
+                self.image = self.resize_screenshot_to_720p(self.image)
 
             if self.config.Emulator_ScreenshotDedithering:
                 # 此操作大约需要 40-60ms
@@ -119,15 +114,6 @@ class Screenshot(Adb, WSA, DroidCast, AScreenCap, Scrcpy, NemuIpc, LDOpenGL):
 
             if self.config.Error_SaveError:
                 self.screenshot_deque.append({'time': current_time(), 'image': self.image})
-            if self.screenshot_queue is not None and self.image is not None:
-                try:
-                    with self._encode_lock:
-                        self._latest_frames.append(self.image.copy())
-                except MemoryError:
-                    logger.error('放入最新帧缓冲时 MemoryError，丢弃一帧并尝试回收内存')
-                    import gc; gc.collect()
-                except Exception as e:
-                    logger.debug('放入最新帧缓冲失败: %s', e)
 
             if self.check_screen_size() and self.check_screen_black():
                 break
@@ -149,6 +135,11 @@ class Screenshot(Adb, WSA, DroidCast, AScreenCap, Scrcpy, NemuIpc, LDOpenGL):
 
     @property
     def has_cached_image(self):
+        """判断是否已有缓存的截图。
+
+        Returns:
+            bool: 存在非空的缓存图像返回 True。
+        """
         return hasattr(self, 'image') and self.image is not None
 
     def _handle_orientated_image(self, image):
@@ -180,10 +171,17 @@ class Screenshot(Adb, WSA, DroidCast, AScreenCap, Scrcpy, NemuIpc, LDOpenGL):
 
     @cached_property
     def screenshot_deque(self):
+        """返回用于保存历史截图的双端队列，用于错误诊断。
+
+        队列长度由配置 Error_ScreenshotLength 控制，限制在 1~400 范围内。
+
+        Returns:
+            deque: 存储 {'time': datetime, 'image': np.ndarray} 字典的队列。
+        """
         try:
             length = int(self.config.Error_ScreenshotLength)
         except ValueError:
-            logger.error(f'Error_ScreenshotLength={self.config.Error_ScreenshotLength} is not an integer')
+            logger.error(f'[设备-截图] Error_ScreenshotLength={self.config.Error_ScreenshotLength} 不是整数')
             raise RequestHumanTakeover
         # 限制在 1~400 范围内
         length = max(1, min(length, 400))
@@ -222,6 +220,11 @@ class Screenshot(Adb, WSA, DroidCast, AScreenCap, Scrcpy, NemuIpc, LDOpenGL):
             return False
 
     def screenshot_last_save_time_reset(self, genre):
+        """重置指定类型的截图保存时间戳，用于允许立即保存下一张截图。
+
+        Args:
+            genre (str): 截图类型名称。
+        """
         self._last_save_time[genre] = 0
 
     def screenshot_interval_set(self, interval=None):
@@ -236,7 +239,7 @@ class Screenshot(Adb, WSA, DroidCast, AScreenCap, Scrcpy, NemuIpc, LDOpenGL):
             origin = self.config.Optimization_ScreenshotInterval
             interval = limit_in(origin, 0.001, 0.3)
             if interval != origin:
-                logger.warning(f'Optimization.ScreenshotInterval {origin} is revised to {interval}')
+                logger.warning(f'[设备-截图] Optimization.ScreenshotInterval {origin} 修正为 {interval}')
                 self.config.Optimization_ScreenshotInterval = interval
             # 允许 nemu_ipc 使用更低的默认值
             if self.config.Emulator_ScreenshotMethod in ['nemu_ipc', 'ldopengl']:
@@ -245,28 +248,38 @@ class Screenshot(Adb, WSA, DroidCast, AScreenCap, Scrcpy, NemuIpc, LDOpenGL):
             origin = self.config.Optimization_CombatScreenshotInterval
             interval = limit_in(origin, 0.001, 1.0)
             if interval != origin:
-                logger.warning(f'Optimization.CombatScreenshotInterval {origin} is revised to {interval}')
+                logger.warning(f'[设备-截图] Optimization.CombatScreenshotInterval {origin} 修正为 {interval}')
                 self.config.Optimization_CombatScreenshotInterval = interval
         elif isinstance(interval, (int, float)):
             # 代码中手动设置无限制
             pass
         else:
-            logger.warning(f'Unknown screenshot interval: {interval}')
-            raise ScriptError(f'Unknown screenshot interval: {interval}')
+            logger.warning(f'[设备-截图] 未知的截图间隔: {interval}')
+            raise ScriptError(f'[设备-截图] 未知的截图间隔: {interval}')
         # scrcpy 的截图间隔无意义，视频流会持续接收，无论是否使用。
         if self.config.Emulator_ScreenshotMethod == 'scrcpy':
             interval = 0.1
 
         if interval != self._screenshot_interval.limit:
-            logger.info(f'Screenshot interval set to {interval}s')
+            logger.info(f'[设备-截图] 截图间隔设置为 {interval}s')
             self._screenshot_interval.limit = interval
 
     def image_show(self, image=None):
+        """使用系统默认图片查看器显示图像。
+
+        Args:
+            image (np.ndarray, optional): 要显示的图像，默认为最近一次截图。
+        """
         if image is None:
             image = self.image
         Image.fromarray(image).show()
 
     def image_save(self, file=None):
+        """将最近一次截图保存到文件。
+
+        Args:
+            file (str, optional): 保存路径，默认使用毫秒时间戳命名。
+        """
         if file is None:
             file = f'{int(time.time() * 1000)}.png'
         save_image(self.image, file)
@@ -283,18 +296,18 @@ class Screenshot(Adb, WSA, DroidCast, AScreenCap, Scrcpy, NemuIpc, LDOpenGL):
         for _ in range(2):
             # 检查屏幕分辨率
             width, height = image_size(self.image)
-            logger.attr('Screen_size', f'{width}x{height}')
+            logger.attr('屏幕分辨率', f'{width}x{height}')
             if width == 1280 and height == 720:
                 self._screen_size_checked = True
                 return True
             elif not orientated and (width == 720 and height == 1280):
-                logger.info('Received orientated screenshot, handling')
+                logger.info('[设备-截图] 收到方向截图，处理中')
                 self.get_orientation()
                 self.image = self._handle_orientated_image(self.image)
                 orientated = True
                 width, height = image_size(self.image)
                 if width == 720 and height == 1280:
-                    logger.info('Unable to handle orientated screenshot, continue for now')
+                    logger.info('[设备-截图] 无法处理方向截图，暂时继续')
                     return True
                 else:
                     continue
@@ -302,14 +315,27 @@ class Screenshot(Adb, WSA, DroidCast, AScreenCap, Scrcpy, NemuIpc, LDOpenGL):
                 self.display_resize_wsa(0)
                 return False
             elif hasattr(self, 'app_is_running') and not self.app_is_running():
-                logger.warning('Received orientated screenshot, game not running')
+                logger.warning('[设备-截图] 收到方向截图，游戏未运行')
                 return True
             else:
-                logger.critical(f"[Device] 大叔，你看着分辨率对吗: {width}x{height}。真是个连分辨率都不会设的杂鱼呢❤")
-                logger.critical("[Device] 乖乖给我改成 1280x720 哦，不然我可不理你了❤")
+                logger.error_context(
+                    title='设备分辨率不受支持',
+                    reason=f'当前截图分辨率为 {width}x{height}，项目只支持 1280x720。',
+                    impact='无法可靠识别游戏界面，任务将停止。',
+                    action='将模拟器和游戏窗口调整为 1280x720 后重新连接设备。',
+                    level=50,
+                )
                 raise RequestHumanTakeover
 
     def check_screen_black(self):
+        """检查截图是否为纯黑色（模拟器异常或设备锁屏）。
+
+        首次调用时执行检测，通过后后续调用直接返回 True。
+        检测到黑屏时会尝试卸载 minicap 或重启相关服务。
+
+        Returns:
+            bool: 屏幕正常返回 True，纯黑截图返回 False 以触发重试。
+        """
         if self._screen_black_checked:
             return True
         # 检查屏幕颜色，某些模拟器可能会获取纯黑截图。
@@ -320,162 +346,28 @@ class Screenshot(Adb, WSA, DroidCast, AScreenCap, Scrcpy, NemuIpc, LDOpenGL):
                     display = self.get_display_id()
                     if display == 0:
                         return True
-                logger.info(f'Game running on display {display}')
-                logger.warning('Game not running on display 0, will be restarted')
+                logger.info(f'[设备-截图] 游戏运行在显示器 {display}')
+                logger.warning('[设备-截图] 游戏未运行在显示器0，将重启')
                 self.app_stop_uiautomator2()
                 return False
             elif self.config.Emulator_ScreenshotMethod == 'uiautomator2':
-                logger.warning(f'Received pure black screenshots from emulator, color: {color}')
-                logger.warning('Uninstall minicap and retry')
-                logger.warning('[Device] 截图为纯黑色。通常是设备处于锁屏状态，或者当前模拟器不支持当前截图方式。')
+                logger.warning(f'[设备-截图] 收到模拟器纯黑截图, color: {color}')
+                logger.warning('[设备-截图] 卸载minicap并重试')
+                logger.warning('[设备-截图] 截图为纯黑色。通常是设备处于锁屏状态，或者当前模拟器不支持当前截图方式。')
                 self.uninstall_minicap()
                 self._screen_black_checked = False
                 return False
             else:
-                logger.warning(f'Received pure black screenshots from emulator, color: {color}')
-                logger.warning(f'Screenshot method `{self.config.Emulator_ScreenshotMethod}` '
-                               f'may not work on emulator `{self.serial}`, or the emulator is not fully started')
+                logger.warning(f'[设备-截图] 收到模拟器纯黑截图, color: {color}')
+                logger.warning(f'[设备-截图] 截图方式 `{self.config.Emulator_ScreenshotMethod}` '
+                               f'在模拟器 `{self.serial}` 上可能无法正常工作，或模拟器未完全启动')
                 if self.is_mumu_family:
                     if self.config.Emulator_ScreenshotMethod == 'DroidCast':
                         self.droidcast_stop()
                     else:
-                        logger.warning('If you are using MuMu X, please upgrade to version >= 12.1.5.0')
+                        logger.warning('[设备-截图] 如果使用的是 MuMu X，请升级到版本 >= 12.1.5.0')
                 self._screen_black_checked = False
                 return False
         else:
             self._screen_black_checked = True
             return True
-
-
-    def _encoder_worker(self):
-        """后台编码线程：只编码最新帧并把 base64 放入 self.screenshot_queue
-        支持暂停以在关闭调度器时停止编码并清空缓冲。"""
-        while not getattr(self, '_encoder_stop', False):
-            if getattr(self, '_encoder_paused', False):
-                time.sleep(0.1)
-                continue
-            if getattr(self, '_screenshot_enabled', None) is not None:
-                try:
-                    if not bool(self._screenshot_enabled.value):
-                        with self._encode_lock:
-                            try:
-                                self._latest_frames.clear()
-                            except Exception:
-                                pass
-                        time.sleep(0.1)
-                        continue
-                except Exception:
-                    pass
-            try:
-                if not self._latest_frames:
-                    time.sleep(0.05)
-                    continue
-
-                try:
-                    qmax = getattr(self.screenshot_queue, 'maxsize', 8) or 8
-                    qsize = self.screenshot_queue.qsize() if self.screenshot_queue is not None else 0
-                except Exception:
-                    qmax, qsize = 8, 0
-
-                nowt = time.time()
-                q_threshold = max(1, int(qmax))
-
-                if qsize >= q_threshold:
-                    self._screenshot_drop_count += 1
-                    if self._queue_full_since == 0.0:
-                        self._queue_full_since = nowt
-                    if nowt - self._last_queue_warn_time > 15.0:
-                        logger.warning('雪风大人提示：已丢帧=%d qsize=%d max=%d', self._screenshot_drop_count, qsize, qmax)
-                        self._last_queue_warn_time = nowt
-                    if nowt - self._queue_full_since > 10.0:
-                        time.sleep(0.3)
-                        continue
-                else:
-                    if self._screenshot_drop_count:
-                        self._screenshot_drop_count = 0
-                    self._queue_full_since = 0.0
-
-                with self._encode_lock:
-                    try:
-                        image = self._latest_frames.pop()
-                    except Exception:
-                        image = None
-                    self._latest_frames.clear()
-
-                if image is None:
-                    continue
-
-                rgb_image = image
-                if rgb_image.ndim == 2:
-                    rgb_image = cv2.cvtColor(rgb_image, cv2.COLOR_GRAY2BGR)
-                elif rgb_image.shape[2] == 4:
-                    try:
-                        rgb_image = cv2.cvtColor(rgb_image, cv2.COLOR_RGBA2BGR)
-                    except Exception:
-                        rgb_image = rgb_image[..., :3][:, :, ::-1]
-                elif rgb_image.shape[2] == 3:
-                    try:
-                        rgb_image = cv2.cvtColor(rgb_image, cv2.COLOR_RGB2BGR)
-                    except Exception:
-                        rgb_image = rgb_image[:, :, ::-1]
-
-                h, w = rgb_image.shape[:2]
-                max_w, max_h = 1280, 720  # 限制到 720p 级别
-                if w > max_w or h > max_h:
-                    scale = min(max_w / w, max_h / h)
-                    rgb_image = cv2.resize(rgb_image, (int(w * scale), int(h * scale)), interpolation=cv2.INTER_AREA)
-
-                quality = 30  # 默认足够清晰但降低带宽
-                try:
-                    qsize = self.screenshot_queue.qsize() if self.screenshot_queue is not None else 0
-                    if qsize >= max(4, int(qmax * 0.75)):
-                        quality = 10
-                    elif qsize >= max(2, int(qmax * 0.5)):
-                        quality = 20
-                except Exception:
-                    pass
-
-                is_success, buffer = cv2.imencode(".jpg", rgb_image, [int(cv2.IMWRITE_JPEG_QUALITY), quality])
-                if not is_success:
-                    continue
-                img_base64 = base64.b64encode(buffer.tobytes()).decode("utf-8")
-
-                if self.screenshot_queue is None:
-                    continue
-
-                try:
-                    self.screenshot_queue.put(img_base64, timeout=0.1)
-                except Exception:
-                    try:
-                        _ = self.screenshot_queue.get_nowait()
-                        self.screenshot_queue.put_nowait(img_base64)
-                        self._screenshot_drop_count += 1
-                    except Exception:
-                        self._screenshot_drop_count += 1
-
-            except Exception as e:
-                logger.debug('编码线程异常: %s', e)
-                time.sleep(0.1)
-
-    def pause_encoder(self):
-        """暂停编码线程并清空 _latest_frames，适用于关闭调度器前调用。"""
-        self._encoder_paused = True
-        with self._encode_lock:
-            try:
-                self._latest_frames.clear()
-            except Exception:
-                pass
-
-    def resume_encoder(self):
-        """恢复编码线程（在清空队列后调用以避免瞬间显示旧帧）。"""
-        self._encoder_paused = False
-
-    def clear_screenshot_queue(self):
-        """清空外部 screenshot_queue（若存在），用于恢复前清理旧数据。"""
-        if self.screenshot_queue is None:
-            return
-        try:
-            while True:
-                self.screenshot_queue.get_nowait()
-        except Exception:
-            pass

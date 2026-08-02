@@ -40,6 +40,27 @@ MenuAlas:
   Overview:
   Log:
 
+TaskConfig:
+  SearchPlaceholder:
+  SearchNoResult:
+  SearchResultCount:
+
+FleetManagement:
+  StartScan:
+  Scanning:
+  ScanStarted:
+  ScanAlreadyRunning:
+  ScanStartFailed:
+  LastScan:
+  NoResult:
+  Main:
+  Vanguard:
+  Submarine:
+  SurfaceFleet:
+  UnderwaterFleet:
+  Fleet:
+  Ships:
+
 MenuDevelop:
   HomePage:
   Translate:
@@ -123,8 +144,30 @@ AppManage:
   Back:
   New:
   Import:
+  ImportLegacy:
+  ImportLegacyTitle:
+  ImportLegacyHint:
+  ImportLegacyContent:
+  ImportLegacyWarning:
+  ImportLegacyChoose:
+  ImportLegacySelecting:
+  ImportLegacySuccess:
+  ImportLegacyFailed:
+  ImportLegacyNoMatch:
+  ImportLegacyRequestFailed:
+  ImportLegacyUnknownError:
   Export:
   Delete:
+  Summary:
+  Collapse:
+  EnabledTasks:
+  SchedulerOrderHint:
+  SummaryLoadFailed:
+  DeleteConfirm:
+  DeleteRunning:
+  DeleteLast:
+  DeleteSuccess:
+  DeleteFailed:
   OverrideWarning:
   ImportSuccess:
   NewSuccess:
@@ -209,8 +252,6 @@ DeploySetting:
   GitProxyHelp:
   SSLVerify:
   SSLVerifyHelp:
-  AutoUpdate:
-  AutoUpdateHelp:
   PythonExecutable:
   PythonExecutableHelp:
   PypiMirror:

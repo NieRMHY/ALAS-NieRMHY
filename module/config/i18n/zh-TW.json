@@ -1,15 +1,15 @@
 {
   "Menu": {
     "Alas": {
-      "name": "智慧港區+",
+      "name": "智慧港區Plus",
       "help": ""
     },
     "Farm": {
-      "name": "出擊+",
+      "name": "出擊Plus",
       "help": ""
     },
     "Event": {
-      "name": "活動+",
+      "name": "活動Plus",
       "help": ""
     },
     "EventDaily": {
@@ -25,15 +25,19 @@
       "help": ""
     },
     "Opsi": {
-      "name": "大世界+",
+      "name": "大世界Plus",
       "help": ""
     },
     "Island": {
       "name": "島嶼計劃",
       "help": ""
     },
+    "FleetManagement": {
+      "name": "艦隊管理",
+      "help": ""
+    },
     "Tool": {
-      "name": "工具+",
+      "name": "工具Plus",
       "help": ""
     }
   },
@@ -47,59 +51,59 @@
       "help": ""
     },
     "UpdateDate": {
-      "name": "Task.UpdateDate.name",
-      "help": "Task.UpdateDate.help"
+      "name": "維護窗口",
+      "help": "手動填寫遊戲維護時間窗口，ALAS 會提前自動進入維護模式，並在結束時間後恢復完整排程。"
     },
     "Restart": {
       "name": "重啟設定",
       "help": ""
     },
     "Main": {
-      "name": "主線圖-1+",
+      "name": "主線圖-1Plus",
       "help": ""
     },
     "Main2": {
-      "name": "主線圖-2+",
+      "name": "主線圖-2Plus",
       "help": ""
     },
     "Main3": {
-      "name": "主線圖+",
+      "name": "主線圖-3Plus",
       "help": ""
     },
     "GemsFarming": {
-      "name": "緊急委託+",
+      "name": "緊急委託Plus",
       "help": ""
     },
     "ThreeOilLowCost": {
-      "name": "三油低耗+",
+      "name": "三油低耗Plus",
       "help": "使用三油低耗陣容進行戰鬥，在旗艦達到32級時自動更換旗艦並退役。"
     },
     "Ambush11": {
-      "name": "Task.Ambush11.name",
-      "help": "Task.Ambush11.help"
+      "name": "1-1刷伏擊(測試中)",
+      "help": "在1-1不打boss刷伏擊獲得物資等，支援按緊急委託流程自動換船。"
     },
     "EventGeneral": {
       "name": "活動通用",
       "help": ""
     },
     "Event": {
-      "name": "活動圖-1+",
+      "name": "活動圖-1Plus",
       "help": ""
     },
     "Event2": {
-      "name": "活動圖-2+",
+      "name": "活動圖-2Plus",
       "help": ""
     },
     "Event3": {
-      "name": "活動圖-3+",
+      "name": "活動圖-3Plus",
       "help": ""
     },
     "Raid": {
-      "name": "共鬥活動+",
+      "name": "共鬥活動Plus",
       "help": ""
     },
     "RaidScuttle": {
-      "name": "共鬥沉船+",
+      "name": "共鬥沉船Plus",
       "help": ""
     },
     "Hospital": {
@@ -110,8 +114,12 @@
       "name": "光影風尚-拍攝進行時",
       "help": ""
     },
+    "CoalitionScuttle": {
+      "name": "連戰刷好感plus",
+      "help": "連戰刷好感：前2編隊勝利刷好感度，第3編隊沉船觸發整體失敗，只扣極少資源。建議多隊出擊"
+    },
     "MaritimeEscort": {
-      "name": "商船護航",
+      "name": "商路護航Plus",
       "help": ""
     },
     "EventShop": {
@@ -120,7 +128,7 @@
     },
     "WarArchives": {
       "name": "作戰檔案",
-      "help": "由於作戰檔案缺少維護，開荒功能不一定能正常使用，如果發現AzurPilot執行異常，請手動完成開荒後使用自律尋敵功能"
+      "help": "由於作戰檔案缺少維護，開荒功能不一定能正常使用，如果發現ALAS執行異常，請手動完成開荒後使用自律尋敵功能"
     },
     "EventA": {
       "name": "每日A圖",
@@ -147,7 +155,7 @@
       "help": ""
     },
     "CoalitionSp": {
-      "name": "光影風尚-拍攝進行時SP",
+      "name": "怪談紀實：逃離白夜山莊SP",
       "help": ""
     },
     "Commission": {
@@ -235,11 +243,11 @@
       "help": ""
     },
     "OpsiExplore": {
-      "name": "每月開荒+",
+      "name": "每月開荒Plus",
       "help": ""
     },
     "OpsiShop": {
-      "name": "大世界商店+",
+      "name": "大世界商店Plus",
       "help": ""
     },
     "OpsiVoucher": {
@@ -247,7 +255,7 @@
       "help": ""
     },
     "OpsiDaily": {
-      "name": "大世界-每日+",
+      "name": "大世界每日Plus",
       "help": ""
     },
     "OpsiObscure": {
@@ -271,16 +279,16 @@
       "help": ""
     },
     "OpsiMeowfficerFarming": {
-      "name": "短貓相接+",
+      "name": "短貓相接",
       "help": ""
     },
     "OpsiHazard1Leveling": {
-      "name": "侵蝕1練級+",
+      "name": "侵蝕1練級",
       "help": ""
     },
     "OpsiScheduling": {
-      "name": "智慧排程+",
-      "help": "大世界智慧排程功能，用於協調侵蝕1練級與黃幣補充任務之間的切換\n啟用後將根據黃幣和行動力自動在不同任務之間切換並傳送推送通知"
+      "name": "智慧排程Plus",
+      "help": "大世界智慧排程Plus功能，開啟後無需重複開啟侵蝕1等任務，智慧排程Plus將全部接管"
     },
     "OpsiPreventActionPointOverflow": {
       "name": "防止行動力溢出",
@@ -288,79 +296,87 @@
     },
     "OpsiCrossMonth": {
       "name": "跨月每日",
-      "help": "    AzurPilot將在大世界跨月重置之前10分鍾進入大世界，等待大世界重置但不退出大世界，然後完成新一天的大世界每日、隱秘海域、深淵海域和短貓相接，以獲得額外的金菜。執行大世界每日時，按\"大世界每日\"任務設定執行，其餘同理。\n    重要：AzurPilot等待跨月期間，請不要操作遊戲。"
+      "help": "    ALAS將在大世界跨月重置之前10分鐘進入大世界，等待大世界重置但不退出大世界，然後完成新一天的大世界每日、隱秘海域、深淵海域和短貓相接，以獲得額外的金菜。執行大世界每日時，按\"大世界每日\"任務設定執行，其餘同理。\n    重要：ALAS等待跨月期間，請不要操作遊戲。"
     },
     "OpsiSimulator": {
-      "name": "Task.OpsiSimulator.name",
-      "help": "Task.OpsiSimulator.help"
+      "name": "大世界模擬器 Alpha",
+      "help": "使用蒙地卡羅演算法估算在當前狀態下持續進行侵蝕循環一段時間後的結果，該功能不會影響ALAS正常運行\n模型所用參數均取自ALAS配置和統計，請確保正確配置了智慧排程等大世界設定\n目前為測試版本，結果不具備太多參考價值\n關於奸商售賣行動力的模型無足夠充分的證據支撐。具體來講，這裡認為奸商賣6種行動力箱子滿足超幾何分佈X~H(6,6,24)\n關於墜機：這裡墜機是指整個模擬流程中行動力低於智慧排程中設定的行動力保留閾值至少一次。若低於該閾值，模擬器將停止侵蝕循環等待行動力自然回復"
     },
     "IslandPlan": {
-      "name": "Task.IslandPlan.name",
-      "help": "Task.IslandPlan.help"
+      "name": "全域配置",
+      "help": "島嶼計劃的全域配置，包括季節設定"
     },
     "IslandBusiness": {
-      "name": "Task.IslandBusiness.name",
-      "help": "Task.IslandBusiness.help"
+      "name": "經營模組",
+      "help": "自動經營島嶼計劃中的5個商店（有魚餐館、白熊飲品、烏魚烤肉、啾啾簡餐、啾咖啡）\n包括：選擇角色、選擇餐品、開始經營等自動化操作"
     },
     "IslandFarm": {
-      "name": "Task.IslandFarm.name",
-      "help": "Task.IslandFarm.help"
+      "name": "農田",
+      "help": ""
     },
     "IslandRancher": {
-      "name": "Task.IslandRancher.name",
-      "help": "Task.IslandRancher.help"
+      "name": "牧場",
+      "help": ""
     },
     "IslandMineForest": {
-      "name": "Task.IslandMineForest.name",
-      "help": "Task.IslandMineForest.help"
+      "name": "礦山林場",
+      "help": ""
     },
     "IslandRestaurant": {
-      "name": "Task.IslandRestaurant.name",
-      "help": "Task.IslandRestaurant.help"
+      "name": "有魚餐館",
+      "help": ""
     },
     "IslandTeahouse": {
-      "name": "Task.IslandTeahouse.name",
-      "help": "Task.IslandTeahouse.help"
+      "name": "白熊飲品",
+      "help": ""
     },
     "IslandGrill": {
-      "name": "Task.IslandGrill.name",
-      "help": "Task.IslandGrill.help"
+      "name": "烏魚烤肉",
+      "help": "餐品會按從1~8的順序依次生產，生產目標為餐品X數量選項，完全滿足前一項後才會執行下一項，後一項在運行時不會影響之前幾項任務的達成"
     },
     "IslandJuuEatery": {
-      "name": "Task.IslandJuuEatery.name",
-      "help": "Task.IslandJuuEatery.help"
+      "name": "啾啾簡餐",
+      "help": "餐品會按從1~8的順序依次生產，生產目標為餐品X數量選項，完全滿足前一項後才會執行下一項，後一項在運行時不會影響之前幾項任務的達成"
     },
     "IslandJuuCoffee": {
-      "name": "Task.IslandJuuCoffee.name",
-      "help": "Task.IslandJuuCoffee.help"
+      "name": "啾咖啡",
+      "help": "餐品會按從1~8的順序依次生產，生產目標為餐品X數量選項，完全滿足前一項後才會執行下一項，後一項在運行時不會影響之前幾項任務的達成"
     },
     "IslandManufacture": {
-      "name": "Task.IslandManufacture.name",
-      "help": "Task.IslandManufacture.help"
+      "name": "製造業",
+      "help": ""
     },
     "IslandDailyGather": {
-      "name": "Task.IslandDailyGather.name",
-      "help": "Task.IslandDailyGather.help"
+      "name": "每日採集",
+      "help": "透過管理介面採集頁籤，UI模擬點選完成每日採集。執行時間：凌晨3:10、下午6:00。流程：選擇採集目標→切換開關→分配角色→出發"
     },
     "IslandAirDrop": {
-      "name": "Task.IslandAirDrop.name",
-      "help": "Task.IslandAirDrop.help"
+      "name": "每日補給",
+      "help": "僅支援minitouch"
     },
     "IslandCargoPreparation": {
-      "name": "Task.IslandCargoPreparation.name",
-      "help": "Task.IslandCargoPreparation.help"
+      "name": "貨物籌備",
+      "help": "自動處理島嶼貨運委託：領取完成的貨運獎勵，避開牛奶等黑名單貨物，進入更換頁面確認預設選中的第一個委託，並裝載可提交貨物。"
     },
     "IslandDailyOrder": {
-      "name": "Task.IslandDailyOrder.name",
-      "help": "Task.IslandDailyOrder.help"
+      "name": "每日訂單",
+      "help": "從島嶼手機頁面進入每日訂單介面，自動檢測訂單類型（緊急/挑戰/輕鬆，目前不支援普通訂單），根據物品條件交付或駁回。\n\n每日訂單功能仍在測試中。如果遇到每日訂單或緊急委託無法交付的情況，請截圖回饋（請確保截圖為 1280x720 的遊戲內截圖）。"
     },
     "IslandDailyInteract": {
       "name": "每日/週任務",
-      "help": "處理島嶼摸貓、JUU速運、商區外送服務與每週照相任務。相關按鈕資源生成後可啟用。"
+      "help": "僅支援minitouch。處理島嶼摸貓、JUU速運、商區外送服務與每週照相任務。相關按鈕資源生成後可啟用。"
     },
     "IslandPearlSell": {
-      "name": "Task.IslandPearlSell.name",
-      "help": "Task.IslandPearlSell.help"
+      "name": "每週珍珠採購與售賣",
+      "help": "僅支援minitouch。每週二 01:00 自動處理珍珠：先採購本週珍珠，再售賣已有珍珠。金幣一定要夠購買200x220個這是最低要求能一次買光本週珍珠, 否則可能會報錯."
+    },
+    "FleetScan": {
+      "name": "艦隊掃描",
+      "help": "掃描目前編入艦隊的艦船資訊"
+    },
+    "FleetInfo": {
+      "name": "艦隊資訊",
+      "help": "查看最近一次艦隊掃描結果"
     },
     "Daemon": {
       "name": "半自動點選",
@@ -378,13 +394,17 @@
       "name": "拆裝備箱",
       "help": ""
     },
+    "AutoEquip": {
+      "name": "自動裝備",
+      "help": "從船塢第一艘艦船開始，進入快速更換並開啟「裝備中」篩選，隨後按艦船詳情頁滑動遍歷。實際換裝策略尚待設定。"
+    },
     "Benchmark": {
       "name": "效能測試",
       "help": ""
     },
     "OcrBenchmark": {
-      "name": "Task.OcrBenchmark.name",
-      "help": "Task.OcrBenchmark.help"
+      "name": "OCR效能測試",
+      "help": ""
     },
     "AzurLaneUncensored": {
       "name": "反和諧",
@@ -395,8 +415,8 @@
       "help": ""
     },
     "EmulatorManager": {
-      "name": "Task.EmulatorManager.name",
-      "help": "Task.EmulatorManager.help"
+      "name": "模擬器管理器",
+      "help": "提供手動重啟模擬器的入口"
     }
   },
   "Scheduler": {
@@ -408,7 +428,7 @@
       "name": "啟用該功能",
       "help": "將這個任務加入排程器\n委託、科研、收獲任務是強制開啟的",
       "True": "已啟用",
-      "False": "False"
+      "False": "未啟用"
     },
     "PushNotification": {
       "name": "推送通知",
@@ -425,11 +445,11 @@
       "help": ""
     },
     "SuccessInterval": {
-      "name": "執行成功後，推遲下一次執行 X 分鍾",
+      "name": "執行成功後，推遲下一次執行 X 分鐘",
       "help": ""
     },
     "FailureInterval": {
-      "name": "執行失敗後，推遲下一次執行 X 分鍾",
+      "name": "執行失敗後，推遲下一次執行 X 分鐘",
       "help": ""
     },
     "ServerUpdate": {
@@ -438,9 +458,9 @@
     },
     "Sensitive": {
       "name": "敏感任務",
-      "help": "出錯時禁止重啟遊戲，直接停止 AzurPilot 運行。適用於跨月每日、隱秘海域、深淵海域等關鍵時刻任務。",
-      "True": "True",
-      "False": "False"
+      "help": "出錯時禁止重啟遊戲，直接停止 ALAS 運行。適用於跨月每日、隱秘海域、深淵海域等關鍵時刻任務。",
+      "True": "是",
+      "False": "否"
     }
   },
   "Restart": {
@@ -527,6 +547,7 @@
       "cn_android-26": "[国服] 冬月计划",
       "cn_android-27": "[国服] 长弓计划",
       "cn_android-28": "[国服] 裁决协议",
+      "cn_android-29": "[国服] 帷幕计划",
       "cn_ios-0": "[国服] 夏威夷",
       "cn_ios-1": "[国服] 珊瑚海",
       "cn_ios-2": "[国服] 中途岛",
@@ -570,7 +591,7 @@
       "jp-17": "[JP] スイートバン"
     },
     "ScreenshotMethod": {
-      "name": "模擬器截圖方案",
+      "name": "選擇截圖方案",
       "help": "使用自動選擇時，將執行一次效能測試並自動更改為最快的截圖方案\n一般情況下的速度: DroidCast_raw >> aScreenCap_nc > ADB_nc >>> aScreenCap > uiautomator2 ~= ADB\n執行 工具 - 效能測試 以尋找最快的方案",
       "auto": "自動選擇最快的",
       "ADB": "ADB",
@@ -584,13 +605,19 @@
       "ldopengl": "ldopengl"
     },
     "ControlMethod": {
-      "name": "模擬器控制方案",
+      "name": "選擇控制方案",
       "help": "速度: minitouch > Hermit >>> uiautomator2 ~= ADB\n建議選minitouch，不建議選Hermit除非在vmos下",
       "ADB": "ADB",
       "uiautomator2": "uiautomator2",
       "minitouch": "minitouch",
       "Hermit": "Hermit",
       "MaaTouch": "MaaTouch"
+    },
+    "GameSettings": {
+      "name": "自動套用建議的遊戲設定",
+      "help": "在啟動遊戲前，自動嘗試套用建議的幀率、劇情、大型作戰、提示及確認設定。僅在遊戲程序已完全停止、具備 root 或 su 權限且寫入驗證通過時執行。設定資料僅於記憶體中處理，不會建立備份或還原檔案；無法安全執行時會略過，不影響遊戲正常啟動。",
+      "True": "開啟",
+      "False": "關閉"
     },
     "ScreenshotDedithering": {
       "name": "去除圖片色彩抖動",
@@ -607,7 +634,7 @@
       "help": "下列數值是根據Serial自動填充的，如果不懂請不要隨意修改，修改埠即可自動啟動對應例項"
     },
     "Emulator": {
-      "name": "模擬器型別",
+      "name": "選擇模擬器類型",
       "help": "",
       "auto": "自動檢測",
       "NoxPlayer": "夜神模擬器",
@@ -639,8 +666,8 @@
     "EnableRemoteSSH": {
       "name": "啟用遠端 SSH 管理",
       "help": "在重啟模擬器之前，透過 SSH 在遠端伺服器上執行特定指令（如重啟 Docker 容器）。",
-      "True": "True",
-      "False": "False"
+      "True": "開啟",
+      "False": "關閉"
     },
     "RemoteSSHHost": {
       "name": "遠端伺服器地址",
@@ -655,8 +682,8 @@
       "help": "登入 SSH 的用戶名，例如: root"
     },
     "RemoteSSHPublicKey": {
-      "name": "SSH 私鑰",
-      "help": "SSH 登入所需的私鑰內容（如果需要）"
+      "name": "SSH 公鑰",
+      "help": "SSH 登入所需的公鑰內容（如果需要）"
     },
     "RemoteStartCommand": {
       "name": "遠端啟動指令",
@@ -682,10 +709,10 @@
     },
     "StrictRestart": {
       "name": "敏感任務出錯時禁止重啟",
-      "help": "執行敏感任務出錯時停止AzurPilot，而不是重啟遊戲\n敏感任務包含隱秘海域、深淵海域、跨月每日"
+      "help": "執行敏感任務出錯時停止ALAS，而不是重啟遊戲\n敏感任務包含隱秘海域、深淵海域、跨月每日"
     },
     "SaveErrorCount": {
-      "name": "Error Log 儲存上限",
+      "name": "最多保存 X 個錯誤日誌",
       "help": "超出上限的錯誤日誌將被刪除，若為0或負值則沒有限制"
     },
     "OnePushConfig": {
@@ -701,7 +728,7 @@
       "help": "在遊戲連續卡死（觸發GameStuckError）達到指定次數後，嘗試重啟模擬器。可能有助於解決模擬器假死或視訊記憶體溢位等問題。"
     },
     "GameStuckThreshold": {
-      "name": "遊戲卡死重啟閾值",
+      "name": "遊戲卡死超過 X 秒後重啟",
       "help": "連續卡死多少次後觸發重啟。"
     },
     "AdbOfflineRestart": {
@@ -709,7 +736,7 @@
       "help": "在連續檢測不到裝置（ADB離線或連線失敗）達到指定次數後，嘗試重啟模擬器。"
     },
     "AdbOfflineThreshold": {
-      "name": "檢測不到裝置重啟閾值",
+      "name": "偵測不到裝置超過 X 秒後重啟",
       "help": "連續檢測不到裝置多少次後觸發重啟。"
     }
   },
@@ -720,10 +747,14 @@
     },
     "OcrDevice": {
       "name": "OCR 裝置",
-      "help": "選擇 OCR 裝置。GPU 用 Windows DirectML，ANE 用 macOS Apple Neural Engine。自動：Apple Silicon Mac 使用 ANE，Windows VRAM > 1GB 用 GPU，否則 CPU。",
+      "help": "選擇 OCR 推論裝置。\n自動選擇：Windows 依序嘗試 QNN NPU、OpenVINO NPU、OpenVINO 獨顯 GPU、DirectML 獨顯 GPU、OpenVINO CPU、CPU；關閉「自動安裝並使用廠商 EP」後只嘗試 DirectML 獨顯 GPU 和 CPU。\nQNN/OpenVINO 裝置僅適用於 ONNX Runtime，ANE 僅適用於 Apple Silicon Mac。",
       "auto": "自動選擇",
+      "qnn_npu": "QNN NPU",
+      "openvino_npu": "OpenVINO NPU",
+      "openvino_gpu": "OpenVINO 獨顯 GPU",
+      "gpu": "DirectML 獨顯 GPU",
+      "openvino_cpu": "OpenVINO CPU",
       "cpu": "CPU",
-      "gpu": "GPU",
       "ane": "ANE (Apple)"
     },
     "OcrBackend": {
@@ -733,9 +764,15 @@
       "onnxruntime": "ONNX Runtime",
       "ncnn": "ncnn (Vulkan)"
     },
+    "OcrWindowsMlVendorEp": {
+      "name": "自動安裝並使用廠商 EP",
+      "help": "允許 Windows ML 透過 Windows Update 下載並使用 QNN/OpenVINO 廠商 EP。",
+      "True": "啟用",
+      "False": "停用"
+    },
     "OcrModelVersionEnglish": {
       "name": "OCR 英文模型版本",
-      "help": "選擇英文 OCR 模型版本。auto 使用英文推薦模型 850K。此項影響英文 Azur Lane 模型；ncnn 後端會忽略此選擇。",
+      "help": "選擇英文 OCR 模型版本。auto 使用英文推薦模型 AlOCR v2.6。此項影響英文 Azur Lane 模型；ncnn 後端會忽略此選擇。",
       "auto": "自動推薦",
       "alocr_en_900k": "alocr_en_900k",
       "azur_lane_v6_6": "英文 v6.6 (Azur Lane)",
@@ -777,8 +814,8 @@
       "help": "執行兩次截圖之間的最小間隔，限制在 0.001 ~ 1.0，能降低戰鬥時的 CPU 佔用"
     },
     "TaskHoardingDuration": {
-      "name": "囤積任務 X 分鍾",
-      "help": "能在收菜期間降低操作遊戲的頻率\n任務觸發後，等待 X 分鍾，再一次性執行囤積的任務"
+      "name": "囤積任務 X 分鐘",
+      "help": "能在收菜期間降低操作遊戲的頻率\n任務觸發後，等待 X 分鐘，再一次性執行囤積的任務"
     },
     "CloseEmulatorDuringLongWait": {
       "name": "長時間等待時關閉模擬器",
@@ -796,114 +833,114 @@
   },
   "GameUpdate": {
     "_info": {
-      "name": "GameUpdate._info.name",
-      "help": "GameUpdate._info.help"
+      "name": "遊戲更新",
+      "help": "用於手動設定維護窗口。進入開始前設定小時數到結束時間之間的時段後，ALAS 會把未保留任務的下一次執行時間統一延後到結束時間，維護結束後自動恢復。"
     },
     "Enable": {
-      "name": "GameUpdate.Enable.name",
-      "help": "GameUpdate.Enable.help"
+      "name": "啟用維護窗口",
+      "help": "關閉時不生效。開啟後會根據開始時間和結束時間控制任務排程。"
     },
     "StopBeforeHours": {
-      "name": "GameUpdate.StopBeforeHours.name",
-      "help": "GameUpdate.StopBeforeHours.help"
+      "name": "提前停止小時數",
+      "help": "在維護開始前多少小時進入維護模式。預設 2，可填寫整數或小數。"
     },
     "StartTime": {
-      "name": "GameUpdate.StartTime.name",
-      "help": "GameUpdate.StartTime.help"
+      "name": "維護開始時間",
+      "help": "遊戲維護正式開始的時間。ALAS 會從這個時間點往前推你設定的小時數進入維護模式。"
     },
     "EndTime": {
-      "name": "GameUpdate.EndTime.name",
-      "help": "GameUpdate.EndTime.help"
+      "name": "維護結束時間",
+      "help": "維護結束後，之前被延後的任務會在這個時間點後自動恢復排程。"
     }
   },
   "GameUpdateTasks": {
     "_info": {
-      "name": "GameUpdateTasks._info.name",
-      "help": "GameUpdateTasks._info.help"
+      "name": "維護期間保留任務",
+      "help": "勾選後，該任務在維護窗口期間仍會繼續參與排程。一般只建議保留委託、科研、商店等低風險任務。"
     },
     "KeepCommission": {
-      "name": "GameUpdateTasks.KeepCommission.name",
-      "help": "GameUpdateTasks.KeepCommission.help"
+      "name": "委託",
+      "help": ""
     },
     "KeepTactical": {
-      "name": "GameUpdateTasks.KeepTactical.name",
-      "help": "GameUpdateTasks.KeepTactical.help"
+      "name": "戰術學院",
+      "help": ""
     },
     "KeepResearch": {
-      "name": "GameUpdateTasks.KeepResearch.name",
-      "help": "GameUpdateTasks.KeepResearch.help"
+      "name": "科研",
+      "help": ""
     },
     "KeepDorm": {
-      "name": "GameUpdateTasks.KeepDorm.name",
-      "help": "GameUpdateTasks.KeepDorm.help"
+      "name": "後宅",
+      "help": ""
     },
     "KeepMeowfficer": {
-      "name": "GameUpdateTasks.KeepMeowfficer.name",
-      "help": "GameUpdateTasks.KeepMeowfficer.help"
+      "name": "指揮喵",
+      "help": ""
     },
     "KeepGuild": {
-      "name": "GameUpdateTasks.KeepGuild.name",
-      "help": "GameUpdateTasks.KeepGuild.help"
+      "name": "大艦隊",
+      "help": ""
     },
     "KeepReward": {
-      "name": "GameUpdateTasks.KeepReward.name",
-      "help": "GameUpdateTasks.KeepReward.help"
+      "name": "收穫",
+      "help": ""
     },
     "KeepAwaken": {
-      "name": "GameUpdateTasks.KeepAwaken.name",
-      "help": "GameUpdateTasks.KeepAwaken.help"
+      "name": "認知覺醒",
+      "help": ""
     },
     "KeepIsland": {
-      "name": "GameUpdateTasks.KeepIsland.name",
-      "help": "GameUpdateTasks.KeepIsland.help"
+      "name": "島嶼計劃",
+      "help": ""
     },
     "KeepExercise": {
-      "name": "GameUpdateTasks.KeepExercise.name",
-      "help": "GameUpdateTasks.KeepExercise.help"
+      "name": "演習",
+      "help": ""
     },
     "KeepShopFrequent": {
-      "name": "GameUpdateTasks.KeepShopFrequent.name",
-      "help": "GameUpdateTasks.KeepShopFrequent.help"
+      "name": "軍火商商店",
+      "help": ""
     },
     "KeepShopOnce": {
-      "name": "GameUpdateTasks.KeepShopOnce.name",
-      "help": "GameUpdateTasks.KeepShopOnce.help"
+      "name": "其他商店",
+      "help": ""
     },
     "KeepShipyard": {
-      "name": "GameUpdateTasks.KeepShipyard.name",
-      "help": "GameUpdateTasks.KeepShipyard.help"
+      "name": "開發船塢",
+      "help": ""
     },
     "KeepGacha": {
-      "name": "GameUpdateTasks.KeepGacha.name",
-      "help": "GameUpdateTasks.KeepGacha.help"
+      "name": "每日抽卡",
+      "help": ""
     },
     "KeepFreebies": {
-      "name": "GameUpdateTasks.KeepFreebies.name",
-      "help": "GameUpdateTasks.KeepFreebies.help"
+      "name": "免費獎勵",
+      "help": ""
     },
     "KeepMinigame": {
-      "name": "GameUpdateTasks.KeepMinigame.name",
-      "help": "GameUpdateTasks.KeepMinigame.help"
+      "name": "小遊戲",
+      "help": ""
     },
     "KeepPrivateQuarters": {
-      "name": "GameUpdateTasks.KeepPrivateQuarters.name",
-      "help": "GameUpdateTasks.KeepPrivateQuarters.help"
+      "name": "宿舍計劃",
+      "help": ""
     },
     "KeepEventShop": {
-      "name": "GameUpdateTasks.KeepEventShop.name",
-      "help": "GameUpdateTasks.KeepEventShop.help"
+      "name": "活動商店",
+      "help": ""
     },
     "KeepOpsiShop": {
-      "name": "GameUpdateTasks.KeepOpsiShop.name",
-      "help": "GameUpdateTasks.KeepOpsiShop.help"
+      "name": "大世界商店",
+      "help": ""
     },
     "KeepOpsiVoucher": {
-      "name": "GameUpdateTasks.KeepOpsiVoucher.name",
-      "help": "GameUpdateTasks.KeepOpsiVoucher.help"
+      "name": "白票商店",
+      "help": ""
     },
     "KeepOpsiAshAssist": {
-      "name": "GameUpdateTasks.KeepOpsiAshAssist.name",
-      "help": "GameUpdateTasks.KeepOpsiAshAssist.help"
+      "name": "META支援",
+      "help": ""
     }
   },
   "DropRecord": {
@@ -971,7 +1008,7 @@
     },
     "TelemetryReport": {
       "name": "遙測資料上報",
-      "help": "啟用後將定期向伺服器匿名上報 CL1 統計資料（戰鬥次數、明石遇見機率等匿名資料）ID生成詳見原始碼，統計資訊 https://alas.nanoda.work/"
+      "help": "啟用後將定期向伺服器匿名上報 CL1 統計資料（戰鬥次數、明石遇見機率等匿名資料），ID生成詳見原始碼"
     },
     "BugReport": {
       "name": "Bug 日誌上報",
@@ -1009,7 +1046,7 @@
       "help": ""
     },
     "RetireMode": {
-      "name": "退役模式",
+      "name": "選擇退役模式",
       "help": "若選擇強化，強化材料不足時回退到一鍵退役",
       "one_click_retire": "一鍵退役",
       "enhance": "強化",
@@ -1099,7 +1136,7 @@
       "help": "格式: \"cv > bb > ...\"，\n留空則使用預設強化方式"
     },
     "CheckPerCategory": {
-      "name": "每分類強化數量",
+      "name": "每個分類檢查 X 艘",
       "help": "每個艦船分類最多強化多少艦船，\n在戰鬥中的艦船會被跳過且不計入，\n優先判斷是否有強化材料"
     }
   },
@@ -1125,7 +1162,7 @@
       "help": ""
     },
     "RetireAmount": {
-      "name": "退役數量",
+      "name": "每次退役 X 艘",
       "help": "",
       "retire_all": "退役全部",
       "retire_10": "退役10個"
@@ -1149,6 +1186,7 @@
       "coalition_20250626": "迷彩都市的尋蹤者",
       "coalition_20251120": "DATE A LANE",
       "coalition_20260122": "光影風尚-拍攝進行時",
+      "coalition_20260723": "Authentic Horror Story",
       "event_20200227_cn": "Northern Overture",
       "event_20200312_cn": "斯圖爾特的硝煙",
       "event_20200326_cn": "Microlayer Medley",
@@ -1233,7 +1271,7 @@
       "event_20260326_cn": "漫遊者招募計劃",
       "event_20260417_cn": "假日航線閃耀海濱",
       "event_20260520_cn": "聖印前的同盟",
-      "event_20260625_cn": "Miracle by Midnight",
+      "event_20260625_cn": "美夢巡演奇秒夜",
       "raid_20200624": "特別演習埃塞克斯級(復刻)",
       "raid_20210708": "復刻穿越彼方的水線",
       "raid_20220127": "演習神秘事件調查",
@@ -1295,7 +1333,7 @@
       "war_archives_20240725_cn": "檔案 幻夢間奏曲"
     },
     "Mode": {
-      "name": "關卡模式",
+      "name": "選擇關卡模式",
       "help": "僅適用於主線圖",
       "normal": "普通",
       "hard": "困難"
@@ -1325,11 +1363,11 @@
       "help": "使用遊戲內建的推薦陣容自動完成困難圖配隊"
     },
     "DefeatWithdraw": {
-      "name": "道中戰鬥失敗撤退",
-      "help": "道中戰鬥戰敗時的處理方式。開啟時直接退出海域，關閉時嘗試由另一隊接管後續戰鬥。",
-      "withdraw_continue": "withdraw_continue",
-      "switch_fleet": "switch_fleet",
-      "withdraw_stop": "withdraw_stop"
+      "name": "道中失敗處理",
+      "help": "道中戰鬥戰敗時的處理方式",
+      "withdraw_continue": "撤退後繼續任務",
+      "switch_fleet": "切換隊伍繼續出擊",
+      "withdraw_stop": "撤退後關閉任務"
     }
   },
   "StopCondition": {
@@ -1374,24 +1412,24 @@
   },
   "WarArchives": {
     "_info": {
-      "name": "WarArchives._info.name",
-      "help": "WarArchives._info.help"
+      "name": "作戰檔案",
+      "help": ""
     },
     "DailyRunCount": {
-      "name": "WarArchives.DailyRunCount.name",
-      "help": "WarArchives.DailyRunCount.help"
+      "name": "每日出擊 X 次",
+      "help": "每天最多執行作戰檔案多少次。\n0 表示不限制。\n達到次數後會延遲到下一次伺服器刷新，不會關閉任務。"
     },
     "DailyRunCountRemain": {
-      "name": "WarArchives.DailyRunCountRemain.name",
-      "help": "WarArchives.DailyRunCountRemain.help"
+      "name": "今日剩餘出擊次數",
+      "help": "腳本自動維護的今日剩餘額度。"
     },
     "DailyRunCountRecord": {
-      "name": "WarArchives.DailyRunCountRecord.name",
-      "help": "WarArchives.DailyRunCountRecord.help"
+      "name": "每日出擊次數記錄時間",
+      "help": "腳本自動維護的額度記錄時間，用於伺服器刷新後重置。"
     },
     "DailyRunCountLimit": {
-      "name": "WarArchives.DailyRunCountLimit.name",
-      "help": "WarArchives.DailyRunCountLimit.help"
+      "name": "上次每日出擊次數",
+      "help": "腳本自動維護的上次每日次數設定，用於調整額度。"
     }
   },
   "Fleet": {
@@ -1400,7 +1438,7 @@
       "help": ""
     },
     "Fleet1": {
-      "name": "一隊編號",
+      "name": "一隊使用第 X 支艦隊",
       "help": "",
       "1": "1 ",
       "2": "2 ",
@@ -1417,7 +1455,7 @@
       "diamond": "輪形陣"
     },
     "Fleet1Mode": {
-      "name": "一隊自律模式",
+      "name": "一隊自律戰鬥模式",
       "help": "",
       "combat_auto": "自律戰鬥",
       "combat_manual": "手操",
@@ -1434,7 +1472,7 @@
       "5": "5 "
     },
     "Fleet2": {
-      "name": "二隊編號",
+      "name": "二隊使用第 X 支艦隊",
       "help": "",
       "0": "不使用",
       "1": "1 ",
@@ -1452,7 +1490,7 @@
       "diamond": "輪形陣"
     },
     "Fleet2Mode": {
-      "name": "二隊自律模式",
+      "name": "二隊自律戰鬥模式",
       "help": "",
       "combat_auto": "自律戰鬥",
       "combat_manual": "手操",
@@ -1475,6 +1513,10 @@
       "fleet1_boss_fleet2_mob": "一隊boss二隊道中",
       "fleet1_all_fleet2_standby": "一隊全清二隊待機",
       "fleet1_standby_fleet2_all": "一隊待機二隊全清"
+    },
+    "SkipPreparation": {
+      "name": "跳過編隊檢測",
+      "help": "開啟後將跳過編隊介面的艦隊選擇步驟，直接使用遊戲內當前預選的艦隊出擊\n適用於艦隊槽位未完全解鎖的帳號，避免下拉選單檢測卡死\n開啟前請確保遊戲內已手動選好艦隊1和艦隊2"
     }
   },
   "Submarine": {
@@ -1483,14 +1525,14 @@
       "help": ""
     },
     "Fleet": {
-      "name": "潛艇艦隊編號",
+      "name": "使用第 X 潛艇編隊",
       "help": "",
       "0": "不使用",
       "1": "1 ",
       "2": "2 "
     },
     "Mode": {
-      "name": "潛艇出擊方案",
+      "name": "選擇潛艇出擊方案",
       "help": "僅在自律尋敵關閉的情況下生效，提醒: '狩獵及BOSS戰'為'僅狩獵'與'僅BOSS戰'的混合，它會在道中進行狩獵打擊，並在BOSS戰嘗試召喚潛艇。",
       "do_not_use": "不使用",
       "hunt_only": "僅狩獵",
@@ -1499,14 +1541,14 @@
       "every_combat": "每戰出擊"
     },
     "AutoSearchMode": {
-      "name": "潛艇自律方案",
+      "name": "選擇潛艇自律方案",
       "help": "僅在自律尋敵下生效",
       "sub_standby": "待機",
       "sub_auto_call": "自動召喚潛艇"
     },
     "DistanceToBoss": {
       "name": "BOSS戰前將潛艇移動到BOSS附近",
-      "help": "僅在\"潛艇出擊方案\"為\"僅BOSS戰\"及\"狩獵及BOSS戰\",時生效\n選擇\"距離BOSS X格\"需要保證潛艇狩獵範圍能覆蓋到BOSS，距離使用曼哈頓距離計算，選擇\"使用遠洋支援\"需要潛艇隊伍裡有U522/達芬奇",
+      "help": "僅在\"潛艇出擊方案\"為\"僅BOSS戰\"及\"狩獵及BOSS戰\"時生效",
       "to_boss_position": "至 BOSS 所在位置",
       "1_grid_to_boss": "距離 BOSS 1 格",
       "2_grid_to_boss": "距離 BOSS 2 格",
@@ -1651,7 +1693,7 @@
   },
   "C72MysteryFarming": {
     "_info": {
-      "name": "7-2 三站揀垃圾",
+      "name": "7-2 三戰揀垃圾",
       "help": "打三戰，揀完問號後撤退"
     },
     "StepOnA3": {
@@ -1704,7 +1746,7 @@
   "GemsFarming": {
     "_info": {
       "name": "刷緊急委託",
-      "help": "警告: 這個功能可以讓玩家獲取少量的鑽石，但不是一個能高效獲取鑽石的方法\n玩碧藍航線不久的玩家, 很容易迷信零破和低耗等, 而忽視了角色養成\n執行這個功能只會讓你自己感覺很充實, 而你的帳號實際零提升\n這個功能的主要用途，是讓陣容成型的玩家獲取額外的魔方，請理性地把鑽石當作副產物\n\n這個功能將在旗艦32級之後更換旗艦\n關於緊急委託重新整理機制, 可閱讀 https://bbs.nga.cn/read.php?tid=27134956\n委託油耗比: A3 > A1 > 2-4 > 2-1, 有活動圖時建議選活動圖, 2-1會揀問號有更多物資\n一隊會完成所有的戰鬥, 前排應當為百級零破驅逐帶輸出裝, 後排應該為33級及以下白皮零破航母\n二隊應提供跨隊支援（跨隊彈幕、跨隊輔助）\n\n無法設定艦隊職能時，以以下方式停止任務以免跨隊隊伍出擊，石油被大量消耗：\n若設定了錯誤推送則推送任務停止的訊息並停止該任務。\n若沒有設定錯誤推送，則直接停止AzurPilot。"
+      "help": "警告: 這個功能可以讓玩家獲取少量的鑽石，但不是一個能高效獲取鑽石的方法\n玩碧藍航線不久的玩家, 很容易迷信零破和低耗等, 而忽視了角色養成\n執行這個功能只會讓你自己感覺很充實, 而你的帳號實際零提升\n這個功能的主要用途，是讓陣容成型的玩家獲取額外的魔方，請理性地把鑽石當作副產物\n\n這個功能將在旗艦32級之後更換旗艦\n關於緊急委託重新整理機制, 可閱讀 https://bbs.nga.cn/read.php?tid=27134956\n委託油耗比: A3 > A1 > 2-4 > 2-1, 有活動圖時建議選活動圖, 2-1會揀問號有更多物資\n一隊會完成所有的戰鬥, 前排應當為百級零破驅逐帶輸出裝, 後排應該為33級及以下白皮零破航母\n二隊應提供跨隊支援（跨隊彈幕、跨隊輔助）\n\n無法設定艦隊職能時，以以下方式停止任務以免跨隊隊伍出擊，石油被大量消耗：\n若設定了錯誤推送則推送任務停止的訊息並停止該任務。\n若沒有設定錯誤推送，則直接停止ALAS。"
     },
     "ChangeFlagship": {
       "name": "更換旗艦",
@@ -1754,18 +1796,18 @@
       "help": "僅當選擇“更換艦船 + 裝備”時生效。\n在換下艦船時，若設定裡當前艦船裝備碼為null則會匯出；在換上艦船時，若設定裡當前艦船裝備碼為null則會使用上一艘艦船匯出的裝備碼，否則使用設定裡的裝備碼\n藍疊模擬器使用者需要先開啟虛擬鍵盤，詳見https://support.bluestacks.com/hc/zh-tw/articles/360061968892-%E5%A6%82%E4%BD%95%E5%9C%A8-BlueStacks-5-%E4%B8%8A%E4%BD%BF%E7%94%A8%E5%B0%8F%E9%8D%B5%E7%9B%A4-%E8%99%9B%E6%93%AC%E9%8D%B5%E7%9B%A4\nDD：前排驅逐    bogue：博格    hermes：競技神    langley：蘭利    ranger：突擊者"
     },
     "UseEmotionFirst": {
-      "name": "GemsFarming.UseEmotionFirst.name",
-      "help": "GemsFarming.UseEmotionFirst.help"
+      "name": "心情優先",
+      "help": "啟用後會優先選擇心情最高的艦船，心情一樣則應用過濾器，後排會優先使用等級低的船"
     },
     "IgnoreEmotionWarning": {
-      "name": "GemsFarming.IgnoreEmotionWarning.name",
-      "help": "GemsFarming.IgnoreEmotionWarning.help"
+      "name": "忽略心情警告彈窗",
+      "help": "開啟後，遇到心情警告彈窗將強制打完，打完後如開啟更換前排會強制換船"
     },
-    "ALLowHighFlagshipLevel": {
+    "AllowHighFlagshipLevel": {
       "name": "僅更換滿級後排",
       "help": "開啟後，更換旗艦時僅會選擇100級的白皮輕航。\n使用時請保證船塢中有符合條件的艦船。"
     },
-    "ALLowLowVanguardLevel": {
+    "AllowLowVanguardLevel": {
       "name": "可更換低等級前排",
       "help": "開啟後，前排等級限制改為30級以上。若為困難模式（如CD圖）則改為70級。"
     },
@@ -1778,12 +1820,12 @@
       "help": "在7x24執行時防止緊急委託數量過多做不完每日委託，建議在委託過濾器僅選擇短時長高收益委託"
     },
     "VanguardLevelMin": {
-      "name": "GemsFarming.VanguardLevelMin.name",
-      "help": "GemsFarming.VanguardLevelMin.help"
+      "name": "前排最低等級",
+      "help": "用於篩選符合條件的白皮前排，預設為1。"
     },
     "VanguardLevelMax": {
-      "name": "GemsFarming.VanguardLevelMax.name",
-      "help": "GemsFarming.VanguardLevelMax.help"
+      "name": "前排最高等級",
+      "help": "用於篩選符合條件的白皮前排，預設為125。"
     }
   },
   "EventGeneral": {
@@ -1792,7 +1834,7 @@
       "help": ""
     },
     "PtLimit": {
-      "name": "活動 PT 限制",
+      "name": "活動PT達到 X 後停止",
       "help": "當累計 PT 達到給定數值時，停用所有活動任務，0 表示不限制，使用自律尋敵時不能即時觸發\n開啟後，你只需要開啟所有活動任務，而不需要計算一共打多少次"
     },
     "TimeLimit": {
@@ -1810,7 +1852,7 @@
       "help": "啟用後，將於每次出擊後檢查物資量"
     },
     "CoinLimit": {
-      "name": "保持物資大於X",
+      "name": "保持物資大於 X",
       "help": ""
     },
     "TaskCall": {
@@ -1912,11 +1954,11 @@
   },
   "MaritimeEscort": {
     "_info": {
-      "name": "商船護航",
+      "name": "商路護航",
       "help": "進一下就撤退，能拿約70%的獎勵"
     },
     "Enable": {
-      "name": "啟用商船護航",
+      "name": "啟用商路護航",
       "help": ""
     }
   },
@@ -1928,17 +1970,38 @@
     "Mode": {
       "name": "難度",
       "help": "SP圖需要使用活動每日SP執行",
-      "tc1": "tc1",
-      "tc2": "tc2",
-      "tc3": "tc3",
-      "sp": "sp",
-      "ex": "ex"
+      "easy": "簡單",
+      "normal": "普通",
+      "hard": "困難",
+      "sp": "SP",
+      "ex": "EX"
     },
     "Fleet": {
       "name": "出擊隊伍",
       "help": "",
       "single": "單隊連戰",
       "multi": "多隊出擊"
+    }
+  },
+  "CoalitionScuttle": {
+    "_info": {
+      "name": "連戰刷好感plus",
+      "help": "連戰刷好感設定：選擇犧牲編隊位置（前排/旗艦/前排+旗艦）"
+    },
+    "Sacrifice": {
+      "name": "犧牲船位置",
+      "help": "選擇被擊沉的艦船位置，前排/旗艦/前排+旗艦",
+      "vanguard": "前排",
+      "flagship": "旗艦",
+      "vanguard_flagship": "前排+旗艦"
+    },
+    "Fleet1Affection": {
+      "name": "編隊1好感度",
+      "help": "編隊1當前好感度。每場勝利且出擊時心情≥40 增加 0.06；達到 100 後暫停任務"
+    },
+    "Fleet2Affection": {
+      "name": "編隊2好感度",
+      "help": "編隊2當前好感度。每場勝利且出擊時心情≥40 增加 0.06；達到 100 後暫停任務"
     }
   },
   "EventShop": {
@@ -1951,7 +2014,7 @@
       "help": ""
     },
     "BuyURShip": {
-      "name": "購買X艘UR艦船",
+      "name": "購買X隻UR艦船",
       "help": "",
       "0": "0",
       "1": "1",
@@ -1959,13 +2022,13 @@
     },
     "PresetFilter": {
       "name": "活動商店過濾器",
-      "help": "一般不需要修改",
+      "help": "一般預設全買即可",
       "all": "全部",
       "custom": "自定義"
     },
     "CustomFilter": {
-      "name": "自定義活動商店過濾器",
-      "help": "使用自定義過濾器需將 \"活動商店過濾器\" 設定為 \"自定義過濾器\"，並閱讀 https://github.com/LmeSzinc/AzurLaneAutoScript/wiki/filter_string_cn"
+      "name": "自訂過濾器",
+      "help": "使用自訂過濾器需將\"活動商店過濾器\"設定為\"自訂\"，並閱讀 https://github.com/LmeSzinc/AzurLaneAutoScript/wiki/filter_string_cn"
     }
   },
   "Commission": {
@@ -1996,12 +2059,12 @@
       "help": "1200油委託現在已經過時，收益很低，建議關閉"
     },
     "CommissionNotifyReward": {
-      "name": "Commission.CommissionNotifyReward.name",
-      "help": "Commission.CommissionNotifyReward.help"
+      "name": "委託獎勵推送通知",
+      "help": "獲得委託獎勵時推送通知（特別關注鑽石獎勵）"
     },
     "CommissionNotifyRewardStatistics": {
-      "name": "Commission.CommissionNotifyRewardStatistics.name",
-      "help": "Commission.CommissionNotifyRewardStatistics.help"
+      "name": "推送包含統計資訊",
+      "help": "在通知中顯示今日/本週/本月累計鑽石數量"
     }
   },
   "Tactical": {
@@ -2039,19 +2102,19 @@
       "help": ""
     },
     "T4Allow": {
-      "name": "允許 T4 技能書溢位 X 點經驗",
+      "name": "允許T4技能書溢出 X 點經驗",
       "help": ""
     },
     "T3Allow": {
-      "name": "允許 T3 技能書溢位 X 點經驗",
+      "name": "允許T3技能書溢出 X 點經驗",
       "help": ""
     },
     "T2Allow": {
-      "name": "允許 T2 技能書溢位 X 點經驗",
+      "name": "允許T2技能書溢出 X 點經驗",
       "help": ""
     },
     "T1Allow": {
-      "name": "允許 T1 技能書溢位 X 點經驗",
+      "name": "允許T1技能書溢出 X 點經驗",
       "help": ""
     }
   },
@@ -2069,14 +2132,14 @@
       "help": ""
     },
     "MinLevel": {
-      "name": "僅新增等級 >= X 的角色",
+      "name": "僅添加等級 >= X 的角色",
       "help": ""
     }
   },
   "Research": {
     "_info": {
       "name": "科研",
-      "help": "當過濾器和其他設定一起工作時，AzurPilot 會尋找同時滿足所有使用者設定的專案。\n例如，你設定科研過濾器是 `H1 > D2.5 > shortest` （包含消耗魔方的科研），但又設定了不允許消耗魔方，最終的結果是 AzurPilot 不會選擇消耗魔方的科研。當你突然想切魔方的時候，只需開啟消耗魔方，而不需要修改過濾器，這是比較方便的。"
+      "help": "當過濾器和其他設定一起工作時，ALAS 會尋找同時滿足所有使用者設定的專案。\n例如，你設定科研過濾器是 `H1 > D2.5 > shortest` （包含消耗魔方的科研），但又設定了不允許消耗魔方，最終的結果是 ALAS 不會選擇消耗魔方的科研。當你突然想切魔方的時候，只需開啟消耗魔方，而不需要修改過濾器，這是比較方便的。"
     },
     "UseCube": {
       "name": "使用魔方",
@@ -2085,10 +2148,6 @@
       "only_05_hour": "0.5小時+無專案可做時",
       "only_no_project": "無專案可做時",
       "do_not_use": "不使用"
-    },
-    "CubePreserve": {
-      "name": "保留 X 個魔方",
-      "help": "當目前魔方數量小於等於該值時，科研暫時不選擇消耗魔方的專案。\n0 表示關閉。"
     },
     "UseCoin": {
       "name": "使用物資",
@@ -2108,7 +2167,15 @@
     },
     "AllowDelay": {
       "name": "資源不足時延遲科研",
-      "help": "資源不足時AzurPilot會延遲科研直到滿足條件或科研佇列即將清空，不會導致科研停轉\n如果長期保持資源不足或執行AzurPilot的時間不夠長，可以取消本選項以保持科研佇列裝滿"
+      "help": "資源不足時ALAS會延遲科研直到滿足條件或科研佇列即將清空，不會導致科研停轉\n如果長期保持資源不足或執行ALAS的時間不夠長，可以取消本選項以保持科研佇列裝滿"
+    },
+    "AllowGenreT": {
+      "name": "允許進行T類科研",
+      "help": "此功能可能導致科研佇列閒置及效率降低，請僅在確實需要時啟用。"
+    },
+    "RemainingCommissions": {
+      "name": "T類科研剩餘委託次數",
+      "help": "待處理T類科研仍需完成的委託次數，-1代表沒有待處理的T類科研。"
     },
     "PresetFilter": {
       "name": "科研過濾器",
@@ -2184,7 +2251,7 @@
     },
     "LastRun": {
       "name": "上次檢查時間",
-      "help": "記錄上一次檢查的時間以防止任務重復執行，檢查間隔為6天，這個數值是自動記錄的，一般不需要修改"
+      "help": "記錄上一次檢查的時間以防止任務重複執行，檢查間隔為6天，這個數值是自動記錄的，一般不需要修改"
     }
   },
   "Meowfficer": {
@@ -2211,7 +2278,7 @@
       "help": ""
     },
     "Mode": {
-      "name": "訓練模式",
+      "name": "選擇訓練模式",
       "help": "無縫練貓將每隔 2.5 ~ 3.5 小時收取指揮貓\n每天收一隻意思是每天收一隻，週日收全部、強化並重新填充佇列，以完成每週任務",
       "seamlessly": "無縫練貓",
       "once_a_day": "每天收一隻"
@@ -2329,8 +2396,8 @@
       "help": ""
     },
     "Enable": {
-      "name": "商店开关",
-      "help": ""
+      "name": "商店開關",
+      "help": "開啟後才會執行該商店，關閉後會在任務中跳過該商店"
     },
     "UseGems": {
       "name": "使用鑽石",
@@ -2342,15 +2409,15 @@
     },
     "BuySkinBox": {
       "name": "買外觀裝備箱",
-      "help": "為降低維護成本，過濾器中的外觀箱選擇器不會隨遊戲更新，但AzurPilot會將任何未知的，數量為1的，消耗7000物資的物品視為外觀箱，並購買"
+      "help": "為降低維護成本，過濾器中的外觀箱選擇器不會隨遊戲更新，但ALAS會將任何未知的，數量為1的，消耗7000物資的物品視為外觀箱，並購買"
     },
     "ConsumeCoins": {
       "name": "消耗溢位物資",
-      "help": "物資超過550000時購買所有消耗物資的物品"
+      "help": "物資超過指定閾值時購買所有消耗物資的物品，0表示關閉，範圍1-600000"
     },
     "OverflowCoins": {
-      "name": "GeneralShop.OverflowCoins.name",
-      "help": "GeneralShop.OverflowCoins.help"
+      "name": "金幣溢出購買貓箱",
+      "help": "金幣超過指定閾值時自動購買貓箱消耗金幣，0表示關閉，範圍1-600000"
     },
     "Filter": {
       "name": "商店過濾器",
@@ -2363,8 +2430,8 @@
       "help": ""
     },
     "Enable": {
-      "name": "商店开关",
-      "help": ""
+      "name": "商店開關",
+      "help": "開啟後才會執行該商店，關閉後會在任務中跳過該商店"
     },
     "Refresh": {
       "name": "重新整理商店",
@@ -2480,8 +2547,8 @@
       "help": ""
     },
     "Enable": {
-      "name": "商店开关",
-      "help": ""
+      "name": "商店開關",
+      "help": "開啟後才會執行該商店，關閉後會在任務中跳過該商店"
     },
     "Filter": {
       "name": "商店過濾器",
@@ -2586,7 +2653,7 @@
       "6": "六期科研"
     },
     "ShipIndex": {
-      "name": "艦船序號",
+      "name": "選擇第 X 艘科研船",
       "help": "從左往右數，從 1 開始",
       "0": "不購買",
       "1": "1",
@@ -2602,7 +2669,7 @@
     },
     "LastRun": {
       "name": "上一次購買時間",
-      "help": "因為遊戲不顯示今天已經購買了幾張，所以這裡記錄上一次購買的時間以防止任務重復執行，這個數值是自動記錄的，一般不需要修改"
+      "help": "因為遊戲不顯示今天已經購買了幾張，所以這裡記錄上一次購買的時間以防止任務重複執行，這個數值是自動記錄的，一般不需要修改"
     }
   },
   "Shipyard": {
@@ -2621,7 +2688,7 @@
       "6": "六期科研"
     },
     "ShipIndex": {
-      "name": "艦船序號",
+      "name": "選擇第 X 艘科研船",
       "help": "從左往右數，從1開始",
       "0": "不購買",
       "1": "1",
@@ -2637,7 +2704,7 @@
     },
     "LastRun": {
       "name": "上一次購買時間",
-      "help": "因為遊戲不顯示今天已經購買了幾張，所以這裡記錄上一次購買的時間以防止任務重復執行，這個數值是自動記錄的，一般不需要修改"
+      "help": "因為遊戲不顯示今天已經購買了幾張，所以這裡記錄上一次購買的時間以防止任務重複執行，這個數值是自動記錄的，一般不需要修改"
     }
   },
   "Gacha": {
@@ -2655,7 +2722,7 @@
       "wishing_well": "祈願池"
     },
     "Amount": {
-      "name": "抽卡數量",
+      "name": "每天建造 X 次",
       "help": "",
       "1": "1",
       "2": "2",
@@ -2780,7 +2847,7 @@
       "new_jersey": "紐澤西",
       "taihou": "大鳳",
       "aegir": "埃吉爾",
-      "nakhimov": "纳希莫夫"
+      "nakhimov": "納希莫夫"
     }
   },
   "Daily": {
@@ -2793,7 +2860,7 @@
       "help": "每日關卡S勝後，解鎖掃蕩，未解鎖時，自動回退至傳統出擊"
     },
     "EscortMission": {
-      "name": "商船護送（部件本，魚雷本）",
+      "name": "商路護航（部件本，魚雷本）",
       "help": "",
       "skip": "不打",
       "first": "第一個",
@@ -2801,7 +2868,7 @@
       "third": "第三個"
     },
     "EscortMissionFleet": {
-      "name": "商船護送出擊艦隊",
+      "name": "商路護航出擊艦隊",
       "help": "",
       "1": "1",
       "2": "2",
@@ -2924,7 +2991,7 @@
     },
     "HardNewMode": {
       "name": "均衡模式",
-      "help": "開啟後按圖紙類型跨天輪轉刷圖，關閉則固定單關",
+      "help": "開啟後按圖紙類型跨天輪替刷圖，關閉則固定單關",
       "True": "開啟",
       "False": "關閉"
     },
@@ -2957,8 +3024,8 @@
       "False": "關閉"
     },
     "HardNewCursor": {
-      "name": "輪次指針",
-      "help": "跨天輪轉指針，自動管理無需手動修改"
+      "name": "輪替指標",
+      "help": "跨天輪替指標，自動管理無需手動修改"
     }
   },
   "Exercise": {
@@ -3009,7 +3076,7 @@
       "help": "推薦 1.0 ~ 3.0，因為人物立繪會遮擋血條，所以需要一定的時間確認血量是否真的低於閾值"
     },
     "OpponentRefreshValue": {
-      "name": "今日演習對手已重新整理 X 次",
+      "name": "今日已重新整理對手 X 次",
       "help": "自動更新的數值，過0點重置\n如果你手動重新整理的對手，應該修改這個數值"
     },
     "OpponentRefreshRecord": {
@@ -3055,7 +3122,7 @@
       "help": "每次進入倉庫的時候，使用所有的使用坐標記錄儀"
     },
     "BuyActionPointLimit": {
-      "name": "買行動力X次",
+      "name": "購買行動力 X 次",
       "help": "買行動力的最大次數",
       "0": "不買",
       "1": "1次 (1000油, 100行動力)",
@@ -3082,7 +3149,7 @@
     },
     "RepairPackThresholdHazard1": {
       "name": "任意艦船血量低於 X 後，使用維修箱修理（侵蝕1）",
-      "help": "僅在開啟“使用維修箱修船”時生效\n僅在「侵蝕1練級+」任務中嘗試維修\n0.0 ~ 1.0"
+      "help": "僅在開啟“使用維修箱修船”時生效\n僅在「侵蝕1練級Plus」任務中嘗試維修\n0.0 ~ 1.0"
     },
     "DoRandomMapEvent": {
       "name": "完成地圖隨機事件",
@@ -3090,7 +3157,7 @@
     },
     "AkashiShopFilter": {
       "name": "商店過濾器",
-      "help": "預設只購買體力nanoda。如果要購買紫幣，設定為 'ActionPoint > PurpleCoins'"
+      "help": "預設只購買體力。如果要購買紫幣，設定為 'ActionPoint > PurpleCoins'"
     },
     "NotifyOpsiMail": {
       "name": "推送大世界相關資訊",
@@ -3101,7 +3168,7 @@
       "help": "將大世界相關資訊推送到啟動器和 Windows 通知。關閉後僅影響啟動器推送，不影響 OnePush 推送。"
     },
     "IndependentPush": {
-      "name": "大世界信息獨立推送",
+      "name": "大世界資訊獨立推送",
       "help": "需要同時開啟「推送大世界相關資訊」功能。\n關閉時使用智慧港區設定 —> 調試設定 —> 錯誤推送設定，需要同時開啟「錯誤推送」功能。\n開啟時使用大世界推送設定，需要分離推送內容時請開啟此功能"
     },
     "OpsiOnePushConfig": {
@@ -3153,7 +3220,7 @@
     },
     "Filter": {
       "name": "出擊艦隊過濾器",
-      "help": "車輪戰打BOSS，一個艦隊死了就換另一個。\n請確保艦隊有足夠強度，最終能打死BOSS。\n使用 \"CallSubmarine\" 以在戰鬥前呼叫潛艇，但執行間隔將增加至60分鍾"
+      "help": "車輪戰打BOSS，一個艦隊死了就換另一個。\n請確保艦隊有足夠強度，最終能打死BOSS。\n使用 \"CallSubmarine\" 以在戰鬥前呼叫潛艇，但執行間隔將增加至60分鐘"
     }
   },
   "OpsiFleet": {
@@ -3171,13 +3238,13 @@
     },
     "Submarine": {
       "name": "呼叫潛艇",
-      "help": "開啟後，執行間隔將增加至60分鍾"
+      "help": "開啟後，執行間隔將增加至60分鐘"
     }
   },
   "OpsiExplore": {
     "_info": {
-      "name": "大世界開荒",
-      "help": "每月月初開荒大世界的所有海域，不需要買戰役資訊記錄儀（5000油道具）\n這個功能將每隔27分鍾清理一個海域，以保證空域搜尋冷卻\n使用此功能前必須滿足以下條件：\n- 通關大世界主線並完成模擬戰+塞壬試驗場"
+      "name": "大世界開荒Plus",
+      "help": "每月月初開荒大世界的所有海域，不需要買戰役資訊記錄儀（5000油道具）\n這個功能將每隔27分鐘清理一個海域，以保證空域搜尋冷卻\n使用此功能前必須滿足以下條件：\n- 通關大世界主線並完成模擬戰+塞壬試驗場"
     },
     "SpecialRadar": {
       "name": "已購買戰役資訊記錄儀（5000油道具）",
@@ -3196,13 +3263,13 @@
       "help": "開啟後將不會推遲侵蝕1練級任務，慎用，沒體力開荒就老實了。"
     },
     "ExploreProgress": {
-      "name": "OpsiExplore.ExploreProgress.name",
-      "help": "OpsiExplore.ExploreProgress.help"
+      "name": "每月開荒進度",
+      "help": "顯示當前每月開荒的完成百分比"
     }
   },
   "OpsiShop": {
     "_info": {
-      "name": "大世界商店",
+      "name": "大世界商店Plus",
       "help": "使用此功能前必須滿足以下條件：\n- 通關大世界主線並完成模擬戰+塞壬試驗場\n- 啟用大世界開荒任務或使用戰役資訊記錄儀（5000油道具）\n- 通關大世界主線後的下一個月，即港口商店變為新版商店後才可使用"
     },
     "PresetFilter": {
@@ -3219,7 +3286,7 @@
       "help": "使用自定義過濾器需將 \"港口商店過濾器\" 設定為 \"自定義\"，並閱讀 https://github.com/LmeSzinc/AzurLaneAutoScript/wiki/filter_string_cn"
     },
     "DisableBeforeDate": {
-      "name": "每月 X 號前，不購買大世界商店",
+      "name": "每月 X 號前，不購買大世界商店Plus",
       "help": "從指定日期的後一天開始，每天買一次大世界商店\n0 表示不限制，每天都購買"
     }
   },
@@ -3235,11 +3302,11 @@
   },
   "OpsiDaily": {
     "_info": {
-      "name": "大世界每日",
+      "name": "大世界每日Plus",
       "help": "使用此功能前必須滿足以下條件：\n- 通關大世界主線並完成模擬戰+塞壬試驗場\n- 啟用大世界開荒任務或使用戰役資訊記錄儀（5000油道具）"
     },
     "DoMission": {
-      "name": "做大世界每日",
+      "name": "做大世界每日Plus",
       "help": "在港口接每日，並完成所有每日"
     },
     "UseTuningSample": {
@@ -3266,7 +3333,7 @@
   "OpsiObscure": {
     "_info": {
       "name": "隱秘海域",
-      "help": "每隔27分鍾清理一個隱秘海域，以保證空域搜尋冷卻\n使用此功能前必須滿足以下條件：\n- 通關大世界主線並完成模擬戰+塞壬試驗場\n- 啟用大世界開荒任務或使用戰役資訊記錄儀（5000油道具）"
+      "help": "每隔27分鐘清理一個隱秘海域，以保證空域搜尋冷卻\n使用此功能前必須滿足以下條件：\n- 通關大世界主線並完成模擬戰+塞壬試驗場\n- 啟用大世界開荒任務或使用戰役資訊記錄儀（5000油道具）"
     },
     "SkipHazard2Obscure": {
       "name": "不清理2級坐標",
@@ -3301,8 +3368,8 @@
       "help": "開啟後將帶來額外的行動力消耗，一般不用開啟，慢慢打就好"
     },
     "HasStronghold": {
-      "name": "OpsiStronghold.HasStronghold.name",
-      "help": "OpsiStronghold.HasStronghold.help"
+      "name": "是否有要塞",
+      "help": "地圖上是否有塞壬要塞可用"
     }
   },
   "OpsiMonthBoss": {
@@ -3351,10 +3418,6 @@
     "StayInZone": {
       "name": "停留在指定海域",
       "help": "開啟後，將按「指定海域」設定執行。指定單個海域時一直停留在該海域；指定多個海域時按填寫順序循環。僅在指定海域不為0時生效。"
-    },
-    "APPreserveUntilReset": {
-      "name": "OpsiMeowfficerFarming.APPreserveUntilReset.name",
-      "help": "OpsiMeowfficerFarming.APPreserveUntilReset.help"
     }
   },
   "OpsiTarget": {
@@ -3368,7 +3431,7 @@
     },
     "TargetZone": {
       "name": "指定海域",
-      "help": "僅出擊指定的海域，可以用來獲取大世界成就星星\n自動更新的數值，填0可重置進度，重置後自動跳過已開荒的海域\n支援海域ID、國服/國際服/日服/台服海域名稱，例如 \"51\", \"NA海域東南E\", \"NA Ocean SE Sector E\"\n填入默認值0，或者刪除數值即可取消指定"
+      "help": "僅出擊指定的海域，可以用來獲取大世界成就星星\n支援海域ID、國服/國際服/日服/台服海域名稱，例如 \"51\", \"NA海域東南E\"\n填入預設值0，或者刪除數值即可取消指定"
     },
     "LastRun": {
       "name": "上一次領取時間",
@@ -3378,7 +3441,7 @@
   "OpsiHazard1Leveling": {
     "_info": {
       "name": "侵蝕1練級",
-      "help": "消耗作戰補給憑證以獲取大量經驗和少量行動力\n推薦攜帶1-2艘預裝填航母以獲取最高的時均收益\n\n原版 AzurPilot 的一些防呆限制已被解除，請謹慎設定引數"
+      "help": "消耗作戰補給憑證以獲取大量經驗和少量行動力\n推薦攜帶1-2艘預裝填航母以獲取最高的時均收益\n\n原版 ALAS 的一些防呆限制已被解除，請謹慎設定引數"
     },
     "TargetZone": {
       "name": "指定海域",
@@ -3393,21 +3456,21 @@
     },
     "MinimumActionPointReserve": {
       "name": "保留 X 點行動力",
-      "help": "搏一搏，單車變摩託，雪風大人已經把幸運分給指揮官了nanoda，上吧nanoda！"
+      "help": "搏一搏，單車變摩託，雪風大人已經把幸運分給指揮官了，上吧！"
     },
     "ExecuteFixedPatrolScan": {
       "name": "艦隊強制移動",
-      "help": "雪風大人溫馨提示：開啟後，將強制移動艦隊以免找不到明石，指揮官你也不想因為找不到明石導致墜機nanoda？開啟這個功能輕輕鬆鬆達到50萬海裡每月nanoda，指揮官還在等什麼nanoda!"
+      "help": "雪風大人溫馨提示：開啟後，將強制移動艦隊以免找不到明石，指揮官你也不想因為找不到明石導致墜機吧？開啟這個功能輕輕鬆鬆達到50萬海裡每月，指揮官還在等什麼！"
     },
     "SkipHpCheck": {
       "name": "獻祭流跳過血量檢測",
       "help": "開啟後跳過戰鬥後的血量檢測，即使船沉了也不會停止練級",
-      "True": "True",
-      "False": "False"
+      "True": "開啟",
+      "False": "關閉"
     },
     "Cl1Filter": {
       "name": "明石購買篩選",
-      "help": "預設只購買體力nanoda。如果要同時購買紫幣，設定為 'ActionPoint > PurpleCoins'"
+      "help": "預設只購買體力。如果要同時購買紫幣，設定為 'ActionPoint > PurpleCoins'"
     },
     "RecordNonCL1AP": {
       "name": "統計非侵蝕1來源體力",
@@ -3448,7 +3511,7 @@
   "OpsiCheckLeveling": {
     "_info": {
       "name": "大世界艦隊經驗檢測",
-      "help": "檢測出擊艦隊所有船是否已經獲取滿經驗，是的話則傳送一條推送訊息\n需要先在 AzurPilot 設定中配置好\"錯誤推送設定\""
+      "help": "檢測出擊艦隊所有船是否已經獲取滿經驗，是的話則發送一條推送訊息\n需要先在 ALAS 設定中配置好\"錯誤推送設定\"\n沒成功檢測經驗會重新檢測，建議上滿六艘艦船不然就將檢測時間調大，連續3次失敗會推送並延時"
     },
     "TargetLevel": {
       "name": "當所有艦船經驗可升至此等級時推送 (0為不限制)",
@@ -3456,21 +3519,21 @@
     },
     "LastRun": {
       "name": "上次檢查經驗的時間 (自動記錄)",
-      "help": "記錄上一次檢查的時間以防止任務重復執行，檢查間隔為 1 天。這個數值是自動記錄的，一般不需要手動修改"
+      "help": "記錄上一次檢查的時間以防止任務重複執行，檢查間隔為 1 天。這個數值是自動記錄的，一般不需要手動修改"
     },
     "CheckInterval": {
-      "name": "OpsiCheckLeveling.CheckInterval.name",
-      "help": "OpsiCheckLeveling.CheckInterval.help"
+      "name": "檢測間隔 (小時)",
+      "help": "每隔多少小時進行一次經驗檢測，預設24小時"
     },
     "EnableCustomCheck": {
-      "name": "OpsiCheckLeveling.EnableCustomCheck.name",
-      "help": "OpsiCheckLeveling.EnableCustomCheck.help",
-      "True": "True",
-      "False": "False"
+      "name": "啟用自訂艦船檢測",
+      "help": "啟用後僅檢測指定的艦船是否達到目標等級，而非全部艦船",
+      "True": "開啟",
+      "False": "關閉"
     },
     "CustomCheckPositions": {
-      "name": "OpsiCheckLeveling.CustomCheckPositions.name",
-      "help": "OpsiCheckLeveling.CustomCheckPositions.help"
+      "name": "自訂檢測艦位",
+      "help": "填寫需要檢測的艦位編號(1-6)，多個艦位用英文逗號分隔（如：4,5），從上往下數1-6\n留空則檢測所有艦船"
     },
     "DelayAfterFull": {
       "name": "到達目標等級後將推遲該任務",
@@ -3479,38 +3542,38 @@
   },
   "OpsiFleetAutoChange": {
     "_info": {
-      "name": "OpsiFleetAutoChange._info.name",
-      "help": "OpsiFleetAutoChange._info.help"
+      "name": "侵蝕一艦隊自動配隊",
+      "help": "自動更換已滿經驗的艦船\n當經驗檢測發現指定艦位已滿經驗時，自動進入船塢選擇替換艦船\n使用大世界經驗檢測的目標等級和自訂檢測艦位配置\n使用教程：1.必須將所有常用艦船全部取消，只能留下練級艦船 2.必須啟用自訂艦船檢測並設定艦位 3.艦隊必須為艦隊1"
     },
     "Enable": {
-      "name": "OpsiFleetAutoChange.Enable.name",
-      "help": "OpsiFleetAutoChange.Enable.help",
-      "True": "True",
-      "False": "False"
+      "name": "啟用自動配隊",
+      "help": "開啟後將自動更換已滿經驗的艦船",
+      "True": "開啟",
+      "False": "關閉"
     },
     "CooldownHours": {
-      "name": "OpsiFleetAutoChange.CooldownHours.name",
-      "help": "OpsiFleetAutoChange.CooldownHours.help",
+      "name": "冷卻時間(小時)",
+      "help": "每次自動配隊後的冷卻時間，避免頻繁觸發",
       "12": "12",
       "24": "24",
       "48": "48",
       "72": "72"
     },
     "LastRun": {
-      "name": "OpsiFleetAutoChange.LastRun.name",
-      "help": "OpsiFleetAutoChange.LastRun.help"
+      "name": "上次運行時間 (自動記錄)",
+      "help": "記錄上一次自動配隊的時間以防止任務重複運行。這個數值是自動記錄的，一般不需要手動修改"
     }
   },
   "OpsiScheduling": {
     "_info": {
-      "name": "智慧排程",
-      "help": "大世界智慧排程功能，用於協調侵蝕1練級與黃幣補充任務之間的切換\n啟用後將根據黃幣和行動力自動在不同任務之間切換並傳送推送通知\n\n原版 AzurPilot 的一些防呆限制已被解除，請謹慎設定引數"
+      "name": "智慧排程Plus",
+      "help": "大世界智慧排程功能，用於協調侵蝕1練級與黃幣補充任務之間的切換\n啟用後將根據黃幣和行動力自動在不同任務之間切換並傳送推送通知\n\n原版 ALAS 的一些防呆限制已被解除，請謹慎設定引數"
     },
     "UseSmartSchedulingOperationCoinsPreserve": {
-      "name": "獲取 X 個作戰補給憑證",
+      "name": "保留 X 個作戰補給憑證",
       "help": "啟用後將使用下方設定的 獲取 X 個作戰補給憑證 的配置，停用則使用侵蝕1練級 黃幣保留配置\n關閉後將使用行動力控制\n開啟後使用黃幣控制",
-      "True": "True",
-      "False": "False"
+      "True": "開啟",
+      "False": "關閉"
     },
     "OperationCoinsPreserve": {
       "name": "侵蝕1練級 保留 X 個作戰補給憑證",
@@ -3521,7 +3584,7 @@
       "help": "行動力低於 X 後停止，自動開啟行動力箱子，X 包含箱子中的行動力，建議保留1000行動力給侵蝕1練級"
     },
     "OperationCoinsReturnThreshold": {
-      "name": "獲取 X 個作戰補給憑證",
+      "name": "作戰補給憑證低於 X 時返航",
       "help": "在黃幣獲取任務時 共獲取(增加) X 個作戰補給憑證後返回侵蝕1練級"
     },
     "EnableMeowfficerFarming": {
@@ -3551,6 +3614,26 @@
     "TaskPriority": {
       "name": "補充黃幣任務優先級",
       "help": "黃幣不足時，執行補充黃幣任務的優先級順序。使用 > 分隔。"
+    },
+    "MonthEndActionPointCleanupEnable": {
+      "name": "OpsiScheduling.MonthEndActionPointCleanupEnable.name",
+      "help": "OpsiScheduling.MonthEndActionPointCleanupEnable.help",
+      "True": "True",
+      "False": "False"
+    },
+    "MonthEndActionPointCleanupDays": {
+      "name": "OpsiScheduling.MonthEndActionPointCleanupDays.name",
+      "help": "OpsiScheduling.MonthEndActionPointCleanupDays.help"
+    },
+    "MonthEndActionPointPreserve": {
+      "name": "OpsiScheduling.MonthEndActionPointPreserve.name",
+      "help": "OpsiScheduling.MonthEndActionPointPreserve.help"
+    },
+    "MonthEndShopPurchase": {
+      "name": "OpsiScheduling.MonthEndShopPurchase.name",
+      "help": "OpsiScheduling.MonthEndShopPurchase.help",
+      "True": "True",
+      "False": "False"
     }
   },
   "OpsiPreventActionPointOverflow": {
@@ -3576,42 +3659,42 @@
   },
   "IslandPlan": {
     "_info": {
-      "name": "IslandPlan._info.name",
-      "help": "IslandPlan._info.help"
+      "name": "島嶼計劃全域",
+      "help": "島嶼計劃的全域配置，包括季節設定"
     },
     "Season": {
-      "name": "IslandPlan.Season.name",
-      "help": "IslandPlan.Season.help",
-      "spring": "spring",
-      "summer": "summer",
-      "autumn": "autumn",
-      "winter": "winter"
+      "name": "當前季節",
+      "help": "設定島嶼計劃當前所處的季節，不同季節會啟用對應的季節限定物品。\n春季限定：涼拌雙筍、蘆筍炒蝦仁、迎春花茶、鮮榨鳳梨汁、蘆筍、鳳梨、薺菜乾、春季花束\n夏季限定：莧菜飯糰、番茄炒蛋、西瓜汁、黃瓜汁、番茄、黃瓜、茉莉精油、夏季花束",
+      "spring": "春",
+      "summer": "夏",
+      "autumn": "秋",
+      "winter": "冬"
     }
   },
   "IslandFarm": {
     "_info": {
-      "name": "IslandFarm._info.name",
-      "help": "IslandFarm._info.help"
+      "name": "農田",
+      "help": ""
     },
     "Positions": {
-      "name": "IslandFarm.Positions.name",
-      "help": "IslandFarm.Positions.help",
+      "name": "農田崗位",
+      "help": "",
       "1": "1",
       "2": "2",
       "3": "3",
       "4": "4"
     },
     "WorkerFilter": {
-      "name": "IslandFarm.WorkerFilter.name",
-      "help": "IslandFarm.WorkerFilter.help"
+      "name": "農田使用角色",
+      "help": "以>連接，例如肇和 新澤西 小天城：ChaoHo > NewJersey > Amagi_chan\n小加加：Saratoga > 明石：Akashi > 塔什干：Tashkent > 應瑞：YingSwei\n惡毒：LeMalin > 獨角獸：Unicorn > 島風：Shimakaze > 柴郡：Cheshire\n鎮海：ChenHai > 威廉D波特：WilliamDPorter\n海倫娜：Helena > 大帝：Friedrich > 愛宕：Atago\n逸仙：Yixian > 奧古斯特：August > 歐根親王：Eugen > 胡德：Hood > 標槍：Javelin > 拉菲：Laffey > 探索者：Explorer > 領航員：Navigator > 領洋者：OceanCrosser > 飛雲：FeiYun > 高雄：Takao\n僅識別預設排序前兩排；指定艦娘不可用時回退 WorkerJuu。"
     },
     "MinFarm": {
-      "name": "IslandFarm.MinFarm.name",
-      "help": "IslandFarm.MinFarm.help"
+      "name": "農田作物底線",
+      "help": "建議660及以上"
     },
     "PlantPotatoes": {
-      "name": "IslandFarm.PlantPotatoes.name",
-      "help": "IslandFarm.PlantPotatoes.help",
+      "name": "種小麥",
+      "help": "",
       "0": "0",
       "1": "1",
       "2": "2",
@@ -3621,32 +3704,32 @@
   },
   "IslandOrchard": {
     "_info": {
-      "name": "IslandOrchard._info.name",
-      "help": "IslandOrchard._info.help"
+      "name": "果園",
+      "help": "倉庫只識別兩排，注意清理"
     },
     "Positions": {
-      "name": "IslandOrchard.Positions.name",
-      "help": "IslandOrchard.Positions.help",
+      "name": "果園崗位",
+      "help": "",
       "1": "1",
       "2": "2",
       "3": "3",
       "4": "4"
     },
     "WorkerFilter": {
-      "name": "IslandOrchard.WorkerFilter.name",
-      "help": "IslandOrchard.WorkerFilter.help"
+      "name": "果園使用角色",
+      "help": "以>連接，例如肇和 新澤西 小天城：ChaoHo > NewJersey > Amagi_chan\n小加加：Saratoga > 明石：Akashi > 塔什干：Tashkent > 應瑞：YingSwei\n惡毒：LeMalin > 獨角獸：Unicorn > 島風：Shimakaze > 柴郡：Cheshire\n鎮海：ChenHai > 威廉D波特：WilliamDPorter\n海倫娜：Helena > 大帝：Friedrich > 愛宕：Atago\n逸仙：Yixian > 奧古斯特：August > 歐根親王：Eugen > 胡德：Hood > 標槍：Javelin > 拉菲：Laffey > 探索者：Explorer > 領航員：Navigator > 領洋者：OceanCrosser > 飛雲：FeiYun > 高雄：Takao\n僅識別預設排序前兩排；指定艦娘不可用時回退 WorkerJuu。"
     },
     "MinOrchard": {
-      "name": "IslandOrchard.MinOrchard.name",
-      "help": "IslandOrchard.MinOrchard.help"
+      "name": "水果底線",
+      "help": ""
     },
     "IgnoreAvocado": {
-      "name": "IslandOrchard.IgnoreAvocado.name",
-      "help": "IslandOrchard.IgnoreAvocado.help"
+      "name": "忽視酪梨",
+      "help": ""
     },
     "PlantRubber": {
-      "name": "IslandOrchard.PlantRubber.name",
-      "help": "IslandOrchard.PlantRubber.help",
+      "name": "種橡膠",
+      "help": "",
       "0": "0",
       "1": "1",
       "2": "2",
@@ -3654,36 +3737,36 @@
       "4": "4"
     },
     "AmagiChanRubber": {
-      "name": "IslandOrchard.AmagiChanRubber.name",
-      "help": "IslandOrchard.AmagiChanRubber.help"
+      "name": "小天城種橡膠",
+      "help": ""
     }
   },
   "IslandNursery": {
     "_info": {
-      "name": "IslandNursery._info.name",
-      "help": "IslandNursery._info.help"
+      "name": "苗圃",
+      "help": ""
     },
     "Positions": {
-      "name": "IslandNursery.Positions.name",
-      "help": "IslandNursery.Positions.help",
+      "name": "苗圃崗位",
+      "help": "",
       "1": "1",
       "2": "2"
     },
     "WorkerFilter": {
-      "name": "IslandNursery.WorkerFilter.name",
-      "help": "IslandNursery.WorkerFilter.help"
+      "name": "苗圃使用角色",
+      "help": "以>連接，例如肇和 新澤西 小天城：ChaoHo > NewJersey > Amagi_chan\n小加加：Saratoga > 明石：Akashi > 塔什干：Tashkent > 應瑞：YingSwei\n惡毒：LeMalin > 獨角獸：Unicorn > 島風：Shimakaze > 柴郡：Cheshire\n鎮海：ChenHai > 威廉D波特：WilliamDPorter\n海倫娜：Helena > 大帝：Friedrich > 愛宕：Atago\n逸仙：Yixian > 奧古斯特：August > 歐根親王：Eugen > 胡德：Hood > 標槍：Javelin > 拉菲：Laffey > 探索者：Explorer > 領航員：Navigator > 領洋者：OceanCrosser > 飛雲：FeiYun > 高雄：Takao\n僅識別預設排序前兩排；指定艦娘不可用時回退 WorkerJuu。"
     },
     "MinNursery": {
-      "name": "IslandNursery.MinNursery.name",
-      "help": "IslandNursery.MinNursery.help"
+      "name": "苗圃作物底線",
+      "help": ""
     },
     "IgnorePineapple": {
-      "name": "IslandNursery.IgnorePineapple.name",
-      "help": "IslandNursery.IgnorePineapple.help"
+      "name": "忽視鳳梨",
+      "help": ""
     },
     "PlantLavender": {
-      "name": "IslandNursery.PlantLavender.name",
-      "help": "IslandNursery.PlantLavender.help",
+      "name": "種薰衣草",
+      "help": "",
       "0": "0",
       "1": "1",
       "2": "2"
@@ -3691,107 +3774,107 @@
   },
   "IslandRancher": {
     "_info": {
-      "name": "IslandRancher._info.name",
-      "help": "IslandRancher._info.help"
+      "name": "牧場",
+      "help": ""
     },
     "MinChicken": {
-      "name": "IslandRancher.MinChicken.name",
-      "help": "IslandRancher.MinChicken.help"
+      "name": "雞肉底線",
+      "help": ""
     },
     "MinPork": {
-      "name": "IslandRancher.MinPork.name",
-      "help": "IslandRancher.MinPork.help"
+      "name": "豬肉底線",
+      "help": ""
     },
     "Milk": {
-      "name": "IslandRancher.Milk.name",
-      "help": "IslandRancher.Milk.help"
+      "name": "養牛",
+      "help": ""
     },
     "RancherFilter": {
-      "name": "IslandRancher.RancherFilter.name",
-      "help": "IslandRancher.RancherFilter.help"
+      "name": "使用角色",
+      "help": "以>連接，例如肇和 新澤西 小天城：ChaoHo > NewJersey > Amagi_chan\n小加加：Saratoga > 明石：Akashi > 塔什干：Tashkent > 應瑞：YingSwei\n惡毒：LeMalin > 獨角獸：Unicorn > 島風：Shimakaze > 柴郡：Cheshire\n鎮海：ChenHai > 威廉D波特：WilliamDPorter\n海倫娜：Helena > 大帝：Friedrich > 愛宕：Atago\n逸仙：Yixian > 奧古斯特：August > 歐根親王：Eugen > 胡德：Hood > 標槍：Javelin > 拉菲：Laffey > 探索者：Explorer > 領航員：Navigator > 領洋者：OceanCrosser > 飛雲：FeiYun > 高雄：Takao\n僅識別預設排序前兩排；指定艦娘不可用時回退 WorkerJuu。"
     },
     "Wool": {
-      "name": "IslandRancher.Wool.name",
-      "help": "IslandRancher.Wool.help"
+      "name": "養羊",
+      "help": ""
     },
     "WoolWorkerFilter": {
-      "name": "IslandRancher.WoolWorkerFilter.name",
-      "help": "IslandRancher.WoolWorkerFilter.help"
+      "name": "養羊使用角色",
+      "help": "以>連接，例如肇和 新澤西 小天城：ChaoHo > NewJersey > Amagi_chan\n小加加：Saratoga > 明石：Akashi > 塔什干：Tashkent > 應瑞：YingSwei\n惡毒：LeMalin > 獨角獸：Unicorn > 島風：Shimakaze > 柴郡：Cheshire\n鎮海：ChenHai > 威廉D波特：WilliamDPorter\n海倫娜：Helena > 大帝：Friedrich > 愛宕：Atago\n逸仙：Yixian > 奧古斯特：August > 歐根親王：Eugen > 胡德：Hood > 標槍：Javelin > 拉菲：Laffey > 探索者：Explorer > 領航員：Navigator > 領洋者：OceanCrosser > 飛雲：FeiYun > 高雄：Takao\n僅識別預設排序前兩排；指定艦娘不可用時回退 WorkerJuu。"
     }
   },
   "IslandFishery": {
     "_info": {
-      "name": "IslandFishery._info.name",
-      "help": "IslandFishery._info.help"
+      "name": "漁場",
+      "help": "支援7種水產品：鱸魚、黃鰭鮪魚、貝殼、小河蝦、螃蟹、魷魚、海參\n預設養殖黃鰭鮪魚"
     },
     "Positions": {
-      "name": "IslandFishery.Positions.name",
-      "help": "IslandFishery.Positions.help",
+      "name": "漁場崗位",
+      "help": "",
       "1": "1",
       "2": "2",
       "3": "3"
     },
     "MinBass": {
-      "name": "IslandFishery.MinBass.name",
-      "help": "IslandFishery.MinBass.help"
+      "name": "鱸魚底線",
+      "help": ""
     },
     "MinYellowfinTuna": {
-      "name": "IslandFishery.MinYellowfinTuna.name",
-      "help": "IslandFishery.MinYellowfinTuna.help"
+      "name": "黃鰭鮪魚底線",
+      "help": ""
     },
     "MinShell": {
-      "name": "IslandFishery.MinShell.name",
-      "help": "IslandFishery.MinShell.help"
+      "name": "貝殼底線",
+      "help": ""
     },
     "MinShrimp": {
-      "name": "IslandFishery.MinShrimp.name",
-      "help": "IslandFishery.MinShrimp.help"
+      "name": "小河蝦底線",
+      "help": ""
     },
     "MinCrayfish": {
-      "name": "IslandFishery.MinCrayfish.name",
-      "help": "IslandFishery.MinCrayfish.help"
+      "name": "小龍蝦底線",
+      "help": ""
     },
     "MinCrab": {
-      "name": "IslandFishery.MinCrab.name",
-      "help": "IslandFishery.MinCrab.help"
+      "name": "螃蟹底線",
+      "help": ""
     },
     "MinSquid": {
-      "name": "IslandFishery.MinSquid.name",
-      "help": "IslandFishery.MinSquid.help"
+      "name": "魷魚底線",
+      "help": ""
     },
     "MinSeaCucumber": {
-      "name": "IslandFishery.MinSeaCucumber.name",
-      "help": "IslandFishery.MinSeaCucumber.help"
+      "name": "海參底線",
+      "help": ""
     },
     "PlantYellowfinTuna": {
-      "name": "IslandFishery.PlantYellowfinTuna.name",
-      "help": "IslandFishery.PlantYellowfinTuna.help",
+      "name": "養黃鰭鮪魚",
+      "help": "",
       "0": "0",
       "1": "1",
       "2": "2",
       "3": "3"
     },
     "RancherFilter": {
-      "name": "IslandFishery.RancherFilter.name",
-      "help": "IslandFishery.RancherFilter.help"
+      "name": "使用角色",
+      "help": "以>連接，例如肇和 新澤西 小天城：ChaoHo > NewJersey > Amagi_chan\n小加加：Saratoga > 明石：Akashi > 塔什干：Tashkent > 應瑞：YingSwei\n惡毒：LeMalin > 獨角獸：Unicorn > 島風：Shimakaze > 柴郡：Cheshire\n鎮海：ChenHai > 威廉D波特：WilliamDPorter\n海倫娜：Helena > 大帝：Friedrich > 愛宕：Atago\n逸仙：Yixian > 奧古斯特：August > 歐根親王：Eugen > 胡德：Hood > 標槍：Javelin > 拉菲：Laffey > 探索者：Explorer > 領航員：Navigator > 領洋者：OceanCrosser > 飛雲：FeiYun > 高雄：Takao\n僅識別預設排序前兩排；指定艦娘不可用時回退 WorkerJuu。"
     }
   },
   "IslandMine": {
     "_info": {
-      "name": "IslandMine._info.name",
-      "help": "IslandMine._info.help"
+      "name": "礦山",
+      "help": ""
     },
     "Positions": {
-      "name": "IslandMine.Positions.name",
-      "help": "IslandMine.Positions.help",
+      "name": "安排 X 個礦工崗位",
+      "help": "",
       "1": "1",
       "2": "2",
       "3": "3",
       "4": "4"
     },
     "MineSilver": {
-      "name": "采银矿岗位数",
-      "help": "",
+      "name": "採銀礦崗位數",
+      "help": "幾個空閒礦山崗位用於生產銀礦，其餘空著不動",
       "0": "0",
       "1": "1",
       "2": "2",
@@ -3799,46 +3882,46 @@
       "4": "4"
     },
     "WorkerFilter": {
-      "name": "IslandMine.WorkerFilter.name",
-      "help": "IslandMine.WorkerFilter.help"
+      "name": "礦山使用角色",
+      "help": "以>連接，例如肇和 新澤西 小天城：ChaoHo > NewJersey > Amagi_chan\n小加加：Saratoga > 明石：Akashi > 塔什干：Tashkent > 應瑞：YingSwei\n惡毒：LeMalin > 獨角獸：Unicorn > 島風：Shimakaze > 柴郡：Cheshire\n鎮海：ChenHai > 威廉D波特：WilliamDPorter\n海倫娜：Helena > 大帝：Friedrich > 愛宕：Atago\n逸仙：Yixian > 奧古斯特：August > 歐根親王：Eugen > 胡德：Hood > 標槍：Javelin > 拉菲：Laffey > 探索者：Explorer > 領航員：Navigator > 領洋者：OceanCrosser > 飛雲：FeiYun > 高雄：Takao\n僅識別預設排序前兩排；指定艦娘不可用時回退 WorkerJuu。"
     },
     "MinCopper": {
-      "name": "IslandMine.MinCopper.name",
-      "help": "IslandMine.MinCopper.help"
+      "name": "銅礦最低庫存",
+      "help": "倉庫中銅礦數量低於此值時，礦山崗位才會生產"
     },
     "MinAluminium": {
-      "name": "IslandMine.MinAluminium.name",
-      "help": "IslandMine.MinAluminium.help"
+      "name": "鋁礦最低庫存",
+      "help": "倉庫中鋁礦數量低於此值時，礦山崗位才會生產"
     },
     "MinIron": {
-      "name": "IslandMine.MinIron.name",
-      "help": "IslandMine.MinIron.help"
+      "name": "鐵礦最低庫存",
+      "help": "倉庫中鐵礦數量低於此值時，礦山崗位才會生產"
     },
     "MinSulphur": {
-      "name": "IslandMine.MinSulphur.name",
-      "help": "IslandMine.MinSulphur.help"
+      "name": "硫磺最低庫存",
+      "help": "倉庫中硫磺數量低於此值時，礦山崗位才會生產"
     },
     "MinSilver": {
-      "name": "IslandMine.MinSilver.name",
-      "help": "IslandMine.MinSilver.help"
+      "name": "銀礦最低庫存",
+      "help": "倉庫中銀礦數量低於此值時，礦山崗位才會生產"
     }
   },
   "IslandForest": {
     "_info": {
-      "name": "IslandForest._info.name",
-      "help": "IslandForest._info.help"
+      "name": "林場",
+      "help": ""
     },
     "Positions": {
-      "name": "IslandForest.Positions.name",
-      "help": "IslandForest.Positions.help",
+      "name": "安排 X 個伐木工崗位",
+      "help": "",
       "1": "1",
       "2": "2",
       "3": "3",
       "4": "4"
     },
     "CutElegant": {
-      "name": "伐典雅之木岗位数",
-      "help": "",
+      "name": "伐典雅之木崗位數",
+      "help": "幾個空閒林場崗位用於生產典雅之木，其餘空著不動",
       "0": "0",
       "1": "1",
       "2": "2",
@@ -3846,988 +3929,988 @@
       "4": "4"
     },
     "WorkerFilter": {
-      "name": "IslandForest.WorkerFilter.name",
-      "help": "IslandForest.WorkerFilter.help"
+      "name": "林場使用角色",
+      "help": "以>連接，例如肇和 新澤西 小天城：ChaoHo > NewJersey > Amagi_chan\n小加加：Saratoga > 明石：Akashi > 塔什干：Tashkent > 應瑞：YingSwei\n惡毒：LeMalin > 獨角獸：Unicorn > 島風：Shimakaze > 柴郡：Cheshire\n鎮海：ChenHai > 威廉D波特：WilliamDPorter\n海倫娜：Helena > 大帝：Friedrich > 愛宕：Atago\n逸仙：Yixian > 奧古斯特：August > 歐根親王：Eugen > 胡德：Hood > 標槍：Javelin > 拉菲：Laffey > 探索者：Explorer > 領航員：Navigator > 領洋者：OceanCrosser > 飛雲：FeiYun > 高雄：Takao\n僅識別預設排序前兩排；指定艦娘不可用時回退 WorkerJuu。"
     },
     "MinElegant": {
-      "name": "IslandForest.MinElegant.name",
-      "help": "IslandForest.MinElegant.help"
+      "name": "優雅木材最低庫存",
+      "help": "倉庫中優雅木材數量低於此值時，林場崗位才會生產"
     },
     "MinPractical": {
-      "name": "IslandForest.MinPractical.name",
-      "help": "IslandForest.MinPractical.help"
+      "name": "實用木材最低庫存",
+      "help": "倉庫中實用木材數量低於此值時，林場崗位才會生產"
     },
     "MinSelected": {
-      "name": "IslandForest.MinSelected.name",
-      "help": "IslandForest.MinSelected.help"
+      "name": "精選木材最低庫存",
+      "help": "倉庫中精選木材數量低於此值時，林場崗位才會生產"
     }
   },
   "IslandDailyGather": {
     "_info": {
-      "name": "IslandDailyGather._info.name",
-      "help": "IslandDailyGather._info.help"
+      "name": "每日採集",
+      "help": "透過管理介面採集分頁，UI模擬點擊完成每日採集。執行時間：凌晨3:10、下午6:00。流程：選擇採集目標→切換開關→分配角色→出發"
     },
     "WorkerFilter": {
-      "name": "IslandDailyGather.WorkerFilter.name",
-      "help": "IslandDailyGather.WorkerFilter.help"
+      "name": "採集角色",
+      "help": "以>連接，最多填寫3個角色，分別對應第1~3個採集槽位。\n以>連接，例如肇和 新澤西 小天城：ChaoHo > NewJersey > Amagi_chan\n小加加：Saratoga > 明石：Akashi > 塔什干：Tashkent > 應瑞：YingSwei\n惡毒：LeMalin > 獨角獸：Unicorn > 島風：Shimakaze > 柴郡：Cheshire\n鎮海：ChenHai > 威廉D波特：WilliamDPorter\n海倫娜：Helena > 大帝：Friedrich > 愛宕：Atago\n逸仙：Yixian > 奧古斯特：August > 歐根親王：Eugen > 胡德：Hood > 標槍：Javelin > 拉菲：Laffey > 探索者：Explorer > 領航員：Navigator > 領洋者：OceanCrosser > 飛雲：FeiYun > 高雄：Takao\n每日採集不能選擇 WorkerJuu，填寫後會自動忽略。\n僅識別預設排序前兩排；指定角色不可用時該槽位回退現有採集邏輯。"
     }
   },
   "IslandRestaurant": {
     "_info": {
-      "name": "IslandRestaurant._info.name",
-      "help": "IslandRestaurant._info.help"
+      "name": "有魚餐館",
+      "help": "餐品會按從1~8的順序依次生產，生產目標為餐品X數量選項，完全滿足前一項後才會執行下一項，後一項在運行時不會影響之前幾項任務的達成\n餐品1-8中的涼拌雙筍和蘆筍炒蝦仁會根據當前季節自動切換為對應季節餐品"
     },
     "PostNumber": {
-      "name": "IslandRestaurant.PostNumber.name",
-      "help": "IslandRestaurant.PostNumber.help",
+      "name": "安排 X 個廚師崗位",
+      "help": "",
       "1": "1",
       "2": "2"
     },
     "ChefFilter": {
-      "name": "IslandRestaurant.ChefFilter.name",
-      "help": "IslandRestaurant.ChefFilter.help"
+      "name": "廚師",
+      "help": "以>連接，例如肇和 新澤西 小天城：ChaoHo > NewJersey > Amagi_chan\n小加加：Saratoga > 明石：Akashi > 塔什干：Tashkent > 應瑞：YingSwei\n惡毒：LeMalin > 獨角獸：Unicorn > 島風：Shimakaze > 柴郡：Cheshire\n鎮海：ChenHai > 威廉D波特：WilliamDPorter\n海倫娜：Helena > 大帝：Friedrich > 愛宕：Atago\n逸仙：Yixian > 奧古斯特：August > 歐根親王：Eugen > 胡德：Hood > 標槍：Javelin > 拉菲：Laffey > 探索者：Explorer > 領航員：Navigator > 領洋者：OceanCrosser > 飛雲：FeiYun > 高雄：Takao\n僅識別預設排序前兩排；指定艦娘不可用時回退 WorkerJuu。"
     },
     "DoubleBambooShoots": {
-      "name": "IslandRestaurant.DoubleBambooShoots.name",
-      "help": "IslandRestaurant.DoubleBambooShoots.help"
+      "name": "季節餐優先製作",
+      "help": "開啟後按目前季節選擇餐館季節餐，並在基礎餐品之前優先製作。春季為涼拌雙筍，夏季為莧菜飯糰；秋冬無餐館季節餐時不額外製作。"
     },
     "Meal1": {
-      "name": "IslandRestaurant.Meal1.name",
-      "help": "IslandRestaurant.Meal1.help",
+      "name": "餐品1",
+      "help": "",
       "None": "None",
-      "tofu": "tofu",
-      "omurice": "omurice",
-      "cabbage_tofu": "cabbage_tofu",
-      "salad": "salad",
-      "tofu_meat": "tofu_meat",
-      "tofu_combo": "tofu_combo",
-      "hearty_meal": "hearty_meal",
-      "double_bamboo_shoots": "double_bamboo_shoots",
-      "asparagus_shrimp": "asparagus_shrimp",
-      "fish_chip": "fish_chip",
-      "fo_tiao": "fo_tiao",
-      "onion_fish": "onion_fish"
+      "tofu": "豆腐",
+      "omurice": "蛋包飯",
+      "cabbage_tofu": "白菜豆腐湯",
+      "salad": "蔬菜沙拉",
+      "tofu_meat": "肉末燒豆腐",
+      "tofu_combo": "經典豆腐套餐",
+      "hearty_meal": "綿玉定食",
+      "double_bamboo_shoots": "涼拌雙筍",
+      "asparagus_shrimp": "蘆筍炒蝦仁",
+      "fish_chip": "炸魚薯條",
+      "fo_tiao": "佛跳牆",
+      "onion_fish": "洋蔥蒸魚"
     },
     "MealNumber1": {
-      "name": "IslandRestaurant.MealNumber1.name",
-      "help": "IslandRestaurant.MealNumber1.help"
+      "name": "生產餐品1至 X 份",
+      "help": ""
     },
     "Meal2": {
-      "name": "IslandRestaurant.Meal2.name",
-      "help": "IslandRestaurant.Meal2.help",
+      "name": "餐品2",
+      "help": "",
       "None": "None",
-      "tofu": "tofu",
-      "omurice": "omurice",
-      "cabbage_tofu": "cabbage_tofu",
-      "salad": "salad",
-      "tofu_meat": "tofu_meat",
-      "tofu_combo": "tofu_combo",
-      "hearty_meal": "hearty_meal",
-      "double_bamboo_shoots": "double_bamboo_shoots",
-      "asparagus_shrimp": "asparagus_shrimp",
-      "fish_chip": "fish_chip",
-      "fo_tiao": "fo_tiao",
-      "onion_fish": "onion_fish"
+      "tofu": "豆腐",
+      "omurice": "蛋包飯",
+      "cabbage_tofu": "白菜豆腐湯",
+      "salad": "蔬菜沙拉",
+      "tofu_meat": "肉末燒豆腐",
+      "tofu_combo": "經典豆腐套餐",
+      "hearty_meal": "綿玉定食",
+      "double_bamboo_shoots": "涼拌雙筍",
+      "asparagus_shrimp": "蘆筍炒蝦仁",
+      "fish_chip": "炸魚薯條",
+      "fo_tiao": "佛跳牆",
+      "onion_fish": "洋蔥蒸魚"
     },
     "MealNumber2": {
-      "name": "IslandRestaurant.MealNumber2.name",
-      "help": "IslandRestaurant.MealNumber2.help"
+      "name": "生產餐品2至 X 份",
+      "help": ""
     },
     "Meal3": {
-      "name": "IslandRestaurant.Meal3.name",
-      "help": "IslandRestaurant.Meal3.help",
+      "name": "餐品3",
+      "help": "",
       "None": "None",
-      "tofu": "tofu",
-      "omurice": "omurice",
-      "cabbage_tofu": "cabbage_tofu",
-      "salad": "salad",
-      "tofu_meat": "tofu_meat",
-      "tofu_combo": "tofu_combo",
-      "hearty_meal": "hearty_meal",
-      "double_bamboo_shoots": "double_bamboo_shoots",
-      "asparagus_shrimp": "asparagus_shrimp",
-      "fish_chip": "fish_chip",
-      "fo_tiao": "fo_tiao",
-      "onion_fish": "onion_fish"
+      "tofu": "豆腐",
+      "omurice": "蛋包飯",
+      "cabbage_tofu": "白菜豆腐湯",
+      "salad": "蔬菜沙拉",
+      "tofu_meat": "肉末燒豆腐",
+      "tofu_combo": "經典豆腐套餐",
+      "hearty_meal": "綿玉定食",
+      "double_bamboo_shoots": "涼拌雙筍",
+      "asparagus_shrimp": "蘆筍炒蝦仁",
+      "fish_chip": "炸魚薯條",
+      "fo_tiao": "佛跳牆",
+      "onion_fish": "洋蔥蒸魚"
     },
     "MealNumber3": {
-      "name": "IslandRestaurant.MealNumber3.name",
-      "help": "IslandRestaurant.MealNumber3.help"
+      "name": "生產餐品3至 X 份",
+      "help": ""
     },
     "Meal4": {
-      "name": "IslandRestaurant.Meal4.name",
-      "help": "IslandRestaurant.Meal4.help",
+      "name": "餐品4",
+      "help": "",
       "None": "None",
-      "tofu": "tofu",
-      "omurice": "omurice",
-      "cabbage_tofu": "cabbage_tofu",
-      "salad": "salad",
-      "tofu_meat": "tofu_meat",
-      "tofu_combo": "tofu_combo",
-      "hearty_meal": "hearty_meal",
-      "double_bamboo_shoots": "double_bamboo_shoots",
-      "asparagus_shrimp": "asparagus_shrimp",
-      "fish_chip": "fish_chip",
-      "fo_tiao": "fo_tiao",
-      "onion_fish": "onion_fish"
+      "tofu": "豆腐",
+      "omurice": "蛋包飯",
+      "cabbage_tofu": "白菜豆腐湯",
+      "salad": "蔬菜沙拉",
+      "tofu_meat": "肉末燒豆腐",
+      "tofu_combo": "經典豆腐套餐",
+      "hearty_meal": "綿玉定食",
+      "double_bamboo_shoots": "涼拌雙筍",
+      "asparagus_shrimp": "蘆筍炒蝦仁",
+      "fish_chip": "炸魚薯條",
+      "fo_tiao": "佛跳牆",
+      "onion_fish": "洋蔥蒸魚"
     },
     "MealNumber4": {
-      "name": "IslandRestaurant.MealNumber4.name",
-      "help": "IslandRestaurant.MealNumber4.help"
+      "name": "生產餐品4至 X 份",
+      "help": ""
     },
     "Meal5": {
-      "name": "IslandRestaurant.Meal5.name",
-      "help": "IslandRestaurant.Meal5.help",
+      "name": "餐品5",
+      "help": "",
       "None": "None",
-      "tofu": "tofu",
-      "omurice": "omurice",
-      "cabbage_tofu": "cabbage_tofu",
-      "salad": "salad",
-      "tofu_meat": "tofu_meat",
-      "tofu_combo": "tofu_combo",
-      "hearty_meal": "hearty_meal",
-      "double_bamboo_shoots": "double_bamboo_shoots",
-      "asparagus_shrimp": "asparagus_shrimp",
-      "fish_chip": "fish_chip",
-      "fo_tiao": "fo_tiao",
-      "onion_fish": "onion_fish"
+      "tofu": "豆腐",
+      "omurice": "蛋包飯",
+      "cabbage_tofu": "白菜豆腐湯",
+      "salad": "蔬菜沙拉",
+      "tofu_meat": "肉末燒豆腐",
+      "tofu_combo": "經典豆腐套餐",
+      "hearty_meal": "綿玉定食",
+      "double_bamboo_shoots": "涼拌雙筍",
+      "asparagus_shrimp": "蘆筍炒蝦仁",
+      "fish_chip": "炸魚薯條",
+      "fo_tiao": "佛跳牆",
+      "onion_fish": "洋蔥蒸魚"
     },
     "MealNumber5": {
-      "name": "IslandRestaurant.MealNumber5.name",
-      "help": "IslandRestaurant.MealNumber5.help"
+      "name": "生產餐品5至 X 份",
+      "help": ""
     },
     "Meal6": {
-      "name": "IslandRestaurant.Meal6.name",
-      "help": "IslandRestaurant.Meal6.help",
+      "name": "餐品6",
+      "help": "",
       "None": "None",
-      "tofu": "tofu",
-      "omurice": "omurice",
-      "cabbage_tofu": "cabbage_tofu",
-      "salad": "salad",
-      "tofu_meat": "tofu_meat",
-      "tofu_combo": "tofu_combo",
-      "hearty_meal": "hearty_meal",
-      "double_bamboo_shoots": "double_bamboo_shoots",
-      "asparagus_shrimp": "asparagus_shrimp",
-      "fish_chip": "fish_chip",
-      "fo_tiao": "fo_tiao",
-      "onion_fish": "onion_fish"
+      "tofu": "豆腐",
+      "omurice": "蛋包飯",
+      "cabbage_tofu": "白菜豆腐湯",
+      "salad": "蔬菜沙拉",
+      "tofu_meat": "肉末燒豆腐",
+      "tofu_combo": "經典豆腐套餐",
+      "hearty_meal": "綿玉定食",
+      "double_bamboo_shoots": "涼拌雙筍",
+      "asparagus_shrimp": "蘆筍炒蝦仁",
+      "fish_chip": "炸魚薯條",
+      "fo_tiao": "佛跳牆",
+      "onion_fish": "洋蔥蒸魚"
     },
     "MealNumber6": {
-      "name": "IslandRestaurant.MealNumber6.name",
-      "help": "IslandRestaurant.MealNumber6.help"
+      "name": "生產餐品6至 X 份",
+      "help": ""
     },
     "Meal7": {
-      "name": "IslandRestaurant.Meal7.name",
-      "help": "IslandRestaurant.Meal7.help",
+      "name": "餐品7",
+      "help": "",
       "None": "None",
-      "tofu": "tofu",
-      "omurice": "omurice",
-      "cabbage_tofu": "cabbage_tofu",
-      "salad": "salad",
-      "tofu_meat": "tofu_meat",
-      "tofu_combo": "tofu_combo",
-      "hearty_meal": "hearty_meal",
-      "double_bamboo_shoots": "double_bamboo_shoots",
-      "asparagus_shrimp": "asparagus_shrimp",
-      "fish_chip": "fish_chip",
-      "fo_tiao": "fo_tiao",
-      "onion_fish": "onion_fish"
+      "tofu": "豆腐",
+      "omurice": "蛋包飯",
+      "cabbage_tofu": "白菜豆腐湯",
+      "salad": "蔬菜沙拉",
+      "tofu_meat": "肉末燒豆腐",
+      "tofu_combo": "經典豆腐套餐",
+      "hearty_meal": "綿玉定食",
+      "double_bamboo_shoots": "涼拌雙筍",
+      "asparagus_shrimp": "蘆筍炒蝦仁",
+      "fish_chip": "炸魚薯條",
+      "fo_tiao": "佛跳牆",
+      "onion_fish": "洋蔥蒸魚"
     },
     "MealNumber7": {
-      "name": "IslandRestaurant.MealNumber7.name",
-      "help": "IslandRestaurant.MealNumber7.help"
+      "name": "生產餐品7至 X 份",
+      "help": ""
     },
     "Meal8": {
-      "name": "IslandRestaurant.Meal8.name",
-      "help": "IslandRestaurant.Meal8.help",
+      "name": "餐品8",
+      "help": "",
       "None": "None",
-      "tofu": "tofu",
-      "omurice": "omurice",
-      "cabbage_tofu": "cabbage_tofu",
-      "salad": "salad",
-      "tofu_meat": "tofu_meat",
-      "tofu_combo": "tofu_combo",
-      "hearty_meal": "hearty_meal",
-      "double_bamboo_shoots": "double_bamboo_shoots",
-      "asparagus_shrimp": "asparagus_shrimp",
-      "fish_chip": "fish_chip",
-      "fo_tiao": "fo_tiao",
-      "onion_fish": "onion_fish"
+      "tofu": "豆腐",
+      "omurice": "蛋包飯",
+      "cabbage_tofu": "白菜豆腐湯",
+      "salad": "蔬菜沙拉",
+      "tofu_meat": "肉末燒豆腐",
+      "tofu_combo": "經典豆腐套餐",
+      "hearty_meal": "綿玉定食",
+      "double_bamboo_shoots": "涼拌雙筍",
+      "asparagus_shrimp": "蘆筍炒蝦仁",
+      "fish_chip": "炸魚薯條",
+      "fo_tiao": "佛跳牆",
+      "onion_fish": "洋蔥蒸魚"
     },
     "MealNumber8": {
-      "name": "IslandRestaurant.MealNumber8.name",
-      "help": "IslandRestaurant.MealNumber8.help"
+      "name": "生產餐品8至 X 份",
+      "help": ""
     }
   },
   "IslandRestaurantNextTask": {
     "_info": {
-      "name": "IslandRestaurantNextTask._info.name",
-      "help": "IslandRestaurantNextTask._info.help"
+      "name": "候補任務",
+      "help": ""
     },
     "AwayCook": {
-      "name": "IslandRestaurantNextTask.AwayCook.name",
-      "help": "IslandRestaurantNextTask.AwayCook.help",
+      "name": "常駐餐品",
+      "help": "以上全做完則做常駐餐品",
       "None": "None",
-      "tofu": "tofu",
-      "omurice": "omurice",
-      "cabbage_tofu": "cabbage_tofu",
-      "salad": "salad",
-      "tofu_meat": "tofu_meat",
-      "tofu_combo": "tofu_combo",
-      "hearty_meal": "hearty_meal",
-      "double_bamboo_shoots": "double_bamboo_shoots",
-      "asparagus_shrimp": "asparagus_shrimp",
-      "fish_chip": "fish_chip",
-      "fo_tiao": "fo_tiao",
-      "onion_fish": "onion_fish"
+      "tofu": "豆腐",
+      "omurice": "蛋包飯",
+      "cabbage_tofu": "白菜豆腐湯",
+      "salad": "蔬菜沙拉",
+      "tofu_meat": "肉末燒豆腐",
+      "tofu_combo": "經典豆腐套餐",
+      "hearty_meal": "綿玉定食",
+      "double_bamboo_shoots": "涼拌雙筍",
+      "asparagus_shrimp": "蘆筍炒蝦仁",
+      "fish_chip": "炸魚薯條",
+      "fo_tiao": "佛跳牆",
+      "onion_fish": "洋蔥蒸魚"
     }
   },
   "IslandTeahouse": {
     "_info": {
-      "name": "IslandTeahouse._info.name",
-      "help": "IslandTeahouse._info.help"
+      "name": "白熊飲品",
+      "help": "餐品會按從1~8的順序依次生產，生產目標為餐品X數量選項，完全滿足前一項後才會執行下一項，後一項在運行時不會影響之前幾項任務的達成\n請手動製作蜂蜜製品\n餐品中的迎春花茶和鮮榨鳳梨汁會根據當前季節自動切換為對應季節餐品"
     },
     "PostNumber": {
-      "name": "IslandTeahouse.PostNumber.name",
-      "help": "IslandTeahouse.PostNumber.help",
+      "name": "安排 X 個調飲師崗位",
+      "help": "",
       "1": "1",
       "2": "2"
     },
     "ChefFilter": {
-      "name": "IslandTeahouse.ChefFilter.name",
-      "help": "IslandTeahouse.ChefFilter.help"
+      "name": "廚師",
+      "help": "以>連接，例如肇和 新澤西 小天城：ChaoHo > NewJersey > Amagi_chan\n小加加：Saratoga > 明石：Akashi > 塔什干：Tashkent > 應瑞：YingSwei\n惡毒：LeMalin > 獨角獸：Unicorn > 島風：Shimakaze > 柴郡：Cheshire\n鎮海：ChenHai > 威廉D波特：WilliamDPorter\n海倫娜：Helena > 大帝：Friedrich > 愛宕：Atago\n逸仙：Yixian > 奧古斯特：August > 歐根親王：Eugen > 胡德：Hood > 標槍：Javelin > 拉菲：Laffey > 探索者：Explorer > 領航員：Navigator > 領洋者：OceanCrosser > 飛雲：FeiYun > 高雄：Takao\n僅識別預設排序前兩排；指定艦娘不可用時回退 WorkerJuu。"
     },
     "Seasonal": {
-      "name": "IslandTeahouse.Seasonal.name",
-      "help": "IslandTeahouse.Seasonal.help"
+      "name": "季節飲品優先製作",
+      "help": "開啟後按目前季節選擇白熊飲品的季節飲品，並在基礎飲品之前優先製作。春季為迎春花茶，夏季為西瓜汁；秋冬無白熊飲品季節飲品時不額外製作。"
     },
     "Meal1": {
-      "name": "IslandTeahouse.Meal1.name",
-      "help": "IslandTeahouse.Meal1.help",
+      "name": "餐品1",
+      "help": "",
       "None": "None",
-      "apple_juice": "apple_juice",
-      "banana_mango": "banana_mango",
-      "honey_lemon": "honey_lemon",
-      "strawberry_lemon": "strawberry_lemon",
-      "strawberry_honey": "strawberry_honey",
-      "floral_fruity": "floral_fruity",
-      "fruit_paradise": "fruit_paradise",
-      "lavender_tea": "lavender_tea",
-      "sunny_honey": "sunny_honey",
-      "spring_flower_tea": "spring_flower_tea"
+      "apple_juice": "蘋果汁",
+      "banana_mango": "香蕉芒果汁",
+      "honey_lemon": "蜂蜜檸檬水",
+      "strawberry_lemon": "草莓蜜沁",
+      "strawberry_honey": "草莓蜂蜜冰沙",
+      "floral_fruity": "花香果韻",
+      "fruit_paradise": "繽紛果樂園",
+      "lavender_tea": "薰衣草茶",
+      "sunny_honey": "陽光蜜水",
+      "spring_flower_tea": "迎春花茶"
     },
     "MealNumber1": {
-      "name": "IslandTeahouse.MealNumber1.name",
-      "help": "IslandTeahouse.MealNumber1.help"
+      "name": "生產餐品1至 X 份",
+      "help": ""
     },
     "Meal2": {
-      "name": "IslandTeahouse.Meal2.name",
-      "help": "IslandTeahouse.Meal2.help",
+      "name": "餐品2",
+      "help": "",
       "None": "None",
-      "apple_juice": "apple_juice",
-      "banana_mango": "banana_mango",
-      "honey_lemon": "honey_lemon",
-      "strawberry_lemon": "strawberry_lemon",
-      "strawberry_honey": "strawberry_honey",
-      "floral_fruity": "floral_fruity",
-      "fruit_paradise": "fruit_paradise",
-      "lavender_tea": "lavender_tea",
-      "sunny_honey": "sunny_honey",
-      "spring_flower_tea": "spring_flower_tea"
+      "apple_juice": "蘋果汁",
+      "banana_mango": "香蕉芒果汁",
+      "honey_lemon": "蜂蜜檸檬水",
+      "strawberry_lemon": "草莓蜜沁",
+      "strawberry_honey": "草莓蜂蜜冰沙",
+      "floral_fruity": "花香果韻",
+      "fruit_paradise": "繽紛果樂園",
+      "lavender_tea": "薰衣草茶",
+      "sunny_honey": "陽光蜜水",
+      "spring_flower_tea": "迎春花茶"
     },
     "MealNumber2": {
-      "name": "IslandTeahouse.MealNumber2.name",
-      "help": "IslandTeahouse.MealNumber2.help"
+      "name": "生產餐品2至 X 份",
+      "help": ""
     },
     "Meal3": {
-      "name": "IslandTeahouse.Meal3.name",
-      "help": "IslandTeahouse.Meal3.help",
+      "name": "餐品3",
+      "help": "",
       "None": "None",
-      "apple_juice": "apple_juice",
-      "banana_mango": "banana_mango",
-      "honey_lemon": "honey_lemon",
-      "strawberry_lemon": "strawberry_lemon",
-      "strawberry_honey": "strawberry_honey",
-      "floral_fruity": "floral_fruity",
-      "fruit_paradise": "fruit_paradise",
-      "lavender_tea": "lavender_tea",
-      "sunny_honey": "sunny_honey",
-      "spring_flower_tea": "spring_flower_tea"
+      "apple_juice": "蘋果汁",
+      "banana_mango": "香蕉芒果汁",
+      "honey_lemon": "蜂蜜檸檬水",
+      "strawberry_lemon": "草莓蜜沁",
+      "strawberry_honey": "草莓蜂蜜冰沙",
+      "floral_fruity": "花香果韻",
+      "fruit_paradise": "繽紛果樂園",
+      "lavender_tea": "薰衣草茶",
+      "sunny_honey": "陽光蜜水",
+      "spring_flower_tea": "迎春花茶"
     },
     "MealNumber3": {
-      "name": "IslandTeahouse.MealNumber3.name",
-      "help": "IslandTeahouse.MealNumber3.help"
+      "name": "生產餐品3至 X 份",
+      "help": ""
     },
     "Meal4": {
-      "name": "IslandTeahouse.Meal4.name",
-      "help": "IslandTeahouse.Meal4.help",
+      "name": "餐品4",
+      "help": "",
       "None": "None",
-      "apple_juice": "apple_juice",
-      "banana_mango": "banana_mango",
-      "honey_lemon": "honey_lemon",
-      "strawberry_lemon": "strawberry_lemon",
-      "strawberry_honey": "strawberry_honey",
-      "floral_fruity": "floral_fruity",
-      "fruit_paradise": "fruit_paradise",
-      "lavender_tea": "lavender_tea",
-      "sunny_honey": "sunny_honey",
-      "spring_flower_tea": "spring_flower_tea"
+      "apple_juice": "蘋果汁",
+      "banana_mango": "香蕉芒果汁",
+      "honey_lemon": "蜂蜜檸檬水",
+      "strawberry_lemon": "草莓蜜沁",
+      "strawberry_honey": "草莓蜂蜜冰沙",
+      "floral_fruity": "花香果韻",
+      "fruit_paradise": "繽紛果樂園",
+      "lavender_tea": "薰衣草茶",
+      "sunny_honey": "陽光蜜水",
+      "spring_flower_tea": "迎春花茶"
     },
     "MealNumber4": {
-      "name": "IslandTeahouse.MealNumber4.name",
-      "help": "IslandTeahouse.MealNumber4.help"
+      "name": "生產餐品4至 X 份",
+      "help": ""
     },
     "Meal5": {
-      "name": "IslandTeahouse.Meal5.name",
-      "help": "IslandTeahouse.Meal5.help",
+      "name": "餐品5",
+      "help": "",
       "None": "None",
-      "apple_juice": "apple_juice",
-      "banana_mango": "banana_mango",
-      "honey_lemon": "honey_lemon",
-      "strawberry_lemon": "strawberry_lemon",
-      "strawberry_honey": "strawberry_honey",
-      "floral_fruity": "floral_fruity",
-      "fruit_paradise": "fruit_paradise",
-      "lavender_tea": "lavender_tea",
-      "sunny_honey": "sunny_honey",
-      "spring_flower_tea": "spring_flower_tea"
+      "apple_juice": "蘋果汁",
+      "banana_mango": "香蕉芒果汁",
+      "honey_lemon": "蜂蜜檸檬水",
+      "strawberry_lemon": "草莓蜜沁",
+      "strawberry_honey": "草莓蜂蜜冰沙",
+      "floral_fruity": "花香果韻",
+      "fruit_paradise": "繽紛果樂園",
+      "lavender_tea": "薰衣草茶",
+      "sunny_honey": "陽光蜜水",
+      "spring_flower_tea": "迎春花茶"
     },
     "MealNumber5": {
-      "name": "IslandTeahouse.MealNumber5.name",
-      "help": "IslandTeahouse.MealNumber5.help"
+      "name": "生產餐品5至 X 份",
+      "help": ""
     },
     "Meal6": {
-      "name": "IslandTeahouse.Meal6.name",
-      "help": "IslandTeahouse.Meal6.help",
+      "name": "餐品6",
+      "help": "",
       "None": "None",
-      "apple_juice": "apple_juice",
-      "banana_mango": "banana_mango",
-      "honey_lemon": "honey_lemon",
-      "strawberry_lemon": "strawberry_lemon",
-      "strawberry_honey": "strawberry_honey",
-      "floral_fruity": "floral_fruity",
-      "fruit_paradise": "fruit_paradise",
-      "lavender_tea": "lavender_tea",
-      "sunny_honey": "sunny_honey",
-      "spring_flower_tea": "spring_flower_tea"
+      "apple_juice": "蘋果汁",
+      "banana_mango": "香蕉芒果汁",
+      "honey_lemon": "蜂蜜檸檬水",
+      "strawberry_lemon": "草莓蜜沁",
+      "strawberry_honey": "草莓蜂蜜冰沙",
+      "floral_fruity": "花香果韻",
+      "fruit_paradise": "繽紛果樂園",
+      "lavender_tea": "薰衣草茶",
+      "sunny_honey": "陽光蜜水",
+      "spring_flower_tea": "迎春花茶"
     },
     "MealNumber6": {
-      "name": "IslandTeahouse.MealNumber6.name",
-      "help": "IslandTeahouse.MealNumber6.help"
+      "name": "生產餐品6至 X 份",
+      "help": ""
     },
     "Meal7": {
-      "name": "IslandTeahouse.Meal7.name",
-      "help": "IslandTeahouse.Meal7.help",
+      "name": "餐品7",
+      "help": "",
       "None": "None",
-      "apple_juice": "apple_juice",
-      "banana_mango": "banana_mango",
-      "honey_lemon": "honey_lemon",
-      "strawberry_lemon": "strawberry_lemon",
-      "strawberry_honey": "strawberry_honey",
-      "floral_fruity": "floral_fruity",
-      "fruit_paradise": "fruit_paradise",
-      "lavender_tea": "lavender_tea",
-      "sunny_honey": "sunny_honey",
-      "spring_flower_tea": "spring_flower_tea"
+      "apple_juice": "蘋果汁",
+      "banana_mango": "香蕉芒果汁",
+      "honey_lemon": "蜂蜜檸檬水",
+      "strawberry_lemon": "草莓蜜沁",
+      "strawberry_honey": "草莓蜂蜜冰沙",
+      "floral_fruity": "花香果韻",
+      "fruit_paradise": "繽紛果樂園",
+      "lavender_tea": "薰衣草茶",
+      "sunny_honey": "陽光蜜水",
+      "spring_flower_tea": "迎春花茶"
     },
     "MealNumber7": {
-      "name": "IslandTeahouse.MealNumber7.name",
-      "help": "IslandTeahouse.MealNumber7.help"
+      "name": "生產餐品7至 X 份",
+      "help": ""
     },
     "Meal8": {
-      "name": "IslandTeahouse.Meal8.name",
-      "help": "IslandTeahouse.Meal8.help",
+      "name": "餐品8",
+      "help": "",
       "None": "None",
-      "apple_juice": "apple_juice",
-      "banana_mango": "banana_mango",
-      "honey_lemon": "honey_lemon",
-      "strawberry_lemon": "strawberry_lemon",
-      "strawberry_honey": "strawberry_honey",
-      "floral_fruity": "floral_fruity",
-      "fruit_paradise": "fruit_paradise",
-      "lavender_tea": "lavender_tea",
-      "sunny_honey": "sunny_honey",
-      "spring_flower_tea": "spring_flower_tea"
+      "apple_juice": "蘋果汁",
+      "banana_mango": "香蕉芒果汁",
+      "honey_lemon": "蜂蜜檸檬水",
+      "strawberry_lemon": "草莓蜜沁",
+      "strawberry_honey": "草莓蜂蜜冰沙",
+      "floral_fruity": "花香果韻",
+      "fruit_paradise": "繽紛果樂園",
+      "lavender_tea": "薰衣草茶",
+      "sunny_honey": "陽光蜜水",
+      "spring_flower_tea": "迎春花茶"
     },
     "MealNumber8": {
-      "name": "IslandTeahouse.MealNumber8.name",
-      "help": "IslandTeahouse.MealNumber8.help"
+      "name": "生產餐品8至 X 份",
+      "help": ""
     }
   },
   "IslandTeahouseNextTask": {
     "_info": {
-      "name": "IslandTeahouseNextTask._info.name",
-      "help": "IslandTeahouseNextTask._info.help"
+      "name": "候補任務",
+      "help": ""
     },
     "AwayCook": {
-      "name": "IslandTeahouseNextTask.AwayCook.name",
-      "help": "IslandTeahouseNextTask.AwayCook.help",
+      "name": "常駐餐品",
+      "help": "以上全做完則做常駐餐品",
       "None": "None",
-      "apple_juice": "apple_juice",
-      "banana_mango": "banana_mango",
-      "honey_lemon": "honey_lemon",
-      "strawberry_lemon": "strawberry_lemon",
-      "strawberry_honey": "strawberry_honey",
-      "floral_fruity": "floral_fruity",
-      "fruit_paradise": "fruit_paradise",
-      "lavender_tea": "lavender_tea",
-      "sunny_honey": "sunny_honey",
-      "spring_flower_tea": "spring_flower_tea"
+      "apple_juice": "蘋果汁",
+      "banana_mango": "香蕉芒果汁",
+      "honey_lemon": "蜂蜜檸檬水",
+      "strawberry_lemon": "草莓蜜沁",
+      "strawberry_honey": "草莓蜂蜜冰沙",
+      "floral_fruity": "花香果韻",
+      "fruit_paradise": "繽紛果樂園",
+      "lavender_tea": "薰衣草茶",
+      "sunny_honey": "陽光蜜水",
+      "spring_flower_tea": "迎春花茶"
     }
   },
   "IslandGrill": {
     "_info": {
-      "name": "IslandGrill._info.name",
-      "help": "IslandGrill._info.help"
+      "name": "烏魚烤肉",
+      "help": "餐品會按從1~8的順序依次生產，生產目標為餐品X數量選項，完全滿足前一項後才會執行下一項，後一項在運行時不會影響之前幾項任務的達成"
     },
     "PostNumber": {
-      "name": "IslandGrill.PostNumber.name",
-      "help": "IslandGrill.PostNumber.help",
+      "name": "安排 X 個燒烤師崗位",
+      "help": "",
       "1": "1",
       "2": "2"
     },
     "ChefFilter": {
-      "name": "IslandGrill.ChefFilter.name",
-      "help": "IslandGrill.ChefFilter.help"
+      "name": "廚師",
+      "help": "以>連接，例如肇和 新澤西 小天城：ChaoHo > NewJersey > Amagi_chan\n小加加：Saratoga > 明石：Akashi > 塔什干：Tashkent > 應瑞：YingSwei\n惡毒：LeMalin > 獨角獸：Unicorn > 島風：Shimakaze > 柴郡：Cheshire\n鎮海：ChenHai > 威廉D波特：WilliamDPorter\n海倫娜：Helena > 大帝：Friedrich > 愛宕：Atago\n逸仙：Yixian > 奧古斯特：August > 歐根親王：Eugen > 胡德：Hood > 標槍：Javelin > 拉菲：Laffey > 探索者：Explorer > 領航員：Navigator > 領洋者：OceanCrosser > 飛雲：FeiYun > 高雄：Takao\n僅識別預設排序前兩排；指定艦娘不可用時回退 WorkerJuu。"
     },
     "Meal1": {
-      "name": "IslandGrill.Meal1.name",
-      "help": "IslandGrill.Meal1.help",
+      "name": "餐品1",
+      "help": "",
       "None": "None",
-      "roasted_skewer": "roasted_skewer",
-      "chicken_potato": "chicken_potato",
-      "carrot_omelette": "carrot_omelette",
-      "stir_fried_chicken": "stir_fried_chicken",
-      "steak_bowl": "steak_bowl",
-      "crayfish_stir_fry": "crayfish_stir_fry",
-      "carnival": "carnival",
-      "double_energy": "double_energy"
+      "roasted_skewer": "碳烤肉串",
+      "chicken_potato": "禽肉馬鈴薯拼盤",
+      "carrot_omelette": "胡蘿蔔厚蛋燒",
+      "stir_fried_chicken": "爆炒禽肉",
+      "steak_bowl": "漢堡肉飯",
+      "crayfish_stir_fry": "爆炒小龍蝦",
+      "carnival": "烤肉狂歡",
+      "double_energy": "能量雙拼套餐"
     },
     "MealNumber1": {
-      "name": "IslandGrill.MealNumber1.name",
-      "help": "IslandGrill.MealNumber1.help"
+      "name": "生產餐品1至 X 份",
+      "help": ""
     },
     "Meal2": {
-      "name": "IslandGrill.Meal2.name",
-      "help": "IslandGrill.Meal2.help",
+      "name": "餐品2",
+      "help": "",
       "None": "None",
-      "roasted_skewer": "roasted_skewer",
-      "chicken_potato": "chicken_potato",
-      "carrot_omelette": "carrot_omelette",
-      "stir_fried_chicken": "stir_fried_chicken",
-      "steak_bowl": "steak_bowl",
-      "crayfish_stir_fry": "crayfish_stir_fry",
-      "carnival": "carnival",
-      "double_energy": "double_energy"
+      "roasted_skewer": "碳烤肉串",
+      "chicken_potato": "禽肉馬鈴薯拼盤",
+      "carrot_omelette": "胡蘿蔔厚蛋燒",
+      "stir_fried_chicken": "爆炒禽肉",
+      "steak_bowl": "漢堡肉飯",
+      "crayfish_stir_fry": "爆炒小龍蝦",
+      "carnival": "烤肉狂歡",
+      "double_energy": "能量雙拼套餐"
     },
     "MealNumber2": {
-      "name": "IslandGrill.MealNumber2.name",
-      "help": "IslandGrill.MealNumber2.help"
+      "name": "生產餐品2至 X 份",
+      "help": ""
     },
     "Meal3": {
-      "name": "IslandGrill.Meal3.name",
-      "help": "IslandGrill.Meal3.help",
+      "name": "餐品3",
+      "help": "",
       "None": "None",
-      "roasted_skewer": "roasted_skewer",
-      "chicken_potato": "chicken_potato",
-      "carrot_omelette": "carrot_omelette",
-      "stir_fried_chicken": "stir_fried_chicken",
-      "steak_bowl": "steak_bowl",
-      "crayfish_stir_fry": "crayfish_stir_fry",
-      "carnival": "carnival",
-      "double_energy": "double_energy"
+      "roasted_skewer": "碳烤肉串",
+      "chicken_potato": "禽肉馬鈴薯拼盤",
+      "carrot_omelette": "胡蘿蔔厚蛋燒",
+      "stir_fried_chicken": "爆炒禽肉",
+      "steak_bowl": "漢堡肉飯",
+      "crayfish_stir_fry": "爆炒小龍蝦",
+      "carnival": "烤肉狂歡",
+      "double_energy": "能量雙拼套餐"
     },
     "MealNumber3": {
-      "name": "IslandGrill.MealNumber3.name",
-      "help": "IslandGrill.MealNumber3.help"
+      "name": "生產餐品3至 X 份",
+      "help": ""
     },
     "Meal4": {
-      "name": "IslandGrill.Meal4.name",
-      "help": "IslandGrill.Meal4.help",
+      "name": "餐品4",
+      "help": "",
       "None": "None",
-      "roasted_skewer": "roasted_skewer",
-      "chicken_potato": "chicken_potato",
-      "carrot_omelette": "carrot_omelette",
-      "stir_fried_chicken": "stir_fried_chicken",
-      "steak_bowl": "steak_bowl",
-      "crayfish_stir_fry": "crayfish_stir_fry",
-      "carnival": "carnival",
-      "double_energy": "double_energy"
+      "roasted_skewer": "碳烤肉串",
+      "chicken_potato": "禽肉馬鈴薯拼盤",
+      "carrot_omelette": "胡蘿蔔厚蛋燒",
+      "stir_fried_chicken": "爆炒禽肉",
+      "steak_bowl": "漢堡肉飯",
+      "crayfish_stir_fry": "爆炒小龍蝦",
+      "carnival": "烤肉狂歡",
+      "double_energy": "能量雙拼套餐"
     },
     "MealNumber4": {
-      "name": "IslandGrill.MealNumber4.name",
-      "help": "IslandGrill.MealNumber4.help"
+      "name": "生產餐品4至 X 份",
+      "help": ""
     },
     "Meal5": {
-      "name": "IslandGrill.Meal5.name",
-      "help": "IslandGrill.Meal5.help",
+      "name": "餐品5",
+      "help": "",
       "None": "None",
-      "roasted_skewer": "roasted_skewer",
-      "chicken_potato": "chicken_potato",
-      "carrot_omelette": "carrot_omelette",
-      "stir_fried_chicken": "stir_fried_chicken",
-      "steak_bowl": "steak_bowl",
-      "crayfish_stir_fry": "crayfish_stir_fry",
-      "carnival": "carnival",
-      "double_energy": "double_energy"
+      "roasted_skewer": "碳烤肉串",
+      "chicken_potato": "禽肉馬鈴薯拼盤",
+      "carrot_omelette": "胡蘿蔔厚蛋燒",
+      "stir_fried_chicken": "爆炒禽肉",
+      "steak_bowl": "漢堡肉飯",
+      "crayfish_stir_fry": "爆炒小龍蝦",
+      "carnival": "烤肉狂歡",
+      "double_energy": "能量雙拼套餐"
     },
     "MealNumber5": {
-      "name": "IslandGrill.MealNumber5.name",
-      "help": "IslandGrill.MealNumber5.help"
+      "name": "生產餐品5至 X 份",
+      "help": ""
     },
     "Meal6": {
-      "name": "IslandGrill.Meal6.name",
-      "help": "IslandGrill.Meal6.help",
+      "name": "餐品6",
+      "help": "",
       "None": "None",
-      "roasted_skewer": "roasted_skewer",
-      "chicken_potato": "chicken_potato",
-      "carrot_omelette": "carrot_omelette",
-      "stir_fried_chicken": "stir_fried_chicken",
-      "steak_bowl": "steak_bowl",
-      "crayfish_stir_fry": "crayfish_stir_fry",
-      "carnival": "carnival",
-      "double_energy": "double_energy"
+      "roasted_skewer": "碳烤肉串",
+      "chicken_potato": "禽肉馬鈴薯拼盤",
+      "carrot_omelette": "胡蘿蔔厚蛋燒",
+      "stir_fried_chicken": "爆炒禽肉",
+      "steak_bowl": "漢堡肉飯",
+      "crayfish_stir_fry": "爆炒小龍蝦",
+      "carnival": "烤肉狂歡",
+      "double_energy": "能量雙拼套餐"
     },
     "MealNumber6": {
-      "name": "IslandGrill.MealNumber6.name",
-      "help": "IslandGrill.MealNumber6.help"
+      "name": "生產餐品6至 X 份",
+      "help": ""
     },
     "Meal7": {
-      "name": "IslandGrill.Meal7.name",
-      "help": "IslandGrill.Meal7.help",
+      "name": "餐品7",
+      "help": "",
       "None": "None",
-      "roasted_skewer": "roasted_skewer",
-      "chicken_potato": "chicken_potato",
-      "carrot_omelette": "carrot_omelette",
-      "stir_fried_chicken": "stir_fried_chicken",
-      "steak_bowl": "steak_bowl",
-      "crayfish_stir_fry": "crayfish_stir_fry",
-      "carnival": "carnival",
-      "double_energy": "double_energy"
+      "roasted_skewer": "碳烤肉串",
+      "chicken_potato": "禽肉馬鈴薯拼盤",
+      "carrot_omelette": "胡蘿蔔厚蛋燒",
+      "stir_fried_chicken": "爆炒禽肉",
+      "steak_bowl": "漢堡肉飯",
+      "crayfish_stir_fry": "爆炒小龍蝦",
+      "carnival": "烤肉狂歡",
+      "double_energy": "能量雙拼套餐"
     },
     "MealNumber7": {
-      "name": "IslandGrill.MealNumber7.name",
-      "help": "IslandGrill.MealNumber7.help"
+      "name": "生產餐品7至 X 份",
+      "help": ""
     },
     "Meal8": {
-      "name": "IslandGrill.Meal8.name",
-      "help": "IslandGrill.Meal8.help",
+      "name": "餐品8",
+      "help": "",
       "None": "None",
-      "roasted_skewer": "roasted_skewer",
-      "chicken_potato": "chicken_potato",
-      "carrot_omelette": "carrot_omelette",
-      "stir_fried_chicken": "stir_fried_chicken",
-      "steak_bowl": "steak_bowl",
-      "crayfish_stir_fry": "crayfish_stir_fry",
-      "carnival": "carnival",
-      "double_energy": "double_energy"
+      "roasted_skewer": "碳烤肉串",
+      "chicken_potato": "禽肉馬鈴薯拼盤",
+      "carrot_omelette": "胡蘿蔔厚蛋燒",
+      "stir_fried_chicken": "爆炒禽肉",
+      "steak_bowl": "漢堡肉飯",
+      "crayfish_stir_fry": "爆炒小龍蝦",
+      "carnival": "烤肉狂歡",
+      "double_energy": "能量雙拼套餐"
     },
     "MealNumber8": {
-      "name": "IslandGrill.MealNumber8.name",
-      "help": "IslandGrill.MealNumber8.help"
+      "name": "生產餐品8至 X 份",
+      "help": ""
     }
   },
   "IslandGrillNextTask": {
     "_info": {
-      "name": "IslandGrillNextTask._info.name",
-      "help": "IslandGrillNextTask._info.help"
+      "name": "候補任務",
+      "help": ""
     },
     "AwayCook": {
-      "name": "IslandGrillNextTask.AwayCook.name",
-      "help": "IslandGrillNextTask.AwayCook.help",
+      "name": "常駐餐品",
+      "help": "以上全做完則做常駐餐品",
       "None": "None",
-      "roasted_skewer": "roasted_skewer",
-      "chicken_potato": "chicken_potato",
-      "carrot_omelette": "carrot_omelette",
-      "stir_fried_chicken": "stir_fried_chicken",
-      "steak_bowl": "steak_bowl",
-      "crayfish_stir_fry": "crayfish_stir_fry",
-      "carnival": "carnival",
-      "double_energy": "double_energy"
+      "roasted_skewer": "碳烤肉串",
+      "chicken_potato": "禽肉馬鈴薯拼盤",
+      "carrot_omelette": "胡蘿蔔厚蛋燒",
+      "stir_fried_chicken": "爆炒禽肉",
+      "steak_bowl": "漢堡肉飯",
+      "crayfish_stir_fry": "爆炒小龍蝦",
+      "carnival": "烤肉狂歡",
+      "double_energy": "能量雙拼套餐"
     }
   },
   "IslandJuuEatery": {
     "_info": {
-      "name": "IslandJuuEatery._info.name",
-      "help": "IslandJuuEatery._info.help"
+      "name": "啾啾簡餐",
+      "help": "餐品會按從1~8的順序依次生產，生產目標為餐品X數量選項，完全滿足前一項後才會執行下一項，後一項在運行時不會影響之前幾項任務的達成"
     },
     "PostNumber": {
-      "name": "IslandJuuEatery.PostNumber.name",
-      "help": "IslandJuuEatery.PostNumber.help",
+      "name": "安排 X 個簡餐師崗位",
+      "help": "",
       "1": "1",
       "2": "2"
     },
     "ChefFilter": {
-      "name": "IslandJuuEatery.ChefFilter.name",
-      "help": "IslandJuuEatery.ChefFilter.help"
+      "name": "廚師",
+      "help": "以>連接，例如肇和 新澤西 小天城：ChaoHo > NewJersey > Amagi_chan\n小加加：Saratoga > 明石：Akashi > 塔什干：Tashkent > 應瑞：YingSwei\n惡毒：LeMalin > 獨角獸：Unicorn > 島風：Shimakaze > 柴郡：Cheshire\n鎮海：ChenHai > 威廉D波特：WilliamDPorter\n海倫娜：Helena > 大帝：Friedrich > 愛宕：Atago\n逸仙：Yixian > 奧古斯特：August > 歐根親王：Eugen > 胡德：Hood > 標槍：Javelin > 拉菲：Laffey > 探索者：Explorer > 領航員：Navigator > 領洋者：OceanCrosser > 飛雲：FeiYun > 高雄：Takao\n僅識別預設排序前兩排；指定艦娘不可用時回退 WorkerJuu。"
     },
     "Meal1": {
-      "name": "IslandJuuEatery.Meal1.name",
-      "help": "IslandJuuEatery.Meal1.help",
+      "name": "餐品1",
+      "help": "",
       "None": "None",
-      "apple_pie": "apple_pie",
-      "corn_cup": "corn_cup",
-      "orange_pie": "orange_pie",
-      "banana_crepe": "banana_crepe",
-      "orchard_duo": "orchard_duo",
-      "rice_mango": "rice_mango",
-      "succulently_sweet": "succulently_sweet",
-      "berry_orange": "berry_orange",
-      "strawberry_charlotte": "strawberry_charlotte",
-      "seafood_rice": "seafood_rice"
+      "apple_pie": "蘋果派",
+      "corn_cup": "玉米杯",
+      "orange_pie": "香橙派",
+      "banana_crepe": "香蕉可麗餅",
+      "orchard_duo": "果園二重奏",
+      "rice_mango": "芒果糯米飯",
+      "succulently_sweet": "香甜組合",
+      "berry_orange": "莓果香橙甜點組",
+      "strawberry_charlotte": "草莓夏洛特",
+      "seafood_rice": "海鮮飯"
     },
     "MealNumber1": {
-      "name": "IslandJuuEatery.MealNumber1.name",
-      "help": "IslandJuuEatery.MealNumber1.help"
+      "name": "生產餐品1至 X 份",
+      "help": ""
     },
     "Meal2": {
-      "name": "IslandJuuEatery.Meal2.name",
-      "help": "IslandJuuEatery.Meal2.help",
+      "name": "餐品2",
+      "help": "",
       "None": "None",
-      "apple_pie": "apple_pie",
-      "corn_cup": "corn_cup",
-      "orange_pie": "orange_pie",
-      "banana_crepe": "banana_crepe",
-      "orchard_duo": "orchard_duo",
-      "rice_mango": "rice_mango",
-      "succulently_sweet": "succulently_sweet",
-      "berry_orange": "berry_orange",
-      "strawberry_charlotte": "strawberry_charlotte",
-      "seafood_rice": "seafood_rice"
+      "apple_pie": "蘋果派",
+      "corn_cup": "玉米杯",
+      "orange_pie": "香橙派",
+      "banana_crepe": "香蕉可麗餅",
+      "orchard_duo": "果園二重奏",
+      "rice_mango": "芒果糯米飯",
+      "succulently_sweet": "香甜組合",
+      "berry_orange": "莓果香橙甜點組",
+      "strawberry_charlotte": "草莓夏洛特",
+      "seafood_rice": "海鮮飯"
     },
     "MealNumber2": {
-      "name": "IslandJuuEatery.MealNumber2.name",
-      "help": "IslandJuuEatery.MealNumber2.help"
+      "name": "生產餐品2至 X 份",
+      "help": ""
     },
     "Meal3": {
-      "name": "IslandJuuEatery.Meal3.name",
-      "help": "IslandJuuEatery.Meal3.help",
+      "name": "餐品3",
+      "help": "",
       "None": "None",
-      "apple_pie": "apple_pie",
-      "corn_cup": "corn_cup",
-      "orange_pie": "orange_pie",
-      "banana_crepe": "banana_crepe",
-      "orchard_duo": "orchard_duo",
-      "rice_mango": "rice_mango",
-      "succulently_sweet": "succulently_sweet",
-      "berry_orange": "berry_orange",
-      "strawberry_charlotte": "strawberry_charlotte",
-      "seafood_rice": "seafood_rice"
+      "apple_pie": "蘋果派",
+      "corn_cup": "玉米杯",
+      "orange_pie": "香橙派",
+      "banana_crepe": "香蕉可麗餅",
+      "orchard_duo": "果園二重奏",
+      "rice_mango": "芒果糯米飯",
+      "succulently_sweet": "香甜組合",
+      "berry_orange": "莓果香橙甜點組",
+      "strawberry_charlotte": "草莓夏洛特",
+      "seafood_rice": "海鮮飯"
     },
     "MealNumber3": {
-      "name": "IslandJuuEatery.MealNumber3.name",
-      "help": "IslandJuuEatery.MealNumber3.help"
+      "name": "生產餐品3至 X 份",
+      "help": ""
     },
     "Meal4": {
-      "name": "IslandJuuEatery.Meal4.name",
-      "help": "IslandJuuEatery.Meal4.help",
+      "name": "餐品4",
+      "help": "",
       "None": "None",
-      "apple_pie": "apple_pie",
-      "corn_cup": "corn_cup",
-      "orange_pie": "orange_pie",
-      "banana_crepe": "banana_crepe",
-      "orchard_duo": "orchard_duo",
-      "rice_mango": "rice_mango",
-      "succulently_sweet": "succulently_sweet",
-      "berry_orange": "berry_orange",
-      "strawberry_charlotte": "strawberry_charlotte",
-      "seafood_rice": "seafood_rice"
+      "apple_pie": "蘋果派",
+      "corn_cup": "玉米杯",
+      "orange_pie": "香橙派",
+      "banana_crepe": "香蕉可麗餅",
+      "orchard_duo": "果園二重奏",
+      "rice_mango": "芒果糯米飯",
+      "succulently_sweet": "香甜組合",
+      "berry_orange": "莓果香橙甜點組",
+      "strawberry_charlotte": "草莓夏洛特",
+      "seafood_rice": "海鮮飯"
     },
     "MealNumber4": {
-      "name": "IslandJuuEatery.MealNumber4.name",
-      "help": "IslandJuuEatery.MealNumber4.help"
+      "name": "生產餐品4至 X 份",
+      "help": ""
     },
     "Meal5": {
-      "name": "IslandJuuEatery.Meal5.name",
-      "help": "IslandJuuEatery.Meal5.help",
+      "name": "餐品5",
+      "help": "",
       "None": "None",
-      "apple_pie": "apple_pie",
-      "corn_cup": "corn_cup",
-      "orange_pie": "orange_pie",
-      "banana_crepe": "banana_crepe",
-      "orchard_duo": "orchard_duo",
-      "rice_mango": "rice_mango",
-      "succulently_sweet": "succulently_sweet",
-      "berry_orange": "berry_orange",
-      "strawberry_charlotte": "strawberry_charlotte",
-      "seafood_rice": "seafood_rice"
+      "apple_pie": "蘋果派",
+      "corn_cup": "玉米杯",
+      "orange_pie": "香橙派",
+      "banana_crepe": "香蕉可麗餅",
+      "orchard_duo": "果園二重奏",
+      "rice_mango": "芒果糯米飯",
+      "succulently_sweet": "香甜組合",
+      "berry_orange": "莓果香橙甜點組",
+      "strawberry_charlotte": "草莓夏洛特",
+      "seafood_rice": "海鮮飯"
     },
     "MealNumber5": {
-      "name": "IslandJuuEatery.MealNumber5.name",
-      "help": "IslandJuuEatery.MealNumber5.help"
+      "name": "生產餐品5至 X 份",
+      "help": ""
     },
     "Meal6": {
-      "name": "IslandJuuEatery.Meal6.name",
-      "help": "IslandJuuEatery.Meal6.help",
+      "name": "餐品6",
+      "help": "",
       "None": "None",
-      "apple_pie": "apple_pie",
-      "corn_cup": "corn_cup",
-      "orange_pie": "orange_pie",
-      "banana_crepe": "banana_crepe",
-      "orchard_duo": "orchard_duo",
-      "rice_mango": "rice_mango",
-      "succulently_sweet": "succulently_sweet",
-      "berry_orange": "berry_orange",
-      "strawberry_charlotte": "strawberry_charlotte",
-      "seafood_rice": "seafood_rice"
+      "apple_pie": "蘋果派",
+      "corn_cup": "玉米杯",
+      "orange_pie": "香橙派",
+      "banana_crepe": "香蕉可麗餅",
+      "orchard_duo": "果園二重奏",
+      "rice_mango": "芒果糯米飯",
+      "succulently_sweet": "香甜組合",
+      "berry_orange": "莓果香橙甜點組",
+      "strawberry_charlotte": "草莓夏洛特",
+      "seafood_rice": "海鮮飯"
     },
     "MealNumber6": {
-      "name": "IslandJuuEatery.MealNumber6.name",
-      "help": "IslandJuuEatery.MealNumber6.help"
+      "name": "生產餐品6至 X 份",
+      "help": ""
     },
     "Meal7": {
-      "name": "IslandJuuEatery.Meal7.name",
-      "help": "IslandJuuEatery.Meal7.help",
+      "name": "餐品7",
+      "help": "",
       "None": "None",
-      "apple_pie": "apple_pie",
-      "corn_cup": "corn_cup",
-      "orange_pie": "orange_pie",
-      "banana_crepe": "banana_crepe",
-      "orchard_duo": "orchard_duo",
-      "rice_mango": "rice_mango",
-      "succulently_sweet": "succulently_sweet",
-      "berry_orange": "berry_orange",
-      "strawberry_charlotte": "strawberry_charlotte",
-      "seafood_rice": "seafood_rice"
+      "apple_pie": "蘋果派",
+      "corn_cup": "玉米杯",
+      "orange_pie": "香橙派",
+      "banana_crepe": "香蕉可麗餅",
+      "orchard_duo": "果園二重奏",
+      "rice_mango": "芒果糯米飯",
+      "succulently_sweet": "香甜組合",
+      "berry_orange": "莓果香橙甜點組",
+      "strawberry_charlotte": "草莓夏洛特",
+      "seafood_rice": "海鮮飯"
     },
     "MealNumber7": {
-      "name": "IslandJuuEatery.MealNumber7.name",
-      "help": "IslandJuuEatery.MealNumber7.help"
+      "name": "生產餐品7至 X 份",
+      "help": ""
     },
     "Meal8": {
-      "name": "IslandJuuEatery.Meal8.name",
-      "help": "IslandJuuEatery.Meal8.help",
+      "name": "餐品8",
+      "help": "",
       "None": "None",
-      "apple_pie": "apple_pie",
-      "corn_cup": "corn_cup",
-      "orange_pie": "orange_pie",
-      "banana_crepe": "banana_crepe",
-      "orchard_duo": "orchard_duo",
-      "rice_mango": "rice_mango",
-      "succulently_sweet": "succulently_sweet",
-      "berry_orange": "berry_orange",
-      "strawberry_charlotte": "strawberry_charlotte",
-      "seafood_rice": "seafood_rice"
+      "apple_pie": "蘋果派",
+      "corn_cup": "玉米杯",
+      "orange_pie": "香橙派",
+      "banana_crepe": "香蕉可麗餅",
+      "orchard_duo": "果園二重奏",
+      "rice_mango": "芒果糯米飯",
+      "succulently_sweet": "香甜組合",
+      "berry_orange": "莓果香橙甜點組",
+      "strawberry_charlotte": "草莓夏洛特",
+      "seafood_rice": "海鮮飯"
     },
     "MealNumber8": {
-      "name": "IslandJuuEatery.MealNumber8.name",
-      "help": "IslandJuuEatery.MealNumber8.help"
+      "name": "生產餐品8至 X 份",
+      "help": ""
     }
   },
   "IslandJuuEateryNextTask": {
     "_info": {
-      "name": "IslandJuuEateryNextTask._info.name",
-      "help": "IslandJuuEateryNextTask._info.help"
+      "name": "候補任務",
+      "help": ""
     },
     "AwayCook": {
-      "name": "IslandJuuEateryNextTask.AwayCook.name",
-      "help": "IslandJuuEateryNextTask.AwayCook.help",
+      "name": "常駐餐品",
+      "help": "以上全做完則做常駐餐品",
       "None": "None",
-      "apple_pie": "apple_pie",
-      "corn_cup": "corn_cup",
-      "orange_pie": "orange_pie",
-      "banana_crepe": "banana_crepe",
-      "orchard_duo": "orchard_duo",
-      "rice_mango": "rice_mango",
-      "succulently_sweet": "succulently_sweet",
-      "berry_orange": "berry_orange",
-      "strawberry_charlotte": "strawberry_charlotte",
-      "seafood_rice": "seafood_rice"
+      "apple_pie": "蘋果派",
+      "corn_cup": "玉米杯",
+      "orange_pie": "香橙派",
+      "banana_crepe": "香蕉可麗餅",
+      "orchard_duo": "果園二重奏",
+      "rice_mango": "芒果糯米飯",
+      "succulently_sweet": "香甜組合",
+      "berry_orange": "莓果香橙甜點組",
+      "strawberry_charlotte": "草莓夏洛特",
+      "seafood_rice": "海鮮飯"
     }
   },
   "IslandJuuCoffee": {
     "_info": {
-      "name": "IslandJuuCoffee._info.name",
-      "help": "IslandJuuCoffee._info.help"
+      "name": "啾咖啡",
+      "help": "餐品會按從1~8的順序依次生產，生產目標為餐品X數量選項，完全滿足前一項後才會執行下一項，後一項在運行時不會影響之前幾項任務的達成"
     },
     "PostNumber": {
-      "name": "IslandJuuCoffee.PostNumber.name",
-      "help": "IslandJuuCoffee.PostNumber.help",
+      "name": "安排 X 個咖啡師崗位",
+      "help": "",
       "1": "1",
       "2": "2"
     },
     "ChefFilter": {
-      "name": "IslandJuuCoffee.ChefFilter.name",
-      "help": "IslandJuuCoffee.ChefFilter.help"
+      "name": "廚師",
+      "help": "以>連接，例如肇和 新澤西 小天城：ChaoHo > NewJersey > Amagi_chan\n小加加：Saratoga > 明石：Akashi > 塔什干：Tashkent > 應瑞：YingSwei\n惡毒：LeMalin > 獨角獸：Unicorn > 島風：Shimakaze > 柴郡：Cheshire\n鎮海：ChenHai > 威廉D波特：WilliamDPorter\n海倫娜：Helena > 大帝：Friedrich > 愛宕：Atago\n逸仙：Yixian > 奧古斯特：August > 歐根親王：Eugen > 胡德：Hood > 標槍：Javelin > 拉菲：Laffey > 探索者：Explorer > 領航員：Navigator > 領洋者：OceanCrosser > 飛雲：FeiYun > 高雄：Takao\n僅識別預設排序前兩排；指定艦娘不可用時回退 WorkerJuu。"
     },
     "Friedrich": {
-      "name": "IslandJuuCoffee.Friedrich.name",
-      "help": "IslandJuuCoffee.Friedrich.help"
+      "name": "大帝",
+      "help": "芝士只識別兩排角色，無則黃雞，但醒神套餐會指定大帝製作，如果前兩排沒有大帝則不會製作"
     },
     "Meal1": {
-      "name": "IslandJuuCoffee.Meal1.name",
-      "help": "IslandJuuCoffee.Meal1.help",
+      "name": "餐品1",
+      "help": "",
       "None": "None",
-      "iced_coffee": "iced_coffee",
-      "omelette": "omelette",
-      "cheese": "cheese",
-      "latte": "latte",
-      "citrus_coffee": "citrus_coffee",
-      "strawberry_milkshake": "strawberry_milkshake",
-      "morning_light": "morning_light",
-      "wake_up_call": "wake_up_call",
-      "fruity_fruitier": "fruity_fruitier"
+      "iced_coffee": "冰咖啡",
+      "omelette": "歐姆蛋",
+      "cheese": "芝士",
+      "latte": "拿鐵",
+      "citrus_coffee": "柑橘咖啡",
+      "strawberry_milkshake": "草莓奶綠",
+      "morning_light": "晨光活力組合",
+      "wake_up_call": "醒神套餐",
+      "fruity_fruitier": "果香雙杯樂"
     },
     "MealNumber1": {
-      "name": "IslandJuuCoffee.MealNumber1.name",
-      "help": "IslandJuuCoffee.MealNumber1.help"
+      "name": "生產餐品1至 X 份",
+      "help": ""
     },
     "Meal2": {
-      "name": "IslandJuuCoffee.Meal2.name",
-      "help": "IslandJuuCoffee.Meal2.help",
+      "name": "餐品2",
+      "help": "",
       "None": "None",
-      "iced_coffee": "iced_coffee",
-      "omelette": "omelette",
-      "cheese": "cheese",
-      "latte": "latte",
-      "citrus_coffee": "citrus_coffee",
-      "strawberry_milkshake": "strawberry_milkshake",
-      "morning_light": "morning_light",
-      "wake_up_call": "wake_up_call",
-      "fruity_fruitier": "fruity_fruitier"
+      "iced_coffee": "冰咖啡",
+      "omelette": "歐姆蛋",
+      "cheese": "芝士",
+      "latte": "拿鐵",
+      "citrus_coffee": "柑橘咖啡",
+      "strawberry_milkshake": "草莓奶綠",
+      "morning_light": "晨光活力組合",
+      "wake_up_call": "醒神套餐",
+      "fruity_fruitier": "果香雙杯樂"
     },
     "MealNumber2": {
-      "name": "IslandJuuCoffee.MealNumber2.name",
-      "help": "IslandJuuCoffee.MealNumber2.help"
+      "name": "生產餐品2至 X 份",
+      "help": ""
     },
     "Meal3": {
-      "name": "IslandJuuCoffee.Meal3.name",
-      "help": "IslandJuuCoffee.Meal3.help",
+      "name": "餐品3",
+      "help": "",
       "None": "None",
-      "iced_coffee": "iced_coffee",
-      "omelette": "omelette",
-      "cheese": "cheese",
-      "latte": "latte",
-      "citrus_coffee": "citrus_coffee",
-      "strawberry_milkshake": "strawberry_milkshake",
-      "morning_light": "morning_light",
-      "wake_up_call": "wake_up_call",
-      "fruity_fruitier": "fruity_fruitier"
+      "iced_coffee": "冰咖啡",
+      "omelette": "歐姆蛋",
+      "cheese": "芝士",
+      "latte": "拿鐵",
+      "citrus_coffee": "柑橘咖啡",
+      "strawberry_milkshake": "草莓奶綠",
+      "morning_light": "晨光活力組合",
+      "wake_up_call": "醒神套餐",
+      "fruity_fruitier": "果香雙杯樂"
     },
     "MealNumber3": {
-      "name": "IslandJuuCoffee.MealNumber3.name",
-      "help": "IslandJuuCoffee.MealNumber3.help"
+      "name": "生產餐品3至 X 份",
+      "help": ""
     },
     "Meal4": {
-      "name": "IslandJuuCoffee.Meal4.name",
-      "help": "IslandJuuCoffee.Meal4.help",
+      "name": "餐品4",
+      "help": "",
       "None": "None",
-      "iced_coffee": "iced_coffee",
-      "omelette": "omelette",
-      "cheese": "cheese",
-      "latte": "latte",
-      "citrus_coffee": "citrus_coffee",
-      "strawberry_milkshake": "strawberry_milkshake",
-      "morning_light": "morning_light",
-      "wake_up_call": "wake_up_call",
-      "fruity_fruitier": "fruity_fruitier"
+      "iced_coffee": "冰咖啡",
+      "omelette": "歐姆蛋",
+      "cheese": "芝士",
+      "latte": "拿鐵",
+      "citrus_coffee": "柑橘咖啡",
+      "strawberry_milkshake": "草莓奶綠",
+      "morning_light": "晨光活力組合",
+      "wake_up_call": "醒神套餐",
+      "fruity_fruitier": "果香雙杯樂"
     },
     "MealNumber4": {
-      "name": "IslandJuuCoffee.MealNumber4.name",
-      "help": "IslandJuuCoffee.MealNumber4.help"
+      "name": "生產餐品4至 X 份",
+      "help": ""
     },
     "Meal5": {
-      "name": "IslandJuuCoffee.Meal5.name",
-      "help": "IslandJuuCoffee.Meal5.help",
+      "name": "餐品5",
+      "help": "",
       "None": "None",
-      "iced_coffee": "iced_coffee",
-      "omelette": "omelette",
-      "cheese": "cheese",
-      "latte": "latte",
-      "citrus_coffee": "citrus_coffee",
-      "strawberry_milkshake": "strawberry_milkshake",
-      "morning_light": "morning_light",
-      "wake_up_call": "wake_up_call",
-      "fruity_fruitier": "fruity_fruitier"
+      "iced_coffee": "冰咖啡",
+      "omelette": "歐姆蛋",
+      "cheese": "芝士",
+      "latte": "拿鐵",
+      "citrus_coffee": "柑橘咖啡",
+      "strawberry_milkshake": "草莓奶綠",
+      "morning_light": "晨光活力組合",
+      "wake_up_call": "醒神套餐",
+      "fruity_fruitier": "果香雙杯樂"
     },
     "MealNumber5": {
-      "name": "IslandJuuCoffee.MealNumber5.name",
-      "help": "IslandJuuCoffee.MealNumber5.help"
+      "name": "生產餐品5至 X 份",
+      "help": ""
     },
     "Meal6": {
-      "name": "IslandJuuCoffee.Meal6.name",
-      "help": "IslandJuuCoffee.Meal6.help",
+      "name": "餐品6",
+      "help": "",
       "None": "None",
-      "iced_coffee": "iced_coffee",
-      "omelette": "omelette",
-      "cheese": "cheese",
-      "latte": "latte",
-      "citrus_coffee": "citrus_coffee",
-      "strawberry_milkshake": "strawberry_milkshake",
-      "morning_light": "morning_light",
-      "wake_up_call": "wake_up_call",
-      "fruity_fruitier": "fruity_fruitier"
+      "iced_coffee": "冰咖啡",
+      "omelette": "歐姆蛋",
+      "cheese": "芝士",
+      "latte": "拿鐵",
+      "citrus_coffee": "柑橘咖啡",
+      "strawberry_milkshake": "草莓奶綠",
+      "morning_light": "晨光活力組合",
+      "wake_up_call": "醒神套餐",
+      "fruity_fruitier": "果香雙杯樂"
     },
     "MealNumber6": {
-      "name": "IslandJuuCoffee.MealNumber6.name",
-      "help": "IslandJuuCoffee.MealNumber6.help"
+      "name": "生產餐品6至 X 份",
+      "help": ""
     },
     "Meal7": {
-      "name": "IslandJuuCoffee.Meal7.name",
-      "help": "IslandJuuCoffee.Meal7.help",
+      "name": "餐品7",
+      "help": "",
       "None": "None",
-      "iced_coffee": "iced_coffee",
-      "omelette": "omelette",
-      "cheese": "cheese",
-      "latte": "latte",
-      "citrus_coffee": "citrus_coffee",
-      "strawberry_milkshake": "strawberry_milkshake",
-      "morning_light": "morning_light",
-      "wake_up_call": "wake_up_call",
-      "fruity_fruitier": "fruity_fruitier"
+      "iced_coffee": "冰咖啡",
+      "omelette": "歐姆蛋",
+      "cheese": "芝士",
+      "latte": "拿鐵",
+      "citrus_coffee": "柑橘咖啡",
+      "strawberry_milkshake": "草莓奶綠",
+      "morning_light": "晨光活力組合",
+      "wake_up_call": "醒神套餐",
+      "fruity_fruitier": "果香雙杯樂"
     },
     "MealNumber7": {
-      "name": "IslandJuuCoffee.MealNumber7.name",
-      "help": "IslandJuuCoffee.MealNumber7.help"
+      "name": "生產餐品7至 X 份",
+      "help": ""
     },
     "Meal8": {
-      "name": "IslandJuuCoffee.Meal8.name",
-      "help": "IslandJuuCoffee.Meal8.help",
+      "name": "餐品8",
+      "help": "",
       "None": "None",
-      "iced_coffee": "iced_coffee",
-      "omelette": "omelette",
-      "cheese": "cheese",
-      "latte": "latte",
-      "citrus_coffee": "citrus_coffee",
-      "strawberry_milkshake": "strawberry_milkshake",
-      "morning_light": "morning_light",
-      "wake_up_call": "wake_up_call",
-      "fruity_fruitier": "fruity_fruitier"
+      "iced_coffee": "冰咖啡",
+      "omelette": "歐姆蛋",
+      "cheese": "芝士",
+      "latte": "拿鐵",
+      "citrus_coffee": "柑橘咖啡",
+      "strawberry_milkshake": "草莓奶綠",
+      "morning_light": "晨光活力組合",
+      "wake_up_call": "醒神套餐",
+      "fruity_fruitier": "果香雙杯樂"
     },
     "MealNumber8": {
-      "name": "IslandJuuCoffee.MealNumber8.name",
-      "help": "IslandJuuCoffee.MealNumber8.help"
+      "name": "生產餐品8至 X 份",
+      "help": ""
     }
   },
   "IslandJuuCoffeeNextTask": {
     "_info": {
-      "name": "IslandJuuCoffeeNextTask._info.name",
-      "help": "IslandJuuCoffeeNextTask._info.help"
+      "name": "候補任務",
+      "help": ""
     },
     "AwayCook": {
-      "name": "IslandJuuCoffeeNextTask.AwayCook.name",
-      "help": "IslandJuuCoffeeNextTask.AwayCook.help",
+      "name": "常駐餐品",
+      "help": "以上全做完則做常駐餐品",
       "None": "None",
-      "iced_coffee": "iced_coffee",
-      "omelette": "omelette",
-      "cheese": "cheese",
-      "latte": "latte",
-      "citrus_coffee": "citrus_coffee",
-      "strawberry_milkshake": "strawberry_milkshake",
-      "morning_light": "morning_light",
-      "wake_up_call": "wake_up_call",
-      "fruity_fruitier": "fruity_fruitier"
+      "iced_coffee": "冰咖啡",
+      "omelette": "歐姆蛋",
+      "cheese": "芝士",
+      "latte": "拿鐵",
+      "citrus_coffee": "柑橘咖啡",
+      "strawberry_milkshake": "草莓奶綠",
+      "morning_light": "晨光活力組合",
+      "wake_up_call": "醒神套餐",
+      "fruity_fruitier": "果香雙杯樂"
     }
   },
   "WoodProcessing": {
     "_info": {
-      "name": "WoodProcessing._info.name",
-      "help": "WoodProcessing._info.help"
+      "name": "木料加工",
+      "help": "僅製作檔案櫃"
     },
     "Positions": {
-      "name": "WoodProcessing.Positions.name",
-      "help": "WoodProcessing.Positions.help",
+      "name": "崗位數",
+      "help": "",
       "0": "0",
       "1": "1",
       "2": "2"
@@ -4835,12 +4918,12 @@
   },
   "ElectronicProcessing": {
     "_info": {
-      "name": "ElectronicProcessing._info.name",
-      "help": "ElectronicProcessing._info.help"
+      "name": "電子加工",
+      "help": "僅製作濾芯"
     },
     "Positions": {
-      "name": "ElectronicProcessing.Positions.name",
-      "help": "ElectronicProcessing.Positions.help",
+      "name": "崗位數",
+      "help": "",
       "0": "0",
       "1": "1",
       "2": "2"
@@ -4848,12 +4931,12 @@
   },
   "Industrial": {
     "_info": {
-      "name": "Industrial._info.name",
-      "help": "Industrial._info.help"
+      "name": "工業加工",
+      "help": "釘子超過20個開始做餐具，未解鎖則需手動"
     },
     "Positions": {
-      "name": "Industrial.Positions.name",
-      "help": "Industrial.Positions.help",
+      "name": "崗位數",
+      "help": "",
       "0": "0",
       "1": "1",
       "2": "2"
@@ -4861,12 +4944,12 @@
   },
   "Handmade": {
     "_info": {
-      "name": "Handmade._info.name",
-      "help": "Handmade._info.help"
+      "name": "手工製作",
+      "help": "皮革超過10個開始做鞋靴，未解鎖則需手動"
     },
     "Positions": {
-      "name": "Handmade.Positions.name",
-      "help": "Handmade.Positions.help",
+      "name": "崗位數",
+      "help": "",
       "0": "0",
       "1": "1",
       "2": "2"
@@ -4874,794 +4957,808 @@
   },
   "IslandAirDrop": {
     "_info": {
-      "name": "IslandAirDrop._info.name",
-      "help": "IslandAirDrop._info.help"
+      "name": "每日補給",
+      "help": ""
     },
     "LastSteal": {
-      "name": "IslandAirDrop.LastSteal.name",
-      "help": "IslandAirDrop.LastSteal.help"
+      "name": "上次運行時間",
+      "help": ""
     },
     "VisitOtherIsland": {
-      "name": "IslandAirDrop.VisitOtherIsland.name",
-      "help": "IslandAirDrop.VisitOtherIsland.help"
+      "name": "拜訪其他玩家島嶼",
+      "help": "關閉後只收取自己島嶼的空中補給，不再前往其他玩家島嶼。"
     }
   },
   "IslandDailyOrder": {
     "_info": {
-      "name": "IslandDailyOrder._info.name",
-      "help": "IslandDailyOrder._info.help"
+      "name": "每日訂單",
+      "help": "從島嶼手機頁面進入每日訂單介面，自動檢測訂單類型（緊急/挑戰/輕鬆，目前不支援普通訂單），根據物品條件交付或駁回。\n\n每日訂單功能仍在測試中。如果遇到每日訂單或緊急委託無法交付的情況，請截圖回饋（請確保截圖為 1280x720 的遊戲內截圖）。"
     },
     "RejectCount": {
-      "name": "IslandDailyOrder.RejectCount.name",
-      "help": "IslandDailyOrder.RejectCount.help"
+      "name": "當前駁回次數",
+      "help": "當前累計的訂單駁回次數。每日 0:00 自動重置為 0。可手動修改。"
     },
     "RejectFilter": {
-      "name": "IslandDailyOrder.RejectFilter.name",
-      "help": "IslandDailyOrder.RejectFilter.help"
+      "name": "駁回物品過濾",
+      "help": "設定需要駁回的物品，支援 Cheese（芝士）和 Tofu（豆腐），用 > 分隔。如 \"Cheese > Tofu\" 表示檢測到芝士或豆腐時駁回。"
     },
     "UrgentDetectRefreshTime": {
-      "name": "IslandDailyOrder.UrgentDetectRefreshTime.name",
-      "help": "IslandDailyOrder.UrgentDetectRefreshTime.help"
+      "name": "緊急委託檢測刷新時間",
+      "help": "緊急委託檢測的冷卻時間。在此時間之前跳過緊急委託檢測。格式: YYYY-MM-DD HH:mm:ss"
     }
   },
   "IslandDailyInteract": {
     "_info": {
       "name": "每日/週任務",
-      "help": "控制島嶼每日與每週互動任務，包含晨露農場摸貓、開發計畫中的 JUU 速運、商區外送服務和每週照相任務。"
+      "help": "僅支援minitouch。控制島嶼每日與每週互動任務，包含晨露農場摸貓、開發計畫中的 JUU 速運、商區外送服務和每週照相任務。"
     },
     "WeeklyPhoto": {
       "name": "每週照相任務",
       "help": "從開發計畫頁面啟動每週照相任務，循環完成三輪照相與空閒選擇，直到任務圖標消失。",
-      "True": "True",
-      "False": "False"
+      "True": "開啟",
+      "False": "關閉"
     }
   },
   "IslandPearlSell": {
     "_info": {
-      "name": "IslandPearlSell._info.name",
-      "help": "IslandPearlSell._info.help"
+      "name": "每週珍珠採購與售賣",
+      "help": "僅支援minitouch。每週二 01:00 自動處理珍珠：先按最高採購價採購本週珍珠，再按最低售賣價售賣已有珍珠。其他未完成流程會延遲到次日 01:00 重試。金幣一定要夠購買200x220個這是最低要求能一次買光本週珍珠, 否則可能會報錯."
     },
     "BuyPrice": {
-      "name": "IslandPearlSell.BuyPrice.name",
-      "help": "IslandPearlSell.BuyPrice.help"
+      "name": "最高採購價格",
+      "help": "珍珠採購階段允許的最高折算價格，範圍 200~1000。"
     },
     "SellPrice": {
-      "name": "IslandPearlSell.SellPrice.name",
-      "help": "IslandPearlSell.SellPrice.help"
+      "name": "最低售賣價格",
+      "help": "珍珠售賣階段要求的最低價格，範圍 200~1000。"
     },
     "BuyNextRun": {
-      "name": "IslandPearlSell.BuyNextRun.name",
-      "help": "IslandPearlSell.BuyNextRun.help"
+      "name": "採購下次運行時間",
+      "help": "記錄下次自動採購珍珠的時間，此值會自動更新，通常無需手動修改。"
     },
     "DailyPriceRefresh": {
-      "name": "IslandPearlSell.DailyPriceRefresh.name",
-      "help": "IslandPearlSell.DailyPriceRefresh.help"
+      "name": "每日03:00刷新價格",
+      "help": "開啟後每天03:00進入珍珠商店刷新價格顯示，不執行採購或售賣操作。勾選後整體任務調度邏輯會變化。"
     },
     "NextPearlTradeTime": {
-      "name": "IslandPearlSell.NextPearlTradeTime.name",
-      "help": "IslandPearlSell.NextPearlTradeTime.help"
+      "name": "下次採購售賣時間",
+      "help": "記錄下次執行採購售賣的時間。到達此時間前僅做價格刷新（如啟用）。"
     }
   },
   "IslandCargoPreparation": {
     "_info": {
-      "name": "IslandCargoPreparation._info.name",
-      "help": "IslandCargoPreparation._info.help"
+      "name": "貨物籌備",
+      "help": "自動管理島嶼貨運委託的領取、更換和裝載流程。"
     },
     "Blacklist": {
-      "name": "IslandCargoPreparation.Blacklist.name",
-      "help": "IslandCargoPreparation.Blacklist.help"
+      "name": "貨物黑名單",
+      "help": "命中黑名單貨物時更換委託。目前僅支援 Milk（牛奶）。"
     }
   },
   "IslandBusiness": {
     "_info": {
-      "name": "IslandBusiness._info.name",
-      "help": "IslandBusiness._info.help"
+      "name": "經營模組",
+      "help": "管理島嶼商店的經營運作"
     },
     "BatchEnabled": {
-      "name": "IslandBusiness.BatchEnabled.name",
-      "help": "IslandBusiness.BatchEnabled.help",
-      "True": "True",
-      "False": "False"
+      "name": "啟用分批經營",
+      "help": "將5個商店分成兩批執行，避免共用經營人員的商店同批派出",
+      "True": "啟用",
+      "False": "禁用"
     },
     "Batch1Shops": {
-      "name": "IslandBusiness.Batch1Shops.name",
-      "help": "IslandBusiness.Batch1Shops.help",
-      "1": "1",
-      "2": "2",
-      "3": "3",
-      "4": "4",
-      "5": "5"
+      "name": "第一批經營商店",
+      "help": "選擇第一批要經營的商店",
+      "1": "有魚餐館",
+      "2": "白熊飲品",
+      "3": "啾啾簡餐",
+      "4": "烏魚烤肉",
+      "5": "啾咖啡"
     },
     "Batch2Shops": {
-      "name": "IslandBusiness.Batch2Shops.name",
-      "help": "IslandBusiness.Batch2Shops.help",
-      "1": "1",
-      "2": "2",
-      "3": "3",
-      "4": "4",
-      "5": "5"
+      "name": "第二批經營商店",
+      "help": "選擇第二批要經營的商店",
+      "1": "有魚餐館",
+      "2": "白熊飲品",
+      "3": "啾啾簡餐",
+      "4": "烏魚烤肉",
+      "5": "啾咖啡"
     },
     "SeasonalReplaceEnabled": {
-      "name": "IslandBusiness.SeasonalReplaceEnabled.name",
-      "help": "IslandBusiness.SeasonalReplaceEnabled.help",
-      "True": "True",
-      "False": "False"
+      "name": "啟用季節限定替換",
+      "help": "季節限定菜品庫存不足時自動替換",
+      "True": "啟用",
+      "False": "禁用"
     },
     "SeasonalThreshold": {
-      "name": "IslandBusiness.SeasonalThreshold.name",
-      "help": "IslandBusiness.SeasonalThreshold.help"
+      "name": "季節限定商品數量低於 X 時替換",
+      "help": "季節限定菜品庫存低於此數量時觸發替換"
     }
   },
   "IslandBusinessShop1": {
     "_info": {
-      "name": "IslandBusinessShop1._info.name",
-      "help": "IslandBusinessShop1._info.help"
+      "name": "有魚餐館",
+      "help": ""
     },
     "Char1": {
-      "name": "IslandBusinessShop1.Char1.name",
-      "help": "IslandBusinessShop1.Char1.help",
+      "name": "角色1",
+      "help": "",
       "None": "None",
-      "WorkerJuu": "WorkerJuu",
-      "Cheshire": "Cheshire",
-      "YingSwei": "YingSwei",
-      "Saratoga": "Saratoga",
-      "Akashi": "Akashi",
-      "NewJersey": "NewJersey",
-      "Tashkent": "Tashkent",
-      "LeMalin": "LeMalin",
-      "Shimakaze": "Shimakaze",
-      "Amagi_chan": "Amagi_chan",
-      "Unicorn": "Unicorn",
-      "ChaoHo": "ChaoHo",
-      "ChenHai": "ChenHai",
-      "WilliamDPorter": "WilliamDPorter",
-      "Helena": "Helena",
-      "Friedrich": "Friedrich",
-      "Atago": "Atago",
-      "Yixian": "Yixian",
-      "August": "August",
-      "Eugen": "Eugen",
-      "Hood": "Hood",
-      "Javelin": "Javelin",
-      "Laffey": "Laffey",
-      "Explorer": "Explorer",
-      "Navigator": "Navigator",
-      "OceanCrosser": "OceanCrosser",
-      "FeiYun": "FeiYun",
-      "Takao": "Takao"
+      "WorkerJuu": "工作啾",
+      "Cheshire": "柴郡",
+      "YingSwei": "應瑞",
+      "Saratoga": "薩拉託加",
+      "Akashi": "明石",
+      "NewJersey": "新澤西",
+      "Tashkent": "塔什干",
+      "LeMalin": "惡毒",
+      "Shimakaze": "島風",
+      "Amagi_chan": "天城醬",
+      "Unicorn": "獨角獸",
+      "ChaoHo": "肇和",
+      "ChenHai": "鎮海",
+      "WilliamDPorter": "威廉·D·波特",
+      "Helena": "海倫娜",
+      "Friedrich": "腓特烈",
+      "Atago": "愛宕",
+      "Yixian": "逸仙",
+      "August": "奧古斯特",
+      "Eugen": "歐根親王",
+      "Hood": "胡德",
+      "Javelin": "標槍",
+      "Laffey": "拉菲",
+      "Explorer": "探索者",
+      "Navigator": "領航者",
+      "OceanCrosser": "領洋者",
+      "FeiYun": "飛雲",
+      "Takao": "高雄"
     },
     "Char2": {
-      "name": "IslandBusinessShop1.Char2.name",
-      "help": "IslandBusinessShop1.Char2.help",
+      "name": "角色2",
+      "help": "",
       "None": "None",
-      "WorkerJuu": "WorkerJuu",
-      "Cheshire": "Cheshire",
-      "YingSwei": "YingSwei",
-      "Saratoga": "Saratoga",
-      "Akashi": "Akashi",
-      "NewJersey": "NewJersey",
-      "Tashkent": "Tashkent",
-      "LeMalin": "LeMalin",
-      "Shimakaze": "Shimakaze",
-      "Amagi_chan": "Amagi_chan",
-      "Unicorn": "Unicorn",
-      "ChaoHo": "ChaoHo",
-      "ChenHai": "ChenHai",
-      "WilliamDPorter": "WilliamDPorter",
-      "Helena": "Helena",
-      "Friedrich": "Friedrich",
-      "Atago": "Atago",
-      "Yixian": "Yixian",
-      "August": "August",
-      "Eugen": "Eugen",
-      "Hood": "Hood",
-      "Javelin": "Javelin",
-      "Laffey": "Laffey",
-      "Explorer": "Explorer",
-      "Navigator": "Navigator",
-      "OceanCrosser": "OceanCrosser",
-      "FeiYun": "FeiYun",
-      "Takao": "Takao"
+      "WorkerJuu": "工作啾",
+      "Cheshire": "柴郡",
+      "YingSwei": "應瑞",
+      "Saratoga": "薩拉託加",
+      "Akashi": "明石",
+      "NewJersey": "新澤西",
+      "Tashkent": "塔什干",
+      "LeMalin": "惡毒",
+      "Shimakaze": "島風",
+      "Amagi_chan": "天城醬",
+      "Unicorn": "獨角獸",
+      "ChaoHo": "肇和",
+      "ChenHai": "鎮海",
+      "WilliamDPorter": "威廉·D·波特",
+      "Helena": "海倫娜",
+      "Friedrich": "腓特烈",
+      "Atago": "愛宕",
+      "Yixian": "逸仙",
+      "August": "奧古斯特",
+      "Eugen": "歐根親王",
+      "Hood": "胡德",
+      "Javelin": "標槍",
+      "Laffey": "拉菲",
+      "Explorer": "探索者",
+      "Navigator": "領航者",
+      "OceanCrosser": "領洋者",
+      "FeiYun": "飛雲",
+      "Takao": "高雄"
     },
     "Product1": {
-      "name": "IslandBusinessShop1.Product1.name",
-      "help": "IslandBusinessShop1.Product1.help",
+      "name": "餐品1",
+      "help": "",
       "None": "None",
-      "double_bamboo_shoots": "double_bamboo_shoots",
-      "tofu_meat": "tofu_meat",
-      "tofu_combo": "tofu_combo",
-      "hearty_meal": "hearty_meal",
-      "fo_tiao": "fo_tiao",
-      "amaranth_rice_ball": "amaranth_rice_ball"
+      "double_bamboo_shoots": "涼拌雙筍",
+      "tofu_meat": "肉末燒豆腐",
+      "tofu_combo": "經典豆腐套餐",
+      "hearty_meal": "綿玉定食",
+      "fo_tiao": "佛跳牆",
+      "amaranth_rice_ball": "莧菜飯糰"
     },
     "Product2": {
-      "name": "IslandBusinessShop1.Product2.name",
-      "help": "IslandBusinessShop1.Product2.help",
+      "name": "餐品2",
+      "help": "",
       "None": "None",
-      "double_bamboo_shoots": "double_bamboo_shoots",
-      "tofu_meat": "tofu_meat",
-      "tofu_combo": "tofu_combo",
-      "hearty_meal": "hearty_meal",
-      "fo_tiao": "fo_tiao",
-      "amaranth_rice_ball": "amaranth_rice_ball"
+      "double_bamboo_shoots": "涼拌雙筍",
+      "tofu_meat": "肉末燒豆腐",
+      "tofu_combo": "經典豆腐套餐",
+      "hearty_meal": "綿玉定食",
+      "fo_tiao": "佛跳牆",
+      "amaranth_rice_ball": "莧菜飯糰"
     },
     "Product3": {
-      "name": "IslandBusinessShop1.Product3.name",
-      "help": "IslandBusinessShop1.Product3.help",
+      "name": "餐品3",
+      "help": "",
       "None": "None",
-      "double_bamboo_shoots": "double_bamboo_shoots",
-      "tofu_meat": "tofu_meat",
-      "tofu_combo": "tofu_combo",
-      "hearty_meal": "hearty_meal",
-      "fo_tiao": "fo_tiao",
-      "amaranth_rice_ball": "amaranth_rice_ball"
+      "double_bamboo_shoots": "涼拌雙筍",
+      "tofu_meat": "肉末燒豆腐",
+      "tofu_combo": "經典豆腐套餐",
+      "hearty_meal": "綿玉定食",
+      "fo_tiao": "佛跳牆",
+      "amaranth_rice_ball": "莧菜飯糰"
     },
     "Product4": {
-      "name": "IslandBusinessShop1.Product4.name",
-      "help": "IslandBusinessShop1.Product4.help",
+      "name": "餐品4",
+      "help": "",
       "None": "None",
-      "double_bamboo_shoots": "double_bamboo_shoots",
-      "tofu_meat": "tofu_meat",
-      "tofu_combo": "tofu_combo",
-      "hearty_meal": "hearty_meal",
-      "fo_tiao": "fo_tiao",
-      "amaranth_rice_ball": "amaranth_rice_ball"
+      "double_bamboo_shoots": "涼拌雙筍",
+      "tofu_meat": "肉末燒豆腐",
+      "tofu_combo": "經典豆腐套餐",
+      "hearty_meal": "綿玉定食",
+      "fo_tiao": "佛跳牆",
+      "amaranth_rice_ball": "莧菜飯糰"
     },
     "Product5": {
-      "name": "IslandBusinessShop1.Product5.name",
-      "help": "IslandBusinessShop1.Product5.help",
+      "name": "餐品5",
+      "help": "",
       "None": "None",
-      "double_bamboo_shoots": "double_bamboo_shoots",
-      "tofu_meat": "tofu_meat",
-      "tofu_combo": "tofu_combo",
-      "hearty_meal": "hearty_meal",
-      "fo_tiao": "fo_tiao",
-      "amaranth_rice_ball": "amaranth_rice_ball"
+      "double_bamboo_shoots": "涼拌雙筍",
+      "tofu_meat": "肉末燒豆腐",
+      "tofu_combo": "經典豆腐套餐",
+      "hearty_meal": "綿玉定食",
+      "fo_tiao": "佛跳牆",
+      "amaranth_rice_ball": "莧菜飯團"
     },
     "SeasonalFallback": {
-      "name": "IslandBusinessShop1.SeasonalFallback.name",
-      "help": "IslandBusinessShop1.SeasonalFallback.help",
-      "None": "None",
-      "double_bamboo_shoots": "double_bamboo_shoots",
-      "tofu_meat": "tofu_meat",
-      "tofu_combo": "tofu_combo",
-      "hearty_meal": "hearty_meal",
-      "fo_tiao": "fo_tiao",
-      "amaranth_rice_ball": "amaranth_rice_ball"
+      "name": "季節餐品備用餐品",
+      "help": "有魚餐館當前季節餐品庫存不足時替換成該餐品",
+      "None": "無",
+      "double_bamboo_shoots": "涼拌雙筍",
+      "tofu_meat": "肉末燒豆腐",
+      "tofu_combo": "經典豆腐套餐",
+      "hearty_meal": "綿玉定食",
+      "fo_tiao": "佛跳牆",
+      "amaranth_rice_ball": "莧菜飯糰"
     },
     "BoostReplaceFilter": {
-      "name": "IslandBusinessShop1.BoostReplaceFilter.name",
-      "help": "IslandBusinessShop1.BoostReplaceFilter.help"
+      "name": "有魚餐館加成替換過濾",
+      "help": "多個加成餐品時按過濾順序優先替換第一個；替換槽位從餐品5→1倒查替換最後一個非空餐品\n可用餐品key對照：double_bamboo_shoots:涼拌雙筍, tofu_meat:肉末燒豆腐, tofu_combo:經典豆腐套餐, hearty_meal:綿玉定食, fo_tiao:佛跳牆, amaranth_rice_ball:莧菜飯糰\n示例：30 > 20 > 10"
     }
   },
   "IslandBusinessShop2": {
     "_info": {
-      "name": "IslandBusinessShop2._info.name",
-      "help": "IslandBusinessShop2._info.help"
+      "name": "白熊飲品",
+      "help": ""
     },
     "Char1": {
-      "name": "IslandBusinessShop2.Char1.name",
-      "help": "IslandBusinessShop2.Char1.help",
+      "name": "角色1",
+      "help": "",
       "None": "None",
-      "WorkerJuu": "WorkerJuu",
-      "Cheshire": "Cheshire",
-      "YingSwei": "YingSwei",
-      "Saratoga": "Saratoga",
-      "Akashi": "Akashi",
-      "NewJersey": "NewJersey",
-      "Tashkent": "Tashkent",
-      "LeMalin": "LeMalin",
-      "Shimakaze": "Shimakaze",
-      "Amagi_chan": "Amagi_chan",
-      "Unicorn": "Unicorn",
-      "ChaoHo": "ChaoHo",
-      "ChenHai": "ChenHai",
-      "WilliamDPorter": "WilliamDPorter",
-      "Helena": "Helena",
-      "Friedrich": "Friedrich",
-      "Atago": "Atago",
-      "Yixian": "Yixian",
-      "August": "August",
-      "Eugen": "Eugen",
-      "Hood": "Hood",
-      "Javelin": "Javelin",
-      "Laffey": "Laffey",
-      "Explorer": "Explorer",
-      "Navigator": "Navigator",
-      "OceanCrosser": "OceanCrosser",
-      "FeiYun": "FeiYun",
-      "Takao": "Takao"
+      "WorkerJuu": "工作啾",
+      "Cheshire": "柴郡",
+      "YingSwei": "應瑞",
+      "Saratoga": "薩拉託加",
+      "Akashi": "明石",
+      "NewJersey": "新澤西",
+      "Tashkent": "塔什干",
+      "LeMalin": "惡毒",
+      "Shimakaze": "島風",
+      "Amagi_chan": "天城醬",
+      "Unicorn": "獨角獸",
+      "ChaoHo": "肇和",
+      "ChenHai": "鎮海",
+      "WilliamDPorter": "威廉·D·波特",
+      "Helena": "海倫娜",
+      "Friedrich": "腓特烈",
+      "Atago": "愛宕",
+      "Yixian": "逸仙",
+      "August": "奧古斯特",
+      "Eugen": "歐根親王",
+      "Hood": "胡德",
+      "Javelin": "標槍",
+      "Laffey": "拉菲",
+      "Explorer": "探索者",
+      "Navigator": "領航者",
+      "OceanCrosser": "領洋者",
+      "FeiYun": "飛雲",
+      "Takao": "高雄"
     },
     "Char2": {
-      "name": "IslandBusinessShop2.Char2.name",
-      "help": "IslandBusinessShop2.Char2.help",
+      "name": "角色2",
+      "help": "",
       "None": "None",
-      "WorkerJuu": "WorkerJuu",
-      "Cheshire": "Cheshire",
-      "YingSwei": "YingSwei",
-      "Saratoga": "Saratoga",
-      "Akashi": "Akashi",
-      "NewJersey": "NewJersey",
-      "Tashkent": "Tashkent",
-      "LeMalin": "LeMalin",
-      "Shimakaze": "Shimakaze",
-      "Amagi_chan": "Amagi_chan",
-      "Unicorn": "Unicorn",
-      "ChaoHo": "ChaoHo",
-      "ChenHai": "ChenHai",
-      "WilliamDPorter": "WilliamDPorter",
-      "Helena": "Helena",
-      "Friedrich": "Friedrich",
-      "Atago": "Atago",
-      "Yixian": "Yixian",
-      "August": "August",
-      "Eugen": "Eugen",
-      "Hood": "Hood",
-      "Javelin": "Javelin",
-      "Laffey": "Laffey",
-      "Explorer": "Explorer",
-      "Navigator": "Navigator",
-      "OceanCrosser": "OceanCrosser",
-      "FeiYun": "FeiYun",
-      "Takao": "Takao"
+      "WorkerJuu": "工作啾",
+      "Cheshire": "柴郡",
+      "YingSwei": "應瑞",
+      "Saratoga": "薩拉託加",
+      "Akashi": "明石",
+      "NewJersey": "新澤西",
+      "Tashkent": "塔什干",
+      "LeMalin": "惡毒",
+      "Shimakaze": "島風",
+      "Amagi_chan": "天城醬",
+      "Unicorn": "獨角獸",
+      "ChaoHo": "肇和",
+      "ChenHai": "鎮海",
+      "WilliamDPorter": "威廉·D·波特",
+      "Helena": "海倫娜",
+      "Friedrich": "腓特烈",
+      "Atago": "愛宕",
+      "Yixian": "逸仙",
+      "August": "奧古斯特",
+      "Eugen": "歐根親王",
+      "Hood": "胡德",
+      "Javelin": "標槍",
+      "Laffey": "拉菲",
+      "Explorer": "探索者",
+      "Navigator": "領航者",
+      "OceanCrosser": "領洋者",
+      "FeiYun": "飛雲",
+      "Takao": "高雄"
     },
     "Product1": {
-      "name": "IslandBusinessShop2.Product1.name",
-      "help": "IslandBusinessShop2.Product1.help",
+      "name": "餐品1",
+      "help": "",
       "None": "None",
-      "spring_flower_tea": "spring_flower_tea",
-      "strawberry_lemon": "strawberry_lemon",
-      "strawberry_honey": "strawberry_honey",
-      "floral_fruity": "floral_fruity",
-      "fruit_paradise": "fruit_paradise",
-      "lavender_tea": "lavender_tea",
-      "sunny_honey": "sunny_honey",
-      "watermelon_juice": "watermelon_juice"
+      "spring_flower_tea": "迎春花茶",
+      "strawberry_lemon": "草莓蜜沁",
+      "strawberry_honey": "草莓蜂蜜冰沙",
+      "floral_fruity": "花香果韻",
+      "fruit_paradise": "繽紛果樂園",
+      "lavender_tea": "薰衣草茶",
+      "sunny_honey": "陽光蜜水",
+      "watermelon_juice": "西瓜汁"
     },
     "Product2": {
-      "name": "IslandBusinessShop2.Product2.name",
-      "help": "IslandBusinessShop2.Product2.help",
+      "name": "餐品2",
+      "help": "",
       "None": "None",
-      "spring_flower_tea": "spring_flower_tea",
-      "strawberry_lemon": "strawberry_lemon",
-      "strawberry_honey": "strawberry_honey",
-      "floral_fruity": "floral_fruity",
-      "fruit_paradise": "fruit_paradise",
-      "lavender_tea": "lavender_tea",
-      "sunny_honey": "sunny_honey",
-      "watermelon_juice": "watermelon_juice"
+      "spring_flower_tea": "迎春花茶",
+      "strawberry_lemon": "草莓蜜沁",
+      "strawberry_honey": "草莓蜂蜜冰沙",
+      "floral_fruity": "花香果韻",
+      "fruit_paradise": "繽紛果樂園",
+      "lavender_tea": "薰衣草茶",
+      "sunny_honey": "陽光蜜水",
+      "watermelon_juice": "西瓜汁"
     },
     "Product3": {
-      "name": "IslandBusinessShop2.Product3.name",
-      "help": "IslandBusinessShop2.Product3.help",
+      "name": "餐品3",
+      "help": "",
       "None": "None",
-      "spring_flower_tea": "spring_flower_tea",
-      "strawberry_lemon": "strawberry_lemon",
-      "strawberry_honey": "strawberry_honey",
-      "floral_fruity": "floral_fruity",
-      "fruit_paradise": "fruit_paradise",
-      "lavender_tea": "lavender_tea",
-      "sunny_honey": "sunny_honey",
-      "watermelon_juice": "watermelon_juice"
+      "spring_flower_tea": "迎春花茶",
+      "strawberry_lemon": "草莓蜜沁",
+      "strawberry_honey": "草莓蜂蜜冰沙",
+      "floral_fruity": "花香果韻",
+      "fruit_paradise": "繽紛果樂園",
+      "lavender_tea": "薰衣草茶",
+      "sunny_honey": "陽光蜜水",
+      "watermelon_juice": "西瓜汁"
     },
     "Product4": {
-      "name": "IslandBusinessShop2.Product4.name",
-      "help": "IslandBusinessShop2.Product4.help",
+      "name": "餐品4",
+      "help": "",
       "None": "None",
-      "spring_flower_tea": "spring_flower_tea",
-      "strawberry_lemon": "strawberry_lemon",
-      "strawberry_honey": "strawberry_honey",
-      "floral_fruity": "floral_fruity",
-      "fruit_paradise": "fruit_paradise",
-      "lavender_tea": "lavender_tea",
-      "sunny_honey": "sunny_honey",
-      "watermelon_juice": "watermelon_juice"
+      "spring_flower_tea": "迎春花茶",
+      "strawberry_lemon": "草莓蜜沁",
+      "strawberry_honey": "草莓蜂蜜冰沙",
+      "floral_fruity": "花香果韻",
+      "fruit_paradise": "繽紛果樂園",
+      "lavender_tea": "薰衣草茶",
+      "sunny_honey": "陽光蜜水",
+      "watermelon_juice": "西瓜汁"
     },
     "Product5": {
-      "name": "IslandBusinessShop2.Product5.name",
-      "help": "IslandBusinessShop2.Product5.help",
+      "name": "餐品5",
+      "help": "",
       "None": "None",
-      "spring_flower_tea": "spring_flower_tea",
-      "strawberry_lemon": "strawberry_lemon",
-      "strawberry_honey": "strawberry_honey",
-      "floral_fruity": "floral_fruity",
-      "fruit_paradise": "fruit_paradise",
-      "lavender_tea": "lavender_tea",
-      "sunny_honey": "sunny_honey",
-      "watermelon_juice": "watermelon_juice"
+      "spring_flower_tea": "迎春花茶",
+      "strawberry_lemon": "草莓蜜沁",
+      "strawberry_honey": "草莓蜂蜜冰沙",
+      "floral_fruity": "花香果韻",
+      "fruit_paradise": "繽紛果樂園",
+      "lavender_tea": "薰衣草茶",
+      "sunny_honey": "陽光蜜水",
+      "watermelon_juice": "西瓜汁"
     },
     "BoostReplaceFilter": {
-      "name": "IslandBusinessShop2.BoostReplaceFilter.name",
-      "help": "IslandBusinessShop2.BoostReplaceFilter.help"
+      "name": "白熊飲品加成替換過濾",
+      "help": "多個加成餐品時按過濾順序優先替換第一個；替換槽位從餐品5→1倒查替換最後一個非空餐品\n可用餐品key對照：spring_flower_tea:迎春花茶, strawberry_lemon:草莓蜜沁, strawberry_honey:草莓蜂蜜冰沙, floral_fruity:花香果韻, fruit_paradise:繽紛果樂園, lavender_tea:薰衣草茶, sunny_honey:陽光蜜水, watermelon_juice:西瓜汁\n示例：30 > 20 > strawberry_honey > fruit_paradise > 10"
     }
   },
   "IslandBusinessShop3": {
     "_info": {
-      "name": "IslandBusinessShop3._info.name",
-      "help": "IslandBusinessShop3._info.help"
+      "name": "啾啾簡餐",
+      "help": "餐品會按從1~8的順序依次生產"
     },
     "Char1": {
-      "name": "IslandBusinessShop3.Char1.name",
-      "help": "IslandBusinessShop3.Char1.help",
+      "name": "角色1",
+      "help": "",
       "None": "None",
-      "WorkerJuu": "WorkerJuu",
-      "Cheshire": "Cheshire",
-      "YingSwei": "YingSwei",
-      "Saratoga": "Saratoga",
-      "Akashi": "Akashi",
-      "NewJersey": "NewJersey",
-      "Tashkent": "Tashkent",
-      "LeMalin": "LeMalin",
-      "Shimakaze": "Shimakaze",
-      "Amagi_chan": "Amagi_chan",
-      "Unicorn": "Unicorn",
-      "ChaoHo": "ChaoHo",
-      "ChenHai": "ChenHai",
-      "WilliamDPorter": "WilliamDPorter",
-      "Helena": "Helena",
-      "Friedrich": "Friedrich",
-      "Atago": "Atago",
-      "Yixian": "Yixian",
-      "August": "August",
-      "Eugen": "Eugen",
-      "Hood": "Hood",
-      "Javelin": "Javelin",
-      "Laffey": "Laffey",
-      "Explorer": "Explorer",
-      "Navigator": "Navigator",
-      "OceanCrosser": "OceanCrosser",
-      "FeiYun": "FeiYun",
-      "Takao": "Takao"
+      "WorkerJuu": "工作啾",
+      "Cheshire": "柴郡",
+      "YingSwei": "應瑞",
+      "Saratoga": "薩拉託加",
+      "Akashi": "明石",
+      "NewJersey": "新澤西",
+      "Tashkent": "塔什干",
+      "LeMalin": "惡毒",
+      "Shimakaze": "島風",
+      "Amagi_chan": "天城醬",
+      "Unicorn": "獨角獸",
+      "ChaoHo": "肇和",
+      "ChenHai": "鎮海",
+      "WilliamDPorter": "威廉·D·波特",
+      "Helena": "海倫娜",
+      "Friedrich": "腓特烈",
+      "Atago": "愛宕",
+      "Yixian": "逸仙",
+      "August": "奧古斯特",
+      "Eugen": "歐根親王",
+      "Hood": "胡德",
+      "Javelin": "標槍",
+      "Laffey": "拉菲",
+      "Explorer": "探索者",
+      "Navigator": "領航者",
+      "OceanCrosser": "領洋者",
+      "FeiYun": "飛雲",
+      "Takao": "高雄"
     },
     "Char2": {
-      "name": "IslandBusinessShop3.Char2.name",
-      "help": "IslandBusinessShop3.Char2.help",
+      "name": "角色2",
+      "help": "",
       "None": "None",
-      "WorkerJuu": "WorkerJuu",
-      "Cheshire": "Cheshire",
-      "YingSwei": "YingSwei",
-      "Saratoga": "Saratoga",
-      "Akashi": "Akashi",
-      "NewJersey": "NewJersey",
-      "Tashkent": "Tashkent",
-      "LeMalin": "LeMalin",
-      "Shimakaze": "Shimakaze",
-      "Amagi_chan": "Amagi_chan",
-      "Unicorn": "Unicorn",
-      "ChaoHo": "ChaoHo",
-      "ChenHai": "ChenHai",
-      "WilliamDPorter": "WilliamDPorter",
-      "Helena": "Helena",
-      "Friedrich": "Friedrich",
-      "Atago": "Atago",
-      "Yixian": "Yixian",
-      "August": "August",
-      "Eugen": "Eugen",
-      "Hood": "Hood",
-      "Javelin": "Javelin",
-      "Laffey": "Laffey",
-      "Explorer": "Explorer",
-      "Navigator": "Navigator",
-      "OceanCrosser": "OceanCrosser",
-      "FeiYun": "FeiYun",
-      "Takao": "Takao"
+      "WorkerJuu": "工作啾",
+      "Cheshire": "柴郡",
+      "YingSwei": "應瑞",
+      "Saratoga": "薩拉託加",
+      "Akashi": "明石",
+      "NewJersey": "新澤西",
+      "Tashkent": "塔什干",
+      "LeMalin": "惡毒",
+      "Shimakaze": "島風",
+      "Amagi_chan": "天城醬",
+      "Unicorn": "獨角獸",
+      "ChaoHo": "肇和",
+      "ChenHai": "鎮海",
+      "WilliamDPorter": "威廉·D·波特",
+      "Helena": "海倫娜",
+      "Friedrich": "腓特烈",
+      "Atago": "愛宕",
+      "Yixian": "逸仙",
+      "August": "奧古斯特",
+      "Eugen": "歐根親王",
+      "Hood": "胡德",
+      "Javelin": "標槍",
+      "Laffey": "拉菲",
+      "Explorer": "探索者",
+      "Navigator": "領航者",
+      "OceanCrosser": "領洋者",
+      "FeiYun": "飛雲",
+      "Takao": "高雄"
     },
     "Product1": {
-      "name": "IslandBusinessShop3.Product1.name",
-      "help": "IslandBusinessShop3.Product1.help",
+      "name": "餐品1",
+      "help": "",
       "None": "None",
-      "orchard_duo": "orchard_duo",
-      "succulently_sweet": "succulently_sweet",
-      "berry_orange": "berry_orange",
-      "strawberry_charlotte": "strawberry_charlotte",
-      "seafood_rice": "seafood_rice"
+      "orchard_duo": "果園二重奏",
+      "succulently_sweet": "香甜組合",
+      "berry_orange": "莓果香橙甜點組",
+      "strawberry_charlotte": "草莓夏洛特",
+      "seafood_rice": "海鮮飯"
     },
     "Product2": {
-      "name": "IslandBusinessShop3.Product2.name",
-      "help": "IslandBusinessShop3.Product2.help",
+      "name": "餐品2",
+      "help": "",
       "None": "None",
-      "orchard_duo": "orchard_duo",
-      "succulently_sweet": "succulently_sweet",
-      "berry_orange": "berry_orange",
-      "strawberry_charlotte": "strawberry_charlotte",
-      "seafood_rice": "seafood_rice"
+      "orchard_duo": "果園二重奏",
+      "succulently_sweet": "香甜組合",
+      "berry_orange": "莓果香橙甜點組",
+      "strawberry_charlotte": "草莓夏洛特",
+      "seafood_rice": "海鮮飯"
     },
     "Product3": {
-      "name": "IslandBusinessShop3.Product3.name",
-      "help": "IslandBusinessShop3.Product3.help",
+      "name": "餐品3",
+      "help": "",
       "None": "None",
-      "orchard_duo": "orchard_duo",
-      "succulently_sweet": "succulently_sweet",
-      "berry_orange": "berry_orange",
-      "strawberry_charlotte": "strawberry_charlotte",
-      "seafood_rice": "seafood_rice"
+      "orchard_duo": "果園二重奏",
+      "succulently_sweet": "香甜組合",
+      "berry_orange": "莓果香橙甜點組",
+      "strawberry_charlotte": "草莓夏洛特",
+      "seafood_rice": "海鮮飯"
     },
     "Product4": {
-      "name": "IslandBusinessShop3.Product4.name",
-      "help": "IslandBusinessShop3.Product4.help",
+      "name": "餐品4",
+      "help": "",
       "None": "None",
-      "orchard_duo": "orchard_duo",
-      "succulently_sweet": "succulently_sweet",
-      "berry_orange": "berry_orange",
-      "strawberry_charlotte": "strawberry_charlotte",
-      "seafood_rice": "seafood_rice"
+      "orchard_duo": "果園二重奏",
+      "succulently_sweet": "香甜組合",
+      "berry_orange": "莓果香橙甜點組",
+      "strawberry_charlotte": "草莓夏洛特",
+      "seafood_rice": "海鮮飯"
     },
     "Product5": {
-      "name": "IslandBusinessShop3.Product5.name",
-      "help": "IslandBusinessShop3.Product5.help",
+      "name": "餐品5",
+      "help": "",
       "None": "None",
-      "orchard_duo": "orchard_duo",
-      "succulently_sweet": "succulently_sweet",
-      "berry_orange": "berry_orange",
-      "strawberry_charlotte": "strawberry_charlotte",
-      "seafood_rice": "seafood_rice"
+      "orchard_duo": "果園二重奏",
+      "succulently_sweet": "香甜組合",
+      "berry_orange": "莓果香橙甜點組",
+      "strawberry_charlotte": "草莓夏洛特",
+      "seafood_rice": "海鮮飯"
     },
     "BoostReplaceFilter": {
-      "name": "IslandBusinessShop3.BoostReplaceFilter.name",
-      "help": "IslandBusinessShop3.BoostReplaceFilter.help"
+      "name": "啾啾簡餐加成替換過濾",
+      "help": "多個加成餐品時按過濾順序優先替換第一個；替換槽位從餐品5→1倒查替換最後一個非空餐品\n可用餐品key對照：orchard_duo:果園二重奏, succulently_sweet:香甜組合, berry_orange:莓果香橙甜點組, strawberry_charlotte:草莓夏洛特, seafood_rice:海鮮飯\n示例：30 > 20 > succulently_sweet > 10"
     }
   },
   "IslandBusinessShop4": {
     "_info": {
       "name": "烏魚烤肉",
-      "help": ""
+      "help": "餐品會按從1~8的順序依次生產，生產目標為餐品X數量選項，完全滿足前一項後才會執行下一項，後一項在運行時不會影響之前幾項任務的達成"
     },
     "Char1": {
       "name": "角色1",
       "help": "",
       "None": "None",
-      "WorkerJuu": "WorkerJuu",
-      "Cheshire": "Cheshire",
-      "YingSwei": "YingSwei",
-      "Saratoga": "Saratoga",
-      "Akashi": "Akashi",
-      "NewJersey": "NewJersey",
-      "Tashkent": "Tashkent",
-      "LeMalin": "LeMalin",
-      "Shimakaze": "Shimakaze",
-      "Amagi_chan": "Amagi_chan",
-      "Unicorn": "Unicorn",
-      "ChaoHo": "ChaoHo",
-      "ChenHai": "ChenHai",
-      "WilliamDPorter": "WilliamDPorter",
-      "Helena": "Helena",
-      "Friedrich": "Friedrich",
-      "Atago": "Atago",
-      "Yixian": "Yixian",
-      "August": "August",
-      "Eugen": "Eugen",
-      "Hood": "Hood",
-      "Javelin": "Javelin",
-      "Laffey": "Laffey",
-      "Explorer": "Explorer",
-      "Navigator": "Navigator",
-      "OceanCrosser": "OceanCrosser",
-      "FeiYun": "FeiYun",
-      "Takao": "Takao"
+      "WorkerJuu": "工作啾",
+      "Cheshire": "柴郡",
+      "YingSwei": "應瑞",
+      "Saratoga": "薩拉託加",
+      "Akashi": "明石",
+      "NewJersey": "新澤西",
+      "Tashkent": "塔什干",
+      "LeMalin": "惡毒",
+      "Shimakaze": "島風",
+      "Amagi_chan": "天城醬",
+      "Unicorn": "獨角獸",
+      "ChaoHo": "肇和",
+      "ChenHai": "鎮海",
+      "WilliamDPorter": "威廉·D·波特",
+      "Helena": "海倫娜",
+      "Friedrich": "腓特烈",
+      "Atago": "愛宕",
+      "Yixian": "逸仙",
+      "August": "奧古斯特",
+      "Eugen": "歐根親王",
+      "Hood": "胡德",
+      "Javelin": "標槍",
+      "Laffey": "拉菲",
+      "Explorer": "探索者",
+      "Navigator": "領航者",
+      "OceanCrosser": "領洋者",
+      "FeiYun": "飛雲",
+      "Takao": "高雄"
     },
     "Char2": {
       "name": "角色2",
       "help": "",
       "None": "None",
-      "WorkerJuu": "WorkerJuu",
-      "Cheshire": "Cheshire",
-      "YingSwei": "YingSwei",
-      "Saratoga": "Saratoga",
-      "Akashi": "Akashi",
-      "NewJersey": "NewJersey",
-      "Tashkent": "Tashkent",
-      "LeMalin": "LeMalin",
-      "Shimakaze": "Shimakaze",
-      "Amagi_chan": "Amagi_chan",
-      "Unicorn": "Unicorn",
-      "ChaoHo": "ChaoHo",
-      "ChenHai": "ChenHai",
-      "WilliamDPorter": "WilliamDPorter",
-      "Helena": "Helena",
-      "Friedrich": "Friedrich",
-      "Atago": "Atago",
-      "Yixian": "Yixian",
-      "August": "August",
-      "Eugen": "Eugen",
-      "Hood": "Hood",
-      "Javelin": "Javelin",
-      "Laffey": "Laffey",
-      "Explorer": "Explorer",
-      "Navigator": "Navigator",
-      "OceanCrosser": "OceanCrosser",
-      "FeiYun": "FeiYun",
-      "Takao": "Takao"
+      "WorkerJuu": "工作啾",
+      "Cheshire": "柴郡",
+      "YingSwei": "應瑞",
+      "Saratoga": "薩拉託加",
+      "Akashi": "明石",
+      "NewJersey": "新澤西",
+      "Tashkent": "塔什干",
+      "LeMalin": "惡毒",
+      "Shimakaze": "島風",
+      "Amagi_chan": "天城醬",
+      "Unicorn": "獨角獸",
+      "ChaoHo": "肇和",
+      "ChenHai": "鎮海",
+      "WilliamDPorter": "威廉·D·波特",
+      "Helena": "海倫娜",
+      "Friedrich": "腓特烈",
+      "Atago": "愛宕",
+      "Yixian": "逸仙",
+      "August": "奧古斯特",
+      "Eugen": "歐根親王",
+      "Hood": "胡德",
+      "Javelin": "標槍",
+      "Laffey": "拉菲",
+      "Explorer": "探索者",
+      "Navigator": "領航者",
+      "OceanCrosser": "領洋者",
+      "FeiYun": "飛雲",
+      "Takao": "高雄"
     },
     "Product1": {
       "name": "餐品1",
       "help": "",
-      "None": "無",
-      "roasted_skewer": "烤肉串",
-      "stir_fried_chicken": "炒雞丁",
-      "steak_bowl": "牛排飯",
-      "crayfish_stir_fry": "crayfish_stir_fry",
-      "carnival": "狂歡套餐",
-      "double_energy": "雙倍能量"
+      "None": "None",
+      "roasted_skewer": "碳烤肉串",
+      "stir_fried_chicken": "爆炒禽肉",
+      "steak_bowl": "漢堡肉飯",
+      "crayfish_stir_fry": "爆炒小龍蝦",
+      "carnival": "烤肉狂歡",
+      "double_energy": "能量雙拼套餐"
     },
     "Product2": {
       "name": "餐品2",
       "help": "",
-      "None": "無",
-      "roasted_skewer": "烤肉串",
-      "stir_fried_chicken": "炒雞丁",
-      "steak_bowl": "牛排飯",
-      "crayfish_stir_fry": "crayfish_stir_fry",
-      "carnival": "狂歡套餐",
-      "double_energy": "雙倍能量"
+      "None": "None",
+      "roasted_skewer": "碳烤肉串",
+      "stir_fried_chicken": "爆炒禽肉",
+      "steak_bowl": "漢堡肉飯",
+      "crayfish_stir_fry": "爆炒小龍蝦",
+      "carnival": "烤肉狂歡",
+      "double_energy": "能量雙拼套餐"
     },
     "Product3": {
       "name": "餐品3",
       "help": "",
-      "None": "無",
-      "roasted_skewer": "烤肉串",
-      "stir_fried_chicken": "炒雞丁",
-      "steak_bowl": "牛排飯",
-      "crayfish_stir_fry": "crayfish_stir_fry",
-      "carnival": "狂歡套餐",
-      "double_energy": "雙倍能量"
+      "None": "None",
+      "roasted_skewer": "碳烤肉串",
+      "stir_fried_chicken": "爆炒禽肉",
+      "steak_bowl": "漢堡肉飯",
+      "crayfish_stir_fry": "爆炒小龍蝦",
+      "carnival": "烤肉狂歡",
+      "double_energy": "能量雙拼套餐"
     },
     "Product4": {
       "name": "餐品4",
       "help": "",
-      "None": "無",
-      "roasted_skewer": "烤肉串",
-      "stir_fried_chicken": "炒雞丁",
-      "steak_bowl": "牛排飯",
-      "crayfish_stir_fry": "crayfish_stir_fry",
-      "carnival": "狂歡套餐",
-      "double_energy": "雙倍能量"
+      "None": "None",
+      "roasted_skewer": "碳烤肉串",
+      "stir_fried_chicken": "爆炒禽肉",
+      "steak_bowl": "漢堡肉飯",
+      "crayfish_stir_fry": "爆炒小龍蝦",
+      "carnival": "烤肉狂歡",
+      "double_energy": "能量雙拼套餐"
     },
     "Product5": {
       "name": "餐品5",
       "help": "",
-      "None": "無",
-      "roasted_skewer": "烤肉串",
-      "stir_fried_chicken": "炒雞丁",
-      "steak_bowl": "牛排飯",
-      "crayfish_stir_fry": "crayfish_stir_fry",
-      "carnival": "狂歡套餐",
-      "double_energy": "雙倍能量"
+      "None": "None",
+      "roasted_skewer": "碳烤肉串",
+      "stir_fried_chicken": "爆炒禽肉",
+      "steak_bowl": "漢堡肉飯",
+      "crayfish_stir_fry": "爆炒小龍蝦",
+      "carnival": "烤肉狂歡",
+      "double_energy": "能量雙拼套餐"
     },
     "BoostReplaceFilter": {
-      "name": "IslandBusinessShop4.BoostReplaceFilter.name",
-      "help": "IslandBusinessShop4.BoostReplaceFilter.help"
+      "name": "烏魚烤肉加成替換過濾",
+      "help": "多個加成餐品時按過濾順序優先替換第一個；替換槽位從餐品5→1倒查替換最後一個非空餐品\n可用餐品key對照：roasted_skewer:碳烤肉串, stir_fried_chicken:爆炒禽肉, steak_bowl:漢堡肉飯, crayfish_stir_fry:爆炒小龍蝦, carnival:烤肉狂歡, double_energy:能量雙拼套餐\n示例：30 > 20 > crayfish_stir_fry > 10"
     }
   },
   "IslandBusinessShop5": {
     "_info": {
       "name": "啾咖啡",
-      "help": ""
+      "help": "餐品會按從1~8的順序依次生產，生產目標為餐品X數量選項，完全滿足前一項後才會執行下一項，後一項在運行時不會影響之前幾項任務的達成"
     },
     "Char1": {
       "name": "角色1",
       "help": "",
       "None": "None",
-      "WorkerJuu": "WorkerJuu",
-      "Cheshire": "Cheshire",
-      "YingSwei": "YingSwei",
-      "Saratoga": "Saratoga",
-      "Akashi": "Akashi",
-      "NewJersey": "NewJersey",
-      "Tashkent": "Tashkent",
-      "LeMalin": "LeMalin",
-      "Shimakaze": "Shimakaze",
-      "Amagi_chan": "Amagi_chan",
-      "Unicorn": "Unicorn",
-      "ChaoHo": "ChaoHo",
-      "ChenHai": "ChenHai",
-      "WilliamDPorter": "WilliamDPorter",
-      "Helena": "Helena",
-      "Friedrich": "Friedrich",
-      "Atago": "Atago",
-      "Yixian": "Yixian",
-      "August": "August",
-      "Eugen": "Eugen",
-      "Hood": "Hood",
-      "Javelin": "Javelin",
-      "Laffey": "Laffey",
-      "Explorer": "Explorer",
-      "Navigator": "Navigator",
-      "OceanCrosser": "OceanCrosser",
-      "FeiYun": "FeiYun",
-      "Takao": "Takao"
+      "WorkerJuu": "工作啾",
+      "Cheshire": "柴郡",
+      "YingSwei": "應瑞",
+      "Saratoga": "薩拉託加",
+      "Akashi": "明石",
+      "NewJersey": "新澤西",
+      "Tashkent": "塔什干",
+      "LeMalin": "惡毒",
+      "Shimakaze": "島風",
+      "Amagi_chan": "天城醬",
+      "Unicorn": "獨角獸",
+      "ChaoHo": "肇和",
+      "ChenHai": "鎮海",
+      "WilliamDPorter": "威廉·D·波特",
+      "Helena": "海倫娜",
+      "Friedrich": "腓特烈",
+      "Atago": "愛宕",
+      "Yixian": "逸仙",
+      "August": "奧古斯特",
+      "Eugen": "歐根親王",
+      "Hood": "胡德",
+      "Javelin": "標槍",
+      "Laffey": "拉菲",
+      "Explorer": "探索者",
+      "Navigator": "領航者",
+      "OceanCrosser": "領洋者",
+      "FeiYun": "飛雲",
+      "Takao": "高雄"
     },
     "Char2": {
       "name": "角色2",
       "help": "",
       "None": "None",
-      "WorkerJuu": "WorkerJuu",
-      "Cheshire": "Cheshire",
-      "YingSwei": "YingSwei",
-      "Saratoga": "Saratoga",
-      "Akashi": "Akashi",
-      "NewJersey": "NewJersey",
-      "Tashkent": "Tashkent",
-      "LeMalin": "LeMalin",
-      "Shimakaze": "Shimakaze",
-      "Amagi_chan": "Amagi_chan",
-      "Unicorn": "Unicorn",
-      "ChaoHo": "ChaoHo",
-      "ChenHai": "ChenHai",
-      "WilliamDPorter": "WilliamDPorter",
-      "Helena": "Helena",
-      "Friedrich": "Friedrich",
-      "Atago": "Atago",
-      "Yixian": "Yixian",
-      "August": "August",
-      "Eugen": "Eugen",
-      "Hood": "Hood",
-      "Javelin": "Javelin",
-      "Laffey": "Laffey",
-      "Explorer": "Explorer",
-      "Navigator": "Navigator",
-      "OceanCrosser": "OceanCrosser",
-      "FeiYun": "FeiYun",
-      "Takao": "Takao"
+      "WorkerJuu": "工作啾",
+      "Cheshire": "柴郡",
+      "YingSwei": "應瑞",
+      "Saratoga": "薩拉託加",
+      "Akashi": "明石",
+      "NewJersey": "新澤西",
+      "Tashkent": "塔什干",
+      "LeMalin": "惡毒",
+      "Shimakaze": "島風",
+      "Amagi_chan": "天城醬",
+      "Unicorn": "獨角獸",
+      "ChaoHo": "肇和",
+      "ChenHai": "鎮海",
+      "WilliamDPorter": "威廉·D·波特",
+      "Helena": "海倫娜",
+      "Friedrich": "腓特烈",
+      "Atago": "愛宕",
+      "Yixian": "逸仙",
+      "August": "奧古斯特",
+      "Eugen": "歐根親王",
+      "Hood": "胡德",
+      "Javelin": "標槍",
+      "Laffey": "拉菲",
+      "Explorer": "探索者",
+      "Navigator": "領航者",
+      "OceanCrosser": "領洋者",
+      "FeiYun": "飛雲",
+      "Takao": "高雄"
     },
     "Product1": {
       "name": "餐品1",
       "help": "",
-      "None": "無",
+      "None": "None",
       "cheese": "芝士",
-      "strawberry_milkshake": "草莓奶昔",
-      "morning_light": "晨光咖啡",
-      "wake_up_call": "叫醒咖啡",
-      "fruity_fruitier": "水果特飲"
+      "strawberry_milkshake": "草莓奶綠",
+      "morning_light": "晨光活力組合",
+      "wake_up_call": "醒神套餐",
+      "fruity_fruitier": "果香雙杯樂"
     },
     "Product2": {
       "name": "餐品2",
       "help": "",
-      "None": "無",
+      "None": "None",
       "cheese": "芝士",
-      "strawberry_milkshake": "草莓奶昔",
-      "morning_light": "晨光咖啡",
-      "wake_up_call": "叫醒咖啡",
-      "fruity_fruitier": "水果特飲"
+      "strawberry_milkshake": "草莓奶綠",
+      "morning_light": "晨光活力組合",
+      "wake_up_call": "醒神套餐",
+      "fruity_fruitier": "果香雙杯樂"
     },
     "Product3": {
       "name": "餐品3",
       "help": "",
-      "None": "無",
+      "None": "None",
       "cheese": "芝士",
-      "strawberry_milkshake": "草莓奶昔",
-      "morning_light": "晨光咖啡",
-      "wake_up_call": "叫醒咖啡",
-      "fruity_fruitier": "水果特飲"
+      "strawberry_milkshake": "草莓奶綠",
+      "morning_light": "晨光活力組合",
+      "wake_up_call": "醒神套餐",
+      "fruity_fruitier": "果香雙杯樂"
     },
     "Product4": {
       "name": "餐品4",
       "help": "",
-      "None": "無",
+      "None": "None",
       "cheese": "芝士",
-      "strawberry_milkshake": "草莓奶昔",
-      "morning_light": "晨光咖啡",
-      "wake_up_call": "叫醒咖啡",
-      "fruity_fruitier": "水果特飲"
+      "strawberry_milkshake": "草莓奶綠",
+      "morning_light": "晨光活力組合",
+      "wake_up_call": "醒神套餐",
+      "fruity_fruitier": "果香雙杯樂"
     },
     "Product5": {
       "name": "餐品5",
       "help": "",
-      "None": "無",
+      "None": "None",
       "cheese": "芝士",
-      "strawberry_milkshake": "草莓奶昔",
-      "morning_light": "晨光咖啡",
-      "wake_up_call": "叫醒咖啡",
-      "fruity_fruitier": "水果特飲"
+      "strawberry_milkshake": "草莓奶綠",
+      "morning_light": "晨光活力組合",
+      "wake_up_call": "醒神套餐",
+      "fruity_fruitier": "果香雙杯樂"
     },
     "BoostReplaceFilter": {
-      "name": "IslandBusinessShop5.BoostReplaceFilter.name",
-      "help": "IslandBusinessShop5.BoostReplaceFilter.help"
+      "name": "啾咖啡加成替換過濾",
+      "help": "多個加成餐品時按過濾順序優先替換第一個；替換槽位從餐品5→1倒查替換最後一個非空餐品\n可用餐品key對照：cheese:芝士, strawberry_milkshake:草莓奶綠, morning_light:晨光活力組合, wake_up_call:醒神套餐, fruity_fruitier:果香雙杯樂\n示例：30 > 20 > cheese > 10"
+    }
+  },
+  "FleetInfo": {
+    "_info": {
+      "name": "艦隊資訊",
+      "help": "儲存艦隊掃描結果"
+    },
+    "Result": {
+      "name": "掃描結果",
+      "help": "依艦種與艦隊編號儲存的艦船資訊"
+    },
+    "Record": {
+      "name": "掃描時間",
+      "help": "最近一次完成艦隊掃描的時間"
     }
   },
   "Daemon": {
     "_info": {
       "name": "半自動點選",
-      "help": "在出擊未適配的關卡時有用，能減少大量人工操作\nAzurPilot 將幫助點選戰鬥準備，點選戰鬥結算，跳過劇情，自動退役，關閉各種彈窗。你只需要手動選擇敵人。"
+      "help": "在出擊未適配的關卡時有用，能減少大量人工操作\nALAS 將幫助點選戰鬥準備，點選戰鬥結算，跳過劇情，自動退役，關閉各種彈窗。你只需要手動選擇敵人。"
     },
     "EnterMap": {
       "name": "自動點選進圖準備",
@@ -5671,11 +5768,11 @@
   "OpsiDaemon": {
     "_info": {
       "name": "大世界半自動",
-      "help": "在出擊大世界深淵海域（紅寶箱圖）或完成大世界主線時有用，能減少大量人工操作\nAzurPilot 將幫助點選戰鬥準備，點選戰鬥結算，跳過劇情，關閉各種彈窗。你只需要手動選擇敵人和手動切換海域。"
+      "help": "在出擊大世界深淵海域（紅寶箱圖）或完成大世界主線時有用，能減少大量人工操作\nALAS 將幫助點選戰鬥準備，點選戰鬥結算，跳過劇情，關閉各種彈窗。你只需要手動選擇敵人和手動切換海域。"
     },
     "RepairShip": {
       "name": "靠近港口時自動修船",
-      "help": "手動把隊伍移動至港口後，AzurPilot將幫助修船\n修理完成後需要在30秒內將隊伍移出港口，否則將再次修船"
+      "help": "手動把隊伍移動至港口後，ALAS將幫助修船\n修理完成後需要在30秒內將隊伍移出港口，否則將再次修船"
     },
     "SelectEnemy": {
       "name": "清理附近的敵人和物資",
@@ -5685,13 +5782,13 @@
   "EventStory": {
     "_info": {
       "name": "活動劇情",
-      "help": "完成活動劇情，僅適用於上線時間20241219及之後的活動，請等待約3分鍾"
+      "help": "完成活動劇情，僅適用於上線時間20241219及之後的活動，請等待約3分鐘"
     },
     "SkipBattle": {
       "name": "殺遊戲跳過戰鬥",
       "help": "",
       "True": "已啟用",
-      "False": "False"
+      "False": "關閉"
     }
   },
   "BoxDisassemble": {
@@ -5724,13 +5821,53 @@
       "help": ""
     }
   },
+  "AutoEquip": {
+    "_info": {
+      "name": "自動裝備",
+      "help": "目前版本搭建點擊流程：船塢、第一艘、快速更換、裝備中、佔位換裝邏輯、下一艘。"
+    },
+    "ShipLimit": {
+      "name": "處理前 X 艘艦船",
+      "help": "0 表示一直處理到無法切換下一艘；除錯時可設定為 1 或其他較小數量。"
+    },
+    "EnableSlot1": {
+      "name": "更換第 1 個裝備",
+      "help": "啟用後，僅當第 1 個裝備位為空時嘗試自動裝備。",
+      "True": "True",
+      "False": "False"
+    },
+    "EnableSlot2": {
+      "name": "更換第 2 個裝備",
+      "help": "啟用後，僅當第 2 個裝備位為空時嘗試自動裝備。",
+      "True": "True",
+      "False": "False"
+    },
+    "EnableSlot3": {
+      "name": "更換第 3 個裝備",
+      "help": "啟用後，僅當第 3 個裝備位為空時嘗試自動裝備。",
+      "True": "True",
+      "False": "False"
+    },
+    "EnableSlot4": {
+      "name": "更換第 4 個裝備",
+      "help": "啟用後，僅當第 4 個裝備位為空時嘗試自動裝備。",
+      "True": "True",
+      "False": "False"
+    },
+    "EnableSlot5": {
+      "name": "更換第 5 個裝備",
+      "help": "啟用後，僅當第 5 個裝備位為空時嘗試自動裝備。",
+      "True": "True",
+      "False": "False"
+    }
+  },
   "Benchmark": {
     "_info": {
       "name": "效能測試",
-      "help": "測試哪個截圖方案和控制方案速度更快，速度因模擬器和電腦配置而異\n測試完成後，在 \"AzurPilot\" - \"模擬器設定\" 內選擇最快的截圖和控制方案"
+      "help": "測試哪個截圖方案和控制方案速度更快，速度因模擬器和電腦配置而異\n測試完成後，在 \"ALAS\" - \"模擬器設定\" 內選擇最快的截圖和控制方案"
     },
     "DeviceType": {
-      "name": "裝置型別",
+      "name": "選擇裝置類型",
       "help": "",
       "emulator": "模擬器",
       "plone_cloud_with_adb": "雲手機 有公網ADB",
@@ -5786,113 +5923,113 @@
       "help": "提供手動重啟模擬器的入口"
     },
     "EnableRemoteSSH": {
-      "name": "EmulatorManager.EnableRemoteSSH.name",
-      "help": "EmulatorManager.EnableRemoteSSH.help",
-      "True": "True",
-      "False": "False"
+      "name": "啟用遠端 SSH 管理",
+      "help": "在重啟模擬器之前，透過 SSH 在遠端伺服器上執行特定指令（如重啟 Docker 容器）。",
+      "True": "開啟",
+      "False": "關閉"
     },
     "RemoteSSHHost": {
-      "name": "遠端伺服器位址",
-      "help": "遠端伺服器的 IP 位址或域名，例如: 192.168.1.100"
+      "name": "遠端伺服器地址",
+      "help": "遠端伺服器的 IP 地址或域名，例如: 192.168.1.100"
     },
     "RemoteSSHPort": {
-      "name": "連接埠號",
-      "help": "SSH 服務連接埠，預設 22"
+      "name": "埠號",
+      "help": "SSH 服務埠，預設 22"
     },
     "RemoteSSHUser": {
-      "name": "SSH 使用者名稱",
-      "help": "登入 SSH 的使用者名稱，例如: root"
+      "name": "SSH 用戶名",
+      "help": "登入 SSH 的用戶名，例如: root"
     },
     "RemoteSSHPublicKey": {
-      "name": "存取公鑰",
-      "help": "SSH 登入所需的公鑰內容（如果需要）"
+      "name": "SSH 私鑰",
+      "help": "SSH 登入所需的私鑰內容（如果需要）"
     },
     "RemoteStartCommand": {
-      "name": "EmulatorManager.RemoteStartCommand.name",
-      "help": "EmulatorManager.RemoteStartCommand.help"
+      "name": "遠端啟動指令",
+      "help": "在重啟模擬器時執行的啟動 SSH 指令（如啟動 Docker 容器）"
     },
     "RemoteStopCommand": {
-      "name": "EmulatorManager.RemoteStopCommand.name",
-      "help": "EmulatorManager.RemoteStopCommand.help"
+      "name": "遠端停止指令",
+      "help": "在重啟模擬器時執行的停止 SSH 指令（如停止 Docker 容器）"
     }
   },
   "OpsiSimulatorParameters": {
     "_info": {
-      "name": "OpsiSimulatorParameters._info.name",
-      "help": "OpsiSimulatorParameters._info.help"
+      "name": "參數設定",
+      "help": ""
     },
     "Samples": {
-      "name": "OpsiSimulatorParameters.Samples.name",
-      "help": "OpsiSimulatorParameters.Samples.help"
+      "name": "採樣數",
+      "help": "理論上越大模擬越精準但是更消耗效能"
     },
     "Draw": {
-      "name": "OpsiSimulatorParameters.Draw.name",
-      "help": "OpsiSimulatorParameters.Draw.help",
-      "do_not": "do_not",
-      "single_sample": "single_sample",
-      "multi_sample": "multi_sample"
+      "name": "繪圖設定",
+      "help": "單樣本軌跡：繪製一個樣本的變化軌跡\n多樣本平均趨勢：繪製總體趨勢與機率",
+      "do_not": "不繪圖",
+      "single_sample": "單樣本軌跡",
+      "multi_sample": "多樣本平均趨勢"
     },
     "TotalTime": {
-      "name": "OpsiSimulatorParameters.TotalTime.name",
-      "help": "OpsiSimulatorParameters.TotalTime.help"
+      "name": "總模擬時間",
+      "help": "模擬經過多長時間（單位：秒）\n若為0，則為從現在開始當月剩餘時間"
     },
     "TimeUseRatio": {
-      "name": "OpsiSimulatorParameters.TimeUseRatio.name",
-      "help": "OpsiSimulatorParameters.TimeUseRatio.help"
+      "name": "時間利用率",
+      "help": "總模擬時間中多少比例進行侵蝕循環"
     },
     "InitialAp": {
-      "name": "OpsiSimulatorParameters.InitialAp.name",
-      "help": "OpsiSimulatorParameters.InitialAp.help"
+      "name": "初始行動力",
+      "help": "填0為自動獲取，不建議修改"
     },
     "InitialCoin": {
-      "name": "OpsiSimulatorParameters.InitialCoin.name",
-      "help": "OpsiSimulatorParameters.InitialCoin.help"
+      "name": "初始黃幣",
+      "help": "填0為自動獲取，不建議修改"
     },
     "MeowHazardLevel": {
-      "name": "OpsiSimulatorParameters.MeowHazardLevel.name",
-      "help": "OpsiSimulatorParameters.MeowHazardLevel.help",
+      "name": "短貓侵蝕等級",
+      "help": "選擇短貓任務的執行等級（3級或5級）。",
       "level3": "level3",
       "level5": "level5"
     },
     "CrossWeek": {
-      "name": "OpsiSimulatorParameters.CrossWeek.name",
-      "help": "OpsiSimulatorParameters.CrossWeek.help"
+      "name": "計算跨週",
+      "help": "是否計算每週購買行動力和要塞的事件"
     },
     "BuyAp": {
-      "name": "OpsiSimulatorParameters.BuyAp.name",
-      "help": "OpsiSimulatorParameters.BuyAp.help"
+      "name": "每週是否購買行動力",
+      "help": "是否每週購買1000行動力，就算不購買依然會打要塞"
     },
     "Cl1Coin": {
-      "name": "OpsiSimulatorParameters.Cl1Coin.name",
-      "help": "OpsiSimulatorParameters.Cl1Coin.help"
+      "name": "侵蝕1黃幣期望",
+      "help": "每輪侵蝕1平均獲得多少黃幣，建議145"
     },
     "Meow3Coin": {
-      "name": "OpsiSimulatorParameters.Meow3Coin.name",
-      "help": "OpsiSimulatorParameters.Meow3Coin.help"
+      "name": "短3黃幣期望",
+      "help": "每輪侵蝕3貓任務平均獲得多少黃幣，推薦配置為600。"
     },
     "Meow5Coin": {
-      "name": "OpsiSimulatorParameters.Meow5Coin.name",
-      "help": "OpsiSimulatorParameters.Meow5Coin.help"
+      "name": "短5黃幣期望",
+      "help": "每輪侵蝕5貓任務平均獲得多少黃幣，建議1700"
     },
     "AkashiProbability": {
-      "name": "OpsiSimulatorParameters.AkashiProbability.name",
-      "help": "OpsiSimulatorParameters.AkashiProbability.help"
+      "name": "明石遇見機率",
+      "help": "在侵蝕循環中遇見明石商店的機率，建議0.05"
     },
     "Cl1Time": {
-      "name": "OpsiSimulatorParameters.Cl1Time.name",
-      "help": "OpsiSimulatorParameters.Cl1Time.help"
+      "name": "侵蝕1單輪耗時",
+      "help": "單位：秒。填0為自動從歷史統計中獲取。"
     },
     "Meow3Time": {
-      "name": "OpsiSimulatorParameters.Meow3Time.name",
-      "help": "OpsiSimulatorParameters.Meow3Time.help"
+      "name": "短3單輪耗時",
+      "help": "單位：秒。執行侵蝕3貓任務的平均耗時。填0為從歷史統計獲取。"
     },
     "Meow5Time": {
-      "name": "OpsiSimulatorParameters.Meow5Time.name",
-      "help": "OpsiSimulatorParameters.Meow5Time.help"
+      "name": "短5單輪耗時",
+      "help": "單位：秒。執行侵蝕5貓任務的平均耗時。填0為從歷史統計獲取。"
     },
     "Deterministic": {
-      "name": "OpsiSimulatorParameters.Deterministic.name",
-      "help": "OpsiSimulatorParameters.Deterministic.help"
+      "name": "取消隨機性",
+      "help": "除錯用，一般情況下不開"
     }
   },
   "Storage": {
@@ -5901,8 +6038,8 @@
       "help": "存放任務內部狀態，任務異常時可以手動清除"
     },
     "Storage": {
-      "name": "Storage.Storage.name",
-      "help": "Storage.Storage.help"
+      "name": "儲存空間",
+      "help": "清除任務內部儲存的狀態資料"
     }
   },
   "Gui": {
@@ -5933,17 +6070,38 @@
       "DisableTranslateMode": "點選這裡關閉翻譯模式",
       "ConfigSaved": "設定已儲存",
       "AlasIsRunning": "排程器已在執行中",
-      "ClickToUpdate": "有可用更新nanoda!"
+      "ClickToUpdate": "有可用更新!"
     },
     "Status": {
-      "Running": "秘書艦正在處理",
-      "Inactive": "茗正在偷走你的箱子",
-      "Warning": "發生錯誤",
+      "Running": "秘書艦代理中",
+      "Inactive": "港區假期",
+      "Warning": "塞壬來襲",
       "Updating": "等待更新"
     },
     "MenuAlas": {
       "Overview": "總覽",
       "Log": "執行日誌"
+    },
+    "TaskConfig": {
+      "SearchPlaceholder": "搜尋設定",
+      "SearchNoResult": "找不到相符的設定",
+      "SearchResultCount": "共 {count} 項結果"
+    },
+    "FleetManagement": {
+      "StartScan": "開始掃描",
+      "Scanning": "掃描中",
+      "ScanStarted": "艦隊掃描已啟動",
+      "ScanAlreadyRunning": "目前實例正在執行任務，無法啟動艦隊掃描",
+      "ScanStartFailed": "艦隊掃描啟動失敗",
+      "LastScan": "最近掃描",
+      "NoResult": "尚未儲存艦隊掃描結果",
+      "Main": "後排主力",
+      "Vanguard": "前排先鋒",
+      "Submarine": "潛艇",
+      "SurfaceFleet": "水上艦隊",
+      "UnderwaterFleet": "水下艦隊",
+      "Fleet": "艦隊",
+      "Ships": "艦船"
     },
     "MenuDevelop": {
       "HomePage": "主頁",
@@ -5957,25 +6115,25 @@
     "Overview": {
       "Scheduler": "排程器",
       "Dashboard": "儀表盤",
-      "SecondsAgo": "Gui.Overview.SecondsAgo",
-      "MinutesAgo": "Gui.Overview.MinutesAgo",
-      "HoursAgo": "Gui.Overview.HoursAgo",
-      "DaysAgo": "Gui.Overview.DaysAgo",
-      "MonthsAgo": "Gui.Overview.MonthsAgo",
-      "YearsAgo": "Gui.Overview.YearsAgo",
-      "NoData": "Gui.Overview.NoData",
-      "Oil": "Gui.Overview.Oil",
-      "Coin": "Gui.Overview.Coin",
-      "Gem": "Gui.Overview.Gem",
-      "Cube": "Gui.Overview.Cube",
-      "Pt": "Gui.Overview.Pt",
-      "YellowCoin": "Gui.Overview.YellowCoin",
-      "PurpleCoin": "Gui.Overview.PurpleCoin",
-      "ActionPoint": "Gui.Overview.ActionPoint",
-      "Merit": "Gui.Overview.Merit",
-      "Medal": "Gui.Overview.Medal",
-      "Core": "Gui.Overview.Core",
-      "GuildCoin": "Gui.Overview.GuildCoin",
+      "SecondsAgo": "秒前",
+      "MinutesAgo": "分鐘前",
+      "HoursAgo": "小時前",
+      "DaysAgo": "天前",
+      "MonthsAgo": "月前",
+      "YearsAgo": "年前",
+      "NoData": "無資料",
+      "Oil": "石油",
+      "Coin": "物資",
+      "Gem": "鑽石",
+      "Cube": "魔方",
+      "Pt": "活動PT",
+      "YellowCoin": "大世界黃幣",
+      "PurpleCoin": "大世界紫幣",
+      "ActionPoint": "行動力",
+      "Merit": "功勳",
+      "Medal": "勳章",
+      "Core": "核心資料",
+      "GuildCoin": "艦隊幣",
       "Log": "日誌",
       "Running": "執行中",
       "Pending": "佇列中",
@@ -5987,7 +6145,7 @@
       "TimeError": "時間錯誤",
       "JustNow": "剛剛",
       "SecondsAgo": "秒前",
-      "MinutesAgo": "分鍾前",
+      "MinutesAgo": "分鐘前",
       "HoursAgo": "小時前",
       "DaysAgo": "天前",
       "MonthsAgo": "月前",
@@ -6026,10 +6184,32 @@
       "InvalidChar": "配置檔名不能包含下列任何字元：.\\/:*?\"<>|",
       "InvalidPrefixTemplate": "配置檔名不能以 template 開頭",
       "Back": "返回",
-      "New": "新增",
-      "Import": "匯入",
+      "New": "新增配置",
+      "Import": "匯入配置",
+      "ImportLegacy": "匯入舊資料",
+      "ImportLegacyTitle": "匯入舊 ALAS 資料",
+      "ImportLegacyHint": "選擇舊 ALAS 根目錄後，將自動匯入以下資料。",
+      "ImportLegacyContent": "配置檔案、資料庫和日誌統計",
+      "ImportLegacyWarning": "同名檔案會被覆蓋，建議先備份目前專案。",
+      "ImportLegacyChoose": "選擇舊 ALAS 資料夾",
+      "ImportLegacySelecting": "請在彈出的視窗中選擇舊 ALAS 根目錄",
+      "ImportLegacySuccess": "舊資料匯入成功",
+      "ImportLegacyFailed": "舊資料匯入失敗：{error}",
+      "ImportLegacyNoMatch": "所選資料夾中未找到 config/ 或 log/cl1/ 下的相符檔案",
+      "ImportLegacyRequestFailed": "上傳請求失敗",
+      "ImportLegacyUnknownError": "未知錯誤",
       "Export": "匯出",
       "Delete": "刪除",
+      "Summary": "概覽",
+      "Collapse": "收起",
+      "EnabledTasks": "已啟用任務",
+      "SchedulerOrderHint": "依調度優先順序顯示；實際執行時間仍由各任務的 NextRun 決定。",
+      "SummaryLoadFailed": "無法讀取配置概覽：{error}",
+      "DeleteConfirm": "確定刪除配置「{name}」嗎？此操作無法復原，但不會刪除日誌與統計資料。",
+      "DeleteRunning": "配置「{name}」正在執行，請先停止後再刪除。",
+      "DeleteLast": "至少需要保留一個配置，請先新增其他配置。",
+      "DeleteSuccess": "已刪除配置「{name}」",
+      "DeleteFailed": "刪除配置失敗：{error}",
       "OverrideWarning": "將會覆蓋現有的配置檔案",
       "ImportSuccess": "匯入成功",
       "NewSuccess": "新增成功",
@@ -6041,19 +6221,19 @@
       "UpToDate": "已是最新版本",
       "HaveUpdate": "有新版本可用",
       "UpdateStart": "開始更新",
-      "UpdateWait": "等待所有 AzurPilot 完成當前任務",
+      "UpdateWait": "等待所有 ALAS 完成當前任務",
       "UpdateRun": "更新中",
       "UpdateSuccess": "更新成功，正在重啟",
       "UpdateFailed": "更新失敗，可在./log/*_gui.txt中找到錯誤日誌",
       "UpdateChecking": "檢查更新中",
-      "UpdateCancel": "取消更新，重啟 AzurPilot 中",
+      "UpdateCancel": "取消更新，重啟 ALAS 中",
       "UpdateFinish": "更新成功，請手動重啟",
       "Local": "本地",
       "Upstream": "上遊倉庫",
       "Author": "作者",
       "Time": "提交時間",
       "Message": "提交資訊",
-      "DisabledWarn": "更新模組未啟用，你需要手動重啟 AzurPilot 進行更新",
+      "DisabledWarn": "更新模組未啟用，你需要手動重啟 ALAS 進行更新",
       "DetailedHistory": "詳細提交歷史"
     },
     "Remote": {
@@ -6076,7 +6256,7 @@
       "AutoStartHelp": "開啟後，啟動器會在登入 Windows 時自動啟動，並預設最小化到系統匣。",
       "Loading": "正在讀取啟動器狀態...",
       "Connected": "啟動器已連線",
-      "Disconnected": "啟動器未連線，請透過啟動器開啟 AzurPilot",
+      "Disconnected": "啟動器未連線，請透過啟動器開啟 ALAS",
       "RemoteUnavailable": "開機自動啟動只能在本機 WebUI 中設定",
       "Unsupported": "目前平台不支援開機自動啟動",
       "Enabled": "已開啟",
@@ -6086,7 +6266,7 @@
     },
     "DeploySetting": {
       "Title": "部署設定",
-      "RestartNotice": "設定會立即寫入 config/deploy.yaml，部分設定需要重新啟動 AzurPilot 後生效。",
+      "RestartNotice": "設定會立即寫入 config/deploy.yaml，部分設定需要重新啟動 ALAS 後生效。",
       "Loading": "正在讀取部署設定...",
       "Refresh": "重新讀取",
       "Save": "儲存設定",
@@ -6104,7 +6284,7 @@
       "GroupMisc": "其他設定",
       "GroupRemoteAccess": "遠端訪問",
       "GroupWebui": "WebUI 設定",
-      "Repository": "AzurPilot 倉庫地址",
+      "Repository": "ALAS 倉庫地址",
       "RepositoryHelp": "用於更新和安裝的 Git 倉庫地址。中國大陸使用者可使用 git://git.pull/AzurPilot。",
       "Branch": "分支",
       "BranchHelp": "穩定版通常使用 master，開發或測試可填寫 dev、app 等分支。",
@@ -6114,10 +6294,8 @@
       "GitProxyHelp": "HTTP 或 SOCKS5 代理地址，留空表示不使用代理。",
       "SSLVerify": "Git SSL 驗證",
       "SSLVerifyHelp": "連線可信網路時建議開啟。",
-      "AutoUpdate": "啟動時自動更新",
-      "AutoUpdateHelp": "啟動 AzurPilot 時自動檢查並更新程式碼。",
       "PythonExecutable": "Python 可執行檔",
-      "PythonExecutableHelp": "用於執行 AzurPilot 的 Python 路徑。",
+      "PythonExecutableHelp": "用於執行 ALAS 的 Python 路徑。",
       "PypiMirror": "PyPI 鏡像",
       "PypiMirrorHelp": "安裝依賴使用的鏡像地址，留空使用預設來源。",
       "InstallDependencies": "啟動時安裝依賴",
@@ -6145,7 +6323,7 @@
       "AutoRestartTime": "定時重啟時間",
       "AutoRestartTimeHelp": "有更新時每天自動重啟的時間，留空表示停用。",
       "DiscordRichPresence": "Discord 富狀態",
-      "DiscordRichPresenceHelp": "在 Discord 中展示 AzurPilot 執行狀態。",
+      "DiscordRichPresenceHelp": "在 Discord 中展示 ALAS 執行狀態。",
       "EnableRemoteAccess": "啟用遠端訪問",
       "EnableRemoteAccessHelp": "透過 SSH 反向通道暴露 WebUI。公開使用前請務必設定密碼。",
       "RemoteAccessMode": "遠端存取模式",
@@ -6189,7 +6367,7 @@
     },
     "StartupRun": {
       "Title": "啟動時自動執行",
-      "Description": "開啟後，WebUI 或啟動器啟動 AzurPilot 時會自動執行目前實例；只影響下次啟動。",
+      "Description": "開啟後，WebUI 或啟動器啟動 ALAS 時會自動執行目前實例；只影響下次啟動。",
       "Loading": "正在讀取啟動策略...",
       "Enabled": "已加入啟動時自動執行列表",
       "Disabled": "未加入啟動時自動執行列表",
@@ -6204,39 +6382,39 @@
       "ChooseFile": "選擇檔案"
     },
     "Stat": {
-      "LoadApDataFailed": "加载体力数据失败: {e}",
-      "NoApData": "暂无体力变化数据，运行侵蚀1任务后将自动记录",
-      "Refresh": "刷新",
-      "NoValidApData": "暂无有效体力数据",
-      "ViewTitleLine": "分时曲线 (详细波动)",
-      "ViewTitleDay": "天视图 ({day} 小时K线)",
-      "ViewTitleMonth": "月视图 (日K线)",
-      "CannotAggregateKline": "无法聚合K线数据",
-      "ViewLineShort": "分时",
-      "DataPointsCount": "共 {count} 个点",
-      "CandlesCount": "共 {count} 根K线",
+      "LoadApDataFailed": "載入體力資料失敗: {e}",
+      "NoApData": "暫無體力變化資料，執行侵蝕1任務後將自動記錄",
+      "Refresh": "重新整理",
+      "NoValidApData": "暫無有效體力資料",
+      "ViewTitleLine": "分時曲線 (詳細波動)",
+      "ViewTitleDay": "天視圖 ({day} 小時K線)",
+      "ViewTitleMonth": "月視圖 (日K線)",
+      "CannotAggregateKline": "無法聚合K線資料",
+      "ViewLineShort": "分時",
+      "DataPointsCount": "共 {count} 個點",
+      "CandlesCount": "共 {count} 根K線",
       "ViewLabel": "📊 視圖:",
       "DetailLabel": "📈 詳情:",
-      "ViewLineButton": "分时(详细波动)",
-      "ViewDayButton": "天视图(小时K)",
-      "ViewMonthButton": "月视图(日K)",
+      "ViewLineButton": "分時(詳細波動)",
+      "ViewDayButton": "天視圖(小時K)",
+      "ViewMonthButton": "月視圖(日K)",
       "DetailChartTitle": "單日體力波動詳情 (24小時)",
       "ToggleDetailChart": "詳情圖",
       "DetailChartOn": "✓ 開啟",
       "DetailChartOff": "○ 關閉",
-      "LoadOpsiStatsFailed": "加载 OpSi 统计失败: {e}",
-      "LoadExpStatsFailed": "加载经验统计失败: {e}",
-      "DailyExpCheckTitle": "每日经验检测",
-      "CheckTime": "检测时间: {value}",
-      "TargetLevel": "目标等级: {value}",
-      "ShipSlot": "舰位",
-      "Level": "等级",
-      "CurrentExpThisLevel": "当前经验(本级)",
-      "TotalExp": "总经验",
-      "ExpToTarget": "距目标经验",
-      "SortiesNeeded": "还需出击",
-      "EstimatedTime": "预计时间",
-      "NoExpData": "暂无经验数据，运行侵蚀1练级后将自动记录",
+      "LoadOpsiStatsFailed": "載入 OpSi 統計失敗: {e}",
+      "LoadExpStatsFailed": "載入經驗統計失敗: {e}",
+      "DailyExpCheckTitle": "每日經驗偵測",
+      "CheckTime": "偵測時間: {value}",
+      "TargetLevel": "目標等級: {value}",
+      "ShipSlot": "艦位",
+      "Level": "等級",
+      "CurrentExpThisLevel": "當前經驗(本級)",
+      "TotalExp": "總經驗",
+      "ExpToTarget": "距目標經驗",
+      "SortiesNeeded": "還需出擊",
+      "EstimatedTime": "預計時間",
+      "NoExpData": "暫無經驗資料，執行侵蝕1練級後將自動記錄",
       "Month": "月份",
       "BattleCount": "戰鬥場次",
       "BattleRounds": "戰鬥輪次",
@@ -6306,12 +6484,12 @@
       "CommissionIncomeTotalCommissions": "委託總次數: {value}",
       "CommissionIncomeRecentTitle": "最近委託記錄",
       "ResourceChartTitle": "全資源變化趨勢",
-      "LoadResourceDataFailed": "Gui.Stat.LoadResourceDataFailed",
-      "NoResourceData": "Gui.Stat.NoResourceData",
-      "NoValidResourceData": "Gui.Stat.NoValidResourceData"
+      "LoadResourceDataFailed": "加載資源數據失敗: {e}",
+      "NoResourceData": "暫無資源變化數據，運行腳本後將自動記錄",
+      "NoValidResourceData": "暫無有效資源數據"
     },
     "Tactical": {
-      "SkillAutoSwitch": "Gui.Tactical.SkillAutoSwitch"
+      "SkillAutoSwitch": "技能自動切換"
     },
     "OpsiScheduling": {
       "UseSmartSchedulingOperationCoinsPreserve": "智慧排程作戰補給憑證保留",
@@ -6330,7 +6508,7 @@
     },
     "OOBE": {
       "ImportTitle": "匯入舊資料",
-      "ImportHint": "如果你以前使用過 AzurPilot 或 ALAS，可以直接匯入舊設定繼續使用。",
+      "ImportHint": "如果你以前使用過 ALAS 或 ALAS，可以直接匯入舊設定繼續使用。",
       "ImportCardTitle": "保留舊設定",
       "ImportCardText": "匯入會讀取舊的 JSON 設定，遷移到目前版本後寫入 config/ap.json。",
       "ImportDetected": "偵測到的舊設定",
@@ -6339,10 +6517,10 @@
       "ImportButton": "匯入並繼續",
       "ImportSkip": "不匯入，繼續設定",
       "ImportErrorEmpty": "請選擇或填寫舊設定路徑",
-      "ImportErrorInvalid": "這不是有效的 AzurPilot/ALAS 設定",
+      "ImportErrorInvalid": "這不是有效的 ALAS 設定",
       "ImportErrorFailed": "匯入失敗",
       "ImportErrorNoMatch": "所選資料夾中沒有找到 config/ 或 log/cl1/ 下的匹配檔案",
-      "WelcomeTitle": "歡迎使用 AzurPilot",
+      "WelcomeTitle": "歡迎使用 ALAS",
       "WelcomeDescription": "讓我們完成初次設定。",
       "WelcomeSelectLanguage": "選擇語言",
       "WelcomeHint": "選擇介面語言後會自動匹配預設伺服器，之後仍可調整。",
@@ -6357,7 +6535,7 @@
       "EmulatorSerial": "模擬器序號 / 位址",
       "EmulatorPackage": "包名",
       "ReviewTitle": "確認並建立",
-      "ReviewHint": "確認下方資訊，建立後會進入 AzurPilot 主介面。",
+      "ReviewHint": "確認下方資訊，建立後會進入 ALAS 主介面。",
       "ReviewConfigName": "設定名稱",
       "ReviewLanguage": "語言",
       "ReviewServer": "伺服器",

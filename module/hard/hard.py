@@ -1,3 +1,12 @@
+"""困难模式战役执行模块。
+
+自动执行碧蓝航线的困难模式关卡。困难模式与普通模式共享同一张地图，
+但使用独立的战役入口和额外的限制条件（如每日出击次数、舰队锁定等）。
+通过 OCR 识别剩余出击次数，循环执行直到用尽。
+
+配置路径: Hard.HardStage (关卡选择), Hard.HardFleet (舰队选择)
+"""
+
 import importlib
 
 from campaign.campaign_hard.campaign_hard import Campaign
@@ -19,11 +28,22 @@ _BLUEPRINT_STAGE_MAP = {
 
 
 class CampaignHard(CampaignRun):
+    """困难模式战役执行器。
+
+    继承自 CampaignRun，负责执行困难模式关卡。从普通模式战役加载地图数据，
+    强制启用舰队锁定和自动搜索，通过 OCR 识别每日剩余出击次数并循环执行。
+
+    Attributes:
+        equipment_has_take_on: 装备是否已穿戴（当前未使用）。
+        campaign: 战役执行实例，由 CampaignRun 提供。
+    """
+
     equipment_has_take_on = False
     campaign: Campaign
 
     def run(self):
-        logger.hr('Campaign hard', level=1)
+        logger.hr('困难战役', level=1)
+        # Modify by MHY: 支持均衡模式开关，开启则跨天轮转刷图纸，关闭走原有固定单关逻辑
         if self.config.Hard_HardNewMode:
             self._run_balanced_mode()
         else:
@@ -56,7 +76,7 @@ class CampaignHard(CampaignRun):
 
         # 执行
         remain = OCR_HARD_REMAIN.ocr(self.device.image)
-        logger.attr('Remain', remain)
+        logger.attr('剩余次数', remain)
         for n in range(remain):
             self.campaign.run()
 
@@ -78,10 +98,10 @@ class CampaignHard(CampaignRun):
                 stages.append(f'{chapter}-{stage_num}')
 
         if not stages:
-            logger.warning('No stage selected in balanced mode, fallback to 14-1')
+            logger.warning('均衡模式未勾选任何图纸类型，回退到 {chapter}-1'.format(chapter=chapter))
             stages = [f'{chapter}-1']
 
-        logger.attr('BalancedStages', stages)
+        logger.attr('均衡关卡列表', stages)
 
         self.config.override(
             Campaign_Mode='hard',
@@ -105,7 +125,7 @@ class CampaignHard(CampaignRun):
         self.campaign.device.image = self.device.image
         self.campaign.ensure_campaign_ui(name=first_stage, mode='hard')
         remain = OCR_HARD_REMAIN.ocr(self.device.image)
-        logger.attr('Remain', remain)
+        logger.attr('剩余次数', remain)
 
         if remain == 0:
             self.campaign.ensure_auto_search_exit()
@@ -119,7 +139,7 @@ class CampaignHard(CampaignRun):
 
         for i in range(remain - 1):
             stage = stages[cursor % len(stages)]
-            logger.attr('CurrentStage', stage)
+            logger.attr('当前关卡', stage)
 
             map_name = to_map_file_name(stage)
             module = importlib.import_module('.' + map_name, 'campaign.campaign_main')

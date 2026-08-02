@@ -1,3 +1,7 @@
+"""WebUI 底层工具函数集，提供 LocalStorage 读写、JS 注入执行、
+CSS 样式管理、时间格式转换等功能，
+以及维持 UI 刷新的任务调度控制器。"""
+
 # 此文件提供了 WebUI 相关的底层工具函数。
 # 包含 LocalStorage 读写、JavaScript 代码注入执行、CSS 样式管理、时间格式转换以及维持 UI 刷新的任务调度控制器。
 import datetime
@@ -17,7 +21,7 @@ import pywebio
 from pywebio.exceptions import SessionClosedException
 from pywebio.input import PASSWORD, actions, input, input_group
 from pywebio.output import PopupSize, popup, put_html, put_text, toast
-from pywebio.session import eval_js, info as session_info, register_thread, run_js
+from pywebio.session import eval_js, info as session_info, local, register_thread, run_js
 from rich.console import Console
 from rich.terminal_theme import TerminalTheme
 
@@ -93,6 +97,7 @@ WEBUI_LOGIN_MAX_FAILURES = 5
 _webui_login_failure_count = 0
 _webui_login_forbidden = False
 _webui_login_lock = threading.Lock()
+_LOCALSTORAGE_UNSET = object()
 
 
 class QueueHandler:
@@ -110,8 +115,9 @@ class Task:
         self.g = g
         g.send(None)
         self.delay = delay
-        self.next_run = next_run if next_run else time.time()
+        self.next_run = next_run if next_run is not None else time.time()
         self.name = name if name is not None else self.g.__name__
+        self.wake_requested = False
 
     def __str__(self) -> str:
         return f"<{self.name} (delay={self.delay})>"
@@ -136,7 +142,9 @@ class TaskHandler:
         # 任务运行线程
         self._thread: threading.Thread = None
         self._alive = False
-        self._lock = threading.Lock()
+        self._lock = threading.RLock()
+        # 新增、移除或停止任务时主动唤醒调度线程，避免固定间隔空轮询。
+        self._condition = threading.Condition(self._lock)
 
     def add(self, func, delay: float, pending_delete: bool = False) -> None:
         """
@@ -159,22 +167,23 @@ class TaskHandler:
         """
         添加后台运行的任务。
         """
-        if task in self.tasks:
-            logger.warning(f"Task {task} already in tasks list.")
-            return
-        logger.info(f"Add task {task}")
-        with self._lock:
+        with self._condition:
+            if task in self.tasks:
+                logger.warning(f"[WebUI-工具] 任务 {task} 已在任务列表中")
+                return
+            logger.info(f"添加任务 {task}")
             self.tasks.append(task)
-        if pending_delete:
-            self.pending_remove_tasks.append(task)
+            if pending_delete:
+                self.pending_remove_tasks.append(task)
+            self._condition.notify()
 
     def _remove_task(self, task: Task) -> None:
         if task in self.tasks:
             self.tasks.remove(task)
-            logger.info(f"Task {task} removed.")
+            logger.info(f"[WebUI-工具] 任务 {task} 已移除")
         else:
             logger.warning(
-                f"Failed to remove task {task}. Current tasks list: {self.tasks}"
+                f"[WebUI-工具] 移除任务 {task} 失败。当前任务列表: {self.tasks}"
             )
 
     def remove_task(self, task: Task, nowait: bool = False) -> None:
@@ -185,20 +194,22 @@ class TaskHandler:
             task: 要移除的任务
             nowait: 为 True 时立即移除，否则在调用 `self.remove_pending_task` 时统一移除
         """
-        if nowait:
-            with self._lock:
+        with self._condition:
+            if nowait:
                 self._remove_task(task)
-        else:
-            self.pending_remove_tasks.append(task)
+            elif task not in self.pending_remove_tasks:
+                self.pending_remove_tasks.append(task)
+            self._condition.notify()
 
     def remove_pending_task(self) -> None:
         """
         移除所有待移除的任务。
         """
-        with self._lock:
+        with self._condition:
             for task in self.pending_remove_tasks:
                 self._remove_task(task)
             self.pending_remove_tasks = []
+            self._condition.notify()
 
     def remove_current_task(self) -> None:
         self.remove_task(self._task, nowait=True)
@@ -210,43 +221,65 @@ class TaskHandler:
                     return task
             return None
 
+    def wake_task(self, name: str) -> bool:
+        """让指定任务尽快执行，并唤醒正在等待的调度线程。"""
+        with self._condition:
+            for task in self.tasks:
+                if task.name == name:
+                    if task is self._task:
+                        task.wake_requested = True
+                    else:
+                        task.next_run = time.time()
+                    self._condition.notify()
+                    return True
+            return False
+
     def loop(self) -> None:
         """
         启动任务循环。
 
         此函数**必须**在独立线程中运行。
         """
-        self._alive = True
-        while self._alive:
-            if self.tasks:
-                with self._lock:
+        while True:
+            with self._condition:
+                while self._alive:
+                    if not self.tasks:
+                        self._condition.wait()
+                        continue
                     self.tasks.sort(key=operator.attrgetter("next_run"))
                     task = self.tasks[0]
-                if task.next_run < time.time():
-                    start_time = time.time()
-                    try:
-                        self._task = task
-                        # logger.debug(f'Start task {task.g.__name__}')
-                        task.send(self)
-                        # logger.debug(f'End task {task.g.__name__}')
-                    except SessionClosedException:
-                        logger.debug(f"WebIO 会话已关闭，停止任务 {task.name}")
-                        self.remove_task(task, nowait=True)
-                    except Exception as e:
-                        logger.exception(e)
-                        self.remove_task(task, nowait=True)
-                    finally:
-                        self._task = None
-                    end_time = time.time()
-                    task.next_run += task.delay
-                    with self._lock:
-                        for task in self.tasks:
-                            task.next_run += end_time - start_time
+                    wait_seconds = task.next_run - time.time()
+                    if wait_seconds > 0:
+                        self._condition.wait(timeout=wait_seconds)
+                        continue
+                    self._task = task
+                    break
                 else:
-                    time.sleep(0.05)
-            else:
-                time.sleep(0.5)
-        logger.info("End of task handler loop")
+                    break
+
+            if not self._alive:
+                break
+
+            try:
+                task.send(self)
+            except SessionClosedException:
+                logger.debug(f"WebIO 会话已关闭，停止任务 {task.name}")
+                self.remove_task(task, nowait=True)
+            except Exception as e:
+                logger.exception(e)
+                self.remove_task(task, nowait=True)
+            finally:
+                with self._condition:
+                    # 每次执行后从当前时间重新计时。系统休眠或事件循环长时间
+                    # 阻塞后不会补跑大量已经过期的刷新任务。
+                    if task in self.tasks:
+                        if task.wake_requested:
+                            task.wake_requested = False
+                            task.next_run = time.time()
+                        else:
+                            task.next_run = time.time() + max(0, task.delay)
+                    self._task = None
+        logger.info("任务处理循环结束")
 
     def _get_thread(self) -> threading.Thread:
         thread = threading.Thread(target=self.loop, daemon=True)
@@ -256,24 +289,40 @@ class TaskHandler:
         """
         启动任务处理器。
         """
-        logger.info("Start task handler")
-        if self._thread is not None and self._thread.is_alive():
-            logger.warning("Task handler already running!")
-            return
-        self._thread = self._get_thread()
-        self._thread.start()
+        with self._condition:
+            logger.info("启动任务处理")
+            if self._thread is not None and self._thread.is_alive():
+                logger.warning("[WebUI-工具] 任务处理器已在运行！")
+                return
+            self._alive = True
+            self._thread = self._get_thread()
+            try:
+                self._thread.start()
+            except Exception:
+                self._alive = False
+                self._thread = None
+                raise
 
-    def stop(self) -> None:
+    def stop(self) -> bool:
+        """停止任务线程，并返回是否已能安全释放共享状态。"""
         self.remove_pending_task()
-        self._alive = False
+        with self._condition:
+            self._alive = False
+            self._condition.notify_all()
+        if self._thread is None:
+            logger.info("[WebUI] 任务处理器未启动，跳过停止")
+            return True
         if threading.current_thread() is not self._thread:
             self._thread.join(timeout=2)
             if not self._thread.is_alive():
-                logger.info("Finish task handler")
+                logger.info("完成任务处理")
+                return True
             else:
                 logger.warning("[WebUI] 任务处理器未在 2 秒内停止")
+                return False
         else:
             logger.info("[WebUI] 任务处理器在其自身线程内调用了停止，跳过 join")
+            return True
 
 
 class WebIOTaskHandler(TaskHandler):
@@ -386,49 +435,100 @@ def get_generator(func: Callable):
 def filepath_css(filename):
     return f"./assets/gui/css/{filename}.css"
 
-# def filepath_icon(filename):
-#     return f"./assets/gui/icon/{filename}.svg"
+
+# Modify by MHY, 支持 ext 参数以加载 PNG 头图（参考 essex 分支）
 def filepath_icon(filename, ext: str = "svg"):
     return f"./assets/gui/icon/{filename}.{ext}"
 
 
-def add_css(filepath):
-    """
-    将 CSS 文件安全注入到文档头部。
+def add_css_files(filepaths):
+    """将多份 CSS 合并为一次会话命令，保持传入顺序注入。"""
+    injected_styles = getattr(local, "webui_injected_styles", None)
+    if injected_styles is None:
+        injected_styles = set()
+        local.webui_injected_styles = injected_styles
 
-    使用 document.createElement + 文本节点的方式，确保包含引号或 </style> 的 CSS
-    不会破坏 JS/HTML 解析。
-    """
-    with open(filepath, "r", encoding="utf-8") as f:
-        css = f.read()
+    styles = []
+    loaded_paths = []
+    for filepath in filepaths:
+        if filepath in injected_styles:
+            continue
 
-    style_id = f"alas-css-{os.path.basename(filepath).replace('.', '-') }"
+        with open(filepath, "r", encoding="utf-8") as f:
+            css = f.read()
+        style_id = f"alas-css-{os.path.basename(filepath).replace('.', '-') }"
+        styles.append((style_id, css))
+        loaded_paths.append(filepath)
+
+    if not styles:
+        return
 
     js = (
-        "(function(){"
-        "var old = document.getElementById('" + style_id + "');"
-        "if(old) old.parentNode.removeChild(old);"
-        "var s = document.createElement('style');"
-        "s.type = 'text/css';"
-        "s.id = '" + style_id + "';"
-        "s.appendChild(document.createTextNode(%s));"
-        "document.head.appendChild(s);"
-        "})();"
-    ) % json.dumps(css)
-
+        "(function(styles){"
+        "styles.forEach(function(style){"
+        "if(document.getElementById(style[0])) return;"
+        "var element=document.createElement('style');"
+        "element.type='text/css';element.id=style[0];"
+        "element.appendChild(document.createTextNode(style[1]));"
+        "document.head.appendChild(element);"
+        "});"
+        "})(%s);"
+    ) % json.dumps(styles)
     run_js(js)
+    injected_styles.update(loaded_paths)
+
+
+def add_css(filepath):
+    """将 CSS 文件安全注入到文档头部。"""
+    add_css_files((filepath,))
+
+
+def load_webui_styles(theme=None, is_mobile=None, preloaded_styles=()):
+    """加载 WebUI 各入口共用的基础、响应式与主题样式。
+
+    Args:
+        theme: 当前主题名称。
+        is_mobile: 当前会话是否为移动端。
+        preloaded_styles: 已由初始 HTML 加载的样式名称，避免重复经 WebSocket 注入。
+    """
+    if theme is None:
+        theme = State.theme or "default"
+    if is_mobile is None:
+        is_mobile = session_info.user_agent.is_mobile
+
+    if preloaded_styles:
+        injected_styles = getattr(local, "webui_injected_styles", None)
+        if injected_styles is None:
+            injected_styles = set()
+            local.webui_injected_styles = injected_styles
+        injected_styles.update(filepath_css(name) for name in preloaded_styles)
+
+    styles = [
+        "alas",
+        "alas-mobile" if is_mobile else "alas-pc",
+        "entry-alas",
+    ]
+    theme_styles = {
+        "dark": ("dark-alas",),
+        "advanced_material": ("advanced-material-alas",),
+        "dark_advanced_material": (
+            "advanced-material-alas",
+            "dark-advanced-material-overrides-alas",
+        ),
+    }
+    styles.extend(theme_styles.get(theme, ("light-alas",)))
+
+    add_css_files(filepath_css(name) for name in styles)
 
 
 def _read(path):
-    with open(path, "r") as f:
+    with open(path, "r", encoding="utf-8") as f:
         return f.read()
 
-# Modified by NieRMHY 修改头图
+
+# Modify by MHY, 引入 PNG 头图：PNG 以 base64 内嵌避免静态路径问题，缺失则回退 SVG
 def _load_icon(name: str) -> str:
-    """
-    优先使用同名 PNG，若不存在或读取失败则回退到 SVG。
-    PNG 以 data URI 形式嵌入，可避免静态路径问题；设置固定尺寸保证展示一致。
-    """
+    """优先读同名 PNG，缺失或失败则回退 SVG。"""
     png_path = filepath_icon(name, "png")
     if os.path.exists(png_path):
         try:
@@ -453,11 +553,7 @@ class Icon:
     """
     存储图标的 HTML 内容。
     """
-    # ALAS = _read(filepath_icon("alas"))
-    # SETTING = _read(filepath_icon("setting"))
-    # RUN = _read(filepath_icon("run"))
-    # DEVELOP = _read(filepath_icon("develop"))
-    # ADD = _read(filepath_icon("add"))
+
     ALAS = _load_icon("alas")
     SETTING = _load_icon("setting")
     RUN = _load_icon("run")
@@ -581,31 +677,58 @@ def _show_password_help(action):
 
 
 def _input_webui_password():
-    while True:
-        data = input_group(inputs=[
-            input(
-                name="password",
-                label="请输入 WebUI 密码",
-                type=PASSWORD,
-                placeholder="PASSWORD",
-            ),
-            actions(name="action", buttons=[
-                {"label": "登录", "value": "login", "type": "submit", "color": "primary"},
-                {"label": "没设置过密码？", "value": "new", "type": "submit", "color": "secondary"},
-                {"label": "忘记密码？", "value": "forgot", "type": "submit", "color": "secondary"},
-            ]),
-        ])
-        action = data["action"]
-        if action == "login":
-            return data["password"]
-        _show_password_help(action)
+    eval_js("(document.body.classList.add('alas-login-page'), true)")
+    try:
+        while True:
+            data = input_group(
+                label="ALAS",  # Modify by MHY, 密码页标题改 ALAS
+                inputs=[
+                    input(
+                        name="password",
+                        label="请输入 WebUI 密码",
+                        type=PASSWORD,
+                        placeholder="PASSWORD",
+                    ),
+                    actions(
+                        name="action",
+                        buttons=[
+                            {
+                                "label": "登录",
+                                "value": "login",
+                                "type": "submit",
+                                "color": "primary",
+                            },
+                            {
+                                "label": "没设置过密码？",
+                                "value": "new",
+                                "type": "submit",
+                                "color": "secondary",
+                            },
+                            {
+                                "label": "忘记密码？",
+                                "value": "forgot",
+                                "type": "submit",
+                                "color": "secondary",
+                            },
+                        ],
+                    ),
+                ],
+            )
+            action = data["action"]
+            if action == "login":
+                return data["password"]
+            _show_password_help(action)
+    finally:
+        run_js("document.body.classList.remove('alas-login-page')")
 
 
-def login(password):
+def login(password, stored_password=_LOCALSTORAGE_UNSET):
     if is_login_forbidden():
         toast("密码错误次数过多，请重启后再试。", color="error")
         return False
-    if get_localstorage("password") == str(password):
+    if stored_password is _LOCALSTORAGE_UNSET:
+        stored_password = get_localstorage("password")
+    if stored_password == str(password):
         return True
     pwd = _input_webui_password()
     if is_login_forbidden():
@@ -636,6 +759,23 @@ def set_localstorage(key, value):
 
 def get_localstorage(key):
     return eval_js("localStorage.getItem(key)", key=key)
+
+
+def get_localstorage_values(keys):
+    """一次读取多个 localStorage 键，避免首屏串行浏览器往返。"""
+    keys = list(dict.fromkeys(keys))
+    if not keys:
+        return {}
+
+    values = eval_js(
+        "(function(keys) {"
+        "var values = {};"
+        "keys.forEach(function(key) { values[key] = localStorage.getItem(key); });"
+        "return values;"
+        "})(keys)",
+        keys=keys,
+    )
+    return values if isinstance(values, dict) else {}
 
 
 def re_fullmatch(pattern, string):
@@ -671,7 +811,7 @@ def get_next_time(t: datetime.time):
 
 
 def on_task_exception(self):
-    logger.exception("An internal error occurred in the application")
+    logger.exception("[WebUI-工具] 应用发生内部错误")
     toast_msg = (
         "应用发生内部错误"
         if "zh" in session_info.user_language
@@ -690,7 +830,7 @@ def on_task_exception(self):
             word_wrap=True, extra_lines=1, show_locals=True
         )
 
-    if State.theme == "dark":
+    if State.theme in ("dark", "dark_advanced_material"):
         theme = DARK_TERMINAL_THEME
     else:
         theme = LIGHT_TERMINAL_THEME

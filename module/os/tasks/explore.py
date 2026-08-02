@@ -1,3 +1,14 @@
+"""
+大世界每月开荒模块。
+
+执行大世界海域的全面探索，自动遍历并清理未完成的海域区域。
+探索期间会延迟其他大世界任务（隐秘、深渊、要塞等）以避免冲突。
+记录探索失败的海域 ID，支持从上次中断的位置继续探索。
+
+Classes:
+    OpsiExplore: 每月开荒处理器，继承 OSMap。
+"""
+
 from module.config.utils import get_os_next_reset, DEFAULT_TIME
 from module.exception import GameStuckError, ScriptError
 from module.logger import logger
@@ -13,7 +24,7 @@ class OpsiExplore(OSMap):
         """
         在大世界探索期间延迟其他大世界任务。
         """
-        logger.info('Delay other OpSi tasks during OpsiExplore')
+        logger.info('每月开荒+运行中，延迟其他大世界任务')
         with self.config.multi_set():
             next_run = self.config.Scheduler_NextRun
             delay_tasks = ['OpsiObscure', 'OpsiAbyssal', 'OpsiArchive', 'OpsiStronghold', 'OpsiMeowfficerFarming',
@@ -28,7 +39,7 @@ class OpsiExplore(OSMap):
                 keys = f'{task}.Scheduler.NextRun'
                 current = self.config.cross_get(keys=keys, default=DEFAULT_TIME)
                 if current < next_run:
-                    logger.info(f'Delay task `{task}` to {next_run}')
+                    logger.info(f'[大世界-探索] 延迟任务 `{task}` 到 {next_run}')
                     self.config.cross_set(keys=keys, value=next_run)
 
     def _os_explore(self):
@@ -44,10 +55,10 @@ class OpsiExplore(OSMap):
         """
 
         def end():
-            logger.info('OS explore finished, delay to next reset')
+            logger.info('每月开荒+已完成，延迟到下次重置')
             next_reset = get_os_next_reset()
-            logger.attr('OpsiNextReset', next_reset)
-            logger.info('To run again, clear OpsiExplore.Scheduler.NextRun and set OpsiExplore.OpsiExplore.LastZone=0')
+            logger.attr('大世界下次重置', next_reset)
+            logger.info('[大世界-探索] 如需重新运行，请清除 OpsiExplore.Scheduler.NextRun 并设置 OpsiExplore.OpsiExplore.LastZone=0')
             with self.config.multi_set():
                 self.config.OpsiExplore_LastZone = 0
                 self.config.OpsiExplore_ExploreProgress = '已完成百分之100.00'
@@ -57,14 +68,14 @@ class OpsiExplore(OSMap):
                 self.config.task_call('OpsiShop', force_call=False)
             self.config.task_stop()
 
-        logger.hr('OS explore', level=1)
+        logger.hr('大世界-每月开荒+', level=1)
         full_order = [int(f.strip(' \t\r\n')) for f in self.config.OS_EXPLORE_FILTER.split('>')]
         total_zones = len(full_order)
         # 转换用户输入
         try:
             last_zone = self.name_to_zone(self.config.OpsiExplore_LastZone).zone_id
         except ScriptError:
-            logger.warning(f'Invalid OpsiExplore_LastZone={self.config.OpsiExplore_LastZone}, re-explore')
+            logger.warning(f'[大世界-探索] 无效的 OpsiExplore_LastZone={self.config.OpsiExplore_LastZone}, 重新探索')
             last_zone = 0
 
         # 从上次探索的区域继续
@@ -75,12 +86,12 @@ class OpsiExplore(OSMap):
             if total_zones > 0:
                 percentage = completed_count / total_zones * 100
                 self.config.OpsiExplore_ExploreProgress = f'已完成百分之{percentage:.2f}'
-            logger.info(f'Last zone: {self.name_to_zone(last_zone)}, next zone: {order[:1]}')
+            logger.info(f'上次区域: {self.name_to_zone(last_zone)}, next zone: {order[:1]}')
         elif last_zone == 0:
             completed_count = 0
             order = full_order
             self.config.OpsiExplore_ExploreProgress = '已完成百分之0.00'
-            logger.info(f'First run, next zone: {order[:1]}')
+            logger.info(f'首次运行，下一个区域: {order[:1]}')
         else:
             raise ScriptError(f'Invalid last_zone: {last_zone}')
 
@@ -100,7 +111,7 @@ class OpsiExplore(OSMap):
                 continue
 
             # 运行区域
-            logger.hr(f'OS explore {zone}', level=1)
+            logger.hr(f'大世界-每月开荒+ {zone}', level=1)
             if not self.config.OpsiExplore_SpecialRadar:
                 # 特殊雷达提供 90 个调谐样本，没有特殊雷达时使用仓库中的调谐样本强化舰队
                 self.tuning_sample_use()
@@ -117,7 +128,7 @@ class OpsiExplore(OSMap):
                 percentage = completed_count / total_zones * 100
                 self.config.OpsiExplore_ExploreProgress = f'已完成百分之{percentage:.2f}'
             if finished_combat == 0:
-                logger.warning('Zone cleared but did not finish any combat')
+                logger.warning('区域已清除但未完成任何战斗')
                 self._os_explore_failed_zone.append(zone)
             self.handle_after_auto_search()
             self.config.check_task_switch()
@@ -131,12 +142,11 @@ class OpsiExplore(OSMap):
             try:
                 self._os_explore()
             except OSExploreError:
-                logger.info('Go back to NY, explore again')
+                logger.info('返回 NY，重新执行每月开荒+')
                 self.config.OpsiExplore_LastZone = 0
                 self.globe_goto(0)
 
         failed_zone = [self.name_to_zone(zone) for zone in self._os_explore_failed_zone]
-        logger.error(f'OpsiExplore failed at these zones, please check you game settings '
-                     f'and check if there is any unfinished event in them: {failed_zone}')
-        logger.critical('[大世界-开荒] 无法解锁该区域')
+        logger.error(f'[大世界-每月开荒+] 以下区域开荒失败，请检查游戏设置和区域内未完成事件: {failed_zone}')
+        logger.critical('[大世界-每月开荒+] 无法解锁该区域')
         raise GameStuckError

@@ -20,7 +20,7 @@ class CachedThreadPoolExecutor:
     def executor(cls):
         from concurrent.futures.thread import ThreadPoolExecutor
         pool = ThreadPoolExecutor(max_workers=5)
-        logger.info('Patched ThreadPoolExecutor created')
+        logger.info('[WebUI-补丁] 已创建补丁线程池')
         return pool
 
 
@@ -64,7 +64,7 @@ def patch_mimetype():
     修补 mimetype 数据库，使用内置表而非从环境变量读取。
 
     默认情况下，mimetype 会读取用户环境中配置的 MIME 类型表。
-    这对服务器环境是合理的，但 AzurPilot 部署在用户本地机器上，
+    这对服务器环境是合理的，但 ALAS 部署在用户本地机器上，
     环境可能已被污染。为保证所有部署行为一致，仅使用内置 MIME 表。
     """
     import mimetypes

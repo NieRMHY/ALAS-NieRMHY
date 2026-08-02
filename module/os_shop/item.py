@@ -1,3 +1,9 @@
+"""大世界商店物品数据模块。
+
+定义大世界商店的物品数据结构，包括价格 OCR 识别器（修正常见
+OCR 错误）、计数器 OCR 识别器以及商品价格区域的识别逻辑，
+为商店购买决策提供准确的价格和数量信息。
+"""
 from typing import List
 import module.config.server as server
 from module.logger import logger
@@ -19,7 +25,7 @@ class PriceOcr(DigitYuv):
         prev = result
         if result.startswith('0'):
             result = '1' + result
-            logger.warning(f'OS shop amount {prev} is revised to {result}')
+            logger.warning(f'大世界商店+数量 {prev} 已修正为 {result}')
 
         result = super().after_process(result)
         return result
@@ -56,13 +62,13 @@ class CounterOcr(Ocr):
             parsed = []
             for i in result_list:
                 if not i or '/' not in i:
-                    logger.warning(f'Invalid OCR result format: {i}')
+                    logger.warning(f'计数器 OCR 结果格式无效: {i}')
                     parsed.append([0, 0])
                     continue
 
                 parts = i.split('/')
                 if len(parts) != 2:
-                    logger.warning(f'Invalid counter format: {i}')
+                    logger.warning(f'计数器格式无效: {i}')
                     parsed.append([0, 0])
                     continue
                 parsed.append([int(j) for j in parts])
@@ -70,12 +76,12 @@ class CounterOcr(Ocr):
             return parsed
         else:
             if not result_list or '/' not in result_list:
-                logger.warning(f'Invalid OCR result: {result_list}')
+                logger.warning(f'计数器 OCR 结果无效: {result_list}')
                 return [0, 0]
 
             parts = result_list.split('/')
             if len(parts) != 2:
-                logger.warning(f'Invalid counter format: {result_list}')
+                logger.warning(f'计数器格式无效: {result_list}')
                 return [0, 0]
 
             return [int(i) for i in parts]
@@ -90,7 +96,7 @@ else:
 
 
 class OSShopItem(Item):
-    """大世界商店物品类。
+    """大世界商店+物品类。
 
     扩展基础物品类，增加商店索引、滚动位置、库存计数等属性。
     """
@@ -155,7 +161,7 @@ class OSShopItem(Item):
 
 
 class OSShopItemGrid(ItemGrid):
-    """大世界商店物品网格类。
+    """大世界商店+物品网格类。
 
     支持物品识别、计数器 OCR、商店索引和滚动位置记录。
     """

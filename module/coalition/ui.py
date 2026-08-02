@@ -1,3 +1,10 @@
+"""联动活动 UI 处理模块。
+
+提供联动活动的界面交互功能，包括页面检测、难度模式切换、
+关卡选择确认、作战编成准备以及返回导航等。定义了
+NeoncitySwitch 用于检测带红字提示的特殊状态。
+"""
+
 from module.base.timer import Timer
 from module.coalition.assets import *
 from module.combat.assets import BATTLE_PREPARATION
@@ -55,14 +62,18 @@ class CoalitionUI(Combat):
             mode_switch.add_state('story', NEONCITY_MODE_STORY)
             mode_switch.add_state('battle', NEONCITY_MODE_BATTLE)
         elif event == 'coalition_20251120':
-            logger.info('Coalition event coalition_20251120 has no mode switch')
+            logger.info('[联动-UI] 联动活动 coalition_20251120 无模式切换')
             return
         elif event == 'coalition_20260122':
             mode_switch = Switch('CoalitionMode', offset=(20, 20))
             mode_switch.add_state('story', FASHION_MODE_STORY)
             mode_switch.add_state('battle', FASHION_MODE_BATTLE)
+        elif event == 'coalition_20260723':
+            # 常规活动入口直接进入作战页面，无需切换剧情模式。
+            logger.info('[联动-UI] 恐怖故事活动无模式切换')
+            return
         else:
-            logger.error(f'MODE_SWITCH is not defined in event {event}')
+            logger.error(f'[联动-UI] MODE_SWITCH未定义在活动中 {event}')
             raise ScriptError
 
         if mode == 'story':
@@ -70,7 +81,7 @@ class CoalitionUI(Combat):
         elif mode == 'battle':
             mode_switch.set('battle', main=self)
         else:
-            logger.warning(f'Unknown coalition campaign mode: {mode}')
+            logger.warning(f'未知的联动战役模式: {mode}')
 
     def coalition_set_fleet(self, event, mode):
         """
@@ -100,8 +111,11 @@ class CoalitionUI(Combat):
         elif event == 'coalition_20260122':
             fleet_switch.add_state('single', FASHION_SWITCH_SINGLE)
             fleet_switch.add_state('multi', FASHION_SWITCH_MULTI)
+        elif event == 'coalition_20260723':
+            fleet_switch.add_state('single', MYSTERY_RECORD_SWITCH_SINGLE)
+            fleet_switch.add_state('multi', MYSTERY_RECORD_SWITCH_MULTI)
         else:
-            logger.error(f'FLEET_SWITCH is not defined in event {event}')
+            logger.error(f'[联动-UI] FLEET_SWITCH未定义在活动中 {event}')
             raise ScriptError
 
         if fleet_switch.get(main=self) == mode:
@@ -113,7 +127,7 @@ class CoalitionUI(Combat):
             fleet_switch.set('multi', main=self)
             return True
         else:
-            logger.warning(f'Unknown coalition fleet mode: {mode}')
+            logger.warning(f'未知的联动舰队模式: {mode}')
             return False
 
     @staticmethod
@@ -164,6 +178,12 @@ class CoalitionUI(Combat):
             ('coalition_20260122', 'hard'): FASHION_HARD,
             ('coalition_20260122', 'sp'): FASHION_SP,
             ('coalition_20260122', 'ex'): FASHION_EX,
+            # MYSTERY_RECORD
+            ('coalition_20260723', 'easy'): MYSTERY_RECORD_EASY,
+            ('coalition_20260723', 'normal'): MYSTERY_RECORD_NORMAL,
+            ('coalition_20260723', 'hard'): MYSTERY_RECORD_HARD,
+            ('coalition_20260723', 'sp'): MYSTERY_RECORD_SP,
+            ('coalition_20260723', 'ex'): MYSTERY_RECORD_EX,
         }
         stage = stage.lower()
         try:
@@ -252,6 +272,12 @@ class CoalitionUI(Combat):
             ('coalition_20260122', 'hard'): 3,
             ('coalition_20260122', 'sp'): 4,
             ('coalition_20260122', 'ex'): 5,
+            # MYSTERY_RECORD
+            ('coalition_20260723', 'easy'): 1,
+            ('coalition_20260723', 'normal'): 2,
+            ('coalition_20260723', 'hard'): 3,
+            ('coalition_20260723', 'sp'): 4,
+            ('coalition_20260723', 'ex'): 5,
         }
         stage = stage.lower()
         try:
@@ -280,8 +306,10 @@ class CoalitionUI(Combat):
         elif event == 'coalition_20260122':
             # FASHION reuses NEONCITY, just (-12, -12) shifted
             return NEONCITY_FLEET_PREPARATION
+        elif event == 'coalition_20260723':
+            return MYSTERY_RECORD_FLEET_PREPARATION
         else:
-            logger.error(f'FLEET_PREPARATION is not defined in event {event}')
+            logger.error(f'[联动-UI] FLEET_PREPARATION未定义在活动中 {event}')
             raise ScriptError
 
     def handle_fleet_preparation(self, event, stage, mode):
@@ -304,6 +332,7 @@ class CoalitionUI(Combat):
             'coalition_20240627',
             'coalition_20250626',
             'coalition_20260122',
+            'coalition_20260723',
         ]:
             # easy is single fleet, SP and EX must must multiple fleets
             if stage in ['easy', 'sp', 'ex']:
@@ -332,7 +361,7 @@ class CoalitionUI(Combat):
             in: BATTLE_PREPARATION, or coalition specific fleet_preparation
             out: in_coalition
         """
-        logger.info('Coalition map exit')
+        logger.info('联动地图退出')
         fleet_preparation = self.coalition_get_fleet_preparation(event)
         for _ in self.loop():
             if self.in_coalition():

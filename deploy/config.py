@@ -6,22 +6,17 @@ from deploy.logger import logger
 from deploy.utils import *
 
 
-GIT_OVER_CDN_REPOSITORY = 'git://git.pull/AzurPilot'
-GIT_OVER_CDN_FALLBACK_REPOSITORY = 'https://gitcode.com/ddl2/AzurLaneAutoScript'
-
-
 class ExecutionError(Exception):
     pass
 
 
 class ConfigModel:
     # Git 配置
-    Repository: str = "https://github.com/wess09/AzurPilot"
+    Repository: str = "https://github.com/NieRMHY/ALAS-NieRMHY.git"
     Branch: str = "master"
     GitExecutable: str = "./.venv/Scripts/git/cmd/git.exe" if sys.platform == "win32" else "./.venv/bin/git"
     GitProxy: Optional[str] = None
     SSLVerify: bool = False
-    AutoUpdate: bool = True
 
     # Python 配置
     PythonExecutable: str = "./.venv/Scripts/python.exe" if sys.platform == "win32" else "./.venv/bin/python"
@@ -70,9 +65,6 @@ class ConfigModel:
     Password: Optional[str] = None
     CDN: Union[str, bool] = False
     Run: Optional[str] = None
-
-    # 动态配置
-    GitOverCdn: bool = False
 
 
 class DeployConfig(ConfigModel):
@@ -125,7 +117,11 @@ class DeployConfig(ConfigModel):
 
         每次 `read()` 之后必须调用。
         """
+        # Modify by MHY, 移除 git_over_cdn 机制，旧官方/nanoda 源与 global/cn 别名统一迁移到自有源（纯 git pull）
+        self.config.pop('AutoUpdate', None)
         if self.Repository in [
+            'https://github.com/wess09/AzurPilot',
+            'https://github.com/LmeSzinc/AzurLaneAutoScript',
             'https://gitee.com/LmeSzinc/AzurLaneAutoScript',
             'https://gitee.com/lmeszinc/azur-lane-auto-script-mirror',
             'https://e.coding.net/llop18870/alas/AzurLaneAutoScript.git',
@@ -139,26 +135,16 @@ class DeployConfig(ConfigModel):
             'https://git.nanoda.work/git/AzurLaneAutoScript',
             'https://git.nanoda.work/git/AzurPilot',
             'https://git.nanoda.work',
+            'global',
+            'cn',
         ]:
-            self.Repository = GIT_OVER_CDN_REPOSITORY
-            self.config['Repository'] = GIT_OVER_CDN_REPOSITORY
+            self.Repository = 'https://github.com/NieRMHY/ALAS-NieRMHY.git'
+            self.config['Repository'] = self.Repository
         if self.PypiMirror in [
             'https://pypi.tuna.tsinghua.edu.cn/simple'
         ]:
             self.PypiMirror = 'https://mirrors.aliyun.com/pypi/simple'
             self.config['PypiMirror'] = 'https://mirrors.aliyun.com/pypi/simple'
-
-        # 绕过 webui.config.DeployConfig.__setattr__()，不写入 deploy.yaml
-        super().__setattr__(
-            'GitOverCdn',
-            self.Repository == GIT_OVER_CDN_REPOSITORY and self.Branch == 'master'
-        )
-        if self.Repository == GIT_OVER_CDN_REPOSITORY:
-            super().__setattr__('Repository', GIT_OVER_CDN_FALLBACK_REPOSITORY)
-        if self.Repository in ['global']:
-            super().__setattr__('Repository', 'https://github.com/wess09/AzurPilot')
-        if self.Repository in ['cn']:
-            super().__setattr__('Repository', GIT_OVER_CDN_REPOSITORY)
 
     def filepath(self, key):
         """根据配置键获取绝对文件路径。

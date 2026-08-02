@@ -1,3 +1,28 @@
+"""AlOcr 文字识别引擎。
+
+基于 RapidOCR 框架的多后端 OCR 系统，支持：
+- ONNX Runtime 推理（默认），支持 DirectML (Windows GPU) 和 CoreML (macOS ANE) 加速
+- NCNN 推理，推理速度更快但模型覆盖较窄
+- Windows ML 设备选择，精确控制 GPU/CPU 推理设备
+- 自定义 CNN-CTC 英文识别模型（900k 参数），专为碧蓝航线优化
+
+模型按语言区分：
+- azur_lane：英文数字识别（游戏 UI 中的数字、等级、时间等）
+- azur_lane_jp：日文服务器专用识别模型
+- cn：中文识别（中+英混合）
+- jp：日文识别
+- tw：繁体中文识别
+
+工作线程模型：
+- OCR 推理在专用后台线程 (AlOcrQueue) 中执行，避免阻塞主循环
+- 模型使用懒加载策略，首次使用时才初始化
+- 模型缓存按 (名称, 后端, 设备, 版本) 组合键管理
+
+检测模型：
+- 使用 PP-OCRv6 tiny 检测模型定位文本区域
+- 检测+识别流水线在 ncnn 和 ONNX 后端有不同实现
+"""
+
 import os
 import queue
 import threading
@@ -12,15 +37,29 @@ from module.exception import RequestHumanTakeover
 from module.logger import logger
 from module.config.config import AzurLaneConfig
 from module.config.utils import DEFAULT_CONFIG_NAME
+from module.ocr.windows_ml import create_onnx_session
 
 
 def handle_ocr_error(e):
-    logger.critical(f"Failed to load OCR dependencies: {e}")
+    """处理 OCR 依赖加载失败的统一错误处理。
+
+    打印详细的故障排除指引，包括：
+    - 安装微软 C++ 运行库
+    - 关闭 GPU 加速
+    - 获取社区支持
+
+    Args:
+        e (Exception): 原始异常。
+
+    Raises:
+        RequestHumanTakeover: 始终抛出，需要用户手动干预。
+    """
+    logger.critical(f"加载OCR依赖失败: {e}")
     logger.critical(
         "[OCR] 无法加载 OCR 依赖，请安装微软 C++ 运行库 https://aka.ms/vs/17/release/vc_redist.x64.exe"
     )
     logger.critical("[OCR] 也有可能是 GPU 不支持加速引起，请尝试关闭 GPU 加速")
-    logger.critical("[OCR] 如果上述方法都无法解决，请加群获取支持")
+    logger.critical("[OCR] 如果上述方法都无法解决，请在 GitHub Issues 反馈：https://github.com/NieRMHY/ALAS-NieRMHY/issues")
     raise RequestHumanTakeover
 
 
@@ -61,7 +100,12 @@ AZUR_LANE_JP_V6_PARAMS = (
 
 
 class RecOnlyOCR(RapidOCR):
-    """只加载识别模型，跳过 det 和 cls 的 ONNX 模型加载。"""
+    """只加载识别模型，跳过 det 和 cls 的 ONNX 模型加载。
+
+    碧蓝航线的 OCR 场景中，文本位置通常固定（已通过 Button 区域裁剪），
+    不需要文本检测模型，仅需识别模型即可。跳过检测模型可节省约 10MB 内存
+    和加载时间。
+    """
 
     def _initialize(self, cfg):
         self.text_score = cfg.Global.text_score
@@ -91,9 +135,26 @@ class RecOnlyOCR(RapidOCR):
 
 
 class AlOcrCtcRecOCR:
-    """900k 参数 CNN-CTC 英文识别模型，直接使用 ONNXRuntime 推理。"""
+    """900k 参数 CNN-CTC 英文识别模型。
 
-    def __init__(self, model_path, device="cpu"):
+    专为碧蓝航线优化的轻量级英文识别模型，直接使用 ONNXRuntime 推理，
+    不依赖 RapidOCR 框架。使用 CTC (Connectionist Temporal Classification)
+    解码算法进行序列识别。
+
+    模型特点：
+    - 固定输入高度 48px，最大宽度 768px
+    - 字符集仅包含数字、冒号、斜线和大小写英文字母
+    - 支持 DirectML/CoreML GPU 加速
+
+    Attributes:
+        model_path (Path): ONNX 模型文件路径。
+        device (str): 推理设备（'cpu'、'gpu'、'ane'）。
+        charset (str): 识别字符集。
+        blank_id (int): CTC blank token 的索引。
+        session: ONNXRuntime 推理会话。
+    """
+
+    def __init__(self, model_path, device="cpu", allow_vendor_execution_providers=True):
         try:
             import onnxruntime as ort
         except Exception as exc:
@@ -110,12 +171,17 @@ class AlOcrCtcRecOCR:
         self.max_width = ALAS_CTC_MAX_WIDTH
         self.load_image = LoadImage()
 
-        providers = self._select_providers(ort)
-        self.session = ort.InferenceSession(str(self.model_path), providers=providers)
+        self.session, selected_provider = create_onnx_session(
+            ort,
+            self.model_path,
+            allow_acceleration=self.device != 'cpu',
+            allow_vendor_execution_providers=allow_vendor_execution_providers,
+            device_preference=self.device,
+        )
         self.input_names = [item.name for item in self.session.get_inputs()]
         logger.info(
             f"Loaded OCR model '{ALAS_CTC_MODEL_VERSION}' on "
-            f"{', '.join(self.session.get_providers())}"
+            f"{selected_provider} ({', '.join(self.session.get_providers())})"
         )
 
     @staticmethod
@@ -124,19 +190,6 @@ class AlOcrCtcRecOCR:
         if path.is_absolute():
             return path
         return REPO_ROOT / path
-
-    def _select_providers(self, ort):
-        available = ort.get_available_providers()
-        providers = []
-        if os.name == 'nt' and self.device == 'gpu':
-            if "DmlExecutionProvider" in available:
-                providers.append("DmlExecutionProvider")
-            else:
-                logger.warning(
-                    "DmlExecutionProvider is not available, falling back to CPU"
-                )
-        providers.append("CPUExecutionProvider")
-        return providers
 
     def close(self):
         self.session = None
@@ -377,7 +430,7 @@ CUSTOM_CTC_MODEL_PARAMS = {
 }
 
 DEFAULT_ONNX_MODEL_VERSION = {
-    "azur_lane": ALAS_CTC_MODEL_VERSION,
+    "azur_lane": "alocr_en_v2_6",
     "azur_lane_jp": "azur_lane_jp_v6",
     "ppocr_v6": "ppocr_v6",
     "cn": "cn_v6_1",
@@ -427,21 +480,59 @@ def _get_onnx_model_params(name):
     return ONNX_MODEL_PARAMS[name][version]
 
 
+def _configure_windows_ml_sessions(
+    ocr,
+    model_paths,
+    ocr_device,
+    allow_vendor_execution_providers,
+):
+    """将 RapidOCR 创建的 CPU session 替换为 Windows ML 精确选定的设备。"""
+    if os.name != 'nt':
+        return ocr
+
+    try:
+        import onnxruntime as ort
+    except Exception as exc:
+        handle_ocr_error(exc)
+
+    for config_name, component_name, model_path in model_paths:
+        component = getattr(ocr, component_name)
+        ort_session = component.session
+        engine_config = getattr(ocr.cfg, config_name).engine_cfg
+        session_options_factory = lambda: ort_session._init_sess_opts(engine_config)
+        ort_session.session, _ = create_onnx_session(
+            ort,
+            model_path,
+            session_options_factory=session_options_factory,
+            allow_acceleration=ocr_device != 'cpu',
+            allow_vendor_execution_providers=allow_vendor_execution_providers,
+            device_preference=ocr_device,
+        )
+
+    return ocr
+
+
 def _create_ocr(name):
     backend = config.ocr_backend
     if backend == 'ncnn':
         if not supports_ncnn_model(name):
             raise ValueError(f"Unsupported ncnn OCR model: {name}")
-        logger.info("OCR backend is ncnn, using ncnn-specific recognition model")
+        logger.info("[OCR] OCR后端为ncnn，使用ncnn专用识别模型")
         return NcnnRecOCR(name, device=config.ocr_device)
     else:
         ocr_device = config.ocr_device
-        use_dml = os.name == 'nt' and ocr_device == 'gpu'
+        allow_vendor_execution_providers = config.Optimization_OcrWindowsMlVendorEp
+        # Windows 下由 Windows ML 显式选择设备，不能交给 RapidOCR 默认 DirectML。
+        use_dml = False
         use_coreml = ocr_device == 'ane'
         version = _resolve_onnx_model_version(name)
         custom_model_path = CUSTOM_CTC_MODEL_PARAMS.get(name, {}).get(version)
         if custom_model_path is not None:
-            return AlOcrCtcRecOCR(custom_model_path, device=ocr_device)
+            return AlOcrCtcRecOCR(
+                custom_model_path,
+                device=ocr_device,
+                allow_vendor_execution_providers=allow_vendor_execution_providers,
+            )
 
         model_path, rec_keys_path, ocr_version = _get_onnx_model_params(name)
         params = {
@@ -456,7 +547,13 @@ def _create_ocr(name):
             "EngineConfig.onnxruntime.use_coreml": use_coreml,
             "EngineConfig.onnxruntime.coreml_ep_cfg.MLComputeUnits": "CPUAndNeuralEngine",
         }
-        return RecOnlyOCR(params=params)
+        ocr = RecOnlyOCR(params=params)
+        return _configure_windows_ml_sessions(
+            ocr,
+            [('Rec', 'text_rec', model_path)],
+            ocr_device,
+            allow_vendor_execution_providers,
+        )
 
 
 # 懒加载：模块级不再创建模型，首次 init() 时才加载
@@ -468,6 +565,7 @@ def _model_cache_key(name):
         name,
         config.ocr_backend,
         config.ocr_device,
+        config.Optimization_OcrWindowsMlVendorEp,
         config.ocr_model_version(name),
     )
 
@@ -485,7 +583,11 @@ _det_model_cache = {}
 
 
 class DetOnlyOCR(RapidOCR):
-    """仅加载 RapidOCR 检测模型，识别部分由 ncnn 处理。"""
+    """仅加载 RapidOCR 检测模型，识别部分由 ncnn 处理。
+
+    在 ncnn 后端模式下，文本检测使用 ONNX 的 PP-OCRv6 tiny 检测模型，
+    而文本识别使用 ncnn 的识别模型。此类封装了这种混合模式的检测端。
+    """
 
     def _initialize(self, cfg):
         self.text_score = cfg.Global.text_score
@@ -514,7 +616,9 @@ class DetOnlyOCR(RapidOCR):
 def _create_det_ocr_for_onnx(name):
     """为 ONNX 后端创建完整的 RapidOCR 实例（检测 + 识别）。"""
     ocr_device = config.ocr_device
-    use_dml = os.name == 'nt' and ocr_device == 'gpu'
+    allow_vendor_execution_providers = config.Optimization_OcrWindowsMlVendorEp
+    # Windows 下由 Windows ML 显式选择设备，不能交给 RapidOCR 默认 DirectML。
+    use_dml = False
     use_coreml = ocr_device == 'ane'
     model_path, rec_keys_path, ocr_version = _get_onnx_model_params(name)
     params = {
@@ -529,7 +633,16 @@ def _create_det_ocr_for_onnx(name):
         "EngineConfig.onnxruntime.use_coreml": use_coreml,
         "EngineConfig.onnxruntime.coreml_ep_cfg.MLComputeUnits": "CPUAndNeuralEngine",
     }
-    return RapidOCR(params=params)
+    ocr = RapidOCR(params=params)
+    return _configure_windows_ml_sessions(
+        ocr,
+        [
+            ('Det', 'text_det', DET_MODEL_PATH),
+            ('Rec', 'text_rec', model_path),
+        ],
+        ocr_device,
+        allow_vendor_execution_providers,
+    )
 
 
 def _create_det_ocr_for_ncnn():
@@ -565,20 +678,52 @@ def _get_det_model(name):
         return _det_model_cache[key]
 
 
-def reset_ocr_model():
-    def _reset():
-        logger.info("Resetting OCR models")
-        for model in _model_cache.values():
-            close = getattr(model, "close", None)
-            if close is not None:
-                close()
-        _model_cache.clear()
-        _det_model_cache.clear()
+def release_ocr_models(names=None):
+    """在 OCR 工作线程中释放指定模型的全局缓存。"""
+    names = None if names is None else set(names)
 
-    return _run_ocr_queued(_reset)
+    def _release():
+        released = 0
+        for cache in (_model_cache, _det_model_cache):
+            keys = [key for key in cache if names is None or key[0] in names]
+            for key in keys:
+                model = cache.pop(key)
+                close = getattr(model, "close", None)
+                if callable(close):
+                    try:
+                        close()
+                    except Exception as exc:
+                        logger.warning("关闭 OCR 模型缓存失败: %s", exc)
+                released += 1
+
+        if released:
+            logger.info("已释放 %s 个 OCR 模型缓存", released)
+        return released
+
+    return _run_ocr_queued(_release)
+
+
+def reset_ocr_model():
+    logger.info("重置 OCR 模型")
+    return release_ocr_models()
 
 
 class AlOcr:
+    """统一的 OCR 识别接口。
+
+    封装了 ONNX 和 ncnn 两种后端的识别和检测功能，提供一致的 API。
+    所有 OCR 推理操作在专用后台线程中执行，避免阻塞主事件循环。
+
+    支持的操作：
+    - ocr(): 单行文本识别（已裁剪的文本图像）
+    - det(): 文本检测 + 识别（完整图像，返回带位置坐标的结果）
+    - ocr_for_single_lines(): 批量单行文本识别
+
+    Attributes:
+        name (str): 模型名称，如 'azur_lane'、'cn'、'jp'、'tw'。
+        model: 识别模型实例（懒加载）。
+        _det_model: 检测模型实例（懒加载）。
+    """
     def __init__(self, **kwargs):
         self.model = None
         self.name = kwargs.get("name", "en")
@@ -650,7 +795,7 @@ class AlOcr:
                         pass
         except Exception as e:
             # 不应因调试图片保存失败而崩溃主进程
-            logger.warning(f"Failed to save OCR debug image: {e}")
+            logger.warning(f"保存OCR调试图像失败: {e}")
 
     def _ocr_direct(self, img_fp):
         logger.debug(f"[VERBOSE] AlOcr.ocr: Ensure loaded...")
@@ -665,7 +810,7 @@ class AlOcr:
             self._save_debug_image(img_fp, txt)
             return txt
         except Exception as e:
-            logger.error(f"AlOcr.ocr exception: {e}")
+            logger.error(f"AlOcr.ocr异常: {e}")
             raise
 
     def ocr(self, img_fp):
@@ -716,7 +861,7 @@ class AlOcr:
                     return results
                 return []
         except Exception as e:
-            logger.error(f"AlOcr.det exception: {e}")
+            logger.error(f"AlOcr.det异常: {e}")
             raise
 
     def _save_det_debug(self, img, results):

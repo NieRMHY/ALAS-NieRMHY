@@ -1,5 +1,4 @@
-from deploy.config import DeployConfig, ExecutionError
-from deploy.git_over_cdn.client import GitOverCdnClient
+from deploy.config import DeployConfig
 from deploy.logger import logger
 from deploy.utils import *
 
@@ -53,7 +52,7 @@ class GitManager(DeployConfig):
         self.execute(f'"{self.git}" fetch {source} {branch}')
 
         logger.hr('Pull Repository Branch', 1)
-        # Remove git lock
+        # 移除 git 锁文件
         for lock_file in [
             './.git/index.lock',
             './.git/HEAD.lock',
@@ -68,49 +67,9 @@ class GitManager(DeployConfig):
         logger.hr('Show Version', 1)
         self.execute(f'"{self.git}" --no-pager log --no-merges -1')
 
-    @property
-    def goc_client(self):
-        client = GitOverCdnClient(
-            url=[
-                'https://alas.nanoda.work/upd',
-                'https://1825239988.v.123pan.cn/1825239988/azur/AzurPilot_master',
-            ],
-            folder=self.root_filepath,
-            source='origin',
-            branch='master',
-            git=self.git,
-        )
-        client.logger = logger
-        return client
-
-    @staticmethod
-    def cloud_auto_update_enabled():
-        # Modify by MHY, 禁用第三方云更新检测，始终允许从自有仓库更新
-        logger.info('Cloud update control disabled, using own repository')
-        return True
-
-    def cloud_update_access_failed(self, fatal=True):
-        logger.hr('Cloud Update Control Failed', 0)
-        if fatal:
-            logger.warning('Failed to access cloud update control, stopping startup')
-            raise ExecutionError
-        else:
-            logger.warning('Failed to access cloud update control, skip update check')
-
+    # Modify by MHY, 移除 nanoda 云端更新开关(kill-switch)与 git_over_cdn，改为纯 git pull
     def git_install(self):
-        logger.hr('Update Alas', 0)
-
-        cloud_update = self.cloud_auto_update_enabled()
-        if cloud_update is None:
-            self.cloud_update_access_failed()
-        if not cloud_update:
-            logger.info('Cloud update control disabled, skip')
-            return
-
-        if self.GitOverCdn:
-            if self.goc_client.update():
-                return
-
+        logger.hr('Update AzurPilot', 0)
         self.git_repository_init(
             repo=self.Repository,
             source='origin',
@@ -122,4 +81,4 @@ class GitManager(DeployConfig):
 
 if __name__ == '__main__':
     self = GitManager()
-    self.goc_client.get_status()
+    self.git_install()

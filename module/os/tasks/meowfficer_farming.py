@@ -1,3 +1,15 @@
+"""大世界指挥喵 farming 模块。
+
+在大世界中执行指挥喵（Meowfficer）资源 farming，包括：
+- 支持指定目标海域的精确 farming
+- 智能海域选择和路径规划
+- 代币资源保护和行动力管理
+- 失败重试和异常恢复机制
+
+继承自 CoinTaskMixin 和 OSMap，提供代币保护和地图导航能力，
+通过指定海域列表实现高效的指挥喵资源收集。
+"""
+
 from module.config.config import TaskEnd
 from module.config.utils import get_os_reset_remain
 from module.exception import (
@@ -15,7 +27,7 @@ from module.os.tasks.scheduling import CoinTaskMixin
 
 class MeowfficerTargetZoneMixin:
     def _meow_target_zone_tokens(self):
-        """解析短猫指定海域输入，保留原始顺序用于后续校验。"""
+        """解析耄耋相接指定海域输入，保留原始顺序用于后续校验。"""
         target_zone = self.config.OpsiMeowfficerFarming_TargetZone
         if target_zone is None:
             return []
@@ -33,11 +45,11 @@ class MeowfficerTargetZoneMixin:
 
     def _meow_target_zone_error(self, message):
         logger.error(message)
-        raise RequestHumanTakeover('短猫指定海域配置无效，任务已停止')
+        raise RequestHumanTakeover('耄耋相接指定海域配置无效，任务已停止')
 
     def _meow_target_zones(self, *, require_target=False, allow_multiple=True):
         """
-        获取短猫指定海域列表。
+        获取耄耋相接指定海域列表。
 
         Args:
             require_target (bool): 未填写目标时是否停止任务。
@@ -50,14 +62,18 @@ class MeowfficerTargetZoneMixin:
         raw_value = self.config.OpsiMeowfficerFarming_TargetZone
         if not tokens:
             if require_target:
-                logger.warning('[大世界-短猫相接] 已启用 StayInZone 但未设置 TargetZone，跳过本次任务')
-                self.config.task_delay(server_update=True)
+                message = '已启用 StayInZone 但未设置 TargetZone'
+                logger.warning(f'[大世界-耄耋相接] {message}，跳过本次任务')
+                if self.is_running_smart_scheduling_task():
+                    self._handle_coin_task_no_content('耄耋相接', message)
+                    return []
+                self.delay_opsi_active_task(server_update=True)
                 self.config.task_stop()
             return []
 
         if len(tokens) > 1 and not allow_multiple:
             self._meow_target_zone_error(
-                f'短猫指定海域填写了多海域列表 "{raw_value}"，需要开启"循环出击指定海域"后才能使用'
+                f'耄耋相接指定海域填写了多海域列表 "{raw_value}"，需要开启“循环出击指定海域”后才能使用'
             )
 
         empty_tokens = [index + 1 for index, token in enumerate(tokens) if token == '']
@@ -92,20 +108,20 @@ class MeowfficerTargetZoneMixin:
         if invalid_tokens:
             errors.append(f'无法识别: {", ".join(map(str, invalid_tokens))}')
         if port_zones:
-            errors.append(f'港口海域不可用于短猫: {[zone.zone_id for zone in port_zones]}')
+            errors.append(f'港口海域不可用于耄耋相接: {[zone.zone_id for zone in port_zones]}')
         if duplicate_zones:
             errors.append(f'重复海域: {[zone.zone_id for zone in duplicate_zones]}')
         if errors:
-            self._meow_target_zone_error(f'短猫指定海域输入错误 ({raw_value}): {"; ".join(errors)}')
+            self._meow_target_zone_error(f'耄耋相接指定海域输入错误 ({raw_value}): {"; ".join(errors)}')
 
-        logger.attr('MeowTargetZones', [zone.zone_id for zone in zones])
+        logger.attr('目标海域列表', [zone.zone_id for zone in zones])
         return zones
 
     def _meow_target_zone_at(self, zones, index):
         """按顺序循环获取本轮目标海域。"""
         zone_index = index % len(zones)
         zone = zones[zone_index]
-        logger.attr('MeowTargetZoneIndex', f'{zone_index + 1}/{len(zones)}')
+        logger.attr('目标海域索引', f'{zone_index + 1}/{len(zones)}')
         return zone, zone_index + 1
 
 
@@ -126,9 +142,9 @@ class OpsiMeowfficerFarming(MeowfficerTargetZoneMixin, CoinTaskMixin, OSMap):
         if self.config.is_task_enabled('OpsiAshBeacon') \
                 and not self._ash_fully_collected \
                 and self.config.OpsiAshBeacon_EnsureFullyCollected:
-            logger.info('[大世界-短猫相接] 余烬信标未收集满，暂时忽略行动力限制')
+            logger.info('[大世界-耄耋相接] 余烬信标未收集满，暂时忽略行动力限制')
             self.config.OS_ACTION_POINT_PRESERVE = 0
-        logger.attr('OS_ACTION_POINT_PRESERVE', self.config.OS_ACTION_POINT_PRESERVE)
+        logger.attr('大世界行动力保留', self.config.OS_ACTION_POINT_PRESERVE)
 
         if not ap_checked:
             # 行动力前置检查，确保明日每日任务有足够行动力
@@ -156,7 +172,7 @@ class OpsiMeowfficerFarming(MeowfficerTargetZoneMixin, CoinTaskMixin, OSMap):
         return ap_checked
 
     def _meow_handle_traditional_zone(self, zone):
-        logger.hr(f'OS meowfficer farming, zone_id={zone.zone_id}', level=1)
+        logger.hr(f'大世界-耄耋相接, zone_id={zone.zone_id}', level=1)
         self.globe_goto(zone, types='SAFE', refresh=True)
         self.fleet_set(self.config.OpsiFleet_Fleet)
         self.meow_search_metrics_start()
@@ -172,7 +188,7 @@ class OpsiMeowfficerFarming(MeowfficerTargetZoneMixin, CoinTaskMixin, OSMap):
         self.config.check_task_switch()
 
     def _meow_handle_stay_in_zone(self, zone):
-        logger.hr(f'OS meowfficer farming (stay in zone), zone_id={zone.zone_id}', level=1)
+        logger.hr(f'大世界-耄耋相接（指定海域循环）, zone_id={zone.zone_id}', level=1)
         self.get_current_zone()
         if self.zone.zone_id != zone.zone_id or not self.is_zone_name_hidden:
             self.globe_goto(zone, types='SAFE', refresh=True)
@@ -189,7 +205,7 @@ class OpsiMeowfficerFarming(MeowfficerTargetZoneMixin, CoinTaskMixin, OSMap):
             except (TaskEnd, GameStuckError, GameTooManyClickError, RequestHumanTakeover):
                 raise
             except Exception as e:
-                logger.warning(f'[大世界-短猫相接] 战略搜索异常: {e}')
+                logger.warning(f'[大世界-耄耋相接] 战略搜索异常: {e}')
 
             if search_completed:
                 self._solved_map_event = set()
@@ -202,15 +218,15 @@ class OpsiMeowfficerFarming(MeowfficerTargetZoneMixin, CoinTaskMixin, OSMap):
             except (TaskEnd, GameStuckError, GameTooManyClickError, RequestHumanTakeover):
                 raise
             except Exception:
-                logger.exception('[大世界-短猫相接] handle_after_auto_search 发生异常')
+                logger.exception('[大世界-耄耋相接] handle_after_auto_search 发生异常')
         finally:
             self.meow_search_metrics_end()
 
         self.config.check_task_switch()
 
     def _meow_handle_target_zone_search(self, zone):
-        """按普通短猫流程清理指定海域。"""
-        logger.hr(f'OS meowfficer farming, zone_id={zone.zone_id}', level=1)
+        """按普通耄耋相接流程清理指定海域。"""
+        logger.hr(f'大世界-耄耋相接, zone_id={zone.zone_id}', level=1)
 
         self.globe_goto(zone)
 
@@ -234,10 +250,12 @@ class OpsiMeowfficerFarming(MeowfficerTargetZoneMixin, CoinTaskMixin, OSMap):
             .sort_by_clock_degree(center=(1252, 1012), start=self.zone.location)
 
         if not zones:
-            logger.warning(f'[大世界-短猫相接] 普通搜索模式：未找到符合条件的海域 (侵蚀等级 {hazard_level})')
-            return
+            message = f'普通搜索模式未找到符合条件的海域 (侵蚀等级 {hazard_level})'
+            logger.warning(f'[大世界-耄耋相接] {message}')
+            self._handle_coin_task_no_content('耄耋相接', message)
+            return False
 
-        logger.hr(f'OS meowfficer farming, zone_id={zones[0].zone_id}', level=1)
+        logger.hr(f'大世界-耄耋相接, zone_id={zones[0].zone_id}', level=1)
 
         self.globe_goto(zones[0])
 
@@ -254,22 +272,19 @@ class OpsiMeowfficerFarming(MeowfficerTargetZoneMixin, CoinTaskMixin, OSMap):
         self.config.check_task_switch()
         
     def os_meowfficer_farming(self):
-        """短猫相接任务入口。"""
+        """耄耋相接任务入口。"""
         self.run_meowfficer_farming()
 
     def _prepare_meowfficer_farming(self, ap_preserve=None):
-        """准备短猫相接运行环境。"""
-        logger.hr(f'OS meowfficer farming, hazard_level={self.config.OpsiMeowfficerFarming_HazardLevel}', level=1)
+        """准备耄耋相接运行环境。"""
+        logger.hr(f'大世界-耄耋相接, hazard_level={self.config.OpsiMeowfficerFarming_HazardLevel}', level=1)
 
         if ap_preserve is None and self.is_cl1_mode_enabled and self.config.OpsiMeowfficerFarming_ActionPointPreserve < 500:
-            logger.info('[大世界-短猫相接] 启用侵蚀 1 练级时，最低行动力保留自动调整为 500')
+            logger.info('[大世界-耄耋相接] 启用侵蚀 1 练级时，最低行动力保留自动调整为 500')
             self.config.OpsiMeowfficerFarming_ActionPointPreserve = 500
 
         if ap_preserve is None:
-            preserve = min(
-                self.get_action_point_limit(self.config.OpsiMeowfficerFarming_APPreserveUntilReset),
-                self.config.OpsiMeowfficerFarming_ActionPointPreserve,
-            )
+            preserve = self.config.OpsiMeowfficerFarming_ActionPointPreserve
         else:
             preserve = int(ap_preserve)
         if preserve == 0:
@@ -283,16 +298,16 @@ class OpsiMeowfficerFarming(MeowfficerTargetZoneMixin, CoinTaskMixin, OSMap):
                 OpsiFleet_Submarine=False,
             )
             cd = self.nearest_task_cooling_down
-            logger.attr('[大世界-短猫相接] 最近冷却中的任务', cd)
+            logger.attr('[大世界-耄耋相接] 最近冷却中的任务', cd)
 
             remain = get_os_reset_remain()
             if cd is not None and remain > 0:
-                logger.info(f'[大世界-短猫相接] 存在冷却中的任务，延迟短猫任务至 {cd.next_run} 后执行')
+                logger.info(f'[大世界-耄耋相接] 存在冷却中的任务，延迟耄耋相接任务至 {cd.next_run} 后执行')
                 self.delay_opsi_active_task(target=cd.next_run)
                 self.config.task_stop()
 
         if self.is_in_opsi_explore():
-            logger.warning(f'[大世界-短猫相接] 大世界探索正在运行，无法执行 {self.config.task.command}')
+            logger.warning(f'[大世界-耄耋相接] 每月开荒+正在运行，无法执行 {self.config.task.command}')
             self.delay_opsi_active_task(server_update=True)
             self.config.task_stop()
 
@@ -302,7 +317,7 @@ class OpsiMeowfficerFarming(MeowfficerTargetZoneMixin, CoinTaskMixin, OSMap):
                 if hasattr(self, '_os_target'):
                     self._os_target()
             else:
-                logger.info(f'Server {self.config.SERVER} does not support OpsiTarget yet, please contact the developers.')
+                logger.info(f'服务器 {self.config.SERVER} 暂不支持海域成就，请联系开发者')
 
         target_zone_tokens = self._meow_target_zone_tokens()
         self._meow_target_zone_list = []
@@ -310,13 +325,15 @@ class OpsiMeowfficerFarming(MeowfficerTargetZoneMixin, CoinTaskMixin, OSMap):
         self._meow_target_zone_index = getattr(self, '_meow_target_zone_index', 0)
         if self.config.OpsiMeowfficerFarming_StayInZone:
             self._meow_target_zone_list = self._meow_target_zones(require_target=True, allow_multiple=True)
+            if not self._meow_target_zone_list:
+                return None
         elif target_zone_tokens:
             self._meow_traditional_zone = self._meow_target_zones(require_target=False, allow_multiple=False)[0]
 
         return preserve
 
     def run_meowfficer_farming(self):
-        """执行大世界短猫相接（猫箱搜寻）任务。"""
+        """执行大世界耄耋相接（猫箱搜寻）任务。"""
         preserve = None
         ap_checked = False
         preserve = self._prepare_meowfficer_farming()
@@ -330,7 +347,7 @@ class OpsiMeowfficerFarming(MeowfficerTargetZoneMixin, CoinTaskMixin, OSMap):
             )
 
     def run_meowfficer_farming_once(self, ap_preserve=None, ap_checked=False, prepared=False):
-        """执行一轮短猫相接，由独立任务或 OpsiScheduling 调用。"""
+        """执行一轮耄耋相接，由独立任务或 OpsiScheduling 调用。"""
         if prepared:
             preserve = int(ap_preserve or 0)
         else:
@@ -357,6 +374,6 @@ class OpsiMeowfficerFarming(MeowfficerTargetZoneMixin, CoinTaskMixin, OSMap):
                 self._meow_handle_target_zone_search(zone)
             return ap_checked
 
-        # ===== 普通短猫搜索主逻辑 =====
+        # ===== 普通耄耋相接搜索主逻辑 =====
         self._meow_handle_normal_search()
         return ap_checked

@@ -7,7 +7,7 @@ alwaysApply: true
 
 **生成日期**: 2026-05-27
 **项目版本**: dev 分支
-**最后分析的代码版本**: ec367b2c9
+**最后分析的代码版本**: cf2944e9e
 
 ---
 
@@ -24,7 +24,6 @@ alwaysApply: true
 | **语言** | Python 3.14+ |
 | **包管理** | uv (项目模式) |
 | **Web 框架** | PyWebIO + Starlette + uvicorn |
-| **桌面应用** | Electron + Vue 3 + Ant Design Vue |
 | **设备控制** | ADB + uiautomator2 |
 | **图像处理** | OpenCV + Pillow + NumPy |
 | **OCR 引擎** | RapidOCR + ONNX Runtime + NCNN |
@@ -99,10 +98,11 @@ alwaysApply: true
 │  │statistics│  │  notify  │  │  daemon  │  │  webui   │  │submodule│
 │  │ 掉落统计  │  │ 推送通知  │  │ 守护模式  │  │ WebUI   │  │外部桥接 ││
 │  └──────────┘  └──────────┘  └──────────┘  └──────────┘  └────────┘│
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐                          │
-│  │   llm    │  │  logger  │  │ exception│                          │
-│  │ LLM 分析  │  │ 日志系统  │  │ 异常定义  │                          │
-│  └──────────┘  └──────────┘  └──────────┘                          │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐            │
+│  │   llm    │  │  logger  │  │ exception│  │azur_stats│            │
+│  │ LLM 分析  │  │ 日志系统  │  │ 异常定义  │  │ 数据上报  │            │
+│  └──────────┘  └──────────┘  └──────────┘  └──────────┘            │
+│  （另有 log_res 日志资源、memory_profiler.py 内存分析）              │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -423,9 +423,12 @@ class ConfigWatcher:
 | [DEVICE.md](DEVICE.md) | 设备层分析 |
 | [UI.md](UI.md) | UI 导航分析 |
 | [OCR.md](OCR.md) | OCR 系统分析 |
+| [OCR-USAGE.md](OCR-USAGE.md) | OCR 使用场景统计 |
 | [HANDLER.md](HANDLER.md) | 处理器层分析 |
 | [COMBAT.md](COMBAT.md) | 战斗系统分析 |
+| [COMBAT-UI.md](COMBAT-UI.md) | 战斗 UI 资源分析 |
 | [MAP.md](MAP.md) | 地图处理分析 |
+| [MAP-DETECTION.md](MAP-DETECTION.md) | 地图检测分析 |
 | [CAMPAIGN.md](CAMPAIGN.md) | 战役执行分析 |
 | [GAME-FUNCTIONS.md](GAME-FUNCTIONS.md) | 游戏功能模块分析 |
 | [OS-SYSTEM.md](OS-SYSTEM.md) | 大世界系统分析 |

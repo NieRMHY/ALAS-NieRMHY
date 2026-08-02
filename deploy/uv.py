@@ -1,8 +1,13 @@
 import os
+import multiprocessing
+import queue
+import re
 import shlex
 import shutil
 import subprocess
 import sys
+import time
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional, Union
 from urllib.parse import urlparse
@@ -11,7 +16,24 @@ from urllib.parse import urlparse
 BOOTSTRAPPED_ENV = "AZURPILOT_UV_BOOTSTRAPPED"
 BOOTSTRAP_UV_ENV = "AZURPILOT_BOOTSTRAP_UV"
 NO_BOOTSTRAP_ENV = "AZURPILOT_NO_UV_BOOTSTRAP"
-PYTHON_VERSION = "3.14.3"
+DEPENDENCY_SYNC_TIMEOUT = 30 * 60
+
+
+_URL_USERINFO_RE = re.compile(r"(?P<scheme>\b[a-z][a-z0-9+.-]*://)[^/\s@]+@", re.IGNORECASE)
+_SENSITIVE_QUERY_RE = re.compile(
+    r"(?i)([?&](?:access[_-]?token|api[_-]?key|token|password|passwd|secret)=)[^&#\s]+"
+)
+_SENSITIVE_ASSIGNMENT_RE = re.compile(
+    r"(?i)\b(authorization|access[_-]?token|api[_-]?key|token|password|passwd|secret)\s*([:=])\s*(?:bearer\s+)?[^\s,;]+"
+)
+
+
+@dataclass
+class UvCommandResult:
+    """一次 uv 命令的可记录执行结果。"""
+
+    command: list[str]
+    output: str
 
 
 def project_root() -> Path:
@@ -151,17 +173,19 @@ def _resolve_uv(root: Path, bootstrap_uv: Optional[PathLikeArg] = None) -> Path:
 
 def _uv_python_env(root: Path):
     env = os.environ.copy()
+    env.pop("UV_PYTHON", None)
     env["UV_PYTHON_INSTALL_DIR"] = str(venv_python_install_dir(root))
+    env["UV_CACHE_DIR"] = str(root / ".uv-cache")
     env.setdefault("UV_NO_PROGRESS", "1")
     return env
 
 
 def _managed_python_executable(root: Path) -> Optional[Path]:
     install_dir = venv_python_install_dir(root)
-    for python_home in sorted(install_dir.glob(f"cpython-{PYTHON_VERSION}-*")):
+    for python_home in sorted(install_dir.glob("cpython-*-*"), reverse=True):
         candidates = [
             python_home / "python.exe",
-            python_home / "bin" / "python3.14",
+            python_home / "bin" / "python3",
             python_home / "bin" / "python",
         ]
         for candidate in candidates:
@@ -179,7 +203,7 @@ def _venv_python_works(root: Path) -> bool:
             [
                 str(python),
                 "-c",
-                "import sys; raise SystemExit(0 if sys.version_info[:2] == (3, 14) else 1)",
+                "import sys; raise SystemExit(0)",
             ],
             cwd=str(root),
             stdout=subprocess.DEVNULL,
@@ -210,18 +234,63 @@ def _remove_stale_venv_launcher(root: Path):
         pass
 
 
-def _run(command, root: Path, env=None):
+def _run(
+    command,
+    root: Path,
+    env=None,
+    capture_output: bool = False,
+    timeout: float | None = None,
+):
     command = [str(part) for part in command]
     print("+ " + _join_command(command))
     # nosemgrep: python.lang.security.audit.dangerous-subprocess-use-audit
-    subprocess.run(command, cwd=str(root), check=True, env=env)
+    if not capture_output:
+        subprocess.run(command, cwd=str(root), check=True, env=env, timeout=timeout)
+        return None
+
+    result = subprocess.run(
+        command,
+        cwd=str(root),
+        env=env,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        timeout=timeout,
+    )
+    output = result.stdout or ""
+    if result.returncode:
+        raise subprocess.CalledProcessError(
+            result.returncode,
+            command,
+            output=output,
+        )
+    return output
 
 
-def _run_output(command, root: Path, env=None) -> str:
+def _run_output(command, root: Path, env=None, timeout: float | None = None) -> str:
     command = [str(part) for part in command]
     print("+ " + _join_command(command))
     # nosemgrep: python.lang.security.audit.dangerous-subprocess-use-audit
-    return subprocess.check_output(command, cwd=str(root), text=True, env=env).strip()
+    result = subprocess.run(
+        command,
+        cwd=str(root),
+        env=env,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        timeout=timeout,
+    )
+    if result.returncode:
+        raise subprocess.CalledProcessError(
+            result.returncode,
+            command,
+            output=(result.stderr or "") + (result.stdout or ""),
+        )
+    return (result.stdout or "").strip()
 
 
 def _join_command(command):
@@ -230,84 +299,232 @@ def _join_command(command):
     return " ".join(shlex.quote(part) for part in command)
 
 
-def _ensure_self_contained_python(root: Path, uv: Path):
+def _run_and_collect(
+    command,
+    root: Path,
+    env,
+    outputs: Optional[list[str]],
+    timeout: float | None = None,
+):
+    output = _run(
+        command,
+        root,
+        env=env,
+        capture_output=outputs is not None,
+        timeout=timeout,
+    )
+    if outputs is not None and output:
+        outputs.append(output)
+    return output
+
+
+def _remaining_timeout(deadline: float | None, command) -> float | None:
+    """返回同步总预算的剩余时间，并在预算耗尽时阻止新的 uv 命令。"""
+    if deadline is None:
+        return None
+    remaining = deadline - time.monotonic()
+    if remaining <= 0:
+        raise subprocess.TimeoutExpired(command, 0)
+    return remaining
+
+
+def _ensure_self_contained_python(
+    root: Path,
+    uv: Path,
+    outputs: Optional[list[str]] = None,
+    deadline: float | None = None,
+):
+    env = _uv_python_env(root)
     if _venv_python_works(root) and _managed_python_executable(root):
         return
 
-    env = _uv_python_env(root)
     managed_python = _managed_python_executable(root)
     if managed_python is None:
-        _run(
-            [
-                uv,
-                "python",
-                "install",
-                "--install-dir",
-                venv_python_install_dir(root),
-                "--no-bin",
-                "--managed-python",
-                PYTHON_VERSION,
-            ],
+        command = [
+            uv,
+            "python",
+            "install",
+            "--install-dir",
+            venv_python_install_dir(root),
+            "--no-bin",
+            "--managed-python",
+        ]
+        _run_and_collect(
+            command,
             root,
-            env=env,
+            env,
+            outputs,
+            _remaining_timeout(deadline, command),
         )
         managed_python = _managed_python_executable(root)
     if managed_python is None:
-        managed_python = Path(
-            _run_output(
-                [
-                    uv,
-                    "python",
-                    "find",
-                    "--managed-python",
-                    PYTHON_VERSION,
-                ],
-                root,
-                env=env,
-            )
+        command = [
+            uv,
+            "python",
+            "find",
+            "--managed-python",
+        ]
+        output = _run_output(
+            command,
+            root,
+            env=env,
+            timeout=_remaining_timeout(deadline, command),
         )
+        if outputs is not None and output:
+            outputs.append(output)
+        managed_python = Path(output.strip())
 
     _remove_stale_venv_launcher(root)
-    _run(
-        [
-            uv,
-            "venv",
-            "--allow-existing",
-            "--relocatable",
-            "--python",
-            managed_python,
-            venv_path(root),
-        ]
-        + _uv_index_args(root),
+    command = [
+        uv,
+        "venv",
+        "--allow-existing",
+        "--relocatable",
+        "--python",
+        managed_python,
+        venv_path(root),
+    ] + _uv_index_args(root)
+    _run_and_collect(
+        command,
         root,
-        env=env,
+        env,
+        outputs,
+        _remaining_timeout(deadline, command),
     )
 
 
-def sync_project_venv(root: Path = None, bootstrap_uv: Optional[PathLikeArg] = None):
+def command_output(exc: BaseException) -> str:
+    """提取由 subprocess 保留的合并输出。"""
+    output = getattr(exc, "stdout", None)
+    if output is None:
+        output = getattr(exc, "output", "")
+    if isinstance(output, bytes):
+        return output.decode("utf-8", errors="replace")
+    return str(output or "")
+
+
+def redact_sensitive_text(value: object) -> str:
+    """脱敏命令输出中的 URL 凭据和常见认证字段。"""
+    text = str(value or "")
+    text = _URL_USERINFO_RE.sub(r"\g<scheme>***@", text)
+    text = _SENSITIVE_QUERY_RE.sub(r"\1***", text)
+    return _SENSITIVE_ASSIGNMENT_RE.sub(r"\1\2***", text)
+
+
+def log_command_output(logger, output: str, prefix: str = "[uv]"):
+    """将已捕获的子进程输出逐行交给调用方的日志器。"""
+    for line in output.splitlines():
+        logger.info(f"{prefix} {redact_sensitive_text(line)}")
+
+
+def sync_project_venv(
+    root: Path = None,
+    bootstrap_uv: Optional[PathLikeArg] = None,
+    capture_output: bool = False,
+    timeout: float | None = None,
+) -> Optional[UvCommandResult]:
+    """在单一总时限内准备解释器、虚拟环境并同步项目依赖。"""
     root = root or project_root()
     if not _deploy_bool(root, "InstallDependencies", default=True):
-        print("InstallDependencies is disabled, skip uv sync")
-        return
+        output = "InstallDependencies is disabled, skip uv sync"
+        print(output)
+        if capture_output:
+            return UvCommandResult(command=[], output=output)
+        return None
 
     uv = _resolve_uv(root, bootstrap_uv=bootstrap_uv)
+    outputs = [] if capture_output else None
+    deadline = time.monotonic() + timeout if timeout is not None else None
 
-    _ensure_self_contained_python(root, uv)
-
-    _run(
-        [
+    try:
+        _ensure_self_contained_python(root, uv, outputs=outputs, deadline=deadline)
+        command = [
             uv,
             "sync",
             "--project",
             str(root),
-            "--frozen",
-            "--no-dev",
-            "--no-install-project",
+            "--python",
+            venv_python(root),
         ]
-        + _uv_index_args(root),
-        root,
-        env=_uv_python_env(root),
-    )
+        if (root / "uv.lock").exists():
+            command.append("--frozen")
+        command += ["--no-dev", "--no-install-project"] + _uv_index_args(root)
+        _run_and_collect(
+            command,
+            root,
+            _uv_python_env(root),
+            outputs,
+            _remaining_timeout(deadline, command),
+        )
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as exc:
+        if outputs is not None:
+            output = command_output(exc)
+            if output:
+                outputs.append(output)
+            exc.output = "\n".join(outputs)
+        raise
+
+    if capture_output:
+        return UvCommandResult(command=[str(part) for part in command], output="\n".join(outputs))
+    return None
+
+
+def dependency_sync_service(
+    request_queue,
+    response_queue,
+    root: PathLikeArg = None,
+    timeout: float | None = DEPENDENCY_SYNC_TIMEOUT,
+):
+    """空闲等待 WebUI 更新请求的独立依赖同步服务。"""
+    root = Path(root) if root is not None else project_root()
+    parent = multiprocessing.parent_process()
+
+    while True:
+        try:
+            request = request_queue.get(timeout=1)
+        except queue.Empty:
+            # 启动器强制结束 gui.py 时不会执行 finally，此处避免遗留服务。
+            if parent is not None and not parent.is_alive():
+                return
+            continue
+        if request == "shutdown":
+            return
+        if request != "sync":
+            response_queue.put(
+                {
+                    "success": False,
+                    "command": [],
+                    "output": "",
+                    "error": f"Unknown dependency sync request: {request}",
+                }
+            )
+            continue
+
+        try:
+            result = sync_project_venv(
+                root=root,
+                capture_output=True,
+                timeout=timeout,
+            )
+        except Exception as exc:
+            response_queue.put(
+                {
+                    "success": False,
+                    "command": [str(part) for part in (getattr(exc, "cmd", None) or [])],
+                    "output": command_output(exc),
+                    "error": str(exc),
+                }
+            )
+            continue
+
+        response_queue.put(
+            {
+                "success": True,
+                "command": result.command,
+                "output": result.output,
+                "error": "",
+            }
+        )
 
 
 def ensure_uv_environment():

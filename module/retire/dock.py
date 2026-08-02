@@ -1,7 +1,16 @@
+"""
+船坞界面操作模块。
+
+提供船坞页面的 UI 交互功能，包括卡片网格布局、排序切换、
+收藏筛选、筛选器设置与确认、舰船选择、进入舰船详情等操作。
+定义了卡片各属性区域 (稀有度、等级、情绪、情绪状态) 的
+按钮网格和情绪颜色常量。
+"""
+
 import module.config.server as server
 
 from module.base.button import ButtonGrid, get_color, color_similar
-from module.base.decorator import cached_property
+from module.base.decorator import Config, cached_property
 from module.base.timer import Timer
 from module.combat.assets import GET_ITEMS_1
 from module.equipment.equipment import Equipment
@@ -40,6 +49,15 @@ OCR_DOCK_SELECTED = DigitCounter(DOCK_SELECTED, threshold=64, name='OCR_DOCK_SEL
 
 
 class Dock(Equipment):
+    """船坞界面操作处理器。
+
+    提供船坞页面的通用操作：卡片加载等待、排序切换、收藏筛选、
+    筛选器设置、舰船选择与确认、进入舰船详情等。
+    继承 Equipment 以复用装备侧边导航栏操作。
+
+    服务器差异：TW 服务器的筛选器按钮布局与其他服务器不同，
+    通过 @Config.when 装饰器分发。
+    """
     def handle_dock_cards_loading(self, skip_first_screenshot=True):
         """
         等待船坞卡片加载完成。
@@ -57,7 +75,6 @@ class Dock(Equipment):
             self.device.screenshot()
             skip_first_screenshot = True
         new_result = scanner.scan(self.device.image)
-        # confirm_timer 方法不可用，手动设置超时
         timeout = Timer(1.2, count=1).start()
         while 1:
             if skip_first_screenshot:
@@ -66,108 +83,67 @@ class Dock(Equipment):
                 old_result = new_result
                 self.device.screenshot()
                 new_result = scanner.scan(self.device.image)
-            # 船坞为空时快速退出
+
             if self.appear(DOCK_EMPTY):
-                logger.info('Dock empty')
+                logger.info('船坞为空')
                 break
-            # 兜底超时 1.2s
             if timeout.reached():
                 break
-            # 画面已稳定，加载完成
             if old_result == new_result:
                 break
 
     def dock_favourite_set(self, enable=False, wait_loading=True):
         """
-        设置船坞收藏筛选。
-
-        切换收藏夹筛选开关，开启后仅显示已收藏的舰船。
-
         Args:
-            enable: True 仅筛选收藏舰船，False 显示全部。
-            wait_loading: 是否等待卡片加载完成，连续操作时可设为 False。
-
-        Pages:
-            in: page_dock
+            enable: True to filter favourite ships only
+            wait_loading: Default to True, use False on continuous operation
         """
         if DOCK_FAVOURITE.set('on' if enable else 'off', main=self):
             if wait_loading:
                 self.handle_dock_cards_loading()
 
     def _dock_quit_check_func(self):
-        """检查是否已离开船坞页面（DOCK_CHECK 不再出现）。"""
         return not self.appear(DOCK_CHECK, offset=(20, 20))
 
     def dock_quit(self):
-        """
-        退出船坞页面。
-
-        Pages:
-            in: page_dock
-            out: page_main
-        """
         self.ui_back(check_button=self._dock_quit_check_func, skip_first_screenshot=True)
 
     def dock_sort_method_dsc_set(self, enable=True, wait_loading=True):
         """
-        设置船坞排序方向。
-
-        切换升序/降序排列，切换后等待卡片重新加载。
-
         Args:
-            enable: True 设置为降序排列，False 设置为升序排列。
-            wait_loading: 是否等待卡片加载完成，连续操作时可设为 False。
-
-        Pages:
-            in: page_dock
+            enable: True to set descending sorting
+            wait_loading: Default to True, use False on continuous operation
         """
         if DOCK_SORTING.set('Descending' if enable else 'Ascending', main=self):
             if wait_loading:
                 self.handle_dock_cards_loading()
 
     def dock_filter_enter(self):
-        """
-        进入船坞筛选面板。
-
-        点击筛选按钮并等待筛选面板出现。处理退役流程残留的弹窗（装备确认、获取物品）。
-
-        Pages:
-            in: page_dock (DOCK_CHECK)
-            out: DOCK_FILTER_CONFIRM
-        """
-        logger.info('Dock filter enter')
+        logger.info('船坞筛选进入')
         self.interval_clear(DOCK_CHECK)
         for _ in self.loop():
-            if self.appear(DOCK_FILTER_CONFIRM, offset=(20, 20)):
+            if self.appear(DOCK_FILTER_CONFIRM, offset=(20, 60)):
                 break
             if self.appear(DOCK_CHECK, offset=(20, 20), interval=5):
                 self.device.click(DOCK_FILTER)
                 continue
-            # 上次退役遗留的慢速弹窗：装备确认
+            # slow popups from last retirement
+            # Equip confirm
             if self.appear_then_click(EQUIP_CONFIRM, offset=(30, 30), interval=2):
                 continue
             if self.appear_then_click(EQUIP_CONFIRM_2, offset=(30, 30), interval=2):
                 self.interval_clear(GET_ITEMS_1)
                 continue
-            # 上次退役遗留的慢速弹窗：获取物品
+            # Get items
             if self.appear(GET_ITEMS_1, offset=(30, 30), interval=2):
                 self.device.click(GET_ITEMS_1_RETIREMENT_SAVE)
                 continue
 
     def dock_filter_confirm(self, wait_loading=True, skip_first_screenshot=True):
         """
-        确认筛选面板并等待关闭。
-
-        点击确认按钮关闭筛选面板。部分情况下筛选面板没有黑色模糊背景，
-        DOCK_FILTER_CONFIRM 和 DOCK_CHECK 同时出现，此时需等待前者消失。
-
         Args:
-            wait_loading: 是否等待卡片加载完成，连续操作时可设为 False。
-            skip_first_screenshot: 是否跳过首次截图，复用上一状态循环的截图。
-
-        Pages:
-            in: DOCK_FILTER_CONFIRM
-            out: page_dock (DOCK_CHECK)
+            wait_loading: Default to True, use False on continuous operation
+            skip_first_screenshot:
         """
         while 1:
             if skip_first_screenshot:
@@ -175,17 +151,20 @@ class Dock(Equipment):
             else:
                 self.device.screenshot()
 
-            # 筛选面板已关闭（确认按钮消失且船坞页面出现）
-            if not self.appear(DOCK_FILTER_CONFIRM, offset=(20, 20)):
+            # End
+            # sometimes you have dock filter without black-blurred background
+            # DOCK_FILTER_CONFIRM and DOCK_CHECK appears
+            if not self.appear(DOCK_FILTER_CONFIRM, offset=(20, 60)):
                 if self.appear(DOCK_CHECK, offset=(20, 20)):
                     break
-            if self.appear_then_click(DOCK_FILTER_CONFIRM, offset=(20, 20), interval=3):
+            if self.appear_then_click(DOCK_FILTER_CONFIRM, offset=(20, 60), interval=3):
                 continue
 
         if wait_loading:
             self.handle_dock_cards_loading()
 
     @cached_property
+    @Config.when(SERVER='tw')
     def dock_filter(self) -> Setting:
         delta = (147 + 1 / 3, 57)
         button_shape = (139, 42)
@@ -193,8 +172,55 @@ class Dock(Equipment):
         setting.add_setting(
             setting='sort',
             option_buttons=ButtonGrid(
-                origin=(218, 37), delta=delta, button_shape=button_shape, grid_shape=(7, 1), name='FILTER_SORT'),
-            # stat 选项有多余的网格，不值得处理
+                origin=(218, 65), delta=delta, button_shape=button_shape, grid_shape=(7, 1), name='FILTER_SORT'),
+            # stat has extra grid, not worth pursuing
+            option_names=['rarity', 'level', 'total', 'join', 'intimacy', 'mood', 'stat'],
+            option_default='level'
+        )
+        setting.add_setting(
+            setting='index',
+            option_buttons=ButtonGrid(
+                origin=(218, 138), delta=delta, button_shape=button_shape, grid_shape=(7, 2), name='FILTER_INDEX'),
+            option_names=['all', 'vanguard', 'main', 'dd', 'cl', 'ca', 'bb',
+                          'cv', 'repair', 'ss', 'others', 'not_available', 'not_available', 'not_available'],
+            option_default='all'
+        )
+        setting.add_setting(
+            setting='faction',
+            option_buttons=ButtonGrid(
+                origin=(218, 268), delta=delta, button_shape=button_shape, grid_shape=(7, 2), name='FILTER_FACTION'),
+            option_names=['all', 'eagle', 'royal', 'sakura', 'iron', 'dragon', 'sardegna',
+                          'northern', 'iris', 'vichya', 'tulipa', 'meta', 'tempesta', 'other'],
+            option_default='all'
+        )
+        setting.add_setting(
+            setting='rarity',
+            option_buttons=ButtonGrid(
+                origin=(218, 427), delta=delta, button_shape=button_shape, grid_shape=(7, 1), name='FILTER_RARITY'),
+            option_names=['all', 'common', 'rare', 'elite', 'super_rare', 'ultra', 'not_available'],
+            option_default='all'
+        )
+        setting.add_setting(
+            setting='extra',
+            option_buttons=ButtonGrid(
+                origin=(218, 499), delta=delta, button_shape=button_shape, grid_shape=(7, 2), name='FILTER_EXTRA'),
+            option_names=['no_limit', 'has_skin', 'can_retrofit', 'enhanceable', 'can_limit_break', 'not_level_max', 'can_awaken',
+                          'can_awaken_plus', 'special', 'oath_skin', 'unique_augment_module', 'wear_skin', 'oathed', 'not_available'],
+            option_default='no_limit'
+        )
+        return setting
+
+    @cached_property
+    @Config.when(SERVER=None)
+    def dock_filter(self) -> Setting:
+        delta = (147 + 1 / 3, 57)
+        button_shape = (139, 42)
+        setting = Setting(name='DOCK', main=self)
+        setting.add_setting(
+            setting='sort',
+            option_buttons=ButtonGrid(
+                origin=(218, 36), delta=delta, button_shape=button_shape, grid_shape=(7, 1), name='FILTER_SORT'),
+            # stat has extra grid, not worth pursuing
             option_names=['rarity', 'level', 'total', 'join', 'intimacy', 'mood', 'stat'],
             option_default='level'
         )
@@ -212,20 +238,20 @@ class Dock(Equipment):
                 origin=(218, 239), delta=delta, button_shape=button_shape, grid_shape=(7, 3), name='FILTER_FACTION'),
             option_names=['all', 'eagle', 'royal', 'sakura', 'iron', 'dragon', 'sardegna',
                           'northern', 'iris', 'vichya', 'tulipa', 'pedreria', 'meta', 'tempesta',
-                          'other'],
+                          'other', 'not_available', 'not_available', 'not_available', 'not_available', 'not_available', 'not_available'],
             option_default='all'
         )
         setting.add_setting(
             setting='rarity',
             option_buttons=ButtonGrid(
-                origin=(218, 426), delta=delta, button_shape=button_shape, grid_shape=(7, 1), name='FILTER_RARITY'),
+                origin=(218, 427), delta=delta, button_shape=button_shape, grid_shape=(7, 1), name='FILTER_RARITY'),
             option_names=['all', 'common', 'rare', 'elite', 'super_rare', 'ultra', 'not_available'],
             option_default='all'
         )
         setting.add_setting(
             setting='extra',
             option_buttons=ButtonGrid(
-                origin=(218, 498), delta=delta, button_shape=button_shape, grid_shape=(7, 2), name='FILTER_EXTRA'),
+                origin=(218, 499), delta=delta, button_shape=button_shape, grid_shape=(7, 2), name='FILTER_EXTRA'),
             option_names=['no_limit', 'has_skin', 'can_retrofit', 'enhanceable', 'can_limit_break', 'not_level_max', 'can_awaken',
                           'can_awaken_plus', 'special', 'oath_skin', 'unique_augment_module', 'wear_skin', 'oathed', 'not_available'],
             option_default='no_limit'
@@ -242,21 +268,23 @@ class Dock(Equipment):
             wait_loading=True
     ):
         """
-        一步设置船坞筛选条件。
-
-        进入筛选面板、设置所有筛选项、确认并等待加载。支持单个值或列表。
+        A faster filter set function.
 
         Args:
-            sort: 排序方式，可选值：rarity, level, total, join, intimacy, mood, stat。
-            index: 舰种筛选，可选值：all, vanguard, main, dd, cl, ca, bb,
-                cv, repair, ss, others, not_available。
-            faction: 阵营筛选，可选值：all, eagle, royal, sakura, iron, dragon, sardegna,
-                northern, iris, vichya, tulipa, pedreria, meta, tempesta, other。
-            rarity: 稀有度筛选，可选值：all, common, rare, elite, super_rare, ultra, not_available。
-            extra: 额外筛选，可选值：no_limit, has_skin, can_retrofit, enhanceable,
-                can_limit_break, not_level_max, can_awaken, can_awaken_plus,
-                special, oath_skin, unique_augment_module, wear_skin, oathed, not_available。
-            wait_loading: 是否等待卡片加载完成，连续操作时可设为 False。
+            sort (str, list):
+                ['rarity', 'level', 'total', 'join', 'intimacy', 'mood', 'stat']
+            index (str, list):
+                ['all', 'vanguard', 'main', 'dd', 'cl', 'ca', 'bb',
+                 'cv', 'repair', 'ss', 'others', 'not_available', 'not_available', 'not_available']
+            faction (str, list):
+                ['all', 'eagle', 'royal', 'sakura', 'iron', 'dragon', 'sardegna',
+                 'northern', 'iris', 'vichya', 'tulipa', 'pedreria', 'meta', 'tempesta',
+                 'other', 'not_available', 'not_available', 'not_available', 'not_available', 'not_available', 'not_available']
+            rarity (str, list):
+                ['all', 'common', 'rare', 'elite', 'super_rare', 'ultra', 'not_available']
+            extra (str, list):
+                ['no_limit', 'has_skin', 'can_retrofit', 'enhanceable', 'can_limit_break', 'not_level_max', 'can_awaken',
+                 'can_awaken_plus', 'special', 'oath_skin', 'unique_augment_module', 'wear_skin', 'oathed', 'not_available'],
 
         Pages:
             in: page_dock
@@ -265,20 +293,31 @@ class Dock(Equipment):
         self.dock_filter.set(sort=sort, index=index, faction=faction, rarity=rarity, extra=extra)
         self.dock_filter_confirm(wait_loading=wait_loading)
 
+    def dock_reset(self):
+        self.dock_favourite_set(False, wait_loading=False)
+        self.dock_sort_method_dsc_set(False, wait_loading=False)
+        self.dock_filter_set()
+
     def dock_select_one(self, button, skip_first_screenshot=True):
         """
-        在船坞中选择一艘舰船。
-
-        点击指定舰船卡片并等待选择确认（选中计数变为 1/1）。
-        处理可能出现的弹窗确认对话框。
-
         Args:
-            button: 要选择的舰船卡片按钮。
-            skip_first_screenshot: 是否跳过首次截图，复用上一状态循环的截图。
-
-        Pages:
-            in: page_dock (DOCK_CHECK)
+            button (Button): Ship button to select
+            skip_first_screenshot:
         """
+        # if self.config.SERVER == 'en':
+        #     logger.info('EN has no dock_selected check currently, use plain click')
+        #
+        #     self.device.click(button)
+        #
+        #     while 1:
+        #         self.device.screenshot()
+        #
+        #         if self.appear(DOCK_CHECK, offset=(20, 20)):
+        #             break
+        #         if self.handle_popup_confirm('DOCK_SELECT'):
+        #             continue
+        #     return
+
         self.interval_clear(DOCK_CHECK)
         while 1:
             if skip_first_screenshot:
@@ -297,17 +336,17 @@ class Dock(Equipment):
 
     def dock_selected(self, skip_first_screenshot=True):
         """
-        检查船坞中是否已选中舰船。
-
-        通过 OCR 读取选中计数（如 1/1），判断是否有舰船被选中。
-        超时 1.5 秒后假设未选中。
-
         Args:
-            skip_first_screenshot: 是否跳过首次截图，复用上一状态循环的截图。
+            skip_first_screenshot:
 
         Returns:
-            bool: True 表示已选中舰船（计数 >= 1/1），False 表示未选中（0/1）。
+            bool: If selected a ship in dock.
+                True for ship counter 1/1, False for 0/1.
         """
+        # if self.config.SERVER == 'en':
+        #     logger.info('EN has no dock_selected check currently, assume not selected')
+        #     return False
+
         current = 0
         timeout = Timer(1.5, count=3).start()
         while 1:
@@ -317,7 +356,7 @@ class Dock(Equipment):
                 self.device.screenshot()
 
             if timeout.reached():
-                logger.warning('Get dock_selected timeout, assume not selected')
+                logger.warning('[退役-船坞] 获取已选数量超时，假设未选中')
                 break
 
             current, _, total = OCR_DOCK_SELECTED.ocr(self.device.image)
@@ -328,18 +367,9 @@ class Dock(Equipment):
 
     def dock_select_confirm(self, check_button, skip_first_screenshot=True):
         """
-        确认舰船选择并等待跳转到目标页面。
-
-        点击确认按钮，等待 check_button 指定的页面出现。
-        处理可能出现的弹窗确认对话框。
-
         Args:
-            check_button: 目标页面的检测按钮，可以是 Button 或 callable。
-            skip_first_screenshot: 是否跳过首次截图，复用上一状态循环的截图。
-
-        Pages:
-            in: SHIP_CONFIRM
-            out: check_button 对应的页面
+            check_button (callable, Button):
+            skip_first_screenshot:
         """
         while 1:
             if skip_first_screenshot:
@@ -357,23 +387,22 @@ class Dock(Equipment):
 
     def dock_enter_first(self, non_npc=True, skip_first_screenshot=True):
         """
-        进入船坞中第一艘舰船的详情页。
-
-        点击第一艘舰船卡片进入详情。若 non_npc 为 True 且第一艘是 NPC，
-        则自动选择第二艘。船坞为空时返回 False。
+        Enter first ship in dock
 
         Args:
-            non_npc: True 时若第一艘是 NPC 则选择第二艘，False 时始终选择第一艘。
-            skip_first_screenshot: 是否跳过首次截图，复用上一状态循环的截图。
+            non_npc: True to enter the second ship if first ship is NPC
+            skip_first_screenshot:
 
         Returns:
-            bool: True 成功进入舰船详情页，False 船坞为空或无可用舰船。
+            bool: True if success to enter
+                False if dock empty
+                False if non_npc and only one NPC in dock
 
         Pages:
-            in: page_dock (DOCK_CHECK)
+            in: page_dock
             out: SHIP_DETAIL_CHECK
         """
-        logger.info('Dock enter first')
+        logger.info('进入船坞首选')
         self.interval_clear(DOCK_CHECK, interval=3)
 
         while 1:
@@ -382,24 +411,24 @@ class Dock(Equipment):
             else:
                 self.device.screenshot()
 
-            # 退出条件：已进入详情页或船坞为空
+            # End
             if self.appear(SHIP_DETAIL_CHECK, offset=(20, 20)):
                 return True
             if self.appear(DOCK_EMPTY, offset=(20, 20)):
-                logger.info('Dock empty')
+                logger.info('船坞为空')
                 return False
 
-            # 点击舰船卡片
+            # Click
             if self.appear(DOCK_CHECK, offset=(20, 20), interval=3):
                 if non_npc:
-                    # 检测第一艘是否为 NPC
+                    # Check NPC
                     if DOCK_FIRST_NPC.match_luma(self.device.image, offset=(20, 20)):
-                        logger.info('First ship is NPC, select second')
+                        logger.info('第一艘是NPC舰船，选择第二艘')
                         button = CARD_GRIDS[(1, 0)]
-                        # 检测第二艘是否存在
+                        # Check if there's second ship
                         color = get_color(self.device.image, button.area)
                         if color_similar(color, (34, 34, 42)):
-                            logger.info('Second ship empty, dock empty')
+                            logger.info('第二艘为空，船坞为空')
                             return False
                     else:
                         button = CARD_GRIDS[(0, 0)]

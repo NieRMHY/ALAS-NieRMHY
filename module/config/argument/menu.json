@@ -33,6 +33,7 @@
       "RaidScuttle",
       "Hospital",
       "Coalition",
+      "CoalitionScuttle",
       "MaritimeEscort",
       "EventShop",
       "WarArchives"
@@ -128,6 +129,14 @@
       "IslandPearlSell"
     ]
   },
+  "FleetManagement": {
+    "menu": "collapse",
+    "page": "setting",
+    "tasks": [
+      "FleetScan",
+      "FleetInfo"
+    ]
+  },
   "Tool": {
     "menu": "collapse",
     "page": "tool",
@@ -136,6 +145,7 @@
       "OpsiDaemon",
       "EventStory",
       "BoxDisassemble",
+      "AutoEquip",
       "Benchmark",
       "OcrBenchmark",
       "AzurLaneUncensored",

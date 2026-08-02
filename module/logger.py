@@ -1,10 +1,30 @@
+"""ALAS 日志（Logger）系统模块。
+
+基于 Rich 库构建的多目标日志系统，支持控制台彩色输出、文件轮转记录
+和 WebUI 流式渲染。全局 logger 实例（alas）被整个框架共享使用。
+
+主要组件：
+    - RichFileHandler: 文件日志处理器（基于 Rich 格式化）。
+    - RichRenderableHandler: 将日志渲染为可渲染对象传递给回调，用于 WebUI 实时展示。
+    - RichTimedRotatingHandler: 按时间轮转的文件日志处理器，支持跨平台多进程。
+    - HTMLConsole: 输出 HTML 格式的 Rich Console，用于 WebUI 渲染。
+    - Highlighter: 自定义正则高亮器，高亮路径、URL、Python 布尔值/None 等。
+
+提供的辅助函数：
+    - hr(): 分节标题输出（支持 4 级标题）。
+    - attr() / attr_align(): 属性对齐输出。
+    - error_context() / exception_context(): 结构化错误信息输出。
+
+全局 logger 实例通过 monkey-patch 方式扩展了上述方法，作为整个框架的
+统一日志入口。
+"""
+
 import datetime
 import io
 import json
 import logging
 import multiprocessing
 import os
-import random
 import shutil
 import sys
 import tarfile
@@ -373,7 +393,7 @@ console_hdlr = RichHandler(
 console_hdlr.setFormatter(console_formatter)
 logger.addHandler(console_hdlr)
 
-# 确保运行在 AzurPilot 根目录下
+# 确保运行在 ALAS 根目录下
 os.chdir(os.path.join(os.path.dirname(__file__), '../'))
 
 # 添加文件日志处理器
@@ -406,7 +426,7 @@ def set_file_logger(name=pyw_name):
         # Windows 下这些进程无需保存日志文件
         processes = ["SyncManager-", "MainProcess", "Process-"]
         pname = multiprocessing.current_process().name.replace(":", "_")
-        # 每个进程在 AzurPilot 启动时只应调用一次。
+        # 每个进程在 ALAS 启动时只应调用一次。
         if any(isinstance(hdlr, RichTimedRotatingHandler) for hdlr in logger.handlers):
             return
     else:
@@ -414,7 +434,7 @@ def set_file_logger(name=pyw_name):
         pname = name
         for hdlr in logger.handlers:
             if isinstance(hdlr, RichTimedRotatingHandler):
-                # 每个进程在 AzurPilot 启动时只应调用一次。
+                # 每个进程在 ALAS 启动时只应调用一次。
                 if hdlr.pname == name:
                     return
                 else:
@@ -553,7 +573,7 @@ def show():
     logger.hr('hr1', 1)
     logger.hr('hr2', 2)
     logger.hr('hr3', 3)
-    logger.info(r'Brace { [ ( ) ] }')
+    logger.info(r'大括号 { [ ( ) ] }')
     logger.info(r'True, False, None')
     logger.info(r'E:/path\\to/alas/alas.exe, /root/alas/, ./relative/path/log.txt')
     local_var1 = 'This is local variable'
@@ -562,35 +582,38 @@ def show():
     # 异常发生后的行
 
 
-def professional_convert(func, level='error'):
-    error_prefix = '错误：'
-    critical_prefixes = ('严重错误：', '关键错误：', '请检查：', '处理失败：')
-    existing_prefixes = (error_prefix, *critical_prefixes)
+def error_context(title, reason, impact, action, exc=None, level=logging.ERROR, with_traceback=None):
+    """输出包含原因、影响和处理建议的统一错误信息。
 
-    def professional_wrapper(msg, *args, **kwargs):
-        if isinstance(msg, Exception):
-            msg = f'{type(msg).__name__}: {msg}'
-
-
-        if isinstance(msg, str) and any('\u4e00' <= char <= '\u9fff' for char in msg):
-            # 避免重复叠加前缀或傲娇语气
-            if msg.startswith(existing_prefixes) or any(w in msg for w in ('杂鱼', '哒内', '大叔', '笨蛋')):
-                return func(msg, *args, **kwargs)
-
-            if level == 'critical':
-                msg = f"{random.choice(critical_prefixes)}{msg}"
-                if not msg.endswith(('？', '！', '。')):
-                    msg += '。'
-            elif level == 'error':
-                msg = f'{error_prefix}{msg}'
-
-        return func(msg, *args, **kwargs)
-
-    return professional_wrapper
+    ``with_traceback`` 为 ``None`` 时，保持原有行为：传入异常对象则输出完整堆栈。
+    """
+    message = '\n'.join([
+        f'[错误] {title}',
+        f'原因：{reason}',
+        f'影响：{impact}',
+        f'建议：{action}',
+    ])
+    if exc is not None:
+        message += f'\n异常：{type(exc).__name__}: {exc}'
+    if with_traceback is None:
+        with_traceback = exc is not None
+    logger.log(level, message, exc_info=with_traceback)
 
 
-logger.error = professional_convert(logger.error, level='error')
-logger.critical = professional_convert(logger.critical, level='critical')
+def exception_context(title, exc, impact, action, level=logging.ERROR):
+    """输出未知异常的统一错误信息并保留完整堆栈。"""
+    error_context(
+        title=title,
+        reason=f'程序抛出了 {type(exc).__name__}，具体原因需要结合下方堆栈定位。',
+        impact=impact,
+        action=action,
+        exc=exc,
+        level=level,
+    )
+
+
+logger.error_context = error_context
+logger.exception_context = exception_context
 logger.hr = hr
 logger.attr = attr
 logger.attr_align = attr_align
@@ -601,4 +624,4 @@ logger.print = print
 logger.log_file: str
 
 logger.set_file_logger()
-logger.hr('Start', level=0)
+logger.hr('启动', level=0)

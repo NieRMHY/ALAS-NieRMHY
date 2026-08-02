@@ -1,3 +1,8 @@
+"""岛屿每日订单模块。
+
+处理岛屿每日订单的自动化交付，包括紧急委托检测、订单刷新与货物筹备状态判断。
+支持订单页面状态识别（为空/紧急/可交付/驳回）与左侧挑战图标的逐个处理。
+"""
 from module.island.island import Island
 import module.island_daily_order.assets as daily_order_assets
 from module.island_daily_order.assets import *
@@ -55,11 +60,12 @@ class IslandDailyOrder(Island):
     FAST_POPUP_CHECK_INTERVAL = 0.5
     REWARD_POPUP_CHECK_INTERVAL = 2
     REWARD_POPUP_CHECK_LIMIT = 5
+    DAILY_RUN_HOUR = 3
     URGENT_TEMPLATE_PREFIX = 'TEMPLATE_DAILY_ORDER_URGENT'
     _urgent_template_cache = None
 
     def run(self):
-        logger.hr('Island Daily Order Run', level=1)
+        logger.hr('岛屿每日订单', level=1)
 
         self.ui_ensure(page_island)
 
@@ -301,7 +307,7 @@ class IslandDailyOrder(Island):
                 self._reenter()
                 continue
             elif result == 'next_day':
-                self._delay_to_next_day()
+                self._delay_to_next_daily_run()
                 break
             elif result == 'to_step3':
                 pass  # 进入 ③
@@ -314,7 +320,7 @@ class IslandDailyOrder(Island):
                 self._reenter()
                 continue
             elif result == 'next_day':
-                self._delay_to_next_day()
+                self._delay_to_next_daily_run()
                 break
             elif result == 'to_step2':
                 continue  # 回到 ②（由 _step_right_panel 处理）
@@ -326,7 +332,7 @@ class IslandDailyOrder(Island):
             if result == 'wait':
                 break  # 延时等待
             elif result == 'next_day':
-                self._delay_to_next_day()
+                self._delay_to_next_daily_run()
                 break
             elif result == 'normal':
                 break
@@ -413,7 +419,7 @@ class IslandDailyOrder(Island):
         if self._is_right_panel_empty():
             if self._first_right_panel_check:
                 self._first_right_panel_check = False
-                logger.info('[岛屿-每日订单] 首次进入右侧为空，延时到第二天')
+                logger.info('[岛屿-每日订单] 首次进入右侧为空，延时到下一个 03:00')
                 return 'next_day'
             else:
                 logger.info('[岛屿-每日订单] 右侧为空，退出重进')
@@ -531,7 +537,7 @@ class IslandDailyOrder(Island):
         ④ 退出判断。
 
         Returns:
-            str: 'wait' → OCR 等待; 'next_day' → 第二天; 'normal' → 正常退出
+            str: 'wait' → OCR 等待; 'next_day' → 下一个 03:00; 'normal' → 正常退出
         """
         self.device.screenshot()
 
@@ -547,7 +553,7 @@ class IslandDailyOrder(Island):
                 self.config.task_delay(minute=60)
             return 'wait'
         else:
-            logger.info('[岛屿-每日订单] 右侧不是筹备中，延时到第二天')
+            logger.info('[岛屿-每日订单] 右侧不是筹备中，延时到下一个 03:00')
             return 'next_day'
 
     # ==================== 辅助方法 ====================
@@ -579,7 +585,7 @@ class IslandDailyOrder(Island):
         cls._urgent_template_cache = tuple(sorted(templates, key=cls._urgent_template_sort_key))
         return cls._urgent_template_cache
 
-    def _template_match_urgent(self, template, similarity=0.80):
+    def _template_match_urgent(self, template, similarity=0.75):
         """
         获取紧急模板在左侧面板中的匹配位置及尺寸。
 
@@ -598,7 +604,7 @@ class IslandDailyOrder(Island):
         x1, y1, x2, y2 = button.area
         return (x1, y1, x2 - x1, y2 - y1)
 
-    def _template_click_urgent(self, similarity=0.80):
+    def _template_click_urgent(self, similarity=0.75):
         """点击左侧面板中第一个匹配到的紧急模板，返回匹配位置信息。"""
         for name, template in self._urgent_templates():
             match = self._template_match_urgent(template, similarity=similarity)
@@ -648,13 +654,16 @@ class IslandDailyOrder(Island):
                 continue
             self.device.sleep(0.5)
 
-    def _delay_to_next_day(self):
-        """延时到第二天。"""
-        tomorrow = current_time().replace(
-            hour=0, minute=0, second=0, microsecond=0
-        ) + timedelta(days=1)
-        self.config.task_delay(target=tomorrow)
-        logger.info(f'[岛屿-每日订单] 延时到 {tomorrow}')
+    def _delay_to_next_daily_run(self):
+        """延时到下一个每日运行时间（03:00）。"""
+        now = current_time()
+        target = now.replace(
+            hour=self.DAILY_RUN_HOUR, minute=0, second=0, microsecond=0
+        )
+        if target <= now:
+            target += timedelta(days=1)
+        self.config.task_delay(target=target)
+        logger.info(f'[岛屿-每日订单] 下次每日订单运行时间: {target}')
 
     def _handle_popups(self):
         """处理弹窗。"""

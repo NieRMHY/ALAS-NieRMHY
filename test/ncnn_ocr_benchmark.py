@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Benchmark AzurPilot OCR recognition models with ONNX Runtime and ncnn.
+"""Benchmark ALAS OCR recognition models with ONNX Runtime and ncnn.
 
 This tool verifies the ncnn OCR runtime against the legacy ONNX Runtime
 baseline and records latency, accuracy, and power data.
@@ -779,7 +779,7 @@ def patch_alocr_attention_lines(lines: list[str]) -> tuple[list[str], int, int]:
 
     if added_layers != 10 or added_blobs != 10:
         raise RuntimeError(
-            "Unexpected ncnn param structure while patching AzurPilot OCR attention "
+            "Unexpected ncnn param structure while patching ALAS OCR attention "
             f"(added_layers={added_layers}, added_blobs={added_blobs})."
         )
 

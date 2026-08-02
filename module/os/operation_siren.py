@@ -1,3 +1,27 @@
+"""大世界主任务编排模块。
+
+组合大世界的所有任务模块，提供统一的任务执行入口。
+大世界（Operation Siren）是碧蓝航线的开放世界模式，
+包含多种任务类型：
+
+- 日常任务（OpsiDaily）：每日固定任务
+- 商店（OpsiShop）：港口商店购买
+- 代币兑换（OpsiVoucher）：代币商店
+- 指挥喵 farming（OpsiMeowfficerFarming）
+- 危险海域升级（OpsiHazard1Leveling）
+- 舰队自动切换（OpsiFleetAutoChange）
+- 行动力溢出保护（OpsiPreventActionPointOverflow）
+- 模糊任务（OpsiObscure）
+- 深渊任务（OpsiAbyssal）
+- 档案任务（OpsiArchive）
+- 要塞任务（OpsiStronghold）
+- 月度 Boss（OpsiMonthBoss）
+- 探索（OpsiExplore）
+- 跨月重置（OpsiCrossMonth）
+
+继承自所有任务模块，通过多重继承组合各任务的能力。
+"""
+
 from datetime import timedelta
 
 from module.config.time_source import now as current_time
@@ -42,10 +66,10 @@ class OperationSiren(
     def os_target_receive(self):
         next_reset = get_os_next_reset()
         now = current_time()
-        logger.attr('OpsiNextReset', next_reset)
+        logger.attr('大世界下次重置', next_reset)
         if next_reset - now < timedelta(days=1):
-            logger.error('Only one day to next reset, received loggers may be wasted.'
-                         'Running Achievement Collection is undesirable, delayed to next reset.')
+            logger.error('[大世界-成就] 距离下次重置仅剩一天，领取的成就奖励可能浪费。'
+                         '运行成就收集不太合适，延迟到下次重置。')
         else:
             self.os_map_goto_globe(unpin=False)
             if self.appear(TARGET_RED_DOT):
@@ -53,14 +77,14 @@ class OperationSiren(
                 OSTargetHandler(self.config, self.device).receive_reward()
                 self._os_target_exit()
             else:
-                logger.info('No reward to receive')
+                logger.info('[大世界-成就] 没有奖励可领取')
         self.config.OpsiTarget_LastRun = now.replace(microsecond=0)
 
     def _os_target(self):
         if self.config.OpsiTarget_LastRun > get_server_last_update('00:00'):
-            logger.warning('Opsi Safe Achievement search has already been run today, stop')
+            logger.warning('海域成就今日已经运行过，停止任务')
         else:
-            logger.hr('OS target', level=1)
+            logger.hr('大世界-海域成就', level=1)
             self._os_target_enter()
             OSTargetHandler(self.config, self.device).run()
             self._os_target_exit()
@@ -75,7 +99,7 @@ class OperationSiren(
             if self.server_support_os_target():
                 self.os_target_receive()
             else:
-                logger.info(f'Server {self.config.SERVER} does not support OpsiTarget yet, please contact the developers.')
+                logger.info(f'服务器 {self.config.SERVER} 暂不支持海域成就，请联系开发者')
 
 
 if __name__ == '__main__':
@@ -87,5 +111,5 @@ if __name__ == '__main__':
     self.device.screenshot()
     self.os_init()
 
-    logger.hr("OS clear Month Boss", level=1)
+    logger.hr("大世界-月度Boss", level=1)
     self.clear_month_boss()

@@ -1,3 +1,16 @@
+"""每日任务处理器。
+
+自动完成碧蓝航线的每日任务，包括：
+- 每日出击（商船护送、海域突进、斩首行动等）
+- 每日任务的完成和奖励领取
+- 剩余次数检测和任务切换
+
+每日任务类型通过 DAILY_MISSION_LIST 定义，
+每日有固定的出击次数限制，通过 OCR 读取剩余次数。
+
+继承自 Combat，可直接调用战斗流程。
+"""
+
 import numpy as np
 
 import module.config.server as server
@@ -5,12 +18,12 @@ from module.base.utils import get_color
 from module.combat.assets import BATTLE_PREPARATION
 from module.combat.combat import Combat
 from module.daily.assets import *
-from module.daily.equipment import DailyEquipment
 from module.logger import logger
 from module.ocr.ocr import Digit
 from module.ui.assets import BACK_ARROW, DAILY_CHECK
 from module.ui.page import page_campaign_menu, page_daily
 
+# 每日任务列表
 DAILY_MISSION_LIST = [DAILY_MISSION_1, DAILY_MISSION_2, DAILY_MISSION_3]
 if server.server != 'jp':
     OCR_REMAIN = Digit(OCR_REMAIN, threshold=128, alphabet='01234')
@@ -19,7 +32,17 @@ else:
 OCR_DAILY_FLEET_INDEX = Digit(OCR_DAILY_FLEET_INDEX, letter=(90, 154, 255), threshold=128, alphabet='123456')
 
 
-class Daily(Combat, DailyEquipment):
+class Daily(Combat):
+    """每日任务执行器。
+
+    管理每日任务的选择、执行和完成检测。
+    每个每日任务有独立的活跃状态和剩余次数。
+
+    Attributes:
+        daily_current (int): 当前正在处理的每日任务索引。
+        daily_checked (list): 已检查过的每日任务列表。
+        emergency_module_development (bool): 是否为紧急模块开发任务。
+    """
     daily_current: int
     daily_checked: list
     emergency_module_development = False
@@ -30,9 +53,9 @@ class Daily(Combat, DailyEquipment):
         color = (np.max(color) + np.min(color)) / 2
         active = color > 30
         if active:
-            logger.attr(f'Daily_{self.daily_current}', 'active')
+            logger.attr(f'每日任务_{self.daily_current}', '活跃')
         else:
-            logger.attr(f'Daily_{self.daily_current}', 'inactive')
+            logger.attr(f'每日任务_{self.daily_current}', '未活跃')
         return active
 
     def _wait_daily_switch(self):
@@ -40,14 +63,14 @@ class Daily(Combat, DailyEquipment):
 
     def next(self):
         self.daily_current += 1
-        logger.info('Switch to %s' % str(self.daily_current))
+        logger.info(f'[每日任务] 切换到 {self.daily_current}')
         self.device.click(DAILY_NEXT)
         self._wait_daily_switch()
         self.device.screenshot()
 
     def prev(self):
         self.daily_current -= 1
-        logger.info('Switch to %s' % str(self.daily_current))
+        logger.info(f'[每日任务] 切换到 {self.daily_current}')
         self.device.click(DAILY_PREV)
         self._wait_daily_switch()
         self.device.screenshot()
@@ -137,7 +160,7 @@ class Daily(Combat, DailyEquipment):
         stage = stages[self.daily_current]
 
         if stage not in dic:
-            logger.warning(f'Unknown daily stage `{stage}` from daily_current={self.daily_current}')
+            logger.warning(f'未知的每日关卡 `{stage}` from daily_current={self.daily_current}')
         stage = dic.get(stage, 0)
         return int(stage), int(fleet)
 
@@ -171,7 +194,7 @@ class Daily(Combat, DailyEquipment):
             in: page_daily
             out: page_daily
         """
-        logger.hr(f'Daily {self.daily_current}', level=2)
+        logger.hr(f'每日任务 {self.daily_current}', level=2)
         logger.info(f'remain={remain}, stage={stage}, fleet={fleet}')
 
         def daily_enter_check():
@@ -185,19 +208,19 @@ class Daily(Combat, DailyEquipment):
         self.ui_click(click_button=DAILY_ENTER, check_button=daily_enter_check, appear_button=DAILY_CHECK,
                       skip_first_screenshot=True)
         if self.appear(DAILY_LOCKED):
-            logger.info('Daily locked')
+            logger.info('每日锁定')
             self.ui_click(click_button=BACK_ARROW, check_button=DAILY_CHECK)
             self.device.sleep((1, 1.2))
             return False
 
         button = DAILY_MISSION_LIST[stage - 1]
         for n in range(remain):
-            logger.hr(f'Count {n + 1}')
+            logger.hr(f'计数 {n + 1}')
             result = self.daily_enter(button)
             if not result:
                 break
             if self.daily_current == self.supply_line_disruption_index:
-                logger.info('Submarine daily skip not unlocked, skip')
+                logger.info('潜艇每日跳过未解锁，跳过')
                 self.ui_click(click_button=BACK_ARROW, check_button=daily_enter_check, skip_first_screenshot=True)
                 break
             # 执行经典每日任务
@@ -267,11 +290,11 @@ class Daily(Combat, DailyEquipment):
         if not n:
             n = self.daily_current
         self.daily_checked.append(n)
-        logger.info(f'Checked daily {n}')
-        logger.info(f'Checked_list: {self.daily_checked}')
+        logger.info(f'已检查每日 {n}')
+        logger.info(f'已检查列表: {self.daily_checked}')
 
     def daily_run_one(self):
-        logger.hr('Daily run one', level=1)
+        logger.hr('每日运行一次', level=1)
         self.ui_ensure(page_daily)
         self.device.sleep(0.2)
         self.device.screenshot()
@@ -279,7 +302,7 @@ class Daily(Combat, DailyEquipment):
         self.emergency_module_development = self.appear(ENTRANCE_EMERGENCY_MODULE_DEVELOPMENT, offset=(25, 50))
         logger.attr('emergency_module_development', self.emergency_module_development)
 
-        logger.info(f'Checked_list: {self.daily_checked}')
+        logger.info(f'已检查列表: {self.daily_checked}')
         for _ in range(max(self.daily_checked)):
             self.next()
 
@@ -287,23 +310,23 @@ class Daily(Combat, DailyEquipment):
             if self.daily_current > 7:
                 break
             if self.daily_current == self.empty_index:
-                logger.info('This daily is not open now')
+                logger.info('此每日当前未开放')
                 self.daily_check()
                 self.next()
                 continue
             stage, fleet = self.get_daily_stage_and_fleet()
             if self.daily_current == self.supply_line_disruption_index and not self.config.Daily_UseDailySkip:
-                logger.info('Skip supply line disruption if UseDailySkip disabled')
+                logger.info('如UseDailySkip禁用则跳过补给线破坏')
                 self.daily_check()
                 self.next()
                 continue
             if not stage:
-                logger.info(f'No stage set on daily_current: {self.daily_current}, skip')
+                logger.info(f'daily_current未设置关卡，跳过: {self.daily_current}, skip')
                 self.daily_check()
                 self.next()
                 continue
             if self.daily_current != self.supply_line_disruption_index and not fleet:
-                logger.info(f'No fleet set on daily_current: {self.daily_current}, skip')
+                logger.info(f'daily_current未设置舰队，跳过: {self.daily_current}, skip')
                 self.daily_check()
                 self.next()
                 continue
@@ -333,7 +356,7 @@ class Daily(Combat, DailyEquipment):
                 self.daily_checked = [0]
 
             if max(self.daily_checked) >= 7:
-                logger.info('Daily clear complete.')
+                logger.info('每日清除完成')
                 break
 
     def run(self):
@@ -344,9 +367,7 @@ class Daily(Combat, DailyEquipment):
             in: 任意页面
             out: page_daily
         """
-        # self.equipment_take_on()
         self.daily_run()
-        # self.equipment_take_off()
 
         # 不能停留在 page_daily，因为顺序会乱掉。
         self.config.task_delay(server_update=True)

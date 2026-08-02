@@ -1,3 +1,9 @@
+"""大世界模拟器可视化模块。
+
+提供大世界模拟器的图表绘制功能，包括单样本轨迹图、
+多轮模拟的行动力/代币/完成海域数分布直方图以及
+综合报告图，使用 matplotlib 生成并保存为 PNG 图像。
+"""
 import os
 import numpy as np
 import matplotlib
@@ -68,13 +74,13 @@ class OSSimulatorPlotter:
                 ax1.axvspan(start_t, times[-1], facecolor='red', alpha=0.15)
                 
         cl1_patch = mpatches.Patch(color='green', alpha=0.15, label='侵蚀1')
-        meow_patch = mpatches.Patch(color='orange', alpha=0.15, label='短猫')
+        meow_patch = mpatches.Patch(color='orange', alpha=0.15, label='耄耋相接')
         crash_patch = mpatches.Patch(color='red', alpha=0.15, label='坠机')
         
         lines1, labels1 = ax1.get_legend_handles_labels()
         lines2, labels2 = ax2.get_legend_handles_labels()
         ax1.legend(lines1 + lines2 + [cl1_patch, meow_patch, crash_patch], 
-                labels1 + labels2 + ['侵蚀1', '短猫', '坠机'], 
+                labels1 + labels2 + ['侵蚀1', '耄耋相接', '坠机'],
                 loc='upper left')
 
         plt.title('大世界模拟器: 单样本轨迹图')

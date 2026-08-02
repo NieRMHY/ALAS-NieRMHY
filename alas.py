@@ -1,8 +1,3 @@
-# rev: auto_restart
-# 基于原版 alas.py 增加了自动尝试重启调度器的功能
-# 用于解决 Unknown ui page 、短暂网络不良等 无需人工修复的偶发意外情形，避免调度器直接终止
-# Modified: run, loop
-# Last Updated: 2025-09-01 00:03
 import json
 import os
 import re
@@ -15,7 +10,7 @@ import inflection
 from cached_property import cached_property
 
 from module.base.decorator import del_cached_property
-from module.base.api_client import ApiClient
+from module.base.ssh import clear_ssh_host_key
 from module.config.config import AzurLaneConfig, TaskEnd
 from module.config.deep import deep_get, deep_set
 from module.config.time_source import now as current_time
@@ -61,24 +56,19 @@ def _get_task_display_name(task_command):
     return _i18n_task_names.get(task_command, task_command)
 
 
-RESTART_SENSITIVE_TASKS = ['Commission', 'Research']
 
 
 class AzurLaneAutoScript:
     stop_event: threading.Event = None
 
-    # Modify by MHY, 保留screenshot参数修复截图预览, 默认配置名跟随上游
-    def __init__(self, config_name=DEFAULT_CONFIG_NAME, screenshot_queue=None, screenshot_enabled=None):
+    def __init__(self, config_name=DEFAULT_CONFIG_NAME):
         logger.hr('Start', level=0)
         self.config_name = config_name
-        self.screenshot_queue = screenshot_queue
-        self.screenshot_enabled = screenshot_enabled
-        # Skip first restart
+        # 跳过启动后的第一次 Restart 任务
         self.is_first_task = True
-        # Failure count of tasks
-        # Key: str, task name, value: int, failure count
+        # 任务失败计数器，key 为任务名，value 为连续失败次数
         self.failure_record = {}
-        # Restart counters
+        # 连续卡死/ADB 离线计数，用于判断是否需要重启模拟器
         self.consecutive_game_stuck = 0
         self.consecutive_adb_offline = 0
         # 上次计划重启模拟器的时间戳
@@ -86,18 +76,24 @@ class AzurLaneAutoScript:
 
     def _try_restart_emulator(self):
         """
-        尝试重启模拟器（如果启用了AdbOfflineRestart且未达到重试上限）。
+        尝试重启模拟器。
 
-        如果可用，使用现有的self.device对象（包含emulator_instance缓存）。
-        否则，回退到创建新的PlatformWindows（Windows）或PlatformMac（macOS）实例。
+        需要启用 AdbOfflineRestart 且未超过重试上限。
+        优先使用已缓存的 device 对象，否则根据平台回退创建新实例。
 
         Returns:
-            bool: True如果模拟器重启成功，False如果无法重启。
+            bool: 重启成功返回 True，无法重启返回 False。
         """
         import sys
 
         if not self.config.Error_AdbOfflineRestart:
-            logger.warning('[Alas] AdbOfflineRestart 已禁用，无法自动重启模拟器')
+            logger.error_context(
+                title='模拟器自动重启已禁用',
+                reason='配置项 Error.AdbOfflineRestart 未启用。',
+                impact='模拟器离线后无法自动恢复，当前任务可能终止。',
+                action='确认模拟器稳定性后，按需启用 AdbOfflineRestart 和合理的重试阈值。',
+                level=30,
+            )
             return False
 
         self.consecutive_adb_offline += 1
@@ -105,16 +101,21 @@ class AzurLaneAutoScript:
         logger.warning(f'[Alas] EmulatorNotRunningError: 连续次数 {self.consecutive_adb_offline}/{limit}')
 
         if self.consecutive_adb_offline > limit:
-            logger.critical(f'[Alas] EmulatorNotRunningError: 已达到重启限制 ({limit})')
+            logger.error_context(
+                title='模拟器自动重启次数已达上限',
+                reason=f'模拟器连续离线次数已超过配置限制 {limit} 次。',
+                impact='本次自动恢复停止，任务将进入失败处理。',
+                action='手动确认模拟器是否运行、ADB 是否可用，再重新启动 ALAS。',
+                level=50,
+            )
             return False
 
         logger.hr('[Alas] 正在重启模拟器', level=1)
         try:
-            # 尝试获取现有的设备对象
+            # 优先使用已缓存的设备对象
             device = self.__dict__.get('device', None)
             if device is None:
-                # 回退：根据操作系统创建PlatformWindows或PlatformMac对象
-                # 注意：这可能会触发一些检测，但这是device缺失时的最佳回退方案
+                # device 缓存不存在时，按平台回退创建新实例
                 if sys.platform == 'darwin':
                     from module.device.platform.platform_mac import PlatformMac
                     device = PlatformMac(self.config)
@@ -129,12 +130,17 @@ class AzurLaneAutoScript:
             device.emulator_start()
             logger.info('[Alas] 模拟器重启完成')
 
-            # 清除缓存的device，以便下次访问时创建新的连接
+            # 清除 device 缓存，下次访问时重新建立连接
             if 'device' in self.__dict__:
                 del_cached_property(self, 'device')
             return True
         except Exception as e:
-            logger.error(f'[Alas] 重启模拟器失败: {e}')
+            logger.exception_context(
+                title='重启模拟器失败',
+                exc=e,
+                impact='模拟器仍可能处于离线状态，当前任务无法恢复。',
+                action='检查模拟器进程权限、ADB 服务和模拟器管理配置。',
+            )
             return False
 
     def _start_emulator_after_long_wait(self):
@@ -173,23 +179,45 @@ class AzurLaneAutoScript:
             config = AzurLaneConfig(config_name=self.config_name)
             return config
         except RequestHumanTakeover:
-            logger.critical('RequestHumanTakeover')
+            logger.error_context(
+                title='配置初始化需要人工介入',
+                reason='配置加载或配置校验未通过，自动修复无法继续。',
+                impact='调度器无法启动。',
+                action='检查配置文件和最近一次错误堆栈，修正配置后重新启动。',
+                level=50,
+            )
             exit(1)
         except Exception as e:
-            logger.exception(e)
+            logger.exception_context(
+                title='配置初始化失败', exc=e,
+                impact='调度器无法启动。',
+                action='检查 config 目录中的配置格式、参数名称和文件权限。',
+                level=50,
+            )
             exit(1)
 
     @cached_property
     def device(self):
         try:
             from module.device.device import Device
-            device = Device(config=self.config, screenshot_queue=self.screenshot_queue, screenshot_enabled=self.screenshot_enabled)
+            device = Device(config=self.config)
             return device
         except RequestHumanTakeover:
-            logger.critical('RequestHumanTakeover')
+            logger.error_context(
+                title='设备初始化需要人工介入',
+                reason='设备连接或设备参数校验未通过，自动修复无法继续。',
+                impact='调度器无法控制模拟器。',
+                action='确认模拟器已启动、ADB 可用且分辨率为 1280x720，然后重新启动。',
+                level=50,
+            )
             exit(1)
         except Exception as e:
-            logger.exception(e)
+            logger.exception_context(
+                title='设备初始化失败', exc=e,
+                impact='调度器无法控制模拟器。',
+                action='检查模拟器、ADB 连接和当前截图/控制方案配置。',
+                level=50,
+            )
             exit(1)
 
     @cached_property
@@ -199,7 +227,12 @@ class AzurLaneAutoScript:
             checker = ServerChecker(server=self.config.Emulator_ServerName)
             return checker
         except Exception as e:
-            logger.exception(e)
+            logger.exception_context(
+                title='服务器状态检查器初始化失败', exc=e,
+                impact='无法判断服务器维护状态，调度器无法继续。',
+                action='检查网络连接、服务器配置和相关依赖后重新启动。',
+                level=50,
+            )
             exit(1)
 
     def _check_sensitive_exit(self, command, error):
@@ -222,28 +255,44 @@ class AzurLaneAutoScript:
         if not sensitive:
             return False
 
-        logger.critical(f'敏感任务 `{task_name}` 出错，禁止重启，AzurPilot 将停止运行')
-        logger.critical(f'异常: {error}')
+        logger.error_context(
+            title=f'敏感任务失败，禁止自动重启（{task_name}）',
+            reason=f'任务抛出了 {type(error).__name__}，且该任务被配置为重启敏感任务。',
+            impact='为避免状态或数据损坏，ALAS 将停止运行。',
+            action='查看错误现场并手动确认游戏状态；修复配置或根因后再启动。',
+            exc=error,
+            level=50,
+        )
         handle_notify(
             self.config.Error_OnePushConfig,
-            title=f"AzurPilot <{self.config_name}> 敏感任务出错",
-            content=f"<{self.config_name}> 敏感任务 `{task_name}` 出错，AzurPilot 已停止运行\n{error}",
+            title=f"ALAS <{self.config_name}> 敏感任务出错",
+            content=f"<{self.config_name}> 敏感任务 `{task_name}` 出错，ALAS 已停止运行\n{error}",
         )
         notify_webui(
             self.config_name,
-            title=f"敏感任务 {task_name} 出错喵！AzurPilot 已停止喵！",
-            content=f"因为 {task_name} 是敏感任务，出错后不会重启喵~\n{error}",
+            title=f"敏感任务 {task_name} 出错，ALAS 已停止",  # Modify by MHY, 去傲娇语
+            content=f"{task_name} 是敏感任务，出错后不会自动重启\n{error}",
         )
         exit(1)
 
     def run(self, command, skip_first_screenshot=False):
         """
-        运行任务命令。
+        执行指定任务命令，捕获异常并决定后续行为。
+
+        根据异常类型自动判断：重启游戏、重启模拟器、请求人工介入或直接终止。
+        敏感任务出错时直接停止，不做任何重启。
+
+        任务执行前会进行一次截图（除非 skip_first_screenshot=True）。
+
+        Args:
+            command (str): 任务方法名（驼峰转下划线后的形式）。
+            skip_first_screenshot (bool): 是否跳过执行前的首次截图。
 
         Returns:
-            True: 任务成功完成
-            False: 任务失败且不可恢复（计入失败限制）
-            'recoverable': 任务失败但可恢复（不计入失败限制）
+            bool | str:
+                True — 任务成功完成。
+                False — 不可恢复的失败，计入连续失败限制。
+                'recoverable' — 可恢复的失败，不计入连续失败限制。
         """
         try:
             if not skip_first_screenshot:
@@ -253,29 +302,46 @@ class AzurLaneAutoScript:
         except TaskEnd:
             return True
         except GameNotRunningError as e:
-            # 可恢复错误：游戏未运行，重启即可
-            logger.warning(e)
+            # 游戏未运行，调度 Restart 任务自动恢复
+            logger.error_context(
+                title='游戏进程未运行',
+                reason='任务执行前未检测到碧蓝航线游戏进程。',
+                impact='当前任务跳过，调度器将自动安排 Restart 任务。',
+                action='通常无需处理；若反复发生，请检查游戏包名、模拟器状态和登录流程。',
+                exc=e,
+                level=30,
+                # 预期恢复路径仅保留异常摘要，避免堆栈淹没后续重启日志。
+                with_traceback=False,
+            )
+            self._check_sensitive_exit(command, e)
             handle_notify(
                 self.config.Error_OnePushConfig,
-                title=f"Alas <{self.config_name}> 警告",
+                title=f"ALAS <{self.config_name}> 警告",
                 content=f"<{self.config_name}> 游戏未运行 - 将自动重启游戏",
             )
             notify_webui(
                 self.config_name,
-                title=f" <{self.config_name}> 发出了警告喵！",
-                content=f"<{self.config_name}> 游戏未运行喵 将自动重启游戏喵~",
+                title=f"<{self.config_name}> 警告",  # Modify by MHY, 去傲娇语
+                content=f"<{self.config_name}> 游戏未运行，将自动重启游戏",
             )
             self.config.task_call('Restart')
             return 'recoverable'
         except (GameStuckError, GameTooManyClickError) as e:
-            # 可恢复错误：游戏卡住或点击过多，重启即可
-            logger.error(e)
+            # 游戏卡住或点击过多，尝试重启游戏；连续卡死则重启模拟器
+            logger.error_context(
+                title='游戏状态无法推进',
+                reason='截图状态在限定时间内没有变化，或同一按钮被连续点击过多。',
+                impact='当前任务已中断，将尝试重启游戏；重复发生时会重启模拟器。',
+                action='确认模拟器没有被手动操作，检查截图方案、游戏分辨率和资源版本。',
+                exc=e,
+            )
             self.save_error_log()
+            self._check_sensitive_exit(command, e)
 
             if self.config.Error_GameStuckRestart:
                 self.consecutive_game_stuck += 1
                 limit = int(self.config.Error_GameStuckThreshold)
-                logger.warning(f'GameStuckError: {self.consecutive_game_stuck}/{limit}')
+                logger.warning(f'[Alas] GameStuckError: {self.consecutive_game_stuck}/{limit}')
                 if self.consecutive_game_stuck >= limit:
                     logger.warning('[Alas] 游戏卡住次数过多，正在重启模拟器...')
                     if self._try_restart_emulator():
@@ -283,144 +349,193 @@ class AzurLaneAutoScript:
                         self.config.task_call('Restart')
                         return 'recoverable'
 
-            logger.warning(f'Game stuck, {self.device.package} will be restarted in 10 seconds')
-            logger.warning('If you are playing by hand, please stop Alas')
+            logger.warning(f'[Alas] 游戏卡住，{self.device.package} 将在10秒后重启')
+            logger.warning('[Alas] 如果您正在手动操作，请停止 ALAS')
             handle_notify(
                 self.config.Error_OnePushConfig,
-                title=f"Alas <{self.config_name}> 警告",
+                title=f"ALAS <{self.config_name}> 警告",
                 content=f"<{self.config_name}> 游戏卡住 - 将自动重启游戏",
             )
             notify_webui(
                 self.config_name,
-                title=f"<{self.config_name}> 发出了警告喵！",
-                content=f"<{self.config_name}> 游戏卡住 将自动重启游戏喵~",
+                title=f"<{self.config_name}> 警告",  # Modify by MHY, 去傲娇语
+                content=f"<{self.config_name}> 游戏卡住，将自动重启游戏",
             )
-            self.config.task_call('Restart')  # modfiy by MHY
+            self.config.task_call('Restart')
             self.device.sleep(10)
             return 'recoverable'
         except GameBugError as e:
-            # 可恢复错误：游戏客户端 bug，重启即可
-            logger.warning(e)
+            # 游戏客户端 bug，重启游戏修复
+            logger.error_context(
+                title='游戏客户端发生异常',
+                reason='检测到碧蓝航线客户端的异常状态。',
+                impact='当前任务已中断，正在重启游戏尝试恢复。',
+                action='等待自动重启；若反复出现，请更新游戏和 ALAS，并保留错误现场。',
+                exc=e,
+            )
             self.save_error_log()
             self._check_sensitive_exit(command, e)
-            logger.warning('碧蓝航线游戏客户端发生错误，Alas 无法处理')
-            logger.warning(f'正在重启 {self.device.package} 以修复问题')
+            logger.warning('[Alas] 碧蓝航线游戏客户端发生错误，ALAS 无法处理')
+            logger.warning(f'[Alas] 正在重启 {self.device.package} 以修复问题')
             handle_notify(
                 self.config.Error_OnePushConfig,
-                title=f"Alas <{self.config_name}> 警告",
+                title=f"ALAS <{self.config_name}> 警告",
                 content=f"<{self.config_name}> 游戏客户端错误 - 将自动重启游戏",
             )
-            self.config.task_call('Restart')  # modfiy by MHY
-            # self.config.task_call('Restart', force_call=False)  # 禁用强制重启
+            notify_webui(
+                self.config_name,
+                title=f"<{self.config_name}> 警告",  # Modify by MHY, 去傲娇语
+                content=f"<{self.config_name}> 游戏客户端错误，将自动重启游戏",
+            )
+            self.config.task_call('Restart')
             self.device.sleep(10)
             return 'recoverable'
-        except GamePageUnknownError:
+        except GamePageUnknownError as e:
             logger.info('[Alas] 游戏服务器可能正在维护或网络连接中断，正在检查服务器状态')
             self.checker.check_now()
             if self.checker.is_available():
-                logger.critical('Unknown game page error is not caused by server unavailability, may be due to script issues or unexpected UI changes')
+                logger.error_context(
+                    title='无法识别游戏页面',
+                    reason='服务器可用，但当前截图不符合任何已知游戏页面。',
+                    impact='无法安全继续任务，调度器即将终止。',
+                    action='确认游戏版本、服务器和分辨率；若更新后出现，请更新 ALAS 资源。',
+                    exc=e,
+                    level=50,
+                )
                 self.save_error_log()
                 handle_notify(
                     self.config.Error_OnePushConfig,
-                    title=f"Alas <{self.config_name}> 崩溃",
+                    title=f"ALAS <{self.config_name}> 崩溃",
                     content=f"<{self.config_name}> GamePageUnknownError",
                 )
                 notify_webui(
                     self.config_name,
-                    title=f"出大问题了喵！{self.config_name} 崩溃了喵！",
-                    content=f"因为 GamePageUnknownError 喵！",
+                    title=f"{self.config_name} 崩溃",  # Modify by MHY, 去傲娇语
+                    content=f"原因: GamePageUnknownError",
                 )
                 exit(1)
             else:
                 self.checker.wait_until_available()
                 return False
         except ScriptError as e:
-            logger.exception(e)
-            logger.critical('ScriptError: Maybe due to unknown game page or unexpected UI changes, which requires script update to fix')
+            logger.exception_context(
+                title='任务脚本执行失败', exc=e,
+                impact='当前任务无法继续，调度器将终止并保留错误现场。',
+                action='根据堆栈定位脚本错误；如果是新版本回归，请提交错误日志和截图。',
+                level=50,
+            )
             handle_notify(
                 self.config.Error_OnePushConfig,
-                title=f"Alas <{self.config_name}> 崩溃",
+                title=f"ALAS <{self.config_name}> 崩溃",
                 content=f"<{self.config_name}> ScriptError",
             )
             notify_webui(
                 self.config_name,
-                title=f"出大问题了喵！{self.config_name}崩溃了喵！",
-                content=f"因为 ScriptError 喵！",
+                title=f"{self.config_name} 崩溃",  # Modify by MHY, 去傲娇语
+                content=f"原因: ScriptError",
             )
-            # exit(1)
             raise
         except EmulatorNotRunningError as e:
-            # 模拟器离线/死机，尝试自动重启模拟器
-            logger.error('任务执行期间模拟器未运行')
+            # 模拟器离线或死机，尝试自动重启
+            logger.error_context(
+                title='模拟器连接中断',
+                reason='任务执行期间无法访问模拟器或 ADB 设备。',
+                impact='当前任务中断，系统将按配置尝试重启模拟器。',
+                action='确认模拟器进程和 ADB 服务正常；连续失败时检查端口、代理和模拟器保活设置。',
+                exc=e,
+            )
             self.save_error_log()
+            self._check_sensitive_exit(command, e)
             if self._try_restart_emulator():
-                # 重启成功，调度 Restart 任务重新启动游戏
+                # 重启成功，调度 Restart 任务恢复游戏
                 self.config.task_call('Restart')
                 handle_notify(
                     self.config.Error_OnePushConfig,
-                    title=f"Alas <{self.config_name}> 警告",
+                    title=f"ALAS <{self.config_name}> 警告",
                     content=f"<{self.config_name}> 模拟器离线 - 已自动重启模拟器",
                 )
                 notify_webui(
                     self.config_name,
-                    title=f"{self.config_name} 出了点小问题喵~",
-                    content=f"模拟器离线喵 所以重启了喵",
+                    title=f"{self.config_name} 模拟器离线",  # Modify by MHY, 去傲娇语
+                    content=f"模拟器离线，已自动重启",
                 )
                 return 'recoverable'
             else:
-                # 重启失败或未启用，终止程序
-                logger.critical('EmulatorNotRunningError: 模拟器离线且无法自动重启，程序将终止')
+                # 重启失败或未启用自动重启，终止程序
+                logger.error_context(
+                    title='模拟器无法自动恢复',
+                    reason='模拟器离线重启失败或已达到自动重启次数限制。',
+                    impact='调度器将终止，任务不会继续执行。',
+                    action='手动启动模拟器并确认 ADB 可见，再重新启动 ALAS。',
+                    level=50,
+                )
                 handle_notify(
                     self.config.Error_OnePushConfig,
-                    title=f"Alas <{self.config_name}> 崩溃",
+                    title=f"ALAS <{self.config_name}> 崩溃",
                     content=f"<{self.config_name}> EmulatorNotRunningError",
                 )
                 notify_webui(
                     self.config_name,
-                    title=f"出大问题了喵！{self.config_name}崩溃了喵！",
-                    content=f"因为 模拟器出问题了 喵！",
+                    title=f"{self.config_name} 崩溃",  # Modify by MHY, 去傲娇语
+                    content=f"原因: 模拟器异常",
                 )
                 exit(1)
         except RequestHumanTakeover:
-            logger.critical('RequestHumanTakeover')
+            logger.error_context(
+                title='任务需要人工介入',
+                reason='当前状态无法由自动化流程安全判断或修复。',
+                impact='调度器将终止，避免继续执行造成误操作。',
+                action='查看错误现场和堆栈，按日志中的具体建议处理后重新启动。',
+                level=50,
+            )
             handle_notify(
                 self.config.Error_OnePushConfig,
-                title=f"Alas <{self.config_name}> 崩溃",
+                title=f"ALAS <{self.config_name}> 崩溃",
                 content=f"<{self.config_name}> RequestHumanTakeover",
             )
             notify_webui(
                 self.config_name,
-                title=f"出大问题了喵！{self.config_name}崩溃了喵！",
-                content=f"因为 需要人工介入 喵！",
+                title=f"{self.config_name} 崩溃",  # Modify by MHY, 去傲娇语
+                content=f"原因: 需要人工介入",
             )
             exit(1)
-        except AutoSearchSetError:
-            logger.critical('AutoSearchSetError: Alas 无法识别当前页面，且自动搜索功能未正确配置或失效')
+        except AutoSearchSetError as e:
+            logger.error_context(
+                title='自动搜索设置失败',
+                reason='无法将游戏切换到所需的自动搜索状态。',
+                impact='当前任务无法安全继续，调度器将终止。',
+                action='检查编队、关卡限制和游戏页面；确认后手动设置自动搜索并重新启动。',
+                exc=e,
+                level=50,
+            )
             exit(1)
         except Exception as e:
-            logger.exception(e)
+            logger.exception_context(
+                title=f'任务执行发生未处理异常（{command}）', exc=e,
+                impact='当前任务无法确认执行结果，调度器将保留现场并终止。',
+                action='查看错误现场中的 log.txt、截图和完整堆栈，确认是否需要更新资源或提交问题。',
+                level=50,
+            )
             self.save_error_log()
             handle_notify(
                 self.config.Error_OnePushConfig,
-                title=f"Alas <{self.config_name}> 崩溃",
+                title=f"ALAS <{self.config_name}> 崩溃",
                 content=f"<{self.config_name}> 发生异常",
             )
             notify_webui(
                 self.config_name,
-                title=f"出大问题了喵！{self.config_name}崩溃了喵！",
-                content=f"因为 发生异常 喵！",
+                title=f"{self.config_name} 崩溃",  # Modify by MHY, 去傲娇语
+                content=f"原因: 发生异常",
             )
-            # exit(1)
             raise
 
     def keep_last_errlog(self, folder_path, n: int = 30):
         """
-        保留folder_path中的最后n个文件夹，删除其他文件夹。
-        如果n为负数或0，则不执行任何操作（保留所有errlog文件夹）。
+        清理旧的错误日志文件夹，只保留最近的 n 个。
 
         Args:
-            folder_path (str): 文件夹路径。
-            n (int): 要保留的文件夹数量。
+            folder_path (str): 错误日志根目录路径。
+            n (int): 保留的文件夹数量，<=0 时不清理。
         """
         if n <= 0:
             return
@@ -434,35 +549,45 @@ class AzurLaneAutoScript:
 
     def save_error_log(self):
         """
-        保存最后60张截图到 ./log/error/<config-name>/<timestamp>
-        保存日志到 ./log/error/<config-name>/<timestamp>/log.txt
+        保存错误现场：最近截图和日志文件到 ./log/error/<config-name>/<timestamp>/。
         """
         import pathlib
         from module.base.utils import save_image
         from module.handler.sensitive_info import (handle_sensitive_image,
                                                    handle_sensitive_logs)
-        if self.config.Error_SaveError:
+                                                   
+        if getattr(self.config, 'Error_SaveError', False):
             config_folder = pathlib.Path(f"./log/error/{self.config_name}")
             folder = config_folder.joinpath(str(int(time.time() * 1000)))
             folder.mkdir(parents=True, exist_ok=True)
             logger.warning(f'[Alas] 保存错误日志: {folder}')
 
-            for data in self.device.screenshot_deque:
-                image_time = datetime.strftime(data['time'], '%Y-%m-%d_%H-%M-%S-%f')
-                image = handle_sensitive_image(data['image'])
-                save_image(image, f'{folder}/{image_time}.png')
-            with open(logger.log_file, 'r', encoding='utf-8') as f:
-                lines = f.readlines()
-                start = 0
-                for index, line in enumerate(lines):
-                    line = line.strip(' \r\t\n')
-                    if re.match('^═{15,}$', line):
-                        start = index
-                lines = lines[start - 2:]
-                lines = handle_sensitive_logs(lines)
-            with open(f'{folder}/log.txt', 'w', encoding='utf-8') as f:
-                f.writelines(lines)
-            self.keep_last_errlog(config_folder, self.config.Error_SaveErrorCount)
+            try:
+                # 只在已经初始化了设备时才尝试保存截图，避免按需初始化时二次崩溃
+                if 'device' in self.__dict__:
+                    for data in self.device.screenshot_deque:
+                        image_time = datetime.strftime(data['time'], '%Y-%m-%d_%H-%M-%S-%f')
+                        image = handle_sensitive_image(data['image'])
+                        save_image(image, f'{folder}/{image_time}.png')
+            except Exception as e:
+                logger.error(f"[Alas] 保存错误截图失败: {e}")
+
+            try:
+                with open(logger.log_file, 'r', encoding='utf-8') as f:
+                    lines = f.readlines()
+                    start = 0
+                    for index, line in enumerate(lines):
+                        line = line.strip(' \r\t\n')
+                        if re.match('^═{15,}$', line):
+                            start = index
+                    lines = lines[start - 2:]
+                    lines = handle_sensitive_logs(lines)
+                with open(f'{folder}/log.txt', 'w', encoding='utf-8') as f:
+                    f.writelines(lines)
+            except Exception as e:
+                logger.error(f"[Alas] 保存错误日志失败: {e}")
+                
+            self.keep_last_errlog(config_folder, getattr(self.config, 'Error_SaveErrorCount', 0))
 
     def restart(self):
         from module.handler.login import LoginHandler
@@ -837,6 +962,10 @@ class AzurLaneAutoScript:
         from module.coalition.coalition_sp import CoalitionSP
         CoalitionSP(config=self.config, device=self.device).run()
 
+    def coalition_scuttle(self):
+        from module.coalition.coalition_scuttle import CoalitionScuttleRun
+        CoalitionScuttleRun(config=self.config, device=self.device).run()
+
     def c72_mystery_farming(self):
         from module.campaign.run import CampaignRun
         CampaignRun(config=self.config, device=self.device).run(
@@ -866,10 +995,6 @@ class AzurLaneAutoScript:
         from module.campaign.ambush_1_1 import Ambush11
         Ambush11(config=self.config, device=self.device).run()
 
-    def island_season_task(self):
-        from module.island.season_task import IslandSeasonTaskHandler
-        IslandSeasonTaskHandler(config=self.config, device=self.device).run()
-
     def daemon(self):
         from module.daemon.daemon import AzurLaneDaemon
         AzurLaneDaemon(config=self.config, device=self.device, task="Daemon").run()
@@ -886,6 +1011,10 @@ class AzurLaneAutoScript:
         from module.storage.box_disassemble import StorageBox
         StorageBox(config=self.config, device=self.device, task="BoxDisassemble").run()
 
+    def auto_equip(self):
+        from module.auto_equip.auto_equip import AutoEquip
+        AutoEquip(config=self.config, device=self.device, task="AutoEquip").run()
+
     def azur_lane_uncensored(self):
         from module.daemon.uncensored import AzurLaneUncensored
         AzurLaneUncensored(config=self.config, device=self.device, task="AzurLaneUncensored").run()
@@ -898,14 +1027,17 @@ class AzurLaneAutoScript:
         from module.daemon.ocr_benchmark import run_ocr_benchmark
         run_ocr_benchmark(config=self.config)
 
+    def fleet_scan(self):
+        from module.retire.fleet_management import FleetManagement
+        FleetManagement(config=self.config, device=self.device, task="FleetScan").run()
+
     def game_manager(self):
         from module.daemon.game_manager import GameManager
         GameManager(config=self.config, device=self.device, task="GameManager").run()
 
     def emulator_manager(self):
         import subprocess
-        # Use deep_get to handle potential nesting
-        # Prioritize EmulatorInfo settings if enabled
+        # 优先使用 EmulatorInfo 中的 SSH 配置
         if getattr(self.config, 'EmulatorInfo_EnableRemoteSSH', False):
             host = getattr(self.config, 'EmulatorInfo_RemoteSSHHost', '')
             port = getattr(self.config, 'EmulatorInfo_RemoteSSHPort', 22)
@@ -913,10 +1045,10 @@ class AzurLaneAutoScript:
             command = getattr(self.config, 'EmulatorInfo_RemoteStartCommand', '')
             key = getattr(self.config, 'EmulatorInfo_RemoteSSHPublicKey', '')
         else:
-            # Use deep_get to handle potential nesting
+            # 回退到 EmulatorManager 配置
             enable = deep_get(self.config.data, 'EmulatorManager.EmulatorManager.EnableRemoteSSH', False)
             if not enable:
-                logger.warning('Remote SSH is not enabled in EmulatorManager settings.')
+                logger.warning('[Alas-SSH] 模拟器管理器设置中未启用远程SSH')
                 return
 
             host = deep_get(self.config.data, 'EmulatorManager.EmulatorManager.RemoteSSHHost', '')
@@ -928,20 +1060,24 @@ class AzurLaneAutoScript:
             key = deep_get(self.config.data, 'EmulatorManager.EmulatorManager.RemoteSSHPublicKey', '')
 
         if not host or not command:
-            logger.warning(f'RemoteSSHHost ({host}) or RemoteStartCommand ({command}) is empty, skip remote SSH command')
+            logger.warning(f'[Alas-SSH] 远程SSH主机 ({host}) 或远程启动命令 ({command}) 为空，跳过远程SSH命令')
             return
 
-        logger.hr('Remote SSH Command', level=1)
+        logger.hr('远程SSH命令', level=1)
         target = f'{user}@{host}' if user else host
-        # -n: Redirects stdin from /dev/null
-        # -T: Disable pseudo-terminal allocation
-        # BatchMode to avoid hanging on password prompts
-        cmd = ['ssh', '-n', '-T', '-p', str(port), '-o', 'StrictHostKeyChecking=no', '-o', 'BatchMode=yes', '-o', 'ConnectTimeout=10']
+        clear_ssh_host_key(host, port)
+        # -n: 禁用标准输入  -T: 禁用伪终端分配  BatchMode: 避免密码提示导致挂起
+        cmd = [
+            'ssh', '-n', '-T', '-p', str(port),
+            '-o', 'StrictHostKeyChecking=no',
+            '-o', f'UserKnownHostsFile={os.devnull}',
+            '-o', f'GlobalKnownHostsFile={os.devnull}',
+            '-o', 'BatchMode=yes', '-o', 'ConnectTimeout=10',
+        ]
         
         key_file = None
         if key and len(key) > 50:
             import tempfile
-            import os
             try:
                 fd, key_file = tempfile.mkstemp()
                 with os.fdopen(fd, 'w') as f:
@@ -957,12 +1093,12 @@ class AzurLaneAutoScript:
                     os.chmod(key_file, 0o600)
 
                 cmd += ['-i', key_file]
-                logger.info(f'Using provided private key for authentication')
+                logger.info(f'[Alas-SSH] 使用提供的私钥进行认证')
             except Exception as e:
-                logger.error(f'Failed to create or secure temporary key file: {e}')
+                logger.error(f'[Alas-SSH] 创建或保护临时密钥文件失败: {e}')
 
         cmd += [target, command]
-        logger.info(f'Executing remote command: {" ".join(cmd)}')
+        logger.info(f'[Alas-SSH] 执行远程命令: {" ".join(cmd)}')
 
         try:
             process = subprocess.Popen(
@@ -974,7 +1110,7 @@ class AzurLaneAutoScript:
                 creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0
             )
 
-            # Store stderr to show only if it fails
+            # 缓存 stderr 输出，仅在失败时打印
             stderr_content = []
             import threading
             
@@ -984,32 +1120,32 @@ class AzurLaneAutoScript:
             
             def collect_stdout():
                 for line in process.stdout:
-                    logger.info(f'Remote: {line.strip()}')
-            
+                    logger.info(f'[Alas-SSH] 远程输出: {line.strip()}')
+
             stderr_thread = threading.Thread(target=collect_stderr)
             stdout_thread = threading.Thread(target=collect_stdout)
             stderr_thread.start()
             stdout_thread.start()
 
             try:
-                # Main thread waits for the process to exit
+                # 主线程等待进程退出
                 process.wait(timeout=30)
             except subprocess.TimeoutExpired:
                 process.kill()
-                logger.error('Remote SSH command timed out after 30 seconds')
+                logger.error('[Alas-SSH] 远程SSH命令超时（30秒）')
                 return
             finally:
                 stderr_thread.join(timeout=5)
                 stdout_thread.join(timeout=5)
 
             if process.returncode == 0:
-                logger.info('Remote command executed successfully')
+                logger.info('[Alas-SSH] 远程命令执行成功')
             else:
-                logger.error(f'Remote command failed with return code {process.returncode}')
+                logger.error(f'[Alas-SSH] 远程命令失败，返回码 {process.returncode}')
                 for line in stderr_content:
-                    logger.error(f'Remote Error: {line}')
+                    logger.error(f'[Alas-SSH] 远程错误: {line}')
         except Exception as e:
-            logger.error(f'Failed to execute remote SSH command: {e}')
+            logger.error(f'[Alas-SSH] 执行远程SSH命令失败: {e}')
         finally:
             if key_file and os.path.exists(key_file):
                 try:
@@ -1019,13 +1155,15 @@ class AzurLaneAutoScript:
 
     def wait_until(self, future):
         """
-        等待直到特定时间。
+        阻塞等待直到指定时间到达。
+
+        等待期间每 5 秒检查一次配置文件变更和停止事件。
 
         Args:
-            future (datetime):
+            future (datetime): 目标等待时间。
 
         Returns:
-            bool: True如果等待完成，False如果配置更改。
+            bool: 正常等到返回 True，检测到配置变更返回 False。
         """
         future = future + timedelta(seconds=1)
         self.config.start_watching()
@@ -1045,8 +1183,13 @@ class AzurLaneAutoScript:
 
     def get_next_task(self):
         """
+        获取下一个待执行的任务。
+
+        如果任务尚未到执行时间，根据 Optimization_WhenTaskQueueEmpty 设置
+        选择等待策略（关闭游戏 / 前往主页 / 停留原地），然后阻塞等待。
+
         Returns:
-            str: 下一个任务的名称。
+            str: 下一个任务的方法名（如 'Restart'、'Commission'）。
         """
         while 1:
             task = self.config.get_next()
@@ -1065,6 +1208,7 @@ class AzurLaneAutoScript:
                 if (
                     self.config.Optimization_CloseEmulatorDuringLongWait
                     and wait_duration > timedelta(hours=3)
+                    and 'device' in self.__dict__ and self.device.emulator_instance is not None  # 远程设备（无线 ADB / SSH）没有本地模拟器实例可管理，跳过关闭流程，走常规等待逻辑
                 ):
                     logger.info(
                         f'下一个任务 `{task.command}` 将在 {wait_duration} 后运行，'
@@ -1134,20 +1278,19 @@ class AzurLaneAutoScript:
         from module.config.utils import is_oobe_needed
 
         if is_oobe_needed():
-            logger.critical(
-                "未检测到配置文件。\n"
-                "请先运行 WebUI 完成初次设置:\n"
-                "    python gui.py\n"
-                "No configuration files detected.\n"
-                "Please run the WebUI first:\n"
-                "    python gui.py"
+            logger.error_context(
+                title='未检测到配置文件',
+                reason='项目尚未完成首次配置，或 config 目录中的配置文件缺失。',
+                impact='调度器无法启动。',
+                action='运行 `uv run python gui.py` 打开 WebUI，完成初次设置后再启动调度器。',
+                level=50,
             )
             exit(1)
 
-        # 初始化计数器
+        # 全局异常连续失败计数与阈值
         consecutive_global_failures = 0
-        MAX_GLOBAL_FAILURES = 3     # 3次及以上，4次及以上会执行长达5分钟的防网络波动等待
-        RESTART_DELAY = 20          # 重启尝试间隔
+        MAX_GLOBAL_FAILURES = 3
+        RESTART_DELAY = 20
         LONG_WAIT = 300
 
         while 1:
@@ -1155,16 +1298,13 @@ class AzurLaneAutoScript:
                 # 检查来自GUI的更新事件
                 if self.stop_event is not None:
                     if self.stop_event.is_set():
-                        logger.info("检测到更新事件")
-                        logger.info(f"Alas [{self.config_name}] 已退出。原因: 更新 | Reason: Update")
+                        logger.info('[Alas] 检测到更新事件')
+                        logger.info(f"[Alas] [{self.config_name}] 已退出。原因: 更新 | Reason: Update")
                         break
                 # 检查游戏服务器维护
                 self.checker.wait_until_available()
                 if self.checker.is_recovered():
-                    # 有一个难以复现的意外bug
-                    # 有时，由于阻塞，配置不会被更新
-                    # 即使它已经被更改
-                    # 所以在恢复后更新一次
+                    # 服务器恢复后强制刷新配置，修复阻塞期间配置未更新的问题
                     del_cached_property(self, 'config')
                     logger.info('[Alas] 服务器或网络已恢复。重启游戏客户端')
                     self.config.task_call('Restart')
@@ -1218,7 +1358,7 @@ class AzurLaneAutoScript:
                             task_display = _get_task_display_name(task)
                             handle_notify(
                                 self.config.Error_OnePushConfig,
-                                title=f"[Alas] <{self.config_name}> {task_display} {status}",
+                                title=f"[ALAS] <{self.config_name}> {task_display} {status}",
                                 content=f"<{self.config_name}> 任务 {task_display} —— {status}",
                             )
                     except Exception:
@@ -1238,26 +1378,33 @@ class AzurLaneAutoScript:
                     failed = failed + 1  # 不可恢复错误，增加计数
                 deep_set(self.failure_record, keys=task, value=failed)
 
-                strict_restart = self.config.Error_StrictRestart and failed >= 1 and task in RESTART_SENSITIVE_TASKS
+                strict_restart = self.config.Error_StrictRestart and failed >= 1 and self.config.cross_get(
+                    keys=f'{task}.Scheduler.Sensitive', default=False
+                )
                 if failed >= 3 or strict_restart:
-                    logger.critical(f"[Alas] 任务 `{task}` 失败 {failed} 次或更多。")
-                    logger.critical("[Alas] 可能原因 #1: 您未正确使用。请阅读选项的帮助文本。")
-                    logger.critical("[Alas] 可能原因 #2: 此任务存在问题。请联系开发者或尝试自行修复。")
+                    reason = '任务配置或使用方式不符合要求，也可能是任务本身存在问题。'
+                    action = '检查任务选项帮助和错误现场；确认配置正确后再重试。'
                     if strict_restart:
-                        logger.critical("[Alas] 可能原因 #3: 这是重启敏感任务。请手动接管游戏或关闭 'StrictRestart' 选项。")
-                    logger.critical('[Alas] 请求人工接管')
+                        reason += '该任务是重启敏感任务，失败后禁止自动重启。'
+                        action += '如需自动恢复，请关闭对应任务的 StrictRestart；否则手动接管游戏。'
+                    logger.error_context(
+                        title=f'任务连续失败，需要人工介入（{task}）',
+                        reason=f'该任务已连续失败 {failed} 次。{reason}',
+                        impact='调度器将停止，避免继续执行造成重复操作或数据异常。',
+                        action=action,
+                        level=50,
+                    )
                     handle_notify(
                         self.config.Error_OnePushConfig,
-                        title=f"Alas <{self.config_name}> crashed",
+                        title=f"ALAS <{self.config_name}> crashed",
                         content=f"<{self.config_name}> RequestHumanTakeover\nTask `{task}` failed {failed} or more times.",
                     )
                     notify_webui(
                         self.config_name,
-                        title=f"诶呀！{self.config_name}出现了问题喵！",
-                        content=f"因为 {task} 任务失败次数过多喵！",
+                        title=f"{self.config_name} 任务失败",  # Modify by MHY, 去傲娇语
+                        content=f"{task} 任务连续失败次数过多",
                     )
-                    logger.warning("任务连续失败次数过多，正在上报错误日志...")
-                    ApiClient.submit_bug_log(f"Alas <{self.config_name}> crashed\nTask `{task}` failed {failed} or more times.")
+                    logger.warning("[Alas] 任务连续失败次数过多，已停止调度")
                     exit(1)
 
                 if success == True:
@@ -1267,8 +1414,7 @@ class AzurLaneAutoScript:
                     self.consecutive_adb_offline = 0
                     continue
                 elif success == 'recoverable' or self.config.Error_HandleError:
-                    # 可恢复错误或启用了错误处理，继续循环
-                    # self.config.task_delay(success=False)
+                    # 可恢复错误或启用了错误处理，刷新配置后继续循环
                     del_cached_property(self, 'config')
                     self.checker.check_now()
                     continue
@@ -1279,33 +1425,31 @@ class AzurLaneAutoScript:
             except Exception as e:
                 consecutive_global_failures += 1
                 self.is_first_task = False
-                logger.error("[Alas] 调度器循环中发生意外的全局异常！")
                 import traceback
-                logger.error(traceback.format_exc()) # 打印完整的错误堆栈
+                logger.exception_context(
+                    title='调度器循环发生未处理异常',
+                    exc=e,
+                    impact='本轮任务中断，调度器将尝试执行 Restart 后继续运行。',
+                    action='关注下方堆栈；若连续发生，请检查设备连接、配置和最近更新的资源。',
+                )
                 
-                # 即使没有达到重启或失败上限，也第一时间自动请求分析崩溃原因
-                try:
-                    if hasattr(self, 'config') and getattr(self.config, 'Error_LlmAnalysis', False):
-                        from module.llm import analyze_exception
-                        analyze_exception(self.config, e)
-                except Exception as ex:
-                    logger.error(f'LLM Analysis failed: {ex}')
-
                 logger.warning(
                     f">>> 这是第 {consecutive_global_failures} 次连续全局失败，共 {MAX_GLOBAL_FAILURES} 次。"
                 )
 
                 # 检查是否达到重试上限
                 if consecutive_global_failures >= MAX_GLOBAL_FAILURES:
-                    logger.critical(
-                        f"已达到最大连续全局失败次数 ({MAX_GLOBAL_FAILURES})。"
+                    logger.error_context(
+                        title='调度器达到连续失败上限',
+                        reason=f'全局异常已连续发生 {MAX_GLOBAL_FAILURES} 次。',
+                        impact='自动恢复已停止，ALAS 将退出。',
+                        action='查看错误现场中的 log.txt 和截图，修复根因后重新启动；提交问题时请附带该现场。',
+                        exc=e,
+                        level=50,
                     )
-                    logger.critical("错误似乎是致命的，无法通过重启恢复。")
                     self.save_error_log()
-                    logger.critical("调度器正在终止。需要人工干预。")
-                    logger.warning("遇到无法恢复的致命错误，正在上报错误日志...")
-                    ApiClient.submit_bug_log(f"Alas <{self.config_name}> 调度器终止。\n已达到最大全局失败次数 ({MAX_GLOBAL_FAILURES})。\n{traceback.format_exc()}")
-                    exit(1)   # 达到上限，强制终止程序
+                    logger.warning("[Alas] 遇到无法恢复的致命错误，已停止调度")
+                    exit(1)
 
                 # 尝试重启
                 logger.warning("[Alas] 尝试通过强制执行 RESTART 任务来恢复...")
@@ -1316,8 +1460,12 @@ class AzurLaneAutoScript:
                     del_cached_property(self, 'config')
                     logger.info("[Alas] 已为下一个循环安排了 `Restart` 任务。")
                 except Exception as restart_e:
-                    logger.error("[Alas] 甚至无法安排重启任务！")
-                    logger.error(f"[Alas] 安排错误: {restart_e}")
+                    logger.exception_context(
+                        title='无法安排 Restart 恢复任务',
+                        exc=restart_e,
+                        impact='调度器无法自动恢复，本轮循环结束后仍可能再次失败。',
+                        action='检查配置是否可读、Restart 任务是否启用，以及设备是否仍在线。',
+                    )
 
                 # 等待一段时间后开始下一次循环
                 wait_seconds = RESTART_DELAY if consecutive_global_failures < 4 else LONG_WAIT

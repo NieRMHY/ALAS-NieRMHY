@@ -1,8 +1,18 @@
+"""
+实例进程管理器。
+
+管理 Alas 多实例运行时的进程生命周期，包括进程池维护、状态追踪
+（运行中/停止/异常）及进程间通信的安全处理逻辑。
+"""
+
 import argparse
+
 # 此文件专门用于管理 Alas 运行时各实例进程的生存周期及其子进程。
 # 负责多账号多开时的进程池维护、状态（运行中、停止、异常）追踪及进程间通信的安全处理逻辑。
+from collections.abc import Sequence
 import os
 import queue
+import subprocess
 import threading
 import time
 from multiprocessing import Process
@@ -10,6 +20,7 @@ from typing import Dict, List, Union
 
 import inflection
 from rich.console import Console, ConsoleRenderable
+from rich.text import Text
 
 # 由于本文件不在 app.py 的同一进程或子进程中运行，
 # 以下代码需要重复执行。
@@ -21,26 +32,51 @@ import_fake_pil_module()
 from module.logger import logger, set_file_logger, set_func_logger
 from module.config.utils import DEFAULT_CONFIG_NAME
 from module.submodule.submodule import load_mod
-from module.submodule.utils import get_available_func, get_available_mod, get_available_mod_func, get_config_mod, \
-    get_func_mod, list_mod_instance
+from module.submodule.utils import (
+    get_available_func,
+    get_available_mod,
+    get_available_mod_func,
+    get_config_mod,
+    get_func_mod,
+    list_mod_instance,
+)
 from module.webui.setting import State
+from module.webui.worker_registry import (
+    get_workers,
+    is_current_owner,
+    process_matches,
+    register_worker,
+    unregister_worker,
+)
 
 
 class ProcessManager:
     _processes: Dict[str, "ProcessManager"] = {}
+    _managers_lock = threading.RLock()
+    _lifecycle_locks: Dict[str, threading.RLock] = {}
+    _lifecycle_locks_lock = threading.Lock()
 
     def __init__(self, config_name: str = DEFAULT_CONFIG_NAME) -> None:
         self.config_name = config_name
         self._renderable_queue: queue.Queue[ConsoleRenderable] = State.manager.Queue()
-        self._screenshot_data_queue = None
         self.renderables: List[ConsoleRenderable] = []
         self.renderables_max_length = 400
         self.renderables_reduce_length = 80
-        self._process: Process = None
-        self._process_locks: Dict[str, threading.Lock] = {}
-        self.thd_log_queue_handler: threading.Thread = None
-        self._state_override: int = None
-        self._state_override_deadline: float = None
+        self._process: Process | None = None
+        self.thd_log_queue_handler: threading.Thread | None = None
+        self._state_override: int | None = None
+        self._state_override_deadline: float | None = None
+
+    @classmethod
+    def _get_lifecycle_lock(cls, config_name: str) -> threading.RLock:
+        """返回配置实例共享的生命周期锁。"""
+        with cls._lifecycle_locks_lock:
+            try:
+                return cls._lifecycle_locks[config_name]
+            except KeyError:
+                lock = threading.RLock()
+                cls._lifecycle_locks[config_name] = lock
+                return lock
 
     def set_state_override(self, state: int, duration: float = 10) -> None:
         """
@@ -62,7 +98,7 @@ class ProcessManager:
         self._state_override = None
         self._state_override_deadline = None
 
-    def _get_state_override(self) -> Union[int, None]:
+    def _get_state_override(self) -> int | None:
         if self._state_override is None:
             return None
         if (
@@ -73,79 +109,397 @@ class ProcessManager:
             return None
         return self._state_override
 
-    def start(self, func, ev: threading.Event = None) -> None:
-        if not self.alive:
-            if func is None:
-                func = get_config_mod(self.config_name)
+    def start(self, func: str | None, ev: threading.Event | None = None) -> None:
+        # 更新事务持有 restart_lock；清理过程持有 cleanup_lock。请求线程不能在事务
+        # 期间长期阻塞；同线程的 RLock 重入仍允许更新失败后的实例恢复。
+        if not State.restart_lock.acquire(blocking=False):
+            logger.info(f"[{self.config_name}] WebUI 更新或重启事务进行中，拒绝启动 worker")
+            return
+        try:
+            if not State.cleanup_lock.acquire(blocking=False):
+                logger.info(f"[{self.config_name}] WebUI 清理进行中，拒绝启动 worker")
+                return
             try:
-                import multiprocessing
-                if getattr(self, "_screenshot_data_queue", None) is not None:
+                with self._get_lifecycle_lock(self.config_name):
+                    if State._restart_requested or State._clearup:
+                        logger.warning(
+                            f"[{self.config_name}] WebUI 正在重启或已清理，拒绝启动 worker"
+                        )
+                        return
+                    if self.alive:
+                        return
+                    # alive 在登记不可验证时保守返回 False；
+                    # 此处再次确认登记状态，防止在登记不一致时启动重复 worker。
+                    _pid, _, _verified = self._registered_worker()
+                    if not _verified and _pid is not None:
+                        logger.warning(
+                            f"[{self.config_name}] Worker 登记不一致，拒绝启动以避免重复"
+                        )
+                        return
+                    if func is None:
+                        func = get_config_mod(self.config_name)
+                    args = (
+                        self.config_name,
+                        func,
+                        self._renderable_queue,
+                        ev,
+                    )
+                    process = Process(
+                        target=ProcessManager.run_process,
+                        args=args,
+                    )
+                    self._process = process
                     try:
-                        self._screenshot_data_queue.close()
+                        process.start()
+                        self._register_process(process.pid)
                     except Exception:
-                        pass
-                    try:
-                        self._screenshot_data_queue.join_thread()
-                    except Exception:
-                        pass
-                self._screenshot_data_queue = multiprocessing.Queue(maxsize=8)
-                try:
-                    enabled = 1 if getattr(State, "display_screenshots", False) else 0
-                except Exception:
-                    enabled = 1
-                try:
-                    self._screenshot_enabled_flag = multiprocessing.Value('b', enabled)
-                except Exception:
-                    self._screenshot_enabled_flag = None
-            except Exception:
-                logger.exception("雪风大人提醒无法创建多进程截图队列")
-            args = (
-                self.config_name,
-                func,
-                self._renderable_queue,
-                self._screenshot_data_queue,
-                ev,
-            )
-            if getattr(self, '_screenshot_enabled_flag', None) is not None:
-                args = args + (self._screenshot_enabled_flag,)
-            self._process = Process(
-                target=ProcessManager.run_process,
-                args=args,
-            )
-            self._process.start()
-            self.start_log_queue_handler()
+                        self._terminate_unregistered_process(process)
+                        self._process = None
+                        raise
+                    self.start_log_queue_handler()
+            finally:
+                State.cleanup_lock.release()
+        finally:
+            State.restart_lock.release()
 
-    def start_log_queue_handler(self):
-        if (
-            self.thd_log_queue_handler is not None
-            and self.thd_log_queue_handler.is_alive()
-        ):
+    def start_log_queue_handler(self) -> None:
+        log_queue_handler = self.thd_log_queue_handler
+        if log_queue_handler is not None and log_queue_handler.is_alive():
             return
         self.thd_log_queue_handler = threading.Thread(
             target=self._thread_log_queue_handler
         )
         self.thd_log_queue_handler.start()
 
-    def stop(self) -> None:
-        try:
-            lock = self._process_locks[self.config_name]
-        except KeyError:
-            lock = threading.Lock()
-            self._process_locks[self.config_name] = lock
+    def stop(self) -> bool:
+        """停止 worker 进程树，并返回是否确认全部结束。"""
+        with self._get_lifecycle_lock(self.config_name):
+            process = self._process
+            local_process_alive = self._is_process_alive(process)
 
-        with lock:
-            if self.alive:
-                self._process.kill()
-                self.renderables.append(
-                    f"[{self.config_name}] exited. Reason: Manual stop\n"
-                )
-            if self.thd_log_queue_handler is not None:
-                self.thd_log_queue_handler.join(timeout=1)
-                if self.thd_log_queue_handler.is_alive():
-                    logger.warning(
-                        "Log queue handler thread does not stop within 1 seconds"
+            if local_process_alive:
+                pid, record, pid_verified = self._registered_worker(process.pid)
+            else:
+                pid, record, pid_verified = self._registered_worker()
+
+            # _registered_worker 可能已通过 join(0) 回收僵尸句柄，
+            # 或 worker 在此期间自然退出。同步本地活性状态，
+            # 避免因过时的 local_process_alive 误判 stop 失败。
+            if local_process_alive and not self._is_process_alive(self._process):
+                local_process_alive = False
+
+            stopped = pid is None and not local_process_alive
+            if pid is not None and not pid_verified:
+                # _registered_worker 可能已通过 join(0) 回收了僵尸句柄；
+                # 若句柄已被清理说明 worker 已确认退出，视为成功停止。
+                if self._is_process_alive(self._process):
+                    logger.error(
+                        f"[{self.config_name}] worker PID {pid} 身份无法确认，拒绝终止未知进程"
                     )
-        logger.info(f"[{self.config_name}] exited")
+                    stopped = False
+                else:
+                    logger.info(
+                        f"[{self.config_name}] worker PID {pid} 本地句柄已回收，确认已退出"
+                    )
+                    stopped = True
+            elif pid is not None:
+                if local_process_alive and process is not None:
+                    # 优先使用本地 Process 句柄的 terminate/kill，
+                    # 比 taskkill 更可靠。
+                    stopped = ProcessManager._stop_local_process(process)
+                    if not stopped:
+                        # 本地句柄失败时回退到 taskkill 终止进程树
+                        stopped = self._kill_registered_process_tree(pid, record)
+                        if stopped:
+                            process.join(timeout=3)
+                            stopped = not self._is_process_alive(process)
+                else:
+                    stopped = self._kill_registered_process_tree(pid, record)
+                    if stopped and process is not None:
+                        process.join(timeout=3)
+                        stopped = not self._is_process_alive(process)
+            if stopped:
+                self._process = None
+                stopped = self._unregister_process()
+                if stopped and pid is not None:
+                    self.renderables.append(
+                        Text(f"[{self.config_name}] exited. Reason: Manual stop\n")
+                    )
+            if not stopped:
+                logger.error(f"[{self.config_name}] 停止工作进程失败 PID {pid}")
+            log_queue_handler = self.thd_log_queue_handler
+            if log_queue_handler is not None:
+                log_queue_handler.join(timeout=1)
+                if log_queue_handler.is_alive():
+                    logger.warning(
+                        "[WebUI-进程管理] 日志队列处理线程未在 1 秒内停止"
+                    )
+        if stopped:
+            logger.info(f"[{self.config_name}] 已退出")
+        else:
+            logger.warning(f"[{self.config_name}] worker 未完全停止")
+        return stopped
+
+    @staticmethod
+    def _is_process_alive(process: Process | None) -> bool:
+        """读取本地进程状态，回收僵尸句柄并将失效句柄视为已退出。
+
+        已退出但未 join 的 multiprocessing.Process 句柄在 join() 之前
+        仍报告 is_alive() == True（僵尸状态）。此方法调用 join(timeout=0)
+        回收僵尸句柄，避免活性检查在整个 stop 流程中误判。
+        join(timeout=0) 对仍在运行的进程完全不阻塞。
+        """
+        try:
+            if process is None:
+                return False
+            if not process.is_alive():
+                return False
+            # 尝试 join(0) 回收已退出但未 join 的僵尸进程句柄
+            process.join(timeout=0)
+            return process.is_alive()
+        except (OSError, ValueError, AssertionError):
+            return False
+
+    @staticmethod
+    def _stop_local_process(process: Process) -> bool:
+        """使用本地 Process 句柄逐级终止 worker，优先于 taskkill。
+
+        先 terminate() 等待 5 秒，超时则 kill() 等待 3 秒。
+        taskkill 可能因权限或进程状态问题静默失败；
+        本地句柄的 terminate/kill 更可靠。
+        注意：此方法仅终止根进程，不处理子进程树。
+        调用方应在失败时回退到 _kill_process_tree。
+        """
+        try:
+            process.terminate()
+        except (OSError, ValueError, AssertionError):
+            pass
+        process.join(timeout=5)
+        if process.is_alive():
+            try:
+                process.kill()
+            except (OSError, ValueError, AssertionError):
+                pass
+            process.join(timeout=3)
+        return not process.is_alive()
+
+    @classmethod
+    def _terminate_unregistered_process(cls, process: Process) -> None:
+        """通过本地进程句柄回滚启动失败的未登记 worker。"""
+        if not cls._is_process_alive(process):
+            try:
+                process.join(timeout=0)
+            except (OSError, ValueError, AssertionError):
+                pass
+            return
+
+        try:
+            # Process 句柄绑定创建时的子进程，可避免按已复用 PID 误杀其他进程。
+            process.terminate()
+            process.join(timeout=3)
+            if cls._is_process_alive(process):
+                process.kill()
+                process.join(timeout=3)
+        except (OSError, ValueError, AssertionError):
+            pass
+
+    def _kill_registered_process_tree(self, pid: int, record: dict | None) -> bool:
+        """在 taskkill 前再次校验登记身份，缩小 PID 复用窗口。"""
+        if record is None:
+            logger.error(f"[{self.config_name}] worker PID {pid} 缺少持久化身份记录")
+            return False
+        try:
+            matches = process_matches(record)
+        except RuntimeError as exc:
+            logger.error(f"[{self.config_name}] 无法再次验证 worker PID {pid}: {exc}")
+            return False
+
+        if matches is True:
+            return self._kill_process_tree(pid)
+        if matches is None:
+            logger.info(f"[{self.config_name}] worker PID {pid} 已在终止前退出")
+            return True
+
+        logger.error(
+            f"[{self.config_name}] worker PID {pid} 已复用，拒绝终止未知进程"
+        )
+        return False
+
+    @staticmethod
+    def _kill_process_tree(pid: int) -> bool:
+        """终止 worker 及其派生进程，避免关闭 WebUI 后任务留在后台。"""
+        if os.name == "nt":
+            try:
+                result = subprocess.run(
+                    ["taskkill", "/PID", str(pid), "/T", "/F"],
+                    check=False,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                    creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
+                    timeout=3,
+                )
+                if result.returncode == 0:
+                    return ProcessManager._wait_pid_exit(pid, timeout=3)
+                if not ProcessManager._pid_exists(pid):
+                    return True
+                logger.warning(f"[WebUI-进程管理] 停止工作进程失败 PID {pid}: taskkill 返回 {result.returncode}")
+                return False
+            except (OSError, subprocess.TimeoutExpired) as exc:
+                logger.warning(f"[WebUI-进程管理] 停止工作进程失败 PID {pid}: {exc}")
+                return False
+        else:
+            try:
+                import psutil
+
+                parent = psutil.Process(pid)
+                for child in reversed(parent.children(recursive=True)):
+                    try:
+                        child.kill()
+                    except psutil.NoSuchProcess:
+                        pass
+            except (ImportError, psutil.Error if "psutil" in locals() else OSError):
+                pass
+        try:
+            os.kill(pid, 9)
+        except ProcessLookupError:
+            return True
+        return ProcessManager._wait_pid_exit(pid, timeout=3)
+
+    @staticmethod
+    def _pid_exists(pid: int) -> bool:
+        try:
+            os.kill(pid, 0)
+        except ProcessLookupError:
+            return False
+        except PermissionError:
+            return True
+        return True
+
+    @staticmethod
+    def _wait_pid_exit(pid: int, timeout: float) -> bool:
+        deadline = time.time() + timeout
+        while time.time() < deadline:
+            if not ProcessManager._pid_exists(pid):
+                return True
+            time.sleep(0.1)
+        return not ProcessManager._pid_exists(pid)
+
+    def _registered_worker(
+        self, expected_pid: int | None = None
+    ) -> tuple[int | None, dict | None, bool]:
+        """返回已验证的 worker 身份；调用方必须持有生命周期锁。"""
+        registry = State.process_registry
+        cached_pid = None
+        if registry is not None:
+            try:
+                cached_pid = registry.get(self.config_name)
+                cached_pid = int(cached_pid) if cached_pid is not None else None
+            except (TypeError, ValueError):
+                logger.error(f"[{self.config_name}] worker PID 登记无效")
+                return expected_pid, None, False
+            except Exception as exc:
+                logger.error(f"[{self.config_name}] 无法读取 worker PID 登记: {exc}")
+                return expected_pid, None, False
+
+        try:
+            expected_pid = int(expected_pid) if expected_pid is not None else None
+        except (TypeError, ValueError):
+            logger.error(f"[{self.config_name}] 本地 worker PID 无效")
+            return None, None, False
+
+        if expected_pid is not None and cached_pid not in (None, expected_pid):
+            logger.error(
+                f"[{self.config_name}] 本地 worker PID {expected_pid} 与共享登记 {cached_pid} 不一致"
+            )
+            return expected_pid, None, False
+
+        pid = expected_pid if expected_pid is not None else cached_pid
+        if pid is None:
+            return None, None, True
+
+        try:
+            if not is_current_owner(os.getpid()):
+                logger.error(
+                    f"[{self.config_name}] 当前 WebUI 不拥有 worker 登记，拒绝操作 PID {pid}"
+                )
+                return pid, None, False
+            record = get_workers(os.getpid()).get(self.config_name)
+            try:
+                record_pid = int(record["pid"])
+            except (KeyError, TypeError, ValueError):
+                record_pid = None
+            if not isinstance(record, dict) or record_pid != pid:
+                logger.error(
+                    f"[{self.config_name}] worker PID {pid} 缺少匹配的持久化登记"
+                )
+                return pid, None, False
+            matches = process_matches(record)
+        except RuntimeError as exc:
+            logger.error(f"[{self.config_name}] 无法验证 worker PID {pid}: {exc}")
+            return pid, None, False
+
+        if matches is True:
+            return pid, record, True
+
+        if matches is False:
+            logger.error(
+                f"[{self.config_name}] worker PID {pid} 已复用，清除过期登记但不终止该进程"
+            )
+        else:
+            logger.info(f"[{self.config_name}] worker PID {pid} 已退出，清除过期登记")
+
+        unregistered = self._unregister_process()
+        if expected_pid is not None:
+            # process_matches 已确认进程死亡（返回 None）或 PID 已复用
+            # （返回 False），本地句柄可能是未 join 的僵尸。
+            # 尝试 join 回收僵尸句柄，避免将已死进程误报为存活。
+            try:
+                process = self._process
+                if process is not None and process.pid == expected_pid:
+                    process.join(timeout=0)
+            except (OSError, ValueError, AssertionError):
+                pass
+            # join 后若句柄不再报告存活，说明已是僵尸，已回收。
+            if not self._is_process_alive(self._process):
+                self._process = None
+                if unregistered:
+                    return None, None, True
+            return expected_pid, None, False
+        if unregistered:
+            return None, None, True
+        return pid, None, False
+
+    def _registered_pid(self) -> tuple[int | None, bool]:
+        """返回登记的 worker PID 及其身份是否已被持久化记录确认。"""
+        pid, _, verified = self._registered_worker()
+        return pid, verified
+
+    def _register_process(self, pid: int | None) -> None:
+        if pid is None:
+            return
+        register_worker(os.getpid(), self.config_name, pid)
+        if State.process_registry is not None:
+            State.process_registry[self.config_name] = pid
+
+    def _unregister_process(self) -> bool:
+        try:
+            if not unregister_worker(os.getpid(), self.config_name):
+                logger.error(
+                    f"[{self.config_name}] 当前 WebUI 不拥有 worker 登记，拒绝清除"
+                )
+                return False
+        except Exception as exc:
+            logger.exception_context(
+                title='无法清除 worker 登记',
+                exc=exc,
+                impact='父进程会在下一次重启前再次验证该 PID。',
+                action='检查 config 目录写入权限。',
+                level=40,
+            )
+            return False
+        if State.process_registry is not None:
+            State.process_registry.pop(self.config_name, None)
+        return True
 
     def _thread_log_queue_handler(self) -> None:
         while self.alive:
@@ -156,14 +510,20 @@ class ProcessManager:
             self.renderables.append(log)
             if len(self.renderables) > self.renderables_max_length:
                 self.renderables = self.renderables[self.renderables_reduce_length :]
-        logger.info("End of log queue handler loop")
+        logger.info("日志队列处理循环结束")
 
     @property
     def alive(self) -> bool:
-        if self._process is not None:
-            return self._process.is_alive()
-        else:
-            return False
+        with self._get_lifecycle_lock(self.config_name):
+            if self._is_process_alive(self._process):
+                return True
+            pid, pid_verified = self._registered_pid()
+            if not pid_verified:
+                # 登记验证失败且本地句柄已死时，保守默认已退出，
+                # 避免 alert 属性持续阻塞日志线程和状态展示。
+                # start() 通过额外的 _registered_worker 检查防止重复启动。
+                return False
+            return pid is not None
 
     @property
     def state(self) -> int:
@@ -213,34 +573,6 @@ class ProcessManager:
             else:
                 return 3
 
-    @property
-    def get_latest_screenshot(self):
-        """
-        获取最新的截图数据（Base64编码）。
-        """
-        if self._screenshot_data_queue is None:
-            return None
-
-        latest_screenshot = None
-        while not self._screenshot_data_queue.empty():
-            try:
-                latest_screenshot = self._screenshot_data_queue.get_nowait()
-                State.last_screenshot_base64 = latest_screenshot
-            except queue.Empty:
-                break  # 队列为空
-            except Exception as e:
-                logger.error(f"从截图队列获取数据失败: {e}")
-                break
-        return latest_screenshot
-
-    def set_screenshot_enabled(self, enabled: bool):
-        """Set shared screenshot enabled flag for the running process (if supported)."""
-        try:
-            if getattr(self, '_screenshot_enabled_flag', None) is not None:
-                self._screenshot_enabled_flag.value = 1 if enabled else 0
-        except Exception:
-            logger.debug('Unable to set screenshot_enabled_flag for %s', self.config_name)
-
     @classmethod
     def get_manager(cls, config_name: str) -> "ProcessManager":
         """
@@ -252,27 +584,50 @@ class ProcessManager:
         Returns:
             对应的 ProcessManager 实例。
         """
-        if config_name not in cls._processes:
-            cls._processes[config_name] = ProcessManager(config_name)
-        return cls._processes[config_name]
+        with cls._managers_lock:
+            if config_name not in cls._processes:
+                cls._processes[config_name] = ProcessManager(config_name)
+            return cls._processes[config_name]
+
+    @classmethod
+    def is_running(cls, config_name: str) -> bool:
+        """检查指定配置实例是否正在运行。"""
+        with cls._managers_lock:
+            manager = cls._processes.get(config_name)
+        return manager is not None and manager.alive
+
+    @classmethod
+    def remove_manager(cls, config_name: str) -> None:
+        """移除指定配置实例的进程管理器。"""
+        with cls._managers_lock:
+            cls._processes.pop(config_name, None)
 
     @staticmethod
     def run_process(
-        config_name, func: str, q: queue.Queue, screenshot_q: queue.Queue, e: threading.Event = None, screenshot_enabled=None
+        config_name,
+        func: str,
+        q: queue.Queue[ConsoleRenderable],
+        e: threading.Event | None = None,
     ) -> None:
         import sys
+
         if sys.platform != "win32":
             import resource
+
             try:
                 _soft, _hard = resource.getrlimit(resource.RLIMIT_NOFILE)
-                _target = 65536 if _hard == resource.RLIM_INFINITY else min(65536, _hard)
+                _target = (
+                    65536 if _hard == resource.RLIM_INFINITY else min(65536, _hard)
+                )
                 if _soft < _target:
                     resource.setrlimit(resource.RLIMIT_NOFILE, (_target, _hard))
             except Exception:
                 pass
         parser = argparse.ArgumentParser()
         parser.add_argument(
-            "--electron", action="store_true", help="由 Electron 客户端运行时启用此参数。"
+            "--electron",
+            action="store_true",
+            help="由 Electron 客户端运行时启用此参数。",
         )
         args, _ = parser.parse_known_args()
         State.electron = args.electron
@@ -283,15 +638,16 @@ class ProcessManager:
             # 参考 https://github.com/LmeSzinc/AzurLaneAutoScript/issues/2051
             logger.info("[WebUI] 检测到 Electron 环境，移除标准输出日志处理器")
             from module.logger import console_hdlr
+
             logger.removeHandler(console_hdlr)
         set_func_logger(func=q.put)
 
         if os.environ.get("DEMO") == "1":
-            logger.info("Log3")
+            logger.info("[WebUI-进程] 日志3")
             time.sleep(1)
-            logger.info("Log2")
+            logger.info("[WebUI-进程] 日志2")
             time.sleep(1)
-            logger.info("Log1")
+            logger.info("[WebUI-进程] 日志1")
             time.sleep(1)
             logger.info("[WebUI] 此版本为演示用途")
             return
@@ -302,37 +658,42 @@ class ProcessManager:
         remove_fake_pil_module()
 
         # 设置环境变量，使预加载模块（如 al_ocr.py）可以提前读取配置
-        os.environ['ALAS_CONFIG_NAME'] = config_name
+        os.environ["ALAS_CONFIG_NAME"] = config_name
 
-        AzurLaneConfig.stop_event = e
+        if e is not None:
+            AzurLaneConfig.stop_event = e
         try:
-            # 运行 AzurPilot
+            # 运行 ALAS
             if func == "alas":
                 from alas import AzurLaneAutoScript
 
                 if e is not None:
                     AzurLaneAutoScript.stop_event = e
-                if screenshot_enabled is not None:
-                    AzurLaneAutoScript(config_name=config_name, screenshot_queue=screenshot_q, screenshot_enabled=screenshot_enabled).loop()
-                else:
-                    AzurLaneAutoScript(config_name=config_name, screenshot_queue=screenshot_q).loop()
+                AzurLaneAutoScript(config_name=config_name).loop()
             elif func in get_available_func():
                 from alas import AzurLaneAutoScript
 
-                if screenshot_enabled is not None:
-                    AzurLaneAutoScript(config_name=config_name, screenshot_enabled=screenshot_enabled).run(inflection.underscore(func), skip_first_screenshot=True)
-                else:
-                    AzurLaneAutoScript(config_name=config_name).run(inflection.underscore(func), skip_first_screenshot=True)
+                AzurLaneAutoScript(config_name=config_name).run(
+                    inflection.underscore(func), skip_first_screenshot=True
+                )
             elif func in get_available_mod():
                 mod = load_mod(func)
+
+                if mod is None:
+                    logger.critical(f"[WebUI] 无法加载功能模块：{func}")
+                    return
 
                 if e is not None:
                     mod.set_stop_event(e)
                 mod.loop(config_name)
             elif func in get_available_mod_func():
-                getattr(load_mod(get_func_mod(func)), inflection.underscore(func))(config_name)
+                getattr(load_mod(get_func_mod(func)), inflection.underscore(func))(
+                    config_name
+                )
             else:
-                logger.critical(f"[WebUI] 杂鱼大叔，连功能模块都找不到吗？{func} 这种东西根本不存在啦~")
+                logger.critical(
+                    f"[WebUI] 功能模块不存在: {func}"  # Modify by MHY, 去傲娇语
+                )
             if e is not None and e.is_set():
                 logger.info(f"[{config_name}] exited. Reason: Update\n")
             else:
@@ -342,24 +703,25 @@ class ProcessManager:
 
     @classmethod
     def running_instances(cls) -> List["ProcessManager"]:
-        l = []
-        for process in cls._processes.values():
-            if process.alive:
-                l.append(process)
-        return l
+        with cls._managers_lock:
+            names = set(cls._processes)
+        if State.process_registry is not None:
+            names.update(State.process_registry.keys())
+        return [cls.get_manager(name) for name in names if cls.get_manager(name).alive]
 
     @staticmethod
     def restart_processes(
-        instances: List[Union["ProcessManager", str]] = None, ev: threading.Event = None
-    ):
+        instances: Sequence[Union["ProcessManager", str]] | None = None,
+        ev: threading.Event | None = None,
+    ) -> None:
         """
-        更新重载后（或更新失败时），重启所有更新前正在运行的 AzurPilot 实例。
+        更新重载后（或更新失败时），重启所有更新前正在运行的 ALAS 实例。
 
         Args:
             instances: 需要重启的实例列表，元素为 ProcessManager 或配置名称字符串。
             ev: 用于通知子进程执行更新的事件对象。
         """
-        logger.hr("Restart alas")
+        logger.hr("[WebUI-进程管理] 重启 Alas")
 
         # 加载 MOD_CONFIG_DICT
         list_mod_instance()
@@ -367,7 +729,7 @@ class ProcessManager:
         if instances is None:
             instances = []
 
-        _instances = set()
+        _instances: set[ProcessManager] = set()
 
         for instance in instances:
             if isinstance(instance, str):
@@ -376,7 +738,7 @@ class ProcessManager:
                 _instances.add(instance)
 
         try:
-            with open("./config/reloadalas", mode="r") as f:
+            with open("./config/reloadalas", mode="r", encoding="utf-8") as f:
                 for line in f.readlines():
                     line = line.strip()
                     _instances.add(ProcessManager.get_manager(line))
@@ -384,11 +746,11 @@ class ProcessManager:
             pass
 
         for process in _instances:
-            logger.info(f"Starting [{process.config_name}]")
+            logger.info(f"启动中 [{process.config_name}]")
             process.start(func=get_config_mod(process.config_name), ev=ev)
 
         try:
             os.remove("./config/reloadalas")
         except:
             pass
-        logger.info("Start alas complete")
+        logger.info("[WebUI-进程管理] 启动 Alas 完成")

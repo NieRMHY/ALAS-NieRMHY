@@ -1,3 +1,18 @@
+"""配置重定向工具函数集。
+
+提供配置版本升级时的值转换函数。
+当配置 schema 发生变更时（如选项名称修改、值格式调整），
+这些函数负责将旧格式的配置值转换为新格式。
+
+重定向函数在 ConfigUpdater.config_redirect() 中被调用，
+确保用户升级后无需手动修改配置文件。
+
+常见的重定向场景：
+- 选项名称变更（如 'auto' → 'default'）
+- 值格式调整（如布尔值 → 枚举值）
+- 服务器名称规范化
+"""
+
 from module.config.server import to_server
 
 
@@ -106,7 +121,7 @@ def api_redirect2(value):
 
 def coalition_to_frostfall(value):
     """
-    Redirect Little Academy stage names to Frostfall
+    将通用难度名转换为霜落活动的内部关卡编号。
     """
     if value == 'easy':
         return 'tc1'
@@ -120,13 +135,14 @@ def coalition_to_frostfall(value):
 
 def coalition_to_little_academy(value):
     """
-    Redirect Little Academy stage names to Frostfall
+    将旧联动活动的 TC 关卡编号转换为通用难度名。
     """
-    if value == 'tc1':
+    normalized = str(value).lower().replace('-', '')
+    if normalized == 'tc1':
         return 'easy'
-    elif value == 'tc2':
+    elif normalized == 'tc2':
         return 'normal'
-    elif value == 'tc3':
+    elif normalized == 'tc3':
         return 'hard'
     else:
         return value

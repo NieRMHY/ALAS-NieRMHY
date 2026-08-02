@@ -1,7 +1,20 @@
+"""
+船坞舰船扫描系统。
+
+提供船坞页面中舰船属性的多维度扫描能力，包括等级、情绪、稀有度、
+舰队归属和状态识别。通过组合多个子扫描器 (LevelScanner、
+EmotionScanner、RarityScanner、FleetScanner、StatusScanner)
+实现舰船信息的批量采集。
+
+支持单页扫描 (ShipScanner) 和跨页滚动扫描 (DockScanner)，
+后者通过灰度图标准差定位卡片间隙，自动滚动并去重，完成全船坞扫描。
+DHash 感知哈希用于跨页去重判断。
+"""
+
 import os
 import time
 from abc import ABCMeta, abstractmethod
-from collections import deque
+from collections import defaultdict, deque
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Tuple, Union
 
@@ -16,7 +29,7 @@ from module.base.utils import (color_similar, crop, extract_letters, get_color,
                                random_rectangle_point)
 from module.combat.level import LevelOcr
 from module.logger import logger
-from module.ocr.ocr import Digit
+from module.ocr.ocr import Digit, Ocr
 from module.retire.assets import (DOCK_CHECK, SHIP_DETAIL_CHECK,
                                   TEMPLATE_FLEET_1, TEMPLATE_FLEET_2,
                                   TEMPLATE_FLEET_3, TEMPLATE_FLEET_4,
@@ -26,9 +39,15 @@ from module.retire.assets import (DOCK_CHECK, SHIP_DETAIL_CHECK,
 from module.retire.dock import (CARD_EMOTION_GRIDS, CARD_EMOTION_STATUS_GRIDS, CARD_GRIDS,
                                 CARD_LEVEL_GRIDS, CARD_RARITY_GRIDS, DOCK_SCROLL,
                                 EMOTION_RED, EMOTION_YELLOW, EMOTION_GREEN)
+from module.retire.ship_name import ShipNameMatcher
 
 
 class EmotionDigit(Digit):
+    """情绪值 OCR 识别器，针对船坞卡片的情绪数字区域优化。
+
+    针对 JP 服务器特殊处理白色文字提取，
+    并修正唐斯头发区域的随机误识别 (044 -> 0)。
+    """
     def pre_process(self, image):
         if server.server == 'jp':
             image_gray = extract_letters(image, letter=(255, 255, 255), threshold=self.threshold)
@@ -97,6 +116,15 @@ class Ship:
 
 
 class DHash:
+    """感知哈希 (Difference Hash) 实现，用于图像去重。
+
+    通过比较相邻像素生成哈希值，以汉明距离判断两张图像是否相似。
+    用于 DockScanner 跨页扫描时的去重判断。
+
+    Attributes:
+        EQ_THRES (int): 哈希相等的距离阈值，默认 30。
+        code (str): 生成的十六进制哈希字符串。
+    """
     EQ_THRES: int = 30
 
     def __init__(self, image, size=8) -> None:
@@ -131,6 +159,17 @@ class DHash:
 
 
 class Scanner(metaclass=ABCMeta):
+    """扫描器抽象基类。
+
+    定义船坞卡片属性扫描的通用接口，子扫描器 (LevelScanner、
+    RarityScanner 等) 继承此类并实现 _scan() 方法。
+
+    Attributes:
+        _results (List): 缓存的扫描结果。
+        _enabled (bool): 扫描器是否启用，禁用时返回全 None 列表。
+        _disabled_value (List[None]): 禁用时的默认返回值。
+        grids (ButtonGrid): 卡片属性区域的按钮网格。
+    """
     _results: List = None
     _enabled: bool = True
     _disabled_value: List[None] = [None] * 14
@@ -189,12 +228,34 @@ class Scanner(metaclass=ABCMeta):
 
 
 class LevelScanner(Scanner):
-    def __init__(self) -> None:
+    """等级扫描器，通过 OCR 识别船坞卡片上显示的舰船等级。"""
+    def __init__(
+        self,
+        grid_shape: Tuple[int, int] = (7, 2),
+        excluded_positions: Tuple[Tuple[int, int], ...] = (),
+    ) -> None:
         super().__init__()
         self._results = []
-        self.grids = CARD_LEVEL_GRIDS
-        self.ocr_model = LevelOcr(self.grids.buttons,
+        card_grids = ButtonGrid(
+            origin=CARD_GRIDS.origin,
+            delta=CARD_GRIDS.delta,
+            button_shape=CARD_GRIDS.button_shape,
+            grid_shape=grid_shape,
+            name='CARD',
+        )
+        level_origin = CARD_LEVEL_GRIDS.origin - CARD_GRIDS.origin
+        level_area = tuple(np.append(level_origin, level_origin + CARD_LEVEL_GRIDS.button_shape))
+        self.grids = card_grids.crop(area=level_area, name='LEVEL')
+        self.excluded_positions = set(excluded_positions)
+        self.ocr_model = LevelOcr(self._buttons(),
                                   name='DOCK_LEVEL_OCR', threshold=64)
+
+    def _buttons(self) -> List:
+        return [
+            button
+            for x, y, button in self.grids.generate()
+            if (x, y) not in self.excluded_positions
+        ]
 
     def _scan(self, image) -> List:
         return self.ocr_model.ocr(image)
@@ -204,10 +265,15 @@ class LevelScanner(Scanner):
     
     def move(self, vector) -> None:
         super().move(vector)
-        self.ocr_model.buttons = [button.area for button in self.grids.buttons]
+        self.ocr_model.buttons = self._buttons()
 
 
 class EmotionScanner(Scanner):
+    """情绪扫描器，通过 OCR 识别舰船情绪值。
+
+    结合 EmotionStatusScanner 的颜色状态进行交叉校正，
+    修正 OCR 在低情绪场景下的误识别。
+    """
     def __init__(self) -> None:
         super().__init__()
         self._results = []
@@ -235,7 +301,7 @@ class EmotionScanner(Scanner):
                 if emotion > 40:
                     emotion //= 10
             results.append(emotion)
-        logger.attr('DOCK_EMOTION_OCR', results)
+        logger.attr('船坞情绪OCR', results)
         return results
 
     def limit_value(self, value) -> int:
@@ -247,6 +313,11 @@ class EmotionScanner(Scanner):
 
 
 class EmotionStatusScanner(Scanner):
+    """情绪状态扫描器，通过颜色识别情绪指示灯。
+
+    检测船坞卡片右上角指示灯的颜色：红、黄、绿，分别对应
+    不同的情绪区间。结果用于 EmotionScanner 的交叉校正。
+    """
     def __init__(self) -> None:
         super().__init__()
         self._results = []
@@ -280,7 +351,7 @@ class EmotionStatusScanner(Scanner):
     def _scan(self, image) -> List:
         results = [self.get_emotion_status(crop(image, button.area, copy=False))
                    for button in self.grids.buttons]
-        logger.attr('DOCK_EMOTION_STATUS', results)
+        logger.attr('船坞情绪状态', results)
         return results
 
     def limit_value(self, value) -> str:
@@ -288,6 +359,11 @@ class EmotionStatusScanner(Scanner):
 
 
 class RarityScanner(Scanner):
+    """稀有度扫描器，通过卡片顶部颜色条判断舰船稀有度。
+
+    稀有度映射：common(灰)、rare(蓝)、elite(紫)、super_rare(金)。
+    彩虹稀有度因颜色差异过大标记为 unknown。
+    """
     def __init__(self) -> None:
         super().__init__()
         self._results = []
@@ -327,10 +403,36 @@ class RarityScanner(Scanner):
 
 
 class FleetScanner(Scanner):
-    def __init__(self) -> None:
+    """舰队归属扫描器，通过模板匹配识别舰船所属的舰队编号。
+
+    对卡片左下角的舰队标识进行灰度二值化预处理后，
+    逐一匹配 Fleet 1-6 的模板图像。未匹配到则返回 0（不在编队）。
+    """
+    TEMPLATE_SIMILARITY = 0.75
+
+    def __init__(
+        self,
+        grid_shape: Tuple[int, int] = (7, 2),
+        excluded_positions: Tuple[Tuple[int, int], ...] = (),
+    ) -> None:
+        """初始化舰队归属扫描器。
+
+        Args:
+            grid_shape: 待扫描的卡片网格。退役流程保持默认的 7×2；
+                舰队管理可使用 7×3 扫描当前页面的第三行卡片。
+            excluded_positions: 不扫描的卡片坐标，格式为 ``(列, 行)``。
+        """
         super().__init__()
         self._results = []
-        self.grids = CARD_GRIDS.crop(area=(0, 117, 35, 162), name='FLEET')
+        card_grids = ButtonGrid(
+            origin=CARD_GRIDS.origin,
+            delta=CARD_GRIDS.delta,
+            button_shape=CARD_GRIDS.button_shape,
+            grid_shape=grid_shape,
+            name='CARD',
+        )
+        self.grids = card_grids.crop(area=(0, 117, 35, 162), name='FLEET')
+        self.excluded_positions = set(excluded_positions)
         self.templates = {
             TEMPLATE_FLEET_1: 1,
             TEMPLATE_FLEET_2: 2,
@@ -359,21 +461,17 @@ class FleetScanner(Scanner):
         未匹配到任何舰队时返回 0（不在任何编队中）。
         """
         for template, fleet in self.templates.items():
-            if template.match(image):
+            if template.match(image, similarity=self.TEMPLATE_SIMILARITY):
                 return fleet
-
-        if TEMPLATE_FLEET_1.match(image, similarity=0.80):
-            return 1
-        elif TEMPLATE_FLEET_3.match(image, similarity=0.80):
-            return 3
-        elif TEMPLATE_FLEET_4.match(image, similarity=0.80):
-            return 4
-        else:
-            return 0
+        return 0
 
     def _scan(self, image) -> List:
         image = self.pre_process(image)
-        image_list = [crop(image, button.area) for button in self.grids.buttons]
+        image_list = [
+            crop(image, button.area)
+            for x, y, button in self.grids.generate()
+            if (x, y) not in self.excluded_positions
+        ]
 
         return [self._match(image) for image in image_list]
 
@@ -381,7 +479,126 @@ class FleetScanner(Scanner):
         return limit_in(value, 0, 6)
 
 
+class FleetNameScanner(Scanner):
+    """识别船坞卡片中的舰娘名称，保留 OCR 原始结果。"""
+    OCR_LANG = {
+        'cn': 'ppocr_v6',
+        'en': 'ppocr_v6',
+        'jp': 'jp',
+        'tw': 'tw',
+    }
+
+    class NameOcr(Ocr):
+        """提取白色和婚舰粉色名称，统一为黑白图像。"""
+        PINK_LETTER = (255, 170, 206)
+        PINK_THRESHOLD = 108
+        TEXT_ROWS = (4, 23)
+        TEXT_LEFT = 4
+
+        @staticmethod
+        def _remove_edge_noise(image):
+            """移除名称区域左右边缘残留的卡片边框像素。"""
+            count, labels, stats, _ = cv2.connectedComponentsWithStats(
+                (image < 120).astype(np.uint8), connectivity=8
+            )
+            for label in range(1, count):
+                x, _, component_width, _, _ = stats[label]
+                if x == 0 or x + component_width == image.shape[1]:
+                    image[labels == label] = 255
+            return image
+
+        def pre_process(self, image):
+            white = extract_letters(image, letter=self.letter, threshold=self.threshold)
+            pink = extract_letters(image, letter=self.PINK_LETTER, threshold=self.PINK_THRESHOLD)
+            merged = cv2.min(white, pink)
+            merged = merged[self.TEXT_ROWS[0]:self.TEXT_ROWS[1], self.TEXT_LEFT:]
+            return self._remove_edge_noise(merged)
+
+    def __init__(
+        self,
+        grid_shape: Tuple[int, int] = (7, 2),
+        excluded_positions: Tuple[Tuple[int, int], ...] = (),
+    ) -> None:
+        super().__init__()
+        self._results = []
+        card_grids = ButtonGrid(
+            origin=CARD_GRIDS.origin,
+            delta=CARD_GRIDS.delta,
+            button_shape=CARD_GRIDS.button_shape,
+            grid_shape=grid_shape,
+            name='CARD',
+        )
+        self.grids = card_grids.crop(area=(-10, 160, 142, 190), name='SHIP_NAME')
+        self.excluded_positions = set(excluded_positions)
+        self.ocr_model = self.NameOcr(
+            self._buttons(),
+            lang=self.OCR_LANG[server.server],
+            threshold=128,
+            name='FLEET_SHIP_NAME',
+        )
+        self.name_matcher = ShipNameMatcher(server.server)
+
+    def _buttons(self) -> List:
+        return [
+            button.area
+            for x, y, button in self.grids.generate()
+            if (x, y) not in self.excluded_positions
+        ]
+
+    def _scan(self, image) -> List:
+        names = self.ocr_model.ocr(image)
+        corrected = [self.name_matcher.correct(name) for name in names]
+        for raw, name in zip(names, corrected):
+            if raw != name:
+                logger.info(f'[舰队扫描-OCR] 舰娘名修正: {raw!r} -> {name!r}')
+        return corrected
+
+    def limit_value(self, value) -> str:
+        return value
+
+    def move(self, vector) -> None:
+        super().move(vector)
+        self.ocr_model.buttons = self._buttons()
+
+
+class FleetManagementScanner:
+    """扫描当前船坞页面，并按舰队归属聚合舰娘名称与等级。"""
+    def __init__(
+        self,
+        grid_shape: Tuple[int, int] = (7, 3),
+        excluded_positions: Tuple[Tuple[int, int], ...] = (),
+    ) -> None:
+        self.fleet_scanner = FleetScanner(
+            grid_shape=grid_shape,
+            excluded_positions=excluded_positions,
+        )
+        self.name_scanner = FleetNameScanner(
+            grid_shape=grid_shape,
+            excluded_positions=excluded_positions,
+        )
+        self.level_scanner = LevelScanner(
+            grid_shape=grid_shape,
+            excluded_positions=excluded_positions,
+        )
+
+    def scan(self, image) -> Dict[int, List[Dict[str, Union[str, int]]]]:
+        """返回按舰队编号分组的舰娘名称与等级 OCR 结果。"""
+        fleets = self.fleet_scanner.scan(image, output=False)
+        names = self.name_scanner.scan(image, output=False)
+        levels = self.level_scanner.scan(image, output=False)
+        result = defaultdict(list)
+        for fleet, name, level in zip(fleets, names, levels):
+            if fleet:
+                result[fleet].append({'name': name, 'level': level})
+        return dict(result)
+
+
 class StatusScanner(Scanner):
+    """状态扫描器，通过模板匹配识别舰船的使用状态。
+
+    状态类型：free(空闲)、battle(出击中)、commission(委托中)、
+    in_hard_fleet(困难舰队)、in_event_fleet(活动舰队)。
+    """
     def __init__(self) -> None:
         super().__init__()
         self._results = []
@@ -417,6 +634,10 @@ class StatusScanner(Scanner):
 
 
 class HashGenerator(Scanner):
+    """哈希生成器，为每张船坞卡片生成 DHash 感知哈希。
+
+    用于 DockScanner 跨页扫描时的去重判断和加载完成检测。
+    """
     def __init__(self, length=8) -> None:
         super().__init__()
         self._results = []
@@ -579,7 +800,7 @@ class ShipScanner(Scanner):
             if value is False:
                 self.sub_scanners[attr].disable()
 
-        logger.info(f'Limitations set to {self.limitation}')
+        logger.info(f'筛选条件已设置为 {self.limitation}')
 
 
 class DockScanner(ShipScanner):
@@ -743,7 +964,7 @@ class DockScanner(ShipScanner):
         if not results:
             self.retry += 1
             self.debug_info['reposition_retry'] += 1
-            logger.info(f'No ship was detected, reset the position. Retry {self.retry} time(s)')
+            logger.info(f'[退役-扫描] 未检测到舰船，重置位置。重试第 {self.retry} 次')
             self.reset_position()
             self.reposition(image, bound)
             results = self.scanner.scan(image, cached=False, output=False)
@@ -846,7 +1067,7 @@ class DockScanner(ShipScanner):
                 for k,v in self.debug_info.items():
                     f.write(f'{k} = {v}\n')
 
-            logger.info(f'debug info has been saved in {self.debug_folder}')
+            logger.info(f'[退役-扫描] 调试信息已保存到 {self.debug_folder}')
 
     def scan(self, image, cached=False, output=True) -> Union[List, None]:
         """请使用 multi_scan() 代替。"""

@@ -1,3 +1,10 @@
+"""
+Web界面 REST API 路由。
+
+提供 Starlette 路由处理函数，包括大世界统计、AP 时间线、通知推送、
+截图获取、配置导入、远程设备控制等 HTTP/WebSocket 接口。
+"""
+
 import asyncio
 import json
 import os
@@ -31,8 +38,24 @@ from module.webui.deploy_settings import (
     save_deploy_settings,
     set_startup_run,
 )
-from module.webui.launcher import is_local_request, launcher_control
 from module.webui.lang import t
+
+# Modify by MHY, 删除 nanoda 启动器(launcher_control)，仅保留本机请求校验供部署 API 使用
+LOCAL_HOSTS = {"127.0.0.1", "::1", "localhost"}
+
+
+def is_local_request(request) -> bool:
+    client = getattr(request, "client", None)
+    host = getattr(client, "host", "") if client is not None else ""
+    header_host = _normalize_host(request.headers.get("host", ""))
+    return host in LOCAL_HOSTS and header_host in LOCAL_HOSTS
+
+
+def _normalize_host(host: str) -> str:
+    host = str(host or "").strip().lower()
+    if host.startswith("["):
+        return host[1:].split("]", maxsplit=1)[0]
+    return host.split(":", maxsplit=1)[0]
 
 
 def is_demo_mode():
@@ -46,7 +69,7 @@ def api_cl1_stats(request):
         stats = get_opsi_stats(instance_name=instance_name).get_detailed_summary()
         return JSONResponse({"success": True, "data": stats})
     except Exception as e:
-        logger.error(f"api_cl1_stats error: {e}")
+        logger.error(f"api_cl1_stats错误: {e}")
         return JSONResponse({"success": False, "error": str(e)}, status_code=500)
 
 def api_ap_timeline(request):
@@ -56,7 +79,7 @@ def api_ap_timeline(request):
         timeline = get_ap_timeline(instance_name=instance_name)
         return JSONResponse({"success": True, "data": timeline})
     except Exception as e:
-        logger.error(f"api_ap_timeline error: {e}")
+        logger.error(f"api_ap_timeline错误: {e}")
         return JSONResponse({"success": False, "error": str(e)}, status_code=500)
 
 def serve_obs_overlay(request):
@@ -828,12 +851,12 @@ class LiveScrcpySession:
             self.control_socket = self._connect_scrcpy_socket()
             device_name = self.video_socket.recv(64).decode("utf-8", errors="replace").rstrip("\x00")
             if device_name:
-                logger.attr("LiveScrcpyDevice", device_name)
+                logger.attr("Scrcpy直播设备", device_name)
             resolution = self.video_socket.recv(4)
             if len(resolution) != 4:
                 raise RuntimeError("scrcpy 未返回视频分辨率")
             self.resolution = struct.unpack(">HH", resolution)
-            logger.attr("LiveScrcpyResolution", self.resolution)
+            logger.attr("Scrcpy直播分辨率", self.resolution)
             self.video_socket.settimeout(1)
             self.alive = True
         except Exception:
@@ -1100,13 +1123,13 @@ async def _ws_live_ws_scrcpy(websocket, instance, fps, target_width, bitrate_sca
         session.resolution = (max(1, width), max(1, height))
         session.device_name = info.get("device_name") or ""
         if session.device_name:
-            logger.attr("LiveWsScrcpyDevice", session.device_name)
-        logger.attr("LiveWsScrcpyResolution", session.resolution)
+            logger.attr("WsScrcpy直播设备", session.device_name)
+        logger.attr("WsScrcpy直播分辨率", session.resolution)
 
         await session.send_binary(_build_ws_scrcpy_video_settings(target_width, fps, session.bitrate))
         preroll = await _collect_ws_scrcpy_preroll(session)
         codec_string = _h264_avc1_codec_from_chunks(preroll)
-        logger.attr("LiveWsScrcpyPreroll", f"{sum(len(item) for item in preroll)} bytes, {codec_string}")
+        logger.attr("WsScrcpy预缓冲", f"{sum(len(item) for item in preroll)} bytes, {codec_string}")
         await websocket.send_text(json.dumps({
             "type": "ready",
             "mode": "ws-scrcpy",
@@ -1165,7 +1188,7 @@ async def _ws_live_raw_scrcpy(websocket, instance, fps, target_width, bitrate_sc
             raise RuntimeError("scrcpy 未输出 H264 视频数据")
         codec_string = _h264_avc1_codec(preroll)
         description = _h264_avcc_description(preroll)
-        logger.attr("LiveScrcpyPreroll", f"{len(preroll)} bytes, {codec_string}")
+        logger.attr("Scrcpy预缓冲", f"{len(preroll)} bytes, {codec_string}")
         await websocket.send_text(json.dumps({
             "type": "ready",
             "mode": "scrcpy",
@@ -1422,83 +1445,6 @@ async def api_notify_stream(request):
     )
 
 
-async def api_launcher_status(request):
-    """GET /api/launcher/status — 查询启动器连接和开机自启动状态"""
-    request_local = is_local_request(request)
-    return JSONResponse(launcher_control.status(request_local=request_local))
-
-
-async def api_launcher_startup(request):
-    """POST /api/launcher/startup — 请求启动器设置 Windows 开机自启动"""
-    if not is_local_request(request):
-        return JSONResponse(
-            {"success": False, "error": "开机自启动只能从本机 WebUI 设置"},
-            status_code=403,
-        )
-
-    try:
-        data = await request.json()
-    except Exception:
-        return JSONResponse({"success": False, "error": "请求体不是有效 JSON"}, status_code=400)
-
-    if "enabled" not in data:
-        return JSONResponse({"success": False, "error": "缺少 enabled 字段"}, status_code=400)
-    if not isinstance(data.get("enabled"), bool):
-        return JSONResponse({"success": False, "error": "enabled 必须是布尔值"}, status_code=400)
-
-    result = await launcher_control.set_autostart(data["enabled"])
-    status = 200 if result.get("success") else 500
-    return JSONResponse(result, status_code=status)
-
-
-async def api_launcher_stream(request):
-    """GET /api/launcher/stream — 启动器订阅的本地命令流"""
-    if not is_local_request(request):
-        return JSONResponse(
-            {"success": False, "error": "启动器命令流只允许本机连接"},
-            status_code=403,
-        )
-
-    async def event_generator():
-        await launcher_control.mark_connected()
-        try:
-            while True:
-                if await request.is_disconnected():
-                    break
-                try:
-                    command = await asyncio.wait_for(launcher_control.next_command(), timeout=30)
-                    launcher_control.keep_alive()
-                    yield launcher_control.event(command)
-                except asyncio.TimeoutError:
-                    launcher_control.keep_alive()
-                    yield launcher_control.keepalive_event()
-        finally:
-            launcher_control.mark_disconnected()
-
-    return StreamingResponse(
-        event_generator(),
-        media_type="text/event-stream",
-        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
-    )
-
-
-async def api_launcher_report(request):
-    """POST /api/launcher/report — 启动器回报命令执行结果"""
-    if not is_local_request(request):
-        return JSONResponse(
-            {"success": False, "error": "启动器回报只允许本机连接"},
-            status_code=403,
-        )
-
-    try:
-        data = await request.json()
-    except Exception:
-        return JSONResponse({"success": False, "error": "请求体不是有效 JSON"}, status_code=400)
-
-    result = await launcher_control.report(data)
-    return JSONResponse(result)
-
-
 async def api_deploy_settings(request):
     """GET /api/deploy/settings — 查询 deploy.yaml 可视化配置。"""
     if not is_local_request(request):
@@ -1587,7 +1533,7 @@ async def api_deploy_startup_run_save(request):
 
 async def api_import_legacy_upload(request):
     """
-    接收浏览器上传的旧 AzurPilot 文件夹内容，写入本项目对应位置。
+    接收浏览器上传的旧 ALAS 文件夹内容，写入本项目对应位置。
     前端使用 webkitdirectory 选择文件夹后上传。
     """
     from pathlib import Path
@@ -1674,10 +1620,6 @@ api_routes = [
     Route("/api/ap_timeline", api_ap_timeline),
     Route("/api/notify", api_notify, methods=["POST"]),
     Route("/api/notify_stream", api_notify_stream),
-    Route("/api/launcher/status", api_launcher_status),
-    Route("/api/launcher/startup", api_launcher_startup, methods=["POST"]),
-    Route("/api/launcher/stream", api_launcher_stream),
-    Route("/api/launcher/report", api_launcher_report, methods=["POST"]),
     Route("/api/deploy/settings", api_deploy_settings),
     Route("/api/deploy/settings", api_deploy_settings_save, methods=["POST"]),
     Route("/api/deploy/startup-run", api_deploy_startup_run),

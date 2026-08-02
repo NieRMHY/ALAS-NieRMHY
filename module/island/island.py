@@ -1,3 +1,9 @@
+"""岛屿系统基类模块。
+
+提供岛屿自动化操作的核心基础功能，包括岛屿导航、岗位管理、产品选择与派遣。
+继承自 InfoHandler 和 LoginHandler，组合仓库 OCR 与角色选择能力。
+定义岛屿地图确认等待时间、产品选择安全区域及材料数量 OCR 区域等公共常量。
+"""
 from module.island.assets import *
 from module.ui.page import *
 from module.base.timer import Timer
@@ -221,6 +227,54 @@ class Island(SelectCharacter):
         access_map = self.appear(ISLAND_ACCESS_MAP, offset=(20, 20))
         return leave and access_map
 
+    def check_visit_friend_island(self, visit_button):
+        """点击好友拜访按钮并等待进入好友岛屿。
+
+        检测逻辑分为两个阶段：
+        1. 等待 ISLAND_ACCESS_MAP（右上角地图入口）出现，表示已开始加载好友岛
+        2. 等待 AIR_DROP_RUN_AWAY（顶部"离开"按钮）也出现，确认场景完全加载完毕
+        只有两者同时出现（is_in_friend_island() 为 True），才视为成功进入好友岛屿。
+        """
+        click_timer = Timer(3).start()
+        self.device.click(visit_button)
+        self.device.sleep(3)
+        for _ in self.loop(timeout=30, skip_first=False):
+            if self.is_in_friend_island():
+                logger.info("[岛屿] 二次检测拜访状态......")
+                # 在等待的过程中, 先后会出现黑底黄鸡loading、UI(一闪而过)、白底沙漏loading
+				# 因此等待1s后进行二次确认, 避免中间UI一闪而过时出现误判
+                self.device.sleep(1)
+                self.device.screenshot()
+                if self.is_in_friend_island():
+                    self._island_expect_friend = True
+                    logger.info("[岛屿] 成功进入好友岛屿")
+                    return True
+            if self.appear(CANT_ACCESS, offset=(20, 20)):
+                logger.info("[岛屿] 好友不可访问")
+                return False
+            if click_timer.reached():
+                self.device.click(visit_button)
+                click_timer.reset()
+            if self.ui_additional():
+                continue
+        logger.warning("[岛屿] 拜访好友超时")
+        return False
+
+    def exit_friend_island(self):
+        """退出好友岛屿。"""
+        logger.info("[岛屿] 退出好友岛屿")
+        self._island_expect_friend = False
+        for _ in self.loop(timeout=30):
+            if self.appear_then_click(AIR_DROP_RUN_AWAY, offset=(20, 20), interval=2):
+                continue
+            if self.appear(ISLAND_GOTO_MAP):
+                logger.info("[岛屿] 成功退出好友岛屿")
+                return True
+            if self.ui_additional():
+                continue
+        logger.warning("[岛屿] 退出好友岛屿超时")
+        return False
+
     def _wait_island_map_entry(self, timeout=3):
         last_status = None
         for _ in self.loop(timeout=timeout, skip_first=False):
@@ -249,7 +303,7 @@ class Island(SelectCharacter):
         }
 
     def goto_island_map(self):
-        logger.hr("Island goto map", level=2)
+        logger.hr("岛屿-前往地图", level=2)
         expect_friend = bool(getattr(self, "_island_expect_friend", False))
         status = self._wait_island_map_entry(timeout=10 if expect_friend else 3)
         in_map = status["in_map"]
@@ -346,6 +400,8 @@ class Island(SelectCharacter):
                     self.appear(ISLAND_CHECK, offset=(20, 20))
                     or (in_friend and self.is_in_friend_island())
             ):
+                self.device.sleep(1)
+                logger.info(f"[岛屿] 岛屿地图进入成功: {destination}")
                 return True
 
         logger.warning(f"[岛屿] 岛屿地图进入目的地超时: {destination}")

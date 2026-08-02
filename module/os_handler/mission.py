@@ -1,3 +1,9 @@
+"""大世界任务管理模块。
+
+处理大世界（Operation Siren）的任务系统，包括任务提交、
+任务奖励领取、任务结算界面导航以及月度 Boss 任务的特殊处理。
+通过 OCR 和图像匹配检测任务状态，自动完成任务流程。
+"""
 from datetime import timedelta
 
 from module.base.timer import Timer
@@ -22,17 +28,17 @@ class MissionHandler(GlobeOperation, ZoneManager):
 
     def _os_find_checkout_offset_skip_monthly_boss(self, checkout_offset):
         """
-        查找非月度 Boss 的任务结算行。
+        查找非月度Boss的任务结算行。
 
         Args:
             checkout_offset (tuple): 初始结算按钮偏移量。
 
         Returns:
-            tuple | None: 非月度 Boss 任务行的偏移量，如果未找到则返回 None。
+            tuple | None: 非月度Boss任务行的偏移量，如果未找到则返回 None。
         """
         row_offset = checkout_offset
         # 任务行垂直排列，间隔约 110 像素
-        # 扫描多行以处理月度 Boss 不在第一行的情况
+        # 扫描多行以处理月度Boss不在第一行的情况
         for _ in range(8):
             has_checkout = self.match_template_color(MISSION_CHECKOUT, offset=row_offset, similarity=0.78)
             if has_checkout and not self.appear(MISSION_MONTHLY_BOSS, offset=row_offset):
@@ -53,7 +59,7 @@ class MissionHandler(GlobeOperation, ZoneManager):
         image = color_similarity_2d(self.image_crop(area, copy=False), color=(255, 207, 66))
         points = np.array(np.where(image > 235)).T[:, ::-1]
         if not len(points):
-            logger.warning('Unable to find mission on OS mission map')
+            logger.warning('无法在大世界任务地图中找到任务')
 
         point = fit_points(points, mod=(1000, 1000), encourage=5) + (0, 11)
         # 海域位置
@@ -81,7 +87,7 @@ class MissionHandler(GlobeOperation, ZoneManager):
             in: MISSION_ENTER
             out: MISSION_CHECK
         """
-        logger.info('OS mission enter')
+        logger.info('[大世界处理-任务] 进入大世界任务')
         checkout_offset = (-20, -20, 20, 20)
         confirm_timer = Timer(2, count=6).start()
         for _ in self.loop():
@@ -91,12 +97,12 @@ class MissionHandler(GlobeOperation, ZoneManager):
                     and not self.match_template_color(MISSION_CHECKOUT, offset=checkout_offset, similarity=0.78):
                 # 未找到任务，等待确认。任务可能加载较慢。
                 if confirm_timer.reached():
-                    logger.info('No OS mission found.')
+                    logger.info('[大世界处理-任务] 未找到大世界任务')
                     break
             elif self.is_in_os_mission() \
                     and self.match_template_color(MISSION_CHECKOUT, offset=checkout_offset, similarity=0.78):
                 # 找到至少一个任务
-                logger.info('Found at least one OS missions.')
+                logger.info('[大世界处理-任务] 至少找到一个大世界任务')
                 break
             else:
                 confirm_timer.reset()
@@ -135,7 +141,7 @@ class MissionHandler(GlobeOperation, ZoneManager):
         """
         退出任务列表。
         """
-        logger.info('OS mission quit')
+        logger.info('[大世界处理-任务] 退出大世界任务')
         for _ in self.loop():
             # 结束
             # 有时任务弹窗没有黑色模糊背景
@@ -164,29 +170,29 @@ class MissionHandler(GlobeOperation, ZoneManager):
         checkout_offset = self.os_mission_enter(skip_siren_mission=skip_siren_mission)
         checkout_offset = self._os_find_checkout_offset_skip_monthly_boss(checkout_offset)
         if checkout_offset is None:
-            logger.info('No more non-monthly-boss OS missions')
+            logger.info('[大世界处理-任务] 没有更多非月度Boss的大世界任务')
             self.os_mission_quit()
             return False
 
         if self.is_in_opsi_explore():
-            logger.info('OpsiExplore is under scheduling, accept missions and receive rewards only')
+            logger.info('[大世界处理-任务] 每月开荒+正在运行，仅接取任务并领取奖励')
             self.os_mission_quit()
             return False
 
-        logger.info('Checkout os mission')
+        logger.info('[大世界处理-任务] 接取大世界任务')
         for _ in self.loop():
             # 结束
             if self.is_zone_pinned():
                 if self.get_zone_pinned_name() == 'ARCHIVE':
-                    logger.info('Pinned at archive zone')
+                    logger.info('[大世界处理-任务] 固定在档案区域')
                     self.globe_enter(zone=self.name_to_zone(72))
                     return 'pinned_at_archive_zone'
                 else:
-                    logger.info('Pinned at mission zone')
+                    logger.info('[大世界处理-任务] 固定在任务区域')
                     self.globe_enter(zone=self.name_to_zone(72))
                     return 'pinned_at_mission_zone'
             if self.is_in_map() and self.info_bar_count():
-                logger.info('Already at mission zone')
+                logger.info('[大世界处理-任务] 已在任务区域')
                 return 'already_at_mission_zone'
 
             if self.appear_then_click(MISSION_CHECKOUT, offset=checkout_offset, interval=2, similarity=0.78):
@@ -210,7 +216,7 @@ class MissionHandler(GlobeOperation, ZoneManager):
             in: is_in_map
             out: is_in_map
         """
-        logger.hr('OS mission overview accept', level=1)
+        logger.hr('大世界任务总览接取', level=1)
         # is_in_map
         self.os_map_goto_globe(unpin=False)
         # is_in_globe
@@ -235,15 +241,14 @@ class MissionHandler(GlobeOperation, ZoneManager):
                 continue
             if self.info_bar_count():
                 if skip_siren_mission:
-                    logger.info('Unable to accept missions, '
-                                'because there are multiple Siren Research missions with the same name')
+                    logger.info('[大世界处理-任务] 无法接受任务，存在多个同名塞壬研究任务')
                     success = True
                 else:
-                    logger.info('Unable to accept missions, because reached the maximum number of missions')
+                    logger.info('[大世界处理-任务] 无法接受任务，已达任务数量上限')
                     success = False
                 break
             if self.appear(MISSION_OVERVIEW_EMPTY, offset=(20, 20)):
-                logger.info('No more missions to accept')
+                logger.info('[大世界处理-任务] 无更多任务可接受')
                 success = True
                 break
 
@@ -263,26 +268,24 @@ class MissionHandler(GlobeOperation, ZoneManager):
 
     def is_in_opsi_explore(self):
         """
-        判断任务 OpsiExplore 是否正在调度中。
+        判断任务每月开荒+是否正在调度中。
 
         Returns:
-            bool: OpsiExplore 是否正在调度中。
+            bool: 每月开荒+是否正在调度中。
         """
         enable = self.config.is_task_enabled('OpsiExplore')
         next_run = self.config.cross_get(keys='OpsiExplore.Scheduler.NextRun', default=DEFAULT_TIME)
         next_reset = get_os_next_reset()
-        logger.attr('OpsiNextReset', next_reset)
-        logger.attr('OpsiExplore', (enable, next_run))
+        logger.attr('大世界下次重置', next_reset)
+        logger.attr('每月开荒+', (enable, next_run))
         # -12 小时以处理夏令时
         # `next_run` 可能在夏令时之前计算，但现在是夏令时
         # 2023-03-14 11:15:28.423 | INFO | [OpsiNextReset] 2023-04-01 03:00:00
         # 2023-03-14 11:15:28.425 | INFO | [OpsiExplore] (True, datetime.datetime(2023, 4, 1, 2, 0))
-        # 2023-03-14 11:15:28.426 | INFO | OpsiExplore is still running, accept missions only...
+        # 2023-03-14 11:15:28.426 | INFO | 每月开荒+仍在运行，仅接取任务...
         if enable and next_run < next_reset - timedelta(hours=12):
-            logger.info('OpsiExplore is still running, accept missions only. '
-                        'Missions will be finished when OpsiExplore visits every zones, '
-                        'no need to worry they are left behind.')
+            logger.info('每月开荒+仍在运行，仅接取任务。每月开荒+访问所有区域时会完成这些任务，不必担心遗漏。')
             return True
         else:
-            logger.info('Not in OpsiExplore, able to do OpsiDaily')
+            logger.info('未处于每月开荒+，可以执行大世界每日+')
             return False

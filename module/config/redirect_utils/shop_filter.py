@@ -1,3 +1,9 @@
+"""商店过滤器配置重定向工具。
+
+提供 bp_redirect 等函数，用于将商店过滤器的旧版科研蓝图格式
+（如 PRBP、PROdinBP）迁移转换为新版系列格式（如 PRS1、PROdinS3）。
+"""
+
 import re
 
 FILTER_REGEX_SERIES = re.compile(
@@ -60,7 +66,7 @@ def voucher_redirect(value):
     from using banned strings i.e. Logger, LoggerT[1-6],
     LoggerArchive, or LoggerArchiveT[1-6]
     Banned strings are used for special circumstances
-    handled by AzurPilot
+    handled by ALAS
     """
     matches = re.findall(FILTER_REGEX_VOUCHER, value)
     if not matches:

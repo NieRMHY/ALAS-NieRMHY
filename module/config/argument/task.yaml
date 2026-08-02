@@ -140,6 +140,13 @@ Event:
       - Coalition
       - StopCondition
       - Emotion
+    CoalitionScuttle:
+      - Scheduler
+      - CoalitionScuttle
+      - Campaign
+      - Coalition
+      - StopCondition
+      - Emotion
     MaritimeEscort:
       - Scheduler
       - MaritimeEscort
@@ -440,6 +447,16 @@ Island:
       - Scheduler
       - IslandPearlSell
 
+# ==================== Fleet Management ====================
+
+FleetManagement:
+  menu: collapse
+  page: setting
+  tasks:
+    FleetScan: []
+    FleetInfo:
+      - FleetInfo
+
 # ==================== Tool ====================
 
 Tool:
@@ -454,6 +471,8 @@ Tool:
       - EventStory
     BoxDisassemble:
       - BoxDisassemble
+    AutoEquip:
+      - AutoEquip
     Benchmark:
       - Benchmark
     OcrBenchmark:

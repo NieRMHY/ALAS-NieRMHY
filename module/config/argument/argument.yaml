@@ -116,6 +116,10 @@ Emulator:
   ControlMethod:
     value: MaaTouch
     option: [ADB, uiautomator2, minitouch, Hermit, MaaTouch]
+  GameSettings:
+    type: checkbox
+    value: false
+    option: [true, false]
   ScreenshotDedithering: false
   AdbRestart: false
 EmulatorInfo:
@@ -188,10 +192,14 @@ Error:
 Optimization:
   OcrDevice:
     value: auto
-    option: [auto, cpu, gpu, ane]
+    option: [auto, qnn_npu, openvino_npu, openvino_gpu, gpu, openvino_cpu, cpu, ane]
   OcrBackend:
     value: auto
     option: [auto, onnxruntime, ncnn]
+  OcrWindowsMlVendorEp:
+    type: checkbox
+    value: true
+    option: [true, false]
   OcrModelVersionEnglish:
     value: auto
     option:
@@ -451,6 +459,8 @@ Fleet:
         fleet1_all_fleet2_standby,
         fleet1_standby_fleet2_all,
       ]
+  SkipPreparation:
+    value: false
 Submarine:
   Fleet:
     value: 0
@@ -552,8 +562,8 @@ GemsFarming:
       ranger: null
   UseEmotionFirst: false
   IgnoreEmotionWarning: false
-  ALLowHighFlagshipLevel: false
-  ALLowLowVanguardLevel: false
+  AllowHighFlagshipLevel: false
+  AllowLowVanguardLevel: false
   DelayTaskIFNoFlagship: false
   CommissionLimit: false
   VanguardLevelMin:
@@ -562,7 +572,6 @@ GemsFarming:
   VanguardLevelMax:
     value: 125
     validate: [1, 125]
-
 # ==================== Event ====================
 
 EventGeneral:
@@ -603,11 +612,22 @@ MaritimeEscort:
   Enable: true
 Coalition:
   Mode:
-    value: tc3
-    option: [ tc1, tc2, tc3, sp, ex ]
+    value: hard
+    option: [ easy, normal, hard, sp, ex ]
   Fleet:
     value: single
     option: [ single, multi ]
+CoalitionScuttle:
+  Sacrifice:
+    value: vanguard
+    option: [ vanguard, flagship, vanguard_flagship ]
+  # Add by MHY, 编队1/2好感度：每场胜利且出击时心情≥40 累加 0.07，满 100 暂停任务
+  Fleet1Affection:
+    value: 0.0
+    validate: [0, 100]
+  Fleet2Affection:
+    value: 0.0
+    validate: [0, 100]
 EventShop:
   UnlockSSRShip: true
   BuyURShip:
@@ -693,9 +713,6 @@ Research:
   UseCube:
     value: only_05_hour
     option: [always_use, only_05_hour, only_no_project, do_not_use]
-  CubePreserve:
-    value: 0
-    validate: [0, 999999]
   UseCoin:
     value: always_use
     option: [always_use, only_05_hour, only_no_project, do_not_use]
@@ -703,6 +720,8 @@ Research:
     value: always_use
     option: [always_use, only_05_hour, only_no_project, do_not_use]
   AllowDelay: true
+  AllowGenreT: false
+  RemainingCommissions: -1
   PresetFilter:
     value: series_9_blueprint_ta152
     option:
@@ -1128,7 +1147,6 @@ OpsiMeowfficerFarming:
   TargetZone:
     value: 0
   StayInZone: false
-  APPreserveUntilReset: false
 OpsiTarget:
   TargetFarming: false
   TargetZone:
@@ -1212,6 +1230,16 @@ OpsiScheduling:
   TaskPriority:
     type: textarea
     value: OpsiStronghold > OpsiObscure > OpsiAbyssal > OpsiMeowfficerFarming
+  MonthEndActionPointCleanupEnable:
+    value: false
+    option: [true, false]
+  MonthEndActionPointCleanupDays:
+    value: 0
+  MonthEndActionPointPreserve:
+    value: 0
+  MonthEndShopPurchase:
+    value: true
+    option: [true, false]
 OpsiPreventActionPointOverflow:
   Task:
     value: OpsiScheduling
@@ -1849,6 +1877,18 @@ IslandBusinessShop5:
     value: |-
       30 > 20 > cheese > 10
 
+# ==================== Fleet Management ====================
+
+FleetInfo:
+  Result:
+    type: stored
+    value: {}
+    display: hide
+  Record:
+    type: stored
+    value: 2020-01-01 00:00:00
+    display: hide
+
 # ==================== Tools ====================
 
 Daemon:
@@ -1868,6 +1908,30 @@ BoxDisassemble:
   BlueBoxLimit: 1000
   UseWhiteBox: true
   WhiteBoxLimit: 2000
+AutoEquip:
+  ShipLimit:
+    value: 0
+    validate: [0, 9999]
+  EnableSlot1:
+    type: checkbox
+    value: true
+    option: [true, false]
+  EnableSlot2:
+    type: checkbox
+    value: true
+    option: [true, false]
+  EnableSlot3:
+    type: checkbox
+    value: true
+    option: [true, false]
+  EnableSlot4:
+    type: checkbox
+    value: true
+    option: [true, false]
+  EnableSlot5:
+    type: checkbox
+    value: true
+    option: [true, false]
 Benchmark:
   DeviceType:
     value: emulator

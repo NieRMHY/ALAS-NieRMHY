@@ -1,3 +1,14 @@
+"""
+大世界每日任务模块。
+
+遍历所有碧蓝港口执行每日港口任务，包括接取/完成任务委托、
+修理舰队、补给物资等。支持随机化港口遍历顺序以降低检测风险。
+任务完成后自动延迟至次日服务器更新时间。
+
+Classes:
+    OpsiDaily: 大世界每日任务处理器，继承 OSMap。
+"""
+
 import numpy as np
 
 from module.config.config import TaskEnd
@@ -21,14 +32,14 @@ class OpsiDaily(OSMap):
             in: page_os, 大世界地图
             out: page_os, 大世界地图
         """
-        logger.hr('OS port mission', level=1)
+        logger.hr('大世界-大世界每日+ 港口任务', level=1)
         ports = ['NY City', 'Dakar', 'Taranto', 'Gibraltar', 'Brest', 'Liverpool', 'Kiel', 'St. Petersburg']
         if np.random.uniform() > 0.5:
             ports.reverse()
 
         for port in ports:
             port = self.name_to_zone(port)
-            logger.hr(f'OS port daily in {port}', level=2)
+            logger.hr(f'大世界-大世界每日+ 港口每日, port={port}', level=2)
             self.globe_goto(port)
 
             self.run_auto_search()
@@ -68,7 +79,7 @@ class OpsiDaily(OSMap):
             ActionPointLimit: 行动力不足时跳过当前区域。
         """
         if get_os_reset_remain() > 0:
-            logger.info('More than 1 day to OpSi reset, skip OS clear mission zones')
+            logger.info('距离大世界重置超过 1 天，跳过大世界每日+任务海域清理')
             return
 
         def os_daily_check_zone(zone):
@@ -82,11 +93,11 @@ class OpsiDaily(OSMap):
                 .filter(os_daily_check_zone) \
                 .sort_by_clock_degree(center=(1252, 1012), start=self.zone.location)
         except ScriptError:
-            logger.warning('Invalid zones setting, skip OS clear mission zones')
+            logger.warning('任务海域配置无效，跳过大世界每日+任务海域清理')
             zones = []
 
         for zone in clear_zones:
-            logger.hr(f'OS clear mission zones, zone_id={zone.zone_id}', level=1)
+            logger.hr(f'大世界-大世界每日+ 清理任务海域, zone_id={zone.zone_id}', level=1)
             try:
                 self.globe_goto(zone, types='SAFE', refresh=True)
             except ActionPointLimit:
@@ -119,7 +130,7 @@ class OpsiDaily(OSMap):
             in: page_os, 大世界地图
             out: page_os, 大世界地图
         """
-        logger.hr('OS finish daily mission', level=1)
+        logger.hr('大世界-大世界每日+ 完成每日任务', level=1)
         count = 0
         # 防止港口类型每日任务的无限刷新循环（如对话/拾取/商店交互等自动搜索无法完成的情况）
         stuck_port_zone_id = None
@@ -167,10 +178,8 @@ class OpsiDaily(OSMap):
 
                 if stuck_port_retry >= 3:
                     logger.warning(
-                        f'Port mission appears stuck in zone {zone_id} '
-                        f'({self.zone}). Auto-search made no progress after '
-                        f'{stuck_port_retry} retries. Stop OpsiDaily to avoid '
-                        f'infinite zone refresh loop.')
+                        f'大世界每日+港口任务疑似卡在海域 {zone_id} ({self.zone})，'
+                        f'{stuck_port_retry} 次重试后自律寻敌仍无进展，停止大世界每日+以避免无限刷新海域。')
                     abort_due_to_stuck_port = True
                     break
             else:
@@ -194,10 +203,10 @@ class OpsiDaily(OSMap):
             self.logger_use()
 
         if self.config.OpsiDaily_SkipSirenResearchMission and self.config.SERVER not in ['cn']:
-            logger.warning(f'OpsiDaily.SkipSirenResearchMission is not supported in {self.config.SERVER}')
+            logger.warning(f'[大世界-日常] 跳过塞壬研究任务不支持 {self.config.SERVER} 服务器')
             self.config.OpsiDaily_SkipSirenResearchMission = False
         if self.config.OpsiDaily_KeepMissionZone and self.config.SERVER not in ['cn']:
-            logger.warning(f'OpsiDaily.KeepMissionZone is not supported in {self.config.SERVER}')
+            logger.warning(f'[大世界-日常] 保留任务区域不支持 {self.config.SERVER} 服务器')
             self.config.OpsiDaily_KeepMissionZone = False
 
         skip_siren_mission = self.config.OpsiDaily_SkipSirenResearchMission
@@ -219,7 +228,7 @@ class OpsiDaily(OSMap):
 
         if self.config.OpsiDaily_KeepMissionZone:
             if self.zone.is_azur_port:
-                logger.info('Already in azur port')
+                logger.info('[大世界-日常] 已在碧蓝港口')
             else:
                 self.globe_goto(self.zone_nearest_azur_port(self.zone))
             self.os_daily_clear_all_mission_zones()

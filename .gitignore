@@ -17,8 +17,12 @@ dev_tools/debug_tools
 /campaign/test/
 /toolkit
 *.lock
+# Modify by MHY, 放行 uv.lock：lockfile 必须入库，否则 Windows 端 dependency_sync 的
+# uv sync --frozen 会用过期的本地 lock，上游依赖版本更新无法生效（静默装旧版本）。
+!uv.lock
 config/reloadflag
 config/reloadalas
+config/webui-dependency-sync-pending
 /password.txt
 test.py
 test/
@@ -45,6 +49,8 @@ docs/
 .idea/**/shelf
 
 # Generated files
+.github/scripts/node_modules/
+.github/scripts/package-lock.json
 .idea/**/contentModel.xml
 
 # Sensitive or high-churn files
@@ -312,3 +318,6 @@ cursor-helper/**/review/reports/files/
 
 AGENTS.md
 RTK.md
+
+# Add by MHY, agent 配置目录本地化：不纳入 git 管理，上游合并时不采用上游版本
+.claude/

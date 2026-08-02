@@ -1,3 +1,8 @@
+"""岛屿珍珠售卖模块。
+
+管理每周珍珠的采购与售卖流程，根据交易周期和每日刷新时间自动执行。
+支持价格 OCR 识别与重试机制，处理岛屿珍珠交易的定时调度逻辑。
+"""
 import re
 from datetime import timedelta
 
@@ -48,7 +53,7 @@ class IslandPearlSell(Island):
     PHASE_DELAYED = "delayed"
 
     def run(self):
-        logger.hr("Island Pearl Sell Run", level=1)
+        logger.hr("岛屿珍珠出售运行", level=1)
         now = current_time().replace(microsecond=0)
 
         pearl_trade_time = self._get_next_pearl_trade_time(now=now)
@@ -56,10 +61,10 @@ class IslandPearlSell(Island):
         # 判断当前触发类型
         trade_due = self._trade_due(now=now, next_time=pearl_trade_time)
         refresh_due = False if trade_due else self._refresh_due(now=now)
-        logger.attr("SchedulerNextRun", self.config.Scheduler_NextRun)
-        logger.attr("PearlTradeTime", pearl_trade_time)
-        logger.attr("PearlTradeDue", trade_due)
-        logger.attr("PearlRefreshDue", refresh_due)
+        logger.attr("下次调度运行", self.config.Scheduler_NextRun)
+        logger.attr("珍珠交易时间", pearl_trade_time)
+        logger.attr("珍珠交易到期", trade_due)
+        logger.attr("珍珠刷新到期", refresh_due)
 
         if not trade_due and not refresh_due:
             target = self._next_run(now=now)
@@ -107,7 +112,7 @@ class IslandPearlSell(Island):
 
     def run_buy_phase(self):
         """执行采购阶段。"""
-        logger.hr("Pearl buy phase", level=2)
+        logger.hr("珍珠购买阶段", level=2)
         self._purchase_quota_exhausted = False
 
         # 检查购买延时——如果还没到购买时间则跳过采购，让售卖正常执行
@@ -155,6 +160,7 @@ class IslandPearlSell(Island):
             in_friend_island = True
         else:
             logger.info(f"[岛屿-珍珠采购] 本岛价格命中采购价 {home_price}")
+            self.back_to_pearl_shop_or_map()
 
         if not self._goto_pearl_shop_at("port"):
             if in_friend_island:
@@ -213,7 +219,7 @@ class IslandPearlSell(Island):
 
     def run_sell_phase(self):
         """执行售卖阶段。"""
-        logger.hr("Pearl sell phase", level=2)
+        logger.hr("珍珠出售阶段", level=2)
         sell_price_limit = int(self.config.IslandPearlSell_SellPrice)
 
         if not self._enter_home_pearl_shop("assembly"):
@@ -360,20 +366,6 @@ class IslandPearlSell(Island):
                 continue
         return False
 
-    def exit_friend_island(self):
-        """退出好友岛屿。"""
-        logger.info("[岛屿-珍珠采购] 退出好友岛屿")
-        self._island_expect_friend = False
-        for _ in self.loop(timeout=20):
-            if self.appear_then_click(AIR_DROP_RUN_AWAY, offset=(20, 20), interval=2):
-                continue
-            if self.appear(ISLAND_ACCESS_MAP, offset=(20, 20)):
-                return True
-            if self.ui_additional():
-                continue
-        logger.warning("[岛屿-珍珠采购] 退出好友岛屿超时")
-        return False
-
     # ==================== 好友排名 ====================
 
     def visit_friend_by_rank(self, mode, threshold):
@@ -398,7 +390,7 @@ class IslandPearlSell(Island):
 
         self._rank_visit_target_selected = True
         logger.info(f"[岛屿-珍珠采购] 选择好友珍珠价格 {target['price']}")
-        return self.click_rank_visit(target["visit_button"])
+        return self.check_visit_friend_island(target["visit_button"])
 
     def switch_to_friend_rank_tab(self):
         """切换到好友排名页签。"""
@@ -530,12 +522,20 @@ class IslandPearlSell(Island):
         )
 
     def click_rank_visit(self, visit_button):
-        """点击好友排名拜访按钮并等待进入好友岛屿。"""
+        """点击好友排名拜访按钮并等待进入好友岛屿。
+
+        检测逻辑分为两个阶段：
+        1. 等待 ISLAND_ACCESS_MAP（右上角地图入口）出现，表示已开始加载好友岛
+        2. 等待 AIR_DROP_RUN_AWAY（顶部"离开"按钮）也出现，确认场景完全加载完毕
+        只有两者同时出现（is_in_friend_island() 为 True），才视为成功进入好友岛屿。
+        """
         click_timer = Timer(3).start()
         self.device.click(visit_button)
+        self.device.sleep(3)
         for _ in self.loop(timeout=30, skip_first=False):
-            if self.appear(ISLAND_ACCESS_MAP, offset=(20, 20)):
+            if self.is_in_friend_island():
                 self._island_expect_friend = True
+                logger.info("[岛屿-珍珠采购] 成功进入好友岛屿")
                 return True
             if self.appear(CANT_ACCESS, offset=(20, 20)):
                 logger.info("[岛屿-珍珠采购] 好友不可访问")
@@ -678,6 +678,7 @@ class IslandPearlSell(Island):
             logger.warning(f"[岛屿-珍珠采购] 打开珍珠{self._action_name(action)}弹窗超时")
             return False
 
+        self.device.sleep(0.5)
         if not self.adjust_trade_count(count):
             logger.warning(f"[岛屿-珍珠采购] 珍珠{self._action_name(action)}数量未调整到目标: {count}")
             return False
@@ -779,7 +780,7 @@ class IslandPearlSell(Island):
 
     def run_price_refresh(self):
         """每日 03:00 进入珍珠售卖商店后立即退出，刷新价格显示。"""
-        logger.hr("Pearl price refresh", level=2)
+        logger.hr("珍珠价格刷新", level=2)
         if not self._enter_home_pearl_shop("assembly"):
             logger.warning("[岛屿-珍珠采购] 价格刷新：进入珍珠商店失败")
             return False

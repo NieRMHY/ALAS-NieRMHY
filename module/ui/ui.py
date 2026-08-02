@@ -1,3 +1,28 @@
+"""UI 导航核心模块。
+
+提供游戏页面间的自动导航功能，是所有需要页面切换的操作的基础。
+
+核心方法：
+- ui_goto(page): 沿最短路径导航到目标页面
+- ui_ensure(page): 检测当前页面并导航到目标页面
+- ui_page_appear(page): 检测指定页面是否出现
+- ui_back(): 点击返回按钮
+- ui_get_current_page(): 检测当前所在页面
+
+导航机制：
+1. 通过 Page.init_connection() 预计算页面间的最短路径
+2. 每个页面有 check_button 用于检测
+3. 页面间通过 link(button, destination) 建立连接
+4. 导航时沿 parent 链逐页跳转
+
+特殊处理：
+- 弹窗关闭：导航过程中自动关闭各种弹窗
+- 剧情跳过：自动跳过插入的剧情
+- 页面等待：等待页面完全加载后再继续
+
+继承自 InfoHandler，可处理导航过程中的各种弹窗。
+"""
+
 from module.base.button import Button
 from module.base.decorator import run_once
 from module.base.timer import Timer
@@ -22,6 +47,14 @@ from module.ui_white.assets import *
 
 
 class UI(InfoHandler):
+    """UI 导航核心类。
+
+    提供游戏页面间的自动导航功能。所有需要页面切换的操作
+    都通过此类的方法进行导航。
+
+    Attributes:
+        ui_current (Page): 当前所在的页面。
+    """
     ui_current: Page
 
     def ui_page_appear(self, page, offset=(30, 30), interval=0):
@@ -99,7 +132,7 @@ class UI(InfoHandler):
             retry_wait (int, float): 重试等待时间（秒）。
             skip_first_screenshot (bool): 是否跳过首次截图。
         """
-        logger.hr("UI click")
+        logger.hr("UI 点击")
         if appear_button is None:
             appear_button = click_button
 
@@ -163,12 +196,12 @@ class UI(InfoHandler):
         Returns:
             Page: 当前页面对象。
         """
-        logger.info("UI get current page")
+        logger.info("UI 获取当前页面")
 
         @run_once
         def app_check():
             if not self.device.app_is_running():
-                raise GameNotRunningError("Game not running")
+                raise GameNotRunningError("[UI] 游戏未运行")
 
         @run_once
         def minicap_check():
@@ -200,7 +233,7 @@ class UI(InfoHandler):
                     return page
 
             # 未知页面但可以处理
-            logger.info("Unknown ui page")
+            logger.info("[UI] 未知UI页面")
             if self.appear_then_click(GOTO_MAIN, offset=(30, 30), interval=2):
                 timeout.reset()
                 continue
@@ -222,17 +255,18 @@ class UI(InfoHandler):
                 orientation_timer.reset()
 
         # 未知页面，需要手动切换
-        logger.warning("Unknown ui page")
-        logger.attr("EMULATOR__SCREENSHOT_METHOD", self.config.Emulator_ScreenshotMethod)
-        logger.attr("EMULATOR__CONTROL_METHOD", self.config.Emulator_ControlMethod)
-        logger.attr("SERVER", self.config.SERVER)
-        logger.warning("Starting from current page is not supported")
-        logger.warning(f"Supported page: {[str(page) for page in Page.iter_pages()]}")
-        logger.warning('Supported page: Any page with a "HOME" button on the upper-right')
-        logger.critical("Please switch to a supported page within 10 seconds, or the script will try to restart the game automatically")
-
+        logger.warning("[UI] 未知UI页面")
+        logger.attr("模拟器截图方式", self.config.Emulator_ScreenshotMethod)
+        logger.attr("模拟器控制方式", self.config.Emulator_ControlMethod)
+        logger.attr("服务器", self.config.SERVER)
+        logger.warning("[UI] 不支持从当前页面启动")
+        logger.warning(f"[UI] 支持的页面: {[str(page) for page in Page.iter_pages()]}")
+        logger.warning('[UI] 支持的页面: 任何右上角有"HOME"按钮的页面')
+        logger.critical("[UI] 无法进入主界面")  # Modify by MHY, 去傲娇语
+        logger.critical("[UI] 请从支持的页面启动 ALAS，或先在游戏内使用『一键回港』回到主界面")
+        
         # 未知页面自动重启
-        logger.warning("Unknown page detected, try to restart game")
+        logger.warning("[UI] 检测到未知页面，尝试重启游戏")
         from module.handler.login import LoginHandler
         login_handler = LoginHandler(config=self.config, device=self.device)
         login_handler.device.app_stop()
@@ -256,7 +290,9 @@ class UI(InfoHandler):
         Page.init_connection(destination)
         self.interval_clear(list(Page.iter_check_buttons()))
 
-        logger.hr(f"UI goto {destination}")
+        logger.hr(f"UI 导航到 {destination}")
+        # 导航超时计时器：长时间无法识别页面时触发恢复
+        nav_timeout = Timer(30, count=60).start()
         while 1:
             GOTO_MAIN.clear_offset()
             if skip_first_screenshot:
@@ -266,12 +302,12 @@ class UI(InfoHandler):
 
             # 到达目标页面
             if self.ui_page_appear(page=destination, offset=offset):
-                logger.info(f'Page arrive: {destination}')
+                logger.info(f'[UI] 到达页面: {destination}')
                 break
             # 主界面新旧主题互为等价：目标为任一主界面时，
             # 检测到另一主题也视为到达
             if destination in (page_main, page_main_white) and self.is_in_main():
-                logger.info(f'Page arrive: {destination}')
+                logger.info(f'[UI] 到达页面: {destination}')
                 break
 
             # 其他页面：按 A* 路径点击导航
@@ -280,18 +316,37 @@ class UI(InfoHandler):
                 if page.parent is None or page.check_button is None:
                     continue
                 if self.appear(page.check_button, offset=offset, interval=5):
-                    logger.info(f'Page switch: {page} -> {page.parent}')
+                    logger.info(f'[UI] 页面切换: {page} -> {page.parent}')
                     button = page.links[page.parent]
                     self.device.click(button)
                     self.ui_button_interval_reset(button)
                     clicked = True
                     break
             if clicked:
+                nav_timeout.reset()
                 continue
 
             # 处理额外弹窗
             if self.ui_additional(get_ship=get_ship):
+                nav_timeout.reset()
                 continue
+
+            # 导航超时：当前页面无法识别，调用 ui_get_current_page 触发恢复
+            if nav_timeout.reached():
+                logger.warning(f'[UI] 导航到 {destination} 超时，尝试检测当前页面并恢复')
+                Page.clear_connection()
+                current = self.ui_get_current_page(skip_first_screenshot=True)
+                if current == destination:
+                    logger.info(f'[UI] 到达页面: {destination}')
+                    return
+                # 主界面新旧主题互为等价
+                if destination in (page_main, page_main_white) and self.is_in_main():
+                    logger.info(f'[UI] 到达页面: {destination}')
+                    return
+                # 重新初始化导航
+                Page.init_connection(destination)
+                self.interval_clear(list(Page.iter_check_buttons()))
+                nav_timeout.reset()
 
         # 重置页面连接
         Page.clear_connection()
@@ -307,17 +362,17 @@ class UI(InfoHandler):
         Returns:
             bool: 是否发生了页面切换。
         """
-        logger.hr("UI ensure")
+        logger.hr("UI 确保页面")
         self.ui_get_current_page(skip_first_screenshot=skip_first_screenshot)
         if self.ui_current == destination:
-            logger.info("Already at %s" % destination)
+            logger.info("[UI] 已在 %s" % destination)
             return False
         # 主界面新旧主题互为等价
         if {self.ui_current, destination} == {page_main, page_main_white}:
-            logger.info("Already at %s (equivalent main page)" % destination)
+            logger.info("[UI] 已在 %s (等效主界面)" % destination)
             return False
         else:
-            logger.info("Goto %s" % destination)
+            logger.info("[UI] 导航到 %s" % destination)
             self.ui_goto(destination, skip_first_screenshot=True)
             return True
 
@@ -342,7 +397,6 @@ class UI(InfoHandler):
             skip_first_screenshot=False,
             fast=True,
             interval=(0.2, 0.3),
-            stall_tolerance=10,
     ):
         """
         确保翻页到指定索引位置，通过 OCR 识别当前页码并点击翻页按钮。
@@ -355,13 +409,9 @@ class UI(InfoHandler):
             skip_first_screenshot (bool): 是否跳过首次截图。
             fast (bool): 默认为 True。当索引不连续时设为 False。
             interval (tuple, int, float): 两次点击之间的间隔（秒）。
-            stall_tolerance (int): 允许索引连续不变的次数，超过后判定为无法达到目标并退出。
         """
-        logger.hr("UI ensure index")
+        logger.hr("UI 确保索引")
         retry = Timer(1, count=2)
-        # 进度停滞检测：记录上一次索引值和连续不变次数，防止因游戏端限制导致死循环
-        last_current = None
-        stall_count = 0
         while 1:
             if skip_first_screenshot:
                 skip_first_screenshot = False
@@ -373,20 +423,9 @@ class UI(InfoHandler):
             else:
                 current = letter(self.device.image)
 
-            logger.attr("Index", current)
+            logger.attr("当前索引", current)
             diff = index - current
             if diff == 0:
-                break
-
-            # 进度停滞检测：当连续stall_tolerance次索引值未变化且diff不为0时退出
-            if current == last_current:
-                stall_count += 1
-            else:
-                stall_count = 0
-                last_current = current
-            if stall_count >= stall_tolerance:
-                logger.warning(f'Index stuck at {current} for {stall_count} times, '
-                               f'unable to reach target {index}, skipping')
                 break
 
             if retry.reached():
@@ -435,7 +474,7 @@ class UI(InfoHandler):
         if self.appear_then_click(LOGIN_RETURN_SIGN, offset=(30, 30), interval=3):
             return True
         if self.appear(EVENT_LIST_CHECK, offset=(30, 30), interval=5):
-            logger.info(f'UI additional: {EVENT_LIST_CHECK} -> {GOTO_MAIN}')
+            logger.info(f'[UI-额外] {EVENT_LIST_CHECK} -> {GOTO_MAIN}')
             if self.appear_then_click(GOTO_MAIN, offset=(30, 30)):
                 return True
         # 月卡即将到期
@@ -450,7 +489,7 @@ class UI(InfoHandler):
         #     return True
         # 通行券新赛季通知弹窗
         if self.appear(BATTLE_PASS_NEW_SEASON, offset=(30, 30), interval=3):
-            logger.info(f'UI additional: {BATTLE_PASS_NEW_SEASON} -> {BACK_ARROW}')
+            logger.info(f'[UI-额外] {BATTLE_PASS_NEW_SEASON} -> {BACK_ARROW}')
             self.device.click(BACK_ARROW)
             return True
         # 物品过期 offset=(37, 72)，皮肤过期 offset=(24, 68)
@@ -461,16 +500,16 @@ class UI(InfoHandler):
             return True
         # 从确认点击误入的页面
         if self.appear(SHIPYARD_CHECK, offset=(30, 30), interval=5):
-            logger.info(f'UI additional: {SHIPYARD_CHECK} -> {GOTO_MAIN}')
+            logger.info(f'[UI-额外] {SHIPYARD_CHECK} -> {GOTO_MAIN}')
             if self.appear_then_click(GOTO_MAIN, offset=(30, 30)):
                 return True
         if self.appear(META_CHECK, offset=(30, 30), interval=5):
-            logger.info(f'UI additional: {META_CHECK} -> {GOTO_MAIN}')
+            logger.info(f'[UI-额外] {META_CHECK} -> {GOTO_MAIN}')
             if self.appear_then_click(GOTO_MAIN, offset=(30, 30)):
                 return True
         # 误点击
         if self.appear(PLAYER_CHECK, offset=(30, 30), interval=3):
-            logger.info(f'UI additional: {PLAYER_CHECK} -> {GOTO_MAIN}')
+            logger.info(f'[UI-额外] {PLAYER_CHECK} -> {GOTO_MAIN}')
             if self.appear_then_click(GOTO_MAIN, offset=(30, 30)):
                 return True
             if self.appear_then_click(BACK_ARROW, offset=(30, 30)):
@@ -488,9 +527,9 @@ class UI(InfoHandler):
         # - 是否打开兑换商店？handle_popup_confirm() 点击确认
         # - EXCHANGE_CHECK 页面，点击返回箭头
         if self._opsi_reset_fleet_preparation_click >= 5:
-            logger.critical("无法确认大世界出击舰队，RESET_FLEET_PREPARATION 点击次数过多")
-            logger.critical("可能原因 #1: 您尚未在大世界中设置任何舰队")
-            logger.critical("可能原因 #2: 您的舰队尚未满足大世界的等级限制")
+            logger.critical("[UI] 无法确认大世界出击舰队")  # Modify by MHY, 去傲娇语
+            logger.critical("[UI] #1: 建议检查您是否在大世界中设置了舰队")
+            logger.critical("[UI] #2: 建议检查您的舰队准入门槛（等级限制）")
             raise RequestHumanTakeover
         if self.appear_then_click(RESET_TICKET_POPUP, offset=(30, 30), interval=3):
             return True
@@ -500,7 +539,7 @@ class UI(InfoHandler):
             self.interval_reset(RESET_TICKET_POPUP)
             return True
         if self.appear(EXCHANGE_CHECK, offset=(30, 30), interval=3):
-            logger.info(f'UI additional: {EXCHANGE_CHECK} -> {GOTO_MAIN}')
+            logger.info(f'[UI-额外] {EXCHANGE_CHECK} -> {GOTO_MAIN}')
             GOTO_MAIN.clear_offset()
             self.device.click(GOTO_MAIN)
             return True
@@ -540,7 +579,7 @@ class UI(InfoHandler):
         # 度假村的活动委托提示
         # 2025.05.29 进入船坞时出现的皮肤功能提示
         if self.appear(GAME_TIPS, offset=(30, 30), interval=2):
-            logger.info(f'UI additional: {GAME_TIPS} -> {GOTO_MAIN}')
+            logger.info(f'[UI-额外] {GAME_TIPS} -> {GOTO_MAIN}')
             self.device.click(GOTO_MAIN)
             return True
 
@@ -558,7 +597,7 @@ class UI(InfoHandler):
             self.interval_reset(GET_SHIP)
             return True
         if self.appear(MEOWFFICER_BUY, offset=(30, 30), interval=3):
-            logger.info(f'UI additional: {MEOWFFICER_BUY} -> {BACK_ARROW}')
+            logger.info(f'[UI-额外] {MEOWFFICER_BUY} -> {BACK_ARROW}')
             self.device.click(BACK_ARROW)
             self.interval_reset(GET_SHIP)
             return True
@@ -582,14 +621,14 @@ class UI(InfoHandler):
             # - Alas 切换到 page_campaign 并从已有关卡撤退
             # - 游戏客户端在 page_campaign W12 界面卡死，点击屏幕无响应
             # - 再次重启游戏客户端可修复此问题
-            logger.info("WITHDRAW button found, wait until map loaded to prevent bugs in game client")
+            logger.info("[UI-额外] 发现撤退按钮，等待地图加载以防止游戏客户端bug")
             self.device.sleep(2)
             self.device.screenshot()
             if self.appear_then_click(WITHDRAW, offset=(30, 30)):
                 self.interval_reset(WITHDRAW)
                 return True
             else:
-                logger.warning("WITHDRAW button does not exist anymore")
+                logger.warning("[UI-额外] 撤退按钮已不存在")
                 self.interval_reset(WITHDRAW)
 
         # 登录相关
@@ -600,7 +639,7 @@ class UI(InfoHandler):
 
         # 误点击
         if self.appear(EXERCISE_PREPARATION, interval=3):
-            logger.info(f'UI additional: {EXERCISE_PREPARATION} -> {GOTO_MAIN}')
+            logger.info(f'[UI-额外] {EXERCISE_PREPARATION} -> {GOTO_MAIN}')
             self.device.click(GOTO_MAIN)
             return True
 
@@ -627,7 +666,7 @@ class UI(InfoHandler):
             return True
         # 白色主题 UI 切换，无偏移量仅颜色匹配
         if self.appear(MAIN_GOTO_MEMORIES_WHITE, interval=3):
-            logger.info(f'UI additional: {MAIN_GOTO_MEMORIES_WHITE} -> {MAIN_TAB_SWITCH_WHITE}')
+            logger.info(f'[UI-额外] {MAIN_GOTO_MEMORIES_WHITE} -> {MAIN_TAB_SWITCH_WHITE}')
             self.device.click(MAIN_TAB_SWITCH_WHITE)
             return True
 
@@ -644,17 +683,17 @@ class UI(InfoHandler):
         if not timer.reached():
             return False
         if IDLE.match_luma(self.device.image, offset=(5, 5)):
-            logger.info(f'UI additional: {IDLE} -> {REWARD_GOTO_MAIN}')
+            logger.info(f'[UI-额外] {IDLE} -> {REWARD_GOTO_MAIN}')
             self.device.click(REWARD_GOTO_MAIN)
             timer.reset()
             return True
         if IDLE_2.match_luma(self.device.image, offset=(5, 5)):
-            logger.info(f'UI additional: {IDLE_2} -> {REWARD_GOTO_MAIN}')
+            logger.info(f'[UI-额外] {IDLE_2} -> {REWARD_GOTO_MAIN}')
             self.device.click(REWARD_GOTO_MAIN)
             timer.reset()
             return True
         if IDLE_3.match_luma(self.device.image, offset=(5, 5)):
-            logger.info(f'UI additional: {IDLE_3} -> {REWARD_GOTO_MAIN}')
+            logger.info(f'[UI-额外] {IDLE_3} -> {REWARD_GOTO_MAIN}')
             self.device.click(REWARD_GOTO_MAIN)
             timer.reset()
             return True

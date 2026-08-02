@@ -25,5 +25,5 @@ Hello, your public IP has been exposed. Please add a password as soon as possibl
 
 
 while True:
-    handle_notify(CONFIG, title="AzurPilot OR Alas", content=CONTENT)
+    handle_notify(CONFIG, title="ALAS OR Alas", content=CONTENT)
     time.sleep(0.5)

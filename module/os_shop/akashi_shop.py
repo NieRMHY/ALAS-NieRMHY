@@ -1,3 +1,9 @@
+"""大世界明石商店模块。
+
+管理大世界（Operation Siren）明石（Akashi）商店的购买逻辑。
+提供各服务器（CN/EN/JP/TW）的物品网格配置差异、商品识别、
+购买决策以及购买流程的状态循环控制。
+"""
 from typing import List
 from module.base.button import Button, ButtonGrid
 from module.base.decorator import Config, cached_property
@@ -80,12 +86,12 @@ class AkashiShop(OSStatus, OSShopUI, Selector, MapEventHandler):
         if len(items):
             min_row = self.os_akashi_shop_items.grids[0, 0].area[1]
             row = [str(item) for item in items if item.button[1] == min_row]
-            logger.info(f'Shop row 1: {row}')
+            logger.info(f'明石商店第 1 行: {row}')
             row = [str(item) for item in items if item.button[1] != min_row]
-            logger.info(f'Shop row 2: {row}')
+            logger.info(f'明石商店第 2 行: {row}')
             return items
         else:
-            logger.info('No shop items found')
+            logger.info('未找到明石商店物品')
             return []
 
     def os_shop_get_item_to_buy_in_akashi(self) -> Item:
@@ -102,7 +108,7 @@ class AkashiShop(OSStatus, OSShopUI, Selector, MapEventHandler):
         # 商店物品不会立即出现，需要确认商店是否为空
         for _ in range(2):
             if not len(items) or any(not item.is_known_item() for item in items):
-                logger.warning('Empty akashi shop or empty items, confirming')
+                logger.warning('明石商店为空或物品为空，正在确认')
                 self.device.sleep((0.3, 0.5))
                 self.device.screenshot()
                 items = self.os_shop_get_items_in_akashi()
