@@ -13,6 +13,7 @@ from module.coalition.combat import CoalitionCombat
 from module.coalition.coalition import Coalition
 from module.exception import ScriptEnd, ScriptError
 from module.logger import logger
+from module.notify import handle_notify
 from module.ui.page import page_coalition
 
 
@@ -340,12 +341,21 @@ class CoalitionScuttleRun(Coalition, CoalitionScuttleCombat):
 
     # Add by MHY, 好感度满100暂停任务
     def check_affection_stop(self):
-        """任一编队好感度达到100时停止任务（抛 TaskEnd 由调度器捕获）。"""
+        """任一编队好感度达到100时禁用任务并发通知（TaskEnd 由调度器捕获）。"""
         a1 = float(self.config.CoalitionScuttle_Fleet1Affection or 0)
         a2 = float(self.config.CoalitionScuttle_Fleet2Affection or 0)
         if a1 >= 100 or a2 >= 100:
             logger.hr('好感度已满，停止连战刷好感任务')
             logger.info(f'编队1好感: {a1:.2f}，编队2好感: {a2:.2f}')
+            # 禁用调度器，避免任务被立即重新调度形成刷屏循环
+            self.config.Scheduler_Enable = False
+            # 通知渠道由 Error_OnePushConfig 配置（配 smtp 即发邮件）
+            handle_notify(
+                self.config.Error_OnePushConfig,
+                title='好感已满，连战暂停',
+                content=f'<{self.config.config_name}> 编队1好感: {a1:.2f}，'
+                        f'编队2好感: {a2:.2f}，连战刷好感已暂停',
+            )
             self.config.task_stop()
 
     def run(self, event='', mode='', fleet='', total=0):
