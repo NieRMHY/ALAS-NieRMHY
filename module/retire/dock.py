@@ -196,14 +196,14 @@ class Dock(Equipment):
         setting.add_setting(
             setting='rarity',
             option_buttons=ButtonGrid(
-                origin=(218, 398), delta=delta, button_shape=button_shape, grid_shape=(7, 1), name='FILTER_RARITY'),
+                origin=(218, 427), delta=delta, button_shape=button_shape, grid_shape=(7, 1), name='FILTER_RARITY'),
             option_names=['all', 'common', 'rare', 'elite', 'super_rare', 'ultra', 'not_available'],
             option_default='all'
         )
         setting.add_setting(
             setting='extra',
             option_buttons=ButtonGrid(
-                origin=(218, 471), delta=delta, button_shape=button_shape, grid_shape=(7, 2), name='FILTER_EXTRA'),
+                origin=(218, 499), delta=delta, button_shape=button_shape, grid_shape=(7, 2), name='FILTER_EXTRA'),
             option_names=['no_limit', 'has_skin', 'can_retrofit', 'enhanceable', 'can_limit_break', 'not_level_max', 'can_awaken',
                           'can_awaken_plus', 'special', 'oath_skin', 'unique_augment_module', 'wear_skin', 'oathed', 'not_available'],
             option_default='no_limit'

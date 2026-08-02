@@ -27,7 +27,6 @@
 """
 import time
 from contextlib import suppress
-from sys import maxsize
 
 import inflection
 
@@ -83,7 +82,6 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
     - 舰队维护: 修理 (fleet_repair)、士气恢复 (fleet_resolve)、EMP 解除。
     - 自律寻敌 (run_auto_search): 清理当前海域的所有敌人和事件。
     - 地图重扫 (map_rescan): 自动搜索后清理遗漏的事件和装置。
-    - 行动力管理 (get_action_point_limit): 月末自动调整行动力策略。
 
     Attributes:
         _auto_search_battle_count (int): 当前自动搜索的战斗次数。
@@ -776,55 +774,6 @@ class OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler):
             self.handle_fleet_repair(revert=False)
 
         return True
-
-    def get_action_point_limit(self, preserve=False):
-        """
-        每月末覆盖用户配置，以便无需手动配置即可消耗所有行动力。
-
-        Args:
-            preserve (bool): 是否保留行动力直到大世界重置。
-
-        Returns:
-            int: 行动力保留值。
-        """
-        if preserve:
-            if self.config.is_task_enabled("OpsiCrossMonth"):
-                logger.info("[大世界-调度] 保留行动点直到大世界跨月")
-                return maxsize
-            else:
-                logger.info(
-                    "[大世界-调度] OpsiCrossMonth 未启用, 跳过 OpsiMeowfficerFarming.APPreserveUntilReset"
-                )
-
-        remain = get_os_reset_remain()
-        if remain <= 0:
-            if self.config.is_task_enabled("OpsiCrossMonth"):
-                logger.info(
-                    "[大世界-调度] 距大世界重置不足1天, OpsiCrossMonth 已启用, "
-                    "临时将行动力保留设为 500"
-                )
-                return 500
-            else:
-                logger.info(
-                    "[大世界-调度] 距大世界重置不足1天, "
-                    "临时将行动力保留设为 0"
-                )
-                return 0
-        elif self.is_cl1_mode_enabled and remain <= 2:
-            logger.info(
-                "[大世界-调度] 距大世界重置不足3天, "
-                "临时将行动力保留设为 2000 (侵蚀1练级)"
-            )
-            return 2000
-        elif remain <= 2:
-            logger.info(
-                "[大世界-调度] 距大世界重置不足3天, "
-                "临时将行动力保留设为 500"
-            )
-            return 500
-        else:
-            logger.info("[大世界-调度] 未接近大世界重置")
-            return maxsize
 
     def handle_after_auto_search(self):
         logger.hr("自动搜索后", level=2)

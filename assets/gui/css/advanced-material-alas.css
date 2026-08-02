@@ -31,9 +31,6 @@
    1. CSS 变量定义
    ========================================== */
 
-/* 引入 Google Fonts 字体：Inter，包含常规、中等和半粗字重 */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
-
 :root {
 	/* === 色彩系统 === */
 	--alas-apple-bg: #f5f5f7;
@@ -1561,6 +1558,33 @@ h6 {
 /* 特定按钮修复 */
 button[style*="--menu-Overview--"] {
 	border-left: none !important;
+}
+
+/* 配置搜索需要覆盖菜单的透明化规则。 */
+#pywebio-scope-menu #pywebio-scope-task_config_search .form-control {
+	background-color: rgba(255, 255, 255, 0.72) !important;
+	border: 1px solid var(--alas-apple-glass-border) !important;
+	box-shadow: var(--alas-apple-shadow-xs) !important;
+	color: var(--alas-apple-text) !important;
+}
+
+#pywebio-scope-menu #pywebio-scope-task_config_search .form-control:focus {
+	border-color: var(--alas-apple-accent) !important;
+	box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.12), var(--alas-apple-shadow-xs) !important;
+}
+
+#pywebio-scope-menu .config-search-result {
+	background-color: rgba(255, 255, 255, 0.5) !important;
+	border: 1px solid rgba(60, 60, 67, 0.14) !important;
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+	color: var(--alas-apple-text) !important;
+}
+
+#pywebio-scope-menu .config-search-result:hover,
+#pywebio-scope-menu .config-search-result:focus-visible {
+	background-color: rgba(0, 122, 255, 0.1) !important;
+	border-color: rgba(0, 122, 255, 0.36) !important;
+	box-shadow: 0 4px 12px rgba(0, 122, 255, 0.12) !important;
 }
 
 /* ==========================================

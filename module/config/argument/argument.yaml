@@ -1147,7 +1147,6 @@ OpsiMeowfficerFarming:
   TargetZone:
     value: 0
   StayInZone: false
-  APPreserveUntilReset: false
 OpsiTarget:
   TargetFarming: false
   TargetZone:
@@ -1231,6 +1230,16 @@ OpsiScheduling:
   TaskPriority:
     type: textarea
     value: OpsiStronghold > OpsiObscure > OpsiAbyssal > OpsiMeowfficerFarming
+  MonthEndActionPointCleanupEnable:
+    value: false
+    option: [true, false]
+  MonthEndActionPointCleanupDays:
+    value: 0
+  MonthEndActionPointPreserve:
+    value: 0
+  MonthEndShopPurchase:
+    value: true
+    option: [true, false]
 OpsiPreventActionPointOverflow:
   Task:
     value: OpsiScheduling
@@ -1867,6 +1876,18 @@ IslandBusinessShop5:
   BoostReplaceFilter:
     value: |-
       30 > 20 > cheese > 10
+
+# ==================== Fleet Management ====================
+
+FleetInfo:
+  Result:
+    type: stored
+    value: {}
+    display: hide
+  Record:
+    type: stored
+    value: 2020-01-01 00:00:00
+    display: hide
 
 # ==================== Tools ====================
 

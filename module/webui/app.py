@@ -7,6 +7,9 @@
 该模块是 WebUI 的顶层入口，被 gui.py 启动时引用。
 """
 
+from hashlib import sha256
+from pathlib import Path
+
 from module.webui.app_dashboard import DashboardMixin
 from module.webui.app_dependencies import (
     Dict,
@@ -25,7 +28,6 @@ from module.webui.app_dependencies import (
     local,
     logger,
     login,
-    os,
     run_js,
     set_env,
     task_handler,
@@ -38,6 +40,7 @@ from module.webui.app_developer_settings import DeveloperSettingsMixin
 from module.webui.app_developer_tools import DeveloperToolsMixin
 from module.webui.app_developer_update import DeveloperUpdateMixin
 from module.webui.app_event_tools import EventToolsMixin
+from module.webui.app_fleet_management import FleetManagementMixin
 from module.webui.app_helpers import (
     build_copyable_device_id,
     build_muted_notice,
@@ -65,7 +68,101 @@ from module.webui.app_statistics_page import StatisticsPageMixin
 from module.webui.app_task_config import TaskConfigMixin
 
 
-INITIAL_WEBUI_CSS = "/static/assets/gui/css/alas.css"
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+
+
+def _versioned_static_asset(relative_path: str) -> str:
+    """返回带内容哈希的相对静态资源地址。"""
+    digest = sha256((PROJECT_ROOT / relative_path).read_bytes()).hexdigest()[:12]
+    return f"static/{relative_path}?v={digest}"
+
+
+INITIAL_WEBUI_CSS = _versioned_static_asset("assets/gui/css/alas.css")
+WEBUI_THEME_STYLE_NAMES = {
+    "dark": ("dark-alas",),
+    "advanced_material": ("advanced-material-alas",),
+    "dark_advanced_material": (
+        "advanced-material-alas",
+        "dark-advanced-material-overrides-alas",
+    ),
+}
+INITIAL_LOADING_JS = """
+(function () {
+    var observer = null;
+    function markReady() {
+        var root = document.getElementById("pywebio-scope-ROOT");
+        var inputs = document.getElementById("input-cards");
+        var hasContent = (root && root.firstElementChild)
+            || (inputs && inputs.firstElementChild)
+            || document.querySelector(".modal");
+        if (!hasContent) return;
+        document.documentElement.classList.add("alas-initial-ready");
+        if (observer) observer.disconnect();
+    }
+    observer = new MutationObserver(markReady);
+    observer.observe(document.body, {childList: true, subtree: true});
+    markReady();
+})();
+"""
+
+
+def _initial_style_names(theme: str) -> tuple[str, ...]:
+    """返回首屏必须通过 HTML 预加载的样式名称。"""
+    return (
+        "alas",
+        "entry-alas",
+        *WEBUI_THEME_STYLE_NAMES.get(theme, ("light-alas",)),
+    )
+
+
+def _initial_loading_css(theme: str) -> str:
+    """生成在 PyWebIO 首条可见输出前展示的轻量加载骨架。"""
+    if theme in ("dark", "dark_advanced_material"):
+        background = "#202225"
+        foreground = "#f2f3f5"
+        accent = "#8b89d8"
+        track = "rgba(139, 137, 216, .22)"
+    else:
+        background = "#f4f5f7"
+        foreground = "#34343d"
+        accent = "#4e4c97"
+        track = "rgba(78, 76, 151, .22)"
+    return f"""
+html:not(.alas-initial-ready) #pywebio-scope-ROOT:empty {{
+    position: fixed;
+    inset: 0;
+    z-index: 2147483000;
+    display: grid;
+    place-items: center;
+    min-height: 100vh;
+    background: {background};
+    color: {foreground};
+}}
+html:not(.alas-initial-ready) #pywebio-scope-ROOT:empty::before {{
+    width: 34px;
+    height: 34px;
+    content: "";
+    border: 3px solid {track};
+    border-top-color: {accent};
+    border-radius: 50%;
+    animation: alas-initial-spin .72s linear infinite;
+}}
+html:not(.alas-initial-ready) #pywebio-scope-ROOT:empty::after {{
+    position: absolute;
+    top: calc(50% + 34px);
+    content: "AzurPilot";
+    font: 600 14px/1.5 system-ui, sans-serif;
+    letter-spacing: .04em;
+}}
+@keyframes alas-initial-spin {{
+    to {{ transform: rotate(360deg); }}
+}}
+@media (prefers-reduced-motion: reduce) {{
+    html:not(.alas-initial-ready) #pywebio-scope-ROOT:empty::before {{
+        animation-duration: 1.8s;
+    }}
+}}
+"""
 
 
 class AlasGUI(
@@ -78,6 +175,7 @@ class AlasGUI(
     OpsiExportMixin,
     ShipExperienceStatisticsMixin,
     CommissionIncomeStatisticsMixin,
+    FleetManagementMixin,
     TaskConfigMixin,
     EventToolsMixin,
     OverviewMixin,
@@ -132,6 +230,15 @@ def app():
     args, _ = parser.parse_known_args()
 
     AlasGUI.set_theme(theme=State.deploy_config.Theme)
+    initial_style_names = _initial_style_names(AlasGUI.theme)
+    initial_css_files = (
+        INITIAL_WEBUI_CSS,
+        *(
+            _versioned_static_asset(f"assets/gui/css/{name}.css")
+            for name in initial_style_names[1:]
+        ),
+    )
+    initial_loading_css = _initial_loading_css(AlasGUI.theme)
     lang.LANG = State.deploy_config.Language
     key = args.key if is_webui_password_set(args.key) else State.deploy_config.Password
     cdn: str | bool = args.cdn if args.cdn else State.deploy_config.CDN
@@ -155,14 +262,17 @@ def app():
     from deploy.atomic import atomic_failure_cleanup
 
     atomic_failure_cleanup("./config")
-    static_path = os.getcwd()
+    static_mounts = {
+        "/static/assets": str(PROJECT_ROOT / "assets"),
+        "/static/doc": str(PROJECT_ROOT / "doc"),
+    }
 
     def _run_gui(initial_page: str = "home") -> None:
         set_env(title="ALAS", output_animation=False)  # Modify by MHY, 网页标题改 ALAS
         load_webui_styles(
             theme=AlasGUI.theme,
             is_mobile=info.user_agent.is_mobile,
-            preloaded_styles=("alas",),
+            preloaded_styles=initial_style_names,
         )
         localstorage = None
         if is_webui_password_set(key):
@@ -180,11 +290,19 @@ def app():
         local.gui = gui
         gui.run(initial_page=initial_page, localstorage=localstorage)
 
-    @webconfig(css_file=INITIAL_WEBUI_CSS)
+    @webconfig(
+        css_file=initial_css_files,
+        css_style=initial_loading_css,
+        js_code=INITIAL_LOADING_JS,
+    )
     def index() -> None:
         _run_gui()
 
-    @webconfig(css_file=INITIAL_WEBUI_CSS)
+    @webconfig(
+        css_file=initial_css_files,
+        css_style=initial_loading_css,
+        js_code=INITIAL_LOADING_JS,
+    )
     def manage() -> None:
         _run_gui(initial_page="manage")
 
@@ -193,8 +311,8 @@ def app():
     application = asgi_app(
         applications=[index, manage],
         cdn=cdn,
-        static_dir=static_path,
-        debug=True,
+        static_mounts=static_mounts,
+        debug=False,
         on_startup=[
             startup,
             lambda: ProcessManager.restart_processes(

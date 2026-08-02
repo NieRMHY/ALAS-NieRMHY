@@ -120,7 +120,7 @@ class State:
             pass
 
         name = cls.placeholder_images[cls.placeholder_index % len(cls.placeholder_images)]
-        return f"/static/assets/spa/{name}"
+        return f"static/assets/spa/{name}"
 
     @classmethod
     def toggle_placeholder(cls) -> str:
@@ -134,7 +134,7 @@ class State:
         except Exception:
             pass
         name = cls.placeholder_images[cls.placeholder_index]
-        return f"/static/assets/spa/{name}"
+        return f"static/assets/spa/{name}"
     
     @classmethod
     def init(cls):

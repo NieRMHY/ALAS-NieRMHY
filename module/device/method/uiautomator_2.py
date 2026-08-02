@@ -104,7 +104,9 @@ def retry(func):
         if func.__name__ in [
             '_app_start_u2_am', '_app_start_u2_monkey',
             'screenshot_uiautomator2',
+            'app_current_uiautomator2',
         ]:
+            # 这些函数失败说明设备连接已断开，应触发重启而非人工介入
             logger.critical(f'[设备-U2] 重试 {func.__name__}() 失败')
             raise EmulatorNotRunningError
 

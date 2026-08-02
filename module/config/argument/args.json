@@ -13674,10 +13674,6 @@
       "StayInZone": {
         "type": "checkbox",
         "value": false
-      },
-      "APPreserveUntilReset": {
-        "type": "checkbox",
-        "value": false
       }
     },
     "OpsiSirenBug": {
@@ -14059,6 +14055,30 @@
       "TaskPriority": {
         "type": "textarea",
         "value": "OpsiStronghold > OpsiObscure > OpsiAbyssal > OpsiMeowfficerFarming"
+      },
+      "MonthEndActionPointCleanupEnable": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "MonthEndActionPointCleanupDays": {
+        "type": "input",
+        "value": 0
+      },
+      "MonthEndActionPointPreserve": {
+        "type": "input",
+        "value": 0
+      },
+      "MonthEndShopPurchase": {
+        "type": "checkbox",
+        "value": true,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "Storage": {
@@ -17454,6 +17474,39 @@
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
         "validate": "datetime"
+      }
+    },
+    "Storage": {
+      "Storage": {
+        "type": "storage",
+        "value": {},
+        "valuetype": "ignore",
+        "display": "disabled"
+      }
+    }
+  },
+  "FleetScan": {
+    "Storage": {
+      "Storage": {
+        "type": "storage",
+        "value": {},
+        "valuetype": "ignore",
+        "display": "disabled"
+      }
+    }
+  },
+  "FleetInfo": {
+    "FleetInfo": {
+      "Result": {
+        "type": "stored",
+        "value": {},
+        "display": "hide"
+      },
+      "Record": {
+        "type": "stored",
+        "value": "2020-01-01 00:00:00",
+        "validate": "datetime",
+        "display": "hide"
       }
     },
     "Storage": {

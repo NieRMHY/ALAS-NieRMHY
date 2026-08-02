@@ -656,7 +656,6 @@ class GeneratedConfig:
     OpsiMeowfficerFarming_HazardLevel = 5  # 2, 3, 4, 5, 6, 10
     OpsiMeowfficerFarming_TargetZone = 0
     OpsiMeowfficerFarming_StayInZone = False
-    OpsiMeowfficerFarming_APPreserveUntilReset = False
 
     # 配置组 `OpsiTarget`
     OpsiTarget_TargetFarming = False
@@ -701,6 +700,10 @@ class GeneratedConfig:
     OpsiScheduling_EnableAbyssal = False  # True, False
     OpsiScheduling_EnableStronghold = False  # True, False
     OpsiScheduling_TaskPriority = 'OpsiStronghold > OpsiObscure > OpsiAbyssal > OpsiMeowfficerFarming'
+    OpsiScheduling_MonthEndActionPointCleanupEnable = False  # True, False
+    OpsiScheduling_MonthEndActionPointCleanupDays = 0
+    OpsiScheduling_MonthEndActionPointPreserve = 0
+    OpsiScheduling_MonthEndShopPurchase = True  # True, False
 
     # 配置组 `OpsiPreventActionPointOverflow`
     OpsiPreventActionPointOverflow_Task = 'OpsiScheduling'  # OpsiScheduling, OpsiHazard1Leveling, OpsiMeowfficerFarming
@@ -982,6 +985,10 @@ class GeneratedConfig:
     IslandBusinessShop5_Product4 = 'None'  # None, cheese, strawberry_milkshake, morning_light, wake_up_call, fruity_fruitier
     IslandBusinessShop5_Product5 = 'None'  # None, cheese, strawberry_milkshake, morning_light, wake_up_call, fruity_fruitier
     IslandBusinessShop5_BoostReplaceFilter = '30 > 20 > cheese > 10'
+
+    # 配置组 `FleetInfo`
+    FleetInfo_Result = {}
+    FleetInfo_Record = datetime.datetime(2020, 1, 1, 0, 0)
 
     # 配置组 `Daemon`
     Daemon_EnterMap = True

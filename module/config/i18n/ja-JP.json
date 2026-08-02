@@ -32,6 +32,10 @@
       "name": "島嶼計画",
       "help": ""
     },
+    "FleetManagement": {
+      "name": "艦隊管理",
+      "help": ""
+    },
     "Tool": {
       "name": "ツールPlus",
       "help": ""
@@ -365,6 +369,14 @@
     "IslandPearlSell": {
       "name": "週間パール取引",
       "help": "minitouchのみ対応。毎週火曜日01:00にパールを自動処理：まず今週のパールを購入し、次に既存のパールを販売します。コインが200x220個分の購入に十分であることを確認してください。これが今週のパールを一括購入するための最低要件です。不足するとエラーが発生する可能性があります。"
+    },
+    "FleetScan": {
+      "name": "艦隊スキャン",
+      "help": "艦隊に編成されている艦船をスキャンします"
+    },
+    "FleetInfo": {
+      "name": "艦隊情報",
+      "help": "最新の艦隊スキャン結果を表示します"
     },
     "Daemon": {
       "name": "半自動クリック",
@@ -3406,10 +3418,6 @@
     "StayInZone": {
       "name": "指定海域での作戦計画を立てる",
       "help": "有効にすると「指定海域」の設定に従って実行します。単一海域ならその海域に留まり、複数海域なら入力順に循環します。指定海域が0でない場合のみ有効です。"
-    },
-    "APPreserveUntilReset": {
-      "name": "月末までアクティブに過ごしましょう",
-      "help": "セイレーン作戦リセット前に、保留行動力を自動的に0に設定し、残余行動力を消費します。侵蝕1レベリングとの併用を推奨します。"
     }
   },
   "OpsiTarget": {
@@ -3606,6 +3614,26 @@
     "TaskPriority": {
       "name": "作戦コイン補充優先度",
       "help": "作戦コイン（黄）が不足している場合、作戦コイン補充任務の実行優先順位。> で区切ります。"
+    },
+    "MonthEndActionPointCleanupEnable": {
+      "name": "OpsiScheduling.MonthEndActionPointCleanupEnable.name",
+      "help": "OpsiScheduling.MonthEndActionPointCleanupEnable.help",
+      "True": "True",
+      "False": "False"
+    },
+    "MonthEndActionPointCleanupDays": {
+      "name": "OpsiScheduling.MonthEndActionPointCleanupDays.name",
+      "help": "OpsiScheduling.MonthEndActionPointCleanupDays.help"
+    },
+    "MonthEndActionPointPreserve": {
+      "name": "OpsiScheduling.MonthEndActionPointPreserve.name",
+      "help": "OpsiScheduling.MonthEndActionPointPreserve.help"
+    },
+    "MonthEndShopPurchase": {
+      "name": "OpsiScheduling.MonthEndShopPurchase.name",
+      "help": "OpsiScheduling.MonthEndShopPurchase.help",
+      "True": "True",
+      "False": "False"
     }
   },
   "OpsiPreventActionPointOverflow": {
@@ -5713,6 +5741,20 @@
       "help": "複数のブースト商品が検出された場合、フィルター順で最初のものを優先して置き換えます；置き換えスロットは商品5→1から最後の空でないスロットを探します"
     }
   },
+  "FleetInfo": {
+    "_info": {
+      "name": "艦隊情報",
+      "help": "艦隊スキャン結果を保存します"
+    },
+    "Result": {
+      "name": "スキャン結果",
+      "help": "艦種と艦隊番号ごとに保存された艦船情報"
+    },
+    "Record": {
+      "name": "スキャン時刻",
+      "help": "最後に艦隊スキャンを完了した時刻"
+    }
+  },
   "Daemon": {
     "_info": {
       "name": "半自動クリック",
@@ -6039,6 +6081,27 @@
     "MenuAlas": {
       "Overview": "概要",
       "Log": "実行ログ"
+    },
+    "TaskConfig": {
+      "SearchPlaceholder": "設定を検索",
+      "SearchNoResult": "一致する設定がありません",
+      "SearchResultCount": "{count} 件の結果"
+    },
+    "FleetManagement": {
+      "StartScan": "スキャン開始",
+      "Scanning": "スキャン中",
+      "ScanStarted": "艦隊スキャンを開始しました",
+      "ScanAlreadyRunning": "このインスタンスはすでに実行中のため、艦隊スキャンを開始できません",
+      "ScanStartFailed": "艦隊スキャンの開始に失敗しました",
+      "LastScan": "最新スキャン",
+      "NoResult": "保存済みの艦隊スキャン結果はありません",
+      "Main": "主力",
+      "Vanguard": "前衛",
+      "Submarine": "潜水艦",
+      "SurfaceFleet": "水上艦隊",
+      "UnderwaterFleet": "水中艦隊",
+      "Fleet": "艦隊",
+      "Ships": "艦船"
     },
     "MenuDevelop": {
       "HomePage": "ホームページ",
