@@ -14,7 +14,6 @@ from module.device.method.minitouch import Minitouch
 from module.device.method.nemu_ipc import NemuIpc
 from module.device.method.scrcpy import Scrcpy
 from module.logger import logger
-from module.config.time_source import now as current_time  # Add by MHY: 补上游 #446 遗漏的 current_time import
 
 
 class Control(Hermit, Minitouch, Scrcpy, MaaTouch, NemuIpc):
