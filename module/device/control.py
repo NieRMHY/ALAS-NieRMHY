@@ -27,13 +27,6 @@ class Control(Hermit, Minitouch, Scrcpy, MaaTouch, NemuIpc):
         # 将在 Device 中被重写
         pass
 
-    # Add by MHY, 非720p分辨率下将720p空间坐标反向映射到实际屏幕坐标
-    # 后续上游如果提供完整的坐标映射方案，可对比后选择采用上游方案或保留当前方案
-    def _map_coord(self, x, y):
-        sx = getattr(self, '_screen_scale_x', 1.0)
-        sy = getattr(self, '_screen_scale_y', 1.0)
-        return x * sx, y * sy
-
     @cached_property
     def click_methods(self):
         """返回控制方法名到点击实现的映射字典。
