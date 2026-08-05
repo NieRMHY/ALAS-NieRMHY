@@ -621,7 +621,7 @@ CoalitionScuttle:
   Sacrifice:
     value: vanguard
     option: [ vanguard, flagship, vanguard_flagship ]
-  # Add by MHY, 编队1/2好感度：每场胜利且出击时心情≥40 累加 0.07，满 100 暂停任务
+  # Add by MHY, 编队1/2好感度：每场胜利且出击时心情≥40 累加 0.05，满 100 暂停任务
   Fleet1Affection:
     value: 0.0
     validate: [0, 100]

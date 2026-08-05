@@ -458,8 +458,10 @@ def set_file_logger(name=pyw_name):
     logger.addHandler(hdlr)
     logger.log_file = hdlr.log_file
     try:
+        # Modify by MHY, truncate 替代 unlink：多进程并发（如 button_extract 的 worker）时
+        # 删除文件会破坏其他进程创建 handler 时的 os.stat，改为清空内容保持文件存在
         if log_file.exists():
-            log_file.unlink()
+            log_file.write_text('')
     except Exception:
         pass
 

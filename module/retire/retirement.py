@@ -623,9 +623,8 @@ class Retirement(Enhancement, QuickRetireSettingHandler):
             total = self.retire_ships_old()
             total += self.retire_gems_farming_flagships()
             if not total:
-                logger.critical('[退役] 甚至没船能退役，你这设置是认真的吗？')
-                logger.critical('[退役] 既然你想让脚本停，我也挺支持的，毕竟这设置简直不可思议。')
-                logger.critical('[退役] 未退役任何船只，如果你眼瞎没开对应稀有度，请去 Alas 设置打开。')
+                logger.critical('[退役] 未退役任何船只，可能未开启对应稀有度，请检查退役设置。')
+                logger.critical('[退役] 确认设置无误仍无船可退时，请手动处理退役，脚本将请求人工接管。')
                 raise RequestHumanTakeover
         else:
             raise ScriptError(

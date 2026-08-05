@@ -27,7 +27,6 @@ from module.exception import ScriptEnd, ScriptError
 from module.log_res.log_res import LogRes
 from module.logger import logger
 from module.ocr.ocr import Digit
-from module.log_res.log_res import LogRes
 from module.ui.assets import BACK_ARROW
 from module.ui.page import page_campaign_menu
 

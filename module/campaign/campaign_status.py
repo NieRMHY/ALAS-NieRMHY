@@ -82,12 +82,6 @@ class CampaignStatus(UI):
             pt = int(pt.strip())
             logger.attr('活动PT', pt)
             LogRes(self.config).Pt = pt
-# add by NieRMHY 游戏为「×PT」样式，理想输出为 X12345；位数变多或裁剪偏左时可能只剩纯数字
-        elif re.fullmatch(r'\d+', pt.strip()):
-            pt = int(pt.strip())
-            logger.attr('Event_PT', pt)
-            LogRes(self.config).Pt = pt
-# add end
         else:
             logger.warning(f'无效的PT结果: {pt}')
             pt = 0
