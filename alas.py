@@ -10,7 +10,6 @@ import inflection
 from cached_property import cached_property
 
 from module.base.decorator import del_cached_property
-from module.base.api_client import ApiClient
 from module.base.ssh import clear_ssh_host_key
 from module.config.config import AzurLaneConfig, TaskEnd
 from module.config.deep import deep_get, deep_set
@@ -1447,11 +1446,10 @@ class AzurLaneAutoScript:
                     )
                     notify_webui(
                         self.config_name,
-                        title=f"诶呀！{self.config_name}出现了问题！",
+                        title=f"{self.config_name} 出现问题",
                         content=f"因为 {task} 任务失败次数过多！",
                     )
-                    logger.warning("[Alas] 任务连续失败次数过多，正在上报错误日志...")
-                    ApiClient.submit_bug_log(f"ALAS <{self.config_name}> crashed\nTask `{task}` failed {failed} or more times.")
+                    logger.warning("[Alas] 任务连续失败次数过多，调度器退出。")
                     exit(1)
 
                 if failed >= 3:
@@ -1521,18 +1519,13 @@ class AzurLaneAutoScript:
                 )
 
                 # 不再因连续失败次数达到上限而退出，改为持续重试
-                # 上报错误日志（首次失败时上报，避免刷屏）
+                # 首次全局异常时保存本地错误现场
                 if consecutive_global_failures == 1:
                     try:
                         self.save_error_log()
-                        logger.warning("[Alas] 首次全局异常，正在上报错误日志...")
-                        ApiClient.submit_bug_log(
-                            f"ALAS <{self.config_name}> 调度器发生异常。\n"
-                            f"调度器将自动重试恢复（永不退出）。\n"
-                            f"{traceback.format_exc()}"
-                        )
+                        logger.warning("[Alas] 首次全局异常，已保存错误现场。")
                     except Exception as report_e:
-                        logger.warning(f'[Alas] 错误日志上报失败: {report_e}')
+                        logger.warning(f'[Alas] 错误现场保存失败: {report_e}')
 
                 # 尝试重启模拟器（始终尝试，永不放弃）
                 logger.warning("[Alas] 尝试通过重启模拟器 + 强制执行 RESTART 任务来恢复...")
