@@ -2046,10 +2046,6 @@
       "oil": "Diamond > Oil > Cubes",
       "custom": "Customize"
     },
-    "AddShortest": {
-      "name": "Automatically choose the shortest daily commission",
-      "help": "Automatically accept the shortest daily commission, excluding urgent commissions. Has lower priority than the commission filter"
-    },
     "CustomFilter": {
       "name": "Custom Commission Filter",
       "help": "Custom commission filter syntax is the same as the Commission Preset filter"

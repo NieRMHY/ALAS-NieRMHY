@@ -234,11 +234,12 @@ class LoginHandler(UI):
                 if i < RESTART_TRIES - 1:
                     logger.info("[重启] 重试中...")
 
-        # 所有尝试均失败则抛出异常
+        # 所有尝试均失败则抛出 EmulatorNotRunningError，
+        # 由上层调度器触发模拟器重启流程，而非直接终止。
         if not is_restart_success:
             logger.critical(f"[重启] 重试 {RESTART_TRIES} 次了！还是死活起不来，你的运行环境是碳基生物能搞出来的？")
-            from module.exception import RequestHumanTakeover
-            raise RequestHumanTakeover("[重启] 应用重启多次失败")
+            from module.exception import EmulatorNotRunningError
+            raise EmulatorNotRunningError("[重启] 应用重启多次失败，可能模拟器已离线")
         self.handle_app_login()
         # self.ensure_no_unfinished_campaign()
 
