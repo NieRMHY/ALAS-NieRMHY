@@ -19,7 +19,6 @@ DICT_FILTER_PRESET = {
     > UrgentCube-2:15 > UrgentCube-4
     > ExtraDrill-1 > UrgentCube-6 > ExtraCube-1:30 
     > ExtraDrill-2:40 > ExtraDrill-0:20
-    > expire
     > Major > DailyChip > DailyResource
     > ExtraPart-0:30 > ExtraOil-1 > UrgentBox-6 
     > ExtraCube-3 > ExtraPart-1 > UrgentBox-3
@@ -29,6 +28,7 @@ DICT_FILTER_PRESET = {
     > UrgentDrill-4 > UrgentDrill-2:40 > UrgentDrill-2 
     > UrgentDrill-1 > UrgentDrill-1:30 > UrgentDrill-1:10
     > Extra-0:20 > Extra-0:30 > Extra-1:00 > Extra-1:30 > Extra-2:00
+    > ignore
     > shortest
     """,
     'chip_night': """
@@ -46,6 +46,7 @@ DICT_FILTER_PRESET = {
     > UrgentBox-1 > UrgentDrill-1:30 > ExtraDrill-0:20
     > UrgentDrill-1:10 > UrgentDrill-1
     > ExtraOil-1
+    > ignore
     > shortest
     """,
     'chip_24h': """
@@ -62,6 +63,7 @@ DICT_FILTER_PRESET = {
     > ExtraCube-4 > ExtraPart-1:30 > ExtraOil-4
     > UrgentBox-1 > ExtraCube-5
     > Extra-0:20 > Extra-0:30 > Extra-1:00 > Extra-1:30 > Extra-2:00
+    > ignore
     > shortest
     """,
     'cube': """
@@ -70,7 +72,6 @@ DICT_FILTER_PRESET = {
     > UrgentCube-2:15 > UrgentCube-4 > UrgentCube-6 
     > ExtraCube-1:30 > ExtraCube-3 > ExtraCube-4 
     > ExtraCube-8 > UrgentBox-6 > UrgentBox-3 > ExtraCube-5 > UrgentBox-1
-    > expire
     > Major > DailyChip > DailyResource
     > ExtraOil-8 > UrgentDrill-4 > ExtraOil-4 > ExtraOil-1 
     > ExtraDrill-0:20 > UrgentDrill-2:40 > ExtraPart-0:30 
@@ -79,6 +80,7 @@ DICT_FILTER_PRESET = {
     > ExtraPart-1:30 > ExtraDrill-2 
     > ExtraDrill-2:40 > ExtraDrill-3:20 > ExtraDrill-5:20 
     > Extra-0:20 > Extra-0:30 > Extra-1:00 > Extra-1:30 > Extra-2:00
+    > ignore
     > shortest
     """,
     'cube_night': """
@@ -97,6 +99,7 @@ DICT_FILTER_PRESET = {
     > UrgentDrill-1:10 > UrgentDrill-1 > ExtraOil-1
     > ExtraDrill-3:20 > ExtraDrill-2:40 > ExtraDrill-2      
     > Extra-0:20 > Extra-0:30 > Extra-1:00 > Extra-1:30 > Extra-2:00
+    > ignore
     > shortest
     """,
     'cube_24h': """
@@ -110,6 +113,7 @@ DICT_FILTER_PRESET = {
     > ExtraPart-0:30 > ExtraPart-1 > ExtraDrill-1
     > ExtraPart-1:30 > ExtraDrill-2 
     > Extra-0:20 > Extra-0:30 > Extra-1:00 > Extra-1:30 > Extra-2:00
+    > ignore
     > shortest
     """,
     'oil': """
@@ -119,7 +123,6 @@ DICT_FILTER_PRESET = {
     > UrgentBox-6 > ExtraCube-1:30 > UrgentCube-6 
     > UrgentBox-3 > UrgentBox-1
     > UrgentDrill-4 > ExtraOil-8 > UrgentDrill-2:40 > ExtraOil-4
-    > expire
     > Major > DailyChip > DailyResource
     > ExtraCube-3 > UrgentDrill-2 > UrgentDrill-1
     > UrgentDrill-1:30 > UrgentDrill-1:10 
@@ -128,6 +131,7 @@ DICT_FILTER_PRESET = {
     > ExtraDrill-1 > ExtraPart-1:30 > ExtraDrill-2 
     > ExtraDrill-2:40 > ExtraDrill-3:20 > ExtraDrill-5:20 
     > Extra-0:20 > Extra-0:30 > Extra-1:00 > Extra-1:30 > Extra-2:00
+    > ignore
     > shortest
     """,
     'oil_night': """
@@ -146,6 +150,7 @@ DICT_FILTER_PRESET = {
     > ExtraOil-1 > ExtraDrill-3:20 > ExtraDrill-2:40
     > ExtraPart-1:30 > ExtraDrill-2       
     > Extra-0:20 > Extra-0:30 > Extra-1:00 > Extra-1:30 > Extra-2:00
+    > ignore
     > shortest
     """
 }

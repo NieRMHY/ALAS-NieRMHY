@@ -306,6 +306,7 @@
           "en-3",
           "en-4",
           "en-5",
+          "en-6",
           "jp-0",
           "jp-1",
           "jp-2",
@@ -323,7 +324,12 @@
           "jp-14",
           "jp-15",
           "jp-16",
-          "jp-17"
+          "jp-17",
+          "tw-0",
+          "tw-1",
+          "tw-2",
+          "tw-3",
+          "tw-4"
         ]
       },
       "ScreenshotMethod": {
@@ -10520,9 +10526,13 @@
           "custom"
         ]
       },
+      "DynamicProgramming": {
+        "type": "checkbox",
+        "value": true
+      },
       "CustomFilter": {
         "type": "textarea",
-        "value": "DailyEvent > Gem-4 > Gem-2 > Gem-8 > ExtraCube-0:30\n> UrgentCube-1:30 > UrgentCube-1:45 > UrgentCube-3\n> ExtraDrill-5:20 > ExtraDrill-2 > ExtraDrill-3:20\n> UrgentCube-2:15 > UrgentCube-4\n> ExtraDrill-1 > UrgentCube-6 > ExtraCube-1:30\n> ExtraDrill-2:40 > ExtraDrill-0:20\n> expire\n> Major > DailyChip > DailyResource\n> ExtraPart-0:30 > ExtraOil-1 > UrgentBox-6\n> ExtraCube-3 > ExtraPart-1 > UrgentBox-3\n> ExtraCube-4 > ExtraPart-1:30 > ExtraOil-4\n> UrgentBox-1 > ExtraCube-5 > UrgentBox-1\n> ExtraCube-8 > ExtraOil-8\n> UrgentDrill-4 > UrgentDrill-2:40 > UrgentDrill-2\n> UrgentDrill-1 > UrgentDrill-1:30 > UrgentDrill-1:10\n> Extra-0:20 > Extra-0:30 > Extra-1:00 > Extra-1:30 > Extra-2:00\n> shortest"
+        "value": "DailyEvent > Gem-4 > Gem-2 > Gem-8 > ExtraCube-0:30\n> UrgentCube-1:30 > UrgentCube-1:45 > UrgentCube-3\n> ExtraDrill-5:20 > ExtraDrill-2 > ExtraDrill-3:20\n> UrgentCube-2:15 > UrgentCube-4\n> ExtraDrill-1 > UrgentCube-6 > ExtraCube-1:30\n> ExtraDrill-2:40 > ExtraDrill-0:20\n> Major > DailyChip > DailyResource\n> ExtraPart-0:30 > ExtraOil-1 > UrgentBox-6\n> ExtraCube-3 > ExtraPart-1 > UrgentBox-3\n> ExtraCube-4 > ExtraPart-1:30 > ExtraOil-4\n> UrgentBox-1 > ExtraCube-5 > UrgentBox-1\n> ExtraCube-8 > ExtraOil-8\n> UrgentDrill-4 > UrgentDrill-2:40 > UrgentDrill-2\n> UrgentDrill-1 > UrgentDrill-1:30 > UrgentDrill-1:10\n> Extra-0:20 > Extra-0:30 > Extra-1:00 > Extra-1:30 > Extra-2:00\n> ignore\n> shortest"
       },
       "DoMajorCommission": {
         "type": "checkbox",
@@ -14478,7 +14488,12 @@
           "Navigator",
           "OceanCrosser",
           "FeiYun",
-          "Takao"
+          "Takao",
+          "Anchorage",
+          "Belfast",
+          "ChangFeng",
+          "Mogador",
+          "RoyalFortune"
         ]
       },
       "Char2": {
@@ -14513,7 +14528,12 @@
           "Navigator",
           "OceanCrosser",
           "FeiYun",
-          "Takao"
+          "Takao",
+          "Anchorage",
+          "Belfast",
+          "ChangFeng",
+          "Mogador",
+          "RoyalFortune"
         ]
       },
       "Product1": {
@@ -14526,7 +14546,9 @@
           "tofu_combo",
           "hearty_meal",
           "fo_tiao",
-          "amaranth_rice_ball"
+          "amaranth_rice_ball",
+          "matsutake_chicken_soup",
+          "persimmon_cake"
         ]
       },
       "Product2": {
@@ -14539,7 +14561,9 @@
           "tofu_combo",
           "hearty_meal",
           "fo_tiao",
-          "amaranth_rice_ball"
+          "amaranth_rice_ball",
+          "matsutake_chicken_soup",
+          "persimmon_cake"
         ]
       },
       "Product3": {
@@ -14552,7 +14576,9 @@
           "tofu_combo",
           "hearty_meal",
           "fo_tiao",
-          "amaranth_rice_ball"
+          "amaranth_rice_ball",
+          "matsutake_chicken_soup",
+          "persimmon_cake"
         ]
       },
       "Product4": {
@@ -14565,7 +14591,9 @@
           "tofu_combo",
           "hearty_meal",
           "fo_tiao",
-          "amaranth_rice_ball"
+          "amaranth_rice_ball",
+          "matsutake_chicken_soup",
+          "persimmon_cake"
         ]
       },
       "Product5": {
@@ -14578,7 +14606,9 @@
           "tofu_combo",
           "hearty_meal",
           "fo_tiao",
-          "amaranth_rice_ball"
+          "amaranth_rice_ball",
+          "matsutake_chicken_soup",
+          "persimmon_cake"
         ]
       },
       "SeasonalFallback": {
@@ -14591,7 +14621,9 @@
           "tofu_combo",
           "hearty_meal",
           "fo_tiao",
-          "amaranth_rice_ball"
+          "amaranth_rice_ball",
+          "matsutake_chicken_soup",
+          "persimmon_cake"
         ]
       },
       "BoostReplaceFilter": {
@@ -14632,7 +14664,12 @@
           "Navigator",
           "OceanCrosser",
           "FeiYun",
-          "Takao"
+          "Takao",
+          "Anchorage",
+          "Belfast",
+          "ChangFeng",
+          "Mogador",
+          "RoyalFortune"
         ]
       },
       "Char2": {
@@ -14667,7 +14704,12 @@
           "Navigator",
           "OceanCrosser",
           "FeiYun",
-          "Takao"
+          "Takao",
+          "Anchorage",
+          "Belfast",
+          "ChangFeng",
+          "Mogador",
+          "RoyalFortune"
         ]
       },
       "Product1": {
@@ -14682,7 +14724,9 @@
           "fruit_paradise",
           "lavender_tea",
           "sunny_honey",
-          "watermelon_juice"
+          "watermelon_juice",
+          "chrysanthemum_tea",
+          "carrot_pear_juice"
         ]
       },
       "Product2": {
@@ -14697,7 +14741,9 @@
           "fruit_paradise",
           "lavender_tea",
           "sunny_honey",
-          "watermelon_juice"
+          "watermelon_juice",
+          "chrysanthemum_tea",
+          "carrot_pear_juice"
         ]
       },
       "Product3": {
@@ -14712,7 +14758,9 @@
           "fruit_paradise",
           "lavender_tea",
           "sunny_honey",
-          "watermelon_juice"
+          "watermelon_juice",
+          "chrysanthemum_tea",
+          "carrot_pear_juice"
         ]
       },
       "Product4": {
@@ -14727,7 +14775,9 @@
           "fruit_paradise",
           "lavender_tea",
           "sunny_honey",
-          "watermelon_juice"
+          "watermelon_juice",
+          "chrysanthemum_tea",
+          "carrot_pear_juice"
         ]
       },
       "Product5": {
@@ -14742,7 +14792,26 @@
           "fruit_paradise",
           "lavender_tea",
           "sunny_honey",
-          "watermelon_juice"
+          "watermelon_juice",
+          "chrysanthemum_tea",
+          "carrot_pear_juice"
+        ]
+      },
+      "SeasonalFallback": {
+        "type": "select",
+        "value": "sunny_honey",
+        "option": [
+          "None",
+          "spring_flower_tea",
+          "strawberry_lemon",
+          "strawberry_honey",
+          "floral_fruity",
+          "fruit_paradise",
+          "lavender_tea",
+          "sunny_honey",
+          "watermelon_juice",
+          "chrysanthemum_tea",
+          "carrot_pear_juice"
         ]
       },
       "BoostReplaceFilter": {
@@ -14783,7 +14852,12 @@
           "Navigator",
           "OceanCrosser",
           "FeiYun",
-          "Takao"
+          "Takao",
+          "Anchorage",
+          "Belfast",
+          "ChangFeng",
+          "Mogador",
+          "RoyalFortune"
         ]
       },
       "Char2": {
@@ -14818,7 +14892,12 @@
           "Navigator",
           "OceanCrosser",
           "FeiYun",
-          "Takao"
+          "Takao",
+          "Anchorage",
+          "Belfast",
+          "ChangFeng",
+          "Mogador",
+          "RoyalFortune"
         ]
       },
       "Product1": {
@@ -14919,7 +14998,12 @@
           "Navigator",
           "OceanCrosser",
           "FeiYun",
-          "Takao"
+          "Takao",
+          "Anchorage",
+          "Belfast",
+          "ChangFeng",
+          "Mogador",
+          "RoyalFortune"
         ]
       },
       "Char2": {
@@ -14954,7 +15038,12 @@
           "Navigator",
           "OceanCrosser",
           "FeiYun",
-          "Takao"
+          "Takao",
+          "Anchorage",
+          "Belfast",
+          "ChangFeng",
+          "Mogador",
+          "RoyalFortune"
         ]
       },
       "Product1": {
@@ -15060,7 +15149,12 @@
           "Navigator",
           "OceanCrosser",
           "FeiYun",
-          "Takao"
+          "Takao",
+          "Anchorage",
+          "Belfast",
+          "ChangFeng",
+          "Mogador",
+          "RoyalFortune"
         ]
       },
       "Char2": {
@@ -15095,7 +15189,12 @@
           "Navigator",
           "OceanCrosser",
           "FeiYun",
-          "Takao"
+          "Takao",
+          "Anchorage",
+          "Belfast",
+          "ChangFeng",
+          "Mogador",
+          "RoyalFortune"
         ]
       },
       "Product1": {
@@ -15710,7 +15809,9 @@
           "asparagus_shrimp",
           "fish_chip",
           "fo_tiao",
-          "onion_fish"
+          "onion_fish",
+          "matsutake_chicken_soup",
+          "persimmon_cake"
         ]
       },
       "MealNumber1": {
@@ -15733,7 +15834,9 @@
           "asparagus_shrimp",
           "fish_chip",
           "fo_tiao",
-          "onion_fish"
+          "onion_fish",
+          "matsutake_chicken_soup",
+          "persimmon_cake"
         ]
       },
       "MealNumber2": {
@@ -15756,7 +15859,9 @@
           "asparagus_shrimp",
           "fish_chip",
           "fo_tiao",
-          "onion_fish"
+          "onion_fish",
+          "matsutake_chicken_soup",
+          "persimmon_cake"
         ]
       },
       "MealNumber3": {
@@ -15779,7 +15884,9 @@
           "asparagus_shrimp",
           "fish_chip",
           "fo_tiao",
-          "onion_fish"
+          "onion_fish",
+          "matsutake_chicken_soup",
+          "persimmon_cake"
         ]
       },
       "MealNumber4": {
@@ -15802,7 +15909,9 @@
           "asparagus_shrimp",
           "fish_chip",
           "fo_tiao",
-          "onion_fish"
+          "onion_fish",
+          "matsutake_chicken_soup",
+          "persimmon_cake"
         ]
       },
       "MealNumber5": {
@@ -15825,7 +15934,9 @@
           "asparagus_shrimp",
           "fish_chip",
           "fo_tiao",
-          "onion_fish"
+          "onion_fish",
+          "matsutake_chicken_soup",
+          "persimmon_cake"
         ]
       },
       "MealNumber6": {
@@ -15848,7 +15959,9 @@
           "asparagus_shrimp",
           "fish_chip",
           "fo_tiao",
-          "onion_fish"
+          "onion_fish",
+          "matsutake_chicken_soup",
+          "persimmon_cake"
         ]
       },
       "MealNumber7": {
@@ -15871,7 +15984,9 @@
           "asparagus_shrimp",
           "fish_chip",
           "fo_tiao",
-          "onion_fish"
+          "onion_fish",
+          "matsutake_chicken_soup",
+          "persimmon_cake"
         ]
       },
       "MealNumber8": {
@@ -15896,7 +16011,9 @@
           "asparagus_shrimp",
           "fish_chip",
           "fo_tiao",
-          "onion_fish"
+          "onion_fish",
+          "matsutake_chicken_soup",
+          "persimmon_cake"
         ]
       }
     },
@@ -15992,7 +16109,9 @@
           "fruit_paradise",
           "lavender_tea",
           "sunny_honey",
-          "spring_flower_tea"
+          "spring_flower_tea",
+          "chrysanthemum_tea",
+          "carrot_pear_juice"
         ]
       },
       "MealNumber1": {
@@ -16013,7 +16132,9 @@
           "fruit_paradise",
           "lavender_tea",
           "sunny_honey",
-          "spring_flower_tea"
+          "spring_flower_tea",
+          "chrysanthemum_tea",
+          "carrot_pear_juice"
         ]
       },
       "MealNumber2": {
@@ -16034,7 +16155,9 @@
           "fruit_paradise",
           "lavender_tea",
           "sunny_honey",
-          "spring_flower_tea"
+          "spring_flower_tea",
+          "chrysanthemum_tea",
+          "carrot_pear_juice"
         ]
       },
       "MealNumber3": {
@@ -16055,7 +16178,9 @@
           "fruit_paradise",
           "lavender_tea",
           "sunny_honey",
-          "spring_flower_tea"
+          "spring_flower_tea",
+          "chrysanthemum_tea",
+          "carrot_pear_juice"
         ]
       },
       "MealNumber4": {
@@ -16076,7 +16201,9 @@
           "fruit_paradise",
           "lavender_tea",
           "sunny_honey",
-          "spring_flower_tea"
+          "spring_flower_tea",
+          "chrysanthemum_tea",
+          "carrot_pear_juice"
         ]
       },
       "MealNumber5": {
@@ -16097,7 +16224,9 @@
           "fruit_paradise",
           "lavender_tea",
           "sunny_honey",
-          "spring_flower_tea"
+          "spring_flower_tea",
+          "chrysanthemum_tea",
+          "carrot_pear_juice"
         ]
       },
       "MealNumber6": {
@@ -16118,7 +16247,9 @@
           "fruit_paradise",
           "lavender_tea",
           "sunny_honey",
-          "spring_flower_tea"
+          "spring_flower_tea",
+          "chrysanthemum_tea",
+          "carrot_pear_juice"
         ]
       },
       "MealNumber7": {
@@ -16139,7 +16270,9 @@
           "fruit_paradise",
           "lavender_tea",
           "sunny_honey",
-          "spring_flower_tea"
+          "spring_flower_tea",
+          "chrysanthemum_tea",
+          "carrot_pear_juice"
         ]
       },
       "MealNumber8": {
@@ -16162,7 +16295,9 @@
           "fruit_paradise",
           "lavender_tea",
           "sunny_honey",
-          "spring_flower_tea"
+          "spring_flower_tea",
+          "chrysanthemum_tea",
+          "carrot_pear_juice"
         ]
       }
     },

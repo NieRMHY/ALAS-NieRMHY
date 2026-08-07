@@ -1,0 +1,181 @@
+name: Git over CDN Worker
+
+on:
+  workflow_dispatch:
+    inputs:
+      history:
+        description: "生成多少个旧提交的更新包"
+        required: false
+        default: "15"
+      site_url:
+        description: "canonical/sitemap 默认 CDN 首页"
+        required: false
+        default: "https://ap-update-cdn-cloudflare.3463343.xyz/"
+      mirror_urls:
+        description: "额外 CDN 镜像 URL，空格或逗号分隔"
+        required: false
+        default: ""
+      worker_name:
+        description: "Worker 名称，留空时使用 CF_WORKER_NAME secret"
+        required: false
+        default: ""
+      release_mode:
+        description: "上传预览版本、灰度切流或全量发布"
+        required: false
+        type: choice
+        options:
+          - upload
+          - gray
+          - production
+        default: production
+      traffic_percentage:
+        description: "灰度模式中新版本承接的流量百分比（1-99）"
+        required: false
+        default: "10"
+      preview_alias:
+        description: "本次版本的 Worker 预览别名"
+        required: false
+        default: "git-over-cdn-preview"
+  push:
+    branches:
+      - master
+
+concurrency:
+  group: git-over-cdn-worker
+  cancel-in-progress: true
+
+jobs:
+  build-upload-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: master
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Build static update files
+        env:
+          GOC_SITE_URL: ${{ github.event.inputs.site_url || 'https://ap-update-cdn-cloudflare.3463343.xyz/' }}
+          GOC_MIRROR_URLS: ${{ github.event.inputs.mirror_urls || '' }}
+        run: |
+          set -euo pipefail
+          npm --prefix .github/scripts run build:git-over-cdn:eo-esa -- \
+            --branch master \
+            --history "${{ github.event.inputs.history || '15' }}" \
+            --output dist/git-over-cdn \
+            --fetch-full
+
+      - name: Upload Worker version and optionally release traffic
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_WORKER_NAME_SECRET: ${{ secrets.CF_WORKER_NAME }}
+          CF_WORKER_NAME_INPUT: ${{ github.event.inputs.worker_name || '' }}
+          CF_WORKER_RELEASE_MODE: ${{ github.event.inputs.release_mode || 'production' }}
+          CF_WORKER_TRAFFIC_PERCENTAGE: ${{ github.event.inputs.traffic_percentage || '10' }}
+          CF_WORKER_PREVIEW_ALIAS: ${{ github.event.inputs.preview_alias || 'git-over-cdn-preview' }}
+        run: |
+          set -euo pipefail
+
+          : "${CLOUDFLARE_ACCOUNT_ID:?Set CLOUDFLARE_ACCOUNT_ID secret}"
+          : "${CLOUDFLARE_API_TOKEN:?Set CLOUDFLARE_API_TOKEN secret}"
+
+          CF_WORKER_NAME="${CF_WORKER_NAME_INPUT:-${CF_WORKER_NAME_SECRET:-}}"
+          : "${CF_WORKER_NAME:?Set CF_WORKER_NAME secret or workflow input}"
+
+          case "$CF_WORKER_RELEASE_MODE" in
+            upload|gray|production) ;;
+            *)
+              echo "Unsupported release mode: $CF_WORKER_RELEASE_MODE" >&2
+              exit 2
+              ;;
+          esac
+
+          test -f dist/git-over-cdn/index.html
+          test -f dist/git-over-cdn/latest.json
+          test -f dist/git-over-cdn/sitemap.xml
+          test -f dist/git-over-cdn/robots.txt
+
+          VERSION_TAG="git-${GITHUB_SHA}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          VERSION_MESSAGE="Git over CDN static files ${GITHUB_SHA}"
+
+          npx wrangler@latest versions upload dist/git-over-cdn \
+            --name "$CF_WORKER_NAME" \
+            --tag "$VERSION_TAG" \
+            --message "$VERSION_MESSAGE" \
+            --compatibility-date "2026-08-06" \
+            --preview-alias "$CF_WORKER_PREVIEW_ALIAS" \
+            --keep-vars
+
+          if [ "$CF_WORKER_RELEASE_MODE" = "upload" ]; then
+            echo "Worker version uploaded without changing production traffic."
+            exit 0
+          fi
+
+          VERSION_LIST="$(npx wrangler@latest versions list --name "$CF_WORKER_NAME" --json)"
+          NEW_VERSION_ID="$(node -e '
+            let input = "";
+            process.stdin.setEncoding("utf8");
+            process.stdin.on("data", (chunk) => { input += chunk; });
+            process.stdin.on("end", () => {
+              const tag = process.argv[1];
+              const version = JSON.parse(input).find((item) => item.annotations?.["workers/tag"] === tag);
+              if (!version?.id) {
+                throw new Error(`Cannot find the uploaded Worker version for tag: ${tag}`);
+              }
+              process.stdout.write(version.id);
+            });
+          ' "$VERSION_TAG" <<<"$VERSION_LIST")"
+
+          if [ "$CF_WORKER_RELEASE_MODE" = "production" ]; then
+            npx wrangler@latest versions deploy "${NEW_VERSION_ID}@100" \
+              --name "$CF_WORKER_NAME" \
+              --message "全量发布 Git over CDN ${GITHUB_SHA}" \
+              --yes
+            exit 0
+          fi
+
+          case "$CF_WORKER_TRAFFIC_PERCENTAGE" in
+            ""|*[!0-9]*)
+              echo "traffic_percentage must be an integer from 1 to 99" >&2
+              exit 2
+              ;;
+          esac
+          if [ "$CF_WORKER_TRAFFIC_PERCENTAGE" -lt 1 ] || [ "$CF_WORKER_TRAFFIC_PERCENTAGE" -gt 99 ]; then
+            echo "traffic_percentage must be an integer from 1 to 99" >&2
+            exit 2
+          fi
+
+          DEPLOYMENT_STATUS="$(npx wrangler@latest deployments status --name "$CF_WORKER_NAME" --json)"
+          STABLE_VERSION_ID="$(node -e '
+            let input = "";
+            process.stdin.setEncoding("utf8");
+            process.stdin.on("data", (chunk) => { input += chunk; });
+            process.stdin.on("end", () => {
+              const versions = JSON.parse(input).versions;
+              const stable = versions
+                .filter((item) => typeof item.version_id === "string" && typeof item.percentage === "number")
+                .sort((left, right) => right.percentage - left.percentage)[0];
+              if (!stable) {
+                throw new Error("Cannot find a stable version in the current Worker deployment");
+              }
+              process.stdout.write(stable.version_id);
+            });
+          ' <<<"$DEPLOYMENT_STATUS")"
+          STABLE_PERCENTAGE=$((100 - CF_WORKER_TRAFFIC_PERCENTAGE))
+
+          npx wrangler@latest versions deploy \
+            "${NEW_VERSION_ID}@${CF_WORKER_TRAFFIC_PERCENTAGE}" \
+            "${STABLE_VERSION_ID}@${STABLE_PERCENTAGE}" \
+            --name "$CF_WORKER_NAME" \
+            --message "灰度发布 Git over CDN ${GITHUB_SHA}" \
+            --yes

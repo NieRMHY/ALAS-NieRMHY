@@ -1081,7 +1081,7 @@ class OOBEWizard:
             "cn": ("cn_android", "cn_ios", "cn_channel"),
             "en": ("en",),
             "jp": ("jp",),
-            "tw": (),
+            "tw": ("tw",),
         }.get(region, ())
 
     def _server_name_items_for_region(self, region):
@@ -1091,8 +1091,6 @@ class OOBEWizard:
                 value = f"{prefix}-{index}"
                 label_prefix = "国服" if prefix.startswith("cn") else prefix.upper()
                 items.append((value, f"[{label_prefix}] {name}", value))
-        if region == "tw":
-            items.append(("disabled", lang.t("Emulator.ServerName.disabled"), "TW"))
         return items
 
     def _default_server_name_for_region(self, region):
