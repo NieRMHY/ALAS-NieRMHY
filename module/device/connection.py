@@ -86,16 +86,11 @@ def retry(func):
                 def init():
                     pass
 
-        if func.__name__ in [
-            'adb_connect', 'adb_reconnect', 'adb_start_server',
-            'screenshot', 'screenshot_adb', 'screenshot_uiautomator2', 'screenshot_ascreencap',
-            'screenshot_droidcast', 'screenshot_droidcast_raw', 'screenshot_scrcpy',
-            'screenshot_nemu_ipc', 'screenshot_ldopengl',
-        ]:
-            logger.critical(f'[Device] 重试 {func.__name__}() 失败')
-            raise EmulatorNotRunningError
+        # 所有 ADB 相关重试失败统一抛 EmulatorNotRunningError，
+        # 由上层调度器统一触发模拟器/游戏重启流程，
+        # 不再因 get_orientation 等非截图函数失败而直接终止调度器。
         logger.critical(f'[Device] 重试 {func.__name__}() 失败')
-        raise RequestHumanTakeover
+        raise EmulatorNotRunningError
 
     return retry_wrapper
 

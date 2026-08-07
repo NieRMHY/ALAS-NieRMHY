@@ -1074,17 +1074,37 @@ class RemoteAccess:
     def keep_ssh_alive():
         task_handler: TaskHandler
         task_handler = yield
+        consecutive_failures = 0
+        max_failures = 5
         while True:
             if _provider.is_alive():
+                consecutive_failures = 0
                 yield
                 continue
-            logger.info("远程访问服务未运行，正在启动")
+            if consecutive_failures >= max_failures:
+                logger.warning(
+                    f"远程访问服务连续 {max_failures} 次启动后仍不可用，已停止重试。"
+                    "请检查 SSHServer / SignalingServer 配置是否可用。"
+                )
+                task_handler.remove_current_task()
+                return
+            consecutive_failures += 1
+            logger.info(
+                f"远程访问服务未运行，正在启动（第 {consecutive_failures}/{max_failures} 次尝试）"
+            )
             try:
                 start_remote_access_service()
             except ParseError as e:
                 logger.exception(e)
                 task_handler.remove_current_task()
+                return
             yield
+            if not _provider.is_alive():
+                logger.warning(
+                    f"远程访问服务启动后仍不可用（连续第 {consecutive_failures} 次）"
+                )
+            else:
+                consecutive_failures = 0
 
     @staticmethod
     def kill_ssh_process():

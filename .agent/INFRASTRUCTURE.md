@@ -753,14 +753,16 @@ graph TD
 
 ### 文件清单与逐文件分析
 
-#### `server_checker.py` (244 行)
+#### `server_checker.py`
 - **导出类型**：`ServerChecker` 类
 - **导入依赖**：`requests`, `module.base.timer.Timer`, `module.config.server`
 - **核心功能**：
-  - `_load_server()`：调用 `sc.shiratama.cn` API 查询服务器状态
+  - `_load_server()`：调用 `https://server-checker.nanoda.work/api/v1/servers/{region}_{id}` 查询单个服务器状态
   - `wait_until_available()`：阻塞等待服务器可用
   - `fast_retry()`：网络故障时通过百度验证网络连通性
   - 渐进式退避：每次不可用增加 120 秒，上限 600 秒
+  - 支持 CN、EN、JP、TW；配置服务器键通过固定地区、ID、名称元数据解析，避免依赖 API 列表顺序
+  - `normal`、`full`、`reg_full` 视为可用；`maintenance`、`unopened`、`unknown` 进入等待
 
 ### 设计模式与架构分析
 
@@ -776,7 +778,7 @@ graph TD
 
 ### 安全性分析
 
-- API 使用 HTTP（非 HTTPS），存在中间人攻击风险
+- API 使用 HTTPS 并保持证书校验
 - `trust_env = False` 忽略代理设置
 
 ### 代码质量评估

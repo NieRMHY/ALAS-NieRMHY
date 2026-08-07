@@ -71,44 +71,36 @@ class AzurLaneAutoScript:
         # 连续卡死/ADB 离线计数，用于判断是否需要重启模拟器
         self.consecutive_game_stuck = 0
         self.consecutive_adb_offline = 0
+        # ScriptError 连续计数，达到阈值后退出（代码 bug 重试无意义）
+        self.script_error_count = 0
         # 上次计划重启模拟器的时间戳
         self.last_emulator_restart_time = time.monotonic()
 
     def _try_restart_emulator(self):
         """
-        尝试重启模拟器。
+        尝试重启模拟器。永不放弃，一直重试。
 
-        需要启用 AdbOfflineRestart 且未超过重试上限。
+        不再受 Error_AdbOfflineRestart 开关限制，
+        超过阈值时仅增加等待间隔，不停止重试。
         优先使用已缓存的 device 对象，否则根据平台回退创建新实例。
 
         Returns:
-            bool: 重启成功返回 True，无法重启返回 False。
+            bool: 重启成功返回 True，本次重启失败返回 False（调度器会继续尝试）。
         """
         import sys
-
-        if not self.config.Error_AdbOfflineRestart:
-            logger.error_context(
-                title='模拟器自动重启已禁用',
-                reason='配置项 Error.AdbOfflineRestart 未启用。',
-                impact='模拟器离线后无法自动恢复，当前任务可能终止。',
-                action='确认模拟器稳定性后，按需启用 AdbOfflineRestart 和合理的重试阈值。',
-                level=30,
-            )
-            return False
 
         self.consecutive_adb_offline += 1
         limit = int(self.config.Error_AdbOfflineThreshold)
         logger.warning(f'[Alas] EmulatorNotRunningError: 连续次数 {self.consecutive_adb_offline}/{limit}')
 
+        # 超过阈值时不放弃，仅增加等待间隔后继续重试
         if self.consecutive_adb_offline > limit:
-            logger.error_context(
-                title='模拟器自动重启次数已达上限',
-                reason=f'模拟器连续离线次数已超过配置限制 {limit} 次。',
-                impact='本次自动恢复停止，任务将进入失败处理。',
-                action='手动确认模拟器是否运行、ADB 是否可用，再重新启动 ALAS。',
-                level=50,
+            wait_seconds = min(300, 30 * (self.consecutive_adb_offline - limit + 1))
+            logger.warning(
+                f'[Alas] 已超过重启阈值 {limit}，'
+                f'等待 {wait_seconds} 秒后继续重试（永不放弃）'
             )
-            return False
+            time.sleep(wait_seconds)
 
         logger.hr('[Alas] 正在重启模拟器', level=1)
         try:
@@ -133,12 +125,14 @@ class AzurLaneAutoScript:
             # 清除 device 缓存，下次访问时重新建立连接
             if 'device' in self.__dict__:
                 del_cached_property(self, 'device')
+            # 重置连续离线计数
+            self.consecutive_adb_offline = 0
             return True
         except Exception as e:
             logger.exception_context(
                 title='重启模拟器失败',
                 exc=e,
-                impact='模拟器仍可能处于离线状态，当前任务无法恢复。',
+                impact='模拟器仍可能处于离线状态，调度器将继续尝试。',
                 action='检查模拟器进程权限、ADB 服务和模拟器管理配置。',
             )
             return False
@@ -270,8 +264,8 @@ class AzurLaneAutoScript:
         )
         notify_webui(
             self.config_name,
-            title=f"敏感任务 {task_name} 出错，ALAS 已停止",  # Modify by MHY, 去傲娇语
-            content=f"{task_name} 是敏感任务，出错后不会自动重启\n{error}",
+            title=f"敏感任务 {task_name} 出错！ALAS 已停止！",
+            content=f"因为 {task_name} 是敏感任务，出错后不会重启\n{error}",
         )
         exit(1)
 
@@ -321,8 +315,8 @@ class AzurLaneAutoScript:
             )
             notify_webui(
                 self.config_name,
-                title=f"<{self.config_name}> 警告",  # Modify by MHY, 去傲娇语
-                content=f"<{self.config_name}> 游戏未运行，将自动重启游戏",
+                title=f" <{self.config_name}> 发出了警告！",
+                content=f"<{self.config_name}> 游戏未运行 将自动重启游戏",
             )
             self.config.task_call('Restart')
             return 'recoverable'
@@ -358,8 +352,8 @@ class AzurLaneAutoScript:
             )
             notify_webui(
                 self.config_name,
-                title=f"<{self.config_name}> 警告",  # Modify by MHY, 去傲娇语
-                content=f"<{self.config_name}> 游戏卡住，将自动重启游戏",
+                title=f"<{self.config_name}> 发出了警告！",
+                content=f"<{self.config_name}> 游戏卡住 将自动重启游戏",
             )
             self.config.task_call('Restart')
             self.device.sleep(10)
@@ -384,8 +378,8 @@ class AzurLaneAutoScript:
             )
             notify_webui(
                 self.config_name,
-                title=f"<{self.config_name}> 警告",  # Modify by MHY, 去傲娇语
-                content=f"<{self.config_name}> 游戏客户端错误，将自动重启游戏",
+                title=f"<{self.config_name}> 发出了警告！",
+                content=f"<{self.config_name}> 游戏客户端错误 将自动重启游戏",
             )
             self.config.task_call('Restart')
             self.device.sleep(10)
@@ -394,140 +388,176 @@ class AzurLaneAutoScript:
             logger.info('[Alas] 游戏服务器可能正在维护或网络连接中断，正在检查服务器状态')
             self.checker.check_now()
             if self.checker.is_available():
+                # 服务器可用但页面未知，尝试重启游戏恢复
                 logger.error_context(
                     title='无法识别游戏页面',
                     reason='服务器可用，但当前截图不符合任何已知游戏页面。',
-                    impact='无法安全继续任务，调度器即将终止。',
+                    impact='当前任务中断，将尝试重启游戏恢复。',
                     action='确认游戏版本、服务器和分辨率；若更新后出现，请更新 ALAS 资源。',
                     exc=e,
-                    level=50,
                 )
                 self.save_error_log()
+                self._check_sensitive_exit(command, e)
+                logger.warning('[Alas] 无法识别游戏页面，尝试重启游戏恢复')
                 handle_notify(
                     self.config.Error_OnePushConfig,
-                    title=f"ALAS <{self.config_name}> 崩溃",
-                    content=f"<{self.config_name}> GamePageUnknownError",
+                    title=f"ALAS <{self.config_name}> 警告",
+                    content=f"<{self.config_name}> 无法识别页面 - 将自动重启游戏",
                 )
                 notify_webui(
                     self.config_name,
-                    title=f"{self.config_name} 崩溃",  # Modify by MHY, 去傲娇语
-                    content=f"原因: GamePageUnknownError",
+                    title=f"<{self.config_name}> 发出了警告！",
+                    content=f"<{self.config_name}> 无法识别页面 将自动重启游戏",
                 )
-                exit(1)
+                self.config.task_call('Restart')
+                return 'recoverable'
             else:
                 self.checker.wait_until_available()
                 return False
         except ScriptError as e:
+            # 代码 bug，先重试3次再退出
+            self.script_error_count += 1
             logger.exception_context(
-                title='任务脚本执行失败', exc=e,
-                impact='当前任务无法继续，调度器将终止并保留错误现场。',
+                title=f'任务脚本执行失败（第 {self.script_error_count}/3 次）', exc=e,
+                impact='当前任务无法继续，将尝试重启恢复。',
                 action='根据堆栈定位脚本错误；如果是新版本回归，请提交错误日志和截图。',
                 level=50,
             )
+            self.save_error_log()
+            self._check_sensitive_exit(command, e)
+
+            if self.script_error_count >= 3:
+                logger.error_context(
+                    title='ScriptError 重试次数已达上限',
+                    reason=f'脚本错误已连续发生 {self.script_error_count} 次，可能是代码 bug。',
+                    impact='重试无意义，ALAS 将退出。',
+                    action='查看错误现场中的 log.txt 和截图，修复代码后重新启动。',
+                    level=50,
+                )
+                handle_notify(
+                    self.config.Error_OnePushConfig,
+                    title=f"ALAS <{self.config_name}> 崩溃",
+                    content=f"<{self.config_name}> ScriptError (连续 {self.script_error_count} 次)",
+                )
+                notify_webui(
+                    self.config_name,
+                    title=f"出大问题了！{self.config_name}崩溃了！",
+                    content=f"因为 ScriptError 连续 {self.script_error_count} 次！",
+                )
+                exit(1)
+
+            logger.warning(f'[Alas] ScriptError 第 {self.script_error_count}/3 次，尝试重启恢复')
             handle_notify(
                 self.config.Error_OnePushConfig,
-                title=f"ALAS <{self.config_name}> 崩溃",
-                content=f"<{self.config_name}> ScriptError",
+                title=f"ALAS <{self.config_name}> 警告",
+                content=f"<{self.config_name}> ScriptError - 将尝试重启恢复 ({self.script_error_count}/3)",
             )
             notify_webui(
                 self.config_name,
-                title=f"{self.config_name} 崩溃",  # Modify by MHY, 去傲娇语
-                content=f"原因: ScriptError",
+                title=f"<{self.config_name}> 发出了警告！",
+                content=f"<{self.config_name}> ScriptError 将尝试重启恢复",
             )
-            raise
+            self.config.task_call('Restart')
+            return 'recoverable'
         except EmulatorNotRunningError as e:
-            # 模拟器离线或死机，尝试自动重启
+            # 模拟器离线或死机，尝试自动重启，永不退出
             logger.error_context(
                 title='模拟器连接中断',
                 reason='任务执行期间无法访问模拟器或 ADB 设备。',
-                impact='当前任务中断，系统将按配置尝试重启模拟器。',
+                impact='当前任务中断，系统将尝试重启模拟器。',
                 action='确认模拟器进程和 ADB 服务正常；连续失败时检查端口、代理和模拟器保活设置。',
                 exc=e,
             )
             self.save_error_log()
             self._check_sensitive_exit(command, e)
-            if self._try_restart_emulator():
-                # 重启成功，调度 Restart 任务恢复游戏
-                self.config.task_call('Restart')
-                handle_notify(
-                    self.config.Error_OnePushConfig,
-                    title=f"ALAS <{self.config_name}> 警告",
-                    content=f"<{self.config_name}> 模拟器离线 - 已自动重启模拟器",
-                )
-                notify_webui(
-                    self.config_name,
-                    title=f"{self.config_name} 模拟器离线",  # Modify by MHY, 去傲娇语
-                    content=f"模拟器离线，已自动重启",
-                )
-                return 'recoverable'
-            else:
-                # 重启失败或未启用自动重启，终止程序
-                logger.error_context(
-                    title='模拟器无法自动恢复',
-                    reason='模拟器离线重启失败或已达到自动重启次数限制。',
-                    impact='调度器将终止，任务不会继续执行。',
-                    action='手动启动模拟器并确认 ADB 可见，再重新启动 ALAS。',
-                    level=50,
-                )
-                handle_notify(
-                    self.config.Error_OnePushConfig,
-                    title=f"ALAS <{self.config_name}> 崩溃",
-                    content=f"<{self.config_name}> EmulatorNotRunningError",
-                )
-                notify_webui(
-                    self.config_name,
-                    title=f"{self.config_name} 崩溃",  # Modify by MHY, 去傲娇语
-                    content=f"原因: 模拟器异常",
-                )
-                exit(1)
-        except RequestHumanTakeover:
-            logger.error_context(
-                title='任务需要人工介入',
-                reason='当前状态无法由自动化流程安全判断或修复。',
-                impact='调度器将终止，避免继续执行造成误操作。',
-                action='查看错误现场和堆栈，按日志中的具体建议处理后重新启动。',
-                level=50,
-            )
+            # 始终尝试重启模拟器，即使失败也不退出
+            self._try_restart_emulator()
+            self.config.task_call('Restart')
             handle_notify(
                 self.config.Error_OnePushConfig,
-                title=f"ALAS <{self.config_name}> 崩溃",
-                content=f"<{self.config_name}> RequestHumanTakeover",
+                title=f"ALAS <{self.config_name}> 警告",
+                content=f"<{self.config_name}> 模拟器离线 - 正在尝试重启模拟器",
             )
             notify_webui(
                 self.config_name,
-                title=f"{self.config_name} 崩溃",  # Modify by MHY, 去傲娇语
-                content=f"原因: 需要人工介入",
+                title=f"{self.config_name} 警告",
+                content=f"模拟器离线 正在重启模拟器",
             )
-            exit(1)
+            return 'recoverable'
+        except RequestHumanTakeover as e:
+            # 几乎所有报错都应通过重启模拟器/游戏解决，不再直接终止
+            logger.error_context(
+                title='任务需要人工介入（将尝试自动恢复）',
+                reason='当前状态无法由自动化流程安全判断或修复。',
+                impact='调度器将尝试重启模拟器恢复，而非直接终止。',
+                action='查看错误现场和堆栈；若自动恢复失败，再手动处理。',
+                level=50,
+            )
+            self.save_error_log()
+            self._check_sensitive_exit(command, e)
+            # 尝试通过重启模拟器恢复
+            logger.warning('[Alas] RequestHumanTakeover: 尝试通过重启模拟器恢复')
+            self._try_restart_emulator()
+            self.config.task_call('Restart')
+            handle_notify(
+                self.config.Error_OnePushConfig,
+                title=f"ALAS <{self.config_name}> 警告",
+                content=f"<{self.config_name}> 需要人工介入 - 正在尝试自动重启恢复",
+            )
+            notify_webui(
+                self.config_name,
+                title=f"{self.config_name} 警告",
+                content=f"遇到需要人工介入的问题 正在尝试自动重启恢复",
+            )
+            return 'recoverable'
         except AutoSearchSetError as e:
+            # 自动搜索设置失败，尝试重启游戏恢复
             logger.error_context(
                 title='自动搜索设置失败',
                 reason='无法将游戏切换到所需的自动搜索状态。',
-                impact='当前任务无法安全继续，调度器将终止。',
+                impact='当前任务中断，将尝试重启游戏恢复。',
                 action='检查编队、关卡限制和游戏页面；确认后手动设置自动搜索并重新启动。',
                 exc=e,
-                level=50,
             )
-            exit(1)
+            self.save_error_log()
+            self._check_sensitive_exit(command, e)
+            logger.warning('[Alas] 自动搜索设置失败，尝试重启游戏恢复')
+            self.config.task_call('Restart')
+            handle_notify(
+                self.config.Error_OnePushConfig,
+                title=f"ALAS <{self.config_name}> 警告",
+                content=f"<{self.config_name}> 自动搜索设置失败 - 将自动重启游戏",
+            )
+            notify_webui(
+                self.config_name,
+                title=f"<{self.config_name}> 发出了警告！",
+                content=f"<{self.config_name}> 自动搜索设置失败 将自动重启游戏",
+            )
+            return 'recoverable'
         except Exception as e:
+            # 未预期异常，尝试重启恢复而非直接终止
             logger.exception_context(
                 title=f'任务执行发生未处理异常（{command}）', exc=e,
-                impact='当前任务无法确认执行结果，调度器将保留现场并终止。',
+                impact='当前任务无法确认执行结果，调度器将尝试重启恢复。',
                 action='查看错误现场中的 log.txt、截图和完整堆栈，确认是否需要更新资源或提交问题。',
                 level=50,
             )
             self.save_error_log()
+            self._check_sensitive_exit(command, e)
+            logger.warning('[Alas] 未处理异常，尝试重启模拟器恢复')
+            self._try_restart_emulator()
+            self.config.task_call('Restart')
             handle_notify(
                 self.config.Error_OnePushConfig,
-                title=f"ALAS <{self.config_name}> 崩溃",
-                content=f"<{self.config_name}> 发生异常",
+                title=f"ALAS <{self.config_name}> 警告",
+                content=f"<{self.config_name}> 发生异常 - 正在尝试自动重启恢复",
             )
             notify_webui(
                 self.config_name,
-                title=f"{self.config_name} 崩溃",  # Modify by MHY, 去傲娇语
-                content=f"原因: 发生异常",
+                title=f"<{self.config_name}> 发出了警告！",
+                content=f"<{self.config_name}> 发生异常 正在尝试自动重启恢复",
             )
-            raise
+            return 'recoverable'
 
     def keep_last_errlog(self, folder_path, n: int = 30):
         """
@@ -550,12 +580,31 @@ class AzurLaneAutoScript:
     def save_error_log(self):
         """
         保存错误现场：最近截图和日志文件到 ./log/error/<config-name>/<timestamp>/。
+
+        同时触发 LLM 错误分析（如果启用）。
         """
         import pathlib
         from module.base.utils import save_image
         from module.handler.sensitive_info import (handle_sensitive_image,
                                                    handle_sensitive_logs)
                                                    
+        # LLM 错误分析放在最前面，避免后续截图保存时二次崩溃导致分析未执行
+        try:
+            if hasattr(self, 'config') and getattr(self.config, 'Error_LlmAnalysis', False):
+                from module.llm import analyze_exception
+                import sys
+                _, exc_value, _ = sys.exc_info()
+                if exc_value is not None:
+                    analyze_exception(self.config, exc_value)
+        except Exception as e:
+            logger.exception_context(
+                title='LLM 错误分析失败',
+                exc=e,
+                impact='不影响任务恢复，但本次错误不会生成 LLM 分析结果。',
+                action='检查 LLM API 配置、网络和配额；直接根据错误现场排查。',
+                level=30,
+            )
+
         if getattr(self.config, 'Error_SaveError', False):
             config_folder = pathlib.Path(f"./log/error/{self.config_name}")
             folder = config_folder.joinpath(str(int(time.time() * 1000)))
@@ -1287,9 +1336,8 @@ class AzurLaneAutoScript:
             )
             exit(1)
 
-        # 全局异常连续失败计数与阈值
+        # 全局异常连续失败计数（仅用于日志展示和退避策略，不再触发退出）
         consecutive_global_failures = 0
-        MAX_GLOBAL_FAILURES = 3
         RESTART_DELAY = 20
         LONG_WAIT = 300
 
@@ -1365,8 +1413,9 @@ class AzurLaneAutoScript:
                         logger.warning('[Alas] 每任务推送通知异常，已跳过')
 
                 # 检查失败
-                # 单个任务连续失败三次终止程序
-                # 注意：可恢复错误 (success == 'recoverable') 不计入失败次数
+                # 任务失败次数统计：可恢复错误 (success == 'recoverable') 不计入失败次数。
+                # 非敏感任务永不退出，连续失败时强制重启模拟器+游戏恢复；
+                # 敏感任务（StrictRestart=True 且 Sensitive=True）失败后立即退出。
                 failed = deep_get(self.failure_record, keys=task, default=0)
                 if success == True:
                     failed = 0  # 成功，重置计数
@@ -1381,17 +1430,13 @@ class AzurLaneAutoScript:
                 strict_restart = self.config.Error_StrictRestart and failed >= 1 and self.config.cross_get(
                     keys=f'{task}.Scheduler.Sensitive', default=False
                 )
-                if failed >= 3 or strict_restart:
-                    reason = '任务配置或使用方式不符合要求，也可能是任务本身存在问题。'
-                    action = '检查任务选项帮助和错误现场；确认配置正确后再重试。'
-                    if strict_restart:
-                        reason += '该任务是重启敏感任务，失败后禁止自动重启。'
-                        action += '如需自动恢复，请关闭对应任务的 StrictRestart；否则手动接管游戏。'
+                if strict_restart:
+                    # 仅敏感任务失败后立即退出，避免状态或数据损坏
                     logger.error_context(
-                        title=f'任务连续失败，需要人工介入（{task}）',
-                        reason=f'该任务已连续失败 {failed} 次。{reason}',
-                        impact='调度器将停止，避免继续执行造成重复操作或数据异常。',
-                        action=action,
+                        title=f'敏感任务失败，禁止自动重启（{task}）',
+                        reason=f'该任务是重启敏感任务，已连续失败 {failed} 次。',
+                        impact='为避免状态或数据损坏，ALAS 将停止运行。',
+                        action='查看错误现场并手动确认游戏状态；如需自动恢复，请关闭对应任务的 StrictRestart。',
                         level=50,
                     )
                     handle_notify(
@@ -1401,11 +1446,35 @@ class AzurLaneAutoScript:
                     )
                     notify_webui(
                         self.config_name,
-                        title=f"{self.config_name} 任务失败",  # Modify by MHY, 去傲娇语
-                        content=f"{task} 任务连续失败次数过多",
+                        title=f"{self.config_name} 出现问题",
+                        content=f"因为 {task} 任务失败次数过多！",
                     )
-                    logger.warning("[Alas] 任务连续失败次数过多，已停止调度")
+                    logger.warning("[Alas] 任务连续失败次数过多，调度器退出。")
                     exit(1)
+
+                if failed >= 3:
+                    # 非敏感任务连续失败：不退出，强制重启模拟器+游戏后继续调度
+                    logger.warning(
+                        f'[Alas] 任务 `{task}` 已连续失败 {failed} 次，'
+                        f'非敏感任务不退出，强制重启模拟器+游戏后继续调度。'
+                    )
+                    handle_notify(
+                        self.config.Error_OnePushConfig,
+                        title=f"ALAS <{self.config_name}> 警告",
+                        content=f"<{self.config_name}> 任务 `{task}` 连续失败 {failed} 次，将强制重启恢复",
+                    )
+                    notify_webui(
+                        self.config_name,
+                        title=f"{self.config_name} 警告",
+                        content=f"任务 `{task}` 失败次数过多 正在强制重启恢复",
+                    )
+                    try:
+                        self._try_restart_emulator()
+                    except Exception as restart_emu_e:
+                        logger.warning(f'[Alas] 模拟器重启失败，将继续调度: {restart_emu_e}')
+                    self.config.task_call('Restart')
+                    # 重置该任务的失败计数，避免下次循环立即再次触发
+                    deep_set(self.failure_record, keys=task, value=0)
 
                 if success == True:
                     del_cached_property(self, 'config')
@@ -1422,6 +1491,9 @@ class AzurLaneAutoScript:
                     break
 
             # 捕获全局异常并执行重启
+            # 说明：调度器永不主动退出，所有未处理异常均通过指数退避重试恢复，
+            # 唯一例外是 ScriptError（开发者代码错误），其在 run() 中已限制连续 3 次后退出。
+            # 敏感任务失败由 _check_sensitive_exit 处理，仍会主动退出。
             except Exception as e:
                 consecutive_global_failures += 1
                 self.is_first_task = False
@@ -1432,27 +1504,36 @@ class AzurLaneAutoScript:
                     impact='本轮任务中断，调度器将尝试执行 Restart 后继续运行。',
                     action='关注下方堆栈；若连续发生，请检查设备连接、配置和最近更新的资源。',
                 )
-                
+
+                # 即使没有达到重启或失败上限，也第一时间自动请求分析崩溃原因
+                try:
+                    if hasattr(self, 'config') and getattr(self.config, 'Error_LlmAnalysis', False):
+                        from module.llm import analyze_exception
+                        analyze_exception(self.config, e)
+                except Exception as ex:
+                    logger.error(f'[Alas] LLM错误分析失败: {ex}')
+
                 logger.warning(
-                    f">>> 这是第 {consecutive_global_failures} 次连续全局失败，共 {MAX_GLOBAL_FAILURES} 次。"
+                    f">>> 这是第 {consecutive_global_failures} 次连续全局失败，"
+                    f"调度器永不放弃，将持续重试恢复。"
                 )
 
-                # 检查是否达到重试上限
-                if consecutive_global_failures >= MAX_GLOBAL_FAILURES:
-                    logger.error_context(
-                        title='调度器达到连续失败上限',
-                        reason=f'全局异常已连续发生 {MAX_GLOBAL_FAILURES} 次。',
-                        impact='自动恢复已停止，ALAS 将退出。',
-                        action='查看错误现场中的 log.txt 和截图，修复根因后重新启动；提交问题时请附带该现场。',
-                        exc=e,
-                        level=50,
-                    )
-                    self.save_error_log()
-                    logger.warning("[Alas] 遇到无法恢复的致命错误，已停止调度")
-                    exit(1)
+                # 不再因连续失败次数达到上限而退出，改为持续重试
+                # 首次全局异常时保存本地错误现场
+                if consecutive_global_failures == 1:
+                    try:
+                        self.save_error_log()
+                        logger.warning("[Alas] 首次全局异常，已保存错误现场。")
+                    except Exception as report_e:
+                        logger.warning(f'[Alas] 错误现场保存失败: {report_e}')
 
-                # 尝试重启
-                logger.warning("[Alas] 尝试通过强制执行 RESTART 任务来恢复...")
+                # 尝试重启模拟器（始终尝试，永不放弃）
+                logger.warning("[Alas] 尝试通过重启模拟器 + 强制执行 RESTART 任务来恢复...")
+                try:
+                    self._try_restart_emulator()
+                except Exception as restart_emu_e:
+                    logger.warning(f'[Alas] 模拟器重启失败，将继续尝试: {restart_emu_e}')
+
                 try:
                     # 注入 Restart 任务
                     self.config.task_call('Restart')
@@ -1463,14 +1544,15 @@ class AzurLaneAutoScript:
                     logger.exception_context(
                         title='无法安排 Restart 恢复任务',
                         exc=restart_e,
-                        impact='调度器无法自动恢复，本轮循环结束后仍可能再次失败。',
+                        impact='调度器将继续重试，但本轮循环可能再次失败。',
                         action='检查配置是否可读、Restart 任务是否启用，以及设备是否仍在线。',
                     )
 
-                # 等待一段时间后开始下一次循环
-                wait_seconds = RESTART_DELAY if consecutive_global_failures < 4 else LONG_WAIT
+                # 指数退避：失败次数越多，等待时间越长，但上限 300 秒
+                wait_seconds = min(LONG_WAIT, RESTART_DELAY * (2 ** min(consecutive_global_failures - 1, 4)))
                 logger.info(
-                    f"调度器将在 {wait_seconds} 秒后从头重试。"
+                    f"调度器将在 {wait_seconds} 秒后从头重试（第 {consecutive_global_failures} 次重试，"
+                    f"永不放弃）。"
                 )
                 time.sleep(wait_seconds)
 
