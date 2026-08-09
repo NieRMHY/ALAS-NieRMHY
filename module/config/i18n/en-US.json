@@ -778,38 +778,35 @@
     },
     "OcrModelVersionEnglish": {
       "name": "OCR English Model Version",
-      "help": "Choose the English OCR model version. Auto uses the recommended English AlOCR v2.6 model. This affects the English Azur Lane model; ncnn ignores this setting.",
+      "help": "Choose the English OCR model tier. Lite is lightest and fastest, Standard is balanced, Pro is highest accuracy. Auto uses Standard. This affects the English Azur Lane model.",
       "auto": "Auto Recommended",
-      "alocr_en_900k": "alocr_en_900k",
-      "azur_lane_v6_6": "English v6.6 (Azur Lane)",
-      "azur_lane_v6_5": "English v6.5 (Azur Lane)",
-      "ppocr_v6": "Generic PP-OCRv6",
-      "alocr_en_v2_6": "English AlOCR v2.6",
-      "alocr_en_v2_0": "English AlOCR v2.0",
-      "alocr_en_v1_0": "English AlOCR v1.0"
+      "lite": "Lite",
+      "standard": "Standard",
+      "pro": "Pro"
     },
     "OcrModelVersionChinese": {
       "name": "OCR Chinese Model Version",
-      "help": "Choose the Simplified Chinese OCR model version. Auto uses the recommended Chinese v6.1 model. This affects cnocr/Chinese models; ncnn ignores this setting.",
+      "help": "Choose the Simplified Chinese OCR model tier. Lite is lightest and fastest, Standard is balanced, Pro is highest accuracy. Auto uses Standard. This affects cnocr/Chinese models.",
       "auto": "Auto Recommended",
-      "cn_v6_1": "Chinese v6.1",
-      "cn_v6": "Chinese v6",
-      "ppocr_v6": "Generic PP-OCRv6",
-      "alocr_cn_v3": "Chinese AlOCR v3",
-      "alocr_cn_v2_5": "Chinese AlOCR v2.5"
+      "lite": "Lite",
+      "standard": "Standard",
+      "pro": "Pro"
     },
     "OcrModelVersionJapanese": {
       "name": "OCR Japanese Model Version",
-      "help": "Choose the Japanese OCR model version. Auto uses the Japanese Azur Lane v6 model. This affects Japanese models; ncnn ignores this setting.",
+      "help": "Choose the Japanese OCR model tier. Lite is lightest and fastest but does not support Japanese, Standard is balanced, Pro is highest accuracy. Auto uses Standard. This affects Japanese models.",
       "auto": "Auto Recommended",
-      "azur_lane_jp_v6": "Japanese v6 (Azur Lane JP)",
-      "ppocr_v6": "Generic PP-OCRv6"
+      "lite": "Lite",
+      "standard": "Standard",
+      "pro": "Pro"
     },
     "OcrModelVersionTraditionalChinese": {
       "name": "OCR Traditional Chinese Model Version",
-      "help": "Choose the Traditional Chinese OCR model version. Currently only the generic PP-OCRv6 model is available; this separate setting is kept for future models. ncnn ignores this setting.",
+      "help": "Choose the Traditional Chinese OCR model tier. Lite is lightest and fastest, Standard is balanced, Pro is highest accuracy. Auto uses Standard.",
       "auto": "Auto Recommended",
-      "ppocr_v6": "Generic PP-OCRv6"
+      "lite": "Lite",
+      "standard": "Standard",
+      "pro": "Pro"
     },
     "ScreenshotInterval": {
       "name": "Slow Down Screenshot Speed to X Seconds per Frame",
@@ -2053,12 +2050,32 @@
       "custom": "Customize"
     },
     "DynamicProgramming": {
-      "name": "Global optimal strategy (Experimental)",
-      "help": "This experimental option is disabled by default. Dynamic programming compares the value vector, per-tier index sums, and deduplicates plans selecting the same commissions by filter order before comparing latest finish time and total completion time."
+      "name": "Experimental Dynamic Programming",
+      "help": "When disabled, commissions are selected greedily in filter order. Enable it to use the polynomial planner with a rigorous optimality certificate and the five value-model settings below."
+    },
+    "TierValueRatio": {
+      "name": "Adjacent Tier Value Ratio",
+      "help": "Base-value ratio between one tier and the next; must be greater than 1. Higher values make the planner less willing to delay a higher tier for a lower tier. Default: 2."
+    },
+    "DelayHalfLife": {
+      "name": "Base Delay Half-Life (Hours)",
+      "help": "H in the unified factor 2^(-s/H). Lower values apply a stronger base delay penalty to every commission. Must be positive; one decimal place is supported."
+    },
+    "DeadlineFutureHorizon": {
+      "name": "Deadline Discount Scale (Hours)",
+      "help": "T in the unified relative-window exponent (T/d)^2. Larger values impose a stronger penalty for the same start delay and deadline. Must be positive; one decimal place is supported. Default: 2.0 hours."
+    },
+    "FilterValueFloor": {
+      "name": "In-Tier Filter Value Floor",
+      "help": "Minimum value fraction retained by very late rules within one tier. Range: greater than 0 and at most 1. Lower values make in-tier order matter more. Default: 0.6."
+    },
+    "FilterValueHalfLife": {
+      "name": "In-Tier Index Half-Life",
+      "help": "Number of filter rules required for the in-tier adjustment to move halfway toward its floor; must be positive and may use one decimal place. Lower values concentrate more value in early rules."
     },
     "CustomFilter": {
       "name": "Custom Commission Filter",
-      "help": "Set Commission Filter to Customize to use this filter. With experimental dynamic programming enabled, tier separates value levels and ignore marks the algorithm boundary: rules before ignore use dynamic programming; rules after it fill slots in traditional filter order, but a commission must fit within the time window reserved by dynamic programming for that slot. When dynamic programming is disabled, both tier and ignore are ignored."
+      "help": "Set Commission Filter to Customize to use this filter. With experimental dynamic programming enabled, tier separates value levels; without tier, every rule becomes its own level. The planner discounts finite tier and in-tier values by expected start delay and may drop low-value commissions. The traditional greedy strategy ignores tier; shortest fills unmatched slots."
     },
     "DoMajorCommission": {
       "name": "Run Major Commissions (1200/1000 Oil)",
