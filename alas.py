@@ -485,31 +485,27 @@ class AzurLaneAutoScript:
             )
             return 'recoverable'
         except RequestHumanTakeover as e:
-            # 几乎所有报错都应通过重启模拟器/游戏解决，不再直接终止
+            # Modify by MHY, 需要人工介入的错误不应自动重启模拟器，通知后退出
             logger.error_context(
-                title='任务需要人工介入（将尝试自动恢复）',
+                title='任务需要人工介入',
                 reason='当前状态无法由自动化流程安全判断或修复。',
-                impact='调度器将尝试重启模拟器恢复，而非直接终止。',
-                action='查看错误现场和堆栈；若自动恢复失败，再手动处理。',
+                impact='调度器将终止，避免继续执行造成误操作。',
+                action='查看错误现场和堆栈，按日志中的具体建议处理后重新启动。',
                 level=50,
             )
             self.save_error_log()
             self._check_sensitive_exit(command, e)
-            # 尝试通过重启模拟器恢复
-            logger.warning('[Alas] RequestHumanTakeover: 尝试通过重启模拟器恢复')
-            self._try_restart_emulator()
-            self.config.task_call('Restart')
             handle_notify(
                 self.config.Error_OnePushConfig,
-                title=f"ALAS <{self.config_name}> 警告",
-                content=f"<{self.config_name}> 需要人工介入 - 正在尝试自动重启恢复",
+                title=f"ALAS <{self.config_name}> 崩溃",
+                content=f"<{self.config_name}> RequestHumanTakeover",
             )
             notify_webui(
                 self.config_name,
-                title=f"{self.config_name} 警告",
-                content=f"遇到需要人工介入的问题 正在尝试自动重启恢复",
+                title=f"{self.config_name} 崩溃",
+                content=f"原因: 需要人工介入",
             )
-            return 'recoverable'
+            exit(1)
         except AutoSearchSetError as e:
             # 自动搜索设置失败，尝试重启游戏恢复
             logger.error_context(
@@ -535,27 +531,26 @@ class AzurLaneAutoScript:
             )
             return 'recoverable'
         except Exception as e:
-            # 未预期异常，尝试重启恢复而非直接终止
+            # Modify by MHY, 未预期异常只重启游戏恢复，不重启模拟器
             logger.exception_context(
                 title=f'任务执行发生未处理异常（{command}）', exc=e,
-                impact='当前任务无法确认执行结果，调度器将尝试重启恢复。',
+                impact='当前任务无法确认执行结果，调度器将尝试重启游戏恢复。',
                 action='查看错误现场中的 log.txt、截图和完整堆栈，确认是否需要更新资源或提交问题。',
                 level=50,
             )
             self.save_error_log()
             self._check_sensitive_exit(command, e)
-            logger.warning('[Alas] 未处理异常，尝试重启模拟器恢复')
-            self._try_restart_emulator()
+            logger.warning('[Alas] 未处理异常，尝试重启游戏恢复')
             self.config.task_call('Restart')
             handle_notify(
                 self.config.Error_OnePushConfig,
                 title=f"ALAS <{self.config_name}> 警告",
-                content=f"<{self.config_name}> 发生异常 - 正在尝试自动重启恢复",
+                content=f"<{self.config_name}> 发生异常 - 正在尝试重启游戏",
             )
             notify_webui(
                 self.config_name,
-                title=f"<{self.config_name}> 发出了警告！",
-                content=f"<{self.config_name}> 发生异常 正在尝试自动重启恢复",
+                title=f"{self.config_name} 警告",
+                content=f"{self.config_name} 发生异常 正在尝试重启游戏",
             )
             return 'recoverable'
 
@@ -1453,25 +1448,21 @@ class AzurLaneAutoScript:
                     exit(1)
 
                 if failed >= 3:
-                    # 非敏感任务连续失败：不退出，强制重启模拟器+游戏后继续调度
+                    # Modify by MHY, 任务连续失败只重启游戏恢复，不重启模拟器
                     logger.warning(
                         f'[Alas] 任务 `{task}` 已连续失败 {failed} 次，'
-                        f'非敏感任务不退出，强制重启模拟器+游戏后继续调度。'
+                        f'非敏感任务不退出，强制重启游戏后继续调度。'
                     )
                     handle_notify(
                         self.config.Error_OnePushConfig,
                         title=f"ALAS <{self.config_name}> 警告",
-                        content=f"<{self.config_name}> 任务 `{task}` 连续失败 {failed} 次，将强制重启恢复",
+                        content=f"<{self.config_name}> 任务 `{task}` 连续失败 {failed} 次，将强制重启游戏",
                     )
                     notify_webui(
                         self.config_name,
                         title=f"{self.config_name} 警告",
-                        content=f"任务 `{task}` 失败次数过多 正在强制重启恢复",
+                        content=f"任务 `{task}` 失败次数过多 正在强制重启游戏",
                     )
-                    try:
-                        self._try_restart_emulator()
-                    except Exception as restart_emu_e:
-                        logger.warning(f'[Alas] 模拟器重启失败，将继续调度: {restart_emu_e}')
                     self.config.task_call('Restart')
                     # 重置该任务的失败计数，避免下次循环立即再次触发
                     deep_set(self.failure_record, keys=task, value=0)
