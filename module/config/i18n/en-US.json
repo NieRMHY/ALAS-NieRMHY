@@ -2077,6 +2077,10 @@
       "name": "Custom Commission Filter",
       "help": "Set Commission Filter to Customize to use this filter. With experimental dynamic programming enabled, tier separates value levels; without tier, every rule becomes its own level. The planner discounts finite tier and in-tier values by expected start delay and may drop low-value commissions. The traditional greedy strategy ignores tier; shortest fills unmatched slots."
     },
+    "Blacklist": {
+      "name": "Commission Blacklist",
+      "help": "Enter commission filter rules to ignore, separated by half-width commas (,), for example: ExtraBook, UrgentOil-8, Major. The blacklist applies to both the traditional greedy strategy and the planner."
+    },
     "DoMajorCommission": {
       "name": "Run Major Commissions (1200/1000 Oil)",
       "help": "The 1200 oil commission is now obsolete and the yield is very low. It is recommended to close it."
@@ -6087,8 +6091,8 @@
       "help": "Username for SSH login, e.g.: root"
     },
     "RemoteSSHPublicKey": {
-      "name": "Public Key",
-      "help": "Public key content for SSH login (if needed)"
+      "name": "Private Key",
+      "help": "Private key content for SSH login (if needed)"
     },
     "RemoteStartCommand": {
       "name": "Remote Start Command",
