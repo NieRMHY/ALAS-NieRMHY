@@ -530,13 +530,10 @@
         "value": "auto",
         "option": [
           "auto",
-          "alocr_en_900k",
-          "azur_lane_v6_6",
-          "azur_lane_v6_5",
-          "ppocr_v6",
-          "alocr_en_v2_6",
-          "alocr_en_v2_0",
-          "alocr_en_v1_0"
+          "lite",
+          "standard",
+          "pro",
+          "alocr_en_v2_6"
         ]
       },
       "OcrModelVersionChinese": {
@@ -544,11 +541,10 @@
         "value": "auto",
         "option": [
           "auto",
-          "cn_v6_1",
-          "cn_v6",
-          "ppocr_v6",
-          "alocr_cn_v3",
-          "alocr_cn_v2_5"
+          "lite",
+          "standard",
+          "pro",
+          "alocr_cn_v3"
         ]
       },
       "OcrModelVersionJapanese": {
@@ -556,8 +552,9 @@
         "value": "auto",
         "option": [
           "auto",
-          "azur_lane_jp_v6",
-          "ppocr_v6"
+          "lite",
+          "standard",
+          "pro"
         ]
       },
       "OcrModelVersionTraditionalChinese": {
@@ -565,7 +562,9 @@
         "value": "auto",
         "option": [
           "auto",
-          "ppocr_v6"
+          "lite",
+          "standard",
+          "pro"
         ]
       },
       "ScreenshotInterval": {
@@ -2457,6 +2456,14 @@
         "type": "checkbox",
         "value": false
       },
+      "HighValueCommissionFilterCount": {
+        "type": "input",
+        "value": 32
+      },
+      "HighValueCommissionReserve": {
+        "type": "input",
+        "value": 2
+      },
       "VanguardLevelMin": {
         "type": "input",
         "value": 1,
@@ -2966,6 +2973,14 @@
         "type": "checkbox",
         "value": false
       },
+      "HighValueCommissionFilterCount": {
+        "type": "input",
+        "value": 32
+      },
+      "HighValueCommissionReserve": {
+        "type": "input",
+        "value": 2
+      },
       "VanguardLevelMin": {
         "type": "input",
         "value": 1,
@@ -3474,6 +3489,14 @@
       "CommissionLimit": {
         "type": "checkbox",
         "value": false
+      },
+      "HighValueCommissionFilterCount": {
+        "type": "input",
+        "value": 32
+      },
+      "HighValueCommissionReserve": {
+        "type": "input",
+        "value": 2
       },
       "VanguardLevelMin": {
         "type": "input",
@@ -10530,9 +10553,33 @@
         "type": "checkbox",
         "value": true
       },
+      "TierValueRatio": {
+        "type": "input",
+        "value": 2.0
+      },
+      "DelayHalfLife": {
+        "type": "input",
+        "value": 100.0
+      },
+      "DeadlineFutureHorizon": {
+        "type": "input",
+        "value": 0.5
+      },
+      "FilterValueFloor": {
+        "type": "input",
+        "value": 0.6
+      },
+      "FilterValueHalfLife": {
+        "type": "input",
+        "value": 4.0
+      },
       "CustomFilter": {
         "type": "textarea",
-        "value": "DailyEvent > Gem-4 > Gem-2 > Gem-8 > ExtraCube-0:30\n> UrgentCube-1:30 > UrgentCube-1:45 > UrgentCube-3\n> ExtraDrill-5:20 > ExtraDrill-2 > ExtraDrill-3:20\n> UrgentCube-2:15 > UrgentCube-4\n> ExtraDrill-1 > UrgentCube-6 > ExtraCube-1:30\n> ExtraDrill-2:40 > ExtraDrill-0:20\n> Major > DailyChip > DailyResource\n> ExtraPart-0:30 > ExtraOil-1 > UrgentBox-6\n> ExtraCube-3 > ExtraPart-1 > UrgentBox-3\n> ExtraCube-4 > ExtraPart-1:30 > ExtraOil-4\n> UrgentBox-1 > ExtraCube-5 > UrgentBox-1\n> ExtraCube-8 > ExtraOil-8\n> UrgentDrill-4 > UrgentDrill-2:40 > UrgentDrill-2\n> UrgentDrill-1 > UrgentDrill-1:30 > UrgentDrill-1:10\n> Extra-0:20 > Extra-0:30 > Extra-1:00 > Extra-1:30 > Extra-2:00\n> ignore\n> shortest"
+        "value": "DailyEvent > Gem-4 > Gem-2 > Gem-8 > ExtraCube-0:30\n> UrgentCube-1:30 > UrgentCube-1:45 > UrgentCube-3\n> ExtraDrill-5:20 > ExtraDrill-2 > ExtraDrill-3:20\n> UrgentCube-2:15 > UrgentCube-4\n> ExtraDrill-1 > UrgentCube-6 > ExtraCube-1:30\n> ExtraDrill-2:40 > ExtraDrill-0:20\n> Major > DailyChip > DailyResource\n> ExtraPart-0:30 > ExtraOil-1 > UrgentBox-6\n> ExtraCube-3 > ExtraPart-1 > UrgentBox-3\n> ExtraCube-4 > ExtraPart-1:30 > ExtraOil-4\n> UrgentBox-1 > ExtraCube-5 > UrgentBox-1\n> ExtraCube-8 > ExtraOil-8\n> UrgentDrill-4 > UrgentDrill-2:40 > UrgentDrill-2\n> UrgentDrill-1 > UrgentDrill-1:30 > UrgentDrill-1:10\n> Extra-0:20 > Extra-0:30 > Extra-1:00 > Extra-1:30 > Extra-2:00\n> shortest"
+      },
+      "Blacklist": {
+        "type": "textarea",
+        "value": ""
       },
       "DoMajorCommission": {
         "type": "checkbox",
@@ -15203,6 +15250,7 @@
         "option": [
           "None",
           "cheese",
+          "citrus_coffee",
           "strawberry_milkshake",
           "morning_light",
           "wake_up_call",
@@ -15215,6 +15263,7 @@
         "option": [
           "None",
           "cheese",
+          "citrus_coffee",
           "strawberry_milkshake",
           "morning_light",
           "wake_up_call",
@@ -15227,6 +15276,7 @@
         "option": [
           "None",
           "cheese",
+          "citrus_coffee",
           "strawberry_milkshake",
           "morning_light",
           "wake_up_call",
@@ -15239,6 +15289,7 @@
         "option": [
           "None",
           "cheese",
+          "citrus_coffee",
           "strawberry_milkshake",
           "morning_light",
           "wake_up_call",
@@ -15251,6 +15302,7 @@
         "option": [
           "None",
           "cheese",
+          "citrus_coffee",
           "strawberry_milkshake",
           "morning_light",
           "wake_up_call",
@@ -15490,9 +15542,17 @@
         "type": "input",
         "value": 300
       },
+      "ChickenFilter": {
+        "type": "textarea",
+        "value": "WorkerJuu"
+      },
       "MinPork": {
         "type": "input",
         "value": 300
+      },
+      "PigFilter": {
+        "type": "textarea",
+        "value": "WorkerJuu"
       },
       "Milk": {
         "type": "checkbox",

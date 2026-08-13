@@ -126,10 +126,10 @@ class GeneratedConfig:
     Optimization_OcrDevice = 'auto'  # auto, qnn_npu, openvino_npu, openvino_gpu, gpu, openvino_cpu, cpu, ane
     Optimization_OcrBackend = 'auto'  # auto, onnxruntime, ncnn
     Optimization_OcrWindowsMlVendorEp = True  # True, False
-    Optimization_OcrModelVersionEnglish = 'auto'  # auto, alocr_en_900k, azur_lane_v6_6, azur_lane_v6_5, ppocr_v6, alocr_en_v2_6, alocr_en_v2_0, alocr_en_v1_0
-    Optimization_OcrModelVersionChinese = 'auto'  # auto, cn_v6_1, cn_v6, ppocr_v6, alocr_cn_v3, alocr_cn_v2_5
-    Optimization_OcrModelVersionJapanese = 'auto'  # auto, azur_lane_jp_v6, ppocr_v6
-    Optimization_OcrModelVersionTraditionalChinese = 'auto'  # auto, ppocr_v6
+    Optimization_OcrModelVersionEnglish = 'auto'  # auto, lite, standard, pro, alocr_en_v2_6
+    Optimization_OcrModelVersionChinese = 'auto'  # auto, lite, standard, pro, alocr_cn_v3
+    Optimization_OcrModelVersionJapanese = 'auto'  # auto, lite, standard, pro
+    Optimization_OcrModelVersionTraditionalChinese = 'auto'  # auto, lite, standard, pro
     Optimization_ScreenshotInterval = 0.3
     Optimization_CombatScreenshotInterval = 1.0
     Optimization_TaskHoardingDuration = 0
@@ -315,6 +315,8 @@ class GeneratedConfig:
     GemsFarming_AllowLowVanguardLevel = False
     GemsFarming_DelayTaskIFNoFlagship = False
     GemsFarming_CommissionLimit = False
+    GemsFarming_HighValueCommissionFilterCount = 32
+    GemsFarming_HighValueCommissionReserve = 2
     GemsFarming_VanguardLevelMin = 1
     GemsFarming_VanguardLevelMax = 125
 
@@ -369,7 +371,13 @@ class GeneratedConfig:
     # 配置组 `Commission`
     Commission_PresetFilter = 'cube'  # cube, cube_24h, chip, chip_24h, oil, custom
     Commission_DynamicProgramming = True
-    Commission_CustomFilter = 'DailyEvent > Gem-4 > Gem-2 > Gem-8 > ExtraCube-0:30\n> UrgentCube-1:30 > UrgentCube-1:45 > UrgentCube-3\n> ExtraDrill-5:20 > ExtraDrill-2 > ExtraDrill-3:20\n> UrgentCube-2:15 > UrgentCube-4\n> ExtraDrill-1 > UrgentCube-6 > ExtraCube-1:30\n> ExtraDrill-2:40 > ExtraDrill-0:20\n> Major > DailyChip > DailyResource\n> ExtraPart-0:30 > ExtraOil-1 > UrgentBox-6\n> ExtraCube-3 > ExtraPart-1 > UrgentBox-3\n> ExtraCube-4 > ExtraPart-1:30 > ExtraOil-4\n> UrgentBox-1 > ExtraCube-5 > UrgentBox-1\n> ExtraCube-8 > ExtraOil-8\n> UrgentDrill-4 > UrgentDrill-2:40 > UrgentDrill-2\n> UrgentDrill-1 > UrgentDrill-1:30 > UrgentDrill-1:10\n> Extra-0:20 > Extra-0:30 > Extra-1:00 > Extra-1:30 > Extra-2:00\n> ignore\n> shortest'
+    Commission_TierValueRatio = 2.0
+    Commission_DelayHalfLife = 100.0
+    Commission_DeadlineFutureHorizon = 0.5
+    Commission_FilterValueFloor = 0.6
+    Commission_FilterValueHalfLife = 4.0
+    Commission_CustomFilter = 'DailyEvent > Gem-4 > Gem-2 > Gem-8 > ExtraCube-0:30\n> UrgentCube-1:30 > UrgentCube-1:45 > UrgentCube-3\n> ExtraDrill-5:20 > ExtraDrill-2 > ExtraDrill-3:20\n> UrgentCube-2:15 > UrgentCube-4\n> ExtraDrill-1 > UrgentCube-6 > ExtraCube-1:30\n> ExtraDrill-2:40 > ExtraDrill-0:20\n> Major > DailyChip > DailyResource\n> ExtraPart-0:30 > ExtraOil-1 > UrgentBox-6\n> ExtraCube-3 > ExtraPart-1 > UrgentBox-3\n> ExtraCube-4 > ExtraPart-1:30 > ExtraOil-4\n> UrgentBox-1 > ExtraCube-5 > UrgentBox-1\n> ExtraCube-8 > ExtraOil-8\n> UrgentDrill-4 > UrgentDrill-2:40 > UrgentDrill-2\n> UrgentDrill-1 > UrgentDrill-1:30 > UrgentDrill-1:10\n> Extra-0:20 > Extra-0:30 > Extra-1:00 > Extra-1:30 > Extra-2:00\n> shortest'
+    Commission_Blacklist = None
     Commission_DoMajorCommission = False
     Commission_CommissionNotifyReward = False
     Commission_CommissionNotifyRewardStatistics = True
@@ -736,7 +744,9 @@ class GeneratedConfig:
 
     # 配置组 `IslandRancher`
     IslandRancher_MinChicken = 300
+    IslandRancher_ChickenFilter = 'WorkerJuu'
     IslandRancher_MinPork = 300
+    IslandRancher_PigFilter = 'WorkerJuu'
     IslandRancher_Milk = True
     IslandRancher_RancherFilter = 'WorkerJuu'
     IslandRancher_Wool = True
@@ -980,11 +990,11 @@ class GeneratedConfig:
     # 配置组 `IslandBusinessShop5`
     IslandBusinessShop5_Char1 = 'None'  # None, WorkerJuu, Cheshire, YingSwei, Saratoga, Akashi, NewJersey, Tashkent, LeMalin, Shimakaze, Amagi_chan, Unicorn, ChaoHo, ChenHai, WilliamDPorter, Helena, Friedrich, Atago, Yixian, August, Eugen, Hood, Javelin, Laffey, Explorer, Navigator, OceanCrosser, FeiYun, Takao, Anchorage, Belfast, ChangFeng, Mogador, RoyalFortune
     IslandBusinessShop5_Char2 = 'None'  # None, WorkerJuu, Cheshire, YingSwei, Saratoga, Akashi, NewJersey, Tashkent, LeMalin, Shimakaze, Amagi_chan, Unicorn, ChaoHo, ChenHai, WilliamDPorter, Helena, Friedrich, Atago, Yixian, August, Eugen, Hood, Javelin, Laffey, Explorer, Navigator, OceanCrosser, FeiYun, Takao, Anchorage, Belfast, ChangFeng, Mogador, RoyalFortune
-    IslandBusinessShop5_Product1 = 'None'  # None, cheese, strawberry_milkshake, morning_light, wake_up_call, fruity_fruitier
-    IslandBusinessShop5_Product2 = 'None'  # None, cheese, strawberry_milkshake, morning_light, wake_up_call, fruity_fruitier
-    IslandBusinessShop5_Product3 = 'None'  # None, cheese, strawberry_milkshake, morning_light, wake_up_call, fruity_fruitier
-    IslandBusinessShop5_Product4 = 'None'  # None, cheese, strawberry_milkshake, morning_light, wake_up_call, fruity_fruitier
-    IslandBusinessShop5_Product5 = 'None'  # None, cheese, strawberry_milkshake, morning_light, wake_up_call, fruity_fruitier
+    IslandBusinessShop5_Product1 = 'None'  # None, cheese, citrus_coffee, strawberry_milkshake, morning_light, wake_up_call, fruity_fruitier
+    IslandBusinessShop5_Product2 = 'None'  # None, cheese, citrus_coffee, strawberry_milkshake, morning_light, wake_up_call, fruity_fruitier
+    IslandBusinessShop5_Product3 = 'None'  # None, cheese, citrus_coffee, strawberry_milkshake, morning_light, wake_up_call, fruity_fruitier
+    IslandBusinessShop5_Product4 = 'None'  # None, cheese, citrus_coffee, strawberry_milkshake, morning_light, wake_up_call, fruity_fruitier
+    IslandBusinessShop5_Product5 = 'None'  # None, cheese, citrus_coffee, strawberry_milkshake, morning_light, wake_up_call, fruity_fruitier
     IslandBusinessShop5_BoostReplaceFilter = '30 > 20 > cheese > 10'
 
     # 配置组 `FleetInfo`

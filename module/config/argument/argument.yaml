@@ -202,34 +202,16 @@ Optimization:
     option: [true, false]
   OcrModelVersionEnglish:
     value: auto
-    option:
-      [
-        auto,
-        alocr_en_900k,
-        azur_lane_v6_6,
-        azur_lane_v6_5,
-        ppocr_v6,
-        alocr_en_v2_6,
-        alocr_en_v2_0,
-        alocr_en_v1_0,
-      ]
+    option: [auto, lite, standard, pro, alocr_en_v2_6]
   OcrModelVersionChinese:
     value: auto
-    option:
-      [
-        auto,
-        cn_v6_1,
-        cn_v6,
-        ppocr_v6,
-        alocr_cn_v3,
-        alocr_cn_v2_5,
-      ]
+    option: [auto, lite, standard, pro, alocr_cn_v3]
   OcrModelVersionJapanese:
     value: auto
-    option: [auto, azur_lane_jp_v6, ppocr_v6]
+    option: [auto, lite, standard, pro]
   OcrModelVersionTraditionalChinese:
     value: auto
-    option: [auto, ppocr_v6]
+    option: [auto, lite, standard, pro]
   ScreenshotInterval: 0.3
   CombatScreenshotInterval: 1.0
   TaskHoardingDuration: 0
@@ -566,6 +548,10 @@ GemsFarming:
   AllowLowVanguardLevel: false
   DelayTaskIFNoFlagship: false
   CommissionLimit: false
+  HighValueCommissionFilterCount:
+    type: input
+    value: 32
+  HighValueCommissionReserve: 2
   VanguardLevelMin:
     value: 1
     validate: [1, 125]
@@ -659,6 +645,21 @@ Commission:
       - oil
       - custom
   DynamicProgramming: true
+  TierValueRatio:
+    type: input
+    value: 2.0
+  DelayHalfLife:
+    type: input
+    value: 100.0
+  DeadlineFutureHorizon:
+    type: input
+    value: 0.5
+  FilterValueFloor:
+    type: input
+    value: 0.6
+  FilterValueHalfLife:
+    type: input
+    value: 4.0
   CustomFilter: |-
     DailyEvent > Gem-4 > Gem-2 > Gem-8 > ExtraCube-0:30
     > UrgentCube-1:30 > UrgentCube-1:45 > UrgentCube-3
@@ -675,8 +676,10 @@ Commission:
     > UrgentDrill-4 > UrgentDrill-2:40 > UrgentDrill-2
     > UrgentDrill-1 > UrgentDrill-1:30 > UrgentDrill-1:10
     > Extra-0:20 > Extra-0:30 > Extra-1:00 > Extra-1:30 > Extra-2:00
-    > ignore
     > shortest
+  Blacklist:
+    type: textarea
+    value: ""
   DoMajorCommission: false
   CommissionNotifyReward:
     type: checkbox
@@ -1290,7 +1293,11 @@ IslandNursery:
     option: [ 0, 1, 2 ]
 IslandRancher:
   MinChicken: 300
+  ChickenFilter: |-
+    WorkerJuu
   MinPork: 300
+  PigFilter: |-
+    WorkerJuu
   Milk: true
   RancherFilter: |-
     WorkerJuu
@@ -1775,6 +1782,7 @@ _IslandBusinessProduct5: &IslandBusinessProduct5
   option:
     - None
     - cheese
+    - citrus_coffee
     - strawberry_milkshake
     - morning_light
     - wake_up_call

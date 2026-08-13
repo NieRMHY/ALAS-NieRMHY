@@ -1,0 +1,105 @@
+name: CI
+
+# 统一 PR 质量检查工作流。
+# 原 lint.yml（ruff / button-config-check）与 import-test.yml（import-smoke）
+# 合并于此，三者均为 push / pull_request 触发，直接作为 PR 的 check 显示。
+#
+# 其余 workflow（docker-publish / git-over-cdn-* / sync2 / ai-issue-labeler）
+# 触发条件与职责不同（tags 发布、master 镜像、issues 自动化），保持独立，
+# 不并入本工作流。
+
+on: [push, pull_request]
+
+concurrency:
+  # 同一分支/PR 上避免并发重复运行。
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  ruff:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.14'
+      - name: Install dependencies
+        run: uv sync
+      - name: Run ruff
+        run: uv run ruff check . --select E9,F63,F7,F82 --ignore F821,F722
+
+  button-config-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.14'
+      - name: Install dependencies
+        run: uv sync --no-dev
+      - name: Run button_extract
+        run: uv run -m dev_tools.button_extract
+      - name: Run config_updater
+        run: uv run -m module.config.config_updater
+      - name: Check for differences
+        run: |
+          git diff --exit-code
+
+  import-smoke:
+    name: Import Smoke Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      # OpenCV 在无头 CI 环境需要系统运行库（与 deploy/docker/Dockerfile 保持一致）。
+      - name: Install system deps
+        run: sudo apt-get update && sudo apt-get install -y libgl1 libglib2.0-0 libgomp1
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.14'
+
+      - name: Install dependencies
+        run: uv sync
+
+      # 全量导入冒烟：遍历 module/ deploy/ 下所有模块在独立子进程导入，
+      # 已知失败在白名单中（见 dev_tools/import_smoke_test.py），意外失败会使 CI 失败。
+      # --summary-file 产出机器可读汇总，供 pr-report job 写入 PR 评论。
+      - name: Run import smoke test
+        run: uv run python -m dev_tools.import_smoke_test --summary-file import-smoke-summary.json
+
+      # 入口点导入 + WebUI/MCP 进程隔离守卫。
+      - name: Run CI import unittest
+        run: uv run python -m unittest tests.test_ci_import
+
+      - name: Upload import smoke summary
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: import-smoke-summary
+          path: import-smoke-summary.json
+
+  # 说明：PR 检查报告评论由两条 workflow 协作完成：
+  # 1. ci-report-placeholder.yml（pull_request_target）：PR 提交时立即创建占位评论；
+  # 2. ci-report.yml（workflow_run）：CI 完成后找到占位评论并更新为最终报告。
+  # 因此不再在 ci.yml 内直接发布评论（fork PR 下 GITHUB_TOKEN 只读无法发布，
+  # 且与占位机制重复）。

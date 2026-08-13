@@ -318,4 +318,22 @@ class AppShellMixin(WebUIMixinBase):
         if theme in ("advanced_material", "dark_advanced_material"):
             pywebio_theme = "default"
 
-        webconfig(theme=pywebio_theme)
+        webconfig(theme=pywebio_theme)  
+
+        run_js("""
+        document.querySelectorAll(
+            'link[href*="advanced-material-alas"],' +
+            'link[href*="dark-advanced-material-overrides-alas"]'
+        ).forEach(function(e) {
+            e.remove();
+        });
+        """)
+
+        run_js(f"""
+        window.dispatchEvent(
+            new CustomEvent(
+                "alas-theme-change",
+                {{detail: "{theme}"}}
+            )
+        );
+        """)

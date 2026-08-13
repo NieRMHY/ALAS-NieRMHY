@@ -778,38 +778,37 @@
     },
     "OcrModelVersionEnglish": {
       "name": "OCR 英語モデルバージョン",
-      "help": "英語 OCR モデルのバージョンを選択します。auto は推奨の英語 AlOCR v2.6 モデルを使用します。この項目は英語 Azur Lane モデルに適用されます。ncnn バックエンドでは無視されます。",
+      "help": "英語 OCR モデルの階層を選択します。lite は最軽量で最速、standard はバランス型、pro は最高精度です。auto は standard を使用します。alocr_en_v2_6 は旧版 AlOCR 英語モデル（ONNX バックエンドのみ）です。この項目は英語 Azur Lane モデルに適用されます。",
       "auto": "自動推奨",
-      "alocr_en_900k": "alocr_en_900k",
-      "azur_lane_v6_6": "英語 v6.6 (Azur Lane)",
-      "azur_lane_v6_5": "英語 v6.5 (Azur Lane)",
-      "ppocr_v6": "汎用 PP-OCRv6",
-      "alocr_en_v2_6": "英語 AlOCR v2.6",
-      "alocr_en_v2_0": "英語 AlOCR v2.0",
-      "alocr_en_v1_0": "英語 AlOCR v1.0"
+      "lite": "Lite（軽量）",
+      "standard": "Standard（標準）",
+      "pro": "Pro（高精度）",
+      "alocr_en_v2_6": "AlOCR v2.6（旧版）"
     },
     "OcrModelVersionChinese": {
       "name": "OCR 中国語モデルバージョン",
-      "help": "簡体中国語 OCR モデルのバージョンを選択します。auto は推奨の中国語 v6.1 モデルを使用します。この項目は cnocr/中国語モデルに適用されます。ncnn バックエンドでは無視されます。",
+      "help": "簡体中国語 OCR モデルの階層を選択します。lite は最軽量で最速、standard はバランス型、pro は最高精度です。auto は standard を使用します。alocr_cn_v3 は旧版 AlOCR 中国語モデル（ONNX バックエンドのみ）です。この項目は cnocr/中国語モデルに適用されます。",
       "auto": "自動推奨",
-      "cn_v6_1": "中国語 v6.1",
-      "cn_v6": "中国語 v6",
-      "ppocr_v6": "汎用 PP-OCRv6",
-      "alocr_cn_v3": "中国語 AlOCR v3",
-      "alocr_cn_v2_5": "中国語 AlOCR v2.5"
+      "lite": "Lite（軽量）",
+      "standard": "Standard（標準）",
+      "pro": "Pro（高精度）",
+      "alocr_cn_v3": "AlOCR v3（旧版）"
     },
     "OcrModelVersionJapanese": {
       "name": "OCR 日本語モデルバージョン",
-      "help": "日本語 OCR モデルのバージョンを選択します。auto は日本語 Azur Lane v6 モデルを使用します。この項目は日本語モデルに適用されます。ncnn バックエンドでは無視されます。",
+      "help": "日本語 OCR モデルの階層を選択します。lite は最軽量で最速ですが日本語には対応していません。standard はバランス型、pro は最高精度です。auto は standard を使用します。この項目は日本語モデルに適用されます。",
       "auto": "自動推奨",
-      "azur_lane_jp_v6": "日本語 v6 (Azur Lane JP)",
-      "ppocr_v6": "汎用 PP-OCRv6"
+      "lite": "Lite（軽量）",
+      "standard": "Standard（標準）",
+      "pro": "Pro（高精度）"
     },
     "OcrModelVersionTraditionalChinese": {
       "name": "OCR 繁体中国語モデルバージョン",
-      "help": "繁体中国語 OCR モデルのバージョンを選択します。現在は汎用 PP-OCRv6 のみ利用できます。今後のモデル追加のため、独立した設定として残しています。ncnn バックエンドでは無視されます。",
+      "help": "繁体中国語 OCR モデルの階層を選択します。lite は最軽量で最速、standard はバランス型、pro は最高精度です。auto は standard を使用します。",
       "auto": "自動推奨",
-      "ppocr_v6": "汎用 PP-OCRv6"
+      "lite": "Lite（軽量）",
+      "standard": "Standard（標準）",
+      "pro": "Pro（高精度）"
     },
     "ScreenshotInterval": {
       "name": "スクリーンショット速度をX秒に1枚に減速",
@@ -1823,7 +1822,15 @@
     },
     "CommissionLimit": {
       "name": "緊急委託数の過多を防ぐ",
-      "help": "7x24運行時に緊急委託数が多すぎてデイリー委託を完了できないことを防ぐため、委託フィルターでは短時間高収益の委託のみを選択することをお勧めします。"
+      "help": "有効にすると、以下の設定に従って高価値委託を確保し、確保数に達した場合は緊急委託周回タスクを延期します。"
+    },
+    "HighValueCommissionFilterCount": {
+      "name": "高価値委託フィルター数",
+      "help": "現在の委託フィルターの先頭から X 件の通常ルールを高価値ルールとして扱います。tier や shortest などの制御記号は数に含めません。"
+    },
+    "HighValueCommissionReserve": {
+      "name": "高価値委託の確保数",
+      "help": "委託開始後、高価値ルールに一致する未開始委託数がこの値以上の場合、緊急委託周回タスクを延期します。"
     },
     "VanguardLevelMin": {
       "name": "前衛最低レベル",
@@ -2053,12 +2060,36 @@
       "custom": "カスタム"
     },
     "DynamicProgramming": {
-      "name": "全体最適戦略を選択（実験的）",
-      "help": "この実験機能はデフォルトで無効です。有効時は価値ベクトル、各レベルの番号合計を比較し、同じ委託集合はフィルター順で重複排除してから、最終終了時刻や完了時刻合計などを比較します。"
+      "name": "実験的動的計画法",
+      "help": "オフの場合はフィルター順の従来の貪欲選択を使用します。オンにすると厳密な最適性証明付き多項式プランナーと下の5つの価値モデル設定を使用します。"
+    },
+    "TierValueRatio": {
+      "name": "隣接 tier 価値倍率",
+      "help": "前の tier と次の tier の基本価値倍率です。1より大きい値が必要です。大きいほど、低い tier のために高い tier を遅らせにくくなります。既定値は2です。"
+    },
+    "DelayHalfLife": {
+      "name": "基本待機半減期（時間）",
+      "help": "統一割引式 2^(-s/H) の H です。小さいほど、すべての委託に対する基本待機ペナルティが強くなります。正の値を小数第1位まで指定できます。"
+    },
+    "DeadlineFutureHorizon": {
+      "name": "締切割引基準時間（時間）",
+      "help": "統一割引式の相対ウィンドウ指数 (T/d)^2 における T です。大きいほど、同じ開始待ち時間と締切に対するペナルティが強くなります。正の値を小数第1位まで指定でき、既定値は2.0時間です。"
+    },
+    "FilterValueFloor": {
+      "name": "tier 内フィルター価値下限",
+      "help": "同じ tier 内で非常に後ろのルールが保持する最小価値割合です。0より大きく1以下に設定します。小さいほど tier 内の順序が強く影響します。既定値は0.6です。"
+    },
+    "FilterValueHalfLife": {
+      "name": "tier 内番号半減期",
+      "help": "tier 内番号補正が価値下限へ半分近づくまでのフィルタールール数です。正数で、小数第1位まで指定できます。小さいほど前方ルールの優位が集中します。"
     },
     "CustomFilter": {
       "name": "カスタム委託フィルター",
-      "help": "委託フィルターをカスタムに設定してください。実験的な動的計画法を有効にすると、tier は価値レベルを区切り、ignore はアルゴリズムの境界を示します。ignore より前は動的計画法を使用し、後は従来のフィルター順でスロットを埋めますが、委託時間は動的計画法がそのスロットに確保した時間枠以内である必要があります。動的計画法が無効な場合、tier と ignore はどちらも無視されます。"
+      "help": "このフィルターを使用するには、委託フィルターをカスタムに設定してください。実験的動的計画法を有効にすると、tier で価値レベルを区切れます。tier がない場合は各ルールが個別のレベルになります。プランナーは tier 倍率、tier 内順序、予想開始待ち時間から割引価値を計算し、低価値委託を見送ることがあります。従来の貪欲選択は tier を無視し、shortest で未一致の空きを補います。"
+    },
+    "Blacklist": {
+      "name": "委託ブラックリスト",
+      "help": "無視する委託フィルタールールを半角コンマ（,）区切りで入力します。例：ExtraBook, UrgentOil-8, Major。従来の貪欲選択とプランナーの両方に適用されます。"
     },
     "DoMajorCommission": {
       "name": "主要委託を実行する（1200燃料/1000燃料委託）",
@@ -3787,9 +3818,17 @@
       "name": "鶏肉在庫閾値",
       "help": ""
     },
+    "ChickenFilter": {
+      "name": "鶏作業員フィルター",
+      "help": ">で接続。例：ChaoHo > NewJersey > Amagi_chan\nSaratoga > Akashi > Tashkent > YingSwei\nLeMalin > Unicorn > Shimakaze > Cheshire\nChenHai > WilliamDPorter\nHelena > Friedrich > Atago\nYixian > August > Eugen > Hood > Javelin > Laffey > Explorer > Navigator > OceanCrosser > FeiYun > Takao > Anchorage > Belfast > ChangFeng > Mogador > RoyalFortune\nデフォルト順の先頭2行のみ認識します。指定キャラクターが使用できない場合は WorkerJuu にフォールバックします。"
+    },
     "MinPork": {
       "name": "豚肉在庫閾値",
       "help": ""
+    },
+    "PigFilter": {
+      "name": "豚作業員フィルター",
+      "help": ">で接続。例：ChaoHo > NewJersey > Amagi_chan\nSaratoga > Akashi > Tashkent > YingSwei\nLeMalin > Unicorn > Shimakaze > Cheshire\nChenHai > WilliamDPorter\nHelena > Friedrich > Atago\nYixian > August > Eugen > Hood > Javelin > Laffey > Explorer > Navigator > OceanCrosser > FeiYun > Takao > Anchorage > Belfast > ChangFeng > Mogador > RoyalFortune\nデフォルト順の先頭2行のみ認識します。指定キャラクターが使用できない場合は WorkerJuu にフォールバックします。"
     },
     "Milk": {
       "name": "牛を飼育",
@@ -5820,6 +5859,7 @@
       "help": "",
       "None": "None",
       "cheese": "チーズ",
+      "citrus_coffee": "シトラスコーヒー",
       "strawberry_milkshake": "いちごミルクティー",
       "morning_light": "朝の光セット",
       "wake_up_call": "目覚ましセット",
@@ -5830,6 +5870,7 @@
       "help": "",
       "None": "None",
       "cheese": "チーズ",
+      "citrus_coffee": "シトラスコーヒー",
       "strawberry_milkshake": "いちごミルクティー",
       "morning_light": "朝の光セット",
       "wake_up_call": "目覚ましセット",
@@ -5840,6 +5881,7 @@
       "help": "",
       "None": "None",
       "cheese": "チーズ",
+      "citrus_coffee": "シトラスコーヒー",
       "strawberry_milkshake": "いちごミルクティー",
       "morning_light": "朝の光セット",
       "wake_up_call": "目覚ましセット",
@@ -5850,6 +5892,7 @@
       "help": "",
       "None": "None",
       "cheese": "チーズ",
+      "citrus_coffee": "シトラスコーヒー",
       "strawberry_milkshake": "いちごミルクティー",
       "morning_light": "朝の光セット",
       "wake_up_call": "目覚ましセット",
@@ -5860,6 +5903,7 @@
       "help": "",
       "None": "None",
       "cheese": "チーズ",
+      "citrus_coffee": "シトラスコーヒー",
       "strawberry_milkshake": "いちごミルクティー",
       "morning_light": "朝の光セット",
       "wake_up_call": "目覚ましセット",
