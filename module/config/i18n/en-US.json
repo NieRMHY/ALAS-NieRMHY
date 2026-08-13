@@ -477,6 +477,10 @@
       "help": "When restarting the game client, delete external cache files under /sdcard/Android/data/<package>/cache/ after force-stopping the app.",
       "True": "Enabled",
       "False": "Disabled"
+    },
+    "LoginWaitTimeout": {
+      "name": "Login wait timeout",
+      "help": "Maximum time (seconds) to wait for login/startup to complete after the game restarts.\nIncrease this if the game starts slowly when the emulator runs in the background, to avoid false stuck detection and restart loops.\nDefault 30 seconds; only affects the post-restart login wait phase."
     }
   },
   "Emulator": {
@@ -1277,6 +1281,7 @@
       "event_20260417_cn": "Vacation Lane – Beachside Brilliance",
       "event_20260520_cn": "Alliance Before the Hagiobull",
       "event_20260625_cn": "Miracle by Midnight",
+      "event_20260813_cn": "沉溺于星光之城",
       "raid_20200624": "Air Raid Drills with Essex Rerun",
       "raid_20210708": "Cross Wave rerun",
       "raid_20220127": "Mystery Investigation",
