@@ -1,0 +1,52 @@
+name: CI Report
+
+# 在 CI 工作流完成后，向关联 PR 发布/更新检查报告评论。
+#
+# 为什么用 workflow_run：
+# - 在 pull_request 事件下，fork PR 的 GITHUB_TOKEN 只读，无法在 base 仓库发评论
+#   （同一 CI 工作流内的 pr-report job 因此对 fork PR 静默跳过）。
+# - workflow_run 在 base 仓库默认分支上运行，GITHUB_TOKEN 拥有完整写权限，
+#   可以对 fork PR 正常发布评论。
+# - 安全：本工作流只运行默认分支（可信）的代码 + gh/API 数据，不执行 PR head 的未信任代码。
+#
+# 注意：workflow_run 事件只在 workflow 文件位于仓库默认分支（master）时触发，
+# 因此本功能在合并到 master 后对后续 PR 生效。
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  post-report:
+    name: Post PR report
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.event == 'pull_request' && github.event.workflow_run.conclusion != 'cancelled' }}
+    steps:
+      # 检出 base 仓库默认分支（可信代码），不执行 PR head 的未信任代码。
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+
+      # 下载 CI 运行中由 import-smoke job 上传的汇总 artifact。
+      - name: Download import smoke summary
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          run-id: ${{ github.event.workflow_run.id }}
+          name: import-smoke-summary
+          path: .ci-reports
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Post PR report
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_RUN_ID: ${{ github.event.workflow_run.id }}
+          GITHUB_EVENT_PATH: ${{ github.event_path }}
+          GITHUB_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: python3 dev_tools/ci_pr_report.py --summary-file .ci-reports/import-smoke-summary.json

@@ -778,19 +778,21 @@
     },
     "OcrModelVersionEnglish": {
       "name": "OCR 英語モデルバージョン",
-      "help": "英語 OCR モデルの階層を選択します。lite は最軽量で最速、standard はバランス型、pro は最高精度です。auto は standard を使用します。この項目は英語 Azur Lane モデルに適用されます。",
+      "help": "英語 OCR モデルの階層を選択します。lite は最軽量で最速、standard はバランス型、pro は最高精度です。auto は standard を使用します。alocr_en_v2_6 は旧版 AlOCR 英語モデル（ONNX バックエンドのみ）です。この項目は英語 Azur Lane モデルに適用されます。",
       "auto": "自動推奨",
       "lite": "Lite（軽量）",
       "standard": "Standard（標準）",
-      "pro": "Pro（高精度）"
+      "pro": "Pro（高精度）",
+      "alocr_en_v2_6": "AlOCR v2.6（旧版）"
     },
     "OcrModelVersionChinese": {
       "name": "OCR 中国語モデルバージョン",
-      "help": "簡体中国語 OCR モデルの階層を選択します。lite は最軽量で最速、standard はバランス型、pro は最高精度です。auto は standard を使用します。この項目は cnocr/中国語モデルに適用されます。",
+      "help": "簡体中国語 OCR モデルの階層を選択します。lite は最軽量で最速、standard はバランス型、pro は最高精度です。auto は standard を使用します。alocr_cn_v3 は旧版 AlOCR 中国語モデル（ONNX バックエンドのみ）です。この項目は cnocr/中国語モデルに適用されます。",
       "auto": "自動推奨",
       "lite": "Lite（軽量）",
       "standard": "Standard（標準）",
-      "pro": "Pro（高精度）"
+      "pro": "Pro（高精度）",
+      "alocr_cn_v3": "AlOCR v3（旧版）"
     },
     "OcrModelVersionJapanese": {
       "name": "OCR 日本語モデルバージョン",
@@ -1820,7 +1822,15 @@
     },
     "CommissionLimit": {
       "name": "緊急委託数の過多を防ぐ",
-      "help": "7x24運行時に緊急委託数が多すぎてデイリー委託を完了できないことを防ぐため、委託フィルターでは短時間高収益の委託のみを選択することをお勧めします。"
+      "help": "有効にすると、以下の設定に従って高価値委託を確保し、確保数に達した場合は緊急委託周回タスクを延期します。"
+    },
+    "HighValueCommissionFilterCount": {
+      "name": "高価値委託フィルター数",
+      "help": "現在の委託フィルターの先頭から X 件の通常ルールを高価値ルールとして扱います。tier や shortest などの制御記号は数に含めません。"
+    },
+    "HighValueCommissionReserve": {
+      "name": "高価値委託の確保数",
+      "help": "委託開始後、高価値ルールに一致する未開始委託数がこの値以上の場合、緊急委託周回タスクを延期します。"
     },
     "VanguardLevelMin": {
       "name": "前衛最低レベル",
@@ -3808,9 +3818,17 @@
       "name": "鶏肉在庫閾値",
       "help": ""
     },
+    "ChickenFilter": {
+      "name": "鶏作業員フィルター",
+      "help": ">で接続。例：ChaoHo > NewJersey > Amagi_chan\nSaratoga > Akashi > Tashkent > YingSwei\nLeMalin > Unicorn > Shimakaze > Cheshire\nChenHai > WilliamDPorter\nHelena > Friedrich > Atago\nYixian > August > Eugen > Hood > Javelin > Laffey > Explorer > Navigator > OceanCrosser > FeiYun > Takao > Anchorage > Belfast > ChangFeng > Mogador > RoyalFortune\nデフォルト順の先頭2行のみ認識します。指定キャラクターが使用できない場合は WorkerJuu にフォールバックします。"
+    },
     "MinPork": {
       "name": "豚肉在庫閾値",
       "help": ""
+    },
+    "PigFilter": {
+      "name": "豚作業員フィルター",
+      "help": ">で接続。例：ChaoHo > NewJersey > Amagi_chan\nSaratoga > Akashi > Tashkent > YingSwei\nLeMalin > Unicorn > Shimakaze > Cheshire\nChenHai > WilliamDPorter\nHelena > Friedrich > Atago\nYixian > August > Eugen > Hood > Javelin > Laffey > Explorer > Navigator > OceanCrosser > FeiYun > Takao > Anchorage > Belfast > ChangFeng > Mogador > RoyalFortune\nデフォルト順の先頭2行のみ認識します。指定キャラクターが使用できない場合は WorkerJuu にフォールバックします。"
     },
     "Milk": {
       "name": "牛を飼育",
@@ -5841,6 +5859,7 @@
       "help": "",
       "None": "None",
       "cheese": "チーズ",
+      "citrus_coffee": "シトラスコーヒー",
       "strawberry_milkshake": "いちごミルクティー",
       "morning_light": "朝の光セット",
       "wake_up_call": "目覚ましセット",
@@ -5851,6 +5870,7 @@
       "help": "",
       "None": "None",
       "cheese": "チーズ",
+      "citrus_coffee": "シトラスコーヒー",
       "strawberry_milkshake": "いちごミルクティー",
       "morning_light": "朝の光セット",
       "wake_up_call": "目覚ましセット",
@@ -5861,6 +5881,7 @@
       "help": "",
       "None": "None",
       "cheese": "チーズ",
+      "citrus_coffee": "シトラスコーヒー",
       "strawberry_milkshake": "いちごミルクティー",
       "morning_light": "朝の光セット",
       "wake_up_call": "目覚ましセット",
@@ -5871,6 +5892,7 @@
       "help": "",
       "None": "None",
       "cheese": "チーズ",
+      "citrus_coffee": "シトラスコーヒー",
       "strawberry_milkshake": "いちごミルクティー",
       "morning_light": "朝の光セット",
       "wake_up_call": "目覚ましセット",
@@ -5881,6 +5903,7 @@
       "help": "",
       "None": "None",
       "cheese": "チーズ",
+      "citrus_coffee": "シトラスコーヒー",
       "strawberry_milkshake": "いちごミルクティー",
       "morning_light": "朝の光セット",
       "wake_up_call": "目覚ましセット",

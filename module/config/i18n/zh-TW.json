@@ -778,19 +778,21 @@
     },
     "OcrModelVersionEnglish": {
       "name": "OCR 英文模型版本",
-      "help": "選擇英文 OCR 模型檔位。lite 輕量最快，standard 均衡，pro 精度最高。auto 使用 standard。此項影響英文 Azur Lane 模型。",
+      "help": "選擇英文 OCR 模型檔位。lite 輕量最快，standard 均衡，pro 精度最高。auto 使用 standard。alocr_en_v2_6 為舊版 AlOCR 專用英文模型，僅 ONNX 後端可用。此項影響英文 Azur Lane 模型。",
       "auto": "自動推薦",
       "lite": "Lite 輕量",
       "standard": "Standard 標準",
-      "pro": "Pro 高精度"
+      "pro": "Pro 高精度",
+      "alocr_en_v2_6": "AlOCR v2.6（舊版）"
     },
     "OcrModelVersionChinese": {
       "name": "OCR 簡中模型版本",
-      "help": "選擇簡體中文 OCR 模型檔位。lite 輕量最快，standard 均衡，pro 精度最高。auto 使用 standard。此項影響 cnocr/中文模型。",
+      "help": "選擇簡體中文 OCR 模型檔位。lite 輕量最快，standard 均衡，pro 精度最高。auto 使用 standard。alocr_cn_v3 為舊版 AlOCR 專用中文模型，僅 ONNX 後端可用。此項影響 cnocr/中文模型。",
       "auto": "自動推薦",
       "lite": "Lite 輕量",
       "standard": "Standard 標準",
-      "pro": "Pro 高精度"
+      "pro": "Pro 高精度",
+      "alocr_cn_v3": "AlOCR v3（舊版）"
     },
     "OcrModelVersionJapanese": {
       "name": "OCR 日文模型版本",
@@ -1820,7 +1822,15 @@
     },
     "CommissionLimit": {
       "name": "防止緊急委託數量過多",
-      "help": "在7x24執行時防止緊急委託數量過多做不完每日委託，建議在委託過濾器僅選擇短時長高收益委託"
+      "help": "啟用後，委託排程會根據以下兩項設定保留高價值委託；達到保留量時延後刷緊急委託任務。"
+    },
+    "HighValueCommissionFilterCount": {
+      "name": "高價值委託過濾器數量",
+      "help": "將目前委託過濾器由前往後的前 X 條普通規則視為高價值規則。tier 和 shortest 等控制標記不計入數量。"
+    },
+    "HighValueCommissionReserve": {
+      "name": "高價值委託保留量",
+      "help": "委託執行後，若仍待執行且符合高價值規則的委託數量達到此值，則延後刷緊急委託任務。"
     },
     "VanguardLevelMin": {
       "name": "前排最低等級",
@@ -3808,9 +3818,17 @@
       "name": "雞肉底線",
       "help": ""
     },
+    "ChickenFilter": {
+      "name": "養雞使用角色",
+      "help": "以>連接，例如肇和 新澤西 小天城：ChaoHo > NewJersey > Amagi_chan\n小加加：Saratoga > 明石：Akashi > 塔什干：Tashkent > 應瑞：YingSwei\n惡毒：LeMalin > 獨角獸：Unicorn > 島風：Shimakaze > 柴郡：Cheshire\n鎮海：ChenHai > 威廉D波特：WilliamDPorter\n海倫娜：Helena > 大帝：Friedrich > 愛宕：Atago\n逸仙：Yixian > 奧古斯特：August > 歐根親王：Eugen > 胡德：Hood > 標槍：Javelin > 拉菲：Laffey > 探索者：Explorer > 領航員：Navigator > 領洋者：OceanCrosser > 飛雲：FeiYun > 高雄：Takao > 安克雷奇：Anchorage > 貝爾法斯特：Belfast > 長風：ChangFeng > 莫加多爾：Mogador > 皇家財富號：RoyalFortune\n僅識別預設排序前兩排；指定艦娘不可用時回退 WorkerJuu。"
+    },
     "MinPork": {
       "name": "豬肉底線",
       "help": ""
+    },
+    "PigFilter": {
+      "name": "養豬使用角色",
+      "help": "以>連接，例如肇和 新澤西 小天城：ChaoHo > NewJersey > Amagi_chan\n小加加：Saratoga > 明石：Akashi > 塔什干：Tashkent > 應瑞：YingSwei\n惡毒：LeMalin > 獨角獸：Unicorn > 島風：Shimakaze > 柴郡：Cheshire\n鎮海：ChenHai > 威廉D波特：WilliamDPorter\n海倫娜：Helena > 大帝：Friedrich > 愛宕：Atago\n逸仙：Yixian > 奧古斯特：August > 歐根親王：Eugen > 胡德：Hood > 標槍：Javelin > 拉菲：Laffey > 探索者：Explorer > 領航員：Navigator > 領洋者：OceanCrosser > 飛雲：FeiYun > 高雄：Takao > 安克雷奇：Anchorage > 貝爾法斯特：Belfast > 長風：ChangFeng > 莫加多爾：Mogador > 皇家財富號：RoyalFortune\n僅識別預設排序前兩排；指定艦娘不可用時回退 WorkerJuu。"
     },
     "Milk": {
       "name": "養牛",
@@ -5841,6 +5859,7 @@
       "help": "",
       "None": "None",
       "cheese": "芝士",
+      "citrus_coffee": "柑橘咖啡",
       "strawberry_milkshake": "草莓奶綠",
       "morning_light": "晨光活力組合",
       "wake_up_call": "醒神套餐",
@@ -5851,6 +5870,7 @@
       "help": "",
       "None": "None",
       "cheese": "芝士",
+      "citrus_coffee": "柑橘咖啡",
       "strawberry_milkshake": "草莓奶綠",
       "morning_light": "晨光活力組合",
       "wake_up_call": "醒神套餐",
@@ -5861,6 +5881,7 @@
       "help": "",
       "None": "None",
       "cheese": "芝士",
+      "citrus_coffee": "柑橘咖啡",
       "strawberry_milkshake": "草莓奶綠",
       "morning_light": "晨光活力組合",
       "wake_up_call": "醒神套餐",
@@ -5871,6 +5892,7 @@
       "help": "",
       "None": "None",
       "cheese": "芝士",
+      "citrus_coffee": "柑橘咖啡",
       "strawberry_milkshake": "草莓奶綠",
       "morning_light": "晨光活力組合",
       "wake_up_call": "醒神套餐",
@@ -5881,6 +5903,7 @@
       "help": "",
       "None": "None",
       "cheese": "芝士",
+      "citrus_coffee": "柑橘咖啡",
       "strawberry_milkshake": "草莓奶綠",
       "morning_light": "晨光活力組合",
       "wake_up_call": "醒神套餐",

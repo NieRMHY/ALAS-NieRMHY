@@ -1,0 +1,48 @@
+name: CI Report Placeholder
+
+# 在 PR 提交时立即创建一条带唯一标记的占位评论，
+# 提示「CI 检查进行中，报告将在完成后更新」；
+# ci-report workflow（workflow_run）在 ci.yml 完成后找到该占位评论并更新为最终报告。
+#
+# 为什么用 pull_request_target：
+# - fork PR 的 pull_request 事件下 GITHUB_TOKEN 只读，无法在 base 仓库发评论；
+# - pull_request_target 在 base 仓库上下文运行，具备写权限，可对 fork PR 发评论。
+#
+# 安全：本工作流只通过 actions/github-script 调 API 发评论，不 checkout、不执行 PR 代码。
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  pull-requests: write
+
+concurrency:
+  group: ci-report-placeholder-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  create-placeholder:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create / ensure placeholder comment
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const number = context.payload.pull_request.number;
+            const marker = '<!-- ci-report-placeholder -->';
+            const body = `${marker}\n\n⏳ CI 检查进行中，报告将在完成后更新。`;
+            const { data: comments } = await github.rest.issues.listComments({
+              owner, repo, issue_number: number, per_page: 100,
+            });
+            const existing = comments.find((c) => c.body && c.body.includes(marker));
+            if (existing) {
+              core.info(`占位评论已存在（id=${existing.id}），跳过创建`);
+              return;
+            }
+            const created = await github.rest.issues.createComment({
+              owner, repo, issue_number: number, body,
+            });
+            core.info(`已创建占位评论（id=${created.data.id}）`);

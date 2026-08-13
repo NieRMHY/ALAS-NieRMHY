@@ -202,10 +202,10 @@ Optimization:
     option: [true, false]
   OcrModelVersionEnglish:
     value: auto
-    option: [auto, lite, standard, pro]
+    option: [auto, lite, standard, pro, alocr_en_v2_6]
   OcrModelVersionChinese:
     value: auto
-    option: [auto, lite, standard, pro]
+    option: [auto, lite, standard, pro, alocr_cn_v3]
   OcrModelVersionJapanese:
     value: auto
     option: [auto, lite, standard, pro]
@@ -548,6 +548,10 @@ GemsFarming:
   AllowLowVanguardLevel: false
   DelayTaskIFNoFlagship: false
   CommissionLimit: false
+  HighValueCommissionFilterCount:
+    type: input
+    value: 32
+  HighValueCommissionReserve: 2
   VanguardLevelMin:
     value: 1
     validate: [1, 125]
@@ -1289,7 +1293,11 @@ IslandNursery:
     option: [ 0, 1, 2 ]
 IslandRancher:
   MinChicken: 300
+  ChickenFilter: |-
+    WorkerJuu
   MinPork: 300
+  PigFilter: |-
+    WorkerJuu
   Milk: true
   RancherFilter: |-
     WorkerJuu
@@ -1774,6 +1782,7 @@ _IslandBusinessProduct5: &IslandBusinessProduct5
   option:
     - None
     - cheese
+    - citrus_coffee
     - strawberry_milkshake
     - morning_light
     - wake_up_call
