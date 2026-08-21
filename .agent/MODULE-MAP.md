@@ -5,8 +5,8 @@ alwaysApply: true
 
 # 模块映射表
 
-**生成日期**: 2026-05-27
-**项目版本**: dev 分支
+**生成日期**: 2026-08-14
+**项目版本**: dev 分支（HEAD f992af6c0）
 
 ## 项目概述
 
@@ -14,7 +14,7 @@ alwaysApply: true
 - **主要语言**: Python 3.14+
 - **框架**: PyWebIO + Starlette + uvicorn (WebUI), ADB/uiautomator2 (设备控制)
 - **包管理器**: uv (项目模式)
-- **总文件数**: 2002 个 Python 文件
+- **总文件数**: 2025 个 Python 文件（不含 `.venv` 与 `webapp/node_modules`）
 
 ---
 
@@ -74,6 +74,22 @@ alwaysApply: true
 | **event_hospital** | `module/event_hospital/` | 医院活动 |
 | **coalition** | `module/coalition/` | 联动活动 |
 | **island** | `module/island/` | 岛屿系统 |
+| **island_business** | `module/island_business/` | 岛屿子模块（商业） |
+| **island_cargo_preparation** | `module/island_cargo_preparation/` | 岛屿子模块（货运准备） |
+| **island_daily_interact** | `module/island_daily_interact/` | 岛屿子模块（每日互动） |
+| **island_daily_order** | `module/island_daily_order/` | 岛屿子模块（每日订单） |
+| **island_farm** | `module/island_farm/` | 岛屿子模块（农场） |
+| **island_fishery** | `module/island_fishery/` | 岛屿子模块（渔业） |
+| **island_grill** | `module/island_grill/` | 岛屿子模块（烧烤） |
+| **island_juu_coffee** | `module/island_juu_coffee/` | 岛屿子模块（啾咖啡） |
+| **island_juu_eatery** | `module/island_juu_eatery/` | 岛屿子模块（啾食堂） |
+| **island_manufacture** | `module/island_manufacture/` | 岛屿子模块（制造） |
+| **island_mine_forest** | `module/island_mine_forest/` | 岛屿子模块（采矿/森林） |
+| **island_pearl_sell** | `module/island_pearl_sell/` | 岛屿子模块（珍珠出售） |
+| **island_rancher** | `module/island_rancher/` | 岛屿子模块（牧场） |
+| **island_restaurant** | `module/island_restaurant/` | 岛屿子模块（餐厅） |
+| **island_select_character** | `module/island_select_character/` | 岛屿子模块（角色选择） |
+| **island_teahouse** | `module/island_teahouse/` | 岛屿子模块（茶馆） |
 | **private_quarters** | `module/private_quarters/` | 私人休息室 |
 | **shipyard** | `module/shipyard/` | 船坞系统 |
 | **freebies** | `module/freebies/` | 免费福利 |
@@ -86,6 +102,7 @@ alwaysApply: true
 | **storage** | `module/storage/` | 仓库（拆解、StorageHandler） |
 | **game_setting** | `module/game_setting/` | 游戏内设置（player_prefs 等） |
 | **template** | `module/template/` | 模板匹配资源（assets.py） |
+| **ui_white** | `module/ui_white/` | 白色主题 UI 资源（assets.py） |
 
 ### 第五层：大世界系统
 
@@ -108,6 +125,7 @@ alwaysApply: true
 | **daemon** | `module/daemon/` | 守护模式 |
 | **webui** | `module/webui/` | WebUI 应用 |
 | **submodule** | `module/submodule/` | 外部桥接 |
+| **log_res** | `module/log_res/` | 日志资源管理 |
 | **llm** | `module/llm.py` | LLM 错误分析 |
 | **logger** | `module/logger.py` | 日志系统 |
 
@@ -122,7 +140,7 @@ alwaysApply: true
 | **event_*_cn** | `campaign/event_*/` | 各活动战役数据 |
 | **war_archives_*_cn** | `campaign/war_archives_*/` | 各作战档案活动数据 |
 
-> 实际目录结构：除 `campaign_main`、`campaign_hard`、`campaign_sos`、`campaign_war_archives` 外，含约 78 个 `event_*` 目录和 47 个 `war_archives_*` 目录（共 130+ 个条目）。
+> 实际目录结构：除 `campaign_main`、`campaign_hard`、`campaign_sos`、`campaign_war_archives` 外，含 82 个 `event_*` 目录和 48 个 `war_archives_*` 目录（加 4 个基础目录共 134 个条目）。
 
 ### 第八层：资源与工具层
 
@@ -155,9 +173,10 @@ alwaysApply: true
 ## 关键文件清单
 
 ### 入口文件
-- `alas.py` - 核心调度器（约 1500 行）
-- `gui.py` - WebUI 启动器（约 1000 行）
-- `mcp_server_sse.py` - MCP 服务器（约 570 行）
+- `alas.py` - 核心调度器（1568 行，112 个方法，其中 93 个任务方法）
+- `gui.py` - WebUI 启动器（1026 行）
+- `mcp_server_sse.py` - MCP 服务器（574 行，18 个工具）
+- `module/webui/app.py` - WebUI 应用工厂与 ASGI 入口（363 行，已拆分为 `app_*` 系列约 50 个文件，如 `app_home.py`、`app_instances.py`、`app_stat_*.py`、`app_developer_*.py`）
 
 ### 配置文件
 - `module/config/argument/*.yaml` - 配置源文件

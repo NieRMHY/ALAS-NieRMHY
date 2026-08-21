@@ -5,8 +5,8 @@ alwaysApply: true
 
 # 快速上手指南
 
-**生成日期**: 2026-05-27
-**项目版本**: dev 分支
+**生成日期**: 2026-08-14
+**项目版本**: dev 分支（HEAD f992af6c0）
 
 ---
 
@@ -138,6 +138,9 @@ uv run python mcp_server_sse.py
 | module/os | 大世界核心 | [OS-SYSTEM.md](OS-SYSTEM.md) |
 | module/os_combat | 大世界战斗 | [OS-SYSTEM.md](OS-SYSTEM.md) |
 | module/os_handler | 事件处理 | [OS-SYSTEM.md](OS-SYSTEM.md) |
+| module/os_ash | 余烬/信标系统 | [OS-SYSTEM.md](OS-SYSTEM.md) |
+| module/os_shop | 大世界商店 | [OS-SYSTEM.md](OS-SYSTEM.md) |
+| module/os_simulator | 大世界地图模拟器 | [OS-SYSTEM.md](OS-SYSTEM.md) |
 
 ### 4.6 基础设施层
 

@@ -15,6 +15,8 @@ alwaysApply: true
 | 许可证 | GPL-3.0 |
 
 > **版本说明**：本文档描述的 `func(ev)` 单事件热重载架构为早期版本。当前 gui.py 已大规模重写（1026 行），新增：依赖同步服务（`_start_dependency_sync_service`）、IPv4/IPv6 双栈 socket（`_create_dual_stack_sockets`）、worker 进程登记与孤儿回收（`worker_registry`）、进程树终止、WebUI 就绪检测等。核心结构变化见文末"当前版本差异"。
+>
+> **最后核对**：2026-08-14（dev 分支，HEAD 提交 f992af6c0）。文中行号均已按当前 gui.py 重新核实。
 
 ### 导入依赖
 
@@ -37,7 +39,7 @@ alwaysApply: true
 
 ---
 
-## 2. 平台兼容性处理 (L7-L15)
+## 2. 平台兼容性处理 (L12-L20)
 
 ```python
 if sys.platform != "win32":
@@ -57,7 +59,7 @@ if sys.platform != "win32":
 
 ---
 
-## 3. `func(ev, dependency_sync_event=None, ready_event=None)` 函数分析 (L124-L267)
+## 3. `func(ev, dependency_sync_event=None, ready_event=None)` 函数分析 (L124-L266)
 
 ```python
 def func(ev: Optional[Event], dependency_sync_event: Optional[Event] = None,
@@ -76,7 +78,7 @@ def func(ev: Optional[Event], dependency_sync_event: Optional[Event] = None,
 
 ### 3.2 执行流程
 
-#### 阶段 1: 平台特定的 asyncio 配置 (L33-L38)
+#### 阶段 1: 平台特定的 asyncio 配置 (L141-L147)
 
 ```python
 if sys.platform == "darwin":
@@ -188,13 +190,13 @@ else:
 
 **关键配置**:
 - `factory=True`: `module.webui.app:app` 是一个工厂函数，每次调用返回新的 ASGI 应用实例
-- **双栈 socket**: 通配地址（`0.0.0.0`/`::`）时显式创建 IPv4+IPv6 两个监听 socket，避免 Windows 将 IPv6 wildcard 作为仅 IPv6 监听（`_create_dual_stack_sockets`，L59-99）
-- **就绪检测**: `_run_uvicorn_server`（L109-122）启动 uvicorn 后通过 `ready_event` 通知父进程，配合父进程的 `_wait_for_webui_ready`（L316-327）实现启动超时重试
+- **双栈 socket**: 通配地址（`0.0.0.0`/`::`）时显式创建 IPv4+IPv6 两个监听 socket，避免 Windows 将 IPv6 wildcard 作为仅 IPv6 监听（`_create_dual_stack_sockets`，L59-97）
+- **就绪检测**: `_run_uvicorn_server`（L109-121）启动 uvicorn 后通过 `ready_event` 通知父进程，配合父进程的 `_wait_for_webui_ready`（L316-327）实现启动超时重试
 - SSL 模式下同时提供密钥和证书文件
 
 ---
 
-## 4. `_stop_process(process, timeout=5)` 函数分析 (L125-L139)
+## 4. `_stop_process(process, timeout=5)` 函数分析 (L269-L313)
 
 ```python
 def _stop_process(process, timeout=5):
@@ -215,9 +217,9 @@ def _stop_process(process, timeout=5):
 
 ---
 
-## 5. `__main__` 入口分析 (L142-L191)
+## 5. `__main__` 入口分析 (L1012-L1026)
 
-### 5.1 multiprocessing 启动方式设置 (L143-L150)
+### 5.1 multiprocessing 启动方式设置 (L1013-L1020)
 
 ```python
 try:
@@ -273,11 +275,11 @@ def run_webui_supervisor() -> None:
 5. **双栈 socket**: 通配地址显式创建 IPv4/IPv6 双监听
 
 **错误处理**:
-- 子进程未就绪 → 递增 `startup_failures`，指数退避重试，超过 `WEBUI_START_RETRY_LIMIT` 退出
+- 子进程未就绪 → 递增 `startup_failures`，按重试次数秒退避（`time.sleep(startup_failures)`）重试，超过 `WEBUI_START_RETRY_LIMIT` 退出
 - 子进程反复意外退出 → 递增 `runtime_failures`，超过 `WEBUI_RUNTIME_RETRY_LIMIT` 退出（避免无限崩溃循环）
 - 清理失败（worker 未回收）→ 不创建替代 WebUI，防止重复设备控制任务
 
-### 5.3 非重载模式 (L1012-L1026)
+### 5.3 非重载模式 (L1022-L1026)
 
 ```python
 else:
@@ -294,12 +296,17 @@ else:
 
 ```python
 class State:
-    restart_event: threading.Event = None  # 热重载事件
-    manager: SyncManager = None            # multiprocessing 管理器
-    electron: bool = False                 # Electron 模式标志
-    theme: str = "default"                 # UI 主题
-    deploy_config: DeployConfig            # 部署配置（类属性，由 @cached_class_property 初始化）
+    restart_event: threading.Event = None          # 热重载事件
+    dependency_sync_event: threading.Event = None  # 请求父进程同步依赖的事件
+    manager: SyncManager = None                    # multiprocessing 管理器
+    process_registry = None                        # 进程级 worker 登记（manager.dict()）
+    electron: bool = False                         # Electron 模式标志
+    webui_host: str = None                         # 实际监听主机
+    theme: str = "default"                         # UI 主题
+    deploy_config: DeployConfig                    # 部署配置（类属性，由 @cached_class_property 初始化）
 ```
+
+另有 `init()`/`clearup()` 类方法管理 `multiprocessing.Manager` 生命周期，并在 `init()` 中通过 `worker_registry.claim_owner()` 认领 WebUI 所有者身份。
 
 ### 6.2 DeployConfig 结构
 
@@ -334,6 +341,20 @@ class ConfigModel:
     CheckUpdateInterval: int = 5
     AutoRestartTime: str = "03:50"
 
+    # 杂项
+    DiscordRichPresence: bool = False
+
+    # 远程访问
+    EnableRemoteAccess: bool = False
+    RemoteAccessMode: str = "auto"
+    SSHUser: Optional[str] = None
+    SSHServer: Optional[str] = None
+    SSHExecutable: Optional[str] = None
+    SignalingServer: Optional[str] = None
+    StunServers: Optional[str] = '["stun:stun.l.google.com:19302"]'
+    TurnServers: Optional[str] = None
+    TurnCredentialMode: str = "static"
+
     # WebUI 配置
     WebuiHost: str = "0.0.0.0"
     WebuiPort: int = 25548
@@ -358,23 +379,58 @@ class ConfigModel:
 gui.py (__main__)
   │
   ├── State (module.webui.setting)
-  │   └── DeployConfig (module.webui.config)
-  │       └── deploy.config.ConfigModel
+  │   ├── DeployConfig (module.webui.config → deploy.config.ConfigModel)
+  │   └── worker_registry (module.webui.worker_registry)
   │
-  ├── func(ev) [子进程/主进程]
+  ├── run_webui_supervisor() [热重载模式]
+  │   ├── _recover_orphaned_workers() / _stop_registered_workers()
+  │   ├── _start_dependency_sync_service() → deploy.uv.dependency_sync_service
+  │   ├── Process(target=func, args=(event, dependency_sync_event, ready_event))
+  │   ├── _wait_for_webui_ready() / _stop_webui_process_tree()
+  │   └── _stop_dependency_sync_service()
+  │
+  ├── func(ev, dependency_sync_event, ready_event) [子进程/主进程]
   │   ├── argparse - 命令行参数
   │   ├── asyncio - 事件循环策略
-  │   ├── uvicorn.run("module.webui.app:app")
-  │   │   └── module.webui.app (PyWebIO + Starlette)
-  │   │       ├── AzurLaneConfig - 配置管理
-  │   │       ├── ProcessManager - 进程管理
-  │   │       └── 55 个任务处理器（惰性加载）
-  │   └── State.restart_event = ev
+  │   ├── uvicorn.Config("module.webui.app:app", factory=True)
+  │   │   └── uvicorn.Server().run(sockets=...)  # 双栈 socket（_create_dual_stack_sockets）
+  │   │       └── module.webui.app.app()  # ASGI 应用工厂（PyWebIO + Starlette）
+  │   │           ├── AlasGUI ← AppShellMixin + DashboardMixin + ... + Frame（app_* 系列 27 个模块）
+  │   │           ├── api_routes（module.webui.api）— REST/WebSocket 路由
+  │   │           ├── application.mount("/mcp", mcp_app)  # MCP SSE 服务器
+  │   │           └── ProcessManager / AzurLaneConfig（惰性加载）
+  │   └── State.restart_event = ev / State.dependency_sync_event
   │
   └── _stop_process(process)
       ├── process.terminate() - SIGTERM
       └── process.kill() - SIGKILL (回退)
 ```
+
+### 7.1 ASGI 路由与 MCP 挂载
+
+`module/webui/app.py`（363 行）是 ASGI 应用工厂（`app()`），组合了 PyWebIO 页面、REST/WebSocket 路由与 MCP 子应用：
+
+- **PyWebIO 页面**: `index`（首页）与 `manage`（管理页），通过 `asgi_app()`（`module/webui/fastapi.py`）注册；`api_routes` 由 `fastapi.asgi_app` 一并挂载
+- **REST/WebSocket 路由**（`module/webui/api.py` 的 `api_routes`）:
+
+| 路径 | 方法 | 功能 |
+|---|---|---|
+| `/api/cl1_stats` | GET | 大世界月度统计（`get_opsi_stats`） |
+| `/api/ap_timeline` | GET | AP 时间线（`get_ap_timeline`） |
+| `/api/notify` | POST | 接收通知并推送到 SSE |
+| `/api/notify_stream` | GET (SSE) | 启动器订阅通知流 |
+| `/api/import_legacy_upload` | POST | 浏览器上传旧版文件夹导入（config/log/cl1/azurstat） |
+| `/obs` | GET | OBS 覆盖层页面（`obs_overlay.html`） |
+| `/ws/live_screenshot` | WebSocket | 实时预览（ws-scrcpy → scrcpy → 截图兜底） |
+| `/ws/live_control` | WebSocket | 实时预览触摸/按键控制 |
+| `/api/launcher/status` | GET | 启动器连接与自启动状态 |
+| `/api/launcher/startup` | POST | 设置开机自启动（仅本机） |
+| `/api/launcher/stream` | GET (SSE) | 启动器命令流（仅本机） |
+| `/api/launcher/report` | POST | 启动器命令执行回报（仅本机） |
+| `/api/deploy/settings` | GET/POST | deploy.yaml 可视化配置读写（仅本机） |
+| `/api/deploy/startup-run` | GET/POST | 实例随 WebUI 启动自动运行设置（仅本机） |
+
+- **MCP 挂载**: `application.mount("/mcp", mcp_app)`（app.py L362），将 `mcp_server_sse.app` 挂载到 `/mcp`，SSE 端点为 `/mcp/sse`、消息端点为 `/mcp/messages`
 
 ---
 

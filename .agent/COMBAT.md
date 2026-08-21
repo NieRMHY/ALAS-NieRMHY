@@ -5,6 +5,12 @@ alwaysApply: true
 
 # 战斗逻辑模块 (module/combat/) 分析文档
 
+**生成日期**: 2026-08-14
+**项目版本**: dev 分支
+**最后分析的代码版本**: f992af6c0
+
+---
+
 ## 1. 模块概述
 
 **一句话定位**：战斗系统的核心执行引擎，负责管理战斗准备、战斗执行、战斗状态处理的完整生命周期。
@@ -35,9 +41,9 @@ alwaysApply: true
 
 **逐行分析**：
 
-**L1-20**：导入语句，引入战斗系统所需的全部依赖。
+**L23-41**：导入语句，引入战斗系统所需的全部依赖（numpy、Timer、图像工具、ApiClient、各子模块类与资源）。
 
-**L22**：`Combat` 类定义，采用多重继承组合以下功能：
+**L44**：`Combat` 类定义，采用多重继承组合以下 7 个功能类：
 - `Level`：等级检测
 - `HPBalancer`：血量平衡
 - `Retirement`：退役处理
@@ -46,88 +52,88 @@ alwaysApply: true
 - `CombatManual`：手动战斗
 - `AutoSearchHandler`：自动搜索处理
 
-**L23-24**：类属性定义：
+**L56-57**：类属性定义：
 - `_automation_set_timer`：自动化设置计时器（1秒间隔）
 - `battle_status_click_interval`：战斗状态点击间隔
 
-**L26-40**：`combat_appear()` 方法，检测是否进入战斗状态：
+**L59-75**：`combat_appear()` 方法，检测是否进入战斗状态：
 - 检查舰队锁定配置
 - 检测战斗加载画面
 - 检测战斗准备界面（含覆盖层）
 
-**L42-64**：`map_offensive()` 方法，地图进攻流程：
+**L77-99**：`map_offensive()` 方法，地图进攻流程：
 - 点击 `MAP_OFFENSIVE` 按钮
 - 处理低情绪状态
 - 处理退役场景
 - 循环直到战斗出现
 
-**L65-80**：`is_combat_loading()` 方法，检测战斗加载状态：
+**L100-119**：`is_combat_loading()` 方法，检测战斗加载状态：
 - 裁剪图像区域 (0, 620, 1280, 690)
 - 使用模板匹配检测加载条
 - 计算加载进度百分比
 - 回退检测：检查战斗执行状态
 
-**L82-137**：`is_combat_executing()` 方法，检测战斗执行状态：
+**L121-184**：`is_combat_executing()` 方法，检测战斗执行状态：
 - 支持多种暂停按钮样式（CN/EN/JP/TW）
 - 使用颜色匹配、模板匹配、亮度匹配多种方式
 - 处理特殊主题按钮（圣诞节、赛博朋克、忍者等）
 
-**L139-196**：`handle_combat_quit()` 方法，处理战斗退出：
+**L186-259**：`handle_combat_quit()` 方法，处理战斗退出：
 - 支持多种退出按钮样式
 - 使用计时器防止重复点击
 
-**L198-205**：`handle_combat_quit_reconfirm()` 方法，处理退出确认。
+**L261-267**：`handle_combat_quit_reconfirm()` 方法，处理退出确认。
 
-**L207-208**：`ensure_combat_oil_loaded()` 方法，确保石油加载完成。
+**L269-271**：`ensure_combat_oil_loaded()` 方法，确保石油加载完成。
 
-**L210-215**：`handle_combat_automation_confirm()` 方法，处理自动化确认弹窗。
+**L273-284**：`handle_combat_automation_confirm()` 方法，处理自动化确认弹窗。
 
-**L217-268**：`combat_preparation()` 方法，战斗准备流程：
+**L286-343**：`combat_preparation()` 方法，战斗准备流程：
 - 参数：`balance_hp`（血量平衡）、`emotion_reduce`（情绪减少）、`auto`（自动模式）、`fleet_index`（舰队索引）
 - 流程：情绪等待 → 血量平衡 → 战斗准备界面处理 → 自动化设置 → 退役处理 → 紧急维修 → 故事跳过 → 战斗加载检测
 
-**L270-278**：`handle_battle_preparation()` 方法，处理战斗准备按钮。
+**L345-355**：`handle_battle_preparation()` 方法，处理战斗准备按钮。
 
-**L280-311**：`handle_combat_automation_set()` 方法，设置战斗自动化模式：
+**L357-392**：`handle_combat_automation_set()` 方法，设置战斗自动化模式：
 - 检测当前自动化状态（ON/OFF）
 - 根据配置切换自动化状态
 
-**L313-349**：`handle_emergency_repair_use()` 方法，处理紧急维修：
+**L394-428**：`handle_emergency_repair_use()` 方法，处理紧急维修：
 - 检查配置是否启用
 - 等待舰队力量数字稳定
 - 根据血量阈值决定是否使用维修
 
-**L351-399**：`combat_execute()` 方法，战斗执行流程：
+**L430-484**：`combat_execute()` 方法，战斗执行流程：
 - 参数：`auto`（战斗模式）、`submarine`（潜艇模式）、`drop`（掉落记录）
 - 重置状态计时器
 - 处理：自动化确认 → 故事跳过 → 自动战斗 → 手动战斗 → 武器释放 → 潜艇呼叫 → 弹窗处理 → 战斗状态
 
-**L401-453**：`handle_battle_status()` 方法，处理战斗状态：
+**L486-540**：`handle_battle_status()` 方法，处理战斗状态：
 - 检测战斗评分（S/A/B/C/D）
 - 记录掉落物品
 - 点击继续
 
-**L455-488**：`handle_get_items()` 方法，处理获得物品：
+**L542-579**：`handle_get_items()` 方法，处理获得物品：
 - 检测三种物品获取界面
 - 重置战斗状态计时器
 
-**L490-507**：`handle_exp_info()` 方法，处理经验信息：
+**L581-606**：`handle_exp_info()` 方法，处理经验信息：
 - 检测 S/A/B 级经验信息
 - 添加短暂延迟
 
-**L509-525**：`handle_get_ship()` 方法，处理获得舰船：
+**L608-628**：`handle_get_ship()` 方法，处理获得舰船：
 - 检测新舰船
 - 设置触发标志
 
-**L527-541**：`handle_combat_mis_click()` 方法，处理战斗误点击：
+**L630-650**：`handle_combat_mis_click()` 方法，处理战斗误点击：
 - 检测弹药库/演习界面
 - 点击返回按钮
 
-**L543-622**：`combat_status()` 方法，战斗状态处理：
+**L652-737**：`combat_status()` 方法，战斗状态处理：
 - 参数：`drop`（掉落记录）、`expected_end`（预期结束条件）
 - 处理：故事跳过 → 获得舰船 → 获得物品 → 弹窗确认 → 战斗状态 → 经验信息 → 自动搜索退出 → 误点击处理
 
-**L623-667**：`combat()` 方法，完整战斗流程：
+**L739-780**：`combat()` 方法，完整战斗流程：
 - 参数合并：使用用户配置或传入参数
 - 创建掉落记录上下文
 - 执行：战斗准备 → 战斗执行 → 战斗状态
@@ -136,28 +142,29 @@ alwaysApply: true
 
 ### 2.2 combat_auto.py (89 行)
 
-**导出类型**：类 `CombatAuto`
+**导出类型**：类 `CombatAuto`（继承 `ModuleBase`）
 
 **导入依赖**：
 - `module.base.base.ModuleBase`
 - `module.base.timer.Timer`
-- `module.combat.assets`
+- `module.combat.assets`（COMBAT_AUTO、COMBAT_AUTO_133、COMBAT_AUTO_150、COMBAT_AUTO_SWITCH）
+- `module.logger.logger`
 
 **逐行分析**：
 
-**L7-12**：类属性定义：
+**L33-37**：类属性定义：
 - `auto_skip_timer`：自动跳过计时器
 - `auto_click_interval_timer`：自动点击间隔计时器
 - `auto_mode_checked`：自动模式检查标志
 - `auto_mode_switched`：自动模式切换标志
 - `auto_mode_click_timer`：自动模式点击计时器
 
-**L14-24**：`combat_joystick_appear()` 方法，检测摇杆是否出现（表示手动模式）：
+**L39-47**：`combat_joystick_appear()` 方法，检测摇杆是否出现（表示手动模式）：
 - 检测三种自动按钮样式
 
-**L26-30**：`combat_auto_reset()` 方法，重置自动战斗状态。
+**L49-53**：`combat_auto_reset()` 方法，重置自动战斗状态。
 
-**L32-65**：`handle_combat_auto()` 方法，处理自动战斗模式：
+**L55-89**：`handle_combat_auto()` 方法，处理自动战斗模式：
 - 检查是否已确认
 - 检查计时器
 - 根据摇杆状态切换自动/手动模式
@@ -166,7 +173,7 @@ alwaysApply: true
 
 ### 2.3 combat_manual.py (118 行)
 
-**导出类型**：类 `CombatManual`
+**导出类型**：类 `CombatManual`（继承 `ModuleBase`）
 
 **导入依赖**：
 - `module.base.base.ModuleBase`
@@ -174,26 +181,26 @@ alwaysApply: true
 
 **逐行分析**：
 
-**L5-8**：类属性定义：
+**L32-34**：类属性定义：
 - `auto_mode_checked`：自动模式检查标志
 - `auto_mode_switched`：自动模式切换标志
 - `manual_executed`：手动执行标志
 
-**L10-11**：`combat_manual_reset()` 方法，重置手动战斗状态。
+**L36-37**：`combat_manual_reset()` 方法，重置手动战斗状态。
 
-**L13-29**：`handle_combat_stand_still_in_the_middle()` 方法，处理中间站位：
+**L39-56**：`handle_combat_stand_still_in_the_middle()` 方法，处理中间站位：
 - 长按向下移动 0.8 秒
 
-**L31-43**：`handle_combat_stand_still_bottom_left()` 方法，处理左下角站位：
+**L58-71**：`handle_combat_stand_still_bottom_left()` 方法，处理左下角站位：
 - 长按左下移动 3.5-5.5 秒
 
-**L45-57**：`handle_combat_stand_still_upper_left()` 方法，处理左上角站位：
+**L73-86**：`handle_combat_stand_still_upper_left()` 方法，处理左上角站位：
 - 长按左上移动 1.5-3.5 秒
 
-**L59-65**：`handle_combat_weapon_release()` 方法，处理武器释放：
+**L88-94**：`handle_combat_weapon_release()` 方法，处理武器释放：
 - 检测并点击空袭/鱼雷准备按钮
 
-**L67-88**：`handle_combat_manual()` 方法，处理手动战斗：
+**L96-118**：`handle_combat_manual()` 方法，处理手动战斗：
 - 按优先级尝试：中间站位 → 左下角站位 → 左上角站位
 
 ---
@@ -211,9 +218,9 @@ alwaysApply: true
 
 **逐行分析**：
 
-**L7-11**：侦察位置常量 `SCOUT_POSITION`。
+**L25-29**：侦察位置常量 `SCOUT_POSITION`。
 
-**L14-21**：类属性定义：
+**L46-52**：类属性定义：
 - `fleet_current_index`：当前舰队索引
 - `fleet_show_index`：显示舰队索引
 - `_hp`：血量字典
@@ -221,37 +228,37 @@ alwaysApply: true
 - `COLOR_HP_GREEN`：绿色血量颜色
 - `COLOR_HP_RED`：红色血量颜色
 
-**L23-53**：属性访问器，支持按舰队索引访问血量数据。
+**L54-84**：属性访问器（`hp`、`hp_has_ship`），支持按舰队索引访问血量数据。
 
-**L55-68**：`_calculate_hp()` 方法，根据颜色计算血量：
+**L86-99**：`_calculate_hp()` 方法，根据颜色计算血量：
 - 使用 `color_bar_percentage` 函数
 - 取红色和绿色血量的最大值
 
-**L70-77**：`_hp_grid()` 方法，获取血量网格位置：
+**L101-108**：`_hp_grid()` 方法，获取血量网格位置：
 - 根据服务器类型返回不同的按钮网格
 
-**L79-108**：`hp_get()` 方法，获取当前血量：
+**L110-139**：`hp_get()` 方法，获取当前血量：
 - 处理中文逗号
 - 计算侦察舰船加权血量
 - 记录血量日志
 
-**L110-115**：`hp_reset()` 方法，重置血量数据。
+**L141-144**：`hp_reset()` 方法，重置血量数据。
 
-**L117-126**：`_scout_position_change()` 方法，交换侦察舰船位置：
+**L146-154**：`_scout_position_change()` 方法，交换侦察舰船位置：
 - 使用拖拽操作
 
-**L128-163**：`_expected_scout_order()` 方法，计算期望的侦察顺序：
+**L156-191**：`_expected_scout_order()` 方法，计算期望的侦察顺序：
 - 根据血量和阈值计算最优位置
 
-**L165-221**：`_gen_exchange_step()` 方法，生成交换步骤：
-- 两个版本：minitouch 和默认
+**L193-248**：`_gen_exchange_step()` 方法，生成交换步骤：
+- 两个版本：minitouch（L193-222）和默认（L224-248）
 - 使用 `@Config.when` 装饰器根据设备控制方法分发
 
-**L223-232**：`hp_balance()` 方法，执行血量平衡：
+**L250-259**：`hp_balance()` 方法，执行血量平衡：
 - 检查舰队锁定配置
 - 计算目标顺序并执行交换
 
-**L234-241**：`hp_retreat_triggered()` 方法，检测低血量撤退触发。
+**L261-268**：`hp_retreat_triggered()` 方法，检测低血量撤退触发。
 
 ---
 
@@ -269,32 +276,32 @@ alwaysApply: true
 
 **逐行分析**：
 
-**L9-10**：颜色常量定义。
+**L26-27**：颜色常量定义（`COLOR_WHITE`、`COLOR_MASKED`）。
 
-**L13-15**：类属性定义：
+**L39-40**：类属性定义：
 - `_lv`：当前等级列表
 - `_lv_before_battle`：战斗前等级列表
 
-**L17-38**：属性访问器和重置方法。
+**L42-61**：属性访问器（`lv`）和重置方法（`lv_reset`）。
 
-**L40-50**：`_lv_grid()` 方法，获取等级网格位置（服务器特定）。
+**L63-73**：`_lv_grid()` 方法，获取等级网格位置（服务器特定：en/jp/其他）。
 
-**L52-73**：`lv_get()` 方法，获取当前等级：
+**L75-97**：`lv_get()` 方法，获取当前等级：
 - 使用 OCR 识别等级
 - 触发等级检查
 
-**L75-93**：`lv_triggered()` 方法，检测等级触发：
+**L99-117**：`lv_triggered()` 方法，检测等级触发：
 - 检查是否达到目标等级
 - 防止异常等级跳跃
 
-**L95-104**：`lv32_triggered()` 方法，检测 LV32 触发。
+**L119-128**：`lv32_triggered()` 方法，检测 LV32 触发。
 
-**L107-154**：`LevelOcr` 类，等级 OCR 处理：
-- `pre_process()`：图像预处理
+**L131-177**：`LevelOcr` 类（继承 `Digit`），等级 OCR 处理：
+- `pre_process()`（L132-167）：图像预处理
   - 检测遮罩状态
   - 处理蓝色背景
   - 提取 'L' 字符位置
-- `after_process()`：结果后处理
+- `after_process()`（L169-177）：结果后处理
   - 修正常见 OCR 错误
   - 转换为整数
 
@@ -302,23 +309,24 @@ alwaysApply: true
 
 ### 2.6 submarine.py (74 行)
 
-**导出类型**：类 `SubmarineCall`
+**导出类型**：类 `SubmarineCall`（继承 `ModuleBase`）
 
 **导入依赖**：
 - `module.base.base.ModuleBase`
 - `module.base.timer.Timer`
 - `module.combat.assets`
+- `module.logger.logger`
 
 **逐行分析**：
 
-**L7-9**：类属性定义：
+**L33-35**：类属性定义：
 - `submarine_call_flag`：潜艇呼叫标志
 - `submarine_call_timer`：潜艇呼叫计时器
 - `submarine_call_click_timer`：潜艇点击计时器
 
-**L11-17**：`submarine_call_reset()` 方法，重置潜艇呼叫状态。
+**L37-40**：`submarine_call_reset()` 方法，重置潜艇呼叫状态。
 
-**L19-50**：`handle_submarine_call()` 方法，处理潜艇呼叫：
+**L42-74**：`handle_submarine_call()` 方法，处理潜艇呼叫：
 - 检查标志和计时器
 - 检测潜艇可用状态
 - 检测潜艇已呼叫状态
@@ -337,19 +345,20 @@ alwaysApply: true
 - `module.base.decorator.cached_property`
 - `module.base.utils.random_normal_distribution_int`
 - `module.config.config.AzurLaneConfig`
-- `module.exception`
+- `module.config.time_source.now`（当前时间源）
+- `module.exception`（ScriptEnd、ScriptError、RequestHumanTakeover）
 - `module.logger.logger`
 
 **逐行分析**：
 
-**L12-30**：常量定义：
+**L33-52**：常量定义：
 - `DIC_LIMIT`：情绪限制字典
 - `DIC_RECOVER`：恢复速度字典
 - `DIC_RECOVER_MAX`：最大恢复字典
 - `OATH_RECOVER`：誓约恢复
 - `ONSEN_RECOVER`：温泉恢复
 
-**L32-160**：`FleetEmotion` 类，单舰队情绪管理：
+**L55-210**：`FleetEmotion` 类，单舰队情绪管理：
 - 属性：`value`（当前值）、`record`（记录时间）、`recover`（恢复地点）、`control`（控制模式）、`oath`（誓约）、`onsen`（温泉）
 - `speed` 属性：计算恢复速度（考虑誓约和温泉加成）
 - `limit` 属性：获取控制限制
@@ -357,67 +366,82 @@ alwaysApply: true
 - `update()` 方法：根据时间差更新情绪值
 - `get_recovered()` 方法：计算恢复时间
 
-**L162-398**：`Emotion` 类，双舰队情绪管理：
-- 属性：`is_calculate`（是否计算）、`is_ignore`（是否忽略）
+**L212-476**：`Emotion` 类，双舰队情绪管理：
+- 属性：`is_calculate`（是否计算）、`is_ignore`（是否忽略）、`using_public`（公海舰队模式）
+- `_handle_public()`（L240-255）：处理公海舰队统一情绪管理
 - `update()` 方法：更新所有舰队情绪
 - `record()` 方法：保存情绪值到配置
 - `show()` 方法：显示情绪信息
 - `reduce_per_battle` 属性：每场战斗减少值
+- `reduce_per_battle_before_entering` 属性：进入战斗前每场减少值
+- `reduce_shipwreck` 属性：沉船扣减值
 - `_check_reduce()` 方法：检查情绪减少
 - `check_reduce()` 方法：战役前检查情绪
 - `wait()` 方法：等待情绪恢复
 - `reduce()` 方法：减少情绪值
+- `bug_threshold` 属性：情绪 bug 触发阈值
 - `triggered_bug()` 方法：检测情绪计算 bug
 
 ---
 
 ### 2.8 auto_search_combat.py (561 行)
 
-**导出类型**：类 `AutoSearchCombat`
+**导出类型**：类 `AutoSearchCombat`（继承 `MapOperation + Combat + CampaignStatus`）
 
 **导入依赖**：
 - `module.base.timer.Timer`
 - `module.campaign.campaign_status.CampaignStatus`
 - `module.combat.assets`
 - `module.combat.combat.Combat`
-- `module.exception.CampaignEnd`
-- `module.handler.assets`
+- `module.exception`（CampaignEnd、ScriptEnd）
+- `module.handler.assets`（AUTO_SEARCH_MAP_OPTION_ON、GET_MISSION）
 - `module.logger.logger`
-- `module.map.assets`
+- `module.map.assets`（WITHDRAW、SWITCH_OVER、FLEET_WITHDRAW、FLEET_SWITCH_CONFIRM、FLEET_WITHDRAW_BOSS）
 - `module.map.map_operation.MapOperation`
 
 **逐行分析**：
 
-**L12-16**：类属性定义：
+**L44-52**：类属性定义：
 - `_auto_search_in_stage_timer`：自动搜索阶段计时器
 - `_auto_search_status_confirm`：状态确认标志
 - `_withdraw`：撤退标志
+- `_defeat_count`：战败次数
+- `_shipwreck_emotion_reduced`：沉船心情扣减标志（防止重复扣减）
+- `_auto_search_emotion_reduce`：本次战斗是否扣减心情
+- `_auto_search_fleet_index`：本次战斗的舰队索引
 - `auto_search_oil_limit_triggered`：石油限制触发
 - `auto_search_coin_limit_triggered`：金币限制触发
 
-**L18-35**：`_handle_auto_search_menu_missing()` 方法，处理自动搜索菜单缺失 bug。
+**L54-70**：`_handle_auto_search_menu_missing()` 方法，处理自动搜索菜单缺失 bug。
 
-**L37-63**：`map_offensive_auto_search()` 方法，自动搜索地图进攻。
+**L72-98**：`map_offensive_auto_search()` 方法，自动搜索地图进攻。
 
-**L65-91**：`auto_search_watch_fleet()` 方法，监控舰队状态。
+**L100-126**：`auto_search_watch_fleet()` 方法，监控舰队状态。
 
-**L93-113**：`auto_search_watch_oil()` 方法，监控石油状态。
+**L128-148**：`auto_search_watch_oil()` 方法，监控石油状态。
 
-**L115-140**：`auto_search_watch_coin()` 方法，监控金币状态。
+**L150-175**：`auto_search_watch_coin()` 方法，监控金币状态。
 
-**L142-159**：`_wait_until_in_map()` 方法，等待进入地图。
+**L177-194**：`_wait_until_in_map()` 方法，等待进入地图。
 
-**L161-203**：`auto_search_moving()` 方法，自动搜索移动：
+**L196-237**：`auto_search_moving()` 方法，自动搜索移动：
 - 监控舰队、石油、金币
 - 处理退役、自动搜索选项、低情绪、故事跳过
 
-**L204-312**：`auto_search_combat_execute()` 方法，自动搜索战斗执行：
+**L239-355**：`auto_search_combat_execute()` 方法，自动搜索战斗执行：
 - 处理加载阶段
 - 执行战斗：潜艇呼叫 → 自动战斗 → 手动战斗 → 武器释放 → 弹窗处理
+- 沉船 D 评价、结算确认超时处理
 
-**L314-397**：`auto_search_combat_status()` 方法，自动搜索战斗状态处理。
+**L357-375**：`_wait_withdraw_stable()` 方法，等待 WITHDRAW 按钮稳定出现。
 
-**L398-410**：`auto_search_combat()` 方法，自动搜索战斗主流程。
+**L377-400**：`_handle_fleet_switch_over()` 方法，处理舰队切换（撤退战败舰队后切换另一队）。
+
+**L402-544**：`auto_search_combat_status()` 方法，自动搜索战斗状态处理：
+- 撤退流程（withdraw_continue / withdraw_stop / switch_fleet）
+- 战斗结算、沉船弹窗检测
+
+**L546-561**：`auto_search_combat()` 方法，自动搜索战斗主流程。
 
 ---
 
@@ -425,18 +449,24 @@ alwaysApply: true
 
 **导出类型**：按钮和模板常量
 
-**导入依赖**：无（资源定义文件）
+**导入依赖**：
+- `module.base.button.Button`：按钮基类
+- `module.base.template.Template`：模板基类
 
-**说明**：定义战斗系统使用的所有 UI 元素常量，包括：
-- 战斗准备界面按钮
-- 战斗状态按钮（S/A/B/C/D）
-- 自动化开关按钮
-- 暂停按钮（多种主题）
-- 退出按钮（多种主题）
-- 潜艇相关按钮
+**说明**：定义战斗系统使用的所有 UI 元素常量（由 `dev_tools/button_extract.py` 自动生成），包括：
+- 战斗准备界面按钮（BATTLE_PREPARATION 及其覆盖层）
+- 战斗状态按钮（BATTLE_STATUS_S/A/B/C/D）
+- 自动化开关按钮（AUTOMATION_ON/OFF/SWITCH/CONFIRM）
+- 自动战斗摇杆按钮（COMBAT_AUTO 及 133/150 偏移变体）
+- 退出确认按钮（QUIT_RECONFIRM）
+- 潜艇相关按钮（SUBMARINE_READY/CALLED/AVAILABLE_CHECK）
 - 紧急维修按钮
-- 经验信息按钮
-- 获得物品/舰船按钮
+- 经验信息按钮（EXP_INFO_S/A/B/C/D）
+- 获得物品/舰船按钮（GET_ITEMS、GET_SHIP、NEW_SHIP）
+- 移动摇杆按钮（MOVE_DOWN、MOVE_LEFT_DOWN、MOVE_LEFT_UP）
+- 战斗加载条（LOADING_BAR）与石油加载检测按钮
+
+（暂停按钮及其主题变体位于 `module/combat_ui/assets.py`，见 COMBAT-UI.md）
 
 ---
 
@@ -488,6 +518,7 @@ graph TD
 - `module.base.utils`：工具函数
 - `module.config.config.AzurLaneConfig`：配置管理
 - `module.config.server`：服务器配置
+- `module.config.time_source`：时间源（情绪恢复时间计算）
 - `module.logger.logger`：日志系统
 - `module.exception`：异常定义
 - `module.ocr.ocr.Digit`：OCR 数字识别

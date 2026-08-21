@@ -5,7 +5,10 @@ alwaysApply: true
 
 # AzurPilot 游戏功能模块综合分析
 
-> 本文档对 AzurPilot 项目的 28 个游戏功能模块进行全面分析，涵盖模块概述、文件结构、依赖关系、设计模式、代码质量等方面。
+> 本文档对 AzurPilot 项目的 33 个游戏功能模块进行全面分析，涵盖模块概述、文件结构、依赖关系、设计模式、代码质量等方面。
+> 生成日期：2026-08-14
+> 项目版本：dev 分支（HEAD f992af6c0）
+> 最后分析的代码版本：f992af6c0
 
 ## 目录
 
@@ -39,6 +42,11 @@ alwaysApply: true
    - [退役系统 (module/retire/)](#退役系统-moduleretire)
    - [装备管理 (module/equipment/)](#装备管理-moduleequipment)
    - [META 奖励 (module/meta_reward/)](#meta-奖励-modulemeta_reward)
+   - [自动配装 (module/auto_equip/)](#自动配装-moduleauto_equip)
+   - [仓库系统 (module/storage/)](#仓库系统-modulestorage)
+   - [游戏设置 (module/game_setting/)](#游戏设置-modulegame_setting)
+   - [模板资源 (module/template/)](#模板资源-moduletemplate)
+   - [战斗 UI 资源 (module/combat_ui/)](#战斗-ui-资源-modulecombat_ui)
 3. [模块依赖关系图](#模块依赖关系图)
 4. [设计模式与架构分析](#设计模式与架构分析)
 5. [性能分析](#性能分析)
@@ -51,42 +59,52 @@ alwaysApply: true
 
 | 模块 | 代码行数 | 核心类 | 主要职责 | 复杂度 |
 |------|---------|--------|---------|--------|
-| research | 3336 | `RewardResearch` | 科研项目管理、队列调度 | 高 |
-| commission | 1513 | `RewardCommission` | 委托识别、选择、执行 | 高 |
-| tactical | 722 | `RewardTacticalClass` | 战术学院教材选择、技能学习 | 中 |
-| dorm | 897 | `RewardDorm` | 宿舍喂食、收集、家具购买 | 中 |
-| meowfficer | 1494 | `RewardMeowfficer` | 指挥喵购买、训练、强化 | 中 |
-| guild | 1437 | `GuildLobby` | 大舰队奖励、后勤、作战 | 中 |
-| shop | 2222 | `GeneralShop_250814` | 通用商店、勋章商店等 | 高 |
-| shop_event | 1105 | `ShopEvent` | 活动商店购买 | 中 |
-| reward | 326 | `Reward` | 基础奖励收取 | 低 |
-| exercise | 789 | `Exercise` | 演习 PvP 战斗 | 中 |
-| gacha | 591 | `GachaUI` | 建造系统 UI 导航 | 低 |
-| daily | 405 | `Daily` | 每日任务执行 | 中 |
-| hard | 88 | `CampaignHard` | 困难模式战役 | 低 |
-| sos | 251 | `CampaignSos` | SOS 信号任务 | 低 |
-| war_archives | 155 | `CampaignWarArchives` | 作战档案战役 | 低 |
-| raid | 1058 | `Raid` | 突袭活动战斗 | 高 |
-| event | 229 | `EventBase` | 活动关卡处理 | 低 |
-| eventstory | 240 | `EventStory` | 活动剧情处理 | 中 |
-| event_hospital | 967 | `Hospital` | 医院活动调查、战斗 | 中 |
-| coalition | 883 | `Coalition` | 联动活动战斗 | 中 |
-| island | 2963 | `Island` | 岛屿系统项目、运输 | 高 |
-| private_quarters | 947 | `PrivateQuarters` | 私人休息室互动、商店 | 中 |
-| shipyard | 717 | `RewardShipyard` | 船坞蓝图购买 | 中 |
-| freebies | 679 | `Freebies` | 免费福利收取 | 低 |
-| minigame | 448 | `Minigame` | 小游戏执行 | 低 |
-| awaken | 412 | `Awaken` | 舰船觉醒升级 | 中 |
-| retire | 2478 | `Retirement` | 舰船退役、强化 | 高 |
-| equipment | 842 | `Equipment` | 装备管理、更换 | 中 |
-| meta_reward | 349 | `MetaReward` | META 奖励收取 | 低 |
-| auto_equip | 88 | `AutoEquip` | 自动配装 | 低 |
-| storage | 331 | `StorageHandler` | 仓库管理、箱子拆解 | 中 |
-| game_setting | 227 | `GameSetting` | 游戏内设置（player_prefs） | 低 |
-| template | 8 | - | 模板匹配资源（assets.py） | 低 |
+| research | 4022 | `RewardResearch` | 科研项目管理、队列调度 | 高 |
+| commission | 2656 | `RewardCommission` | 委托识别、选择、执行 | 高 |
+| tactical | 934 | `RewardTacticalClass` | 战术学院教材选择、技能学习 | 中 |
+| dorm | 993 | `RewardDorm` | 宿舍喂食、收集、家具购买 | 中 |
+| meowfficer | 1683 | `RewardMeowfficer` | 指挥喵购买、训练、强化 | 中 |
+| guild | 1512 | `GuildLobby` | 大舰队奖励、后勤、作战 | 中 |
+| shop | 2608 | `GeneralShop_250814` | 通用商店、勋章商店等 | 高 |
+| shop_event | 1158 | `EventShop` | 活动商店购买 | 中 |
+| reward | 336 | `Reward` | 基础奖励收取 | 低 |
+| exercise | 1007 | `Exercise` | 演习 PvP 战斗 | 中 |
+| gacha | 611 | `GachaUI` | 建造系统 UI 导航 | 低 |
+| daily | 395 | `Daily` | 每日任务执行 | 中 |
+| hard | 114 | `CampaignHard` | 困难模式战役 | 低 |
+| sos | 282 | `CampaignSos` | SOS 信号任务 | 低 |
+| war_archives | 310 | `CampaignWarArchives` | 作战档案战役 | 低 |
+| raid | 1216 | `Raid` | 突袭活动战斗 | 高 |
+| event | 341 | `EventBase` | 活动关卡处理 | 低 |
+| eventstory | 320 | `EventStory` | 活动剧情处理 | 中 |
+| event_hospital | 1084 | `Hospital` | 医院活动调查、战斗 | 中 |
+| coalition | 1462 | `Coalition` | 联动活动战斗 | 中 |
+| island | 14043 | `Island` | 岛屿系统：模块/island 下 24 个 py 文件 + 16 个资源目录 | 高 |
+| private_quarters | 1102 | `PrivateQuarters` | 私人休息室互动、商店 | 中 |
+| shipyard | 782 | `RewardShipyard` | 船坞蓝图购买 | 中 |
+| freebies | 777 | `Freebies` | 免费福利收取 | 低 |
+| minigame | 516 | `Minigame` | 小游戏执行 | 低 |
+| awaken | 474 | `Awaken` | 舰船觉醒升级 | 中 |
+| retire | 3042 | `Retirement` | 舰船退役、强化 | 高 |
+| equipment | 1131 | `Equipment` | 装备管理、更换 | 中 |
+| meta_reward | 418 | `MetaReward` | META 奖励收取 | 低 |
+| auto_equip | 325 | `AutoEquip` | 自动配装 | 低 |
+| storage | 1081 | `StorageHandler` | 仓库管理、箱子拆解 | 中 |
+| game_setting | 1681 | `PlayerPrefsManager` / `SettingExtractor` | 游戏内设置（player_prefs XML） | 中 |
+| template | 292 | - | 模板匹配资源（assets.py） | 低 |
 | combat_ui | 41 | - | 战斗 UI 资源（35 个主题按钮） | 低 |
 
-**总计**: 约 28,000 行代码（28 个主模块 + 5 个辅助模块）
+**总计**: 上表共 34 项 = 33 个游戏功能模块 + 1 个辅助资源模块（`combat_ui`）。另外 `module/` 下还有 16 个 `island_*` 子模块资源目录（仅含 `assets.py`，任务类位于 `module/island/*.py`），详见下方目录清单。
+
+### module/ 完整子目录清单（74 个，与当前代码一致）
+
+| 类别 | 数量 | 子目录 |
+|------|------|--------|
+| 游戏功能模块（本文档） | 33 | `auto_equip`、`awaken`、`coalition`、`commission`、`daily`、`dorm`、`equipment`、`event`、`event_hospital`、`eventstory`、`exercise`、`freebies`、`gacha`、`game_setting`、`guild`、`hard`、`island`、`meowfficer`、`meta_reward`、`minigame`、`private_quarters`、`raid`、`research`、`retire`、`reward`、`shipyard`、`shop`、`shop_event`、`sos`、`storage`、`tactical`、`template`、`war_archives` |
+| 岛屿子模块资源目录 | 16 | `island_business`、`island_cargo_preparation`、`island_daily_interact`、`island_daily_order`、`island_farm`、`island_fishery`、`island_grill`、`island_juu_coffee`、`island_juu_eatery`、`island_manufacture`、`island_mine_forest`、`island_pearl_sell`、`island_rancher`、`island_restaurant`、`island_select_character`、`island_teahouse` |
+| 大世界系统（见 OS-SYSTEM.md） | 6 | `os`、`os_ash`、`os_combat`、`os_handler`、`os_shop`、`os_simulator` |
+| 基础设施（见 INFRASTRUCTURE.md） | 7 | `azur_stats`、`daemon`、`log_res`、`notify`、`statistics`、`submodule`、`webui` |
+| 基础框架（见 BASE/CONFIG/DEVICE/HANDLER/UI/OCR/MAP/CAMPAIGN/COMBAT 文档） | 12 | `base`、`campaign`、`combat`、`combat_ui`、`config`、`device`、`handler`、`map`、`map_detection`、`ocr`、`ui`、`ui_white` |
 
 ---
 
@@ -101,16 +119,16 @@ alwaysApply: true
 
 | 文件 | 行数 | 导出类型 | 主要职责 |
 |------|------|---------|---------|
-| `research.py` | 605 | `RewardResearch` | 核心调度器，管理科研生命周期 |
-| `selector.py` | 297 | `ResearchSelector` | 科研项目选择和过滤逻辑 |
-| `project.py` | 694 | `ResearchProject`, `ResearchProjectJp` | 科研项目数据模型和检测 |
-| `project_data.py` | ~800 | `LIST_RESEARCH_PROJECT` | 科研项目静态数据 |
-| `preset.py` | ~100 | `DICT_FILTER_PRESET` | 预设过滤器字符串 |
-| `preset_generator.py` | ~50 | - | 预设生成工具 |
-| `queue.py` | ~200 | `ResearchQueue` | 科研队列管理 |
-| `series.py` | ~150 | - | 科研系列识别 |
-| `ui.py` | ~100 | `ResearchUI` | 科研 UI 交互 |
-| `assets.py` | ~200 | - | 按钮和模板资源定义 |
+| `research.py` | 722 | `RewardResearch` | 核心调度器，管理科研生命周期 |
+| `selector.py` | 346 | `ResearchSelector` | 科研项目选择和过滤逻辑 |
+| `project.py` | 906 | `ResearchProject`, `ResearchProjectJp` | 科研项目数据模型和检测 |
+| `project_data.py` | 679 | `LIST_RESEARCH_PROJECT` | 科研项目静态数据 |
+| `preset.py` | 544 | `DICT_FILTER_PRESET` | 预设过滤器字符串 |
+| `preset_generator.py` | 207 | - | 预设生成工具 |
+| `rqueue.py` | 200 | `ResearchQueue` | 科研队列管理 |
+| `series.py` | 104 | - | 科研系列识别 |
+| `ui.py` | 240 | `ResearchUI` | 科研 UI 交互 |
+| `assets.py` | 74 | - | 按钮和模板资源定义 |
 
 #### 核心类关系
 
@@ -129,7 +147,7 @@ class RewardResearch(ResearchSelector, ResearchQueue, StorageHandler):
 
 #### 关键算法
 
-**1. 科研项目检测 (`project.py:L385-L398`)**
+**1. 科研项目检测 (`selector.py:L133-L188`，`research_detect()`)**
 ```python
 def research_detect(image):
     """从截图中检测5个科研项目"""
@@ -140,7 +158,7 @@ def research_detect(image):
     return projects
 ```
 
-**2. 项目过滤系统 (`selector.py:L159-L204`)**
+**2. 项目过滤系统 (`selector.py:L189-L241`，`research_sort_filter()`)**
 ```python
 def research_sort_filter(self, enforce=False):
     """根据配置过滤和排序科研项目"""
@@ -151,7 +169,7 @@ def research_sort_filter(self, enforce=False):
     return priority
 ```
 
-**3. 队列管理 (`research.py:L472-L507`)**
+**3. 队列管理 (`research.py:L560-L596`，`research_fill_queue()`)**
 ```python
 def research_fill_queue(self):
     """填充科研队列直到满"""
@@ -186,15 +204,16 @@ def research_fill_queue(self):
 
 | 文件 | 行数 | 导出类型 | 主要职责 |
 |------|------|---------|---------|
-| `commission.py` | 774 | `RewardCommission` | 委托系统主类 |
-| `project.py` | ~400 | `Commission` | 委托项目数据模型 |
-| `project_data.py` | ~200 | - | 委托项目静态数据 |
-| `preset.py` | ~100 | `DICT_FILTER_PRESET` | 预设过滤器 |
-| `assets.py` | ~100 | - | 按钮和模板资源 |
+| `commission.py` | 1153 | `RewardCommission` | 委托系统主类 |
+| `project.py` | 759 | `Commission` | 委托项目数据模型 |
+| `planner.py` | 500 | - | 委托规划（最长/最短耗时选择） |
+| `preset.py` | 148 | `DICT_FILTER_PRESET` | 预设过滤器 |
+| `project_data.py` | 78 | - | 委托项目静态数据 |
+| `assets.py` | 18 | - | 按钮和模板资源 |
 
 #### 核心功能
 
-**1. 委托检测 (`commission.py:L63-L82`)**
+**1. 委托检测 (`commission.py:L111-L164`，`_commission_detect()` / `commission_detect()`)**
 ```python
 def _commission_detect(self, image):
     """从截图中检测所有委托"""
@@ -214,7 +233,7 @@ def _commission_choose(self, daily, urgent):
     return self._commission_choose_legacy(daily, urgent)
 ```
 
-**3. 委托执行 (`commission.py:L356-L436`)**
+**3. 委托执行 (`commission.py:L634-L718`，`_commission_start_click()`)**
 ```python
 def _commission_start_click(self, comm, is_urgent=False):
     """启动委托，处理各种弹窗和异常"""
@@ -246,12 +265,12 @@ def _commission_start_click(self, comm, is_urgent=False):
 
 | 文件 | 行数 | 导出类型 | 主要职责 |
 |------|------|---------|---------|
-| `tactical_class.py` | 722 | `RewardTacticalClass` | 战术学院主类 |
-| `assets.py` | ~100 | - | 按钮和模板资源 |
+| `tactical_class.py` | 919 | `RewardTacticalClass` | 战术学院主类 |
+| `assets.py` | 15 | - | 按钮和模板资源 |
 
 #### 核心功能
 
-**1. 教材选择 (`tactical_class.py:L381-L441`)**
+**1. 教材选择 (`tactical_class.py:L406-L467`，`_tactical_books_choose()`)**
 ```python
 def _tactical_books_choose(self):
     """根据配置选择最优教材"""
@@ -264,7 +283,7 @@ def _tactical_books_choose(self):
         return True
 ```
 
-**2. 经验溢出控制 (`tactical_class.py:L271-L307`)**
+**2. 经验溢出控制 (`tactical_class.py:L300-L330`，`_tactical_books_filter_exp()`)**
 ```python
 def _tactical_books_filter_exp(self):
     """过滤掉会导致经验溢出的教材"""
@@ -278,7 +297,7 @@ def _tactical_books_filter_exp(self):
         self.books = SelectedGrids([book for book in self.books if filter_exp_func(book)])
 ```
 
-**3. 技能自动切换 (`tactical_class.py:L327-L379`)**
+**3. 技能自动切换 (`tactical_class.py:L362-L405`，`_try_switch_to_next_skill()`)**
 ```python
 def _try_switch_to_next_skill(self):
     """当前技能满级时切换到下一个技能"""
@@ -302,13 +321,13 @@ def _try_switch_to_next_skill(self):
 
 | 文件 | 行数 | 导出类型 | 主要职责 |
 |------|------|---------|---------|
-| `dorm.py` | 630 | `RewardDorm` | 宿舍管理主类 |
-| `buy_furniture.py` | ~200 | `BuyFurniture` | 家具购买逻辑 |
-| `assets.py` | ~100 | - | 按钮和模板资源 |
+| `dorm.py` | 704 | `RewardDorm` | 宿舍管理主类 |
+| `buy_furniture.py` | 252 | `BuyFurniture` | 家具购买逻辑 |
+| `assets.py` | 37 | - | 按钮和模板资源 |
 
 #### 核心功能
 
-**1. 资源收集 (`dorm.py:L233-L265`)**
+**1. 资源收集 (`dorm.py:L233-L296`，`dorm_view_reset()` / `dorm_collect()`)**
 ```python
 def dorm_collect(self):
     """使用一键收集按钮收集所有硬币和爱心"""
@@ -319,7 +338,7 @@ def dorm_collect(self):
             break  # 收集完成
 ```
 
-**2. 喂食系统 (`dorm.py:L307-L363`)**
+**2. 喂食系统 (`dorm.py:L368-L428`，`dorm_feed_once()` / `dorm_feed()`)**
 ```python
 def dorm_feed_once(self):
     """执行一次喂食"""
@@ -332,7 +351,7 @@ def dorm_feed_once(self):
             return True
 ```
 
-**3. 长按喂食 (`dorm.py:L107-L201`)**
+**3. 长按喂食 (`dorm.py:L138-L232`，`_dorm_feed_long_tap()` 多版本)**
 ```python
 @Config.when(DEVICE_CONTROL_METHOD='minitouch')
 def _dorm_feed_long_tap(self, button, count):
@@ -357,16 +376,16 @@ def _dorm_feed_long_tap(self, button, count):
 
 | 文件 | 行数 | 导出类型 | 主要职责 |
 |------|------|---------|---------|
-| `meowfficer.py` | 72 | `RewardMeowfficer` | 指挥喵主调度器 |
-| `buy.py` | ~200 | `MeowfficerBuy` | 指挥喵购买 |
-| `train.py` | ~200 | `MeowfficerTrain` | 指挥喵训练 |
-| `enhance.py` | ~200 | `MeowfficerEnhance` | 指挥喵强化 |
-| `fort.py` | ~300 | `MeowfficerFort` | 要塞任务 |
-| `collect.py` | ~200 | `MeowfficerCollect` | 指挥喵收集 |
-| `base.py` | ~200 | `MeowfficerBase` | 基础功能 |
-| `assets.py` | ~100 | - | 按钮和模板资源 |
+| `meowfficer.py` | 76 | `RewardMeowfficer` | 指挥喵主调度器 |
+| `buy.py` | 212 | `MeowfficerBuy` | 指挥喵购买 |
+| `train.py` | 261 | `MeowfficerTrain` | 指挥喵训练 |
+| `enhance.py` | 445 | `MeowfficerEnhance` | 指挥喵强化 |
+| `fort.py` | 93 | `MeowfficerFort` | 要塞任务 |
+| `collect.py` | 357 | `MeowfficerCollect` | 指挥喵收集 |
+| `base.py` | 195 | `MeowfficerBase` | 基础功能 |
+| `assets.py` | 44 | - | 按钮和模板资源 |
 
-#### 调度逻辑 (`meowfficer.py:L27-L72`)
+#### 调度逻辑 (`meowfficer.py:L34`，`run()`)
 ```python
 def run(self):
     """按顺序执行各项操作"""
@@ -391,15 +410,15 @@ def run(self):
 
 | 文件 | 行数 | 导出类型 | 主要职责 |
 |------|------|---------|---------|
-| `lobby.py` | 98 | `GuildLobby` | 大厅奖励领取 |
-| `guild_reward.py` | ~300 | `GuildReward` | 奖励处理 |
-| `logistics.py` | ~200 | `GuildLogistics` | 后勤补给 |
-| `operations.py` | ~200 | `GuildOperations` | 作战任务 |
-| `guild_combat.py` | ~200 | `GuildCombat` | 战斗处理 |
-| `base.py` | ~200 | `GuildBase` | 基础功能 |
-| `assets.py` | ~100 | - | 按钮和模板资源 |
+| `lobby.py` | 101 | `GuildLobby` | 大厅奖励领取 |
+| `guild_reward.py` | 43 | `GuildReward` | 奖励处理 |
+| `logistics.py` | 601 | `GuildLogistics` | 后勤补给 |
+| `operations.py` | 583 | `GuildOperations` | 作战任务 |
+| `guild_combat.py` | 59 | `GuildCombat` | 战斗处理 |
+| `base.py` | 87 | `GuildBase` | 基础功能 |
+| `assets.py` | 38 | - | 按钮和模板资源 |
 
-#### 奖励领取 (`lobby.py:L15-L30`)
+#### 奖励领取 (`lobby.py:L19-L37`，`guild_lobby_get_report()`)
 ```python
 def guild_lobby_get_report(self):
     """检测并返回报告按钮"""
@@ -424,31 +443,32 @@ def guild_lobby_get_report(self):
 
 | 文件 | 行数 | 导出类型 | 主要职责 |
 |------|------|---------|---------|
-| `shop_general.py` | 160 | `GeneralShop_250814` | 通用商店 |
-| `shop_medal.py` | ~150 | `MedalShop2_250814` | 勋章商店 |
-| `shop_merit.py` | ~150 | `MeritShop` | 功勋商店 |
-| `shop_guild.py` | ~150 | `GuildShop` | 舰队商店 |
-| `shop_voucher.py` | ~150 | `VoucherShop` | 凭证商店 |
-| `shop_core.py` | ~150 | `CoreShop_250814` | 核心商店 |
-| `shop_reward.py` | ~150 | `RewardShop` | 奖励商店 |
-| `shop_status.py` | ~100 | `ShopStatus` | 商店状态检测 |
-| `clerk.py` | ~200 | `ShopClerk` | 购买逻辑 |
-| `base.py` | ~300 | `ShopItemGrid` | 商品网格 |
-| `ui.py` | ~200 | `ShopUI` | 商店 UI 导航 |
-| `assets.py` | ~200 | - | 按钮和模板资源 |
+| `shop_general.py` | 242 | `GeneralShop_250814` | 通用商店 |
+| `shop_medal.py` | 332 | `MedalShop2_250814` | 勋章商店 |
+| `shop_merit.py` | 96 | `MeritShop_250814` | 功勋商店 |
+| `shop_guild.py` | 128 | `GuildShop_250814` | 舰队商店 |
+| `shop_voucher.py` | 323 | `VoucherShop` | 凭证商店 |
+| `shop_core.py` | 113 | `CoreShop_250814` | 核心商店 |
+| `shop_reward.py` | 87 | `RewardShop` | 奖励商店 |
+| `shop_status.py` | 134 | `ShopStatus` | 商店状态检测 |
+| `shop_select_globals.py` | 106 | - | 商店选择全局常量（商品过滤预设） |
+| `clerk.py` | 367 | `ShopClerk` | 购买逻辑 |
+| `base.py` | 464 | `ShopItemGrid` / `ShopItemGrid_250814` | 商品网格 |
+| `ui.py` | 173 | `ShopUI` | 商店 UI 导航 |
+| `assets.py` | 43 | - | 按钮和模板资源 |
 
 **module/shop_event/**
 
 | 文件 | 行数 | 导出类型 | 主要职责 |
 |------|------|---------|---------|
-| `shop_event.py` | ~200 | `ShopEvent` | 活动商店主类 |
-| `clerk.py` | ~200 | `ShopEventClerk` | 活动商店购买 |
-| `item.py` | ~200 | `ShopEventItem` | 活动商品 |
-| `selector.py` | ~200 | `ShopEventSelector` | 商品选择 |
-| `ui.py` | ~200 | `ShopEventUI` | 活动商店 UI |
-| `assets.py` | ~100 | - | 按钮和模板资源 |
+| `shop_event.py` | 383 | `EventShop` | 活动商店主类 |
+| `clerk.py` | 202 | `EventShopClerk` | 活动商店购买 |
+| `item.py` | 244 | `EventShopItem` / `EventShopItemGrid` | 活动商品 |
+| `selector.py` | 142 | `FILTER` 与过滤函数（无类） | 商品过滤选择 |
+| `ui.py` | 176 | `EventShopUI` / `EventShopScroll` | 活动商店 UI |
+| `assets.py` | 11 | - | 按钮和模板资源 |
 
-#### 通用商店购买逻辑 (`shop_general.py:L93-L137`)
+#### 通用商店购买逻辑 (`shop_general.py:L90-L111`，`shop_check_item()`)
 ```python
 def shop_check_item(self, item):
     """检查商品是否可购买"""
@@ -475,12 +495,12 @@ def shop_check_item(self, item):
 
 | 文件 | 行数 | 导出类型 | 主要职责 |
 |------|------|---------|---------|
-| `reward.py` | 326 | `Reward` | 奖励收取主类 |
-| `assets.py` | ~50 | - | 按钮和模板资源 |
+| `reward.py` | 321 | `Reward` | 奖励收取主类 |
+| `assets.py` | 15 | - | 按钮和模板资源 |
 
 #### 核心功能
 
-**1. 资源收取 (`reward.py:L14-L55`)**
+**1. 资源收取 (`reward.py:L18-L62`)**
 ```python
 def reward_receive(self, oil, coin, exp):
     """收取石油、金币、经验"""
@@ -495,7 +515,7 @@ def reward_receive(self, oil, coin, exp):
             break
 ```
 
-**2. 任务奖励 (`reward.py:L220-L247`)**
+**2. 任务奖励 (`reward.py:L231-L259`)**
 ```python
 def reward_mission(self, daily=True, weekly=True):
     """收取任务奖励"""
@@ -519,14 +539,14 @@ def reward_mission(self, daily=True, weekly=True):
 
 | 文件 | 行数 | 导出类型 | 主要职责 |
 |------|------|---------|---------|
-| `exercise.py` | 274 | `Exercise` | 演习主类 |
-| `combat.py` | ~200 | `ExerciseCombat` | 演习战斗 |
-| `opponent.py` | ~150 | `Opponent` | 对手分析 |
-| `equipment.py` | ~100 | `ExerciseEquipment` | 装备管理 |
-| `hp_daemon.py` | ~100 | `HPDaemon` | 血量监控 |
-| `assets.py` | ~100 | - | 按钮和模板资源 |
+| `exercise.py` | 360 | `Exercise` | 演习主类 |
+| `combat.py` | 250 | `ExerciseCombat` | 演习战斗 |
+| `opponent.py` | 172 | `Opponent` | 对手分析 |
+| `equipment.py` | 70 | `ExerciseEquipment` | 装备管理 |
+| `hp_daemon.py` | 132 | `HPDaemon` | 血量监控 |
+| `assets.py` | 23 | - | 按钮和模板资源 |
 
-#### 演习策略 (`exercise.py:L185-L199`)
+#### 演习策略 (`exercise.py:L256-L275`)
 ```python
 def _get_exercise_strategy(self):
     """获取演习策略"""
@@ -539,7 +559,7 @@ def _get_exercise_strategy(self):
     return preserve, admiral_interval
 ```
 
-#### 对手选择 (`exercise.py:L125-L155`)
+#### 对手选择 (`exercise.py:L129-L170`，`_new_opponent()` / `_opponent_fleet_check_all()` / `_opponent_sort()`)
 ```python
 def _exercise_easiest_else_exp(self):
     """优先选择最弱对手，失败则选择经验最高的"""
@@ -567,11 +587,11 @@ def _exercise_easiest_else_exp(self):
 
 | 文件 | 行数 | 导出类型 | 主要职责 |
 |------|------|---------|---------|
-| `ui.py` | 209 | `GachaUI` | 建造系统 UI |
-| `gacha_reward.py` | ~200 | `GachaReward` | 建造奖励 |
-| `assets.py` | ~100 | - | 按钮和模板资源 |
+| `ui.py` | 228 | `GachaUI` | 建造系统 UI |
+| `gacha_reward.py` | 363 | `GachaReward` | 建造奖励 |
+| `assets.py` | 20 | - | 按钮和模板资源 |
 
-#### UI 导航 (`ui.py:L43-L100`)
+#### UI 导航 (`ui.py:L74-L214`，`gacha_side_navbar_ensure()` / `gacha_bottom_navbar_ensure()`)
 ```python
 @cached_property
 def _gacha_side_navbar(self):
@@ -594,11 +614,10 @@ def _gacha_side_navbar(self):
 
 | 文件 | 行数 | 导出类型 | 主要职责 |
 |------|------|---------|---------|
-| `daily.py` | 346 | `Daily` | 每日任务主类 |
-| `equipment.py` | ~50 | `DailyEquipment` | 装备管理 |
-| `assets.py` | ~50 | - | 按钮和模板资源 |
+| `daily.py` | 373 | `Daily` | 每日任务主类 |
+| `assets.py` | 22 | - | 按钮和模板资源 |
 
-#### 每日任务执行 (`daily.py:L156-L207`)
+#### 每日任务执行 (`daily.py:L181-L235`，`daily_execute()`)
 ```python
 def daily_execute(self, remain=3, stage=1, fleet=1):
     """执行每日任务"""
@@ -610,7 +629,7 @@ def daily_execute(self, remain=3, stage=1, fleet=1):
         self.combat(emotion_reduce=False, save_get_items=False, ...)
 ```
 
-#### 任务类型映射 (`daily.py:L96-L140`)
+#### 任务类型映射 (`daily.py:L83-L167`，`get_daily_stage_and_fleet()`)
 ```python
 # emergency_module_development 模式
 fleets = [
@@ -636,11 +655,11 @@ fleets = [
 
 | 文件 | 行数 | 导出类型 | 主要职责 |
 |------|------|---------|---------|
-| `hard.py` | 55 | `CampaignHard` | 困难模式主类 |
-| `equipment.py` | ~30 | - | 装备管理 |
-| `assets.py` | ~20 | - | 按钮和模板资源 |
+| `hard.py` | 73 | `CampaignHard` | 困难模式主类 |
+| `equipment.py` | 32 | - | 装备管理 |
+| `assets.py` | 9 | - | 按钮和模板资源 |
 
-#### 执行逻辑 (`hard.py:L17-L54`)
+#### 执行逻辑 (`hard.py:L36`，`run()`)
 ```python
 def run(self):
     """执行困难模式战役"""
@@ -667,10 +686,10 @@ SOS 模块负责执行游戏中的 SOS 信号任务。
 
 | 文件 | 行数 | 导出类型 | 主要职责 |
 |------|------|---------|---------|
-| `sos.py` | 238 | `CampaignSos` | SOS 任务主类 |
-| `assets.py` | ~30 | - | 按钮和模板资源 |
+| `sos.py` | 268 | `CampaignSos` | SOS 任务主类 |
+| `assets.py` | 14 | - | 按钮和模板资源 |
 
-#### 信号选择 (`sos.py:L57-L85`)
+#### 信号选择 (`sos.py:L119-L192`，`_sos_signal_select()` 多版本)
 ```python
 def _find_target_chapter(self, chapter):
     """查找目标章节的信号"""
@@ -698,11 +717,11 @@ def _find_target_chapter(self, chapter):
 
 | 文件 | 行数 | 导出类型 | 主要职责 |
 |------|------|---------|---------|
-| `war_archives.py` | 46 | `CampaignWarArchives` | 作战档案主类 |
-| `dictionary.py` | ~100 | - | 档案数据 |
-| `assets.py` | ~20 | - | 按钮和模板资源 |
+| `war_archives.py` | 192 | `CampaignWarArchives` | 作战档案主类 |
+| `dictionary.py` | 56 | - | 档案数据 |
+| `assets.py` | 62 | - | 按钮和模板资源 |
 
-#### 停止条件 (`war_archives.py:L22-L35`)
+#### 停止条件 (`war_archives.py:L131-L162`，`triggered_stop_condition()`)
 ```python
 def triggered_stop_condition(self, oil_check=True):
     """检查停止条件"""
@@ -725,14 +744,14 @@ def triggered_stop_condition(self, oil_check=True):
 
 | 文件 | 行数 | 导出类型 | 主要职责 |
 |------|------|---------|---------|
-| `raid.py` | 485 | `Raid` | 突袭主类 |
-| `combat.py` | ~200 | `RaidCombat` | 突袭战斗 |
-| `run.py` | ~200 | `RaidRun` | 突袭运行 |
-| `daily.py` | ~100 | `RaidDaily` | 每日突袭 |
-| `scuttle.py` | ~100 | `RaidScuttle` | 突袭扫荡 |
-| `assets.py` | ~200 | - | 按钮和模板资源 |
+| `raid.py` | 572 | `Raid` | 突袭主类 |
+| `combat.py` | 72 | `RaidCombat` | 突袭战斗 |
+| `run.py` | 151 | `RaidRun` | 突袭运行 |
+| `daily.py` | 96 | `RaidDaily` | 每日突袭 |
+| `scuttle.py` | 226 | `RaidScuttle` | 突袭扫荡 |
+| `assets.py` | 99 | - | 按钮和模板资源 |
 
-#### 活动类型映射 (`raid.py:L69-L101`)
+#### 活动类型映射 (`raid.py:L534-L545`，`is_raid_rpg()`)
 ```python
 def raid_name_shorten(name):
     """将活动名称转换为简称"""
@@ -745,7 +764,7 @@ def raid_name_shorten(name):
     # ... 更多活动
 ```
 
-#### OCR 配置 (`raid.py:L119-L178`)
+#### OCR 配置 (`raid.py:L43-L272`，`RaidOcr` 类)
 ```python
 def raid_ocr(raid, mode):
     """根据活动类型配置 OCR"""
@@ -767,13 +786,13 @@ def raid_ocr(raid, mode):
 
 | 文件 | 行数 | 导出类型 | 主要职责 |
 |------|------|---------|---------|
-| `base.py` | 55 | `EventBase` | 活动基础类 |
-| `campaign_abcd.py` | ~80 | `CampaignABCD` | ABCD 关卡 |
-| `campaign_sp.py` | ~80 | `CampaignSP` | SP 关卡 |
-| `maritime_escort.py` | ~30 | `MaritimeEscort` | 海上护卫 |
-| `assets.py` | ~20 | - | 按钮和模板资源 |
+| `base.py` | 84 | `EventBase` | 活动基础类 |
+| `campaign_abcd.py` | 100 | `CampaignABCD` | ABCD 关卡 |
+| `campaign_sp.py` | 63 | `CampaignSP` | SP 关卡 |
+| `maritime_escort.py` | 84 | `MaritimeEscort` | 海上护卫 |
+| `assets.py` | 10 | - | 按钮和模板资源 |
 
-#### 关卡名称转换 (`base.py:L30-L54`)
+#### 关卡名称转换 (`base.py:L52-L58`，`convert_stages()`)
 ```python
 def convert_stages(self, stages):
     """转换关卡名称"""
@@ -797,10 +816,10 @@ def convert_stages(self, stages):
 
 | 文件 | 行数 | 导出类型 | 主要职责 |
 |------|------|---------|---------|
-| `eventstory.py` | 226 | `EventStory` | 活动剧情主类 |
-| `assets.py` | ~30 | - | 按钮和模板资源 |
+| `eventstory.py` | 305 | `EventStory` | 活动剧情主类 |
+| `assets.py` | 15 | - | 按钮和模板资源 |
 
-#### 剧情处理 (`eventstory.py:L91-L155`)
+#### 剧情处理 (`eventstory.py:L136-L214`，`event_story()`)
 ```python
 def event_story(self, skip_first_screenshot=True):
     """处理活动剧情"""
@@ -829,14 +848,14 @@ def event_story(self, skip_first_screenshot=True):
 
 | 文件 | 行数 | 导出类型 | 主要职责 |
 |------|------|---------|---------|
-| `hospital.py` | 266 | `Hospital` | 医院活动主类 |
-| `clue.py` | ~200 | `HospitalClue` | 线索处理 |
-| `combat.py` | ~200 | `HospitalCombat` | 医院战斗 |
-| `hospital_event.py` | ~150 | `HospitalEvent` | 医院事件 |
-| `ui.py` | ~100 | `HospitalUI` | 医院 UI |
-| `assets.py` | ~100 | - | 按钮和模板资源 |
+| `hospital.py` | 304 | `Hospital` | 医院活动主类 |
+| `clue.py` | 339 | `HospitalClue` | 线索处理 |
+| `combat.py` | 144 | `HospitalCombat` | 医院战斗 |
+| `hospital_event.py` | 196 | `HospitalEvent` | 医院事件 |
+| `ui.py` | 65 | `HospitalUI` | 医院 UI |
+| `assets.py` | 36 | - | 按钮和模板资源 |
 
-#### 调查循环 (`hospital.py:L120-L142`)
+#### 调查循环 (`hospital.py:L161-L186`，`loop_invest()`)
 ```python
 def loop_invest(self):
     """执行所有调查"""
@@ -862,13 +881,14 @@ def loop_invest(self):
 
 | 文件 | 行数 | 导出类型 | 主要职责 |
 |------|------|---------|---------|
-| `coalition.py` | 258 | `Coalition` | 联动活动主类 |
-| `coalition_sp.py` | ~200 | `CoalitionSP` | SP 关卡 |
-| `combat.py` | ~200 | `CoalitionCombat` | 联动战斗 |
-| `ui.py` | ~150 | `CoalitionUI` | 联动 UI |
-| `assets.py` | ~100 | - | 按钮和模板资源 |
+| `coalition.py` | 378 | `Coalition` | 联动活动主类 |
+| `coalition_scuttle.py` | 402 | `CoalitionScuttle` | 联动扫荡 |
+| `coalition_sp.py` | 22 | `CoalitionSP` | SP 关卡 |
+| `combat.py` | 90 | `CoalitionCombat` | 联动战斗 |
+| `ui.py` | 482 | `CoalitionUI` | 联动 UI |
+| `assets.py` | 88 | - | 按钮和模板资源 |
 
-#### PT 获取 (`coalition.py:L49-L80`)
+#### PT 获取 (`coalition.py:L93-L131`，`get_event_pt()`)
 ```python
 def get_event_pt(self):
     """获取活动 PT"""
@@ -907,7 +927,9 @@ def get_event_pt(self):
 | `ui.py` / `warehouse.py` | `IslandUI` / `WarehouseOCR` | 页面导航和仓库数量识别 |
 | `assets.py` | - | 自动生成的按钮和模板资源 |
 
-> 完整文件清单：`module/island/` 下共 25 个 py 文件，alas.py 中对应 18 个独立任务方法（`island` + `island_*`）。
+> 完整文件清单：`module/island/` 下共 **24 个 py 文件**（无 `__init__.py`），alas.py 中对应 **17 个独立任务方法**：`island_mine_forest`、`island_farm`、`island_rancher`、`island_fishery`、`island_grill`、`island_teahouse`、`island_restaurant`、`island_juu_coffee`、`island_juu_eatery`、`island_daily_gather`、`island_manufacture`、`island_air_drop`、`island_cargo_preparation`、`island_business`、`island_daily_order`、`island_daily_interact`、`island_pearl_sell`。
+>
+> 另外 `module/` 下还有 **16 个 `island_*` 顶层资源目录**（`island_business`、`island_cargo_preparation`、`island_daily_interact`、`island_daily_order`、`island_farm`、`island_fishery`、`island_grill`、`island_juu_coffee`、`island_juu_eatery`、`island_manufacture`、`island_mine_forest`、`island_pearl_sell`、`island_rancher`、`island_restaurant`、`island_select_character`、`island_teahouse`），仅含 `assets.py` 资源，任务逻辑类均位于 `module/island/*.py`。
 
 ---
 
@@ -920,15 +942,15 @@ def get_event_pt(self):
 
 | 文件 | 行数 | 导出类型 | 主要职责 |
 |------|------|---------|---------|
-| `private_quarters.py` | 179 | `PrivateQuarters` | 私人休息室主类 |
-| `interact.py` | ~200 | `PQInteract` | 互动逻辑 |
-| `shop.py` | ~200 | `PQShop` | 商店购买 |
-| `clerk.py` | ~150 | `PQClerk` | 店员处理 |
-| `status.py` | ~100 | `PQStatus` | 状态检测 |
-| `ui.py` | ~100 | `PQUI` | UI 导航 |
-| `assets.py` | ~100 | - | 按钮和模板资源 |
+| `private_quarters.py` | 262 | `PrivateQuarters` | 私人休息室主类 |
+| `interact.py` | 335 | `PQInteract` | 互动逻辑 |
+| `shop.py` | 187 | `PQShop` | 商店购买 |
+| `clerk.py` | 119 | `PQClerk` | 店员处理 |
+| `status.py` | 71 | `PQStatus` | 状态检测 |
+| `ui.py` | 88 | `PQUI` | UI 导航 |
+| `assets.py` | 40 | - | 按钮和模板资源 |
 
-#### 互动执行 (`private_quarters.py:L97-L117`)
+#### 互动执行 (`private_quarters.py:L169-L193`，`pq_execute_interact()`)
 ```python
 def pq_execute_interact(self, target_ship):
     """执行与目标舰娘的互动"""
@@ -953,12 +975,12 @@ def pq_execute_interact(self, target_ship):
 
 | 文件 | 行数 | 导出类型 | 主要职责 |
 |------|------|---------|---------|
-| `shipyard_reward.py` | 271 | `RewardShipyard` | 船坞奖励主类 |
-| `ui.py` | ~200 | `ShipyardUI` | 船坞 UI |
-| `ui_globals.py` | ~100 | - | UI 全局变量 |
-| `assets.py` | ~100 | - | 按钮和模板资源 |
+| `shipyard_reward.py` | 313 | `RewardShipyard` | 船坞奖励主类 |
+| `ui.py` | 411 | `ShipyardUI` | 船坞 UI |
+| `ui_globals.py` | 31 | - | UI 全局变量 |
+| `assets.py` | 27 | - | 按钮和模板资源 |
 
-#### 蓝图购买计算 (`shipyard_reward.py:L33-L58`)
+#### 蓝图购买计算 (`shipyard_reward.py:L113-L150`，`_shipyard_calculate()`)
 ```python
 def _shipyard_get_cost(self, amount, rarity=None):
     """计算蓝图购买成本"""
@@ -981,14 +1003,14 @@ def _shipyard_get_cost(self, amount, rarity=None):
 
 | 文件 | 行数 | 导出类型 | 主要职责 |
 |------|------|---------|---------|
-| `freebies.py` | 30 | `Freebies` | 免费福利主调度器 |
-| `battle_pass.py` | ~200 | `BattlePass` | 通行证奖励 |
-| `data_key.py` | ~150 | `DataKey` | 数据钥匙 |
-| `mail_white.py` | ~150 | `MailWhite` | 邮件收取 |
-| `supply_pack.py` | ~150 | `SupplyPack_250814` | 补给包 |
-| `assets.py` | ~50 | - | 按钮和模板资源 |
+| `freebies.py` | 48 | `Freebies` | 免费福利主调度器 |
+| `battle_pass.py` | 135 | `BattlePass` | 通行证奖励 |
+| `data_key.py` | 85 | `DataKey` | 数据钥匙 |
+| `mail_white.py` | 339 | `MailWhite` | 邮件收取 |
+| `supply_pack.py` | 143 | `SupplyPack_250814` | 补给包 |
+| `assets.py` | 27 | - | 按钮和模板资源 |
 
-#### 调度逻辑 (`freebies.py:L10-L29`)
+#### 调度逻辑 (`freebies.py:L29`，`run()`)
 ```python
 def run(self):
     """按顺序收取各种免费福利"""
@@ -1012,11 +1034,11 @@ def run(self):
 
 | 文件 | 行数 | 导出类型 | 主要职责 |
 |------|------|---------|---------|
-| `minigame.py` | 244 | `Minigame`, `MinigameRun` | 小游戏主类 |
-| `new_year_challenge.py` | ~150 | `NewYearChallenge` | 新年挑战 |
-| `assets.py` | ~50 | - | 按钮和模板资源 |
+| `minigame.py` | 307 | `Minigame`, `MinigameRun` | 小游戏主类 |
+| `new_year_challenge.py` | 176 | `NewYearChallenge` | 新年挑战 |
+| `assets.py` | 33 | - | 按钮和模板资源 |
 
-#### 小游戏执行 (`minigame.py:L181-L243`)
+#### 小游戏执行 (`minigame.py:L215-L244`，`collect_coin()` / `run()`)
 ```python
 def run(self):
     """执行小游戏"""
@@ -1043,10 +1065,10 @@ def run(self):
 
 | 文件 | 行数 | 导出类型 | 主要职责 |
 |------|------|---------|---------|
-| `awaken.py` | 396 | `Awaken` | 觉醒主类 |
-| `assets.py` | ~30 | - | 按钮和模板资源 |
+| `awaken.py` | 457 | `Awaken` | 觉醒主类 |
+| `assets.py` | 17 | - | 按钮和模板资源 |
 
-#### 觉醒执行 (`awaken.py:L231-L285`)
+#### 觉醒执行 (`awaken.py:L166-L264`，`awaken_once()`)
 ```python
 def awaken_ship(self, use_array=False):
     """觉醒一艘舰船"""
@@ -1074,14 +1096,16 @@ def awaken_ship(self, use_array=False):
 
 | 文件 | 行数 | 导出类型 | 主要职责 |
 |------|------|---------|---------|
-| `retirement.py` | 725 | `Retirement` | 退役主类 |
-| `enhancement.py` | ~300 | `Enhancement` | 强化处理 |
-| `scanner.py` | ~300 | `ShipScanner` | 舰船扫描 |
-| `dock.py` | ~400 | `Dock` | 船坞操作 |
-| `setting.py` | ~200 | `QuickRetireSettingHandler` | 退役设置 |
-| `assets.py` | ~200 | - | 按钮和模板资源 |
+| `retirement.py` | 821 | `Retirement` | 退役主类 |
+| `enhancement.py` | 361 | `Enhancement` | 强化处理 |
+| `scanner.py` | 1089 | `ShipScanner` | 舰船扫描 |
+| `dock.py` | 440 | `Dock` | 船坞操作 |
+| `setting.py` | 118 | `QuickRetireSettingHandler` | 退役设置 |
+| `fleet_management.py` | 81 | - | 舰队管理 |
+| `ship_name.py` | 62 | - | 舰船名称数据 |
+| `assets.py` | 70 | - | 按钮和模板资源 |
 
-#### 一键退役 (`retirement.py:L241-L301`)
+#### 一键退役 (`retirement.py:L290-L357`，`retire_ships_one_click()`)
 ```python
 def retire_ships_one_click(self):
     """一键退役"""
@@ -1101,7 +1125,7 @@ def retire_ships_one_click(self):
     return total
 ```
 
-#### GemsFarming 旗舰退役 (`retirement.py:L362-L422`)
+#### GemsFarming 旗舰退役 (`retirement.py:L421-L489`，`retire_gems_farming_flagships()`)
 ```python
 def retire_gems_farming_flagships(keep_one=True):
     """退役 GemsFarming 废弃旗舰"""
@@ -1127,13 +1151,13 @@ def retire_gems_farming_flagships(keep_one=True):
 
 | 文件 | 行数 | 导出类型 | 主要职责 |
 |------|------|---------|---------|
-| `equipment.py` | 290 | `Equipment` | 装备管理主类 |
-| `equipment_change.py` | ~200 | `EquipmentChange` | 装备更换 |
-| `equipment_code.py` | ~200 | `EquipmentCode` | 装备代码 |
-| `fleet_equipment.py` | ~150 | `FleetEquipment` | 舰队装备 |
-| `assets.py` | ~100 | - | 按钮和模板资源 |
+| `equipment.py` | 334 | `Equipment` | 装备管理主类 |
+| `equipment_change.py` | 179 | `EquipmentChange` | 装备更换 |
+| `equipment_code.py` | 480 | `EquipmentCode` | 装备代码 |
+| `fleet_equipment.py` | 69 | `FleetEquipment` | 舰队装备 |
+| `assets.py` | 69 | - | 按钮和模板资源 |
 
-#### 装备卸下 (`equipment.py:L171-L210`)
+#### 装备卸下 (`equipment.py:L223-L281`，`_equip_take_off_one()` / `equipment_take_off()`)
 ```python
 def _equip_take_off_one(self):
     """卸下一件装备"""
@@ -1157,10 +1181,10 @@ META 奖励模块负责收取游戏中的 META 舰船奖励。
 
 | 文件 | 行数 | 导出类型 | 主要职责 |
 |------|------|---------|---------|
-| `meta_reward.py` | 333 | `MetaReward`, `BeaconReward`, `DossierReward` | META 奖励主类 |
-| `assets.py` | ~30 | - | 按钮和模板资源 |
+| `meta_reward.py` | 401 | `MetaReward`, `BeaconReward`, `DossierReward` | META 奖励主类 |
+| `assets.py` | 17 | - | 按钮和模板资源 |
 
-#### 信标奖励 (`meta_reward.py:L24-L71`)
+#### 信标奖励 (`meta_reward.py:L72-L120`，`meta_reward_receive()`)
 ```python
 def meta_reward_receive(self):
     """收取 META 信标奖励"""
@@ -1175,6 +1199,98 @@ def meta_reward_receive(self):
             received = True
             continue
 ```
+
+---
+
+### 自动配装 (module/auto_equip/)
+
+#### 模块概述
+自动配装模块通过「空槽 + 模板」评分机制，从仓库中自动为舰船快速填充装备槽，无需逐个选择装备。
+
+#### 文件清单与分析
+
+| 文件 | 行数 | 导出类型 | 主要职责 |
+|------|------|---------|---------|
+| `auto_equip.py` | 325 | `AutoEquip` | 自动配装主类（继承 `Dock`，L140） |
+
+#### 核心功能
+- **快速配装**（`_quick_change_appear` L145 / `_open_quick_change` L148 / `_quick_change_next` L181）：进入快速更换界面并逐个槽位切换
+- **空槽 + 模板评分**（`_empty_slot_plus_score` L203 / `_warehouse_no_equipment_score` L232）：对仓库中的装备按类型模板打分，选择最合适的填入
+- **仓库填充**（`_quick_fill_slot_from_warehouse` L244 / `_fill_current_ship_equipment` L262 / `equipment_change_logic` L272）：从仓库自动填充当前舰船的空槽
+- **停止条件**（`_should_stop` L141 / `_ship_limit` L292）：达到舰船数上限时停止
+
+---
+
+### 仓库系统 (module/storage/)
+
+#### 模块概述
+仓库模块负责管理游戏中的仓库，包括物品筛选、上锁/解锁、以及装备箱拆解。
+
+#### 文件清单与分析
+
+| 文件 | 行数 | 导出类型 | 主要职责 |
+|------|------|---------|---------|
+| `storage.py` | 624 | `StorageHandler` | 仓库主类（继承 `StorageUI`，L35；`StorageFull` 异常 L30） |
+| `ui.py` | 199 | `StorageUI` | 仓库 UI 导航（继承 `UI`，L17） |
+| `box_disassemble.py` | 230 | `StorageBox` | 装备箱拆解（继承 `StorageHandler`，L20） |
+| `assets.py` | 28 | - | 按钮和模板资源 |
+
+#### 核心功能
+- **仓库筛选与操作**：物品分类筛选、上锁/解锁、批量选择
+- **仓库容量管理**：容量上限检测（`StorageFull`），容量不足时提示清理
+- **装备箱拆解**：`StorageBox` 自动拆解装备箱并统计所得材料
+
+---
+
+### 游戏设置 (module/game_setting/)
+
+#### 模块概述
+游戏设置模块直接读写游戏客户端的 `playerprefs.xml`，实现图像质量、战斗演出等设置项的自动化修改。
+
+#### 文件清单与分析
+
+| 文件 | 行数 | 导出类型 | 主要职责 |
+|------|------|---------|---------|
+| `player_prefs.py` | 663 | `PlayerPrefsManager` | playerprefs.xml 读写管理（L302） |
+| `setting_extractor.py` | 277 | `SettingExtractor` | 从游戏截图提取设置项（L189） |
+| `setting_generated.py` | 741 | `GameSettingsGenerated` | 自动生成的设置定义（L11） |
+
+#### 核心功能
+- **playerprefs 读写**：定位并解析 `playerprefs.xml`，修改键值后写回
+- **设置提取**：通过截图识别当前游戏内设置状态，与配置比对
+- **生成设置**：`setting_generated.py` 由 `dev_tools/playerprefs_extractor.py` 生成，定义所有可修改的设置项
+
+---
+
+### 模板资源 (module/template/)
+
+#### 模块概述
+全局模板匹配资源模块，集中定义各模块共用的 `Template` 匹配常量（敌人类型、弹药、阵型、空袭等）。
+
+#### 文件清单与分析
+
+| 文件 | 行数 | 导出类型 | 主要职责 |
+|------|------|---------|---------|
+| `assets.py` | 292 | - | 全局 `TEMPLATE_*` 模板常量（自动生成，勿手动修改） |
+
+#### 说明
+由 `dev_tools/button_extract.py` 自动生成，按服务器（cn/en/jp/tw）提供独立的模板文件路径；地图敌人识别（`TEMPLATE_ENEMY_*`）、空袭图标、弹药/阵型等通用模板均定义于此，供战斗、地图、大世界等模块引用。
+
+---
+
+### 战斗 UI 资源 (module/combat_ui/)
+
+#### 模块概述
+战斗界面 UI 资源模块，定义战斗暂停/退出按钮及其多主题变体。
+
+#### 文件清单与分析
+
+| 文件 | 行数 | 导出类型 | 主要职责 |
+|------|------|---------|---------|
+| `assets.py` | 41 | - | `PAUSE` / `QUIT` 按钮及 35 个主题变体（自动生成，勿手动修改） |
+
+#### 说明
+由 `dev_tools/button_extract.py` 自动生成。`PAUSE`（含 `PAUSE_DOUBLE_CHECK` 及 Ancient/AzureCore/Christmas/Cyber/Devil/ElvenVine/GildedReverie/HolyLight/Iridescent_Fantasy/MaidCafe/Neon/New/Nier/Ninja/Nurse/Pharaoh/Seaside/ShadowPuppetry/SpringInn/Star 等主题）与 `QUIT`（含 13 个主题变体）共 35 个按钮，供 `module/combat/` 战斗流程识别不同活动主题的战斗界面。
 
 ---
 

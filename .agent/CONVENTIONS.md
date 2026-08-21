@@ -5,8 +5,9 @@ alwaysApply: true
 
 # 编码规范文档
 
-**生成日期**: 2026-05-27
+**生成日期**: 2026-08-14
 **项目版本**: dev 分支
+**最后分析代码版本**: f992af6c0（2026-08-14）
 
 ---
 
@@ -193,6 +194,8 @@ def some_function(self, skip_first_screenshot=True):
 
 ### 6.1 异常层次
 
+`module/exception.py` 中所有自定义异常均直接继承 `Exception`（无中间基类）：
+
 ```python
 # 正常战役结束
 CampaignEnd, OilExhausted, OilMaxed
@@ -210,10 +213,18 @@ GameNotRunningError, GamePageUnknownError, EmulatorNotRunningError
 ScriptError, ScriptEnd
 
 # 不可恢复
-RequestHumanTakeover, AutoSearchSetError
+RequestHumanTakeover, AutoSearchSetError, HardNotSatisfied
 ```
 
-### 6.2 异常捕获原则
+- `HardNotSatisfied` 继承 `RequestHumanTakeover`，表示困难模式前置条件不满足。
+- `TaskEnd` 定义在 `module/config/config.py` 中（不在 `exception.py`），表示任务正常结束，调度器视为成功（`run()` 返回 `True`）。
+
+### 6.2 死循环检测（`module/device/device.py`）
+
+- `GameStuckError`：截图状态无有效推进。默认 `stuck_timer`=60 秒、`stuck_timer_long`=195 秒；战斗关键按钮（`BATTLE_STATUS_S`、`PAUSE`、`LOGIN_CHECK`、`TEMPLATE_MANJUU`）出现在检测记录中可放宽长等待判定；登录等待阶段由 `Restart.LoginWaitTimeout`（默认 30 秒）放宽。
+- `GameTooManyClickError`：`click_record` 为最近 15 次操作（`deque(maxlen=15)`），其中同一按钮被点击 ≥12 次，或两个按钮各 ≥6 次。
+
+### 6.3 异常捕获原则
 
 - 异常只在顶层捕获
 - 捕获时，日志和最近截图保存到单独的文件夹
@@ -296,7 +307,7 @@ TEMPLATE_SHIP = Template(file='assets/cn/module/TEMPLATE_SHIP.png')
 
 ## 十一、测试规范
 
-- Python 单元测试位于 `tests/`，使用标准库 `unittest`（非 pytest），覆盖 WebUI、进程管理、部署与配置逻辑
+- Python 单元测试位于 `tests/`，使用标准库 `unittest`（非 pytest），覆盖 WebUI、进程管理、部署与配置逻辑，以及调度器错误处理（`test_alas_error_handling`）、大世界调度（`test_opsi_scheduling`）、委托规划（`test_commission_planner`）、服务器检查（`test_server_checker`）、CI 导入（`test_ci_import`）、游戏设置（`test_game_setting_player_prefs`）等，共 19 个测试文件、240 个用例
 - 运行全部测试：`uv run python -m unittest discover -s tests`
 - 运行单个测试文件：`uv run python -m unittest tests.test_webui_config_search`
 - OCR 性能基准见 `module/daemon/ocr_benchmark.py`（非单元测试）

@@ -5,6 +5,8 @@ alwaysApply: true
 
 # mcp_server_sse.py 入口文件深度分析
 
+> **最后核对**：2026-08-14（dev 分支，HEAD 提交 f992af6c0）。文中行号均已按当前 mcp_server_sse.py 重新核实。
+
 ## 1. 文件基础信息
 
 | 项目 | 内容 |
@@ -15,26 +17,25 @@ alwaysApply: true
 | 许可证 | GPL-3.0 |
 | 服务器名称 | `"AzurPilot-MCP"` |
 | 默认端口 | 22268 |
-| SSE 端点 | `/sse` |
+| SSE 端点 | `/mcp/sse`（独立运行时为 `/sse`） |
 | 消息端点 | `/mcp/messages` |
 
 ### 导入依赖
 
 | 模块来源 | 具体导入 | 用途 |
 |---|---|---|
-| 标准库 | `os`, `asyncio`, `logging`, `json`, `datetime`, `base64`, `time`, `subprocess`, `threading`, `re` | 系统操作、异步、日志、序列化、时间、编码、进程、线程、正则 |
-| 标准库 | `typing.List, Optional, Dict, Any` | 类型注解 |
-| 标准库 | `io.BytesIO` | 内存字节流 |
+| 标准库 | `os`, `logging`, `json`, `datetime`, `base64`, `time`, `subprocess`, `threading` | 系统操作、日志、序列化、时间、编码、进程、线程 |
+| 标准库 | `typing.List, Dict, Any` | 类型注解 |
+| 标准库 | `io.BytesIO` | 内存字节流（`re` 在 `_tool_get_current_running_task` 内部局部导入） |
 | 第三方 | `starlette.applications.Starlette` | ASGI 框架 |
 | 第三方 | `starlette.middleware.Middleware` | 中间件 |
 | 第三方 | `starlette.middleware.cors.CORSMiddleware` | CORS 跨域支持 |
 | 第三方 | `mcp.server.Server` | MCP 服务器核心 |
-| 第三方 | `mcp.server.models.InitializationOptions` | MCP 初始化选项 |
 | 第三方 | `mcp.server.sse.SseServerTransport` | SSE 传输层 |
 | 第三方 | `mcp.types.TextContent, ImageContent, Tool` | MCP 类型定义 |
 | 项目内部 | `module.config.config.AzurLaneConfig` | 配置系统 |
-| 项目内部 | `module.config.time_source.now` | 统一时间源（NTP 校准） |
-| 项目内部 | `module.config.utils.alas_instance` | 实例列表 |
+| 项目内部 | `module.config.time_source.now`（别名 `current_time`） | 统一时间源（NTP 校准） |
+| 项目内部 | `module.config.utils.DEFAULT_CONFIG_NAME, alas_instance` | 默认实例名、实例列表 |
 | 项目内部 | `module.webui.process_manager.ProcessManager` | 进程管理 |
 | 项目内部 | `module.config.mcp_helper.McpConfigHelper` | MCP 配置辅助 |
 | 项目内部 | `module.webui.setting.State` | WebUI 全局状态 |
@@ -42,24 +43,27 @@ alwaysApply: true
 
 ---
 
-## 2. 模块级初始化 (L38-L46)
+## 2. 模块级初始化 (L35-L45)
 
 ```python
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("alas-mcp")
+logger = logging.getLogger("azurpilot-mcp")
 
 helper = McpConfigHelper()
 
 mcp_server = Server("AzurPilot-MCP")
+
+ToolResponse = List[TextContent | ImageContent]
 ```
 
-- **日志**: 使用标准库 `logging`（非项目的 `module.logger`），级别 INFO
+- **日志**: 使用标准库 `logging`（非项目的 `module.logger`），级别 INFO，logger 名为 `"azurpilot-mcp"`
 - **helper**: `McpConfigHelper` 实例，加载 `args.json` 和 i18n 数据
 - **mcp_server**: MCP 服务器实例，名称 `"AzurPilot-MCP"`
+- **ToolResponse**: 类型别名 `List[TextContent | ImageContent]`，所有工具处理器的返回类型
 
 ---
 
-## 3. `list_tools()` 工具注册 (L48-L199)
+## 3. `list_tools()` 工具注册 (L47-L198)
 
 ```python
 @mcp_server.list_tools()
@@ -131,7 +135,7 @@ inputSchema={
 
 ```python
 @mcp_server.call_tool()
-async def call_tool(name: str, arguments: Dict[str, Any]) -> List[TextContent]:
+async def call_tool(name: str, arguments: Dict[str, Any]) -> ToolResponse:
 ```
 
 **这是所有工具调用的统一分发函数。**
@@ -145,7 +149,7 @@ async def call_tool(name: str, arguments: Dict[str, Any]) -> List[TextContent]:
 
 > 注意：各工具实现已拆分为独立的 `_tool_*` 函数，行号与原 if/elif 结构不同，以下行号为函数内部实现位置。
 
-#### `list_instances` (L204-L206)
+#### `list_instances` (L200-L202)
 
 ```python
 instances = alas_instance()
@@ -155,7 +159,7 @@ return [TextContent(type="text", text=json.dumps(instances, ensure_ascii=False, 
 - **数据源**: `alas_instance()` 从 `config/` 目录扫描 JSON 配置文件
 - **返回**: JSON 格式的实例名列表
 
-#### `get_status` (L208-L214)
+#### `get_status` (L205-L211)
 
 ```python
 instances = alas_instance()
@@ -169,7 +173,7 @@ for inst in instances:
 - **返回**: 每个实例的 `{instance, running, state}`
 - **性能**: 遍历所有实例，每个实例获取一次进程状态
 
-#### `list_tasks` (L216-L218)
+#### `list_tasks` (L214-L216)
 
 ```python
 tasks = helper.get_tasks()
@@ -178,7 +182,7 @@ tasks = helper.get_tasks()
 - **数据源**: `McpConfigHelper.get_tasks()` 从 `args.json` 提取任务名
 - **返回**: 任务名列表
 
-#### `get_task_help` (L220-L223)
+#### `get_task_help` (L219-L222)
 
 ```python
 task_name = arguments["task_name"]
@@ -198,7 +202,7 @@ res = helper.get_dashboard_resources(config.data)
 - **数据源**: 实例配置中的 `Dashboard` 节点
 - **返回**: 资源状态（油、金币、红尖尖等）的 Value/Limit/Total
 
-#### `get_config` (L231-L236)
+#### `get_config` (L232-L237)
 
 ```python
 config = AzurLaneConfig(inst)
@@ -208,7 +212,7 @@ data = config.data.get(task, {}) if task else config.data
 - **参数**: `instance` (必需), `task` (可选过滤)
 - **返回**: 配置数据（可按任务过滤）
 
-#### `update_config` (L238-L248)
+#### `update_config` (L240-L250)
 
 ```python
 config = AzurLaneConfig(inst)
@@ -221,7 +225,7 @@ config.save()
 - **路径格式**: `Task.Group.Arg`（如 `Research.Scheduler.Enable`）
 - **副作用**: 写入 `config/{instance}.json`
 
-#### `get_recent_logs` (L250-L274)
+#### `get_recent_logs` (L253-L277)
 
 ```python
 date_str = datetime.date.today().strftime("%Y-%m-%d")
@@ -232,7 +236,7 @@ log_file = f"./log/{date_str}_{inst}.txt"
 - **返回**: 最近 N 行日志（默认 50）
 - **实现**: 读取整个文件后截取最后 N 行（对大文件不高效）
 
-#### `start_instance` (L276-L284)
+#### `start_instance` (L280-L288)
 
 ```python
 manager = ProcessManager.get_manager(inst)
@@ -247,7 +251,7 @@ manager.start(func=func)
 - **功能**: 通过 `ProcessManager` 启动实例子进程
 - **模块选择**: `get_config_mod()` 根据配置确定要运行的模块
 
-#### `stop_instance` (L286-L292)
+#### `stop_instance` (L291-L297)
 
 ```python
 manager = ProcessManager.get_manager(inst)
@@ -259,7 +263,7 @@ manager.stop()
 - **前置检查**: 未运行则返回错误
 - **功能**: 通过 `ProcessManager` 停止实例子进程
 
-#### `get_screenshot` (L293-L320)
+#### `get_screenshot` (L300-L327)
 
 ```python
 config = AzurLaneConfig(inst)
@@ -274,12 +278,12 @@ return [ImageContent(type="image", data=img_data, mimeType="image/jpeg")]
 
 - **功能**: 截取模拟器屏幕并返回 Base64 编码的 JPEG 图像
 - **流程**: ADB 截图 -> numpy 数组 -> PIL Image -> JPEG Bytes -> Base64
-- **环境变量**: 设置 `ALAS_CONFIG_NAME` 用于设备连接
+- **环境变量**: 若 `ALAS_CONFIG_NAME` 未设置则写入当前实例名，用于设备连接
 - **特殊处理**: `remove_fake_pil_module()` 清理 PIL 模块伪装
 - **错误处理**: 捕获异常返回错误文本（含堆栈跟踪）
 - **性能**: 每次调用创建新的 Device 实例（无缓存）
 
-#### `get_current_running_task` (L322-L351)
+#### `get_current_running_task` (L330-L359)
 
 ```python
 manager = ProcessManager.get_manager(inst)
@@ -301,7 +305,7 @@ for line in reversed(lines):
   - 旧版格式: `<<< Run task TaskName >>>`
 - **回退**: 匹配失败返回 `"Unknown"`
 
-#### `get_scheduler_queue` (L353-L365)
+#### `get_scheduler_queue` (L362-L374)
 
 ```python
 config = AzurLaneConfig(inst)
@@ -321,12 +325,12 @@ queue_data.sort(key=lambda x: str(x["next_run"]))
 - **排序**: 按 `NextRun` 时间升序
 - **返回**: `[{task, next_run}, ...]`
 
-#### `trigger_task` (L367-L375)
+#### `trigger_task` (L377-L385)
 
 ```python
 config = AzurLaneConfig(inst)
 config.cross_set(f"{task}.Scheduler.Enable", True)
-now = datetime.datetime.now()
+now = current_time()  # 统一时间源 module.config.time_source.now（导入别名 current_time）
 config.cross_set(f"{task}.Scheduler.NextRun", str(now))
 config.save()
 ```
@@ -334,7 +338,7 @@ config.save()
 - **功能**: 强制将指定任务加入队列并立即执行
 - **实现**: 启用任务调度器 + 设置 NextRun 为当前时间
 
-#### `clear_scheduler_queue` (L377-L388)
+#### `clear_scheduler_queue` (L388-L399)
 
 ```python
 config = AzurLaneConfig(inst)
@@ -352,7 +356,7 @@ if cleared:
 - **实现**: 遍历所有任务，禁用 Scheduler.Enable
 - **返回**: 被清除的任务列表
 
-#### `restart_emulator` (L390-L409)
+#### `restart_emulator` (L402-L421)
 
 ```python
 config = AzurLaneConfig(inst)
@@ -367,7 +371,7 @@ device.emulator_start()
 - **注意**: 使用 `time.sleep(60)` 阻塞当前线程（在 async 函数中调用同步阻塞操作）
 - **性能问题**: 60 秒阻塞可能影响 MCP 服务器响应其他请求
 
-#### `restart_adb` (L411-L437)
+#### `restart_adb` (L424-L450)
 
 ```python
 adb_path = State.deploy_config.AdbExecutable
@@ -380,7 +384,7 @@ subprocess.run([adb_path, "start-server"], check=False)
 - **ADB 路径搜索顺序**: deploy.yaml 配置 -> `.venv/Scripts/adb.exe` -> `.venv/bin/adb` -> `./bin/adb/adb.exe` -> `adb` (PATH)
 - **实现**: kill-server + start-server
 
-#### `update_alas` (L439-L447)
+#### `update_alas` (L453-L463)
 
 ```python
 from module.webui.updater import updater
@@ -393,7 +397,7 @@ threading.Thread(target=do_update).start()
 - **实现**: 启动独立线程执行 `updater.update()`
 - **返回**: 立即返回成功消息（不等待更新完成）
 
-### 4.2 错误处理 (L452-L454)
+### 4.2 错误处理 (L495-L497)
 
 ```python
 except Exception as e:
@@ -405,9 +409,9 @@ except Exception as e:
 
 ---
 
-## 5. SSE 传输层 (L456-L503)
+## 5. SSE 传输层 (L499-L561)
 
-### 5.1 SSE 传输初始化 (L457)
+### 5.1 SSE 传输初始化 (L500)
 
 ```python
 transport = SseServerTransport("/mcp/messages")
@@ -415,7 +419,7 @@ transport = SseServerTransport("/mcp/messages")
 
 创建 SSE 传输实例，消息端点路径为 `/mcp/messages`。
 
-### 5.2 `mcp_asgi_app` ASGI 应用 (L459-L503)
+### 5.2 `mcp_asgi_app` ASGI 应用 (L545-L561)
 
 ```python
 async def mcp_asgi_app(scope, receive, send):
@@ -432,7 +436,7 @@ async def mcp_asgi_app(scope, receive, send):
 | `path.endswith("/messages")` 或 `path.endswith("/messages/")` | `transport.handle_post_message()` | 处理客户端 POST 消息 |
 | 其他 | 返回 404 | 未匹配的路径 |
 
-**SSE 连接流程** (L472-L479):
+**SSE 连接流程** (L503-L512):
 
 ```python
 async with transport.connect_sse(scope, receive, send) as (read_stream, write_stream):
@@ -444,14 +448,17 @@ async with transport.connect_sse(scope, receive, send) as (read_stream, write_st
 2. 创建 MCP 初始化选项
 3. 运行 MCP 服务器循环（阻塞直到连接关闭）
 
-**错误处理** (L487-L491):
+**错误处理** (L519-L529):
 
 ```python
-if "BrokenResourceError" in str(type(e)) or "BrokenPipeError" in str(e)):
+# 断开判断封装在 _is_mcp_client_disconnected()（L515-L516）
+if _is_mcp_client_disconnected(e):
     logger.warning("MCP client disconnected during POST message.")
 else:
     logger.error(f"Error handling MCP message: {e}", exc_info=True)
 ```
+
+`_is_mcp_client_disconnected` 判断 `"BrokenResourceError" in str(type(error)) or "BrokenPipeError" in str(error)`。
 
 区分客户端断开连接（警告）和其他错误（记录完整堆栈）。
 
@@ -459,7 +466,7 @@ else:
 
 ---
 
-## 6. Starlette 应用包装 (L505-L511)
+## 6. Starlette 应用包装 (L563-L569)
 
 ```python
 app = Starlette(
@@ -476,12 +483,12 @@ app.mount("/", mcp_asgi_app)
 
 ---
 
-## 7. `__main__` 入口 (L513-L516)
+## 7. `__main__` 入口 (L571-L574)
 
 ```python
 if __name__ == "__main__":
     import uvicorn
-    logger.info("启动 ALAS MCP 服务 (Port: 22268)")
+    logger.info("[MCP] 启动 AzurPilot MCP 服务 (Port: 22268)")
     uvicorn.run(app, host="0.0.0.0", port=22268)
 ```
 
@@ -562,7 +569,7 @@ mcp_server_sse.py
   │
   ├── MCP Server (mcp.server.Server)
   │   ├── list_tools() -> List[Tool]          # 工具注册
-  │   └── call_tool() -> List[TextContent]    # 工具调用分发
+  │   └── call_tool() -> ToolResponse       # 工具调用分发（TOOL_HANDLERS 查表）
   │
   ├── SseServerTransport
   │   ├── connect_sse() -> (read_stream, write_stream)
@@ -639,7 +646,6 @@ mcp_server_sse.py
 | `get_screenshot` 每次创建 Device | 缓存 Device 实例或使用连接池 |
 | `restart_emulator` 阻塞 60 秒 | 使用 `asyncio.sleep()` 替代 `time.sleep()` |
 | `get_recent_logs` 读取整个文件 | 使用文件尾部读取（`tail` 逻辑） |
-| `trigger_task` 使用 `time_source.now` | 统一时间源已引入（`module.config.time_source`） |
 
 ### 11.3 并发考虑
 
@@ -655,23 +661,23 @@ mcp_server_sse.py
 
 | 措施 | 位置 | 说明 |
 |---|---|---|
-| CORS 中间件 | L506-L510 | 配置跨域访问策略 |
-| 异常信息截断 | L454 | 返回 `str(e)` 而非完整堆栈 |
-| 日志记录 | L453 | `logger.exception()` 记录完整异常 |
-| 错误隔离 | L452-L454 | 工具调用异常不影响服务器运行 |
+| CORS 中间件 | L564-L568 | 配置跨域访问策略 |
+| 异常信息截断 | L497 | 返回 `str(e)` 而非完整堆栈 |
+| 日志记录 | L496 | `logger.exception()` 记录完整异常 |
+| 错误隔离 | L495-L497 | 工具调用异常不影响服务器运行 |
 
 ### 12.2 潜在安全风险
 
 | 风险 | 位置 | 严重程度 | 说明 |
 |---|---|---|---|
-| CORS 完全开放 | L509 | **高** | `allow_origins=["*"]` 允许任何来源访问 |
+| CORS 完全开放 | L566 | **高** | `allow_origins=["*"]` 允许任何来源访问 |
 | 无认证机制 | 全局 | **高** | 无 API 密钥、Token 或密码验证 |
-| `update_config` 可修改任意配置 | L238-L248 | **高** | 可修改密码、服务器等敏感配置 |
-| `start_instance` / `stop_instance` | L276-L292 | **中** | 可远程启停进程 |
-| `restart_emulator` | L390-L409 | **中** | 可远程重启模拟器 |
-| `update_alas` | L439-L447 | **中** | 可触发代码更新 |
-| `restart_adb` 子进程执行 | L433-L434 | **低** | `subprocess.run()` 但参数受控 |
-| 环境变量注入 | L295-L296 | **低** | 设置 `ALAS_CONFIG_NAME` 环境变量 |
+| `update_config` 可修改任意配置 | L240-L250 | **高** | 可修改密码、服务器等敏感配置 |
+| `start_instance` / `stop_instance` | L280-L297 | **中** | 可远程启停进程 |
+| `restart_emulator` | L402-L421 | **中** | 可远程重启模拟器 |
+| `update_alas` | L453-L463 | **中** | 可触发代码更新 |
+| `restart_adb` 子进程执行 | L446-L447 | **低** | `subprocess.run()` 但参数受控 |
+| 环境变量注入 | L302-L303 | **低** | 写入 `ALAS_CONFIG_NAME` 环境变量 |
 
 ### 12.3 安全建议
 
@@ -710,7 +716,7 @@ mcp_server_sse.py
 ### 14.1 潜在 Bug
 
 1. **`restart_emulator` 阻塞事件循环**: `time.sleep(60)` 会阻塞整个 SSE 连接的消息处理
-2. **`get_screenshot` 环境变量泄漏**: 设置 `ALAS_CONFIG_NAME` 环境变量可能影响其他调用
+2. **`get_screenshot` 环境变量泄漏**: 写入 `ALAS_CONFIG_NAME` 环境变量可能影响其他调用
 3. **`get_recent_logs` 文件锁定**: 在 Windows 上可能与其他进程的日志写入冲突
 4. **`update_config` 无验证**: 不验证配置路径和值的有效性
 

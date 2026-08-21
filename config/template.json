@@ -100,7 +100,12 @@
       "GameStuckRestart": false,
       "GameStuckThreshold": 3,
       "AdbOfflineRestart": false,
-      "AdbOfflineThreshold": 3
+      "AdbOfflineThreshold": 3,
+      "WatchdogEnable": false,
+      "WatchdogTaskEnable": false,
+      "WatchdogTaskTimeout": 120,
+      "RestartOperationTimeoutEnable": false,
+      "RestartOperationTimeout": 120
     },
     "Optimization": {
       "OcrDevice": "auto",
@@ -114,7 +119,8 @@
       "CombatScreenshotInterval": 1.0,
       "TaskHoardingDuration": 0,
       "CloseEmulatorDuringLongWait": true,
-      "WhenTaskQueueEmpty": "goto_main"
+      "WhenTaskQueueEmpty": "goto_main",
+      "WhenSchedulerStopped": "stay_there"
     },
     "DropRecord": {
       "SaveFolder": "./screenshots",
@@ -131,6 +137,7 @@
     },
     "EmulatorManagement": {
       "ScheduledEmulatorRestart": false,
+      "ForceScheduledRestart": false,
       "RestartIntervalHours": 4
     },
     "Storage": {
@@ -225,7 +232,8 @@
     },
     "Restart": {
       "RandomDelay": "5, 50",
-      "ClearCache": false
+      "ClearCache": false,
+      "LoginWaitTimeout": 30
     },
     "Storage": {
       "Storage": {}

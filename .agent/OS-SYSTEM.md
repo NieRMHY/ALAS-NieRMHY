@@ -5,9 +5,10 @@ alwaysApply: true
 
 # 大世界（Operation Siren）系统综合分析
 
-> 分析日期：2026-05-27
+> 分析日期：2026-08-14
+> 项目版本：dev 分支（HEAD f992af6c0）
 > 分析范围：`module/os/`、`module/os_combat/`、`module/os_handler/`、`module/os_ash/`、`module/os_shop/`、`module/os_simulator/`
-> 总代码量：16,161 行（63 个 Python 文件）
+> 总代码量：18,147 行（64 个 Python 文件）
 
 ---
 
@@ -32,12 +33,12 @@ alwaysApply: true
 
 | 目录 | 文件数 | 总行数 | 最大文件 |
 |------|--------|--------|---------|
-| `module/os/` | 33 | 11,387 | `map.py` (2162行), `fleet.py` (1151行), `tasks/scheduling.py` (1484行) |
-| `module/os_combat/` | 2 | 406 | `combat.py` (398行) |
-| `module/os_handler/` | 10 | 2,447 | `action_point.py` (568行), `storage.py` (420行) |
-| `module/os_ash/` | 3 | 823 | `meta.py` (634行) |
-| `module/os_shop/` | 8 | 1,198 | `shop.py` (332行) |
-| `module/os_simulator/` | 4 | 711 | `simulator.py` (514行) |
+| `module/os/` | 35 | 11,533 | `map.py` (2162行), `fleet.py` (1151行), `tasks/scheduling.py` (1518行) |
+| `module/os_combat/` | 2 | 577 | `combat.py` (569行) |
+| `module/os_handler/` | 12 | 2,910 | `action_point.py` (611行), `storage.py` (447行) |
+| `module/os_ash/` | 3 | 1,058 | `meta.py` (798行) |
+| `module/os_shop/` | 8 | 1,332 | `shop.py` (433行) |
+| `module/os_simulator/` | 4 | 737 | `simulator.py` (521行) |
 
 ---
 
@@ -45,7 +46,7 @@ alwaysApply: true
 
 ### 2.1 `module/os/` — 大世界核心
 
-#### 2.1.1 `map.py`（2225 行）— 大世界地图总控
+#### 2.1.1 `map.py`（2162 行）— 大世界地图总控
 
 **导出类型**：类 `OSMap`
 **继承链**：`OSMap(OSFleet, Map, GlobeCamera, StorageHandler, StrategicSearchHandler)`
@@ -63,7 +64,7 @@ alwaysApply: true
 - 强制巡逻扫描（`_execute_fixed_patrol_scan`）：多舰队定点移动、视角复位、全图重扫
 - 短猫任务指标（`meow_search_metrics_start/end`）：战斗计时、行动力消耗记录
 - CL1 战斗统计（`on_auto_search_battle_count_add`）：每月战斗计数、遥测提交
-- 行动力月底策略（`get_action_point_limit`）：根据大世界重置剩余时间动态调整保留值
+- 行动力月底策略（`cl1_ap_preserve`）：CL1 的 AP 保留值属性（按 5 的倍数与 `OperationCoinsPreserve` 联动），原 `get_action_point_limit` 已移除
 
 **关键设计模式**：
 - 状态循环模式：所有 UI 交互使用截图-检查循环，不使用 sleep-wait
@@ -76,7 +77,7 @@ alwaysApply: true
 
 ---
 
-#### 2.1.2 `fleet.py`（997 行）— 舰队控制
+#### 2.1.2 `fleet.py`（1151 行）— 舰队控制
 
 **导出类型**：类 `OSFleet`、`BossFleet`、`PercentageOcr`，函数 `limit_walk`
 **继承链**：`OSFleet(OSCamera, Combat, Fleet, OSAsh)`
@@ -98,7 +99,7 @@ alwaysApply: true
 
 ---
 
-#### 2.1.3 `globe_camera.py`（341 行）— 全球地图摄像机
+#### 2.1.3 `globe_camera.py`（406 行）— 全球地图摄像机
 
 **导出类型**：类 `GlobeCamera`
 **继承链**：`GlobeCamera(GlobeOperation, ZoneManager)`
@@ -112,7 +113,7 @@ alwaysApply: true
 
 ---
 
-#### 2.1.4 `globe_operation.py`（421 行）— 全球地图操作
+#### 2.1.4 `globe_operation.py`（496 行）— 全球地图操作
 
 **导出类型**：类 `GlobeOperation`、异常 `OSExploreError`、`RewardUncollectedError`
 **继承链**：`GlobeOperation(ActionPointHandler)`
@@ -125,14 +126,14 @@ alwaysApply: true
 
 ---
 
-#### 2.1.5 `globe_detection.py`（134 行）— 全球地图检测
+#### 2.1.5 `globe_detection.py`（195 行）— 全球地图检测
 
 **导出类型**：类 `GlobeDetection`
 **核心职责**：基于单应性变换的全球地图位置检测，加载全球地图模板并计算摄像机中心坐标。
 
 ---
 
-#### 2.1.6 `globe_zone.py`（181 行）— 区域数据管理
+#### 2.1.6 `globe_zone.py`（224 行）— 区域数据管理
 
 **导出类型**：类 `Zone`、`ZoneManager`
 **核心职责**：
@@ -142,7 +143,7 @@ alwaysApply: true
 
 ---
 
-#### 2.1.7 `radar.py`（381 行）— 雷达系统
+#### 2.1.7 `radar.py`（437 行）— 雷达系统
 
 **导出类型**：类 `RadarGrid`、`Radar`
 **核心职责**：
@@ -153,15 +154,15 @@ alwaysApply: true
 
 ---
 
-#### 2.1.8 `camera.py`（162 行）— 大世界摄像机
+#### 2.1.8 `camera.py`（183 行）— 大世界摄像机
 
 **导出类型**：类 `OSCamera`
-**继承链**：`OSCamera(MapCamera)`
+**继承链**：`OSCamera(OSMapOperation, Camera)`
 **核心职责**：大世界专用摄像机控制，包括 `update_os()` 更新视图和雷达、`convert_radar_to_local()` 坐标转换。
 
 ---
 
-#### 2.1.9 `map_base.py`（44 行）— 地图基类
+#### 2.1.9 `map_base.py`（65 行）— 地图基类
 
 **导出类型**：类 `OSCampaignMap`
 **继承链**：`OSCampaignMap(CampaignMap)`
@@ -169,28 +170,29 @@ alwaysApply: true
 
 ---
 
-#### 2.1.10 `map_operation.py`（318 行）— 地图操作
+#### 2.1.10 `map_operation.py`（364 行）— 地图操作
 
 **导出类型**：类 `OSMapOperation`
+**继承链**：`OSMapOperation(MapOrderHandler, MissionHandler, PortHandler, StorageHandler, OSFleetSelector)`
 **核心职责**：地图上的移动、点击、等待操作。`wait_until_walk_stable` 的辅助实现。
 
 ---
 
-#### 2.1.11 `map_fleet_selector.py`（225 行）— 舰队选择器
+#### 2.1.11 `map_fleet_selector.py`（241 行）— 舰队选择器
 
-**导出类型**：类 `OSMapFleetSelector`、`StorageFleetSelector`
-**核心职责**：大世界舰队编队的切换和选择，支持存储页面的舰队选择。
-
----
-
-#### 2.1.12 `map_data.py`（86 行）— 地图数据
-
-**导出类型**：类 `OSMapData`
-**核心职责**：地图网格数据的初始化和管理。
+**导出类型**：类 `FleetSelector`、`StorageFleetSelector`、`OSFleetSelector`
+**核心职责**：大世界舰队编队的切换和选择。`FleetSelector`（L19）基础选择器、`StorageFleetSelector`（L209）支持存储页面的舰队选择、`OSFleetSelector`（L234，继承 `MapEventHandler`）地图事件集成版本。
 
 ---
 
-#### 2.1.13 `config.py`（47 行）— 大世界配置
+#### 2.1.12 `map_data.py`（97 行）— 地图数据
+
+**导出类型**：字典 `DIC_OS_MAP`（无 `OSMapData` 类）
+**核心职责**：大世界地图网格数据字典，由 `dev_tools/os_extract.py` 自动生成。
+
+---
+
+#### 2.1.13 `config.py`（73 行）— 大世界配置
 
 **导出类型**：类 `OSConfig`
 **核心职责**：大世界专用配置项，如 `OS_ACTION_POINT_PRESERVE`、`OS_GLOBE_SWIPE_MULTIPLY` 等。
@@ -204,54 +206,54 @@ alwaysApply: true
 
 ---
 
-#### 2.1.15 `operation_siren.py`（90 行）— 大世界入口
+#### 2.1.15 `operation_siren.py`（115 行）— 大世界入口
 
 **导出类型**：类 `OperationSiren`
-**继承链**：`OperationSiren(OpsiDaily, OpsiShop, OpsiVoucher, OpsiMeowfficerFarming, OpsiHazard1Leveling, OpsiFleetAutoChange, OpsiScheduling, OpsiObscure, OpsiAbyssal, OpsiArchive, OpsiStronghold, OpsiMonthBoss, OpsiExplore, OpsiCrossMonth)`
+**继承链**：`OperationSiren(OpsiDaily, OpsiShop, OpsiVoucher, OpsiMeowfficerFarming, OpsiHazard1Leveling, OpsiFleetAutoChange, OpsiPreventActionPointOverflow, OpsiObscure, OpsiAbyssal, OpsiArchive, OpsiStronghold, OpsiMonthBoss, OpsiExplore, OpsiCrossMonth)`
 
-**核心职责**：大世界功能的总聚合类，组合所有任务模块。提供 `os_target_receive()` 和 `_os_target()` 用于成就收集。
+**核心职责**：大世界功能的总聚合类，组合所有任务模块。提供 `os_target_receive()`、`_os_target()`、`server_support_os_target()` 用于成就收集，`os_daily()` 供每日任务调用。
 
 ---
 
-#### 2.1.16 `ship_exp.py`（82 行）/ `ship_exp_data.py`（130 行）— 舰船经验
+#### 2.1.16 `ship_exp.py`（106 行）/ `ship_exp_data.py`（141 行）— 舰船经验
 
 **核心职责**：OCR 读取舰船等级和经验，提供经验数据表 `LIST_SHIP_EXP`。
 
 ---
 
-#### 2.1.17 `sea_miles_ocr.py`（25 行）— 海里数 OCR
+#### 2.1.17 `sea_miles_ocr.py`（37 行）— 海里数 OCR
 
 **核心职责**：定义 `OCR_SEA_MILES_DIGIT` 用于识别大世界海里数。
 
 ---
 
-#### 2.1.18 `dock_mixin.py`（39 行）— 船坞 Mixin
+#### 2.1.18 `dock_mixin.py`（51 行）— 船坞 Mixin
 
 **导出类型**：类 `DockMixin`
 **核心职责**：船坞交互的 Mixin，提供 `dock_favourite_set()` 和 `dock_select_ship_at_grid()` 方法。
 
 ---
 
-#### 2.1.19 `tasks/` 子目录（17 个文件）
+#### 2.1.19 `tasks/` 子目录（16 个文件）
 
 | 文件 | 行数 | 导出类 | 核心职责 |
 |------|------|--------|---------|
-| `scheduling.py` | 1484 | `OpsiScheduling`, `CoinTaskMixin` | 智能调度引擎：黄币/行动力阈值、任务切换、虚拟资产计算、推送通知、短猫提前开始算法（原 `smart_scheduling_utils.py` 已并入本文件） |
-| `hazard_leveling.py` | 856 | `OpsiHazard1Leveling` | 侵蚀1练级：CL1 战斗循环、黄币检查、舰船经验检测、海里数记录、遥测提交 |
-| `fleet_auto_change.py` | 605 | `OpsiFleetAutoChange` | 自动配队：满经验检测、船坞选船、舰队部署、冷却管理 |
-| `meowfficer_farming.py` | 379 | `OpsiMeowfficerFarming` | 短猫相接：传统/StayInZone/普通搜索三种模式、行动力管理 |
-| `daily.py` | 221 | `OpsiDaily` | 每日任务：港口任务、任务完成、调谐样本使用 |
-| `cross_month.py` | 173 | `OpsiCrossMonth` | 月末行动力清理 |
-| `prevent_action_point_overflow.py` | 231 | `OpsiPreventActionPointOverflow` | 月末自动清理行动力（2026-07 新增，可配置触发天数与保留值，自动执行短猫相接、商店采购、隐秘海域和深渊坐标任务消耗） |
-| `abyssal.py` | 174 | `OpsiAbyssal` | 深渊海域 |
-| `stronghold.py` | 165 | `OpsiStronghold` | 塞壬要塞 |
-| `explore.py` | 134 | `OpsiExplore` | 大世界探索 |
-| `month_boss.py` | 108 | `OpsiMonthBoss` | 月度 Boss |
-| `obscure.py` | 64 | `OpsiObscure` | 隐秘海域 |
-| `shop.py` | 71 | `OpsiShop` | 大世界商店任务 |
-| `voucher.py` | 29 | `OpsiVoucher` | 凭证兑换 |
-| `archive.py` | 42 | `OpsiArchive` | 作战档案 |
-| `coin_task_mixin.py` | 3 | - | 黄币任务 Mixin 占位 |
+| `scheduling.py` | 1518 | `OpsiScheduling`（`CoinTaskMixin, OSMap`），`CoinTaskMixin` | 智能调度引擎：黄币/行动力阈值、任务切换、虚拟资产计算、推送通知、短猫提前开始算法（原 `smart_scheduling_utils.py` 已并入本文件） |
+| `hazard_leveling.py` | 856 | `OpsiHazard1Leveling`（`CoinTaskMixin, OSMap`） | 侵蚀1练级：CL1 战斗循环、黄币检查、舰船经验检测、海里数记录、遥测提交 |
+| `fleet_auto_change.py` | 618 | `OpsiFleetAutoChange`（`CoinTaskMixin, DockMixin, OSMap`） | 自动配队：满经验检测、船坞选船、舰队部署、冷却管理 |
+| `meowfficer_farming.py` | 379 | `OpsiMeowfficerFarming`（`MeowfficerTargetZoneMixin, CoinTaskMixin, OSMap`）、`MeowfficerTargetZoneMixin` | 短猫相接：传统/StayInZone/普通搜索三种模式、行动力管理 |
+| `daily.py` | 235 | `OpsiDaily`（`OSMap`） | 每日任务：港口任务、任务完成、调谐样本使用 |
+| `cross_month.py` | 197 | `OpsiCrossMonth`（`MeowfficerTargetZoneMixin, OSMap`） | 月末行动力清理 |
+| `prevent_action_point_overflow.py` | 231 | `OpsiPreventActionPointOverflow`（`OpsiScheduling`） | 月末自动清理行动力（2026-07 新增，可配置触发天数与保留值，自动执行短猫相接、商店采购、隐秘海域和深渊坐标任务消耗） |
+| `abyssal.py` | 190 | `OpsiAbyssal`（`CoinTaskMixin, OSMap`） | 深渊海域 |
+| `stronghold.py` | 159 | `OpsiStronghold`（`CoinTaskMixin, OSMap`） | 塞壬要塞 |
+| `explore.py` | 152 | `OpsiExplore`（`OSMap`） | 大世界探索 |
+| `month_boss.py` | 125 | `OpsiMonthBoss`（`OSMap`） | 月度 Boss |
+| `obscure.py` | 70 | `OpsiObscure`（`CoinTaskMixin, OSMap`） | 隐秘海域 |
+| `shop.py` | 111 | `OpsiShop`（`OSMap`） | 大世界商店任务 |
+| `voucher.py` | 40 | `OpsiVoucher`（`OSMap`） | 凭证兑换 |
+| `archive.py` | 49 | `OpsiArchive`（`OSMap`） | 作战档案 |
+| `coin_task_mixin.py` | 14 | - | 黄币任务 Mixin 占位（实际实现位于 `scheduling.py`） |
 
 ---
 
@@ -285,7 +287,7 @@ alwaysApply: true
 
 ### 2.3 `module/os_handler/` — 事件处理
 
-#### 2.3.1 `action_point.py`（568 行）— 行动力管理
+#### 2.3.1 `action_point.py`（611 行）— 行动力管理
 
 **导出类型**：类 `ActionPointHandler`、`ActionPointLimit`、`ActionPointItem`、`ActionPointBuyCounter`
 **继承链**：`ActionPointHandler(UI, MapEventHandler)`
@@ -309,69 +311,69 @@ alwaysApply: true
 
 ---
 
-#### 2.3.2 `map_event.py`（314 行）— 地图事件处理
+#### 2.3.2 `map_event.py`（332 行）— 地图事件处理
 
 **导出类型**：类 `MapEventHandler`
 **核心职责**：处理大世界地图上的各种事件，包括故事跳过、物品获取、弹窗确认、地图锁定等。
 
 ---
 
-#### 2.3.3 `storage.py`（420 行）— 补给仓库
+#### 2.3.3 `storage.py`（447 行）— 补给仓库
 
 **导出类型**：类 `StorageHandler`、枚举 `RepairResult`
 **核心职责**：仓库页面交互，维修箱使用，物品获取，舰队选择。
 
 ---
 
-#### 2.3.4 `port.py`（177 行）— 港口操作
+#### 2.3.4 `port.py`（207 行）— 港口操作
 
 **导出类型**：类 `PortHandler`
 **核心职责**：港口进入/退出、港口任务接受、修理、补给。
 
 ---
 
-#### 2.3.5 `mission.py`（280 行）— 任务系统
+#### 2.3.5 `mission.py`（291 行）— 任务系统
 
 **导出类型**：类 `MissionHandler`
 **核心职责**：大世界任务的接受、完成、奖励领取。
 
 ---
 
-#### 2.3.6 `target.py`（221 行）— 目标/成就系统
+#### 2.3.6 `target.py`（230 行）— 目标/成就系统
 
 **导出类型**：类 `OSTargetHandler`
 **核心职责**：大世界成就目标的查看和奖励领取。
 
 ---
 
-#### 2.3.7 `strategic.py`（148 行）— 策略搜索
+#### 2.3.7 `strategic.py`（154 行）— 策略搜索
 
 **导出类型**：类 `StrategicSearchHandler`
 **核心职责**：策略搜索模式的启动和管理。
 
 ---
 
-#### 2.3.8 `os_status.py`（170 行）— 状态检测
+#### 2.3.8 `os_status.py`（190 行）— 状态检测
 
-**导出类型**：类 `OSStatusHandler`
+**导出类型**：类 `OSStatus`
 **核心职责**：大世界各种页面状态的检测（地图、全球、港口、仓库等）。
 
 ---
 
-#### 2.3.9 `enemy_searching.py`（28 行）— 敌人搜索
+#### 2.3.9 `enemy_searching.py`（34 行）— 敌人搜索
 
 **核心职责**：敌人搜索动画检测。
 
 ---
 
-#### 2.3.10 `map_order.py`（158 行）— 地图指令
+#### 2.3.10 `map_order.py`（164 行）— 地图指令
 
 **导出类型**：类 `MapOrderHandler`
 **核心职责**：潜艇呼叫、侦察扫描等地图指令的执行。
 
 ---
 
-#### 2.3.11 `target_data.py`（77 行）— 目标数据
+#### 2.3.11 `target_data.py`（83 行）— 目标数据
 
 **核心职责**：大世界成就目标的数据定义。
 
@@ -385,7 +387,7 @@ alwaysApply: true
 
 ### 2.4 `module/os_ash/` — 余烬/信标系统
 
-#### 2.4.1 `ash.py`（149 行）— 余烬基础
+#### 2.4.1 `ash.py`（220 行）— 余烬基础
 
 **导出类型**：类 `AshCombat`、`OSAsh`、`DailyDigitCounter`、异常 `AshBeaconFinished`
 **继承链**：`AshCombat(Combat)`、`OSAsh(UI, MapEventHandler)`
@@ -397,7 +399,7 @@ alwaysApply: true
 
 ---
 
-#### 2.4.2 `meta.py`（634 行）— META 系统
+#### 2.4.2 `meta.py`（798 行）— META 系统
 
 **导出类型**：类 `OpsiAshBeacon`、`AshBeaconAssist`、`Meta`、`MetaDigitCounter`、枚举 `MetaState`
 **继承链**：`Meta(UI, MapEventHandler)`、`OpsiAshBeacon(Meta)`、`AshBeaconAssist(Meta)`
@@ -423,7 +425,7 @@ alwaysApply: true
 
 ### 2.5 `module/os_shop/` — 大世界商店
 
-#### 2.5.1 `shop.py`（332 行）— 商店主逻辑
+#### 2.5.1 `shop.py`（433 行）— 商店主逻辑
 
 **导出类型**：类 `OSShop`
 **继承链**：`OSShop(PortShop, AkashiShop)`
@@ -438,42 +440,42 @@ alwaysApply: true
 
 ---
 
-#### 2.5.2 `port_shop.py`（168 行）— 港口商店
+#### 2.5.2 `port_shop.py`（196 行）— 港口商店
 
 **导出类型**：类 `PortShop`
 **核心职责**：港口商店的页面导航、物品扫描、标签切换。
 
 ---
 
-#### 2.5.3 `akashi_shop.py`（110 行）— 明石商店
+#### 2.5.3 `akashi_shop.py`（123 行）— 明石商店
 
 **导出类型**：类 `AkashiShop`
 **核心职责**：明石（喵喵）商店的物品获取和购买过滤。
 
 ---
 
-#### 2.5.4 `selector.py`（134 行）— 物品选择器
+#### 2.5.4 `selector.py`（141 行）— 物品选择器
 
-**导出类型**：类 `OSShopSelector`
+**导出类型**：类 `Selector`
 **核心职责**：商店物品的扫描、模板匹配、价格 OCR。
 
 ---
 
-#### 2.5.5 `item.py`（166 行）— 物品数据
+#### 2.5.5 `item.py`（206 行）— 物品数据
 
-**导出类型**：类 `OSItem`
+**导出类型**：类 `OSShopItem`、`OSShopItemGrid`
 **核心职责**：商店物品的数据结构，包含名称、价格、货币类型、数量。
 
 ---
 
-#### 2.5.6 `ui.py`（161 行）— 商店 UI
+#### 2.5.6 `ui.py`（182 行）— 商店 UI
 
 **导出类型**：类 `OSShopUI`
 **核心职责**：商店页面的 UI 交互，滚动条、标签导航。
 
 ---
 
-#### 2.5.7 `preset.py`（33 行）— 预设过滤
+#### 2.5.7 `preset.py`（37 行）— 预设过滤
 
 **核心职责**：商店购买过滤预设。
 
@@ -487,7 +489,7 @@ alwaysApply: true
 
 ### 2.6 `module/os_simulator/` — 蒙特卡洛模拟器
 
-#### 2.6.1 `simulator.py`（514 行）— 模拟器主逻辑
+#### 2.6.1 `simulator.py`（521 行）— 模拟器主逻辑
 
 **导出类型**：类 `OSSimulator`
 
@@ -507,20 +509,20 @@ alwaysApply: true
 
 ---
 
-#### 2.6.2 `constants.py`（21 行）— 模拟常量
+#### 2.6.2 `constants.py`（27 行）— 模拟常量
 
 **核心职责**：定义状态码（STATUS_CL1/MEOW/CRASHED/DONE）、AP 消耗表、明石奖励表。
 
 ---
 
-#### 2.6.3 `plotter.py`（137 行）— 绘图器
+#### 2.6.3 `plotter.py`（143 行）— 绘图器
 
 **导出类型**：类 `OSSimulatorPlotter`
 **核心职责**：使用 matplotlib 生成单样本轨迹图和多样本统计图。
 
 ---
 
-#### 2.6.4 `logger.py`（39 行）— 模拟日志
+#### 2.6.4 `logger.py`（46 行）— 模拟日志
 
 **导出类型**：类 `OSSLogger`、`TqdmToLogger`
 **核心职责**：模拟器专用日志系统，支持 tqdm 进度条重定向。
@@ -581,10 +583,20 @@ graph TD
     OSMap --> OpsiHazard1Leveling["OpsiHazard1Leveling"]
     OSMap --> OpsiMeowfficerFarming["OpsiMeowfficerFarming"]
     OSMap --> OpsiDaily["OpsiDaily"]
-    OpsiScheduling --> OperationSiren
+    OpsiScheduling --> OpsiPreventActionPointOverflow["OpsiPreventActionPointOverflow"]
     OpsiHazard1Leveling --> OperationSiren
     OpsiMeowfficerFarming --> OperationSiren
     OpsiDaily --> OperationSiren
+    OpsiPreventActionPointOverflow --> OperationSiren
+    OpsiObscure --> OperationSiren
+    OpsiAbyssal --> OperationSiren
+    OpsiArchive --> OperationSiren
+    OpsiStronghold --> OperationSiren
+    OpsiMonthBoss --> OperationSiren
+    OpsiExplore --> OperationSiren
+    OpsiCrossMonth --> OperationSiren
+    OpsiVoucher --> OperationSiren
+    OpsiShop --> OperationSiren
 ```
 
 ### 3.2 任务调度流程
@@ -722,8 +734,8 @@ graph LR
 
 - **整体情况**：类型注解使用较少，大部分方法参数和返回值缺乏类型标注
 - **较好示例**：
-  - `scheduling.py` 中 `_should_start_meow_early(self, current_ap: int) -> tuple`
-  - `scheduling.py` 中 `_get_current_action_point_value(self) -> tuple[int, str]`
+  - `scheduling.py` 中 `_get_scheduling_action_point(self) -> tuple[int, int]`（L811）
+  - `scheduling.py` 中 `run_smart_scheduling_once(self)`（L979）、`_run_month_end_cleanup(...)`（L1395）的文档化参数
   - `simulator.py` 中 `_simulate_one` 的完整参数类型
 - **缺失示例**：
   - `map.py` 中大多数方法缺少返回类型标注
@@ -784,10 +796,10 @@ graph LR
 
 | 风险 | 位置 | 说明 |
 |------|------|------|
-| `time.sleep()` 使用 | `map.py:L206`、`globe_operation.py:L179` | 少量硬编码 sleep，但都在注释说明原因 |
-| 裸 `except` | `fleet_auto_change.py:L236` | `except:` 无异常类型，可能吞掉意外错误 |
+| `time.sleep()` 使用 | `map.py:L273`、`globe_operation.py:L247` | 少量硬编码 sleep，但都在注释说明原因 |
+| 裸 `except` | `fleet_auto_change.py:L249` | `except:` 无异常类型，可能吞掉意外错误 |
 | 全局可变状态 | `radar.py` | `RadarGrid` 实例在 `predict()` 中修改自身状态 |
-| `__getattribute__` 使用 | `radar.py:L228` | 动态属性访问，类型检查器无法验证 |
+| `__getattribute__` 使用 | `radar.py:L100`、`radar.py:L284` | 动态属性访问，类型检查器无法验证 |
 
 ---
 
@@ -807,13 +819,13 @@ graph LR
 
 | 问题 | 严重度 | 位置 | 建议 |
 |------|--------|------|------|
-| 文件过大 | 中 | `map.py` (2225行), `scheduling.py` (1271行) | 拆分为更小的职责单元 |
+| 文件过大 | 中 | `map.py` (2162行), `scheduling.py` (1518行) | 拆分为更小的职责单元 |
 | 类型注解不足 | 低 | 全局 | 逐步添加类型注解，使用 mypy 检查 |
 | 菱形继承过深 | 中 | `OSMap` 继承 5 个父类 | 考虑组合模式替代部分继承 |
-| 硬编码魔法数字 | 低 | `map.py:L63` (`ord("n") // 22`)、`fleet.py:L354` (`clicked_story_count >= 11`) | 提取为命名常量 |
+| 硬编码魔法数字 | 低 | `map.py:L137` (`ord("n") // 22`)、`fleet.py:L456` (`clicked_story_count >= 11`) | 提取为命名常量 |
 | 代码重复 | 中 | `map.py` 中 `os_auto_search_daemon` 和 `os_auto_search_daemon_until_combat` 有 90% 相同 | 提取公共逻辑 |
-| 裸 except | 低 | `fleet_auto_change.py:L236` | 指定具体异常类型 |
-| 调试代码残留 | 低 | `map.py:L91-106` 注释掉的 CL1 预扫描代码 | 清理或恢复 |
+| 裸 except | 低 | `fleet_auto_change.py:L249` | 指定具体异常类型 |
+| 调试代码残留 | 低 | `map.py:L163` 注释掉的 `# self.map_init()` 与 L279 | 清理或恢复 |
 
 ### 9.3 代码规范符合度
 
@@ -821,7 +833,7 @@ graph LR
 |------|------|------|
 | Google docstring | 部分符合 | 多数方法有 docstring，但格式不统一 |
 | 中文注释 | 符合 | 注释和日志使用简体中文 |
-| 文件长度 ≤500 行 | 不符合 | `map.py`(2225)、`scheduling.py`(1271)、`hazard_leveling.py`(1052)、`fleet.py`(997) 超标 |
+| 文件长度 ≤500 行 | 不符合 | `map.py`(2162)、`scheduling.py`(1518)、`hazard_leveling.py`(856)、`fleet.py`(1151) 超标 |
 | 一个函数一个画面 | 符合 | Pages 注解标注了 UI 状态 |
 | 变量命名英文 | 符合 | 代码变量使用英文命名 |
 
@@ -832,13 +844,13 @@ graph LR
 ### 10.1 架构改进建议
 
 1. **拆分大文件**：
-   - `map.py`（2225 行）→ 拆分为 `map_init.py`、`map_auto_search.py`、`map_rescan.py`、`map_repair.py`
-   - `scheduling.py`（1271 行）→ 拆分为 `coin_task_mixin.py`（已有占位）、`smart_scheduling.py`、`notification.py`
-   - `hazard_leveling.py`（1052 行）→ 拆分为 `hazard1_battle.py`、`ship_exp_check.py`、`fleet_auto_change.py`（已有）
+   - `map.py`（2162 行）→ 拆分为 `map_init.py`、`map_auto_search.py`、`map_rescan.py`、`map_repair.py`
+   - `scheduling.py`（1518 行）→ 拆分为 `coin_task_mixin.py`（已有占位）、`smart_scheduling.py`、`notification.py`
+   - `hazard_leveling.py`（856 行）→ 拆分为 `hazard1_battle.py`、`ship_exp_check.py`、`fleet_auto_change.py`（已有）
 
 2. **减少菱形继承**：
    - `OSMap` 继承 5 个父类，建议将 `StorageHandler` 和 `StrategicSearchHandler` 改为组合注入
-   - `CoinTaskMixin` 的 750 行代码已超出 Mixin 的合理范围，建议提取为独立的服务类
+   - `CoinTaskMixin` 的约 700 行代码（`scheduling.py:L40-L737`）已超出 Mixin 的合理范围，建议提取为独立的服务类
 
 3. **统一错误处理**：
    - `map.py` 中 `_try_fixed_patrol_move` 的 200 行错误恢复逻辑过于复杂
@@ -903,68 +915,68 @@ graph LR
 ## 附录 B：文件行数完整统计
 
 ```
-  2225 module/os/map.py
-  1271 module/os/tasks/scheduling.py
-  1052 module/os/tasks/hazard_leveling.py
-   997 module/os/fleet.py
-   634 module/os_ash/meta.py
-   605 module/os/tasks/fleet_auto_change.py
-   568 module/os_handler/action_point.py
-   514 module/os_simulator/simulator.py
-   421 module/os/globe_operation.py
-   420 module/os_handler/storage.py
-   398 module/os_combat/combat.py
-   381 module/os/radar.py
-   341 module/os/globe_camera.py
-   332 module/os_shop/shop.py
-   318 module/os/map_operation.py
-   314 module/os_handler/map_event.py
-   280 module/os_handler/mission.py
-   268 module/os/tasks/meowfficer_farming.py
-   225 module/os/map_fleet_selector.py
-   221 module/os/tasks/daily.py
-   221 module/os_handler/target.py
-   181 module/os/globe_zone.py
-   177 module/os_handler/port.py
-   174 module/os/tasks/abyssal.py
-   173 module/os/tasks/cross_month.py
-   170 module/os_handler/os_status.py
-   168 module/os_shop/port_shop.py
+  2162 module/os/map.py
+  1518 module/os/tasks/scheduling.py
+  1151 module/os/fleet.py
+   856 module/os/tasks/hazard_leveling.py
+   798 module/os_ash/meta.py
+   618 module/os/tasks/fleet_auto_change.py
+   611 module/os_handler/action_point.py
+   569 module/os_combat/combat.py
+   521 module/os_simulator/simulator.py
+   496 module/os/globe_operation.py
+   447 module/os_handler/storage.py
+   437 module/os/radar.py
+   433 module/os_shop/shop.py
+   406 module/os/globe_camera.py
+   379 module/os/tasks/meowfficer_farming.py
+   364 module/os/map_operation.py
+   332 module/os_handler/map_event.py
+   291 module/os_handler/mission.py
+   241 module/os/map_fleet_selector.py
+   235 module/os/tasks/daily.py
+   231 module/os/tasks/prevent_action_point_overflow.py
+   230 module/os_handler/target.py
+   224 module/os/globe_zone.py
+   220 module/os_ash/ash.py
+   207 module/os_handler/port.py
+   206 module/os_shop/item.py
+   196 module/os_shop/port_shop.py
+   197 module/os/tasks/cross_month.py
+   195 module/os/globe_detection.py
+   190 module/os_handler/os_status.py
+   190 module/os/tasks/abyssal.py
+   183 module/os/camera.py
+   182 module/os_shop/ui.py
    167 module/os_handler/assets.py
-   166 module/os_shop/item.py
-   165 module/os/tasks/stronghold.py
-   162 module/os/camera.py
-   161 module/os_shop/ui.py
-   158 module/os_handler/map_order.py
-   149 module/os_ash/ash.py
-   148 module/os_handler/strategic.py
-   137 module/os_simulator/plotter.py
-   134 module/os/globe_detection.py
-   134 module/os/tasks/explore.py
-   134 module/os_shop/selector.py
-   130 module/os/ship_exp_data.py
-   110 module/os_shop/akashi_shop.py
-   108 module/os/tasks/month_boss.py
-    90 module/os/operation_siren.py
-    86 module/os/map_data.py
-    82 module/os/ship_exp.py
-    77 module/os_handler/target_data.py
-    71 module/os/tasks/shop.py
-    64 module/os/tasks/obscure.py
-    47 module/os/config.py
+   164 module/os_handler/map_order.py
+   159 module/os/tasks/stronghold.py
+   154 module/os_handler/strategic.py
+   152 module/os/tasks/explore.py
+   143 module/os_simulator/plotter.py
+   141 module/os/ship_exp_data.py
+   141 module/os_shop/selector.py
+   125 module/os/tasks/month_boss.py
+   123 module/os_shop/akashi_shop.py
+   115 module/os/operation_siren.py
+   111 module/os/tasks/shop.py
+   106 module/os/ship_exp.py
+    97 module/os/map_data.py
+    83 module/os_handler/target_data.py
+    73 module/os/config.py
+    70 module/os/tasks/obscure.py
+    65 module/os/map_base.py
+    51 module/os/dock_mixin.py
+    49 module/os/tasks/archive.py
+    46 module/os_simulator/logger.py
     45 module/os/assets.py
-    44 module/os/map_base.py
-    42 module/os/tasks/archive.py
+    40 module/os/tasks/voucher.py
     40 module/os_ash/assets.py
-    39 module/os_simulator/logger.py
-    39 module/os/dock_mixin.py
-    33 module/os_shop/preset.py
-    29 module/os/tasks/voucher.py
-    28 module/os_handler/enemy_searching.py
-    25 module/os/sea_miles_ocr.py
-    22 module/os/tasks/smart_scheduling_utils.py
-    21 module/os_simulator/constants.py
+    37 module/os/sea_miles_ocr.py
+    37 module/os_shop/preset.py
+    34 module/os_handler/enemy_searching.py
+    27 module/os_simulator/constants.py
     14 module/os_shop/assets.py
+    14 module/os/tasks/coin_task_mixin.py
      8 module/os_combat/assets.py
-     3 module/os/tasks/coin_task_mixin.py
 ```

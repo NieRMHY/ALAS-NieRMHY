@@ -88,6 +88,9 @@ Restart:
     type: checkbox
     value: false
     option: [true, false]
+  LoginWaitTimeout:
+    value: 30
+    validate: [1, 3600]
 Emulator:
   Serial:
     value: auto
@@ -189,6 +192,16 @@ Error:
   AdbOfflineThreshold:
     value: 3
     validate: [1, 10]
+  WatchdogEnable: false
+  WatchdogTaskEnable: false
+  WatchdogTaskTimeout:
+    value: 120
+    validate: [0, 99999]
+  RestartOperationTimeoutEnable: false
+  RestartOperationTimeout:
+    value: 120
+    validate: [10, 600]
+  # Modify by MHY, 不采纳上游 LLM 外联配置项
 Optimization:
   OcrDevice:
     value: auto
@@ -222,6 +235,9 @@ Optimization:
   WhenTaskQueueEmpty:
     value: goto_main
     option: [stay_there, goto_main, close_game]
+  WhenSchedulerStopped:
+    value: stay_there
+    option: [stay_there, goto_main, close_game, close_emulator]
 # Add by MHY: 游戏更新窗口基础设置，在维护窗口前自动暂停任务
 GameUpdate:
   Enable: false
@@ -1722,6 +1738,7 @@ _IslandBusinessChar: &IslandBusinessChar
     - ChangFeng
     - Mogador
     - RoyalFortune
+    - DaVinci
 
 _IslandBusinessProduct1: &IslandBusinessProduct1
   type: select
@@ -1988,6 +2005,7 @@ GameManager:
   AutoRestart: true
 EmulatorManagement:
   ScheduledEmulatorRestart: false
+  ForceScheduledRestart: false
   RestartIntervalHours:
     value: 4
     validate: [1, 24]

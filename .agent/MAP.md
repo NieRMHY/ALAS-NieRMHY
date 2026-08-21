@@ -5,6 +5,12 @@ alwaysApply: true
 
 # 地图处理模块 (module/map/) 分析文档
 
+**生成日期**: 2026-08-14
+**项目版本**: dev 分支
+**最后分析的代码版本**: f992af6c0
+
+---
+
 ## 1. 模块概述
 
 **一句话定位**：游戏地图的核心处理引擎，负责地图数据管理、舰队控制、摄像机操作和地图导航的完整生命周期。
@@ -42,84 +48,87 @@ alwaysApply: true
 
 **逐行分析**：
 
-**L11**：`ENEMY_FILTER` 常量，敌人过滤器。
+**L31**：`ENEMY_FILTER` 常量，敌人过滤器。
 
-**L14**：`Map` 类定义，继承自 `Fleet`。
+**L34**：`Map` 类定义，直接继承自 `Fleet`。地图整体功能通过继承链组合：
+`Map → Fleet（舰队）→ Camera（摄像机）→ MapOperation（地图操作）`，
+即 `Map` 组合了 `MapOperation`（地图操作）+ `Camera`（摄像机）+ `Fleet`（舰队）三部分能力。
+（`Fleet` 还继承 `AmbushHandler`，见 2.4 节）
 
-**L15-36**：`clear_chosen_enemy()` 方法，清除选定敌人：
+**L40-61**：`clear_chosen_enemy()` 方法，清除选定敌人：
 - 参数：`grid`（目标网格）、`expected`（预期战斗类型）
 - 流程：显示舰队 → 情绪等待 → 前往目标 → 全图扫描 → 路径规划
 
-**L38-47**：`clear_chosen_mystery()` 方法，清除神秘格子。
+**L63-72**：`clear_chosen_mystery()` 方法，清除神秘格子。
 
-**L49-72**：`pick_up_ammo()` 方法，拾取弹药：
+**L74-97**：`pick_up_ammo()` 方法，拾取弹药：
 - 检查弹药数量和可达性
 - 计算恢复量（最多 3）
 - 更新弹药计数
 
-**L74-100**：`clear_mechanism()` 方法，清除机关：
+**L99-125**：`clear_mechanism()` 方法，清除机关：
 - 检查地图是否有陆基机关
 - 选择可触发的机关
 - 前往并触发机关
 
-**L102-158**：`select_grids()` 静态方法，网格选择：
+**L127-183**：`select_grids()` 静态方法，网格选择：
 - 参数：`nearby`（附近）、`is_accessible`（可达）、`scale`（规模）、`genre`（类型）、`strongest`（最强）、`weakest`（最弱）、`sort`（排序）、`ignore`（忽略）
 - 支持多条件组合筛选
 
-**L160-169**：`show_select_grids()` 静态方法，显示选中网格。
+**L185-194**：`show_select_grids()` 静态方法，显示选中网格。
 
-**L171-189**：`clear_all_mystery()` 方法，清除所有神秘格子。
+**L196-214**：`clear_all_mystery()` 方法，清除所有神秘格子。
 
-**L191-214**：`clear_enemy()` 方法，清除敌人：
+**L216-239**：`clear_enemy()` 方法，清除敌人：
 - 根据敌人优先级配置选择目标
 - 支持 S3/S1 优先模式
 
-**L216-275**：路障清除方法族：
-- `clear_roadblocks()`：清除路障
-- `clear_potential_roadblocks()`：清除潜在路障
-- `clear_first_roadblocks()`：清除首个路障
-- `clear_grids_for_faster()`：清除网格以加速
+**L241-343**：路障清除方法族：
+- `clear_roadblocks()`（L241-269）：清除路障
+- `clear_potential_roadblocks()`（L271-299）：清除潜在路障
+- `clear_first_roadblocks()`（L301-322）：清除首个路障
+- `clear_grids_for_faster()`（L324-343）：清除网格以加速
 
-**L320-345**：`clear_boss()` 方法，清除 BOSS：
+**L345-369**：`clear_boss()` 方法，清除 BOSS：
 - 检测 BOSS 位置
 - 移动潜艇到 BOSS 附近
 - 清除 BOSS
 
-**L346-372**：`capture_clear_boss()` 方法，大征服地图清除 BOSS。
+**L371-396**：`capture_clear_boss()` 方法，大征服地图清除 BOSS。
 
-**L373-408**：`clear_potential_boss()` 方法，清除潜在 BOSS：
+**L398-432**：`clear_potential_boss()` 方法，清除潜在 BOSS：
 - 遍历所有可能的 BOSS 生成点
 - 尝试清除每个点
 
-**L410-435**：`brute_clear_boss()` 方法，暴力清除 BOSS：
+**L434-458**：`brute_clear_boss()` 方法，暴力清除 BOSS：
 - 使用两支舰队
 - 暴力寻找路障
 
-**L437-451**：`brute_fleet_meet()` 方法，暴力舰队会合。
+**L460-473**：`brute_fleet_meet()` 方法，暴力舰队会合。
 
-**L453-478**：`clear_siren()` 方法，清除塞壬。
+**L475-501**：`clear_siren()` 方法，清除塞壬。
 
-**L480-507**：`clear_any_enemy()` 方法，清除任意敌人。
+**L503-531**：`clear_any_enemy()` 方法，清除任意敌人。
 
-**L509-544**：`fleet_2_step_on()` 方法，舰队 2 踩点：
+**L533-568**：`fleet_2_step_on()` 方法，舰队 2 踩点：
 - 减少伏击频率
 - 处理路障
 
-**L546-567**：`fleet_2_break_siren_caught()` 方法，舰队 2 打破塞壬捕捉。
+**L570-591**：`fleet_2_break_siren_caught()` 方法，舰队 2 打破塞壬捕捉。
 
-**L569-604**：`fleet_2_push_forward()` 方法，舰队 2 推进：
+**L593-627**：`fleet_2_push_forward()` 方法，舰队 2 推进：
 - 减少 BOSS 舰队被堵风险
 
-**L606-627**：`fleet_2_rescue()` 方法，舰队 2 救援。
+**L629-650**：`fleet_2_rescue()` 方法，舰队 2 救援。
 
-**L629-661**：`fleet_2_protect()` 方法，舰队 2 保护：
+**L652-683**：`fleet_2_protect()` 方法，舰队 2 保护：
 - 清除接近的塞壬
 
-**L663-702**：`clear_filter_enemy()` 方法，过滤清除敌人：
+**L685-724**：`clear_filter_enemy()` 方法，过滤清除敌人：
 - 使用敌人过滤器
 - 保留最弱敌人用于无弹药战斗
 
-**L704-746**：`clear_bouncing_enemy()` 方法，清除弹跳敌人：
+**L726-764**：`clear_bouncing_enemy()` 方法，清除弹跳敌人：
 - 处理固定路线弹跳的敌人
 - 最多尝试 12 次
 
@@ -139,105 +148,109 @@ alwaysApply: true
 
 **逐行分析**：
 
-**L10-37**：`CampaignMap` 类属性：
+**L23-56**：`CampaignMap` 类文档与属性说明：
 - `name`：地图名称
-- `grid_class`：网格类
+- `grid_class`：网格类（默认 `GridInfo`）
 - `grids`：网格字典
 - `_shape`：地图形状
-- `_map_data`：地图数据
+- `_map_data` / `_map_data_loop`：默认/快进模式地图数据
 - `_weight_data`：权重数据
 - `_wall_data`：墙壁数据
 - `_portal_data`：传送门数据
 - `_land_based_data`：陆基数据
-- `_maze_data`：迷宫数据
+- `_maze_data` / `maze_round`：迷宫数据
 - `_fortress_data`：要塞数据
 - `_bouncing_enemy_data`：弹跳敌人数据
-- `_spawn_data`：生成数据
-- `_camera_data`：摄像机数据
+- `_spawn_data` / `_spawn_data_stack` / `_spawn_data_loop` / `_spawn_data_use_loop`：敌人刷新数据
+- `_camera_data` / `_camera_data_spawn_point`：摄像机数据
 - `_map_covered`：地图覆盖
 - `_ignore_prediction`：忽略预测
+- `poor_map_data`：地图数据是否不完整
 - `camera_sight`：摄像机视野
 - `grid_connection`：网格连接
 
-**L39-53**：迭代器和访问器方法。
+**L58-84**：`__init__()` 方法，初始化地图对象并解析数据。
 
-**L55-61**：`_parse_text()` 静态方法，解析文本数据。
+**L86-114**：迭代器和访问器方法（`__iter__`、`__getitem__`、`__contains__`）。
 
-**L63-82**：`shape` 属性，设置地图形状：
+**L115-130**：`_parse_text()` 静态方法，解析文本数据。
+
+**L131-157**：`shape` 属性，设置地图形状：
 - 创建网格
 - 生成摄像机数据
 - 设置默认权重
 
-**L84-119**：`map_data` 属性，加载地图数据。
+**L158-214**：`map_data` 属性族与加载方法：
+- `map_data`（L158-173）、`map_data_loop`（L174-186）
+- `load_map_data()`（L187-199）、`_load_map_data()`（L200-214）
 
-**L121-130**：`map_data_loop` 属性，循环地图数据。
+**L215-229**：`wall_data` 属性，墙壁数据。
 
-**L132-141**：`wall_data` 属性，墙壁数据。
+**L230-251**：`portal_data` 属性，传送门数据。
 
-**L143-173**：`portal_data` 属性，传送门数据。
-
-**L175-207**：`land_based_data` 属性，陆基数据：
+**L252-286**：`land_based_data` 属性，陆基数据：
 - 设置机关触发器和阻挡器
 
-**L209-248**：`maze_data` 属性，迷宫数据。
+**L287-316**：`maze_data` 属性，迷宫数据。
 
-**L250-275**：`fortress_data` 属性，要塞数据。
+**L317-348**：`fortress_data` 属性，要塞数据。
 
-**L277-303**：`bouncing_enemy_data` 属性，弹跳敌人数据。
+**L349-370**：`bouncing_enemy_data` 属性，弹跳敌人数据。
 
-**L305-337**：`load_mechanism()` 方法，加载机关。
+**L371-392**：`load_mechanism()` 方法，加载机关。
 
-**L339-403**：`grid_connection_initial()` 方法，初始化网格连接：
+**L393-448**：`grid_connection_initial()` 方法，初始化网格连接：
 - 生成基本连接
 - 应用墙壁数据
 - 创建传送门链接
 
-**L405-422**：`fixup_submarine_fleet()` 方法，修复潜艇舰队。
+**L449-471**：`fixup_submarine_fleet()` 方法，修复潜艇舰队。
 
-**L424-448**：`show()` 方法，显示地图。
+**L472-483**：`show()` 方法，显示地图。
 
-**L450-482**：`update()` 方法，更新地图：
+**L484-525**：`update()` 方法，更新地图：
 - 合并网格信息
 - 处理预测错误
 
-**L484-491**：`reset()` 方法，重置地图。
+**L526-535**：`reset()` / `reset_fleet()` 方法，重置地图。
 
-**L493-508**：`camera_data` 属性，摄像机数据。
+**L536-568**：`camera_data` / `camera_data_spawn_point` 属性，摄像机数据。
 
-**L510-527**：`spawn_data` 属性，生成数据。
+**L569-636**：`spawn_data` 属性族与加载方法：
+- `spawn_data`（L569-583）、`spawn_data_loop`（L584-596）、`spawn_data_stack`（L597-605）
+- `load_spawn_data()`（L606-620）、`_load_spawn_data()`（L621-636）
 
-**L529-551**：`weight_data` 属性，权重数据。
+**L637-653**：`weight_data` 属性，权重数据。
 
-**L553-567**：`map_covered` 属性，地图覆盖。
+**L654-672**：`map_covered` 属性，地图覆盖。
 
-**L569-609**：`ignore_prediction()` 方法，忽略预测。
+**L673-731**：预测与展示方法：
+- `ignore_prediction()`（L673-685）、`ignore_prediction_match()`（L686-701）
+- `is_map_data_poor` 属性（L702-714）
+- `show_cost()`（L715-722）、`show_connection()`（L723-731）
 
-**L611-633**：`missing_get()` 方法，获取缺失信息。
+**L732-940**：路径规划方法：
+- `find_path_initial()`（L732-773）：初始化路径
+- `find_path_initial_multi_fleet()`（L774-789）：多舰队路径初始化
+- `_find_path()`（L790-824）：内部路径查找
+- `_find_route_node()`（L825-881）：路由节点查找
+- `find_path()`（L882-924）：路径查找
+- `grid_covered()`（L925-940）：网格覆盖
 
-**L635-678**：`missing_predict()` 方法，缺失预测。
+**L941-1048**：缺失预测方法：
+- `missing_get()`（L941-995）：获取缺失
+- `missing_is_none()`（L996-1019）：缺失为空
+- `missing_predict()`（L1020-1048）：缺失预测
 
-**L680-712**：`select()` 方法，选择网格。
+**L1049-1077**：`select()`（L1049-1067）、`to_selected()`（L1068-1077）方法，网格选择。
 
-**L714-728**：`to_selected()` 方法，转换为选中网格。
-
-**L730-746**：`flatten()` 方法，展平网格。
-
-**L748-832**：路径规划方法：
-- `find_path_initial()`：初始化路径
-- `find_path_initial_multi_fleet()`：多舰队路径初始化
-- `_find_path()`：内部路径查找
-- `_find_route_node()`：路由节点查找
-- `find_path()`：路径查找
-- `grid_covered()`：网格覆盖
-- `missing_get()`：获取缺失
-- `missing_is_none()`：缺失为空
-- `missing_predict()`：缺失预测
+**L1078-1083**：`flatten()` 方法，展平网格。
 
 ---
 
-### 2.3 camera.py (597 行)
+### 2.3 camera.py (626 行)
 
-**导出类型**：类 `Camera`
+**导出类型**：类 `Camera`（继承 `MapOperation`）
 
 **导入依赖**：
 - `copy`：对象拷贝
@@ -262,7 +275,7 @@ alwaysApply: true
 
 **逐行分析**：
 
-**L24-30**：`Camera` 类属性：
+**L56-61**：`Camera` 类属性：
 - `view`：视图对象
 - `map`：地图对象
 - `camera`：摄像机位置
@@ -270,56 +283,58 @@ alwaysApply: true
 - `_prev_view`：前一个视图
 - `_prev_swipe`：前一次滑动
 
-**L32-67**：`_map_swipe()` 方法，地图滑动：
+**L63-98**：`_map_swipe()` 方法，地图滑动：
 - 计算滑动距离
 - 优化滑动路径
 - 执行滑动操作
 - 更新视图
 
-**L69-85**：`map_swipe()` 方法，地图滑动（相对位置）。
+**L100-115**：`map_swipe()` 方法，地图滑动（相对位置）。
 
-**L87-103**：`focus_to_grid_center()` 方法，聚焦到网格中心。
+**L117-132**：`focus_to_grid_center()` 方法，聚焦到网格中心。
 
-**L105-208**：`_update_view()` 方法，更新视图：
+**L134-136**：`_view_init()` 方法，初始化视图。
+
+**L138-242**：`_update_view()` 方法，更新视图：
 - 检测是否在地图中
 - 处理各种异常情况（信息栏、物品获取、故事跳过等）
 - 处理大世界地图
 - 处理游戏死亡
 
-**L210-245**：`_update_view_data()` 方法，更新视图数据：
+**L243-279**：`_update_view_data()` 方法，更新视图数据：
 - 滑动预测
 - 更新摄像机位置
 - 边缘校正
 
-**L247-333**：`update()` 方法，更新地图图像：
+**L280-365**：`update()` 方法，更新地图图像：
 - 处理滑动等待
 - 重试机制
 - 错误处理
 
-**L334-339**：`predict()` 方法，预测。
+**L366-369**：`predict()` 方法，预测。
 
-**L340-342**：`show_camera()` 方法，显示摄像机位置。
+**L370-372**：`show_camera()` 方法，显示摄像机位置。
 
-**L344-386**：`ensure_edge_insight()` 方法，确保边缘可见：
+**L373-418**：`ensure_edge_insight()` 方法，确保边缘可见：
 - 滑动到左下角直到两个边缘可见
 - 支持反向滑动
 
-**L388-405**：`focus_to()` 方法，聚焦到位置。
+**L419-436**：`focus_to()` 方法，聚焦到位置。
 
-**L407-448**：`full_scan()` 方法，全图扫描：
+**L437-478**：`full_scan()` 方法，全图扫描：
 - 扫描整个地图
 - 提前停止条件
 - 缺失预测
 
-**L449-474**：`in_sight()` 方法，确保位置在视野中。
+**L479-505**：`in_sight()` 方法，确保位置在视野中。
 
-**L476-501**：`convert_global_to_local()` 方法，全局转局部。
+**L506-532**：`convert_global_to_local()` 方法，全局转局部。
 
-**L503-529**：`convert_local_to_global()` 方法，局部转全局。
+**L533-560**：`convert_local_to_global()` 方法，局部转全局。
 
-**L531-550**：`full_scan_find_boss()` 方法，全图扫描找 BOSS。
+**L561-581**：`full_scan_find_boss()` 方法，全图扫描找 BOSS。
 
-**L552-597**：`get_swipe_area_opt()` 方法，获取滑动区域优化。
+**L582-626**：`get_swipe_area_opt()` 方法，获取滑动区域优化。
 
 ---
 
@@ -340,7 +355,9 @@ alwaysApply: true
 
 **逐行分析**：
 
-**L14-23**：`Fleet` 类属性：
+**L37**：`Fleet` 类定义，继承自 `Camera` + `AmbushHandler`。
+
+**L55-62**：`Fleet` 类属性：
 - `fleet_1_location`：舰队 1 位置
 - `fleet_2_location`：舰队 2 位置
 - `fleet_submarine_location`：潜艇位置
@@ -350,7 +367,7 @@ alwaysApply: true
 - `fleet_ammo`：舰队弹药
 - `ammo_count`：弹药计数
 
-**L24-94**：舰队属性访问器：
+**L64-133**：舰队属性访问器：
 - `fleet_1`：舰队 1
 - `fleet_2`：舰队 2
 - `fleet_submarine`：潜艇
@@ -359,22 +376,64 @@ alwaysApply: true
 - `fleet_boss_index`：BOSS 舰队索引
 - `fleet_step`：舰队步数
 
-**L96-108**：`fleet_ensure()` 方法，确保舰队。
+**L136-148**：`fleet_ensure()` 方法，确保舰队。
 
-**L110-111**：`switch_to()` 方法，切换到（空实现）。
+**L150-154**：`switch_to()` 方法，切换到（空实现）。
 
-**L113-153**：回合管理：
+**L156-191**：回合管理：
 - `round_next()`：下一回合
 - `round_battle()`：战斗回合
 - `round_reset()`：重置回合
 
-**L155-171**：`round_enemy_turn` 属性，敌人移动回合。
+**L192-209**：`round_enemy_turn` 属性，敌人移动回合。
 
-**L173-193**：`round_is_new` 属性，是否新回合。
+**L210-229**：`round_is_new` 属性，是否新回合。
 
-**L195-200**：`round_wait` 属性，等待时间。
+**L230-256**：`round_wait` 属性，等待时间。
 
-（由于文件过长，仅分析前 200 行）
+**L257-290**：`round_maze_changed` 属性与 `maze_active_on()` 方法，迷宫回合处理。
+
+**L291-511**：`_goto()` 方法，内部地图行走（核心行走逻辑，处理伏击/空袭/神秘/塞壬等事件）。
+
+**L512-553**：`goto()` 方法，地图行走入口。
+
+**L554-585**：`find_path_initial()`、`show_fleet()`、`show_submarine()` 方法，路径初始化与舰队显示。
+
+**L586-644**：全图扫描方法族：
+- `full_scan()`（L586-607）
+- `full_scan_carrier()`（L608-615）
+- `full_scan_movable()`（L616-644）
+
+**L645-744**：`track_movable()` 方法，可移动敌人追踪。
+
+**L745-877**：舰队与潜艇定位：
+- `find_all_fleets()`（L745-758）
+- `find_current_fleet()`（L759-822）
+- `find_all_submarines()`（L823-834）
+- `find_submarine()`（L835-877）
+
+**L878-987**：地图与战斗初始化：
+- `map_init()`（L878-887）
+- `map_data_init()`（L888-920）
+- `map_control_init()`（L921-942）
+- `handle_clear_mode_config_cover()`（L943-953）
+- `_expected_end()`（L954-978）
+- `_submarine_mode()`（L979-987）
+
+**L988-1073**：可达性与路障：
+- `fleet_at()`（L988-1003）
+- `check_accessibility()`（L1004-1031）
+- `brute_find_roadblocks()`（L1032-1073）
+
+**L1074-1129**：摄像机与 Boss 处理：
+- `catch_camera_repositioning()`（L1074-1099）
+- `handle_boss_appear_refocus()`（L1100-1124）
+- `fleet_checked_reset()`（L1125-1129）
+
+**L1130-1268**：潜艇移动：
+- `_submarine_goto()`（L1130-1192）
+- `submarine_goto()`（L1193-1218）
+- `submarine_move_near_boss()`（L1219-1268）
 
 ---
 
@@ -396,22 +455,22 @@ alwaysApply: true
 
 **逐行分析**：
 
-**L14**：`MapOperation` 类定义，继承自 `MysteryHandler`、`FleetPreparation`、`Retirement`、`FastForwardHandler`。
+**L30**：`MapOperation` 类定义，继承自 `MysteryHandler`、`FleetPreparation`、`Retirement`、`FastForwardHandler`。
 
-**L15-23**：类属性：
+**L44-52**：类属性：
 - `map_cat_attack_timer`：猫咪攻击计时器
 - `map_clear_percentage_prev`：清除百分比
 - `map_clear_percentage_timer`：清除百分比计时器
 - `fleet_show_index`：显示舰队索引
 - `fleet_current_index`：当前舰队索引
 
-**L25-56**：舰队索引获取方法：
-- `get_fleet_show_index()`：获取显示舰队
-- `get_fleet_current_index()`：获取当前舰队
+**L54-88**：舰队索引获取方法：
+- `get_fleet_show_index()`（L54-74）：获取显示舰队
+- `get_fleet_current_index()`（L75-88）：获取当前舰队
 
-**L58-101**：`fleet_set()` 方法，设置舰队。
+**L89-135**：`fleet_set()` 方法，设置舰队。
 
-**L103-200**：`enter_map()` 方法，进入地图：
+**L136-283**：`enter_map()` 方法，进入地图：
 - 错误检查
 - 地图准备
 - 舰队准备
@@ -419,7 +478,23 @@ alwaysApply: true
 - 退役处理
 - 数据密钥使用
 
-（由于文件过长，仅分析前 200 行）
+**L284-312**：`enter_map_cancel()` 方法，取消进入地图。
+
+**L313-349**：`handle_map_mode_switch()` 方法，地图难度模式切换（普通/困难）。
+
+**L350-403**：困难模式检测方法族：
+- `_is_mod_switch_hard_appear()`（L350-381）
+- `_is_mod_switch_hard_active()`（L382-403）
+
+**L404-442**：`handle_map_preparation()` 方法，地图准备阶段处理。
+
+**L443-471**：`withdraw()` 方法，撤退操作。
+
+**L472-492**：`handle_map_cat_attack()` 方法，猫猫攻击跳过。
+
+**L493-498**：`fleets_reversed` 属性，舰队顺序是否反转。
+
+**L499-519**：`handle_fleet_reverse()` 方法，舰队顺序反转处理。
 
 ---
 
@@ -433,48 +508,65 @@ alwaysApply: true
 
 **逐行分析**：
 
-**L5-200**：`SelectedGrids` 类，网格集合：
-- `__init__()`：初始化
-- `__iter__()`：迭代器
-- `__getitem__()`：索引访问
-- `__contains__()`：包含检查
-- `__str__()`：字符串表示
-- `__len__()`：长度
-- `__bool__()`：布尔值
-- `location` 属性：位置列表
-- `cost` 属性：代价列表
-- `weight` 属性：权重列表
-- `count` 属性：计数
-- `select()` 方法：选择
-- `create_index()` 方法：创建索引
-- `indexed_select()` 方法：索引选择
-- `left_join()` 方法：左连接
-- `filter()` 方法：过滤
-- `set()` 方法：设置属性
-- `get()` 方法：获取属性
-- `call()` 方法：调用方法
-- `first_or_none()` 方法：首个或空
-- `add()` 方法：添加
-- `add_by_eq()` 方法：按相等添加
+**L15-397**：`SelectedGrids` 类，网格集合：
+- `__init__()`（L26-29）：初始化
+- `__iter__()`（L30-37）：迭代器
+- `__getitem__()`（L38-51）：索引访问
+- `__contains__()`（L52-62）：包含检查
+- `__str__()`（L63-71）：字符串表示
+- `__len__()`（L72-79）：长度
+- `__bool__()`（L80-90）：布尔值
+- `location` 属性（L91-99）：位置列表
+- `cost` 属性（L100-108）：代价列表
+- `weight` 属性（L109-117）：权重列表
+- `count` 属性（L118-126）：计数
+- `select()`（L127-148）：选择
+- `create_index()`（L149-172）：创建索引
+- `indexed_select()`（L173-183）：索引选择
+- `left_join()`（L184-211）：左连接
+- `filter()`（L212-222）：过滤
+- `set()`（L223-232）：设置属性
+- `get()`（L233-243）：获取属性
+- `call()`（L244-255）：调用方法
+- `first_or_none()`（L256-266）：首个或空
+- `add()`（L267-277）：添加
+- `add_by_eq()`（L278-295）：按相等添加
+- `intersect()`（L296-306）：交集
+- `intersect_by_eq()`（L307-322）：按相等交集
+- `delete()`（L323-334）：删除
+- `sort()`（L335-351）：排序
+- `sort_by_camera_distance()`（L352-369）：按摄像机距离排序
+- `sort_by_clock_degree()`（L370-397）：按钟表角度排序
 
-（由于文件过长，仅分析前 200 行）
+**L398-496**：`RoadGrids` 类，路径路障：
+- `__init__()`（L408-419）
+- `__str__()`（L420-427）
+- `roadblocks()`（L428-441）：路障
+- `potential_roadblocks()`（L442-460）：潜在路障
+- `first_roadblocks()`（L461-478）：首个路障
+- `combine()`（L479-496）：组合路线
 
 ---
 
-### 2.7 map_fleet_preparation.py (476 行)
+### 2.7 map_fleet_preparation.py (453 行)
 
-**导出类型**：类 `FleetPreparation`
+**导出类型**：类 `FleetOperator`、`FleetPreparation`（继承 `InfoHandler`）
 
 **导入依赖**：
-- `module.base.base.ModuleBase`：基础模块
-- `module.base.button.Button`、`ButtonGrid`：按钮定义
-- `module.base.decorator.Config`：配置装饰器
-- `module.base.filter.Filter`：过滤器
-- `module.base.scroll.Scroll`：滚动条
+- `numpy`：数值计算
+- `scipy.signal`：信号处理
+- `module.base.button.Button`：按钮定义
+- `module.base.timer.Timer`：计时器
+- `module.base.utils`：基础工具
+- `module.exception.HardNotSatisfied`：困难模式未满足异常
+- `module.handler.assets`：处理器资源（AUTO_SEARCH_SET_MOB/BOSS/ALL/STANDBY/SUB_AUTO/SUB_STANDBY）
+- `module.handler.info_handler.InfoHandler`：信息处理器基类
 - `module.logger.logger`：日志系统
 - `module.map.assets`：地图资源
 
-**说明**：处理舰队准备界面的逻辑，包括舰队选择、潜艇设置、自动搜索设置等。
+**说明**：处理舰队准备界面的逻辑：
+- `FleetOperator`（L31-330）：单个舰队槽位的操作器（舰队条解析、状态检测、选择/推荐/清空/开关操作）
+- `FleetPreparation`（L331-453）：舰队准备流程（`fleet_preparation()` 处理舰队选择、潜艇设置、自动搜索设置等）
 
 ---
 
@@ -484,19 +576,32 @@ alwaysApply: true
 
 **导入依赖**：
 - `numpy`：数值计算
-- `module.base.utils`：基础工具
+- `module.base.utils`（node2location）：基础工具
+- `module.map_detection.grid_info.GridInfo`：网格信息
 
-**说明**：提供地图处理相关的工具函数，如位置转换、方向计算、移动匹配等。
+**说明**：提供地图处理相关的工具函数：
+- `location_ensure()`（L18-38）：统一坐标格式（GridInfo 对象/节点名/元组）
+- `camera_1d()`（L40-60）：一维相机位置序列
+- `camera_2d()`（L62-80）：二维相机位置网格
+- `get_map_active_area()`（L82-103）：地图活动区域边界
+- `camera_spawn_point()`（L106-125）：出生点附近最近相机位置
+- `random_direction()`（L128-152）：方向描述转随机方向向量
+- `combine()`（L155-174）：排列候选索引组合
+- `match_movable()`（L177-244）：可移动敌人（塞壬）移动匹配
 
 ---
 
-### 2.9 assets.py (49 行)
+### 2.9 assets.py (50 行)
 
 **导出类型**：按钮和模板常量
 
-**导入依赖**：无（资源定义文件）
+**导入依赖**：
+- `module.base.button.Button`：按钮基类
+- `module.base.template.Template`：模板基类
 
-**说明**：定义地图系统使用的所有 UI 元素常量。
+**说明**：定义地图系统使用的所有 UI 元素常量（由 `dev_tools/button_extract.py` 自动生成），
+包括舰队选择（FLEET_1/2_*）、出击（MAP_OFFENSIVE）、撤退（WITHDRAW）、
+模式切换（MAP_MODE_SWITCH_*）、地图准备（MAP_PREPARATION）、猫猫攻击等按钮。
 
 ---
 
@@ -588,8 +693,9 @@ graph TD
 
 **多重继承组合模式**：
 - `Map` 类通过继承 `Fleet` 组合地图和舰队功能
-- `Fleet` 类通过继承 `Camera` 组合舰队和摄像机功能
+- `Fleet` 类通过继承 `Camera` + `AmbushHandler` 组合舰队、摄像机和伏击处理功能
 - `Camera` 类通过继承 `MapOperation` 组合摄像机和操作功能
+- 完整继承链：`Map → Fleet → Camera → MapOperation`（其中 `MapOperation` 组合 `MysteryHandler`、`FleetPreparation`、`Retirement`、`FastForwardHandler`）
 
 **策略模式**：
 - 敌人清除策略：`clear_enemy()`、`clear_siren()`、`clear_boss()` 等

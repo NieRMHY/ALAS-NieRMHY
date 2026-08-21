@@ -1,20 +1,20 @@
 # OCR 使用统计
 
-本文档统计仓库中业务代码对 `module.ocr` 的使用位置、使用的模型以及用途。统计时间：2026-07-05（2026-08-01 复核，未发现新增调用点；`module/ocr/windows_ml.py` 为 OCR 框架内部模块，不计入业务调用）。
+本文档统计仓库中业务代码对 `module.ocr` 的使用位置、使用的模型以及用途。统计时间：2026-07-05（2026-08-14 复核，代码版本 dev @ f992af6c0；`module/ocr/windows_ml.py` 为 OCR 框架内部模块，不计入业务调用）。
 
 ## 统计口径
 
-- 扫描对象：仓库内 Python 源码。
+- 扫描对象：仓库内 Python 源码（排除 `module/ocr/`、`module/base/resource.py`、`module/webui/`、`module/device/`、`module/config/`）。
 - 纳入范围：直接构造 `Ocr`、`Digit`、`DigitCounter`、`Duration`、`AlOcr`，以及继承这些类的业务 OCR 子类；同时统计已有 OCR 对象的 `.ocr()` 和 `.det()` 调用。
 - 排除范围：`module/ocr/` OCR 框架自身、`module/base/resource.py` 模型释放逻辑、`module/webui/` OCR 服务启停、`module/device/` 设备重连后重置 OCR、`module/config/` 后端能力探测。
 - 注意：`assets/**/OCR_*.png` 是识别区域资源，不是 OCR 调用点。
 
-业务侧静态扫描结果：
+业务侧静态扫描结果（2026-08-14 复核，grep 计数）：
 
-- 相关业务/工具/测试文件：86 个。
-- OCR 构造或 OCR 子类构造调用：230 处。
-- `.ocr()` 或 `atomic_ocr*()` 识别调用：184 处。
-- `.det()` 文本检测调用：2 处。
+- 相关业务/工具/测试文件：79 个。
+- OCR 构造或 OCR 子类构造调用：211 处（直接构造 177、业务 OCR 子类定义 34）。
+- `.ocr()` 或 `atomic_ocr*()` 识别调用：177 处（`.ocr()` 175、`atomic_ocr_for_single_lines()` 2，后者位于 `module/statistics/item.py`）。
+- `.det()` 文本检测调用：0 处（框架 `AlOcr.det()` 定义保留，业务侧已无调用方）。
 
 ## 模型映射
 
@@ -22,18 +22,21 @@
 
 | 业务写法 | 实际 `AlOcr` 模型 | ONNX 识别模型 | 字典 | 主要用途 |
 |---|---|---|---|---|
-| 默认不写 `lang` / `lang='azur_lane'` | `azur_lane`；日服运行时自动改成 `azur_lane_jp` | `bin/ocr_models/ppocr-v6/PP-OCRv6_small_rec.onnx`（auto 默认通用 PP-OCRv6） | `ppocrv6_dict.txt` | 数字、计数器、时长、关卡名、少量英文/符号 |
+| 默认不写 `lang` / `lang='azur_lane'` | `azur_lane`；日服运行时自动改成 `azur_lane_jp` | `bin/ocr_models/ppocr-v6/PP-OCRv6_small_rec.onnx`（auto 默认通用 PP-OCRv6） | `ppocrv6_en_restricted_dict.txt`（受限 en 字典） | 数字、计数器、时长、关卡名、少量英文/符号 |
 | `lang='cnocr'` | `cn` | `bin/ocr_models/ppocr-v6/PP-OCRv6_small_rec.onnx`（auto 默认通用 PP-OCRv6） | `ppocrv6_dict.txt` | 中文文本、中文 UI 中非标准字体数字 |
 | `lang='ppocr_v6'` | `ppocr_v6` | `bin/ocr_models/ppocr-v6/PP-OCRv6_small_rec.onnx` | `ppocrv6_dict.txt` | 国际服/通用文本 |
 | `lang='jp'` | `jp` | `bin/ocr_models/ppocr-v6/PP-OCRv6_small_rec.onnx` | `ppocrv6_dict.txt` | 日服文本 |
 | `lang='tw'` | `tw` | `bin/ocr_models/ppocr-v6/PP-OCRv6_small_rec.onnx` | `ppocrv6_dict.txt` | 台服文本 |
-| `AlOcr(name='cn' if server.server == 'cn' else 'ppocr_v6')` | 国服 `cn`，其他服 `ppocr_v6` | 同上 | 同上 | 岛屿系统文本检测和整图候选定位 |
+
+`azur_lane`/`azur_lane_jp` 使用受限 en 字典（`ppocrv6_en_restricted_dict.txt`），将非 en 输出静默过滤，避免误识别出中文等无关内容；`cnocr` 是 `cn` 的别名，`en` 是 `azur_lane` 的别名。
+
+`AlOcr` 仅在框架内部构造：`module/ocr/models.py`（`OCR_MODEL` 懒加载入口的 6 个缓存属性）与 `module/daemon/ocr_benchmark.py`（动态 `model_name`）。业务代码统一通过 `Ocr` 系列类间接使用，不直接构造 `AlOcr`。
 
 后端说明：
 
 - 默认后端是 RapidOCR + ONNX Runtime。
-- 当配置 `ocr_backend == 'ncnn'` 时，识别模型改用 `bin/ocr_models/ncnn/ppocr_v6.param/bin`（通用 PP-OCRv6 的 ncnn 转换版）；`cnocr` 是 `cn` 的别名，`en` 是 `azur_lane` 的别名。
-- `.det()` 文本检测使用 `bin/ocr_models/det/PP-OCRv6_tiny_det.onnx`，ONNX 后端会检测 + 识别；ncnn 后端用 RapidOCR 做检测，再用 ncnn 识别模型。
+- 当配置 `ocr_backend == 'ncnn'` 时，识别模型改用 `bin/ocr_models/ncnn/ppocr_v6_standard.param/bin`（通用 PP-OCRv6 的 ncnn 转换版，另有 `ppocr_v6_lite`/`ppocr_v6_pro` 档位，见 `ncnn_ocr.py` 的 `MODEL_SPECS`）。
+- 文本检测模型为 `bin/ocr_models/det/PP-OCRv6_tiny_det.onnx`（框架 `AlOcr.det()`：ONNX 后端一次调用检测 + 识别，ncnn 后端用 RapidOCR 检测 + ncnn 识别模型）；当前业务侧无 `.det()` 调用方，该能力仅框架保留。
 - `Ocr` 默认会先裁剪区域、按字色二值化，再走 `atomic_ocr_for_single_lines()`；`Digit`、`DigitCounter`、`Duration` 在此基础上做数字、`x/y`、`hh:mm:ss` 后处理。
 
 ## OCR 子类
@@ -53,7 +56,7 @@
 | `DALPtOcr` | `module/coalition/coalition.py` | `Digit` | DAL 联动 PT，从 `X9100` 中提取数字 |
 | `LevelOcr` | `module/combat/level.py` | `Digit` | 战斗/船坞卡片等级 |
 | `Level` | `module/exercise/opponent.py` | `Digit` | 演习对手等级 |
-| `DatedDuration`、`DatedDurationYuv` | `module/exercise/exercise.py` | `Ocr` | 演习周期剩余时间，支持带日期文本 |
+| `DatedDuration`、`DatedDurationYuv` | `module/exercise/exercise.py` | `Ocr` | 演习周期剩余时间，支持带日期文本（默认 `lang='cnocr'`） |
 | `ExchangeLimitOcr` | `module/guild/logistics.py` | `Digit` | 大舰队兑换次数上限 |
 | `MeowfficerLevelOcr` | `module/meowfficer/enhance.py` | `Digit` | 指挥喵强化等级 |
 | `PercentageOcr` | `module/os/fleet.py` | `Ocr` | 大世界据点百分比 |
@@ -68,6 +71,7 @@
 | `AmountOcr` | `module/statistics/item.py` | `Digit` | 掉落物数量，带最大值校验 |
 | `AutoSearchAmount` | `module/azur_stats/image/auto_search_reward.py` | `AmountOcr` | 自动搜索奖励数量 |
 | `EmotionDigit` | `module/retire/scanner.py` | `Digit` | 船坞心情数字 |
+| `NameOcr` | `module/retire/scanner.py` | `Ocr` | 船坞舰船名字识别（嵌套类） |
 | `RaidCounter`、`RaidCounterPostMixin`、`HuanChangCounter`、`HuanChangPtOcr` | `module/raid/raid.py` | `DigitCounter` / `Digit` | 突袭活动剩余次数和 PT，针对活动 UI 修正 |
 
 ## 按模块用途清单
@@ -107,7 +111,7 @@
 | `module/meowfficer/enhance.py` | 默认 `azur_lane` | 识别指挥喵喂养材料数量、强化等级、金币 |
 | `module/guild/operations.py` | 默认 `azur_lane` | 识别大舰队作战进度 |
 | `module/guild/logistics.py` | 默认 `azur_lane` | 识别大舰队后勤商店兑换限制 |
-| `module/retire/dock.py`、`module/retire/enhancement.py`、`module/retire/scanner.py` | 默认 `azur_lane` | 识别船坞选中数量、船坞容量、舰船等级、心情数字，用于退役和强化筛选 |
+| `module/retire/dock.py`、`module/retire/enhancement.py`、`module/retire/scanner.py` | 默认 `azur_lane` | 识别船坞选中数量、船坞容量、舰船等级、心情数字、舰船名字，用于退役和强化筛选 |
 | `module/awaken/awaken.py` | 默认 `azur_lane` | 识别舰船等级，判断觉醒条件 |
 
 ### 商店、仓库、免费福利
@@ -166,7 +170,7 @@
 | `module/gacha/gacha_reward.py` | 默认 `azur_lane` | 识别建造魔方、快速建造票、提交数量、活动提交数量 |
 | `module/equipment/fleet_equipment.py` | 默认 `azur_lane` | 识别舰队装备界面的舰队编号 |
 | `module/shipyard/ui.py`、`module/shipyard/ui_globals.py` | 默认 `azur_lane` | 识别船坞金币、蓝图数量、开发/命运总进度 |
-| `module/exercise/exercise.py` | 默认 `azur_lane`；周期时间可用 YUV 变体 | 识别演习次数和周期剩余时间 |
+| `module/exercise/exercise.py` | 演习次数默认 `azur_lane`；周期剩余时间用 `cnocr`（`DatedDuration`/`DatedDurationYuv`） | 识别演习次数和周期剩余时间 |
 | `module/exercise/opponent.py` | 默认 `azur_lane` | 识别演习对手等级和战力 |
 | `module/combat/level.py` | 默认 `azur_lane` | 识别战斗/敌人等级 |
 | `module/ui/ui.py` | 调用方传入 OCR 对象，通常默认 `azur_lane` | `ui_ensure_index()` 中读取当前页签/数量索引 |
@@ -186,9 +190,9 @@
 | `module/ocr/models.py` | 定义 `OCR_MODEL` 懒加载入口，映射 `azur_lane`、`azur_lane_jp`、`ppocr_v6`、`cnocr`、`jp`、`tw` |
 | `module/ocr/al_ocr.py` | RapidOCR / ONNX / ncnn 后端、单线程 OCR 队列、文本检测 `.det()` |
 | `module/ocr/ncnn_ocr.py` | ncnn 识别模型规格和推理实现 |
+| `module/ocr/windows_ml.py` | Windows ML 设备选择（`create_onnx_session()`，DirectML/QNN/OpenVINO EP） |
 | `module/ocr/rpc.py` | OCR RPC 客户端/服务器代理；启用 OCR server 时业务对象仍通过同一 `OCR_MODEL` 属性访问 |
 | `module/base/resource.py` | 释放 OCR 模型缓存 |
-| `module/webui/app.py` | 启停 OCR server 进程 |
+| `module/webui/app_lifecycle.py` | 启停 OCR server 进程 |
 | `module/device/device.py` | 设备重连后重置 OCR 模型缓存 |
 | `module/config/config.py` | 探测 ncnn Vulkan GPU 可用性 |
-

@@ -554,7 +554,12 @@ class Icon:
     存储图标的 HTML 内容。
     """
 
-    ALAS = _load_icon("alas")
+    # 首屏图标使用独立静态资源，避免每个 PyWebIO 会话都发送 Base64 图片。
+    ALAS = (
+        '<img class="alas-icon" '
+        'src="static/assets/spa/spa-icon-192x192.png" '
+        'alt="ALAS" width="42" height="42" decoding="async" fetchpriority="high">'
+    )
     SETTING = _load_icon("setting")
     RUN = _load_icon("run")
     DEVELOP = _load_icon("develop")

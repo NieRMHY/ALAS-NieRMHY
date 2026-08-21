@@ -10,23 +10,26 @@ alwaysApply: true
 | 项目 | 内容 |
 |---|---|
 | 文件路径 | `alas.py` |
-| 总行数 | 1509 行 |
+| 总行数 | 1568 行 |
 | 文件类型 | Python 脚本（主入口 + 核心调度器类） |
 | 许可证 | GPL-3.0 |
 | 修改注释 | 基于原版增加了自动尝试重启调度器的功能（rev: auto_restart, Last Updated: 2025-09-01） |
+| 最后分析 | 2026-08-14（dev 分支，commit f992af6c0） |
 
 ### 导入依赖
 
 | 模块来源 | 具体导入 | 用途 |
 |---|---|---|
-| 标准库 | `json`, `os`, `re`, `shutil`, `threading`, `time`, `datetime`, `subprocess`, `tempfile` | 文件操作、正则、线程、时间、进程 |
+| 标准库 | `json`, `os`, `re`, `shutil`, `threading`, `time` 及 `from datetime import datetime, timedelta` | 文件操作、正则、线程、时间（`subprocess`/`tempfile` 在方法内按需导入，非顶层） |
 | 第三方 | `inflection` | 驼峰/下划线命名转换（任务名 -> 方法名） |
 | 第三方 | `cached_property` | 惰性属性缓存 |
 | 项目内部 | `module.base.decorator.del_cached_property` | 清除缓存属性 |
 | 项目内部 | `module.base.api_client.ApiClient` | Bug 日志上报 |
+| 项目内部 | `module.base.ssh.clear_ssh_host_key` | 远程 SSH 执行前清除已知主机密钥 |
 | 项目内部 | `module.config.config.AzurLaneConfig, TaskEnd` | 配置系统 |
 | 项目内部 | `module.config.deep.deep_get, deep_set` | 嵌套字典操作 |
-| 项目内部 | `module.config.utils.filepath_i18n, read_file` | i18n 路径和文件读取 |
+| 项目内部 | `module.config.time_source.now as current_time` | 统一时间源 |
+| 项目内部 | `module.config.utils` | `DEFAULT_CONFIG_NAME`、`ensure_time`、`filepath_i18n`、`get_server_last_update`、`get_server_next_update`、`read_file` |
 | 项目内部 | `module.exception.*` | 全部自定义异常类（通配符导入） |
 | 项目内部 | `module.logger.logger` | 日志系统 |
 | 项目内部 | `module.notify.handle_notify, notify_webui` | 推送通知 |
@@ -65,11 +68,16 @@ def _get_task_display_name(task_command):
 
 > **注意**：旧版本中 `RESTART_SENSITIVE_TASKS = ['Commission', 'Research']` 常量已被移除。
 
-当前实现改为动态判断（alas.py L1401）：`Error_StrictRestart` 启用时，结合 `{task}.Scheduler.Sensitive` 配置项决定是否触发严格重启行为。敏感任务出错时直接停止，不做任何重启。
+当前实现改为动态判断：`Error_StrictRestart`（默认关闭，`config/template.json`）启用时，结合 `{task}.Scheduler.Sensitive` 配置项决定是否触发严格重启行为。敏感任务出错时直接停止（`exit(1)`），不做任何重启。代码中有两处判断：
+
+- `run()` 内每个异常分支都会先调用 `_check_sensitive_exit()`（alas.py L233-L271）：通过 `inflection.camelize(command)` 还原任务名，读取 `{task}.Scheduler.Sensitive`，为真时记录错误现场、推送 onepush + webui 通知并 `exit(1)`；
+- `loop()` 的失败计数检查（alas.py L1431-L1455）：`Error_StrictRestart && 连续失败 >= 1 && {task}.Scheduler.Sensitive` 时上报 bug 日志（`ApiClient.submit_bug_log`）并退出。
+
+`config/template.json` 中默认 `Sensitive: true` 的任务为 `OpsiCrossMonth`、`OpsiAbyssal`、`OpsiObscure`（原 `['Commission', 'Research']` 已不适用）。
 
 ---
 
-## 3. `AzurLaneAutoScript` 类分析 (L61-L1508)
+## 3. `AzurLaneAutoScript` 类分析 (L62-L1564)
 
 ### 3.1 类定义与类属性
 
@@ -81,26 +89,29 @@ class AzurLaneAutoScript:
 - **类型注解**: `stop_event` 是类级别的 `threading.Event`，用于从外部（如 GUI 进程）通知调度器停止
 - **设计**: 类属性默认为 `None`，由 GUI 层在创建实例时注入
 
-### 3.2 `__init__(self, config_name='alas')` (L64-L76)
+### 3.2 `__init__(self, config_name=DEFAULT_CONFIG_NAME)` (L65-L78)
 
 ```python
-def __init__(self, config_name='alas'):
+def __init__(self, config_name=DEFAULT_CONFIG_NAME):
 ```
 
-- **参数**: `config_name` (str) - 配置实例名称，默认 `'alas'`
+- **参数**: `config_name` (str) - 配置实例名称，默认取 `module.config.utils.DEFAULT_CONFIG_NAME`（即 `'alas'`）
 - **初始化状态**:
   - `self.config_name` - 配置实例名
   - `self.is_first_task` (bool) - 标记是否为首次任务（用于跳过启动时的 Restart）
   - `self.failure_record` (dict) - 任务失败计数器 `{task_name: failure_count}`
   - `self.consecutive_game_stuck` (int) - 连续游戏卡死次数
   - `self.consecutive_adb_offline` (int) - 连续 ADB 离线次数
-  - `self.last_emulator_restart_time` (float) - 上次模拟器重启时间戳
+  - `self.script_error_count` (int) - `ScriptError` 连续计数，达到 3 次后退出（代码 bug 重试无意义）
+  - `self.last_emulator_restart_time` (float) - 上次计划重启模拟器的时间戳（`time.monotonic()`）
 
 ---
 
 ### 3.3 惰性缓存属性
 
-#### `config` (L178-L199)
+三个缓存属性初始化失败时均通过 `logger.error_context` 记录错误并 `exit(1)` 终止（`RequestHumanTakeover` 同样终止）；`device`/`checker` 在方法内惰性导入，避免启动时就建立设备连接。
+
+#### `config` (L172-L192)
 
 ```python
 @cached_property
@@ -113,7 +124,7 @@ def config(self):
 - **惰性加载**: 首次访问时从 `config/{config_name}.json` 加载配置
 - **错误处理**: `RequestHumanTakeover` 致命退出，其他异常记录后退出
 
-#### `device` (L201-L223)
+#### `device` (L195-L216)
 
 ```python
 @cached_property
@@ -127,7 +138,7 @@ def device(self):
 - **惰性导入**: 内部导入避免启动时就连接设备
 - **依赖**: 需要 `self.config` 先初始化
 
-#### `checker` (L225-L243)
+#### `checker` (L219-L231)
 
 ```python
 @cached_property
@@ -142,7 +153,7 @@ def checker(self):
 
 ---
 
-### 3.4 核心方法 `run(self, command, skip_first_screenshot=False)` (L279-L531)
+### 3.4 核心方法 `run(self, command, skip_first_screenshot=False)` (L273-L561)
 
 ```python
 def run(self, command, skip_first_screenshot=False):
@@ -151,7 +162,7 @@ def run(self, command, skip_first_screenshot=False):
 **这是整个调度器的任务执行核心方法。**
 
 - **参数**:
-  - `command` (str) - 任务方法名（下划线格式，如 `'research'`）
+  - `command` (str) - 任务方法名（下划线格式，如 `'research'`；由 `loop()` 通过 `inflection.underscore(task)` 转换）
   - `skip_first_screenshot` (bool) - 是否跳过首次截图
 - **返回值**:
   - `True` - 任务成功完成
@@ -161,99 +172,109 @@ def run(self, command, skip_first_screenshot=False):
 **执行流程**:
 1. 截图（除非 `skip_first_screenshot=True`）
 2. 通过 `self.__getattribute__(command)()` 动态调用对应任务方法
-3. 根据异常类型进行分级错误处理
+3. 根据异常类型进行分级错误处理（每个分支先调用 `_check_sensitive_exit()` 判断是否为敏感任务）
 
-**异常处理矩阵**:
+**异常处理矩阵**（当前版本调度器"永不主动退出"，绝大多数错误都转为 `'recoverable'` 自动恢复）：
 
 | 异常类型 | 处理策略 | 返回值 | 是否通知 | 是否重启 |
 |---|---|---|---|---|
 | `TaskEnd` | 正常结束 | `True` | 否 | 否 |
-| `GameNotRunningError` | 调度 Restart 任务 | `'recoverable'` | 是 (onepush + webui) | 游戏重启 |
-| `GameStuckError` / `GameTooManyClickError` | 保存日志，尝试重启模拟器 | `'recoverable'` | 是 | 可能模拟器重启 |
+| `GameNotRunningError` | 注入 Restart 任务自动恢复 | `'recoverable'` | 是 (onepush + webui) | 游戏重启 |
+| `GameStuckError` / `GameTooManyClickError` | 保存日志；`Error_GameStuckRestart` 启用时按 `Error_GameStuckThreshold` 计数，达到阈值重启模拟器；否则重启游戏 | `'recoverable'` | 是 | 游戏/模拟器重启 |
 | `GameBugError` | 重启游戏修复客户端 bug | `'recoverable'` | 是 | 游戏重启 |
-| `GamePageUnknownError` | 检查服务器状态，等待恢复 | `False` 或 `exit(1)` | 是 | 视情况 |
-| `ScriptError` | 开发者错误，终止 | `raise` | 是 | 否 |
-| `EmulatorNotRunningError` | 尝试重启模拟器 | `'recoverable'` 或 `exit(1)` | 是 | 模拟器重启 |
-| `RequestHumanTakeover` | 不可恢复，终止 | `exit(1)` | 是 | 否 |
-| `AutoSearchSetError` | 配置错误，终止 | `exit(1)` | 否 | 否 |
-| 其他 `Exception` | 保存日志，终止 | `raise` | 是 | 否 |
+| `GamePageUnknownError` | 检查服务器状态；可用则重启游戏，不可用则等待服务器恢复 | `'recoverable'` / `False` | 是 | 视情况 |
+| `ScriptError` | 连续 3 次后 `exit(1)`（代码 bug 重试无意义），否则重启恢复 | `'recoverable'` / `exit(1)` | 是 | 重启游戏 |
+| `EmulatorNotRunningError` | 始终尝试重启模拟器（失败也不退出） | `'recoverable'` | 是 | 模拟器重启 |
+| `RequestHumanTakeover` | 尝试通过重启模拟器自动恢复（不再直接终止） | `'recoverable'` | 是 | 模拟器重启 |
+| `AutoSearchSetError` | 重启游戏恢复 | `'recoverable'` | 是 | 游戏重启 |
+| 其他 `Exception` | 尝试重启模拟器恢复 | `'recoverable'` | 是 | 模拟器重启 |
 
 **关键设计点**:
 - `'recoverable'` 返回值不计入失败次数限制，这是可恢复错误的核心机制
-- `GameStuckError` 和 `GameTooManyClickError` 有专门的连续卡死计数器，达到阈值时尝试重启模拟器而非仅重启游戏
+- `GameStuckError` 和 `GameTooManyClickError` 有专门的连续卡死计数器（`consecutive_game_stuck`），达到 `Error_GameStuckThreshold`（默认 3）时尝试重启模拟器而非仅重启游戏
+- `RequestHumanTakeover` 由"直接退出"改为"重启模拟器自动恢复"，符合调度器永不主动退出的整体策略
+- 敏感任务（`Sensitive=True`）在任一分支都会被 `_check_sensitive_exit()` 拦截并直接 `exit(1)`
 - 所有错误处理路径都包含 `handle_notify`（onepush 推送）和 `notify_webui`（WebUI 通知）双重通知
 
 ---
 
-### 3.5 `_try_restart_emulator(self)` (L118-L176)
+### 3.5 `_try_restart_emulator(self)` (L80-L139)
 
 ```python
 def _try_restart_emulator(self):
 ```
 
-- **功能**: 尝试重启模拟器
-- **前置条件**: `Error_AdbOfflineRestart` 配置启用且未达到重试上限
-- **返回**: `bool` - 是否成功重启
+- **功能**: 尝试重启模拟器，**永不放弃，一直重试**
+- **前置条件**: 无（不再受 `Error_AdbOfflineRestart` 开关限制，超过阈值仅增加等待间隔）
+- **返回**: `bool` - 重启成功返回 `True`；失败返回 `False`（调度器会继续尝试）
 - **执行流程**:
-  1. 检查配置是否启用重启
-  2. 递增 `consecutive_adb_offline` 计数器
-  3. 检查是否超过阈值 `Error_AdbOfflineThreshold`
-  4. 尝试复用现有的 `self.device` 对象（含 `emulator_instance` 缓存）
-  5. 若 device 未初始化，根据平台回退创建 `PlatformWindows` 或 `PlatformMac`
-  6. 调用 `device.emulator_stop()` -> sleep(5) -> `device.emulator_start()`
-  7. 清除 device 缓存以强制重建连接
+  1. 递增 `consecutive_adb_offline` 计数器，输出 `连续次数/Error_AdbOfflineThreshold`
+  2. 超过阈值 `Error_AdbOfflineThreshold`（默认 3）时不放弃，仅增加等待间隔 `min(300, 30 * (次数 - 阈值 + 1))` 秒后继续重试
+  3. 优先复用已缓存的 `self.device` 对象（含 `emulator_instance` 缓存）
+  4. 若 device 缓存不存在，根据平台回退创建 `PlatformWindows` 或 `PlatformMac`
+  5. 调用 `device.emulator_stop()` -> sleep(5) -> `device.emulator_start()`
+  6. 成功后 `del_cached_property(self, 'device')` 强制重建连接，并重置 `consecutive_adb_offline`
+  7. 失败时通过 `logger.exception_context` 记录原因并返回 `False`
 - **平台适配**: 区分 `sys.platform == 'darwin'` (macOS) 和其他平台 (Windows)
+- **关联方法**: `_start_emulator_after_long_wait()` (L141-L169) 是省资源模式（长时间等待关闭模拟器后）的显式启动恢复路径，同样不受开关与次数限制
 
 ---
 
-### 3.6 `keep_last_errlog(self, folder_path, n=30)` (L533-L550)
+### 3.6 `keep_last_errlog(self, folder_path, n=30)` (L563-L579)
 
 ```python
 def keep_last_errlog(self, folder_path, n: int = 30):
 ```
 
 - **功能**: 保留错误日志目录中最后 n 个子文件夹，删除旧的
-- **参数**: `folder_path` (str) - 目录路径, `n` (int) - 保留数量
+- **参数**: `folder_path` (str) - 目录路径, `n` (int) - 保留数量（默认 30，对应 `Error_SaveErrorCount`）
 - **行为**: `n <= 0` 时不执行任何操作
 
-### 3.7 `save_error_log(self)` (L551-L610)
+### 3.7 `save_error_log(self)` (L581-L640)
 
 ```python
 def save_error_log(self):
 ```
 
-- **功能**: 保存错误现场（截图 + 日志）到 `./log/error/<config-name>/<timestamp>/`
+- **功能**: 保存错误现场（截图 + 日志）到 `./log/error/<config-name>/<timestamp>/`，同时触发 LLM 错误分析
 - **执行流程**:
-  1. **LLM 分析优先**: 如果启用了 `Error_LlmAnalysis`，先调用 `module.llm.analyze_exception()` 进行 AI 错误分析（避免后续保存截图时二次崩溃导致分析未执行）
-  2. **截图保存**: 从 `device.screenshot_deque` 获取最近截图，进行敏感信息遮罩后保存
-  3. **日志保存**: 读取日志文件，提取最后一个分隔线之后的内容，进行敏感信息遮罩后保存
-  4. **清理旧日志**: 调用 `keep_last_errlog()` 限制日志数量
+  1. **LLM 分析优先**: 如果启用了 `Error_LlmAnalysis` 且 `sys.exc_info()` 存在异常，先调用 `module.llm.analyze_exception()` 进行 AI 错误分析（避免后续保存截图时二次崩溃导致分析未执行）
+  2. **截图保存**: `Error_SaveError` 启用时，从 `device.screenshot_deque` 获取最近截图（仅当 device 已初始化），进行敏感信息遮罩后保存
+  3. **日志保存**: 读取日志文件，提取最后一个 `═` 分隔线之后的内容，进行敏感信息遮罩后保存为 `log.txt`
+  4. **清理旧日志**: 调用 `keep_last_errlog()` 按 `Error_SaveErrorCount`（默认 30）限制日志数量
 
 **安全性**: 使用 `handle_sensitive_image` 和 `handle_sensitive_logs` 处理敏感信息
 
 ---
 
-### 3.8 基础任务方法 (L612-L676)
+### 3.8 基础任务方法 (L642-L706)
 
-#### `restart()` (L612-L617)
+#### `restart()` (L642-L647)
 ```python
 def restart(self):
+    if self.delay_due_restart():
+        return
     LoginHandler(self.config, device=self.device).app_restart()
-    self.config.task_delay(server_update=True)
+    self.delay_next_restart()
 ```
-重启游戏应用并设置下次运行时间。同区域还提供 `restart_random_delay_minutes()`（L619）、`delay_due_restart()`（L632）、`delay_next_restart()`（L655）等延迟控制方法。
+重启游戏应用：先检查每日重启是否命中服务器刷新整点（`delay_due_restart()`，命中则按 `Restart_RandomDelay` 随机延后），再执行 `app_restart()`，最后用 `delay_next_restart()` 安排下一次重启时间。
 
-#### `start()` (L663-L665)
-启动游戏应用（不等待完成）。
+延迟控制方法（每日重启随机延后机制，读取 `Restart_RandomDelay` 与 `Scheduler_ServerUpdate`）：
+- `restart_random_delay_minutes()` (L649-L660) - 获取每日重启的随机延后分钟数
+- `delay_due_restart()` (L662-L683) - 把排在服务器刷新整点的重启改排到随机延后时间
+- `delay_next_restart()` (L685-L691) - 将下一次每日重启延后到服务器刷新后的随机时间
 
-#### `goto_main()` (L667-L676)
-导航到游戏主页面。如果应用已运行则直接导航，否则先启动。
+#### `start()` (L693-L695)
+启动游戏应用（`LoginHandler.app_start()`，含登录等待处理）。
+
+#### `goto_main()` (L697-L706)
+导航到游戏主页面。如果应用已运行则直接 `UI.ui_goto_main()`，否则先启动应用再导航。
 
 ---
 
-### 3.9 游戏任务方法 (L678-L1057)
+### 3.9 游戏任务方法 (L708-L1104)
 
-共 **93 个任务方法**，每个方法遵循统一模式：
+`AzurLaneAutoScript` 类中共 **112 个方法**（`^    def ` 统计），其中 **93 个游戏任务方法**（L708-L1104，`research` → `emulator_manager`）由 `run()` 动态分发，另有 6 个基础任务方法（见 3.8）。每个方法遵循统一模式：
 
 ```python
 def task_name(self):
@@ -289,7 +310,8 @@ def task_name(self):
 | **突袭** | `raid_daily` / `raid` / `raid_scuttle` | `module.raid.*` | 突袭任务 |
 | **活动** | `event_a/b/c/d/sp` | `module.event.campaign_abcd/sp` | 活动战役 (A-D, SP) |
 | **护航** | `maritime_escort` | `module.event.maritime_escort.MaritimeEscort` | 海上护航 |
-| **大世界** | `opsi_*` (18个) | `module.campaign.os_run.OSCampaignRun` | 大世界各种任务（探索/商店/行动力/深渊/强敌/档案/信标/余烬等） |
+| **大世界** | `opsi_*` (17个) | 见下 | 大世界各种任务（探索/商店/行动力/深渊/强敌/档案/信标/余烬等） |
+| **大世界信标/余烬** | `opsi_ash_assist` / `opsi_ash_beacon` | `module.os_ash.meta.AshBeaconAssist` / `OpsiAshBeacon` | 余烬信标支援 / 信标激活 |
 | **主线** | `main/main2/main3` | `module.campaign.run.CampaignRun` | 主线战役（3个槽位） |
 | **活动战役** | `event/event2/event3` | `module.campaign.run.CampaignRun` | 活动战役（3个槽位） |
 | **联动** | `coalition/coalition_sp/coalition_scuttle` | `module.coalition.*` | 联动活动 |
@@ -300,14 +322,14 @@ def task_name(self):
 | **自动配装** | `auto_equip` | `module.auto_equip.auto_equip.AutoEquip` | 自动配装 |
 | **特殊** | `azur_lane_uncensored` | `module.daemon.uncensored.AzurLaneUncensored` | 去遮罩 |
 | **测试** | `benchmark/ocr_benchmark` | `module.daemon.*` | 性能基准测试 |
-| **舰队扫描** | `fleet_scan` | `module.fleet_management.*` | 舰队扫描 |
+| **舰队扫描** | `fleet_scan` | `module.retire.fleet_management.FleetManagement` | 舰队扫描 |
 | **管理** | `game_manager/emulator_manager` | `module.daemon.game_manager/手动SSH` | 游戏/模拟器管理 |
 
-**注意**: `main/main2/main3` 和 `event/event2/event3` 以及 `c72_mystery_farming`、`c122_medium_leveling`、`c124_large_leveling`、`gems_farming`、`three_oil_low_cost`、`ambush11` 都是调用同一个 `CampaignRun.run()`，通过配置区分具体战役。
+**注意**: `main/main2/main3`、`event/event2/event3`、`c72_mystery_farming`、`c122_medium_leveling`、`c124_large_leveling` 均调用 `module.campaign.run.CampaignRun.run()`，通过配置（`Campaign_Name`/`Campaign_Event`/`Campaign_Mode`）区分具体战役；`gems_farming`、`three_oil_low_cost` 调用 `module.campaign.gems_farming.GemsFarming.run()`；`ambush11` 调用 `module.campaign.ambush_1_1.Ambush11.run()`。
 
 ---
 
-### 3.10 `emulator_manager()` (L1058-L1170) - 特殊方法
+### 3.10 `emulator_manager()` (L1088-L1204) - 特殊方法
 
 ```python
 def emulator_manager(self):
@@ -316,55 +338,88 @@ def emulator_manager(self):
 这是唯一一个不遵循统一模式的任务方法，直接在 `alas.py` 中实现了完整的 SSH 远程命令执行逻辑。
 
 - **功能**: 通过 SSH 远程执行模拟器管理命令
-- **配置来源**: 优先 `EmulatorInfo_*` 配置，回退到 `EmulatorManager.EmulatorManager.*`
-- **SSH 参数**: `-n -T -o StrictHostKeyChecking=no -o BatchMode=yes -o ConnectTimeout=10`
-- **密钥处理**: 支持内联私钥（长度 > 50 时写入临时文件），Windows 上使用 `icacls` 设置权限
-- **执行**: 使用 `subprocess.Popen`，30 秒超时，分离的 stdout/stderr 收集线程
-- **安全**: 临时密钥文件在 `finally` 块中清理
+- **配置来源**: 优先 `EmulatorInfo_*` 配置（`EmulatorInfo_EnableRemoteSSH` 等），回退到 `EmulatorManager.EmulatorManager.*`；主机或命令为空时跳过
+- **SSH 参数**: `ssh -n -T -p <port> -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o GlobalKnownHostsFile=/dev/null -o BatchMode=yes -o ConnectTimeout=10`
+- **主机密钥**: 执行前调用 `module.base.ssh.clear_ssh_host_key()` 清除已知主机密钥记录
+- **密钥处理**: 支持内联私钥（长度 > 50 时写入临时文件），Windows 上使用 `icacls /reset /inheritance:r /grant:r <USER>:F` 设置权限，其他平台 `chmod 0o600`
+- **执行**: 使用 `subprocess.Popen`（Windows 上带 `CREATE_NO_WINDOW`），30 秒超时（超时 kill），分离的 stdout/stderr 收集线程（stderr 仅在失败时打印）
+- **安全**: 临时密钥文件在 `finally` 块中清理（删除失败静默忽略）
 
 ---
 
-### 3.11 `wait_until(self, future)` (L1176-L1202)
+### 3.11 `wait_until(self, future)` (L1206-L1232)
 
 ```python
 def wait_until(self, future):
 ```
 
-- **功能**: 等待直到指定时间，同时监控配置变更和停止事件
+- **功能**: 阻塞等待直到指定时间到达，同时监控配置变更和停止事件
 - **参数**: `future` (datetime) - 目标时间
-- **返回**: `True` (等待完成), `False` (配置已更改，需要重新加载)
+- **返回**: `True` (正常等到), `False` (检测到配置变更，需要重新加载)
 - **轮询间隔**: 5 秒
 - **特性**:
   - 加 1 秒缓冲 (`future + timedelta(seconds=1)`)
-  - 使用 `ConfigWatcher` 检测配置文件变更
-  - 检查 `stop_event` 响应外部停止信号
+  - 等待前调用 `config.start_watching()`（`module/config/watcher.py` 的 `ConfigWatcher`）记录基准修改时间
+  - 每轮检查 `stop_event`，置位时记录"更新事件"并 `exit(0)` 退出
+  - 每轮调用 `config.should_reload()` 检测配置文件修改，为真则返回 `False`
 
 ---
 
-### 3.12 `get_next_task(self)` (L1204-L1292)
+### 3.12 `get_next_task(self)` (L1234-L1322)
 
 ```python
 def get_next_task(self):
 ```
 
 - **功能**: 获取下一个待执行的任务
-- **返回**: `str` - 任务命令名
+- **返回**: `str` - 任务命令名（如 `'Restart'`、`'Commission'`）
 - **执行流程**:
-  1. 调用 `config.get_next()` 获取优先级最高的任务
-  2. 绑定任务配置 (`config.bind(task)`)
-  3. 释放非当前任务的资源缓存 (`release_resources()`)
-  4. 如果任务的 `next_run` 在未来，进入等待逻辑
+  1. 调用 `config.get_next()` 获取优先级最高的任务（`module/config/config.py` 的 `get_next_task()` 按 `SCHEDULER_PRIORITY` 过滤排序）
+  2. 绑定任务配置 (`config.bind(task)`)，非 `Alas` 任务时释放资源缓存 (`release_resources(next_task=task.command)`)
+  3. 如果任务的 `next_run` 在未来，进入等待逻辑（置 `is_first_task = False`）
+  4. **省资源长等待**: `Optimization_CloseEmulatorDuringLongWait` 且等待超过 3 小时、存在本地模拟器实例时，先关闭模拟器等待，恢复后由 `_start_emulator_after_long_wait()` 重新启动，非 `Restart` 任务则注入 `Restart`
   5. 等待期间根据 `Optimization_WhenTaskQueueEmpty` 设置执行不同策略：
-     - `close_game` - 关闭游戏释放资源，等待后重启
+     - `close_game` - 关闭游戏释放资源，等待后注入 `Restart`
      - `goto_main` - 导航到主页面，等待后继续
      - `stay_there` - 停留在当前页面，等待后继续
-  6. 等待过程中持续监听配置变更（`wait_until()` 返回 `False` 时重新开始循环）
+     - 其他无效值 - 记录警告并回退 `stay_there`
+  6. 等待过程中持续监听配置变更（`wait_until()` 返回 `False` 时清除 config 缓存重新开始循环）
+  7. 返回前设置 `AzurLaneConfig.is_hoarding_task = False`
 
-**任务优先级** (按代码注释): `Restart > OpsiCrossMonth > Commission > Tactical > Research > Exercise > Dorm > Meowfficer > Guild > Gacha > Reward > ShopFrequent > ... > Main > Main2 > Main3 > GemsFarming`
+**任务优先级**: 定义在 `module/config/config_manual.py` 的 `_DEFAULT_SCHEDULER_PRIORITY`（可由 `YukikazeTaskManager.TaskPriorityAdjustment` 覆盖，经 `SCHEDULER_PRIORITY` 属性合并），在 `module/config/config.py` 的 `get_next_task()` 中通过 `Filter` 应用。当前默认顺序（`>` 表示更高优先级）:
+
+```text
+Restart
+> OpsiCrossMonth
+> Commission > Tactical > Research
+> Exercise
+> Dorm > Meowfficer > Guild > Gacha
+> Reward
+> ShopFrequent > EventShop > ShopOnce > Shipyard > Freebies
+> PrivateQuarters
+> OpsiExplore
+> Minigame > Awaken
+> OpsiAshBeacon
+> OpsiDaily > OpsiShop > OpsiVoucher
+> OpsiScheduling
+> OpsiAbyssal > OpsiStronghold > OpsiObscure > OpsiArchive
+> Daily > Hard > OpsiAshBeacon > OpsiAshAssist > OpsiMonthBoss
+> Sos > EventSp > EventA > EventB > EventC > EventD
+> RaidDaily > CoalitionSp > WarArchives > MaritimeEscort
+> IslandJuuEatery > IslandJuuCoffee > IslandGrill > IslandTeahouse > IslandRestaurant
+> IslandFarm > IslandRancher > IslandMineForest > IslandDailyGather > IslandManufacture
+> IslandAirDrop > IslandBusiness
+> Event > Event2 > Event3 > Raid > Hospital > HospitalEvent > Coalition > CoalitionScuttle > RaidScuttle > Main > Main2 > Main3
+> OpsiMeowfficerFarming
+> GemsFarming
+> Ambush11
+> OpsiHazard1Leveling
+> ThreeOilLowCost
+```
 
 ---
 
-### 3.13 `loop(self)` (L1294-L1507) - 主调度循环
+### 3.13 `loop(self)` (L1324-L1564) - 主调度循环
 
 ```python
 def loop(self):
@@ -372,54 +427,62 @@ def loop(self):
 
 **这是整个程序的主入口循环，实现了完整的任务调度、错误恢复和生命周期管理。**
 
-- **功能**: 无限循环调度任务，处理错误，监控状态
+- **功能**: 无限循环调度任务，处理错误，监控状态。**调度器永不主动退出**——所有未处理异常均通过指数退避重试恢复，唯一例外是 `ScriptError`（`run()` 内连续 3 次后退出）、敏感任务失败（`_check_sensitive_exit()` / `strict_restart` 判断）和 `stop_event` 更新信号
 - **常量**:
-  - `MAX_GLOBAL_FAILURES = 3` - 全局最大连续失败次数
-  - `RESTART_DELAY = 20` - 重启等待秒数
-  - `LONG_WAIT = 300` - 长等待秒数（第 4 次及以上连续失败）
+  - `RESTART_DELAY = 20` - 重启等待基础秒数
+  - `LONG_WAIT = 300` - 指数退避等待上限秒数
+  - （原 `MAX_GLOBAL_FAILURES = 3` 常量已删除，连续全局失败只用于日志展示和退避策略，不再触发退出）
 
 **执行流程**:
 
 ```
 loop()
-  ├── 检查 OOBE (首次配置)
+  ├── 设置文件日志 logger.set_file_logger(config_name)
+  ├── 检查 OOBE (首次配置, is_oobe_needed() -> exit(1))
   ├── while True:
-  │   ├── 检查 stop_event (GUI 更新信号)
+  │   ├── 检查 stop_event (GUI 更新信号 -> break)
   │   ├── checker.wait_until_available() (服务器维护检测)
-  │   ├── 检查计划的模拟器重启 (EmulatorManagement_ScheduledEmulatorRestart)
+  │   ├── 服务器恢复后 (is_recovered) -> 刷新配置并注入 Restart
+  │   ├── 检查计划的模拟器重启 (EmulatorManagement_ScheduledEmulatorRestart + RestartIntervalHours)
   │   ├── get_next_task() 获取下一个任务
   │   ├── 初始化 device
-  │   ├── 跳过首次 Restart 任务
-  │   ├── 清除卡死/点击记录
-  │   ├── run(task) 执行任务
+  │   ├── 跳过首次 Restart 任务 (is_first_task)
+  │   ├── 清除卡死/点击记录 (stuck_record_clear / click_record_clear)
+  │   ├── run(inflection.underscore(task)) 执行任务
   │   ├── 每任务推送通知 (Scheduler_PushNotification)
-  │   ├── 失败计数管理:
+  │   ├── 失败计数管理 (failure_record):
   │   │   ├── success=True -> 重置计数
-  │   │   ├── success='recoverable' -> 不计入
+  │   │   ├── success='recoverable' -> 不计入（也不重置）
   │   │   └── success=False -> 递增计数
-  │   ├── 连续失败 >= 3 次 -> RequestHumanTakeover
-  │   ├── success=True -> 继续下一个任务
+  │   ├── strict_restart 判断: Error_StrictRestart && 失败>=1 && {task}.Scheduler.Sensitive
+  │   │   └── 命中 -> 上报 bug 日志 (ApiClient.submit_bug_log) + exit(1)
+  │   ├── 连续失败 >= 3 次（非敏感任务）-> 不退出，强制重启模拟器 + 注入 Restart，重置计数后继续
+  │   ├── success=True -> 清除配置缓存, 重置全局计数, 继续下一个任务
+  │   ├── success='recoverable' 或 Error_HandleError -> 刷新配置, 继续循环
   │   └── success=False -> 退出循环
   │
-  └── except Exception (全局异常捕获):
+  └── except Exception (全局异常捕获, 永不退出):
       ├── 递增 consecutive_global_failures
-      ├── LLM 错误分析
-      ├── 达到 MAX_GLOBAL_FAILURES -> 保存日志, exit(1)
-      └── 未达到 -> 注入 Restart 任务, 等待后重试
+      ├── LLM 错误分析 (Error_LlmAnalysis -> module.llm.analyze_exception)
+      ├── 首次失败: save_error_log() + ApiClient.submit_bug_log()
+      ├── 尝试重启模拟器 (_try_restart_emulator)
+      ├── 注入 Restart 任务 + 重新加载配置
+      └── 指数退避: min(300, 20 * 2^(连续失败-1)) 秒后重试
 ```
 
 **关键设计**:
 
 1. **双重错误恢复**: 单个任务的 `run()` 方法处理任务级异常，`loop()` 的 `try/except` 处理未预期的全局异常
-2. **分级等待策略**: 连续失败 < 4 次等 20 秒，>= 4 次等 300 秒（防网络波动）
-3. **计划模拟器重启**: 在任务间检查是否需要定时重启模拟器，不中断正在运行的任务
-4. **服务器维护检测**: 通过 `ServerChecker` API 检测游戏服务器状态
-5. **配置热重载**: 通过 `del_cached_property(self, 'config')` 清除缓存，下次访问时重新加载
-6. **LLM 错误分析**: 全局异常时第一时间调用 AI 分析崩溃原因
+2. **永不主动退出**: 全局异常不再因连续失败达到上限而退出，改为指数退避持续重试（上限 300 秒）
+3. **敏感任务保护**: `Error_StrictRestart` + `{task}.Scheduler.Sensitive` 命中时立即退出，避免状态或数据损坏
+4. **计划模拟器重启**: 在任务间检查是否需要定时重启模拟器（`EmulatorManagement_RestartIntervalHours`，默认 4 小时），不中断正在运行的任务
+5. **服务器维护检测**: 通过 `ServerChecker` API 检测游戏服务器状态，恢复后刷新配置并重启游戏客户端
+6. **配置热重载**: 通过 `del_cached_property(self, 'config')` 清除缓存，下次访问时重新加载
+7. **LLM 错误分析**: 全局异常时第一时间调用 AI 分析崩溃原因
 
 ---
 
-### 3.14 `__main__` 入口 (L1507-L1509)
+### 3.14 `__main__` 入口 (L1566-L1568)
 
 ```python
 if __name__ == '__main__':
@@ -463,9 +526,9 @@ config.modified: Dict[str, Any]  # 修改追踪
 alas.py
   ├── AzurLaneConfig (module.config.config)
   │   ├── ConfigUpdater - 配置更新和模板合并
-  │   ├── ManualConfig - 手动配置
+  │   ├── ManualConfig - 手动配置（含 _DEFAULT_SCHEDULER_PRIORITY 任务优先级）
   │   ├── GeneratedConfig - 自动生成的配置属性
-  │   └── ConfigWatcher - 文件变更监控
+  │   └── ConfigWatcher (module.config.watcher) - 文件变更监控
   │
   ├── Device (module.device.device) - 惰性加载
   │   ├── Screenshot - 截图捕获
@@ -475,16 +538,18 @@ alas.py
   │
   ├── ServerChecker (module.server_checker) - 惰性加载
   │
-  ├── 93 个任务处理器 (module.*.*) - 全部惰性加载
+  ├── 93 个游戏任务处理器 + 6 个基础任务方法 (module.*.*) - 全部惰性导入
   │   └── 每个处理器继承 ModuleBase, 实现 run()
   │
   ├── LoginHandler (module.handler.login)
+  │
+  ├── clear_ssh_host_key (module.base.ssh) - emulator_manager 使用
   │
   ├── handle_notify / notify_webui (module.notify)
   │
   ├── ApiClient (module.base.api_client)
   │
-  └── LLM 分析 (module.llm) - 可选
+  └── LLM 分析 (module.llm) - 可选 (Error_LlmAnalysis)
 ```
 
 ---
@@ -495,8 +560,8 @@ alas.py
 
 | 模式 | 应用位置 | 说明 |
 |---|---|---|
-| **命令模式** | `run(command)` + 93 个任务方法 | 通过方法名动态分发任务 |
-| **策略模式** | `get_next_task()` 中的 `Optimization_WhenTaskQueueEmpty` | 空闲时不同行为策略 |
+| **命令模式** | `run(command)` + 93 个游戏任务方法 | 通过方法名动态分发任务 |
+| **策略模式** | `get_next_task()` 中的 `Optimization_WhenTaskQueueEmpty` / `Optimization_CloseEmulatorDuringLongWait` | 空闲时不同行为策略 |
 | **惰性初始化** | `config`, `device`, `checker` 的 `@cached_property` | 按需加载重资源 |
 | **观察者模式** | `ConfigWatcher` + `stop_event` | 监听配置变更和停止信号 |
 | **模板方法** | 所有任务方法遵循相同模式 | 统一的 `import -> 实例化 -> run()` |
@@ -552,9 +617,9 @@ alas.py
 
 | 风险 | 位置 | 严重程度 | 说明 |
 |---|---|---|---|
-| SSH 主机密钥未验证 | `emulator_manager()` L772 | 中 | `StrictHostKeyChecking=no` 可能遭受 MITM 攻击 |
-| 临时密钥文件残留 | `emulator_manager()` L847-L851 | 低 | `except: pass` 静默忽略删除失败 |
-| 通配符异常导入 | L22 | 低 | `from module.exception *` 可能引入意外名称 |
+| SSH 主机密钥未验证 | `emulator_manager()` L1122-L1125 | 中 | `StrictHostKeyChecking=no` 且将 known_hosts 指向 `/dev/null`，可能遭受 MITM 攻击 |
+| 临时密钥文件残留 | `emulator_manager()` L1200-L1204 | 低 | `except: pass` 静默忽略删除失败 |
+| 通配符异常导入 | L26 | 低 | `from module.exception import *` 可能引入意外名称 |
 | LLM API 密钥暴露 | `save_error_log()` | 中 | 错误日志中可能包含 API 密钥 |
 
 ---
@@ -572,8 +637,8 @@ alas.py
 
 ### 9.2 问题与不足
 
-1. **`run()` 方法过长** (180 行): 异常处理逻辑可以提取为独立的错误处理策略类
-2. **`loop()` 方法过长** (200 行): 全局异常处理和任务调度逻辑可分离
+1. **`run()` 方法过长** (289 行, L273-L561): 异常处理逻辑可以提取为独立的错误处理策略类
+2. **`loop()` 方法过长** (241 行, L1324-L1564): 全局异常处理和任务调度逻辑可分离
 3. **通配符导入** (`from module.exception *`): 不利于代码分析和 IDE 支持
 4. **硬编码字符串**: 日志消息中的 emoji 和口语化表达可能影响国际化
 5. **`emulator_manager()` 内联**: SSH 逻辑直接嵌入任务方法，违反单一职责原则
