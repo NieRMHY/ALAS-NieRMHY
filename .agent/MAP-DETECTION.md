@@ -5,6 +5,12 @@ alwaysApply: true
 
 # 地图检测模块 (module/map_detection/) 分析文档
 
+**生成日期**: 2026-08-14
+**项目版本**: dev 分支
+**最后分析的代码版本**: f992af6c0
+
+---
+
 ## 1. 模块概述
 
 **一句话定位**：游戏地图的视觉检测引擎，负责从屏幕截图中识别地图网格、边界、透视关系和网格信息。
@@ -26,7 +32,7 @@ alwaysApply: true
 
 ## 2. 文件清单与逐文件分析
 
-### 2.1 detector.py (55 行)
+### 2.1 detector.py (58 行)
 
 **导出类型**：类 `MapDetector`
 
@@ -38,28 +44,28 @@ alwaysApply: true
 
 **逐行分析**：
 
-**L8-20**：`MapDetector` 类属性：
+**L15-23**：`MapDetector` 类属性：
 - `image`：图像数组
 - `config`：配置对象
 - `left_edge`、`right_edge`、`lower_edge`、`upper_edge`：边界标志
 - `generate`：生成器函数
 
-**L22-29**：`__init__()` 方法，初始化检测器：
+**L25-32**：`__init__()` 方法，初始化检测器：
 - 设置配置
 - 初始化后端
 
-**L31-42**：`detector_set_backend()` 方法，设置检测后端：
+**L34-45**：`detector_set_backend()` 方法，设置检测后端：
 - 支持 `homography` 和 `perspective` 两种后端
 - 默认使用配置中的后端
 
-**L44-55**：`load()` 方法，加载图像：
+**L47-58**：`load()` 方法，加载图像：
 - 调用后端的 `load()` 方法
 - 更新边界标志
 - 设置生成器
 
 ---
 
-### 2.2 perspective.py (438 行)
+### 2.2 perspective.py (442 行)
 
 **导出类型**：类 `Perspective`
 
@@ -78,7 +84,7 @@ alwaysApply: true
 
 **逐行分析**：
 
-**L18-53**：`Perspective` 类属性：
+**L37-54**：`Perspective` 类属性：
 - `image`：图像数组
 - `config`：配置对象
 - `left_edge`、`right_edge`、`lower_edge`、`upper_edge`：边界线
@@ -87,9 +93,9 @@ alwaysApply: true
 - `vanish_point`、`distant_point`：消失点/远点
 - `map_inner`：地图内部区域
 
-**L55-60**：`__init__()` 方法，初始化透视检测器。
+**L56-61**：`__init__()` 方法，初始化透视检测器。
 
-**L62-161**：`load()` 方法，加载图像并检测：
+**L63-163**：`load()` 方法，加载图像并检测：
 - 图像初始化：裁剪、灰度化、UI 遮罩
 - 线检测：水平线、垂直线、边缘线
 - 线预处理：分组、删除、信任设置
@@ -97,50 +103,52 @@ alwaysApply: true
 - 线清洗：中点清洗、边缘分离
 - 日志输出：检测结果统计
 
-**L162-174**：`load_image()` 方法，图像预处理：
+**L164-177**：`load_image()` 方法，图像预处理：
 - RGB 转灰度
 - 应用 UI 遮罩
 - 反转图像
 
-**L176-204**：`find_peaks()` 静态方法，峰值检测：
+**L178-208**：`find_peaks()` 静态方法，峰值检测：
 - 使用 `scipy.signal.find_peaks`
 - 支持水平/垂直模式
 - 应用遮罩
 
-**L206-230**：`hough_lines()` 方法，霍夫线检测：
+**L209-234**：`hough_lines()` 方法，霍夫线检测：
 - 使用 `cv2.HoughLines`
 - 过滤角度范围
 - 处理 rho 符号
 
-**L232-240**：`detect_lines()` 方法，线检测包装器。
+**L235-243**：`detect_lines()` 方法，线检测包装器。
 
-**L242-270**：`draw()` 方法，绘制检测结果。
+**L243-247**：`show_array()` 静态方法，显示检测数组（调试用）。
 
-**L272-285**：`_vanish_point_value()` 方法，消失点价值函数：
+**L248-273**：`draw()` 方法，绘制检测结果。
+
+**L274-287**：`_vanish_point_value()` 方法，消失点价值函数：
 - 使用对数距离度量
 - 鼓励重合线，惩罚错误线
 
-**L287-300**：`_distant_point_value()` 方法，远点价值函数。
+**L288-302**：`_distant_point_value()` 方法，远点价值函数。
 
-**L302-391**：`mid_cleanse()` 方法，中点清洗：
+**L303-394**：`mid_cleanse()` 方法，中点清洗：
 - 转换坐标系统
 - 绘制线条
 - 拟合中点
 - 激活函数处理
 - 填充中点
 
-**L393-430**：`line_cleanse()` 方法，线清洗：
+**L395-433**：`line_cleanse()` 方法，线清洗：
 - 分离边缘
 - 裁剪中点
 - 转换为线对象
 
-**L432-438**：`generate()` 方法，生成网格：
+**L434-442**：`generate()` 方法，生成网格：
 - 交叉点计算
 - 区域生成
 
 ---
 
-### 2.3 homography.py (442 行)
+### 2.3 homography.py (447 行)
 
 **导出类型**：类 `Homography`
 
@@ -158,7 +166,7 @@ alwaysApply: true
 
 **逐行分析**：
 
-**L15-56**：`Homography` 类属性：
+**L37-59**：`Homography` 类属性：
 - `image`：图像数组
 - `config`：配置对象
 - `left_edge`、`right_edge`、`lower_edge`、`upper_edge`：边界标志
@@ -170,40 +178,52 @@ alwaysApply: true
 - `map_inner`：地图内部
 - `_map_edge_count`：边缘计数
 
-**L59-65**：`__init__()` 方法，初始化单应性检测器。
+**L61-68**：`__init__()` 方法，初始化单应性检测器。
 
-**L67-82**：`ui_mask_homo_stroke` 属性，UI 遮罩笔画：
+**L70-85**：`ui_mask_homo_stroke` 属性，UI 遮罩笔画：
 - 根据模式选择遮罩
 - 透视变换
 - 形态学操作
 
-**L84-92**：`load()` 方法，加载图像：
+**L86-95**：`load()` 方法，加载图像：
 - 首次加载时计算单应性
 - 调用 `detect()` 方法
 
-**L94-121**：`load_homography()` 方法，加载单应性数据：
+**L97-125**：`load_homography()` 方法，加载单应性数据：
 - 支持多种输入格式
 - 从存储、透视、图像、文件加载
 
-**L123-154**：`find_homography()` 方法，计算单应性：
+**L127-159**：`find_homography()` 方法，计算单应性：
 - 生成透视数据
 - 对齐图像到左上角
 - 计算变换矩阵
 
-**L156-200**：`detect()` 方法，检测地图：
+**L161-222**：`detect()` 方法，检测地图：
 - 图像初始化
 - 透视变换
 - 边缘检测
 - 查找空闲网格
 - 检测地图边缘
 
-（由于文件过长，仅分析前 200 行）
+**L223-257**：`search_tile_center()` 方法，搜索网格中心。
+
+**L258-292**：`search_tile_corner()` 方法，搜索网格角落。
+
+**L293-336**：`search_tile_rectangle()` 方法，搜索网格矩形。
+
+**L337-381**：`detect_edges()` 方法，边缘检测。
+
+**L382-404**：`generate()` 方法，生成网格。
+
+**L405-423**：`to_perspective()` 方法，转换到透视模式。
+
+**L424-447**：`draw()` 方法，绘制检测结果。
 
 ---
 
-### 2.4 grid.py (47 行)
+### 2.4 grid.py (50 行)
 
-**导出类型**：类 `Grid`
+**导出类型**：类 `Grid`（继承 `GridInfo` + `GridPredictor`）
 
 **导入依赖**：
 - `module.base.decorator.cached_property`：缓存属性
@@ -213,21 +233,21 @@ alwaysApply: true
 
 **逐行分析**：
 
-**L7**：`Grid` 类定义，继承自 `GridInfo` 和 `GridPredictor`。
+**L10**：`Grid` 类定义，继承自 `GridInfo` 和 `GridPredictor`。
 
-**L8-19**：`__init__()` 方法，初始化网格：
+**L11-23**：`__init__()` 方法，初始化网格：
 - 参数：`location`（位置）、`image`（图像）、`corner`（角点）、`config`（配置）
 - 角点格式：左上、右上、左下、右下
 
-**L22-30**：`inner` 属性，内接矩形：
+**L25-33**：`inner` 属性，内接矩形：
 - 使用 `trapezoid2area()` 计算
 - 填充 5 像素
 
-**L32-40**：`outer` 属性，外接矩形：
+**L35-43**：`outer` 属性，外接矩形：
 - 使用 `trapezoid2area()` 计算
 - 收缩 5 像素
 
-**L42-47**：`button` 属性，点击区域：
+**L45-50**：`button` 属性，点击区域：
 - 暴露 `button` 属性，使 Grid 对象可点击
 - 返回 `inner` 区域
 
@@ -242,7 +262,7 @@ alwaysApply: true
 
 **逐行分析**：
 
-**L4-24**：类文档，说明网格属性：
+**L8-26**：类文档，说明网格属性：
 - `++`：陆地
 - `--`：海洋
 - `__`：潜艇生成点
@@ -253,7 +273,7 @@ alwaysApply: true
 - `MA`：弹药可能生成
 - `MS`：塞壬可能生成
 
-**L25-76**：类属性定义：
+**L27-77**：类属性定义：
 - `is_os`：是否大世界
 - `is_land`：是否陆地
 - `is_spawn_point`：是否生成点
@@ -290,17 +310,17 @@ alwaysApply: true
 - `weight`：权重
 - `location`：位置
 
-**L77-98**：`decode()` 方法，解码文本：
+**L79-99**：`decode()` 方法，解码文本：
 - 将文本代码转换为属性
 - 设置 `may_ambush` 属性
 
-**L99-144**：`encode()` 方法，编码文本：
+**L101-146**：`encode()` 方法，编码文本：
 - 将属性转换为文本代码
 - 支持多种状态
 
-**L146-155**：字符串和哈希方法。
+**L148-157**：字符串和哈希方法（`__str__`、`__hash__`、`__eq__`）。
 
-**L157-183**：属性访问器：
+**L159-186**：属性访问器：
 - `str`：字符串表示
 - `is_sea`：是否海洋
 - `may_carrier`：可能航母
@@ -308,11 +328,15 @@ alwaysApply: true
 - `is_accessible_1`、`is_accessible_2`：舰队可达
 - `is_nearby`：是否附近
 
-**L185-200**：`merge()` 方法，合并信息：
+**L187-297**：`merge()` 方法，合并信息：
 - 合并潜艇信息
 - 处理生成点
 
-（由于文件过长，仅分析前 200 行）
+**L298-327**：`wipe_out()`（L298-314）/ `reset()`（L315-327）方法，清除与重置网格状态。
+
+**L328-340**：`covered_grid()` 方法，获取覆盖网格。
+
+**L341-352**：`distance_to()` 方法，计算曼哈顿距离。
 
 ---
 
@@ -322,15 +346,59 @@ alwaysApply: true
 
 **导入依赖**：
 - `module.base.utils`：基础工具
+- `module.config.config.AzurLaneConfig`：配置管理
+- `module.exception.ScriptError`：脚本错误
 - `module.logger.logger`：日志系统
+- `module.map_detection.utils`：检测工具
+- `module.map_detection.utils_assets`：资源工具
+- `module.template.assets`：模板资源
 
 **说明**：网格预测器，通过颜色和模板匹配预测网格状态。
+
+**逐行分析**：
+
+**L14-48**：`__init__()` 方法，初始化预测器并预计算单应性矩阵。
+
+**L49-77**：坐标转换：
+- `screen2grid()`（L49-64）：屏幕坐标转网格坐标
+- `grid2screen()`（L65-77）：网格坐标转屏幕坐标
+
+**L78-88**：`image_trans`（L78-81）/ `image_homo`（L82-88）属性，变换图像。
+
+**L89-118**：`predict()` 方法，综合预测网格状态。
+
+**L119-174**：区域统计工具：
+- `relative_crop()`（L119-135）
+- `relative_rgb_count()`（L136-152）
+- `relative_hsv_count()`（L153-174）
+
+**L175-255**：敌人预测：
+- `predict_enemy_scale()`（L175-195）：敌人规模
+- `predict_enemy_genre()`（L196-234）：敌人类型
+- `predict_boss()`（L235-252）：BOSS
+- `predict_missile_attack()`（L253-255）：导弹攻击
+
+**L256-333**：舰队与事件预测：
+- `predict_fleet()`（L256-260）
+- `predict_submarine()`（L261-265）
+- `predict_caught_by_siren()`（L266-269）
+- `predict_mystery()`（L270-286）
+- `predict_current_fleet()`（L287-298）
+- `predict_sea()`（L299-317）
+- `predict_submarine_move()`（L318-321）
+- `predict_mob_move_icon()`（L322-325）
+- `predict_air_strike_icon()`（L326-333）
+
+**L334-367**：相似度检测：
+- `_image_similar_piece()`（L334-337）、`_image_similar_full()`（L338-343）
+- `is_in_detecting_area()`（L344-350）
+- `is_similar_to()`（L351-367）
 
 ---
 
 ### 2.7 view.py (200 行)
 
-**导出类型**：类 `View`
+**导出类型**：类 `View`（继承 `MapDetector`）
 
 **导入依赖**：
 - `collections`：集合工具
@@ -346,22 +414,22 @@ alwaysApply: true
 
 **逐行分析**：
 
-**L14-19**：`View` 类属性：
+**L17-22**：`View` 类属性：
 - `grids`：网格字典
 - `shape`：形状
 - `center_loca`：中心位置
 - `center_offset`：中心偏移
 - `swipe_base`：滑动基础
 
-**L21-30**：`__init__()` 方法，初始化视图。
+**L24-33**：`__init__()` 方法，初始化视图（mode：'main'/'os'，grid_class）。
 
-**L32-39**：迭代器和访问器方法。
+**L35-42**：迭代器和访问器方法（`__iter__`、`__getitem__`、`__contains__`）。
 
-**L41-44**：`show()` 方法，显示视图。
+**L44-47**：`show()` 方法，显示视图。
 
-**L46-50**：`_image_clear_ui()` 方法，清除 UI。
+**L49-53**：`_image_clear_ui()` 方法，清除 UI。
 
-**L52-98**：`load()` 方法，加载图像：
+**L55-102**：`load()` 方法，加载图像：
 - 清除 UI
 - 调用父类加载
 - 创建局部视图
@@ -369,13 +437,13 @@ alwaysApply: true
 - 查找中心位置
 - 计算滑动基础
 
-**L100-107**：`predict()` 方法，预测网格信息。
+**L104-109**：`predict()` 方法，预测网格信息。
 
-**L109-118**：`update()` 方法，更新图像。
+**L111-119**：`update()` 方法，更新图像。
 
-**L120-137**：`select()` 方法，选择网格。
+**L121-139**：`select()` 方法，选择网格。
 
-**L139-197**：`predict_swipe()` 方法，预测滑动：
+**L141-200**：`predict_swipe()` 方法，预测滑动：
 - 使用当前舰队预测
 - 使用海洋网格预测
 - 暴力匹配
@@ -384,51 +452,66 @@ alwaysApply: true
 
 ### 2.8 utils.py (416 行)
 
-**导出类型**：工具函数和类
+**导出类型**：工具函数和类（`Points`、`Lines`）
 
 **导入依赖**：
 - `numpy`：数值计算
 - `scipy.optimize`：优化算法
-- `module.base.utils`：基础工具
+- `module.base.utils`（area_pad）：基础工具
 
-**说明**：提供地图检测相关的工具函数，包括几何变换、线操作、点操作等。
+**说明**：提供地图检测相关的工具函数，包括几何变换、线操作、点操作等：
+- `Points` 类（L17-93）：二维点集操作（排序、分组、交叉等）
+- `Lines` 类（L94-~400）：直线集合操作（`cross`、`group`、`delete`、`distance_to_point` 等）
+- `points_to_area_generator()`、`cal_distance()`（L405）等辅助函数
 
 ---
 
-### 2.9 utils_assets.py (59 行)
+### 2.9 utils_assets.py (62 行)
 
-**导出类型**：资源常量
+**导出类型**：资源常量、类 `Assets`、单例 `ASSETS`
 
 **导入依赖**：
-- `module.base.utils.load_image`：图像加载
+- `cv2`：图像处理
+- `numpy`：数值计算
+- `module.base.decorator.cached_property`：缓存属性
+- `module.base.mask.Mask`：遮罩类
+- `module.base.utils.crop`：图像裁剪
 
-**说明**：定义 UI 遮罩等资源常量。
+**说明**：定义地图检测所需的蒙版图像和模板资源：
+- 常量（L11-15）：`UI_MASK`、`UI_MASK_OS`、`TILE_CENTER`、`TILE_CORNER`、`DETECTING_AREA`
+- `Assets` 类（L18-59）：通过 `@cached_property` 惰性提供 `ui_mask`、`ui_mask_os`、`ui_mask_stroke`、`ui_mask_in_map`、`ui_mask_os_in_map`、`tile_center_image`、`tile_corner_image`、`tile_corner_image_list`
+- `ASSETS` 单例（L62）
 
 ---
 
 ### 2.10 os_grid.py (331 行)
 
-**导出类型**：类 `OSGridInfo`、`OSGridPredictor`
+**导出类型**：类 `OSGridInfo`、`OSGridPredictor`、`OSGrid`
 
 **导入依赖**：
-- `module.map_detection.grid.Grid`：网格类
-- `module.map_detection.grid_predictor.GridPredictor`：网格预测
+- `module.base.utils`：基础工具
+- `module.map_detection.grid`（`Grid`、`GridInfo`、`GridPredictor`）：基础网格类
+- `module.map_detection.utils_assets.ASSETS`：检测资源
+- `module.os.assets`：大世界资源
+- `module.os.radar.RadarGrid`：雷达网格
+- `module.template.assets`：模板资源
 
-**说明**：大世界网格类。`OSGridInfo` 继承自 `Grid`，`OSGridPredictor` 继承自 `GridPredictor`。
-
-> **注意**：不存在名为 `OSGrid` 的类（旧文档误标），实际类名为 `OSGridInfo` 和 `OSGridPredictor`。
+**说明**：大世界网格类：
+- `OSGridInfo`（L12-154）继承自 `GridInfo`，扩展大世界特有属性（敌人、资源、问号、盟友等）与雷达扫描状态（`is_radar_scanned` 等）
+- `OSGridPredictor`（L156-328）继承自 `GridPredictor`，实现大世界网格预测（敌人类别 `predict_enemy_genre`、敌人规模 `predict_enemy_scale`、舰队机制 `predict_fleet_mechanism` 等）
+- `OSGrid`（L330）为组合类：`class OSGrid(OSGridInfo, OSGridPredictor, Grid)`（空实现，仅组合三个基类的能力）
 
 ---
 
-### 2.11 detector_example.py (47 行)
+### 2.11 detector_example.py (50 行)
 
-**导出类型**：示例代码
+**导出类型**：示例代码（类 `DetectionBackendExample`）
 
 **导入依赖**：
+- `numpy`：数值计算
 - `module.config.config.AzurLaneConfig`：配置管理
-- `module.map_detection.view.View`：视图类
 
-**说明**：地图检测的使用示例。
+**说明**：地图检测后端的使用示例，演示如何实现 `load`/`generate` 等接口供 `MapDetector` 调用。
 
 ---
 
@@ -488,10 +571,18 @@ graph TD
 ### 4.2 内部依赖
 - `module.base.utils`：基础工具
 - `module.base.decorator.cached_property`：缓存属性
+- `module.base.mask.Mask`：遮罩类
 - `module.config.config.AzurLaneConfig`：配置管理
-- `module.exception.MapDetectionError`：检测异常
+- `module.exception.MapDetectionError`、`ScriptError`：异常定义
 - `module.logger.logger`：日志系统
 - `module.map.map_grids.SelectedGrids`：网格集合
+- `module.map_detection.grid.Grid`：网格类
+- `module.map_detection.grid_info.GridInfo`：网格信息
+- `module.map_detection.grid_predictor.GridPredictor`：网格预测
+- `module.map_detection.utils`：检测工具
+- `module.map_detection.utils_assets`：资源工具
+- `module.os.assets`、`module.os.radar.RadarGrid`：大世界资源（os_grid.py 使用）
+- `module.template.assets`：模板资源
 
 ---
 

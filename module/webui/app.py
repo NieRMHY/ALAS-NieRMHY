@@ -56,7 +56,11 @@ from module.webui.app_instances import InstanceMixin
 from module.webui.app_lifecycle import clearup, startup
 from module.webui.app_manage import app_manage
 from module.webui.app_overview import OverviewMixin
-from module.webui.app_shell import AppShellMixin
+from module.webui.app_shell import (
+    AppShellMixin,
+    normalize_webui_theme,
+    pywebio_theme_for,
+)
 from module.webui.app_stat_action_point import ActionPointStatisticsMixin
 from module.webui.app_stat_action_point_toolbar import ActionPointToolbarMixin
 from module.webui.app_stat_commission import CommissionIncomeStatisticsMixin
@@ -66,6 +70,7 @@ from module.webui.app_stat_resource import ResourceStatisticsMixin
 from module.webui.app_stat_ship import ShipExperienceStatisticsMixin
 from module.webui.app_statistics_page import StatisticsPageMixin
 from module.webui.app_task_config import TaskConfigMixin
+from module.webui.fastapi import INITIAL_LOADING_STYLE_MARKER
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -89,13 +94,15 @@ WEBUI_THEME_STYLE_NAMES = {
 INITIAL_LOADING_JS = """
 (function () {
     var observer = null;
-    function markReady() {
+    function hasContent() {
         var root = document.getElementById("pywebio-scope-ROOT");
         var inputs = document.getElementById("input-cards");
-        var hasContent = (root && root.firstElementChild)
+        return (root && root.firstElementChild)
             || (inputs && inputs.firstElementChild)
             || document.querySelector(".modal");
-        if (!hasContent) return;
+    }
+    function markReady() {
+        if (!hasContent()) return;
         document.documentElement.classList.add("alas-initial-ready");
         if (observer) observer.disconnect();
     }
@@ -128,6 +135,7 @@ def _initial_loading_css(theme: str) -> str:
         accent = "#4e4c97"
         track = "rgba(78, 76, 151, .22)"
     return f"""
+/* {INITIAL_LOADING_STYLE_MARKER} */
 html:not(.alas-initial-ready) #pywebio-scope-ROOT:empty {{
     position: fixed;
     inset: 0;
@@ -229,7 +237,12 @@ def app():
     )
     args, _ = parser.parse_known_args()
 
-    initial_style_names = _initial_style_names(AlasGUI.theme)
+    initial_theme = normalize_webui_theme(State.deploy_config.Theme)
+    initial_pywebio_theme = pywebio_theme_for(initial_theme)
+    AlasGUI.theme = initial_theme
+    State.theme = initial_theme
+    State.deploy_config.Theme = initial_theme
+    initial_style_names = _initial_style_names(initial_theme)
     initial_css_files = (
         INITIAL_WEBUI_CSS,
         *(
@@ -237,7 +250,7 @@ def app():
             for name in initial_style_names[1:]
         ),
     )
-    initial_loading_css = _initial_loading_css(AlasGUI.theme)
+    initial_loading_css = _initial_loading_css(initial_theme)
     lang.LANG = State.deploy_config.Language
     key = args.key if is_webui_password_set(args.key) else State.deploy_config.Password
     cdn: str | bool = args.cdn if args.cdn else State.deploy_config.CDN
@@ -267,7 +280,14 @@ def app():
     }
 
     def _run_gui(initial_page: str = "home") -> None:
-        AlasGUI.set_theme(theme=State.deploy_config.Theme)
+        session_theme = normalize_webui_theme(State.deploy_config.Theme)
+        if session_theme != initial_theme:
+            # 应用运行期间切换主题时，当前 HTML 仍是启动时主题，需要兼容热切换。
+            AlasGUI.set_theme(theme=session_theme)
+        else:
+            # 正常首屏已预载正确主题，避免通过 WebSocket 删除并重复发送 CSS。
+            AlasGUI.theme = session_theme
+            State.theme = session_theme
         set_env(title="ALAS", output_animation=False)  # Modify by MHY, 网页标题改 ALAS
         load_webui_styles(
             theme=AlasGUI.theme,
@@ -291,6 +311,7 @@ def app():
         gui.run(initial_page=initial_page, localstorage=localstorage)
 
     @webconfig(
+        theme=initial_pywebio_theme,
         css_file=initial_css_files,
         css_style=initial_loading_css,
         js_code=INITIAL_LOADING_JS,
@@ -299,6 +320,7 @@ def app():
         _run_gui()
 
     @webconfig(
+        theme=initial_pywebio_theme,
         css_file=initial_css_files,
         css_style=initial_loading_css,
         js_code=INITIAL_LOADING_JS,

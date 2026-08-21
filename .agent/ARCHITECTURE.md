@@ -5,9 +5,9 @@ alwaysApply: true
 
 # 项目架构文档
 
-**生成日期**: 2026-05-27
+**生成日期**: 2026-08-14
 **项目版本**: dev 分支
-**最后分析的代码版本**: cf2944e9e
+**最后分析的代码版本**: f992af6c0
 
 ---
 
@@ -106,31 +106,35 @@ alwaysApply: true
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
+> 注：大世界层另有 `os_simulator`（大世界地图模拟器）子模块，用于地图/事件模拟与策略验证。
+
 ---
 
 ## 三、核心类层次结构
 
 ```
 ModuleBase (module/base/base.py)
-  ← AzurLaneConfig + Device
-  ├── UI (module/ui/ui.py)
-  │   └── InfoHandler (module/handler/info_handler.py)
+  普通类，通过实例属性组合 AzurLaneConfig（self.config）与 Device（self.device）
+  ├── InfoHandler (module/handler/info_handler.py) ← ModuleBase（弹窗/对话框处理）
+  │   └── UI (module/ui/ui.py) ← InfoHandler（页面导航）
+  │       └── LoginHandler (module/handler/login.py) ← UI（应用重启/登录流程）
   ├── Combat (module/combat/combat.py)
-  │   ← Level + HPBalancer + Retirement + SubmarineCall + CombatAuto + CombatManual
-  ├── CampaignBase (module/campaign/campaign_base.py)
-  │   ← CampaignUI + Map + AutoSearchCombat
-  └── LoginHandler (module/handler/login.py)
-      └── ← UI (应用重启/登录流程)
+  │   ← Level + HPBalancer + Retirement + SubmarineCall + CombatAuto + CombatManual + AutoSearchHandler
+  └── CampaignBase (module/campaign/campaign_base.py)
+      ← CampaignUI + Map + AutoSearchCombat
 
 AzurLaneAutoScript (alas.py)
-  ← AzurLaneConfig + Device + ServerChecker
+  普通类，通过 @cached_property 组合 AzurLaneConfig（config）、Device（device）与 ServerChecker（checker）
   └── 通过惰性导入分发到任务模块
 
 Device (module/device/device.py)
   ← Screenshot + Control + AppControl + Input
-  └── Connection (module/device/connection.py)
-      ← ConnectionAttr
-      └── Adb, WSA, Uiautomator2, AScreenCap, MaaTouch, Minitouch, ScrcpyCore, Platform
+  （Screenshot ← Adb / WSA / DroidCast / AScreenCap / Scrcpy / NemuIpc / LDOpenGL 截图后端）
+  （Control ← Hermit / Minitouch / Scrcpy / MaaTouch / NemuIpc 控制后端）
+  （Input ← Uiautomator2；AppControl ← Adb / WSA / Uiautomator2）
+
+Connection (module/device/connection.py)
+  ← ConnectionAttr（ADB 连接层，与 Device 独立）
 ```
 
 ---
@@ -269,6 +273,39 @@ Device.click()/swipe() → 模拟输入
 返回结果 (True/False/'recoverable')
 ```
 
+**任务优先级顺序**：由 `module/config/config_manual.py` 的 `_DEFAULT_SCHEDULER_PRIORITY` 定义，
+`AzurLaneConfig.SCHEDULER_PRIORITY`（`module/config/config.py`）在加载时与用户调整
+（`YukikazeTaskManager.TaskPriorityAdjustment`）合并，最终通过 `Filter` 排序待执行任务：
+
+```
+Restart
+> OpsiCrossMonth
+> Commission > Tactical > Research
+> Exercise
+> Dorm > Meowfficer > Guild > Gacha
+> Reward
+> ShopFrequent > EventShop > ShopOnce > Shipyard > Freebies
+> PrivateQuarters
+> OpsiExplore
+> Minigame > Awaken
+> OpsiAshBeacon
+> OpsiDaily > OpsiShop > OpsiVoucher
+> OpsiScheduling
+> OpsiAbyssal > OpsiStronghold > OpsiObscure > OpsiArchive
+> Daily > Hard > OpsiAshBeacon > OpsiAshAssist > OpsiMonthBoss
+> Sos > EventSp > EventA > EventB > EventC > EventD
+> RaidDaily > CoalitionSp > WarArchives > MaritimeEscort
+> IslandJuuEatery > IslandJuuCoffee > IslandGrill > IslandTeahouse > IslandRestaurant
+> IslandFarm > IslandRancher > IslandMineForest > IslandDailyGather > IslandManufacture
+> IslandAirDrop > IslandBusiness
+> Event > Event2 > Event3 > Raid > Hospital > HospitalEvent > Coalition > CoalitionScuttle > RaidScuttle > Main > Main2 > Main3
+> OpsiMeowfficerFarming
+> GemsFarming
+> Ambush11
+> OpsiHazard1Leveling
+> ThreeOilLowCost
+```
+
 ### 5.2 截图-识别-操作循环
 
 ```
@@ -294,20 +331,22 @@ AzurLaneConfig("alas")
     ↓
 init_task(task) → load()
     ↓
-read_file("./config/alas.json") → 读取用户配置
+read_file("./config/alas.json") → 读取用户配置（ConfigUpdater.read_file）
     ↓
-config_update(old) → 与 args.json 默认值合并
+config_update(old) → 与 args.json 默认值合并（活动关卡/优先级自动更新）
     ↓
-config_redirect(old, new) → 版本迁移
+config_redirect(old, new) → 版本迁移（重定向）
     ↓
-_override(new) → 云手机覆盖
+_override(new) → 云手机覆盖（IS_ON_PHONE_CLOUD）
     ↓
 config_override() → 强制覆盖，重置过期 NextRun
     ↓
-bind(task) → 映射属性名到配置路径
+bind(task) → 映射属性名到配置路径（自动注入 Alas/General/OpsiGeneral/EventGeneral/TaskBalancer）
     ↓
 save() → 写回磁盘
 ```
+
+> 注：`config_update` → `config_redirect` → `_override` 均在 `ConfigUpdater.read_file()`（`module/config/config_updater.py`）内部依次完成。
 
 ---
 
@@ -337,12 +376,14 @@ def some_function(self, skip_first_screenshot=True):
 ### 6.2 多重继承组合模式
 
 ```python
-# ModuleBase 组合了配置和设备
-class ModuleBase(AzurLaneConfig, Device):
-    pass
+# ModuleBase 通过实例属性组合配置与设备（非继承，module/base/base.py）
+class ModuleBase:
+    def __init__(self, config, device=None, task=None):
+        self.config = config
+        self.device = device
 
-# Combat 组合了多个战斗子系统
-class Combat(Level, HPBalancer, Retirement, SubmarineCall, CombatAuto, CombatManual):
+# Combat 组合了多个战斗子系统（另含 AutoSearchHandler 自动搜索处理）
+class Combat(Level, HPBalancer, Retirement, SubmarineCall, CombatAuto, CombatManual, AutoSearchHandler):
     pass
 ```
 
@@ -355,11 +396,18 @@ class Combat(Level, HPBalancer, Retirement, SubmarineCall, CombatAuto, CombatMan
 
 ### 6.4 工厂模式
 
-OCR 模型使用工厂模式创建：
+OCR 模型使用懒加载工厂集合创建（`module/ocr/models.py`）：
 ```python
-# module/ocr/models.py
-azur_lane = lazy_import(lambda: AlOcr('azur_lane'))
-cnocr = lazy_import(lambda: AlOcr('cnocr'))
+class OcrModel:
+    @cached_property
+    def azur_lane(self):
+        return AlOcr(name='azur_lane')
+
+    @cached_property
+    def cnocr(self):
+        return AlOcr(name='cn')
+
+OCR_MODEL = OcrModel()  # 全局共享实例，首次访问时初始化模型
 ```
 
 ### 6.5 观察者模式

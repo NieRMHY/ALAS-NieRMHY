@@ -90,9 +90,9 @@ class CoalitionScuttleCombat(CoalitionCombat):
                 self._withdraw = True
                 self._is_shipwreck = True
                 break
-            # D评价结算界面：S/A/B评价的动画过渡帧可能短暂误匹配D评价模板，
+            # D评价结算界面：S/A/B/C评价的动画过渡帧可能短暂误匹配D评价模板，
             # 但只有真正的沉船才会出现OPTS_INFO_D弹窗。
-            # 此处不设置沉船标记（未经过OPTS_INFO_D确认），让后续S/A/B条件覆盖。
+            # 此处不设置沉船标记（未经过OPTS_INFO_D确认），让后续S/A/B/C条件覆盖。
             if self.appear(BATTLE_STATUS_D) or self.appear(EXP_INFO_D):
                 break
             if confirm_timer.reached():
@@ -106,6 +106,10 @@ class CoalitionScuttleCombat(CoalitionCombat):
             if self.appear(BATTLE_STATUS_A) or self.appear(BATTLE_STATUS_B) \
                     or self.appear(EXP_INFO_A) or self.appear(EXP_INFO_B):
                 self._affection_add(fleet_index)
+                break
+
+            # C评价：胜利但不额外扣减心情，也不累加好感度
+            if self.appear(BATTLE_STATUS_C) or self.appear(EXP_INFO_C):
                 break
 
             # S评价或自动搜索运行中

@@ -5,6 +5,10 @@ alwaysApply: true
 
 # 战役执行模块 (module/campaign/) 分析文档
 
+> 生成日期：2026-08-14
+> 项目版本：dev 分支（HEAD f992af6c0）
+> 最后分析的代码版本：f992af6c0
+
 ## 1. 模块概述
 
 **一句话定位**：战役系统的执行引擎，负责战役的 UI 导航、关卡选择、战斗执行和状态管理的完整生命周期。
@@ -41,49 +45,49 @@ alwaysApply: true
 
 **逐行分析**：
 
-**L10**：`CampaignBase` 类定义，继承自 `CampaignUI`、`Map`、`AutoSearchCombat`。
+**L23**：`CampaignBase` 类定义，继承自 `CampaignUI`、`Map`、`AutoSearchCombat`。
 
-**L11-12**：类属性：
-- `FUNCTION_NAME_BASE`：函数名基础
-- `MAP`：战役地图
+**L38-39**：类属性：
+- `FUNCTION_NAME_BASE`：函数名基础（`'battle_'`）
+- `MAP`：战役地图（类型标注 `CampaignMap`，由子类地图文件赋值）
 
-**L14-19**：`battle_default()` 方法，默认战斗：
+**L41-53**：`battle_default()` 方法，默认战斗：
 - 清除敌人
 - 记录警告
 
-**L21-26**：`battle_boss()` 方法，BOSS 战斗：
+**L55-67**：`battle_boss()` 方法，BOSS 战斗：
 - 暴力清除 BOSS
 
-**L28-46**：`battle_function()` 方法（POOR_MAP_DATA=True）：
+**L69-96**：`battle_function()` 方法（POOR_MAP_DATA=True）：
 - 打破塞壬捕捉
 - 清除所有神秘
 - 拾取弹药
 - 清除 BOSS 或敌人
 
-**L48-77**：`battle_function()` 方法（MAP_CLEAR_ALL_THIS_TIME=True）：
+**L98-135**：`battle_function()` 方法（MAP_CLEAR_ALL_THIS_TIME=True）：
 - 清除所有敌人
 - 处理弹跳敌人、塞壬、机关
 - 清除 BOSS
 
-**L79-92**：`battle_function()` 方法（默认）：
+**L137-160**：`battle_function()` 方法（默认）：
 - 动态选择战斗函数
 - 根据战斗计数选择函数
 
-**L94-117**：`execute_a_battle()` 方法，执行一场战斗：
+**L162-197**：`execute_a_battle()` 方法，执行一场战斗：
 - 尝试执行战斗函数
 - 处理敌人移动异常
 - 错误处理和撤退
 
-**L119-160**：`run()` 方法，战役运行：
+**L199-258**：`run()` 方法，战役运行：
 - 进入地图
 - 地图初始化
 - 执行战斗循环
 - 异常处理
 
-**L162-195**：`_map_battle` 属性，地图战斗计数：
-- 两个版本：普通模式和全清模式
+**L260-295**：`_map_battle` 属性，地图战斗计数：
+- 两个版本（L260 普通模式、L279 全清模式）
 
-**L197-202**：`auto_search_execute_a_battle()` 方法，自动搜索战斗执行。
+**L297-307**：`auto_search_execute_a_battle()` 方法，自动搜索战斗执行。
 
 ---
 
@@ -106,59 +110,59 @@ alwaysApply: true
 
 **逐行分析**：
 
-**L14-46**：`ModeSwitch` 类和实例：
+**L27-38**：`ModeSwitch` 类（继承 `Switch`，重写 `handle_additional` 检测撤退按钮异常）与 L41-65 各实例：
 - `MODE_SWITCH_1`：普通/困难模式切换
 - `MODE_SWITCH_2`：困难/EX 模式切换
 - `MODE_SWITCH_20241219`：20241219 活动模式切换
 - `ASIDE_SWITCH_20241219`：20241219 活动侧边栏切换
 - `ASIDE_SWITCH_20260326`：20260326 活动侧边栏切换
 
-**L48-62**：`is_digit_chapter()` 函数，判断是否数字章节。
+**L68-83**：`is_digit_chapter()` 函数，判断是否数字章节。
 
-**L64**：`CampaignUI` 类定义，继承自 `MapOperation`、`CampaignEvent`、`CampaignOcr`。
+**L86**：`CampaignUI` 类定义，继承自 `MapOperation`、`CampaignEvent`、`CampaignOcr`。
 
-**L65**：`ENTRANCE` 属性，战役入口按钮。
+**L104**：`ENTRANCE` 属性，战役入口按钮。
 
-**L67-113**：`campaign_ensure_chapter()` 方法，确保章节：
+**L106-154**：`campaign_ensure_chapter()` 方法，确保章节：
 - 获取章节索引
 - 处理额外情况
 - 切换章节
 
-**L115-122**：`handle_chapter_additional()` 方法，处理章节额外情况。
+**L156-163**：`handle_chapter_additional()` 方法，处理章节额外情况。
 
-**L124-153**：`campaign_ensure_mode()` 方法，确保模式：
+**L165-196**：`campaign_ensure_mode()` 方法，确保模式：
 - 处理普通/困难/EX 模式切换
 
-**L155-182**：`campaign_ensure_mode_20241219()` 方法，确保 20241219 活动模式。
+**L198-210**：`campaign_ensure_mode_20241219()` 方法，确保 20241219 活动模式。
 
-**L167-181**：`campaign_ensure_aside_20241219()` 方法，确保 20241219 活动侧边栏。
+**L212-228**：`campaign_ensure_aside_20241219()` 方法，确保 20241219 活动侧边栏。
 
-**L183-193**：`campaign_ensure_aside_20260326()` 方法，确保 20260326 活动侧边栏。
+**L230-242**：`campaign_ensure_aside_20260326()` 方法，确保 20260326 活动侧边栏。
 
-**L195-216**：`campaign_get_mode_names()` 方法，获取模式名称。
+**L244-265**：`campaign_get_mode_names()` 方法，获取模式名称。
 
-**L218-233**：`_campaign_name_is_hard()` 方法，判断是否困难模式。
+**L267-281**：`_campaign_name_is_hard()` 方法，判断是否困难模式。
 
-**L234-261**：`campaign_get_entrance()` 方法，获取战役入口。
+**L283-311**：`campaign_get_entrance()` 方法，获取战役入口。
 
-**L263-276**：`campaign_set_chapter_main()` 方法，设置主章节。
+**L313-338**：`campaign_set_chapter_main()` 方法，设置主章节。
 
-**L278-290**：`campaign_set_chapter_event()` 方法，设置活动章节。
+**L340-364**：`campaign_set_chapter_event()` 方法，设置活动章节。
 
-**L292-299**：`campaign_set_chapter_sp()` 方法，设置 SP 章节。
+**L366-384**：`campaign_set_chapter_sp()` 方法，设置 SP 章节。
 
-**L300-383**：`campaign_set_chapter_20241219()` 方法，设置 20241219 活动章节。
+**L386-485**：`campaign_set_chapter_20241219()` 方法，设置 20241219 活动章节。
 
-**L385-404**：`campaign_set_chapter_20260326()` 方法，设置 20260326 活动章节。
+**L487-519**：`campaign_set_chapter_20260326()` 方法，设置 20260326 活动章节。
 
-**L406-431**：`campaign_set_chapter()` 方法，设置章节：
+**L521-547**：`campaign_set_chapter()` 方法，设置章节：
 - 按优先级尝试：主章节 → 20260326 → 20241219 → 活动 → SP
 
-**L432-445**：`handle_campaign_ui_additional()` 方法，处理战役 UI 额外情况。
+**L549-564**：`handle_campaign_ui_additional()` 方法，处理战役 UI 额外情况。
 
-**L447-477**：`ensure_campaign_ui()` 方法，确保战役 UI。
+**L566-598**：`ensure_campaign_ui()` 方法，确保战役 UI。
 
-**L479-484**：`commission_notice_show_at_campaign()` 方法，委托通知显示。
+**L600-607**：`commission_notice_show_at_campaign()` 方法，委托通知显示。
 
 ---
 
@@ -168,9 +172,9 @@ alwaysApply: true
 
 **导入依赖**：
 - `re`：正则表达式
-- `datetime`：日期时间
 - `module.campaign.campaign_status.CampaignStatus`：战役状态
-- `module.config.config_updater`：配置更新器
+- `module.config.config_updater`：配置更新器（`COALITIONS`、`EVENTS`、`GEMS_FARMINGS`、`HOSPITAL`、`MARITIME_ESCORTS`、`RAIDS`）
+- `module.config.time_source.now`：当前时间
 - `module.config.utils.DEFAULT_TIME`：默认时间
 - `module.logger.logger`：日志系统
 - `module.notify.handle_notify`：通知处理
@@ -180,42 +184,50 @@ alwaysApply: true
 
 **逐行分析**：
 
-**L14**：`CampaignEvent` 类定义，继承自 `CampaignStatus`。
+**L33**：`CampaignEvent` 类定义，继承自 `CampaignStatus`。
 
-**L15-29**：`_reset_gems_farming()` 方法，重置钻石 farming：
+**L38-52**：`_reset_gems_farming()` 方法，重置钻石 farming：
 - 重置为 2-4 关卡
 
-**L31-53**：`_disable_tasks()` 方法，禁用任务：
+**L54-78**：`_disable_tasks()` 方法，禁用任务：
 - 禁用普通活动任务
 - 重置钻石 farming
 - 重置活动时间限制
 
-**L55-83**：`event_pt_limit_triggered()` 方法，活动 PT 限制触发：
+**L80-110**：`event_pt_limit_triggered()` 方法，活动 PT 限制触发：
 - 获取 PT 值
 - 检查限制
 - 禁用任务
 
-**L85-113**：`coin_limit_triggered()` 方法，金币限制触发：
+**L112-142**：`coin_limit_triggered()` 方法，金币限制触发：
 - 获取金币值
 - 检查限制
 - 延迟任务
 
-**L115-138**：`event_time_limit_triggered()` 方法，活动时间限制触发：
+**L144-169**：`event_time_limit_triggered()` 方法，活动时间限制触发：
 - 获取时间限制
 - 检查时间
 - 禁用任务
 
-**L140-165**：`triggered_task_balancer()` 方法，任务平衡器触发：
+**L171-199**：`triggered_task_balancer()` 方法，任务平衡器触发：
 - 检查金币限制
 - 判断是否平衡器任务
 
-**L167-173**：`handle_task_balancer()` 方法，处理任务平衡器。
+**L201-207**：`handle_task_balancer()` 方法，处理任务平衡器。
 
-**L175-190**：`is_event_entrance_available()` 方法，活动入口是否可用。
+**L209-226**：`is_event_entrance_available()` 方法，活动入口是否可用。
 
-**L192-200**：`ui_goto_event()` 方法，前往活动页面。
+**L228-241**：`ui_goto_event()` 方法，前往活动页面。
 
-（由于文件过长，仅分析前 200 行）
+**L243-256**：`ui_goto_sp()` 方法，前往 SP 页面。
+
+**L258-268**：`ui_goto_coalition()` 方法，前往联动页面。
+
+**L270-287**：`disable_raid_on_event()` 方法，活动期间禁用突袭任务。
+
+**L289-305**：`disable_event_on_raid()` 方法，突袭期间禁用活动任务。
+
+**L307-316**：`stage_is_main()` 静态方法，判断关卡是否主线关卡。
 
 ---
 
@@ -237,52 +249,82 @@ alwaysApply: true
 
 **逐行分析**：
 
-**L14**：`CampaignOcr` 类定义，继承自 `ModuleBase`。
+**L29**：`CampaignOcr` 类定义，继承自 `ModuleBase`。
 
-**L15-18**：类属性：
+**L39-42**：类属性：
 - `stage_entrance`：关卡入口
 - `campaign_chapter`：战役章节
 - `_stage_detect_area`：关卡检测区域
 
-**L20-39**：`_campaign_get_chapter_index()` 静态方法，获取章节索引。
+**L44-65**：`_campaign_get_chapter_index()` 静态方法，获取章节索引。
 
-**L41-59**：`_campaign_ocr_result_process()` 静态方法，处理 OCR 结果：
+**L67-85**：`_campaign_ocr_result_process()` 静态方法，处理 OCR 结果：
 - 修正破折号
 - 替换错误字符
 - 转换格式
 
-**L61-87**：`_campaign_separate_name()` 静态方法，分离名称：
+**L87-115**：`_campaign_separate_name()` 静态方法，分离名称：
 - 处理 SP、EX、数字等格式
 
-**L89-125**：`campaign_match_multi()` 方法，多模板匹配：
+**L117-153**：`campaign_match_multi()` 方法，多模板匹配：
 - 查找关卡入口
 - 提取名称
 - 加载颜色
 
-**L127-133**：`_stage_image` 属性，关卡图像。
+**L156-162**：`_stage_image` 属性（及 `_stage_image_gray`），关卡图像。
 
-**L135-186**：`campaign_extract_name_image()` 方法（EN 服务器）：
+**L164-215**：`campaign_extract_name_image()` 方法（EN 服务器）：
 - 匹配多种关卡样式
 
-**L188-200**：`campaign_extract_name_image()` 方法（默认）：
+**L217-289**：`campaign_extract_name_image()` 方法（默认）：
 - 匹配关卡入口
 
-（由于文件过长，仅分析前 200 行）
+**L291-311**：`_extract_stage_name()` 静态方法，提取关卡名称。
+
+**L312-363**：`_get_stage_name()` 方法，识别当前页面关卡名称。
+
+**L365-374**：`handle_get_chapter_additional()` 方法，处理章节切换额外情况。
+
+**L376-405**：`get_chapter_index()` 方法，获取当前章节索引。
 
 ---
 
 ### 2.5 campaign_status.py (207 行)
 
-**导出类型**：类 `CampaignStatus`
+**导出类型**：类 `CampaignStatus`、`PtOcr`，实例 `OCR_PT`
 
 **导入依赖**：
-- `module.base.base.ModuleBase`：基础模块
-- `module.base.decorator.cached_property`：缓存属性
-- `module.base.utils`：基础工具
+- `datetime`、`re`、`cv2`、`numpy`：标准库与图像处理
+- `module.base.timer.Timer`：计时器
+- `module.base.utils`：`color_similar`、`get_color` 工具
+- `module.campaign.assets`：战役资源（OCR_COIN、OCR_OIL、OCR_EVENT_PT 等）
+- `module.config.server`：服务器选择
 - `module.logger.logger`：日志系统
-- `module.ocr.ocr.Digit`、`DigitCounter`：OCR 类
+- `module.ocr.ocr.Digit`、`Ocr`：OCR 类
+- `module.ui.ui.UI`：UI 基类
+- `module.log_res.LogRes`：日志资源记录
 
-**说明**：战役状态管理，包括石油、金币、PT 等资源的获取和检测。
+**逐行分析**：
+
+**L38-58**：`PtOcr` 类（继承 `Ocr`），活动 PT 专用 OCR，预处理反色去背景；L61 定义全局实例 `OCR_PT`。
+
+**L64**：`CampaignStatus` 类定义，继承自 `UI`。
+
+**L65-94**：`get_event_pt()` 方法，获取活动 PT 数量：
+- 优先匹配带 `X` 前缀的格式，回退纯数字
+- 通过 `LogRes` 记录 PT 值
+
+**L96-125**：`get_coin()` 方法，获取金币数量：
+- OCR 识别金币值与上限
+- 记录 `LogRes.Coin`
+
+**L127-148**：`_get_num()` 方法，按 `OCR_OIL_CHECK` 颜色分支选择 OCR 参数（原始/黑色遮罩/默认）。
+
+**L150-183**：`get_oil()` 方法，获取石油数量：
+- 检测石油图标，OCR 识别值与上限
+- 记录 `LogRes.Oil`
+
+**L185-207**：`is_balancer_task()` 方法，判断当前任务是否为活动任务（Event/Event2/Raid/Coalition/GemsFarming/ThreeOilLowCost）。
 
 ---
 
@@ -308,9 +350,9 @@ alwaysApply: true
 
 **逐行分析**：
 
-**L18**：`CampaignRun` 类定义，继承自 `CampaignEvent`、`ShopStatus`。
+**L31**：`CampaignRun` 类定义，继承自 `CampaignEvent`、`ShopStatus`。
 
-**L19-27**：类属性：
+**L52-60**：类属性：
 - `folder`：文件夹
 - `name`：名称
 - `stage`：关卡
@@ -321,12 +363,12 @@ alwaysApply: true
 - `run_limit`：运行限制
 - `is_stage_loop`：关卡循环
 
-**L29-68**：`load_campaign()` 方法，加载战役：
+**L62-103**：`load_campaign()` 方法，加载战役：
 - 动态导入地图模块
 - 合并配置
 - 创建战役实例
 
-**L70-141**：`triggered_stop_condition()` 方法，触发停止条件：
+**L105-178**：`triggered_stop_condition()` 方法，触发停止条件：
 - 运行次数限制
 - 等级限制
 - 石油限制
@@ -336,51 +378,79 @@ alwaysApply: true
 - 活动 PT 限制
 - 任务平衡器
 
-**L143-153**：`_triggered_app_restart()` 方法，触发应用重启。
+**L180-192**：`_triggered_app_restart()` 方法，触发应用重启。
 
-**L155-160**：`handle_app_restart()` 方法，处理应用重启。
+**L194-199**：`handle_app_restart()` 方法，处理应用重启。
 
-**L162-200**：`handle_stage_name()` 方法，处理关卡名称：
+**L201-399**：`handle_stage_name()` 方法，处理关卡名称：
 - 处理特殊名称
 - 处理 GemsFarming 和 ThreeOilLowCost
 - 处理活动特殊关卡
 
-（由于文件过长，仅分析前 200 行）
+**L401-415**：`can_use_auto_search_continue()` 方法，判断是否可使用自动搜索续战。
+
+**L417-419**：`after_campaign_run()` 方法，战役运行后处理。
+
+**L421-434**：`handle_commission_notice()` 方法，处理委托完成通知。
+
+**L436-550**：`run()` 方法，战役运行主循环：
+- 加载地图、处理关卡名称
+- 循环执行 `campaign.run()` 直至停止条件/任务切换/一次性关卡限制/关卡循环触发
 
 ---
 
 ### 2.7 gems_farming.py (1175 行)
 
-**导出类型**：类 `GemsFarming`
+**导出类型**：类 `GemsFarming`、`GemsEmotion`、`GemsCampaignOverride`、`GemsEquipmentHandler`
 
 **导入依赖**：
-- `module.campaign.run.CampaignRun`：战役运行
+- `module.campaign.run.CampaignRun`：战役运行框架
+- `module.campaign.campaign_base.CampaignBase`：战役基类（供 `GemsCampaignOverride` 注入）
+- `module.equipment.equipment_code.EquipmentCodeHandler`：装备码处理（供 `GemsEquipmentHandler` 继承）
+- `module.equipment.fleet_equipment.FleetEquipment`：舰队装备管理
+- `module.combat.emotion.Emotion`：情绪管理（供 `GemsEmotion` 继承）
+- `module.retire.retirement.Retirement`：退役与船坞管理（MRO 链含 Dock/Equipment/EquipmentCodeHandler）
 - `module.config.config.AzurLaneConfig`：配置管理
 - `module.exception`：异常定义
 - `module.logger.logger`：日志系统
 
-**说明**：钻石 farming 自动化，支持多种关卡和策略。
+**类结构**：
+- `GemsEmotion`（L53）：钻石 farming 专用情绪管理，低情绪时抛 `CampaignEnd` 触发换船
+- `GemsCampaignOverride`（L86）：覆写 `handle_combat_low_emotion` / `handle_exp_info`
+- `GemsEquipmentHandler`（L154）：装备码导入导出的设备处理
+- `GemsFarming`（L248）：主类，继承 `CampaignRun, FleetEquipment, GemsEquipmentHandler, Retirement`，提供换旗舰/先锋、装备装卸、等级 32 限制、情绪监控等
+
+**说明**：钻石 farming 自动化，支持多种关卡和策略（换船逻辑、困难模式适配、装备码自动装卸）。
 
 ---
 
-### 2.8 os_run.py (162 行)
+### 2.8 os_run.py (175 行)
 
 **导出类型**：类 `OSCampaignRun`（继承 `OSMapOperation`）
 
 **导入依赖**：
-- `module.os.map.OSMapOperation`：大世界地图操作基类
-- `module.config.config.AzurLaneConfig`：配置管理
+- `module.os.map_operation.OSMapOperation`：大世界地图操作基类（实际导入路径）
+- `module.os.config.OSConfig`：大世界配置
+- `module.os.operation_siren.OperationSiren`：大世界主类
+- `module.os_handler.action_point.ActionPointLimit`：行动力不足异常
+- `module.config.utils.get_os_reset_remain`：大世界重置剩余时间
 - `module.logger.logger`：日志系统
 
-**说明**：大世界战役运行。`OSCampaignRun` 提供 16 个 `opsi_*` 方法（`opsi_explore`、`opsi_shop`、`opsi_voucher`、`opsi_daily`、`opsi_stronghold`、`opsi_scheduling`、`opsi_abyssal`、`opsi_archive` 等），对应 `alas.py` 中的大世界任务入口。
+**类结构**：
+- `PREVENT_AP_OVERFLOW_TASK` 常量（L36）：防溢出任务名 `'OpsiPreventActionPointOverflow'`
+- `load_campaign()`（L38）：合并 OSConfig 并实例化 `OperationSiren`，执行 `os_init()`
+- `delay_opsi_tasks_after_ap_limit()`（L44）：行动力不足时按 `delay_minutes` 延迟任务
+- `_run_opsi_task_with_ap_overflow_guard()`（L50）：运行普通大世界任务时临时关闭防溢出任务，结束后恢复调度
+
+**说明**：大世界战役运行。`OSCampaignRun` 提供 **14 个** `opsi_*` 方法：`opsi_explore`、`opsi_shop`、`opsi_voucher`、`opsi_daily`、`opsi_meowfficer_farming`、`opsi_hazard1_leveling`、`opsi_obscure`、`opsi_month_boss`、`opsi_abyssal`、`opsi_archive`、`opsi_stronghold`、`opsi_scheduling`、`opsi_prevent_action_point_overflow`、`opsi_cross_month`，对应 `alas.py` 中的大世界任务入口。其余大世界任务（`opsi_ash_assist`、`opsi_ash_beacon` 在 `module/os_ash/meta.py`；`opsi_daily_delay`、`opsi_daemon` 直接在 `alas.py` 中实现）。
 
 > **注意**：类名是 `OSCampaignRun`，不是 `OpsiRun`（旧文档误标）。
 
 ---
 
-### 2.9 ambush_1_1.py (700+ 行)
+### 2.9 ambush_1_1.py (1100 行)
 
-**导出类型**：类 `Ambush11`（继承 `CampaignRun, FleetEquipment, Retirement`，独立实现不依赖 GemsFarming）
+**导出类型**：类 `Ambush11`（继承 `CampaignRun, FleetEquipment, Retirement`，独立实现不依赖 GemsFarming）、`AmbushEmotion`、`AmbushCampaignOverride`
 
 **导入依赖**：
 - `module.campaign.run.CampaignRun`：战役运行框架
@@ -389,6 +459,11 @@ alwaysApply: true
 - `module.combat.emotion.Emotion`：情绪管理（供 `AmbushEmotion` 注入）
 - `module.retire.retirement.Retirement`：退役与船坞管理（MRO 链含 Dock/Equipment/EquipmentCodeHandler）
 - `module.logger.logger`：日志系统
+
+**类结构**：
+- `AmbushEmotion`（L44）：1-1 伏击专用情绪管理，低情绪时抛 `CampaignEnd` 触发换船
+- `AmbushCampaignOverride`（L74）：覆写 `handle_combat_low_emotion` / `handle_exp_info`
+- `Ambush11`（L142）：主类，继承 `CampaignRun, FleetEquipment, Retirement`，专用于 1-1 伏击刷关/钻石 farming
 
 **说明**：专用于 1-1 伏击刷关/钻石 farming 的独立实现，用于 `ambush11` 任务。框架能力来自继承链（船坞、装备码、退役、装备、UI、地图），换船逻辑与 `GemsFarming` 等价但已内联。配置仍复用 `Ambush11.GemsFarming.*` 配置组。重写旗舰更换策略（填充主舰队 3 个后排槽位）。注意不是单纯的战役地图定义文件。
 
@@ -401,6 +476,25 @@ alwaysApply: true
 **导入依赖**：无（资源定义文件）
 
 **说明**：定义战役系统使用的所有 UI 元素常量。
+
+---
+
+### 2.11 campaign/ 地图数据目录（134 个子目录）
+
+**说明**：`campaign/` 目录存放所有战役地图定义文件（**Python 模块，非 YAML**），由 `module/campaign/run.py` 的 `load_campaign()` 通过 `importlib.import_module()` 动态加载。每个地图文件定义 `MAP = CampaignMap()`（shape/camera_data/map_data/spawn_data）、`class Config`（地图参数）与 `class Campaign(CampaignBase)`（战斗函数），由 `dev_tools/map_extractor.py` 生成。
+
+**目录结构**（共 134 个子目录）：
+
+| 类别 | 数量 | 命名规则 | 示例 |
+|------|------|---------|------|
+| `campaign_main/` | 1 | 主线章节地图（1-16 章，含 base/aircraft/submarine 变体） | `campaign_7_2.py`、`campaign_16_base.py` |
+| `campaign_hard/` | 1 | 困难模式地图 | `campaign_12_4.py` |
+| `campaign_sos/` | 1 | SOS 信号任务地图 | `campaign_3_5.py`、`campaign_base.py` |
+| `campaign_war_archives/` | 1 | 作战档案地图（复用 event 数据） | - |
+| `event_YYYYMMDD_<server>/` | 82 | 限时活动地图，按活动开始日期与服务器命名 | `event_20241219_cn/`、`event_20200521_en/` |
+| `war_archives_YYYYMMDD_<server>/` | 48 | 作战档案活动地图 | `war_archives_20240725_cn/` |
+
+**加载逻辑**（`run.py:load_campaign`）：`folder` 以 `campaign_` 开头时 `stage = '-'.join(name.split('_')[1:3])`（如 `campaign_7_2` → `7-2`）；以 `event` 或 `war_archives` 开头时 `stage = name`。地图文件缺失时抛 `RequestHumanTakeover` 并提示使用 `dev_tools/map_extractor.py` 自行制作。
 
 ---
 

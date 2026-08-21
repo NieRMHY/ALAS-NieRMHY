@@ -748,6 +748,26 @@
     "AdbOfflineThreshold": {
       "name": "Restart When Device Unreachable for X Seconds",
       "help": "The number of times the device cannot be detected in a row triggers a restart."
+    },
+    "WatchdogEnable": {
+      "name": "Watchdog Master Switch",
+      "help": "What's a watchdog? It's a bodyguard running in the background. Turn it on to enable the checks below; turn it off and nothing below matters. Default off."
+    },
+    "WatchdogTaskEnable": {
+      "name": "Auto-restart if task runs too long",
+      "help": "When enabled, if a task runs too long (e.g. stuck on an unskippable story, pathfinding loop), the emulator is force-restarted to break out of it.\nRequires the master switch above to be on. Default off."
+    },
+    "WatchdogTaskTimeout": {
+      "name": "How long before a task is considered stuck (min)",
+      "help": "How many minutes a task can run before it's considered stuck. If exceeded, the emulator is force-restarted.\n0 = never trigger; 99999 = basically never.\nDefault 120 min (2 hours)."
+    },
+    "RestartOperationTimeoutEnable": {
+      "name": "Game restart timeout protection",
+      "help": "When enabled, if a step during game restart (stopping/starting the game) gets stuck for longer than the timeout below, the emulator is considered dead and gets restarted.\nWhen disabled, this check is skipped.\nDefault off."
+    },
+    "RestartOperationTimeout": {
+      "name": "How long before game restart is considered stuck (sec)",
+      "help": "During game restart, if stopping or starting the game is stuck for longer than this many seconds, the emulator is considered dead and gets restarted.\nRequires 'Game restart timeout protection' above to be on.\nDefault 120 sec."
     }
   },
   "Optimization": {
@@ -838,6 +858,14 @@
       "stay_there": "Stay in Place",
       "goto_main": "Go to Main Menu",
       "close_game": "Close Game"
+    },
+    "WhenSchedulerStopped": {
+      "name": "After Stopping Scheduler",
+      "help": "Action to perform after stopping the scheduler from the WebUI",
+      "stay_there": "Stay in Place",
+      "goto_main": "Go to Main Menu",
+      "close_game": "Close Game",
+      "close_emulator": "Close Emulator"
     }
   },
   "GameUpdate": {
@@ -6100,6 +6128,10 @@
       "name": "Restart the emulator regularly",
       "help": "Once enabled, the emulator will automatically restart at specified intervals to avoid memory leaks or lagging caused by long-term running. The restart will wait until the current task is completed before executing it."
     },
+    "ForceScheduledRestart": {
+      "name": "Restart on schedule (don't wait for task)",
+      "help": "When enabled, restarts the emulator right on schedule, without waiting for the current task to finish.\nBut if a sensitive task is currently running, it will still wait for it to finish.\nRequires 'Restart the emulator regularly' above to be on. Default off."
+    },
     "RestartIntervalHours": {
       "name": "Restart interval (hours)",
       "help": "Automatically restart the emulator every few hours."
@@ -6574,6 +6606,7 @@
       "LoadApDataFailed": "Failed to load AP data: {e}",
       "NoApData": "No AP change data yet. Data will be recorded after running OpSi-1.",
       "Refresh": "Refresh",
+      "NewDataAvailable": "New statistics are available. Refresh to update.",
       "NoValidApData": "No valid AP data available.",
       "ViewTitleLine": "Intraday Line (Detailed Fluctuation)",
       "ViewTitleDay": "Day View ({day} Hourly Candles)",

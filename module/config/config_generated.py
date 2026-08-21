@@ -122,6 +122,11 @@ class GeneratedConfig:
     Error_GameStuckThreshold = 3
     Error_AdbOfflineRestart = False
     Error_AdbOfflineThreshold = 3
+    Error_WatchdogEnable = False
+    Error_WatchdogTaskEnable = False
+    Error_WatchdogTaskTimeout = 120
+    Error_RestartOperationTimeoutEnable = False
+    Error_RestartOperationTimeout = 120
 
     # 配置组 `Optimization`
     Optimization_OcrDevice = 'auto'  # auto, qnn_npu, openvino_npu, openvino_gpu, gpu, openvino_cpu, cpu, ane
@@ -136,6 +141,7 @@ class GeneratedConfig:
     Optimization_TaskHoardingDuration = 0
     Optimization_CloseEmulatorDuringLongWait = True  # True, False
     Optimization_WhenTaskQueueEmpty = 'goto_main'  # stay_there, goto_main, close_game
+    Optimization_WhenSchedulerStopped = 'stay_there'  # stay_there, goto_main, close_game, close_emulator
 
     # 配置组 `GameUpdate`
     GameUpdate_Enable = False
@@ -1040,6 +1046,7 @@ class GeneratedConfig:
 
     # 配置组 `EmulatorManagement`
     EmulatorManagement_ScheduledEmulatorRestart = False
+    EmulatorManagement_ForceScheduledRestart = False
     EmulatorManagement_RestartIntervalHours = 4
 
     # 配置组 `EmulatorManager`

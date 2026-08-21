@@ -491,6 +491,34 @@
           1,
           10
         ]
+      },
+      "WatchdogEnable": {
+        "type": "checkbox",
+        "value": false
+      },
+      "WatchdogTaskEnable": {
+        "type": "checkbox",
+        "value": false
+      },
+      "WatchdogTaskTimeout": {
+        "type": "input",
+        "value": 120,
+        "validate": [
+          0,
+          99999
+        ]
+      },
+      "RestartOperationTimeoutEnable": {
+        "type": "checkbox",
+        "value": false
+      },
+      "RestartOperationTimeout": {
+        "type": "input",
+        "value": 120,
+        "validate": [
+          10,
+          600
+        ]
       }
     },
     "Optimization": {
@@ -595,6 +623,16 @@
           "goto_main",
           "close_game"
         ]
+      },
+      "WhenSchedulerStopped": {
+        "type": "select",
+        "value": "stay_there",
+        "option": [
+          "stay_there",
+          "goto_main",
+          "close_game",
+          "close_emulator"
+        ]
       }
     },
     "DropRecord": {
@@ -681,6 +719,10 @@
     },
     "EmulatorManagement": {
       "ScheduledEmulatorRestart": {
+        "type": "checkbox",
+        "value": false
+      },
+      "ForceScheduledRestart": {
         "type": "checkbox",
         "value": false
       },
