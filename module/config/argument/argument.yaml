@@ -201,7 +201,7 @@ Error:
   RestartOperationTimeout:
     value: 120
     validate: [10, 600]
-  # Modify by MHY, 不采纳上游 LLM 外联配置项
+  # Modify by MHY, 不采纳上游 LLM 外联配置项与依赖 LLM 的每日总结
 Optimization:
   OcrDevice:
     value: auto

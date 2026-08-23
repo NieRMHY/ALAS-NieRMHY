@@ -1656,6 +1656,7 @@ class AzurLaneAutoScript:
                 self._watchdog_active = True
                 self._watchdog_task_start = time.monotonic()
                 self._watchdog_task_name = task
+                success = None
                 try:
                     success = self.run(inflection.underscore(task))
                 finally:
