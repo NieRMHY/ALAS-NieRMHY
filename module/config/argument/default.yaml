@@ -29,6 +29,7 @@ EventD:
 RaidAffection:
   Emotion:
     Fleet1Control: prevent_green_face
+    Fleet2Control: prevent_green_face
 
 # ==================== Reward ====================
 

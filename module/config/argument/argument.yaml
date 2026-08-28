@@ -631,6 +631,14 @@ RaidAffection:
   Target:
     value: main
     option: [ vanguard, main ]
+  # Add by MHY, 二队刷法：编队按难度独立保存，二队可用另一难度独立刷另一目标侧
+  Fleet2Enable: false
+  Fleet2Mode:
+    value: normal
+    option: [ easy, normal, hard, ex ]
+  Fleet2Target:
+    value: vanguard
+    option: [ vanguard, main ]
   VanguardAffection:
     value: 0.0
     validate: [0, 100]

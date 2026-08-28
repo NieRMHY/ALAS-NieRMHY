@@ -368,6 +368,9 @@ class GeneratedConfig:
 
     # 配置组 `RaidAffection`
     RaidAffection_Target = 'main'  # vanguard, main
+    RaidAffection_Fleet2Enable = False
+    RaidAffection_Fleet2Mode = 'normal'  # easy, normal, hard, ex
+    RaidAffection_Fleet2Target = 'vanguard'  # vanguard, main
     RaidAffection_VanguardAffection = 0.0
     RaidAffection_MainAffection = 0.0
 

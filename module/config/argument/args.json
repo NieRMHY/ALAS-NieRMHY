@@ -5625,6 +5625,28 @@
           "main"
         ]
       },
+      "Fleet2Enable": {
+        "type": "checkbox",
+        "value": false
+      },
+      "Fleet2Mode": {
+        "type": "select",
+        "value": "normal",
+        "option": [
+          "easy",
+          "normal",
+          "hard",
+          "ex"
+        ]
+      },
+      "Fleet2Target": {
+        "type": "select",
+        "value": "vanguard",
+        "option": [
+          "vanguard",
+          "main"
+        ]
+      },
       "VanguardAffection": {
         "type": "input",
         "value": 0.0,
@@ -5825,25 +5847,23 @@
       },
       "Fleet2Value": {
         "type": "input",
-        "value": 119,
-        "display": "hide"
+        "value": 119
       },
       "Fleet2Record": {
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
         "validate": "datetime",
-        "display": "hide"
+        "display": "disabled"
       },
       "Fleet2Control": {
         "type": "select",
-        "value": "prevent_yellow_face",
+        "value": "prevent_green_face",
         "option": [
           "keep_exp_bonus",
           "prevent_green_face",
           "prevent_yellow_face",
           "prevent_red_face"
-        ],
-        "display": "hide"
+        ]
       },
       "Fleet2Recover": {
         "type": "select",
@@ -5852,13 +5872,11 @@
           "not_in_dormitory",
           "dormitory_floor_1",
           "dormitory_floor_2"
-        ],
-        "display": "hide"
+        ]
       },
       "Fleet2Oath": {
         "type": "checkbox",
-        "value": false,
-        "display": "hide"
+        "value": false
       },
       "Fleet2Onsen": {
         "type": "checkbox",

@@ -1077,6 +1077,9 @@
     },
     "RaidAffection": {
       "Target": "main",
+      "Fleet2Enable": false,
+      "Fleet2Mode": "normal",
+      "Fleet2Target": "vanguard",
       "VanguardAffection": 0.0,
       "MainAffection": 0.0
     },
@@ -1115,7 +1118,7 @@
       "Fleet1Onsen": false,
       "Fleet2Value": 119,
       "Fleet2Record": "2020-01-01 00:00:00",
-      "Fleet2Control": "prevent_yellow_face",
+      "Fleet2Control": "prevent_green_face",
       "Fleet2Recover": "not_in_dormitory",
       "Fleet2Oath": false,
       "Fleet2Onsen": false

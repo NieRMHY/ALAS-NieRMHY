@@ -2049,6 +2049,24 @@
       "vanguard": "Vanguard affection",
       "main": "Main affection"
     },
+    "Fleet2Enable": {
+      "name": "Enable Fleet 2",
+      "help": "Raid fleets are saved per difficulty: fleet 1 uses raid difficulty, fleet 2 uses its own difficulty and target side; emotions tracked independently with auto switching"
+    },
+    "Fleet2Mode": {
+      "name": "Fleet 2 Difficulty",
+      "help": "Difficulty for fleet 2; a different difficulty from fleet 1 keeps two fleet setups saved",
+      "easy": "Easy",
+      "normal": "Normal",
+      "hard": "Hard",
+      "ex": "EX"
+    },
+    "Fleet2Target": {
+      "name": "Fleet 2 Affection Target",
+      "help": "Target side of fleet 2: vanguard farming sacrifices flagship slot, main farming sacrifices vanguard",
+      "vanguard": "Vanguard affection",
+      "main": "Main affection"
+    },
     "VanguardAffection": {
       "name": "Vanguard Affection",
       "help": "Current affection of vanguard target. +1/16 per sortie when morale >= 40 (regardless of result); pauses at 100"
