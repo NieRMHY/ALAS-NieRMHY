@@ -62,11 +62,13 @@ class RaidAffectionRun(RaidScuttleRun):
     def _line_emotion_ready(self, fleet_index):
         """预检线的心情是否可支撑一场出击（出击后仍不低于控制阈值与好感门槛）。
 
+        判定与 emotion.check_reduce 对齐：value 扣除本场消耗后仍需
+        不低于 max(好感门槛, 控制阈值)，否则该线跳过换另一线。
         不做等待与延迟，仅用于双线间的切换决策。
         """
         fleet = self.emotion.fleets[fleet_index - 1]
-        threshold = max(AFFECTION_EMOTION_MIN, fleet.limit) + self.emotion.reduce_per_battle
-        return fleet.value + self.emotion.reduce_per_battle >= threshold
+        threshold = max(AFFECTION_EMOTION_MIN, fleet.limit)
+        return fleet.value - self.emotion.reduce_per_battle >= threshold
 
     def _line_recovered(self, fleet_index):
         """计算线的心情恢复到可出击阈值的时间。"""
