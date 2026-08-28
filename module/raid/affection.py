@@ -6,6 +6,7 @@
 """
 
 from module.exception import ScriptEnd, ScriptError
+from module.handler.fast_forward import AUTO_SEARCH
 from module.logger import logger
 from module.notify import handle_notify
 from module.raid.scuttle import RaidScuttleRun
@@ -33,6 +34,19 @@ class RaidAffectionRun(RaidScuttleRun):
     def change_flagship(self):
         # Modify by MHY, 刷前排好感时牺牲旗舰位，换船只换旗舰白船
         return self._target_vanguard
+
+    def combat_execute(self, auto='combat_auto', submarine='do_not_use', drop=None):
+        """战斗执行前按配置同步战斗内自律寻敌开关。
+
+        默认关闭自律寻敌：舰船站桩接敌，牺牲侧沉船更快；
+        部分突袭战斗无此开关，状态未知时保持现状跳过。
+        """
+        # Add by MHY, 自律寻敌控制开关
+        state = 'on' if self.config.RaidAffection_UseAutoSearch else 'off'
+        current = AUTO_SEARCH.get(main=self)
+        if current != 'unknown' and current != state:
+            self._auto_search_set(state, current=current, skip_first_screenshot=True)
+        super().combat_execute(auto=auto, submarine=submarine, drop=drop)
 
     def _affection_add(self):
         """战斗结束后为目标侧累计好感。

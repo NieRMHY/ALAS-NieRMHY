@@ -1077,6 +1077,7 @@
     },
     "RaidAffection": {
       "Target": "main",
+      "UseAutoSearch": false,
       "VanguardAffection": 0.0,
       "MainAffection": 0.0
     },
