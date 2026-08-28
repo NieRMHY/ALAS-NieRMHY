@@ -630,6 +630,17 @@ CoalitionScuttle:
   Fleet2Affection:
     value: 0.0
     validate: [0, 100]
+# Add by MHY, 共斗刷好感：牺牲一侧速刷 D 评价，出击即 +1/16 好感（与胜负无关）
+RaidAffection:
+  Target:
+    value: main
+    option: [ vanguard, main ]
+  VanguardAffection:
+    value: 0.0
+    validate: [0, 100]
+  MainAffection:
+    value: 0.0
+    validate: [0, 100]
 EventShop:
   UnlockSSRShip: true
   BuyURShip:

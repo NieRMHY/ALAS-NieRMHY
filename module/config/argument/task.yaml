@@ -130,6 +130,15 @@ Event:
       - Fleet
       - Submarine
       - Emotion
+    RaidAffection:
+      - Scheduler
+      - RaidAffection
+      - Raid
+      - Campaign
+      - StopCondition
+      - Fleet
+      - Submarine
+      - Emotion
     Hospital:
       - Scheduler
       - Hospital

@@ -1252,6 +1252,11 @@ class AzurLaneAutoScript:
         from module.raid.scuttle import RaidScuttleRun
         RaidScuttleRun(config=self.config, device=self.device).run()
 
+    def raid_affection(self):
+        # Add by MHY, 共斗刷好感：牺牲一侧舰船速刷 D 评价，为目标侧累计好感
+        from module.raid.affection import RaidAffectionRun
+        RaidAffectionRun(config=self.config, device=self.device).run()
+
     def hospital(self):
         from module.event_hospital.hospital import Hospital
         Hospital(config=self.config, device=self.device).run()

@@ -369,6 +369,11 @@ class GeneratedConfig:
     CoalitionScuttle_Fleet1Affection = 0.0
     CoalitionScuttle_Fleet2Affection = 0.0
 
+    # 配置组 `RaidAffection`
+    RaidAffection_Target = 'main'  # vanguard, main
+    RaidAffection_VanguardAffection = 0.0
+    RaidAffection_MainAffection = 0.0
+
     # 配置组 `EventShop`
     EventShop_UnlockSSRShip = True
     EventShop_BuyURShip = 2  # 0, 1, 2

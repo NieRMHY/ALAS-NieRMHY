@@ -153,11 +153,11 @@ class CoalitionScuttleCombat(CoalitionCombat):
         except CampaignEnd:
             logger.info('联动战斗结束。')
 
-    # Add by MHY, 好感度追踪：编队1/2 胜利且出击时心情≥40 累加 0.05
+    # Modify by MHY, 好感度追踪：编队1/2 胜利且出击时心情≥40 累加 1/16
     def _affection_add(self, fleet_index):
         """胜利时累加编队好感度。
 
-        仅编队1/2参与；出击时心情≥40（正常状态）才累加 0.05。
+        仅编队1/2参与；出击时心情≥40（正常状态）才累加 1/16。
         好感度写回配置自动持久化，满100由 check_affection_stop 暂停任务。
         """
         if fleet_index not in (1, 2):
@@ -169,7 +169,7 @@ class CoalitionScuttleCombat(CoalitionCombat):
             return
         key = 'Fleet1Affection' if fleet_index == 1 else 'Fleet2Affection'
         current = float(getattr(self.config, f'CoalitionScuttle_{key}') or 0)
-        new = min(round(current + 0.05, 2), 100.0)
+        new = min(round(current + 0.0625, 4), 100.0)
         setattr(self.config, f'CoalitionScuttle_{key}', new)
         logger.attr(f'好感度-编队{fleet_index}', f'{new:.2f}/100')
 

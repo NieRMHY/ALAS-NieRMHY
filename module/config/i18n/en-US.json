@@ -106,6 +106,10 @@
       "name": "Raid Scuttle Plus",
       "help": ""
     },
+    "RaidAffection": {
+      "name": "Raid Affection Farming",
+      "help": "Sacrifice one side to end battles quickly with D rating; affection is gained per sortie regardless of result"
+    },
     "Hospital": {
       "name": "Letter from the Deep Valley",
       "help": ""
@@ -2049,6 +2053,26 @@
     "Fleet2Affection": {
       "name": "Fleet 2 Affection",
       "help": "Current affection of fleet 2. +0.05 per win when morale ≥ 40 at sortie; pauses at 100"
+    }
+  },
+  "RaidAffection": {
+    "_info": {
+      "name": "Raid Affection Farming",
+      "help": ""
+    },
+    "Target": {
+      "name": "Affection Target",
+      "help": "Farm vanguard affection by sacrificing the flagship slot (main fleet white ships), or farm main affection by sacrificing the vanguard (vanguard white ships). Battles end quickly with D rating while the other side still gains affection",
+      "vanguard": "Vanguard affection",
+      "main": "Main affection"
+    },
+    "VanguardAffection": {
+      "name": "Vanguard Affection",
+      "help": "Current affection of vanguard target. +1/16 per sortie when morale >= 40 (regardless of result); pauses at 100"
+    },
+    "MainAffection": {
+      "name": "Main Affection",
+      "help": "Current affection of main target. +1/16 per sortie when morale >= 40 (regardless of result); pauses at 100"
     }
   },
   "EventShop": {
