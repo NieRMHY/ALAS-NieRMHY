@@ -14,10 +14,16 @@ from module.raid.scuttle import RaidScuttleRun
 AFFECTION_PER_SORTIE = 0.0625
 # 出击时心情低于该值不累计好感，与连战刷好感保持一致
 AFFECTION_EMOTION_MIN = 40
+# 真胜利判定的石油扣减阈值：困难图胜利扣 25 油，D 评价仅扣水面船数（<=6），中间无重叠
+OIL_WIN_THRESHOLD = 10
 
 
 class RaidAffectionRun(RaidScuttleRun):
     """共斗刷好感主循环，牺牲一侧舰船速刷 D 评价，为目标侧累计好感。"""
+
+    # Add by MHY, 上场评价为正常结算待石油校验，及上场前石油值
+    _pending_normal_end = False
+    _oil_prev = None
 
     @property
     def _target_vanguard(self):
@@ -110,6 +116,19 @@ class RaidAffectionRun(RaidScuttleRun):
             if not self._raid_has_oil_icon:
                 from module.ui.page import page_campaign_menu
                 self.ui_ensure(page_campaign_menu)
+                oil = self.get_oil()
+                # Add by MHY, 石油校验：评价识别可能误判（如 D 误识别为 C），石油扣减不会骗人
+                if self._pending_normal_end:
+                    self._pending_normal_end = False
+                    if self._oil_prev is not None and self._oil_prev - oil >= OIL_WIN_THRESHOLD:
+                        logger.info(
+                            f'[共斗好感] 石油校验: 上场为真胜利 '
+                            f'(扣油 {self._oil_prev - oil} >= {OIL_WIN_THRESHOLD})，换新白船')
+                        self._sacrifice_refresh(mode=mode, raid=name)
+                    else:
+                        oil_drop = self._oil_prev - oil if self._oil_prev is not None else '未知'
+                        logger.info(f'[共斗好感] 石油校验: 上场评价误识别 (扣油 {oil_drop})，不换船继续')
+                self._oil_prev = oil
                 if self.triggered_stop_condition(oil_check=True, coin_check=True):
                     break
 
@@ -149,27 +168,37 @@ class RaidAffectionRun(RaidScuttleRun):
             # Add by MHY, 无论胜负，出击即累计好感
             self._affection_add()
 
-            # 意外胜利后换新白船（复用 RaidScuttle 自愈逻辑）
+            # 评价为正常结算时暂存，待下场读油校验真伪后再决定是否换白船
+            # Modify by MHY, C 评价可能为 D 误识别，石油扣减才是胜负铁证
             if self.triggered_normal_end:
-                self.raid_enter_preparation(mode=mode, raid=name, skip_first_screenshot=False)
-                success = True
-                if self.change_vanguard:
-                    success = self.vanguard_change()
-                if self.change_flagship:
-                    success = success and self.flagship_change()
-
-                self.enter_map_cancel(skip_first_screenshot=False)
                 self.triggered_normal_end = False
-
-                if self.config.task_switched():
-                    self.campaign.ensure_auto_search_exit()
-                    self.config.task_stop()
-                elif not success:
-                    self.campaign.ensure_auto_search_exit()
-                    self.config.task_delay(minute=30)
-                    self.config.task_stop()
+                self._pending_normal_end = True
 
             if self.triggered_stop_condition():
                 break
             if self.config.task_switched():
                 self.config.task_stop()
+
+    def _sacrifice_refresh(self, mode, raid):
+        """真胜利后重进编队换新白船，无可用白船时延迟 30 分钟。
+
+        Args:
+            mode (str): 难度模式。
+            raid (str): 突袭活动名称。
+        """
+        self.raid_enter_preparation(mode=mode, raid=raid, skip_first_screenshot=False)
+        success = True
+        if self.change_vanguard:
+            success = self.vanguard_change()
+        if self.change_flagship:
+            success = success and self.flagship_change()
+
+        self.enter_map_cancel(skip_first_screenshot=False)
+
+        if self.config.task_switched():
+            self.campaign.ensure_auto_search_exit()
+            self.config.task_stop()
+        elif not success:
+            self.campaign.ensure_auto_search_exit()
+            self.config.task_delay(minute=30)
+            self.config.task_stop()
