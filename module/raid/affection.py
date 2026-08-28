@@ -87,6 +87,10 @@ class RaidAffectionRun(RaidScuttleRun):
         if not name or not mode:
             raise ScriptError(f'RaidAffection arguments unfilled. name={name}, mode={mode}')
 
+        # Add by MHY, 共斗仅一个舰队出击，情绪只追踪编队1（record/show/检查的 zip 均按 fleets 截断）
+        if not self.emotion.using_public:
+            self.emotion.fleets = [self.emotion.fleet_1]
+
         self.run_count = 0
         self.run_limit = self.config.StopCondition_RunCount
         while 1:
