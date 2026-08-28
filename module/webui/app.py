@@ -158,7 +158,7 @@ html:not(.alas-initial-ready) #pywebio-scope-ROOT:empty::before {{
 html:not(.alas-initial-ready) #pywebio-scope-ROOT:empty::after {{
     position: absolute;
     top: calc(50% + 34px);
-    content: "AzurPilot";
+    content: "ALAS";
     font: 600 14px/1.5 system-ui, sans-serif;
     letter-spacing: .04em;
 }}

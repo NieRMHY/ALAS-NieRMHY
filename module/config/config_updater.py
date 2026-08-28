@@ -65,7 +65,8 @@ ARCHIVES_PREFIX = {
 MAINS = ['Main', 'Main2', 'Main3']
 EVENTS = ['Event', 'Event2', 'Event3', 'EventA', 'EventB', 'EventC', 'EventD', 'EventSp']
 GEMS_FARMINGS = ['GemsFarming', 'ThreeOilLowCost']
-RAIDS = ['Raid', 'RaidDaily', 'RaidScuttle']
+# Modify by MHY, RaidScuttle 已由 RaidAffection（共斗刷好感）替代
+RAIDS = ['Raid', 'RaidDaily', 'RaidAffection']
 WAR_ARCHIVES = ['WarArchives']
 COALITIONS = ['Coalition', 'CoalitionSp', 'CoalitionScuttle']
 MARITIME_ESCORTS = ['MaritimeEscort']
@@ -636,6 +637,9 @@ class ConfigGenerator:
 class ConfigUpdater:
     # 格式：source, target, (可选) convert_func
     redirection = [
+        # Add by MHY, 共斗刷好感计数器按线拆分，旧进度迁移到一队对应计数器
+        ('RaidAffection.RaidAffection.VanguardAffection', 'RaidAffection.RaidAffection.Fleet1VanguardAffection'),
+        ('RaidAffection.RaidAffection.MainAffection', 'RaidAffection.RaidAffection.Fleet1MainAffection'),
         # ('OpsiDaily.OpsiDaily.BuySupply', 'OpsiShop.Scheduler.Enable'),
         # ('OpsiDaily.Scheduler.Enable', 'OpsiDaily.OpsiDaily.DoMission'),
         # ('OpsiShop.Scheduler.Enable', 'OpsiShop.OpsiShop.BuySupply'),

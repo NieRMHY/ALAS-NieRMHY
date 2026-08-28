@@ -102,9 +102,9 @@
       "name": "Raid Event Plus",
       "help": ""
     },
-    "RaidScuttle": {
-      "name": "Raid Scuttle Plus",
-      "help": ""
+    "RaidAffection": {
+      "name": "Raid Affection Farming",
+      "help": "Sacrifice one side to end battles quickly with D rating; affection is gained per sortie regardless of result"
     },
     "Hospital": {
       "name": "Letter from the Deep Valley",
@@ -1321,6 +1321,7 @@
       "raid_20240328": "From Zero to Hero Rerun",
       "raid_20250116": "Spring Fashion Festa",
       "raid_20260212": "Spring Auction Adventure",
+      "raid_20260827": "The Great Ones Advance Notice",
       "war_archives_20180607_cn": "archives Ink Stained Steel Sakura",
       "war_archives_20180726_cn": "archives Iris of Light and Dark",
       "war_archives_20181020_en": "archives Strive Wish and Strategize",
@@ -1943,19 +1944,6 @@
       "help": ""
     }
   },
-  "RaidScuttle": {
-    "_info": {
-      "name": "Raid Scuttle",
-      "help": "Raid event scuttle settings. Select the position of ships to be sunk."
-    },
-    "Sacrifice": {
-      "name": "Sacrifice ship position",
-      "help": "",
-      "vanguard": "Vanguard",
-      "flagship": "flagship",
-      "vanguard_flagship": "Vanguard + Flagship"
-    }
-  },
   "RaidDaily": {
     "_info": {
       "name": "Raid Daily",
@@ -2048,6 +2036,52 @@
     "Fleet2Affection": {
       "name": "Fleet 2 Affection",
       "help": "Current affection of fleet 2. +0.05 per win when morale ≥ 40 at sortie; pauses at 100"
+    }
+  },
+  "RaidAffection": {
+    "_info": {
+      "name": "Raid Affection Farming",
+      "help": ""
+    },
+    "Target": {
+      "name": "Affection Target",
+      "help": "Farm vanguard affection by sacrificing the flagship slot (main fleet white ships), or farm main affection by sacrificing the vanguard (vanguard white ships). Battles end quickly with D rating while the other side still gains affection",
+      "vanguard": "Vanguard affection",
+      "main": "Main affection"
+    },
+    "Fleet2Enable": {
+      "name": "Enable Fleet 2",
+      "help": "Raid fleets are saved per difficulty: fleet 1 uses raid difficulty, fleet 2 uses its own difficulty and target side; emotions tracked independently with auto switching"
+    },
+    "Fleet2Mode": {
+      "name": "Fleet 2 Difficulty",
+      "help": "Difficulty for fleet 2; a different difficulty from fleet 1 keeps two fleet setups saved",
+      "easy": "Easy",
+      "normal": "Normal",
+      "hard": "Hard",
+      "ex": "EX"
+    },
+    "Fleet2Target": {
+      "name": "Fleet 2 Affection Target",
+      "help": "Target side of fleet 2: vanguard farming sacrifices flagship slot, main farming sacrifices vanguard",
+      "vanguard": "Vanguard affection",
+      "main": "Main affection"
+    },
+    "Fleet1VanguardAffection": {
+      "name": "Fleet 1 Vanguard Affection",
+      "help": "Current affection of fleet 1 vanguard target. +1/16 per sortie when morale >= 40 (regardless of result); line stops at 100"
+    },
+    "Fleet1MainAffection": {
+      "name": "Fleet 1 Main Affection",
+      "help": "Current affection of fleet 1 main target. +1/16 per sortie when morale >= 40 (regardless of result); line stops at 100"
+    },
+    "Fleet2VanguardAffection": {
+      "name": "Fleet 2 Vanguard Affection",
+      "help": "Current affection of fleet 2 vanguard target. +1/16 per sortie when morale >= 40 (regardless of result); line stops at 100"
+    },
+    "Fleet2MainAffection": {
+      "name": "Fleet 2 Main Affection",
+      "help": "Current affection of fleet 2 main target. +1/16 per sortie when morale >= 40 (regardless of result); line stops at 100"
     }
   },
   "EventShop": {

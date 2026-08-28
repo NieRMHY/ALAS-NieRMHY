@@ -354,7 +354,7 @@ YukikazeTaskManager:
       > IslandJuuEatery > IslandJuuCoffee > IslandGrill > IslandTeahouse > IslandRestaurant
       > IslandFarm > IslandRancher > IslandMineForest > IslandDailyGather > IslandManufacture
       > IslandAirDrop > IslandBusiness > IslandDailyOrder > IslandDailyInteract > IslandPearlSell > IslandCargoPreparation
-      > Event > Event2 > Event3 > Raid > Hospital > HospitalEvent > Coalition > RaidScuttle > Main > Main2 > Main3
+      > Event > Event2 > Event3 > Raid > Hospital > HospitalEvent > Coalition > RaidAffection > Main > Main2 > Main3
       > OpsiScheduling
       > OpsiMeowfficerFarming
       > GemsFarming
@@ -594,10 +594,6 @@ Raid:
     value: hard
     option: [easy, normal, hard, ex]
   UseTicket: false
-RaidScuttle:
-  Sacrifice:
-    value: vanguard
-    option: [ vanguard, flagship, vanguard_flagship ]
 RaidDaily:
   StageFilter: |-
     hard > normal > easy
@@ -628,6 +624,32 @@ CoalitionScuttle:
     value: 0.0
     validate: [0, 100]
   Fleet2Affection:
+    value: 0.0
+    validate: [0, 100]
+# Add by MHY, 共斗刷好感：牺牲一侧速刷 D 评价，出击即 +1/16 好感（与胜负无关）
+RaidAffection:
+  Target:
+    value: main
+    option: [ vanguard, main ]
+  # Add by MHY, 二队刷法：编队按难度独立保存，二队可用另一难度独立刷另一目标侧
+  Fleet2Enable: false
+  Fleet2Mode:
+    value: normal
+    option: [ easy, normal, hard, ex ]
+  Fleet2Target:
+    value: vanguard
+    option: [ vanguard, main ]
+  # Add by MHY, 计数器按线拆分：两队独立编队各自的进度，各满 100 各自判断
+  Fleet1VanguardAffection:
+    value: 0.0
+    validate: [0, 100]
+  Fleet1MainAffection:
+    value: 0.0
+    validate: [0, 100]
+  Fleet2VanguardAffection:
+    value: 0.0
+    validate: [0, 100]
+  Fleet2MainAffection:
     value: 0.0
     validate: [0, 100]
 EventShop:
@@ -1122,7 +1144,7 @@ OpsiShop:
       - all
       - custom
   CustomFilter: |-
-    LoggerAbyssalT6 > LoggerAbyssalT5 > LoggerObscure > LoggerAbyssalT4 > ActionPoint > PurpleCoins
+    LoggerAbyssalT6 > LoggerAbyssalT5 > LoggerAbyssalT4 > LoggerObscureT6 > LoggerObscureT5 > LoggerObscureT4 > LoggerObscureT3 > ActionPoint > PurpleCoins
     > GearDesignPlanT3 > PlateRandomT4 > DevelopmentMaterialT3 > GearDesignPlanT2 > GearPart
     > OrdnanceTestingReportT3 > OrdnanceTestingReportT2 > DevelopmentMaterialT2 > OrdnanceTestingReportT1
     > METARedBook > CrystallizedHeatResistantSteel > NanoceramicAlloy > NeuroplasticProstheticArm > SupercavitationGenerator

@@ -1480,7 +1480,7 @@ class OpsiScheduling(CoinTaskMixin, OSMap):
             f'当前行动力={current_ap}, 保留值={month_end_preserve}'
         )
         self.notify_push(
-            title='[AzurPilot] 智能调度+ - 月末清理行动力完成',
+            title='[ALAS] 智能调度+ - 月末清理行动力完成',
             content=(
                 f'月末清理行动力已完成\n'
                 f'总行动力: {total_ap} (保留值 {month_end_preserve})\n'

@@ -555,9 +555,10 @@ class Icon:
     """
 
     # 首屏图标使用独立静态资源，避免每个 PyWebIO 会话都发送 Base64 图片。
+    # Modify by MHY, logo 恢复为 ALAS 图（合并 nanoda 时被切到 AzurPilot 图）
     ALAS = (
         '<img class="alas-icon" '
-        'src="static/assets/spa/spa-icon-192x192.png" '
+        'src="static/assets/gui/icon/alas.png" '
         'alt="ALAS" width="42" height="42" decoding="async" fetchpriority="high">'
     )
     SETTING = _load_icon("setting")

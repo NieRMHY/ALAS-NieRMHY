@@ -25,6 +25,12 @@ EventD:
     StageFilter: |-
       D1 > D2 > D3
 
+# Add by MHY, 共斗刷好感：心情控制默认防止绿脸(>40)，与好感计数门槛对齐
+RaidAffection:
+  Emotion:
+    Fleet1Control: prevent_green_face
+    Fleet2Control: prevent_green_face
+
 # ==================== Reward ====================
 
 # ==================== DailyReward ====================

@@ -121,14 +121,12 @@ Event:
       - Campaign
       - StopCondition
       - Emotion
-    RaidScuttle:
+    RaidAffection:
       - Scheduler
-      - RaidScuttle
+      - RaidAffection
       - Raid
       - Campaign
       - StopCondition
-      - Fleet
-      - Submarine
       - Emotion
     Hospital:
       - Scheduler
