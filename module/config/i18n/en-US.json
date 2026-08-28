@@ -102,10 +102,6 @@
       "name": "Raid Event Plus",
       "help": ""
     },
-    "RaidScuttle": {
-      "name": "Raid Scuttle Plus",
-      "help": ""
-    },
     "RaidAffection": {
       "name": "Raid Affection Farming",
       "help": "Sacrifice one side to end battles quickly with D rating; affection is gained per sortie regardless of result"
@@ -1946,19 +1942,6 @@
     "UseTicket": {
       "name": "Use Exercise Tickets",
       "help": ""
-    }
-  },
-  "RaidScuttle": {
-    "_info": {
-      "name": "Raid Scuttle",
-      "help": "Raid event scuttle settings. Select the position of ships to be sunk."
-    },
-    "Sacrifice": {
-      "name": "Sacrifice ship position",
-      "help": "",
-      "vanguard": "Vanguard",
-      "flagship": "flagship",
-      "vanguard_flagship": "Vanguard + Flagship"
     }
   },
   "RaidDaily": {

@@ -24,6 +24,16 @@ class RaidAffectionRun(RaidScuttleRun):
         """当前是否以刷前排好感为目标（牺牲旗舰位）。"""
         return self.config.RaidAffection_Target == 'vanguard'
 
+    @property
+    def change_vanguard(self):
+        # Modify by MHY, 刷后排好感时牺牲前排，换船只换前排白船
+        return not self._target_vanguard
+
+    @property
+    def change_flagship(self):
+        # Modify by MHY, 刷前排好感时牺牲旗舰位，换船只换旗舰白船
+        return self._target_vanguard
+
     def _affection_add(self):
         """战斗结束后为目标侧累计好感。
 
@@ -76,12 +86,6 @@ class RaidAffectionRun(RaidScuttleRun):
         mode = mode if mode else self.config.Raid_Mode
         if not name or not mode:
             raise ScriptError(f'RaidAffection arguments unfilled. name={name}, mode={mode}')
-
-        # 刷前排好感时牺牲旗舰位，刷后排好感时牺牲前排，由 Sacrifice 覆盖换船逻辑
-        if self._target_vanguard:
-            self.config.override(RaidScuttle_Sacrifice='flagship')
-        else:
-            self.config.override(RaidScuttle_Sacrifice='vanguard')
 
         self.run_count = 0
         self.run_limit = self.config.StopCondition_RunCount

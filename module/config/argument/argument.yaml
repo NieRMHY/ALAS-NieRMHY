@@ -354,7 +354,7 @@ YukikazeTaskManager:
       > IslandJuuEatery > IslandJuuCoffee > IslandGrill > IslandTeahouse > IslandRestaurant
       > IslandFarm > IslandRancher > IslandMineForest > IslandDailyGather > IslandManufacture
       > IslandAirDrop > IslandBusiness > IslandDailyOrder > IslandDailyInteract > IslandPearlSell > IslandCargoPreparation
-      > Event > Event2 > Event3 > Raid > Hospital > HospitalEvent > Coalition > RaidScuttle > Main > Main2 > Main3
+      > Event > Event2 > Event3 > Raid > Hospital > HospitalEvent > Coalition > RaidAffection > Main > Main2 > Main3
       > OpsiScheduling
       > OpsiMeowfficerFarming
       > GemsFarming
@@ -594,10 +594,6 @@ Raid:
     value: hard
     option: [easy, normal, hard, ex]
   UseTicket: false
-RaidScuttle:
-  Sacrifice:
-    value: vanguard
-    option: [ vanguard, flagship, vanguard_flagship ]
 RaidDaily:
   StageFilter: |-
     hard > normal > easy

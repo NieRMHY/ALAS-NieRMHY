@@ -102,10 +102,6 @@
       "name": "共斗活动Plus",
       "help": ""
     },
-    "RaidScuttle": {
-      "name": "共斗沉船Plus",
-      "help": ""
-    },
     "RaidAffection": {
       "name": "共斗刷好感",
       "help": "牺牲一侧舰船速刷 D 评价，出击即累计好感（与胜负无关）"
@@ -1946,19 +1942,6 @@
     "UseTicket": {
       "name": "使用演习券",
       "help": ""
-    }
-  },
-  "RaidScuttle": {
-    "_info": {
-      "name": "共斗沉船",
-      "help": ""
-    },
-    "Sacrifice": {
-      "name": "牺牲船位置",
-      "help": "",
-      "vanguard": "前排",
-      "flagship": "旗舰",
-      "vanguard_flagship": "前排+旗舰"
     }
   },
   "RaidDaily": {

@@ -102,10 +102,6 @@
       "name": "レイドイベントPlus",
       "help": ""
     },
-    "RaidScuttle": {
-      "name": "レイド沈船Plus",
-      "help": ""
-    },
     "RaidAffection": {
       "name": "レイド好感度稼ぎ",
       "help": "片側を犠牲にしてD評価で素早く戦闘を終え、出撃ごとに好感度を獲得（勝敗不問）"
@@ -1946,19 +1942,6 @@
     "UseTicket": {
       "name": "演習チケットを使用する",
       "help": ""
-    }
-  },
-  "RaidScuttle": {
-    "_info": {
-      "name": "共闘沈船",
-      "help": ""
-    },
-    "Sacrifice": {
-      "name": "犠牲船の位置",
-      "help": "",
-      "vanguard": "前衛",
-      "flagship": "旗艦",
-      "vanguard_flagship": "前衛+旗艦"
     }
   },
   "RaidDaily": {

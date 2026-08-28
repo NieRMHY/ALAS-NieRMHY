@@ -65,7 +65,8 @@ ARCHIVES_PREFIX = {
 MAINS = ['Main', 'Main2', 'Main3']
 EVENTS = ['Event', 'Event2', 'Event3', 'EventA', 'EventB', 'EventC', 'EventD', 'EventSp']
 GEMS_FARMINGS = ['GemsFarming', 'ThreeOilLowCost']
-RAIDS = ['Raid', 'RaidDaily', 'RaidScuttle']
+# Modify by MHY, RaidScuttle 已由 RaidAffection（共斗刷好感）替代
+RAIDS = ['Raid', 'RaidDaily', 'RaidAffection']
 WAR_ARCHIVES = ['WarArchives']
 COALITIONS = ['Coalition', 'CoalitionSp', 'CoalitionScuttle']
 MARITIME_ESCORTS = ['MaritimeEscort']
