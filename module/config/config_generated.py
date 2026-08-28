@@ -368,7 +368,6 @@ class GeneratedConfig:
 
     # 配置组 `RaidAffection`
     RaidAffection_Target = 'main'  # vanguard, main
-    RaidAffection_UseAutoSearch = False
     RaidAffection_VanguardAffection = 0.0
     RaidAffection_MainAffection = 0.0
 

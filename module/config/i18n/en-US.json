@@ -2049,10 +2049,6 @@
       "vanguard": "Vanguard affection",
       "main": "Main affection"
     },
-    "UseAutoSearch": {
-      "name": "Use Auto Search",
-      "help": "Off by default: ships stay still and get sunk faster; enable for auto chasing"
-    },
     "VanguardAffection": {
       "name": "Vanguard Affection",
       "help": "Current affection of vanguard target. +1/16 per sortie when morale >= 40 (regardless of result); pauses at 100"

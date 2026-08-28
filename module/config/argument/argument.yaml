@@ -631,8 +631,6 @@ RaidAffection:
   Target:
     value: main
     option: [ vanguard, main ]
-  # Add by MHY, 自律寻敌默认关闭：关闭后舰船站桩接敌，牺牲侧沉船更快
-  UseAutoSearch: false
   VanguardAffection:
     value: 0.0
     validate: [0, 100]

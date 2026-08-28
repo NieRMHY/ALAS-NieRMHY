@@ -5625,10 +5625,6 @@
           "main"
         ]
       },
-      "UseAutoSearch": {
-        "type": "checkbox",
-        "value": false
-      },
       "VanguardAffection": {
         "type": "input",
         "value": 0.0,
