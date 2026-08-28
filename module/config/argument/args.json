@@ -5647,7 +5647,7 @@
           "main"
         ]
       },
-      "VanguardAffection": {
+      "Fleet1VanguardAffection": {
         "type": "input",
         "value": 0.0,
         "validate": [
@@ -5655,7 +5655,23 @@
           100
         ]
       },
-      "MainAffection": {
+      "Fleet1MainAffection": {
+        "type": "input",
+        "value": 0.0,
+        "validate": [
+          0,
+          100
+        ]
+      },
+      "Fleet2VanguardAffection": {
+        "type": "input",
+        "value": 0.0,
+        "validate": [
+          0,
+          100
+        ]
+      },
+      "Fleet2MainAffection": {
         "type": "input",
         "value": 0.0,
         "validate": [

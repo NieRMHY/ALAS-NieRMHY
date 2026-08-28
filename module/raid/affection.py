@@ -30,23 +30,34 @@ class RaidAffectionRun(RaidScuttleRun):
     # 上场出击的线标签（如 hard/normal），用于真胜利通知与日志
     _last_line_label = ''
 
+    # Add by MHY, 计数器按线拆分：两队独立编队各自的进度
+    def _counter_key(self, fleet_index, target):
+        """返回线的好感计数器配置键，按线拆分互不干扰。"""
+        side = 'Vanguard' if target == 'vanguard' else 'Main'
+        return f'Fleet{fleet_index}{side}Affection'
+
+    def _line_full(self, fleet_index, target):
+        """线的目标侧计数器是否已满 100。"""
+        return float(getattr(self.config, f'RaidAffection_{self._counter_key(fleet_index, target)}') or 0) >= 100
+
     def _lines(self):
         """返回启用的刷取线列表，每条线为 (难度, 目标键, 舰队编号, 标签)。
 
         一队绑定 Raid.Mode 与 RaidAffection.Target，心情追踪舰队 1；
         二队由 Fleet2Enable 启用，绑定 Fleet2Mode/Fleet2Target，心情追踪舰队 2。
         """
-        lines = [
+        candidates = [
             (self.config.Raid_Mode, self.config.RaidAffection_Target, 1, self.config.Raid_Mode),
         ]
         if self.config.RaidAffection_Fleet2Enable:
-            lines.append((
+            candidates.append((
                 self.config.RaidAffection_Fleet2Mode,
                 self.config.RaidAffection_Fleet2Target,
                 2,
                 f'{self.config.RaidAffection_Fleet2Mode}二队',
             ))
-        return lines
+        # 目标侧已满 100 的线剔除，全部剔除时由 check_affection_stop 停任务
+        return [line for line in candidates if not self._line_full(line[2], line[1])]
 
     def _line_emotion_ready(self, fleet_index):
         """预检线的心情是否可支撑一场出击（出击后仍不低于控制阈值与好感门槛）。
@@ -67,38 +78,49 @@ class RaidAffectionRun(RaidScuttleRun):
         """战斗结束后为线的目标侧累计好感。
 
         出击时心情低于 40 不计；计数写回配置自动持久化，
-        双计数器随目标切换各自保留。
+        计数器按线拆分，两队进度互不干扰。
         """
         fleet = self.emotion.fleets[fleet_index - 1]
         if fleet.value + self.emotion.reduce_per_battle < AFFECTION_EMOTION_MIN:
             logger.info(f'[共斗好感] 出击时心情不足{AFFECTION_EMOTION_MIN}，不计好感')
             return
-        key = 'VanguardAffection' if target == 'vanguard' else 'MainAffection'
+        key = self._counter_key(fleet_index, target)
         current = float(getattr(self.config, f'RaidAffection_{key}') or 0)
         new = min(round(current + AFFECTION_PER_SORTIE, 4), 100.0)
         setattr(self.config, f'RaidAffection_{key}', new)
-        logger.attr(f'共斗好感-{"前排" if target == "vanguard" else "后排"}', f'{new:.4f}/100')
+        side = '前排' if target == 'vanguard' else '后排'
+        logger.attr(f'共斗好感-{"" if fleet_index == 1 else "二队"}{side}', f'{new:.4f}/100')
 
     def check_affection_stop(self):
-        """启用的线中任一目标侧好感达到 100 时禁用任务并发通知。"""
-        targets = {target for _, target, _, _ in self._lines()}
-        for target in targets:
-            key = 'VanguardAffection' if target == 'vanguard' else 'MainAffection'
-            if float(getattr(self.config, f'RaidAffection_{key}') or 0) >= 100:
-                logger.hr('共斗好感已满，停止刷好感任务')
-                logger.info(
-                    f'前排好感: {float(self.config.RaidAffection_VanguardAffection or 0):.2f}，'
-                    f'后排好感: {float(self.config.RaidAffection_MainAffection or 0):.2f}')
-                self.config.Scheduler_Enable = False
-                handle_notify(
-                    self.config.Error_OnePushConfig,
-                    title='共斗好感已满，任务暂停',
-                    content=f'<{self.config.config_name}> 前排好感: '
-                            f'{float(self.config.RaidAffection_VanguardAffection or 0):.2f}，'
-                            f'后排好感: {float(self.config.RaidAffection_MainAffection or 0):.2f}，'
-                            f'共斗刷好感已暂停',
-                )
-                self.config.task_stop()
+        """所有启用线的目标侧计数器均满 100 时禁用任务并发通知。
+
+        单条线满 100 时该线被 _lines 剔除，其余线继续刷取。
+        """
+        enabled = [
+            (self.config.Raid_Mode, self.config.RaidAffection_Target, 1),
+        ]
+        if self.config.RaidAffection_Fleet2Enable:
+            enabled.append((
+                self.config.RaidAffection_Fleet2Mode,
+                self.config.RaidAffection_Fleet2Target,
+                2,
+            ))
+        if not all(self._line_full(f, t) for _, t, f in enabled):
+            return
+        logger.hr('共斗好感已满，停止刷好感任务')
+        detail = '，'.join(
+            f'{"一队" if f == 1 else "二队"}{"前排" if t == "vanguard" else "后排"}'
+            f'{float(getattr(self.config, f"RaidAffection_{self._counter_key(f, t)}") or 0):.2f}'
+            for _, t, f in enabled
+        )
+        logger.info(detail)
+        self.config.Scheduler_Enable = False
+        handle_notify(
+            self.config.Error_OnePushConfig,
+            title='共斗好感已满，任务暂停',
+            content=f'<{self.config.config_name}> {detail}，共斗刷好感已暂停',
+        )
+        self.config.task_stop()
 
     def run(self, name='', mode='', total=0):
         """

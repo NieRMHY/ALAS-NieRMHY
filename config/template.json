@@ -1080,8 +1080,10 @@
       "Fleet2Enable": false,
       "Fleet2Mode": "normal",
       "Fleet2Target": "vanguard",
-      "VanguardAffection": 0.0,
-      "MainAffection": 0.0
+      "Fleet1VanguardAffection": 0.0,
+      "Fleet1MainAffection": 0.0,
+      "Fleet2VanguardAffection": 0.0,
+      "Fleet2MainAffection": 0.0
     },
     "Raid": {
       "Mode": "hard",

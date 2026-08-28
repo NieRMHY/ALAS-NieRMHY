@@ -637,6 +637,9 @@ class ConfigGenerator:
 class ConfigUpdater:
     # 格式：source, target, (可选) convert_func
     redirection = [
+        # Add by MHY, 共斗刷好感计数器按线拆分，旧进度迁移到一队对应计数器
+        ('RaidAffection.RaidAffection.VanguardAffection', 'RaidAffection.RaidAffection.Fleet1VanguardAffection'),
+        ('RaidAffection.RaidAffection.MainAffection', 'RaidAffection.RaidAffection.Fleet1MainAffection'),
         # ('OpsiDaily.OpsiDaily.BuySupply', 'OpsiShop.Scheduler.Enable'),
         # ('OpsiDaily.Scheduler.Enable', 'OpsiDaily.OpsiDaily.DoMission'),
         # ('OpsiShop.Scheduler.Enable', 'OpsiShop.OpsiShop.BuySupply'),

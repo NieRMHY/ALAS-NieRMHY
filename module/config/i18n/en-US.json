@@ -2067,13 +2067,21 @@
       "vanguard": "Vanguard affection",
       "main": "Main affection"
     },
-    "VanguardAffection": {
-      "name": "Vanguard Affection",
-      "help": "Current affection of vanguard target. +1/16 per sortie when morale >= 40 (regardless of result); pauses at 100"
+    "Fleet1VanguardAffection": {
+      "name": "Fleet 1 Vanguard Affection",
+      "help": "Current affection of fleet 1 vanguard target. +1/16 per sortie when morale >= 40 (regardless of result); line stops at 100"
     },
-    "MainAffection": {
-      "name": "Main Affection",
-      "help": "Current affection of main target. +1/16 per sortie when morale >= 40 (regardless of result); pauses at 100"
+    "Fleet1MainAffection": {
+      "name": "Fleet 1 Main Affection",
+      "help": "Current affection of fleet 1 main target. +1/16 per sortie when morale >= 40 (regardless of result); line stops at 100"
+    },
+    "Fleet2VanguardAffection": {
+      "name": "Fleet 2 Vanguard Affection",
+      "help": "Current affection of fleet 2 vanguard target. +1/16 per sortie when morale >= 40 (regardless of result); line stops at 100"
+    },
+    "Fleet2MainAffection": {
+      "name": "Fleet 2 Main Affection",
+      "help": "Current affection of fleet 2 main target. +1/16 per sortie when morale >= 40 (regardless of result); line stops at 100"
     }
   },
   "EventShop": {

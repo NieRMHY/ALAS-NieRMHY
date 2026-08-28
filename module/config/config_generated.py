@@ -371,8 +371,10 @@ class GeneratedConfig:
     RaidAffection_Fleet2Enable = False
     RaidAffection_Fleet2Mode = 'normal'  # easy, normal, hard, ex
     RaidAffection_Fleet2Target = 'vanguard'  # vanguard, main
-    RaidAffection_VanguardAffection = 0.0
-    RaidAffection_MainAffection = 0.0
+    RaidAffection_Fleet1VanguardAffection = 0.0
+    RaidAffection_Fleet1MainAffection = 0.0
+    RaidAffection_Fleet2VanguardAffection = 0.0
+    RaidAffection_Fleet2MainAffection = 0.0
 
     # 配置组 `EventShop`
     EventShop_UnlockSSRShip = True
