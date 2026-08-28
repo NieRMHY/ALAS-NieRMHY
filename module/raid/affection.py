@@ -155,11 +155,14 @@ class RaidAffectionRun(RaidScuttleRun):
             # Add by MHY, 好感满 100 暂停任务
             self.check_affection_stop()
 
-            # 心情驱动选线：从轮转起点扫描一周，取第一条心情可用的线
+            # 心情驱动选线：从轮转起点扫描一周，跳过已满线，取第一条心情可用的线
             picked = None
             for offset in range(len(lines)):
                 index = (cursor + offset) % len(lines)
                 mode, target, fleet_index, label = lines[index]
+                if self._line_full(fleet_index, target):
+                    logger.info(f'[共斗好感] 线 {label} 好感已满，停刷该线')
+                    continue
                 if self._line_emotion_ready(fleet_index):
                     picked = (index, mode, target, fleet_index, label)
                     break
@@ -171,7 +174,9 @@ class RaidAffectionRun(RaidScuttleRun):
                 self.config.task_delay(target=recovered)
                 break
 
-            cursor, mode, target, fleet_index, label = picked
+            # Modify by MHY, 游标推进到下一条：两队可用时一把一把交替，心情消耗均衡
+            _, mode, target, fleet_index, label = picked
+            cursor = (picked[0] + 1) % len(lines)
             logger.hr(f'{name}_{label}', level=2)
             if self.config.StopCondition_RunCount > 0:
                 logger.info(f'剩余次数: {self.config.StopCondition_RunCount}')
