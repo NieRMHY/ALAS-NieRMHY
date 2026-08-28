@@ -264,11 +264,29 @@ Raid:
     Fleet2Recover: not_in_dormitory
     Fleet2Oath: false
 
-RaidScuttle:
+# Add by MHY, 共斗刷好感：结构对齐共斗活动，隐藏 raid 用不到的参数
+RaidAffection:
   Campaign:
     Name: dynamic
-    Event:
-      type: state
+    Mode: normal
+    UseClearMode: true
+    UseFleetLock: true
+    UseAutoSearch: false
+    Use2xBook: false
+    AmbushEvade: true
+  StopCondition:
+    MapAchievement: non_stop
+    StageIncrease: false
+    GetNewShip: false
+    ReachLevel: 0
+  Emotion:
+    Fleet1Control: prevent_yellow_face
+    Fleet2Value: 119
+    Fleet2Record: 2020-01-01 00:00:00
+    Fleet2Control: prevent_yellow_face
+    Fleet2Recover: not_in_dormitory
+    Fleet2Oath: false
+
 Hospital:
   StopCondition:
     RunCount: 0

@@ -5661,7 +5661,8 @@
     "Campaign": {
       "Name": {
         "type": "input",
-        "value": "12-4"
+        "value": "dynamic",
+        "display": "hide"
       },
       "Event": {
         "type": "select",
@@ -5696,23 +5697,28 @@
       },
       "UseClearMode": {
         "type": "checkbox",
-        "value": true
+        "value": true,
+        "display": "hide"
       },
       "UseFleetLock": {
         "type": "checkbox",
-        "value": true
+        "value": true,
+        "display": "hide"
       },
       "UseAutoSearch": {
         "type": "checkbox",
-        "value": true
+        "value": false,
+        "display": "hide"
       },
       "Use2xBook": {
         "type": "checkbox",
-        "value": false
+        "value": false,
+        "display": "hide"
       },
       "AmbushEvade": {
         "type": "checkbox",
-        "value": true
+        "value": true,
+        "display": "hide"
       },
       "UseRecommendFleet": {
         "type": "checkbox",
@@ -5751,19 +5757,23 @@
           "map_3_stars",
           "threat_safe",
           "threat_safe_without_3_stars"
-        ]
+        ],
+        "display": "hide"
       },
       "StageIncrease": {
         "type": "checkbox",
-        "value": false
+        "value": false,
+        "display": "hide"
       },
       "GetNewShip": {
         "type": "checkbox",
-        "value": false
+        "value": false,
+        "display": "hide"
       },
       "ReachLevel": {
         "type": "input",
-        "value": 0
+        "value": 0,
+        "display": "hide"
       }
     },
     "Emotion": {
@@ -5788,13 +5798,14 @@
       },
       "Fleet1Control": {
         "type": "select",
-        "value": "prevent_green_face",
+        "value": "prevent_yellow_face",
         "option": [
           "keep_exp_bonus",
           "prevent_green_face",
           "prevent_yellow_face",
           "prevent_red_face"
-        ]
+        ],
+        "display": "hide"
       },
       "Fleet1Recover": {
         "type": "select",
@@ -5815,23 +5826,25 @@
       },
       "Fleet2Value": {
         "type": "input",
-        "value": 119
+        "value": 119,
+        "display": "hide"
       },
       "Fleet2Record": {
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
         "validate": "datetime",
-        "display": "disabled"
+        "display": "hide"
       },
       "Fleet2Control": {
         "type": "select",
-        "value": "prevent_green_face",
+        "value": "prevent_yellow_face",
         "option": [
           "keep_exp_bonus",
           "prevent_green_face",
           "prevent_yellow_face",
           "prevent_red_face"
-        ]
+        ],
+        "display": "hide"
       },
       "Fleet2Recover": {
         "type": "select",
@@ -5840,11 +5853,13 @@
           "not_in_dormitory",
           "dormitory_floor_1",
           "dormitory_floor_2"
-        ]
+        ],
+        "display": "hide"
       },
       "Fleet2Oath": {
         "type": "checkbox",
-        "value": false
+        "value": false,
+        "display": "hide"
       },
       "Fleet2Onsen": {
         "type": "checkbox",
