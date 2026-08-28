@@ -265,6 +265,7 @@ Raid:
     Fleet2Oath: false
 
 # Add by MHY, 共斗刷好感：结构对齐共斗活动，隐藏 raid 用不到的参数
+# 心情控制为相关项，暴露在设置界面（默认值见 default.yaml）
 RaidAffection:
   Campaign:
     Name: dynamic
@@ -280,7 +281,6 @@ RaidAffection:
     GetNewShip: false
     ReachLevel: 0
   Emotion:
-    Fleet1Control: prevent_yellow_face
     Fleet2Value: 119
     Fleet2Record: 2020-01-01 00:00:00
     Fleet2Control: prevent_yellow_face

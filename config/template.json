@@ -1109,7 +1109,7 @@
       "Mode": "calculate",
       "Fleet1Value": 119,
       "Fleet1Record": "2020-01-01 00:00:00",
-      "Fleet1Control": "prevent_yellow_face",
+      "Fleet1Control": "prevent_green_face",
       "Fleet1Recover": "not_in_dormitory",
       "Fleet1Oath": false,
       "Fleet1Onsen": false,
