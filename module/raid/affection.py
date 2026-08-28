@@ -76,6 +76,44 @@ class RaidAffectionRun(RaidScuttleRun):
         threshold = max(AFFECTION_EMOTION_MIN, fleet.limit) + self.emotion.reduce_per_battle
         return fleet.get_recovered(threshold - fleet.limit)
 
+    # Modify by MHY, 重写 raid_execute_once：二队出击时心情扣减挂到舰队2，
+    # 基类的 override 会把 FleetOrder 强制回舰队1，导致二队误判心情不足
+    def raid_execute_once(self, mode, raid, fleet_index=1):
+        """执行一次突袭战斗，心情检查与扣减挂在出击线绑定的舰队上。
+
+        Args:
+            mode (str): 难度模式。
+            raid (str): 突袭活动名称。
+            fleet_index (int): 出击线绑定的舰队编号，1 或 2。
+
+        Pages:
+            in: page_raid
+            out: page_raid
+        """
+        logger.hr('突袭执行')
+        fleet_order = 'fleet1_all_fleet2_standby' if fleet_index == 1 else 'fleet1_standby_fleet2_all'
+        self.config.override(
+            Campaign_Name=f'{raid}_{mode}',
+            Campaign_UseAutoSearch=False,
+            Fleet_FleetOrder=fleet_order,
+        )
+
+        if mode == 'ex':
+            backup = self.config.temporary(
+                Submarine_Fleet=1,
+                Submarine_Mode='every_combat'
+            )
+
+        self.emotion.check_reduce(1)
+
+        self.raid_enter(mode=mode, raid=raid)
+        self.combat(balance_hp=False, expected_end=self.raid_expected_end, fleet_index=fleet_index)
+
+        if mode == 'ex':
+            backup.recover()
+
+        logger.hr('突袭结束')
+
     def _affection_add(self, fleet_index, target):
         """战斗结束后为线的目标侧累计好感。
 
@@ -230,13 +268,7 @@ class RaidAffectionRun(RaidScuttleRun):
             self.device.stuck_record_clear()
             self.device.click_record_clear()
             try:
-                # 线的心情追踪：舰队1走 fleet1_all_fleet2_standby，舰队2走 standby 变体，
-                # 使 emotion.check_reduce 只扣减该线绑定的舰队
-                if fleet_index == 1:
-                    self.config.override(Fleet_FleetOrder='fleet1_all_fleet2_standby')
-                else:
-                    self.config.override(Fleet_FleetOrder='fleet1_standby_fleet2_all')
-                self.raid_execute_once(mode=mode, raid=name)
+                self.raid_execute_once(mode=mode, raid=name, fleet_index=fleet_index)
             except ScriptEnd as e:
                 logger.hr('脚本结束')
                 logger.info(str(e))
