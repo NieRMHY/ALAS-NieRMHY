@@ -193,6 +193,13 @@ class RaidAffectionRun(RaidScuttleRun):
             # Add by MHY, 好感满 100 暂停任务
             self.check_affection_stop()
 
+            # Modify by MHY, 选线前按实际经过时间恢复心情并落盘：
+            # update() 只在出击路径被调用，预检直接读配置值，
+            # 任务延迟重跑后会读到冻结的旧值导致无限推迟
+            if not self.emotion.using_public:
+                self.emotion.update()
+                self.emotion.record()
+
             # 心情驱动选线：从轮转起点扫描一周，跳过已满线，取第一条心情可用的线
             picked = None
             for offset in range(len(lines)):
