@@ -33,7 +33,11 @@ Pages:
 """
 
 import module.config.server as server
+from datetime import timedelta
+
+# Add by MHY, 读 0 重试的时间计算
 from module.base.timer import Timer
+from module.config.time_source import now as current_time
 from module.logger import logger
 from module.private_quarters.assets import *
 from module.private_quarters.interact import PQInteract
@@ -233,7 +237,24 @@ class PrivateQuarters(PQInteract, PQShop):
             # 获取每日剩余次数，为 0 则退出
             count = self._pq_get_daily_count(retry=3)
             if count == 0:
-                logger.info('每日亲密度次数耗尽，退出子任务')
+                # Modify by MHY, 0点刚过服务端互动次数可能未刷新（OCR 读 0/3），
+                # 立即推迟到明天会天天踩中刷新延迟空转。改为当日两段重试：
+                # 2 小时后再试（跨过刷新延迟窗口），当天 19 点兜底复查一次，
+                # 仍未刷新则次日 0 点正常调度
+                now = current_time()
+                check_19 = now.replace(hour=19, minute=0, second=0, microsecond=0)
+                if now >= check_19:
+                    # 19 点后仍为 0，互动资格确实耗尽，等次日刷新
+                    logger.info('19 点后每日亲密度仍为 0，等待次日刷新')
+                    self.config.task_delay(server_update=True)
+                elif now + timedelta(hours=2) >= check_19:
+                    # 2 小时后越过 19 点复查线，直接等 19 点检查
+                    logger.info('每日亲密度读数为 0，下午 7 点复查')
+                    self.config.task_delay(target=check_19)
+                else:
+                    logger.info('每日亲密度读数为 0，2 小时后重试等待服务端刷新')
+                    self.config.task_delay(target=now + timedelta(hours=2))
+                self.config.task_stop()
                 return
 
             # 执行互动
