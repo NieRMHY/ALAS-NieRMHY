@@ -94,11 +94,14 @@ class RaidAffectionRun(RaidScuttleRun):
     def handle_combat_weapon_release(self):
         return False
 
-    # Add by MHY, 共斗进场即手操（有摇杆），通用 handle_combat_auto 依赖摇杆模板
-    # 检测翻转，会连点 Auto 按钮来回震荡（震荡期舰队自律开火击沉自爆船）。
-    # 一次性判定 + 无摇杆多帧确认：入场演出期按钮未渲染会被误判为自律中，
-    # 必须战斗执行中且连续多帧无摇杆才点击切换，否则会把已手操状态点回自律
+    # Add by MHY, Nier 等联动皮肤下 COMBAT_AUTO 模板失配，摇杆检测永远返回
+    # "无摇杆"，会把进场即手操误判为自律中，主动点击反而打开自律。
+    # 改用反馈校正策略：摇杆可见直接确认；上场 D 评价（沉船成功）= 手操
+    # 铁证，本场不点；仅状态未知/上场胜利（自律铁证）才点一次。
+    # 点错最多废一场，下场按结算结果自动校正，绝不连续点错
     _manual_no_joystick_frames = 0
+    # 跨场记忆：上场结算为 D 评价（手操生效铁证）
+    _last_battle_was_manual = None
 
     def combat_auto_reset(self):
         super().combat_auto_reset()
@@ -110,23 +113,29 @@ class RaidAffectionRun(RaidScuttleRun):
         if self.combat_joystick_appear():
             logger.info('[共斗好感] 检测到摇杆，已在手操模式')
             self.auto_mode_checked = True
+            self._last_battle_was_manual = True
             return False
-        if self.auto_mode_click_timer.reached():
-            logger.info('[共斗好感] 摇杆未出现，放弃切换保持现状')
+        # 上场 D 评价 = 手操已生效铁证（模板失配也敢确定），本场跳过
+        if self._last_battle_was_manual:
+            logger.info('[共斗好感] 上场D评价（手操铁证），本场不点保持手操')
             self.auto_mode_checked = True
             return False
         if not self.auto_skip_timer.reached():
             return False
+        if self.auto_mode_click_timer.reached():
+            logger.info('[共斗好感] 摇杆未出现且无手操铁证，放弃判定保持现状')
+            self.auto_mode_checked = True
+            return False
         # 战斗未进入执行态（入场演出/加载中）不做判定，按钮未渲染会误判
         if not self.is_combat_executing():
             return False
-        # 连续 3 帧无摇杆才认定真自律，防单帧模板失配误触发
+        # 连续 3 帧无摇杆（真自律或皮肤失配无法区分），点一次赌手操
         self._manual_no_joystick_frames += 1
         if self._manual_no_joystick_frames < 3:
             return False
         if not self.auto_click_interval_timer.reached():
             return False
-        logger.info(f'[共斗好感] 连续{self._manual_no_joystick_frames}帧无摇杆（自律中），点击一次切换到手操')
+        logger.info(f'[共斗好感] 连续{self._manual_no_joystick_frames}帧无摇杆，点击一次切换（下场按结算校正）')
         # 切换确认期用最短截图间隔，避免下一帧还在旧状态就被判定
         self.device.screenshot_interval_set(0.001)
         self.device.click(COMBAT_AUTO_SWITCH)
@@ -350,6 +359,11 @@ class RaidAffectionRun(RaidScuttleRun):
             self.run_count += 1
             if self.config.StopCondition_RunCount:
                 self.config.StopCondition_RunCount -= 1
+
+            # Add by MHY, 反馈校正：D 评价沉船 = 手操生效铁证（下场不点）；
+            # 正常结算 = 自律未关铁证（下场必须点一次）
+            self._last_battle_was_manual = not self.triggered_normal_end
+            self.triggered_normal_end = False
 
             # Add by MHY, 无论胜负，出击即累计好感
             self._affection_add(fleet_index, target)
