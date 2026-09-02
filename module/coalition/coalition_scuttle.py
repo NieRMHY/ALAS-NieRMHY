@@ -308,7 +308,14 @@ class CoalitionScuttleRun(Coalition, CoalitionScuttleCombat):
 
     # Add by MHY, 牺牲编队一次性手操切换：通用 handle_combat_auto 在点击切换后
     # 依赖摇杆模板翻转确认，截图延迟期会误判来回连点（震荡期舰队自律开火）。
-    # 有摇杆直接确认；无摇杆仅点一次即完成，受益编队仍走基类逻辑
+    # 加无摇杆多帧确认：入场演出期按钮未渲染会被误判为自律中而误点开自律。
+    # 有摇杆直接确认；无摇杆须战斗执行中且连续3帧才点一次，受益编队走基类
+    _manual_no_joystick_frames = 0
+
+    def combat_auto_reset(self):
+        super().combat_auto_reset()
+        self._manual_no_joystick_frames = 0
+
     def handle_combat_auto(self, auto):
         if self._is_sacrifice_fleet:
             if self.auto_mode_checked:
@@ -323,9 +330,16 @@ class CoalitionScuttleRun(Coalition, CoalitionScuttleCombat):
                 return False
             if not self.auto_skip_timer.reached():
                 return False
+            # 战斗未进入执行态（入场演出/加载中）不做判定，按钮未渲染会误判
+            if not self.is_combat_executing():
+                return False
+            # 连续 3 帧无摇杆才认定真自律，防单帧模板失配误触发
+            self._manual_no_joystick_frames += 1
+            if self._manual_no_joystick_frames < 3:
+                return False
             if not self.auto_click_interval_timer.reached():
                 return False
-            logger.info('[连战好感] 牺牲编队无摇杆（自律中），点击一次切换到手操')
+            logger.info(f'[连战好感] 牺牲编队连续{self._manual_no_joystick_frames}帧无摇杆（自律中），点击一次切换到手操')
             # 切换确认期用最短截图间隔，避免下一帧还在旧状态就被判定
             self.device.screenshot_interval_set(0.001)
             self.device.click(COMBAT_AUTO_SWITCH)

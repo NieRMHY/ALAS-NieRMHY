@@ -96,7 +96,14 @@ class RaidAffectionRun(RaidScuttleRun):
 
     # Add by MHY, 共斗进场即手操（有摇杆），通用 handle_combat_auto 依赖摇杆模板
     # 检测翻转，会连点 Auto 按钮来回震荡（震荡期舰队自律开火击沉自爆船）。
-    # 改为一次性判定：有摇杆直接确认手操；无摇杆仅点一次切换后即视为完成
+    # 一次性判定 + 无摇杆多帧确认：入场演出期按钮未渲染会被误判为自律中，
+    # 必须战斗执行中且连续多帧无摇杆才点击切换，否则会把已手操状态点回自律
+    _manual_no_joystick_frames = 0
+
+    def combat_auto_reset(self):
+        super().combat_auto_reset()
+        self._manual_no_joystick_frames = 0
+
     def handle_combat_auto(self, auto):
         if self.auto_mode_checked:
             return False
@@ -110,9 +117,16 @@ class RaidAffectionRun(RaidScuttleRun):
             return False
         if not self.auto_skip_timer.reached():
             return False
+        # 战斗未进入执行态（入场演出/加载中）不做判定，按钮未渲染会误判
+        if not self.is_combat_executing():
+            return False
+        # 连续 3 帧无摇杆才认定真自律，防单帧模板失配误触发
+        self._manual_no_joystick_frames += 1
+        if self._manual_no_joystick_frames < 3:
+            return False
         if not self.auto_click_interval_timer.reached():
             return False
-        logger.info('[共斗好感] 无摇杆（自律中），点击一次切换到手操')
+        logger.info(f'[共斗好感] 连续{self._manual_no_joystick_frames}帧无摇杆（自律中），点击一次切换到手操')
         # 切换确认期用最短截图间隔，避免下一帧还在旧状态就被判定
         self.device.screenshot_interval_set(0.001)
         self.device.click(COMBAT_AUTO_SWITCH)
