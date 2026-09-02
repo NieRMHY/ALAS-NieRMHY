@@ -199,12 +199,6 @@ class HomeMixin(WebUIMixinBase):
             name="visibility_state",
         )
 
-        self.state_switch = Switch(
-            status=self.set_status,
-            get_state=lambda: getattr(getattr(self, "alas", -1), "state", 0),
-            name="state",
-        )
-
         def goto_update():
             self.ui_develop()
             self.dev_update()

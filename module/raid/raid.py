@@ -425,7 +425,7 @@ class Raid(MapOperation, RaidCombat, CampaignEvent):
         if self.is_raid_rpg():
             return self.appear(page_rpg_stage.check_button, offset=(30, 30))
         else:
-            return self.appear(RAID_CHECK, offset=(30, 30))
+            return self.ui_page_appear(page_raid, offset=(30, 30))
 
     def raid_execute_once(self, mode, raid):
         """

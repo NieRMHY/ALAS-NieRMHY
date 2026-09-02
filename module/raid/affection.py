@@ -76,6 +76,10 @@ class RaidAffectionRun(RaidScuttleRun):
         threshold = max(AFFECTION_EMOTION_MIN, fleet.limit) + self.emotion.reduce_per_battle
         return fleet.get_recovered(threshold - fleet.limit)
 
+    # Add by MHY, 刷好感的产出是好感不是 PT，PT 上限误触发会批量禁用活动任务中断好感积累
+    def event_pt_limit_triggered(self):
+        return False
+
     # Modify by MHY, 重写 raid_execute_once：二队出击时心情扣减挂到舰队2，
     # 基类的 override 会把 FleetOrder 强制回舰队1，导致二队误判心情不足
     def raid_execute_once(self, mode, raid, fleet_index=1):
@@ -192,6 +196,13 @@ class RaidAffectionRun(RaidScuttleRun):
                 self.config.task_stop()
             # Add by MHY, 好感满 100 暂停任务
             self.check_affection_stop()
+
+            # Modify by MHY, 选线前按实际经过时间恢复心情并落盘：
+            # update() 只在出击路径被调用，预检直接读配置值，
+            # 任务延迟重跑后会读到冻结的旧值导致无限推迟
+            if not self.emotion.using_public:
+                self.emotion.update()
+                self.emotion.record()
 
             # 心情驱动选线：从轮转起点扫描一周，跳过已满线，取第一条心情可用的线
             picked = None
