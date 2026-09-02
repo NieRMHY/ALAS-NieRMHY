@@ -317,6 +317,14 @@
     "EnemyPriority": {
       "EnemyScaleBalanceWeight": "default_mode"
     },
+    "MainAffection": {
+      "MainFleet1Affection": 0.0,
+      "MainFleet2Affection": 0.0,
+      "Main2Fleet1Affection": 0.0,
+      "Main2Fleet2Affection": 0.0,
+      "Main3Fleet1Affection": 0.0,
+      "Main3Fleet2Affection": 0.0
+    },
     "Storage": {
       "Storage": {}
     }
@@ -399,6 +407,14 @@
     "EnemyPriority": {
       "EnemyScaleBalanceWeight": "default_mode"
     },
+    "MainAffection": {
+      "MainFleet1Affection": 0.0,
+      "MainFleet2Affection": 0.0,
+      "Main2Fleet1Affection": 0.0,
+      "Main2Fleet2Affection": 0.0,
+      "Main3Fleet1Affection": 0.0,
+      "Main3Fleet2Affection": 0.0
+    },
     "Storage": {
       "Storage": {}
     }
@@ -480,6 +496,14 @@
     },
     "EnemyPriority": {
       "EnemyScaleBalanceWeight": "default_mode"
+    },
+    "MainAffection": {
+      "MainFleet1Affection": 0.0,
+      "MainFleet2Affection": 0.0,
+      "Main2Fleet1Affection": 0.0,
+      "Main2Fleet2Affection": 0.0,
+      "Main3Fleet1Affection": 0.0,
+      "Main3Fleet2Affection": 0.0
     },
     "Storage": {
       "Storage": {}

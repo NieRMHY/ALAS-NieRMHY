@@ -1205,6 +1205,36 @@
       "retire_10": "退役10個"
     }
   },
+  "MainAffection": {
+    "_info": {
+      "name": "主線好感度",
+      "help": "主線任務戰鬥勝利累計好感，按任務與艦隊分開計數，出擊時心情>=40 計 1/16，滿 100 暫停任務"
+    },
+    "MainFleet1Affection": {
+      "name": "主線一隊好感",
+      "help": "Main 任務一隊好感進度（0-100）"
+    },
+    "MainFleet2Affection": {
+      "name": "主線二隊好感",
+      "help": "Main 任務二隊好感進度（0-100）"
+    },
+    "Main2Fleet1Affection": {
+      "name": "主線2一隊好感",
+      "help": "Main2 任務一隊好感進度（0-100）"
+    },
+    "Main2Fleet2Affection": {
+      "name": "主線2二隊好感",
+      "help": "Main2 任務二隊好感進度（0-100）"
+    },
+    "Main3Fleet1Affection": {
+      "name": "主線3一隊好感",
+      "help": "Main3 任務一隊好感進度（0-100）"
+    },
+    "Main3Fleet2Affection": {
+      "name": "主線3二隊好感",
+      "help": "Main3 任務二隊好感進度（0-100）"
+    }
+  },
   "Campaign": {
     "_info": {
       "name": "關卡設定",

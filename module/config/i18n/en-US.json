@@ -1205,6 +1205,36 @@
       "retire_10": "Retire 10"
     }
   },
+  "MainAffection": {
+    "_info": {
+      "name": "Main Affection",
+      "help": "Accumulate affection on mainline battle victories, counted per task and fleet, +1/16 when sortie mood >= 40, pause task at 100"
+    },
+    "MainFleet1Affection": {
+      "name": "Main Fleet1 Affection",
+      "help": "Affection progress of Main task fleet 1 (0-100)"
+    },
+    "MainFleet2Affection": {
+      "name": "Main Fleet2 Affection",
+      "help": "Affection progress of Main task fleet 2 (0-100)"
+    },
+    "Main2Fleet1Affection": {
+      "name": "Main2 Fleet1 Affection",
+      "help": "Affection progress of Main2 task fleet 1 (0-100)"
+    },
+    "Main2Fleet2Affection": {
+      "name": "Main2 Fleet2 Affection",
+      "help": "Affection progress of Main2 task fleet 2 (0-100)"
+    },
+    "Main3Fleet1Affection": {
+      "name": "Main3 Fleet1 Affection",
+      "help": "Affection progress of Main3 task fleet 1 (0-100)"
+    },
+    "Main3Fleet2Affection": {
+      "name": "Main3 Fleet2 Affection",
+      "help": "Affection progress of Main3 task fleet 2 (0-100)"
+    }
+  },
   "Campaign": {
     "_info": {
       "name": "Level settings",

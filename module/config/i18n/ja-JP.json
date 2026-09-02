@@ -1205,6 +1205,36 @@
       "retire_10": "10隻退役"
     }
   },
+  "MainAffection": {
+    "_info": {
+      "name": "メイン好感度",
+      "help": "メイン任務の戦闘勝利で好感度を蓄積、任務と艦隊ごとに分けてカウント、出撃時の気分>=40で1/16、100で任務停止"
+    },
+    "MainFleet1Affection": {
+      "name": "メイン第1艦隊好感度",
+      "help": "Main任務第1艦隊の好感度（0-100）"
+    },
+    "MainFleet2Affection": {
+      "name": "メイン第2艦隊好感度",
+      "help": "Main任務第2艦隊の好感度（0-100）"
+    },
+    "Main2Fleet1Affection": {
+      "name": "メイン2第1艦隊好感度",
+      "help": "Main2任務第1艦隊の好感度（0-100）"
+    },
+    "Main2Fleet2Affection": {
+      "name": "メイン2第2艦隊好感度",
+      "help": "Main2任務第2艦隊の好感度（0-100）"
+    },
+    "Main3Fleet1Affection": {
+      "name": "メイン3第1艦隊好感度",
+      "help": "Main3任務第1艦隊の好感度（0-100）"
+    },
+    "Main3Fleet2Affection": {
+      "name": "メイン3第2艦隊好感度",
+      "help": "Main3任務第2艦隊の好感度（0-100）"
+    }
+  },
   "Campaign": {
     "_info": {
       "name": "ステージ設定",
