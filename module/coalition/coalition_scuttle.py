@@ -46,6 +46,10 @@ class CoalitionScuttleCombat(CoalitionCombat):
 
         self.device.stuck_record_clear()
         self.device.click_record_clear()
+        # Add by MHY, 每场战斗重置模式判定标志与帧计数器：连战三场依次接敌，
+        # 上一场的 checked=True 会拦截下一场（牺牲队）的手操切换
+        self.combat_auto_reset()
+        self.combat_manual_reset()
 
         # 编队1/2胜利各扣2心情，第3编队（牺牲）沉船不扣心情
         if emotion_reduce:
