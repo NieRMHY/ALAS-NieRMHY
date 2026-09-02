@@ -382,6 +382,27 @@ OldRetire:
 
 # ==================== Farm ====================
 
+# Add by MHY, 主线战斗好感计数：按任务 × 舰队分开，胜利且出击时心情≥40 计 1/16
+MainAffection:
+  MainFleet1Affection:
+    value: 0.0
+    validate: [0, 100]
+  MainFleet2Affection:
+    value: 0.0
+    validate: [0, 100]
+  Main2Fleet1Affection:
+    value: 0.0
+    validate: [0, 100]
+  Main2Fleet2Affection:
+    value: 0.0
+    validate: [0, 100]
+  Main3Fleet1Affection:
+    value: 0.0
+    validate: [0, 100]
+  Main3Fleet2Affection:
+    value: 0.0
+    validate: [0, 100]
+
 Campaign:
   Name: 12-4
   Event:
@@ -619,6 +640,10 @@ CoalitionScuttle:
   Sacrifice:
     value: vanguard
     option: [ vanguard, flagship, vanguard_flagship ]
+  # Add by MHY, 第3编队（牺牲）手操模式：站桩被集火沉 或 藏左上放自爆船撞沉
+  SacrificeMode:
+    value: stand_still_in_the_middle
+    option: [ stand_still_in_the_middle, hide_in_upper_left ]
   # Add by MHY, 编队1/2好感度：每场胜利且出击时心情≥40 累加 0.05，满 100 暂停任务
   Fleet1Affection:
     value: 0.0

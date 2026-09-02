@@ -12,6 +12,10 @@ from module.raid.run import RaidRun
 
 
 class RaidScuttleCombat(RaidCombat):
+    # Add by MHY, 正常结算（非D评价）标记：上游简化时移除，共斗刷好感的
+    # 石油校验仍依赖它判定上场是否真胜利
+    triggered_normal_end = False
+
     def handle_battle_status(self, drop=None):
         """
         处理弃船突袭的战斗结算画面，优先识别弃船专用结算按钮。
@@ -40,6 +44,8 @@ class RaidScuttleCombat(RaidCombat):
             return True
         if super().handle_battle_status(drop=drop):
             logger.warning("触发正常结束")
+            # Add by MHY, 落到父类结算说明非D评价，置位供石油校验
+            self.triggered_normal_end = True
             return True
 
         return False

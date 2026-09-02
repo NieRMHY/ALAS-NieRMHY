@@ -524,7 +524,9 @@ PrivateQuarters:
   Scheduler:
     SuccessInterval: 30
     FailureInterval: 30
-    ServerUpdate: 00:00
+    # Modify by MHY, 0 点服务端互动次数刷新有延迟（OCR 读 0/3 误判耗尽），
+    # 推迟到 1 点规避同步窗口
+    ServerUpdate: 01:00
 
 # ==================== Daily ====================
 

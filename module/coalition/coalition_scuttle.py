@@ -5,6 +5,7 @@
 
 from module.combat.assets import (
     BATTLE_STATUS_D, BATTLE_STATUS_A, BATTLE_STATUS_B, BATTLE_STATUS_S,
+    COMBAT_AUTO_SWITCH,
     OPTS_INFO_D,
     EXP_INFO_D, EXP_INFO_A, EXP_INFO_B, EXP_INFO_S
 )
@@ -23,6 +24,8 @@ class CoalitionScuttleCombat(CoalitionCombat):
     triggered_normal_end = False
     _is_shipwreck = False  # 当前战斗是否为沉船D评价
     _is_s_rank = False  # 当前战斗是否为S评价
+    # Add by MHY, 当前编队是否为牺牲编队（第3队），手操流程禁武器释放
+    _is_sacrifice_fleet = False
 
     def auto_search_combat_execute(self, emotion_reduce=True, fleet_index=1, expected_end=None):
         """
@@ -43,6 +46,10 @@ class CoalitionScuttleCombat(CoalitionCombat):
 
         self.device.stuck_record_clear()
         self.device.click_record_clear()
+        # Add by MHY, 每场战斗重置模式判定标志与帧计数器：连战三场依次接敌，
+        # 上一场的 checked=True 会拦截下一场（牺牲队）的手操切换
+        self.combat_auto_reset()
+        self.combat_manual_reset()
 
         # 编队1/2胜利各扣2心情，第3编队（牺牲）沉船不扣心情
         if emotion_reduce:
@@ -50,6 +57,12 @@ class CoalitionScuttleCombat(CoalitionCombat):
 
         # fleet_index>=2（含牺牲编队）统一使用 Fleet2 战斗模式
         auto = self.config.Fleet_Fleet1Mode if fleet_index == 1 else self.config.Fleet_Fleet2Mode
+        # Modify by MHY, 第3编队（牺牲）切手操：模式由用户配置，站桩或藏左上；
+        # 编队1/2（受益）保持用户战斗配置（可自律）
+        self._is_sacrifice_fleet = fleet_index >= 3
+        if self._is_sacrifice_fleet:
+            auto = self.config.CoalitionScuttle_SacrificeMode
+            logger.info(f'[连战好感] 第{fleet_index}编队（牺牲）战斗模式: {auto}')
         confirm_timer = Timer(10)
         confirm_timer.start()
 
@@ -148,6 +161,10 @@ class CoalitionScuttleCombat(CoalitionCombat):
                     fleet_index=self.battle_count + 1,
                     expected_end=self.auto_search_combat_end
                 )
+                # Add by MHY, 反馈校正：牺牲队沉船成功（_is_shipwreck）= 手操
+                # 生效铁证，下一轮牺牲队不再点 Auto；正常结算则下场必须点
+                if self.battle_count >= 2:
+                    self._sacrifice_was_manual = self._is_shipwreck
                 self.coalition_combat_re_enter()
                 self.battle_count += 1
         except CampaignEnd:
@@ -289,6 +306,62 @@ class CoalitionScuttleRun(Coalition, CoalitionScuttleCombat):
         沉船任务中牺牲船必然低心情，红脸弹窗出现时点击确认继续出击。
         """
         return self.handle_popup_confirm('IGNORE_LOW_EMOTION')
+
+    # Add by MHY, 牺牲编队（第3队）手操流程绝不释放鱼雷/空袭，否则会击沉来撞的敌方
+    # 破坏沉船节奏；受益编队（1/2）不受影响，手操时照常释放
+    def handle_combat_weapon_release(self):
+        if self._is_sacrifice_fleet:
+            return False
+        return super().handle_combat_weapon_release()
+
+    # Add by MHY, 牺牲编队一次性手操切换：联动皮肤下 COMBAT_AUTO 模板可能
+    # 失配（摇杆检测永远无摇杆），反馈校正策略：上场牺牲队 D 评价沉船 =
+    # 手操铁证本场不点；摇杆可见直接确认；仅无铁证时才点一次，下场校正
+    _manual_no_joystick_frames = 0
+    _sacrifice_was_manual = None
+
+    def combat_auto_reset(self):
+        super().combat_auto_reset()
+        self._manual_no_joystick_frames = 0
+
+    def handle_combat_auto(self, auto):
+        if self._is_sacrifice_fleet:
+            if self.auto_mode_checked:
+                return False
+            if self.combat_joystick_appear():
+                logger.info('[连战好感] 牺牲编队检测到摇杆，已在手操模式')
+                self.auto_mode_checked = True
+                self._sacrifice_was_manual = True
+                return False
+            # 上一轮牺牲队沉船成功 = 手操已生效，本轮不点
+            if self._sacrifice_was_manual:
+                logger.info('[连战好感] 上轮牺牲队D评价（手操铁证），本轮不点保持手操')
+                self.auto_mode_checked = True
+                return False
+            if not self.auto_skip_timer.reached():
+                return False
+            if self.auto_mode_click_timer.reached():
+                logger.info('[连战好感] 牺牲编队摇杆未出现且无手操铁证，放弃判定保持现状')
+                self.auto_mode_checked = True
+                return False
+            # 战斗未进入执行态（入场演出/加载中）不做判定，按钮未渲染会误判
+            if not self.is_combat_executing():
+                return False
+            # 连续 3 帧无摇杆（真自律或皮肤失配无法区分），点一次赌手操
+            self._manual_no_joystick_frames += 1
+            if self._manual_no_joystick_frames < 3:
+                return False
+            if not self.auto_click_interval_timer.reached():
+                return False
+            logger.info(f'[连战好感] 牺牲编队连续{self._manual_no_joystick_frames}帧无摇杆，点击一次切换（下场按结算校正）')
+            # 切换确认期用最短截图间隔，避免下一帧还在旧状态就被判定
+            self.device.screenshot_interval_set(0.001)
+            self.device.click(COMBAT_AUTO_SWITCH)
+            self.auto_click_interval_timer.reset()
+            self.auto_mode_checked = True
+            self.auto_mode_switched = True
+            return True
+        return super().handle_combat_auto(auto)
 
     def coalition_execute_once(self, event, stage, fleet):
         """执行一次连战刷好感战斗。

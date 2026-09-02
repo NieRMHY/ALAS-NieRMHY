@@ -8,6 +8,7 @@
 （或其他组合），两条线各绑一组心情追踪，心情不足的线自动跳过另一线继续。
 """
 
+from module.combat.assets import COMBAT_AUTO_SWITCH
 from module.exception import ScriptEnd, ScriptError
 from module.logger import logger
 from module.notify import handle_notify
@@ -15,6 +16,12 @@ from module.raid.scuttle import RaidScuttleRun
 
 # 每次出击好感增量：1/16，MVP 双倍不计（刷好感不追求 MVP）
 AFFECTION_PER_SORTIE = 0.0625
+# Add by MHY, 目标侧 → 手操模式映射：刷后排时前排中路站桩被集火沉，
+# 刷前排时藏左上放自爆船直冲撞沉后排
+TARGET_COMBAT_MODE = {
+    'main': 'stand_still_in_the_middle',
+    'vanguard': 'hide_in_upper_left',
+}
 # 出击时心情低于该值不累计好感，与连战刷好感保持一致
 AFFECTION_EMOTION_MIN = 40
 # 真胜利判定的石油扣减阈值：困难图胜利扣 25 油，D 评价仅扣水面船数（<=6），中间无重叠
@@ -29,6 +36,9 @@ class RaidAffectionRun(RaidScuttleRun):
     _oil_prev = None
     # 上场出击的线标签（如 hard/normal），用于真胜利通知与日志
     _last_line_label = ''
+    # Modify by MHY, 上游简化 scuttle 后不再自带该标记，本地石油校验仍依赖：
+    # 结算走父类（非D评价）时置位，run() 读它暂存待下场扣油校验真伪
+    triggered_normal_end = False
 
     # Add by MHY, 计数器按线拆分：两队独立编队各自的进度
     def _counter_key(self, fleet_index, target):
@@ -80,6 +90,61 @@ class RaidAffectionRun(RaidScuttleRun):
     def event_pt_limit_triggered(self):
         return False
 
+    # Add by MHY, 手操牺牲流程绝不释放鱼雷/空袭，否则会击沉来撞的自爆船破坏沉船节奏
+    def handle_combat_weapon_release(self):
+        return False
+
+    # Add by MHY, Nier 等联动皮肤下 COMBAT_AUTO 模板失配，摇杆检测永远返回
+    # "无摇杆"，会把进场即手操误判为自律中，主动点击反而打开自律。
+    # 改用反馈校正策略：摇杆可见直接确认；上场 D 评价（沉船成功）= 手操
+    # 铁证，本场不点；仅状态未知/上场胜利（自律铁证）才点一次。
+    # 点错最多废一场，下场按结算结果自动校正，绝不连续点错
+    _manual_no_joystick_frames = 0
+    # 跨场记忆：上场结算为 D 评价（手操生效铁证）
+    _last_battle_was_manual = None
+
+    def combat_auto_reset(self):
+        super().combat_auto_reset()
+        self._manual_no_joystick_frames = 0
+
+    def handle_combat_auto(self, auto):
+        if self.auto_mode_checked:
+            return False
+        if self.combat_joystick_appear():
+            logger.info('[共斗好感] 检测到摇杆，已在手操模式')
+            self.auto_mode_checked = True
+            self._last_battle_was_manual = True
+            return False
+        # 上场 D 评价 = 手操已生效铁证（模板失配也敢确定），本场跳过
+        if self._last_battle_was_manual:
+            logger.info('[共斗好感] 上场D评价（手操铁证），本场不点保持手操')
+            self.auto_mode_checked = True
+            return False
+        if not self.auto_skip_timer.reached():
+            return False
+        if self.auto_mode_click_timer.reached():
+            logger.info('[共斗好感] 摇杆未出现且无手操铁证，放弃判定保持现状')
+            self.auto_mode_checked = True
+            return False
+        # 战斗未进入执行态（入场演出/加载中）不做判定，按钮未渲染会误判
+        if not self.is_combat_executing():
+            return False
+        # 连续 3 帧无摇杆（真自律或皮肤失配无法区分），点一次赌手操
+        self._manual_no_joystick_frames += 1
+        if self._manual_no_joystick_frames < 3:
+            return False
+        if not self.auto_click_interval_timer.reached():
+            return False
+        logger.info(f'[共斗好感] 连续{self._manual_no_joystick_frames}帧无摇杆，点击一次切换（下场按结算校正）')
+        # 切换确认期用最短截图间隔，避免下一帧还在旧状态就被判定
+        self.device.screenshot_interval_set(0.001)
+        self.device.click(COMBAT_AUTO_SWITCH)
+        self.auto_click_interval_timer.reset()
+        # 点一次即确认完成，不再二次判定，避免状态翻转期误判导致来回点
+        self.auto_mode_checked = True
+        self.auto_mode_switched = True
+        return True
+
     # Modify by MHY, 重写 raid_execute_once：二队出击时心情扣减挂到舰队2，
     # 基类的 override 会把 FleetOrder 强制回舰队1，导致二队误判心情不足
     def raid_execute_once(self, mode, raid, fleet_index=1):
@@ -111,7 +176,13 @@ class RaidAffectionRun(RaidScuttleRun):
         self.emotion.check_reduce(1)
 
         self.raid_enter(mode=mode, raid=raid)
-        self.combat(balance_hp=False, expected_end=self.raid_expected_end, fleet_index=fleet_index)
+        # Modify by MHY, 刷好感一律手操：按目标侧强制站桩/藏角模式，
+        # 避免用户全局自律战斗配置污染牺牲机制
+        auto_mode = TARGET_COMBAT_MODE[self.config.RaidAffection_Target \
+            if fleet_index == 1 else self.config.RaidAffection_Fleet2Target]
+        logger.info(f'[共斗好感] 战斗模式: {auto_mode}')
+        self.combat(balance_hp=False, auto_mode=auto_mode,
+                    expected_end=self.raid_expected_end, fleet_index=fleet_index)
 
         if mode == 'ex':
             backup.recover()
@@ -288,6 +359,11 @@ class RaidAffectionRun(RaidScuttleRun):
             self.run_count += 1
             if self.config.StopCondition_RunCount:
                 self.config.StopCondition_RunCount -= 1
+
+            # Add by MHY, 反馈校正：D 评价沉船 = 手操生效铁证（下场不点）；
+            # 正常结算 = 自律未关铁证（下场必须点一次）
+            self._last_battle_was_manual = not self.triggered_normal_end
+            self.triggered_normal_end = False
 
             # Add by MHY, 无论胜负，出击即累计好感
             self._affection_add(fleet_index, target)

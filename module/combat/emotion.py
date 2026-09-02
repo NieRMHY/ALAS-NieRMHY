@@ -449,6 +449,63 @@ class Emotion:
         self.record()
         self.show()
 
+        # Add by MHY, 主线任务战斗好感累计：胜利结算走到这里说明本场有效
+        # 沉船（shipwreck）判负不计好感，按实际接敌舰队计数；
+        # 心情配置为不计算（is_calculate=False）时整条通道关闭
+        if not shipwreck:
+            self.main_affection_add(fleet_index)
+
+    # Add by MHY, 主线好感累计：仅 Main/Main2/Main3 任务生效，
+    # 计数器按任务 × 舰队分开（三任务可能打不同地图），满 100 暂停任务
+    @property
+    def _main_affection_key(self):
+        """当前主线任务的好感计数器配置键前缀，非主线任务返回 None。
+
+        组名固定为 MainAffection，字段名带任务前缀：
+        Main2 任务读 MainAffection_Main2Fleet1Affection。
+        """
+        command = self.config.task.command
+        if command not in ('Main', 'Main2', 'Main3'):
+            return None
+        return f'MainAffection_{command}Fleet'
+
+    def main_affection_add(self, fleet_index):
+        """主线战斗胜利后为接敌舰队累计好感 1/16，满 100 暂停当前任务。
+
+        出击时心情低于 40 不计（与共斗/连战规则一致）。
+        """
+        prefix = self._main_affection_key
+        if prefix is None:
+            return
+        # 心情配置为不计算时，好感也不计算
+        if not self.is_calculate:
+            return
+        fleet = self.fleets[fleet_index - 1] if fleet_index in (1, 2) else None
+        if fleet is None:
+            return
+        # 出击时心情 ≥40 才计，扣减后值 + 单场扣减还原出击前心情
+        if fleet.current + self.reduce_per_battle < 40:
+            logger.info(f'[主线好感] 舰队{fleet_index}出击时心情不足40，不计好感')
+            return
+        key = f'{prefix}{fleet_index}Affection'
+        current = float(getattr(self.config, key) or 0)
+        if current >= 100:
+            return
+        new = min(round(current + 0.0625, 4), 100.0)
+        setattr(self.config, key, new)
+        logger.attr(f'主线好感-{self.config.task.command}-舰队{fleet_index}', f'{new:.4f}/100')
+        if new >= 100:
+            logger.hr(f'{self.config.task.command} 舰队{fleet_index}好感已满，暂停任务')
+            self.config.Scheduler_Enable = False
+            from module.notify import handle_notify
+            handle_notify(
+                self.config.Error_OnePushConfig,
+                title='主线好感已满，任务暂停',
+                content=f'<{self.config.config_name}> {self.config.task.command} '
+                        f'舰队{fleet_index}好感达 100，任务已暂停',
+            )
+            self.config.task_stop()
+
     def emergency_reset(self):
         """心情清零保底。计算模式下出现红脸弹窗时调用。
 
