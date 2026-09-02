@@ -36,6 +36,9 @@ class RaidAffectionRun(RaidScuttleRun):
     _oil_prev = None
     # 上场出击的线标签（如 hard/normal），用于真胜利通知与日志
     _last_line_label = ''
+    # Modify by MHY, 上游简化 scuttle 后不再自带该标记，本地石油校验仍依赖：
+    # 结算走父类（非D评价）时置位，run() 读它暂存待下场扣油校验真伪
+    triggered_normal_end = False
 
     # Add by MHY, 计数器按线拆分：两队独立编队各自的进度
     def _counter_key(self, fleet_index, target):
