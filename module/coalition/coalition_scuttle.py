@@ -23,6 +23,8 @@ class CoalitionScuttleCombat(CoalitionCombat):
     triggered_normal_end = False
     _is_shipwreck = False  # 当前战斗是否为沉船D评价
     _is_s_rank = False  # 当前战斗是否为S评价
+    # Add by MHY, 当前编队是否为牺牲编队（第3队），手操流程禁武器释放
+    _is_sacrifice_fleet = False
 
     def auto_search_combat_execute(self, emotion_reduce=True, fleet_index=1, expected_end=None):
         """
@@ -50,6 +52,12 @@ class CoalitionScuttleCombat(CoalitionCombat):
 
         # fleet_index>=2（含牺牲编队）统一使用 Fleet2 战斗模式
         auto = self.config.Fleet_Fleet1Mode if fleet_index == 1 else self.config.Fleet_Fleet2Mode
+        # Modify by MHY, 第3编队（牺牲）切手操：模式由用户配置，站桩或藏左上；
+        # 编队1/2（受益）保持用户战斗配置（可自律）
+        self._is_sacrifice_fleet = fleet_index >= 3
+        if self._is_sacrifice_fleet:
+            auto = self.config.CoalitionScuttle_SacrificeMode
+            logger.info(f'[连战好感] 第{fleet_index}编队（牺牲）战斗模式: {auto}')
         confirm_timer = Timer(10)
         confirm_timer.start()
 
@@ -289,6 +297,13 @@ class CoalitionScuttleRun(Coalition, CoalitionScuttleCombat):
         沉船任务中牺牲船必然低心情，红脸弹窗出现时点击确认继续出击。
         """
         return self.handle_popup_confirm('IGNORE_LOW_EMOTION')
+
+    # Add by MHY, 牺牲编队（第3队）手操流程绝不释放鱼雷/空袭，否则会击沉来撞的敌方
+    # 破坏沉船节奏；受益编队（1/2）不受影响，手操时照常释放
+    def handle_combat_weapon_release(self):
+        if self._is_sacrifice_fleet:
+            return False
+        return super().handle_combat_weapon_release()
 
     def coalition_execute_once(self, event, stage, fleet):
         """执行一次连战刷好感战斗。

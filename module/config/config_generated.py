@@ -363,6 +363,7 @@ class GeneratedConfig:
 
     # 配置组 `CoalitionScuttle`
     CoalitionScuttle_Sacrifice = 'vanguard'  # vanguard, flagship, vanguard_flagship
+    CoalitionScuttle_SacrificeMode = 'stand_still_in_the_middle'  # stand_still_in_the_middle, hide_in_upper_left
     CoalitionScuttle_Fleet1Affection = 0.0
     CoalitionScuttle_Fleet2Affection = 0.0
 

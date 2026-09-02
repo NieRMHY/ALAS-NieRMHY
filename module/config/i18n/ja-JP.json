@@ -2029,6 +2029,12 @@
       "flagship": "旗艦",
       "vanguard_flagship": "前衛+旗艦"
     },
+    "SacrificeMode": {
+      "name": "犠牲艦隊の手動モード",
+      "help": "第3艦隊（犠牲）の戦闘モード：中央で立ち止まって早く沈む、または左上に隠れて自爆船に突撃させる",
+      "stand_still_in_the_middle": "stand_still_in_the_middle",
+      "hide_in_upper_left": "hide_in_upper_left"
+    },
     "Fleet1Affection": {
       "name": "編成1好感度",
       "help": "編成1の現在好感度。出撃時に心情が40以上の勝利ごとに0.05加算。100に達するとタスク停止"

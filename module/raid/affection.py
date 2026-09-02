@@ -15,6 +15,12 @@ from module.raid.scuttle import RaidScuttleRun
 
 # 每次出击好感增量：1/16，MVP 双倍不计（刷好感不追求 MVP）
 AFFECTION_PER_SORTIE = 0.0625
+# Add by MHY, 目标侧 → 手操模式映射：刷后排时前排中路站桩被集火沉，
+# 刷前排时藏左上放自爆船直冲撞沉后排
+TARGET_COMBAT_MODE = {
+    'main': 'stand_still_in_the_middle',
+    'vanguard': 'hide_in_upper_left',
+}
 # 出击时心情低于该值不累计好感，与连战刷好感保持一致
 AFFECTION_EMOTION_MIN = 40
 # 真胜利判定的石油扣减阈值：困难图胜利扣 25 油，D 评价仅扣水面船数（<=6），中间无重叠
@@ -80,6 +86,10 @@ class RaidAffectionRun(RaidScuttleRun):
     def event_pt_limit_triggered(self):
         return False
 
+    # Add by MHY, 手操牺牲流程绝不释放鱼雷/空袭，否则会击沉来撞的自爆船破坏沉船节奏
+    def handle_combat_weapon_release(self):
+        return False
+
     # Modify by MHY, 重写 raid_execute_once：二队出击时心情扣减挂到舰队2，
     # 基类的 override 会把 FleetOrder 强制回舰队1，导致二队误判心情不足
     def raid_execute_once(self, mode, raid, fleet_index=1):
@@ -111,7 +121,13 @@ class RaidAffectionRun(RaidScuttleRun):
         self.emotion.check_reduce(1)
 
         self.raid_enter(mode=mode, raid=raid)
-        self.combat(balance_hp=False, expected_end=self.raid_expected_end, fleet_index=fleet_index)
+        # Modify by MHY, 刷好感一律手操：按目标侧强制站桩/藏角模式，
+        # 避免用户全局自律战斗配置污染牺牲机制
+        auto_mode = TARGET_COMBAT_MODE[self.config.RaidAffection_Target \
+            if fleet_index == 1 else self.config.RaidAffection_Fleet2Target]
+        logger.info(f'[共斗好感] 战斗模式: {auto_mode}')
+        self.combat(balance_hp=False, auto_mode=auto_mode,
+                    expected_end=self.raid_expected_end, fleet_index=fleet_index)
 
         if mode == 'ex':
             backup.recover()

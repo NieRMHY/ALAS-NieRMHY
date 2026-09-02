@@ -619,6 +619,10 @@ CoalitionScuttle:
   Sacrifice:
     value: vanguard
     option: [ vanguard, flagship, vanguard_flagship ]
+  # Add by MHY, 第3编队（牺牲）手操模式：站桩被集火沉 或 藏左上放自爆船撞沉
+  SacrificeMode:
+    value: stand_still_in_the_middle
+    option: [ stand_still_in_the_middle, hide_in_upper_left ]
   # Add by MHY, 编队1/2好感度：每场胜利且出击时心情≥40 累加 0.05，满 100 暂停任务
   Fleet1Affection:
     value: 0.0

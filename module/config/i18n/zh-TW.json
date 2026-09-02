@@ -2029,6 +2029,12 @@
       "flagship": "旗艦",
       "vanguard_flagship": "前排+旗艦"
     },
+    "SacrificeMode": {
+      "name": "犧牲艦隊手動模式",
+      "help": "第3艦隊（犧牲）的戰鬥模式：中路站樁被集火快速沉船，或藏左上放自爆船撞擊",
+      "stand_still_in_the_middle": "stand_still_in_the_middle",
+      "hide_in_upper_left": "hide_in_upper_left"
+    },
     "Fleet1Affection": {
       "name": "編隊1好感度",
       "help": "編隊1當前好感度。每場勝利且出擊時心情≥40 增加 0.05；達到 100 後暫停任務"

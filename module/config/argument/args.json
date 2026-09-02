@@ -6457,6 +6457,14 @@
           "vanguard_flagship"
         ]
       },
+      "SacrificeMode": {
+        "type": "select",
+        "value": "stand_still_in_the_middle",
+        "option": [
+          "stand_still_in_the_middle",
+          "hide_in_upper_left"
+        ]
+      },
       "Fleet1Affection": {
         "type": "input",
         "value": 0.0,

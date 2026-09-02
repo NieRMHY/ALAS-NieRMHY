@@ -1239,6 +1239,7 @@
     },
     "CoalitionScuttle": {
       "Sacrifice": "vanguard",
+      "SacrificeMode": "stand_still_in_the_middle",
       "Fleet1Affection": 0.0,
       "Fleet2Affection": 0.0
     },

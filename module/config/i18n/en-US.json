@@ -2029,6 +2029,12 @@
       "flagship": "Flagship",
       "vanguard_flagship": "Vanguard + Flagship"
     },
+    "SacrificeMode": {
+      "name": "Sacrifice Fleet Manual Mode",
+      "help": "Combat mode of the 3rd (sacrifice) fleet: stand still in the middle to sink fast, or hide in upper left to let suicide boats ram",
+      "stand_still_in_the_middle": "stand_still_in_the_middle",
+      "hide_in_upper_left": "hide_in_upper_left"
+    },
     "Fleet1Affection": {
       "name": "Fleet 1 Affection",
       "help": "Current affection of fleet 1. +0.05 per win when morale ≥ 40 at sortie; pauses at 100"

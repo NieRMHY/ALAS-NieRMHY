@@ -2029,6 +2029,12 @@
       "flagship": "旗舰",
       "vanguard_flagship": "前排+旗舰"
     },
+    "SacrificeMode": {
+      "name": "牺牲编队手操模式",
+      "help": "第3编队（牺牲）的战斗模式：中路站桩被集火快速沉船，或藏左上放自爆船撞击",
+      "stand_still_in_the_middle": "stand_still_in_the_middle",
+      "hide_in_upper_left": "hide_in_upper_left"
+    },
     "Fleet1Affection": {
       "name": "编队1好感度",
       "help": "编队1当前好感度。每场胜利且出击时心情≥40 增加 0.05；达到 100 后暂停任务"
