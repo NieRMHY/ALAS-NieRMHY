@@ -8,6 +8,7 @@
 （或其他组合），两条线各绑一组心情追踪，心情不足的线自动跳过另一线继续。
 """
 
+from module.combat.assets import COMBAT_AUTO_SWITCH
 from module.exception import ScriptEnd, ScriptError
 from module.logger import logger
 from module.notify import handle_notify
@@ -89,6 +90,34 @@ class RaidAffectionRun(RaidScuttleRun):
     # Add by MHY, 手操牺牲流程绝不释放鱼雷/空袭，否则会击沉来撞的自爆船破坏沉船节奏
     def handle_combat_weapon_release(self):
         return False
+
+    # Add by MHY, 共斗进场即手操（有摇杆），通用 handle_combat_auto 依赖摇杆模板
+    # 检测翻转，会连点 Auto 按钮来回震荡（震荡期舰队自律开火击沉自爆船）。
+    # 改为一次性判定：有摇杆直接确认手操；无摇杆仅点一次切换后即视为完成
+    def handle_combat_auto(self, auto):
+        if self.auto_mode_checked:
+            return False
+        if self.combat_joystick_appear():
+            logger.info('[共斗好感] 检测到摇杆，已在手操模式')
+            self.auto_mode_checked = True
+            return False
+        if self.auto_mode_click_timer.reached():
+            logger.info('[共斗好感] 摇杆未出现，放弃切换保持现状')
+            self.auto_mode_checked = True
+            return False
+        if not self.auto_skip_timer.reached():
+            return False
+        if not self.auto_click_interval_timer.reached():
+            return False
+        logger.info('[共斗好感] 无摇杆（自律中），点击一次切换到手操')
+        # 切换确认期用最短截图间隔，避免下一帧还在旧状态就被判定
+        self.device.screenshot_interval_set(0.001)
+        self.device.click(COMBAT_AUTO_SWITCH)
+        self.auto_click_interval_timer.reset()
+        # 点一次即确认完成，不再二次判定，避免状态翻转期误判导致来回点
+        self.auto_mode_checked = True
+        self.auto_mode_switched = True
+        return True
 
     # Modify by MHY, 重写 raid_execute_once：二队出击时心情扣减挂到舰队2，
     # 基类的 override 会把 FleetOrder 强制回舰队1，导致二队误判心情不足

@@ -5,6 +5,7 @@
 
 from module.combat.assets import (
     BATTLE_STATUS_D, BATTLE_STATUS_A, BATTLE_STATUS_B, BATTLE_STATUS_S,
+    COMBAT_AUTO_SWITCH,
     OPTS_INFO_D,
     EXP_INFO_D, EXP_INFO_A, EXP_INFO_B, EXP_INFO_S
 )
@@ -304,6 +305,35 @@ class CoalitionScuttleRun(Coalition, CoalitionScuttleCombat):
         if self._is_sacrifice_fleet:
             return False
         return super().handle_combat_weapon_release()
+
+    # Add by MHY, 牺牲编队一次性手操切换：通用 handle_combat_auto 在点击切换后
+    # 依赖摇杆模板翻转确认，截图延迟期会误判来回连点（震荡期舰队自律开火）。
+    # 有摇杆直接确认；无摇杆仅点一次即完成，受益编队仍走基类逻辑
+    def handle_combat_auto(self, auto):
+        if self._is_sacrifice_fleet:
+            if self.auto_mode_checked:
+                return False
+            if self.combat_joystick_appear():
+                logger.info('[连战好感] 牺牲编队检测到摇杆，已在手操模式')
+                self.auto_mode_checked = True
+                return False
+            if self.auto_mode_click_timer.reached():
+                logger.info('[连战好感] 牺牲编队摇杆未出现，放弃切换保持现状')
+                self.auto_mode_checked = True
+                return False
+            if not self.auto_skip_timer.reached():
+                return False
+            if not self.auto_click_interval_timer.reached():
+                return False
+            logger.info('[连战好感] 牺牲编队无摇杆（自律中），点击一次切换到手操')
+            # 切换确认期用最短截图间隔，避免下一帧还在旧状态就被判定
+            self.device.screenshot_interval_set(0.001)
+            self.device.click(COMBAT_AUTO_SWITCH)
+            self.auto_click_interval_timer.reset()
+            self.auto_mode_checked = True
+            self.auto_mode_switched = True
+            return True
+        return super().handle_combat_auto(auto)
 
     def coalition_execute_once(self, event, stage, fleet):
         """执行一次连战刷好感战斗。
