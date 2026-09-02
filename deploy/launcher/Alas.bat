@@ -11,14 +11,4 @@ set "PATH=%_pyBin%;%_gitBin%;%PATH%"
 title ALAS WebUI
 color F0
 
-echo ============================================
-echo   ALAS WebUI
-echo   浏览器将自动打开，关闭本窗口即停止服务
-echo ============================================
-echo.
-
-"%_pyBin%\python.exe" "%_root%\gui.py"
-
-echo.
-echo WebUI 已停止。
-pause
+echo =====================================
