@@ -39,7 +39,7 @@ Farm:
       - Emotion
       - HpControl
       - EnemyPriority
-      # Add by MHY, 主线战斗好感计数（按任务分开，三任务可能打不同地图）
+      # Add by MHY, 主线战斗好感计数（各任务只挂自己的组，避免 GUI 显示无关计数器）
       - MainAffection
     Main2:
       - Scheduler
@@ -50,7 +50,7 @@ Farm:
       - Emotion
       - HpControl
       - EnemyPriority
-      - MainAffection
+      - Main2Affection
     Main3:
       - Scheduler
       - Campaign
@@ -60,7 +60,7 @@ Farm:
       - Emotion
       - HpControl
       - EnemyPriority
-      - MainAffection
+      - Main3Affection
     GemsFarming:
       - Scheduler
       - GemsFarming

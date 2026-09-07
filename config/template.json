@@ -318,12 +318,8 @@
       "EnemyScaleBalanceWeight": "default_mode"
     },
     "MainAffection": {
-      "MainFleet1Affection": 0.0,
-      "MainFleet2Affection": 0.0,
-      "Main2Fleet1Affection": 0.0,
-      "Main2Fleet2Affection": 0.0,
-      "Main3Fleet1Affection": 0.0,
-      "Main3Fleet2Affection": 0.0
+      "Fleet1Affection": 0.0,
+      "Fleet2Affection": 0.0
     },
     "Storage": {
       "Storage": {}
@@ -407,13 +403,9 @@
     "EnemyPriority": {
       "EnemyScaleBalanceWeight": "default_mode"
     },
-    "MainAffection": {
-      "MainFleet1Affection": 0.0,
-      "MainFleet2Affection": 0.0,
-      "Main2Fleet1Affection": 0.0,
-      "Main2Fleet2Affection": 0.0,
-      "Main3Fleet1Affection": 0.0,
-      "Main3Fleet2Affection": 0.0
+    "Main2Affection": {
+      "Fleet1Affection": 0.0,
+      "Fleet2Affection": 0.0
     },
     "Storage": {
       "Storage": {}
@@ -497,13 +489,9 @@
     "EnemyPriority": {
       "EnemyScaleBalanceWeight": "default_mode"
     },
-    "MainAffection": {
-      "MainFleet1Affection": 0.0,
-      "MainFleet2Affection": 0.0,
-      "Main2Fleet1Affection": 0.0,
-      "Main2Fleet2Affection": 0.0,
-      "Main3Fleet1Affection": 0.0,
-      "Main3Fleet2Affection": 0.0
+    "Main3Affection": {
+      "Fleet1Affection": 0.0,
+      "Fleet2Affection": 0.0
     },
     "Storage": {
       "Storage": {}

@@ -222,12 +222,16 @@ class GeneratedConfig:
     OldRetire_RetireAmount = 'retire_all'  # retire_all, retire_10
 
     # 配置组 `MainAffection`
-    MainAffection_MainFleet1Affection = 0.0
-    MainAffection_MainFleet2Affection = 0.0
-    MainAffection_Main2Fleet1Affection = 0.0
-    MainAffection_Main2Fleet2Affection = 0.0
-    MainAffection_Main3Fleet1Affection = 0.0
-    MainAffection_Main3Fleet2Affection = 0.0
+    MainAffection_Fleet1Affection = 0.0
+    MainAffection_Fleet2Affection = 0.0
+
+    # 配置组 `Main2Affection`
+    Main2Affection_Fleet1Affection = 0.0
+    Main2Affection_Fleet2Affection = 0.0
+
+    # 配置组 `Main3Affection`
+    Main3Affection_Fleet1Affection = 0.0
+    Main3Affection_Fleet2Affection = 0.0
 
     # 配置组 `Campaign`
     Campaign_Name = '12-4'

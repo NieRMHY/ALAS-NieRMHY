@@ -417,7 +417,9 @@ class CampaignRun(CampaignEvent, ShopStatus):
 
     def after_campaign_run(self):
         """单次战役完成后的扩展钩子。"""
-        pass
+        # Add by MHY, 整图打完（含 Boss）后检查主线好感满标志，
+        # 满则停任务——道中记满不打断当次出击
+        self.campaign.emotion.main_affection_check_stop()
 
     def handle_commission_notice(self):
         """

@@ -1515,7 +1515,7 @@
       }
     },
     "MainAffection": {
-      "MainFleet1Affection": {
+      "Fleet1Affection": {
         "type": "input",
         "value": 0.0,
         "validate": [
@@ -1523,39 +1523,7 @@
           100
         ]
       },
-      "MainFleet2Affection": {
-        "type": "input",
-        "value": 0.0,
-        "validate": [
-          0,
-          100
-        ]
-      },
-      "Main2Fleet1Affection": {
-        "type": "input",
-        "value": 0.0,
-        "validate": [
-          0,
-          100
-        ]
-      },
-      "Main2Fleet2Affection": {
-        "type": "input",
-        "value": 0.0,
-        "validate": [
-          0,
-          100
-        ]
-      },
-      "Main3Fleet1Affection": {
-        "type": "input",
-        "value": 0.0,
-        "validate": [
-          0,
-          100
-        ]
-      },
-      "Main3Fleet2Affection": {
+      "Fleet2Affection": {
         "type": "input",
         "value": 0.0,
         "validate": [
@@ -1989,8 +1957,8 @@
         ]
       }
     },
-    "MainAffection": {
-      "MainFleet1Affection": {
+    "Main2Affection": {
+      "Fleet1Affection": {
         "type": "input",
         "value": 0.0,
         "validate": [
@@ -1998,39 +1966,7 @@
           100
         ]
       },
-      "MainFleet2Affection": {
-        "type": "input",
-        "value": 0.0,
-        "validate": [
-          0,
-          100
-        ]
-      },
-      "Main2Fleet1Affection": {
-        "type": "input",
-        "value": 0.0,
-        "validate": [
-          0,
-          100
-        ]
-      },
-      "Main2Fleet2Affection": {
-        "type": "input",
-        "value": 0.0,
-        "validate": [
-          0,
-          100
-        ]
-      },
-      "Main3Fleet1Affection": {
-        "type": "input",
-        "value": 0.0,
-        "validate": [
-          0,
-          100
-        ]
-      },
-      "Main3Fleet2Affection": {
+      "Fleet2Affection": {
         "type": "input",
         "value": 0.0,
         "validate": [
@@ -2464,8 +2400,8 @@
         ]
       }
     },
-    "MainAffection": {
-      "MainFleet1Affection": {
+    "Main3Affection": {
+      "Fleet1Affection": {
         "type": "input",
         "value": 0.0,
         "validate": [
@@ -2473,39 +2409,7 @@
           100
         ]
       },
-      "MainFleet2Affection": {
-        "type": "input",
-        "value": 0.0,
-        "validate": [
-          0,
-          100
-        ]
-      },
-      "Main2Fleet1Affection": {
-        "type": "input",
-        "value": 0.0,
-        "validate": [
-          0,
-          100
-        ]
-      },
-      "Main2Fleet2Affection": {
-        "type": "input",
-        "value": 0.0,
-        "validate": [
-          0,
-          100
-        ]
-      },
-      "Main3Fleet1Affection": {
-        "type": "input",
-        "value": 0.0,
-        "validate": [
-          0,
-          100
-        ]
-      },
-      "Main3Fleet2Affection": {
+      "Fleet2Affection": {
         "type": "input",
         "value": 0.0,
         "validate": [

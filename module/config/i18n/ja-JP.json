@@ -1208,31 +1208,43 @@
   "MainAffection": {
     "_info": {
       "name": "メイン好感度",
-      "help": "メイン任務の戦闘勝利で好感度を蓄積、任務と艦隊ごとに分けてカウント、出撃時の気分>=40で1/16、100で任務停止"
+      "help": "戦闘勝利で接敵艦隊ごとに好感度を蓄積、出撃時の気分>=40で1/16、100で今回の出撃を完了後に任務停止"
     },
-    "MainFleet1Affection": {
-      "name": "メイン第1艦隊好感度",
-      "help": "Main任務第1艦隊の好感度（0-100）"
+    "Fleet1Affection": {
+      "name": "第1艦隊好感度",
+      "help": "第1艦隊の好感度（0-100）"
     },
-    "MainFleet2Affection": {
-      "name": "メイン第2艦隊好感度",
-      "help": "Main任務第2艦隊の好感度（0-100）"
+    "Fleet2Affection": {
+      "name": "第2艦隊好感度",
+      "help": "第2艦隊の好感度（0-100）"
+    }
+  },
+  "Main2Affection": {
+    "_info": {
+      "name": "メイン2好感度",
+      "help": "戦闘勝利で接敵艦隊ごとに好感度を蓄積、出撃時の気分>=40で1/16、100で今回の出撃を完了後に任務停止"
     },
-    "Main2Fleet1Affection": {
-      "name": "メイン2第1艦隊好感度",
-      "help": "Main2任務第1艦隊の好感度（0-100）"
+    "Fleet1Affection": {
+      "name": "第1艦隊好感度",
+      "help": "第1艦隊の好感度（0-100）"
     },
-    "Main2Fleet2Affection": {
-      "name": "メイン2第2艦隊好感度",
-      "help": "Main2任務第2艦隊の好感度（0-100）"
+    "Fleet2Affection": {
+      "name": "第2艦隊好感度",
+      "help": "第2艦隊の好感度（0-100）"
+    }
+  },
+  "Main3Affection": {
+    "_info": {
+      "name": "メイン3好感度",
+      "help": "戦闘勝利で接敵艦隊ごとに好感度を蓄積、出撃時の気分>=40で1/16、100で今回の出撃を完了後に任務停止"
     },
-    "Main3Fleet1Affection": {
-      "name": "メイン3第1艦隊好感度",
-      "help": "Main3任務第1艦隊の好感度（0-100）"
+    "Fleet1Affection": {
+      "name": "第1艦隊好感度",
+      "help": "第1艦隊の好感度（0-100）"
     },
-    "Main3Fleet2Affection": {
-      "name": "メイン3第2艦隊好感度",
-      "help": "Main3任務第2艦隊の好感度（0-100）"
+    "Fleet2Affection": {
+      "name": "第2艦隊好感度",
+      "help": "第2艦隊の好感度（0-100）"
     }
   },
   "Campaign": {

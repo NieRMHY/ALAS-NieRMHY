@@ -456,23 +456,28 @@ class Emotion:
             self.main_affection_add(fleet_index)
 
     # Add by MHY, 主线好感累计：仅 Main/Main2/Main3 任务生效，
-    # 计数器按任务 × 舰队分开（三任务可能打不同地图），满 100 暂停任务
+    # 各任务独立组只含自己的计数器；满 100 不打断当次出击，整图打完再停
     @property
     def _main_affection_key(self):
         """当前主线任务的好感计数器配置键前缀，非主线任务返回 None。
 
-        组名固定为 MainAffection，字段名带任务前缀：
-        Main2 任务读 MainAffection_Main2Fleet1Affection。
+        各任务独立组：Main 任务读 MainAffection_Fleet1Affection，
+        Main2 任务读 Main2Affection_Fleet1Affection。
         """
         command = self.config.task.command
         if command not in ('Main', 'Main2', 'Main3'):
             return None
-        return f'MainAffection_{command}Fleet'
+        return f'{command}Affection_Fleet'
+
+    # 满 100 标志：道中记满后不打断当次出击，打完 Boss 整图结算后再停
+    main_affection_full = None
 
     def main_affection_add(self, fleet_index):
-        """主线战斗胜利后为接敌舰队累计好感 1/16，满 100 暂停当前任务。
+        """主线战斗胜利后为接敌舰队累计好感 1/16。
 
         出击时心情低于 40 不计（与共斗/连战规则一致）。
+        满 100 只记标志，由 main_affection_check_stop 在整图结束后停任务，
+        保证道中打满后仍打完 Boss 完整一战。
         """
         prefix = self._main_affection_key
         if prefix is None:
@@ -495,16 +500,31 @@ class Emotion:
         setattr(self.config, key, new)
         logger.attr(f'主线好感-{self.config.task.command}-舰队{fleet_index}', f'{new:.4f}/100')
         if new >= 100:
-            logger.hr(f'{self.config.task.command} 舰队{fleet_index}好感已满，暂停任务')
-            self.config.Scheduler_Enable = False
-            from module.notify import handle_notify
-            handle_notify(
-                self.config.Error_OnePushConfig,
-                title='主线好感已满，任务暂停',
-                content=f'<{self.config.config_name}> {self.config.task.command} '
-                        f'舰队{fleet_index}好感达 100，任务已暂停',
-            )
-            self.config.task_stop()
+            logger.info(f'[主线好感] {self.config.task.command} 舰队{fleet_index}好感已满，'
+                        f'当次出击打完后停止任务')
+            self.main_affection_full = str(fleet_index)
+
+    def main_affection_check_stop(self):
+        """整图结束后检查好感满标志，满则停任务并发通知。
+
+        由 CampaignRun.after_campaign_run 调用，保证道中打满后
+        仍打完 Boss 完整一战再停。
+        """
+        if self.main_affection_full is None:
+            return False
+        fleet_index = self.main_affection_full
+        self.main_affection_full = None
+        logger.hr(f'{self.config.task.command} 好感已满，暂停任务')
+        self.config.Scheduler_Enable = False
+        from module.notify import handle_notify
+        handle_notify(
+            self.config.Error_OnePushConfig,
+            title='主线好感已满，任务暂停',
+            content=f'<{self.config.config_name}> {self.config.task.command} '
+                    f'舰队{fleet_index}好感达 100，任务已暂停',
+        )
+        self.config.task_stop()
+        return True
 
     def emergency_reset(self):
         """心情清零保底。计算模式下出现红脸弹窗时调用。
