@@ -76,20 +76,39 @@ class OpsiHazard1Leveling(CoinTaskMixin, OSMap):
         if not search_completed and search_completed is not None:
             logger.warning("[大世界-侵蚀1练级] 战略搜索返回 False，可能已被提前中断")
 
-        # 第一次重扫：检查是否还有事件
-        self._solved_map_event = set()
-        self._solved_fleet_mechanism = False
-        self.map_rescan()
+        # debug 录屏：只录“战后找事件 + 处理事件 + 强制移动”这一段
+        # 事件/强制移动处理完进入下一轮前结束；若无事件则不保留文件。
+        from module.base.debug_clip import clip_end, clip_start
 
-        # 强制移动逻辑
-        if self.config.OpsiHazard1Leveling_ExecuteFixedPatrolScan:
-            if not self._solved_map_event:
-                self._execute_fixed_patrol_scan(ExecuteFixedPatrolScan=True)
-                # 第二次重扫：舰队移动后再次重扫
-                self._solved_map_event = set()
-                self.map_rescan()
+        debug_clip = None
+        had_forced_move = False
+        debug_error = None
+        if self.config.OpsiHazard1Leveling_DebugClip:
+            debug_clip = clip_start(self.config)
+        try:
+            # 第一次重扫：检查是否还有事件
+            self._solved_map_event = set()
+            self._solved_fleet_mechanism = False
+            self.map_rescan()
 
-        self.handle_after_auto_search()
+            # 强制移动逻辑（按等级 0/1/2 分发）
+            # 0=关闭；1=效率模式（只换队看雷达、不挪动舰队，最快，找不到就放弃）；
+            # 2=保守模式（先扫雷达不动，扫不到再逐个挪舰队+整图重扫，更稳但会挪、慢一些）。
+            # 保守模式在 _execute_fixed_patrol_scan 内部完成（L1→L2→L3），返回后不再
+            # 二次重扫，否则清完明石后会再次重复进明石商店（购买之外的多余进店）。
+            if self._forced_move_level() >= 1:
+                if not self._solved_map_event:
+                    had_forced_move = True
+                    self._execute_fixed_patrol_scan(ExecuteFixedPatrolScan=True)
+
+            self.handle_after_auto_search()
+        except BaseException as e:
+            debug_error = e
+            raise
+        finally:
+            if debug_clip is not None:
+                keep = bool(self._solved_map_event) or had_forced_move or debug_error is not None
+                clip_end(keep=keep)
 
         # 明石遭遇记录
         solved_events = getattr(self, "_solved_map_event", set())
