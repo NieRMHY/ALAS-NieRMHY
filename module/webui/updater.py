@@ -84,9 +84,10 @@ class Updater(DeployConfig, GitManager):
         self.state = "checking"
 
         source = "origin"
-        # gitcode 等镜像会对固定 git UA 返回 418，改用随机 UA 重试
+        # Modify by MHY, 上游随机 UA 重试方法随合并剔除（本地直连 GitHub 无需绕 gitcode 418），
+        # 改回单次 fetch，仅保留失败告警与跳过更新的行为
         try:
-            self._fetch_with_retry(source, self.Branch, max_retry=3, delay=1)
+            self.execute(f'"{self.git}" fetch {source} {self.Branch}')
         except ExecutionError:
             logger.warning("Git获取失败")
             return False
