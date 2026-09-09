@@ -1207,44 +1207,110 @@
   },
   "MainAffection": {
     "_info": {
-      "name": "主線好感度",
-      "help": "Main 任務戰鬥勝利按接敵艦隊累計好感，出擊時心情>=40 計 1/16，滿 100 打完當次出擊後暫停任務"
+      "name": "主线好感度",
+      "help": "戰鬥勝利按接敵艦隊累計好感，出擊時心情>=40 計 1/16"
+    },
+    "AffectionLimit": {
+      "name": "好感暫停閾值",
+      "help": "達到該值後打完當次出擊暫停任務，0 表示不暫停一直累計"
     },
     "Fleet1Affection": {
       "name": "一隊好感",
-      "help": "一隊好感進度（0-100）"
+      "help": "一隊好感進度"
     },
     "Fleet2Affection": {
       "name": "二隊好感",
-      "help": "二隊好感進度（0-100）"
+      "help": "二隊好感進度"
     }
   },
   "Main2Affection": {
     "_info": {
-      "name": "主線2好感度",
-      "help": "Main2 任務戰鬥勝利按接敵艦隊累計好感，出擊時心情>=40 計 1/16，滿 100 打完當次出擊後暫停任務"
+      "name": "主线2好感度",
+      "help": "戰鬥勝利按接敵艦隊累計好感，出擊時心情>=40 計 1/16"
+    },
+    "AffectionLimit": {
+      "name": "好感暫停閾值",
+      "help": "達到該值後打完當次出擊暫停任務，0 表示不暫停一直累計"
     },
     "Fleet1Affection": {
       "name": "一隊好感",
-      "help": "一隊好感進度（0-100）"
+      "help": "一隊好感進度"
     },
     "Fleet2Affection": {
       "name": "二隊好感",
-      "help": "二隊好感進度（0-100）"
+      "help": "二隊好感進度"
     }
   },
   "Main3Affection": {
     "_info": {
-      "name": "主線3好感度",
-      "help": "Main3 任務戰鬥勝利按接敵艦隊累計好感，出擊時心情>=40 計 1/16，滿 100 打完當次出擊後暫停任務"
+      "name": "主线3好感度",
+      "help": "戰鬥勝利按接敵艦隊累計好感，出擊時心情>=40 計 1/16"
+    },
+    "AffectionLimit": {
+      "name": "好感暫停閾值",
+      "help": "達到該值後打完當次出擊暫停任務，0 表示不暫停一直累計"
     },
     "Fleet1Affection": {
       "name": "一隊好感",
-      "help": "一隊好感進度（0-100）"
+      "help": "一隊好感進度"
     },
     "Fleet2Affection": {
       "name": "二隊好感",
-      "help": "二隊好感進度（0-100）"
+      "help": "二隊好感進度"
+    }
+  },
+  "EventAffection": {
+    "_info": {
+      "name": "活动好感度",
+      "help": "戰鬥勝利按接敵艦隊累計好感，出擊時心情>=40 計 1/16"
+    },
+    "AffectionLimit": {
+      "name": "好感暫停閾值",
+      "help": "達到該值後打完當次出擊暫停任務，0 表示不暫停一直累計"
+    },
+    "Fleet1Affection": {
+      "name": "一隊好感",
+      "help": "一隊好感進度"
+    },
+    "Fleet2Affection": {
+      "name": "二隊好感",
+      "help": "二隊好感進度"
+    }
+  },
+  "Event2Affection": {
+    "_info": {
+      "name": "活动2好感度",
+      "help": "戰鬥勝利按接敵艦隊累計好感，出擊時心情>=40 計 1/16"
+    },
+    "AffectionLimit": {
+      "name": "好感暫停閾值",
+      "help": "達到該值後打完當次出擊暫停任務，0 表示不暫停一直累計"
+    },
+    "Fleet1Affection": {
+      "name": "一隊好感",
+      "help": "一隊好感進度"
+    },
+    "Fleet2Affection": {
+      "name": "二隊好感",
+      "help": "二隊好感進度"
+    }
+  },
+  "Event3Affection": {
+    "_info": {
+      "name": "活动3好感度",
+      "help": "戰鬥勝利按接敵艦隊累計好感，出擊時心情>=40 計 1/16"
+    },
+    "AffectionLimit": {
+      "name": "好感暫停閾值",
+      "help": "達到該值後打完當次出擊暫停任務，0 表示不暫停一直累計"
+    },
+    "Fleet1Affection": {
+      "name": "一隊好感",
+      "help": "一隊好感進度"
+    },
+    "Fleet2Affection": {
+      "name": "二隊好感",
+      "help": "二隊好感進度"
     }
   },
   "Campaign": {

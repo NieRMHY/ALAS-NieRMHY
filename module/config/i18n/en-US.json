@@ -1207,44 +1207,110 @@
   },
   "MainAffection": {
     "_info": {
-      "name": "Main Affection",
-      "help": "Accumulate affection per engaged fleet on battle victories, +1/16 when sortie mood >= 40, finish current sortie then pause at 100"
+      "name": "主线好感度",
+      "help": "Accumulate affection per engaged fleet on battle victories, +1/16 when sortie mood >= 40"
+    },
+    "AffectionLimit": {
+      "name": "Affection Pause Threshold",
+      "help": "Finish current sortie then pause at this value, 0 means never pause"
     },
     "Fleet1Affection": {
       "name": "Fleet1 Affection",
-      "help": "Affection progress of fleet 1 (0-100)"
+      "help": "Affection progress of fleet 1"
     },
     "Fleet2Affection": {
       "name": "Fleet2 Affection",
-      "help": "Affection progress of fleet 2 (0-100)"
+      "help": "Affection progress of fleet 2"
     }
   },
   "Main2Affection": {
     "_info": {
-      "name": "Main2 Affection",
-      "help": "Accumulate affection per engaged fleet on battle victories, +1/16 when sortie mood >= 40, finish current sortie then pause at 100"
+      "name": "主线2好感度",
+      "help": "Accumulate affection per engaged fleet on battle victories, +1/16 when sortie mood >= 40"
+    },
+    "AffectionLimit": {
+      "name": "Affection Pause Threshold",
+      "help": "Finish current sortie then pause at this value, 0 means never pause"
     },
     "Fleet1Affection": {
       "name": "Fleet1 Affection",
-      "help": "Affection progress of fleet 1 (0-100)"
+      "help": "Affection progress of fleet 1"
     },
     "Fleet2Affection": {
       "name": "Fleet2 Affection",
-      "help": "Affection progress of fleet 2 (0-100)"
+      "help": "Affection progress of fleet 2"
     }
   },
   "Main3Affection": {
     "_info": {
-      "name": "Main3 Affection",
-      "help": "Accumulate affection per engaged fleet on battle victories, +1/16 when sortie mood >= 40, finish current sortie then pause at 100"
+      "name": "主线3好感度",
+      "help": "Accumulate affection per engaged fleet on battle victories, +1/16 when sortie mood >= 40"
+    },
+    "AffectionLimit": {
+      "name": "Affection Pause Threshold",
+      "help": "Finish current sortie then pause at this value, 0 means never pause"
     },
     "Fleet1Affection": {
       "name": "Fleet1 Affection",
-      "help": "Affection progress of fleet 1 (0-100)"
+      "help": "Affection progress of fleet 1"
     },
     "Fleet2Affection": {
       "name": "Fleet2 Affection",
-      "help": "Affection progress of fleet 2 (0-100)"
+      "help": "Affection progress of fleet 2"
+    }
+  },
+  "EventAffection": {
+    "_info": {
+      "name": "活动好感度",
+      "help": "Accumulate affection per engaged fleet on battle victories, +1/16 when sortie mood >= 40"
+    },
+    "AffectionLimit": {
+      "name": "Affection Pause Threshold",
+      "help": "Finish current sortie then pause at this value, 0 means never pause"
+    },
+    "Fleet1Affection": {
+      "name": "Fleet1 Affection",
+      "help": "Affection progress of fleet 1"
+    },
+    "Fleet2Affection": {
+      "name": "Fleet2 Affection",
+      "help": "Affection progress of fleet 2"
+    }
+  },
+  "Event2Affection": {
+    "_info": {
+      "name": "活动2好感度",
+      "help": "Accumulate affection per engaged fleet on battle victories, +1/16 when sortie mood >= 40"
+    },
+    "AffectionLimit": {
+      "name": "Affection Pause Threshold",
+      "help": "Finish current sortie then pause at this value, 0 means never pause"
+    },
+    "Fleet1Affection": {
+      "name": "Fleet1 Affection",
+      "help": "Affection progress of fleet 1"
+    },
+    "Fleet2Affection": {
+      "name": "Fleet2 Affection",
+      "help": "Affection progress of fleet 2"
+    }
+  },
+  "Event3Affection": {
+    "_info": {
+      "name": "活动3好感度",
+      "help": "Accumulate affection per engaged fleet on battle victories, +1/16 when sortie mood >= 40"
+    },
+    "AffectionLimit": {
+      "name": "Affection Pause Threshold",
+      "help": "Finish current sortie then pause at this value, 0 means never pause"
+    },
+    "Fleet1Affection": {
+      "name": "Fleet1 Affection",
+      "help": "Affection progress of fleet 1"
+    },
+    "Fleet2Affection": {
+      "name": "Fleet2 Affection",
+      "help": "Affection progress of fleet 2"
     }
   },
   "Campaign": {

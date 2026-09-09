@@ -101,6 +101,8 @@ Event:
       - Emotion
       - HpControl
       - EnemyPriority
+      # Add by MHY, 活动图战斗好感计数（各任务独立组）
+      - EventAffection
     Event2:
       - Scheduler
       - Campaign
@@ -110,6 +112,7 @@ Event:
       - Emotion
       - HpControl
       - EnemyPriority
+      - Event2Affection
     Event3:
       - Scheduler
       - Campaign
@@ -119,6 +122,7 @@ Event:
       - Emotion
       - HpControl
       - EnemyPriority
+      - Event3Affection
     Raid:
       - Scheduler
       - Raid

@@ -318,6 +318,7 @@
       "EnemyScaleBalanceWeight": "default_mode"
     },
     "MainAffection": {
+      "AffectionLimit": 100,
       "Fleet1Affection": 0.0,
       "Fleet2Affection": 0.0
     },
@@ -404,6 +405,7 @@
       "EnemyScaleBalanceWeight": "default_mode"
     },
     "Main2Affection": {
+      "AffectionLimit": 100,
       "Fleet1Affection": 0.0,
       "Fleet2Affection": 0.0
     },
@@ -490,6 +492,7 @@
       "EnemyScaleBalanceWeight": "default_mode"
     },
     "Main3Affection": {
+      "AffectionLimit": 100,
       "Fleet1Affection": 0.0,
       "Fleet2Affection": 0.0
     },
@@ -853,6 +856,11 @@
     "EnemyPriority": {
       "EnemyScaleBalanceWeight": "default_mode"
     },
+    "EventAffection": {
+      "AffectionLimit": 100,
+      "Fleet1Affection": 0.0,
+      "Fleet2Affection": 0.0
+    },
     "Storage": {
       "Storage": {}
     }
@@ -935,6 +943,11 @@
     "EnemyPriority": {
       "EnemyScaleBalanceWeight": "default_mode"
     },
+    "Event2Affection": {
+      "AffectionLimit": 100,
+      "Fleet1Affection": 0.0,
+      "Fleet2Affection": 0.0
+    },
     "Storage": {
       "Storage": {}
     }
@@ -1016,6 +1029,11 @@
     },
     "EnemyPriority": {
       "EnemyScaleBalanceWeight": "default_mode"
+    },
+    "Event3Affection": {
+      "AffectionLimit": 100,
+      "Fleet1Affection": 0.0,
+      "Fleet2Affection": 0.0
     },
     "Storage": {
       "Storage": {}

@@ -1515,12 +1515,20 @@
       }
     },
     "MainAffection": {
+      "AffectionLimit": {
+        "type": "input",
+        "value": 100,
+        "validate": [
+          0,
+          10000
+        ]
+      },
       "Fleet1Affection": {
         "type": "input",
         "value": 0.0,
         "validate": [
           0,
-          100
+          10000
         ]
       },
       "Fleet2Affection": {
@@ -1528,7 +1536,7 @@
         "value": 0.0,
         "validate": [
           0,
-          100
+          10000
         ]
       }
     },
@@ -1958,12 +1966,20 @@
       }
     },
     "Main2Affection": {
+      "AffectionLimit": {
+        "type": "input",
+        "value": 100,
+        "validate": [
+          0,
+          10000
+        ]
+      },
       "Fleet1Affection": {
         "type": "input",
         "value": 0.0,
         "validate": [
           0,
-          100
+          10000
         ]
       },
       "Fleet2Affection": {
@@ -1971,7 +1987,7 @@
         "value": 0.0,
         "validate": [
           0,
-          100
+          10000
         ]
       }
     },
@@ -2401,12 +2417,20 @@
       }
     },
     "Main3Affection": {
+      "AffectionLimit": {
+        "type": "input",
+        "value": 100,
+        "validate": [
+          0,
+          10000
+        ]
+      },
       "Fleet1Affection": {
         "type": "input",
         "value": 0.0,
         "validate": [
           0,
-          100
+          10000
         ]
       },
       "Fleet2Affection": {
@@ -2414,7 +2438,7 @@
         "value": 0.0,
         "validate": [
           0,
-          100
+          10000
         ]
       }
     },
@@ -4433,6 +4457,32 @@
         ]
       }
     },
+    "EventAffection": {
+      "AffectionLimit": {
+        "type": "input",
+        "value": 100,
+        "validate": [
+          0,
+          10000
+        ]
+      },
+      "Fleet1Affection": {
+        "type": "input",
+        "value": 0.0,
+        "validate": [
+          0,
+          10000
+        ]
+      },
+      "Fleet2Affection": {
+        "type": "input",
+        "value": 0.0,
+        "validate": [
+          0,
+          10000
+        ]
+      }
+    },
     "Storage": {
       "Storage": {
         "type": "storage",
@@ -4874,6 +4924,32 @@
         ]
       }
     },
+    "Event2Affection": {
+      "AffectionLimit": {
+        "type": "input",
+        "value": 100,
+        "validate": [
+          0,
+          10000
+        ]
+      },
+      "Fleet1Affection": {
+        "type": "input",
+        "value": 0.0,
+        "validate": [
+          0,
+          10000
+        ]
+      },
+      "Fleet2Affection": {
+        "type": "input",
+        "value": 0.0,
+        "validate": [
+          0,
+          10000
+        ]
+      }
+    },
     "Storage": {
       "Storage": {
         "type": "storage",
@@ -5311,6 +5387,32 @@
           "default_mode",
           "S3_enemy_first",
           "S1_enemy_first"
+        ]
+      }
+    },
+    "Event3Affection": {
+      "AffectionLimit": {
+        "type": "input",
+        "value": 100,
+        "validate": [
+          0,
+          10000
+        ]
+      },
+      "Fleet1Affection": {
+        "type": "input",
+        "value": 0.0,
+        "validate": [
+          0,
+          10000
+        ]
+      },
+      "Fleet2Affection": {
+        "type": "input",
+        "value": 0.0,
+        "validate": [
+          0,
+          10000
         ]
       }
     },

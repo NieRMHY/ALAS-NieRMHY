@@ -382,29 +382,75 @@ OldRetire:
 
 # ==================== Farm ====================
 
-# Add by MHY, 主线战斗好感计数：各任务独立组（只含自己的计数器），
-# 胜利且出击时心情≥40 计 1/16，满 100 打完当次出击（含 Boss）后暂停任务
+# Add by MHY, 主线/活动图战斗好感计数：各任务独立组（只含自己的计数器），
+# 胜利且出击时心情≥40 计 1/16；AffectionLimit 为暂停阈值填入框：
+# 0 = 不暂停一直累计，>0（如 100/200）= 达到该值后打完当次出击暂停任务
 MainAffection:
+  AffectionLimit:
+    value: 100
+    type: input
+    validate: [0, 10000]
   Fleet1Affection:
     value: 0.0
-    validate: [0, 100]
+    validate: [0, 10000]
   Fleet2Affection:
     value: 0.0
-    validate: [0, 100]
+    validate: [0, 10000]
 Main2Affection:
+  AffectionLimit:
+    value: 100
+    type: input
+    validate: [0, 10000]
   Fleet1Affection:
     value: 0.0
-    validate: [0, 100]
+    validate: [0, 10000]
   Fleet2Affection:
     value: 0.0
-    validate: [0, 100]
+    validate: [0, 10000]
 Main3Affection:
+  AffectionLimit:
+    value: 100
+    type: input
+    validate: [0, 10000]
   Fleet1Affection:
     value: 0.0
-    validate: [0, 100]
+    validate: [0, 10000]
   Fleet2Affection:
     value: 0.0
-    validate: [0, 100]
+    validate: [0, 10000]
+EventAffection:
+  AffectionLimit:
+    value: 100
+    type: input
+    validate: [0, 10000]
+  Fleet1Affection:
+    value: 0.0
+    validate: [0, 10000]
+  Fleet2Affection:
+    value: 0.0
+    validate: [0, 10000]
+Event2Affection:
+  AffectionLimit:
+    value: 100
+    type: input
+    validate: [0, 10000]
+  Fleet1Affection:
+    value: 0.0
+    validate: [0, 10000]
+  Fleet2Affection:
+    value: 0.0
+    validate: [0, 10000]
+Event3Affection:
+  AffectionLimit:
+    value: 100
+    type: input
+    validate: [0, 10000]
+  Fleet1Affection:
+    value: 0.0
+    validate: [0, 10000]
+  Fleet2Affection:
+    value: 0.0
+    validate: [0, 10000]
 
 Campaign:
   Name: 12-4
