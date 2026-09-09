@@ -318,12 +318,9 @@
       "EnemyScaleBalanceWeight": "default_mode"
     },
     "MainAffection": {
-      "MainFleet1Affection": 0.0,
-      "MainFleet2Affection": 0.0,
-      "Main2Fleet1Affection": 0.0,
-      "Main2Fleet2Affection": 0.0,
-      "Main3Fleet1Affection": 0.0,
-      "Main3Fleet2Affection": 0.0
+      "AffectionLimit": 100,
+      "Fleet1Affection": 0.0,
+      "Fleet2Affection": 0.0
     },
     "Storage": {
       "Storage": {}
@@ -407,13 +404,10 @@
     "EnemyPriority": {
       "EnemyScaleBalanceWeight": "default_mode"
     },
-    "MainAffection": {
-      "MainFleet1Affection": 0.0,
-      "MainFleet2Affection": 0.0,
-      "Main2Fleet1Affection": 0.0,
-      "Main2Fleet2Affection": 0.0,
-      "Main3Fleet1Affection": 0.0,
-      "Main3Fleet2Affection": 0.0
+    "Main2Affection": {
+      "AffectionLimit": 100,
+      "Fleet1Affection": 0.0,
+      "Fleet2Affection": 0.0
     },
     "Storage": {
       "Storage": {}
@@ -497,13 +491,10 @@
     "EnemyPriority": {
       "EnemyScaleBalanceWeight": "default_mode"
     },
-    "MainAffection": {
-      "MainFleet1Affection": 0.0,
-      "MainFleet2Affection": 0.0,
-      "Main2Fleet1Affection": 0.0,
-      "Main2Fleet2Affection": 0.0,
-      "Main3Fleet1Affection": 0.0,
-      "Main3Fleet2Affection": 0.0
+    "Main3Affection": {
+      "AffectionLimit": 100,
+      "Fleet1Affection": 0.0,
+      "Fleet2Affection": 0.0
     },
     "Storage": {
       "Storage": {}
@@ -865,6 +856,11 @@
     "EnemyPriority": {
       "EnemyScaleBalanceWeight": "default_mode"
     },
+    "EventAffection": {
+      "AffectionLimit": 100,
+      "Fleet1Affection": 0.0,
+      "Fleet2Affection": 0.0
+    },
     "Storage": {
       "Storage": {}
     }
@@ -947,6 +943,11 @@
     "EnemyPriority": {
       "EnemyScaleBalanceWeight": "default_mode"
     },
+    "Event2Affection": {
+      "AffectionLimit": 100,
+      "Fleet1Affection": 0.0,
+      "Fleet2Affection": 0.0
+    },
     "Storage": {
       "Storage": {}
     }
@@ -1028,6 +1029,11 @@
     },
     "EnemyPriority": {
       "EnemyScaleBalanceWeight": "default_mode"
+    },
+    "Event3Affection": {
+      "AffectionLimit": 100,
+      "Fleet1Affection": 0.0,
+      "Fleet2Affection": 0.0
     },
     "Storage": {
       "Storage": {}
@@ -1263,7 +1269,6 @@
     },
     "CoalitionScuttle": {
       "Sacrifice": "vanguard",
-      "SacrificeMode": "stand_still_in_the_middle",
       "Fleet1Affection": 0.0,
       "Fleet2Affection": 0.0
     },
@@ -2328,6 +2333,7 @@
     "MeritShop": {
       "Enable": true,
       "Refresh": false,
+      "BuyUnobtainedShip": false,
       "Filter": "Cube"
     },
     "CoreShop": {
@@ -2766,11 +2772,12 @@
       "TargetZone": 0,
       "OperationCoinsPreserve": 40000,
       "MinimumActionPointReserve": 200,
-      "ExecuteFixedPatrolScan": true,
+      "ExecuteFixedPatrolScan": 0,
       "SkipHpCheck": false,
       "Cl1Filter": "ActionPoint",
       "RecordNonCL1AP": true,
-      "RecordSeaMiles": true
+      "RecordSeaMiles": true,
+      "DebugClip": false
     },
     "OpsiSirenBug": {
       "SirenResearch_Enable": true,

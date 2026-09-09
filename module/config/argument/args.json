@@ -1515,52 +1515,28 @@
       }
     },
     "MainAffection": {
-      "MainFleet1Affection": {
+      "AffectionLimit": {
         "type": "input",
-        "value": 0.0,
+        "value": 100,
         "validate": [
           0,
-          100
+          10000
         ]
       },
-      "MainFleet2Affection": {
+      "Fleet1Affection": {
         "type": "input",
         "value": 0.0,
         "validate": [
           0,
-          100
+          10000
         ]
       },
-      "Main2Fleet1Affection": {
+      "Fleet2Affection": {
         "type": "input",
         "value": 0.0,
         "validate": [
           0,
-          100
-        ]
-      },
-      "Main2Fleet2Affection": {
-        "type": "input",
-        "value": 0.0,
-        "validate": [
-          0,
-          100
-        ]
-      },
-      "Main3Fleet1Affection": {
-        "type": "input",
-        "value": 0.0,
-        "validate": [
-          0,
-          100
-        ]
-      },
-      "Main3Fleet2Affection": {
-        "type": "input",
-        "value": 0.0,
-        "validate": [
-          0,
-          100
+          10000
         ]
       }
     },
@@ -1989,53 +1965,29 @@
         ]
       }
     },
-    "MainAffection": {
-      "MainFleet1Affection": {
+    "Main2Affection": {
+      "AffectionLimit": {
         "type": "input",
-        "value": 0.0,
+        "value": 100,
         "validate": [
           0,
-          100
+          10000
         ]
       },
-      "MainFleet2Affection": {
+      "Fleet1Affection": {
         "type": "input",
         "value": 0.0,
         "validate": [
           0,
-          100
+          10000
         ]
       },
-      "Main2Fleet1Affection": {
+      "Fleet2Affection": {
         "type": "input",
         "value": 0.0,
         "validate": [
           0,
-          100
-        ]
-      },
-      "Main2Fleet2Affection": {
-        "type": "input",
-        "value": 0.0,
-        "validate": [
-          0,
-          100
-        ]
-      },
-      "Main3Fleet1Affection": {
-        "type": "input",
-        "value": 0.0,
-        "validate": [
-          0,
-          100
-        ]
-      },
-      "Main3Fleet2Affection": {
-        "type": "input",
-        "value": 0.0,
-        "validate": [
-          0,
-          100
+          10000
         ]
       }
     },
@@ -2464,53 +2416,29 @@
         ]
       }
     },
-    "MainAffection": {
-      "MainFleet1Affection": {
+    "Main3Affection": {
+      "AffectionLimit": {
         "type": "input",
-        "value": 0.0,
+        "value": 100,
         "validate": [
           0,
-          100
+          10000
         ]
       },
-      "MainFleet2Affection": {
+      "Fleet1Affection": {
         "type": "input",
         "value": 0.0,
         "validate": [
           0,
-          100
+          10000
         ]
       },
-      "Main2Fleet1Affection": {
+      "Fleet2Affection": {
         "type": "input",
         "value": 0.0,
         "validate": [
           0,
-          100
-        ]
-      },
-      "Main2Fleet2Affection": {
-        "type": "input",
-        "value": 0.0,
-        "validate": [
-          0,
-          100
-        ]
-      },
-      "Main3Fleet1Affection": {
-        "type": "input",
-        "value": 0.0,
-        "validate": [
-          0,
-          100
-        ]
-      },
-      "Main3Fleet2Affection": {
-        "type": "input",
-        "value": 0.0,
-        "validate": [
-          0,
-          100
+          10000
         ]
       }
     },
@@ -2690,22 +2618,24 @@
         "type": "select",
         "value": "campaign_main",
         "option": [
-          "event_20260813_cn"
+          "event_20260813_cn",
+          "event_20260908_cn"
         ],
         "option_cn": [
-          "event_20260813_cn"
+          "event_20260908_cn"
         ],
         "option_en": [
-          "event_20260813_cn"
+          "event_20260908_cn"
         ],
         "option_jp": [
-          "event_20260813_cn"
+          "event_20260908_cn"
         ],
         "option_tw": [
           "event_20260813_cn"
         ],
         "option_bold": [
-          "event_20260813_cn"
+          "event_20260813_cn",
+          "event_20260908_cn"
         ]
       },
       "Mode": {
@@ -3207,23 +3137,25 @@
         "type": "select",
         "value": "campaign_main",
         "option": [
-          "event_20260813_cn"
+          "event_20260813_cn",
+          "event_20260908_cn"
         ],
         "display": "hide",
         "option_cn": [
-          "event_20260813_cn"
+          "event_20260908_cn"
         ],
         "option_en": [
-          "event_20260813_cn"
+          "event_20260908_cn"
         ],
         "option_jp": [
-          "event_20260813_cn"
+          "event_20260908_cn"
         ],
         "option_tw": [
           "event_20260813_cn"
         ],
         "option_bold": [
-          "event_20260813_cn"
+          "event_20260813_cn",
+          "event_20260908_cn"
         ]
       },
       "Mode": {
@@ -4158,22 +4090,24 @@
         "type": "select",
         "value": "campaign_main",
         "option": [
-          "event_20260813_cn"
+          "event_20260813_cn",
+          "event_20260908_cn"
         ],
         "option_cn": [
-          "event_20260813_cn"
+          "event_20260908_cn"
         ],
         "option_en": [
-          "event_20260813_cn"
+          "event_20260908_cn"
         ],
         "option_jp": [
-          "event_20260813_cn"
+          "event_20260908_cn"
         ],
         "option_tw": [
           "event_20260813_cn"
         ],
         "option_bold": [
-          "event_20260813_cn"
+          "event_20260813_cn",
+          "event_20260908_cn"
         ]
       },
       "Mode": {
@@ -4526,6 +4460,32 @@
           "default_mode",
           "S3_enemy_first",
           "S1_enemy_first"
+        ]
+      }
+    },
+    "EventAffection": {
+      "AffectionLimit": {
+        "type": "input",
+        "value": 100,
+        "validate": [
+          0,
+          10000
+        ]
+      },
+      "Fleet1Affection": {
+        "type": "input",
+        "value": 0.0,
+        "validate": [
+          0,
+          10000
+        ]
+      },
+      "Fleet2Affection": {
+        "type": "input",
+        "value": 0.0,
+        "validate": [
+          0,
+          10000
         ]
       }
     },
@@ -4599,22 +4559,24 @@
         "type": "select",
         "value": "campaign_main",
         "option": [
-          "event_20260813_cn"
+          "event_20260813_cn",
+          "event_20260908_cn"
         ],
         "option_cn": [
-          "event_20260813_cn"
+          "event_20260908_cn"
         ],
         "option_en": [
-          "event_20260813_cn"
+          "event_20260908_cn"
         ],
         "option_jp": [
-          "event_20260813_cn"
+          "event_20260908_cn"
         ],
         "option_tw": [
           "event_20260813_cn"
         ],
         "option_bold": [
-          "event_20260813_cn"
+          "event_20260813_cn",
+          "event_20260908_cn"
         ]
       },
       "Mode": {
@@ -4970,6 +4932,32 @@
         ]
       }
     },
+    "Event2Affection": {
+      "AffectionLimit": {
+        "type": "input",
+        "value": 100,
+        "validate": [
+          0,
+          10000
+        ]
+      },
+      "Fleet1Affection": {
+        "type": "input",
+        "value": 0.0,
+        "validate": [
+          0,
+          10000
+        ]
+      },
+      "Fleet2Affection": {
+        "type": "input",
+        "value": 0.0,
+        "validate": [
+          0,
+          10000
+        ]
+      }
+    },
     "Storage": {
       "Storage": {
         "type": "storage",
@@ -5040,22 +5028,24 @@
         "type": "select",
         "value": "campaign_main",
         "option": [
-          "event_20260813_cn"
+          "event_20260813_cn",
+          "event_20260908_cn"
         ],
         "option_cn": [
-          "event_20260813_cn"
+          "event_20260908_cn"
         ],
         "option_en": [
-          "event_20260813_cn"
+          "event_20260908_cn"
         ],
         "option_jp": [
-          "event_20260813_cn"
+          "event_20260908_cn"
         ],
         "option_tw": [
           "event_20260813_cn"
         ],
         "option_bold": [
-          "event_20260813_cn"
+          "event_20260813_cn",
+          "event_20260908_cn"
         ]
       },
       "Mode": {
@@ -5407,6 +5397,32 @@
           "default_mode",
           "S3_enemy_first",
           "S1_enemy_first"
+        ]
+      }
+    },
+    "Event3Affection": {
+      "AffectionLimit": {
+        "type": "input",
+        "value": 100,
+        "validate": [
+          0,
+          10000
+        ]
+      },
+      "Fleet1Affection": {
+        "type": "input",
+        "value": 0.0,
+        "validate": [
+          0,
+          10000
+        ]
+      },
+      "Fleet2Affection": {
+        "type": "input",
+        "value": 0.0,
+        "validate": [
+          0,
+          10000
         ]
       }
     },
@@ -6605,14 +6621,6 @@
           "vanguard",
           "flagship",
           "vanguard_flagship"
-        ]
-      },
-      "SacrificeMode": {
-        "type": "select",
-        "value": "stand_still_in_the_middle",
-        "option": [
-          "stand_still_in_the_middle",
-          "hide_in_upper_left"
         ]
       },
       "Fleet1Affection": {
@@ -7837,22 +7845,24 @@
         "type": "select",
         "value": "campaign_main",
         "option": [
-          "event_20260813_cn"
+          "event_20260813_cn",
+          "event_20260908_cn"
         ],
         "option_cn": [
-          "event_20260813_cn"
+          "event_20260908_cn"
         ],
         "option_en": [
-          "event_20260813_cn"
+          "event_20260908_cn"
         ],
         "option_jp": [
-          "event_20260813_cn"
+          "event_20260908_cn"
         ],
         "option_tw": [
           "event_20260813_cn"
         ],
         "option_bold": [
-          "event_20260813_cn"
+          "event_20260813_cn",
+          "event_20260908_cn"
         ]
       },
       "Mode": {
@@ -8295,22 +8305,24 @@
         "type": "select",
         "value": "campaign_main",
         "option": [
-          "event_20260813_cn"
+          "event_20260813_cn",
+          "event_20260908_cn"
         ],
         "option_cn": [
-          "event_20260813_cn"
+          "event_20260908_cn"
         ],
         "option_en": [
-          "event_20260813_cn"
+          "event_20260908_cn"
         ],
         "option_jp": [
-          "event_20260813_cn"
+          "event_20260908_cn"
         ],
         "option_tw": [
           "event_20260813_cn"
         ],
         "option_bold": [
-          "event_20260813_cn"
+          "event_20260813_cn",
+          "event_20260908_cn"
         ]
       },
       "Mode": {
@@ -8753,22 +8765,24 @@
         "type": "select",
         "value": "campaign_main",
         "option": [
-          "event_20260813_cn"
+          "event_20260813_cn",
+          "event_20260908_cn"
         ],
         "option_cn": [
-          "event_20260813_cn"
+          "event_20260908_cn"
         ],
         "option_en": [
-          "event_20260813_cn"
+          "event_20260908_cn"
         ],
         "option_jp": [
-          "event_20260813_cn"
+          "event_20260908_cn"
         ],
         "option_tw": [
           "event_20260813_cn"
         ],
         "option_bold": [
-          "event_20260813_cn"
+          "event_20260813_cn",
+          "event_20260908_cn"
         ]
       },
       "Mode": {
@@ -9211,22 +9225,24 @@
         "type": "select",
         "value": "campaign_main",
         "option": [
-          "event_20260813_cn"
+          "event_20260813_cn",
+          "event_20260908_cn"
         ],
         "option_cn": [
-          "event_20260813_cn"
+          "event_20260908_cn"
         ],
         "option_en": [
-          "event_20260813_cn"
+          "event_20260908_cn"
         ],
         "option_jp": [
-          "event_20260813_cn"
+          "event_20260908_cn"
         ],
         "option_tw": [
           "event_20260813_cn"
         ],
         "option_bold": [
-          "event_20260813_cn"
+          "event_20260813_cn",
+          "event_20260908_cn"
         ]
       },
       "Mode": {
@@ -9659,22 +9675,24 @@
         "type": "select",
         "value": "campaign_main",
         "option": [
-          "event_20260813_cn"
+          "event_20260813_cn",
+          "event_20260908_cn"
         ],
         "option_cn": [
-          "event_20260813_cn"
+          "event_20260908_cn"
         ],
         "option_en": [
-          "event_20260813_cn"
+          "event_20260908_cn"
         ],
         "option_jp": [
-          "event_20260813_cn"
+          "event_20260908_cn"
         ],
         "option_tw": [
           "event_20260813_cn"
         ],
         "option_bold": [
-          "event_20260813_cn"
+          "event_20260813_cn",
+          "event_20260908_cn"
         ]
       },
       "Mode": {
@@ -12267,6 +12285,10 @@
         "type": "checkbox",
         "value": false
       },
+      "BuyUnobtainedShip": {
+        "type": "checkbox",
+        "value": false
+      },
       "Filter": {
         "type": "textarea",
         "value": "Cube"
@@ -13995,8 +14017,13 @@
         "value": 200
       },
       "ExecuteFixedPatrolScan": {
-        "type": "checkbox",
-        "value": true
+        "type": "select",
+        "value": 0,
+        "option": [
+          0,
+          1,
+          2
+        ]
       },
       "SkipHpCheck": {
         "type": "checkbox",
@@ -14021,6 +14048,10 @@
           true,
           false
         ]
+      },
+      "DebugClip": {
+        "type": "checkbox",
+        "value": false
       }
     },
     "OpsiSirenBug": {
@@ -14671,7 +14702,8 @@
           "ChangFeng",
           "Mogador",
           "RoyalFortune",
-          "DaVinci"
+          "DaVinci",
+          "Taihou"
         ]
       },
       "Char2": {
@@ -14712,7 +14744,8 @@
           "ChangFeng",
           "Mogador",
           "RoyalFortune",
-          "DaVinci"
+          "DaVinci",
+          "Taihou"
         ]
       },
       "Product1": {
@@ -14849,7 +14882,8 @@
           "ChangFeng",
           "Mogador",
           "RoyalFortune",
-          "DaVinci"
+          "DaVinci",
+          "Taihou"
         ]
       },
       "Char2": {
@@ -14890,7 +14924,8 @@
           "ChangFeng",
           "Mogador",
           "RoyalFortune",
-          "DaVinci"
+          "DaVinci",
+          "Taihou"
         ]
       },
       "Product1": {
@@ -15039,7 +15074,8 @@
           "ChangFeng",
           "Mogador",
           "RoyalFortune",
-          "DaVinci"
+          "DaVinci",
+          "Taihou"
         ]
       },
       "Char2": {
@@ -15080,7 +15116,8 @@
           "ChangFeng",
           "Mogador",
           "RoyalFortune",
-          "DaVinci"
+          "DaVinci",
+          "Taihou"
         ]
       },
       "Product1": {
@@ -15187,7 +15224,8 @@
           "ChangFeng",
           "Mogador",
           "RoyalFortune",
-          "DaVinci"
+          "DaVinci",
+          "Taihou"
         ]
       },
       "Char2": {
@@ -15228,7 +15266,8 @@
           "ChangFeng",
           "Mogador",
           "RoyalFortune",
-          "DaVinci"
+          "DaVinci",
+          "Taihou"
         ]
       },
       "Product1": {
@@ -15340,7 +15379,8 @@
           "ChangFeng",
           "Mogador",
           "RoyalFortune",
-          "DaVinci"
+          "DaVinci",
+          "Taihou"
         ]
       },
       "Char2": {
@@ -15381,7 +15421,8 @@
           "ChangFeng",
           "Mogador",
           "RoyalFortune",
-          "DaVinci"
+          "DaVinci",
+          "Taihou"
         ]
       },
       "Product1": {

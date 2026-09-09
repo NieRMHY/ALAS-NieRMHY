@@ -7,6 +7,8 @@
 该模块是 WebUI 的顶层入口，被 gui.py 启动时引用。
 """
 
+import os
+
 from hashlib import sha256
 from pathlib import Path
 
