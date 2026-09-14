@@ -25,7 +25,6 @@ from module.webui.app_dependencies import (
     threading,
     time,
     toast,
-    updater,
     use_scope,
 )
 
@@ -199,37 +198,9 @@ class HomeMixin(WebUIMixinBase):
             name="visibility_state",
         )
 
-        def goto_update():
-            self.ui_develop()
-            self.dev_update()
-            self._close_update_notice()
-
-        def show_update_toast():
-            if self._update_notified:
-                return
-            self._update_notified = True
-
-            from module.notify.notify import notify_webui
-
-            notify_webui(
-                instance="Alas",
-                title=t("Gui.Toast.ClickToUpdate"),
-                content="检测到新版本，请及时更新",  # Modify by MHY, 去傲娇语
-                updata=True,
-            )
-
-            self._show_update_notice(goto_update)
-
-        update_switch = Switch(
-            status={1: show_update_toast},
-            get_state=lambda: updater.state,
-            name="update_state",
-        )
-
         self.task_handler.add(self.state_switch.g(), 2)
         self.task_handler.add(self.set_aside_status, 2)
         self.task_handler.add(visibility_state_switch.g(), 15)
-        self.task_handler.add(update_switch.g(), 1)
 
         if restore_instance:
             self.ui_alas(aside)

@@ -110,11 +110,6 @@ class DeveloperToolsMixin(WebUIMixinBase):
             onclick=raise_exception,
             scope="develop_detail",
         )
-        put_button(
-            label=t("预览更新提示"),
-            onclick=self._preview_update_notice,
-            scope="develop_detail",
-        )
 
         def _get_debug_target_instance() -> Optional[str]:
             if getattr(self, "alas_name", ""):

@@ -28,7 +28,6 @@ class WebUIMixinBase:
         alive: bool
         is_mobile: bool
         _log: Any
-        _update_notified: bool
         _overview_snapshot: Any
         _overview_log: Any
         _overview_log_config_name: str | None

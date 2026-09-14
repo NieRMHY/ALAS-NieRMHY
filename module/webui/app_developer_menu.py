@@ -59,12 +59,5 @@ class DeveloperMenuMixin(WebUIMixinBase):
         lang.TRANSLATE_MODE = True
         self.show_home()
 
-    def _preview_update_notice(self) -> None:
-        def handle_preview_click():
-            self._close_update_notice()
-            toast("success", color="success")
-
-        self._show_update_notice(handle_preview_click)
-
     def ui_develop(self) -> None:
         self.show_home()

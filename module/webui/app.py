@@ -37,8 +37,6 @@ from module.webui.app_dependencies import (
     updater,
     webconfig,
 )
-# Add by MHY, 上游公网监听自动密码在 app() 内调用 is_public_webui_host，合并缝隙补导入
-from module.webui.password_utils import is_public_webui_host
 from module.webui.app_developer_menu import DeveloperMenuMixin
 from module.webui.app_developer_settings import DeveloperSettingsMixin
 from module.webui.app_developer_tools import DeveloperToolsMixin
@@ -332,16 +330,7 @@ def app():
     def manage() -> None:
         _run_gui(initial_page="manage")
 
-    from mcp_server_sse import app as mcp_app, configure_auth as configure_mcp_auth
-
-    # MCP 复用 WebUI 密码：PyWebIO 的登录校验发生在页面会话内，管不到挂载的
-    # ASGI 子应用，这里显式把已解析的密码注入 MCP。
-    configure_mcp_auth(
-        key,
-        public_bind=is_public_webui_host(
-            State.webui_host or State.deploy_config.WebuiHost
-        ),
-    )
+    from mcp_server_sse import app as mcp_app
 
     application = asgi_app(
         applications=[index, manage],
