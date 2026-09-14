@@ -190,6 +190,10 @@
       "name": "認知覺醒",
       "help": ""
     },
+    "OperationHandover": {
+      "name": "作戰委託合約",
+      "help": "消耗作戰委託書，自動進行作戰委託。"
+    },
     "Daily": {
       "name": "每日任務",
       "help": ""
@@ -1430,7 +1434,7 @@
       "raid_20240328": "從零開始的魔王討伐之旅",
       "raid_20250116": "華裳巧展喜事長",
       "raid_20260212": "春宴懷玉香滿庭",
-      "raid_20260827": "The Big Shots Proclamation",
+      "raid_20260827": "大人物的預告信",
       "war_archives_20180607_cn": "檔案 墨染的鋼鐵之花",
       "war_archives_20180726_cn": "檔案 光與影的鳶尾之華",
       "war_archives_20181020_en": "檔案 努力希望和計劃",
@@ -1516,6 +1520,59 @@
       "withdraw_continue": "撤退後繼續任務",
       "switch_fleet": "切換隊伍繼續出擊",
       "withdraw_stop": "撤退後關閉任務"
+    }
+  },
+  "OperationHandover": {
+    "_info": {
+      "name": "作戰委託設定",
+      "help": ""
+    },
+    "Count": {
+      "name": "委託次數",
+      "help": "本次作戰委託要執行的關卡次數\n0 表示降到遊戲允許的最少次數：這時如果不開啟「一鍵消耗作戰全權委託書」，本任務會直接被關閉"
+    },
+    "AutoSupplementTime": {
+      "name": "自動補充時間",
+      "help": "剩餘可用時間不足以完成委託時，用作戰全權委託書兌換可用時間（1 本 = 1 小時）"
+    },
+    "UseHandoverBook": {
+      "name": "使用作戰全權委託書",
+      "help": "開始委託前把作戰全權委託書的投入量拉到最大"
+    },
+    "ConsumeAllBook": {
+      "name": "一鍵消耗作戰全權委託書",
+      "help": "每週定時觸發一次：作戰次數拉滿 → 使用委託書拉滿 → 依委託書數量設定作戰次數，\n把倉庫裡的作戰全權委託書一次用光。\n觸發當天會忽略「委託次數」的設定；委託次數為 0 時，本任務只在觸發時間執行",
+      "True": "已啟用",
+      "False": "關閉"
+    },
+    "ConsumeAllBookWeekday": {
+      "name": "一鍵消耗觸發日",
+      "help": "每週在這一天觸發一次",
+      "mon": "週一",
+      "tue": "週二",
+      "wed": "週三",
+      "thu": "週四",
+      "fri": "週五",
+      "sat": "週六",
+      "sun": "週日"
+    },
+    "ConsumeAllBookTime": {
+      "name": "一鍵消耗觸發時間",
+      "help": "觸發日當天到這個時間之後才會觸發，格式 HH:MM，例如 12:00"
+    },
+    "MaintainOverride": {
+      "name": "維護當天作戰委託",
+      "help": "開啟後每天查一次停服維護公告：維護就在今天且還沒開始時，本次執行會延後到維護前 10 分鐘，\n到點把作戰次數拉滿跑最後一次（受「使用作戰全權委託書」「自動補充時間」影響）。\n維護時間已經過去、或者不是今天，都照正常流程走。\n資料來自 api-blhx-maintain，依目前遊戲伺服器取對應公告，時間已換算為本機時間",
+      "True": "已啟用",
+      "False": "關閉"
+    },
+    "OilLimit": {
+      "name": "石油低於 X 後延後",
+      "help": "石油低於該數值時延後任務，石油夠了再繼續出擊\n0 表示不檢查"
+    },
+    "ConsumeAllBookRecord": {
+      "name": "一鍵消耗觸發記錄",
+      "help": "腳本記錄本週是否已經觸發過，不需要手動修改"
     }
   },
   "StopCondition": {
@@ -1686,7 +1743,8 @@
       "hunt_only": "僅狩獵",
       "boss_only": "僅BOSS戰",
       "hunt_and_boss": "狩獵及BOSS戰",
-      "every_combat": "每戰出擊"
+      "every_combat": "每戰出擊",
+      "advanced": "advanced"
     },
     "AutoSearchMode": {
       "name": "選擇潛艇自律方案",
@@ -1701,6 +1759,10 @@
       "1_grid_to_boss": "距離 BOSS 1 格",
       "2_grid_to_boss": "距離 BOSS 2 格",
       "use_open_ocean_support": "使用 遠洋支援"
+    },
+    "AdvancedConfig": {
+      "name": "Submarine.AdvancedConfig.name",
+      "help": "Submarine.AdvancedConfig.help"
     }
   },
   "Emotion": {
@@ -3376,6 +3438,10 @@
       "name": "商店過濾器",
       "help": "預設只購買體力。如果要購買紫幣，設定為 'ActionPoint > PurpleCoins'"
     },
+    "DebugClipRetentionDays": {
+      "name": "錄影保留天數",
+      "help": "侵蝕一與短貓相接的戰後 debug 錄影保留天數。log/clips/ 下的錄影超過該天數會被自動清理，避免磁碟被佔滿；填 0 表示永久保留、不自動清理。"
+    },
     "NotifyOpsiMail": {
       "name": "推送大世界相關資訊",
       "help": "使用 OnePush 推送關於侵蝕1和短貓的資訊。啟動器推送由「啟動器推送」單獨控制。由於資訊較多，可能會比較吵"
@@ -3635,6 +3701,14 @@
     "StayInZone": {
       "name": "停留在指定海域",
       "help": "開啟後，將按「指定海域」設定執行。指定單個海域時一直停留在該海域；指定多個海域時按填寫順序循環。僅在指定海域不為0時生效。"
+    },
+    "ExecuteFixedPatrolScan": {
+      "name": "固定巡回扫描",
+      "help": "开启后每10秒扫描一次固定巡回区域。"
+    },
+    "DebugClip": {
+      "name": "戰後 debug 錄影",
+      "help": "開啟後，在每輪短貓相接戰後「找事件 / 處理事件 / 強制移動」期間，把 ALAS 自己看到的畫面錄成 mp4，存到 log/clips/ 目錄（檔名以 meow_clip_ 開頭）。每一輪都會保存，不論有沒有遇到事件，方便逐輪回看。保留天數見「大世界通用設定」。"
     }
   },
   "OpsiTarget": {
@@ -3704,7 +3778,7 @@
     },
     "DebugClip": {
       "name": "戰後 debug 錄影",
-      "help": "開啟後，在每輪侵蝕1戰後「找事件 / 處理事件 / 強制移動」期間，把 ALAS 自己看到的畫面錄成 mp4，存到 log/clips/ 目錄；一輪沒發生任何事件則不保存。用於人工核對是否漏貓。影片預設全部保留、不自動清理，請留意磁碟空間。"
+      "help": "開啟後，在每輪侵蝕1戰後「找事件 / 處理事件 / 強制移動」期間，把 ALAS 自己看到的畫面錄成 mp4，存到 log/clips/ 目錄。每一輪都會保存，不論有沒有遇到事件，方便逐輪回看。用於人工核對是否漏貓。影片會依「大世界通用設定」裡的天數自動清理。"
     }
   },
   "OpsiSirenBug": {

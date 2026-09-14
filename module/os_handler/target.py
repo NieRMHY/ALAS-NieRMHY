@@ -63,7 +63,7 @@ class OSTargetHandler(OSTarget, Combat, UI):
                 continue
                 
             # End
-            if not self.image_color_count(TARGET_RECEIVE_ALL, color=(230, 187, 67), threshold=220, count=400):
+            if not self.image_color_count(TARGET_RECEIVE_ALL, color=(230, 187, 67), threshold=35, count=400):
                 if confirm_timer.reached():
                     break
 
@@ -122,7 +122,7 @@ class OSTargetHandler(OSTarget, Combat, UI):
                 continue
 
             # End
-            if not self.image_color_count(TARGET_RECEIVE_SINGLE, color=(76, 117, 184), threshold=220, count=400):
+            if not self.image_color_count(TARGET_RECEIVE_SINGLE, color=(76, 117, 184), threshold=35, count=400):
                 if confirm_timer.reached():
                     break
         
@@ -149,7 +149,7 @@ class OSTargetHandler(OSTarget, Combat, UI):
         return received
     
     def _is_finished(self, area):
-        return self.image_color_count(area, color=(255, 239, 156), threshold=221, count=100)
+        return self.image_color_count(area, color=(255, 239, 156), threshold=34, count=100)
     
     def _star_grid(self):
         return ButtonGrid(

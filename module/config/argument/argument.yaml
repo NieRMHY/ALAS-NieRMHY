@@ -361,6 +361,7 @@ YukikazeTaskManager:
       > Ambush11
       > OpsiHazard1Leveling
       > ThreeOilLowCost
+      > OperationHandover
 OneClickRetire:
   KeepLimitBreak:
     value: keep_limit_break
@@ -469,6 +470,33 @@ Campaign:
   DefeatWithdraw:
     value: withdraw_stop
     option: [ withdraw_continue, switch_fleet, withdraw_stop ]
+OperationHandover:
+  Count:
+    value: 1
+    validate: [0, 999]
+  AutoSupplementTime: false
+  UseHandoverBook: false
+  ConsumeAllBook:
+    type: checkbox
+    value: false
+    option: [true, false]
+  ConsumeAllBookWeekday:
+    value: sun
+    option: [mon, tue, wed, thu, fri, sat, sun]
+  ConsumeAllBookTime:
+    value: "00:00"
+    valuetype: str
+  MaintainOverride:
+    type: checkbox
+    value: false
+    option: [true, false]
+  OilLimit:
+    value: 1000
+    validate: [0, 999999]
+  ConsumeAllBookRecord:
+    type: stored
+    value: ""
+    display: hide
 StopCondition:
   OilLimit: 1000
   CoinLimit: 0
@@ -535,7 +563,7 @@ Submarine:
     option: [0, 1, 2]
   Mode:
     value: do_not_use
-    option: [do_not_use, hunt_only, boss_only, hunt_and_boss, every_combat]
+    option: [do_not_use, hunt_only, boss_only, hunt_and_boss, every_combat, advanced]
   AutoSearchMode:
     value: sub_standby
     option: [sub_standby, sub_auto_call]
@@ -543,6 +571,52 @@ Submarine:
     value: "2_grid_to_boss"
     option:
       [to_boss_position, 1_grid_to_boss, 2_grid_to_boss, use_open_ocean_support]
+  AdvancedConfig:
+    type: textarea
+    mode: yaml
+    value: |
+      # 弹药数
+      ammo: 7
+
+      # 远洋支援数
+      support: 1
+
+      # 松鲷的狩猎范围
+      range:
+        - "ONONOOO"
+        - "ONNNNOO"
+        - "NNNNNNO"
+        - "ONNHNNN"
+        - "NNNNNNO"
+        - "ONOONOO"
+        - "OOOOOOO"
+
+      # 规则
+      rules:
+        battle_0: # 所有战斗
+          type: hunt  # 出击类型为狩猎
+          condition:  # 出击条件
+            ammo: ">2"  # 弹药数大于2
+            enemy:  # 敌人类型为
+              - "2C"  # 中航
+              - "3T"  # 大运
+              - "0E"  # 未知敌人
+            in_range: true  # 在狩猎范围里
+          move: false # 不移动
+        battle_2: # 第二场战斗
+          type: call  # 出击类型为召唤
+          condition:  # 出击条件
+            ammo: ">=2" # 弹药数大于等于2
+            support: "!=0" # 远洋支援数不等于0
+            enemy:  # 敌人类型为
+              - "3*"  # 所有大型舰队
+            in_range: false  # 不要求在狩猎范围里
+          move: false # 不移动
+        battle_-1:  # 最后一场战斗
+          type: call  # 出击类型为召唤
+          # 这里没写条件所以是必定出击
+          support: true # 远洋支援
+          move: true # 移动
 Emotion:
   Mode:
     value: calculate
@@ -1169,6 +1243,9 @@ OpsiGeneral:
   DoRandomMapEvent: true
   AkashiShopFilter: |-
     ActionPoint
+  # 战后 debug 录像保留天数：log/clips/ 下超过该天数的录像会被自动清理，
+  # 0 表示永久保留。侵蚀一与短猫相接的录像共用这一项。
+  DebugClipRetentionDays: 7
   NotifyOpsiMail: true
   LauncherPush: true
   IndependentPush: false
@@ -1259,6 +1336,13 @@ OpsiMeowfficerFarming:
   TargetZone:
     value: 0
   StayInZone: false
+  # 效率模式强制移动（套用侵蚀一）：战后遍历 1~4 队雷达清剩余问号，
+  # 只切换舰队看雷达、不挪动舰队；默认关闭
+  ExecuteFixedPatrolScan: false
+  # 战后 debug 录像：录制「打完找事件 / 处理事件 / 强制移动」这一段的真实画面，
+  # 每一轮都保存（不论有没有遇到事件），方便逐轮回看实际过程。
+  # 保留天数见「大世界通用设置」。
+  DebugClip: false
 OpsiTarget:
   TargetFarming: false
   TargetZone:

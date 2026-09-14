@@ -148,13 +148,18 @@ AzurPilot은 MCP 서비스를 제공하며, MCP 호환 클라이언트나 도구
 
 > MCP 서비스는 기본적으로 WebUI와 함께 시작되며 `/mcp` 경로(WebUI 기본 포트 25548)에 마운트됩니다. 또한 `uv run python mcp_server_sse.py`로 단독 실행할 수도 있습니다(단독 포트 22268).
 
+MCP는 WebUI 비밀번호(`--key` 또는 `config/deploy.yaml`의 `Password`)를 그대로 사용합니다. 비밀번호가 없고 WebUI가 공용 주소를 수신하면 WebUI가 자동으로 생성하며, 저장소 루트의 `password.txt`에서 확인할 수 있습니다. 이 비밀번호가 없는 요청은 401로 거부됩니다.
+
 ### 로컬 연결 설정
 
 ```json
 {
   "mcpServers": {
     "alas": {
-      "url": "http://127.0.0.1:25548/mcp/sse"
+      "url": "http://127.0.0.1:25548/mcp/sse",
+      "headers": {
+        "Authorization": "Bearer <WebUI 비밀번호>"
+      }
     }
   }
 }
@@ -166,13 +171,20 @@ AzurPilot은 MCP 서비스를 제공하며, MCP 호환 클라이언트나 도구
 {
   "mcpServers": {
     "alas": {
-      "url": "http://[IP_ADDRESS]:25548/mcp/sse"
+      "url": "http://[IP_ADDRESS]:25548/mcp/sse",
+      "headers": {
+        "Authorization": "Bearer <WebUI 비밀번호>"
+      }
     }
   }
 }
 ```
 
 `[IP_ADDRESS]`를 실제 서버 주소 또는 인트라넷 주소로 바꾸세요. WebUI 포트를 변경한 경우 URL의 포트도 함께 변경하세요.
+
+URL만 입력할 수 있고 요청 헤더를 설정할 수 없는 클라이언트는 비밀번호를 쿼리 파라미터에 넣을 수 있습니다: `http://[IP_ADDRESS]:25548/mcp/sse?key=<WebUI 비밀번호>`. 이 경우 URL 자체가 자격 증명이므로 캡처하거나 공유하지 말고, 가능하면 헤더를 사용하세요. `Authorization` 대신 `X-API-Key: <WebUI 비밀번호>`도 사용할 수 있습니다.
+
+비밀번호를 변경한 경우 MCP에 반영되도록 WebUI를 다시 시작하세요.
 
 ### MCP 도구 목록
 

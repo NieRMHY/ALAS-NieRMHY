@@ -133,20 +133,19 @@ class GridPredictor:
             image = cv2.resize(image, shape, interpolation=cv2.INTER_CUBIC)
         return image
 
-    def relative_rgb_count(self, area, color, shape=(50, 50), threshold=221):
+    def relative_rgb_count(self, area, color, shape=(50, 50), threshold=34):
         """统计相对区域内匹配目标 RGB 颜色的像素数量。
 
         Args:
             area (tuple): 相对区域坐标 (左上x, 左上y, 右下x, 右下y)，如 (-1, -1, 1, 1)。
             color (tuple): 目标 RGB 颜色。
             shape (tuple): 输出图像尺寸，(宽, 高)。
-            threshold (int): 阈值 0-255，越大越严格，255 表示完全相同。
+            threshold (int): 颜色容差 0-255，值越小越严格，0 表示完全相同。
 
         Returns:
             int: 匹配的像素数量。
         """
-        mask = color_similarity_2d(self.relative_crop(area, shape=shape), color=color)
-        cv2.inRange(mask, threshold, 255, dst=mask)
+        mask = color_mask(self.relative_crop(area, shape=shape), color=color, threshold=threshold)
         count = cv2.countNonZero(mask)
         return count
 

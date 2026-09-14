@@ -1087,28 +1087,87 @@ def color_similarity_2d(image, color):
     return positive
 
 
-def image_color_count(image, color, threshold=221, count=50):
-    """判断图像中与指定颜色相似的像素数量是否超过阈值。
+def image_color_count(image, color, threshold=34, count=50):
+    """判断图像中与指定颜色接近的像素数量是否超过阈值。
 
-    result = sat_mul(sat_add(max_c(sat_sub(image - l)), max_c(sat_sub(l - image))), 255 / threshold)
-    where l = (r, g, b), sat_sub/sat_add/sat_mul are uint8 saturating ops,
-    max_c takes the per-pixel maximum across channels, and the scale step
-    is skipped when threshold = 255.
-    For l = (255, 255, 255): result = sat_mul(max_c(~image), 255 / threshold).
+    threshold 使用「容差」语义：0 表示完全相同，值越大越宽松，
+    与 color_mask() 保持一致。旧的「相似度」阈值 221 等价于容差 34。
 
     Args:
-        image (np.ndarray): 图像数组。
-        color (tuple): RGB 颜色。
-        threshold (int): 相似度阈值，255 表示完全相同，值越低越宽松。
+        image (np.ndarray): 图像数组，形状 (height, width, channel)。
+        color (tuple): 目标 RGB 颜色。
+        threshold (int): 颜色容差，0 表示完全相同，值越大越宽松。
         count (int): 像素计数阈值。
 
     Returns:
-        bool: 相似像素数超过 count 返回 True。
+        bool: 匹配像素数超过 count 返回 True。
     """
-    mask = color_similarity_2d(image, color=color)
-    cv2.inRange(mask, threshold, 255, dst=mask)
+    mask = color_mask(image, color, threshold=threshold)
     sum_ = cv2.countNonZero(mask)
     return sum_ > count
+
+
+def color_mask(image, color, threshold=30):
+    """生成与指定颜色接近的像素的二值掩码。
+
+    result = 255 if diff <= threshold else 0
+    其中 diff = sat_add(max_c(sat_sub(image - c)), max_c(sat_sub(c - image)))，
+    c = (r, g, b)，sat_sub/sat_add 为 uint8 饱和运算，
+    max_c 取各通道间的逐像素最大值。
+    该容差定义与 color_similar() 相同。
+
+    Args:
+        image: 形状为 (height, width, channel) 的图像数组。
+        color: (r, g, b)。
+        threshold (int): 默认 30。容差小于等于 threshold 的像素视为匹配。
+
+    Returns:
+        np.ndarray: 形状 (height, width) 的 uint8 数组，
+            匹配像素为 255，其余为 0。
+    """
+    # r, g, b = cv2.split(cv2.subtract(image, (*color, 0)))
+    # positive = cv2.max(cv2.max(r, g), b)
+    # r, g, b = cv2.split(cv2.subtract((*color, 0), image))
+    # negative = cv2.max(cv2.max(r, g), b)
+    # diff = cv2.add(positive, negative)
+    # return cv2.inRange(cv2.bitwise_not(diff), 255 - threshold, 255)
+    h, w = image.shape[:2]
+    if h * w < 30000:
+        # 3 通道路径在极小图上更快（单次调用开销占主导）
+        diff = cv2.subtract(image, (*color, 0))
+        r, g, b = cv2.split(diff)
+        cv2.max(r, g, dst=r)
+        cv2.max(r, b, dst=r)
+        positive = r
+        cv2.subtract((*color, 0), image, dst=diff)
+        r, g, b = cv2.split(diff)
+        cv2.max(r, g, dst=r)
+        cv2.max(r, b, dst=r)
+        negative = r
+        cv2.add(positive, negative, dst=positive)
+        # diff 恒非负，因此「diff <= threshold 处为 255」等价于
+        # inRange(255 - diff, 255 - threshold, 255)，
+        # 可省去 color_similarity_2d 中一次 bitwise_not
+        cv2.threshold(positive, threshold, 255, cv2.THRESH_BINARY_INV, dst=positive)
+        return positive
+    # 大图逐通道减法 + 缓冲区复用更优
+    r, g, b = cv2.split(image)
+    cr, cg, cb = color
+    positive = cv2.subtract(r, cr)
+    cv2.subtract(cr, r, dst=r)
+    negative = r
+    diff = cv2.subtract(g, cg)
+    cv2.max(positive, diff, dst=positive)
+    cv2.subtract(cg, g, dst=diff)
+    cv2.max(negative, diff, dst=negative)
+    cv2.subtract(b, cb, dst=diff)
+    cv2.max(positive, diff, dst=positive)
+    cv2.subtract(cb, b, dst=diff)
+    cv2.max(negative, diff, dst=negative)
+    cv2.add(positive, negative, dst=positive)
+    # 同上，diff 恒非负，直接用阈值化取代 inRange + bitwise_not
+    cv2.threshold(positive, threshold, 255, cv2.THRESH_BINARY_INV, dst=positive)
+    return positive
 
 
 def extract_letters(image, letter=(255, 255, 255), threshold=128):

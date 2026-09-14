@@ -148,13 +148,18 @@ AzurPilot は MCP サービスを提供しており、MCP 対応のクライア�
 
 > MCP サービスはデフォルトで WebUI と一緒に起動し、`/mcp` パス（WebUI のデフォルトポート 25548）にマウントされます。また、`uv run python mcp_server_sse.py` で単独実行も可能です（単独ポート 22268）。
 
+MCP は WebUI のパスワード（`--key` または `config/deploy.yaml` の `Password`）を流用します。パスワード未設定で WebUI が公開アドレスをリッスンしている場合、WebUI が自動生成し、リポジトリ直下の `password.txt` で確認できます。このパスワードを付けないリクエストは 401 で拒否されます。
+
 ### ローカル接続設定
 
 ```json
 {
   "mcpServers": {
     "alas": {
-      "url": "http://127.0.0.1:25548/mcp/sse"
+      "url": "http://127.0.0.1:25548/mcp/sse",
+      "headers": {
+        "Authorization": "Bearer <WebUI のパスワード>"
+      }
     }
   }
 }
@@ -166,13 +171,20 @@ AzurPilot は MCP サービスを提供しており、MCP 対応のクライア�
 {
   "mcpServers": {
     "alas": {
-      "url": "http://[IP_ADDRESS]:25548/mcp/sse"
+      "url": "http://[IP_ADDRESS]:25548/mcp/sse",
+      "headers": {
+        "Authorization": "Bearer <WebUI のパスワード>"
+      }
     }
   }
 }
 ```
 
 `[IP_ADDRESS]` を実際のサーバーアドレスまたはイントラネットアドレスに置き換えてください。WebUI のポートを変更した場合は、URL 内のポートも同様に置き換えてください。
+
+URL しか指定できずリクエストヘッダーを設定できないクライアントは、パスワードをクエリパラメータに含められます：`http://[IP_ADDRESS]:25548/mcp/sse?key=<WebUI のパスワード>`。この場合 URL 自体が資格情報になるため、スクリーンショットや共有は避け、可能な限りヘッダーを使用してください。`Authorization` の代わりに `X-API-Key: <WebUI のパスワード>` も使用できます。
+
+パスワードを変更した場合は、MCP に反映させるため WebUI を再起動してください。
 
 ### MCP ツール一覧
 

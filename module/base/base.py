@@ -346,14 +346,14 @@ class ModuleBase:
         else:
             return crop(self.device.image, button, copy=copy)
 
-    def image_color_count(self, button, color, threshold=221, count=50):
+    def image_color_count(self, button, color, threshold=30, count=50):
         """
         统计指定区域中接近目标颜色的像素数量，判断是否达标。
 
         Args:
             button: Button 实例、区域元组或 np.ndarray 图像。
             color: 目标 RGB 颜色值。
-            threshold: 颜色相似度容差，255 表示完全相同，值越小要求越严格。
+            threshold: 颜色容差，0 表示完全相同，值越大越宽松。
             count: 像素数量阈值，超过此数返回 True。
 
         Returns:
@@ -363,29 +363,30 @@ class ModuleBase:
             image = button
         else:
             image = self.image_crop(button, copy=False)
+        # 复用 utils.image_color_count，内部已改用更快的 color_mask 实现
         return image_color_count(image, color, threshold, count)
 
-    def image_color_button(self, area, color, color_threshold=250, encourage=5, name='COLOR_BUTTON'):
+    def image_color_button(self, area, color, threshold=5, encourage=5, name='COLOR_BUTTON'):
         """
         在指定区域中查找纯色区域，将其转换为可点击的 Button。
 
         Args:
             area: 搜索区域 (x1, y1, x2, y2)。
             color: 目标 RGB 颜色值。
-            color_threshold: 颜色匹配容差，0~255，255 表示精确匹配。
+            threshold: 颜色容差，0 表示精确匹配，值越大越宽松。
             encourage: 生成按钮的半径。
             name: 按钮名称。
 
         Returns:
             Button: 匹配成功返回 Button 实例，否则返回 None。
         """
-        image = color_similarity_2d(self.image_crop(area, copy=False), color=color)
-        points = np.array(np.where(image > color_threshold)).T[:, ::-1]
+        mask = color_mask(self.image_crop(area, copy=False), color=color, threshold=threshold)
+        points = np.array(np.where(mask > 0)).T[:, ::-1]
         if points.shape[0] < encourage ** 2:
             # 匹配像素不足，无法生成有效按钮
             return None
 
-        point = fit_points(points, mod=image_size(image), encourage=encourage)
+        point = fit_points(points, mod=image_size(mask), encourage=encourage)
         point = ensure_int(point + area[:2])
         button_area = area_offset((-encourage, -encourage, encourage, encourage), offset=point)
         color = get_color(self.device.image, button_area)

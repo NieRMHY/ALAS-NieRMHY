@@ -204,7 +204,7 @@ class GeneratedConfig:
     PublicEmotion_FleetOnsen = False
 
     # 配置组 `YukikazeTaskManager`
-    YukikazeTaskManager_TaskPriorityAdjustment = 'Restart\n> OpsiCrossMonth\n> Commission > Tactical > Research\n> Exercise\n> Dorm > Meowfficer > Guild > Gacha\n> Reward\n> ShopFrequent > ShopOnce > Shipyard > Freebies\n> PrivateQuarters\n> OpsiExplore\n> OpsiPreventActionPointOverflow\n> Minigame > Awaken\n> OpsiAshBeacon\n> OpsiDaily > OpsiShop > OpsiVoucher > EventShop\n> OpsiAbyssal > OpsiStronghold > OpsiObscure > OpsiArchive\n> Daily > Hard > OpsiAshBeacon > OpsiAshAssist > OpsiMonthBoss\n> Sos > EventSp > EventA > EventB > EventC > EventD\n> RaidDaily > CoalitionSp > WarArchives > MaritimeEscort\n> IslandJuuEatery > IslandJuuCoffee > IslandGrill > IslandTeahouse > IslandRestaurant\n> IslandFarm > IslandRancher > IslandMineForest > IslandDailyGather > IslandManufacture\n> IslandAirDrop > IslandBusiness > IslandDailyOrder > IslandDailyInteract > IslandPearlSell > IslandCargoPreparation\n> Event > Event2 > Event3 > Raid > Hospital > HospitalEvent > Coalition > RaidAffection > Main > Main2 > Main3\n> OpsiScheduling\n> OpsiMeowfficerFarming\n> GemsFarming\n> Ambush11\n> OpsiHazard1Leveling\n> ThreeOilLowCost'
+    YukikazeTaskManager_TaskPriorityAdjustment = 'Restart\n> OpsiCrossMonth\n> Commission > Tactical > Research\n> Exercise\n> Dorm > Meowfficer > Guild > Gacha\n> Reward\n> ShopFrequent > ShopOnce > Shipyard > Freebies\n> PrivateQuarters\n> OpsiExplore\n> OpsiPreventActionPointOverflow\n> Minigame > Awaken\n> OpsiAshBeacon\n> OpsiDaily > OpsiShop > OpsiVoucher > EventShop\n> OpsiAbyssal > OpsiStronghold > OpsiObscure > OpsiArchive\n> Daily > Hard > OpsiAshBeacon > OpsiAshAssist > OpsiMonthBoss\n> Sos > EventSp > EventA > EventB > EventC > EventD\n> RaidDaily > CoalitionSp > WarArchives > MaritimeEscort\n> IslandJuuEatery > IslandJuuCoffee > IslandGrill > IslandTeahouse > IslandRestaurant\n> IslandFarm > IslandRancher > IslandMineForest > IslandDailyGather > IslandManufacture\n> IslandAirDrop > IslandBusiness > IslandDailyOrder > IslandDailyInteract > IslandPearlSell > IslandCargoPreparation\n> Event > Event2 > Event3 > Raid > Hospital > HospitalEvent > Coalition > RaidAffection > Main > Main2 > Main3\n> OpsiScheduling\n> OpsiMeowfficerFarming\n> GemsFarming\n> Ambush11\n> OpsiHazard1Leveling\n> ThreeOilLowCost\n> OperationHandover'
 
     # 配置组 `OneClickRetire`
     OneClickRetire_KeepLimitBreak = 'keep_limit_break'  # keep_limit_break, do_not_keep
@@ -263,6 +263,17 @@ class GeneratedConfig:
     Campaign_UseRecommendFleet = False
     Campaign_DefeatWithdraw = 'withdraw_stop'  # withdraw_continue, switch_fleet, withdraw_stop
 
+    # 配置组 `OperationHandover`
+    OperationHandover_Count = 1
+    OperationHandover_AutoSupplementTime = False
+    OperationHandover_UseHandoverBook = False
+    OperationHandover_ConsumeAllBook = False  # True, False
+    OperationHandover_ConsumeAllBookWeekday = 'sun'  # mon, tue, wed, thu, fri, sat, sun
+    OperationHandover_ConsumeAllBookTime = '00:00'
+    OperationHandover_MaintainOverride = False  # True, False
+    OperationHandover_OilLimit = 1000
+    OperationHandover_ConsumeAllBookRecord = None
+
     # 配置组 `StopCondition`
     StopCondition_OilLimit = 1000
     StopCondition_CoinLimit = 0
@@ -292,9 +303,10 @@ class GeneratedConfig:
 
     # 配置组 `Submarine`
     Submarine_Fleet = 0  # 0, 1, 2
-    Submarine_Mode = 'do_not_use'  # do_not_use, hunt_only, boss_only, hunt_and_boss, every_combat
+    Submarine_Mode = 'do_not_use'  # do_not_use, hunt_only, boss_only, hunt_and_boss, every_combat, advanced
     Submarine_AutoSearchMode = 'sub_standby'  # sub_standby, sub_auto_call
     Submarine_DistanceToBoss = '2_grid_to_boss'  # to_boss_position, 1_grid_to_boss, 2_grid_to_boss, use_open_ocean_support
+    Submarine_AdvancedConfig = '# 弹药数\nammo: 7\n\n# 远洋支援数\nsupport: 1\n\n# 松鲷的狩猎范围\nrange:\n  - "ONONOOO"\n  - "ONNNNOO"\n  - "NNNNNNO"\n  - "ONNHNNN"\n  - "NNNNNNO"\n  - "ONOONOO"\n  - "OOOOOOO"\n\n# 规则\nrules:\n  battle_0: # 所有战斗\n    type: hunt  # 出击类型为狩猎\n    condition:  # 出击条件\n      ammo: ">2"  # 弹药数大于2\n      enemy:  # 敌人类型为\n        - "2C"  # 中航\n        - "3T"  # 大运\n        - "0E"  # 未知敌人\n      in_range: true  # 在狩猎范围里\n    move: false # 不移动\n  battle_2: # 第二场战斗\n    type: call  # 出击类型为召唤\n    condition:  # 出击条件\n      ammo: ">=2" # 弹药数大于等于2\n      support: "!=0" # 远洋支援数不等于0\n      enemy:  # 敌人类型为\n        - "3*"  # 所有大型舰队\n      in_range: false  # 不要求在狩猎范围里\n    move: false # 不移动\n  battle_-1:  # 最后一场战斗\n    type: call  # 出击类型为召唤\n    # 这里没写条件所以是必定出击\n    support: true # 远洋支援\n    move: true # 移动\n'
 
     # 配置组 `Emotion`
     Emotion_Mode = 'calculate'  # calculate, ignore, calculate_ignore
@@ -643,6 +655,7 @@ class GeneratedConfig:
     OpsiGeneral_RepairPackThresholdHazard1 = 0.5
     OpsiGeneral_DoRandomMapEvent = True
     OpsiGeneral_AkashiShopFilter = 'ActionPoint'
+    OpsiGeneral_DebugClipRetentionDays = 7
     OpsiGeneral_NotifyOpsiMail = True
     OpsiGeneral_LauncherPush = True
     OpsiGeneral_IndependentPush = False
@@ -709,6 +722,8 @@ class GeneratedConfig:
     OpsiMeowfficerFarming_HazardLevel = 5  # 2, 3, 4, 5, 6, 10
     OpsiMeowfficerFarming_TargetZone = 0
     OpsiMeowfficerFarming_StayInZone = False
+    OpsiMeowfficerFarming_ExecuteFixedPatrolScan = False
+    OpsiMeowfficerFarming_DebugClip = False
 
     # 配置组 `OpsiTarget`
     OpsiTarget_TargetFarming = False

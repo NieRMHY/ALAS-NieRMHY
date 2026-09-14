@@ -7,31 +7,55 @@ from module.webui.app_dependencies import (
     os,
     t,
 )
+from module.webui.password_utils import (
+    WEBUI_AUTO_PASSWORD_FILE,
+    ensure_password_for_host,
+    generate_webui_password,
+    is_demo_mode,
+    is_public_webui_host,
+    is_webui_password_set,
+)
+
+__all__ = [
+    "WEBUI_AUTO_PASSWORD_FILE",
+    "DEMO_DEVICE_ID_TEXT",
+    "ensure_password_for_host",
+    "ensure_public_webui_password",
+    "generate_webui_password",
+    "is_demo_mode",
+    "is_public_webui_host",
+    "is_webui_password_set",
+]
 
 DEMO_DEVICE_ID_TEXT = "此程序是为了演示用途构建的版本/This application is a version built for demonstration purposes."
 
 
-def is_demo_mode():
+def ensure_public_webui_password(key):
     """
-    判断是否处于演示环境。
-
-    Returns:
-        bool: True 表示 DEMO=1。
-    """
-    return os.environ.get("DEMO") == "1"
-
-
-def is_webui_password_set(password):
-    """
-    判断 WebUI 密码是否有效设置。
+    公网监听且未设置密码时自动生成密码。
 
     Args:
-        password: WebUI 密码配置。
+        key: 命令行或部署配置中的 WebUI 密码。
 
     Returns:
-        bool: True 表示密码包含非空白字符。
+        tuple[str | None, str | None]: 有效密码和失败原因。
     """
-    return bool(str(password or "").strip())
+    if is_demo_mode():
+        return key, None
+
+    host = State.webui_host or State.deploy_config.WebuiHost
+    try:
+        password = ensure_password_for_host(key, host)
+    except Exception as e:
+        logger.exception(f"WebUI 自动生成密码失败: {e}")
+        return None, str(e)
+
+    if password != key:
+        State.deploy_config.Password = password
+        logger.warning(
+            f"[WebUI] WebUI 已自动生成密码，请在根目录 {WEBUI_AUTO_PASSWORD_FILE} 查看。"
+        )
+    return password, None
 
 
 def timedelta_to_text(delta=None):

@@ -206,7 +206,7 @@ class IslandUI(UI):
         if self.appear(MAINTENANCE_ANNOUNCE, offset=(100, 50)):
             for _ in self.loop():
                 enabled = self.image_color_count(
-                    USE_DATA_KEY_NOTIFIED, color=(140, 207, 66), threshold=180, count=10)
+                    USE_DATA_KEY_NOTIFIED, color=(140, 207, 66), threshold=75, count=10)
                 if enabled:
                     break
 

@@ -69,6 +69,7 @@ Farm:
       - Fleet
       - Submarine
       - Emotion
+      - EnemyPriority
     ThreeOilLowCost:
       - Scheduler
       - GemsFarming
@@ -77,6 +78,7 @@ Farm:
       - Fleet
       - Submarine
       - Emotion
+      - EnemyPriority
     Ambush11:
       - Scheduler
       - GemsFarming
@@ -271,6 +273,10 @@ Reward:
     Awaken:
       - Scheduler
       - Awaken
+    OperationHandover:
+      - Scheduler
+      - Campaign
+      - OperationHandover
 DailyMission:
   menu: collapse
   page: setting

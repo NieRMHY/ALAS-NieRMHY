@@ -11,7 +11,7 @@ from typing import List, Optional, Tuple
 import cv2
 import numpy as np
 
-from module.base.utils import area_offset, color_similarity_2d, image_size, rgb2gray, xywh2xyxy
+from module.base.utils import area_offset, color_mask, image_size, rgb2gray, xywh2xyxy
 from module.event_hospital.assets import *
 from module.event_hospital.ui import HospitalUI
 from module.logger import logger
@@ -72,12 +72,10 @@ class HospitalClue(HospitalUI):
         area = CLUE_LIST.area
         image = self.image_crop(area, copy=False)
 
-        # 灰色文字掩码
-        gray = color_similarity_2d(image, color=(132, 134, 148))
-        cv2.inRange(gray, 215, 255, dst=gray)
+        # 灰色文字掩码（容差 40 等价于旧相似度阈值 215）
+        gray = color_mask(image, color=(132, 134, 148), threshold=40)
         # 白色文字掩码（已选中的旁白）
-        white = color_similarity_2d(image, color=(255, 255, 255))
-        cv2.inRange(white, 215, 255, dst=white)
+        white = color_mask(image, color=(255, 255, 255), threshold=40)
         # 清除白色像素周围的灰色掩码
         kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (200, 20))
         white_expanded = cv2.dilate(white, kernel)
@@ -277,7 +275,7 @@ class HospitalClue(HospitalUI):
         search = CLUE_LIST.area
         # 检查周围是否有深色背景
         area = (search[0], area[1], search[2], area[3])
-        return self.image_color_count(area, color=(82, 85, 107), threshold=221, count=500)
+        return self.image_color_count(area, color=(82, 85, 107), threshold=30, count=500)
 
     def is_aside_checked(self, button: Button) -> bool:
         """检查旁白是否已完成（青色标记）。"""
@@ -285,7 +283,7 @@ class HospitalClue(HospitalUI):
         search = CLUE_LIST.area
         # 检查是否有青色标记，JP 服文字溢出故右边界设为 308
         area = (search[0], area[1], 308, area[3])
-        return self.image_color_count(area, color=(74, 130, 148), threshold=221, count=20)
+        return self.image_color_count(area, color=(74, 130, 148), threshold=30, count=20)
 
     def iter_aside(self):
         """遍历所有未完成的旁白按钮。

@@ -54,14 +54,6 @@ GemsFarming:
     Fleet2Control: prevent_red_face
     Fleet2Recover: not_in_dormitory
     Fleet2Oath: false
-  Submarine:
-    Mode:
-      display: display
-      value: do_not_use
-      option: [do_not_use, hunt_only]
-    AutoSearchMode: sub_standby
-    DistanceToBoss: use_open_ocean_support
-
 
 ThreeOilLowCost:
   Scheduler:
@@ -73,8 +65,6 @@ ThreeOilLowCost:
     # SuccessInterval: 0
     # FailureInterval: 0
   Campaign:
-    Event:
-      value: campaign_main
     Mode: normal
     UseClearMode: true
     UseFleetLock: true
@@ -99,13 +89,6 @@ ThreeOilLowCost:
     Fleet2Control: prevent_red_face
     Fleet2Recover: not_in_dormitory
     Fleet2Oath: false
-  Submarine:
-    Mode:
-      display: display
-      value: do_not_use
-      option: [do_not_use, hunt_only]
-    AutoSearchMode: sub_standby
-    DistanceToBoss: use_open_ocean_support
 
 Ambush11:
   Campaign:
@@ -553,6 +536,26 @@ WarArchives:
   Campaign:
     Mode: normal
     AmbushEvade: true
+OperationHandover:
+  Scheduler:
+    SuccessInterval: 30
+    FailureInterval: 30
+    ServerUpdate: 00:00
+  Campaign:
+    UseClearMode:
+      display: hide
+    UseFleetLock:
+      display: hide
+    UseAutoSearch:
+      display: hide
+    Use2xBook:
+      display: hide
+    AmbushEvade:
+      display: hide
+    UseRecommendFleet:
+      display: hide
+    DefeatWithdraw:
+      display: hide
 
 # ==================== Opsi ====================
 

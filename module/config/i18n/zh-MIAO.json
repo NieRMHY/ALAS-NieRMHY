@@ -186,6 +186,10 @@
       "name": "认知觉醒喵",
       "help": "觉醒舰娘潜力，消耗心智单元，突破极限喵！( •̀ ω •́ )✧"
     },
+    "OperationHandover": {
+      "name": "作战委托合约喵！",
+      "help": "交委托书就能自动跑作战委托喵～挂机期间只有大世界能打喵 (๑•̀ㅂ•́)و✧"
+    },
     "Daily": {
       "name": "每日任务清剿喵",
       "help": "每日挑战、商船护送等，完成有丰厚奖励喵！(＾▽＾)"
@@ -1342,6 +1346,59 @@
       "withdraw_stop": "撤退后关闭任务喵"
     }
   },
+  "OperationHandover": {
+    "_info": {
+      "name": "作战委托设定喵",
+      "help": ""
+    },
+    "Count": {
+      "name": "委托次数",
+      "help": "这次要打多少把喵\n填 0 就是降到最少：这时候要是没开一键消耗委托书，这个任务就直接被关掉喵 (・_・)"
+    },
+    "AutoSupplementTime": {
+      "name": "自动补充时间",
+      "help": "时间不够就用委托书换喵，一本换一小时喵 (=^･ω･^=)"
+    },
+    "UseHandoverBook": {
+      "name": "使用作战全权委托书",
+      "help": "开打之前把委托书塞满喵！"
+    },
+    "ConsumeAllBook": {
+      "name": "一键把委托书全烧了喵",
+      "help": "每周挑一天，把仓库里的作战全权委托书一次性烧光喵！\n火力全开，委托次数自己看着办喵 (๑•̀ㅂ•́)و✧\n开了这个之后，触发当天就无视「委托次数」；委托次数填 0 的话，这个任务只会在触发时间跑喵",
+      "True": "开烧喵",
+      "False": "不烧"
+    },
+    "ConsumeAllBookWeekday": {
+      "name": "哪天开烧喵",
+      "help": "一周就烧这一次喵",
+      "mon": "周一",
+      "tue": "周二",
+      "wed": "周三",
+      "thu": "周四",
+      "fri": "周五",
+      "sat": "周六",
+      "sun": "周日"
+    },
+    "ConsumeAllBookTime": {
+      "name": "几点开烧喵",
+      "help": "到了这个点才开始烧，格式 HH:MM 喵"
+    },
+    "MaintainOverride": {
+      "name": "维护前也要薅一把喵",
+      "help": "每天看一眼停服公告喵~ 会按你玩的服找对应的公告，今天要维护的话，就在维护前 10 分钟把作战次数拉满，跑最后一次喵！\n已经停服了或者不是今天就当无事发生喵 (´・ω・`)",
+      "True": "开着喵",
+      "False": "关着喵"
+    },
+    "OilLimit": {
+      "name": "石油低于 X 就歇着喵",
+      "help": "油不够就先别跑，等油攒够了再来喵~ (￣ω￣)"
+    },
+    "ConsumeAllBookRecord": {
+      "name": "开烧记录喵",
+      "help": "脚本自己记的，不用管喵~"
+    }
+  },
   "StopCondition": {
     "_info": {
       "name": "停火条件",
@@ -1510,7 +1567,8 @@
       "hunt_only": "仅狩猎喵",
       "boss_only": "仅BOSS战喵",
       "hunt_and_boss": "狩猎及BOSS战喵",
-      "every_combat": "每战出击喵"
+      "every_combat": "每战出击喵",
+      "advanced": "advanced"
     },
     "AutoSearchMode": {
       "name": "潜艇自律方案",
@@ -1525,6 +1583,10 @@
       "1_grid_to_boss": "距BOSS 1格喵",
       "2_grid_to_boss": "距BOSS 2格喵",
       "use_open_ocean_support": "使用远洋支援喵"
+    },
+    "AdvancedConfig": {
+      "name": "Submarine.AdvancedConfig.name",
+      "help": "Submarine.AdvancedConfig.help"
     }
   },
   "Emotion": {
@@ -3108,6 +3170,10 @@
       "name": "商店过滤器",
       "help": "默认只买体力喵。买紫币设为 'ActionPoint > PurpleCoins'。"
     },
+    "DebugClipRetentionDays": {
+      "name": "录像保留天数",
+      "help": "侵蚀一和短猫相接的战后 debug 录像保留天数喵。log/clips/ 下的录像超过这个天数就会被自动清理喵，免得磁盘被塞满喵；填 0 就是不清理、一直留着喵。"
+    },
     "NotifyOpsiMail": {
       "name": "推送大世界相关信息",
       "help": "使用 OnePush 推送侵蚀1和短猫信息喵。启动器推送由“启动器推送”单独控制喵。信息较多可能较吵喵。"
@@ -3367,6 +3433,14 @@
     "StayInZone": {
       "name": "循环出击指定海域",
       "help": "开启后按“指定海域”配置运行。指定单个海域时一直留在该海域；指定多个海域时按填写顺序循环。仅在指定海域不为0时生效喵。"
+    },
+    "ExecuteFixedPatrolScan": {
+      "name": "固定巡回扫描",
+      "help": "开启后每10秒扫描一次固定巡回区域。"
+    },
+    "DebugClip": {
+      "name": "战后 debug 录屏",
+      "help": "开启后，在每轮短猫相接战后「找事件 / 处理事件 / 强制移动」期间，把 ALAS 自己看到的画面录成 mp4，放到 log/clips/ 喵（文件名以 meow_clip_ 开头）喵。每一轮都会保存喵，不管有没有遇到事件，方便一轮一轮回看喵。保留天数见「大世界通用设置」喵！"
     }
   },
   "OpsiTarget": {
@@ -3436,7 +3510,7 @@
     },
     "DebugClip": {
       "name": "战后 debug 录屏",
-      "help": "开启后，在每轮侵蚀1战后「找事件 / 处理事件 / 强制移动」期间，把 ALAS 自己看到的画面录成 mp4，放到 log/clips/ 喵；一轮没发生任何事件就不保存喵。用来人工核对有没有漏猫喵。视频默认全保留不自动清理，记得留意磁盘喵！"
+      "help": "开启后，在每轮侵蚀1战后「找事件 / 处理事件 / 强制移动」期间，把 ALAS 自己看到的画面录成 mp4，放到 log/clips/ 喵。每一轮都会保存喵，不管有没有遇到事件，方便一轮一轮回看喵。用来人工核对有没有漏猫喵。录像会按「大世界通用设置」里的保留天数自动清理，记得留意磁盘喵！"
     }
   },
   "OpsiSirenBug": {

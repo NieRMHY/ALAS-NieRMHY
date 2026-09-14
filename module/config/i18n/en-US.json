@@ -190,6 +190,10 @@
       "name": "Cognitive Awakening",
       "help": ""
     },
+    "OperationHandover": {
+      "name": "Operation Handover Contract",
+      "help": "Consume Handover Books to run Operation Handover automatically."
+    },
     "Daily": {
       "name": "Daily Missions",
       "help": ""
@@ -1518,6 +1522,59 @@
       "withdraw_stop": "Withdraw & Stop Task"
     }
   },
+  "OperationHandover": {
+    "_info": {
+      "name": "Operation Handover Settings",
+      "help": ""
+    },
+    "Count": {
+      "name": "Handover Count",
+      "help": "How many sorties this Operation Handover runs\n0 means the minimum the game allows: in that case the task is disabled unless Consume all Handover Books is on"
+    },
+    "AutoSupplementTime": {
+      "name": "Auto Supplement Time",
+      "help": "Exchange Handover Books for available time when the remaining time is not enough (1 book = 1 hour)"
+    },
+    "UseHandoverBook": {
+      "name": "Use Handover Book",
+      "help": "Max out the invested Handover Books before starting"
+    },
+    "ConsumeAllBook": {
+      "name": "Consume all Handover Books",
+      "help": "Triggered once a week: max out Sorties → max out Handover Books → set Sorties to the number of books,\nso the whole stock of books is spent at once.\nOn the trigger day the Count option is ignored; with Count set to 0 the task only runs at the trigger time",
+      "True": "On",
+      "False": "Off"
+    },
+    "ConsumeAllBookWeekday": {
+      "name": "Trigger day",
+      "help": "Trigger once a week on this day",
+      "mon": "Monday",
+      "tue": "Tuesday",
+      "wed": "Wednesday",
+      "thu": "Thursday",
+      "fri": "Friday",
+      "sat": "Saturday",
+      "sun": "Sunday"
+    },
+    "ConsumeAllBookTime": {
+      "name": "Trigger time",
+      "help": "Trigger at or after this time on the trigger day, format HH:MM, e.g. 12:00"
+    },
+    "MaintainOverride": {
+      "name": "Handover before maintenance",
+      "help": "Check the maintenance notice once a day. If the maintenance is today and has not started yet, this run is\npostponed to 10 minutes before it and then runs with max sorties (still respecting Use Handover Book and\nauto-supplement time). Past or non-today maintenance is ignored.\nData from api-blhx-maintain, fetched for your game server and converted to local time",
+      "True": "On",
+      "False": "Off"
+    },
+    "OilLimit": {
+      "name": "Postpone if Oil below X",
+      "help": "Postpone the task while oil is below this value, resume when oil is enough\n0 to disable"
+    },
+    "ConsumeAllBookRecord": {
+      "name": "Trigger record",
+      "help": "Which week it was last triggered, managed by the script"
+    }
+  },
   "StopCondition": {
     "_info": {
       "name": "Stop Condition",
@@ -1686,7 +1743,8 @@
       "hunt_only": "Hunt Only",
       "boss_only": "Boss Only",
       "hunt_and_boss": "Hunt and Boss",
-      "every_combat": "Every Combat"
+      "every_combat": "Every Combat",
+      "advanced": "advanced"
     },
     "AutoSearchMode": {
       "name": "Select Submarine Auto Plan",
@@ -1701,6 +1759,10 @@
       "1_grid_to_boss": "1 Tile from Boss",
       "2_grid_to_boss": "2 Tiles from Boss",
       "use_open_ocean_support": "Use Open Ocean Support"
+    },
+    "AdvancedConfig": {
+      "name": "Submarine.AdvancedConfig.name",
+      "help": "Submarine.AdvancedConfig.help"
     }
   },
   "Emotion": {
@@ -3376,6 +3438,10 @@
       "name": "Shop Filter",
       "help": "By default, only Action Points are purchased. If you want to buy purple coins, set to 'ActionPoint > PurpleCoins'"
     },
+    "DebugClipRetentionDays": {
+      "name": "Clip retention days",
+      "help": "Retention for the post-battle debug recordings of Erosion-1 leveling and Meowfficer farming. Clips under log/clips/ older than this many days are deleted automatically, so recordings cannot fill up your disk. Set to 0 to keep them forever with no auto cleanup."
+    },
     "NotifyOpsiMail": {
       "name": "Push Operation Siren notifications",
       "help": "Send notifications about Corrosion 1 and Meowfficer farming through OnePush. Launcher notifications are controlled separately by \"Launcher notifications\". May be noisy due to high message volume."
@@ -3635,6 +3701,14 @@
     "StayInZone": {
       "name": "Planned Operation in Target Zone",
       "help": "After enabling this, the task runs according to Target Zone. With one zone it stays there; with multiple zones it cycles through them in the configured order. Only takes effect when Target Zone is not 0."
+    },
+    "ExecuteFixedPatrolScan": {
+      "name": "Fixed Patrol Scan",
+      "help": "After enabling this, the task will scan the fixed patrol zone every 10 seconds."
+    },
+    "DebugClip": {
+      "name": "Post-battle debug recording",
+      "help": "When enabled, during each Meowfficer-farming round's post-battle handling (event detection / event resolution / forced movement), record what ALAS itself sees into an mp4 under log/clips/ (filename starts with meow_clip_). Every round is saved, whether or not an event occurred, so you can review each round. Retention is configured under OS General Settings."
     }
   },
   "OpsiTarget": {
@@ -3704,7 +3778,7 @@
     },
     "DebugClip": {
       "name": "Post-battle debug recording",
-      "help": "When enabled, during each erosion-1 round's post-battle handling (rescan / event resolution / forced movement), record what ALAS itself sees into an mp4 under log/clips/. Rounds with no event produce no file. Use this to manually verify whether Akashi is missed. Videos are kept indefinitely (no auto cleanup) — watch disk space."
+      "help": "When enabled, during each erosion-1 round's post-battle handling (rescan / event resolution / forced movement), record what ALAS itself sees into an mp4 under log/clips/. Every round is saved, whether or not an event occurred, so you can review each round. Use this to manually verify whether Akashi is missed. Clips are cleaned up automatically according to the clip retention setting under OS General Settings."
     }
   },
   "OpsiSirenBug": {

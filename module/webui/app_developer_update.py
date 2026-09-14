@@ -28,10 +28,50 @@ from module.webui.app_types import WebUIMixinBase
 class DeveloperUpdateMixin(WebUIMixinBase):
     """WebUI更新和启动项设置"""
 
+    # 更新器页面的全部 scope 名，供幽灵节点清理复用
+    UPDATER_SCOPES = (
+        "updater_info",
+        "updater_loading",
+        "updater_state",
+        "updater_btn",
+        "updater_table",
+        "updater_detail",
+    )
+
+    @staticmethod
+    def remove_stale_updater_scopes() -> None:
+        """清除落在 content 之外的 updater_* scope 残留。
+
+        后台 switch 任务在页面切走后仍会跑完当前一轮，此时这些 scope 已随
+        content 一起被清空；PyWebIO 的 set_scope(if_exist='blank') 在前端找不到
+        元素时，会把新 scope 追加到调用线程的当前 scope（任务线程只有 ROOT），
+        于是在 #pywebio-scope-ROOT 下留下幽灵节点：既让下次 put_scope 撞名
+        （前端渲染“scope 名称重复”灰条），又作为 ROOT 网格的额外一行把应用
+        外壳挤扁、内容跑到 content 之外。渲染前清理一次，保证本页 DOM 干净。
+
+        Pages: in: page_update
+        """
+        run_js(
+            """
+            (function () {
+                var content = document.getElementById("pywebio-scope-content");
+                if (!content) return;
+                names.forEach(function (name) {
+                    var el = document.getElementById("pywebio-scope-" + name);
+                    if (el && el.parentNode && !content.contains(el)) {
+                        el.parentNode.removeChild(el);
+                    }
+                });
+            })();
+            """,
+            names=list(DeveloperUpdateMixin.UPDATER_SCOPES),
+        )
+
     @use_scope("content", clear=True)
     def dev_update(self) -> None:
         self.init_menu(name="Update")
         self.set_title(t("Gui.MenuDevelop.Update"))
+        self.remove_stale_updater_scopes()
 
         put_scope("updater_info")
         with use_scope("updater_info"):
@@ -52,6 +92,9 @@ class DeveloperUpdateMixin(WebUIMixinBase):
         put_scope("updater_detail")
 
         def update_table():
+            """刷新提交表格；页面已切走时直接放弃，避免写出幽灵 scope。"""
+            if self.page != "Update":
+                return
             with use_scope("updater_table", clear=True):
                 local_commit = updater.get_commit(short_sha1=True)
                 upstream_commit = updater.get_commit(
@@ -70,6 +113,10 @@ class DeveloperUpdateMixin(WebUIMixinBase):
                         t("Gui.Update.Message"),
                     ],
                 )
+            # 两次 get_commit 是 git 子进程，期间用户可能已切页；这里再判一次，
+            # 否则 set_scope 会在 ROOT 下创建幽灵 updater_detail。
+            if self.page != "Update":
+                return
             with use_scope("updater_detail", clear=True):
                 put_text(t("Gui.Update.DetailedHistory"))
                 history = updater.get_commit(
@@ -86,7 +133,8 @@ class DeveloperUpdateMixin(WebUIMixinBase):
                 )
 
         def u(state):
-            if state == -1:
+            # 后台 switch 在本页卸载后仍会跑完当前一轮，必须放弃写 DOM
+            if state == -1 or self.page != "Update":
                 return
             clear("updater_loading")
             clear("updater_state")

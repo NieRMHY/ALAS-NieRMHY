@@ -148,13 +148,18 @@ AzurPilot provides an MCP service that can be called by MCP-compatible clients o
 
 > The MCP service starts by default with the WebUI and is mounted under the `/mcp` path (WebUI default port 25548). It can also be run standalone via `uv run python mcp_server_sse.py` (standalone port 22268).
 
+The MCP service reuses the WebUI password (the `--key` flag or `Password` in `config/deploy.yaml`). If no password is set and the WebUI listens on a public address, it generates one automatically — see `password.txt` in the repository root. Requests without this password are rejected with 401.
+
 ### Local Connection Configuration
 
 ```json
 {
   "mcpServers": {
     "alas": {
-      "url": "http://127.0.0.1:25548/mcp/sse"
+      "url": "http://127.0.0.1:25548/mcp/sse",
+      "headers": {
+        "Authorization": "Bearer <WebUI password>"
+      }
     }
   }
 }
@@ -166,13 +171,20 @@ AzurPilot provides an MCP service that can be called by MCP-compatible clients o
 {
   "mcpServers": {
     "alas": {
-      "url": "http://[IP_ADDRESS]:25548/mcp/sse"
+      "url": "http://[IP_ADDRESS]:25548/mcp/sse",
+      "headers": {
+        "Authorization": "Bearer <WebUI password>"
+      }
     }
   }
 }
 ```
 
 Replace `[IP_ADDRESS]` with your actual server address or intranet address. If the WebUI port has been changed, update the port in the URL accordingly.
+
+Clients that can only specify a URL and cannot set custom headers may put the password in the query string instead: `http://[IP_ADDRESS]:25548/mcp/sse?key=<WebUI password>`. The URL itself then becomes the credential, so do not share or screenshot it, and prefer the header when possible. `X-API-Key: <WebUI password>` is also accepted in place of `Authorization`.
+
+After changing the password, restart the WebUI so that MCP picks it up.
 
 ### MCP Tool List
 

@@ -143,13 +143,13 @@ class ResearchQueue(ResearchUI):
                 'empty': Black … surrounded by black border or just nothing
         """
         center = button.crop((7, 7, 21, 21))
-        if self.image_color_count(center, color=(255, 158, 57), threshold=180, count=20):
+        if self.image_color_count(center, color=(255, 158, 57), threshold=75, count=20):
             return 'finished'
-        if self.image_color_count(center, color=(90, 97, 132), threshold=221, count=10):
+        if self.image_color_count(center, color=(90, 97, 132), threshold=30, count=10):
             return 'waiting'
-        if self.image_color_count(center, color=(24, 24, 41), threshold=221, count=10):
+        if self.image_color_count(center, color=(24, 24, 41), threshold=30, count=10):
             below = button.crop((7, 14, 21, 21))
-            if self.image_color_count(below, color=(24, 24, 41), threshold=221, count=10):
+            if self.image_color_count(below, color=(24, 24, 41), threshold=30, count=10):
                 return 'running'
             else:
                 return 'empty'
@@ -186,12 +186,12 @@ class ResearchQueue(ResearchUI):
         Raises:
             GameBugError:
         """
-        if self.image_color_count(QUEUE_REMAIN, color=(123, 125, 123), threshold=235, count=100):
+        if self.image_color_count(QUEUE_REMAIN, color=(123, 125, 123), threshold=20, count=100):
             logger.error('[科研-队列] 队列中第一个科研未运行，'
                          '可能是游戏bug，'
                          '重启游戏应该能修复。')
             raise GameBugError
-        if not self.image_color_count(QUEUE_REMAIN, color=(255, 255, 255), threshold=221, count=100):
+        if not self.image_color_count(QUEUE_REMAIN, color=(255, 255, 255), threshold=30, count=100):
             logger.info('[科研-队列] 科研队列为空')
             return current_time()
 

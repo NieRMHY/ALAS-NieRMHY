@@ -58,8 +58,8 @@ class FleetSelector:
         area = self._bar.area
         area = (area[0] + 3, area[1], area[0] + 13, area[3])
         # Should have at least 2 gray option and 1 blue option.
-        return self.main.image_color_count(area, color=(239, 243, 247), threshold=221, count=400) \
-               and self.main.image_color_count(area, color=(66, 125, 231), threshold=221, count=150)
+        return self.main.image_color_count(area, color=(239, 243, 247), threshold=30, count=400) \
+               and self.main.image_color_count(area, color=(66, 125, 231), threshold=30, count=150)
 
     def parse_fleet_bar(self, image):
         """
@@ -224,8 +224,8 @@ class StorageFleetSelector(FleetSelector):
         area = self._bar.area
         area = (area[0] + 3, area[1], area[0] + 13, area[3])
         # Should have at least 2 gray option and 1 orange option.
-        return self.main.image_color_count(area, color=(200, 207, 231), threshold=221, count=400) \
-               and self.main.image_color_count(area, color=(214, 150, 96), threshold=221, count=150)
+        return self.main.image_color_count(area, color=(200, 207, 231), threshold=34, count=400) \
+               and self.main.image_color_count(area, color=(214, 150, 96), threshold=34, count=150)
 
     def get_button(self, index):
         return super().get_button(index, 6)

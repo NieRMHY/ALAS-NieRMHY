@@ -408,7 +408,7 @@ gui.py (__main__)
 
 ### 7.1 ASGI 路由与 MCP 挂载
 
-`module/webui/app.py`（363 行）是 ASGI 应用工厂（`app()`），组合了 PyWebIO 页面、REST/WebSocket 路由与 MCP 子应用：
+`module/webui/app.py`（405 行）是 ASGI 应用工厂（`app()`），组合了 PyWebIO 页面、REST/WebSocket 路由与 MCP 子应用：
 
 - **PyWebIO 页面**: `index`（首页）与 `manage`（管理页），通过 `asgi_app()`（`module/webui/fastapi.py`）注册；`api_routes` 由 `fastapi.asgi_app` 一并挂载
 - **REST/WebSocket 路由**（`module/webui/api.py` 的 `api_routes`）:
@@ -430,7 +430,8 @@ gui.py (__main__)
 | `/api/deploy/settings` | GET/POST | deploy.yaml 可视化配置读写（仅本机） |
 | `/api/deploy/startup-run` | GET/POST | 实例随 WebUI 启动自动运行设置（仅本机） |
 
-- **MCP 挂载**: `application.mount("/mcp", mcp_app)`（app.py L362），将 `mcp_server_sse.app` 挂载到 `/mcp`，SSE 端点为 `/mcp/sse`、消息端点为 `/mcp/messages`
+- **MCP 挂载**: `application.mount("/mcp", mcp_app)`（app.py L404），将 `mcp_server_sse.app` 挂载到 `/mcp`，SSE 端点为 `/mcp/sse`、消息端点为 `/mcp/messages`
+- **MCP 鉴权注入**: 挂载前调用 `configure_mcp_auth(key, public_bind=...)`（app.py L380-L388），把本工厂已解析好的 WebUI 密码交给 MCP。PyWebIO 的 `login()` 发生在页面会话内，管不到挂载的 ASGI 子应用，因此 MCP 侧必须自行校验。详见 `.agent/ENTRY-MCP-SERVER.md` §12
 
 ---
 

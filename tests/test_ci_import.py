@@ -66,6 +66,23 @@ class TestEntryPointImports(unittest.TestCase):
 class TestProcessIsolation(unittest.TestCase):
     """WebUI/MCP 进程与 OCR 的进程隔离守卫。"""
 
+    def test_mcp_server_sse_does_not_load_ocr(self):
+        # 独立运行 mcp_server_sse 时，密码策略不得经由
+        # module.webui.app_dependencies 把 pywebio / module.ocr.rpc 拖进来。
+        code = (
+            "import sys\n"
+            "import mcp_server_sse\n"
+            "assert 'module.webui.app_dependencies' not in sys.modules, "
+            "'app_dependencies 不得加载进独立 MCP 进程'\n"
+            "assert 'module.ocr.al_ocr' not in sys.modules, 'OCR 不得加载进独立 MCP 进程'\n"
+            "assert 'rapidocr' not in sys.modules, 'rapidocr 不得加载进独立 MCP 进程'\n"
+        )
+        proc = _run_py(code)
+        self.assertEqual(
+            proc.returncode, 0,
+            f"独立 MCP 进程隔离被破坏：{proc.stderr[-500:]}",
+        )
+
     def test_webui_app_does_not_load_ocr(self):
         # 创建完整 WebUI app（挂载 mcp_server_sse）后，
         # module.ocr.al_ocr / rapidocr 不得被加载进同一进程。

@@ -26,10 +26,10 @@ OCR_COIN = Digit(
 
 class ShipyardNavbar(Navbar):
     def is_button_active(self, button, main):
-        if main.image_color_count(button, color=(33, 113, 222), threshold=221, count=400):
+        if main.image_color_count(button, color=(33, 113, 222), threshold=30, count=400):
             return True
         # 奥丁肩部区域的颜色
-        if main.image_color_count(button, color=(41, 85, 165), threshold=221, count=400):
+        if main.image_color_count(button, color=(41, 85, 165), threshold=30, count=400):
             return True
         return False
 
@@ -198,7 +198,7 @@ class ShipyardUI(UI):
         """
         return ShipyardNavbar(
             grids=SHIPYARD_FACE_GRID,
-            inactive_color=(49, 60, 82), inactive_threshold=221, inactive_count=50)
+            inactive_color=(49, 60, 82), inactive_threshold=30, inactive_count=50)
 
     def shipyard_bottom_navbar_ensure(self, left=None, right=None, skip_first_screenshot=True):
         """

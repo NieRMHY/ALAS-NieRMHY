@@ -148,13 +148,18 @@ AzurPilot 提供 MCP 服務，可供支援 MCP 的用戶端或工具呼叫，方
 
 > MCP 服務預設隨 WebUI 啟動並掛載於 `/mcp` 路徑下（WebUI 預設連接埠 25548），也可透過 `uv run python mcp_server_sse.py` 獨立執行（獨立連接埠 22268）。
 
+MCP 沿用 WebUI 的密碼（`--key` / `config/deploy.yaml` 的 `Password`），未設定密碼且監聽公網時 WebUI 會自動產生密碼，可在根目錄 `password.txt` 查看。呼叫 MCP 時必須攜帶該密碼，否則回傳 401。
+
 ### 本機連線設定
 
 ```json
 {
   "mcpServers": {
     "alas": {
-      "url": "http://127.0.0.1:25548/mcp/sse"
+      "url": "http://127.0.0.1:25548/mcp/sse",
+      "headers": {
+        "Authorization": "Bearer <WebUI 密碼>"
+      }
     }
   }
 }
@@ -166,13 +171,20 @@ AzurPilot 提供 MCP 服務，可供支援 MCP 的用戶端或工具呼叫，方
 {
   "mcpServers": {
     "alas": {
-      "url": "http://[IP_ADDRESS]:25548/mcp/sse"
+      "url": "http://[IP_ADDRESS]:25548/mcp/sse",
+      "headers": {
+        "Authorization": "Bearer <WebUI 密碼>"
+      }
     }
   }
 }
 ```
 
 請將 `[IP_ADDRESS]` 替換為實際伺服器位址或內網位址；若 WebUI 連接埠已修改，請同步替換 URL 中的連接埠。
+
+只能填寫 URL、無法自訂請求標頭的用戶端，可以把密碼放在查詢參數裡：`http://[IP_ADDRESS]:25548/mcp/sse?key=<WebUI 密碼>`。此時 URL 本身就是憑證，請勿截圖外貼或分享；有條件時優先使用請求標頭。也可用 `X-API-Key: <WebUI 密碼>` 請求標頭代替 `Authorization`。
+
+修改密碼後需要重新啟動 WebUI，MCP 才會使用新密碼。
 
 ### MCP 工具清單
 
