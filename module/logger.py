@@ -406,15 +406,16 @@ def get_log_file_path(name, root='.', day=None):
 
 
 def _set_file_logger(name=pyw_name):
-    # Modify by MHY, python -c / 嵌入式环境的 argv[0] 无有效文件名（如 "-c"），
-    # 并行导入冒烟时还会竞态写同一 log/-c.txt，这类环境跳过文件日志
-    if not name or not name[0].isalnum():
+    # Modify by MHY, python -c / 嵌入式环境的 argv[0] 无有效日志文件名
+    # （如 "-c"、解释器名），并行导入冒烟时还会竞态写同一文件，这类环境跳过文件日志
+    if not name or not name[0].isalnum() or name in ('python', 'python3', 'c'):
         return
     log_file = str(get_log_file_path(name))
     try:
         file = logging.FileHandler(log_file, encoding='utf-8')
     except FileNotFoundError:
-        os.mkdir('./log')
+        # 并发初始化时目录可能已被同批进程创建，exist_ok 防竞态
+        os.makedirs('./log', exist_ok=True)
         file = logging.FileHandler(log_file, encoding='utf-8')
     file.setFormatter(file_formatter)
 
