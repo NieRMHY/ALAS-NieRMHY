@@ -149,6 +149,10 @@
 .home-deck {position: relative; min-width: 0; padding: clamp(28px, 3.4vw, 54px); display: flex; flex-direction: column; gap: 26px}
 .home-deck-copy {margin: auto 0; max-width: 34em}
 .home-deck-eyebrow {margin: 0 0 10px; font-size: 12px; font-weight: 650; letter-spacing: .14em; opacity: .74}
+/* Add by MHY, ESSEX 主题头：旧版图标 + 标题行（参考 essex 分支） */
+.home-essex-brand {display: flex; align-items: center; gap: 10px; margin: 0 0 12px}
+.home-essex-brand img {width: 42px; height: 42px; object-fit: contain; border-radius: 8px}
+.home-essex-title {font-size: 17px; font-weight: 700; letter-spacing: .05em}
 .home-deck-greeting {margin: 0 0 14px; font-size: clamp(30px, 3vw, 42px); line-height: 1.24; font-weight: 700; word-break: keep-all; overflow-wrap: anywhere; text-wrap: balance}
 .home-deck-subtitle {margin: 0; font-size: 13.5px; line-height: 1.8; opacity: .82}
 .home-deck-foot {display: flex; flex-direction: column; gap: 14px; padding-top: 6px}

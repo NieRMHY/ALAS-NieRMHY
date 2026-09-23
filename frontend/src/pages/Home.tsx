@@ -42,7 +42,11 @@ export function Home() {
     <div className="home-editorial">
       <aside className="home-deck">
         <div className="home-deck-copy">
-          <p className="home-deck-eyebrow">{ui('home.commandCenter')}</p>
+          {/* Modify by MHY, ESSEX 主题头：旧版图标 + ESSEX Secretary 标题（参考 essex 分支 7357e679f） */}
+          <div className="home-essex-brand">
+            <img src="alas-icon.png" alt="ALAS" width={42} height={42} decoding="async"/>
+            <span className="home-essex-title">ESSEX Secretary</span>
+          </div>
           <h1 className="home-deck-greeting">{getGreeting(ui)}</h1>
           <p className="home-deck-subtitle">{ui('home.subtitle')}</p>
         </div>
