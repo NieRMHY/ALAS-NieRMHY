@@ -29,6 +29,11 @@ class Gateway:
         self.failures = OrderedDict()
 
     async def endpoint(self, ws: WebSocket):
+        # Add by MHY, WS 连接诊断日志：确认外网请求是否到达后端及升级成败
+        logger.info(
+            f'[WS-诊断] 连接到达: client={ws.client.host if ws.client else "?"} '
+            f'host={ws.headers.get("host")} origin={ws.headers.get("origin")}'
+        )
         origin = ws.headers.get('origin')
         # WebSocket 不受浏览器 CORS 保护，必须在升级前验证来源。
         # Modify by MHY, frp/Lucky 等反代会改写 Host 头，严格 netloc 相等会误杀合法反代连接；
