@@ -99,7 +99,9 @@ class UpdateService:
                         raise ApiError('UPDATE_BUSY', '更新器正在处理其他操作')
                     self.updater.state = 'checking'
                     owns_check = True
-                    self.updater._fetch_with_retry('origin', self.updater.Branch, max_retry=3, delay=1)
+                    # Modify by MHY, _fetch_with_retry 属上游随机 UA 重试体系（随合并剔除，方法不存在），
+                    # AttributeError 被 except 吞掉表现为"获取更新失败"；改单次 fetch 与旧更新流程一致
+                    self.updater.execute(f'"{self.updater.git}" fetch origin {self.updater.Branch}')
                     local, upstream = self.heads()
                     behind = int(self.git('rev-list', '--count', f'{local}..{upstream}')) if local and upstream else 0
                     self.updater.state = bool(behind)
