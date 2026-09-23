@@ -38,7 +38,11 @@ class Gateway:
             host_header = ws.headers.get('host') or ''
             origin_host = (parsed.hostname or '').lower()
             host_name = host_header.split(':')[0].lower()
-            if parsed.scheme not in ('http', 'https') or origin_host != host_name:
+            # Modify by MHY, 公网域名经 frp/反代时 Host 可能被改写为内网上游地址
+            # （proxy_set_header Host 127.0.0.1:port 场景），此时 Origin 与 Host 天然
+            # 不匹配但连接合法；仅要求 Origin 是合法 http(s) URL 即放行——真正的
+            # 安全边界在密码鉴权层（authenticate），Origin 校验只挡浏览器跨站
+            if parsed.scheme not in ('http', 'https'):
                 await ws.close(code=1008)
                 return
         if self.connections >= 32:
