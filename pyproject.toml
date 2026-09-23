@@ -32,6 +32,9 @@ dependencies = [
     "rapidocr==3.9.0",
     "ncnn>=1.0.20260114",
     "onnxruntime-windowsml==1.27.1.202607110137; sys_platform == 'win32'",
+    # Add by MHY, 托盘启动器依赖（Windows 专用；入 lockfile 防 uv sync 清除）
+    "pystray==0.19.5; sys_platform == 'win32'",
+    "pywin32==311; sys_platform == 'win32'",
     "windowsml==2.1.74; sys_platform == 'win32'",
     "onnxruntime==1.27.0; sys_platform == 'linux'",
     "onnxruntime==1.27.0; sys_platform == 'darwin' and platform_machine == 'arm64'",
