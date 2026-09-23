@@ -67,9 +67,12 @@ def main():
     if os.path.isdir(node_dir):
         popen_kwargs["env"] = {**os.environ, "PATH": node_dir + os.pathsep + os.environ.get("PATH", "")}
     if sys.platform == "win32":
+        # Modify by MHY, SW_HIDE 隐藏 console 下 gui 会静默退出（uvicorn 多进程在无可见
+        # console 句柄场景不稳定）；改 SW_SHOWMINNOACTIVE——窗口存在但最小化不起焦点，
+        # 与 bat 前台运行同构，任务栏可点开查日志
         si = subprocess.STARTUPINFO()
         si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-        si.wShowWindow = 0  # SW_HIDE
+        si.wShowWindow = 7  # SW_SHOWMINNOACTIVE
         popen_kwargs["startupinfo"] = si
         popen_kwargs["creationflags"] = subprocess.CREATE_NEW_CONSOLE
     gui_proc = subprocess.Popen(

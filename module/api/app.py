@@ -15,7 +15,7 @@ from module.api.runtime_service import RuntimeService
 from module.api.socket import Gateway
 from module.api.static import FrontendFiles
 from module.logger import logger
-from module.runtime.password_utils import ensure_password_for_host, is_demo_mode
+# Modify by MHY, 公网自动密码已移除（frp 内网透传场景），保留导入最小化
 from module.runtime.setting import State
 
 
@@ -30,10 +30,9 @@ def create_app(*, root: Path = ROOT, password=None, manage_runtime=True, mount_m
     args, _ = parser.parse_known_args()
     if password is None:
         key = args.key or State.deploy_config.Password
-        host = State.webui_host or State.deploy_config.WebuiHost
-        password = ensure_password_for_host(key, host, demo=is_demo_mode())
-        if password and password != key:
-            State.deploy_config.Password = password
+        # Modify by MHY, 本部署走 frp 内网透传（服务器侧已有 Basic Auth），
+        # 公网监听不再自动生成密码——未配置 Password 即免登录
+        password = key
     gateway = Gateway(Router(configs, runtime), password)
 
     @asynccontextmanager
