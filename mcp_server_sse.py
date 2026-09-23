@@ -556,7 +556,7 @@ async def _send_not_found(send):
 
 
 async def mcp_asgi_app(scope, receive, send):
-    """MCP 服务的纯 ASGI 应用。"""
+    """MCP 服务的纯 ASGI 应用：SSE（旧规范）与 streamable-http（新规范）双传输。"""
     path = scope.get("path", "")
     method = scope.get("method", "")
 
@@ -565,7 +565,9 @@ async def mcp_asgi_app(scope, receive, send):
 
     logger.info("[MCP] %s %s", method, path)
 
-    # 路由逻辑 - 使用末尾匹配以兼容各种挂载路径和斜线组合
+    # Add by MHY, streamable-http（新 MCP 规范，单端点 POST）：挂载根路径的
+    # POST/GET/DELETE 交给 streamable manager——dsh-mcp-client 等只讲新规范的
+    # 客户端经 /mcp 根直连；SSE 旧规范路径（/sse + /messages）保持不变
     if path.endswith("/sse"):
         await _run_sse(scope, receive, send)
 
@@ -573,10 +575,56 @@ async def mcp_asgi_app(scope, receive, send):
         await _handle_mcp_post(scope, receive, send, method)
 
     else:
+        await _run_streamable(scope, receive, send, method)
+
+
+# Add by MHY, streamable-http 传输管理器：与 SSE 共用同一个 mcp_server 实例，
+# 工具注册一次两种传输都可调用
+_streamable_manager = None
+
+
+def _get_streamable_manager():
+    global _streamable_manager
+    if _streamable_manager is None:
+        from mcp.server.streamable_http_manager import StreamableHTTPSessionManager
+        _streamable_manager = StreamableHTTPSessionManager(
+            app=mcp_server,
+            event_store=None,
+            json_response=False,
+            stateless=True,
+        )
+    return _streamable_manager
+
+
+async def _run_streamable(scope, receive, send, method):
+    """streamable-http 入口：POST（消息）/ GET（SSE 流可选）/ DELETE（会话终结）。"""
+    if method not in ("POST", "GET", "DELETE"):
         await _send_not_found(send)
+        return
+    try:
+        await _get_streamable_manager().handle_request(scope, receive, send)
+    except Exception:
+        logger.exception("[MCP] streamable-http 处理异常")
+        try:
+            await _send_not_found(send)
+        except Exception:
+            pass
 
 # Starlette 应用包装
+# Add by MHY, lifespan 启动 streamable manager 的 task group（无 run() 初始化
+# handle_request 会报 Task group is not initialized）
+from contextlib import asynccontextmanager
+
+
+@asynccontextmanager
+async def _mcp_lifespan(app_):
+    manager = _get_streamable_manager()
+    async with manager.run():
+        yield
+
+
 app = Starlette(
+    lifespan=_mcp_lifespan,
     middleware=[
         Middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
     ]
