@@ -14,7 +14,9 @@ export interface BackgroundSnapshot extends BackgroundPreference {
   revision: number
 }
 
-export const DEFAULT_BACKGROUND_URL = 'https://api.yppp.net/api.php'
+// Modify by MHY, 默认背景改为空——原先指向随机图床 api.yppp.net（外链，且不可控），
+// 不设置时走主题自身的纯色/渐变背景，无任何外部请求
+export const DEFAULT_BACKGROUND_URL = ''
 export const MAX_BACKGROUND_FILE_SIZE = 200 * 1024 * 1024
 const STORAGE_KEY = 'azurpilot.background'
 const DATABASE_NAME = 'azurpilot-preferences'
@@ -39,7 +41,8 @@ function readPreference(): BackgroundPreference {
 const initial = readPreference()
 let snapshot: BackgroundSnapshot = {
   ...initial,
-  assetUrl: initial.source === 'default' ? DEFAULT_BACKGROUND_URL : initial.source === 'url' ? initial.url : '',
+  // Modify by MHY, default 源无背景地址（不再请求随机图床），主题纯色背景兜底
+  assetUrl: initial.source === 'url' ? initial.url : '',
   loading: initial.source === 'upload',
   revision: 0,
 }
@@ -174,6 +177,6 @@ export function resetBackground() {
   const preference: BackgroundPreference = {source: 'default', kind: 'image', url: '', name: ''}
   replaceObjectUrl()
   savePreference(preference)
-  publish({...preference, assetUrl: DEFAULT_BACKGROUND_URL, loading: false})
+  publish({...preference, assetUrl: '', loading: false})
   void deleteStoredFile()
 }
