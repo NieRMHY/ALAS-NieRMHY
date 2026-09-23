@@ -31,9 +31,14 @@ class Gateway:
     async def endpoint(self, ws: WebSocket):
         origin = ws.headers.get('origin')
         # WebSocket 不受浏览器 CORS 保护，必须在升级前验证来源。
+        # Modify by MHY, frp/Lucky 等反代会改写 Host 头，严格 netloc 相等会误杀合法反代连接；
+        # 放宽为 hostname 一致（端口差异不影响安全判定，仍拦跨站 Origin）
         if origin:
             parsed = urlsplit(origin)
-            if parsed.scheme not in ('http', 'https') or parsed.netloc != ws.headers.get('host'):
+            host_header = ws.headers.get('host') or ''
+            origin_host = (parsed.hostname or '').lower()
+            host_name = host_header.split(':')[0].lower()
+            if parsed.scheme not in ('http', 'https') or origin_host != host_name:
                 await ws.close(code=1008)
                 return
         if self.connections >= 32:
