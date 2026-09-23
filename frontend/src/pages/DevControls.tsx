@@ -30,7 +30,7 @@ function DevField({id, label, help, multiline = false, children}: {id: string; l
 export function DevControls() {
   const {setDevMode, notify, ui, theme} = useApp()
   const navigate = useNavigate()
-  const [text, setText] = useState('AzurPilot')
+  const [text, setText] = useState('ALAS')
   const [number, setNumber] = useState(25548)
   const [password, setPassword] = useState('developer')
   const [select, setSelect] = useState<Value>('Auto')
@@ -99,7 +99,7 @@ export function DevControls() {
       <div className="panel-heading"><div><Sparkles size={18}/><h2 aria-label={ui('developer.visualLab')} data-text={ui('developer.visualLab')}>{ui('developer.visualLab')}</h2></div><span className="small-label">{ui('developer.liveTuning')}</span></div>
       <div className="dev-effect-lab">
         <div className="dev-effect-stage">
-          <div className="dev-effect-wallpaper" aria-hidden="true"><i/><i/><i/><span>AzurPilot</span></div>
+          <div className="dev-effect-wallpaper" aria-hidden="true"><i/><i/><i/><span>ALAS</span></div>
           <div className="dev-effect-glass" style={{
             backdropFilter: `blur(${blur}px) saturate(${saturation}%)`,
             WebkitBackdropFilter: `blur(${blur}px) saturate(${saturation}%)`,
@@ -348,6 +348,6 @@ export function DevControls() {
       </div>
     </section>
 
-    {modalOpen && <Modal title={ui('developer.modalPreview')} onClose={() => setModalOpen(false)}><div className="form-stack"><p className="muted">{ui('developer.modalHint')}</p><label>{ui('developer.sampleInput')}<input defaultValue="AzurPilot Dev Mode"/></label><div className="dev-button-row"><button className="button secondary" onClick={() => setModalOpen(false)}>{ui('common.cancel')}</button><button className="button primary" onClick={() => setModalOpen(false)}>{ui('common.confirm')}</button></div></div></Modal>}
+    {modalOpen && <Modal title={ui('developer.modalPreview')} onClose={() => setModalOpen(false)}><div className="form-stack"><p className="muted">{ui('developer.modalHint')}</p><label>{ui('developer.sampleInput')}<input defaultValue="ALAS Dev Mode"/></label><div className="dev-button-row"><button className="button secondary" onClick={() => setModalOpen(false)}>{ui('common.cancel')}</button><button className="button primary" onClick={() => setModalOpen(false)}>{ui('common.confirm')}</button></div></div></Modal>}
   </>
 }
