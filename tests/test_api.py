@@ -308,9 +308,11 @@ class SocketApiTests(unittest.TestCase):
                 updates.commits.assert_called_once_with(50, 50)
 
     def test_untrusted_origin_is_rejected_before_upgrade(self):
-        with self.assertRaises(WebSocketDisconnect):
-            with self.client.websocket_connect('/api/v1/ws', headers={'origin': 'https://evil.example'}):
-                pass
+        # Modify by MHY, Origin 校验已放宽为协议合法性（frp 反代 Host 改写场景），
+        # 任意合法 http(s) Origin 放行、由密码鉴权层把关；恶意 Origin 不再断连
+        with self.client.websocket_connect('/api/v1/ws', headers={'origin': 'https://evil.example'}) as ws:
+            session = ws.receive_json()
+            self.assertTrue(session['data']['authRequired'])
 
     def test_local_connection_skips_password(self):
         """本机浏览器与启动器内嵌窗口直接进入，不再要求输入密码。"""

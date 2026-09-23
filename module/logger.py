@@ -407,8 +407,9 @@ def get_log_file_path(name, root='.', day=None):
 
 def _set_file_logger(name=pyw_name):
     # Modify by MHY, python -c / 嵌入式环境的 argv[0] 无有效日志文件名
-    # （如 "-c"、解释器名），并行导入冒烟时还会竞态写同一文件，这类环境跳过文件日志
-    if not name or not name[0].isalnum() or name in ('python', 'python3', 'c'):
+    # （如 "-c"、解释器名），并行导入冒烟时还会竞态写同一文件，这类环境跳过文件日志。
+    # CI 解释器名带版本后缀（python3.14），按前缀匹配拦截
+    if not name or not name[0].isalnum() or name.startswith(('python', '-')):
         return
     log_file = str(get_log_file_path(name))
     try:
