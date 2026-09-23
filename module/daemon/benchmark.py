@@ -222,8 +222,9 @@ class Benchmark(DaemonBase, CampaignUI):
         if click_result:
             self.show(test='Control', data=click_result, evaluate_func=self.evaluate_click)
             fastest = sorted(click_result, key=lambda item: compare(item))[0]
-            # 如果 minitouch 和 MaaTouch 都是最快的，优先选择 MaaTouch
-            if 'MaaTouch' in click and fastest[0] == 'minitouch':
+            # 如果 minitouch 和 MaaTouch 都是最快的，优先选择 MaaTouch；
+            # nemu_ipc 触控有兼容性风险，不作推荐，同为最快时也让位 MaaTouch
+            if 'MaaTouch' in click and fastest[0] in ('minitouch', 'nemu_ipc'):
                 fastest[0] = 'MaaTouch'
             logger.info(f'推荐控制方式: {fastest[0]} ({float2str(fastest[1])})')
             fastest_click = fastest[0]
@@ -261,6 +262,10 @@ class Benchmark(DaemonBase, CampaignUI):
 
         if self.device.nemu_ipc_available():
             screenshot.append('nemu_ipc')
+            # nemu_ipc 也实现了点击（Control.click_methods 已注册），完整基准测试
+            # 中展示其成绩供参考；自动选择路径（run_simple_screenshot_benchmark）
+            # 不包含 nemu_ipc，不会自动启用
+            click.append('nemu_ipc')
         if self.device.ldopengl_available():
             screenshot.append('ldopengl')
         if self.device.is_bluestacks_air:
@@ -303,8 +308,8 @@ class Benchmark(DaemonBase, CampaignUI):
             screenshot = remove('aScreenCap', 'aScreenCap_nc')
         if self.device.is_chinac_phone_cloud:
             screenshot = remove('ADB_nc', 'aScreenCap_nc')
-        if self.device.nemu_ipc_available():
-            screenshot.append('nemu_ipc')
+        # 注意：nemu_ipc 不参与自动选择（速度虽快但触控有兼容性风险），
+        # 仅在完整基准测试（get_test_methods）中展示成绩，由用户手动决定是否启用
         if self.device.ldopengl_available():
             screenshot.append('ldopengl')
         screenshot = tuple(screenshot)

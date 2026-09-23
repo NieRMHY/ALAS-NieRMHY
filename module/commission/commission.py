@@ -21,7 +21,7 @@
 """
 
 import copy
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 from scipy import signal
 
@@ -47,6 +47,7 @@ from module.logger import logger
 from module.notify.notify import handle_notify, notify_webui
 from module.map.map_grids import SelectedGrids
 from module.retire.assets import DOCK_CHECK
+from module.statistics.item import AmountOcr
 from module.ui.assets import BACK_ARROW, REWARD_GOTO_COMMISSION
 from module.tactical.assets import TACTICAL_CLASS_START, TACTICAL_CLASS_CANCEL
 from module.ui.page import page_commission, page_reward
@@ -59,6 +60,27 @@ COMMISSION_SWITCH = Switch('Commission_switch', is_selector=True)
 COMMISSION_SWITCH.add_state('daily', COMMISSION_DAILY)
 COMMISSION_SWITCH.add_state('urgent', COMMISSION_URGENT)
 COMMISSION_SCROLL = Scroll(COMMISSION_SCROLL_AREA, color=(247, 211, 66), name='COMMISSION_SCROLL')
+
+# 委托收益截图保留张数：与统计页「最近委托记录」的 50 条上限保持一致。
+# 仅在「掉落记录 - 截图保留天数」为 0 时生效，填了天数就改按天数清理。
+COMMISSION_REWARD_SCREENSHOT_KEEP = 50
+
+
+class CommissionAmount(AmountOcr):
+    """委托收益数量 OCR：碎片过滤 + 2 倍放大 + 裁剪。
+
+    委托页数字很小（高约 14px），直接识别时两处系统性误读：
+    - 不裁剪时右缘被截断的数字会被丢掉（71 → 7）；
+    - 裁剪后原尺寸下两个 7 会丢掉一个（77 → 7）。
+    实测「裁剪 + 放大 2 倍」后 71/77/97/13 等读数全部正确。
+    """
+    remove_fragments = True
+
+    def pre_process(self, image):
+        import cv2
+
+        image = cv2.resize(image, (0, 0), fx=2, fy=2, interpolation=2)
+        return super().pre_process(image)
 
 
 def lines_detect(image):
@@ -797,148 +819,324 @@ class RewardCommission(UI, InfoHandler):
                 self.handle_info_bar()
                 if self._commission_find_and_start(comm, is_urgent=True):
                     comm.convert_to_running()
+                    if comm.is_gem_commission:
+                        try:
+                            from module.statistics.cl1_database import db as cl1_db
+                            cl1_db.add_running_gem_commission(
+                                instance=self.config.config_name,
+                                commission={
+                                    "name": comm.name,
+                                    "create_time": comm.create_time.isoformat(),
+                                    "finish_time": comm.finish_time.isoformat(),
+                                    "duration": int(comm.duration.total_seconds() // 3600),
+                                },
+                            )
+                            if self.config.Commission_GemNotify:
+                                self._send_gem_commission_notify()
+                        except Exception as e:
+                            logger.warning(f'记录钻石委托持久化失败: {e}')
                 self._commission_mode_reset()
+
+        # 同步紧急委托列表中已 running 状态的钻石委托到数据库
+        self._sync_running_gem_commissions()
+
         if not self.daily_choose and not self.urgent_choose:
             logger.info('[委托-执行] 没有选择任何委托')
 
-    def _record_commission_income(self):
-        """
-        记录委托奖励的收入（物品）。
-
-        分析委托奖励收集过程中在 `_commission_reward_images` 中截取的截图，
-        识别特定物品（钻石、心智魔方、心智单元、石油、金币），
-        汇总数量并保存到数据库。
-        """
+    def _record_commission_income(self) -> bool:
+        """识别并保存一组奖励；只有持久化成功后才发送通知。"""
         try:
-            from module.statistics.get_items import (
-                GetItemsStatistics, ITEM_GRIDS_1_ODD, ITEM_GRIDS_1_EVEN,
-                ITEM_GRIDS_2, ITEM_GRIDS_3
-            )
-            from module.statistics.item import ItemGrid, Item
-            from module.statistics.cl1_database import db as cl1_db
-            from module.combat.assets import GET_ITEMS_1, GET_ITEMS_2, GET_ITEMS_3
-            from module.handler.assets import INFO_BAR_1
-            import os
-
-            template_folder = os.path.join('.', 'assets', 'stats_commission_items')
-            if not os.path.exists(template_folder):
-                logger.info('[委托-收入] 模板文件夹不存在，跳过')
-                return
-
-            grid = ItemGrid(None, {}, template_area=(40, 21, 89, 70), amount_area=(50, 71, 91, 92))
-            grid.item_class = Item
-            grid.similarity = 0.92
-            grid.load_template_folder(template_folder)
-
-            if not grid.templates:
-                logger.info('[委托-收入] 没有加载模板，跳过')
-                return
-
-            get_items = GetItemsStatistics()
-
-            merged_items = {}
-            item_count = 0
-
-            images = getattr(self, '_commission_reward_images', None)
-            if not images:
-                logger.info('[委托-收入] 没有收集到奖励截图')
-                return
-
-            COMMISSION_TRACKED_ITEMS = ['Gem', 'Cube', 'Chip', 'Oil', 'Coin']
-
-            COMMISSION_ITEM_NAME_MAP = {
-                'Gems': 'Gem',
-                'Cubes': 'Cube',
-                'CognitiveChips': 'Chip',
-                'Coins': 'Coin',
-            }
-
-            logger.info(f'[委托-收入] 处理 {len(images)} 张奖励截图')
-            for idx, image in enumerate(images):
-                try:
-                    if INFO_BAR_1.appear_on(image):
-                        logger.info(f'[委托-收入] 截图[{idx}] 有信息栏，跳过')
-                        continue
-                    grid.grids = None
-                    if GET_ITEMS_1.match_template_color(image, offset=(5, 0)):
-                        is_odd = get_items._stats_get_items_is_odd(image)
-                        grid.grids = ITEM_GRIDS_1_ODD if is_odd else ITEM_GRIDS_1_EVEN
-                    elif GET_ITEMS_2.match_template_color(image, offset=(5, 0)):
-                        grid.grids = ITEM_GRIDS_2
-                    elif GET_ITEMS_3.match_template_color(image, offset=(5, 0)):
-                        grid.grids = ITEM_GRIDS_3
-                    else:
-                        logger.info(f'[委托-收入] 截图[{idx}] 不是获取物品页面，跳过')
-                        continue
-                    grid.predict(image)
-                    recognized = []
-                    for item in grid.items:
-                        if item.is_known_item() and item.name not in ('DefaultItem',):
-                            mapped_name = COMMISSION_ITEM_NAME_MAP.get(item.name, item.name)
-                            if mapped_name not in COMMISSION_TRACKED_ITEMS:
-                                logger.info(f'[委托-收入] 截图[{idx}] 忽略 {item.name} (未跟踪)')
-                                continue
-                            merged_items[mapped_name] = merged_items.get(mapped_name, 0) + item.amount
-                            item_count += 1
-                            recognized.append(f'{mapped_name}x{item.amount}')
-                    if recognized:
-                        logger.info(f'[委托-收入] 截图[{idx}] 识别到 {len(recognized)} 个物品: {", ".join(recognized)}')
-                    else:
-                        logger.info(f'[委托-收入] 截图[{idx}] 没有识别到已知物品')
-                except Exception as e:
-                    logger.info(f'[委托-收入] 截图[{idx}] 识别失败: {e}')
-                    continue
-
-            if merged_items:
-                instance = self.config.config_name
-                cl1_db.add_commission_income(instance, merged_items, commission_count=1)
-                item_str = ', '.join([f'{k}x{v}' for k, v in merged_items.items()])
-                logger.info(f'[委托-收入] 委托收入记录: {item_str} (实例={instance})')
-                if self.config.Commission_CommissionNotifyReward:
-                    reward_stats = None
-                    if self.config.Commission_CommissionNotifyRewardStatistics:
-                        reward_stats = cl1_db.get_commission_reward_stats(instance)
-                    gem_count = merged_items.get("Gem", 0)
-                    tracked = []
-                    if gem_count > 0:
-                        text = f'本次获得钻石 * {gem_count}'
-                        if reward_stats:
-                            text += (
-                                f'\n\n今日累计: {reward_stats["today"].get("Gem", 0)}'
-                                f'\n本周累计: {reward_stats["week"].get("Gem", 0)}'
-                                f'\n本月累计: {reward_stats["month"].get("Gem", 0)}'
-                            )
-                        tracked.append(text)
-                    if tracked:
-
-                        msg = '\n'.join(tracked)
-                        webui_msg = msg.replace('\n\n', '\n')
-                        title = f"ALAS <{instance}> 委托获得奖励"  # Modify by MHY, 去傲娇语
-                        webui_title = f"ALAS <{instance}> 委托获得奖励"
-                        if gem_count >= 50:
-                            title = f"ALAS <{instance}> 大成功！委托获得顶级奖励"
-                            webui_title = f"ALAS <{instance}> 大成功！委托获得顶级奖励"
-
-                        elif gem_count > 0:
-                            title = f"ALAS <{instance}> 委托获得顶级奖励"
-                            webui_title = f"ALAS <{instance}> 委托获得顶级奖励"
-                        handle_notify(
-                            self.config.Error_OnePushConfig,
-                            title=title,
-                            content=msg,
-                        )
-
-                        notify_webui(
-                            instance,
-                            title=webui_title,
-                            content=webui_msg,
-                        )
-
-            else:
+            merged_items, reward_images = self._recognize_commission_income()
+            if not merged_items:
                 logger.info('[委托-收入] 所有截图都没有识别到已知物品')
-
+                return True
+            self._persist_commission_income(merged_items, reward_images)
         except Exception as e:
-            logger.warning(f'[委托-收入] 委托收入记录失败: {e}')
+            logger.warning(f'[委托-收入] 委托收入记录失败，保留运行委托: {e}')
+            return False
+
+        item_str = ', '.join(f'{key}x{value}' for key, value in merged_items.items())
+        logger.info(f'[委托-收入] 委托收入记录: {item_str} (实例={self.config.config_name})')
+        try:
+            self._notify_commission_income(merged_items)
+        except Exception as e:
+            # 通知失败不回滚或重写已经提交的收益。
+            logger.warning(f'[委托-收入] 奖励已保存，但通知失败: {e}')
+        return True
+
+    def _recognize_commission_income(self):
+        """只识别本组截图，返回合并物品和通过页面校验的原图。"""
+        images = getattr(self, '_commission_reward_images', None)
+        if not images:
+            logger.info('[委托-收入] 没有收集到奖励截图')
+            return {}, []
+
+        from module.statistics.get_items import (
+            GetItemsStatistics, ITEM_GRIDS_1_ODD, ITEM_GRIDS_1_EVEN,
+            ITEM_GRIDS_2, ITEM_GRIDS_3
+        )
+        from module.statistics.item import ItemGrid, Item
+        from module.combat.assets import GET_ITEMS_1, GET_ITEMS_2, GET_ITEMS_3
+        from module.handler.assets import INFO_BAR_1
+        import os
+
+        template_folder = os.path.join('.', 'assets', 'stats_commission_items')
+        if not os.path.exists(template_folder):
+            logger.info('[委托-收入] 模板文件夹不存在，跳过')
+            return {}, []
+
+        grid = ItemGrid(None, {}, template_area=(40, 21, 89, 70), amount_area=(50, 71, 91, 92))
+        grid.item_class = Item
+        grid.similarity = 0.92
+        # 过滤图标底部伸入数量区域的白色碎块，避免被 OCR 误读为数字
+        # （如 11 → 211）；数字放大 2 倍后裁剪，避免小数字丢位
+        # （不裁剪 71 → 7，原尺寸裁剪 77 → 7）
+        grid.amount_ocr = CommissionAmount([], threshold=96, name='Amount_ocr')
+        grid.load_template_folder(template_folder)
+
+        if not grid.templates:
+            logger.info('[委托-收入] 没有加载模板，跳过')
+            return {}, []
+
+        get_items = GetItemsStatistics()
+
+        merged_items = {}
+        # 通过「获取物品」页面校验的截图，结算后落盘存档供 WebUI 查看
+        reward_images = []
+
+        COMMISSION_TRACKED_ITEMS = ['Gem', 'Cube', 'Chip', 'Oil', 'Coin']
+
+        COMMISSION_ITEM_NAME_MAP = {
+            'Gems': 'Gem',
+            'Cubes': 'Cube',
+            'CognitiveChips': 'Chip',
+            'Coins': 'Coin',
+        }
+
+        logger.info(f'[委托-收入] 处理 {len(images)} 张奖励截图')
+        for idx, image in enumerate(images):
+            try:
+                if INFO_BAR_1.appear_on(image):
+                    logger.info(f'[委托-收入] 截图[{idx}] 有信息栏，跳过')
+                    continue
+                grid.grids = None
+                if GET_ITEMS_1.match_template_color(image, offset=(5, 0)):
+                    is_odd = get_items._stats_get_items_is_odd(image)
+                    grid.grids = ITEM_GRIDS_1_ODD if is_odd else ITEM_GRIDS_1_EVEN
+                elif GET_ITEMS_2.match_template_color(image, offset=(5, 0)):
+                    grid.grids = ITEM_GRIDS_2
+                elif GET_ITEMS_3.match_template_color(image, offset=(5, 0)):
+                    grid.grids = ITEM_GRIDS_3
+                else:
+                    logger.info(f'[委托-收入] 截图[{idx}] 不是获取物品页面，跳过')
+                    continue
+                reward_images.append(image)
+                # 数量 OCR 在 CommissionAmount 内先放大 2 倍再裁剪，
+                # 碎片过滤后数字右对齐的问题由放大+裁剪共同规避
+                grid.predict(image, amount_trim=True)
+                recognized = []
+                for item in grid.items:
+                    if item.is_known_item() and item.name not in ('DefaultItem',):
+                        mapped_name = COMMISSION_ITEM_NAME_MAP.get(item.name, item.name)
+                        if mapped_name not in COMMISSION_TRACKED_ITEMS:
+                            logger.info(f'[委托-收入] 截图[{idx}] 忽略 {item.name} (未跟踪)')
+                            continue
+                        merged_items[mapped_name] = merged_items.get(mapped_name, 0) + item.amount
+                        recognized.append(f'{mapped_name}x{item.amount}')
+                if recognized:
+                    logger.info(f'[委托-收入] 截图[{idx}] 识别到 {len(recognized)} 个物品: {", ".join(recognized)}')
+                else:
+                    logger.info(f'[委托-收入] 截图[{idx}] 没有识别到已知物品')
+            except Exception as e:
+                logger.info(f'[委托-收入] 截图[{idx}] 识别失败: {e}')
+                continue
+
+        return merged_items, reward_images
+
+    def _persist_commission_income(self, merged_items, reward_images):
+        """截图先独立存档，收益与钻石委托的迁移交给单个数据库事务。"""
+        from module.statistics.cl1_database import db as cl1_db
+
+        instance = self.config.config_name
+        screenshots = self._save_commission_reward_screenshots(reward_images, instance)
+        gem_count = merged_items.get("Gem", 0)
+        target_duration = self._guess_gem_duration(gem_count) if gem_count > 0 else None
+        commission = cl1_db.add_commission_income(
+            instance, merged_items, commission_count=1, screenshots=screenshots,
+            gem_duration=target_duration, completed_at=current_time(),
+        )
+        if gem_count > 0:
+            if target_duration is None:
+                logger.warning(f'无法根据钻石数量 {gem_count} 推断委托时长')
+            elif commission is None:
+                logger.warning(f'钻石委托 {target_duration}h 在运行列表中未找到记录')
+
+    def _notify_commission_income(self, merged_items):
+        """读取已提交的统计并生成奖励通知，不修改委托结算数据。"""
+        from module.statistics.cl1_database import db as cl1_db
+
+        instance = self.config.config_name
+        if self.config.Commission_CommissionNotifyReward:
+            reward_stats = None
+            if self.config.Commission_CommissionNotifyRewardStatistics:
+                reward_stats = cl1_db.get_commission_reward_stats(instance)
+            gem_count = merged_items.get("Gem", 0)
+            tracked = []
+            if gem_count > 0:
+                text = f'本次获得钻石 * {gem_count}'
+                if reward_stats:
+                    text += (
+                        f'\n\n今日累计: {reward_stats["today"].get("Gem", 0)}'
+                        f'\n本周累计: {reward_stats["week"].get("Gem", 0)}'
+                        f'\n本月累计: {reward_stats["month"].get("Gem", 0)}'
+                    )
+                tracked.append(text)
+            if tracked:
+
+                msg = '\n'.join(tracked)
+                webui_msg = msg.replace('\n\n', '\n')
+                title = f"AzurPilot <{instance}> 委托获得奖励喵！"
+                webui_title = f"AzurPilot <{instance}> 委托获得奖励喵！"
+                if gem_count >= 50:
+                    title = f"AzurPilot <{instance}> 大成功！！！委托获得顶级奖励喵！"
+                    webui_title = f"AzurPilot <{instance}> 大成功！！！委托获得顶级奖励喵！"
+
+                elif gem_count > 0:
+                    title = f"AzurPilot <{instance}> 委托获得顶级奖励喵！"
+                    webui_title = f"AzurPilot <{instance}> 委托获得顶级奖励喵！"
+
+                # 附加钻石委托分时长统计
+                if gem_count > 0 and self.config.Commission_GemStatistics:
+                    try:
+                        gem_stats = cl1_db.get_gem_commission_stats(
+                            instance,
+                            period=self.config.Commission_GemStatisticsPeriod,
+                        )
+                        gem_entries = cl1_db.get_gem_commissions(instance)
+                        msg += '\n\n' + self._format_gem_statistics(
+                            gem_stats,
+                            gem_entries,
+                            self.config.Commission_GemStatisticsPeriod,
+                        )
+                        webui_msg = msg.replace('\n\n', '\n')
+                    except Exception as e:
+                        logger.warning(f'钻石委托统计生成失败: {e}')
+
+                handle_notify(
+                    self.config.Error_OnePushConfig,
+                    title=title,
+                    content=msg,
+                )
+
+                notify_webui(
+                    instance,
+                    title=webui_title,
+                    content=webui_msg,
+                )
+
+
+    def _save_commission_reward_screenshots(self, images, instance):
+        """保存本次结算的委托收益截图。
+
+        截图落盘到 ``./log/commission_rewards/<instance>/<YYYY-MM>/`` 目录，
+        文件名使用毫秒时间戳避免冲突。返回相对 ``log/commission_rewards``
+        根目录的路径列表（POSIX 风格），写入数据库供 WebUI 查看截图使用。
+
+        关掉「掉落记录 - 委托收益截图」后不再落盘，
+        但收益数据本身仍然记录，只是统计页不再有截图可看。
+
+        Args:
+            images: 通过「获取物品」页面校验的截图列表（RGB numpy 数组）。
+            instance: 配置实例名称。
+
+        Returns:
+            list[str]: 保存成功的截图相对路径列表，未保存或失败时返回空列表。
+        """
+        import os
+
+        from module.statistics.drop_cleanup import drop_screenshot_retention_days
+
+        if self.config.DropRecord_CommissionIncomeScreenshot == 'do_not':
+            return []
+        if not images:
+            return []
+
+        month_str = current_time().strftime('%Y-%m')
+        folder = os.path.join('.', 'log', 'commission_rewards', instance, month_str)
+        try:
+            os.makedirs(folder, exist_ok=True)
+        except OSError as e:
+            logger.warning(f'[委托-收入] 创建截图目录失败: {e}')
+            return []
+
+        stamp = current_time().strftime('%Y%m%d_%H%M%S_%f')
+        paths = []
+        for idx, image in enumerate(images):
+            filename = f'{stamp}_{idx}.png'
+            try:
+                save_image(image, os.path.join(folder, filename))
+            except Exception as e:
+                logger.warning(f'[委托-收入] 保存截图失败 {filename}: {e}')
+                continue
+            paths.append(f'{instance}/{month_str}/{filename}')
+            logger.info(f'[委托-收入] 已保存收益截图: log/commission_rewards/{instance}/{month_str}/{filename}')
+
+        # 填了保留天数就交给掉落记录模块按天数统一清理
+        # （见 module/statistics/drop_cleanup.py），没填才沿用张数上限
+        if drop_screenshot_retention_days(self.config) <= 0:
+            self._prune_commission_reward_screenshots(instance)
+        return paths
+
+    @staticmethod
+    def _prune_commission_reward_screenshots(instance, max_keep=None, base=None):
+        """清理实例目录下超量的委托收益截图，仅保留最近 max_keep 张。
+
+        截图保留张数与统计页「最近委托记录」的 50 条上限对应：
+        超过保留数量的旧截图按修改时间排序删除，并移除清空后的
+        空月份目录。清理在每次保存截图后顺带执行。
+        ``bak/`` 下的备份不计入张数上限，也不会被删除。
+
+        Args:
+            instance: 配置实例名称。
+            max_keep: 保留的截图张数上限，默认使用模块级常量
+                COMMISSION_REWARD_SCREENSHOT_KEEP。
+            base: 实例截图目录，默认按实例名推导；测试可注入临时目录。
+        """
+        import os
+
+        from module.statistics.drop_cleanup import BAK_FOLDER
+
+        if max_keep is None:
+            max_keep = COMMISSION_REWARD_SCREENSHOT_KEEP
+
+        if base is None:
+            base = os.path.join('.', 'log', 'commission_rewards', instance)
+        if not os.path.isdir(base):
+            return
+        files = []
+        for folder, dirs, names in os.walk(base):
+            dirs[:] = [d for d in dirs if d != BAK_FOLDER]
+            for name in names:
+                if not name.endswith('.png'):
+                    continue
+                file = os.path.join(folder, name)
+                try:
+                    files.append((os.path.getmtime(file), file))
+                except OSError:
+                    continue
+        files.sort(reverse=True)
+        for _, file in files[max_keep:]:
+            try:
+                os.remove(file)
+            except OSError:
+                continue
+        for folder, _, _ in os.walk(base, topdown=False):
+            if os.path.basename(os.path.normpath(folder)) == BAK_FOLDER:
+                continue
+            try:
+                os.rmdir(folder)
+            except OSError:
+                pass
 
     def _handle_research_genre_t_update(self, completed_commission_count):
         """更新 T 类科研任务的剩余委托计数。
@@ -984,6 +1182,7 @@ class RewardCommission(UI, InfoHandler):
         click_timer = Timer(1)
         self._commission_reward_images = []
         completed_commission_count = 0
+        income_recorded = True
 
         try:
             with self.stat.new(
@@ -1008,7 +1207,7 @@ class RewardCommission(UI, InfoHandler):
                             if button is EXP_INFO_S_REWARD:
                                 completed_commission_count += 1
                                 if self._commission_reward_images:
-                                    self._record_commission_income()
+                                    income_recorded = self._record_commission_income() and income_recorded
                                     self._commission_reward_images = []
                             else:
                                 self._commission_reward_images.append(self.device.image.copy())
@@ -1047,16 +1246,19 @@ class RewardCommission(UI, InfoHandler):
                         if self.appear(OIL_MAXED, offset=(20, 20), interval=3):
                             raise OilMaxed
 
-                    for button in [GET_SHIP]:
-                        if click_timer.reached() and self.appear(button, interval=1):
-                            self.ensure_no_info_bar(timeout=1)
-                            drop.add(self.device.image)
+                    # 委托舰船掉落检测开关：不做会掉落舰船的委托时
+                    # 可在配置中关闭，避免识别错误；其他场景的舰船检测不受影响
+                    if self.config.Commission_DetectShipDrop:
+                        for button in [GET_SHIP]:
+                            if click_timer.reached() and self.appear(button, interval=1):
+                                self.ensure_no_info_bar(timeout=1)
+                                drop.add(self.device.image)
 
-                            REWARD_SAVE_CLICK.name = button.name
-                            self.device.click(REWARD_SAVE_CLICK)
-                            click_timer.reset()
-                            reward = True
-                            continue
+                                REWARD_SAVE_CLICK.name = button.name
+                                self.device.click(REWARD_SAVE_CLICK)
+                                click_timer.reset()
+                                reward = True
+                                continue
                     if click_timer.reached() and self.ui_additional():
                         click_timer.reset()
                         continue
@@ -1064,7 +1266,24 @@ class RewardCommission(UI, InfoHandler):
             self._handle_research_genre_t_update(completed_commission_count)
 
         if reward:
-            self._record_commission_income()
+            income_recorded = self._record_commission_income() and income_recorded
+
+        if not income_recorded:
+            logger.warning("委托收益未全部保存，本轮跳过未获钻石委托的失败结算")
+            return reward
+
+        # 已处理所有奖励截图且回到委托列表后，剩余的到期钻石委托没有匹配到
+        # 钻石收益，按失败写入统计并从运行列表清理。
+        try:
+            from module.statistics.cl1_database import db as cl1_db
+            settled = cl1_db.settle_expired_gem_commissions(
+                self.config.config_name,
+                now=current_time(),
+            )
+            if settled:
+                logger.info(f'钻石委托统计：结算 {settled} 条未获得钻石的委托')
+        except Exception as e:
+            logger.warning(f'钻石委托失败统计结算失败: {e}')
 
         return reward
 
@@ -1087,6 +1306,317 @@ class RewardCommission(UI, InfoHandler):
 
         logger.critical('[委托-石油] 尝试3次后仍无法处理石油溢出')
         raise RequestHumanTakeover
+
+    def _sync_running_gem_commissions(self):
+        """同步 urgent 列表中钻石委托到数据库。
+
+        commission_start() 只写本次新启动的 urgent 钻石委托。
+        上会话已启动的钻石委托在当前会话中可能已 finished，不会被
+        commission_start() 写入。此方法遍历 self.urgent 全量列表，
+        补充写入 running/finished 状态的钻石委托（同名委托已存在则跳过）。
+
+        新启动的委托会在 commission_start() 中使用实际启动时间持久化；
+        本方法仅用于恢复缺失记录。扫描对象的 create_time 每次都会刷新，
+        因而恢复记录只能以本次扫描时间估算开始时间；记录写入后由同名检查
+        保留，后续扫描不会继续刷新数据库中的时间戳。
+        """
+        try:
+            from module.statistics.cl1_database import db as cl1_db
+        except Exception:
+            return
+
+        try:
+            existing = cl1_db.get_running_gem_commissions(
+                self.config.config_name
+            )
+        except Exception:
+            return
+        existing_names = {c.get("name") for c in existing}
+
+        for comm in self.urgent:
+            if not comm.is_gem_commission:
+                continue
+            if comm.name in existing_names:
+                continue
+            if comm.status not in ('running', 'finished'):
+                continue
+
+            duration_seconds = comm.duration.total_seconds()
+            duration_hour = int(duration_seconds // 3600)
+            now = current_time()
+
+            if comm.status == 'finished':
+                create_time = now - timedelta(seconds=duration_seconds)
+                finish_time = now
+            else:
+                finish_time = now + timedelta(seconds=duration_seconds)
+                create_time = now
+
+            try:
+                cl1_db.add_running_gem_commission(
+                    instance=self.config.config_name,
+                    commission={
+                        "name": comm.name,
+                        "create_time": create_time.isoformat(),
+                        "finish_time": finish_time.isoformat(),
+                        "duration": duration_hour,
+                    },
+                )
+            except Exception as e:
+                logger.warning(
+                    f'同步钻石委托运行列表失败: {e}'
+                )
+
+    @staticmethod
+    def _guess_gem_duration(gem_count):
+        """按获得的钻石数量推断钻石委托时长。
+
+        对应关系：2h -> 10~20，4h -> 25~40，8h -> 50~80。
+
+        Args:
+            gem_count (int): 本次结算获得的钻石数量。
+
+        Returns:
+            int | None: 推断出的委托时长（小时）；无法推断时返回 None。
+        """
+        if 10 <= gem_count <= 20:
+            return 2
+        if 25 <= gem_count <= 40:
+            return 4
+        if 50 <= gem_count <= 80:
+            return 8
+        return None
+
+    def _get_gem_reward(self, comm):
+        """根据委托时长返回预计钻石收益。
+
+        优先使用 comm.duration，当 OCR 识别失败（duration 为 0）时，
+        用 finish_time - create_time 推算时长。
+        """
+        hour = int(comm.duration.total_seconds() // 3600)
+
+        if hour == 0:
+            try:
+                hour = int(
+                    (comm.finish_time - comm.create_time).total_seconds() // 3600
+                )
+            except Exception:
+                pass
+
+        return {
+            2: '钻石 10~20',
+            4: '钻石 25~40',
+            8: '钻石 50~80',
+        }.get(hour, '未知')
+
+    def _get_remaining_time(self, comm):
+        remaining = comm.finish_time - current_time()
+
+        if remaining.total_seconds() <= 0:
+            return '已完成'
+
+        hours, remainder = divmod(int(remaining.total_seconds()), 3600)
+        minutes, _ = divmod(remainder, 60)
+
+        if hours:
+            return f'{hours}小时{minutes}分钟'
+        return f'{minutes}分钟'
+
+    def _get_remaining_time_str(self, finish_time_str):
+        finish_time = datetime.fromisoformat(finish_time_str)
+        remaining = finish_time - current_time()
+
+        if remaining.total_seconds() <= 0:
+            return '已完成'
+
+        hours, remainder = divmod(int(remaining.total_seconds()), 3600)
+        minutes, _ = divmod(remainder, 60)
+
+        if hours:
+            return f'{hours}小时{minutes}分钟'
+        return f'{minutes}分钟'
+
+    def _get_gem_reward_str(self, duration_hour):
+        return {
+            2: '钻石 10~20',
+            4: '钻石 25~40',
+            8: '钻石 50~80',
+        }.get(duration_hour, '未知')
+
+    def _format_gem_statistics(self, stats, entries, period='month'):
+        """格式化钻石委托统计信息，返回可直接拼接的文本。
+
+        Args:
+            stats: get_gem_commission_stats() 返回的字典，
+                   结构为 {duration: {count, success, reward, rate}}。
+            entries: 原始钻石委托记录列表，用于找到实际第一条记录日期。
+            period: 统计周期（today / week / month），用于标题格式。
+        """
+
+        now = datetime.now()
+        today = now.date()
+        week_start = today - timedelta(days=today.weekday())
+        month_start = today.replace(day=1)
+
+        if period == 'today':
+            ts_filter = lambda d: d == today
+        elif period == 'week':
+            ts_filter = lambda d: week_start <= d <= today
+        else:
+            ts_filter = lambda d: d >= month_start
+
+        # 从周期范围内的 entries 中找到第一条记录日期作为统计开始日
+        first_ts = None
+        for entry in entries:
+            try:
+                ts = datetime.fromisoformat(entry.get("ts", ""))
+                if not ts_filter(ts.date()):
+                    continue
+                if first_ts is None or ts < first_ts:
+                    first_ts = ts
+            except Exception:
+                continue
+
+        has_data = first_ts is not None
+
+        if period == 'today':
+            title = f'{today.month}.{today.day}'
+        elif period == 'week':
+            if has_data:
+                start = first_ts.date()
+                if start < week_start:
+                    start = week_start
+                title = (
+                    f'{start.month}.{start.day}~{today.month}.{today.day}'
+                )
+            else:
+                title = (
+                    f'{week_start.month}.{week_start.day}~{today.month}.{today.day}'
+                )
+        else:
+            if has_data:
+                start = first_ts.date()
+                if start < month_start:
+                    start = month_start
+                title = (
+                    f'{start.month}.{start.day}~{today.month}.{today.day}'
+                )
+            else:
+                title = (
+                    f'{month_start.month}.{month_start.day}~{today.month}.{today.day}'
+                )
+
+        lines = [
+            '',
+            '━━━━━━━━━━━━',
+            f'钻石委托统计{title}',
+            '',
+        ]
+
+        commission_names = {
+            2: 'BIW/NYB要员护卫',
+            4: 'BIW/NYB度假护卫',
+            8: 'BIW/NYB巡视护卫',
+        }
+
+        total_count = 0
+        total_success = 0
+        total_reward = 0
+
+        for hour in (2, 4, 8):
+            item = stats[hour]
+
+            total_count += item['count']
+            total_success += item['success']
+            total_reward += item['reward']
+
+            avg_reward = (
+                item['reward'] / item['success']
+                if item['success']
+                else 0
+            )
+
+            lines.extend([
+                f'{commission_names[hour]}（{hour}小时）',
+                f'成功：{item["success"]} / {item["count"]}（{item["rate"]:.1f}%）',
+                f'累计：{item["reward"]}',
+                f'平均：{avg_reward:.1f}/次成功',
+                '',
+            ])
+
+        total_rate = (
+            total_success * 100 / total_count
+            if total_count
+            else 0
+        )
+
+        avg_total = (
+            total_reward / total_success
+            if total_success
+            else 0
+        )
+
+        lines.extend([
+            '━━━━━━━━━━━━',
+            '总计',
+            f'成功：{total_success} / {total_count}（{total_rate:.1f}%）',
+            f'累计：{total_reward}',
+            f'平均：{avg_total:.1f}/次成功',
+        ])
+
+        return '\n'.join(lines)
+
+    def _send_gem_commission_notify(self):
+        """推送当前执行中的钻石委托列表。
+
+        从数据库中读取运行中的钻石委托（保证时间戳稳定），
+        按完成时间排序后通过 OnePush 和 WebUI 推送通知。
+        没有运行中的钻石委托时静默返回。
+        """
+        instance = self.config.config_name
+        now = current_time()
+
+        try:
+            from module.statistics.cl1_database import db as cl1_db
+            db_commissions = cl1_db.get_running_gem_commissions(instance)
+        except Exception as e:
+            logger.warning(f'读取钻石委托数据库失败: {e}')
+            return
+
+        if not db_commissions:
+            return
+
+        db_commissions = [
+            c for c in db_commissions
+            if datetime.fromisoformat(c['finish_time']) > now
+        ]
+
+        if not db_commissions:
+            return
+
+        db_commissions.sort(key=lambda c: c['finish_time'])
+
+        content = '当前钻石委托执行列表\n'
+        content += '\n\n'.join(
+            f'{idx}. {c["name"]}\n'
+            f'接取时间：{datetime.fromisoformat(c["create_time"]):%Y-%m-%d %H:%M:%S}\n'
+            f'预计完成：{datetime.fromisoformat(c["finish_time"]):%Y-%m-%d %H:%M:%S}\n'
+            f'剩余时间：{self._get_remaining_time_str(c["finish_time"])}\n'
+            f'预计收益：{self._get_gem_reward_str(c["duration"])}'
+            for idx, c in enumerate(db_commissions, 1)
+        )
+
+        handle_notify(
+            self.config.Error_OnePushConfig,
+            title=f'AzurPilot <{instance}> 新的钻石委托开始执行',
+            content=content,
+        )
+
+        notify_webui(
+            instance,
+            title=f'{instance} 新的钻石委托开始执行',
+            content=content,
+        )
 
     def run(self):
         """

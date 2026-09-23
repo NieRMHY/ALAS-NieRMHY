@@ -118,7 +118,8 @@ Emulator:
       ]
   ControlMethod:
     value: MaaTouch
-    option: [ADB, uiautomator2, minitouch, Hermit, MaaTouch]
+    option: [ADB, uiautomator2, minitouch, Hermit, MaaTouch, nemu_ipc]
+    help: nemu_ipc 需与截图方式配套使用（截图选 nemu_ipc 时启动会自动联动）。注意：nemu_ipc 触控走模拟器内部 RPC，低性能电脑上滑动易丢步、拖拽易变形，调用偶发挂死会丢失点击；滑动或拖拽异常时请改回 minitouch / MaaTouch。
   GameSettings:
     type: checkbox
     value: false
@@ -178,7 +179,15 @@ Error:
   HandleError: true
   SaveError: true
   StrictRestart: false
-  SaveErrorCount: 30
+  SaveErrorRetentionDays:
+    value: 30
+    validate: [0, 3650]
+  SaveErrorBackUpMethod:
+    value: zip
+    option: [ delete, zip, copy ]
+  SaveErrorZipMethod:
+    value: zip
+    option: [ bz2, gzip, xz, zip ]
   OnePushConfig:
     type: textarea
     mode: yaml
@@ -230,7 +239,7 @@ Optimization:
   TaskHoardingDuration: 0
   CloseEmulatorDuringLongWait:
     type: checkbox
-    value: true
+    value: false
     option: [true, false]
   WhenTaskQueueEmpty:
     value: goto_main
@@ -271,6 +280,15 @@ GameUpdateTasks:
 # Add end
 DropRecord:
   SaveFolder: ./screenshots
+  RetentionDays:
+    value: 0
+    validate: [0, 3650]
+  BackUpMethod:
+    value: zip
+    option: [ delete, zip, copy ]
+  ZipMethod:
+    value: zip
+    option: [ bz2, gzip, xz, zip ]
   AzurStatsID: null
   API:
     value: default
@@ -281,6 +299,9 @@ DropRecord:
   CommissionRecord:
     value: do_not
     option: [do_not, save, upload, save_and_upload]
+  CommissionIncomeScreenshot:
+    value: save
+    option: [do_not, save]
   CombatRecord:
     value: do_not
     option: [do_not, save]
@@ -295,6 +316,11 @@ DropRecord:
     option: [do_not, save, upload, save_and_upload]
   TelemetryReport: true
   BugReport: true
+Backup:
+  Enable: true
+  KeepDays:
+    value: 7
+    validate: [1, 3650]
 Log:
   LogKeepCount: 3
   LogBackUpMethod:
@@ -493,12 +519,19 @@ OperationHandover:
   OilLimit:
     value: 1000
     validate: [0, 999999]
-  ConsumeAllBookRecord:
+  # 一键消耗上一次实际执行的时间。落在本周内就表示本周不用再触发，
+  # 清空或改成上周及更早会让本周的一键消耗重新生效。用可见的 datetime
+  # 而不是隐藏的 stored，就是为了能手动改这个状态
+  ConsumeAllBookRecord: 2020-01-01 00:00:00
+  CommissionEnd:
     type: stored
-    value: ""
+    value: "2020-01-01 00:00:00"
     display: hide
 StopCondition:
   OilLimit: 1000
+  # 石油停止下限：实际停止阈值为 max(下限, OilLimit)，历史遗留的 500 安全网。
+  # 低耗监工希望把油打到更低时可以调小（#444）
+  OilLimitHardFloor: 500
   CoinLimit: 0
   RunCount: 0
   MapAchievement:
@@ -509,6 +542,15 @@ StopCondition:
   ReachLevel: 0
 WarArchives:
   DailyRunCount: 0
+  AutoClear: false
+  AutoSelectEvent: false
+  AutoClearTarget:
+    value: three_star
+    option: [normal_3_star, three_star, clear_100]
+  AutoClearProgress:
+    type: stored
+    value: null
+    display: hide
   DailyRunCountRemain:
     type: stored
     value: 0
@@ -621,6 +663,7 @@ Emotion:
   Mode:
     value: calculate
     option: [calculate, ignore, calculate_ignore]
+  IgnoreShipwreck: false
   Fleet1Value: 119
   Fleet1Record:
     value: 2020-01-01 00:00:00
@@ -677,6 +720,9 @@ C124LargeLeveling:
     value: 3
     option: [3, 4, 5]
 GemsFarming:
+  EventFallbackStage:
+    type: input
+    value: 2-4
   ChangeFlagship:
     value: ship_equip
     option: [ ship, ship_equip ]
@@ -722,7 +768,7 @@ GemsFarming:
 
 EventGeneral:
   PtLimit: 0
-  TimeLimit: 2020-01-01 00:00:00
+  TimeLimit: 2023-01-01 00:00:00
 TaskBalancer:
   Enable: false
   CoinLimit: 10000
@@ -814,6 +860,16 @@ EventShop:
     > CatT2 > CatT1 > PlateGeneralT3 > PlateT3 > BoxT4
     > ShipSSR
 
+ShopAdvanced:
+  Mode:
+    value: legacy
+    option: [legacy, advanced]
+  Script:
+    type: textarea
+    mode: restricted_lua
+    preserve_empty: true
+    value: ""
+
 # ==================== Reward ====================
 
 Commission:
@@ -869,6 +925,19 @@ Commission:
   CommissionNotifyRewardStatistics:
     type: checkbox
     value: true
+  DetectShipDrop:
+    type: checkbox
+    value: false
+    option: [true, false]
+  GemNotify:
+    type: checkbox
+    value: true
+  GemStatistics:
+    type: checkbox
+    value: false
+  GemStatisticsPeriod:
+    value: month
+    option: [today, week, month]
 Tactical:
   TacticalFilter: |-
     SameT4 > SameT3 > SameT2 > SameT1
@@ -917,6 +986,7 @@ Research:
       - series_8_blueprint_305
       - series_8_blueprint_only
       - series_8_305_only
+      - series_8_305_e_first
       - series_7_blueprint_la9
       - series_7_blueprint_only
       - series_7_la9_only
@@ -967,6 +1037,10 @@ MeowfficerTrain:
     option: [seamlessly, once_a_day]
   RetainTalentedGold: true
   RetainTalentedPurple: true
+  ScoreTalents: false
+  ScoreThreshold:
+    value: 0
+    validate: [0, 100]
   EnhanceIndex: 1
   MaxFeedLevel: 5
 GuildLogistics:
@@ -996,6 +1070,18 @@ Awaken:
     option: [level120, level125]
   Favourite:
     value: false
+Secretary:
+  CustomFilter: |-
+    ultra > super_rare > elite > rare > common
+  LowFavorabilityPriority: false
+  FavouriteOnly: true
+  BackupEnable: true
+  CheckInterval: 0
+  Notify: true
+  OnePushConfig:
+    type: textarea
+    mode: yaml
+    value: "provider: null"
 GeneralShop:
   Enable: true
   UseGems: false
@@ -1334,7 +1420,9 @@ OpsiMeowfficerFarming:
     value: 5
     option: [ 2, 3, 4, 5, 6, 10 ]
   TargetZone:
-    value: 0
+    # 显式文本模式兼容旧配置中的数字值，否则 WebUI 会渲染 number 输入框并拒绝逗号列表。
+    mode: text
+    value: '0'
   StayInZone: false
   # 效率模式强制移动（套用侵蚀一）：战后遍历 1~4 队雷达清剩余问号，
   # 只切换舰队看雷达、不挪动舰队；默认关闭
@@ -1355,12 +1443,11 @@ OpsiHazard1Leveling:
   OperationCoinsPreserve: 40000
   MinimumActionPointReserve: 200
   ExecuteFixedPatrolScan:
-    # 默认关闭(0)，避免未经配置就搬动舰队。
-    # 1=效率模式（只切换舰队看雷达、不挪动舰队，最快，找不到就放弃）；
-    # 2=保守模式（先扫雷达不动，扫不到再逐个挪舰队+整图重扫，更稳但会挪、慢一些）。
-    # 旧版布尔 true 会迁移为 2（见 redirect_utils）。
-    value: 0
-    option: [0, 1, 2]
+    # 战后强制移动：开启后遍历 1~4 队雷达清剩余问号（只换队看雷达、零移动），
+    # 找到明石/记录塔/装置就处理；这样仍没找到、且行动力大于 7 时，再逐个
+    # 挪动舰队做一遍整图重扫（把挡路的舰队让开）。
+    # 默认关闭，避免未经配置就搬动舰队。旧版等级 1/2/3 一并视为开启。
+    value: false
   # Sacrifice run: skip HP check
   SkipHpCheck:
     type: checkbox
@@ -1433,6 +1520,8 @@ OpsiScheduling:
   TaskPriority:
     type: textarea
     value: OpsiStronghold > OpsiObscure > OpsiAbyssal > OpsiMeowfficerFarming
+  ObscureAbyssalCheckDelayDays:
+    value: 0
   MonthEndActionPointCleanupEnable:
     value: false
     option: [true, false]
@@ -2194,6 +2283,9 @@ EmulatorManagement:
   RestartIntervalHours:
     value: 4
     validate: [1, 24]
+  DeepRestartAfterFailures:
+    value: 0
+    validate: [0, 10]
 EmulatorManager:
   EnableRemoteSSH:
     type: checkbox
@@ -2212,6 +2304,29 @@ EmulatorManager:
     value: ""
   RemoteStopCommand:
     value: ""
+MeowfficerScore:
+  Source:
+    value: screenshot
+    option: [screenshot, device, scan]
+  Folder:
+    value: ./screenshots/meowfficer_talent
+  MaxImages:
+    value: 50
+    validate: [1, 999]
+  ReportPath:
+    value: ./log/meowfficer_score.md
+  DeviceShots:
+    value: 1
+    validate: [1, 99]
+  DeviceInterval:
+    value: 2
+    validate: [0, 60]
+  ScanLimit:
+    value: 0
+    validate: [0, 999]
+  ScanPasses:
+    value: 12
+    validate: [1, 60]
 OpsiSimulatorParameters:
   Samples: 100000
   Draw:

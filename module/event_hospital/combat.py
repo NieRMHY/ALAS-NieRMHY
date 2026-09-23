@@ -64,7 +64,7 @@ class HospitalCombat(Combat, HospitalUI, CampaignEvent):
 
         @run_once
         def check_oil():
-            if self.get_oil() < max(500, self.config.StopCondition_OilLimit):
+            if self.get_oil() < max(self.config.StopCondition_OilLimitHardFloor, self.config.StopCondition_OilLimit):
                 logger.hr('触发石油上限')
                 raise OilExhausted
 

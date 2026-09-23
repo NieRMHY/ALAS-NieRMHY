@@ -17,9 +17,7 @@
 </p>
 
 <p align="center">
-  <a href="https://deepwiki.com/wess09/AzurPilot">
-    <img src="https://deepwiki.com/badge.svg" alt="DeepWiki" height="22">
-  </a>
+  <a href="https://deepwiki.com/wess09/AzurPilot"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki"></a>
 </p>
 
 <p align="center">
@@ -263,7 +261,13 @@ MCP 沿用 WebUI 的密碼（`--key` / `config/deploy.yaml` 的 `Password`），
 - [GitHub 儲存庫](https://github.com/wess09/AzurPilot) — 原始碼、Issue、Pull Request
 - [QQ 交流群](https://join.nanoda.work/#/) — 碧藍航線自動化社群交流
 - [AzurLaneAutoScript 上游專案](https://github.com/LmeSzinc/AzurLaneAutoScript) — ALAS 原版
+
+### 衍生專案與友鏈
+
 - [AzurPilot 樹莓派版](https://github.com/nnieie/AzurPilot) — 面向樹莓派 / Termux 真機的 AzurPilot CN 部署版
+- [AzurPilot-private-Ru](https://github.com/AliceLiddell01/AzurPilot-private-Ru) — 個人俄語版本，提供受控更新、透明啟動並精簡外部網路相依
+- [PerseusAutoScript](https://github.com/lajiovo/PerseusAutoScript) — 面向 AzurPilot 的綜合維運工具庫（後台靜默控制、閉環自癒與多端推播）
+- [AzurRem](https://github.com/syyxl3111/AzurRem) — AzurPilot 原生安卓客戶端（Kotlin + Jetpack Compose 重寫，附帶 PC 閘道）
 
 ## 開發與貢獻
 

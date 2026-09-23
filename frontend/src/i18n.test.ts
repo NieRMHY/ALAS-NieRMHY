@@ -1,0 +1,58 @@
+import { describe, expect, it } from 'vitest'
+import { detectLanguage, translateUi } from './i18n'
+
+describe('WebUI i18n', () => {
+  it('detects supported browser locales', () => {
+    expect(detectLanguage(['zh-HK'])).toBe('zh-TW')
+    expect(detectLanguage(['ja'])).toBe('ja-JP')
+    expect(detectLanguage(['en-GB'])).toBe('en-US')
+    expect(detectLanguage(['fr-FR'])).toBe('zh-CN')
+  })
+
+  it('interpolates translated values', () => {
+    expect(translateUi('en-US', 'instance.deletePrompt', {name: 'alas-main'})).toBe('Delete alas-main? Its configuration will remain in backup.')
+  })
+
+  it('offers a different delete-instance warning at each of the three confirmations', () => {
+    const prompts = ['instance.deletePrompt', 'instance.deletePrompt2', 'instance.deletePrompt3'] as const
+    for (const language of ['zh-CN', 'zh-TW', 'en-US', 'ja-JP', 'zh-MIAO'] as const) {
+      const texts = prompts.map(key => translateUi(language, key, {name: 'alas-main'}))
+      expect(new Set(texts).size).toBe(prompts.length)
+      /* 键不存在时 translateUi 会把键名原样返回，那样三条也「互不相同」，所以这里必须排除。 */
+      expect(texts.some(text => text.includes('instance.deletePrompt'))).toBe(false)
+    }
+  })
+
+  it('keeps the Miao locale complete through its Simplified Chinese base', () => {
+    expect(translateUi('zh-MIAO', 'nav.statistics')).toBe('资源统计')
+  })
+
+  it('keeps Japanese and Traditional Chinese dictionaries complete for formerly missing UI keys', () => {
+    expect(translateUi('ja-JP', 'log.search')).toBe('ログを検索')
+    expect(translateUi('ja-JP', 'resource.Oil')).toBe('燃料')
+    expect(translateUi('zh-TW', 'fleet.vanguard')).toBe('先鋒艦隊')
+    expect(translateUi('zh-TW', 'stats.toolboxSave')).toBe('儲存圖表')
+    expect(translateUi('zh-TW', 'stats.axisMode')).toBe('座標軸')
+    expect(translateUi('ja-JP', 'stats.axisMode')).toBe('軸モード')
+    expect(translateUi('en-US', 'stats.axisMode')).toBe('Axis mode')
+    expect(translateUi('zh-CN', 'stats.axisMode')).toBe('坐标轴')
+    expect(translateUi('zh-TW', 'stats.candlestickOverlay')).toBe('K 線 + 折線疊加')
+    expect(translateUi('ja-JP', 'stats.candlestickOverlay')).toBe('ローソク足 + 折れ線')
+    expect(translateUi('en-US', 'stats.candlestickOverlay')).toBe('Candlestick + line overlay')
+    expect(translateUi('zh-CN', 'stats.candlestickOverlay')).toBe('K 线 + 折线叠加')
+  })
+
+  it('translates the advanced-mode script prerequisite in every UI language', () => {
+    expect(translateUi('zh-CN', 'script.modeRequiresScript')).toContain('非空策略脚本')
+    expect(translateUi('en-US', 'script.modeRequiresScript')).toContain('non-empty strategy script')
+    expect(translateUi('ja-JP', 'script.modeRequiresScript')).toContain('空でない戦略スクリプト')
+    expect(translateUi('zh-TW', 'script.modeRequiresScript')).toContain('非空策略指令碼')
+    expect(translateUi('zh-MIAO', 'script.modeRequiresScript')).toContain('喵')
+  })
+
+  it('translates developer playground UI instead of leaving hardcoded labels', () => {
+    expect(translateUi('en-US', 'developer.pageTitle')).toBe('Developer · Control Preview')
+    expect(translateUi('ja-JP', 'developer.formControls')).toBe('フォームコントロール')
+    expect(translateUi('zh-TW', 'developer.emptyTitle')).toBe('暫無內容')
+  })
+})

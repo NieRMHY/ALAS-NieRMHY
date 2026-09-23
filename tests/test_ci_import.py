@@ -7,11 +7,8 @@
 
 2. **进程隔离守卫**：WebUI 进程（挂载 mcp_server_sse 的进程）不得加载 OCR
    相关模块（`module.ocr.al_ocr` / `rapidocr`）。
-   背景见 shared/mcp-ocr-dependency.md：MCP 与 OCR 分属不同进程是设计约束。
-   fake_pil_module 会污染 `sys.modules['PIL']`，一旦 OCR 被引入 WebUI 进程，
-   rapidocr 会因 `cannot import name 'ImageDraw' from 'PIL'` 崩溃。
-   本测试守护该隔离不被破坏；若未来需要在 WebUI 进程内使用 OCR，
-   应先在 WebUI 侧 remove_fake_pil_module() 或重构假 PIL 注入方式。
+   React API 与 OCR 分属不同进程，模型只在实际需要推理的工作进程中加载。
+   旧的伪 PIL 注入已移除，本测试继续守护轻量服务进程的依赖边界。
 
 所有检查都在子进程中执行，避免 import 副作用污染测试运行器本身。
 """
@@ -28,11 +25,13 @@ PYTHON = sys.executable
 
 def _run_py(code: str, timeout: int = 120) -> subprocess.CompletedProcess:
     """在独立子进程中执行代码，隔离 import 副作用。"""
-    env = {**os.environ, "AZURPILOT_NTP_DISABLE": "1"}
+    env = {**os.environ, "AZURPILOT_NTP_DISABLE": "1", "PYTHONUTF8": "1"}
     return subprocess.run(
         [PYTHON, "-c", code],
         capture_output=True,
         text=True,
+        encoding="utf-8",
+        errors="replace",
         timeout=timeout,
         env=env,
         cwd=REPO_ROOT,
@@ -67,13 +66,11 @@ class TestProcessIsolation(unittest.TestCase):
     """WebUI/MCP 进程与 OCR 的进程隔离守卫。"""
 
     def test_mcp_server_sse_does_not_load_ocr(self):
-        # 独立运行 mcp_server_sse 时，密码策略不得经由
-        # module.webui.app_dependencies 把 pywebio / module.ocr.rpc 拖进来。
+        # 独立 MCP 只需要运行服务和认证，不应加载界面或 OCR 模型。
         code = (
             "import sys\n"
             "import mcp_server_sse\n"
-            "assert 'module.webui.app_dependencies' not in sys.modules, "
-            "'app_dependencies 不得加载进独立 MCP 进程'\n"
+            "assert 'pywebio' not in sys.modules, '不得加载已移除的界面依赖'\n"
             "assert 'module.ocr.al_ocr' not in sys.modules, 'OCR 不得加载进独立 MCP 进程'\n"
             "assert 'rapidocr' not in sys.modules, 'rapidocr 不得加载进独立 MCP 进程'\n"
         )
@@ -88,8 +85,8 @@ class TestProcessIsolation(unittest.TestCase):
         # module.ocr.al_ocr / rapidocr 不得被加载进同一进程。
         code = (
             "import sys\n"
-            "from module.webui import app as webui_app\n"
-            "application = webui_app.app()\n"
+            "from module.api import app as webui_app\n"
+            "application = webui_app.create_app(password='', manage_runtime=False)\n"
             "assert 'mcp_server_sse' in sys.modules, 'mcp_server_sse 应已加载'\n"
             "assert 'module.ocr.al_ocr' not in sys.modules, 'OCR 不得加载进 WebUI 进程'\n"
             "assert 'rapidocr' not in sys.modules, 'rapidocr 不得加载进 WebUI 进程'\n"

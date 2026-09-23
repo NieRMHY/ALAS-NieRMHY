@@ -194,7 +194,9 @@ def alas_template():
     for file in os.listdir('./config'):
         name, extension = os.path.splitext(file)
         if name == 'template' and extension == '.json':
-            out.append(f'{name}-alas')
+            # 主模块（template.json）在前端以 template-ap 展示，
+            # 实际模块名仍为 alas，由 get_config_mod() 负责映射回去。
+            out.append(f'{name}-{DEFAULT_CONFIG_NAME}')
 
     out.extend(list_mod_template())
 
@@ -359,8 +361,8 @@ def server_time_offset() -> timedelta:
     """
     计算本地时间与服务器时间的偏移量。
 
-    本地时间转服务器时间：server_time = local_time + server_time_offset()
-    服务器时间转本地时间：local_time = server_time - server_time_offset()
+    本地时间转服务器时间：server_time = local_time - server_time_offset()
+    服务器时间转本地时间：local_time = server_time + server_time_offset()
     """
     return current_time(timezone.utc).astimezone().utcoffset() - server_timezone()
 
@@ -416,6 +418,28 @@ def ensure_time(second, n=3, precision=3):
         return second
 
 
+def get_os_next_reset_after(moment):
+    """
+    获取指定时间之后的下一次大世界重置时间。
+
+    与 get_os_next_reset() 的区别：以传入时间为基准，可用来判断某个历史时间点
+    （如「上次打空隐秘/深渊的时间」）之后会先撞上哪次重置。
+
+    Args:
+        moment (datetime.datetime): 基准时间（本地时间）。
+
+    Returns:
+        datetime.datetime: 该时间之后的下一次重置的本地时间。
+    """
+    diff = server_time_offset()
+    server_moment = moment - diff
+    server_reset = (server_moment.replace(day=1) + timedelta(days=32)) \
+        .replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    server_reset = server_reset.replace(tzinfo=timezone(server_timezone()))
+    local_reset = server_reset.astimezone().replace(tzinfo=None)
+    return local_reset
+
+
 def get_os_next_reset():
     """
     获取下个月的第一天（大世界重置时间）。
@@ -423,18 +447,15 @@ def get_os_next_reset():
     Returns:
         datetime.datetime: 下次重置的本地时间。
     """
-    diff = server_time_offset()
-    server_now = current_time() - diff
-    server_reset = (server_now.replace(day=1) + timedelta(days=32)) \
-        .replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-    server_reset = server_reset.replace(tzinfo=timezone(server_timezone()))
-    local_reset = server_reset.astimezone().replace(tzinfo=None)
-    return local_reset
+    return get_os_next_reset_after(current_time())
 
 
 def get_os_reset_remain():
     """
-    获取距离大世界下次重置的剩余天数。
+    获取距离大世界下次重置的剩余整天数（不足一天向下取整）。
+
+    按整 24 小时计算，因此「还剩 1 天」指的是重置前的最后 24 小时。
+    要按自然日判断「距重置还有几天」请用 get_os_reset_remain_days()。
 
     Returns:
         int: 剩余天数。
@@ -445,6 +466,25 @@ def get_os_reset_remain():
 
     remain = int((next_reset - now).total_seconds() // 86400)
     logger.attr('重置剩余天数', remain)
+    return remain
+
+
+def get_os_reset_remain_days():
+    """
+    获取距离大世界下次重置的剩余自然天数（按日期计算）。
+
+    用于「距离重置还剩几天」的判断，重置前一天为 1，重置当天已是新月。
+    与 get_os_reset_remain() 的整天数不同，不会因为过了半天就跳动一天。
+
+    Returns:
+        int: 剩余自然天数。
+    """
+    next_reset = get_os_next_reset()
+    now = current_time()
+    logger.attr('大世界下次重置', next_reset)
+
+    remain = (next_reset.date() - now.date()).days
+    logger.attr('重置剩余自然天数', remain)
     return remain
 
 

@@ -1,0 +1,178 @@
+.table-toolbar {display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px; color:var(--muted); font-size:12px}
+.resource-grid {display:flex;flex-wrap:wrap;--resource-card-min:150px}.resource-grid .resource-card {flex:1 1 var(--resource-card-min)}
+.resource-card {min-width:0}.resource-value {white-space:nowrap}
+.resource-settings {margin-top:8px;padding-top:18px;border-top:1px solid var(--border)}
+.resource-settings-heading {display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:14px}.resource-settings-heading>div {display:flex;flex-direction:column;gap:4px}.resource-settings-heading strong {font-size:15px;letter-spacing:-.2px}.resource-settings-heading span {color:var(--muted);font-size:11px;line-height:1.5}
+.resource-card-editor {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.resource-editor-card, .resource-editor-card.resource-picker-card {min-width:0;min-height:58px;display:flex;align-items:center;gap:9px;padding:10px 11px;border:1px solid color-mix(in srgb,var(--border) 82%,transparent);border-radius:16px;background:color-mix(in srgb,var(--surface) 92%,transparent);box-shadow:0 4px 14px #00000008,inset 0 1px 0 #ffffff66;transition:transform .18s,translate .18s,border-color .18s,box-shadow .18s,background .18s;user-select:none}
+.resource-editor-card:not(.resource-editor-add) {cursor:grab;touch-action:none}.resource-editor-card:not(.resource-editor-add):active {cursor:grabbing}.resource-editor-card:hover {border-color:color-mix(in srgb,var(--accent) 34%,var(--border));box-shadow:0 7px 18px #0000000d,inset 0 1px 0 #ffffff80}.resource-editor-card.dragging {z-index:2;transform:scale(1.04);border-color:var(--accent);box-shadow:0 12px 26px #00000026,inset 0 1px 0 #ffffff80}
+.resource-editor-grip {width:16px;display:grid;place-items:center;color:color-mix(in srgb,var(--muted) 72%,transparent);flex:0 0 auto}.resource-editor-icon {width:32px;height:32px;display:grid;place-items:center;flex:0 0 auto;border-radius:10px;background:var(--accent-soft);color:var(--accent)}.resource-editor-icon-image {background:transparent;overflow:visible}.resource-editor-icon-image .resource-icon-image {width:30px;height:30px}.resource-editor-label {min-width:0;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px;font-weight:600}
+.resource-editor-remove {width:28px;height:28px;display:grid;place-items:center;flex:0 0 auto;padding:0;border:0;border-radius:9px;background:transparent;color:var(--muted);cursor:pointer;transition:background .15s,color .15s}.resource-editor-remove:hover {background:color-mix(in srgb,var(--red) 11%,transparent);color:var(--red)}
+.resource-editor-add {justify-content:center;cursor:pointer;border-style:dashed;color:var(--accent);background:color-mix(in srgb,var(--accent-soft) 42%,var(--surface));font:inherit;font-size:13px;font-weight:600}.resource-editor-add:hover,.resource-editor-add.open {border-color:color-mix(in srgb,var(--accent) 62%,var(--border));background:color-mix(in srgb,var(--accent-soft) 72%,var(--surface))}.resource-editor-add-icon {width:30px;height:30px;display:grid;place-items:center;border-radius:10px;background:color-mix(in srgb,var(--accent) 12%,transparent)}
+.resource-picker {margin-top:10px;padding:10px;border:1px solid color-mix(in srgb,var(--border) 76%,transparent);border-radius:16px;background:color-mix(in srgb,var(--surface-muted) 78%,var(--surface));box-shadow:inset 0 1px 0 #ffffff55}.resource-picker-grid {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.resource-picker-card {min-width:0;min-height:50px;display:flex;align-items:center;gap:9px;padding:8px 10px;border:1px solid transparent;border-radius:13px;background:transparent;color:var(--text);font:inherit;font-size:12px;text-align:left;cursor:pointer;transition:background .15s,border-color .15s}.resource-picker-card>span:nth-child(2) {min-width:0;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.resource-picker-card:hover {background:var(--surface);border-color:var(--border)}.resource-picker-card>svg {color:var(--accent);flex:0 0 auto}.resource-picker-empty {padding:14px;color:var(--muted);font-size:12px;text-align:center}
+.overview-grid {grid-template-columns:minmax(260px,.45fr) minmax(0,1.55fr);align-items:stretch}
+.schedule-panel {min-width:0;overflow:hidden;height:780px;display:flex;flex-direction:column}
+.monitor-panel {min-width:0;overflow:hidden;display:flex;flex-direction:column}
+.overview-main {display:flex;flex-direction:column;flex:1;min-height:0}
+@media(min-width:951px) {
+  /* 高度取父级 100%：自算高度对不上 main 的内边距与页标题外边距，底部会空一截；
+     flex-basis 会盖过 height，所以这一项不能参与伸缩。 */
+  /* 外壳给确定高度，内层 height:100% 才解析得到；只设 min-height 时整条链按内容长。 */
+  .app-shell:has(.overview-page) {height: var(--viewport-height)}
+  /* 网格项的最小尺寸默认取内容高，归零后才受外壳高度约束。 */
+  .app-shell:has(.overview-page) .main-shell {min-height: 0}
+  /* 高度取父级 100%：外壳没给确定高度时它会退化成 auto。flex-basis 会盖过 height，所以不参与伸缩。 */
+  .overview-page {display:flex;flex-direction:column;flex:0 0 auto;height:100%;min-height:0;width:100%}
+  /* 总览日志必须按父容器的剩余高度收缩，溢出交给 .log-content 内部滚动。
+     basis:auto 会把日志内容纳入面板基准高度，日志越多面板就越长；旧版总览也会被这条全局规则误伤。 */
+  .overview-page .monitor-panel,
+  .instance-page-panel > .monitor-panel {flex:1 1 0;height:auto;min-height:0}
+  .overview-main {margin-bottom:-10px}
+}
+.schedule-panel .panel-heading,.schedule-panel .schedule-summary {flex-shrink:0}
+.schedule-summary {flex-wrap:wrap;gap:8px 12px;padding:12px 16px}.schedule-summary > span {display:none}
+.schedule-panel .task-table {flex:1;min-height:0;max-height:none;overflow-y:auto;padding:0 14px}
+.task-row {grid-template-columns:minmax(0,1fr) 48px 74px 10px;gap:6px}.task-order {display:none}.task-row-name {min-width:0;overflow:hidden}.task-row-name strong {display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.task-state.running {color:#159b88;background:#159b881a;font-weight:700}.task-state.waiting {color:var(--muted)}
+.monitor-tabs {display:flex;flex-direction:row;align-items:center;border-bottom:1px solid var(--border);padding:0 18px;gap:6px;flex-shrink:0;height:49px;box-sizing:border-box}
+.monitor-tabs button {display:inline-flex;align-items:center;gap:8px;padding:0 16px;height:100%;background:none;border:0;color:var(--muted);border-bottom:2px solid transparent;cursor:pointer;box-sizing:border-box}
+.monitor-tabs button[aria-selected=true] {color:var(--text);border-bottom-color:#159b88}
+.monitor-tabs > a.text-button {margin-left:auto;font-size:11px}
+.monitor-tabs > a.text-button + span {margin-left:0}
+.monitor-tabs > span {margin-left:auto;font-size:11px;color:var(--muted)}
+.monitor-view[hidden] {display:none !important}
+.monitor-view:not([hidden]) {flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden}
+.monitor-panel .log-panel {display:flex;flex-direction:column;flex:1;min-height:0;height:100%}
+.monitor-panel .log-filters {flex-shrink:0;flex-wrap:wrap;gap:8px;border-bottom:1px solid var(--border)}.monitor-panel .log-filters input {min-width:0}
+.monitor-panel .log-content {flex:1;min-height:0;height:auto;font-size:11px;overflow:auto}
+.monitor-panel .log-line {overflow-wrap:anywhere}
+.monitor-panel .preview-log {flex:0 0 auto;margin:16px 16px 0;padding:8px 13px;border:1px solid var(--border);border-radius:7px;background:var(--surface-muted);overflow:hidden;font-family:var(--theme-font-mono, "JetBrains Mono", "JetBrains Mono NL", "Cascadia Code", "Consolas", "Courier New", monospace);font-size:11px;line-height:1.6;color:var(--text)}
+.monitor-panel .preview-log-line {display:flex;gap:8px;align-items:baseline;white-space:nowrap;overflow:hidden}
+.monitor-panel .preview-log-ts {color:#06b6d4;flex-shrink:0}
+.monitor-panel .preview-log-msg {flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.monitor-panel .preview-stage {flex:1 1 auto;min-height:0;display:flex;flex-direction:column}
+.monitor-panel .preview-screen {flex:0 0 auto;aspect-ratio:16/9;width:calc(100% - 32px);max-height:calc(100% - 32px);height:auto;margin:auto auto 16px;position:relative;border-radius:7px;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.monitor-panel .preview-screen img {width:100%;height:100%;object-fit:contain;position:absolute;inset:0}
+@supports (container-type: size) {
+  /* 日志条压缩了上方空间，用容器高度反推 16:9 的宽度，画面才不会被压成两侧留黑边的信箱形。 */
+  .monitor-panel .preview-stage {container-type:size}
+  .monitor-panel .preview-screen {width:min(calc(100% - 32px),calc((100cqh - 32px)*16/9));max-height:none}
+}
+.statistics-controls {display:flex;flex-wrap:wrap;align-items:end;gap:14px;padding:18px 22px}.statistics-controls label {display:flex;flex-direction:column;gap:7px;font-size:11px;color:var(--muted)}.statistics-controls select,.statistics-controls input {max-width:200px;min-height:34px}.period-controls {padding:0 0 18px;align-items:center}.period-controls strong {margin-right:auto}.period-controls > span {font-size:12px;color:var(--muted)}
+/* 以下工具栏规则只服务紧凑主题：分类、时间范围与操作合并为一行并置顶，滚动时仍可切换与刷新。
+   非旧版版式由 body 滚动，需让开吸顶的顶栏；旧版版式的 .instance-page-main 自身滚动，贴顶即可。 */
+:root[data-theme='extreme'] .statistics-toolbar-row {position:sticky;top:var(--topbar-height);z-index:30;display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:8px 0;margin-bottom:12px;background:var(--bg)}
+/* 分段控件放不下时换成单按钮下拉（指针移入即展开，见 Select 的 openOnFocus）。
+   is-compact 由 Statistics 测量可用宽度得出，不用固定断点：右侧控件宽度随分类变化。 */
+:root[data-theme='extreme'] .statistics-toolbar-row .statistics-category-select {display:none}
+:root[data-theme='extreme'] .statistics-toolbar-row.is-compact .statistics-category-control {display:none}
+:root[data-theme='extreme'] .statistics-toolbar-row.is-compact .statistics-category-select {display:inline-flex}
+:root[data-theme='extreme'] .instance-page-main > .statistics-toolbar-row {top:0}
+:root[data-theme='extreme'] .statistics-toolbar-row .statistics-category-control {margin-bottom:0;flex:0 0 auto;width:max-content}
+:root[data-theme='extreme'] .statistics-toolbar-right {display:flex;align-items:center;gap:12px;margin-left:auto;flex-wrap:wrap}
+:root[data-theme='extreme'] .statistics-actions {display:flex;align-items:center;gap:8px}
+:root[data-theme='extreme'] .statistics-inline-control {display:flex;align-items:center;gap:7px;font-size:11px;color:var(--muted);white-space:nowrap}
+:root[data-theme='extreme'] .statistics-inline-control select,:root[data-theme='extreme'] .statistics-inline-control input {max-width:200px;min-height:var(--form-height)}
+/* 控件名收进提示：工具栏只留当前值，鼠标移入或键盘聚焦时把名称浮在控件下方。
+   文字仍渲染在 DOM 里（.statistics-inline-label），只是紧凑主题不占位，其它主题照旧。 */
+:root[data-theme='extreme'] .statistics-inline-label {display:none}
+:root[data-theme='extreme'] .statistics-inline-control {position:relative}
+:root[data-theme='extreme'] .statistics-inline-control[data-tip]:not([data-tip='']):hover::after,
+:root[data-theme='extreme'] .statistics-inline-control[data-tip]:not([data-tip='']):focus-within::after {
+  content:attr(data-tip);position:absolute;left:50%;top:calc(100% + 6px);transform:translateX(-50%);
+  padding:3px 8px;background:var(--text);color:var(--surface);font-size:11px;line-height:1.6;
+  white-space:nowrap;pointer-events:none;z-index:40;
+}
+/* 图表设置行挪到图表下方后由它收尾：紧凑主题把内边距压到与面板一致的尺度。 */
+:root[data-theme='extreme'] .statistics-controls {padding:10px 12px;gap:12px;border-top:1px solid var(--border)}
+:root[data-theme='extreme'] .statistics-controls label {gap:4px}
+:root[data-theme='extreme'] .statistics-controls select,:root[data-theme='extreme'] .statistics-controls input {min-height:var(--form-height)}
+/* 数值区（单指标一行 / 多指标卡片）：这两块原本按简约尺度写死，多选指标后一片卡片
+   又高又散。紧凑主题收紧内边距、列宽与字号，并保持直角。 */
+:root[data-theme='extreme'] .stat-metrics {padding:8px 12px;gap:12px}
+:root[data-theme='extreme'] .stat-metrics span {margin-bottom:4px}
+:root[data-theme='extreme'] .stat-metrics strong {font-size:18px}
+:root[data-theme='extreme'] .stat-multi-metrics {grid-template-columns:repeat(auto-fit,minmax(178px,1fr));gap:8px;padding:8px 12px}
+:root[data-theme='extreme'] .stat-metric-card {padding:8px 10px;gap:6px;border-radius:0}
+:root[data-theme='extreme'] .stat-metric-header {font-size:12px;gap:6px}
+:root[data-theme='extreme'] .stat-metric-body {gap:4px 8px;font-size:11px}
+:root[data-theme='extreme'] .stat-metric-body span {font-size:10px;margin-bottom:2px}
+:root[data-theme='extreme'] .stat-metric-body strong {font-size:14px}
+.sr-title {position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.date-input-wrap {position:relative;display:inline-flex;align-items:center;width:100%;max-width:200px}.date-input-wrap input {width:100%}.date-empty {color:transparent}.date-empty::-webkit-datetime-edit {color:transparent}.date-empty::-webkit-calendar-picker-indicator {opacity:1}.date-input-placeholder {position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none;font-size:11px;user-select:none;font-variant-numeric:tabular-nums;letter-spacing:0.5px}
+/* 统计区与配置页一致采用自然贯穿流式布局，内容随页面自然向下延伸并在全局滚动。 */
+.statistics-sections {display:flex;flex-direction:column;gap:20px}
+.statistics-sections > * {flex:0 0 auto}
+.statistics-sections > .statistics-chart:not(.chart-expanded) {height:auto;min-height:0}
+.statistics-note {padding:13px 17px;background:var(--surface);border-left:3px solid #159b88;border-radius:5px;font-size:12px;line-height:1.8;color:var(--muted);margin:0}
+.stat-metrics {display:grid;grid-template-columns:repeat(auto-fit,minmax(125px,1fr));gap:16px;padding:20px 22px}.stat-metrics span {display:block;color:var(--muted);font-size:11px;margin-bottom:10px}.stat-metrics strong {display:block;font-size:23px;font-weight:600;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}.stat-metrics small {font-size:11px;font-weight:400;margin-left:6px;color:var(--muted)}.summary-metrics-panel {padding:22px 26px}.summary-metrics-panel .summary-metrics {padding:0;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:16px 20px}.summary-metrics {padding:0;grid-template-columns:repeat(auto-fill,minmax(165px,1fr))}.summary-metric-card, .summary-metrics section {padding:12px 14px;background:transparent;border:1px solid transparent;border-radius:12px;display:flex;flex-direction:column;justify-content:space-between;min-height:72px;transition:background .15s ease,border-color .15s ease,transform .15s ease}
+.summary-metric-card:hover, .summary-metrics section:hover {background:var(--surface-muted);border-color:var(--border)}
+.summary-metric-head {display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
+.summary-metrics .summary-metric-label {display:block;margin-bottom:0;color:var(--muted);font-size:13px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.summary-metric-icon {display:inline-flex;align-items:center;justify-content:center;color:var(--accent);opacity:.75;flex-shrink:0;transition:transform .18s ease,opacity .18s ease}
+.summary-metric-card:hover .summary-metric-icon {opacity:1;transform:scale(1.08)}
+.summary-metric-card strong {display:block;font-size:24px;font-weight:650;font-variant-numeric:tabular-nums;line-height:1.15;letter-spacing:-0.5px}
+.summary-metric-card small {font-size:12px;font-weight:400;margin-left:6px;color:var(--muted);letter-spacing:normal}
+.statistics-metrics-container {display:flex;flex-direction:column;gap:8px;padding:14px 22px 0}
+.statistics-metrics-label {font-size:11px;color:var(--muted);font-weight:500}
+.statistics-metrics-chips {display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.stat-chip {display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:20px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:12px;cursor:pointer;user-select:none;transition:all .15s ease}
+.stat-chip:hover:not(:disabled) {border-color:var(--accent);background:var(--surface-muted)}
+.stat-chip.active {border-color:var(--accent);background:var(--surface-muted);font-weight:600;box-shadow:0 0 0 1px var(--accent-soft)}
+.stat-chip.empty {opacity:.45;cursor:not-allowed}
+.stat-chip small {font-size:10px;color:var(--muted);margin-left:2px}
+.stat-chip-dot {width:9px;height:9px;border-radius:50%;background:var(--border);flex-shrink:0;transition:all .15s ease}
+.stat-chip-badge {font-size:10px;padding:1px 5px;border-radius:4px;font-weight:600;line-height:1.2;margin-left:4px;transition:all .15s ease}
+.stat-chip-badge.primary {background:var(--accent);color:#fff}
+.stat-chip-badge.secondary {background:var(--surface-muted);color:var(--muted);border:1px solid var(--border)}
+.stat-chip-badge.secondary:hover {border-color:var(--accent);color:var(--text)}
+.stat-multi-metrics {display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;padding:16px 22px}
+.stat-metric-card {background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.stat-metric-header {display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600}
+.stat-metric-body {display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:12px}
+.stat-metric-body span {display:block;color:var(--muted);font-size:11px;margin-bottom:4px}
+.stat-metric-body strong {display:block;font-size:16px;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.stat-metric-body strong.positive {color:#10b981}
+.stat-metric-body strong.negative {color:#ef4444}
+.stat-metric-body strong.neutral {color:var(--text)}
+/* 统计图表面板：自然垂直流式布局，不设内部纵向滚动；图表保持适宜高度，下方内容自然排列。 */
+.statistics-chart {display: flex; flex-direction: column}
+.statistics-chart:not(.chart-expanded) > .chart-canvas {height: 380px; min-height: 320px; width: 100%; flex: 0 0 auto}
+.chart-expanded {position:fixed;inset:20px;z-index:100;overflow:auto;background:var(--surface);box-shadow:0 0 0 50px #0008}.chart-expanded .chart-canvas {flex: none; height:55vh}
+/* 放大视图铺满窗口后，右上角是 Electron 的窗口控制按钮，会压住「收起图表」；
+   同时面板自身可滚动，滚动后标题行会滚出视口。右侧让开按钮宽度并让它吸顶。
+   这里必须带 !important：紧凑主题用 padding 简写加 !important 压过面板内边距。 */
+.panel.chart-expanded .panel-heading {position:sticky;top:0;z-index:2;padding-right:160px !important;background:var(--surface)}
+.statistics-table {min-width:0}.statistics-table h3 {margin:0;font-size:14px}.table-toolbar {padding:10px 22px;margin:0;flex-wrap:wrap}.table-toolbar input {max-width:240px}.table-scroll {overflow-x:auto;overflow-y:visible;max-height:none}.statistics-table table {border-collapse:collapse;width:100%;font-size:12px;white-space:nowrap}.statistics-table td,.statistics-table th {padding:13px 20px;text-align:left;border-bottom:1px solid var(--border);font-variant-numeric:tabular-nums}.statistics-table th {position:sticky;top:0;background:var(--surface-muted);z-index:1}.statistics-table th button {border:0;background:none;color:var(--text);cursor:pointer;font:inherit}.statistics-table tbody tr:hover {background:var(--surface-muted)}
+/* 卡片适应：列数由脚本按容器宽度写入，末排因此不会各自撑满整行。 */
+.resource-grid.resource-fit {display:grid}
+/* 卡片适应把网格切成多列，合并卡片仍占满整行。 */
+.resource-grid.resource-fit .resource-merged {grid-column:1/-1}
+/* 紧凑视图：只收紧间距与内边距；旧版主题有更具体的规则，仍按主题的紧凑度走。 */
+.resource-grid.resource-dense {gap:4px;margin-bottom:6px}
+.resource-grid.resource-dense .resource-card {padding:4px 11px 3px}
+/* 字体适应：窄卡片按容器宽度重排字号层级——数值统一收小并各卡一致（覆盖上游窄视口下的固定字号）；
+   标题、图标与记录时间上调，总量后缀随数值放大；权重高于各主题的同名规则，避免紧凑主题按自己的尺寸覆盖。 */
+:root .resource-grid.resource-fit-text .resource-card,
+:root .resource-grid.resource-fit-text .resource-merged-item {container-type:inline-size}
+:root .resource-grid.resource-fit-text .resource-heading {font-size:clamp(14px,6.6cqw,17px)}
+:root .resource-grid.resource-fit-text .resource-heading > div {width:clamp(28px,15cqw,32px);height:clamp(28px,15cqw,32px)}
+:root .resource-grid.resource-fit-text .resource-icon-image {width:clamp(28px,15cqw,32px);height:clamp(28px,15cqw,32px)}
+:root .resource-grid.resource-fit-text .resource-value {font-size:20px !important}
+:root .resource-grid.resource-fit-text .resource-value-content small {font-size:.8em}
+:root .resource-grid.resource-fit-text .resource-foot {font-size:clamp(12px,5.6cqw,14px)}
+/* 通用卡片：内部条目沿用资源卡自身的排版，仅由外层容器统一描边。 */
+.resource-grid .resource-merged {flex:1 1 100%;display:flex;flex-wrap:wrap;gap:8px;box-shadow:var(--shadow)}
+.resource-merged .resource-merged-item {flex:1 1 var(--resource-card-min);min-width:0;border:0;background:transparent;box-shadow:none}
+/* 仪表盘设置弹窗内的开关行：弹窗比设置页窄，用紧凑排法。 */
+.dashboard-options {display:flex;flex-direction:column}
+.dashboard-option {display:flex;align-items:flex-start;justify-content:space-between;gap:14px;padding:11px 0;border-bottom:1px solid color-mix(in srgb,var(--border) 70%,transparent)}
+.dashboard-option:last-child {border-bottom:0}
+.dashboard-option-label {min-width:0;display:flex;flex-direction:column;gap:3px}
+.dashboard-option-label strong {font-size:13px;font-weight:600}
+.dashboard-option-label span {color:var(--muted);font-size:11px;line-height:1.6}
+.dashboard-option .toggle {flex:0 0 auto;margin-top:2px}
+
+@media(max-width:950px) {.resource-grid:not(.resource-fit) {grid-template-columns:repeat(auto-fit,minmax(140px,1fr)) !important}.resource-card-editor,.resource-picker-grid {grid-template-columns:1fr}.resource-settings-heading {gap:10px}.task-row {grid-template-columns:minmax(0,1fr) 48px 74px 10px !important}.stat-metrics {grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.statistics-controls {padding:15px;gap:10px}.statistics-controls label {max-width:100%}.statistics-controls input {max-width:100%}.statistics-sections {flex:none;grid-template-rows:auto auto}.schedule-panel, .monitor-panel {height:500px}.chart-expanded {inset:5px}.statistics-note {font-size:11px}}
+
+/* 未展示资源的卡片外观复用编辑卡，点击即添加。 */
+.resource-editor-card.resource-picker-card {cursor: pointer; font-size: inherit; color: inherit}

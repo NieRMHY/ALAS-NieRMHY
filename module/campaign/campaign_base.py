@@ -15,6 +15,7 @@ from module.base.decorator import Config, cached_property
 from module.campaign.campaign_ui import CampaignUI
 from module.combat.auto_search_combat import AutoSearchCombat
 from module.exception import CampaignEnd, MapEnemyMoved, ScriptError
+from module.handler.assets import AUTO_SEARCH_MAP_OPTION_OFF, AUTO_SEARCH_MAP_OPTION_ON
 from module.logger import logger
 from module.map.map import Map
 from module.map.map_base import CampaignMap
@@ -37,6 +38,10 @@ class CampaignBase(CampaignUI, Map, AutoSearchCombat):
     """
     FUNCTION_NAME_BASE = 'battle_'
     MAP: CampaignMap
+    # 三战撤退类地图（如 D3-3）置为 True：自律寻敌打满 _map_battle 后
+    # 关闭自律寻敌并撤退（#275）。普通地图保持 False，避免 boss 战败后
+    # 被误撤退。
+    AUTO_SEARCH_WITHDRAW = False
 
     def battle_default(self):
         """默认战斗策略：清除所有敌人。
@@ -239,6 +244,11 @@ class CampaignBase(CampaignUI, Map, AutoSearchCombat):
                 if not self.map_is_auto_search:
                     self.execute_a_battle()
                 else:
+                    # 三战撤退类地图：打满目标战数后关闭自律寻敌并撤退（#275）
+                    if self.AUTO_SEARCH_WITHDRAW and self.battle_count >= self._map_battle:
+                        logger.info(f'[战役-基础] 已完成 {self.battle_count} 战，撤退')
+                        self.auto_search_withdraw()
+                        return True
                     self.auto_search_execute_a_battle()
             except CampaignEnd:
                 logger.hr('战役结束')
@@ -305,3 +315,39 @@ class CampaignBase(CampaignUI, Map, AutoSearchCombat):
         self.auto_search_combat(fleet_index=self.fleet_show_index,
                                 battle=(self.battle_count, self._map_battle))
         self.battle_count += 1
+
+    def auto_search_withdraw(self, skip_first_screenshot=True):
+        """自律寻敌运行中撤退：先退出自律寻敌状态回到普通地图，再执行撤退。
+
+        自律寻敌运行时地图右下角的撤退按钮（WITHDRAW）被自律寻敌开关替换，
+        直接调用 withdraw() 会一直等不到按钮而卡死（#275）。
+
+        Pages:
+            in: is_in_map，自律寻敌运行中或自动搜索菜单
+            out: handle_in_stage（撤退完成，raise CampaignEnd('Withdraw')）
+        """
+        logger.hr('地图撤退（自律寻敌）')
+        while 1:
+            if skip_first_screenshot:
+                skip_first_screenshot = False
+            else:
+                self.device.screenshot()
+
+            # 自动搜索菜单已弹出（战斗间歇），直接退出，等效撤退
+            if self.handle_auto_search_exit():
+                continue
+            if self.handle_in_stage():
+                raise CampaignEnd('Withdraw')
+
+            # 自律寻敌运行中，点击开关关闭
+            if self.appear(AUTO_SEARCH_MAP_OPTION_ON, offset=(5, 5)) \
+                    and self.appear_then_click(AUTO_SEARCH_MAP_OPTION_ON, offset=(5, 5), interval=2):
+                continue
+            # 关闭时可能弹出确认框
+            if self.handle_popup_confirm('AUTO_SEARCH_WITHDRAW'):
+                continue
+
+            # 开关已回到 OFF，普通地图状态，交给标准撤退流程
+            if self.appear(AUTO_SEARCH_MAP_OPTION_OFF, offset=(5, 5)):
+                break
+        self.withdraw()

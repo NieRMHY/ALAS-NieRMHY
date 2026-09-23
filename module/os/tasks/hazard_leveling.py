@@ -70,7 +70,7 @@ class OpsiHazard1Leveling(CoinTaskMixin, OSMap):
         self.config.OpsiHazard1_PreviousApInsufficient = _previous_ap_insufficient
 
     def _cl1_run_battle(self):
-        """执行侵蚀 1 战后的战略搜索与扫荡逻辑"""
+        """执行侵蚀 1 战后的战略搜索与事件检索逻辑"""
         search_completed = self.run_strategic_search()
 
         if not search_completed and search_completed is not None:
@@ -93,12 +93,11 @@ class OpsiHazard1Leveling(CoinTaskMixin, OSMap):
             self._solved_fleet_mechanism = False
             self.map_rescan()
 
-            # 强制移动逻辑（按等级 0/1/2 分发）
-            # 0=关闭；1=效率模式（只换队看雷达、不挪动舰队，最快，找不到就放弃）；
-            # 2=保守模式（先扫雷达不动，扫不到再逐个挪舰队+整图重扫，更稳但会挪、慢一些）。
-            # 保守模式在 _execute_fixed_patrol_scan 内部完成（L1→L2→L3），返回后不再
-            # 二次重扫，否则清完明石后会再次重复进明石商店（购买之外的多余进店）。
-            if self._forced_move_level() >= 1:
+            # 强制移动（开关）：开启后先零移动遍历 1~4 队雷达找问号；仍没找到
+            # 且行动力大于阈值时，再逐个挪动舰队重扫（见 _execute_fixed_patrol_scan）。
+            # 挪舰队那段的整图重扫在 _execute_fixed_patrol_scan 内部完成，返回后
+            # 不再二次重扫，否则清完明石后会再次重复进明石商店（购买之外的多余进店）。
+            if self._forced_move_enabled():
                 if not self._solved_map_event:
                     self._execute_fixed_patrol_scan(ExecuteFixedPatrolScan=True)
 
@@ -157,8 +156,11 @@ class OpsiHazard1Leveling(CoinTaskMixin, OSMap):
             raise
 
         # 侵蚀 1 练级时，行动力优先用于此任务，而非耄耋相接。
+        # 防溢出：当前行动力 100-119 时直接开工不开启行动力箱；
+        # 低于 100 时开箱后达到或超过 200 满值的箱子不开启。
         self.action_point_set(
-            cost=120, keep_current_ap=True, check_rest_ap=True
+            cost=120, keep_current_ap=True, check_rest_ap=True,
+            avoid_ap_overflow=True,
         )
 
         yellow_coins = self.get_yellow_coins()
@@ -743,7 +745,8 @@ class OpsiHazard1Leveling(CoinTaskMixin, OSMap):
                 record_ap_snapshot(
                     config=self.config,
                     ap_current=self._action_point_current,
-                    ap_total=self._action_point_total,
+                    # 统计口径使用始终含体力箱的总行动力，避免防溢出上下文关闭开箱后丢箱
+                    ap_total=getattr(self, '_action_point_total_with_box', self._action_point_total),
                     source='hazard1',
                     distance=sea_miles,
                 )

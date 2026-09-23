@@ -5,6 +5,11 @@ alwaysApply: true
 
 # gui.py 入口文件深度分析
 
+> **2026-09-13 更新**：父监督器仍负责依赖同步、双栈监听和进程回收；
+> 应用工厂已改为 `module.api.app:create_app`，静态页面由 `frontend/` 构建。
+> 启动前 `deploy.frontend.ensure_frontend()` 检查并构建前端。
+> 本文旧 PyWebIO 页面及 `module/webui` 引用不再适用于当前实现，协议见 [frontend/API.md](../frontend/API.md)。
+
 ## 1. 文件基础信息
 
 | 项目 | 内容 |

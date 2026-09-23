@@ -81,9 +81,10 @@ class GridPredictor:
     @cached_property
     def image_homo(self):
         image_edge = rgb2gray(self.image_trans)
-        cv2.Canny(image_edge, 100, 150, dst=image_edge)
+        # OpenCV 5 移除了 dst= 输出参数，改用返回值写法（4/5 通用）
+        image_edge = cv2.Canny(image_edge, 100, 150)
         kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
-        cv2.morphologyEx(image_edge, cv2.MORPH_CLOSE, kernel, dst=image_edge)
+        image_edge = cv2.morphologyEx(image_edge, cv2.MORPH_CLOSE, kernel)
         return image_edge
 
     def predict(self):

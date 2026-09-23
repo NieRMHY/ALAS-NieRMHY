@@ -1,0 +1,36 @@
+import { useState, useSyncExternalStore } from 'react'
+import { Settings2 } from 'lucide-react'
+import type { Resource } from '../api/types'
+import { useApp } from '../app/context'
+import { readDashboardPrefs, setDashboardPref, subscribeDashboardPrefs, type DashboardPrefs } from '../app/dashboardPrefs'
+import type { UiKey } from '../i18n'
+import { FieldInput } from './FieldInput'
+import { ResourceSettings } from './ResourceCards'
+import { Modal } from './ui'
+
+const DASHBOARD_OPTIONS: {key: keyof DashboardPrefs; label: UiKey; help: UiKey}[] = [
+  {key: 'fitCards', label: 'dashboard.fitCards', help: 'dashboard.fitCardsHelp'},
+  {key: 'fitText', label: 'dashboard.fitText', help: 'dashboard.fitTextHelp'},
+  {key: 'dense', label: 'dashboard.dense', help: 'dashboard.denseHelp'},
+  {key: 'merged', label: 'dashboard.merged', help: 'dashboard.mergedHelp'},
+  {key: 'totalFirst', label: 'dashboard.totalFirst', help: 'dashboard.totalFirstHelp'},
+]
+/** showLabel：紧凑主题下按钮改挂日志面板工具栏，空间充足故补上文字。 */
+export function InstanceActions({resources, selectedResources, onResourcesChange, showLabel = false}: {resources: Resource[]; selectedResources: string[]; onResourcesChange: (keys: string[]) => void; showLabel?: boolean}) {
+  const [open, setOpen] = useState(false)
+  const {ui} = useApp()
+  // 无障碍名称用「仪表盘设置」，可见文字在紧凑下换成「资源卡片设置」。
+  return <><button className="button" aria-label={ui('instance.settings')} title={ui('instance.settings')} onClick={() => setOpen(true)}><Settings2 size={16}/>{showLabel && <span>{ui('resource.settings')}</span>}</button>{open && <InstanceSettings resources={resources} selectedResources={selectedResources} onResourcesChange={onResourcesChange} onClose={() => setOpen(false)}/>}</>
+}
+
+function InstanceSettings({resources, selectedResources, onResourcesChange, onClose}: {resources: Resource[]; selectedResources: string[]; onResourcesChange: (keys: string[]) => void; onClose: () => void}) {
+  const {ui} = useApp()
+  const dashboardPrefs = useSyncExternalStore(subscribeDashboardPrefs, readDashboardPrefs, readDashboardPrefs)
+  return <Modal title={ui('instance.dashboard')} onClose={onClose}><div className="form-stack">
+    <div className="dashboard-options">{DASHBOARD_OPTIONS.map(option => <div className="dashboard-option" key={option.key}>
+      <div className="dashboard-option-label"><strong>{ui(option.label)}</strong><span>{ui(option.help)}</span></div>
+      <FieldInput id={`dashboard-${option.key}`} label={ui(option.label)} value={dashboardPrefs[option.key]} onChange={value => setDashboardPref(option.key, value === true)}/>
+    </div>)}</div>
+    <ResourceSettings resources={resources} selected={selectedResources} onChange={onResourcesChange}/>
+  </div></Modal>
+}

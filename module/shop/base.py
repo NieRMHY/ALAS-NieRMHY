@@ -176,6 +176,7 @@ class ShopBase(UI):
     """
     _currency = 0
     shop_template_folder = ''
+    SHOP_STRATEGY_TASKS = frozenset({'ShopFrequent', 'ShopOnce', 'PrivateQuarters', 'OpsiVoucher'})
 
     @cached_property
     def shop_filter(self):
@@ -227,6 +228,140 @@ class ShopBase(UI):
             int: 当前货币数量。
         """
         return self._currency
+
+    def shop_strategy_enabled(self):
+        """仅在声明了该配置组的实际任务中启用高级策略。
+
+        配置绑定会保留前一任务的 Python 属性，因此不能只读取
+        ``ShopAdvanced_Mode``，否则 OpsiArchive 等复用商店的任务会误继承策略。
+        """
+        task = getattr(getattr(self.config, 'task', None), 'command', None)
+        return task in self.SHOP_STRATEGY_TASKS and getattr(self.config, 'ShopAdvanced_Mode', 'legacy') == 'advanced'
+
+    def shop_strategy_domain(self):
+        """返回通用商店策略域，子类可为专用购买流程覆盖。"""
+        return 'general'
+
+    def shop_strategy_currency(self, items):
+        """按当前商品货币名称投影已 OCR 的通用余额。"""
+        try:
+            amount = max(0, int(self._currency))
+        except (TypeError, ValueError):
+            amount = 0
+
+        currencies = {}
+        for item in items:
+            cost = getattr(item, 'cost', None)
+            if isinstance(cost, str) and cost:
+                currencies[cost] = amount
+        return currencies
+
+    @staticmethod
+    def shop_strategy_stock(item):
+        """普通确认式商店在策略层按单件处理，避免虚构未知库存。"""
+        return 1
+
+    @staticmethod
+    def shop_strategy_max_quantity(item):
+        """子类只有在可可靠识别数量选择框时才会放宽该上限。"""
+        return 1
+
+    def _shop_strategy_state(self):
+        """返回当前商店会话的已消费金额和已购候选记录。"""
+        state = getattr(self, '_shop_strategy_session', None)
+        if state is None:
+            state = {'spent': {}, 'purchased': {}, 'inventory_purchased': {}, 'cap_usage': {}}
+            self._shop_strategy_session = state
+        return state
+
+    def shop_strategy_reset_inventory(self):
+        """在商店刷新后清空已购货架记录，保留预算与分类配额累计值。"""
+        if not self.shop_strategy_enabled():
+            return
+        self._shop_strategy_state()['inventory_purchased'].clear()
+
+    def shop_strategy_plan_quantity(self, item, limit):
+        """将策略数量上限与游戏实际可购数量取较小值。"""
+        planned = getattr(item, '_shop_strategy_quantity', None)
+        if isinstance(planned, int) and not isinstance(planned, bool) and planned > 0:
+            return min(limit, planned)
+        return limit
+
+    def shop_strategy_select_item(self, items, eligible=None):
+        """在高级模式下生成并验证当前页面的下一项购买动作。
+
+        脚本只接收商品 DTO。余额、库存和业务前置条件由 Python 在投影前后
+        分别检查；任意策略错误都会返回 ``None``，从而安全跳过本轮购买。
+        """
+        if not self.shop_strategy_enabled():
+            return None
+
+        from module.shop_strategy.adapter import run_shop_strategy
+
+        if eligible is None:
+            eligible = self.shop_check_item
+        state = self._shop_strategy_state()
+        result = run_shop_strategy(
+            self.config.ShopAdvanced_Script,
+            items,
+            domain=self.shop_strategy_domain(),
+            currency=self.shop_strategy_currency(items),
+            eligible=eligible,
+            stock=self.shop_strategy_stock,
+            max_quantity=self.shop_strategy_max_quantity,
+            spent=state['spent'],
+            purchased=state['purchased'],
+            inventory_purchased=state['inventory_purchased'],
+            cap_usage=state['cap_usage'],
+        )
+        if not result.success:
+            diagnostic = result.diagnostic
+            location = ''
+            if diagnostic is not None and diagnostic.line is not None:
+                location = f'（第 {diagnostic.line} 行，第 {diagnostic.column or 1} 列）'
+            message = diagnostic.message if diagnostic is not None else '未知策略错误'
+            logger.warning(f'[高级商店策略] {message}{location}；本轮不购买')
+            return None
+        if not result.actions:
+            logger.info('[高级商店策略] 当前候选未生成可执行购买计划')
+            return None
+
+        action = result.actions[0]
+        item = action.item
+        # 仅附着基本类型执行信息，原商品从未传递给策略运行时。
+        item._shop_strategy_candidate_id = action.candidate.id
+        item._shop_strategy_quantity = action.quantity
+        item._shop_strategy_cost = action.cost
+        item._shop_strategy_total_price = action.total_price
+        item._shop_strategy_cap_usage_keys = action.cap_usage_keys
+        logger.attr('高级策略计划', ' > '.join(
+            f'{entry.candidate.name} x{entry.quantity}' for entry in result.actions
+        ))
+        return item
+
+    def shop_strategy_record_purchase(self, item):
+        """在一次购买流程正常返回后记录实际执行量，供下一次重算计划。"""
+        if not self.shop_strategy_enabled():
+            return
+        candidate_id = getattr(item, '_shop_strategy_candidate_id', None)
+        cost = getattr(item, '_shop_strategy_cost', None)
+        quantity = getattr(item, '_shop_strategy_executed_quantity',
+                           getattr(item, '_shop_strategy_quantity', None))
+        price = getattr(item, 'price', None)
+        if not isinstance(candidate_id, str) or not isinstance(cost, str):
+            return
+        if not isinstance(quantity, int) or isinstance(quantity, bool) or quantity <= 0:
+            return
+        if not isinstance(price, int) or isinstance(price, bool) or price < 0:
+            return
+
+        state = self._shop_strategy_state()
+        state['spent'][cost] = state['spent'].get(cost, 0) + price * quantity
+        state['purchased'][candidate_id] = state['purchased'].get(candidate_id, 0) + quantity
+        state['inventory_purchased'][candidate_id] = state['inventory_purchased'].get(candidate_id, 0) + quantity
+        for key in getattr(item, '_shop_strategy_cap_usage_keys', ()):
+            state['cap_usage'][key] = state['cap_usage'].get(key, 0) + quantity
+        logger.attr('高级策略已购', f'{getattr(item, "name", candidate_id)} x{quantity}')
 
     def shop_has_loaded(self, items):
         """
@@ -295,6 +430,22 @@ class ShopBase(UI):
             logger.info('未找到商店物品')
             return []
 
+    def shop_purchase_result_handle(self):
+        """关闭已获得物品界面，并报告本次购买已得到明确确认。"""
+        if self.appear(GET_SHIP, interval=1):
+            logger.info(f'商店遮挡: {GET_SHIP} -> {SHOP_CLICK_SAFE_AREA}')
+            self.device.click(SHOP_CLICK_SAFE_AREA)
+            return True
+        if self.appear(GET_ITEMS_1, interval=1):
+            logger.info(f'商店遮挡: {GET_ITEMS_1} -> {SHOP_CLICK_SAFE_AREA}')
+            self.device.click(SHOP_CLICK_SAFE_AREA)
+            return True
+        if self.appear(GET_ITEMS_3, interval=1):
+            logger.info(f'商店遮挡: {GET_ITEMS_3} -> {SHOP_CLICK_SAFE_AREA}')
+            self.device.click(SHOP_CLICK_SAFE_AREA)
+            return True
+        return False
+
     def shop_obstruct_handle(self):
         """
         移除商店视图中的遮挡物（如果存在）。
@@ -305,23 +456,11 @@ class ShopBase(UI):
         Returns:
             bool: 是否存在并处理了遮挡物。
         """
-        # 处理商店遮挡物
-        if self.appear(GET_SHIP, interval=1):
-            logger.info(f'商店遮挡: {GET_SHIP} -> {SHOP_CLICK_SAFE_AREA}')
-            self.device.click(SHOP_CLICK_SAFE_AREA)
+        if self.shop_purchase_result_handle():
             return True
         # 锁定新获得的舰船
         if self.handle_popup_confirm('SHOP_OBSTRUCT'):
             return True
-        if self.appear(GET_ITEMS_1, interval=1):
-            logger.info(f'商店遮挡: {GET_ITEMS_1} -> {SHOP_CLICK_SAFE_AREA}')
-            self.device.click(SHOP_CLICK_SAFE_AREA)
-            return True
-        if self.appear(GET_ITEMS_3, interval=1):
-            logger.info(f'商店遮挡: {GET_ITEMS_3} -> {SHOP_CLICK_SAFE_AREA}')
-            self.device.click(SHOP_CLICK_SAFE_AREA)
-            return True
-
         return False
 
     def shop_get_items(self, skip_first_screenshot=True):
@@ -449,6 +588,12 @@ class ShopBase(UI):
         Returns:
             Item: 待购买的物品，无可用物品时返回 None。
         """
+        if self.shop_strategy_enabled():
+            return self.shop_strategy_select_item(
+                items,
+                eligible=lambda item: self.shop_check_item(item) or self.shop_check_custom_item(item),
+            )
+
         # 首先扫描自定义物品，因其没有模板或过滤器支持
         for item in items:
             if self.shop_check_custom_item(item):

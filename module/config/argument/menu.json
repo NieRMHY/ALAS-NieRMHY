@@ -64,6 +64,7 @@
       "Guild",
       "Reward",
       "Awaken",
+      "Secretary",
       "OperationHandover"
     ]
   },
@@ -134,7 +135,6 @@
     "menu": "collapse",
     "page": "setting",
     "tasks": [
-      "FleetScan",
       "FleetInfo"
     ]
   },
@@ -142,6 +142,7 @@
     "menu": "collapse",
     "page": "tool",
     "tasks": [
+      "FleetScan",
       "Daemon",
       "OpsiDaemon",
       "EventStory",
@@ -151,7 +152,8 @@
       "OcrBenchmark",
       "AzurLaneUncensored",
       "GameManager",
-      "EmulatorManager"
+      "EmulatorManager",
+      "MeowfficerScore"
     ]
   }
 }

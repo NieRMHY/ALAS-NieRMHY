@@ -27,6 +27,7 @@ def get_available_func():
         'AzurLaneUncensored',
         'Benchmark',
         'OcrBenchmark',
+        'MeowfficerScore',
         'FleetScan',
         'GameManager',
         'EmulatorManager',
@@ -89,7 +90,11 @@ def get_config_mod(config_name):
         config_name (str):
     """
     if config_name.startswith('template-'):
-        return config_name.replace('template-', '')
+        mod_name = config_name.replace('template-', '')
+        # 主模块模板在前端展示为 template-ap（对应 config/template.json），
+        # 其实际模块名仍为 alas，这里映射回去。
+        # 与 module/config/utils.py 中的 DEFAULT_CONFIG_NAME 保持一致。
+        return 'alas' if mod_name == 'ap' else mod_name
     try:
         return MOD_CONFIG_DICT[config_name]
     except KeyError:

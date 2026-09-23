@@ -1,0 +1,774 @@
+{
+  "version": 1,
+  "methods": {
+    "system.ping": {
+      "mutates": false,
+      "params": {
+        "additionalProperties": false,
+        "properties": {},
+        "title": "Params",
+        "type": "object"
+      }
+    },
+    "schema.get": {
+      "mutates": false,
+      "params": {
+        "additionalProperties": false,
+        "properties": {
+          "language": {
+            "default": "zh-CN",
+            "enum": [
+              "zh-CN",
+              "zh-MIAO",
+              "en-US",
+              "ja-JP",
+              "zh-TW"
+            ],
+            "title": "Language",
+            "type": "string"
+          }
+        },
+        "title": "SchemaParams",
+        "type": "object"
+      }
+    },
+    "instances.list": {
+      "mutates": false,
+      "params": {
+        "additionalProperties": false,
+        "properties": {},
+        "title": "Params",
+        "type": "object"
+      }
+    },
+    "instances.create": {
+      "mutates": true,
+      "params": {
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Source"
+          },
+          "import_file": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Import File"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "CreateParams",
+        "type": "object"
+      }
+    },
+    "instances.importable": {
+      "mutates": false,
+      "params": {
+        "additionalProperties": false,
+        "properties": {},
+        "title": "Params",
+        "type": "object"
+      }
+    },
+    "instances.importConfig": {
+      "mutates": true,
+      "params": {
+        "additionalProperties": false,
+        "description": "上传一份配置文件到导入目录，供创建实例时选用。",
+        "properties": {
+          "name": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "content": {
+            "maxLength": 2000000,
+            "minLength": 2,
+            "title": "Content",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "content"
+        ],
+        "title": "ImportParams",
+        "type": "object"
+      }
+    },
+    "instances.delete": {
+      "mutates": true,
+      "params": {
+        "additionalProperties": false,
+        "properties": {
+          "instance": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Instance",
+            "type": "string"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "string"
+          }
+        },
+        "required": [
+          "instance",
+          "revision"
+        ],
+        "title": "RevisionParams",
+        "type": "object"
+      }
+    },
+    "config.get": {
+      "mutates": false,
+      "params": {
+        "additionalProperties": false,
+        "properties": {
+          "instance": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Instance",
+            "type": "string"
+          }
+        },
+        "required": [
+          "instance"
+        ],
+        "title": "InstanceParams",
+        "type": "object"
+      }
+    },
+    "config.patch": {
+      "mutates": true,
+      "params": {
+        "$defs": {
+          "ConfigChange": {
+            "additionalProperties": false,
+            "properties": {
+              "path": {
+                "maxLength": 180,
+                "minLength": 1,
+                "title": "Path",
+                "type": "string"
+              },
+              "value": {
+                "title": "Value"
+              }
+            },
+            "required": [
+              "path",
+              "value"
+            ],
+            "title": "ConfigChange",
+            "type": "object"
+          }
+        },
+        "additionalProperties": false,
+        "properties": {
+          "instance": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Instance",
+            "type": "string"
+          },
+          "revision": {
+            "anyOf": [
+              {
+                "maxLength": 64,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Revision"
+          },
+          "changes": {
+            "items": {
+              "$ref": "#/$defs/ConfigChange"
+            },
+            "maxItems": 200,
+            "minItems": 1,
+            "title": "Changes",
+            "type": "array"
+          }
+        },
+        "required": [
+          "instance",
+          "changes"
+        ],
+        "title": "PatchParams",
+        "type": "object"
+      }
+    },
+    "shop_strategy.validate": {
+      "mutates": false,
+      "params": {
+        "additionalProperties": false,
+        "description": "高级商店策略的只读语法校验请求。",
+        "properties": {
+          "instance": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Instance",
+            "type": "string"
+          },
+          "task": {
+            "enum": [
+              "EventShop",
+              "ShopFrequent",
+              "ShopOnce",
+              "PrivateQuarters",
+              "OpsiShop",
+              "OpsiVoucher"
+            ],
+            "title": "Task",
+            "type": "string"
+          },
+          "script": {
+            "maxLength": 20000,
+            "title": "Script",
+            "type": "string"
+          }
+        },
+        "required": [
+          "instance",
+          "task",
+          "script"
+        ],
+        "title": "ShopStrategyValidateParams",
+        "type": "object"
+      }
+    },
+    "overview.get": {
+      "mutates": false,
+      "params": {
+        "additionalProperties": false,
+        "properties": {
+          "instance": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Instance",
+            "type": "string"
+          }
+        },
+        "required": [
+          "instance"
+        ],
+        "title": "InstanceParams",
+        "type": "object"
+      }
+    },
+    "scheduler.start": {
+      "mutates": true,
+      "params": {
+        "additionalProperties": false,
+        "properties": {
+          "instance": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Instance",
+            "type": "string"
+          }
+        },
+        "required": [
+          "instance"
+        ],
+        "title": "InstanceParams",
+        "type": "object"
+      }
+    },
+    "scheduler.stop": {
+      "mutates": true,
+      "params": {
+        "additionalProperties": false,
+        "properties": {
+          "instance": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Instance",
+            "type": "string"
+          }
+        },
+        "required": [
+          "instance"
+        ],
+        "title": "InstanceParams",
+        "type": "object"
+      }
+    },
+    "tasks.run": {
+      "mutates": true,
+      "params": {
+        "additionalProperties": false,
+        "properties": {
+          "instance": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Instance",
+            "type": "string"
+          },
+          "task": {
+            "maxLength": 80,
+            "minLength": 1,
+            "title": "Task",
+            "type": "string"
+          }
+        },
+        "required": [
+          "instance",
+          "task"
+        ],
+        "title": "TaskParams",
+        "type": "object"
+      }
+    },
+    "logs.get": {
+      "mutates": false,
+      "params": {
+        "additionalProperties": false,
+        "properties": {
+          "instance": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Instance",
+            "type": "string"
+          },
+          "after": {
+            "default": 0,
+            "minimum": 0,
+            "title": "After",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "instance"
+        ],
+        "title": "LogsParams",
+        "type": "object"
+      }
+    },
+    "preview.capture": {
+      "mutates": false,
+      "params": {
+        "additionalProperties": false,
+        "properties": {
+          "instance": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Instance",
+            "type": "string"
+          }
+        },
+        "required": [
+          "instance"
+        ],
+        "title": "InstanceParams",
+        "type": "object"
+      }
+    },
+    "statistics.refreshLoot": {
+      "mutates": true,
+      "params": {
+        "additionalProperties": false,
+        "properties": {
+          "instance": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Instance",
+            "type": "string"
+          }
+        },
+        "required": [
+          "instance"
+        ],
+        "title": "InstanceParams",
+        "type": "object"
+      }
+    },
+    "statistics.report": {
+      "mutates": false,
+      "params": {
+        "additionalProperties": false,
+        "properties": {
+          "instance": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Instance",
+            "type": "string"
+          },
+          "category": {
+            "default": "resources",
+            "enum": [
+              "resources",
+              "action",
+              "opsi",
+              "commission",
+              "ships",
+              "loot"
+            ],
+            "title": "Category",
+            "type": "string"
+          },
+          "month": {
+            "anyOf": [
+              {
+                "pattern": "^\\d{4}-(0[1-9]|1[0-2])$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Month"
+          },
+          "days": {
+            "default": 7,
+            "maximum": 365,
+            "minimum": 1,
+            "title": "Days",
+            "type": "integer"
+          },
+          "period": {
+            "default": "month",
+            "enum": [
+              "day",
+              "week",
+              "month"
+            ],
+            "title": "Period",
+            "type": "string"
+          }
+        },
+        "required": [
+          "instance"
+        ],
+        "title": "StatisticsReportParams",
+        "type": "object"
+      }
+    },
+    "meowfficer.scoreReport": {
+      "mutates": false,
+      "params": {
+        "additionalProperties": false,
+        "description": "指挥喵评分报告的只读查询。",
+        "properties": {
+          "instance": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Instance",
+            "type": "string"
+          },
+          "limit": {
+            "default": 100,
+            "maximum": 500,
+            "minimum": 1,
+            "title": "Limit",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "instance"
+        ],
+        "title": "MeowfficerScoreReportParams",
+        "type": "object"
+      }
+    },
+    "meowfficer.clearReport": {
+      "mutates": true,
+      "params": {
+        "additionalProperties": false,
+        "description": "清空指挥喵评分报告（删掉 json / md / html 三份产物）。",
+        "properties": {
+          "instance": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Instance",
+            "type": "string"
+          }
+        },
+        "required": [
+          "instance"
+        ],
+        "title": "MeowfficerClearReportParams",
+        "type": "object"
+      }
+    },
+    "statistics.resources": {
+      "mutates": false,
+      "params": {
+        "additionalProperties": false,
+        "properties": {
+          "instance": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Instance",
+            "type": "string"
+          },
+          "days": {
+            "default": 7,
+            "maximum": 90,
+            "minimum": 1,
+            "title": "Days",
+            "type": "integer"
+          },
+          "resource": {
+            "default": "Oil",
+            "enum": [
+              "Oil",
+              "Coin",
+              "Gem",
+              "Cube",
+              "Pt",
+              "ActionPoint",
+              "Core",
+              "Medal",
+              "Merit",
+              "GuildCoin",
+              "YellowCoin",
+              "PurpleCoin"
+            ],
+            "title": "Resource",
+            "type": "string"
+          }
+        },
+        "required": [
+          "instance"
+        ],
+        "title": "StatisticsParams",
+        "type": "object"
+      }
+    },
+    "settings.get": {
+      "mutates": false,
+      "params": {
+        "additionalProperties": false,
+        "properties": {},
+        "title": "Params",
+        "type": "object"
+      }
+    },
+    "settings.patch": {
+      "mutates": true,
+      "params": {
+        "additionalProperties": false,
+        "properties": {
+          "values": {
+            "additionalProperties": true,
+            "title": "Values",
+            "type": "object"
+          }
+        },
+        "required": [
+          "values"
+        ],
+        "title": "DeployParams",
+        "type": "object"
+      }
+    },
+    "startup.get": {
+      "mutates": false,
+      "params": {
+        "additionalProperties": false,
+        "properties": {
+          "instance": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Instance",
+            "type": "string"
+          }
+        },
+        "required": [
+          "instance"
+        ],
+        "title": "InstanceParams",
+        "type": "object"
+      }
+    },
+    "startup.set": {
+      "mutates": true,
+      "params": {
+        "additionalProperties": false,
+        "properties": {
+          "instance": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Instance",
+            "type": "string"
+          },
+          "enabled": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Enabled"
+          },
+          "remember": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Remember"
+          }
+        },
+        "required": [
+          "instance"
+        ],
+        "title": "StartupParams",
+        "type": "object"
+      }
+    },
+    "updater.status": {
+      "mutates": false,
+      "params": {
+        "additionalProperties": false,
+        "properties": {},
+        "title": "Params",
+        "type": "object"
+      }
+    },
+    "updater.commits": {
+      "mutates": false,
+      "params": {
+        "additionalProperties": false,
+        "properties": {
+          "offset": {
+            "default": 0,
+            "minimum": 0,
+            "title": "Offset",
+            "type": "integer"
+          },
+          "limit": {
+            "default": 50,
+            "maximum": 100,
+            "minimum": 1,
+            "title": "Limit",
+            "type": "integer"
+          }
+        },
+        "title": "CommitsParams",
+        "type": "object"
+      }
+    },
+    "updater.fetch": {
+      "mutates": true,
+      "params": {
+        "additionalProperties": false,
+        "properties": {},
+        "title": "Params",
+        "type": "object"
+      }
+    },
+    "updater.apply": {
+      "mutates": true,
+      "params": {
+        "additionalProperties": false,
+        "properties": {},
+        "title": "Params",
+        "type": "object"
+      }
+    },
+    "updater.cancel": {
+      "mutates": true,
+      "params": {
+        "additionalProperties": false,
+        "properties": {},
+        "title": "Params",
+        "type": "object"
+      }
+    },
+    "auth.login": {
+      "mutates": false,
+      "params": {
+        "additionalProperties": false,
+        "properties": {
+          "password": {
+            "default": "",
+            "maxLength": 256,
+            "title": "Password",
+            "type": "string"
+          }
+        },
+        "title": "AuthParams",
+        "type": "object"
+      }
+    },
+    "events.subscribe": {
+      "mutates": false,
+      "params": {
+        "additionalProperties": false,
+        "properties": {
+          "instance": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Instance"
+          },
+          "topics": {
+            "items": {
+              "enum": [
+                "instances",
+                "overview",
+                "logs",
+                "preview"
+              ],
+              "type": "string"
+            },
+            "maxItems": 4,
+            "title": "Topics",
+            "type": "array"
+          }
+        },
+        "required": [
+          "topics"
+        ],
+        "title": "SubscribeParams",
+        "type": "object"
+      }
+    }
+  }
+}

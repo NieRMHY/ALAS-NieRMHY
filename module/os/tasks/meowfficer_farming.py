@@ -174,7 +174,13 @@ class OpsiMeowfficerFarming(MeowfficerTargetZoneMixin, CoinTaskMixin, OSMap):
 
     def _meow_fixed_patrol_scan(self):
         """
-        战后效率模式强制移动（套用侵蚀一，可开关，默认关闭）。
+        短猫相接的战后强制移动：短猫舰队没找到事件就换其他舰队扫雷达。
+
+        这是短猫唯一的强制移动形式——等价于侵蚀一的 L0/L1（换队扫雷达清问号），
+        **没有**侵蚀一的 L2。侵蚀一 L2 会把舰队逐个挪到固定的 C1/D1/E1/F1，
+        那是照侵蚀一那张图定的，短猫跑的海域地图各不相同，挪了没意义、还可能
+        把舰队挪到不该去的地方。共享的 _execute_fixed_patrol_scan 也会直接
+        跳过短猫，短猫不走那条路。
 
         开启后遍历 1~4 号舰队的雷达清剩余问号：只切换舰队看雷达、
         不挪动舰队；已解决目标事件（明石/记录塔/信息探测装置）时跳过。
@@ -219,11 +225,15 @@ class OpsiMeowfficerFarming(MeowfficerTargetZoneMixin, CoinTaskMixin, OSMap):
                 if search_completed:
                     self._solved_map_event = set()
                     self._solved_fleet_mechanism = False
-                    self.clear_question()
+                    # 重扫地图找画面上可见的事件；逐队扫雷达清问号是强制移动的
+                    # 事（_meow_fixed_patrol_scan）。分步检索链扫的是同一批雷达，
+                    # 两边先后跑一遍就是同一轮白扫第二遍（舰队一步都没挪）。
                     self.map_rescan()
+                    self._meow_fixed_patrol_scan()
                 self.handle_after_auto_search()
         finally:
             self.meow_search_metrics_end()
+        self._meow_record_akashi_if_solved()
         self.config.check_task_switch()
 
     def _meow_handle_stay_in_zone(self, zone):
@@ -250,7 +260,9 @@ class OpsiMeowfficerFarming(MeowfficerTargetZoneMixin, CoinTaskMixin, OSMap):
                 if search_completed:
                     self._solved_map_event = set()
                     self._solved_fleet_mechanism = False
-                    self.clear_question()
+                    # 重扫地图找画面上可见的事件；逐队扫雷达清问号是强制移动的
+                    # 事（_meow_fixed_patrol_scan），这里不要再自己扫一遍——
+                    # 两边扫的是同一批雷达，中间没有舰队移动，第二遍纯属白扫。
                     self.map_rescan()
                     self._meow_fixed_patrol_scan()
 
@@ -263,6 +275,7 @@ class OpsiMeowfficerFarming(MeowfficerTargetZoneMixin, CoinTaskMixin, OSMap):
         finally:
             self.meow_search_metrics_end()
 
+        self._meow_record_akashi_if_solved()
         self.config.check_task_switch()
 
     def _meow_handle_target_zone_search(self, zone):
@@ -282,7 +295,25 @@ class OpsiMeowfficerFarming(MeowfficerTargetZoneMixin, CoinTaskMixin, OSMap):
         finally:
             self.meow_search_metrics_end()
 
+        self._meow_record_akashi_if_solved()
         self.config.check_task_switch()
+
+    def _meow_record_akashi_if_solved(self):
+        """本轮耄耋相接搜索结束后，记录明石事件（按侵蚀等级）。
+
+        明石事件由共享的地图事件机制写入 _solved_map_event，
+        这里消费掉该标记防止跨轮次重复计数。
+        """
+        solved_events = getattr(self, '_solved_map_event', set())
+        if 'is_akashi' not in solved_events:
+            return
+        solved_events.discard('is_akashi')
+        try:
+            from module.statistics.opsi_runtime import record_meow_akashi_encounter
+
+            record_meow_akashi_encounter(self)
+        except Exception:
+            logger.exception('[大世界-耄耋相接] 记录明石事件失败')
 
     def _meow_handle_normal_search(self):
         hazard_level = self.config.OpsiMeowfficerFarming_HazardLevel
@@ -307,17 +338,19 @@ class OpsiMeowfficerFarming(MeowfficerTargetZoneMixin, CoinTaskMixin, OSMap):
         self.meow_search_metrics_start()
         try:
             self.run_auto_search()
-            # 自律寻敌完成后，查看短猫舰队雷达上的剩余问号并处理
-            # （仅当前舰队雷达，不切换 1~4 队；参考侵蚀一的战后问号处理）
             with self._meow_debug_clip():
                 self._solved_map_event = set()
                 self._solved_fleet_mechanism = False
-                self.clear_question()
+                # 重扫地图找画面上可见的事件；逐队扫雷达清问号是强制移动的事
+                # （_meow_fixed_patrol_scan，随机海域同样要跑）。这里原来只扫
+                # 当前舰队的雷达，和强制移动的主队那一趟重叠，一并交给它。
                 self.map_rescan()
+                self._meow_fixed_patrol_scan()
                 self.handle_after_auto_search()
         finally:
             self.meow_search_metrics_end()
 
+        self._meow_record_akashi_if_solved()
         self.config.check_task_switch()
 
     def os_meowfficer_farming(self):

@@ -112,18 +112,19 @@ class MeritShop_250814(ShopClerk, ShopUI, ShopStatus):
         按照过滤器配置购买功勋商店商品，支持刷新。
         """
         # 过滤器为空且未启用"购买未获得舰船"时直接退出
-        if not self.shop_filter and not self.config.MeritShop_BuyUnobtainedShip:
+        if not self.shop_filter and not self.config.MeritShop_BuyUnobtainedShip and not self.shop_strategy_enabled():
             return
 
         # 调用时应已在功勋商店界面
         logger.hr('[商店-功勋] 功勋商店', level=1)
 
-        # 执行购买操作，启用刷新时最多尝试 2 次
-        refresh = self.config.MeritShop_Refresh
+        # 刷新会绕开高级脚本的 reserve / max_spend，故高级模式不执行。
+        refresh = self.config.MeritShop_Refresh and not self.shop_strategy_enabled()
         for _ in range(2):
             success = self.shop_buy()
             if not success:
                 break
             if refresh and self.shop_refresh():
+                self.shop_strategy_reset_inventory()
                 continue
             break

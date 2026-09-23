@@ -25,6 +25,7 @@ from module.event_hospital.assets import HOSIPITAL_CHECK
 from module.freebies.assets import MAIL_ENTER
 from module.raid.assets import *
 from module.retire.assets import DOCK_CHECK
+from module.secretary.assets import *
 from module.ui.assets import *
 from module.ui_white.assets import *
 import module.config.server as server
@@ -307,6 +308,14 @@ page_main_white.link(button=MAIN_GOTO_DORMMENU_WHITE, destination=page_dormmenu)
 page_dorm = Page(DORM_CHECK)
 page_dormmenu.link(button=DORMMENU_GOTO_DORM, destination=page_dorm)
 page_dorm.link(button=DORM_GOTO_MAIN, destination=page_main)
+
+# 秘书舰
+page_profile = Page(PROFILE_CHECK)
+page_secretary_group = Page(SECRETARY_GROUP_CHECK)
+page_main_white.link(button=MAIN_GOTO_PROFILE, destination=page_profile)
+page_profile.link(button=SECRETARY_BUTTON, destination=page_secretary_group)
+page_secretary_group.link(button=BACK_ARROW, destination=page_profile)
+page_profile.link(button=BACK_ARROW, destination=page_main)
 
 # 指挥喵
 page_meowfficer = Page(MEOWFFICER_CHECK)

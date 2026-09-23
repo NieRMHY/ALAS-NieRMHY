@@ -140,6 +140,34 @@ class PQShop(PQShopClerk, PQStatus):
         self.gems = self.status_get_gems()
         logger.info(f'[私人休息室-商店] 金币: {self._currency}, 钻石: {self.gems}')
 
+    def shop_strategy_domain(self):
+        """私人休息室使用独立策略域。"""
+        return 'private_quarters'
+
+    def shop_strategy_currency(self, items):
+        """向高级策略提供金币和钻石的实际余额。"""
+        return {
+            'Coins': max(0, int(self._currency)),
+            'Gems': max(0, int(self.gems)),
+        }
+
+    @staticmethod
+    def shop_strategy_stock(item):
+        """每周礼物的界面购买以单件为安全上限。"""
+        return 1
+
+    @staticmethod
+    def shop_strategy_max_quantity(item):
+        return 1
+
+    def shop_strategy_check_item(self, item):
+        """高级模式只保留真实余额约束，礼物偏好由脚本决定。"""
+        if item.cost == 'Coins':
+            return item.price <= self._currency
+        if item.cost == 'Gems':
+            return item.price <= self.gems
+        return False
+
     def shop_check_item(self, item):
         """
         检查商品是否可购买（余额是否充足）。
@@ -176,6 +204,9 @@ class PQShop(PQShopClerk, PQStatus):
         Returns:
             Item: 待购买的商品，无可买项时返回 None
         """
+        if self.shop_strategy_enabled():
+            return self.shop_strategy_select_item(items, eligible=self.shop_strategy_check_item)
+
         # 加载过滤条件，应用过滤，返回第一个结果
         FILTER.load(self.shop_filter)
         filtered = FILTER.apply(items, self.shop_check_item)

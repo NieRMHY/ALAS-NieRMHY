@@ -22,6 +22,7 @@ from module.logger import logger
 from module.ocr.ocr import DigitCounter
 from module.retire.assets import *
 from module.retire.dock import Dock
+from module.ui.assets import BACK_ARROW
 
 VALID_SHIP_TYPES = ['dd', 'ss', 'cl', 'ca', 'bb', 'cv', 'repair', 'others']
 if server.server != 'jp':
@@ -186,6 +187,10 @@ class Enhancement(Dock):
     def _enhance_deselect_cv(self):
         """
         De-select common rarity CV from enhance material slots
+
+        Pages:
+            in: page_ship_enhance
+            out: page_ship_enhance
         """
         cv = self._enhance_get_deselect_cv()
         if cv is None:
@@ -201,6 +206,8 @@ class Enhancement(Dock):
 
         self.interval_clear(ENHANCE_RECOMMEND, interval=2)
         EMPTY_ENHANCE_SLOT_PLUS.ensure_template()
+        # 返回次数上限，避免反复点返回把界面越退越远
+        back_count = 0
         for _ in self.loop():
             image = self.image_crop(search, copy=False)
             result = cv2.matchTemplate(EMPTY_ENHANCE_SLOT_PLUS.image, image, cv2.TM_CCOEFF_NORMED)
@@ -212,6 +219,22 @@ class Enhancement(Dock):
             if self.appear(ENHANCE_RECOMMEND, offset=(5, 5), interval=2):
                 self.device.click(cv)
                 continue
+
+            # 点击材料槽位偶尔会打开船坞选择界面：此时推荐按钮与材料槽一并消失，
+            # 反选无从继续，循环也不会自行结束（最终卡死到 GameStuckError）。
+            # DOCK_CHECK 匹配标题栏，出现即说明已离开强化界面，
+            # 点左上角返回箭头退回强化界面后重新反选。
+            # 计数按「检测到离开强化界面」累加而非按点击成功累加，
+            # 否则返回箭头不可见时（如被弹窗遮挡）计数不增长、依然会转到卡死
+            if self.appear(DOCK_CHECK, offset=(20, 20), interval=3):
+                back_count += 1
+                if back_count > 3:
+                    logger.warning('[退役-强化] 多次返回仍未回到强化界面，放弃反选')
+                    break
+                if self.appear_then_click(BACK_ARROW, offset=(30, 30), interval=3):
+                    logger.warning(
+                        f'[退役-强化] 误入船坞界面，点返回退回强化界面 ({back_count}/3)')
+                    continue
 
     def _enhance_choose(self, ship_count, skip_first_screenshot=True):
         """

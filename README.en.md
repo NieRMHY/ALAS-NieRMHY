@@ -17,9 +17,7 @@
 </p>
 
 <p align="center">
-  <a href="https://deepwiki.com/wess09/AzurPilot">
-    <img src="https://deepwiki.com/badge.svg" alt="DeepWiki" height="22">
-  </a>
+  <a href="https://deepwiki.com/wess09/AzurPilot"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki"></a>
 </p>
 
 <p align="center">
@@ -263,7 +261,13 @@ Since this project continues development based on AzurLaneAutoScript and its com
 - [GitHub Repository](https://github.com/wess09/AzurPilot) — Source code, Issues, Pull Requests
 - [QQ Community Group](https://join.nanoda.work/#/) — Azur Lane automation community
 - [AzurLaneAutoScript Upstream](https://github.com/LmeSzinc/AzurLaneAutoScript) — The original ALAS
+
+### Derived Projects & Community Links
+
 - [AzurPilot Raspberry Pi Edition](https://github.com/nnieie/AzurPilot) — AzurPilot CN deployment for Raspberry Pi / Termux physical devices
+- [AzurPilot-private-Ru](https://github.com/AliceLiddell01/AzurPilot-private-Ru) — Personal Russian version of AzurPilot with controlled updates, transparent startup, and reduced network dependencies
+- [PerseusAutoScript](https://github.com/lajiovo/PerseusAutoScript) — Comprehensive ops toolkit for AzurPilot featuring background silent execution, closed-loop self-healing, and multi-channel notifications
+- [AzurRem](https://github.com/syyxl3111/AzurRem) — Native Android client for AzurPilot (rewritten in Kotlin + Jetpack Compose, with PC gateway widget)
 
 ## Development & Contribution
 

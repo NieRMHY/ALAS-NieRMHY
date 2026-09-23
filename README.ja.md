@@ -17,9 +17,7 @@
 </p>
 
 <p align="center">
-  <a href="https://deepwiki.com/wess09/AzurPilot">
-    <img src="https://deepwiki.com/badge.svg" alt="DeepWiki" height="22">
-  </a>
+  <a href="https://deepwiki.com/wess09/AzurPilot"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki"></a>
 </p>
 
 <p align="center">
@@ -263,7 +261,13 @@ URL しか指定できずリクエストヘッダーを設定できないクラ�
 - [GitHub リポジトリ](https://github.com/wess09/AzurPilot) — ソースコード、Issue、Pull Request
 - [QQ 交流群](https://join.nanoda.work/#/) — アズールレーン自動化コミュニティ
 - [AzurLaneAutoScript 上流プロジェクト](https://github.com/LmeSzinc/AzurLaneAutoScript) — ALAS オリジナル版
+
+### 派生プロジェクト・リンク
+
 - [AzurPilot ラズベリーパイ版](https://github.com/nnieie/AzurPilot) — ラズベリーパイ / Termux 実機向けの AzurPilot CN デプロイ版
+- [AzurPilot-private-Ru](https://github.com/AliceLiddell01/AzurPilot-private-Ru) — 制御可能なアップデート、透明な起動、外部ネットワーク依存を削減した個人向けロシア語版 AzurPilot
+- [PerseusAutoScript](https://github.com/lajiovo/PerseusAutoScript) — AzurPilot 向け総合運用ツール（バックグラウンド静默実行、クローズドループ自己修復、各種通知）
+- [AzurRem](https://github.com/syyxl3111/AzurRem) — AzurPilot 向けネイティブ Android クライアント（Kotlin + Jetpack Compose で再実装、PC ゲートウェイ同梱）
 
 ## 開発と貢献
 

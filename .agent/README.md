@@ -5,6 +5,11 @@ alwaysApply: true
 
 # 快速上手指南
 
+> **前端架构更新（2026-09-13）**：界面现使用 `frontend/`（React + TypeScript）。
+> WebSocket API 位于 `module/api/`，后台运行服务位于 `module/runtime/`；
+> `module/webui/`、`webapp/` 与 PyWebIO 依赖已移除。下文涉及旧界面的描述是历史记录，
+> 当前启动、接口与扩展流程请阅读 [frontend/README.md](../frontend/README.md) 和 [frontend/API.md](../frontend/API.md)。
+
 **生成日期**: 2026-08-14
 **项目版本**: dev 分支（HEAD f992af6c0）
 

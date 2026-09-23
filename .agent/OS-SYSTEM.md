@@ -892,7 +892,7 @@ graph LR
 | `OpsiHazard1Leveling.OperationCoinsPreserve` | int | 黄币保留阈值 |
 | `OpsiHazard1Leveling.MinimumActionPointReserve` | int | 最低行动力保留 |
 | `OpsiHazard1Leveling.TargetZone` | int | 目标海域 ID |
-| `OpsiHazard1Leveling.ExecuteFixedPatrolScan` | int(0/1/2/3) | 强制移动等级：0 关闭（默认）/ 1 仅换队重扫（零移动遍历舰队雷达，未命中即止）/ 2 分级恢复 / 3 旧版全体强制移动。旧布尔 true 迁移为 3、false 迁移为 0 |
+| `OpsiHazard1Leveling.ExecuteFixedPatrolScan` | bool | 侵蚀1 战后强制移动开关（默认 false）。开启后零移动遍历 1~4 队雷达找问号，再决定 L2 要不要挪舰队：①有舰队看到问号却点不到（`_question_unreachable`）必须挪，**与行动力无关**；②全队都没线索时看**界面上的当前行动力**（不含药剂箱，`_read_current_action_point()`），大于 7 才挪。L2 落点固定 C1/D1/E1/F1，只适合侵蚀1 那张图——**短猫相接不走这条路**：`_execute_fixed_patrol_scan` 和 `_recover_unreachable_akashi` 对短猫直接跳过，短猫的强制移动只有换队扫雷达。旧版等级 1/2/3 一并视为开启 |
 | `OpsiMeowfficerFarming.HazardLevel` | int | 短猫侵蚀等级 |
 | `OpsiMeowfficerFarming.TargetZone` | int | 短猫目标海域 |
 | `OpsiMeowfficerFarming.StayInZone` | bool | 指定海域计划作战 |

@@ -207,28 +207,32 @@ class MapOperation(MysteryHandler, FleetPreparation, Retirement, FastForwardHand
     def handover_conflict_delay(self):
         """把当前任务推迟到作战委托结束之后。
 
-        作战委托任务已经把自己推迟到委托预计完成的时间点（面板上的「需要时间」），
-        出击任务推迟到同一个时间点再晚一分钟即可。委托结束时再撞上弹窗，会按当时
-        新的委托结束时间重新推迟，所以这里的估计偏早也不会有问题。
-
-        读不到委托的结束时间、或者那个时间已经过期时，改为
-        HANDOVER_CONFLICT_RETRY_MINUTES 分钟后再试：这种情况下委托任务自己也是
-        过期的，会在下一次调度里先执行，等它把结束时间更新出来再按上面的规则推迟，
-        比整天不刷要好。
+        作战委托开委托时会把结束时间记在 OperationHandover.CommissionEnd，
+        优先用它——作战委托任务自己的 NextRun 不一定是委托结束时间（委托次数为 0
+        时它只是下一次触发时刻，可能在一周以后）。两个都读不到或者都已经过期时，
+        改为 HANDOVER_CONFLICT_RETRY_MINUTES 分钟后再试，避免把任务排到过去。
 
         Returns:
             datetime.datetime: 实际推迟到的时间点。
         """
+        now = current_time()
+        commission_end = self.config.cross_get(
+            keys=['OperationHandover', 'OperationHandover', 'CommissionEnd'], default=None)
         next_run = self.config.cross_get(
             keys=['OperationHandover', 'Scheduler', 'NextRun'], default=None)
-        now = current_time()
+        candidates = [
+            t for t in (commission_end, next_run)
+            if isinstance(t, datetime) and t > now
+        ]
 
-        if isinstance(next_run, datetime) and next_run > now:
-            target = (next_run + timedelta(minutes=1)).replace(microsecond=0)
-            logger.info(f'[功能冲突] 作战委托预计 {next_run} 结束，推迟到 {target}')
+        if candidates:
+            end = min(candidates)
+            target = (end + timedelta(minutes=1)).replace(microsecond=0)
+            logger.info(f'[功能冲突] 作战委托预计 {end} 结束，推迟到 {target}')
         else:
             target = (now + timedelta(minutes=HANDOVER_CONFLICT_RETRY_MINUTES)).replace(microsecond=0)
-            logger.warning(f'[功能冲突] 读不到作战委托的结束时间（{next_run}），'
+            logger.warning(f'[功能冲突] 读不到作战委托的结束时间'
+                           f'（{commission_end} / {next_run}），'
                            f'{HANDOVER_CONFLICT_RETRY_MINUTES} 分钟后再试')
 
         self.config.task_delay(target=target)

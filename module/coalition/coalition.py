@@ -144,7 +144,7 @@ class Coalition(CoalitionCombat, CampaignEvent):
             logger.info('联动活动无石油图标，跳过石油检查')
             return False
 
-        limit = max(500, self.config.StopCondition_OilLimit)
+        limit = max(self.config.StopCondition_OilLimitHardFloor, self.config.StopCondition_OilLimit)
         if not (self.get_oil() < limit):
             return False
 

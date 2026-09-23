@@ -18,6 +18,7 @@ class IslandShopBase(Island, WarehouseOCR):
     _MAX_FILL_LOOP = 10  # while 循环填岗最大迭代次数
     PRODUCT_SELECT_RETRY_LIMIT = 3  # 餐品选择识别失败后，退出重进的最大次数
     POST_PRODUCE_LIMIT = 7  # 餐馆每个岗位单次最多生产数量
+    FILL_SPECIAL_FOOD = True  # 子类可关闭余岗的特殊餐品回退
 
     def __init__(self, config, device=None, task=None):
         # 分别初始化每个父类
@@ -445,10 +446,17 @@ class IslandShopBase(Island, WarehouseOCR):
             else:
                 self.current_totals[name] = current - max_target
 
+    def get_priority_production(self):
+        """返回基础需求之前安排的产品及数量，由店铺声明季节规则。"""
+        return {}
+
     def run(self):
         self.island_error = False
         self.chef_unavailable_products.clear()
         self.unavailable_characters.clear()
+        # 在制品和保留线每轮重新建立，不能累加同一实例上轮的识别结果。
+        self.post_check_meal.clear()
+        self._reserved_targets.clear()
         self.goto_postmanage()
         self.post_manage_mode(POST_MANAGE_PRODUCTION)
         self.post_close()
@@ -499,6 +507,17 @@ class IslandShopBase(Island, WarehouseOCR):
             _force_skip_run = set()  # 排产多次无法生产的缺口（非原料原因），本轮强制跳过
             _loop_count = 0
 
+            # 季节优先排产也记入本轮在制品；基础需求必须按扣料后的库存重算。
+            priority_products = self.get_priority_production()
+            if priority_products:
+                self.to_post_products = priority_products
+                logger.info(f"[岛屿] 季节优先生产计划: {self._inv_cn(priority_products)}")
+                self._schedule_and_track(_produced_pass)
+                self.current_totals = self._rebuild_current_totals(_produced_pass)
+                self._compute_base_demands()
+                if self.to_post_products:
+                    self.to_post_products = self.process_meal_requirements(self.to_post_products)
+
             self._schedule_and_track(_produced_pass)
 
             while self.get_idle_posts():
@@ -524,7 +543,10 @@ class IslandShopBase(Island, WarehouseOCR):
                     logger.info("[岛屿] [循环] 当前缺口排产失败，切换严格模式扫描")
                     self.to_post_products = {}
                     self.current_totals = self._rebuild_current_totals(_produced_pass)
-                    self._compute_base_demands(check_materials=True)
+                    # 严格模式必须传入已有的 force_skip 集合；否则之前已被标记
+                    # 卡住的产品（如 seafood_rice）会被再次扫描、再次 schedule，
+                    # 造成 UI 层无效点击。
+                    self._compute_base_demands(check_materials=True, force_skip=_force_skip_run)
                     if not self.to_post_products:
                         break
                     self.to_post_products = self.process_meal_requirements(self.to_post_products)
@@ -546,7 +568,7 @@ class IslandShopBase(Island, WarehouseOCR):
             idle_posts_after_basic = self.get_idle_posts()
 
             # 获取特殊餐品和常驻餐品配置
-            special_food = self.special_food
+            special_food = self.special_food if self.FILL_SPECIAL_FOOD else None
             away_cook = getattr(self.config, self.config_away_cook, None)
 
             # 检查特殊餐品是否为有效值（不为None且不为"None"）
@@ -955,6 +977,11 @@ class IslandShopBase(Island, WarehouseOCR):
 
                 if max_producible <= 0:
                     logger.info(f"[岛屿] 生产 {self._item_cn(product)} 的材料暂时不足，保留在计划中等待下一轮")
+                    # 标记为本轮已在排产阶段确认原料不足，后续 _compute_base_demands
+                    # 会通过 chef_unavailable_products 检查直接跳过，避免同一 run()
+                    # 内再次计算并实际 UI 点击（get_max_producible 对基础餐品漏算
+                    # 底层食材时，每轮都会重新加入计划造成重复尝试）
+                    self.chef_unavailable_products.add(product)
                     break  # 跳过当前产品，但保留在 to_post_products 中
 
                 # 分配生产
@@ -967,6 +994,11 @@ class IslandShopBase(Island, WarehouseOCR):
                 # 如果实际生产数量为0，说明原料不足
                 if actual_number == 0:
                     logger.info(f"[岛屿] 生产 {self._item_cn(product)} 时检测到原料不足，保留在计划中等待下一轮")
+                    # 游戏 UI 层实际拒绝了生产（常见于基础餐品 get_max_producible 未建模
+                    # 的底层食材，如海鲜饭的米/海鲜料）。标记为本轮不可用，后续所有
+                    # _compute_base_demands 扫描都会直接跳过，避免同一 run() 内在
+                    # while 循环、严格模式中反复执行无效 UI 点击
+                    self.chef_unavailable_products.add(product)
                     break  # 跳过当前产品，但保留在 to_post_products 中
 
                 # 记录已产出（部分生产不算停滞）

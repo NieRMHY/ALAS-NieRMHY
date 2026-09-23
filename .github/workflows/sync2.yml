@@ -1,11 +1,10 @@
 name: sync2mirror
-# --------Modify by MHY, 禁用自动同步到第三方GitCode镜像，改为手动触发
 on:
-  workflow_dispatch:
-  # push:
-  #   branches:
-  #     - master
-  #     - dev
+  push:
+    branches:
+      - master
+      - dev
+      - dev_frontend
 jobs:
   repo-sync:
     env:

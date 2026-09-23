@@ -1,0 +1,324 @@
+{
+  "repo_notes": [
+    {
+      "content": "语言与呈现规范：整个 Wiki 必须以简体中文（zh-CN）为主要语言，英文为辅助语言。页面标题统一采用“中文标题 / English Title”格式；正文先用中文完整解释，首次出现的重要技术术语保留英文原文（例如 WebSocket、Scheduler、Runtime、OCR）。每页末尾增加简洁的“English Summary”小节，用英文总结该页的核心架构、关键流程、主要文件与扩展点。不要把整篇中文逐段机械翻译成英文，以中文可读性和技术准确性为优先。代码标识符、类名、函数名、配置键、协议方法名保持源码原样。"
+    },
+    {
+      "content": "事实来源与时效性：以当前分支的实际源码为最高优先级。README、frontend/README.md、frontend/API.md、AGENTS.md、CLAUDE.md、.agent/*.md、docs/ 与 README/ 可作为上下文和导航，但若文档与源码冲突，必须以源码为准并指出差异。尤其注意 2026-09 前端已迁移到 frontend/（React + TypeScript + Vite），业务通信位于 module/api/ 的 WebSocket API v1，运行服务主要位于 module/runtime/；不要把历史 PyWebIO/webapp/module/webui 架构描述成当前主架构。module/webui/ 仅在确有现存代码时按其实际职责说明。"
+    },
+    {
+      "content": "项目定位：AzurPilot 是面向《碧蓝航线》的自动化框架，核心由 alas.py 调度任务，通过 module/device/ 控制 Android 模拟器/设备，通过截图、模板匹配和 OCR 感知游戏 UI，并由 module/ui/、module/handler/、module/combat/、module/map/、module/campaign/ 以及各业务模块执行自动化流程。支持 CN/EN/JP/TW 等服务器资源和配置差异。Wiki 应强调模块边界、数据流、控制流、失败恢复和 7×24h 长期运行设计，而不只罗列文件。"
+    },
+    {
+      "content": "Web 与运行架构：gui.py 是 Web 控制台启动/监督入口；frontend/ 是当前 React 控制台；module/api/ 提供严格白名单的 WebSocket v1 API、认证、配置服务、统计与更新服务；module/runtime/ 提供进程管理、任务处理、预览、更新器、启动器、远程访问和认证等与 UI 解耦的运行服务。配置写入涉及 module/config/transaction.py 等跨进程事务机制。描述这些部分时必须明确前端、API、Runtime、核心调度器之间的进程边界和调用方向。"
+    },
+    {
+      "content": "文档质量要求：优先给出具体源码路径、关键类/函数/协议方法和配置文件；复杂流程应使用 Mermaid 图（架构图、时序图、状态机或依赖图）。说明“入口 → 核心对象 → 数据/状态 → 失败处理 → 扩展方式”。不要臆造不存在的 API、类或目录。自动生成文件、资源文件、配置源文件和手写代码要区分清楚。对可能陈旧或兼容保留的路径明确标注“历史/兼容/当前”。"
+    },
+    {
+      "content": "覆盖优先级：必须完整覆盖调度器与任务生命周期、配置与事务、设备连接/截图/输入、模板匹配与 OCR、UI 导航与处理器、战斗/地图/战役、大世界、岛屿与主要日常功能；同时覆盖 React 前端、WebSocket API、Runtime 多进程、安全认证、MCP、统计日志、资源与国际化、部署更新、开发工具、测试 CI 和开发规范。大型业务目录不要逐文件流水账，应先解释共同模式，再列代表性实现和扩展路径。"
+    }
+  ],
+  "pages": [
+    {
+      "title": "项目概览 / Project Overview",
+      "purpose": "介绍 AzurPilot 的项目目标、主要能力、支持平台/服务器、核心技术栈、典型使用场景和仓库导航。解释它如何从配置出发，经调度、设备控制、视觉识别和业务模块完成游戏自动化，并给出新读者的整体心智模型。",
+      "parent": null,
+      "page_notes": [
+        {
+          "content": "以 README.md、pyproject.toml、alas.py、gui.py、frontend/README.md 和当前目录结构为主要依据。加入一张端到端总览图：用户/浏览器 → Web/API/Runtime → Scheduler → Device/Vision → 游戏。明确 AzurPilot 与历史名称 AzurLaneAutoScript/ALAS 的关系，但不要让历史架构掩盖当前实现。"
+        }
+      ]
+    },
+    {
+      "title": "架构全景 / Architecture Overview",
+      "purpose": "从分层、进程边界和依赖方向解释当前系统架构，覆盖入口层、自动化核心层、设备与视觉层、战斗/地图/业务层、Web 控制层、运行时服务和基础设施。",
+      "parent": "项目概览 / Project Overview",
+      "page_notes": [
+        {
+          "content": "重点交叉检查 alas.py、gui.py、module/base/、module/config/、module/device/、module/api/、module/runtime/、frontend/。使用 Mermaid 分层图和至少一张主要控制流图。特别区分“浏览器前端”“WebSocket API 父进程服务”“自动化工作进程/调度器”。"
+        }
+      ]
+    },
+    {
+      "title": "快速开始与运行模式 / Getting Started & Run Modes",
+      "purpose": "说明开发者如何安装依赖、构建前端、启动 WebUI、直接运行调度器、启动 MCP，以及真实后端、前端开发代理和 mock 前端等不同运行模式。",
+      "parent": "项目概览 / Project Overview",
+      "page_notes": [
+        {
+          "content": "以 pyproject.toml、uv.lock、frontend/package.json、frontend/README.md、gui.py、alas.py、mcp_server_sse.py、Dockerfile 为准。给出 Windows/通用命令时优先采用仓库实际使用的 uv 与 npm 工作流。说明默认 WebUI 端口来源及源码构建/静态产物关系，但不要写死无法从代码确认的环境假设。"
+        }
+      ]
+    },
+    {
+      "title": "模块地图与代码阅读指南 / Module Map & Code Reading Guide",
+      "purpose": "提供面向开发者的仓库地图：入口文件、module/ 各层、campaign/、assets/、config/、frontend/、dev_tools/、tests/、deploy/ 等目录的职责，并给出按学习目标组织的代码阅读顺序。",
+      "parent": "项目概览 / Project Overview",
+      "page_notes": [
+        {
+          "content": "可参考 .agent/MODULE-MAP.md，但必须用当前目录重新校验。不要逐个重复所有活动目录；对数量庞大的 event_*、war_archives_*、island_* 使用分类表。明确哪些目录是核心源码、生成物、资源、测试、开发工具或兼容残留。"
+        }
+      ]
+    },
+    {
+      "title": "自动化核心 / Automation Core",
+      "purpose": "作为自动化核心章节入口，概括 Scheduler、Config、Device、Vision/OCR、UI/Handler、Combat、Map、Campaign 与各业务模块之间的组合关系和统一编程模式。",
+      "parent": null,
+      "page_notes": [
+        {
+          "content": "说明 ModuleBase、AzurLaneConfig、Device、UI/InfoHandler、Combat、CampaignBase、AzurLaneAutoScript 等关键对象如何组合，而不是简单画继承树。给出一次典型任务从调度到完成/失败/NextRun 更新的概览。"
+        }
+      ]
+    },
+    {
+      "title": "调度器与任务生命周期 / Scheduler & Task Lifecycle",
+      "purpose": "深入解释 alas.py 的任务调度模型、任务选择与分发、NextRun/启用状态、任务启动与结束、错误处理、恢复、停止语义以及与 Runtime 工作进程的关系。",
+      "parent": "自动化核心 / Automation Core",
+      "page_notes": [
+        {
+          "content": "重点分析 alas.py、module/config/ 中与任务调度相关代码、module/runtime/task_handler.py、scheduler_stop.py、worker_events.py 以及相关 tests/test_scheduler_*.py、tests/test_runtime_task_handler.py。用状态图说明 stopped/running/error/updating 与游戏任务状态之间不要混淆。"
+        }
+      ]
+    },
+    {
+      "title": "配置系统与事务 / Configuration & Transactions",
+      "purpose": "解释配置定义、生成、读取、校验、实例配置、任务参数、配置元数据和跨进程事务写入机制，覆盖 config/、module/config/argument/、config_generated.py、template.json 与 Web API 配置更新。",
+      "parent": "自动化核心 / Automation Core",
+      "page_notes": [
+        {
+          "content": "重点追踪 module/config/config.py、module/config/argument/、module/config/transaction.py、config/template.json、module/api/config_service.py 与 dev_tools/export_api_schema.py。区分配置源、生成文件和用户实例 JSON；解释 revision、字段级 patch、原子写入、并发修改保护和 storage 特例。"
+        }
+      ]
+    },
+    {
+      "title": "设备连接、截图与控制 / Device, Screenshot & Control",
+      "purpose": "解释 module/device/ 的连接抽象、ADB/uiautomator2、截图后端、输入/触控后端、应用控制、模拟器适配、后端选择与故障恢复机制。",
+      "parent": "自动化核心 / Automation Core",
+      "page_notes": [
+        {
+          "content": "覆盖 Device、Connection、Screenshot、Control、Input、AppControl 及实际存在的后端（如 ADB、Scrcpy、Minitouch、MaaTouch、NemuIpc、DroidCast 等）。说明 1280×720 等项目约束应以当前代码/配置确认。加入截图→识别→点击链路和后端故障切换/重试说明。"
+        }
+      ]
+    },
+    {
+      "title": "图像模板与 OCR / Vision Templates & OCR",
+      "purpose": "解释按钮/模板匹配、图像裁剪与颜色判断、OCR 抽象、RapidOCR/ONNX/NCNN 等实际后端、模型与字符集资源，以及这些能力如何被上层模块使用。",
+      "parent": "自动化核心 / Automation Core",
+      "page_notes": [
+        {
+          "content": "重点查看 module/base/button.py、Template 相关实现、module/ocr/、module/template/、assets/ 与 bin/ocr_models 等实际路径。说明坐标区域、匹配阈值、预处理、结果解析和多服务器资源差异。不要把训练流程和运行时推理混为一谈。"
+        }
+      ]
+    },
+    {
+      "title": "UI 导航与通用处理器 / UI Navigation & Handlers",
+      "purpose": "解释游戏页面状态建模、页面导航、appear/click 循环、弹窗/登录/自动搜索等通用处理器，以及业务模块如何复用这些基础流程。",
+      "parent": "自动化核心 / Automation Core",
+      "page_notes": [
+        {
+          "content": "重点分析 module/ui/、module/handler/ 与 ModuleBase 的组合关系。用一个具体但通用的“截图 → 判断页面/弹窗 → 处理 → 重新截图 → 到达目标页”的时序图。强调循环退出条件、超时/Timer 和异常页面恢复。"
+        }
+      ]
+    },
+    {
+      "title": "战斗系统 / Combat System",
+      "purpose": "解释普通战斗的状态机、自动/手动战斗、血量/情绪/潜艇/退役等协作逻辑、Auto Search 处理以及战斗结果与上层战役的接口。",
+      "parent": "自动化核心 / Automation Core",
+      "page_notes": [
+        {
+          "content": "覆盖 module/combat/、module/combat_ui/ 及与 module/handler/、module/device/ 的关键依赖。优先解释状态与协作 mixin/组合关系，列代表性入口，不要逐个资源按钮展开。说明普通战斗与大世界战斗的边界。"
+        }
+      ]
+    },
+    {
+      "title": "地图模型与地图检测 / Map Model & Detection",
+      "purpose": "解释地图网格、摄像机/舰队位置、路径与障碍建模，以及透视/单应性/网格预测等地图检测流程如何把截图转换为可执行的地图状态。",
+      "parent": "自动化核心 / Automation Core",
+      "page_notes": [
+        {
+          "content": "重点分析 module/map/、module/map_detection/ 及其与 OCR、Button、CampaignBase 的关系。给出“截图 → 几何检测 → 网格/对象 → 策略决策 → 移动/战斗”的数据流。对数学细节保持源码级准确，避免无依据推导。"
+        }
+      ]
+    },
+    {
+      "title": "战役、活动与作战档案 / Campaigns, Events & War Archives",
+      "purpose": "解释 CampaignBase 与 campaign/ 数据目录如何配合运行主线、困难、活动、SOS、作战档案等地图，说明地图定义、战斗循环、活动差异和新增活动的扩展方式。",
+      "parent": "自动化核心 / Automation Core",
+      "page_notes": [
+        {
+          "content": "覆盖 module/campaign/、campaign/campaign_main、campaign_hard、campaign_sos、campaign_war_archives、event_* 与 war_archives_* 的共同模式。抽取代表性地图演示结构，不要为每个历史活动单独写流水账。说明代码逻辑与战役数据文件的边界。"
+        }
+      ]
+    },
+    {
+      "title": "大世界系统 / Operation Siren",
+      "purpose": "系统说明 Operation Siren（大世界）的核心导航、区域/行动力、战斗、事件处理、余烬/信标、商店、短猫/侵蚀等任务，以及大世界调度与普通战役的差异。",
+      "parent": "自动化核心 / Automation Core",
+      "page_notes": [
+        {
+          "content": "重点覆盖 module/os/、os_combat/、os_handler/、os_ash/、os_shop/、os_simulator/ 和相关 tests/test_opsi_*.py。用模块依赖图展示共享基础设施和大世界专用逻辑；明确术语中英文，如 Operation Siren、Action Point。"
+        }
+      ]
+    },
+    {
+      "title": "岛屿系统 / Island System",
+      "purpose": "解释 island 核心框架及其 business、farm、fishery、manufacture、rancher、restaurant、daily order/interact、cargo preparation 等子模块的共同结构、任务编排和资源交互。",
+      "parent": "自动化核心 / Automation Core",
+      "page_notes": [
+        {
+          "content": "覆盖 module/island/ 与所有 module/island_* 目录，但按“核心导航/生产/采集/经营/日常交互”分组，而不是逐文件罗列。选择 2–3 个典型子模块说明扩展模式，并指出共享 UI/OCR/配置依赖。"
+        }
+      ]
+    },
+    {
+      "title": "日常玩法与资源功能 / Daily & Resource Features",
+      "purpose": "归纳科研、委托、战术学院、宿舍、指挥喵、大舰队、奖励、演习、建造、每日、困难、突袭、小游戏、秘书舰、船坞、META 奖励等常规业务模块的共同设计与差异。",
+      "parent": "自动化核心 / Automation Core",
+      "page_notes": [
+        {
+          "content": "重点覆盖 module/research/、commission/、tactical/、dorm/、meowfficer/、guild/、reward/、exercise/、gacha/、daily/、hard/、raid/、minigame/、secretary/、shipyard/、meta_reward/ 等。先总结统一的 run()/UI/OCR/配置模式，再以表格给出模块职责和代表性入口。"
+        }
+      ]
+    },
+    {
+      "title": "商店、退役与装备策略 / Shop, Retirement & Equipment",
+      "purpose": "解释商店购买、活动商店、受限 Lua 风格高级商店策略、退役、仓库、装备管理与自动配装等涉及规则/筛选/资源消耗的模块。",
+      "parent": "自动化核心 / Automation Core",
+      "page_notes": [
+        {
+          "content": "重点覆盖 module/shop/、shop_event/、shop_strategy/、retire/、storage/、equipment/、auto_equip/。高级商店策略必须准确说明其静态解析/白名单/校验边界以及 API 的 shop_strategy.validate，不要描述成任意 Lua VM 执行。结合 tests/test_shop_strategy*.py 校验行为。"
+        }
+      ]
+    },
+    {
+      "title": "Web 控制台 / Web Console",
+      "purpose": "作为当前 Web 管理界面的章节入口，解释 React 前端、WebSocket API、Runtime 服务、认证与核心自动化进程如何共同提供实例管理、任务配置、日志、预览、统计、设置和更新能力。",
+      "parent": null,
+      "page_notes": [
+        {
+          "content": "以 frontend/README.md、frontend/API.md、gui.py、module/api/、module/runtime/ 为当前事实来源。明确历史 PyWebIO/webapp 已非主实现；不要沿用旧 .agent 文档中的过时 WebUI 描述。提供浏览器到工作进程的请求/事件路径图。"
+        }
+      ]
+    },
+    {
+      "title": "React 前端架构与主题系统 / React Frontend & Theming",
+      "purpose": "解释 frontend/ 的 React + TypeScript + Vite 架构、路由与页面、API client、配置保存队列、组件体系、主题/玻璃/紧凑模式、i18n、mock server 与前端构建流程。",
+      "parent": "Web 控制台 / Web Console",
+      "page_notes": [
+        {
+          "content": "重点覆盖 frontend/src/app、api、config、components、pages、styles、mock、e2e，以及 theme.ts、apple.css、forms.css、compact.css 等实际文件。说明经典/简约/紧凑主题的加载边界、浏览器本地偏好和可访问性降级。不要把 UI 视觉描述代替组件/状态架构。"
+        }
+      ]
+    },
+    {
+      "title": "WebSocket API v1 / WebSocket API v1",
+      "purpose": "完整解释 /api/v1/ws 协议：握手、认证、请求/响应/事件信封、方法白名单、参数模型、错误码、订阅、速率/大小限制、重连语义、配置写入和统计/更新接口。",
+      "parent": "Web 控制台 / Web Console",
+      "page_notes": [
+        {
+          "content": "以 frontend/API.md、module/api/protocol.py、router.py、socket.py、app.py、各 *_service.py 和 frontend/src/api/contract.json 为准。用表格列出当前方法与职责，但参数细节引用契约而不是猜测。给出请求与事件订阅时序图，并说明 seq/request id/revision 的不同语义。"
+        }
+      ]
+    },
+    {
+      "title": "运行时服务、多进程与预览 / Runtime, Processes & Preview",
+      "purpose": "解释 module/runtime/ 如何把进程管理、任务执行、截图预览、Worker 事件、部署设置、启动器、更新和远程访问从界面层解耦，并与 gui.py、API 和 alas.py 协作。",
+      "parent": "Web 控制台 / Web Console",
+      "page_notes": [
+        {
+          "content": "重点覆盖 process_manager.py、process_control.py、task_handler.py、worker_registry.py、worker_events.py、preview.py、launcher.py、setting.py、deploy_settings.py、updater.py。说明父/子进程职责、IPC/事件边界、预览不会主动制造额外截图的设计，以及工作进程重启/停止的状态清理。"
+        }
+      ]
+    },
+    {
+      "title": "安全、认证与输入边界 / Security, Auth & Input Boundaries",
+      "purpose": "梳理 Web 控制台和运行服务的安全边界：Origin/Host 校验、访问密码、认证退避、连接/请求限制、实例名与路径约束、只读模式、配置校验、受限脚本校验、错误信息脱敏和远程访问。",
+      "parent": "Web 控制台 / Web Console",
+      "page_notes": [
+        {
+          "content": "重点检查 module/api/socket.py、protocol.py、lifecycle.py、module/runtime/password_utils.py、mcp_auth.py、remote_access.py、launcher_trust.py、module/shop_strategy/ 及相关安全测试。只描述代码实际提供的安全属性，不宣称“绝对安全”。区分浏览器 WebSocket 认证与 MCP 认证。"
+        }
+      ]
+    },
+    {
+      "title": "工程与运维 / Engineering & Operations",
+      "purpose": "作为工程章节入口，概括 MCP/AI、日志统计、资源与国际化、部署更新、开发工具、测试 CI 和贡献规范，帮助维护者理解从开发到发布和长期运行的完整工程链路。",
+      "parent": null,
+      "page_notes": [
+        {
+          "content": "围绕“开发 → 生成/构建 → 测试 → 部署 → 运行观测 → 更新/故障处理”组织内容，并链接本章节各子页。引用 .github/workflows、Dockerfile、deploy/、dev_tools/、tests/、module/logger.py 等当前实现。"
+        }
+      ]
+    },
+    {
+      "title": "MCP 与 AI 集成 / MCP & AI Integration",
+      "purpose": "解释独立 MCP 服务、module/mcp/、mcp_server_sse.py、认证与生命周期、暴露的工具/资源边界，以及 LLM 错误分析等 AI 辅助能力如何与核心自动化隔离。",
+      "parent": "工程与运维 / Engineering & Operations",
+      "page_notes": [
+        {
+          "content": "重点检查 mcp_server_sse.py、module/mcp/、module/runtime/mcp_auth.py、module/llm.py、tests/test_mcp_*.py。列出工具时以当前注册表/实现为准；明确 MCP 与 WebSocket API 是不同集成面，避免混为同一协议。"
+        }
+      ]
+    },
+    {
+      "title": "日志、统计、通知与可观测性 / Logging, Statistics, Notifications & Observability",
+      "purpose": "解释日志产生与传输、Web 日志窗口、文件日志、资源/大世界/委托/舰船/掉落统计、Azurlane/AzurStats 数据、通知与 Discord Presence 等运行可观测能力。",
+      "parent": "工程与运维 / Engineering & Operations",
+      "page_notes": [
+        {
+          "content": "覆盖 module/logger.py、module/log_res/、statistics/、azur_stats/、notify/、runtime/discord_presence.py、module/api/statistics_service.py 及前端统计页。区分实时 UI 缓冲、持久日志和统计源；说明采样/聚合/截断/CSV 等口径以源码与 API 文档为准。"
+        }
+      ]
+    },
+    {
+      "title": "资源、国际化与多服务器适配 / Assets, i18n & Multi-Server Support",
+      "purpose": "解释 assets/、模板/OCR 资源、服务器差异、配置翻译、前端语言切换和 CN/EN/JP/TW 等区域适配如何组织，并说明新增/更新资源的开发流程。",
+      "parent": "工程与运维 / Engineering & Operations",
+      "page_notes": [
+        {
+          "content": "重点查看 assets/cn、en、jp、tw、module/config/argument、翻译 JSON/生成文件、frontend/src/i18n.ts 及资源提取工具。区分游戏服务器资源与 Web 控制台语言；如果存在 zh-MIAO 等 UI 语言，按代码实际支持范围说明，不要误写成游戏服务器。"
+        }
+      ]
+    },
+    {
+      "title": "部署、Docker、启动器与更新 / Deployment, Docker, Launcher & Updater",
+      "purpose": "说明本地/服务器部署、Docker 镜像与 compose、gui 启动监督、部署配置、静态前端构建、远程监听、依赖同步、Git 更新检查与应用更新流程。",
+      "parent": "工程与运维 / Engineering & Operations",
+      "page_notes": [
+        {
+          "content": "重点覆盖 Dockerfile、docker-compose.yml、deploy/、config/deploy.yaml、gui.py、module/runtime/launcher.py、deploy_settings.py、updater.py、module/api/update_service.py 以及更新相关测试。用状态/时序图说明 fetch 与 apply 的区别、实例停止与服务重启前置条件、分叉时的限制。"
+        }
+      ]
+    },
+    {
+      "title": "开发工具、代码生成与资源制作 / Dev Tools, Codegen & Asset Tooling",
+      "purpose": "介绍 dev_tools/ 中 API Schema、地图/按钮/坐标/OCR/资源提取、统计与维护工具，以及配置/类型/资源生成链路，说明何时运行哪些工具、输入输出和防止手工修改生成物的方法。",
+      "parent": "工程与运维 / Engineering & Operations",
+      "page_notes": [
+        {
+          "content": "重点覆盖 dev_tools/export_api_schema.py、button_extract.py、coordinate_picker.py、map_extractor.py、ocr_ncnn_convert.py、requirements_updater.py 等代表性工具；同时追踪 module/config 的生成流程。按用途分类，不要为每个脚本写同等篇幅。明确 generated 文件与 source-of-truth。"
+        }
+      ]
+    },
+    {
+      "title": "测试、CI 与质量保证 / Testing, CI & Quality Assurance",
+      "purpose": "解释 tests/、test/、frontend 单元测试与 Playwright E2E、mock server、CI 工作流、导入/构建检查，以及设备相关逻辑如何在无真实模拟器环境下测试。",
+      "parent": "工程与运维 / Engineering & Operations",
+      "page_notes": [
+        {
+          "content": "重点查看 tests/test_api*.py、test_config_transaction.py、test_runtime_task_handler.py、test_device_*.py、test_mcp_*.py、test_frontend_build.py、frontend/e2e、frontend/mock、.github/workflows/。给出推荐的分层验证命令，并标注哪些测试需要真实设备/浏览器/网络。"
+        }
+      ]
+    },
+    {
+      "title": "开发规范、扩展指南与故障排查 / Development Conventions, Extension & Troubleshooting",
+      "purpose": "汇总仓库开发约定、增加新任务/模块/活动/API 方法/前端页面的推荐步骤、常见错误定位路径、兼容性注意事项，以及维护者应遵循的验证与提交前检查。",
+      "parent": "工程与运维 / Engineering & Operations",
+      "page_notes": [
+        {
+          "content": "参考 AGENTS.md、CLAUDE.md、README/开发必看文档.md、.agent/CONVENTIONS.md，但以当前源码和 CI 为准。分别给出“新增自动化任务”“新增活动地图”“新增 WebSocket 方法”“新增前端功能”四条扩展路径；故障排查按配置→进程→设备→识别→业务→API/前端分层定位。不要写与仓库规则冲突的 Git 工作流。"
+        }
+      ]
+    }
+  ]
+}

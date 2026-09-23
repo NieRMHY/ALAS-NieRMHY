@@ -387,6 +387,14 @@ class FastForwardHandler(AutoSearchHandler):
             in: FLEET_PREPARATION
         """
         if not self.map_is_auto_search:
+            # 手动寻敌下舰队编制选项不可用，但潜艇待命仍需同步：
+            # 游戏内潜艇“自动召唤”若未关闭，每场战斗都会自动召唤潜艇，浪费油耗与潜艇弹药（#144）
+            if self.map_is_clear_mode and self.config.Submarine_Fleet \
+                    and self.config.Submarine_AutoSearchMode == 'sub_standby':
+                logger.info('自动搜索设置（手动寻敌，仅确保潜艇待命）')
+                if self.fleet_preparation_sidebar_ensure(3):
+                    self.auto_search_setting_ensure('sub_standby')
+                    return True
             return False
 
         logger.info('自动搜索设置')

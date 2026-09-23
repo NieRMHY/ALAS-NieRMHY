@@ -42,6 +42,9 @@ class PQShopClerk(ShopClerk, PQShopUI):
             out: 私人宿舍商店
         """
 
+        if self.shop_strategy_enabled():
+            item._shop_strategy_executed_quantity = 1
+
         # 辅助函数：检测购买确认前后的界面状态
         def after_confirm_state():
             return (self.appear(PRIVATE_QUARTERS_SHOP_WEEKLY_ROSES_GET, offset=(20, 20)) or
@@ -64,7 +67,9 @@ class PQShopClerk(ShopClerk, PQShopUI):
             if self.appear(PRIVATE_QUARTERS_SHOP_CHECK, interval=3):
                 self.device.click(item)
                 continue
-            if self.appear_then_click(PRIVATE_QUARTERS_SHOP_AMOUNT_MAX, offset=(20, 20), interval=1):
+            if not self.shop_strategy_enabled() and self.appear_then_click(
+                    PRIVATE_QUARTERS_SHOP_AMOUNT_MAX, offset=(20, 20), interval=1,
+            ):
                 continue
             if self.appear_then_click(PRIVATE_QUARTERS_SHOP_CONFIRM_AMOUNT, offset=(20, 20), interval=1):
                 continue
@@ -73,7 +78,7 @@ class PQShopClerk(ShopClerk, PQShopUI):
         for _ in self.loop():
             # 结束条件：购买完成状态
             if after_purchase_state():
-                break
+                return True
 
             if click_timer.reached() and after_confirm_state():
                 self.device.click(PRIVATE_QUARTERS_SHOP_CHECK)
@@ -98,7 +103,8 @@ class PQShopClerk(ShopClerk, PQShopUI):
             # 先获取商品列表，再读取货币以获得更准确的 OCR 结果
             items = self.shop_get_items()
             self.shop_currency()
-            if self._currency <= 0:
+            strategy_currency = self.shop_strategy_currency(items) if self.shop_strategy_enabled() else {}
+            if self._currency <= 0 and not any(amount > 0 for amount in strategy_currency.values()):
                 logger.warning(f'[私人休息室-店员] 当前资金: {self._currency}，停止购买')
                 return False
 
@@ -107,7 +113,12 @@ class PQShopClerk(ShopClerk, PQShopUI):
                 logger.info('[私人休息室-店员] 商店购买完成')
                 return True
             else:
-                self.shop_buy_execute(item)
+                completed = self.shop_buy_execute(item)
+                if completed:
+                    self.shop_strategy_record_purchase(item)
+                elif self.shop_strategy_enabled():
+                    logger.warning('[高级商店策略] 未获得明确购买结果，停止本轮以避免错误记账')
+                    return True
 
                 # 购买后导航栏会重置到默认位置，需要重新定位
                 self.shop_left_navbar_ensure(2)

@@ -53,6 +53,10 @@ import shutil
 import subprocess
 import time
 
+from module.device.pkg_resources import get_distribution
+
+# adbutils 0.11 仍会导入 pkg_resources；Python 3.14 环境下先注册项目内兼容层。
+_ = get_distribution
 from adbutils import AdbClient, AdbDevice
 
 from module.logger import logger

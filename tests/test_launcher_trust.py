@@ -2,7 +2,7 @@
 
 import unittest
 
-from module.webui import launcher_trust
+from module.runtime import launcher_trust
 
 
 class TestLauncherTrust(unittest.TestCase):

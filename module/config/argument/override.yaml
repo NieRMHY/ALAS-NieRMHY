@@ -49,8 +49,7 @@ GemsFarming:
     Fleet1Control: prevent_red_face
     Fleet1Recover: not_in_dormitory
     Fleet1Oath: false
-    Fleet2Value: 119
-    Fleet2Record: 2020-01-01 00:00:00
+    # 支持二队出击，心情值与记录时间必须保留运行时写入，不能强制覆盖。
     Fleet2Control: prevent_red_face
     Fleet2Recover: not_in_dormitory
     Fleet2Oath: false
@@ -119,6 +118,7 @@ Ambush11:
     AutoSearchMode: sub_standby
     DistanceToBoss: use_open_ocean_support
   GemsFarming:
+    EventFallbackStage: '0'
     VanguardLevelMin: 1
     VanguardLevelMax: 28
 
@@ -241,8 +241,13 @@ Raid:
     DistanceToBoss: 2_grid_to_boss
   Emotion:
     Fleet1Control: prevent_yellow_face
-    Fleet2Value: 119
-    Fleet2Record: 2020-01-01 00:00:00
+    # 当前固定使用一队；二队状态保持隐藏，但仍需保留通用心情流程的运行时写入。
+    Fleet2Value:
+      type: stored
+      value: 119
+    Fleet2Record:
+      type: stored
+      value: 2020-01-01 00:00:00
     Fleet2Control: prevent_yellow_face
     Fleet2Recover: not_in_dormitory
     Fleet2Oath: false
@@ -276,8 +281,13 @@ Hospital:
     Fleet1Recover: not_in_dormitory
     Fleet1Oath: false
     Fleet1Onsen: false
-    Fleet2Value: 119
-    Fleet2Record: 2020-01-01 00:00:00
+    # 当前固定使用一队；二队状态保持隐藏，但仍需保留通用心情流程的运行时写入。
+    Fleet2Value:
+      type: stored
+      value: 119
+    Fleet2Record:
+      type: stored
+      value: 2020-01-01 00:00:00
     Fleet2Control: prevent_yellow_face
     Fleet2Recover: not_in_dormitory
     Fleet2Oath: false
@@ -315,8 +325,13 @@ RaidDaily:
     GetNewShip: false
     ReachLevel: 0
   Emotion:
-    Fleet2Value: 119
-    Fleet2Record: 2020-01-01 00:00:00
+    # 当前固定使用一队；二队状态保持隐藏，但仍需保留通用心情流程的运行时写入。
+    Fleet2Value:
+      type: stored
+      value: 119
+    Fleet2Record:
+      type: stored
+      value: 2020-01-01 00:00:00
     Fleet2Control: prevent_yellow_face
     Fleet2Recover: not_in_dormitory
     Fleet2Oath: false
@@ -350,8 +365,13 @@ Coalition:
     GetNewShip: false
     ReachLevel: 0
   Emotion:
-    Fleet2Value: 119
-    Fleet2Record: 2020-01-01 00:00:00
+    # 当前固定使用一队；二队状态保持隐藏，但仍需保留通用心情流程的运行时写入。
+    Fleet2Value:
+      type: stored
+      value: 119
+    Fleet2Record:
+      type: stored
+      value: 2020-01-01 00:00:00
     Fleet2Control: prevent_yellow_face
     Fleet2Recover: not_in_dormitory
     Fleet2Oath: false
@@ -430,8 +450,13 @@ CoalitionSp:
     GetNewShip: false
     ReachLevel: 0
   Emotion:
-    Fleet2Value: 119
-    Fleet2Record: 2020-01-01 00:00:00
+    # 当前固定使用一队；二队状态保持隐藏，但仍需保留通用心情流程的运行时写入。
+    Fleet2Value:
+      type: stored
+      value: 119
+    Fleet2Record:
+      type: stored
+      value: 2020-01-01 00:00:00
     Fleet2Control: prevent_yellow_face
     Fleet2Recover: not_in_dormitory
     Fleet2Oath: false

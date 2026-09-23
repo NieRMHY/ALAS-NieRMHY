@@ -5,7 +5,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import Mock, patch
 
-from module.webui import event_calculator
+from module.runtime import event_calculator
 
 
 DYNAMIC_SHOP_RAW = """

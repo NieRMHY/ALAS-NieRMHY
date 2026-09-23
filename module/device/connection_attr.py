@@ -386,7 +386,7 @@ class ConnectionAttr:
         Returns:
             str: ADB 可执行文件的绝对路径。
         """
-        from module.webui.setting import State
+        from module.runtime.setting import State
 
         # 统一使用绝对路径检查，避免相对路径导致的 CWD 问题
         # deploy.yaml 中的路径是相对于项目根目录的

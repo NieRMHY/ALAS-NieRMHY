@@ -73,6 +73,15 @@ class GuildShop_250814(ShopClerk, ShopUI, ShopStatus):
         logger.info(f'[商店-舰队] 舰队币: {self._currency}')
         return self._currency
 
+    @staticmethod
+    def shop_strategy_stock(item):
+        """舰队商店可在选择弹窗读取真实库存，策略先保留较高上限。"""
+        return 99
+
+    @staticmethod
+    def shop_strategy_max_quantity(item):
+        return 99
+
     def shop_interval_clear(self):
         """清除购买界面相关按钮的点击间隔。
 
@@ -107,13 +116,13 @@ class GuildShop_250814(ShopClerk, ShopUI, ShopStatus):
         按照过滤器配置购买舰队商店商品，支持刷新。
         刷新消耗 50 舰队币，T4 部件箱价格 60，余额不足 110 时跳过刷新。
         """
-        if not self.shop_filter:
+        if not self.shop_filter and not self.shop_strategy_enabled():
             return
 
         logger.hr('[商店-舰队] 舰队商店', level=1)
 
-        # 执行购买操作，启用刷新时最多尝试 2 次
-        refresh = self.config.GuildShop_Refresh
+        # 刷新会额外消耗舰队币，但不属于高级脚本的购买计划。
+        refresh = self.config.GuildShop_Refresh and not self.shop_strategy_enabled()
         for _ in range(2):
             success = self.shop_buy()
             if not success:
@@ -122,6 +131,7 @@ class GuildShop_250814(ShopClerk, ShopUI, ShopStatus):
                 # 刷新消耗 50，T4 部件箱价格 60
                 if self._currency >= 110:
                     if self.shop_refresh():
+                        self.shop_strategy_reset_inventory()
                         continue
                 else:
                     logger.info('[商店-舰队] 舰队币 < 110，跳过刷新')

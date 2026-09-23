@@ -40,6 +40,16 @@ RaidAffection:
 
 # ==================== Reward ====================
 
+Commission:
+  Scheduler:
+    Enable: true
+Research:
+  Scheduler:
+    Enable: true
+Reward:
+  Scheduler:
+    Enable: true
+
 # ==================== DailyReward ====================
 
 # ==================== DailyMission ====================

@@ -8,6 +8,7 @@
     - notify_webui(): 向本地 WebUI 服务发送 HTTP POST 通知。
 """
 
+import requests
 import onepush.core
 import yaml
 from onepush import get_notifier
@@ -19,6 +20,22 @@ from requests import Response
 from module.logger import logger
 
 onepush.core.log = logger
+
+# onepush 的内部请求不传 timeout，推送服务器无响应时会永久阻塞调度线程（issue #824）。
+# 覆盖其 Provider.request，为所有推送请求注入默认超时，(连接超时, 读取超时)，单位秒。
+PUSH_REQUEST_TIMEOUT = (10, 30)
+
+# 仅在未 patch 过时包装：模块被重复加载时 Provider.request 已是包装函数，
+# 二次包装会因模块 dict 原地更新导致原函数引用丢失、无限递归
+if not getattr(Provider.request, '_timeout_patched', False):
+    _original_provider_request = Provider.request
+
+    def _provider_request_with_timeout(method, url, **kwargs):
+        kwargs.setdefault('timeout', PUSH_REQUEST_TIMEOUT)
+        return _original_provider_request(method, url, **kwargs)
+
+    _provider_request_with_timeout._timeout_patched = True
+    Provider.request = staticmethod(_provider_request_with_timeout)
 
 
 def handle_notify(_config: str, **kwargs) -> bool:
@@ -75,6 +92,12 @@ def handle_notify(_config: str, **kwargs) -> bool:
                 config["token"] = access_token
 
         resp = notifier.notify(**config)
+        if resp is None:
+            # onepush 内部请求异常被吞（连接失败/超时/SSL 重试失败）时返回 None，
+            # 必须显式报失败，否则卡死或推送不可达时日志里无任何失败痕迹
+            logger.warning("推送通知失败!")
+            logger.warning("[通知] 未收到推送服务器的响应（连接失败或超时）")
+            return False
         if isinstance(resp, Response):
             if resp.status_code != 200:
                 logger.warning("推送通知失败!")
@@ -116,12 +139,11 @@ def notify_webui(instance: str, title: str, content: str, **kwargs) -> bool:
         推送成功返回 True，失败返回 False。
     """
     try:
-        from module.webui.setting import State
+        from module.runtime.setting import State
         port = int(State.deploy_config.WebuiPort) or 25548
     except Exception:
         port = 25548
     try:
-        import requests
         payload = {"instance": instance, "title": title, "content": content}
         payload.update(kwargs)
         requests.post(

@@ -8,6 +8,7 @@ import requests
 
 from module.exception import ScriptError
 from module.server_checker import ServerChecker
+from module.server_status import GatewayServer, ServerStatusQueryError
 
 API_BASE = "https://server-checker.nanoda.work/api/v1/servers"
 
@@ -160,7 +161,10 @@ class TestServerApiFailure(ServerCheckerTestCase):
                 self.session.get.return_value = make_response(
                     status_code=status_code, text="temporary failure"
                 )
-                with patch.object(ServerChecker, "fast_retry", return_value=True) as retry:
+                with patch(
+                    'module.server_checker.query_server',
+                    side_effect=ServerStatusQueryError('timeout'),
+                ), patch.object(ServerChecker, "fast_retry", return_value=True) as retry:
                     checker = self.build_checker("cn_android-0")
 
                 self.assertTrue(checker.is_available())
@@ -174,7 +178,10 @@ class TestServerApiFailure(ServerCheckerTestCase):
             with self.subTest(error=type(error).__name__):
                 self.session.get.reset_mock()
                 self.session.get.side_effect = error
-                with patch.object(ServerChecker, "fast_retry", return_value=True) as retry:
+                with patch(
+                    'module.server_checker.query_server',
+                    side_effect=ServerStatusQueryError('timeout'),
+                ), patch.object(ServerChecker, "fast_retry", return_value=True) as retry:
                     checker = self.build_checker("cn_android-0")
 
                 self.assertTrue(checker.is_available())
@@ -190,7 +197,10 @@ class TestServerApiFailure(ServerCheckerTestCase):
         response.json.side_effect = JSONDecodeError("invalid JSON", "not json", 0)
         self.session.get.return_value = response
 
-        with self.assertRaises(ScriptError):
+        with patch(
+            'module.server_checker.query_server',
+            side_effect=ServerStatusQueryError('network_error'),
+        ), self.assertRaises(ScriptError):
             checker._load_server()
 
     def test_missing_server_status_raises_script_error_from_loader(self):
@@ -216,6 +226,29 @@ class TestServerApiFailure(ServerCheckerTestCase):
 
         with self.assertRaises(ScriptError):
             checker._load_server()
+
+    def test_gateway_is_used_when_api_is_temporarily_unavailable(self):
+        self.session.get.return_value = make_response(status_code=503, text='unavailable')
+        gateway_server = GatewayServer(1, '莱茵演习', 0, 0, 1)
+
+        with patch(
+            'module.server_checker.query_server', return_value=gateway_server
+        ) as query, patch.object(ServerChecker, 'fast_retry') as retry:
+            checker = self.build_checker('cn_android-0')
+
+        self.assertTrue(checker.is_available())
+        query.assert_called_once_with('cn', 1)
+        retry.assert_not_called()
+
+    def test_gateway_maintenance_status_is_used_when_api_fails(self):
+        self.session.get.return_value = make_response(status_code=429, text='limited')
+        gateway_server = GatewayServer(1, '莱茵演习', 1, 0, 1)
+
+        with patch('module.server_checker.query_server', return_value=gateway_server):
+            checker = self.build_checker('cn_android-0')
+
+        self.assertFalse(checker.is_available())
+        self.assertGreater(checker._timer.limit, 0)
 
 
 if __name__ == "__main__":

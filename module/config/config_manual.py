@@ -10,15 +10,6 @@
 配置属性通过 `@property` 装饰器暴露，供 AzurLaneConfig 通过多重继承访问。
 """
 
-try:
-    from pywebio.io_ctrl import Output
-except ImportError:
-    class Output:
-        def __init__(self, spec=None, on_embed=None):
-            pass
-        def __new__(cls, *args, **kwargs):
-            return super().__new__(cls)
-
 import typing as t
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
@@ -467,12 +458,3 @@ class ManualConfig:
     module.war_archives
     """
     USE_DATA_KEY = False
-
-
-
-
-
-class OutputConfig(Output, ManualConfig):
-    def __init__(self, spec=None, on_embed=None):
-        # Use explicit call to avoid IDE confusion over super() in hybrid classes
-        Output.__init__(self, spec=spec, on_embed=on_embed)

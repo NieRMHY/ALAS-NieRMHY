@@ -35,6 +35,7 @@ class OpsiStronghold(CoinTaskMixin, OSMap):
             zone = self.find_siren_stronghold()
             if zone is None:
                 self.config.OpsiStronghold_HasStronghold = False
+                self._postpone_stronghold_check('塞壬要塞没有可执行内容')
                 self.os_globe_goto_map()
                 if self._handle_coin_task_no_content('塞壬要塞', '塞壬要塞没有可执行内容'):
                     return
@@ -58,6 +59,7 @@ class OpsiStronghold(CoinTaskMixin, OSMap):
         next_zone = self.find_siren_stronghold()
         if next_zone is None:
             self.config.OpsiStronghold_HasStronghold = False
+            self._postpone_stronghold_check('塞壬要塞没有更多可执行内容')
             self.os_globe_goto_map()
             if self._handle_coin_task_no_content('塞壬要塞', '塞壬要塞没有更多可执行内容'):
                 return

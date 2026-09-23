@@ -17,9 +17,7 @@
 </p>
 
 <p align="center">
-  <a href="https://deepwiki.com/wess09/AzurPilot">
-    <img src="https://deepwiki.com/badge.svg" alt="DeepWiki" height="22">
-  </a>
+  <a href="https://deepwiki.com/wess09/AzurPilot"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki"></a>
 </p>
 
 <p align="center">
@@ -263,7 +261,13 @@ URL만 입력할 수 있고 요청 헤더를 설정할 수 없는 클라이언�
 - [GitHub 저장소](https://github.com/wess09/AzurPilot) — 소스 코드, Issue, Pull Request
 - [QQ 커뮤니티](https://join.nanoda.work/#/) — 아즈란 레인 자동화 커뮤니티
 - [AzurLaneAutoScript 업스트림 프로젝트](https://github.com/LmeSzinc/AzurLaneAutoScript) — ALAS 오리지널
+
+### 파생 프로젝트 및 링크
+
 - [AzurPilot 라즈베리파이 버전](https://github.com/nnieie/AzurPilot) — 라즈베리파이 / Termux 실기기용 AzurPilot CN 배포판
+- [AzurPilot-private-Ru](https://github.com/AliceLiddell01/AzurPilot-private-Ru) — 제어 가능한 업데이트, 투명한 실행 및 외부 네트워크 의존성을 줄인 개인용 러시아어 버전 AzurPilot
+- [PerseusAutoScript](https://github.com/lajiovo/PerseusAutoScript) — 백그라운드 무인 제어, 폐루프 자가 치유 및 다중 알림을 지원하는 AzurPilot 종합 운영 툴킷
+- [AzurRem](https://github.com/syyxl3111/AzurRem) — AzurPilot 용 네이티브 안드로이드 클라이언트 (Kotlin + Jetpack Compose 재작성, PC 게이트웨이 포함)
 
 ## 개발 및 기여
 

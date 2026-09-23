@@ -4,8 +4,8 @@ import types
 import unittest
 from unittest.mock import Mock, patch
 
-from module.webui.setting import State
-from module.webui.updater import Updater
+from module.runtime.setting import State
+from module.runtime.updater import Updater
 
 
 class TestUpdaterReload(unittest.TestCase):
@@ -32,15 +32,15 @@ class TestUpdaterReload(unittest.TestCase):
 
     def test_update_cleans_before_triggering_webui_reload(self):
         order = []
-        app_module = types.ModuleType("module.webui.app")
+        app_module = types.ModuleType("module.api.lifecycle")
         app_module.clearup = lambda: order.append("clearup")
         updater = self._updater()
         updater._trigger_reload = Mock(side_effect=lambda: order.append("trigger"))
 
         with (
-            patch("module.webui.updater.atomic_write") as atomic_write,
-            patch("module.webui.updater.mark_dependency_sync_pending") as mark_pending,
-            patch.dict(sys.modules, {"module.webui.app": app_module}),
+            patch("module.runtime.updater.atomic_write") as atomic_write,
+            patch("module.runtime.updater.mark_dependency_sync_pending") as mark_pending,
+            patch.dict(sys.modules, {"module.api.lifecycle": app_module}),
         ):
             result = updater._run_update([], ["alas\n"])
 
@@ -52,7 +52,7 @@ class TestUpdaterReload(unittest.TestCase):
 
     def test_update_still_triggers_reload_when_cleanup_fails(self):
         order = []
-        app_module = types.ModuleType("module.webui.app")
+        app_module = types.ModuleType("module.api.lifecycle")
 
         def clearup():
             order.append("clearup")
@@ -63,10 +63,10 @@ class TestUpdaterReload(unittest.TestCase):
         updater._trigger_reload = Mock(side_effect=lambda: order.append("trigger"))
 
         with (
-            patch("module.webui.updater.atomic_write"),
-            patch("module.webui.updater.mark_dependency_sync_pending"),
-            patch("module.webui.updater.logger.exception_context") as log_error,
-            patch.dict(sys.modules, {"module.webui.app": app_module}),
+            patch("module.runtime.updater.atomic_write"),
+            patch("module.runtime.updater.mark_dependency_sync_pending"),
+            patch("module.runtime.updater.logger.exception_context") as log_error,
+            patch.dict(sys.modules, {"module.api.lifecycle": app_module}),
         ):
             updater._run_update([], [])
 
@@ -79,14 +79,14 @@ class TestUpdaterReload(unittest.TestCase):
         original_import = __import__
 
         def fail_webui_app_import(name, *args, **kwargs):
-            if name == "module.webui.app":
+            if name == "module.api.lifecycle":
                 raise ImportError("updated WebUI module is unavailable")
             return original_import(name, *args, **kwargs)
 
         with (
-            patch("module.webui.updater.atomic_write"),
-            patch("module.webui.updater.mark_dependency_sync_pending"),
-            patch("module.webui.updater.logger.exception_context") as log_error,
+            patch("module.runtime.updater.atomic_write"),
+            patch("module.runtime.updater.mark_dependency_sync_pending"),
+            patch("module.runtime.updater.logger.exception_context") as log_error,
             patch("builtins.__import__", side_effect=fail_webui_app_import),
         ):
             self.assertTrue(updater._run_update([], []))
@@ -100,10 +100,10 @@ class TestUpdaterReload(unittest.TestCase):
         updater._trigger_reload = Mock()
 
         with (
-            patch("module.webui.updater.atomic_write", side_effect=OSError("read-only")),
-            patch("module.webui.updater.mark_dependency_sync_pending") as mark_pending,
-            patch("module.webui.updater.ProcessManager.restart_processes") as restart,
-            patch("module.webui.updater.logger.exception_context") as log_error,
+            patch("module.runtime.updater.atomic_write", side_effect=OSError("read-only")),
+            patch("module.runtime.updater.mark_dependency_sync_pending") as mark_pending,
+            patch("module.runtime.updater.ProcessManager.restart_processes") as restart,
+            patch("module.runtime.updater.logger.exception_context") as log_error,
         ):
             result = updater._run_update([], ["alas\n"])
 
@@ -123,12 +123,12 @@ class TestUpdaterReload(unittest.TestCase):
 
         with (
             patch(
-                "module.webui.updater.mark_dependency_sync_pending",
+                "module.runtime.updater.mark_dependency_sync_pending",
                 side_effect=OSError("read-only"),
             ),
-            patch("module.webui.updater.atomic_write") as write_marker,
-            patch("module.webui.updater.ProcessManager.restart_processes") as restart,
-            patch("module.webui.updater.logger.exception_context") as log_error,
+            patch("module.runtime.updater.atomic_write") as write_marker,
+            patch("module.runtime.updater.ProcessManager.restart_processes") as restart,
+            patch("module.runtime.updater.logger.exception_context") as log_error,
         ):
             result = updater._run_update([], ["alas\n"])
 
@@ -146,8 +146,8 @@ class TestUpdaterReload(unittest.TestCase):
         State._restart_requested = True
 
         with (
-            patch("module.webui.updater.atomic_write") as write_marker,
-            patch("module.webui.updater.mark_dependency_sync_pending") as mark_pending,
+            patch("module.runtime.updater.atomic_write") as write_marker,
+            patch("module.runtime.updater.mark_dependency_sync_pending") as mark_pending,
         ):
             self.assertTrue(updater._run_update([], ["alas\n"]))
 
@@ -170,7 +170,7 @@ class TestUpdaterReload(unittest.TestCase):
         updater = object.__new__(Updater)
         updater.git_install = Mock(side_effect=RuntimeError("network broken"))
 
-        with patch("module.webui.updater.logger.exception_context") as log_error:
+        with patch("module.runtime.updater.logger.exception_context") as log_error:
             self.assertFalse(updater.update())
 
         log_error.assert_called_once()
@@ -245,7 +245,7 @@ class TestUpdaterReload(unittest.TestCase):
 
     def test_update_marks_pending_sync_before_notifying_parent(self):
         order = []
-        app_module = types.ModuleType("module.webui.app")
+        app_module = types.ModuleType("module.api.lifecycle")
         app_module.clearup = lambda: order.append("clearup")
         updater = self._updater()
         updater.update.side_effect = lambda: order.append("git") or True
@@ -253,14 +253,14 @@ class TestUpdaterReload(unittest.TestCase):
 
         with (
             patch(
-                "module.webui.updater.atomic_write",
+                "module.runtime.updater.atomic_write",
                 side_effect=lambda *args: order.append("marker"),
             ),
             patch(
-                "module.webui.updater.mark_dependency_sync_pending",
+                "module.runtime.updater.mark_dependency_sync_pending",
                 side_effect=lambda: order.append("pending"),
             ),
-            patch.dict(sys.modules, {"module.webui.app": app_module}),
+            patch.dict(sys.modules, {"module.api.lifecycle": app_module}),
         ):
             State.dependency_sync_event.set.side_effect = lambda: order.append("sync")
             self.assertTrue(updater._run_update([], []))
@@ -268,7 +268,7 @@ class TestUpdaterReload(unittest.TestCase):
         self.assertEqual(["pending", "marker", "git", "sync", "clearup", "reload"], order)
 
     def test_update_failure_restarts_through_parent_without_local_worker_recovery(self):
-        app_module = types.ModuleType("module.webui.app")
+        app_module = types.ModuleType("module.api.lifecycle")
         app_module.clearup = Mock(return_value=True)
         updater = self._updater()
         updater.event = Mock()
@@ -276,10 +276,10 @@ class TestUpdaterReload(unittest.TestCase):
         updater._trigger_reload = Mock()
 
         with (
-            patch("module.webui.updater.atomic_write"),
-            patch("module.webui.updater.mark_dependency_sync_pending"),
-            patch("module.webui.updater.ProcessManager.restart_processes") as restart,
-            patch.dict(sys.modules, {"module.webui.app": app_module}),
+            patch("module.runtime.updater.atomic_write"),
+            patch("module.runtime.updater.mark_dependency_sync_pending"),
+            patch("module.runtime.updater.ProcessManager.restart_processes") as restart,
+            patch.dict(sys.modules, {"module.api.lifecycle": app_module}),
         ):
             result = updater._run_update([], ["alas\n"])
 
@@ -292,17 +292,17 @@ class TestUpdaterReload(unittest.TestCase):
         self.assertTrue(State._restart_requested)
 
     def test_update_keeps_persistent_sync_marker_when_event_notification_fails(self):
-        app_module = types.ModuleType("module.webui.app")
+        app_module = types.ModuleType("module.api.lifecycle")
         app_module.clearup = Mock(return_value=True)
         updater = self._updater()
         updater._trigger_reload = Mock()
         State.dependency_sync_event.set.side_effect = OSError("event closed")
 
         with (
-            patch("module.webui.updater.atomic_write"),
-            patch("module.webui.updater.mark_dependency_sync_pending") as mark_pending,
-            patch("module.webui.updater.logger.exception_context") as log_error,
-            patch.dict(sys.modules, {"module.webui.app": app_module}),
+            patch("module.runtime.updater.atomic_write"),
+            patch("module.runtime.updater.mark_dependency_sync_pending") as mark_pending,
+            patch("module.runtime.updater.logger.exception_context") as log_error,
+            patch.dict(sys.modules, {"module.api.lifecycle": app_module}),
         ):
             self.assertTrue(updater._run_update([], []))
 
@@ -340,11 +340,11 @@ class TestUpdaterReload(unittest.TestCase):
         worker.stop.return_value = False
 
         with (
-            patch("module.webui.updater.time.time", side_effect=[0, 601]),
-            patch("module.webui.updater.time.sleep"),
-            patch("module.webui.updater.logger.warning"),
-            patch("module.webui.updater.logger.critical"),
-            patch("module.webui.updater.ProcessManager.restart_processes") as restart,
+            patch("module.runtime.updater.time.time", side_effect=[0, 601]),
+            patch("module.runtime.updater.time.sleep"),
+            patch("module.runtime.updater.logger.warning"),
+            patch("module.runtime.updater.logger.critical"),
+            patch("module.runtime.updater.ProcessManager.restart_processes") as restart,
         ):
             self.assertFalse(updater._wait_update([worker], ["alas\n"]))
 
@@ -406,7 +406,7 @@ class TestUpdaterForceUpdate(unittest.TestCase):
         next(loop)
 
         with patch(
-            "module.webui.updater.time.monotonic", side_effect=[0.0, 0.5, 1.5]
+            "module.runtime.updater.time.monotonic", side_effect=[0.0, 0.5, 1.5]
         ):
             loop.send(handler)
             next(loop)

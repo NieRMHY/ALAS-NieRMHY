@@ -107,6 +107,10 @@ Deploy:
     # [Default] ssh (find ssh in system PATH)
     # If you don't have one, install OpenSSH or download it here (https://github.com/PowerShell/Win32-OpenSSH/releases)
     SSHExecutable: ssh
+    # 允许远程访问重定向的主机，留空使用默认列表
+    AllowedRedirectHosts: null
+    # 远程访问重定向次数上限
+    MaxRedirects: 2
     # WebRTC signaling server, empty means deriving wss://host/signal from SSHServer
     SignalingServer: null
     # STUN servers as JSON array or comma separated string
@@ -145,10 +149,8 @@ Deploy:
     # Useful when expose AzurPilot to the public network
     # WebuiHost 为 0.0.0.0 或 :: 时必须设置密码
     Password: null
-    # --cdn. Use jsdelivr cdn for pywebio static files (css, js).
-    # 'true' for jsdelivr cdn
-    # 'false' for self host cdn (automatically)
-    # 'https://path.to.your/cdn' to use custom cdn
+    # --cdn. 已废弃，React 前端静态资源始终由本地提供
+    # --cdn. Deprecated. React frontend static assets are always served locally.
     CDN: false
     # --run. Auto-run specified config when startup
     # 'null' default no specified config

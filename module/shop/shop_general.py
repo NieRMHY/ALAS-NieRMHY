@@ -87,6 +87,13 @@ class GeneralShop_250814(ShopClerk, ShopUI, ShopStatus):
 
         return self._currency
 
+    def shop_strategy_currency(self, items):
+        """向高级策略提供金币和钻石两种实际余额。"""
+        return {
+            'Coins': max(0, int(self._currency)),
+            'Gems': max(0, int(self.gems)),
+        }
+
     def shop_check_item(self, item):
         """检查商品是否可购买（基于货币余额）。
 
@@ -223,20 +230,24 @@ class GeneralShop_250814(ShopClerk, ShopUI, ShopStatus):
         # 配置值验证：检测并修正异常值
         self._validate_config_values()
 
-        if not self.shop_filter:
+        if not self.shop_filter and not self.shop_strategy_enabled():
             return
 
         logger.hr('通用商店', level=1)
 
-        # 执行购买操作，启用刷新时最多尝试 2 次
-        refresh = self.config.GeneralShop_Refresh
+        # 刷新与金币溢出购买属于旧过滤器工作流，未纳入高级脚本的 reserve /
+        # max_spend 计划；高级模式必须完全由脚本预算控制。
+        advanced = self.shop_strategy_enabled()
+        refresh = self.config.GeneralShop_Refresh and not advanced
         for _ in range(2):
             success = self.shop_buy()
             if not success:
                 break
             if refresh and self.shop_refresh():
+                self.shop_strategy_reset_inventory()
                 continue
             break
 
-        # 金币溢出购买猫箱
-        self._meowfficer_overflow_buy()
+        if not advanced:
+            # 金币溢出购买猫箱
+            self._meowfficer_overflow_buy()

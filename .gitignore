@@ -3,6 +3,8 @@ log
 cache/
 .codex
 config/backup/*
+# 每日备份目录（AzurPilot_Data_Backup/）：默认落在项目根目录，含个人统计数据与配置，不应入库
+/AzurPilot_Data_Backup/
 config/*.ini
 !config/template.ini
 config/*.yaml
@@ -35,7 +37,8 @@ test/*
 debug_ocr/
 PaddleOCR
 .trae
-docs/
+docs/*
+!docs/modules/
 .claude
 # Created by .ignore support plugin (hsz.mobi)
 
@@ -329,3 +332,12 @@ RTK.md
 # 于是在工作目录建出真实文件，并在 StrictHostKeyChecking=no 下往里追加主机密钥。
 # 触发点：module/webui/remote_access.py、alas.py、module/device/platform/platform_base.py
 /nul
+
+.workbuddy
+
+# React 前端本地依赖与测试产物
+frontend/node_modules/
+frontend/test-results/
+frontend/playwright-report/
+frontend/*.tsbuildinfo
+!uv.lock

@@ -1,10 +1,10 @@
 import json
 import os
 import re
-import shutil
 import threading
 import time
 from datetime import datetime, timedelta
+from functools import partial
 
 import inflection
 from cached_property import cached_property
@@ -37,8 +37,18 @@ WATCHDOG_CHECK_INTERVAL = 30
 # 单个任务最长运行时间（分钟），仅作为配置读取失败的兜底默认值
 # 实际值从配置 Error.WatchdogTaskTimeout 读取，0 表示禁用
 WATCHDOG_TASK_TIMEOUT_DEFAULT = 120
-# 模拟器 stop/start 单次操作的硬超时秒数
-RESTART_EMULATOR_OP_TIMEOUT = 120
+# 模拟器 stop/start 单次操作的硬超时秒数。
+# 必须覆盖 PlatformWindows.emulator_start() 的完整预算，一次调用最多：
+#   关闭 30 + 深度清场 90（关全部实例≤60 + 等进程退出≤30） + 等实例真正关闭 60
+#   + 启动监视 300（阶梯上限） = 480 秒
+# 普通路径没有深度清场那 90 秒（实测 390 秒封顶），但按最坏情况取。
+# 取 600 秒：宁可慢，也不能在模拟器正在启动时放弃——超时被放弃的
+# worker 线程仍会继续对模拟器执行关/开操作，是历史上"模拟器永远起不来"
+# 的根因（原值 120 秒 < 内层 180 秒监视超时，必然超时、必然残留）。
+# 残留线程由 PlatformWindows 的启停互斥锁兜底：它结束之前，任何新的
+# 启停操作都会抛 EmulatorOpBusy 被跳过，不会再打断正在进行的启动。
+# Modify by MHY, 采纳上游 600 秒预算（原本地 120 秒会在模拟器深度清场时误判超时）
+RESTART_EMULATOR_OP_TIMEOUT = 600
 
 
 # 缓存 i18n 任务名查找
@@ -97,6 +107,29 @@ class AzurLaneAutoScript:
         self._watchdog_task_start = 0.0  # 当前任务开始时间（monotonic）
         self._watchdog_task_name = ''    # 当前任务名
 
+    def _deep_restart_enabled(self):
+        """判断本次模拟器重启是否改用「深度重启」。
+
+        配置 EmulatorManagement.DeepRestartAfterFailures：模拟器连续重启失败
+        达到该次数后，此后每次重启都改为深度重启——结束 MuMu 全部进程
+        （含后台服务与虚拟机）再重新启动。
+
+        这是设备较差、反复重启都起不来时的最后一招逃生口，实测并不能省内存，
+        所以默认 0（禁用），需要的人自己开。
+
+        只在 MuMu12 上生效：其它模拟器没有这套进程模型，会忽略该标志。
+
+        Returns:
+            bool: True 表示本次使用深度重启。
+        """
+        try:
+            threshold = int(self.config.EmulatorManagement_DeepRestartAfterFailures)
+        except (TypeError, ValueError, AttributeError):
+            return False
+        if threshold <= 0:
+            return False
+        return self.consecutive_adb_offline >= threshold
+
     def _try_restart_emulator(self):
         """
         尝试重启模拟器。永不放弃，一直重试。
@@ -130,6 +163,14 @@ class AzurLaneAutoScript:
                 from module.device.platform import Platform
                 device = Platform(self.config, connect=False)
 
+            # 连续失败够多次就改用深度重启（结束 MuMu 全部进程）
+            deep = self._deep_restart_enabled()
+            if deep:
+                logger.warning(
+                    f'[Alas] 连续重启失败 {self.consecutive_adb_offline} 次，'
+                    f'本次改用深度重启（结束 MuMu 全部进程）'
+                )
+
             logger.info('[Alas] 正在停止模拟器...')
             self._emulator_op_with_timeout(
                 device.emulator_stop,
@@ -139,7 +180,15 @@ class AzurLaneAutoScript:
             time.sleep(5)
             logger.info('[Alas] 正在启动模拟器...')
             self._emulator_op_with_timeout(
-                device.emulator_start,
+                # consecutive_adb_offline 在函数开头已 +1，减 1 得到"本次之前
+                # 已经连续失败过几次"；平台据此选取启动监视的等待时长，
+                # 连续失败越多等得越久（60 → 90 → 120 → 180 → 300 秒），
+                # 重启成功后该计数归零、等待时间随之回到 60 秒
+                partial(
+                    device.emulator_start,
+                    deep=deep,
+                    failures=max(0, self.consecutive_adb_offline - 1),
+                ),
                 timeout=RESTART_EMULATOR_OP_TIMEOUT,
                 operation_name='模拟器启动',
             )
@@ -151,6 +200,13 @@ class AzurLaneAutoScript:
             # 重置连续离线计数
             self.consecutive_adb_offline = 0
             return True
+        except EmulatorOpBusy as e:
+            # 上一轮的重启操作还在后台跑（很可能正在冷启动模拟器）。
+            # 此时既不能停也不能再启——那会把正在进行的启动打断，正是
+            # "模拟器窗口一直卡在加载、永远起不来"的成因。放弃本轮即可，
+            # 后台那次操作结束后，下一轮调度自然会接手。
+            logger.warning(f'[Alas] 上一轮模拟器重启仍在进行，放弃本轮重启：{e}')
+            return False
         except Exception as e:
             logger.exception_context(
                 title='重启模拟器失败',
@@ -169,12 +225,18 @@ class AzurLaneAutoScript:
         线程中执行操作，超时后抛出 TimeoutError，由外层 try/except 捕获
         并返回 False，调度器会退避重试。
 
+        并发保护由 PlatformWindows 的启停互斥锁负责（emulator_op_exclusive）：
+        超时被放弃的 worker 线程仍在真实地关闭/启动模拟器，锁由它一直持有
+        到操作真正结束，因此后续任何启停请求都会抛 EmulatorOpBusy 被跳过，
+        不会出现"一个线程刚发出启动命令、另一个线程随即 shutdown"的踩踏。
+
         Args:
             func: 无参数的可调用对象。
             timeout (int | float): 超时秒数。
             operation_name (str): 操作名称，用于日志。
 
         Raises:
+            EmulatorOpBusy: 已有启停操作在进行（由平台层抛出），本次被跳过。
             TimeoutError: 操作超时。
             Exception: 操作本身抛出的异常会被原样向上抛出。
         """
@@ -194,7 +256,8 @@ class AzurLaneAutoScript:
         if thread.is_alive():
             logger.critical(
                 f'[Alas] {operation_name} 超过 {timeout}s 未完成，'
-                f'跳过此操作（daemon 线程残留，进程退出时自动清理）'
+                f'放弃等待（操作线程仍在后台运行并持有模拟器启停锁，'
+                f'下一轮恢复会主动跳过，直到它结束）'
             )
             raise TimeoutError(
                 f'{operation_name} 超过 {timeout}s 未完成'
@@ -387,6 +450,10 @@ class AzurLaneAutoScript:
             logger.info(
                 '[Alas][看门狗] 已强制停止模拟器，主线程的下次 I/O 调用将失败并触发恢复'
             )
+        except EmulatorOpBusy as e:
+            logger.warning(
+                f'[Alas][看门狗] 上一轮模拟器重启仍在进行，本次不再插手：{e}'
+            )
         except TimeoutError:
             logger.warning(
                 '[Alas][看门狗] 强制停止模拟器超时，等待下个周期重试'
@@ -412,13 +479,22 @@ class AzurLaneAutoScript:
                 logger.warning('[Alas] 未找到模拟器实例，无法在长时间等待后启动模拟器')
                 return False
 
-            if platform.emulator_start():
+            if self._emulator_op_with_timeout(
+                platform.emulator_start,
+                timeout=RESTART_EMULATOR_OP_TIMEOUT,
+                operation_name='长时间等待后启动模拟器',
+            ):
                 logger.info('[Alas] 长时间等待后模拟器启动完成')
                 if 'device' in self.__dict__:
                     del_cached_property(self, 'device')
                 return True
 
             logger.warning('[Alas] 长时间等待后启动模拟器失败，继续调度恢复流程')
+            return False
+        except EmulatorOpBusy as e:
+            # 与 _try_restart_emulator 同理：已有启停操作在跑时不要插队，
+            # 否则会打断对方正在进行的冷启动
+            logger.warning(f'[Alas] 已有模拟器启停操作在进行，跳过本次启动：{e}')
             return False
         except Exception as e:
             logger.warning(f'[Alas] 长时间等待后启动模拟器失败，继续调度恢复流程: {e}')
@@ -534,8 +610,23 @@ class AzurLaneAutoScript:
     def device(self):
         try:
             from module.device.device import Device
-            device = Device(config=self.config)
+            # 调度器统一管理模拟器恢复，避免设备初始化再嵌套一轮启动重试。
+            device = Device(config=self.config, auto_start_emulator=False)
             return device
+        except EmulatorNotRunningError as e:
+            if self.config.Error_HandleError:
+                # loop() 会在 run() 之前初始化设备，同样必须遵守敏感任务保护。
+                self._check_sensitive_exit(self.config.task.command, e)
+                raise
+            logger.error_context(
+                title='设备离线且自动恢复已关闭',
+                reason='初始化设备时无法建立连接，Error.HandleError 已禁用。',
+                impact='调度器停止运行，不会启动或重启模拟器。',
+                action='手动恢复设备连接后重新启动，或启用错误处理。',
+                exc=e,
+                level=50,
+            )
+            exit(1)
         except RequestHumanTakeover:
             logger.error_context(
                 title='设备初始化需要人工介入',
@@ -569,9 +660,16 @@ class AzurLaneAutoScript:
             )
             exit(1)
 
+    def _is_strict_restart(self, command):
+        """统一任务异常和调度结果的敏感任务停机条件。"""
+        task_name = inflection.camelize(command)
+        return self.config.Error_StrictRestart and self.config.cross_get(
+            keys=f'{task_name}.Scheduler.Sensitive', default=False
+        )
+
     def _check_sensitive_exit(self, command, error):
         """
-        检查当前任务是否为敏感任务，如果是则直接退出。
+        严格重启模式下，敏感任务出错时直接退出。
 
         敏感任务出错时不做任何重启或恢复，完全停止 Alas 运行。
 
@@ -583,10 +681,7 @@ class AzurLaneAutoScript:
             bool: True 表示已退出（不会返回），False 表示非敏感任务，继续原有逻辑。
         """
         task_name = inflection.camelize(command)
-        sensitive = self.config.cross_get(
-            keys=f'{task_name}.Scheduler.Sensitive', default=False
-        )
-        if not sensitive:
+        if not self._is_strict_restart(command):
             return False
 
         logger.error_context(
@@ -614,7 +709,7 @@ class AzurLaneAutoScript:
         执行指定任务命令，捕获异常并决定后续行为。
 
         根据异常类型自动判断：重启游戏、重启模拟器、请求人工介入或直接终止。
-        敏感任务出错时直接停止，不做任何重启。
+        严格重启模式下，敏感任务出错时直接停止，不做任何重启。
 
         任务执行前会进行一次截图（除非 skip_first_screenshot=True）。
 
@@ -628,6 +723,9 @@ class AzurLaneAutoScript:
                 False — 不可恢复的失败，计入连续失败限制。
                 'recoverable' — 可恢复的失败，不计入连续失败限制。
         """
+        from module.runtime.preview import set_task
+        command = inflection.underscore(command)
+        set_task(inflection.camelize(command))
         try:
             if not skip_first_screenshot:
                 self.device.screenshot()
@@ -893,25 +991,119 @@ class AzurLaneAutoScript:
                 content=f"{self.config_name} 发生异常 正在尝试重启游戏",
             )
             return 'recoverable'
+        finally:
+            set_task(None)
 
-    def keep_last_errlog(self, folder_path, n: int = 30):
+    def cleanup_error_logs(self, folder_path):
         """
-        清理旧的错误日志文件夹，只保留最近的 n 个。
+        按过期天数清理错误现场目录。
+
+        过期条目按「错误日志 - 过期错误日志处理方式」归置：直接删除、
+        拷贝备份（``bak/<时间戳>/``）或压缩备份
+        （``bak/<日期范围>_<实例名>.<压缩后缀>``，格式由「压缩格式」决定）。
+        ``bak`` 目录不参与扫描，不会被重复处理。清理是尽力而为的：
+        单个条目失败只记警告，不让清理本身的异常盖掉正在处理的错误。
 
         Args:
-            folder_path (str): 错误日志根目录路径。
-            n (int): 保留的文件夹数量，<=0 时不清理。
+            folder_path (str): 错误日志根目录，即 ``./log/error/<实例名>``。
+
+        Returns:
+            int: 处理的现场目录数量。
         """
-        # Modify by MHY, 配置值可能非数字（如测试 Mock），非数字时不清理
-        if not isinstance(n, (int, float)) or n <= 0:
-            return
-        folders = [
-            os.path.join(folder_path, f)
-            for f in os.listdir(folder_path)
-            if os.path.isdir(os.path.join(folder_path, f))
-        ]
-        for folder in folders[:-n]:
-            shutil.rmtree(folder)
+        from module.base import archive
+
+        days = archive.read_days(
+            self.config, 'Error_SaveErrorRetentionDays', default=0)
+        # Modify by MHY, 保留 Mock 兜底：read_days 读 Mock 配置可能返回非数字
+        try:
+            days = int(days)
+        except (TypeError, ValueError):
+            return 0
+        if days <= 0 or not os.path.isdir(folder_path):
+            return 0
+
+        now = time.time()
+        deadline = days * 86400
+        expired = []
+        try:
+            names = os.listdir(folder_path)
+        except OSError as e:
+            logger.warning(f'[Alas] 读取错误日志目录失败 {folder_path}: {e}，本次跳过清理')
+            return 0
+        for name in names:
+            if name == 'bak':
+                continue
+            folder = os.path.join(folder_path, name)
+            if not os.path.isdir(folder):
+                continue
+            try:
+                older = now - os.path.getmtime(folder) >= deadline
+            except OSError:
+                continue
+            if older:
+                expired.append(folder)
+
+        if not expired:
+            return 0
+
+        method = archive.read_method(
+            self.config, 'Error_SaveErrorBackUpMethod', default='zip')
+        zip_method = archive.read_zip_method(
+            self.config, 'Error_SaveErrorZipMethod', default='zip')
+        handled = archive.expire(
+            expired, os.path.join(folder_path, 'bak'), method, zip_method,
+            self.config_name)
+
+        if handled:
+            logger.info(
+                f'[Alas] 已处理 {handled} 个超过 {days} 天的错误日志'
+                f'（{method}），备份目录 log/error/{self.config_name}/bak')
+        return handled
+
+        from module.base import archive
+
+        days = archive.read_days(
+            self.config, 'Error_SaveErrorRetentionDays', default=0)
+        if days <= 0 or not os.path.isdir(folder_path):
+            return 0
+
+        now = time.time()
+        deadline = days * 86400
+        expired = []
+        try:
+            names = os.listdir(folder_path)
+        except OSError as e:
+            logger.warning(f'[Alas] 读取错误日志目录失败 {folder_path}: {e}，本次跳过清理')
+            return 0
+        for name in names:
+            if name == 'bak':
+                continue
+            folder = os.path.join(folder_path, name)
+            if not os.path.isdir(folder):
+                continue
+            try:
+                older = now - os.path.getmtime(folder) >= deadline
+            except OSError:
+                continue
+            if older:
+                expired.append(folder)
+
+        if not expired:
+            return 0
+
+        method = archive.read_method(
+            self.config, 'Error_SaveErrorBackUpMethod', default='zip')
+        zip_method = archive.read_zip_method(
+            self.config, 'Error_SaveErrorZipMethod', default='zip')
+        handled = archive.expire(
+            expired, os.path.join(folder_path, 'bak'), method, zip_method,
+            self.config_name)
+
+        if handled:
+            logger.info(
+                f'[Alas] 已处理 {handled} 个超过 {days} 天的错误日志'
+                f'（{method}），备份目录 log/error/{self.config_name}/bak')
+        return handled
 
     def save_error_log(self):
         """
@@ -972,7 +1164,7 @@ class AzurLaneAutoScript:
             except Exception as e:
                 logger.error(f"[Alas] 保存错误日志失败: {e}")
                 
-            self.keep_last_errlog(config_folder, getattr(self.config, 'Error_SaveErrorCount', 0))
+            self.cleanup_error_logs(config_folder)
 
     def restart(self):
         from module.handler.login import LoginHandler
@@ -1071,6 +1263,10 @@ class AzurLaneAutoScript:
     def awaken(self):
         from module.awaken.awaken import Awaken
         Awaken(config=self.config, device=self.device).run()
+
+    def secretary(self):
+        from module.secretary.secretary import Secretary
+        Secretary(config=self.config, device=self.device).run()
 
     def shop_frequent(self):
         from module.shop.shop_reward import RewardShop
@@ -1416,6 +1612,10 @@ class AzurLaneAutoScript:
     def ocr_benchmark(self):
         from module.daemon.ocr_benchmark import run_ocr_benchmark
         run_ocr_benchmark(config=self.config)
+
+    def meowfficer_score(self):
+        from module.meowfficer.score_task import run_meowfficer_score
+        run_meowfficer_score(config=self.config, device=self.device)
 
     def fleet_scan(self):
         from module.retire.fleet_management import FleetManagement
@@ -1768,6 +1968,32 @@ class AzurLaneAutoScript:
             )
             exit(1)
 
+        # 每日自动备份：备份数据库与用户配置，超过保留天数的历史备份自动清理。
+        # 备份失败不阻断调度器启动，仅记录告警。
+        try:
+            from module.base.backup import backup
+            today = datetime.now().strftime('%Y-%m-%d')
+            if getattr(self, 'last_backup_date', None) != today:
+                backup(
+                    enable=self.config.Backup_Enable,
+                    keep_days=self.config.Backup_KeepDays,
+                )
+                self.last_backup_date = today
+        except Exception as e:
+            logger.warning(f'每日自动备份失败，已跳过本次备份：{e}')
+
+        # 本地调试服务：仅在显式设置环境变量 ALAS_DEBUG_SERVER=1 时启动，
+        # 监听 127.0.0.1，用于向统计库注入测试数据并验证推送链路。
+        # 默认不启动，避免无意中开放本地端口。
+        if os.environ.get('ALAS_DEBUG_SERVER') == '1':
+            try:
+                from module.debug.commission_debug import CommissionDebugHandler
+                from module.debug.web_debug_server import start_debug_server
+
+                start_debug_server(CommissionDebugHandler(self))
+            except Exception as e:
+                logger.warning(f'调试服务启动失败：{e}')
+
         # 全局异常连续失败计数（仅用于日志展示和退避策略，不再触发退出）
         consecutive_global_failures = 0
         RESTART_DELAY = 20
@@ -1870,9 +2096,7 @@ class AzurLaneAutoScript:
                     failed = failed + 1  # 不可恢复错误，增加计数
                 deep_set(self.failure_record, keys=task, value=failed)
 
-                strict_restart = self.config.Error_StrictRestart and failed >= 1 and self.config.cross_get(
-                    keys=f'{task}.Scheduler.Sensitive', default=False
-                )
+                strict_restart = failed >= 1 and self._is_strict_restart(task)
                 if strict_restart:
                     # 仅敏感任务失败后立即退出，避免状态或数据损坏
                     logger.error_context(
@@ -1917,9 +2141,16 @@ class AzurLaneAutoScript:
 
                 if success == True:
                     del_cached_property(self, 'config')
-                    consecutive_global_failures = 0 # 任务成功时重置全局失败计数器
-                    self.consecutive_game_stuck = 0
-                    self.consecutive_adb_offline = 0
+                    # Restart 成功只说明恢复步骤完成；普通任务成功才说明故障已恢复。
+                    # 所有任务级连续错误在同一边界清零，避免重启掩盖重复故障，
+                    # 也避免零散的 ScriptError 累计到退出阈值。
+                    # Modify by MHY, 采纳上游清零边界语义
+                    if task != 'Restart':
+                        consecutive_global_failures = 0
+                        self.consecutive_game_stuck = 0
+                        self.consecutive_adb_offline = 0
+                        self.consecutive_unexpected_error = 0
+                        self.script_error_count = 0
                     continue
                 elif success == 'recoverable' or self.config.Error_HandleError:
                     # 可恢复错误或启用了错误处理，刷新配置后继续循环

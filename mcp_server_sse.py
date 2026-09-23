@@ -24,9 +24,9 @@ from io import BytesIO
 from module.config.config import AzurLaneConfig
 from module.config.time_source import now as current_time
 from module.config.utils import DEFAULT_CONFIG_NAME, alas_instance
-from module.webui.process_manager import ProcessManager
+from module.runtime.process_manager import ProcessManager
 from module.config.mcp_helper import McpConfigHelper
-from module.webui.setting import State
+from module.runtime.setting import State
 
 try:
     from module.webui.fake_pil_module import remove_fake_pil_module
@@ -453,7 +453,7 @@ async def _tool_restart_adb(arguments: Dict[str, Any]) -> ToolResponse:
 
 async def _tool_update_alas(arguments: Dict[str, Any]) -> ToolResponse:
     try:
-        from module.webui.updater import updater
+        from module.runtime.updater import updater
 
         def do_update():
             updater.update()

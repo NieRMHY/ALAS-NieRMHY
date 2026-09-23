@@ -20,7 +20,7 @@ from module.device.method.utils import HierarchyButton
 from module.logger import logger
 from module.map_detection.utils import fit_points
 from module.statistics.azurstats import AzurStats
-from module.webui.setting import cached_class_property
+from module.runtime.setting import cached_class_property
 
 
 class ModuleBase:

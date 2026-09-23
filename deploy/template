@@ -233,14 +233,8 @@ Deploy:
     # 将 AzurPilot 暴露到公网时很有用
     # Useful when expose AzurPilot to the public network
     Password: null
-    # --cdn. 使用 jsdelivr CDN 加载 PyWebIO 静态文件（css、js）
-    # --cdn. Use jsdelivr cdn for pywebio static files (css, js).
-    # 'true' 使用 jsdelivr CDN
-    # 'true' for jsdelivr cdn
-    # 'false' 自动使用自托管 CDN
-    # 'false' for self host cdn (automatically)
-    # 'https://path.to.your/cdn' 使用自定义 CDN
-    # 'https://path.to.your/cdn' to use custom cdn
+    # --cdn. 已废弃，React 前端静态资源始终由本地提供
+    # --cdn. Deprecated. React frontend static assets are always served locally.
     CDN: false
     # --run. 启动时自动运行指定的配置
     # --run. Auto-run specified config when startup
