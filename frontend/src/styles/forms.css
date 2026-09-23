@@ -1,0 +1,177 @@
+/* 全站表单共用现有主题契约，外部 theme.css 仍可覆盖颜色与圆角。 */
+:root {
+  --form-height: 40px;
+  --form-edge: color-mix(in srgb, var(--theme-input-border) 75%, var(--theme-muted));
+  --form-shadow: 0 1px 2px rgb(0 0 0 / .04);
+}
+
+input:where(:not([type='checkbox']):not([type='radio']):not([type='range'])), select, textarea {
+  min-height: var(--form-height);
+  padding: 9px 12px;
+  border: 1px solid var(--form-edge);
+  border-radius: var(--theme-radius-control);
+  background: var(--theme-input-bg);
+  color: var(--theme-input-text);
+  line-height: 1.5;
+  box-shadow: var(--form-shadow);
+  transition: border-color .16s ease, box-shadow .16s ease, background-color .16s ease;
+}
+input::placeholder, textarea::placeholder {color: var(--theme-muted); opacity: .85}
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: var(--theme-focus);
+  box-shadow: 0 0 0 3px var(--theme-focus-ring);
+}
+input:disabled, select:disabled, textarea:disabled {
+  opacity: .55;
+  cursor: not-allowed;
+  -webkit-text-fill-color: currentColor;
+}
+input[readonly] {color: var(--theme-muted); box-shadow: none}
+input[aria-invalid='true'], select[aria-invalid='true'], textarea[aria-invalid='true'] {
+  border-color: var(--theme-danger);
+  background: color-mix(in srgb, var(--theme-danger) 4%, var(--theme-input-bg));
+}
+input[aria-invalid='true']:focus, select[aria-invalid='true']:focus, textarea[aria-invalid='true']:focus {
+  box-shadow: 0 0 0 3px var(--theme-danger-soft);
+}
+
+/* 下拉框的触发器和展开列表共用主题，浏览器 select 只桥接变更事件。 */
+.select-control, .password-control {position: relative; display: inline-flex; min-width: 0; max-width: 100%; vertical-align: middle}
+.select-control > select {display: none}
+
+
+.field-control > .select-control, .field-control > .password-control {width: 100%; font-size: 13px}
+.password-control > input {width: 100%; padding-right: 44px !important}
+.password-reveal {position: absolute; right: 0; top: 0; bottom: 0; width: 42px; display: grid; place-items: center; color: var(--theme-muted); border-radius: var(--theme-radius-control)}
+.password-reveal:hover:not(:disabled) {color: var(--theme-accent)}
+.password-reveal:focus-visible {outline-offset: -4px}
+.form-stack label > .select-control, .form-stack label > .password-control, .login-card .password-control {width: 100%}
+
+/* 文件选择包在 label 里做成按钮：input 藏起来但仍可被 label 激活，label 也不再按字段那样竖排。
+   不能用 display:none —— 那会让 label 跳过激活，点击冒泡到 <dialog> 被当成点背景，弹窗会直接关掉。 */
+.form-stack label.file-button {position: relative; display: inline-flex; flex-direction: row; align-items: center; align-self: flex-start; gap: 0; cursor: pointer}
+.form-stack label.file-button > input {position: absolute; width: 1px; height: 1px; opacity: 0}
+.input-icon {border-radius: var(--theme-radius-control); border-color: var(--form-edge); color: var(--theme-muted); box-shadow: var(--form-shadow); transition: border-color .16s, box-shadow .16s}
+.input-icon:focus-within {border-color: var(--theme-focus); box-shadow: 0 0 0 3px var(--theme-focus-ring)}
+.input-icon > input, .input-icon > input:focus {background: transparent; border: 0; box-shadow: none; padding-left: 0}
+.field-control textarea {min-height: var(--form-height); font-family: var(--theme-font-sans); line-height: 1.9}
+.yaml-editor {border: 1px solid var(--form-edge); border-radius: var(--theme-radius-control); box-shadow: var(--form-shadow); overflow: hidden}
+.yaml-editor:focus-within {border-color: var(--theme-focus); box-shadow: 0 0 0 3px var(--theme-focus-ring)}
+.yaml-editor .cm-editor.cm-focused {outline: none}
+.yaml-editor[aria-invalid='true'] {border-color: var(--theme-danger)}
+
+/* 多选采用可点击的整行标签，选中状态同时通过勾选符号与颜色表达。 */
+.multi-options {gap: 6px; text-align: left}
+.multi-options .checkbox-control {gap: 9px; min-height: 36px; padding: 6px 10px; border: 1px solid transparent; border-radius: 9px; font-size: 13px; cursor: pointer; color: var(--theme-text)}
+.checkbox-control:has(:checked) {background: var(--theme-accent-soft)}
+.checkbox-control:has(:disabled) {opacity: .5; cursor: not-allowed}
+.checkbox-mark {position: relative; display: inline-flex; width: 18px; height: 18px; flex-shrink: 0}
+.checkbox-mark input[type='checkbox'] {appearance: none; width: 18px; height: 18px; min-height: 0; padding: 0; margin: 0; border: 1px solid var(--form-edge); border-radius: 5px; background: var(--theme-input-bg); cursor: inherit; opacity: 1}
+.checkbox-mark input:checked {background: var(--theme-primary-bg); border-color: var(--theme-primary-bg)}
+.checkbox-mark > svg {position: absolute; left: 2.5px; top: 2.5px; color: var(--theme-on-accent); pointer-events: none; visibility: hidden}
+.checkbox-mark:has(:checked) > svg {visibility: visible}
+input[type='radio'] {accent-color: var(--theme-primary-bg); width: 18px; height: 18px; min-height: 0; padding: 0}
+
+/* 开关的实际焦点及触控区域为 52×44，轨道在其中垂直居中。 */
+.toggle {width: 52px; height: 44px; padding: 0 3px; background: transparent; isolation: isolate}
+.toggle::before {inset: 6px 0; border-radius: 999px; background: var(--theme-toggle-off); z-index: -1; transition: background-color .2s}
+.toggle.on {background: transparent}
+.toggle.on::before {background: var(--theme-toggle-on)}
+.toggle > span {width: 26px; height: 26px; background: var(--theme-toggle-knob); box-shadow: var(--theme-toggle-shadow)}
+.toggle.on > span {transform: translateX(20px)}
+.toggle:active:not(:disabled) > span {width: 29px}
+.toggle.on:active:not(:disabled) > span {transform: translateX(17px)}
+
+.button {min-height: var(--form-height); height: auto; padding: 9px 17px; line-height: 1.4; background: var(--theme-surface-muted); border-color: var(--theme-border); box-shadow: var(--form-shadow)}
+.button.primary, .button.danger {border-color: transparent}
+.button.subtle:not(.danger) {background: var(--theme-accent-soft); color: var(--theme-accent); border-color: transparent; box-shadow: none}
+.button svg, .icon-button svg, .text-button svg {stroke-width: 1.8}
+.button:disabled, .icon-button:disabled, .text-button:disabled {opacity: .45; filter: none; box-shadow: none}
+.edit-status {display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 5px; line-height: 1.5; overflow-wrap: anywhere}
+/* 状态文本变化时淡入，避免「等待连接 / 已保存」来回切换时抽一下。 */
+.edit-status-text {animation: edit-status-in .2s ease-out}
+@keyframes edit-status-in {from {opacity: 0} to {opacity: 1}}
+@media (prefers-reduced-motion: reduce) {.edit-status-text {animation: none}}
+.edit-status > svg {flex-shrink: 0}
+.field-row-multiline .edit-status {justify-content: flex-start}
+.field-row {gap: 24px}
+.field-label p {line-height: 1.65}
+.background-control {display: flex; flex-direction: column; gap: 10px; min-width: 0; text-align: left}
+.background-url-form {display: flex; flex-direction: column; gap: 8px; min-width: 0}
+.background-url-form > input {width: 100%}
+.background-url-actions {display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: start}
+.background-url-actions > .select-control {width: 100%; min-width: 0}
+.background-url-actions > .button {white-space: nowrap}
+.background-upload {position: relative; display: grid; grid-template-columns: 38px minmax(0, 1fr); align-items: center; gap: 12px; min-height: 76px; padding: 14px; border: 1px dashed var(--form-edge); border-radius: calc(var(--theme-radius-control) + 2px); background: color-mix(in srgb, var(--theme-input-bg) 88%, var(--theme-accent-soft)); cursor: pointer; overflow-wrap: anywhere; transition: border-color .16s ease, background-color .16s ease, box-shadow .16s ease}
+.background-upload:hover {border-color: var(--theme-accent); background: color-mix(in srgb, var(--theme-input-bg) 76%, var(--theme-accent-soft))}
+.background-upload:focus-within {border-color: var(--theme-focus); box-shadow: 0 0 0 3px var(--theme-focus-ring)}
+.background-upload-input {position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0}
+.background-upload-icon {display: grid; place-items: center; width: 38px; height: 38px; border-radius: 11px; color: var(--theme-accent); background: var(--theme-accent-soft)}
+.background-upload-icon svg {stroke-width: 1.8}
+.background-upload-copy {display: flex; flex-direction: column; gap: 3px; min-width: 0}
+.background-upload-copy strong {color: var(--theme-text); font-size: 13px; font-weight: 600; line-height: 1.45; overflow-wrap: anywhere}
+.background-upload-copy small {color: var(--theme-muted); font-size: 11px; line-height: 1.55}
+.background-error {margin: 0; color: var(--theme-danger); font-size: 12px; line-height: 1.5}
+.statistics-controls select, .statistics-controls input {min-height: var(--form-height)}
+.statistics-table th button {display: inline-flex; align-items: center; gap: 6px; min-height: 32px}
+.nav-search:focus-within {border-color: var(--theme-focus); box-shadow: 0 0 0 3px var(--theme-focus-ring)}
+.nav-search input, .nav-search input:focus {border: 0; background: transparent; box-shadow: none; padding-left: 0}
+
+/* 原生滑块保留方向键、Home/End 和触控拖动。 */
+input[type='range'] {appearance: none; width: 100%; min-height: 32px; margin: 0; padding: 0; border: 0; box-shadow: none; background: transparent; accent-color: var(--theme-primary-bg); cursor: pointer}
+input[type='range']::-webkit-slider-runnable-track {height: 5px; border-radius: 999px; background: var(--theme-input-border)}
+input[type='range']::-moz-range-track {height: 5px; border-radius: 999px; background: var(--theme-input-border)}
+input[type='range']::-moz-range-progress {height: 5px; border-radius: 999px; background: var(--theme-primary-bg)}
+input[type='range']::-webkit-slider-thumb {appearance: none; height: 22px; width: 22px; margin-top: -8.5px; border-radius: 50%; background: var(--theme-toggle-knob); border: 1px solid var(--theme-input-border); box-shadow: 0 2px 5px #0002}
+input[type='range']::-moz-range-thumb {height: 22px; width: 22px; border-radius: 50%; background: var(--theme-toggle-knob); border: 1px solid var(--theme-input-border); box-shadow: 0 2px 5px #0002}
+input[type='range']:focus-visible {outline: 2px solid var(--theme-focus); outline-offset: 2px}
+
+@media (hover: hover) {
+  .checkbox-control:hover:not(:has(:disabled)) {background: var(--theme-accent-soft)}
+  .button:not(.primary):not(.danger):hover:not(:disabled) {background: var(--theme-accent-soft); color: var(--theme-accent); border-color: var(--theme-border)}
+}
+@media (max-width: 768px), (pointer: coarse) {
+  :root {--form-height: 44px}
+  .field-control > .select-control, .field-control > .password-control, .select-trigger, .password-control input {font-size: 16px}
+  .multi-options .checkbox-control {min-height: 44px}
+  .password-reveal {width: 44px}
+  .monitor-segmented button {min-height: 44px}
+  .background-url-actions {grid-template-columns: minmax(0, 1fr) auto}
+}
+@media (forced-colors: active) {
+  input, select, textarea, .button {border-color: ButtonText}
+  .select-trigger, .select-menu {border-color: ButtonText}
+  .select-option.is-active {background: Highlight; color: HighlightText}
+  .checkbox-mark input[type='checkbox'] {appearance: auto}
+  .checkbox-mark > svg {display: none}
+  .toggle::before {background: Canvas; border: 1px solid ButtonText}
+  .toggle.on::before {background: Highlight}
+  .toggle > span {background: ButtonText}
+  input[type='range'] {appearance: auto}
+  .background-upload {border-style: solid}
+  .background-upload-icon {border: 1px solid ButtonText}
+}
+
+.select-trigger {display: flex; align-items: center; justify-content: space-between; gap: 14px; min-width: 0; width: 100%; min-height: var(--form-height); padding: 9px 12px; border: 1px solid var(--form-edge); border-radius: var(--theme-radius-control); background: var(--theme-input-bg); color: var(--theme-input-text); line-height: 1.5; text-align: left; box-shadow: var(--form-shadow); transition: border-color .16s, box-shadow .16s}
+.select-trigger > span {overflow: hidden; text-overflow: ellipsis; white-space: nowrap}
+.select-trigger > svg {color: var(--theme-muted)}
+.select-trigger:focus-visible, .select-trigger[aria-expanded='true'] {outline: none; border-color: var(--theme-focus); box-shadow: 0 0 0 3px var(--theme-focus-ring)}
+.select-trigger[aria-invalid='true'] {border-color: var(--theme-danger); background: var(--theme-danger-soft)}
+.select-trigger:disabled {cursor: not-allowed; opacity: .55}
+.select-menu {position: fixed; inset: auto; margin: 0; padding: 5px; box-sizing: border-box; border: 1px solid var(--theme-border); border-radius: 13px; background: var(--theme-surface); color: var(--theme-text); box-shadow: 0 12px 36px #0003, 0 2px 8px #0001; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; font: 13px/1.5 var(--theme-font-sans); text-align: left; z-index: 1000; zoom: 1}
+.select-menu::backdrop {background: transparent; pointer-events: none}
+.select-option {display: flex; align-items: center; gap: 8px; min-height: 34px; padding: 7px 9px; border-radius: 8px; cursor: pointer; overflow-wrap: anywhere}
+.select-option > span {min-width: 0}
+.select-option > svg {color: var(--theme-accent); flex-shrink: 0}
+.select-option.is-active {background: var(--theme-accent-soft)}
+.select-option[aria-disabled='true'] {opacity: .45; cursor: not-allowed}
+@media (max-width: 768px), (pointer: coarse) {
+  .select-trigger, .select-menu {font-size: 16px}
+  .select-option {min-height: 44px}
+}
+@media (forced-colors: active) {
+  .select-trigger, .select-menu {border-color: ButtonText}
+  .select-option.is-active {background: Highlight; color: HighlightText}
+  .select-option > svg {color: currentColor}
+}

@@ -11,7 +11,7 @@ from module.base.decorator import cached_property
 from module.base.utils import *
 from module.logger import logger
 from module.ocr.rpc import ModelProxyFactory
-from module.webui.setting import State
+from module.runtime.setting import State
 
 if TYPE_CHECKING:
     from module.ocr.al_ocr import AlOcr

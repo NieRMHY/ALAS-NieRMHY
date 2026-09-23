@@ -10,6 +10,9 @@
 """
 
 import threading
+import hashlib
+import tempfile
+from contextlib import closing
 import os
 import sqlite3
 import time
@@ -18,9 +21,12 @@ from datetime import datetime
 from dataclasses import asdict
 
 import numpy as np
+import cv2
 
-from module.base.utils import save_image
+from deploy.atomic import atomic_replace
+from module.base.utils import area_pad, save_image
 from module.logger import logger
+from module.statistics.drop_cleanup import cleanup_drop_screenshots_if_due
 from module.statistics.utils import pack
 from module.base.device_id import get_device_id
 
@@ -141,6 +147,8 @@ class AzurStats:
     LOCAL_DB = './config/azurstats_local.db'
     LOCAL_MEOW_CSV = './log/azurstat_meowofficer_farming.csv'
     LOCAL_GENRES = {'opsi_meowfficer_farming'}
+    # 未识别物品的定位截图保存目录（随 screenshots/ 一起被 git 忽略）
+    UNKNOWN_ITEM_FOLDER = './screenshots/unknown_items'
     _local_lock = threading.Lock()
     _record_lock = threading.Lock()
 
@@ -168,28 +176,36 @@ class AzurStats:
     }
 
     @staticmethod
-    def load_meowofficer_farming():
+    def _meowofficer_farming_path(instance=None):
+        """实例缓存使用独立文件；无实例参数保留旧版全局 CSV 的访问方式。"""
+        if instance is None:
+            return AzurStats.LOCAL_MEOW_CSV
+        # 不将实例名直接拼成路径，避免大小写、特殊字符和路径分隔符冲突。
+        key = hashlib.sha256(f'{get_device_id()}\0{instance}'.encode('utf-8')).hexdigest()
+        stem, suffix = os.path.splitext(AzurStats.LOCAL_MEOW_CSV)
+        return f'{stem}.instance-{key}{suffix}'
+
+    @staticmethod
+    def load_meowofficer_farming(instance=None):
+        """读取指定实例的汇总，缺失时从明细重算，绝不借用全局 CSV。
+
+        无实例参数仅用于兼容旧版全局汇总，不能用作实例页的数据源。
         """
-        Returns:
-            np.ndarray: Stats.
-        """
+        path = AzurStats._meowofficer_farming_path(instance)
         try:
-            data = np.loadtxt(AzurStats.LOCAL_MEOW_CSV, delimiter=',', dtype=float, skiprows=1, encoding='utf-8')
-            if data.shape[0] != 6:
-                raise IndexError
-        except Exception:
-            data = np.zeros((6, len(AzurStats.meowofficer_farming_labels)))
-            data[:, 0] = np.arange(1, 7)
-            header = ','.join(AzurStats.meowofficer_farming_labels)
-            os.makedirs(os.path.dirname(AzurStats.LOCAL_MEOW_CSV), exist_ok=True)
-            np.savetxt(AzurStats.LOCAL_MEOW_CSV, data, delimiter=',', header=header, comments='', fmt='%f', encoding='utf-8')
-            data = np.loadtxt(AzurStats.LOCAL_MEOW_CSV, delimiter=',', dtype=float, skiprows=1, encoding='utf-8')
+            data = np.loadtxt(path, delimiter=',', dtype=float, skiprows=1, encoding='utf-8')
+            if data.shape != (6, len(AzurStats.meowofficer_farming_labels)):
+                raise ValueError('统计缓存形状不匹配')
+        except (OSError, ValueError):
+            return AzurStats.get_meowofficer_farming(instance=instance)
         return data
 
     @staticmethod
     def _ensure_local_db():
-        os.makedirs(os.path.dirname(AzurStats.LOCAL_DB), exist_ok=True)
-        with sqlite3.connect(AzurStats.LOCAL_DB) as conn:
+        os.makedirs(os.path.dirname(AzurStats.LOCAL_DB) or '.', exist_ok=True)
+        with closing(sqlite3.connect(AzurStats.LOCAL_DB, timeout=30)) as conn, conn:
+            # 跨进程先拿写锁，再检查列，避免两个进程同时执行 ALTER TABLE。
+            conn.execute('BEGIN IMMEDIATE')
             conn.execute('''
                 CREATE TABLE IF NOT EXISTS opsi_items (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -203,11 +219,18 @@ class AzurStats:
                     amount INTEGER,
                     tag TEXT,
                     device_id TEXT,
+                    instance TEXT,
                     genre TEXT,
                     combat_count INTEGER,
                     created_at INTEGER
                 )
             ''')
+            columns = {row[1] for row in conn.execute('PRAGMA table_info(opsi_items)')}
+            if 'instance' not in columns:
+                # 旧记录没有可靠的实例身份，NULL 明确表示历史共享，禁止推断归属。
+                conn.execute('ALTER TABLE opsi_items ADD COLUMN instance TEXT')
+            conn.execute('CREATE INDEX IF NOT EXISTS idx_opsi_items_instance_device_genre '
+                         'ON opsi_items(instance, device_id, genre)')
             conn.execute('CREATE INDEX IF NOT EXISTS idx_opsi_items_device_genre ON opsi_items(device_id, genre)')
             conn.execute('CREATE INDEX IF NOT EXISTS idx_opsi_items_imgid ON opsi_items(imgid)')
             conn.commit()
@@ -218,23 +241,28 @@ class AzurStats:
             return 0
 
         AzurStats._ensure_local_db()
+        # 兼容旧版离线导入；缺少身份的记录仍属于历史共享。
+        rows = [dict(row, instance=row.get("instance")) for row in rows]
         with AzurStats._local_lock:
-            with sqlite3.connect(AzurStats.LOCAL_DB) as conn:
+            with closing(sqlite3.connect(AzurStats.LOCAL_DB, timeout=30)) as conn, conn:
                 conn.executemany('''
                     INSERT INTO opsi_items (
                         imgid, server, zone, zone_type, zone_id, hazard_level,
-                        item, amount, tag, device_id, genre, combat_count, created_at
+                        item, amount, tag, device_id, instance, genre, combat_count, created_at
                     ) VALUES (
                         :imgid, :server, :zone, :zone_type, :zone_id, :hazard_level,
-                        :item, :amount, :tag, :device_id, :genre, :combat_count, :created_at
+                        :item, :amount, :tag, :device_id, :instance, :genre, :combat_count, :created_at
                     )
                 ''', rows)
                 conn.commit()
         return len(rows)
 
     @staticmethod
-    def _load_local_opsi_items(device_id=None, genre='opsi_meowfficer_farming'):
-        AzurStats._ensure_local_db()
+    def _load_local_opsi_items(device_id=None, genre='opsi_meowfficer_farming', instance=None, connection=None):
+        if connection is None:
+            AzurStats._ensure_local_db()
+            with closing(sqlite3.connect(AzurStats.LOCAL_DB, timeout=30)) as conn:
+                return AzurStats._load_local_opsi_items(device_id, genre, instance, connection=conn)
         query = 'SELECT * FROM opsi_items WHERE 1=1'
         params = []
         if device_id:
@@ -243,68 +271,205 @@ class AzurStats:
         if genre:
             query += ' AND genre = ?'
             params.append(genre)
+        if instance is not None:
+            query += ' AND instance = ?'
+            params.append(instance)
         query += ' ORDER BY id ASC'
-
-        with sqlite3.connect(AzurStats.LOCAL_DB) as conn:
-            conn.row_factory = sqlite3.Row
-            rows = conn.execute(query, params).fetchall()
-            return [dict(row) for row in rows]
+        connection.row_factory = sqlite3.Row
+        return [dict(row) for row in connection.execute(query, params).fetchall()]
 
     @staticmethod
-    def _write_meowofficer_farming(data):
-        header = ','.join(AzurStats.meowofficer_farming_labels)
-        os.makedirs(os.path.dirname(AzurStats.LOCAL_MEOW_CSV), exist_ok=True)
-        np.savetxt(
-            AzurStats.LOCAL_MEOW_CSV,
-            data,
-            delimiter=',',
-            header=header,
-            comments='',
-            fmt='%f',
-            encoding='utf-8',
-        )
+    def _write_meowofficer_farming(data, instance=None):
+        """原子替换汇总文件，读取者只会看到完整的新旧版本。"""
+        path = AzurStats._meowofficer_farming_path(instance)
+        folder = os.path.dirname(path) or '.'
+        os.makedirs(folder, exist_ok=True)
+        temporary = None
+        try:
+            with tempfile.NamedTemporaryFile(mode='w', encoding='utf-8', dir=folder,
+                                             prefix='.meow-', suffix='.tmp', delete=False) as stream:
+                temporary = stream.name
+                np.savetxt(stream, data, delimiter=',', header=','.join(AzurStats.meowofficer_farming_labels),
+                           comments='', fmt='%f')
+            atomic_replace(temporary, path)
+        finally:
+            if temporary and os.path.exists(temporary):
+                os.unlink(temporary)
 
     @staticmethod
-    def get_meowofficer_farming():
-        all_data = AzurStats._load_local_opsi_items(
-            device_id=get_device_id(),
-            genre='opsi_meowfficer_farming',
-        )
-        out_data = np.zeros((6, len(AzurStats.meowofficer_farming_labels)))
-        img_combat_counts = {}
+    def get_meowofficer_farming(instance=None):
+        """重算指定实例的收益；无参数时保留旧版全局导出用途。
 
-        for row in all_data:
-            imgid = row.get('imgid')
-            h_level = row.get('hazard_level')
-            if not h_level or h_level < 1 or h_level > 6:
+        用 SQLite 写事务串行化明细读取和缓存替换，防止跨进程刷新将
+        新快照覆盖成旧快照。旧记录的 NULL 身份不会匹配任何实例。
+        """
+        AzurStats._ensure_local_db()
+        with closing(sqlite3.connect(AzurStats.LOCAL_DB, timeout=30)) as conn, conn:
+            conn.execute('BEGIN IMMEDIATE')
+            all_data = AzurStats._load_local_opsi_items(
+                device_id=get_device_id(),
+                genre='opsi_meowfficer_farming',
+                instance=instance, connection=conn,
+            )
+            out_data = np.zeros((6, len(AzurStats.meowofficer_farming_labels)))
+            img_combat_counts = {}
+
+            for row in all_data:
+                imgid = (row.get('instance'), row.get('device_id'), row.get('imgid'))
+                h_level = row.get('hazard_level')
+                if not h_level or h_level < 1 or h_level > 6:
+                    continue
+
+                combat_count = row.get('combat_count', 0)
+                if imgid not in img_combat_counts:
+                    img_combat_counts[imgid] = combat_count
+                    out_data[h_level - 1, 2] += combat_count
+
+                item_name = row.get('item')
+                amount = row.get('amount', 0)
+
+                for i, item_prefix in enumerate(AzurStats.meowofficer_farming_map):
+                    if item_name.startswith(item_prefix):
+                        out_data[h_level - 1, 3 + i] += amount
+                        break
+            current_time = int(datetime.timestamp(datetime.now()))
+
+            for i in range(6):
+                h = i + 1
+                out_data[i, 0] = h
+                out_data[i, 1] = current_time
+                out_data[i, 2] /= AzurStats.unit_combat_count[h]
+
+                if out_data[i, 2] > 0:
+                    for j in range(3, len(AzurStats.meowofficer_farming_labels)):
+                        out_data[i, j] /= out_data[i, 2]
+
+            AzurStats._write_meowofficer_farming(out_data, instance=instance)
+            logger.info(f'[Statistics] 本地统计数据更新成功: {instance or "全局共享"}')
+            return out_data
+
+    @staticmethod
+    def get_meow_loot_monthly_totals(device_id=None, year=None, month=None, instance=None):
+        """按侵蚀等级汇总指定月份（默认本月）的耄耋相接掉落总数。
+
+        从本地掉落明细库 opsi_items 汇总，供统计页
+        「本月/历史耄耋相接收获」表格使用。分类口径：
+        Plate 为金菜（装备强化板）、GearDesignPlan*T5 为彩图纸、
+        OrdnanceTestingReport*T4 为金机密、CoordinateObscure 为隐秘、
+        CoordinateAbyssal 为深渊、CatT3 为金猫箱。
+
+        Args:
+            device_id: 设备标识，默认当前设备。
+            year: 年份，默认当前年。
+            month: 月份（1-12），默认当前月。
+            instance: 实例名；省略时保留旧版全局汇总。
+
+        Returns:
+            dict[int, dict[str, int]]: 侵蚀等级(1-6) → 分类计数字典，
+                键为 Plate / GearDesignPlanT5 / OrdnanceTestingReportT4 /
+                CoordinateObscure / CoordinateAbyssal / CatT3。
+        """
+        if year is None or month is None:
+            now = datetime.now()
+            year, month = now.year, now.month
+        month_start = int(datetime(year, month, 1).timestamp())
+        if month == 12:
+            month_end = int(datetime(year + 1, 1, 1).timestamp())
+        else:
+            month_end = int(datetime(year, month + 1, 1).timestamp())
+        if device_id is None:
+            device_id = get_device_id()
+        AzurStats._ensure_local_db()
+
+        # 分类规则：前缀 + 可选等级后缀（彩图纸只取 T5、金机密只取 T4）
+        def classify(name: str):
+            if name.startswith("CatT3"):
+                return "CatT3"
+            if name.startswith("GearDesignPlan") and name.endswith("T5"):
+                return "GearDesignPlanT5"
+            if name.startswith("OrdnanceTestingReport") and name.endswith("T4"):
+                return "OrdnanceTestingReportT4"
+            if name.startswith("CoordinateObscure"):
+                return "CoordinateObscure"
+            if name.startswith("CoordinateAbyssal"):
+                return "CoordinateAbyssal"
+            if name.startswith("Plate"):
+                return "Plate"
+            return None
+
+        keys = (
+            "Plate",
+            "GearDesignPlanT5",
+            "OrdnanceTestingReportT4",
+            "CoordinateObscure",
+            "CoordinateAbyssal",
+            "CatT3",
+        )
+        totals = {h: {k: 0 for k in keys} for h in range(1, 7)}
+        scope = ' AND instance = ?' if instance is not None else ''
+        params = (month_start, month_end, device_id) + ((instance,) if instance is not None else ())
+        try:
+            with closing(sqlite3.connect(AzurStats.LOCAL_DB, timeout=30)) as conn:
+                rows = conn.execute(
+                    "SELECT hazard_level, item, SUM(amount) FROM opsi_items "
+                    "WHERE genre='opsi_meowfficer_farming' AND created_at >= ? AND created_at < ? "
+                    f"AND device_id = ?{scope} GROUP BY hazard_level, item",
+                    params,
+                ).fetchall()
+            for h_raw, item, total in rows:
+                try:
+                    h = int(h_raw)
+                except (TypeError, ValueError):
+                    continue
+                if h not in totals or not total:
+                    continue
+                key = classify(str(item or ""))
+                if key is None:
+                    continue
+                try:
+                    totals[h][key] += int(total)
+                except (TypeError, ValueError):
+                    pass
+        except Exception:
+            logger.warning('[Statistics] 查询耄耋相接掉落总数失败', exc_info=True)
+        return totals
+
+    @staticmethod
+    def get_meow_loot_available_months(device_id=None, limit=24, instance=None):
+        """返回掉落明细库中存在耄耋相接数据的月份列表（从新到旧）。
+
+        Args:
+            device_id: 设备标识，默认当前设备。
+            limit: 最多返回的月份数。
+            instance: 实例名；省略时保留旧版全局月份列表。
+
+        Returns:
+            list[tuple[int, int]]: [(year, month), ...] 从新到旧。
+        """
+        if device_id is None:
+            device_id = get_device_id()
+        AzurStats._ensure_local_db()
+        scope = ' AND instance = ?' if instance is not None else ''
+        params = (device_id,) + ((instance,) if instance is not None else ()) + (limit,)
+        try:
+            with closing(sqlite3.connect(AzurStats.LOCAL_DB, timeout=30)) as conn:
+                rows = conn.execute(
+                    "SELECT DISTINCT strftime('%Y-%m', created_at, 'unixepoch') AS ym "
+                    "FROM opsi_items WHERE genre='opsi_meowfficer_farming' AND device_id = ? "
+                    f"{scope} ORDER BY ym DESC LIMIT ?",
+                    params,
+                ).fetchall()
+        except Exception:
+            logger.warning('[Statistics] 查询耄耋相接掉落月份列表失败', exc_info=True)
+            return []
+        months = []
+        for (ym,) in rows:
+            try:
+                y_str, m_str = ym.split("-")
+                months.append((int(y_str), int(m_str)))
+            except (ValueError, AttributeError):
                 continue
-                
-            combat_count = row.get('combat_count', 0)
-            if imgid not in img_combat_counts:
-                img_combat_counts[imgid] = combat_count
-                out_data[h_level - 1, 2] += combat_count
-            
-            item_name = row.get('item')
-            amount = row.get('amount', 0)
-            
-            for i, item_prefix in enumerate(AzurStats.meowofficer_farming_map):
-                if item_name.startswith(item_prefix):
-                    out_data[h_level - 1, 3 + i] += amount
-                    break
-        current_time = int(datetime.timestamp(datetime.now()))
-
-        for i in range(6):
-            h = i + 1
-            out_data[i, 0] = h
-            out_data[i, 1] = current_time
-            out_data[i, 2] /= AzurStats.unit_combat_count[h]
-
-            if out_data[i, 2] > 0:
-                for j in range(3, len(AzurStats.meowofficer_farming_labels)):
-                    out_data[i, j] /= out_data[i, 2]
-
-        AzurStats._write_meowofficer_farming(out_data)
-        logger.info('[Statistics] 本地统计数据更新成功: azurstat_meowofficer_farming.csv')
+        return months
 
     @staticmethod
     def _ensure_local_parser():
@@ -312,7 +477,7 @@ class AzurStats:
         return SceneOperationSiren
 
     @staticmethod
-    def _parse_local_opsi_items(image, imgid, genre, combat_count):
+    def _parse_local_opsi_items(image, imgid, genre, combat_count, filename=None, instance=None):
         SceneOperationSiren = AzurStats._ensure_local_parser()
         scene = SceneOperationSiren()
         scene.load_file(image)
@@ -325,12 +490,67 @@ class AzurStats:
             row = asdict(item)
             row['imgid'] = imgid
             row['device_id'] = device_id
+            row['instance'] = instance
             row['genre'] = genre
             row['combat_count'] = int(combat_count or 0)
             row['created_at'] = created_at
             rows.append(row)
 
+        if filename and any(str(row['item']).isdigit() for row in rows):
+            AzurStats._save_unknown_item_images(scene, filename)
+
         return rows
+
+    @staticmethod
+    def _save_unknown_item_images(scene, filename):
+        """保存含未识别物品的掉落截图。
+
+        未识别物品（模板匹配失败、只有数字代号）需要人工辨认后补模板，
+        这里把该结算截图另存一份并在未知物品所在格子画红框，存到
+        ``screenshots/unknown_items/``，便于事后核对物品位置。
+
+        Args:
+            scene (SceneOperationSiren): 已完成 parse_scene() 的场景对象。
+            filename (str): 掉落记录文件名，用于生成保存文件名。
+        """
+        group = scene.auto_search_item_group
+        stem = os.path.splitext(os.path.basename(filename))[0]
+        saved = []
+        for index, image in enumerate(scene.images):
+            if not scene.is_opsi_reward(image):
+                continue
+            try:
+                scene._auto_search_get_items_load(image)
+                # 数量已在解析阶段识别过，这里只需要物品名
+                group.predict(image, name=True, amount=False, tag=False)
+            except Exception as e:
+                logger.warning(f'未识别物品截图生成失败, {e}')
+                continue
+
+            items = [item for item in group.items if not item.is_known_item()]
+            if not items:
+                continue
+
+            marked = image.copy()
+            for item in items:
+                area = area_pad(item.area, pad=4)
+                cv2.rectangle(marked, area[:2], area[2:], (255, 0, 0), 3)
+                cv2.putText(marked, str(item.name), (area[0], area[1] - 6),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
+
+            code = '_'.join(sorted({str(item.name) for item in items}))
+            suffix = f'_{index}' if len(scene.images) > 1 else ''
+            file = os.path.join(
+                AzurStats.UNKNOWN_ITEM_FOLDER, f'{stem}_未知物品{code}{suffix}.png')
+            try:
+                os.makedirs(AzurStats.UNKNOWN_ITEM_FOLDER, exist_ok=True)
+                save_image(marked, file)
+                saved.append(file)
+            except Exception as e:
+                logger.warning(f'未识别物品截图保存失败, {e}')
+
+        if saved:
+            logger.info(f'发现未识别物品，截图已保存: {", ".join(saved)}')
 
     def _record_local(self, image, genre, filename, combat_count):
         if genre not in ['opsi_meowfficer_farming']:
@@ -338,12 +558,13 @@ class AzurStats:
 
         imgid = f"{os.path.splitext(os.path.basename(filename))[0][:8]}{uuid.uuid4().hex[:8]}"
         try:
-            rows = self._parse_local_opsi_items(image, imgid, genre, combat_count)
+            rows = self._parse_local_opsi_items(
+                image, imgid, genre, combat_count, filename=filename, instance=self.config.config_name)
             if not rows:
                 logger.warning('本地碧蓝统计解析跳过, no opsi item rows extracted')
                 return False
             inserted = self._insert_local_opsi_items(rows)
-            self.get_meowofficer_farming()
+            self.get_meowofficer_farming(instance=self.config.config_name)
             logger.info(f'本地碧蓝统计解析成功，行数={inserted}')
             return True
         except Exception as e:
@@ -423,6 +644,10 @@ class AzurStats:
         Returns:
             DropImage:
         """
+        # 掉落记录的每个提交周期都会走到这里，用它作为过期截图的清理时机
+        # （内部有节流，不会每场战斗都扫目录）
+        cleanup_drop_screenshots_if_due(self.config)
+
         method_value = None
         if isinstance(method, bool):
             save = save or method

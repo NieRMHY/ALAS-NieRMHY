@@ -17,9 +17,7 @@
 </p>
 
 <p align="center">
-  <a href="https://deepwiki.com/wess09/AzurPilot">
-    <img src="https://deepwiki.com/badge.svg" alt="DeepWiki" height="22">
-  </a>
+  <a href="https://deepwiki.com/wess09/AzurPilot"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki"></a>
 </p>
 
 <p align="center">
@@ -148,13 +146,18 @@ AzurPilot は MCP サービスを提供しており、MCP 対応のクライア�
 
 > MCP サービスはデフォルトで WebUI と一緒に起動し、`/mcp` パス（WebUI のデフォルトポート 25548）にマウントされます。また、`uv run python mcp_server_sse.py` で単独実行も可能です（単独ポート 22268）。
 
+MCP は WebUI のパスワード（`--key` または `config/deploy.yaml` の `Password`）を流用します。パスワード未設定で WebUI が公開アドレスをリッスンしている場合、WebUI が自動生成し、リポジトリ直下の `password.txt` で確認できます。このパスワードを付けないリクエストは 401 で拒否されます。
+
 ### ローカル接続設定
 
 ```json
 {
   "mcpServers": {
     "alas": {
-      "url": "http://127.0.0.1:25548/mcp/sse"
+      "url": "http://127.0.0.1:25548/mcp/sse",
+      "headers": {
+        "Authorization": "Bearer <WebUI のパスワード>"
+      }
     }
   }
 }
@@ -166,13 +169,20 @@ AzurPilot は MCP サービスを提供しており、MCP 対応のクライア�
 {
   "mcpServers": {
     "alas": {
-      "url": "http://[IP_ADDRESS]:25548/mcp/sse"
+      "url": "http://[IP_ADDRESS]:25548/mcp/sse",
+      "headers": {
+        "Authorization": "Bearer <WebUI のパスワード>"
+      }
     }
   }
 }
 ```
 
 `[IP_ADDRESS]` を実際のサーバーアドレスまたはイントラネットアドレスに置き換えてください。WebUI のポートを変更した場合は、URL 内のポートも同様に置き換えてください。
+
+URL しか指定できずリクエストヘッダーを設定できないクライアントは、パスワードをクエリパラメータに含められます：`http://[IP_ADDRESS]:25548/mcp/sse?key=<WebUI のパスワード>`。この場合 URL 自体が資格情報になるため、スクリーンショットや共有は避け、可能な限りヘッダーを使用してください。`Authorization` の代わりに `X-API-Key: <WebUI のパスワード>` も使用できます。
+
+パスワードを変更した場合は、MCP に反映させるため WebUI を再起動してください。
 
 ### MCP ツール一覧
 
@@ -251,7 +261,13 @@ AzurPilot は MCP サービスを提供しており、MCP 対応のクライア�
 - [GitHub リポジトリ](https://github.com/wess09/AzurPilot) — ソースコード、Issue、Pull Request
 - [QQ 交流群](https://join.nanoda.work/#/) — アズールレーン自動化コミュニティ
 - [AzurLaneAutoScript 上流プロジェクト](https://github.com/LmeSzinc/AzurLaneAutoScript) — ALAS オリジナル版
+
+### 派生プロジェクト・リンク
+
 - [AzurPilot ラズベリーパイ版](https://github.com/nnieie/AzurPilot) — ラズベリーパイ / Termux 実機向けの AzurPilot CN デプロイ版
+- [AzurPilot-private-Ru](https://github.com/AliceLiddell01/AzurPilot-private-Ru) — 制御可能なアップデート、透明な起動、外部ネットワーク依存を削減した個人向けロシア語版 AzurPilot
+- [PerseusAutoScript](https://github.com/lajiovo/PerseusAutoScript) — AzurPilot 向け総合運用ツール（バックグラウンド静默実行、クローズドループ自己修復、各種通知）
+- [AzurRem](https://github.com/syyxl3111/AzurRem) — AzurPilot 向けネイティブ Android クライアント（Kotlin + Jetpack Compose で再実装、PC ゲートウェイ同梱）
 
 ## 開発と貢献
 

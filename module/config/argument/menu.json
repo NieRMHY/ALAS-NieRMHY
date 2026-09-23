@@ -63,7 +63,9 @@
       "Meowfficer",
       "Guild",
       "Reward",
-      "Awaken"
+      "Awaken",
+      "Secretary",
+      "OperationHandover"
     ]
   },
   "DailyMission": {
@@ -133,7 +135,6 @@
     "menu": "collapse",
     "page": "setting",
     "tasks": [
-      "FleetScan",
       "FleetInfo"
     ]
   },
@@ -141,6 +142,7 @@
     "menu": "collapse",
     "page": "tool",
     "tasks": [
+      "FleetScan",
       "Daemon",
       "OpsiDaemon",
       "EventStory",
@@ -150,7 +152,8 @@
       "OcrBenchmark",
       "AzurLaneUncensored",
       "GameManager",
-      "EmulatorManager"
+      "EmulatorManager",
+      "MeowfficerScore"
     ]
   }
 }

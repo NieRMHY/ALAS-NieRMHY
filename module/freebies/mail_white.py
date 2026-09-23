@@ -29,7 +29,7 @@ class MailSelectSetting(Setting):
     """
 
     def is_option_active(self, option: Button) -> bool:
-        return self.main.image_color_count(option, color=(57, 56, 57), threshold=221, count=50)
+        return self.main.image_color_count(option, color=(57, 56, 57), threshold=30, count=50)
 
 
 class MailWhite(UI):

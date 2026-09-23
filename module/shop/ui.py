@@ -114,13 +114,13 @@ class ShopUI(UI):
             # SHOP_REFRESH 是带背景的刷新图标
             if self.appear(SHOP_REFRESH_CHECK, offset=(30, 30), interval=3):
                 # SHOP_REFRESH 激活时有两种颜色状态
-                if self.image_color_count(SHOP_REFRESH.button, color=(49, 142, 207), threshold=221, count=50):
+                if self.image_color_count(SHOP_REFRESH.button, color=(49, 142, 207), threshold=30, count=50):
                     self.device.click(SHOP_REFRESH)
                     continue
-                if self.image_color_count(SHOP_REFRESH.button, color=(54, 117, 161), threshold=221, count=50):
+                if self.image_color_count(SHOP_REFRESH.button, color=(54, 117, 161), threshold=30, count=50):
                     self.device.click(SHOP_REFRESH)
                     continue
-                if self.image_color_count(SHOP_REFRESH.button, color=(52, 74, 94), threshold=221, count=50):
+                if self.image_color_count(SHOP_REFRESH.button, color=(52, 74, 94), threshold=30, count=50):
                     logger.info('[商店-UI] 刷新不可用')
                     break
                 # 不使用 continue，当作 SHOP_REFRESH 未匹配处理

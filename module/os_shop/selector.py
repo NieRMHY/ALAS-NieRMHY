@@ -4,8 +4,10 @@
 支持明石商店过滤和 OS 商店预设两种过滤模式。
 """
 import re
+from contextlib import contextmanager
 from typing import List
 from module.config.config_generated import GeneratedConfig
+from module.logger import logger
 from module.os_shop.preset import OS_SHOP
 from module.os_shop.item import OSShopItem as Item
 from module.base.filter import Filter
@@ -94,6 +96,116 @@ class Selector():
         """
         return item.count >= 1 and item.total_count >= 1 and item.count <= item.total_count
 
+    def _opsi_shop_strategy_enabled(self):
+        """仅在 OpsiShop 的港口购买作用域内启用高级策略。"""
+        task = getattr(getattr(self.config, 'task', None), 'command', None)
+        return (
+            getattr(self, '_opsi_shop_strategy_scope_active', False)
+            and task == 'OpsiShop'
+            and getattr(self.config, 'ShopAdvanced_Mode', 'legacy') == 'advanced'
+        )
+
+    @contextmanager
+    def opsi_shop_strategy_scope(self):
+        """将高级策略限制在 OpsiShop 明确拥有的港口商店流程。"""
+        previous = getattr(self, '_opsi_shop_strategy_scope_active', False)
+        self._opsi_shop_strategy_scope_active = True
+        try:
+            yield
+        finally:
+            self._opsi_shop_strategy_scope_active = previous
+
+    def _opsi_shop_strategy_state(self):
+        """保存明石商店多次刷新间的策略会话记录。"""
+        state = getattr(self, '_opsi_shop_strategy_session', None)
+        if state is None:
+            state = {'spent': {}, 'purchased': {}, 'inventory_purchased': {}, 'cap_usage': {}}
+            self._opsi_shop_strategy_session = state
+        return state
+
+    def _opsi_shop_strategy_currency(self, items):
+        """以现有保留币规则计算脚本可支配的黄币和紫币。"""
+        currencies = {}
+        for item in items:
+            cost = getattr(item, 'cost', None)
+            if not isinstance(cost, str) or not cost or cost in currencies:
+                continue
+            try:
+                currencies[cost] = max(0, int(self.get_currency_coins(item)))
+            except (TypeError, ValueError):
+                currencies[cost] = 0
+        return currencies
+
+    def _opsi_shop_strategy_max_quantity(self, item):
+        """用实际库存和保留后的币量限制单个大世界商品数量。"""
+        if item.price <= 0:
+            return 0
+        try:
+            currency = max(0, int(self.get_currency_coins(item)))
+        except (TypeError, ValueError):
+            return 0
+        stock = max(1, int(getattr(item, 'count', 0)))
+        return min(stock, currency // item.price)
+
+    def _opsi_shop_strategy_actions(self, items, eligible):
+        """将大世界商品投影给策略，并将已校验的动作绑定回原商品。"""
+        from module.shop_strategy.adapter import run_shop_strategy
+
+        self._opsi_shop_strategy_failed = False
+        state = self._opsi_shop_strategy_state()
+        result = run_shop_strategy(
+            self.config.ShopAdvanced_Script,
+            items,
+            domain='opsi',
+            currency=self._opsi_shop_strategy_currency(items),
+            eligible=eligible,
+            # 明石商店不读取计数器，count 会保持 -1；此时以单件作为安全上限。
+            stock=lambda item: max(1, int(getattr(item, 'count', 0))),
+            max_quantity=self._opsi_shop_strategy_max_quantity,
+            spent=state['spent'],
+            purchased=state['purchased'],
+            inventory_purchased=state['inventory_purchased'],
+            cap_usage=state['cap_usage'],
+        )
+        if not result.success:
+            self._opsi_shop_strategy_failed = True
+            diagnostic = result.diagnostic
+            location = ''
+            if diagnostic is not None and diagnostic.line is not None:
+                location = f'（第 {diagnostic.line} 行，第 {diagnostic.column or 1} 列）'
+            message = diagnostic.message if diagnostic is not None else '未知策略错误'
+            logger.warning(f'[高级商店策略] {message}{location}；本轮不购买')
+            return None
+
+        for action in result.actions:
+            action.item._shop_strategy_candidate_id = action.candidate.id
+            action.item._shop_strategy_quantity = action.quantity
+            action.item._shop_strategy_cost = action.cost
+            action.item._shop_strategy_cap_usage_keys = action.cap_usage_keys
+        logger.attr('高级策略计划', ' > '.join(
+            f'{action.candidate.name} x{action.quantity}' for action in result.actions
+        ))
+        return result.actions
+
+    def _opsi_shop_strategy_record_purchase(self, item):
+        """将大世界商店实际购买量加入当前高级策略会话。"""
+        if not self._opsi_shop_strategy_enabled():
+            return
+        candidate_id = getattr(item, '_shop_strategy_candidate_id', None)
+        cost = getattr(item, '_shop_strategy_cost', None)
+        quantity = getattr(item, '_shop_strategy_executed_quantity',
+                           getattr(item, '_shop_strategy_quantity', None))
+        if not isinstance(candidate_id, str) or not isinstance(cost, str):
+            return
+        if not isinstance(quantity, int) or isinstance(quantity, bool) or quantity <= 0:
+            return
+        state = self._opsi_shop_strategy_state()
+        state['spent'][cost] = state['spent'].get(cost, 0) + item.price * quantity
+        state['purchased'][candidate_id] = state['purchased'].get(candidate_id, 0) + quantity
+        state['inventory_purchased'][candidate_id] = state['inventory_purchased'].get(candidate_id, 0) + quantity
+        for key in getattr(item, '_shop_strategy_cap_usage_keys', ()):
+            state['cap_usage'][key] = state['cap_usage'].get(key, 0) + quantity
+
     def items_filter_in_akashi_shop(self, items) -> List[Item]:
         """过滤明石商店中可购买的物品。
 
@@ -106,6 +218,18 @@ class Selector():
             list[Item]: 可购买的物品列表。
         """
         items = self.pretreatment(items)
+        if self._opsi_shop_strategy_enabled():
+            actions = self._opsi_shop_strategy_actions(
+                items,
+                eligible=lambda item: (
+                    self.enough_coins_in_akashi(item)
+                    and item.price <= max(0, self.get_currency_coins(item))
+                ),
+            )
+            if actions is None:
+                return []
+            # 旧调用方使用 pop() 取候选；只返回下一项以便每次购买后重新 OCR 规划。
+            return [actions[0].item] if actions else []
         if getattr(self, 'is_running_cl1_leveling', False):
             parser = self.config.OpsiHazard1Leveling_Cl1Filter
             if not parser:
@@ -129,6 +253,18 @@ class Selector():
             list[Item]: 可购买的物品列表。
         """
         items = self.pretreatment(items)
+        if self._opsi_shop_strategy_enabled():
+            actions = self._opsi_shop_strategy_actions(
+                items,
+                eligible=lambda item: (
+                    self.check_cl1_purple_coins(item)
+                    and self.check_item_count(item)
+                    and item.price <= max(0, self.get_currency_coins(item))
+                ),
+            )
+            if actions is None:
+                return []
+            return [action.item for action in actions]
         preset = self.config.OpsiShop_PresetFilter
         parser = ''
         if preset == 'custom':

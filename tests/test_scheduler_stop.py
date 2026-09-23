@@ -2,14 +2,14 @@ import unittest
 from unittest.mock import Mock, patch
 
 from module.exception import RequestHumanTakeover
-from module.webui.scheduler_stop import execute_stop_action, normalize_stop_action
+from module.runtime.scheduler_stop import execute_stop_action, normalize_stop_action
 
 
 class TestSchedulerStopAction(unittest.TestCase):
     def test_invalid_action_falls_back_without_connecting_device(self):
         config = Mock()
 
-        with patch('module.webui.scheduler_stop._get_existing_device') as device:
+        with patch('module.runtime.scheduler_stop._get_existing_device') as device:
             self.assertTrue(execute_stop_action(config, 'unexpected'))
 
         device.assert_not_called()
@@ -18,7 +18,7 @@ class TestSchedulerStopAction(unittest.TestCase):
     def test_stay_there_does_not_connect_device(self):
         config = Mock()
 
-        with patch('module.webui.scheduler_stop._get_existing_device') as device:
+        with patch('module.runtime.scheduler_stop._get_existing_device') as device:
             self.assertTrue(execute_stop_action(config, 'stay_there'))
 
         device.assert_not_called()
@@ -28,7 +28,7 @@ class TestSchedulerStopAction(unittest.TestCase):
         device = Mock()
 
         with patch(
-            'module.webui.scheduler_stop._get_existing_device', return_value=device
+            'module.runtime.scheduler_stop._get_existing_device', return_value=device
         ):
             self.assertTrue(execute_stop_action(config, 'close_game'))
 
@@ -40,7 +40,7 @@ class TestSchedulerStopAction(unittest.TestCase):
         device.app_stop.side_effect = RequestHumanTakeover
 
         with patch(
-            'module.webui.scheduler_stop._get_existing_device', return_value=device
+            'module.runtime.scheduler_stop._get_existing_device', return_value=device
         ):
             with self.assertRaises(RequestHumanTakeover):
                 execute_stop_action(config, 'close_game')
@@ -52,7 +52,7 @@ class TestSchedulerStopAction(unittest.TestCase):
 
         with (
             patch(
-                'module.webui.scheduler_stop._get_existing_device', return_value=device
+                'module.runtime.scheduler_stop._get_existing_device', return_value=device
             ),
             patch('module.ui.ui.UI') as ui,
         ):
@@ -70,7 +70,7 @@ class TestSchedulerStopAction(unittest.TestCase):
 
         with (
             patch(
-                'module.webui.scheduler_stop._get_existing_device', return_value=device
+                'module.runtime.scheduler_stop._get_existing_device', return_value=device
             ),
             patch('module.ui.ui.UI', return_value=ui) as ui_class,
         ):

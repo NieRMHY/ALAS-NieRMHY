@@ -98,6 +98,18 @@ Overview:
   Waiting:
   NoTask:
   Stat:
+  BackgroundCurrentDefault:
+  BackgroundCurrentLocal:
+  BackgroundCurrentMixed:
+  BackgroundCurrentUrl:
+  BackgroundCustomUrls:
+  BackgroundDirectLink:
+  BackgroundExtractToLocal:
+  BackgroundLocalCount:
+  BackgroundOpenFolder:
+  BackgroundOpenInNewWindow:
+  BackgroundTitle:
+  BackgroundUrlCount:
 
 Dashboard:
   TimeError:
@@ -322,6 +334,9 @@ DeploySetting:
   WebuiSSLKeyHelp:
   WebuiSSLCert:
   WebuiSSLCertHelp:
+  DisableBranchWatermark:
+  DisableBranchWatermarkHelp:
+  WatermarkHiddenNow:
 
 StartupRun:
   Title:
@@ -337,6 +352,9 @@ Text:
   InvalidFeedBack:
   Clear:
   RunNow:
+  RunNowSchedulerStopped:
+  RunNowTaskDisabled:
+  SchedulerQuickBar:
   EnterPassword:
   ChooseFile:
 
@@ -447,6 +465,53 @@ Stat:
   LoadResourceDataFailed:
   NoResourceData:
   NoValidResourceData:
+  BackgroundBtn:
+  ChartAp:
+  ChartApLabel:
+  ChartAsset:
+  ChartChange:
+  ChartChangeLabel:
+  ChartClose:
+  ChartDelta:
+  ChartDensity:
+  ChartDistance:
+  ChartHigh:
+  ChartLow:
+  ChartMa10:
+  ChartMa5:
+  ChartMaxLabel:
+  ChartMean:
+  ChartMeanLabel:
+  ChartMinLabel:
+  ChartOpen:
+  ChartPanelTitle:
+  ChartPurple:
+  ChartResetBtn:
+  ChartSeriesAp:
+  ChartSeriesAsset:
+  ChartSeriesDistance:
+  ChartSeriesPurple:
+  ChartSeriesYellow:
+  ChartSource:
+  ChartYellow:
+  ExtractAlreadyLocal:
+  ExtractDone:
+  ExtractFailed:
+  ExtractHint:
+  ExtractNoImage:
+  ExtractNoImageData:
+  ExtractRunning:
+  ExtractSkipped:
+  ExtractUnknownError:
+  MaterialAdvancedOnly:
+  MaterialBlur:
+  MaterialCards:
+  MaterialReset:
+  MaterialTiles:
+  MaterialTitle:
+  MaterialTransparency:
+  Readme:
+  ScreenshotPreviewBtn:
 
 Tactical:
   SkillAutoSwitch:

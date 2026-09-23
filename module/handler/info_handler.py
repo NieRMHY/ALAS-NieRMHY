@@ -23,7 +23,7 @@ from module.base.button import Button
 from module.base.timer import Timer
 from module.base.utils import *
 from module.combat.assets import BATTLE_PREPARATION
-from module.exception import CampaignEnd, GameNotRunningError, ScriptEnd
+from module.exception import CampaignEnd, GameNotRunningError, GameTooManyClickError, ScriptEnd
 from module.handler.assets import *
 from module.logger import logger
 from module.os_handler.assets import CLICK_SAFE_AREA as OS_CLICK_SAFE_AREA
@@ -223,12 +223,21 @@ class InfoHandler(ModuleBase):
         - calculate 模式（不含 ignore）：正常不应出现红脸弹窗（已预检），
           若出现则视为异常，取消弹窗退出关卡、心情清零、延时任务
 
+        作战档案出击后的「消耗档案密钥」弹窗同样由 POPUP_CANCEL /
+        POPUP_CONFIRM 这两个通用按钮组成，仅凭按钮判定会把出击被数据密钥
+        弹窗拦住误判成红脸弹窗（取消弹窗、清零心情、任务延后到次日），
+        因此先交给 handle_use_data_key() 处理。
+
         Returns:
             bool: 是否处理了弹窗。calculate 模式下若触发保底会抛出 ScriptEnd。
 
         Raises:
             ScriptEnd: calculate 模式下出现红脸弹窗时，心情清零并延时后抛出。
         """
+        # 作战档案强制启用数据密钥，此时的双按钮弹窗优先按数据密钥弹窗处理
+        if self.handle_use_data_key():
+            return True
+
         # calculate 模式保底：正常不应出现红脸弹窗
         # 若出现则可能是ALAS计算错误或用户手动操作，需异常处理
         if self.emotion.is_calculate and not self.emotion.is_ignore:
@@ -296,7 +305,54 @@ class InfoHandler(ModuleBase):
                 self.withdraw()
                 break
 
+    def use_data_key_notified_enabled(self):
+        """
+        判断「今日不再提示」复选框是否已勾选。
+
+        Returns:
+            bool: 复选框变绿（已勾选）返回 True。
+        """
+        return self.image_color_count(
+            USE_DATA_KEY_NOTIFIED, color=(140, 207, 66), threshold=75, count=10)
+
+    def use_data_key_appear(self):
+        """
+        判断当前画面是否为作战档案的数据密钥确认弹窗。
+
+        弹窗内容「进入所选关卡需要消耗档案密钥x5，是否进入？」是逐元素渲染
+        且整行居中的：刚弹出时文字可能还没画出来，数量位数变化又会让黄色
+        文字左右移动，位置写死的 USE_DATA_KEY 模板可能匹配不到。因此再用
+        固定位置的「今日不再提示」复选框兜底——该复选框只在这个弹窗上出现，
+        未勾选是标题栏右侧的深色方块，勾选后是绿色方块。
+
+        Returns:
+            bool: 是数据密钥确认弹窗返回 True。
+        """
+        if self.appear(USE_DATA_KEY, offset=(20, 20)):
+            return True
+        if self.image_color_count(USE_DATA_KEY_NOTIFIED, color=(34, 49, 75), threshold=40, count=100):
+            return True
+        if self.use_data_key_notified_enabled():
+            return True
+
+        return False
+
     def handle_use_data_key(self):
+        """
+        处理作战档案的数据密钥确认弹窗：勾选「今日不再提示」后确认。
+
+        勾选后当天不再弹出，省掉每次出击的确认。弹窗刚出现时内容可能还没
+        渲染完，此时不能直接放弃——调用方（含红脸弹窗判定）只看
+        POPUP_CANCEL / POPUP_CONFIRM 这两个通用按钮，放弃就会被当成别的弹窗
+        处理。所以这里等弹窗渲染完成再判断，勾选失败也不影响确认弹窗。
+
+        Pages:
+            in: 作战档案出击后的数据密钥确认弹窗
+            out: 弹窗已确认
+
+        Returns:
+            bool: 是否处理了数据密钥弹窗。
+        """
         if not self.config.USE_DATA_KEY:
             return False
 
@@ -304,21 +360,33 @@ class InfoHandler(ModuleBase):
                 and not self.appear(POPUP_CANCEL, offset=self._popup_offset, interval=2):
             return False
 
-        if self.appear(USE_DATA_KEY, offset=(20, 20)):
-            # enable USE_DATA_KEY_NOTIFIED
-            for _ in self.loop():
-                enabled = self.image_color_count(
-                    USE_DATA_KEY_NOTIFIED, color=(140, 207, 66), threshold=180, count=10)
-                if enabled:
+        # 等待弹窗渲染完成；等待期间弹窗消失说明不是数据密钥弹窗，交回上层
+        if not self.use_data_key_appear():
+            for _ in self.loop(timeout=2):
+                if self.use_data_key_appear():
                     break
-                if self.appear(USE_DATA_KEY, offset=(20, 20), interval=5):
-                    self.device.click(USE_DATA_KEY_NOTIFIED)
-                    continue
+                if not self.appear(POPUP_CONFIRM, offset=self._popup_offset):
+                    return False
+            else:
+                return False
 
+        # enable USE_DATA_KEY_NOTIFIED
+        # 定时器不启动，首次判断立即点击，之后每 2 秒重试一次，最多重试 6 秒
+        interval = Timer(2, count=2)
+        for _ in self.loop(timeout=Timer(6, count=20)):
+            if self.use_data_key_notified_enabled():
+                break
+            if interval.reached() and self.use_data_key_appear():
+                self.device.click(USE_DATA_KEY_NOTIFIED)
+                interval.reset()
+                continue
+        else:
+            logger.warning('[作战档案] 「今日不再提示」未勾选成功，直接确认弹窗')
+
+        result = self.handle_popup_confirm('USE_DATA_KEY')
+        if result:
             self.config.USE_DATA_KEY = False  # 成功后重置，因为任务可能在恢复前被停止
-            return self.handle_popup_confirm('USE_DATA_KEY')
-
-        return False
+        return result
 
     def handle_vote_popup(self):
         """
@@ -409,6 +477,10 @@ class InfoHandler(ModuleBase):
     _story_option_timer = Timer(2)
     _story_option_record = 0
     _story_option_confirm = Timer(0.3, count=0)
+    # 剧情选项连续点击数。选项点击不计入点击记录（见 story_skip），
+    # 由这个计数兜底检测剧情卡在选项画面不动的情况。
+    _story_option_click = 0
+    _story_option_click_limit = 12
 
     def _story_option_buttons(self):
         """
@@ -495,6 +567,48 @@ class InfoHandler(ModuleBase):
         buttons = sorted(buttons, key=lambda button: button.button[1])
         return buttons
 
+    def _story_option_buttons_3(self):
+        """
+        检测剧情选项按钮（右侧白色选项样式）。
+
+        例如大世界主线的适应性选择界面（[适应性·攻击]提升 /
+        [适应性·耐久]提升 / [适应性·效能]提升 / 不做选择），
+        选项纵向排列在画面右侧，点击右上角跳过无效，必须选择一项。
+
+        Returns:
+            从上到下排列的剧情选项按钮列表，未找到则返回空列表。
+        """
+        # 选项检测区域，至少需要包含 2 个选项
+        # 右侧雷达在 x=1080 以后，检测区域避开雷达
+        story_option_area = (760, 150, 1010, 470)
+        story_option_color = (247, 247, 247)
+        image = color_similarity_2d(self.image_crop(story_option_area, copy=False), color=story_option_color) > 225
+
+        # 选项约为 150px x 47px，白色底上文字使行白色计数降到约一半
+        # 沿 y 平滑填平文字凹陷，窗口小于选项间距(约28px)不会误合并相邻选项
+        parameters = {
+            'height': 60,
+            'width': 25,
+            'distance': 60,
+        }
+        y_count = np.convolve(np.sum(image, axis=1), np.ones(15), mode='same')
+        peaks, properties = signal.find_peaks(y_count, **parameters)
+        buttons = []
+        total = len(peaks)
+        if not total:
+            return []
+        for n, bases in enumerate(zip(properties['left_bases'], properties['right_bases'])):
+            y0, y1 = int(bases[0]), int(bases[1])
+            x_count = np.where(np.sum(image[y0:y1, :], axis=0) > 5)[0]
+            if not len(x_count):
+                continue
+            x_min, x_max = np.min(x_count), np.max(x_count)
+            area = (x_min, y0, x_max, y1)
+            area = area_pad(area_offset(area, offset=story_option_area[:2]), pad=5)
+            buttons.append(
+                Button(area=area, color=story_option_color, button=area, name=f'STORY_OPTION_{n + 1}_OF_{total}'))
+        return buttons
+
     def _is_story_black(self):
         color = get_color(self.device.image, area=STORY_LETTER_BLACK.area)
         if color_similar(color, STORY_LETTER_BLACK.color, threshold=10):
@@ -511,6 +625,10 @@ class InfoHandler(ModuleBase):
         侵蚀一地图的装置剧情：
         - 塞壬探测装置：5 个选项（探测敌人/探测资源/离开），按 Siren_Mode 选择；
         - 塞壬信息收集装置 / 探测装置产物柱子：3 个选项，点中间选项即完成。
+
+        3 选项剧情并不都是塞壬装置：深渊 / 隐秘 / 要塞 / 跨月 用 STORY_OPTION=0
+        指定点第一项（解除封锁的强制确认，中间项是「查阅作战说明」），
+        因此显式指定了 STORY_OPTION 时按配置选择，只有自动选择（-2）才按柱子处理。
 
         Args:
             options: 检测到的剧情选项按钮列表。
@@ -548,7 +666,16 @@ class InfoHandler(ModuleBase):
                 return options[3]
 
         elif len(options) == 3:
-            # 塞壬信息收集装置 / 探测装置产物柱子：点中间选项完成
+            # 3 选项剧情的正确选项随海域而变，不能一律点中间项：
+            # - 深渊 / 隐秘 / 要塞 / 跨月 用 STORY_OPTION=0 指定点第一项，
+            #   例如深渊解除封锁的强制确认，中间项是「查阅作战说明」；
+            # - 大世界其余任务为 STORY_OPTION=-2（自动选择），3 选项时
+            #   即塞壬信息收集装置 / 探测装置产物柱子的「提交物品」。
+            story_option = self.config.STORY_OPTION
+            if 0 <= story_option < len(options):
+                logger.info(f'[Handler] [Story] 3 选项剧情，按 STORY_OPTION 选择第 {story_option + 1} 项')
+                return options[story_option]
+            # 未显式指定选项，按塞壬信息收集装置 / 柱子处理
             logger.info('[Handler] [Story] 塞壬信息收集装置/柱子，点中间选项完成')
             self.siren_device_mode = 'collected'
             return options[1]
@@ -561,19 +688,33 @@ class InfoHandler(ModuleBase):
 
         2023.09.14 剧情选项变更为中间大白色选项样式，
         通过 STORY_SKIP_3 检测但点击原始 STORY_SKIP。
+
+        剧情选项按钮名按「第几个/共几个」生成（如 STORY_OPTION_2_OF_3），
+        不同剧情段会共用同一个名字，连续处理多个装置时会被防连点机制
+        （两个按钮各 ≥6 次）误判为卡死，因此剧情点击后清空点击记录，
+        改由 _story_option_click 计数检测剧情停在选项画面不动的情况。
         """
         if self.story_popup_timeout.started() and not self.story_popup_timeout.reached():
             if self.handle_popup_confirm('STORY_SKIP'):
+                # 提交确认弹窗的按钮名（POPUP_CONFIRM_STORY_SKIP）同样在不同剧情段
+                # 复用，与选项一起清掉点击记录，避免被防连点机制误判为卡死
+                self.device.click_record_clear()
+                self._story_option_click = 0
                 self.story_popup_timeout = Timer(10)
                 self.interval_reset(STORY_SKIP_3)
                 self.interval_reset(STORY_LETTERS_ONLY)
                 return True
         if self._is_story_black():
             if self.appear_then_click(STORY_LETTERS_ONLY, offset=(20, 20), interval=2):
+                self._story_option_click = 0
                 self.story_popup_timeout.reset()
                 return True
         if self._story_option_timer.reached() and self.appear(STORY_SKIP_3, offset=(20, 20), interval=0):
             options = self._story_option_buttons_2()
+            if not options:
+                # 大世界主线适应性选择界面：选项在右侧纵向排列，
+                # 点击右上角跳过无效，必须选择一项
+                options = self._story_option_buttons_3()
             options_count = len(options)
             logger.attr('剧情选项数量', options_count)
             if options_count:
@@ -597,6 +738,16 @@ class InfoHandler(ModuleBase):
                             select = options[0]
                     
                     self.device.click(select)
+                    # 选项按钮名按「第几个/共几个」生成，不同剧情段共用同一个名字，
+                    # 装置 / 柱子较多的海域会被防连点机制误判为「两个按钮交替点击」
+                    # 而报 GameTooManyClickError。因此剧情点击后清空点击记录，
+                    # 卡死检测改由连续点击数兜底：剧情一直停在选项画面才会报错。
+                    self.device.click_record_clear()
+                    self._story_option_click += 1
+                    if self._story_option_click >= self._story_option_click_limit:
+                        self._story_option_click = 0
+                        raise GameTooManyClickError(
+                            f'[处理器-剧情] 连续点击剧情选项 {self._story_option_click_limit} 次仍未推进，剧情可能卡住')
                     self._story_option_timer.reset()
                     self.story_popup_timeout.reset()
                     self.interval_reset(STORY_SKIP_3)
@@ -627,8 +778,11 @@ class InfoHandler(ModuleBase):
             else:
                 self.interval_clear(STORY_SKIP_3)
         else:
+            # 剧情选项画面消失，重置连续点击数
+            self._story_option_click = 0
             self._story_confirm.reset()
         if self.appear_then_click(STORY_CLOSE, offset=(10, 10), interval=2):
+            self._story_option_click = 0
             self.story_popup_timeout.reset()
             return True
 
@@ -681,15 +835,15 @@ class InfoHandler(ModuleBase):
             是否处理了游戏提示。
         """
         if self.appear(GAME_TIPS, offset=(20, 20), interval=2) and self.image_color_count(
-                GAME_TIPS.button, color=(40, 40, 40), threshold=240, count=50):
+                GAME_TIPS.button, color=(40, 40, 40), threshold=15, count=50):
             self.device.click(GAME_TIPS)
             return True
         if self.appear(GAME_TIPS3, offset=(20, 20), interval=2) and self.image_color_count(
-                GAME_TIPS3.button, color=(40, 40, 40), threshold=240, count=50):
+                GAME_TIPS3.button, color=(40, 40, 40), threshold=15, count=50):
             self.device.click(GAME_TIPS)
             return True
         if self.appear(GAME_TIPS4, offset=(20, 20), interval=2) and self.image_color_count(
-                GAME_TIPS4.button, color=(40, 40, 40), threshold=240, count=50):
+                GAME_TIPS4.button, color=(40, 40, 40), threshold=15, count=50):
             self.device.click(GAME_TIPS)
             return True
 

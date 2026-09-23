@@ -237,8 +237,9 @@ class TestCommissionTierFilter(unittest.TestCase):
 
 
 class TestCommissionAlgorithmSwitch(unittest.TestCase):
-    def test_dynamic_programming_is_disabled_by_default(self):
-        self.assertIs(GeneratedConfig.Commission_DynamicProgramming, False)
+    def test_dynamic_programming_is_enabled_by_default(self):
+        # 83cfe779b「默认启用选择全局最优策略（实验性）功能」把默认值改成了 true。
+        self.assertIs(GeneratedConfig.Commission_DynamicProgramming, True)
         self.assertIsNone(GeneratedConfig.Commission_Blacklist)
         self.assertIsInstance(GeneratedConfig.Commission_DelayHalfLife, float)
         self.assertIsInstance(GeneratedConfig.Commission_DeadlineFutureHorizon, float)
@@ -371,8 +372,10 @@ class TestCommissionValueModel(unittest.TestCase):
         self.assertLess(threshold, deadline)
 
     def test_delaying_more_high_value_jobs_reduces_threshold(self):
-        one = delay_threshold_seconds(1, 1, 12 * 60 * 60)
-        three = delay_threshold_seconds(1, 3, 12 * 60 * 60)
+        # deadline 取小一些：12 小时窗口下两个取值都会顶到 deadline-1，
+        # 断言恒等成立不了（阈值饱和，测不出差异）。
+        one = delay_threshold_seconds(1, 1, 2 * 60 * 60)
+        three = delay_threshold_seconds(1, 3, 2 * 60 * 60)
 
         self.assertLess(three, one)
 

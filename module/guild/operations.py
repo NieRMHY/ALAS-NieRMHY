@@ -51,7 +51,7 @@ class GuildOperations(GuildBase):
                 confirm_timer.reset()
                 continue
             if self.appear(GUILD_OPERATIONS_JOIN, interval=3):
-                if self.image_color_count(GUILD_OPERATIONS_MONTHLY_COUNT, color=(255, 93, 90), threshold=221, count=20):
+                if self.image_color_count(GUILD_OPERATIONS_MONTHLY_COUNT, color=(255, 93, 90), threshold=30, count=20):
                     logger.info('[大舰队-作战] 无法加入作战，本月尝试次数已用完')
                     self.device.click(GUILD_OPERATIONS_CLICK_SAFE_AREA)
                 else:
@@ -130,7 +130,7 @@ class GuildOperations(GuildBase):
         """
         if not self.appear(GUILD_OPERATIONS_NEW, offset=(20, 20)):
             return False
-        if self.image_color_count(GUILD_OPERATION_FUND_CHECK, color=(255, 93, 91), threshold=180, count=30):
+        if self.image_color_count(GUILD_OPERATION_FUND_CHECK, color=(255, 93, 91), threshold=75, count=30):
             logger.warning('[大舰队-作战] 大舰队资金不足，无法开始新作战')
             return True
         return False
@@ -271,7 +271,7 @@ class GuildOperations(GuildBase):
                     for button in entrance_2:
                         # Enter button has a black area around Easy/Normal/Hard on the upper right
                         # If operation not expanded, enter button is a background with Gaussian Blur
-                        if self.image_color_count(button, color=(0, 0, 0), threshold=235, count=50):
+                        if self.image_color_count(button, color=(0, 0, 0), threshold=20, count=50):
                             self.device.click(button)
                             timer_1.reset()
                             timer_2.reset()
@@ -316,11 +316,11 @@ class GuildOperations(GuildBase):
         index = 0
         button = None
         for switch in switch_grid.buttons:
-            if self.image_color_count(switch, color=color_inactive, threshold=235, count=30):
+            if self.image_color_count(switch, color=color_inactive, threshold=20, count=30):
                 index += 1
                 text.append(f'| {index} |')
                 button = switch
-            elif self.image_color_count(switch, color=color_active, threshold=235, count=30):
+            elif self.image_color_count(switch, color=color_active, threshold=20, count=30):
                 index += 1
                 text.append(f'[ {index} ]')
                 button = switch
@@ -382,7 +382,7 @@ class GuildOperations(GuildBase):
             if not dispatched and self.appear(GUILD_DISPATCH_FLEET, offset=(20, 20), interval=3):
                 # GUILD_DISPATCH_FLEET 和 GUILD_DISPATCH_FLEET_UNFILLED 特征相同但颜色不同
                 # 通过检查背景蓝色进行二次确认
-                if self.image_color_count(GUILD_DISPATCH_FLEET, color=(82, 93, 221), threshold=235, count=500):
+                if self.image_color_count(GUILD_DISPATCH_FLEET, color=(82, 93, 221), threshold=20, count=500):
                     self.device.click(GUILD_DISPATCH_FLEET)
                 else:
                     self.interval_clear(GUILD_DISPATCH_FLEET)
@@ -400,7 +400,7 @@ class GuildOperations(GuildBase):
             if dispatched and self.appear(GUILD_DISPATCH_FLEET, offset=(20, 20), interval=3):
                 # GUILD_DISPATCH_FLEET 和 GUILD_DISPATCH_FLEET_UNFILLED 特征相同但颜色不同
                 # 通过检查背景蓝色进行二次确认
-                if self.image_color_count(GUILD_DISPATCH_FLEET, color=(82, 93, 221), threshold=235, count=500):
+                if self.image_color_count(GUILD_DISPATCH_FLEET, color=(82, 93, 221), threshold=20, count=500):
                     # 后续派遣会显示 GUILD_DISPATCH_FLEET
                     # 无法确认舰队是否已派遣，
                     # 因为点击推荐后派遣前也会显示 GUILD_DISPATCH_FLEET
@@ -547,7 +547,7 @@ class GuildOperations(GuildBase):
         Returns:
             bool: Boss 是否可用。
         """
-        appear = self.image_color_count(GUILD_BOSS_AVAILABLE, color=(140, 243, 99), threshold=221, count=10)
+        appear = self.image_color_count(GUILD_BOSS_AVAILABLE, color=(140, 243, 99), threshold=30, count=10)
         if appear:
             logger.info('[大舰队-作战] 大舰队Boss可用')
         else:

@@ -39,7 +39,7 @@ class HospitalSwitch(Switch):
             str: 状态名称，未匹配时返回 'unknown'。
         """
         for data in self.state_list:
-            if main.image_color_count(data['check_button'], color=(33, 77, 189), threshold=221, count=100):
+            if main.image_color_count(data['check_button'], color=(33, 77, 189), threshold=30, count=100):
                 return data['state']
 
         return 'unknown'
@@ -69,11 +69,11 @@ class Hospital(HospitalClue, HospitalCombat):
 
     def daily_red_dot_appear(self):
         """检测每日奖励红点是否出现。"""
-        return self.image_color_count(DAILY_RED_DOT, color=(189, 69, 66), threshold=221, count=35)
+        return self.image_color_count(DAILY_RED_DOT, color=(189, 69, 66), threshold=30, count=35)
 
     def daily_reward_receive_appear(self):
         """检测每日奖励领取按钮是否可点击。"""
-        return self.image_color_count(DAILY_REWARD_RECEIVE, color=(41, 73, 198), threshold=221, count=200)
+        return self.image_color_count(DAILY_REWARD_RECEIVE, color=(41, 73, 198), threshold=30, count=200)
 
     def is_in_daily_reward(self, interval=0):
         """检测当前是否在每日奖励界面。"""
@@ -186,7 +186,7 @@ class Hospital(HospitalClue, HospitalCombat):
 
     def invest_reward_appear(self) -> bool:
         """检测调查奖励领取按钮是否出现。"""
-        return self.image_color_count(INVEST_REWARD_RECEIVE, color=(33, 77, 189), threshold=221, count=100)
+        return self.image_color_count(INVEST_REWARD_RECEIVE, color=(33, 77, 189), threshold=30, count=100)
 
     def claim_invest_reward(self):
         """领取调查奖励。"""

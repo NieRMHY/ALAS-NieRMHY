@@ -715,7 +715,7 @@ class AshBeaconAssist(Meta):
         tier = self.config.OpsiAshAssist_Tier
         logger.info(f'[META支援] 开始查找等级 {tier} 的 META 信标')
         for n in range(10):
-            if self.image_color_count(BEACON_TIER, color=(0, 0, 0), threshold=221, count=50):
+            if self.image_color_count(BEACON_TIER, color=(0, 0, 0), threshold=30, count=50):
                 break
 
             self.device.screenshot()

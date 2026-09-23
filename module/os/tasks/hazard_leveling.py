@@ -70,45 +70,38 @@ class OpsiHazard1Leveling(CoinTaskMixin, OSMap):
         self.config.OpsiHazard1_PreviousApInsufficient = _previous_ap_insufficient
 
     def _cl1_run_battle(self):
-        """执行侵蚀 1 战后的战略搜索与扫荡逻辑"""
+        """执行侵蚀 1 战后的战略搜索与事件检索逻辑"""
         search_completed = self.run_strategic_search()
 
         if not search_completed and search_completed is not None:
             logger.warning("[大世界-侵蚀1练级] 战略搜索返回 False，可能已被提前中断")
 
         # debug 录屏：只录“战后找事件 + 处理事件 + 强制移动”这一段
-        # 事件/强制移动处理完进入下一轮前结束；若无事件则不保留文件。
-        from module.base.debug_clip import clip_end, clip_start
+        # 事件/强制移动处理完进入下一轮前结束。每一轮都保留，不论有没有遇到事件。
+        from module.base.debug_clip import cleanup_clips_if_due, clip_recording
 
-        debug_clip = None
-        had_forced_move = False
-        debug_error = None
-        if self.config.OpsiHazard1Leveling_DebugClip:
-            debug_clip = clip_start(self.config)
-        try:
+        # 过期录像清理：与本次是否开启录制无关，避免关掉录制后旧录像一直堆着。
+        # 内部有节流，不会每轮战斗都真的扫目录。
+        cleanup_clips_if_due(self.config)
+
+        with clip_recording(
+            self.config,
+            self.config.OpsiHazard1Leveling_DebugClip,
+        ):
             # 第一次重扫：检查是否还有事件
             self._solved_map_event = set()
             self._solved_fleet_mechanism = False
             self.map_rescan()
 
-            # 强制移动逻辑（按等级 0/1/2 分发）
-            # 0=关闭；1=效率模式（只换队看雷达、不挪动舰队，最快，找不到就放弃）；
-            # 2=保守模式（先扫雷达不动，扫不到再逐个挪舰队+整图重扫，更稳但会挪、慢一些）。
-            # 保守模式在 _execute_fixed_patrol_scan 内部完成（L1→L2→L3），返回后不再
-            # 二次重扫，否则清完明石后会再次重复进明石商店（购买之外的多余进店）。
-            if self._forced_move_level() >= 1:
+            # 强制移动（开关）：开启后先零移动遍历 1~4 队雷达找问号；仍没找到
+            # 且行动力大于阈值时，再逐个挪动舰队重扫（见 _execute_fixed_patrol_scan）。
+            # 挪舰队那段的整图重扫在 _execute_fixed_patrol_scan 内部完成，返回后
+            # 不再二次重扫，否则清完明石后会再次重复进明石商店（购买之外的多余进店）。
+            if self._forced_move_enabled():
                 if not self._solved_map_event:
-                    had_forced_move = True
                     self._execute_fixed_patrol_scan(ExecuteFixedPatrolScan=True)
 
             self.handle_after_auto_search()
-        except BaseException as e:
-            debug_error = e
-            raise
-        finally:
-            if debug_clip is not None:
-                keep = bool(self._solved_map_event) or had_forced_move or debug_error is not None
-                clip_end(keep=keep)
 
         # 明石遭遇记录
         solved_events = getattr(self, "_solved_map_event", set())
@@ -163,8 +156,11 @@ class OpsiHazard1Leveling(CoinTaskMixin, OSMap):
             raise
 
         # 侵蚀 1 练级时，行动力优先用于此任务，而非耄耋相接。
+        # 防溢出：当前行动力 100-119 时直接开工不开启行动力箱；
+        # 低于 100 时开箱后达到或超过 200 满值的箱子不开启。
         self.action_point_set(
-            cost=120, keep_current_ap=True, check_rest_ap=True
+            cost=120, keep_current_ap=True, check_rest_ap=True,
+            avoid_ap_overflow=True,
         )
 
         yellow_coins = self.get_yellow_coins()
@@ -749,7 +745,8 @@ class OpsiHazard1Leveling(CoinTaskMixin, OSMap):
                 record_ap_snapshot(
                     config=self.config,
                     ap_current=self._action_point_current,
-                    ap_total=self._action_point_total,
+                    # 统计口径使用始终含体力箱的总行动力，避免防溢出上下文关闭开箱后丢箱
+                    ap_total=getattr(self, '_action_point_total_with_box', self._action_point_total),
                     source='hazard1',
                     distance=sea_miles,
                 )

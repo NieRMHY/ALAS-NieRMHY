@@ -1,5 +1,12 @@
-# docker build -t hgjazhgj/alas:latest -f deploy/docker/Dockerfile .
+# docker build -t hgjazhgj/alas:latest .
 # docker run -v ${PWD}:/app/AzurPilot -p 25548:25548 --name AzurPilot -it --rm hgjazhgj/alas
+
+FROM node:24-bookworm-slim AS frontend-build
+WORKDIR /frontend
+COPY frontend/package.json frontend/package-lock.json ./
+RUN npm ci --no-audit --no-fund
+COPY frontend/ ./
+RUN npm run build
 
 FROM python:3.14-slim-bookworm
 
@@ -21,6 +28,8 @@ ENV PATH=/app/AzurPilot/.venv/bin:${PATH}
 
 WORKDIR /app/AzurPilot
 
+COPY --from=frontend-build /usr/local/bin/node /usr/local/bin/node
+COPY --from=frontend-build /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/npm
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 COPY pyproject.toml uv.lock ./
 
@@ -45,7 +54,11 @@ RUN git config --global --add safe.directory '*' && \
         git config --global https.proxy "$HTTPS_PROXY"; \
     fi
 
-RUN uv venv --relocatable --python /usr/local/bin/python .venv && \
+RUN ln -s ../lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm && \
+    ln -s ../lib/node_modules/npm/bin/npx-cli.js /usr/local/bin/npx && \
+    node --version && \
+    npm --version && \
+    uv venv --relocatable --python /usr/local/bin/python .venv && \
     uv sync --frozen --no-dev --no-install-project && \
     cp /usr/local/bin/uv .venv/bin/uv && \
     cp /usr/bin/adb .venv/bin/adb && \
@@ -53,5 +66,7 @@ RUN uv venv --relocatable --python /usr/local/bin/python .venv && \
     rm -rf /root/.cache/uv
 
 COPY . .
+COPY --from=frontend-build /frontend/dist ./frontend/dist
+RUN .venv/bin/python -c "from pathlib import Path; from deploy.frontend import source_fingerprint; p=Path('frontend'); (p/'dist/.source-fingerprint').write_text(source_fingerprint(p))"
 
 CMD [".venv/bin/python", "gui.py"]

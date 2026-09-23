@@ -186,7 +186,7 @@ class CargoPreparationTransportItem:
         blue_bar_check = image_color_count(
             self.image[:10, :, :],
             color=(90, 201, 255),
-            threshold=221,
+            threshold=34,
             count=500
         )
         return mean > 0.3 and not blue_bar_check

@@ -11,22 +11,58 @@ from module.handler.auto_search import AutoSearchHandler
 from module.logger import logger
 from module.ui.switch import Switch
 
-FAST_FORWARD = Switch('Fast_Forward', offset=(5, 5))    # fixed by mihongyu 起舞于天原之上，周回按钮偏移
-FAST_FORWARD.add_state('on', check_button=FAST_FORWARD_ON, similarity=0.6)
-FAST_FORWARD.add_state('off', check_button=FAST_FORWARD_OFF, similarity=0.6)
+# Modify by MHY, 上游 7122ebff3 自适应 CLEAR_MODE/AUTO_SEARCH 重构移除旧 FAST_FORWARD
+# Switch（本地周回按钮偏移修正随旧体系废弃，新体系按标题色判定无需偏移）
 FLEET_LOCK = Switch('Fleet_Lock', offset=(5, 20))
 FLEET_LOCK.add_state('on', check_button=FLEET_LOCKED)
 FLEET_LOCK.add_state('off', check_button=FLEET_UNLOCKED)
-# 2026.08.27 elements on MAP_PREPARATION page are right moved 56px
-AUTO_SEARCH = Switch('Auto_Search', offset=(0, -20, 120, 20))
-AUTO_SEARCH.add_state('on', check_button=AUTO_SEARCH_ON)
-AUTO_SEARCH.add_state('on', check_button=AUTO_SEARCH_ON2)
-AUTO_SEARCH.add_state('on', check_button=AUTO_SEARCH_ON3)
-AUTO_SEARCH.add_state('on', check_button=AUTO_SEARCH_ON4)
-AUTO_SEARCH.add_state('off', check_button=AUTO_SEARCH_OFF)
-AUTO_SEARCH.add_state('off', check_button=AUTO_SEARCH_OFF2)
-AUTO_SEARCH.add_state('off', check_button=AUTO_SEARCH_OFF3)
-AUTO_SEARCH.add_state('off', check_button=AUTO_SEARCH_OFF4)
+
+
+class SwitchClearMode(Switch):
+    def get(self, main):
+        title = main.appear(CLEAR_MODE_TITLE, offset=(20, 20))
+        if not title:
+            return 'unknown'
+        # find check area to the right of title
+        CLEAR_MODE_CHECK.load_offset(CLEAR_MODE_TITLE)
+        # cyan letter is `on`
+        if main.image_color_count(CLEAR_MODE_CHECK.button, color=(130, 229, 255), threshold=30, count=50):
+            return 'on'
+        # white button is `off`
+        if main.image_color_count(CLEAR_MODE_CHECK.button, color=(255, 255, 255), threshold=30, count=200):
+            return 'off'
+        return 'unknown'
+
+
+CLEAR_MODE = SwitchClearMode('Clear_Mode')
+CLEAR_MODE.add_state('on', check_button=CLEAR_MODE_TITLE, click_button=CLEAR_MODE_CHECK)
+CLEAR_MODE.add_state('off', check_button=CLEAR_MODE_TITLE, click_button=CLEAR_MODE_CHECK)
+
+
+class SwitchAutoSearch(Switch):
+    def get(self, main):
+        title = None
+        if main.appear(AUTO_SEARCH_TITLE, offset=(20, 20)):
+            title = AUTO_SEARCH_TITLE
+        # [JP] has different character spacing in hard mode and normal mode
+        if not title:
+            if main.appear(AUTO_SEARCH_TITLE2, offset=(20, 20)):
+                title = AUTO_SEARCH_TITLE2
+        if not title:
+            return 'unknown'
+        # find check area to the right of title
+        AUTO_SEARCH_CHECK.load_offset(title)
+        # green square is `on`
+        if main.image_color_count(AUTO_SEARCH_CHECK.button, color=(158, 234, 94), threshold=30, count=50):
+            return 'on'
+        # no way to detect `off`
+        # return `off` if title appears and it's not `on`
+        return 'off'
+
+
+AUTO_SEARCH = SwitchAutoSearch('Auto_Search')
+AUTO_SEARCH.add_state('on', check_button=AUTO_SEARCH_TITLE, click_button=AUTO_SEARCH_CHECK)
+AUTO_SEARCH.add_state('off', check_button=AUTO_SEARCH_TITLE, click_button=AUTO_SEARCH_CHECK)
 
 
 def map_files(event):
@@ -160,7 +196,7 @@ class FastForwardHandler(AutoSearchHandler):
             # 如果用户手动关闭了自动搜索，alas 无法重新开启
             self.map_has_clear_mode = AUTO_SEARCH.appear(main=self)
         else:
-            self.map_has_clear_mode = self.map_is_100_percent_clear and FAST_FORWARD.appear(main=self)
+            self.map_has_clear_mode = self.map_is_100_percent_clear and CLEAR_MODE.appear(main=self)
 
         # 覆盖配置
         if self.map_achieved_star_1:
@@ -220,13 +256,13 @@ class FastForwardHandler(AutoSearchHandler):
             pass
 
         state = 'on' if self.config.Campaign_UseClearMode else 'off'
-        changed = FAST_FORWARD.set(state, main=self)
+        changed = CLEAR_MODE.set(state, main=self)
         if changed:
             self.map_wait_auto_search()
         return changed
 
     def _is_map_star_active(self, button):
-        return self.image_color_count(button, color=(250, 232, 140), threshold=180, count=35)
+        return self.image_color_count(button, color=(250, 232, 140), threshold=75, count=35)
 
     def handle_map_fleet_lock(self, enable=None):
         """
@@ -351,6 +387,14 @@ class FastForwardHandler(AutoSearchHandler):
             in: FLEET_PREPARATION
         """
         if not self.map_is_auto_search:
+            # 手动寻敌下舰队编制选项不可用，但潜艇待命仍需同步：
+            # 游戏内潜艇“自动召唤”若未关闭，每场战斗都会自动召唤潜艇，浪费油耗与潜艇弹药（#144）
+            if self.map_is_clear_mode and self.config.Submarine_Fleet \
+                    and self.config.Submarine_AutoSearchMode == 'sub_standby':
+                logger.info('自动搜索设置（手动寻敌，仅确保潜艇待命）')
+                if self.fleet_preparation_sidebar_ensure(3):
+                    self.auto_search_setting_ensure('sub_standby')
+                    return True
             return False
 
         logger.info('自动搜索设置')
@@ -390,7 +434,9 @@ class FastForwardHandler(AutoSearchHandler):
         """
         if self.map_fleet_checked:
             return False
-        if not self.is_call_submarine_at_boss:
+        advanced = (self.config.SUBMARINE and self.config.Submarine_Mode == 'advanced'
+                    and not self.map_is_auto_search)
+        if not (self.is_call_submarine_at_boss or advanced):
             return False
         # 2025.09.22 修正：舰队角色设置在通关模式后才解锁
         if not self.map_is_clear_mode:
@@ -556,7 +602,7 @@ class FastForwardHandler(AutoSearchHandler):
 
             if self.appear(check_button, offset=self._auto_search_menu_offset, interval=3):
                 box_button.load_offset(check_button)
-                enabled = self.image_color_count(box_button.button, color=(156, 255, 82), threshold=221, count=20)
+                enabled = self.image_color_count(box_button.button, color=(156, 255, 82), threshold=30, count=20)
                 if (status == 'on' and enabled) or (status == 'off' and not enabled):
                     return True
                 if (status == 'on' and not enabled) or (status == 'off' and enabled):
@@ -633,7 +679,7 @@ class FastForwardHandler(AutoSearchHandler):
             else:
                 self.device.screenshot()
 
-            if self.image_color_count(MAP_WALK_SPEEDUP, color=(132, 255, 148), threshold=180, count=50):
+            if self.image_color_count(MAP_WALK_SPEEDUP, color=(132, 255, 148), threshold=75, count=50):
                 logger.attr('行走加速', '开启')
                 return True
             if timeout.reached():

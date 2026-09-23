@@ -1,5 +1,7 @@
+import datetime
 import logging
-from typing import Any, Callable
+from pathlib import Path
+from typing import Callable
 
 from rich.console import Console, ConsoleRenderable
 from rich.highlighter import RegexHighlighter
@@ -21,8 +23,14 @@ web_formatter: logging.Formatter
 stdout_console: Console
 console_hdlr: RichHandler
 
+def get_log_file_path(
+    name: str,
+    root: str | Path = '.',
+    day: datetime.date | str | None = None,
+) -> Path: ...
+
 def set_file_logger(
-    name: str = pyw_name,
+    name: str | None = None,
 ) -> None: ...
 def set_func_logger(
     func: Callable[[ConsoleRenderable], None],
@@ -57,7 +65,7 @@ class __logger(logging.Logger):
     ) -> None: ...
     def set_file_logger(
         self,
-        name: str = pyw_name,
+        name: str | None = None,
     ) -> None: ...
     def set_func_logger(
         self,

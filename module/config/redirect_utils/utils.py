@@ -150,15 +150,18 @@ def coalition_to_little_academy(value):
 
 def execute_fixed_patrol_scan_redirect(value):
     """
-    OpsiHazard1Leveling.ExecuteFixedPatrolScan 旧布尔 → 等级枚举。
+    OpsiHazard1Leveling.ExecuteFixedPatrolScan 旧等级枚举 → 布尔开关。
 
-    旧版本该配置是布尔开关（开启=强制移动）。升级为 0/1/2 等级后，
-    需把旧布尔显式转成数字，避免 GUI 显示（Python 的 True==1 会误配到选项 1）
-    与运行时行为不一致：
-    - True  → 2（分级恢复，保留最高可用档）
-    - False → 0（关闭）
-    仅 int 值直接透传。
+    该配置的形态变过两轮：布尔开关 → 0/1/2 等级 → 又合并回开关（保守模式
+    并入效率模式）。存量配置里的数字档位要清洗成布尔，否则复选框会显示
+    数字，运行时也容易读错：
+    - 0（关闭）           → False
+    - 1/2/3（各档强制移动）→ True（等级已合并成同一个效率模式）
+    - 布尔值直接透传。
     """
     if isinstance(value, bool):
-        return 2 if value else 0
-    return value
+        return value
+    try:
+        return int(value) > 0
+    except (TypeError, ValueError):
+        return bool(value)

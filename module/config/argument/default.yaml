@@ -6,6 +6,13 @@
 
 # ==================== Farm ====================
 
+GemsFarming:
+  EnemyPriority:
+    EnemyScaleBalanceWeight: S1_enemy_first
+ThreeOilLowCost:
+  EnemyPriority:
+    EnemyScaleBalanceWeight: S1_enemy_first
+
 # ==================== Event ====================
 
 EventA:
@@ -33,14 +40,21 @@ RaidAffection:
 
 # ==================== Reward ====================
 
+Commission:
+  Scheduler:
+    Enable: true
+Research:
+  Scheduler:
+    Enable: true
+Reward:
+  Scheduler:
+    Enable: true
+
 # ==================== DailyReward ====================
 
 # ==================== DailyMission ====================
 
 # ==================== Opsi ====================
-ThreeOilLowCost:
-  Scheduler:
-    Enable: false
 OpsiCrossMonth:
   Scheduler:
     Sensitive: true

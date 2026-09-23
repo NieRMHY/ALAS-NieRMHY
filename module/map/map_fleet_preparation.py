@@ -383,16 +383,31 @@ class FleetPreparation(InfoHandler):
         # Check if ship is prepared in hard mode
         h1, h2, h3 = fleet_1.is_hard_satisfied(), fleet_2.is_hard_satisfied(), submarine.is_hard_satisfied()
         logger.info(f'[地图-编队] 困难满足: 舰队1: {h1}, 舰队2: {h2}, 潜艇: {h3}')
+        self.map_is_hard_mode = h1 is not None or h2 is not None or h3 is not None
         if self.config.SERVER in ['cn', 'en', 'jp']:
-            if self.config.Fleet_Fleet1:
+            # 困难关卡一次只有一支舰队实际出击，另一支在基地待命、不参与战斗，
+            # 所以待命舰队不应被强制要求满足困难限制（否则会误报"必须准备两只舰队"）。
+            # 出击舰队由 Fleet_FleetOrder 决定，与 Hard.HardFleet 一一对应：
+            #   fleet1_all_fleet2_standby -> 舰队1出击、舰队2待命
+            #   fleet1_standby_fleet2_all -> 舰队2出击、舰队1待命
+            #   其余取值（mob/boss 分工）两队都出击，两队都需要满足限制
+            sortie_fleet = 0  # 0: 两队均出击，1: 仅舰队1出击，2: 仅舰队2出击
+            if self.map_is_hard_mode:
+                if self.config.Fleet_FleetOrder == 'fleet1_all_fleet2_standby':
+                    sortie_fleet = 1
+                elif self.config.Fleet_FleetOrder == 'fleet1_standby_fleet2_all':
+                    sortie_fleet = 2
+                if sortie_fleet:
+                    logger.info(f'[地图-编队] 困难模式仅舰队{sortie_fleet}出击，'
+                                f'待命舰队不做困难限制校验')
+            if self.config.Fleet_Fleet1 and sortie_fleet in (0, 1):
                 fleet_1.raise_hard_not_satisfied()
-            if self.config.Fleet_Fleet2:
+            if self.config.Fleet_Fleet2 and sortie_fleet in (0, 2):
                 fleet_2.raise_hard_not_satisfied()
             if self.config.Submarine_Fleet:
                 submarine.raise_hard_not_satisfied()
 
         # Skip fleet preparation in hard mode
-        self.map_is_hard_mode = h1 is not None or h2 is not None or h3 is not None
         if self.map_is_hard_mode:
             logger.info('[地图-编队] 困难战役，无需舰队准备')
             # Clear submarine if user did not set a submarine fleet

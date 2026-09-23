@@ -17,9 +17,7 @@
 </p>
 
 <p align="center">
-  <a href="https://deepwiki.com/wess09/AzurPilot">
-    <img src="https://deepwiki.com/badge.svg" alt="DeepWiki" height="22">
-  </a>
+  <a href="https://deepwiki.com/wess09/AzurPilot"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki"></a>
 </p>
 
 <p align="center">
@@ -148,13 +146,18 @@ AzurPilot provides an MCP service that can be called by MCP-compatible clients o
 
 > The MCP service starts by default with the WebUI and is mounted under the `/mcp` path (WebUI default port 25548). It can also be run standalone via `uv run python mcp_server_sse.py` (standalone port 22268).
 
+The MCP service reuses the WebUI password (the `--key` flag or `Password` in `config/deploy.yaml`). If no password is set and the WebUI listens on a public address, it generates one automatically — see `password.txt` in the repository root. Requests without this password are rejected with 401.
+
 ### Local Connection Configuration
 
 ```json
 {
   "mcpServers": {
     "alas": {
-      "url": "http://127.0.0.1:25548/mcp/sse"
+      "url": "http://127.0.0.1:25548/mcp/sse",
+      "headers": {
+        "Authorization": "Bearer <WebUI password>"
+      }
     }
   }
 }
@@ -166,13 +169,20 @@ AzurPilot provides an MCP service that can be called by MCP-compatible clients o
 {
   "mcpServers": {
     "alas": {
-      "url": "http://[IP_ADDRESS]:25548/mcp/sse"
+      "url": "http://[IP_ADDRESS]:25548/mcp/sse",
+      "headers": {
+        "Authorization": "Bearer <WebUI password>"
+      }
     }
   }
 }
 ```
 
 Replace `[IP_ADDRESS]` with your actual server address or intranet address. If the WebUI port has been changed, update the port in the URL accordingly.
+
+Clients that can only specify a URL and cannot set custom headers may put the password in the query string instead: `http://[IP_ADDRESS]:25548/mcp/sse?key=<WebUI password>`. The URL itself then becomes the credential, so do not share or screenshot it, and prefer the header when possible. `X-API-Key: <WebUI password>` is also accepted in place of `Authorization`.
+
+After changing the password, restart the WebUI so that MCP picks it up.
 
 ### MCP Tool List
 
@@ -251,7 +261,13 @@ Since this project continues development based on AzurLaneAutoScript and its com
 - [GitHub Repository](https://github.com/wess09/AzurPilot) — Source code, Issues, Pull Requests
 - [QQ Community Group](https://join.nanoda.work/#/) — Azur Lane automation community
 - [AzurLaneAutoScript Upstream](https://github.com/LmeSzinc/AzurLaneAutoScript) — The original ALAS
+
+### Derived Projects & Community Links
+
 - [AzurPilot Raspberry Pi Edition](https://github.com/nnieie/AzurPilot) — AzurPilot CN deployment for Raspberry Pi / Termux physical devices
+- [AzurPilot-private-Ru](https://github.com/AliceLiddell01/AzurPilot-private-Ru) — Personal Russian version of AzurPilot with controlled updates, transparent startup, and reduced network dependencies
+- [PerseusAutoScript](https://github.com/lajiovo/PerseusAutoScript) — Comprehensive ops toolkit for AzurPilot featuring background silent execution, closed-loop self-healing, and multi-channel notifications
+- [AzurRem](https://github.com/syyxl3111/AzurRem) — Native Android client for AzurPilot (rewritten in Kotlin + Jetpack Compose, with PC gateway widget)
 
 ## Development & Contribution
 

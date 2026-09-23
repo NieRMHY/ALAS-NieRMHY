@@ -794,12 +794,19 @@ Arguments:
                      adapted for war_archives usage
 """
 FILE = '../AzurLaneLuaScripts'
-FOLDER = './campaign/event_20260723_cn'
-KEYWORD = '6001'
+FOLDER = './campaign/event_20260908_cn'
+KEYWORD = '2060001'
 SELECT = True
 OVERWRITE = True
 IS_WAR_ARCHIVES = False
 ENEMY_FILTER = '1L > 1M > 1E > 1C > 2L > 2M > 2E > 2C > 3L > 3M > 3E > 3C'
+
+# 上面 FILE / FOLDER / KEYWORD 是上次运行留下的值，每次提取前按实际活动改写。
+if not os.path.exists(os.path.join(FILE, 'CN', 'sharecfgdata', 'chapter_template.lua')):
+    raise SystemExit(
+        f'FILE 指向的 AzurLaneLuaScripts 目录无效: {os.path.abspath(FILE)}\n'
+        f'请改成解压后的 Lua 数据仓库路径（需包含 CN/sharecfgdata/chapter_template.lua）'
+    )
 
 LOADER = LuaLoader(FILE, server='CN')
 DATA = LOADER.load('./sharecfgdata/chapter_template.lua')
@@ -809,4 +816,11 @@ MAP_EVENT_TEMPLATE = LOADER.load('./sharecfg/map_event_template.lua')
 EXPECTATION_DATA = LOADER.load('./sharecfgdata/expedition_data_template.lua')
 
 ct = ChapterTemplate()
-ct.extract(ct.get_chapter_by_name(KEYWORD, select=SELECT), folder=FOLDER)
+maps = ct.get_chapter_by_name(KEYWORD, select=SELECT)
+if not maps:
+    raise SystemExit(
+        f'KEYWORD={KEYWORD!r} 没有匹配到任何地图。注意 KEYWORD 要填 map_id（如 2060001）'
+        f'或章节名关键词，填活动 ID（如 6001）会取到别的活动。'
+    )
+
+ct.extract(maps, folder=FOLDER)

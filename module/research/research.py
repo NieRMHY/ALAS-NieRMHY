@@ -333,7 +333,9 @@ class RewardResearch(ResearchSelector, ResearchQueue, StorageHandler):
             logger.info(f'[科研-E系列] 准备启动E系列科研: {project} '
                         f'并拆解 {project.equipment_amount} 个装备')
             # 启动项目
-            self.research_project_start(project, add_queue=False)
+            result = self.research_project_start(project, add_queue=False)
+            if result is not True:
+                return result
             # 拆解装备
             self.storage_disassemble_equipment(amount=project.equipment_amount)
             # 返回科研界面
@@ -346,7 +348,9 @@ class RewardResearch(ResearchSelector, ResearchQueue, StorageHandler):
             return result
         elif project.genre == 'T':
             logger.info(f'[科研-T系列] 准备启动T系列科研: {project}')
-            self.research_project_start(project, add_queue=False)
+            result = self.research_project_start(project, add_queue=False)
+            if result is not True:
+                return result
             self.config.Research_RemainingCommissions = project.commission_amount
             self.research_project_started = None
             return False

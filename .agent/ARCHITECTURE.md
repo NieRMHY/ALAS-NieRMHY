@@ -5,6 +5,11 @@ alwaysApply: true
 
 # 项目架构文档
 
+> **2026-09-13 前端重构**：当前表示层为 `frontend/`（React + TypeScript + Vite），
+> 通信层为 `module/api/`（Starlette WebSocket v1），运行服务位于 `module/runtime/`。
+> 核心配置不再引用 PyWebIO，配置 API 与运行器通过 `module/config/transaction.py` 共享跨进程事务锁。
+> 下文图示中的旧 WebUI 是历史架构；当前契约和模块边界以 [frontend/README.md](../frontend/README.md) 为准。
+
 **生成日期**: 2026-08-14
 **项目版本**: dev 分支
 **最后分析的代码版本**: f992af6c0

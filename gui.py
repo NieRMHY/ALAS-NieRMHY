@@ -2,11 +2,9 @@ import errno
 import os
 import queue
 import socket
-import subprocess
 import sys
 import threading
 import time
-import webbrowser
 from multiprocessing import Event, Process, Queue, set_start_method
 from typing import Optional
 
@@ -27,12 +25,13 @@ from deploy.uv import (
     redact_sensitive_text,
 )
 from module.logger import logger
-from module.webui.setting import (
+from module.runtime.setting import (
     State,
     clear_dependency_sync_pending,
     is_dependency_sync_pending,
 )
-from module.webui import worker_registry
+from module.runtime import worker_registry
+from module.runtime.process_control import pid_exists, stop_process, stop_process_tree
 
 
 WEBUI_READY_TIMEOUT = 120
@@ -41,6 +40,17 @@ WEBUI_RUNTIME_RETRY_LIMIT = 3
 WEBUI_STABLE_RUNTIME = 60
 DEPENDENCY_SYNC_START_RETRY_LIMIT = 3
 DEPENDENCY_SYNC_RESPONSE_TIMEOUT = DEPENDENCY_SYNC_TIMEOUT + 60
+
+# 启动失败时父进程的退出码。
+EXIT_STARTUP_FAILURE = 70
+
+
+class FatalStartupError(Exception):
+    """本进程无法再提供服务，需以非零退出码结束后由启动器报告。"""
+
+    def __init__(self, reason: str) -> None:
+        super().__init__(reason)
+        self.reason = reason
 
 
 def _is_ipv6_unavailable_error(exc: OSError) -> bool:
@@ -150,8 +160,11 @@ def func(
     State.restart_event = ev
     State.dependency_sync_event = dependency_sync_event
 
+    from deploy.frontend import ensure_frontend
+    ensure_frontend()
+
     # 解析命令行参数
-    parser = argparse.ArgumentParser(description="ALAS Web 服务")
+    parser = argparse.ArgumentParser(description="AzurPilot Web 服务")
     parser.add_argument(
         "--host",
         type=str,
@@ -169,7 +182,7 @@ def func(
     parser.add_argument(
         "--cdn",
         action="store_true",
-        help="使用jsdelivr CDN获取pywebio静态文件（css, js）。默认使用自托管CDN",
+        help="已废弃，React 静态资源始终由本地提供",
     )
     parser.add_argument(
         "--electron", action="store_true", help="由Electron客户端运行"
@@ -184,7 +197,7 @@ def func(
         "--run",
         nargs="+",
         type=str,
-        help="启动时运行指定配置的ALAS",
+        help="启动时运行指定配置的AzurPilot",
     )
     args, _ = parser.parse_known_args()
 
@@ -218,20 +231,14 @@ def func(
     elif ssl_key is None and ssl_cert is not None:
         logger.error("[GUI] 提供了SSL证书但未提供密钥。请同时提供SSL密钥和证书。")
 
-    # Modify by MHY, 非 Electron 模式下 uvicorn 就绪后自动打开默认浏览器
-    if not State.electron:
-        def _open_browser_when_ready():
-            if ready_event is not None:
-                ready_event.wait(timeout=30)
-            webbrowser.open(f"http://127.0.0.1:{port}")
-        threading.Thread(target=_open_browser_when_ready, daemon=True, name="webui-browser").start()
-
     # 通配地址显式创建两个 socket，避免 Windows 将 IPv6 wildcard 作为仅 IPv6 监听。
     try:
         uvicorn_options = {
             "host": host,
             "port": port,
             "factory": True,
+            "ws_max_size": 1048576,
+            "ws_max_queue": 16,
         }
         if ssl:
             uvicorn_options.update(
@@ -242,7 +249,7 @@ def func(
         if host in ("0.0.0.0", "::", "[::]"):
             if host in ("::", "[::]"):
                 uvicorn_options["host"] = "::"
-            config = uvicorn.Config("module.webui.app:app", **uvicorn_options)
+            config = uvicorn.Config("module.api.app:create_app", **uvicorn_options)
             sockets = _create_dual_stack_sockets(
                 port,
                 backlog=config.backlog,
@@ -262,13 +269,13 @@ def func(
                 for listener in sockets:
                     listener.close()
         else:
-            config = uvicorn.Config("module.webui.app:app", **uvicorn_options)
+            config = uvicorn.Config("module.api.app:create_app", **uvicorn_options)
             _run_uvicorn_server(config, ready_event=ready_event)
     except Exception as e:
         logger.exception_context(
             title='WebUI 服务启动失败',
             exc=e,
-            impact='WebUI 进程将退出，无法管理 ALAS。',
+            impact='WebUI 进程将退出，无法管理 AzurPilot。',
             action='检查端口是否被占用、SSL 证书和密钥是否匹配，并确认依赖已通过 uv sync --frozen 安装。',
             level=50,
         )
@@ -276,50 +283,8 @@ def func(
 
 
 def _stop_process(process, timeout=5) -> bool:
-    """
-    安全停止子进程，采用逐级升级的终止策略。
-
-    先尝试 terminate()，超时后升级为 kill() 强制终止。
-
-    Args:
-        process: 待停止的 multiprocessing.Process 实例
-        timeout: 等待进程优雅退出的超时时间（秒），默认 5
-
-    Returns:
-        bool: 子进程是否已确认退出。
-    """
-    if not process:
-        return True
-    try:
-        alive = process.is_alive()
-    except (OSError, ValueError, AssertionError):
-        return True
-    if not alive:
-        try:
-            process.join(timeout=0)
-        except (OSError, ValueError, AssertionError):
-            pass
-        return True
-
-    logger.info(f"[GUI] 正在停止服务进程 (PID: {process.pid})...")
-    try:
-        process.terminate()
-    except (OSError, ValueError, AssertionError) as exc:
-        logger.warning(f"[GUI] 无法终止服务进程 (PID: {process.pid}): {exc}")
-    process.join(timeout=timeout)
-
-    if process.is_alive():
-        logger.warning(f"[GUI] 服务进程 (PID: {process.pid}) 超时未退出，强制终止...")
-        try:
-            process.kill()
-        except (OSError, ValueError, AssertionError) as exc:
-            logger.warning(f"[GUI] 无法强制终止服务进程 (PID: {process.pid}): {exc}")
-        process.join(timeout=3)
-
-    stopped = not process.is_alive()
-    if not stopped:
-        logger.error(f"[GUI] 服务进程 (PID: {process.pid}) 仍在运行，取消重启以避免端口冲突")
-    return stopped
+    """通过本地句柄逐级停止服务，退出结果由 multiprocessing 回收。"""
+    return stop_process(process, timeout=timeout)
 
 
 def _wait_for_webui_ready(process, ready_event: Event, timeout=WEBUI_READY_TIMEOUT) -> bool:
@@ -336,182 +301,15 @@ def _wait_for_webui_ready(process, ready_event: Event, timeout=WEBUI_READY_TIMEO
 
 
 def _stop_process_tree(process, name: str) -> bool:
-    """终止指定进程及其子树，并确认根进程已退出。"""
-    if not process:
-        return True
-    try:
-        alive = process.is_alive()
-    except (OSError, ValueError, AssertionError):
-        return True
-    if not alive:
-        try:
-            process.join(timeout=0)
-        except (OSError, ValueError, AssertionError):
-            pass
-        return True
-
-    pid = process.pid
-    logger.warning(f"[GUI] 强制终止{name}进程树 (PID: {pid})...")
-    tree_terminated = True
-    child_processes = []
-    psutil_module = None
-    if os.name == "nt":
-        try:
-            result = subprocess.run(
-                ["taskkill", "/PID", str(pid), "/T", "/F"],
-                check=False,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-                creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
-                timeout=5,
-            )
-            tree_terminated = result.returncode == 0
-            if not tree_terminated and process.is_alive():
-                logger.warning(f"[GUI] taskkill 未能终止{name} (PID: {pid})")
-                try:
-                    process.kill()
-                except (OSError, ValueError, AssertionError) as exc:
-                    logger.warning(f"[GUI] 无法强制终止{name} (PID: {pid}): {exc}")
-        except (OSError, subprocess.TimeoutExpired) as exc:
-            logger.warning(f"[GUI] 终止{name}进程树失败: {exc}")
-            tree_terminated = False
-    else:
-        try:
-            import psutil
-
-            psutil_module = psutil
-            parent = psutil.Process(pid)
-            child_processes = parent.children(recursive=True)
-            for child in reversed(child_processes):
-                try:
-                    child.kill()
-                except psutil.NoSuchProcess:
-                    pass
-        except ImportError:
-            logger.warning(f"[GUI] 缺少 psutil，无法确认{name}子进程是否已结束")
-            tree_terminated = False
-        except psutil.NoSuchProcess:
-            # 根进程可能在 is_alive() 检查后自然退出；此时与前置已退出分支等价。
-            logger.info(f"[GUI] {name}根进程已在枚举子进程前退出 (PID: {pid})")
-        except Exception as exc:
-            logger.warning(f"[GUI] 枚举{name}子进程失败: {exc}")
-            tree_terminated = False
-        try:
-            process.kill()
-        except (OSError, ValueError, AssertionError) as exc:
-            logger.warning(f"[GUI] 无法强制终止{name} (PID: {pid}): {exc}")
-            tree_terminated = False
-
-    process.join(timeout=3)
-    stopped = not process.is_alive()
-    if os.name != "nt" and psutil_module is not None and child_processes:
-        try:
-            _, alive_children = psutil_module.wait_procs(child_processes, timeout=3)
-        except Exception as exc:
-            logger.warning(f"[GUI] 等待{name}子进程退出失败: {exc}")
-            tree_terminated = False
-        else:
-            if alive_children:
-                child_pids = ", ".join(
-                    str(getattr(child, "pid", "未知")) for child in alive_children
-                )
-                logger.error(f"[GUI] {name}子进程仍在运行 (PID: {child_pids})")
-                tree_terminated = False
-    if os.name == "nt" and stopped and not tree_terminated:
-        # taskkill 可能与子进程自然退出交错；根进程已确认退出时不应阻断重启。
-        logger.warning(
-            f"[GUI] taskkill 未返回成功，但{name}根进程已退出 (PID: {pid})"
-        )
-        tree_terminated = True
-    if not stopped or not tree_terminated:
-        logger.error(f"[GUI] {name}进程树仍在运行 (PID: {pid})")
-    return stopped and tree_terminated
-
-
-def _wait_for_registered_worker_exit(
-    pid: int,
-    name: str,
-    record: dict,
-    timeout: float = 3,
-) -> bool:
-    """等待登记 worker 退出，并拒绝 PID 已复用的记录。"""
-    deadline = time.monotonic() + timeout
-    while True:
-        try:
-            matches = worker_registry.process_matches(record)
-        except RuntimeError as exc:
-            logger.error(f"[GUI] 无法确认 worker {name} (PID: {pid}) 已退出: {exc}")
-            return False
-        if matches is None:
-            return True
-        if not matches:
-            logger.error(
-                f"[GUI] worker PID 已复用，拒绝终止未知进程: {name} (PID: {pid})"
-            )
-            return False
-        remaining = deadline - time.monotonic()
-        if remaining <= 0:
-            logger.error(f"[GUI] worker {name} (PID: {pid}) 终止超时")
-            return False
-        time.sleep(min(0.1, remaining))
+    """统一回收服务进程树，保留根进程的 multiprocessing 退出状态。"""
+    return stop_process_tree(process, name=name, timeout=0)
 
 
 def _stop_registered_worker(pid: int, name: str, record: dict) -> bool:
-    """终止登记的 worker，并验证 PID 没有被系统复用。"""
-    try:
-        matches = worker_registry.process_matches(record)
-    except RuntimeError as exc:
-        logger.error(f"[GUI] 无法确认 worker {name} (PID: {pid}) 身份: {exc}")
+    """按持久化身份回收 worker，不按缓存 PID 发信号。"""
+    if record.get("pid") != pid:
         return False
-    if matches is None:
-        return True
-    if not matches:
-        logger.error(
-            f"[GUI] worker PID 已复用，拒绝终止未知进程: {name} (PID: {pid})"
-        )
-        return False
-
-    if os.name == "nt":
-        try:
-            result = subprocess.run(
-                ["taskkill", "/PID", str(pid), "/T", "/F"],
-                check=False,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-                creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
-                timeout=5,
-            )
-        except (OSError, subprocess.TimeoutExpired) as exc:
-            logger.warning(f"[GUI] 终止 worker {name} (PID: {pid}) 失败: {exc}")
-            return False
-        if result.returncode != 0:
-            logger.warning(
-                f"[GUI] taskkill 终止 worker {name} (PID: {pid}) 返回 {result.returncode}"
-            )
-    else:
-        try:
-            import psutil
-        except ImportError:
-            logger.warning(f"[GUI] 缺少 psutil，无法终止 worker {name} (PID: {pid})")
-            return False
-
-        try:
-            parent = psutil.Process(pid)
-            children = parent.children(recursive=True)
-            for child in reversed(children):
-                child.kill()
-            parent.kill()
-            _, alive = psutil.wait_procs([parent, *children], timeout=3)
-            if alive:
-                logger.error(f"[GUI] worker {name} (PID: {pid}) 仍在运行")
-                return False
-        except psutil.NoSuchProcess:
-            return True
-        except Exception as exc:
-            logger.warning(f"[GUI] 终止 worker {name} (PID: {pid}) 失败: {exc}")
-            return False
-
-    return _wait_for_registered_worker_exit(pid, name, record)
+    return stop_process_tree(record=record, name=f"worker {name}", timeout=0)
 
 
 def _stop_registered_workers(
@@ -561,15 +359,7 @@ def _stop_registered_workers(
 
 
 def _pid_exists(pid: int) -> bool:
-    try:
-        os.kill(pid, 0)
-    except ProcessLookupError:
-        return False
-    except PermissionError:
-        return True
-    except OSError:
-        return True
-    return True
+    return pid_exists(pid)
 
 
 def _recover_orphaned_workers() -> bool:
@@ -617,7 +407,7 @@ def _stop_dependency_sync_service_tree(process) -> bool:
 
 
 def _stop_webui_process_tree(process) -> bool:
-    """终止 WebUI 及其 ALAS worker 子进程，避免重启后重复控制设备。"""
+    """终止 WebUI 及其 AzurPilot worker 子进程，避免重启后重复控制设备。"""
     root_stopped = _stop_process_tree(process, "WebUI")
     if not root_stopped:
         # 根 WebUI 仍可能继续创建或管理 worker，不能清除其登记。
@@ -832,8 +622,9 @@ def _prepare_dependency_sync_before_webui_start(
     return True, service, request_queue, response_queue
 
 
-def run_webui_supervisor() -> None:
-    """监督热重载 WebUI 子进程及其独立依赖同步服务。"""
+def run_webui_supervisor() -> int:
+    """监督热重载 WebUI 子进程及其独立依赖同步服务，返回本进程退出码。"""
+    fatal_error: Optional[FatalStartupError] = None
     should_exit = False
     process = None
     service = None
@@ -843,7 +634,9 @@ def run_webui_supervisor() -> None:
     runtime_failures = 0
     force_dependency_sync = False
     if not _recover_orphaned_workers():
-        return
+        fatal_error = FatalStartupError("残留 worker 未能回收，无法保证设备控制任务唯一")
+        logger.error("[GUI] AzurPilot Web服务启动失败：%s", fatal_error.reason)
+        return EXIT_STARTUP_FAILURE
     try:
         while not should_exit:
             (
@@ -858,9 +651,22 @@ def run_webui_supervisor() -> None:
                 force=force_dependency_sync,
             )
             if not ready_to_start:
-                should_exit = True
-                break
+                raise FatalStartupError("依赖同步未就绪，WebUI 无法启动")
             force_dependency_sync = False
+
+            # 首次安装前端依赖可能较慢，必须在子进程监听计时开始前完成。
+            from deploy.frontend import ensure_frontend
+            try:
+                ensure_frontend()
+            except Exception as exc:
+                logger.exception_context(
+                    title='React 前端构建失败',
+                    exc=exc,
+                    impact='前端静态资源不可用，停止创建 WebUI 子进程。',
+                    action='检查 Node.js 安装和 npm 输出，修复后重新启动。',
+                    level=50,
+                )
+                raise FatalStartupError("React 前端构建失败") from exc
 
             event = Event()
             dependency_sync_event = Event()
@@ -884,11 +690,10 @@ def run_webui_supervisor() -> None:
                     level=50,
                 )
                 if startup_failures >= WEBUI_START_RETRY_LIMIT:
-                    should_exit = True
-                else:
-                    time.sleep(startup_failures)
+                    raise FatalStartupError("WebUI 子进程连续启动失败")
+                time.sleep(startup_failures)
                 continue
-            logger.info(f"[GUI] 启动ALAS Web服务 (PID: {process.pid})")
+            logger.info(f"[GUI] 启动AzurPilot Web服务 (PID: {process.pid})")
 
             try:
                 ready = _wait_for_webui_ready(process, ready_event)
@@ -909,7 +714,7 @@ def run_webui_supervisor() -> None:
                         action='手动结束残留 gui.py 子进程后重新启动。',
                         level=50,
                     )
-                    should_exit = True
+                    raise FatalStartupError("WebUI 子进程未就绪且无法停止")
                 elif startup_failures >= WEBUI_START_RETRY_LIMIT:
                     logger.error_context(
                         title='WebUI 子进程未能完成启动',
@@ -918,7 +723,9 @@ def run_webui_supervisor() -> None:
                         action='检查端口占用、WebUI 日志和 Python 环境后重新启动。',
                         level=50,
                     )
-                    should_exit = True
+                    raise FatalStartupError(
+                        f'连续 {startup_failures} 次未在 {WEBUI_READY_TIMEOUT} 秒内完成监听'
+                    )
                 else:
                     logger.warning(
                         f"[GUI] WebUI 未就绪，将在 {startup_failures} 秒后重试 "
@@ -947,8 +754,7 @@ def run_webui_supervisor() -> None:
                         action='检查 WebUI 子进程状态和系统进程权限。',
                         level=50,
                     )
-                    should_exit = True
-                    break
+                    raise FatalStartupError("WebUI 重启事件处理失败") from e
 
                 if restart_triggered:
                     logger.info("[GUI] 重启事件触发，终止当前服务...")
@@ -960,8 +766,7 @@ def run_webui_supervisor() -> None:
                             action='检查系统进程权限，手动结束残留的 gui.py 子进程后重新启动。',
                             level=50,
                         )
-                        should_exit = True
-                        break
+                        raise FatalStartupError("重启时旧 WebUI 子进程未能停止")
                     try:
                         force_dependency_sync = dependency_sync_event.is_set()
                     except OSError as exc:
@@ -972,8 +777,7 @@ def run_webui_supervisor() -> None:
                             action='检查 config 目录读写权限后重新启动。',
                             level=50,
                         )
-                        should_exit = True
-                        break
+                        raise FatalStartupError("无法读取依赖同步状态") from exc
                     if force_dependency_sync:
                         logger.info("[GUI] 检测到更新请求，创建替代 WebUI 前将同步依赖")
                     break
@@ -983,7 +787,7 @@ def run_webui_supervisor() -> None:
                     runtime_failures += 1
                     if runtime_failures >= WEBUI_RUNTIME_RETRY_LIMIT:
                         logger.error_context(
-                            title='ALAS Web 服务反复意外退出',
+                            title='AzurPilot Web 服务反复意外退出',
                             reason=(
                                 f'已连续 {runtime_failures} 次在稳定运行前退出，'
                                 '且没有收到正常重启事件。'
@@ -992,7 +796,7 @@ def run_webui_supervisor() -> None:
                             action='查看对应的 GUI 日志和子进程错误现场后重新启动。',
                             level=50,
                         )
-                        should_exit = True
+                        raise FatalStartupError("WebUI 反复意外退出")
                     else:
                         logger.warning(
                             f"[GUI] WebUI 意外退出，将在 {runtime_failures} 秒后重试 "
@@ -1003,7 +807,7 @@ def run_webui_supervisor() -> None:
 
             # 确保子进程完全退出；清理失败时不能创建替代 WebUI。
             if not _stop_webui_process_tree(process):
-                if not should_exit:
+                if fatal_error is None:
                     logger.error_context(
                         title='WebUI 子进程清理失败',
                         reason='子进程已退出或需要重启，但关联 worker 未能确认回收。',
@@ -1011,11 +815,19 @@ def run_webui_supervisor() -> None:
                         action='检查残留 gui.py/worker 进程后重新启动。',
                         level=50,
                     )
-                should_exit = True
+                    raise FatalStartupError("WebUI 子进程清理失败，关联 worker 未能回收")
+    except FatalStartupError as exc:
+        # 致命路径统一收敛到此，只决定退出码；错误现场已在各自分支记录。
+        fatal_error = exc
     finally:
         _stop_webui_process_tree(process)
         _stop_dependency_sync_service(service, service_request_queue)
-        logger.info("[GUI] ALAS Web服务已成功退出")
+        if fatal_error is None:
+            logger.info("[GUI] ALAS Web服务已成功退出")
+        else:
+            logger.error("[GUI] AzurPilot Web服务启动失败：%s", fatal_error.reason)
+
+    return EXIT_STARTUP_FAILURE if fatal_error is not None else 0
 
 
 if __name__ == "__main__":
@@ -1029,7 +841,7 @@ if __name__ == "__main__":
         logger.warning("[GUI] 无法设置spawn启动方式，可能使用fork（macOS上不推荐）")
 
     if State.deploy_config.EnableReload:
-        run_webui_supervisor()
+        sys.exit(run_webui_supervisor())
     else:
         # 非重载模式：直接运行
         func(None, None)

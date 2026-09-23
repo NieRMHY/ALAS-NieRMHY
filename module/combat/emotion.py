@@ -432,6 +432,13 @@ class Emotion:
             fleet_index (int): 舰队编号，1 或 2。
             shipwreck (bool): 舰队是否遭遇船难。
         """
+        # 无视沉船心情惩罚：沉船的额外扣减发生在结算阶段，而进入战斗时
+        # 已扣过基础扣减（reduce_per_battle），因此这里直接返回即可。
+        # 同时不累加 total_reduced，让"无视"在情绪模型中完全等价于一场 S 评价。
+        if shipwreck and self.config.Emotion_IgnoreShipwreck:
+            logger.info('[情绪-忽略] 已开启无视沉船心情惩罚，本次不额外扣减沉船心情')
+            return
+
         logger.hr('情绪扣减')
         self.update()
 

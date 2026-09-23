@@ -93,6 +93,26 @@ DICT_FILTER_PRESET = {
         > 5 > S8-DR8 > S8-PRY8 > S8-C8 > C6 > 6 > DR8 > PRY8 > C8 > 8
         > S8-C12 > C12 > 12
     """,
+    # 与 series_8_305_only 相同，但产 305 彩装的 E 类项目出现即取，不再刷短项等待（issue #935）
+    # 注意：E-880 消耗 283mm 主炮设计图、E-180 消耗铁血科技箱，
+    # 且资源门控不识别这两类消耗，库存不足时无法自动跳过
+    'series_8_305_e_first': """
+        S8-E-880 > S8-E-180 > S8-Q0.5 > S8-PRY0.5 > S8-DR0.5 > Q0.5 > S8-Q4 > S8-Q2 > S8-Q1 > 0.5
+        > S8-E-315 > S8-G4 > S8-G1.5 > Q1 > 1 > S8-E-031 > S8-DR2.5 > reset
+        > S8-G2.5 > S8-PRY2.5 > G1.5 > 1.5 > Q2 > E2 > 2 > DR2.5 > PRY2.5
+        > G2.5 > 2.5 > S8-DR5 > S8-PRY5 > Q4 > G4 > 4 > S8-C6 > DR5 > PRY5
+        > 5 > S8-DR8 > S8-PRY8 > S8-C8 > C6 > 6 > DR8 > PRY8 > C8 > 8
+        > S8-C12 > C12 > 12
+    """,
+    # series_8_305_e_first 的允许使用魔方变体，与 series_8_305_only_cube 的差异同上
+    'series_8_305_e_first_cube': """
+        S8-E-880 > S8-E-180 > S8-Q0.5 > S8-DR0.5 > S8-PRY0.5 > Q0.5 > S8-Q4 > S8-Q2 > S8-Q1 > 0.5
+        > S8-E-315 > S8-G1.5 > S8-G4 > Q1 > reset > S8-H1 > H1 > 1 > S8-E-031
+        > S8-DR2.5 > S8-PRY2.5 > S8-G2.5 > G1.5 > 1.5 > Q2 > E2 > S8-H2 > H2
+        > 2 > DR2.5 > PRY2.5 > G2.5 > 2.5 > S8-DR5 > S8-PRY5 > Q4 > G4
+        > S8-H4 > H4 > 4 > S8-C6 > DR5 > PRY5 > 5 > S8-DR8 > S8-PRY8 > S8-C8
+        > C6 > 6 > S8-C12 > DR8 > PRY8 > C8 > 8 > C12 > 12
+    """,
     # Goal: DR_blurprint=513, PRY_blueprint=343, tanrai_blueprint=100
     # Average time cost: 124.67622465277958
     # Average rewards: [531.93022864 529.81919864 510.27473326 510.18530159 510.11215826 100.8088164]

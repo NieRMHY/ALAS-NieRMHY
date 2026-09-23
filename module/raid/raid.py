@@ -18,7 +18,7 @@ import numpy as np
 
 import module.config.server as server
 from module.base.timer import Timer
-from module.base.utils import color_similarity_2d, image_size
+from module.base.utils import color_mask, image_size
 from module.campaign.campaign_event import CampaignEvent
 from module.combat.assets import *
 from module.exception import ScriptError
@@ -93,13 +93,15 @@ class HuanChangPtOcr(Digit):
         """
         image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         image = cv2.threshold(image, 128, 255, cv2.THRESH_BINARY_INV)[1]
-        count, cc = cv2.connectedComponents(image)
+        count, cc, stats, _ = cv2.connectedComponentsWithStats(image)
         # 计算连通域面积，大于 60 的视为数字
         # CN/JP 背景最右侧连通但 EN 不连通，因此需要同时排除 [0,-1] 和 [-1,-1]
-        num_idx = [i for i in range(1, count + 1) if
-                   i != cc[0, -1] and i != cc[-1, -1] and np.count_nonzero(cc == i) > 60]
-        image = ~(np.isin(cc, num_idx) * 255)  # 数字为白色，需要反转
-        return image.astype(np.uint8)
+        num_idx = [i for i in range(1, count) if
+                   i != cc[0, -1] and i != cc[-1, -1] and stats[i, cv2.CC_STAT_AREA] > 60]
+        # 数字为白色需要反转，因此把数字标签映射为 0、其余映射为 255
+        lut = np.full(count, 255, np.uint8)
+        lut[num_idx] = 0
+        return lut[cc]
 
 
 class BigshotPtOcr(Digit):
@@ -108,8 +110,7 @@ class BigshotPtOcr(Digit):
         remove white background at upper-left and bottom-left
         """
         # create white background mask
-        mask = color_similarity_2d(image, (240, 252, 233))
-        cv2.inRange(mask, 180, 255, dst=mask)
+        mask = color_mask(image, (240, 252, 233), threshold=75)
         # flood-fill upper-left and bottom-left to 128
         width, height = image_size(image)
         fill_color = 128
@@ -319,7 +320,7 @@ class Raid(MapOperation, RaidCombat, CampaignEvent):
         """
         # 油量限制
         if oil_check:
-            if self.get_oil() < max(500, self.config.StopCondition_OilLimit):
+            if self.get_oil() < max(self.config.StopCondition_OilLimitHardFloor, self.config.StopCondition_OilLimit):
                 logger.hr('触发停止条件: 石油上限')
                 self.config.task_delay(minute=(120, 240))
                 return True

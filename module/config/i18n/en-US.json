@@ -1,7 +1,7 @@
 {
   "Menu": {
     "Alas": {
-      "name": "Smart Port Plus",
+      "name": "System",
       "help": ""
     },
     "Farm": {
@@ -155,7 +155,7 @@
       "help": ""
     },
     "CoalitionSp": {
-      "name": "怪谈纪实：逃离白夜山庄SP",
+      "name": "Tales of the Strange: Escape from White Night Villa SP",
       "help": ""
     },
     "Commission": {
@@ -189,6 +189,14 @@
     "Awaken": {
       "name": "Cognitive Awakening",
       "help": ""
+    },
+    "Secretary": {
+      "name": "Secretary",
+      "help": "Automatically monitor the secretary ship's affinity and replace it when it reaches 90 affinity"
+    },
+    "OperationHandover": {
+      "name": "Operation Handover Contract",
+      "help": "Consume Handover Books to run Operation Handover automatically."
     },
     "Daily": {
       "name": "Daily Missions",
@@ -370,13 +378,13 @@
       "name": "Weekly Pearl Trade",
       "help": "Only supports minitouch. Process pearls every Tuesday at 01:00."
     },
-    "FleetScan": {
-      "name": "Fleet Scan",
-      "help": "Scan ships assigned to fleets"
-    },
     "FleetInfo": {
       "name": "Fleet Information",
       "help": "View the latest fleet scan result"
+    },
+    "FleetScan": {
+      "name": "Fleet Scan",
+      "help": "Scan ships assigned to fleets"
     },
     "Daemon": {
       "name": "Semi-Auto Click",
@@ -417,6 +425,10 @@
     "EmulatorManager": {
       "name": "Emulator Manager",
       "help": "Provides an entry point for manually restarting the emulator."
+    },
+    "MeowfficerScore": {
+      "name": "Meowfficer Score",
+      "help": "Read meowfficer talents and score them with public guide rules"
     }
   },
   "Scheduler": {
@@ -426,7 +438,7 @@
     },
     "Enable": {
       "name": "Enable this feature",
-      "help": "Add this task to the scheduler\nCommission, Research, and Reward tasks are always enabled",
+      "help": "Add this task to the scheduler",
       "True": "Enabled",
       "False": "Disabled"
     },
@@ -485,11 +497,11 @@
   },
   "Emulator": {
     "_info": {
-      "name": "Emulator Settings",
+      "name": "Emulator settings",
       "help": ""
     },
     "Serial": {
-      "name": "Emulator Serial",
+      "name": "Emulator serial",
       "help": "Common emulator Serial can be found in the list below\nFill in \"auto\" to automatically detect the emulator. \"auto\" cannot be used when multiple emulators are running or an emulator that does not support automatic detection is used and must be filled in manually.\n\nEmulator default Serial:\n- BlueStacks 127.0.0.1:5555\n- BlueStacks 4 Hyper-v version, fill in \"bluestacks4-hyperv\" to automatically connect, fill in \"bluestacks4-hyperv-2\" for more options, and so on.\n- BlueStacks 5 Hyper-v version, fill in \"bluestacks5-hyperv\" to automatically connect, fill in \"bluestacks5-hyperv-1\" for more options, and so on.\n- NoxPlayer 127.0.0.1:62001\n- NoxPlayer 64-bit 127.0.0.1:59865\n- MuMu Player/MuMu Player X 127.0.0.1:7555\n- MuMu Player 12 127.0.0.1:16384\n- MuMu Pro (macOS) 127.0.0.1:16384, the order of opening is 127.0.0.1:16416, 127.0.0.1:16448...\n- MEmu 127.0.0.1:21503\n- LDPlayer emulator-5554 or 127.0.0.1:5555\nIf you use the multi-instance function of the emulator, their Serial will not be the default. You can execute `adb devices` query in console.bat, or fill it in according to the official tutorial of the emulator."
     },
     "PackageName": {
@@ -601,7 +613,7 @@
       "tw-4": "[TW] 雷伊泰灣"
     },
     "ScreenshotMethod": {
-      "name": "Select Screenshot Method",
+      "name": "Select screenshot method",
       "help": "When using auto-select, a performance test will be performed and automatically changed to the fastest screenshot method\nGeneral speed: DroidCast_raw >> aScreenCap_nc > ADB_nc >>> aScreenCap > uiautomator2 ~= ADB\nRun Tools - Performance Test to find the fastest method",
       "auto": "Auto-select fastest",
       "ADB": "ADB",
@@ -615,13 +627,14 @@
       "ldopengl": "ldopengl"
     },
     "ControlMethod": {
-      "name": "Select Control Method",
-      "help": "Speed: minitouch > Hermit >>> uiautomator2 ~= ADB\nRecommended: minitouch. Not recommended: Hermit unless running under vmos.",
+      "name": "Select control method",
+      "help": "Input injection method for clicks and swipes. Speed: minitouch ≈ MaaTouch > ADB >>> uiautomator2. Recommended: MaaTouch (minitouch can be unstable on newer Android devices).\n⚠️ nemu_ipc must be paired with the nemu_ipc screenshot method (auto-paired at startup when screenshot is set to nemu_ipc). Caution: nemu_ipc touch injection goes through the emulator's internal RPC; on low-end PCs swipes may lose steps and drags may deform, and occasional hangs can drop clicks. Switch back to minitouch / MaaTouch if swiping misbehaves.",
       "ADB": "ADB",
       "uiautomator2": "uiautomator2",
       "minitouch": "minitouch",
       "Hermit": "Hermit",
-      "MaaTouch": "MaaTouch"
+      "MaaTouch": "MaaTouch",
+      "nemu_ipc": "nemu_ipc"
     },
     "GameSettings": {
       "name": "Automatically apply recommended game settings",
@@ -630,21 +643,21 @@
       "False": "Disabled"
     },
     "ScreenshotDedithering": {
-      "name": "Remove Image Color Dithering",
+      "name": "Remove image color dithering",
       "help": "Enable when running on a real device"
     },
     "AdbRestart": {
-      "name": "Try Restarting ADB When Device Not Detected",
+      "name": "Restart ADB when no device is detected",
       "help": ""
     }
   },
   "EmulatorInfo": {
     "_info": {
-      "name": "Emulator Settings",
+      "name": "Emulator settings",
       "help": "The following values are automatically filled in based on Serial. If you do not understand, please do not modify it at will. Modifying the port will automatically start the corresponding instance."
     },
     "Emulator": {
-      "name": "Select Emulator Type",
+      "name": "Select emulator type",
       "help": "",
       "auto": "Automatic detection",
       "NoxPlayer": "NoxPlayer",
@@ -666,41 +679,41 @@
       "SSH": "SSH"
     },
     "name": {
-      "name": "Emulator Instance Name",
+      "name": "Emulator instance name",
       "help": ""
     },
     "path": {
-      "name": "Emulator Installation Path",
+      "name": "Emulator installation path",
       "help": ""
     },
     "EnableRemoteSSH": {
-      "name": "Enable Remote SSH Management",
+      "name": "Enable remote SSH management",
       "help": "Execute specific commands (e.g., restart Docker containers) on a remote server via SSH before restarting the emulator.",
       "True": "Enabled",
       "False": "Disabled"
     },
     "RemoteSSHHost": {
-      "name": "Remote Server Address",
+      "name": "Remote server address",
       "help": "IP address or domain of the remote server, e.g., 192.168.1.100"
     },
     "RemoteSSHPort": {
-      "name": "Port Number",
+      "name": "Port number",
       "help": "SSH service port, default 22"
     },
     "RemoteSSHUser": {
-      "name": "SSH Username",
+      "name": "SSH username",
       "help": "Username to login via SSH, e.g., root"
     },
     "RemoteSSHPublicKey": {
-      "name": "SSH Private Key",
+      "name": "SSH private key",
       "help": "The private key content for SSH authentication (if needed)"
     },
     "RemoteStartCommand": {
-      "name": "Remote Start Command",
+      "name": "Remote start command",
       "help": "SSH command to start the emulator/service (e.g., docker start)"
     },
     "RemoteStopCommand": {
-      "name": "Remote Stop Command",
+      "name": "Remote stop command",
       "help": "SSH command to stop the emulator/service (e.g., docker stop)"
     }
   },
@@ -721,12 +734,27 @@
       "name": "Prohibit restarting when errors occur in sensitive tasks",
       "help": "When an error occurs, directly terminate ALAS without restarting the game. Use for debugging, commission tasks, research tasks, Obscured Zones, Abyssal Zones, and other critical timing tasks"
     },
-    "SaveErrorCount": {
-      "name": "Keep Up to X Error Logs",
-      "help": "Error logs exceeding the upper limit will be deleted. If it is 0 or a negative value, there is no limit."
+    "SaveErrorRetentionDays": {
+      "name": "Error log expiration (days)",
+      "help": "Error scenes older than this are handled by the method below\n0 = keep everything"
+    },
+    "SaveErrorBackUpMethod": {
+      "name": "Expired error log processing method",
+      "help": "The backup directory is ./log/error/<instance>/bak",
+      "delete": "Delete",
+      "zip": "Compress backup",
+      "copy": "Copy backup"
+    },
+    "SaveErrorZipMethod": {
+      "name": "Compression format",
+      "help": "",
+      "bz2": "bz2",
+      "gzip": "gzip",
+      "xz": "xz",
+      "zip": "zip"
     },
     "OnePushConfig": {
-      "name": "Error Push Settings",
+      "name": "Error push settings",
       "help": "Notification will be sent via OnePush when an error occurs. Configure the OnePush provider for use, refer to https://github.com/y1ndan/onepush"
     },
     "ScreenshotLength": {
@@ -738,7 +766,7 @@
       "help": "After the game freezes (triggers GameStuckError) for the specified number of times, try restarting the emulator. It may help solve problems such as emulator freeze or memory overflow."
     },
     "GameStuckThreshold": {
-      "name": "Restart When Game Stuck for X Seconds",
+      "name": "Restart when the game is stuck for X seconds",
       "help": "How many consecutive times it is stuck before triggering a restart."
     },
     "AdbOfflineRestart": {
@@ -746,11 +774,11 @@
       "help": "After the device cannot be detected continuously (ADB is offline or the connection fails) for the specified number of times, try to restart the emulator."
     },
     "AdbOfflineThreshold": {
-      "name": "Restart When Device Unreachable for X Seconds",
+      "name": "Restart when the device is unreachable for X seconds",
       "help": "The number of times the device cannot be detected in a row triggers a restart."
     },
     "WatchdogEnable": {
-      "name": "Watchdog Master Switch",
+      "name": "Watchdog master switch",
       "help": "What's a watchdog? It's a bodyguard running in the background. Turn it on to enable the checks below; turn it off and nothing below matters. Default off."
     },
     "WatchdogTaskEnable": {
@@ -772,23 +800,23 @@
   },
   "Optimization": {
     "_info": {
-      "name": "Optimization Settings",
+      "name": "Optimization settings",
       "help": ""
     },
     "OcrDevice": {
-      "name": "OCR Device",
+      "name": "OCR device",
       "help": "Choose the OCR inference device.\nAuto on Windows tries QNN NPU, OpenVINO NPU, OpenVINO discrete GPU, DirectML discrete GPU, OpenVINO CPU, then CPU. Disabling Auto-install and use vendor EPs limits Windows to DirectML discrete GPU and CPU.\nQNN/OpenVINO devices require ONNX Runtime. ANE is only for Apple Silicon Macs.",
       "auto": "Auto",
       "qnn_npu": "QNN NPU",
       "openvino_npu": "OpenVINO NPU",
-      "openvino_gpu": "OpenVINO Discrete GPU",
-      "gpu": "DirectML Discrete GPU",
+      "openvino_gpu": "OpenVINO discrete GPU",
+      "gpu": "DirectML discrete GPU",
       "openvino_cpu": "OpenVINO CPU",
       "cpu": "CPU",
       "ane": "ANE (Apple)"
     },
     "OcrBackend": {
-      "name": "OCR Backend",
+      "name": "OCR backend",
       "help": "Choose the OCR inference engine. ONNX Runtime uses the ONNX Runtime backend, ncnn uses the ncnn Vulkan backend. Auto defaults to ONNX Runtime.",
       "auto": "Auto (ONNX Runtime)",
       "onnxruntime": "ONNX Runtime",
@@ -819,48 +847,48 @@
       "alocr_cn_v3": "AlOCR v3 (Legacy)"
     },
     "OcrModelVersionJapanese": {
-      "name": "OCR Japanese Model Version",
+      "name": "OCR Japanese model version",
       "help": "Choose the Japanese OCR model tier. Lite is lightest and fastest but does not support Japanese, Standard is balanced, Pro is highest accuracy. Auto uses Standard. This affects Japanese models.",
-      "auto": "Auto Recommended",
+      "auto": "Auto (recommended)",
       "lite": "Lite",
       "standard": "Standard",
       "pro": "Pro"
     },
     "OcrModelVersionTraditionalChinese": {
-      "name": "OCR Traditional Chinese Model Version",
+      "name": "OCR Traditional Chinese model version",
       "help": "Choose the Traditional Chinese OCR model tier. Lite is lightest and fastest, Standard is balanced, Pro is highest accuracy. Auto uses Standard.",
-      "auto": "Auto Recommended",
+      "auto": "Auto (recommended)",
       "lite": "Lite",
       "standard": "Standard",
       "pro": "Pro"
     },
     "ScreenshotInterval": {
-      "name": "Slow Down Screenshot Speed to X Seconds per Frame",
+      "name": "Slow down screenshot speed to X seconds per frame",
       "help": "Minimum interval between two screenshots, limited to 0.001 ~ 0.3. Can reduce CPU usage on high-spec computers."
     },
     "CombatScreenshotInterval": {
-      "name": "Slow Down Combat Screenshot Speed to X Seconds per Frame",
+      "name": "Slow down combat screenshot speed to X seconds per frame",
       "help": "Minimum interval between two screenshots, limited to 0.001 ~ 1.0. Can reduce CPU usage during combat."
     },
     "TaskHoardingDuration": {
-      "name": "Hoard Tasks for X Minutes",
+      "name": "Hoard tasks for X minutes",
       "help": "Can reduce the frequency of game operations during reward collection\nAfter a task is triggered, wait X minutes, then execute all hoarded tasks at once"
     },
     "CloseEmulatorDuringLongWait": {
-      "name": "Close Emulator During Long Wait",
+      "name": "Close the emulator during long waits",
       "help": "When the next task is more than 3 hours away, close the emulator during the wait to save memory and CPU.",
-      "True": "True",
-      "False": "False"
+      "True": "Enabled",
+      "False": "Disabled"
     },
     "WhenTaskQueueEmpty": {
-      "name": "When Task Queue Is Empty",
+      "name": "When the task queue is empty",
       "help": "Closing the game when there are no tasks can reduce CPU usage during reward collection",
-      "stay_there": "Stay in Place",
-      "goto_main": "Go to Main Menu",
-      "close_game": "Close Game"
+      "stay_there": "Stay in place",
+      "goto_main": "Go to the main menu",
+      "close_game": "Close the game"
     },
     "WhenSchedulerStopped": {
-      "name": "After Stopping Scheduler",
+      "name": "After stopping the scheduler",
       "help": "Action to perform after stopping the scheduler from the WebUI",
       "stay_there": "Stay in Place",
       "goto_main": "Go to Main Menu",
@@ -982,74 +1010,113 @@
   },
   "DropRecord": {
     "_info": {
-      "name": "Drop Record",
+      "name": "Drop record",
       "help": ""
     },
     "SaveFolder": {
-      "name": "Drop Save Directory",
+      "name": "Drop save directory",
       "help": ""
+    },
+    "RetentionDays": {
+      "name": "Screenshot retention (days)",
+      "help": "Drop record screenshots older than this many days are handled by the method below\n0 = no day-based cleanup (commission reward screenshots still keep the latest 50 only)"
+    },
+    "BackUpMethod": {
+      "name": "Expired screenshot processing method",
+      "help": "The backup directory is the bak folder under the save directory (for commission rewards, under each instance folder)",
+      "delete": "Delete",
+      "zip": "Compress backup",
+      "copy": "Copy backup"
+    },
+    "ZipMethod": {
+      "name": "Compression format",
+      "help": "",
+      "bz2": "bz2",
+      "gzip": "gzip",
+      "xz": "xz",
+      "zip": "zip"
     },
     "AzurStatsID": {
       "name": "AzurStat ID",
       "help": "The client ID declared when uploading to https://azur-stats.lyoko.io\nComposed of random characters and can be modified at will"
     },
     "API": {
-      "name": "Upload Route",
+      "name": "Upload route",
       "help": "If users in China cannot connect to AzurStat, they can use \"China Reverse Proxy\"",
       "default": "Default (Cloudflare)",
       "cn_gz_reverse_proxy": "China Reverse Proxy (Guangzhou)"
     },
     "ResearchRecord": {
-      "name": "Research Screenshot",
+      "name": "Research screenshot",
       "help": "",
-      "do_not": "No Action",
+      "do_not": "No action",
       "save": "Save",
       "upload": "Upload",
-      "save_and_upload": "Save and Upload"
+      "save_and_upload": "Save and upload"
     },
     "CommissionRecord": {
-      "name": "Commission Screenshot",
+      "name": "Commission screenshot",
       "help": "",
-      "do_not": "No Action",
+      "do_not": "No action",
       "save": "Save",
       "upload": "Upload",
-      "save_and_upload": "Save and Upload"
+      "save_and_upload": "Save and upload"
+    },
+    "CommissionIncomeScreenshot": {
+      "name": "Commission reward screenshot",
+      "help": "Save the \"GET ITEMS\" screenshot on each commission settlement for the \"View screenshot\" links on the statistics page\nWhen disabled, reward data is still recorded, only the images are skipped",
+      "do_not": "Do not save",
+      "save": "Save"
     },
     "CombatRecord": {
-      "name": "Combat Drop Screenshot",
+      "name": "Combat drop screenshot",
       "help": "Enabling this will slow down click speed during settlement\nDoes not take effect in auto-search mode",
-      "do_not": "No Action",
+      "do_not": "No action",
       "save": "Save"
     },
     "OpsiRecord": {
-      "name": "OpSi Drop Screenshot",
+      "name": "OpSi drop screenshot",
       "help": "",
-      "do_not": "No Action",
+      "do_not": "No action",
       "save": "Save",
       "upload": "Upload",
-      "save_and_upload": "Save and Upload"
+      "save_and_upload": "Save and upload"
     },
     "MeowfficerBuy": {
-      "name": "Meowfficer Purchase Screenshot",
+      "name": "Meowfficer purchase screenshot",
       "help": "",
-      "do_not": "No Action",
+      "do_not": "No action",
       "save": "Save"
     },
     "MeowfficerTalent": {
-      "name": "Meowfficer Talent Screenshot",
+      "name": "Meowfficer talent screenshot",
       "help": "",
-      "do_not": "No Action",
+      "do_not": "No action",
       "save": "Save",
       "upload": "Upload",
-      "save_and_upload": "Save and Upload"
+      "save_and_upload": "Save and upload"
     },
     "TelemetryReport": {
       "name": "Telemetry Data Reporting",
       "help": "After being enabled, CL1 statistics (anonymous data such as the number of battles and Akashi encounter probability) will be reported anonymously to the server on a regular basis. For details on ID generation, please see the source code."
     },
     "BugReport": {
-      "name": "Bug Log Reporting",
+      "name": "Bug log reporting",
       "help": "When enabled, bug logs will be anonymously reported to the server when an exception is encountered to help improve ID generation. See the source code for details."
+    }
+  },
+  "Backup": {
+    "_info": {
+      "name": "Daily backup",
+      "help": "Backs up the database and user configs when the scheduler starts for the first time each day. Backups are stored in the AzurPilot_Data_Backup folder inside the project directory."
+    },
+    "Enable": {
+      "name": "Enable daily backup",
+      "help": "When disabled, no new backup is created and existing backups are never deleted."
+    },
+    "KeepDays": {
+      "name": "Backup retention (days)",
+      "help": "Backups older than this many days are deleted after each backup completes. For example, 7 keeps only the most recent 7 days."
     }
   },
   "Log": {
@@ -1058,15 +1125,15 @@
       "help": "It will take effect after the scheduler is restarted."
     },
     "LogKeepCount": {
-      "name": "Log Retention Count",
+      "name": "Log retention count",
       "help": "Log expiration time (days)"
     },
     "LogBackUpMethod": {
-      "name": "Expired Log Processing Method",
+      "name": "Expired log processing method",
       "help": "The backup directory is ./log/bak",
-      "delete": "delete",
+      "delete": "Delete",
       "zip": "Compress backup",
-      "copy": "copy backup"
+      "copy": "Copy backup"
     },
     "ZipMethod": {
       "name": "Compression format",
@@ -1083,36 +1150,36 @@
       "help": ""
     },
     "RetireMode": {
-      "name": "Select Retirement Mode",
+      "name": "Select retirement mode",
       "help": "If you choose to strengthen, you will fall back to one-click retirement when the strengthening materials are insufficient.",
       "one_click_retire": "Retire with one click",
       "enhance": "Enhance",
-      "old_retire": "traditional retirement"
+      "old_retire": "Traditional retirement"
     }
   },
   "PublicEmotion": {
     "_info": {
-      "name": "Shared Morale",
+      "name": "Shared morale",
       "help": "Can use the same team to complete multiple tasks\nWhen using this function, please ensure that the fleet function of the corresponding task is to clear all single teams, and the team is a shared team."
     },
     "Enable": {
-      "name": "Enable Shared Morale",
+      "name": "Enable shared morale",
       "help": "After enabling, the shared morale will be used, and the following morale configuration will replace the original configuration."
     },
     "Tasks": {
-      "name": "Shared Morale Tasks",
-      "help": "Select tasks that use shared morale, separated by half-width commas, such as \"Main, Event, EventA\"\nMain Line Diagram-1: Main, Main Line Diagram-2: Main2, Main Line Diagram-3: Main3\nActivity Diagram-1: Event, Activity Diagram-2: Event2, War Archives: WarArchives\nDaily A chart: EventA, Daily B chart: EventB, Daily C chart: EventC, Daily D chart: EventD, Daily SP chart: EventSp"
+      "name": "Shared morale tasks",
+      "help": "Select tasks that use shared morale, separated by half-width commas, such as \"Main, Event, EventA\"\nMain Campaign-1: Main, Main Campaign-2: Main2, Main Campaign-3: Main3\nEvent Map-1: Event, Event Map-2: Event2, War Archives: WarArchives\nDaily Map A: EventA, Daily Map B: EventB, Daily Map C: EventC, Daily Map D: EventD, Daily Map SP: EventSp"
     },
     "FleetValue": {
-      "name": "Morale Value",
+      "name": "Morale value",
       "help": ""
     },
     "FleetRecord": {
-      "name": "Morale Record Time",
+      "name": "Morale record time",
       "help": ""
     },
     "FleetControl": {
-      "name": "Morale Control",
+      "name": "Morale control",
       "help": "",
       "keep_exp_bonus": "Maintain experience bonus (>120)",
       "prevent_green_face": "Prevent green face (>40)",
@@ -1120,11 +1187,11 @@
       "prevent_red_face": "Prevent red face (>0)"
     },
     "FleetRecover": {
-      "name": "Morale Recovery",
+      "name": "Morale recovery",
       "help": "",
-      "not_in_dormitory": "Not in Dorm (20/h)",
-      "dormitory_floor_1": "Dorm 1st Floor (40/h)",
-      "dormitory_floor_2": "Dorm 2nd Floor (50/h)"
+      "not_in_dormitory": "Not in dorm (20/h)",
+      "dormitory_floor_1": "Dorm 1st floor (40/h)",
+      "dormitory_floor_2": "Dorm 2nd floor (50/h)"
     },
     "FleetOath": {
       "name": "All members are married (+10/h)",
@@ -1142,66 +1209,66 @@
     },
     "TaskPriorityAdjustment": {
       "name": "Task priority adjustment",
-      "help": "Drag task rows to adjust scheduler priority. Tasks closer to the top run first. New tasks are automatically inserted into suitable positions according to the built-in default priority."
+      "help": "Enter task names in order from top to bottom; tasks closer to the top run first. One task per line, or separate them with >. New tasks are automatically inserted into suitable positions according to the built-in default priority."
     }
   },
   "OneClickRetire": {
     "_info": {
-      "name": "Quick Retire Settings",
+      "name": "Quick retire settings",
       "help": "Only takes effect when \"Retirement Mode\" is set to \"Quick Retire\""
     },
     "KeepLimitBreak": {
-      "name": "Keep the star-filled ship with the same name",
+      "name": "Keep same-name ships with full stars",
       "help": "When there are no ships of the same name with full stars, several ships of the same name that meet the conditions for retirement will be retained.\nIf one-click retirement cannot be retired, please set it to \"No retention\"",
-      "keep_limit_break": "Required to retain full stars",
-      "do_not_keep": "Not reserved"
+      "keep_limit_break": "Retain full-star ships",
+      "do_not_keep": "Do not retain"
     }
   },
   "Enhance": {
     "_info": {
-      "name": "Enhance Settings",
+      "name": "Enhance settings",
       "help": "Only takes effect when \"Retirement Mode\" is set to \"Enhance\""
     },
     "ShipToEnhance": {
-      "name": "Ships to Enhance",
+      "name": "Ships to enhance",
       "help": "",
-      "all": "Enhance All Ships",
-      "favourite": "Enhance Favorite Ships Only"
+      "all": "Enhance all ships",
+      "favourite": "Enhance favorite ships only"
     },
     "Filter": {
       "name": "Enhance filter string",
       "help": "Format: \"cv > bb > ...\",\nLeave blank to use the default enhancement method"
     },
     "CheckPerCategory": {
-      "name": "Check X Ships per Category",
+      "name": "Check X ships per category",
       "help": "Prioritizes checking whether enhancement materials are available"
     }
   },
   "OldRetire": {
     "_info": {
-      "name": "Traditional Retirement Settings",
+      "name": "Traditional retirement settings",
       "help": "Only takes effect when \"Retirement Mode\" is set to \"Traditional\"\nNote: Traditional retirement is based on rarity, and may retire Bulin"
     },
     "N": {
-      "name": "Retire N (White)",
+      "name": "Retire N (white)",
       "help": ""
     },
     "R": {
-      "name": "Retire R (Blue)",
+      "name": "Retire R (blue)",
       "help": ""
     },
     "SR": {
-      "name": "Retire SR (Purple)",
+      "name": "Retire SR (purple)",
       "help": ""
     },
     "SSR": {
-      "name": "Retire SSR (Gold)",
+      "name": "Retire SSR (gold)",
       "help": ""
     },
     "RetireAmount": {
-      "name": "Retire X Ships Each Time",
+      "name": "Retire X ships each time",
       "help": "",
-      "retire_all": "Retire All",
+      "retire_all": "Retire all",
       "retire_10": "Retire 10"
     }
   },
@@ -1323,7 +1390,7 @@
       "help": "For example, 7-2, 12-4, D3, SP4, case-insensitive\nIf the level is missing, please wait for the update"
     },
     "Event": {
-      "name": "Event Name",
+      "name": "Event name",
       "help": "Automatically select the latest event",
       "campaign_main": "Main Campaign",
       "coalition_20230323": "Frostfall",
@@ -1481,80 +1548,141 @@
       "war_archives_20240725_cn": "archives Interlude of Illusions"
     },
     "Mode": {
-      "name": "Select Stage Mode",
+      "name": "Select stage mode",
       "help": "Only applies to main campaign",
       "normal": "Normal",
       "hard": "Hard"
     },
     "UseClearMode": {
-      "name": "Use Clearing Mode",
+      "name": "Use clearing mode",
       "help": ""
     },
     "UseFleetLock": {
-      "name": "Use Fleet Lock",
+      "name": "Use fleet lock",
       "help": ""
     },
     "UseAutoSearch": {
-      "name": "Use Auto-Search",
+      "name": "Use auto-search",
       "help": ""
     },
     "Use2xBook": {
-      "name": "Use High Efficiency Combat Manual",
+      "name": "Use high-efficiency combat manual",
       "help": "Double oil consumption, double drop settlement"
     },
     "AmbushEvade": {
-      "name": "Evade Ambush",
+      "name": "Evade ambush",
       "help": ""
     },
     "UseRecommendFleet": {
-      "name": "Auto Fleet Composition",
+      "name": "Auto fleet composition",
       "help": "Use the game's built-in recommended fleet to automatically compose hard mode fleets"
     },
     "DefeatWithdraw": {
-      "name": "Defeat in Mob Action",
+      "name": "Defeat in mob action",
       "help": "Handling method when defeated in mob battle during the journey",
-      "withdraw_continue": "Withdraw & Continue Task",
-      "switch_fleet": "Switch Fleet & Continue",
-      "withdraw_stop": "Withdraw & Stop Task"
+      "withdraw_continue": "Withdraw & continue task",
+      "switch_fleet": "Switch fleet & continue",
+      "withdraw_stop": "Withdraw & stop task"
+    }
+  },
+  "OperationHandover": {
+    "_info": {
+      "name": "Operation handover settings",
+      "help": ""
+    },
+    "Count": {
+      "name": "Handover count",
+      "help": "How many sorties this Operation Handover runs\n0 means the minimum the game allows: in that case the task is disabled unless Consume all Handover Books is on"
+    },
+    "AutoSupplementTime": {
+      "name": "Auto supplement time",
+      "help": "Exchange Handover Books for available time when the remaining time is not enough (1 book = 1 hour)"
+    },
+    "UseHandoverBook": {
+      "name": "Use handover book",
+      "help": "Max out the invested Handover Books before starting"
+    },
+    "ConsumeAllBook": {
+      "name": "Consume all Handover Books",
+      "help": "Triggered once a week: max out Sorties → max out Handover Books → set Sorties to the number of books,\nso the whole stock of books is spent at once.\nOn the trigger day the Count option is ignored; with Count set to 0 the task only runs at the trigger time",
+      "True": "Enabled",
+      "False": "Disabled"
+    },
+    "ConsumeAllBookWeekday": {
+      "name": "Trigger day",
+      "help": "Trigger once a week on this day",
+      "mon": "Monday",
+      "tue": "Tuesday",
+      "wed": "Wednesday",
+      "thu": "Thursday",
+      "fri": "Friday",
+      "sat": "Saturday",
+      "sun": "Sunday"
+    },
+    "ConsumeAllBookTime": {
+      "name": "Trigger time",
+      "help": "Trigger at or after this time on the trigger day, format HH:MM, e.g. 12:00"
+    },
+    "MaintainOverride": {
+      "name": "Handover before maintenance",
+      "help": "Check the maintenance notice once a day. If the maintenance is today and has not started yet, this run is\npostponed to 10 minutes before it and then runs with max sorties (still respecting Use Handover Book and\nauto-supplement time). Past or non-today maintenance is ignored.\nData from api-blhx-maintain, fetched for your game server and converted to local time",
+      "True": "Enabled",
+      "False": "Disabled"
+    },
+    "OilLimit": {
+      "name": "Postpone if oil is below X",
+      "help": "Postpone the task while oil is below this value, resume when oil is enough\n0 to disable"
+    },
+    "ConsumeAllBookRecord": {
+      "name": "Last consume time",
+      "help": "When the Handover Books were last consumed.\nIf it falls in the current week, the weekly consume will not trigger again.\nClear it or set it to last week or earlier to let it run again this week"
+    },
+    "CommissionEnd": {
+      "name": "Commission end time",
+      "help": "Recorded by the script when starting a commission, used to know when to collect the reward"
     }
   },
   "StopCondition": {
     "_info": {
-      "name": "Stop Condition",
+      "name": "Stop condition",
       "help": "Stop the task after any of the following conditions are triggered"
     },
     "OilLimit": {
-      "name": "Delay When Oil Falls Below X",
+      "name": "Delay when oil falls below X",
       "help": "Delay the task when oil is too low, continue sortie when oil is sufficient"
     },
+    "OilLimitHardFloor": {
+      "name": "Oil stop floor",
+      "help": "Actual stop threshold is max(floor, oil limit). 500 is a legacy safety net; lower it if you run low-cost maps and want to drain oil further. Set 0 to make oil limit take effect directly"
+    },
     "CoinLimit": {
-      "name": "Delay When Coins Reach X",
+      "name": "Delay when coins reach X",
       "help": "Delay the current task when coins are found to be at or above this number. The task will resume after coins drop below the limit.\n0 means no coin limit"
     },
     "RunCount": {
-      "name": "Stop After Sortie Count Exceeds X",
+      "name": "Stop after sortie count exceeds X",
       "help": "Each run decreases the count by one, task stops when it reaches zero\n0 means no limit"
     },
     "MapAchievement": {
-      "name": "Stop After Achieving Map Completion",
+      "name": "Stop after achieving map completion",
       "help": "Achieve 100% map clear, achieve 3-star clear, achieve safe sea area,\nor achieve safe sea area without getting 3 stars then stop",
       "non_stop": "No",
-      "non_stop_clear_all": "Don’t Stop + Full Clear Every Run",
-      "100_percent_clear": "100% Clear",
-      "map_3_stars": "100% Clear + 3 Stars",
-      "threat_safe": "100% Clear + 3 Stars + Safe Sea Area",
-      "threat_safe_without_3_stars": "100% Clear + Safe Sea Area"
+      "non_stop_clear_all": "Don’t stop + full clear every run",
+      "100_percent_clear": "100% clear",
+      "map_3_stars": "100% clear + 3 stars",
+      "threat_safe": "100% clear + 3 stars + safe sea area",
+      "threat_safe_without_3_stars": "100% clear + safe sea area"
     },
     "StageIncrease": {
-      "name": "Auto-Progress After Achieving Map Completion",
+      "name": "Auto-progress after achieving map completion",
       "help": "Automatically progresses to next stage. Ensure your fleet is strong enough and meets stage attribute requirements. Set \"Stop After Achieving Map Completion\" accordingly.\nFor example, turn on this option and select \"100% Clear\", it will proceed to the next stage after 100% completion.\nSupported maps: 1-1 to 15-4, A1 to A3, B1 to B3, C1 to C3, D1 to D3, T1 to T6, SP1 to SP4"
     },
     "GetNewShip": {
-      "name": "Stop After Getting New Ship",
+      "name": "Stop after getting a new ship",
       "help": ""
     },
     "ReachLevel": {
-      "name": "Stop When Ship Reaches Level X",
+      "name": "Stop when a ship reaches level X",
       "help": "Any ship below level X will stop after reaching level X\n0 means no level restriction"
     }
   },
@@ -1564,29 +1692,48 @@
       "help": ""
     },
     "DailyRunCount": {
-      "name": "Sortie X Times Daily",
+      "name": "Sortie X times daily",
       "help": "Maximum War Archives runs per day.\n0 means no limit.\nAfter reaching the limit, the task is delayed until the next server reset instead of being disabled."
     },
+    "AutoClear": {
+      "name": "Auto clear",
+      "help": "Automatically clear all stages of the event.\nStage name can be left blank; the script decides which stage to run\naccording to the clear target. Finished stages are skipped.\nNormal Maps 3 Stars / All Maps 3 Stars mode: auto search for the 2nd star,\nfull clear for the 3rd.\n100% Clear mode: full-clear runs only; intermediate stages advance once 100% cleared."
+    },
+    "AutoSelectEvent": {
+      "name": "Auto select event",
+      "help": "When enabled, the event name input is ignored.\nThe script selects war archive events from top to bottom and clears them one by one;\nwhen an event is fully cleared, the next one starts automatically.\nRequires Auto Clear."
+    },
+    "AutoClearTarget": {
+      "name": "Clear target",
+      "help": "Scope and strategy of auto clear:\nNormal Maps 3 Stars: farms every stage of the normal map to 3 stars\n(auto search for the 2nd star, full clear for the 3rd), stops when done.\nAll Maps 3 Stars: farms every stage of both normal and hard maps to 3 stars\n(auto search for the 2nd star, full clear for the 3rd);\nnormal maps are cleared before hard maps.\n100% Clear: full-clears hard stages; intermediate stages advance once 100% cleared\n(one full-clear run each), only the last stage is farmed to full stars.\nStage name is decided by the script automatically.",
+      "normal_3_star": "Normal maps 3 stars",
+      "three_star": "All maps 3 stars",
+      "clear_100": "100% clear (hard)"
+    },
+    "AutoClearProgress": {
+      "name": "Auto clear progress",
+      "help": "Auto clear progress recorded by the script, so finished stages are skipped on the next run."
+    },
     "DailyRunCountRemain": {
-      "name": "Daily Sorties Remaining",
+      "name": "Daily sorties remaining",
       "help": "Today's remaining quota, maintained automatically by the script."
     },
     "DailyRunCountRecord": {
-      "name": "Daily Sortie Count Record Time",
+      "name": "Daily sortie count record time",
       "help": "Quota record time maintained automatically by the script, used to reset after server refresh."
     },
     "DailyRunCountLimit": {
-      "name": "Previous Daily Sortie Count",
+      "name": "Previous daily sortie count",
       "help": "Previous daily count setting maintained automatically by the script, used when adjusting the quota."
     }
   },
   "Fleet": {
     "_info": {
-      "name": "Sortie Fleet",
+      "name": "Sortie fleet",
       "help": ""
     },
     "Fleet1": {
-      "name": "Fleet 1 Uses Fleet Number X",
+      "name": "Fleet 1 uses fleet number X",
       "help": "",
       "1": "1 ",
       "2": "2 ",
@@ -1596,23 +1743,23 @@
       "6": "6 "
     },
     "Fleet1Formation": {
-      "name": "Fleet 1 Formation",
+      "name": "Fleet 1 formation",
       "help": "",
       "line_ahead": "Line Ahead",
       "double_line": "Double Line",
       "diamond": "Diamond"
     },
     "Fleet1Mode": {
-      "name": "Fleet 1 Auto Battle Mode",
+      "name": "Fleet 1 auto-battle mode",
       "help": "",
-      "combat_auto": "Auto Battle",
+      "combat_auto": "Auto battle",
       "combat_manual": "Manual",
-      "stand_still_in_the_middle": "Stand Still in Middle",
-      "hide_in_bottom_left": "Hide in Bottom Left",
-      "hide_in_upper_left": "Hide in Upper Left"
+      "stand_still_in_the_middle": "Stand still in middle",
+      "hide_in_bottom_left": "Hide in bottom left",
+      "hide_in_upper_left": "Hide in upper left"
     },
     "Fleet1Step": {
-      "name": "Fleet 1 Step Size",
+      "name": "Fleet 1 step size",
       "help": "Limit movement distance in event maps",
       "2": "2 ",
       "3": "3 ",
@@ -1620,7 +1767,7 @@
       "5": "5 "
     },
     "Fleet2": {
-      "name": "Fleet 2 Uses Fleet Number X",
+      "name": "Fleet 2 uses fleet number X",
       "help": "",
       "0": "Not used",
       "1": "1 ",
@@ -1631,23 +1778,23 @@
       "6": "6 "
     },
     "Fleet2Formation": {
-      "name": "Fleet 2 Formation",
+      "name": "Fleet 2 formation",
       "help": "",
       "line_ahead": "Line Ahead",
       "double_line": "Double Line",
       "diamond": "Diamond"
     },
     "Fleet2Mode": {
-      "name": "Fleet 2 Auto Battle Mode",
+      "name": "Fleet 2 auto-battle mode",
       "help": "",
-      "combat_auto": "Auto Battle",
+      "combat_auto": "Auto battle",
       "combat_manual": "Manual",
-      "stand_still_in_the_middle": "Stand Still in Middle",
-      "hide_in_bottom_left": "Hide in Bottom Left",
-      "hide_in_upper_left": "Hide in Upper Left"
+      "stand_still_in_the_middle": "Stand still in middle",
+      "hide_in_bottom_left": "Hide in bottom left",
+      "hide_in_upper_left": "Hide in upper left"
     },
     "Fleet2Step": {
-      "name": "Fleet 2 Step Size",
+      "name": "Fleet 2 step size",
       "help": "Limit movement distance in event maps",
       "2": "2 ",
       "3": "3 ",
@@ -1655,160 +1802,169 @@
       "5": "5 "
     },
     "FleetOrder": {
-      "name": "Fleet Role",
+      "name": "Fleet role",
       "help": "Without auto-search, will pick up question marks and ammo.\nWhen fighting 4 battles or fewer without auto-search, uses \"one fleet clears, other fleet on standby\".",
-      "fleet1_mob_fleet2_boss": "Fleet 1 Mob, Fleet 2 Boss",
-      "fleet1_boss_fleet2_mob": "Fleet 1 Boss, Fleet 2 Mob",
-      "fleet1_all_fleet2_standby": "Fleet 1 Clears All, Fleet 2 Standby",
-      "fleet1_standby_fleet2_all": "Fleet 1 Standby, Fleet 2 Clears All"
+      "fleet1_mob_fleet2_boss": "Fleet 1 mob, fleet 2 boss",
+      "fleet1_boss_fleet2_mob": "Fleet 1 boss, fleet 2 mob",
+      "fleet1_all_fleet2_standby": "Fleet 1 clears all, fleet 2 standby",
+      "fleet1_standby_fleet2_all": "Fleet 1 standby, fleet 2 clears all"
     },
     "SkipPreparation": {
-      "name": "Skip Fleet Preparation",
+      "name": "Skip fleet preparation",
       "help": "When enabled, skips the fleet selection step in the preparation screen and directly uses the currently pre-selected fleet for sortie\nSuitable for accounts with unlocked fleet slots, to avoid dropdown detection getting stuck\nBefore enabling, make sure Fleet 1 and Fleet 2 are manually selected in-game"
     }
   },
   "Submarine": {
     "_info": {
-      "name": "Submarine Settings",
+      "name": "Submarine settings",
       "help": ""
     },
     "Fleet": {
-      "name": "Use Submarine Fleet X",
+      "name": "Use submarine fleet X",
       "help": "",
       "0": "Not used",
       "1": "1 ",
       "2": "2 "
     },
     "Mode": {
-      "name": "Select Submarine Sortie Plan",
+      "name": "Select submarine sortie plan",
       "help": "Only takes effect when auto-search is off. Note: 'Hunt and Boss' combines 'Hunt Only' and 'Boss Only' - submarines will hunt during mob battles and be summoned during boss battles.",
-      "do_not_use": "Not Used",
-      "hunt_only": "Hunt Only",
-      "boss_only": "Boss Only",
-      "hunt_and_boss": "Hunt and Boss",
-      "every_combat": "Every Combat"
+      "do_not_use": "Not used",
+      "hunt_only": "Hunt only",
+      "boss_only": "Boss only",
+      "hunt_and_boss": "Hunt and boss",
+      "every_combat": "Every combat",
+      "advanced": "Advanced"
     },
     "AutoSearchMode": {
-      "name": "Select Submarine Auto Plan",
-      "help": "Only takes effect when using auto-search",
+      "name": "Select submarine auto plan",
+      "help": "Applies to auto search sorties. With manual enemy search and \"standby\", in-game sub auto call is also turned off before entering (cleared maps only; the setting page does not exist on uncleared maps)",
       "sub_standby": "Standby",
-      "sub_auto_call": "Auto-Summon Submarine"
+      "sub_auto_call": "Auto-summon submarine"
     },
     "DistanceToBoss": {
-      "name": "Move Submarine Near Boss Before Boss Battle",
+      "name": "Move submarine near the boss before the boss battle",
       "help": "Only takes effect when \"Submarine Attack Mode\" is \"Boss Only\" or \"Hunt and Boss\"\nSelecting \"X tiles from Boss\" requires ensuring the submarine hunting range covers the Boss. Distance is calculated using Manhattan distance. Selecting \"Use Open Ocean Support\" requires U-522/Da Vinci in the submarine fleet.",
-      "to_boss_position": "To Boss Position",
-      "1_grid_to_boss": "1 Tile from Boss",
-      "2_grid_to_boss": "2 Tiles from Boss",
-      "use_open_ocean_support": "Use Open Ocean Support"
+      "to_boss_position": "To boss position",
+      "1_grid_to_boss": "1 tile from boss",
+      "2_grid_to_boss": "2 tiles from boss",
+      "use_open_ocean_support": "Use open-ocean support"
+    },
+    "AdvancedConfig": {
+      "name": "Advanced config",
+      "help": "The advanced config takes effect only when the Submarine Sortie Plan is set to \"Advanced\". The configuration must strictly follow the YAML format.\n\n[Basic parameters]\n- ammo: Total ammunition of the submarine.\n- support: Number of Open Ocean Support uses available.\n- range: Hunting range, composed of 7 strings of length 7. \"N\" means covered; \"O\" means not covered; \"H\" is the submarine position, which only appears at row 4 column 4 (center).\n\n[Rules]\n- Battle index: battle_0 (all battles), battle_N (the Nth battle, 1-based), battle_-N (the Nth from the end). If a battle matches multiple rules, the sortie order is \"summon > hunt > don't sortie\".\n- type: Sortie type. hunt, call.\n- condition: Trigger condition (sortie unconditionally if omitted).\n    ammo: Ammo condition expression, e.g. \">2\", \">=2\", \"=3\". Supported operators: \">\", \">=\", \"<\", \"<=\", \"=\", \"!=\".\n    support: Open Ocean Support count condition expression, e.g. \">2\", \">=2\", \"=3\". Supported operators: \">\", \">=\", \"<\", \"<=\", \"=\", \"!=\".\n    enemy: Target enemy fleet type list, expressed as scale + class. E.g. \"3M\" means a large main fleet. Wildcard \"*\" is supported, e.g. \"3*\" means all large fleets, \"*T\" means all transports.\n    - Scale: 1: small fleet; 2: medium fleet; 3: large fleet; 0: unknown scale.\n    - Class: L: scout fleet; M: main fleet; C: aircraft carrier fleet; T: transport; E: unknown type.\n    in_range (true/false): Whether the submarine is within hunting range. Summoning outside the hunting range consumes Open Ocean Support uses.\n- move: Whether to spend oil to move the submarine to the cheapest fuel position covering the target when out of range (true/false). If Open Ocean Support uses remain, it won't move and will use Open Ocean Support instead."
     }
   },
   "Emotion": {
     "_info": {
-      "name": "Morale Settings",
+      "name": "Morale settings",
       "help": ""
     },
     "Mode": {
-      "name": "Morale Mode",
+      "name": "Morale mode",
       "help": "",
-      "calculate": "Calculate Morale Consumption",
-      "ignore": "Ignore Low Morale Warning",
-      "calculate_ignore": "Calculate Morale + Ignore Low Morale Warning"
+      "calculate": "Calculate morale consumption",
+      "ignore": "Ignore low morale warning",
+      "calculate_ignore": "Calculate morale + ignore low morale warning"
+    },
+    "IgnoreShipwreck": {
+      "name": "Ignore shipwreck morale penalty",
+      "help": "When enabled, the extra 10 morale penalty for sinking ships in battle (non-S rating) is no longer counted. Only effective when the morale mode includes \"Calculate morale consumption\"."
     },
     "Fleet1Value": {
-      "name": "Fleet 1 Morale Value",
+      "name": "Fleet 1 morale value",
       "help": ""
     },
     "Fleet1Record": {
-      "name": "Fleet 1 Morale Record Time",
+      "name": "Fleet 1 morale record time",
       "help": ""
     },
     "Fleet1Control": {
-      "name": "Fleet 1 Morale Control",
+      "name": "Fleet 1 morale control",
       "help": "",
-      "keep_exp_bonus": "Keep EXP Bonus (>120)",
-      "prevent_green_face": "Prevent Green Face (>40)",
-      "prevent_yellow_face": "Prevent Yellow Face (>30)",
-      "prevent_red_face": "Prevent Red Face (>0)"
+      "keep_exp_bonus": "Keep EXP bonus (>120)",
+      "prevent_green_face": "Prevent green face (>40)",
+      "prevent_yellow_face": "Prevent yellow face (>30)",
+      "prevent_red_face": "Prevent red face (>0)"
     },
     "Fleet1Recover": {
-      "name": "Fleet 1 Morale Recovery",
+      "name": "Fleet 1 morale recovery",
       "help": "",
-      "not_in_dormitory": "Not in Dorm (20/h)",
-      "dormitory_floor_1": "Dorm 1st Floor (40/h)",
-      "dormitory_floor_2": "Dorm 2nd Floor (50/h)"
+      "not_in_dormitory": "Not in dorm (20/h)",
+      "dormitory_floor_1": "Dorm 1st floor (40/h)",
+      "dormitory_floor_2": "Dorm 2nd floor (50/h)"
     },
     "Fleet1Oath": {
-      "name": "All Fleet 1 Members Oathed (+10/h)",
+      "name": "All Fleet 1 members are married (+10/h)",
       "help": ""
     },
     "Fleet1Onsen": {
-      "name": "All Fleet 1 Members Have Hot Spring (+10/h)",
+      "name": "All Fleet 1 members have a hot spring (+10/h)",
       "help": ""
     },
     "Fleet2Value": {
-      "name": "Fleet 2 Morale Value",
+      "name": "Fleet 2 morale value",
       "help": ""
     },
     "Fleet2Record": {
-      "name": "Fleet 2 Morale Record Time",
+      "name": "Fleet 2 morale record time",
       "help": ""
     },
     "Fleet2Control": {
-      "name": "Fleet 2 Morale Control",
+      "name": "Fleet 2 morale control",
       "help": "",
-      "keep_exp_bonus": "Keep EXP Bonus (>120)",
-      "prevent_green_face": "Prevent Green Face (>40)",
-      "prevent_yellow_face": "Prevent Yellow Face (>30)",
-      "prevent_red_face": "Prevent Red Face (>0)"
+      "keep_exp_bonus": "Keep EXP bonus (>120)",
+      "prevent_green_face": "Prevent green face (>40)",
+      "prevent_yellow_face": "Prevent yellow face (>30)",
+      "prevent_red_face": "Prevent red face (>0)"
     },
     "Fleet2Recover": {
-      "name": "Fleet 2 Morale Recovery",
+      "name": "Fleet 2 morale recovery",
       "help": "",
-      "not_in_dormitory": "Not in Dorm (20/h)",
-      "dormitory_floor_1": "Dorm 1st Floor (40/h)",
-      "dormitory_floor_2": "Dorm 2nd Floor (50/h)"
+      "not_in_dormitory": "Not in dorm (20/h)",
+      "dormitory_floor_1": "Dorm 1st floor (40/h)",
+      "dormitory_floor_2": "Dorm 2nd floor (50/h)"
     },
     "Fleet2Oath": {
-      "name": "All Fleet 2 Members Oathed (+10/h)",
+      "name": "All Fleet 2 members are married (+10/h)",
       "help": ""
     },
     "Fleet2Onsen": {
-      "name": "All Fleet 2 Members Have Hot Spring (+10/h)",
+      "name": "All Fleet 2 members have a hot spring (+10/h)",
       "help": ""
     }
   },
   "HpControl": {
     "_info": {
-      "name": "HP Control",
+      "name": "HP control",
       "help": "Only takes effect when fleet lock is off"
     },
     "UseHpBalance": {
-      "name": "Enable HP Balance",
+      "name": "Enable HP balance",
       "help": "Move ships with low HP to protected positions, and ships with high HP to damage-taking positions."
     },
     "UseEmergencyRepair": {
-      "name": "Use Repair Tools",
+      "name": "Use repair tools",
       "help": ""
     },
     "UseLowHpRetreat": {
-      "name": "Enable Low HP Retreat",
+      "name": "Enable low-HP retreat",
       "help": ""
     },
     "HpBalanceThreshold": {
-      "name": "Swap Positions When Vanguard HP Difference Exceeds X",
+      "name": "Swap positions when vanguard HP difference exceeds X",
       "help": ""
     },
     "HpBalanceWeight": {
-      "name": "Vanguard HP Weight",
+      "name": "Vanguard HP weight",
       "help": "Modify if there are differences in vanguard tankiness. Format:\n1000, 1000, 1000"
     },
     "RepairUseSingleThreshold": {
-      "name": "Use Emergency Repair When Any Ship HP Falls Below X",
+      "name": "Use emergency repair when any ship's HP falls below X",
       "help": ""
     },
     "RepairUseMultiThreshold": {
-      "name": "Use Emergency Repair When All Ships HP Fall Below X",
+      "name": "Use emergency repair when all ships' HP fall below X",
       "help": ""
     },
     "LowHpRetreatThreshold": {
@@ -1818,15 +1974,15 @@
   },
   "EnemyPriority": {
     "_info": {
-      "name": "Enemy Priority",
+      "name": "Enemy priority",
       "help": "Customize the priority of enemies to fight"
     },
     "EnemyScaleBalanceWeight": {
-      "name": "Enemy Priority",
+      "name": "Enemy priority",
       "help": "First clear enemies on the main route to Boss, then clear others by priority.",
-      "default_mode": "According to Map File",
-      "S3_enemy_first": "Large Enemies First",
-      "S1_enemy_first": "Small Enemies First"
+      "default_mode": "According to map file",
+      "S3_enemy_first": "Large enemies first",
+      "S1_enemy_first": "Small enemies first"
     }
   },
   "C11AffinityFarming": {
@@ -1845,7 +2001,7 @@
       "help": "Fight three battles, then retreat after collecting mystery nodes"
     },
     "StepOnA3": {
-      "name": "Use Fleet 2 to Step on A3",
+      "name": "Use Fleet 2 to step on A3",
       "help": "Can effectively prevent A2's mystery node from being blocked."
     }
   },
@@ -1869,7 +2025,7 @@
       "help": "Use a strong fleet to level up at 12-4, retreat after defeating 3-star enemies.\nIncrease EXP/oil ratio by defeating more 3-star enemies"
     },
     "NonLargeEnterTolerance": {
-      "name": "After entering the map, X fights no three-star enemies and retreats.",
+      "name": "After entering the map, retreat if X consecutive battles have no three-star enemies",
       "help": "",
       "0": "0",
       "1": "1",
@@ -1884,7 +2040,7 @@
       "10": "10"
     },
     "PickupAmmo": {
-      "name": "Pick Up Ammo After X Battles",
+      "name": "Pick up ammo after X battles",
       "help": "",
       "3": "3",
       "4": "4",
@@ -1896,40 +2052,44 @@
       "name": "Urgent Commission Farming",
       "help": "Warning: This feature allows players to earn a small amount of Gems, but it is not an efficient way to farm Gems\nNew Azur Lane players often overvalue limit break avoidance and low oil cost, while neglecting ship development\nRunning this feature only makes you feel productive, while your account actually makes zero progress\nPlease press the return button"
     },
+    "EventFallbackStage": {
+      "name": "Stage after event",
+      "help": "When the event PT limit or time limit is reached, or the event is unavailable, continue on this main campaign stage. Default: 2-4. Enter 0 to disable the task and keep the event stage. Only applies to tasks currently farming an event stage."
+    },
     "ChangeFlagship": {
-      "name": "Change Flagship",
+      "name": "Change flagship",
       "help": "White-rarity light carriers and white-rarity carriers will be treated as retirement targets\nOnly 0 limit break, no equipment, white-rarity light carriers will be used as replacement\nControls: When to replace the flagship",
       "ship": "Change ship",
       "ship_equip": "Change ships + equipment"
     },
     "CommonCV": {
-      "name": "Designated Flagship Carrier",
+      "name": "Designated flagship carrier",
       "help": "",
       "custom": "Custom",
       "any": "Any",
-      "eagle": "Eagle Union Only",
+      "eagle": "Eagle Union only",
       "langley": "Langley",
       "bogue": "Bogue",
       "ranger": "Ranger",
       "hermes": "Hermes"
     },
     "CommonCVFilter": {
-      "name": "Custom Flagship Carrier Filter",
+      "name": "Custom flagship carrier filter",
       "help": "Filter usable light carriers, syntax same as common CV filter\nSeparated by spaces, case-insensitive\nExample: bogue: Bogue, ranger: Ranger, langley: Langley, hermes: Hermes"
     },
     "ChangeVanguard": {
-      "name": "Change Vanguard",
+      "name": "Change vanguard",
       "help": "Replace vanguard with low-oil-cost ships from Eagle Union or Iron Blood\nOnly 0 limit break, no equipment, white-rarity destroyers will be used as replacement\nControls: When to replace the vanguard",
-      "disabled": "Do Not Change",
+      "disabled": "Do not change",
       "ship": "Change ship",
       "ship_equip": "Change ships + equipment"
     },
     "CommonDD": {
-      "name": "Designated Vanguard",
+      "name": "Designated vanguard",
       "help": "",
       "custom": "Custom",
       "any": "Any",
-      "favourite": "Favorites Only",
+      "favourite": "Favorites only",
       "aulick_or_foote": "Aulick or Foote",
       "cassin_or_downes": "Cassin or Downes",
       "z20_or_z21": "Z20 or Z21",
@@ -1944,75 +2104,75 @@
       "help": "Default equipment code for light carriers\nSeparate by spaces\nbogue: Bogue, hermes: Hermes, langley: Langley, ranger: Ranger"
     },
     "UseEmotionFirst": {
-      "name": "Prioritize Morale",
+      "name": "Prioritize morale",
       "help": "When replacing ships, prioritize the highest mood ships."
     },
     "IgnoreEmotionWarning": {
-      "name": "Ignore Low Morale Warning",
+      "name": "Ignore low morale warning",
       "help": "Force through the mood warning popup when it appears."
     },
     "AllowHighFlagshipLevel": {
-      "name": "Only Replace Max-Level Back Row",
+      "name": "Only replace max-level back row",
       "help": "When the flagship has a replacement and its level is higher than the vanguard\nUse white-rarity light carriers in the back row to consume oil and earn experience\nIf the back row has other ships, this function will not be used\nPlease manually add ships that need leveling"
     },
     "AllowLowVanguardLevel": {
-      "name": "Allow Low-Level Vanguard Replacement",
-      "help": "After opening, the front row level limit is changed to level 30 or above. If it is difficult mode (such as the CD picture), it will be changed to level 70."
+      "name": "Allow low-level vanguard replacement",
+      "help": "After enabling, the front row level limit is changed to level 30 or above. If it is hard mode (such as the CD map), it is changed to level 70."
     },
     "DelayTaskIFNoFlagship": {
-      "name": "Delay Task When No Replacement Flagship Available",
+      "name": "Delay task when no replacement flagship is available",
       "help": "When changing the flagship, if a white aircraft carrier that meets the conditions cannot be found, the mission will be postponed."
     },
     "CommissionLimit": {
-      "name": "Prevent Too Many Urgent Commissions",
+      "name": "Prevent too many urgent commissions",
       "help": "When enabled, commission scheduling reserves high-value commissions according to the following settings and delays urgent-commission farming when the reserve threshold is reached."
     },
     "HighValueCommissionFilterCount": {
-      "name": "High-Value Commission Filter Count",
+      "name": "High-value commission filter count",
       "help": "Treat the first X regular rules in the active commission filter as high-value rules. Control markers such as tier and shortest are not counted."
     },
     "HighValueCommissionReserve": {
-      "name": "High-Value Commission Reserve",
+      "name": "High-value commission reserve",
       "help": "After starting commissions, delay urgent-commission farming when the number of pending commissions matching high-value rules reaches this value."
     },
     "VanguardLevelMin": {
-      "name": "Vanguard Minimum Level",
+      "name": "Vanguard minimum level",
       "help": "Used to filter eligible white-rarity vanguard ships. Default is 1."
     },
     "VanguardLevelMax": {
-      "name": "Vanguard Maximum Level",
+      "name": "Vanguard maximum level",
       "help": "Used to filter eligible white-rarity vanguard ships. Default is 125."
     }
   },
   "EventGeneral": {
     "_info": {
-      "name": "Event General Settings",
+      "name": "Event general settings",
       "help": ""
     },
     "PtLimit": {
-      "name": "Stop When Event PT Reaches X",
-      "help": "When accumulated PT reaches the given value, all event tasks are disabled. 0 means no limit. Cannot trigger immediately when using auto-search.\nAfter enabling, you only need to open all event tasks without counting total runs."
+      "name": "Stop when event PT reaches X",
+      "help": "When accumulated PT reaches the given value, all event tasks are disabled. 0 means no limit. Cannot trigger immediately when using auto-search.\nAfter enabling, you only need to open all event tasks without counting total runs.\nGems farming and Three-oil low-cost farming follow their own Stage after event setting: continue on a main campaign stage, or stop if set to 0."
     },
     "TimeLimit": {
-      "name": "Event Time Limit",
-      "help": "When local time exceeds the given value, all event tasks are disabled. '2020-01-01 00:00:00' means no limit. Timer resets after triggering once.\nAfter setting, prevents forgetting to close tasks after an event ends."
+      "name": "Event time limit",
+      "help": "When local time exceeds the given value, all event tasks are disabled. '2023-01-01 00:00:00' means no limit. Timer resets after triggering once.\nAfter setting, prevents forgetting to close tasks after an event ends.\nGems farming and Three-oil low-cost farming follow their own Stage after event setting: continue on a main campaign stage, or stop if set to 0."
     }
   },
   "TaskBalancer": {
     "_info": {
-      "name": "Task Balance Settings",
+      "name": "Task balance settings",
       "help": "Prevent coins from being too low when running event maps"
     },
     "Enable": {
-      "name": "Enable Task Balancing",
+      "name": "Enable task balancing",
       "help": "When enabled, coin amount will be checked after each sortie"
     },
     "CoinLimit": {
-      "name": "Keep Coins Above X",
+      "name": "Keep coins above X",
       "help": ""
     },
     "TaskCall": {
-      "name": "Call Task X When Coins Are Low",
+      "name": "Call task X when coins are low",
       "help": "Note: Players need to set up the called task in advance, otherwise it won't work",
       "Main": "Main Campaign",
       "Main2": "Main Campaign-2",
@@ -2023,21 +2183,21 @@
   },
   "EventDaily": {
     "_info": {
-      "name": "Event Daily",
+      "name": "Event daily",
       "help": ""
     },
     "StageFilter": {
-      "name": "Event Daily Filter",
+      "name": "Event daily filter",
       "help": "Sortie in filter order"
     },
     "LastStage": {
-      "name": "Last Completed Stage",
+      "name": "Last completed stage",
       "help": "Automatically updated value that skips completed stages in the filter, resets after midnight."
     }
   },
   "Raid": {
     "_info": {
-      "name": "Raid Event Settings",
+      "name": "Raid event settings",
       "help": ""
     },
     "Mode": {
@@ -2049,13 +2209,13 @@
       "ex": "EX"
     },
     "UseTicket": {
-      "name": "Use Exercise Tickets",
+      "name": "Use exercise tickets",
       "help": ""
     }
   },
   "RaidDaily": {
     "_info": {
-      "name": "Raid Daily",
+      "name": "Raid daily",
       "help": "Complete daily Raid on Easy, Normal, and Hard difficulties"
     },
     "StageFilter": {
@@ -2065,17 +2225,17 @@
   },
   "Hospital": {
     "_info": {
-      "name": "Event Settings",
+      "name": "Event settings",
       "help": ""
     },
     "UseRecommendFleet": {
-      "name": "Use Fleet Recommendations",
+      "name": "Use fleet recommendations",
       "help": "If turned off, you need to manually team up all 15 levels in advance"
     }
   },
   "HospitalEvent": {
     "_info": {
-      "name": "Hospital Event Settings",
+      "name": "Hospital event settings",
       "help": ""
     },
     "Mode": {
@@ -2097,17 +2257,17 @@
   },
   "MaritimeEscort": {
     "_info": {
-      "name": "Trade Convoy",
+      "name": "Trade convoy",
       "help": "Enter and immediately retreat, can earn about 70% of the rewards"
     },
     "Enable": {
-      "name": "Enable Trade Convoy",
+      "name": "Enable trade convoy",
       "help": ""
     }
   },
   "Coalition": {
     "_info": {
-      "name": "Coalition Settings",
+      "name": "Coalition settings",
       "help": "Teams must be manually allocated in the game before going out."
     },
     "Mode": {
@@ -2120,7 +2280,7 @@
       "ex": "EX"
     },
     "Fleet": {
-      "name": "Sortie Fleet",
+      "name": "Sortie fleet",
       "help": "",
       "single": "Single team battle",
       "multi": "Multiple teams attack"
@@ -2132,7 +2292,7 @@
       "help": "Chain battle affection settings. Select the sacrifice fleet position."
     },
     "Sacrifice": {
-      "name": "Sacrificial Ship Position",
+      "name": "Sacrificial ship position",
       "help": "Select the position of ships to be sunk: Vanguard, Flagship, or Vanguard + Flagship",
       "vanguard": "Vanguard",
       "flagship": "Flagship",
@@ -2195,29 +2355,45 @@
   },
   "EventShop": {
     "_info": {
-      "name": "Event Shop",
+      "name": "Event shop",
       "help": ""
     },
     "UnlockSSRShip": {
-      "name": "Unlock SSR Ship",
+      "name": "Unlock SSR ship",
       "help": ""
     },
     "BuyURShip": {
-      "name": "Buy X UR Ships",
+      "name": "Buy X UR ships",
       "help": "",
       "0": "0",
       "1": "1",
       "2": "2"
     },
     "PresetFilter": {
-      "name": "Event Shop Filter",
+      "name": "Event shop filter",
       "help": "Default is to buy everything.",
       "all": "All",
       "custom": "Custom"
     },
     "CustomFilter": {
-      "name": "Custom Filter",
+      "name": "Custom filter",
       "help": "To use a custom filter, set \"Event Shop Filter\" to \"Custom\" and read https://github.com/LmeSzinc/AzurLaneAutoScript/wiki/filter_string_cn"
+    }
+  },
+  "ShopAdvanced": {
+    "_info": {
+      "name": "Advanced shop strategy",
+      "help": "Generate a shop purchase plan with restricted Lua-style rules."
+    },
+    "Mode": {
+      "name": "Strategy mode",
+      "help": "Simple mode keeps the existing filter. Advanced mode uses the strategy script below.",
+      "legacy": "Simple",
+      "advanced": "Advanced"
+    },
+    "Script": {
+      "name": "Strategy script",
+      "help": "Only restricted Lua-style rules are supported. A validation error skips purchases for this run."
     }
   },
   "Commission": {
@@ -2226,7 +2402,7 @@
       "help": ""
     },
     "PresetFilter": {
-      "name": "Commission Filter",
+      "name": "Commission filter",
       "help": "Select a preset commission filter or enter a custom filter",
       "cube": "Diamond>Cubes>Oil",
       "cube_24h": "Diamond > Cubes > Oil (7x24 Commission Farming)",
@@ -2236,70 +2412,91 @@
       "custom": "Customize"
     },
     "DynamicProgramming": {
-      "name": "Experimental Dynamic Programming",
+      "name": "Experimental dynamic programming",
       "help": "When disabled, commissions are selected greedily in filter order. Enable it to use the polynomial planner with a rigorous optimality certificate and the five value-model settings below."
     },
     "TierValueRatio": {
-      "name": "Adjacent Tier Value Ratio",
+      "name": "Adjacent tier value ratio",
       "help": "Base-value ratio between one tier and the next; must be greater than 1. Higher values make the planner less willing to delay a higher tier for a lower tier. Default: 2."
     },
     "DelayHalfLife": {
-      "name": "Base Delay Half-Life (Hours)",
+      "name": "Base delay half-life (hours)",
       "help": "H in the unified factor 2^(-s/H). Lower values apply a stronger base delay penalty to every commission. Must be positive; one decimal place is supported."
     },
     "DeadlineFutureHorizon": {
-      "name": "Deadline Discount Scale (Hours)",
+      "name": "Deadline discount scale (hours)",
       "help": "T in the unified relative-window exponent (T/d)^2. Larger values impose a stronger penalty for the same start delay and deadline. Must be positive; one decimal place is supported. Default: 2.0 hours."
     },
     "FilterValueFloor": {
-      "name": "In-Tier Filter Value Floor",
+      "name": "In-tier filter value floor",
       "help": "Minimum value fraction retained by very late rules within one tier. Range: greater than 0 and at most 1. Lower values make in-tier order matter more. Default: 0.6."
     },
     "FilterValueHalfLife": {
-      "name": "In-Tier Index Half-Life",
+      "name": "In-tier index half-life",
       "help": "Number of filter rules required for the in-tier adjustment to move halfway toward its floor; must be positive and may use one decimal place. Lower values concentrate more value in early rules."
     },
     "CustomFilter": {
-      "name": "Custom Commission Filter",
+      "name": "Custom commission filter",
       "help": "Set Commission Filter to Customize to use this filter. With experimental dynamic programming enabled, tier separates value levels; without tier, every rule becomes its own level. The planner discounts finite tier and in-tier values by expected start delay and may drop low-value commissions. The traditional greedy strategy ignores tier; shortest fills unmatched slots."
     },
     "Blacklist": {
-      "name": "Commission Blacklist",
+      "name": "Commission blacklist",
       "help": "Enter commission filter rules to ignore, separated by half-width commas (,), for example: ExtraBook, UrgentOil-8, Major. The blacklist applies to both the traditional greedy strategy and the planner."
     },
     "DoMajorCommission": {
-      "name": "Run Major Commissions (1200/1000 Oil)",
-      "help": "The 1200 oil commission is now obsolete and the yield is very low. It is recommended to close it."
+      "name": "Run major commissions (1200/1000 oil)",
+      "help": "The 1200 oil commission is now obsolete and the yield is very low. It is recommended to disable it."
     },
     "CommissionNotifyReward": {
-      "name": "Commission Reward Push Notification",
+      "name": "Commission reward push notification",
       "help": "Push notification when receiving commission rewards (especially for gems)"
     },
     "CommissionNotifyRewardStatistics": {
-      "name": "Include Statistics in Push",
+      "name": "Include statistics in push",
       "help": "Display today/week/month cumulative gem count in notification"
+    },
+    "DetectShipDrop": {
+      "name": "Detect ship drop",
+      "help": "Detect and close the ship obtained popup after claiming commission rewards. Disable if you do not run ship-dropping commissions to avoid detection errors.",
+      "True": "Enabled",
+      "False": "Disabled"
+    },
+    "GemNotify": {
+      "name": "Gem commission execution notification",
+      "help": "After a new Gem Commission starts, send the list of all currently running Gem Commissions"
+    },
+    "GemStatistics": {
+      "name": "Gem commission statistics details",
+      "help": "When enabled, include gem commission statistics (success rate, total rewards) in reward notification"
+    },
+    "GemStatisticsPeriod": {
+      "name": "Gem commission statistics period",
+      "help": "Statistical period for gem commission rewards",
+      "today": "Today",
+      "week": "This week",
+      "month": "This month"
     }
   },
   "Tactical": {
     "_info": {
-      "name": "Tactical Class",
+      "name": "Tactical class",
       "help": ""
     },
     "TacticalFilter": {
-      "name": "Tactics Academy Filter",
+      "name": "Tactics academy filter",
       "help": "Generally no modification is required"
     },
     "RapidTrainingSlot": {
       "name": "Use quick learning",
       "help": "During the event, there are 10 quick skill learning sessions per day",
       "do_not_use": "Not used",
-      "slot_1": "Used in position 1",
-      "slot_2": "Used in position 2",
-      "slot_3": "Used in position 3",
-      "slot_4": "Used in position 4"
+      "slot_1": "Slot 1",
+      "slot_2": "Slot 2",
+      "slot_3": "Slot 3",
+      "slot_4": "Slot 4"
     },
     "SkillAutoSwitch": {
-      "name": "Auto Switch Skill",
+      "name": "Auto switch skill",
       "help": "Automatically switch to the next unlearned skill for training",
       "True": "Enabled",
       "False": "Disabled"
@@ -2307,33 +2504,33 @@
   },
   "ControlExpOverflow": {
     "_info": {
-      "name": "Overflow EXP Control",
+      "name": "Overflow EXP control",
       "help": "Prevent the use of advanced skill books from overflowing a large amount of experience when skills are almost at full level.\nFor example, if the T3 book overflows by 100 points and the T4 book overflows by 100 points, when there are 1100 experience points left, the T4 book will not be used and the T3 book will be used instead."
     },
     "Enable": {
-      "name": "Enable Overflow EXP Control",
+      "name": "Enable overflow EXP control",
       "help": ""
     },
     "T4Allow": {
-      "name": "Allow T4 Skill Book to Overflow X EXP",
+      "name": "Allow T4 skill book to overflow X EXP",
       "help": ""
     },
     "T3Allow": {
-      "name": "Allow T3 Skill Book to Overflow X EXP",
+      "name": "Allow T3 skill book to overflow X EXP",
       "help": ""
     },
     "T2Allow": {
-      "name": "Allow T2 Skill Book to Overflow X EXP",
+      "name": "Allow T2 skill book to overflow X EXP",
       "help": ""
     },
     "T1Allow": {
-      "name": "Allow T1 Skill Book to Overflow X EXP",
+      "name": "Allow T1 skill book to overflow X EXP",
       "help": ""
     }
   },
   "AddNewStudent": {
     "_info": {
-      "name": "Learn New Skills",
+      "name": "Learn new skills",
       "help": "When there is a vacant position in the Tactics Academy, a ship girl will be automatically assigned and will learn the first skill that is not yet full level."
     },
     "Enable": {
@@ -2341,11 +2538,11 @@
       "help": ""
     },
     "Favorite": {
-      "name": "Only Favorite Ships",
+      "name": "Only favorite ships",
       "help": "During student selection apply the favorite filter\nThereby, giving priority to certain ship girls\nApply the favorite status to a ship girl in-game"
     },
     "MinLevel": {
-      "name": "Only Add Characters Level >= X",
+      "name": "Only add ships at level >= X",
       "help": ""
     }
   },
@@ -2355,7 +2552,7 @@
       "help": "When filters work with other settings, ALAS looks for items that satisfy all user settings simultaneously.\nFor example, if you set the research filter to `H1 > D2.5 > shortest` (including research that consumes cubes), but also set it not to allow cube consumption, the final result is that ALAS will not select research that consumes cubes. When you suddenly want to use cubes, you only need to enable cube consumption without modifying the filter, which is more convenient."
     },
     "UseCube": {
-      "name": "Use Cubes",
+      "name": "Use cubes",
       "help": "",
       "always_use": "Always use",
       "only_05_hour": "0.5 hour + when no project available",
@@ -2363,7 +2560,7 @@
       "do_not_use": "Do not use"
     },
     "UseCoin": {
-      "name": "Use Coins",
+      "name": "Use coins",
       "help": "",
       "always_use": "Always use",
       "only_05_hour": "0.5 hour + when no project available",
@@ -2371,7 +2568,7 @@
       "do_not_use": "Do not use"
     },
     "UsePart": {
-      "name": "Use Parts",
+      "name": "Use parts",
       "help": "",
       "always_use": "Always use",
       "only_05_hour": "0.5 hour + when no project available",
@@ -2394,30 +2591,31 @@
       "name": "Research filter",
       "help": "For research drops and project refreshes, please see https://azur-stats.lyoko.io/. People who do not have a basic understanding of these are not recommended to write custom filters. It is recommended to use pre-optimized research filters.",
       "custom": "Custom",
-      "series_9_blueprint_ta152": "Series 9 Blueprint + Ta152",
-      "series_9_blueprint_only": "Series 9 Blueprint only",
+      "series_9_blueprint_ta152": "Series 9 blueprint + Ta152",
+      "series_9_blueprint_only": "Series 9 blueprint only",
       "series_9_ta152_only": "Series 9 Ta152 only",
-      "series_8_blueprint_305": "Series 8 Blueprint + 305",
-      "series_8_blueprint_only": "Series 8 Blueprint only",
+      "series_8_blueprint_305": "Series 8 blueprint + 305",
+      "series_8_blueprint_only": "Series 8 blueprint only",
       "series_8_305_only": "Series 8 305 only",
-      "series_7_blueprint_la9": "Series 7 Blueprint + La9",
-      "series_7_blueprint_only": "Series 7 Blueprint only",
+      "series_8_305_e_first": "Series 8 305 E-first",
+      "series_7_blueprint_la9": "Series 7 blueprint + La9",
+      "series_7_blueprint_only": "Series 7 blueprint only",
       "series_7_la9_only": "Series 7 La9 only",
-      "series_6_blueprint_203": "Series 6 Blueprint + 203",
-      "series_6_blueprint_only": "Series 6 Blueprint only",
+      "series_6_blueprint_203": "Series 6 blueprint + 203",
+      "series_6_blueprint_only": "Series 6 blueprint only",
       "series_6_203_only": "Series 6 203 only",
-      "series_5_blueprint_152": "Series 5 Blueprint + 152",
-      "series_5_blueprint_only": "Series 5 Blueprint only",
+      "series_5_blueprint_152": "Series 5 blueprint + 152",
+      "series_5_blueprint_only": "Series 5 blueprint only",
       "series_5_152_only": "Series 5 152 only",
-      "series_4_blueprint_tenrai": "Series 4 Blueprint + Tenrai",
-      "series_4_blueprint_only": "Series 4 Blueprint only",
+      "series_4_blueprint_tenrai": "Series 4 blueprint + Tenrai",
+      "series_4_blueprint_only": "Series 4 blueprint only",
       "series_4_tenrai_only": "Series 4 Tenrai only",
-      "series_3_blueprint_234": "Series 3 Blueprint + 234",
-      "series_3_blueprint_only": "Series 3 Blueprint only",
+      "series_3_blueprint_234": "Series 3 blueprint + 234",
+      "series_3_blueprint_only": "Series 3 blueprint only",
       "series_3_234_only": "Series 3 234 only",
       "series_2_than_3_457_234": "Series 2 + Series 3 457+234",
-      "series_2_blueprint_457": "Series 2 Blueprint + 457",
-      "series_2_blueprint_only": "Series 2 Blueprint only",
+      "series_2_blueprint_457": "Series 2 blueprint + 457",
+      "series_2_blueprint_only": "Series 2 blueprint only",
       "series_2_457_only": "Series 2 457 only"
     },
     "CustomFilter": {
@@ -2473,25 +2671,25 @@
       "help": ""
     },
     "BuyAmount": {
-      "name": "Buy X Meowfficer Boxes Daily",
+      "name": "Buy X meowfficer boxes daily",
       "help": "The first cat box of the day is free"
     },
     "FortChoreMeowfficer": {
-      "name": "Meow Nest Interaction",
+      "name": "Meow nest interaction",
       "help": "Clean, feed and entertain cats"
     }
   },
   "MeowfficerTrain": {
     "_info": {
-      "name": "Meowfficer Training",
+      "name": "Meowfficer training",
       "help": ""
     },
     "Enable": {
-      "name": "Enable Meowfficer Training",
+      "name": "Enable meowfficer training",
       "help": ""
     },
     "Mode": {
-      "name": "Select Training Mode",
+      "name": "Select training mode",
       "help": "Seamless Meowfficer Training will collect Meowfficers every 2.5 ~ 3.5 hours.\nCollect one per day means collect one every day, collect all on Sunday, enhance and refill the queue to complete weekly missions",
       "seamlessly": "Seamless training",
       "once_a_day": "Collect one per day"
@@ -2504,6 +2702,14 @@
       "name": "Lock purple Meowfficers with special talents",
       "help": "Lock Meowfficers with special talents when collecting. Locked Meowfficers will not be used for enhancement. Users need to manually check and unlock unnecessary ones."
     },
+    "ScoreTalents": {
+      "name": "Score talents while collecting",
+      "help": "Also identify talent names and score them with public guide rules when collecting meowfficers; opens every talent detail, a bit slower"
+    },
+    "ScoreThreshold": {
+      "name": "Score threshold to keep",
+      "help": "0 disables the check; when greater than 0, cats scoring below it are not locked (only when scoring is enabled)"
+    },
     "EnhanceIndex": {
       "name": "Use Meowfficers without special talents to enhance the Xth Meowfficer",
       "help": "The Xth Meowfficer in the Meowfficer storage, limited to 1 ~ 12, in order from upper left to lower right"
@@ -2515,11 +2721,11 @@
   },
   "GuildLogistics": {
     "_info": {
-      "name": "Guild Logistics",
+      "name": "Guild logistics",
       "help": ""
     },
     "Enable": {
-      "name": "Enable Guild Logistics",
+      "name": "Enable guild logistics",
       "help": "Receive guild missions, submit preparation materials, and receive fleet rewards"
     },
     "SelectNewMission": {
@@ -2533,27 +2739,27 @@
   },
   "GuildOperation": {
     "_info": {
-      "name": "Guild Operation",
+      "name": "Guild operation",
       "help": ""
     },
     "Enable": {
-      "name": "Enable Guild Operation",
+      "name": "Enable guild operation",
       "help": ""
     },
     "SelectNewOperation": {
-      "name": "Start a new Guild Operation",
+      "name": "Start a new guild operation",
       "help": "This account needs to be the fleet commander or deputy commander to enable.\nBy default, the Guadalcanal Island Sea and Air Battle with the most rewards is selected."
     },
     "NewOperationMaxDate": {
-      "name": "After the Xth day of each month, no new Guild Operations will be started",
+      "name": "After the Xth day of each month, no new guild operations will be started",
       "help": "Only takes effect when \"Start a new Guild Operation\" is enabled.\nIt is not recommended to start three Guild Operations per month, because each player can only participate twice a month, and most members cannot participate in the dispatch of the third operation. This will affect the evaluation of dispatch events, resulting in reduced final rewards."
     },
     "JoinThreshold": {
-      "name": "Only join Guild Operation when progress > X",
+      "name": "Only join a guild operation when progress > X",
       "help": "0.0 ~ 1.0. For example, '0.5' means to join only when the combat progress is less than half, and '1' means to join directly regardless of the progress."
     },
     "AttackBoss": {
-      "name": "Attack Guild BOSS",
+      "name": "Attack guild BOSS",
       "help": ""
     },
     "BossFleetRecommend": {
@@ -2567,15 +2773,15 @@
       "help": ""
     },
     "CollectOil": {
-      "name": "Collect Oil",
+      "name": "Collect oil",
       "help": ""
     },
     "CollectCoin": {
-      "name": "Collect Coins",
+      "name": "Collect coins",
       "help": ""
     },
     "CollectExp": {
-      "name": "Collect EXP Books",
+      "name": "Collect EXP books",
       "help": ""
     },
     "CollectMission": {
@@ -2603,17 +2809,51 @@
       "help": ""
     }
   },
+  "Secretary": {
+    "_info": {
+      "name": "Secretary settings",
+      "help": "Configure automatic secretary replacement and notification settings"
+    },
+    "CustomFilter": {
+      "name": "Rarity filter",
+      "help": "Rarities include ultra, super_rare, elite, rare, and common\nPlease enter the custom order below\nDefault priority: ultra > super_rare > elite > rare > common"
+    },
+    "LowFavorabilityPriority": {
+      "name": "Low favorability priority",
+      "help": "Ships will be selected in ascending order of favorability"
+    },
+    "FavouriteOnly": {
+      "name": "Only pick from favorited ships",
+      "help": "When enabled, only ships marked as favourite in the dock are picked as secretary. Disable it to pick from all ships by rarity and favorability"
+    },
+    "BackupEnable": {
+      "name": "Backup secretary",
+      "help": "Use ships in the secretary group as backup secretaries and prioritize switching to them"
+    },
+    "CheckInterval": {
+      "name": "Custom check interval (hours)",
+      "help": "Check after the specified interval following a secretary switch. Set to 0 to calculate automatically based on affinity. If your secretary gains affinity through sorties, setting this value allows earlier replacement"
+    },
+    "Notify": {
+      "name": "Secretary notifications",
+      "help": "Send secretary-related notifications via OnePush"
+    },
+    "OnePushConfig": {
+      "name": "OnePush configuration",
+      "help": "Notification settings for secretary replacement. Leave empty to use the global configuration"
+    }
+  },
   "GeneralShop": {
     "_info": {
-      "name": "Arms Dealer (General Shop)",
+      "name": "Arms dealer (general shop)",
       "help": ""
     },
     "Enable": {
-      "name": "Shop Toggle",
+      "name": "Shop toggle",
       "help": "Enable this to run the shop. Disable it to skip this shop during the task."
     },
     "UseGems": {
-      "name": "Use Gems",
+      "name": "Use gems",
       "help": ""
     },
     "Refresh": {
@@ -2625,33 +2865,33 @@
       "help": "To reduce maintenance costs, the appearance box selector in the filter will not be updated with the game, but ALAS will treat any unknown item with a quantity of 1 and consuming 7000 supplies as an appearance box and purchase it."
     },
     "ConsumeCoins": {
-      "name": "Spend Overflowing Coins",
+      "name": "Spend overflowing coins",
       "help": "When coins exceed the limit, auto-purchase items from the Arms Dealer. Stops when coins drop below the limit"
     },
     "OverflowCoins": {
-      "name": "Buy Meowfficer Boxes on Coin Overflow",
+      "name": "Buy meowfficer boxes on coin overflow",
       "help": "Automatically buy meowfficer boxes when coins exceed the threshold. 0 means disabled. Range: 1-600000"
     },
     "Filter": {
-      "name": "Shop Filter",
+      "name": "Shop filter",
       "help": ""
     }
   },
   "GuildShop": {
     "_info": {
-      "name": "Guild Shop",
+      "name": "Guild shop",
       "help": ""
     },
     "Enable": {
-      "name": "Shop Toggle",
+      "name": "Shop toggle",
       "help": "Enable this to run the shop. Disable it to skip this shop during the task."
     },
     "Refresh": {
-      "name": "Refresh Shop",
+      "name": "Refresh shop",
       "help": "Refreshing costs 50 Guild coins. Guild coins are not very valuable, it is recommended to enable."
     },
     "Filter": {
-      "name": "Shop Filter",
+      "name": "Shop filter",
       "help": ""
     },
     "BOX_T3": {
@@ -2756,15 +2996,15 @@
   },
   "MedalShop2": {
     "_info": {
-      "name": "Medal Shop (Retire Exchange)",
+      "name": "Medal shop (retire exchange)",
       "help": ""
     },
     "Enable": {
-      "name": "Shop Toggle",
+      "name": "Shop toggle",
       "help": "Enable this to run the shop. Disable it to skip this shop during the task."
     },
     "Filter": {
-      "name": "Shop Filter",
+      "name": "Shop filter",
       "help": ""
     },
     "RETROFIT_T1": {
@@ -2821,37 +3061,37 @@
   },
   "MeritShop": {
     "_info": {
-      "name": "Merit Shop (Exercise Shop)",
+      "name": "Merit shop (exercise shop)",
       "help": ""
     },
     "Enable": {
-      "name": "Shop Toggle",
+      "name": "Shop toggle",
       "help": "Enable this to run the shop. Disable it to skip this shop during the task."
     },
     "Refresh": {
-      "name": "Refresh Shop",
+      "name": "Refresh shop",
       "help": "Refreshing costs 20 Gems"
     },
     "BuyUnobtainedShip": {
-      "name": "Buy Unobtained Ships",
+      "name": "Buy unobtained ships",
       "help": "Prioritizes ships marked as unobtained in the upper-right corner, regardless of the normal shop filter"
     },
     "Filter": {
-      "name": "Shop Filter",
+      "name": "Shop filter",
       "help": ""
     }
   },
   "CoreShop": {
     "_info": {
-      "name": "Core Shop",
+      "name": "Core shop",
       "help": ""
     },
     "Enable": {
-      "name": "Shop Toggle",
+      "name": "Shop toggle",
       "help": "Enable this to run the shop. Disable it to skip this shop during the task."
     },
     "Filter": {
-      "name": "Shop Filter",
+      "name": "Shop filter",
       "help": ""
     }
   },
@@ -2870,7 +3110,7 @@
       "6": "PR6"
     },
     "ShipIndex": {
-      "name": "Select Research Ship X",
+      "name": "Select research ship X",
       "help": "Counting from left to right, starting from 1",
       "0": "Don't buy",
       "1": "1",
@@ -2905,7 +3145,7 @@
       "6": "PR6"
     },
     "ShipIndex": {
-      "name": "Select Research Ship X",
+      "name": "Select research ship X",
       "help": "Counting from left to right, starting from 1",
       "0": "Don't buy",
       "1": "1",
@@ -2926,11 +3166,11 @@
   },
   "Gacha": {
     "_info": {
-      "name": "Daily Build",
+      "name": "Daily build",
       "help": "Build ships to complete daily missions. Building once in the Light Build Pool daily saves 200 Coins."
     },
     "Pool": {
-      "name": "Build Pool",
+      "name": "Build pool",
       "help": "",
       "light": "Light",
       "heavy": "Heavy",
@@ -2939,7 +3179,7 @@
       "wishing_well": "Wishing Well"
     },
     "Amount": {
-      "name": "Build X Times Daily",
+      "name": "Build X times daily",
       "help": "",
       "1": "1",
       "2": "2",
@@ -2953,17 +3193,17 @@
       "10": "10"
     },
     "UseTicket": {
-      "name": "Use Single Build Permit",
+      "name": "Use single build permit",
       "help": "When enabled, pools that support build permits will use them first. When no permits are available or building in a standard pool, Cubes will be used instead."
     },
     "UseDrill": {
-      "name": "Use Quick Finisher to Complete Build",
+      "name": "Use quick finisher to complete build",
       "help": "If set to No, will wait until tomorrow to launch. Use this to save Quick Finishers"
     }
   },
   "BattlePass": {
     "_info": {
-      "name": "Cruise Pass",
+      "name": "Cruise pass",
       "help": ""
     },
     "Collect": {
@@ -2973,21 +3213,21 @@
   },
   "DataKey": {
     "_info": {
-      "name": "Data Key",
+      "name": "Data key",
       "help": ""
     },
     "Collect": {
-      "name": "Collect Data Key",
+      "name": "Collect data key",
       "help": ""
     },
     "ForceCollect": {
-      "name": "Force collect Data Key",
+      "name": "Force collect data key",
       "help": "When Data Keys are full, force collect (remove the red dot)"
     }
   },
   "Mail": {
     "_info": {
-      "name": "Collect Mail",
+      "name": "Collect mail",
       "help": ""
     },
     "ClaimMerit": {
@@ -2999,7 +3239,7 @@
       "help": ""
     },
     "ClaimTradeLicense": {
-      "name": "Collect Trade License mail",
+      "name": "Collect trade license mail",
       "help": ""
     },
     "DeleteCollected": {
@@ -3009,7 +3249,7 @@
   },
   "SupplyPack": {
     "_info": {
-      "name": "Supply Pack",
+      "name": "Supply pack",
       "help": ""
     },
     "Collect": {
@@ -3040,7 +3280,7 @@
   },
   "PrivateQuarters": {
     "_info": {
-      "name": "Private Quarters Settings",
+      "name": "Private quarters settings",
       "help": ""
     },
     "BuyRoses": {
@@ -3073,11 +3313,11 @@
       "help": ""
     },
     "UseDailySkip": {
-      "name": "Use Quick Challenge",
+      "name": "Use quick challenge",
       "help": "After getting S rank on the daily stage, sweep is unlocked. If not unlocked, it will automatically fall back to the traditional sortie."
     },
     "EscortMission": {
-      "name": "Trade Convoy (Parts, Torpedo)",
+      "name": "Trade convoy (parts, torpedo)",
       "help": "",
       "skip": "Skip",
       "first": "First",
@@ -3095,7 +3335,7 @@
       "6": "6"
     },
     "AdvanceMission": {
-      "name": "Advance Mission (Textbook, Bomb Ship)",
+      "name": "Advance mission (textbook, bomb ship)",
       "help": "",
       "skip": "Skip",
       "first": "First",
@@ -3103,7 +3343,7 @@
       "third": "Third"
     },
     "AdvanceMissionFleet": {
-      "name": "Advance Mission sortie fleet",
+      "name": "Advance mission sortie fleet",
       "help": "",
       "1": "1",
       "2": "2",
@@ -3113,7 +3353,7 @@
       "6": "6"
     },
     "FierceAssault": {
-      "name": "Fierce Assault (Equipment Box)",
+      "name": "Fierce assault (equipment box)",
       "help": "",
       "skip": "Skip",
       "first": "First",
@@ -3121,7 +3361,7 @@
       "third": "Third"
     },
     "FierceAssaultFleet": {
-      "name": "Fierce Assault sortie fleet",
+      "name": "Fierce assault sortie fleet",
       "help": "",
       "1": "1",
       "2": "2",
@@ -3131,7 +3371,7 @@
       "6": "6"
     },
     "TacticalTraining": {
-      "name": "Tactical Training (Cognitive Chips)",
+      "name": "Tactical training (cognitive chips)",
       "help": "",
       "skip": "Skip",
       "first": "First",
@@ -3139,7 +3379,7 @@
       "third": "Third"
     },
     "TacticalTrainingFleet": {
-      "name": "Tactical Training sortie fleet",
+      "name": "Tactical training sortie fleet",
       "help": "",
       "1": "1",
       "2": "2",
@@ -3149,7 +3389,7 @@
       "6": "6"
     },
     "SupplyLineDisruption": {
-      "name": "Supply Line Disruption (Submarine)",
+      "name": "Supply line disruption (submarine)",
       "help": "Quick Challenge needs to be unlocked, otherwise it will be skipped",
       "skip": "Skip",
       "first": "First",
@@ -3157,14 +3397,14 @@
       "third": "Third"
     },
     "ModuleDevelopment": {
-      "name": "Module Development (Augment Module)",
+      "name": "Module development (augment module)",
       "help": "",
       "skip": "Skip",
       "first": "First",
       "second": "Second"
     },
     "ModuleDevelopmentFleet": {
-      "name": "Module Development sortie fleet",
+      "name": "Module development sortie fleet",
       "help": "",
       "1": "1",
       "2": "2",
@@ -3174,14 +3414,14 @@
       "6": "6"
     },
     "EmergencyModuleDevelopment": {
-      "name": "Emergency Module Development (Limited-time Augment Module)",
+      "name": "Emergency module development (limited-time augment module)",
       "help": "",
       "skip": "Skip",
       "first": "First",
       "second": "Second"
     },
     "EmergencyModuleDevelopmentFleet": {
-      "name": "Emergency Module Development sortie fleet",
+      "name": "Emergency module development sortie fleet",
       "help": "",
       "1": "1",
       "2": "2",
@@ -3193,7 +3433,7 @@
   },
   "Hard": {
     "_info": {
-      "name": "Hard Mode",
+      "name": "Hard mode",
       "help": "Running daily Hard mode requires clearing mode to be unlocked. Before unlocking, use the main campaign function instead."
     },
     "HardStage": {
@@ -3293,7 +3533,7 @@
       "help": "Recommended 1.0 ~ 3.0, because the character portrait may cover the HP bar, so a brief confirmation period is needed."
     },
     "OpponentRefreshValue": {
-      "name": "Opponents Refreshed X Times Today",
+      "name": "Opponents refreshed X times today",
       "help": "Automatically updated value, resets at midnight.\nIf you manually refresh opponents, you should update this value."
     },
     "OpponentRefreshRecord": {
@@ -3303,7 +3543,7 @@
   },
   "Sos": {
     "_info": {
-      "name": "SOS Rescue",
+      "name": "SOS rescue",
       "help": ""
     },
     "Chapter": {
@@ -3321,25 +3561,25 @@
   },
   "OpsiAshAssist": {
     "_info": {
-      "name": "META Assist",
+      "name": "META assist",
       "help": "Beacon assist three times a day"
     },
     "Tier": {
-      "name": "Find Beacons with Level Above X",
+      "name": "Find beacons with level above X",
       "help": "If you try several times and still can't find a beacon that meets the criteria, fight a random one."
     }
   },
   "OpsiGeneral": {
     "_info": {
-      "name": "Operation Siren General Settings",
+      "name": "Operation Siren general settings",
       "help": "All Operation Siren features use these settings"
     },
     "UseLogger": {
-      "name": "Use Coordinate Logger",
+      "name": "Use coordinate logger",
       "help": "Every time you enter the storage, use all Coordinate Loggers"
     },
     "BuyActionPointLimit": {
-      "name": "Buy Action Points X Times",
+      "name": "Buy action points X times",
       "help": "Maximum number of times to buy Action Points",
       "0": "Don't buy",
       "1": "1 time (1000 Oil, 100 AP)",
@@ -3349,7 +3589,7 @@
       "5": "5 times (10000 Oil, 1000 AP)"
     },
     "OilLimit": {
-      "name": "When buying AP, keep X Oil",
+      "name": "When buying AP, keep X oil",
       "help": ""
     },
     "RepairThreshold": {
@@ -3376,6 +3616,10 @@
       "name": "Shop Filter",
       "help": "By default, only Action Points are purchased. If you want to buy purple coins, set to 'ActionPoint > PurpleCoins'"
     },
+    "DebugClipRetentionDays": {
+      "name": "Clip retention days",
+      "help": "Retention for the post-battle debug recordings of Corrosion 1 leveling and Meowfficer farming. Clips under log/clips/ older than this many days are deleted automatically, so recordings cannot fill up your disk. Set to 0 to keep them forever with no auto cleanup."
+    },
     "NotifyOpsiMail": {
       "name": "Push Operation Siren notifications",
       "help": "Send notifications about Corrosion 1 and Meowfficer farming through OnePush. Launcher notifications are controlled separately by \"Launcher notifications\". May be noisy due to high message volume."
@@ -3385,7 +3629,7 @@
       "help": "Send Operation Siren notifications to the launcher and Windows notification channel. Disabling this only affects launcher notifications and does not affect OnePush."
     },
     "IndependentPush": {
-      "name": "Independent Operation Siren Push",
+      "name": "Independent Operation Siren push",
       "help": "When enabled, Operation Siren notifications will be pushed via the Operation Siren push provider below\nWhen disabled, notifications will be pushed via the Error provider\nBefore enabling, please enable push notifications for individual events, such as: Corrosion 1, Meowfficer Farming, etc."
     },
     "OpsiOnePushConfig": {
@@ -3393,17 +3637,17 @@
       "help": "Push settings for Operation Siren notifications\nWhen Operation Siren push is enabled, notifications will only be sent if this option is enabled\nOperation Siren push settings allow setting different OnePush providers from error notifications\nWhen the independent push is disabled, notifications will be pushed via the error notification provider"
     },
     "AutoSearchTimeLimit": {
-      "name": "Auto Search Time Limit",
+      "name": "Auto-search time limit",
       "help": "Unit: minutes. During auto search, the script will assume the game is stuck if no event is detected for this period."
     }
   },
   "OpsiAshBeacon": {
     "_info": {
-      "name": "META Fight",
+      "name": "META fight",
       "help": ""
     },
     "AttackMode": {
-      "name": "META Fight",
+      "name": "META fight",
       "help": "",
       "current": "Current season",
       "current_dossier": "Current season + Dossier",
@@ -3414,7 +3658,7 @@
       "help": "Only attack each beacon once, then call for assist every half hour.\nDoes not work on Dossier beacons."
     },
     "DossierAutoAttackMode": {
-      "name": "Dossier Beacon Auto Combat",
+      "name": "Dossier beacon auto combat",
       "help": "Automatically fight after the first battle at the Dossier beacon. Currently only available on CN Server."
     },
     "RequestAssist": {
@@ -3432,17 +3676,17 @@
   },
   "OpsiFleetFilter": {
     "_info": {
-      "name": "Fleet Settings",
+      "name": "Fleet settings",
       "help": ""
     },
     "Filter": {
-      "name": "Sortie Fleet Filter",
-      "help": "Fight the BOSS in rotation. If one fleet dies, replace it with another.\nPlease make sure the fleet is strong enough to ultimately defeat the BOSS.\nUse \"CallSubmarine\" to call a submarine before combat, but the run interval will be increased to 60 minutes."
+      "name": "Sortie fleet filter",
+      "help": "Fight the BOSS in rotation. If one fleet dies, replace it with another.\nPlease make sure the fleet is strong enough to ultimately defeat the BOSS.\nUse \"Call submarine\" to call a submarine before combat, but the run interval will be increased to 60 minutes."
     }
   },
   "OpsiFleet": {
     "_info": {
-      "name": "Fleet Settings",
+      "name": "Fleet settings",
       "help": ""
     },
     "Fleet": {
@@ -3460,7 +3704,7 @@
   },
   "OpsiExplore": {
     "_info": {
-      "name": "Monthly Exploration Plus",
+      "name": "Monthly exploration plus",
       "help": "Explore all sea zones in Operation Siren at the beginning of each month, without needing to buy a Campaign Information Recorder (5000 Oil item).\nThis function will clear a sea zone every 27 minutes to ensure airspace search cooldown.\nThe following conditions must be met before using this feature:\n- Complete Operation Siren main story and finish Simulation Battle + Siren Proving Ground"
     },
     "SpecialRadar": {
@@ -3476,17 +3720,17 @@
       "help": "Automatically updated value. Fill in 0 to reset progress. After reset, already explored sea zones will be automatically skipped.\nSupports sea zone ID, CN/EN/JP/TW server zone names, e.g. \"51\", \"NA Ocean SE Sector E\""
     },
     "AllowHazard1Leveling": {
-      "name": "Allow Hazard 1 Leveling during exploration",
+      "name": "Allow Corrosion 1 leveling during exploration",
       "help": "If enabled, Corrosion 1 Leveling will not be postponed. Use with caution, as you might run out of Action Points for exploration."
     },
     "ExploreProgress": {
-      "name": "Monthly Exploration Progress",
+      "name": "Monthly exploration progress",
       "help": "Shows the current completion percentage of monthly exploration."
     }
   },
   "OpsiShop": {
     "_info": {
-      "name": "Operation Siren Shop Plus",
+      "name": "Operation Siren shop plus",
       "help": "The following conditions must be met before using this feature:\n- Complete Operation Siren main story and finish Simulation Battle + Siren Proving Ground\n- Enable Operation Siren exploration or use Campaign Information Recorder (5000 Oil item)\n- The month after completing Operation Siren main story, i.e. when the Port Shop becomes the new version."
     },
     "PresetFilter": {
@@ -3503,31 +3747,31 @@
       "help": "To use a custom filter, set \"Port Shop Filter\" to \"Custom\" and read https://github.com/LmeSzinc/AzurLaneAutoScript/wiki/filter_string_cn"
     },
     "DisableBeforeDate": {
-      "name": "Do not purchase from OpSi Shop Plus before the Xth day of each month",
+      "name": "Do not purchase from OpSi shop plus before the Xth day of each month",
       "help": "Starting from the day after the specified date, buy from Operation Siren Shop once a day.\n0 means no limit, buy every day."
     }
   },
   "OpsiVoucher": {
     "_info": {
-      "name": "Special Exchange Shop (Monthly Voucher Shop)",
+      "name": "Special exchange shop (monthly voucher shop)",
       "help": "Purchase from the monthly voucher shop.\nThe following conditions must be met before using this feature:\n- Complete Operation Siren main story and finish Simulation Battle + Siren Proving Ground"
     },
     "Filter": {
-      "name": "Shop Filter",
+      "name": "Shop filter",
       "help": "Reference documentation https://github.com/LmeSzinc/AzurLaneAutoScript/wiki/reward_shop_filter_string"
     }
   },
   "OpsiDaily": {
     "_info": {
-      "name": "Operation Siren Daily Plus",
+      "name": "Operation Siren daily plus",
       "help": "The following conditions must be met before using this feature:\n- Clear the Operation Siren main storyline and complete Simulation Battle + Siren Proving Ground\n- Enable Operation Siren Exploration mission or use the Campaign Information Recorder (5000 Oil item)"
     },
     "DoMission": {
-      "name": "Do Operation Siren Daily Plus",
+      "name": "Do Operation Siren daily plus",
       "help": "Pick up dailies at port and complete all dailies"
     },
     "UseTuningSample": {
-      "name": "Use Tuning Samples",
+      "name": "Use tuning samples",
       "help": "Use all six Tuning Samples and the strong Tuning Sample"
     },
     "SkipSirenResearchMission": {
@@ -3543,59 +3787,59 @@
       "help": "This value is automatically recorded and generally does not need to be modified."
     },
     "CollectTargetReward": {
-      "name": "Collect Achievement Rewards",
+      "name": "Collect achievement rewards",
       "help": ""
     }
   },
   "OpsiObscure": {
     "_info": {
-      "name": "Obscured Zone",
+      "name": "Obscured zone",
       "help": "Clear an Obscured Zone every 27 minutes to ensure the zone search cooldown\nThe following conditions must be met before using this feature:\n- Clear the Operation Siren main storyline and complete Simulation Battle + Siren Proving Ground\n- Enable Operation Siren Exploration mission or use the Campaign Information Recorder (5000 Oil item)"
     },
     "SkipHazard2Obscure": {
-      "name": "Skip Corrosion Level 2 Coordinates",
+      "name": "Skip Corrosion Level 2 coordinates",
       "help": "When enabled, Obscured Zones with Corrosion Level 2 will not be cleared."
     },
     "ForceRun": {
-      "name": "Force Run Ignoring Interval",
+      "name": "Force run ignoring interval",
       "help": "When enabled, it will consume additional Action Points. Generally not needed, just run it slowly."
     }
   },
   "OpsiAbyssal": {
     "_info": {
-      "name": "Abyssal Zone",
+      "name": "Abyssal zone",
       "help": "Clear the Abyssal Zone coordinates in inventory\nThe following conditions must be met before using this feature:\n- Clear the Operation Siren main storyline and complete Simulation Battle + Siren Proving Ground\n- Enable Operation Siren Exploration mission or use the Campaign Information Recorder (5000 Oil item)"
     },
     "ForceRun": {
-      "name": "Force Run Ignoring Interval",
+      "name": "Force run ignoring interval",
       "help": "When enabled, it will consume additional Action Points. Generally not needed, just run it slowly."
     }
   },
   "OpsiStronghold": {
     "_info": {
-      "name": "Siren Stronghold",
+      "name": "Siren stronghold",
       "help": "Clear the weekly Siren Stronghold\nThe following conditions must be met before using this feature:\n- Clear the Operation Siren main storyline and complete Simulation Battle + Siren Proving Ground\n- Enable Operation Siren Exploration mission or use the Campaign Information Recorder (5000 Oil item)"
     },
     "SubmarineEveryCombat": {
-      "name": "Submarine Sortie Every Battle",
+      "name": "Submarine sortie every battle",
       "help": "When enabled, if there is a submarine fleet in the sortie fleet filter and the submarine fleet runs out of ammo, it will exit the Siren Stronghold and postpone the mission."
     },
     "ForceRun": {
-      "name": "Force Run Ignoring Interval",
+      "name": "Force run ignoring interval",
       "help": "When enabled, it will consume additional Action Points. Generally not needed, just run it slowly."
     },
     "HasStronghold": {
-      "name": "Siren Stronghold Available",
+      "name": "Siren stronghold available",
       "help": "Execute when a Siren Stronghold is detected on the map"
     }
   },
   "OpsiMonthBoss": {
     "_info": {
-      "name": "Monthly Boss",
+      "name": "Monthly boss",
       "help": "Clear the (Normal/Hard) Monthly Boss. On Normal difficulty, will continue attacking until defeated. On Hard difficulty, will terminate the task directly upon failure.\nThe following conditions must be met before using this feature:\n- Clear the Operation Siren main storyline and complete Simulation Battle + Siren Proving Ground\n- Enable Operation Siren Exploration mission or use the Campaign Information Recorder (5000 Oil item)"
     },
     "Mode": {
-      "name": "Monthly Boss Difficulty",
+      "name": "Monthly boss difficulty",
       "help": "",
       "normal": "Normal",
       "normal_hard": "Normal + Hard"
@@ -3605,53 +3849,61 @@
       "help": ""
     },
     "ForceRun": {
-      "name": "Force Run Ignoring Interval",
+      "name": "Force run ignoring interval",
       "help": "When enabled, it will consume additional Action Points. Generally not needed, just run it slowly."
     }
   },
   "OpsiMeowfficerFarming": {
     "_info": {
-      "name": "Meowfficer Farming",
+      "name": "Meowfficer farming",
       "help": "Attack sea zones with designated Corrosion levels in clockwise order\nThe following conditions must be met before using this feature:\n- Clear the Operation Siren main storyline and complete Simulation Battle + Siren Proving Ground\n- Enable Operation Siren Exploration mission or use the Campaign Information Recorder (5000 Oil item)"
     },
     "ActionPointPreserve": {
-      "name": "Preserve X Action Points",
+      "name": "Preserve X action points",
       "help": "Stop when Action Points are lower than X, and automatically open Action Point boxes. X includes Action Points in boxes. It is recommended to preserve 3000 AP for Corrosion 1 Leveling.\nThis value will be automatically reduced to 200 points 3 days before Operation Siren reset. If Corrosion 1 Leveling is enabled, it will be changed to 1000 points, and will be automatically reduced to 0 points on the last day."
     },
     "HazardLevel": {
-      "name": "Corrosion Level",
+      "name": "Corrosion level",
       "help": "Attack sea zones with specific Corrosion levels in clockwise order\nIt is recommended to choose 5 or 3, which has a higher cat point/AP ratio.",
       "2": "2",
       "3": "3",
       "4": "4",
       "5": "5",
       "6": "6",
-      "10": "Central Sea Zone"
+      "10": "Central sea zone"
     },
     "TargetZone": {
-      "name": "Target Zone",
-      "help": "Only attack the designated sea zone. Supports zone IDs and CN/EN/JP/TW zone names. Use 0 to return to the default logic by Corrosion level.\nWhen Planned Operation in Target Zone is enabled, multiple zones can be entered and cycled in order, e.g. 42,55,45, 42, 55, 45, or 42，55，45."
+      "name": "Target zone",
+      "help": "Only attack the designated sea zone. Supports zone IDs and CN/EN/JP/TW zone names. Use 0 to return to the default logic by Corrosion level.\nWhen Planned Operation in Target Zone is enabled, multiple zones can be entered and cycled in order, e.g. 42,55,45, 42, 55, 45, or 42, 55, 45."
     },
     "StayInZone": {
-      "name": "Planned Operation in Target Zone",
+      "name": "Planned operation in target zone",
       "help": "After enabling this, the task runs according to Target Zone. With one zone it stays there; with multiple zones it cycles through them in the configured order. Only takes effect when Target Zone is not 0."
+    },
+    "ExecuteFixedPatrolScan": {
+      "name": "Fixed patrol scan",
+      "help": "After enabling this, the task will scan the fixed patrol zone every 10 seconds."
+    },
+    "DebugClip": {
+      "name": "Post-battle debug recording",
+      "help": "When enabled, during each Meowfficer-farming round's post-battle handling (event detection / event resolution / forced movement), record what ALAS itself sees into an mp4 under log/clips/ (filename starts with meow_clip_). Every round is saved, whether or not an event occurred, so you can review each round. Retention is configured under OS General Settings."
     }
   },
   "OpsiTarget": {
     "_info": {
-      "name": "Zone Achievements",
+      "name": "Zone achievements",
       "help": ""
     },
     "TargetFarming": {
-      "name": "Farm Safe Zone Achievements",
+      "name": "Farm safe zone achievements",
       "help": ""
     },
     "TargetZone": {
-      "name": "Target Zone",
+      "name": "Target zone",
       "help": "Only sortie to specified zones. Can be used to earn Operation Siren achievement stars.\nSupports zone ID, CN/EN/JP/TW zone names, e.g. \"51\", \"NA Ocean SE Sector E\"\nEnter default value 0 or delete the value to cancel targeting."
     },
     "LastRun": {
-      "name": "Last Claim Time",
+      "name": "Last claim time",
       "help": "This value is auto-recorded and generally does not need modification."
     }
   },
@@ -3661,14 +3913,14 @@
       "help": "Consume Combat Supply Vouchers to gain large amounts of EXP and small amounts of Action Points\nIt is recommended to bring 1-2 preloaded carriers to obtain the highest hourly income.\n\nSome safety restrictions of the original ALAS have been lifted, please set parameters carefully"
     },
     "TargetZone": {
-      "name": "Target Zone",
+      "name": "Target zone",
       "help": "Only attack the designated zone, can be used to avoid zone refresh issues caused by game bugs",
       "0": "Not specified",
       "44": "44 | Western Continental Shelf D",
       "22": "22 | NA Ocean SW B"
     },
     "OperationCoinsPreserve": {
-      "name": "Preserve X Combat Supply Vouchers",
+      "name": "Preserve X combat supply vouchers",
       "help": "When Combat Supply Vouchers are lower than X, run Meowfficer Farming. Not recommended to modify."
     },
     "MinimumActionPointReserve": {
@@ -3677,10 +3929,7 @@
     },
     "ExecuteFixedPatrolScan": {
       "name": "Forced Fleet Movement",
-      "help": "Warm reminder from Yukikaze-sama: After enabling, the fleet will be forced to move to prevent not finding Akashi. Commander, you don’t want to crash because you can’t find Akashi, do you? Enable this function and easily reach 500,000 nautical miles per month. What are you waiting for, Commander?",
-      "0": "0",
-      "1": "1",
-      "2": "2"
+      "help": "Warm reminder from Yukikaze-sama: After enabling, the fleet will be forced to move to prevent not finding Akashi. Commander, you don’t want to crash because you can’t find Akashi, do you? Enable this function and easily reach 500,000 nautical miles per month. What are you waiting for, Commander?"
     },
     "SkipHpCheck": {
       "name": "Sacrifice run: skip HP check",
@@ -3693,37 +3942,37 @@
       "help": "By default, only Action Points are purchased. If you want to also buy purple coins, set it to ‘ActionPoint > PurpleCoins’"
     },
     "RecordNonCL1AP": {
-      "name": "Record Non-Corrosion 1 AP Sources",
+      "name": "Record non-Corrosion 1 AP sources",
       "help": "When enabled, AP acquisition data from all sources (such as Akashi shop purchases) will be recorded. When disabled, AP data will only be recorded during Corrosion 1 Leveling tasks, ignoring AP gained during other tasks or manual operations."
     },
     "RecordSeaMiles": {
-      "name": "Sea Miles Recording",
-      "help": "Record sea miles to statistics after each hazard 1 leveling cycle",
+      "name": "Sea miles recording",
+      "help": "Record sea miles to statistics after each Corrosion 1 leveling cycle",
       "True": "Enabled",
       "False": "Disabled"
     },
     "DebugClip": {
       "name": "Post-battle debug recording",
-      "help": "When enabled, during each erosion-1 round's post-battle handling (rescan / event resolution / forced movement), record what ALAS itself sees into an mp4 under log/clips/. Rounds with no event produce no file. Use this to manually verify whether Akashi is missed. Videos are kept indefinitely (no auto cleanup) — watch disk space."
+      "help": "When enabled, during each Corrosion 1 round's post-battle handling (rescan / event resolution / forced movement), record what ALAS itself sees into an mp4 under log/clips/. Every round is saved, whether or not an event occurred, so you can review each round. Use this to manually verify whether Akashi is missed. Clips are cleaned up automatically according to the clip retention setting under OS General Settings."
     }
   },
   "OpsiSirenBug": {
     "_info": {
-      "name": "Siren Research Device",
+      "name": "Siren research device",
       "help": "Basic options for handling Siren Research Devices"
     },
     "SirenResearch_Enable": {
-      "name": "Enable Siren Research Device",
+      "name": "Enable Siren research device",
       "help": "After enabling, use purple coins to convert to yellow coins through the Siren Research Device\nSufficient nautical miles are needed to sustain the purple coin consumption"
     },
     "Siren_Mode": {
-      "name": "Interaction Mode with Siren Detection Device",
+      "name": "Interaction mode with Siren detection device",
       "help": "Choose how to interact with Siren devices. Detecting resources costs purple coins (Special Exchange Vouchers), detecting enemies costs Siren Energy Storage",
       "resource": "Repeatedly attempt to detect hidden resources",
       "enemy": "Repeatedly attempt to detect hidden enemies"
     },
     "Siren_Fleet": {
-      "name": "Fleet for Enemy Detection",
+      "name": "Fleet for enemy detection",
       "help": "Select the fleet to use when detecting hidden enemies. 0 means use current fleet, 1-4 means use specified fleet",
       "0": "Use current fleet",
       "1": "Fleet 1",
@@ -3742,41 +3991,41 @@
       "help": "When all ships have accumulated enough experience to reach the specified level, a push notification is triggered."
     },
     "LastRun": {
-      "name": "Last EXP Check Time (auto-recorded)",
+      "name": "Last EXP check time (auto-recorded)",
       "help": "Records the time of last check to prevent repeated runs, check interval is 1 day. This value is auto-recorded and generally does not need manual modification."
     },
     "CheckInterval": {
-      "name": "Check Interval (Hours)",
+      "name": "Check interval (hours)",
       "help": "How many hours between each experience check. Default is 24 hours."
     },
     "EnableCustomCheck": {
-      "name": "Enable Custom Ship Check",
+      "name": "Enable custom ship check",
       "help": "Check only specified ships instead of all ships.",
       "True": "Enabled",
       "False": "Disabled"
     },
     "CustomCheckPositions": {
-      "name": "Custom Check Positions",
+      "name": "Custom check positions",
       "help": "Ship position numbers 1-6, separated by comma. Only these positions will be checked."
     },
     "DelayAfterFull": {
-      "name": "Delay Task After Reaching Target Level",
+      "name": "Delay task after reaching target level",
       "help": "When full experience is detected, this task will be delayed for the specified duration."
     }
   },
   "OpsiFleetAutoChange": {
     "_info": {
-      "name": "Fleet Auto-Compose",
+      "name": "Fleet auto-compose",
       "help": "Automatically replace ships that have reached the target level."
     },
     "Enable": {
-      "name": "Enable Auto-Compose",
+      "name": "Enable auto-compose",
       "help": "Automatically replace ships that have reached max level.",
       "True": "Enabled",
       "False": "Disabled"
     },
     "CooldownHours": {
-      "name": "Cooldown Hours",
+      "name": "Cooldown hours",
       "help": "Cooldown period in hours after an auto-compose before the next one.",
       "12": "12",
       "24": "24",
@@ -3784,7 +4033,7 @@
       "72": "72"
     },
     "LastRun": {
-      "name": "Last Run Time (Auto-recorded)",
+      "name": "Last run time (auto-recorded)",
       "help": "Records the last auto-compose execution time. Do not modify manually."
     }
   },
@@ -3794,100 +4043,104 @@
       "help": "Operation Siren smart scheduling function, used to coordinate switching between Corrosion 1 Leveling and yellow coin replenishment tasks.\nOnce enabled, it will automatically switch between different tasks and send push notifications based on coins and Action Points.\n\nSome safety restrictions of the original ALAS have been lifted, please set parameters carefully"
     },
     "UseSmartSchedulingOperationCoinsPreserve": {
-      "name": "Reserve X Operation Supply Coins",
+      "name": "Reserve X operation supply coins",
       "help": "When enabled, will use the 'Obtain X Combat Supply Vouchers' configuration below. When disabled, will use the Corrosion 1 Leveling yellow coin retention configuration.\nWhen disabled, Action Points are used for control.\nWhen enabled, yellow coins are used for control.",
       "True": "Enabled",
       "False": "Disabled"
     },
     "OperationCoinsPreserve": {
-      "name": "Corrosion 1 Leveling: Preserve X Combat Supply Vouchers",
+      "name": "Corrosion 1 leveling: preserve X combat supply vouchers",
       "help": "When Combat Supply Vouchers are lower than X, run yellow coin replenishment task. Not recommended to modify."
     },
     "ActionPointPreserve": {
-      "name": "Meowfficer Farming: Preserve X Action Points",
+      "name": "Meowfficer farming: preserve X action points",
       "help": "Stop when Action Points are lower than X, and automatically open AP boxes. X includes AP in boxes. It is recommended to preserve 1000 AP for Corrosion 1 Leveling."
     },
     "OperationCoinsReturnThreshold": {
-      "name": "Return When Supply Coins Below X",
+      "name": "Return when supply coins below X",
       "help": "During the yellow coin acquisition task, obtain (increase) X Combat Supply Vouchers in total, then return to Corrosion 1 Leveling."
     },
     "EnableMeowfficerFarming": {
-      "name": "Enable Meowfficer Farming",
+      "name": "Enable meowfficer farming",
       "help": "Whether to enable Meowfficer Farming task for yellow coin replenishment in Smart Scheduling",
       "True": "Enabled",
       "False": "Disabled"
     },
     "EnableObscure": {
-      "name": "Enable Obscured Zone",
+      "name": "Enable obscured zone",
       "help": "Whether to enable Obscured Zone task for yellow coin replenishment in Smart Scheduling",
       "True": "Enabled",
       "False": "Disabled"
     },
     "EnableAbyssal": {
-      "name": "Enable Abyssal Zone",
+      "name": "Enable abyssal zone",
       "help": "Whether to enable Abyssal Zone task for yellow coin replenishment in Smart Scheduling",
       "True": "Enabled",
       "False": "Disabled"
     },
     "EnableStronghold": {
-      "name": "Enable Siren Stronghold",
+      "name": "Enable Siren stronghold",
       "help": "Whether to enable Siren Stronghold task for yellow coin replenishment in Smart Scheduling",
       "True": "Enabled",
       "False": "Disabled"
     },
     "TaskPriority": {
-      "name": "Replenishment Task Priority",
+      "name": "Replenishment task priority",
       "help": "The priority order of tasks for yellow coin replenishment when they are insufficient. Separated by >."
     },
+    "ObscureAbyssalCheckDelayDays": {
+      "name": "Obscure/Abyssal recheck delay (days)",
+      "help": "After all Obscure Zones and Abyssal Zones are cleared, Smart Scheduling delays their checks by the given number of days and skips them in the meantime to speed up coin replenishing. 0 checks every round. The Operation Siren monthly reset refreshes them, and checks resume after the reset."
+    },
     "MonthEndActionPointCleanupEnable": {
-      "name": "OpsiScheduling.MonthEndActionPointCleanupEnable.name",
-      "help": "OpsiScheduling.MonthEndActionPointCleanupEnable.help",
-      "True": "True",
-      "False": "False"
+      "name": "Enable month-end action point cleanup",
+      "help": "Whether to enable the month-end Action Point cleanup. When enabled, once the days remaining until the Operation Siren reset are at or below the \"Month-end Action Point Cleanup Days\" value, the month-end cleanup mode starts to consume Action Points.",
+      "True": "Enabled",
+      "False": "Disabled"
     },
     "MonthEndActionPointCleanupDays": {
-      "name": "OpsiScheduling.MonthEndActionPointCleanupDays.name",
-      "help": "OpsiScheduling.MonthEndActionPointCleanupDays.help"
+      "name": "Month-end action point cleanup days",
+      "help": "Start the month-end Action Point cleanup mode when the days remaining until the Operation Siren reset are at or below this value. 0 disables it. When enabled, the cleanup loop repeatedly runs Meowfficer Farming, shop purchases, Obscured Zones and Abyssal Zones to consume Action Points, and summons the Siren Stronghold on the first run."
     },
     "MonthEndActionPointPreserve": {
-      "name": "OpsiScheduling.MonthEndActionPointPreserve.name",
-      "help": "OpsiScheduling.MonthEndActionPointPreserve.help"
+      "name": "Month-end action point preserve",
+      "help": "Action Point preserve value in month-end cleanup mode. If the cross-month daily task is enabled, at least 200 Action Points are reserved. When this value is larger than the minimum reserve, this value is used."
     },
     "MonthEndShopPurchase": {
-      "name": "OpsiScheduling.MonthEndShopPurchase.name",
-      "help": "OpsiScheduling.MonthEndShopPurchase.help",
-      "True": "True",
-      "False": "False"
+      "name": "Month-end shop purchase",
+      "help": "Whether to buy from the Operation Siren shop during month-end Action Point cleanup. When disabled, the cleanup loop skips the shop purchase step.",
+      "True": "Enabled",
+      "False": "Disabled"
     }
   },
   "OpsiPreventActionPointOverflow": {
     "_info": {
-      "name": "Prevent AP Overflow",
+      "name": "Prevent AP overflow",
       "help": "Runs Operation Siren tasks when current AP reaches the upper limit.\nWhen Smart Scheduling is selected, it runs Meowfficer Farming if both AP and Operation Supply Coins are insufficient and no other task can run."
     },
     "Task": {
-      "name": "Task to Run",
+      "name": "Task to run",
       "help": "Recommended: Smart Scheduling, which has dedicated overflow handling.",
-      "OpsiScheduling": "Smart Scheduling (Recommended)",
-      "OpsiHazard1Leveling": "Corrosion 1 Leveling",
-      "OpsiMeowfficerFarming": "Meowfficer Farming"
+      "OpsiScheduling": "Smart scheduling (recommended)",
+      "OpsiHazard1Leveling": "Corrosion 1 leveling",
+      "OpsiMeowfficerFarming": "Meowfficer farming"
     },
     "ActionPointUpperbound": {
-      "name": "Current AP Upper Limit",
+      "name": "Current AP upper limit",
       "help": "Start running Operation Siren tasks when current AP reaches this value."
     },
     "ActionPointLowerbound": {
-      "name": "Current AP Lower Limit",
+      "name": "Current AP lower limit",
       "help": "Keep running until current AP drops below this value."
     }
   },
   "IslandPlan": {
     "_info": {
-      "name": "Global Config",
+      "name": "Global config",
       "help": "Global configuration for Island Plan, including season settings."
     },
     "Season": {
-      "name": "Current Season",
+      "name": "Current season",
       "help": "Some items are season-limited. Adjust according to the current season. Autumn limited items: Persimmon Cake, Matsutake Chicken Soup, Carrot Pear Juice, Chrysanthemum Tea, Autumn Pear, Persimmon, Peanut Oil, Autumn Bouquet.",
       "spring": "Spring",
       "summer": "Summer",
@@ -3901,7 +4154,7 @@
       "help": ""
     },
     "Positions": {
-      "name": "Farmland Positions",
+      "name": "Farmland positions",
       "help": "",
       "1": "1",
       "2": "2",
@@ -3909,15 +4162,15 @@
       "4": "4"
     },
     "WorkerFilter": {
-      "name": "Farm Worker Filter",
+      "name": "Farm worker filter",
       "help": "Connect with >, e.g. ChaoHo > NewJersey > Amagi_chan\nSaratoga > Akashi > Tashkent > YingSwei\nLeMalin > Unicorn > Shimakaze > Cheshire\nChenHai > WilliamDPorter\nHelena > Friedrich > Atago\nYixian > August > Eugen > Hood > Javelin > Laffey > Explorer > Navigator > OceanCrosser > FeiYun > Takao > Anchorage > Belfast > ChangFeng > Mogador > RoyalFortune > DaVinci > Taihou\nOnly recognizes the first two rows in default order. If the specified character is unavailable, falls back to WorkerJuu."
     },
     "MinFarm": {
-      "name": "Crop Stock Threshold",
+      "name": "Crop stock threshold",
       "help": "Recommended 660 or above."
     },
     "PlantPotatoes": {
-      "name": "Plant Wheat",
+      "name": "Plant wheat",
       "help": "",
       "0": "0",
       "1": "1",
@@ -3932,7 +4185,7 @@
       "help": "The warehouse only recognizes two rows. Please clean up regularly."
     },
     "Positions": {
-      "name": "Orchard Positions",
+      "name": "Orchard positions",
       "help": "",
       "1": "1",
       "2": "2",
@@ -3940,19 +4193,19 @@
       "4": "4"
     },
     "WorkerFilter": {
-      "name": "Orchard Worker Filter",
+      "name": "Orchard worker filter",
       "help": "Connect with >, e.g. ChaoHo > NewJersey > Amagi_chan\nSaratoga > Akashi > Tashkent > YingSwei\nLeMalin > Unicorn > Shimakaze > Cheshire\nChenHai > WilliamDPorter\nHelena > Friedrich > Atago\nYixian > August > Eugen > Hood > Javelin > Laffey > Explorer > Navigator > OceanCrosser > FeiYun > Takao > Anchorage > Belfast > ChangFeng > Mogador > RoyalFortune > DaVinci > Taihou\nOnly recognizes the first two rows in default order. If the specified character is unavailable, falls back to WorkerJuu."
     },
     "MinOrchard": {
-      "name": "Fruit Stock Threshold",
+      "name": "Fruit stock threshold",
       "help": ""
     },
     "IgnoreAvocado": {
-      "name": "Ignore Avocado",
+      "name": "Ignore avocado",
       "help": ""
     },
     "PlantRubber": {
-      "name": "Plant Rubber",
+      "name": "Plant rubber",
       "help": "",
       "0": "0",
       "1": "1",
@@ -3961,7 +4214,7 @@
       "4": "4"
     },
     "AmagiChanRubber": {
-      "name": "Amagi-chan Plants Rubber",
+      "name": "Amagi-chan plants rubber",
       "help": ""
     }
   },
@@ -3971,25 +4224,25 @@
       "help": ""
     },
     "Positions": {
-      "name": "Nursery Positions",
+      "name": "Nursery positions",
       "help": "",
       "1": "1",
       "2": "2"
     },
     "WorkerFilter": {
-      "name": "Nursery Worker Filter",
+      "name": "Nursery worker filter",
       "help": "Connect with >, e.g. ChaoHo > NewJersey > Amagi_chan\nSaratoga > Akashi > Tashkent > YingSwei\nLeMalin > Unicorn > Shimakaze > Cheshire\nChenHai > WilliamDPorter\nHelena > Friedrich > Atago\nYixian > August > Eugen > Hood > Javelin > Laffey > Explorer > Navigator > OceanCrosser > FeiYun > Takao > Anchorage > Belfast > ChangFeng > Mogador > RoyalFortune > DaVinci > Taihou\nOnly recognizes the first two rows in default order. If the specified character is unavailable, falls back to WorkerJuu."
     },
     "MinNursery": {
-      "name": "Nursery Crop Stock Threshold",
+      "name": "Nursery crop stock threshold",
       "help": ""
     },
     "IgnorePineapple": {
-      "name": "Ignore Pineapple",
+      "name": "Ignore pineapple",
       "help": ""
     },
     "PlantLavender": {
-      "name": "Plant Lavender",
+      "name": "Plant lavender",
       "help": "",
       "0": "0",
       "1": "1",
@@ -4002,35 +4255,35 @@
       "help": ""
     },
     "MinChicken": {
-      "name": "Chicken Stock Threshold",
+      "name": "Chicken stock threshold",
       "help": ""
     },
     "ChickenFilter": {
-      "name": "Chicken Worker Filter",
+      "name": "Chicken worker filter",
       "help": "Connect with >, e.g. ChaoHo > NewJersey > Amagi_chan\nSaratoga > Akashi > Tashkent > YingSwei\nLeMalin > Unicorn > Shimakaze > Cheshire\nChenHai > WilliamDPorter\nHelena > Friedrich > Atago\nYixian > August > Eugen > Hood > Javelin > Laffey > Explorer > Navigator > OceanCrosser > FeiYun > Takao > Anchorage > Belfast > ChangFeng > Mogador > RoyalFortune > DaVinci > Taihou\nOnly recognizes the first two rows in default order. If the specified character is unavailable, falls back to WorkerJuu."
     },
     "MinPork": {
-      "name": "Pork Stock Threshold",
+      "name": "Pork stock threshold",
       "help": ""
     },
     "PigFilter": {
-      "name": "Pig Worker Filter",
+      "name": "Pig worker filter",
       "help": "Connect with >, e.g. ChaoHo > NewJersey > Amagi_chan\nSaratoga > Akashi > Tashkent > YingSwei\nLeMalin > Unicorn > Shimakaze > Cheshire\nChenHai > WilliamDPorter\nHelena > Friedrich > Atago\nYixian > August > Eugen > Hood > Javelin > Laffey > Explorer > Navigator > OceanCrosser > FeiYun > Takao > Anchorage > Belfast > ChangFeng > Mogador > RoyalFortune > DaVinci > Taihou\nOnly recognizes the first two rows in default order. If the specified character is unavailable, falls back to WorkerJuu."
     },
     "Milk": {
-      "name": "Raise Cattle",
+      "name": "Raise cattle",
       "help": ""
     },
     "RancherFilter": {
-      "name": "Character Filter",
+      "name": "Character filter",
       "help": "Connect with >, e.g. ChaoHo > NewJersey > Amagi_chan\nSaratoga > Akashi > Tashkent > YingSwei\nLeMalin > Unicorn > Shimakaze > Cheshire\nChenHai > WilliamDPorter\nHelena > Friedrich > Atago\nYixian > August > Eugen > Hood > Javelin > Laffey > Explorer > Navigator > OceanCrosser > FeiYun > Takao > Anchorage > Belfast > ChangFeng > Mogador > RoyalFortune > DaVinci > Taihou\nOnly recognizes the first two rows in default order. If the specified character is unavailable, falls back to WorkerJuu."
     },
     "Wool": {
-      "name": "Raise Sheep",
+      "name": "Raise sheep",
       "help": ""
     },
     "WoolWorkerFilter": {
-      "name": "Sheep Worker Filter",
+      "name": "Sheep worker filter",
       "help": "Connect with >, e.g. ChaoHo > NewJersey > Amagi_chan\nSaratoga > Akashi > Tashkent > YingSwei\nLeMalin > Unicorn > Shimakaze > Cheshire\nChenHai > WilliamDPorter\nHelena > Friedrich > Atago\nYixian > August > Eugen > Hood > Javelin > Laffey > Explorer > Navigator > OceanCrosser > FeiYun > Takao > Anchorage > Belfast > ChangFeng > Mogador > RoyalFortune > DaVinci > Taihou\nOnly recognizes the first two rows in default order. If the specified character is unavailable, falls back to WorkerJuu."
     }
   },
@@ -4040,46 +4293,46 @@
       "help": "Supports 7 types of seafood: Bass, Yellowfin Tuna, Shell, Shrimp, Crab, Squid, Sea Cucumber.\nDefault: raise Yellowfin Tuna."
     },
     "Positions": {
-      "name": "Fishery Positions",
+      "name": "Fishery positions",
       "help": "",
       "1": "1",
       "2": "2",
       "3": "3"
     },
     "MinBass": {
-      "name": "Bass Stock Threshold",
+      "name": "Bass stock threshold",
       "help": ""
     },
     "MinYellowfinTuna": {
-      "name": "Yellowfin Tuna Stock Threshold",
+      "name": "Yellowfin tuna stock threshold",
       "help": ""
     },
     "MinShell": {
-      "name": "Shell Stock Threshold",
+      "name": "Shell stock threshold",
       "help": ""
     },
     "MinShrimp": {
-      "name": "Shrimp Stock Threshold",
+      "name": "Shrimp stock threshold",
       "help": ""
     },
     "MinCrayfish": {
-      "name": "Crayfish Stock Threshold",
+      "name": "Crayfish stock threshold",
       "help": ""
     },
     "MinCrab": {
-      "name": "Crab Stock Threshold",
+      "name": "Crab stock threshold",
       "help": ""
     },
     "MinSquid": {
-      "name": "Squid Stock Threshold",
+      "name": "Squid stock threshold",
       "help": ""
     },
     "MinSeaCucumber": {
-      "name": "Sea Cucumber Stock Threshold",
+      "name": "Sea cucumber stock threshold",
       "help": ""
     },
     "PlantYellowfinTuna": {
-      "name": "Raise Yellowfin Tuna",
+      "name": "Raise yellowfin tuna",
       "help": "",
       "0": "0",
       "1": "1",
@@ -4087,7 +4340,7 @@
       "3": "3"
     },
     "RancherFilter": {
-      "name": "Character Filter",
+      "name": "Character filter",
       "help": "Connect with >, e.g. ChaoHo > NewJersey > Amagi_chan\nSaratoga > Akashi > Tashkent > YingSwei\nLeMalin > Unicorn > Shimakaze > Cheshire\nChenHai > WilliamDPorter\nHelena > Friedrich > Atago\nYixian > August > Eugen > Hood > Javelin > Laffey > Explorer > Navigator > OceanCrosser > FeiYun > Takao > Anchorage > Belfast > ChangFeng > Mogador > RoyalFortune > DaVinci > Taihou\nOnly recognizes the first two rows in default order. If the specified character is unavailable, falls back to WorkerJuu."
     }
   },
@@ -4097,7 +4350,7 @@
       "help": ""
     },
     "Positions": {
-      "name": "Assign X Miner Positions",
+      "name": "Assign X miner positions",
       "help": "",
       "1": "1",
       "2": "2",
@@ -4105,7 +4358,7 @@
       "4": "4"
     },
     "MineSilver": {
-      "name": "Silver Mining Slots",
+      "name": "Silver mining slots",
       "help": "Number of idle mine posts to produce Silver; remaining stay idle",
       "0": "0",
       "1": "1",
@@ -4114,27 +4367,27 @@
       "4": "4"
     },
     "WorkerFilter": {
-      "name": "Mine Worker Filter",
+      "name": "Mine worker filter",
       "help": "Connect with >, e.g. ChaoHo > NewJersey > Amagi_chan\nSaratoga > Akashi > Tashkent > YingSwei\nLeMalin > Unicorn > Shimakaze > Cheshire\nChenHai > WilliamDPorter\nHelena > Friedrich > Atago\nYixian > August > Eugen > Hood > Javelin > Laffey > Explorer > Navigator > OceanCrosser > FeiYun > Takao > Anchorage > Belfast > ChangFeng > Mogador > RoyalFortune > DaVinci > Taihou\nOnly recognizes the first two rows in default order. If the specified character is unavailable, falls back to WorkerJuu."
     },
     "MinCopper": {
-      "name": "Copper Ore Min Stock",
+      "name": "Copper ore min stock",
       "help": "Mine positions only produce when copper ore in warehouse falls below this value."
     },
     "MinAluminium": {
-      "name": "Aluminium Ore Min Stock",
+      "name": "Aluminium ore min stock",
       "help": "Mine positions only produce when aluminium ore in warehouse falls below this value."
     },
     "MinIron": {
-      "name": "Iron Ore Min Stock",
+      "name": "Iron ore min stock",
       "help": "Mine positions only produce when iron ore in warehouse falls below this value."
     },
     "MinSulphur": {
-      "name": "Sulphur Min Stock",
+      "name": "Sulphur min stock",
       "help": "Mine positions only produce when sulphur in warehouse falls below this value."
     },
     "MinSilver": {
-      "name": "Silver Ore Min Stock",
+      "name": "Silver ore min stock",
       "help": "Mine positions only produce when silver ore in warehouse falls below this value."
     }
   },
@@ -4144,7 +4397,7 @@
       "help": ""
     },
     "Positions": {
-      "name": "Assign X Lumberjack Positions",
+      "name": "Assign X lumberjack positions",
       "help": "",
       "1": "1",
       "2": "2",
@@ -4152,7 +4405,7 @@
       "4": "4"
     },
     "CutElegant": {
-      "name": "Elegant Wood Slots",
+      "name": "Elegant wood slots",
       "help": "Number of idle forest posts to produce Elegant wood; remaining stay idle",
       "0": "0",
       "1": "1",
@@ -4161,49 +4414,49 @@
       "4": "4"
     },
     "WorkerFilter": {
-      "name": "Forest Worker Filter",
+      "name": "Forest worker filter",
       "help": "Connect with >, e.g. ChaoHo > NewJersey > Amagi_chan\nSaratoga > Akashi > Tashkent > YingSwei\nLeMalin > Unicorn > Shimakaze > Cheshire\nChenHai > WilliamDPorter\nHelena > Friedrich > Atago\nYixian > August > Eugen > Hood > Javelin > Laffey > Explorer > Navigator > OceanCrosser > FeiYun > Takao > Anchorage > Belfast > ChangFeng > Mogador > RoyalFortune > DaVinci > Taihou\nOnly recognizes the first two rows in default order. If the specified character is unavailable, falls back to WorkerJuu."
     },
     "MinElegant": {
-      "name": "Elegant Wood Min Stock",
+      "name": "Elegant wood min stock",
       "help": "Forest positions only produce when elegant wood in warehouse falls below this value."
     },
     "MinPractical": {
-      "name": "Practical Wood Min Stock",
+      "name": "Practical wood min stock",
       "help": "Forest positions only produce when practical wood in warehouse falls below this value."
     },
     "MinSelected": {
-      "name": "Selected Wood Min Stock",
+      "name": "Selected wood min stock",
       "help": "Forest positions only produce when selected wood in warehouse falls below this value."
     }
   },
   "IslandDailyGather": {
     "_info": {
-      "name": "Daily Gathering",
+      "name": "Daily gathering",
       "help": "Gather resources from the management interface gathering tab. Runs at 03:10 and 18:00. Flow: select targets, toggle switches, assign characters, and depart."
     },
     "WorkerFilter": {
-      "name": "Gathering Worker Filter",
+      "name": "Gathering worker filter",
       "help": "Connect with >. Up to 3 characters, mapped to gathering slots 1-3.\nConnect with >, e.g. ChaoHo > NewJersey > Amagi_chan\nSaratoga > Akashi > Tashkent > YingSwei\nLeMalin > Unicorn > Shimakaze > Cheshire\nChenHai > WilliamDPorter\nHelena > Friedrich > Atago\nYixian > August > Eugen > Hood > Javelin > Laffey > Explorer > Navigator > OceanCrosser > FeiYun > Takao > Anchorage > Belfast > ChangFeng > Mogador > RoyalFortune > DaVinci > Taihou\nDaily gathering cannot use WorkerJuu; it will be ignored if entered.\nOnly recognizes the first two rows in default order. If the specified character is unavailable, that slot falls back to the existing gathering logic."
     }
   },
   "IslandRestaurant": {
     "_info": {
-      "name": "Fish Restaurant",
+      "name": "Fish restaurant",
       "help": "Meals are produced sequentially from 1 to 8. The production target is the Meal X quantity option. The next item is only executed after the previous one is fully satisfied. Later items will not affect the completion of earlier items during runtime.\nDouble Bamboo Shoots and Asparagus Shrimp in meals 1-8 will automatically switch to corresponding seasonal meals based on the current season."
     },
     "PostNumber": {
-      "name": "Assign X Chef Positions",
+      "name": "Assign X chef positions",
       "help": "",
       "1": "1",
       "2": "2"
     },
     "ChefFilter": {
-      "name": "Chef Filter",
+      "name": "Chef filter",
       "help": "Connect with >, e.g. ChaoHo > NewJersey > Amagi_chan\nSaratoga > Akashi > Tashkent > YingSwei\nLeMalin > Unicorn > Shimakaze > Cheshire\nChenHai > WilliamDPorter\nHelena > Friedrich > Atago\nYixian > August > Eugen > Hood > Javelin > Laffey > Explorer > Navigator > OceanCrosser > FeiYun > Takao > Anchorage > Belfast > ChangFeng > Mogador > RoyalFortune > DaVinci > Taihou\nOnly recognizes the first two rows in default order. If the specified character is unavailable, falls back to WorkerJuu."
     },
     "DoubleBambooShoots": {
-      "name": "Prioritize Seasonal Dish",
+      "name": "Prioritize seasonal dish",
       "help": "When enabled, produce the current restaurant seasonal dish before base meals. Spring uses Cold Bamboo Shoots, summer uses Amaranth Rice Ball, autumn uses Matsutake Chicken Soup; winter has no extra restaurant seasonal dish."
     },
     "Meal1": {
@@ -4226,7 +4479,7 @@
       "persimmon_cake": "Persimmon Cake"
     },
     "MealNumber1": {
-      "name": "Produce Meal 1 to X Servings",
+      "name": "Produce meal 1 to X servings",
       "help": ""
     },
     "Meal2": {
@@ -4249,7 +4502,7 @@
       "persimmon_cake": "Persimmon Cake"
     },
     "MealNumber2": {
-      "name": "Produce Meal 2 to X Servings",
+      "name": "Produce meal 2 to X servings",
       "help": ""
     },
     "Meal3": {
@@ -4272,7 +4525,7 @@
       "persimmon_cake": "Persimmon Cake"
     },
     "MealNumber3": {
-      "name": "Produce Meal 3 to X Servings",
+      "name": "Produce meal 3 to X servings",
       "help": ""
     },
     "Meal4": {
@@ -4295,7 +4548,7 @@
       "persimmon_cake": "Persimmon Cake"
     },
     "MealNumber4": {
-      "name": "Produce Meal 4 to X Servings",
+      "name": "Produce meal 4 to X servings",
       "help": ""
     },
     "Meal5": {
@@ -4318,7 +4571,7 @@
       "persimmon_cake": "Persimmon Cake"
     },
     "MealNumber5": {
-      "name": "Produce Meal 5 to X Servings",
+      "name": "Produce meal 5 to X servings",
       "help": ""
     },
     "Meal6": {
@@ -4341,7 +4594,7 @@
       "persimmon_cake": "Persimmon Cake"
     },
     "MealNumber6": {
-      "name": "Produce Meal 6 to X Servings",
+      "name": "Produce meal 6 to X servings",
       "help": ""
     },
     "Meal7": {
@@ -4364,7 +4617,7 @@
       "persimmon_cake": "Persimmon Cake"
     },
     "MealNumber7": {
-      "name": "Produce Meal 7 to X Servings",
+      "name": "Produce meal 7 to X servings",
       "help": ""
     },
     "Meal8": {
@@ -4387,17 +4640,17 @@
       "persimmon_cake": "Persimmon Cake"
     },
     "MealNumber8": {
-      "name": "Produce Meal 8 to X Servings",
+      "name": "Produce meal 8 to X servings",
       "help": ""
     }
   },
   "IslandRestaurantNextTask": {
     "_info": {
-      "name": "Backup Tasks",
+      "name": "Backup tasks",
       "help": ""
     },
     "AwayCook": {
-      "name": "Permanent Meal",
+      "name": "Permanent meal",
       "help": "Produce permanent meals after all above are completed.",
       "None": "None",
       "tofu": "Tofu",
@@ -4422,17 +4675,17 @@
       "help": "Meals are produced sequentially from 1 to 8. The production target is the Meal X quantity option. The next item is only executed after the previous one is fully satisfied. Later items will not affect the completion of earlier items during runtime.\nHoney drinks support automatic production; make sure honey stock is sufficient.\nSpring Flower Tea and Fresh Pineapple Juice in meals will automatically switch to corresponding seasonal meals based on the current season."
     },
     "PostNumber": {
-      "name": "Assign X Bartender Positions",
+      "name": "Assign X bartender positions",
       "help": "",
       "1": "1",
       "2": "2"
     },
     "ChefFilter": {
-      "name": "Chef Filter",
+      "name": "Chef filter",
       "help": "Connect with >, e.g. ChaoHo > NewJersey > Amagi_chan\nSaratoga > Akashi > Tashkent > YingSwei\nLeMalin > Unicorn > Shimakaze > Cheshire\nChenHai > WilliamDPorter\nHelena > Friedrich > Atago\nYixian > August > Eugen > Hood > Javelin > Laffey > Explorer > Navigator > OceanCrosser > FeiYun > Takao > Anchorage > Belfast > ChangFeng > Mogador > RoyalFortune > DaVinci > Taihou\nOnly recognizes the first two rows in default order. If the specified character is unavailable, falls back to WorkerJuu."
     },
     "Seasonal": {
-      "name": "Prioritize Seasonal Drink",
+      "name": "Prioritize seasonal drink",
       "help": "When enabled, produce the current Teahouse seasonal drink before base drinks. Spring uses Spring Flower Tea, summer uses Watermelon Juice, autumn uses Chrysanthemum Tea; winter has no extra teahouse seasonal drink."
     },
     "Meal1": {
@@ -4453,7 +4706,7 @@
       "carrot_pear_juice": "Carrot Pear Juice"
     },
     "MealNumber1": {
-      "name": "Produce Meal 1 to X Servings",
+      "name": "Produce meal 1 to X servings",
       "help": ""
     },
     "Meal2": {
@@ -4474,7 +4727,7 @@
       "carrot_pear_juice": "Carrot Pear Juice"
     },
     "MealNumber2": {
-      "name": "Produce Meal 2 to X Servings",
+      "name": "Produce meal 2 to X servings",
       "help": ""
     },
     "Meal3": {
@@ -4495,7 +4748,7 @@
       "carrot_pear_juice": "Carrot Pear Juice"
     },
     "MealNumber3": {
-      "name": "Produce Meal 3 to X Servings",
+      "name": "Produce meal 3 to X servings",
       "help": ""
     },
     "Meal4": {
@@ -4516,7 +4769,7 @@
       "carrot_pear_juice": "Carrot Pear Juice"
     },
     "MealNumber4": {
-      "name": "Produce Meal 4 to X Servings",
+      "name": "Produce meal 4 to X servings",
       "help": ""
     },
     "Meal5": {
@@ -4537,7 +4790,7 @@
       "carrot_pear_juice": "Carrot Pear Juice"
     },
     "MealNumber5": {
-      "name": "Produce Meal 5 to X Servings",
+      "name": "Produce meal 5 to X servings",
       "help": ""
     },
     "Meal6": {
@@ -4558,7 +4811,7 @@
       "carrot_pear_juice": "Carrot Pear Juice"
     },
     "MealNumber6": {
-      "name": "Produce Meal 6 to X Servings",
+      "name": "Produce meal 6 to X servings",
       "help": ""
     },
     "Meal7": {
@@ -4579,7 +4832,7 @@
       "carrot_pear_juice": "Carrot Pear Juice"
     },
     "MealNumber7": {
-      "name": "Produce Meal 7 to X Servings",
+      "name": "Produce meal 7 to X servings",
       "help": ""
     },
     "Meal8": {
@@ -4600,17 +4853,17 @@
       "carrot_pear_juice": "Carrot Pear Juice"
     },
     "MealNumber8": {
-      "name": "Produce Meal 8 to X Servings",
+      "name": "Produce meal 8 to X servings",
       "help": ""
     }
   },
   "IslandTeahouseNextTask": {
     "_info": {
-      "name": "Backup Tasks",
+      "name": "Backup tasks",
       "help": ""
     },
     "AwayCook": {
-      "name": "Permanent Meal",
+      "name": "Permanent meal",
       "help": "Produce permanent meals after all above are completed.",
       "None": "None",
       "apple_juice": "Apple Juice",
@@ -4633,13 +4886,13 @@
       "help": "Meals are produced sequentially from 1 to 8. The production target is the Meal X quantity option. The next item is only executed after the previous one is fully satisfied. Later items will not affect the completion of earlier items during runtime."
     },
     "PostNumber": {
-      "name": "Assign X Grill Chef Positions",
+      "name": "Assign X grill chef positions",
       "help": "",
       "1": "1",
       "2": "2"
     },
     "ChefFilter": {
-      "name": "Chef Filter",
+      "name": "Chef filter",
       "help": "Connect with >, e.g. ChaoHo > NewJersey > Amagi_chan\nSaratoga > Akashi > Tashkent > YingSwei\nLeMalin > Unicorn > Shimakaze > Cheshire\nChenHai > WilliamDPorter\nHelena > Friedrich > Atago\nYixian > August > Eugen > Hood > Javelin > Laffey > Explorer > Navigator > OceanCrosser > FeiYun > Takao > Anchorage > Belfast > ChangFeng > Mogador > RoyalFortune > DaVinci > Taihou\nOnly recognizes the first two rows in default order. If the specified character is unavailable, falls back to WorkerJuu."
     },
     "Meal1": {
@@ -4656,7 +4909,7 @@
       "double_energy": "Double Energy Combo"
     },
     "MealNumber1": {
-      "name": "Produce Meal 1 to X Servings",
+      "name": "Produce meal 1 to X servings",
       "help": ""
     },
     "Meal2": {
@@ -4673,7 +4926,7 @@
       "double_energy": "Double Energy Combo"
     },
     "MealNumber2": {
-      "name": "Produce Meal 2 to X Servings",
+      "name": "Produce meal 2 to X servings",
       "help": ""
     },
     "Meal3": {
@@ -4690,7 +4943,7 @@
       "double_energy": "Double Energy Combo"
     },
     "MealNumber3": {
-      "name": "Produce Meal 3 to X Servings",
+      "name": "Produce meal 3 to X servings",
       "help": ""
     },
     "Meal4": {
@@ -4707,7 +4960,7 @@
       "double_energy": "Double Energy Combo"
     },
     "MealNumber4": {
-      "name": "Produce Meal 4 to X Servings",
+      "name": "Produce meal 4 to X servings",
       "help": ""
     },
     "Meal5": {
@@ -4724,7 +4977,7 @@
       "double_energy": "Double Energy Combo"
     },
     "MealNumber5": {
-      "name": "Produce Meal 5 to X Servings",
+      "name": "Produce meal 5 to X servings",
       "help": ""
     },
     "Meal6": {
@@ -4741,7 +4994,7 @@
       "double_energy": "Double Energy Combo"
     },
     "MealNumber6": {
-      "name": "Produce Meal 6 to X Servings",
+      "name": "Produce meal 6 to X servings",
       "help": ""
     },
     "Meal7": {
@@ -4758,7 +5011,7 @@
       "double_energy": "Double Energy Combo"
     },
     "MealNumber7": {
-      "name": "Produce Meal 7 to X Servings",
+      "name": "Produce meal 7 to X servings",
       "help": ""
     },
     "Meal8": {
@@ -4775,17 +5028,17 @@
       "double_energy": "Double Energy Combo"
     },
     "MealNumber8": {
-      "name": "Produce Meal 8 to X Servings",
+      "name": "Produce meal 8 to X servings",
       "help": ""
     }
   },
   "IslandGrillNextTask": {
     "_info": {
-      "name": "Backup Tasks",
+      "name": "Backup tasks",
       "help": ""
     },
     "AwayCook": {
-      "name": "Permanent Meal",
+      "name": "Permanent meal",
       "help": "Produce permanent meals after all above are completed.",
       "None": "None",
       "roasted_skewer": "Grilled Skewers",
@@ -4804,13 +5057,13 @@
       "help": "Meals are produced sequentially from 1 to 8. The production target is the Meal X quantity option. The next item is only executed after the previous one is fully satisfied. Later items will not affect the completion of earlier items during runtime."
     },
     "PostNumber": {
-      "name": "Assign X Cook Positions",
+      "name": "Assign X cook positions",
       "help": "",
       "1": "1",
       "2": "2"
     },
     "ChefFilter": {
-      "name": "Chef Filter",
+      "name": "Chef filter",
       "help": "Connect with >, e.g. ChaoHo > NewJersey > Amagi_chan\nSaratoga > Akashi > Tashkent > YingSwei\nLeMalin > Unicorn > Shimakaze > Cheshire\nChenHai > WilliamDPorter\nHelena > Friedrich > Atago\nYixian > August > Eugen > Hood > Javelin > Laffey > Explorer > Navigator > OceanCrosser > FeiYun > Takao > Anchorage > Belfast > ChangFeng > Mogador > RoyalFortune > DaVinci > Taihou\nOnly recognizes the first two rows in default order. If the specified character is unavailable, falls back to WorkerJuu."
     },
     "Meal1": {
@@ -4829,7 +5082,7 @@
       "seafood_rice": "Seafood Rice"
     },
     "MealNumber1": {
-      "name": "Produce Meal 1 to X Servings",
+      "name": "Produce meal 1 to X servings",
       "help": ""
     },
     "Meal2": {
@@ -4848,7 +5101,7 @@
       "seafood_rice": "Seafood Rice"
     },
     "MealNumber2": {
-      "name": "Produce Meal 2 to X Servings",
+      "name": "Produce meal 2 to X servings",
       "help": ""
     },
     "Meal3": {
@@ -4867,7 +5120,7 @@
       "seafood_rice": "Seafood Rice"
     },
     "MealNumber3": {
-      "name": "Produce Meal 3 to X Servings",
+      "name": "Produce meal 3 to X servings",
       "help": ""
     },
     "Meal4": {
@@ -4886,7 +5139,7 @@
       "seafood_rice": "Seafood Rice"
     },
     "MealNumber4": {
-      "name": "Produce Meal 4 to X Servings",
+      "name": "Produce meal 4 to X servings",
       "help": ""
     },
     "Meal5": {
@@ -4905,7 +5158,7 @@
       "seafood_rice": "Seafood Rice"
     },
     "MealNumber5": {
-      "name": "Produce Meal 5 to X Servings",
+      "name": "Produce meal 5 to X servings",
       "help": ""
     },
     "Meal6": {
@@ -4924,7 +5177,7 @@
       "seafood_rice": "Seafood Rice"
     },
     "MealNumber6": {
-      "name": "Produce Meal 6 to X Servings",
+      "name": "Produce meal 6 to X servings",
       "help": ""
     },
     "Meal7": {
@@ -4943,7 +5196,7 @@
       "seafood_rice": "Seafood Rice"
     },
     "MealNumber7": {
-      "name": "Produce Meal 7 to X Servings",
+      "name": "Produce meal 7 to X servings",
       "help": ""
     },
     "Meal8": {
@@ -4962,17 +5215,17 @@
       "seafood_rice": "Seafood Rice"
     },
     "MealNumber8": {
-      "name": "Produce Meal 8 to X Servings",
+      "name": "Produce meal 8 to X servings",
       "help": ""
     }
   },
   "IslandJuuEateryNextTask": {
     "_info": {
-      "name": "Backup Tasks",
+      "name": "Backup tasks",
       "help": ""
     },
     "AwayCook": {
-      "name": "Permanent Meal",
+      "name": "Permanent meal",
       "help": "Produce permanent meals after all above are completed.",
       "None": "None",
       "apple_pie": "Apple Pie",
@@ -4993,13 +5246,13 @@
       "help": "Meals are produced sequentially from 1 to 8. The production target is the Meal X quantity option. The next item is only executed after the previous one is fully satisfied. Later items will not affect the completion of earlier items during runtime."
     },
     "PostNumber": {
-      "name": "Assign X Barista Positions",
+      "name": "Assign X barista positions",
       "help": "",
       "1": "1",
       "2": "2"
     },
     "ChefFilter": {
-      "name": "Chef Filter",
+      "name": "Chef filter",
       "help": "Connect with >, e.g. ChaoHo > NewJersey > Amagi_chan\nSaratoga > Akashi > Tashkent > YingSwei\nLeMalin > Unicorn > Shimakaze > Cheshire\nChenHai > WilliamDPorter\nHelena > Friedrich > Atago\nYixian > August > Eugen > Hood > Javelin > Laffey > Explorer > Navigator > OceanCrosser > FeiYun > Takao > Anchorage > Belfast > ChangFeng > Mogador > RoyalFortune > DaVinci > Taihou\nOnly recognizes the first two rows in default order. If the specified character is unavailable, falls back to WorkerJuu."
     },
     "Friedrich": {
@@ -5021,7 +5274,7 @@
       "fruity_fruitier": "Fruity Fruitier"
     },
     "MealNumber1": {
-      "name": "Produce Meal 1 to X Servings",
+      "name": "Produce meal 1 to X servings",
       "help": ""
     },
     "Meal2": {
@@ -5039,7 +5292,7 @@
       "fruity_fruitier": "Fruity Fruitier"
     },
     "MealNumber2": {
-      "name": "Produce Meal 2 to X Servings",
+      "name": "Produce meal 2 to X servings",
       "help": ""
     },
     "Meal3": {
@@ -5057,7 +5310,7 @@
       "fruity_fruitier": "Fruity Fruitier"
     },
     "MealNumber3": {
-      "name": "Produce Meal 3 to X Servings",
+      "name": "Produce meal 3 to X servings",
       "help": ""
     },
     "Meal4": {
@@ -5075,7 +5328,7 @@
       "fruity_fruitier": "Fruity Fruitier"
     },
     "MealNumber4": {
-      "name": "Produce Meal 4 to X Servings",
+      "name": "Produce meal 4 to X servings",
       "help": ""
     },
     "Meal5": {
@@ -5093,7 +5346,7 @@
       "fruity_fruitier": "Fruity Fruitier"
     },
     "MealNumber5": {
-      "name": "Produce Meal 5 to X Servings",
+      "name": "Produce meal 5 to X servings",
       "help": ""
     },
     "Meal6": {
@@ -5111,7 +5364,7 @@
       "fruity_fruitier": "Fruity Fruitier"
     },
     "MealNumber6": {
-      "name": "Produce Meal 6 to X Servings",
+      "name": "Produce meal 6 to X servings",
       "help": ""
     },
     "Meal7": {
@@ -5129,7 +5382,7 @@
       "fruity_fruitier": "Fruity Fruitier"
     },
     "MealNumber7": {
-      "name": "Produce Meal 7 to X Servings",
+      "name": "Produce meal 7 to X servings",
       "help": ""
     },
     "Meal8": {
@@ -5147,17 +5400,17 @@
       "fruity_fruitier": "Fruity Fruitier"
     },
     "MealNumber8": {
-      "name": "Produce Meal 8 to X Servings",
+      "name": "Produce meal 8 to X servings",
       "help": ""
     }
   },
   "IslandJuuCoffeeNextTask": {
     "_info": {
-      "name": "Backup Tasks",
+      "name": "Backup tasks",
       "help": ""
     },
     "AwayCook": {
-      "name": "Permanent Meal",
+      "name": "Permanent meal",
       "help": "Produce permanent meals after all above are completed.",
       "None": "None",
       "iced_coffee": "Iced Coffee",
@@ -5177,7 +5430,7 @@
       "help": "Only crafts filing cabinets."
     },
     "Positions": {
-      "name": "Position Count",
+      "name": "Position count",
       "help": "",
       "0": "0",
       "1": "1",
@@ -5190,7 +5443,7 @@
       "help": "Only crafts filter cartridges."
     },
     "Positions": {
-      "name": "Position Count",
+      "name": "Position count",
       "help": "",
       "0": "0",
       "1": "1",
@@ -5203,7 +5456,7 @@
       "help": "Starts making cutlery when nails exceed 20. Manual operation needed if not unlocked."
     },
     "Positions": {
-      "name": "Position Count",
+      "name": "Position count",
       "help": "",
       "0": "0",
       "1": "1",
@@ -5216,7 +5469,7 @@
       "help": "Starts making footwear when leather exceeds 10. Manual operation needed if not unlocked."
     },
     "Positions": {
-      "name": "Position Count",
+      "name": "Position count",
       "help": "",
       "0": "0",
       "1": "1",
@@ -5229,7 +5482,7 @@
       "help": ""
     },
     "LastSteal": {
-      "name": "Last Run Time",
+      "name": "Last run time",
       "help": ""
     },
     "VisitOtherIsland": {
@@ -5243,15 +5496,15 @@
       "help": "Enter the daily order interface from the island phone page, automatically detect order types (Urgent/Challenge/Easy, Normal orders are not currently supported and likely won't be), deliver or reject based on item conditions.\n\nDaily Orders is still in testing. If you encounter issues with daily orders or urgent commissions being unable to deliver, please report with screenshots (ensure screenshots are 1280x720 in-game screenshots)."
     },
     "RejectCount": {
-      "name": "Current Reject Count",
+      "name": "Current reject count",
       "help": "Current cumulative order reject count. Auto-resets to 0 daily at 0:00. Can be manually modified."
     },
     "RejectFilter": {
-      "name": "Reject Item Filter",
+      "name": "Reject item filter",
       "help": "Set items to reject. Supports Cheese and Tofu, separated by >. E.g. \"Cheese > Tofu\" means reject when Cheese or Tofu is detected."
     },
     "UrgentDetectRefreshTime": {
-      "name": "Urgent Commission Detect Refresh Time",
+      "name": "Urgent commission detect refresh time",
       "help": "Cooldown time for urgent commission detection. Skips urgent commission detection before this time. Format: YYYY-MM-DD HH:mm:ss"
     }
   },
@@ -5261,7 +5514,7 @@
       "help": "Only supports minitouch. Controls island daily and weekly interactions, including Morningdew Farm petting, JUU Express, Business Delivery, and weekly photo tasks in Development Plan."
     },
     "WeeklyPhoto": {
-      "name": "Weekly Photo Task",
+      "name": "Weekly photo task",
       "help": "Start the weekly photo task from Development Plan, loop through three camera and idle selections, until the task icon disappears.",
       "True": "Enabled",
       "False": "Disabled"
@@ -5273,11 +5526,11 @@
       "help": "Only supports minitouch. Every Tuesday at 01:00, automatically handle pearls: first purchase this week's pearls at the highest purchase price, then sell existing pearls at the lowest selling price. Other incomplete processes will be delayed to 01:00 the next day for retry. Make sure you have enough coins to purchase 200x220 units, which is the minimum requirement to buy out all pearls for the week, otherwise errors may occur."
     },
     "BuyPrice": {
-      "name": "Max Purchase Price",
+      "name": "Max purchase price",
       "help": "Maximum allowable equivalent price during pearl purchase phase, range 200~1000."
     },
     "SellPrice": {
-      "name": "Min Selling Price",
+      "name": "Min selling price",
       "help": "Minimum required price during pearl selling phase, range 200~1000."
     },
     "BuyNextRun": {
@@ -5285,11 +5538,11 @@
       "help": ""
     },
     "DailyPriceRefresh": {
-      "name": "Daily 03:00 Price Refresh",
+      "name": "Daily 03:00 price refresh",
       "help": "When enabled, enters the pearl shop at 03:00 daily to refresh price display without performing purchase or sale operations. Enabling this changes the overall task scheduling logic."
     },
     "NextPearlTradeTime": {
-      "name": "Next Pearl Trade Time",
+      "name": "Next pearl trade time",
       "help": "Records the next scheduled pearl trade time. Only price refresh is performed before this time (if enabled)."
     }
   },
@@ -5299,7 +5552,7 @@
       "help": "Automatically manage island cargo commission collection, replacement, and loading processes."
     },
     "Blacklist": {
-      "name": "Cargo Blacklist",
+      "name": "Cargo blacklist",
       "help": "Replace commission when blacklisted cargo is detected. Currently only supports Milk."
     }
   },
@@ -5309,13 +5562,13 @@
       "help": "Manage island shop business operations"
     },
     "BatchEnabled": {
-      "name": "Enable Batch",
+      "name": "Enable batch",
       "help": "Split 5 shops into 2 batches to avoid staff conflicts",
       "True": "Enabled",
       "False": "Disabled"
     },
     "Batch1Shops": {
-      "name": "Batch 1 Shops",
+      "name": "Batch 1 shops",
       "help": "Select shops for the first batch",
       "1": "Fish Restaurant",
       "2": "Teahouse",
@@ -5324,7 +5577,7 @@
       "5": "Juu Coffee"
     },
     "Batch2Shops": {
-      "name": "Batch 2 Shops",
+      "name": "Batch 2 shops",
       "help": "Select shops for the second batch",
       "1": "Fish Restaurant",
       "2": "Teahouse",
@@ -5333,13 +5586,13 @@
       "5": "Juu Coffee"
     },
     "SeasonalReplaceEnabled": {
-      "name": "Seasonal Replace",
+      "name": "Seasonal replace",
       "help": "Auto-replace seasonal products when stock is low",
       "True": "Enabled",
       "False": "Disabled"
     },
     "SeasonalThreshold": {
-      "name": "Replace Seasonal Items When Below X",
+      "name": "Replace seasonal items when below X",
       "help": "Replace seasonal product when stock is below this number"
     }
   },
@@ -5494,7 +5747,7 @@
       "persimmon_cake": "Persimmon Cake"
     },
     "SeasonalFallback": {
-      "name": "Seasonal Fallback",
+      "name": "Seasonal fallback",
       "help": "Fallback dish when seasonal dish stock is low",
       "None": "None",
       "double_bamboo_shoots": "Cold Bamboo Shoots",
@@ -5507,7 +5760,7 @@
       "persimmon_cake": "Persimmon Cake"
     },
     "BoostReplaceFilter": {
-      "name": "Boost Replace Filter",
+      "name": "Boost replace filter",
       "help": "When multiple boosted products are detected, the first one in filter order is prioritized for replacement; the replacement slot is the last non-empty slot searched from Product5→1"
     }
   },
@@ -5672,7 +5925,7 @@
       "carrot_pear_juice": "Carrot Pear Juice"
     },
     "SeasonalFallback": {
-      "name": "Fallback Drink",
+      "name": "Fallback drink",
       "help": "Fallback drink when seasonal drink stock is low",
       "None": "None",
       "spring_flower_tea": "Spring Flower Tea",
@@ -5687,7 +5940,7 @@
       "carrot_pear_juice": "Carrot Pear Juice"
     },
     "BoostReplaceFilter": {
-      "name": "Boost Replace Filter",
+      "name": "Boost replace filter",
       "help": "When multiple boosted products are detected, the first one in filter order is prioritized for replacement; the replacement slot is the last non-empty slot searched from Product5→1"
     }
   },
@@ -5827,13 +6080,13 @@
       "seafood_rice": "Seafood Rice"
     },
     "BoostReplaceFilter": {
-      "name": "Boost Replace Filter",
+      "name": "Boost replace filter",
       "help": "When multiple boosted products are detected, the first one in filter order is prioritized for replacement; the replacement slot is the last non-empty slot searched from Product5→1"
     }
   },
   "IslandBusinessShop4": {
     "_info": {
-      "name": "Squid BBQ",
+      "name": "Squid Grill",
       "help": "Meals are produced sequentially from 1 to 8. The production target is the Meal X quantity option. The next item is only executed after the previous one is fully satisfied. Later items will not affect the completion of earlier items during runtime."
     },
     "Char1": {
@@ -5972,7 +6225,7 @@
       "double_energy": "Double Energy Combo"
     },
     "BoostReplaceFilter": {
-      "name": "Boost Replace Filter",
+      "name": "Boost replace filter",
       "help": "When multiple boosted products are detected, the first one in filter order is prioritized for replacement; the replacement slot is the last non-empty slot searched from Product5→1"
     }
   },
@@ -6117,7 +6370,7 @@
       "fruity_fruitier": "Fruity Fruitier"
     },
     "BoostReplaceFilter": {
-      "name": "Boost Replace Filter",
+      "name": "Boost replace filter",
       "help": "When multiple boosted products are detected, the first one in filter order is prioritized for replacement; the replacement slot is the last non-empty slot searched from Product5→1"
     }
   },
@@ -6141,7 +6394,7 @@
       "help": "It is useful when attacking unadapted levels, which can reduce a lot of manual operations.\nALAS will help you click to prepare for battle, click to settle the battle, skip the plot, automatically retire, and close various pop-up windows. You just need to select the enemy manually."
     },
     "EnterMap": {
-      "name": "Automatically click to enter picture preparation",
+      "name": "Automatically click to enter battle preparation",
       "help": "Before using it, you need to prepare the attack team"
     }
   },
@@ -6165,7 +6418,7 @@
       "help": "Complete the event plot. It is only applicable to activities on and after the launch time of 20241219. Please wait for about 3 minutes."
     },
     "SkipBattle": {
-      "name": "Kill Game to Skip Battle",
+      "name": "Kill the game to skip battle",
       "help": "",
       "True": "Enabled",
       "False": "Disabled"
@@ -6189,15 +6442,15 @@
       "help": ""
     },
     "BlueBoxLimit": {
-      "name": "Keep X equipment boxes of each blue color",
+      "name": "Keep X number of blue equipment boxes of each type",
       "help": ""
     },
     "UseWhiteBox": {
-      "name": "Disassemble the white equipment box",
+      "name": "Disassemble white equipment box",
       "help": ""
     },
     "WhiteBoxLimit": {
-      "name": "Keep X boxes of each type of white equipment",
+      "name": "Keep X number of white equipment boxes of each type",
       "help": ""
     }
   },
@@ -6207,38 +6460,38 @@
       "help": "Current scaffold: dock, first ship, quick change, equipping filter, placeholder strategy, next ship."
     },
     "ShipLimit": {
-      "name": "Process First X Ships",
+      "name": "Process the first X ships",
       "help": "0 means continue until no next ship is detected. Use 1 or another small value while debugging."
     },
     "EnableSlot1": {
       "name": "Replace equipment slot 1",
       "help": "When enabled, AutoEquip will try to fill equipment slot 1 only if it is empty.",
-      "True": "True",
-      "False": "False"
+      "True": "Enabled",
+      "False": "Disabled"
     },
     "EnableSlot2": {
       "name": "Replace equipment slot 2",
       "help": "When enabled, AutoEquip will try to fill equipment slot 2 only if it is empty.",
-      "True": "True",
-      "False": "False"
+      "True": "Enabled",
+      "False": "Disabled"
     },
     "EnableSlot3": {
       "name": "Replace equipment slot 3",
       "help": "When enabled, AutoEquip will try to fill equipment slot 3 only if it is empty.",
-      "True": "True",
-      "False": "False"
+      "True": "Enabled",
+      "False": "Disabled"
     },
     "EnableSlot4": {
       "name": "Replace equipment slot 4",
       "help": "When enabled, AutoEquip will try to fill equipment slot 4 only if it is empty.",
-      "True": "True",
-      "False": "False"
+      "True": "Enabled",
+      "False": "Disabled"
     },
     "EnableSlot5": {
       "name": "Replace equipment slot 5",
       "help": "When enabled, AutoEquip will try to fill equipment slot 5 only if it is empty.",
-      "True": "True",
-      "False": "False"
+      "True": "Enabled",
+      "False": "Disabled"
     }
   },
   "Benchmark": {
@@ -6247,16 +6500,16 @@
       "help": "Test which screenshot scheme and control scheme is faster, speed varies based on emulator and computer configuration\nAfter the test is completed, select the fastest screenshot and control scheme in \"ALAS\" - \"Emulator Settings\""
     },
     "DeviceType": {
-      "name": "Select Device Type",
+      "name": "Select device type",
       "help": "",
-      "emulator": "emulator",
-      "plone_cloud_with_adb": "Cloud mobile phone has public network ADB",
+      "emulator": "Emulator",
+      "plone_cloud_with_adb": "Cloud mobile phone with public network ADB",
       "phone_cloud_without_adb": "Cloud mobile phone without public network ADB",
       "android_phone": "Android real phone",
       "android_phone_vmos": "Android real machine VMOS virtual machine"
     },
     "TestScene": {
-      "name": "Test Scene",
+      "name": "Test scene",
       "help": "",
       "screenshot_click": "Screenshot + click speed test",
       "screenshot": "Screenshot speed test",
@@ -6269,7 +6522,7 @@
       "help": "Only for CN Server. This tool will:\n- Download uncensor files\n- Push files to the emulator\n- Restart the game client"
     },
     "Repository": {
-      "name": "Uncensor Repository",
+      "name": "Uncensor repository",
       "help": "Generally no modification is required.\nRepository https://github.com/LmeSzinc/AzurLaneUncensored\nDomestic mirror (default) https://e.coding.net/llop18870/alas/AzurLaneUncensored.git"
     }
   },
@@ -6279,7 +6532,7 @@
       "help": "Semi-finished product, only implements force-closing the game and auto-login."
     },
     "AutoRestart": {
-      "name": "Auto Login",
+      "name": "Auto login",
       "help": "Automatically log into the game after it is force-closed"
     }
   },
@@ -6299,6 +6552,10 @@
     "RestartIntervalHours": {
       "name": "Restart interval (hours)",
       "help": "Automatically restart the emulator every few hours."
+    },
+    "DeepRestartAfterFailures": {
+      "name": "EmulatorManagement.DeepRestartAfterFailures.name",
+      "help": "EmulatorManagement.DeepRestartAfterFailures.help"
     }
   },
   "EmulatorManager": {
@@ -6307,112 +6564,153 @@
       "help": "Provides manual emulator restart entry"
     },
     "EnableRemoteSSH": {
-      "name": "Enable Remote SSH Management",
+      "name": "Enable remote SSH management",
       "help": "Execute specific commands (e.g., restart Docker containers) on a remote server via SSH before restarting the emulator.",
       "True": "Enabled",
       "False": "Disabled"
     },
     "RemoteSSHHost": {
-      "name": "Remote Server Address",
+      "name": "Remote server address",
       "help": "IP address or domain of remote server, e.g.: 192.168.1.100"
     },
     "RemoteSSHPort": {
-      "name": "Port",
+      "name": "Port number",
       "help": "SSH service port, default 22"
     },
     "RemoteSSHUser": {
-      "name": "SSH Username",
+      "name": "SSH username",
       "help": "Username for SSH login, e.g.: root"
     },
     "RemoteSSHPublicKey": {
-      "name": "Private Key",
+      "name": "SSH private key",
       "help": "Private key content for SSH login (if needed)"
     },
     "RemoteStartCommand": {
-      "name": "Remote Start Command",
+      "name": "Remote start command",
       "help": "SSH command to start the emulator/service (e.g., docker start)."
     },
     "RemoteStopCommand": {
-      "name": "Remote Stop Command",
+      "name": "Remote stop command",
       "help": "SSH command to stop the emulator/service (e.g., docker stop)."
+    }
+  },
+  "MeowfficerScore": {
+    "_info": {
+      "name": "Meowfficer Talent Score",
+      "help": "Read talents from a screenshot and rate them with public guide rules, including tier and re-roll advice"
+    },
+    "Source": {
+      "name": "Score Source",
+      "help": "Local screenshots: scan a folder in batch; Auto follow: keep capturing and score whenever a new talent panel shows up - just flip cats in game; Scan all: walks the cattery list and reads every cat's talents (drives the game automatically, CN client only)",
+      "screenshot": "Local screenshots",
+      "device": "Auto follow current screen",
+      "scan": "Scan all meowfficers"
+    },
+    "Folder": {
+      "name": "Screenshot Folder",
+      "help": "Folder holding talent panel screenshots; defaults to the talent drop-record folder ./screenshots/meowfficer_talent"
+    },
+    "MaxImages": {
+      "name": "Max Images",
+      "help": "Score at most N most recently modified screenshots"
+    },
+    "ReportPath": {
+      "name": "Report Path",
+      "help": "Where to write the Markdown report; leave empty to skip"
+    },
+    "DeviceShots": {
+      "name": "Auto follow target cats",
+      "help": "How many distinct cats to score before the auto-follow loop stops"
+    },
+    "DeviceInterval": {
+      "name": "Follow poll interval",
+      "help": "Seconds between captures in auto follow; unchanged screens skip recognition"
+    },
+    "ScanLimit": {
+      "name": "Max cats to scan",
+      "help": "How many cats to scan at most in scan-all mode; 0 means no limit"
+    },
+    "ScanPasses": {
+      "name": "Max list pages",
+      "help": "How many pages of the cattery list to walk in scan-all mode (12 cats per page); stops early at the end of the list"
     }
   },
   "OpsiSimulatorParameters": {
     "_info": {
-      "name": "Parameter Settings",
+      "name": "Parameter settings",
       "help": ""
     },
     "Samples": {
-      "name": "Sample Count",
+      "name": "Sample count",
       "help": "Theoretically larger values give more accurate simulation but consume more performance."
     },
     "Draw": {
-      "name": "Drawing Settings",
+      "name": "Drawing settings",
       "help": "Single sample trajectory: plots the trajectory of one sample.\nMulti-sample average trend: plots overall trend and probability.",
-      "do_not": "No Drawing",
-      "single_sample": "Single Sample Trajectory",
-      "multi_sample": "Multi-Sample Average Trend"
+      "do_not": "No drawing",
+      "single_sample": "Single sample trajectory",
+      "multi_sample": "Multi-sample average trend"
     },
     "TotalTime": {
-      "name": "Total Simulation Time",
+      "name": "Total simulation time",
       "help": "How long to simulate (unit: seconds).\nIf 0, uses the remaining time of the current month from now."
     },
     "TimeUseRatio": {
-      "name": "Time Utilization Ratio",
+      "name": "Time utilization ratio",
       "help": "What proportion of total simulation time is spent on corrosion cycles."
     },
     "InitialAp": {
-      "name": "Initial Action Points",
+      "name": "Initial action points",
       "help": "Set to 0 for auto-detect. Not recommended to modify."
     },
     "InitialCoin": {
-      "name": "Initial Coins",
+      "name": "Initial coins",
       "help": "Set to 0 for auto-detect. Not recommended to modify."
     },
     "MeowHazardLevel": {
-      "name": "Meowfficer Hazard Level",
+      "name": "Meowfficer Corrosion level",
       "help": "Select the execution level for Meowfficer tasks (Level 3 or Level 5).",
-      "level3": "level3",
-      "level5": "level5"
+      "level3": "3",
+      "level5": "5"
     },
     "CrossWeek": {
-      "name": "Calculate Cross-Week",
+      "name": "Calculate cross-week",
       "help": "Whether to calculate weekly action point purchase and fortress events."
     },
     "BuyAp": {
-      "name": "Weekly AP Purchase",
+      "name": "Weekly AP purchase",
       "help": "Whether to purchase 1000 action points weekly. Stronghold will still be fought even without purchasing."
     },
     "Cl1Coin": {
-      "name": "Corrosion 1 Coin Expectation",
+      "name": "Corrosion 1 coin expectation",
       "help": "Average coins per corrosion 1 cycle. Recommended: 145."
     },
     "Meow3Coin": {
-      "name": "Meow 3 Coin Expectation",
+      "name": "Meow 3 coin expectation",
       "help": "Average coins per corrosion 3 Meowfficer task. Recommended: 600."
     },
     "Meow5Coin": {
-      "name": "Meow 5 Coin Expectation",
+      "name": "Meow 5 coin expectation",
       "help": "Average coins per corrosion 5 Meowfficer task. Recommended: 1700."
     },
     "AkashiProbability": {
-      "name": "Akashi Encounter Probability",
+      "name": "Akashi encounter probability",
       "help": "Probability of encountering Akashi shop during corrosion cycles. Recommended: 0.05."
     },
     "Cl1Time": {
-      "name": "Corrosion 1 Cycle Time",
+      "name": "Corrosion 1 cycle time",
       "help": "Unit: seconds. Set to 0 to auto-detect from historical statistics."
     },
     "Meow3Time": {
-      "name": "Meow 3 Cycle Time",
+      "name": "Meow 3 cycle time",
       "help": "Unit: seconds. Average time for corrosion 3 Meowfficer task. Set to 0 for historical statistics."
     },
     "Meow5Time": {
-      "name": "Meow 5 Cycle Time",
+      "name": "Meow 5 cycle time",
       "help": "Unit: seconds. Average time for corrosion 5 Meowfficer task. Set to 0 for historical statistics."
     },
     "Deterministic": {
-      "name": "Disable Randomness",
+      "name": "Disable randomness",
       "help": "For debugging. Generally should be off."
     }
   },
@@ -6520,10 +6818,22 @@
       "GuildCoin": "Guild Coins",
       "Log": "Log",
       "Running": "Running",
-      "Pending": "in queue",
+      "Pending": "In queue",
       "Waiting": "Waiting",
       "NoTask": "No tasks",
-      "Stat": "Statistics"
+      "Stat": "Statistics",
+      "BackgroundCurrentDefault": "**Current**: Web (default)",
+      "BackgroundCurrentLocal": "**Current**: Local",
+      "BackgroundCurrentMixed": "**Current**: Mixed",
+      "BackgroundCurrentUrl": "**Current**: Web",
+      "BackgroundCustomUrls": "**Custom URLs**",
+      "BackgroundDirectLink": "Direct image link:",
+      "BackgroundExtractToLocal": "Extract to local",
+      "BackgroundLocalCount": "Local: {n}",
+      "BackgroundOpenFolder": "Open folder",
+      "BackgroundOpenInNewWindow": "Open this image in a new window",
+      "BackgroundTitle": "### Background Image",
+      "BackgroundUrlCount": "Resolved links: {n}"
     },
     "Dashboard": {
       "TimeError": "time error",
@@ -6747,7 +7057,10 @@
       "WebuiSSLKey": "SSL Key File",
       "WebuiSSLKeyHelp": "SSL key path for WebUI HTTPS. Must be set together with the certificate.",
       "WebuiSSLCert": "SSL Certificate File",
-      "WebuiSSLCertHelp": "SSL certificate path for WebUI HTTPS. Must be set together with the key."
+      "WebuiSSLCertHelp": "SSL certificate path for WebUI HTTPS. Must be set together with the key.",
+      "DisableBranchWatermark": "Disable the unverified-build watermark",
+      "DisableBranchWatermarkHelp": "[The watermark is shown unless you tick this box]\n⚠ Do NOT enable this if you do not understand AzurPilot, or what branches such as master / dev mean.\n⚠ Do NOT enable this if you need to report a problem with screenshots or ask others for help: the watermark is the only clue telling which build you are actually running, and hiding it makes the problem impossible to locate.\nRestart AzurPilot for the change to take effect.",
+      "WatermarkHiddenNow": "Watermark hidden; refresh the page or restart AzurPilot to show it again."
     },
     "StartupRun": {
       "Title": "Auto-run on Startup",
@@ -6763,6 +7076,9 @@
       "InvalidFeedBack": "Format error. Example: {0}",
       "Clear": "Clear",
       "RunNow": "Run Now",
+      "RunNowSchedulerStopped": "Scheduler is not running. Start it with the switch above or on the overview page.",
+      "RunNowTaskDisabled": "Task is not enabled. Turn on its scheduler before running now.",
+      "SchedulerQuickBar": "Scheduler",
       "EnterPassword": "Enter password",
       "ChooseFile": "Select file"
     },
@@ -6872,7 +7188,54 @@
       "ResourceChartTitle": "All Resources Trend",
       "LoadResourceDataFailed": "Failed to load resource data: {e}",
       "NoResourceData": "No resource data yet. It will be recorded automatically when the script runs.",
-      "NoValidResourceData": "No valid resource data"
+      "NoValidResourceData": "No valid resource data",
+      "BackgroundBtn": "Background",
+      "ChartAp": "AP: ",
+      "ChartApLabel": "AP",
+      "ChartAsset": "Assets: ",
+      "ChartChange": "Change: ",
+      "ChartChangeLabel": "Change",
+      "ChartClose": "Close: ",
+      "ChartDelta": "Change: ",
+      "ChartDensity": "Point density: ",
+      "ChartDistance": "Distance: ",
+      "ChartHigh": "High: ",
+      "ChartLow": "Low: ",
+      "ChartMa10": "  MA10 (10-period avg): ",
+      "ChartMa5": "  MA5 (5-period avg): ",
+      "ChartMaxLabel": "Max",
+      "ChartMean": "Mean: ",
+      "ChartMeanLabel": "Mean",
+      "ChartMinLabel": "Min",
+      "ChartOpen": "Open: ",
+      "ChartPanelTitle": "AP Trend - {view}",
+      "ChartPurple": "Purple Coins: ",
+      "ChartResetBtn": "Reset",
+      "ChartSeriesAp": "AP",
+      "ChartSeriesAsset": "Assets",
+      "ChartSeriesDistance": "Distance",
+      "ChartSeriesPurple": "Purple Coins",
+      "ChartSeriesYellow": "Yellow Coins",
+      "ChartSource": "Source: ",
+      "ChartYellow": "Yellow Coins: ",
+      "ExtractAlreadyLocal": "The current background is already a local image; nothing to extract.",
+      "ExtractDone": "Extracted to bg/{sub}/{name}",
+      "ExtractFailed": "Extraction failed: {error}",
+      "ExtractHint": "Extraction only saves the file; it is not applied as background. Move it to bg/ to use it.",
+      "ExtractNoImage": "No background image available to extract.",
+      "ExtractNoImageData": "No image available to extract",
+      "ExtractRunning": "Extracting…",
+      "ExtractSkipped": "This image was already extracted: {name}",
+      "ExtractUnknownError": "Unknown error",
+      "MaterialAdvancedOnly": "Advanced material only",
+      "MaterialBlur": "Blur",
+      "MaterialCards": "Cards",
+      "MaterialReset": "Reset",
+      "MaterialTiles": "Tiles",
+      "MaterialTitle": "Interface Material",
+      "MaterialTransparency": "Opacity",
+      "Readme": "Put images in this folder to use them as WebUI backgrounds.\nSupported: {{exts}}\nIf there are several, one is picked at random.\n\nThe subfolder \"{{sub}}\" holds images downloaded via the Extract button in the UI.\nThey are kept separate from the images you add manually, and the UI labels the source of each image.\nThis file can be deleted; it does not affect functionality.\n",
+      "ScreenshotPreviewBtn": "Screenshot Preview"
     },
     "Tactical": {
       "SkillAutoSwitch": "Skill Auto Switch"

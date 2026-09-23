@@ -22,7 +22,7 @@ class QuickRetireSetting(Setting):
     """
 
     def is_option_active(self, option: Button) -> bool:
-        return self.main.image_color_count(option, color=(255, 255, 255), threshold=221, count=50)
+        return self.main.image_color_count(option, color=(255, 255, 255), threshold=30, count=50)
 
 
 class QuickRetireSettingHandler(UI):

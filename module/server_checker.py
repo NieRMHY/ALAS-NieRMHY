@@ -14,6 +14,7 @@ from module.config.server import VALID_SERVER_LIST as server_list
 from module.config.server import ServerInfo, get_server_info
 from module.exception import ScriptError
 from module.logger import logger
+from module.server_status import ServerStatusQueryError, query_server
 
 SERVER_API_BASE = 'https://server-checker.nanoda.work'
 AVAILABLE_SERVER_STATES = {'normal', 'full', 'reg_full'}
@@ -47,8 +48,9 @@ class ServerChecker:
         """
         通过 API 获取当前服务器状态。
 
-        无法取得状态的临时网络或服务端错误会走快速重试；响应结构错误和
-        非预期客户端错误则抛出 ``ScriptError``，由顶层临时禁用检测器。
+        公共 API 暂时不可用时，改为直连游戏网关。两种来源均无法取得状态
+        才会走既有的快速重试；响应结构错误和非预期客户端错误仍会抛出
+        ``ScriptError``，由顶层临时禁用检测器。
         """
         if self._server == 'disabled':
             self._state.append(True)
@@ -89,14 +91,19 @@ class ServerChecker:
                 )
         except (requests.exceptions.ConnectionError, requests.exceptions.Timeout) as e:
             logger.error(e)
-            logger.error('服务器检查 API 暂时不可用。')
+            if self._load_gateway_server():
+                return
+
+            logger.error('服务器检查 API 和游戏网关均暂时不可用。')
             if self._retry:
                 self._state.append(False)
             else:
                 self._state.append(self.fast_retry())
         except (JSONDecodeError, ValueError) as e:
+            if self._load_gateway_server():
+                return
             self._state.append(False)
-            raise ScriptError('服务器检查 API 返回的 JSON 无效。') from e
+            raise ScriptError('服务器检查 API 与游戏网关均返回无效数据。') from e
         except Exception as e:
             logger.error(e)
             self._state.append(False)
@@ -135,6 +142,51 @@ class ServerChecker:
             logger.info(f'[服务器检查] 服务器 "{self._server}" 暂不可用（{status}）。')
         else:
             raise ScriptError(f'服务器检查 API 返回了未知状态：{status}')
+
+    def _load_gateway_server(self) -> bool:
+        """公共 API 不可用时，直连游戏网关查询当前服务器。
+
+        返回 ``True`` 说明已取得并记录服务器状态。网关失败只作为公共 API
+        故障的后备失败处理，交由调用方进入原有的快速重试与退避流程。
+        """
+        assert self._server_info is not None
+        try:
+            server = query_server(
+                self._server_info.region,
+                self._server_info.server_id,
+            )
+        except ServerStatusQueryError as e:
+            logger.warning(f'[服务器检查] 直连游戏网关失败（{e.code}）。')
+            return False
+
+        try:
+            self._load_gateway_response(server.id, server.name, server.status)
+        except ScriptError as e:
+            logger.warning(f'[服务器检查] 游戏网关返回的数据无效：{e}')
+            return False
+        return True
+
+    def _load_gateway_response(self, server_id: int, name: str, status: str) -> None:
+        """校验游戏网关的单服数据并复用 API 的状态判定语义。"""
+        assert self._server_info is not None
+        if server_id != self._server_info.server_id:
+            raise ScriptError(
+                f'游戏网关返回了错误的 ID：期望 {self._server_info.server_id}，'
+                f'实际 {server_id}。'
+            )
+        if name != self._server:
+            raise ScriptError(
+                f'游戏网关返回了错误的服务器：期望 "{self._server}"，实际 "{name}"。'
+            )
+
+        if status in AVAILABLE_SERVER_STATES:
+            self._state.append(True)
+            logger.info(f'[服务器检查] 服务器 "{self._server}" 可用（游戏网关 {status}）。')
+        elif status in UNAVAILABLE_SERVER_STATES:
+            self._state.append(False)
+            logger.info(f'[服务器检查] 服务器 "{self._server}" 暂不可用（游戏网关 {status}）。')
+        else:
+            raise ScriptError(f'游戏网关返回了未知状态：{status}')
 
     def wait_until_available(self) -> None:
         while not self.is_available():

@@ -355,7 +355,7 @@ class OSFleet(OSCamera, Combat, Fleet, OSAsh):
         检测当前舰队是否有低士气减益效果。
         """
         return self.image_color_count(
-            FLEET_LOW_RESOLVE, color=FLEET_LOW_RESOLVE.color, threshold=221, count=250)
+            FLEET_LOW_RESOLVE, color=FLEET_LOW_RESOLVE.color, threshold=30, count=250)
 
     def get_sea_grids(self):
         """

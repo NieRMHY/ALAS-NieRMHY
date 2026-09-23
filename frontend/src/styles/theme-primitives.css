@@ -1,0 +1,185 @@
+/* 共用语义变量映射；材质由当前主题提供。 */
+html, body {font-family: var(--theme-font-sans); color: var(--theme-text); background: var(--theme-bg)}
+body {background-attachment: fixed}
+::selection {background: var(--theme-selection)}
+::-webkit-scrollbar-thumb {background: var(--theme-scrollbar-thumb)}
+
+input, select, textarea {
+  color: var(--theme-input-text);
+  background: var(--theme-input-bg);
+  border-color: var(--theme-input-border);
+  border-radius: var(--theme-radius-control);
+}
+input:focus, select:focus, textarea:focus {border-color: var(--theme-focus); box-shadow: 0 0 0 3px var(--theme-focus-ring)}
+button:focus-visible, a:focus-visible, summary:focus-visible {outline-color: var(--theme-focus)}
+
+.sidebar, .right-rail, .panel, .resource-card {
+  background: var(--theme-glass);
+  border-color: var(--theme-glass-edge);
+  box-shadow: var(--theme-shadow-panel);
+  -webkit-backdrop-filter: var(--theme-material-filter, none);
+  backdrop-filter: var(--theme-material-filter, none);
+}
+.sidebar {background: var(--theme-sidebar); border-radius: 0 var(--theme-radius-panel) var(--theme-radius-panel) 0}
+.right-rail {border-radius: 0 0 0 var(--theme-radius-panel); box-shadow: var(--theme-shadow-floating), var(--theme-shadow-panel)}
+.panel, .resource-card {border-radius: var(--theme-radius-panel)}
+.summary-metrics-panel .summary-metric-card,
+.summary-metrics-panel .summary-metrics section {
+  border-radius: var(--theme-radius-control, 12px);
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+.instance-card {border-radius: var(--theme-radius-card)}
+
+.glass-material {background: var(--theme-glass); -webkit-backdrop-filter: var(--theme-chrome-filter, none); backdrop-filter: var(--theme-chrome-filter, none)}
+.glass-material-lens > .glass {box-shadow: inset 0 1px 0 var(--theme-glass-edge) !important}
+
+.primary-nav a {color: var(--theme-nav-text)}
+.primary-nav a svg, .task-group-icon {color: var(--theme-nav-icon)}
+.primary-nav a:hover {background: var(--theme-nav-hover-bg)}
+.primary-nav a.active {background: var(--theme-nav-active-bg); color: var(--theme-nav-active-text); box-shadow: none}
+.primary-nav a.active svg {color: inherit}
+.sidebar-label, .sidebar-label button, .breadcrumb, .breadcrumb span {color: var(--theme-muted)}
+.task-submenu-item, .task-group-button {color: var(--theme-nav-text)}
+.task-group-button:hover, .task-submenu-item:hover {color: var(--theme-text); background: var(--theme-nav-hover-bg)}
+.task-group-button {position: relative}
+.task-group-button.active, .task-submenu-item.active {color: var(--theme-accent); background: var(--theme-nav-active-bg); box-shadow: none}
+.task-group-button.expanded {color: var(--theme-accent); background: var(--theme-nav-expanded-bg); border-color: transparent; box-shadow: none}
+.task-group-button.active.expanded {background: var(--theme-nav-expanded-bg); box-shadow: none}
+.task-submenu-dot {background: var(--theme-muted)}
+.task-submenu-item:hover .task-submenu-dot, .task-submenu-item.active .task-submenu-dot {background: var(--theme-accent)}
+
+.task-submenu-flyout, .instance-menu {
+  background: var(--theme-nav-popover-bg);
+  border-color: var(--theme-nav-popover-edge);
+  border-radius: var(--theme-radius-popover);
+  box-shadow: var(--theme-nav-popover-shadow);
+  -webkit-backdrop-filter: var(--theme-popover-filter, none);
+  backdrop-filter: var(--theme-popover-filter, none);
+}
+.task-submenu-flyout {
+  isolation: isolate;
+  background: var(--theme-surface);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+.task-submenu-item {border: 1px solid transparent}
+.task-submenu-item.active {border-color: transparent}
+.task-submenu-item.active .task-submenu-dot {box-shadow: none}
+.instance-menu button:hover, .instance-menu button:focus-visible, .instance-menu button[aria-checked='true'] {background: var(--theme-accent-soft); color: var(--theme-accent)}
+
+.topbar {border-color: var(--theme-glass-edge); box-shadow: var(--theme-glass-shadow)}
+.connection-label, .eyebrow, .text-button, .data-table summary {color: var(--theme-accent)}
+.connection-banner {background: var(--theme-warning-soft); color: var(--theme-warning)}
+
+.button {border-radius: var(--theme-radius-button)}
+.button.primary, [data-theme='dark'] .button.primary {background: var(--theme-primary-bg); color: var(--theme-on-accent)}
+.button.primary:hover:not(:disabled) {background: var(--theme-primary-hover)}
+.button.secondary {background: var(--theme-surface); color: var(--theme-text); border-color: var(--theme-border)}
+.button.secondary:hover {border-color: var(--theme-accent); color: var(--theme-accent)}
+.button.danger {background: var(--theme-danger); color: var(--theme-on-accent)}
+.button.danger.subtle {background: var(--theme-danger-soft); color: var(--theme-danger); border-color: color-mix(in srgb, var(--theme-danger) 18%, transparent)}
+.icon-button {color: var(--theme-muted)}
+.icon-button:hover {background: var(--theme-surface-muted); color: var(--theme-accent)}
+
+.toggle {background: var(--theme-toggle-off)}
+.toggle > span {background: var(--theme-toggle-knob); box-shadow: var(--theme-toggle-shadow)}
+.toggle.on {background: var(--theme-toggle-on)}
+
+.monitor-segmented {background: var(--theme-segment-bg); border-color: var(--theme-segment-border)}
+.monitor-segmented .segmented-indicator {background: var(--theme-segment-indicator)}
+.monitor-segmented button {color: var(--theme-muted)}
+.monitor-segmented button:hover, .monitor-segmented button[aria-selected='true'], [data-theme='dark'] .monitor-segmented button[aria-selected='true'] {color: var(--theme-text)}
+
+.page-title h1 {
+  color: var(--theme-title-color);
+  background-image: var(--theme-title-fill);
+  -webkit-text-stroke-color: var(--theme-title-stroke);
+  text-shadow: var(--theme-title-shadow);
+}
+.page-title h1::before {background: var(--theme-title-glass)}
+.page-title h1::after {-webkit-text-stroke-color: var(--theme-title-highlight-stroke)}
+
+.status.running, .task-state.running {color: var(--theme-success); background: var(--theme-success-soft)}
+.status.stopped {color: var(--theme-status-stopped-text); background: var(--theme-status-stopped-bg)}
+.status.error {color: var(--theme-danger); background: var(--theme-danger-soft)}
+.status.updating {color: var(--theme-warning); background: var(--theme-warning-soft)}
+.scheduler-status.running {color: var(--theme-text)}
+
+.resource-heading, .resource-foot, .resource-value small, .count-badge, .task-order, .task-state, .task-row time, .task-row > svg, .empty, .empty > svg, .empty strong, .input-icon {color: var(--theme-muted)}
+.resource-heading > div {background: var(--theme-resource-0-bg); color: var(--theme-resource-0-text)}
+.resource-1 .resource-heading > div {background: var(--theme-resource-1-bg); color: var(--theme-resource-1-text)}
+.resource-2 .resource-heading > div {background: var(--theme-resource-2-bg); color: var(--theme-resource-2-text)}
+.resource-3 .resource-heading > div {background: var(--theme-resource-3-bg); color: var(--theme-resource-3-text)}
+.resource-heading > div.resource-image-wrap {background: transparent}
+.instance-card:hover {border-color: color-mix(in srgb, var(--theme-accent) 35%, var(--theme-border)); box-shadow: var(--theme-shadow-hover)}
+.home-instance-icon {background: var(--theme-instance-icon-bg); color: var(--theme-on-accent); box-shadow: var(--theme-instance-icon-shadow)}
+
+.preview-screen {background: var(--theme-preview-bg); color: var(--theme-preview-text)}
+.preview-screen > span, .preview-screen > .preview-resolution, .radar {color: var(--theme-preview-muted)}
+.live-label {color: var(--theme-success); border-color: color-mix(in srgb, var(--theme-success) 22%, transparent)}
+.live-label i {background: var(--theme-success)}
+
+.log-content {color: var(--theme-text)}
+.lvl-debug {color: var(--theme-log-debug)}
+.lvl-info {color: var(--theme-log-info)}
+.lvl-warning {color: var(--theme-log-warning)}
+.lvl-error {color: var(--theme-log-error)}
+.lvl-critical {color: var(--theme-log-critical)}
+.log-ts, .hl-time {color: var(--theme-log-time)}
+.hl-bool-true {color: var(--theme-log-true)}
+.hl-bool-false {color: var(--theme-log-false)}
+.hl-none {color: var(--theme-log-null)}
+.hl-path {color: var(--theme-log-path)}
+.hl-attr {color: var(--theme-log-attr)}
+.log-search-match {background: var(--theme-log-search)}
+
+.error-box {color: var(--theme-danger); background: var(--theme-error-bg); border-color: var(--theme-error-border)}
+.toast {background: var(--theme-toast-bg); color: var(--theme-toast-text); box-shadow: var(--theme-shadow-popover)}
+.toast.error {background: var(--theme-toast-error-bg); color: var(--theme-on-accent)}
+.modal {background: var(--theme-surface); color: var(--theme-text); border-color: var(--theme-glass-edge); border-radius: var(--theme-radius-panel); box-shadow: var(--theme-shadow-modal)}
+/* 弹窗只是小窗，遮罩要能让背后的页面仍然看得见：一律半透明且不模糊。 */
+.modal::backdrop {background: var(--theme-overlay, color-mix(in srgb, var(--bg) 30%, transparent)); backdrop-filter: none}
+
+.login-page {background: var(--theme-bg)}
+.login-art {background: var(--theme-login-art-bg); color: var(--theme-login-art-text)}
+.login-art > span {color: var(--theme-login-art-text)}
+.login-card {background: var(--theme-surface)}
+
+.yaml-editor, .yaml-editor .cm-editor, .yaml-editor .cm-gutters, .field-row-multiline textarea, .storage-field pre {background: var(--theme-input-bg)}
+.yaml-editor {border-color: var(--theme-border)}
+.yaml-editor:focus-within {border-color: var(--theme-accent)}
+
+/* Secondary surfaces and queue hierarchy inherit theme colors instead of literals. */
+.scheduler-widget, .schedule-summary, .nav-search, .input-icon, .count-badge {background: var(--theme-surface-muted); border-color: var(--theme-border)}
+.group-nav {
+  background: var(--theme-glass);
+  border: 1px solid var(--theme-glass-edge);
+  box-shadow: var(--theme-shadow-panel);
+  -webkit-backdrop-filter: var(--theme-material-filter, none);
+  backdrop-filter: var(--theme-material-filter, none);
+}
+.group-nav a {
+  color: var(--theme-nav-text);
+  font-weight: 500;
+  transition: color .16s ease, background-color .16s ease, box-shadow .16s ease;
+}
+.group-nav a:hover,
+.group-nav a:focus-visible {
+  color: var(--theme-text);
+  background: var(--theme-nav-hover-bg);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, #fff 28%, transparent);
+}
+.group-nav a:active {
+  color: var(--theme-nav-active-text);
+  background: var(--theme-nav-active-bg);
+}
+.rail-queue-group.running {background: color-mix(in srgb, var(--theme-surface) 94%, transparent); border-color: color-mix(in srgb, var(--theme-glass-edge) 90%, var(--theme-border))}
+.rail-queue-group.pending {background: color-mix(in srgb, var(--theme-surface) 72%, transparent); border-color: color-mix(in srgb, var(--theme-border) 64%, transparent)}
+.rail-queue-group.waiting {background: color-mix(in srgb, var(--theme-surface) 46%, transparent); border-color: color-mix(in srgb, var(--theme-border) 42%, transparent)}
+.rail-task-item:hover {background: color-mix(in srgb, var(--theme-surface) 86%, transparent)}
+
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more), (forced-colors: active) {
+  .glass-material, .sidebar, .right-rail, .instance-menu, .task-submenu-flyout, .group-nav, .panel, .resource-card {background: var(--theme-surface); -webkit-backdrop-filter: none; backdrop-filter: none}
+}

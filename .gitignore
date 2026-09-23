@@ -1,7 +1,10 @@
 ### AzurLaneAutoScript
 log
 cache/
+.codex
 config/backup/*
+# 每日备份目录（AzurPilot_Data_Backup/）：默认落在项目根目录，含个人统计数据与配置，不应入库
+/AzurPilot_Data_Backup/
 config/*.ini
 !config/template.ini
 config/*.yaml
@@ -34,7 +37,8 @@ test/*
 debug_ocr/
 PaddleOCR
 .trae
-docs/
+docs/*
+!docs/modules/
 .claude
 # Created by .ignore support plugin (hsz.mobi)
 
@@ -322,3 +326,18 @@ RTK.md
 
 # Add by MHY, agent 配置目录本地化：不纳入 git 管理，上游合并时不采用上游版本
 .claude/
+# Windows 下误建的 nul 文件
+# 成因：WebUI「远程访问」/ SSH 模拟器把 os.devnull 当作 ssh 的已知主机文件路径
+# （Windows 上 os.devnull == 'nul'），而 MSYS2 版 ssh 不把裸的 'nul' 当设备名，
+# 于是在工作目录建出真实文件，并在 StrictHostKeyChecking=no 下往里追加主机密钥。
+# 触发点：module/webui/remote_access.py、alas.py、module/device/platform/platform_base.py
+/nul
+
+.workbuddy
+
+# React 前端本地依赖与测试产物
+frontend/node_modules/
+frontend/test-results/
+frontend/playwright-report/
+frontend/*.tsbuildinfo
+!uv.lock

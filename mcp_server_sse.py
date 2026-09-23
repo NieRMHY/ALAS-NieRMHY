@@ -2,6 +2,7 @@ import os
 import logging
 import json
 import datetime
+import re
 from typing import List, Dict, Any
 
 from starlette.applications import Starlette
@@ -23,9 +24,9 @@ from io import BytesIO
 from module.config.config import AzurLaneConfig
 from module.config.time_source import now as current_time
 from module.config.utils import DEFAULT_CONFIG_NAME, alas_instance
-from module.webui.process_manager import ProcessManager
+from module.runtime.process_manager import ProcessManager
 from module.config.mcp_helper import McpConfigHelper
-from module.webui.setting import State
+from module.runtime.setting import State
 
 try:
     from module.webui.fake_pil_module import remove_fake_pil_module
@@ -452,7 +453,7 @@ async def _tool_restart_adb(arguments: Dict[str, Any]) -> ToolResponse:
 
 async def _tool_update_alas(arguments: Dict[str, Any]) -> ToolResponse:
     try:
-        from module.webui.updater import updater
+        from module.runtime.updater import updater
 
         def do_update():
             updater.update()
@@ -499,21 +500,33 @@ async def call_tool(name: str, arguments: Dict[str, Any]) -> ToolResponse:
 # SSE 传输层初始化 - 固定端点（与 /mcp 挂载点匹配）
 transport = SseServerTransport("/mcp/messages")
 
+# 独立运行时的监听地址与端口
+STANDALONE_HOST = "0.0.0.0"
+STANDALONE_PORT = 22268
 
 async def _run_sse(scope, receive, send):
     logger.info("Matched endpoint: /sse. Opening SSE connection...")
-    async with transport.connect_sse(scope, receive, send) as (read_stream, write_stream):
-        logger.info("SSE Stream connected. Running MCP server loop...")
-        try:
-            options = mcp_server.create_initialization_options()
-            await mcp_server.run(read_stream, write_stream, options)
-        except Exception as e:
-            logger.error(f"MCP Server Loop Error: {e}", exc_info=True)
-        logger.info("MCP Server Loop exited.")
+
+    try:
+        async with transport.connect_sse(scope, receive, send) as (read_stream, write_stream):
+            logger.info("SSE Stream connected. Running MCP server loop...")
+            try:
+                options = mcp_server.create_initialization_options()
+                await mcp_server.run(read_stream, write_stream, options)
+            except Exception as e:
+                logger.error(f"MCP Server Loop Error: {e}", exc_info=True)
+            logger.info("MCP Server Loop exited.")
+    finally:
+        pass
 
 
 def _is_mcp_client_disconnected(error: Exception) -> bool:
-    return "BrokenResourceError" in str(type(error)) or "BrokenPipeError" in str(error)
+    # ClosedResourceError：SSE 已断开但客户端仍在宽限期内投递消息，属正常现象
+    return (
+        "BrokenResourceError" in str(type(error))
+        or "BrokenPipeError" in str(error)
+        or "ClosedResourceError" in str(type(error))
+    )
 
 
 async def _handle_mcp_post(scope, receive, send, method):
@@ -543,22 +556,24 @@ async def _send_not_found(send):
 
 
 async def mcp_asgi_app(scope, receive, send):
-    """MCP 服务的纯 ASGI 应用，带增强日志记录。"""
+    """MCP 服务的纯 ASGI 应用。"""
     path = scope.get("path", "")
     method = scope.get("method", "")
 
-    if scope["type"] == "http":
-        logger.info(f"Incoming ASGI HTTP: {method} {path}")
+    if scope["type"] != "http":
+        return
 
-        # 路由逻辑 - 使用末尾匹配以兼容各种挂载路径和斜线组合
-        if path.endswith("/sse"):
-            await _run_sse(scope, receive, send)
+    logger.info("[MCP] %s %s", method, path)
 
-        elif path.endswith("/messages") or path.endswith("/messages/"):
-            await _handle_mcp_post(scope, receive, send, method)
+    # 路由逻辑 - 使用末尾匹配以兼容各种挂载路径和斜线组合
+    if path.endswith("/sse"):
+        await _run_sse(scope, receive, send)
 
-        else:
-            await _send_not_found(send)
+    elif path.endswith("/messages") or path.endswith("/messages/"):
+        await _handle_mcp_post(scope, receive, send, method)
+
+    else:
+        await _send_not_found(send)
 
 # Starlette 应用包装
 app = Starlette(
@@ -570,5 +585,5 @@ app.mount("/", mcp_asgi_app)
 
 if __name__ == "__main__":
     import uvicorn
-    logger.info("[MCP] 启动 ALAS MCP 服务 (Port: 22268)")
-    uvicorn.run(app, host="0.0.0.0", port=22268)
+    logger.info(f"[MCP] 启动 ALAS MCP 服务 (Port: {STANDALONE_PORT})")
+    uvicorn.run(app, host=STANDALONE_HOST, port=STANDALONE_PORT)

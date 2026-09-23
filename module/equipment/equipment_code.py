@@ -61,10 +61,14 @@ class EquipmentCodeHandler(StorageHandler):
         config = {}
         try:
             for item in yaml.safe_load_all(raw or ''):
-                if item:
-                    config.update(item)
-        except Exception:
-            logger.error("加载装备码配置失败")
+                if item is None:
+                    continue
+                if not isinstance(item, dict):
+                    raise ValueError('装备码配置必须是名称到装备码的映射')
+                config.update(item)
+        except (yaml.YAMLError, TypeError, ValueError) as exc:
+            # 不能把损坏的配置当成空配置，随后自动保存会覆盖其余方案。
+            raise RequestHumanTakeover('装备码配置格式错误，请检查配置后再换船') from exc
         return config
 
     def _code_config_save(self, config):
@@ -76,6 +80,8 @@ class EquipmentCodeHandler(StorageHandler):
             self.config.EquipmentCode_Config = value
         else:
             logger.warning("无装备码配置目标，跳过保存")
+            return False
+        return True
 
     def equipment_code_supported(self):
         method = self.config.Emulator_ControlMethod
@@ -91,17 +97,26 @@ class EquipmentCodeHandler(StorageHandler):
     def get_code(self, name):
         config = self._code_config_load()
         code = config.get(name)
-        if code is None:
-            logger.error(f"[装备-代码] 配置不包含 {name} 的装备代码")
-        return code
+        if code is None or isinstance(code, str) and not code.strip():
+            logger.info(f"[装备-代码] 尚未配置 {name} 的装备代码")
+            return None
+        if not self._is_equipment_code(code):
+            logger.warning(f"[装备-代码] {name} 的装备代码格式无效")
+            return None
+        return code.strip().strip('\'\"')
 
     def set_code(self, name, code):
+        if not self._is_equipment_code(code):
+            return False
         config = self._code_config_load()
         try:
             config.update({name: code})
-            self._code_config_save(config)
+            return self._code_config_save(config)
+        except (EmulatorNotRunningError, RequestHumanTakeover):
+            raise
         except Exception:
             logger.error("设置装备码配置失败")
+            return False
 
     def current_ship(self):
         """
@@ -354,7 +369,8 @@ class EquipmentCodeHandler(StorageHandler):
 
     def _code_apply(self, code=None):
         for _ in range(5):
-            self._code_preview_clear()
+            if not self._code_preview_clear():
+                continue
             if code is not None and code != EMPTY_CODE:
                 success = self._code_input(code)
                 if not success:
@@ -370,6 +386,8 @@ class EquipmentCodeHandler(StorageHandler):
 
     @staticmethod
     def _is_equipment_code(code):
+        if not isinstance(code, str):
+            return False
         code = code.strip().strip('\'"')
         if len(code) < len(EMPTY_CODE):
             return False
@@ -517,25 +535,36 @@ class EquipmentCodeHandler(StorageHandler):
         self.set_fastinput_ime()
         for _ in self.loop(timeout=10):
             if self.info_bar_count():
-                break
+                return self._clipboard_get()
             if self.appear_then_click(EQUIPMENT_CODE_EXPORT, offset=(5, 5), interval=3):
                 continue
-        return self._clipboard_get()
+        logger.warning('未确认装备码导出成功，不读取可能残留的剪贴板')
+        return None
 
     def code_clear(self, name=None):
+        # 每次卸装独立交接，禁止复用上一艘舰船或上一轮失败留下的缓存。
+        self.last_code = None
         if not self.equipment_code_supported():
             return False
 
         self._code_enter()
         if name is None:
             name = self.current_ship()
-        if self.equipment_code_export_to_config and self.get_code(name=name) is None:
-            self.last_code = self._code_export()
-            if self.last_code is None:
-                logger.warning("装备码导出失败，跳过清空装备")
-                return False
-            self.set_code(name=name, code=self.last_code)
-        return self._code_apply(code=None)
+        code = None
+        if self.equipment_code_export_to_config:
+            code = self.get_code(name=name)
+            if code is None:
+                code = self._code_export()
+                if not self._is_equipment_code(code):
+                    logger.warning("装备码导出失败，跳过清空装备")
+                    return False
+                if not self.set_code(name=name, code=code):
+                    logger.warning('装备码保存失败，保留当前装备')
+                    return False
+        if not self._code_apply(code=None):
+            return False
+        self.last_code = code
+        return True
 
     def code_apply(self, name=None):
         if not self.equipment_code_supported():
@@ -547,7 +576,10 @@ class EquipmentCodeHandler(StorageHandler):
         code = self.get_code(name=name)
         if code is None:
             code = self.last_code
-        if code is None:
+        if not self._is_equipment_code(code):
             logger.warning("没有可用装备码，跳过装备应用")
             return False
-        return self._code_apply(code=code)
+        success = self._code_apply(code=code)
+        if success:
+            self.last_code = None
+        return success

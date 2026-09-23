@@ -1,11 +1,17 @@
-import copy
 import os
 import subprocess
 import sys
 from typing import Optional, Union
 
+from deploy.geo import get_country_code
+from deploy.config_transaction import DeployConfigTransaction
 from deploy.Windows.logger import logger
-from deploy.Windows.utils import DEPLOY_CONFIG, DEPLOY_TEMPLATE, cached_property, poor_yaml_read, poor_yaml_write
+from deploy.Windows.utils import DEPLOY_CONFIG, DEPLOY_TEMPLATE, cached_property
+
+
+GIT_OVER_CDN_REPOSITORY = 'git://git.pull/AzurPilot'
+GIT_OVER_CDN_FALLBACK_REPOSITORY = 'https://gitcode.com/ddl2/AzurLaneAutoScript'
+GITHUB_REPOSITORY = 'https://github.com/wess09/AzurPilot'
 
 
 class ExecutionError(Exception):
@@ -14,7 +20,7 @@ class ExecutionError(Exception):
 
 class ConfigModel:
     # Git 配置
-    Repository: str = "https://github.com/NieRMHY/ALAS-NieRMHY.git"
+    Repository: str = GITHUB_REPOSITORY
     Branch: str = "master"
     GitExecutable: str = "./.venv/Scripts/git/cmd/git.exe"
     GitProxy: Optional[str] = None
@@ -51,6 +57,8 @@ class ConfigModel:
     SSHUser: Optional[str] = None
     SSHServer: Optional[str] = None
     SSHExecutable: Optional[str] = None
+    AllowedRedirectHosts: Optional[str] = None
+    MaxRedirects: int = 2
     SignalingServer: Optional[str] = None
     StunServers: Optional[str] = '["stun:stun.l.google.com:19302"]'
     TurnServers: Optional[str] = None
@@ -64,12 +72,18 @@ class ConfigModel:
     DpiScaling: bool = True
     Password: Optional[str] = None
     CDN: Union[str, bool] = False
+    # --watermark. 关闭未经验证版本的水印。默认 False，即默认显示水印；
+    # 需与 deploy/config.py 保持一致，否则 Windows 启动器读不到该开关。
+    DisableBranchWatermark: bool = False
     Run: Optional[str] = None
     AppAsarUpdate: bool = True
     NoSandbox: bool = True
 
+    # 动态配置
+    GitOverCdn: bool = False
 
-class DeployConfig(ConfigModel):
+
+class DeployConfig(DeployConfigTransaction, ConfigModel):
     def __init__(self, file=DEPLOY_CONFIG):
         """初始化部署配置。
 
@@ -77,8 +91,10 @@ class DeployConfig(ConfigModel):
             file (str): 用户部署配置文件路径。
         """
         self.file = file
+        self.template_file = DEPLOY_TEMPLATE
         self.config = {}
         self.config_template = {}
+        self._github_location_checked = False
         self.read()
 
         self.show_config()
@@ -94,39 +110,35 @@ class DeployConfig(ConfigModel):
 
         logger.info(f"Rest of the configs are the same as default")
 
-    def read(self):
-        self.config = poor_yaml_read(DEPLOY_TEMPLATE)
-        self.config_template = copy.deepcopy(self.config)
-        origin = poor_yaml_read(self.file)
-        self.config.update(origin)
-
-        for key, value in self.config.items():
-            if hasattr(self, key):
-                super().__setattr__(key, value)
-
-        self.config_redirect()
-
-        if self.config != origin:
-            self.write()
-
-    def write(self):
-        poor_yaml_write(self.config, self.file)
-
     def config_redirect(self):
         """部署配置重定向，处理旧配置到新配置的迁移。
 
         每次 `read()` 之后必须调用。
         """
-        # Modify by MHY, 移除 git_over_cdn 机制，旧源与 global/cn 别名统一迁移到自有源（纯 git pull）
         self.config.pop('AutoUpdate', None)
-        if self.Repository in [
-            'https://github.com/wess09/AzurPilot',
-            'https://github.com/LmeSzinc/AzurLaneAutoScript',
-            'global',
-            'cn',
-        ]:
-            super().__setattr__('Repository', 'https://github.com/NieRMHY/ALAS-NieRMHY.git')
-            self.config['Repository'] = 'https://github.com/NieRMHY/ALAS-NieRMHY.git'
+        self._redirect_github_repository()
+        # 绕过 webui.config.DeployConfig.__setattr__()，不写入 deploy.yaml
+        super().__setattr__('GitOverCdn', self.Repository in ['cn', GIT_OVER_CDN_REPOSITORY])
+        if self.Repository in ['global']:
+            super().__setattr__('Repository', 'https://github.com/wess09/AzurPilot')
+        if self.Repository in ['cn', GIT_OVER_CDN_REPOSITORY]:
+            super().__setattr__('Repository', GIT_OVER_CDN_FALLBACK_REPOSITORY)
+
+    def _redirect_github_repository(self):
+        """为官方 GitHub 源一次性选择适合当前网络的更新镜像。"""
+        if self._github_location_checked or self.Repository != GITHUB_REPOSITORY:
+            return
+
+        self._github_location_checked = True
+        country_code = get_country_code()
+        if country_code == 'cn':
+            logger.info('检测到中国大陆网络，切换至国内 Git 更新源')
+            object.__setattr__(self, 'Repository', GIT_OVER_CDN_REPOSITORY)
+            self.config['Repository'] = GIT_OVER_CDN_REPOSITORY
+        elif country_code is None:
+            logger.warning('无法检测网络所在国家，保留 GitHub 更新源')
+        else:
+            logger.info('当前网络不在中国大陆，保留 GitHub 更新源')
 
     def filepath(self, path):
         """获取绝对文件路径。

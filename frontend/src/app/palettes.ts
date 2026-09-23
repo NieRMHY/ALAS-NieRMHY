@@ -1,0 +1,182 @@
+export const palettes = ['ocean', 'forest', 'violet', 'sand', 'slate'] as const
+export type PresetPalette = typeof palettes[number]
+export type Palette = PresetPalette | `custom:${string}`
+export const colorModes = ['auto', 'light', 'dark', 'terminal', 'retro-gray', 'retro-blue', 'retro-red'] as const
+export type ColorMode = typeof colorModes[number]
+/** 实际生效的明暗。自带色值的档位各自固定一个，其余由主题与系统决定。 */
+export type ResolvedMode = 'light' | 'dark'
+export type BrandColors = {primary: string; secondary: string}
+export type CustomPalette = {id: `custom:${string}`; primary: string; secondary: string}
+
+export const presetColors: Record<PresetPalette, Record<ResolvedMode, BrandColors>> = {
+  ocean: {light: {primary: '#245dbe', secondary: '#147d83'}, dark: {primary: '#8ab4ff', secondary: '#71cbc9'}},
+  forest: {light: {primary: '#286747', secondary: '#956020'}, dark: {primary: '#86cba3', secondary: '#dfb472'}},
+  violet: {light: {primary: '#7050a3', secondary: '#a14865'}, dark: {primary: '#c1a4ee', secondary: '#efa2bb'}},
+  sand: {light: {primary: '#915a2b', secondary: '#426b70'}, dark: {primary: '#e1b082', secondary: '#92c3c8'}},
+  slate: {light: {primary: '#45566b', secondary: '#96553b'}, dark: {primary: '#acbdd2', secondary: '#dfaa8e'}},
+}
+
+type FixedMode = {mode: ResolvedMode; tokens: Record<string, string>}
+
+/** 主题模式里「自带整套色值」的档位：选中时忽略配色方案，明暗也由这里固定。
+    加新档位只要往这张表补一条 —— 界面下拉与偏好校验都会从 colorModes 自动跟上。 */
+export const fixedColorModes: Partial<Record<ColorMode, FixedMode>> = {
+  /* 程序员：黑灰白六级，模拟终端。 */
+  terminal: {
+    mode: 'dark',
+    tokens: {
+      '--bg': '#0b0b0b',
+      '--surface': '#141414',
+      '--surface-muted': '#1d1d1d',
+      '--border': '#2b2b2b',
+      '--muted': '#8c8c8c',
+      '--text': '#e8e8e8',
+      '--accent': '#f2f2f2',
+      '--accent-hover': '#ffffff',
+      '--accent-soft': '#232323',
+      '--secondary': '#a0a0a0',
+      '--secondary-soft': '#1f1f1f',
+      '--theme-on-accent': '#111111',
+    },
+  },
+  /* 复古灰：九十年代中期桌面观感 —— 青绿底、银灰窗体、深蓝标题栏。 */
+  'retro-gray': {
+    mode: 'light',
+    tokens: {
+      '--bg': '#008080',
+      '--surface': '#c0c0c0',
+      '--surface-muted': '#d4d0c8',
+      '--border': '#808080',
+      '--muted': '#404040',
+      '--text': '#000000',
+      '--accent': '#000080',
+      '--accent-hover': '#0000a8',
+      '--accent-soft': '#a8b0d0',
+      '--secondary': '#006666',
+      '--secondary-soft': '#a8c8c8',
+      '--theme-on-accent': '#ffffff',
+    },
+  },
+  /* 复古蓝：同期稍晚的一代 —— 蓝底、更亮的银灰、标题栏渐变色的深端。 */
+  'retro-blue': {
+    mode: 'light',
+    tokens: {
+      '--bg': '#3a6ea5',
+      '--surface': '#d4d0c8',
+      '--surface-muted': '#e4e0d8',
+      '--border': '#858585',
+      '--muted': '#4a4a4a',
+      '--text': '#000000',
+      '--accent': '#0a246a',
+      '--accent-hover': '#143a94',
+      '--accent-soft': '#b8c4dc',
+      '--secondary': '#2f5d8a',
+      '--secondary-soft': '#b4c8dc',
+      '--theme-on-accent': '#ffffff',
+    },
+  },
+  /* 复古红：米白机身加红色强调，八位机时代的塑料壳与按键色。 */
+  'retro-red': {
+    mode: 'light',
+    tokens: {
+      '--bg': '#e6e2da',
+      '--surface': '#f7f5f0',
+      '--surface-muted': '#dedad2',
+      '--border': '#b5b0a6',
+      '--muted': '#5c5850',
+      '--text': '#1a1a1a',
+      '--accent': '#a8121e',
+      '--accent-hover': '#8c0e18',
+      '--accent-soft': '#f2d5d7',
+      '--secondary': '#1b4965',
+      '--secondary-soft': '#d4e0e8',
+      '--theme-on-accent': '#ffffff',
+    },
+  },
+}
+
+export const isHexColor = (value: unknown): value is string => typeof value === 'string' && /^#[\da-f]{6}$/i.test(value)
+const validColors = (value: unknown): value is BrandColors => !!value && typeof value === 'object'
+  && isHexColor((value as BrandColors).primary) && isHexColor((value as BrandColors).secondary)
+
+/** 只接收完整的实色配置，避免损坏的本地数据进入 CSS。 */
+export function readCustomPalettes(value: string | null): CustomPalette[] {
+  try {
+    const data: unknown = JSON.parse(value ?? '[]')
+    if (!Array.isArray(data)) return []
+    const result: CustomPalette[] = []
+    for (const item of data.slice(0, 32)) {
+      if (!item || typeof item.id !== 'string' || !/^custom:[\w-]{1,80}$/.test(item.id)
+        || result.some(entry => entry.id === item.id)) continue
+      let primary: string | undefined
+      let secondary: string | undefined
+      if (isHexColor((item as {primary?: unknown}).primary) && isHexColor((item as {secondary?: unknown}).secondary)) {
+        primary = (item as {primary: string}).primary
+        secondary = (item as {secondary: string}).secondary
+      } else if (validColors((item as {light?: unknown}).light)) {
+        primary = (item as {light: BrandColors}).light.primary
+        secondary = (item as {light: BrandColors}).light.secondary
+      }
+      if (!primary || !secondary) continue
+      result.push({id: item.id as `custom:${string}`, primary, secondary})
+    }
+    return result
+  } catch { return [] }
+}
+
+export function paletteColors(palette: Palette, custom: CustomPalette[], mode: ResolvedMode): BrandColors {
+  const match = custom.find(item => item.id === palette)
+  if (match) return {primary: match.primary, secondary: match.secondary}
+  return presetColors[palette as PresetPalette]?.[mode] ?? presetColors.ocean[mode]
+}
+
+function channels(color: string) {
+  return [1, 3, 5].map(index => parseInt(color.slice(index, index + 2), 16))
+}
+
+export function mixColor(color: string, background: string, weight: number): string {
+  const base = channels(background)
+  return '#' + channels(color).map((value, index) => Math.round(value * weight + base[index] * (1 - weight)).toString(16).padStart(2, '0')).join('')
+}
+
+function luminance(color: string) {
+  const rgb = channels(color).map(value => {
+    const channel = value / 255
+    return channel <= .04045 ? channel / 12.92 : ((channel + .055) / 1.055) ** 2.4
+  })
+  return rgb[0] * .2126 + rgb[1] * .7152 + rgb[2] * .0722
+}
+
+export function contrastRatio(first: string, second: string): number {
+  const a = luminance(first), b = luminance(second)
+  return (Math.max(a, b) + .05) / (Math.min(a, b) + .05)
+}
+
+/** 保留所选色相，必要时调整明度，让链接和辅助文字在实色面板上清晰可读。 */
+function readableColor(color: string, background: string, mode: ResolvedMode) {
+  const target = mode === 'dark' ? '#ffffff' : '#000000'
+  for (let step = 0; step <= 20; step++) {
+    const adjusted = mixColor(target, color, step / 20)
+    if (contrastRatio(adjusted, background) >= 4.5) return adjusted
+  }
+  return target
+}
+
+export function paletteTokens(colors: BrandColors, mode: ResolvedMode): Record<string, string> {
+  const dark = mode === 'dark'
+  const surface = dark ? '#20252d' : '#ffffff'
+  const mutedSurface = dark ? '#282f39' : '#edf2f7'
+  const primary = readableColor(colors.primary, mutedSurface, mode)
+  const secondary = readableColor(colors.secondary, mutedSurface, mode)
+  const onAccent = contrastRatio(primary, '#ffffff') >= contrastRatio(primary, '#17202b') ? '#ffffff' : '#17202b'
+  return {
+    '--bg': mixColor(colors.primary, dark ? '#14181e' : '#f5f7fa', .025),
+    '--surface': surface, '--surface-muted': mutedSurface,
+    '--text': dark ? '#e5ebf3' : '#243447', '--muted': dark ? '#a5b2c3' : '#5b6d80',
+    '--border': dark ? '#424d5d' : '#d5dee8',
+    '--accent': primary, '--accent-hover': mixColor(primary, dark ? '#ffffff' : '#000000', .85),
+    '--accent-soft': mixColor(primary, surface, dark ? .12 : .07),
+    '--secondary': secondary, '--secondary-soft': mixColor(secondary, surface, dark ? .12 : .07),
+    '--theme-on-accent': onAccent,
+  }
+}
