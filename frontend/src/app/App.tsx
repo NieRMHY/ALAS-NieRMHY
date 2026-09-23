@@ -108,7 +108,8 @@ function Login() {
 }
 
 export function NavigationMark() {
-  return <img src={`${import.meta.env.BASE_URL}azurpilot.svg`} alt="ALAS" width="28" height="28" className="brand-logo"/>
+  // Modify by MHY, 左上角品牌位换 essex 头图（原 azurpilot.svg 默认图标）
+  return <img src={`${import.meta.env.BASE_URL}alas-icon.png`} alt="ALAS" width="28" height="28" className="brand-logo"/>
 }
 
 export function App() {
@@ -191,7 +192,8 @@ export function App() {
   const railFirst = theme === 'extreme' && compactRailSide === 'left'
   // 开发者工具可以预览「有可用更新」的角标，这里统一算一次。
   const updateAvailable = Boolean(update.data?.available) || devOverride.updatePreview
-  const brand = <><Link to="/" className="brand-title" aria-label={`ALAS ${ui('nav.home')}`}><img src={`${import.meta.env.BASE_URL}azurpilot.svg`} alt="" className="brand-logo" onClick={handleBrandLogoClick}/><span>ALAS</span></Link>{updateAvailable && <Link className="update-notice sidebar-update-notice" to="/updater" aria-label={ui('nav.newVersion')} title={ui('nav.newVersion')}><span>{ui('nav.newBadge')}</span></Link>}</>
+  // Modify by MHY, 顶栏/侧栏品牌位换 essex 头图（原 azurpilot.svg），文字 ESSEX Secretary
+  const brand = <><Link to="/" className="brand-title" aria-label={`ALAS ${ui('nav.home')}`}><img src={`${import.meta.env.BASE_URL}alas-icon.png`} alt="" className="brand-logo" onClick={handleBrandLogoClick}/><span>ESSEX Secretary</span></Link>{updateAvailable && <Link className="update-notice sidebar-update-notice" to="/updater" aria-label={ui('nav.newVersion')} title={ui('nav.newVersion')}><span>{ui('nav.newBadge')}</span></Link>}</>
   // 旧版顶栏的第三列是居中的页面名：实例页写任务名，无实例时写导航项名。
   const pageTitle = instance
     ? currentTask ? t(`Task.${currentTask}.name`) : location.pathname.endsWith('/statistics') ? ui('nav.statistics') : ui('nav.overview')
