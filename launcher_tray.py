@@ -61,6 +61,11 @@ def main():
     # console 句柄（pythonw 无 console 会导致 worker spawn 崩溃）；SW_HIDE 让窗口创建即
     # 隐藏，实现无窗口后台运行。不重定向 stdout/stderr，保留 worker 继承的 console 句柄。
     popen_kwargs = {"cwd": ROOT}
+    # Modify by MHY, 新版 WebUI 启动链 ensure_frontend 需要 Node.js（本地解压版），
+    # 前置进子进程 PATH，避免每次系统级安装 Node
+    node_dir = os.path.join(ROOT, "nodejs", "node-v24.21.0-win-x64")
+    if os.path.isdir(node_dir):
+        popen_kwargs["env"] = {**os.environ, "PATH": node_dir + os.pathsep + os.environ.get("PATH", "")}
     if sys.platform == "win32":
         si = subprocess.STARTUPINFO()
         si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
