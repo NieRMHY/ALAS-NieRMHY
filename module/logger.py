@@ -406,6 +406,10 @@ def get_log_file_path(name, root='.', day=None):
 
 
 def _set_file_logger(name=pyw_name):
+    # Modify by MHY, python -c / 嵌入式环境的 argv[0] 无有效文件名（如 "-c"），
+    # 并行导入冒烟时还会竞态写同一 log/-c.txt，这类环境跳过文件日志
+    if not name or not name[0].isalnum():
+        return
     log_file = str(get_log_file_path(name))
     try:
         file = logging.FileHandler(log_file, encoding='utf-8')
