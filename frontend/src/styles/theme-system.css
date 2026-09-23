@@ -1,7 +1,7 @@
 @import './theme-primitives.css';
 
 /*
- * AzurPilot theme contract.
+ * ALAS theme contract.
  *
  * All visual primitives used by the application are normalized here to CSS
  * custom properties.  The file is deliberately imported after the legacy
