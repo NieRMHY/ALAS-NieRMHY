@@ -246,8 +246,22 @@ async def _tool_update_config(arguments: Dict[str, Any]) -> ToolResponse:
     value = arguments["value"]
     config = AzurLaneConfig(inst)
     path = f"{task}.{group}.{arg}"
+    # Add by MHY, 修复 update_config 静默失效：cross_set/deep_set 对不存在的路径
+    # 会逐层创建垃圾顶级键（如把组名当任务名拼出 IslandBusinessShop1.x.Char1），
+    # 并无条件返回 Success。写入前校验路径真实存在，不存在则明确报错。
+    from module.config.deep import deep_exist
+    if not deep_exist(config.args, path):
+        return [TextContent(type="text",
+                            text=f"Error: path {path} 不存在于配置定义（args.json）。"
+                                 f"路径格式为 <任务名>.<组名>.<参数名>，"
+                                 f"注意组挂在任务下（如 IslandBusiness.IslandBusinessShop1.Char1）")]
     config.cross_set(path, value)
     config.save()
+    # 回读确认（防其它静默失败）
+    actual = config.cross_get(path)
+    if actual != value:
+        return [TextContent(type="text",
+                            text=f"Error: wrote {path}={value} but read back {actual}")]
     return [TextContent(type="text", text=f"Success: Updated {path} to {value}")]
 
 
@@ -379,6 +393,10 @@ async def _tool_trigger_task(arguments: Dict[str, Any]) -> ToolResponse:
     inst = arguments["instance"]
     task = arguments["task"]
     config = AzurLaneConfig(inst)
+    # Add by MHY, 同 update_config：校验任务名存在，避免拼出垃圾路径静默成功
+    if task not in config.data or 'Scheduler' not in config.data.get(task, {}):
+        return [TextContent(type="text",
+                            text=f"Error: unknown task {task}（须为顶级任务名，如 IslandBusiness）")]
     config.cross_set(f"{task}.Scheduler.Enable", True)
     now = current_time()
     config.cross_set(f"{task}.Scheduler.NextRun", str(now))
