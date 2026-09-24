@@ -532,6 +532,12 @@ class Island(SelectCharacter):
         for _ in range(_SELECT_PRODUCT_MAX_SWIPES):
             self.device.screenshot()
 
+            # Add by MHY, 岛屿经济闭环：AutoProfit 禁用名单探测。
+            # 被禁商品出现在派单列表里说明账号已解锁，自动解除禁用（复用本张截图，无额外开销）
+            probe = getattr(self, 'probe_unproducible_products', None)
+            if probe is not None:
+                probe()
+
             # 使用形状+颜色双重验证来识别 product_selection_check
             if self.match_template_color(product_selection_check, offset=20, similarity=0.85, threshold=10):
                 return True

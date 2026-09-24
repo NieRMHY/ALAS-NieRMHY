@@ -3,6 +3,7 @@
 
 不连游戏、不依赖设备，全部纯逻辑验证（仿照 test_island_shop_production 的离线模式）。
 """
+import os
 import unittest
 
 from module.island.island_economy import (
@@ -186,6 +187,53 @@ class TestAutoProfitPlanner(unittest.TestCase):
         plan = p.build_plan({'tofu_combo': target - 1}, season='autumn')
         names = [n for n, _ in plan]
         self.assertNotIn('tofu_combo', names)
+
+
+class TestUnproducibleList(unittest.TestCase):
+    """不可生产名单的持久化与解除（账号解锁后恢复排产）"""
+
+    def setUp(self):
+        import tempfile
+        import module.island.island_autoprofit as ap
+        self.ap = ap
+        self._orig = ap.UNPRODUCIBLE_FILE
+        fd, path = tempfile.mkstemp(suffix='.json')
+        os.close(fd)
+        os.remove(path)
+        ap.UNPRODUCIBLE_FILE = path
+
+    def tearDown(self):
+        import os as _os
+        try:
+            _os.remove(self.ap.UNPRODUCIBLE_FILE)
+        except OSError:
+            pass
+        self.ap.UNPRODUCIBLE_FILE = self._orig
+
+    def test_add_load_remove_cycle(self):
+        """加入名单 → 读取到 → 解除 → 名单清空"""
+        self.assertEqual(self.ap.load_unproducible('grill'), set())
+        self.ap.add_unproducible('grill', 'crayfish_stir_fry')
+        self.assertEqual(self.ap.load_unproducible('grill'), {'crayfish_stir_fry'})
+        self.ap.remove_unproducible('grill', 'crayfish_stir_fry')
+        self.assertEqual(self.ap.load_unproducible('grill'), set())
+
+    def test_remove_keeps_other_shops(self):
+        """解除一个店铺的商品不影响其他店铺名单"""
+        self.ap.add_unproducible('grill', 'crayfish_stir_fry')
+        self.ap.add_unproducible('teahouse', 'pineapple_juice')
+        self.ap.remove_unproducible('grill', 'crayfish_stir_fry')
+        self.assertEqual(self.ap.load_unproducible('grill'), set())
+        self.assertEqual(self.ap.load_unproducible('teahouse'), {'pineapple_juice'})
+
+    def test_blacklisted_excluded_from_plan(self):
+        """名单内商品不参与排产，解除后重新参与"""
+        p = AutoProfitPlanner('grill')
+        blacklist = {'crayfish_stir_fry'}
+        plan = [n for n, _ in p.build_plan({}, season='autumn', exclude=blacklist)]
+        self.assertNotIn('crayfish_stir_fry', plan)
+        plan2 = [n for n, _ in p.build_plan({}, season='autumn', exclude=set())]
+        self.assertIn('crayfish_stir_fry', plan2)
 
 
 class TestShopBaseHook(unittest.TestCase):

@@ -51,6 +51,38 @@ def load_unproducible(shop):
     return set(data.get(shop, []))
 
 
+def remove_unproducible(shop, name):
+    """
+    解除禁用：账号已解锁该商品（选品列表出现其图标）时恢复排产。
+
+    Args:
+        shop: 店铺类型标识
+        name: 商品英文名
+    """
+    try:
+        with open(UNPRODUCIBLE_FILE, encoding='utf-8') as f:
+            data = json.load(f)
+    except (OSError, ValueError):
+        return
+    items = set(data.get(shop, []))
+    if name not in items:
+        return
+    items.discard(name)
+    if items:
+        data[shop] = sorted(items)
+    else:
+        data.pop(shop, None)
+    try:
+        with open(UNPRODUCIBLE_FILE, 'w', encoding='utf-8') as f:
+            json.dump(data, f, ensure_ascii=False, indent=1)
+    except OSError as e:
+        logger.warning(f"[岛屿-AutoProfit] 更新不可生产名单失败: {e}")
+        return
+    logger.info(
+        f"[岛屿-AutoProfit] {SHOP_CN_NAMES.get(shop, shop)} {name} 已在选品列表出现"
+        f"（账号已解锁），解除禁用并恢复排产")
+
+
 def add_unproducible(shop, name):
     """
     记录不可生产商品（选品连续失败时调用），供后续排产排除。

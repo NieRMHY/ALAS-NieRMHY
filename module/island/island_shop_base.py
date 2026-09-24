@@ -227,6 +227,35 @@ class IslandShopBase(Island, WarehouseOCR):
         self.autoprofit_unproducible.add(name)
         self.chef_unavailable_products.add(name)
 
+    def release_unproducible_product(self, name):
+        """解除禁用：该商品已在选品列表出现（账号已解锁）。"""
+        from module.island.island_autoprofit import remove_unproducible
+        remove_unproducible(self.shop_type, name)
+        self.autoprofit_unproducible.discard(name)
+
+    def probe_unproducible_products(self):
+        """
+        选品页探测：被禁商品出现在派单列表中说明账号已解锁，自动解除禁用。
+
+        由 Island.select_product 在已截图的循环里调用，无额外截图开销；
+        每次最多解除一个，其余留待后续轮次。
+        """
+        if not self.autoprofit_enabled or not self.autoprofit_unproducible:
+            return
+        for name in list(self.autoprofit_unproducible):
+            item = self.name_to_config.get(name)
+            if not item:
+                continue
+            check = item.get('selection_check') or item.get('selection')
+            if check is None:
+                continue
+            try:
+                if self.appear(check, offset=20):
+                    self.release_unproducible_product(name)
+                    return
+            except Exception:
+                continue
+
     def retry_product_selection_from_postmanage(self, post_button, product, failed_product, failed_count):
         """餐品选择失败后退出岗位，重新进入同一岗位走完整派遣流程。
 
