@@ -562,7 +562,10 @@ class Island(SelectCharacter):
         for _ in self.loop(timeout=15, skip_first=False):
             if self.ui_page_appear(page_island_postmanage) and not self.is_post_detail_visible():
                 return True
-            if self.appear(ISLAND_GET, offset=30):
+            # Add by MHY, 收取产物后弹「获得物品」窗口：ISLAND_GET 颜色校验在新版弹窗
+            # 上经常不命中（标题区实际色 ~(225,227,226)，注册色 (193,195,196)），
+            # 用 GET_ITEMS_ISLAND 模板兜底，点安全区域关闭
+            if self.appear(ISLAND_GET, offset=30) or self.appear(GET_ITEMS_ISLAND, offset=30):
                 self.device.click(ISLAND_POST_SAFE_AREA)
                 continue
             if self.is_post_detail_visible():
@@ -590,7 +593,8 @@ class Island(SelectCharacter):
                 self.device.click(POST_CLOSE)
                 self.island_error = True
                 continue
-            if self.appear(ISLAND_GET, offset=30):
+            # Add by MHY, ISLAND_GET 颜色不命中时用 GET_ITEMS_ISLAND 模板兜底（同 post_close）
+            if self.appear(ISLAND_GET, offset=30) or self.appear(GET_ITEMS_ISLAND, offset=30):
                 self.device.click(ISLAND_POST_SAFE_AREA)
                 self.device.sleep(0.5)
                 continue
@@ -614,7 +618,8 @@ class Island(SelectCharacter):
                 self.device.click(POST_CLOSE)
                 self.island_error = True
                 continue
-            if self.appear(ISLAND_GET, offset=30):
+            # Add by MHY, ISLAND_GET 颜色不命中时用 GET_ITEMS_ISLAND 模板兜底（同 post_close）
+            if self.appear(ISLAND_GET, offset=30) or self.appear(GET_ITEMS_ISLAND, offset=30):
                 self.device.click(ISLAND_POST_SAFE_AREA)
                 self.device.sleep(0.5)
                 continue
@@ -636,7 +641,8 @@ class Island(SelectCharacter):
                 self.device.click(POST_CLOSE)
                 self.island_error = True
                 return False
-            if self.appear(ISLAND_GET,offset=1):
+            # Add by MHY, ISLAND_GET 颜色不命中时用 GET_ITEMS_ISLAND 模板兜底（同 post_close）
+            if self.appear(ISLAND_GET,offset=1) or self.appear(GET_ITEMS_ISLAND, offset=30):
                 self.device.click(ISLAND_POST_SAFE_AREA)
                 continue
             if self.appear_then_click(POST_ADD,offset=1):
@@ -698,7 +704,8 @@ class Island(SelectCharacter):
                     and not self.is_post_detail_visible()
             ):
                 return True
-            if self.appear(ISLAND_GET, offset=30):
+            # Add by MHY, ISLAND_GET 颜色不命中时用 GET_ITEMS_ISLAND 模板兜底（同 post_close）
+            if self.appear(ISLAND_GET, offset=30) or self.appear(GET_ITEMS_ISLAND, offset=30):
                 self.device.click(ISLAND_POST_SAFE_AREA)
                 continue
             if self.appear(ISLAND_SELECT_PRODUCT_CHECK, offset=1):
