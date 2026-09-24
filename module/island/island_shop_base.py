@@ -74,6 +74,7 @@ class IslandShopBase(Island, WarehouseOCR):
         self.autoprofit_planner = None
         self.autoprofit_level = 'diamond'
         self.autoprofit_unproducible = set()  # 账号未解锁/研发未完成的商品（持久化学习）
+        self.autoprofit_fill_queue = []  # 空岗填充的原料保障队列（本轮优先生产）
         self.manual_products = set()  # 用户手动配置的商品，失败时不自动降级
 
     # ==================== 季节配置支持 ====================
@@ -720,12 +721,42 @@ class IslandShopBase(Island, WarehouseOCR):
             # Add by MHY, 岛屿经济闭环：AutoProfit 开启且未配置常驻餐品时，
             # 空闲岗位自动填本店利润/分钟最高的商品（岗位不闲置，持续赚金币）。
             # 用户手动配置的 AwayCook 优先级更高，不覆盖。
+            autoprofit_filled_away_cook = False
             if (self.autoprofit_enabled and idle_posts_after_basic
                     and (not away_cook or away_cook == 'None')):
                 top = self.economy_top_product()
                 if top:
                     away_cook = top
+                    autoprofit_filled_away_cook = True
                     logger.info(f"[岛屿-AutoProfit] 空岗自动填充常驻餐品: {self._item_cn(top)}")
+
+            # Add by MHY, 岛屿经济闭环：填充商品的原料保障。
+            # 填充商品（如醒神套餐）高于目标库存时不会进基础需求，其原料
+            # （冰咖啡/香橙派）可能为 0 → post_produce 返回 0 → 岗位一直空着。
+            # 这里先算出缺失的可自产原料，本轮优先生产它们，下轮再产成品。
+            self.autoprofit_fill_queue = []
+            self.autoprofit_fill_fallbacks = []
+            if (self.autoprofit_enabled and idle_posts_after_basic
+                    and autoprofit_filled_away_cook
+                    and away_cook in self.name_to_config):
+                support = self.autoprofit_planner.support_plan(
+                    away_cook, self.warehouse_counts, self.post_check_meal,
+                    exclude=set(self.autoprofit_unproducible))
+                if support:
+                    self.autoprofit_fill_queue = [n for n, _ in support]
+                    logger.info(
+                        f"[岛屿-AutoProfit] 填充商品 {self._item_cn(away_cook)} 缺原料，"
+                        f"本轮优先生产: {[self._item_cn(n) for n in self.autoprofit_fill_queue]}")
+                # 备选商品：队列耗尽后主商品仍缺料时，用其他可生产的高利润商品填岗，
+                # 避免第二个岗位空着（真机：简餐 POST2 闲置）
+                for item in self.autoprofit_planner.economy.recommend_products(
+                        self.shop_type,
+                        season=self.current_season if hasattr(self, 'current_season') else None,
+                        top=6, exclude=set(self.autoprofit_unproducible)):
+                    name = item['name']
+                    if (name in self.name_to_config and name != away_cook
+                            and name not in self.autoprofit_fill_queue):
+                        self.autoprofit_fill_fallbacks.append(name)
 
             # 检查特殊餐品是否为有效值（不为None且不为"None"）
             has_special_food = (special_food and special_food != "None" and
@@ -784,27 +815,46 @@ class IslandShopBase(Island, WarehouseOCR):
 
                     elif not has_special_food and has_away_cook:
                         # 情况3：只有常驻餐品，没有特殊餐品
-                        logger.info(f"[岛屿] 只有常驻餐品 {self._item_cn(away_cook)}，没有特殊餐品")
+                        # Add by MHY: AutoProfit 原料保障队列优先（缺什么原料先造什么）
+                        fill_product = away_cook
+                        if self.autoprofit_fill_queue:
+                            fill_product = self.autoprofit_fill_queue.pop(0)
+                            logger.info(
+                                f"[岛屿-AutoProfit] 岗位 {post_id} 优先生产缺失原料 "
+                                f"{self._item_cn(fill_product)}")
+                        elif (self.autoprofit_fill_fallbacks
+                              and self.get_max_producible(away_cook, 1) <= 0):
+                            # 主商品原料不足：改用备选的可生产商品填岗，避免岗位空闲
+                            while self.autoprofit_fill_fallbacks:
+                                cand = self.autoprofit_fill_fallbacks.pop(0)
+                                if self.get_max_producible(cand, 1) > 0:
+                                    fill_product = cand
+                                    logger.info(
+                                        f"[岛屿-AutoProfit] 岗位 {post_id} 改产可生产商品 "
+                                        f"{self._item_cn(cand)}")
+                                    break
+                        else:
+                            logger.info(f"[岛屿] 只有常驻餐品 {self._item_cn(away_cook)}，没有特殊餐品")
 
                         # 检查材料限制
                         batch_size = self.POST_PRODUCE_LIMIT
-                        batch_size = self.get_max_producible(away_cook, batch_size)
+                        batch_size = self.get_max_producible(fill_product, batch_size)
 
                         if batch_size > 0:
                             result = self.post_produce(
                                 post_id,
-                                product=away_cook,
+                                product=fill_product,
                                 number=batch_size,
                                 time_var_name=time_var_name
                             )
 
                             if result == 0:
-                                logger.info(f"[岛屿] 常驻餐品 {self._item_cn(away_cook)} 原料不足，保持岗位空闲")
+                                logger.info(f"[岛屿] {self._item_cn(fill_product)} 原料不足，保持岗位空闲")
                                 break
                             else:
-                                logger.info(f"[岛屿] 已为岗位 {post_id} 安排常驻餐品 {self._item_cn(away_cook)} x{batch_size}")
+                                logger.info(f"[岛屿] 已为岗位 {post_id} 安排 {self._item_cn(fill_product)} x{batch_size}")
                         else:
-                            logger.info(f"[岛屿] 生产 {self._item_cn(away_cook)} 的材料不足，跳过岗位 {post_id}")
+                            logger.info(f"[岛屿] 生产 {self._item_cn(fill_product)} 的材料不足，跳过岗位 {post_id}")
                             break
 
                     else:

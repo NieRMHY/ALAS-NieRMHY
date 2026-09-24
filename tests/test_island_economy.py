@@ -189,6 +189,42 @@ class TestAutoProfitPlanner(unittest.TestCase):
         self.assertNotIn('tofu_combo', names)
 
 
+class TestSupportPlan(unittest.TestCase):
+    """空岗填充的原料保障：填充商品缺上游原料时先造原料"""
+
+    def test_coffee_missing_iced_coffee(self):
+        """啾咖啡：醒神套餐缺冰咖啡 → 冰咖啡进保障计划"""
+        p = AutoProfitPlanner('juu_coffee')
+        plan = p.support_plan('wake_up_call', {'cheese': 21, 'iced_coffee': 0},
+                              exclude=set())
+        names = [n for n, _ in plan]
+        self.assertIn('iced_coffee', names)
+        self.assertNotIn('cheese', names)  # 芝士充足不需要补
+
+    def test_eatery_missing_orange_pie(self):
+        """啾啾简餐：莓果香橙甜点组缺香橙派 → 香橙派进保障计划"""
+        p = AutoProfitPlanner('juu_eatery')
+        plan = p.support_plan('berry_orange',
+                              {'strawberry_charlotte': 23, 'orange_pie': 0})
+        names = [n for n, _ in plan]
+        self.assertIn('orange_pie', names)
+        self.assertNotIn('strawberry_charlotte', names)
+
+    def test_no_support_when_materials_enough(self):
+        """原料充足时保障计划为空"""
+        p = AutoProfitPlanner('juu_coffee')
+        plan = p.support_plan('wake_up_call', {'cheese': 99, 'iced_coffee': 99})
+        self.assertEqual(plan, [])
+
+    def test_exclude_respected(self):
+        """不可生产名单内的原料不进保障计划"""
+        p = AutoProfitPlanner('juu_coffee')
+        plan = p.support_plan('wake_up_call', {'cheese': 0, 'iced_coffee': 0},
+                              exclude={'iced_coffee'})
+        names = [n for n, _ in plan]
+        self.assertNotIn('iced_coffee', names)
+
+
 class TestUnproducibleList(unittest.TestCase):
     """不可生产名单的持久化与解除（账号解锁后恢复排产）"""
 

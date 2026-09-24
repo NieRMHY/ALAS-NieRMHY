@@ -251,6 +251,55 @@ class AutoProfitPlanner:
             f"计划: {[(n, q) for n, q in plan]} (容量{self.capacity}, 等级{self.shop_level})")
         return plan
 
+    def support_plan(self, name, warehouse_counts, in_production=None,
+                     quantity=None, exclude=(), _depth=0):
+        """
+        上游原料保障计划：为生产 name 计算当前缺失、且本店可自产的中间品。
+
+        与 build_plan 的原料联动不同，本方法不依赖"目标库存有缺口"——
+        空岗填充商品即使库存已超目标仍需补齐原料，否则缺料会让岗位一直
+        空着（真机：啾咖啡缺冰咖啡、啾啾简餐缺香橙派）。
+
+        Args:
+            name: 目标商品
+            warehouse_counts: {商品: 仓库库存}
+            in_production: {商品: 在制数量}
+            quantity: 目标生产数量；None 用该商品目标库存
+            exclude: 排除商品（不可生产名单）
+            _depth: 递归深度（内部使用）
+
+        Returns:
+            list[(商品, 数量)]：缺失的可自产中间品，深层原料在前
+        """
+        if _depth > 4 or name in exclude:
+            return []
+        info = self.economy.get_product(name)
+        if not info:
+            return []
+        in_production = in_production or {}
+        qty = quantity or self.target_stock(name)
+        plan = []
+        for sub, per in info['materials'].items():
+            if sub not in self.economy.economy_products or sub in exclude:
+                continue
+            need = per * qty
+            have = warehouse_counts.get(sub, 0) + in_production.get(sub, 0)
+            if have >= need:
+                continue
+            want = max(self.target_stock(sub), need - have)
+            # 先保证中间品自身的原料，再排中间品本身
+            plan.extend(self.support_plan(sub, warehouse_counts, in_production,
+                                          want, exclude, _depth + 1))
+            plan.append((sub, want))
+        seen = set()
+        out = []
+        for item, q in plan:
+            if item in seen:
+                continue
+            seen.add(item)
+            out.append((item, q))
+        return out
+
     def manual_slots_to_targets(self, post_products):
         """
         将手动槽位 (name, number) 列表转为保底目标映射。
