@@ -73,6 +73,8 @@ class IslandShopBase(Island, WarehouseOCR):
         self.autoprofit_enabled = False
         self.autoprofit_planner = None
         self.autoprofit_level = 'diamond'
+        self.autoprofit_unproducible = set()  # 账号未解锁/研发未完成的商品（持久化学习）
+        self.manual_products = set()  # 用户手动配置的商品，失败时不自动降级
 
     # ==================== 季节配置支持 ====================
 
@@ -149,6 +151,9 @@ class IslandShopBase(Island, WarehouseOCR):
                 meal_number = getattr(self.config, number_key, 0)
                 self.post_products.append((meal_name, meal_number))
 
+        # Add by MHY: 记录用户手动配置的商品，AutoProfit 只对自动选品做失败降级
+        self.manual_products = {name for name, _ in self.post_products}
+
     def initialize_shop(self):
         """初始化店铺，子类必须在__init__中调用"""
         self.name_to_config = {item['name']: item for item in self.shop_items}
@@ -211,9 +216,35 @@ class IslandShopBase(Island, WarehouseOCR):
     def produce_special_food(self):
         pass
 
+    def is_manual_product(self, name):
+        """商品是否来自用户手动配置（Meal1-8），手动配置不参与自动降级。"""
+        return name in getattr(self, 'manual_products', set())
+
+    def blacklist_autoprofit_product(self, name):
+        """把连续选品失败的自动商品记入持久化不可生产名单。"""
+        from module.island.island_autoprofit import add_unproducible
+        add_unproducible(self.shop_type, name)
+        self.autoprofit_unproducible.add(name)
+        self.chef_unavailable_products.add(name)
+
     def retry_product_selection_from_postmanage(self, post_button, product, failed_product, failed_count):
-        """餐品选择失败后退出岗位，重新进入同一岗位走完整派遣流程。"""
+        """餐品选择失败后退出岗位，重新进入同一岗位走完整派遣流程。
+
+        Returns:
+            bool: True 已重进岗位可继续尝试；
+                  False 自动选品判定为不可生产（未解锁），本轮跳过该商品。
+        """
         if failed_count >= self.PRODUCT_SELECT_RETRY_LIMIT:
+            # Add by MHY: AutoProfit 自动选的商品连续选不到（账号未解锁/研发未完成，
+            # 派单列表里没有该图标）时，记入持久黑名单并跳过本轮，避免 GameStuckError
+            # 触发游戏重启循环；用户手动配置的商品保持原有抛错行为。
+            if self.autoprofit_enabled and not self.is_manual_product(failed_product):
+                self.blacklist_autoprofit_product(failed_product)
+                logger.warning(
+                    f"[岛屿-AutoProfit] {self._item_cn(failed_product)} 连续{failed_count}次选品失败，"
+                    f"判定为未解锁并跳过"
+                )
+                return False
             raise GameStuckError(
                 f"{self._item_cn(product)}生产选择餐品时连续{failed_count}次未识别到 {self._item_cn(failed_product)}"
             )
@@ -230,6 +261,7 @@ class IslandShopBase(Island, WarehouseOCR):
         if not self.post_open(post_button):
             raise GameStuckError(f"{self._item_cn(product)}生产选择餐品失败后无法重新打开岗位")
         self.device.sleep(0.5)
+        return True
 
     def increase_product_selection_failure(self, product_select_failures, failed_product):
         """记录单个餐品的选择失败次数。"""
@@ -282,9 +314,10 @@ class IslandShopBase(Island, WarehouseOCR):
                                     failed_count = self.increase_product_selection_failure(
                                         product_select_failures, product2
                                     )
-                                    self.retry_product_selection_from_postmanage(
-                                        post_button, product, product2, failed_count
-                                    )
+                                    if not self.retry_product_selection_from_postmanage(
+                                            post_button, product, product2, failed_count):
+                                        self.back_to_postmanage_from_dispatch()
+                                        return 0
                                     continue
                                 self.device.sleep(0.5)
                                 if self.produce_check():
@@ -319,9 +352,10 @@ class IslandShopBase(Island, WarehouseOCR):
                     failed_count = self.increase_product_selection_failure(
                         product_select_failures, product
                     )
-                    self.retry_product_selection_from_postmanage(
-                        post_button, product, product, failed_count
-                    )
+                    if not self.retry_product_selection_from_postmanage(
+                            post_button, product, product, failed_count):
+                        self.back_to_postmanage_from_dispatch()
+                        return 0
                 continue
         else:
             raise GameStuckError(f"{self._item_cn(product)}生产派遣流程超时")
@@ -482,6 +516,13 @@ class IslandShopBase(Island, WarehouseOCR):
             self.shop_type, shop_level=raw_level)
         self.autoprofit_enabled = self.autoprofit_planner is not None
         if self.autoprofit_enabled:
+            # 载入历史学到的不可生产商品（未解锁），排产时排除
+            from module.island.island_autoprofit import load_unproducible
+            self.autoprofit_unproducible = load_unproducible(self.shop_type)
+            if self.autoprofit_unproducible:
+                logger.info(f"[岛屿-AutoProfit] 已排除不可生产商品: "
+                            f"{sorted(self.autoprofit_unproducible)}")
+        if self.autoprofit_enabled:
             logger.info(
                 f"[岛屿-AutoProfit] {self.shop_type} 已启用 "
                 f"（等级: {raw_level}, 容量: {self.autoprofit_planner.capacity}）")
@@ -492,7 +533,8 @@ class IslandShopBase(Island, WarehouseOCR):
             return None
         season = self.current_season if hasattr(self, 'current_season') else None
         items = self.autoprofit_planner.economy.recommend_products(
-            self.shop_type, season=season, top=1)
+            self.shop_type, season=season, top=1,
+            exclude=set(self.autoprofit_unproducible))
         if not items:
             return None
         name = items[0]['name']
@@ -508,10 +550,14 @@ class IslandShopBase(Island, WarehouseOCR):
         if not self.autoprofit_enabled or self.autoprofit_planner is None:
             return
         manual_targets = dict(self.post_products)
+        # available 传本店实际有按钮资源的商品，过滤经济库中代码未实现的条目
+        # （如 grill 的 lemon_shrimp），否则排产到它会在 post_produce 里 KeyError
         auto_plan = self.autoprofit_planner.build_plan(
             warehouse_counts=self.warehouse_counts,
             in_production=self.post_check_meal,
             season=self.current_season if hasattr(self, 'current_season') else None,
+            available=set(self.name_to_config),
+            exclude=set(self.autoprofit_unproducible),
         )
         merged = merge_autoprofit_with_manual(auto_plan, manual_targets)
         if merged:

@@ -21,9 +21,65 @@ from module.island.island_economy import (
 )
 from module.logger import logger
 
+import json
+import os
+
 
 # AutoProfit 触发的最小补货阈值（目标库存 - 当前库存 > 此值才排产）
 AUTOPROFIT_MIN_DEFICIT = 2
+
+# 运行时学习的「不可生产商品」名单（账号未解锁/研发未完成，派单列表无图标）。
+# 由选品连续失败触发记录，排产时排除，避免反复 GameStuckError 重启游戏。
+UNPRODUCIBLE_FILE = os.path.join('config', 'island_unproducible.json')
+
+
+def load_unproducible(shop):
+    """
+    读取本店已确认不可生产的商品名集合。
+
+    Args:
+        shop: 店铺类型标识
+
+    Returns:
+        set[str]
+    """
+    try:
+        with open(UNPRODUCIBLE_FILE, encoding='utf-8') as f:
+            data = json.load(f)
+    except (OSError, ValueError):
+        return set()
+    return set(data.get(shop, []))
+
+
+def add_unproducible(shop, name):
+    """
+    记录不可生产商品（选品连续失败时调用），供后续排产排除。
+
+    Args:
+        shop: 店铺类型标识
+        name: 商品英文名
+    """
+    data = {}
+    try:
+        with open(UNPRODUCIBLE_FILE, encoding='utf-8') as f:
+            data = json.load(f)
+    except (OSError, ValueError):
+        pass
+    items = set(data.get(shop, []))
+    if name in items:
+        return
+    items.add(name)
+    data[shop] = sorted(items)
+    try:
+        os.makedirs(os.path.dirname(UNPRODUCIBLE_FILE) or '.', exist_ok=True)
+        with open(UNPRODUCIBLE_FILE, 'w', encoding='utf-8') as f:
+            json.dump(data, f, ensure_ascii=False, indent=1)
+    except OSError as e:
+        logger.warning(f"[岛屿-AutoProfit] 写入不可生产名单失败: {e}")
+        return
+    logger.warning(
+        f"[岛屿-AutoProfit] {SHOP_CN_NAMES.get(shop, shop)} {name} 连续选品失败，"
+        f"判定为未解锁，记入不可生产名单（后续不再排产，不重启游戏）")
 
 
 def get_autoprofit_planner(shop, shop_level='diamond'):
@@ -101,7 +157,7 @@ class AutoProfitPlanner:
         return sellable + self.safety_margin
 
     def build_plan(self, warehouse_counts, in_production=None, season=None,
-                   exclude=()):
+                   exclude=(), available=None):
         """
         生成本轮生产计划。
 
@@ -110,14 +166,23 @@ class AutoProfitPlanner:
             in_production: {商品名: 在制数量}；None 视为空
             season: 季节；None 用经济库实例季节
             exclude: 排除商品（如本轮强制跳过项）
+            available: 可生产商品名集合；None 不过滤。
+                       Add by MHY：经济库收录 wiki 全部商品，但代码可能缺少
+                       某个商品的按钮资源（如 lemon_shrimp/pineapple_juice），
+                       不过滤会在排产时 KeyError。
 
         Returns:
             list[(商品名, 补货数量)] 按利润/分钟降序，只含有缺口的商品
         """
         in_production = in_production or {}
-        # 1. 选品：利润排序取前 max_items 个（含当季季节限定）
-        candidates = self.economy.recommend_products(
-            self.shop, season=season, top=self.max_items, exclude=exclude)
+
+        def producible(name):
+            return available is None or name in available
+
+        # 1. 选品：利润排序取前 max_items 个（含当季季节限定），仅保留可生产的
+        candidates = [p for p in self.economy.recommend_products(
+            self.shop, season=season, top=self.max_items * 2, exclude=exclude)
+            if producible(p['name'])][:self.max_items]
         if not candidates:
             return []
 
@@ -138,7 +203,7 @@ class AutoProfitPlanner:
             if not info:
                 continue
             for mat, per in info['materials'].items():
-                if mat not in self.economy.economy_products:
+                if mat not in self.economy.economy_products or not producible(mat):
                     continue
                 # 原料也是本店可生产商品（如冰咖啡/柑橘咖啡）且库存不足
                 have = warehouse_counts.get(mat, 0) + in_production.get(mat, 0)

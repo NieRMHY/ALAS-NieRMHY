@@ -164,6 +164,20 @@ class TestAutoProfitPlanner(unittest.TestCase):
         self.assertEqual(merged['tofu_combo'], 7)
         self.assertEqual(merged['tofu_meat'], 3)
 
+    def test_build_plan_filters_unproducible(self):
+        """经济库中代码未实现的商品（无按钮资源）不参与排产，避免 KeyError"""
+        p = AutoProfitPlanner('grill')
+        available = {'roasted_skewer', 'chicken_potato', 'stir_fried_chicken',
+                     'carrot_omelette', 'steak_bowl', 'crayfish_stir_fry',
+                     'carnival', 'double_energy'}
+        # 不传 available：lemon_shrimp（利润高）会被选中
+        plan_all = [n for n, _ in p.build_plan({}, season='autumn')]
+        self.assertIn('lemon_shrimp', plan_all)
+        # 传 available（代码可生产列表）：被过滤掉
+        plan_filtered = [n for n, _ in p.build_plan({}, season='autumn', available=available)]
+        self.assertNotIn('lemon_shrimp', plan_filtered)
+        self.assertTrue(set(plan_filtered) <= available)
+
     def test_min_deficit_threshold(self):
         """缺口小于阈值不排产"""
         p = AutoProfitPlanner('restaurant', shop_level='bronze')
