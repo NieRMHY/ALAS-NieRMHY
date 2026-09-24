@@ -46,6 +46,8 @@ module/island/                  # 全部逻辑所在的主包
 ├── island_business.py          # 商区经营（最大的单文件，含按钮状态机与批次逻辑）
 ├── island_daily_gather.py / island_daily_interact.py / island_daily_order.py
 ├── island_air_drop.py / island_pearl_sell.py / island_cargo_preparation.py
+├── island_economy.py              # 经济数据库：59 个餐饮商品成本/售价/利润/配方（Add by MHY）
+├── island_autoprofit.py           # AutoProfit 感知生产规划器（Add by MHY）
 └── island_shop_base.py 所在的生产链各店无独立 run 以外的入口
 
 module/island_farm/ 等 16 个目录  # 薄壳：仅 button_extract 生成的 assets.py
@@ -146,6 +148,47 @@ flowchart TD
 | `island_air_drop.py` | 每日空投 + 好友岛偷补给 | `IslandAirDrop` | 以服务器 0 点为每日边界；5 小时偷取冷却（`LastSteal` 落配置）；拜访次数 OCR 复检 |
 | `island_pearl_sell.py` | 珍珠每周采购售卖 | `IslandPearlSell` | 周一 01:00 交易窗口；本岛价不达标时按排行榜拜访好友岛比价（买 1.1 折算）；每日 03:00 可选价格刷新 |
 | `island_cargo_preparation.py` | 货运委托 | `IslandCargoPreparation` | 3 栏位状态机（locked/pending/running/finished/refreshing/empty）；牛奶黑名单触发换货；默认 2 小时重跑 |
+
+## 6.5 经济闭环（AutoProfit 感知生产）
+
+> Add by MHY：解决「只生产不管售卖回血」的坐吃山空问题。
+
+**两个新模块：**
+
+- `island_economy.py`：餐饮经济数据库。59 个商品（5 店铺全覆盖）的
+  材料配方、制作时间（分钟）、体力成本、材料费用、售价、结算利润，
+  数据抓取自 biligame wiki「岛屿计划」页。提供 `profit_per_min()`、
+  `recommend_products()`（按利润/分钟推荐）、`expand_materials()`
+  （套餐递归分解到基础食材）、`shop_capacity()`（店铺等级容量）、
+  `sales_boost()`（店员销售额加成合计）等查询 API，进程级单例
+  `get_global_economy()`。制造产线走 PT 转化体系，不在本表。
+- `island_autoprofit.py`：`AutoProfitPlanner` 单店铺规划器。按
+  「目标库存 = 店铺容量 × 售出系数 / 1.6 + 安全余量」计算每个商品的
+  补货缺口，输出按利润/分钟降序的生产计划；
+  `merge_autoprofit_with_manual()` 把自动计划与手动槽位（Meal1-8）
+  合并——同名取最大值，手动配置始终是保底下限。
+
+**接入方式（最小侵入）：**
+
+- `IslandShopBase` 新增 `setup_autoprofit()` / `refresh_autoprofit_targets()`
+  两个挂点；`run()` 在 `get_warehouse_counts()` 之后调用 refresh，
+  用「仓库库存 + 在制品」重建 `post_products`，后续排产走原有
+  `_compute_base_demands → process_meal_requirements → schedule_production`
+  全链路，不重复实现排产。
+- 五个餐饮店铺 `__init__` 末尾按 `IslandXxx_AutoProfit` 开关条件启用；
+  制造工坊（manufacture）被工厂函数显式排除，行为不变。
+
+**配置项：**
+
+| 配置 | 类型 | 默认 | 说明 |
+| --- | --- | --- | --- |
+| `IslandBusiness.AutoProfit` | checkbox | false | 全局开关（还需店铺侧开启） |
+| `IslandBusiness.ShopLevel` | select | diamond | 店铺等级：bronze/silver/gold/diamond |
+| `IslandRestaurant（等5店）.AutoProfit` | checkbox | false | 单店开关，默认关闭保手动模式 |
+
+角色选择不自动化：经营店员仍走 `IslandBusinessShopX.Char1/Char2`
+手动配置（角色不全也能用），经济库的 `SALES_BOOST_CHARACTERS`
+只作为日志参考，不强制选人。
 
 ## 7. 调用关系
 
