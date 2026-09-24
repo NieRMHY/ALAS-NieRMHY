@@ -4445,6 +4445,12 @@
       "name": "Fish restaurant",
       "help": "Meals are produced sequentially from 1 to 8. The production target is the Meal X quantity option. The next item is only executed after the previous one is fully satisfied. Later items will not affect the completion of earlier items during runtime.\nDouble Bamboo Shoots and Asparagus Shrimp in meals 1-8 will automatically switch to corresponding seasonal meals based on the current season."
     },
+    "AutoProfit": {
+      "name": "Auto profit scheduling",
+      "help": "When enabled, decides what to produce by profit/min from the economy database; manual slots remain as guaranteed targets",
+      "True": "True",
+      "False": "False"
+    },
     "PostNumber": {
       "name": "Assign X chef positions",
       "help": "",
@@ -4674,6 +4680,12 @@
       "name": "Polar Bear Drinks",
       "help": "Meals are produced sequentially from 1 to 8. The production target is the Meal X quantity option. The next item is only executed after the previous one is fully satisfied. Later items will not affect the completion of earlier items during runtime.\nHoney drinks support automatic production; make sure honey stock is sufficient.\nSpring Flower Tea and Fresh Pineapple Juice in meals will automatically switch to corresponding seasonal meals based on the current season."
     },
+    "AutoProfit": {
+      "name": "Auto profit scheduling",
+      "help": "When enabled, decides what to produce by profit/min from the economy database; manual slots remain as guaranteed targets",
+      "True": "True",
+      "False": "False"
+    },
     "PostNumber": {
       "name": "Assign X bartender positions",
       "help": "",
@@ -4885,6 +4897,12 @@
       "name": "Squid Grill",
       "help": "Meals are produced sequentially from 1 to 8. The production target is the Meal X quantity option. The next item is only executed after the previous one is fully satisfied. Later items will not affect the completion of earlier items during runtime."
     },
+    "AutoProfit": {
+      "name": "Auto profit scheduling",
+      "help": "When enabled, decides what to produce by profit/min from the economy database; manual slots remain as guaranteed targets",
+      "True": "True",
+      "False": "False"
+    },
     "PostNumber": {
       "name": "Assign X grill chef positions",
       "help": "",
@@ -5055,6 +5073,12 @@
     "_info": {
       "name": "Juu Eatery",
       "help": "Meals are produced sequentially from 1 to 8. The production target is the Meal X quantity option. The next item is only executed after the previous one is fully satisfied. Later items will not affect the completion of earlier items during runtime."
+    },
+    "AutoProfit": {
+      "name": "Auto profit scheduling",
+      "help": "When enabled, decides what to produce by profit/min from the economy database; manual slots remain as guaranteed targets",
+      "True": "True",
+      "False": "False"
     },
     "PostNumber": {
       "name": "Assign X cook positions",
@@ -5244,6 +5268,12 @@
     "_info": {
       "name": "Juu Coffee",
       "help": "Meals are produced sequentially from 1 to 8. The production target is the Meal X quantity option. The next item is only executed after the previous one is fully satisfied. Later items will not affect the completion of earlier items during runtime."
+    },
+    "AutoProfit": {
+      "name": "Auto profit scheduling",
+      "help": "When enabled, decides what to produce by profit/min from the economy database; manual slots remain as guaranteed targets",
+      "True": "True",
+      "False": "False"
     },
     "PostNumber": {
       "name": "Assign X barista positions",
@@ -5594,6 +5624,20 @@
     "SeasonalThreshold": {
       "name": "Replace seasonal items when below X",
       "help": "Replace seasonal product when stock is below this number"
+    },
+    "AutoProfit": {
+      "name": "Business-aware production",
+      "help": "Enable profit-driven scheduling in food shops (also enable in each shop task)",
+      "True": "True",
+      "False": "False"
+    },
+    "ShopLevel": {
+      "name": "Shop level",
+      "help": "Determines meal slots and per-slot capacity: bronze 2x5, silver 2x6, gold 3x6, diamond 4x6 (+1 per slot with boost characters)",
+      "bronze": "bronze",
+      "silver": "silver",
+      "gold": "gold",
+      "diamond": "diamond"
     }
   },
   "IslandBusinessShop1": {

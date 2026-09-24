@@ -15488,6 +15488,24 @@
       "SeasonalThreshold": {
         "type": "input",
         "value": 7
+      },
+      "AutoProfit": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "ShopLevel": {
+        "type": "select",
+        "value": "diamond",
+        "option": [
+          "bronze",
+          "silver",
+          "gold",
+          "diamond"
+        ]
       }
     },
     "IslandBusinessShop1": {
@@ -16845,6 +16863,14 @@
       }
     },
     "IslandRestaurant": {
+      "AutoProfit": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
       "PostNumber": {
         "type": "select",
         "value": 2,
@@ -17147,6 +17173,14 @@
       }
     },
     "IslandTeahouse": {
+      "AutoProfit": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
       "PostNumber": {
         "type": "select",
         "value": 2,
@@ -17431,6 +17465,14 @@
       }
     },
     "IslandGrill": {
+      "AutoProfit": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
       "PostNumber": {
         "type": "select",
         "value": 1,
@@ -17675,6 +17717,14 @@
       }
     },
     "IslandJuuEatery": {
+      "AutoProfit": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
       "PostNumber": {
         "type": "select",
         "value": 1,
@@ -17937,6 +17987,14 @@
       }
     },
     "IslandJuuCoffee": {
+      "AutoProfit": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
       "PostNumber": {
         "type": "select",
         "value": 2,

@@ -78,6 +78,10 @@ class IslandGrill(IslandShopBase):
         # 初始化店铺
         self.initialize_shop()
 
+        # Add by MHY, 岛屿经济闭环：AutoProfit 感知生产（读全局开关+等级，未开启时零行为变化）
+        if getattr(self.config, 'IslandGrill_AutoProfit', False):
+            self.setup_autoprofit(level_config_key='IslandBusiness_ShopLevel')
+
     def test(self):
         self.island_error = False
         self.post_get_and_close()

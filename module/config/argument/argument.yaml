@@ -1649,6 +1649,11 @@ IslandDailyGather:
     value: ""
     preserve_empty: true
 IslandRestaurant:
+  # Add by MHY, 岛屿经济闭环：AutoProfit 感知生产开关（手动槽位 Meal1-8 始终兜底）
+  AutoProfit:
+    type: checkbox
+    value: false
+    option: [ true, false ]
   PostNumber:
     value: 2
     option: [ 1, 2 ]
@@ -1700,6 +1705,11 @@ IslandRestaurantNextTask:
     value: None
     option: [ None, tofu, omurice, cabbage_tofu, salad, tofu_meat, tofu_combo, hearty_meal , double_bamboo_shoots, asparagus_shrimp, fish_chip, fo_tiao, onion_fish, matsutake_chicken_soup, persimmon_cake]
 IslandTeahouse:
+  # Add by MHY, 岛屿经济闭环：AutoProfit 感知生产开关（手动槽位 Meal1-8 始终兜底）
+  AutoProfit:
+    type: checkbox
+    value: false
+    option: [ true, false ]
   PostNumber:
     value: 2
     option: [ 1, 2 ]
@@ -1751,6 +1761,11 @@ IslandTeahouseNextTask:
     value: None
     option: [ None, apple_juice, banana_mango, honey_lemon, strawberry_lemon, strawberry_honey, floral_fruity, fruit_paradise, lavender_tea, sunny_honey, spring_flower_tea, chrysanthemum_tea, carrot_pear_juice]
 IslandGrill:
+  # Add by MHY, 岛屿经济闭环：AutoProfit 感知生产开关（手动槽位 Meal1-8 始终兜底）
+  AutoProfit:
+    type: checkbox
+    value: false
+    option: [ true, false ]
   PostNumber:
     value: 1
     option: [ 1, 2 ]
@@ -1801,6 +1816,11 @@ IslandGrillNextTask:
     value: None
     option: [ None, roasted_skewer, chicken_potato, carrot_omelette, stir_fried_chicken, steak_bowl, crayfish_stir_fry, carnival, double_energy ]
 IslandJuuEatery:
+  # Add by MHY, 岛屿经济闭环：AutoProfit 感知生产开关（手动槽位 Meal1-8 始终兜底）
+  AutoProfit:
+    type: checkbox
+    value: false
+    option: [ true, false ]
   PostNumber:
     value: 1
     option: [ 1, 2 ]
@@ -1851,6 +1871,11 @@ IslandJuuEateryNextTask:
     value: None
     option: [ None, apple_pie, corn_cup, orange_pie, banana_crepe, orchard_duo, rice_mango, succulently_sweet, berry_orange, strawberry_charlotte, seafood_rice ]
 IslandJuuCoffee:
+  # Add by MHY, 岛屿经济闭环：AutoProfit 感知生产开关（手动槽位 Meal1-8 始终兜底）
+  AutoProfit:
+    type: checkbox
+    value: false
+    option: [ true, false ]
   PostNumber:
     value: 2
     option: [ 1, 2 ]
@@ -1971,6 +1996,15 @@ IslandBusiness:
   SeasonalThreshold:
     type: input
     value: 7
+  # Add by MHY, 岛屿经济闭环：AutoProfit 感知生产全局开关与店铺等级
+  AutoProfit:
+    type: checkbox
+    value: false
+    option: [ true, false ]
+  ShopLevel:
+    type: select
+    value: diamond
+    option: [ bronze, silver, gold, diamond ]
 
 # ---------- Island Business Shops ----------
 _IslandBusinessChar: &IslandBusinessChar

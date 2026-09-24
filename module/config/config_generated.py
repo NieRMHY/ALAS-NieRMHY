@@ -886,6 +886,7 @@ class GeneratedConfig:
     IslandDailyGather_WorkerFilter = ''
 
     # 配置组 `IslandRestaurant`
+    IslandRestaurant_AutoProfit = False  # True, False
     IslandRestaurant_PostNumber = 2  # 1, 2
     IslandRestaurant_ChefFilter = 'WorkerJuu'
     IslandRestaurant_DoubleBambooShoots = False
@@ -910,6 +911,7 @@ class GeneratedConfig:
     IslandRestaurantNextTask_AwayCook = 'None'  # None, tofu, omurice, cabbage_tofu, salad, tofu_meat, tofu_combo, hearty_meal, double_bamboo_shoots, asparagus_shrimp, fish_chip, fo_tiao, onion_fish, matsutake_chicken_soup, persimmon_cake
 
     # 配置组 `IslandTeahouse`
+    IslandTeahouse_AutoProfit = False  # True, False
     IslandTeahouse_PostNumber = 2  # 1, 2
     IslandTeahouse_ChefFilter = 'WorkerJuu'
     IslandTeahouse_Seasonal = False
@@ -934,6 +936,7 @@ class GeneratedConfig:
     IslandTeahouseNextTask_AwayCook = 'None'  # None, apple_juice, banana_mango, honey_lemon, strawberry_lemon, strawberry_honey, floral_fruity, fruit_paradise, lavender_tea, sunny_honey, spring_flower_tea, chrysanthemum_tea, carrot_pear_juice
 
     # 配置组 `IslandGrill`
+    IslandGrill_AutoProfit = False  # True, False
     IslandGrill_PostNumber = 1  # 1, 2
     IslandGrill_ChefFilter = 'WorkerJuu'
     IslandGrill_Meal1 = 'double_energy'  # None, roasted_skewer, chicken_potato, carrot_omelette, stir_fried_chicken, steak_bowl, crayfish_stir_fry, carnival, double_energy
@@ -957,6 +960,7 @@ class GeneratedConfig:
     IslandGrillNextTask_AwayCook = 'None'  # None, roasted_skewer, chicken_potato, carrot_omelette, stir_fried_chicken, steak_bowl, crayfish_stir_fry, carnival, double_energy
 
     # 配置组 `IslandJuuEatery`
+    IslandJuuEatery_AutoProfit = False  # True, False
     IslandJuuEatery_PostNumber = 1  # 1, 2
     IslandJuuEatery_ChefFilter = 'WorkerJuu'
     IslandJuuEatery_Meal1 = 'berry_orange'  # None, apple_pie, corn_cup, orange_pie, banana_crepe, orchard_duo, rice_mango, succulently_sweet, berry_orange, strawberry_charlotte, seafood_rice
@@ -980,6 +984,7 @@ class GeneratedConfig:
     IslandJuuEateryNextTask_AwayCook = 'None'  # None, apple_pie, corn_cup, orange_pie, banana_crepe, orchard_duo, rice_mango, succulently_sweet, berry_orange, strawberry_charlotte, seafood_rice
 
     # 配置组 `IslandJuuCoffee`
+    IslandJuuCoffee_AutoProfit = False  # True, False
     IslandJuuCoffee_PostNumber = 2  # 1, 2
     IslandJuuCoffee_ChefFilter = 'WorkerJuu'
     IslandJuuCoffee_Friedrich = False
@@ -1043,6 +1048,8 @@ class GeneratedConfig:
     IslandBusiness_Batch2Shops = [2, 4]  # 1, 2, 3, 4, 5
     IslandBusiness_SeasonalReplaceEnabled = True  # True, False
     IslandBusiness_SeasonalThreshold = 7
+    IslandBusiness_AutoProfit = False  # True, False
+    IslandBusiness_ShopLevel = 'diamond'  # bronze, silver, gold, diamond
 
     # 配置组 `IslandBusinessShop1`
     IslandBusinessShop1_Char1 = 'None'  # None, WorkerJuu, Cheshire, YingSwei, Saratoga, Akashi, NewJersey, Tashkent, LeMalin, Shimakaze, Amagi_chan, Unicorn, ChaoHo, ChenHai, WilliamDPorter, Helena, Friedrich, Atago, Yixian, August, Eugen, Hood, Javelin, Laffey, Explorer, Navigator, OceanCrosser, FeiYun, Takao, Anchorage, Belfast, ChangFeng, Mogador, RoyalFortune, DaVinci, Taihou

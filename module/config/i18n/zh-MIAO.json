@@ -4374,6 +4374,10 @@
     "MealNumber8": {
       "name": "餐品8数量喵",
       "help": ""
+    },
+    "AutoProfit": {
+      "name": "利润自动排产喵",
+      "help": "开启后按经济数据库利润/分钟自动决定本店生产什么喵，手动槽位作为保底目标保留喵"
     }
   },
   "IslandRestaurantNextTask": {
@@ -4587,6 +4591,10 @@
     "MealNumber8": {
       "name": "餐品8数量喵",
       "help": ""
+    },
+    "AutoProfit": {
+      "name": "利润自动排产喵",
+      "help": "开启后按经济数据库利润/分钟自动决定本店生产什么喵，手动槽位作为保底目标保留喵"
     }
   },
   "IslandTeahouseNextTask": {
@@ -4762,6 +4770,10 @@
     "MealNumber8": {
       "name": "餐品8数量喵",
       "help": ""
+    },
+    "AutoProfit": {
+      "name": "利润自动排产喵",
+      "help": "开启后按经济数据库利润/分钟自动决定本店生产什么喵，手动槽位作为保底目标保留喵"
     }
   },
   "IslandGrillNextTask": {
@@ -4949,6 +4961,10 @@
     "MealNumber8": {
       "name": "餐品8数量喵",
       "help": ""
+    },
+    "AutoProfit": {
+      "name": "利润自动排产喵",
+      "help": "开启后按经济数据库利润/分钟自动决定本店生产什么喵，手动槽位作为保底目标保留喵"
     }
   },
   "IslandJuuEateryNextTask": {
@@ -5134,6 +5150,10 @@
     "MealNumber8": {
       "name": "餐品8数量喵",
       "help": ""
+    },
+    "AutoProfit": {
+      "name": "利润自动排产喵",
+      "help": "开启后按经济数据库利润/分钟自动决定本店生产什么喵，手动槽位作为保底目标保留喵"
     }
   },
   "IslandJuuCoffeeNextTask": {
@@ -5326,6 +5346,14 @@
     "SeasonalThreshold": {
       "name": "季节限定替换阈值喵",
       "help": "库存低于这个数就换商品喵"
+    },
+    "AutoProfit": {
+      "name": "经营感知生产喵",
+      "help": "开启后各餐饮店铺按利润自动排产喵（需在各店铺任务中同时开启喵）"
+    },
+    "ShopLevel": {
+      "name": "店铺等级喵",
+      "help": "决定餐品格数与每格容量：铜2x5 银2x6 金3x6 钻4x6（有加成角色时每格+1）喵"
     }
   },
   "IslandBusinessShop1": {

@@ -13,6 +13,9 @@ from module.island.warehouse import *
 from module.logger import logger
 from module.island.island_season import get_global_season_config
 
+# Add by MHY, 岛屿经济闭环：AutoProfit 感知生产
+from module.island.island_autoprofit import get_autoprofit_planner, merge_autoprofit_with_manual
+
 
 class IslandShopBase(Island, WarehouseOCR):
     _MAX_FILL_LOOP = 10  # while 循环填岗最大迭代次数
@@ -65,6 +68,11 @@ class IslandShopBase(Island, WarehouseOCR):
 
         # 滑动配置（子类可覆盖）
         self.post_manage_swipe_count = 1  # 默认滑动1次450
+
+        # Add by MHY, 岛屿经济闭环：AutoProfit 感知生产状态（默认关闭，子类启用）
+        self.autoprofit_enabled = False
+        self.autoprofit_planner = None
+        self.autoprofit_level = 'diamond'
 
     # ==================== 季节配置支持 ====================
 
@@ -450,6 +458,66 @@ class IslandShopBase(Island, WarehouseOCR):
         """返回基础需求之前安排的产品及数量，由店铺声明季节规则。"""
         return {}
 
+    # ==================== AutoProfit 感知生产（Add by MHY, 岛屿经济闭环） ====================
+
+    def setup_autoprofit(self, level_config_key=None):
+        """
+        启用 AutoProfit 感知生产：按经济数据库利润排序动态生成 post_products。
+
+        手动槽位（Meal1-8）仍作为兜底参与目标合并（同名取最大值），
+        未开启或配置缺失时保持原有行为不变。
+
+        Args:
+            level_config_key: 店铺等级的配置键名；None 用默认 'diamond'
+        """
+        from module.island.island_economy import SHOP_LEVELS
+        raw_level = 'diamond'
+        if level_config_key:
+            raw_level = getattr(self.config, level_config_key, 'diamond') or 'diamond'
+        if raw_level not in SHOP_LEVELS:
+            logger.warning(f"[岛屿-AutoProfit] 未知店铺等级 {raw_level}，回退钻石档")
+            raw_level = 'diamond'
+        self.autoprofit_level = raw_level
+        self.autoprofit_planner = get_autoprofit_planner(
+            self.shop_type, shop_level=raw_level)
+        self.autoprofit_enabled = self.autoprofit_planner is not None
+        if self.autoprofit_enabled:
+            logger.info(
+                f"[岛屿-AutoProfit] {self.shop_type} 已启用 "
+                f"（等级: {raw_level}, 容量: {self.autoprofit_planner.capacity}）")
+
+    def economy_top_product(self):
+        """返回本店利润/分钟最高且可生产的商品名（AutoProfit 空岗填充用）。"""
+        if not self.autoprofit_enabled or self.autoprofit_planner is None:
+            return None
+        season = self.current_season if hasattr(self, 'current_season') else None
+        items = self.autoprofit_planner.economy.recommend_products(
+            self.shop_type, season=season, top=1)
+        if not items:
+            return None
+        name = items[0]['name']
+        return name if name in self.name_to_config else None
+
+    def refresh_autoprofit_targets(self):
+        """
+        感知生产入口：读取仓库与在制品，重建 post_products。
+
+        在 run() 的 get_warehouse_counts 之后调用：AutoProfit 计划与
+        手动槽位目标合并（同名取最大），保证手动配置的保底线不被压低。
+        """
+        if not self.autoprofit_enabled or self.autoprofit_planner is None:
+            return
+        manual_targets = dict(self.post_products)
+        auto_plan = self.autoprofit_planner.build_plan(
+            warehouse_counts=self.warehouse_counts,
+            in_production=self.post_check_meal,
+            season=self.current_season if hasattr(self, 'current_season') else None,
+        )
+        merged = merge_autoprofit_with_manual(auto_plan, manual_targets)
+        if merged:
+            self.post_products = merged
+            logger.info(f"[岛屿-AutoProfit] 合并后槽位目标: {self._products_cn(self.post_products)}")
+
     def run(self):
         self.island_error = False
         self.chef_unavailable_products.clear()
@@ -481,6 +549,9 @@ class IslandShopBase(Island, WarehouseOCR):
             self.post_manage_mode(POST_MANAGE_PRODUCTION)
             self.post_close()
             self.post_manage_swipe(self.post_manage_swipe_count)
+
+            # Add by MHY, 岛屿经济闭环：AutoProfit 按当前库存重建生产目标
+            self.refresh_autoprofit_targets()
 
             # 计算当前总库存
             self.current_totals = self._rebuild_current_totals({})
@@ -570,6 +641,16 @@ class IslandShopBase(Island, WarehouseOCR):
             # 获取特殊餐品和常驻餐品配置
             special_food = self.special_food if self.FILL_SPECIAL_FOOD else None
             away_cook = getattr(self.config, self.config_away_cook, None)
+
+            # Add by MHY, 岛屿经济闭环：AutoProfit 开启且未配置常驻餐品时，
+            # 空闲岗位自动填本店利润/分钟最高的商品（岗位不闲置，持续赚金币）。
+            # 用户手动配置的 AwayCook 优先级更高，不覆盖。
+            if (self.autoprofit_enabled and idle_posts_after_basic
+                    and (not away_cook or away_cook == 'None')):
+                top = self.economy_top_product()
+                if top:
+                    away_cook = top
+                    logger.info(f"[岛屿-AutoProfit] 空岗自动填充常驻餐品: {self._item_cn(top)}")
 
             # 检查特殊餐品是否为有效值（不为None且不为"None"）
             has_special_food = (special_food and special_food != "None" and
@@ -666,7 +747,12 @@ class IslandShopBase(Island, WarehouseOCR):
             time_value = getattr(self, var)
             if time_value is not None:
                 finish_times.append(time_value)
-        hours_later = current_time() + timedelta(hours=6)
+        # Modify by MHY, 岛屿经济闭环：AutoProfit 开启时兜底延时从 6h 缩短到 2h。
+        # 原因：生产目标达成后任务长眠 6h，但经营端在持续售卖消耗库存，
+        # 下午库存被卖空却无人补产。2h 兜底让"售空→补产"链路闭环；
+        # 岗位在产时 OCR 完成时间（约70分钟/批）早于兜底，不受影响。
+        fallback_hours = 2 if self.autoprofit_enabled else 6
+        hours_later = current_time() + timedelta(hours=fallback_hours)
         finish_times.append(hours_later)
         finish_times.sort()
         self.config.task_delay(target=finish_times)

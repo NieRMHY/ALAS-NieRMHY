@@ -3105,7 +3105,9 @@
         4
       ],
       "SeasonalReplaceEnabled": true,
-      "SeasonalThreshold": 7
+      "SeasonalThreshold": 7,
+      "AutoProfit": false,
+      "ShopLevel": "diamond"
     },
     "IslandBusinessShop1": {
       "Char1": "None",
@@ -3282,6 +3284,7 @@
       "Sensitive": false
     },
     "IslandRestaurant": {
+      "AutoProfit": false,
       "PostNumber": 2,
       "ChefFilter": "WorkerJuu",
       "DoubleBambooShoots": false,
@@ -3321,6 +3324,7 @@
       "Sensitive": false
     },
     "IslandTeahouse": {
+      "AutoProfit": false,
       "PostNumber": 2,
       "ChefFilter": "WorkerJuu",
       "Seasonal": false,
@@ -3360,6 +3364,7 @@
       "Sensitive": false
     },
     "IslandGrill": {
+      "AutoProfit": false,
       "PostNumber": 1,
       "ChefFilter": "WorkerJuu",
       "Meal1": "double_energy",
@@ -3398,6 +3403,7 @@
       "Sensitive": false
     },
     "IslandJuuEatery": {
+      "AutoProfit": false,
       "PostNumber": 1,
       "ChefFilter": "WorkerJuu",
       "Meal1": "berry_orange",
@@ -3436,6 +3442,7 @@
       "Sensitive": false
     },
     "IslandJuuCoffee": {
+      "AutoProfit": false,
       "PostNumber": 2,
       "ChefFilter": "WorkerJuu",
       "Friedrich": false,
