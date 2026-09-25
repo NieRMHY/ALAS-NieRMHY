@@ -216,6 +216,28 @@ class TestSupportPlan(unittest.TestCase):
         plan = p.support_plan('wake_up_call', {'cheese': 99, 'iced_coffee': 99})
         self.assertEqual(plan, [])
 
+    def test_eatery_must_not_plan_cheese(self):
+        """真机事故回归：芝士是咖啡店商品，简餐只能当材料用，不得排产"""
+        p = AutoProfitPlanner('juu_eatery')
+        # 简餐可生产列表（无 cheese）
+        eatery_items = {'apple_pie', 'corn_cup', 'orange_pie', 'banana_crepe',
+                        'orchard_duo', 'rice_mango', 'succulently_sweet',
+                        'berry_orange', 'strawberry_charlotte', 'seafood_rice'}
+        plan = p.support_plan('berry_orange', {}, available=eatery_items)
+        names = [n for n, _ in plan]
+        self.assertNotIn('cheese', names)
+        self.assertTrue(set(names) <= eatery_items)
+
+    def test_coffee_can_plan_cheese(self):
+        """咖啡店可以生产芝士，保障计划允许包含"""
+        p = AutoProfitPlanner('juu_coffee')
+        coffee_items = {'omelette', 'iced_coffee', 'cheese', 'latte',
+                        'citrus_coffee', 'strawberry_milkshake',
+                        'morning_light', 'wake_up_call', 'fruity_fruitier'}
+        plan = p.support_plan('wake_up_call', {}, available=coffee_items)
+        names = [n for n, _ in plan]
+        self.assertIn('cheese', names)  # 芝士在该店可生产
+
     def test_exclude_respected(self):
         """不可生产名单内的原料不进保障计划"""
         p = AutoProfitPlanner('juu_coffee')

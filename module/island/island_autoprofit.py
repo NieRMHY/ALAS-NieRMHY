@@ -252,7 +252,7 @@ class AutoProfitPlanner:
         return plan
 
     def support_plan(self, name, warehouse_counts, in_production=None,
-                     quantity=None, exclude=(), _depth=0):
+                     quantity=None, exclude=(), available=None, _depth=0):
         """
         上游原料保障计划：为生产 name 计算当前缺失、且本店可自产的中间品。
 
@@ -277,10 +277,19 @@ class AutoProfitPlanner:
         if not info:
             return []
         in_production = in_production or {}
+
+        def producible(item):
+            # Add by MHY: 只把本店能生产的中间品纳入保障计划。
+            # 芝士虽是经济库商品（啾咖啡），但简餐只能把它当材料用，
+            # 若排产会在 post_produce 里 KeyError（真机死循环事故）。
+            return available is None or item in available
+
         qty = quantity or self.target_stock(name)
         plan = []
         for sub, per in info['materials'].items():
             if sub not in self.economy.economy_products or sub in exclude:
+                continue
+            if not producible(sub):
                 continue
             need = per * qty
             have = warehouse_counts.get(sub, 0) + in_production.get(sub, 0)
@@ -289,7 +298,7 @@ class AutoProfitPlanner:
             want = max(self.target_stock(sub), need - have)
             # 先保证中间品自身的原料，再排中间品本身
             plan.extend(self.support_plan(sub, warehouse_counts, in_production,
-                                          want, exclude, _depth + 1))
+                                          want, exclude, available, _depth + 1))
             plan.append((sub, want))
         seen = set()
         out = []

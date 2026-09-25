@@ -741,7 +741,10 @@ class IslandShopBase(Island, WarehouseOCR):
                     and away_cook in self.name_to_config):
                 support = self.autoprofit_planner.support_plan(
                     away_cook, self.warehouse_counts, self.post_check_meal,
-                    exclude=set(self.autoprofit_unproducible))
+                    exclude=set(self.autoprofit_unproducible),
+                    available=set(self.name_to_config))
+                # 安全网：只保留本店有按钮资源的商品，防止 KeyError 死循环
+                support = [(n, q) for n, q in support if n in self.name_to_config]
                 if support:
                     self.autoprofit_fill_queue = [n for n, _ in support]
                     logger.info(
