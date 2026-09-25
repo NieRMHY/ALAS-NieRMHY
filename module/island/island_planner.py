@@ -376,6 +376,51 @@ def config_patch(plans):
     return patch
 
 
+def config_key_values(plans):
+    """
+    方案 → 配置键值对（供 config.cross_set_many 写回，避免与 ALAS 保存竞争）。
+
+    Args:
+        plans: {店铺标识: ShopPlan}
+
+    Returns:
+        dict: {'IslandRestaurant.IslandRestaurant.Meal1': ...,
+               'IslandBusiness.IslandBusinessShop1.Product1': ...}
+    """
+    values = {}
+    for shop, plan in plans.items():
+        task, index, _ = SHOP_TASKS[shop]
+        for i in range(1, MEAL_SLOTS + 1):
+            if i <= len(plan.meals):
+                name, number = plan.meals[i - 1]
+            else:
+                name, number = 'None', 0
+            values[f'{task}.{task}.Meal{i}'] = name
+            values[f'{task}.{task}.MealNumber{i}'] = number
+        for i in range(1, SHELF_SLOTS + 1):
+            values[f'IslandBusiness.IslandBusinessShop{index}.Product{i}'] = (
+                plan.shelf[i - 1] if i <= len(plan.shelf) else 'None')
+    return values
+
+
+def refresh_verified_from_logs(log_glob='log/*_ALAS.txt', keep=3):
+    """
+    从最近的 ALAS 日志重建「已验证可生产」名单并落盘。
+
+    Args:
+        log_glob: 日志通配路径（相对 ALAS 根目录）
+        keep: 取最近几个日志文件
+
+    Returns:
+        dict: {店铺: 数量}
+    """
+    import glob
+    paths = sorted(glob.glob(log_glob))[-keep:]
+    data = mine_verified(paths)
+    save_verified(data)
+    return {shop: len(names) for shop, names in data.items()}
+
+
 def apply_patch(config_path, patch):
     """
     深合并配置补丁并写回文件（先备份 .bak）。

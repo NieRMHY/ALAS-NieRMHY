@@ -3076,7 +3076,11 @@
   },
   "IslandPlan": {
     "IslandPlan": {
-      "Season": "spring"
+      "Season": "spring",
+      "RefreshPlan": false,
+      "PlanVerifiedOnly": true,
+      "PlanMineVerified": true,
+      "PlanShelfSlots": 5
     },
     "Storage": {
       "Storage": {}

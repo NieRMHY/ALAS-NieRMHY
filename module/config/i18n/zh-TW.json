@@ -4146,6 +4146,28 @@
       "summer": "夏",
       "autumn": "秋",
       "winter": "冬"
+    },
+    "RefreshPlan": {
+      "name": "重新整理生產／上架方案",
+      "help": "勾選後，下一次島嶼任務會依經濟庫重新產生生產清單與上架清單並寫入設定，隨後自動關閉",
+      "True": "啟用",
+      "False": "禁用"
+    },
+    "PlanVerifiedOnly": {
+      "name": "只排已驗證可生產商品",
+      "help": "只把本帳號確認能生產的商品排進生產清單，避免未解鎖商品造成選品失敗重啟",
+      "True": "啟用",
+      "False": "禁用"
+    },
+    "PlanMineVerified": {
+      "name": "重整時更新已驗證名單",
+      "help": "從最近日誌的「已安排生產」記錄重建已驗證商品名單",
+      "True": "啟用",
+      "False": "禁用"
+    },
+    "PlanShelfSlots": {
+      "name": "上架格數",
+      "help": "產生上架清單時使用幾個貨架格"
     }
   },
   "IslandFarm": {

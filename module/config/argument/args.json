@@ -15376,6 +15376,34 @@
           "autumn",
           "winter"
         ]
+      },
+      "RefreshPlan": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "PlanVerifiedOnly": {
+        "type": "checkbox",
+        "value": true,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "PlanMineVerified": {
+        "type": "checkbox",
+        "value": true,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "PlanShelfSlots": {
+        "type": "input",
+        "value": 5
       }
     },
     "Storage": {

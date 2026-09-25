@@ -819,6 +819,10 @@ class GeneratedConfig:
 
     # 配置组 `IslandPlan`
     IslandPlan_Season = 'spring'  # spring, summer, autumn, winter
+    IslandPlan_RefreshPlan = False  # True, False
+    IslandPlan_PlanVerifiedOnly = True  # True, False
+    IslandPlan_PlanMineVerified = True  # True, False
+    IslandPlan_PlanShelfSlots = 5
 
     # 配置组 `IslandFarm`
     IslandFarm_Positions = 3  # 1, 2, 3, 4

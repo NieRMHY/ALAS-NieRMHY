@@ -147,6 +147,16 @@ class Island(SelectCharacter):
         self.post_open_retry_swipe_limit = 1
         self.post_open_full_retry_limit = 1
 
+        # Add by MHY, 岛屿计划总览：一次性「刷新生产/上架方案」开关。
+        # 勾选后由下一次岛屿任务（任意子任务）执行刷新并自动复位；
+        # 失败只记日志，绝不影响任务本身。
+        try:
+            from module.island.island_plan_refresh import refresh_plan_if_requested
+            refresh_plan_if_requested(self.config)
+        except Exception:
+            from module.logger import logger as _logger
+            _logger.exception("[岛屿-方案刷新] 执行异常，已跳过")
+
     def _item_cn(self, name):
         """返回岛屿物品英文 key 对应的中文名；无映射时原样返回。"""
         if not isinstance(name, str):

@@ -3878,6 +3878,28 @@
       "summer": "夏季",
       "autumn": "秋季",
       "winter": "冬季"
+    },
+    "RefreshPlan": {
+      "name": "刷新做菜和卖货清单喵",
+      "help": "勾上以后，下一次岛屿任务会重新算好清单写进配置，然后自己关掉喵",
+      "True": "启用喵",
+      "False": "禁用喵"
+    },
+    "PlanVerifiedOnly": {
+      "name": "只排做过的菜喵",
+      "help": "没做过的菜不排，免得选不到一直重启喵",
+      "True": "启用喵",
+      "False": "禁用喵"
+    },
+    "PlanMineVerified": {
+      "name": "顺便更新白名单喵",
+      "help": "从日志里把做过的菜记下来喵",
+      "True": "启用喵",
+      "False": "禁用喵"
+    },
+    "PlanShelfSlots": {
+      "name": "货架几格喵",
+      "help": "生成上架清单用几格货架喵"
     }
   },
   "IslandFarm": {

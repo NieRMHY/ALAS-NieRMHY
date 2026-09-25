@@ -4146,6 +4146,28 @@
       "summer": "Summer",
       "autumn": "Autumn",
       "winter": "Winter"
+    },
+    "RefreshPlan": {
+      "name": "Refresh production/shelf plan",
+      "help": "When checked, the next island task regenerates the production and shelf lists from the economy database, writes them to config, then clears this switch",
+      "True": "Enabled",
+      "False": "Disabled"
+    },
+    "PlanVerifiedOnly": {
+      "name": "Verified products only",
+      "help": "Only schedule products this account has proven it can produce, avoiding unlock-related restarts",
+      "True": "Enabled",
+      "False": "Disabled"
+    },
+    "PlanMineVerified": {
+      "name": "Update verified list on refresh",
+      "help": "Rebuild the verified-product list from recent \"scheduled production\" log entries",
+      "True": "Enabled",
+      "False": "Disabled"
+    },
+    "PlanShelfSlots": {
+      "name": "Shelf slots",
+      "help": "How many shelf slots the generated list should use"
     }
   },
   "IslandFarm": {

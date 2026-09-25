@@ -1547,6 +1547,22 @@ IslandPlan:
   Season:
     value: spring
     option: [ spring, summer, autumn, winter ]
+  # Add by MHY, 岛屿经济闭环：总览里的一次性方案刷新开关 + 生成参数
+  RefreshPlan:
+    type: checkbox
+    value: false
+    option: [ true, false ]
+  PlanVerifiedOnly:
+    type: checkbox
+    value: true
+    option: [ true, false ]
+  PlanMineVerified:
+    type: checkbox
+    value: true
+    option: [ true, false ]
+  PlanShelfSlots:
+    type: input
+    value: 5
 IslandFarm:
   Positions:
     value: 3
