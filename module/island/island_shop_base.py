@@ -582,17 +582,24 @@ class IslandShopBase(Island, WarehouseOCR):
         manual_targets = dict(self.post_products)
         # available 传本店实际有按钮资源的商品，过滤经济库中代码未实现的条目
         # （如 grill 的 lemon_shrimp），否则排产到它会在 post_produce 里 KeyError
-        auto_plan = self.autoprofit_planner.build_plan(
-            warehouse_counts=self.warehouse_counts,
-            in_production=self.post_check_meal,
-            season=self.current_season if hasattr(self, 'current_season') else None,
-            available=set(self.name_to_config),
-            exclude=set(self.autoprofit_unproducible),
-        )
-        merged = merge_autoprofit_with_manual(auto_plan, manual_targets)
-        if merged:
-            self.post_products = merged
-            logger.info(f"[岛屿-AutoProfit] 合并后槽位目标: {self._products_cn(self.post_products)}")
+        try:
+            auto_plan = self.autoprofit_planner.build_plan(
+                warehouse_counts=self.warehouse_counts,
+                in_production=self.post_check_meal,
+                season=self.current_season if hasattr(self, 'current_season') else None,
+                available=set(self.name_to_config),
+                exclude=set(self.autoprofit_unproducible),
+            )
+            merged = merge_autoprofit_with_manual(auto_plan, manual_targets)
+            if merged:
+                self.post_products = merged
+                logger.info(f"[岛屿-AutoProfit] 合并后槽位目标: {self._products_cn(self.post_products)}")
+        except Exception:
+            # Add by MHY: AutoProfit 是可选增强层，任何异常都只回退手动模式，
+            # 不能让规划错误升级成未处理异常→游戏重启→死循环（真机事故教训）
+            self.autoprofit_enabled = False
+            logger.exception("[岛屿-AutoProfit] 规划异常，本轮回退手动模式")
+            return
 
     def run(self):
         self.island_error = False
@@ -724,7 +731,13 @@ class IslandShopBase(Island, WarehouseOCR):
             autoprofit_filled_away_cook = False
             if (self.autoprofit_enabled and idle_posts_after_basic
                     and (not away_cook or away_cook == 'None')):
-                top = self.economy_top_product()
+                # 异常保护：AutoProfit 异常只回退手动模式，不升级为游戏重启
+                try:
+                    top = self.economy_top_product()
+                except Exception:
+                    top = None
+                    logger.exception("[岛屿-AutoProfit] 选品异常，本轮回退手动模式")
+                    self.autoprofit_enabled = False
                 if top:
                     away_cook = top
                     autoprofit_filled_away_cook = True
@@ -739,10 +752,14 @@ class IslandShopBase(Island, WarehouseOCR):
             if (self.autoprofit_enabled and idle_posts_after_basic
                     and autoprofit_filled_away_cook
                     and away_cook in self.name_to_config):
-                support = self.autoprofit_planner.support_plan(
-                    away_cook, self.warehouse_counts, self.post_check_meal,
-                    exclude=set(self.autoprofit_unproducible),
-                    available=set(self.name_to_config))
+                try:
+                    support = self.autoprofit_planner.support_plan(
+                        away_cook, self.warehouse_counts, self.post_check_meal,
+                        exclude=set(self.autoprofit_unproducible),
+                        available=set(self.name_to_config))
+                except Exception:
+                    support = []
+                    logger.exception("[岛屿-AutoProfit] 原料保障规划异常，跳过填充")
                 # 安全网：只保留本店有按钮资源的商品，防止 KeyError 死循环
                 support = [(n, q) for n, q in support if n in self.name_to_config]
                 if support:
@@ -752,10 +769,15 @@ class IslandShopBase(Island, WarehouseOCR):
                         f"本轮优先生产: {[self._item_cn(n) for n in self.autoprofit_fill_queue]}")
                 # 备选商品：队列耗尽后主商品仍缺料时，用其他可生产的高利润商品填岗，
                 # 避免第二个岗位空着（真机：简餐 POST2 闲置）
-                for item in self.autoprofit_planner.economy.recommend_products(
+                try:
+                    fallback_items = self.autoprofit_planner.economy.recommend_products(
                         self.shop_type,
                         season=self.current_season if hasattr(self, 'current_season') else None,
-                        top=6, exclude=set(self.autoprofit_unproducible)):
+                        top=6, exclude=set(self.autoprofit_unproducible))
+                except Exception:
+                    fallback_items = []
+                    logger.exception("[岛屿-AutoProfit] 备选商品查询异常，跳过")
+                for item in fallback_items:
                     name = item['name']
                     if (name in self.name_to_config and name != away_cook
                             and name not in self.autoprofit_fill_queue):
