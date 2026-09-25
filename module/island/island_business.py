@@ -14,6 +14,8 @@ from module.base.button import Button
 from module.base.template import Template
 from module.base.utils import crop, get_color, color_similar
 from module.island.island_season import SEASONAL_ITEMS
+# Add by MHY, 岛屿经营：上架前库存校验（独立模块，只做缺货替换）
+from module.island.island_business_stock import BusinessStockCheckMixin
 from datetime import timedelta
 
 from module.config.time_source import now as current_time
@@ -116,7 +118,7 @@ SEASONAL_DRINK_MAP = {
 }
 
 
-class IslandBusiness(Island):
+class IslandBusiness(BusinessStockCheckMixin, Island):
     BUSINESS_REVIEW_OFFSET_X = 150
 
     def __init__(self, config, device=None, task=None):
@@ -230,17 +232,6 @@ class IslandBusiness(Island):
         self._init_season_config()
         self.season = self.season_config.season
         logger.info(f"[岛屿-经营] 当前季节: {self.season_config.season_name}")
-
-        # Add by MHY, 岛屿经济闭环：经营端 AutoProfit 开关（全局总闸，
-        # 读取 IslandBusiness.AutoProfit；开店等级供选品容量参考）
-        self.autoprofit_enabled = bool(getattr(self.config, 'IslandBusiness_AutoProfit', False))
-        if self.autoprofit_enabled:
-            from module.island.island_economy import SHOP_LEVELS
-            level = getattr(self.config, 'IslandBusiness_ShopLevel', 'diamond') or 'diamond'
-            if level not in SHOP_LEVELS:
-                level = 'diamond'
-            self.autoprofit_shop_level = level
-            logger.info(f"[岛屿-AutoProfit] 经营端已启用（等级: {level}）")
 
         # 读取每个商店配置的角色和餐品
         self._load_shop_configs()
@@ -859,24 +850,6 @@ class IslandBusiness(Island):
                         if p['name'] == val:
                             products.append(p)
                             break
-            # Add by MHY, 岛屿经济闭环：AutoProfit 开启时按利润/分钟自动补足上架商品。
-            # 手动 Product1-5 优先保留，不足餐品格数时从可上架列表按利润排序补齐，
-            # 与生产端共用同一经济库，保证「生产的」和「上架的」是同一批高利润商品。
-            if self.autoprofit_enabled:
-                from module.island.island_autoprofit import select_business_products
-                manual_names = [p['name'] for p in products]
-                shop_type = self.SHOP_SEASON_MAP.get(shop_name, '')
-                picked = select_business_products(
-                    shop_type,
-                    available_names=self._all_product_names(shop_name),
-                    manual_names=manual_names,
-                    season=self.season_config.season,
-                )
-                # 按选品结果重建 products（保持按钮对象）
-                products = [p for p in self.shop_products.get(shop_name, [])
-                            if p['name'] in picked]
-                # 保持 picked 顺序
-                products.sort(key=lambda p: picked.index(p['name']))
             if products:
                 self.active_products[shop_name] = products
                 logger.info(f"[岛屿-经营] {shop_name}: 配置 {len(products)} 餐品")
@@ -1144,6 +1117,8 @@ class IslandBusiness(Island):
         else:
             logger.info(f"[岛屿-经营] === 第一批经营: {[s['name'] for s in batch1_shops]} ===")
             self._check_seasonal_products_for_batch(batch1_shops)
+            # Add by MHY: 上架前库存校验（缺货商品换成有货的高利润商品）
+            self._check_products_stock_for_batch(batch1_shops)
 
             batch1_started_shop_names = self._run_batch(batch1_shops)
             self._trigger_shop_refill(batch1_started_shop_names)
@@ -1160,6 +1135,8 @@ class IslandBusiness(Island):
 
         logger.info(f"[岛屿-经营] === 第二批经营: {[s['name'] for s in batch2_shops]} ===")
         self._check_seasonal_products_for_batch(batch2_shops)
+        # Add by MHY: 上架前库存校验（缺货商品换成有货的高利润商品）
+        self._check_products_stock_for_batch(batch2_shops)
         batch2_started_shop_names = self._run_batch(batch2_shops)
         self._trigger_shop_refill(batch2_started_shop_names)
 

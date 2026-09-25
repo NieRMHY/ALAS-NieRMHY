@@ -13,8 +13,6 @@ from module.island.warehouse import *
 from module.logger import logger
 from module.island.island_season import get_global_season_config
 
-# Add by MHY, 岛屿经济闭环：AutoProfit 感知生产
-from module.island.island_autoprofit import get_autoprofit_planner, merge_autoprofit_with_manual
 
 
 class IslandShopBase(Island, WarehouseOCR):
@@ -69,13 +67,7 @@ class IslandShopBase(Island, WarehouseOCR):
         # 滑动配置（子类可覆盖）
         self.post_manage_swipe_count = 1  # 默认滑动1次450
 
-        # Add by MHY, 岛屿经济闭环：AutoProfit 感知生产状态（默认关闭，子类启用）
-        self.autoprofit_enabled = False
-        self.autoprofit_planner = None
-        self.autoprofit_level = 'diamond'
-        self.autoprofit_unproducible = set()  # 账号未解锁/研发未完成的商品（持久化学习）
-        self.autoprofit_fill_queue = []  # 空岗填充的原料保障队列（本轮优先生产）
-        self.manual_products = set()  # 用户手动配置的商品，失败时不自动降级
+
 
     # ==================== 季节配置支持 ====================
 
@@ -152,8 +144,6 @@ class IslandShopBase(Island, WarehouseOCR):
                 meal_number = getattr(self.config, number_key, 0)
                 self.post_products.append((meal_name, meal_number))
 
-        # Add by MHY: 记录用户手动配置的商品，AutoProfit 只对自动选品做失败降级
-        self.manual_products = {name for name, _ in self.post_products}
 
     def initialize_shop(self):
         """初始化店铺，子类必须在__init__中调用"""
@@ -217,64 +207,9 @@ class IslandShopBase(Island, WarehouseOCR):
     def produce_special_food(self):
         pass
 
-    def is_manual_product(self, name):
-        """商品是否来自用户手动配置（Meal1-8），手动配置不参与自动降级。"""
-        return name in getattr(self, 'manual_products', set())
-
-    def blacklist_autoprofit_product(self, name):
-        """把连续选品失败的自动商品记入持久化不可生产名单。"""
-        from module.island.island_autoprofit import add_unproducible
-        add_unproducible(self.shop_type, name)
-        self.autoprofit_unproducible.add(name)
-        self.chef_unavailable_products.add(name)
-
-    def release_unproducible_product(self, name):
-        """解除禁用：该商品已在选品列表出现（账号已解锁）。"""
-        from module.island.island_autoprofit import remove_unproducible
-        remove_unproducible(self.shop_type, name)
-        self.autoprofit_unproducible.discard(name)
-
-    def probe_unproducible_products(self):
-        """
-        选品页探测：被禁商品出现在派单列表中说明账号已解锁，自动解除禁用。
-
-        由 Island.select_product 在已截图的循环里调用，无额外截图开销；
-        每次最多解除一个，其余留待后续轮次。
-        """
-        if not self.autoprofit_enabled or not self.autoprofit_unproducible:
-            return
-        for name in list(self.autoprofit_unproducible):
-            item = self.name_to_config.get(name)
-            if not item:
-                continue
-            check = item.get('selection_check') or item.get('selection')
-            if check is None:
-                continue
-            try:
-                if self.appear(check, offset=20):
-                    self.release_unproducible_product(name)
-                    return
-            except Exception:
-                continue
-
     def retry_product_selection_from_postmanage(self, post_button, product, failed_product, failed_count):
-        """餐品选择失败后退出岗位，重新进入同一岗位走完整派遣流程。
-
-        Returns:
-            bool: True 已重进岗位可继续尝试；
-                  False 自动选品判定为不可生产（未解锁），本轮跳过该商品。
-        """
+        """餐品选择失败后退出岗位，重新进入同一岗位走完整派遣流程。"""
         if failed_count >= self.PRODUCT_SELECT_RETRY_LIMIT:
-            # Add by MHY: AutoProfit 自动选的商品连续选不到（账号未解锁/研发未完成，
-            # 派单列表里没有该图标）时，记入持久黑名单并跳过本轮，避免 GameStuckError
-            # 触发游戏重启循环；用户手动配置的商品保持原有抛错行为。
-            if self.autoprofit_enabled and not self.is_manual_product(failed_product):
-                self.blacklist_autoprofit_product(failed_product)
-                logger.warning(
-                    f"[岛屿-AutoProfit] {self._item_cn(failed_product)} 连续{failed_count}次选品失败，"
-                    f"判定为未解锁并跳过"
-                )
-                return False
             raise GameStuckError(
                 f"{self._item_cn(product)}生产选择餐品时连续{failed_count}次未识别到 {self._item_cn(failed_product)}"
             )
@@ -291,7 +226,6 @@ class IslandShopBase(Island, WarehouseOCR):
         if not self.post_open(post_button):
             raise GameStuckError(f"{self._item_cn(product)}生产选择餐品失败后无法重新打开岗位")
         self.device.sleep(0.5)
-        return True
 
     def increase_product_selection_failure(self, product_select_failures, failed_product):
         """记录单个餐品的选择失败次数。"""
@@ -344,10 +278,9 @@ class IslandShopBase(Island, WarehouseOCR):
                                     failed_count = self.increase_product_selection_failure(
                                         product_select_failures, product2
                                     )
-                                    if not self.retry_product_selection_from_postmanage(
-                                            post_button, product, product2, failed_count):
-                                        self.back_to_postmanage_from_dispatch()
-                                        return 0
+                                    self.retry_product_selection_from_postmanage(
+                                        post_button, product, product2, failed_count
+                                    )
                                     continue
                                 self.device.sleep(0.5)
                                 if self.produce_check():
@@ -382,10 +315,9 @@ class IslandShopBase(Island, WarehouseOCR):
                     failed_count = self.increase_product_selection_failure(
                         product_select_failures, product
                     )
-                    if not self.retry_product_selection_from_postmanage(
-                            post_button, product, product, failed_count):
-                        self.back_to_postmanage_from_dispatch()
-                        return 0
+                    self.retry_product_selection_from_postmanage(
+                        post_button, product, product, failed_count
+                    )
                 continue
         else:
             raise GameStuckError(f"{self._item_cn(product)}生产派遣流程超时")
@@ -522,85 +454,6 @@ class IslandShopBase(Island, WarehouseOCR):
         """返回基础需求之前安排的产品及数量，由店铺声明季节规则。"""
         return {}
 
-    # ==================== AutoProfit 感知生产（Add by MHY, 岛屿经济闭环） ====================
-
-    def setup_autoprofit(self, level_config_key=None):
-        """
-        启用 AutoProfit 感知生产：按经济数据库利润排序动态生成 post_products。
-
-        手动槽位（Meal1-8）仍作为兜底参与目标合并（同名取最大值），
-        未开启或配置缺失时保持原有行为不变。
-
-        Args:
-            level_config_key: 店铺等级的配置键名；None 用默认 'diamond'
-        """
-        from module.island.island_economy import SHOP_LEVELS
-        raw_level = 'diamond'
-        if level_config_key:
-            raw_level = getattr(self.config, level_config_key, 'diamond') or 'diamond'
-        if raw_level not in SHOP_LEVELS:
-            logger.warning(f"[岛屿-AutoProfit] 未知店铺等级 {raw_level}，回退钻石档")
-            raw_level = 'diamond'
-        self.autoprofit_level = raw_level
-        self.autoprofit_planner = get_autoprofit_planner(
-            self.shop_type, shop_level=raw_level)
-        self.autoprofit_enabled = self.autoprofit_planner is not None
-        if self.autoprofit_enabled:
-            # 载入历史学到的不可生产商品（未解锁），排产时排除
-            from module.island.island_autoprofit import load_unproducible
-            self.autoprofit_unproducible = load_unproducible(self.shop_type)
-            if self.autoprofit_unproducible:
-                logger.info(f"[岛屿-AutoProfit] 已排除不可生产商品: "
-                            f"{sorted(self.autoprofit_unproducible)}")
-        if self.autoprofit_enabled:
-            logger.info(
-                f"[岛屿-AutoProfit] {self.shop_type} 已启用 "
-                f"（等级: {raw_level}, 容量: {self.autoprofit_planner.capacity}）")
-
-    def economy_top_product(self):
-        """返回本店利润/分钟最高且可生产的商品名（AutoProfit 空岗填充用）。"""
-        if not self.autoprofit_enabled or self.autoprofit_planner is None:
-            return None
-        season = self.current_season if hasattr(self, 'current_season') else None
-        items = self.autoprofit_planner.economy.recommend_products(
-            self.shop_type, season=season, top=1,
-            exclude=set(self.autoprofit_unproducible))
-        if not items:
-            return None
-        name = items[0]['name']
-        return name if name in self.name_to_config else None
-
-    def refresh_autoprofit_targets(self):
-        """
-        感知生产入口：读取仓库与在制品，重建 post_products。
-
-        在 run() 的 get_warehouse_counts 之后调用：AutoProfit 计划与
-        手动槽位目标合并（同名取最大），保证手动配置的保底线不被压低。
-        """
-        if not self.autoprofit_enabled or self.autoprofit_planner is None:
-            return
-        manual_targets = dict(self.post_products)
-        # available 传本店实际有按钮资源的商品，过滤经济库中代码未实现的条目
-        # （如 grill 的 lemon_shrimp），否则排产到它会在 post_produce 里 KeyError
-        try:
-            auto_plan = self.autoprofit_planner.build_plan(
-                warehouse_counts=self.warehouse_counts,
-                in_production=self.post_check_meal,
-                season=self.current_season if hasattr(self, 'current_season') else None,
-                available=set(self.name_to_config),
-                exclude=set(self.autoprofit_unproducible),
-            )
-            merged = merge_autoprofit_with_manual(auto_plan, manual_targets)
-            if merged:
-                self.post_products = merged
-                logger.info(f"[岛屿-AutoProfit] 合并后槽位目标: {self._products_cn(self.post_products)}")
-        except Exception:
-            # Add by MHY: AutoProfit 是可选增强层，任何异常都只回退手动模式，
-            # 不能让规划错误升级成未处理异常→游戏重启→死循环（真机事故教训）
-            self.autoprofit_enabled = False
-            logger.exception("[岛屿-AutoProfit] 规划异常，本轮回退手动模式")
-            return
-
     def run(self):
         self.island_error = False
         self.chef_unavailable_products.clear()
@@ -633,8 +486,6 @@ class IslandShopBase(Island, WarehouseOCR):
             self.post_close()
             self.post_manage_swipe(self.post_manage_swipe_count)
 
-            # Add by MHY, 岛屿经济闭环：AutoProfit 按当前库存重建生产目标
-            self.refresh_autoprofit_targets()
 
             # 计算当前总库存
             self.current_totals = self._rebuild_current_totals({})
@@ -725,63 +576,6 @@ class IslandShopBase(Island, WarehouseOCR):
             special_food = self.special_food if self.FILL_SPECIAL_FOOD else None
             away_cook = getattr(self.config, self.config_away_cook, None)
 
-            # Add by MHY, 岛屿经济闭环：AutoProfit 开启且未配置常驻餐品时，
-            # 空闲岗位自动填本店利润/分钟最高的商品（岗位不闲置，持续赚金币）。
-            # 用户手动配置的 AwayCook 优先级更高，不覆盖。
-            autoprofit_filled_away_cook = False
-            if (self.autoprofit_enabled and idle_posts_after_basic
-                    and (not away_cook or away_cook == 'None')):
-                # 异常保护：AutoProfit 异常只回退手动模式，不升级为游戏重启
-                try:
-                    top = self.economy_top_product()
-                except Exception:
-                    top = None
-                    logger.exception("[岛屿-AutoProfit] 选品异常，本轮回退手动模式")
-                    self.autoprofit_enabled = False
-                if top:
-                    away_cook = top
-                    autoprofit_filled_away_cook = True
-                    logger.info(f"[岛屿-AutoProfit] 空岗自动填充常驻餐品: {self._item_cn(top)}")
-
-            # Add by MHY, 岛屿经济闭环：填充商品的原料保障。
-            # 填充商品（如醒神套餐）高于目标库存时不会进基础需求，其原料
-            # （冰咖啡/香橙派）可能为 0 → post_produce 返回 0 → 岗位一直空着。
-            # 这里先算出缺失的可自产原料，本轮优先生产它们，下轮再产成品。
-            self.autoprofit_fill_queue = []
-            self.autoprofit_fill_fallbacks = []
-            if (self.autoprofit_enabled and idle_posts_after_basic
-                    and autoprofit_filled_away_cook
-                    and away_cook in self.name_to_config):
-                try:
-                    support = self.autoprofit_planner.support_plan(
-                        away_cook, self.warehouse_counts, self.post_check_meal,
-                        exclude=set(self.autoprofit_unproducible),
-                        available=set(self.name_to_config))
-                except Exception:
-                    support = []
-                    logger.exception("[岛屿-AutoProfit] 原料保障规划异常，跳过填充")
-                # 安全网：只保留本店有按钮资源的商品，防止 KeyError 死循环
-                support = [(n, q) for n, q in support if n in self.name_to_config]
-                if support:
-                    self.autoprofit_fill_queue = [n for n, _ in support]
-                    logger.info(
-                        f"[岛屿-AutoProfit] 填充商品 {self._item_cn(away_cook)} 缺原料，"
-                        f"本轮优先生产: {[self._item_cn(n) for n in self.autoprofit_fill_queue]}")
-                # 备选商品：队列耗尽后主商品仍缺料时，用其他可生产的高利润商品填岗，
-                # 避免第二个岗位空着（真机：简餐 POST2 闲置）
-                try:
-                    fallback_items = self.autoprofit_planner.economy.recommend_products(
-                        self.shop_type,
-                        season=self.current_season if hasattr(self, 'current_season') else None,
-                        top=6, exclude=set(self.autoprofit_unproducible))
-                except Exception:
-                    fallback_items = []
-                    logger.exception("[岛屿-AutoProfit] 备选商品查询异常，跳过")
-                for item in fallback_items:
-                    name = item['name']
-                    if (name in self.name_to_config and name != away_cook
-                            and name not in self.autoprofit_fill_queue):
-                        self.autoprofit_fill_fallbacks.append(name)
 
             # 检查特殊餐品是否为有效值（不为None且不为"None"）
             has_special_food = (special_food and special_food != "None" and
@@ -840,46 +634,27 @@ class IslandShopBase(Island, WarehouseOCR):
 
                     elif not has_special_food and has_away_cook:
                         # 情况3：只有常驻餐品，没有特殊餐品
-                        # Add by MHY: AutoProfit 原料保障队列优先（缺什么原料先造什么）
-                        fill_product = away_cook
-                        if self.autoprofit_fill_queue:
-                            fill_product = self.autoprofit_fill_queue.pop(0)
-                            logger.info(
-                                f"[岛屿-AutoProfit] 岗位 {post_id} 优先生产缺失原料 "
-                                f"{self._item_cn(fill_product)}")
-                        elif (self.autoprofit_fill_fallbacks
-                              and self.get_max_producible(away_cook, 1) <= 0):
-                            # 主商品原料不足：改用备选的可生产商品填岗，避免岗位空闲
-                            while self.autoprofit_fill_fallbacks:
-                                cand = self.autoprofit_fill_fallbacks.pop(0)
-                                if self.get_max_producible(cand, 1) > 0:
-                                    fill_product = cand
-                                    logger.info(
-                                        f"[岛屿-AutoProfit] 岗位 {post_id} 改产可生产商品 "
-                                        f"{self._item_cn(cand)}")
-                                    break
-                        else:
-                            logger.info(f"[岛屿] 只有常驻餐品 {self._item_cn(away_cook)}，没有特殊餐品")
+                        logger.info(f"[岛屿] 只有常驻餐品 {self._item_cn(away_cook)}，没有特殊餐品")
 
                         # 检查材料限制
                         batch_size = self.POST_PRODUCE_LIMIT
-                        batch_size = self.get_max_producible(fill_product, batch_size)
+                        batch_size = self.get_max_producible(away_cook, batch_size)
 
                         if batch_size > 0:
                             result = self.post_produce(
                                 post_id,
-                                product=fill_product,
+                                product=away_cook,
                                 number=batch_size,
                                 time_var_name=time_var_name
                             )
 
                             if result == 0:
-                                logger.info(f"[岛屿] {self._item_cn(fill_product)} 原料不足，保持岗位空闲")
+                                logger.info(f"[岛屿] 常驻餐品 {self._item_cn(away_cook)} 原料不足，保持岗位空闲")
                                 break
                             else:
-                                logger.info(f"[岛屿] 已为岗位 {post_id} 安排 {self._item_cn(fill_product)} x{batch_size}")
+                                logger.info(f"[岛屿] 已为岗位 {post_id} 安排常驻餐品 {self._item_cn(away_cook)} x{batch_size}")
                         else:
-                            logger.info(f"[岛屿] 生产 {self._item_cn(fill_product)} 的材料不足，跳过岗位 {post_id}")
+                            logger.info(f"[岛屿] 生产 {self._item_cn(away_cook)} 的材料不足，跳过岗位 {post_id}")
                             break
 
                     else:
@@ -897,11 +672,11 @@ class IslandShopBase(Island, WarehouseOCR):
             time_value = getattr(self, var)
             if time_value is not None:
                 finish_times.append(time_value)
-        # Modify by MHY, 岛屿经济闭环：AutoProfit 开启时兜底延时从 6h 缩短到 2h。
+        # Modify by MHY, 岛屿经济闭环：兜底延时 6h（原逻辑）
         # 原因：生产目标达成后任务长眠 6h，但经营端在持续售卖消耗库存，
         # 下午库存被卖空却无人补产。2h 兜底让"售空→补产"链路闭环；
         # 岗位在产时 OCR 完成时间（约70分钟/批）早于兜底，不受影响。
-        fallback_hours = 2 if self.autoprofit_enabled else 6
+        fallback_hours = 6
         hours_later = current_time() + timedelta(hours=fallback_hours)
         finish_times.append(hours_later)
         finish_times.sort()

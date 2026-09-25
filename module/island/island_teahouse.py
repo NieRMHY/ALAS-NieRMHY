@@ -213,10 +213,6 @@ class IslandTeahouse(IslandShopBase):
         self.fresh_honey = 0
         self.initialize_shop()
 
-        # Add by MHY, 岛屿经济闭环：AutoProfit 感知生产（读全局开关+等级，未开启时零行为变化）
-        if getattr(self.config, 'IslandTeahouse_AutoProfit', False):
-            self.setup_autoprofit(level_config_key='IslandBusiness_ShopLevel')
-
     def _auto_switch_seasonal_meals(self):
         """
         自动切换用户配置中的春季限定餐品到当前季节对应餐品。

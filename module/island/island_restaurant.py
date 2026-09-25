@@ -171,10 +171,6 @@ class IslandRestaurant(IslandShopBase):
         # 初始化店铺
         self.initialize_shop()
 
-        # Add by MHY, 岛屿经济闭环：AutoProfit 感知生产（读全局开关+等级，未开启时零行为变化）
-        if getattr(self.config, 'IslandRestaurant_AutoProfit', False):
-            self.setup_autoprofit(level_config_key='IslandBusiness_ShopLevel')
-
     def _is_seasonal_priority_enabled(self):
         return getattr(self.config, 'IslandRestaurant_DoubleBambooShoots', False)
 

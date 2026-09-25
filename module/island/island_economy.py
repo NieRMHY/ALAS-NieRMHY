@@ -190,6 +190,9 @@ class EconomyDatabase:
             list[dict]: 按 profit_per_min 降序
         """
         items = [dict(v, name=k) for k, v in ECONOMY_PRODUCTS.items() if v['shop'] == shop]
+        # Add by MHY: 经济库只存 profit/time_min，per_min 是派生值，这里现算
+        for item in items:
+            item['profit_per_min'] = (item['profit'] / item['time_min']) if item['time_min'] else 0.0
         items.sort(key=lambda x: -x['profit_per_min'])
         return items
 
