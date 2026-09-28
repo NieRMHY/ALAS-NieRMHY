@@ -77,6 +77,11 @@ class GridInfo:
     location = None
 
     def decode(self, text):
+        """解析地图文本符号并设置网格属性。
+
+        Args:
+            text (str): 网格类型简写（如 '++', 'SP', '__', 'ME', 'MB', 'MM', 'MA', 'MS'）。
+        """
         text = text.upper()
         dic = {
             '++': 'is_land',
@@ -99,6 +104,11 @@ class GridInfo:
         #     self.may_enemy = True
 
     def encode(self):
+        """将网格状态编码为两字符文本符号。
+
+        Returns:
+            str: 两字符的网格状态代码（如 '++', 'BO', '3M', 'FL', '--'）。
+        """
         dic = {
             '++': 'is_land',
             'BO': 'is_boss',
@@ -158,30 +168,37 @@ class GridInfo:
 
     @property
     def str(self):
+        """获取网格状态的两字符编码字符串。"""
         return self.encode()
 
     @property
     def is_sea(self):
+        """网格是否为可通行的海洋。"""
         return False if self.is_land or self.is_enemy or self.is_siren or self.is_fortress or self.is_boss else True
 
     @property
     def may_carrier(self):
+        """网格是否可能刷新航母支援敌人。"""
         return self.is_sea and not self.may_enemy
 
     @property
     def is_accessible(self):
+        """网格对当前舰队是否可达。"""
         return self.cost < 9999
 
     @property
     def is_accessible_1(self):
+        """网格对第一舰队是否可达。"""
         return self.cost_1 < 9999
 
     @property
     def is_accessible_2(self):
+        """网格对第二舰队是否可达。"""
         return self.cost_2 < 9999
 
     @property
     def is_nearby(self):
+        """网格是否在当前舰队附近（寻路代价 < 20）。"""
         return self.cost < 20
 
     def merge(self, info, mode='normal'):

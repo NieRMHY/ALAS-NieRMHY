@@ -48,6 +48,7 @@ sys.stderr.reconfigure(encoding='utf-8')
 
 
 def empty_function(*args, **kwargs):
+    """空操作占位函数，用于屏蔽三方库无意覆盖的 logging 配置。"""
     pass
 
 
@@ -61,18 +62,33 @@ RichHandler.KEYWORDS = []
 
 
 class RichFileHandler(RichHandler):
-    # 重命名，用于区分文件日志处理器
+    """基于 Rich 格式化的文件日志处理器类型标记。"""
     pass
 
 
 class RichRenderableHandler(RichHandler):
-    """将渲染对象传递给回调函数的日志处理器。"""
+    """将渲染对象传递给回调函数的日志处理器。
+
+    用于捕获 Rich 渲染后的对象并传递给外部流式处理管道（如 WebUI 日志推送）。
+    """
 
     def __init__(self, *args, func: Callable[[ConsoleRenderable], None] = None, **kwargs):
+        """初始化可渲染对象日志处理器。
+
+        Args:
+            *args: 透传给父类 RichHandler 的位置参数。
+            func (Callable[[ConsoleRenderable], None], optional): 接收渲染对象的回调函数。默认为 None。
+            **kwargs: 透传给父类 RichHandler 的关键字参数。
+        """
         super().__init__(*args, **kwargs)
         self._func = func
 
     def emit(self, record: logging.LogRecord) -> None:
+        """处理日志记录并将渲染结果回调给注册函数。
+
+        Args:
+            record (logging.LogRecord): 日志记录对象。
+        """
         message = self.format(record)
         traceback = None
         if (
@@ -113,22 +129,42 @@ class RichRenderableHandler(RichHandler):
         self._func(log_renderable)
 
     def handle(self, record: logging.LogRecord) -> bool:
+        """条件处理单条日志记录。
+
+        Args:
+            record (logging.LogRecord): 日志记录对象。
+
+        Returns:
+            bool: 回调不存在时直接返回 True，否则执行父类处理。
+        """
         if not self._func:
             return True
-        super().handle(record)
+        return super().handle(record)
 
 
 class RichTimedRotatingHandler(TimedRotatingFileHandler):
+    """按时间轮转并结合 Rich 格式化输出的文件日志处理器。
+
+    支持根据配置文件自动轮转、保留指定历史数量、压缩备份等特性。
+    """
     ZIPMAP = {
         "gzip": "gz",
-        "gz" : "gz",
-        "bz2" : "bz2",
+        "gz": "gz",
+        "bz2": "bz2",
         "xz": "xz",
         "zip": "zip",
     }
-    def __init__(self, pname:str, *args, **kwargs) -> None:
+
+    def __init__(self, pname: str, *args, **kwargs) -> None:
+        """初始化时间轮转日志处理器。
+
+        Args:
+            pname (str): 进程或配置实例名称。
+            *args: 透传给 TimedRotatingFileHandler 的位置参数。
+            **kwargs: 透传给 TimedRotatingFileHandler 的关键字参数。
+        """
         count, bak_method, zip_method = self._read_file_logger_config(pname)
-        TimedRotatingFileHandler.__init__(self, backupCount=count,* args, **kwargs)
+        TimedRotatingFileHandler.__init__(self, backupCount=count, *args, **kwargs)
         self.console = Console(file=io.StringIO(), no_color=True, highlight=False, width=119)
         self.richd = RichHandler(
             console=self.console,
@@ -161,8 +197,16 @@ class RichTimedRotatingHandler(TimedRotatingFileHandler):
         # 关闭不必要的文件流
         self.stream.close()
         self.stream = None
-    
+
     def _read_file_logger_config(self, process_name):
+        """读取日志相关配置项。
+
+        Args:
+            process_name (str): 进程名称。
+
+        Returns:
+            tuple[int, str, str]: 日志保留数、备份方式、压缩格式。
+        """
         cfg_name = "alas" if process_name == "gui" else process_name
         config_file = Path("./config").joinpath(f"{cfg_name}.json")
         if config_file.exists():
@@ -185,9 +229,12 @@ class RichTimedRotatingHandler(TimedRotatingFileHandler):
         return count, bak_method, zip_method
 
     def getFilesToDelete(self) -> List[Path]:
-        """确定日志轮转时需要删除的旧日志文件。
+        """确定日志轮转时需要删除或归档的旧日志文件。
 
         覆盖原始方法，使用 RichHandler 并保持统一的日志格式。
+
+        Returns:
+            List[Path]: 需要删除或归档的文件路径列表。
         """
         dirName, baseName = os.path.split(self.baseFilename)
         fileNames = os.listdir(dirName)
@@ -207,7 +254,7 @@ class RichTimedRotatingHandler(TimedRotatingFileHandler):
         return result
 
     def doRollover(self) -> None:
-        """执行日志轮转。
+        """执行日志轮转并创建新的日志文件。
 
         覆盖原始方法，使用 RichHandler 处理日志输出。
         """
@@ -241,7 +288,6 @@ class RichTimedRotatingHandler(TimedRotatingFileHandler):
             files = self.getFilesToDelete()
             if files:
                 threading.Thread(target=self.expire, args=(files,), daemon=True).start()
-                # self.expire(files)
 
         newRolloverAt = self.computeRollover(currentTime)
         while newRolloverAt <= currentTime:
@@ -250,9 +296,7 @@ class RichTimedRotatingHandler(TimedRotatingFileHandler):
         if (self.when == "MIDNIGHT" or self.when.startswith("W")) and not self.utc:
             dstAtRollover = time.localtime(newRolloverAt)[-1]
             if dstNow != dstAtRollover:
-                if (
-                    not dstNow
-                ):  # 夏令时在下次轮转前生效，需要减去一小时
+                if not dstNow:  # 夏令时在下次轮转前生效，需要减去一小时
                     addend = -3600
                 else:  # 夏令时在下次轮转前结束，需要加上一小时
                     addend = 3600
@@ -268,6 +312,9 @@ class RichTimedRotatingHandler(TimedRotatingFileHandler):
             2021-08-01_alas.txt...2021-08-07_alas.txt   ->  bak/2021-08-01~2021-08-07_alas.tar.bz2
             2021-08-01_gui.txt                          ->  bak/2021-08-01_gui.zip
             2021-08-01_gui.txt(copy)                    ->  bak/2021-08-01_gui.txt(copy)
+
+        Args:
+            files (List[Path]): 待清理或归档的文件列表。
         """
         basePath = Path(self.baseFilename)
         bakPath = basePath.parent / "bak"
@@ -307,9 +354,20 @@ class RichTimedRotatingHandler(TimedRotatingFileHandler):
             logger.exception(e)
 
     def print(self, *objects: ConsoleRenderable, **kwargs) -> None:
+        """通过内置控制台打印可渲染对象。
+
+        Args:
+            *objects (ConsoleRenderable): 可渲染对象。
+            **kwargs: 透传给 Console.print 的参数。
+        """
         Console.print(self.console, *objects, **kwargs)
 
     def emit(self, record: logging.LogRecord) -> None:
+        """输出日志记录，并在需要时触发日志轮转。
+
+        Args:
+            record (logging.LogRecord): 日志记录对象。
+        """
         try:
             if self.shouldRollover(record):
                 self.doRollover()
@@ -326,6 +384,11 @@ class HTMLConsole(Console):
 
     @property
     def options(self) -> ConsoleOptions:
+        """获取适用于 Web 渲染的控制台配置选项。
+
+        Returns:
+            ConsoleOptions: 控制台配置选项对象。
+        """
         return ConsoleOptions(
             max_height=self.size.height,
             size=self.size,
@@ -338,17 +401,14 @@ class HTMLConsole(Console):
 
 
 class Highlighter(RegexHighlighter):
+    """用于 Web 控制台的高亮语法规则解析器。"""
     base_style = 'web.'
     highlights = [
-        # (r'(?P<datetime>(\d{2}|\d{4})(?:\-)?([0]{1}\d{1}|[1]{1}[0-2]{1})'
-        #  r'(?:\-)?([0-2]{1}\d{1}|[3]{1}[0-1]{1})(?:\s)?([0-1]{1}\d{1}|'
-        #  r'[2]{1}[0-3]{1})(?::)?([0-5]{1}\d{1})(?::)?([0-5]{1}\d{1}).\d+\b)'),
         (r'(?P<time>([0-1]{1}\d{1}|[2]{1}[0-3]{1})(?::)?'
          r'([0-5]{1}\d{1})(?::)?([0-5]{1}\d{1})(.\d+\b))'),
         r"(?P<brace>[\{\[\(\)\]\}])",
         r"\b(?P<bool_true>True)\b|\b(?P<bool_false>False)\b|\b(?P<none>None)\b",
         r"(?P<path>(([A-Za-z]\:)|.)?\B([\/\\][\w\.\-\_\+]+)*[\/\\])(?P<filename>[\w\.\-\_\+]*)?",
-        # r"(?<![\\\w])(?P<str>b?\'\'\'.*?(?<!\\)\'\'\'|b?\'.*?(?<!\\)\'|b?\"\"\".*?(?<!\\)\"\"\"|b?\".*?(?<!\\)\")",
     ]
 
 
@@ -375,12 +435,6 @@ console_formatter = logging.Formatter(
 web_formatter = logging.Formatter(
     fmt='%(asctime)s.%(msecs)03d │ %(message)s', datefmt='%H:%M:%S')
 
-# 添加控制台日志处理器
-# console = logging.StreamHandler(stream=sys.stdout)
-# console.setFormatter(formatter)
-# console.flush = sys.stdout.flush
-# logger.addHandler(console)
-
 # 添加 Rich 控制台日志处理器
 stdout_console = console = Console()
 console_hdlr = RichHandler(
@@ -401,11 +455,25 @@ pyw_name = os.path.splitext(os.path.basename(sys.argv[0]))[0]
 
 
 def get_log_file_path(name, root='.', day=None):
-    """按完整实例名定位日志，不将下划线当作任务名分隔符。"""
+    """按完整实例名定位日志，不将下划线当作任务名分隔符。
+
+    Args:
+        name (str): 实例名称。
+        root (str, optional): 根目录路径。默认为 '.'。
+        day (datetime.date | str, optional): 日期。默认为当天。
+
+    Returns:
+        Path: 日志文件路径对象。
+    """
     return Path(root) / 'log' / f'{day or datetime.date.today()}_{name}.txt'
 
 
 def _set_file_logger(name=pyw_name):
+    """内部函数：按名称配置简单的单文件日志处理器。
+
+    Args:
+        name (str, optional): 实例名称。默认为当前主程序名。
+    """
     # Modify by MHY, python -c / 嵌入式环境的 argv[0] 无有效日志文件名
     # （如 "-c"、解释器名），并行导入冒烟时还会竞态写同一文件，这类环境跳过文件日志。
     # CI 解释器名带版本后缀（python3.14），按前缀匹配拦截
@@ -427,7 +495,11 @@ def _set_file_logger(name=pyw_name):
 
 
 def set_file_logger(name=None):
-    """绑定完整实例名；只有自动 GUI 日志按 Windows 进程身份过滤。"""
+    """绑定完整实例名；只有自动 GUI 日志按 Windows 进程身份过滤。
+
+    Args:
+        name (str, optional): 实例名称。若为 None 则自动推断。
+    """
     automatic = name is None
     if automatic:
         name = pyw_name
@@ -468,8 +540,12 @@ def set_file_logger(name=None):
         pass
 
 
-
 def set_func_logger(func):
+    """设置将日志输出传递给回调函数的处理器（用于 WebUI 实时展示）。
+
+    Args:
+        func (Callable[[ConsoleRenderable], None]): 接收渲染对象的回调函数。
+    """
     console = HTMLConsole(
         force_terminal=False,
         force_interactive=False,
@@ -503,6 +579,19 @@ def _get_renderables(
     """获取可渲染对象列表。
 
     参考 rich.console.Console.print() 的实现。
+
+    Args:
+        self (Console): Console 实例。
+        *objects: 待渲染对象。
+        sep (str, optional): 分隔符。默认为 " "。
+        end (str, optional): 结尾符。默认为 "\\n"。
+        justify (str, optional): 对齐方式。默认为 None。
+        emoji (bool, optional): 是否开启 emoji。默认为 None。
+        markup (bool, optional): 是否解析标记。默认为 None。
+        highlight (bool, optional): 是否高亮。默认为 None。
+
+    Returns:
+        List[ConsoleRenderable]: 可渲染对象列表。
     """
     if not objects:
         objects = (NewLine(),)
@@ -524,6 +613,12 @@ def _get_renderables(
 
 
 def print(*objects: ConsoleRenderable, **kwargs):
+    """统一向当前配置的所有输出处理器打印可渲染对象。
+
+    Args:
+        *objects (ConsoleRenderable): 可渲染对象。
+        **kwargs: 附加格式化参数。
+    """
     for hdlr in logger.handlers:
         if isinstance(hdlr, RichRenderableHandler):
             for renderable in _get_renderables(hdlr.console, *objects, **kwargs):
@@ -535,12 +630,27 @@ def print(*objects: ConsoleRenderable, **kwargs):
 
 
 def rule(title="", *, characters="─", style="rule.line", end="\n", align="center"):
+    """输出横向分隔分割线。
+
+    Args:
+        title (str, optional): 标题文字。默认为空。
+        characters (str, optional): 组成线条的字符。默认为 "─"。
+        style (str, optional): 富文本样式。默认为 "rule.line"。
+        end (str, optional): 结尾字符。默认为 "\\n"。
+        align (str, optional): 对齐方式。默认为 "center"。
+    """
     rule = Rule(title=title, characters=characters,
                 style=style, end=end, align=align)
     print(rule)
 
 
 def hr(title, level=3):
+    """分节标题输出（支持 4 级标题）。
+
+    Args:
+        title: 标题内容。
+        level (int, optional): 标题级别（0~3）。默认为 3。
+    """
     title = str(title).upper()
     if level == 1:
         logger.rule(title, characters='═')
@@ -557,10 +667,24 @@ def hr(title, level=3):
 
 
 def attr(name, text):
+    """输出单行属性名称与对应内容。
+
+    Args:
+        name: 属性名。
+        text: 属性值。
+    """
     logger.info('[%s] %s' % (str(name), str(text)))
 
 
 def attr_align(name, text, front='', align=22):
+    """按固定宽度右对齐输出属性名称与内容。
+
+    Args:
+        name: 属性名。
+        text: 属性值。
+        front (str, optional): 前置补充内容。默认为 ''。
+        align (int, optional): 对齐列宽。默认为 22。
+    """
     name = str(name).rjust(align)
     if front:
         name = front + name[len(front):]
@@ -568,6 +692,7 @@ def attr_align(name, text, front='', align=22):
 
 
 def show():
+    """测试日志输出样式与示例信息。"""
     logger.info('INFO')
     logger.warning('WARNING')
     logger.debug('DEBUG')
@@ -590,6 +715,15 @@ def error_context(title, reason, impact, action, exc=None, level=logging.ERROR, 
     """输出包含原因、影响和处理建议的统一错误信息。
 
     ``with_traceback`` 为 ``None`` 时，保持原有行为：传入异常对象则输出完整堆栈。
+
+    Args:
+        title (str): 错误标题。
+        reason (str): 发生原因。
+        impact (str): 产生影响。
+        action (str): 处理建议。
+        exc (Exception, optional): 关联的异常对象。默认为 None。
+        level (int, optional): 日志等级。默认为 logging.ERROR。
+        with_traceback (bool, optional): 是否包含完整异常堆栈。默认为 None。
     """
     message = '\n'.join([
         f'[错误] {title}',
@@ -605,7 +739,15 @@ def error_context(title, reason, impact, action, exc=None, level=logging.ERROR, 
 
 
 def exception_context(title, exc, impact, action, level=logging.ERROR):
-    """输出未知异常的统一错误信息并保留完整堆栈。"""
+    """输出未知异常的统一错误信息并保留完整堆栈。
+
+    Args:
+        title (str): 错误标题。
+        exc (Exception): 异常对象。
+        impact (str): 产生影响。
+        action (str): 建议操作。
+        level (int, optional): 日志级别。默认为 logging.ERROR。
+    """
     error_context(
         title=title,
         reason=f'程序抛出了 {type(exc).__name__}，具体原因需要结合下方堆栈定位。',

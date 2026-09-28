@@ -1,6 +1,10 @@
+/**
+ * @fileoverview 顶栏多实例平铺标签页组件。
+ */
+
 import { matchPath, useLocation, useNavigate, useParams } from 'react-router-dom'
-import { Activity, AlertTriangle, LoaderCircle, Pause, Play, Plus, Square, Trash2, X } from 'lucide-react'
-import { useState } from 'react'
+import { AlertTriangle, LoaderCircle, Play, Plus, Square, Trash2, X } from 'lucide-react'
+import { useState, type ComponentType } from 'react'
 import { api } from '../api/client'
 import { useApp, useConnection } from '../app/context'
 import { editor } from '../config/editors'
@@ -8,12 +12,29 @@ import type { Status } from '../api/types'
 import type { UiKey } from '../i18n'
 import { ErrorBox, Modal } from './ui'
 
-/** 图标随状态换：跑着的两种叠动画，出错的与停下的静态。 */
-const STATUS_ICON: Record<Status, typeof Activity> = {
-    running: Activity,
+type StatusIconType = ComponentType<{className?: string; size?: number; 'aria-hidden'?: boolean | 'true' | 'false'}>
+
+/** 待命状态的小圆点图标 */
+function StatusDot({className, size = 14, ...props}: {className?: string; size?: number; 'aria-hidden'?: boolean | 'true' | 'false'}) {
+    return <svg
+        className={`lucide lucide-dot ${className ?? ''}`}
+        width={size}
+        height={size}
+        viewBox="0 0 24 24"
+        fill="currentColor"
+        aria-hidden="true"
+        {...props}
+    >
+        <circle cx="12" cy="12" r="5" />
+    </svg>
+}
+
+/** 图标随状态换：运行与更新带加载动画，出错与停下的静态。 */
+const STATUS_ICON: Record<Status, StatusIconType> = {
+    running: LoaderCircle,
     updating: LoaderCircle,
     error: AlertTriangle,
-    stopped: Pause,
+    stopped: StatusDot,
 }
 
 /** 悬停提示用的状态文案。 */
@@ -54,7 +75,7 @@ export function InstanceTabs({onCreate}: {onCreate: () => void}) {
                     <SchedulerToggle name={item.name} status={item.status}/>
                 </span>
                 <span className="instance-tab-name">{item.name}</span>
-                <span className="instance-tab-cell instance-tab-remove" role="button" tabIndex={-1} aria-label={ui('instance.delete')} title={ui('instance.delete')} onClick={event => { event.stopPropagation(); setPendingDelete(item.name) }}><X size={13} aria-hidden="true"/></span>
+                <span className="instance-tab-cell instance-tab-remove" role="button" tabIndex={-1} aria-label={`${ui('instance.delete')} · ${ui('instance.rightClick')}`} title={`${ui('instance.delete')} · ${ui('instance.rightClick')}`} onContextMenu={event => { event.preventDefault(); setPendingDelete(item.name) }}><X size={13} aria-hidden="true"/></span>
             </button>
         })}
         <button type="button" className="instance-tab-create" aria-label={ui('instance.create')} title={ui('instance.create')} onClick={onCreate}><Plus size={15}/></button>
@@ -72,7 +93,7 @@ function SchedulerToggle({name, status}: {name: string; status: Status}) {
     const usable = connection === 'ready' && !busy && status !== 'updating'
 
     async function toggle(event: React.MouseEvent) {
-        event.stopPropagation()
+        event.preventDefault()
         if (!usable) return
         setBusy(true)
         try {
@@ -91,9 +112,9 @@ function SchedulerToggle({name, status}: {name: string; status: Status}) {
         className="instance-tab-power"
         role="button"
         tabIndex={-1}
-        aria-label={running ? ui('scheduler.stop') : ui('scheduler.start')}
-        title={running ? ui('scheduler.stop') : ui('scheduler.start')}
-        onClick={toggle}
+        aria-label={`${running ? ui('scheduler.stop') : ui('scheduler.start')} · ${ui('instance.rightClick')}`}
+        title={`${running ? ui('scheduler.stop') : ui('scheduler.start')} · ${ui('instance.rightClick')}`}
+        onContextMenu={toggle}
     >{running ? <Square size={13} aria-hidden="true"/> : <Play size={13} aria-hidden="true"/>}</span>
 }
 

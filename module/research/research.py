@@ -688,11 +688,13 @@ class RewardResearch(ResearchSelector, ResearchQueue, StorageHandler):
         return False
 
     def run(self):
-        """
+        """执行科研主调度任务。
+
+        进入科研界面，领取队列奖励，处理挂起的 T 类科研，填充队列并设置下次调度时间。
+
         Pages:
-            in: Any page
-            out: page_research, with research project information, but it's still page_research.
-                    or page_main
+            in: 任意页面
+            out: page_research（包含项目详情）或 page_main
         """
         self.ui_ensure(page_research)
 

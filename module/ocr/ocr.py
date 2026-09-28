@@ -23,6 +23,18 @@ else:
 
 
 class Ocr:
+    """通用 OCR 识别器基类。
+
+    提供基于图像裁剪、颜色通道提取、字符白名单过滤的统一文字识别流程。
+
+    Attributes:
+        name (str): 识别器标识名称。
+        letter (tuple[int, int, int]): 字符目标颜色 RGB 值。
+        threshold (int): 颜色提取容差二值化阈值。
+        alphabet (str | None): 字符过滤白名单。
+        lang (str): 语言模型标识。
+    """
+
     SHOW_LOG = True
     SHOW_REVISE_WARNING = False
 
@@ -30,12 +42,12 @@ class Ocr:
         """初始化 OCR 识别器。
 
         Args:
-            buttons: OCR 区域，支持 Button、坐标元组、Button 列表或坐标元组列表。
-            lang: 语言模型，如 'azur_lane'、'ppocr_v6'、'cnocr'、'jp'、'tw'。
-            letter: 字母 RGB 颜色值元组。
-            threshold: 二值化阈值。
-            alphabet: 字母白名单。
-            name: 识别器名称。
+            buttons (Button | tuple | list): OCR 区域，支持 Button、坐标元组、Button 列表或坐标元组列表。
+            lang (str): 语言模型标识，如 'azur_lane'、'ppocr_v6'、'cnocr'、'jp'、'tw'。
+            letter (tuple[int, int, int]): 字符目标 RGB 颜色元组。
+            threshold (int): 字符颜色二值化阈值。
+            alphabet (str | None): 字符过滤白名单。
+            name (str | None): 识别器名称。
         """
         self.name = str(buttons) if isinstance(buttons, Button) else name
         self._buttons = buttons
@@ -48,10 +60,20 @@ class Ocr:
 
     @property
     def cnocr(self) -> "AlOcr":
+        """获取底层 OCR 识别模型实例。
+
+        Returns:
+            AlOcr: 识别模型实例。
+        """
         return OCR_MODEL.__getattribute__(self.lang)
 
     @property
     def buttons(self):
+        """获取识别区域列表。
+
+        Returns:
+            list[tuple[int, int, int, int]]: 矩形区域坐标列表。
+        """
         buttons = self._buttons
         buttons = buttons if isinstance(buttons, list) else [buttons]
         buttons = [button.area if isinstance(button, Button) else button for button in buttons]
@@ -59,41 +81,46 @@ class Ocr:
 
     @buttons.setter
     def buttons(self, value):
+        """设置识别区域。
+
+        Args:
+            value: Button、坐标元组或其列表。
+        """
         self._buttons = value
 
     def pre_process(self, image):
-        """图像预处理，提取字母颜色通道。
+        """图像预处理，提取指定字符颜色通道。
 
         Args:
-            image: 输入图像，形状为 (height, width, channel)。
+            image (np.ndarray): 输入图像，形状为 (height, width, channel)。
 
         Returns:
-            处理后的灰度图像，形状为 (width, height)。
+            np.ndarray: 处理后的二值化灰度图像。
         """
         image = extract_letters(image, letter=self.letter, threshold=self.threshold)
 
         return image.astype(np.uint8)
 
     def after_process(self, result):
-        """OCR 结果后处理。
+        """OCR 识别结果后处理。
 
         Args:
-            result: OCR 识别结果字符串。
+            result (str): OCR 识别出的原始字符串。
 
         Returns:
-            处理后的结果字符串。
+            str: 修正或清洗后的结果字符串。
         """
         return result
 
     def ocr(self, image, direct_ocr=False):
-        """执行 OCR 识别。
+        """执行 OCR 文字识别。
 
         Args:
-            image: 输入图像或图像列表。
-            direct_ocr: 为 True 时跳过区域裁剪，直接对整图预处理。
+            image: 输入图像（ndarray）或图像列表。
+            direct_ocr (bool): 为 True 时跳过区域裁剪，直接对整图预处理。默认 False。
 
         Returns:
-            识别结果字符串或结果列表。
+            str | list[str]: 识别结果文本或文本列表。
         """
         start_time = time.time()
 
@@ -125,6 +152,11 @@ class OcrYuv(Ocr):
 
     @cached_property
     def letter_y(self):
+        """计算目标字符颜色在 YUV 空间的亮度 Y 分量。
+
+        Returns:
+            int: 亮度分量值。
+        """
         arr = np.array([[self.letter]], dtype=np.uint8)
         y = rgb2luma(arr)[0][0]
         return y
@@ -133,10 +165,10 @@ class OcrYuv(Ocr):
         """在 YUV 色彩空间中预处理图像，提取 Y 通道差异。
 
         Args:
-            image: 输入图像，形状为 (height, width, channel)。
+            image (np.ndarray): 输入图像，形状为 (height, width, channel)。
 
         Returns:
-            Y 通道差异图像，形状为 (width, height)。
+            np.ndarray: Y 通道差异图像。
         """
         y = rgb2luma(image)
         letter_y = (np.ones(y.shape) * self.letter_y).astype(np.uint8)
@@ -146,16 +178,34 @@ class OcrYuv(Ocr):
 
 
 class Digit(Ocr):
-    """数字 OCR 识别器，识别如 `45` 这样的数字。
+    """数字 OCR 识别器，识别如 `45` 这样的纯数字。
 
     ocr() 方法返回 int 或 int 列表。
     """
 
     def __init__(self, buttons, lang='azur_lane', letter=(255, 255, 255), threshold=128, alphabet='0123456789IDSB',
                  name=None):
+        """初始化数字识别器。
+
+        Args:
+            buttons: 识别区域。
+            lang (str): 语言模型标识。
+            letter (tuple[int, int, int]): 字符目标 RGB 颜色元组。
+            threshold (int): 颜色二值化阈值。
+            alphabet (str): 候选数字及常见易混淆字母白名单。
+            name (str | None): 识别器名称。
+        """
         super().__init__(buttons, lang=lang, letter=letter, threshold=threshold, alphabet=alphabet, name=name)
 
     def after_process(self, result):
+        """将易混淆字符替换修正并转换为整数。
+
+        Args:
+            result (str): 原始识别字符串。
+
+        Returns:
+            int: 转换后的整数结果，为空或解析失败时返回 0。
+        """
         result = super().after_process(result)
         result = result.replace('I', '1').replace('D', '0').replace('S', '5')
         result = result.replace('B', '8')
@@ -170,15 +220,36 @@ class Digit(Ocr):
 
 
 class DigitYuv(Digit, OcrYuv):
+    """基于 YUV 色彩空间亮度通道的数字 OCR 识别器。"""
     pass
 
 
 class DigitCounter(Ocr):
+    """计数器格式数字 OCR 识别器，识别如 `14/15` 格式。"""
+
     def __init__(self, buttons, lang='azur_lane', letter=(255, 255, 255), threshold=128, alphabet='0123456789/IDSB',
                  name=None):
+        """初始化计数器数字识别器。
+
+        Args:
+            buttons: 识别区域。
+            lang (str): 语言模型标识。
+            letter (tuple[int, int, int]): 字符目标 RGB 颜色元组。
+            threshold (int): 颜色二值化阈值。
+            alphabet (str): 包含斜杠的候选字符白名单。
+            name (str | None): 识别器名称。
+        """
         super().__init__(buttons, lang=lang, letter=letter, threshold=threshold, alphabet=alphabet, name=name)
 
     def after_process(self, result):
+        """修正易混淆字符。
+
+        Args:
+            result (str): 原始识别字符串。
+
+        Returns:
+            str: 修正后的字符文本。
+        """
         result = super().after_process(result)
         result = result.replace('I', '1').replace('D', '0').replace('S', '5')
         result = result.replace('B', '8')
@@ -191,10 +262,10 @@ class DigitCounter(Ocr):
 
         Args:
             image: 输入图像。
-            direct_ocr: 为 True 时跳过区域裁剪，直接对整图预处理。
+            direct_ocr (bool): 为 True 时跳过区域裁剪，直接对整图预处理。
 
         Returns:
-            三元组 (current, remain, total)，分别为当前值、剩余值和总数。
+            tuple[int, int, int]: 三元组 (current, remain, total)，分别为当前值、剩余值和总数。
         """
         result_list = super().ocr(image, direct_ocr=direct_ocr)
         result = result_list[0] if isinstance(result_list, list) else result_list
@@ -211,15 +282,36 @@ class DigitCounter(Ocr):
 
 
 class DigitCounterYuv(DigitCounter, OcrYuv):
+    """基于 YUV 色彩空间亮度通道的计数器数字 OCR 识别器。"""
     pass
 
 
 class Duration(Ocr):
+    """时长 OCR 识别器，识别如 `01:30:00` 格式的时间文本。"""
+
     def __init__(self, buttons, lang='azur_lane', letter=(255, 255, 255), threshold=128, alphabet='0123456789:IDSB',
                  name=None):
+        """初始化时长识别器。
+
+        Args:
+            buttons: 识别区域。
+            lang (str): 语言模型标识。
+            letter (tuple[int, int, int]): 字符目标 RGB 颜色元组。
+            threshold (int): 颜色二值化阈值。
+            alphabet (str): 包含冒号的候选字符白名单。
+            name (str | None): 识别器名称。
+        """
         super().__init__(buttons, lang=lang, letter=letter, threshold=threshold, alphabet=alphabet, name=name)
 
     def after_process(self, result):
+        """修正易混淆字符。
+
+        Args:
+            result (str): 原始识别字符串。
+
+        Returns:
+            str: 修正后的字符文本。
+        """
         result = super().after_process(result)
         result = result.replace('I', '1').replace('D', '0').replace('S', '5')
         result = result.replace('B', '8')
@@ -230,10 +322,10 @@ class Duration(Ocr):
 
         Args:
             image: 输入图像。
-            direct_ocr: 为 True 时跳过区域裁剪，直接对整图预处理。
+            direct_ocr (bool): 为 True 时跳过区域裁剪，直接对整图预处理。
 
         Returns:
-            timedelta 对象或 timedelta 列表。
+            timedelta | list[timedelta]: timedelta 对象或 timedelta 列表。
         """
         result_list = super().ocr(image, direct_ocr=direct_ocr)
         if not isinstance(result_list, list):
@@ -248,10 +340,10 @@ class Duration(Ocr):
         """解析时长字符串为 timedelta 对象。
 
         Args:
-            string: 时长字符串，如 `01:30:00`。
+            string (str): 时长字符串，如 `01:30:00`。
 
         Returns:
-            解析后的 timedelta 对象。
+            timedelta: 解析后的 timedelta 对象，解析失败时返回 0 时长。
         """
         result = re.search(r'(\d{1,2}):?(\d{2}):?(\d{2})', string)
         if result:
@@ -263,4 +355,5 @@ class Duration(Ocr):
 
 
 class DurationYuv(Duration, OcrYuv):
+    """基于 YUV 色彩空间亮度通道的时长 OCR 识别器。"""
     pass

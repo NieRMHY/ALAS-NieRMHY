@@ -25,19 +25,24 @@ FILTER_REGEX = re.compile(
     '|core|change|enhance'
     '|general|gun|torpedo|antiair|plane)?'
 
-    '(s[1-8]|t[1-6])?$'
+    '(s[1-9]|t[1-6])?$'
 )
 FILTER_ATTR = ('group', 'sub_genre', 'tier')
 FILTER = Filter(FILTER_REGEX, FILTER_ATTR)
 
 
 def parse_filter_amount(filter_string):
-    """
-    Parse optional amount suffix from event shop filter.
+    """从活动商店过滤器字符串中解析可选的数量后缀。
 
-    Examples:
+    示例：
         Cube:5 > Oil:2 -> {'cube': 5, 'oil': 2}
         EquipSSR > Cube -> {}
+
+    Args:
+        filter_string (str): 过滤器配置字符串。
+
+    Returns:
+        dict[str, int]: 标准化物品名称与对应购买数量的字典。
     """
     out = {}
     for part in str(filter_string).split('>'):
@@ -61,8 +66,13 @@ def parse_filter_amount(filter_string):
 
 
 def strip_filter_amount(filter_string):
-    """
-    Remove optional amount suffix before passing filters to base Filter.
+    """移除过滤器中的数量后缀，以便传递给基础 Filter 进行正则匹配。
+
+    Args:
+        filter_string (str): 带有数量后缀的过滤器字符串。
+
+    Returns:
+        str: 剥离数量后缀后的标准过滤器字符串。
     """
     out = []
     for part in str(filter_string).split('>'):
@@ -79,12 +89,17 @@ def strip_filter_amount(filter_string):
 
 
 def parse_filter_tokens(filter_string):
-    """
-    Parse filter string into ordered tokens.
+    """将过滤器字符串解析为有序的标记字典列表。
+
+    Args:
+        filter_string (str): 待解析的过滤器字符串。
 
     Returns:
-        list[dict]:
-            {'raw': str, 'name': str, 'amount': int|None, 'key': str|None}
+        list[dict]: 每个字典包含：
+            - 'raw' (str): 原始片段文本；
+            - 'name' (str): 物品名称；
+            - 'amount' (int | None): 指定购买数量，无后缀为 None；
+            - 'key' (str | None): 归一化的正则匹配键名。
     """
     out = []
     for part in str(filter_string).split('>'):
@@ -110,9 +125,15 @@ def parse_filter_tokens(filter_string):
 
 
 def rebuild_filter_tokens(tokens):
-    """
-    Rebuild filter string from ordered tokens.
-    Tokens with amount <= 0 are removed.
+    """根据标记列表重新组装过滤器字符串。
+
+    数量小于等于 0 的标记将被自动剔除。
+
+    Args:
+        tokens (list[dict]): 标记字典列表。
+
+    Returns:
+        str: 组装后的过滤器字符串。
     """
     parts = []
     for token in tokens:

@@ -1,5 +1,8 @@
-"""Scrcpy 核心连接层。管理与设备端 scrcpy 服务的 Socket 连接，
-处理视频流解码、控制通道建立和连接生命周期。"""
+"""scrcpy 核心连接层模块。
+
+管理与设备端 scrcpy-server 服务的 Socket 通信，处理 H.264 视频流解码、
+控制通道创建与维护，提供连接生命周期管理。
+"""
 
 import socket
 import struct
@@ -22,13 +25,15 @@ from module.logger import logger
 
 
 class ScrcpyError(Exception):
+    """scrcpy 通信或协议异常基类。"""
     pass
 
 
 class ScrcpyCore(Connection):
-    """
-    Scrcpy: https://github.com/Genymobile/scrcpy
-    Module from https://github.com/leng-yue/py-scrcpy-client
+    """scrcpy 核心通信与视频流接收处理类。
+
+    管理与设备端 scrcpy-server 的连接，包括视频流 Socket 与控制 Socket，
+    并在后台线程中解码 H.264 帧为 numpy ndarray 图像。
     """
 
     _scrcpy_last_frame: t.Optional[np.ndarray] = None
@@ -48,6 +53,7 @@ class ScrcpyCore(Connection):
         return ControlSender(self)
 
     def scrcpy_init(self):
+        """初始化 scrcpy 服务：停止存量服务、推送服务端 jar 并启动连接。"""
         self._scrcpy_server_stop()
 
         logger.hr('[设备-Scrcpy] Scrcpy初始化')
@@ -58,18 +64,18 @@ class ScrcpyCore(Connection):
         self.scrcpy_ensure_running()
 
     def scrcpy_ensure_running(self):
+        """确保 scrcpy 服务正在运行，未运行则触发启动。"""
         if not self._scrcpy_alive:
             with self._scrcpy_control_socket_lock:
                 self._scrcpy_server_start()
 
     def _scrcpy_server_start(self):
-        """
-        Connect to scrcpy server, there will be two sockets, video and control socket.
+        """启动设备端的 scrcpy 服务进程并建立视频流与控制 Socket 连接。
 
         Raises:
-            ScrcpyError:
-            adbutils.AdbTimeout:
-            socket.timeout:
+            ScrcpyError: 服务启动异常或连接超时。
+            adbutils.AdbTimeout: ADB 连接超时。
+            socket.timeout: Socket 通信超时。
         """
         logger.hr('[设备-Scrcpy] Scrcpy服务器启动')
         commands = ScrcpyOptions.command_v120(jar_path=self.config.SCRCPY_FILEPATH_REMOTE)
@@ -82,14 +88,14 @@ class ScrcpyCore(Connection):
         logger.info('[设备-Scrcpy] 创建服务器流')
         ret = self._scrcpy_server_stream.read(10)
         # b'Aborted \r\n'
-        # Probably because file not exists
+        # 可能是 jar 文件不存在
         if b'Aborted' in ret:
             raise ScrcpyError('Aborted')
         if ret == b'[server] E':
             # [server] ERROR: ...
             ret += recv_all(self._scrcpy_server_stream)
             logger.error(ret)
-            # java.lang.IllegalArgumentException: The server version (1.25) does not match the client (...)
+            # 服务端与客户端版本不匹配
             if b'does not match the client' in ret:
                 raise ScrcpyError('Server version does not match the client')
             else:
@@ -150,13 +156,8 @@ class ScrcpyCore(Connection):
         logger.info('[设备-Scrcpy] Scrcpy服务器已启动')
 
     def _scrcpy_server_stop(self):
-        """
-        Stop listening (both threaded and blocked)
-        """
+        """停止 scrcpy 服务端并清理所有 Socket 和解码线程。"""
         logger.hr('[设备-Scrcpy] Scrcpy服务器停止')
-        # err = self._scrcpy_receive_from_server_stream()
-        # if err:
-        #     logger.error(err)
 
         self._scrcpy_alive = False
 
@@ -192,6 +193,7 @@ class ScrcpyCore(Connection):
         logger.info('[设备-Scrcpy] Scrcpy服务器已停止')
 
     def _scrcpy_receive_from_server_stream(self):
+        """从 scrcpy 服务器流读取输出信息。"""
         if self._scrcpy_server_stream is not None:
             try:
                 return self._scrcpy_server_stream.conn.recv(4096)
@@ -199,8 +201,11 @@ class ScrcpyCore(Connection):
                 pass
 
     def _scrcpy_stream_loop(self) -> None:
-        """
-        Core loop for video parsing
+        """后台视频流接收与 H.264 解码循环。
+
+        Raises:
+            RequestHumanTakeover: 缺失 PyAV (`av`) 依赖时提示人工处理。
+            ScrcpyError: 视频流异常中断时抛出。
         """
         try:
             from av.codec import CodecContext
@@ -221,15 +226,14 @@ class ScrcpyCore(Connection):
                 for packet in packets:
                     frames = codec.decode(packet)
                     for frame in frames:
-                        # logger.info('frame received')
                         frame = frame.to_ndarray(format="rgb24")
                         self._scrcpy_last_frame = frame
                         self._scrcpy_last_frame_time = time.time()
                         self._scrcpy_resolution = (frame.shape[1], frame.shape[0])
             except (BlockingIOError, InvalidDataError):
-                # only return nonempty frames, may block cv2 render thread
+                # 仅返回非空帧，避免阻塞渲染
                 time.sleep(0.001)
-            except (ConnectionError, OSError) as e:  # Socket Closed
+            except (ConnectionError, OSError) as e:  # Socket 已关闭
                 if self._scrcpy_alive:
                     logger.error(f'_scrcpy_stream_loop_thread: {repr(e)}')
                     raise

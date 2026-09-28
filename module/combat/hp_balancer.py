@@ -53,7 +53,8 @@ class HPBalancer(ModuleBase):
 
     @property
     def hp(self):
-        """
+        """获取当前舰队各舰船的 HP 值列表。
+
         Returns:
             list[float]: 各舰船的 HP 值列表。
         """
@@ -61,7 +62,8 @@ class HPBalancer(ModuleBase):
 
     @hp.setter
     def hp(self, value):
-        """
+        """设置当前舰队各舰船的 HP 值列表。
+
         Args:
             value (list[float]): 各舰船的 HP 值列表。
         """
@@ -69,7 +71,8 @@ class HPBalancer(ModuleBase):
 
     @property
     def hp_has_ship(self):
-        """
+        """获取当前舰队各位置是否存在舰船。
+
         Returns:
             list[bool]: 各位置是否有舰船。
         """
@@ -77,20 +80,21 @@ class HPBalancer(ModuleBase):
 
     @hp_has_ship.setter
     def hp_has_ship(self, value):
-        """
+        """设置当前舰队各位置是否存在舰船。
+
         Args:
-            value (list[float]): 各位置是否有舰船。
+            value (list[bool]): 各位置是否有舰船。
         """
         self._hp_has_ship[self.fleet_current_index] = value
 
     def _calculate_hp(self, area):
-        """根据颜色计算 HP。
+        """根据 HP 条颜色计算血量百分比。
 
         Args:
-            area (tuple): HP 条的区域坐标。
+            area (tuple[int, int, int, int]): HP 条的区域坐标。
 
         Returns:
-            float: HP 百分比。
+            float: HP 百分比（0.0 至 1.0）。
         """
         data = max(
             color_bar_percentage(self.device.image, area=area, prev_color=self.COLOR_HP_RED),
@@ -99,6 +103,11 @@ class HPBalancer(ModuleBase):
         return data
 
     def _hp_grid(self):
+        """获取当前服务器对应的 HP 条按钮网格。
+
+        Returns:
+            ButtonGrid: 六个 HP 条的按钮网格对象。
+        """
         # 六个 HP 条的位置，根据不同服务器的战役界面调整
         if self.config.SERVER == 'en':
             return ButtonGrid(origin=(35, 190), delta=(0, 100), button_shape=(66, 4), grid_shape=(1, 6))
@@ -108,13 +117,10 @@ class HPBalancer(ModuleBase):
             return ButtonGrid(origin=(35, 206), delta=(0, 100), button_shape=(66, 4), grid_shape=(1, 6))
 
     def hp_get(self):
-        """从截图获取当前 HP。
+        """从当前截图获取各舰船的 HP 并计算权重修正。
 
         Returns:
-            list: 6 艘舰船的 HP（float）。
-
-        Logs:
-            [HP]  98% ____ ____  98%  98%  98%
+            list[float]: 包含 6 艘舰船 HP 的列表。
         """
         # 中文逗号修正
         weight = self.config.HpControl_HpBalanceWeight
@@ -144,16 +150,26 @@ class HPBalancer(ModuleBase):
         self._hp_has_ship = {}
 
     def _scout_position_change(self, p1, p2):
-        """交换舰船位置。即使移动到正确位置，也需要稍微上下移动。
+        """通过拖拽交换先锋舰队中两艘舰船的位置。
 
         Args:
-            p1 (int): 原始位置 [0, 2]。
-            p2 (int): 目标位置 [0, 2]。
+            p1 (int): 原始位置索引 [0, 2]。
+            p2 (int): 目标位置索引 [0, 2]。
         """
         logger.info('[血量-平衡] 侦察位置交换 (%s, %s)' % (p1, p2))
         self.device.drag(p1=SCOUT_POSITION[p1], p2=SCOUT_POSITION[p2], segments=3)
 
     def _expected_scout_order(self, hp):
+        """根据当前先锋血量计算期望的站位顺序。
+
+        高血量舰船优先放置在承伤位置（如先锋前部和尾部）。
+
+        Args:
+            hp (list[float]): 先锋三艘舰船的 HP 列表。
+
+        Returns:
+            list[int]: 期望的站位排列顺序，例如 [0, 1, 2]。
+        """
         count = np.count_nonzero(hp)
         threshold = self.config.HpControl_HpBalanceThreshold
 
@@ -192,11 +208,16 @@ class HPBalancer(ModuleBase):
 
     @Config.when(DEVICE_CONTROL_METHOD='minitouch')
     def _gen_exchange_step(self, target):
-        """minitouch 拖拽更接近人类操作。当把第一个舰船拖到第三个位置时，
-        [0, 1, 2] 变为 [1, 2, 0]，而 adb/uiautomator2 下变为 [2, 1, 0]。
+        """针对 minitouch 控制方式生成位置交换步骤。
+
+        minitouch 拖拽行为更接近人类操作：
+        将首位拖到末位时，[0, 1, 2] 变为 [1, 2, 0]。
 
         Args:
-            target (list[int]): 目标排列，如 [2, 0, 1]。
+            target (list[int]): 目标站位排列，如 [2, 0, 1]。
+
+        Yields:
+            tuple[int, int]: 每次交换的两个位置索引 (p1, p2)。
         """
         diff = np.array(target) - np.array((0, 1, 2))
         count = np.count_nonzero(diff)
@@ -223,9 +244,15 @@ class HPBalancer(ModuleBase):
 
     @Config.when(DEVICE_CONTROL_METHOD=None)
     def _gen_exchange_step(self, target):
-        """
+        """针对默认控制方式生成位置交换步骤。
+
+        在 adb/uiautomator2 下将首位拖到末位时，[0, 1, 2] 变为 [2, 1, 0]。
+
         Args:
-            target (list[int]): 目标排列，如 [2, 0, 1]。
+            target (list[int]): 目标站位排列，如 [2, 0, 1]。
+
+        Yields:
+            tuple[int, int]: 每次交换的两个位置索引 (p1, p2)。
         """
         diff = np.array(target) - np.array((0, 1, 2))
         count = np.count_nonzero(diff)
@@ -248,6 +275,11 @@ class HPBalancer(ModuleBase):
             pass
 
     def hp_balance(self):
+        """执行先锋舰队血量平衡调位。
+
+        Returns:
+            bool: 是否执行了调位操作。若启用阵容锁定则返回 False。
+        """
         if self.config.Campaign_UseFleetLock:
             return False
 
@@ -259,6 +291,11 @@ class HPBalancer(ModuleBase):
         return True
 
     def hp_retreat_triggered(self):
+        """检测是否触发低血量撤退。
+
+        Returns:
+            bool: 是否触发撤退条件。
+        """
         if self.config.HpControl_UseLowHpRetreat:
             hp = np.array(self.hp)[self.hp_has_ship]
             if np.any(hp < self.config.HpControl_LowHpRetreatThreshold):

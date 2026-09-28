@@ -11,7 +11,14 @@ STOP_ACTIONS = {
 
 
 def normalize_stop_action(action: object) -> str:
-    """校验停止后的动作，非法配置安全回退为不操作。"""
+    """校验停止后的动作，非法配置安全回退为不操作。
+
+    Args:
+        action: 待校验的停止操作字符串。
+
+    Returns:
+        str: 合法的操作字符串，若不合法则返回 'stay_there'。
+    """
     if action in STOP_ACTIONS:
         return action
 
@@ -22,14 +29,28 @@ def normalize_stop_action(action: object) -> str:
 
 
 def _get_existing_device(config):
-    """连接已有设备，不允许为了停止动作启动模拟器。"""
+    """连接已有设备，不允许为了停止动作启动模拟器。
+
+    Args:
+        config: 配置对象。
+
+    Returns:
+        Device: 已初始化的现有设备连接实例。
+    """
     from module.device.device import Device
 
     return Device.for_existing_device(config)
 
 
 def _close_emulator(config) -> bool:
-    """关闭可管理的模拟器实例。"""
+    """关闭可管理的模拟器实例。
+
+    Args:
+        config: 配置对象。
+
+    Returns:
+        bool: 关闭成功返回 True，失败或无可用实例返回 False。
+    """
     from module.device.platform import Platform
 
     platform = Platform(config, connect=False)
@@ -46,7 +67,15 @@ def _close_emulator(config) -> bool:
 
 
 def execute_stop_action(config, action: object) -> bool:
-    """执行单个停止后动作，所有异常由调用方记录并隔离。"""
+    """执行单个停止后动作，所有异常由调用方记录并隔离。
+
+    Args:
+        config: 配置对象。
+        action: 指定的收尾动作名称。
+
+    Returns:
+        bool: 执行成功返回 True，否则返回 False。
+    """
     action = normalize_stop_action(action)
     logger.hr("手动停止收尾", level=1)
     logger.attr("停止后操作", action)
@@ -76,7 +105,11 @@ def execute_stop_action(config, action: object) -> bool:
 
 
 def run_stop_action(config_name: str) -> None:
-    """独立进程入口：加载配置并执行停止后动作。"""
+    """独立进程入口：加载配置并执行停止后动作。
+
+    Args:
+        config_name: 实例配置名。
+    """
     try:
         set_file_logger(name=config_name)
 

@@ -18,11 +18,16 @@ BOX_DISASSEMBLE_DICT = {
 
 
 class StorageBox(StorageHandler):
+    """装备箱自动开启与溢出装备拆解处理器。"""
+
     box_preserve_amount = 2000
     BOX_MAX_USE_AMOUNT = 100
 
     def _handle_use_box_amount(self, amount):
         """设置箱子使用数量。
+
+        Args:
+            amount (int): 待设置的箱子开启数量。
 
         Returns:
             bool: 是否成功设置。

@@ -11,11 +11,26 @@ from module.statistics.assets import ENEMY_NAME
 
 
 class BattleStatusStatistics:
+    """战斗状态界面敌人信息提取器。"""
+
     def appear_on(self, image):
+        """检查图像中是否包含 S 胜战斗评价标识。
+
+        Args:
+            image (np.ndarray): 截图图像。
+
+        Returns:
+            bool: 包含返回 True，否则返回 False。
+        """
         return BATTLE_STATUS_S.appear_on(image)
 
     @cached_property
     def ocr_object(self):
+        """敌人名称 OCR 识别器。
+
+        Returns:
+            Ocr: 针对敌人名称区域配置的 OCR 对象。
+        """
         return Ocr(ENEMY_NAME, lang='cnocr', threshold=128, name='ENEMY_NAME')
 
     def stats_battle_status(self, image):

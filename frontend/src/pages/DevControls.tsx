@@ -1,4 +1,9 @@
+/**
+ * @fileoverview 开发者调试工具箱页面，提供动效、状态模拟与控件预览。
+ */
+
 import { useState, useSyncExternalStore, type ReactNode } from 'react'
+import { MarqueeText } from '../components/MarqueeText'
 import { useNavigate } from 'react-router-dom'
 import { ArrowRight, Bell, ChevronRight, CircleAlert, CirclePlay, Code2, Database, Gauge, Image, Layers3, RefreshCw, Search, Server, Settings2, Sparkles, Terminal, Trash2, Wrench, X } from 'lucide-react'
 import type { Value } from '../api/types'
@@ -299,10 +304,10 @@ export function DevControls() {
             <a href="#dev-nav" className="active" onClick={event => event.preventDefault()}><Database size={18}/>{ui('developer.navCurrent')}<span className="nav-pill">DEV</span></a>
             <a href="#dev-nav" onClick={event => event.preventDefault()}><Settings2 size={18}/>{ui('developer.navHover')}</a>
           </nav>
-          <div className="task-group-button expanded"><Layers3 size={18} className="task-group-icon"/><span className="task-group-title">{ui('developer.taskGroup')}</span><ChevronRight size={13} className="task-group-arrow"/></div>
+          <div className="task-group-button expanded"><Layers3 size={18} className="task-group-icon"/><MarqueeText className="task-group-title" text={ui('developer.taskGroup')}/><ChevronRight size={13} className="task-group-arrow"/></div>
           <div className="task-submenu-list dev-submenu-list">
-            <a className="task-submenu-item active" href="#dev-sub" onClick={event => event.preventDefault()}><span className="task-submenu-dot"/><span className="task-submenu-item-text">{ui('developer.submenuCurrent')}</span></a>
-            <a className="task-submenu-item" href="#dev-sub" onClick={event => event.preventDefault()}><span className="task-submenu-dot"/><span className="task-submenu-item-text">{ui('developer.submenuNormal')}</span></a>
+            <a className="task-submenu-item active" href="#dev-sub" onClick={event => event.preventDefault()}><span className="task-submenu-dot"/><MarqueeText className="task-submenu-item-text" text={ui('developer.submenuCurrent')}/></a>
+            <a className="task-submenu-item" href="#dev-sub" onClick={event => event.preventDefault()}><span className="task-submenu-dot"/><MarqueeText className="task-submenu-item-text" text={ui('developer.submenuNormal')}/></a>
           </div>
         </div>
         <div className="dev-card-preview">

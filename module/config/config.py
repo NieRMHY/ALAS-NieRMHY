@@ -890,8 +890,15 @@ class AzurLaneConfig(ConfigUpdater, ManualConfig, GeneratedConfig, ConfigWatcher
 
 
 class ConfigBackup:
+    """配置临时覆盖备份管理器。
+
+    用于在特定代码块内临时修改配置项并在退出时恢复原始值。
+    支持作为上下文管理器（with 语句）使用。
+    """
+
     def __init__(self, config):
-        """
+        """初始化配置备份管理器。
+
         Args:
             config (AzurLaneConfig): 要备份的配置对象。
         """
@@ -900,25 +907,50 @@ class ConfigBackup:
         self.kwargs = {}
 
     def cover(self, **kwargs):
+        """应用临时配置覆盖并记录原始值。
+
+        Args:
+            **kwargs: 键值对形式的临时配置项。
+        """
         self.kwargs = kwargs
         for key, value in kwargs.items():
             self.backup[key] = self.config.__getattribute__(key)
             self.config.__setattr__(key, value)
 
     def recover(self):
+        """恢复所有已备份的原始配置项。"""
         for key, value in self.backup.items():
             self.config.__setattr__(key, value)
 
     def __enter__(self):
+        """进入上下文管理器。
+
+        Returns:
+            ConfigBackup: 当前备份对象实例。
+        """
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
+        """退出上下文管理器并自动恢复原始配置。
+
+        Args:
+            exc_type: 异常类型。
+            exc_val: 异常值。
+            exc_tb: 异常追踪。
+        """
         self.recover()
 
 
 class MultiSetWrapper:
+    """批量配置设置上下文管理器。
+
+    在上下文内部临时禁用配置的自动保存（auto_update），
+    在退出上下文时统一触发一次保存更新，提高批量修改配置时的性能。
+    """
+
     def __init__(self, main):
-        """
+        """初始化批量配置设置管理器。
+
         Args:
             main (AzurLaneConfig): 配置实例。
         """
@@ -926,11 +958,23 @@ class MultiSetWrapper:
         self._previous_auto_update = []
 
     def __enter__(self):
+        """进入批量修改模式，暂停自动更新。
+
+        Returns:
+            MultiSetWrapper: 当前包装器实例。
+        """
         self._previous_auto_update.append(self.main.auto_update)
         self.main.auto_update = False
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
+        """退出批量修改模式并执行合并保存。
+
+        Args:
+            exc_type: 异常类型。
+            exc_val: 异常值。
+            exc_tb: 异常追踪。
+        """
         auto_update = self._previous_auto_update.pop()
         try:
             if auto_update:

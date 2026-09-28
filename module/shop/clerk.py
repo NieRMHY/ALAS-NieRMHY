@@ -211,6 +211,14 @@ class ShopClerk(ShopBase, Retirement):
 
         # 包装 OCR 函数适配 ui_ensure_index，防止库存不足时超买
         def shop_buy_select_ensure_index(image):
+            """读取自选商品库存并适配索引控制。
+
+            Args:
+                image: 截图区域。
+
+            Returns:
+                int: 剩余库存数或目标限制数。
+            """
             current, remain, _ = OCR_SHOP_SELECT_STOCK.ocr(image)
             if not current:
                 group_case = item.group.title() if len(item.group) > 2 else item.group.upper()

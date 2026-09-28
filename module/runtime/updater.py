@@ -6,6 +6,7 @@ Web界面更新管理器。
 """
 
 import datetime
+import os
 import subprocess
 import threading
 import time
@@ -26,7 +27,25 @@ from module.runtime.task_handler import TaskHandler, get_next_time
 
 
 class Updater(DeployConfig, GitManager):
+    """Web 界面更新与版本管理控制器。
+
+    继承 DeployConfig 和 GitManager，负责检查云端/本地更新、
+    协调进程停止、拉取代码与触发 WebUI 热重载及依赖同步。
+
+    Attributes:
+        state: 当前更新器状态（如 0, 1, "checking", "start", "wait", "run update", "reload", "failed", "cancel"）。
+        event: 更新过程中的同步线程事件。
+        _update_lock: 防止并发执行更新的互斥线程锁。
+        force_update: 是否强制执行更新。
+        _force_update_checking: 是否正在后台检查强制更新标记。
+    """
+
     def __init__(self, file=DEPLOY_CONFIG):
+        """初始化更新管理器实例。
+
+        Args:
+            file: 部署配置文件路径，默认为 DEPLOY_CONFIG。
+        """
         super().__init__(file=file)
         self.state = 0
         self.event: threading.Event = None
@@ -35,16 +54,27 @@ class Updater(DeployConfig, GitManager):
         self._force_update_checking = False
 
     def alas_kill(self):
+        """强制终止当前进程。"""
         import os
         os._exit(1)
 
     @property
     def delay(self):
+        """读取配置获取更新检查时间间隔（秒）。
+
+        Returns:
+            更新检查的秒数间隔。
+        """
         self.read()
         return int(self.CheckUpdateInterval) * 60
 
     @property
     def schedule_time(self):
+        """读取配置获取每日自动重启时间。
+
+        Returns:
+            若配置了 AutoRestartTime 则返回 datetime.time 对象，否则返回 None。
+        """
         self.read()
         t = self.AutoRestartTime
         if t is not None:
@@ -53,6 +83,14 @@ class Updater(DeployConfig, GitManager):
             return None
 
     def execute_output(self, command) -> str:
+        """执行 Shell 命令并返回标准输出。
+
+        Args:
+            command: 要执行的命令行字符串。
+
+        Returns:
+            命令执行的标准输出字符串。
+        """
         command = command.replace(r"\\", "/").replace("\\", "/").replace('"', '"')
         log = subprocess.run(
             command, capture_output=True, text=True, encoding="utf8", shell=True
@@ -60,9 +98,16 @@ class Updater(DeployConfig, GitManager):
         return log
 
     def get_commit(self, revision="", n=1, short_sha1=False) -> Tuple:
-        """
-        Return:
-            (sha1, author, isotime, message,)
+        """获取指定 Git 修订版本的提交信息元组。
+
+        Args:
+            revision: Git 修订版本表达式（如 "..origin/master"）。
+            n: 获取的提交条数。
+            short_sha1: 是否使用短 SHA1 哈希。
+
+        Returns:
+            当 n=1 时返回 (sha1, author, isotime, message) 元组；
+            当 n>1 时返回包含上述元组的列表；若无提交则返回包含 None 的元组。
         """
         ph = "h" if short_sha1 else "H"
 
@@ -81,7 +126,14 @@ class Updater(DeployConfig, GitManager):
         else:
             return logs
 
+    # Modify by MHY, 上游云端更新开关(nanoda kill-switch)与 git_over_cdn 随合并剔除：
+    # 本地更新链保持纯 git fetch/pull（见 deploy/git.py、module/api/update_service.py）
     def _check_update(self) -> bool:
+        """执行核心更新检测逻辑，比较远程分支与本地提交。
+
+        Returns:
+            若有可用更新返回 True (或 1)，否则返回 False (或 0)。
+        """
         self.state = "checking"
 
         source = "origin"
@@ -113,8 +165,10 @@ class Updater(DeployConfig, GitManager):
             return False
 
     def _check_update_(self) -> bool:
-        """
-        Deprecated
+        """通过 Git API 检查更新（已弃用）。
+
+        Returns:
+            有更新返回 1，无更新返回 0。
         """
         self.state = "checking"
         r = self.Repository.split("/")
@@ -175,7 +229,7 @@ class Updater(DeployConfig, GitManager):
             return 0
 
         if get_commit.status_code != 200:
-            # for develops
+            # 开发者本地未推送的提交
             logger.info(
                 f"[WebUI-更新] 无法在上游找到本地提交 {local_sha[:8]}，跳过更新"
             )
@@ -185,7 +239,7 @@ class Updater(DeployConfig, GitManager):
         return 1
 
     def _check_update_thread(self):
-        """在后台线程中执行更新检查"""
+        """在后台线程中执行更新检查。"""
         try:
             result = self._check_update()
             self.state = result
@@ -194,6 +248,11 @@ class Updater(DeployConfig, GitManager):
             self.state = 0
 
     def check_update(self):
+        """触发更新检查线程。"""
+        # Android 运行时没有 .git，源码、前端和兼容清单由宿主整包切换。
+        if os.environ.get('AZURPILOT_ANDROID') == '1':
+            self.state = 0
+            return
         if self.state in (0, "failed", "finish"):
             self.state = "checking"
             threading.Thread(
@@ -202,7 +261,11 @@ class Updater(DeployConfig, GitManager):
             ).start()
 
     def check_update_loop(self) -> Generator:
-        """按普通或强制模式调度更新检查。"""
+        """按普通或强制模式周期性调度更新检查。
+
+        Yields:
+            生成器状态对象供调度器流转。
+        """
         th: TaskHandler
         th = yield
         next_check = 0.0
@@ -216,9 +279,15 @@ class Updater(DeployConfig, GitManager):
 
     @retry(ExecutionError, tries=3, delay=5, logger=None)
     def git_install(self):
+        """执行 Git 源码拉取与安装，失败自动重试。"""
         return super().git_install()
 
     def update(self):
+        """执行实际的代码拉取与更新。
+
+        Returns:
+            若更新成功返回 True，否则返回 False。
+        """
         logger.hr("[WebUI-更新] 执行更新")
         try:
             self.git_install()
@@ -236,6 +305,11 @@ class Updater(DeployConfig, GitManager):
         return True
 
     def run_update(self) -> bool:
+        """获取更新锁并启动安全的完整更新流程。
+
+        Returns:
+            更新成功或跳过返回 True，执行失败返回 False。
+        """
         if not hasattr(self, "_update_lock"):
             self._update_lock = threading.Lock()
         with self._update_lock:
@@ -257,6 +331,11 @@ class Updater(DeployConfig, GitManager):
                 return self._start_update()
 
     def _start_update(self) -> bool:
+        """准备需要暂停的实例列表并开始等待停止。
+
+        Returns:
+            后续更新流程执行结果。
+        """
         self.state = "start"
         instances = ProcessManager.running_instances()
         names = []
@@ -267,6 +346,15 @@ class Updater(DeployConfig, GitManager):
         return self._wait_update(instances, names)
 
     def _wait_update(self, instances: List[ProcessManager], names) -> bool:
+        """等待所有正在运行的实例退出，超时后强制终止。
+
+        Args:
+            instances: 运行中的 ProcessManager 列表。
+            names: 实例名称字符串列表。
+
+        Returns:
+            更新执行结果布尔值。
+        """
         if self.state == "cancel":
             self.state = 1
             return True
@@ -305,6 +393,15 @@ class Updater(DeployConfig, GitManager):
         return self._run_update(instances, names)
 
     def _run_update(self, instances, names) -> bool:
+        """执行源码更新、持久化恢复标记并触发 WebUI 热重载。
+
+        Args:
+            instances: 原先处于运行状态的实例列表。
+            names: 实例名称列表。
+
+        Returns:
+            更新成功返回 True，失败返回 False。
+        """
         # 该方法也会被定向测试和维护代码直接调用，故在内部重复取得可重入事务锁。
         with State.restart_lock:
             if State._restart_requested:
@@ -397,9 +494,15 @@ class Updater(DeployConfig, GitManager):
 
     @staticmethod
     def _trigger_reload():
+        """触发父进程的 WebUI 重载事件。"""
         State.restart_event.set()
 
     def schedule_update(self) -> Generator:
+        """按定时计划调度自动更新与检查任务。
+
+        Yields:
+            生成器状态对象供调度器流转。
+        """
         th: TaskHandler
         th = yield
         if self.schedule_time is None:
@@ -422,6 +525,7 @@ class Updater(DeployConfig, GitManager):
             yield
 
     def cancel(self):
+        """取消当前正在等待的更新流程。"""
         self.state = "cancel"
 
 

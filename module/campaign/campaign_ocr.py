@@ -43,14 +43,16 @@ class CampaignOcr(ModuleBase):
 
     @staticmethod
     def _campaign_get_chapter_index(name):
-        """
-        获取章节索引。
+        """获取章节索引。
 
         Args:
-            name (str, int): 章节名称或索引。
+            name (str | int): 章节名称或索引。
 
         Returns:
-            int: 章节索引。
+            int: 章节数值索引。
+
+        Raises:
+            CampaignNameError: 无法识别章节名称时抛出。
         """
         if isinstance(name, int):
             return name
@@ -66,6 +68,16 @@ class CampaignOcr(ModuleBase):
 
     @staticmethod
     def _campaign_ocr_result_process(result):
+        """清洗并修正关卡 OCR 识别结果文本。
+
+        处理常见识别误差，如破折号重复、'1' 误识别为 'I' 等。
+
+        Args:
+            result (str): 原始 OCR 识别字符串。
+
+        Returns:
+            str: 格式化修正后的关卡名称。
+        """
         # OCR 结果可能为 '7--2'，因为游戏中使用的是 '–' 而非 '-'
         result = result.replace('--', '-').replace('--', '-').lstrip('-')
 
@@ -154,14 +166,32 @@ class CampaignOcr(ModuleBase):
 
     @cached_property
     def _stage_image(self):
+        """裁剪出关卡入口大致检测区域的彩色图像。
+
+        Returns:
+            np.ndarray: 裁剪后的图像数据。
+        """
         return crop(self.device.image, self._stage_detect_area, copy=False)
 
     @cached_property
     def _stage_image_gray(self):
+        """获取关卡入口检测区域的灰度图像。
+
+        Returns:
+            np.ndarray: 灰度图像数据。
+        """
         return rgb2gray(self._stage_image)
 
     @Config.when(SERVER='en')
     def campaign_extract_name_image(self, image):
+        """查找所有关卡入口（美服专用配置）。
+
+        Args:
+            image (np.ndarray): 截图数据。
+
+        Returns:
+            list[Button]: 匹配到的关卡入口按钮列表。
+        """
         digits = []
 
         if 'normal' in self.config.STAGE_ENTRANCE:
@@ -215,12 +245,12 @@ class CampaignOcr(ModuleBase):
 
     @Config.when(SERVER=None)
     def campaign_extract_name_image(self, image):
-        """
-        查找所有关卡入口并处理活动差异。
+        """查找所有关卡入口并处理活动差异。
+
         关卡入口设置参见 ManualConfig.STAGE_ENTRANCE。
 
         Args:
-            image: 截图。
+            image (np.ndarray): 截图数据。
 
         Returns:
             list[Button]: 关卡入口按钮列表。
@@ -289,14 +319,13 @@ class CampaignOcr(ModuleBase):
 
     @staticmethod
     def _extract_stage_name(image):
-        """
-        从完整关卡名称图像中提取关卡编号区域。
+        """从完整关卡名称图像中提取关卡编号区域。
 
         Args:
-            image: 裁剪后的完整关卡名称图像，如 '3-4 Counterattack!'。
+            image (np.ndarray): 裁剪后的完整关卡名称图像，如 '3-4 Counterattack!'。
 
         Returns:
-            关卡名称区域坐标，如输入图像中 '3-4' 的坐标。
+            np.ndarray: 关卡名称区域相对坐标 [x1, y1, x2, y2]。
         """
         x_skip = 10
         interval = 5
@@ -310,14 +339,17 @@ class CampaignOcr(ModuleBase):
         return np.array(area) + (-3, -7, 3, 7)
 
     def _get_stage_name(self, image):
-        """
-        从给定图像中解析关卡名称。
+        """从给定图像中解析关卡名称。
+
         设置属性：
         self.campaign_chapter: str，当前章节名称。
         self.stage_entrance: dict，键为关卡名称(str)，值为进入关卡的按钮(Button)。
 
         Args:
             image (np.ndarray): 截图。
+
+        Raises:
+            CampaignNameError: 未找到有效关卡或章节解析失败时抛出。
         """
         self.stage_entrance = {}
         del_cached_property(self, '_stage_image')
@@ -363,26 +395,51 @@ class CampaignOcr(ModuleBase):
         logger.attr('关卡', ', '.join(self.stage_entrance.keys()))
 
     def handle_get_chapter_additional(self):
-        """
-        获取章节时的额外处理。
+        """获取章节时的额外异常处理。
 
         Returns:
-            bool: 是否进行了点击操作。
+            bool: 是否进行了额外操作。
+
+        Raises:
+            CampaignNameError: 若出现撤退按钮则抛出异常。
         """
         if self.appear(WITHDRAW, offset=(30, 30)):
             logger.warning(f'[战役-OCR] 获取章节索引时出现撤退按钮')
             raise CampaignNameError
+        return False
 
     def get_chapter_index(self, skip_first_screenshot=True):
-        """
-        获取当前章节索引，供 ui_ensure_index 使用。
+        """获取当前章节索引，供 ui_ensure_index 使用。
 
         Args:
-            skip_first_screenshot: 是否跳过首次截图。
+            skip_first_screenshot (bool): 是否跳过首次截图。默认 True。
 
         Returns:
-            int: 章节索引。
+            int: 章节数值索引。
+
+        Raises:
+            CampaignNameError: 超时或解析失败时抛出。
         """
+        timeout = Timer(2, count=4).start()
+        while 1:
+            if skip_first_screenshot:
+                skip_first_screenshot = False
+            else:
+                self.device.screenshot()
+
+            if timeout.reached():
+                raise CampaignNameError
+            image = self.device.image
+            try:
+                self._get_stage_name(image)
+                break
+            except (IndexError, CampaignNameError):
+                pass
+
+            if self.handle_get_chapter_additional():
+                continue
+
+        return self._campaign_get_chapter_index(self.campaign_chapter)
         timeout = Timer(2, count=4).start()
         while 1:
             if skip_first_screenshot:

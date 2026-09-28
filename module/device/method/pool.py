@@ -1,5 +1,8 @@
-"""工作线程池。基于生产者-消费者模型的通用任务池，
-用于并发执行截图、控制等设备操作，支持优雅关闭和异常传播。"""
+"""工作线程池模块。
+
+基于生产者-消费者模型的轻量任务池，用于并发执行截图、控制等设备操作，
+提供 Outcome 包装、异常栈帧清理、优雅关闭与异常传播支持。
+"""
 
 import abc
 import ctypes
@@ -17,13 +20,14 @@ ResultT = TypeVar("ResultT")
 
 
 def remove_tb_frames(exc, n: int):
-    """
+    """移除异常回溯信息中最顶层的 n 个栈帧。
+
     Args:
-        exc (BaseException):
-        n:
+        exc (BaseException): 原始异常对象。
+        n (int): 要剥离的栈帧层数。
 
     Returns:
-        BaseException:
+        BaseException: 附加修剪后回溯栈帧的异常对象。
     """
     tb = exc.__traceback__
     for _ in range(n):
@@ -33,76 +37,84 @@ def remove_tb_frames(exc, n: int):
 
 
 class Outcome(abc.ABC, Generic[ValueT]):
+    """封装同步计算结果（值或异常）的抽象基类。"""
+
     @abc.abstractmethod
     def unwrap(self) -> ValueT:
-        """返回或抛出包含的值或异常。
+        """返回包含的值或重新抛出捕获的异常。
 
-        以下两行代码是等价的::
+        Returns:
+            ValueT: 成功计算得到的值。
 
-           x = fn(*args)
-           x = outcome.capture(fn, *args).unwrap()
-
+        Raises:
+            BaseException: 如果捕获的是异常则将其重新抛出。
         """
         pass
 
 
 class Value(Outcome[ValueT], Generic[ValueT]):
-    """表示常规值的 :class:`Outcome` 具体子类。
-
-    """
+    """表示成功执行并包含返回值的 Outcome 实现类。"""
     __slots__ = ('value',)
 
     def __init__(self, value: ValueT):
+        """初始化成功值对象。
+
+        Args:
+            value: 计算结果值。
+        """
         self.value: ValueT = value
 
     def __repr__(self) -> str:
         return f'Value({self.value!r})'
 
     def unwrap(self) -> ValueT:
+        """获取并返回包含的计算结果值。
+
+        Returns:
+            ValueT: 计算结果。
+        """
         return self.value
 
 
 class Error(Outcome[NoReturn]):
-    """表示已抛出异常的 :class:`Outcome` 具体子类。
-
-    """
+    """表示执行失败并捕获了异常的 Outcome 实现类。"""
     __slots__ = ('error',)
 
     def __init__(self, error: BaseException):
+        """初始化异常结果对象。
+
+        Args:
+            error: 捕获的异常对象。
+        """
         self.error: BaseException = error
 
     def __repr__(self) -> str:
         return f'Error({self.error!r})'
 
     def unwrap(self):
-        # 回溯信息会脱离上下文显示下面的 'raise' 行，因此给这个变量
-        # 取一个在脱离上下文时仍有意义的名字。
+        """重新抛出捕获的异常并清理局部变量避免引用循环。
+
+        Raises:
+            BaseException: 包含的原始异常。
+        """
         captured_error = self.error
         try:
             raise captured_error
         finally:
-            # 这里需要避免创建引用循环。Python 能正常回收循环引用，
-            # 所以即使创建了循环也不是世界末日，但循环垃圾回收器会
-            # 增加 Python 程序的延迟，创建的循环越多，回收器运行越频繁，
-            # 所以最好从一开始就避免创建循环。更多详情请参阅:
-            #
-            #    https://github.com/python-trio/trio/issues/1770
-            #
-            # 具体来说，通过从 'unwrap' 方法的栈帧中删除这些局部变量，
-            # 可以避免 'captured_error' 对象的 __traceback__ 间接引用
-            # 'captured_error' 本身。
+            # 清理局部变量，防止 captured_error 的 __traceback__ 形成循环引用
             del captured_error, self
 
 
 def capture(sync_fn, *args, **kwargs):
-    """
-    运行 ``sync_fn(*args, **kwargs)`` 并捕获结果。
+    """执行同步函数并将其返回值或抛出的异常包装为 Outcome 对象。
 
     Args:
-        sync_fn (Callable[..., ResultT]):
+        sync_fn: 待执行的目标函数。
+        *args: 传递给目标函数的位置参数。
+        **kwargs: 传递给目标函数的关键字参数。
 
     Returns:
-        Value[ResultT] | Error:
+        Value | Error: 成功时返回 Value，抛出异常时返回 Error。
     """
     try:
         return Value(sync_fn(*args, **kwargs))
@@ -112,28 +124,33 @@ def capture(sync_fn, *args, **kwargs):
 
 
 class JobError(Exception):
+    """任务执行失败异常。"""
     pass
 
 
 class JobTimeout(Exception):
+    """任务等待超时异常。"""
     pass
 
 
 class _JobKill(Exception):
+    """用于强制终止工作线程的内部异常。"""
     pass
 
 
 class Job(Generic[ResultT]):
-    """
-    简单队列，从 queue.Queue() 复制而来。
-    更快但只能 put() 一次和 get() 一次。
-    """
+    """轻量单次任务结果队列。
 
-    # __slots__ = ('worker', 'func_args_kwargs', 'queue', 'mutex', 'finished')
+    从 queue.Queue 简化而来，针对一次 put() 和一次 get() 进行极致性能优化。
+    """
 
     def __init__(self, worker, func_args_kwargs):
-        # 有 "worker" 属性表示任务正在进行中
-        # 没有 "worker" 属性表示任务已完成或被终止
+        """初始化任务对象。
+
+        Args:
+            worker: 执行本任务的工作线程实例。
+            func_args_kwargs: 函数与入参元组 (func, args, kwargs)。
+        """
         self.worker = worker
         self.func_args_kwargs = func_args_kwargs
 
@@ -146,24 +163,31 @@ class Job(Generic[ResultT]):
         return f'Job({self.func_args_kwargs})'
 
     def get(self) -> ResultT:
-        """
-        获取任务结果或任务错误。
+        """阻塞等待并获取任务的执行结果。
+
+        Returns:
+            ResultT: 任务执行成功时的返回值。
+
+        Raises:
+            BaseException: 任务内部抛出的任何异常。
         """
         self.notify_get.acquire()
-
-        # 返回任务结果或抛出任务错误
         item = self.queue.popleft()
         return item.unwrap()
 
     def get_or_kill(self, timeout) -> ResultT:
-        """
-        尝试在给定秒数内获取结果。
-        成功则返回任务结果或任务错误，失败则终止任务并抛出 JobTimeout。
+        """在指定超时时间内获取任务结果，超时则强行终止任务。
 
-        注意当线程池已满时，JobTimeout 可能不会立即抛出。
+        Args:
+            timeout (float): 最长等待超时时间（秒）。
+
+        Returns:
+            ResultT: 任务执行返回值。
+
+        Raises:
+            JobTimeout: 超时未获取到结果。
         """
         if self.notify_get.acquire(timeout=timeout):
-            # 返回任务结果或抛出任务错误
             item = self.queue.popleft()
             return item.unwrap()
         else:
@@ -171,11 +195,11 @@ class Job(Generic[ResultT]):
             raise JobTimeout
 
     def _kill(self):
+        """终止当前正在执行该任务的工作线程。"""
         with self.put_lock:
             try:
                 worker = self.worker
             except AttributeError:
-                # 尝试终止已完成的任务，不做任何操作
                 return
             worker.kill()
             del self.worker
@@ -255,12 +279,12 @@ class WorkerThread:
                     return
 
     def kill(self):
-        """
-        终止线程确实不安全，但当单个任务函数阻塞时别无选择。
-        此方法应受 `job.put_lock` 保护，以防止与 `_handle_job()` 的竞态条件。
+        """强制终止当前工作线程。
+
+        通过向目标线程发送异步异常 `_JobKill` 来中断执行。
 
         Returns:
-            bool: 是否成功终止线程
+            bool: 成功终止返回 True，失败返回 False。
         """
         # 向线程发送 SystemExit
         thread_id = ctypes.c_long(self.thread.ident)
@@ -282,15 +306,20 @@ class WorkerThread:
 
 
 class WorkerPool:
-    """
-    模仿 trio.to_thread.start_thread_soon() 的线程池。
-    参考: https://github.com/python-trio/trio/issues/6
+    """轻量级工作线程池。
+
+    模仿 trio.to_thread.start_thread_soon() 设计，提供低延迟的任务分发与线程复用。
     """
 
     # 线程空闲 10 秒后退出。
     IDLE_TIMEOUT = 10
 
     def __init__(self, pool_size: int = 8):
+        """初始化线程池。
+
+        Args:
+            pool_size (int): 线程池最大线程数量，默认为 8。
+        """
         # 线程池最多 8 个线程。
         # Alasio 用于本地低频访问，默认线程池较小
         self.pool_size = pool_size
@@ -304,19 +333,7 @@ class WorkerPool:
         self.notify_pool.acquire()
 
     def release_full_lock(self):
-        """
-        当工作线程完成任务、退出或被终止时调用此方法。
-
-        当线程池已满时，
-        线程池通知所有工作线程：任何完成任务的线程请通知我。
-        `self.notify_worker.release()`
-        然后线程池阻塞自己。
-        `self.notify_pool.acquire()`
-        最快的工作线程（也是唯一一个）接收到消息。
-        `if self.notify_worker.acquire(blocking=False):`
-        工作线程通知线程池，新槽位已就绪，可以继续。
-        `self.notify_pool.release()`
-        """
+        """当工作线程完成任务、退出或被终止时释放满池等待锁。"""
         if self.notify_worker.acquire(blocking=False):
             self.notify_pool.release()
 
@@ -338,31 +355,22 @@ class WorkerPool:
                 return worker
             except KeyError:
                 pass
-            # 某个工作线程刚好退出
-            # if len(self.all_workers) < WorkerPool.MAX_WORKER:
-            #     break
 
         # 创建新工作线程
         worker = WorkerThread(self)
-        # logger.info(f'New worker thread: {worker.default_name}')
         self.all_workers[worker] = None
         return worker
 
     def start_thread_soon(self, func, *args, **kwargs):
-        """
-        在线程上运行函数，结果可从 `job` 对象获取。
+        """在工作线程上调度执行函数，并返回用于获取结果的 Job 对象。
 
         Args:
-            func (Callable[..., ResultT]):
-            *args:
-            **kwargs:
+            func: 目标可调用对象。
+            *args: 位置参数。
+            **kwargs: 关键字参数。
 
         Returns:
-            Job[ResultT]:
-
-        Examples:
-            job = WORKER_POOL.start_thread_soon(func, *args)
-            result = job.get()
+            Job[ResultT]: 用于获取执行结果的任务对象。
         """
         worker = self._get_thread_worker()
         job = Job(worker=worker, func_args_kwargs=(func, args, kwargs))
@@ -372,21 +380,13 @@ class WorkerPool:
         return job
 
     def run_on_thread(self, func):
-        """
-        装饰器，使函数在线程上运行，结果可从 `job` 对象获取。
+        """将函数装饰为在后台工作线程上异步运行（返回 Job）。
 
         Args:
-            func (Callable[..., ResultT]):
+            func: 目标函数。
 
         Returns:
-            Job[ResultT]:
-
-        Examples:
-            @run_on_thread
-            def function(...):
-                pass
-            job = function(...)
-            result = job.get()
+            Callable: 包装后的函数，调用时返回 Job。
         """
         @wraps(func)
         def thread_wrapper(*args, **kwargs) -> "Job[ResultT]":
@@ -396,15 +396,14 @@ class WorkerPool:
 
     @staticmethod
     def _subprocess_execute(cmd, timeout=10):
-        """
-        在子进程中运行命令的辅助函数。
+        """在子进程中运行 Shell 命令并捕获其标准输出。
 
         Args:
-            cmd (list[str]):
-            timeout:
+            cmd (list[str]): 待执行的命令参数列表。
+            timeout (float): 命令执行超时时间（秒）。
 
         Returns:
-            bytes:
+            bytes: 标准输出字节串。
         """
         logger.info(f'[设备-进程池] 执行: {cmd}')
 
@@ -419,15 +418,14 @@ class WorkerPool:
         return stdout
 
     def start_cmd_soon(self, cmd, timeout=10):
-        """
-        在子进程中运行命令并在另一个线程上通信，结果可从 `job` 对象获取。
+        """在工作线程中异步执行子进程命令。
 
         Args:
-            cmd (list[str]):
-            timeout:
+            cmd (list[str]): 命令参数列表。
+            timeout (float): 超时秒数。
 
         Returns:
-            Job[bytes]:
+            Job[bytes]: 封装命令输出的 Job 对象。
         """
         worker = self._get_thread_worker()
         job = Job(worker=worker, func_args_kwargs=(
@@ -439,67 +437,57 @@ class WorkerPool:
         return job
 
     def wait_jobs(self) -> "WaitJobsWrapper":
-        """
-        自动等待所有任务完成。
+        """获取自动等待所有任务完成的上下文管理器。
 
-        Examples:
-            with WORKER_POOL.wait_jobs() as pool:
-                pool.start_thread_soon(...)
+        Returns:
+            WaitJobsWrapper: 任务等待包装器。
         """
         return WaitJobsWrapper(self)
 
     def gather_jobs(self) -> "GatherJobsWrapper":
-        """
-        自动等待所有任务完成并收集结果。
+        """获取自动等待并收集所有任务结果的上下文管理器。
 
-        Examples:
-            pool = WORKER_POOL.gather_jobs()
-            with pool:
-                pool.start_thread_soon(...)
-            # 获取结果
-            print(pool.results)
+        Returns:
+            GatherJobsWrapper: 结果聚合包装器。
         """
         return GatherJobsWrapper(self)
 
     def thread_map(self, func, iterables):
-        """
-        ThreadPoolExecutor.map(func, iterables) 的替代方案。
+        """并发映射函数到参数序列并等待返回所有结果（类似 ThreadPoolExecutor.map）。
 
         Args:
-            func (Callable[..., ResultT]):
-            iterables:
+            func: 目标执行函数。
+            iterables: 参数可迭代对象。
 
         Returns:
-            list[ResultT]:
+            list[ResultT]: 所有任务的执行结果列表。
         """
         jobs = [self.start_thread_soon(func, arg) for arg in iterables]
         results = [job.get() for job in jobs]
         return results
 
     def thread_starmap(self, func, iterables):
-        """
-        multiprocessing.pool.Pool().starmap(func, iterables) 的线程版本替代方案。
+        """并发星号映射函数到解包参数序列（类似 Pool.starmap）。
 
         Args:
-            func (Callable[..., ResultT]):
-            iterables:
+            func: 目标执行函数。
+            iterables: 包含参数元组的可迭代对象。
 
         Returns:
-            list[ResultT]:
+            list[ResultT]: 所有任务的执行结果列表。
         """
         jobs = [self.start_thread_soon(func, *arg) for arg in iterables]
         results = [job.get() for job in jobs]
         return results
 
     def thread_funcmap(self, func_iterables):
-        """
-        在线程上运行一组函数。
+        """并发运行一组无参函数并返回结果。
 
         Args:
-            func_iterables (Iterable[Callable[..., ResultT]]):
+            func_iterables: 可调用对象序列。
 
         Returns:
-            list[ResultT]:
+            list[ResultT]: 执行结果列表。
         """
         jobs = [self.start_thread_soon(func) for func in func_iterables]
         results = [job.get() for job in jobs]
@@ -507,15 +495,19 @@ class WorkerPool:
 
 
 class WaitJobsWrapper:
-    """
-    等待所有任务完成的包装类。
-    """
+    """等待所有已投递任务执行完毕的上下文管理器。"""
 
     def __init__(self, pool: "WorkerPool"):
+        """初始化等待包装器。
+
+        Args:
+            pool (WorkerPool): 所属线程池。
+        """
         self.pool: "WorkerPool" = pool
         self.jobs: "list[Job[ResultT]]" = []
 
     def get(self):
+        """等待所有已分发任务完成。"""
         for job in self.jobs:
             job.get()
         self.jobs.clear()
@@ -528,16 +520,15 @@ class WaitJobsWrapper:
         self.get()
 
     def start_thread_soon(self, func, *args, **kwargs):
-        """
-        在线程上运行函数，结果可从 `job` 对象获取。
+        """分发新任务并登记到等待列表。
 
         Args:
-            func (Callable[..., ResultT]):
-            *args:
-            **kwargs:
+            func: 目标函数。
+            *args: 位置参数。
+            **kwargs: 关键字参数。
 
         Returns:
-            Job[ResultT]:
+            Job[ResultT]: 对应的 Job 实例。
         """
         job = self.pool.start_thread_soon(func, *args, **kwargs)
         self.jobs.append(job)
@@ -545,15 +536,19 @@ class WaitJobsWrapper:
 
 
 class GatherJobsWrapper(WaitJobsWrapper):
-    """
-    收集所有任务结果的包装类。
-    """
+    """等待并收集所有已投递任务返回值的上下文管理器。"""
 
     def __init__(self, pool: "WorkerPool"):
+        """初始化聚合包装器。
+
+        Args:
+            pool (WorkerPool): 所属线程池。
+        """
         super().__init__(pool)
         self.results: "list[ResultT]" = []
 
     def get(self):
+        """等待所有任务完成并收集其结果到 self.results。"""
         for job in self.jobs:
             result = job.get()
             self.results.append(result)
@@ -566,3 +561,4 @@ class GatherJobsWrapper(WaitJobsWrapper):
 
 
 WORKER_POOL = WorkerPool()
+

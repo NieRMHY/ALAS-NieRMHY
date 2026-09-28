@@ -24,6 +24,11 @@ class SelectedGrids:
     """
 
     def __init__(self, grids):
+        """初始化格子集合。
+
+        Args:
+            grids (list): 格子对象列表。
+        """
         self.grids = grids
         self.indexes: t.Dict[tuple, SelectedGrids] = {}
 
@@ -406,9 +411,10 @@ class RoadGrids:
     """
 
     def __init__(self, grids):
-        """
+        """初始化路径障碍组合。
+
         Args:
-            grids (list):
+            grids (list): 障碍格子或格子列表的集合。
         """
         self.grids = []
         for grid in grids:

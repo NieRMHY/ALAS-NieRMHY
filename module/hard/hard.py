@@ -42,6 +42,15 @@ class CampaignHard(CampaignRun):
     campaign: Campaign
 
     def run(self):
+        """执行困难关卡出击主流程。
+
+        流程包括：覆写困难模式配置、加载战役与地图模块、导航至困难关卡界面、
+        OCR 识别剩余次数并循环出击，完成后退出自动搜索并延迟到次日服务器刷新。
+
+        Pages:
+            in: 任意页面
+            out: page_campaign 或关卡选择界面
+        """
         logger.hr('困难战役', level=1)
         # Modify by MHY: 支持均衡模式开关，开启则跨天轮转刷图纸，关闭走原有固定单关逻辑
         if self.config.Hard_HardNewMode:

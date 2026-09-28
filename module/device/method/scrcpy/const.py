@@ -1,13 +1,14 @@
-"""
-This module includes all consts used in this project
+"""scrcpy 协议常量定义模块。
+
+包含 scrcpy 投屏与控制协议中的动作类型、按键编码（KeyCode）、事件类型、注入类型以及屏幕锁定与电源模式常量。
 """
 
-# Action
+# 动作类型 (Action)
 ACTION_DOWN = 0
 ACTION_UP = 1
 ACTION_MOVE = 2
 
-# KeyCode
+# 按键代码 (KeyCode)
 KEYCODE_UNKNOWN = 0
 KEYCODE_SOFT_LEFT = 1
 KEYCODE_SOFT_RIGHT = 2

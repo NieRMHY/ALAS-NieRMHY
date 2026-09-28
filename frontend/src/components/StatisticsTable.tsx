@@ -1,11 +1,72 @@
-import { ArrowDown, ArrowUp } from 'lucide-react'
+/**
+ * @fileoverview 统计数据明细与掉落记录表格组件。
+ */
+
+import type {ReactNode} from 'react'
+import { ArrowDown, ArrowUp, Search } from 'lucide-react'
 import { useState } from 'react'
 import type { StatTable, TableSort } from '../api/types'
 import { downloadCsv } from './statisticsData'
+import { DEFAULT_TABLE_ROWS } from '../app/statisticsLayout'
 import { useApp } from '../app/context'
 import { localeForLanguage } from '../i18n'
 
-export function StatisticsTable({data}: {data: StatTable}) {
+const iconBase = import.meta.env.BASE_URL
+export const resourceIcons: Record<string, string> = {
+  '钻石': `${iconBase}diamond.webp`,
+  '心智魔方': `${iconBase}cube.webp`,
+  '魔方': `${iconBase}cube.webp`,
+  '心智单元': `${iconBase}cognitive_chips.webp`,
+  '石油': `${iconBase}oil.webp`,
+  '物资': `${iconBase}gold.webp`,
+  '完成委托': `${iconBase}honor_medal.webp`,
+  '活动 PT': `${iconBase}pt.webp`,
+  '行动力': `${iconBase}guild_coin.webp`,
+  '作战补给凭证': `${iconBase}supply_token.webp`,
+  '特别兑换凭证': `${iconBase}special_token.webp`,
+  '核心数据': `${iconBase}core_data.webp`,
+  '荣誉勋章': `${iconBase}honor_medal.webp`,
+  '功勋': `${iconBase}merit.webp`,
+  '舰队币': `${iconBase}stamina.webp`,
+}
+
+// 科研掉落用仓库里的模板图当图标，后端把 /research-items 挂到 assets/stats/research_items，
+// 不走前端构建，补了新模板立刻生效。单元格值形如 'research:BlueprintValparaiso'。
+export const RESEARCH_PREFIX = 'research:'
+// 大世界掉落同理，值形如 'opsi:PlateGeneralT4'，后端把 /opsi-items 挂到
+// assets/stats/opsi_reward_items。
+export const OPSI_PREFIX = 'opsi:'
+export const TEMPLATE_PREFIXES = [RESEARCH_PREFIX, OPSI_PREFIX]
+export function resolveIcon(value: string, resources = true): {src: string, label: string} | undefined {
+  if (value.startsWith(RESEARCH_PREFIX)) {
+    const name = value.slice(RESEARCH_PREFIX.length)
+    // 图标列不重复显示模板名：它很长（Prototype_Quadruple_610mm_Cruiser_...）会把列撑爆，
+    // 而中文名在「物品」列已经有了；搜索也走那一列。
+    return {src: `${iconBase}research-items/${name}.png`, label: ''}
+  }
+  if (value.startsWith(OPSI_PREFIX)) {
+    const name = value.slice(OPSI_PREFIX.length)
+    return {src: `${iconBase}opsi-items/${name}.png`, label: ''}
+  }
+  // resources=false：这一行已经有科研模板图标了，「物品」列别再按资源名查一次——
+  // 「心智单元」「物资」既是科研物品名又是资源名，会被套上资源图标（还可能是错的那张）。
+  if (!resources) return undefined
+  const icon = resourceIcons[value]
+  return icon ? {src: icon, label: value} : undefined
+}
+
+export function StatisticsTable({data, foldControl, editControls, rows: rowsPerPage = DEFAULT_TABLE_ROWS, icons = false, plain = false}: {
+  data: StatTable
+  foldControl?: ReactNode
+  /** 编辑模式下的表格设置控件，与其他卡片动作同排。 */
+  editControls?: ReactNode
+  /** 每页行数，0 表示不分页。 */
+  rows?: number
+  /** 为纯数值补上所在列的资源图标。 */
+  icons?: boolean
+  /** 简洁显示：不显示表头，每个数据行压成一行文字。 */
+  plain?: boolean
+}) {
   const {ui, language} = useApp()
   const [page, setPage] = useState(0)
   const [search, setSearch] = useState('')
@@ -17,7 +78,27 @@ export function StatisticsTable({data}: {data: StatTable}) {
     const order = typeof av === 'number' && typeof bv === 'number' ? av - bv : String(av ?? '').localeCompare(String(bv ?? ''), localeForLanguage(language), {numeric: true})
     return order * (activeSort.descending ? -1 : 1)
   })
-  const pages = Math.max(1, Math.ceil(rows.length / 25))
+/* 接口会把数值当字符串发回来（'98'、'5,122'），补图标时两种都要当成数值。 */
+function numericValue(value: StatTable['rows'][number][number]): number | undefined {
+  if (typeof value === 'number') return value
+  if (typeof value !== 'string' || !value.trim()) return undefined
+  const parsed = Number(value.replace(/,/g, ''))
+  return Number.isFinite(parsed) ? parsed : undefined
+}
+
+  /* 单元格显示文本：图标值取图标自带的标签，数字按语言格式化，空值给破折号。 */
+  const cellText = (value: StatTable['rows'][number][number], icon?: {src: string; label: string}) => icon ? icon.label : value == null ? '—' : typeof value === 'number' ? value.toLocaleString(localeForLanguage(language), {maximumFractionDigits: 4}) : String(value)
+  const perPage = rowsPerPage > 0 ? rowsPerPage : Math.max(rows.length, 1)
+  const pages = Math.max(1, Math.ceil(rows.length / perPage))
   const current = Math.min(page, pages - 1)
-  return <section className="statistics-table"><div className="panel-heading"><h3>{data.title}</h3><button className="text-button" disabled={!rows.length} onClick={() => downloadCsv(data.title, [data.columns, ...rows])}>{ui('stats.exportDetails')}</button></div>{data.note && <p className="panel-note">{data.note}</p>}<div className="table-toolbar"><input aria-label={ui('stats.searchTable', {title: data.title})} value={search} onChange={event => {setSearch(event.target.value); setPage(0)}} placeholder={ui('stats.searchPlaceholder')}/><span>{ui('stats.records', {count: rows.length})}</span></div><div className="table-scroll"><table><thead><tr>{data.columns.map((column, index) => <th key={column} aria-sort={activeSort?.index === index ? activeSort.descending ? 'descending' : 'ascending' : 'none'}><button onClick={() => {setPage(0); setSort(currentSort => {const current = currentSort ?? data.defaultSort; return {index, descending: current?.index === index ? !current.descending : false}})}}>{column}{activeSort?.index === index ? activeSort.descending ? <ArrowDown size={14} aria-hidden="true"/> : <ArrowUp size={14} aria-hidden="true"/> : null}</button></th>)}</tr></thead><tbody>{rows.slice(current * 25, (current + 1) * 25).map((row, index) => <tr key={index}>{row.map((value, cell) => <td key={cell}>{value == null ? '—' : typeof value === 'number' ? value.toLocaleString(localeForLanguage(language), {maximumFractionDigits: 4}) : String(value)}</td>)}</tr>)}</tbody></table>{!rows.length && <p className="panel-note">{ui('stats.noRecords')}</p>}</div><div className="table-toolbar"><button className="text-button" disabled={!current} onClick={() => setPage(current - 1)}>{ui('common.previous')}</button><span>{current + 1} / {pages}</span><button className="text-button" disabled={current + 1 === pages} onClick={() => setPage(current + 1)}>{ui('common.next')}</button></div></section>
+  const singleRow = rows.length === 1
+  /* 只有一页时不画分页栏：页码恒为 1 / 1，两个翻页钮也点不动。 */
+  return <section className={`statistics-table${singleRow ? ' is-single-row' : ''}`}><div className="panel-heading"><h3>{data.title}</h3><div className="table-search"><Search size={14}/><input aria-label={ui('stats.searchTable', {title: data.title})} value={search} onChange={event => {setSearch(event.target.value); setPage(0)}} placeholder={ui('stats.searchPlaceholder')}/><span>{ui('stats.records', {count: rows.length})}</span></div><div className="stat-card-actions">{editControls}{foldControl}<button className="text-button" disabled={!rows.length} onClick={() => downloadCsv(data.title, [data.columns, ...rows])}>{ui('stats.exportDetails')}</button></div></div>{data.note && <p className="panel-note">{data.note}</p>}<div className="table-scroll">{plain ? (<div className="table-lines">{rows.slice(current * perPage, (current + 1) * perPage).map((row, index) => (
+              <p className="table-line" key={index}>
+                <span className="table-line-first">{cellText(row[0])}：</span>
+                {row.slice(1).map((value, cell) => {const icon = typeof value === 'string' ? resolveIcon(value, false) : undefined
+                  const src = icon?.src ?? (numericValue(value) !== undefined ? resourceIcons[data.columns[cell + 1]] : undefined)
+                  return ({src, text: cellText(value, icon)})}).filter(item => item.src && item.text !== '—').map((item, cell) => (
+                  <span className="table-line-cell" key={cell}>{cell ? '、' : ''}{item.src ? <img className="table-resource-icon" src={item.src} alt="" draggable={false}/> : null}{item.src ? '×' : ''}{item.text}</span>))}
+              </p>))}</div>) : (<table><thead><tr>{data.columns.map((column, index) => {const colIcon = resourceIcons[column]; return <th key={column} aria-sort={activeSort?.index === index ? activeSort.descending ? 'descending' : 'ascending' : 'none'}><button onClick={() => {setPage(0); setSort(currentSort => {const current = currentSort ?? data.defaultSort; return {index, descending: current?.index === index ? !current.descending : false}})}}>{colIcon && <img className="table-resource-icon table-header-icon" src={colIcon} alt="" width={24} height={24} draggable={false}/>}{column}{activeSort?.index === index ? activeSort.descending ? <ArrowDown size={14} aria-hidden="true"/> : <ArrowUp size={14} aria-hidden="true"/> : null}</button></th>})}</tr></thead><tbody>{rows.slice(current * perPage, (current + 1) * perPage).map((row, index) => {const templateRow = row.some(value => typeof value === 'string' && TEMPLATE_PREFIXES.some(prefix => value.startsWith(prefix))); return <tr key={index}>{row.map((value, cell) => {const icon = typeof value === 'string' ? resolveIcon(value, !templateRow) : undefined; const formatted = cellText(value, icon); const columnIcon = numericValue(value) !== undefined && (icons || plain) ? resourceIcons[data.columns[cell]] : undefined; return <td key={cell}>{icon ? <span className="table-resource-cell"><img className="table-resource-icon" src={icon.src} alt="" width={26} height={26} draggable={false}/><span>{formatted}</span></span> : columnIcon ? <span className="table-resource-cell"><img className="table-resource-icon" src={columnIcon} alt="" width={26} height={26} draggable={false}/><span>{formatted}</span></span> : formatted}</td>})}</tr>})}</tbody></table>)}{!rows.length && <p className="panel-note">{ui('stats.noRecords')}</p>}</div>{pages > 1 && <div className="table-toolbar"><button className="text-button" disabled={!current} onClick={() => setPage(current - 1)}>{ui('common.previous')}</button><span>{current + 1} / {pages}</span><button className="text-button" disabled={current + 1 === pages} onClick={() => setPage(current + 1)}>{ui('common.next')}</button></div>}</section>
 }

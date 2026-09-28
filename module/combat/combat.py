@@ -56,11 +56,10 @@ class Combat(Level, HPBalancer, Retirement, SubmarineCall, CombatAuto, CombatMan
     battle_status_click_interval = 0
 
     def combat_appear(self):
-        """
-        检测是否进入战斗画面。
+        """检测是否进入战斗画面。
 
         Returns:
-            是否已进入战斗准备或战斗加载状态。
+            bool: 是否已进入战斗准备或战斗加载状态。
         """
         if self.config.Campaign_UseFleetLock and not self.is_in_map():
             if self.is_combat_loading():
@@ -74,7 +73,11 @@ class Combat(Level, HPBalancer, Retirement, SubmarineCall, CombatAuto, CombatMan
         return False
 
     def map_offensive(self, skip_first_screenshot=True):
-        """
+        """在地图中点击出击并等待进入战斗画面。
+
+        Args:
+            skip_first_screenshot (bool, optional): 是否跳过首次截图。默认为 True。
+
         Pages:
             in: in_map, MAP_OFFENSIVE
             out: combat_appear
@@ -96,14 +99,14 @@ class Combat(Level, HPBalancer, Retirement, SubmarineCall, CombatAuto, CombatMan
             # 检测到战斗画面，退出循环
             if self.combat_appear():
                 break
+
     def is_combat_loading(self):
-        """
-        检测是否处于战斗加载画面。
+        """检测是否处于战斗加载画面。
 
         通过底部加载条模板匹配判断，CN/EN/TW 资源相同，JP 角色较小。
 
         Returns:
-            是否处于战斗加载状态。
+            bool: 是否处于战斗加载状态。
         """
         image = self.image_crop((0, 620, 1280, 690), copy=False)
         # CN/EN/TW 加载条资源相同，JP 角色尺寸较小
@@ -118,13 +121,12 @@ class Combat(Level, HPBalancer, Retirement, SubmarineCall, CombatAuto, CombatMan
         return False
 
     def is_combat_executing(self):
-        """
-        检测战斗是否正在执行中（暂停按钮可见）。
+        """检测战斗是否正在执行中（暂停按钮可见）。
 
         遍历所有服务器的暂停按钮皮肤，返回匹配到的按钮。
 
         Returns:
-            匹配到的暂停按钮，未匹配返回 False。
+            Button | bool: 匹配到的暂停按钮对象；未匹配则返回 False。
         """
         self.device.stuck_record_add(PAUSE)
         if self.config.SERVER in ['cn', 'en']:
@@ -184,22 +186,21 @@ class Combat(Level, HPBalancer, Retirement, SubmarineCall, CombatAuto, CombatMan
             return PAUSE_OldeRoyal
         if PAUSE_YoRHa.match_template_color(self.device.image, offset=(10, 10)):
             return PAUSE_YoRHa
-        if PAUSE_Ghost.match_template_color(self.device.image, offset=(10, 10)):
-            return PAUSE_Ghost
+        if PAUSE_Ritual.match_template_color(self.device.image, offset=(10, 10)):
+            return PAUSE_Ritual
         return False
 
     def handle_combat_quit(self, offset=(20, 20), interval=3):
-        """
-        处理战斗退出按钮（暂停菜单中的退出）。
+        """处理战斗退出按钮（暂停菜单中的退出）。
 
         遍历所有服务器的退出按钮皮肤，点击匹配到的按钮。
 
         Args:
-            offset: 按钮匹配偏移量。
-            interval: 点击间隔秒数。
+            offset (tuple[int, int], optional): 按钮匹配偏移量。默认为 (20, 20)。
+            interval (int | float, optional): 点击间隔秒数。默认为 3。
 
         Returns:
-            是否点击了退出按钮。
+            bool: 是否点击了退出按钮。
         """
         timer = self.get_interval_timer(QUIT, interval=interval)
         if not timer.reached():
@@ -272,6 +273,16 @@ class Combat(Level, HPBalancer, Retirement, SubmarineCall, CombatAuto, CombatMan
         return False
 
     def handle_combat_quit_reconfirm(self, interval=2):
+        """处理战斗退出的二次确认弹窗。
+
+        QUIT_RECONFIRM 点击间隔应短于 QUIT，以便在 QUIT 冷却期间多次重试。
+
+        Args:
+            interval (int | float, optional): 点击间隔秒数。默认为 2。
+
+        Returns:
+            bool: 是否点击了二次确认按钮。
+        """
         # QUIT_RECONFIRM 间隔应短于 QUIT，以便在 QUIT 间隔内多次重试
         if self.appear_then_click(QUIT_RECONFIRM, offset=(20, 20), interval=interval):
             # 重置 QUIT 计时器，避免重复点击 QUIT 取消 QUIT_RECONFIRM
@@ -284,11 +295,10 @@ class Combat(Level, HPBalancer, Retirement, SubmarineCall, CombatAuto, CombatMan
         self.wait_until_stable(COMBAT_OIL_LOADING)
 
     def handle_combat_automation_confirm(self):
-        """
-        处理战斗自动化确认弹窗。
+        """处理战斗自动化确认弹窗。
 
         Returns:
-            是否点击了确认按钮。
+            bool: 是否点击了确认按钮。
         """
         if self.appear(AUTOMATION_CONFIRM_CHECK, threshold=30, interval=1):
             self.appear_then_click(AUTOMATION_CONFIRM, offset=(20, 20))
@@ -297,18 +307,17 @@ class Combat(Level, HPBalancer, Retirement, SubmarineCall, CombatAuto, CombatMan
         return False
 
     def combat_preparation(self, balance_hp=False, emotion_reduce=False, auto='combat_auto', fleet_index=1):
-        """
-        战斗准备阶段：设置自动化模式、处理退役和情绪、等待进入战斗。
+        """战斗准备阶段：设置自动化模式、处理退役和情绪、等待进入战斗。
+
+        Args:
+            balance_hp (bool, optional): 是否在战前进行血量平衡。默认为 False。
+            emotion_reduce (bool, optional): 是否在战前等待情绪恢复并在进入战斗后扣减情绪。默认为 False。
+            auto (str, optional): 自动战斗模式，如 'combat_auto' 或其他模式。默认为 'combat_auto'。
+            fleet_index (int, optional): 舰队索引（1 或 2）。默认为 1。
 
         Pages:
             in: BATTLE_PREPARATION
             out: is_combat_executing（暂停按钮可见）
-
-        Args:
-            balance_hp: 是否在战前进行血量平衡。
-            emotion_reduce: 是否在战前等待情绪恢复。
-            auto: 自动战斗模式，'combat_auto' 或其他模式。
-            fleet_index: 舰队索引，1 或 2。
         """
         logger.info('[战斗-准备] 战斗准备')
         self.device.stuck_record_clear()
@@ -356,11 +365,10 @@ class Combat(Level, HPBalancer, Retirement, SubmarineCall, CombatAuto, CombatMan
                 break
 
     def handle_battle_preparation(self):
-        """
-        点击战斗准备按钮。
+        """点击战斗准备按钮。
 
         Returns:
-            是否点击了战斗准备按钮。
+            bool: 是否点击了战斗准备按钮。
         """
         if self.appear_then_click(BATTLE_PREPARATION, offset=(20, 20), interval=2):
             return True
@@ -368,16 +376,15 @@ class Combat(Level, HPBalancer, Retirement, SubmarineCall, CombatAuto, CombatMan
         return False
 
     def handle_combat_automation_set(self, auto):
-        """
-        设置战斗自动化开关状态。
+        """设置战斗自动化开关状态。
 
         检测当前自动化状态（开/关），若与目标状态不一致则点击切换。
 
         Args:
-            auto: 是否启用自动战斗。
+            auto (bool): 是否启用自动战斗。
 
         Returns:
-            是否进行了切换操作。
+            bool: 是否进行了切换操作。
         """
         if not self._automation_set_timer.reached():
             return False
@@ -405,6 +412,13 @@ class Combat(Level, HPBalancer, Retirement, SubmarineCall, CombatAuto, CombatMan
         return False
 
     def handle_emergency_repair_use(self):
+        """处理战前使用紧急维修道具。
+
+        检测舰队血量是否低于阈值，若满足条件且道具有效则使用紧急维修。
+
+        Returns:
+            bool: 是否使用了紧急维修道具。
+        """
         if not self.config.HpControl_UseEmergencyRepair:
             return False
 
@@ -441,17 +455,17 @@ class Combat(Level, HPBalancer, Retirement, SubmarineCall, CombatAuto, CombatMan
         return False
 
     def combat_execute(self, auto='combat_auto', submarine='do_not_use', drop=None):
-        """
-        战斗执行阶段：处理自动/手动战斗、潜艇呼叫、弹窗，等待战斗结算。
+        """战斗执行阶段：处理自动/手动战斗、潜艇呼叫、弹窗，等待战斗结算。
+
+        Args:
+            auto (str, optional): 战斗模式，可选 'combat_auto'、'combat_manual'、
+                'stand_still_in_the_middle'、'hide_in_bottom_left'。默认为 'combat_auto'。
+            submarine (str, optional): 潜艇模式，可选 'do_not_use'、'hunt_only'、'every_combat'。默认为 'do_not_use'。
+            drop (DropImage, optional): 掉落记录对象，用于统计。默认为 None。
 
         Pages:
             in: is_combat_executing（暂停按钮可见）
             out: BATTLE_STATUS / GET_ITEMS（战斗结算画面）
-
-        Args:
-            auto: 战斗模式，可选 'combat_auto'、'combat_manual'、'stand_still_in_the_middle'、'hide_in_bottom_left'。
-            submarine: 潜艇模式，可选 'do_not_use'、'hunt_only'、'every_combat'。
-            drop: 掉落记录对象，用于统计。
         """
         logger.info('[战斗-执行] 战斗执行')
         self.submarine_call_reset()
@@ -497,16 +511,15 @@ class Combat(Level, HPBalancer, Retirement, SubmarineCall, CombatAuto, CombatMan
                 break
 
     def handle_battle_status(self, drop=None):
-        """
-        处理战斗结算画面（S/A/B/C/D 评价）。
+        """处理战斗结算画面（S/A/B/C/D 评价）。
 
         检测战斗是否仍在执行，然后按优先级匹配各评价等级的结算画面。
 
         Args:
-            drop: 掉落记录对象，用于截图统计。
+            drop (DropImage, optional): 掉落记录对象，用于截图统计。默认为 None。
 
         Returns:
-            是否点击了结算画面。
+            bool: 是否点击了结算画面。
         """
         if self.is_combat_executing():
             return False
@@ -553,16 +566,15 @@ class Combat(Level, HPBalancer, Retirement, SubmarineCall, CombatAuto, CombatMan
         return False
 
     def handle_get_items(self, drop=None):
-        """
-        处理战斗掉落物品画面。
+        """处理战斗掉落物品画面。
 
         检测 GET_ITEMS_1/2/3 三种掉落画面并点击。
 
         Args:
-            drop: 掉落记录对象，用于截图统计。
+            drop (DropImage, optional): 掉落记录对象，用于截图统计。默认为 None。
 
         Returns:
-            是否点击了掉落画面。
+            bool: 是否点击了掉落画面。
         """
         if self.appear(GET_ITEMS_1, offset=5, interval=self.battle_status_click_interval):
             if drop:
@@ -592,11 +604,10 @@ class Combat(Level, HPBalancer, Retirement, SubmarineCall, CombatAuto, CombatMan
         return False
 
     def handle_exp_info(self):
-        """
-        处理经验结算画面（S/A/B/C/D 评价）。
+        """处理经验结算画面（S/A/B/C/D 评价）。
 
         Returns:
-            是否点击了经验结算画面。
+            bool: 是否点击了经验结算画面。
         """
         if self.is_combat_executing():
             return False
@@ -619,18 +630,17 @@ class Combat(Level, HPBalancer, Retirement, SubmarineCall, CombatAuto, CombatMan
         return False
 
     def handle_get_ship(self, drop=None):
-        """
-        处理获得新舰船画面。
+        """处理获得新舰船画面。
 
         检测 GET_SHIP 按钮并点击，若出现 NEW_SHIP 标记则记录新船获取。
 
         Args:
-            drop: 掉落记录对象，用于截图统计。
+            drop (DropImage, optional): 掉落记录对象，用于截图统计。默认为 None。
 
         Returns:
-            是否点击了获得舰船画面。
+            bool: 是否点击了获得舰船画面。
         """
-        if self.appear_then_click(GET_SHIP, interval=1):
+        if self.appear_then_click(GET_SHIP, offset=(20, 20), interval=1):
             if self.appear(NEW_SHIP):
                 logger.info('[战斗-舰船] 获得新舰船')
                 if drop:
@@ -641,15 +651,14 @@ class Combat(Level, HPBalancer, Retirement, SubmarineCall, CombatAuto, CombatMan
         return False
 
     def handle_combat_mis_click(self):
-        """
-        处理战斗中的误点击（误入军需页面或演习页面）。
+        """处理战斗中的误点击（误入军需页面或演习页面）。
 
         Pages:
             in: MUNITIONS_CHECK 或 EXERCISE_CHECK
             out: 返回上一页面
 
         Returns:
-            是否处理了误点击。
+            bool: 是否处理了误点击。
         """
         if self.appear(MUNITIONS_CHECK, offset=(20, 20), interval=5):
             logger.info(f'[战斗-误点击] 误入军需页面 {MUNITIONS_CHECK} -> {BACK_ARROW}')
@@ -663,17 +672,16 @@ class Combat(Level, HPBalancer, Retirement, SubmarineCall, CombatAuto, CombatMan
         return False
 
     def combat_status(self, drop=None, expected_end=None):
-        """
-        战斗结算阶段：处理战斗评价、经验结算、掉落物品、新船获取等，直到回到预期页面。
+        """战斗结算阶段：处理战斗评价、经验结算、掉落物品、新船获取等，直到回到预期页面。
+
+        Args:
+            drop (DropImage, optional): 掉落记录对象，用于截图统计。默认为 None。
+            expected_end (str | callable, optional): 预期结束状态，可选 'with_searching'、
+                'no_searching'、'in_stage'、'in_ui'，也可传入回调函数。默认为 None。
 
         Pages:
             in: BATTLE_STATUS / GET_ITEMS（战斗结算画面）
             out: 根据 expected_end 返回不同页面（地图、关卡选择等）
-
-        Args:
-            drop: 掉落记录对象，用于截图统计。
-            expected_end: 预期结束状态，可选 'with_searching'、'no_searching'、'in_stage'、'in_ui'，
-                也可传入回调函数。
         """
         logger.info('[战斗-结算] 战斗结算')
         logger.attr('预期结束状态', expected_end.__name__ if callable(expected_end) else expected_end)
@@ -751,20 +759,19 @@ class Combat(Level, HPBalancer, Retirement, SubmarineCall, CombatAuto, CombatMan
 
     def combat(self, balance_hp=None, emotion_reduce=None, auto_mode=None, submarine_mode=None,
                save_get_items=None, expected_end=None, fleet_index=1):
-        """
-        执行一次完整战斗流程：准备 → 执行 → 结算。
+        """执行一次完整战斗流程：准备 -> 执行 -> 结算。
 
         参数为 None 时使用用户配置文件中的默认值。
 
         Args:
-            balance_hp: 是否进行血量平衡，None 时读取配置。
-            emotion_reduce: 是否管理情绪，None 时读取配置。
-            auto_mode: 战斗模式，可选 'combat_auto'、'combat_manual'、
-                'stand_still_in_the_middle'、'hide_in_bottom_left'。
-            submarine_mode: 潜艇模式，可选 'do_not_use'、'hunt_only'、'every_combat'。
-            save_get_items: 是否保存掉落截图，可传入 DropImage 对象或 False 禁用。
-            expected_end: 预期结束状态，可选字符串或回调函数。
-            fleet_index: 舰队索引，1 或 2。
+            balance_hp (bool, optional): 是否进行血量平衡，None 时读取配置。默认为 None。
+            emotion_reduce (bool, optional): 是否管理情绪，None 时读取配置。默认为 None。
+            auto_mode (str, optional): 战斗模式，可选 'combat_auto'、'combat_manual'、
+                'stand_still_in_the_middle'、'hide_in_bottom_left'。默认为 None。
+            submarine_mode (str, optional): 潜艇模式，可选 'do_not_use'、'hunt_only'、'every_combat'。默认为 None。
+            save_get_items (DropImage | bool, optional): 是否保存掉落截图，可传入 DropImage 对象或 False 禁用。默认为 None。
+            expected_end (str | callable, optional): 预期结束状态，可选字符串或回调函数。默认为 None。
+            fleet_index (int, optional): 舰队索引（1 或 2）。默认为 1。
         """
         balance_hp = balance_hp if balance_hp is not None else self.config.HpControl_UseHpBalance
         emotion_reduce = emotion_reduce if emotion_reduce is not None else self.emotion.is_calculate

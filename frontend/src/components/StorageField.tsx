@@ -1,3 +1,7 @@
+/**
+ * @fileoverview 存储项字段占位与辅助渲染组件。
+ */
+
 import { Trash2 } from 'lucide-react'
 import type { Value } from '../api/types'
 import { useApp } from '../app/context'

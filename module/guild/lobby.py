@@ -16,12 +16,16 @@ from module.ui.assets import GUILD_CHECK
 
 
 class GuildLobby(GuildBase):
+    """大舰队大厅业务处理类。
+
+    负责大舰队大厅内的作战报告红点检测与领取、公会事件处理及结算确认。
+    """
+
     def guild_lobby_get_report(self):
-        """
-        获取大舰队报告入口按钮。
+        """获取大舰队报告入口按钮。
 
         Returns:
-            Button: 进入大舰队报告的按钮，如果不存在则返回 None。
+            Button | None: 进入大舰队报告的按钮对象，若无红点或不存在则返回 None。
         """
         # 在 GUILD_REPORT_AVAILABLE 区域内查找红色
         image = color_similarity_2d(self.image_crop(GUILD_REPORT_AVAILABLE, copy=False), color=(255, 8, 8))
@@ -36,15 +40,17 @@ class GuildLobby(GuildBase):
             return None
 
     def _guild_lobby_collect(self, skip_first_screenshot=True):
-        """
-        收集大舰队大厅中的报告奖励。
+        """收集大舰队大厅中的报告奖励。
 
         如果报告奖励存在则执行收取操作。如果已在 page_guild 但不在大厅界面，
         将超时并在下次运行时收取。这些奖励会排队等待，无需立即收取。
 
+        Args:
+            skip_first_screenshot (bool): 是否跳过首次截图。
+
         Pages:
-            in: 任意页面
-            out: 任意页面
+            in: GUILD_CHECK 或任意大舰队页面
+            out: GUILD_CHECK
         """
         confirm_timer = Timer(1.5, count=3).start()
         click_timer = Timer(3)

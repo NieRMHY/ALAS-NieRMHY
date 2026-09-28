@@ -18,7 +18,7 @@ SEASONS = {
 }
 
 # ==================== 每季度的季节限定物品映射 ====================
-# structure: { season: { module_key: [item_names] } }
+# 数据结构: { 季节: { 模块键: [物品名称列表] } }
 # module_key 对应各个店铺模块的类型标识（restaurant/teahouse/nursery/orchard/handmade）
 
 SEASONAL_ITEMS = {

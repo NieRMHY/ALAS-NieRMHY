@@ -1,54 +1,15 @@
-import { useState, type CSSProperties } from 'react'
-import { Plus } from 'lucide-react'
+/**
+ * @fileoverview 主题模式与配色方案配置面板组件。
+ */
+
 import { useApp } from '../app/context'
-import { isHexColor, paletteColors, palettes, fixedColorModes, type CustomPalette } from '../app/palettes'
+import { fixedColorModes } from '../app/palettes'
+import { PaletteSwatches } from './PaletteSwatches'
 import { Select } from './FormControls'
-import { Modal } from './ui'
 
-function CustomPaletteEditor({initial, onClose}: {initial: CustomPalette; onClose: () => void}) {
-  const {ui, saveCustomPalette} = useApp()
-  const [draft, setDraft] = useState(initial)
-  const valid = isHexColor(draft.primary) && isHexColor(draft.secondary)
-  return <Modal title={ui('settings.customPalette')} onClose={onClose} className="custom-palette-modal">
-    <form className="form-stack" onSubmit={event => {
-      event.preventDefault()
-      if (!valid) return
-      saveCustomPalette(draft)
-      onClose()
-    }}>
-      <fieldset className="custom-palette-colors">
-        <legend>{ui('settings.palette')}</legend>
-        {(['primary', 'secondary'] as const).map(key => {
-          const color = draft[key]
-          const label = ui(key === 'primary' ? 'settings.primaryColor' : 'settings.secondaryColor')
-          const update = (value: string) => setDraft({...draft, [key]: value})
-          return <div className="custom-color-row" key={key}>
-            <label htmlFor={`palette-${key}`}>{label}</label>
-            <input type="color" value={isHexColor(color) ? color : '#000000'} aria-label={`${label} ${ui('settings.colorPicker')}`} onChange={event => update(event.target.value)}/>
-            <input id={`palette-${key}`} aria-label={label} value={color} maxLength={7} pattern="#[0-9a-fA-F]{6}" required spellCheck={false} aria-invalid={!isHexColor(color)} aria-describedby={!isHexColor(color) ? 'palette-color-error' : undefined} onChange={event => update(event.target.value)}/>
-          </div>
-        })}
-      </fieldset>
-      {!valid && <p id="palette-color-error" role="status">{ui('settings.paletteInvalid')}</p>}
-      <div className="custom-palette-actions">
-        <button type="button" className="button secondary" onClick={onClose}>{ui('common.cancel')}</button>
-        <button type="submit" className="button primary" disabled={!valid}>{ui('settings.savePalette')}</button>
-      </div>
-    </form>
-  </Modal>
-}
-
-/** 简约主题的模式、预设与自定义方案共用一份配色数据，保证预览跟随系统明暗变化。 */
+/** 简约与紧凑的主题模式、预设与自定义方案共用一份配色数据，保证预览跟随系统明暗变化。 */
 export function ThemePreferences() {
-  const {ui, colorMode, setColorMode, resolvedMode, palette, setPalette, customPalettes, deleteCustomPalette} = useApp()
-  const [editing, setEditing] = useState<CustomPalette>()
-  const selected = customPalettes.find(item => item.id === palette)
-  const paletteIds = [...palettes, ...customPalettes.map(item => item.id)]
-  function createPalette() {
-    const id = `custom:${crypto.getRandomValues(new Uint32Array(2)).join('-')}` as const
-    const current = paletteColors(palette, customPalettes, resolvedMode)
-    setEditing({id, primary: current.primary, secondary: current.secondary})
-  }
+  const {ui, colorMode, setColorMode, palette, setPalette} = useApp()
   return <>
     <div className="field-row">
       <div className="field-label"><label htmlFor="ui-color-mode">{ui('settings.colorMode')}</label><p>{ui('settings.colorModeHelp')}</p></div>
@@ -66,32 +27,8 @@ export function ThemePreferences() {
     {!fixedColorModes[colorMode] && <div className="field-row palette-field">
       <div className="field-label"><label>{ui('settings.palette')}</label><p>{ui('settings.paletteHelp')}</p></div>
       <div className="field-control palette-control">
-        <fieldset className="palette-options">
-          <legend>{ui('settings.palette')}</legend>
-          {paletteIds.map(id => {
-            const colors = paletteColors(id, customPalettes, resolvedMode)
-            return <label className="palette-option" key={id}>
-              <input type="radio" name="palette" value={id} checked={palette === id} onChange={() => setPalette(id)}/>
-              <span className="palette-swatch" style={{'--accent': colors.primary, '--secondary': colors.secondary} as CSSProperties} aria-hidden="true"><i/><i/></span>
-            </label>
-          })}
-          <button
-            type="button"
-            className="palette-add"
-            disabled={customPalettes.length >= 32}
-            onClick={createPalette}
-            aria-label={ui('settings.addPalette')}
-            title={ui('settings.addPalette')}
-          >
-            <Plus size={18} aria-hidden="true"/>
-          </button>
-        </fieldset>
-        {selected && <div className="custom-palette-actions">
-          <button type="button" className="text-button" onClick={() => setEditing(selected)}>{ui('settings.editPalette')}</button>
-          <button type="button" className="text-button" onClick={() => deleteCustomPalette(selected.id)}>{ui('settings.deletePalette')}</button>
-        </div>}
+        <PaletteSwatches value={palette} onChange={next => { if (next) setPalette(next) }} legend={ui('settings.palette')}/>
       </div>
     </div>}
-    {editing && <CustomPaletteEditor initial={editing} onClose={() => setEditing(undefined)}/>}
   </>
 }

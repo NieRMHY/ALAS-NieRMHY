@@ -124,6 +124,14 @@ class _Validator:
         self.pipeline_locals: dict[str, tuple[int, bool, bool]] = {}
 
     def validate(self, tree: Any) -> None:
+        """校验 Lua 语法树是否符合受限的策略语言规范。
+
+        Args:
+            tree (Any): Lua AST 根节点。
+
+        Raises:
+            ShopStrategyCompileError: 语法或结构不合规。
+        """
         if _node_name(tree) != 'Chunk':
             raise _error('invalid_root', '策略必须是 Lua 代码块', tree)
         body = getattr(tree, 'body', None)

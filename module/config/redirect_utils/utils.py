@@ -17,8 +17,13 @@ from module.config.server import to_server
 
 
 def upload_redirect(value):
-    """
-    redirect attr about upload.
+    """重定向上传配置属性（Upload）。
+
+    Args:
+        value (list[bool] | bool): 旧版上传选项配置。
+
+    Returns:
+        str: 新版的上传模式字符串 ('do_not', 'save', 'upload', 'save_and_upload')。
     """
     if isinstance(value, list):
         if not value[0] and not value[1]:
@@ -37,8 +42,13 @@ def upload_redirect(value):
 
 
 def api_redirect(value):
-    """
-    redirect attr about api.
+    """重定向 API 服务器配置（API）。
+
+    Args:
+        value (str): 旧版 API 服务器标识。
+
+    Returns:
+        str: 新版 API 路由模式。
     """
     if value == 'auto':
         return 'default'
@@ -49,8 +59,13 @@ def api_redirect(value):
 
 
 def dossier_redirect(value):
-    """
-    OpsiDossierBeacon -> AttackMode
+    """重定向大型作战档案信标攻击模式（OpsiDossierBeacon -> AttackMode）。
+
+    Args:
+        value (bool): 旧版信标开关。
+
+    Returns:
+        str: 新版攻击模式字符串 ('current_dossier' 或 'current')。
     """
     if value:
         return 'current_dossier'
@@ -59,8 +74,13 @@ def dossier_redirect(value):
 
 
 def enhance_favourite_redirect(value):
-    """
-    EnhanceFavourite -> ShipToEnhance
+    """重定向强化目标舰船选择（EnhanceFavourite -> ShipToEnhance）。
+
+    Args:
+        value (bool): 旧版仅强化喜爱舰船开关。
+
+    Returns:
+        str: 新版目标舰船范围 ('all' 或 'favourite')。
     """
     if value:
         return 'all'
@@ -69,8 +89,13 @@ def enhance_favourite_redirect(value):
 
 
 def enhance_check_redirect(value):
-    """
-    CheckPerCategory should be at least 5
+    """重定向强化检查数量，确保每类检查数至少为 5。
+
+    Args:
+        value (int): 检查次数配置值。
+
+    Returns:
+        int: 修正后的检查次数。
     """
     if isinstance(value, int):
         if value < 5:
@@ -79,8 +104,13 @@ def enhance_check_redirect(value):
 
 
 def emotion_mode_redirect(value):
-    """
-    CalculateEmotion + IgnoreLowEmotionWarn -> Emotion.Mode
+    """重定向心情计算与低心情警告模式（CalculateEmotion + IgnoreLowEmotionWarn -> Emotion.Mode）。
+
+    Args:
+        value (tuple[bool, bool]): (calculate, ignore) 二元组。
+
+    Returns:
+        str: 对应的心情处理模式 ('calculate_ignore', 'calculate', 'ignore')。
     """
     calculate, ignore = value
     if calculate:
@@ -92,13 +122,18 @@ def emotion_mode_redirect(value):
         if ignore:
             return 'ignore'
         else:
-            # Invalid, fallback to calculate
+            # 无效状态，回退为 calculate
             return 'calculate'
 
 
 def change_ship_redirect(value):
-    """
-    FlagshipChange + FlagshipEquipChange -> ChangeFlagship
+    """重定向旗舰更换及装备更换设置（FlagshipChange + FlagshipEquipChange -> ChangeFlagship）。
+
+    Args:
+        value (tuple[bool, bool]): (ship, equip) 二元组。
+
+    Returns:
+        str: 对应的更换模式 ('disabled', 'ship_equip', 'ship')。
     """
     ship, equip = value
     if not ship:
@@ -110,8 +145,13 @@ def change_ship_redirect(value):
 
 
 def api_redirect2(value):
-    """
-    remove shanghai proxy, use guangzhou
+    """移除上海反向代理，重定向到广州反向代理。
+
+    Args:
+        value (str): 代理配置值。
+
+    Returns:
+        str: 重定向后的代理配置值。
     """
     if value == 'cn_sh_reverse_proxy':
         return 'cn_gz_reverse_proxy'
@@ -165,3 +205,27 @@ def execute_fixed_patrol_scan_redirect(value):
         return int(value) > 0
     except (TypeError, ValueError):
         return bool(value)
+
+
+# 大世界掉落截图拆成按任务分类的开关后的参数名（DropRecord 组内），
+# 最后一个 OpsiOther 兜底未单独列出的任务。
+OPSI_RECORD_ARGS = (
+    'OpsiHazard1Leveling',
+    'OpsiMeowfficerFarming',
+    'OpsiDaily',
+    'OpsiObscure',
+    'OpsiAbyssal',
+    'OpsiStronghold',
+    'OpsiExplore',
+    'OpsiOther',
+)
+
+
+def opsi_record_redirect(value):
+    """
+    OpsiRecord → 按任务拆分的 8 个掉落截图开关。
+
+    旧的单一开关同时管着所有大世界任务，拆分后旧值原样铺给每一个开关，
+    升级后各任务的截图行为与升级前一致，不会突然多出或丢掉截图。
+    """
+    return [value] * len(OPSI_RECORD_ARGS)

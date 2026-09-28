@@ -3,8 +3,10 @@
 import multiprocessing
 import subprocess
 import sys
+import tempfile
 import time
 import unittest
+from pathlib import Path
 from unittest.mock import Mock, patch
 
 import psutil
@@ -27,6 +29,27 @@ def _spawn_tree(connection):
 
 
 class TestProcessControl(unittest.TestCase):
+    def test_process_created_at_falls_back_to_android_proc_start_ticks(self):
+        process = Mock()
+        process.create_time.side_effect = psutil.AccessDenied(pid=12345)
+        with patch("psutil.Process", return_value=process), patch.object(
+            control, "_proc_start_ticks", return_value=987654
+        ):
+            self.assertEqual(-987654.0, control.process_created_at(12345))
+
+    def test_proc_start_ticks_parses_command_with_parentheses(self):
+        with tempfile.TemporaryDirectory() as directory:
+            proc = Path(directory)
+            stat = proc / "123" / "stat"
+            stat.parent.mkdir()
+            # state 是字段 3，补齐到字段 22 的 starttime。
+            stat.write_text(
+                "123 (python worker) name) S " + " ".join(["0"] * 18 + ["4567"]),
+                encoding="ascii",
+            )
+            with patch.object(control, "PROCFS_PATH", proc):
+                self.assertEqual(4567, control._proc_start_ticks(123))
+
     def setUp(self):
         self.record = {"pid": 12345, "created_at": 1.0}
 

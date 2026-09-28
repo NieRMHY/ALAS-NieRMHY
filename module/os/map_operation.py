@@ -106,6 +106,11 @@ class OSMapOperation(MapOrderHandler, MissionHandler, PortHandler, StorageHandle
 
     @Config.when(SERVER='en')
     def get_zone_name(self):
+        """识别并清洗当前海域名称（美服专用）。
+
+        Returns:
+            str: 清洗后的海域名称字符串。
+        """
         # 仅用于 EN 服务器
         ocr = Ocr(MAP_NAME, lang='ppocr_v6', letter=(206, 223, 247), threshold=96, name='OCR_OS_MAP_NAME')
         name = ocr.ocr(self.device.image)
@@ -140,6 +145,11 @@ class OSMapOperation(MapOrderHandler, MissionHandler, PortHandler, StorageHandle
 
     @Config.when(SERVER='jp')
     def get_zone_name(self):
+        """识别并清洗当前海域名称（日服专用）。
+
+        Returns:
+            str: 清洗后的海域名称字符串。
+        """
         # 仅用于 JP 服务器
         ocr = Ocr(MAP_NAME, lang='jp', letter=(157, 173, 192), threshold=127, name='OCR_OS_MAP_NAME')
         name = ocr.ocr(self.device.image)
@@ -180,6 +190,11 @@ class OSMapOperation(MapOrderHandler, MissionHandler, PortHandler, StorageHandle
 
     @Config.when(SERVER='tw')
     def get_zone_name(self):
+        """识别并清洗当前海域名称（台服专用）。
+
+        Returns:
+            str: 清洗后的海域名称字符串。
+        """
         # 仅用于 TW 服务器
         ocr = Ocr(MAP_NAME, lang='tw', letter=(198, 215, 239), threshold=127, name='OCR_OS_MAP_NAME')
         name = ocr.ocr(self.device.image)
@@ -205,6 +220,11 @@ class OSMapOperation(MapOrderHandler, MissionHandler, PortHandler, StorageHandle
 
     @Config.when(SERVER=None)
     def get_zone_name(self):
+        """识别并清洗当前海域名称（国服默认）。
+
+        Returns:
+            str: 清洗后的海域名称字符串。
+        """
         # 仅用于 CN 服务器
         ocr = Ocr(MAP_NAME, lang='cnocr', letter=(214, 231, 255), threshold=127, name='OCR_OS_MAP_NAME')
         name = ocr.ocr(self.device.image)
@@ -224,7 +244,8 @@ class OSMapOperation(MapOrderHandler, MissionHandler, PortHandler, StorageHandle
         return name
 
     def get_current_zone(self):
-        """
+        """获取并解析当前海域对象。
+
         Returns:
             Zone: 当前海域对象。
 

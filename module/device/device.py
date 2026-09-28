@@ -271,6 +271,11 @@ class Device(Screenshot, Control, AppControl, Input):
         """
         检查截图方式和控制方式的组合是否合法。
         """
+        if self.serial == 'azurpilot_android':
+            if self.config.Emulator_ScreenshotMethod != 'azurpilot_android' \
+                    or self.config.Emulator_ControlMethod != 'azurpilot_android':
+                raise RequestHumanTakeover('Android 虚拟屏必须同时选择 azurpilot_android 截图和控制方式')
+            return
         # Hermit 仅允许在 VMOS 上使用
         if self.config.Emulator_ControlMethod == 'Hermit' and not self.is_vmos:
             logger.warning('[设备-方法] 控制方式Hermit仅允许在VMOS上使用')
@@ -352,6 +357,8 @@ class Device(Screenshot, Control, AppControl, Input):
         try:
             super().screenshot()
         except RequestHumanTakeover:
+            if self.serial == 'azurpilot_android':
+                raise
             if not self.ascreencap_available:
                 logger.error('[设备-截图] 当前设备aScreenCap不可用，回退到auto')
                 self.run_simple_screenshot_benchmark()
@@ -385,7 +392,8 @@ class Device(Screenshot, Control, AppControl, Input):
         """
         o = super().get_orientation()
 
-        self.on_orientation_change_maatouch()
+        if self.serial != 'azurpilot_android':
+            self.on_orientation_change_maatouch()
 
         return o
 
@@ -545,6 +553,9 @@ class Device(Screenshot, Control, AppControl, Input):
             logger.critical('[Device] 错误 没有启动/停止应用，因为 HandleError 已禁用')
             logger.critical('[Device] 请启用 Alas.Error.HandleError 或手动登录碧蓝航线')
             raise RequestHumanTakeover
+        # 与推荐配置共用启动前流程：设备已连接，先恢复账号，再写配置，最后启动游戏。
+        from module.api.account_service import restore_worker
+        restore_worker(self.config.config_name, device=self)
         if getattr(self.config, 'Emulator_GameSettings', False):
             from module.game_setting.player_prefs import apply_recommended_game_settings
 

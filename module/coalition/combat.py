@@ -15,13 +15,22 @@ from module.os_ash.assets import BATTLE_STATUS
 
 
 class CoalitionCombat(CoalitionUI, CampaignBase):
+    """联合出击战斗处理器。"""
+
     battle_status_click_interval = 2
 
     def coalition_combat_re_enter(self, skip_first_screenshot=True):
-        """
+        """处理一轮战斗结束到下一轮战斗重新加载进入的过程。
+
+        Args:
+            skip_first_screenshot (bool): 是否跳过首次截图。
+
         Pages:
-            in: battle_status
+            in: BATTLE_STATUS
             out: is_combat_executing
+
+        Raises:
+            CampaignEnd: 检测到回到联合出击主页面，本次战役全部战斗已结束。
         """
         logger.info('[联动-战斗] 联动战斗重新进入')
         status_clicked = False
@@ -33,7 +42,7 @@ class CoalitionCombat(CoalitionUI, CampaignBase):
             else:
                 self.device.screenshot()
 
-            # End
+            # 退出条件
             if self.is_combat_loading():
                 break
             if self.is_combat_executing():
@@ -42,33 +51,39 @@ class CoalitionCombat(CoalitionUI, CampaignBase):
                 raise CampaignEnd
 
             if self.appear_then_click(BATTLE_STATUS, offset=(80, 20), interval=2):
-                # About (+53, +3)
+                # 偏移约 (+53, +3)
                 continue
             if self.appear_then_click(COALITION_REWARD_CONFIRM, offset=(20, 20), interval=2):
-                # Stop clicking BATTLE_STATUS because combat ends
+                # 战斗结束，停止点击战斗状态
                 status_clicked = False
                 continue
-            # Coalition 20251120 has ship drop
+            # 联动活动可能有舰船掉落弹窗
             if self.handle_get_ship():
                 continue
             if self.handle_battle_status():
                 status_clicked = True
                 click_last.reset()
                 continue
-            # Keep clicking BATTLE_STATUS to skip animations
+            # 持续点击 BATTLE_STATUS 以快速跳过结算动画
             if status_clicked:
                 if click_timer.reached() and not click_last.reached():
                     self.device.click(BATTLE_STATUS)
                     click_timer.reset()
 
     def auto_search_combat_end(self):
+        """检测自律战斗是否到达结算阶段。
+
+        Returns:
+            bool: 出现战斗状态结算界面时返回 True。
+        """
         if self.handle_battle_status():
             return False
         if self.appear(BATTLE_STATUS, offset=(80, 20)):
             return True
 
     def coalition_combat(self):
-        """
+        """执行联合出击的多轮自律战斗循环。
+
         Pages:
             in: is_coalition
             out: is_coalition

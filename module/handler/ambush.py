@@ -14,7 +14,15 @@ TEMPLATE_MAP_WALK_OUT_OF_STEP.pre_process = info_letter_preprocess
 
 
 class AmbushHandler(Combat):
-    """伏击和空袭处理器，通过红色覆盖层透明度检测事件。"""
+    """伏击和空袭处理器。
+
+    通过红色覆盖层透明度检测地图探索中的伏击与空袭事件，并执行回避、迎击或等待操作。
+
+    Attributes:
+        MAP_AMBUSH_OVERLAY_TRANSPARENCY_THRESHOLD (float): 伏击红色覆盖层透明度阈值。
+        MAP_AIR_RAID_OVERLAY_TRANSPARENCY_THRESHOLD (float): 空袭红色覆盖层透明度阈值。
+        MAP_AIR_RAID_CONFIRM_SECOND (float): 空袭确认等待秒数。
+    """
     MAP_AMBUSH_OVERLAY_TRANSPARENCY_THRESHOLD = 0.40
     MAP_AIR_RAID_OVERLAY_TRANSPARENCY_THRESHOLD = 0.35  # 通常值为 (0.50, 0.53)
     MAP_AIR_RAID_CONFIRM_SECOND = 0.5
@@ -25,19 +33,25 @@ class AmbushHandler(Combat):
         MAP_AIR_RAID.load_color(self.device.image)
 
     def _ambush_appear(self):
-        """检测伏击是否出现。"""
+        """检测伏击是否出现。
+
+        Returns:
+            bool: 是否出现伏击。
+        """
         return red_overlay_transparency(MAP_AMBUSH.color, get_color(self.device.image, MAP_AMBUSH.area)) > \
                self.MAP_AMBUSH_OVERLAY_TRANSPARENCY_THRESHOLD
 
     def _air_raid_appear(self):
-        """检测空袭是否出现。"""
+        """检测空袭是否出现。
+
+        Returns:
+            bool: 是否出现空袭。
+        """
         return red_overlay_transparency(MAP_AIR_RAID.color, get_color(self.device.image, MAP_AIR_RAID.area)) > \
                self.MAP_AIR_RAID_OVERLAY_TRANSPARENCY_THRESHOLD
 
     def _handle_air_raid(self):
-        """
-        等待空袭动画消失。
-        """
+        """等待空袭动画消失。"""
         logger.info('[地图-伏击] 空袭')
         disappear = Timer(self.MAP_AIR_RAID_CONFIRM_SECOND).start()
         timeout = Timer(2.5, count=2).start()
@@ -127,7 +141,11 @@ class AmbushHandler(Combat):
             return self._handle_ambush_attack()
 
     def handle_ambush(self):
-        """统一的伏击/空袭处理入口。"""
+        """统一的伏击与空袭处理入口。
+
+        Returns:
+            bool: 是否检测并处理了伏击或空袭。
+        """
         if not self.config.MAP_HAS_AMBUSH:
             return False
 
@@ -145,7 +163,11 @@ class AmbushHandler(Combat):
         return False
 
     def handle_walk_out_of_step(self):
-        """处理舰队步数不足的提示。"""
+        """处理舰队步数不足的提示。
+
+        Returns:
+            bool: 是否检测并处理了步数不足提示。
+        """
         if not self.config.MAP_HAS_FLEET_STEP:
             return False
         if not self.info_bar_count():

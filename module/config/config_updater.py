@@ -560,6 +560,7 @@ class ConfigGenerator:
 
     @staticmethod
     def generate_deploy_template():
+        """根据基础模板生成各环境（国内镜像、AidLux、Docker、Linux）的部署配置模板。"""
         template = poor_yaml_read(DEPLOY_TEMPLATE)
         cn = {
             'PypiMirror': 'https://mirrors.aliyun.com/pypi/simple',
@@ -602,6 +603,7 @@ class ConfigGenerator:
         update('template-linux-cn', linux, cn)
 
     def insert_package(self):
+        """将支持的模拟器包名选项插入参数定义。"""
         option = deep_get(self.argument, keys='Emulator.PackageName.option')
         option += list(VALID_PACKAGE.keys())
         option += list(VALID_CHANNEL_PACKAGE.keys())
@@ -609,6 +611,7 @@ class ConfigGenerator:
         deep_set(self.args, keys='Alas.Emulator.PackageName.option', value=option)
 
     def insert_server(self):
+        """将支持的服务器名称选项插入参数定义。"""
         option = deep_get(self.argument, keys='Emulator.ServerName.option')
         server_list = []
         for server, _list in VALID_SERVER_LIST.items():
@@ -698,6 +701,13 @@ class ConfigUpdater:
         ('OpsiHazard1Leveling.ExecuteFixedPatrolScan',
          'OpsiHazard1Leveling.ExecuteFixedPatrolScan',
          execute_fixed_patrol_scan_redirect),
+    ]
+    # 大世界掉落截图由单一开关拆成按任务分类的 8 个开关，旧值铺给每一个，
+    # 升级后各任务的截图行为与升级前保持一致。
+    redirection += [
+        ('Alas.DropRecord.OpsiRecord',
+         tuple(f'Alas.DropRecord.{arg}' for arg in OPSI_RECORD_ARGS),
+         opsi_record_redirect),
     ]
 
     # redirection += [

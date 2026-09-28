@@ -1,9 +1,10 @@
-"""指挥喵评分报告读取：把「指挥喵评分」任务产出的 JSON 交给前端渲染。
+"""指挥喵评分报告读取与管理模块。
 
-报告由 `module/meowfficer/score_task.py` 写在仓库根的 `log/meowfficer_score.json`，
-**按机器共享一份**（任务与实例同工作目录），因此这里只做只读读取，不按实例隔离。
-缺少报告属于正常情况（还没跑过任务），返回可展示的业务错误而不是 500。
+将「指挥喵评分」任务产出的 JSON 报告交付给前端渲染，支持只读查询与清理。
+报告由 `module/meowfficer/score_task.py` 生成于仓库根目录的 `log/meowfficer_score.json`，
+按机器共享一份。
 """
+
 import json
 from pathlib import Path
 
@@ -13,24 +14,30 @@ REPORT_NAME = 'meowfficer_score.json'
 
 
 def report_path(root: Path) -> Path:
-    """报告文件路径（仓库根 / log / meowfficer_score.json）。"""
+    """获取指挥喵评分报告文件的完整路径。
+
+    Args:
+        root (Path): 仓库根目录。
+
+    Returns:
+        Path: 报告文件路径（log/meowfficer_score.json）。
+    """
     return root / 'log' / REPORT_NAME
 
 
 def report(configs, instance, limit=100):
-    """读取指挥喵评分报告。
+    """读取指挥喵评分报告内容。
 
     Args:
-        configs (ConfigService): 配置服务，用于实例白名单校验与仓库根定位。
-        instance (str): 实例名，仅用于校验与回显（报告本身按机器共享）。
-        limit (int): 最多返回多少只猫（取最新的若干只）。
+        configs: 配置管理服务实例，用于实例白名单校验与仓库根定位。
+        instance (str): 实例名称，仅用于校验与回显（报告本身按机器共享）。
+        limit (int, optional): 最多返回的猫咪记录数量（取最新的若干只）。默认为 100。
 
     Returns:
-        dict: ``{'instance', 'generatedAt', 'count', 'cats'}``；``cats`` 元素形如
-        ``{'source', 'cat', 'tags', 'talents', 'rubrics', ...}``。
+        dict: 包含 instance, generatedAt, count, cats 的报告数据字典。
 
     Raises:
-        ApiError: 报告不存在或内容损坏时抛出可展示的业务错误。
+        ApiError: 报告不存在或内容损坏时抛出业务错误。
     """
     configs.path(instance)
     path = report_path(configs.root)
@@ -48,21 +55,19 @@ def report(configs, instance, limit=100):
 
 
 def clear(configs, instance):
-    """清空指挥喵评分报告。
+    """清空指挥喵评分报告文件。
 
-    三份产物（json / md / html）一起删：面板回到「还没跑过任务」的空状态，
-    同时避免「查看完整报告」链接指向一个已经被删掉的文件。
+    联动删除 json / md / html 三份生成产物，面板回到未生成状态。
 
     Args:
-        configs (ConfigService): 配置服务，用于实例白名单校验与仓库根定位。
-        instance (str): 实例名，仅用于校验（报告按机器共享）。
+        configs: 配置管理服务实例，用于实例白名单校验与仓库根定位。
+        instance (str): 实例名称，仅用于校验。
 
     Returns:
-        dict: ``{'cleared': bool, 'removed': [文件名, ...]}``；本来就没有报告时
-        ``cleared`` 为 ``False``（重复点清空不算错误）。
+        dict: 包含 cleared 状态与已删除文件名列表 removed 的字典。
 
     Raises:
-        ApiError: 文件存在但删不掉（例如被占用）时抛出。
+        ApiError: 文件被占用或删除失败时抛出。
     """
     configs.path(instance)
     base = report_path(configs.root)

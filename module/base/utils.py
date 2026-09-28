@@ -18,19 +18,24 @@ TEMPLATE_MATCH_NON_NATIVE_720P_RESOLUTION = (1280, 720)
 
 
 def set_template_match_non_native_720p(enabled, resolution=(1280, 720)):
+    """设置非原生 720p 截图的模板匹配模式与分辨率。
+
+    Args:
+        enabled (bool): 是否启用非原生 720p 匹配调整。
+        resolution (tuple[int, int]): 当前截图分辨率 (宽, 高)。
+    """
     global TEMPLATE_MATCH_NON_NATIVE_720P, TEMPLATE_MATCH_NON_NATIVE_720P_RESOLUTION
     TEMPLATE_MATCH_NON_NATIVE_720P = bool(enabled)
     TEMPLATE_MATCH_NON_NATIVE_720P_RESOLUTION = resolution
 
 
 def lower_template_match_similarity(similarity):
-    """
-    对非原生 720p 截图放宽模板匹配阈值。
+    """对非原生 720p 截图放宽模板匹配阈值。
 
     当截图不是以 1280x720 原始分辨率捕获时，将严格阈值限制在 0.75。
 
     Args:
-        similarity: 0~1 范围的 cv2.TM_CCOEFF_NORMED 阈值。
+        similarity (float): 0~1 范围的 cv2.TM_CCOEFF_NORMED 阈值。
 
     Returns:
         float: 调整后的相似度阈值。
@@ -521,13 +526,27 @@ def location2node(location):
 
 
 def xywh2xyxy(area):
-    """将 (x, y, 宽度, 高度) 格式转换为 (x1, y1, x2, y2) 格式。"""
+    """将 (x, y, 宽度, 高度) 格式转换为 (x1, y1, x2, y2) 格式。
+
+    Args:
+        area (tuple): (x, y, 宽度, 高度)。
+
+    Returns:
+        tuple[int, int, int, int]: (x1, y1, x2, y2)。
+    """
     x, y, w, h = area
     return x, y, x + w, y + h
 
 
 def xyxy2xywh(area):
-    """将 (x1, y1, x2, y2) 格式转换为 (x, y, 宽度, 高度) 格式。"""
+    """将 (x1, y1, x2, y2) 格式转换为 (x, y, 宽度, 高度) 格式。
+
+    Args:
+        area (tuple): (x1, y1, x2, y2)。
+
+    Returns:
+        tuple[int, int, int, int]: (x, y, 宽度, 高度)。
+    """
     x1, y1, x2, y2 = area
     return min(x1, x2), min(y1, y2), abs(x2 - x1), abs(y2 - y1)
 

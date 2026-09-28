@@ -5,7 +5,19 @@ test.beforeEach(async ({page}) => {
 })
 
 async function selectTheme(page: Page, name: string) {
-  await page.getByRole('combobox', {name: '界面主题', exact: true}).click()
+  const family = page.getByRole('combobox', {name: '界面主题', exact: true})
+  // 新版主题把“主题家族”和“明暗”拆成两级控制；旧测试里的浅/深色
+  // 仍表示新版家族的明暗成员，不能再把它们当作一级下拉选项。
+  if (name === '浅色' || name === '深色') {
+    if ((await family.textContent()) !== '新版') {
+      await family.click()
+      await page.getByRole('option', {name: '新版', exact: true}).click()
+    }
+    await page.getByRole('tablist', {name: '明暗', exact: true})
+      .getByRole('tab', {name, exact: true}).click()
+    return
+  }
+  await family.click()
   await page.getByRole('option', {name, exact: true}).click()
 }
 
@@ -93,7 +105,12 @@ test('玻璃主题长页面滚动时两侧栏保持贴合视口', async ({page})
   await page.goto('/#/i/testpilot/task/Alas')
   await expect(page.locator('.right-rail')).toBeVisible()
 
-  await expect.poll(() => page.evaluate(() => { scrollTo(0, 500); return scrollY }), {timeout: 15000}).toBe(500)
+  // 主区域自己滚动：窗口高度等于视口高度，滚窗口不产生位移。
+  await expect.poll(() => page.evaluate(() => {
+    const main = document.querySelector('main')!
+    main.scrollTo(0, 500)
+    return main.scrollTop
+  }), {timeout: 15000}).toBe(500)
 
   const sidebar = (await page.locator('.sidebar').boundingBox())!
   const rail = (await page.locator('.right-rail').boundingBox())!
@@ -318,10 +335,19 @@ test('自定义背景支持 URL 与上传文件并在刷新后恢复', async ({p
   const source = page.getByRole('combobox', {name: '自定义背景'})
   await source.click()
   await page.getByRole('option', {name: '填写 URL'}).click()
-  await page.getByRole('textbox', {name: '填写 URL'}).fill(remote)
+  // URL 模式现在是一行一个 API。把默认列表清空后只留下测试地址，
+  // 避免“本次随机生效”挑到其它内置地址。
+  const urlRows = page.getByRole('textbox', {name: '填写 URL'})
+  for (let index = await urlRows.count() - 1; index >= 0; index -= 1) await urlRows.nth(index).fill('')
+  await urlRows.first().fill(remote)
   await page.getByRole('button', {name: '应用背景'}).click()
-  await expect(page.locator('.wallpaper img')).toHaveAttribute('src', remote)
-  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('azurpilot.background') ?? '{}').source)).toBe('url')
+  await expect(page.locator('#ui-background-direct')).toHaveValue(remote)
+  // URL 背景解析完成后统一走同源代理，不再把第三方直链直接挂到壁纸节点。
+  await expect(page.locator('.wallpaper img')).toHaveAttribute('src', /\/api\/v1\/background\/media\?url=/)
+  expect(await page.evaluate(() => {
+    const value = JSON.parse(localStorage.getItem('azurpilot.background') ?? '{}')
+    return {source: value.source, urls: value.urls}
+  })).toEqual({source: 'url', urls: [remote]})
 
   await source.click()
   await page.getByRole('option', {name: '上传文件'}).click()
@@ -330,10 +356,12 @@ test('自定义背景支持 URL 与上传文件并在刷新后恢复', async ({p
     mimeType: 'image/png',
     buffer: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=', 'base64'),
   })
-  await expect(page.locator('.background-upload')).toContainText('local.png')
-  await expect(page.locator('.wallpaper img')).toHaveAttribute('src', /^blob:/)
+  await expect(page.locator('.background-gallery-list')).toContainText('local.png')
+  const uploaded = page.locator('.wallpaper img')
+  await expect(uploaded).toHaveAttribute('src', /^\/background-library\//)
+  const uploadedSrc = await uploaded.getAttribute('src')
   await page.reload()
-  await expect(page.locator('.wallpaper img')).toHaveAttribute('src', /^blob:/)
+  await expect(page.locator('.wallpaper img')).toHaveAttribute('src', uploadedSrc!)
   await expect(page.getByRole('combobox', {name: '自定义背景'})).toHaveText('上传文件')
 })
 test('紧凑主题收窄骨架与留白，且不叠加到其它主题', async ({page}) => {

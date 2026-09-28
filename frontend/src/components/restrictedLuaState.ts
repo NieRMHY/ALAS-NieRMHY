@@ -1,3 +1,7 @@
+/**
+ * @fileoverview 受限 Lua 脚本编辑器状态与服务端诊断管理。
+ */
+
 import type { ScriptDiagnostic, ShopStrategyValidation } from '../api/types'
 
 export interface RestrictedLuaState {

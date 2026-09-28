@@ -122,19 +122,28 @@ class OSStatus(UI):
             return 35000
 
     def get_yellow_coins(self) -> int:
+        """
+        通过 OCR 获取当前拥有的作战补给凭证（黄币）数量。
+
+        采用连续两次稳定比对校验，若超时未能获取则降级使用缓存的最近有效值。
+
+        Returns:
+            int: 黄币数量。
+        """
         yellow_coins = 0
         timeout = Timer(5, count=10).start()  # 增加超时时间和重试次数
         last_valid_value = None
         
         for _ in self.loop():
-            # End
+            # 结束
             if self.appear_then_click(GET_ITEMS_1, offset=True, interval=1):
                 timeout.reset()
                 continue
             if self.appear_then_click(GET_ITEMS_2, offset=True, interval=1):
                 timeout.reset()
                 continue
-            if self.appear_then_click(GET_SHIP, interval=1):
+            # GET_SHIP 素材已随上游更新，需补 offset 容差，否则弹窗可能关不掉
+            if self.appear_then_click(GET_SHIP, offset=(20, 20), interval=1):
                 timeout.reset()
                 continue
 
@@ -144,8 +153,7 @@ class OSStatus(UI):
                 break
 
             if current_value == 0:
-                # OCR may get 0 when amount is not immediately loaded
-                # Or when popups are obscuring the top bar
+                # 界面未完全渲染或弹窗遮挡顶部栏时 OCR 可能识别为 0
                 logger.info('[大世界处理-状态] 黄币为 0，可能是 OCR 错误或界面未加载')
                 continue
             else:
@@ -175,6 +183,12 @@ class OSStatus(UI):
         return yellow_coins
 
     def get_purple_coins(self) -> int:
+        """
+        通过 OCR 获取当前拥有的特别兑换凭证（紫币）数量。
+
+        Returns:
+            int: 紫币数量。
+        """
         if self.appear(OS_SHOP_CHECK):
             purple_coins = OCR_OS_SHOP_PURPLE_COINS.ocr(self.device.image)
         else:
@@ -183,6 +197,9 @@ class OSStatus(UI):
         return purple_coins
 
     def os_shop_get_coins(self):
+        """
+        同时获取大世界黄币与紫币数量，并保存历史快照数据。
+        """
         self._shop_yellow_coins = self.get_yellow_coins()
         self._shop_purple_coins = self.get_purple_coins()
         logger.info(f'[大世界处理-状态] 黄币: {self._shop_yellow_coins}, 紫币: {self._shop_purple_coins}')

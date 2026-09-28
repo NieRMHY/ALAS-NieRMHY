@@ -70,6 +70,11 @@ class PlayerPrefsChanges:
 
     @property
     def changed(self) -> bool:
+        """是否存在任何一项被修改的设置。
+
+        Returns:
+            bool: 存在修改项返回 True，否则返回 False。
+        """
         return (
             self.static_changed > 0
             or self.story_speed_changed > 0
@@ -97,7 +102,14 @@ class AdbResult:
 
 
 def _is_target_key(name: str | None) -> bool:
-    """判断键是否在严格维护的静态或动态设置白名单内。"""
+    """判断键是否在严格维护的静态或动态设置白名单内。
+
+    Args:
+        name (str | None): 设置项的键名。
+
+    Returns:
+        bool: 键名在白名单内返回 True，否则返回 False。
+    """
     return isinstance(name, str) and (
         name in RECOMMENDED_INT_SETTINGS
         or name in RECOMMENDED_STRING_SETTINGS
@@ -107,7 +119,17 @@ def _is_target_key(name: str | None) -> bool:
 
 
 def _index_target_entries(root: etree.Element) -> dict[str, etree.Element]:
-    """索引需要读取或修改的设置项，并拒绝同名目标键。"""
+    """索引需要读取或修改的设置项，并拒绝同名目标键。
+
+    Args:
+        root (etree.Element): XML 根节点。
+
+    Returns:
+        dict[str, etree.Element]: 目标键名到 XML 元素的映射。
+
+    Raises:
+        PlayerPrefsUnsupported: 根节点不是 map 或存在重复的目标键。
+    """
     if root.tag != 'map':
         raise PlayerPrefsUnsupported(f'不支持的 PlayerPrefs 根节点: {root.tag!r}')
 
@@ -123,7 +145,20 @@ def _index_target_entries(root: etree.Element) -> dict[str, etree.Element]:
 
 
 def _set_int(root: etree.Element, entries: dict[str, etree.Element], name: str, value: int) -> bool:
-    """以 Android SharedPreferences 的 int 格式写入单个白名单键。"""
+    """以 Android SharedPreferences 的 int 格式写入单个白名单键。
+
+    Args:
+        root (etree.Element): XML 根节点。
+        entries (dict[str, etree.Element]): 键名到 XML 元素的索引字典。
+        name (str): 目标设置键名。
+        value (int): 要设置的整数值。
+
+    Returns:
+        bool: 值发生改变或新增返回 True，已等于目标值返回 False。
+
+    Raises:
+        PlayerPrefsUnsupported: 元素类型不为 int 或包含无法安全处理的文本。
+    """
     expected = str(value)
     element = entries.get(name)
     if element is None:
@@ -144,7 +179,20 @@ def _set_int(root: etree.Element, entries: dict[str, etree.Element], name: str, 
 
 
 def _set_string(root: etree.Element, entries: dict[str, etree.Element], name: str, value: str) -> bool:
-    """以 Android SharedPreferences 的 string 格式写入单个白名单键。"""
+    """以 Android SharedPreferences 的 string 格式写入单个白名单键。
+
+    Args:
+        root (etree.Element): XML 根节点。
+        entries (dict[str, etree.Element]): 键名到 XML 元素的索引字典。
+        name (str): 目标设置键名。
+        value (str): 要设置的字符串值。
+
+    Returns:
+        bool: 值发生改变或新增返回 True，已等于目标值返回 False。
+
+    Raises:
+        PlayerPrefsUnsupported: 元素类型不为 string 或包含无法安全处理的内容。
+    """
     element = entries.get(name)
     if element is None:
         element = etree.Element('string', {'name': name})
@@ -166,7 +214,14 @@ def _set_string(root: etree.Element, entries: dict[str, etree.Element], name: st
 
 
 def _serialize_xml(root: etree.Element) -> bytes:
-    """生成 Android 可读取的 UTF-8 SharedPreferences XML。"""
+    """生成 Android 可读取的 UTF-8 SharedPreferences XML。
+
+    Args:
+        root (etree.Element): XML 根节点。
+
+    Returns:
+        bytes: 序列化后的 XML 字节流。
+    """
     etree.indent(root, space='    ')
     return etree.tostring(root, encoding='utf-8', xml_declaration=True, short_empty_elements=True)
 
@@ -224,7 +279,16 @@ def verify_player_prefs_xml(
         standby_keys: tuple[str, ...],
         story_speed_keys: tuple[str, ...] = (),
 ) -> None:
-    """验证目标设置是否全部已写入预期值。"""
+    """验证目标设置是否全部已写入预期值。
+
+    Args:
+        content (bytes): 回读的 XML 字节流。
+        standby_keys (tuple[str, ...]): 待验证的待机模式键名元组。
+        story_speed_keys (tuple[str, ...]): 待验证的剧情自动播放速度键名元组。
+
+    Raises:
+        PlayerPrefsWriteError: 回读的 XML 解析失败或任何目标键的值与预期不符。
+    """
     try:
         root = etree.fromstring(content)
     except etree.ParseError as error:
@@ -255,7 +319,19 @@ def verify_player_prefs_xml(
 
 @contextmanager
 def _device_lock(serial: str, package: str, timeout: float = 10) -> None:
-    """用 serial 和包名派生跨进程锁，避免多实例同时替换同一文件。"""
+    """用 serial 和包名派生跨进程锁，避免多实例同时替换同一文件。
+
+    Args:
+        serial (str): 设备序列号。
+        package (str): 游戏应用包名。
+        timeout (float): 等待获取锁的最大超时时间（秒），默认为 10。
+
+    Yields:
+        None: 成功获得文件锁后让出执行权。
+
+    Raises:
+        PlayerPrefsUnsupported: 等待获取锁超时。
+    """
     key = hashlib.sha256(f'{serial}\0{package}'.encode('utf-8')).hexdigest()[:16]
     lock_file = Path('cache') / f'game-settings-{key}.lock'
     lock_file.parent.mkdir(parents=True, exist_ok=True)
@@ -303,6 +379,12 @@ class PlayerPrefsManager:
     """通过 root ADB 原子更新碧蓝航线的 PlayerPrefs 文件。"""
 
     def __init__(self, device, wait_for_stop: bool = False):
+        """初始化 PlayerPrefs 管理器。
+
+        Args:
+            device: 设备连接实例。
+            wait_for_stop (bool): 重启流程中是否轮询等待应用完全退出。
+        """
         self.device = device
         self.wait_for_stop = wait_for_stop
         self.package = str(device.package)
@@ -317,7 +399,20 @@ class PlayerPrefsManager:
             check: bool = True,
             error_type: type[PlayerPrefsError] = PlayerPrefsUnsupported,
     ) -> AdbResult:
-        """执行带退出码检查的 host ADB 命令。"""
+        """执行带退出码检查的 host ADB 命令。
+
+        Args:
+            args (list[str]): ADB 命令参数列表。
+            timeout (float): 命令超时时间（秒），默认为 15。
+            check (bool): 退出码非 0 时是否抛出异常，默认为 True。
+            error_type (type[PlayerPrefsError]): 异常类型，默认为 PlayerPrefsUnsupported。
+
+        Returns:
+            AdbResult: ADB 命令执行结果。
+
+        Raises:
+            PlayerPrefsError: 命令执行失败或超时。
+        """
         command = [str(self.device.adb_binary), '-s', str(self.device.serial), *map(str, args)]
         try:
             completed = subprocess.run(
@@ -346,7 +441,20 @@ class PlayerPrefsManager:
             timeout: float = 15,
             error_type: type[PlayerPrefsError] = PlayerPrefsUnsupported,
     ) -> bytes:
-        """通过 ADB 传输二进制数据，绝不将 PlayerPrefs 写入本地文件。"""
+        """通过 ADB 传输二进制数据，绝不将 PlayerPrefs 写入本地文件。
+
+        Args:
+            args (list[str]): ADB 命令参数列表。
+            input_data (bytes | None): 输入的标准输入数据，默认为 None。
+            timeout (float): 传输超时时间（秒），默认为 15。
+            error_type (type[PlayerPrefsError]): 异常类型，默认为 PlayerPrefsUnsupported。
+
+        Returns:
+            bytes: ADB 标准输出的二进制字节流。
+
+        Raises:
+            PlayerPrefsError: ADB 二进制传输失败。
+        """
         command = [str(self.device.adb_binary), '-s', str(self.device.serial), *map(str, args)]
         try:
             completed = subprocess.run(
@@ -370,6 +478,17 @@ class PlayerPrefsManager:
             check: bool = True,
             error_type: type[PlayerPrefsError] = PlayerPrefsUnsupported,
     ) -> AdbResult:
+        """在设备 shell 中执行命令，必要时自动使用 su -c 提权。
+
+        Args:
+            args (list[str]): shell 命令及参数列表。
+            timeout (float): 命令超时时间（秒），默认为 15。
+            check (bool): 退出码非 0 时是否抛出异常，默认为 True。
+            error_type (type[PlayerPrefsError]): 异常类型，默认为 PlayerPrefsUnsupported。
+
+        Returns:
+            AdbResult: shell 命令执行结果。
+        """
         if self._use_su:
             args = ['su', '-c', shlex.join(map(str, args))]
         return self._run_adb(
@@ -380,7 +499,11 @@ class PlayerPrefsManager:
         )
 
     def _ensure_root(self) -> bool:
-        """确认 adbd 为 root，或回退到可用的 ``su -c``。"""
+        """确认 adbd 为 root，或回退到可用的 ``su -c``。
+
+        Returns:
+            bool: 成功获得 root 权限返回 True，否则返回 False。
+        """
         current = self._shell(['id'], check=False)
         if 'uid=0(root)' in current.stdout:
             return True
@@ -417,7 +540,11 @@ class PlayerPrefsManager:
         logger.warning('[GameSettings] 无法恢复 adbd 的原始非 root 状态')
 
     def _game_is_stopped(self) -> bool | None:
-        """确认包及其子进程均不在运行；无法确认时返回 None。"""
+        """确认包及其子进程均不在运行；无法确认时返回 None。
+
+        Returns:
+            bool | None: 确定未运行返回 True，正在运行返回 False，无法确认返回 None。
+        """
         pidof = self._shell(['pidof', self.package], check=False)
         if pidof.stdout:
             return False
@@ -432,7 +559,11 @@ class PlayerPrefsManager:
         return True
 
     def _wait_until_game_stopped(self) -> bool:
-        """重启流程中短暂轮询应用退出，其他启动路径只检查一次。"""
+        """重启流程中短暂轮询应用退出，其他启动路径只检查一次。
+
+        Returns:
+            bool: 确认已停止返回 True，超时或未停止返回 False。
+        """
         deadline = time.monotonic() + (8 if self.wait_for_stop else 0)
         while True:
             stopped = self._game_is_stopped()
@@ -443,7 +574,14 @@ class PlayerPrefsManager:
             time.sleep(0.25)
 
     def _prefs_path(self) -> str:
-        """定位 Unity PlayerPrefs 文件，文件名不符时拒绝猜测。"""
+        """定位 Unity PlayerPrefs 文件，文件名不符时拒绝猜测。
+
+        Returns:
+            str: PlayerPrefs 远程 XML 文件的绝对路径。
+
+        Raises:
+            PlayerPrefsUnsupported: 包名不合规、未找到目录或无法唯一定位文件。
+        """
         if not PACKAGE_PATTERN.fullmatch(self.package):
             raise PlayerPrefsUnsupported('游戏包名格式不安全')
 
@@ -464,7 +602,14 @@ class PlayerPrefsManager:
         return f'{directory}/{candidates[0]}'
 
     def _ensure_no_atomic_backup(self, prefs: str) -> None:
-        """避免 Android 未完成的原子写入在下次启动时覆盖主文件。"""
+        """避免 Android 未完成的原子写入在下次启动时覆盖主文件。
+
+        Args:
+            prefs (str): PlayerPrefs 远程文件路径。
+
+        Raises:
+            PlayerPrefsUnsupported: 检测到未完成的应用偏好写入或状态无法确认。
+        """
         result = self._shell(['test', '-e', f'{prefs}.bak'], check=False)
         if result.returncode == 0:
             raise PlayerPrefsUnsupported('检测到未完成的应用偏好写入，拒绝覆盖')
@@ -476,6 +621,18 @@ class PlayerPrefsManager:
             remote: str,
             error_type: type[PlayerPrefsError] = PlayerPrefsUnsupported,
     ) -> PlayerPrefsMetadata:
+        """读取指定远程文件的所有者、权限与 SELinux 上下文。
+
+        Args:
+            remote (str): 远程文件路径。
+            error_type (type[PlayerPrefsError]): 异常类型，默认为 PlayerPrefsUnsupported。
+
+        Returns:
+            PlayerPrefsMetadata: 文件的元数据。
+
+        Raises:
+            PlayerPrefsError: 无法读取文件权限或 SELinux 上下文。
+        """
         metadata = self._shell(['stat', '-c', '%u:%g:%a', remote], error_type=error_type).stdout
         match = METADATA_PATTERN.fullmatch(metadata)
         if match is None:
@@ -493,6 +650,15 @@ class PlayerPrefsManager:
         )
 
     def _restore_metadata(self, remote: str, metadata: PlayerPrefsMetadata) -> None:
+        """为远程文件恢复指定的所有者、权限与 SELinux 上下文。
+
+        Args:
+            remote (str): 远程文件路径。
+            metadata (PlayerPrefsMetadata): 要恢复的目标元数据。
+
+        Raises:
+            PlayerPrefsWriteError: 恢复失败或校验不匹配。
+        """
         self._shell(
             ['chown', f'{metadata.uid}:{metadata.gid}', remote],
             error_type=PlayerPrefsWriteError,
@@ -503,7 +669,15 @@ class PlayerPrefsManager:
             raise PlayerPrefsWriteError('PlayerPrefs 临时文件的元数据校验失败')
 
     def _read_remote_bytes(self, remote: str, error_type: type[PlayerPrefsError]) -> bytes:
-        """直接读入内存，不产生本地副本。"""
+        """直接读入内存，不产生本地副本。
+
+        Args:
+            remote (str): 远程文件路径。
+            error_type (type[PlayerPrefsError]): 读取失败时的异常类型。
+
+        Returns:
+            bytes: 文件二进制字节流。
+        """
         args = ['exec-out', 'cat', remote]
         if self._use_su:
             args = ['exec-out', 'su', '-c', shlex.join(['cat', remote])]
@@ -515,7 +689,13 @@ class PlayerPrefsManager:
             content: bytes,
             error_type: type[PlayerPrefsError],
     ) -> None:
-        """从内存写入同目录临时文件，供原子替换使用。"""
+        """从内存写入同目录临时文件，供原子替换使用。
+
+        Args:
+            remote (str): 远程目标路径。
+            content (bytes): 待写入的二进制字节流。
+            error_type (type[PlayerPrefsError]): 写入失败时的异常类型。
+        """
         command = ['exec-in', 'sh', '-c', f'cat > {remote}']
         if self._use_su:
             command = ['exec-in', 'su', '-c', shlex.join(['sh', '-c', f'cat > {remote}'])]
@@ -527,7 +707,14 @@ class PlayerPrefsManager:
         )
 
     def _cleanup_stale_transaction_files(self, prefs: str) -> None:
-        """清理本模块旧版遗留副本和中断事务的临时文件，不记录文件名。"""
+        """清理本模块旧版遗留副本和中断事务的临时文件，不记录文件名。
+
+        Args:
+            prefs (str): 远程 PlayerPrefs 文件路径。
+
+        Raises:
+            PlayerPrefsUnsupported: 清理期间游戏启动。
+        """
         if self._game_is_stopped() is not True:
             raise PlayerPrefsUnsupported('游戏进程在清理敏感临时数据前启动，已取消本次写入')
 
@@ -558,7 +745,17 @@ class PlayerPrefsManager:
             original: bytes,
             temporary: str,
     ) -> bool:
-        """只用内存中的原文恢复目标，并确认内容与原始文件完全一致。"""
+        """只用内存中的原文恢复目标，并确认内容与原始文件完全一致。
+
+        Args:
+            target (str): 目标文件路径。
+            metadata (PlayerPrefsMetadata): 目标文件的原始元数据。
+            original (bytes): 目标文件的原始二进制字节流。
+            temporary (str): 临时文件路径。
+
+        Returns:
+            bool: 恢复成功且校验完全一致返回 True，否则返回 False。
+        """
         if self._game_is_stopped() is not True:
             return False
         try:
@@ -577,6 +774,16 @@ class PlayerPrefsManager:
             return False
 
     def _apply_locked(self) -> bool:
+        """在持有跨进程文件锁的情况下执行 PlayerPrefs 的原子更新。
+
+        Returns:
+            bool: 成功应用修改或无需修改返回 True，失败返回 False。
+
+        Raises:
+            PlayerPrefsUnsupported: 游戏正在运行、未获得 root 或安全检查未通过。
+            PlayerPrefsWriteError: 写入或元数据校验失败。
+            RequestHumanTakeover: 写入失败且原始文件恢复失败。
+        """
         if not self._wait_until_game_stopped():
             raise PlayerPrefsUnsupported('游戏进程仍在运行，已跳过本次写入')
         if not self._ensure_root():
@@ -644,7 +851,11 @@ class PlayerPrefsManager:
         return True
 
     def apply(self) -> bool:
-        """安全应用推荐设置；无法安全执行时不影响常规启动。"""
+        """安全应用推荐设置；无法安全执行时不影响常规启动。
+
+        Returns:
+            bool: 成功应用返回 True，安全检查未通过或跳过返回 False。
+        """
         if getattr(self.device, 'is_over_http', False):
             logger.warning('[GameSettings] HTTP 设备不支持游戏本地设置自动配置，已跳过')
             return False
@@ -659,5 +870,13 @@ class PlayerPrefsManager:
 
 
 def apply_recommended_game_settings(device, wait_for_stop: bool = False) -> bool:
-    """为当前设备应用推荐设置的唯一运行时入口。"""
+    """为当前设备应用推荐设置的唯一运行时入口。
+
+    Args:
+        device: 设备连接实例。
+        wait_for_stop (bool): 重启流程中是否轮询等待应用完全退出。
+
+    Returns:
+        bool: 成功应用返回 True，安全检查未通过或跳过返回 False。
+    """
     return PlayerPrefsManager(device, wait_for_stop=wait_for_stop).apply()

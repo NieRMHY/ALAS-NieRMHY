@@ -18,7 +18,14 @@ class HospitalUI(UI):
     """医院活动 UI 处理器，处理线索界面的进入和退出。"""
 
     def is_in_clue(self, interval=0):
-        """检测当前是否在线索界面。"""
+        """检测当前是否在线索界面。
+
+        Args:
+            interval (int | float): 按钮检测间隔秒数，默认 0。
+
+        Returns:
+            bool: 处于线索界面返回 True，否则返回 False。
+        """
         return self.appear(HOSIPITAL_CLUE_CHECK, offset=(20, 20), interval=interval)
 
     def handle_get_clue(self):

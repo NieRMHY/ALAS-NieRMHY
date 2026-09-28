@@ -17,6 +17,7 @@
   --theme-radius-control: 0px;
   --theme-radius-button: 0px;
   --theme-radius-popover: 0px;
+  --instance-tab-radius: 0px;
 }
 :root[data-theme='extreme'] .sidebar,
 :root[data-theme='extreme'] .right-rail,
@@ -56,6 +57,10 @@
 :root[data-theme='extreme'] .monitor-segmented,
 :root[data-theme='extreme'] .monitor-segmented .segmented-indicator,
 :root[data-theme='extreme'] .monitor-segmented button {border-radius: 0}
+/* 标签页的新建按钮与启停/关闭悬浮钮：其它主题是 999px 与 50%，且不读变量。 */
+:root[data-theme='extreme'] .instance-tab-create,
+:root[data-theme='extreme'] .instance-tab-power,
+:root[data-theme='extreme'] .instance-tab-remove:hover {border-radius: 0}
 :root[data-theme='extreme'] .resource-heading > div,
 :root[data-theme='extreme'] .resource-image-wrap,
 :root[data-theme='extreme'] .instance-caption,
@@ -71,8 +76,9 @@
 :root[data-theme='extreme'] .resource-picker-empty,
 :root[data-theme='extreme'] .resource-picker-option {border-radius: 0}
 
+/* 开关（.toggle）保持其它主题的圆形药丸与圆形滑块：直角化只针对容器与按钮。 */
 /* 浮层与控件补充：这些不在上面的骨架 / 卡片清单里，是圆角审计逐页扫出来的漏网项
-   （下拉浮层、指标芯片、复选框、开关、标签、logo 等）。新增控件后可用同样的扫描方式复查。 */
+   （下拉浮层、指标芯片、复选框、标签、logo 等）。新增控件后可用同样的扫描方式复查。 */
 :root[data-theme='extreme'] .select-menu,
 :root[data-theme='extreme'] .select-option,
 :root[data-theme='extreme'] .stat-chip,
@@ -86,15 +92,27 @@
 :root[data-theme='extreme'] .instance-menu button,
 :root[data-theme='extreme'] .instance-create,
 :root[data-theme='extreme'] .brand-logo,
-:root[data-theme='extreme'] .toggle,
-:root[data-theme='extreme'] .toggle > span,
 :root[data-theme='extreme'] .dev-surface-sample,
 :root[data-theme='extreme'] .dev-shadow-sample,
 :root[data-theme='extreme'] .dev-state-box,
 :root[data-theme='extreme'] .dev-nav-preview,
 :root[data-theme='extreme'] .dev-submenu-list,
 :root[data-theme='extreme'] .live-label,
-:root[data-theme='extreme'] .nav-pill {border-radius: 0}
+:root[data-theme='extreme'] .nav-pill,
+:root[data-theme='extreme'] .log-card,
+:root[data-theme='extreme'] .card-btn-action,
+:root[data-theme='extreme'] .card-btn-icon,
+:root[data-theme='extreme'] .badge-shape,
+:root[data-theme='extreme'] .badge-pill,
+:root[data-theme='extreme'] .trapezoid-visual,
+:root[data-theme='extreme'] .prop-pill,
+:root[data-theme='extreme'] .prop-badge,
+:root[data-theme='extreme'] .error-tag,
+:root[data-theme='extreme'] .section-action,
+:root[data-theme='extreme'] .traceback-viewer,
+:root[data-theme='extreme'] .traceback-frame-card,
+:root[data-theme='extreme'] .traceback-exc-banner,
+:root[data-theme='extreme'] .log-card-line {border-radius: 0}
 
 /* 常驻滚动条：全局规则是 5px 宽、8px 圆角，既占内容宽度又难拖，也不符合直角风格。
    Chromium 的原生滚动条只有「占位」和「彻底消失」两种状态，所以这里把 CompactScrollbars
@@ -155,6 +173,9 @@
 /* 内容留白：窄屏断点用 !important 写死的面板内边距一并压掉 */
 :root[data-theme='extreme'] main {min-height: 0; padding: 4px}
 :root[data-theme='extreme'] .panel-heading {min-height: 0; padding: 8px 12px !important}
+:root[data-theme='extreme'] .statistics-chart-plot .stat-card-fold.is-corner {left: 12px}
+/* 编辑模式的排序控件占住卡片左上角，标题行要让位；紧凑主题的标题内边距带 !important。 */
+:root[data-theme='extreme'] .statistics-sections.is-editing .stat-card .panel-heading {padding-left: 34px !important}
 /* 图表放大视图铺满窗口（inset: 0），右上角正是 Electron 的窗口控制按钮，
    会把「收起图表」压住、只能按 Esc 退出。这里让标题行右侧留出按钮宽度。 */
 :root[data-theme='extreme'] .panel.chart-expanded .panel-heading {padding-right: 160px !important}
@@ -173,6 +194,46 @@
 :root[data-theme='extreme'] .log-filters {padding: 6px 11px}
 :root[data-theme='extreme'] .log-entry-line {padding: 0}
 :root[data-theme='extreme'] .log-rule {margin: 4px 0}
+/* 卡片式日志紧凑适配 (LogCardView Extreme) */
+:root[data-theme='extreme'] .log-cards-container {gap: 4px; padding: 2px 0}
+:root[data-theme='extreme'] .log-card {border-radius: 0; box-shadow: none}
+:root[data-theme='extreme'] .card-header {padding: 4px 8px; font-size: 10px}
+:root[data-theme='extreme'] .card-title {gap: 6px; font-size: 10px}
+:root[data-theme='extreme'] .card-time {font-size: 9px}
+:root[data-theme='extreme'] .card-actions {gap: 4px}
+:root[data-theme='extreme'] .card-btn-action {border-radius: 0; padding: 1px 5px; font-size: 9px}
+:root[data-theme='extreme'] .card-btn-icon {border-radius: 0; padding: 2px}
+:root[data-theme='extreme'] .card-body {padding: 6px 8px}
+:root[data-theme='extreme'] .badge-shape {font-size: 8px; padding: 0 4px; border-radius: 0}
+:root[data-theme='extreme'] .badge-pill {font-size: 8px; padding: 0 5px; border-radius: 0}
+:root[data-theme='extreme'] .trapezoid-visual {width: 140px; height: 90px; padding: 2px; border-radius: 0}
+:root[data-theme='extreme'] .perspective-body {gap: 12px}
+:root[data-theme='extreme'] .perspective-metrics {font-size: 10px; gap: 4px}
+:root[data-theme='extreme'] .property-row {padding: 0 2px; font-size: 10px}
+:root[data-theme='extreme'] .prop-pill,
+:root[data-theme='extreme'] .prop-badge {border-radius: 0; font-size: 9px; padding: 0 4px}
+:root[data-theme='extreme'] .table-card-header {padding: 3px 6px}
+:root[data-theme='extreme'] .native-log-table th {padding: 3px 8px; font-size: 10px}
+:root[data-theme='extreme'] .native-log-table td {padding: 2px 8px; font-size: 10px}
+:root[data-theme='extreme'] .error-body {gap: 4px; padding: 6px 8px}
+:root[data-theme='extreme'] .error-section {gap: 6px; font-size: 10px}
+:root[data-theme='extreme'] .error-tag {border-radius: 0; font-size: 9px; min-width: 44px; padding: 0 3px}
+:root[data-theme='extreme'] .section-action {border-radius: 0; padding: 4px 6px}
+:root[data-theme='extreme'] .traceback-viewer {border-radius: 0}
+:root[data-theme='extreme'] .traceback-toolbar {padding: 3px 6px; font-size: 10px}
+:root[data-theme='extreme'] .traceback-frames-list {gap: 4px; padding: 4px}
+:root[data-theme='extreme'] .traceback-frame-card {border-radius: 0}
+:root[data-theme='extreme'] .traceback-frame-header {padding: 3px 6px; font-size: 10px}
+:root[data-theme='extreme'] .traceback-code-block {font-size: 10px; line-height: 1.4}
+:root[data-theme='extreme'] .traceback-locals-block {padding: 3px 6px; font-size: 9px}
+:root[data-theme='extreme'] .traceback-exc-banner {border-radius: 0; margin: 0 4px 4px; padding: 4px 6px; font-size: 10px}
+:root[data-theme='extreme'] .traceback-raw-pre {padding: 4px 6px; font-size: 9px}
+:root[data-theme='extreme'] .llm-markdown-view {font-size: 11px; line-height: 1.5}
+:root[data-theme='extreme'] .cost-table .map-th-col {width: 26px; min-width: 26px; max-width: 26px; font-size: 10px; padding: 2px 0}
+:root[data-theme='extreme'] .cost-cell {width: 26px; height: 22px; font-size: 10px}
+:root[data-theme='extreme'] .system-banner-card {padding: 4px 0; margin: 2px 0}
+:root[data-theme='extreme'] .stage-header-card {margin: 3px 0}
+:root[data-theme='extreme'] .log-card-line {padding: 1px 4px; border-radius: 0}
 :root[data-theme='extreme'] .statistics-toolbar-row {padding: 6px 0; margin-bottom: 8px}
 :root[data-theme='extreme'] .panel-note {padding: 7px 12px}
 :root[data-theme='extreme'] .settings-notice {margin: 10px 0 8px}
@@ -182,7 +243,8 @@
 :root[data-theme='extreme'] .welcome {padding: 48px 16px}
 :root[data-theme='extreme'] .empty {padding: 20px 14px; min-height: 120px}
 :root[data-theme='extreme'] .chart-metrics {padding: 14px 16px 8px; gap: 34px}
-:root[data-theme='extreme'] .summary-metrics-panel {padding: 10px 14px}
+:root[data-theme='extreme'] .summary-metrics-panel {padding: 0}
+:root[data-theme='extreme'] .summary-metrics-panel .summary-metrics {padding: 18px 26px}
 :root[data-theme='extreme'] .summary-metrics-panel .summary-metrics {gap: 8px 12px; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr))}
 :root[data-theme='extreme'] .summary-metrics-panel .summary-metric-card {padding: 6px 8px; border-radius: 0; min-height: auto; background: transparent; border: none}
 :root[data-theme='extreme'] .summary-metrics-panel .summary-metric-card strong {font-size: 16px}
@@ -303,6 +365,7 @@
   :root[data-theme='extreme'] .button {padding: 5px 12px}
   :root[data-theme='extreme'] .icon-button {width: 28px; height: 28px}
   :root[data-theme='extreme'] .text-button {min-height: 26px; padding: 2px}
+  :root[data-theme='extreme'] {--table-heading-control: 26px}
   :root[data-theme='extreme'] .select-trigger {padding: 5px 10px}
   :root[data-theme='extreme'] .multi-options {gap: 5px}
   :root[data-theme='extreme'] .multi-options .checkbox-control {min-height: 28px; padding: 4px 8px}

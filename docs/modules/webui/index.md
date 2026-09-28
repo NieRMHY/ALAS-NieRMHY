@@ -17,7 +17,7 @@ WebUI 不是一个目录，而是一个跨四层协作的体系：
 
 **历史**：2026-09 前后，旧版 PyWebIO 界面（`module/webui/` 的页面代码与 `webapp/`）整体移除，迁移到 React 前端 + WebSocket API v1；运行服务从旧 `module/webui` 迁往 `module/runtime`。`module/webui/` 现仅剩 `webui_prefs.py` 一个遗留文件（现状见第 16、17 节）。阅读 `.agent/` 下历史文档时注意这一迁移边界：旧架构的页面与协议代码已不存在。
 
-本篇是 WebUI 文档体系的导航篇：画全貌、定边界、解释跨层机制；各层细节见 [WebUI 启动器](../entry/gui.md)、[API 服务](api.md)、[运行时服务](runtime.md)、[前端](frontend.md)。
+本篇是 WebUI 文档体系的导航篇：画全貌、定边界、解释跨层机制；各层细节见 [WebUI 启动器](../entry/gui.md)、[API 服务](api.md)、[运行时服务](runtime.md)、[前端](frontend.md)。独立实例密码、账号快照及 TPM 自动解锁见 [实例账号管理](accounts.md)。
 
 ## 2. 模块职责
 
@@ -85,7 +85,7 @@ AzurPilot/
 
 | 入口 | 用途 |
 | --- | --- |
-| `python gui.py`（`__main__`） | 整个体系的进程起点：按 `EnableReload` 分流监督模式或直连模式 |
+| `uv run python gui.py`（`__main__`） | 整个体系的进程起点：按 `EnableReload` 分流监督模式或直连模式 |
 | `gui.run_webui_supervisor()` / `gui.func()` | 父监督循环 / WebUI 服务子进程体 |
 | `module.api.app.create_app` | ASGI 应用工厂，uvicorn 以工厂字符串加载 |
 | `/api/v1/ws`（`Gateway.endpoint`） | 浏览器业务连接入口：Origin 校验、认证、会话 |
@@ -251,7 +251,8 @@ WebUI 涉及三类配置，读写路径与生效时机各不相同：
 | --- | --- | --- | --- |
 | 实例任务配置 | `config/<instance>.json` | 浏览器 `config.patch`（白名单校验 + 事务写）；worker 经 `AzurLaneConfig` 属性绑定读写（路径 `Task.Group.Argument`，访问 `self.config.Group_Argument`） | worker 在任务边界 mtime 热重载，无需重启 |
 | 部署配置 | `config/deploy.yaml` | `settings.get` / `settings.patch`；`DeployConfig.__setattr__` 属性写即落盘 | 监听、自动运行等重启服务后生效 |
-| 界面偏好 | `config/webui_prefs.json` + 浏览器 localStorage / IndexedDB | 服务端读写见 `module/webui/webui_prefs.py`（遗留，见第 17 节）；主题、语言、背景等保存在浏览器 | 主题即时生效；服务端偏好下次读取生效 |
+| 界面偏好 | `config/webui_prefs.json` + 浏览器 localStorage | 服务端读写见 `module/webui/webui_prefs.py`（遗留，见第 17 节）；主题、语言等保存在浏览器 | 主题即时生效；服务端偏好下次读取生效 |
+| 背景记录 | `cache/background/preference.json` + `cache/background/library/` | `background.preference.get/set` 与 `background.gallery.*`；图库文件由 `/background-library/<id>` 静态提供 | 保存后立刻对所有浏览器与访问地址生效（各端下次加载读取服务端记录） |
 
 关键关联：
 
@@ -320,7 +321,7 @@ WebUI 的并发模型按「进程分层、进程内分工」组织：
 
 ## 14. 生命周期
 
-1. **启动**：用户运行 `python gui.py` → 强制 spawn 启动方式 → 按 `EnableReload` 分流。热重载模式下父监督循环：孤儿 worker 回收 →（按需）依赖同步 → 前端构建校验 → spawn 服务子进程 → 等待就绪事件。
+1. **启动**：用户运行 `uv run python gui.py` → 强制 spawn 启动方式 → 按 `EnableReload` 分流。热重载模式下父监督循环：孤儿 worker 回收 →（按需）依赖同步 → 前端构建校验 → spawn 服务子进程 → 等待就绪事件。
 2. **服务子进程初始化**：uvicorn 加载 `create_app` → 解析密码（必要时生成）→ 组装路由与 MCP 挂载 → lifespan `startup`：`State.init`（SyncManager、认领 worker 登记所有权）→ 注册更新循环 → 可选 OCR server / 远程访问 → 按 `--run`/`Webui.Run`/`reloadalas` 拉起实例 worker。
 3. **运行**：浏览器连接、认证、订阅；worker 由 API 启停；配置修改经事务落盘并在 worker 任务边界生效。
 4. **更新热重载**：见第 8 节更新事务流；父进程重建子进程，应用以新代码重新 import。

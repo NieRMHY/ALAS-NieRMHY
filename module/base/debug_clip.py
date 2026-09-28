@@ -243,17 +243,17 @@ def _parse_progress_duration(stdout):
 def _stale_device_files(listing, now=None, max_age=TMP_MAX_AGE):
     """从设备目录列表里挑出过期的临时文件。
 
-    录像文件名里带的是**本机**时间戳（`<前缀>YYYYMMDD_HHMMSS.mp4`），所以可以直接
+    录像文件名里带的是本机时间戳（`<前缀>YYYYMMDD_HHMMSS.mp4`），所以可以直接
     和本机时钟比：只有超过 max_age 的才算残留（进程被强杀留下的）。这样就不会误删
     别的实例正在录的那一段。
 
     Args:
         listing (str): `ls <前缀>*.mp4 <前缀>*.err` 的输出。
-        now (float): 当前时间戳，默认取本机时间。
+        now (float | None): 当前时间戳，默认取本机时间。
         max_age (float): 超过这么多秒视为残留。
 
     Returns:
-        list: 需要删除的设备端路径。
+        list[str]: 需要删除的设备端路径列表。
     """
     now = time.time() if now is None else now
     stale = []
@@ -301,7 +301,7 @@ def _run_adb_cli(args, timeout=ADB_TIMEOUT):
     见 `_ScreenRecordClip._launch()` 的说明。
 
     Args:
-        args (list): adb 子命令，例如 ['shell', 'echo hi']。
+        args (list[str]): adb 子命令，例如 ['shell', 'echo hi']。
         timeout (float): 超时秒数。
 
     Returns:
@@ -420,16 +420,29 @@ def cleanup_clips_if_due(config, output_dir=DEFAULT_OUTPUT_DIR):
 
 
 class _ScreenRecordClip:
-    """一个基于设备端 screenrecord 的 debug 录屏段。
+    """基于设备端 screenrecord 的 debug 录屏段。
 
-    录制在设备上完成，本类的职责只有三件事：把 recorder 拉起来、按需把它停下来、
-    把产物拉回本地并转码。因此除了 `start()` / `finalize()`，其余方法都是围绕
-    「问设备要信息」展开的，全部失败路径都只记日志、不抛异常。
+    录制在设备上完成，负责启动 recorder、按需中断、
+    拉回产物并调用 ffmpeg 转码。
+
+    Attributes:
+        config: 当前运行实例的配置对象。
+        fps (int): 输出目标帧率。
+        prefix (str): 文件名前缀。
+        output_dir (str): 录像保存目录。
+        alive (bool): 录制会话是否活跃。
     """
 
     _scrcpy_warned = False  # 截图方式为 scrcpy 的提示只打一次
 
     def __init__(self, config, fps=RECORD_FPS, prefix=CLIP_PREFIX_EH1):
+        """初始化录屏段实例。
+
+        Args:
+            config: 当前运行实例的配置对象。
+            fps (int): 目标帧率。
+            prefix (str): 文件名前缀。
+        """
         self.config = config
         self.fps = fps
         self.prefix = prefix
@@ -887,7 +900,7 @@ def _finalize_active(keep):
         keep (bool): 是否保留该段录像。
 
     Returns:
-        str: 保留时的视频路径；无产物返回 None。
+        str | None: 保留时的视频路径；无产物返回 None。
     """
     global _ACTIVE
     rec, _ACTIVE = _ACTIVE, None
@@ -909,7 +922,7 @@ def clip_end(keep=True):
             传 False 会直接丢弃该段，不留下任何文件。
 
     Returns:
-        str: 保留时的视频路径；无录制或产物无效时返回 None。
+        str | None: 保留时的视频路径；无录制或产物无效时返回 None。
     """
     return _finalize_active(keep=keep)
 

@@ -18,7 +18,10 @@ Localization_skin = true
 
 
 class AzurLaneUncensored(LoginHandler):
+    """游戏去和谐补丁部署器。"""
+
     def create_level1_uncensored(self):
+        """创建一级去和谐 localization.txt 配置文件。"""
         logger.info('创建1级未审查')
         folder = './files'
         try:
@@ -30,11 +33,11 @@ class AzurLaneUncensored(LoginHandler):
             f.write(localization_txt)
 
     def run(self):
-        """
-        This will do:
-        1. Update AzurLaneUncensored repo
-        2. Adb push to emulator
-        3. Restart game
+        """执行去和谐补丁更新与推送流程。
+
+        1. 生成或更新去和谐补丁文件
+        2. 通过 ADB push 推送文件到模拟器应用目录
+        3. 重启游戏客户端以生效
         """
         if self.config.AzurLaneUncensored_Repository == 'https://gitee.com/LmeSzinc/AzurLaneUncensored':
             self.config.AzurLaneUncensored_Repository = 'https://e.coding.net/llop18870/alas/AzurLaneUncensored.git'
@@ -50,9 +53,8 @@ class AzurLaneUncensored(LoginHandler):
         os.makedirs(folder, exist_ok=True)
         prev = os.getcwd()
 
-        # Running in ./.venv/AzurLane未审查
+        # 切换到补丁临时目录
         os.chdir(folder)
-        # Monkey patch `print()` build-in to show logs.
         self.create_level1_uncensored()
         # manager.git_repository_init(
         #     repo=repo,
@@ -69,7 +71,7 @@ class AzurLaneUncensored(LoginHandler):
         self.device.adb_command(command, timeout=30)
         logger.info('[守护-无删减] 推送成功')
 
-        # Back to root folder
+        # 返回项目根目录
         os.chdir(prev)
         logger.hr('重启碧蓝航线', level=1)
         self.config.override(Error_HandleError=True)

@@ -1,4 +1,9 @@
+/**
+ * @fileoverview 应用主题模式、明暗切换、紧凑布局与旧版外壳判定。
+ */
+
 import { palettes, paletteColors, paletteTokens, readCustomPalettes, colorModes, fixedColorModes, type Palette, type ColorMode, type ResolvedMode, type CustomPalette } from './palettes'
+import { applyFamilyCustom } from './themeCustom'
 export type Theme = 'light' | 'dark' | 'minimal' | 'extreme'
   | 'legacy-light' | 'legacy-dark'
 export { palettes } from './palettes'
@@ -15,15 +20,44 @@ export const COMPACT_RAIL_DEFAULT_WIDTH: CompactRailWidth = 244
 type Preference = {
   theme: Theme; palette: Palette; colorMode: ColorMode; customPalettes: CustomPalette[]
   compactRailSide: CompactRailSide; compactRailWidth: CompactRailWidth
+  material: Material
 }
 const defaults: Preference = {
   theme: 'light', palette: 'ocean', colorMode: 'auto', customPalettes: [],
   compactRailSide: COMPACT_RAIL_DEFAULT_SIDE, compactRailWidth: COMPACT_RAIL_DEFAULT_WIDTH,
+  material: 'glass',
 }
 
 /** 走 Apple 玻璃/壁纸/装饰动画一档的主题；旧版浅色与深色是朴素风格，不在此列。 */
 const MATERIAL_THEMES: readonly Theme[] = ['light', 'dark']
 export const usesMaterial = (theme: Theme) => MATERIAL_THEMES.includes(theme)
+
+/** 有材质轴（玻璃 / 普通）的家族：新版与旧版。简洁与紧凑的风格即「非透明」，没有材质轴。 */
+const MATERIAL_AXIS_THEMES: readonly Theme[] = ['light', 'dark', 'legacy-light', 'legacy-dark']
+export const hasMaterialAxis = (theme: Theme) => MATERIAL_AXIS_THEMES.includes(theme)
+
+/** 是否支持自定义背景：两个有材质轴的家族都支持，普通材质同样可开。 */
+export const supportsBackground = (theme: Theme) => hasMaterialAxis(theme)
+
+/** 是否铺背景：有关闭档的材质由记录决定铺不铺，简洁与紧凑任何时候都不铺。 */
+export const showsWallpaper = (theme: Theme, source: 'off' | 'default' | 'url' | 'upload') =>
+  supportsBackground(theme) && source !== 'off'
+
+export type Material = 'glass' | 'plain'
+export const MATERIALS: readonly Material[] = ['glass', 'plain']
+
+/** 各家族的默认材质：新版是玻璃（现状），旧版是普通（现状）——默认态因此与加材质轴之前一致。 */
+export const defaultMaterial = (theme: Theme): Material => (theme === 'light' || theme === 'dark') ? 'glass' : 'plain'
+
+/** 玻璃层：半透明磨砂与壁纸由材质决定，与家族无关。 */
+export const usesGlassLayer = (theme: Theme, material: Material) => hasMaterialAxis(theme) && material === 'glass'
+
+/** 一级主题大类。家族内切换材质或明暗不改变已存的其他自定义项。 */
+export type Family = 'new' | 'legacy' | 'minimal' | 'extreme'
+export const familyOf = (theme: Theme): Family =>
+  theme === 'light' || theme === 'dark' ? 'new'
+    : theme === 'legacy-light' || theme === 'legacy-dark' ? 'legacy'
+      : theme === 'extreme' ? 'extreme' : 'minimal'
 
 /** 走配色方案机制的主题（界面上显示「主题模式」与「配色方案」两块）。 */
 const PALETTE_THEMES: readonly Theme[] = ['minimal', 'extreme']
@@ -50,8 +84,11 @@ export function readThemePreference(): Preference {
     const customPalettes = readCustomPalettes(localStorage.getItem('azurpilot.custom-palettes'))
     const railSide = localStorage.getItem('azurpilot.compact-rail-side')
     const railWidth = Number(localStorage.getItem('azurpilot.compact-rail-width'))
+    const storedMaterial = localStorage.getItem('azurpilot.material')
+    const resolvedTheme = VALID_THEMES.includes(theme ?? '') ? theme as Theme : 'light'
     return {
-      theme: VALID_THEMES.includes(theme ?? '') ? theme as Theme : 'light',
+      theme: resolvedTheme,
+      material: MATERIALS.includes(storedMaterial as Material) ? storedMaterial as Material : defaultMaterial(resolvedTheme),
       palette: palettes.some(item => item === palette) || customPalettes.some(item => item.id === palette) ? palette as Palette : 'ocean',
       colorMode: colorModes.includes(colorMode as ColorMode) ? colorMode as ColorMode : 'auto',
       customPalettes,
@@ -67,6 +104,18 @@ let revision = 0
 let activeSkin: string | undefined
 let systemQuery: MediaQueryList | undefined
 let managedTokens: string[] = []
+/* 用户层写入的 token 记账：换大类或重置时据此清理，避免跟着新主题生效。 */
+let customTokens: string[] = []
+
+/** 有材质轴的家族由主题 id 定明暗（浅色/深色各是一个主题值），配色方案的自动与固定档位不适用于它们。 */
+const modeOfTheme = (theme: Theme): ResolvedMode => theme === 'dark' || theme === 'legacy-dark' ? 'dark' : 'light'
+
+/** 用户改动自定义旋钮或品牌配色后立即下发：先清上一套再写当前大类的一套（主题与皮肤都不动）。 */
+export function applyCustomLayer() {
+  const root = document.documentElement
+  for (const token of customTokens) root.style.removeProperty(token)
+  customTokens = applyFamilyCustom(root, familyOf(preference.theme), modeOfTheme(preference.theme))
+}
 export const getThemePreference = () => preference
 export const subscribeTheme = (listener: () => void) => {
   listeners.add(listener)
@@ -176,8 +225,13 @@ export async function applyTheme(next: Preference) {
   const root = document.documentElement
   if (root.dataset.theme !== next.theme) root.dataset.theme = next.theme
   if (root.dataset.palette !== next.palette) root.dataset.palette = next.palette
+  /* 材质属性只在有材质轴的家族下发；切到简洁或紧凑时必须清掉，否则同一份普通取值会跟着生效。 */
+  if (hasMaterialAxis(next.theme)) {
+    if (root.dataset.material !== next.material) root.dataset.material = next.material
+  } else delete root.dataset.material
   const resolvedMode = applyColorMode(next)
   applyCompactLayout(root, next)
+  applyCustomLayer()
   try {
     localStorage.setItem('azurpilot.theme', next.theme)
     localStorage.setItem('azurpilot.palette', next.palette)
@@ -185,6 +239,7 @@ export async function applyTheme(next: Preference) {
     localStorage.setItem('azurpilot.custom-palettes', JSON.stringify(next.customPalettes))
     localStorage.setItem('azurpilot.compact-rail-side', next.compactRailSide)
     localStorage.setItem('azurpilot.compact-rail-width', String(next.compactRailWidth))
+    localStorage.setItem('azurpilot.material', next.material)
   } catch { /* 存储不可用时仍允许切换，本次会话内生效。 */ }
   preference = {...next, resolvedMode}
   listeners.forEach(listener => listener())

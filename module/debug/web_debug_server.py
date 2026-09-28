@@ -1,3 +1,9 @@
+"""Web 调试服务模块。
+
+通过启动轻量 Flask HTTP 服务暴露调试接口，便于通过 HTTP 请求触发
+模拟收益记录写入与通知推送。
+"""
+
 import threading
 
 from module.logger import logger
@@ -11,12 +17,22 @@ DEFAULT_PORT = 8765
 
 
 def _trigger(method):
-    """调用调试处理器上的指定方法，未注入处理器时静默跳过。"""
+    """调用调试处理器上的指定方法，未注入处理器时静默跳过。
+
+    Args:
+        method (str): 目标方法名称。
+    """
     if DEBUG_HANDLER is not None:
         getattr(DEBUG_HANDLER, method)()
 
 
 def _register_routes(app, jsonify):
+    """在 Flask 应用实例上注册调试路由。
+
+    Args:
+        app: Flask 应用实例。
+        jsonify: JSON 响应封装函数。
+    """
     @app.route('/debug/gem')
     def debug_gem():
         _trigger('trigger_gem_test')
@@ -39,6 +55,12 @@ def _register_routes(app, jsonify):
 
 
 def run_server(host=DEFAULT_HOST, port=DEFAULT_PORT):
+    """启动 Flask 调试 HTTP 服务。
+
+    Args:
+        host (str): 监听主机地址。
+        port (int): 监听端口号。
+    """
     from flask import Flask, jsonify
 
     app = Flask(__name__)
@@ -49,8 +71,8 @@ def run_server(host=DEFAULT_HOST, port=DEFAULT_PORT):
 def start_debug_server(handler, host=DEFAULT_HOST, port=DEFAULT_PORT):
     """在后台线程启动调试服务。
 
-    flask 为可选依赖：未安装时记录告警并返回 False，不影响调度器运行。
-    安装方式：`uv run --with flask python alas.py`。
+    flask 为运行时依赖（pyproject 已声明）；保留 ImportError 守卫作为
+    环境被剪除时的兜底，未安装时记录告警并返回 False，不影响调度器运行。
 
     Args:
         handler: 具备 trigger_* 方法的调试处理器，通常为 CommissionDebugHandler。

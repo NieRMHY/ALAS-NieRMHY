@@ -626,6 +626,12 @@ class NemuIpc(Platform):
         logger.info('[设备-NemuIpc] nemu_ipc已释放')
 
     def screenshot_nemu_ipc(self):
+        """
+        通过 NemuIpc 截取模拟器屏幕画面。
+
+        Returns:
+            np.ndarray: RGB 色彩空间的图像数组。
+        """
         image = self.nemu_ipc.screenshot()
 
         image = cv2.cvtColor(image, cv2.COLOR_RGBA2RGB)
@@ -633,6 +639,13 @@ class NemuIpc(Platform):
         return image
 
     def click_nemu_ipc(self, x, y):
+        """
+        通过 NemuIpc 模拟点击指定坐标。
+
+        Args:
+            x: 点击横坐标。
+            y: 点击纵坐标。
+        """
         down = ensure_time((0.010, 0.020))
         self.nemu_ipc.down(x, y)
         self.sleep(down)
@@ -640,12 +653,27 @@ class NemuIpc(Platform):
         self.sleep(0.050 - down)
 
     def long_click_nemu_ipc(self, x, y, duration=1.0):
+        """
+        通过 NemuIpc 模拟长按指定坐标。
+
+        Args:
+            x: 长按横坐标。
+            y: 长按纵坐标。
+            duration: 长按持续时间（秒）。
+        """
         self.nemu_ipc.down(x, y)
         self.sleep(duration)
         self.nemu_ipc.up()
         self.sleep(0.050)
 
     def swipe_nemu_ipc(self, p1, p2):
+        """
+        通过 NemuIpc 模拟平滑滑动操作。
+
+        Args:
+            p1: 滑动起点坐标 (x, y)。
+            p2: 滑动终点坐标 (x, y)。
+        """
         points = insert_swipe(p0=p1, p3=p2)
 
         for point in points:
@@ -656,6 +684,15 @@ class NemuIpc(Platform):
         self.sleep(0.050)
 
     def drag_nemu_ipc(self, p1, p2, point_random=(-10, -10, 10, 10), hold_duration=0.0):
+        """
+        通过 NemuIpc 模拟拖拽操作。
+
+        Args:
+            p1: 拖拽起始坐标 (x, y)。
+            p2: 拖拽释放坐标 (x, y)。
+            point_random: 起止坐标的随机偏移范围。
+            hold_duration: 到达终点后的按住停顿时间（秒）。
+        """
         p1 = np.array(p1) - random_rectangle_point(point_random)
         p2 = np.array(p2) - random_rectangle_point(point_random)
         points = insert_swipe(p0=p1, p3=p2, speed=20)

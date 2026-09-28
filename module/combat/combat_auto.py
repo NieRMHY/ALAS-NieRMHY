@@ -37,7 +37,13 @@ class CombatAuto(ModuleBase):
     auto_mode_click_timer = Timer(5)
 
     def combat_joystick_appear(self) -> bool:
-        """检测摇杆是否出现，若出现则表示战斗处于手动模式。"""
+        """检测摇杆是否出现。
+
+        若摇杆出现，说明当前处于手动操作模式。
+
+        Returns:
+            bool: 摇杆是否出现。
+        """
         if self.appear(COMBAT_AUTO, offset=(20, 20)):
             return True
         if self.appear(COMBAT_AUTO_133, offset=(20, 20)):
@@ -47,6 +53,7 @@ class CombatAuto(ModuleBase):
         return False
 
     def combat_auto_reset(self):
+        """重置自动战斗相关的状态标志与计时器。"""
         self.auto_mode_click_timer.reset()
         self.auto_skip_timer.reset()
         self.auto_mode_checked = False
@@ -55,11 +62,13 @@ class CombatAuto(ModuleBase):
     def handle_combat_auto(self, auto):
         """处理战斗自动模式切换。
 
+        根据配置的目标模式与当前摇杆状态，按需点击自律切换按钮。
+
         Args:
-            auto (str): 战斗自动模式。
+            auto (str): 战斗模式配置项，为 'combat_auto' 时表示启用自律。
 
         Returns:
-            bool: 是否执行了操作。
+            bool: 是否执行了点击切换操作。
         """
         if self.auto_mode_checked:
             return False

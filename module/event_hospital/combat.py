@@ -22,13 +22,13 @@ class HospitalCombat(Combat, HospitalUI, CampaignEvent):
     """医院活动战斗处理器，组合战斗、UI 和活动逻辑。"""
 
     def handle_fleet_recommend(self, recommend=True):
-        """处理舰队推荐。
+        """处理舰队推荐编成。
 
         检查舰队是否已在使用中，若未使用则根据配置决定
         是否自动推荐舰队或要求手动编队。
 
         Args:
-            recommend: 是否启用自动推荐舰队。
+            recommend (bool): 是否启用自动推荐舰队，默认 True。
 
         Returns:
             bool: 是否点击了推荐按钮。
@@ -51,13 +51,16 @@ class HospitalCombat(Combat, HospitalUI, CampaignEvent):
             raise RequestHumanTakeover
 
     def combat_preparation(self, balance_hp=False, emotion_reduce=False, auto='combat_auto', fleet_index=1):
-        """战斗准备阶段，处理舰队编成和出击确认。
+        """战斗准备阶段，处理舰队编成、资源检查与出击确认。
 
         Args:
-            balance_hp: 是否平衡血量。
-            emotion_reduce: 是否减少情绪值。
-            auto: 自动战斗模式。
-            fleet_index: 舰队索引。
+            balance_hp (bool): 是否平衡血量，默认 False。
+            emotion_reduce (bool): 是否减少情绪值，默认 False。
+            auto (str): 自动战斗模式，默认 'combat_auto'。
+            fleet_index (int): 舰队索引，默认 1。
+
+        Raises:
+            OilExhausted: 石油不足达到阈值时抛出。
         """
         logger.info('战斗准备。')
         skip_first_screenshot = True

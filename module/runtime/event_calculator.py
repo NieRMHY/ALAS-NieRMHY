@@ -9,7 +9,6 @@ import requests
 
 from module.logger import logger
 
-
 WIKI_RAW_URL = (
     "https://wiki.biligame.com/blhx/"
     "%E6%B4%BB%E5%8A%A8%E8%AE%A1%E7%AE%97%E5%99%A8?action=raw"
@@ -49,10 +48,27 @@ EVENT_SHOP_FILTER_MAP = [
 
 
 def _clean_wikitext(raw: str) -> str:
+    """清除 MediaWiki 源码中的 HTML 注释。
+
+    Args:
+        raw: 原始 Wiki 文本。
+
+    Returns:
+        str: 过滤注释后的文本。
+    """
     return re.sub(r"<!--.*?-->", "", raw, flags=re.S)
 
 
 def _extract_table(raw: str, table_id: str) -> str:
+    """从 Wiki 源码中根据表格 id 提取对应的表格块文本。
+
+    Args:
+        raw: Wiki 源码。
+        table_id: 表格 id 属性值。
+
+    Returns:
+        str: 表格块文本内容；未找到则返回空字符串。
+    """
     match = re.search(rf'\{{\|[^\n]*id="{re.escape(table_id)}"[^\n]*\n', raw)
     if match is None:
         return ""
@@ -67,12 +83,28 @@ def _extract_table(raw: str, table_id: str) -> str:
 
 
 def _strip_cell_attr(cell: str) -> str:
+    """去除表格单元格中附带的 HTML/Wiki 样式属性。
+
+    Args:
+        cell: 单元格原始文本。
+
+    Returns:
+        str: 剥离属性后的单元格文本。
+    """
     if re.match(r'^[A-Za-z0-9_:-]+="[^"]*"\|', cell):
         return cell.split("|", 1)[1]
     return cell
 
 
 def _parse_table_rows(table: str) -> List[List[str]]:
+    """解析 Wiki 表格为行和单元格二维字符串列表。
+
+    Args:
+        table: 表格源码文本。
+
+    Returns:
+        List[List[str]]: 二维单元格文本列表。
+    """
     rows: List[List[str]] = []
     for block in re.split(r"\n\|-\s*\n", table):
         cells: List[str] = []
@@ -96,6 +128,14 @@ def _parse_table_rows(table: str) -> List[List[str]]:
 
 
 def _clean_name(text: str) -> str:
+    """清理物品或关卡名称中的 Wiki 内部链接与排版标签。
+
+    Args:
+        text: 待清理的文本。
+
+    Returns:
+        str: 提取出的纯文本名称。
+    """
     text = re.sub(r"\[\[文件:[^\]]+\]\]", "", text)
     text = re.sub(r"\[\[[^\]|]+\|([^\]]+)\]\]", r"\1", text)
     text = re.sub(r"\[\[([^\]]+)\]\]", r"\1", text)
@@ -106,6 +146,15 @@ def _clean_name(text: str) -> str:
 
 
 def _to_int(value: str, default: int = 0) -> int:
+    """从文本中提取整数数值。
+
+    Args:
+        value: 待解析的文本。
+        default: 解析失败时的默认值。
+
+    Returns:
+        int: 提取出的整数。
+    """
     match = re.search(r"-?\d+", str(value).replace(",", ""))
     if match is None:
         return default
@@ -113,6 +162,16 @@ def _to_int(value: str, default: int = 0) -> int:
 
 
 def match_event_shop_filter(name: str, price: int, quantity: int) -> str:
+    """匹配活动商店物品所对应的 Alas 任务过滤器标识。
+
+    Args:
+        name: 物品名称。
+        price: 单价。
+        quantity: 兑换数量。
+
+    Returns:
+        str: 过滤器类别标识字符串；未匹配到则返回空字符串。
+    """
     for pattern, filter_name in EVENT_SHOP_FILTER_MAP:
         if pattern in name:
             return filter_name
@@ -126,6 +185,14 @@ def match_event_shop_filter(name: str, price: int, quantity: int) -> str:
 
 
 def _parse_shop(rows: List[List[str]]) -> List[Dict[str, Any]]:
+    """解析商店兑换物品表格行数据。
+
+    Args:
+        rows: 表格行数据。
+
+    Returns:
+        List[Dict[str, Any]]: 格式化后的商品对象列表。
+    """
     out = []
     for row in rows:
         if len(row) < 3:
@@ -146,7 +213,15 @@ def _parse_shop(rows: List[List[str]]) -> List[Dict[str, Any]]:
 
 
 def _extract_vardefine(raw: str, variable_name: str) -> str:
-    """提取 Wiki ``#vardefine`` 变量的完整内容，保留嵌套模板。"""
+    """提取 Wiki ``#vardefine`` 变量的完整内容，保留嵌套模板。
+
+    Args:
+        raw: Wiki 源码。
+        variable_name: 变量名称。
+
+    Returns:
+        str: 提取出的变量定义内容；未找到则返回空字符串。
+    """
     match = re.search(
         rf"\{{\{{#vardefine:\s*{re.escape(variable_name)}\s*\|", raw
     )
@@ -174,7 +249,14 @@ def _extract_vardefine(raw: str, variable_name: str) -> str:
 
 
 def _parse_shop_vardefine(raw: str) -> List[Dict[str, Any]]:
-    """解析 Wiki 动态商店表使用的 ``_shop_items`` 变量。"""
+    """解析 Wiki 动态商店表使用的 ``_shop_items`` 变量。
+
+    Args:
+        raw: Wiki 源码。
+
+    Returns:
+        List[Dict[str, Any]]: 商品对象列表。
+    """
     content = _extract_vardefine(raw, "_shop_items")
     rows = []
     for line in content.splitlines():
@@ -186,6 +268,15 @@ def _parse_shop_vardefine(raw: str) -> List[Dict[str, Any]]:
 
 
 def _parse_points(rows: List[List[str]], key_name: str) -> List[Dict[str, Any]]:
+    """解析关卡或任务的点数列表。
+
+    Args:
+        rows: 表格行。
+        key_name: 点数字段名称。
+
+    Returns:
+        List[Dict[str, Any]]: 格式化后的条目字典列表。
+    """
     out = []
     for row in rows:
         if len(row) < 2:
@@ -198,6 +289,14 @@ def _parse_points(rows: List[List[str]], key_name: str) -> List[Dict[str, Any]]:
 
 
 def _parse_event_name(raw: str) -> str:
+    """从 Wiki 源码提取当前活动名称。
+
+    Args:
+        raw: Wiki 源码。
+
+    Returns:
+        str: 活动名称字符串。
+    """
     match = re.search(r"当前活动：\[\[[^\]|]+(?:\|([^\]]+))?\]\]", raw)
     if match is None:
         return ""
@@ -205,7 +304,16 @@ def _parse_event_name(raw: str) -> str:
 
 
 def parse_event_calculator(raw: str) -> Dict[str, Any]:
-    """解析 Wiki 活动计算器页面原文。"""
+    """解析 Wiki 活动计算器页面源码。
+
+    提取活动名称、结束时间、商店项目、每日任务、EX 关卡及普通关卡点数。
+
+    Args:
+        raw: Wiki 页面原始文本。
+
+    Returns:
+        Dict[str, Any]: 结构化的活动计算器数据字典。
+    """
     cleaned = _clean_wikitext(raw)
     time_rows = _parse_table_rows(_extract_table(cleaned, "ECALCTime"))
     end_date = time_rows[0][0] if time_rows and time_rows[0] else ""
@@ -236,6 +344,11 @@ def parse_event_calculator(raw: str) -> Dict[str, Any]:
 
 
 def _read_cache() -> Dict[str, Any]:
+    """从磁盘缓存中读取活动计算器数据。
+
+    Returns:
+        Dict[str, Any]: 缓存字典；若不存在或读取失败返回空字典。
+    """
     try:
         with open(CACHE_FILE, "r", encoding="utf-8") as f:
             return json.load(f)
@@ -247,6 +360,11 @@ def _read_cache() -> Dict[str, Any]:
 
 
 def _write_cache(data: Dict[str, Any]) -> None:
+    """将活动计算器数据保存到磁盘 JSON 缓存中。
+
+    Args:
+        data: 待保存的数据字典。
+    """
     try:
         os.makedirs(os.path.dirname(CACHE_FILE), exist_ok=True)
         data["cache_version"] = CACHE_VERSION
@@ -257,7 +375,14 @@ def _write_cache(data: Dict[str, Any]) -> None:
 
 
 def load_event_calculator(force_refresh: bool = False) -> Dict[str, Any]:
-    """读取 Wiki 活动计算器数据，失败时回退到缓存。"""
+    """读取 Wiki 活动计算器数据，失败时回退到缓存。
+
+    Args:
+        force_refresh: 是否强制跳过缓存重新从网络拉取。
+
+    Returns:
+        Dict[str, Any]: 活动计算器数据字典。
+    """
     cache = _read_cache()
     cache_valid = cache.get("cache_version") == CACHE_VERSION
     if cache and cache_valid and not force_refresh:

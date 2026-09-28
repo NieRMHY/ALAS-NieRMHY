@@ -63,6 +63,7 @@ class AzurLaneDaemon(DaemonBase, CampaignBase):
         由于禁用了死循环检测，长时间无截图变化不会触发异常。
     """
     def run(self):
+        """执行常规出击守护主循环，持续响应战斗、地图、弹窗等交互。"""
         while 1:
             self.device.screenshot()
 

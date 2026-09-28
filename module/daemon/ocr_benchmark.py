@@ -18,7 +18,9 @@ from module.ocr.al_ocr import AlOcr, OcrSettings
 
 
 class OcrBenchmark:
-    # Each entry: (model_name, dataset_prefix, subfolder_name)
+    """OCR 模型性能与准确率基准测试器。"""
+
+    # 每一项为: (模型名称, 数据集前缀, 解压子目录名)
     BENCHMARKS = [
         ('azur_lane', 'sets_num', 'sets_num'),
         ('azur_lane_jp', 'sets_azur_lane_jp', 'azur_lane_jp'),
@@ -26,6 +28,13 @@ class OcrBenchmark:
     ]
 
     def __init__(self, config, device=None, task=None):
+        """初始化 OCR 基准测试器。
+
+        Args:
+            config: 配置实例或配置名称。
+            device: 设备连接实例（可选）。
+            task: 初始化的任务名称。
+        """
         if isinstance(config, AzurLaneConfig):
             self.config = config
             if task is not None:
@@ -34,6 +43,14 @@ class OcrBenchmark:
             self.config = AzurLaneConfig(config, task=task)
 
     def _find_archive(self, prefix):
+        """查找指定前缀的压缩包文件。
+
+        Args:
+            prefix (str): 压缩包文件名前缀。
+
+        Returns:
+            str | None: 找到的文件路径，未找到返回 None。
+        """
         for ext in ['.zip', '.tar', '.tar.xz', '.tar.gz']:
             path = f'module/daemon/{prefix}{ext}'
             if os.path.exists(path):
@@ -41,6 +58,15 @@ class OcrBenchmark:
         return None
 
     def _load_test_cases(self, extract_dir, subfolder):
+        """从解压目录加载验证集图片和标签。
+
+        Args:
+            extract_dir (str): 数据集解压根目录。
+            subfolder (str): 存放数据的子目录名。
+
+        Returns:
+            list[tuple[str, str]]: (图片路径, 预期识别文本) 列表。
+        """
         target_val_txt = os.path.join(extract_dir, 'val.txt')
         if not os.path.exists(target_val_txt):
             target_val_txt = os.path.join(extract_dir, subfolder, 'val.txt')
@@ -62,6 +88,14 @@ class OcrBenchmark:
 
     @staticmethod
     def _rate_speed(avg_ms):
+        """根据单次推理平均毫秒数评估速度等级。
+
+        Args:
+            avg_ms (float): 平均推理耗时（毫秒）。
+
+        Returns:
+            tuple[str, str]: (速度评级文本, 样式颜色)。
+        """
         if avg_ms < 5.0:    return 'Insane Fast', 'bold bright_green'
         if avg_ms < 10.0:   return 'Ultra Fast', 'bright_green'
         if avg_ms < 20.0:   return 'Very Fast', 'green1'
@@ -72,6 +106,18 @@ class OcrBenchmark:
         return 'Ultra Slow', 'bold red'
 
     def _run_single(self, model_name, dataset_prefix, subfolder, use_gpu=None, ocr_device=None):
+        """对单个 OCR 模型和数据集执行完整的精度与速度基准测试。
+
+        Args:
+            model_name (str): OCR 模型标识名。
+            dataset_prefix (str): 测试数据集文件名前缀。
+            subfolder (str): 数据集内部子文件夹名称。
+            use_gpu (bool, optional): 是否使用 GPU（已废弃，优先使用 ocr_device）。
+            ocr_device (str, optional): 指定运行设备 ('cpu', 'gpu', 'ane')。
+
+        Returns:
+            dict | None: 包含测试精度、耗时和评级的字典，测试失败返回 None。
+        """
         logger.hr(f'基准测试: {model_name.upper()} 模型  |  数据集: {dataset_prefix}', level=2)
 
         # 基准测试只覆盖本次模型快照，不修改调用方配置或重置其他任务的模型。
@@ -79,11 +125,11 @@ class OcrBenchmark:
             ocr_device = 'gpu' if use_gpu else 'cpu'
         settings = OcrSettings.from_config(self.config, model_name, device=ocr_device)
 
-        # --- Init model ---
+        # --- 初始化模型 ---
         ocr = AlOcr(name=model_name, settings=settings)
         ocr.init()
 
-        # --- Extract dataset ---
+        # --- 解压数据集 ---
         archive_path = self._find_archive(dataset_prefix)
         extract_dir = f'module/daemon/{dataset_prefix}_temp'
 
@@ -101,7 +147,7 @@ class OcrBenchmark:
 
             logger.info(f'[{model_name}] 已加载 {len(test_cases)} 个测试用例')
 
-            # --- Accuracy ---
+            # --- 精度测试 ---
             correct = 0
             total = len(test_cases)
             log_step = max(1, total // 20)  # 每 5% 打一次进度
@@ -135,7 +181,7 @@ class OcrBenchmark:
                 extra={"markup": True}
             )
 
-            # --- Speed ---
+            # --- 速度测试 ---
             benchmark_img = cv2.imread(test_cases[0][0])
             count = 100
 
@@ -184,6 +230,7 @@ class OcrBenchmark:
                     logger.error(f'[基准测试] 清理 {extract_dir} 失败: {e}')
 
     def run(self):
+        """执行全量 OCR 模型基准测试并输出汇总评测表格。"""
         logger.hr('OCR基准测试', level=1)
 
         results = []
@@ -192,7 +239,7 @@ class OcrBenchmark:
             if r:
                 results.append(r)
 
-        # --- Summary ---
+        # --- 结果汇总 ---
         if not results:
             logger.hr('OCR基准测试摘要', level=1)
             logger.error('[基准测试] 未收集到基准测试结果')
@@ -229,9 +276,10 @@ class OcrBenchmark:
         logger.info('[Daemon] 如果您的 Status 显示 Error 或 Warning，请使用 CPU 运行 OCR')
 
     def run_simple_ocr_benchmark(self):
-        """
+        """执行快速单项测试，判断当前机器的最佳 OCR 加速后端设备。
+
         Returns:
-            str: Best OCR device for this machine.
+            str: 推荐的 OCR 设备类型 ('cpu', 'gpu', 'ane')。
         """
         logger.hr('简单OCR基准测试', level=1)
         backend = self.config.ocr_backend
@@ -245,7 +293,7 @@ class OcrBenchmark:
             logger.info('[基准测试] 使用ncnn Vulkan GPU测试OCR...')
             device = 'gpu'
         else:
-            # ONNX backend
+            # ONNX 后端
             if sys.platform == 'darwin' and platform.machine() == 'arm64':
                 logger.info('[基准测试] 使用ANE测试OCR...')
                 device = 'ane'
@@ -264,6 +312,14 @@ class OcrBenchmark:
 
 
 def run_ocr_benchmark(config):
+    """运行 OCR 基准测试任务入口函数。
+
+    Args:
+        config (AzurLaneConfig): 配置实例。
+
+    Returns:
+        bool: 测试成功返回 True，异常返回 False。
+    """
     try:
         OcrBenchmark(config, task='OcrBenchmark').run()
         return True

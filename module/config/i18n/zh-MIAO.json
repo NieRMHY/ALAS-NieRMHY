@@ -111,8 +111,8 @@
       "help": "拿起相机拍下最美的瞬间喵，模特队的胜利！(ﾉ◕ヮ◕)ﾉ"
     },
     "CoalitionScuttle": {
-      "name": "Task.CoalitionScuttle.name",
-      "help": "Task.CoalitionScuttle.help"
+      "name": "联盟沉船喵",
+      "help": "联盟活动中舰船被击沉后刷取好感度喵，建议多队出击、第一队就沉，建议看相关教程喵"
     },
     "MaritimeEscort": {
       "name": "商路护航喵",
@@ -626,7 +626,8 @@
       "DroidCast": "DroidCast喵",
       "DroidCast_raw": "DroidCast_raw喵",
       "nemu_ipc": "nemu_ipc喵",
-      "ldopengl": "ldopengl喵"
+      "ldopengl": "ldopengl喵",
+      "azurpilot_android": "AzurPilot Android 虚拟屏"
     },
     "ControlMethod": {
       "name": "模拟器控制手势",
@@ -636,7 +637,8 @@
       "minitouch": "minitouch喵",
       "Hermit": "Hermit喵",
       "MaaTouch": "MaaTouch喵",
-      "nemu_ipc": "nemu_ipc"
+      "nemu_ipc": "nemu_ipc",
+      "azurpilot_android": "AzurPilot Android 虚拟屏"
     },
     "GameSettings": {
       "name": "自动应用推荐游戏设置",
@@ -759,6 +761,12 @@
       "name": "错误推送通知喵",
       "help": "发生无法处理异常时通过Onepush推送消息喵。配置见文档~ (´・ω・`)"
     },
+    "LowPushMode": {
+      "name": "低推送量模式",
+      "help": "只推送需要人管的错误喵。游戏没开、模拟器掉了、游戏卡住这种自己能好的错误只记日志，不推送啦喵~ (´・ω・`)",
+      "True": "已启用",
+      "False": "关闭"
+    },
     "ScreenshotLength": {
       "name": "出错时保留最后 X 张截图 σ",
       "help": "帮助分析错误时的界面截图喵。"
@@ -780,24 +788,24 @@
       "help": "连续多少次触发重启喵。"
     },
     "WatchdogEnable": {
-      "name": "Error.WatchdogEnable.name",
-      "help": "Error.WatchdogEnable.help"
+      "name": "启用看门狗总开关喵",
+      "help": "看门狗总开关喵。关掉之后，所有看门狗检测都不生效；开启后，还要单独打开下面的子开关喵。默认关闭。"
     },
     "WatchdogTaskEnable": {
-      "name": "Error.WatchdogTaskEnable.name",
-      "help": "Error.WatchdogTaskEnable.help"
+      "name": "任务跑太久自动重启喵",
+      "help": "开了之后喵，如果某个任务跑得太久（比如卡在剧情跳不过去、地图走不动了），就会自动重启模拟器把它打断。\n得先开上面的「看门狗总开关」才管用喵。默认关。"
     },
     "WatchdogTaskTimeout": {
-      "name": "Error.WatchdogTaskTimeout.name",
-      "help": "Error.WatchdogTaskTimeout.help"
+      "name": "任务卡死保护超时喵（分钟）",
+      "help": "单个任务运行超过指定时间后没切换其他任务（一般委托科研切换后会重新计算），就判定任务逻辑死循环（如剧情无法跳过、寻路死循环等）喵，强制重启模拟器以中断任务。\n0 表示禁用；99999 表示几乎无限制。\n默认 120 分钟（2 小时）。"
     },
     "RestartOperationTimeoutEnable": {
-      "name": "Error.RestartOperationTimeoutEnable.name",
-      "help": "Error.RestartOperationTimeoutEnable.help"
+      "name": "重启游戏保护开关喵",
+      "help": ""
     },
     "RestartOperationTimeout": {
-      "name": "Error.RestartOperationTimeout.name",
-      "help": "Error.RestartOperationTimeout.help"
+      "name": "重启游戏卡多久算死喵（秒）",
+      "help": "重启游戏时，关游戏或开游戏这步卡住超过这个秒数，就当模拟器卡死了喵，直接去重启模拟器。\n得先开上面的「重启游戏超时保护」才管用喵。\n默认 120 秒。"
     },
     "LlmAnalysis": {
       "name": "启用 LLM 错误分析喵",
@@ -1006,9 +1014,65 @@
       "do_not": "无视喵",
       "save": "保存喵"
     },
-    "OpsiRecord": {
-      "name": "大世界掉落截图",
-      "help": "",
+    "OpsiHazard1Leveling": {
+      "name": "侵蚀一掉落截图喵",
+      "help": "侵蚀1不进「大世界掉落」统计喵（收益看「大世界总结」页）；「保存」只存截图，「上传」对它没用喵",
+      "do_not": "无视喵",
+      "save": "保存喵",
+      "upload": "上传喵",
+      "save_and_upload": "保存并上传喵"
+    },
+    "OpsiMeowfficerFarming": {
+      "name": "短猫掉落截图喵",
+      "help": "「保存」和「上传」都会把掉落记进统计页「大世界掉落」喵，区别只在要不要把截图存下来喵~",
+      "do_not": "无视喵",
+      "save": "保存喵",
+      "upload": "上传喵",
+      "save_and_upload": "保存并上传喵"
+    },
+    "OpsiDaily": {
+      "name": "大世界每日掉落截图喵",
+      "help": "「保存」和「上传」都会把掉落记进统计页「大世界掉落」喵，区别只在要不要把截图存下来喵~\n跨月每日也读这个开关喵",
+      "do_not": "无视喵",
+      "save": "保存喵",
+      "upload": "上传喵",
+      "save_and_upload": "保存并上传喵"
+    },
+    "OpsiObscure": {
+      "name": "隐秘海域掉落截图喵",
+      "help": "「保存」和「上传」都会把掉落记进统计页「大世界掉落」喵，区别只在要不要把截图存下来喵~\n档案坐标也读这个开关喵",
+      "do_not": "无视喵",
+      "save": "保存喵",
+      "upload": "上传喵",
+      "save_and_upload": "保存并上传喵"
+    },
+    "OpsiAbyssal": {
+      "name": "深渊海域掉落截图喵",
+      "help": "「保存」和「上传」都会把掉落记进统计页「大世界掉落」喵，区别只在要不要把截图存下来喵~\n月度Boss也读这个开关喵",
+      "do_not": "无视喵",
+      "save": "保存喵",
+      "upload": "上传喵",
+      "save_and_upload": "保存并上传喵"
+    },
+    "OpsiStronghold": {
+      "name": "塞壬要塞掉落截图喵",
+      "help": "「保存」和「上传」都会把掉落记进统计页「大世界掉落」喵，区别只在要不要把截图存下来喵~",
+      "do_not": "无视喵",
+      "save": "保存喵",
+      "upload": "上传喵",
+      "save_and_upload": "保存并上传喵"
+    },
+    "OpsiExplore": {
+      "name": "每月开荒掉落截图喵",
+      "help": "每月开荒Plus 自己一个开关喵，不跟别人挤\n「保存」和「上传」都会把掉落记进统计页「大世界掉落」喵，区别只在要不要把截图存下来喵~",
+      "do_not": "无视喵",
+      "save": "保存喵",
+      "upload": "上传喵",
+      "save_and_upload": "保存并上传喵"
+    },
+    "OpsiOther": {
+      "name": "其他大世界任务掉落截图喵",
+      "help": "没有单独开关的大世界任务都归它兜底喵\n「保存」和「上传」都会把掉落记进统计页「大世界掉落」喵，区别只在要不要把截图存下来喵~",
       "do_not": "无视喵",
       "save": "保存喵",
       "upload": "上传喵",
@@ -1634,8 +1698,8 @@
       "fleet1_standby_fleet2_all": "一队待机 二队全清喵"
     },
     "SkipPreparation": {
-      "name": "Fleet.SkipPreparation.name",
-      "help": "Fleet.SkipPreparation.help"
+      "name": "跳过编队检测喵",
+      "help": "开启后会跳过编队界面的舰队选择步骤喵，直接使用游戏内当前预选的舰队出击\n适用于舰队槽位未完全解锁的账号，避免下拉菜单检测卡死\n开启前请确保游戏内已手动选好舰队1和舰队2喵"
     }
   },
   "Submarine": {
@@ -1675,8 +1739,8 @@
       "use_open_ocean_support": "使用远洋支援喵"
     },
     "AdvancedConfig": {
-      "name": "Submarine.AdvancedConfig.name",
-      "help": "Submarine.AdvancedConfig.help"
+      "name": "高级配置喵",
+      "help": "高级配置当且仅当潜艇出击方案选择“高级”时生效喵。配置严格遵循 YAML 格式喵。\n\n【基础参数】\n- ammo: 潜艇总弹药数。\n- support: 远洋支援可用次数。\n- range: 狩猎范围，由 7 个长度为 7 的字符串组成。\"N\" 代表覆盖范围；\"O\" 代表未覆盖范围；\"H\" 代表潜艇位置，只出现在第4行第4列（中心位置）。\n\n【规则 rules】\n- 战斗索引: battle_0（所有战斗）、battle_N（第 N 场战斗，1 起始）、battle_-N（倒数第 N 场战斗）。某场战斗如匹配多条规则则会按照“召唤 > 狩猎 > 不出击”的方式出击。\n- type: 出击类型。hunt（狩猎）、call（召唤）。\n- condition: 触发条件（省略则无条件出击）。\n    ammo: 弹药条件表达式，如 \">2\"、\">=2\"、\"=3\"。支持的运算符：\">\"、\">=\"、\"<\"、\"<=\"、\"=\"、\"!=\"。\n    support: 远洋支援次数条件表达式，如 \">2\"、\">=2\"、\"=3\"。支持的运算符：\">\"、\">=\"、\"<\"、\"<=\"、\"=\"、\"!=\"。\n    enemy: 目标敌舰类型列表，采用规模+舰种的方式表示。如 \"3M\" 代表大型主力舰队。支持通配符 \"*\"，如 \"3*\" 代表所有大型舰队，\"*T\" 代表所有运输船。\n    - 规模：1：小型舰队；2：中型舰队；3：大型舰队；0：未知规模。\n    - 舰种：L：侦察舰队；M：主力舰队；C：航空舰队；T：运输船；E：未知类型。\n    in_range（true/false）: 是否在狩猎范围内，如不在狩猎范围内召唤潜艇会消耗远洋支援次数。\n- move: 范围不足时是否消耗石油移动潜艇到能覆盖目标的油耗最小处（true/false），如果远洋支援次数有剩余则不会移动而是使用远洋支援。"
     }
   },
   "Emotion": {
@@ -2112,12 +2176,12 @@
   },
   "CoalitionScuttle": {
     "_info": {
-      "name": "CoalitionScuttle._info.name",
-      "help": "CoalitionScuttle._info.help"
+      "name": "联盟沉船喵",
+      "help": "联盟活动沉船设置喵，选择被击沉的舰船位置"
     },
     "Sacrifice": {
-      "name": "CoalitionScuttle.Sacrifice.name",
-      "help": "CoalitionScuttle.Sacrifice.help",
+      "name": "牺牲船位置喵",
+      "help": "选择要被击沉的舰船位置喵，前排/旗舰/前排+旗舰",
       "vanguard": "vanguard",
       "flagship": "flagship",
       "vanguard_flagship": "vanguard_flagship"
@@ -3825,22 +3889,22 @@
       "help": "隐秘海域和深渊坐标全部打完后，智能调度会延迟指定天数再检查，期间直接跳过，补黄币跑得更快喵~。0 表示每轮都检查 (´・ω・`)。大世界每月重置会刷新它们，重置后会照常检查喵~"
     },
     "MonthEndActionPointCleanupEnable": {
-      "name": "OpsiScheduling.MonthEndActionPointCleanupEnable.name",
-      "help": "OpsiScheduling.MonthEndActionPointCleanupEnable.help",
+      "name": "启用月末清理行动力喵",
+      "help": "是否启用月末清理行动力功能喵。开启后，当距大世界重置剩余天数小于等于「月末清理行动力天数」时，启动月末清理模式消耗行动力喵。",
       "True": "True",
       "False": "False"
     },
     "MonthEndActionPointCleanupDays": {
-      "name": "OpsiScheduling.MonthEndActionPointCleanupDays.name",
-      "help": "OpsiScheduling.MonthEndActionPointCleanupDays.help"
+      "name": "月末清理行动力天数喵",
+      "help": "距大世界重置剩余天数小于等于此值时，启动月末清理行动力模式喵。0 表示禁用。启用后会循环执行短猫相接、商店购买、隐秘海域、深渊坐标消耗行动力，首次运行时还会调出塞壬要塞喵。"
     },
     "MonthEndActionPointPreserve": {
-      "name": "OpsiScheduling.MonthEndActionPointPreserve.name",
-      "help": "OpsiScheduling.MonthEndActionPointPreserve.help"
+      "name": "月末清理行动力保留喵",
+      "help": "月末清理行动力模式下的行动力保留值喵。如果启用跨月每日任务，最低预留 200 行动力；当此值大于最低预留时使用此值喵。"
     },
     "MonthEndShopPurchase": {
-      "name": "OpsiScheduling.MonthEndShopPurchase.name",
-      "help": "OpsiScheduling.MonthEndShopPurchase.help",
+      "name": "月末清理商店购买喵",
+      "help": "月末清理行动力时是否执行大世界商店购买喵。关闭后，月末清理循环将跳过商店购买步骤喵。",
       "True": "True",
       "False": "False"
     }
@@ -3878,6 +3942,28 @@
       "summer": "夏季",
       "autumn": "秋季",
       "winter": "冬季"
+    },
+    "RefreshPlan": {
+      "name": "刷新做菜和卖货清单喵",
+      "help": "勾上以后，下一次岛屿任务会重新算好清单写进配置，然后自己关掉喵",
+      "True": "启用喵",
+      "False": "禁用喵"
+    },
+    "PlanVerifiedOnly": {
+      "name": "只排做过的菜喵",
+      "help": "没做过的菜不排，免得选不到一直重启喵",
+      "True": "启用喵",
+      "False": "禁用喵"
+    },
+    "PlanMineVerified": {
+      "name": "顺便更新白名单喵",
+      "help": "从日志里把做过的菜记下来喵",
+      "True": "启用喵",
+      "False": "禁用喵"
+    },
+    "PlanShelfSlots": {
+      "name": "货架几格喵",
+      "help": "生成上架清单用几格货架喵"
     }
   },
   "IslandFarm": {
@@ -5326,6 +5412,16 @@
     "SeasonalThreshold": {
       "name": "季节限定替换阈值喵",
       "help": "库存低于这个数就换商品喵"
+    },
+    "StockCheck": {
+      "name": "上架前看看有没有货喵",
+      "help": "没货的就换成有货又赚钱的喵",
+      "True": "启用喵",
+      "False": "禁用喵"
+    },
+    "ShopLevel": {
+      "name": "店铺等级喵",
+      "help": "决定餐品格数与每格容量：铜2x5 银2x6 金3x6 钻4x6（有加成角色时每格+1）喵"
     }
   },
   "IslandBusinessShop1": {
@@ -6278,8 +6374,8 @@
       "help": "每隔指定时间自动重启模拟器，防内存泄漏卡顿，等当前任务完成再重启喵。 (´・ω・`)"
     },
     "ForceScheduledRestart": {
-      "name": "EmulatorManagement.ForceScheduledRestart.name",
-      "help": "EmulatorManagement.ForceScheduledRestart.help"
+      "name": "强制定时重启喵（不等任务）",
+      "help": "开了之后喵，到点就直接重启模拟器，不等当前任务跑完。\n不过如果正在跑重要任务（敏感任务），还是会等它跑完再重启喵。\n得先开上面的「定时重启模拟器」才管用。默认关喵。"
     },
     "RestartIntervalHours": {
       "name": "重启间隔",

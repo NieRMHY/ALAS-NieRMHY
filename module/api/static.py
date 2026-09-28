@@ -16,7 +16,7 @@ WEB_MIME_TYPES = {
 
 
 def ensure_static_mime_types() -> None:
-    """把静态资源的 MIME 写进标准映射，覆盖系统注册表里的错误关联。"""
+    """把静态资源的 MIME 类型注册到标准映射表，覆盖系统注册表中的错误关联。"""
     for ext, media_type in WEB_MIME_TYPES.items():
         mimetypes.add_type(media_type, ext)
 
@@ -25,9 +25,26 @@ ensure_static_mime_types()
 
 
 class FrontendFiles(StaticFiles):
-    """保留 SPA 页面回退，同时让缺失资源返回真实的 404。"""
+    """前端静态文件服务。
 
-    async def get_response(self, path, scope):
+    保留 SPA 单页应用路由回退，同时让缺失的静态资源返回真实的 404 状态码。
+    """
+
+    async def get_response(self, path: str, scope: dict):
+        """处理静态资源或 SPA 页面请求响应。
+
+        对点开头的隐藏内部文件返回 404；若无后缀的路由未命中静态资源，则回退到 index.html。
+
+        Args:
+            path: 请求的文件相对路径。
+            scope: ASGI 连接作用域字典。
+
+        Returns:
+            Response: Starlette 响应对象。
+
+        Raises:
+            HTTPException: 隐藏文件访问拒绝 (404) 或带扩展名的文件未找到 (404)。
+        """
         # 构建指纹等内部文件不属于公开资源；路径越界仍由 StaticFiles 拦截。
         if any(part.startswith('.') and part not in ('.', '..') for part in PurePosixPath(path).parts):
             raise HTTPException(status_code=404)

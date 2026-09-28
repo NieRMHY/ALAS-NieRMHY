@@ -18,14 +18,13 @@ from module.os.tasks.scheduling import CoinTaskMixin
 class OpsiObscure(CoinTaskMixin, OSMap):
     
     def clear_obscure(self):
-        """
-        清理一个隐秘海域。
+        """清理一个隐秘海域。
 
         从仓库取出隐秘海域坐标，前往目标区域执行自动搜索。
-        如果没有可执行内容，会在代理模式下标记本轮无内容。
+        若没有可执行内容，在代币任务模式下标记无内容并推迟。
 
         Raises:
-            ActionPointLimit: 行动力不足。
+            ActionPointLimit: 行动力不足时抛出。
 
         Pages:
             in: page_os, 大世界地图
@@ -59,6 +58,10 @@ class OpsiObscure(CoinTaskMixin, OSMap):
             self.handle_after_auto_search()
 
     def os_obscure(self):
+        """执行大世界隐秘海域任务主流程。
+
+        非强制模式下每次仅清理一个海域以利用指令冷却；强制模式下持续清理。
+        """
         while True:
             self.clear_obscure()
 

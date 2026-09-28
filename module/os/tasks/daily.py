@@ -46,10 +46,20 @@ class OpsiDaily(OSMap):
             self.handle_after_auto_search()
 
     def _os_daily_mission_complete_check(self):
+        """检查任务完成弹窗是否出现。
+
+        Returns:
+            bool: 若未处于大世界主界面且出现任务完成弹窗则返回 True，否则返回 False。
+        """
         return not self.appear(OS_CHECK, offset=(20, 20)) and \
             self.appear(MISSION_COMPLETE_POPUP, offset=(20, 20))
 
     def daily_interrupt_check(self):
+        """检查每日任务自律寻敌是否应当中断。
+
+        Returns:
+            bool: 任务已完成且没有指挥喵正在寻敌时返回 True，否则返回 False。
+        """
         if not self.config.OS_MISSION_COMPLETE and self._os_daily_mission_complete_check():
             self.config.OS_MISSION_COMPLETE = True
 
@@ -58,9 +68,7 @@ class OpsiDaily(OSMap):
         return False
 
     def os_daily_set_keep_mission_zone(self):
-        """
-        将当前区域保存到 OpsiDaily_MissionZones 配置中。
-        """
+        """将当前海域保存到 OpsiDaily_MissionZones 配置中。"""
         zones = prev = self.config.OpsiDaily_MissionZones
         zones = [] if zones is None else str(zones).split()
         if str(self.zone.zone_id) not in zones:
@@ -233,6 +241,12 @@ class OpsiDaily(OSMap):
         return count
 
     def os_daily(self):
+        """执行大世界每日任务主流程。
+
+        依次处理调谐样本使用、记录仪使用、接取每日任务并执行。
+        若配置了保留任务海域，将在接近月末时统一清理。
+        执行完毕后延迟至次日服务器刷新。
+        """
         # 清理调谐样本
         if self.config.OpsiDaily_UseTuningSample:
             self.tuning_sample_use(quit=not self.config.OpsiGeneral_UseLogger)

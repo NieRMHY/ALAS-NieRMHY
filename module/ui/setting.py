@@ -13,7 +13,26 @@ from module.logger import logger
 
 
 class Setting:
+    """游戏设置面板控制类。
+
+    封装游戏中设置面板的选项切换逻辑，支持多组设置项的管理和状态追踪。
+
+    Attributes:
+        name (str): 设置组名称。
+        main (ModuleBase): 模块基类实例。
+        reset_first (bool): 设置选项前是否先重置为默认值。
+        need_deselect (bool): 是否需要显式反选取消已激活的选项。
+        settings (dict[tuple[str, str], Button]): 设置名与选项名元组到对应按钮的映射。
+        settings_default (dict[str, str]): 设置名到默认选项名的映射。
+    """
+
     def __init__(self, name='Setting', main: ModuleBase = None):
+        """初始化设置面板控制器。
+
+        Args:
+            name (str): 设置组名称。
+            main (ModuleBase | None): 模块基类实例。
+        """
         self.name = name
         # Alas 模块对象
         self.main: ModuleBase = main
@@ -36,14 +55,16 @@ class Setting:
         self.settings_default: t.Dict[str, str] = {}
 
     def add_setting(self, setting, option_buttons, option_names, option_default):
-        """
-        添加一组设置选项。
+        """添加一组设置选项。
 
         Args:
             setting (str): 设置名称。
-            option_buttons (list[Button], ButtonGrid): 选项按钮列表，可由 ButtonGrid.buttons 生成。
+            option_buttons (list[Button] | ButtonGrid): 选项按钮列表，可由 ButtonGrid.buttons 生成。
             option_names (list[str]): 每个选项的名称，长度必须与 option_buttons 一致。
             option_default (str): 默认选项名称，必须在 option_names 中。
+
+        Raises:
+            ScriptError: 默认选项名称不在选项列表中时抛出。
         """
         if isinstance(option_buttons, ButtonGrid):
             option_buttons = option_buttons.buttons
@@ -58,12 +79,19 @@ class Setting:
         self.settings_default[setting] = option_default
 
     def is_option_active(self, option: Button) -> bool:
+        """检测指定选项按钮当前是否处于激活状态。
+
+        Args:
+            option (Button): 待检测的选项按钮。
+
+        Returns:
+            bool: 选项是否处于激活状态。
+        """
         return self.main.image_color_count(option, color=(181, 142, 90), threshold=20, count=250) \
                or self.main.image_color_count(option, color=(74, 117, 189), threshold=20, count=250)
 
     def _product_setting_status(self, **kwargs) -> t.Dict[Button, bool]:
-        """
-        生成每个选项按钮的目标激活状态。
+        """生成每个选项按钮的目标激活状态。
 
         Args:
             **kwargs: 键为设置名，值为所需选项或选项列表。
@@ -71,13 +99,13 @@ class Setting:
                 `sort=None` 表示不更改该设置。
 
         Returns:
-            dict: 键为选项按钮，值为是否应激活。
+            dict[Button, bool]: 键为选项按钮，值为是否应激活。
         """
-        # Add defaults
+        # 添加默认选项
         required_options = copy.deepcopy(self.settings_default)
         required_options.update(kwargs)
 
-        # option_button: Whether should be active
+        # 选项按钮: 是否应该激活
         # {BUTTON_1: True, BUTTON_2: False, ...}
         status: t.Dict[Button, bool] = {}
         for key, option_button in self.settings.items():
@@ -90,8 +118,7 @@ class Setting:
         return status
 
     def show_active_buttons(self):
-        """
-        记录当前激活的选项按钮。
+        """记录当前激活的选项按钮。
 
         Logs:
             [Setting] sort/rarity, sort/level
@@ -105,11 +132,10 @@ class Setting:
         logger.attr(self.name, ', '.join(active))
 
     def get_buttons_to_click(self, status: t.Dict[Button, bool]) -> t.List[Button]:
-        """
-        根据目标状态计算需要点击的按钮列表。
+        """根据目标状态计算需要点击的按钮列表。
 
         Args:
-            status: 键为选项按钮，值为是否应激活。
+            status (dict[Button, bool]): 键为选项按钮，值为是否应激活。
 
         Returns:
             list[Button]: 需要点击的按钮列表。
@@ -125,8 +151,7 @@ class Setting:
         return click
 
     def _set_execute(self, **kwargs):
-        """
-        执行设置选项的切换，带超时和重试机制。
+        """执行设置选项的切换，带超时和重试机制。
 
         Args:
             **kwargs: 键为设置名，值为所需选项或选项列表。
@@ -163,8 +188,7 @@ class Setting:
                 return True
 
     def set(self, **kwargs):
-        """
-        设置选项，若 reset_first 为 True 则先重置为默认值。
+        """设置选项，若 reset_first 为 True 则先重置为默认值。
 
         Args:
             **kwargs: 键为设置名，值为所需选项或选项列表。
@@ -175,5 +199,5 @@ class Setting:
             bool: 是否设置成功。
         """
         if self.reset_first:
-            self._set_execute()  # Reset options
+            self._set_execute()  # 重置为默认选项
         self._set_execute(**kwargs)

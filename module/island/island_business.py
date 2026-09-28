@@ -14,6 +14,8 @@ from module.base.button import Button
 from module.base.template import Template
 from module.base.utils import crop, get_color, color_similar
 from module.island.island_season import SEASONAL_ITEMS
+# Add by MHY, 岛屿经营：上架前库存校验（独立模块，只做缺货替换）
+from module.island.island_business_stock import BusinessStockCheckMixin
 from datetime import timedelta
 
 from module.config.time_source import now as current_time
@@ -116,7 +118,7 @@ SEASONAL_DRINK_MAP = {
 }
 
 
-class IslandBusiness(Island):
+class IslandBusiness(BusinessStockCheckMixin, Island):
     BUSINESS_REVIEW_OFFSET_X = 150
 
     def __init__(self, config, device=None, task=None):
@@ -1115,6 +1117,8 @@ class IslandBusiness(Island):
         else:
             logger.info(f"[岛屿-经营] === 第一批经营: {[s['name'] for s in batch1_shops]} ===")
             self._check_seasonal_products_for_batch(batch1_shops)
+            # Add by MHY: 上架前库存校验（缺货商品换成有货的高利润商品）
+            self._check_products_stock_for_batch(batch1_shops)
 
             batch1_started_shop_names = self._run_batch(batch1_shops)
             self._trigger_shop_refill(batch1_started_shop_names)
@@ -1131,6 +1135,8 @@ class IslandBusiness(Island):
 
         logger.info(f"[岛屿-经营] === 第二批经营: {[s['name'] for s in batch2_shops]} ===")
         self._check_seasonal_products_for_batch(batch2_shops)
+        # Add by MHY: 上架前库存校验（缺货商品换成有货的高利润商品）
+        self._check_products_stock_for_batch(batch2_shops)
         batch2_started_shop_names = self._run_batch(batch2_shops)
         self._trigger_shop_refill(batch2_started_shop_names)
 
@@ -1631,7 +1637,7 @@ class IslandBusiness(Island):
             (698, 90, 818, 125),            # 偏移150px（美食评审模式）
         ]
 
-        best = (None, None, 0.0)  # (shop, button, similarity)
+        best = (None, None, 0.0)  # (商店, 按钮, 相似度)
         for area in areas:
             area_img = crop(self.device.image, area)
             for shop in self.shops:
@@ -1921,7 +1927,7 @@ class IslandBusiness(Island):
         """
         s = self.device.image
         area_img = crop(s, self.BUSINESS_CHARACTER_AREA)
-        best = (None, None, 0.0)  # (name, button, similarity)
+        best = (None, None, 0.0)  # (角色名, 按钮, 相似度)
 
         # 只遍历优先级列表中的角色模板，跳过不在优先级中的角色
         for name in self.character_priority:
@@ -2025,7 +2031,8 @@ class IslandBusiness(Island):
             self.config.task_delay(minute=0, task=t)
 
     def _set_task_delay(self):
-        self.config.task_delay(minute=60 * 8)
+        # Modify by MHY, 8h 基础上加 5 分钟缓冲，防止网络波动导致调度延迟错过下一轮
+        self.config.task_delay(minute=60 * 8 + 5)
 
 
 if __name__ == "__main__":

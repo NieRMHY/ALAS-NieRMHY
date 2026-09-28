@@ -105,23 +105,30 @@ class HuanChangPtOcr(Digit):
 
 
 class BigshotPtOcr(Digit):
+    """BIGSHOT 突袭活动 PT 积分 OCR 识别器。"""
+
     def pre_process(self, image):
+        """清除左上角和左下角的白色背景干扰。
+
+        Args:
+            image (np.ndarray): 待处理的原始图像。
+
+        Returns:
+            np.ndarray: 清除背景后的图像。
         """
-        remove white background at upper-left and bottom-left
-        """
-        # create white background mask
+        # 创建白色背景掩膜
         mask = color_mask(image, (240, 252, 233), threshold=75)
-        # flood-fill upper-left and bottom-left to 128
+        # 对左上角和左下角执行泛洪填充至 128
         width, height = image_size(image)
         fill_color = 128
         if mask[0, 0] == 255:
             cv2.floodFill(mask, mask=None, seedPoint=(0, 0), newVal=fill_color, flags=8)
         if mask[height - 1, 0] == 255:
             cv2.floodFill(mask, mask=None, seedPoint=(0, height - 1), newVal=fill_color, flags=8)
-        # extract flood-fill area
+        # 提取泛洪填充区域并反转掩膜
         cv2.inRange(mask, fill_color, fill_color, dst=mask)
         cv2.bitwise_not(mask, dst=mask)
-        # apply to image
+        # 应用掩膜清除图像背景
         image = cv2.bitwise_and(image, image, mask=mask)
         return super().pre_process(image)
 

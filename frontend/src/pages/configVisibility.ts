@@ -1,3 +1,7 @@
+/**
+ * @fileoverview 配置字段可见性判断辅助逻辑。
+ */
+
 import type { Field, Value } from '../api/types'
 
 export function isFieldVisible(argument: string, field: Field, value: Value) {

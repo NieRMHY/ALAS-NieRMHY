@@ -68,15 +68,30 @@ class Hospital(HospitalClue, HospitalCombat):
     """
 
     def daily_red_dot_appear(self):
-        """检测每日奖励红点是否出现。"""
+        """检测每日奖励红点是否出现。
+
+        Returns:
+            bool: 存在红点返回 True，否则返回 False。
+        """
         return self.image_color_count(DAILY_RED_DOT, color=(189, 69, 66), threshold=30, count=35)
 
     def daily_reward_receive_appear(self):
-        """检测每日奖励领取按钮是否可点击。"""
+        """检测每日奖励领取按钮是否可点击。
+
+        Returns:
+            bool: 领取按钮可点击返回 True，否则返回 False。
+        """
         return self.image_color_count(DAILY_REWARD_RECEIVE, color=(41, 73, 198), threshold=30, count=200)
 
     def is_in_daily_reward(self, interval=0):
-        """检测当前是否在每日奖励界面。"""
+        """检测当前是否处于每日奖励界面。
+
+        Args:
+            interval (int | float): 按钮检测间隔秒数，默认 0。
+
+        Returns:
+            bool: 处于每日奖励界面返回 True，否则返回 False。
+        """
         return self.match_template_color(HOSIPITAL_CLUE_CHECK, offset=(30, 30), interval=interval)
 
     def daily_reward_receive(self):

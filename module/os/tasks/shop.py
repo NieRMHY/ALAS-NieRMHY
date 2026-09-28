@@ -21,10 +21,9 @@ from module.os_shop.assets import OS_SHOP_CHECK
 
 class OpsiShop(OSMap):
     def os_shop(self):
-        """
-        购买所有港口的补给物资。
+        """购买所有港口的补给物资。
 
-        如果黄币或紫币不足，跳过下一个港口的补给购买。
+        若黄币或紫币不足，跳过下一个港口的补给购买。
 
         Pages:
             in: page_os, 大世界地图
@@ -51,8 +50,7 @@ class OpsiShop(OSMap):
         self.config.task_stop()
 
     def perform_port_shop_purchase(self):
-        """
-        执行一次港口商店购买流程，不包含任务延迟和停止逻辑。
+        """执行一次港口商店购买流程，不包含任务延迟和停止逻辑。
 
         供 os_shop 和智能调度+月末清理共用。前往最近友方港口，
         进入商店购买所有补给，购买完成后退出港口。
@@ -81,8 +79,7 @@ class OpsiShop(OSMap):
         return not_empty
 
     def _os_shop_delay(self, not_empty) -> datetime:
-        """
-        计算大世界商店+的延迟时间。
+        """计算大世界商店+的延迟时间。
 
         根据商店是否为空和距月底重置的天数决定下次运行时间。
 

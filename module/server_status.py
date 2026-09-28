@@ -23,7 +23,14 @@ ServerState = Literal[
 
 @dataclass(frozen=True)
 class RegionEndpoint:
-    """游戏服务器列表网关的连接信息。"""
+    """游戏服务器列表网关的连接信息。
+
+    Attributes:
+        protocol: 传输协议 ('tcp' 或 'http')。
+        host: TCP 主机名或 IP。
+        port: TCP 端口号。
+        url: HTTP 请求完整 URL。
+    """
 
     protocol: Literal['tcp', 'http']
     host: str = ''
@@ -63,7 +70,7 @@ class ServerStatusQueryError(ConnectionError):
     """后备网关查询失败。
 
     Attributes:
-        code: 稳定的故障类型，供日志和调用方诊断。
+        code (str): 稳定的故障类型代码，供日志和调用方诊断。
     """
 
     def __init__(self, code: str):
@@ -73,7 +80,15 @@ class ServerStatusQueryError(ConnectionError):
 
 @dataclass(frozen=True)
 class GatewayServer:
-    """游戏网关返回的单个服务器原始信息。"""
+    """游戏网关返回的单个服务器原始信息。
+
+    Attributes:
+        id (int): 服务器 ID。
+        name (str): 服务器显示名称。
+        state (int): 服务器状态码。
+        tag_state (int): 状态标签标记。
+        sort (int): 排序权重。
+    """
 
     id: int
     name: str
@@ -83,7 +98,11 @@ class GatewayServer:
 
     @property
     def status(self) -> ServerState:
-        """将游戏协议中的状态数字转换为调度器使用的状态文本。"""
+        """将游戏协议中的状态数字转换为调度器使用的状态文本。
+
+        Returns:
+            ServerState: 映射后的服务器状态文本。
+        """
         return _STATUS_MAP.get(self.state, 'unknown')
 
 
@@ -92,7 +111,17 @@ FieldMap = dict[int, list[FieldEntry]]
 
 
 def _encode_varint(value: int) -> bytes:
-    """编码无符号 protobuf varint。"""
+    """编码无符号 protobuf varint。
+
+    Args:
+        value (int): 要编码的非负整数。
+
+    Returns:
+        bytes: 编码后的字节序列。
+
+    Raises:
+        ValueError: 数值为负数时抛出。
+    """
     if value < 0:
         raise ValueError('Varint value must not be negative')
 
@@ -108,12 +137,31 @@ def _encode_varint(value: int) -> bytes:
 
 
 def _encode_varint_field(field_number: int, value: int) -> bytes:
-    """编码 protobuf 的 varint 字段。"""
+    """编码 protobuf 的 varint 字段。
+
+    Args:
+        field_number (int): 字段编号。
+        value (int): 字段整数值。
+
+    Returns:
+        bytes: 包含标签和值的字节序列。
+    """
     return _encode_varint(field_number << 3) + _encode_varint(value)
 
 
 def _decode_varint(data: bytes, offset: int = 0) -> tuple[int, int]:
-    """解码 protobuf varint，并拒绝截断或超长的数据。"""
+    """解码 protobuf varint，并拒绝截断或超长的数据。
+
+    Args:
+        data (bytes): 待解码的字节串。
+        offset (int, optional): 起始偏移量。默认为 0。
+
+    Returns:
+        tuple[int, int]: 解码出的整数值与下一个偏移位置。
+
+    Raises:
+        ServerStatusProtocolError: 数据被截断或超出 64 位时抛出。
+    """
     result = 0
     shift = 0
     while True:
@@ -128,7 +176,18 @@ def _decode_varint(data: bytes, offset: int = 0) -> tuple[int, int]:
 
 
 def decode_protobuf_message(data: bytes, offset: int = 0) -> FieldMap:
-    """解码本协议使用的 protobuf varint、bytes 与 fixed32 字段。"""
+    """解码本协议使用的 protobuf varint、bytes 与 fixed32 字段。
+
+    Args:
+        data (bytes): protobuf 原始消息数据。
+        offset (int, optional): 起始偏移量。默认为 0。
+
+    Returns:
+        FieldMap: 字段编号到字段类型及内容列表的映射。
+
+    Raises:
+        ServerStatusProtocolError: 字段被截断或遇到不支持的 wire type 时抛出。
+    """
     fields: FieldMap = {}
     while offset < len(data):
         tag, offset = _decode_varint(data, offset)
@@ -156,7 +215,15 @@ def decode_protobuf_message(data: bytes, offset: int = 0) -> FieldMap:
 
 
 def _build_packet(msg_id: int, body: bytes) -> bytes:
-    """构造游戏网关使用的消息帧。"""
+    """构造游戏网关使用的消息帧。
+
+    Args:
+        msg_id (int): 协议消息 ID。
+        body (bytes): 消息体内容。
+
+    Returns:
+        bytes: 打包后的完整报文。
+    """
     remaining = 5 + len(body)
     return (
         struct.pack('>H', remaining)
@@ -168,7 +235,17 @@ def _build_packet(msg_id: int, body: bytes) -> bytes:
 
 
 def _parse_tcp_response(data: bytes) -> list[GatewayServer]:
-    """校验 10019 消息帧并解析服务器列表。"""
+    """校验 10019 消息帧并解析服务器列表。
+
+    Args:
+        data (bytes): TCP 接收到的完整响应包。
+
+    Returns:
+        list[GatewayServer]: 解析出的服务器信息列表。
+
+    Raises:
+        ServerStatusProtocolError: 报文长度不足、长度不匹配或消息 ID 错误时抛出。
+    """
     if len(data) < 7:
         raise ServerStatusProtocolError('TCP 响应长度不足')
     remaining = struct.unpack_from('>H', data, 0)[0]
@@ -181,7 +258,14 @@ def _parse_tcp_response(data: bytes) -> list[GatewayServer]:
 
 
 def _decode_name(value: bytes) -> str:
-    """解码服务器名称；国服名称可能是 GBK，其他地区使用 UTF-8。"""
+    """解码服务器名称；国服名称可能是 GBK，其他地区使用 UTF-8。
+
+    Args:
+        value (bytes): 名称原始字节。
+
+    Returns:
+        str: 解码后的文本字符串。
+    """
     try:
         return value.decode('utf-8')
     except UnicodeDecodeError:
@@ -189,19 +273,40 @@ def _decode_name(value: bytes) -> str:
 
 
 def _entry_bytes(entry: FieldEntry) -> bytes | None:
-    """取得 protobuf bytes 字段的内容。"""
+    """取得 protobuf bytes 字段的内容。
+
+    Args:
+        entry (FieldEntry): 字段条目。
+
+    Returns:
+        bytes | None: 若为 bytes 类型返回对应字节序列，否则返回 None。
+    """
     value = entry[1]
     return value if entry[0] == 'bytes' and isinstance(value, bytes) else None
 
 
 def _entry_varint(entry: FieldEntry) -> int | None:
-    """取得 protobuf varint 字段的内容。"""
+    """取得 protobuf varint 字段的内容。
+
+    Args:
+        entry (FieldEntry): 字段条目。
+
+    Returns:
+        int | None: 若为 varint 类型返回对应整数值，否则返回 None。
+    """
     value = entry[1]
     return value if entry[0] == 'varint' and isinstance(value, int) else None
 
 
 def decode_serverinfo(data: bytes) -> GatewayServer:
-    """解析 ServerInfo：1=id、4=state、5=name、6=tag、7=sort。"""
+    """解析 ServerInfo：1=id、4=state、5=name、6=tag、7=sort。
+
+    Args:
+        data (bytes): 单个 ServerInfo 的 protobuf 字节序列。
+
+    Returns:
+        GatewayServer: 解析后的网关服务器信息实例。
+    """
     server_id = 0
     name = ''
     state = 0
@@ -238,7 +343,14 @@ def decode_serverinfo(data: bytes) -> GatewayServer:
 
 
 def decode_serverlist(data: bytes) -> list[GatewayServer]:
-    """解析 10019 消息体中的重复 ServerInfo 字段。"""
+    """解析 10019 消息体中的重复 ServerInfo 字段。
+
+    Args:
+        data (bytes): 10019 消息载荷数据。
+
+    Returns:
+        list[GatewayServer]: 解析出的所有服务器信息。
+    """
     servers = []
     for entry in decode_protobuf_message(data).get(1, []):
         server_data = _entry_bytes(entry)
@@ -248,7 +360,18 @@ def decode_serverlist(data: bytes) -> list[GatewayServer]:
 
 
 def _read_exactly(sock: socket.socket, size: int) -> bytes:
-    """从 TCP 流读取指定长度，连接提前关闭视为协议错误。"""
+    """从 TCP 流读取指定长度，连接提前关闭视为协议错误。
+
+    Args:
+        sock (socket.socket): 套接字对象。
+        size (int): 期望读取的字节数。
+
+    Returns:
+        bytes: 读取到的完整字节序列。
+
+    Raises:
+        ServerStatusProtocolError: 连接在读满前被关闭时抛出。
+    """
     chunks = bytearray()
     while len(chunks) < size:
         chunk = sock.recv(size - len(chunks))
@@ -259,7 +382,19 @@ def _read_exactly(sock: socket.socket, size: int) -> bytes:
 
 
 def query_tcp(host: str, port: int, timeout: float = 10.0) -> list[GatewayServer]:
-    """向 TCP 游戏网关发送 10018 请求并读取服务器列表。"""
+    """向 TCP 游戏网关发送 10018 请求并读取服务器列表。
+
+    Args:
+        host (str): 网关主机地址。
+        port (int): 网关端口号。
+        timeout (float, optional): 连接和读写超时（秒）。默认为 10.0。
+
+    Returns:
+        list[GatewayServer]: 服务器信息列表。
+
+    Raises:
+        ServerStatusQueryError: 超时、协议错误或网络连接异常时抛出。
+    """
     request = _build_packet(MSG_CS_10018, _encode_varint_field(1, 0))
     try:
         with socket.create_connection((host, port), timeout=timeout) as sock:
@@ -279,7 +414,17 @@ def query_tcp(host: str, port: int, timeout: float = 10.0) -> list[GatewayServer
 
 
 def _parse_http_body(data: bytes) -> list[GatewayServer]:
-    """校验 HTTP 200 响应并将 JSON 列表转换为服务器信息。"""
+    """校验 HTTP 200 响应并将 JSON 列表转换为服务器信息。
+
+    Args:
+        data (bytes): 包含 HTTP 响应头和体的完整原始字节。
+
+    Returns:
+        list[GatewayServer]: 解析出的服务器信息列表。
+
+    Raises:
+        ServerStatusProtocolError: HTTP 状态异常或 JSON 格式无效时抛出。
+    """
     separator = data.find(b'\r\n\r\n')
     if separator == -1:
         raise ServerStatusProtocolError('HTTP 响应缺少头部')
@@ -307,7 +452,18 @@ def _parse_http_body(data: bytes) -> list[GatewayServer]:
 
 
 def query_http(url: str, timeout: float = 10.0) -> list[GatewayServer]:
-    """通过原始 HTTP 请求查询国服 iOS 或渠道服列表。"""
+    """通过原始 HTTP 请求查询国服 iOS 或渠道服列表。
+
+    Args:
+        url (str): 请求目标完整 URL。
+        timeout (float, optional): 超时时间（秒）。默认为 10.0。
+
+    Returns:
+        list[GatewayServer]: 服务器信息列表。
+
+    Raises:
+        ServerStatusQueryError: 端点无效、超时、协议错误或网络异常时抛出。
+    """
     parts = urlsplit(url)
     host = parts.hostname
     if host is None:
@@ -341,7 +497,15 @@ def query_http(url: str, timeout: float = 10.0) -> list[GatewayServer]:
 
 
 def query_region(region: str, timeout: float = 10.0) -> list[GatewayServer]:
-    """查询一个地区的完整服务器列表。"""
+    """查询一个地区的完整服务器列表。
+
+    Args:
+        region (str): 地区标识（如 'cn', 'cn_ios', 'en', 'jp', 'tw' 等）。
+        timeout (float, optional): 超时时间（秒）。默认为 10.0。
+
+    Returns:
+        list[GatewayServer]: 该地区所有服务器信息列表。
+    """
     endpoint = REGION_ENDPOINTS[region]
     if endpoint.protocol == 'tcp':
         return query_tcp(endpoint.host, endpoint.port, timeout)
@@ -352,9 +516,12 @@ def query_server(region: str, server_id: int, timeout: float = 10.0) -> GatewayS
     """查询指定地区和 ID 的服务器。
 
     Args:
-        region: 网关地区键，例如 ``cn_ios`` 或 ``jp``。
-        server_id: 游戏网关中的服务器 ID。
-        timeout: 单次连接、收发的超时时间（秒）。
+        region (str): 网关地区键，例如 ``cn_ios`` 或 ``jp``。
+        server_id (int): 游戏网关中的服务器 ID。
+        timeout (float, optional): 单次连接、收发的超时时间（秒）。默认为 10.0。
+
+    Returns:
+        GatewayServer: 匹配的服务器信息对象。
 
     Raises:
         ServerStatusQueryError: 网关无法访问、响应无效或未找到指定服务器。

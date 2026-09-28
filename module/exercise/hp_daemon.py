@@ -42,41 +42,27 @@ class HpDaemon(ModuleBase):
 
     @staticmethod
     def _calculate_hp(image, area, reverse=False, starter=2, prev_color=(239, 32, 33), threshold=30):
-        """
+        """计算指定区域内血条的血量百分比。
+
         Args:
-            image:
-            area:
-            reverse: True if HP is left align.
-            starter:
-            prev_color:
-            threshold:
+            image (np.ndarray): 截图图像。
+            area (tuple): 血条区域坐标 (x1, y1, x2, y2)。
+            reverse (bool): 若血量为左对齐则为 True，默认 False。
+            starter (int): 起始像素偏移，默认 2。
+            prev_color (tuple): 参考起始颜色，默认 (239, 32, 33)。
+            threshold (int): 颜色相似度容差，默认 30。
 
         Returns:
-            float: HP. 0 to 1.
+            float: 血量百分比 (0.0 到 1.0)。
         """
-        # bar = crop(image, area)
-        # length = bar.shape[1]
-        # bar = np.swapaxes(bar, 0, 1)
-        # bar = bar[::-1, :, :] if reverse else bar
-        # prev_index = 0
-        # for index, color in enumerate(bar):
-        #     if index < starter:
-        #         continue
-        #     mask = color_similar_1d(color, prev_color, threshold=30)
-        #     if np.any(mask):
-        #         prev_color = color[mask].mean(axis=0)
-        #         prev_index = index
-        #
-        # return prev_index / length
         return color_bar_percentage(
             image, area, prev_color=prev_color, starter=starter, reverse=reverse, threshold=threshold)
 
     def _show_hp(self, low_hp_time=0.):
-        """
-        Examples:
-            [ 80% - 70%]
-            [ 80% - 70%]
-            [ 80% - 70%] - Low HP: 3.154s
+        """在日志中打印当前双方血量百分比及低血量持续时间。
+
+        Args:
+            low_hp_time (float): 低血量持续时间（秒），默认 0。
         """
         text = '[%s - %s]' % (
             str(int(self.attacker_hp * 100)).rjust(2, '0') + '%',
@@ -86,6 +72,15 @@ class HpDaemon(ModuleBase):
         logger.info(text)
 
     def _at_low_hp(self, image, pause=PAUSE):
+        """检测己方血量是否低于设定的低血量阈值并已持续一定时间。
+
+        Args:
+            image (np.ndarray): 当前战斗截图。
+            pause (Button): 当前战斗界面的暂停按钮，用于识别 UI 主题。
+
+        Returns:
+            bool: 己方处于持续低血量状态返回 True，否则返回 False。
+        """
         if pause == PAUSE:
             self.attacker_hp = self._calculate_hp(image, area=ATTACKER_HP_AREA.area, reverse=True)
             self.defender_hp = self._calculate_hp(image, area=DEFENDER_HP_AREA.area, reverse=False)
@@ -112,16 +107,16 @@ class HpDaemon(ModuleBase):
             PAUSE_Nier,
             PAUSE_OldeRoyal,
             PAUSE_YoRHa,
-            PAUSE_Ghost,
+            PAUSE_Ritual,
         ]:
             self.attacker_hp = self._calculate_hp(image, area=ATTACKER_HP_AREA_New.area, reverse=True)
             self.defender_hp = self._calculate_hp(image, area=DEFENDER_HP_AREA_New.area, reverse=True)
         else:
-            logger.warning(f'_at_low_hp received unknown pause: {pause}')
+            logger.warning(f'_at_low_hp 收到未知暂停按钮: {pause}')
             self.attacker_hp = self._calculate_hp(image, area=ATTACKER_HP_AREA.area, reverse=True)
             self.defender_hp = self._calculate_hp(image, area=DEFENDER_HP_AREA.area, reverse=False)
 
-        # Opponent died or HP bar get covered
+        # 对手阵亡或血条被遮挡
         if self.defender_hp < 0.01:
             self.low_hp_confirm_timer.reset()
         if 0.01 < self.attacker_hp <= self.config.Exercise_LowHpThreshold:

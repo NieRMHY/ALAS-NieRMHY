@@ -1,3 +1,7 @@
+/**
+ * @fileoverview 开发者模式开关状态与连击激活触发逻辑。
+ */
+
 const DEV_MODE_KEY = 'azurpilot.dev-mode'
 const DEV_CLICK_INTERVAL_MS = 900
 const DEV_CLICK_TARGET = 10

@@ -25,6 +25,11 @@ from module.secretary.assets import (
 
 @dataclass(frozen=True)
 class SecretaryRarity:
+    """秘书舰稀有度配置项数据类。
+
+    Attributes:
+        rarity (str): 稀有度字符串。
+    """
     rarity: str
 
 RARITIES = [
@@ -38,7 +43,8 @@ RARITIES = [
 # 秘书舰放置可获取的好感度上限，达到后执行更换
 FAVORABILITY_LIMIT = 90
 
-class Secretary(SecretaryDockMixin,UI):
+class Secretary(SecretaryDockMixin, UI):
+    """秘书舰更换与好感度管理任务处理器。"""
 
     RARITY_FILTER = Filter(
         regex=r'^(common|rare|elite|super_rare|ultra)$',
@@ -53,8 +59,7 @@ class Secretary(SecretaryDockMixin,UI):
         self.search_priority_index = 0
 
     def run(self):
-        """
-        秘书舰任务入口。
+        """执行秘书舰任务的主入口。
 
         好感度未满时按剩余好感安排下次检查；
         已满时执行更换，更换失败按失败间隔重试，
@@ -153,6 +158,7 @@ class Secretary(SecretaryDockMixin,UI):
             self.ui_back(SECRETARY_GROUP_CHECK)
 
     def enter_secretary_group(self):
+        """进入秘书组页面。"""
         logger.hr("Secretary Group")
         while True:
             self.device.screenshot()
@@ -171,6 +177,9 @@ class Secretary(SecretaryDockMixin,UI):
 
         状态循环：点击后等待 SECRETARY_DOCK_CHECK 出现，
         间隔防连击，不使用 sleep 等待。
+
+        Args:
+            button: 待点击的秘书舰槽位按钮。
         """
         logger.hr("Enter Secretary select")
 
@@ -188,8 +197,7 @@ class Secretary(SecretaryDockMixin,UI):
                 logger.info(f"Click secretary slot: {button}")
 
     def choose_secretary(self):
-        """
-        在船坞中搜索并选中候选秘书舰。
+        """在船坞中搜索并选中候选秘书舰。
 
         按 Secretary_FavouriteOnly 决定是否开启「常用」过滤，
         再叠加稀有度筛选，搜索结束后恢复船坞状态。
@@ -213,15 +221,14 @@ class Secretary(SecretaryDockMixin,UI):
         return True
 
     def search_ship(self):
-        """
-        按稀有度优先级搜索候选秘书舰。
+        """按稀有度优先级搜索候选秘书舰。
 
         船坞按好感度排序扫描：低好感度优先时使用升序，
         最低好感度候选必然位于第一页首位，单页扫描即可覆盖；
         高好感度优先时使用降序。
 
         Returns:
-            SecretaryShip: 可用候选，没有则返回 None。
+            SecretaryShip | None: 可用候选，没有则返回 None。
         """
         self.RARITY_FILTER.load(self.config.Secretary_CustomFilter)
         self.search_priority = self.RARITY_FILTER.apply(RARITIES)
@@ -255,12 +262,14 @@ class Secretary(SecretaryDockMixin,UI):
         return None
 
     def scan_ship(self):
-        """
-        扫描船坞第一页并返回一个可用候选，没有则返回 None。
+        """扫描船坞第一页并返回一个可用候选，没有则返回 None。
 
         高好感度优先时，若第一页全部满好感（大量满好感舰船的船坞中常见），
         回退为好感度升序重扫一次，取最低好感度候选，
         避免漏掉降序第一页之外的舰船。
+
+        Returns:
+            SecretaryShip | None: 找到的舰船对象，未找到返回 None。
         """
         descending = not self.config.Secretary_LowFavorabilityPriority
 
@@ -278,11 +287,10 @@ class Secretary(SecretaryDockMixin,UI):
         return ships[0]
 
     def _scan_dock_page(self, descending):
-        """
-        扫描船坞第一页并过滤出可用候选。
+        """扫描船坞第一页并过滤出可用候选。
 
         Args:
-            descending: True 按好感度降序扫描，False 升序。
+            descending (bool): True 按好感度降序扫描，False 升序。
 
         Returns:
             list[SecretaryShip]: 满足条件的候选列表。
@@ -306,10 +314,16 @@ class Secretary(SecretaryDockMixin,UI):
             if not ship.selected
         ]
     def select_ship(self, ship):
+        """点击选中指定的舰船卡片。
+
+        Args:
+            ship (SecretaryShip): 待选中的舰船对象。
+        """
         logger.info(f"Select secretary: Lv{ship.level} FAVORABILITY={ship.favorability}")
         self.device.click(ship.button)
 
     def confirm(self):
+        """确认更换并等待返回秘书组界面。"""
         while True:
             self.device.screenshot()
 
@@ -324,9 +338,15 @@ class Secretary(SecretaryDockMixin,UI):
                 continue
 
     def schedule_next_run(self, favorability):
-        """
-        根据秘书舰好感计算下一次运行时间。
+        """根据秘书舰好感计算下一次运行时间。
+
         好感每 6 小时增加 1 点，达到可获取上限时执行更换。
+
+        Args:
+            favorability (int): 当前秘书舰好感度。
+
+        Returns:
+            datetime: 计算得出的下次运行时间。
         """
         interval = self.config.Secretary_CheckInterval
         # 用户指定检测时间
@@ -357,13 +377,11 @@ class Secretary(SecretaryDockMixin,UI):
         return next_run
             
     def scan_current_secretary(self):
-        """
-        OCR 当前秘书舰信息。
+        """OCR 当前主秘书舰信息。
 
         Returns:
-            SecretaryInfo
+            SecretaryInfo | None: 当前秘书舰信息，识别失败返回 None。
         """
-
         self.device.screenshot()
 
         secretary = self.secretary_scanner.scan(self.device.image)
@@ -381,8 +399,10 @@ class Secretary(SecretaryDockMixin,UI):
         return secretary
 
     def scan_secretary_group(self):
-        """
-        OCR 五个秘书舰。
+        """OCR 识别全部五个秘书舰槽位的信息。
+
+        Returns:
+            list[SecretaryGroupInfo]: 五个槽位的舰船信息列表。
         """
         self.device.screenshot()
 
@@ -423,6 +443,12 @@ class Secretary(SecretaryDockMixin,UI):
         """判断 OnePush 配置是否填写了推送渠道。
 
         留空或仅保留默认的 provider: null 均视为未配置。
+
+        Args:
+            config (str): YAML 格式的推送配置。
+
+        Returns:
+            bool: 是否配置了有效的推送渠道。
         """
         if not config or not config.strip():
             return False
@@ -435,6 +461,12 @@ class Secretary(SecretaryDockMixin,UI):
         return bool(parsed.get("provider"))
 
     def _notify_worker(self, title, content):
+        """后台推送工作函数。
+
+        Args:
+            title (str): 通知标题。
+            content (str): 通知正文。
+        """
         instance = self.config.config_name
 
         # 秘书舰专用 OnePush 配置，留空时回退到全局错误推送配置
@@ -455,6 +487,12 @@ class Secretary(SecretaryDockMixin,UI):
         )
 
     def notify(self, title, content):
+        """异步发送秘书舰状态通知。
+
+        Args:
+            title (str): 通知标题。
+            content (str): 通知内容。
+        """
         Thread(
             target=self._notify_worker,
             args=(title, content),
@@ -462,7 +500,12 @@ class Secretary(SecretaryDockMixin,UI):
         ).start()
 
     def notify_before_replace(self, ship, group_ships=None):
+        """在开始更换秘书舰前发送提醒通知。
 
+        Args:
+            ship (SecretaryInfo): 当前主秘书舰信息。
+            group_ships (list[SecretaryGroupInfo], optional): 秘书组槽位信息列表。
+        """
         group_full = False
 
         if group_ships:
@@ -494,7 +537,13 @@ class Secretary(SecretaryDockMixin,UI):
         )
 
     def notify_after_replace(self, ship, next_run, old_ship=None):
+        """在更换秘书舰成功后发送完成通知。
 
+        Args:
+            ship (SecretaryInfo): 更换后的新秘书舰信息。
+            next_run (datetime): 下次检查时间。
+            old_ship (SecretaryInfo, optional): 原秘书舰信息。
+        """
         # 更换后重新扫描秘书组
         group_full = False
 
@@ -627,12 +676,10 @@ class Secretary(SecretaryDockMixin,UI):
         return True
 
     def replace_all_secretary(self):
-        """
-        当秘书组全部满90时，
-        从主秘书舰开始依次替换。
+        """当秘书组全部满90好感时，从主秘书舰开始依次替换。
 
         Returns:
-            bool: 是否至少成功更换一艘。
+            bool: 是否至少成功更换了一艘秘书舰。
         """
         ships = self.scan_secretary_group()
         if not ships:
@@ -667,7 +714,14 @@ class Secretary(SecretaryDockMixin,UI):
         return count > 0
 
     def search_backup_secretary(self, ships):
+        """在秘书组中搜索未满好感的候补舰船。
 
+        Args:
+            ships (list[SecretaryGroupInfo]): 当前秘书组槽位列表。
+
+        Returns:
+            SecretaryGroupInfo | None: 找到的最佳候补舰船，无可用候补返回 None。
+        """
         backups = [
             ship
             for ship in ships
@@ -694,6 +748,14 @@ class Secretary(SecretaryDockMixin,UI):
 
     @staticmethod
     def button_center(button):
+        """计算按钮区域的中心坐标。
+
+        Args:
+            button: 带有 button 属性（x1, y1, x2, y2）的按钮对象。
+
+        Returns:
+            tuple[int, int]: 中心点坐标 (x, y)。
+        """
         x1, y1, x2, y2 = button.button
         return (
             (x1 + x2) // 2,
@@ -701,7 +763,11 @@ class Secretary(SecretaryDockMixin,UI):
         )
 
     def promote_backup(self, ship):
+        """将候补槽位的舰船拖拽提升到主秘书舰位置（槽位 0）。
 
+        Args:
+            ship (SecretaryGroupInfo): 待提升的候补舰船。
+        """
         logger.info(f"Promote backup secretary: {ship.name}")
         logger.info(
             f"Drag secretary: {ship.name} "
@@ -715,6 +781,14 @@ class Secretary(SecretaryDockMixin,UI):
         self.device.sleep(1)
 
     def is_group_all_full(self, ships):
+        """检查秘书组所有槽位的好感度是否均已达到上限。
+
+        Args:
+            ships (list[SecretaryGroupInfo]): 秘书组槽位列表。
+
+        Returns:
+            bool: 全部达到上限返回 True，否则返回 False。
+        """
         if not ships:
             return False
 

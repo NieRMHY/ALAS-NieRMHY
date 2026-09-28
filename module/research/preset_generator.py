@@ -43,7 +43,7 @@ def translate(string: str, target='series_4_tenrai_only_cube', for_simulate=Fals
     cube = 'cube' in target
     string = string.replace('S4-H0.5 > !4-0.5', '0.5')
     string = string.replace('!4-0.5', '0.5')
-    # Add Q0.5 after the last 0.5 selection
+    # 在最后一个 0.5 选项后添加 Q0.5
     selections = split_filter(string)
     last_05 = 0
     for index, sele in enumerate(selections):

@@ -76,21 +76,29 @@ class RewardShipyard(ShipyardUI):
 
     @staticmethod
     def _shipyard_task_enabled(index, count):
+        """检查船坞蓝图购买子任务是否已启用。
+
+        Args:
+            index (int): 舰船索引。
+            count (int): 购买数量。
+
+        Returns:
+            bool: 索引与数量均大于 0 时返回 True。
+        """
         return index > 0 and count > 0
 
     def _shipyard_get_cost(self, amount, rarity=None):
-        """
-        根据已购蓝图数量和稀有度计算购买单价。
+        """根据已购蓝图数量和稀有度计算购买单价。
 
         Args:
-            amount (int): 已购买的蓝图序号
-            rarity (str): 稀有度，'DR' 或 'PR'
+            amount (int): 已购买的蓝图序号。
+            rarity (str, optional): 稀有度，'DR' 或 'PR'。
 
         Returns:
-            int: 购买价格
+            int: 购买价格。
 
         Raises:
-            ScriptError: 稀有度无效时抛出
+            ScriptError: 稀有度无效时抛出。
         """
         if rarity is None:
             rarity = self._shipyard_bp_rarity
@@ -111,19 +119,18 @@ class RewardShipyard(ShipyardUI):
             raise ScriptError(f'Invalid rarity in _shipyard_get_cost: {rarity}')
 
     def _shipyard_calculate(self, start, count, pay=False):
-        """
-        计算当前金币下可购买的最大蓝图数量。
+        """计算当前金币下可购买的最大蓝图数量。
 
         根据起始位置、剩余数量和金币余额，计算可购买的
         蓝图总数。若 pay 为 True 则扣除对应金币。
 
         Args:
-            start (int): 起始购买序号
-            count (int): 剩余待购买总数
-            pay (bool): 是否实际扣除金币
+            start (int): 起始购买序号。
+            count (int): 剩余待购买总数。
+            pay (bool): 是否实际扣除金币。
 
         Returns:
-            tuple: (下次起始序号, 本次可购买数量)
+            tuple[int, int]: (下次起始序号, 本次可购买数量)。
         """
         if start <= 0 or count <= 0:
             return start, count
@@ -157,14 +164,13 @@ class RewardShipyard(ShipyardUI):
         return self._shipyard_calculate(start, count, pay=True)
 
     def _shipyard_buy(self, count):
-        """
-        购买指定数量的蓝图。
+        """购买指定数量的蓝图。
 
         支持在 DEV 和 FATE 阶段购买。循环进入购买界面、
         调整数量并确认购买，直到数量用尽或无法继续。
 
         Args:
-            count (int): 待购买总数
+            count (int): 待购买总数。
         """
         logger.hr('船坞购买')
         prev = 1
@@ -193,13 +199,12 @@ class RewardShipyard(ShipyardUI):
             start, count = self._shipyard_buy_calc(start, remain)
 
     def _shipyard_use(self, index):
-        """
-        使用指定舰船的所有剩余多余蓝图。
+        """使用指定舰船的所有剩余多余蓝图。
 
         支持在 DEV 和 FATE 阶段使用蓝图。
 
         Args:
-            index (int): 目标舰船索引
+            index (int): 目标舰船索引。
         """
         logger.hr('船坞使用')
         count = self._shipyard_get_bp_count(index)
@@ -216,18 +221,19 @@ class RewardShipyard(ShipyardUI):
             count = self._shipyard_get_bp_count(index)
 
     def shipyard_run(self, series, index, count):
-        """
-        执行船坞蓝图购买流程。
+        """执行船坞蓝图购买流程。
 
-        Pages: in: page_main, out: page_shipyard
+        Pages:
+            in: page_main
+            out: page_shipyard
 
         Args:
-            series (int): 科研系列，1-4（部分系列限制为 1-5）
-            index (int): 舰船索引，1-6
-            count (int): 使用后待购买的数量
+            series (int): 科研系列，1-4（部分系列限制为 1-5）。
+            index (int): 舰船索引，1-6。
+            count (int): 使用后待购买的数量。
 
         Returns:
-            bool: 是否执行了购买流程
+            bool: 是否执行了购买流程。
         """
         if count <= 0:
             logger.info('船坞购买数量为0，跳过')
@@ -267,9 +273,10 @@ class RewardShipyard(ShipyardUI):
         return True
 
     def run(self):
-        """
+        """执行船坞蓝图购买任务的主入口。
+
         Pages:
-            in: Any page
+            in: 任意页面
             out: page_shipyard
         """
         dr_enabled = self._shipyard_task_enabled(

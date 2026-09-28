@@ -27,9 +27,12 @@ class Config:
 
     @classmethod
     def when(cls, **kwargs):
-        """
+        """配置条件装饰器。
+
+        根据运行时配置值决定分发哪个同名函数的具体实现。
+
         Args:
-            **kwargs: AzurLaneConfig 中的任意配置项。
+            **kwargs: AzurLaneConfig 中的任意配置项键值对。
 
         Examples:
             @Config.when(USE_ONE_CLICK_RETIREMENT=True)
@@ -59,11 +62,15 @@ class Config:
 
             @wraps(func)
             def wrapper(self, *args, **kwargs):
-                """
+                """条件分发包装函数。
+
                 Args:
                     self: ModuleBase 实例。
                     *args: 位置参数。
                     **kwargs: 关键字参数。
+
+                Returns:
+                    Any: 目标函数执行结果。
                 """
                 for record in cls.func_list[name]:
 
@@ -93,9 +100,23 @@ class cached_property(Generic[T]):
     """
 
     def __init__(self, func: Callable[..., T]):
+        """初始化缓存属性描述符。
+
+        Args:
+            func (Callable[..., T]): 待计算属性的方法。
+        """
         self.func = func
 
     def __get__(self, obj, cls) -> T:
+        """获取属性值，未缓存时计算并缓存。
+
+        Args:
+            obj: 宿主对象实例。
+            cls: 宿主类。
+
+        Returns:
+            T: 属性值。
+        """
         if obj is None:
             return self
 
@@ -108,7 +129,7 @@ def del_cached_property(obj, name):
 
     Args:
         obj: 目标对象。
-        name: 属性名称。
+        name (str): 属性名称。
     """
     try:
         del obj.__dict__[name]
@@ -121,10 +142,10 @@ def has_cached_property(obj, name):
 
     Args:
         obj: 目标对象。
-        name: 属性名称。
+        name (str): 属性名称。
 
     Returns:
-        如果属性已缓存则返回 True，否则返回 False。
+        bool: 如果属性已缓存则返回 True，否则返回 False。
     """
     return name in obj.__dict__
 
@@ -134,7 +155,7 @@ def set_cached_property(obj, name, value):
 
     Args:
         obj: 目标对象。
-        name: 属性名称。
+        name (str): 属性名称。
         value: 属性值。
     """
     obj.__dict__[name] = value
@@ -144,18 +165,8 @@ def function_drop(rate=0.5, default=None):
     """随机丢弃函数调用，用于模拟模拟器卡死的测试场景。
 
     Args:
-        rate: 丢弃概率，取值范围 0 到 1。
+        rate (float): 丢弃概率，取值范围 0 到 1。
         default: 被丢弃时返回的默认值。
-
-    Examples:
-        @function_drop(0.3)
-        def click(self, button, record_check=True):
-            pass
-
-        30% 概率:
-        INFO | Dropped: module.device.device.Device.click(REWARD_GOTO_MAIN, record_check=True)
-        70% 概率:
-        INFO | Click (1091,  628) @ REWARD_GOTO_MAIN
     """
     from module.logger import logger
 
@@ -185,21 +196,11 @@ def function_drop(rate=0.5, default=None):
 def run_once(f):
     """确保函数只执行一次，无论被调用多少次。
 
-    Examples:
-        @run_once
-        def my_function(foo, bar):
-            return foo + bar
+    Args:
+        f (Callable): 待包装的函数。
 
-        while 1:
-            my_function()
-
-    Examples:
-        def my_function(foo, bar):
-            return foo + bar
-
-        action = run_once(my_function)
-        while 1:
-            action()
+    Returns:
+        Callable: 包装后的只运行一次的函数。
     """
 
     def wrapper(*args, **kwargs):

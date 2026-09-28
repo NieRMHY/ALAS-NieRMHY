@@ -1,3 +1,7 @@
+/**
+ * @fileoverview 后端 WebSocket API 接口与数据模型类型定义。
+ */
+
 export type Scalar = string | number | boolean | null
 export type Value = Scalar | Value[] | {[key: string]: Value}
 export type Values = Record<string, Record<string, Record<string, Value>>>
@@ -6,6 +10,9 @@ export interface Instance { name: string; status: Status; serial: string; server
 export interface UpdateStatus {
   state: string; localHead: string | null; upstreamHead: string | null; branch: string
   ahead: number; behind: number; available: boolean; busy: boolean; canApply: boolean; canCancel: boolean; error: string
+  /** 本地与更新源历史互不包含（例如镜像重写历史导致 SHA 分离），更新前需弹窗确认。 */
+  shaMismatch?: boolean
+  managedByAndroid?: boolean
 }
 export interface Commit { sha: string; author: string; date: string; message: string }
 export interface CommitHistory { entries: Commit[]; total: number; hasMore: boolean; localHead: string | null; upstreamHead: string | null }
@@ -32,8 +39,11 @@ export interface StatTable {title: string; columns: string[]; rows: Scalar[][]; 
 export interface TableSort {index: number; descending: boolean}
 export interface StatisticsReport {
   instance: string; category: string; month: string
-  metrics: {label: string; value: number | null; unit: string}[]
+  /** 图标名称（可选）：为卡片单独指定图标（科研物品填 'research:<模板名>'，大世界掉落填 'opsi:<模板名>'），缺省按 label 查内置表。 */
+  metrics: {label: string; value: number | null; unit: string; icon?: string}[]
   series: StatSeries[]; tables: StatTable[]; notes: string[]
+  /** 大世界掉落专用：任务筛选选项（含当前时间窗口内没有记录的任务），count 表示窗口内掉落记录数。 */
+  taskOptions?: {key: string; label: string; count: number}[]
 }
 /** 指挥喵评分的单条天赋。`kind` 为 `special`（彩天赋）时高亮，`inferred` 表示这条由识别推断而来。 */
 export interface MeowfficerTalent { name: string; level?: number; kind?: string; inferred?: boolean }
@@ -68,7 +78,36 @@ export interface ApiResponse { v: 1; type: 'response'; id: string; ok: boolean; 
 export interface ScriptDiagnostic { code?: string; message: string; line?: number | null; column?: number | null; severity?: 'error' | 'warning' }
 export interface ShopStrategyValidation { valid: boolean; diagnostics: ScriptDiagnostic[]; summary?: string }
 export type ShopStrategyTask = 'EventShop' | 'ShopFrequent' | 'ShopOnce' | 'PrivateQuarters' | 'OpsiShop' | 'OpsiVoucher'
+/** 服务端保存的背景记录：与前端 BackgroundPreference 同构，所有浏览器与访问地址共用一份。 */
+export interface ServerBackgroundPreference {
+  source: 'off' | 'url' | 'upload'
+  kind: 'image' | 'video'
+  urls: string[]
+  active: number
+  name: string
+  entry?: string
+}
+export type ServerBackgrounds = Partial<Record<'glass' | 'plain', ServerBackgroundPreference>>
+/** 背景图库条目：文件都放在服务器的 cache/background/library 下。 */
+export interface BackgroundGalleryEntry {
+  id: string
+  name: string
+  size: number
+  added: number
+  kind: 'image' | 'video'
+  source?: string
+}
+
 export interface Results {
+  'accounts.status': AccountStatus
+  'accounts.manage': AccountStatus
+  'background.resolve': {final_url: string; content_type: string}
+  'background.preference.get': ServerBackgrounds
+  'background.preference.set': ServerBackgrounds
+  'background.gallery.list': BackgroundGalleryEntry[]
+  'background.gallery.add': {entry: BackgroundGalleryEntry}
+  'background.gallery.remove': {removed: boolean}
+  'background.gallery.open': {path: string}
   'updater.status': UpdateStatus
   'updater.commits': CommitHistory
   'updater.fetch': {accepted: boolean}
@@ -101,4 +140,13 @@ export interface Results {
   'settings.patch': {updated: string[]}
   'startup.get': {enabled: boolean; remember: boolean}
   'startup.set': {enabled: boolean; remember: boolean}
+}
+
+export interface AccountStatus {
+  destroyed?: boolean
+  local_bound?: boolean
+  tpm_available?: boolean
+  initialized: boolean; enabled: boolean; unlocked: boolean; tpm_bound: boolean
+  profiles?: Array<{id: string; label: string; users: Array<{uid: string; name: string}>}>
+  selected?: string | null
 }

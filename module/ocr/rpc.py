@@ -31,7 +31,10 @@ class ModelProxy:
 
     @classmethod
     def _disconnect(cls):
-        """在持锁且属于客户端线程时释放连接；关闭异常不影响本地回退。"""
+        """在持锁且属于客户端线程时释放连接。
+
+        关闭异常不影响本地回退。
+        """
         client, cls.client = cls.client, None
         cls.online = False
         if client is not None:
@@ -46,6 +49,12 @@ class ModelProxy:
 
         zerorpc 的 gevent 客户端不能跨原生线程使用。其他线程或并发调用
         直接回退本地；非阻塞锁也避免同线程 greenlet 等待时互相阻塞。
+
+        Args:
+            address (str): OCR 服务器地址，形如 'ip:port'。默认 '127.0.0.1:22268'。
+
+        Returns:
+            bool: 连接成功返回 True，失败或跳过返回 False。
         """
         if not cls._connection_lock.acquire(blocking=False):
             return False
@@ -77,7 +86,11 @@ class ModelProxy:
 
     @classmethod
     def _ensure_client(cls):
-        """所有代理共用健康状态，冷却结束后由调用线程最多尝试一次重连。"""
+        """所有代理共用健康状态，冷却结束后由调用线程最多尝试一次重连。
+
+        Returns:
+            bool: 客户端当前是否可用。
+        """
         if cls._owner_thread not in (None, threading.get_native_id()):
             return False
         if cls.online and cls.client is not None:
@@ -89,7 +102,11 @@ class ModelProxy:
 
     @classmethod
     def close(cls):
-        """在客户端所属线程关闭连接，允许后续访问重新初始化。"""
+        """在客户端所属线程关闭连接，允许后续访问重新初始化。
+
+        Returns:
+            bool: 关闭成功返回 True，未获取到锁返回 False。
+        """
         if not cls._connection_lock.acquire(blocking=False):
             return False
         try:
@@ -104,7 +121,15 @@ class ModelProxy:
             cls._connection_lock.release()
 
     def _call(self, method, *args):
-        """统一远程调用、共享故障清理与本地回退，保留本地参数原貌。"""
+        """统一远程调用、共享故障清理与本地回退，保留本地参数原貌。
+
+        Args:
+            method (str): 调用的 OCR 方法名。
+            *args: 方法参数。
+
+        Returns:
+            Any: OCR 识别结果。
+        """
         cls = ModelProxy
         if cls._ensure_client() and cls._connection_lock.acquire(blocking=False):
             try:
@@ -272,7 +297,11 @@ def start_ocr_server(port=22268):
         """OCR RPC 服务端实现，继承 OcrModel 以复用模型加载逻辑。"""
 
         def hello(self):
-            """心跳检测，用于客户端验证服务器是否存活。"""
+            """心跳检测，用于客户端验证服务器是否存活。
+
+            Returns:
+                str: 固定返回 'hello'。
+            """
             return "hello"
 
         def ocr(self, lang, img_fp):

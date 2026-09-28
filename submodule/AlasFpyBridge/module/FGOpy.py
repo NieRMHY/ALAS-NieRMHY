@@ -28,10 +28,9 @@ class FGOpy(HeadlessCliApplication):
         self.tracebacking = False
         self.first_log = True
         self.log_pattern = re.compile(
-            r"((?:FGO-py@.*?\(.*?\)> )*)"
             r"\[(\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d,\d\d\d)\]"
             r"\[(DEBUG|INFO|WARNING|CRITICAL|ERROR)\]"
-            r"<([a-zA-Z0-9_.]+?)> "
+            r"<([a-zA-Z0-9_.]+)> "
             r"(.*)"
         )
         super().__init__(launch)
@@ -58,11 +57,20 @@ class FGOpy(HeadlessCliApplication):
                 self.tracebacking = False
             return
 
-        match = self.log_pattern.fullmatch(line)
+        # FGO-py 可能在正式日志前重复输出交互提示符。不要用嵌套通配正则
+        # 一次吞掉所有提示符：恶意/异常长输入会触发指数回溯。逐段线性剥离即可。
+        payload = line
+        while payload.startswith("FGO-py@"):
+            prompt_end = payload.find("> ")
+            if prompt_end < 0:
+                break
+            payload = payload[prompt_end + 2:]
+
+        match = self.log_pattern.fullmatch(payload)
         if match is None:
             logger.info(f": {line}")
             return
-        prompt, datetime, level, module, content = match.groups()
+        datetime, level, module, content = match.groups()
         getattr(logger, level.lower())(content)
         self.counter.get(content, lambda: None)()
 

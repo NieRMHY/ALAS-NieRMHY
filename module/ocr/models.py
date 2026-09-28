@@ -32,32 +32,58 @@ class OcrModel:
 
     @cached_property
     def azur_lane(self):
-        """碧蓝航线英文数字识别模型。用于游戏 UI 中的数字、等级、时间等。"""
+        """碧蓝航线英文数字识别模型。
+
+        用于游戏 UI 中的数字、等级、时间等。
+
+        Returns:
+            AlOcr: 英文数字识别模型实例。
+        """
         return AlOcr(name='azur_lane')
 
     @cached_property
     def azur_lane_jp(self):
-        """日文服务器专用识别模型。"""
+        """日文服务器专用识别模型。
+
+        Returns:
+            AlOcr: 日服专用英文数字识别模型实例。
+        """
         return AlOcr(name='azur_lane_jp')
 
     @cached_property
     def ppocr_v6(self):
-        """通用 PP-OCRv6 识别模型。"""
+        """通用 PP-OCRv6 识别模型。
+
+        Returns:
+            AlOcr: 通用识别模型实例。
+        """
         return AlOcr(name='ppocr_v6')
 
     @cached_property
     def cnocr(self):
-        """中文识别模型（中+英混合文本）。"""
+        """中文识别模型（中+英混合文本）。
+
+        Returns:
+            AlOcr: 中文识别模型实例。
+        """
         return AlOcr(name='cn')
 
     @cached_property
     def jp(self):
-        """日文识别模型。"""
+        """日文识别模型。
+
+        Returns:
+            AlOcr: 日文识别模型实例。
+        """
         return AlOcr(name='jp')
 
     @cached_property
     def tw(self):
-        """繁体中文识别模型。"""
+        """繁体中文识别模型。
+
+        Returns:
+            AlOcr: 繁体中文识别模型实例。
+        """
         return AlOcr(name='tw')
 
 

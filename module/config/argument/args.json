@@ -345,7 +345,8 @@
           "DroidCast",
           "DroidCast_raw",
           "nemu_ipc",
-          "ldopengl"
+          "ldopengl",
+          "azurpilot_android"
         ]
       },
       "ControlMethod": {
@@ -357,7 +358,8 @@
           "minitouch",
           "Hermit",
           "MaaTouch",
-          "nemu_ipc"
+          "nemu_ipc",
+          "azurpilot_android"
         ],
         "help": "nemu_ipc 需与截图方式配套使用（截图选 nemu_ipc 时启动会自动联动）。注意：nemu_ipc 触控走模拟器内部 RPC，低性能电脑上滑动易丢步、拖拽易变形，调用偶发挂死会丢失点击；滑动或拖拽异常时请改回 minitouch / MaaTouch。"
       },
@@ -488,6 +490,14 @@
         "type": "textarea",
         "value": "provider: null",
         "mode": "yaml"
+      },
+      "LowPushMode": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       },
       "ScreenshotLength": {
         "type": "input",
@@ -740,7 +750,77 @@
           "save"
         ]
       },
-      "OpsiRecord": {
+      "OpsiHazard1Leveling": {
+        "type": "select",
+        "value": "upload",
+        "option": [
+          "do_not",
+          "save",
+          "upload",
+          "save_and_upload"
+        ]
+      },
+      "OpsiMeowfficerFarming": {
+        "type": "select",
+        "value": "upload",
+        "option": [
+          "do_not",
+          "save",
+          "upload",
+          "save_and_upload"
+        ]
+      },
+      "OpsiDaily": {
+        "type": "select",
+        "value": "upload",
+        "option": [
+          "do_not",
+          "save",
+          "upload",
+          "save_and_upload"
+        ]
+      },
+      "OpsiObscure": {
+        "type": "select",
+        "value": "upload",
+        "option": [
+          "do_not",
+          "save",
+          "upload",
+          "save_and_upload"
+        ]
+      },
+      "OpsiAbyssal": {
+        "type": "select",
+        "value": "upload",
+        "option": [
+          "do_not",
+          "save",
+          "upload",
+          "save_and_upload"
+        ]
+      },
+      "OpsiStronghold": {
+        "type": "select",
+        "value": "upload",
+        "option": [
+          "do_not",
+          "save",
+          "upload",
+          "save_and_upload"
+        ]
+      },
+      "OpsiExplore": {
+        "type": "select",
+        "value": "upload",
+        "option": [
+          "do_not",
+          "save",
+          "upload",
+          "save_and_upload"
+        ]
+      },
+      "OpsiOther": {
         "type": "select",
         "value": "upload",
         "option": [
@@ -2746,7 +2826,6 @@
         "type": "select",
         "value": "campaign_main",
         "option": [
-          "event_20260813_cn",
           "event_20260908_cn"
         ],
         "option_cn": [
@@ -2759,10 +2838,9 @@
           "event_20260908_cn"
         ],
         "option_tw": [
-          "event_20260813_cn"
+          "event_20260908_cn"
         ],
         "option_bold": [
-          "event_20260813_cn",
           "event_20260908_cn"
         ]
       },
@@ -3293,7 +3371,6 @@
         "type": "select",
         "value": "campaign_main",
         "option": [
-          "event_20260813_cn",
           "event_20260908_cn"
         ],
         "option_cn": [
@@ -3306,10 +3383,9 @@
           "event_20260908_cn"
         ],
         "option_tw": [
-          "event_20260813_cn"
+          "event_20260908_cn"
         ],
         "option_bold": [
-          "event_20260813_cn",
           "event_20260908_cn"
         ]
       },
@@ -4288,7 +4364,6 @@
         "type": "select",
         "value": "campaign_main",
         "option": [
-          "event_20260813_cn",
           "event_20260908_cn"
         ],
         "option_cn": [
@@ -4301,10 +4376,9 @@
           "event_20260908_cn"
         ],
         "option_tw": [
-          "event_20260813_cn"
+          "event_20260908_cn"
         ],
         "option_bold": [
-          "event_20260813_cn",
           "event_20260908_cn"
         ]
       },
@@ -4771,7 +4845,6 @@
         "type": "select",
         "value": "campaign_main",
         "option": [
-          "event_20260813_cn",
           "event_20260908_cn"
         ],
         "option_cn": [
@@ -4784,10 +4857,9 @@
           "event_20260908_cn"
         ],
         "option_tw": [
-          "event_20260813_cn"
+          "event_20260908_cn"
         ],
         "option_bold": [
-          "event_20260813_cn",
           "event_20260908_cn"
         ]
       },
@@ -5254,7 +5326,6 @@
         "type": "select",
         "value": "campaign_main",
         "option": [
-          "event_20260813_cn",
           "event_20260908_cn"
         ],
         "option_cn": [
@@ -5267,10 +5338,9 @@
           "event_20260908_cn"
         ],
         "option_tw": [
-          "event_20260813_cn"
+          "event_20260908_cn"
         ],
         "option_bold": [
-          "event_20260813_cn",
           "event_20260908_cn"
         ]
       },
@@ -8173,7 +8243,6 @@
         "type": "select",
         "value": "campaign_main",
         "option": [
-          "event_20260813_cn",
           "event_20260908_cn"
         ],
         "option_cn": [
@@ -8186,10 +8255,9 @@
           "event_20260908_cn"
         ],
         "option_tw": [
-          "event_20260813_cn"
+          "event_20260908_cn"
         ],
         "option_bold": [
-          "event_20260813_cn",
           "event_20260908_cn"
         ]
       },
@@ -8647,7 +8715,6 @@
         "type": "select",
         "value": "campaign_main",
         "option": [
-          "event_20260813_cn",
           "event_20260908_cn"
         ],
         "option_cn": [
@@ -8660,10 +8727,9 @@
           "event_20260908_cn"
         ],
         "option_tw": [
-          "event_20260813_cn"
+          "event_20260908_cn"
         ],
         "option_bold": [
-          "event_20260813_cn",
           "event_20260908_cn"
         ]
       },
@@ -9121,7 +9187,6 @@
         "type": "select",
         "value": "campaign_main",
         "option": [
-          "event_20260813_cn",
           "event_20260908_cn"
         ],
         "option_cn": [
@@ -9134,10 +9199,9 @@
           "event_20260908_cn"
         ],
         "option_tw": [
-          "event_20260813_cn"
+          "event_20260908_cn"
         ],
         "option_bold": [
-          "event_20260813_cn",
           "event_20260908_cn"
         ]
       },
@@ -9595,7 +9659,6 @@
         "type": "select",
         "value": "campaign_main",
         "option": [
-          "event_20260813_cn",
           "event_20260908_cn"
         ],
         "option_cn": [
@@ -9608,10 +9671,9 @@
           "event_20260908_cn"
         ],
         "option_tw": [
-          "event_20260813_cn"
+          "event_20260908_cn"
         ],
         "option_bold": [
-          "event_20260813_cn",
           "event_20260908_cn"
         ]
       },
@@ -10059,7 +10121,6 @@
         "type": "select",
         "value": "campaign_main",
         "option": [
-          "event_20260813_cn",
           "event_20260908_cn"
         ],
         "option_cn": [
@@ -10072,10 +10133,9 @@
           "event_20260908_cn"
         ],
         "option_tw": [
-          "event_20260813_cn"
+          "event_20260908_cn"
         ],
         "option_bold": [
-          "event_20260813_cn",
           "event_20260908_cn"
         ]
       },
@@ -15376,6 +15436,34 @@
           "autumn",
           "winter"
         ]
+      },
+      "RefreshPlan": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "PlanVerifiedOnly": {
+        "type": "checkbox",
+        "value": true,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "PlanMineVerified": {
+        "type": "checkbox",
+        "value": true,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "PlanShelfSlots": {
+        "type": "input",
+        "value": 5
       }
     },
     "Storage": {
@@ -15488,6 +15576,24 @@
       "SeasonalThreshold": {
         "type": "input",
         "value": 7
+      },
+      "StockCheck": {
+        "type": "checkbox",
+        "value": true,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "ShopLevel": {
+        "type": "select",
+        "value": "diamond",
+        "option": [
+          "bronze",
+          "silver",
+          "gold",
+          "diamond"
+        ]
       }
     },
     "IslandBusinessShop1": {

@@ -10,7 +10,6 @@ WebUI 密码或由 WebUI 自动生成密码，启动器依旧免密。手动 ``g
 
 本模块只依赖标准库，便于独立单元测试。
 """
-
 import secrets
 import threading
 import time
@@ -26,7 +25,7 @@ _webui_key: str | None = None    #: 当前 WebUI 有效密码
 _tokens: dict[str, float] = {}   #: token -> 过期时间戳
 
 
-def configure(secret, webui_key):
+def configure(secret: str | None, webui_key: str | None):
     """WebUI 工厂启动时调用一次，登记信任密钥与当前有效 WebUI 密码。
 
     Args:
@@ -47,6 +46,9 @@ def _enabled_locked() -> bool:
 
     单独抽出以便 ``enabled()`` 与 ``issue_token()`` 共享同一判定，避免
     在已持锁时再次获取非重入锁导致死锁。
+
+    Returns:
+        bool: 免密可用返回 True，否则返回 False。
     """
     if not _secret:
         return False
@@ -54,13 +56,26 @@ def _enabled_locked() -> bool:
 
 
 def enabled() -> bool:
-    """免密通道是否可用：既由启动器拉起，又确实配置了 WebUI 密码。"""
+    """检查免密通道是否可用。
+
+    判定条件为既由启动器拉起，又确实配置了有效的 WebUI 密码。
+
+    Returns:
+        bool: 免密通道可用返回 True，否则返回 False。
+    """
     with _lock:
         return _enabled_locked()
 
 
-def check_secret(candidate) -> bool:
-    """常数时间比较候选密钥是否与信任密钥一致。"""
+def check_secret(candidate: str | None) -> bool:
+    """使用常数时间比较候选密钥是否与信任密钥一致。
+
+    Args:
+        candidate: 待校验的密钥字符串。
+
+    Returns:
+        bool: 匹配成功返回 True，否则返回 False。
+    """
     if candidate is None:
         return False
     with _lock:
@@ -70,8 +85,12 @@ def check_secret(candidate) -> bool:
     return secrets.compare_digest(str(candidate), secret)
 
 
-def issue_token():
-    """签发一次性免密令牌，未启用时返回 None。"""
+def issue_token() -> str | None:
+    """签发一次性免密令牌，未启用时返回 None。
+
+    Returns:
+        str | None: 生成的随机令牌字符串；未启用时返回 None。
+    """
     with _lock:
         if not _enabled_locked():
             return None
@@ -80,8 +99,15 @@ def issue_token():
         return token
 
 
-def validate_token(token) -> bool:
-    """校验令牌是否存在且未过期，过期令牌会被清理。"""
+def validate_token(token: str) -> bool:
+    """校验令牌是否存在且未过期，过期令牌会被自动清理。
+
+    Args:
+        token: 待验证的令牌字符串。
+
+    Returns:
+        bool: 令牌有效返回 True，否则返回 False。
+    """
     if not token:
         return False
     now = time.time()
@@ -95,12 +121,16 @@ def validate_token(token) -> bool:
     return True
 
 
-def webui_key():
-    """返回当前有效 WebUI 密码，供种子页写入 localStorage。"""
+def webui_key() -> str | None:
+    """返回当前有效 WebUI 密码，供种子页写入 localStorage。
+
+    Returns:
+        str | None: 当前 WebUI 密码。
+    """
     with _lock:
         return _webui_key
 
 
 def _reset():
-    """清空全部状态，仅用于单元测试。"""
+    """清空全部状态，仅供单元测试使用。"""
     configure(None, None)

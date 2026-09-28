@@ -1,3 +1,7 @@
+/**
+ * @fileoverview 开发者模式专属多语言文案字典。
+ */
+
 export const developerZhCN = {
   'developer.disabled': '开发者模式已关闭',
   'developer.pageTitle': '开发者 · 控件预览',

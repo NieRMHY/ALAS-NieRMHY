@@ -17,6 +17,7 @@ class SeaMilesOCR(Digit):
     识别范围 0-100000000，超出范围时返回 0。
     """
     def __init__(self):
+        """初始化海域里程识别器。"""
         super().__init__(
             buttons=MARITIME_SCHEDULE,
             lang='azur_lane',
@@ -27,6 +28,14 @@ class SeaMilesOCR(Digit):
         )
 
     def after_process(self, result):
+        """后处理校验里程数值范围。
+
+        Args:
+            result (str): 识别结果字符串。
+
+        Returns:
+            int: 校验后的里程数值，超出 0-100000000 时返回 0。
+        """
         result = super().after_process(result)
         if not (0 <= result <= 100000000):
             logger.warning(f"[大世界-里程] 异常的海域里程: {result}")

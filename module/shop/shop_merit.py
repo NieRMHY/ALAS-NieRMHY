@@ -19,12 +19,33 @@ class ShopItemGrid_250814(BaseShopItemGrid_250814):
 
     @staticmethod
     def predict_tag(image):
+        """识别商品角标状态（如未获得）。
+
+        Args:
+            image: 角标区域图像。
+
+        Returns:
+            str | None: 'unobtained' 表示未获得，无对应角标返回 None。
+        """
         color = cv2.mean(image)[:3]
         if color_similar(color, (255, 72, 72), threshold=50):
             return 'unobtained'
         return None
 
     def predict(self, image, name=True, amount=True, cost=False, price=False, tag=False):
+        """识别功勋商店网格中的商品并标记未拥有舰船。
+
+        Args:
+            image: 商店截图。
+            name: 是否识别名称。
+            amount: 是否识别数量。
+            cost: 是否识别货币类型。
+            price: 是否识别价格。
+            tag: 是否识别角标。
+
+        Returns:
+            list[ShopItem_250814]: 识别后的商品列表。
+        """
         items = super().predict(image, name, amount, cost, price, tag=True)
         for item in items:
             item.is_unobtained_ship = item.tag == 'unobtained' and item.price in self.SHIP_PRICES
@@ -94,6 +115,14 @@ class MeritShop_250814(ShopClerk, ShopUI, ShopStatus):
         return self._currency
 
     def shop_check_custom_item(self, item):
+        """检查商品是否为允许购买的未拥有舰船。
+
+        Args:
+            item: 待检查的商品对象。
+
+        Returns:
+            bool: 满足购买条件返回 True，否则返回 False。
+        """
         if not self.config.MeritShop_BuyUnobtainedShip:
             return False
         if not getattr(item, 'is_unobtained_ship', False):
@@ -101,7 +130,7 @@ class MeritShop_250814(ShopClerk, ShopUI, ShopStatus):
         if item.cost != 'Merit' or item.price > self._currency:
             return False
 
-        logger.info(f'Item {item} is considered to be an unobtained ship')
+        logger.info(f'商品 {item} 判定为未获得舰船')
         return True
 
     def run(self):

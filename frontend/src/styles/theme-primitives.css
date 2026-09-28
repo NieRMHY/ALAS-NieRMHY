@@ -13,15 +13,24 @@ input, select, textarea {
 input:focus, select:focus, textarea:focus {border-color: var(--theme-focus); box-shadow: 0 0 0 3px var(--theme-focus-ring)}
 button:focus-visible, a:focus-visible, summary:focus-visible {outline-color: var(--theme-focus)}
 
-.sidebar, .right-rail, .panel, .resource-card {
-  background: var(--theme-glass);
+/* 这四个面按区域分开取值：侧栏/右栏走侧栏区，面板与资源卡走一级面。
+   合成一条规则会让它们全部绑到一级面上（材质族里皮肤规则还压不过它）。 */
+.sidebar, .right-rail {
+  background: var(--theme-sidebar-bg);
   border-color: var(--theme-glass-edge);
   box-shadow: var(--theme-shadow-panel);
-  -webkit-backdrop-filter: var(--theme-material-filter, none);
-  backdrop-filter: var(--theme-material-filter, none);
+  -webkit-backdrop-filter: var(--theme-sidebar-filter, none);
+  backdrop-filter: var(--theme-sidebar-filter, none);
+}
+.panel, .resource-card {
+  background: var(--theme-surface-bg);
+  border-color: var(--theme-glass-edge);
+  box-shadow: var(--theme-shadow-panel);
+  -webkit-backdrop-filter: var(--theme-surface-filter, none);
+  backdrop-filter: var(--theme-surface-filter, none);
 }
 .sidebar {background: var(--theme-sidebar); border-radius: 0 var(--theme-radius-panel) var(--theme-radius-panel) 0}
-.right-rail {border-radius: 0 0 0 var(--theme-radius-panel); box-shadow: var(--theme-shadow-floating), var(--theme-shadow-panel)}
+.right-rail {border-radius: 0 0 0 var(--theme-radius-panel); border-top: 0 !important; box-shadow: var(--theme-shadow-floating)}
 .panel, .resource-card {border-radius: var(--theme-radius-panel)}
 .summary-metrics-panel .summary-metric-card,
 .summary-metrics-panel .summary-metrics section {
@@ -51,7 +60,7 @@ button:focus-visible, a:focus-visible, summary:focus-visible {outline-color: var
 .task-submenu-item:hover .task-submenu-dot, .task-submenu-item.active .task-submenu-dot {background: var(--theme-accent)}
 
 .task-submenu-flyout, .instance-menu {
-  background: var(--theme-nav-popover-bg);
+  background: var(--theme-menu-bg);
   border-color: var(--theme-nav-popover-edge);
   border-radius: var(--theme-radius-popover);
   box-shadow: var(--theme-nav-popover-shadow);
@@ -69,7 +78,7 @@ button:focus-visible, a:focus-visible, summary:focus-visible {outline-color: var
 .task-submenu-item.active .task-submenu-dot {box-shadow: none}
 .instance-menu button:hover, .instance-menu button:focus-visible, .instance-menu button[aria-checked='true'] {background: var(--theme-accent-soft); color: var(--theme-accent)}
 
-.topbar {border-color: var(--theme-glass-edge); box-shadow: var(--theme-glass-shadow)}
+.topbar {border-color: var(--theme-glass-edge); border-bottom: none !important; box-shadow: var(--theme-glass-shadow)}
 .connection-label, .eyebrow, .text-button, .data-table summary {color: var(--theme-accent)}
 .connection-banner {background: var(--theme-warning-soft); color: var(--theme-warning)}
 
@@ -90,6 +99,7 @@ button:focus-visible, a:focus-visible, summary:focus-visible {outline-color: var
 .monitor-segmented {background: var(--theme-segment-bg); border-color: var(--theme-segment-border)}
 .monitor-segmented .segmented-indicator {background: var(--theme-segment-indicator)}
 .monitor-segmented button {color: var(--theme-muted)}
+.statistics-edit-actions button[aria-pressed='true'] {background: var(--theme-segment-indicator); color: var(--theme-text)}
 .monitor-segmented button:hover, .monitor-segmented button[aria-selected='true'], [data-theme='dark'] .monitor-segmented button[aria-selected='true'] {color: var(--theme-text)}
 
 .page-title h1 {
@@ -127,7 +137,8 @@ button:focus-visible, a:focus-visible, summary:focus-visible {outline-color: var
 .lvl-warning {color: var(--theme-log-warning)}
 .lvl-error {color: var(--theme-log-error)}
 .lvl-critical {color: var(--theme-log-critical)}
-.log-ts, .hl-time {color: var(--theme-log-time)}
+.log-ts, .hl-time, .card-time, .stage-time {color: var(--theme-log-time)}
+.text-action {color: var(--theme-success)}
 .hl-bool-true {color: var(--theme-log-true)}
 .hl-bool-false {color: var(--theme-log-false)}
 .hl-none {color: var(--theme-log-null)}
@@ -138,7 +149,7 @@ button:focus-visible, a:focus-visible, summary:focus-visible {outline-color: var
 .error-box {color: var(--theme-danger); background: var(--theme-error-bg); border-color: var(--theme-error-border)}
 .toast {background: var(--theme-toast-bg); color: var(--theme-toast-text); box-shadow: var(--theme-shadow-popover)}
 .toast.error {background: var(--theme-toast-error-bg); color: var(--theme-on-accent)}
-.modal {background: var(--theme-surface); color: var(--theme-text); border-color: var(--theme-glass-edge); border-radius: var(--theme-radius-panel); box-shadow: var(--theme-shadow-modal)}
+.modal {background: var(--theme-modal-bg); color: var(--theme-text); border-color: var(--theme-glass-edge); border-radius: var(--theme-radius-panel); box-shadow: var(--theme-shadow-modal)}
 /* 弹窗只是小窗，遮罩要能让背后的页面仍然看得见：一律半透明且不模糊。 */
 .modal::backdrop {background: var(--theme-overlay, color-mix(in srgb, var(--bg) 30%, transparent)); backdrop-filter: none}
 
@@ -152,7 +163,8 @@ button:focus-visible, a:focus-visible, summary:focus-visible {outline-color: var
 .yaml-editor:focus-within {border-color: var(--theme-accent)}
 
 /* Secondary surfaces and queue hierarchy inherit theme colors instead of literals. */
-.scheduler-widget, .schedule-summary, .nav-search, .input-icon, .count-badge {background: var(--theme-surface-muted); border-color: var(--theme-border)}
+.scheduler-widget, .schedule-summary {background: var(--theme-surface-bg); border-color: var(--theme-border); -webkit-backdrop-filter: var(--theme-surface-filter); backdrop-filter: var(--theme-surface-filter)}
+.nav-search, .input-icon, .count-badge {background: var(--theme-control-bg); border-color: var(--theme-border); -webkit-backdrop-filter: var(--theme-control-filter); backdrop-filter: var(--theme-control-filter)}
 .group-nav {
   background: var(--theme-glass);
   border: 1px solid var(--theme-glass-edge);

@@ -307,6 +307,24 @@ class SocketApiTests(unittest.TestCase):
                 self.assertTrue(response['ok'])
                 updates.commits.assert_called_once_with(50, 50)
 
+    def test_background_preference_round_trip_over_websocket(self):
+        """背景记录经真实 WS 路由落盘：换个浏览器 / 换个访问地址，读到的就是同一份。"""
+        with tempfile.TemporaryDirectory() as folder:
+            with patch('module.api.background_service.PREFERENCE_FILE', Path(folder) / 'preference.json'):
+                with self.client.websocket_connect('/api/v1/ws') as ws:
+                    self.login(ws)
+                    self.assertEqual({}, self.call(ws, 'background.preference.get')['result'])
+                    stored = self.call(ws, 'background.preference.set', {
+                        'material': 'glass',
+                        'preference': {'source': 'upload', 'kind': 'image', 'urls': [], 'active': 0,
+                                       'name': '壁纸', 'entry': 'abc.jpg'},
+                    })
+                    self.assertEqual('upload', stored['result']['glass']['source'])
+                    self.assertEqual('abc.jpg', self.call(ws, 'background.preference.get')['result']['glass']['entry'])
+                    self.assertEqual('INVALID_PARAMS', self.call(
+                        ws, 'background.preference.set', {'material': 'metal', 'preference': {}},
+                    )['error']['code'])
+
     def test_untrusted_origin_is_rejected_before_upgrade(self):
         # Modify by MHY, Origin 校验已放宽为协议合法性（frp 反代 Host 改写场景），
         # 任意合法 http(s) Origin 放行、由密码鉴权层把关；恶意 Origin 不再断连

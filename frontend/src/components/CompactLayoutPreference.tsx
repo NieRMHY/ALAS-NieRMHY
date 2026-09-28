@@ -1,3 +1,7 @@
+/**
+ * @fileoverview 紧凑主题专属的布局与计划栏宽度偏好设置组件。
+ */
+
 import { COMPACT_RAIL_WIDTHS, type CompactRailSide, type CompactRailWidth } from '../app/theme'
 import { useApp } from '../app/context'
 import { Select } from './FormControls'

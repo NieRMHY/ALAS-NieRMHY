@@ -1,4 +1,9 @@
+/**
+ * @fileoverview 旧版侧边栏树状展开任务列表组件。
+ */
+
 import { useState } from 'react'
+import { MarqueeText } from './MarqueeText'
 import { NavLink, useLocation, useParams } from 'react-router-dom'
 import { Anchor, CalendarDays, ChevronDown, Compass, Gift, Palmtree, Search, Settings2, Ship, Sparkles, Swords, Wrench, type LucideIcon } from 'lucide-react'
 import { useApp } from '../app/context'
@@ -14,7 +19,7 @@ const groupIcons: Record<string, LucideIcon> = {
  * 展开状态只记「用户点开过的分组」；当前任务所在的分组始终展开，
  * 搜索时命中的分组也一律展开，清空搜索后回到用户自己的展开选择。
  */
-export function TaskNavTree({ defaultOpenKey }: { defaultOpenKey?: string } = {}) {
+export function TaskNavTree({ defaultOpenKey, onNavigate }: { defaultOpenKey?: string; onNavigate?: () => void } = {}) {
   const { schema, t, ui } = useApp()
   const { instance } = useParams()
   const location = useLocation()
@@ -83,7 +88,7 @@ export function TaskNavTree({ defaultOpenKey }: { defaultOpenKey?: string } = {}
                   aria-controls={`task-group-${key}`}
                 >
                   <GroupIcon size={18} className="task-group-icon" />
-                  <span className="task-group-title">{t(`Menu.${key}.name`)}</span>
+                  <MarqueeText className="task-group-title" text={t(`Menu.${key}.name`)}/>
                   <ChevronDown size={13} className="task-group-arrow" />
                 </button>
                 <div className={'task-submenu-list' + (isExpanded ? ' expanded' : '')} id={`task-group-${key}`}>
@@ -95,9 +100,10 @@ export function TaskNavTree({ defaultOpenKey }: { defaultOpenKey?: string } = {}
                         className={({ isActive }) =>
                           ['task-submenu-item', isActive && 'active'].filter(Boolean).join(' ')
                         }
+                        onClick={onNavigate}
                       >
                         <span className="task-submenu-dot" />
-                        <span className="task-submenu-item-text">{t(`Task.${task}.name`)}</span>
+                        <MarqueeText className="task-submenu-item-text" text={t(`Task.${task}.name`)}/>
                       </NavLink>
                     ))}
                   </div>

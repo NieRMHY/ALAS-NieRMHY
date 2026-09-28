@@ -191,6 +191,16 @@ class StatisticsTests(unittest.TestCase):
         self.assertEqual(15, values['出击消耗'])
         self.assertEqual(85, values['净行动力'])
 
+    def test_opsi_metrics_card_has_no_duplicate_table(self):
+        """收获只在卡片容器里出：卡片 / 表格两种呈现由前端布局切换，后端不另出同名表。"""
+        summary = {'total_battles': 5, 'akashi_encounters': 2, 'siren_research_devices': 1}
+        with patch('module.statistics.opsi_month.get_opsi_stats', return_value=SimpleNamespace(summary=lambda *_: summary)), \
+                patch('module.statistics.opsi_month.compute_monthly_cl1_akashi_ap', return_value=100), \
+                patch('module.statistics.cl1_database.db.get_meow_stats', return_value={}):
+            result = report(SimpleNamespace(path=lambda _: None), 'pilot', 'opsi', '2026-09', 7, 'month')
+        self.assertTrue(result['metrics'])
+        self.assertEqual(['短猫运行统计'], [item['title'] for item in result['tables']])
+
     def test_action_sources_and_commission_records_keep_time_and_scope(self):
         raw = {'ap_snapshots': [{'ts': '2026-09-01 12:00:00', 'ap': 0, 'asset': 50, 'distance': 100, 'source': 'cl1'}],
                'coins_snapshots': [{'ts': '2026-09-02 13:00:00', 'yellow_coins': 200, 'purple_coins': 5}]}
@@ -233,8 +243,10 @@ class StatisticsTests(unittest.TestCase):
                 patch('module.statistics.azurstats.AzurStats.get_meowofficer_farming') as refresh:
             configs = SimpleNamespace(path=lambda _: None)
             result = report(configs, 'pilot', 'loot', None, 7, 'month')
-            self.assertEqual(7, len(result['tables'][0]['columns']))
-            self.assertEqual(.25, result['tables'][0]['rows'][0][-1])
+            # 大世界掉落页里还多了收获明细与掉落记录两张表，按标题取短猫那张
+            meow = next(table for table in result['tables'] if table['title'] == '短猫掉落收益')
+            self.assertEqual(7, len(meow['columns']))
+            self.assertEqual(.25, meow['rows'][0][-1])
             self.assertTrue(refresh_loot(configs, 'pilot')['refreshed'])
             refresh.assert_called_once_with(instance='pilot')
 

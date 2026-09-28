@@ -1,6 +1,8 @@
 import { expect, test } from '@playwright/test'
 
 const serialSelector = '[id="Alas.Emulator.Serial"]'
+const serialStatus = '[id="Alas.Emulator.Serial-status"]'
+// 字段为草稿式提交：键入期间不写配置，失焦或回车才提交，故断言保存前先 blur。
 
 test('两个页面的旧快照均能保存，字段更新互不覆盖', async ({page, context}) => {
   const second = await context.newPage()
@@ -10,15 +12,22 @@ test('两个页面的旧快照均能保存，字段更新互不覆盖', async ({
   const threshold = second.locator('[id="Alas.Error.GameStuckThreshold"]')
   await expect(threshold).toBeVisible()
   await page.locator(serialSelector).fill('parallel-page-edit')
+  await page.locator(serialSelector).blur()
   // “已保存”提示会延迟出现并自动消失，不能把瞬时 UI 当作提交屏障；
   // 从另一页面重新读取服务端快照，才能真正证明旧快照的字段已经合并保存。
+  /* 切走再切回同一实例的任务页：组件重新挂载即重新向服务端取快照。 */
+  const reread = async (target: typeof page) => {
+    await target.evaluate(() => { location.hash = '#/i/testpilot/overview' })
+    await target.evaluate(() => { location.hash = '#/i/testpilot/task/Alas' })
+  }
   await expect.poll(async () => {
-    await second.reload()
+    await reread(second)
     return second.locator(serialSelector).inputValue()
   }).toBe('parallel-page-edit')
   await threshold.fill('7')
+  await threshold.blur()
   await expect.poll(async () => {
-    await page.reload()
+    await reread(page)
     return page.locator('[id="Alas.Error.GameStuckThreshold"]').inputValue()
   }).toBe('7')
   await expect(second.locator(serialSelector)).toHaveValue('parallel-page-edit')
@@ -44,8 +53,10 @@ test('旧响应延迟期间连续输入并切页，最终值继续保存', async
   await page.goto('/#/i/testpilot/task/Alas')
   const serial = page.locator(serialSelector)
   await serial.fill('first-in-flight')
+  await serial.blur()
   await expect.poll(() => !!release).toBe(true)
   await serial.fill('latest-user-input')
+  await serial.blur()
   await expect(serial).toHaveValue('latest-user-input')
   await page.locator('.breadcrumb .instance-caption').click()
   release!()
@@ -71,6 +82,7 @@ test('请求尚未送达就断线并刷新，恢复后自动保存原输入', as
   await page.goto('/#/i/testpilot/task/Alas')
   const serial = page.locator(serialSelector)
   await serial.fill('survives-disconnect-and-reload')
+  await serial.blur()
   await expect.poll(() => dropped).toBe(true)
   drop = false
   await page.reload()
@@ -80,34 +92,40 @@ test('请求尚未送达就断线并刷新，恢复后自动保存原输入', as
   await expect(serial).toHaveValue('survives-disconnect-and-reload')
 })
 
-test('非法数字、日期和 YAML 保留草稿，其他字段仍即时保存', async ({page}) => {
+test('非法数字、日期和 YAML 保留草稿，其他字段失焦后保存', async ({page}) => {
   await page.goto('/#/i/testpilot/task/Alas')
   const threshold = page.locator('[id="Alas.Error.GameStuckThreshold"]')
   await threshold.fill('-')
   await expect(threshold).toHaveValue('-')
+  await threshold.blur()
   await expect(threshold).toHaveAttribute('aria-invalid', 'true')
   const yaml = page.locator('[id="Alas.Error.OnePushConfig"]')
   await yaml.fill('provider: [')
   await expect(page.locator('[id="Alas.Error.OnePushConfig-status"]')).toContainText('YAML 格式不正确')
   await page.locator(serialSelector).fill('valid-despite-invalid-fields')
+  await page.locator(serialSelector).blur()
   await expect(page.locator(serialStatus)).toHaveText('已保存')
   await page.reload()
   await expect(threshold).toHaveValue('-')
   await expect(yaml).toHaveText('provider: [')
   await expect(page.locator(serialSelector)).toHaveValue('valid-despite-invalid-fields')
   await threshold.fill('3')
+  await threshold.blur()
   await yaml.fill('provider: null')
   await expect(page.locator('[id="Alas.Error.GameStuckThreshold-status"]')).toHaveText('已保存')
   await expect(page.locator('[id="Alas.Error.OnePushConfig-status"]')).toHaveText('已保存')
   await page.goto('/#/i/testpilot/task/Main')
   const date = page.locator('[id="Main.Scheduler.NextRun"]')
   await date.fill('2026-02-30 12:00:00')
+  await date.blur()
   await expect(page.locator('[id="Main.Scheduler.NextRun-status"]')).toContainText('日期格式')
   await expect(date).toHaveValue('2026-02-30 12:00:00')
   await date.fill('2099-01-01 12:00:00')
+  await date.blur()
   await expect(page.locator('[id="Main.Scheduler.NextRun-status"]')).toHaveText('已保存')
   // 清空时间要回落到参数默认值：它落在过去，调度器下一轮就把任务当作待运行。
   await date.fill('')
+  await date.blur()
   await expect(date).toHaveValue('2020-01-01 00:00:00')
   await expect(page.locator('[id="Main.Scheduler.NextRun-status"]')).toHaveText('已保存')
   await page.reload()
@@ -133,6 +151,7 @@ test('立刻运行按钮把调度时间改成可立即运行', async ({page}) =>
   const date = page.locator('[id="Main.Scheduler.NextRun"]')
   const status = page.locator('[id="Main.Scheduler.NextRun-status"]')
   await date.fill('2099-01-01 12:00:00')
+  await date.blur()
   await expect(status).toHaveText('已保存')
   // 按钮等同清空该字段：提交参数默认值，它落在过去，调度器下一轮即运行。
   await page.getByRole('button', {name: '立刻运行', exact: true}).click()
@@ -147,8 +166,10 @@ test('清空数字字段回落到参数默认值，不再提示格式错误', as
   const value = page.locator('[id="Main.Emotion.Fleet1Value"]')
   const status = page.locator('[id="Main.Emotion.Fleet1Value-status"]')
   await value.fill('95')
+  await value.blur()
   await expect(status).toHaveText('已保存')
   await value.fill('')
+  await value.blur()
   await expect(value).toHaveValue('119')
   await expect(status).toHaveText('已保存')
   await page.reload()

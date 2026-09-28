@@ -1,3 +1,7 @@
+/**
+ * @fileoverview 顶栏快速任务跳转下拉菜单组件。
+ */
+
 import { useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { Check, ChevronDown } from 'lucide-react'

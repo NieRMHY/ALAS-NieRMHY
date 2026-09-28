@@ -14,6 +14,16 @@ from module.secretary.slot import (
 
 @dataclass
 class SecretaryGroupInfo:
+    """秘书舰槽位分组信息数据类。
+
+    Attributes:
+        index (int): 槽位索引（0-4）。
+        name (str): 舰船名称。
+        level (int): 舰船等级。
+        favorability (int): 舰船好感度。
+        button (object): 槽位对应按钮。
+        is_main (bool): 是否为主秘书舰（索引为 0）。
+    """
     index: int
     name: str
     level: int
@@ -23,8 +33,10 @@ class SecretaryGroupInfo:
 
 
 class SecretaryGroupScanner:
+    """秘书舰组扫描器，用于识别 5 个秘书舰槽位的舰船信息。"""
 
     def __init__(self):
+        """初始化 5 个槽位的名称、等级和好感度 OCR 识别器。"""
         self.name_ocr = []
         self.level_ocr = []
         self.favorability_ocr = []
@@ -75,6 +87,14 @@ class SecretaryGroupScanner:
             )
 
     def scan(self, image):
+        """扫描当前界面的 5 个秘书舰槽位并解析出信息。
+
+        Args:
+            image (np.ndarray): 当前游戏截图。
+
+        Returns:
+            list[SecretaryGroupInfo]: 包含 5 个槽位信息的列表。
+        """
         ships = []
 
         for index in range(5):

@@ -86,14 +86,13 @@ class CampaignSos(CampaignRun, CampaignBase):
         return Digit([], letter=[132, 230, 115], threshold=136, name='OCR_SOS_CHAPTER')
 
     def _find_target_chapter(self, chapter):
-        """
-        find the target chapter search button or goto button.
+        """寻找目标章节的信号搜索或前往按钮。
 
         Args:
-            chapter (int): SOS target chapter
+            chapter (int): SOS 目标章节（3~10）。
 
         Returns:
-            Button: signal search button or goto button of the target chapter
+            Button | None: 找到的目标章节入口按钮，未找到返回 None。
         """
         signal_search_buttons = TEMPLATE_SIGNAL_SEARCH.match_multi(self.device.image)
         sos_goto_buttons = TEMPLATE_SIGNAL_GOTO.match_multi(self.device.image)
@@ -117,19 +116,19 @@ class CampaignSos(CampaignRun, CampaignBase):
 
     @Config.when(SERVER='en')
     def _sos_signal_select(self, chapter):
-        """
-        select a SOS signal
-        EN has no scroll bar, so the swipe signal list.
+        """选择指定章节的 SOS 信号（EN 服滑动实现）。
+
+        EN 服没有滚动条，通过拖拽手势上下滑动信号列表。
 
         Args:
-            chapter (int): 3 to 10.
+            chapter (int): 目标章节（3 到 10）。
+
+        Returns:
+            bool: 是否成功选中目标章节。
 
         Pages:
             in: page_campaign
-            out: page_campaign, in target chapter
-
-        Returns:
-            bool: whether select successful
+            out: page_campaign，位于目标章节
         """
         logger.hr(f'[SOS] 选择第 {chapter} 章信号 ')
         self.ui_click(SIGNAL_SEARCH_ENTER, appear_button=CAMPAIGN_CHECK, check_button=SIGNAL_LIST_CHECK,
@@ -142,29 +141,26 @@ class CampaignSos(CampaignRun, CampaignBase):
                 self._sos_signal_confirm(entrance=target_button)
                 return True
 
-            # backup = self.config.cover(DEVICE_CONTROL_METHOD='minitouch')
             p1, p2 = random_rectangle_vector(
                 (0, -200), box=detection_area, random_range=(-50, -50, 50, 50), padding=20)
             self.device.drag(p1, p2, segments=2, shake=(0, 25), point_random=(0, 0, 0, 0), shake_random=(0, -5, 0, 5))
-            # backup.recover()
             self.device.sleep((0.6, 1))
             self.device.screenshot()
         return False
 
     @Config.when(SERVER=None)
     def _sos_signal_select(self, chapter):
-        """
-        select a SOS signal
+        """选择指定章节的 SOS 信号（滚动条实现）。
 
         Args:
-            chapter (int): 3 to 10.
+            chapter (int): 目标章节（3 到 10）。
+
+        Returns:
+            bool: 是否成功选中目标章节。
 
         Pages:
             in: page_campaign
-            out: page_campaign, in target chapter
-
-        Returns:
-            bool: whether select successful
+            out: page_campaign，位于目标章节
         """
         logger.hr(f'[SOS] 选择第 {chapter} 章信号 ')
         self.ui_click(SIGNAL_SEARCH_ENTER, appear_button=CAMPAIGN_CHECK, check_button=SIGNAL_LIST_CHECK,
@@ -191,12 +187,11 @@ class CampaignSos(CampaignRun, CampaignBase):
         return False
 
     def _sos_signal_confirm(self, entrance, skip_first_screenshot=True):
-        """
-        Search a SOS signal, goto target chapter.
+        """搜索 SOS 信号并前往目标章节。
 
         Args:
-            entrance (Button): Entrance button.
-            skip_first_screenshot (bool):
+            entrance (Button): 入口按钮。
+            skip_first_screenshot (bool): 是否跳过首次截图。
 
         Pages:
             in: SIGNAL_SEARCH
@@ -217,20 +212,21 @@ class CampaignSos(CampaignRun, CampaignBase):
                 if TEMPLATE_SIGNAL_CONFIRM.match(image):
                     self.device.click(entrance)
 
-            # End
+            # 结束
             if self.appear(CAMPAIGN_CHECK, offset=(20, 20)):
                 break
 
     def run(self, name=None, folder='campaign_sos', mode='normal', total=1):
-        """
+        """运行 SOS 任务主循环。
+
         Args:
-            name (str): Default to None, because stages in SOS are dynamic.
-            folder (str): Default to 'campaign_sos'.
-            mode (str): Must be `normal` in SOS
-            total (int): Default to 1, because SOS stages can only run once.
+            name (str, optional): 关卡名称，SOS 关卡动态生成，默认为 None。
+            folder (str): 关卡资源目录，默认为 'campaign_sos'。
+            mode (str): 战斗模式，SOS 必须为 'normal'。
+            total (int): 运行总次数，SOS 关卡仅可通关一次，默认为 1。
 
         Pages:
-            in: Any page
+            in: 任意页面
             out: page_campaign
         """
         if self.config.SERVER in ['cn', 'en', 'jp']:

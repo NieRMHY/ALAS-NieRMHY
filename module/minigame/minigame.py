@@ -67,12 +67,17 @@ class MinigameRun(UI):
     """
 
     def minigame_run(self, skip_first_screenshot=True):
-        """
+        """执行单次小游戏的进入、选择、投币、游玩与退出流程。
+
+        Args:
+            skip_first_screenshot (bool): 是否跳过首次截图。
+
+        Returns:
+            bool: 成功投币并完成游玩返回 True，无法投币或跳过游玩返回 False。
+
         Pages:
-            in: page_game_room main_page
-            out: page_game_room main_page
-        Return:
-            False if unable or unnecessary to play
+            in: page_game_room 主页
+            out: page_game_room 主页
         """
         logger.hr('[小游戏] 运行', level=1)
 
@@ -83,22 +88,19 @@ class MinigameRun(UI):
                 skip_first_screenshot = False
             else:
                 self.device.screenshot()
-            # End
-            # both minigame main and minigame list has GOTO_CHOOSE_GAME
+            # 结束判断：列表界面出现
             if self.appear(GAME_ROOM_CHECK, offset=(5, 5)) and not self.appear(GOTO_CHOOSE_GAME, offset=(20, 20)):
                 if MINIGAME_SCROLL.appear(main=self):
                     break
-            # unable to get more ticket popup
+            # 处理无法获取更多游戏券等弹窗
             if self.deal_popup():
                 continue
             if self.appear_then_click(GOTO_CHOOSE_GAME, offset=(5, 5), interval=3):
-                # note: GOTO_CHOOSE_GAME is some where safe to click
-                # that won't enter any minigame on the minigame list page
                 continue
 
         logger.info("[小游戏] 选择小游戏")
         self.choose_game()
-        # try to add coins, if failed, skip play
+        # 尝试投币，失败则跳过游玩
         add_coin_result = self.use_coin()
         if add_coin_result:
             logger.hr("[小游戏] 游玩", level=2)
@@ -108,46 +110,72 @@ class MinigameRun(UI):
         return add_coin_result
 
     def deal_popup(self):
+        """处理可能出现的弹窗（代币已满、获得物品等）。
+
+        Returns:
+            bool: 成功处理了弹窗返回 True，需要重新截图。
         """
-            deal possible popups
-            need re-screenshot if return true
-        """
-        # specific
         if self.deal_specific_popup():
             return True
         if self.handle_popup_confirm('TICKETS_FULL'):
             self.interval_reset(COIN_POPUP, interval=3)
             return True
-        # coins more than 31, deal popup
+        # 代币超过 31 枚时处理弹窗
         if self.appear_then_click(COIN_POPUP, offset=(5, 5), interval=3):
             return True
-        # coins/tickets received
+        # 收到代币或游戏券
         if self.appear_then_click(GET_ITEMS_1, offset=(5, 5), interval=3):
             return True
         return False
 
     def deal_specific_popup(self):
+        """处理特定小游戏专有的弹窗，由子类重写。
+
+        Returns:
+            bool: 是否处理了弹窗。
+        """
         return False
 
     def choose_game(self, skip_first_screenshot=True):
-        """
+        """在游戏列表中选择目标小游戏，由子类实现。
+
+        Args:
+            skip_first_screenshot (bool): 是否跳过首次截图。
+
         Pages:
-            in: page_game_room choosing_game
-            out: page_game_room game_entrance
+            in: page_game_room 选游戏界面
+            out: page_game_room 游戏入口界面
         """
         pass
 
     def use_coin(self, skip_first_screenshot=True):
+        """投入代币准备游玩，由子类实现。
+
+        Args:
+            skip_first_screenshot (bool): 是否跳过首次截图。
+
+        Returns:
+            bool: 成功投币返回 True，否则返回 False。
+        """
         return False
 
     def play_game(self, skip_first_screenshot=True):
+        """执行小游戏的具体游玩操作，由子类实现。
+
+        Args:
+            skip_first_screenshot (bool): 是否跳过首次截图。
+        """
         pass
 
     def exit_game(self, skip_first_screenshot=True):
-        """
+        """退出当前小游戏返回至游戏室界面，由子类实现。
+
+        Args:
+            skip_first_screenshot (bool): 是否跳过首次截图。
+
         Pages:
-            in: page_game_room new_year_challenge_end
-            out: page_game_room choose_game
+            in: page_game_room 游戏结束界面
+            out: page_game_room 选游戏界面
         """
         pass
 
@@ -175,12 +203,17 @@ class Minigame(UI):
     """
 
     def get_coin_amount(self, skip_first_screenshot=True):
-        """
-        Pages:
-            in: page_game_room main_page
-            out: page_game_room main_page
+        """识别当前拥有的游戏代币数量。
+
+        Args:
+            skip_first_screenshot (bool): 是否跳过首次截图。
+
         Returns:
-            int: Coin amount
+            int: 代币数量（上限截断至 40）。
+
+        Pages:
+            in: page_game_room 主页
+            out: page_game_room 主页
         """
         if not skip_first_screenshot:
             self.device.screenshot()
@@ -190,10 +223,14 @@ class Minigame(UI):
         return amount
 
     def go_to_main_page(self, skip_first_screenshot=True):
-        """
+        """返回游戏室主界面。
+
+        Args:
+            skip_first_screenshot (bool): 是否跳过首次截图。
+
         Pages:
-            in: page_game_room main_page/choose_game_page
-            out: page_game_room main_page
+            in: page_game_room 主页或选游戏界面
+            out: page_game_room 主页
         """
         logger.info('[小游戏] 前往主页')
         while 1:
@@ -213,10 +250,17 @@ class Minigame(UI):
                 break
 
     def collect_coin(self, skip_first_screenshot=True):
-        """
+        """自动收集游戏室中生成的代币。
+
+        Args:
+            skip_first_screenshot (bool): 是否跳过首次截图。
+
+        Returns:
+            bool: 是否成功收集了代币。
+
         Pages:
-            in: page_game_room main_page/choose_game_page
-            out: page_game_room main_page
+            in: page_game_room 主页或选游戏界面
+            out: page_game_room 主页
         """
         coin_collected = False
         while 1:
@@ -228,12 +272,12 @@ class Minigame(UI):
                 continue
             if self.appear_then_click(COIN_POPUP, offset=(5, 5), interval=3):
                 continue
-            # game room and choose game have same header, go to game room first
+            # 游戏室与选游戏界面顶部相同，优先返回游戏室
             if self.appear(GAME_ROOM_CHECK, offset=(5, 5)) \
                     and not self.appear(GOTO_CHOOSE_GAME, offset=(5, 5)):
                 self.appear_then_click(BACK, offset=(5, 5), interval=3)
                 continue
-            # collect coins
+            # 收集代币
             if not coin_collected and self.appear(COIN, offset=(5, 5)):
                 self.appear_then_click(COIN, offset=(5, 5), interval=3)
                 coin_collected = True
@@ -243,15 +287,14 @@ class Minigame(UI):
         return coin_collected
 
     def run(self):
-        """
+        """运行小游戏日常自动化任务。
+
+        导航至学院游戏室，识别并收集代币，循环运行配置的小游戏直至代币耗尽。
+
         Pages:
-            in: Any page
+            in: 任意页面
             out: page_game_room
         """
-        # TEMP: 2026.02.18 separate self.ui_ensure(page_game_room) into 2 steps
-        # EN has different page_academy detection, to use ui_ensure(page_game_room),
-        # ui_goto must use `if self.ui_page_appear(page)` instead of `if self.appear(page.check_button)`
-        # But that would cause page_main/page_main_white clicking a static switch button
         self.ui_ensure(page_academy)
         # page_academy -> page_game_room
         for _ in self.loop():
@@ -260,17 +303,16 @@ class Minigame(UI):
             if self.ui_page_appear(page_academy, interval=5):
                 self.device.click(ACADEMY_GOTO_GAME_ROOM)
                 continue
-            # You've reached your monthly limit of Game Tickets, and will not be able to earn any more.
-            # Continue playing the minigame?
+            # 每月游戏券达到上限时弹窗处理
             if self.handle_popup_confirm('MINIGAME_ENTER'):
                 continue
 
-        # game room and choose game have same header, go to game room first
+        # 确保回到游戏室主界面
         self.go_to_main_page()
         coin_collected = False
         play_count = 0
 
-        # choose game
+        # 选择具体小游戏
         specific_game_name = "new_year_challenge"
         minigame_instance = None
         if specific_game_name == "new_year_challenge":
@@ -278,23 +320,23 @@ class Minigame(UI):
             minigame_instance = NewYearChallenge(config=self.config, device=self.device)
 
         while 1:
-            # play count limit
+            # 游玩次数上限控制
             if play_count >= 10:
                 break
-            # ocr to get coin count and ticket count
+            # OCR 获取代币数量
             coin_count = self.get_coin_amount()
             logger.info(f"[小游戏] 硬币数量: {coin_count}")
-            # collect coins
+            # 收集代币
             if coin_count <= 30 and not coin_collected:
                 coin_collected = True
                 if self.collect_coin():
                     continue
-            # no coin left
+            # 无代币剩余
             if coin_count == 0:
                 logger.info(f"[小游戏] 硬币数量: {coin_count}, 游玩结束")
                 break
             logger.info("[小游戏] 硬币数量 > 0，消费")
-            # specific game logic
+            # 具体小游戏逻辑
             if minigame_instance is not None and minigame_instance.minigame_run():
                 play_count += 1
                 continue

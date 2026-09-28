@@ -34,7 +34,7 @@ class MaritimeEscort(MapOperation, CampaignEvent):
         """处理关卡内状态，通过计时器避免重复检测。
 
         Returns:
-            True 表示确认在关卡内且计时器已到，可执行后续操作。
+            bool: 确认在关卡内且计时器已到返回 True，否则返回 False。
         """
         if self.is_in_escort():
             if self.in_stage_timer.reached():

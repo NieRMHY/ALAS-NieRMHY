@@ -1,3 +1,7 @@
+/**
+ * @fileoverview 配置实例管理页面，提供实例列表概览、导出、导入与删除。
+ */
+
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowRight, Download, FileJson, Plus, Trash2 } from 'lucide-react'

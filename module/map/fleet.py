@@ -64,6 +64,7 @@ class Fleet(SubmarineAdvanced, Camera, AmbushHandler):
 
     @property
     def fleet_1(self):
+        """获取第一舰队，若当前非第一舰队则确保切换。"""
         if self.fleet_current_index != 1:
             self.fleet_ensure(index=1)
         return self
@@ -74,6 +75,7 @@ class Fleet(SubmarineAdvanced, Camera, AmbushHandler):
 
     @property
     def fleet_2(self):
+        """获取第二舰队，若配置启用且当前非第二舰队则确保切换。"""
         if self.config.FLEET_2:
             if self.fleet_current_index != 2:
                 self.fleet_ensure(index=2)
@@ -85,6 +87,7 @@ class Fleet(SubmarineAdvanced, Camera, AmbushHandler):
 
     @property
     def fleet_submarine(self):
+        """获取潜艇舰队对象。"""
         return self
 
     @fleet_submarine.setter
@@ -93,6 +96,7 @@ class Fleet(SubmarineAdvanced, Camera, AmbushHandler):
 
     @property
     def fleet_current(self):
+        """获取当前活跃舰队的全局坐标。"""
         if self.fleet_current_index == 2:
             return self.fleet_2_location
         else:
@@ -107,6 +111,7 @@ class Fleet(SubmarineAdvanced, Camera, AmbushHandler):
 
     @property
     def fleet_boss(self):
+        """获取负责 Boss 战的舰队。"""
         if self.config.FLEET_BOSS == 2 and self.config.FLEET_2:
             return self.fleet_2
         else:
@@ -114,6 +119,7 @@ class Fleet(SubmarineAdvanced, Camera, AmbushHandler):
 
     @property
     def fleet_boss_index(self):
+        """获取负责 Boss 战的舰队编号（1 或 2）。"""
         if self.config.FLEET_BOSS == 2 and self.config.FLEET_2:
             return 2
         else:
@@ -121,6 +127,7 @@ class Fleet(SubmarineAdvanced, Camera, AmbushHandler):
 
     @property
     def fleet_step(self):
+        """获取当前舰队的单次回合步数上限。"""
         if not self.config.MAP_HAS_FLEET_STEP:
             return 0
         if self.fleet_current_index == 2:
@@ -135,6 +142,14 @@ class Fleet(SubmarineAdvanced, Camera, AmbushHandler):
                 return self.config.Fleet_Fleet1Step
 
     def fleet_ensure(self, index):
+        """确保切换到指定索引的舰队并更新相机与寻路数据。
+
+        Args:
+            index (int): 舰队索引（1 或 2）。
+
+        Returns:
+            bool: 是否成功切换并确认舰队。
+        """
         if self.fleet_set(index=index):
             self.camera = self.fleet_current
             self.update()
@@ -149,13 +164,19 @@ class Fleet(SubmarineAdvanced, Camera, AmbushHandler):
             return False
 
     def switch_to(self):
+        """切换舰队。"""
         pass
 
     round = 0
     enemy_round = {}
 
     def round_next(self):
-        """舰队到达后调用此方法。
+        """推进回合计数。
+
+        舰队到达目标格子后调用，更新可移动敌人与迷宫的回合。
+
+        Returns:
+            bool: 若地图无移动敌人或迷宫则返回 False。
         """
         if not self.config.MAP_HAS_MOVABLE_ENEMY and not self.config.MAP_HAS_MAZE:
             return False
@@ -163,7 +184,13 @@ class Fleet(SubmarineAdvanced, Camera, AmbushHandler):
         logger.info(f'[地图-回合] 回合: {self.round}, 敌方回合: {self.enemy_round}')
 
     def round_battle(self, after_battle=True):
-        """清除敌人后调用此方法。
+        """记录战斗后的敌方回合与新增可移动敌人数。
+
+        Args:
+            after_battle (bool, optional): 是否在战斗后调用。默认为 True。
+
+        Returns:
+            bool: 若地图无移动敌人则返回 False。
         """
         if not self.config.MAP_HAS_MOVABLE_ENEMY:
             return False
@@ -185,17 +212,16 @@ class Fleet(SubmarineAdvanced, Camera, AmbushHandler):
             self.enemy_round[r] = self.enemy_round.get(r, 0) + enemy
 
     def round_reset(self):
-        """进入地图后调用此方法。
-        """
+        """进入地图后重置回合计数与敌方回合记录。"""
         self.round = 0
         self.enemy_round = {}
 
     @property
     def round_enemy_turn(self):
-        """
+        """获取敌人移动的回合周期。
+
         Returns:
-            tuple[int]: 敌人移动回合数，即玩家移动 X 次后敌人移动一次。
-                        返回元组因为不同敌人可能有不同的 X 值。
+            tuple[int, ...]: 玩家移动若干次后敌人移动一次的周期元组。
         """
         if self.config.MAP_HAS_MOVABLE_ENEMY:
             if self.config.MAP_HAS_MOVABLE_NORMAL_ENEMY:
@@ -210,14 +236,15 @@ class Fleet(SubmarineAdvanced, Camera, AmbushHandler):
 
     @property
     def round_is_new(self):
-        """通常 MOVABLE_ENEMY_TURN = 2，即一个行走回合为 `玩家-玩家-敌人`，玩家移动两次，敌人移动一次。
+        """检测当前回合是否为新的敌方行动回合。
 
-        不同塞壬有不同的 MOVABLE_ENEMY_TURN：
-            2: 非塞壬精英, SIREN_CL
+        通常 MOVABLE_ENEMY_TURN = 2，即一个行动周期为玩家移动两次、敌人移动一次。
+        不同塞壬可能有不同的移动周期：
+            2: 非塞壬精英、SIREN_CL
             3: SIREN_CA
 
         Returns:
-            bool: 是否为新的行走回合（即敌人已移动）。
+            bool: 是否为新的行动回合（即敌人已移动）。
         """
         if not self.config.MAP_HAS_MOVABLE_ENEMY:
             return False
@@ -230,7 +257,8 @@ class Fleet(SubmarineAdvanced, Camera, AmbushHandler):
 
     @property
     def round_wait(self):
-        """
+        """获取等待敌人移动或机关变化的预估等待秒数。
+
         Returns:
             float: 等待敌人移动的秒数。
         """
@@ -257,21 +285,23 @@ class Fleet(SubmarineAdvanced, Camera, AmbushHandler):
 
     @property
     def round_maze_changed(self):
-        """
+        """检测迷宫墙壁是否在本轮开始时发生了变化。
+
         Returns:
-            bool: 迷宫是否在本轮开始时发生变化。
+            bool: 迷宫是否发生变化。
         """
         if not self.config.MAP_HAS_MAZE:
             return False
         return self.round != 0 and self.round % 3 == 0
 
     def maze_active_on(self, grid):
-        """
+        """判断指定格子上当前是否有迷宫墙壁阻挡。
+
         Args:
-            grid: 格子坐标。
+            grid (tuple | str | GridInfo): 网格坐标或对象。
 
         Returns:
-            bool: 迷宫墙壁是否在指定格子上。
+            bool: 迷宫墙壁是否在指定格子上激活。
         """
         if not self.config.MAP_HAS_MAZE:
             return False
@@ -290,12 +320,16 @@ class Fleet(SubmarineAdvanced, Camera, AmbushHandler):
         return (sight[0], 0, sight[2], sight[3])
 
     def _goto(self, location, expected=''):
-        """直接前往目标格子，并处理伏击、空袭、神秘事件、战斗。
+        """直接前往目标格子，并处理伏击、空袭、神秘事件与战斗。
 
         Args:
-            location (tuple, str, GridInfo): 目标格子。
-            expected (str): 目标格子上的预期结果，如 'combat'、'combat_siren'、'mystery'。
-                到达时结果不符将发出警告。
+            location (tuple | str | GridInfo): 目标网格坐标或对象。
+            expected (str, optional): 目标格子上的预期结果，如 'combat'、'combat_siren'、'mystery'。
+                到达时结果不符将发出警告。默认为 ''。
+
+        Raises:
+            MapWalkError: 步数耗尽或其他地图行走异常时抛出。
+            MapEnemyMoved: 检测到敌方移动或迷宫变化需要重新规划时抛出。
         """
         location = location_ensure(location)
         result_mystery = ''
@@ -321,7 +355,6 @@ class Fleet(SubmarineAdvanced, Camera, AmbushHandler):
 
             self.device.click(grid)
             arrived = False
-            # Wait to confirm fleet arrived. It does't appear immediately if fleet in combat.
             extra = 0
             if self.config.Submarine_Mode in ['hunt_only', 'hunt_and_boss'] or self.submarine_hunt_enabled:
                 extra += 4.5
@@ -511,13 +544,13 @@ class Fleet(SubmarineAdvanced, Camera, AmbushHandler):
                 raise MapEnemyMoved
 
     def goto(self, location, expected='', step_optimize=None, turning_optimize=None):
-        """
+        """规划完整路径并依次移动到目标格子。
+
         Args:
-            location (tuple, str, GridInfo): 目标格子。
-            expected (str): 目标格子上的预期结果，如 'combat'、'combat_siren'、'mystery'。
-                到达时结果不符将发出警告。
-            step_optimize (bool): 为 True 时按舰队步数行走。
-            turning_optimize (bool): 为 True 时优化路线以减少伏击。
+            location (tuple | str | GridInfo): 目标网格坐标或对象。
+            expected (str, optional): 最终目标格子上的预期结果，如 'combat'、'combat_siren'、'mystery'。默认为 ''。
+            step_optimize (bool, optional): 为 True 时按舰队步数行走。为 None 时读取配置。默认为 None。
+            turning_optimize (bool, optional): 为 True 时优化路线以减少伏击。为 None 时读取配置。默认为 None。
         """
         location = location_ensure(location)
         if step_optimize is None:
@@ -553,7 +586,47 @@ class Fleet(SubmarineAdvanced, Camera, AmbushHandler):
             self._goto(location, expected=expected)
 
     def find_path_initial(self):
-        """舰队移动或进入地图后调用此方法。
+        """初始化多舰队寻路图与通行代价。
+
+        在舰队移动或进入地图后调用。
+        """
+        location = location_ensure(location)
+        if step_optimize is None:
+            step_optimize = self.config.MAP_HAS_FLEET_STEP
+            if self.config.MAP_HAS_PORTAL or self.config.MAP_HAS_MAZE:
+                step_optimize = True
+        if turning_optimize is None:
+            turning_optimize = self.config.MAP_HAS_AMBUSH
+
+        # self.device.sleep(1000)
+        if step_optimize or turning_optimize:
+            step = self.fleet_step if step_optimize else 0
+            nodes = self.map.find_path(location, step=step, turning_optimize=turning_optimize)
+            for node in nodes:
+                if self.maze_active_on(node):
+                    logger.info(f'[地图-机关] 迷宫激活于 {location2node(node)}，弹跳等待')
+                    for _ in range(10):
+                        grids = self.map[node].maze_nearby.delete(self.map.select(is_fleet=True))
+                        if grids.select(is_enemy=False):
+                            grids = grids.select(is_enemy=False)
+                        grids = grids.sort('cost')
+                        self._goto(grids[0], expected='')
+                try:
+                    self._goto(node, expected=expected if node == nodes[-1] else '')
+                except MapWalkError:
+                    logger.warning('[地图-移动] 地图移动错误')
+                    self.predict()
+                    self.ensure_edge_insight()
+                    nodes_ = self.map.find_path(node, step=1, turning_optimize=False)
+                    for node_ in nodes_:
+                        self._goto(node_, expected=expected if node == nodes[-1] else '')
+        else:
+            self._goto(location, expected=expected)
+
+    def find_path_initial(self):
+        """初始化多舰队寻路图与通行代价。
+
+        在舰队移动或进入地图后调用。
         """
         if self.fleet_1_location:
             self.map[self.fleet_1_location].is_fleet = True
@@ -571,6 +644,7 @@ class Fleet(SubmarineAdvanced, Camera, AmbushHandler):
             location_dict, current=self.fleet_current, has_ambush=self.config.MAP_HAS_AMBUSH)
 
     def show_fleet(self):
+        """在日志中显示各舰队当前所在节点坐标。"""
         fleets = []
         for n in [1, 2]:
             fleet = self.__getattribute__('fleet_%s_location' % n)
@@ -582,9 +656,17 @@ class Fleet(SubmarineAdvanced, Camera, AmbushHandler):
         logger.info('[地图-舰队] ' + ' '.join(fleets))
 
     def show_submarine(self):
+        """在日志中显示潜艇当前所在节点坐标。"""
         logger.info(f'[地图-潜艇] 潜艇位置: {location2node(self.fleet_submarine_location)}')
 
     def full_scan(self, queue=None, must_scan=None, mode='normal'):
+        """执行全图扫描以识别地图元素。
+
+        Args:
+            queue (SelectedGrids, optional): 需扫描的网格集合。默认为 None。
+            must_scan (SelectedGrids, optional): 必须扫描的网格集合。默认为 None。
+            mode (str, optional): 扫描模式，如 'normal'、'init'、'decoy'。默认为 'normal'。
+        """
         if self.config.MAP_HAS_DECOY_ENEMY and mode == 'normal':
             mode = 'decoy'
         super().full_scan(
@@ -607,19 +689,18 @@ class Fleet(SubmarineAdvanced, Camera, AmbushHandler):
                     self.map[loca].wipe_out()
 
     def full_scan_carrier(self):
-        """在神秘事件中获得敌人搜索时调用此方法。
-        """
+        """扫描航母敌人出生点。在神秘事件中获得侦察支援时调用。"""
         prev = self.map.select(is_enemy=True)
         self.full_scan(mode='carrier')
         diff = self.map.select(is_enemy=True).delete(prev)
         logger.info(f'[地图-舰队] 航母出生点: {diff}')
 
     def full_scan_movable(self, enemy_cleared=True):
-        """敌人移动后调用此方法。
+        """可移动敌人行动后执行扫描并更新追踪。
 
         Args:
-            enemy_cleared (bool): 为 True 表示已清除敌人且需要扫描新生成的敌人。
-                                  为 False 表示只是简单行走，仅需扫描可移动的敌人。
+            enemy_cleared (bool, optional): 为 True 表示已清除敌人且需扫描新生成的敌人；
+                为 False 表示单纯行走，仅需扫描可移动敌人。默认为 True。
         """
         if self.config.MAP_HAS_MOVABLE_NORMAL_ENEMY:
             if self.config.MAP_HAS_MOVABLE_ENEMY:
@@ -647,11 +728,10 @@ class Fleet(SubmarineAdvanced, Camera, AmbushHandler):
         """追踪敌人移动并预测缺失的敌人。
 
         Args:
-            enemy_cleared (bool): 为 True 表示已清除敌人且需要扫描新生成的敌人。
-                                  为 False 表示只是简单行走，仅需扫描可移动的敌人。
-            siren (bool): 为 True 时追踪塞壬，为 False 时追踪普通敌人。
+            enemy_cleared (bool, optional): 为 True 表示已清除敌人且需扫描新生成的敌人。默认为 True。
+            siren (bool, optional): 为 True 时追踪塞壬，为 False 时追踪普通敌人。默认为 True。
         """
-        # Track siren moving
+        # 追踪塞壬移动
         before = self.movable_before if siren else self.movable_before_normal
         after = self.map.select(is_siren=True) if siren else self.map.select(is_enemy=True)
         step = self.config.MOVABLE_ENEMY_FLEET_STEP if siren else 1
@@ -744,6 +824,7 @@ class Fleet(SubmarineAdvanced, Camera, AmbushHandler):
                 grid.is_movable = True
 
     def find_all_fleets(self):
+        """遍历出生点查找所有舰队的真实位置。"""
         logger.hr('查找所有舰队')
         queue = self.map.select(is_spawn_point=True)
         while queue:
@@ -758,6 +839,11 @@ class Fleet(SubmarineAdvanced, Camera, AmbushHandler):
             queue = queue[1:]
 
     def find_current_fleet(self):
+        """检测并确认当前可操作舰队及第二舰队的位置。
+
+        Returns:
+            tuple: 当前舰队的全局网格坐标。
+        """
         logger.hr('查找当前舰队')
         if not self.config.POOR_MAP_DATA:
             fleets = self.map.select(is_fleet=True, is_spawn_point=True)
@@ -822,6 +908,7 @@ class Fleet(SubmarineAdvanced, Camera, AmbushHandler):
         return self.fleet_current
 
     def find_all_submarines(self):
+        """遍历潜艇出生点查找潜艇真实位置。"""
         logger.hr('查找所有潜艇')
         queue = self.map.select(is_submarine_spawn_point=True)
         while queue:
@@ -834,6 +921,11 @@ class Fleet(SubmarineAdvanced, Camera, AmbushHandler):
             queue = queue[1:]
 
     def find_submarine(self):
+        """定位潜艇所在坐标。
+
+        Returns:
+            tuple | bool: 潜艇所在坐标；若未配置或未找到则返回 False。
+        """
         if not (self.config.SUBMARINE and self.map.select(is_submarine_spawn_point=True)):
             return False
 
@@ -931,11 +1023,10 @@ class Fleet(SubmarineAdvanced, Camera, AmbushHandler):
         switched = self.handle_fleet_reverse()
         if not switched:
             switched = self.fleet_set(index=1)
-        # infobar might cover bottom edge, causing retries in ensure_edge_insight
-        # if map surface is dark and fleet spawn point is near bottom edge,
-        # MAP_FLEET_REVERSE_WAIT_INFO_BAR to prevent that happens
+        # 信息栏可能遮挡底部边缘导致 ensure_edge_insight 反复重试
+        # 地图偏暗且舰队出生点接近底边时，等待信息栏消失以防止此问题
         if switched and self.config.MAP_FLEET_REVERSE_WAIT_INFO_BAR:
-            # info bar might not appear immediately, use ensure_no_info_bar to wait until appear with timeout
+            # 信息栏可能不会立即出现，使用超时等待其出现后消失
             self.ensure_no_info_bar()
         self.handle_strategy(index=self.fleet_show_index)
         self.hp_reset()
@@ -953,6 +1044,11 @@ class Fleet(SubmarineAdvanced, Camera, AmbushHandler):
         self.round_battle(after_battle=False)
 
     def handle_clear_mode_config_cover(self):
+        """处理周回模式（通关模式）下的地图配置覆盖。
+
+        Returns:
+            bool: 是否应用了周回模式覆盖。
+        """
         if not self.map_is_clear_mode:
             return False
 
@@ -964,6 +1060,14 @@ class Fleet(SubmarineAdvanced, Camera, AmbushHandler):
         return True
 
     def _expected_end(self, expected):
+        """根据当前战斗序号与预期结果计算战斗预期结束画面。
+
+        Args:
+            expected (str): 预期事件类型。
+
+        Returns:
+            str | None: 预期的战斗结算画面类型。
+        """
         for data in self.map.spawn_data:
             if data.get('battle') == self.battle_count and 'boss' in expected:
                 return 'in_stage'
@@ -981,14 +1085,21 @@ class Fleet(SubmarineAdvanced, Camera, AmbushHandler):
             if data.get('battle') == self.battle_count + 1:
                 matched = True
         if not len(self.map.spawn_data) or matched:
-            # No spawn_data
-            # spawn_data is not continuous, some battles are missing
+            # 无刷新数据，或刷新数据不连续
             return None
         else:
-            # Out of the spawn_data, nothing will spawn
+            # 超出刷新数据范围，不再有新敌人刷新
             return 'no_searching'
 
     def _submarine_mode(self, expected):
+        """根据战斗预期确定潜艇召唤模式。
+
+        Args:
+            expected (str): 预期事件类型。
+
+        Returns:
+            str | None: 潜艇模式名称。
+        """
         if self.config.Submarine_Mode == 'advanced':
             state = self.submarine_advanced
             if state is not None and state.plan is not None and state.plan.mode == 'call' and not state.consumed:
@@ -1003,10 +1114,11 @@ class Fleet(SubmarineAdvanced, Camera, AmbushHandler):
             return None
 
     def fleet_at(self, grid, fleet=None):
-        """
+        """判断指定舰队是否位于指定格子上。
+
         Args:
             grid (Grid): 格子对象。
-            fleet (int): 舰队编号，1 或 2。
+            fleet (int, optional): 舰队编号（1 或 2），为 None 时代表当前舰队。默认为 None。
 
         Returns:
             bool: 舰队是否在指定格子上。
@@ -1019,10 +1131,11 @@ class Fleet(SubmarineAdvanced, Camera, AmbushHandler):
             return self.fleet_2_location == grid.location
 
     def check_accessibility(self, grid, fleet=None):
-        """
+        """检查指定网格对指定舰队的可达性。
+
         Args:
             grid (Grid): 格子对象。
-            fleet (int, str): 舰队编号，1、2 或 'boss'。
+            fleet (int | str, optional): 舰队编号，1、2 或 'boss'。默认为 None 代表当前舰队。
 
         Returns:
             bool: 是否可达。
@@ -1047,13 +1160,14 @@ class Fleet(SubmarineAdvanced, Camera, AmbushHandler):
             return result
 
     def brute_find_roadblocks(self, grid, fleet=None):
-        """
+        """穷举查找阻挡前往目标格子的敌人路障。
+
         Args:
             grid (Grid): 目标格子。
-            fleet (int): 1 或 2，默认为当前舰队。
+            fleet (int, optional): 舰队编号（1 或 2），默认为当前舰队。默认为 None。
 
         Returns:
-            SelectedGrids: 路障格子集合。
+            SelectedGrids: 构成路障的敌舰格子集合。
         """
         if fleet is not None and fleet != self.fleet_current_index:
             backup = self.fleet_current_index
@@ -1089,9 +1203,13 @@ class Fleet(SubmarineAdvanced, Camera, AmbushHandler):
         logger.warning('[地图-路障] 敌舰路障尝试耗尽')
 
     def catch_camera_repositioning(self, destination):
-        """
+        """检测战斗后是否因 Boss 刷新触发了相机重定位。
+
         Args:
-            destination (GridInfo): 全局地图格子。
+            destination (GridInfo): 全局地图格子对象。
+
+        Returns:
+            bool: 是否触发了相机重定位。
         """
         appear = False
         for data in self.map.spawn_data:
@@ -1099,26 +1217,13 @@ class Fleet(SubmarineAdvanced, Camera, AmbushHandler):
                 logger.info('[地图-摄像机] Boss出现后摄像机重新定位')
                 appear = True
 
-        # if self.config.POOR_MAP_DATA:
-        #     self.device.screenshot()
-        #     grids = Grids(self.device.image, config=self.config)
-        #     grids.predict()
-        #     grids.show()
-        #     for grid in grids:
-        #         if grid.is_boss:
-        #             logger.info('[地图-摄像机] Boss出现后摄像机重新定位')
-        #             appear = True
-        #             for g in self.map:
-        #                 g.wipe_out()
-        #             break
-
         return appear
 
     def handle_boss_appear_refocus(self, preset=None):
-        """Boss 出现后重新聚焦到之前的相机位置。
+        """Boss 出现后重新校准并将相机聚焦回之前位置。
 
         Args:
-            preset (tuple): 预设的滑动偏移量 (x, y)。
+            preset (tuple, optional): 预设的滑动偏移量 (x, y)。默认为 None。
         """
         camera = self.camera
         if preset is None:
@@ -1129,7 +1234,7 @@ class Fleet(SubmarineAdvanced, Camera, AmbushHandler):
                 self.update()
             except MapDetectionError:
                 logger.info(f'[地图-摄像机] Boss出现后发生地图检测错误，尝试滑动预设 {preset}')
-                # Swipe optimize here may not be accurate.
+                # 此处滑动优化可能不准确
                 self.map_swipe(preset)
             self.ensure_edge_insight()
         else:
@@ -1140,15 +1245,16 @@ class Fleet(SubmarineAdvanced, Camera, AmbushHandler):
         self.focus_to(camera)
 
     def fleet_checked_reset(self):
+        """重置舰队阵型检查标记。"""
         self.map_fleet_checked = False
         self.fleet_1_formation_fixed = False
         self.fleet_2_formation_fixed = False
 
     def _submarine_goto(self, location):
-        """移动潜艇到指定位置。
+        """底层潜艇移动操作。
 
         Args:
-            location (tuple, str, GridInfo): 目标位置。
+            location (tuple | str | GridInfo): 目标位置。
 
         Returns:
             bool: 潜艇是否移动了。
@@ -1167,17 +1273,16 @@ class Fleet(SubmarineAdvanced, Camera, AmbushHandler):
 
             self.device.click(grid)
             arrived = False
-            # Usually no need to wait
             # 通常不需要等待
             arrive_timer = Timer(0.1, count=0)
-            # 如果没有事件发生，重新点击。
+            # 如果没有事件发生，重新点击
             walk_timeout = Timer(2, count=6).start()
 
             while 1:
                 self.device.screenshot()
                 self.view.update(image=self.device.image)
 
-                # Arrive
+                # 到达判定
                 arrive_checker = grid.predict_submarine_move()
                 if grid.predict_submarine() or (walk_timeout.reached() and grid.predict_fleet()):
                     arrive_checker = True
@@ -1194,14 +1299,14 @@ class Fleet(SubmarineAdvanced, Camera, AmbushHandler):
                     arrived = True
                     break
 
-                # End
+                # 结束判定
                 if walk_timeout.reached():
                     logger.warning('[地图-移动] 移动超时，重试中')
                     self.predict()
                     self.ensure_edge_insight(skip_first_update=False)
                     break
 
-            # End
+            # 结束
             if arrived:
                 break
 
@@ -1211,7 +1316,7 @@ class Fleet(SubmarineAdvanced, Camera, AmbushHandler):
         """打开策略面板，移动潜艇到指定位置，关闭策略面板。
 
         Args:
-            location (tuple, str, GridInfo): 目标位置。
+            location (tuple | str | GridInfo): 目标位置。
 
         Returns:
             bool: 潜艇是否移动了。
@@ -1239,11 +1344,52 @@ class Fleet(SubmarineAdvanced, Camera, AmbushHandler):
         """将潜艇移动到 Boss 附近。
 
         Args:
-            boss (tuple, str, GridInfo): Boss 目标位置。
+            boss (tuple | str | GridInfo): Boss 目标位置。
 
         Returns:
             bool: 潜艇是否移动了。
         """
+        if not (self.is_call_submarine_at_boss and self.map.select(is_submarine_spawn_point=True)):
+            return False
+        if self.config.Submarine_DistanceToBoss == 'use_open_ocean_support':
+            logger.info('[地图-潜艇] 将使用远洋支援，跳过移动潜艇')
+            return False
+
+        boss = location_ensure(boss)
+        logger.info(f'[地图-潜艇] 移动潜艇到 {location2node(boss)} 附近')
+
+        self.map.find_path_initial(self.fleet_submarine_location, has_ambush=False, has_enemy=False)
+        self.map.show_cost()
+
+        def get_location(distance=2):
+            grids = self.map.select(is_land=False).filter(
+                lambda grid: np.sum(np.abs(np.subtract(grid.location, boss))) <= distance)
+            if grids:
+                return grids.sort('cost')[0].location
+            elif distance > 0:
+                logger.info(f'[地图-潜艇] 无法在距离 {distance} 内找到Boss附近格子，回退到 {distance - 1}')
+                return get_location(distance - 1)
+            else:
+                logger.warning(f'[地图-潜艇] 无法在距离 {distance} 内找到Boss附近格子，返回Boss位置')
+                return boss
+
+        distance_dict = {
+            'to_boss_position': 0,
+            '1_grid_to_boss': 1,
+            '2_grid_to_boss': 2
+        }
+        distance_to_boss = distance_dict.get(self.config.Submarine_DistanceToBoss, 0)
+        logger.attr('距Boss距离', distance_to_boss)
+
+        if np.sum(np.abs(np.subtract(self.fleet_submarine_location, boss))) <= distance_to_boss:
+            logger.info('[地图-潜艇] Boss已在狩猎区域内')
+            self.find_path_initial()
+            return False
+        else:
+            near = get_location(distance_to_boss)
+            self.find_path_initial()
+            logger.info(f'[地图-潜艇] 移动潜艇到 {location2node(near)}')
+            return self.submarine_goto(near)
         if not (self.is_call_submarine_at_boss and self.map.select(is_submarine_spawn_point=True)):
             return False
         if self.config.Submarine_DistanceToBoss == 'use_open_ocean_support':

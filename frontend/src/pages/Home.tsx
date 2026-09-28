@@ -1,3 +1,7 @@
+/**
+ * @fileoverview 主页仪表盘与实例列表导航卡片视图。
+ */
+
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowRight, ExternalLink, History, Plus, Server } from 'lucide-react'
@@ -47,6 +51,7 @@ export function Home() {
             <img src="alas-icon.png" alt="ALAS" width={42} height={42} decoding="async"/>
             <span className="home-essex-title">ESSEX Secretary</span>
           </div>
+          <p className="home-deck-eyebrow">{ui('home.commandCenter')}</p>
           <h1 className="home-deck-greeting">{getGreeting(ui)}</h1>
           <p className="home-deck-subtitle">{ui('home.subtitle')}</p>
         </div>

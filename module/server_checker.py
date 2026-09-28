@@ -26,9 +26,18 @@ class ServerApiUnavailableError(requests.exceptions.ConnectionError):
 
 
 class ServerChecker:
-    """游戏服务器状态检查器。"""
+    """游戏服务器状态检查器。
+
+    负责在任务调度前查询服务器运行状态，避免在维护期间进行无效操作。
+    支持公共 API 查询及游戏网关直连后备查询。
+    """
 
     def __init__(self, server: str) -> None:
+        """初始化服务器检查器。
+
+        Args:
+            server (str): 服务器标识名称（如 'disabled' 或具体服务器名称）。
+        """
         self._base = SERVER_API_BASE
         self._server_info: ServerInfo | None = None
         if server == 'disabled':
@@ -45,12 +54,15 @@ class ServerChecker:
         self.check_now()
 
     def _load_server(self) -> None:
-        """
-        通过 API 获取当前服务器状态。
+        """通过 API 获取当前服务器状态。
 
         公共 API 暂时不可用时，改为直连游戏网关。两种来源均无法取得状态
         才会走既有的快速重试；响应结构错误和非预期客户端错误仍会抛出
         ``ScriptError``，由顶层临时禁用检测器。
+
+        Raises:
+            ScriptError: 服务器不存在、返回结构无效或 API 协议不匹配时抛出。
+            ServerApiUnavailableError: API 暂时不可用时抛出。
         """
         if self._server == 'disabled':
             self._state.append(True)
@@ -110,7 +122,14 @@ class ServerChecker:
             raise
 
     def _load_response(self, payload: object) -> None:
-        """校验单服响应并记录可用状态。"""
+        """校验单服响应并记录可用状态。
+
+        Args:
+            payload (object): API 返回的 JSON 字典数据。
+
+        Raises:
+            ScriptError: 字段缺失、类型错误或状态未知时抛出。
+        """
         if not isinstance(payload, dict):
             raise ScriptError('服务器检查 API 返回结构无效。')
 
@@ -148,6 +167,9 @@ class ServerChecker:
 
         返回 ``True`` 说明已取得并记录服务器状态。网关失败只作为公共 API
         故障的后备失败处理，交由调用方进入原有的快速重试与退避流程。
+
+        Returns:
+            bool: 成功从游戏网关获取并记录状态返回 True，失败返回 False。
         """
         assert self._server_info is not None
         try:
@@ -167,7 +189,16 @@ class ServerChecker:
         return True
 
     def _load_gateway_response(self, server_id: int, name: str, status: str) -> None:
-        """校验游戏网关的单服数据并复用 API 的状态判定语义。"""
+        """校验游戏网关的单服数据并复用 API 的状态判定语义。
+
+        Args:
+            server_id (int): 服务器 ID。
+            name (str): 服务器名称。
+            status (str): 服务器状态标识。
+
+        Raises:
+            ScriptError: 服务器信息不匹配或状态未知时抛出。
+        """
         assert self._server_info is not None
         if server_id != self._server_info.server_id:
             raise ScriptError(
@@ -189,13 +220,13 @@ class ServerChecker:
             raise ScriptError(f'游戏网关返回了未知状态：{status}')
 
     def wait_until_available(self) -> None:
+        """阻塞等待，直到服务器恢复可用状态。"""
         while not self.is_available():
             self._timer.wait()
             self.check_now()
 
     def check_now(self) -> None:
-        """
-        忽略计时器，立即获取服务器状态。
+        """忽略计时器，立即获取服务器状态。
 
         若服务器不可用，计时器间隔逐步从 2 分钟递增至 10 分钟。若 API
         协议不兼容，检查器会临时禁用，避免阻断任务调度。
@@ -222,22 +253,35 @@ class ServerChecker:
             self._state.append(True)
 
     def _server_in_local_list(self) -> bool:
-        """检查服务器名称是否存在于本地配置列表。"""
+        """检查服务器名称是否存在于本地配置列表。
+
+        Returns:
+            bool: 存在返回 True，否则返回 False。
+        """
         return any(self._server in servers for servers in server_list.values())
 
     def reset(self) -> None:
+        """重置检查器计时限制与恢复标记。"""
         self._timer.limit = 0
         self._recover = False
 
     def is_available(self) -> bool:
-        """使用缓存返回服务器状态。"""
+        """使用缓存返回服务器状态。
+
+        Returns:
+            bool: 服务器可用返回 True，不可用返回 False。
+        """
         if self._timer.limit != 0 and self._timer.reached():
             self.check_now()
 
         return self._state[-1]
 
     def is_recovered(self) -> bool:
-        """服务器是否刚从不可用状态恢复。"""
+        """检查服务器是否刚从不可用状态恢复。
+
+        Returns:
+            bool: 刚恢复返回 True，否则返回 False。
+        """
         if len(self._state) < 2:
             self._recover = False
             return False
@@ -249,11 +293,13 @@ class ServerChecker:
         return False
 
     def fast_retry(self) -> bool:
-        """
-        快速重试：通过访问百度判断网络是否连通。
+        """快速重试：通过访问百度判断网络是否连通。
 
         部分国内用户可能无法连接 API，但网络实际可用，因此借助百度进行
         网络可达性判断。快速重试中的中间状态不会污染原有状态队列。
+
+        Returns:
+            bool: 快速重试成功获取到可用状态返回 True，网络故障或均失败返回 False。
         """
         self._retry = True
         try:

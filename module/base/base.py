@@ -101,6 +101,14 @@ class ModuleBase:
         return pool
 
     def ensure_button(self, button):
+        """确保按钮对象转换为可用的 Button 或 HierarchyButton 实例。
+
+        Args:
+            button (str | Button | HierarchyButton): 待检测的按钮对象或 xpath 字符串。
+
+        Returns:
+            Button | HierarchyButton: 转换后的按钮对象。
+        """
         if isinstance(button, str):
             button = HierarchyButton(self.device.hierarchy, button)
 
@@ -274,6 +282,20 @@ class ModuleBase:
     def appear_then_click(self, button, screenshot=False, genre='items',
                           offset: Union[bool, int, Tuple[int, int]] = 0, interval=0, similarity=0.85,
                           threshold=30):
+        """如果目标元素出现则执行点击。
+
+        Args:
+            button: 待检测的 Button、HierarchyButton 或模板对象。
+            screenshot (bool): 点击前是否保存截图。
+            genre (str): 保存截图时的分类目录名。
+            offset: 模板匹配偏移量。
+            interval (int | float): 按钮冷却检测间隔（秒）。
+            similarity (float): 模板匹配相似度阈值。
+            threshold (int): 颜色匹配容差。
+
+        Returns:
+            bool: 是否检测到元素并执行了点击。
+        """
         button = self.ensure_button(button)
         appear = self.appear(button, offset=offset, interval=interval, similarity=similarity, threshold=threshold)
         if appear:
@@ -281,11 +303,18 @@ class ModuleBase:
                 self.device.sleep(self.config.WAIT_BEFORE_SAVING_SCREEN_SHOT)
                 self.device.screenshot()
                 self.device.save_screenshot(genre=genre)
-            self.device.sleep(0.1)  # 因为点击太快被多退役了一艘联动金船惨案QAQ
+            self.device.sleep(0.1)  # 避免连击过快导致误操作
             self.device.click(button)
         return appear
 
     def wait_until_appear(self, button, offset=0, skip_first_screenshot=False):
+        """持续截图等待目标元素出现。
+
+        Args:
+            button: 目标 Button 或检测对象。
+            offset: 匹配偏移量。
+            skip_first_screenshot (bool): 是否跳过首次截图。
+        """
         while 1:
             if skip_first_screenshot:
                 skip_first_screenshot = False
@@ -295,16 +324,36 @@ class ModuleBase:
                 break
 
     def wait_until_appear_then_click(self, button, offset=0):
+        """持续截图等待目标元素出现并点击。
+
+        Args:
+            button: 目标 Button 或检测对象。
+            offset: 匹配偏移量。
+        """
         self.wait_until_appear(button, offset=offset)
         self.device.click(button)
 
     def wait_until_disappear(self, button, offset=0):
+        """持续截图等待目标元素消失。
+
+        Args:
+            button: 目标 Button 或检测对象。
+            offset: 匹配偏移量。
+        """
         while 1:
             self.device.screenshot()
             if not self.appear(button, offset=offset):
                 break
 
     def wait_until_stable(self, button, timer=Timer(0.3, count=1), timeout=Timer(5, count=10), skip_first_screenshot=True):
+        """持续截图等待目标按钮画面稳定（画面不再变化）。
+
+        Args:
+            button: 目标 Button。
+            timer (Timer): 判定画面稳定的持续时间计时器。
+            timeout (Timer): 等待超时的计时器。
+            skip_first_screenshot (bool): 是否跳过首次截图。
+        """
         button._match_init = False
         timeout.reset()
         while 1:
@@ -393,6 +442,16 @@ class ModuleBase:
         return Button(area=button_area, color=color, button=button_area, name=name)
 
     def get_interval_timer(self, button, interval=5, renew=False) -> Timer:
+        """获取或创建指定按钮的冷却计时器。
+
+        Args:
+            button: 按钮对象、可调用对象或名称。
+            interval (int | float): 冷却时间限制（秒）。
+            renew (bool): 若计时器已存在且限制不同，是否更新限制。
+
+        Returns:
+            Timer: 该按钮对应的冷却计时器。
+        """
         if hasattr(button, 'name'):
             name = button.name
         elif callable(button):
@@ -412,6 +471,12 @@ class ModuleBase:
             return timer
 
     def interval_reset(self, button, interval=3):
+        """重置指定按钮的冷却计时器。
+
+        Args:
+            button: 按钮对象、按钮列表或按钮名称。
+            interval (int | float): 若计时器不存在时创建的默认秒数。
+        """
         if isinstance(button, (list, tuple)):
             for b in button:
                 self.interval_reset(b)
@@ -424,6 +489,12 @@ class ModuleBase:
                 self.interval_timer[button.name] = Timer(interval).reset()
 
     def interval_clear(self, button, interval=3):
+        """清除指定按钮的冷却计时器，使其立即可用。
+
+        Args:
+            button: 按钮对象、按钮列表或按钮名称。
+            interval (int | float): 若计时器不存在时创建的默认秒数。
+        """
         if isinstance(button, (list, tuple)):
             for b in button:
                 self.interval_clear(b)
@@ -439,14 +510,17 @@ class ModuleBase:
 
     @property
     def image_file(self):
+        """获取当前加载的本地测试图像文件名。"""
         return self._image_file
 
     @image_file.setter
     def image_file(self, value):
-        """
-        从本地文件加载测试图像，用于开发调试。
+        """从本地文件加载测试图像，用于开发调试。
 
         将图片加载到 self.device.image，无需连接模拟器即可测试图像识别逻辑。
+
+        Args:
+            value (Image.Image | str | np.ndarray): 图片对象、路径或 ndarray。
         """
         if isinstance(value, Image.Image):
             value = np.array(value)
@@ -458,10 +532,12 @@ class ModuleBase:
         self.device.image = value
 
     def set_server(self, server):
-        """
-        切换游戏服务器，全局生效（仅用于开发调试）。
+        """切换游戏服务器，全局生效（仅用于开发调试）。
 
         切换后影响资源文件路径和服务器特定方法的分发。
+
+        Args:
+            server (str): 服务器标识，如 'cn'、'en'、'jp'、'tw'。
         """
         package = to_package(server)
         self.device.package = package

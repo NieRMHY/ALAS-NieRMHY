@@ -1,3 +1,7 @@
+/**
+ * @fileoverview 防裁切自绘下拉选择器组件。
+ */
+
 import { useEffect, useId, useLayoutEffect, useRef, useState, type ComponentProps, type KeyboardEvent } from 'react'
 import { Check, ChevronsUpDown } from 'lucide-react'
 import { useApp } from '../app/context'

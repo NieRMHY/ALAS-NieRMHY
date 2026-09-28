@@ -24,7 +24,13 @@ ASIDE_SWITCH_HOSPITAL.add_state('hard', CHAPTER_HOSPITAL_HARD)
 
 
 class HospitalEvent(Hospital, RaidRun):
-    """医院活动事件处理器，继承 Hospital 和 RaidRun。"""
+    """医院活动突袭模式事件处理器。
+
+    继承 Hospital 与 RaidRun，通过突袭模式机制驱动医院活动关卡的批量出击。
+
+    Attributes:
+        raid_name (str): 突袭活动标识名。
+    """
 
     raid_name = 'raid_20250327'
 
@@ -32,7 +38,7 @@ class HospitalEvent(Hospital, RaidRun):
         """确保医院活动难度标签正确设置。
 
         Args:
-            chapter: 难度，'easy'、'normal' 或 'hard'。
+            chapter (str): 难度，'easy'、'normal' 或 'hard'。
         """
         if chapter in ['easy', 'normal', 'hard']:
             ASIDE_SWITCH_HOSPITAL.set(chapter, main=self)
@@ -69,9 +75,9 @@ class HospitalEvent(Hospital, RaidRun):
         点击入口进入舰队准备界面，同时检查 PT 限制。
 
         Args:
-            stage: 关卡编号，如 'T1'、'T2'。
-            raid: 突袭名称。
-            skip_first_screenshot: 是否跳过首次截图复用上一状态。
+            stage (str): 关卡编号，如 'T1'、'T2'。
+            raid (str): 突袭活动标识。
+            skip_first_screenshot (bool): 是否跳过首次截图复用上一状态，默认 True。
 
         Pages:
             in: page_raid
@@ -102,12 +108,12 @@ class HospitalEvent(Hospital, RaidRun):
                 continue
 
     def raid_execute_once(self, mode, raid, stage):
-        """执行一次突袭战斗。
+        """执行单次突袭战斗。
 
         Args:
-            mode: 难度模式。
-            raid: 突袭名称。
-            stage: 关卡编号。
+            mode (str): 难度模式。
+            raid (str): 突袭活动标识。
+            stage (str): 关卡编号。
 
         Pages:
             in: page_raid
@@ -130,13 +136,16 @@ class HospitalEvent(Hospital, RaidRun):
         logger.hr('突袭结束')
 
     def run(self, name='', mode='', stage='', total=0):
-        """医院活动突袭主入口。
+        """医院活动突袭主运行入口。
 
         Args:
-            name: 突袭名称，如 'raid_20250327'。
-            mode: 难度模式，如 'hard'、'normal'、'easy'。
-            stage: 关卡编号，如 'T1'、'T2'。
-            total: 总运行次数限制。
+            name (str): 突袭名称，如 'raid_20250327'。
+            mode (str): 难度模式，如 'hard'、'normal'、'easy'。
+            stage (str): 关卡编号，如 'T1'、'T2'。
+            total (int): 总运行次数限制，0 为不限。
+
+        Raises:
+            ScriptError: 参数未填全时抛出。
         """
         name = name if name else self.raid_name
         mode = mode if mode else self.config.HospitalEvent_Mode

@@ -23,8 +23,10 @@ describe('WebUI i18n', () => {
     }
   })
 
-  it('keeps the Miao locale complete through its Simplified Chinese base', () => {
-    expect(translateUi('zh-MIAO', 'nav.statistics')).toBe('资源统计')
+  it('translates the Miao locale instead of falling back to Simplified Chinese', () => {
+    for (const key of ['nav.statistics', 'common.retry', 'dashboard.fitCards'] as const) {
+      expect(translateUi('zh-MIAO', key)).toContain('喵')
+    }
   })
 
   it('keeps Japanese and Traditional Chinese dictionaries complete for formerly missing UI keys', () => {

@@ -1,3 +1,7 @@
+/**
+ * @fileoverview 商店购买策略与 Lua 脚本语法帮助说明文档组件。
+ */
+
 import { BookOpen } from 'lucide-react'
 import type { ShopStrategyTask } from '../api/types'
 import type { Language } from '../i18n'
@@ -215,7 +219,7 @@ const enUS: HelpCopy = {
     'Advanced mode: uses this group\'s strategy script. Edits stay in a browser-local draft until they pass Check and you select Apply to write configuration.',
     'If validation fails or execution cannot produce a valid plan, this advanced purchase pass safely skips. It never falls back to an unchecked script.',
   ],
-  syntax: 'At top level, only local name = expression or candidate pipeline, if / elseif / else ... then ... end, and return shop.plan {...} are allowed. A local may be defined only once at top level and cannot be reassigned; every reachable branch must return a plan. Expressions support nil, booleans, numbers, strings, and / or / not, arithmetic + - * / // % ^, and comparisons == ~= < <= > >=. Use -- for line comments or --[[ ... ]] for block comments. Lua truthiness applies: only nil and false are false; 0 and empty strings are true.',
+  syntax: 'At top level, only local name = expression or candidate pipeline, if / elseif / else ... then ... end, and return shop.plan {...} are allowed. A local may be defined only once at top level and cannot be reassigned; every reachable branch must return a plan. Expressions support nil, booleans, numbers, strings, and / or / not, arithmetic + - * / // % ^，以及比较运算符 == ~= < <= > >=。使用 -- 表示单行注释，--[[ ... ]] 表示多行注释。Lua 真值规则：仅 nil 和 false 为假，0 与空字符串均为真。',
   candidateIntro: 'Start from candidates or a previous candidate pipeline. Anonymous functions are allowed only as where or score arguments and must be exactly function(item) return expression end.',
   methods: {
     where: 'Keeps candidates whose expression is truthy.',

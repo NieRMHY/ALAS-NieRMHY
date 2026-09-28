@@ -55,7 +55,18 @@ def read_days(config, key, default=0):
 
 
 def read_method(config, key, default):
-    """读取过期后的处理方式，取值不在 VALID_METHODS 内时回落默认值。"""
+    """读取过期后的处理方式。
+
+    取值不在 VALID_METHODS 内时回退默认值。
+
+    Args:
+        config: 当前运行实例的配置对象。
+        key (str): 配置键名。
+        default (str): 默认处理方式。
+
+    Returns:
+        str: 过期处理方式字符串。
+    """
     value = str(getattr(config, key, default)).lower()
     if value not in VALID_METHODS:
         logger.warning(f'[清理] 处理方式配置无效: {key}={value!r}，按 {default} 处理')
@@ -64,7 +75,18 @@ def read_method(config, key, default):
 
 
 def read_zip_method(config, key, default):
-    """读取压缩格式，取值不在 ZIP_EXTENSIONS 内时回落默认值。"""
+    """读取压缩格式配置。
+
+    取值不在 ZIP_EXTENSIONS 内时回退默认值。
+
+    Args:
+        config: 当前运行实例的配置对象。
+        key (str): 配置键名。
+        default (str): 默认压缩格式。
+
+    Returns:
+        str: 压缩格式字符串。
+    """
     value = str(getattr(config, key, default)).lower()
     if value not in ZIP_EXTENSIONS:
         logger.warning(f'[清理] 压缩格式配置无效: {key}={value!r}，按 {default} 处理')
@@ -73,7 +95,14 @@ def read_zip_method(config, key, default):
 
 
 def _remove(path):
-    """删除文件或目录，返回是否成功。"""
+    """删除文件或目录。
+
+    Args:
+        path (str): 待删除的文件或目录路径。
+
+    Returns:
+        bool: 是否删除成功。
+    """
     try:
         if os.path.isdir(path):
             shutil.rmtree(path)
@@ -86,27 +115,48 @@ def _remove(path):
 
 
 def _inside(path, folder):
-    """判断 path 是否位于 folder 内部（用于保护备份目录）。"""
+    """判断路径是否位于指定目录内部（用于保护备份目录）。
+
+    Args:
+        path (str): 目标路径。
+        folder (str): 目录路径。
+
+    Returns:
+        bool: 目标路径是否在目录内。
+    """
     path = os.path.abspath(path)
     folder = os.path.abspath(folder)
     return path == folder or path.startswith(folder + os.sep)
 
 
 def _suffix(zip_method):
-    """压缩格式 → 备份文件后缀，如 ``zip`` → ``.zip``、``bz2`` → ``.tar.bz2``。"""
+    """获取压缩格式对应的备份文件后缀。
+
+    如 zip 对应 .zip、bz2 对应 .tar.bz2。
+
+    Args:
+        zip_method (str): 压缩格式。
+
+    Returns:
+        str: 文件后缀。
+    """
     ext = ZIP_EXTENSIONS[zip_method]
     return '.zip' if ext == 'zip' else f'.tar.{ext}'
 
 
 def _archive_path(bak_folder, name, suffix, times):
-    """生成备份文件名：<最早日期>~<最晚日期>_<来源标识><后缀>，重名加序号。
+    """生成备份文件路径。
 
-    同一天或只有一条时只写一个日期。加序号而不是覆盖，
-    避免同一时间范围内再次清理时丢掉上一轮备份。
+    格式为 <最早日期>~<最晚日期>_<来源标识><后缀>，重名时自动递增序号。
 
-    取名字时先独占创建占位文件：截图目录默认被多个实例共用，
-    两个实例同时清理时若只判断「文件是否存在」，会双双选中同一个
-    名字，后写入的把先写的备份截断。占位失败就换下一个序号。
+    Args:
+        bak_folder (str): 备份保存目录。
+        name (str): 来源标识名称。
+        suffix (str): 文件后缀名。
+        times (list[float]): 文件修改时间戳列表。
+
+    Returns:
+        str: 生成的唯一备份文件路径。
     """
     fmt = DATE_FORMAT
     first = time.strftime(fmt, time.localtime(min(times)))
@@ -131,7 +181,12 @@ def _archive_path(bak_folder, name, suffix, times):
 
 
 def _write_zip(archive, paths):
-    """把文件或目录写进 zip，目录带上自身名字递归打包。"""
+    """将文件或目录写入 zip 压缩包，目录带上自身名称递归打包。
+
+    Args:
+        archive (str): 目标压缩文件路径。
+        paths (list[str]): 待打包的路径列表。
+    """
     with zipfile.ZipFile(archive, 'w', zipfile.ZIP_DEFLATED) as zipf:
         for path in paths:
             if not os.path.isdir(path):
@@ -145,7 +200,13 @@ def _write_zip(archive, paths):
 
 
 def _write_tar(archive, zip_method, paths):
-    """把文件或目录写进 tar，目录递归打包。"""
+    """将文件或目录写入 tar 压缩包，目录递归打包。
+
+    Args:
+        archive (str): 目标压缩文件路径。
+        zip_method (str): 压缩格式。
+        paths (list[str]): 待打包的路径列表。
+    """
     with tarfile.open(archive, 'w:' + ZIP_EXTENSIONS[zip_method]) as tar:
         for path in paths:
             tar.add(path, arcname=os.path.basename(os.path.normpath(path)))

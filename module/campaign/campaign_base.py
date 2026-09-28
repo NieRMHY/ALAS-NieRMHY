@@ -317,10 +317,17 @@ class CampaignBase(CampaignUI, Map, AutoSearchCombat):
         self.battle_count += 1
 
     def auto_search_withdraw(self, skip_first_screenshot=True):
-        """自律寻敌运行中撤退：先退出自律寻敌状态回到普通地图，再执行撤退。
+        """自律寻敌运行中撤退。
 
+        先退出自律寻敌状态回到普通地图，再执行撤退。
         自律寻敌运行时地图右下角的撤退按钮（WITHDRAW）被自律寻敌开关替换，
         直接调用 withdraw() 会一直等不到按钮而卡死（#275）。
+
+        Args:
+            skip_first_screenshot (bool): 是否跳过首次截图。默认 True。
+
+        Raises:
+            CampaignEnd: 撤退完成时抛出 CampaignEnd('Withdraw')。
 
         Pages:
             in: is_in_map，自律寻敌运行中或自动搜索菜单

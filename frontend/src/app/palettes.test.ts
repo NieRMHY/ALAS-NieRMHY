@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { contrastRatio, fixedColorModes, paletteColors, paletteTokens, palettes, presetColors, readCustomPalettes, type CustomPalette } from './palettes'
+import { accentTokens, contrastRatio, fixedColorModes, paletteColors, paletteTokens, palettes, presetColors, readCustomPalettes, stockBrands, type CustomPalette } from './palettes'
 
 const custom: CustomPalette = {id: 'custom:test', primary: '#ffffff', secondary: '#ffff00'}
 
@@ -51,5 +51,30 @@ describe('简约配色生成与校验', () => {
       {id: 'custom:legacy', primary: '#112233', secondary: '#445566'},
     ])
     expect(paletteColors('custom:deleted', [], 'dark')).toEqual(presetColors.ocean.dark)
+  })
+})
+
+describe('品牌配色只动强调色', () => {
+  const ACCENT_KEYS = ['--accent', '--accent-hover', '--accent-soft', '--secondary', '--secondary-soft', '--theme-on-accent']
+
+  it('材质与旧版用它换色：不碰表面/文字/边框，材质层与底图才不会被冲掉', () => {
+    const tokens = accentTokens({primary: '#7050a3', secondary: '#a14865'}, 'light')
+    expect(Object.keys(tokens).sort()).toEqual([...ACCENT_KEYS].sort())
+    expect(tokens['--accent']).toBe('#7050a3')
+  })
+
+  it('整块换色的 paletteTokens 仍然包含中性色（简约/紧凑走它）', () => {
+    const tokens = paletteTokens({primary: '#7050a3', secondary: '#a14865'}, 'dark')
+    for (const key of ['--surface', '--surface-muted', '--text', '--muted', '--border']) expect(tokens[key], key).toBeTruthy()
+    for (const key of ACCENT_KEYS) expect(tokens[key], key).toBeTruthy()
+  })
+
+  it('四个大类都有原版色（色板第一项要用，缺了用户找不回原色）', () => {
+    for (const family of ['new', 'legacy', 'minimal', 'extreme'] as const) {
+      for (const mode of ['light', 'dark'] as const) {
+        expect(stockBrands[family][mode].primary, family + mode).toMatch(/^#[0-9a-f]{6}$/i)
+        expect(stockBrands[family][mode].secondary, family + mode).toMatch(/^#[0-9a-f]{6}$/i)
+      }
+    }
   })
 })

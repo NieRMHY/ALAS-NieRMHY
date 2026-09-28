@@ -14,6 +14,7 @@ from module.logger import logger
 from module.island.island_season import get_global_season_config
 
 
+
 class IslandShopBase(Island, WarehouseOCR):
     _MAX_FILL_LOOP = 10  # while 循环填岗最大迭代次数
     PRODUCT_SELECT_RETRY_LIMIT = 3  # 餐品选择识别失败后，退出重进的最大次数
@@ -65,6 +66,11 @@ class IslandShopBase(Island, WarehouseOCR):
 
         # 滑动配置（子类可覆盖）
         self.post_manage_swipe_count = 1  # 默认滑动1次450
+        # 店铺岗位位于列表较深处，调参滑动后仍识别不到岗位按钮时，
+        # 由 post_open 闭环补滑重新定位（模拟器/云手机滑动距离不够的兜底）
+        self.post_open_retry_swipe = True
+
+
 
     # ==================== 季节配置支持 ====================
 
@@ -140,6 +146,7 @@ class IslandShopBase(Island, WarehouseOCR):
             if meal_name is not None and meal_name != "None":
                 meal_number = getattr(self.config, number_key, 0)
                 self.post_products.append((meal_name, meal_number))
+
 
     def initialize_shop(self):
         """初始化店铺，子类必须在__init__中调用"""
@@ -482,6 +489,7 @@ class IslandShopBase(Island, WarehouseOCR):
             self.post_close()
             self.post_manage_swipe(self.post_manage_swipe_count)
 
+
             # 计算当前总库存
             self.current_totals = self._rebuild_current_totals({})
 
@@ -570,6 +578,7 @@ class IslandShopBase(Island, WarehouseOCR):
             # 获取特殊餐品和常驻餐品配置
             special_food = self.special_food if self.FILL_SPECIAL_FOOD else None
             away_cook = getattr(self.config, self.config_away_cook, None)
+
 
             # 检查特殊餐品是否为有效值（不为None且不为"None"）
             has_special_food = (special_food and special_food != "None" and
@@ -666,7 +675,12 @@ class IslandShopBase(Island, WarehouseOCR):
             time_value = getattr(self, var)
             if time_value is not None:
                 finish_times.append(time_value)
-        hours_later = current_time() + timedelta(hours=6)
+        # Modify by MHY, 岛屿经济闭环：兜底延时 6h（原逻辑）
+        # 原因：生产目标达成后任务长眠 6h，但经营端在持续售卖消耗库存，
+        # 下午库存被卖空却无人补产。2h 兜底让"售空→补产"链路闭环；
+        # 岗位在产时 OCR 完成时间（约70分钟/批）早于兜底，不受影响。
+        fallback_hours = 6
+        hours_later = current_time() + timedelta(hours=fallback_hours)
         finish_times.append(hours_later)
         finish_times.sort()
         self.config.task_delay(target=finish_times)

@@ -1,0 +1,1273 @@
+{
+ "533mm_Quadruple_Torpedo_Mount_T3": {
+  "en": "T3 Quadruple 533mm Torpedo Design",
+  "rarity": 3,
+  "zh": "四联装533mm鱼雷T3设计图"
+ },
+ "533mm_Quintuple_Torpedo_Mount_T2": {
+  "en": "T2 Quintuple 533mm Torpedo Design",
+  "rarity": 3,
+  "zh": "五联装533mm鱼雷T2设计图"
+ },
+ "533mm_Quintuple_Torpedo_Mount_T2_2": {
+  "en": "T2 Quintuple 533mm Torpedo Design",
+  "rarity": 3,
+  "zh": "五联装533mm鱼雷T2设计图"
+ },
+ "533mm_Quintuple_Torpedo_Mount_T3": {
+  "en": "T3 Quintuple 533mm Torpedo Design",
+  "rarity": 4,
+  "zh": "五联装533mm鱼雷T3设计图"
+ },
+ "533mm_Quintuple_Torpedo_Mount_T3_2": {
+  "en": "T3 Quintuple 533mm Torpedo Design",
+  "rarity": 4,
+  "zh": "五联装533mm鱼雷T3设计图"
+ },
+ "533mm_Quintuple_Torpedo_Mount_T3_3": {
+  "en": "T3 Quintuple 533mm Torpedo Design",
+  "rarity": 4,
+  "zh": "五联装533mm鱼雷T3设计图"
+ },
+ "533mm_Triple_Magnetic_Torpedo_Mount_T2": {
+  "en": "T2 Triple 533mm Magnetic Torpedo Design",
+  "rarity": 2,
+  "zh": "三联装533mm磁性鱼雷T2设计图"
+ },
+ "533mm_Triple_Magnetic_Torpedo_Mount_T3": {
+  "en": "T3 Triple 533mm Magnetic Torpedo Design",
+  "rarity": 3,
+  "zh": "三联装533mm磁性鱼雷T3设计图"
+ },
+ "533mm_Triple_Torpedo_Mount_T3": {
+  "en": "T3 Triple 533mm Torpedo Design",
+  "rarity": 2,
+  "zh": "三联装533mm鱼雷T3设计图"
+ },
+ "610mm_Quadruple_Torpedo_Mount_T2": {
+  "en": "T2 Quadruple 610mm Torpedo Design",
+  "rarity": 3,
+  "zh": "四联装610mm鱼雷T2设计图"
+ },
+ "610mm_Quadruple_Torpedo_Mount_T2_2": {
+  "en": "T2 Quadruple 610mm Torpedo Design",
+  "rarity": 3,
+  "zh": "四联装610mm鱼雷T2设计图"
+ },
+ "610mm_Quadruple_Torpedo_Mount_T2_3": {
+  "en": "T2 Quadruple 610mm Torpedo Design",
+  "rarity": 3,
+  "zh": "四联装610mm鱼雷T2设计图"
+ },
+ "610mm_Quadruple_Torpedo_Mount_T3": {
+  "en": "T3 Quadruple 610mm Torpedo Design",
+  "rarity": 4,
+  "zh": "四联装610mm鱼雷T3设计图"
+ },
+ "610mm_Triple_Torpedo_Mount_T3": {
+  "en": "T3 Triple 610mm Torpedo Design",
+  "rarity": 3,
+  "zh": "三联装610mm鱼雷T3设计图"
+ },
+ "610mm_Twin_Torpedo_Mount_T3": {
+  "en": "T3 Twin 610mm Torpedo Design",
+  "rarity": 2,
+  "zh": "双联装610mm鱼雷T3设计图"
+ },
+ "76mm_AA_Gun_T3": {
+  "en": "T3 76mm AA Gun Design",
+  "rarity": 3,
+  "zh": "76mm高射炮T3设计图"
+ },
+ "A5M_Claude_T3": {
+  "en": "T3 A5M Claude Design",
+  "rarity": 2,
+  "zh": "九六式舰战T3设计图"
+ },
+ "A7M_Reppuu_T1": {
+  "en": "T1 A7M Reppü Design",
+  "rarity": 2,
+  "zh": "烈风T1设计图"
+ },
+ "A7M_Reppuu_T2": {
+  "en": "T2 A7M Reppü Design",
+  "rarity": 3,
+  "zh": "烈风T2设计图"
+ },
+ "A7M_Reppuu_T3": {
+  "en": "T3 A7M Reppü Design",
+  "rarity": 4,
+  "zh": "烈风T3设计图"
+ },
+ "Advanced_Boiler_T3": {
+  "en": "T3 Advanced Boiler Design",
+  "rarity": 3,
+  "zh": "改良锅炉T3设计图"
+ },
+ "Aichi_B7A_Ryusei_T1": {
+  "en": "T1 Aichi B7A Ryusei Design",
+  "rarity": 2,
+  "zh": "流星T1设计图"
+ },
+ "Aichi_B7A_Ryusei_T2": {
+  "en": "T2 Aichi B7A Ryusei Design",
+  "rarity": 3,
+  "zh": "流星T2设计图"
+ },
+ "Aichi_B7A_Ryusei_T3": {
+  "en": "T3 Aichi B7A Ryusei Design",
+  "rarity": 4,
+  "zh": "流星T3设计图"
+ },
+ "Aichi_E16A_Zuiun_T2": {
+  "en": "T2 Aichi E16A Zuiun Design",
+  "rarity": 2,
+  "zh": "？？？？？"
+ },
+ "Aichi_E16A_Zuiun_T3": {
+  "en": "T3 Aichi E16A Zuiun Design",
+  "rarity": 3,
+  "zh": "？？？？？"
+ },
+ "Air_Radar_T3": {
+  "en": "T3 Air Radar Design",
+  "rarity": 3,
+  "zh": "对空雷达T3设计图"
+ },
+ "Air_Radar_T3_2": {
+  "en": "T3 Air Radar Design",
+  "rarity": 3,
+  "zh": "对空雷达T3设计图"
+ },
+ "Air_Radar_T3_3": {
+  "en": "T3 Air Radar Design",
+  "rarity": 3,
+  "zh": "对空雷达T3设计图"
+ },
+ "Anti_Torpedo_Bulge_T3": {
+  "en": "T3 Anti-Torpedo Bulge Design",
+  "rarity": 3,
+  "zh": "防鱼雷隔舱T3设计图"
+ },
+ "Autoloader_T3": {
+  "en": "T3 Autoloader Design",
+  "rarity": 3,
+  "zh": "链式装弹机T3设计图"
+ },
+ "Aviation_Oil_Tank_T3": {
+  "en": "T3 Aviation Oil Tank Design",
+  "rarity": 3,
+  "zh": "航空副油箱T3设计图"
+ },
+ "BF_109T_Fighter_T2": {
+  "en": "T2 BF-109T Fighter Design",
+  "rarity": 2,
+  "zh": "BF-109T舰载战斗机T2设计图"
+ },
+ "BF_109T_Fighter_T3": {
+  "en": "T3 BF-109T Fighter Design",
+  "rarity": 3,
+  "zh": "BF-109T舰载战斗机T3设计图"
+ },
+ "BTD_1_Destroyer_T2": {
+  "en": "T2 BTD-1 Destroyer Design",
+  "rarity": 3,
+  "zh": "BTD-1毁灭者T2设计图"
+ },
+ "BTD_1_Destroyer_T3": {
+  "en": "T3 BTD-1 Destroyer Design",
+  "rarity": 4,
+  "zh": "BTD-1毁灭者T3设计图"
+ },
+ "Barracuda_T2": {
+  "en": "T2 Barracuda Design",
+  "rarity": 3,
+  "zh": "梭鱼T2设计图"
+ },
+ "Barracuda_T2_2": {
+  "en": "T2 Barracuda Design",
+  "rarity": 3,
+  "zh": "梭鱼T2设计图"
+ },
+ "Barracuda_T3": {
+  "en": "T3 Barracuda Design",
+  "rarity": 4,
+  "zh": "梭鱼T3设计图"
+ },
+ "Barracuda_T3_2": {
+  "en": "T3 Barracuda Design",
+  "rarity": 4,
+  "zh": "梭鱼T3设计图"
+ },
+ "Blackburn_Skua_T3": {
+  "en": "T3 Blackburn Skua Design",
+  "rarity": 2,
+  "zh": "贼鸥T3设计图"
+ },
+ "BlueprintAdmiralNakhimov": {
+  "en": "Blueprint - Admiral Nakhimov",
+  "rarity": 5,
+  "series": 7,
+  "zh": "蓝图：纳希莫夫海军上将"
+ },
+ "BlueprintAdmiralNakhimov_2": {
+  "en": "Blueprint - Admiral Nakhimov",
+  "rarity": 5,
+  "series": 7,
+  "zh": "蓝图：纳希莫夫海军上将"
+ },
+ "BlueprintAdmiralNakhimov_3": {
+  "en": "Blueprint - Admiral Nakhimov",
+  "rarity": 5,
+  "series": 7,
+  "zh": "蓝图：纳希莫夫海军上将"
+ },
+ "BlueprintAdmiralNakhimov_4": {
+  "en": "Blueprint - Admiral Nakhimov",
+  "rarity": 5,
+  "series": 7,
+  "zh": "蓝图：纳希莫夫海军上将"
+ },
+ "BlueprintAgir": {
+  "en": "Blueprint - Ägir",
+  "rarity": 5,
+  "series": 4,
+  "zh": "蓝图：埃吉尔"
+ },
+ "BlueprintAgir_2": {
+  "en": "Blueprint - Ägir",
+  "rarity": 5,
+  "series": 4,
+  "zh": "蓝图：埃吉尔"
+ },
+ "BlueprintAgir_3": {
+  "en": "Blueprint - Ägir",
+  "rarity": 5,
+  "series": 4,
+  "zh": "蓝图：埃吉尔"
+ },
+ "BlueprintAnchorage": {
+  "en": "Blueprint - Anchorage",
+  "rarity": 4,
+  "series": 4,
+  "zh": "蓝图：安克雷奇"
+ },
+ "BlueprintAnchorage_2": {
+  "en": "Blueprint - Anchorage",
+  "rarity": 4,
+  "series": 4,
+  "zh": "蓝图：安克雷奇"
+ },
+ "BlueprintAzuma": {
+  "en": "Blueprint - Azuma",
+  "rarity": 5,
+  "series": 2,
+  "zh": "蓝图：吾妻"
+ },
+ "BlueprintAzuma_2": {
+  "en": "Blueprint - Azuma",
+  "rarity": 5,
+  "series": 2,
+  "zh": "蓝图：吾妻"
+ },
+ "BlueprintAzuma_3": {
+  "en": "Blueprint - Azuma",
+  "rarity": 5,
+  "series": 2,
+  "zh": "蓝图：吾妻"
+ },
+ "BlueprintAzuma_4": {
+  "en": "Blueprint - Azuma",
+  "rarity": 5,
+  "series": 2,
+  "zh": "蓝图：吾妻"
+ },
+ "BlueprintAzuma_5": {
+  "en": "Blueprint - Azuma",
+  "rarity": 5,
+  "series": 2,
+  "zh": "蓝图：吾妻"
+ },
+ "BlueprintBayard": {
+  "en": "Blueprint - Bayard",
+  "rarity": 4,
+  "series": 7,
+  "zh": "蓝图：贝亚德"
+ },
+ "BlueprintBayard_2": {
+  "en": "Blueprint - Bayard",
+  "rarity": 4,
+  "series": 7,
+  "zh": "蓝图：贝亚德"
+ },
+ "BlueprintBrest": {
+  "en": "Blueprint - Brest",
+  "rarity": 5,
+  "series": 5,
+  "zh": "蓝图：布雷斯特"
+ },
+ "BlueprintBrest_2": {
+  "en": "Blueprint - Brest",
+  "rarity": 5,
+  "series": 5,
+  "zh": "蓝图：布雷斯特"
+ },
+ "BlueprintBrest_3": {
+  "en": "Blueprint - Brest",
+  "rarity": 5,
+  "series": 5,
+  "zh": "蓝图：布雷斯特"
+ },
+ "BlueprintChampagne": {
+  "en": "Blueprint - Champagne",
+  "rarity": 4,
+  "series": 3,
+  "zh": "蓝图：香槟"
+ },
+ "BlueprintChkalov": {
+  "en": "Blueprint - Chkalov",
+  "rarity": 4,
+  "series": 5,
+  "zh": "蓝图：契卡洛夫"
+ },
+ "BlueprintDaisen": {
+  "en": "Blueprint - Daisen",
+  "rarity": 4,
+  "series": 7,
+  "zh": "蓝图：大山"
+ },
+ "BlueprintDmitriDonskoi": {
+  "en": "Blueprint - Dmitri Donskoi",
+  "rarity": 4,
+  "series": 8,
+  "zh": "蓝图：迪米特里·顿斯科伊"
+ },
+ "BlueprintDrake": {
+  "en": "Blueprint - Drake",
+  "rarity": 5,
+  "series": 3,
+  "zh": "蓝图：德雷克"
+ },
+ "BlueprintDrake_2": {
+  "en": "Blueprint - Drake",
+  "rarity": 5,
+  "series": 3,
+  "zh": "蓝图：德雷克"
+ },
+ "BlueprintDrake_3": {
+  "en": "Blueprint - Drake",
+  "rarity": 5,
+  "series": 3,
+  "zh": "蓝图：德雷克"
+ },
+ "BlueprintDuncan": {
+  "en": "Blueprint - Duncan",
+  "rarity": 4,
+  "series": 9,
+  "zh": "蓝图：邓肯"
+ },
+ "BlueprintFelixSchultz": {
+  "en": "Blueprint - Felix Schultz",
+  "rarity": 4,
+  "series": 6,
+  "zh": "蓝图：菲利克斯·舒尔茨"
+ },
+ "BlueprintFlandre": {
+  "en": "Blueprint - Flandre",
+  "rarity": 4,
+  "series": 6,
+  "zh": "蓝图：弗兰德尔"
+ },
+ "BlueprintGascogne": {
+  "en": "Blueprint - Gascogne",
+  "rarity": 4,
+  "series": 2,
+  "zh": "蓝图：加斯科涅"
+ },
+ "BlueprintGascogne_2": {
+  "en": "Blueprint - Gascogne",
+  "rarity": 4,
+  "series": 2,
+  "zh": "蓝图：加斯科涅"
+ },
+ "BlueprintGeorgia": {
+  "en": "Blueprint - Georgia",
+  "rarity": 4,
+  "series": 2,
+  "zh": "蓝图：佐治亚"
+ },
+ "BlueprintGeorgia_2": {
+  "en": "Blueprint - Georgia",
+  "rarity": 4,
+  "series": 2,
+  "zh": "蓝图：佐治亚"
+ },
+ "BlueprintGoudenLeeuw": {
+  "en": "Blueprint - Gouden Leeuw",
+  "rarity": 5,
+  "series": 8,
+  "zh": "蓝图：金狮"
+ },
+ "BlueprintHakuryuu": {
+  "en": "Blueprint - Hakuryuu",
+  "rarity": 5,
+  "series": 4,
+  "zh": "蓝图：白龙"
+ },
+ "BlueprintHakuryuu_2": {
+  "en": "Blueprint - Hakuryuu",
+  "rarity": 5,
+  "series": 4,
+  "zh": "蓝图：白龙"
+ },
+ "BlueprintHakuryuu_3": {
+  "en": "Blueprint - Hakuryuu",
+  "rarity": 5,
+  "series": 4,
+  "zh": "蓝图：白龙"
+ },
+ "BlueprintHakuryuu_4": {
+  "en": "Blueprint - Hakuryuu",
+  "rarity": 5,
+  "series": 4,
+  "zh": "蓝图：白龙"
+ },
+ "BlueprintHalford": {
+  "en": "Blueprint - Halford",
+  "rarity": 4,
+  "series": 7,
+  "zh": "蓝图：哈尔福德"
+ },
+ "BlueprintHarbin": {
+  "en": "Blueprint - Harbin",
+  "rarity": 4,
+  "series": 5,
+  "zh": "蓝图：哈尔滨"
+ },
+ "BlueprintHarbin_2": {
+  "en": "Blueprint - Harbin",
+  "rarity": 4,
+  "series": 5,
+  "zh": "蓝图：哈尔滨"
+ },
+ "BlueprintHindenburg": {
+  "en": "Blueprint - Hindenburg",
+  "rarity": 5,
+  "series": 6,
+  "zh": "蓝图：兴登堡"
+ },
+ "BlueprintHindenburg_2": {
+  "en": "Blueprint - Hindenburg",
+  "rarity": 5,
+  "series": 6,
+  "zh": "蓝图：兴登堡"
+ },
+ "BlueprintIbuki": {
+  "en": "Blueprint - Ibuki",
+  "rarity": 4,
+  "series": 1,
+  "zh": "蓝图：伊吹"
+ },
+ "BlueprintIbuki_2": {
+  "en": "Blueprint - Ibuki",
+  "rarity": 4,
+  "series": 1,
+  "zh": "蓝图：伊吹"
+ },
+ "BlueprintIzumo": {
+  "en": "Blueprint - Izumo",
+  "rarity": 4,
+  "series": 1,
+  "zh": "蓝图：出云"
+ },
+ "BlueprintIzumo_2": {
+  "en": "Blueprint - Izumo",
+  "rarity": 4,
+  "series": 1,
+  "zh": "蓝图：出云"
+ },
+ "BlueprintKansas": {
+  "en": "Blueprint - Kansas",
+  "rarity": 4,
+  "series": 8,
+  "zh": "蓝图：堪萨斯"
+ },
+ "BlueprintKearsarge": {
+  "en": "Blueprint - Kearsarge",
+  "rarity": 5,
+  "series": 6,
+  "zh": "蓝图：奇尔沙治"
+ },
+ "BlueprintKitakaze": {
+  "en": "Blueprint - Kitakaze",
+  "rarity": 4,
+  "series": 2,
+  "zh": "蓝图：北风"
+ },
+ "BlueprintMainz": {
+  "en": "Blueprint - Mainz",
+  "rarity": 4,
+  "series": 3,
+  "zh": "蓝图：美因茨"
+ },
+ "BlueprintMarcopolo": {
+  "en": "Blueprint - Marco Polo",
+  "rarity": 4,
+  "series": 4,
+  "zh": "蓝图：马可波罗"
+ },
+ "BlueprintMarcopolo_2": {
+  "en": "Blueprint - Marco Polo",
+  "rarity": 4,
+  "series": 4,
+  "zh": "蓝图：马可波罗"
+ },
+ "BlueprintMarcopolo_3": {
+  "en": "Blueprint - Marco Polo",
+  "rarity": 4,
+  "series": 4,
+  "zh": "蓝图：马可波罗"
+ },
+ "BlueprintMaxImmelmann": {
+  "en": "Blueprint - Max Immelmann",
+  "rarity": 5,
+  "series": 9,
+  "zh": "蓝图：马克斯·殷麦曼"
+ },
+ "BlueprintMaxImmelmann_2": {
+  "en": "Blueprint - Max Immelmann",
+  "rarity": 5,
+  "series": 9,
+  "zh": "蓝图：马克斯·殷麦曼"
+ },
+ "BlueprintMecklenburg": {
+  "en": "Blueprint - Mecklenburg",
+  "rarity": 5,
+  "series": 8,
+  "zh": "蓝图：梅克伦堡"
+ },
+ "BlueprintMonarch": {
+  "en": "Blueprint - Monarch",
+  "rarity": 4,
+  "series": 1,
+  "zh": "蓝图：君主"
+ },
+ "BlueprintMonarch_2": {
+  "en": "Blueprint - Monarch",
+  "rarity": 4,
+  "series": 1,
+  "zh": "蓝图：君主"
+ },
+ "BlueprintNapoli": {
+  "en": "Blueprint - Napoli",
+  "rarity": 5,
+  "series": 7,
+  "zh": "蓝图：那不勒斯"
+ },
+ "BlueprintNeptune": {
+  "en": "Blueprint - Neptune",
+  "rarity": 4,
+  "series": 1,
+  "zh": "蓝图：海王星"
+ },
+ "BlueprintNeptune_2": {
+  "en": "Blueprint - Neptune",
+  "rarity": 4,
+  "series": 1,
+  "zh": "蓝图：海王星"
+ },
+ "BlueprintOdin": {
+  "en": "Blueprint - Odin",
+  "rarity": 4,
+  "series": 3,
+  "zh": "蓝图：奥丁"
+ },
+ "BlueprintOrage": {
+  "en": "Blueprint - Orage",
+  "rarity": 4,
+  "series": 9,
+  "zh": "蓝图：暴风雨"
+ },
+ "BlueprintPlymouth": {
+  "en": "Blueprint - Plymouth",
+  "rarity": 5,
+  "series": 5,
+  "zh": "蓝图：普利茅斯"
+ },
+ "BlueprintPlymouth_2": {
+  "en": "Blueprint - Plymouth",
+  "rarity": 5,
+  "series": 5,
+  "zh": "蓝图：普利茅斯"
+ },
+ "BlueprintRoon": {
+  "en": "Blueprint - Roon",
+  "rarity": 4,
+  "series": 1,
+  "zh": "蓝图：罗恩"
+ },
+ "BlueprintRoon_2": {
+  "en": "Blueprint - Roon",
+  "rarity": 4,
+  "series": 1,
+  "zh": "蓝图：罗恩"
+ },
+ "BlueprintSaintlouis": {
+  "en": "Blueprint - Saint Louis",
+  "rarity": 4,
+  "series": 1,
+  "zh": "蓝图：路易九世"
+ },
+ "BlueprintSaintlouis_2": {
+  "en": "Blueprint - Saint Louis",
+  "rarity": 4,
+  "series": 1,
+  "zh": "蓝图：路易九世"
+ },
+ "BlueprintSeattle": {
+  "en": "Blueprint - Seattle",
+  "rarity": 4,
+  "series": 2,
+  "zh": "蓝图：西雅图"
+ },
+ "BlueprintSeattle_2": {
+  "en": "Blueprint - Seattle",
+  "rarity": 4,
+  "series": 2,
+  "zh": "蓝图：西雅图"
+ },
+ "BlueprintShimanto": {
+  "en": "Blueprint - Shimanto",
+  "rarity": 4,
+  "series": 6,
+  "zh": "蓝图：四万十"
+ },
+ "BlueprintTakahashi": {
+  "en": "Blueprint - Takahashi",
+  "rarity": 4,
+  "series": 9,
+  "zh": "蓝图：高梁"
+ },
+ "BlueprintValparaiso": {
+  "en": "Blueprint - Valparaíso",
+  "rarity": 5,
+  "series": 9,
+  "zh": "蓝图：瓦尔帕莱索"
+ },
+ "BlueprintValparaiso_2": {
+  "en": "Blueprint - Valparaíso",
+  "rarity": 5,
+  "series": 9,
+  "zh": "蓝图：瓦尔帕莱索"
+ },
+ "BlueprintVittorioCuniberti": {
+  "en": "Blueprint - Vittorio Cuniberti",
+  "rarity": 4,
+  "series": 8,
+  "zh": "蓝图：维托里奥·库尼贝尔蒂"
+ },
+ "CognitiveChips": {
+  "en": "Cognitive Chips",
+  "rarity": 4,
+  "zh": "心智单元"
+ },
+ "CognitiveChips_2": {
+  "en": "Cognitive Chips",
+  "rarity": 4,
+  "zh": "心智单元"
+ },
+ "Coins": {
+  "en": "Coins",
+  "rarity": 1,
+  "zh": "物资"
+ },
+ "F2A_Buffalo_T3": {
+  "en": "T3 F2A Buffalo Design",
+  "rarity": 2,
+  "zh": "F2A水牛T3设计图"
+ },
+ "F4F_Wildcat_T3": {
+  "en": "T3 F4F Wildcat Design",
+  "rarity": 3,
+  "zh": "F4F野猫T3设计图"
+ },
+ "F4U_Corsair_T3": {
+  "en": "T3 F4U Corsair Design",
+  "rarity": 3,
+  "zh": "F4U海盗T3设计图"
+ },
+ "F6F_Hellcat_T2": {
+  "en": "T2 F6F Hellcat Design",
+  "rarity": 3,
+  "zh": "？？？？？"
+ },
+ "F6F_Hellcat_T3": {
+  "en": "T3 F6F Hellcat Design",
+  "rarity": 4,
+  "zh": "？？？？？"
+ },
+ "Fire_Control_Radar_T3": {
+  "en": "T3 Fire-Control Radar Design",
+  "rarity": 3,
+  "zh": "火控雷达T3设计图"
+ },
+ "Fire_Suppressor_T3": {
+  "en": "T3 Fire Suppressor Design",
+  "rarity": 2,
+  "zh": "灭火器T3设计图"
+ },
+ "Fuel_Filter_T3": {
+  "en": "T3 Fuel Filter Design",
+  "rarity": 3,
+  "zh": "燃油滤清器T3设计图"
+ },
+ "Gyroscope_T3": {
+  "en": "T3 Gyroscope Design",
+  "rarity": 3,
+  "zh": "陀螺仪T3设计图"
+ },
+ "High_Performance_Air_Radar_T0": {
+  "en": "T0 High Performance Air Radar Design",
+  "rarity": 4,
+  "zh": "高性能对空雷达T0设计图"
+ },
+ "High_Performance_Air_Radar_T0_2": {
+  "en": "T0 High Performance Air Radar Design",
+  "rarity": 4,
+  "zh": "高性能对空雷达T0设计图"
+ },
+ "High_Performance_Air_Radar_T0_3": {
+  "en": "T0 High Performance Air Radar Design",
+  "rarity": 4,
+  "zh": "高性能对空雷达T0设计图"
+ },
+ "High_Performance_Air_Radar_T0_4": {
+  "en": "T0 High Performance Air Radar Design",
+  "rarity": 4,
+  "zh": "高性能对空雷达T0设计图"
+ },
+ "High_Performance_Hydraulic_Steering_Gear_T0": {
+  "en": "T0 High Performance Hydraulic Steering Gear Design",
+  "rarity": 4,
+  "zh": "高性能舵机T0设计图"
+ },
+ "High_Performance_Hydraulic_Steering_Gear_T0_2": {
+  "en": "T0 High Performance Hydraulic Steering Gear Design",
+  "rarity": 4,
+  "zh": "高性能舵机T0设计图"
+ },
+ "High_Standard_Fire_Control_Radar_T0": {
+  "en": "High Performance Fire Control Radar T0 Design",
+  "rarity": 4,
+  "zh": "高性能火控雷达T0设计图"
+ },
+ "High_Standard_Fire_Control_Radar_T0_2": {
+  "en": "High Performance Fire Control Radar T0 Design",
+  "rarity": 4,
+  "zh": "高性能火控雷达T0设计图"
+ },
+ "High_Standard_Fire_Control_Radar_T0_3": {
+  "en": "High Performance Fire Control Radar T0 Design",
+  "rarity": 4,
+  "zh": "高性能火控雷达T0设计图"
+ },
+ "High_Standard_Fire_Control_Radar_T0_4": {
+  "en": "High Performance Fire Control Radar T0 Design",
+  "rarity": 4,
+  "zh": "高性能火控雷达T0设计图"
+ },
+ "Hydraulic_Steering_Gear_T3": {
+  "en": "T3 Hydraulic Steering Gear Design",
+  "rarity": 2,
+  "zh": "液压舵机T3设计图"
+ },
+ "Ju_87C_Dive_Bomber_T2": {
+  "en": "T2 Ju-87C Dive Bomber Design",
+  "rarity": 2,
+  "zh": "Ju-87C俯冲轰炸机T2设计图"
+ },
+ "Ju_87C_Dive_Bomber_T3": {
+  "en": "T3 Ju-87C Dive Bomber Design",
+  "rarity": 3,
+  "zh": "Ju-87C俯冲轰炸机T3设计图"
+ },
+ "Messerschmitt_Me_155A_T2": {
+  "en": "T2 Messerschmitt Me-155A Design",
+  "rarity": 3,
+  "zh": "Me-155A舰载战斗机T2设计图"
+ },
+ "Messerschmitt_Me_155A_T2_2": {
+  "en": "T2 Messerschmitt Me-155A Design",
+  "rarity": 3,
+  "zh": "Me-155A舰载战斗机T2设计图"
+ },
+ "Messerschmitt_Me_155A_T3": {
+  "en": "T3 Messerschmitt Me-155A Design",
+  "rarity": 4,
+  "zh": "Me-155A舰载战斗机T3设计图"
+ },
+ "Octuple_40mm_Pom_Pom_Gun_Mount_T2": {
+  "en": "T2 Octuple 40mm Pom Pom Gun Design",
+  "rarity": 3,
+  "zh": "八联装40mm“砰砰”炮T2设计图"
+ },
+ "Octuple_40mm_Pom_Pom_Gun_Mount_T3": {
+  "en": "T3 Octuple 40mm Pom Pom Gun Design",
+  "rarity": 4,
+  "zh": "八联装40mm“砰砰”炮T3设计图"
+ },
+ "Prototype_55mm_Gerat_58_AA_Gun_Mount_T0": {
+  "en": "Prototype 55mm Gerät 58 AA Gun Mount T0 Design",
+  "rarity": 4,
+  "zh": "试作型55mm防空炮Gerät 58T0设计图"
+ },
+ "Prototype_BF_109G_T0": {
+  "en": "Prototype BF-109G T0 Design",
+  "rarity": 4,
+  "zh": "试作舰载型BF-109GT0设计图"
+ },
+ "Prototype_BF_109G_T0_2": {
+  "en": "Prototype BF-109G T0 Design",
+  "rarity": 4,
+  "zh": "试作舰载型BF-109GT0设计图"
+ },
+ "Prototype_BF_109G_T0_3": {
+  "en": "Prototype BF-109G T0 Design",
+  "rarity": 4,
+  "zh": "试作舰载型BF-109GT0设计图"
+ },
+ "Prototype_Carrier_Based_La_9_T0": {
+  "en": "Prototype Carrier-Based La-9 T0 Design",
+  "rarity": 5,
+  "series": 7,
+  "zh": "试作舰载型La-9T0设计图"
+ },
+ "Prototype_Carrier_Based_La_9_T0_2": {
+  "en": "Prototype Carrier-Based La-9 T0 Design",
+  "rarity": 5,
+  "series": 7,
+  "zh": "试作舰载型La-9T0设计图"
+ },
+ "Prototype_Carrier_Based_Ta_152_C_1_R14_T0": {
+  "en": "Prototype Carrier-Based Ta 152 C-1/R14 T0 Design",
+  "rarity": 5,
+  "series": 9,
+  "zh": "试作舰载型Ta 152C-1/R14T0设计图"
+ },
+ "Prototype_Carrier_Based_Ta_152_C_1_R14_T0_2": {
+  "en": "Prototype Carrier-Based Ta 152 C-1/R14 T0 Design",
+  "rarity": 5,
+  "series": 9,
+  "zh": "试作舰载型Ta 152C-1/R14T0设计图"
+ },
+ "Prototype_F8F_Bearcat_Float_T0": {
+  "en": "Prototype F8F Bearcat (Float) T0 Design",
+  "rarity": 4,
+  "zh": "试作型F8F熊猫（浮筒型）T0设计图"
+ },
+ "Prototype_Quadruple_305mm_SKC39_Main_Gun_Mount_T0": {
+  "en": "Prototype Quadruple 305mm SKC39 Main Gun Mount T0 Design",
+  "rarity": 5,
+  "series": 8,
+  "zh": "试作型四联装305mmSKC39主炮T0设计图"
+ },
+ "Prototype_Quadruple_305mm_SKC39_Main_Gun_Mount_T0_2": {
+  "en": "Prototype Quadruple 305mm SKC39 Main Gun Mount T0 Design",
+  "rarity": 5,
+  "series": 8,
+  "zh": "试作型四联装305mmSKC39主炮T0设计图"
+ },
+ "Prototype_Quadruple_305mm_SKC39_Main_Gun_Mount_T0_3": {
+  "en": "Prototype Quadruple 305mm SKC39 Main Gun Mount T0 Design",
+  "rarity": 5,
+  "series": 8,
+  "zh": "试作型四联装305mmSKC39主炮T0设计图"
+ },
+ "Prototype_Quadruple_305mm_SKC39_Main_Gun_Mount_T0_4": {
+  "en": "Prototype Quadruple 305mm SKC39 Main Gun Mount T0 Design",
+  "rarity": 5,
+  "series": 8,
+  "zh": "试作型四联装305mmSKC39主炮T0设计图"
+ },
+ "Prototype_Saiun_Kai_T0": {
+  "en": "Prototype Saiun Kai T0 Design",
+  "rarity": 4,
+  "zh": "试作型彩云（舰攻型）T0设计图"
+ },
+ "Prototype_Saiun_Kai_T0_2": {
+  "en": "Prototype Saiun Kai T0 Design",
+  "rarity": 4,
+  "zh": "试作型彩云（舰攻型）T0设计图"
+ },
+ "Prototype_Sextuple_20mm_Scotti_Model_1941_Anti_Air_Gun_T0": {
+  "en": "Prototype Sextuple 20mm Scotti Model 1941 Anti-Air Gun T0 Design",
+  "rarity": 4,
+  "zh": "试作型六联装Scotti20mm机炮Model1941T0设计图"
+ },
+ "Prototype_Tenrai_T0": {
+  "en": "Prototype Tenrai T0 Design",
+  "rarity": 5,
+  "series": 4,
+  "zh": "试作舰载型天雷T0设计图"
+ },
+ "Prototype_Tenrai_T0_2": {
+  "en": "Prototype Tenrai T0 Design",
+  "rarity": 5,
+  "series": 4,
+  "zh": "试作舰载型天雷T0设计图"
+ },
+ "Prototype_Tenrai_T0_3": {
+  "en": "Prototype Tenrai T0 Design",
+  "rarity": 5,
+  "series": 4,
+  "zh": "试作舰载型天雷T0设计图"
+ },
+ "Prototype_Tenrai_T0_4": {
+  "en": "Prototype Tenrai T0 Design",
+  "rarity": 5,
+  "series": 4,
+  "zh": "试作舰载型天雷T0设计图"
+ },
+ "Prototype_Triple_203mm_AA_Gun_T0": {
+  "en": "T0 Prototype Triple 203mm AA Gun Design",
+  "rarity": 4,
+  "zh": "试作型三联装203mm舰炮T0设计图"
+ },
+ "Prototype_Triple_203mm_SKC_Main_Gun_Mount_T0": {
+  "en": "Prototype Triple 203mm SKC Main Gun Mount T0 Design",
+  "rarity": 5,
+  "series": 6,
+  "zh": "试作型三联装203mmSKC主炮改T0设计图"
+ },
+ "Prototype_Triple_234mm_Main_Gun_9_2_MK_XII_T0": {
+  "en": "Prototype Triple 234mm Main Gun (9.2\" MK XII) T0 Design",
+  "rarity": 5,
+  "series": 3,
+  "zh": "试作型三联装234mm主炮T0设计图"
+ },
+ "Prototype_Triple_310mm_Type_0_Main_Gun_Mount_T0": {
+  "en": "Prototype Triple 310mm Main Gun (Type 0) T0 Design",
+  "rarity": 4,
+  "zh": "试作型三联装310mm主炮T0设计图"
+ },
+ "Prototype_Triple_380mm_Mle_1935_Main_Gun_Mount_T0": {
+  "en": "Prototype Triple 380mm Mle 1935 Main Gun Mount T0 Design",
+  "rarity": 4,
+  "zh": "试作型三联装380mm主炮Mle1935T0设计图"
+ },
+ "Prototype_Triple_381mm_AA_Gun_T0": {
+  "en": "T0 Prototype Triple 381mm AA Gun Design",
+  "rarity": 4,
+  "zh": "试作型三联装381mm主炮T0设计图"
+ },
+ "Prototype_Triple_381mm_AA_Gun_T0_2": {
+  "en": "T0 Prototype Triple 381mm AA Gun Design",
+  "rarity": 4,
+  "zh": "试作型三联装381mm主炮T0设计图"
+ },
+ "Prototype_Triple_381mm_AA_Gun_T0_3": {
+  "en": "T0 Prototype Triple 381mm AA Gun Design",
+  "rarity": 4,
+  "zh": "试作型三联装381mm主炮T0设计图"
+ },
+ "Prototype_Triple_381mm_AA_Gun_T0_4": {
+  "en": "T0 Prototype Triple 381mm AA Gun Design",
+  "rarity": 4,
+  "zh": "试作型三联装381mm主炮T0设计图"
+ },
+ "Prototype_Triple_381mm_AA_Gun_T0_5": {
+  "en": "T0 Prototype Triple 381mm AA Gun Design",
+  "rarity": 4,
+  "zh": "试作型三联装381mm主炮T0设计图"
+ },
+ "Prototype_Triple_381mm_AA_Gun_T0_6": {
+  "en": "T0 Prototype Triple 381mm AA Gun Design",
+  "rarity": 4,
+  "zh": "试作型三联装381mm主炮T0设计图"
+ },
+ "Prototype_Triple_381mm_AA_Gun_T0_7": {
+  "en": "T0 Prototype Triple 381mm AA Gun Design",
+  "rarity": 4,
+  "zh": "试作型三联装381mm主炮T0设计图"
+ },
+ "Prototype_Triple_381mm_AA_Gun_T0_8": {
+  "en": "T0 Prototype Triple 381mm AA Gun Design",
+  "rarity": 4,
+  "zh": "试作型三联装381mm主炮T0设计图"
+ },
+ "Prototype_Triple_406mm_50_Main_Gun_Mount_T0": {
+  "en": "Prototype Triple 406mm/50 Main Gun T0 Design",
+  "rarity": 4,
+  "zh": "试作型三联装406mm/50主炮T0设计图"
+ },
+ "Prototype_Triple_406mm_Model_1940_Main_Gun_T0": {
+  "en": "Prototype Triple 406mm Model 1940 Main Gun T0 Design",
+  "rarity": 4,
+  "zh": "试作型三联装406mm主炮Model1940T0设计图"
+ },
+ "Prototype_Triple_406mm_Model_1940_Main_Gun_T0_2": {
+  "en": "Prototype Triple 406mm Model 1940 Main Gun T0 Design",
+  "rarity": 4,
+  "zh": "试作型三联装406mm主炮Model1940T0设计图"
+ },
+ "Prototype_Triple_406mm_Model_1940_Main_Gun_T0_3": {
+  "en": "Prototype Triple 406mm Model 1940 Main Gun T0 Design",
+  "rarity": 4,
+  "zh": "试作型三联装406mm主炮Model1940T0设计图"
+ },
+ "Prototype_Twin_234mm_Main_Gun_9_2_MK_XII_T0": {
+  "en": "Prototype Twin 234mm Main Gun (9.2\" MK XII) T0 Design",
+  "rarity": 4,
+  "zh": "试作型双联装234mm主炮T0设计图"
+ },
+ "Prototype_Twin_234mm_Main_Gun_9_2_MK_XII_T0_2": {
+  "en": "Prototype Twin 234mm Main Gun (9.2\" MK XII) T0 Design",
+  "rarity": 4,
+  "zh": "试作型双联装234mm主炮T0设计图"
+ },
+ "Prototype_Twin_234mm_Main_Gun_9_2_MK_XII_T0_3": {
+  "en": "Prototype Twin 234mm Main Gun (9.2\" MK XII) T0 Design",
+  "rarity": 4,
+  "zh": "试作型双联装234mm主炮T0设计图"
+ },
+ "Prototype_Twin_410mm_mod_A_Main_Gun_Mount_T0": {
+  "en": "Prototype Twin 410mm mod.A Main Gun Mount T0 Design",
+  "rarity": 4,
+  "zh": "试作型双联装410mm主炮mod.AT0设计图"
+ },
+ "Prototype_Twin_90mm_Model_1939_High_Angle_Gun_T0": {
+  "en": "Prototype Twin 90mm Model 1939 High Angle Gun T0 Design",
+  "rarity": 4,
+  "zh": "试作型双联90mm高角炮Model1939T0设计图"
+ },
+ "Prototype_Twin_90mm_Model_1939_High_Angle_Gun_T0_2": {
+  "en": "Prototype Twin 90mm Model 1939 High Angle Gun T0 Design",
+  "rarity": 4,
+  "zh": "试作型双联90mm高角炮Model1939T0设计图"
+ },
+ "Prototype_Twin_90mm_Model_1939_High_Angle_Gun_T0_3": {
+  "en": "Prototype Twin 90mm Model 1939 High Angle Gun T0 Design",
+  "rarity": 4,
+  "zh": "试作型双联90mm高角炮Model1939T0设计图"
+ },
+ "Quadruple_356mm_Main_Gun_Mount_T2": {
+  "en": "T2 Quadruple 356mm Main Gun Design",
+  "rarity": 3,
+  "zh": "四联装356mm主炮T2设计图"
+ },
+ "Quadruple_356mm_Main_Gun_Mount_T3": {
+  "en": "T3 Quadruple 356mm Main Gun Design",
+  "rarity": 4,
+  "zh": "四联装356mm主炮T3设计图"
+ },
+ "Quadruple_356mm_Main_Gun_Mount_T3_2": {
+  "en": "T3 Quadruple 356mm Main Gun Design",
+  "rarity": 4,
+  "zh": "四联装356mm主炮T3设计图"
+ },
+ "Quadruple_356mm_Main_Gun_Mount_T3_3": {
+  "en": "T3 Quadruple 356mm Main Gun Design",
+  "rarity": 4,
+  "zh": "四联装356mm主炮T3设计图"
+ },
+ "Rammer_T3": {
+  "en": "T3 Rammer Design",
+  "rarity": 2,
+  "zh": "电动扬弹机T3设计图"
+ },
+ "Repair_Toolkit_T3": {
+  "en": "T3 Repair Toolkit Design",
+  "rarity": 4,
+  "zh": "舰艇维修设备T3设计图"
+ },
+ "SB2C_Helldiver_T3": {
+  "en": "T3 SB2C Helldiver Design",
+  "rarity": 3,
+  "zh": "？？？？？"
+ },
+ "SB2C_Helldiver_T3_2": {
+  "en": "T3 SB2C Helldiver Design",
+  "rarity": 3,
+  "zh": "？？？？？"
+ },
+ "SBD_Dauntless_T3": {
+  "en": "T3 SBD Dauntless Design",
+  "rarity": 2,
+  "zh": "SBD无畏T3设计图"
+ },
+ "SG_Radar_T2": {
+  "en": "T2 SG Radar Design",
+  "rarity": 3,
+  "zh": "SG雷达T2设计图"
+ },
+ "SG_Radar_T3": {
+  "en": "T3 SG Radar Design",
+  "rarity": 4,
+  "zh": "SG雷达T3设计图"
+ },
+ "Seafang_T2": {
+  "en": "T2 Seafang Design",
+  "rarity": 3,
+  "zh": "？？？？？"
+ },
+ "Seafang_T3": {
+  "en": "T3 Seafang Design",
+  "rarity": 4,
+  "zh": "？？？？？"
+ },
+ "Sextuple_40mm_Bofors_AA_Gun_Mount_T0": {
+  "en": "Sextuple Bofors 40mm AA Gun T0 Design",
+  "rarity": 4,
+  "zh": "六联装40mm博福斯对空机炮T0设计图"
+ },
+ "Single_150mm_SK_C_28_Main_Gun_Mount_T3": {
+  "en": "T3 Single 150mm Main Gun (SK C/28) Design",
+  "rarity": 3,
+  "zh": "单装SKC28式150mm主炮T3设计图"
+ },
+ "Single_152mm_Secondary_Gun_Mount_T3": {
+  "en": "T3 Single 152mm Secondary Gun Design",
+  "rarity": 2,
+  "zh": "单装152mm副炮T3设计图"
+ },
+ "Spitfire_T3": {
+  "en": "T3 Spitfire Design",
+  "rarity": 3,
+  "zh": "海喷火T3设计图"
+ },
+ "Steam_Catapult_T2": {
+  "en": "T2 Steam Catapult Design",
+  "rarity": 3,
+  "zh": "液压弹射装置T2设计图"
+ },
+ "Steam_Catapult_T3": {
+  "en": "T3 Steam Catapult Design",
+  "rarity": 4,
+  "zh": "液压弹射装置T3设计图"
+ },
+ "Swordfish_T3": {
+  "en": "T3 Swordfish Design",
+  "rarity": 3,
+  "zh": "剑鱼T3设计图"
+ },
+ "Swordfish_T3_2": {
+  "en": "T3 Swordfish Design",
+  "rarity": 3,
+  "zh": "剑鱼T3设计图"
+ },
+ "TBD_Devastator_T3": {
+  "en": "T3 TBD Devastator Design",
+  "rarity": 2,
+  "zh": "TBD蹂躏者T3设计图"
+ },
+ "TBF_Avenger_T3": {
+  "en": "T3 TBF Avenger Design",
+  "rarity": 3,
+  "zh": "TBF复仇者T3设计图"
+ },
+ "TBF_Avenger_T3_2": {
+  "en": "T3 TBF Avenger Design",
+  "rarity": 3,
+  "zh": "TBF复仇者T3设计图"
+ },
+ "Triple_102mm_Secondary_Gun_Mount_T3": {
+  "en": "T3 Triple 102mm Secondary Gun Design",
+  "rarity": 3,
+  "zh": "三联装102mm副炮T3设计图"
+ },
+ "Triple_150mm_SK_C_25_Main_Gun_Mount_T3": {
+  "en": "T3 Triple 150mm Main Gun (SK C/25) Design",
+  "rarity": 3,
+  "zh": "三联装SKC25式150mm主炮T3设计图"
+ },
+ "Triple_283mm_SK_C_28_Main_Gun_Mount_T2": {
+  "en": "T2 Triple 283mm Main Gun (SK C/28) Design",
+  "rarity": 2,
+  "zh": "三联283mmSKC28主炮T2设计图"
+ },
+ "Triple_283mm_SK_C_28_Main_Gun_Mount_T3": {
+  "en": "T3 Triple 283mm Main Gun (SK C/28) Design",
+  "rarity": 3,
+  "zh": "三联283mmSKC28主炮T3设计图"
+ },
+ "Triple_356mm_Main_Gun_Mount_T3": {
+  "en": "T3 Triple 356mm Main Gun Design",
+  "rarity": 2,
+  "zh": "三联装356mm主炮T3设计图"
+ },
+ "Triple_406mm_Main_Gun_T2": {
+  "en": "T2 Triple 406mm Main Gun Design",
+  "rarity": 3,
+  "zh": "三联装406mm主炮T2设计图"
+ },
+ "Triple_406mm_Main_Gun_T3": {
+  "en": "T3 Triple 406mm Main Gun Design",
+  "rarity": 4,
+  "zh": "三联装406mm主炮T3设计图"
+ },
+ "Triple_533mm_Torpedo_T3": {
+  "en": "T3 Triple 533mm Torpedo Design",
+  "rarity": 2,
+  "zh": "三联装533mm鱼雷T3设计图"
+ },
+ "Twin_102mm_Secondary_Gun_Mount_T3": {
+  "en": "T3 Twin 102mm Secondary Gun Design",
+  "rarity": 2,
+  "zh": "双联装102mm副炮T3设计图"
+ },
+ "Twin_113mm_AA_Gun_Mount_T2": {
+  "en": "T2 Twin 113mm AA Gun Design",
+  "rarity": 3,
+  "zh": "双联装113mm高射炮T2设计图"
+ },
+ "Twin_113mm_AA_Gun_Mount_T3": {
+  "en": "T3 Twin 113mm AA Gun Design",
+  "rarity": 4,
+  "zh": "双联装113mm高射炮T3设计图"
+ },
+ "Twin_120mm_Main_Gun_Mount_T3": {
+  "en": "T3 Twin 120mm Main Gun Design",
+  "rarity": 3,
+  "zh": "双联装120mm主炮T3设计图"
+ },
+ "Twin_37mm_AA_70K_T3": {
+  "en": "T3 Twin 37mm AA 70K Design",
+  "rarity": 3,
+  "zh": "双联37mm手拉机枪T3设计图"
+ },
+ "Twin_37mm_Mle_1936_AA_Gun_Mount_T0": {
+  "en": "Twin 37mm AA Gun (Mle 1936) T0 Design",
+  "rarity": 4,
+  "zh": "双联37mm高射炮Mle1936T0设计图"
+ },
+ "Twin_381mm_Main_Gun_Mount_T3": {
+  "en": "T3 Twin 381mm Main Gun Design",
+  "rarity": 3,
+  "zh": "双联装381mm主炮T3设计图"
+ },
+ "Twin_40mm_Bofors_Hazemeyer_AA_Gun_Mount_T0": {
+  "en": "Twin 40mm Bofors \"Hazemeyer\" AA Gun T0 Design",
+  "rarity": 4,
+  "zh": "双联装40mm博福斯海兹梅耶T0设计图"
+ },
+ "Twin_40mm_Bofors_Hazemeyer_AA_Gun_Mount_T0_2": {
+  "en": "Twin 40mm Bofors \"Hazemeyer\" AA Gun T0 Design",
+  "rarity": 4,
+  "zh": "双联装40mm博福斯海兹梅耶T0设计图"
+ },
+ "Twin_40mm_Bofors_Hazemeyer_AA_Gun_Mount_T0_3": {
+  "en": "Twin 40mm Bofors \"Hazemeyer\" AA Gun T0 Design",
+  "rarity": 4,
+  "zh": "双联装40mm博福斯海兹梅耶T0设计图"
+ },
+ "Twin_40mm_Bofors_STAAG_T0": {
+  "en": "T0 Twin 40mm Bofors STAAG Design",
+  "rarity": 4,
+  "zh": "双联装40mm博福斯STAAGT0设计图"
+ },
+ "Twin_40mm_Bofors_STAAG_T0_2": {
+  "en": "T0 Twin 40mm Bofors STAAG Design",
+  "rarity": 4,
+  "zh": "双联装40mm博福斯STAAGT0设计图"
+ }
+}

@@ -17,13 +17,29 @@ from module.runtime.setting import State
 
 
 def text_response(value):
+    """
+    将数据封装为 MCP TextContent 响应对象。
+
+    Args:
+        value: 待封装的文本或对象。若非字符串则转换为格式化 JSON。
+
+    Returns:
+        list[TextContent]: MCP 文本内容列表。
+    """
     if not isinstance(value, str):
         value = json.dumps(value, ensure_ascii=False, indent=2, default=str)
     return [TextContent(type='text', text=value)]
 
 
 class Tools:
+    """MCP 工具集适配器，承接并路由来自 MCP 客户端的调用。"""
+
     def __init__(self, configs=None, runtime=None):
+        """
+        Args:
+            configs: 可选的 ConfigService 实例。
+            runtime: 可选的 RuntimeService 实例。
+        """
         self.configs = configs
         self.runtime = runtime
         self.calls = BoundedCalls()
@@ -33,7 +49,7 @@ class Tools:
         self.failed_devices = []
 
     def initialize(self):
-        # 在执行线程中惰性初始化，只读模板，不在导入时加载用户配置。
+        """在工作线程中按需惰性初始化配置服务和运行时服务。"""
         with self.initialize_lock:
             if self.configs is None:
                 self.configs = ConfigService()
@@ -43,6 +59,16 @@ class Tools:
                 self.helper = McpConfigHelper()
 
     async def call(self, name, arguments):
+        """
+        分发执行指定的 MCP 工具。
+
+        Args:
+            name: 工具名称。
+            arguments: 工具调用参数字典。
+
+        Returns:
+            list[TextContent | ImageContent]: MCP 响应内容列表。
+        """
         try:
             if name in DEVICE_TIMEOUTS:
                 # 实例白名单检查也必须经过配置服务，且不在事件循环中读盘。
@@ -59,7 +85,7 @@ class Tools:
             return text_response(f'Error: {exc}')
 
     async def close(self):
-        # 先同时禁入两组调用，再等工作完成；不会在关闭间隙启动新设备进程。
+        """关闭工具队列并清理残留设备进程。"""
         import asyncio
         await asyncio.gather(self.calls.close(), self.devices.close())
         for process in self.failed_devices[:]:

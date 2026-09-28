@@ -41,15 +41,17 @@ class Level(ModuleBase):
 
     @property
     def lv(self):
-        """
+        """获取各位置舰船的等级列表。
+
         Returns:
-            list[int]: 各位置的等级列表。
+            list[int]: 各位置的等级列表，长度为 6。
         """
         return self._lv
 
     @lv.setter
     def lv(self, value):
-        """
+        """设置各位置舰船的等级列表。
+
         Args:
             value (list[int]): 各位置的等级列表。
         """
@@ -62,21 +64,36 @@ class Level(ModuleBase):
 
     @Config.when(SERVER='en')
     def _lv_grid(self):
+        """获取 EN 服务器下的等级显示按钮网格。
+
+        Returns:
+            ButtonGrid: 等级区域按钮网格对象。
+        """
         return ButtonGrid(origin=(56, 113), delta=(0, 100), button_shape=(46, 19), grid_shape=(1, 6))
 
     @Config.when(SERVER='jp')
     def _lv_grid(self):
+        """获取 JP 服务器下的等级显示按钮网格。
+
+        Returns:
+            ButtonGrid: 等级区域按钮网格对象。
+        """
         return ButtonGrid(origin=(34, 128), delta=(0, 100), button_shape=(68, 19), grid_shape=(1, 6))
 
     @Config.when(SERVER=None)
     def _lv_grid(self):
+        """获取默认服务器下的等级显示按钮网格。
+
+        Returns:
+            ButtonGrid: 等级区域按钮网格对象。
+        """
         return ButtonGrid(origin=(58, 128), delta=(0, 100), button_shape=(46, 19), grid_shape=(1, 6))
 
     def lv_get(self, after_battle=False):
-        """获取各位置的等级。
+        """获取各位置舰船的当前等级并执行停止条件检测。
 
         Args:
-            after_battle (bool): 是否在战斗后调用。
+            after_battle (bool, optional): 是否在战斗后调用。默认为 False。
 
         Returns:
             list[int]: 各位置的等级列表。
@@ -97,6 +114,11 @@ class Level(ModuleBase):
         return self.lv
 
     def lv_triggered(self):
+        """检测是否有舰船升级并达到设定的目标等级。
+
+        Returns:
+            bool: 是否触发了目标等级停止条件。
+        """
         limit = self.config.StopCondition_ReachLevel
         if not limit:
             return False
@@ -117,6 +139,11 @@ class Level(ModuleBase):
         return False
 
     def lv32_triggered(self):
+        """检测旗舰是否达到 32 级停止条件。
+
+        Returns:
+            bool: 是否触发了 32 级停止条件。
+        """
         if not self.config.STOP_IF_REACH_LV32:
             return False
 
@@ -129,7 +156,17 @@ class Level(ModuleBase):
 
 
 class LevelOcr(Digit):
+    """舰船等级数字 OCR 识别器。"""
+
     def pre_process(self, image):
+        """图像预处理：去除低血量暗色遮罩与半透明蓝色背景，并截除 'LV.' 前缀。
+
+        Args:
+            image (np.ndarray): 待处理的原始区域图像。
+
+        Returns:
+            np.ndarray: 处理后的二值化或灰度图像。
+        """
         # 检查红色通道最大值以判断图像是否被遮罩。
         # 被遮罩时红色通道最大值不超过 COLOR_MASKED[0]=107。
         # 先裁剪再检查，去除"需要修理"图标同时保留字符 'V' 的上半部分。
@@ -167,6 +204,14 @@ class LevelOcr(Digit):
         return np.array([[255]], dtype=np.uint8)
 
     def after_process(self, result):
+        """后处理识别结果，纠正常见字符混淆并转换为整数。
+
+        Args:
+            result (str): OCR 原始识别文本。
+
+        Returns:
+            int: 解析出的等级数字，解析失败或为空时返回 0。
+        """
         result = result.replace('I', '1').replace('D', '0').replace('S', '5')
         result = result.replace('B', '8')
 

@@ -153,8 +153,7 @@ class EnemySearchingHandler(InfoHandler):
         return self.appear(IN_MAP)
 
     def is_event_animation(self):
-        """
-        检查是否有活动中的动画（击败敌人后的动画）。
+        """检查是否有活动中的动画（击败敌人后的动画）。
 
         Returns:
             bool: 是否正在播放动画。
@@ -162,19 +161,25 @@ class EnemySearchingHandler(InfoHandler):
         return False
 
     def handle_auto_search_exit(self, drop=None) -> bool:
-        """
-        占位方法，将在 AutoSearchHandler 中被覆盖。
-        AutoSearchHandler 继承了 EnemySearchingHandler，
-        但 handle_in_map_with_enemy_searching() 需要调用 handle_auto_search_exit() 来处理意外情况。
+        """处理自动搜索退出操作。
+
+        占位方法，将在 AutoSearchHandler 中被覆盖。AutoSearchHandler 继承自
+        EnemySearchingHandler，但 handle_in_map_with_enemy_searching() 需要
+        调用 handle_auto_search_exit() 处理意外情况。
+
+        Args:
+            drop (DropImage | None): 掉落记录对象。默认为 None。
+
+        Returns:
+            bool: 是否执行了退出操作。
         """
         return False
 
     def handle_in_map_with_enemy_searching(self, drop=None):
-        """
-        处理地图中敌人搜索动画出现的情况。
+        """处理地图中敌人搜索动画出现的情况。
 
         Args:
-            drop (DropImage): 掉落记录对象。
+            drop (DropImage | None): 掉落记录对象。默认为 None。
 
         Returns:
             bool: 是否进行了处理。
@@ -196,7 +201,7 @@ class EnemySearchingHandler(InfoHandler):
             # 关卡可能已经结束，尽管此处预期出现敌人搜索动画
             if self.handle_in_stage():
                 return True
-            # immediately enter submarine combat in W16
+            # 16章中可能立即进入潜艇战
             if hasattr(self, 'is_combat_loading') and self.is_combat_loading():
                 logger.warning('[处理器-搜索] 进入地图时出现战斗加载画面')
                 break
@@ -241,11 +246,10 @@ class EnemySearchingHandler(InfoHandler):
         return True
 
     def handle_in_map_no_enemy_searching(self, drop=None):
-        """
-        处理地图中未出现敌人搜索动画的情况。
+        """处理地图中未出现敌人搜索动画的情况。
 
         Args:
-            drop (DropImage): 掉落记录对象。
+            drop (DropImage | None): 掉落记录对象。默认为 None。
 
         Returns:
             bool: 是否进行了处理。

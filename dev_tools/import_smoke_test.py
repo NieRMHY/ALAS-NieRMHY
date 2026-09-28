@@ -96,7 +96,12 @@ def platform_skip(module: str) -> bool:
 
 def import_in_subprocess(module: str, timeout: int) -> tuple[bool, str]:
     """在独立子进程中导入模块，返回 (是否成功, 错误摘要)。"""
-    code = f"import {module}"
+    # `python -c` 默认把 sys.argv[0] 设为 "-c"。大量模块导入时都会初始化
+    # module.logger，若并行子进程共享同一个 argv[0]，就会竞争 log/-c.txt，
+    # 造成偶发 FileNotFoundError。为每个待导入模块设置稳定且唯一的进程名，
+    # 让导入副作用写入彼此独立的日志文件。
+    import_name = f"import-smoke-{module.replace('.', '_')}"
+    code = f"import sys; sys.argv[0] = {import_name!r}; import {module}"
     env = {**os.environ, "AZURPILOT_NTP_DISABLE": "1"}
     try:
         proc = subprocess.run(

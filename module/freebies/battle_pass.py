@@ -14,6 +14,12 @@ from module.ui_white.assets import POPUP_CONFIRM_WHITE_BATTLEPASS
 
 
 class BattlePass(Combat, UI):
+    """战斗通行证处理器。
+
+    检测并自动领取大月卡（战斗通行证）中的各类奖励，
+    包括普通奖励、特殊奖励、META舰船及皮肤弹窗处理。
+    """
+
     def battle_pass_red_dot_appear(self):
         """
         检测战斗通行证红点是否出现。
@@ -40,6 +46,11 @@ class BattlePass(Combat, UI):
             return False
 
     def handle_battle_pass_popup(self):
+        """处理进入战斗通行证时可能弹出的购买宣传弹窗。
+
+        Returns:
+            bool: 是否处理了弹窗。
+        """
         return self.appear_then_click(PURCHASE_POPUP, offset=(20, 20), interval=2)
 
     def battle_pass_enter(self):
@@ -128,6 +139,12 @@ class BattlePass(Combat, UI):
         return received
 
     def run(self):
+        """执行战斗通行证奖励检查与领取主流程。
+
+        Pages:
+            in: 任意页面
+            out: page_reward 或 page_battle_pass
+        """
         self.ui_ensure(page_reward)
 
         if self.battle_pass_red_dot_appear():

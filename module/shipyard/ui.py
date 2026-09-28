@@ -25,7 +25,18 @@ OCR_COIN = Digit(
 
 
 class ShipyardNavbar(Navbar):
+    """船坞底部舰船切换导航栏。"""
+
     def is_button_active(self, button, main):
+        """判断导航栏按钮是否处于激活（选中）状态。
+
+        Args:
+            button: 待检测的按钮。
+            main (UI): 主 UI 实例。
+
+        Returns:
+            bool: 处于激活状态返回 True，否则返回 False。
+        """
         if main.image_color_count(button, color=(33, 113, 222), threshold=30, count=400):
             return True
         # 奥丁肩部区域的颜色
@@ -35,15 +46,16 @@ class ShipyardNavbar(Navbar):
 
 
 class ShipyardUI(UI):
+    """船坞界面导航与蓝图交互控制器。"""
+
     def _shipyard_cannot_strengthen(self):
-        """
-        检测舰船是否无法继续强化。
+        """检测舰船是否无法继续强化。
 
         在 DEV 或 FATE 界面中，判断当前舰船是否已达
         到当前等级的最大强化程度，无法继续消耗蓝图。
 
         Returns:
-            bool: 是否出现无法强化的提示
+            bool: 是否出现无法强化的提示。
         """
         if self.appear(SHIPYARD_PROGRESS_DEV, offset=(20, 20)) \
                 or self.appear(SHIPYARD_PROGRESS_FATE, offset=(20, 20)) \
@@ -54,11 +66,10 @@ class ShipyardUI(UI):
         return False
 
     def _shipyard_get_append(self):
-        """
-        获取当前所处的开发阶段后缀。
+        """获取当前所处的开发阶段后缀。
 
         Returns:
-            str: 'FATE' 或 'DEV'
+            str: 'FATE' 或 'DEV'。
         """
         if self.appear(SHIPYARD_IN_FATE, offset=(20, 20)):
             return 'FATE'
@@ -66,14 +77,13 @@ class ShipyardUI(UI):
             return 'DEV'
 
     def _shipyard_get_total(self):
-        """
-        获取当前界面中的蓝图总数读值。
+        """获取当前界面中的蓝图总数读值。
 
         游戏 UI 在不同 PR 季节间有差异，且 DEV/FATE
         阶段的按钮布局不同，需要动态检测并生成 OCR 区域。
 
         Returns:
-            tuple: (plus 按钮, minus 按钮, OCR 识别的数值)
+            tuple[Button, Button, int]: (plus 按钮, minus 按钮, OCR 识别的数值)。
         """
         # 游戏 UI 在此处较为复杂，DEV/FATE 与 MAX 按钮的有无会导致不同布局。
         # 有 MAX 按钮时: | - |   0   | + | | MAX |
@@ -91,18 +101,17 @@ class ShipyardUI(UI):
         return plus, minus, ocr.ocr(self.device.image)
 
     def _shipyard_ensure_index(self, count, skip_first_screenshot=True):
-        """
-        调整蓝图消耗数量到目标值。
+        """调整蓝图消耗数量到目标值。
 
         类似 ui_ensure_index 的实现，尝试将消耗数量调整到
         count。若界面不允许消耗全部数量，则保留允许的最大值。
 
         Args:
-            count (int): 目标消耗数量
-            skip_first_screenshot (bool): 是否跳过首次截图
+            count (int): 目标消耗数量。
+            skip_first_screenshot (bool): 是否跳过首次截图。
 
         Returns:
-            int: 无法消耗的剩余蓝图数量，None 表示异常
+            int | None: 无法消耗的剩余蓝图数量，None 表示异常。
         """
         if count < 0:
             logger.warning('[船坞-UI] count 非正数，无法继续')
@@ -288,7 +297,7 @@ class ShipyardUI(UI):
                 confirm_timer.reset()
                 continue
 
-            if self.appear_then_click(GET_SHIP, interval=1):
+            if self.appear_then_click(GET_SHIP, offset=(20, 20), interval=1):
                 confirm_timer.reset()
                 continue
 

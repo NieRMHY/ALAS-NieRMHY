@@ -61,15 +61,17 @@ class CampaignRun(CampaignEvent, ShopStatus):
     is_stage_loop = False
 
     def load_campaign(self, name, folder='campaign_main'):
-        """
-        加载战役地图模块。
+        """加载战役地图模块。
 
         Args:
             name (str): campaign 目录下 .py 文件的名称。
-            folder (str): campaign 下的文件夹名称。
+            folder (str): campaign 下的文件夹名称。默认 'campaign_main'。
 
         Returns:
-            bool: 是否成功加载。
+            bool: 成功加载返回 True，若已加载相同模块则返回 False。
+
+        Raises:
+            RequestHumanTakeover: 地图文件不存在时抛出。
         """
         if hasattr(self, 'name') and name == self.name:
             return False
@@ -104,11 +106,16 @@ class CampaignRun(CampaignEvent, ShopStatus):
         return True
 
     def triggered_stop_condition(self, oil_check=True):
-        """
-        检查是否触发停止条件。
+        """检查是否触发战役停止条件。
+
+        检测包括运行次数、舰船等级、石油储量、金币上限、获得新舰船、活动 PT 上限
+        及任务均衡器触发等条件。
+
+        Args:
+            oil_check (bool): 是否执行石油与金币相关检查。默认 True。
 
         Returns:
-            bool: 是否触发停止条件。
+            bool: 若触发任一停止条件则返回 True，否则返回 False。
         """
         # 运行次数限制
         if self.run_limit and self.config.StopCondition_RunCount <= 0:
@@ -179,8 +186,7 @@ class CampaignRun(CampaignEvent, ShopStatus):
         return False
 
     def _triggered_app_restart(self):
-        """
-        检查是否触发重启条件。
+        """检查是否触发重启条件。
 
         Returns:
             bool: 是否触发重启条件。
@@ -193,6 +199,11 @@ class CampaignRun(CampaignEvent, ShopStatus):
         return False
 
     def handle_app_restart(self):
+        """检查并处理因情绪异常导致的客户端重启。
+
+        Returns:
+            bool: 若触发了重启调用返回 True，否则返回 False。
+        """
         if self._triggered_app_restart():
             self.config.task_call('Restart')  # modfiy by MHY
             # self.config.task_call('Restart', force_call=False)  # 禁用强制重启
@@ -205,6 +216,14 @@ class CampaignRun(CampaignEvent, ShopStatus):
 
         循环选出的名称只转小写，不重新经过活动转换；is_stage_loop 也不在
         未命中时复位，保持同一个运行器的原有状态语义。
+
+        Args:
+            name (str): 关卡原始名称。
+            folder (str): 目标关卡文件夹。
+            mode (str): 运行模式，如 'normal' 或 'hard'。默认 'normal'。
+
+        Returns:
+            tuple[str, str]: (标准化后的关卡名称, 最终确定的文件夹路径)。
         """
         name = to_map_file_name(name)
         folder = self._select_stage_folder(name, folder)
@@ -229,7 +248,15 @@ class CampaignRun(CampaignEvent, ShopStatus):
         return normalize_post_loop_stage(name, folder), folder
 
     def _select_stage_folder(self, name, folder):
-        """选择低耗任务的主线或活动目录，其他任务沿用调用方的目录。"""
+        """选择低耗任务的主线或活动目录，其他任务沿用调用方的目录。
+
+        Args:
+            name (str): 关卡名称。
+            folder (str): 预设文件夹名称。
+
+        Returns:
+            str: 选定后的目录名称。
+        """
         # GemsFarming 和 ThreeOilLowCost 自动选择活动或主线章节
         if self.config.task.command in ['GemsFarming', 'ThreeOilLowCost']:
             if self.stage_is_main(name):
@@ -251,7 +278,12 @@ class CampaignRun(CampaignEvent, ShopStatus):
         return folder
 
     def _apply_event_stage_overrides(self, name, folder):
-        """应用循环选择前的特殊章节限制，包括限时地图的舰队配置。"""
+        """应用循环选择前的特殊章节限制，包括限时地图的舰队配置。
+
+        Args:
+            name (str): 关卡名称。
+            folder (str): 关卡所属文件夹。
+        """
         # TH 章节没有 map_percentage 和 3_stars
         if folder == 'event_20221124_cn' and name.startswith('th'):
             if self.config.StopCondition_MapAchievement not in ['non_stop', 'non_stop_clear_all']:
@@ -279,6 +311,13 @@ class CampaignRun(CampaignEvent, ShopStatus):
 
         每选出一个名称就交还调用方应用运行约束，随后继续匹配；不重新
         规范化名称，也不在第一处匹配后提前结束。
+
+        Args:
+            name (str): 当前关卡名称。
+            folder (str): 当前关卡目录。
+
+        Yields:
+            str: 循环选出的下一个关卡名称。
         """
         for alias, stages in self.config.STAGE_LOOP_ALIAS.items():
             alias_folder, alias = alias
@@ -299,7 +338,11 @@ class CampaignRun(CampaignEvent, ShopStatus):
                 yield name
 
     def _apply_event_achievement_fallback(self, folder):
-        """在循环选择之后处理缺少安全威胁指示器的活动。"""
+        """在循环选择之后处理缺少安全威胁指示器的活动。
+
+        Args:
+            folder (str): 活动目录名称。
+        """
         # event_20240912_cn 没有 "威胁：安全" 指示器，回退 MapAchievement
         if folder == 'event_20240912_cn':
             if self.config.StopCondition_MapAchievement == 'threat_safe':
@@ -339,8 +382,9 @@ class CampaignRun(CampaignEvent, ShopStatus):
         self.campaign.emotion.main_affection_check_stop()
 
     def handle_commission_notice(self):
-        """
-        检查委托通知。如果发现委托完成，停止当前任务并调用委托处理。
+        """检查委托通知。
+
+        如果发现委托完成，停止当前任务并调用委托处理。
 
         Raises:
             TaskEnd: 发现委托通知时抛出。
@@ -354,14 +398,13 @@ class CampaignRun(CampaignEvent, ShopStatus):
             self.config.task_stop('Commission notice found')
 
     def run(self, name, folder='campaign_main', mode='normal', total=0):
-        """
-        运行战役任务。
+        """运行战役任务主流程。
 
         Args:
             name (str): .py 文件名称。
-            folder (str): campaign 下的文件夹名称。
-            mode (str): `normal` 或 `hard`。
-            total (int): 总运行次数限制。
+            folder (str): campaign 下的文件夹名称。默认 'campaign_main'。
+            mode (str): 战役模式，如 `normal` 或 `hard`。默认 'normal'。
+            total (int): 总运行次数限制。默认 0。
         """
         name, folder = self.handle_stage_name(name, folder, mode=mode)
         self.config.override(Campaign_Name=name, Campaign_Event=folder)

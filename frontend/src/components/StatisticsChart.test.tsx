@@ -119,5 +119,21 @@ describe('StatisticsChart 多数据源图表组件', () => {
     const hourlyMatches = html.match(/每小时/g)
     expect(hourlyMatches).toHaveLength(1)
   })
+
+  it('读取持久化偏好中保存的指标选择与采样粒度 (#1043)', async () => {
+    const { setSelectedKeysForCategory, updateStatisticsPrefs } = await import('../app/statisticsPrefs')
+    setSelectedKeysForCategory('resources', ['cube'])
+    updateStatisticsPrefs({ bucket: 60, chartMode: 'line' })
+
+    const html = renderToStaticMarkup(
+      <AppContext.Provider value={context}>
+        <StatisticsChart series={mockSeries} category="resources" onToggleExpanded={() => {}}/>
+      </AppContext.Provider>,
+    )
+
+    // 此时选中的是心智魔方，展示的芯片中心智魔方应处于 active 状态，而石油为非 active
+    expect(html).toContain('心智魔方 (已启用，双击仅看此项)')
+    expect(html).toContain('石油 (未启用，双击仅看此项)')
+  })
 })
 

@@ -51,6 +51,8 @@ function contextWith(theme: Theme): AppContextValue {
     setDevMode: () => {},
     theme,
     setTheme: () => {},
+    material: 'glass',
+    setMaterial: () => {},
     colorMode: 'auto', resolvedMode: 'light', setColorMode: () => {},
     customPalettes: [], saveCustomPalette: () => {}, deleteCustomPalette: () => {},
     compactRailSide: 'right', setCompactRailSide: () => {}, compactRailWidth: 244, setCompactRailWidth: () => {},
@@ -61,7 +63,7 @@ function contextWith(theme: Theme): AppContextValue {
   }
 }
 
-function render(path: string, props: {defaultOpenKey?: string} = {}, theme: Theme = 'legacy-light') {
+function render(path: string, props: {defaultOpenKey?: string; isDesktop?: boolean} = {}, theme: Theme = 'legacy-light') {
   return renderToStaticMarkup(
     <AppContext.Provider value={contextWith(theme)}>
       <MemoryRouter initialEntries={[path]}>
@@ -131,6 +133,17 @@ describe('TaskNav 导航组件', () => {
     expect(html).toContain('href="/i/default/task/Alas"')
     // 浮出层不挂在侧栏的分组里，分组按钮也就不带 aria-controls
     expect(html).not.toContain('aria-controls="task-group-')
+  })
+
+  it('移动端/窄屏下，非经典主题也采用树状折叠菜单（参考经典主题）', () => {
+    const html = render('/i/default/overview', {defaultOpenKey: 'Alas', isDesktop: false}, 'light')
+
+    expect(html).toContain('task-group-button')
+    expect(html).toContain('task-submenu-list')
+    expect(html).toContain('aria-controls="task-group-Alas"')
+    expect(html).toContain('系统设置')
+    expect(html).not.toContain('task-submenu-flyout')
+    expect(html).not.toContain('aria-haspopup="menu"')
   })
 })
 

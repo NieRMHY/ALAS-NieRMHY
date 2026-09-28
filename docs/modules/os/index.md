@@ -228,7 +228,7 @@ flowchart TD
 截图 ──OSGrid/雷达──▶ 海域格子状态 ──策略──▶ 点击/战斗
 OCR：行动力面板 / 黄币 / 紫币 ──▶ 决策（智能调度+ 状态机）
 代理上下文：子任务身份 + 延迟请求容器 ──▶ 退出时代理方统一提交 task_delay
-掉落截图 ──stat.new──▶ 仓库统计与 azurstat 提交
+掉落截图 ──stat.new（记录方式按任务取自 DropRecord.Opsi*）──▶ 存图 / 掉落统计解析（除侵蚀1外都入库）
 ```
 
 智能调度+ 的核心数据是三个数：黄币（OCR 双读确认）、总行动力/当前行动力（行动力面板安全读取）、各保留值（配置）。所有分支都由这三个数与时间阈值推导。
@@ -246,6 +246,7 @@ OCR：行动力面板 / 黄币 / 紫币 ──▶ 决策（智能调度+ 状态�
 | `OpsiObscure/OpsiAbyssal/OpsiStronghold/OpsiArchive/OpsiMonthBoss/OpsiExplore/OpsiCrossMonth.*` | —— | 各玩法参数；后三者的 `Scheduler.Sensitive` 默认 true（异常时严格重启停机） |
 | `OpsiAshBeacon.*` | `EnsureFullyCollected`、`AttackMode` | 信标收集影响 CL1 的 AP 保留（未收满则忽略保留） |
 | `OpsiCheckLeveling.*` | `TargetLevel`、`CheckInterval` | 练度检查（非独立任务，CL1 前置调用） |
+| `Alas.DropRecord.Opsi*` | `OpsiHazard1Leveling` / `OpsiMeowfficerFarming` / `OpsiDaily` / `OpsiObscure` / `OpsiAbyssal` / `OpsiStronghold` / `OpsiExplore` / `OpsiOther` | 掉落记录开关，按任务拆分；跨月每日跟大世界每日、档案坐标跟隐秘海域、月度Boss跟深渊海域共用开关，其余走 `OpsiOther`。运行期由 `module/os/config.py` 的 `opsi_drop_record(config)` 取当前任务的开关 |
 
 代码内手动常量在 `module/os/config.py`：`OSConfig` 覆盖 `STORY_OPTION=-2`、`MAP_SWIPE_MULTIPLY=(1.174, 1.200)`、`DETECTION_BACKEND` 等；守护模式与任务运行时都会 `merge(OSConfig())`。
 

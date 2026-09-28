@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { aggregatePoints, mergeMultiSeriesRows } from './statisticsData'
+import {aggregatePoints, isActionPointSeries, mergeMultiSeriesRows, riseFallDeltas, riseFallSegments} from './statisticsData'
 
 describe('统计时间聚合', () => {
   it('K 线保留开高低收以及零值，不用平均值代替收盘', () => {
@@ -38,3 +38,22 @@ describe('多数据源行合并', () => {
   })
 })
 
+describe('riseFallDeltas', () => {
+  it('首点记 0，其后按相邻两点做差', () => {
+    expect(riseFallDeltas([10, 12, 9, 9, null, 15])).toEqual([0, 2, -3, 0, 0, 0])
+  })
+})
+
+describe('riseFallSegments 与行动力识别', () => {
+  it('按方向分段，涨与持平同组，段间用 "-" 断开', () => {
+    const {rise, fall} = riseFallSegments([1, 2, 3, 4], [10, 12, 9, 9])
+    expect(rise).toEqual([[1, 10], [2, 12], '-', [3, 9], [4, 9], '-'])
+    expect(fall).toEqual([[2, 12], [3, 9], '-'])
+  })
+
+  it('行动力按固定键识别，标签可兜底', () => {
+    expect(isActionPointSeries({key: 'ap', label: '别的名字'}, '行动力')).toBe(true)
+    expect(isActionPointSeries({key: 'mileage', label: '行动力'}, '行动力')).toBe(true)
+    expect(isActionPointSeries({key: 'mileage', label: '海里数'}, '行动力')).toBe(false)
+  })
+})

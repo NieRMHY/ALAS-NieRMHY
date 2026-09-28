@@ -41,10 +41,11 @@ class AmbushEmotion(Emotion):
     重写情绪检查逻辑：当检测到低情绪时抛出 CampaignEnd 异常
     而不是等待恢复，以便触发舰船更换流程。
     """
+
     def check_reduce(self, battle):
-        """
+        """进入战役前检查情绪值。
+
         重写 emotion.check_reduce()。
-        进入战役前检查情绪值。
 
         Args:
             battle (int): 本战役中的战斗次数。
@@ -62,6 +63,13 @@ class AmbushEmotion(Emotion):
             raise CampaignEnd('Emotion control')
 
     def wait(self, fleet_index):
+        """等待情绪恢复。
+
+        伏击任务中空实现，通过换船替代等待。
+
+        Args:
+            fleet_index (int): 舰队编号。
+        """
         pass
 
 
@@ -72,10 +80,18 @@ class AmbushCampaignOverride(CampaignBase):
     - 低情绪时根据配置选择忽略警告或撤退换船
     - 支持多种经验结算弹窗的点击处理
     """
+
     def handle_combat_low_emotion(self):
-        """
+        """处理战斗开始前的低情绪警告弹窗。
+
         重写 info_handler.handle_combat_low_emotion()。
         如果启用了更换先锋，撤出战斗并更换旗舰和先锋。
+
+        Returns:
+            bool: 是否处理了警告弹窗。
+
+        Raises:
+            CampaignEnd: 触发情绪撤退时抛出。
         """
         if self.config.GemsFarming_IgnoreEmotionWarning or self.config.GemsFarming_ChangeVanguard == 'disabled':
             result = self.handle_popup_confirm('IGNORE_LOW_EMOTION')
@@ -118,6 +134,11 @@ class AmbushCampaignOverride(CampaignBase):
             raise CampaignEnd('Emotion withdraw')
 
     def handle_exp_info(self):
+        """处理战后经验结算弹窗。
+
+        Returns:
+            bool: 是否检测并点击了结算弹窗。
+        """
         if self.is_combat_executing():
             return False
         if super().handle_exp_info():
@@ -166,32 +187,56 @@ class Ambush11(FleetSelectionMixin, CampaignRun, FleetEquipment, Retirement):
 
     @property
     def emotion_lower_bound(self):
-        """情绪值下限，根据当前地图的战斗次数动态计算。"""
+        """情绪值下限，根据当前地图的战斗次数动态计算。
+
+        Returns:
+            int: 情绪下限数值。
+        """
         return 4 + self.campaign._map_battle * 2
 
     @property
     def change_flagship(self):
-        """配置中包含 'ship' 时返回 True。"""
+        """是否启用更换旗舰。
+
+        Returns:
+            bool: 配置中包含 'ship' 时返回 True。
+        """
         return 'ship' in self.config.GemsFarming_ChangeFlagship
 
     @property
     def change_flagship_equip(self):
-        """配置中包含 'equip' 时返回 True。"""
+        """是否启用更换旗舰装备。
+
+        Returns:
+            bool: 配置中包含 'equip' 时返回 True。
+        """
         return 'equip' in self.config.GemsFarming_ChangeFlagship
 
     @property
     def change_vanguard(self):
-        """配置中包含 'ship' 时返回 True。"""
+        """是否启用更换先锋。
+
+        Returns:
+            bool: 配置中包含 'ship' 时返回 True。
+        """
         return 'ship' in self.config.GemsFarming_ChangeVanguard
 
     @property
     def change_vanguard_equip(self):
-        """配置中包含 'equip' 时返回 True。"""
+        """是否启用更换先锋装备。
+
+        Returns:
+            bool: 配置中包含 'equip' 时返回 True。
+        """
         return 'equip' in self.config.GemsFarming_ChangeVanguard
 
     @property
     def fleet_to_attack(self):
-        """获取出击舰队编号，fleet1_standby_fleet2_all 模式下使用第二舰队。"""
+        """获取出击舰队编号。
+
+        Returns:
+            int: 舰队编号，fleet1_standby_fleet2_all 模式下使用第二舰队。
+        """
         if self.config.Fleet_FleetOrder == 'fleet1_standby_fleet2_all':
             return self.config.Fleet_Fleet2
         else:
@@ -201,13 +246,24 @@ class Ambush11(FleetSelectionMixin, CampaignRun, FleetEquipment, Retirement):
 
     @property
     def equipment_code_config_key(self):
-        """获取装备码配置的键路径，如 'Ambush11.GemsFarming.EquipmentCode'。"""
+        """获取装备码配置的键路径。
+
+        Returns:
+            str: 配置键路径，如 'Ambush11.GemsFarming.EquipmentCode'。
+        """
         command = self.config.task.command if hasattr(self.config, 'task') and self.config.task else 'Ambush11'
         return f"{command}.GemsFarming.EquipmentCode"
 
     def current_ship(self, skip_first_screenshot=True):
-        """
-        复用 module.retire.assets 中的模板，需要不同的缩放比例来匹配当前旗舰。
+        """识别当前旗舰舰船类型。
+
+        复用 module.retire.assets 中的模板，使用不同缩放比例匹配当前旗舰。
+
+        Args:
+            skip_first_screenshot (bool): 是否跳过首次截图。
+
+        Returns:
+            str: 舰船标识名称（如 'bogue'、'hermes'、'ranger'、'langley' 或 'DD'）。
 
         Pages:
             in: gear_code
@@ -223,7 +279,7 @@ class Ambush11(FleetSelectionMixin, CampaignRun, FleetEquipment, Retirement):
             else:
                 logger.info('[战役-伏击] 等待舰船图标加载。')
 
-        if TEMPLATE_BOGUE.match(self.device.image, scaling=1.46):  # image has rotation
+        if TEMPLATE_BOGUE.match(self.device.image, scaling=1.46):  # 图像带旋转
             return 'bogue'
         if TEMPLATE_HERMES.match(self.device.image, scaling=124 / 89):
             return 'hermes'
@@ -270,7 +326,6 @@ class Ambush11(FleetSelectionMixin, CampaignRun, FleetEquipment, Retirement):
         return success
 
     # ==================== 模式与页面导航 ====================
-
 
     def load_campaign(self, name, folder='campaign_main'):
         """加载战役地图模块并注入伏击专用覆写。
@@ -320,7 +375,6 @@ class Ambush11(FleetSelectionMixin, CampaignRun, FleetEquipment, Retirement):
                       check_button=FLEET_DETAIL_CHECK, skip_first_screenshot=True)
         self.equip_enter(button, long_click=False)
 
-
     def _ship_detail_enter_hard(self, button):
         """进入指定舰船的装备详情页面（困难模式）。
 
@@ -367,12 +421,14 @@ class Ambush11(FleetSelectionMixin, CampaignRun, FleetEquipment, Retirement):
         else:
             self.ui_back(check_button=FLEET_PREPARATION)
 
-
     # ==================== 更换旗舰/先锋 ====================
 
-
     def flagship_change_with_emotion(self, ship):
-        """更换旗舰并计算情绪值。"""
+        """更换旗舰并同步情绪值状态。
+
+        Args:
+            ship (list[Ship]): 候选舰船列表。
+        """
         target_ship = max(ship, key=lambda s: (s.level, s.emotion))
         if self.change_vanguard:
             self.set_emotion(min(self.get_emotion(), target_ship.emotion))
@@ -381,18 +437,24 @@ class Ambush11(FleetSelectionMixin, CampaignRun, FleetEquipment, Retirement):
         self._ship_change_confirm(target_ship.button)
 
     def vanguard_change_with_emotion(self, ship):
-        """更换先锋并计算情绪值。"""
+        """更换先锋并同步情绪值状态。
+
+        Args:
+            ship (list[Ship]): 候选舰船列表。
+        """
         target_ship = max(ship, key=lambda s: s.emotion)
         if self.change_vanguard:
             self.set_emotion(target_ship.emotion)
         self._ship_change_confirm(target_ship.button)
 
     def flagship_change_execute(self):
-        """
-        执行旗舰更换，填充主舰队 3 个后排槽位。
+        """执行旗舰更换，填充主舰队 3 个后排槽位。
 
         Returns:
-            bool: 是否成功。
+            bool: 更换是否成功。
+
+        Raises:
+            RequestHumanTakeover: 进出船坞失败或困难舰队无舰船补位时抛出。
 
         Pages:
             in: page_fleet
@@ -400,13 +462,13 @@ class Ambush11(FleetSelectionMixin, CampaignRun, FleetEquipment, Retirement):
         """
         from module.base.button import Button
 
-        # Coordinates for the 3 rear ships in Formation screen
+        # 编队界面中 3 个后排舰船槽位坐标
         MAIN_1 = Button(area=(771, 80, 832, 106), color=(), button=(771, 80, 832, 106), name='FLEET_ENTER_MAIN_1')
         MAIN_3 = Button(area=(771, 320, 832, 346), color=(), button=(771, 320, 832, 346), name='FLEET_ENTER_MAIN_3')
         MAIN_2 = Button(area=(771, 200, 832, 226), color=(), button=(771, 200, 832, 226), name='FLEET_ENTER_MAIN_2')
 
         success = False
-        # Main 2 is flagship and must be set first to avoid empty fleet errors
+        # Main 2 是旗舰位，必须首先设置以防空舰队报错
         for button in [MAIN_2]:
             if self.hard_mode:
                 if not self.dock_enter(self.fleet_detail_enter_flagship):
@@ -427,7 +489,7 @@ class Ambush11(FleetSelectionMixin, CampaignRun, FleetEquipment, Retirement):
                     max_level = 100
                 else:
                     max_level = 70
-                # Fallback logic
+                # 回退选择逻辑
                 ship = self.get_common_rarity_cv(lv=max_level, emotion=0)
                 if ship and self.hard_mode:
                     self.flagship_change_with_emotion(ship)
@@ -440,11 +502,13 @@ class Ambush11(FleetSelectionMixin, CampaignRun, FleetEquipment, Retirement):
         return success
 
     def vanguard_change_execute(self):
-        """
-        执行先锋更换，使用正确的先锋点击坐标。
+        """执行先锋更换，使用正确的先锋点击坐标。
 
         Returns:
-            bool: 是否成功。
+            bool: 更换是否成功。
+
+        Raises:
+            RequestHumanTakeover: 进出船坞失败或困难舰队无舰船补位时抛出。
 
         Pages:
             in: page_fleet
@@ -479,25 +543,30 @@ class Ambush11(FleetSelectionMixin, CampaignRun, FleetEquipment, Retirement):
 
     # ==================== 选船逻辑 ====================
 
-
     def get_common_rarity_dd(self, emotion=16):
+        """1-1 伏击专用的驱逐舰检索逻辑。
+
+        严格遵循等级限制配置，若未设置则默认限定在 28 级以下。
+
+        Args:
+            emotion (int): 检索舰船所需的情绪下限。默认 16。
+
+        Returns:
+            list[Ship] | None: 匹配的候选舰船列表。
         """
-        Ambush 1-1 specific DD finding logic.
-        Ensures level limits are strictly followed and defaults to < 28 if not set.
-        """
-        # Strictly follow GUI settings
+        # 严格读取 GUI 设置
         min_level = self.config.GemsFarming_VanguardLevelMin
         max_level = self.config.GemsFarming_VanguardLevelMax
 
-        # User explicitly requested 28 as default for 1-1
-        # If it's still at absolute defaults (1, 125), we force it to 1-28
+        # 用户对 1-1 特别要求的 28 级默认值
+        # 若仍为全局初始默认值 (1, 125)，强制修改为 1-28
         if min_level <= 1 and max_level >= 125:
             logger.info('[战役-伏击] 前排等级限制为默认值(1-125)，强制改为1-28')
             max_level = 28
 
         logger.info(f'查找等级前排: {min_level} ~ {max_level}')
 
-        # Implementation similar to GemsFarming but without the 100-level fallback
+        # 类似 GemsFarming 的实现，但不含 100 级回退逻辑
         rarity = 'common'
         extra = 'can_limit_break'
         if self.config.GemsFarming_CommonDD in ['any', 'custom']:
@@ -570,35 +639,46 @@ class Ambush11(FleetSelectionMixin, CampaignRun, FleetEquipment, Retirement):
             self.dock_sort_method_dsc_set(False)
             return self.find_candidates(self.get_templates(self.config.GemsFarming_CommonDD), scanner)
 
-
     # ==================== 停止条件与情绪 ====================
 
     def get_emotion(self):
-        """从配置中获取舰队情绪值。"""
+        """从配置中获取舰队情绪值。
+
+        Returns:
+            int: 舰队当前记录的情绪值。
+        """
         if self.config.Fleet_FleetOrder == 'fleet1_standby_fleet2_all':
             return self.campaign.config.Emotion_Fleet2Value
         else:
             return self.campaign.config.Emotion_Fleet1Value
 
     def set_emotion(self, emotion):
-        """设置舰队情绪值。"""
+        """设置舰队情绪值。
+
+        Args:
+            emotion (int): 需记录的情绪值。
+        """
         if self.config.Fleet_FleetOrder == 'fleet1_standby_fleet2_all':
             self.campaign.config.set_record(Emotion_Fleet2Value=emotion)
         else:
             self.campaign.config.set_record(Emotion_Fleet1Value=emotion)
 
-
     # ==================== 运行器 ====================
 
     def run(self, name='campaign_1_1_f', folder='campaign_main', mode='normal', total=0):
-        """
-        Specialized runner for 1-1 Ambush.
-        Forces auto-search and clear mode off, then uses the ship
-        switching logic before executing the map script.
+        """1-1 伏击专用执行流程主入口。
+
+        强制禁用自律寻敌与周回模式，在执行地图脚本前调用换船逻辑。
+
+        Args:
+            name (str): 关卡名称。默认 'campaign_1_1_f'。
+            folder (str): 关卡文件夹。默认 'campaign_main'。
+            mode (str): 运行模式，如 'normal' 或 'hard'。默认 'normal'。
+            total (int): 总运行次数统计。默认 0。
         """
         logger.hr('1-1伏击运行器', level=1)
 
-        # Enforce manual play and disable clear mode options
+        # 强制手动操作并关闭周回选项
         self.config.override(Campaign_UseClearMode=False, Campaign_UseAutoSearch=False)
         self.config.override(Campaign_Name=name, Campaign_Event=folder)
 
@@ -621,11 +701,11 @@ class Ambush11(FleetSelectionMixin, CampaignRun, FleetEquipment, Retirement):
             initial_check = False
             is_limit = self.config.StopCondition_RunCount
 
-            # Use the map script's run inside loop for standard behavior
+            # 在主循环内执行地图脚本
             try:
-                # We do not use super().run here because it loops infinitely inside map.
-                # However, campaign_1_1_f loops infinitely inside itself!
-                # So we simply ensure UI, do configs, handle ships, then call campaign.run() and handle End exceptions.
+                # 这里不使用 super().run()，因为其在地图内部无限循环。
+                # 而 campaign_1_1_f 内部也会循环，故在此确保 UI、配置和换船，
+                # 再调用 campaign.run() 并捕获 CampaignEnd 异常。
                 logger.hr(name, level=1)
                 if self.config.StopCondition_RunCount > 0:
                     logger.info(f'[战役-伏击] 剩余次数: {self.config.StopCondition_RunCount}')
@@ -649,23 +729,23 @@ class Ambush11(FleetSelectionMixin, CampaignRun, FleetEquipment, Retirement):
                 self.disable_raid_on_event()
                 self.handle_commission_notice()
 
-                # Check level to trigger ship switching
+                # 检查等级以触发换船
                 self.campaign.lv_get()
 
                 if self.triggered_stop_condition(oil_check=False):
                     if self._trigger_lv32 or self._trigger_emotion:
-                        # Ship switching triggered, skip run and proceed to switching block
+                        # 触发换船，跳过运行并进入换船逻辑
                         pass
                     else:
                         break
                 else:
                     self.device.stuck_record_clear()
                     self.device.click_record_clear()
-                    # Run map loop
+                    # 运行地图循环
                     self.campaign.run()
 
             except CampaignEnd as e:
-                # E.g. ship leveled up or emotion triggered, handled normally
+                # 例如舰船升级或情绪触发，正常处理
                 if e.args[0] == 'Emotion control':
                     self._trigger_emotion = True
                 elif e.args[0] == 'Emotion withdraw':
@@ -673,7 +753,7 @@ class Ambush11(FleetSelectionMixin, CampaignRun, FleetEquipment, Retirement):
                     self.set_emotion(0)
                 pass
 
-            # Post-run ship switching block
+            # 战后换船逻辑块
             if self._trigger_lv32 or self._trigger_emotion:
                 success = True
                 self.hard_mode_override()
@@ -708,5 +788,5 @@ class Ambush11(FleetSelectionMixin, CampaignRun, FleetEquipment, Retirement):
                     self.config.task_stop()
 
             else:
-                # If we legitimately exited the map script without exception, we're likely done with runs.
+                # 若无异常正常退出地图脚本，通常表示运行结束
                 break

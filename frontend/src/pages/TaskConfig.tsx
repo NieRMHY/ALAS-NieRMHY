@@ -1,3 +1,7 @@
+/**
+ * @fileoverview 任务参数设置与自定义策略脚本编辑页面。
+ */
+
 import { useCallback, useEffect, useState, useSyncExternalStore } from 'react'
 import { useParams } from 'react-router-dom'
 import { CalendarClock, Clock3, ListTree, Play, Search, Settings2, Ship, Terminal } from 'lucide-react'
@@ -5,6 +9,7 @@ import { api } from '../api/client'
 import type { Config } from '../api/types'
 import { useApp, useConnection } from '../app/context'
 import { usesLegacyLayout } from '../app/theme'
+import { htmlToPlainText } from '../app/htmlText'
 import { readRailView, setRailView, subscribeRailView } from '../app/railPrefs'
 import { smoothScrollToElement } from '../app/scroll'
 import { Empty, ErrorBox, Loading, Modal, PageTitle } from '../components/ui'
@@ -19,6 +24,7 @@ import { TaskQueue } from '../components/TaskQueue'
 import { useInstanceOverview } from '../components/useInstanceOverview'
 import { editor, prepareValue } from '../config/editors'
 import { EditStatus } from '../components/EditStatus'
+import { AccountPanel } from '../components/AccountPanel'
 import { isFieldVisible } from './configVisibility'
 
 export function TaskConfig() {
@@ -161,7 +167,7 @@ export function TaskConfig() {
                 {label}
                 {readonly && <span className="small-label">{ui('task.readonly')}</span>}
               </label>
-              {help && help !== 'help' && help !== arg && <p>{help.replace(/<[^>]*>/g, '')}</p>}
+              {help && help !== 'help' && help !== arg && <p>{htmlToPlainText(help)}</p>}
               {/* 多行控件的提示跟标题同一行，浮在它右端。 */}
               {isMultiline && <EditStatus id={path} edit={edit} retry={queue.retry} queue={queue} />}
             </div>
@@ -262,7 +268,7 @@ export function TaskConfig() {
     </div>
   </section>
 
-  const groupCardsBlock = <div className="config-groups">{startupPanel}{groupCards}</div>
+  const groupCardsBlock = <div className="config-groups">{startupPanel}{task === 'Alas' && !search && <AccountPanel key={instance} instance={instance}/>} {groupCards}</div>
   const groupNav = <nav className="group-nav">
     {visibleGroups.map(({group}) => (
       <a

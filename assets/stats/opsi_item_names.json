@@ -1,0 +1,67 @@
+{
+ "GearDesignPlanAntiAirT4": {
+  "en": "SR Anti-Air Gun Design Plans",
+  "rarity": 4,
+  "zh": "防空炮研发图纸SSR型"
+ },
+ "GearDesignPlanAntiAirT5": {
+  "en": "UR Anti-Air Gun Design Plans",
+  "rarity": 5,
+  "zh": "防空炮研发图纸UR型"
+ },
+ "GearDesignPlanGunT4": {
+  "en": "SR Main Gun Design Plans",
+  "rarity": 4,
+  "zh": "舰炮研发图纸SSR型"
+ },
+ "GearDesignPlanGunT5": {
+  "en": "UR Main Gun Design Plans",
+  "rarity": 5,
+  "zh": "舰炮研发图纸UR型"
+ },
+ "GearDesignPlanPlaneT4": {
+  "en": "SR Aircraft Design Plans",
+  "rarity": 4,
+  "zh": "舰载机研发图纸SSR型"
+ },
+ "GearDesignPlanPlaneT5": {
+  "en": "UR Aircraft Design Plans",
+  "rarity": 5,
+  "zh": "舰载机研发图纸UR型"
+ },
+ "GearDesignPlanTorpedoT4": {
+  "en": "SR Torpedo Design Plans",
+  "rarity": 4,
+  "zh": "鱼雷研发图纸SSR型"
+ },
+ "GearDesignPlanTorpedoT5": {
+  "en": "UR Torpedo Design Plans",
+  "rarity": 5,
+  "zh": "鱼雷研发图纸UR型"
+ },
+ "PlateAntiAirT4": {
+  "en": "T4 Anti-Air Gun Part",
+  "rarity": 4,
+  "zh": "防空炮部件T4"
+ },
+ "PlateGeneralT4": {
+  "en": "T4 General Part",
+  "rarity": 4,
+  "zh": "通用部件T4"
+ },
+ "PlateGunT4": {
+  "en": "T4 Main Gun Part",
+  "rarity": 4,
+  "zh": "主炮部件T4"
+ },
+ "PlatePlaneT4": {
+  "en": "T4 Aircraft Part",
+  "rarity": 4,
+  "zh": "舰载机部件T4"
+ },
+ "PlateTorpedoT4": {
+  "en": "T4 Torpedo Part",
+  "rarity": 4,
+  "zh": "鱼雷部件T4"
+ }
+}

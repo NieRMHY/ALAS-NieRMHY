@@ -17,14 +17,28 @@ GUILD_OPERATIONS_PROGRESS = DigitCounter(OCR_GUILD_OPERATIONS_PROGRESS, letter=(
 
 
 class GuildOperations(GuildBase):
+    """大舰队作战处理类。
+
+    管理大舰队作战（派遣与突袭 Boss）的进入、自动开启、舰队派遣与 Boss 战斗流程。
+    """
+
     def _guild_operations_ensure(self, skip_first_screenshot=True):
-        """
-        确保大舰队作战已加载。
+        """确保大舰队作战已加载。
 
         进入大舰队作战后，先加载背景，然后显示派遣/Boss 界面。
 
+        Args:
+            skip_first_screenshot (bool): 是否跳过首次截图。
+
         Returns:
             bool: True 表示成功进入作战，False 表示资金不足。
+
+        Raises:
+            GameBugError: 无法启动或加入作战（多次重试失败）。
+
+        Pages:
+            in: page_guild
+            out: GUILD_BOSS_ENTER 或 GUILD_OPERATIONS_ACTIVE_CHECK
         """
         logger.attr('大舰队指挥官/官员', self.config.GuildOperation_SelectNewOperation)
         confirm_timer = Timer(1.5, count=3).start()
@@ -335,8 +349,10 @@ class GuildOperations(GuildBase):
             return button
 
     def _guild_operations_dispatch_switch_fleet(self, skip_first_screenshot=True):
-        """
-        切换到最右侧的舰队。
+        """切换到最右侧的派遣舰队。
+
+        Args:
+            skip_first_screenshot (bool): 是否跳过首次截图。
 
         Pages:
             in: page_guild, guild operation, operation dispatch preparation (GUILD_DISPATCH_RECOMMEND)
@@ -360,8 +376,10 @@ class GuildOperations(GuildBase):
                 continue
 
     def _guild_operations_dispatch_execute(self, skip_first_screenshot=True):
-        """
-        执行派遣序列。
+        """执行单支舰队的派遣确认流程。
+
+        Args:
+            skip_first_screenshot (bool): 是否跳过首次截图。
 
         Pages:
             in: page_guild, guild operation, operation dispatch preparation (GUILD_DISPATCH_RECOMMEND)
@@ -409,8 +427,10 @@ class GuildOperations(GuildBase):
                     break
 
     def _guild_operations_dispatch_exit(self, skip_first_screenshot=True):
-        """
-        退出到作战地图。
+        """从派遣准备界面退出回到作战地图。
+
+        Args:
+            skip_first_screenshot (bool): 是否跳过首次截图。
 
         Pages:
             in: page_guild, guild operation, operation dispatch preparation (GUILD_DISPATCH_RECOMMEND)
@@ -438,8 +458,10 @@ class GuildOperations(GuildBase):
                 break
 
     def _guild_operations_dispatch(self):
-        """
-        执行大舰队派遣。
+        """执行大舰队作战的完整派遣循环。
+
+        Returns:
+            bool: 成功执行派遣返回 True，无活跃派遣或尝试过多返回 False。
 
         Pages:
             in: page_guild, guild operation, operation map (GUILD_OPERATIONS_ACTIVE_CHECK)
@@ -470,11 +492,14 @@ class GuildOperations(GuildBase):
         return False
 
     def _guild_operations_boss_preparation(self, az, skip_first_screenshot=True):
-        """
-        执行大舰队突袭 Boss 的准备序列。
+        """执行大舰队突袭 Boss 的出击准备序列。
 
-        az 是一个 GuildCombat 实例，用于处理各种战斗界面。
-        独立创建以避免与父/子对象的方法冲突或覆盖。
+        Args:
+            az (GuildCombat): 大舰队战斗实例，用于处理战斗生命周期。
+            skip_first_screenshot (bool): 是否跳过首次截图。
+
+        Returns:
+            bool: 成功进入战斗返回 True，阵容错误或无法派遣返回 False。
 
         Pages:
             in: GUILD_OPERATIONS_BOSS
@@ -523,8 +548,10 @@ class GuildOperations(GuildBase):
                 return True
 
     def _guild_operations_boss_combat(self):
-        """
-        执行 Boss 战斗序列。如果战斗无法准备则退出。
+        """执行大舰队 Boss 战斗与结算序列。
+
+        Returns:
+            bool: 战斗正常执行完成返回 True，准备失败返回 False。
 
         Pages:
             in: GUILD_OPERATIONS_BOSS
@@ -541,11 +568,10 @@ class GuildOperations(GuildBase):
         return True
 
     def _guild_operations_boss_available(self):
-        """
-        检查大舰队 Boss 是否可用。
+        """检查大舰队 Boss 是否处于可挑战状态。
 
         Returns:
-            bool: Boss 是否可用。
+            bool: Boss 可挑战返回 True，否则返回 False。
         """
         appear = self.image_color_count(GUILD_BOSS_AVAILABLE, color=(140, 243, 99), threshold=30, count=10)
         if appear:
@@ -555,6 +581,15 @@ class GuildOperations(GuildBase):
         return appear
 
     def guild_operations(self):
+        """执行大舰队作战的所有任务，包括舰队派遣与 Boss 战斗。
+
+        Returns:
+            bool: 任务是否成功执行。
+
+        Pages:
+            in: page_guild
+            out: page_guild, GUILD_OPERATIONS
+        """
         logger.hr('大舰队作战', level=1)
         self.guild_side_navbar_ensure(bottom=1)
         entered = self._guild_operations_ensure()
@@ -578,6 +613,9 @@ class GuildOperations(GuildBase):
                     logger.info('[大舰队-作战] 自动战斗已禁用，需手动完成此大舰队任务')
         else:
             result = False
+
+        logger.info(f'[大舰队-作战] 大舰队作战运行成功: {result}')
+        return result
 
         logger.info(f'[大舰队-作战] 大舰队作战运行成功: {result}')
         return result

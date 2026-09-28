@@ -246,6 +246,18 @@ def _scored_plan(
         quantities: tuple[int, ...],
         score: float,
     ) -> None:
+        """递归深度优先搜索最优商品购买数量组合。
+
+        Args:
+            index (int): 当前决策的商品索引。
+            remaining (dict[str, int]): 各货币剩余预算。
+            cap_usage (tuple[int, ...]): 各上限当前已使用量。
+            quantities (tuple[int, ...]): 当前各商品购买数量组合。
+            score (float): 当前组合累积分值。
+
+        Raises:
+            ShopStrategyRuntimeError: 搜索状态数超过上限。
+        """
         nonlocal best_score, best_quantities, states
         states += 1
         if states > MAX_PLANNER_STATES:

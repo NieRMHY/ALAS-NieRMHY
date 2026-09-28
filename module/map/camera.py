@@ -61,13 +61,14 @@ class Camera(MapOperation):
     _prev_swipe = None
 
     def _map_swipe(self, vector, box=(123, 159, 1175, 628)):
-        """
+        """执行底层地图滑动操作。
+
         Args:
-            vector (tuple, np.ndarray): 滑动向量（浮点数）。
-            box (tuple): 允许滑动的区域。
+            vector (tuple | np.ndarray): 滑动向量（浮点数）。
+            box (tuple): 允许滑动的屏幕区域。
 
         Returns:
-            bool: 相机是否移动了。
+            bool: 相机是否成功滑动并移动了位置。
         """
         vector = np.array(vector)
         name = 'MAP_SWIPE_' + '_'.join([str(int(round(x))) for x in vector])
@@ -98,14 +99,15 @@ class Camera(MapOperation):
             return False
 
     def map_swipe(self, vector):
-        """使用相对位置滑动到目标格子。
-        调用前请先更新相机位置。
+        """使用相对网格向量滑动到目标格子。
+
+        调用前请先确保相机位置已更新。
 
         Args:
             vector (tuple): 整数滑动向量。
 
         Returns:
-            bool: 相机是否移动了。
+            bool: 相机是否移动了位置。
         """
         logger.info('[地图-摄像机] 地图滑动: %s' % str(vector))
         self._prev_view = copy.copy(self.view)
@@ -118,10 +120,10 @@ class Camera(MapOperation):
         """重新聚焦到格子中心。
 
         Args:
-            tolerance (float): 容差值，0 到 0.5。为 None 时使用 MAP_GRID_CENTER_TOLERANCE。
+            tolerance (float, optional): 容差值，0 到 0.5。为 None 时读取 MAP_GRID_CENTER_TOLERANCE。默认为 None。
 
         Returns:
-            bool: 地图是否滑动了。
+            bool: 地图是否执行了滑动校准。
         """
         if not tolerance:
             tolerance = self.config.MAP_GRID_CENTER_TOLERANCE
@@ -132,11 +134,22 @@ class Camera(MapOperation):
         return False
 
     def _view_init(self):
+        """初始化视图对象。"""
         if not hasattr(self, 'view'):
             self.view = View(self.config, grid_class=self.grid_class)
 
     def _update_view(self):
-        """更新地图视图。
+        """更新当前屏幕图像到视图中并执行透视检测。
+
+        处理各种可能导致透视检测失败的弹窗、信息栏和异常界面。
+
+        Returns:
+            bool: 视图更新与透视检测是否成功。
+
+        Raises:
+            CampaignEnd: 图像处于关卡选择、地图准备或自动搜索退出界面时抛出。
+            GameNotRunningError: 游戏进程已退出时抛出。
+            MapDetectionError: 未知透视检测错误且无法恢复时抛出。
         """
         self._view_init()
         try:
@@ -242,6 +255,11 @@ class Camera(MapOperation):
         return True
 
     def _update_view_data(self):
+        """更新滑动后的相机位置并对当前视图执行预测。
+
+        Returns:
+            bool: 是否更新成功。
+        """
         if self._prev_view is not None and np.linalg.norm(self._prev_swipe) > 0:
             if self.config.MAP_SWIPE_PREDICT:
                 swipe = self._prev_view.predict_swipe(
@@ -256,7 +274,7 @@ class Camera(MapOperation):
             self._prev_swipe = None
             self.show_camera()
 
-        # Set camera position
+        # 设置相机位置
         if self.view.left_edge:
             x = 0 + self.view.center_loca[0]
         elif self.view.right_edge:
@@ -279,14 +297,14 @@ class Camera(MapOperation):
         return True
 
     def update(self, camera=True, wait_swipe=False, allow_error=False):
-        """更新地图图像。
-        封装原始 update() 方法以处理随机出现的 MapDetectionError，
-        该错误通常由网络问题和误点击引起。
+        """更新地图图像及相机位置与透视数据。
+
+        封装底层检测并带防抖与错误重试机制。
 
         Args:
-            camera (bool): 为 True 时更新相机位置和透视数据。
-            wait_swipe (bool): 为 True 时等待相机到达格子中心。
-            allow_error (bool): 为 True 时遇到检测错误则退出。
+            camera (bool, optional): 是否更新相机位置与透视数据。默认为 True。
+            wait_swipe (bool, optional): 是否等待滑动动画结束并到达格子中心。默认为 False。
+            allow_error (bool, optional): 遇到检测错误时是否直接退出而不抛出异常。默认为 False。
         """
         error_confirm = Timer(5, count=10).start()
         swipe_wait_timeout = Timer(0.35, count=1).start()
@@ -322,12 +340,12 @@ class Camera(MapOperation):
                 self.device._screenshot_interval.clear()
             self.device.screenshot()
 
-            # Update image in view only
+            # 仅更新视图中的图像
             if not camera:
                 self.view.update(image=self.device.image)
                 return True
 
-            # _update_view()
+            # 更新视图及透视
             try:
                 success = self._update_view()
                 if not success:
@@ -343,7 +361,7 @@ class Camera(MapOperation):
                             break
                     else:
                         swiped = True
-                    # No error
+                    # 无错误
                     error_confirm.reset()
                     continue
                 else:
@@ -365,24 +383,25 @@ class Camera(MapOperation):
         self._update_view_data()
 
     def predict(self):
+        """对当前视图执行网格预测并展示预测结果。"""
         self.view.predict()
         self.view.show()
 
     def show_camera(self):
+        """在日志中显示当前相机所在节点坐标。"""
         logger.attr_align('摄像机', location2node(self.camera))
 
     def ensure_edge_insight(self, reverse=False, preset=None, swipe_limit=(3, 2), skip_first_update=True):
-        """滑动到左下角直到两条边缘可见。
-        边缘用于定位相机。
+        """滑动到地图边缘直到两条边缘在视野内，用于定位相机。
 
         Args:
-            reverse (bool): 是否反向滑动。
-            preset (tuple(int)): 手动设置的地图滑动预设。
-            swipe_limit (tuple): (x, y)。滑动限制在 (-x, -y, x, y) 范围内。
-            skip_first_update (bool): 通常为 True。手动调用 ensure_edge_insight 时使用 False。
+            reverse (bool, optional): 是否在定位后反向滑回原位置。默认为 False。
+            preset (tuple[int, int], optional): 手动指定的初始滑动预设。默认为 None。
+            swipe_limit (tuple[int, int], optional): (x, y) 滑动距离限制。默认为 (3, 2)。
+            skip_first_update (bool, optional): 是否跳过首次更新。默认为 True。
 
         Returns:
-            list[tuple]: 滑动记录。
+            list[tuple[int, int]]: 滑动记录列表。
         """
         logger.info(f'[地图-摄像机] 确保边缘在视野内')
         record = []
@@ -439,8 +458,8 @@ class Camera(MapOperation):
         """将相机聚焦到指定格子。
 
         Args:
-            location: 目标格子坐标。
-            swipe_limit (tuple): (x, y)。滑动限制在 (-x, -y, x, y) 范围内。
+            location (tuple[int, int] | str): 目标格子坐标或节点名。
+            swipe_limit (tuple[int, int], optional): 滑动距离限制 (x, y)。默认为 (4, 3)。
         """
         location = location_ensure(location)
         logger.info('[地图-摄像机] 聚焦到: %s' % location2node(location))
@@ -455,16 +474,16 @@ class Camera(MapOperation):
 
     def full_scan(self, queue=None, must_scan=None, battle_count=0, mystery_count=0, siren_count=0, carrier_count=0,
                   mode='normal'):
-        """扫描整个地图。
+        """系统性扫描整个地图以发现所有敌人和事件点。
 
         Args:
-            queue (SelectedGrids): 需要聚焦的格子。为 None 时使用 map.camera_data。
-            must_scan (SelectedGrids): 必须扫描的格子。
-            battle_count (int): 战斗计数。
-            mystery_count (int): 神秘事件计数。
-            siren_count (int): 塞壬计数。
-            carrier_count (int): 航母计数。
-            mode (str): 扫描模式，如 'init'、'normal'、'carrier'、'movable'。
+            queue (SelectedGrids, optional): 需要聚焦的格子集合。为 None 时使用 map.camera_data。默认为 None。
+            must_scan (SelectedGrids, optional): 必须扫描的格子集合。默认为 None。
+            battle_count (int, optional): 战斗计数。默认为 0。
+            mystery_count (int, optional): 神秘事件计数。默认为 0。
+            siren_count (int, optional): 塞壬计数。默认为 0。
+            carrier_count (int, optional): 航母计数。默认为 0。
+            mode (str, optional): 扫描模式，如 'init'、'normal'、'carrier'、'movable'。默认为 'normal'。
         """
         logger.info(f'[地图-摄像机] 全图扫描开始, 模式={mode}')
         self.map.reset_fleet()
@@ -499,8 +518,8 @@ class Camera(MapOperation):
         """确保目标位置在相机视野内。
 
         Args:
-            location: 目标位置坐标。
-            sight (tuple): 视野范围，如 (-3, -1, 3, 2)。
+            location (tuple[int, int] | str): 目标位置坐标或节点名。
+            sight (tuple[int, int, int, int], optional): 视野范围 (x_min, y_min, x_max, y_max)。默认为 None。
         """
         location = location_ensure(location)
         logger.info('[地图-摄像机] 在视野内: %s' % location2node(location))
@@ -523,14 +542,15 @@ class Camera(MapOperation):
         self.focus_to((self.camera[0] + x, self.camera[1] + y))
 
     def convert_global_to_local(self, location):
-        """将全局坐标转换为局部坐标。
-        如果 self.grids 不包含该位置，则将相机聚焦到该位置后重新转换。
+        """将全局地图网格坐标转换为局部视图网格对象。
+
+        如果当前局部视图不包含该位置，则将相机聚焦到该位置后重新转换。
 
         Args:
-            location: self.map 中的格子实例。
+            location (tuple[int, int] | str): 全局坐标或节点名。
 
         Returns:
-            Grid: self.view 中的格子实例。
+            Grid: 局部视图中的对应网格实例。
         """
         location = location_ensure(location)
 
@@ -550,14 +570,15 @@ class Camera(MapOperation):
             return self.view[local]
 
     def convert_local_to_global(self, location):
-        """将局部坐标转换为全局坐标。
-        如果 self.map 不包含该位置，相机可能有误，修正相机后重新转换。
+        """将当前局部视图网格坐标转换为全局地图网格对象。
+
+        如果全局地图中不包含该位置，相机坐标可能有误，校准边缘后重新转换。
 
         Args:
-            location: self.view 中的格子实例。
+            location (tuple[int, int] | str): 局部坐标或节点名。
 
         Returns:
-            Grid: self.map 中的格子实例。
+            Grid: 全局地图中的对应网格实例。
         """
         location = location_ensure(location)
 
@@ -578,6 +599,11 @@ class Camera(MapOperation):
             return self.map[global_]
 
     def full_scan_find_boss(self):
+        """通过全图扫描寻找 Boss 所在网格。
+
+        Returns:
+            bool: 是否找到 Boss。
+        """
         logger.info('[地图-摄像机] 全图扫描找到Boss')
         self.map.reset_fleet()
 
@@ -599,13 +625,13 @@ class Camera(MapOperation):
         return False
 
     def get_swipe_area_opt(self, map_vector):
-        """获取 random_rectangle_vector_opted() 的白名单和黑名单。
+        """计算地图滑动操作的安全点击白名单与避让黑名单。
 
         Args:
-            map_vector: 地图滑动向量。
+            map_vector (tuple | np.ndarray): 地图滑动向量。
 
         Returns:
-            list, list: 白名单和黑名单。
+            tuple[list, list]: 安全滑动区域白名单列表与避让区域黑名单列表。
         """
         map_vector = np.array(map_vector)
 

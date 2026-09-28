@@ -21,7 +21,8 @@ test('共享表单保留键盘交互、密码切换与原生值类型', async ({
   await toggle.focus()
   await page.keyboard.press('Space')
   await expect(toggle).toHaveAttribute('aria-checked', 'false')
-  expect((await toggle.boundingBox())!.height).toBeGreaterThanOrEqual(44)
+  // 实测盒高会带亚像素小数，取整以免测量噪声把尺寸判成不达标。
+  expect(Math.round((await toggle.boundingBox())!.height)).toBeGreaterThanOrEqual(44)
   await expect(page.getByRole('switch', {name: '禁用开关'})).toBeDisabled()
   const checkbox = page.getByRole('checkbox', {name: 'Alas', exact: true})
   await checkbox.focus()

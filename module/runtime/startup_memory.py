@@ -18,20 +18,28 @@ UPDATE_RESTART_NAME = 'webui-update-restart-pending'
 
 
 def memory_path() -> Path:
-    """与部署配置同目录，跟随应用自己的 root。"""
+    """获取记忆文件路径，与部署配置同目录，跟随应用自身的根目录。
+
+    Returns:
+        Path: 记忆配置文件的路径对象。
+    """
     file = getattr(State.deploy_config, 'file', None)
     return Path(file).with_name(MEMORY_NAME) if file else Path('config') / MEMORY_NAME
 
 
 def update_restart_path() -> Path:
-    """与记忆同一来源：应用 root 下的 cache/。"""
+    """获取更新重启标记文件路径，位于应用根目录的 cache/ 下。
+
+    Returns:
+        Path: 重启标记文件的路径对象。
+    """
     file = getattr(State.deploy_config, 'file', None)
     root = Path(file).parent.parent if file else Path('.')
     return root / 'cache' / UPDATE_RESTART_NAME
 
 
 def mark_update_restart() -> None:
-    """记下本次重启由更新触发；写不进去只记录，不阻断重启。"""
+    """记下本次重启由更新触发；写不进去只记录日志，不阻断重启。"""
     path = update_restart_path()
     try:
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -41,7 +49,11 @@ def mark_update_restart() -> None:
 
 
 def consume_update_restart() -> bool:
-    """读取并清除标记，使它只影响紧接着的那一次启动。"""
+    """读取并清除标记，使它只影响紧接着的那一次启动。
+
+    Returns:
+        bool: 存在有效更新标记返回 True，否则返回 False。
+    """
     path = update_restart_path()
     if not path.is_file():
         return False
@@ -53,7 +65,17 @@ def consume_update_restart() -> bool:
 
 
 def startup_runs(configured: Iterable[str], update_restart: bool = False) -> list[str]:
-    """本次启动要运行的实例：更新重启只认记忆，未启用记忆的实例仍按配置清单运行。"""
+    """计算本次启动需要运行的实例列表。
+
+    更新重启只认记忆，未启用记忆的实例仍按配置清单运行。
+
+    Args:
+        configured: 配置清单中指定启动的实例列表。
+        update_restart: 本次启动是否由更新操作触发。
+
+    Returns:
+        list[str]: 经去重计算后最终应启动的实例名称列表。
+    """
     data = _read()
     configured = list(configured)
     if not update_restart:
@@ -64,11 +86,23 @@ def startup_runs(configured: Iterable[str], update_restart: bool = False) -> lis
 
 
 def _names(value: Any) -> list[str]:
+    """过滤并提取字符串列表。
+
+    Args:
+        value: 待提取的原始值。
+
+    Returns:
+        list[str]: 包含的纯字符串列表。
+    """
     return [name for name in value if isinstance(name, str)] if isinstance(value, list) else []
 
 
 def _read() -> dict[str, list[str]]:
-    """文件缺失或损坏都按未启用处理，不让记忆影响启动。"""
+    """读取记忆配置文件。文件缺失或损坏都按未启用处理，不让记忆影响启动。
+
+    Returns:
+        dict[str, list[str]]: 包含 'remember' 和 'last' 列表的字典。
+    """
     try:
         data = json.loads(memory_path().read_text(encoding='utf-8'))
     except FileNotFoundError:
@@ -82,6 +116,12 @@ def _read() -> dict[str, list[str]]:
 
 
 def _write(remember: list[str], last: list[str]) -> None:
+    """将记忆数据持久化写入 JSON 文件。
+
+    Args:
+        remember: 开启记忆运行的实例名称列表。
+        last: 上次退出时仍在运行的实例名称列表。
+    """
     path = memory_path()
     try:
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -92,10 +132,30 @@ def _write(remember: list[str], last: list[str]) -> None:
 
 
 def get_startup_remember(instance: str) -> bool:
+    """获取指定实例是否开启了记忆运行。
+
+    Args:
+        instance: 实例名称。
+
+    Returns:
+        bool: 已开启返回 True，否则返回 False。
+    """
     return instance in _read()['remember']
 
 
 def set_startup_remember(instance: str, remember: bool) -> bool:
+    """设置指定实例是否开启记忆运行。
+
+    Args:
+        instance: 实例名称。
+        remember: 是否开启。
+
+    Returns:
+        bool: 设置后的状态布尔值。
+
+    Raises:
+        PermissionError: 处于演示模式时禁止修改。
+    """
     from module.runtime.deploy_settings import is_demo_mode
     if is_demo_mode():
         raise PermissionError('演示模式下不能修改启动时记忆运行')
@@ -112,13 +172,21 @@ def set_startup_remember(instance: str, remember: bool) -> bool:
 
 
 def remembered_runs() -> list[str]:
-    """上次退出时正在运行、且现在仍启用记忆的实例。"""
+    """获取上次退出时正在运行且当前仍启用记忆的实例列表。
+
+    Returns:
+        list[str]: 匹配的实例名称列表。
+    """
     data = _read()
     return [name for name in data['last'] if name in data['remember']]
 
 
 def record_running(instances: Iterable[str]) -> None:
-    """记下退出那一刻仍在运行的实例，只保留启用记忆的那些。"""
+    """记下退出那一刻仍在运行的实例，只保留启用记忆的那些。
+
+    Args:
+        instances: 当前正在运行的实例名称集合。
+    """
     remember = _read()['remember']
     if not remember:
         return

@@ -17,6 +17,19 @@ from module.map_detection.utils import Points
 
 
 class Template(Resource):
+    """UI 模板资源类。
+
+    用于对截图进行模板匹配以识别游戏 UI 元素，
+    支持多服务器路径映射、GIF 动画序列、Y 通道（亮度）及二值化匹配。
+
+    Attributes:
+        raw_file: 原始文件路径配置。
+        file (str): 针对当前服务器解析后的文件路径。
+        name (str): 模板名称。
+        is_gif (bool): 是否为 GIF 动画模板。
+        size (tuple[int, int]): 模板图像尺寸 (宽, 高)。
+    """
+
     def __init__(self, file):
         """初始化模板资源。
 
@@ -34,18 +47,22 @@ class Template(Resource):
 
     @cached_property
     def file(self):
+        """获取当前服务器对应的模板文件路径。"""
         return self.parse_property(self.raw_file)
 
     @cached_property
     def name(self):
+        """获取模板的大写名称。"""
         return os.path.splitext(os.path.basename(self.file))[0].upper()
 
     @cached_property
     def is_gif(self):
+        """判断模板是否为 GIF 文件。"""
         return os.path.splitext(self.file)[1] == '.gif'
 
     @property
     def image(self):
+        """获取已加载的模板图像数组（或 GIF 帧列表）。"""
         if self._image is None:
             if self.is_gif:
                 self._image = []
@@ -68,6 +85,7 @@ class Template(Resource):
 
     @property
     def image_binary(self):
+        """获取已二值化的模板图像数组（或帧列表）。"""
         if self._image_binary is None:
             if self.is_gif:
                 self._image_binary = []
@@ -83,6 +101,7 @@ class Template(Resource):
 
     @property
     def image_luma(self):
+        """获取亮度（Y 通道）模板图像数组（或帧列表）。"""
         if self._image_luma is None:
             if self.is_gif:
                 self._image_luma = []
@@ -96,7 +115,16 @@ class Template(Resource):
 
     @staticmethod
     def _match_gif(image, templates, similarity):
-        """GIF 模板匹配，对每帧同时尝试原图和水平翻转。"""
+        """GIF 模板匹配，对每帧同时尝试原图和水平翻转。
+
+        Args:
+            image (np.ndarray): 输入截图。
+            templates (list[np.ndarray]): 模板帧列表。
+            similarity (float): 相似度阈值。
+
+        Returns:
+            bool: 是否匹配成功。
+        """
         for template in templates:
             res = cv2.matchTemplate(image, template, cv2.TM_CCOEFF_NORMED)
             _, sim, _, _ = cv2.minMaxLoc(res)
@@ -113,6 +141,7 @@ class Template(Resource):
         self._image = value
 
     def resource_release(self):
+        """释放模板加载的图像数据以释放内存。"""
         super().resource_release()
         self._image = None
         self._image_binary = None
@@ -122,15 +151,16 @@ class Template(Resource):
         """对输入图像进行预处理。
 
         Args:
-            image: 输入图像，np.ndarray 格式。
+            image (np.ndarray): 输入图像。
 
         Returns:
-            预处理后的图像。
+            np.ndarray: 预处理后的图像。
         """
         return image
 
     @cached_property
     def size(self):
+        """获取模板尺寸 (宽, 高)。"""
         if self.is_gif:
             return self.image[0].shape[0:2][::-1]
         else:
@@ -140,13 +170,13 @@ class Template(Resource):
         """在截图图像上进行模板匹配。
 
         Args:
-            image: 截图图像。
-            scaling: 缩放比例，用于缩放模板以匹配图像。
-            similarity: 相似度阈值，范围 0 到 1。
-            direct_match: 若为 True，跳过 lower_template_match_similarity 的阈值限制。
+            image (np.ndarray): 截图图像。
+            scaling (float): 缩放比例，用于缩放模板以匹配图像。
+            similarity (float): 相似度阈值，范围 0 到 1。
+            direct_match (bool): 若为 True，跳过 lower_template_match_similarity 的阈值限制。
 
         Returns:
-            是否匹配成功。
+            bool: 是否匹配成功。
         """
         if not direct_match:
             similarity = lower_template_match_similarity(similarity)
@@ -176,11 +206,11 @@ class Template(Resource):
         """二值化后进行模板匹配。
 
         Args:
-            image: 截图图像。
-            similarity: 相似度阈值，范围 0 到 1。
+            image (np.ndarray): 截图图像。
+            similarity (float): 相似度阈值，范围 0 到 1。
 
         Returns:
-            是否匹配成功。
+            bool: 是否匹配成功。
         """
         similarity = lower_template_match_similarity(similarity)
         if self.is_gif:
@@ -201,6 +231,15 @@ class Template(Resource):
             return sim > similarity
 
     def match_luma(self, image, similarity=0.85):
+        """使用亮度（Y 通道）进行模板匹配。
+
+        Args:
+            image (np.ndarray): 截图图像。
+            similarity (float): 相似度阈值，范围 0 到 1。
+
+        Returns:
+            bool: 是否匹配成功。
+        """
         similarity = lower_template_match_similarity(similarity)
         if self.is_gif:
             image = rgb2luma(image)
@@ -215,12 +254,12 @@ class Template(Resource):
         """将匹配点转换为 Button 对象。
 
         Args:
-            point: 匹配位置的坐标点 (x, y)。
-            image: 截图图像。若提供，则从中加载颜色和图像信息。
-            name: 按钮名称。
+            point (tuple[int, int]): 匹配位置的坐标点 (x, y)。
+            image (np.ndarray | None): 截图图像。若提供，则从中加载颜色和图像信息。
+            name (str | None): 按钮名称。
 
         Returns:
-            根据匹配点生成的 Button 对象。
+            Button: 根据匹配点生成的 Button 对象。
         """
         if name is None:
             name = self.name
@@ -234,11 +273,11 @@ class Template(Resource):
         """模板匹配并返回相似度和匹配位置的 Button 对象。
 
         Args:
-            image: 截图图像。
-            name: 按钮名称。
+            image (np.ndarray): 截图图像。
+            name (str | None): 按钮名称。
 
         Returns:
-            相似度（float）和对应的 Button 对象。
+            tuple[float, Button]: (相似度, 对应的 Button 对象)。
         """
         res = cv2.matchTemplate(image, self.image, cv2.TM_CCOEFF_NORMED)
         _, sim, _, point = cv2.minMaxLoc(res)
@@ -248,6 +287,15 @@ class Template(Resource):
         return sim, button
 
     def match_luma_result(self, image, name=None):
+        """使用亮度（Y 通道）模板匹配并返回相似度和 Button 对象。
+
+        Args:
+            image (np.ndarray): 截图图像。
+            name (str | None): 按钮名称。
+
+        Returns:
+            tuple[float, Button]: (相似度, 对应的 Button 对象)。
+        """
         image = rgb2luma(image)
         res = cv2.matchTemplate(image, self.image_luma, cv2.TM_CCOEFF_NORMED)
         _, sim, _, point = cv2.minMaxLoc(res)
@@ -260,14 +308,14 @@ class Template(Resource):
         """模板匹配多个位置，返回所有匹配结果的 Button 列表。
 
         Args:
-            image: 截图图像。
-            scaling: 缩放比例，用于缩放模板以匹配图像。
-            similarity: 相似度阈值，范围 0 到 1。
-            threshold: 聚类距离阈值，用于合并相邻的匹配结果。
-            name: 按钮名称。
+            image (np.ndarray): 截图图像。
+            scaling (float): 缩放比例，用于缩放模板以匹配图像。
+            similarity (float): 相似度阈值，范围 0 到 1。
+            threshold (int): 聚类距离阈值，用于合并相邻的匹配结果。
+            name (str | None): 按钮名称。
 
         Returns:
-            所有匹配位置的 Button 对象列表。
+            list[Button]: 所有匹配位置的 Button 对象列表。
         """
         similarity = lower_template_match_similarity(similarity)
         scaling = 1 / scaling

@@ -32,12 +32,12 @@ class RewardMeowfficer(MeowfficerBuy, MeowfficerFort, MeowfficerTrain):
         MeowfficerTrain: 指挥喵训练功能
     """
     def run(self):
-        """
-        Execute buy, enhance, train, and fort operations
-        if enabled in configurations
+        """执行指挥喵模块的主调度任务。
+
+        根据配置依次执行购买、打扫猫窝、训练与强化操作，并设置下次执行的调度延迟。
 
         Pages:
-            in: Any page
+            in: 任意页面
             out: page_meowfficer
         """
         if self.config.Meowfficer_BuyAmount <= 0 \
@@ -47,14 +47,14 @@ class RewardMeowfficer(MeowfficerBuy, MeowfficerFort, MeowfficerTrain):
             self.config.task_stop()
 
         self.ui_ensure(page_meowfficer)
-        self.wait_meowfficer_buttons()  # Wait for the ui to load fully
+        self.wait_meowfficer_buttons()  # 等待界面完全加载
 
         if self.config.Meowfficer_BuyAmount > 0:
             self.meow_buy()
         if self.config.Meowfficer_FortChoreMeowfficer:
             self.meow_fort()
 
-        # Train
+        # 训练与强化
         if self.config.MeowfficerTrain_Enable:
             self.meow_train()
             if self.config.MeowfficerTrain_Mode == 'seamlessly':
@@ -64,13 +64,13 @@ class RewardMeowfficer(MeowfficerBuy, MeowfficerFort, MeowfficerTrain):
             else:
                 pass
 
-        # Scheduler
+        # 任务调度
         if self.config.MeowfficerTrain_Enable:
-            # Meowfficer training duration:
-            # - Blue, 2.0h ~ 2.5h
-            # - Purple, 5.5h ~ 6.5h
-            # - Gold, 9.5h ~ 10.5h
-            # Delay 2.5h ~ 3.5h when having meowfficers under training
+            # 指挥喵训练时长：
+            # - 蓝箱：2.0h ~ 2.5h
+            # - 紫箱：5.5h ~ 6.5h
+            # - 金箱：9.5h ~ 10.5h
+            # 有指挥喵在训时延迟 2.5h ~ 3.5h
             self.config.task_delay(minute=(150, 210), server_update=True)
         else:
             self.config.task_delay(server_update=True)

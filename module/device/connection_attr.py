@@ -1,3 +1,12 @@
+"""设备连接属性与 ADB 路径解析模块。
+
+提供 ConnectionAttr 类，负责：
+- 查找和下载适配平台的 ADB 可执行文件
+- 规范化和校验设备序列号
+- 识别模拟器类型（MuMu、LDPlayer、BlueStacks、Nox、WSA 等）
+- 初始化并缓存 ADB 和 uiautomator2 客户端
+"""
+
 import os
 import re
 import shutil
@@ -21,8 +30,10 @@ from module.logger import logger
 
 
 def platform_tools_url():
-    """
-    返回当前平台对应的 Android platform-tools 下载地址。
+    """返回当前平台对应的 Android platform-tools 下载地址。
+
+    Returns:
+        str | None: 对应的 zip 下载链接，不支持的平台返回 None。
     """
     if sys.platform == 'win32':
         return 'https://dl.google.com/android/repository/platform-tools-latest-windows.zip'
@@ -34,6 +45,10 @@ def platform_tools_url():
 
 
 class ConnectionAttr:
+    """设备连接属性与客户端管理类。
+
+    解析配置中的模拟器/设备序列号，确定连接类型，管理 ADB 与 uiautomator2 客户端的初始化。
+    """
     config: AzurLaneConfig
     serial: str
 
@@ -45,8 +60,7 @@ class ConnectionAttr:
     ]
 
     def download_adb_binary(self, target):
-        """
-        下载官方 Android platform-tools，并把 adb 放到目标路径。
+        """下载官方 Android platform-tools，并把 adb 放到目标路径。
 
         Args:
             target (str): 期望的 adb 可执行文件路径，通常是 .venv/bin/adb。
@@ -111,9 +125,10 @@ class ConnectionAttr:
         return str(target).replace('\\\\', '/').replace('\\', '/')
 
     def __init__(self, config):
-        """
+        """初始化设备连接属性。
+
         Args:
-            config (AzurLaneConfig, str): Name of the user config under ./config
+            config (AzurLaneConfig | str): ./config 下的用户配置名或 AzurLaneConfig 实例。
         """
         logger.hr('设备', level=1)
         if isinstance(config, str):
@@ -123,37 +138,45 @@ class ConnectionAttr:
 
         logger.attr('是否云手机', IS_ON_PHONE_CLOUD)
 
-        # Init adb client
+        if self.config.Emulator_Serial == 'azurpilot_android':
+            self.serial = 'azurpilot_android'
+            self.config.DEVICE_OVER_HTTP = False
+            return
+
+        # 初始化 adb 客户端
         logger.attr('ADB路径', self.adb_binary)
-        # Monkey patch to custom adb
+        # Monkey patch 自定义 adb
         adbutils.adb_path = lambda: self.adb_binary
-        # Remove global proxies, or uiautomator2 will go through it
+        # 移除全局代理设置，避免 uiautomator2 请求走代理
         d = dict(**os.environ)
         d.update(self.config.args)
         for k, _ in deep_iter(d, depth=1):
             if 'proxy' in k[0].split('_')[-1].lower():
                 del os.environ[k[0]]
-        # Cache adb_client
+        # 缓存 adb_client
         _ = self.adb_client
 
-        # Parse custom serial
+        # 解析自定义序列号
         self.serial = str(self.config.Emulator_Serial)
         self.serial_check()
         self.config.DEVICE_OVER_HTTP = self.is_over_http
 
     @staticmethod
     def revise_serial(serial: str):
-        """
-        Tons of fool-proof fixes to handle manual serial input
-        To load a serial:
-            serial = SerialStr.revise_serial(serial)
+        """修正手动输入的序列号常见拼写错误。
+
+        Args:
+            serial (str): 原始序列号字符串。
+
+        Returns:
+            str: 修正后的序列号。
         """
         serial = serial.strip().replace(' ', '')
         # 127。0。0。1：5555
         serial = serial.replace('。', '.').replace('，', '.').replace(',', '.').replace('：', ':')
         # 127.0.0.1.5555
         serial = serial.replace('127.0.0.1.', '127.0.0.1:')
-        # 5555,16384 (actually "5555.16384" because replace(',', '.'))
+        # 5555,16384 (实际上为 "5555.16384"，因为替换了逗号)
         if '.' in serial:
             left, _, right = serial.partition('.')
             try:
@@ -185,10 +208,12 @@ class ConnectionAttr:
         return str(serial)
 
     def serial_check(self):
+        """检查并规范化序列号，校验 WSA 及 HTTP 模式下的配置合法性。
+
+        Raises:
+            RequestHumanTakeover: 当序列号格式异常或 HTTP 模式下配置了不支持的截图/控制方法时抛出。
         """
-        serial check
-        """
-        # fool-proof
+        # 容错处理
         new = self.revise_serial(self.serial)
         if new != self.serial:
             logger.warning(f'[设备-属性] 序列号 "{self.config.Emulator_Serial}" 已修正为 "{new}"')
@@ -213,9 +238,9 @@ class ConnectionAttr:
             if self.config.Emulator_ScreenshotMethod not in ["ADB", "uiautomator2", "aScreenCap"] \
                     or self.config.Emulator_ControlMethod not in ["ADB", "uiautomator2", "minitouch"]:
                 logger.warning(
-                    f'When connecting to a device over http: {self.serial} '
-                    f'ScreenshotMethod can only use ["ADB", "uiautomator2", "aScreenCap"], '
-                    f'ControlMethod can only use ["ADB", "uiautomator2", "minitouch"]'
+                    f'通过 HTTP 连接设备: {self.serial} 时，'
+                    f'ScreenshotMethod 仅支持 ["ADB", "uiautomator2", "aScreenCap"], '
+                    f'ControlMethod 仅支持 ["ADB", "uiautomator2", "minitouch"]'
                 )
                 raise RequestHumanTakeover
 
@@ -247,7 +272,7 @@ class ConnectionAttr:
 
     @cached_property
     def is_mumu12_family(self):
-        # 127.0.0.1:16384 + 32*n, assume 32 instances at max
+        # 127.0.0.1:16384 + 32*n，假定最多 32 个多开实例
         return 16384 <= self.port <= 17408
 
     @cached_property
@@ -258,8 +283,8 @@ class ConnectionAttr:
 
     @cached_property
     def is_ldplayer_bluestacks_family(self):
-        # Note that LDPlayer and BlueStacks have the same serial range
-        # 127.0.0.1:5555 + 2*n, assume 32 instances at max
+        # 注意 LDPlayer 和 BlueStacks 使用相同的序列号端口范围
+        # 127.0.0.1:5555 + 2*n，假定最多 32 个多开实例
         return self.serial.startswith('emulator-') or 5555 <= self.port <= 5619
 
     @cached_property
@@ -288,8 +313,8 @@ class ConnectionAttr:
 
     @cached_property
     def is_chinac_phone_cloud(self):
-        # Phone cloud with public ADB connection
-        # Serial like xxx.xxx.xxx.xxx:301
+        # 带公网 ADB 连接的云手机
+        # 序列号格式形如 xxx.xxx.xxx.xxx:301
         return bool(re.search(r":30[0-9]$", self.serial))
 
     @staticmethod
@@ -355,8 +380,8 @@ class ConnectionAttr:
                 with OpenKey(HKEY_LOCAL_MACHINE, r"SOFTWARE\BlueStacks_nxt_cn") as key:
                     directory = QueryValueEx(key, 'UserDefinedDir')[0]
             except FileNotFoundError:
-                logger.error('[设备-属性] 未找到注册表 HKEY_LOCAL_MACHINE\SOFTWARE\BlueStacks_nxt '
-                             '或 HKEY_LOCAL_MACHINE\SOFTWARE\BlueStacks_nxt_cn')
+                logger.error(r'[设备-属性] 未找到注册表 HKEY_LOCAL_MACHINE\SOFTWARE\BlueStacks_nxt '
+                             r'或 HKEY_LOCAL_MACHINE\SOFTWARE\BlueStacks_nxt_cn')
                 logger.error('[设备-属性] 请确认使用的是蓝叠 5 Hyper-V 版本，而非普通蓝叠 5')
                 raise RequestHumanTakeover
         logger.info(f"配置文件目录: {directory}")

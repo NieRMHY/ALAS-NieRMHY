@@ -21,6 +21,15 @@ class OpsiMonthStats:
     def summary(
         self, year: int | None = None, month: int | None = None
     ) -> Dict[str, Any]:
+        """获取指定月份的 CL1 统计基础摘要。
+
+        Args:
+            year (int | None, optional): 统计年份。默认为当前年。
+            month (int | None, optional): 统计月份。默认为当前月。
+
+        Returns:
+            Dict[str, Any]: 包含总战斗次数、明石遭遇次数、塞壬装置数等摘要数据。
+        """
         now = datetime.now()
         if year is None:
             year = now.year
@@ -103,6 +112,14 @@ _singleton: Dict[str, OpsiMonthStats] = {}
 
 
 def get_opsi_stats(instance_name: str | None = None) -> OpsiMonthStats:
+    """获取指定实例的大世界月度统计单例对象。
+
+    Args:
+        instance_name (str | None, optional): 配置实例名称。默认为 "default"。
+
+    Returns:
+        OpsiMonthStats: 对应的月度统计管理器实例。
+    """
     global _singleton
     key = instance_name or "default"
     if key not in _singleton:

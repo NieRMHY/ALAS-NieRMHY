@@ -1,6 +1,6 @@
-/* 平滑滚动工具：替换原生 scrollIntoView({behavior: 'smooth'})，
-   解决「点击章节导航后滑动近 1 秒」的问题（issue #1024）。
-   时长可控（默认 280ms），尊重 prefers-reduced-motion 与 scroll-margin-top。 */
+/**
+ * @fileoverview 平滑滚动辅助函数，支持自定义缓动与滚动边距计算。
+ */
 
 import { motionReducedActive } from './motionPrefs'
 
@@ -92,7 +92,8 @@ export function smoothScrollToElement(target: HTMLElement, duration = 280) {
   const scroller = (document.scrollingElement as HTMLElement | null) ?? document.documentElement
   const to = scrollTargetTop(
     scroller.scrollTop,
-    scroller.getBoundingClientRect().top,
+    // 文档滚动的参照系是视口；documentElement 的矩形顶部会随滚动变成负数。
+    0,
     target.getBoundingClientRect().top,
     readScrollMarginTop(target),
     scroller.scrollHeight - scroller.clientHeight,

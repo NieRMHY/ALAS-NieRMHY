@@ -1,4 +1,8 @@
-"""参数定义驱动的配置服务，在跨进程事务内校验并合并字段修改。"""
+"""参数定义驱动的配置服务模块。
+
+在跨进程事务内校验并合并字段修改，提供配置读取、更新、导入、删除与元数据获取能力。
+"""
+
 import copy
 import hashlib
 import json
@@ -35,6 +39,15 @@ def validate_name(value):
     末尾的空白与点归一化掉：Windows 上 `ap .json` 落盘就是 `ap.json`，
     两者本就是同一个文件。前导点不削，`.` 与 `..` 是路径成分，`.隐藏` 这类名字一概拒。
     以点分段的基名命中 RESERVED 即拒：`template` 与 `template.fpy` 都是模板。
+
+    Args:
+        value (str): 待校验的实例名称。
+
+    Returns:
+        str: 规整化后的安全实例名称。
+
+    Raises:
+        ApiError: 实例名类型错误或包含非法字符、保留名时抛出。
     """
     if not isinstance(value, str):
         raise ApiError('INVALID_PARAMS', '实例名无效')
@@ -45,16 +58,44 @@ def validate_name(value):
 
 
 def accepts_name(value):
-    """列举时用的宽松版：不合规的文件名当作不存在，不让一个坏文件名打断整份列表。"""
+    """列举时用的宽松版检验函数。
+
+    不合规的文件名当作不存在，不让一个坏文件名打断整份列表。
+
+    Args:
+        value: 待检查的文件名或实例名。
+
+    Returns:
+        bool: 符合命名规范返回 True，否则返回 False。
+    """
     try:
         return validate_name(value) == value
     except ApiError:
         return False
 
+
 class ConfigService:
-    """只访问白名单配置，读操作不会触发运行器的配置写回。"""
+    """参数驱动的配置服务。
+
+    只访问白名单配置，读操作不会触发运行器的配置写回。
+
+    Attributes:
+        root (Path): 仓库根目录。
+        directory (Path): 配置文件夹路径 (config/)。
+        import_directory (Path): 导入源配置文件夹路径 (config/import/)。
+        lock (threading.RLock): 配置操作重入锁。
+        args (dict): 参数元数据定义。
+        menu (dict): 菜单结构元数据。
+        translations (dict): 简体中文翻译字典。
+        template (dict): 模板配置快照。
+    """
 
     def __init__(self, root: Path = ROOT):
+        """初始化配置服务。
+
+        Args:
+            root (Path, optional): 根目录。默认为 ROOT。
+        """
         self.root = root
         self.directory = root / 'config'
         # 导入源单独一个目录：config/ 下的 *.json 都算实例，导入源不能与实例列表混在一起。
@@ -68,15 +109,43 @@ class ConfigService:
 
     @staticmethod
     def read_json(path):
+        """读取并反序列化 JSON 文件。
+
+        Args:
+            path (Path): JSON 文件路径。
+
+        Returns:
+            Any: 解析后的 JSON 对象。
+        """
         return json.loads(path.read_text(encoding='utf-8'))
 
     def translate(self, key):
+        """根据路径键翻译文本。
+
+        Args:
+            key (str): 点号分隔的国际化路径键。
+
+        Returns:
+            str: 翻译后的显示文本或键的最后一段。
+        """
         value = self.translations
         for part in key.split('.'):
             value = value.get(part, {}) if isinstance(value, dict) else {}
         return value if isinstance(value, str) and value != key else key.split('.')[-1]
 
     def path(self, name, exists=True):
+        """解析并校验实例配置文件路径。
+
+        Args:
+            name (str): 实例名称。
+            exists (bool, optional): 是否要求文件必须已存在。默认为 True。
+
+        Returns:
+            Path: 安全校验通过的配置文件路径。
+
+        Raises:
+            ApiError: 路径非法或不存在时抛出。
+        """
         name = validate_name(name)
         path = self.directory / f'{name}.json'
         if path.is_symlink() or path.resolve().parent != self.directory.resolve():
@@ -86,11 +155,27 @@ class ConfigService:
         return path
 
     def names(self):
+        """列出当前存在的所有合法实例名称。
+
+        Returns:
+            list[str]: 排序后的实例名列表。
+        """
         return sorted(p.stem for p in self.directory.glob('*.json')
                       if accepts_name(p.stem) and not p.is_symlink() and self.is_instance(p))
 
     def save_import(self, name, content):
-        """把上传的配置写进导入目录；先解成 JSON 并确认有 Alas 段，坏文件不入库。"""
+        """把上传的配置写进导入目录；先解成 JSON 并确认有 Alas 段，坏文件不入库。
+
+        Args:
+            name (str): 导入目标名称。
+            content (str): JSON 配置字符串。
+
+        Returns:
+            dict: 包含导入文件名称的字典。
+
+        Raises:
+            ApiError: JSON 损坏、格式不符或路径非法时抛出。
+        """
         name = validate_name(name)
         try:
             data = json.loads(content)
@@ -107,13 +192,25 @@ class ConfigService:
         return {'name': name}
 
     def is_instance(self, path):
+        """判断指定 JSON 文件是否包含合法的 Alas 实例配置。
+
+        Args:
+            path (Path): 文件路径。
+
+        Returns:
+            bool: 属于合法配置实例返回 True，否则返回 False。
+        """
         try:
             return isinstance(self.read_json(path).get('Alas'), dict)
         except (OSError, ValueError, AttributeError):
             return False
 
     def importable(self):
-        """导入目录里可供挑选的配置文件，供创建实例时直接选一个来源。"""
+        """获取导入目录里可供挑选的配置文件列表。
+
+        Returns:
+            list[dict]: 包含 name 和 modified 信息的字典列表。
+        """
         if not self.import_directory.is_dir():
             return []
         return [{'name': path.stem, 'modified': path.stat().st_mtime}
@@ -121,7 +218,17 @@ class ConfigService:
                 if accepts_name(path.stem) and not path.is_symlink() and self.is_instance(path)]
 
     def read_import(self, name):
-        """读导入目录里的一份配置；与实例名同样用白名单校验，不做任意路径读取。"""
+        """读导入目录里的一份配置；与实例名同样用白名单校验，不做任意路径读取。
+
+        Args:
+            name (str): 导入配置文件名。
+
+        Returns:
+            dict: 配置数据字典。
+
+        Raises:
+            ApiError: 导入路径非法或文件不存在时抛出。
+        """
         name = validate_name(name)
         path = self.import_directory / f'{name}.json'
         if path.is_symlink() or path.resolve().parent != self.import_directory.resolve():
@@ -131,6 +238,17 @@ class ConfigService:
         return self.read_json(path)
 
     def read(self, name):
+        """读取指定实例的配置内容与文件版本校验值。
+
+        Args:
+            name (str): 实例名称。
+
+        Returns:
+            tuple[dict, str]: 补全模板后的完整配置字典与 sha256 校验哈希。
+
+        Raises:
+            ApiError: 文件损坏或无 Alas 根节点时抛出 CONFIG_INVALID。
+        """
         path = self.path(name)
         try:
             raw = path.read_bytes()
@@ -149,7 +267,17 @@ class ConfigService:
         return merged, hashlib.sha256(raw).hexdigest()
 
     def schema(self, language='zh-CN'):
-        """按会话读取翻译，不修改运行器或其他浏览器的全局语言。"""
+        """按会话读取前端菜单与参数元数据，不修改全局语言设置。
+
+        Args:
+            language (str, optional): 语言代码。默认为 'zh-CN'。
+
+        Returns:
+            dict: 包含 menu, args, translations 的架构字典。
+
+        Raises:
+            ApiError: 不支持的语言代码时抛出 INVALID_PARAMS。
+        """
         if language not in {'zh-CN', 'zh-MIAO', 'en-US', 'ja-JP', 'zh-TW'}:
             raise ApiError('INVALID_PARAMS', '不支持的界面语言')
         translations = self.translations if language == 'zh-CN' else self.read_json(
@@ -157,10 +285,31 @@ class ConfigService:
         return {'menu': self.menu, 'args': self.args, 'translations': translations}
 
     def get(self, name):
+        """获取指定实例当前的配置数据与版本号。
+
+        Args:
+            name (str): 实例名称。
+
+        Returns:
+            dict: 包含 instance, revision, values 的字典。
+        """
         data, revision = self.read(name)
         return {'instance': name, 'revision': revision, 'values': data}
 
     def create(self, name, source=None, import_file=None):
+        """创建新的实例配置文件。
+
+        Args:
+            name (str): 新建实例名称。
+            source (str, optional): 复制源实例名称。默认为 None。
+            import_file (str, optional): 导入目录中的源文件名。默认为 None。
+
+        Returns:
+            dict: 新建实例的配置数据及版本。
+
+        Raises:
+            ApiError: 实例名冲突或已存在时抛出 ALREADY_EXISTS。
+        """
         # 先归一化，落盘名与返回给客户端的实例名才是同一个。
         name = validate_name(name)
         with self.lock:
@@ -181,7 +330,17 @@ class ConfigService:
 
     @staticmethod
     def validate_shop_strategy(script):
-        """校验受限 Lua 风格商店策略，不执行脚本。"""
+        """校验受限 Lua 风格商店策略，不执行脚本。
+
+        Args:
+            script (str): 策略脚本源码。
+
+        Returns:
+            dict: 校验诊断结果。
+
+        Raises:
+            ApiError: 脚本语法不合法时抛出。
+        """
         from module.shop_strategy import validate_strategy
 
         result = validate_strategy(script)
@@ -197,6 +356,13 @@ class ConfigService:
         ``Mode`` 与 ``Script`` 能在同一事务中一并修改，因此不能在逐字段
         校验阶段提前判定。高级模式必须保存可执行的非空脚本；简单模式允许
         清空脚本以恢复默认配置。
+
+        Args:
+            data (dict): 当前配置字典快照。
+            tasks (Iterable[str]): 涉及变更的商店任务名称集合。
+
+        Raises:
+            ApiError: 高级模式开启但未配置有效策略脚本时抛出。
         """
         for task in tasks:
             group = data.get(task, {}).get('ShopAdvanced')
@@ -211,6 +377,18 @@ class ConfigService:
             self.validate_shop_strategy(script)
 
     def validate(self, path, value):
+        """严格校验单项参数的修改路径与取值范围。
+
+        Args:
+            path (str): 参数路径（格式为 Task.Group.Argument）。
+            value (Any): 修改后的新值。
+
+        Returns:
+            list[str]: 解析后的 [Task, Group, Argument] 列表。
+
+        Raises:
+            ApiError: 路径格式错误、只读参数、类型不匹配或超出校验规则时抛出。
+        """
         parts = path.split('.')
         if len(parts) != 3:
             raise ApiError('INVALID_PARAMS', '配置路径必须为 Task.Group.Argument')
@@ -271,6 +449,19 @@ class ConfigService:
         return parts
 
     def patch(self, name, revision, changes):
+        """批量修改实例配置项，并在文件事务中原子写回。
+
+        Args:
+            name (str): 实例名称。
+            revision (str): 客户端已知的版本哈希。
+            changes (list): 包含 path 和 value 的修改条目列表。
+
+        Returns:
+            dict: 修改后的最新实例配置。
+
+        Raises:
+            ApiError: 重复修改同一参数或校验失败时抛出。
+        """
         with self.lock, config_transaction(self.path(name)):
             # revision 仅为旧客户端兼容参数。字段赋值合并到锁内最新快照，
             # 无关字段的运行状态更新不应拒绝用户输入；同字段按事务顺序生效。
@@ -296,6 +487,10 @@ class ConfigService:
 
         情绪等参数由“值 + 记录时间”两个字段推算实时状态，改值不刷新时间戳时，
         下次计算会把旧时间戳之后的恢复量重复计入。
+
+        Args:
+            fields (dict): 当前分组配置字典。
+            arg (str): 当前修改的参数名。
         """
         if not arg.endswith('Value'):
             return
@@ -304,6 +499,18 @@ class ConfigService:
             fields[record] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
     def delete(self, name, revision):
+        """删除指定实例并自动创建备份。
+
+        Args:
+            name (str): 待删除的实例名称。
+            revision (str): 校验版本哈希。
+
+        Returns:
+            dict: 包含 deleted 实例名的响应字典。
+
+        Raises:
+            ApiError: 版本冲突时抛出 CONFLICT。
+        """
         with self.lock, config_transaction(self.path(name)):
             if self.read(name)[1] != revision:
                 raise ApiError('CONFLICT', '配置已变化，请重新加载后删除')

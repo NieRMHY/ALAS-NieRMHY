@@ -20,9 +20,19 @@ STAGE_FILTER = Filter(regex=re.compile('^(.*?)$'), attr=('stage',))
 
 
 class EventStage:
-    """活动关卡文件的封装，从文件名提取关卡名称。"""
+    """活动关卡文件的封装，从文件名提取关卡名称。
+
+    Attributes:
+        filename (str): 关卡文件名。
+        stage (str): 提取出的关卡名称。
+    """
 
     def __init__(self, filename):
+        """初始化活动关卡对象。
+
+        Args:
+            filename (str): 关卡 Python 文件名。
+        """
         self.filename = filename
         # 从文件名中去掉 .py 后缀作为关卡名
         self.stage = 'unknown'

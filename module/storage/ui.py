@@ -15,8 +15,15 @@ from module.ui.ui import UI
 
 
 class StorageUI(UI):
+    """仓库 UI 导航与筛选控制器。"""
+
     @cached_property
     def storage_filter(self) -> Setting:
+        """仓库筛选设置对象。
+
+        Returns:
+            Setting: 配置好的仓库筛选设置实例。
+        """
         delta = (147 + 1 / 3, 57)
         button_shape = (139, 42)
         setting = Setting(name='STORAGE', main=self)
@@ -30,28 +37,38 @@ class StorageUI(UI):
         return setting
 
     def ui_goto_storage(self):
+        """导航至仓库页面。
+
+        Returns:
+            bool: 是否成功到达仓库页面。
+        """
         return self.ui_ensure(destination=page_storage)
 
     def _wait_until_storage_stable(self):
+        """等待仓库界面稳定并清除通知栏。"""
         self.wait_until_stable(MATERIAL_STABLE_CHECK)
         self.handle_info_bar()
 
     def _storage_in_material(self, interval=0):
-        """
+        """检测当前是否处于材料仓库界面。
+
         Args:
-            interval (int): for appear func, varies
-                            by needs/location
+            interval (int, optional): 识别间隔，默认为 0。
 
         Returns:
-            bool, if in MATERIAL_CHECK, appear and match_appear_on
+            bool: 处于材料仓库界面返回 True，否则返回 False。
         """
         return self.match_template_color(MATERIAL_CHECK, offset=(20, 20), interval=interval)
 
     def _storage_enter_material(self, skip_first_screenshot=True):
-        """
+        """从任意仓库子页面切换至材料栏。
+
         Pages:
             in: page_storage, any
             out: page_storage, material, MATERIAL_CHECK
+
+        Args:
+            skip_first_screenshot (bool): 是否跳过首次截图。
         """
         logger.info('仓库进入材料')
         while 1:
@@ -82,10 +99,14 @@ class StorageUI(UI):
         self.interval_clear(STORAGE_CHECK)
 
     def _storage_enter_equipment(self, skip_first_screenshot=True):
-        """
+        """从任意仓库子页面切换至装备栏。
+
         Pages:
             in: page_storage, any
             out: page_storage, equipment, DISASSEMBLE
+
+        Args:
+            skip_first_screenshot (bool): 是否跳过首次截图。
         """
         logger.info('仓库进入装备')
         while 1:
@@ -116,10 +137,14 @@ class StorageUI(UI):
         self.interval_clear(STORAGE_CHECK)
 
     def _storage_enter_disassemble(self, skip_first_screenshot=True):
-        """
+        """从任意仓库子页面切换至装备拆解面板。
+
         Pages:
             in: page_storage, any
             out: page_storage, disassemble, DISASSEMBLE_CANCEL
+
+        Args:
+            skip_first_screenshot (bool): 是否跳过首次截图。
         """
         logger.info('仓库进入拆解')
         self.appear(STORAGE_CHECK, interval=3)
@@ -152,6 +177,7 @@ class StorageUI(UI):
         self.interval_clear(STORAGE_CHECK)
 
     def _equipment_filter_enter(self):
+        """打开装备筛选面板。"""
         logger.info('装备筛选进入')
         self.interval_clear(STORAGE_CHECK)
         for _ in self.loop():
@@ -170,18 +196,18 @@ class StorageUI(UI):
                 continue
 
     def _equipment_filter_confirm(self):
+        """确认并关闭装备筛选面板。"""
         logger.info('装备筛选确认')
         self.interval_clear(EQUIPMENT_FILTER_CONFIRM)
         self.ui_click(EQUIPMENT_FILTER_CONFIRM, check_button=STORAGE_CHECK, skip_first_screenshot=True)
         self._wait_until_storage_stable()
 
     def equipment_filter_set(self, rarity='all'):
-        """
-        A faster filter set function.
+        """设置装备稀有度筛选。
 
         Args:
-            rarity (str, int): ['all', 'common', 'rare', 'elite', 'super_rare', 'ultra_rare']
-                Also allow: 1 for common, 2 for rare, 3 for elite, 4 for super_rare, 5 for ultra_rare
+            rarity (str | int): 稀有度筛选值，可选 ['all', 'common', 'rare', 'elite', 'super_rare', 'ultra_rare']，
+                也支持数字映射：1=普通, 2=稀有, 3=精锐, 4=超稀有, 5=最高稀有。
 
         Pages:
             in: DISASSEMBLE

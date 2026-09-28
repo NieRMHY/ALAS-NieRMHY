@@ -1,3 +1,7 @@
+/**
+ * @fileoverview 受限 Lua 商店策略脚本编辑器组件。
+ */
+
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Annotation, Compartment, EditorState } from '@codemirror/state'
 import { EditorView, keymap, lineNumbers, highlightActiveLine } from '@codemirror/view'

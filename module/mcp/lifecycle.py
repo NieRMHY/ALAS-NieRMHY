@@ -7,7 +7,15 @@ from module.runtime.setting import State
 
 
 def cleanup():
-    """确认工作进程全部退出后才关闭 Manager，失败时保留登记供恢复。"""
+    """
+    清理 MCP 运行时状态。
+
+    确认所有由 ProcessManager 追踪的工作进程完全退出后才关闭共享 Manager，
+    若有进程未能正常退出则保留登记以供故障恢复。
+
+    Raises:
+        RuntimeError: 当部分工作进程无法停止时抛出。
+    """
     with State.cleanup_lock:
         success = True
         for manager in ProcessManager.running_instances():
@@ -22,6 +30,14 @@ def cleanup():
 
 @asynccontextmanager
 async def lifespan(application):
+    """
+    MCP Starlette 应用程序生命周期管理器。
+
+    管理共享 State 进程管理器的初始化，并在服务关闭时安全排空工具队列和子进程。
+
+    Args:
+        application: Starlette 应用实例。
+    """
     owns_state = State.manager is None
     try:
         if owns_state:

@@ -18,6 +18,11 @@ MOD_CONFIG_DICT = {}
 
 
 def get_available_func():
+    """获取所有可用的内置辅助功能名称元组。
+
+    Returns:
+        tuple[str, ...]: 功能名称元组。
+    """
     return (
         'Daemon',
         'OpsiDaemon',
@@ -34,30 +39,74 @@ def get_available_func():
     )
 
 def get_available_mod():
+    """获取所有已注册的子模块标识集合。
+
+    Returns:
+        set[str]: 子模块标识集合。
+    """
     return set(MOD_DICT)
 
 
 def get_available_mod_func():
+    """获取所有由子模块实现的功能名称集合。
+
+    Returns:
+        set[str]: 功能名称集合。
+    """
     return set(MOD_FUNC_DICT)
 
 
 def get_func_mod(func):
+    """根据功能名称查询所属的子模块标识。
+
+    Args:
+        func (str): 功能名称。
+
+    Returns:
+        str | None: 对应的子模块标识，若不属于任何子模块则返回 None。
+    """
     return MOD_FUNC_DICT.get(func)
 
 
 def list_mod_dir():
+    """获取子模块标识与物理目录名的映射列表。
+
+    Returns:
+        list[tuple[str, str]]: (模块标识, 目录名) 列表。
+    """
     return list(MOD_DICT.items())
 
 
 def get_mod_dir(name):
+    """根据子模块标识获取其物理目录名。
+
+    Args:
+        name (str): 子模块标识。
+
+    Returns:
+        str | None: 对应的子模块目录名。
+    """
     return MOD_DICT.get(name)
 
 
 def get_mod_filepath(name):
+    """获取子模块的相对文件路径。
+
+    Args:
+        name (str): 子模块标识。
+
+    Returns:
+        str: 相对文件路径。
+    """
     return os.path.join('./submodule', get_mod_dir(name))
 
 
 def list_mod_template():
+    """列出所有子模块的配置模板名称。
+
+    Returns:
+        list[str]: 模板名称列表。
+    """
     out = []
     for file in os.listdir('./config'):
         name, extension = os.path.splitext(file)
@@ -70,6 +119,11 @@ def list_mod_template():
 
 
 def list_mod_instance():
+    """扫描 config 目录并列出所有子模块实例配置名称。
+
+    Returns:
+        list[str]: 子模块实例名称列表。
+    """
     global MOD_CONFIG_DICT
     MOD_CONFIG_DICT.clear()
     out = []
@@ -85,9 +139,13 @@ def list_mod_instance():
 
 
 def get_config_mod(config_name):
-    """
+    """根据配置名称解析对应的所属模块。
+
     Args:
-        config_name (str):
+        config_name (str): 配置名称。
+
+    Returns:
+        str: 模块名称（'alas' 或对应子模块名）。
     """
     if config_name.startswith('template-'):
         mod_name = config_name.replace('template-', '')

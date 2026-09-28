@@ -98,6 +98,7 @@
       "SaveErrorBackUpMethod": "zip",
       "SaveErrorZipMethod": "zip",
       "OnePushConfig": "provider: null",
+      "LowPushMode": false,
       "ScreenshotLength": 1,
       "GameStuckRestart": false,
       "GameStuckThreshold": 3,
@@ -135,7 +136,14 @@
       "CommissionRecord": "do_not",
       "CommissionIncomeScreenshot": "save",
       "CombatRecord": "do_not",
-      "OpsiRecord": "upload",
+      "OpsiHazard1Leveling": "upload",
+      "OpsiMeowfficerFarming": "upload",
+      "OpsiDaily": "upload",
+      "OpsiObscure": "upload",
+      "OpsiAbyssal": "upload",
+      "OpsiStronghold": "upload",
+      "OpsiExplore": "upload",
+      "OpsiOther": "upload",
       "MeowfficerBuy": "do_not",
       "MeowfficerTalent": "do_not",
       "TelemetryReport": true,
@@ -3076,7 +3084,11 @@
   },
   "IslandPlan": {
     "IslandPlan": {
-      "Season": "spring"
+      "Season": "spring",
+      "RefreshPlan": false,
+      "PlanVerifiedOnly": true,
+      "PlanMineVerified": true,
+      "PlanShelfSlots": 5
     },
     "Storage": {
       "Storage": {}
@@ -3105,7 +3117,9 @@
         4
       ],
       "SeasonalReplaceEnabled": true,
-      "SeasonalThreshold": 7
+      "SeasonalThreshold": 7,
+      "StockCheck": true,
+      "ShopLevel": "diamond"
     },
     "IslandBusinessShop1": {
       "Char1": "None",

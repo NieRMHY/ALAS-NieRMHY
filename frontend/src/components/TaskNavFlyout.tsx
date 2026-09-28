@@ -1,4 +1,9 @@
+/**
+ * @fileoverview 侧边栏悬停二级弹出任务菜单组件。
+ */
+
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { MarqueeText } from './MarqueeText'
 import { createPortal } from 'react-dom'
 import { NavLink, useLocation, useParams } from 'react-router-dom'
 import { Anchor, CalendarDays, ChevronRight, Compass, Gift, Palmtree, Search, Settings2, Ship, Sparkles, Swords, Wrench, type LucideIcon } from 'lucide-react'
@@ -18,7 +23,7 @@ export function isDesktopDevice(): boolean {
   return isWide && hasFinePointer
 }
 
-export function TaskNavFlyout({ defaultOpenKey }: { defaultOpenKey?: string } = {}) {
+export function TaskNavFlyout({ defaultOpenKey, onNavigate }: { defaultOpenKey?: string; onNavigate?: () => void } = {}) {
   const { schema, t, ui } = useApp()
   const { instance } = useParams()
   const location = useLocation()
@@ -242,7 +247,7 @@ export function TaskNavFlyout({ defaultOpenKey }: { defaultOpenKey?: string } = 
                 aria-expanded={isExpanded}
               >
                 <GroupIcon size={18} className="task-group-icon" />
-                <span className="task-group-title">{t(`Menu.${key}.name`)}</span>
+                <MarqueeText className="task-group-title" text={t(`Menu.${key}.name`)}/>
                 <ChevronRight size={13} className="task-group-arrow" />
               </button>
             )
@@ -271,11 +276,12 @@ export function TaskNavFlyout({ defaultOpenKey }: { defaultOpenKey?: string } = 
                 onClick={() => {
                   clearCloseTimer()
                   setOpenMenuKey(null)
+                  onNavigate?.()
                 }}
                 role="menuitem"
               >
                 <span className="task-submenu-dot" />
-                <span className="task-submenu-item-text">{t(`Task.${task}.name`)}</span>
+                <MarqueeText className="task-submenu-item-text" text={t(`Task.${task}.name`)}/>
               </NavLink>
             ))}
           </div>

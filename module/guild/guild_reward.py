@@ -9,15 +9,18 @@ from module.ui.page import page_guild, page_main
 
 
 class RewardGuild(GuildLobby, GuildLogistics, GuildOperations):
-    def run(self):
-        """
-        ALAS handler function for guild reward loop
+    """大舰队日常奖励综合执行类。
 
-        Returns:
-            bool: If executed
+    整合大厅签到与公共事件、后勤整备、舰队作战与作战报告领取。
+    """
+
+    def run(self):
+        """执行大舰队日常奖励领取与任务流程。
+
+        依次处理大厅、后勤、作战模块，全部完成后返回主界面并延迟至次日刷新。
 
         Pages:
-            in: page_main
+            in: page_main 或任意页面
             out: page_main
         """
         if not self.config.GuildLogistics_Enable and not self.config.GuildOperation_Enable:

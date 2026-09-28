@@ -18,7 +18,7 @@ import struct
 import threading
 import time as time_
 from datetime import datetime, timezone
-
+from typing import Any, Dict, List, Optional
 
 # NTP 协议常量
 NTP_EPOCH_DELTA = 2208988800  # NTP 时间纪元与 Unix 时间纪元的差值（秒）
@@ -40,13 +40,26 @@ class NetworkTimeSource:
     """通过 NTP 服务器校准本地时间。
 
     只缓存本机时间与 NTP 时间的偏移量，后续读取不会频繁访问网络。
+
+    Attributes:
+        offset: 本地系统时间与网络时间的偏差量（秒）。
+        base_timestamp: 基准网络时间戳。
+        base_monotonic: 基准单调时钟时间。
+        server: 当前已同步的 NTP 服务器域名。
+        synced: 是否已成功完成过网络校时。
+        last_sync_monotonic: 上次成功同步时的单调时钟。
+        retry_after_monotonic: 下次允许重试的单调时钟节点。
+        refresh_interval: 周期性重新同步时间间隔（秒）。
+        retry_interval: 失败后的重试退避间隔（秒）。
+        timeout: 网络查询单次超时时间（秒）。
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """初始化网络时间源管理器。"""
         self.offset = 0.0
         self.base_timestamp = 0.0
         self.base_monotonic = 0.0
-        self.server = None
+        self.server: Optional[str] = None
         self.synced = False
         self.last_sync_monotonic = 0.0
         self.retry_after_monotonic = 0.0
@@ -57,12 +70,22 @@ class NetworkTimeSource:
         self._warned = False
 
     @property
-    def enabled(self):
+    def enabled(self) -> bool:
+        """检查网络校时是否启用。
+
+        Returns:
+            bool: 环境变量未显式禁用时返回 True。
+        """
         value = os.environ.get(NTP_DISABLE_ENV, '').strip().lower()
         return value not in {'1', 'true', 'yes', 'on'}
 
     @property
-    def servers(self):
+    def servers(self) -> List[str]:
+        """获取当前配置的 NTP 服务器列表。
+
+        Returns:
+            List[str]: 有效的 NTP 服务器域名或 IP 列表。
+        """
         value = os.environ.get(NTP_SERVERS_ENV, '').strip()
         if value:
             servers = [item.strip() for item in value.replace(';', ',').split(',')]
@@ -72,7 +95,18 @@ class NetworkTimeSource:
 
         return list(DEFAULT_NTP_SERVERS)
 
-    def _query_server(self, host):
+    def _query_server(self, host: str) -> float:
+        """向指定主机发送 NTP UDP 请求并计算时间偏差。
+
+        Args:
+            host: 目标 NTP 服务器主机名或 IP。
+
+        Returns:
+            float: 计算出的网络时间与本地时间的秒数偏差。
+
+        Raises:
+            OSError: 网络连接失败或响应数据格式无效。
+        """
         last_error = None
         addresses = socket.getaddrinfo(host, NTP_PORT, type=socket.SOCK_DGRAM)
         for family, socktype, proto, _, sockaddr in addresses:
@@ -107,8 +141,15 @@ class NetworkTimeSource:
             raise last_error
         raise OSError(f'无效的 NTP 响应: {host}')
 
-    def refresh(self, force=False):
-        """刷新 NTP 偏移量，失败时保留已有偏移并退回本机时间。"""
+    def refresh(self, force: bool = False) -> bool:
+        """刷新 NTP 偏移量，失败时保留已有偏移并退回本机时间。
+
+        Args:
+            force: 是否忽略刷新间隔强制重新向服务器请求。
+
+        Returns:
+            bool: 当前时间已成功与网络同步返回 True，否则返回 False。
+        """
         if not self.enabled:
             return False
 
@@ -145,16 +186,34 @@ class NetworkTimeSource:
                 self._warned = True
             return self.synced
 
-    def timestamp(self):
+    def timestamp(self) -> float:
+        """获取经网络校准后的当前绝对时间戳。
+
+        Returns:
+            float: 秒级浮点时间戳。
+        """
         self.refresh()
         if self.synced:
             return self.base_timestamp + (time_.monotonic() - self.base_monotonic)
         return time_.time() + self.offset
 
-    def now(self, tz=None):
+    def now(self, tz: Optional[Any] = None) -> datetime:
+        """获取经网络校准后的当前 datetime 对象。
+
+        Args:
+            tz: 可选的时区对象。
+
+        Returns:
+            datetime: 对应时区的当前日期时间对象。
+        """
         return datetime.fromtimestamp(self.timestamp(), tz=tz)
 
-    def status(self):
+    def status(self) -> Dict[str, Any]:
+        """获取当前网络校时服务的运行状态详情。
+
+        Returns:
+            Dict[str, Any]: 包含同步状态、服务器、偏差与刷新间隔的字典。
+        """
         self.refresh()
         return {
             'enabled': self.enabled,
@@ -169,15 +228,26 @@ class NetworkTimeSource:
         }
 
     @staticmethod
-    def monotonic():
+    def monotonic() -> float:
+        """获取系统单调递增时钟秒数。
+
+        Returns:
+            float: 单调时钟秒数。
+        """
         return time_.monotonic()
 
     @staticmethod
-    def sleep(seconds):
+    def sleep(seconds: float) -> None:
+        """系统挂起休眠指定秒数。
+
+        Args:
+            seconds: 休眠秒数。
+        """
         time_.sleep(seconds)
 
     @staticmethod
-    def _log_info(message):
+    def _log_info(message: str) -> None:
+        """输出安全信息日志。"""
         try:
             from module.logger import logger
             logger.info(message)
@@ -185,7 +255,8 @@ class NetworkTimeSource:
             pass
 
     @staticmethod
-    def _log_warning(message):
+    def _log_warning(message: str) -> None:
+        """输出安全警告日志。"""
         try:
             from module.logger import logger
             logger.warning(message)
@@ -196,29 +267,70 @@ class NetworkTimeSource:
 network_time = NetworkTimeSource()
 
 
-def refresh_time(force=False):
+def refresh_time(force: bool = False) -> bool:
+    """刷新网络校时偏移量。
+
+    Args:
+        force: 是否强制立即网络查询。
+
+    Returns:
+        bool: 当前是否已处于同步状态。
+    """
     return network_time.refresh(force=force)
 
 
-def now(tz=None):
+def now(tz: Optional[Any] = None) -> datetime:
+    """获取当前校准后的本地 datetime。
+
+    Args:
+        tz: 可选时区。
+
+    Returns:
+        datetime: 当前日期时间。
+    """
     return network_time.now(tz=tz)
 
 
-def utcnow():
+def utcnow() -> datetime:
+    """获取当前校准后的 UTC datetime。
+
+    Returns:
+        datetime: UTC 日期时间。
+    """
     return now(timezone.utc)
 
 
-def timestamp():
+def timestamp() -> float:
+    """获取当前校准后的网络时间戳。
+
+    Returns:
+        float: 浮点秒数时间戳。
+    """
     return network_time.timestamp()
 
 
-def status():
+def status() -> Dict[str, Any]:
+    """获取网络时间源状态。
+
+    Returns:
+        Dict[str, Any]: 状态信息字典。
+    """
     return network_time.status()
 
 
-def monotonic():
+def monotonic() -> float:
+    """获取系统单调时钟时间。
+
+    Returns:
+        float: 单调时钟数值。
+    """
     return network_time.monotonic()
 
 
-def sleep(seconds):
+def sleep(seconds: float) -> None:
+    """休眠指定秒数。
+
+    Args:
+        seconds: 休眠时长。
+    """
     network_time.sleep(seconds)

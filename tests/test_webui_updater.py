@@ -1,3 +1,4 @@
+import os
 import sys
 import threading
 import types
@@ -415,3 +416,14 @@ class TestUpdaterForceUpdate(unittest.TestCase):
 
         self.assertEqual(2, updater.check_update.call_count)
         self.assertEqual(1, handler._task.delay)
+
+    def test_android_runtime_skips_git_update_check(self):
+        updater = self._updater()
+        updater.state = 'failed'
+        updater._check_update_thread = Mock()
+
+        with patch.dict(os.environ, {'AZURPILOT_ANDROID': '1'}):
+            updater.check_update()
+
+        self.assertEqual(0, updater.state)
+        updater._check_update_thread.assert_not_called()

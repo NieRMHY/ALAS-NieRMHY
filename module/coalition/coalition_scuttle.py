@@ -260,7 +260,7 @@ class CoalitionScuttleCombat(CoalitionCombat):
             else:
                 self.device.screenshot()
 
-            # End
+            # 退出条件
             if self.is_combat_loading():
                 break
             if self.is_combat_executing():

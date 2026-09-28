@@ -13,26 +13,26 @@ from module.base.utils import crop, image_size
 
 
 class ImageError(Exception):
-    """ Error when parsing images """
+    """解析图像时的通用异常。"""
     pass
 
 
 class ImageInvalidResolution(ImageError):
-    """ Image is not in 1280x720 """
+    """图像分辨率异常（非 1280x720 基准尺寸）。"""
     pass
 
 
 def load_folder(folder, ext='.png'):
-    """
+    """加载文件夹下的模板图像映射表。
+
     Args:
-        folder (str): Template folder contains images.
-            Image shape: width=96, height=96, channel=3, format=png.
-            Image name: Camel-Case, such as 'PlateGeneralT3'. Suffix in name will be ignore.
-            For example, 'Javelin' and 'Javelin_2' are different templates, but have same output name 'Javelin'.
-        ext (str|list[str]): File extension.
+        folder (str): 包含模板图像的文件夹路径。
+            图像规范：通常为 96x96 尺寸、3 通道 PNG。
+            文件命名：大驼峰命名（如 'PlateGeneralT3'），下划线后缀会被视作同一物品的不同变体（如 'Javelin' 与 'Javelin_2'）。
+        ext (str | list[str]): 匹配的文件扩展名。默认为 '.png'。
 
     Returns:
-        dict: Key: str, image file base name. Value: full filepath.
+        dict[str, str]: 键为不带扩展名的文件名，值为完整文件路径。
     """
     if not os.path.exists(folder):
         return {}
@@ -48,28 +48,29 @@ def load_folder(folder, ext='.png'):
 
 
 def pack(img_list):
-    """
-    Stack images vertically.
+    """将多个截图垂直拼接（竖向堆叠）成单张长图。
 
     Args:
-        img_list (list): List of image
+        img_list (list[np.ndarray]): 待拼接的图像列表。
 
     Returns:
-        np.ndarray:
+        np.ndarray: 垂直拼接后的图像。
     """
     image = cv2.vconcat(img_list)
     return image
 
 
 def unpack(image):
-    """
-    Split images vertically.
+    """将垂直拼接的长图按 720 高度还原为单张 1280x720 截图列表。
 
     Args:
-        image:
+        image (np.ndarray): 垂直拼接后的长图或单张截图。
 
     Returns:
-        list: List of np.ndarray.
+        list[np.ndarray]: 拆分后的 1280x720 图像列表。
+
+    Raises:
+        ImageInvalidResolution: 图像宽度不是 1280 或高度不是 720 的整数倍。
     """
     size = image_size(image)
     if size == (1280, 720):

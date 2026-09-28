@@ -38,16 +38,19 @@ class MeowfficerBuy(MeowfficerBase):
             金币超过此值时自动购买猫箱。
     """
     def meow_choose(self, count) -> bool:
-        """
+        """选择计划购买的指挥喵猫箱数量。
+
+        识别当前已购买数量与金币余额，校验是否可购买，并设置购买数字。
+
+        Args:
+            count (int): 目标购买数量（0 到 15）。
+
+        Returns:
+            bool: 成功设置购买数量并进入购买弹窗返回 True；无需购买或金币不足返回 False。
+
         Pages:
             in: page_meowfficer
             out: MEOWFFICER_BUY
-
-        Args:
-            count (int): 0 to 15.
-
-        Returns:
-            bool: If success.
         """
         remain, bought, total = MEOWFFICER.ocr(self.device.image)
         logger.attr('指挥喵剩余次数', remain)
@@ -80,13 +83,16 @@ class MeowfficerBuy(MeowfficerBase):
         return True
 
     def meow_confirm(self, skip_first_screenshot=True) -> None:
-        """
+        """确认购买指挥喵猫箱并处理掉落与返回。
+
+        Args:
+            skip_first_screenshot (bool): 是否跳过首次截图。默认为 True。
+
         Pages:
             in: MEOWFFICER_BUY
             out: page_meowfficer
         """
-        # Here uses a simple click, to avoid clicking MEOWFFICER_BUY multiple times.
-        # Retry logic is in meow_buy()
+        # 此处使用单次点击，避免重复点击 MEOWFFICER_BUY；重试逻辑在 meow_buy() 中处理
         logger.hr('确认购买')
         executed = False
         with self.stat.new(
@@ -118,16 +124,22 @@ class MeowfficerBuy(MeowfficerBase):
                     self.interval_clear(MEOWFFICER_BUY)
                     executed = True
                     continue
-                # Rare case that MEOWFFICER_INFO popups here
+                # 罕见情况：此处可能弹出 MEOWFFICER_INFO
                 if self.meow_additional():
                     continue
 
-                # End
+                # 判定结束
                 if self.match_template_color(MEOWFFICER_BUY_ENTER, offset=(20, 20)):
                     break
 
     def meow_buy(self) -> bool:
-        """
+        """执行日常指挥喵猫箱购买任务。
+
+        根据配置中的计划购买数量重试并完成购买。
+
+        Returns:
+            bool: 购买成功或无需购买返回 True，超出重试次数返回 False。
+
         Pages:
             in: page_meowfficer
             out: page_meowfficer

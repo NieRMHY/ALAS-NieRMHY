@@ -1,3 +1,7 @@
+/**
+ * @fileoverview 全局系统部署设置页面。
+ */
+
 import { useApp } from '../app/context'
 import { ErrorBox, Loading, PageTitle } from '../components/ui'
 import { DeployGroups } from '../components/DeployGroups'

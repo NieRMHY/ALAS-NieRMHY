@@ -1,5 +1,8 @@
-"""Scrcpy 控制指令发送器。封装触摸、按键等输入事件的
-二进制编码和 Socket 发送，通过 inject 装饰器实现协议注入。"""
+"""scrcpy 控制指令发送器模块。
+
+封装触摸、按键、剪贴板等输入事件的二进制打包和 Socket 发送逻辑，
+通过 inject 装饰器实现协议注入。
+"""
 
 import functools
 import socket
@@ -10,11 +13,13 @@ import module.device.method.scrcpy.const as const
 
 
 def inject(control_type: int):
-    """
-    Inject control code, with this inject, we will be able to do unit test
+    """注入控制类型头并发送二进制数据包的装饰器。
 
     Args:
-        control_type: event to send, TYPE_*
+        control_type (int): 待发送的事件类型，对应 const.TYPE_* 常量。
+
+    Returns:
+        Callable: 包装后的方法，自动加上控制类型前缀并在 Socket 可用时发送。
     """
 
     def wrapper(f):
@@ -32,7 +37,14 @@ def inject(control_type: int):
 
 
 class ControlSender:
+    """scrcpy 控制指令构建与发送类。"""
+
     def __init__(self, parent):
+        """初始化控制发送器。
+
+        Args:
+            parent: 持有 control_socket 等属性的宿主对象。
+        """
         self.parent = parent
 
     @property
@@ -51,25 +63,28 @@ class ControlSender:
     def keycode(
             self, keycode: int, action: int = const.ACTION_DOWN, repeat: int = 0
     ) -> bytes:
-        """
-        Send keycode to device
+        """向设备发送按键事件。
 
         Args:
-            keycode: const.KEYCODE_*
-            action: ACTION_DOWN | ACTION_UP
-            repeat: repeat count
+            keycode (int): 按键编码，见 const.KEYCODE_*。
+            action (int): 动作类型，ACTION_DOWN 或 ACTION_UP。
+            repeat (int): 重复触发次数。
+
+        Returns:
+            bytes: 打包的二进制控制包。
         """
         return struct.pack(">Biii", action, keycode, repeat, 0)
 
     @inject(const.TYPE_INJECT_TEXT)
     def text(self, text: str) -> bytes:
-        """
-        Send text to device
+        """向设备注入文本输入。
 
         Args:
-            text: text to send
-        """
+            text (str): 待注入的字符串文本。
 
+        Returns:
+            bytes: 打包的二进制控制包。
+        """
         buffer = text.encode("utf-8")
         return struct.pack(">i", len(buffer)) + buffer
 
@@ -77,14 +92,16 @@ class ControlSender:
     def touch(
             self, x: int, y: int, action: int = const.ACTION_DOWN, touch_id: int = -1
     ) -> bytes:
-        """
-        Touch screen
+        """向设备发送屏幕触摸事件。
 
         Args:
-            x: horizontal position
-            y: vertical position
-            action: ACTION_DOWN | ACTION_UP | ACTION_MOVE
-            touch_id: Default using virtual id -1, you can specify it to emulate multi finger touch
+            x (int): 横坐标像素值。
+            y (int): 纵坐标像素值。
+            action (int): 触摸动作类型，ACTION_DOWN、ACTION_UP 或 ACTION_MOVE。
+            touch_id (int): 触控点 ID，默认虚拟 ID -1，可用于模拟多指触控。
+
+        Returns:
+            bytes: 打包的二进制控制包。
         """
         x, y = max(x, 0), max(y, 0)
         return struct.pack(
@@ -101,16 +118,17 @@ class ControlSender:
 
     @inject(const.TYPE_INJECT_SCROLL_EVENT)
     def scroll(self, x: int, y: int, h: int, v: int) -> bytes:
-        """
-        Scroll screen
+        """向设备发送滚轮滑动事件。
 
         Args:
-            x: horizontal position
-            y: vertical position
-            h: horizontal movement
-            v: vertical movement
-        """
+            x (int): 横坐标位置。
+            y (int): 纵坐标位置。
+            h (int): 水平滚动偏移量。
+            v (int): 垂直滚动偏移量。
 
+        Returns:
+            bytes: 打包的二进制控制包。
+        """
         x, y = max(x, 0), max(y, 0)
         return struct.pack(
             ">iiHHii",
@@ -124,44 +142,54 @@ class ControlSender:
 
     @inject(const.TYPE_BACK_OR_SCREEN_ON)
     def back_or_turn_screen_on(self, action: int = const.ACTION_DOWN) -> bytes:
-        """
-        If the screen is off, it is turned on only on ACTION_DOWN
+        """触发返回键或点亮屏幕。当屏幕熄灭时仅 ACTION_DOWN 会点亮屏幕。
 
         Args:
-            action: ACTION_DOWN | ACTION_UP
+            action (int): 动作类型，ACTION_DOWN 或 ACTION_UP。
+
+        Returns:
+            bytes: 打包的二进制控制包。
         """
         return struct.pack(">B", action)
 
     @inject(const.TYPE_EXPAND_NOTIFICATION_PANEL)
     def expand_notification_panel(self) -> bytes:
-        """
-        Expand notification panel
+        """展开通知面板。
+
+        Returns:
+            bytes: 空字节负载。
         """
         return b""
 
     @inject(const.TYPE_EXPAND_SETTINGS_PANEL)
     def expand_settings_panel(self) -> bytes:
-        """
-        Expand settings panel
+        """展开快速设置面板。
+
+        Returns:
+            bytes: 空字节负载。
         """
         return b""
 
     @inject(const.TYPE_COLLAPSE_PANELS)
     def collapse_panels(self) -> bytes:
-        """
-        Collapse all panels
+        """收起所有下拉面板。
+
+        Returns:
+            bytes: 空字节负载。
         """
         return b""
 
     def get_clipboard(self) -> str:
+        """获取设备剪贴板文本。
+
+        Returns:
+            str: 剪贴板中的字符串内容。
         """
-        Get clipboard
-        """
-        # Since this function need socket response, we can't auto inject it any more
+        # 由于需要读取 Socket 响应数据，无法直接使用 inject 装饰器自动发送
         s: socket.socket = self.control_socket
 
         with self.control_socket_lock:
-            # Flush socket
+            # 清空接收缓冲区
             s.setblocking(False)
             while True:
                 try:
@@ -170,7 +198,7 @@ class ControlSender:
                     break
             s.setblocking(True)
 
-            # Read package
+            # 发送请求包并读取数据
             package = struct.pack(">B", const.TYPE_GET_CLIPBOARD)
             s.send(package)
             (code,) = struct.unpack(">B", s.recv(1))
@@ -181,30 +209,36 @@ class ControlSender:
 
     @inject(const.TYPE_SET_CLIPBOARD)
     def set_clipboard(self, text: str, paste: bool = False) -> bytes:
-        """
-        Set clipboard
+        """设置设备剪贴板内容。
 
         Args:
-            text: the string you want to set
-            paste: paste now
+            text (str): 待设置的字符串内容。
+            paste (bool): 设置后是否立即执行粘贴。
+
+        Returns:
+            bytes: 打包的二进制控制包。
         """
         buffer = text.encode("utf-8")
         return struct.pack(">?i", paste, len(buffer)) + buffer
 
     @inject(const.TYPE_SET_SCREEN_POWER_MODE)
     def set_screen_power_mode(self, mode: int = const.POWER_MODE_NORMAL) -> bytes:
-        """
-        Set screen power mode
+        """设置屏幕电源模式（息屏或亮屏）。
 
         Args:
-            mode: POWER_MODE_OFF | POWER_MODE_NORMAL
+            mode (int): 模式常量，POWER_MODE_OFF 或 POWER_MODE_NORMAL。
+
+        Returns:
+            bytes: 打包的二进制控制包。
         """
         return struct.pack(">b", mode)
 
     @inject(const.TYPE_ROTATE_DEVICE)
     def rotate_device(self) -> bytes:
-        """
-        Rotate device
+        """旋转设备屏幕方向。
+
+        Returns:
+            bytes: 空字节负载。
         """
         return b""
 
@@ -217,19 +251,16 @@ class ControlSender:
             move_step_length: int = 5,
             move_steps_delay: float = 0.005,
     ) -> None:
-        """
-        Swipe on screen
+        """在屏幕上执行平滑滑动操作。
 
         Args:
-            start_x: start horizontal position
-            start_y: start vertical position
-            end_x: start horizontal position
-            end_y: end vertical position
-            move_step_length: length per step
-            move_steps_delay: sleep seconds after each step
-        :return:
+            start_x (int): 起始横坐标。
+            start_y (int): 起始纵坐标。
+            end_x (int): 终点横坐标。
+            end_y (int): 终点纵坐标。
+            move_step_length (int): 单步移动像素步长。
+            move_steps_delay (float): 每步之间的延迟时间（秒）。
         """
-
         self.touch(start_x, start_y, const.ACTION_DOWN)
         next_x = start_x
         next_y = start_y

@@ -23,7 +23,17 @@ from module.ui.scroll import Scroll
 
 
 class ShopScroll(Scroll):
+    """勋章商店自定义滚动条检测。"""
+
     def match_color(self, main):
+        """匹配并提取滚动条滑块的颜色掩码与长度。
+
+        Args:
+            main: 包含当前截图的 UI 实例。
+
+        Returns:
+            np.ndarray: 表示滑块所在纵向范围的布尔掩码。
+        """
         area = (
             self.area[0] - 3,
             self.area[1],
@@ -233,6 +243,14 @@ class MedalShop2_250814(ShopClerk, ShopStatus):
 
     @staticmethod
     def shop_strategy_max_quantity(item):
+        """获取策略规划中单次购买数量上限。
+
+        Args:
+            item: 待购买商品对象。
+
+        Returns:
+            int: 允许购买的最大数量。
+        """
         return 99
 
     def shop_has_loaded(self, items):

@@ -534,7 +534,7 @@ class ResearchProject:
         '|goudenleeuw|mecklenburg'
         '|valparaiso|maximmelmann'
     )
-    # Generate with:
+    # 生成方式:
     """
     out = []
     for row in LIST_RESEARCH_PROJECT:

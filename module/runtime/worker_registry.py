@@ -8,11 +8,14 @@ import time
 from contextlib import contextmanager
 from copy import deepcopy
 from pathlib import Path
-from typing import Iterator
+from typing import Iterator, Optional
 
 from deploy.atomic import atomic_remove, atomic_replace, atomic_write
-from module.runtime.process_control import pid_exists as _pid_exists, process_matches
-
+from module.runtime.process_control import (
+    pid_exists as _pid_exists,
+    process_created_at,
+    process_matches,
+)
 
 WORKER_REGISTRY_FILE = Path("./cache/webui-workers.json")
 LEGACY_WORKER_REGISTRY_FILE = Path("./config/webui-workers.json")
@@ -25,17 +28,26 @@ _registry_lock = threading.RLock()
 
 
 class WorkerRegistryOwnershipError(RuntimeError):
-    """当前进程无权修改 WebUI worker 登记。"""
+    """当前进程无权修改 WebUI worker 登记异常。"""
 
 
 class WorkerRegistryLockError(RuntimeError):
-    """无法在限定时间内取得 WebUI worker 登记锁。"""
+    """无法在限定时间内取得 WebUI worker 登记锁异常。"""
 
 
 def _empty_registry(
-    owner_pid: int | None = None,
-    owner_created_at: float | None = None,
+    owner_pid: Optional[int] = None,
+    owner_created_at: Optional[float] = None,
 ) -> dict:
+    """构建空的基础登记字典结构。
+
+    Args:
+        owner_pid: 可选的所有者 PID。
+        owner_created_at: 可选的所有者创建时间戳。
+
+    Returns:
+        dict: 初始化的登记数据字典。
+    """
     return {
         "owner_created_at": owner_created_at,
         "owner_pid": owner_pid,
@@ -43,19 +55,38 @@ def _empty_registry(
     }
 
 
-def _registry_lock_file(registry_file: Path | None = None) -> Path:
-    """返回与登记文件同目录的跨进程锁文件路径。"""
+def _registry_lock_file(registry_file: Optional[Path] = None) -> Path:
+    """返回与登记文件同目录的跨进程锁文件路径。
+
+    Args:
+        registry_file: 登记文件路径，默认为 WORKER_REGISTRY_FILE。
+
+    Returns:
+        Path: 对应的锁文件路径。
+    """
     if registry_file is None:
         registry_file = WORKER_REGISTRY_FILE
     return registry_file.with_name(f"{registry_file.name}.lock")
 
 
 def _legacy_registry_lock_file() -> Path:
-    """返回旧登记文件对应的跨进程锁文件路径。"""
+    """返回旧登记文件对应的跨进程锁文件路径。
+
+    Returns:
+        Path: 旧锁文件路径。
+    """
     return _registry_lock_file(LEGACY_WORKER_REGISTRY_FILE)
 
 
 def _prepare_lock_file(lock_file: Path):
+    """准备并打开锁文件句柄。
+
+    Args:
+        lock_file: 目标锁文件路径。
+
+    Returns:
+        BinaryIO: 打开的二进制文件读写句柄。
+    """
     lock_file.parent.mkdir(parents=True, exist_ok=True)
     handle = lock_file.open("a+b")
     try:
@@ -73,6 +104,14 @@ def _prepare_lock_file(lock_file: Path):
 
 
 def _is_lock_conflict(exc: OSError) -> bool:
+    """判断捕获的系统异常是否为加锁冲突。
+
+    Args:
+        exc: 系统 OSError 异常。
+
+    Returns:
+        bool: 是文件加锁竞争冲突返回 True，否则返回 False。
+    """
     return (
         isinstance(exc, PermissionError)
         or exc.errno in (errno.EACCES, errno.EAGAIN)
@@ -81,6 +120,14 @@ def _is_lock_conflict(exc: OSError) -> bool:
 
 
 def _acquire_file_lock(handle) -> None:
+    """对已打开的文件句柄加排他非阻塞锁，带超时轮询重试。
+
+    Args:
+        handle: 文件句柄。
+
+    Raises:
+        WorkerRegistryLockError: 平台不支持加锁、加锁超时或发生非冲突性系统错误。
+    """
     deadline = time.monotonic() + REGISTRY_LOCK_TIMEOUT
 
     if os.name == "nt":
@@ -112,6 +159,11 @@ def _acquire_file_lock(handle) -> None:
 
 
 def _release_file_lock(handle) -> None:
+    """释放文件句柄上的排他锁。
+
+    Args:
+        handle: 文件句柄。
+    """
     handle.seek(0)
     if os.name == "nt":
         import msvcrt
@@ -125,7 +177,11 @@ def _release_file_lock(handle) -> None:
 
 @contextmanager
 def _locked_file(lock_file: Path) -> Iterator[None]:
-    """以系统级文件锁保护指定的运行时文件。"""
+    """以系统级文件锁保护指定的运行时文件的上下文管理器。
+
+    Args:
+        lock_file: 锁文件路径。
+    """
     handle = _prepare_lock_file(lock_file)
     acquired = False
     try:
@@ -139,12 +195,23 @@ def _locked_file(lock_file: Path) -> Iterator[None]:
 
 
 def _legacy_registry_enabled() -> bool:
-    """仅在默认运行时路径下启用旧文件迁移。"""
+    """仅在默认运行时路径下启用旧文件迁移。
+
+    Returns:
+        bool: 当前处于默认路径返回 True，否则返回 False。
+    """
     return WORKER_REGISTRY_FILE == DEFAULT_WORKER_REGISTRY_FILE
 
 
-def _record_is_alive(record: dict | None) -> bool:
-    """保守判断登记的进程是否仍在运行。"""
+def _record_is_alive(record: Optional[dict]) -> bool:
+    """保守判断登记的进程是否仍在运行。
+
+    Args:
+        record: 进程登记字典。
+
+    Returns:
+        bool: 确认存活或无法确定存活返回 True，已终止返回 False。
+    """
     if record is None:
         return False
     if "created_at" not in record:
@@ -165,6 +232,12 @@ def _migrate_legacy_registry() -> Path:
     - 旧所有者已退出：旧文件只是陈旧残留。写入两份文件的所有事务都在同一把
       跨进程锁内串行，内容不一致不代表存在并发会话，因此不抛冲突异常中止
       启动——清理残留，让缓存文件（或随后的空登记写入）成为唯一权威。
+
+    Returns:
+        Path: 选定的有效登记文件路径。
+
+    Raises:
+        RuntimeError: 文件迁移或清理失败。
     """
     if not _legacy_registry_enabled() or not LEGACY_WORKER_REGISTRY_FILE.exists():
         return WORKER_REGISTRY_FILE
@@ -190,7 +263,11 @@ def _migrate_legacy_registry() -> Path:
 
 @contextmanager
 def _locked_registry() -> Iterator[Path]:
-    """以进程内锁和系统级文件锁保护一次完整的读改写事务。"""
+    """以进程内锁和系统级文件锁保护一次完整的读改写事务。
+
+    Yields:
+        Path: 当前持锁的有效登记文件路径。
+    """
     with _registry_lock:
         if _legacy_registry_enabled():
             # 即使旧登记尚未创建，也必须先锁旧路径。否则旧版本可能在
@@ -204,6 +281,17 @@ def _locked_registry() -> Iterator[Path]:
 
 
 def _read_registry(registry_file: Path) -> dict:
+    """读取指定路径下的 worker 登记文件。
+
+    Args:
+        registry_file: 目标登记文件路径。
+
+    Returns:
+        dict: 解析后的登记字典。
+
+    Raises:
+        RuntimeError: 文件系统读取故障。
+    """
     try:
         raw = registry_file.read_text(encoding="utf-8")
     except FileNotFoundError:
@@ -243,6 +331,12 @@ def _read_registry(registry_file: Path) -> dict:
 
 
 def _write_registry(registry: dict, registry_file: Path) -> None:
+    """将登记数据原子写入指定文件。
+
+    Args:
+        registry: 登记数据字典。
+        registry_file: 写入的目标文件路径。
+    """
     atomic_write(
         registry_file,
         json.dumps(registry, ensure_ascii=True, sort_keys=True),
@@ -250,15 +344,32 @@ def _write_registry(registry: dict, registry_file: Path) -> None:
 
 
 def _process_created_at(pid: int) -> float:
-    try:
-        import psutil
+    """获取指定 PID 的系统创建时间戳。
 
-        return psutil.Process(pid).create_time()
+    Args:
+        pid: 进程 ID。
+
+    Returns:
+        float: 进程创建时间。
+
+    Raises:
+        RuntimeError: 无法读取指定 PID 的创建时间。
+    """
+    try:
+        return process_created_at(pid)
     except Exception as exc:
         raise RuntimeError(f"无法读取 worker PID {pid} 的创建时间: {exc}") from exc
 
 
-def _owner_record(registry: dict) -> dict | None:
+def _owner_record(registry: dict) -> Optional[dict]:
+    """从登记数据中提取所有者身份字典。
+
+    Args:
+        registry: 登记字典。
+
+    Returns:
+        Optional[dict]: 包含 'pid' 与可选 'created_at' 的字典；若无所有者则返回 None。
+    """
     owner_pid = registry["owner_pid"]
     if owner_pid is None:
         return None
@@ -269,7 +380,15 @@ def _owner_record(registry: dict) -> dict | None:
 
 
 def _require_current_owner(registry: dict, owner_pid: int) -> None:
-    """确认调用者 PID 仍是登记文件中的同一 WebUI 进程。"""
+    """确认调用者 PID 仍是登记文件中的同一 WebUI 进程。
+
+    Args:
+        registry: 当前登记数据字典。
+        owner_pid: 调用方声明的所有者 PID。
+
+    Raises:
+        WorkerRegistryOwnershipError: 调用方 PID 与登记所有者不匹配或进程身份已改变。
+    """
     try:
         expected_pid = int(owner_pid)
     except (TypeError, ValueError) as exc:
@@ -297,7 +416,14 @@ def _require_current_owner(registry: dict, owner_pid: int) -> None:
 
 
 def is_current_owner(owner_pid: int) -> bool:
-    """返回 PID 是否仍对应登记文件中的当前 WebUI 所有者。"""
+    """返回 PID 是否仍对应登记文件中的当前 WebUI 所有者。
+
+    Args:
+        owner_pid: 待检测的进程 PID。
+
+    Returns:
+        bool: 是当前登记的有效所有者返回 True，否则返回 False。
+    """
     with _locked_registry() as registry_file:
         registry = _read_registry(registry_file)
         try:
@@ -311,6 +437,12 @@ def filter_live_workers(workers: dict[str, dict]) -> dict[str, dict]:
     """筛出仍存活的 worker 登记，供所有权认领/回收决策使用。
 
     无法确认进程状态时按存活保守处理（宁可不覆盖，也不漏回收）。
+
+    Args:
+        workers: 实例名到 worker 登记字典的映射。
+
+    Returns:
+        dict[str, dict]: 仅包含存活 worker 的字典。
     """
     return {
         name: record
@@ -320,7 +452,14 @@ def filter_live_workers(workers: dict[str, dict]) -> dict[str, dict]:
 
 
 def claim_owner(owner_pid: int) -> None:
-    """原子地声明当前 WebUI 进程为 worker 登记文件的唯一所有者。"""
+    """原子地声明当前 WebUI 进程为 worker 登记文件的唯一所有者。
+
+    Args:
+        owner_pid: 声明所有权的 WebUI 进程 PID。
+
+    Raises:
+        WorkerRegistryOwnershipError: 已有正在运行的 WebUI 所有者或遗留了存活的 worker。
+    """
     try:
         owner_pid = int(owner_pid)
     except (TypeError, ValueError) as exc:
@@ -368,7 +507,17 @@ def claim_owner(owner_pid: int) -> None:
 
 
 def register_worker(owner_pid: int, config_name: str, pid: int) -> None:
-    """登记已启动的 worker，以便父进程在 WebUI 异常退出后回收它。"""
+    """登记已启动的 worker，以便父进程在 WebUI 异常退出后回收它。
+
+    Args:
+        owner_pid: 声明当前登记所属的 WebUI 进程 PID。
+        config_name: 启动的实例配置名。
+        pid: worker 子进程 PID。
+
+    Raises:
+        RuntimeError: PID 参数无效。
+        WorkerRegistryOwnershipError: 调用方非当前所有者。
+    """
     try:
         pid = int(pid)
     except (TypeError, ValueError) as exc:
@@ -385,7 +534,15 @@ def register_worker(owner_pid: int, config_name: str, pid: int) -> None:
 
 
 def unregister_worker(owner_pid: int, config_name: str) -> bool:
-    """移除已正常退出的 worker 登记，返回是否仍拥有该登记。"""
+    """移除已正常退出的 worker 登记，返回是否仍拥有该登记。
+
+    Args:
+        owner_pid: 当前 WebUI 所有者 PID。
+        config_name: 待注销的实例配置名。
+
+    Returns:
+        bool: 仍拥有该登记且注销成功返回 True，所有权已丢失返回 False。
+    """
     with _locked_registry() as registry_file:
         registry = _read_registry(registry_file)
         try:
@@ -398,7 +555,14 @@ def unregister_worker(owner_pid: int, config_name: str) -> bool:
 
 
 def get_workers(owner_pid: int) -> dict[str, dict]:
-    """返回指定 WebUI 所登记的 worker 快照。"""
+    """返回指定 WebUI 所登记的 worker 快照。
+
+    Args:
+        owner_pid: WebUI 所有者 PID。
+
+    Returns:
+        dict[str, dict]: 实例名到 worker 登记信息的字典映射。
+    """
     with _locked_registry() as registry_file:
         registry = _read_registry(registry_file)
         if registry["owner_pid"] != owner_pid:
@@ -406,21 +570,39 @@ def get_workers(owner_pid: int) -> dict[str, dict]:
         return deepcopy(registry["workers"])
 
 
-def get_owner() -> int | None:
-    """返回当前登记文件所有者的 PID。"""
+def get_owner() -> Optional[int]:
+    """返回当前登记文件所有者的 PID。
+
+    Returns:
+        Optional[int]: 所有者 PID；若无所有者则返回 None。
+    """
     with _locked_registry() as registry_file:
         return _read_registry(registry_file)["owner_pid"]
 
 
-def get_owner_record() -> dict | None:
-    """返回 WebUI 所有者的 PID 与创建时间，供父进程验证进程身份。"""
+def get_owner_record() -> Optional[dict]:
+    """返回 WebUI 所有者的 PID 与创建时间，供父进程验证进程身份。
+
+    Returns:
+        Optional[dict]: 包含所有者身份记录的字典；若无则返回 None。
+    """
     with _locked_registry() as registry_file:
         registry = _read_registry(registry_file)
         return _owner_record(registry)
 
 
 def clear_owner(owner_pid: int) -> bool:
-    """在 worker 已确认结束后清除指定 WebUI 的登记。"""
+    """在 worker 已确认结束后清除指定 WebUI 的登记。
+
+    Args:
+        owner_pid: 需清除的 WebUI 所有者 PID。
+
+    Returns:
+        bool: 清除成功返回 True。
+
+    Raises:
+        WorkerRegistryOwnershipError: PID 不匹配或所有者进程仍在存活运行。
+    """
     with _locked_registry() as registry_file:
         registry = _read_registry(registry_file)
         record = _owner_record(registry)

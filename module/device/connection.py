@@ -102,6 +102,12 @@ def retry(func):
 
 
 class AdbDeviceWithStatus(AdbDevice):
+    """带状态信息的 ADB 设备包装类。
+
+    Attributes:
+        status: 设备连接状态（如 'device', 'offline', 'unauthorized'）。
+    """
+
     def __init__(self, client: AdbClient, serial: str, status: str):
         self.status = status
         super().__init__(client, serial)
@@ -134,6 +140,14 @@ class Connection(ConnectionAttr):
             config (AzurLaneConfig, str): ./config 目录下的用户配置名称。
         """
         super().__init__(config)
+        if self.serial == 'azurpilot_android':
+            self.package = self.config.Emulator_PackageName
+            if self.package == 'auto':
+                self.package = 'com.bilibili.azurlane'
+            set_server(self.package)
+            logger.attr('应用包名', self.package)
+            logger.attr('服务器', self.config.SERVER)
+            return
         if not self.is_over_http:
             self.detect_device()
 

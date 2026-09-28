@@ -280,6 +280,7 @@ class Benchmark(DaemonBase, CampaignUI):
         return tuple(screenshot), tuple(click)
 
     def run(self):
+        """执行完整基准测试任务，评估当前配置下的所有可用截图与点击方法。"""
         self.config.override(Emulator_ScreenshotMethod='ADB')
         self.device.uninstall_minicap()
         self.ensure_campaign_ui('7-2', mode='normal')
@@ -325,6 +326,14 @@ class Benchmark(DaemonBase, CampaignUI):
 
 
 def run_benchmark(config):
+    """运行基准测试任务入口函数。
+
+    Args:
+        config (AzurLaneConfig): 配置实例。
+
+    Returns:
+        bool: 测试成功返回 True，请求人类接管等异常返回 False。
+    """
     try:
         Benchmark(config, task='Benchmark').run()
         return True

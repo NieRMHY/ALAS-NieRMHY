@@ -1,3 +1,7 @@
+/**
+ * @fileoverview 即时配置编辑队列，管理乐观更新、防抖提交与服务端回执合并。
+ */
+
 import { ApiError } from '../api/client'
 import type { Value } from '../api/types'
 import { translateCurrentUi } from '../i18n'

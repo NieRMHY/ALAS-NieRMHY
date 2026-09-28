@@ -4,7 +4,7 @@
 
 from module.base.button import ButtonGrid
 
-# Known Secondary Grid Sizes
+# 已知的二级选择网格尺寸
 SELECT_GRID_3X1 = ButtonGrid(
     origin=(185, 266), delta=(158, 0), button_shape=(119, 19), grid_shape=(3, 1),
     name='SHOP_SELECT_GRID_3X1')
@@ -21,9 +21,9 @@ SELECT_GRID_6X1 = ButtonGrid(
     origin=(185, 266), delta=(158, 0), button_shape=(119, 19), grid_shape=(6, 1),
     name='SHOP_SELECT_GRID_6X1')
 
-# Consolidated Select Item Information Map
-# Applicable shops (Guild and Medal)
-# Placeholder entry 'DR'; not valid atm
+# 整合后的自选商品信息映射表
+# 适用于各商店（舰队商店和勋章商店）
+# 包含 DR 占位条目（暂未开放）
 SELECT_ITEM_INFO_MAP = {
     'book': {
         'grid': SELECT_GRID_3X1,

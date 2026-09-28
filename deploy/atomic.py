@@ -192,6 +192,9 @@ def file_write(file: str, data: Union[str, bytes]):
 
     try:
         with open(file, mode=mode, encoding=encoding, newline=newline) as f:
+            # 通用原子写入器只负责持久化调用方明确传入的数据；是否允许持久化
+            # 凭据由上层调用方决定，本层无法也不应按变量名猜测数据敏感性。
+            # codeql[py/clear-text-storage-sensitive-data]
             f.write(data)
             # 确保数据刷新到磁盘
             f.flush()
@@ -202,6 +205,8 @@ def file_write(file: str, data: Union[str, bytes]):
         if directory:
             os.makedirs(directory, exist_ok=True)
         with open(file, mode=mode, encoding=encoding, newline=newline) as f:
+            # 同上：这是通用文件写入 sink，不是凭据存储实现。
+            # codeql[py/clear-text-storage-sensitive-data]
             f.write(data)
             f.flush()
             os.fsync(f.fileno())

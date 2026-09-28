@@ -5,11 +5,13 @@
 根据控制方法和模拟器类型自动选择 ADB 或 uiautomator2 后端。
 """
 import re
+import shlex
 
 from lxml import etree
 
 from module.base.timer import Timer
 from module.device.method.adb import Adb
+from module.device.method.azurpilot_android import AzurPilotAndroid
 from module.device.method.uiautomator_2 import Uiautomator2
 from module.device.method.utils import HierarchyButton
 from module.device.method.wsa import WSA
@@ -17,7 +19,7 @@ from module.exception import ScriptError
 from module.logger import logger
 
 
-class AppControl(Adb, WSA, Uiautomator2):
+class AppControl(AzurPilotAndroid, Adb, WSA, Uiautomator2):
     """应用生命周期和 UI 层级管理器。
 
     通过多重继承组合 ADB、WSA 和 uiautomator2 后端，根据控制方法
@@ -43,7 +45,9 @@ class AppControl(Adb, WSA, Uiautomator2):
             str: 当前前台应用的包名字符串。
         """
         method = self.config.Emulator_ControlMethod
-        if self.is_wsa:
+        if method == 'azurpilot_android':
+            package = self.app_current_azurpilot_android()
+        elif self.is_wsa:
             package = self.app_current_wsa()
         elif method in AppControl._app_u2_family:
             package = self.app_current_uiautomator2()
@@ -67,8 +71,8 @@ class AppControl(Adb, WSA, Uiautomator2):
     def app_is_running_bounded(self, timeout: int = 10) -> bool:
         """带固定超时检查目标应用是否在前台。
 
-        恢复流程在模拟器异常时使用，避免 uiautomator2 的重试
-        长时间阻塞游戏重启流程。查询走 ADB shell，单次受 timeout 限制。
+        恢复流程在设备异常时使用，避免后端重试长时间阻塞游戏重启流程。
+        Android 宿主走本机桥，其余设备走 ADB shell，单次受 timeout 限制。
 
         Args:
             timeout (int): 单次 ADB 查询超时秒数，默认 10 秒。
@@ -76,6 +80,15 @@ class AppControl(Adb, WSA, Uiautomator2):
         Returns:
             bool: 应用在前台运行返回 True；查询失败或无法判断返回 False。
         """
+        if self.config.Emulator_ControlMethod == 'azurpilot_android':
+            try:
+                package = self.app_current_azurpilot_android(timeout=timeout)
+            except Exception as e:
+                logger.warning(f'[设备-应用] 前台应用检查失败（{timeout}s 超时）: {e}')
+                return False
+            logger.attr('应用包名', package)
+            return package == self.package
+
         try:
             output = self.adb_shell(['dumpsys', 'window', 'windows'], timeout=timeout)
         except Exception as e:
@@ -118,7 +131,9 @@ class AppControl(Adb, WSA, Uiautomator2):
         """
         method = self.config.Emulator_ControlMethod
         logger.info(f'应用启动: {self.package}')
-        if self.config.Emulator_Serial == 'wsa-0':
+        if method == 'azurpilot_android':
+            self.app_start_azurpilot_android()
+        elif self.config.Emulator_Serial == 'wsa-0':
             self.app_start_wsa(display=0)
         elif method in AppControl._app_u2_family:
             self.app_start_uiautomator2()
@@ -132,7 +147,9 @@ class AppControl(Adb, WSA, Uiautomator2):
         """
         method = self.config.Emulator_ControlMethod
         logger.info(f'应用停止: {self.package}')
-        if method in AppControl._app_u2_family:
+        if method == 'azurpilot_android':
+            self.app_stop_azurpilot_android()
+        elif method in AppControl._app_u2_family:
             self.app_stop_uiautomator2()
         else:
             self.app_stop_adb()
@@ -143,6 +160,10 @@ class AppControl(Adb, WSA, Uiautomator2):
         通过 ADB 删除 /sdcard/Android/data/{package}/cache/ 下的文件。
         """
         cache_path = f'/sdcard/Android/data/{self.package}/cache/*'
+        if self.config.Emulator_ControlMethod == 'azurpilot_android':
+            cache_dir = f'/sdcard/Android/data/{self.package}/cache'
+            self.azurpilot_android_shell_output(f'rm -rf {shlex.quote(cache_dir)}/*')
+            return
         logger.info(f'应用清除缓存: {cache_path}')
         result = self.adb_shell(['rm', '-rf', cache_path], timeout=30)
         if result:
@@ -180,20 +201,21 @@ class AppControl(Adb, WSA, Uiautomator2):
         self._hierarchy_interval.reset()
 
         method = self.config.Emulator_ControlMethod
-        if method in AppControl._app_u2_family:
+        if method == 'azurpilot_android':
+            self.hierarchy = self.dump_hierarchy_azurpilot_android()
+        elif method in AppControl._app_u2_family:
             self.hierarchy = self.dump_hierarchy_uiautomator2()
         else:
             self.hierarchy = self.dump_hierarchy_adb()
         return self.hierarchy
 
     def xpath_to_button(self, xpath: str) -> HierarchyButton:
-        """
+        """根据 XPath 表达式在当前 UI 层级树中查找匹配的虚拟按钮。
+
         Args:
-            xpath (str):
+            xpath (str): 待查找的 XPath 表达式。
 
         Returns:
-            HierarchyButton:
-                An object with methods and properties similar to Button.
-                If element not found or multiple elements were found, return None.
+            HierarchyButton: 匹配到的虚拟按钮对象。若未找到或匹配到多个元素则可能无法正确获取区域。
         """
         return HierarchyButton(self.hierarchy, xpath)

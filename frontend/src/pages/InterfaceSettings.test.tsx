@@ -36,6 +36,8 @@ function createMockContext(theme: AppContextValue['theme']): AppContextValue {
     setDevMode: () => {},
     theme,
     setTheme: () => {},
+    material: 'glass',
+    setMaterial: () => {},
     palette: 'ocean',
     setPalette: () => {},
     colorMode: 'auto',
@@ -53,9 +55,9 @@ function createMockContext(theme: AppContextValue['theme']): AppContextValue {
   }
 }
 
-function render(theme: AppContextValue['theme']) {
+function render(theme: AppContextValue['theme'], material: AppContextValue['material'] = 'glass') {
   return renderToStaticMarkup(
-    <AppContext.Provider value={createMockContext(theme)}>
+    <AppContext.Provider value={{...createMockContext(theme), material}}>
       <InterfaceSettings />
     </AppContext.Provider>
   )
@@ -81,18 +83,31 @@ describe('界面设置页自定义背景显示逻辑', () => {
     expect(html).toContain('配色方案')
   })
 
-  it('旧版浅色/深色不渲染自定义背景，也没有换配色概念', () => {
+  it('旧版浅色/深色渲染自定义背景，但没有换配色概念', () => {
     for (const theme of ['legacy-light', 'legacy-dark'] as const) {
       const html = render(theme)
-      expect(html).not.toContain('自定义背景')
+      expect(html).toContain('自定义背景')
       expect(html).not.toContain('配色方案')
     }
   })
 
-  it('主题下拉列出全部六个主题', () => {
+  it('一级选择列出四个家族，明暗与材质由后两级承担', () => {
     const html = render('light')
-    for (const label of ['浅色', '深色', '简约', '紧凑', '旧版·浅色', '旧版·深色']) {
-      expect(html).toContain(label)
+    for (const label of ['新版', '旧版', '简约', '紧凑']) expect(html).toContain(label)
+  })
+
+  it('新版与旧版显示材质与明暗两级，简洁与紧凑不显示', () => {
+    for (const theme of ['light', 'dark', 'legacy-light', 'legacy-dark'] as const) {
+      const html = render(theme)
+      expect(html).toContain('材质')
+      expect(html).toContain('>玻璃<')
+      expect(html).toContain('>普通<')
+      expect(html).toContain('明暗')
+    }
+    for (const theme of ['minimal', 'extreme'] as const) {
+      const html = render(theme)
+      expect(html).not.toContain('材质')
+      expect(html).not.toContain('明暗')
     }
   })
 
@@ -111,5 +126,26 @@ describe('界面设置页自定义背景显示逻辑', () => {
     for (const theme of ['light', 'dark', 'minimal', 'legacy-light', 'legacy-dark'] as const) {
       expect(render(theme)).not.toContain('紧凑布局')
     }
+  })
+})
+
+// 自定义外观：一级界面只有主题色与二级菜单入口；七个区域的滑块在二级菜单里。
+describe('自定义外观块', () => {
+  it('新版与旧版渲染主题色与材质细节入口，简洁与紧凑不渲染', () => {
+    for (const theme of ['light', 'dark', 'legacy-light', 'legacy-dark'] as const) {
+      const html = render(theme)
+      expect(html, theme).toContain('主题色')
+      expect(html, theme).toContain('材质细节')
+      /* 滑块不再摊在一级界面：区域名与滑块都要等二级菜单打开才出现。 */
+      expect(html, theme).not.toContain('一级面')
+      expect(html, theme).not.toContain('type="range"')
+    }
+    for (const theme of ['minimal', 'extreme'] as const) expect(render(theme), theme).not.toContain('自定义外观')
+  })
+
+  it('普通材质不给材质细节入口（没有材质层，调了看不见）', () => {
+    const plain = render('light', 'plain')
+    expect(plain).not.toContain('材质细节')
+    expect(plain).toContain('主题色')
   })
 })

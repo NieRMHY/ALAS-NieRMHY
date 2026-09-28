@@ -229,6 +229,12 @@ class MaaTouch(Connection):
         )
 
     def maatouch_send(self, builder: MaatouchBuilder):
+        """
+        向 MaaTouch 守护进程发送无同步触控指令序列。
+
+        Args:
+            builder: 构建完成的 MaaTouch 命令构造器。
+        """
         content = builder.to_minitouch()
         # logger.info("send operation: {}".format(content.replace("\n", "\\n")))
         byte_content = content.encode('utf-8')
@@ -238,6 +244,17 @@ class MaaTouch(Connection):
         builder.clear()
 
     def maatouch_send_sync(self, builder: MaatouchBuilder, mode=2):
+        """
+        向 MaaTouch 守护进程发送带有时间戳同步标识的触控指令序列。
+
+        Args:
+            builder: 构建完成的 MaaTouch 命令构造器。
+            mode: 注入模式，默认为 2（等待系统触控分发确认）。
+
+        Raises:
+            MaaTouchSyncTimeout: 同步响应超时。
+            MaaTouchNotInstalledError: MaaTouch 进程异常终止或未安装。
+        """
         # 设置最后一条命令的注入模式
         for command in builder.commands[::-1]:
             if command.operation in ['r', 'd', 'm', 'u']:
@@ -283,15 +300,24 @@ class MaaTouch(Connection):
         builder.clear()
 
     def maatouch_install(self):
+        """推送 MaaTouch 二进制文件到设备。"""
         logger.hr('[设备-MaaTouch] 安装')
         self.adb_push(self.config.MAATOUCH_FILEPATH_LOCAL, self.config.MAATOUCH_FILEPATH_REMOTE)
 
     def maatouch_uninstall(self):
+        """移除设备上的 MaaTouch 文件。"""
         logger.hr('[设备-MaaTouch] 卸载')
         self.adb_shell(["rm", self.config.MAATOUCH_FILEPATH_REMOTE])
 
     @retry
     def click_maatouch(self, x, y):
+        """
+        通过 MaaTouch 执行点击操作。
+
+        Args:
+            x: 点击横坐标。
+            y: 点击纵坐标。
+        """
         builder = self.maatouch_builder
         builder.down(x, y).commit()
         builder.up().commit()
@@ -299,6 +325,14 @@ class MaaTouch(Connection):
 
     @retry
     def long_click_maatouch(self, x, y, duration=1.0):
+        """
+        通过 MaaTouch 执行长按操作。
+
+        Args:
+            x: 长按横坐标。
+            y: 长按纵坐标。
+            duration: 长按持续时间（秒）。
+        """
         duration = int(duration * 1000)
         builder = self.maatouch_builder
         builder.down(x, y).wait(duration).commit()
@@ -307,6 +341,13 @@ class MaaTouch(Connection):
 
     @retry
     def swipe_maatouch(self, p1, p2):
+        """
+        通过 MaaTouch 执行贝塞尔曲线平滑滑动操作。
+
+        Args:
+            p1: 滑动起点坐标 (x, y)。
+            p2: 滑动终点坐标 (x, y)。
+        """
         points = insert_swipe(p0=p1, p3=p2)
         builder = self.maatouch_builder
 
@@ -323,6 +364,15 @@ class MaaTouch(Connection):
 
     @retry
     def drag_maatouch(self, p1, p2, point_random=(-10, -10, 10, 10), hold_duration=0.0):
+        """
+        通过 MaaTouch 执行拖拽操作。
+
+        Args:
+            p1: 拖拽起始坐标 (x, y)。
+            p2: 拖拽释放坐标 (x, y)。
+            point_random: 起始和结束坐标的随机抖动范围 (x_min, y_min, x_max, y_max)。
+            hold_duration: 到达终点后的按住停顿时间（秒）。
+        """
         p1 = np.array(p1) - random_rectangle_point(point_random)
         p2 = np.array(p2) - random_rectangle_point(point_random)
         points = insert_swipe(p0=p1, p3=p2, speed=20)
@@ -350,6 +400,7 @@ class MaaTouch(Connection):
 
     @retry
     def reset_maatouch(self):
+        """重置 MaaTouch 触控状态并释放所有活动触控点。"""
         builder = self.maatouch_builder
         builder.reset().commit()
         builder.send_sync()

@@ -1,3 +1,7 @@
+/**
+ * @fileoverview 通用 UI 基础原子组件（按钮、弹窗、加载状态、错误框等）。
+ */
+
 import { useEffect, useRef, type CSSProperties, type KeyboardEvent, type ReactNode } from 'react'
 import { AlertCircle, LoaderCircle, X } from 'lucide-react'
 import { GlassMaterial } from './GlassMaterial'

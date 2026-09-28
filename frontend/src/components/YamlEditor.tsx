@@ -1,3 +1,7 @@
+/**
+ * @fileoverview YAML 配置文本代码编辑器组件。
+ */
+
 import { useEffect, useRef } from 'react'
 import { Annotation, Compartment, EditorState } from '@codemirror/state'
 import { EditorView, keymap, lineNumbers, highlightActiveLine } from '@codemirror/view'

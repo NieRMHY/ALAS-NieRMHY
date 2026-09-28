@@ -24,10 +24,10 @@ def location_ensure(location):
     - 元组坐标（如 (3, 4)）
 
     Args:
-        location: 网格坐标，可以是 GridInfo 对象、字符串节点名或元组。
+        location (GridInfo | str | tuple[int, int]): 网格坐标，可以是 GridInfo 对象、字符串节点名或元组。
 
     Returns:
-        tuple[int]: 坐标元组，如 ``(4, 3)``。
+        tuple[int, int]: 坐标元组，如 ``(4, 3)``。
     """
     if hasattr(location, 'location'):
         return location.location

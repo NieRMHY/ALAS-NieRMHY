@@ -21,40 +21,74 @@ OCR_OPSI_ZONE = Ocr(MAP_NAME, lang='cnocr', letter=(214, 231, 255), threshold=12
 
 @dataclass
 class DataOpsiZone:
-    # Standardized zone name in English
+    """大世界海域信息数据类。
+
+    Attributes:
+        zone (str): 标准化英文海域名称。
+        zone_type (str): 海域类型（UNKNOWN, DANGEROUS, SAFE, OBSCURE, ABYSSAL, STRONGHOLD, ARCHIVE）。
+        zone_id (int): 游戏内海域数字编号。
+        hazard_level (int): 海域危险等级（1 至 6）。
+    """
     zone: str
-    # UNKNOWN, DANGEROUS, SAFE, OBSCURE, ABYSSAL, STRONGHOLD, ARCHIVE
     zone_type: str
-    # Zone ID in game
     zone_id: int
-    # 1 to 6
     hazard_level: int
 
 
 class OpsiZoneInvalid(ImageError):
-    """ Unknown zone name """
+    """未知的大世界海域名称。"""
     pass
 
 
 class OpsiZone(ImageBase):
+    """大世界海域截图识别器。
+
+    负责识别大世界地图中的海域名称、类型及危险等级。
+    """
+
     def is_opsi_zone(self, image) -> bool:
+        """判断是否位于大世界海域地图界面。
+
+        Args:
+            image (np.ndarray): 待检测的截图。
+
+        Returns:
+            bool: 是否在大世界海域中。
+        """
         return bool(self.classify_server(IN_MAP, image, offset=(200, 5)))
 
     def parse_opsi_zone(self, image) -> DataOpsiZone:
+        """从截图解析大世界海域信息。
+
+        Args:
+            image (np.ndarray): 包含海域名称的截图。
+
+        Returns:
+            DataOpsiZone: 解析出的海域数据。
+        """
         name = OCR_OPSI_ZONE.ocr(image)
         return self._opsi_zone_name_convert(name)
 
     @cached_property
     def _opsi_zone_manager(self) -> ZoneManager:
+        """获取海域管理器单例实例。
+
+        Returns:
+            ZoneManager: 海域管理器对象。
+        """
         return ZoneManager()
 
     def _opsi_zone_name_convert(self, name: str) -> DataOpsiZone:
-        """
+        """将 OCR 识别到的海域文本转换为标准化海域数据对象。
+
         Args:
-            name: Zone name from OCR.
+            name (str): OCR 识别到的原始海域字符串。
 
         Returns:
-            DataOpsiZone:
+            DataOpsiZone: 转换后的海域数据对象。
+
+        Raises:
+            OpsiZoneInvalid: 无法匹配到已知海域。
         """
         types = 'UNKNOWN'
         if '安全' in name:

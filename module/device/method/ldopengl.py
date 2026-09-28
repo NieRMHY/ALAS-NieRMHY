@@ -80,13 +80,17 @@ class LDConsole:
         self.ld_console = os.path.abspath(os.path.join(ld_folder, './ldconsole.exe'))
 
     def subprocess_run(self, cmd, timeout=10):
-        """
+        """执行 ldconsole 子进程命令并获取输出。
+
         Args:
-            cmd (list):
-            timeout (int):
+            cmd (list[str]): ldconsole 的子命令参数列表。
+            timeout (int): 超时时间（秒）。
 
         Returns:
-            bytes:
+            bytes: 标准输出字节串。
+
+        Raises:
+            LDOpenGLIncompatible: 未找到 ldconsole.exe。
         """
         cmd = [self.ld_console] + cmd
         logger.info(f'执行: {cmd}')
@@ -95,7 +99,7 @@ class LDConsole:
             process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=False)
         except FileNotFoundError as e:
             logger.warning(f'调用时警告 {cmd}, {str(e)}')
-            raise LDOpenGLIncompatible(f'ld_folder does not have ldconsole.exe')
+            raise LDOpenGLIncompatible('ld_folder does not have ldconsole.exe')
         try:
             stdout, stderr = process.communicate(timeout=timeout)
         except subprocess.TimeoutExpired:
@@ -105,13 +109,10 @@ class LDConsole:
         return stdout
 
     def list2(self):
-        """
-        > ldconsole.exe list2
-        0,雷电模拟器,28053900,42935798,1,59776,36816,1280,720,240
-        1,雷电模拟器-1,0,0,0,-1,-1,1280,720,240
+        """调用 `ldconsole.exe list2` 并解析多开实例列表。
 
         Returns:
-            list[DataLDPlayerInfo]:
+            list[DataLDPlayerInfo]: 解析出的雷电模拟器实例信息列表。
         """
         out = []
         data = self.subprocess_run(['list2'])
@@ -204,15 +205,16 @@ class LDOpenGLImpl:
         self.screenshot_instance = IScreenShotClass(instance_ptr)
 
     def get_player_info_by_index(self, instance_id: int):
-        """
+        """根据多开索引获取雷电模拟器实例信息并校验运行状态。
+
         Args:
-            instance_id:
+            instance_id (int): 模拟器实例索引编号。
 
         Returns:
-            DataLDPlayerInfo:
+            DataLDPlayerInfo: 模拟器进程及窗口信息对象。
 
         Raises:
-            LDOpenGLError:
+            LDOpenGLError: 找不到指定索引实例或模拟器未处于运行状态。
         """
         for info in self.console.list2():
             if info.index == instance_id:

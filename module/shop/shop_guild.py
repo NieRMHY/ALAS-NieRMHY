@@ -80,6 +80,14 @@ class GuildShop_250814(ShopClerk, ShopUI, ShopStatus):
 
     @staticmethod
     def shop_strategy_max_quantity(item):
+        """获取策略规划中单次购买数量上限。
+
+        Args:
+            item: 待购买商品对象。
+
+        Returns:
+            int: 允许购买的最大数量。
+        """
         return 99
 
     def shop_interval_clear(self):

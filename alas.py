@@ -1,6 +1,7 @@
 import json
 import os
 import re
+import sys
 import threading
 import time
 from datetime import datetime, timedelta
@@ -21,6 +22,7 @@ from module.config.utils import (
     filepath_i18n,
     get_server_last_update,
     get_server_next_update,
+    parse_config_name,
     read_file,
 )
 from module.exception import *
@@ -53,8 +55,17 @@ RESTART_EMULATOR_OP_TIMEOUT = 600
 
 # 缓存 i18n 任务名查找
 _i18n_task_names = None
+
+
 def _get_task_display_name(task_command):
-    """从 i18n 获取任务的本地化显示名，找不到则返回英文名"""
+    """从 i18n 获取任务的本地化显示名，找不到则返回英文名。
+
+    Args:
+        task_command (str): 任务命令名称。
+
+    Returns:
+        str: 任务的本地化显示名称或原名称。
+    """
     global _i18n_task_names
     if _i18n_task_names is None:
         _i18n_task_names = {}
@@ -84,9 +95,18 @@ def _get_task_display_name(task_command):
 
 
 class AzurLaneAutoScript:
+    """碧蓝航线自动化脚本调度器核心类。
+
+    负责任务调度、异常捕获与恢复、看门狗监控及设备管理。
+    """
     stop_event: threading.Event = None
 
     def __init__(self, config_name=DEFAULT_CONFIG_NAME):
+        """初始化调度器实例。
+
+        Args:
+            config_name (str, optional): 配置实例名称。默认为 DEFAULT_CONFIG_NAME。
+        """
         logger.hr('Start', level=0)
         self.config_name = config_name
         # 跳过启动后的第一次 Restart 任务
@@ -106,6 +126,12 @@ class AzurLaneAutoScript:
         self._watchdog_thread = None
         self._watchdog_task_start = 0.0  # 当前任务开始时间（monotonic）
         self._watchdog_task_name = ''    # 当前任务名
+        # 任务预热实测耗时（秒）；None 表示尚无实测，用配置 WarmupMinutes 兜底。
+        # 「冷启动（模拟器曾关闭）」与「仅启动游戏（模拟器保持运行）」耗时差异大，分别记录。
+        self._warmup_measured_cold_seconds = None       # 模拟器曾关闭（冷启动）
+        self._warmup_measured_game_only_seconds = None  # 模拟器保持运行，仅启动游戏
+        # Modify by MHY, 本地已剔除 LLM 日报第三方外联（module/statistics/daily_summary*.py），
+        # 不再保留上游 _daily_summary_* 定时调度逻辑；仅保留预热实测属性的初始化。
 
     def _deep_restart_enabled(self):
         """判断本次模拟器重启是否改用「深度重启」。
@@ -523,7 +549,14 @@ class AzurLaneAutoScript:
 
     @staticmethod
     def _warmup_duration_text(seconds):
-        """把秒数格式化为人类可读的耗时文本，如 '3 分 15 秒'。"""
+        """把秒数格式化为人类可读的耗时文本，如 '3 分 15 秒'。
+
+        Args:
+            seconds (int | float): 耗时秒数。
+
+        Returns:
+            str: 格式化后的耗时文本。
+        """
         seconds = max(0, int(seconds))
         h, m = divmod(seconds, 3600)
         m, s = divmod(m, 60)
@@ -661,11 +694,50 @@ class AzurLaneAutoScript:
             exit(1)
 
     def _is_strict_restart(self, command):
-        """统一任务异常和调度结果的敏感任务停机条件。"""
+        """统一任务异常和调度结果的敏感任务停机条件。
+
+        Args:
+            command (str): 任务命令名称。
+
+        Returns:
+            bool: 是否属于严格重启模式下的敏感任务。
+        """
         task_name = inflection.camelize(command)
         return self.config.Error_StrictRestart and self.config.cross_get(
             keys=f'{task_name}.Scheduler.Sensitive', default=False
         )
+
+    def _notify_recoverable(self, title, content, webui_title, webui_content):
+        """
+        推送可自动恢复的错误（OnePush 手机渠道 + 本地启动器双通道）。
+
+        游戏未运行、模拟器离线、卡死这类错误调度器会自行重启恢复，但每次
+        发生都推送会在无人值守时形成轰炸。低推送量模式下整体跳过，只在日志
+        中留痕；需要人工介入的错误不经过本方法，不受该模式影响。
+
+        Args:
+            title (str): OnePush 推送标题。
+            content (str): OnePush 推送正文。
+            webui_title (str): 本地启动器通知标题。
+            webui_content (str): 本地启动器通知正文。
+
+        Returns:
+            bool: True 表示已推送，False 表示被低推送量模式跳过。
+        """
+        if self.config.Error_LowPushMode:
+            logger.info(f'[Alas] 低推送量模式：跳过可恢复错误的推送 - {title}')
+            return False
+        handle_notify(
+            self.config.Error_OnePushConfig,
+            title=title,
+            content=content,
+        )
+        notify_webui(
+            self.config_name,
+            title=webui_title,
+            content=webui_content,
+        )
+        return True
 
     def _check_sensitive_exit(self, command, error):
         """
@@ -711,7 +783,8 @@ class AzurLaneAutoScript:
         根据异常类型自动判断：重启游戏、重启模拟器、请求人工介入或直接终止。
         严格重启模式下，敏感任务出错时直接停止，不做任何重启。
 
-        任务执行前会进行一次截图（除非 skip_first_screenshot=True）。
+        普通任务执行前会进行一次截图（除非 skip_first_screenshot=True）。Restart 在启动游戏前不截图，
+        避免 Android 虚拟屏尚无首帧时因截图失败而阻断 app_restart()。
 
         Args:
             command (str): 任务方法名（驼峰转下划线后的形式）。
@@ -727,7 +800,10 @@ class AzurLaneAutoScript:
         command = inflection.underscore(command)
         set_task(inflection.camelize(command))
         try:
-            if not skip_first_screenshot:
+            # Restart 的职责就是把游戏从“未运行/未出首帧”恢复起来。
+            # Android 虚拟屏在没有实际内容提交前不会产生可读帧；若这里先截图，
+            # screencap 会 no-frame，导致永远执行不到 restart() -> app_restart()。
+            if not skip_first_screenshot and command != 'restart':
                 self.device.screenshot()
             self.__getattribute__(command)()
             return True
@@ -746,15 +822,11 @@ class AzurLaneAutoScript:
                 with_traceback=False,
             )
             self._check_sensitive_exit(command, e)
-            handle_notify(
-                self.config.Error_OnePushConfig,
+            self._notify_recoverable(
                 title=f"ALAS <{self.config_name}> 警告",
                 content=f"<{self.config_name}> 游戏未运行 - 将自动重启游戏",
-            )
-            notify_webui(
-                self.config_name,
-                title=f" <{self.config_name}> 发出了警告！",
-                content=f"<{self.config_name}> 游戏未运行 将自动重启游戏",
+                webui_title=f" <{self.config_name}> 发出了警告！",
+                webui_content=f"<{self.config_name}> 游戏未运行 将自动重启游戏",
             )
             self.config.task_call('Restart')
             return 'recoverable'
@@ -783,15 +855,11 @@ class AzurLaneAutoScript:
 
             logger.warning(f'[Alas] 游戏卡住，{self.device.package} 将在10秒后重启')
             logger.warning('[Alas] 如果您正在手动操作，请停止 ALAS')
-            handle_notify(
-                self.config.Error_OnePushConfig,
+            self._notify_recoverable(
                 title=f"ALAS <{self.config_name}> 警告",
                 content=f"<{self.config_name}> 游戏卡住 - 将自动重启游戏",
-            )
-            notify_webui(
-                self.config_name,
-                title=f"<{self.config_name}> 发出了警告！",
-                content=f"<{self.config_name}> 游戏卡住 将自动重启游戏",
+                webui_title=f"<{self.config_name}> 发出了警告！",
+                webui_content=f"<{self.config_name}> 游戏卡住 将自动重启游戏",
             )
             self.config.task_call('Restart')
             self.device.sleep(10)
@@ -809,15 +877,11 @@ class AzurLaneAutoScript:
             self._check_sensitive_exit(command, e)
             logger.warning('[Alas] 碧蓝航线游戏客户端发生错误，ALAS 无法处理')
             logger.warning(f'[Alas] 正在重启 {self.device.package} 以修复问题')
-            handle_notify(
-                self.config.Error_OnePushConfig,
+            self._notify_recoverable(
                 title=f"ALAS <{self.config_name}> 警告",
                 content=f"<{self.config_name}> 游戏客户端错误 - 将自动重启游戏",
-            )
-            notify_webui(
-                self.config_name,
-                title=f"<{self.config_name}> 发出了警告！",
-                content=f"<{self.config_name}> 游戏客户端错误 将自动重启游戏",
+                webui_title=f"<{self.config_name}> 发出了警告！",
+                webui_content=f"<{self.config_name}> 游戏客户端错误 将自动重启游戏",
             )
             self.config.task_call('Restart')
             self.device.sleep(10)
@@ -837,15 +901,11 @@ class AzurLaneAutoScript:
                 self.save_error_log()
                 self._check_sensitive_exit(command, e)
                 logger.warning('[Alas] 无法识别游戏页面，尝试重启游戏恢复')
-                handle_notify(
-                    self.config.Error_OnePushConfig,
+                self._notify_recoverable(
                     title=f"ALAS <{self.config_name}> 警告",
                     content=f"<{self.config_name}> 无法识别页面 - 将自动重启游戏",
-                )
-                notify_webui(
-                    self.config_name,
-                    title=f"<{self.config_name}> 发出了警告！",
-                    content=f"<{self.config_name}> 无法识别页面 将自动重启游戏",
+                    webui_title=f"<{self.config_name}> 发出了警告！",
+                    webui_content=f"<{self.config_name}> 无法识别页面 将自动重启游戏",
                 )
                 self.config.task_call('Restart')
                 return 'recoverable'
@@ -885,15 +945,11 @@ class AzurLaneAutoScript:
                 exit(1)
 
             logger.warning(f'[Alas] ScriptError 第 {self.script_error_count}/3 次，尝试重启恢复')
-            handle_notify(
-                self.config.Error_OnePushConfig,
+            self._notify_recoverable(
                 title=f"ALAS <{self.config_name}> 警告",
                 content=f"<{self.config_name}> ScriptError - 将尝试重启恢复 ({self.script_error_count}/3)",
-            )
-            notify_webui(
-                self.config_name,
-                title=f"<{self.config_name}> 发出了警告！",
-                content=f"<{self.config_name}> ScriptError 将尝试重启恢复",
+                webui_title=f"<{self.config_name}> 发出了警告！",
+                webui_content=f"<{self.config_name}> ScriptError 将尝试重启恢复",
             )
             self.config.task_call('Restart')
             return 'recoverable'
@@ -911,15 +967,11 @@ class AzurLaneAutoScript:
             # 始终尝试重启模拟器，即使失败也不退出
             self._try_restart_emulator()
             self.config.task_call('Restart')
-            handle_notify(
-                self.config.Error_OnePushConfig,
+            self._notify_recoverable(
                 title=f"ALAS <{self.config_name}> 警告",
                 content=f"<{self.config_name}> 模拟器离线 - 正在尝试重启模拟器",
-            )
-            notify_webui(
-                self.config_name,
-                title=f"{self.config_name} 警告",
-                content=f"模拟器离线 正在重启模拟器",
+                webui_title=f"{self.config_name} 警告",
+                webui_content=f"模拟器离线 正在重启模拟器",
             )
             return 'recoverable'
         except RequestHumanTakeover as e:
@@ -957,15 +1009,11 @@ class AzurLaneAutoScript:
             self._check_sensitive_exit(command, e)
             logger.warning('[Alas] 自动搜索设置失败，尝试重启游戏恢复')
             self.config.task_call('Restart')
-            handle_notify(
-                self.config.Error_OnePushConfig,
+            self._notify_recoverable(
                 title=f"ALAS <{self.config_name}> 警告",
                 content=f"<{self.config_name}> 自动搜索设置失败 - 将自动重启游戏",
-            )
-            notify_webui(
-                self.config_name,
-                title=f"<{self.config_name}> 发出了警告！",
-                content=f"<{self.config_name}> 自动搜索设置失败 将自动重启游戏",
+                webui_title=f"<{self.config_name}> 发出了警告！",
+                webui_content=f"<{self.config_name}> 自动搜索设置失败 将自动重启游戏",
             )
             return 'recoverable'
         except Exception as e:
@@ -980,15 +1028,11 @@ class AzurLaneAutoScript:
             self._check_sensitive_exit(command, e)
             logger.warning('[Alas] 未处理异常，尝试重启游戏恢复')
             self.config.task_call('Restart')
-            handle_notify(
-                self.config.Error_OnePushConfig,
+            self._notify_recoverable(
                 title=f"ALAS <{self.config_name}> 警告",
                 content=f"<{self.config_name}> 发生异常 - 正在尝试重启游戏",
-            )
-            notify_webui(
-                self.config_name,
-                title=f"{self.config_name} 警告",
-                content=f"{self.config_name} 发生异常 正在尝试重启游戏",
+                webui_title=f"{self.config_name} 警告",
+                webui_content=f"{self.config_name} 发生异常 正在尝试重启游戏",
             )
             return 'recoverable'
         finally:
@@ -1167,6 +1211,7 @@ class AzurLaneAutoScript:
             self.cleanup_error_logs(config_folder)
 
     def restart(self):
+        """执行游戏客户端重启任务。"""
         from module.handler.login import LoginHandler
         if self.delay_due_restart():
             return
@@ -1174,7 +1219,11 @@ class AzurLaneAutoScript:
         self.delay_next_restart()
 
     def restart_random_delay_minutes(self):
-        """获取每日重启的随机延后分钟数。"""
+        """获取每日重启的随机延后分钟数。
+
+        Returns:
+            int: 随机延后的分钟数。
+        """
         random_delay = getattr(self.config, 'Restart_RandomDelay', 0)
         if isinstance(random_delay, list) and len(random_delay) == 2:
             random_delay = tuple(random_delay)
@@ -1187,7 +1236,11 @@ class AzurLaneAutoScript:
         return max(delay, 0)
 
     def delay_due_restart(self):
-        """把已排在服务器刷新整点的每日重启改排到随机延后时间。"""
+        """把已排在服务器刷新整点的每日重启改排到随机延后时间。
+
+        Returns:
+            bool: 触发了随机延后返回 True，无需延后返回 False。
+        """
         current = self.config.Scheduler_NextRun
         if not isinstance(current, datetime):
             return False
@@ -1626,6 +1679,7 @@ class AzurLaneAutoScript:
         GameManager(config=self.config, device=self.device, task="GameManager").run()
 
     def emulator_manager(self):
+        """执行模拟器管理器任务（支持通过 SSH 执行远程启动/关闭命令）。"""
         import subprocess
         # 优先使用 EmulatorInfo 中的 SSH 配置
         if getattr(self.config, 'EmulatorInfo_EnableRemoteSSH', False):
@@ -1705,10 +1759,12 @@ class AzurLaneAutoScript:
             import threading
             
             def collect_stderr():
+                """收集子进程的标准错误输出。"""
                 for line in process.stderr:
                     stderr_content.append(line.strip())
             
             def collect_stdout():
+                """收集并输出子进程的标准输出。"""
                 for line in process.stdout:
                     logger.info(f'[Alas-SSH] 远程输出: {line.strip()}')
 
@@ -1948,6 +2004,10 @@ class AzurLaneAutoScript:
         return task.command
 
     def loop(self):
+        """调度器主事件循环。
+
+        负责任务提取、看门狗生命周期管理、日常维护检查、异常恢复与重试逻辑。
+        """
         logger.set_file_logger(self.config_name)
         logger.info(f'[Alas] 启动调度器循环: {self.config_name}')
 
@@ -2229,5 +2289,14 @@ class AzurLaneAutoScript:
                 time.sleep(wait_seconds)
 
 if __name__ == '__main__':
-    alas = AzurLaneAutoScript()
+    try:
+        config_name = parse_config_name(sys.argv[1:])
+    except ValueError as error:
+        logger.error(f'[Alas] 无法启动调度器：{error}')
+        logger.info(
+            f'[Alas] 用法：python alas.py [实例名]，省略实例名时使用 {DEFAULT_CONFIG_NAME}'
+        )
+        exit(2)
+
+    alas = AzurLaneAutoScript(config_name=config_name)
     alas.loop()

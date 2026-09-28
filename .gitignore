@@ -11,6 +11,8 @@ config/*.yaml
 !config/deploy.*.yaml
 config/*.json
 config/*.db
+config/*/config.db*
+config/*/account.destroyed
 config/tmp*
 !config/template*.json
 *.pyw
@@ -40,6 +42,8 @@ PaddleOCR
 docs/*
 !docs/modules/
 .claude
+.dsh
+.agents
 # Created by .ignore support plugin (hsz.mobi)
 
 ### JetBrains template
@@ -341,3 +345,6 @@ frontend/test-results/
 frontend/playwright-report/
 frontend/*.tsbuildinfo
 !uv.lock
+
+# GraphFlow 工具的本地缓存（graphflow MCP 在工作目录运行时产生）
+.graphflow-cache/

@@ -120,14 +120,36 @@ class FleetSelectionMixin:
                 break
 
     def flagship_change(self):
-        """更换旗舰；卸装、选船、复装全部确认后才能继续出击。"""
+        """更换旗舰。
+
+        卸装、选船、复装全部确认后才能继续出击。
+
+        Returns:
+            bool: 更换是否成功。
+        """
         return self._change_ship('flagship')
 
     def vanguard_change(self):
-        """更换先锋，装备交接与旗舰使用相同的失败处理。"""
+        """更换先锋。
+
+        装备交接与旗舰使用相同的失败处理。
+
+        Returns:
+            bool: 更换是否成功。
+        """
         return self._change_ship('vanguard')
 
     def _change_ship(self, position):
+        """执行换船通用流程。
+
+        处理卸装、执行具体换船、重新穿装并包含异常保护。
+
+        Args:
+            position (str): 'flagship'（旗舰）或 'vanguard'（先锋）。
+
+        Returns:
+            bool: 换船是否成功。
+        """
         label = '旗舰' if position == 'flagship' else '前排'
         button = self.fleet_detail_enter_flagship if position == 'flagship' else self.fleet_detail_enter
         change_equip = self.change_flagship_equip if position == 'flagship' else self.change_vanguard_equip
@@ -159,18 +181,17 @@ class FleetSelectionMixin:
             self.last_code = None
 
     def get_common_rarity_cv(self, lv=31, emotion=16):
-        """
-        根据 config.GemsFarming_CommonCV 获取普通稀有度航母。
-        如果 config.GemsFarming_CommonCV == 'any'，默认返回等级 1~31 的普通航母。
+        """根据 config.GemsFarming_CommonCV 获取普通稀有度航母。
 
+        如果 config.GemsFarming_CommonCV == 'any'，默认返回等级 1~31 的普通航母。
         调用后需要调用 _dock_reset()。
 
         Args:
-            lv (int): 普通航母的最大等级。
-            emotion (int): 普通航母的最低情绪值。
+            lv (int): 普通航母的最大等级。默认 31。
+            emotion (int): 普通航母的最低情绪值。默认 16。
 
         Returns:
-            Ship: 匹配的舰船。
+            list[Ship]: 匹配的舰船列表。
         """
         faction = 'eagle' if self.config.GemsFarming_CommonCV == 'eagle' else 'all'
         extra = 'can_limit_break' if self.config.GemsFarming_AllowHighFlagshipLevel else 'enhanceable'
@@ -278,8 +299,14 @@ class FleetSelectionMixin:
             return template.match(self.image_crop(ship.button, copy=False), similarity=SIM_VALUE)
 
     def find_all_vanguard_candidates(self, scanner, common_ship):
-        """
-        扫描并查找 common_ship 列表的所有匹配候选舰船，按 (情绪值, -优先级索引) 降序返回。
+        """扫描并查找指定舰船列表的所有匹配先锋候选，按 (情绪值, -优先级索引) 降序返回。
+
+        Args:
+            scanner (ShipScanner): 舰船扫描器。
+            common_ship (list[str]): 目标舰船名称列表。
+
+        Returns:
+            list[Ship]: 排序后的匹配舰船列表。
         """
         templates_list = [TEMPLATE_COMMON_DD[name.upper()] for name in common_ship]
         all_ships = scanner.scan(self.device.image, output=False)
@@ -294,11 +321,19 @@ class FleetSelectionMixin:
         return [x[0] for x in matched_candidates]
 
     def find_all_backline_candidates(self, scanner, common_ship):
-        """
-        扫描并查找 common_ship 列表的所有匹配候选舰船，按以下顺序排序：
+        """扫描并查找指定舰船列表的所有匹配主力候选舰船。
+
+        排序优先级：
         1. 情绪值（降序）
         2. 等级（升序）
         3. 优先级索引（升序）
+
+        Args:
+            scanner (ShipScanner): 舰船扫描器。
+            common_ship (list[str]): 目标舰船名称列表。
+
+        Returns:
+            list[Ship]: 排序后的匹配舰船列表。
         """
         templates_list = [TEMPLATE_COMMON_CV[name.upper()] for name in common_ship]
         all_ships = scanner.scan(self.device.image, output=False)
@@ -313,12 +348,16 @@ class FleetSelectionMixin:
         return [x[0] for x in matched_candidates]
 
     def find_custom_candidates(self, scanner, ship_type='cv'):
-        """
-        获取普通稀有度航母/驱逐舰的候选舰船，仅用于 'custom' GemsFarming_CommonCV/DD 设置。
+        """获取普通稀有度航母/驱逐舰的自定义候选舰船。
+
+        仅用于 'custom' GemsFarming_CommonCV/DD 设置。
 
         Args:
             scanner (ShipScanner): 舰船扫描器。
-            ship_type (str): 'cv' 或 'dd'。
+            ship_type (str): 'cv' 或 'dd'。默认 'cv'。
+
+        Returns:
+            list[Ship]: 匹配到的候选舰船列表。
         """
         if ship_type.lower() not in ['cv', 'dd']:
             logger.warning(f'[战役-选船] 无效的舰船类型: {ship_type}')
@@ -367,8 +406,14 @@ class FleetSelectionMixin:
         return []
 
     def find_candidates(self, template, scanner):
-        """
-        基于模板匹配查找候选舰船。
+        """基于模板匹配查找候选舰船。
+
+        Args:
+            template: 单个模板对象或模板列表。
+            scanner (ShipScanner): 舰船扫描器。
+
+        Returns:
+            list[Ship]: 匹配到的舰船列表。
         """
         candidates = []
         if isinstance(template, list):
@@ -384,8 +429,16 @@ class FleetSelectionMixin:
 
     @staticmethod
     def get_templates(common_dd):
-        """
-        根据 CommonDD 设置返回对应的模板列表。
+        """根据 CommonDD 设置返回对应的模板列表。
+
+        Args:
+            common_dd (str): 驱逐舰配置类型。
+
+        Returns:
+            list[Template]: 对应的舰船图标模板列表。
+
+        Raises:
+            ScriptError: 未知配置时抛出。
         """
         if common_dd == 'aulick_or_foote':
             return [

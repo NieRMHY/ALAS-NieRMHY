@@ -1,6 +1,11 @@
+/**
+ * @fileoverview 部署设置分组表单渲染组件。
+ */
+
 import type { Settings as SettingsData } from '../api/types'
 import type { EditQueue, EditSnapshot } from '../config/EditQueue'
 import { useApp } from '../app/context'
+import { htmlToPlainText } from '../app/htmlText'
 import { prepareValue } from '../config/editors'
 import { EditStatus } from './EditStatus'
 import { FieldInput } from './FieldInput'
@@ -34,7 +39,7 @@ export function DeployGroups({data, only, except, edits, queue}: {
           <div className={`field-row ${isMultiline ? 'field-row-multiline' : ''}`} key={field.key}>
             <div className="field-label">
               <label htmlFor={`deploy-${field.key}`}>{field.label}</label>
-              <p>{field.key === 'Password' ? ui('settings.passwordHelp') : field.help.replace(/<[^>]*>/g, '')}</p>
+              <p>{field.key === 'Password' ? ui('settings.passwordHelp') : htmlToPlainText(field.help)}</p>
               {/* 多行控件的提示跟标题同一行，浮在它右端。 */}
               {isMultiline && <EditStatus id={`deploy-${field.key}`} edit={edits.edits[field.key]} retry={queue.retry} queue={queue}/>}
             </div>

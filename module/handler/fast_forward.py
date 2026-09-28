@@ -19,16 +19,26 @@ FLEET_LOCK.add_state('off', check_button=FLEET_UNLOCKED)
 
 
 class SwitchClearMode(Switch):
+    """通关模式（Clear Mode）开关。"""
+
     def get(self, main):
+        """获取通关模式开关状态。
+
+        Args:
+            main (ModuleBase): 包含设备与截图的上下文对象。
+
+        Returns:
+            str: 开关状态（'on'、'off' 或 'unknown'）。
+        """
         title = main.appear(CLEAR_MODE_TITLE, offset=(20, 20))
         if not title:
             return 'unknown'
-        # find check area to the right of title
+        # 查找标题右侧的复选区域
         CLEAR_MODE_CHECK.load_offset(CLEAR_MODE_TITLE)
-        # cyan letter is `on`
+        # 青色文字表示开启（on）
         if main.image_color_count(CLEAR_MODE_CHECK.button, color=(130, 229, 255), threshold=30, count=50):
             return 'on'
-        # white button is `off`
+        # 白色按钮表示关闭（off）
         if main.image_color_count(CLEAR_MODE_CHECK.button, color=(255, 255, 255), threshold=30, count=200):
             return 'off'
         return 'unknown'
@@ -40,23 +50,35 @@ CLEAR_MODE.add_state('off', check_button=CLEAR_MODE_TITLE, click_button=CLEAR_MO
 
 
 class SwitchAutoSearch(Switch):
+    """自动搜索（Auto Search）开关。"""
+
     def get(self, main):
+        """获取自动搜索开关状态。
+
+        Args:
+            main (ModuleBase): 包含设备与截图的上下文对象。
+
+        Returns:
+            str: 开关状态（'on'、'off' 或 'unknown'）。
+        """
         title = None
         if main.appear(AUTO_SEARCH_TITLE, offset=(20, 20)):
             title = AUTO_SEARCH_TITLE
-        # [JP] has different character spacing in hard mode and normal mode
+        # 日服困难模式和普通模式下的字符间距不同
         if not title:
             if main.appear(AUTO_SEARCH_TITLE2, offset=(20, 20)):
                 title = AUTO_SEARCH_TITLE2
         if not title:
+            if main.appear(AUTO_SEARCH_TITLE3, offset=(20, 20)):
+                title = AUTO_SEARCH_TITLE3
+        if not title:
             return 'unknown'
-        # find check area to the right of title
+        # 查找标题右侧的复选区域
         AUTO_SEARCH_CHECK.load_offset(title)
-        # green square is `on`
+        # 绿色方块表示开启（on）
         if main.image_color_count(AUTO_SEARCH_CHECK.button, color=(158, 234, 94), threshold=30, count=50):
             return 'on'
-        # no way to detect `off`
-        # return `off` if title appears and it's not `on`
+        # 无法直接检测 off，若标题出现且不是 on 则返回 off
         return 'off'
 
 
@@ -66,8 +88,7 @@ AUTO_SEARCH.add_state('off', check_button=AUTO_SEARCH_TITLE, click_button=AUTO_S
 
 
 def map_files(event):
-    """
-    获取指定活动目录下的地图文件列表。
+    """获取指定活动目录下的地图文件列表。
 
     Args:
         event (str): './campaign' 下的活动名称。
@@ -93,12 +114,15 @@ def map_files(event):
 
 
 def to_map_input_name(name: str) -> str:
-    """
-    将地图名称转换为用户输入格式。
+    """将地图名称转换为用户输入格式。
 
-    7-2 -> 7-2
-    campaign_7_2 -> 7-2
-    d3 -> D3
+    例如：7-2 -> 7-2，campaign_7_2 -> 7-2，d3 -> D3。
+
+    Args:
+        name (str): 原始地图名称。
+
+    Returns:
+        str: 规范化后的用户输入格式地图名称。
     """
     # 移除空白字符
     name = re.sub('[ \t\n]', '', name).lower()
@@ -114,12 +138,15 @@ def to_map_input_name(name: str) -> str:
 
 
 def to_map_file_name(name: str) -> str:
-    """
-    将地图名称转换为地图文件名格式。
+    """将地图名称转换为地图文件名格式。
 
-    7-2 -> campaign_7_2
-    campaign_7_2 -> campaign_7_2
-    D3 -> d3
+    例如：7-2 -> campaign_7_2，campaign_7_2 -> campaign_7_2，D3 -> d3。
+
+    Args:
+        name (str): 原始地图名称。
+
+    Returns:
+        str: 规范化后的地图文件名格式。
     """
     name = str(name).lower()
     # 移除空白字符
@@ -135,6 +162,23 @@ def to_map_file_name(name: str) -> str:
 
 
 class FastForwardHandler(AutoSearchHandler):
+    """快进与通关模式处理器。
+
+    管理战斗中的快进开关、通关模式、舰队锁定、自动搜索选项及二倍经验书等设置。
+
+    Attributes:
+        map_clear_percentage (float): 地图通关进度百分比（0.0 ~ 1.0）。
+        map_achieved_star_1 (bool): 地图是否达成 1 星。
+        map_achieved_star_2 (bool): 地图是否达成 2 星。
+        map_achieved_star_3 (bool): 地图是否达成 3 星。
+        map_is_100_percent_clear (bool): 地图是否达到 100% 通关。
+        map_is_3_stars (bool): 地图是否达成 3 星。
+        map_is_threat_safe (bool): 地图威胁等级是否已降为安全（绿海）。
+        map_has_clear_mode (bool): 地图是否具备通关模式。
+        map_is_clear_mode (bool): 当前是否处于通关模式。
+        map_is_auto_search (bool): 当前是否启用自动搜索。
+        map_is_2x_book (bool): 当前是否使用二倍经验书。
+    """
     map_clear_percentage = 0.
     map_achieved_star_1 = False
     map_achieved_star_2 = False
@@ -177,11 +221,10 @@ class FastForwardHandler(AutoSearchHandler):
     map_fleet_checked = False
 
     def map_get_info(self, star=False):
-        """
-        获取地图信息并记录日志。
+        """获取地图通关、星级与安全状态信息并记录日志。
 
-        Logs:
-            | INFO | [Map_info] 98%, star_1, star_2, star_3, clear, 3_star, green, fast_forward
+        Args:
+            star (bool): 是否假定已获得星级（用于强制覆盖）。默认为 False。
         """
         self.map_clear_percentage = self.get_map_clear_percentage()
         self.map_achieved_star_1 = self._is_map_star_active(MAP_STAR_1) or star
@@ -210,6 +253,7 @@ class FastForwardHandler(AutoSearchHandler):
         self.map_show_info()
 
     def map_show_info(self):
+        """打印当前地图状态与成就条件日志。"""
         # 记录日志
         logger.attr('本次全图清除', self.config.MAP_CLEAR_ALL_THIS_TIME)
         names = ['map_achieved_star_1', 'map_achieved_star_2', 'map_achieved_star_3',
@@ -223,6 +267,11 @@ class FastForwardHandler(AutoSearchHandler):
         logger.attr('地图成就条件', self.config.StopCondition_MapAchievement)
 
     def handle_fast_forward(self):
+        """处理快进与通关模式开关。
+
+        Returns:
+            bool: 开关状态是否发生了改变。
+        """
         if not self.map_has_clear_mode:
             self.map_is_clear_mode = False
             self.map_is_auto_search = False
@@ -262,14 +311,21 @@ class FastForwardHandler(AutoSearchHandler):
         return changed
 
     def _is_map_star_active(self, button):
+        """检测指定星级按钮是否已激活（已点亮）。
+
+        Args:
+            button (Button): 星级图标按钮。
+
+        Returns:
+            bool: 该星级是否已点亮。
+        """
         return self.image_color_count(button, color=(250, 232, 140), threshold=75, count=35)
 
     def handle_map_fleet_lock(self, enable=None):
-        """
-        处理舰队锁定开关。
+        """处理舰队锁定开关。
 
         Args:
-            enable (bool): 是否启用舰队锁定，默认为 None 时使用 Campaign_UseFleetLock 配置。
+            enable (bool | None): 是否启用舰队锁定，默认为 None 时使用 Campaign_UseFleetLock 配置。
 
         Returns:
             bool: 是否进行了切换操作。
@@ -288,9 +344,7 @@ class FastForwardHandler(AutoSearchHandler):
         return changed
 
     def map_wait_auto_search(self):
-        """
-        开启通关模式（FAST_FORWARD）后，AUTO_SEARCH 有出现动画，
-        等待其完全显示。
+        """开启通关模式后等待自动搜索开关动画完全显示。
 
         Returns:
             bool: 是否等待成功。
@@ -307,14 +361,13 @@ class FastForwardHandler(AutoSearchHandler):
                 return False
 
     def handle_auto_search(self):
-        """
-        处理自动搜索开关。
-
-        Returns:
-            bool: 是否进行了切换操作。
+        """处理自动搜索开关。
 
         Pages:
             in: MAP_PREPARATION
+
+        Returns:
+            bool: 是否进行了切换操作。
         """
         # if not self.map_is_clear_mode:
         #     return False
@@ -335,12 +388,19 @@ class FastForwardHandler(AutoSearchHandler):
         return changed
 
     def _auto_search_set(self, state, current='unknown', skip_first_screenshot=True):
-        """
-        仅在当前状态已知时设置自动搜索开关。
+        """仅在当前状态已知时设置自动搜索开关。
 
         AUTO_SEARCH_ON 和 AUTO_SEARCH_OFF 共享同一点击区域。
-        如果开关已开启但模板匹配暂时返回 ``unknown``，
+        如果开关已开启但模板匹配暂时返回 unknown，
         点击目标 ON 区域实际上会将其关闭。
+
+        Args:
+            state (str): 目标状态（'on' 或 'off'）。
+            current (str): 当前已知状态，默认为 'unknown'。
+            skip_first_screenshot (bool): 是否跳过首次截图。
+
+        Returns:
+            bool: 开关状态是否发生了更改。
         """
         logger.info(f'[处理器-快进] 自动搜索设置为 {state}')
         timeout = Timer(2, count=4).start()
@@ -377,14 +437,16 @@ class FastForwardHandler(AutoSearchHandler):
             current = AUTO_SEARCH.get(main=self)
 
     def handle_auto_search_setting(self):
-        """
-        处理自动搜索设置。
+        """处理编队准备界面的自动搜索设置。
+
+        Pages:
+            in: FLEET_PREPARATION
 
         Returns:
             bool: 是否进行了更改。
 
-        Pages:
-            in: FLEET_PREPARATION
+        Raises:
+            AutoSearchSetError: 设置自动搜索失败且无法通知时抛出。
         """
         if not self.map_is_auto_search:
             # 手动寻敌下舰队编制选项不可用，但潜艇待命仍需同步：
@@ -420,17 +482,17 @@ class FastForwardHandler(AutoSearchHandler):
 
     @property
     def is_call_submarine_at_boss(self):
+        """是否在 Boss 战时呼叫潜艇。"""
         return self.config.SUBMARINE and self.config.Submarine_Mode in ['boss_only', 'hunt_and_boss']
 
     def handle_auto_submarine_call_disable(self):
-        """
-        禁用自动潜艇呼叫。
-
-        Returns:
-            bool: 是否进行了更改。
+        """禁用自动潜艇呼叫。
 
         Pages:
             in: FLEET_PREPARATION
+
+        Returns:
+            bool: 是否进行了更改。
         """
         if self.map_fleet_checked:
             return False
@@ -452,8 +514,15 @@ class FastForwardHandler(AutoSearchHandler):
         return True
 
     def handle_auto_search_continue(self, drop=None):
-        """
-        覆盖 AutoSearchHandler 的定义，用于处理二倍经验书设置。
+        """处理自动搜索继续菜单及二倍经验书设置。
+
+        覆盖 AutoSearchHandler 的实现，用于处理二倍经验书设置。
+
+        Args:
+            drop (DropImage | None): 掉落记录对象。
+
+        Returns:
+            bool: 是否执行了继续操作。
         """
         if self.appear(AUTO_SEARCH_MENU_CONTINUE, offset=self._auto_search_menu_offset, interval=2):
             self.map_is_2x_book = self.config.Campaign_Use2xBook
@@ -469,14 +538,13 @@ class FastForwardHandler(AutoSearchHandler):
         return False
 
     def get_map_clear_percentage(self):
-        """
-        获取地图通关进度百分比。
-
-        Returns:
-            float: 0 到 1 之间的浮点数。
+        """获取地图通关进度百分比。
 
         Pages:
             in: MAP_PREPARATION
+
+        Returns:
+            float: 0 到 1 之间的浮点数。
         """
         percent = color_bar_percentage(self.device.image, area=MAP_CLEAR_PERCENTAGE.area, prev_color=(231, 170, 82))
         if self.config.MAP_CLEAR_PERCENTAGE_SHORT:
@@ -484,8 +552,7 @@ class FastForwardHandler(AutoSearchHandler):
         return percent
 
     def campaign_name_increase(self, name):
-        """
-        将关卡名称推进到下一关。
+        """将关卡名称推进到下一关。
 
         Args:
             name (str): 关卡名称，如 `6-1`、`a1`、`campaign_6_1`。
@@ -533,8 +600,7 @@ class FastForwardHandler(AutoSearchHandler):
         return name
 
     def triggered_map_stop(self):
-        """
-        判断是否触发了地图停止条件。
+        """判断是否触发了地图停止条件。
 
         Returns:
             bool: 是否满足停止条件。
@@ -559,9 +625,7 @@ class FastForwardHandler(AutoSearchHandler):
         return False
 
     def handle_map_stop(self):
-        """
-        达到停止条件后修改配置，禁用当前任务或推进关卡。
-        """
+        """达到停止条件后修改配置，禁用当前任务或推进关卡。"""
         if self.config.StopCondition_StageIncrease:
             prev_stage = to_map_input_name(self.config.Campaign_Name)
             next_stage = self.campaign_name_increase(prev_stage)
@@ -575,8 +639,7 @@ class FastForwardHandler(AutoSearchHandler):
             self.config.Scheduler_Enable = False
 
     def _set_2x_book_status(self, status, check_button, box_button, skip_first_screenshot=True):
-        """
-        设置二倍经验书的开关状态，内置重试机制，最多尝试 3 次，每次间隔 3 秒。
+        """设置二倍经验书的开关状态，内置重试机制，最多尝试 3 次，每次间隔 3 秒。
 
         Args:
             status (str): 'on' 或 'off'。
@@ -618,8 +681,7 @@ class FastForwardHandler(AutoSearchHandler):
         return False
 
     def handle_2x_book_setting(self, mode='prep'):
-        """
-        处理二倍经验书设置（如适用）。
+        """处理二倍经验书设置（如适用）。
 
         Args:
             mode (str): 'prep' 或 'auto'，非 'prep' 则视为 'auto'。
@@ -652,6 +714,11 @@ class FastForwardHandler(AutoSearchHandler):
         return True
 
     def handle_2x_book_popup(self):
+        """处理二倍经验书使用确认弹窗。
+
+        Returns:
+            bool: 是否处理了弹窗。
+        """
         if self.appear(BOOK_POPUP_CHECK, offset=(20, 20)):
             if self.handle_popup_confirm('2X_BOOK'):
                 return True
@@ -659,14 +726,21 @@ class FastForwardHandler(AutoSearchHandler):
         return False
 
     def handle_submarine_support_popup(self):
-        """
-        Should be rewritten in W16 submarine base class
+        """处理潜艇支援弹窗，应在第16章潜艇基类中重写。
+
+        Returns:
+            bool: 是否处理了弹窗。
         """
         return False
 
     def handle_map_walk_speedup(self, skip_first_screenshot=True):
-        """
-        开启地图行走加速，没有关闭的理由。
+        """开启地图行走加速，没有关闭的理由。
+
+        Args:
+            skip_first_screenshot (bool): 是否跳过首次截图。
+
+        Returns:
+            bool: 是否成功开启地图行走加速。
         """
         if not self.config.MAP_HAS_WALK_SPEEDUP:
             return False
@@ -692,6 +766,11 @@ class FastForwardHandler(AutoSearchHandler):
                 continue
 
     def handle_submarine_cost_popup(self):
+        """处理潜艇消耗弹窗。
+
+        Returns:
+            bool: 是否处理了弹窗。
+        """
         if self.config.MAP_HAS_SUBMARINE_SUPPORT and self.handle_popup_confirm('SUBMARINE_COST'):
             return True
 

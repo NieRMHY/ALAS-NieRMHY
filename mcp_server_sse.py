@@ -3,16 +3,17 @@ import logging
 import json
 import datetime
 import re
-from typing import List, Dict, Any
+from typing import Any, Dict, List
 
+# Modify by MHY, 本地保留自己的 ASGI 免密实现，需直接使用 starlette（上游已改走 create_app 工厂）
 from starlette.applications import Starlette
 from starlette.middleware import Middleware
 from starlette.middleware.cors import CORSMiddleware
 from mcp.server import Server
 from mcp.server.sse import SseServerTransport
 from mcp.types import (
-    TextContent,
     ImageContent,
+    TextContent,
     Tool,
 )
 import base64
@@ -45,8 +46,14 @@ mcp_server = Server("ALAS-MCP")
 
 ToolResponse = List[TextContent | ImageContent]
 
+
 @mcp_server.list_tools()
 async def list_tools() -> List[Tool]:
+    """列出 MCP 服务器当前支持的所有工具定义。
+
+    Returns:
+        List[Tool]: 工具对象列表。
+    """
     return [
         Tool(
             name="list_instances",
@@ -246,8 +253,22 @@ async def _tool_update_config(arguments: Dict[str, Any]) -> ToolResponse:
     value = arguments["value"]
     config = AzurLaneConfig(inst)
     path = f"{task}.{group}.{arg}"
+    # Add by MHY, 修复 update_config 静默失效：cross_set/deep_set 对不存在的路径
+    # 会逐层创建垃圾顶级键（如把组名当任务名拼出 IslandBusinessShop1.x.Char1），
+    # 并无条件返回 Success。写入前校验路径真实存在，不存在则明确报错。
+    from module.config.deep import deep_exist
+    if not deep_exist(config.args, path):
+        return [TextContent(type="text",
+                            text=f"Error: path {path} 不存在于配置定义（args.json）。"
+                                 f"路径格式为 <任务名>.<组名>.<参数名>，"
+                                 f"注意组挂在任务下（如 IslandBusiness.IslandBusinessShop1.Char1）")]
     config.cross_set(path, value)
     config.save()
+    # 回读确认（防其它静默失败）
+    actual = config.cross_get(path)
+    if actual != value:
+        return [TextContent(type="text",
+                            text=f"Error: wrote {path}={value} but read back {actual}")]
     return [TextContent(type="text", text=f"Success: Updated {path} to {value}")]
 
 
@@ -379,6 +400,10 @@ async def _tool_trigger_task(arguments: Dict[str, Any]) -> ToolResponse:
     inst = arguments["instance"]
     task = arguments["task"]
     config = AzurLaneConfig(inst)
+    # Add by MHY, 同 update_config：校验任务名存在，避免拼出垃圾路径静默成功
+    if task not in config.data or 'Scheduler' not in config.data.get(task, {}):
+        return [TextContent(type="text",
+                            text=f"Error: unknown task {task}（须为顶级任务名，如 IslandBusiness）")]
     config.cross_set(f"{task}.Scheduler.Enable", True)
     now = current_time()
     config.cross_set(f"{task}.Scheduler.NextRun", str(now))
@@ -505,6 +530,13 @@ STANDALONE_HOST = "0.0.0.0"
 STANDALONE_PORT = 22268
 
 async def _run_sse(scope, receive, send):
+    """处理 /sse 端点的请求，建立并运行 SSE 流式连接。
+
+    Args:
+        scope: ASGI scope 字典。
+        receive: ASGI receive 异步可调用对象。
+        send: ASGI send 异步可调用对象。
+    """
     logger.info("Matched endpoint: /sse. Opening SSE connection...")
 
     try:
@@ -521,7 +553,16 @@ async def _run_sse(scope, receive, send):
 
 
 def _is_mcp_client_disconnected(error: Exception) -> bool:
-    # ClosedResourceError：SSE 已断开但客户端仍在宽限期内投递消息，属正常现象
+    """判断异常是否属于客户端主动断开连接。
+
+    ClosedResourceError：SSE 已断开但客户端仍在宽限期内投递消息，属正常现象。
+
+    Args:
+        error (Exception): 捕获的异常对象。
+
+    Returns:
+        bool: 是否属于客户端正常断连。
+    """
     return (
         "BrokenResourceError" in str(type(error))
         or "BrokenPipeError" in str(error)
@@ -530,6 +571,14 @@ def _is_mcp_client_disconnected(error: Exception) -> bool:
 
 
 async def _handle_mcp_post(scope, receive, send, method):
+    """处理客户端通过 POST /messages 发送过来的消息。
+
+    Args:
+        scope: ASGI scope 字典。
+        receive: ASGI receive 异步可调用对象。
+        send: ASGI send 异步可调用对象。
+        method (str): HTTP 请求方法。
+    """
     logger.info(f"Matched endpoint: /messages. Method: {method}")
     try:
         await transport.handle_post_message(scope, receive, send)
@@ -543,7 +592,11 @@ async def _handle_mcp_post(scope, receive, send, method):
 
 
 async def _send_not_found(send):
-    # 未匹配路由，返回 404
+    """返回 404 Not Found 响应。
+
+    Args:
+        send: ASGI send 异步可调用对象。
+    """
     await send({
         'type': 'http.response.start',
         'status': 404,
@@ -556,7 +609,7 @@ async def _send_not_found(send):
 
 
 async def mcp_asgi_app(scope, receive, send):
-    """MCP 服务的纯 ASGI 应用。"""
+    """MCP 服务的纯 ASGI 应用：SSE（旧规范）与 streamable-http（新规范）双传输。"""
     path = scope.get("path", "")
     method = scope.get("method", "")
 
@@ -565,7 +618,9 @@ async def mcp_asgi_app(scope, receive, send):
 
     logger.info("[MCP] %s %s", method, path)
 
-    # 路由逻辑 - 使用末尾匹配以兼容各种挂载路径和斜线组合
+    # Add by MHY, streamable-http（新 MCP 规范，单端点 POST）：挂载根路径的
+    # POST/GET/DELETE 交给 streamable manager——dsh-mcp-client 等只讲新规范的
+    # 客户端经 /mcp 根直连；SSE 旧规范路径（/sse + /messages）保持不变
     if path.endswith("/sse"):
         await _run_sse(scope, receive, send)
 
@@ -573,10 +628,56 @@ async def mcp_asgi_app(scope, receive, send):
         await _handle_mcp_post(scope, receive, send, method)
 
     else:
+        await _run_streamable(scope, receive, send, method)
+
+
+# Add by MHY, streamable-http 传输管理器：与 SSE 共用同一个 mcp_server 实例，
+# 工具注册一次两种传输都可调用
+_streamable_manager = None
+
+
+def _get_streamable_manager():
+    global _streamable_manager
+    if _streamable_manager is None:
+        from mcp.server.streamable_http_manager import StreamableHTTPSessionManager
+        _streamable_manager = StreamableHTTPSessionManager(
+            app=mcp_server,
+            event_store=None,
+            json_response=False,
+            stateless=True,
+        )
+    return _streamable_manager
+
+
+async def _run_streamable(scope, receive, send, method):
+    """streamable-http 入口：POST（消息）/ GET（SSE 流可选）/ DELETE（会话终结）。"""
+    if method not in ("POST", "GET", "DELETE"):
         await _send_not_found(send)
+        return
+    try:
+        await _get_streamable_manager().handle_request(scope, receive, send)
+    except Exception:
+        logger.exception("[MCP] streamable-http 处理异常")
+        try:
+            await _send_not_found(send)
+        except Exception:
+            pass
 
 # Starlette 应用包装
+# Add by MHY, lifespan 启动 streamable manager 的 task group（无 run() 初始化
+# handle_request 会报 Task group is not initialized）
+from contextlib import asynccontextmanager
+
+
+@asynccontextmanager
+async def _mcp_lifespan(app_):
+    manager = _get_streamable_manager()
+    async with manager.run():
+        yield
+
+
 app = Starlette(
+    lifespan=_mcp_lifespan,
     middleware=[
         Middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
     ]

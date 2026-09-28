@@ -1,3 +1,7 @@
+/**
+ * @fileoverview 模拟器画面监控与截图捕获面板组件。
+ */
+
 import { useEffect, useState, type ReactNode } from 'react'
 import { Download, Image, Terminal } from 'lucide-react'
 import { api } from '../api/client'

@@ -48,6 +48,11 @@ class PreservedAssets:
 
     @cached_property
     def ui(self):
+        """获取需要常驻内存的 UI 资源名称集合。
+
+        Returns:
+            set[str]: 资源常量名集合。
+        """
         assets = set()
         assets |= get_assets_from_file(
             file='./module/ui/assets.py',

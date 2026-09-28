@@ -1,7 +1,18 @@
 from copy import deepcopy
 from module.secretary.assets import SECRETARY_FIRST_SHIP_SLOT
-def move_button(btn, dx, dy):
 
+
+def move_button(btn, dx, dy):
+    """深拷贝按钮对象并应用二维坐标偏移量。
+
+    Args:
+        btn: 原始按钮对象。
+        dx (int): X 轴偏移量。
+        dy (int): Y 轴偏移量。
+
+    Returns:
+        Button: 平移后的新按钮对象。
+    """
     btn = deepcopy(btn)
 
     for server in btn.raw_area:

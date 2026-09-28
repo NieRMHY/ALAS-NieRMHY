@@ -45,11 +45,11 @@ def handle_notify(_config: str, **kwargs) -> bool:
     并通过 onepush 库发送通知消息。
 
     Args:
-        _config: YAML 格式的通知配置字符串，包含 provider 和渠道参数。
+        _config (str): YAML 格式的通知配置字符串，包含 provider 和渠道参数。
         **kwargs: 附加的通知参数，如 title、content 等。
 
     Returns:
-        通知发送成功返回 True，失败返回 False。
+        bool: 通知发送成功返回 True，失败返回 False。
     """
     try:
         config = {}
@@ -130,13 +130,13 @@ def notify_webui(instance: str, title: str, content: str, **kwargs) -> bool:
     默认端口为 25548，可通过配置自定义。
 
     Args:
-        instance: 触发通知的实例名称。
-        title: 通知标题。
-        content: 通知正文内容。
+        instance (str): 触发通知的实例名称。
+        title (str): 通知标题。
+        content (str): 通知正文内容。
         **kwargs: 其他附加字段，合并到请求体中。
 
     Returns:
-        推送成功返回 True，失败返回 False。
+        bool: 推送成功返回 True，失败返回 False。
     """
     try:
         from module.runtime.setting import State

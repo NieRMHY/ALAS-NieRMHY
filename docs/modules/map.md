@@ -51,7 +51,7 @@ module/
 │   ├── fleet.py                # Fleet：行走、回合、舰队追踪、双舰队协作
 │   ├── camera.py               # Camera：滑动、扫描、边缘定位、坐标转换
 │   ├── map_operation.py        # MapOperation：进图/撤退/模式切换
-│   ├── map_fleet_preparation.py# 舰队准备界面（下拉选队、困难校验）
+│   ├── map_fleet_preparation.py# 舰队准备界面（下拉选队、困难校验、推荐配队）
 │   ├── submarine.py            # 潜艇高级出击规划
 │   ├── utils.py                # 坐标转换、相机位计算、移动敌人匹配
 │   └── assets.py               # 进图/编队界面按钮（生成产物）
