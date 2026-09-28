@@ -110,5 +110,87 @@ class TestGallery(unittest.TestCase):
         self.assertEqual(service.gallery_list(), [])
 
 
+class TestPreference(unittest.TestCase):
+    """背景记录（哪个材质铺哪一张）：跨浏览器共用的那份状态，读写与清洗都要稳。"""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.dir = Path(self.tmp.name)
+        self.patch = mock.patch.object(service, 'PREFERENCE_FILE', self.dir / 'preference.json')
+        self.patch.start()
+
+    def tearDown(self):
+        self.patch.stop()
+        self.tmp.cleanup()
+
+    def test_missing_file_reads_empty(self):
+        """没有记录时返回空字典：老用户升级后前端沿用自身默认档，行为不变。"""
+        self.assertEqual(service.load_preferences(), {})
+
+    def test_round_trip_keeps_gallery_entry(self):
+        stored = {'source': 'upload', 'kind': 'image', 'urls': [], 'active': 0, 'name': '壁纸', 'entry': 'abc.jpg'}
+        service.save_preference('glass', stored)
+        self.assertEqual(service.load_preferences()['glass'], stored)
+
+    def test_save_keeps_other_material(self):
+        service.save_preference('glass', {'source': 'off'})
+        service.save_preference('plain', {'source': 'url', 'urls': ['https://a.test/1.jpg'], 'active': 0})
+        preferences = service.load_preferences()
+        self.assertEqual(preferences['glass']['source'], 'off')
+        self.assertEqual(preferences['plain']['urls'], ['https://a.test/1.jpg'])
+
+    def test_sanitize_drops_bad_values(self):
+        cleaned = service.sanitize_preference({
+            'source': 'hack', 'kind': 'gif',
+            'urls': ['https://ok.test/a.jpg', 'file:///etc/passwd', 'javascript:alert(1)', 42, 'https://ok.test/a.jpg', '  '],
+            'active': 99, 'name': 'x' * 200, 'entry': 5,
+        })
+        self.assertEqual(cleaned['source'], 'off')
+        self.assertEqual(cleaned['kind'], 'image')
+        self.assertEqual(cleaned['urls'], ['https://ok.test/a.jpg'])
+        self.assertEqual(cleaned['active'], 0)
+        self.assertEqual(len(cleaned['name']), 120)
+        self.assertNotIn('entry', cleaned)
+
+    def test_active_clamped_into_range(self):
+        cleaned = service.sanitize_preference({'source': 'url', 'urls': ['https://a.test/1.jpg', 'https://b.test/2.jpg'], 'active': 1})
+        self.assertEqual(cleaned['active'], 1)
+        self.assertEqual(service.sanitize_preference({'source': 'url', 'active': 5})['active'], 0)
+
+    def test_rejects_unknown_material(self):
+        with self.assertRaises(service.BackgroundError):
+            service.save_preference('metal', {'source': 'off'})
+
+    def test_corrupt_file_reads_empty(self):
+        (self.dir / 'preference.json').write_text('{不是 JSON', encoding='utf-8')
+        self.assertEqual(service.load_preferences(), {})
+
+
+class TestUploadLimit(unittest.TestCase):
+    """本地上传与远程代抓的上限不同：界面承诺 200 MB，迁移旧浏览器图片时不能被 20 MB 卡住。"""
+
+    def test_upload_limit_is_larger_than_fetch_limit(self):
+        self.assertGreater(service.MAX_UPLOAD_BYTES, service.MAX_BYTES)
+
+    def test_upload_accepts_file_over_fetch_limit(self):
+        with tempfile.TemporaryDirectory() as folder:
+            with mock.patch.object(service, 'LIBRARY_DIR', Path(folder)), \
+                 mock.patch.object(service, 'INDEX_FILE', Path(folder) / 'index.json'), \
+                 mock.patch.object(service, 'MAX_UPLOAD_BYTES', 4):
+                with self.assertRaises(service.BackgroundError):
+                    service.gallery_add_bytes(b'12345', 'big.jpg')
+                self.assertEqual(service.gallery_add_bytes(b'123', 'small.jpg')['size'], 3)
+
+    def test_params_accept_frontend_payload(self):
+        """前端发来的就是这个形状；严格模型下也必须过。"""
+        from module.api import protocol
+        params = protocol.BackgroundPreferenceParams.model_validate(
+            {'material': 'plain', 'preference': {'source': 'url', 'kind': 'image', 'urls': ['https://a.test/1.jpg'], 'active': 0, 'name': ''}}
+        )
+        self.assertEqual(params.material, 'plain')
+        self.assertEqual(params.preference['urls'], ['https://a.test/1.jpg'])
+        self.assertEqual(protocol.BackgroundPreferenceParams.model_validate({'material': 'glass'}).preference, {})
+
+
 if __name__ == '__main__':
     unittest.main()

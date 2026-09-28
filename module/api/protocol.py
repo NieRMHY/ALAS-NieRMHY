@@ -68,6 +68,12 @@ class BackgroundGalleryRemoveParams(Params):
     id: StrictStr = Field(min_length=1, max_length=128)
 
 
+class BackgroundPreferenceParams(Params):
+    """背景记录写入参数模型。"""
+    material: Literal['glass', 'plain']
+    preference: dict[str, Any] = Field(default_factory=dict)
+
+
 class InstanceParams(Params):
     """单实例操作通用入参模型。"""
     instance: StrictStr = Field(min_length=1, max_length=64)

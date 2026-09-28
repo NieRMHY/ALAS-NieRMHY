@@ -79,6 +79,10 @@ class Router:
             'background.gallery.remove': Method(p.BackgroundGalleryRemoveParams,
                                                     lambda x: {'removed': background.gallery_remove(x.id)}, True),
             'background.gallery.open': Method(p.Params, lambda _: background.gallery_open(), True),
+            # Add by MHY, 背景记录存服务端：换浏览器 / 换访问地址也能看到同一张背景
+            'background.preference.get': Method(p.Params, lambda _: background.load_preferences()),
+            'background.preference.set': Method(p.BackgroundPreferenceParams,
+                                                lambda x: background.save_preference(x.material, x.preference), True),
         }
 
     @property

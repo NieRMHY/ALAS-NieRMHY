@@ -33,6 +33,9 @@ INDEX_FILE = LIBRARY_DIR / 'index.json'
 MAX_REDIRECTS = 5
 TIMEOUT = 10
 MAX_BYTES = 20 * 1024 * 1024
+# Add by MHY, 本地上传是用户自己的文件，上限跟界面声明的 200 MB 对齐（旧版浏览器上传也是这个量级）；
+# 远程代抓仍按 MAX_BYTES 限制，避免把大文件拖进服务端。
+MAX_UPLOAD_BYTES = 200 * 1024 * 1024
 IMAGE_SUFFIX = ('.jpg', '.jpeg', '.png', '.webp', '.gif', '.bmp', '.avif')
 VIDEO_SUFFIX = ('.mp4', '.webm', '.mov')
 USER_AGENT = 'AzurPilot/1.0 (+background)'
@@ -291,8 +294,8 @@ def gallery_add_bytes(data: bytes, filename: str, content_type: str = '') -> Dic
     """
     if not data:
         raise BackgroundError('所选文件为空。')
-    if len(data) > MAX_BYTES:
-        raise BackgroundError('文件超过 20 MB。')
+    if len(data) > MAX_UPLOAD_BYTES:
+        raise BackgroundError('文件超过 200 MB。')
     suffix = Path(filename or '').suffix.lower()
     is_video = content_type.startswith('video/') or suffix in VIDEO_SUFFIX
     if not (content_type.startswith('image/') or is_video or suffix in IMAGE_SUFFIX):
@@ -354,3 +357,96 @@ def gallery_path(identifier: str) -> Optional[Path]:
         return None
     path = LIBRARY_DIR / identifier
     return path if path.is_file() else None
+
+
+# Add by MHY, 背景记录（选的是图库哪一张 / 哪一行地址）原先只存在浏览器 localStorage，
+# 换浏览器或换访问地址（局域网 IP 与 frp 公网域名各算一份存储）就丢了；这里把它也落到
+# 服务端，与图库文件放在同一棵目录下，所有浏览器与访问地址共用一份。
+PREFERENCE_FILE = PROJECT_ROOT / 'cache' / 'background' / 'preference.json'
+PREFERENCE_MATERIALS = ('glass', 'plain')
+PREFERENCE_SOURCES = ('off', 'url', 'upload')
+MAX_PREFERENCE_URLS = 50
+
+
+def clean_preference_url(value: Any) -> Optional[str]:
+    """背景地址只需具备可用的协议与长度；不合法的单条丢弃，不因一行脏数据拒绝整份记录。"""
+    if not isinstance(value, str):
+        return None
+    url = value.strip()
+    if not url or len(url) > 2048:
+        return None
+    if not url.startswith(('http://', 'https://')):
+        return None
+    return url
+
+
+def sanitize_preference(raw: Any) -> Dict[str, Any]:
+    """把前端传来的背景记录归一化成可落盘的最小集合。
+
+    Args:
+        raw: 前端记录，内容不可信，缺字段或类型不对时逐项回退默认值。
+
+    Returns:
+        含 source / kind / urls / active / name 的字典，图库模式再带 entry。
+    """
+    data = raw if isinstance(raw, dict) else {}
+    source = data.get('source') if data.get('source') in PREFERENCE_SOURCES else 'off'
+    kind = data.get('kind') if data.get('kind') in ('image', 'video') else 'image'
+    urls: List[str] = []
+    for value in data.get('urls') or []:
+        cleaned = clean_preference_url(value)
+        if cleaned and cleaned not in urls:
+            urls.append(cleaned)
+        if len(urls) >= MAX_PREFERENCE_URLS:
+            break
+    active = data.get('active')
+    if not isinstance(active, int) or isinstance(active, bool) or not 0 <= active < len(urls):
+        active = 0
+    name = data.get('name') if isinstance(data.get('name'), str) else ''
+    entry = data.get('entry') if isinstance(data.get('entry'), str) else ''
+    preference: Dict[str, Any] = {
+        'source': source, 'kind': kind, 'urls': urls, 'active': active, 'name': name[:120],
+    }
+    if entry:
+        preference['entry'] = entry[:128]
+    return preference
+
+
+def load_preferences() -> Dict[str, Dict[str, Any]]:
+    """读回全部材质的背景记录；从未保存过时返回空字典，由前端沿用自身默认档。"""
+    if not PREFERENCE_FILE.exists():
+        return {}
+    try:
+        data = json.loads(PREFERENCE_FILE.read_text(encoding='utf-8'))
+    except (OSError, ValueError):
+        logger.warning(f'[背景] 记录损坏，按空处理：{PREFERENCE_FILE}')
+        return {}
+    if not isinstance(data, dict):
+        return {}
+    return {
+        material: sanitize_preference(data[material])
+        for material in PREFERENCE_MATERIALS if material in data
+    }
+
+
+def save_preference(material: str, raw: Any) -> Dict[str, Dict[str, Any]]:
+    """写入某个材质的背景记录，并返回写入后的全部记录。
+
+    Args:
+        material: glass 或 plain。
+        raw: 前端记录。
+
+    Returns:
+        写入后的完整记录表。
+
+    Raises:
+        BackgroundError: 材质名不在支持范围内。
+    """
+    if material not in PREFERENCE_MATERIALS:
+        raise BackgroundError(f'未知的材质：{material}')
+    preferences = load_preferences()
+    preferences[material] = sanitize_preference(raw)
+    PREFERENCE_FILE.parent.mkdir(parents=True, exist_ok=True)
+    PREFERENCE_FILE.write_text(json.dumps(preferences, ensure_ascii=False, indent=2), encoding='utf-8')
+    logger.info(f'[背景] 已保存 {material} 记录：{preferences[material]["source"]}')
+    return preferences

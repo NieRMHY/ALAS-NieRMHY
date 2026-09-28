@@ -251,7 +251,8 @@ WebUI 涉及三类配置，读写路径与生效时机各不相同：
 | --- | --- | --- | --- |
 | 实例任务配置 | `config/<instance>.json` | 浏览器 `config.patch`（白名单校验 + 事务写）；worker 经 `AzurLaneConfig` 属性绑定读写（路径 `Task.Group.Argument`，访问 `self.config.Group_Argument`） | worker 在任务边界 mtime 热重载，无需重启 |
 | 部署配置 | `config/deploy.yaml` | `settings.get` / `settings.patch`；`DeployConfig.__setattr__` 属性写即落盘 | 监听、自动运行等重启服务后生效 |
-| 界面偏好 | `config/webui_prefs.json` + 浏览器 localStorage / IndexedDB | 服务端读写见 `module/webui/webui_prefs.py`（遗留，见第 17 节）；主题、语言、背景等保存在浏览器 | 主题即时生效；服务端偏好下次读取生效 |
+| 界面偏好 | `config/webui_prefs.json` + 浏览器 localStorage | 服务端读写见 `module/webui/webui_prefs.py`（遗留，见第 17 节）；主题、语言等保存在浏览器 | 主题即时生效；服务端偏好下次读取生效 |
+| 背景记录 | `cache/background/preference.json` + `cache/background/library/` | `background.preference.get/set` 与 `background.gallery.*`；图库文件由 `/background-library/<id>` 静态提供 | 保存后立刻对所有浏览器与访问地址生效（各端下次加载读取服务端记录） |
 
 关键关联：
 

@@ -19,7 +19,7 @@ frontend/README.md 与 frontend/API.md 已经是本前端的详细文档：前�
 - 配置表单展示与保存：字段保存队列、草稿恢复、重试与数值校验（`src/config/EditQueue.ts`）
 - 任务优先级字段的拖动排序与解析：`src/app/taskPriority.ts`（纯函数：解析/合并/移动）+ `src/components/TaskPriorityField.tsx`（拖拽交互），写入 `Scheduler_Scheduler_Tasks`，提交值用 `
 > ` 分隔（注释行与全角箭头已兼容归一）
-- 主题、语言、背景等浏览器侧偏好的保存与应用（localStorage / IndexedDB）
+- 主题、语言等浏览器侧偏好的保存与应用（localStorage）；背景记录与图库文件存服务端，见 `module/api/background_service.py`
 - 日志面板在数据进入 React state 前只保留最近 1000 条，作为后端环形缓冲之外的独立防线，避免异常历史 payload 在 WebView2 中生成超大 DOM
 - 独立 mock 服务（`mock/`），无需 Python、ADB 或模拟器即可开发验证前端交互
 
@@ -83,7 +83,7 @@ Node.js >= 22.12（推荐 24），首次准备用 `npm ci --prefix frontend`。
 - **不要在 React 中重复登记游戏配置**：配置表单直接读取后端生成的 args.json、menu.json 与翻译文件；新增任务或参数只需改 `module/config/` 并重新生成。
 - 新增选择器使用 `FormControls.tsx` 的 `Select`，配置字段使用 `FieldInput`，不要在各页面单独绘制箭头、勾选等图标。
 - 控制台固定文案在 `src/i18n.ts`（五种语言）；游戏任务配置的名称与说明翻译在 `module/config/i18n/`，二者独立，别改错位置。
-- 主题与背景偏好只存浏览器（localStorage / IndexedDB），不写入服务端部署配置；上传背景保存在 IndexedDB（最大 200 MB）。
+- 主题与语言只存浏览器（localStorage），不写入服务端部署配置；**背景是例外**：生效记录存 `cache/background/preference.json`，图库文件存 `cache/background/library/`，所以换浏览器或换访问地址（局域网 IP 与 frp 公网域名各算一份浏览器存储）看到的是同一张背景。旧的浏览器 IndexedDB 上传图会在首次打开时自动迁移进服务端图库。
 
 ## 19. 调试方法
 

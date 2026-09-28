@@ -37,6 +37,8 @@ export interface Parameters {
   "background.gallery.add": { url: string; name?: string }
   "background.gallery.remove": { id: string }
   "background.gallery.open": Record<string, never>
+  "background.preference.get": Record<string, never>
+  "background.preference.set": { material: "glass" | "plain"; preference?: Record<string, unknown> }
   "auth.login": { password?: string }
   "events.subscribe": { instance?: string | null; topics: Array<"instances" | "overview" | "logs" | "preview"> }
 }

@@ -1,5 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { DEFAULT_BACKGROUND_URLS, normalizeBackgroundUrl, readBackgroundPreference } from './background'
+import type { ServerBackgroundPreference } from '../api/types'
+import { DEFAULT_BACKGROUND_URLS, cacheServerBackgrounds, normalizeBackgroundUrl, readBackgroundPreference } from './background'
+import { getThemePreference } from './theme'
 
 describe('背景地址校验', () => {
   it('接受 HTTP 与 HTTPS 地址并清理首尾空白', () => {
@@ -70,5 +72,23 @@ describe('背景记录按材质读回', () => {
   it('损坏或空白的记录回落到该材质的默认档', () => {
     store({'azurpilot.background.plain': '{不是 JSON'})
     expect(readBackgroundPreference('plain').source).toBe('off')
+  })
+
+  /* 服务端记录是「所有浏览器/访问地址共用」的那份：两个材质都写进本地缓存，只让当前材质生效。 */
+  it('服务端记录写进本地缓存，并返回当前材质的那份', () => {
+    const data = store({})
+    const glass: ServerBackgroundPreference = {source: 'off', kind: 'image', urls: [], active: 0, name: ''}
+    const plain: ServerBackgroundPreference = {source: 'url', kind: 'image', urls: ['https://a.test/1.jpg'], active: 0, name: ''}
+    const applied = cacheServerBackgrounds({glass, plain})
+    expect(JSON.parse(data['azurpilot.background']).source).toBe('off')
+    expect(JSON.parse(data['azurpilot.background.plain']).source).toBe('url')
+    expect(applied?.urls).toEqual(getThemePreference().material === 'plain' ? plain.urls : glass.urls)
+  })
+
+  it('服务端没有记录时返回 null，不覆盖本地记录', () => {
+    store({'azurpilot.background': JSON.stringify({source: 'off', kind: 'image', urls: [], active: 0, name: ''})})
+    expect(cacheServerBackgrounds({})).toBeNull()
+    expect(cacheServerBackgrounds(null)).toBeNull()
+    expect(readBackgroundPreference('glass').source).toBe('off')
   })
 })

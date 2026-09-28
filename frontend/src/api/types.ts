@@ -78,6 +78,16 @@ export interface ApiResponse { v: 1; type: 'response'; id: string; ok: boolean; 
 export interface ScriptDiagnostic { code?: string; message: string; line?: number | null; column?: number | null; severity?: 'error' | 'warning' }
 export interface ShopStrategyValidation { valid: boolean; diagnostics: ScriptDiagnostic[]; summary?: string }
 export type ShopStrategyTask = 'EventShop' | 'ShopFrequent' | 'ShopOnce' | 'PrivateQuarters' | 'OpsiShop' | 'OpsiVoucher'
+/** 服务端保存的背景记录：与前端 BackgroundPreference 同构，所有浏览器与访问地址共用一份。 */
+export interface ServerBackgroundPreference {
+  source: 'off' | 'url' | 'upload'
+  kind: 'image' | 'video'
+  urls: string[]
+  active: number
+  name: string
+  entry?: string
+}
+export type ServerBackgrounds = Partial<Record<'glass' | 'plain', ServerBackgroundPreference>>
 /** 背景图库条目：文件都放在服务器的 cache/background/library 下。 */
 export interface BackgroundGalleryEntry {
   id: string
@@ -92,6 +102,8 @@ export interface Results {
   'accounts.status': AccountStatus
   'accounts.manage': AccountStatus
   'background.resolve': {final_url: string; content_type: string}
+  'background.preference.get': ServerBackgrounds
+  'background.preference.set': ServerBackgrounds
   'background.gallery.list': BackgroundGalleryEntry[]
   'background.gallery.add': {entry: BackgroundGalleryEntry}
   'background.gallery.remove': {removed: boolean}

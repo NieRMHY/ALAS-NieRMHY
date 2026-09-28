@@ -3,14 +3,14 @@
  */
 
 import { api } from '../api/client'
-import type { BackgroundGalleryEntry } from '../api/types'
+import type { BackgroundGalleryEntry, ServerBackgrounds } from '../api/types'
 import { getThemePreference, subscribeTheme, type Material } from './theme'
 
 /** 'default' 只是旧记录里的档位：读入时折算成 URL 模式的内置 API，不再写回。 */
 export type BackgroundSource = 'off' | 'url' | 'upload'
 export type BackgroundKind = 'image' | 'video'
 
-export interface BackgroundPreference {
+export type BackgroundPreference = {
   source: BackgroundSource
   kind: BackgroundKind
   /** URL 模式：一行一个随机图 API，本次生效其中一条。 */
@@ -155,7 +155,53 @@ function publish(patch: Partial<BackgroundSnapshot>) {
 }
 
 function savePreference(value: BackgroundPreference) {
-  try { localStorage.setItem(backgroundStorageKey(getThemePreference().material), JSON.stringify(value)) } catch { /* 本次会话内仍立即生效。 */ }
+  const material = getThemePreference().material
+  try { localStorage.setItem(backgroundStorageKey(material), JSON.stringify(value)) } catch { /* 本次会话内仍立即生效。 */ }
+  pushServerBackground(material, value)
+}
+
+/** 把记录写回服务端：换浏览器、换访问地址（局域网 / frp 公网域名）都读同一份。失败只记日志。 */
+function pushServerBackground(material: Material, preference: BackgroundPreference) {
+  void api.request('background.preference.set', {material, preference})
+    .catch((error: Error) => logger(`同步到服务端失败：${error.message}`))
+}
+
+/** 当前快照与某条记录是否等价（用于避免服务端记录与本地一致时的多余重绘）。 */
+function samePreference(next: BackgroundPreference, current: BackgroundSnapshot) {
+  return next.source === current.source && next.kind === current.kind
+    && next.name === current.name && next.entry === current.entry
+    && activeBackgroundUrl(next) === activeBackgroundUrl(current)
+}
+
+/** 把服务端记录写进本地缓存（两个材质都写），返回当前材质应采用的记录；服务端没有记录时返回 null。
+    缓存是为了让切换材质仍然即时，以及服务端不可达时保持上次的样子。 */
+export function cacheServerBackgrounds(remote: ServerBackgrounds | null | undefined): BackgroundPreference | null {
+  if (!remote || typeof remote !== 'object') return null
+  const material = getThemePreference().material
+  let applied: BackgroundPreference | null = null
+  for (const key of ['glass', 'plain'] as Material[]) {
+    const record = remote[key]
+    if (!record) continue
+    try { localStorage.setItem(backgroundStorageKey(key), JSON.stringify(record)) } catch { /* 写不进缓存时本次仍按服务端记录生效。 */ }
+    if (key === material) applied = readBackgroundPreference(key)
+  }
+  return applied
+}
+
+/** 启动时以服务端记录为准：同一个服务端，任何浏览器 / 任何访问地址都铺同一张背景。
+    服务端没有记录（老版本或从未设置过）或读取失败时，保持本地记录不动。 */
+export async function syncBackgroundFromServer(): Promise<boolean> {
+  let remote: ServerBackgrounds
+  try { remote = await api.request('background.preference.get', {}) } catch { return false }
+  const next = cacheServerBackgrounds(remote)
+  if (!next || samePreference(next, snapshot)) return false
+  replaceObjectUrl()
+  publish({
+    ...next,
+    assetUrl: next.source === 'upload' && next.entry ? galleryUrl(next.entry) : directMediaUrl(activeBackgroundUrl(next)),
+    directUrl: '', resolveError: '', loading: next.source === 'upload',
+  })
+  return true
 }
 
 function replaceObjectUrl(next = '') {
@@ -314,6 +360,8 @@ export async function initBackgroundGallery() {
      没有这个守卫就会「解析→revision 变→effect 重跑→再解析」无限重解析（随机图 API 每次都是新图，表现就是背景狂闪）。 */
   if (bootstrapped) return
   bootstrapped = true
+  /* 先取服务端记录：本地这份可能只是浏览器缓存，服务端才是各端共用的那份。 */
+  await syncBackgroundFromServer()
   await refreshGallery()
   /* 迁移必须排在"随机铺一张"之前：随机铺一张会把快照里的名字换成库里的条目名，
      迁移再拿这个名字去登记，旧图的文件名就丢了。 */
@@ -338,7 +386,10 @@ async function migrateStoredUpload() {
     }
     await deleteStoredFile()
     localStorage.setItem(MIGRATED_KEY, '1')
-  } catch { /* 迁移失败不影响使用：图库照常工作，下次启动再试。 */ }
+  } catch (error) {
+    /* 迁移失败不影响使用：图库照常工作，下次启动再试。留痕便于排查（例如文件超过上限）。 */
+    logger(`浏览器上传背景迁移进图库失败，下次启动重试：${(error as Error).message}`)
+  }
 }
 
 /** 在系统文件管理器里打开图库文件夹。 */
