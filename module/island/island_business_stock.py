@@ -14,7 +14,13 @@ _check_products_stock_for_batch()；替换逻辑 replace_missing_products()
 import os
 
 from module.base.template import Template
+from module.island.island_away_cook import (
+    pick_away_cook,
+    rotation_key,
+    season_items_for_shop,
+)
 from module.island.island_economy import EconomyDatabase
+from module.island.island_season import SeasonConfig
 from module.island.warehouse import WarehouseOCR
 from module.logger import logger
 
@@ -170,6 +176,12 @@ class BusinessStockCheckMixin:
                 logger.warning("[岛屿-库存校验] 现场截图保存失败")
             return 0
 
+        # 顺带按赛季缺口轮换「常驻餐品」，把剩下的空闲岗位用起来
+        try:
+            self._rotate_away_cook(shop_type, counts)
+        except Exception as e:
+            logger.warning(f"[岛屿-常驻餐品] 轮换失败: {e}")
+
         new_products, replacements = self.replace_missing_products(shop_name, counts)
         for missing, candidate, stock in replacements:
             logger.info(f"[岛屿-库存校验] {shop_name} {missing} 无库存，"
@@ -179,6 +191,44 @@ class BusinessStockCheckMixin:
         else:
             logger.info(f"[岛屿-库存校验] {shop_name} 配置商品库存充足，无需替换")
         return len(replacements)
+
+    def _rotate_away_cook(self, shop_type, counts):
+        """
+        按赛季任务缺口切换本店常驻餐品（Island<店>NextTask.AwayCook）。
+
+        缺口用刚读到的仓库库存算；没有库存模板的物品按 0 计（保守：当作
+        还没攒）。物品攒够后自动切到下一个缺得最多的。
+
+        Args:
+            shop_type: 店铺类型标识
+            counts: {商品英文名: 仓库库存}
+        """
+        key = rotation_key(shop_type)
+        if not key:
+            return
+        season = SeasonConfig(self.config).season
+        if not season:
+            return
+
+        # 赛季物品的库存：有仓库模板的才读得到，没有的按 0 处理
+        season_counts = dict(counts)
+        for item, _, _ in season_items_for_shop(shop_type, season):
+            if item in season_counts:
+                continue
+            template = self._stock_check_template(shop_type, item)
+            if template is None:
+                season_counts[item] = 0
+                continue
+            season_counts[item] = WarehouseOCR().ocr_item_quantity(self.device.image, template)
+
+        target = pick_away_cook(shop_type, season, season_counts)
+        current = self.config.cross_get(key, default='None')
+        if target == current:
+            return
+        logger.info(f"[岛屿-常驻餐品] {shop_type}: {current} -> {target}"
+                    f"（赛季缺口 {season}）")
+        self.config.cross_set(key, target)
+        self.config.update()
 
     def _check_products_stock_for_batch(self, batch_shops):
         """
