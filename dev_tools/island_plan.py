@@ -37,8 +37,8 @@ def parse_args(argv=None):
     parser.add_argument('--season', default=None,
                         choices=['spring', 'summer', 'autumn', 'winter'],
                         help='当前季节；不传则只安排常驻商品')
-    parser.add_argument('--shelf-slots', type=int, default=SHELF_SLOTS,
-                        help=f'上架格数，默认 {SHELF_SLOTS}')
+    parser.add_argument('--shelf-slots', type=int, default=None,
+                        help='上架格数，默认按店铺等级（钻石 4 格）')
     parser.add_argument('--warehouse', default=None,
                         help='仓库库存 JSON 文件；传入后无库存商品不上架')
     parser.add_argument('--config', default=os.path.join('config', 'ALAS.json'),

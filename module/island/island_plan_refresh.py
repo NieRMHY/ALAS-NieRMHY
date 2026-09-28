@@ -10,7 +10,10 @@ WebUI 岛屿计划 → 总览 里勾选「刷新生产/上架方案」后，下�
 
 写配置用 config 对象而不是直接改文件，避免与调度器的保存互相覆盖。
 """
+from module.island.island_economy import SHOP_CN_NAMES
 from module.island.island_planner import (
+    SHELF_SLOTS,
+    SHOP_TASKS,
     config_key_values,
     plan_all,
     refresh_verified_from_logs,
@@ -46,8 +49,23 @@ def refresh_plan_if_requested(config):
             counts = refresh_verified_from_logs()
             logger.info(f"[岛屿-方案刷新] 已验证可生产白名单已更新: {counts}")
 
+        # 玩家手动配置的上架清单优先保留（例如照抄社区方案），其余格位由方案补
+        manual_shelf = {}
+        for shop, (task, index, _) in SHOP_TASKS.items():
+            manual = []
+            for i in range(1, SHELF_SLOTS + 1):
+                value = config.cross_get(
+                    f'IslandBusiness.IslandBusinessShop{index}.Product{i}', default='None')
+                if value and value != 'None':
+                    manual.append(value)
+            if manual:
+                manual_shelf[shop] = manual
+        if manual_shelf:
+            logger.info(f"[岛屿-方案刷新] 保留手动上架: "
+                        f"{ {SHOP_CN_NAMES.get(k, k): v for k, v in manual_shelf.items()} }")
+
         plans = plan_all(season=season, shelf_slots=shelf_slots,
-                         verified_only=verified_only)
+                         verified_only=verified_only, manual_shelf=manual_shelf)
         values = config_key_values(plans)
         config.cross_set_many(values)
         logger.info(f"[岛屿-方案刷新] 已写入 {len(values)} 项配置（季节 {season}，"
@@ -55,7 +73,8 @@ def refresh_plan_if_requested(config):
         for shop, plan in plans.items():
             meals = '、'.join(f'{n}x{q}' for n, q in plan.meals) or '（空）'
             logger.info(f"[岛屿-方案刷新] {plan.cn_name}: 生产 {meals}；"
-                        f"上架 {plan.shelf or '（空）'}")
+                        f"上架 {plan.shelf or '（空）'}；"
+                        f"产能 {plan.minutes / 60:.2f} 时")
     except Exception:
         logger.exception("[岛屿-方案刷新] 刷新失败，本次跳过")
     finally:
