@@ -15,12 +15,29 @@ from module.statistics.utils import *
 
 
 class BonusItem(Item):
+    """战役额外奖励物品对象。"""
+
     def predict_valid(self):
+        """判断奖励格是否包含有效物品图标。
+
+        Returns:
+            bool: 灰度均值大于阈值返回 True，否则返回 False。
+        """
         return np.mean(rgb2gray(self.image) > 160) > 0.1
 
 
 class CampaignBonusStatistics(GetItemsStatistics):
+    """战役连续战斗结算额外奖励统计。"""
+
     def appear_on(self, image):
+        """检查截图是否为连续战斗奖励弹窗界面。
+
+        Args:
+            image (np.ndarray): 截图图像。
+
+        Returns:
+            bool: 匹配成功返回 True，否则返回 False。
+        """
         if AUTO_SEARCH_MENU_EXIT.match(image, offset=(200, 20)) \
                 and (CAMPAIGN_BONUS.match(image, offset=(200, 500)) \
                 or CAMPAIGN_BONUS_SINGLE.match(image, offset=(200, 500))):

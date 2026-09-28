@@ -1,5 +1,7 @@
-"""WSA（Windows Subsystem for Android）截图和控制后端。
-继承 Connection，通过 ADB 连接 WSA 实例进行截图和操作。"""
+"""WSA（Windows Subsystem for Android）截图与控制后端模块。
+
+继承 Connection，封装 WSA 特有的多显示屏检测（display id）、应用启动、前台应用检测和屏幕分辨率重置逻辑。
+"""
 
 import re
 from functools import partial
@@ -25,15 +27,17 @@ retry = partial(retry_backend, recover=_retry_recover, label='设备-WSA')
 
 
 class WSA(Connection):
+    """WSA 平台特定的连接与操作实现类。"""
 
     @retry
     def app_current_wsa(self):
-        """
+        """获取 WSA 中当前处于前台焦点的应用包名。
+
         Returns:
-            str: 包名。
+            str: 前台应用包名。
 
         Raises:
-            OSError
+            OSError: 无法获取前台应用时抛出。
         """
         # 尝试: adb shell dumpsys activity top
         _activityRE = re.compile(
@@ -46,19 +50,23 @@ class WSA(Connection):
             ret = m.group('package')
             if ret == self.package:
                 return ret
-        if ret:  # get last result
+        if ret:  # 获取最后匹配的结果
             return ret
         raise OSError("Couldn't get focused app")
 
     @retry
     def app_start_wsa(self, package_name=None, display=0):
-        """
+        """在 WSA 指定显示器上启动目标应用。
+
         Args:
-            package_name (str):
-            display (int):
+            package_name (str | None): 目标应用包名，默认使用当前绑定的 package。
+            display (int): 目标显示屏 ID。
 
         Returns:
-            bool: 是否成功启动
+            bool: 启动成功返回 True。
+
+        Raises:
+            PackageNotInstalled: 目标应用包未安装时抛出。
         """
         if not package_name:
             package_name = self.package
@@ -66,20 +74,24 @@ class WSA(Connection):
         activity_name = self.get_main_activity_name(package_name=package_name)
         result = self.adb_shell(['am', 'start', '--display', display, f'{package_name}/{activity_name}'])
         if 'Activity not started' in result or 'does not exist' in result:
-            # Starting: Intent { act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] pkg=xxx }
-            # Error: Activity not started, unable to resolve Intent { ... }
-
-            # Starting: Intent { act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] cmp=com.bilibili.azurlane/xxx }
-            # Error type 3
-            # Error: Activity class {com.bilibili.azurlane/com.manjuu.azurlane.MainAct} does not exist.
             logger.error(result)
             raise PackageNotInstalled(package_name)
         else:
-            # Starting: Intent { act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] cmp=.../... }
             return True
 
     @retry
     def get_main_activity_name(self, package_name=None):
+        """获取目标应用包的主 Activity 名称。
+
+        Args:
+            package_name (str | None): 目标应用包名。
+
+        Returns:
+            str: 主 Activity 名称。
+
+        Raises:
+            PackageNotInstalled: 未能解析到主 Activity 或应用未安装时抛出。
+        """
         if not package_name:
             package_name = self.package
         try:
@@ -95,10 +107,10 @@ class WSA(Connection):
 
     @retry
     def get_display_id(self):
-        """
+        """获取游戏运行所在的 WSA 显示屏 ID。
+
         Returns:
-            0: 未找到
-            int: 游戏的 display id
+            int: 游戏的 display id，未找到或运行在默认 display 0 时返回 0。
         """
         try:
             get_dump_sys_display = str(self.adb_shell(['dumpsys', 'display']))
@@ -110,5 +122,10 @@ class WSA(Connection):
 
     @retry
     def display_resize_wsa(self, display):
+        """调整 WSA 指定显示屏的分辨率为 1280x720。
+
+        Args:
+            display (int): 目标显示屏 ID。
+        """
         logger.warning('display ' + str(display) + ' should be resized')
         self.adb_shell(['wm', 'size', '1280x720', '-d', str(display)])

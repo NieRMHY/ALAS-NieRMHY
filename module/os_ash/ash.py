@@ -147,10 +147,8 @@ class OSAsh(UI, MapEventHandler):
         通过 OCR 读取余烬信标的收集进度。
 
         Returns:
-            int: 收集进度值。今日已收集满或状态被遮挡时返回 0，表示无需再收集。
+            int: 信标记录仪当前点数；状态被遮挡时返回 0。
         """
-        if self._ash_fully_collected:
-            return 0
         if self.image_color_count(ASH_COLLECT_STATUS, color=(235, 235, 235), threshold=30, count=20):
             logger.info('[META作战] 信标状态：可收集')
             ocr_collect = DigitCounter(
@@ -174,11 +172,6 @@ class OSAsh(UI, MapEventHandler):
         if daily >= 200:
             logger.info('[META作战] 今日信标数据已收集满')
             self._ash_fully_collected = True
-            # 开头的短路返回只对下一次调用生效，本次必须直接返回 0。
-            # 否则 handle_ash_beacon_attack() 仍会因 status >= 100 触发 OpsiAshBeacon，
-            # 该任务优先级高于 OpsiScheduling，会把正在进行的自动搜索打断，
-            # 而任务本身又无事可做、延迟到次日，导致每轮重复触发形成死循环。
-            return 0
         elif status >= 200:
             logger.info('[META作战] 信标数据达到持有上限')
             self._ash_fully_collected = True

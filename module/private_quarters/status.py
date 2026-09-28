@@ -31,12 +31,13 @@ OCR_SHOP_PRICE = Digit([], letter=(64, 72, 77), name='OCR_SHOP_PRICE')
 
 
 class PQStatus(ShopStatus):
+    """私人休息室货币与互动次数状态识别器。"""
+
     def status_get_gold_coins(self):
-        """
-        OCR 识别商店金币数量。
+        """OCR 识别商店金币数量。
 
         Returns:
-            int: 金币数量
+            int: 金币数量。
 
         Pages:
             in: 私人宿舍商店页
@@ -45,11 +46,10 @@ class PQStatus(ShopStatus):
         return amount
 
     def status_get_gems(self):
-        """
-        OCR 识别商店钻石数量。
+        """OCR 识别商店钻石数量。
 
         Returns:
-            int: 钻石数量
+            int: 钻石数量。
 
         Pages:
             in: 私人宿舍商店页
@@ -58,11 +58,10 @@ class PQStatus(ShopStatus):
         return amount
 
     def status_get_daily_count(self):
-        """
-        OCR 识别每日互动剩余次数。
+        """OCR 识别每日互动剩余次数。
 
         Returns:
-            int: 剩余互动次数
+            int: 剩余互动次数。
 
         Pages:
             in: 私人宿舍主页

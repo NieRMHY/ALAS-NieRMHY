@@ -4,8 +4,18 @@ import cv2
 
 
 class SecretaryDigit(Digit):
+    """秘书舰数值 OCR 识别器，跳过 crop_to_text 以保留紧凑数字布局。"""
 
     def ocr(self, image, direct_ocr=False):
+        """执行数字识别。
+
+        Args:
+            image: 输入图像或裁切区域列表。
+            direct_ocr (bool): 是否直接对传入的图像列表识别。
+
+        Returns:
+            int | list[int]: 识别出的数字或数字列表。
+        """
 
         if direct_ocr:
             image_list = [

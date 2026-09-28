@@ -12,8 +12,14 @@ from module.base.utils import image_channel, load_image, rgb2gray
 
 
 class Mask(Template):
+    """遮罩模板类。
+
+    继承自 Template，扩展用于灰度遮罩图像的匹配和通道转换。
+    """
+
     @property
     def image(self):
+        """获取遮罩图像，自动转为单通道灰度图像。"""
         if self._image is None:
             image = load_image(self.file)
             if image_channel(image) == 3:
@@ -24,17 +30,17 @@ class Mask(Template):
 
     @image.setter
     def image(self, value):
+        """设置遮罩图像。"""
         self._image = value
 
     def set_channel(self, channel):
-        """
-        设置遮罩图像的通道数。
+        """设置遮罩图像的通道数。
 
         Args:
-            channel: 目标通道数，0 为灰度，3 为 RGB。
+            channel (int): 目标通道数，0 为灰度，3 为 RGB。
 
         Returns:
-            通道是否发生了变化。
+            bool: 通道是否发生了变化。
         """
         mask_channel = image_channel(self.image)
         if channel == 0:
@@ -51,14 +57,13 @@ class Mask(Template):
                 return False
 
     def apply(self, image):
-        """
-        将遮罩应用到图像上。
+        """将遮罩应用到图像上。
 
         Args:
-            image: 输入图像。
+            image (np.ndarray): 输入图像。
 
         Returns:
-            应用遮罩后的图像。
+            np.ndarray: 应用遮罩后的图像。
         """
         self.set_channel(image_channel(image))
         return cv2.bitwise_and(image, self.image)

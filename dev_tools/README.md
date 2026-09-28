@@ -20,6 +20,9 @@
 
 ### 图像资源与模板工具
 - **`button_extract.py`**: 读取 `assets` 目录下的原始图片素材，提取按钮区域和颜色特征，自动生成 `module/xx/assets.py` 中的 UI 元素代码。
+- **`button_region_editor.py`**: 按钮区域编辑交互工具，用于快速框选或调整按钮识别范围。
+- **`coordinate_picker.py`**: 游戏截图坐标拾取工具，方便开发者定位特定界面像素点或区域。
+- **`ocr_ncnn_convert.py`**: 从 PP-OCRv6 ONNX 识别模型通过 pnnx 转换为 ncnn 运行时格式（`bin/ocr_models/ncnn/ppocr_v6.param/bin`）。
 - **`relative_record.py` (包含 gif 系列)**: 自动化连续截图辅助工具，通常用来给在海面上浮动的人型塞壬录制动态图，筛选出无背景遮挡的纯净图片作为识别模板。
 - **`relative_crop.py`**: 基于已识别出的海域网格进行等比裁剪测试，主要用于截取分析网格内部的特定区域（如敌人类型图标）。
 
@@ -28,8 +31,11 @@
 - **`campaign_swipe.py`**: 校准工具。控制模拟器在地图中进行滑动测试，透视网格计算实际滑动距离差，拟合输出不同底层（adb、minitouch、maatouch）的最佳地图滑动乘数。
 - **`grids_debug.py`**: 调试工具。能够独立调用 ALAS 的图像透视变换和地图网格提取模块，方便开发者排查“识别不到地图网格格子”或者“格子歪了”等视觉识别报错。
 - **`emulator_test.py`**: 压力测试脚本。对比测试 ADB 和 Uiautomator2 各自的截图速度和点击延迟性能。
+- **`import_smoke_test.py`**: 模块导入冒烟测试。并行扫描全量 `module/` 与 `deploy/` 模块，验证依赖与包结构是否能正常加载。
 
 ### 维护工具
+- **`export_api_schema.py`**: 导出后端 API 架构模型并自动生成前端 TypeScript 契约与 JSON 描述（`frontend/src/api/contract.json` 与 `frontend/src/api/generated.ts`）。
 - **`war_archives_update.py`**: 每当官方将以往活动加入常驻“作战档案（War Archives）”时，该脚本可一键将 ALAS 旧的活动代码挪并批量修正命名路径。
+- **`research_drop_import.py` / `research_drop_repair.py` / `research_drop_verify.py`**: 科研掉落统计数据的导入、结构校验与异常数据修复。
 - **`requirements_updater.py`**: 已停用；依赖统一维护在 `pyproject.toml` 和 `uv.lock`。
 - **`Flatten_generator.py`**: 快速将直观的网格字符串转换为坐标拼接代码的小工具。

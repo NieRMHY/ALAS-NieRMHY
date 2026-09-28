@@ -59,7 +59,17 @@ class CommissionValueModel:
             raise ValueError('委托层内编号半衰期必须为正数')
 
     def filter_factor(self, filter_index):
-        """返回层内过滤器编号的定点价值修正。"""
+        """返回层内过滤器编号的定点价值修正。
+
+        Args:
+            filter_index (int): 层内过滤器规则编号（从 0 开始）。
+
+        Returns:
+            int: 缩放后的定点价值系数。
+
+        Raises:
+            ValueError: 过滤器编号为负数。
+        """
         if filter_index < 0:
             raise ValueError('委托过滤器编号必须为非负整数')
         floor = self.filter_value_floor / 10_000
@@ -70,7 +80,14 @@ class CommissionValueModel:
 
     @classmethod
     def from_config(cls, config):
-        """从委托 UI 配置构造与开发工具一致的价值模型。"""
+        """从委托 UI 配置构造与开发工具一致的价值模型。
+
+        Args:
+            config: 包含委托配置项的配置实例。
+
+        Returns:
+            CommissionValueModel: 初始化的价值模型实例。
+        """
         defaults = cls()
         return cls(
             tier_value_ratio=round(float(getattr(
@@ -218,7 +235,15 @@ class _BeamState:
 
 
 def _job_base_values(jobs, model):
-    """构造各委托的未折现定点价值。"""
+    """构造各委托的未折现定点价值。
+
+    Args:
+        jobs (Iterable[CommissionPlanJob]): 委托任务列表。
+        model (CommissionValueModel): 委托价值模型。
+
+    Returns:
+        tuple[int, ...]: 每个委托的基础定点价值元组。
+    """
     maximum_tier = max((job.tier for job in jobs), default=0)
     return tuple(
         round(
@@ -236,7 +261,21 @@ def optimize_commission_plan(
     model=DEFAULT_VALUE_MODEL,
     beam_width=None,
 ):
-    """返回多项式束搜索的最佳计划、最优性证书与稳定委托列表。"""
+    """返回多项式束搜索的最佳计划、最优性证书与稳定委托列表。
+
+    Args:
+        jobs (Iterable[CommissionPlanJob]): 候选委托作业列表。
+        slot_available (Iterable[int]): 各舰队槽位可用的时间（相对规划时刻的秒数）。
+        horizon (int): 规划总时间视界（秒）。
+        model (CommissionValueModel): 委托价值模型参数。
+        beam_width (int, optional): 束搜索保留状态上限，默认按规模自适应计算。
+
+    Returns:
+        tuple[CommissionPlan, list[CommissionPlanJob]]: 规划结果与作业列表。
+
+    Raises:
+        ValueError: 输入参数不合法时抛出。
+    """
     jobs = list(jobs)
     job_count = len(jobs)
     tier_count = max((job.tier for job in jobs), default=-1) + 1
@@ -459,6 +498,20 @@ def delay_threshold_seconds(
     与放弃它并让 ``delayed_count`` 个高层委托立即启动进行比较。
     ``delayed_deadline`` 是被推迟委托距离最晚启动时刻的总秒数；到达 deadline
     即视为不可行。返回 ``None`` 表示即使放弃被推迟委托仍值得启动低层委托。
+
+    Args:
+        tier_gap (int): 高层与低层之间的 tier 差距。
+        delayed_count (int): 受推迟影响的高层委托数量。
+        delayed_deadline (int): 高层委托的最晚启动期限（秒）。
+        model (CommissionValueModel): 委托价值模型。
+        delaying_filter_index (int): 造成推迟的低层委托过滤器规则编号。
+        delayed_filter_index (int): 被推迟的高层委托过滤器规则编号。
+
+    Returns:
+        int | None: 允许推迟的最大秒数，若永久值得启动则返回 None。
+
+    Raises:
+        ValueError: 输入参数不合法时抛出。
     """
     if tier_gap < 0:
         raise ValueError('tier 间隔必须为非负整数')

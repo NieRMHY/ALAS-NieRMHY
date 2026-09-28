@@ -34,16 +34,17 @@ class CombatManual(ModuleBase):
     manual_executed = False
 
     def combat_manual_reset(self):
+        """重置手动战斗执行状态。"""
         self.manual_executed = False
 
     def handle_combat_stand_still_in_the_middle(self, auto):
         """处理战斗中停留在画面中央的模式。
 
         Args:
-            auto (str): 战斗自动模式。
+            auto (str): 战斗模式配置。
 
         Returns:
-            bool: 是否执行了操作。
+            bool: 是否执行了移动操作。
         """
         if auto != 'stand_still_in_the_middle':
             return False
@@ -59,10 +60,10 @@ class CombatManual(ModuleBase):
         """处理战斗中隐藏到左下角的模式。
 
         Args:
-            auto (str): 战斗自动模式。
+            auto (str): 战斗模式配置。
 
         Returns:
-            bool: 是否执行了操作。
+            bool: 是否执行了移动操作。
         """
         if auto != 'hide_in_bottom_left':
             return False
@@ -74,10 +75,10 @@ class CombatManual(ModuleBase):
         """处理战斗中隐藏到左上角的模式。
 
         Args:
-            auto (str): 战斗自动模式。
+            auto (str): 战斗模式配置。
 
         Returns:
-            bool: 是否执行了操作。
+            bool: 是否执行了移动操作。
         """
         if auto != 'hide_in_upper_left':
             return False
@@ -86,6 +87,11 @@ class CombatManual(ModuleBase):
         return True
 
     def handle_combat_weapon_release(self):
+        """处理手动战斗中的武器释放（航空支援和鱼雷）。
+
+        Returns:
+            bool: 是否点击释放了就绪的武器。
+        """
         if self.appear_then_click(READY_AIR_RAID, interval=10):
             return True
         if self.appear_then_click(READY_TORPEDO, interval=10):
@@ -94,13 +100,15 @@ class CombatManual(ModuleBase):
         return False
 
     def handle_combat_manual(self, auto):
-        """处理手动战斗模式。
+        """处理手动战斗模式下的位置控制。
+
+        根据配置的战斗模式控制舰队移动到指定位置（停留中央、左下或左上）。
 
         Args:
-            auto (str): 战斗自动模式。
+            auto (str): 战斗模式配置。
 
         Returns:
-            bool: 是否执行了操作。
+            bool: 是否执行了手动操作。
         """
         if self.manual_executed or not self.auto_mode_checked:
             return False

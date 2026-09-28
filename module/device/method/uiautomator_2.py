@@ -1,5 +1,9 @@
-# 此文件实现了基于 uiautomator2 的设备交互逻辑。
-# 包含截图、模拟点击、长按、滑动、层级提取（dump）等控制移动端设备的核心操作。
+"""基于 uiautomator2 的设备交互与控制实现模块。
+
+提供 Uiautomator2 类，封装了通过 uiautomator2 进行截图、输入控制、应用管理、
+无障碍节点提取（UI dump）、后台进程管理等核心功能。
+"""
+
 import base64
 import typing as t
 from dataclasses import dataclass
@@ -52,6 +56,15 @@ retry = partial(retry_backend, recover=_retry_recover, label='设备-U2')
 
 @dataclass
 class ProcessInfo:
+    """Android 设备进程信息数据类。
+
+    Attributes:
+        pid (int): 进程 ID。
+        ppid (int): 父进程 ID。
+        thread_count (int): 线程数量。
+        cmdline (str): 命令行字符串。
+        name (str): 进程名称。
+    """
     pid: int
     ppid: int
     thread_count: int
@@ -61,6 +74,13 @@ class ProcessInfo:
 
 @dataclass
 class ShellBackgroundResponse:
+    """后台执行 Shell 命令的响应数据类。
+
+    Attributes:
+        success (bool): 是否成功启动。
+        pid (int): 启动的后台进程 ID。
+        description (str): 响应描述信息。
+    """
     success: bool
     pid: int
     description: str
@@ -143,7 +163,7 @@ class Uiautomator2(Connection):
     def drag_uiautomator2(self, p1, p2, segments=1, shake=(0, 15), point_random=(-10, -10, 10, 10),
                           shake_random=(-5, -5, 5, 5), swipe_duration=0.25, shake_duration=0.1,
                           hold_duration=0.0):
-        """拖拽并抖动，示意如下:
+        r"""拖拽并抖动，示意如下:
                      /\
         +-----------+  +  +
                         \/

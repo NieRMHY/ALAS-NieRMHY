@@ -40,6 +40,7 @@ from module.map_detection.utils import area2corner, corner2inner
 from module.ocr.ocr import Ocr
 from module.os.assets import FLEET_EMP_DEBUFF, MAP_EXIT, MAP_GOTO_GLOBE, STRONGHOLD_PERCENTAGE, TEMPLATE_EMPTY_HP
 from module.os.camera import OSCamera
+from module.os.config import opsi_drop_record
 from module.os.map_base import OSCampaignMap
 from module.os_ash.ash import OSAsh
 from module.os_combat.combat import Combat
@@ -201,6 +202,7 @@ class OSFleet(OSCamera, Combat, Fleet, OSAsh):
         # self.round_battle()
 
     def find_current_fleet(self):
+        """记录当前舰队位置为相机中心。"""
         self.fleet_1 = self.camera
 
     @property
@@ -220,8 +222,12 @@ class OSFleet(OSCamera, Combat, Fleet, OSAsh):
         self._os_map_event_handled = False
 
     def handle_ambush(self):
-        """
+        """处理地图伏击与事件交互。
+
         将地图事件视为伏击，触发行走重试。
+
+        Returns:
+            bool: 是否处理了地图事件。
         """
         if self.handle_map_get_items():
             self._os_map_event_handled = True
@@ -236,8 +242,15 @@ class OSFleet(OSCamera, Combat, Fleet, OSAsh):
             return False
 
     def handle_mystery(self, button=None):
-        """
+        """处理神秘格子交互。
+
         处理伏击后，如果舰队已到达则视为神秘格子，否则仅视为伏击。
+
+        Args:
+            button: 目标格子按钮。
+
+        Returns:
+            str | bool: 成功拾取返回 'get_item'，否则返回 False。
         """
         if self._os_map_event_handled and button.predict_fleet() and button.predict_current_fleet():
             return 'get_item'
@@ -246,8 +259,13 @@ class OSFleet(OSCamera, Combat, Fleet, OSAsh):
 
     @staticmethod
     def _get_goto_expected(grid):
-        """
-        获取 _goto() 中使用的 `expected` 参数值。
+        """获取 _goto() 中使用的 expected 参数值。
+
+        Args:
+            grid: 目标格子对象。
+
+        Returns:
+            str: 预期事件类型，如 'combat'、'mystery' 或空字符串。
         """
         if grid.is_enemy:
             return 'combat'
@@ -285,13 +303,20 @@ class OSFleet(OSCamera, Combat, Fleet, OSAsh):
         return ButtonGrid(origin=(185, 553), delta=(166, 0), button_shape=(99, 4), grid_shape=(6, 1))
 
     def hp_retreat_triggered(self):
+        """检查是否触发血量撤退（大世界中固定为 False）。
+
+        Returns:
+            bool: 始终返回 False。
+        """
         return False
 
     need_repair = [False, False, False, False, False, False]
 
     def hp_get(self):
-        """
-        计算当前血量，同时检测扳手图标（舰船已阵亡，需要修理）。
+        """计算当前血量，同时检测扳手图标（舰船已阵亡，需要修理）。
+
+        Returns:
+            list[float]: 各舰船血量百分比列表。
         """
         super().hp_get()
         if self.config.OpsiHazard1Leveling_SkipHpCheck:
@@ -316,6 +341,7 @@ class OSFleet(OSCamera, Combat, Fleet, OSAsh):
         return self.hp
 
     def _storage_hp_get(self):
+        """在仓库界面中读取血量和修理状态。"""
         super().hp_get()
         ship_icon = self._hp_grid().crop((-29, -165, 106, -30))
         has_ship = [not TEMPLATE_STORAGE_SHIP_EMPTY.match(
@@ -618,13 +644,14 @@ class OSFleet(OSCamera, Combat, Fleet, OSAsh):
             self.wait_until_walk_stable()
 
     def fleet_set(self, index=1, skip_first_screenshot=True):
-        """
+        """切换当前出战舰队。
+
         Args:
-            index (int): Target fleet_current_index
-            skip_first_screenshot (bool):
+            index (int): 目标舰队编号 (1-4)。默认 1。
+            skip_first_screenshot (bool): 是否跳过首次截图。默认 True。
 
         Returns:
-            bool: If switched.
+            bool: 是否成功切换。
         """
         logger.hr(f'舰队设置为 {index}')
         if self.fleet_selector.ensure_to_be(index):
@@ -634,21 +661,23 @@ class OSFleet(OSCamera, Combat, Fleet, OSAsh):
             return False
 
     def storage_fleet_set(self, index=1, skip_first_screenshot=True):
-        """
+        """在仓库界面中切换舰队。
+
         Args:
-            index (int): Target fleet_current_index
-            skip_first_screenshot (bool):
+            index (int): 目标舰队编号 (1-4)。默认 1。
+            skip_first_screenshot (bool): 是否跳过首次截图。默认 True。
 
         Returns:
-            bool: If switched.
+            bool: 是否成功切换。
         """
         logger.hr(f'舰队设置为 {index}')
         return self.storage_fleet_selector.ensure_to_be(index)
 
     def parse_fleet_filter(self):
-        """
+        """解析并返回 Boss 战舰队筛选列表及待命站位。
+
         Returns:
-            list: List of BossFleet or str. Such as [Fleet-4, 'CallSubmarine', Fleet-2, Fleet-3, Fleet-1].
+            list[BossFleet | str]: Boss 舰队对象与控制指令列表。
         """
         FLEET_FILTER.load(self.config.OpsiFleetFilter_Filter)
         fleets = FLEET_FILTER.apply([BossFleet(f) for f in [1, 2, 3, 4]])
@@ -656,6 +685,12 @@ class OSFleet(OSCamera, Combat, Fleet, OSAsh):
         # 设置待命位置
         standby_list = [(-1, -1), (0, -1), (1, -1)]
         index = 0
+        for fleet in fleets:
+            if isinstance(fleet, BossFleet) and index < len(standby_list):
+                fleet.standby_loca = standby_list[index]
+                index += 1
+
+        return fleets
         for fleet in fleets:
             if isinstance(fleet, BossFleet) and index < len(standby_list):
                 fleet.standby_loca = standby_list[index]
@@ -970,7 +1005,7 @@ class OSFleet(OSCamera, Combat, Fleet, OSAsh):
         fleets = self.parse_fleet_filter()
         with self.stat.new(
                 genre=inflection.underscore(self.config.task.command),
-                method=self.config.DropRecord_OpsiRecord
+                method=opsi_drop_record(self.config)
         ) as drop:
             for fleet in fleets:
                 logger.hr(f'回合: {fleet}', level=2)
@@ -1106,6 +1141,15 @@ class OSFleet(OSCamera, Combat, Fleet, OSAsh):
 
     @staticmethod
     def fleet_walk_limit(outside, step=3):
+        """将超出范围的目标向量限制在单次可移动步长网格内。
+
+        Args:
+            outside (np.ndarray | tuple[int, int]): 目标相对向量。
+            step (int): 最大单次移动步长。默认 3。
+
+        Returns:
+            np.ndarray: 限制后的移动网格坐标。
+        """
         if np.linalg.norm(outside) <= 3:
             return outside
         if step == 1:
@@ -1123,6 +1167,11 @@ class OSFleet(OSCamera, Combat, Fleet, OSAsh):
     _nearest_object_click_timer = Timer(2)
 
     def click_nearest_object(self):
+        """检测并点击离舰队最近的交互目标或海域格子。
+
+        Returns:
+            bool: 成功点击返回 True，否则返回 False。
+        """
         if not self._nearest_object_click_timer.reached():
             return False
         if not self.appear(MAP_GOTO_GLOBE, offset=(200, 20)):

@@ -11,7 +11,8 @@ test('生产构建保留高斯模糊且资源图标能够解码', async ({page})
   for (const selector of ['.sidebar', '.right-rail', '.resource-card', '.panel']) {
     await expect(page.locator(selector).first()).toHaveCSS('backdrop-filter', 'blur(24px) saturate(1.3)')
   }
-  await expect(page.locator('.glass-material').first()).toHaveCSS('backdrop-filter', 'blur(18px) saturate(1.25)')
+  // 主题原语现在统一由 --theme-chrome-filter 接管，glass-material 与主玻璃面保持同一默认强度。
+  await expect(page.locator('.glass-material').first()).toHaveCSS('backdrop-filter', 'blur(24px) saturate(1.3)')
   const icons = page.locator('.resource-icon-image')
   await expect(icons.first()).toBeVisible()
   await expect.poll(() => icons.evaluateAll(elements => elements.every(element =>

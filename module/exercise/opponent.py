@@ -76,12 +76,13 @@ class Opponent:
 
     @staticmethod
     def get_level(image):
-        """
+        """从演习准备界面识别对手舰队全部 6 艘船的等级。
+
         Args:
-            image: Screenshot in EXERCISE_PREPARATION.
+            image (np.ndarray): 演习准备界面截图。
 
         Returns:
-            list[int]: Fleet level, such as [120, 120, 120, 120, 120, 120].
+            list[int]: 舰队 6 艘舰船的等级列表，如 [120, 120, 120, 120, 120, 120]。
         """
         level = []
         level += ButtonGrid(origin=(130, 259), delta=(168, 0), button_shape=(58, 21), grid_shape=(3, 1), name='LEVEL').buttons
@@ -92,12 +93,13 @@ class Opponent:
         return result
 
     def get_power(self, image):
-        """
+        """从演习主界面识别指定对手的前排与后排战力。
+
         Args:
-            image: Screenshot in page_exercise.
+            image (np.ndarray): 演习主界面截图。
 
         Returns:
-            list[int]: Fleet power, such as [14848, 13477].
+            list[int]: 两支舰队的战力列表，如 [14848, 13477]。
         """
         grids = ButtonGrid(origin=(222, 257), delta=(244, 30), button_shape=(72, 28), grid_shape=(4, 2), name='POWER')
         power = [grids[self.index, 0], grids[self.index, 1]]
@@ -107,13 +109,13 @@ class Opponent:
         return result
 
     def get_priority(self, method="max_exp"):
-        """
+        """根据指定模式计算当前对手的挑战优先级评分。
+
         Args:
-            method: EXERCISE_CHOOSE_MODE
+            method (str): 对手选择模式，如 'max_exp' 或 'easiest'。
 
         Returns:
-            np.ndarray: Priority of 4 opponents, such as [120, 113.2, 120, 95.3].
-                        Higher priority means attack first.
+            float: 优先级评分，分值越高表示应越优先出战。
         """
         if "easiest" in method:
             level = (1 - (np.sum(self.level) / MAX_LVL_SUM)) * 100
@@ -126,8 +128,7 @@ class Opponent:
 
 
 class OpponentChoose(UI):
-    """
-    对手选择器，负责检查和排序演习对手。
+    """对手选择器，负责检查和排序演习对手。
 
     依次进入每个对手的准备界面，OCR 识别其舰队等级和战力，
     然后根据策略对手进行排序，返回攻击优先级列表。
@@ -141,8 +142,7 @@ class OpponentChoose(UI):
     opponents = []
 
     def _opponent_fleet_check_all(self):
-        """
-        依次检查所有 4 个对手的舰队信息。
+        """依次检查所有 4 个对手的舰队信息。
 
         通过点击每个对手进入演习准备界面，OCR 识别等级和战力后返回。
         """
@@ -159,13 +159,13 @@ class OpponentChoose(UI):
                           appear_button=EXERCISE_PREPARATION, skip_first_screenshot=True)
 
     def _opponent_sort(self, method="max_exp"):
-        """
+        """根据指定策略对所有对手按优先级从高到低排序。
+
         Args:
-            method: EXERCISE_CHOOSE_MODE
+            method (str): 对手选择模式，如 'max_exp' 或 'easiest'。
 
         Returns:
-            list[int]: List of opponent index, such as [2, 1, 0, 3].
-                       Attack one by one.
+            list[int]: 排序后的对手索引列表，如 [2, 1, 0, 3]。
         """
         order = np.argsort([- x.get_priority(method) for x in self.opponents])
         logger.attr('出战顺序', str(order))

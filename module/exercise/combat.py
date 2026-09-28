@@ -19,8 +19,7 @@ from module.ui.assets import EXERCISE_CHECK
 
 
 class ExerciseCombat(HpDaemon, OpponentChoose, ExerciseEquipment, Combat):
-    """
-    演习战斗处理器，整合对手选择、血量监控和装备管理。
+    """演习战斗处理器，整合对手选择、血量监控和装备管理。
 
     继承自 HpDaemon（血量监控）、OpponentChoose（对手选择）、
     ExerciseEquipment（装备管理）和 Combat（战斗逻辑），
@@ -30,15 +29,22 @@ class ExerciseCombat(HpDaemon, OpponentChoose, ExerciseEquipment, Combat):
     """
 
     def _in_exercise(self):
-        """检测当前是否在演习主页面。"""
+        """检测当前是否处于演习主页面。
+
+        Returns:
+            bool: 处于演习页面返回 True，否则返回 False。
+        """
         return self.appear(EXERCISE_CHECK, offset=(20, 20))
 
     def _combat_preparation(self, skip_first_screenshot=True):
-        """
-        处理战斗准备界面，点击开始按钮进入战斗。
+        """处理战斗准备界面，点击出击按钮进入战斗。
 
         Args:
-            skip_first_screenshot (bool): 是否跳过首次截图。
+            skip_first_screenshot (bool): 是否跳过首次截图，默认 True。
+
+        Pages:
+            in: BATTLE_PREPARATION
+            out: 战斗画面（is_combat_executing）
         """
         logger.info('[演习-战斗] 战斗准备')
         self.device.stuck_record_clear()
@@ -63,11 +69,14 @@ class ExerciseCombat(HpDaemon, OpponentChoose, ExerciseEquipment, Combat):
                 break
 
     def _combat_execute(self):
-        """
-        执行战斗。
+        """监控演习战斗执行全过程直至结算或 SL 退出。
 
         Returns:
-            bool: 胜利返回 True，退出返回 False。
+            bool: 战斗胜利或自然完成返回 True，血量过低 SL 退出返回 False。
+
+        Pages:
+            in: 战斗画面
+            out: 演习主页或战斗准备界面
         """
         logger.info('[演习-战斗] 执行战斗')
         self.device.stuck_record_clear()
@@ -166,11 +175,15 @@ class ExerciseCombat(HpDaemon, OpponentChoose, ExerciseEquipment, Combat):
         return success
 
     def _choose_opponent(self, index, skip_first_screenshot=True):
-        """
-        选择对手。
+        """选择指定位置的对手并点击进入准备界面。
 
         Args:
-            index (int): 从左到右，0 到 3。
+            index (int): 对手位置索引，从左到右 0 到 3。
+            skip_first_screenshot (bool): 是否跳过首次截图，默认 True。
+
+        Pages:
+            in: EXERCISE_CHECK
+            out: BATTLE_PREPARATION
         """
         logger.hr('对手: %s' % str(index))
         opponent_timer = Timer(5)
@@ -197,19 +210,23 @@ class ExerciseCombat(HpDaemon, OpponentChoose, ExerciseEquipment, Combat):
                 break
 
     def _preparation_quit(self):
-        """从战斗准备界面退回演习主页面。"""
+        """从战斗准备界面退回演习主页面。
+
+        Pages:
+            in: BATTLE_PREPARATION
+            out: EXERCISE_CHECK
+        """
         logger.info('[演习-战斗] 退出准备界面')
         self.ui_back(check_button=self._in_exercise, appear_button=BATTLE_PREPARATION, skip_first_screenshot=True)
 
     def _combat(self, opponent):
-        """
-        执行一次战斗。
+        """对指定对手执行一次或多次尝试战斗。
 
         Args:
-            opponent(int): 从左到右，0 到 3。
+            opponent (int): 对手位置索引，从左到右 0 到 3。
 
         Returns:
-            bool: 胜利返回 True，挑战次数耗尽返回 False。
+            bool: 战斗胜利返回 True，达到重试上限失败返回 False。
         """
         self._choose_opponent(opponent)
 
@@ -229,7 +246,11 @@ class ExerciseCombat(HpDaemon, OpponentChoose, ExerciseEquipment, Combat):
         return False
 
     def equipment_take_off_when_finished(self):
-        """演习结束后卸下装备。"""
+        """演习全部出击结束后卸下舰队装备。
+
+        Returns:
+            bool: 成功卸下返回 True，无需卸下返回 False。
+        """
         if self.config.EXERCISE_FLEET_EQUIPMENT is None:
             return False
         if not self.equipment_has_take_on:

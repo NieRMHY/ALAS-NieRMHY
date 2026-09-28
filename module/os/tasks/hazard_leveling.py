@@ -29,7 +29,11 @@ from module.os_handler.assets import MISSION_ENTER, MISSION_CHECK, MISSION_QUIT
 
 class OpsiHazard1Leveling(CoinTaskMixin, OSMap):
     def _cl1_resource_check(self, yellow_coins):
-        """侵蚀 1 独立运行时的资源保护检查。"""
+        """侵蚀 1 独立运行时的资源保护检查。
+
+        Args:
+            yellow_coins (int): 当前作战补给凭证（黄币）数量。
+        """
         if self.is_running_smart_scheduling_task():
             return
 
@@ -42,7 +46,7 @@ class OpsiHazard1Leveling(CoinTaskMixin, OSMap):
             self.config.task_stop()
 
     def _cl1_ap_check(self):
-        """最低行动力保留检查"""
+        """检查最低行动力保留，不足时推迟任务并视情况推送通知。"""
         min_reserve = self.config.OS_ACTION_POINT_PRESERVE
         if self._action_point_total < min_reserve:
             logger.warning(
@@ -70,7 +74,7 @@ class OpsiHazard1Leveling(CoinTaskMixin, OSMap):
         self.config.OpsiHazard1_PreviousApInsufficient = _previous_ap_insufficient
 
     def _cl1_run_battle(self):
-        """执行侵蚀 1 战后的战略搜索与事件检索逻辑"""
+        """执行侵蚀 1 战后的战略搜索与事件检索逻辑。"""
         search_completed = self.run_strategic_search()
 
         if not search_completed and search_completed is not None:
@@ -123,7 +127,11 @@ class OpsiHazard1Leveling(CoinTaskMixin, OSMap):
             self.config.check_task_switch()
 
     def run_hazard1_leveling_once(self, ap_preserve=None):
-        """执行一轮侵蚀 1 练级，由独立任务或 OpsiScheduling 调用。"""
+        """执行一轮侵蚀 1 练级，由独立任务或 OpsiScheduling 调用。
+
+        Args:
+            ap_preserve (int | None): 行动力最低保留阈值。为 None 时从配置中读取。
+        """
         # 启用随机事件以获得收益。调度器直接调用单轮时也需要保持该行为。
         self.config.override(
             OpsiGeneral_DoRandomMapEvent=True,
@@ -331,43 +339,41 @@ class OpsiHazard1Leveling(CoinTaskMixin, OSMap):
         self.config.OpsiCheckLeveling_LastRun = current_time().replace(microsecond=0)
 
     def _check_auto_change_prerequisite(self, enable_custom_check, custom_positions):
-        """
-        检查自动配队前置条件
-        
+        """检查自动配队的前置条件是否满足。
+
         Args:
-            enable_custom_check: 是否启用自定义舰船检测
-            custom_positions: 自定义舰位列表
-            
+            enable_custom_check (bool): 是否启用自定义舰船检测。
+            custom_positions (list[int]): 自定义检查的舰位列表。
+
         Returns:
-            bool: 是否满足前置条件
+            bool: 满足前置条件或未启用自动配队时返回 True，否则返回 False。
         """
         if not self.config.OpsiFleetAutoChange_Enable:
             return True
-        
+
         if not enable_custom_check:
             logger.warning("[大世界-侵蚀1练级] 自动配队需要启用自定义舰船检测，将禁用自动配队")
             return False
-        
+
         if not custom_positions:
             logger.warning("[大世界-侵蚀1练级] 自动配队需要有效的自定义舰位配置，将禁用自动配队")
             return False
-        
+
         logger.info(f"[大世界-侵蚀1练级] 自动配队前置条件满足: 启用自定义检测，舰位 {custom_positions}")
         return True
 
     def _format_check_report(self, ship_data_list, target_level, fleet_index, error_msg=None, custom_positions=None):
-        """
-        格式化检测报告，用于推送通知
-        
+        """格式化练级经验检测报告，用于推送通知。
+
         Args:
-            ship_data_list: 舰船数据列表，失败时为None
-            target_level: 目标等级
-            fleet_index: 舰队索引
-            error_msg: 错误信息，成功时为None
-            custom_positions: 自定义舰位列表，None时显示所有舰船
-            
+            ship_data_list (list[dict] | None): 舰船数据列表，失败时为 None。
+            target_level (int): 目标等级。
+            fleet_index (int): 待检测的舰队索引。
+            error_msg (str | None): 错误描述信息，成功时为 None。
+            custom_positions (list[int] | None): 自定义舰位列表，为 None 时展示全部舰位。
+
         Returns:
-            str: 格式化的报告文本
+            str: 格式化后的排版报告文本。
         """
         lines = []
         lines.append("【舰船经验检测报告】")
@@ -448,17 +454,16 @@ class OpsiHazard1Leveling(CoinTaskMixin, OSMap):
         return "\n".join(lines)
 
     def _collect_custom_positions_data(self, target_level, custom_positions):
-        """
-        收集指定舰位的舰船数据
-        
+        """收集指定自定义舰位的舰船经验数据。
+
         Args:
-            target_level: 目标等级
-            custom_positions: 自定义舰位列表，如 [1, 3, 6]
-            
+            target_level (int): 目标等级。
+            custom_positions (list[int]): 自定义舰位列表，如 [1, 3, 6]。
+
         Returns:
-            dict: {'ships': list, 'error': str} 
-                  ships为舰船数据列表，失败时为None
-                  error为错误信息，成功时为None
+            dict: 收集结果字典：
+                - 'ships' (list[dict] | None): 舰船数据列表，失败时为 None。
+                - 'error' (str | None): 错误描述信息，成功时为 None。
         """
         from module.os_handler.assets import (
             OS_FLEET_SLOT_NAV_1_BUTTON,
@@ -468,9 +473,9 @@ class OpsiHazard1Leveling(CoinTaskMixin, OSMap):
             OS_FLEET_SLOT_NAV_5_BUTTON,
             OS_FLEET_SLOT_NAV_6_BUTTON,
         )
-        
+
         logger.info(f"[大世界-侵蚀1练级] 开始收集指定舰位数据: {custom_positions}")
-        
+
         slot_buttons = {
             1: OS_FLEET_SLOT_NAV_1_BUTTON,
             2: OS_FLEET_SLOT_NAV_2_BUTTON,
@@ -479,17 +484,17 @@ class OpsiHazard1Leveling(CoinTaskMixin, OSMap):
             5: OS_FLEET_SLOT_NAV_5_BUTTON,
             6: OS_FLEET_SLOT_NAV_6_BUTTON,
         }
-        
+
         ship_data_list = []
-        
+
         self.fleet_set(self.config.OpsiFleet_Fleet)
-        
+
         for position in sorted(custom_positions):
             button = slot_buttons.get(position)
             if not button:
                 logger.warning(f"[大世界-侵蚀1练级] 无效的舰位: {position}")
                 continue
-            
+
             logger.info(f"[大世界-侵蚀1练级] 检测舰位 {position}")
             
             # Add by MHY, 空舰位保护：长按 3 次未进入装备页视为空舰位，跳过并继续后续舰位，不发通知
@@ -499,7 +504,7 @@ class OpsiHazard1Leveling(CoinTaskMixin, OSMap):
             
             self.device.screenshot()
             level, exp = ship_info_get_level_exp(main=self)
-            
+
             if level < 1 or level > len(LIST_SHIP_EXP):
                 logger.warning(f"[大世界-侵蚀1练级] 舰位 {position} 等级识别异常: {level}")
                 ship_data_list.append({
@@ -519,39 +524,38 @@ class OpsiHazard1Leveling(CoinTaskMixin, OSMap):
                     "current_exp": exp,
                     "total_exp": total_exp,
                 })
-            
+
             self.ui_back(check_button=self.is_in_map)
             self.device.sleep(0.5)
-        
+
         if not ship_data_list:
             return {'ships': None, 'error': '未收集到任何舰船数据'}
-        
+
         logger.info(f"[大世界-侵蚀1练级] 指定舰位数据收集完成，共 {len(ship_data_list)} 艘")
         return {'ships': ship_data_list, 'error': None}
 
     def _collect_ship_data_with_retry(self, target_level):
-        """
-        收集舰船数据，带重试机制
-        
+        """收集整队舰船的等级与经验数据，支持重试。
+
         Args:
-            target_level: 目标等级
-            
+            target_level (int): 目标等级。
+
         Returns:
-            dict: {'ships': list, 'error': str} 
-                  ships为舰船数据列表，失败时为None
-                  error为错误信息，成功时为None
+            dict: 收集结果字典：
+                - 'ships' (list[dict] | None): 舰船数据列表，失败时为 None。
+                - 'error' (str | None): 错误描述信息，成功时为 None。
         """
         max_retry = 3
         non_standard_retry_count = 0
         for attempt in range(max_retry):
             logger.info(f"[大世界-侵蚀1练级] 开始收集舰船数据 (尝试 {attempt + 1}/{max_retry})")
-            
+
             self.fleet_set(self.config.OpsiFleet_Fleet)
             self.equip_enter(FLEET_FLAGSHIP)
-            
+
             ship_data_list = []
             position = 1
-            
+
             while True:
                 self.device.screenshot()
                 level, exp = ship_info_get_level_exp(main=self)
@@ -586,19 +590,19 @@ class OpsiHazard1Leveling(CoinTaskMixin, OSMap):
                 if not self.equip_view_next():
                     break
                 position += 1
-            
+
             self.ui_back(appear_button=EQUIPMENT_OPEN, check_button=self.is_in_map)
-            
+
             validation_result = self._validate_ship_data(ship_data_list)
             if validation_result['valid']:
                 if validation_result.get('need_retry', False):
                     current_ship_count = len(ship_data_list)
                     non_standard_retry_count += 1
-                    
+
                     if non_standard_retry_count >= 3:
                         logger.info(f"[大世界-侵蚀1练级] 非标准舰船数量({current_ship_count}艘)已重试3次，使用当前检测结果")
                         return {'ships': ship_data_list, 'error': None}
-                    
+
                     logger.warning(f"[大世界-侵蚀1练级] 舰船数量非标准({current_ship_count}艘)，重试确认 ({non_standard_retry_count}/3)")
                     if attempt < max_retry - 1:
                         logger.info("[大世界-侵蚀1练级] 等待1秒后重试...")
@@ -622,18 +626,20 @@ class OpsiHazard1Leveling(CoinTaskMixin, OSMap):
                 else:
                     logger.error("[大世界-侵蚀1练级] 已达到最大重试次数，舰船数据收集失败")
                     return {'ships': None, 'error': f"验证失败: {last_error}"}
-        
+
         return {'ships': None, 'error': "未知错误"}
 
     def _validate_ship_data(self, ship_data_list):
-        """
-        验证舰船数据有效性
-        
+        """验证收集到的舰船数据有效性。
+
         Args:
-            ship_data_list: 舰船数据列表
-            
+            ship_data_list (list[dict]): 待校验的舰船数据列表。
+
         Returns:
-            dict: {'valid': bool, 'reason': str}
+            dict: 校验结果字典：
+                - 'valid' (bool): 数据是否有效。
+                - 'reason' (str): 验证失败或重试的原因说明。
+                - 'need_retry' (bool, optional): 是否建议重试确认。
         """
         if not ship_data_list:
             return {'valid': False, 'reason': '舰船数据为空'}
@@ -669,13 +675,12 @@ class OpsiHazard1Leveling(CoinTaskMixin, OSMap):
         return {'valid': True, 'reason': ''}
 
     def _check_custom_positions_full_exp(self, ship_data_list, target_level, custom_positions):
-        """
-        检查自定义舰位是否满经验
-        
+        """检查自定义舰位是否均已满经验，若满经验则触发自动配队或延迟任务。
+
         Args:
-            ship_data_list: 舰船数据列表
-            target_level: 目标等级
-            custom_positions: 自定义舰位列表，如 [4, 5]
+            ship_data_list (list[dict]): 舰船数据列表。
+            target_level (int): 目标等级。
+            custom_positions (list[int]): 自定义舰位列表，如 [4, 5]。
         """
         target_exp = LIST_SHIP_EXP[target_level - 1]
         
@@ -734,10 +739,10 @@ class OpsiHazard1Leveling(CoinTaskMixin, OSMap):
                 self.config.task_stop()
 
     def _record_ap_and_coins(self, sea_miles=None):
-        """记录体力和货币到 Dashboard（始终执行）。
+        """记录体力和货币到仪表盘数据库（始终执行）。
 
         Args:
-            sea_miles: 海里数（可选），由 detect_and_record_sea_miles 传入
+            sea_miles (int | None): 海里数，由 `detect_and_record_sea_miles` 识别传入。
         """
         try:
             if self._action_point_current > 0:
@@ -774,11 +779,10 @@ class OpsiHazard1Leveling(CoinTaskMixin, OSMap):
             logger.error(f"[大世界-侵蚀1练级] 体力/货币记录异常: {e}")
 
     def detect_and_record_sea_miles(self):
-        """
-        检测海里数
-        
+        """进入情报页面检测并记录当前大世界航行海里数。
+
         Returns:
-            int: 海里数，失败时返回None
+            int | None: 识别出的海里数数值，识别失败时返回 None。
         """
         logger.info("[大世界-侵蚀1练级] 开始海里数检测")
         

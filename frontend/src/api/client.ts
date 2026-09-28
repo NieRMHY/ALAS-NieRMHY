@@ -1,13 +1,28 @@
+/**
+ * @fileoverview 后端 WebSocket API 客户端实现，管理连接生命周期、请求分发、事件订阅与心跳重试。
+ */
+
 import type { Parameters } from './generated'
 import type { ApiEvent, ApiResponse, Results } from './types'
 import { translateCurrentUi } from '../i18n'
 
+/** API 业务错误封装类。 */
 export class ApiError extends Error {
+  /**
+   * 构造 API 错误实例。
+   *
+   * @param code 错误代码。
+   * @param message 错误描述信息。
+   * @param details 可选的附加错误详情。
+   */
   constructor(public code: string, message: string, public details?: unknown) { super(message) }
 }
 export type Connection = 'connecting' | 'ready' | 'auth' | 'offline'
 type Pending = { resolve: (value: unknown) => void; reject: (error: Error) => void; timer: ReturnType<typeof setTimeout> }
 
+/**
+ * WebSocket API 客户端核心类。
+ */
 export class ApiClient {
   private socket?: WebSocket
   private pending = new Map<string, Pending>()
@@ -22,11 +37,17 @@ export class ApiClient {
   private counter = 0
   private lastReceived = 0
 
+  /** 获取当前连接状态快照。 */
   getSnapshot = () => this.state
+  /** 订阅连接状态变化。 */
   subscribe = (listener: () => void) => { this.listeners.add(listener); return () => { this.listeners.delete(listener) } }
+  /** 注册全量 API 事件监听器。 */
   onEvent = (listener: (event: ApiEvent) => void) => { this.events.add(listener); return () => { this.events.delete(listener) } }
   private setState(state: Connection) { this.state = state; this.listeners.forEach(listener => listener()) }
 
+  /**
+   * 建立 WebSocket 连接。
+   */
   connect = () => {
     if (this.socket && this.socket.readyState < 2) return
     if (!this.password) { try { this.password = window.localStorage.getItem('azurpilot.access-password') ?? '' } catch { /* 浏览器禁用存储时保留会话登录。 */ } }
@@ -74,6 +95,7 @@ export class ApiClient {
     socket.onerror = () => socket.close()
   }
 
+  /** 进入就绪状态并启动心跳定时器。 */
   private ready() {
     this.attempt = 0
     this.setState('ready')
@@ -84,6 +106,11 @@ export class ApiClient {
     }, 15000)
   }
 
+  /**
+   * 使用访问密码执行鉴权登录。
+   *
+   * @param password 访问密码。
+   */
   async login(password: string) {
     try { await this.request('auth.login', {password}) } catch (error) {
       if (error instanceof ApiError && error.code === 'UNAUTHORIZED') {
@@ -97,6 +124,13 @@ export class ApiClient {
     this.ready()
   }
 
+  /**
+   * 发送 RPC 请求并等待返回结果。
+   *
+   * @param method 调用的方法名。
+   * @param params 请求参数对象。
+   * @returns 响应结果 Promise。
+   */
   request<M extends keyof Results & keyof Parameters>(method: M, params: Parameters[M]): Promise<Results[M]> {
     if (!this.socket || this.socket.readyState !== WebSocket.OPEN || (this.state !== 'ready' && method !== 'auth.login')) {
       return Promise.reject(new ApiError('DISCONNECTED', translateCurrentUi('api.notConnected')))
@@ -112,6 +146,9 @@ export class ApiClient {
     })
   }
 
+  /**
+   * 断开连接并重置定时器与凭据。
+   */
   disconnect() {
     this.stopped = true
     this.password = ''

@@ -54,16 +54,19 @@ class OperationSiren(
     """大世界（Operation Siren）主类，组合所有任务模块。"""
 
     def _os_target_enter(self):
+        """进入大世界海域目标与成就界面。"""
         self.os_map_goto_globe(unpin=False)
         self.ui_click(click_button=TARGET_ENTER, check_button=TARGET_ALL_ON,
                       offset=(200, 20), retry_wait=3, skip_first_screenshot=True)
 
     def _os_target_exit(self):
+        """退出大世界海域目标界面并返回海域地图。"""
         self.ui_back(check_button=TARGET_ENTER, appear_button=TARGET_ALL_ON,
                      offset=(200, 20), retry_wait=3, skip_first_screenshot=True)
         self.os_globe_goto_map()
 
     def os_target_receive(self):
+        """检查并领取海域目标成就奖励。"""
         next_reset = get_os_next_reset()
         now = current_time()
         logger.attr('大世界下次重置', next_reset)
@@ -81,6 +84,7 @@ class OperationSiren(
         self.config.OpsiTarget_LastRun = now.replace(microsecond=0)
 
     def _os_target(self):
+        """执行大世界海域成就检查与任务流程。"""
         if self.config.OpsiTarget_LastRun > get_server_last_update('00:00'):
             logger.warning('海域成就今日已经运行过，停止任务')
         else:
@@ -91,9 +95,15 @@ class OperationSiren(
             self.config.OpsiTarget_LastRun = current_time().replace(microsecond=0)
 
     def server_support_os_target(self):
+        """检查当前服务器是否支持大世界海域成就功能。
+
+        Returns:
+            bool: 若支持海域成就返回 True，否则返回 False。
+        """
         return self.config.SERVER in ['cn', 'jp']
 
     def os_daily(self):
+        """执行大世界每日任务并根据配置收集成就奖励。"""
         super().os_daily()
         if self.config.OpsiDaily_CollectTargetReward:
             if self.server_support_os_target():

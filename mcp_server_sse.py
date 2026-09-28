@@ -3,16 +3,17 @@ import logging
 import json
 import datetime
 import re
-from typing import List, Dict, Any
+from typing import Any, Dict, List
 
+# Modify by MHY, 本地保留自己的 ASGI 免密实现，需直接使用 starlette（上游已改走 create_app 工厂）
 from starlette.applications import Starlette
 from starlette.middleware import Middleware
 from starlette.middleware.cors import CORSMiddleware
 from mcp.server import Server
 from mcp.server.sse import SseServerTransport
 from mcp.types import (
-    TextContent,
     ImageContent,
+    TextContent,
     Tool,
 )
 import base64
@@ -45,8 +46,14 @@ mcp_server = Server("ALAS-MCP")
 
 ToolResponse = List[TextContent | ImageContent]
 
+
 @mcp_server.list_tools()
 async def list_tools() -> List[Tool]:
+    """列出 MCP 服务器当前支持的所有工具定义。
+
+    Returns:
+        List[Tool]: 工具对象列表。
+    """
     return [
         Tool(
             name="list_instances",
@@ -523,6 +530,13 @@ STANDALONE_HOST = "0.0.0.0"
 STANDALONE_PORT = 22268
 
 async def _run_sse(scope, receive, send):
+    """处理 /sse 端点的请求，建立并运行 SSE 流式连接。
+
+    Args:
+        scope: ASGI scope 字典。
+        receive: ASGI receive 异步可调用对象。
+        send: ASGI send 异步可调用对象。
+    """
     logger.info("Matched endpoint: /sse. Opening SSE connection...")
 
     try:
@@ -539,7 +553,16 @@ async def _run_sse(scope, receive, send):
 
 
 def _is_mcp_client_disconnected(error: Exception) -> bool:
-    # ClosedResourceError：SSE 已断开但客户端仍在宽限期内投递消息，属正常现象
+    """判断异常是否属于客户端主动断开连接。
+
+    ClosedResourceError：SSE 已断开但客户端仍在宽限期内投递消息，属正常现象。
+
+    Args:
+        error (Exception): 捕获的异常对象。
+
+    Returns:
+        bool: 是否属于客户端正常断连。
+    """
     return (
         "BrokenResourceError" in str(type(error))
         or "BrokenPipeError" in str(error)
@@ -548,6 +571,14 @@ def _is_mcp_client_disconnected(error: Exception) -> bool:
 
 
 async def _handle_mcp_post(scope, receive, send, method):
+    """处理客户端通过 POST /messages 发送过来的消息。
+
+    Args:
+        scope: ASGI scope 字典。
+        receive: ASGI receive 异步可调用对象。
+        send: ASGI send 异步可调用对象。
+        method (str): HTTP 请求方法。
+    """
     logger.info(f"Matched endpoint: /messages. Method: {method}")
     try:
         await transport.handle_post_message(scope, receive, send)
@@ -561,7 +592,11 @@ async def _handle_mcp_post(scope, receive, send, method):
 
 
 async def _send_not_found(send):
-    # 未匹配路由，返回 404
+    """返回 404 Not Found 响应。
+
+    Args:
+        send: ASGI send 异步可调用对象。
+    """
     await send({
         'type': 'http.response.start',
         'status': 404,

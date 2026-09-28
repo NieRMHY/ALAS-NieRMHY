@@ -19,6 +19,8 @@ from module.secretary.dock import (CARD_GRIDS,CARD_LEVEL_GRIDS, CARD_RARITY_GRID
 from module.secretary.assets import SECRETARY_SELECTED
 
 class Scanner(metaclass=ABCMeta):
+    """船坞卡片属性扫描器基类。"""
+
     _results: List = None
     _enabled: bool = True
     _disabled_value: List[None] = [None] * 14
@@ -48,8 +50,8 @@ class Scanner(metaclass=ABCMeta):
 
         Args:
             image: 截图图像。
-            cached: 是否将结果追加到缓存。
-            output: 是否将结果逐条输出到日志。
+            cached (bool): 是否将结果追加到缓存。
+            output (bool): 是否将结果逐条输出到日志。
 
         Returns:
             list 或 None: cached=False 时返回结果列表，cached=True 时返回 None。
@@ -76,6 +78,8 @@ class Scanner(metaclass=ABCMeta):
         self._enabled = False
 
 class RarityScanner(Scanner):
+    """舰船卡片稀有度颜色扫描器。"""
+
     def __init__(self) -> None:
         super().__init__()
         self._results = []
@@ -89,7 +93,7 @@ class RarityScanner(Scanner):
         彩虹（ultra）稀有度因颜色差异过大，标记为 'unknown'。
 
         Args:
-            color: RGB 颜色元组 (r, g, b)。
+            color (tuple[int, int, int]): RGB 颜色元组 (r, g, b)。
 
         Returns:
             str: 稀有度字符串。
@@ -114,6 +118,8 @@ class RarityScanner(Scanner):
         return value if value in self.value_list else 'any'
 
 class DHash:
+    """差异哈希（Difference Hash）图像特征提取类。"""
+
     EQ_THRES: int = 30
 
     def __init__(self, image, size=8) -> None:
@@ -121,6 +127,15 @@ class DHash:
 
     @staticmethod
     def gen_hash(image, size=8) -> str:
+        """生成图像的 dHash 字符串。
+
+        Args:
+            image: 输入图像。
+            size (int): 缩小尺寸。
+
+        Returns:
+            str: 16 进制哈希串。
+        """
         if len(image.shape) > 2:
             image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
         image = cv2.resize(image, (size + 1, size + 1))
@@ -133,6 +148,15 @@ class DHash:
 
     @staticmethod
     def distance(__x, __y) -> int:
+        """计算两个 dHash 之间的汉明距离。
+
+        Args:
+            __x (DHash | str): 第一个哈希。
+            __y (DHash | str): 第二个哈希。
+
+        Returns:
+            int: 汉明距离。
+        """
         if isinstance(__x, DHash) and isinstance(__y, DHash):
             __x, __y = int(__x.code, 16), int(__y.code, 16)
         elif isinstance(__x, str) and isinstance(__y, str):
@@ -147,6 +171,8 @@ class DHash:
         return self.code
 
 class HashGenerator(Scanner):
+    """卡片图像哈希扫描器。"""
+
     def __init__(self, length=8) -> None:
         super().__init__()
         self._results = []
@@ -162,6 +188,8 @@ class HashGenerator(Scanner):
         pass
 
 class LevelScanner(Scanner):
+    """卡片等级 OCR 扫描器。"""
+
     def __init__(self) -> None:
         super().__init__()
         self._results = []
@@ -180,6 +208,8 @@ class LevelScanner(Scanner):
         self.ocr_model.buttons = [button.area for button in self.grids.buttons]
 
 class FavorabilityScanner(Scanner):
+    """卡片好感度 OCR 扫描器。"""
+
     def __init__(self, descending=True):
         super().__init__()
         self._results = []
@@ -211,6 +241,8 @@ class FavorabilityScanner(Scanner):
         self.ocr_model.buttons = [button.area for button in self.grids.buttons]
 
 class FavorabilityDigit(Digit):
+    """卡片好感度双通道 OCR 识别与一致性校验器。"""
+
     def __init__(self, *args, descending=True, **kwargs):
         super().__init__(*args, **kwargs)
         self.descending = descending
@@ -525,6 +557,7 @@ class FavorabilityDigit(Digit):
         return values
 
 class SelectedDetector:
+    """卡片选中状态（勾选标记）检测器。"""
 
     def __init__(self):
         self.grids = CARD_GRIDS
@@ -592,10 +625,28 @@ class SelectedDetector:
 
         return result
     def scan(self, image):
+        """扫描当前卡片中哪些已被选中。
+
+        Args:
+            image: 当前截图。
+
+        Returns:
+            list[bool]: 每个卡片的选中布尔值列表。
+        """
         return self._scan(image)
 
 @dataclass(frozen=True)
 class SecretaryShip:
+    """秘书舰船坞卡片数据类。
+
+    Attributes:
+        rarity (str): 稀有度。
+        level (int): 舰船等级。
+        favorability (int): 好感度。
+        selected (bool): 是否已被选为秘书舰。
+        button (Any): 对应卡片按钮。
+        hash_ (str): 卡片图像哈希。
+    """
     rarity: str = ''
     level: int = 0
     favorability: int = 0

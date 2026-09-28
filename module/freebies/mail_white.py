@@ -29,6 +29,14 @@ class MailSelectSetting(Setting):
     """
 
     def is_option_active(self, option: Button) -> bool:
+        """检测指定选项按钮当前是否处于激活选定状态。
+
+        Args:
+            option (Button): 选项按钮。
+
+        Returns:
+            bool: 处于激活状态返回 True，否则返回 False。
+        """
         return self.main.image_color_count(option, color=(57, 56, 57), threshold=30, count=50)
 
 
@@ -51,6 +59,7 @@ class MailWhite(UI):
     """
     @cached_property
     def mail_select_setting(self):
+        """获取按内容类型筛选邮件的设置管理器。"""
         setting = MailSelectSetting('Mail', main=self)
         setting.reset_first = False
         setting.need_deselect = True
@@ -64,6 +73,7 @@ class MailWhite(UI):
 
     @cached_property
     def mail_select_all_setting(self):
+        """获取全选邮件的设置管理器。"""
         setting = MailSelectSetting('MailAll', main=self)
         setting.reset_first = False
         setting.add_setting(
@@ -78,8 +88,11 @@ class MailWhite(UI):
         """
         进入邮件页面。
 
+        Args:
+            skip_first_screenshot (bool): 是否跳过首次截图，默认 True。
+
         Returns:
-            int: 是否有邮件。
+            bool: 成功进入且有邮件返回 True，邮件列表为空返回 False。
 
         Pages:
             in: page_main_white 或 MAIL_MANAGE

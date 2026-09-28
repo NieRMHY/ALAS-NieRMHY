@@ -59,11 +59,10 @@ class MapOperation(MysteryHandler, FleetPreparation, Retirement, FastForwardHand
     fleet_current_index = 1
 
     def get_fleet_show_index(self):
-        """
-        获取屏幕上当前显示的舰队编号。
+        """获取屏幕上当前显示的舰队编号。
 
         Returns:
-            int: 1 或 2
+            int: 屏幕显示的舰队编号（1 或 2）。
 
         Pages:
             in: in_map
@@ -80,11 +79,10 @@ class MapOperation(MysteryHandler, FleetPreparation, Retirement, FastForwardHand
             return 1
 
     def get_fleet_current_index(self):
-        """
-        获取当前逻辑舰队编号（考虑舰队顺序反转）。
+        """获取当前逻辑舰队编号（考虑舰队顺序反转）。
 
         Returns:
-            int: 1 或 2
+            int: 逻辑舰队编号（1 为道中队，2 为 Boss 队）。
         """
         if self.fleets_reversed:
             self.fleet_current_index = 3 - self.fleet_show_index
@@ -94,15 +92,14 @@ class MapOperation(MysteryHandler, FleetPreparation, Retirement, FastForwardHand
             return self.fleet_current_index
 
     def fleet_set(self, index=None, skip_first_screenshot=True):
-        """
-        切换到目标舰队。
+        """切换到目标逻辑舰队。
 
         Args:
-            index (int): 目标 fleet_current_index。
-            skip_first_screenshot (bool): 是否跳过第一次截图。
+            index (int, optional): 目标逻辑舰队编号（1 或 2）。默认为 None。
+            skip_first_screenshot (bool, optional): 是否跳过首次截图。默认为 True。
 
         Returns:
-            bool: 是否进行了切换。
+            bool: 是否进行了舰队切换。
         """
         logger.info(f'[地图-操作] 舰队设置为 {index}')
         timeout = Timer(5, count=10).start()
@@ -272,13 +269,21 @@ class MapOperation(MysteryHandler, FleetPreparation, Retirement, FastForwardHand
                 continue
 
     def enter_map(self, button, mode='normal', skip_first_screenshot=True):
-        """
-        进入战役关卡。
+        """进入战役关卡。
+
+        包含关卡点击、准备页面检测、自律与通关模式配置、舰队切换、剧情跳过等。
 
         Args:
-            button: 要进入的战役按钮。
-            mode (str): 'normal' 或 'hard'。
-            skip_first_screenshot (bool): 是否跳过第一次截图。
+            button (Button): 要进入的战役按钮。
+            mode (str, optional): 难度模式，'normal' 或 'hard'。默认为 'normal'。
+            skip_first_screenshot (bool, optional): 是否跳过首次截图。默认为 True。
+
+        Returns:
+            bool: 成功进入地图返回 True，若已在地图中则返回 False。
+
+        Raises:
+            RequestHumanTakeover: 点击次数过多或未满足限制时抛出，请求人工接管。
+            ScriptEnd: 达成关卡停止条件时抛出。
         """
         logger.hr('进入地图')
         campaign_timer = Timer(5)
@@ -378,7 +383,7 @@ class MapOperation(MysteryHandler, FleetPreparation, Retirement, FastForwardHand
                 if self.handle_use_data_key():
                     continue
 
-                # 16-1/16-2 submarine support popup
+                # 16-1/16-2 潜艇支援弹窗
                 if self.handle_submarine_support_popup():
                     continue
 
@@ -430,7 +435,7 @@ class MapOperation(MysteryHandler, FleetPreparation, Retirement, FastForwardHand
         """取消进入地图，从地图准备界面退回关卡选择界面。
 
         Args:
-            skip_first_screenshot (bool): 是否跳过第一次截图。
+            skip_first_screenshot (bool, optional): 是否跳过首次截图。默认为 True。
 
         Returns:
             bool: 始终返回 True。
@@ -457,14 +462,13 @@ class MapOperation(MysteryHandler, FleetPreparation, Retirement, FastForwardHand
         return True
 
     def handle_map_mode_switch(self, mode):
-        """
-        处理地图难度模式切换。
+        """处理地图难度模式切换（普通/困难）。
 
         Args:
-            mode (str): 'normal' 或 'hard'。
+            mode (str): 目标模式，'normal' 或 'hard'。
 
         Returns:
-            bool: 地图模式是否满足要求。如果地图没有模式切换，则始终返回 True。
+            bool: 地图模式是否满足要求。若地图无模式切换则始终返回 True。
         """
         if not self.config.MAP_HAS_MODE_SWITCH:
             return True
@@ -499,11 +503,11 @@ class MapOperation(MysteryHandler, FleetPreparation, Retirement, FastForwardHand
         遍历多个可能的困难模式按钮模板进行匹配。
 
         Args:
-            active (bool): 是否需要检查按钮处于激活状态。
-            interval (int): 操作间隔时间（秒）。
+            active (bool, optional): 是否需要检查按钮处于激活状态。默认为 True。
+            interval (int | float, optional): 操作间隔时间（秒）。默认为 0。
 
         Returns:
-            bool: 困难模式按钮是否出现（且如果需要检查，是否处于激活状态）。
+            bool: 困难模式按钮是否出现（且若需要检查则是否处于激活状态）。
         """
         if interval:
             interval = self.get_interval_timer(MAP_MODE_SWITCH_HARD, interval=interval)
@@ -548,8 +552,7 @@ class MapOperation(MysteryHandler, FleetPreparation, Retirement, FastForwardHand
         return sum_ / total > 0.5
 
     def handle_map_preparation(self):
-        """
-        处理地图准备阶段，等待地图信息动画完成。
+        """处理地图准备阶段，等待地图信息动画完成。
 
         Returns:
             Button | None: 地图准备页出现且信息动画结束时，返回普通或困难模式
@@ -592,8 +595,13 @@ class MapOperation(MysteryHandler, FleetPreparation, Retirement, FastForwardHand
             return None
 
     def withdraw(self, skip_first_screenshot=True):
-        """
-        撤退战役。
+        """从当前战役地图撤退。
+
+        Args:
+            skip_first_screenshot (bool, optional): 是否跳过首次截图。默认为 True。
+
+        Raises:
+            CampaignEnd: 成功撤退并回到关卡选择界面时抛出。
         """
         logger.hr('地图撤退')
         while 1:
@@ -621,8 +629,10 @@ class MapOperation(MysteryHandler, FleetPreparation, Retirement, FastForwardHand
                 raise CampaignEnd('Withdraw')
 
     def handle_map_cat_attack(self):
-        """
-        处理猫猫攻击动画，点击跳过。
+        """处理地图上的指挥喵伏击/攻击动画并点击跳过。
+
+        Returns:
+            bool: 是否检测到并点击跳过了动画。
         """
         if not self.map_cat_attack_timer.reached():
             return False
@@ -643,13 +653,17 @@ class MapOperation(MysteryHandler, FleetPreparation, Retirement, FastForwardHand
 
     @property
     def fleets_reversed(self):
+        """是否反转了道中队与 Boss 队在游戏界面上的出击顺序。
+
+        Returns:
+            bool: 是否反转。
+        """
         if not self.config.FLEET_2:
             return False
         return self.config.Fleet_FleetOrder in ['fleet1_boss_fleet2_mob', 'fleet1_standby_fleet2_all']
 
     def handle_fleet_reverse(self):
-        """
-        处理舰队顺序反转。
+        """处理舰队出击顺序反转。
 
         游戏会选择编号较小的舰队作为第一舰队，无论我们在舰队准备中如何选择。
         自动搜索更新后，游戏不再忽略用户设置。

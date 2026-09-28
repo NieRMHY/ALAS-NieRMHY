@@ -1,3 +1,7 @@
+/**
+ * @fileoverview 指挥喵评分结果详情与洗点推荐面板组件。
+ */
+
 import { useEffect, useState } from 'react'
 import { Cat, ChevronDown, FileText, PawPrint, RefreshCw, Sparkles, Trash2, TriangleAlert } from 'lucide-react'
 import { ApiError, api } from '../api/client'

@@ -47,7 +47,8 @@ h2 {font-size: 14px; font-weight: 650}
 small {font-size: 11px}
 svg {flex-shrink: 0; vertical-align: middle}
 ::selection {background: #6ed4bc45}
-::-webkit-scrollbar {width: 5px; height: 5px}
+/* 滚动条不显示也不占位：折叠会改变页面高度，占位一变内容宽度就会跟着跳。 */
+::-webkit-scrollbar {width: 0; height: 0}
 ::-webkit-scrollbar-thumb {background: #95a5b73c; border-radius: 8px}
 .muted, .small-label {color: var(--muted)}
 .small-label {font-size: 11px}

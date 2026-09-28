@@ -16,43 +16,54 @@ DETECTING_AREA = (123, 55, 1280, 720)
 
 
 class Assets:
+    """地图检测资源容器类。
+
+    提供蒙版、地块中心与角点模板图像的惰性加载与缓存。
+    """
     @cached_property
     def ui_mask(self):
+        """主线地图 UI 蒙版图像。"""
         return UI_MASK.image
 
     @cached_property
     def ui_mask_os(self):
+        """大世界地图 UI 蒙版图像。"""
         return UI_MASK_OS.image
 
     @cached_property
     def ui_mask_stroke(self):
+        """经腐蚀后的 UI 蒙版边缘描边图像。"""
         kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
         image = cv2.erode(self.ui_mask, kernel).astype('uint8')
         return image
 
     @cached_property
     def ui_mask_in_map(self):
+        """地图检测区域对齐后的主线 UI 蒙版图像。"""
         area = np.append(np.subtract(0, DETECTING_AREA[:2]), self.ui_mask.shape[::-1])
         # area = (-123, -55, 1157, 665)
         return crop(self.ui_mask, area)
 
     @cached_property
     def ui_mask_os_in_map(self):
+        """地图检测区域对齐后的大世界 UI 蒙版图像。"""
         area = np.append(np.subtract(0, DETECTING_AREA[:2]), self.ui_mask.shape[::-1])
         # area = (-123, -55, 1157, 665)
         return crop(self.ui_mask_os, area)
 
     @cached_property
     def tile_center_image(self):
+        """网格中心特征模板图像。"""
         return TILE_CENTER.image
 
     @cached_property
     def tile_corner_image(self):
+        """网格角点特征模板图像。"""
         return TILE_CORNER.image
 
     @cached_property
     def tile_corner_image_list(self):
-        # [upper-left, upper-right, bottom-left, bottom-right]
+        """四个方向的网格角点模板列表 [左上, 右上, 左下, 右下]。"""
         return [cv2.flip(self.tile_corner_image, -1),
                 cv2.flip(self.tile_corner_image, 0),
                 cv2.flip(self.tile_corner_image, 1),

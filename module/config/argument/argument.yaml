@@ -115,10 +115,11 @@ Emulator:
         DroidCast_raw,
         nemu_ipc,
         ldopengl,
+        azurpilot_android,
       ]
   ControlMethod:
     value: MaaTouch
-    option: [ADB, uiautomator2, minitouch, Hermit, MaaTouch, nemu_ipc]
+    option: [ADB, uiautomator2, minitouch, Hermit, MaaTouch, nemu_ipc, azurpilot_android]
     help: nemu_ipc 需与截图方式配套使用（截图选 nemu_ipc 时启动会自动联动）。注意：nemu_ipc 触控走模拟器内部 RPC，低性能电脑上滑动易丢步、拖拽易变形，调用偶发挂死会丢失点击；滑动或拖拽异常时请改回 minitouch / MaaTouch。
   GameSettings:
     type: checkbox
@@ -192,6 +193,10 @@ Error:
     type: textarea
     mode: yaml
     value: "provider: null"
+  LowPushMode:
+    type: checkbox
+    value: false
+    option: [true, false]
   ScreenshotLength: 1
   GameStuckRestart: false
   GameStuckThreshold:
@@ -305,7 +310,30 @@ DropRecord:
   CombatRecord:
     value: do_not
     option: [do_not, save]
-  OpsiRecord:
+  # 大世界掉落截图按任务拆分（原 OpsiRecord 单一开关）。跨月每日跟大世界每日、
+  # 档案坐标跟隐秘海域、月度Boss跟深渊坐标共用一项，其余任务走 OpsiOther。
+  OpsiHazard1Leveling:
+    value: upload
+    option: [do_not, save, upload, save_and_upload]
+  OpsiMeowfficerFarming:
+    value: upload
+    option: [do_not, save, upload, save_and_upload]
+  OpsiDaily:
+    value: upload
+    option: [do_not, save, upload, save_and_upload]
+  OpsiObscure:
+    value: upload
+    option: [do_not, save, upload, save_and_upload]
+  OpsiAbyssal:
+    value: upload
+    option: [do_not, save, upload, save_and_upload]
+  OpsiStronghold:
+    value: upload
+    option: [do_not, save, upload, save_and_upload]
+  OpsiExplore:
+    value: upload
+    option: [do_not, save, upload, save_and_upload]
+  OpsiOther:
     value: upload
     option: [do_not, save, upload, save_and_upload]
   MeowfficerBuy:

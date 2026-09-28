@@ -38,6 +38,11 @@ jobs:
           sudo apt-get update && sudo apt-get install -y libgl1 libglib2.0-0 libgomp1
           uv sync --frozen
           npm ci --prefix frontend
+      # Modify by MHY, 本地更新链为纯 git pull（已移除 git-over-cdn 与 goc 构建产物），
+      # 仅保留 GitCode 镜像历史脚本的校验
+      - name: 校验 GitCode 镜像历史
+        run: |
+          uv run python -m unittest tests.test_mirror_history
       - name: 校验 API 契约
         run: |
           uv run python -m dev_tools.export_api_schema

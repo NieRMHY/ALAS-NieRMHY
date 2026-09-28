@@ -54,14 +54,12 @@ class GemsEmotion(Emotion):
 
     重写情绪检查逻辑：当检测到低情绪时抛出 CampaignEnd 异常
     而不是等待恢复，以便触发舰船更换流程。
-
-    Attributes:
-        继承自 Emotion 的所有属性。
     """
+
     def check_reduce(self, battle):
-        """
+        """进入战役前检查情绪值。
+
         重写 emotion.check_reduce()。
-        进入战役前检查情绪值。
 
         Args:
             battle (int): 本战役中的战斗次数。
@@ -79,6 +77,11 @@ class GemsEmotion(Emotion):
             raise CampaignEnd('Emotion control')
 
     def wait(self, fleet_index):
+        """等待情绪恢复（通过换船替代等待）。
+
+        Args:
+            fleet_index (int): 舰队编号。
+        """
         pass
 
 
@@ -89,10 +92,18 @@ class GemsCampaignOverride(CampaignBase):
     - 低情绪时根据配置选择忽略警告或撤退换船
     - 支持多种经验结算弹窗的点击处理
     """
+
     def handle_combat_low_emotion(self):
-        """
+        """处理低情绪警告弹窗。
+
         重写 info_handler.handle_combat_low_emotion()。
         如果启用了更换先锋，撤出战斗并更换旗舰和先锋。
+
+        Returns:
+            bool: 是否处理了弹窗。
+
+        Raises:
+            CampaignEnd: 触发情绪撤退时抛出。
         """
         if self.config.GemsFarming_IgnoreEmotionWarning or self.config.GemsFarming_ChangeVanguard == 'disabled':
             result = self.handle_popup_confirm('IGNORE_LOW_EMOTION')
@@ -135,6 +146,11 @@ class GemsCampaignOverride(CampaignBase):
             raise CampaignEnd('Emotion withdraw')
 
     def handle_exp_info(self):
+        """处理战后经验结算弹窗。
+
+        Returns:
+            bool: 是否检测并点击了结算弹窗。
+        """
         if self.is_combat_executing():
             return False
         if super().handle_exp_info():
@@ -156,13 +172,16 @@ class GemsEquipmentHandler(EquipmentCodeHandler):
 
     继承 EquipmentCodeHandler，提供装备码的导入导出功能。
     根据当前旗舰类型（航母/驱逐舰）自动识别装备码配置路径。
-
-    Attributes:
-        继承自 EquipmentCodeHandler 的所有属性。
     """
 
-
     def __init__(self, config, device=None, task=None):
+        """初始化装备处理器。
+
+        Args:
+            config: 配置对象。
+            device: 设备对象。
+            task: 任务标识。
+        """
         super().__init__(config=config, device=device, task=task)
 
     @property
@@ -176,8 +195,15 @@ class GemsEquipmentHandler(EquipmentCodeHandler):
         return f"{command}.GemsFarming.EquipmentCode"
 
     def current_ship(self, skip_first_screenshot=True):
-        """
-        复用 module.retire.assets 中的模板，需要不同的缩放比例来匹配当前旗舰。
+        """识别当前旗舰舰船类型。
+
+        复用 module.retire.assets 中的模板，使用不同缩放比例匹配当前旗舰。
+
+        Args:
+            skip_first_screenshot (bool): 是否跳过首次截图。默认 True。
+
+        Returns:
+            str: 舰船标识名称（如 'bogue'、'hermes'、'ranger'、'langley' 或 'DD'）。
 
         Pages:
             in: gear_code
@@ -193,7 +219,7 @@ class GemsEquipmentHandler(EquipmentCodeHandler):
             else:
                 logger.info('[战役-紧急委托] 等待舰船图标加载。')
 
-        if TEMPLATE_BOGUE.match(self.device.image, scaling=1.46):  # image has rotation
+        if TEMPLATE_BOGUE.match(self.device.image, scaling=1.46):  # 图像带旋转
             return 'bogue'
         if TEMPLATE_HERMES.match(self.device.image, scaling=124 / 89):
             return 'hermes'
@@ -422,16 +448,18 @@ class GemsFarming(FleetSelectionMixin, CampaignRun, FleetEquipment, GemsEquipmen
 
 
     def get_common_rarity_dd(self, emotion=16):
-        """
-        获取等级为 100（非 CN 服务器为 70）且情绪值 >= self.emotion_lower_bound 的普通稀有度驱逐舰。
+        """获取符合等级限制与情绪值要求的普通稀有度驱逐舰。
 
         调用后需要调用 _dock_reset()。
 
         Args:
-            emotion (int): 普通驱逐舰的最低情绪值。
+            emotion (int): 普通驱逐舰的最低情绪值。默认 16。
 
         Returns:
-            Ship: 匹配的舰船。
+            list[Ship]: 匹配的舰船列表。
+
+        Raises:
+            ScriptError: 无效的通用驱逐舰设置时抛出。
         """
         rarity = 'common'
         extra = 'can_limit_break'
@@ -540,7 +568,6 @@ class GemsFarming(FleetSelectionMixin, CampaignRun, FleetEquipment, GemsEquipmen
             candidates = self.find_candidates(self.get_templates(self.config.GemsFarming_CommonDD), scanner)
             return candidates
 
-
     def ship_down_hard(self):
         """困难模式下将舰船从舰队中移除。
 
@@ -552,10 +579,11 @@ class GemsFarming(FleetSelectionMixin, CampaignRun, FleetEquipment, GemsEquipmen
         else:
             self.ui_back(check_button=FLEET_PREPARATION)
 
-
     def flagship_change_with_emotion(self, ship):
-        """
-        更换旗舰并计算情绪值。
+        """更换旗舰并同步更新情绪值。
+
+        Args:
+            ship (list[Ship]): 候选舰船列表。
         """
         target_ship = max(ship, key=lambda s: (s.level, s.emotion))
         if self.change_vanguard:
@@ -565,11 +593,13 @@ class GemsFarming(FleetSelectionMixin, CampaignRun, FleetEquipment, GemsEquipmen
         self._ship_change_confirm(target_ship.button)
 
     def flagship_change_execute(self):
-        """
-        执行旗舰更换。
+        """执行旗舰更换。
 
         Returns:
             bool: 是否成功。
+
+        Raises:
+            RequestHumanTakeover: 进出船坞失败或困难模式无补位舰船时抛出。
 
         Pages:
             in: page_fleet
@@ -605,8 +635,10 @@ class GemsFarming(FleetSelectionMixin, CampaignRun, FleetEquipment, GemsEquipmen
             return False
 
     def vanguard_change_with_emotion(self, ship):
-        """
-        更换先锋并计算情绪值。
+        """更换先锋并同步更新情绪值。
+
+        Args:
+            ship (list[Ship]): 候选舰船列表。
         """
         target_ship = max(ship, key=lambda s: s.emotion)
         if self.change_vanguard:
@@ -614,11 +646,13 @@ class GemsFarming(FleetSelectionMixin, CampaignRun, FleetEquipment, GemsEquipmen
         self._ship_change_confirm(target_ship.button)
 
     def vanguard_change_execute(self):
-        """
-        执行先锋更换。
+        """执行先锋更换。
 
         Returns:
             bool: 是否成功。
+
+        Raises:
+            RequestHumanTakeover: 进出船坞失败或困难模式无补位舰船时抛出。
 
         Pages:
             in: page_fleet
@@ -655,10 +689,11 @@ class GemsFarming(FleetSelectionMixin, CampaignRun, FleetEquipment, GemsEquipmen
     # 类属性在进程生命周期内保持不变，确保初始检查只在进程内执行一次。
     _initial_flagship_check_done = False
 
-
     def get_emotion(self):
-        """
-        从配置中获取舰队情绪值。
+        """从配置中获取舰队情绪值。
+
+        Returns:
+            int: 记录的情绪值。
         """
         if self.config.Fleet_FleetOrder == 'fleet1_standby_fleet2_all':
             return self.campaign.config.Emotion_Fleet2Value
@@ -666,8 +701,10 @@ class GemsFarming(FleetSelectionMixin, CampaignRun, FleetEquipment, GemsEquipmen
             return self.campaign.config.Emotion_Fleet1Value
 
     def set_emotion(self, emotion):
-        """
-        设置舰队情绪值。
+        """设置舰队情绪值。
+
+        Args:
+            emotion (int): 需记录的情绪值。
         """
         if self.config.Fleet_FleetOrder == 'fleet1_standby_fleet2_all':
             self.campaign.config.set_record(Emotion_Fleet2Value=emotion)
@@ -675,14 +712,13 @@ class GemsFarming(FleetSelectionMixin, CampaignRun, FleetEquipment, GemsEquipmen
             self.campaign.config.set_record(Emotion_Fleet1Value=emotion)
 
     def run(self, name, folder='campaign_main', mode='normal', total=0):
-        """
-        运行钻石 farming 任务。
+        """运行钻石 farming 任务主循环。
 
         Args:
             name (str): .py 文件名称。
-            folder (str): campaign 下的文件夹名称。
-            mode (str): `normal` 或 `hard`。
-            total (int): 总运行次数限制。
+            folder (str): campaign 下的文件夹名称。默认 'campaign_main'。
+            mode (str): 战役模式，如 `normal` 或 `hard`。默认 'normal'。
+            total (int): 总运行次数限制。默认 0。
         """
         self.config.STOP_IF_REACH_LV32 = self.change_flagship and not self.config.GemsFarming_AllowHighFlagshipLevel
         # 初始检查旗舰等级。

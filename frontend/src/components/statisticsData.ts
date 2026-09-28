@@ -1,4 +1,9 @@
-import type { Scalar, StatPoint } from '../api/types'
+/**
+ * @fileoverview 统计数据聚合、图表计算与表格排序辅助工具。
+ */
+
+import type { StatSeries,  Scalar, StatPoint } from '../api/types'
+import type { ChartMode } from '../app/statisticsPrefs'
 
 export function aggregatePoints(points: StatPoint[], minutes: number) {
   const buckets = new Map<string, {time: string; open: number; close: number; low: number; high: number}>()
@@ -57,3 +62,84 @@ export function mergeMultiSeriesRows(
   })
 }
 
+
+
+/** 图表与原始记录表共用的视图：同一份选中、聚合与时间范围，两边各自算出同一结果。 */
+export interface StatisticsView {
+  selectedSeries: StatSeries[]
+  seriesData: {
+    series: StatSeries
+    points: StatPoint[]
+    buckets: ReturnType<typeof aggregatePoints>
+    values: number[]
+    latest?: number
+    change: number
+    minimum: number
+    maximum: number
+  }[]
+  isSingle: boolean
+  effectiveBucket: number
+  mergedRows: Scalar[][]
+}
+
+/* 选中系列按保存顺序排列；没有可用记录时取第一条有数据的系列。 */
+export function resolveSelectedKeys(series: StatSeries[], saved: string[]): string[] {
+  const valid = saved.filter(key => series.some(item => item.key === key))
+  if (valid.length) return valid
+  const active = series.find(item => item.points.length)?.key ?? series[0]?.key
+  return active ? [active] : []
+}
+
+export function buildSeriesView(series: StatSeries[], options: {selectedKeys: string[]; mode: ChartMode; bucket: number; from: string; to: string}): StatisticsView {
+  const {selectedKeys, mode, bucket, from, to} = options
+  const keys = resolveSelectedKeys(series, selectedKeys)
+  const selectedSeries = keys.map(key => series.find(item => item.key === key)!).filter(Boolean)
+  const isSingle = selectedSeries.length === 1
+  const effectiveBucket = mode === 'candlestick' && bucket === 0 ? 60 : bucket
+  const seriesData = selectedSeries.map(s => {
+    const points = s.points.filter(point => (!from || point.time.replace(' ', 'T') >= from) && (!to || point.time.replace(' ', 'T') <= `${to}:59.999`))
+    const values = points.map(p => p.value)
+    return {
+      series: s, points, buckets: aggregatePoints(points, effectiveBucket), values,
+      latest: values.at(-1),
+      change: values.length >= 2 ? (values.at(-1)! - values[0]) : 0,
+      minimum: values.length ? Math.min(...values) : 0,
+      maximum: values.length ? Math.max(...values) : 0,
+    }
+  })
+  const single = seriesData[0]
+  const mergedRows = isSingle && single
+    ? single.points.map(point => [point.time, point.value, point.source || '—'] as Scalar[])
+    : mergeMultiSeriesRows(selectedSeries, from, to)
+  return {selectedSeries, seriesData, isSingle, effectiveBucket, mergedRows}
+}
+
+/** 涨跌分段：相邻两点之间按方向归入上涨（持平并入上涨）与下跌两组，组间用 '-' 断开，
+    这样每组是一条独立折线，可以各自上色。 */
+export function riseFallSegments(times: number[], closes: (number | null)[]): {rise: (number[] | '-')[]; fall: (number[] | '-')[]} {
+  const rise: (number[] | '-')[] = []
+  const fall: (number[] | '-')[] = []
+  const deltas = riseFallDeltas(closes)
+  for (let index = 1; index < closes.length; index += 1) {
+    const previous = closes[index - 1]
+    const current = closes[index]
+    if (previous == null || current == null) continue
+    const target = deltas[index] >= 0 ? rise : fall
+    target.push([times[index - 1], previous], [times[index], current], '-')
+  }
+  return {rise, fall}
+}
+
+/** 行动力这条曲线：键固定为 ap，标签作兜底（各页面的资源标签来自后端）。 */
+export function isActionPointSeries(series: {key: string; label: string}, label: string): boolean {
+  return series.key === 'ap' || series.label === label
+}
+
+/** 逐点涨跌：与前一点比较，涨为正、跌为负；首点与空值没有可比值，记 0。 */
+export function riseFallDeltas(values: (number | null)[]): number[] {
+  return values.map((value, index) => {
+    const previous = index > 0 ? values[index - 1] : null
+    if (value == null || previous == null) return 0
+    return value - previous
+  })
+}

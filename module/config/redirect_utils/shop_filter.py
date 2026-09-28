@@ -28,11 +28,19 @@ NAME_TO_SERIES = {
 
 
 def bp_redirect(value):
-    """
-    Redirects shop filter old format for research blueprints
-    to new format
-    PRBP = PR; PR1BP = PRS1; PROdinBP = PROdin/PROdinS3
-    likewise for DR variants
+    """将商店过滤器中旧格式的科研蓝图字符串重定向转换为新版系列格式。
+
+    例如：
+    - PRBP -> PR
+    - PR1BP -> PRS1
+    - PROdinBP -> PROdinS3
+    - DR 船只同理。
+
+    Args:
+        value (str): 原始蓝图过滤器字符串。
+
+    Returns:
+        str: 转换后的蓝图过滤器字符串。
     """
     matches = re.findall(FILTER_REGEX_SERIES, value)
     if not matches:
@@ -61,12 +69,16 @@ FILTER_REGEX_VOUCHER = re.compile(
 
 
 def voucher_redirect(value):
-    """
-    Redirects voucher shop filter to prevents users
-    from using banned strings i.e. Logger, LoggerT[1-6],
-    LoggerArchive, or LoggerArchiveT[1-6]
-    Banned strings are used for special circumstances
-    handled by ALAS
+    """重定向大世界特别兑换商店（Voucher Shop）过滤器配置。
+
+    移除或规范化被保留的特殊字符串（如 Logger、LoggerT[1-6]、LoggerArchive 等），
+    这些特殊字符串由 AzurPilot 内部调度机制专有处理。
+
+    Args:
+        value (str): 原始特别兑换凭证过滤器字符串。
+
+    Returns:
+        str: 过滤并替换后的字符串。
     """
     matches = re.findall(FILTER_REGEX_VOUCHER, value)
     if not matches:

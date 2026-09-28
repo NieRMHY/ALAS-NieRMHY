@@ -1,6 +1,6 @@
 import threading
 import unittest
-from unittest.mock import Mock, PropertyMock, patch
+from unittest.mock import Mock, PropertyMock, patch, mock_open
 
 from rich.text import Text
 
@@ -32,6 +32,26 @@ class TestProcessManagerRegistry(unittest.TestCase):
         State._restart_requested = self.original_restart_requested
         ProcessManager._processes = self.original_processes
         ProcessManager._lifecycle_locks = self.original_lifecycle_locks
+
+    def test_restart_skips_blocked_instance_and_continues_without_logging_secrets(self):
+        from module.api.protocol import ApiError
+        for failure in (ApiError('VAULT_DESTROYED', '合成敏感信息'), RuntimeError('合成敏感信息')):
+            with self.subTest(failure=type(failure).__name__):
+                broken = ProcessManager.get_manager('broken')
+                healthy = ProcessManager.get_manager('healthy')
+                with patch.object(broken, 'start', side_effect=failure) as blocked, \
+                        patch.object(healthy, 'start') as started, \
+                        patch('module.runtime.process_manager.list_mod_instance'), \
+                        patch('module.runtime.process_manager.get_config_mod', return_value='alas'), \
+                        patch('module.runtime.process_manager.open', mock_open(read_data=''), create=True), \
+                        patch('module.runtime.process_manager.os.remove') as remove, \
+                        patch('module.runtime.process_manager.logger.error') as error_log:
+                    ProcessManager.restart_processes(['broken', 'healthy'])
+                blocked.assert_called_once()
+                started.assert_called_once()
+                remove.assert_called_once_with('./config/reloadalas')
+                self.assertEqual(WorkerResult.ERROR, broken.exit_result)
+                self.assertNotIn('合成敏感信息', str(error_log.call_args_list))
 
     def test_second_session_uses_registered_worker_pid(self):
         State.process_registry["alas"] = 12345

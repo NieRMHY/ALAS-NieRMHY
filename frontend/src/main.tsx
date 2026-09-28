@@ -1,3 +1,7 @@
+/**
+ * @fileoverview 前端应用主入口，初始化主题并挂载 React 根节点。
+ */
+
 import { Component, type ReactNode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { createHashRouter, RouterProvider, Navigate } from 'react-router-dom'

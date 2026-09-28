@@ -33,6 +33,14 @@ class ModeSwitch(Switch):
     """
 
     def handle_additional(self, main):
+        """处理模式切换过程中的额外异常状态。
+
+        Args:
+            main: 当前执行环境对象。
+
+        Raises:
+            CampaignNameError: 意外检测到撤退按钮时抛出。
+        """
         if main.appear(WITHDRAW, offset=(30, 30)):
             logger.warning(f'模式切换: 出现撤退按钮')
             raise CampaignNameError
@@ -104,12 +112,11 @@ class CampaignUI(MapOperation, CampaignEvent, CampaignOcr):
     ENTRANCE = Button(area=(), color=(), button=(), name='default_button')
 
     def campaign_ensure_chapter(self, chapter, skip_first_screenshot=True):
-        """
-        确保切换到指定章节。
+        """确保切换到指定章节。
 
         Args:
-            chapter (int, str): 章节名称，如 7、'd'、'sp'。
-            skip_first_screenshot: 是否跳过首次截图。
+            chapter (int | str): 章节名称，如 7、'd'、'sp'。
+            skip_first_screenshot (bool): 是否跳过首次截图。默认 True。
         """
         index = self._campaign_get_chapter_index(chapter)
         isdigit = is_digit_chapter(chapter)
@@ -519,12 +526,13 @@ class CampaignUI(MapOperation, CampaignEvent, CampaignOcr):
         return False
 
     def campaign_set_chapter(self, name, mode='normal'):
-        """
-        设置战役章节。
+        """设置并切换到目标战役章节。
+
+        按主线、各版本活动、SP 章节的顺序依次尝试切换。
 
         Args:
             name (str): 战役名称，如 '7-2'、'd3'、'sp3'。
-            mode (str): 'normal' 或 'hard'。
+            mode (str): 'normal' 或 'hard'。默认 'normal'。
         """
         # 特殊情况：d3_3 在章节导航中使用 d3
         chapter_name = name
@@ -547,11 +555,12 @@ class CampaignUI(MapOperation, CampaignEvent, CampaignOcr):
             logger.warning(f'[战役-UI] 未知的战役章节: {name}')
 
     def handle_campaign_ui_additional(self):
-        """
-        战役 UI 的额外处理。
+        """战役 UI 的额外异常处理。
+
+        若检测到撤退按钮，则等待信息提示条消失后执行撤退。
 
         Returns:
-            bool: 是否已处理。
+            bool: 是否进行了额外处理。
         """
         if self.appear(WITHDRAW, offset=(30, 30)):
             # logger.info("发现 WITHDRAW 按钮，等待地图加载完成以防止游戏客户端 bug")
@@ -564,16 +573,18 @@ class CampaignUI(MapOperation, CampaignEvent, CampaignOcr):
         return False
 
     def ensure_campaign_ui(self, name, mode='normal', skip_first_screenshot=True):
-        """
-        确保进入指定战役的 UI 界面。
+        """确保进入指定战役的 UI 界面并获取关卡入口。
 
         Args:
             name (str): 战役名称，如 '7-2'、'd3'、'sp3'。
-            mode (str): 'normal' 或 'hard'。
-            skip_first_screenshot: 是否跳过首次截图。
+            mode (str): 战役模式，'normal' 或 'hard'。默认 'normal'。
+            skip_first_screenshot (bool): 是否跳过首次截图。默认 True。
+
+        Returns:
+            bool: 成功进入关卡页面并获取到入口按钮时返回 True。
 
         Raises:
-            ScriptEnd: 重试后仍切换失败时抛出。
+            ScriptEnd: 超时或重试后仍切换失败时抛出。
         """
         timeout = Timer(5, count=20).start()
         while 1:
@@ -598,8 +609,7 @@ class CampaignUI(MapOperation, CampaignEvent, CampaignOcr):
         raise ScriptEnd('Campaign name error')
 
     def commission_notice_show_at_campaign(self):
-        """
-        检查战役界面是否显示委托完成通知。
+        """检查战役界面是否显示委托完成通知。
 
         Returns:
             bool: 是否有委托已完成。

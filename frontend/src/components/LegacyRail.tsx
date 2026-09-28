@@ -1,3 +1,7 @@
+/**
+ * @fileoverview 旧版实例视图左侧调度器与任务列表面板组件。
+ */
+
 import type { ReactNode } from 'react'
 import { Clock3 } from 'lucide-react'
 import type { Overview } from '../api/types'

@@ -1,11 +1,10 @@
 """复用既有统计源，为分类页面提供指标、时间线和可导出的明细。"""
 import math
+import os
 import threading
 from datetime import datetime, timedelta
 
-import os
 from module.api.protocol import ApiError
-
 
 _loot_lock = threading.Lock()
 
@@ -15,6 +14,12 @@ def get_statistics_fingerprint(instance: str) -> str:
 
     检测 SQLite 本地快照库、CL1 记录库、舰船统计文件以及配置文件修改时间，
     用于 WebSocket 会话高效判断后端统计数据是否有更新。
+
+    Args:
+        instance: 实例名称。
+
+    Returns:
+        str: 由各文件修改时间及文件大小拼接而成的指纹字符串。
     """
     parts = []
     # 1. 资源快照数据库 (azurstats_local.db)
@@ -52,9 +57,16 @@ def get_statistics_fingerprint(instance: str) -> str:
     return ';'.join(parts)
 
 
+def refresh_loot(configs, instance: str) -> dict:
+    """重新计算已有本地掉落记录，复用旧界面刷新操作。
 
-def refresh_loot(configs, instance):
-    """只重算已有本地掉落记录，复用旧界面刷新操作。"""
+    Args:
+        configs: 配置管理服务实例。
+        instance: 实例名称。
+
+    Returns:
+        dict: 包含刷新成功标识的字典。
+    """
     configs.path(instance)
     from module.statistics.azurstats import AzurStats
     with _loot_lock:
@@ -69,15 +81,38 @@ RESOURCE_LABELS = {
 }
 
 
-def table(title, columns, rows, note='', default_sort=None):
+def table(title: str, columns: list[str], rows: list[list], note: str = '', default_sort: dict = None) -> dict:
+    """构造前端通用的数据表格结构字典。
+
+    Args:
+        title: 表格标题。
+        columns: 列名称列表。
+        rows: 数据行列表。
+        note: 表格备注或提示说明。
+        default_sort: 默认排序规则字典，如 ``{'index': 0, 'descending': True}``。
+
+    Returns:
+        dict: 格式化后的表格结构字典。
+    """
     result = {'title': title, 'columns': columns, 'rows': rows, 'note': note}
     if default_sort is not None:
         result['defaultSort'] = default_sort
     return result
 
 
-def series(rows, key, label):
-    """保留真实采集时间与来源，跳过无效值，绝不把缺失值补成零。"""
+def series(rows: list[dict], key: str, label: str) -> dict:
+    """提取时间线序列数据，保留真实采集时间与来源，跳过无效值。
+
+    绝不把缺失值补充为零。
+
+    Args:
+        rows: 包含时间戳与属性值的数据字典列表。
+        key: 数据字段键名。
+        label: 展现标签名称。
+
+    Returns:
+        dict: 包含字段键、标签及按时间排序的数据点列表字典。
+    """
     points = []
     for row in rows:
         value = row.get(key)
@@ -93,7 +128,79 @@ def series(rows, key, label):
     return {'key': key, 'label': label, 'points': points}
 
 
-def report(configs, instance, category, month, days, period):
+def _research_record_rows(instance: str, start: datetime, end: datetime, scope: str) -> list[list]:
+    """获取指定区间内的科研掉落记录，供「掉落记录」表使用。
+
+    只列当前视图认定的物品：那一次只掉了本视图不看的物品时，不算作一次有效掉落。
+
+    Args:
+        instance: 实例名称。
+        start: 区间起点（含）。
+        end: 区间终点（不含）。
+        scope: 视图口径。
+
+    Returns:
+        list[list]: 表格数据行列表，每行为 [时间, 项目, 期数, 掉落物]。
+    """
+    from module.statistics.cl1_database import db as cl1_db
+    from module.statistics.research_stats import item_info, should_show
+
+    entries = []
+    cursor = start.replace(day=1)
+    while cursor < end:
+        entries.extend(cl1_db.get_research_drop(instance, cursor.year, cursor.month))
+        cursor = (cursor.replace(day=28) + timedelta(days=4)).replace(day=1)
+    entries = [entry for entry in entries
+               if start.isoformat(sep=' ') <= str(entry.get('ts', '')).replace('T', ' ') < end.isoformat(sep=' ')]
+    entries.sort(key=lambda entry: entry['ts'])
+    rows = []
+    for entry in entries:
+        shown = [(item_info(name)['zh'], amount) for name, amount in (entry.get('items') or {}).items()
+                 if should_show(name, scope=scope)]
+        if not shown:
+            continue
+        rows.append([
+            entry['ts'], entry.get('project') or '—', entry.get('series') or '—',
+            '、'.join(f'{zh} x{amount}' for zh, amount in shown),
+        ])
+    return rows
+
+
+def _month_end(moment: datetime) -> datetime:
+    """计算指定时刻所在月份的下月 1 号（0 点）。
+
+    Args:
+        moment: 基准时间对象。
+
+    Returns:
+        datetime: 下月首日零点的时间对象。
+    """
+    return (moment.replace(day=28) + timedelta(days=4)).replace(day=1)
+
+
+def report(configs, instance: str, category: str, month: str, days: int, period: str,
+           research_series: int = 0, research_scope: str = 'series', loot_task: str = None) -> dict:
+    """生成并获取指定维度的统计报表。
+
+    支持资源变动趋势、大世界运营、委托收益、舰船经验以及科研和大世界掉落明细。
+
+    Args:
+        configs: 配置管理服务实例。
+        instance: 实例名称。
+        category: 统计分类（resources, opsi, action, commission, ships, research, loot）。
+        month: 目标月份，格式为 ``YYYY-MM``。
+        days: 趋势查询天数。
+        period: 汇总周期（day, week, month）。
+        research_series: 科研期数过滤编号。
+        research_scope: 科研口径范围（series, consumable 等）。
+        loot_task: 掉落所属任务过滤名称。
+
+    Returns:
+        dict: 统计报表数据字典，包含 metrics 指标、series 时间序列、tables 表格及 notes 备注。
+
+    Raises:
+        ApiError: 月份格式错误或超出有效年份范围 (INVALID_PARAMS)。
+    """
     configs.path(instance)
     now = datetime.now()
     try:
@@ -106,8 +213,12 @@ def report(configs, instance, category, month, days, period):
     result = {'instance': instance, 'category': category, 'month': f'{year:04d}-{month_number:02d}',
               'metrics': [], 'series': [], 'tables': [], 'notes': []}
 
-    def metric(label, value, unit=''):
-        result['metrics'].append({'label': label, 'value': value, 'unit': unit})
+    def metric(label, value, unit='', icon=None):
+        entry = {'label': label, 'value': value, 'unit': unit}
+        if icon:
+            # 前端按 icon 找图标，找不到就用 label 查内置表；科研物品写 'research:<模板名>'
+            entry['icon'] = icon
+        result['metrics'].append(entry)
 
     if category == 'resources':
         from module.statistics.resource_stats import RESOURCE_COLUMNS, get_resource_timeline
@@ -143,6 +254,15 @@ def report(configs, instance, category, month, days, period):
             ('净行动力', purchased - cost, ''), ('循环效率', round((purchased - cost) / cost * 100, 2) if cost else None, '%'),
         ]:
             metric(label, value, unit)
+        # 收获卡片同时给出舰船经验侧的效率与今日进度，与「舰船经验」页同一批数据。
+        from module.statistics.ship_exp_stats import ShipExpStats
+        exp_stats = ShipExpStats(instance_name=instance)
+        today_exp = exp_stats.get_today_stats() or {}
+        metric('平均战斗时长', exp_stats.get_average_battle_time(), '秒')
+        metric('预估经验效率', exp_stats.get_exp_per_hour(), '/小时')
+        metric('今日战斗', today_exp.get('battle_count'), '场')
+        metric('今日经验', today_exp.get('total_exp_gained'))
+        metric('今日运行', round(today_exp['total_run_time'] / 60, 1) if 'total_run_time' in today_exp else None, '分钟')
         rows = []
         for hazard in (3, 5):
             data = db.get_meow_stats(instance, year, month_number, hazard_level=hazard)
@@ -151,6 +271,7 @@ def report(configs, instance, category, month, days, period):
                          data.get('siren_research_devices'), round(data.get('siren_research_rate', 0) * 100, 2),
                          {'exact': '实测', 'estimated': '估算', 'none': '暂无记录'}.get(data.get('by_hazard', {}).get(str(hazard), {}).get('source', 'none'))])
         result['tables'].append(table('短猫运行统计', ['侵蚀等级', '战斗次数', '有效轮数', '平均战斗秒数', '平均每轮秒数', '研究装置', '获取率（%）', '统计来源'], rows))
+        # 收获只作卡片渲染：卡片 / 表格两种呈现由前端布局按页切换，后端不另出表。
     elif category == 'action':
         from module.statistics.opsi_month import get_ap_timeline, get_coins_timeline
         ap = get_ap_timeline(year, month_number, instance)
@@ -212,8 +333,174 @@ def report(configs, instance, category, month, days, period):
             f"上次检测：{data.get('last_check_time', '尚未检测')}；舰队：{data.get('fleet_index', '—')}。"))
         daily = [{'ts': key, **value} for key, value in sorted(data.get('daily_stats', {}).items())]
         result['series'] = [series(daily, 'total_exp_gained', '每日经验'), series(daily, 'battle_count', '每日战斗'), series(daily, 'total_run_time', '每日运行秒数')]
+    elif category == 'research':
+        from module.statistics.research_stats import (
+            CONSUMABLE_ITEMS, collect, item_info, RARITY_LABELS, SCOPE_SERIES)
+        # 走表格的 note 而不是 notes：前端只渲染 tables，notes 仅在导出 CSV 时用到，
+        # 放在那里用户界面上什么都看不到（会以为功能坏了）。
+        # 两个视图（期数 / 心智物资）共用同一套布局与列名：上面收益卡片、中间收获明细、
+        # 下面原始掉落记录——前端按数据形状渲染，这里保持一致即得一致版式。
+        detail_columns = ['图标', '物品', '稀有度', '总收益', '掉落记录数', '平均每次掉落']
+        record_columns = ['时间', '项目', '期数', '掉落物']
+        # 两个视图都照委托收益的样子按「汇总周期」框时间（period=month 看选定月份，
+        # day/week 看今天/本周）；差别只在期数视图还按期过滤。
+        start = selected.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        end = _month_end(start)
+        if period != 'month':
+            start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+            if period == 'week':
+                start -= timedelta(days=start.weekday())
+            end = now
+
+        if research_scope != SCOPE_SERIES:
+            # 不分期：心智单元与物资各期混着出，只有时间范围跟着「汇总周期」走。
+            summary = collect(instance, series=research_series, scope=research_scope, start=start, end=end)
+            title = '心智/物资收获明细'
+            note = ('心智单元与物资不绑期数、各期混着出，所以这里不分期统计'
+                    '（时间范围跟着「汇总周期」走）；清单里没掉过的也留一行，便于对照。'
+                    '图标暂用当前物品模板。')
+            if not summary['records']:
+                result['tables'].append(table(title, detail_columns, [], note=(
+                    '这段时间里没有掉落记录。「汇总周期」选今天/本周时窗口很短，'
+                    '改成「选定月份」能看得更多；统计在领奖时自动完成，把「科研截图」设为'
+                    '「保存」或「上传」即可（两者都会统计，区别只是要不要把截图落盘）。')))
+                return result
+            record_rows = _research_record_rows(instance, start, end, research_scope)
+            metric('掉落记录', len(record_rows), '次')
+            by_name = {item['name']: item for item in summary['items']}
+            rows = []
+            for name in CONSUMABLE_ITEMS:
+                # 两件物品都留一行（没掉过的显示「—」），与期数视图的固定清单一致
+                info = item_info(name)
+                entry = by_name.get(name)
+                amount = entry['amount'] if entry else 0
+                rows.append([f'research:{name}', info['zh'],
+                             RARITY_LABELS.get(info.get('rarity'), '—'),
+                             amount or None, (entry['count'] if entry else 0) or None,
+                             (entry['avg'] if entry else 0) or None])
+                metric(info['zh'], amount or None, icon=f'research:{name}')
+            # 三档时间总计固定看今日 / 本月 / 选定月份，不受上面「汇总周期」影响；
+            # 三者窗口常常重合（选的就是本月时是同一个），同窗口只查一次库。
+            windows = (
+                ('今日总计', now.replace(hour=0, minute=0, second=0, microsecond=0), now + timedelta(seconds=1)),
+                ('本月总计', now.replace(day=1, hour=0, minute=0, second=0, microsecond=0), None),
+                ('选定月份总计', selected.replace(day=1, hour=0, minute=0, second=0, microsecond=0), None),
+            )
+            totals = {}
+            for label, begin, finish in windows:
+                finish = _month_end(begin) if finish is None else finish
+                if (begin, finish) not in totals:
+                    totals[(begin, finish)] = collect(
+                        instance, series=research_series, scope=research_scope,
+                        start=begin, end=finish)['total']
+                metric(label, totals[(begin, finish)] or None)
+            result['tables'].append(table(
+                title, detail_columns, rows, note=note,
+                default_sort={'index': 3, 'descending': True},
+            ))
+            result['tables'].append(table(
+                '掉落记录', record_columns, record_rows[-200:],
+                note='按时间倒序；只列掉了心智单元或物资的记录。'
+                     + ('记录超过 200 条，只显示最近 200 条。' if len(record_rows) > 200 else ''),
+                default_sort={'index': 0, 'descending': True},
+            ))
+            return result
+
+        summary = collect(instance, series=research_series, scope=SCOPE_SERIES, start=start, end=end)
+        title = f'第 {summary["series"]} 期收获明细'
+        note = ('每期只统计该期各艘船的图纸与该期的彩装图纸；'
+                '心智与物资在「心智/物资」里看。图标暂用当前物品模板。'
+                '清单里本期没掉过的也留一行，便于对照。')
+        if not summary['records']:
+            if summary['available']:
+                hint = (f'第 {summary["series"]} 期在统计区间内没有记录；有记录的期数：'
+                        + '、'.join(f'第 {item} 期' for item in summary['available'])
+                        + '（可把「汇总周期」改成选定月份再看）')
+            else:
+                hint = ('还没有科研掉落记录。统计在领奖时自动完成：'
+                        '把「科研截图」设为「保存」或「上传」即可（两者都会统计，'
+                        '区别只是要不要把截图落盘）。')
+            result['tables'].append(table(title, detail_columns, [], note=hint))
+            return result
+        # 原始掉落记录：本视图认的物品才算「一次掉落」，只列这些
+        record_rows = _research_record_rows(instance, start, end, SCOPE_SERIES)
+
+        metric('掉落记录', len(record_rows), '次')
+        for item in summary['items']:
+            # 0 传 null：前端与委托收益一样显示「—」，区分「没有」和「真是 0」
+            metric(item['zh'], item['amount'] or None, icon=f'research:{item["name"]}')
+        rows = [
+            [f'research:{item["name"]}', item['zh'], RARITY_LABELS.get(item.get('rarity'), '—'),
+             item['amount'] or None, item['count'] or None, item['avg'] or None]
+            for item in summary['items']
+        ]
+        result['tables'].append(table(
+            title, detail_columns, rows, note=note,
+            default_sort={'index': 3, 'descending': True},
+        ))
+        result['tables'].append(table(
+            '掉落记录', record_columns, record_rows[-200:],
+            note='按时间倒序；只列掉了本期图纸或彩装的记录，那一次只掉心智或物资的不算。'
+                 + ('记录超过 200 条，只显示最近 200 条。' if len(record_rows) > 200 else ''),
+            default_sort={'index': 0, 'descending': True},
+        ))
     elif category == 'loot':
         from module.statistics.azurstats import AzurStats
+        from module.statistics.opsi_drop_stats import collect as collect_opsi_drop
+        from module.statistics.research_stats import RARITY_LABELS
+        # 版式与科研掉落一致：上面收益卡片、中间收获明细、下面掉落记录。
+        # 「汇总周期」框时间：month 看选定月份，day/week 看今天/本周。
+        start = selected.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        end = _month_end(start)
+        if period != 'month':
+            start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+            if period == 'week':
+                start -= timedelta(days=start.weekday())
+            end = now
+        task = loot_task or None
+        summary = collect_opsi_drop(instance, start, end, task=task)
+        detail_columns = ['图标', '物品', '稀有度', '总收益', '掉落记录数', '平均每次掉落']
+        record_columns = ['时间', '任务', '海域', '掉落物']
+        title = '大世界掉落明细'
+        note = ('暂时只统计金菜（通用/主炮/鱼雷/防空炮/舰载机 部件T4）与彩图纸'
+                '（舰炮/鱼雷/防空炮/舰载机 研发图纸UR型）；其他物品照常入库，只是不在这里展示。'
+                '统计在任务跑完解析掉落时完成：把该任务的「掉落截图」设为保存或上传均可'
+                '（两者都统计，区别只是要不要把截图落盘）。')
+        # 任务筛选下拉的数据源：有掉落开关的任务固定列出，其余任务掉了东西才出现
+        result['taskOptions'] = summary['tasks']
+        if not summary['record_count']:
+            result['tables'].append(table(title, detail_columns, [], note=(
+                note + ' 这段时间里没有掉落记录——「汇总周期」选今天/本周时窗口很短，'
+                '改成「选定月份」能看得更多。')))
+        else:
+            metric('掉落记录', summary['record_count'], '次')
+            for item in summary['items']:
+                # 0 传 null：前端与委托收益一样显示「—」，区分「没有」和「真是 0」
+                metric(item['zh'], item['amount'] or None, icon=f'opsi:{item["name"]}')
+            for label, begin, finish in (
+                ('今日总计', now.replace(hour=0, minute=0, second=0, microsecond=0), now + timedelta(seconds=1)),
+                ('本月总计', now.replace(day=1, hour=0, minute=0, second=0, microsecond=0), None),
+                ('选定月份总计', selected.replace(day=1, hour=0, minute=0, second=0, microsecond=0), None),
+            ):
+                finish = _month_end(begin) if finish is None else finish
+                metric(label, collect_opsi_drop(instance, begin, finish, task=task)['total'] or None)
+            rows = [
+                [f'opsi:{item["name"]}', item['zh'], RARITY_LABELS.get(item.get('rarity'), '—'),
+                 item['amount'] or None, item['count'] or None, item['avg'] or None]
+                for item in summary['items']
+            ]
+            result['tables'].append(table(
+                title, detail_columns, rows, note=note,
+                default_sort={'index': 3, 'descending': True},
+            ))
+            result['tables'].append(table(
+                '掉落记录', record_columns, summary['records'][:200],
+                note='按时间倒序；只列掉了金菜或彩图纸的记录，其余掉落不入这张表。'
+                     + ('记录超过 200 条，只显示最近 200 条。' if len(summary['records']) > 200 else ''),
+                default_sort={'index': 0, 'descending': True},
+            ))
+
+        # 短猫按侵蚀等级的收益汇总：沿用原「短猫掉落」页的数据源，放在最下面
         rows = []
         with _loot_lock:
             cached = AzurStats.load_meowofficer_farming(instance=instance)

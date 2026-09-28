@@ -24,7 +24,15 @@ def merge_two_rects(
         r1: Tuple[int, int, int, int],
         r2: Tuple[int, int, int, int]
 ) -> Tuple[int, int, int, int]:
-    """合并两个矩形区域，返回包含两者的最小矩形。"""
+    """合并两个矩形区域，返回包含两者的最小矩形。
+
+    Args:
+        r1 (Tuple[int, int, int, int]): 第一个矩形坐标 (x1, y1, x2, y2)。
+        r2 (Tuple[int, int, int, int]): 第二个矩形坐标 (x1, y1, x2, y2)。
+
+    Returns:
+        Tuple[int, int, int, int]: 包含两者的最小外接矩形。
+    """
     return (
         min(r1[0], r2[0]),
         min(r1[1], r2[1]),
@@ -34,7 +42,15 @@ def merge_two_rects(
 
 
 def merge_rows(list_word, merge):
-    """将相近的文本行合并为同一行。"""
+    """将垂直间距相近的文本行合并为同一行。
+
+    Args:
+        list_word (list): 包含 (矩形坐标, 中心y坐标) 的元组列表。
+        merge (int): 允许合并的最大垂直像素间距。
+
+    Returns:
+        list: 合并后的行矩形坐标列表。
+    """
     # 按 y 坐标排序
     list_word = sorted(list_word, key=lambda x: x[1])
 
@@ -60,6 +76,11 @@ def merge_rows(list_word, merge):
 
 
 class HospitalClue(HospitalUI):
+    """医院活动线索分析与交互处理器。
+
+    继承自 HospitalUI，负责线索旁白列表解析、未完成调查检测以及线索界面进退与选择。
+    """
+
     def get_clue_list(self) -> List[Button]:
         """获取线索列表中所有旁白按钮。
 

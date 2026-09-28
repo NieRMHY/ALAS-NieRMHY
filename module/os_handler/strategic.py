@@ -41,8 +41,10 @@ class StrategicSearchHandler(MapEventHandler):
 
     def _strategy_search_scroll_appear(self):
         """
+        检查策略搜索界面的滚动条是否仍然存在。
+
         Returns:
-            bool: If it still exists
+            bool: 滚动条存在返回 True，已消失返回 False。
         """
         for _ in self.loop(timeout=2):
             if STRATEGIC_SEARCH_SCROLL.appear(main=self):
@@ -55,14 +57,22 @@ class StrategicSearchHandler(MapEventHandler):
 
     def _strategy_option_selected(self, button):
         """
-        Check if a button is selected
+        检查指定选项按钮是否处于已勾选激活状态。
+
+        Args:
+            button: 选项按钮资源。
+
+        Returns:
+            bool: 按钮被选中返回 True。
         """
         return self.image_color_count(button.button, color=(156, 255, 82), count=30)
 
     def strategic_search_set_option(self):
         """
+        配置策略搜索选项（重复区域模式、遭遇商人停止、遭遇装置停止、自动提交任务等）。
+
         Returns:
-            If success. False if strategic settings closed for unknown reason.
+            bool: 配置是否成功，若因未知原因弹窗意外关闭则返回 False。
         """
         logger.info('[大世界-策略] 设置策略搜索选项')
         for _ in self.loop():
@@ -120,6 +130,7 @@ class StrategicSearchHandler(MapEventHandler):
         return True
 
     def strategic_search_confirm(self):
+        """确认并开始执行策略搜索。"""
         logger.info('[大世界-策略] 策略搜索确认')
         for _ in self.loop():
             if self.appear(STRATEGIC_SEARCH_POPUP_CHECK, offset=(20, 20)) \
@@ -130,15 +141,17 @@ class StrategicSearchHandler(MapEventHandler):
 
     def strategic_search_start(self, skip_first_screenshot=True):
         """
+        启动大世界连续策略搜索。
+
         Args:
-            skip_first_screenshot (bool): Skip first screenshot or not
+            skip_first_screenshot (bool): 是否跳过首次截图。
 
         Returns:
-            If success.
+            bool: 是否启动成功。
 
         Pages:
             in: IN_MAP
-            out: IN_MAP, with strategic search running
+            out: IN_MAP（策略搜索已在运行中）
         """
         logger.hr('策略搜索开始')
         for _ in range(3):

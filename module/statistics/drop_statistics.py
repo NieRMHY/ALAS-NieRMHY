@@ -69,14 +69,32 @@ class DropStatistics:
 
     @property
     def template_folder(self):
+        """获取掉落物模板所在的目录路径。
+
+        Returns:
+            str: 模板目录路径。
+        """
         return os.path.join(DropStatistics.DROP_FOLDER, DropStatistics.TEMPLATE_FOLDER)
 
     @property
     def csv_file(self):
+        """获取统计结果输出的 CSV 文件路径。
+
+        Returns:
+            str: CSV 文件路径。
+        """
         return os.path.join(DropStatistics.DROP_FOLDER, DropStatistics.CSV_FILE)
 
     @staticmethod
     def drop_folder(campaign):
+        """获取指定关卡的截图保存目录。
+
+        Args:
+            campaign (str): 关卡名称。
+
+        Returns:
+            str: 关卡截图文件夹路径。
+        """
         return os.path.join(DropStatistics.DROP_FOLDER, campaign)
 
     @cached_property

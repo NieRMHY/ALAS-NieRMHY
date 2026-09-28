@@ -38,17 +38,28 @@ class SubmarineCall(ModuleBase):
     submarine_advanced = None
 
     def submarine_call_reset(self):
-        """每次战斗执行前重置呼叫状态，避免不同实例共享计时器。"""
+        """重置潜艇呼叫相关的状态标志与计时器。
+
+        每次战斗执行前调用，避免跨战斗实例共享计时器。
+        """
         self.submarine_call_timer = Timer(5).start()
         self.submarine_call_click_timer = Timer(2)
         self.submarine_call_grace_used = False
         self.submarine_call_flag = False
 
     def handle_submarine_call(self, submarine='do_not_use', call=False):
-        """处理潜艇呼叫。
+        """处理战斗中潜艇的主动呼叫。
+
+        根据配置的潜艇模式（普通模式或高级模式）判断是否应该呼叫，
+        检测潜艇呼叫按钮状态并在就绪时点击呼叫。
+
+        Args:
+            submarine (str, optional): 潜艇模式，如 'do_not_use'、'hunt_only'、
+                'boss_only'、'hunt_and_boss'、'advanced'、'advanced_call'。默认为 'do_not_use'。
+            call (bool, optional): 是否强制呼叫潜艇（如 Boss 战）。默认为 False。
 
         Returns:
-            bool: 是否执行了呼叫操作。
+            bool: 是否执行了呼叫点击操作。
         """
         if self.submarine_call_flag:
             return False

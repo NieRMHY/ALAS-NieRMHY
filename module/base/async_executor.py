@@ -12,9 +12,10 @@ from typing import Callable, Any
 from module.logger import logger
 
 class AsyncExecutor:
-    """
-    统一的异步执行器，内部维护一个后台线程运行 asyncio event loop。
-    将所有的存储、推送等阻塞操作投递到该后台队列中，以确保主要流程不受阻塞。
+    """统一的异步执行器。
+
+    内部维护一个后台线程运行 asyncio 事件循环，
+    将所有的存储、推送等阻塞操作投递到该后台队列中，以确保主流程不受阻塞。
     """
     _instance = None
     _lock = threading.Lock()
@@ -39,10 +40,17 @@ class AsyncExecutor:
             logger.exception(f"AsyncExecutor event loop exception: {e}")
 
     def submit(self, func: Callable, *args, **kwargs) -> asyncio.Future:
-        """
-        提交一个同步或异步函数并在队列中执行，返回 future。
-        支持同步调用传入，从而自动被包装并在事件循环中串行/并发执行。
-        因 event loop 在单线程内调度同步 wrapper，默认会串行化所有非 await 的同步操作。
+        """提交一个同步或异步函数并在后台队列中执行。
+
+        支持同步函数传入，会自动包装并在事件循环中串行化执行。
+
+        Args:
+            func (Callable): 待执行的可调用对象或协程函数。
+            *args: 位置参数。
+            **kwargs: 关键字参数。
+
+        Returns:
+            asyncio.Future: 代表异步执行结果的 Future 对象。
         """
         if asyncio.iscoroutinefunction(func):
             return asyncio.run_coroutine_threadsafe(func(*args, **kwargs), self._loop)
@@ -54,9 +62,12 @@ class AsyncExecutor:
             return asyncio.run_coroutine_threadsafe(wrapper(), self._loop)
 
     def flush(self, timeout: float = 5.0):
-        """
-        等待队列内已有任务尽量执行完毕。
+        """等待队列内已有任务尽量执行完毕。
+
         利用提交一个空任务并等待返回值，实现简单的 flush 效果。
+
+        Args:
+            timeout (float): 等待超时时间（秒），默认为 5.0 秒。
         """
         try:
             future = self.submit(lambda: None)

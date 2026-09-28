@@ -38,13 +38,14 @@ class Map(Fleet):
     通过敌人优先级系统智能选择下一个目标。
     """
     def clear_chosen_enemy(self, grid, expected=''):
-        """
+        """前往指定格子并清除该处敌人。
+
         Args:
-            grid (GridInfo): 目标格子。
-            expected (str): 预期结果类型。
+            grid (GridInfo): 目标格子对象。
+            expected (str, optional): 预期结果类型，如 'boss'、'siren'、'fortress'。默认为 ''。
 
         Returns:
-            int: 是否清除了敌人。
+            bool: 战斗计数是否增加（即是否成功进行了战斗）。
         """
         logger.info('[地图-策略] 目标敌舰规模权重:%s' % (self.config.EnemyPriority_EnemyScaleBalanceWeight))
         logger.info('[地图-战斗] 清除敌舰: %s' % grid)
@@ -61,9 +62,10 @@ class Map(Fleet):
         return self.battle_count >= battle_count
 
     def clear_chosen_mystery(self, grid):
-        """
+        """前往并触发指定的神秘问号格子。
+
         Args:
-            grid (GridInfo): 目标格子。
+            grid (GridInfo): 目标神秘格子对象。
         """
         logger.info('[地图-战斗] 清除神秘点: %s' % grid)
         self.show_fleet()
@@ -72,9 +74,13 @@ class Map(Fleet):
         self.map.show_cost()
 
     def pick_up_ammo(self, grid=None):
-        """
+        """前往弹药补给格拾取弹药。
+
         Args:
-            grid (GridInfo): 弹药格子，为 None 时自动选择。
+            grid (GridInfo, optional): 目标弹药格子，为 None 时自动选取最近的可达弹药格。默认为 None。
+
+        Returns:
+            bool: 地图无可用弹药格时返回 False。
         """
         if grid is None:
             grid = self.map.select(may_ammo=True)
@@ -97,12 +103,16 @@ class Map(Fleet):
             self.fleet_ammo += recover
 
     def clear_mechanism(self, grids=None):
-        """
+        """触发地图机关。
+
         Args:
-            grids (SelectedGrids): 触发机关的格子。为 None 时选择所有机关触发器。
+            grids (SelectedGrids, optional): 待触发的机关格子集合。为 None 时选择所有未阻挡的机关触发格。默认为 None。
 
         Returns:
             bool: 始终返回 False，因为未清除任何敌人。
+
+        Raises:
+            MapEnemyMoved: 机关触发改变地图阻挡状态时抛出，用于重新规划路径。
         """
         if not self.config.MAP_HAS_LAND_BASED:
             return False
@@ -127,20 +137,21 @@ class Map(Fleet):
     @staticmethod
     def select_grids(grids, nearby=False, is_accessible=True, scale=(), genre=(), strongest=False, weakest=False,
                      sort=('weight', 'cost'), ignore=None):
-        """
+        """按指定条件筛选并排序网格集合。
+
         Args:
-            grids (SelectedGrids): 待筛选的格子集合。
-            nearby (bool): 是否仅选择附近的格子。
-            is_accessible (bool): 是否仅选择可达的格子。
-            scale (tuple[int], list[int]): 敌人规模，元组表示无序选择，列表表示有序选择。
-            genre (tuple[str], list[str]): 敌人类型：light、main、carrier、treasure（不区分大小写）。
-            strongest (bool): 是否优先选择最强敌人。
-            weakest (bool): 是否优先选择最弱敌人。
-            sort (tuple(str)): 排序依据。
-            ignore (SelectedGrids): 需要忽略的格子。
+            grids (SelectedGrids): 待筛选的网格集合。
+            nearby (bool, optional): 是否仅选择当前相邻的网格。默认为 False。
+            is_accessible (bool, optional): 是否仅选择当前可达的网格。默认为 True。
+            scale (tuple[int, ...] | list[int], optional): 敌人规模，元组表示无序选择，列表表示按先后顺序首个匹配。默认为 ()。
+            genre (tuple[str, ...] | list[str], optional): 敌人类型（如 'light', 'main', 'carrier', 'treasure'）。默认为 ()。
+            strongest (bool, optional): 是否优先选择最强敌人（规模从大到小）。默认为 False。
+            weakest (bool, optional): 是否优先选择最弱敌人（规模从小到大）。默认为 False。
+            sort (tuple[str, ...], optional): 排序属性依据。默认为 ('weight', 'cost')。
+            ignore (SelectedGrids, optional): 需要剔除的网格集合。默认为 None。
 
         Returns:
-            SelectedGrids: 筛选后的格子集合。
+            SelectedGrids: 筛选与排序后的网格集合。
         """
         if nearby:
             grids = grids.select(is_nearby=True)
@@ -158,7 +169,7 @@ class Map(Fleet):
         if len(genre):
             enemy = SelectedGrids([])
             for enemy_genre in genre:
-                # enemy_genre should be camel case
+                # 敌人类型首字母应大写
                 enemy_genre = enemy_genre[0].upper() + enemy_genre[1:] if enemy_genre[0].islower() else enemy_genre
                 enemy = enemy.add(grids.select(enemy_genre=enemy_genre))
                 if isinstance(genre, list) and enemy:
@@ -184,6 +195,12 @@ class Map(Fleet):
 
     @staticmethod
     def show_select_grids(grids, **kwargs):
+        """在日志中显示网格筛选条件与结果列表。
+
+        Args:
+            grids (SelectedGrids): 筛选后的网格集合。
+            **kwargs: 筛选参数键值对。
+        """
         length = 3
         keys = list(kwargs.keys())
         for index in range(0, len(keys), length):
@@ -194,7 +211,10 @@ class Map(Fleet):
         logger.info(f'[地图] 格子: {grids}')
 
     def clear_all_mystery(self, **kwargs):
-        """拾取所有神秘事件的方法。
+        """遍历并触发地图上所有可达的神秘问号事件。
+
+        Args:
+            **kwargs: 网格筛选参数。
 
         Returns:
             bool: 始终返回 False，因为未清除任何敌人。
@@ -214,7 +234,12 @@ class Map(Fleet):
         return False
 
     def clear_enemy(self, **kwargs):
-        """清除一个敌人的方法。如果没有合适的敌人则不做任何操作。
+        """按优先级筛选并清除一个普通敌人。
+
+        若无合适敌人则不做任何操作。
+
+        Args:
+            **kwargs: 传给 select_grids 的筛选与排序参数。
 
         Returns:
             bool: 是否清除了敌人。
@@ -239,10 +264,11 @@ class Map(Fleet):
         return False
 
     def clear_roadblocks(self, roads, **kwargs):
-        """清除路障。
+        """清除指定路线上的敌人路障。
 
         Args:
             roads (list[RoadGrids]): 路线列表。
+            **kwargs: 筛选与排序参数。
 
         Returns:
             bool: 是否清除了敌人。
@@ -269,10 +295,11 @@ class Map(Fleet):
         return False
 
     def clear_potential_roadblocks(self, roads, **kwargs):
-        """清除潜在路障，避免只有一个格子为空的情况。
+        """清除潜在路障，避免路线被敌人完全封死。
 
         Args:
             roads (list[RoadGrids]): 路线列表。
+            **kwargs: 筛选与排序参数。
 
         Returns:
             bool: 是否清除了敌人。
@@ -299,10 +326,11 @@ class Map(Fleet):
         return False
 
     def clear_first_roadblocks(self, roads, **kwargs):
-        """确保每个路障都有一个已清除的格子。
+        """确保每条路线上首个遇到的路障敌舰被清除。
 
         Args:
             roads (list[RoadGrids]): 路线列表。
+            **kwargs: 筛选与排序参数。
 
         Returns:
             bool: 是否清除了敌人。
@@ -322,10 +350,11 @@ class Map(Fleet):
         return False
 
     def clear_grids_for_faster(self, grids, **kwargs):
-        """清除部分格子以缩短行走距离。
+        """清除部分格子中的敌舰以缩短行走距离。
 
         Args:
             grids (SelectedGrids): 待清除的格子集合。
+            **kwargs: 筛选与排序参数。
 
         Returns:
             bool: 是否清除了敌人。
@@ -343,8 +372,9 @@ class Map(Fleet):
         return False
 
     def clear_boss(self):
-        """清除 Boss。此方法已弃用，虽然在简单地图中仍然有效。
-        复杂地图推荐使用 brute_clear_boss。
+        """清除 Boss。
+
+        此方法适用于常规地图；复杂地图推荐使用 brute_clear_boss。
 
         Returns:
             bool: 是否成功清除 Boss。
@@ -369,9 +399,7 @@ class Map(Fleet):
         return self.clear_potential_boss()
 
     def capture_clear_boss(self):
-        """清除 Boss 并处理大捕获地图。此方法已弃用，虽然在简单地图中仍然有效。
-        复杂地图推荐使用 brute_clear_boss。
-        注意：大捕获地图的简易处理方法。
+        """清除 Boss，若未检测到则撤退。
 
         Returns:
             bool: 是否成功清除 Boss。
@@ -396,7 +424,10 @@ class Map(Fleet):
         self.withdraw()
 
     def clear_potential_boss(self):
-        """当 Boss 未被检测到时，踩踏所有 Boss 出生点的方法。
+        """当未直接检测到 Boss 时，尝试踩踏所有可能的 Boss 出生点。
+
+        Returns:
+            bool: 是否成功清除了潜在 Boss 或路障。
         """
         grids = self.map.select(may_boss=True, is_accessible=True).sort('weight', 'cost')
         logger.info('[地图-Boss] 可能的Boss: %s' % grids)
@@ -432,8 +463,12 @@ class Map(Fleet):
         return False
 
     def brute_clear_boss(self):
-        """使用暴力搜索路障的方式清除 Boss。
-        注意：此方法将使用两支舰队。
+        """使用暴力搜索敌人路障的方式清除阻挡并击破 Boss。
+
+        同时利用两支舰队进行协同寻路。
+
+        Returns:
+            bool: 是否成功清除路障或 Boss。
         """
         boss = self.map.select(is_boss=True)
         if boss:
@@ -458,7 +493,10 @@ class Map(Fleet):
             return self.clear_potential_boss()
 
     def brute_fleet_meet(self):
-        """使用暴力搜索清除舰队之间的路障。
+        """使用暴力搜索清除两支舰队之间的阻挡路障。
+
+        Returns:
+            bool: 是否清除了舰队之间的路障。
         """
         if self.fleet_boss_index != 2 or not self.fleet_2_location:
             return False
@@ -473,7 +511,10 @@ class Map(Fleet):
             return False
 
     def clear_siren(self, **kwargs):
-        """清除塞壬敌人。
+        """清除地图上的塞壬或要塞。
+
+        Args:
+            **kwargs: 传给 select_grids 的筛选与排序参数。
 
         Returns:
             bool: 是否清除了敌人。
@@ -501,7 +542,10 @@ class Map(Fleet):
         return False
 
     def clear_any_enemy(self, **kwargs):
-        """清除任意敌人。
+        """清除地图上的任意敌舰（包含普通敌舰、塞壬与要塞）。
+
+        Args:
+            **kwargs: 传给 select_grids 的筛选与排序参数。
 
         Returns:
             bool: 是否清除了敌人。
@@ -531,9 +575,9 @@ class Map(Fleet):
         return False
 
     def fleet_2_step_on(self, grids, roadblocks):
-        """第二舰队踩踏格子以减少另一支舰队的伏击频率。
-        当然也可以直接使用 'self.fleet_2.goto(grid)' 来实现相同效果，
-        但道路可能被敌人阻挡，此方法可以处理这种情况。
+        """使用第二舰队踩踏格子以减少另一支舰队的伏击频率。
+
+        若道路被敌人阻挡，会自动调用第一舰队清除路障。
 
         Args:
             grids (SelectedGrids): 目标格子集合。
@@ -568,6 +612,11 @@ class Map(Fleet):
         return clear
 
     def fleet_2_break_siren_caught(self):
+        """打破第二舰队被塞壬捕获的状态。
+
+        Returns:
+            bool: 是否进行了战斗解脱捕获。
+        """
         if self.fleet_boss_index != 2:
             return False
         if not self.config.MAP_HAS_SIREN or not self.config.MAP_HAS_MOVABLE_ENEMY:
@@ -592,11 +641,8 @@ class Map(Fleet):
 
     def fleet_2_push_forward(self):
         """将第二舰队移动到权重更低的格子。
-        这将降低 Boss 舰队被敌人卡住的可能性，特别是对于第 7 到第 9 章的单行道地图。
 
-        了解更多：
-        9章道中战最小化路线规划
-        https://wiki.biligame.com/blhx/9%E7%AB%A0%E9%81%93%E4%B8%AD%E6%88%98%E6%9C%80%E5%B0%8F%E5%8C%96%E8%B7%AF%E7%BA%BF%E8%A7%84%E5%88%92
+        降低 Boss 舰队被敌人卡住的可能性，特别是第 7 到第 9 章的单行道地图。
 
         Returns:
             bool: 是否推进成功。
@@ -627,7 +673,7 @@ class Map(Fleet):
         return True
 
     def fleet_2_rescue(self, grid):
-        """使用道中舰队救援 Boss 舰队。
+        """使用道中舰队救援被路障阻挡的 Boss 舰队。
 
         Args:
             grid (GridInfo): 目标格子，通常为 Boss 出生点。
@@ -658,7 +704,7 @@ class Map(Fleet):
         if not self.config.FLEET_2 or not self.config.MAP_HAS_MOVABLE_ENEMY:
             return False
 
-        # When having 2 fleet
+        # 双舰队模式下巡逻保护
         for n in range(20):
             if not self.map.select(is_siren=True):
                 return False
@@ -683,14 +729,11 @@ class Map(Fleet):
         return False
 
     def clear_filter_enemy(self, string, preserve=0):
-        """根据过滤器清除敌人。
-        如果 EnemyPriority_EnemyScaleBalanceWeight != default_mode，则忽略敌人过滤器。
-        如果 MAP_HAS_MOVABLE_NORMAL_ENEMY，则忽略敌人过滤器。
+        """根据优先级过滤器表达式清除敌人。
 
         Args:
-            string (str): 用于筛选敌人的过滤器，从易到难排列。
-            preserve (int): 保留几个最简单的敌人用于无弹药战斗。
-                弹药耗尽时使用 0 来清除这些保留的敌人。
+            string (str): 用于筛选敌人的过滤器表达式，从易到难排列。
+            preserve (int, optional): 保留几个最简单的敌人用于无弹药战斗。默认为 0。
 
         Returns:
             bool: 是否清除了敌人。
@@ -724,8 +767,9 @@ class Map(Fleet):
         return False
 
     def clear_bouncing_enemy(self):
-        """清除在固定路线上弹跳的敌人。
-        此方法在清除一个敌人后将被禁用，因为地图上只有一个弹跳敌人。
+        """清除在固定路线上往返弹跳的敌人。
+
+        此方法在清除一个敌人后将被禁用，因为地图上通常只有一个弹跳敌人。
 
         Returns:
             bool: 是否清除了敌人。

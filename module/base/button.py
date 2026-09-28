@@ -151,6 +151,7 @@ class Button(Resource):
         self._button_offset = area_offset(self._button, offset=offset)
 
     def clear_offset(self):
+        """清除已设置的按钮偏移量。"""
         self._button_offset = None
 
     def ensure_template(self):
@@ -182,6 +183,7 @@ class Button(Resource):
             self._match_binary_init = True
 
     def ensure_luma_template(self):
+        """加载灰度（亮度）资源图像。若需调用 self.match_luma，应先调用此方法。"""
         if not self._match_luma_init:
             if self.is_gif:
                 self.image_luma = []
@@ -193,6 +195,7 @@ class Button(Resource):
             self._match_luma_init = True
 
     def resource_release(self):
+        """释放缓存的模板图像资源以节省内存。"""
         super().resource_release()
         self.image = None
         self.image_binary = None
@@ -404,7 +407,21 @@ class Button(Resource):
 
 
 class ButtonGrid:
+    """网格按钮生成器。
+
+    根据原点、间距、按钮尺寸与网格维度，批量生成规则排列的 Button 实例。
+    """
+
     def __init__(self, origin, delta, button_shape, grid_shape, name=None):
+        """初始化按钮网格。
+
+        Args:
+            origin (tuple[int, int] | np.ndarray): 网格左上角起始坐标 (x, y)。
+            delta (tuple[int, int] | np.ndarray): 相邻按钮在 x 和 y 方向的间距 (dx, dy)。
+            button_shape (tuple[int, int] | np.ndarray): 单个按钮的尺寸 (w, h)。
+            grid_shape (tuple[int, int] | np.ndarray): 网格维度 (列数, 行数)。
+            name (str | None): 网格名称。
+        """
         self.origin = np.array(origin)
         self.delta = np.array(delta)
         self.button_shape = np.array(button_shape)
@@ -421,6 +438,11 @@ class ButtonGrid:
         return Button(area=area, color=(), button=area, name='%s_%s_%s' % (self._name, item[0], item[1]))
 
     def generate(self):
+        """生成网格中的所有按钮坐标与 Button 实例。
+
+        Yields:
+            tuple[int, int, Button]: (列索引 x, 行索引 y, 对应的 Button 实例)。
+        """
         for y in range(self.grid_shape[1]):
             for x in range(self.grid_shape[0]):
                 yield x, y, self[x, y]
@@ -475,6 +497,7 @@ class ButtonGrid:
         return image
 
     def show_mask(self):
+        """弹出显示当前网格的遮罩图像窗口。"""
         self.gen_mask().show()
 
     def save_mask(self):

@@ -15,8 +15,17 @@ DATA_KEY = DigitCounter(OCR_DATA_KEY, letter=(255, 247, 247), threshold=64)
 
 
 class DataKey(UI):
+    """作战档案数据钥匙收集器。
+
+    检测作战档案页面中的数据钥匙库存与剩余每日领取数量，自动完成收集。
+    """
+
     def _data_key_collect(self, skip_first_screenshot=True):
-        """
+        """执行数据钥匙点击领取和弹窗处理循环。
+
+        Args:
+            skip_first_screenshot (bool): 是否跳过首次截图，默认 True。
+
         Pages:
             in: page_archives
             out: page_archives, DATA_KEY_COLLECTED
@@ -34,14 +43,13 @@ class DataKey(UI):
                 self.device.click(DATA_KEY_COLLECT)
                 continue
             if self.handle_popup_confirm('DATA_KEY_LIMIT'):
-                # If it's in 29/30 means user is not doing war achieves frequently,
-                # no need to bother losing one key, just make it fulfilled.
+                # 如果当前为 29/30 说明用户不经常打档案，不必担心损失 1 把钥匙，直接领满即可
                 continue
             if self.appear_then_click(CAMPAIGN_MENU_GOTO_WAR_ARCHIVES, offset=(20, 20), interval=3):
-                # Sometimes quit to page_campaign_menu accidentally.
+                # 偶发误退到 page_campaign_menu 时重新进入
                 continue
 
-            # End
+            # 结束条件
             if self.appear(WAR_ARCHIVES_CHECK, offset=(20, 20)) and self.appear(DATA_KEY_COLLECTED, offset=(20, 20)):
                 logger.info('[免费福利-钥匙] 数据钥匙收集完成')
                 break
@@ -70,16 +78,15 @@ class DataKey(UI):
         return True
 
     def run(self):
-        """
-        Handle data_key operations if configured to do so.
+        """执行数据钥匙自动收集任务。
 
         Pages:
-            in: page_any
-            out: page_main
+            in: 任意页面
+            out: page_archives
         """
         self.ui_ensure(page_archives)
 
         self.data_key_collect()
 
-        # clear interval of pages, for faster switching on the next ui_goto()
+        # 清除页面检测间隔，使后续 ui_goto() 切换更快
         self.interval_clear([page_archives.check_button, page_campaign_menu.check_button])

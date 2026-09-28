@@ -1,3 +1,7 @@
+/**
+ * @fileoverview 页面层级路由转场动效推断与执行。
+ */
+
 import { useLayoutEffect, useRef } from 'react'
 import { useLocation } from 'react-router-dom'
 import { motionReducedActive, motionSpeedValue } from './motionPrefs'

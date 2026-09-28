@@ -31,7 +31,7 @@ class OSGridInfo(GridInfo):
 
     @property
     def is_interactive_only(self):
-        # Fleet can't goto this grid, but can only interact next to it
+        """舰队无法直接走上该格子，只能在其相邻格进行互动（如盟友和明石）。"""
         return self.is_ally or self.is_akashi
 
     def encode(self):
@@ -72,13 +72,14 @@ class OSGridInfo(GridInfo):
         return '--'
 
     def merge(self, info, mode='normal'):
-        """
+        """将大世界扫描信息合并到当前网格。
+
         Args:
-            info (OSGridInfo, RadarGrid):
-            mode (str): Scan mode, must be 'normal' in OS
+            info (OSGridInfo | RadarGrid): 待合并的大世界网格或雷达网格对象。
+            mode (str, optional): 扫描模式，大世界中通常为 'normal'。默认为 'normal'。
 
         Returns:
-            bool: If success.
+            bool: 是否合并成功。
         """
         if isinstance(info, RadarGrid):
             self.is_radar_scanned = True
@@ -132,9 +133,7 @@ class OSGridInfo(GridInfo):
         return True
 
     def wipe_out(self):
-        """
-        Call this method when a fleet step on grid.
-        """
+        """当舰队移动到该网格时清除上面的敌人或事件标记。"""
         super().wipe_out()
 
         self.is_enemy = False
@@ -149,9 +148,7 @@ class OSGridInfo(GridInfo):
         self.is_fleet_mechanism = False
 
     def reset(self):
-        """
-        Call this method after entering a map.
-        """
+        """进入地图后重置大世界网格的所有状态。"""
         super().reset()
 
         self.is_radar_scanned = False
@@ -161,10 +158,11 @@ class OSGridInfo(GridInfo):
 
 class OSGridPredictor(GridPredictor):
     def predict(self):
+        """预测大世界网格上的对象类型（敌人、资源、机关等）。"""
         self.enemy_genre = self.predict_enemy_genre()
         # self.enemy_scale = self.predict_enemy_scale()
         # self.is_resource = self.predict_resource()
-        # self.is_meowfficer = self.predict_meowfficer()  # This will increase the overall time cost about 100ms
+        # self.is_meowfficer = self.predict_meowfficer()  # 这会增加约 100ms 的总耗时
         # self.is_ally = self.predict_ally()
         self.is_akashi = self.enemy_genre == 'Akashi'
         self.is_scanning_device = self.enemy_genre == 'ScanningDevice'
@@ -189,10 +187,20 @@ class OSGridPredictor(GridPredictor):
                 self.enemy_scale = 0
 
     def predict_fleet(self):
-        # OS don't have ammo icon
+        """预测大世界网格上是否有舰队（大世界没有弹药图标，通过光标预测）。
+
+        Returns:
+            bool: 是否有舰队。
+        """
+        # 大世界中没有弹药图标
         return super().predict_current_fleet()
 
     def predict_sea(self):
+        """预测大世界网格是否为海洋。
+
+        Returns:
+            bool: 是否为海洋地块。
+        """
         color = cv2.mean(self.image_trans)
         if not min(color[1], color[2]) > color[0] + 20:
             return False
@@ -228,6 +236,11 @@ class OSGridPredictor(GridPredictor):
     }
 
     def predict_enemy_genre(self):
+        """预测大世界敌舰或特殊装置的类型（如明石、扫描装置、记录塔等）。
+
+        Returns:
+            str | None: 识别出的类型名称；若未识别出则返回 None。
+        """
         image = rgb2gray(self.relative_crop((-0.5, -1, 0.5, 0), shape=(60, 60)))
         for name, template in self._os_template_enemy.items():
             if template.match(image, similarity=0.9, direct_match=True):
@@ -241,11 +254,10 @@ class OSGridPredictor(GridPredictor):
         return None
 
     def predict_enemy_scale(self):
-        """
-        Detect the icon on the upper-left which shows enemy scale: Large, Middle, Small.
+        """检测左上角显示的敌人规模（大型、中型）。
 
         Returns:
-            int: 1: Small, 2: Middle, 3: Large, 0: Unknown.
+            int: 2 为中型, 3 为大型, 0 为未知。
         """
         point = (-0.385, 0.815)
         size = (0.53, 0.53)
@@ -257,8 +269,8 @@ class OSGridPredictor(GridPredictor):
             scale = 3
         elif TEMPLATE_ENEMY_M.match(yellow):
             scale = 2
-        # Disable the detection of 1 triangle enemies
-        # In OS, light tower on map will detect to be 1 triangle enemy
+        # 禁用单三角敌人的检测
+        # 在大世界中地图上的灯塔会被误检测为单三角小型敌人
         # elif TEMPLATE_ENEMY_S.match(yellow):
         #     scale = 1
         else:
@@ -267,32 +279,62 @@ class OSGridPredictor(GridPredictor):
         return scale
 
     def predict_resource(self):
+        """预测网格是否为物资箱。
+
+        Returns:
+            bool: 是否为物资箱。
+        """
         image = rgb2gray(self.relative_crop((-0.5, -1, 0.5, 0), shape=(60, 60)))
         return TEMPLATE_OS_Resource.match(image, similarity=0.85, direct_match=True)
 
     def predict_meowfficer(self):
+        """预测网格是否为指挥喵搜索点。
+
+        Returns:
+            bool: 是否为指挥喵搜索点。
+        """
         image = rgb2gray(self.image_trans)
         return TEMPLATE_OS_Meowfficer.match(image, similarity=0.85, direct_match=True)
 
     def predict_ally(self):
-        # Ally cargo ship in daily mission
+        """预测网格是否为每日任务中的盟友运输舰。
+
+        Returns:
+            bool: 是否为盟友运输舰。
+        """
+        # 每日任务中的盟友货船
         image = rgb2gray(self.relative_crop((-0.5, -0.5, 0.5, 0.5), shape=(60, 60)))
         return TEMPLATE_OS_AllyCargo.match(image, similarity=0.85, direct_match=True)
 
     def predict_akashi(self):
+        """预测网格是否为明石（奸商问号）。
+
+        Returns:
+            bool: 是否为明石。
+        """
         image = rgb2gray(self.relative_crop((-0.5, -1, 0.5, 0), shape=(60, 60)))
         return TEMPLATE_SIREN_Akashi.match(image, similarity=0.85, direct_match=True)
 
     def predict_caught_by_siren(self):
-        # Detect the red slash background of `In action`.
+        """预测是否处于被塞壬拦截贴脸状态（检测红色战斗中背景）。
+
+        Returns:
+            bool: 是否被塞壬拦截。
+        """
+        # 检测「作战中」字样的红色斜条纹背景
         return self.relative_rgb_count(
             area=(-1, -0.5, 0, 0.5), color=(255, 109, 91), shape=(50, 50), threshold=30) > 120
 
     def predict_fleet_mechanism(self):
-        # Get the upper border
+        """预测网格是否包含舰队机关控制台。
+
+        Returns:
+            bool: 是否匹配舰队机关。
+        """
+        # 获取上边界
         area = self.grid2screen(np.array([(0, 0), (1, 0.2)]))
         area = np.rint(area.flatten()).astype(int).tolist()
-        # It should in cyan
+        # 青色颜色范围
         h = (185, 195)
         s = (15, 90)
         v = (60, 100)
@@ -300,31 +342,20 @@ class OSGridPredictor(GridPredictor):
         lower = (h[0] / 2, s[0] * 2.55, v[0] * 2.55)
         upper = (h[1] / 2 + 1, s[1] * 2.55 + 1, v[1] * 2.55 + 1)
         image = cv2.inRange(image, lower, upper)
-        # Flatten to a horizontal line
+        # 压扁为单条水平线
         line = np.max(image, axis=0)
-        # Line should be continuous
-        # If not, a fleet may stand on it
+        # 线条应当是连续的；若不连续说明可能有舰队停在上面
         if np.mean(line) < 180:
             return False
-        # Should also have random white rectangles
+        # 还应当有随机白色矩形
         area = self.grid2screen(np.array([(0.2, 0.2), (0.8, 0.8)]))
         area = np.rint(area.flatten()).astype(int).tolist()
         image = color_similarity_2d(crop(self.image, area, copy=False), color=(255, 255, 255))
         count = image[image > 221].shape[0]
         if count < 30:
             return False
-        # Shouldn't contain any thing green or yellow
-        # Green is island and yellow is belt
-        # image = cv2.cvtColor(crop(self.image, area), cv2.COLOR_RGB2HSV)
-        # h = (0, 180)
-        # s = (30, 90)
-        # v = (30, 100)
-        # lower = (h[0] / 2, s[0] * 2.55, v[0] * 2.55)
-        # upper = (h[1] / 2 + 1, s[1] * 2.55 + 1, v[1] * 2.55 + 1)
-        # image_in_range = cv2.inRange(image, lower, upper)
-        # if image_in_range[image_in_range > 0].shape[0] > 30:
-        #     return False
-        # Should match the letter `2`
+        # 不应包含任何绿色或黄色（绿色是岛屿，黄色是传送带）
+        # 匹配数字 '2' 模板
         image = rgb2gray(self.image_trans)
         sim, button = TEMPLATE_FleetMechanism.match_result(image)
         point = (53, 37)
@@ -336,4 +367,8 @@ class OSGridPredictor(GridPredictor):
 
 
 class OSGrid(OSGridInfo, OSGridPredictor, Grid):
+    """大世界地图网格单元类。
+
+    组合大世界网格属性、预测能力和基础网格几何信息。
+    """
     pass

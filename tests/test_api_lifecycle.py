@@ -4,7 +4,7 @@ import threading
 import unittest
 from contextlib import ExitStack
 from types import SimpleNamespace
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, Mock, patch, mock_open
 
 from starlette.testclient import TestClient
 
@@ -16,7 +16,10 @@ from tests.test_api import fixture
 
 
 class ApiLifecycleTests(unittest.TestCase):
-    def run_lifecycle(self, fail_start=False, fail_discord=False, fail_discord_start=False):
+    def test_destroyed_vault_does_not_abort_webui_lifespan(self):
+        self.run_lifecycle(fail_account=True)
+
+    def run_lifecycle(self, fail_start=False, fail_discord=False, fail_discord_start=False, fail_account=False):
         with tempfile.TemporaryDirectory() as directory, ExitStack() as stack:
             root = fixture(directory)
             executed = threading.Event()
@@ -38,7 +41,20 @@ class ApiLifecycleTests(unittest.TestCase):
             stack.enter_context(patch('module.runtime.updater.updater', SimpleNamespace(delay=0, schedule_update=schedule)))
             stack.enter_context(patch.object(lifecycle, 'task_handler', tasks))
             # 禁止读取用户的自动运行列表或接触设备进程；Manager 与调度线程真实运行。
-            stack.enter_context(patch.object(lifecycle.ProcessManager, 'restart_processes'))
+            if fail_account:
+                from module.api.protocol import ApiError
+                broken = Mock(spec=lifecycle.ProcessManager, config_name='broken')
+                healthy = Mock(spec=lifecycle.ProcessManager, config_name='healthy')
+                broken.start.side_effect = ApiError('VAULT_DESTROYED', '合成旧版标记')
+                stack.enter_context(patch.object(lifecycle.ProcessManager, 'get_manager',
+                                               side_effect=lambda name: {'broken': broken, 'healthy': healthy}[name]))
+                stack.enter_context(patch('module.runtime.process_manager.list_mod_instance'))
+                stack.enter_context(patch('module.runtime.process_manager.get_config_mod', return_value='alas'))
+                stack.enter_context(patch('module.runtime.process_manager.open',
+                                         mock_open(read_data='broken\nhealthy\n'), create=True))
+                stack.enter_context(patch('module.runtime.process_manager.os.remove'))
+            else:
+                stack.enter_context(patch.object(lifecycle.ProcessManager, 'restart_processes'))
             stack.enter_context(patch.object(lifecycle.ProcessManager, 'running_instances', return_value=[]))
             if fail_discord:
                 stack.enter_context(patch('module.runtime.discord_presence.async_close_discord_rpc',

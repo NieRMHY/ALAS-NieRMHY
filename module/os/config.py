@@ -8,7 +8,47 @@
 
 大世界的配置参数与主线战役不同，需要单独定义。
 OSConfig 被 OperationSiren 等大世界模块使用。
+另提供按任务读取掉落记录开关的 opsi_drop_record()。
 """
+
+# 大世界掉落记录：下列任务各有一个同名开关（见 module/config/argument/argument.yaml
+# 的 DropRecord 组），其余任务由 OpsiOther 兜底。
+OPSI_DROP_RECORD_TASKS = (
+    'OpsiHazard1Leveling',
+    'OpsiMeowfficerFarming',
+    'OpsiDaily',
+    'OpsiObscure',
+    'OpsiAbyssal',
+    'OpsiStronghold',
+    'OpsiExplore',
+)
+# 与上面某个开关共用记录方式的任务：任务名 → 开关名。共用只影响存图与否，
+# 掉落统计仍按各自的 genre 归类（本地解析只放行耄耋相接这一个 genre）。
+OPSI_DROP_RECORD_SHARED = {
+    'OpsiCrossMonth': 'OpsiDaily',
+    'OpsiArchive': 'OpsiObscure',
+    'OpsiMonthBoss': 'OpsiAbyssal',
+}
+OPSI_DROP_RECORD_OTHER = 'OpsiOther'
+
+
+def opsi_drop_record(config):
+    """读取当前大世界任务对应的掉落记录开关。
+
+    任务身份取自 `config.task.command`；智能调度、防止行动力溢出等代理任务
+    执行子任务时它已被换成子任务名，因此这里的开关与掉落统计都按子任务归类。
+
+    Args:
+        config (AzurLaneConfig): 已绑定当前任务的配置对象。
+
+    Returns:
+        str: 记录方式，do_not / save / upload / save_and_upload。
+    """
+    task = config.task.command
+    arg = OPSI_DROP_RECORD_SHARED.get(task)
+    if arg is None:
+        arg = task if task in OPSI_DROP_RECORD_TASKS else OPSI_DROP_RECORD_OTHER
+    return getattr(config, f'DropRecord_{arg}')
 
 
 class OSConfig:

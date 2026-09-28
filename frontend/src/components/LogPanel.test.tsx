@@ -1,6 +1,16 @@
 import { describe, expect, it } from 'vitest'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { LogLine, LOG_LINE_RE, RULE_RE, PURE_RULE_RE, CENTER_TITLE_RE, LOG_ENTRY_LIMIT, mergeLogEntries } from './LogPanel'
+import {
+  LogLine,
+  LOG_LINE_RE,
+  RULE_RE,
+  PURE_RULE_RE,
+  CENTER_TITLE_RE,
+  LOG_ENTRY_LIMIT,
+  mergeLogEntries,
+  queueLogEvent,
+  type LogBufferState,
+} from './LogPanel'
 
 describe('LogPanel 日志解析与渲染', () => {
   it('超大历史日志在进入 React state 前截断到客户端上限', () => {
@@ -92,6 +102,15 @@ describe('LogPanel 日志解析与渲染', () => {
     expect(html).toContain('hl-title')
   })
 
+  it('中文方括号标签与英文标签同样按属性着色', () => {
+    const line = 'INFO     2026-09-13 23:24:47.008 │ [配置] 已保存 ./config\ap.json'
+    const html = renderToStaticMarkup(
+      <LogLine entry={{ id: 4, level: 'INFO', text: line }} search="" />
+    )
+    expect(html).toContain('hl-attr')
+    expect(html).toContain('hl-path')
+  })
+
   it('普通代码缩进或 Traceback 不会误判为居中标题', () => {
     const indentedCode = '    def some_function():'
     expect(CENTER_TITLE_RE.test(indentedCode)).toBe(false)
@@ -110,5 +129,60 @@ describe('LogPanel 日志解析与渲染', () => {
     expect(html).toContain('log-center-title')
     expect(html).toContain('log-search-match')
     expect(html).toContain('START')
+  })
+
+  describe('流式日志微批处理缓冲队列 (queueLogEvent)', () => {
+    it('短时间多批次事件连续累加且更新最新 cursor', () => {
+      const buffer: LogBufferState = { entries: [], reset: false, cursor: null }
+      queueLogEvent(buffer, {
+        entries: [{ id: 1, level: 'INFO', text: '行 1' }],
+        cursor: 10,
+      })
+      queueLogEvent(buffer, {
+        entries: [
+          { id: 2, level: 'INFO', text: '行 2' },
+          { id: 3, level: 'INFO', text: '行 3' },
+        ],
+        cursor: 12,
+      })
+
+      expect(buffer.entries).toHaveLength(3)
+      expect(buffer.entries.map(e => e.id)).toEqual([1, 2, 3])
+      expect(buffer.reset).toBe(false)
+      expect(buffer.cursor).toBe(12)
+    })
+
+    it('收到 reset=true 时清空此前缓冲日志并标记 reset，后续同批追加', () => {
+      const buffer: LogBufferState = {
+        entries: [
+          { id: 1, level: 'INFO', text: '将被丢弃的旧缓冲' },
+          { id: 2, level: 'INFO', text: '将被丢弃的旧缓冲' },
+        ],
+        reset: false,
+        cursor: 5,
+      }
+
+      // 收到 reset
+      queueLogEvent(buffer, {
+        entries: [{ id: 10, level: 'INFO', text: '重置后的第一条' }],
+        reset: true,
+        cursor: 20,
+      })
+      expect(buffer.reset).toBe(true)
+      expect(buffer.entries).toHaveLength(1)
+      expect(buffer.entries[0].id).toBe(10)
+      expect(buffer.cursor).toBe(20)
+
+      // 同一动画帧内后续到达的事件继续追加
+      queueLogEvent(buffer, {
+        entries: [{ id: 11, level: 'INFO', text: '紧随重置后的第二条' }],
+        reset: false,
+        cursor: 21,
+      })
+      expect(buffer.reset).toBe(true)
+      expect(buffer.entries).toHaveLength(2)
+      expect(buffer.entries.map(e => e.id)).toEqual([10, 11])
+      expect(buffer.cursor).toBe(21)
+    })
   })
 })

@@ -1,3 +1,7 @@
+/**
+ * @fileoverview 根据内容自动撑开高度的文本输入框组件。
+ */
+
 import { useLayoutEffect, useRef } from 'react'
 
 export function AutoTextarea({id, value, disabled, onChange, label, invalid}: {

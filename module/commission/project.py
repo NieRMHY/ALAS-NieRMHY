@@ -156,11 +156,11 @@ def crop_suffix_image(image, area):
     """裁剪委托名称右侧的罗马数字后缀图像。
 
     Args:
-        image: 游戏截图。
-        area: 委托名称区域。
+        image (np.ndarray): 游戏截图。
+        area (tuple[int, int, int, int]): 委托名称区域。
 
     Returns:
-        后缀裁剪图，黑字白底；未检测到文字时返回 None。
+        np.ndarray | None: 后缀裁剪图，黑字白底；未检测到文字时返回 None。
     """
     name_image = crop(image, area)
     name_image = extract_letters(name_image, letter=(255, 255, 255), threshold=128).astype(np.uint8)
@@ -192,10 +192,10 @@ def image_hash(image):
     """计算图像哈希，用于日志输出。
 
     Args:
-        image: 输入图像。
+        image (np.ndarray | None): 输入图像。
 
     Returns:
-        图像 MD5；图像为空时返回空字符串。
+        str: 图像 MD5；图像为空时返回空字符串。
     """
     if image is None:
         return ''
@@ -513,10 +513,10 @@ class Commission:
         进行综合比较。紧急物资委托还需匹配阵营标签（NYB/BIW）。
 
         Args:
-            other: 要比较的委托对象。
+            other (object): 要比较的委托对象。
 
         Returns:
-            是否为同一委托。
+            bool: 是否为同一委托。
         """
         if not isinstance(other, Commission):
             return False
@@ -559,11 +559,11 @@ class Commission:
         """判断两个委托的后缀图像是否匹配。
 
         Args:
-            other: 要比较的委托对象。
-            similarity: 相似度阈值，范围 0-1。
+            other (Commission): 要比较的委托对象。
+            similarity (float): 相似度阈值，范围 0-1。
 
         Returns:
-            后缀是否匹配。
+            bool: 后缀是否匹配。
         """
         if self.suffix_image is None and other.suffix_image is None:
             return True
@@ -589,14 +589,24 @@ class Commission:
         """解析时间字符串为 timedelta 对象。
 
         Args:
-            string: 时间字符串，格式如 '01:00:00', '05:47:10', '17:50:51'。
+            string (str): 时间字符串，格式如 '01:00:00', '05:47:10', '17:50:51'。
 
         Returns:
-            解析后的 timedelta 实例，解析失败时返回 None。
+            timedelta | None: 解析后的 timedelta 实例，解析失败时返回 None。
         """
         # OCR 常将 0 识别为 D，此处修正
         string = string.replace('D', '0')
         result = re.search(r'(\d+):(\d+):(\d+)', string)
+        if not result:
+            logger.warning(f'无效的时间字符串: {string}')
+            self.valid = False
+            return None
+        else:
+            result = [int(s) for s in result.groups()]
+            return timedelta(hours=result[0], minutes=result[1], seconds=result[2])
+        # OCR 常将 0 识别为 D，此处修正
+        string = string.replace('D', '0')
+        result = re.search('(\d+):(\d+):(\d+)', string)
         if not result:
             logger.warning(f'无效的时间字符串: {string}')
             self.valid = False

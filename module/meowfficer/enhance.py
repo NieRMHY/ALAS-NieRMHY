@@ -46,9 +46,18 @@ class MeowfficerLevelOcr(Digit):
     """
     def __init__(self, buttons, lang='azur_lane', letter=(255, 255, 255), threshold=128, alphabet='0123456789IDSLV',
                  name=None):
+        """初始化指挥喵等级 OCR 识别器。"""
         super().__init__(buttons, lang=lang, letter=letter, threshold=threshold, alphabet=alphabet, name=name)
 
     def after_process(self, result):
+        """清洗 OCR 识别结果，移除等级前缀字符和小数点。
+
+        Args:
+            result (str): 识别出的原始字符串。
+
+        Returns:
+            str: 清洗后的纯数字字符串。
+        """
         result = result.replace('L', '').replace('V', '').replace('.', '')
         return super().after_process(result)
 
@@ -67,25 +76,19 @@ class MeowfficerEnhance(MeowfficerBase):
         config.MeowfficerTrain_MaxFeedLevel (int): 喂养材料的最大等级限制（1~30）。
     """
     def _meow_select(self, skip_first_screenshot=True):
-        """
-        Select the target meowfficer in the
-        MEOWFFICER_SELECT_GRID (4x3)
-        Ensure through dotted yellow/white
-        circle appearance after click
+        """在指挥喵选择网格（4x3）中选中目标指挥喵。
+
+        点击后通过目标指挥喵周围出现的黄色虚线圆环确认选中。
 
         Args:
-            skip_first_screenshot (bool):
+            skip_first_screenshot (bool): 是否跳过首次截图。默认为 True。
         """
-        # Calculate (x, y) coordinate within
-        # MEOWFFICER_SELECT/FEED_GRID (4x3) for
-        # enhance target
+        # 计算目标指挥喵在 4x3 网格中的 (x, y) 坐标
         index = self.config.MeowfficerTrain_EnhanceIndex - 1
         x = index if index < 4 else index % 4
         y = index // 4
 
-        # Must confirm selected
-        # Dotted yellow/white circle
-        # around target meowfficer
+        # 必须确认选中：目标指挥喵周围出现黄白色虚线圈
         click_timer = Timer(3, count=6)
         while 1:
             if skip_first_screenshot:
@@ -105,24 +108,20 @@ class MeowfficerEnhance(MeowfficerBase):
                 click_timer.reset()
 
     def meow_feed_scan(self):
-        """
-        Scan for meowfficers that can be fed
-        according to the MEOWFFICER_FEED_GRID (4x3)
-        into target meowfficer for enhancement
-        Ensure through green check mark appearance
-        after click
+        """扫描可作为材料喂养给目标指挥喵的候选指挥喵列表。
+
+        检查 4x3 材料网格中的槽位，过滤已选中、空槽位以及等级超过上限的指挥喵。
+
+        Returns:
+            list[Button]: 可作为强化材料的指挥喵按钮列表。
 
         Pages:
             in: MEOWFFICER_FEED
             out: MEOWFFICER_FEED
-
-        Returns:
-            list(Button)
         """
         clickable = []
 
-        # Reset invalid value of MeowfficerTrain_MaxFeedLevel
-        # it can work without this code, just for rigor
+        # 修正非法的最大喂养等级配置
         reset_max_feed_level = -1
         if self.config.MeowfficerTrain_MaxFeedLevel < 1:
             reset_max_feed_level = 1
@@ -135,50 +134,42 @@ class MeowfficerEnhance(MeowfficerBase):
                            f'reset to {reset_max_feed_level}')
             self.config.MeowfficerTrain_MaxFeedLevel = reset_max_feed_level
 
-        # Get all the cat levels ready for enhance
+        # OCR 识别候选材料的指挥喵等级
         feed_level_list = Digit(MEOWFICER_FEED_LEVEL_GRID.buttons, letter=(49, 48, 49),
                                 name='FEED_MEOWFFICER_LEVEL').ocr(self.device.image)
 
         for index, (button, level) in enumerate(zip(MEOWFFICER_FEED_GRID.buttons, feed_level_list)):
-            # Exit if 11th button; no need to validate as not
-            # possible to click beyond this point
+            # 超过 10 只后退出，无需继续判断
             if index >= 10:
                 break
 
-            # Exit if button is empty slot
+            # 遇到空槽位退出
             if self.image_color_count(button, color=(231, 223, 221), threshold=20, count=450):
                 break
 
-            # Continue onto next if button
-            # already selected (green check mark)
+            # 若已选中（绿色对勾），跳过
             if self.image_color_count(button, color=(95, 229, 108), threshold=30, count=150):
                 continue
 
-            # Continue onto next If the target Meowfficer's level
-            # is greater than the maximum feed level set
+            # 若材料等级超过设定的最大喂养等级，跳过
             if level > self.config.MeowfficerTrain_MaxFeedLevel:
                 continue
 
-            # Neither base case, so presume
-            # button is clickable
+            # 满足条件，加入可选材料列表
             clickable.append(button)
 
         logger.info(f'[指挥喵-强化] 找到强化材料总数: {len(clickable)}')
         return clickable
 
     def meow_feed_select(self):
-        """
-        Click and confirm the meowfficers that
-        can be used as feed to enhance the target
-        meowfficer
+        """点击并确认用作强化材料的指挥喵。
+
+        Returns:
+            int: 选中的材料数量（大于 0 表示有材料被选中并确认，0 表示无可用材料并取消）。
 
         Pages:
             in: MEOWFFICER_FEED
             out: MEOWFFICER_ENHANCE
-
-        Returns:
-            int: non-zero positive, some selected
-                 zero, none selected
         """
         self.interval_clear([
             MEOWFFICER_FEED_CONFIRM,
@@ -195,26 +186,23 @@ class MeowfficerEnhance(MeowfficerBase):
             else:
                 self.device.screenshot()
 
-            # Exit if maximum clicked
+            # 已达上限则退出
             current, remain, total = MEOWFFICER_FEED.ocr(self.device.image)
             if not remain:
                 break
 
-            # Scan for feed, exit if none
+            # 扫描可用材料，无材料则退出
             buttons = self.meow_feed_scan()
             if not len(buttons):
                 break
 
-            # Else click each button to
-            # apply green check mark
-            # Sleep for stable image
+            # 依次点击材料按钮以选中
             if retry.reached():
                 for button in buttons:
                     self.device.click(button)
                 retry.reset()
 
-        # Use current to pass appropriate button for ui_click
-        # route back to MEOWFFICER_ENHANCE
+        # 根据是否选中材料点击确认或取消
         if current:
             logger.info(f'[指挥喵-强化] 确认选择的强化材料, 总数: {current} / 10')
             self.ui_click(MEOWFFICER_FEED_CONFIRM, check_button=MEOWFFICER_ENHANCE_CONFIRM,
@@ -226,19 +214,17 @@ class MeowfficerEnhance(MeowfficerBase):
         return current
 
     def meow_feed_enter(self, skip_first_screenshot=True):
-        """
+        """进入材料选择（喂养）界面。
+
         Args:
-            skip_first_screenshot:
+            skip_first_screenshot (bool): 是否跳过首次截图。默认为 True。
 
         Returns:
-            bool: If success. False if failed,
-                probably because the meowfficer
-                to enhance has reached LV.30
+            bool: 成功进入材料选择界面返回 True；失败（可能因为目标指挥喵已达到满级 30 级）返回 False。
 
         Pages:
             in: MEOWFFICER_FEED_ENTER
-            out: MEOWFFICER_FEED_CONFIRM if success
-                 MEOWFFICER_FEED_ENTER if failed
+            out: MEOWFFICER_FEED_CONFIRM（成功）或 MEOWFFICER_FEED_ENTER（失败）
         """
         click_count = 0
         confirm_timer = Timer(3, count=6).start()
@@ -252,7 +238,7 @@ class MeowfficerEnhance(MeowfficerBase):
                 click_count += 1
                 continue
 
-            # End
+            # 判定结束
             if self.appear(MEOWFFICER_FEED_CONFIRM, offset=(20, 20)):
                 if confirm_timer.reached():
                     return True
@@ -262,9 +248,10 @@ class MeowfficerEnhance(MeowfficerBase):
                 return False
 
     def meow_enhance_confirm(self, skip_first_screenshot=True):
-        """
-        Finalize feed materials for enhancement
-        of meowfficer
+        """确认强化操作并等待消耗材料完成。
+
+        Args:
+            skip_first_screenshot (bool): 是否跳过首次截图。默认为 True。
 
         Pages:
             in: MEOWFFICER_ENHANCE
@@ -282,7 +269,7 @@ class MeowfficerEnhance(MeowfficerBase):
             else:
                 self.device.screenshot()
 
-            # End
+            # 判定结束
             if self.appear(MEOWFFICER_FEED_ENTER, offset=(20, 20)):
                 if confirm_timer.reached():
                     break
@@ -296,12 +283,13 @@ class MeowfficerEnhance(MeowfficerBase):
                 continue
 
     def meow_enhance_enter(self, skip_first_screenshot=True):
-        """
+        """进入指挥喵强化详情界面。
+
         Args:
-            skip_first_screenshot:
+            skip_first_screenshot (bool): 是否跳过首次截图。默认为 True。
 
         Returns:
-            bool: If success.
+            bool: 成功进入返回 True，失败（如指挥喵在战斗中）返回 False。
 
         Pages:
             in: MEOWFFICER_ENHANCE_ENTER
@@ -314,7 +302,7 @@ class MeowfficerEnhance(MeowfficerBase):
             else:
                 self.device.screenshot()
 
-            # End
+            # 判定结束
             if self.appear(MEOWFFICER_FEED_ENTER, offset=(20, 20)):
                 return True
             if count > 3:
@@ -326,14 +314,15 @@ class MeowfficerEnhance(MeowfficerBase):
                 continue
             if self.meow_additional():
                 continue
-            # Meowfficer enhance tips
+            # 处理强化提示弹窗
             if self.handle_game_tips():
                 continue
 
     def _meow_get_level(self):
-        """
+        """识别当前选中指挥喵的等级。
+
         Returns:
-            int: level from 1 to 30. Returns 0 if cannot detect
+            int: 指挥喵等级（1 到 30）；识别失败返回 0。
 
         Pages:
             in: MEOWFFICER_ENHANCE_ENTER
@@ -344,13 +333,12 @@ class MeowfficerEnhance(MeowfficerBase):
         return level
 
     def _meow_enhance(self):
-        """
-        Perform meowfficer enhancement operations
-        involving using extraneous meowfficers to
-        donate XP into a meowfficer target
+        """执行单次指挥喵强化流程。
+
+        选择目标指挥喵并循环喂养材料，直至材料耗尽、金币不足或达到满级。
 
         Returns:
-            str:
+            str: 强化结果状态码（'invalid', 'coin_limit', 'leveled_max', 'in_battle', 'success'）。
 
         Pages:
             in: page_meowfficer
@@ -359,9 +347,7 @@ class MeowfficerEnhance(MeowfficerBase):
         logger.hr('指挥喵强化', level=1)
         logger.attr('强化索引', self.config.MeowfficerTrain_EnhanceIndex)
 
-        # Base Cases
-        # - Config at least > 0 but less than or equal to 12
-        # - Coins at least > 1000
+        # 基础条件检查：索引 1~12，金币 >= 1000
         if not (1 <= self.config.MeowfficerTrain_EnhanceIndex <= 12):
             logger.warning(f'[指挥喵-强化] 强化索引={self.config.MeowfficerTrain_EnhanceIndex} '
                            f'is out of bounds. Please limit to 1~12, skip')
@@ -374,37 +360,30 @@ class MeowfficerEnhance(MeowfficerBase):
             return 'coin_limit'
 
         for _ in range(2):
-            # Select target meowfficer
-            # for enhancement
+            # 选中目标指挥喵
             self._meow_select()
 
             if self._meow_get_level() >= 30:
                 logger.info('[指挥喵-强化] 当前指挥喵已满级')
                 return 'leveled_max'
 
-            # Transition to MEOWFFICER_FEED after
-            # selection; broken up due to significant
-            # delayed behavior of meow_additional
+            # 进入材料界面，若失败则撤退并重进
             if self.meow_enhance_enter():
                 break
             else:
-                # Retreat from an existing battle
+                # 处理可能存在的战役未结束状态
                 self.ui_goto_campaign()
                 self.ui_goto(page_meowfficer)
                 continue
 
-        # Initiate feed sequence; loop until exhaust all
-        # - Select Feed
-        # - Confirm/Cancel Feed
-        # - Confirm Enhancement
-        # - Check remaining coins after enhancement
+        # 循环执行喂养流程：选材料 -> 确认/取消 -> 确认强化 -> 检查金币
         while 1:
             logger.hr('强化一次', level=2)
             if not self.meow_feed_enter():
-                # Exit back into page_meowfficer
+                # 返回指挥喵主界面
                 self.ui_click(MEOWFFICER_GOTO_DORMMENU, check_button=MEOWFFICER_ENHANCE_ENTER,
                               appear_button=MEOWFFICER_ENHANCE_CONFIRM, offset=None, skip_first_screenshot=True)
-                # Re-enter page_meowfficer
+                # 重新进入指挥喵主界面
                 self.ui_goto_main()
                 self.ui_goto(page_meowfficer)
                 return 'in_battle'
@@ -418,23 +397,36 @@ class MeowfficerEnhance(MeowfficerBase):
                             f'enhancement, skip')
                 break
 
-        # Exit back into page_meowfficer
+        # 返回指挥喵主界面
         self.ui_click(MEOWFFICER_GOTO_DORMMENU, check_button=MEOWFFICER_ENHANCE_ENTER,
                       appear_button=MEOWFFICER_ENHANCE_CONFIRM, offset=None, skip_first_screenshot=True)
         return 'success'
 
     def meow_enhance(self):
-        """
-        A wrapper of _meow_enhance()
-        MeowfficerTrain_EnhanceIndex will auto
-        increase if it reached LV.30
+        """执行指挥喵强化任务。
+
+        封装 `_meow_enhance()`；若当前目标指挥喵达到满级（30级），会自动递增索引强化下一只，直至第 12 只满级后禁用。
         """
         while 1:
             result = self._meow_enhance()
             if result not in ['leveled_max']:
                 break
 
-            # Only for 'leveled_max'
+            # 仅针对满级情况递增索引
+            if self.config.MeowfficerTrain_EnhanceIndex < 12:
+                self.config.MeowfficerTrain_EnhanceIndex += 1
+                logger.info(f'[指挥喵-强化] 强化索引增加至 {self.config.MeowfficerTrain_EnhanceIndex}')
+                continue
+            else:
+                logger.warning('[指挥喵-强化] 第12只指挥喵达到30级，禁用指挥喵训练')
+                self.config.MeowfficerTrain_Enable = False
+                break
+        while 1:
+            result = self._meow_enhance()
+            if result not in ['leveled_max']:
+                break
+
+            # 仅针对满级情况递增索引
             if self.config.MeowfficerTrain_EnhanceIndex < 12:
                 self.config.MeowfficerTrain_EnhanceIndex += 1
                 logger.info(f'[指挥喵-强化] 强化索引增加至 {self.config.MeowfficerTrain_EnhanceIndex}')

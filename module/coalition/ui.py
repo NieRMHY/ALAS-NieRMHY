@@ -17,8 +17,21 @@ from module.ui.switch import Switch
 
 
 class NeoncitySwitch(Switch):
+    """霓虹都市联动活动模式切换开关。
+
+    通过检测指定区域的红色文字像素以判断当前模式状态。
+    """
+
     def get(self, main):
-        # check if having red text
+        """检测当前开关状态。
+
+        Args:
+            main (ModuleBase): 拥有图像检测能力的主运行实例。
+
+        Returns:
+            str: 匹配到的状态字符串，未匹配返回 'unknown'。
+        """
+        # 检查是否包含红字
         for data in self.state_list:
             if main.image_color_count(data['check_button'], color=(123, 41, 41), threshold=30, count=100):
                 return data['state']
@@ -27,33 +40,62 @@ class NeoncitySwitch(Switch):
 
 
 class HorrorSwitch(Switch):
+    """惊悚乐园联动活动模式切换开关。
+
+    支持模式切换过程中的剧情跳过。
+    """
+
     def handle_additional(self, main):
+        """处理切换过程中的附加弹窗或剧情跳过。
+
+        Args:
+            main (ModuleBase): 主运行实例。
+
+        Returns:
+            bool: 是否进行了额外操作。
+        """
         if main.handle_story_skip():
             return True
         return super().handle_additional(main)
 
 
 class CoalitionUI(Combat):
+    """联合出击活动界面交互基类。"""
+
     def in_coalition(self):
-        # The same as raid
+        """判断当前是否位于联合出击活动主界面。
+
+        Returns:
+            bool: 是否在联合出击主界面。
+        """
+        # 与突袭活动界面判断一致
         return self.ui_page_appear(page_coalition, offset=(20, 20))
 
     def in_coalition_20251120_difficulty_selection(self):
+        """判断是否处于 20251120 联动活动的难度选择界面。
+
+        Returns:
+            bool: 是否在难度选择弹窗中。
+        """
         return self.appear(DAL_DIFFICULTY_EXIT, offset=(20, 20))
 
     def coalition_ensure_mode(self, event, mode):
-        """
+        """确保联动活动处于指定的战役模式（剧情模式或战斗模式）。
+
         Args:
-            event (str): Event name.
-            mode (str): 'story' or 'battle'
+            event (str): 活动标识符。
+            mode (str): 目标模式，'story' 或 'battle'。
 
         Pages:
             in: in_coalition
+
+        Raises:
+            ScriptError: 未知活动的模式开关定义。
         """
         if event == 'coalition_20230323':
             mode_switch = Switch('CoalitionMode', offset=(20, 20))
-            # Note that switch button are reversed
-            # but TW rerun event at 20260703 does not have button reversed
+            # 注意按钮状态反转
+            # 但 TW 20260703 复刻活动未反转
             if self.config.SERVER == 'tw':
                 mode_switch.add_state('story', FROSTFALL_MODE_BATTLE)
                 mode_switch.add_state('battle', FROSTFALL_MODE_STORY)
@@ -91,18 +133,22 @@ class CoalitionUI(Combat):
             logger.warning(f'未知的联动战役模式: {mode}')
 
     def coalition_set_fleet(self, event, mode):
-        """
+        """设置联动出击队伍模式（单队或多队）。
+
         Args:
-            event (str): Event name.
-            mode (str): 'single' or 'multi'
+            event (str): 活动标识符。
+            mode (str): 队伍模式，'single' 或 'multi'。
 
         Returns:
-            bool: If clicked
+            bool: 是否进行了切换点击。
 
         Pages:
             in: FLEET_PREPARATION
+
+        Raises:
+            ScriptError: 未知活动的舰队开关定义。
         """
-        fleet_switch = Switch('FleetMode', is_selector=True, offset=0)  # No offset for color match
+        fleet_switch = Switch('FleetMode', is_selector=True, offset=0)  # 颜色匹配不设置偏移
         if event == 'coalition_20230323':
             fleet_switch.add_state('single', FROSTFALL_SWITCH_SINGLE)
             fleet_switch.add_state('multi', FROSTFALL_SWITCH_MULTI)
@@ -139,13 +185,17 @@ class CoalitionUI(Combat):
 
     @staticmethod
     def coalition_get_entrance(event, stage):
-        """
+        """获取指定活动与关卡的入口按钮。
+
         Args:
-            event (str): Event name.
-            stage (str): Stage name.
+            event (str): 活动标识符。
+            stage (str): 关卡名称。
 
         Returns:
-            Button: Entrance button
+            Button: 关卡入口按钮。
+
+        Raises:
+            CampaignNameError: 未匹配到已知关卡。
         """
         dic = {
             # FROSTFALL
@@ -201,13 +251,17 @@ class CoalitionUI(Combat):
 
     @staticmethod
     def coalition_20251120_get_entrance_difficulty(event, stage):
-        """
+        """获取 20251120 联动活动关卡的难度选择按钮。
+
         Args:
-            event (str): Event name.
-            stage (str): Stage name.
+            event (str): 活动标识符。
+            stage (str): 关卡名称。
 
         Returns:
-            Button: Entrance difficulty button
+            Button: 难度选择按钮（普通或困难）。
+
+        Raises:
+            CampaignNameError: 未匹配到已知关卡。
         """
         dic = {
             # DAL
@@ -233,13 +287,17 @@ class CoalitionUI(Combat):
 
     @staticmethod
     def coalition_get_battles(event, stage):
-        """
+        """获取指定联动关卡包含的战斗场次数。
+
         Args:
-            event (str): Event name.
-            stage (str): Stage name.
+            event (str): 活动标识符。
+            stage (str): 关卡名称。
 
         Returns:
-            int: Number of battles
+            int: 战斗场次数。
+
+        Raises:
+            CampaignNameError: 未匹配到已知关卡。
         """
         dic = {
             # FROSTFALL
@@ -295,12 +353,16 @@ class CoalitionUI(Combat):
 
     @staticmethod
     def coalition_get_fleet_preparation(event):
-        """
+        """获取指定联动活动出击编队准备按钮。
+
         Args:
-            event (str): Event name.
+            event (str): 活动标识符。
 
         Returns:
-            Button:
+            Button: 编队准备按钮。
+
+        Raises:
+            ScriptError: 未定义活动的编队按钮。
         """
         if event == 'coalition_20230323':
             return FROSTFALL_FLEET_PREPARATION
@@ -311,7 +373,7 @@ class CoalitionUI(Combat):
         elif event == 'coalition_20251120':
             return DAL_FLEET_PREPARATION
         elif event == 'coalition_20260122':
-            # FASHION reuses NEONCITY, just (-12, -12) shifted
+            # FASHION 复用 NEONCITY 资源，整体向 (-12, -12) 偏移
             return NEONCITY_FLEET_PREPARATION
         elif event == 'coalition_20260723':
             return HORROR_FLEET_PREPARATION
@@ -320,19 +382,23 @@ class CoalitionUI(Combat):
             raise ScriptError
 
     def handle_fleet_preparation(self, event, stage, mode):
-        """
+        """处理联动编队界面的舰队检查与单队/多队模式配置。
+
         Args:
-            event (str): Event name.
-            stage (str): Stage name.
-            mode (str): 'single' or 'multi'
+            event (str): 活动标识符。
+            stage (str): 关卡名称。
+            mode (str): 舰队模式，'single' 或 'multi'。
 
         Returns:
-            bool: If clicked
+            bool: 是否进行了点击配置。
+
+        Raises:
+            RequestHumanTakeover: 舰队未就绪或旗舰/先锋为空，请求人工介入。
         """
         stage = stage.lower()
 
         if event == 'coalition_20230323':
-            # No fleet switch in TC1
+            # TC1 和 SP 模式无队伍切换开关
             if stage in ['tc1', 'sp']:
                 return False
         if event in [
@@ -341,7 +407,7 @@ class CoalitionUI(Combat):
             'coalition_20260122',
             'coalition_20260723',
         ]:
-            # easy is single fleet, SP and EX must must multiple fleets
+            # easy 固定单队，SP 和 EX 必须多队
             if stage in ['easy', 'sp', 'ex']:
                 return False
 
@@ -363,9 +429,13 @@ class CoalitionUI(Combat):
         return clicked
 
     def coalition_map_exit(self, event):
-        """
+        """退出当前关卡编成或准备界面，返回联动主界面。
+
+        Args:
+            event (str): 活动标识符。
+
         Pages:
-            in: BATTLE_PREPARATION, or coalition specific fleet_preparation
+            in: BATTLE_PREPARATION 或各活动特定的 fleet_preparation
             out: in_coalition
         """
         logger.info('联动地图退出')
@@ -390,15 +460,19 @@ class CoalitionUI(Combat):
                     continue
 
     def enter_map(self, event, stage, mode):
-        """
+        """进入指定的联动活动关卡并完成出击前准备。
+
         Args:
-            event (str): Event name such as 'coalition_20230323'
-            stage (str): Stage name such as 'TC3'
-            mode (str): 'single' or 'multi'
+            event (str): 活动标识符，如 'coalition_20230323'。
+            stage (str): 关卡名称，如 'TC3'。
+            mode (str): 舰队模式，'single' 或 'multi'。
 
         Pages:
             in: in_coalition
             out: BATTLE_PREPARATION
+
+        Raises:
+            RequestHumanTakeover: 进入关卡或准备舰队连续失败超过阈值。
         """
         button = self.coalition_get_entrance(event, stage)
         if event in ['coalition_20251120']:
@@ -414,7 +488,7 @@ class CoalitionUI(Combat):
         fleet_click = 0
 
         for _ in self.loop():
-            # Check errors
+            # 异常检查
             if campaign_click > 5:
                 logger.critical(f"[联动] 无法进入 {button}，点击次数过多")
                 logger.critical("[联动] 可能的原因1: 你还没有通关前置关卡，无法解锁该关卡。")
@@ -429,7 +503,7 @@ class CoalitionUI(Combat):
                 logger.critical("[联动] 可能的原因2: 该关卡每天只能进入一次，但这是你第二次尝试进入。")
                 raise RequestHumanTakeover
 
-            # End
+            # 退出条件
             if self.appear(BATTLE_PREPARATION, offset=(20, 20)):
                 break
 
@@ -439,7 +513,7 @@ class CoalitionUI(Combat):
             # 作战委托进行中，出击会被游戏阻止
             self.handle_handover_conflict()
 
-            # Enter campaign
+            # 进入关卡
             if campaign_timer.reached() and self.in_coalition():
                 self.device.click(button)
                 campaign_click += 1
@@ -452,7 +526,7 @@ class CoalitionUI(Combat):
                     campaign_difficulty_timer.reset()
                     continue
 
-            # Fleet preparation
+            # 舰队准备
             if fleet_timer.reached() and self.appear(fleet_preparation, offset=(20, 50)):
                 self.handle_fleet_preparation(event, stage, mode)
                 self.device.click(fleet_preparation)
@@ -461,33 +535,33 @@ class CoalitionUI(Combat):
                 campaign_timer.reset()
                 continue
 
-            # Auto search continue
+            # 自律寻敌确认
             if self.handle_auto_search_continue():
                 campaign_timer.reset()
                 continue
 
-            # Retire
+            # 船坞满退役
             if self.handle_retirement():
                 continue
 
-            # Emotion
+            # 心情低落
             if self.handle_combat_low_emotion():
                 continue
 
-            # Urgent commission
+            # 紧急委托
             if self.handle_urgent_commission(drop=None):
                 continue
 
-            # Story skip
+            # 剧情跳过
             if self.handle_story_skip():
                 campaign_timer.reset()
                 continue
 
-            # Auto confirm
+            # 自动战斗确认
             if self.handle_combat_automation_confirm():
                 continue
 
-            # 2026.01.22 coalition FASHION adds popup to load fleet from previous fleet
-            # coalition does not allow low emotion battle, so clicking any popup confirm should be safe
+            # 2026.01.22 联动活动 FASHION 增加了从上一队加载舰队的弹窗提示
+            # 联动活动不允许心情低落战斗，点击任意弹窗确认均属安全操作
             if self.handle_popup_confirm('COALITION'):
                 continue

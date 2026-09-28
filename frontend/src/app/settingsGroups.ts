@@ -1,4 +1,8 @@
 /**
+ * @fileoverview 部署设置分组的页面归属划分常量。
+ */
+
+/**
  * 部署设置分组的页面归属。
  *
  * 与 `module/runtime/deploy_settings.py` 的 `DEPLOY_GROUPS` 对应：这里只登记

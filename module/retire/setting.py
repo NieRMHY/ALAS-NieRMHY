@@ -22,6 +22,14 @@ class QuickRetireSetting(Setting):
     """
 
     def is_option_active(self, option: Button) -> bool:
+        """检查快速退役设置项中的选项按钮是否处于激活状态。
+
+        Args:
+            option (Button): 待检测的选项按钮。
+
+        Returns:
+            bool: 激活返回 True，否则返回 False。
+        """
         return self.main.image_color_count(option, color=(255, 255, 255), threshold=30, count=50)
 
 
@@ -30,8 +38,10 @@ class QuickRetireSettingHandler(UI):
 
     提供退役设置页面的进入和退出操作。
     """
+
     def _retire_setting_enter(self):
-        """
+        """进入一键退役设置界面。
+
         Pages:
             in: IN_RETIREMENT_CHECK, RETIRE_SETTING_ENTER
             out: RETIRE_SETTING_QUIT
@@ -40,7 +50,8 @@ class QuickRetireSettingHandler(UI):
                       offset=(30, 100), retry_wait=3, skip_first_screenshot=True)
 
     def _retire_setting_quit(self):
-        """
+        """退出一键退役设置界面并保存。
+
         Pages:
             in: RETIRE_SETTING_QUIT
             out: IN_RETIREMENT_CHECK, RETIRE_SETTING_ENTER
@@ -50,6 +61,7 @@ class QuickRetireSettingHandler(UI):
 
     @cached_property
     def retire_setting(self) -> QuickRetireSetting:
+        """快速退役设置项定义对象。"""
         setting = QuickRetireSetting(name='RETIRE', main=self)
         setting.reset_first = False
         setting.add_setting(
@@ -85,23 +97,19 @@ class QuickRetireSettingHandler(UI):
         return setting
 
     def quick_retire_setting_set(self, filter_5='all'):
-        """
-        Set options of quick retire options.
-        The first 4 options are forced to set to:
-        - Prioritize Rarity 1: R (Rare)
-        - Prioritize Rarity 1: E (Elite)
-        - Prioritize Rarity 1: N (Normal)
-        - If you own a ship that has been fully Limit Broken, this option
-          determines what you want to do with the corresponding duplicate ships.
-              Don't Keep
+        """配置一键退役的各项过滤选项。
+
+        前 4 项选项强制设置为：
+        - 优先级稀有度 1: R（稀有）
+        - 优先级稀有度 2: E（精锐）
+        - 优先级稀有度 3: N（普通）
+        - 已满破舰船同名船处理: 全部退役（不保留）
 
         Args:
-            filter_5 (str, None): The fifth option in quick retire options.
-                "If you own multiple copies of a ship that has not been fully Limit
-                Broken, this option determines what you want to do with those copies."
-                'keep_limit_break' for "Keep Enough to Max LB",
-                'all' for "Don't Keep"
-                None for don't change
+            filter_5 (str, optional): 第 5 项设置（未满破舰船同名船处理规则）：
+                'keep_limit_break': 保留满破所需数量；
+                'all': 全部退役（不保留）；
+                None: 不修改该项。默认为 'all'。
 
         Pages:
             in: IN_RETIREMENT_CHECK, RETIRE_SETTING_ENTER
@@ -112,7 +120,9 @@ class QuickRetireSettingHandler(UI):
         self._retire_setting_quit()
 
     def server_support_quick_retire_setting_fallback(self):
-        """
-        Fallback to the correct quick retire settings if user has wrong set.
+        """检查当前服务器是否支持一键退役设置自动回退纠正。
+
+        Returns:
+            bool: 支持返回 True，否则返回 False。
         """
         return self.config.SERVER in ['cn', 'en', 'jp']

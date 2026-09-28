@@ -85,6 +85,18 @@ main#main-content.motion-nav-fade {
   animation: none !important;
 }
 
+/* 桌面端侧边栏招牌首次入场：与 SidebarTransition 从左至右保持视觉统一 */
+@keyframes motion-sidebar-brand-in {
+  from { opacity: 0; transform: translateX(-12px); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (min-width: 951px) {
+  .sidebar-brand {
+    animation: motion-sidebar-brand-in var(--dur-3) var(--ease-emphasized) both;
+  }
+}
+
 /* ============================================================================
    2 · 抽屉与右栏：视觉不变、性能修复（left/right → transform，避免逐帧重排）
    ============================================================================ */

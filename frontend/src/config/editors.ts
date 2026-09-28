@@ -1,3 +1,7 @@
+/**
+ * @fileoverview 全局配置与部署设置编辑器单例及各类型字段草稿维护。
+ */
+
 import { api } from '../api/client'
 import type { Field, Value } from '../api/types'
 import { EditQueue } from './EditQueue'

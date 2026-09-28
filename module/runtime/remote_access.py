@@ -1,10 +1,8 @@
-"""
-远程访问服务。
+"""远程访问服务。
 
 默认使用 localshare 的 P2P bootstrap：优先 WebRTC 直连/TURN 中继，失败后回到
 localshare 现有 SSH 反向隧道。`RemoteAccessMode=ssh` 时保持旧行为。
 """
-
 import asyncio
 import base64
 import fnmatch
@@ -28,7 +26,6 @@ from module.runtime.setting import State
 if TYPE_CHECKING:
     from module.runtime.task_handler import TaskHandler
 
-
 HTTP_BODY_CHUNK = 12 * 1024
 P2P_SETUP_TIMEOUT = 60
 SSH_RECONNECT_DELAY = 2
@@ -37,19 +34,33 @@ HOST_KEY_CHANGED_MARKER = "REMOTE HOST IDENTIFICATION HAS CHANGED"
 
 
 class ParseError(Exception):
+    """远程访问配置或响应解析异常。"""
     pass
 
 
 class RemoteDependencyError(Exception):
+    """缺少远程访问所需的可选依赖库异常。"""
     pass
 
 
 class RemoteSignalError(Exception):
+    """P2P 信令服务器交互异常。"""
     pass
 
 
 @dataclass
 class RemoteAccessInfo:
+    """远程访问运行元数据状态对象。
+
+    Attributes:
+        address: 当前对外公开的 Web 访问地址。
+        fallback_address: 回退的 SSH 访问地址。
+        peer_id: 当前节点分配的 P2P 对等标识。
+        signal_url: 信令服务器 WebSocket 地址。
+        ice_servers: 服务端返回的 STUN/TURN 服务器配置列表。
+        connection_state: 当前连接状态描述。
+        error: 记录的错误信息。
+    """
     address: Optional[str] = None
     fallback_address: Optional[str] = None
     peer_id: Optional[str] = None
@@ -60,7 +71,11 @@ class RemoteAccessInfo:
 
 
 def am_i_the_only_thread() -> bool:
-    """判断当前线程是否是进程中唯一的非守护线程。"""
+    """判断当前线程是否是进程中唯一的非守护线程。
+
+    Returns:
+        bool: 当前线程是唯一的非守护存活线程返回 True，否则返回 False。
+    """
     alive_none_daemonic_thread_cnt = sum(
         1
         for t in threading.enumerate()
@@ -70,6 +85,17 @@ def am_i_the_only_thread() -> bool:
 
 
 def _parse_host_port(value: Optional[str]) -> Tuple[str, int]:
+    """解析形如 host:port 的字符串。
+
+    Args:
+        value: 待解析的字符串。
+
+    Returns:
+        Tuple[str, int]: (主机名, 端口号)。
+
+    Raises:
+        ParseError: 解析格式错误。
+    """
     try:
         server, port = str(value or "").rsplit(":", 1)
         return server, int(port)
@@ -78,6 +104,15 @@ def _parse_host_port(value: Optional[str]) -> Tuple[str, int]:
 
 
 def _parse_host_port_default(value: Optional[str], default_port: int) -> Tuple[str, int]:
+    """解析 host:port 字符串，若无端口则使用默认端口。
+
+    Args:
+        value: 待解析的字符串。
+        default_port: 默认端口号。
+
+    Returns:
+        Tuple[str, int]: (主机名, 端口号)。
+    """
     text = str(value or "").strip()
     if ":" not in text:
         return text, default_port
@@ -85,6 +120,15 @@ def _parse_host_port_default(value: Optional[str], default_port: int) -> Tuple[s
 
 
 def _csv_or_json_list(value, default=None) -> List[str]:
+    """将 CSV 或 JSON 格式的字符串解析为字符串列表。
+
+    Args:
+        value: 原始值。
+        default: 默认列表。
+
+    Returns:
+        List[str]: 解析后的字符串列表。
+    """
     if value in (None, ""):
         return list(default or [])
     if isinstance(value, list):
@@ -100,6 +144,14 @@ def _csv_or_json_list(value, default=None) -> List[str]:
 
 
 def _default_redirect_hosts(primary_host: str) -> List[str]:
+    """根据主服务器域名自动推导允许重定向的域名白名单通配符。
+
+    Args:
+        primary_host: 主服务器域名。
+
+    Returns:
+        List[str]: 允许的重定向域名列表。
+    """
     host = (primary_host or "").strip().lower()
     if not host:
         return []
@@ -115,6 +167,14 @@ def _default_redirect_hosts(primary_host: str) -> List[str]:
 
 
 def _is_private_redirect_host(host: str) -> bool:
+    """检查重定向目标是否为私有、回环或保留网络地址。
+
+    Args:
+        host: 主机名或 IP。
+
+    Returns:
+        bool: 属于受限私有网络返回 True，否则返回 False。
+    """
     value = (host or "").strip("[]").lower()
     if value in ("localhost",):
         return True
@@ -133,6 +193,11 @@ def _is_private_redirect_host(host: str) -> bool:
 
 
 def _local_host() -> str:
+    """获取本地 WebUI 绑定的可连接主机地址。
+
+    Returns:
+        str: 本地主机 IP 或主机名。
+    """
     host = State.webui_host or State.deploy_config.WebuiHost
     if host in ("0.0.0.0", "::", "[::]"):
         return "127.0.0.1"
@@ -140,6 +205,11 @@ def _local_host() -> str:
 
 
 def _remote_mode() -> str:
+    """获取配置的远程访问模式。
+
+    Returns:
+        str: 'ssh', 'webrtc' 或 'auto'。
+    """
     mode = getattr(State.deploy_config, "RemoteAccessMode", "auto")
     mode = str(mode or "auto").strip().lower()
     if mode not in ("ssh", "webrtc", "auto"):
@@ -149,6 +219,15 @@ def _remote_mode() -> str:
 
 
 def _json_list(value, default=None) -> list:
+    """解析 JSON 列表或逗号分隔串。
+
+    Args:
+        value: 原始值。
+        default: 默认列表。
+
+    Returns:
+        list: 解析结果列表。
+    """
     if value in (None, ""):
         return list(default or [])
     if isinstance(value, list):
@@ -162,6 +241,14 @@ def _json_list(value, default=None) -> list:
 
 
 def _configured_ice_servers(remote_servers=None) -> List[dict]:
+    """整合本地配置与服务端下发的 ICE (STUN/TURN) 服务器列表。
+
+    Args:
+        remote_servers: 可选的服务端下发列表。
+
+    Returns:
+        List[dict]: 格式化后的 ICE 服务器配置字典列表。
+    """
     if remote_servers:
         return remote_servers
 
@@ -180,6 +267,11 @@ def _configured_ice_servers(remote_servers=None) -> List[dict]:
 
 
 def _signal_url_from_ssh_server() -> str:
+    """由 SSH 服务器配置推导默认的信令服务器 WebSocket 地址。
+
+    Returns:
+        str: 信令服务器 URL。
+    """
     configured = getattr(State.deploy_config, "SignalingServer", None)
     if configured:
         return configured
@@ -190,6 +282,15 @@ def _signal_url_from_ssh_server() -> str:
 
 
 def _format_signal_error(error: Exception, signal_url: str) -> str:
+    """格式化信令连接失败的友好错误提示。
+
+    Args:
+        error: 异常对象。
+        signal_url: 信令地址。
+
+    Returns:
+        str: 格式化后的错误描述。
+    """
     status = getattr(error, "status", None)
     message = getattr(error, "message", "") or str(error)
     request_info = getattr(error, "request_info", None)
@@ -200,30 +301,50 @@ def _format_signal_error(error: Exception, signal_url: str) -> str:
 
 
 class RemoteAccessProvider:
+    """远程访问底层提供者抽象基类。"""
+
     def start(self) -> None:
+        """启动远程访问后台服务。"""
         raise NotImplementedError
 
     def stop(self) -> None:
+        """停止远程访问后台服务。"""
         raise NotImplementedError
 
     def is_alive(self) -> bool:
+        """检查后台服务是否存活。"""
         raise NotImplementedError
 
     def get_state(self) -> int:
+        """获取当前状态码。"""
         raise NotImplementedError
 
     def get_entry_point(self) -> Optional[str]:
+        """获取当前对外公开的访问 URL。"""
         raise NotImplementedError
 
     def get_connection_state(self) -> str:
+        """获取详细连接状态字符串。"""
         return "stopped"
 
     def get_error(self) -> str:
+        """获取记录的错误信息。"""
         return ""
 
 
 class SSHRemoteAccessProvider(RemoteAccessProvider):
+    """基于 OpenSSH 反向隧道的远程访问提供者。
+
+    Attributes:
+        process: 运行中的 SSH 命令行子进程对象。
+        thread: 守护线程对象。
+        stop_event: 停止通知事件。
+        notfound: 是否未找到 ssh 可执行文件。
+        info: 远程访问状态元数据。
+    """
+
     def __init__(self) -> None:
+        """初始化 SSH 远程访问提供者。"""
         self.process: Optional[Popen] = None
         self.thread: Optional[threading.Thread] = None
         self.stop_event = threading.Event()
@@ -231,6 +352,7 @@ class SSHRemoteAccessProvider(RemoteAccessProvider):
         self.info = RemoteAccessInfo()
 
     def _max_redirects(self) -> int:
+        """获取允许的最大重定向跳转次数。"""
         try:
             return max(0, int(getattr(State.deploy_config, "MaxRedirects", 2) or 0))
         except (TypeError, ValueError):
@@ -238,10 +360,23 @@ class SSHRemoteAccessProvider(RemoteAccessProvider):
             return 2
 
     def _redirect_hosts(self, primary_host: str) -> List[str]:
+        """获取允许的重定向域名列表。"""
         configured = _csv_or_json_list(getattr(State.deploy_config, "AllowedRedirectHosts", None))
         return configured or _default_redirect_hosts(primary_host)
 
     def _validate_redirect_target(self, ssh_server: str, primary_host: str) -> Tuple[str, int]:
+        """校验重定向目标服务器是否安全合规。
+
+        Args:
+            ssh_server: 重定向目标地址。
+            primary_host: 原始服务器域名。
+
+        Returns:
+            Tuple[str, int]: (主机名, 端口)。
+
+        Raises:
+            ParseError: 目标为空、属于私有网段或不在白名单内。
+        """
         host, port = _parse_host_port_default(ssh_server, 1022)
         host = host.strip().lower()
         if not host:
@@ -254,6 +389,7 @@ class SSHRemoteAccessProvider(RemoteAccessProvider):
         return host, port
 
     def _terminate_process(self) -> None:
+        """终止当前正在运行的 SSH 子进程。"""
         if self.process and self.process.poll() is None:
             self.process.kill()
             try:
@@ -269,6 +405,18 @@ class SSHRemoteAccessProvider(RemoteAccessProvider):
         server_port: int,
         remote_port: str,
     ) -> Optional[Popen]:
+        """构造参数并启动 SSH 反向端口转发子进程。
+
+        Args:
+            local_host: 本地转发目标主机。
+            local_port: 本地转发目标端口。
+            server: 远程 SSH 主机名。
+            server_port: 远程 SSH 端口。
+            remote_port: 申请的远程转发端口。
+
+        Returns:
+            Optional[Popen]: 启动成功的 Popen 实例；若未找到 ssh 命令则返回 None。
+        """
         bin_path = State.deploy_config.SSHExecutable
         known_hosts = os.devnull
         clear_ssh_host_key(server, server_port, ssh_executable=bin_path)
@@ -304,14 +452,26 @@ class SSHRemoteAccessProvider(RemoteAccessProvider):
 
     def _run(
         self,
-        local_host="127.0.0.1",
-        local_port=25548,
-        server="app.pywebio.online",
-        server_port=1022,
-        remote_port="/",
-        setup_timeout=60,
+        local_host: str = "127.0.0.1",
+        local_port: int = 25548,
+        server: str = "app.pywebio.online",
+        server_port: int = 1022,
+        remote_port: str = "/",
+        setup_timeout: int = 60,
     ) -> Optional[str]:
-        """运行一次连接；仅服务要求改名时返回下一轮应使用的用户名。"""
+        """执行单次连接生命周期；若服务要求改名则返回下一轮使用的用户名。
+
+        Args:
+            local_host: 本地主机。
+            local_port: 本地端口。
+            server: 远程服务器地址。
+            server_port: 远程端口。
+            remote_port: 远程路径或端口。
+            setup_timeout: 连接建连超时时间（秒）。
+
+        Returns:
+            Optional[str]: 新分配的用户名（若有）。
+        """
         primary_user, primary_host = server.rsplit("@", 1) if "@" in server else ("", server)
         current_server = server
         current_port = server_port
@@ -436,6 +596,7 @@ class SSHRemoteAccessProvider(RemoteAccessProvider):
         self.info.address = None
 
     def start(self) -> None:
+        """启动 SSH 远程访问后台守护线程。"""
         if self.thread is not None and self.thread.is_alive():
             return
 
@@ -460,6 +621,7 @@ class SSHRemoteAccessProvider(RemoteAccessProvider):
         self.thread.start()
 
     def _thread_main(self, **kwargs) -> None:
+        """SSH 连接重试守护循环。"""
         logger.info("启动SSH远程访问服务")
         reconnect_delay = SSH_RECONNECT_DELAY
         while not self.stop_event.is_set():
@@ -490,11 +652,17 @@ class SSHRemoteAccessProvider(RemoteAccessProvider):
         logger.info("退出SSH远程访问服务线程")
 
     def stop(self) -> None:
+        """停止 SSH 远程访问并终止子进程。"""
         self.stop_event.set()
         if self.process and self.process.poll() is None:
             self.process.kill()
 
     def is_alive(self) -> bool:
+        """检查 SSH 服务线程及子进程是否均处于运行状态。
+
+        Returns:
+            bool: 正常运行返回 True，否则返回 False。
+        """
         return (
             self.thread is not None
             and self.thread.is_alive()
@@ -503,6 +671,11 @@ class SSHRemoteAccessProvider(RemoteAccessProvider):
         )
 
     def get_state(self) -> int:
+        """获取状态码。
+
+        Returns:
+            int: 0=未启动, 1=已就绪, 2=连接中, 3=未找到 ssh。
+        """
         if self.is_alive():
             return 1 if self.info.address else 2
         if self.notfound:
@@ -510,19 +683,56 @@ class SSHRemoteAccessProvider(RemoteAccessProvider):
         return 0
 
     def get_entry_point(self) -> Optional[str]:
+        """获取对外公开的访问 URL。
+
+        Returns:
+            Optional[str]: 访问 URL；未运行或未获取到时返回 None。
+        """
         return self.info.address if self.is_alive() else None
 
     def get_connection_state(self) -> str:
+        """获取当前连接状态描述。
+
+        Returns:
+            str: 状态字符串。
+        """
         if self.is_alive():
             return self.info.connection_state if self.info.address else "starting"
         return "ssh_not_found" if self.notfound else "stopped"
 
     def get_error(self) -> str:
+        """获取错误信息。
+
+        Returns:
+            str: 错误信息字符串。
+        """
         return self.info.error
 
 
 class WebRTCTunnel:
+    """基于 WebRTC DataChannel 的透明反向代理隧道。
+
+    处理通过数据通道传输的 HTTP 请求、WebSocket 与 SSE 流。
+
+    Attributes:
+        local_host: 本地目标主机。
+        local_port: 本地目标端口。
+        channel: WebRTC DataChannel 通道对象。
+        peer_id: 本地节点标识。
+        ws_sessions: 活跃的 WebSocket 客户端会话映射。
+        sse_tasks: 运行中的 SSE 转发协程任务。
+        ws_incoming_chunks: 分片接收的 WebSocket 大消息缓存。
+    """
+
     def __init__(self, local_host: str, local_port: int, channel, peer_id: Optional[str] = None) -> None:
+        """初始化 WebRTC 数据通道代理隧道。
+
+        Args:
+            local_host: 本地服务 IP。
+            local_port: 本地服务端口。
+            channel: WebRTC DataChannel 实例。
+            peer_id: 本地节点对等 ID。
+        """
         self.local_host = local_host.strip("[]")
         self.local_port = int(local_port)
         self.channel = channel
@@ -533,6 +743,7 @@ class WebRTCTunnel:
 
     @property
     def base_http_url(self) -> str:
+        """本地 HTTP 基础访问 URL。"""
         host = self.local_host
         if ":" in host and not host.startswith("["):
             host = f"[{host}]"
@@ -540,15 +751,29 @@ class WebRTCTunnel:
 
     @property
     def base_ws_url(self) -> str:
+        """本地 WebSocket 基础访问 URL。"""
         host = self.local_host
         if ":" in host and not host.startswith("["):
             host = f"[{host}]"
         return f"ws://{host}:{self.local_port}"
 
     def send_json(self, payload: dict) -> None:
+        """向 WebRTC 数据通道发送 JSON 消息。
+
+        Args:
+            payload: 消息载荷字典。
+        """
         self.channel.send(json.dumps(payload, ensure_ascii=False))
 
-    def _normalize_proxy_path(self, value) -> str:
+    def _normalize_proxy_path(self, value: str) -> str:
+        """规范化代理转发路径，去除 P2P 前缀。
+
+        Args:
+            value: 原始请求路径。
+
+        Returns:
+            str: 转换后的本地服务相对路径。
+        """
         text = str(value or "/")
         if "://" in text:
             parsed = urlsplit(text)
@@ -577,6 +802,13 @@ class WebRTCTunnel:
 
         透明传递浏览器信息，并打上隧道标记：隧道连接同样来自回环地址，
         标记后 WebUI 才不会把它当成免密的本机直连。
+
+        Args:
+            headers: 原始请求头字典。
+            payload: 数据包字典。
+
+        Returns:
+            dict: 注入标记与客户端信息后的请求头。
         """
         headers = dict(headers or {})
         user_agent = payload.get("user_agent")
@@ -589,6 +821,11 @@ class WebRTCTunnel:
         return headers
 
     async def handle(self, payload: dict) -> None:
+        """分发处理从 WebRTC 通道收到的各类代理消息。
+
+        Args:
+            payload: 协议消息字典。
+        """
         msg_type = payload.get("type")
         if msg_type == "http.request":
             await self._http_request(payload)
@@ -610,6 +847,7 @@ class WebRTCTunnel:
             await self._sse_close(payload)
 
     async def _http_request(self, payload: dict) -> None:
+        """代理执行本地 HTTP 请求并将响应分片送回通道。"""
         req_id = payload.get("id")
         try:
             import aiohttp
@@ -641,6 +879,7 @@ class WebRTCTunnel:
             self.send_json({"type": "http.response.error", "id": req_id, "message": str(e)})
 
     async def _ws_open(self, payload: dict) -> None:
+        """建立至本地服务的 WebSocket 代理连接。"""
         ws_id = payload.get("id")
         session = None
         try:
@@ -664,6 +903,7 @@ class WebRTCTunnel:
             self.send_json({"type": "ws.error", "id": ws_id, "message": str(e)})
 
     async def _ws_reader(self, ws_id, session, ws) -> None:
+        """读取本地 WebSocket 输出并转发到通道。"""
         try:
             import aiohttp
 
@@ -680,6 +920,7 @@ class WebRTCTunnel:
             self.send_json({"type": "ws.closed", "id": ws_id, "code": 1000, "reason": ""})
 
     async def _ws_send(self, payload: dict) -> None:
+        """将客户端发送的消息转发给本地 WebSocket 服务。"""
         ws_id = payload.get("id")
         item = self.ws_sessions.get(ws_id)
         if not item:
@@ -691,6 +932,7 @@ class WebRTCTunnel:
             await ws.send_str(payload.get("data") or "")
 
     def _ws_send_start(self, payload: dict) -> None:
+        """开始接收客户端分片上传的大消息。"""
         message_id = payload.get("message_id")
         if not message_id:
             return
@@ -701,6 +943,7 @@ class WebRTCTunnel:
         }
 
     def _ws_send_chunk(self, payload: dict) -> None:
+        """接收单个数据分片。"""
         message_id = payload.get("message_id")
         item = self.ws_incoming_chunks.get(message_id)
         if not item:
@@ -710,6 +953,7 @@ class WebRTCTunnel:
             item["chunks"][index] = base64.b64decode(payload.get("data") or "")
 
     async def _ws_send_end(self, payload: dict) -> None:
+        """大消息分片全部接收完毕，组装并发送给本地服务。"""
         message_id = payload.get("message_id")
         item = self.ws_incoming_chunks.pop(message_id, None)
         if not item:
@@ -726,6 +970,7 @@ class WebRTCTunnel:
             await ws.send_str(data.decode("utf-8", errors="replace"))
 
     async def _ws_close(self, payload: dict) -> None:
+        """关闭代理的 WebSocket 连接。"""
         ws_id = payload.get("id")
         item = self.ws_sessions.pop(ws_id, None)
         if not item:
@@ -735,11 +980,13 @@ class WebRTCTunnel:
         await session.close()
 
     async def _sse_open(self, payload: dict) -> None:
+        """打开 SSE 事件流转发。"""
         sse_id = payload.get("id")
         task = asyncio.create_task(self._sse_reader(payload))
         self.sse_tasks[sse_id] = task
 
     async def _sse_reader(self, payload: dict) -> None:
+        """读取本地 SSE 流并打包送回客户端。"""
         sse_id = payload.get("id")
         try:
             import aiohttp
@@ -764,12 +1011,14 @@ class WebRTCTunnel:
             self.send_json({"type": "sse.closed", "id": sse_id})
 
     async def _sse_close(self, payload: dict) -> None:
+        """取消 SSE 转发任务。"""
         sse_id = payload.get("id")
         task = self.sse_tasks.pop(sse_id, None)
         if task:
             task.cancel()
 
-    async def _ws_send_chunked_message(self, ws_id, binary, data) -> None:
+    async def _ws_send_chunked_message(self, ws_id, binary: bool, data) -> None:
+        """将大尺寸 WebSocket 消息分片后通过 DataChannel 发送。"""
         if isinstance(data, str):
             data = data.encode("utf-8")
         data = bytes(data)
@@ -795,7 +1044,23 @@ class WebRTCTunnel:
 
 
 class WebRTCRemoteAccessProvider(RemoteAccessProvider):
+    """基于 WebRTC P2P 的远程访问提供者。
+
+    与 localshare 信令服务器协作建立客户端与服务端之间的点对点连接，失败时回退到 SSH 隧道。
+
+    Attributes:
+        ssh_provider: 底层的 SSH 回退提供者。
+        thread: 守护线程对象。
+        stop_event: 停止事件。
+        info: 远程访问状态元数据。
+    """
+
     def __init__(self, ssh_provider: SSHRemoteAccessProvider) -> None:
+        """初始化 WebRTC 提供者。
+
+        Args:
+            ssh_provider: SSH 回退服务实例。
+        """
         self.ssh_provider = ssh_provider
         self.thread: Optional[threading.Thread] = None
         self.stop_event = threading.Event()
@@ -804,6 +1069,7 @@ class WebRTCRemoteAccessProvider(RemoteAccessProvider):
         self._missing_dependency = ""
 
     def start(self) -> None:
+        """启动 WebRTC 及底层 SSH 回退服务。"""
         with self._lock:
             if self.thread is not None and self.thread.is_alive():
                 return
@@ -816,6 +1082,7 @@ class WebRTCRemoteAccessProvider(RemoteAccessProvider):
             self.thread.start()
 
     def _wait_for_ssh_info(self) -> bool:
+        """等待 SSH 隧道就绪并返回元数据。"""
         started = time.time()
         while time.time() - started < P2P_SETUP_TIMEOUT:
             if self.stop_event.is_set():
@@ -828,6 +1095,7 @@ class WebRTCRemoteAccessProvider(RemoteAccessProvider):
         return False
 
     def _thread_main(self) -> None:
+        """WebRTC 信令与连接维护主线程。"""
         logger.info("启动WebRTC远程访问服务")
         try:
             if not self._wait_for_ssh_info():
@@ -859,6 +1127,7 @@ class WebRTCRemoteAccessProvider(RemoteAccessProvider):
         logger.info("退出WebRTC远程访问服务线程")
 
     async def _run_signal_loop(self) -> None:
+        """运行 WebRTC 信令循环处理协商。"""
         try:
             import aiohttp
             from aiortc import RTCConfiguration, RTCIceServer, RTCPeerConnection, RTCSessionDescription
@@ -961,7 +1230,7 @@ class WebRTCRemoteAccessProvider(RemoteAccessProvider):
                                     "viewer_id": viewer_id,
                                     "sdp": pc.localDescription.sdp,
                                     "kind": pc.localDescription.type,
-                                })
+                                    })
                             elif msg_type == "candidate":
                                 viewer_id = data.get("viewer_id")
                                 pc = peer_connections_by_viewer.get(viewer_id)
@@ -991,7 +1260,8 @@ class WebRTCRemoteAccessProvider(RemoteAccessProvider):
                 await pc.close()
 
     @staticmethod
-    async def _wait_ice_complete(pc, timeout=3.5) -> None:
+    async def _wait_ice_complete(pc, timeout: float = 3.5) -> None:
+        """等待 ICE 候选收集完成。"""
         if pc.iceGatheringState == "complete":
             return
         done = asyncio.Event()
@@ -1007,6 +1277,7 @@ class WebRTCRemoteAccessProvider(RemoteAccessProvider):
             pass
 
     async def _signal_keepalive(self, ws) -> None:
+        """信令 WebSocket 定期心跳保活。"""
         while not self.stop_event.is_set():
             await asyncio.sleep(25)
             if ws.closed:
@@ -1014,13 +1285,16 @@ class WebRTCRemoteAccessProvider(RemoteAccessProvider):
             await ws.send_json({"type": "ping", "peer_id": self.info.peer_id})
 
     def stop(self) -> None:
+        """停止 WebRTC 及 SSH 服务。"""
         self.stop_event.set()
         self.ssh_provider.stop()
 
     def is_alive(self) -> bool:
+        """检查 WebRTC 服务是否正常运行。"""
         return self.ssh_provider.is_alive() and self.thread is not None and self.thread.is_alive()
 
     def get_state(self) -> int:
+        """获取当前状态码。"""
         if self.is_alive():
             return 1 if self.info.address else 2
         if self._missing_dependency:
@@ -1028,11 +1302,13 @@ class WebRTCRemoteAccessProvider(RemoteAccessProvider):
         return self.ssh_provider.get_state()
 
     def get_entry_point(self) -> Optional[str]:
+        """获取当前对外访问入口 URL。"""
         if self.is_alive() and self.info.address:
             return self.info.address
         return self.ssh_provider.get_entry_point()
 
     def get_connection_state(self) -> str:
+        """获取连接状态描述。"""
         if self.is_alive():
             return self.info.connection_state
         if self._missing_dependency:
@@ -1040,46 +1316,74 @@ class WebRTCRemoteAccessProvider(RemoteAccessProvider):
         return self.ssh_provider.get_connection_state()
 
     def get_error(self) -> str:
+        """获取错误信息。"""
         return self.info.error or self.ssh_provider.get_error()
 
 
 class AutoRemoteAccessProvider(RemoteAccessProvider):
+    """根据部署配置自动选取最佳协议（SSH 或 WebRTC）的聚合提供者。
+
+    Attributes:
+        ssh: SSH 协议提供者。
+        webrtc: WebRTC P2P 协议提供者。
+    """
+
     def __init__(self) -> None:
+        """初始化自动远程访问聚合服务。"""
         self.ssh = SSHRemoteAccessProvider()
         self.webrtc = WebRTCRemoteAccessProvider(self.ssh)
 
     def active(self) -> RemoteAccessProvider:
+        """根据当前配置模式返回活跃的提供者实例。
+
+        Returns:
+            RemoteAccessProvider: 选中的提供者对象。
+        """
         mode = _remote_mode()
         return self.ssh if mode == "ssh" else self.webrtc
 
     def start(self) -> None:
+        """启动远程访问服务。"""
         self.active().start()
 
     def stop(self) -> None:
+        """停止所有远程访问提供者。"""
         self.webrtc.stop()
         self.ssh.stop()
 
     def is_alive(self) -> bool:
+        """检查当前活跃提供者是否存活。"""
         return self.active().is_alive()
 
     def get_state(self) -> int:
+        """获取当前状态码。"""
         return self.active().get_state()
 
     def get_entry_point(self) -> Optional[str]:
+        """获取对外访问入口 URL。"""
         return self.active().get_entry_point()
 
     def get_connection_state(self) -> str:
+        """获取连接状态描述。"""
         return self.active().get_connection_state()
 
     def get_error(self) -> str:
+        """获取错误描述。"""
         return self.active().get_error()
 
 
 _provider = AutoRemoteAccessProvider()
 
 
-def start_remote_access_service(**kwargs):
-    """兼容旧调用入口。"""
+def start_remote_access_service(**kwargs) -> bool:
+    """启动远程访问服务（兼容历史入参）。
+
+    Args:
+        **kwargs: 历史参数。
+
+    Returns:
+        bool: 始终返回 True。
+    """
     if kwargs:
         logger.debug(f"[WebUI-远程访问] 忽略旧版远程访问参数: {kwargs}")
     _provider.start()
@@ -1087,8 +1391,11 @@ def start_remote_access_service(**kwargs):
 
 
 class RemoteAccess:
+    """远程访问对外暴露的全局静态方法接口。"""
+
     @staticmethod
     def keep_ssh_alive():
+        """用于调度器任务的生成器，监控并在异常时自动恢复远程访问。"""
         task_handler: TaskHandler
         task_handler = yield
         consecutive_failures = 0
@@ -1125,26 +1432,32 @@ class RemoteAccess:
 
     @staticmethod
     def kill_ssh_process():
+        """停止远程访问服务。"""
         _provider.stop()
 
     @staticmethod
-    def is_alive():
+    def is_alive() -> bool:
+        """检查远程访问服务是否存活。"""
         return _provider.is_alive()
 
     @staticmethod
-    def get_state():
+    def get_state() -> int:
+        """获取当前状态码。"""
         return _provider.get_state()
 
     @staticmethod
-    def get_entry_point():
+    def get_entry_point() -> Optional[str]:
+        """获取对外公开的访问 URL。"""
         return _provider.get_entry_point()
 
     @staticmethod
-    def get_connection_state():
+    def get_connection_state() -> str:
+        """获取连接状态。"""
         return _provider.get_connection_state()
 
     @staticmethod
-    def get_error():
+    def get_error() -> str:
+        """获取错误信息。"""
         return _provider.get_error()
 
 

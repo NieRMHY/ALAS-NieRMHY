@@ -123,13 +123,14 @@ class GlobeCamera(GlobeOperation, ZoneManager):
         logger.attr('地球仪中心', center.zone_id)
 
     def globe_swipe(self, vector, box=(20, 220, 980, 620)):
-        """
+        """滑动全球地图视角。
+
         Args:
-            vector (tuple, np.ndarray): float
-            box (tuple): Area that allows to swipe.
+            vector (tuple[float, float] | np.ndarray): 滑动偏移向量。
+            box (tuple[int, int, int, int]): 允许滑动的屏幕区域。默认 (20, 220, 980, 620)。
 
         Returns:
-            bool: if camera moved.
+            bool: 相机是否成功移动。
         """
         name = 'GLOBE_SWIPE_' + '_'.join([str(int(round(x))) for x in vector])
         if np.linalg.norm(vector) <= 25:
@@ -204,15 +205,16 @@ class GlobeCamera(GlobeOperation, ZoneManager):
         return points - self.globe.homo_center + self.globe_camera
 
     def zone_to_button(self, zone):
-        """
+        """将海域对象转换为屏幕上的可点击按钮。
+
         Args:
-            zone (Zone):
+            zone (Zone): 海域对象。
 
         Returns:
-            Button:
+            Button: 对应的屏幕按钮。
         """
         pinned = self.globe2screen([zone.location])[0]
-        # pinned is the bottom left corner of where its actually pinned.
+        # pinned 为实际固定位置的左下角
         area = area_offset((0, -10, 16, 0), offset=pinned)
         button = Button(area=area, color=(), button=area, name=f'ZONE_{zone.zone_id}')
         return button
@@ -242,21 +244,23 @@ class GlobeCamera(GlobeOperation, ZoneManager):
             self.globe_swipe(swipe)
 
     def get_globe_pinned_zone(self):
-        """
+        """获取当前固定的海域对象。
+
         Returns:
-            Zone:
+            Zone: 当前固定选中的海域实例。
         """
         location = self.screen2globe([ZONE_PINNED.button[:2]])[0] + (0, 5)
         return self.camera_to_zone(location)
 
     def globe_wait_until_zone_pinned(self, zone, skip_first_screenshot=True):
-        """
+        """等待目标海域被固定选中。
+
         Args:
-            zone (str, int, Zone): Name in CN/EN/JP/TW, zone id, or Zone instance.
-            skip_first_screenshot:
+            zone (str | int | Zone): 海域名称、ID 或 Zone 实例。
+            skip_first_screenshot (bool): 是否跳过首次截图。默认 True。
 
         Returns:
-            bool: True if zone pinned, False if timeout
+            bool: 成功固定返回 True，超时返回 False。
         """
         zone = self.name_to_zone(zone)
         timeout = Timer(5, count=5).start()
@@ -276,16 +280,16 @@ class GlobeCamera(GlobeOperation, ZoneManager):
                 return False
 
     def globe_focus_to(self, zone):
-        """
-        Focus to a zone in globe view
-        self.globe_update() needs to be called first
+        """在全球地图视图中聚焦并选中指定海域。
+
+        调用前需确保已执行 self.globe_update()。
 
         Args:
-            zone (str, int, Zone): Name in CN/EN/JP/TW, zone id, or Zone instance.
+            zone (str | int | Zone): 海域名称、ID 或 Zone 实例。
 
         Pages:
             in: IN_GLOBE
-            out: IN_GLOBE, zone selected, ZONE_ENTRANCE
+            out: IN_GLOBE, 海域已选中, ZONE_ENTRANCE 可见
         """
         zone = self.name_to_zone(zone)
         logger.info(f'[大世界-地球仪] 聚焦到: {zone.zone_id}')
@@ -295,57 +299,58 @@ class GlobeCamera(GlobeOperation, ZoneManager):
                 self.globe_update()
                 continue
 
-            # Insight
+            # 移入视野
             self.globe_in_sight(zone)
-            # Click zone
+            # 点击海域
             button = self.zone_to_button(zone)
             self.device.click(button)
-            # Wait until zone pinned
+            # 等待海域固定
             if self.globe_wait_until_zone_pinned(zone):
                 break
 
     def _globe_predict_stronghold(self, zone):
-        """
-        Predict if this zone has siren stronghold.
-        `self.globe_in_sight(zone)` must be called before calling this method.
+        """预测指定海域是否存在塞壬要塞。
+
+        调用此方法前必须先调用 self.globe_in_sight(zone)。
 
         Args:
-            zone (str, int, Zone): Name in CN/EN/JP/TW, zone id, or Zone instance.
+            zone (str | int | Zone): 海域名称、ID 或 Zone 实例。
 
         Returns:
-            bool:
+            bool: 若检测到塞壬要塞红色漩涡特征返回 True，否则返回 False。
         """
         zone = self.name_to_zone(zone)
-        # The center of red whirlpool, on 2D map.
+        # 二维地图上红色漩涡中心
         location = zone.location + (-9.5, -12.5)
-        # Area around the center, on 2D map.
+        # 二维地图上中心周围区域
         location = [location - (4, 4), location + (4, 4)]
-        # Area around the center, on screen.
+        # 屏幕上的对应区域
         screen = self.globe2screen(location).flatten().round()
         screen = np.round(screen).astype(int).tolist()
-        # Average color of whirlpool center
+        # 漩涡中心平均颜色
         center = self.image_crop(screen, copy=False)
         center = np.array([[cv2.mean(center), ], ]).astype(np.uint8)
         h, s, v = rgb2hsv(center)[0][0]
-        # hsv usually to be (338, 74.9, 100)
+        # hsv 通常为 (338, 74.9, 100)
         if 285 < h <= 360 and s > 45 and v > 45:
             return True
         else:
             return False
 
     def _find_siren_stronghold(self, zones):
-        """
-        self.globe_update() needs to be called first
+        """在给定的一组海域中搜索塞壬要塞。
+
+        调用前必须先调用 self.globe_update()。
 
         Args:
-            zones (SelectGrids): A group of zones to search from.
+            zones (SelectedGrids): 待搜索的一组海域。
 
         Returns:
-            zone: Zone that has siren stronghold, or None if not found.
+            Zone | None: 找到要塞海域则返回该 Zone 对象，未找到返回 None。
 
         Pages:
             in: in_globe
-            out: in_globe, is_zone_pinned() if found.
+            out: in_globe，若找到要塞则处于固定选中状态 is_zone_pinned()。
         """
         sight = (20, 220, 980, 620)
         while zones:
@@ -374,13 +379,14 @@ class GlobeCamera(GlobeOperation, ZoneManager):
         return None
 
     def find_siren_stronghold(self):
-        """
+        """在全球地图的所有区域中搜索塞壬要塞。
+
         Returns:
-            zone: Zone that has siren stronghold, or None if not found.
+            Zone | None: 存在塞壬要塞的海域对象，全部搜索完毕未找到时返回 None。
 
         Pages:
             in: in_globe
-            out: in_globe, is_zone_pinned() if found.
+            out: in_globe，找到时处于固定海域状态 is_zone_pinned()。
         """
         logger.hr(f'[大世界-地球仪] 查找塞壬要塞', level=1)
         region = self.camera_to_zone(self.globe_camera).region

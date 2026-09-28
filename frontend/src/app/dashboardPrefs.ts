@@ -1,4 +1,8 @@
 /**
+ * @fileoverview 仪表盘资源卡排布、疏密与行动力口径等外观偏好持久化。
+ */
+
+/**
  * 仪表盘外观偏好：资源卡的排布、疏密、字号与行动力口径。
  *
  * 与其它界面偏好一张存法：关掉再打开接着上次的样子，直到用户自己切回去。
@@ -10,10 +14,11 @@ export interface DashboardPrefs {
   dense: boolean
   merged: boolean
   totalFirst: boolean
+  dogIcon: boolean
 }
 
 const PREFS_KEY = 'azurpilot.dashboard'
-const PREFS_DEFAULTS: DashboardPrefs = {fitCards: false, fitText: false, dense: false, merged: false, totalFirst: false}
+const PREFS_DEFAULTS: DashboardPrefs = {fitCards: false, fitText: false, dense: false, merged: false, totalFirst: false, dogIcon: true}
 const listeners = new Set<() => void>()
 
 function read(): DashboardPrefs {

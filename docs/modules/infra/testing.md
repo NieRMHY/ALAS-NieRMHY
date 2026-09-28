@@ -47,8 +47,9 @@ frontend/
 
 | 命令 | 层 | 说明 |
 | --- | --- | --- |
-| `uv run python -m unittest tests.test_api` | Python | 单模块 |
-| `uv run python -m unittest discover -s tests` | Python | 全量 |
+| `uv run python -m unittest tests.test_api` | Python | 单模块（unittest） |
+| `uv run python -m unittest discover -s tests` | Python | 全量 unittest |
+| `uv run pytest tests/shop_event` | Python | pytest 用例（shop_event 图像夹具等） |
 | `npm test --prefix frontend` | 前端单元 | vitest |
 | `npm run test:e2e --prefix frontend` | e2e 主配置 | 需先有最新前端构建 |
 | `npm run test:e2e:mock --prefix frontend` | e2e mock | 不需要 Python/模拟器 |

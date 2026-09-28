@@ -1,3 +1,7 @@
+/**
+ * @fileoverview 新版主题右侧栏（调度器状态与任务队列）组件。
+ */
+
 import { Clock3, X } from 'lucide-react'
 import { useApp } from '../app/context'
 import { useInstanceOverview } from './useInstanceOverview'

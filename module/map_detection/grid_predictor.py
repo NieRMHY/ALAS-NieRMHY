@@ -88,6 +88,7 @@ class GridPredictor:
         return image_edge
 
     def predict(self):
+        """预测当前网格的全部属性（敌人、规模、舰种、Boss、潜艇、舰队、问号等）。"""
         self.enemy_scale = self.predict_enemy_scale()
         self.enemy_genre = self.predict_enemy_genre()
         self.is_boss = self.predict_boss()
@@ -122,7 +123,7 @@ class GridPredictor:
 
         Args:
             area (tuple): 相对区域坐标 (左上x, 左上y, 右下x, 右下y)，如 (-1, -1, 1, 1)。
-            shape (tuple): 输出图像尺寸，(宽, 高)。
+            shape (tuple, optional): 输出图像尺寸，(宽, 高)。默认为 None。
 
         Returns:
             np.ndarray: 形状 (高, 宽, 通道)。
@@ -130,7 +131,7 @@ class GridPredictor:
         area = self._image_center + np.array(area) * self._image_a
         image = crop(self.image, area=np.rint(area).astype(int), copy=False)
         if shape is not None:
-            # 使用 pillow 默认的重采样滤波器，即 BICUBIC。
+            # 使用 pillow 默认的重采样滤波器，即 BICUBIC
             image = cv2.resize(image, shape, interpolation=cv2.INTER_CUBIC)
         return image
 
@@ -140,8 +141,8 @@ class GridPredictor:
         Args:
             area (tuple): 相对区域坐标 (左上x, 左上y, 右下x, 右下y)，如 (-1, -1, 1, 1)。
             color (tuple): 目标 RGB 颜色。
-            shape (tuple): 输出图像尺寸，(宽, 高)。
-            threshold (int): 颜色容差 0-255，值越小越严格，0 表示完全相同。
+            shape (tuple, optional): 输出图像尺寸 (宽, 高)。默认为 (50, 50)。
+            threshold (int, optional): 颜色容差 0-255，值越小越严格，0 表示完全相同。默认为 34。
 
         Returns:
             int: 匹配的像素数量。
@@ -155,10 +156,10 @@ class GridPredictor:
 
         Args:
             area (tuple): 相对区域坐标 (左上x, 左上y, 右下x, 右下y)，如 (-1, -1, 1, 1)。
-            h (tuple): 色相范围。
-            s (tuple): 饱和度范围。
-            v (tuple): 明度范围。
-            shape (tuple): 输出图像尺寸，(宽, 高)。
+            h (tuple, optional): 色相范围。默认为 (0, 360)。
+            s (tuple, optional): 饱和度范围。默认为 (0, 100)。
+            v (tuple, optional): 明度范围。默认为 (0, 100)。
+            shape (tuple, optional): 输出图像尺寸 (宽, 高)。默认为 (50, 50)。
 
         Returns:
             int: 匹配的像素数量。
@@ -167,7 +168,7 @@ class GridPredictor:
         cv2.cvtColor(image, cv2.COLOR_RGB2HSV, dst=image)
         lower = (h[0] / 2, s[0] * 2.55, v[0] * 2.55)
         upper = (h[1] / 2 + 1, s[1] * 2.55 + 1, v[1] * 2.55 + 1)
-        # 不要设置 `dst`，输出图像为 (50, 50) 但 `image` 为 (50, 50, 3)
+        # 不要设置 dst，输出图像为 (50, 50) 但 image 为 (50, 50, 3)
         image = cv2.inRange(image, lower, upper)
         count = cv2.countNonZero(image)
         return count
@@ -194,6 +195,14 @@ class GridPredictor:
         return scale
 
     def predict_enemy_genre(self):
+        """预测敌人的舰种（如 Light, Main, Carrier, Treasure, Siren 等）。
+
+        Returns:
+            str | None: 识别出的敌舰类型名称；若未识别出则返回 None。
+
+        Raises:
+            ScriptError: 未找到配置的敌人模板资源时抛出。
+        """
         if self.config.MAP_SIREN_HAS_BOSS_ICON:
             if self.enemy_scale:
                 return ''
@@ -233,6 +242,11 @@ class GridPredictor:
         return None
 
     def predict_boss(self):
+        """预测网格是否为 Boss 敌人。
+
+        Returns:
+            bool: 是否为 Boss。
+        """
         if self.enemy_genre == 'Siren_Siren':
             return False
 
@@ -251,19 +265,39 @@ class GridPredictor:
         return False
 
     def predict_missile_attack(self):
+        """预测网格是否受到导弹袭击标记。
+
+        Returns:
+            bool: 是否受到导弹攻击。
+        """
         return self.relative_rgb_count(area=(-0.5, -1, 0.5, 0), color=(255, 255, 60), shape=(50, 50)) > 35
 
     def predict_fleet(self):
+        """预测网格上是否存在水面舰队（通过弹药图标检测）。
+
+        Returns:
+            bool: 是否有舰队。
+        """
         image = self.relative_crop((-1, -2, -0.5, -1.5), shape=(50, 50))
         image = color_similarity_2d(image, color=(255, 255, 255))
         return TEMPLATE_FLEET_AMMO.match(image)
 
     def predict_submarine(self):
+        """预测网格上是否存在潜艇。
+
+        Returns:
+            bool: 是否有潜艇。
+        """
         image = self.relative_crop((-0.86, 0.08, -0.36, 0.58), shape=(50, 50))
         image = color_similarity_2d(image, color=(255, 243, 156))
         return TEMPLATE_SUBMARINE.match(image)
 
     def predict_caught_by_siren(self):
+        """预测舰队是否被塞壬抓捕贴脸。
+
+        Returns:
+            bool: 是否被塞壬捕获。
+        """
         image = self.relative_crop((-1, -1.5, 1, 0.5), shape=(120, 120))
         return TEMPLATE_CAUGHT_BY_SIREN.match(image, similarity=0.6)
 
@@ -271,7 +305,7 @@ class GridPredictor:
         """预测网格是否为神秘事件。
 
         Returns:
-            bool: True 表示是神秘事件。
+            bool: 是否为神秘事件。
         """
         # 青色问号
         if self.relative_rgb_count(
@@ -285,6 +319,11 @@ class GridPredictor:
         return False
 
     def predict_current_fleet(self):
+        """预测网格上是否为当前选中的活跃舰队（通过绿色光标箭头检测）。
+
+        Returns:
+            bool: 是否为当前操作舰队。
+        """
         count = self.relative_hsv_count(area=(-0.5, -3.5, 0.5, -2.5), h=(141 - 3, 141 + 10), shape=(50, 50))
         if count < 600:
             return False
@@ -297,6 +336,11 @@ class GridPredictor:
         return True
 
     def predict_sea(self):
+        """预测网格是否为海面网格（通过中心与四角地块纹理匹配）。
+
+        Returns:
+            bool: 是否为海洋地块。
+        """
         area = area_pad((48, 48, 48 + 46, 48 + 46), pad=5)
         res = cv2.matchTemplate(ASSETS.tile_center_image, crop(self.image_homo, area=area, copy=False), cv2.TM_CCOEFF_NORMED)
         _, sim, _, _ = cv2.minMaxLoc(res)
@@ -316,14 +360,28 @@ class GridPredictor:
         return False
 
     def predict_submarine_move(self):
-        # 检测潜艇移动模式下的橙色箭头。
+        """检测潜艇移动模式下的橙色箭头。
+
+        Returns:
+            bool: 是否为潜艇移动目标。
+        """
         return self.relative_rgb_count((-0.5, -1, 0.5, 0), color=(231, 138, 49), shape=(60, 60)) > 200
 
     def predict_mob_move_icon(self):
+        """预测道中移动模式图标。
+
+        Returns:
+            bool: 是否匹配道中移动图标。
+        """
         image = rgb2gray(self.relative_crop(area=(-0.5, -0.5, 0.5, 0.5), shape=(60, 60)))
         return TEMPLATE_MOB_MOVE_ICON.match(image)
 
     def predict_air_strike_icon(self):
+        """预测空袭引导图标。
+
+        Returns:
+            bool: 是否匹配空袭图标。
+        """
         # area = area_pad((0, 0, 140, 140), pad=5)
         # image = color_similarity_2d(crop(self.image_trans, area=area, copy=False), color=(255, 255, 160))
         image = color_similarity_2d(self.image_trans, color=(255, 255, 160))

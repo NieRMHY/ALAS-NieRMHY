@@ -2,7 +2,7 @@
 
 /* 统一材质和层级：导航悬浮于内容之上，数据与表单使用稳定的实色表面。 */
 :root {
-  --glass-tint: #ffffffb8;
+  --glass-tint: var(--theme-surface-bg);
   --glass-edge: #ffffffd9;
   --glass-shadow: 0 8px 32px #1d1d1f08, inset 0 1px 0 #ffffffb3;
   --sidebar-width: 232px;
@@ -11,7 +11,7 @@
   --green-soft: #eaf6ed;
 }
 :root[data-theme='dark'] {
-  --glass-tint: #242426d9;
+  --glass-tint: var(--theme-surface-bg);
   --glass-edge: #ffffff1f;
   --glass-shadow: 0 8px 32px #0002, inset 0 1px 0 #ffffff0d;
   --green: #6cda86;
@@ -19,15 +19,21 @@
   --red: #ff8078;
 }
 body {background: var(--bg); background-attachment: fixed}
-#root {isolation: isolate}
-.wallpaper {position: fixed; inset: 0; z-index: -1; pointer-events: none; background: none; overflow: hidden}
-.wallpaper img, .wallpaper video {position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover}
-.wallpaper-media {opacity: 1; backface-visibility: hidden; transform: translateZ(0)}
-.wallpaper-media.wallpaper-hidden {opacity: 0}
 .wallpaper-fade-in {animation: wallpaper-fade-in var(--dur-5, .36s) cubic-bezier(.16, 1, .3, 1) both}
 @keyframes wallpaper-fade-in {
   from {opacity: 0}
   to {opacity: 1}
+}
+:root[data-theme='dark'] .wallpaper::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgb(0 0 0 / .52);
+  pointer-events: none;
+  animation: wallpaper-fade-in var(--dur-5, .36s) cubic-bezier(.16, 1, .3, 1) both;
+}
+:root[data-theme='dark'].home-active .wallpaper::after {
+  background: linear-gradient(168deg, rgb(0 0 0 / .46), rgb(0 0 0 / .56) 55%, rgb(0 0 0 / .68));
 }
 .lucide {stroke-width: 1.75}
 
@@ -36,11 +42,11 @@ body {background: var(--bg); background-attachment: fixed}
 .app-shell {padding: 0; gap: 14px; align-items: start}
 .app-shell.with-rail {grid-template-columns: var(--sidebar-width) minmax(0, 1fr) var(--right-rail-width)}
 .sidebar {
+  background: var(--theme-sidebar-bg);
+  -webkit-backdrop-filter: var(--theme-sidebar-filter);
+  backdrop-filter: var(--theme-sidebar-filter);
   top: 0;
   height: var(--viewport-height);
-  background: var(--glass-tint);
-  -webkit-backdrop-filter: blur(24px) saturate(130%);
-  backdrop-filter: blur(24px) saturate(130%);
   border: 1px solid var(--glass-edge);
   border-left: 0;
   border-radius: 0 26px 26px 0;
@@ -49,24 +55,26 @@ body {background: var(--bg); background-attachment: fixed}
   overflow: visible;
 }
 .right-rail {
+  background: var(--theme-sidebar-bg);
+  -webkit-backdrop-filter: var(--theme-sidebar-filter);
+  backdrop-filter: var(--theme-sidebar-filter);
   position: sticky;
   top: 56px;
   height: calc(var(--viewport-height) - 56px);
-  background: var(--glass-tint);
   -webkit-backdrop-filter: blur(24px) saturate(130%);
   backdrop-filter: blur(24px) saturate(130%);
   border: 1px solid var(--glass-edge);
-  border-top: 0;
+  border-top: 0 !important;
   border-right: 0;
   border-radius: 0 0 0 26px;
-  box-shadow: 0 18px 56px #0003, var(--glass-shadow);
+  box-shadow: 0 18px 56px #0003;
   overflow: hidden;
   z-index: 70;
 }
-.right-rail-header {border-bottom-color: color-mix(in srgb, var(--border) 64%, transparent)}
+.right-rail-header {border-bottom: 0}
 .scheduler-widget {border-radius: 18px; background: color-mix(in srgb, var(--surface) 72%, transparent); border-color: color-mix(in srgb, var(--border) 70%, transparent); box-shadow: inset 0 1px 0 color-mix(in srgb, white 46%, transparent)}
 .scheduler-stats > div {border-radius: 14px}
-.rail-schedule {margin: 0 10px 10px; padding: 14px 4px 4px; border-top: 1px solid color-mix(in srgb, var(--border) 68%, transparent)}
+.rail-schedule {margin: 0 10px 10px; padding: 14px 12px 10px; border-top: 1px solid color-mix(in srgb, var(--border) 68%, transparent)}
 .rail-task-item {margin: 3px 0; padding: 9px 8px; border-bottom: 0; border-radius: 13px}
 .rail-task-item:hover {background: color-mix(in srgb, var(--surface) 72%, transparent)}
 /* 用 flex 撑满外壳的剩余高度，不再靠「视口 − 常数 − 顶栏」的算术：算术补不齐外壳的 gap，底部会留缝。 */
@@ -83,17 +91,18 @@ body {background: var(--bg); background-attachment: fixed}
 .task-group-button {min-height: 43px; font-size: 13px; border-radius: 11px; color: var(--text)}
 .task-group-icon {color: var(--accent)}
 .task-group-button.expanded, [data-theme='dark'] .task-group-button.expanded {border-color: transparent; background: var(--accent-soft)}
-.task-submenu-flyout, .instance-menu {background: var(--glass-tint); -webkit-backdrop-filter: blur(28px); backdrop-filter: blur(28px); border-color: var(--glass-edge); border-radius: 16px; box-shadow: 0 12px 40px #0002; padding: 7px}
+.task-submenu-flyout, .instance-menu {background: var(--theme-menu-bg); -webkit-backdrop-filter: var(--theme-menu-filter); backdrop-filter: var(--theme-menu-filter); border-color: var(--glass-edge); border-radius: 16px; box-shadow: 0 12px 40px #0002; padding: 7px}
 .task-submenu-item {font-size: 13px; min-height: 38px; border-radius: 9px; color: var(--text)}
 .task-submenu-item.active .task-submenu-dot {box-shadow: none}
 .nav-search {border-radius: 10px; background: var(--surface-muted); color: var(--muted)}
 .nav-search input {font-size: 13px; min-height: 38px}
-.topbar {position: sticky; z-index: 80; margin: 0 0 0 24px; top: 0; height: 56px; padding: 0 18px; border: 1px solid var(--glass-edge); border-radius: 26px 0 0 26px; background: transparent; box-shadow: var(--glass-shadow); isolation: isolate}
+.topbar {position: sticky; z-index: 80; margin: 0 0 0 24px; top: 0; height: 56px; padding: 0 18px; border: 1px solid var(--glass-edge); border-bottom: none !important; border-radius: 26px 0 0 26px; background: transparent; box-shadow: var(--glass-shadow); isolation: isolate}
 /* 顶栏横跨到屏幕右缘，两个模式都如此：右栏的 top 就在顶栏下方，顶栏不伸过去的话
    两者之间会空出一条缝。用视口单位而不是百分比：百分比以内容盒为基准，
    加上顶栏自身的 margin-left 后会比视口长出一截。 */
-.app-shell.with-rail .topbar {width: calc(100vw - var(--sidebar-width) - 14px - 24px)}
+.app-shell.with-rail .topbar {width: calc(100% + var(--right-rail-width) + 14px - 24px); border-bottom: none !important}
 .topbar > :not(.glass-material), .title-actions > :not(.glass-material) {position: relative; z-index: 1}
+.topbar > .glass-material {background: var(--theme-topbar-bg); -webkit-backdrop-filter: var(--theme-topbar-filter); backdrop-filter: var(--theme-topbar-filter)}
 .breadcrumb {font-size: 13px; gap: 10px}
 .breadcrumb .instance-caption strong {font-size: 13px}
 .breadcrumb span {color: var(--muted)}
@@ -171,9 +180,9 @@ main:focus {outline: none}
 .icon-button {width: 36px; height: 36px; border-radius: 50%; color: var(--muted)}
 .text-button {font-size: 12px; min-height: 36px; padding: 6px 8px}
 .panel, .resource-card {
-  background: var(--glass-tint);
-  -webkit-backdrop-filter: blur(24px) saturate(130%);
-  backdrop-filter: blur(24px) saturate(130%);
+  background: var(--theme-surface-bg);
+  -webkit-backdrop-filter: var(--theme-surface-filter);
+  backdrop-filter: var(--theme-surface-filter);
   border: 1px solid var(--glass-edge);
   border-radius: 26px;
   box-shadow: var(--glass-shadow);
@@ -240,7 +249,7 @@ main:focus {outline: none}
 .monitor-tabs > a.text-button {margin-left: auto}
 .monitor-panel .log-content {font-size: 12px; line-height: 1.8}
 .monitor-panel .log-content {
-  background: color-mix(in srgb, var(--surface) 30%, transparent);
+  background: var(--theme-plate-bg);
 }
 .monitor-panel .log-filters {
   background: color-mix(in srgb, var(--surface) 18%, transparent);
@@ -251,6 +260,47 @@ main:focus {outline: none}
   box-shadow: none;
   border: 0;
   border-radius: inherit;
+}
+/* 经典玻璃主题卡片式日志适配 (LogCardView Apple Glass) */
+.log-card {
+  background: color-mix(in srgb, var(--surface) 85%, transparent);
+  border-color: color-mix(in srgb, var(--glass-edge) 54%, var(--border));
+  border-radius: 10px;
+}
+.card-header {
+  background: color-mix(in srgb, var(--surface) 50%, transparent);
+  border-bottom-color: color-mix(in srgb, var(--glass-edge) 54%, var(--border));
+}
+.card-btn-action {
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--surface) 70%, transparent);
+  border-color: color-mix(in srgb, var(--glass-edge) 45%, var(--border));
+}
+.card-btn-icon {
+  border-radius: 6px;
+}
+.trapezoid-visual {
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--surface) 40%, transparent);
+  border-color: color-mix(in srgb, var(--glass-edge) 54%, var(--border));
+}
+.traceback-viewer {
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--surface) 40%, transparent);
+  border-color: color-mix(in srgb, var(--glass-edge) 54%, var(--border));
+}
+.traceback-toolbar {
+  background: color-mix(in srgb, var(--surface) 70%, transparent);
+  border-bottom-color: color-mix(in srgb, var(--glass-edge) 54%, var(--border));
+}
+.traceback-frame-card {
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--surface) 60%, transparent);
+  border-color: color-mix(in srgb, var(--glass-edge) 45%, var(--border));
+}
+.traceback-frame-header {
+  background: color-mix(in srgb, var(--surface) 45%, transparent);
+  border-bottom-color: color-mix(in srgb, var(--glass-edge) 45%, var(--border));
 }
 .statistics-note {border-left-color: var(--accent); border-radius: 12px}
 .group-nav {border: 0; padding: 6px; gap: 3px; border-radius: 16px; background: var(--surface-muted)}
@@ -287,9 +337,9 @@ html.home-active .topbar,
 }
 .home-main {
   position: relative;
-  background: var(--glass-tint);
-  -webkit-backdrop-filter: blur(24px) saturate(130%);
-  backdrop-filter: blur(24px) saturate(130%);
+  background: var(--theme-surface-bg);
+  -webkit-backdrop-filter: var(--theme-surface-filter);
+  backdrop-filter: var(--theme-surface-filter);
   border: none;
   border-bottom-left-radius: 26px;
   box-shadow: none;
@@ -379,12 +429,14 @@ html.home-active .topbar,
 @media (max-width: 950px) {
   :root {--topbar-height: 76px}
   .app-shell {padding: 0}
-  .sidebar {width: 232px; left: -250px; top: 0; height: var(--viewport-height); border-radius: 0 26px 26px 0}
+  .app-shell.mobile-open::after {content: ''; position: fixed; inset: 0; z-index: 90; background: rgb(17 17 27 / .38)}
+  .sidebar {width: 232px; left: -250px; top: 0; height: var(--viewport-height); z-index: 100; border-radius: 0 26px 26px 0; background: var(--surface); background: color-mix(in srgb, var(--surface) 96%, var(--bg)); -webkit-backdrop-filter: none; backdrop-filter: none}
   .sidebar-brand {height: 56px; min-height: 56px}
   .topbar, .app-shell.with-rail .topbar {width: auto; margin: 0 0 0 12px; top: 0; padding: 0 10px; height: 56px; min-height: 56px; gap: 6px; border-radius: 26px 0 0 26px}
   .app-shell.with-rail .topbar {justify-content: flex-start}
-  .right-rail {position: fixed; top: 56px; right: 0; width: min(360px, calc(100vw - 12px)); height: calc(var(--viewport-height) - 56px); opacity: 0; visibility: hidden; pointer-events: none; transform: translateY(-12px) scale(.985); transform-origin: top right; transition: opacity .18s ease, transform .22s cubic-bezier(.22,.61,.36,1), visibility .18s}
+  .right-rail {position: fixed; top: 56px; right: 0; width: min(360px, calc(100vw - 12px)); height: calc(var(--viewport-height) - 56px); z-index: 110; opacity: 0; visibility: hidden; pointer-events: none; transform: translateY(-12px) scale(.985); transform-origin: top right; transition: opacity .18s ease, transform .22s cubic-bezier(.22,.61,.36,1), visibility .18s}
   .rail-open .right-rail {opacity: 1; visibility: visible; pointer-events: auto; transform: translateY(0) scale(1)}
+  .right-rail::before, .right-rail::after {display: none}
   main {padding: 28px 18px}
   .breadcrumb {font-size: 12px; gap: 6px}
   .page-title {gap: 18px}

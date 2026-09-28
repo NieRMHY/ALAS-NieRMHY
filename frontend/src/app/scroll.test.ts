@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { animateScrollTop, easeOutCubic, scrollTargetTop } from './scroll'
+import { animateScrollTop, easeOutCubic, scrollTargetTop, smoothScrollToElement } from './scroll'
 
 afterEach(() => vi.unstubAllGlobals())
 
@@ -38,5 +38,27 @@ describe('animateScrollTop', () => {
     animateScrollTop(container, 200, 280)
 
     expect(cancelled).toEqual([1])
+  })
+})
+
+describe('smoothScrollToElement', () => {
+  it('文档滚动后重复点击同一锚点不会继续下滑', () => {
+    const scroller = Object.assign(new EventTarget(), {
+      scrollTop: 0,
+      scrollHeight: 2000,
+      clientHeight: 500,
+      getBoundingClientRect: () => ({top: -scroller.scrollTop}),
+    }) as HTMLElement
+    const target = {
+      parentElement: null,
+      getBoundingClientRect: () => ({top: 600 - scroller.scrollTop}),
+    } as HTMLElement
+    vi.stubGlobal('document', {scrollingElement: scroller})
+    vi.stubGlobal('getComputedStyle', () => ({scrollMarginTop: '0px'}))
+
+    smoothScrollToElement(target)
+    expect(scroller.scrollTop).toBe(600)
+    smoothScrollToElement(target)
+    expect(scroller.scrollTop).toBe(600)
   })
 })

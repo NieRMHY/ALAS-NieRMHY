@@ -42,6 +42,17 @@ OUTPUT_NAME = "out0"
 
 @dataclass(frozen=True)
 class NcnnRecModelSpec:
+    """NCNN 文本识别模型规格定义。
+
+    Attributes:
+        name (str): 规格名称或档位（如 'lite', 'standard', 'pro'）。
+        param_path (Path): NCNN 网络结构参数文件路径 (.param)。
+        bin_path (Path): NCNN 模型权重二进制文件路径 (.bin)。
+        keys_path (Path): 识别字符字典文件路径。
+        output_name (str): 模型输出层节点名称。
+        disable_fp16 (bool): 是否强制禁用 FP16 精度。默认 False。
+    """
+
     name: str
     param_path: Path
     bin_path: Path
@@ -52,6 +63,17 @@ class NcnnRecModelSpec:
 
 # PP-OCRv6 三档 ncnn 转换模型：lite(tiny) / standard(small) / pro(medium)。
 def _ncnn_spec(name, param, bin, keys):
+    """构建 NcnnRecModelSpec 模型规格实例。
+
+    Args:
+        name (str): 规格名称。
+        param (str): .param 文件名。
+        bin (str): .bin 文件名。
+        keys (str): 字典文件名。
+
+    Returns:
+        NcnnRecModelSpec: 构建完成的模型规格对象。
+    """
     return NcnnRecModelSpec(
         name=name,
         param_path=MODEL_ROOT / param,
@@ -119,14 +141,38 @@ _gpu_instance_created = False
 
 
 def normalize_model_name(name: str) -> str:
+    """标准化 OCR 模型名称别名。
+
+    Args:
+        name (str): 原始模型名称。
+
+    Returns:
+        str: 标准化后的模型名称。
+    """
     return MODEL_ALIASES.get(name, name)
 
 
 def supports_ncnn_model(name: str) -> bool:
+    """检查是否支持指定的 NCNN 模型。
+
+    Args:
+        name (str): 模型名称。
+
+    Returns:
+        bool: 若支持该模型则返回 True，否则返回 False。
+    """
     return normalize_model_name(name) in MODEL_SPECS
 
 
 def _load_ncnn():
+    """按需延迟导入并返回全局 ncnn 模块。
+
+    Returns:
+        module: 导入的 ncnn 模块对象。
+
+    Raises:
+        RuntimeError: 当未安装 ncnn 依赖包时抛出。
+    """
     global _ncnn
     if _ncnn is not None:
         return _ncnn
@@ -160,6 +206,11 @@ def _destroy_gpu_instance():
 
 
 def _ensure_gpu_instance(ncnn) -> None:
+    """确保 ncnn 全局 GPU 实例已创建并注册退出清理。
+
+    Args:
+        ncnn (module): ncnn 模块对象。
+    """
     global _gpu_instance_created, _gpu_instance_registered
     if _gpu_instance_created:
         return
@@ -176,6 +227,11 @@ def _ensure_gpu_instance(ncnn) -> None:
 
 
 def get_ncnn_vulkan_gpu_count() -> int:
+    """获取系统检测到的支持 Vulkan 的 GPU 数量。
+
+    Returns:
+        int: Vulkan GPU 数量。
+    """
     ncnn = _load_ncnn()
     _ensure_gpu_instance(ncnn)
 
@@ -186,6 +242,11 @@ def get_ncnn_vulkan_gpu_count() -> int:
 
 
 def has_ncnn_vulkan_gpu() -> bool:
+    """检查系统是否存在可用的 ncnn Vulkan GPU。
+
+    Returns:
+        bool: 存在可用 Vulkan GPU 时返回 True，否则返回 False。
+    """
     try:
         return get_ncnn_vulkan_gpu_count() > 0
     except Exception as e:
@@ -194,6 +255,18 @@ def has_ncnn_vulkan_gpu() -> bool:
 
 
 def _resolve_gpu_index(ncnn, requested_index: int) -> int:
+    """验证并解析请求的 Vulkan GPU 设备索引。
+
+    Args:
+        ncnn (module): ncnn 模块对象。
+        requested_index (int): 请求的 GPU 索引，负数表示使用默认 GPU。
+
+    Returns:
+        int: 有效的 GPU 索引编号。
+
+    Raises:
+        RuntimeError: 未检测到 GPU 或请求的索引超出有效范围。
+    """
     gpu_count = get_ncnn_vulkan_gpu_count()
     if gpu_count <= 0:
         raise RuntimeError("ncnn Vulkan requested, but no Vulkan GPU was detected.")
@@ -211,6 +284,16 @@ def _resolve_gpu_index(ncnn, requested_index: int) -> int:
 
 
 def _gpu_info_value(ncnn, gpu_index: int, name: str):
+    """读取指定 GPU 的硬件信息属性值。
+
+    Args:
+        ncnn (module): ncnn 模块对象。
+        gpu_index (int): GPU 设备索引。
+        name (str): 属性名称。
+
+    Returns:
+        Any: 属性值；若获取失败则返回 None。
+    """
     try:
         info = ncnn.get_gpu_info(gpu_index)
         value = getattr(info, name)
@@ -220,10 +303,32 @@ def _gpu_info_value(ncnn, gpu_index: int, name: str):
 
 
 class RecPreprocessor:
+    """NCNN 文本识别模型图像预处理器。
+
+    Attributes:
+        rec_image_shape (tuple[int, int, int]): 模型期望的输入图像形状 (C, H, W)。
+    """
+
     def __init__(self, rec_image_shape: tuple[int, int, int] = REC_IMAGE_SHAPE):
+        """初始化预处理器。
+
+        Args:
+            rec_image_shape (tuple[int, int, int]): 输入图像形状 (C, H, W)。
+        """
         self.rec_image_shape = rec_image_shape
 
     def resize_norm_img(self, img: np.ndarray) -> np.ndarray:
+        """缩放并归一化图像以适应模型输入规范。
+
+        Args:
+            img (np.ndarray): 输入图像，形状为 (H, W, C)。
+
+        Returns:
+            np.ndarray: 填充归一化后的图像数组，形状为 (C, H, W)。
+
+        Raises:
+            ValueError: 图像通道数与期望通道数不符。
+        """
         img_channel, img_height, img_width = self.rec_image_shape
         if img.shape[2] != img_channel:
             raise ValueError(f"Expected {img_channel} channels, got {img.shape[2]}")
@@ -244,7 +349,33 @@ class RecPreprocessor:
 
 
 class NcnnRecOCR:
+    """基于 NCNN 框架的文本识别器。
+
+    Attributes:
+        spec (NcnnRecModelSpec): 模型规格。
+        device (str): 运行设备 ('cpu' 或 'gpu')。
+        gpu_index (int): Vulkan GPU 索引。
+        use_vulkan (bool): 是否启用 Vulkan 计算加速。
+        ncnn (module): ncnn 模块。
+        preprocess (RecPreprocessor): 图像预处理器。
+        load_image (LoadImage): 图像加载工具。
+        decoder (CTCLabelDecode): CTC 解码器。
+        class_count (int): 类别字典大小。
+        net (ncnn.Net | None): NCNN 神经网络实例。
+    """
+
     def __init__(self, model_name: str, device: str = "cpu", gpu_index: int = -1, version: str = "standard"):
+        """初始化 NCNN 识别器。
+
+        Args:
+            model_name (str): 模型名称。
+            device (str): 目标设备，'cpu' 或 'gpu'。
+            gpu_index (int): GPU 设备索引，-1 表示自动选择。
+            version (str): 模型版本档位 ('lite', 'standard', 'pro')。
+
+        Raises:
+            ValueError: 不支持的模型名称。
+        """
         normalized_name = normalize_model_name(model_name)
         specs = MODEL_SPECS.get(normalized_name)
         if specs is None:
@@ -267,6 +398,11 @@ class NcnnRecOCR:
         self._create_net()
 
     def _check_model_files(self) -> None:
+        """检查所需模型文件与字典文件是否存在。
+
+        Raises:
+            FileNotFoundError: 模型或字典文件缺失。
+        """
         missing = [
             str(path)
             for path in (self.spec.param_path, self.spec.bin_path, self.spec.keys_path)
@@ -278,6 +414,11 @@ class NcnnRecOCR:
             )
 
     def _create_net(self) -> None:
+        """创建并初始化 NCNN 神经网络与模型参数。
+
+        Raises:
+            RuntimeError: 不支持的设备或模型加载失败。
+        """
         if self.device == "gpu":
             self.gpu_index = _resolve_gpu_index(self.ncnn, self.gpu_index)
             self.use_vulkan = True
@@ -319,13 +460,32 @@ class NcnnRecOCR:
 
     @staticmethod
     def _check_return(value, op: str, path: Path) -> None:
+        """检查 NCNN C++ API 调用返回值状态。
+
+        Args:
+            value (int): API 返回的状态码。
+            op (str): 操作名称。
+            path (Path): 操作相关的文件路径。
+
+        Raises:
+            RuntimeError: 返回非零错误码。
+        """
         if isinstance(value, int) and value != 0:
             raise RuntimeError(f"ncnn {op} failed for {path}, return code {value}")
 
     def close(self) -> None:
+        """释放网络资源。"""
         self.net = None
 
     def __call__(self, image_or_path) -> TextRecOutput:
+        """执行单图文本识别推理。
+
+        Args:
+            image_or_path: 输入图像数据（ndarray、PIL Image 或路径）。
+
+        Returns:
+            TextRecOutput: 包含识别文本、置信度及耗时信息的输出对象。
+        """
         start_time = time.perf_counter()
         img = self.load_image(image_or_path)
         img, _, _ = resize_image_within_bounds(img, 30, 2000)
@@ -344,6 +504,17 @@ class NcnnRecOCR:
         )
 
     def _infer(self, input_arr: np.ndarray) -> np.ndarray:
+        """执行前向推理提取网络输出。
+
+        Args:
+            input_arr (np.ndarray): 预处理后的图像数组 (C, H, W)。
+
+        Returns:
+            np.ndarray: 规范化形状的预测特征数组。
+
+        Raises:
+            RuntimeError: 模型已关闭或提取失败。
+        """
         if self.net is None:
             raise RuntimeError("ncnn OCR model has been closed")
 
@@ -366,6 +537,17 @@ class NcnnRecOCR:
         return self._normalize_output(np.array(mat_out))
 
     def _to_ncnn_mat(self, input_arr: np.ndarray):
+        """将 numpy 数组转换为 ncnn.Mat 格式。
+
+        Args:
+            input_arr (np.ndarray): 输入数组 (C, H, W)。
+
+        Returns:
+            ncnn.Mat: 转换后的 ncnn 矩阵。
+
+        Raises:
+            ValueError: 数组维度不是 3 维。
+        """
         arr = np.ascontiguousarray(input_arr, dtype=np.float32)
         if arr.ndim != 3:
             raise ValueError(f"Expected CHW input for ncnn, got shape {arr.shape}")
@@ -377,6 +559,17 @@ class NcnnRecOCR:
         return mat
 
     def _normalize_output(self, output: np.ndarray) -> np.ndarray:
+        """标准化模型输出维度以匹配 CTC 解码输入。
+
+        Args:
+            output (np.ndarray): 原始网络输出数组。
+
+        Returns:
+            np.ndarray: 标准化后的输出数组 (batch, seq_len, num_classes)。
+
+        Raises:
+            RuntimeError: 输出维度形状无法识别。
+        """
         arr = np.asarray(output, dtype=np.float32)
 
         if arr.ndim == 3 and arr.shape[-1] == self.class_count:

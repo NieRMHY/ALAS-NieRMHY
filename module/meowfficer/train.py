@@ -57,18 +57,15 @@ class MeowfficerTrain(MeowfficerCollect, MeowfficerEnhance):
     _box_count = [0, 0, 0]
 
     def _meow_queue_enter(self, skip_first_screenshot=True):
-        """
-        Transition into the queuing window to
-        enqueue meowfficer boxes
-        May fail to enter so limit to 3 tries
-        before giving up
+        """进入猫箱入队训练弹窗。
+
+        尝试点击开始训练按钮以展开入队弹窗，最多尝试 3 次。
 
         Args:
-            skip_first_screenshot (bool):
+            skip_first_screenshot (bool): 是否跳过首次截图。默认为 True。
 
         Returns:
-            bool, whether able to enter into
-            MEOWFFICER_TRAIN_FILL_QUEUE
+            bool: 成功进入入队界面返回 True，槽位已满或超时返回 False。
         """
         timeout_count = 3
         self.handle_info_bar()
@@ -86,7 +83,7 @@ class MeowfficerTrain(MeowfficerCollect, MeowfficerEnhance):
                 else:
                     return False
 
-            # End
+            # 判定结束
             if self.appear(MEOWFFICER_TRAIN_FILL_QUEUE, offset=(20, 20)):
                 return True
             if self.info_bar_count():
@@ -94,17 +91,18 @@ class MeowfficerTrain(MeowfficerCollect, MeowfficerEnhance):
                 return False
 
     def _meow_nqueue(self, skip_first_screenshot=True):
-        """
-        Queue all remaining empty slots does
-        so autonomously enqueuing rare boxes
-        first
+        """自动填满剩余训练槽位（游戏默认降序：金 > 紫 > 蓝）。
+
+        点击一键填充后确认入队。
+
+        Args:
+            skip_first_screenshot (bool): 是否跳过首次截图。默认为 True。
 
         Pages:
             in: MEOWFFICER_TRAIN
             out: MEOWFFICER_TRAIN
         """
-        # Loop through possible screen transitions
-        # as a result of the previous action
+        # 循环等待操作后的界面转换
         confirm_timer = Timer(1.5, count=3).start()
         while 1:
             if skip_first_screenshot:
@@ -124,7 +122,7 @@ class MeowfficerTrain(MeowfficerCollect, MeowfficerEnhance):
                 confirm_timer.reset()
                 continue
 
-            # End
+            # 判定结束
             if self.appear(MEOWFFICER_TRAIN_START, offset=(20, 20)):
                 if confirm_timer.reached():
                     break
@@ -132,26 +130,24 @@ class MeowfficerTrain(MeowfficerCollect, MeowfficerEnhance):
                 confirm_timer.reset()
 
     def _meow_rqueue(self):
-        """
-        Queue all remaining empty slots however does
-        so manually in order to enqueue common
-        boxes first
+        """手动按升序填满剩余训练槽位（蓝 > 紫 > 金）。
+
+        根据读取的猫箱库存手动点击普通/稀有猫箱，优先消耗低品质猫箱。
 
         Pages:
             in: MEOWFFICER_TRAIN
             out: MEOWFFICER_TRAIN
         """
-        # Maintain local box count for
-        # count/click accuracy
+        # 维护本地猫箱计数以确保点击准确
         local_count = deepcopy(self._box_count)
         buttons = MEOWFFICER_BOX_GRID.buttons
         while 1:
-            # Number that can be queued
+            # OCR 识别可入队数量
             current, remain, total = MEOWFFICER_QUEUE.ocr(self.device.image)
             if not remain:
                 break
 
-            # Loop as needed to queue boxes appropriately
+            # 循环点击对应猫箱入队
             for i, j in ((0, 2), (1, 1)):
                 logger.attr(f'训练中猫箱数量 (索引 {i})', local_count)
                 count = local_count[i] - remain
@@ -168,43 +164,35 @@ class MeowfficerTrain(MeowfficerCollect, MeowfficerEnhance):
             self.device.sleep((0.3, 0.5))
             self.device.screenshot()
 
-        # Re-use mechanism to transition through screens
+        # 复用流程完成入队确认并退出
         self._meow_nqueue()
 
     def meow_queue(self, ascending=True):
-        """
-        Enter into training window and then
-        choose appropriate queue method based
-        on current stock
+        """进入训练窗口并根据当前库存选择入队策略。
 
         Args:
-            ascending (bool):
-                True for Blue > Purple > Gold
-                False for Gold > Purple > Blue
+            ascending (bool): 队列品质顺序。True 为升序（蓝 > 紫 > 金），False 为降序（金 > 紫 > 蓝）。默认为 True。
 
         Pages:
             in: MEOWFFICER_TRAIN
             out: MEOWFFICER_TRAIN
         """
         logger.hr('指挥喵队列', level=1)
-        # Either can remain in same window or
-        # enter the queuing window
+        # 尝试进入入队界面
         if not self._meow_queue_enter():
             return
 
-        # Sum of common and elite/sr boxes
-        # Ocr'ed earlier in meow_train else default
+        # 计算普通和稀有猫箱总数
         common_sum = self._box_count[0] + self._box_count[1]
 
-        # Check remains
+        # 检查是否还有剩余猫箱
         if sum(self._box_count) <= 0:
             logger.info('[指挥喵-训练] 没有更多猫箱可训练')
             return
 
-        # Choose appropriate queue func based on
-        # common box sum count
-        # - <= 20, low stock; queue normally
-        # - > 20, high stock; queue common boxes first
+        # 根据普通猫箱总数决定入队方式：
+        # - <= 20，低库存：普通入队（降序）
+        # - > 20，高库存：优先排队普通猫箱（升序）
         if ascending:
             if common_sum > 20:
                 logger.info('[指挥喵-训练] 升序队列 (蓝 > 紫 > 金)')
@@ -218,9 +206,10 @@ class MeowfficerTrain(MeowfficerCollect, MeowfficerEnhance):
             self._meow_nqueue()
 
     def meow_train(self):
-        """
-        Performs both retrieving a trained meowfficer and queuing
-        meowfficer boxes for training
+        """执行指挥喵训练流程，包括收取已训练指挥喵与排队训练新猫箱。
+
+        Returns:
+            bool: 是否收集到了训练完成的指挥喵。
 
         Pages:
             in: page_meowfficer
@@ -228,34 +217,34 @@ class MeowfficerTrain(MeowfficerCollect, MeowfficerEnhance):
         """
         logger.hr('指挥喵训练', level=1)
 
-        # Retrieve capacity to determine whether able to collect
+        # 识别剩余容量以判断是否可收集
         current, remain, total = MEOWFFICER_CAPACITY.ocr(self.device.image)
         logger.attr('剩余容量', remain)
 
-        # Read box count, utilized in other helper funcs
+        # 识别三种猫箱的当前库存
         self._box_count = MEOWFFICER_BOX_COUNT.ocr(self.device.image)
 
         logger.attr('训练模式', self.config.MeowfficerTrain_Mode)
         collected = False
         if self.config.MeowfficerTrain_Mode == 'seamlessly':
-            # Enter
+            # 进入训练界面
             self.meow_enter(MEOWFFICER_TRAIN_ENTER, check_button=MEOWFFICER_TRAIN_START)
-            # Collect
+            # 收集已完成指挥喵
             if remain > 0:
                 collected = self.meow_collect(collect_all=True)
-            # Queue
+            # 猫箱入队
             self.meow_queue(ascending=False)
-            # Exit
+            # 退出训练界面
             self.meow_menu_close()
         else:
-            # Enter
+            # 进入训练界面
             self.meow_enter(MEOWFFICER_TRAIN_ENTER, check_button=MEOWFFICER_TRAIN_START)
-            # Collect
+            # 收集已完成指挥喵
             if remain > 0:
                 collected = self.meow_collect(collect_all=self.meow_is_sunday())
-            # Queue
+            # 猫箱入队
             self.meow_queue(ascending=False)
-            # Exit
+            # 退出训练界面
             self.meow_menu_close()
 
         return collected

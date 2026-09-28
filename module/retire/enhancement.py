@@ -56,25 +56,28 @@ class Enhancement(Dock):
 
     @property
     def _retire_keep_common_cv(self):
-        """
+        """获取需要保留的普通航母类型名称。
+
         Returns:
-            str: "any" or specific ship name, or empty string if GemsFarming is not enabled
+            str: "any" 或指定舰船名；未启用 GemsFarming 任务时返回空字符串。
         """
         if not self.config.is_task_enabled('GemsFarming'):
             return ''
         return self.config.cross_get('GemsFarming.GemsFarming.CommonCV', default='any')
 
     def _enhance_enter(self, favourite=False, ship_type=None):
-        """
+        """进入舰船强化界面并选中第一艘可强化舰船。
+
+        Args:
+            favourite (bool): 是否仅筛选喜爱舰船。默认为 False。
+            ship_type (str, optional): 筛选的舰船类型。默认为 None。
+
+        Returns:
+            bool: 成功进入并选中舰船返回 True；筛选后船坞为空返回 False。
+
         Pages:
             in: page_dock
             out: page_ship_enhance
-
-        Returns:
-            bool: False with filter applied resulting
-                  in empty dock.
-                  Otherwise true with at least 1 card
-                  available to be picked.
         """
         if favourite:
             self.dock_favourite_set(enable=True, wait_loading=False)
@@ -91,7 +94,8 @@ class Enhancement(Dock):
         return self.dock_enter_first()
 
     def _enhance_quit(self):
-        """
+        """退出舰船强化界面，恢复船坞默认筛选并返回船坞主界面。
+
         Pages:
             in: page_ship_enhance
             out: page_dock
@@ -101,10 +105,14 @@ class Enhancement(Dock):
         self.dock_filter_set()
 
     def _enhance_confirm(self, skip_first_screenshot=True):
-        """
+        """确认强化并等待完成提示和弹窗处理。
+
+        Args:
+            skip_first_screenshot (bool): 是否跳过首次截图。默认为 True。
+
         Pages:
             in: EQUIP_CONFIRM
-            out: page_ship_enhance, without info_bar
+            out: page_ship_enhance（无提示条）
         """
 
         confirm_timer = Timer(1.5, count=3).start()
@@ -126,7 +134,7 @@ class Enhancement(Dock):
                 confirm_timer.reset()
                 continue
 
-            # End
+            # 判定结束
             if self.appear(ENHANCE_CONFIRM, offset=(30, 30)):
                 if confirm_timer.reached():
                     break
@@ -134,12 +142,13 @@ class Enhancement(Dock):
                 confirm_timer.reset()
 
     def _enhance_get_deselect_cv(self, first_slot=False):
-        """
+        """在强化材料槽位中寻找需要反选（保留）的普通航母。
+
         Args:
-            first_slot: True to check in first slot only, False to check in all slots
+            first_slot (bool): True 仅检查第一个槽位，False 检查全部槽位。默认为 False。
 
         Returns:
-            Button | None: Button of common rarity CV to de-select, or None if not found
+            Button | None: 找到匹配的普通航母按钮；未找到返回 None。
         """
         cv = self._retire_keep_common_cv
         if not cv:
@@ -169,7 +178,7 @@ class Enhancement(Dock):
             dict_template = {cv: dict_template[cv]}
 
         if first_slot:
-            # outer pad 22 px reaches slot edge
+            # 向外扩 22 像素覆盖到槽位边缘
             area = area_pad(EMPTY_ENHANCE_SLOT_PLUS.area, pad=-22)
         else:
             area = ENHANCE_AREA_FULL.area
@@ -185,8 +194,7 @@ class Enhancement(Dock):
         return None
 
     def _enhance_deselect_cv(self):
-        """
-        De-select common rarity CV from enhance material slots
+        """在强化材料槽位中反选普通航母，避免误消耗。
 
         Pages:
             in: page_ship_enhance
@@ -196,8 +204,8 @@ class Enhancement(Dock):
         if cv is None:
             return
 
-        logger.info(f'Enhance de-select common CV')
-        # get cv slot, outer pad from matched center
+        logger.info('强化反选普通航母')
+        # 获取航母槽位，根据匹配中心向外扩展区域
         area = cv.area
         center = ((area[0] + area[2]) / 2, (area[1] + area[3]) / 2)
         radius = abs(EMPTY_ENHANCE_SLOT_PLUS.area[3] - EMPTY_ENHANCE_SLOT_PLUS.area[1]) / 2
@@ -213,10 +221,15 @@ class Enhancement(Dock):
             result = cv2.matchTemplate(EMPTY_ENHANCE_SLOT_PLUS.image, image, cv2.TM_CCOEFF_NORMED)
             _, similarity, _, _ = cv2.minMaxLoc(result)
             if similarity > 0.85:
-                logger.info(f'Enhance de-select common CV done')
+                logger.info('强化反选普通航母完成')
                 break
 
-            if self.appear(ENHANCE_RECOMMEND, offset=(5, 5), interval=2):
+            # 误入船坞界面处理
+            if self.appear(DOCK_CHECK, offset=(20, 20), interval=3):
+                logger.info(f'{DOCK_CHECK} -> {BACK_ARROW}')
+                self.device.click(BACK_ARROW)
+                continue
+            if self.appear(ENHANCE_RECOMMEND, offset=(5, 5), interval=5):
                 self.device.click(cv)
                 continue
 
@@ -237,30 +250,25 @@ class Enhancement(Dock):
                     continue
 
     def _enhance_choose(self, ship_count, skip_first_screenshot=True):
-        """
-        Refactor the implementation.
-        Divided the enhancement process into
-        several state functions. Use a DFA method
-        to call those functions according to
-        current state. Each state corresponds to
-        a function with the same name.
+        """使用有限状态机（DFA）执行单艘舰船的强化材料选择与强化。
+
+        根据状态在等待推荐、反选、确认强化、滑动到下一艘之间转移。
+
+        Args:
+            ship_count (int): 当前类别下剩余可检查的舰船数量（正整数）。
+            skip_first_screenshot (bool): 是否跳过首次截图。默认为 True。
+
+        Returns:
+            tuple[bool, int]: (是否强化成功, 剩余检查舰船数量)。
 
         Pages:
             in: page_ship_enhance
             out: page_ship_enhance
-
-        Args:
-            ship_count (int): ship_count, must be
-            non-zero positive integer
-
-        Returns:
-            True if able to enhance otherwise False
-            Always paired with current ship_count
         """
         need_to_skip: bool = False
 
         def state_enhance_check():
-            # Check the base case, switch to ready if enhancement can continue
+            # 基础条件检查：若达到上限则退出，否则切换到就绪状态
             nonlocal need_to_skip
             need_to_skip = False
             if ship_count <= 0:
@@ -275,7 +283,7 @@ class Enhancement(Dock):
             return "state_enhance_ready"
 
         def state_enhance_ready():
-            # Wait until ENHANCE_RECOMMEND appears
+            # 等待一键推荐按钮出现并点击
             if self.appear_then_click(ENHANCE_RECOMMEND, offset=(5, 5), interval=0.3):
                 logger.info('按推荐设置强化材料')
                 return "state_enhance_recommend"
@@ -283,7 +291,7 @@ class Enhancement(Dock):
             return "state_enhance_ready"
 
         def state_enhance_recommend():
-            # Judge if enhance material appeared
+            # 判断是否填充了强化材料
             if not EMPTY_ENHANCE_SLOT_PLUS.match(self.device.image, offset=(20, 20)):
                 if self._retire_keep_common_cv:
                     # 若第一格为普通 CV 且第二格为空，视为无材料，
@@ -306,7 +314,7 @@ class Enhancement(Dock):
             return "state_enhance_ready"
 
         def state_enhance_attempt():
-            # Wait until ENHANCE_CONFIRM appears
+            # 等待强化确认按钮出现并点击
             if (self.appear_then_click(ENHANCE_CONFIRM, offset=(5, 5), interval=0.3)
                     or self.appear(EQUIP_CONFIRM, offset=(30, 30))
                     or self.info_bar_count()
@@ -316,7 +324,7 @@ class Enhancement(Dock):
             return "state_enhance_attempt"
 
         def state_enhance_confirm():
-            # Succeeded if EQUIP_CONFIRM appeared, otherwise failed
+            # 若出现装备确认弹窗说明强化成功，否则失败
             if self.appear(EQUIP_CONFIRM, offset=(30, 30)):
                 logger.info('强化成功')
                 self._enhance_confirm()
@@ -334,18 +342,18 @@ class Enhancement(Dock):
             return "state_enhance_attempt"
 
         def state_enhance_fail():
-            # Avoid a misjudgement caused by broken network
+            # 避免因网络延迟导致误判
             if self.appear(EQUIP_CONFIRM, offset=(30, 30)):
                 return "state_enhance_confirm"
 
-            # Try to swipe to next
+            # 尝试滑动到下一艘舰船
             if self.equip_view_next(check_button=ENHANCE_RECOMMEND):
                 if not need_to_skip:
                     nonlocal ship_count
                     ship_count -= 1
                 return "state_enhance_check"
             else:
-                # Avoid a misjudgement caused by broken network
+                # 避免因网络延迟导致误判
                 if self.appear(EQUIP_CONFIRM, offset=(30, 30)):
                     return "state_enhance_confirm"
                 else:
@@ -368,11 +376,11 @@ class Enhancement(Dock):
             logger.info(f'调用状态函数: {state}')
 
             if state == "state_enhance_check":
-                # Avoid too_many_click exception caused by multiple tries without material
+                # 避免因多次无材料尝试触发 too_many_click 异常
                 if state_list[-2:] == ["state_enhance_recommend", "state_enhance_fail"]:
                     while self.device.click_record and (self.device.click_record[-1] in ['ENHANCE_RECOMMEND', 'EQUIP_SWIPE', 'SHIP_SWIPE']):
                         self.device.click_record.pop()
-                # Avoid too_many_click exception caused by enhancement failure on in-battle ships
+                # 避免因出击中舰船强化失败触发 too_many_click 异常
                 elif state_list[-3:] == ["state_enhance_attempt", "state_enhance_confirm", "state_enhance_fail"]:
                     while self.device.click_record and (self.device.click_record[-1] in ['ENHANCE_RECOMMEND', 'EQUIP_SWIPE', 'SHIP_SWIPE', 'ENHANCE_CONFIRM']):
                         self.device.click_record.pop()
@@ -394,22 +402,17 @@ class Enhancement(Dock):
         return state, ship_count
 
     def enhance_ships(self, favourite=None):
-        """
-        Enhance target ships by specified order
-        of types listed in ENHANCE_ORDER_STRING
+        """按配置的舰种顺序批量强化目标舰船。
 
-        Invalid types are treated as requesting
-        from ALAS to choose a valid one at random
+        Args:
+            favourite (bool, optional): 是否仅强化喜爱舰船。默认为 None（使用配置值）。
+
+        Returns:
+            int: 消耗材料完成强化的总估算数。
 
         Pages:
             in: page_dock
             out: page_dock
-
-        Args:
-            favourite (bool):
-
-        Returns:
-            int: total enhanced
         """
         if favourite is None:
             favourite = self.config.Enhance_ShipToEnhance == 'favourite'
@@ -417,7 +420,7 @@ class Enhancement(Dock):
         logger.hr('按类型强化')
         total = 0
 
-        # Process ENHANCE_ORDER_STRING if any into ship_types
+        # 将强化顺序字符串解析为舰种列表
         if self.config.Enhance_Filter is not None:
             ship_types = [s.strip().lower()
                           for s in self.config.Enhance_Filter.split('>')]
@@ -428,17 +431,13 @@ class Enhancement(Dock):
             ship_types = [None]
         logger.attr('强化顺序', ship_types)
 
-        # Process available ship types for choice randomization
-        # Removing types that have already been specified by
-        # ENHANCE_ORDER_STRING
+        # 排除已指定的舰种，用于未识别类型的随机补位
         available_ship_types = VALID_SHIP_TYPES.copy()
         [available_ship_types.remove(s)
          for s in ship_types if s in available_ship_types]
 
         for ship_type in ship_types:
-            # None check, do not execute if is None
-            # Otherwise, select a type at random since
-            # user has specified an unrecognized type
+            # 检查非空：若未指定则跳过，若指定了未识别类型则随机抽取一个有效舰种
             if ship_type is not None and ship_type not in VALID_SHIP_TYPES:
                 if len(available_ship_types) == 0:
                     logger.info(
@@ -449,8 +448,7 @@ class Enhancement(Dock):
 
             logger.info(f'收藏={favourite}, 舰船类型={ship_type}')
 
-            # Continue if at least 1 CARD_GRID is selectable
-            # otherwise skip to next ship type
+            # 至少有一张卡片可选时继续，否则跳到下一个舰种
             if not self._enhance_enter(favourite=favourite, ship_type=ship_type):
                 logger.hr(f'[退役-强化] 船坞为空，舰船类型: {ship_type}')
                 continue
@@ -474,17 +472,14 @@ class Enhancement(Dock):
         return total
 
     def _enhance_handler(self):
-        """
-        Pages:
-            in: RETIRE_APPEAR
-            out:
+        """处理船坞已满时触发的强化流程，返回强化轮次和剩余船坞容量。
 
         Returns:
-            tuple(int, int): (enhance turn count, remaining dock amount)
+            tuple[int, int]: (强化消耗材料总数, 船坞剩余空位)。
 
         Pages:
-            in: DOCK_CHECK
-            out: the page before retirement popup
+            in: RETIRE_APPEAR / DOCK_CHECK
+            out: 退役弹窗出现前的页面
         """
         total = self.enhance_ships()
         _, remain, _ = OCR_DOCK_AMOUNT.ocr(self.device.image)

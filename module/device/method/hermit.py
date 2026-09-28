@@ -62,6 +62,12 @@ class Hermit(Adb):
         return f'http://127.0.0.1:{self._hermit_port}'
 
     def hermit_init(self):
+        """
+        初始化 Hermit 服务。
+
+        尝试启动已安装的 Hermit 应用，若未安装则自动推送 APK 安装，
+        随后请求启用系统无障碍辅助服务并返回后台。
+        """
         logger.hr('[设备-Hermit] Hermit初始化')
 
         self.app_stop_adb(self._hermit_package_name)
@@ -94,6 +100,7 @@ class Hermit(Adb):
         self.app_start_adb()
 
     def uninstall_hermit(self):
+        """卸载设备上的 Hermit 应用程序。"""
         self.adb_command(['uninstall', self._hermit_package_name])
 
     def hermit_enable_accessibility(self):
@@ -195,4 +202,11 @@ class Hermit(Adb):
 
     @retry
     def click_hermit(self, x, y):
+        """
+        通过 Hermit 模拟点击指定坐标。
+
+        Args:
+            x: 点击目标横坐标。
+            y: 点击目标纵坐标。
+        """
         self.hermit_send('/click', x=x, y=y)

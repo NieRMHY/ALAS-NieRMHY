@@ -64,4 +64,12 @@ def handle_sensitive_text(text):
 
 
 def handle_sensitive_logs(logs):
+    """批量对日志列表中的敏感信息进行脱敏处理。
+
+    Args:
+        logs (list[str]): 原始日志文本行列表。
+
+    Returns:
+        list[str]: 脱敏后的日志文本行列表。
+    """
     return [handle_sensitive_text(line) for line in logs]

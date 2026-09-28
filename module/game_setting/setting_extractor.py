@@ -40,7 +40,14 @@ def _strip_code(string):
 
 
 def strip_code(string):
-    """拼接 _strip_code 生成器的输出为完整字符串。"""
+    """拼接 _strip_code 生成器的输出为完整字符串。
+
+    Args:
+        string (str): 包含括号的代码字符串。
+
+    Returns:
+        str: 剥离后的代码字符串。
+    """
     return ''.join(list(_strip_code(string)))
 
 

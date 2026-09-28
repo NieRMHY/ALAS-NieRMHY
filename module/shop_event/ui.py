@@ -31,7 +31,17 @@ from module.ui.ui import UI
 
 
 class EventShopScroll(Scroll):
+    """活动商店滚动条识别。"""
+
     def match_color(self, main):
+        """匹配并提取滚动条滑块的颜色掩码与长度。
+
+        Args:
+            main: 包含当前截图的 UI 实例。
+
+        Returns:
+            np.ndarray: 表示滑块所在纵向范围的布尔掩码。
+        """
         background_transparency = 0.2
         button_transparency = 0.5
         delta_x = 3
@@ -75,8 +85,15 @@ OCR_EVENT_SHOP_URPT = Digit(SHOP_OCR_BALANCE_SECOND, letter=(100, 100, 100), nam
 
 
 class EventShopUI(UI):
+    """活动商店 UI 导航与状态检测基类。"""
+
     @cached_property
     def event_shop_tab_count_and_navbar(self):
+        """动态计算活动商店标签数量并构建导航栏。
+
+        Returns:
+            tuple[int, Navbar]: (标签数量, 导航栏对象)。
+        """
         gap_x = 33
         area = (206, 92, 1092, 134)
         image = crop(self.device.image, area)
@@ -96,6 +113,11 @@ class EventShopUI(UI):
 
     @cached_property
     def event_shop_has_urpt(self):
+        """检测当前活动商店是否包含 UR 点数。
+
+        Returns:
+            bool: 包含 UR 点数返回 True，否则返回 False。
+        """
         if self.image_color_count(SHOP_OCR_BALANCE_SECOND, OCR_EVENT_SHOP_URPT.letter, threshold=95, count=30):
             logger.info("[活动商店-UI] 活动商店包含UR点数")
             return True
@@ -119,6 +141,11 @@ class EventShopUI(UI):
 
     @cached_property
     def is_event_ended(self):
+        """检查活动关卡是否已结束（距离商店兑换截止时间小于 7 天）。
+
+        Returns:
+            bool: 活动已结束返回 True，否则返回 False。
+        """
         if self.config.EVENT_SHOP_IGNORE_DEADLINE:
             return True
 
@@ -134,6 +161,14 @@ class EventShopUI(UI):
         return (deadline - server_now).days < 7
 
     def event_shop_load_ensure(self):
+        """等待活动商店页面及货币余额完全加载。
+
+        Returns:
+            bool: 加载成功返回 True。
+
+        Raises:
+            GameStuckError: 等待超时未检测到货币余额。
+        """
         ensure_timeout = Timer(3, count=6).start()
         for _ in self.loop():
             if self.image_color_count(SHOP_OCR_BALANCE, OCR_EVENT_SHOP_PT.letter, threshold=95, count=30):
@@ -145,22 +180,41 @@ class EventShopUI(UI):
 
     @cached_property
     def is_pt_reversed(self):
+        """检测特殊活动中 PT 与 URpt 显示位置是否颠倒。
+
+        Returns:
+            bool: 颠倒返回 True，否则返回 False。
+        """
         return self.ui_process_check_button(check_button=[SHOP_EVENT_20240521])
 
     def event_shop_get_pt(self):
+        """识别并获取当前活动 PT 点数余额。
+
+        Returns:
+            int: PT 点数数量。
+        """
         if self.is_pt_reversed:
             return OCR_EVENT_SHOP_URPT.ocr(self.device.image)
         return OCR_EVENT_SHOP_PT.ocr(self.device.image)
 
     def event_shop_get_urpt(self):
+        """识别并获取当前活动 URpt 点数余额。
+
+        Returns:
+            int: URpt 点数数量。
+        """
         if self.is_pt_reversed:
             return OCR_EVENT_SHOP_PT.ocr(self.device.image)
         return OCR_EVENT_SHOP_URPT.ocr(self.device.image)
 
     def get_oil(self, skip_first_screenshot=True):
-        """
+        """获取当前石油余额。
+
+        Args:
+            skip_first_screenshot (bool): 是否跳过首次截图。默认为 True。
+
         Returns:
-            int: Oil amount
+            int: 当前石油数量。
         """
         amount = 0
         timeout = Timer(1, count=2).start()
@@ -185,10 +239,15 @@ class EventShopUI(UI):
         return amount
 
     def handle_get_meowfficer(self):
+        """处理购买商品后触发的指挥喵获得弹窗。
+
+        Returns:
+            bool: 是否检测并关闭了弹窗。
+        """
         if self.appear(MEOWFFICER_GET_CHECK, offset=(40, 40), interval=3):
             logger.info(f'获取指挥喵奖励。')
             SWITCH_LOCK.set('lock', main=self)
-            # Wait until info bar disappears
+            # 等待信息提示栏消失
             self.ensure_no_info_bar(timeout=1)
             self.device.click(MEOWFFICER_TRAIN_CLICK_SAFE_AREA)
             return True

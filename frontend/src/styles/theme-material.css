@@ -1,0 +1,24 @@
+/* 材质轴：玻璃与普通共用一份皮肤，只在面板底色与磨砂滤镜上分叉。
+   玻璃取值由家族调色板给出（新版是 Apple 玻璃，旧版是旧版色板上的磨砂）；
+   这里声明「普通」分支，把四个 token 压回不透明、无滤镜。 */
+:root[data-material='plain'] {
+  --theme-glass: var(--surface);
+  --theme-glass-edge: var(--border);
+  --theme-glass-shadow: none;
+  --theme-material-filter: none;
+  /* 材质皮肤里还有直接读原始玻璃变量的规则，一并压平，否则部分卡片仍是半透明。 */
+  --glass-tint: var(--surface);
+  --glass-edge: var(--border);
+  --glass-shadow: none;
+  /* 普通材质没有材质层：七个区域一并压成不透明、无滤镜。 */
+  --theme-surface-alpha: 100%; --theme-plate-alpha: 100%; --theme-sidebar-alpha: 100%; --theme-topbar-alpha: 100%; --theme-modal-alpha: 100%; --theme-menu-alpha: 100%; --theme-control-alpha: 100%;
+  --theme-surface-bg: var(--surface); --theme-sidebar-bg: var(--surface); --theme-topbar-bg: var(--surface); --theme-modal-bg: var(--surface); --theme-menu-bg: var(--surface);
+  --theme-plate-bg: var(--surface-muted); --theme-control-bg: var(--surface-muted);
+  --theme-surface-filter: none; --theme-plate-filter: none; --theme-sidebar-filter: none; --theme-topbar-filter: none; --theme-modal-filter: none; --theme-menu-filter: none; --theme-control-filter: none;
+}
+
+/* 普通材质没有磨砂层：与紧凑皮肤同一种做法，整棵子树关掉背景滤镜。 */
+:root[data-material='plain'] *, :root[data-material='plain'] *::before, :root[data-material='plain'] *::after {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}

@@ -18,11 +18,23 @@ def retry_backend(
     func=None, *, recover, label, on_exhausted=RequestHumanTakeover,
     before_attempt=None, passthrough=(),
 ):
-    """保留后端原有时序：等待、执行恢复动作、再次调用原方法。
+    """
+    保留后端原有时序的重试装饰器：等待、执行恢复动作、再次调用原方法。
 
     recover 返回下一轮执行的恢复函数；返回 None 表示错误不能自动处理。
     显式接管、已分类的离线异常和 passthrough 异常原样抛出，包括恢复动作
     自身抛出的异常。方法名称仅用于日志，不参与恢复策略选择。
+
+    Args:
+        func: 被包装的目标函数。
+        recover: 异常恢复策略回调函数，返回恢复动作 callable 或 None。
+        label: 用于日志记录的模块标签名称。
+        on_exhausted: 重试次数耗尽后抛出的异常类型，默认为 RequestHumanTakeover。
+        before_attempt: 每次尝试前调用的回调函数 (trial, args, kwargs)。
+        passthrough: 允许直接透传不捕获的异常类型元组。
+
+    Returns:
+        包装后的函数或偏函数。
     """
     if func is None:
         return partial(
@@ -65,18 +77,48 @@ def retry_without_recovery():
 
 
 def recover_unknown(error):
+    """
+    处理未归类的未知异常，记录日志并退避重试。
+
+    Args:
+        error: 捕获到的异常实例。
+
+    Returns:
+        Callable: 无额外动作的退避恢复函数。
+    """
     logger.exception(error)
     return retry_without_recovery
 
 
 def recover_truncated_image(device, error):
-    # 截断计数及阈值恢复仍在异常发生时执行，不延后到下一次尝试。
+    """
+    处理截图截断或损坏异常。
+
+    截断计数及阈值恢复在异常发生时立即执行，不延后到下一次尝试。
+
+    Args:
+        device: 设备实例。
+        error: 图像截断异常实例。
+
+    Returns:
+        Callable: 无额外动作的退避恢复函数。
+    """
     handle_image_truncated(device, error)
     return retry_without_recovery
 
 
 def recover_adb(device, error, *, reconnect=None):
-    """选择 ADB 恢复动作，允许触控后端在重连后清理端口和 builder。"""
+    """
+    选择 ADB 恢复动作，允许触控后端在重连后清理端口和 builder。
+
+    Args:
+        device: 设备实例。
+        error: ADB 相关的异常实例。
+        reconnect: 可选的自定义重连函数，默认为 device.adb_reconnect。
+
+    Returns:
+        Callable: 恢复函数，若无法自动恢复则返回 None。
+    """
     reconnect = device.adb_reconnect if reconnect is None else reconnect
     if isinstance(error, (ConnectionResetError, ConnectionAbortedError)):
         logger.error(error)

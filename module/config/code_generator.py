@@ -44,6 +44,11 @@ class TabWrapper:
         return self.prefix
 
     def set_nested(self, suffix=''):
+        """标记当前上下文为嵌套结构，并追加后缀。
+
+        Args:
+            suffix: 追加的后缀字符。
+        """
         self.nested = True
         self.suffix += suffix
 

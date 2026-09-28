@@ -19,22 +19,26 @@ warnings.filterwarnings("ignore")
 
 
 class Perspective:
-    """透视检测。
+    """透视检测器。
 
-    Examples:
-        persp = Perspective(AzurLaneConfig('template'))
-        persp.load(image)
+    通过检测地图网格线的消失点与边缘，计算地图视角的透视变换参数，
+    用于校正地图视角并识别网格边界。
 
-    Logs:
-                  vanish_point: (  646, -1736)
-                 distant_point: (-2321, -1736)
-        0.155s  _   Horizontal: 5 (7 inner, 3 edge)
-        Edges: /_     Vertical: 9 (10 inner, 3 edge)
+    Attributes:
+        image (np.ndarray): 输入的地图图像。
+        config (AzurLaneConfig): 配置对象。
+        left_edge (Lines): 左边缘线段对象。
+        right_edge (Lines): 右边缘线段对象。
+        lower_edge (Lines): 下边缘线段对象。
+        upper_edge (Lines): 上边缘线段对象。
+        horizontal (Lines): 检测到的水平线段集合。
+        vertical (Lines): 检测到的垂直线段集合。
+        crossings (Points): 水平线与垂直线的交点集合。
+        vanish_point (tuple): 消失点（灭点）坐标。
+        distant_point (tuple): 远点坐标。
+        map_inner (np.ndarray): 内部区域坐标。
     """
 
-    """
-    输出
-    """
     image: np.ndarray
     config: AzurLaneConfig
     # 四条边缘线，bool 类型或具有 __bool__ 属性
@@ -43,9 +47,6 @@ class Perspective:
     lower_edge: Lines
     upper_edge: Lines
 
-    """
-    私有属性
-    """
     horizontal: Lines
     vertical: Lines
     crossings: Points
@@ -54,16 +55,21 @@ class Perspective:
     map_inner: np.ndarray
 
     def __init__(self, config):
-        """
+        """初始化透视检测器。
+
         Args:
             config (AzurLaneConfig): 配置对象。
         """
         self.config = config
 
     def load(self, image):
-        """
+        """加载地图截图并执行透视线段检测与参数优化。
+
         Args:
             image (np.ndarray): 截图图像，形状为 (720, 1280, 3)。
+
+        Raises:
+            MapDetectionError: 未检测到水平线、垂直线或灭点计算异常时抛出。
         """
         start_time = time.time()
         self.image = image
@@ -246,6 +252,13 @@ class Perspective:
         image.show()
 
     def draw(self, lines=None, bg=None, expend=0):
+        """在图像上绘制透视线段并展示。
+
+        Args:
+            lines (Lines, optional): 待绘制的线段集合。默认为 None。
+            bg (np.ndarray, optional): 背景图像。默认为 None（使用 self.image）。
+            expend (int, optional): 边缘扩展像素数。默认为 0。
+        """
         if bg is None:
             image = self.image.copy()
         else:

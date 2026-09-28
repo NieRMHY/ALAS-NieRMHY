@@ -13,20 +13,30 @@ from module.azur_stats.image.get_items import GetItems
 from module.azur_stats.image.opsi_reward import OpsiReward
 from module.azur_stats.image.opsi_zone import OpsiZone, DataOpsiZone
 from module.azur_stats.scene.base import SceneBase
+from module.logger import logger
 
 
 @dataclass
 class DataOpsiItems:
+    """大型作战掉落物品详细数据结构。
+
+    Attributes:
+        imgid (str): 图像唯一标识 ID。
+        server (str): 所属服务器标识。
+        zone (str): 标准化英文海域名称。
+        zone_type (str): 海域类型（如 SAFE, ABYSSAL 等）。
+        zone_id (int): 海域数字编号。
+        hazard_level (int): 海域危险等级（1 至 6）。
+        item (str): 掉落物品名称标识。
+        amount (int): 掉落物品数量。
+        tag (str): 物品分类标签（如 'meow', 'log', 'scan' 等）。
+    """
     imgid: str
     server: str
 
-    # Standardized zone name in English
     zone: str
-    # UNKNOWN, DANGEROUS, SAFE, OBSCURE, ABYSSAL, STRONGHOLD, ARCHIVE
     zone_type: str
-    # Zone ID in game
     zone_id: int
-    # 1 to 6
     hazard_level: int
 
     item: str
@@ -35,10 +45,16 @@ class DataOpsiItems:
 
 
 class SceneOperationSiren(SceneBase, OpsiReward, GetItems, OpsiZone):
+    """大型作战（大世界）场景分析器。
+
+    整合大世界海域检测与各类奖励物品识别，完成整套结算流程的数据提取与归纳。
+    """
+
     AUTO_SEARCH_ITEM_TEMPLATE_FOLDER = './assets/stats/opsi_reward_items'
     ITEM_TEMPLATE_FOLDER = './assets/stats/opsi_items'
 
     def extract_assets(self):
+        """提取大型作战掉落截图中的未知物品模板。"""
         zone = None
         for _, image in enumerate(self.images):
             if self.is_opsi_zone(image):
@@ -54,15 +70,29 @@ class SceneOperationSiren(SceneBase, OpsiReward, GetItems, OpsiZone):
                 self.extract_item_template(image)
 
     def parse_scene(self):
+        """解析大型作战截图序列，提取海域及所有产出的掉落道具列表。
+
+        Yields:
+            DataOpsiItems: 解析出的单项物品条目。
+        """
         zone = None
         cleared = -1
         for index, image in enumerate(self.images):
             if self.is_opsi_zone(image):
-                zone = self.parse_opsi_zone(image)
+                try:
+                    zone = self.parse_opsi_zone(image)
+                except Exception as e:
+                    # 海域名读不出或不在 ZoneManager 里（新海域、活动图）时不再
+                    # 整条丢弃：按未知区域记下奖励，侵蚀等级留空。按任务维度的
+                    # 掉落统计照常工作，按侵蚀等级的短猫收益会自动跳过这些行。
+                    logger.warning(f'[统计-大世界] 海域识别失败，按未知区域解析: {e}')
                 cleared = index
                 break
         if zone is None:
-            return
+            # 整包都没有海域页（例如只在战斗结算里抓到的掉落）也照样解析奖励帧。
+            logger.info('[统计-大世界] 掉落记录里没有海域页，按未知区域解析')
+            zone = DataOpsiZone(zone='', zone_type='UNKNOWN', zone_id=0, hazard_level=0)
+            cleared = -1
 
         for index, image in enumerate(self.images):
             if index == cleared:
@@ -88,6 +118,16 @@ class SceneOperationSiren(SceneBase, OpsiReward, GetItems, OpsiZone):
 
     def _operation_siren_product(self, zone: DataOpsiZone, items: t.Iterable[AutoSearchItem], tag: str = None) \
             -> t.Iterable[DataOpsiItems]:
+        """将海域信息与掉落物品合并封装为 DataOpsiItems 数据对象。
+
+        Args:
+            zone (DataOpsiZone): 当前海域信息对象。
+            items (Iterable[AutoSearchItem]): 掉落物品集合。
+            tag (str, optional): 覆盖物品标签，若未提供则使用物品自身标签。
+
+        Yields:
+            DataOpsiItems: 封装后的物品数据条目。
+        """
         for item in items:
             yield DataOpsiItems(
                 imgid=self.imgid,

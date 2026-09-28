@@ -69,6 +69,14 @@ class ShopItem_250814(Item):
     """
 
     def predict_valid(self):
+        """判断商品是否有效（未售罄）。
+
+        通过统计商品图标区域高亮度像素的占比来区分是否售罄。
+        未售出商品的亮度均值通常 > 0.36，已售罄商品则变暗 < 0.2。
+
+        Returns:
+            bool: 商品未售罄返回 True，已售罄返回 False。
+        """
         mean = np.mean(np.max(self.image, axis=2) > 139)
         return mean > 0.3
 
@@ -432,7 +440,7 @@ class ShopBase(UI):
 
     def shop_purchase_result_handle(self):
         """关闭已获得物品界面，并报告本次购买已得到明确确认。"""
-        if self.appear(GET_SHIP, interval=1):
+        if self.appear(GET_SHIP, offset=(20, 20), interval=1):
             logger.info(f'商店遮挡: {GET_SHIP} -> {SHOP_CLICK_SAFE_AREA}')
             self.device.click(SHOP_CLICK_SAFE_AREA)
             return True

@@ -1,3 +1,7 @@
+/**
+ * @fileoverview 经典毛玻璃与装饰层独立渲染组件。
+ */
+
 import { useSyncExternalStore } from 'react'
 import LiquidGlass from 'liquid-glass-react'
 

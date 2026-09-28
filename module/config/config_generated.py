@@ -93,8 +93,8 @@ class GeneratedConfig:
     Emulator_Serial = 'auto'
     Emulator_PackageName = 'auto'  # auto, com.bilibili.azurlane, com.YoStarEN.AzurLane, com.YoStarJP.AzurLane, com.hkmanjuu.azurlane.gp, com.bilibili.blhx.huawei, com.bilibili.blhx.honor, com.bilibili.blhx.mi, com.tencent.tmgp.bilibili.blhx, com.bilibili.blhx.baidu, com.bilibili.blhx.qihoo, com.bilibili.blhx.nearme.gamecenter, com.bilibili.blhx.vivo, com.bilibili.blhx.mz, com.bilibili.blhx.dl, com.bilibili.blhx.lenovo, com.bilibili.blhx.uc, com.bilibili.blhx.mzw, com.yiwu.blhx.yx15, com.bilibili.blhx.m4399, com.bilibili.blhx.bilibiliMove, com.hkmanjuu.azurlane.gp.mc
     Emulator_ServerName = 'disabled'  # disabled, cn_android-0, cn_android-1, cn_android-2, cn_android-3, cn_android-4, cn_android-5, cn_android-6, cn_android-7, cn_android-8, cn_android-9, cn_android-10, cn_android-11, cn_android-12, cn_android-13, cn_android-14, cn_android-15, cn_android-16, cn_android-17, cn_android-18, cn_android-19, cn_android-20, cn_android-21, cn_android-22, cn_android-23, cn_android-24, cn_android-25, cn_android-26, cn_android-27, cn_android-28, cn_android-29, cn_ios-0, cn_ios-1, cn_ios-2, cn_ios-3, cn_ios-4, cn_ios-5, cn_ios-6, cn_ios-7, cn_ios-8, cn_ios-9, cn_ios-10, cn_channel-0, cn_channel-1, cn_channel-2, cn_channel-3, cn_channel-4, cn_channel-5, en-0, en-1, en-2, en-3, en-4, en-5, en-6, jp-0, jp-1, jp-2, jp-3, jp-4, jp-5, jp-6, jp-7, jp-8, jp-9, jp-10, jp-11, jp-12, jp-13, jp-14, jp-15, jp-16, jp-17, tw-0, tw-1, tw-2, tw-3, tw-4
-    Emulator_ScreenshotMethod = 'auto'  # auto, ADB, ADB_nc, uiautomator2, aScreenCap, aScreenCap_nc, DroidCast, DroidCast_raw, nemu_ipc, ldopengl
-    Emulator_ControlMethod = 'MaaTouch'  # ADB, uiautomator2, minitouch, Hermit, MaaTouch, nemu_ipc
+    Emulator_ScreenshotMethod = 'auto'  # auto, ADB, ADB_nc, uiautomator2, aScreenCap, aScreenCap_nc, DroidCast, DroidCast_raw, nemu_ipc, ldopengl, azurpilot_android
+    Emulator_ControlMethod = 'MaaTouch'  # ADB, uiautomator2, minitouch, Hermit, MaaTouch, nemu_ipc, azurpilot_android
     Emulator_GameSettings = False  # True, False
     Emulator_ScreenshotDedithering = False
     Emulator_AdbRestart = False
@@ -119,6 +119,7 @@ class GeneratedConfig:
     Error_SaveErrorBackUpMethod = 'zip'  # delete, zip, copy
     Error_SaveErrorZipMethod = 'zip'  # bz2, gzip, xz, zip
     Error_OnePushConfig = 'provider: null'
+    Error_LowPushMode = False  # True, False
     Error_ScreenshotLength = 1
     Error_GameStuckRestart = False
     Error_GameStuckThreshold = 3
@@ -185,7 +186,14 @@ class GeneratedConfig:
     DropRecord_CommissionRecord = 'do_not'  # do_not, save, upload, save_and_upload
     DropRecord_CommissionIncomeScreenshot = 'save'  # do_not, save
     DropRecord_CombatRecord = 'do_not'  # do_not, save
-    DropRecord_OpsiRecord = 'upload'  # do_not, save, upload, save_and_upload
+    DropRecord_OpsiHazard1Leveling = 'upload'  # do_not, save, upload, save_and_upload
+    DropRecord_OpsiMeowfficerFarming = 'upload'  # do_not, save, upload, save_and_upload
+    DropRecord_OpsiDaily = 'upload'  # do_not, save, upload, save_and_upload
+    DropRecord_OpsiObscure = 'upload'  # do_not, save, upload, save_and_upload
+    DropRecord_OpsiAbyssal = 'upload'  # do_not, save, upload, save_and_upload
+    DropRecord_OpsiStronghold = 'upload'  # do_not, save, upload, save_and_upload
+    DropRecord_OpsiExplore = 'upload'  # do_not, save, upload, save_and_upload
+    DropRecord_OpsiOther = 'upload'  # do_not, save, upload, save_and_upload
     DropRecord_MeowfficerBuy = 'do_not'  # do_not, save
     DropRecord_MeowfficerTalent = 'do_not'  # do_not, save, upload, save_and_upload
     DropRecord_TelemetryReport = True

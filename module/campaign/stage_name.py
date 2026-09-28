@@ -84,7 +84,15 @@ def normalize_event_stage(name, folder):
 
 
 def normalize_post_loop_stage(name, folder):
-    """保留在循环选择之后才生效的活动别名，不重复执行其他名称转换。"""
+    """保留在循环选择之后才生效的活动别名，不重复执行其他名称转换。
+
+    Args:
+        name (str): 关卡名称。
+        folder (str): 活动目录。
+
+    Returns:
+        str: 转换后的关卡名称。
+    """
     if folder == 'event_20260417_cn' and name == 'vsp':
         return 'sp'
     return name

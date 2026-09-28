@@ -73,13 +73,18 @@ class ManualConfig:
 
     @staticmethod
     def _normalize_scheduler_priority(value: str | None) -> str:
-        """
-        Normalize user-defined scheduler priority text.
+        """规范化用户定义的调度优先级文本。
 
-        - Remove inline `# ...` comments from each line.
-        - Drop empty lines.
-        - Keep only raw task expressions joined by newlines.
-        - Strip trailing `>` to prevent accidental token concatenation.
+        - 去除每行的行内 `# ...` 注释。
+        - 过滤空行。
+        - 保留以换行符连接的原始任务表达式。
+        - 去除末尾的 `>` 防止意外拼接任务标识符。
+
+        Args:
+            value: 原始调度优先级字符串。
+
+        Returns:
+            规范化后的调度优先级字符串。
         """
         if not value:
             return ""
@@ -98,11 +103,16 @@ class ManualConfig:
 
     @property
     def SCHEDULER_PRIORITY(self) -> str:
+        """获取并计算合并后的任务调度优先级字符串。
+
+        Returns:
+            按优先级排序的任务序列字符串。
+        """
         if TYPE_CHECKING:
             from module.config.config import AzurLaneConfig
             self = t.cast(AzurLaneConfig, self)
         task_adj = None
-        # Use getattr to satisfy type checkers unaware of the full inheritance tree
+        # 使用 getattr 适配类型检查器未感知的完整继承树
         cross_get = getattr(self, "cross_get", None)
         if cross_get:
             try:
@@ -144,16 +154,16 @@ class ManualConfig:
     module.campaign
     """
     MAP_CLEAR_ALL_THIS_TIME = False
-    # From chapter_template.lua
+    # 来自 chapter_template.lua
     STAR_REQUIRE_1 = 1
     STAR_REQUIRE_2 = 2
     STAR_REQUIRE_3 = 3
-    # normal: Most stage use this.
-    # blue: Blue stage icons in Dreamwaker's Butterfly (Shinano event, event_20200917_cn).
-    # half: Left half of '%' in Vacation Lane (DOA collaboration, event_20201126_cn)
-    #       DOA has smaller stage icon, right half of '%' is out of the original area.
+    # normal: 大多数关卡使用
+    # blue: 蝶海一梦（信浓活动，event_20200917_cn）中的蓝色关卡图标
+    # half: 假日航线（死或生联动，event_20201126_cn）中 '%' 的左半部分
+    #       死或生联动关卡图标较小，'%' 的右半部分超出原始区域
     STAGE_ENTRANCE = ['normal']  # normal, blue, half
-    # Set stage='TH' and run_count=100, to run TH1~TH5 in cycle
+    # 设置 stage='TH' 且 run_count=100 时，循环执行 TH1~TH5
     STAGE_LOOP_ALIAS = {
         ('event_20221124_cn', 'TH'): 'TH1 > TH2 > TH3 > TH4 > TH5',
         ('event_20250724_cn', 'TS'): 'TS1 > TS2 > TS3 > TS4 > TS5',
@@ -202,26 +212,24 @@ class ManualConfig:
     module.handler
     """
     STORY_OPTION = 0
-    # Dirty patch to fix a game bug on game client
-    # 2023.09.07 AL story skip will skip story options
-    # but ridiculous that options that must be selected are skipped too
-    # such as compulsory confirm before abyssal, interaction of siren scanning devices and logging devices
-    # Don't click SKIP at the situation above
+    # 临时修复碧蓝航线客户端剧情跳过问题的补丁
+    # 2023.09.07 碧蓝航线跳过剧情时会跳过剧情选项
+    # 导致必须选择的选项也会被跳过，例如深渊强制确认、塞壬扫描装置和记录装置交互
+    # 在上述情况下禁止点击跳过（SKIP）
     STORY_ALLOW_SKIP = True
 
     """
     module.map.fleet
     """
-    MAP_HAS_MODE_SWITCH = False  # event_20240725_cn has mode switch in map preparation
-    # Events from 20240725 to 20241219 introduced new chapter switches
+    MAP_HAS_MODE_SWITCH = False  # event_20240725_cn 地图准备阶段支持模式切换
+    # 20240725 至 20241219 活动引入的新章节切换
     MAP_CHAPTER_SWITCH_20241219 = False
     MAP_CHAPTER_SWITCH_20241219_SP = False
     MAP_CHAPTER_SWITCH_20241219_SPEX = False
     MAP_CHAPTER_SWITCH_20260326 = False
-    # Since event_20241219_cn chapter B unlocks event startup
-    # which means chapter AB are continuous
+    # 自 event_20241219_cn 起 B 篇章在活动开始时解锁，AB 篇章连续
     STAGE_INCREASE_AB = True
-    # Insert anything to STAGE_INCREASE
+    # 向 STAGE_INCREASE 插入自定义关卡
     STAGE_INCREASE_CUSTOM = ''
     MAP_HAS_CLEAR_PERCENTAGE = True
     MAP_CLEAR_PERCENTAGE_SHORT = False
@@ -232,32 +240,32 @@ class ManualConfig:
     MAP_HAS_MOVABLE_NORMAL_ENEMY = False
     MAP_HAS_SIREN = False
     MAP_HAS_DYNAMIC_RED_BORDER = False
-    MAP_HAS_MAP_STORY = False  # event_20200521_cn(穹顶下的圣咏曲) adds after-combat story.
-    MAP_HAS_WALL = False  # event_20200521_cn(穹顶下的圣咏曲) adds wall between grids.
-    MAP_HAS_PT_BONUS = False  # 100% PT bonus if success to catch enemy else 50%. Retreat get 0%.
+    MAP_HAS_MAP_STORY = False  # event_20200521_cn（穹顶下的圣咏曲）增加战后剧情
+    MAP_HAS_WALL = False  # event_20200521_cn（穹顶下的圣咏曲）在格子间增加障碍墙
+    MAP_HAS_PT_BONUS = False  # 追击成功获得 100% PT 加成，否则 50%，撤退 0%
     MAP_IS_ONE_TIME_STAGE = False
     MAP_HAS_PORTAL = False
     MAP_HAS_LAND_BASED = False
-    MAP_HAS_MAZE = False  # event_20210422_cn adds maze and maze walls move every 3 rounds.
-    MAP_HAS_FORTRESS = False  # event_2021917_cn, clear fortress to remove roadblock to boss.
-    MAP_HAS_MISSILE_ATTACK = False  # event_202111229_cn, missile attack covers the feature area of sirens.
-    MAP_HAS_BOUNCING_ENEMY = False  # event_20220224_cn, enemy is bouncing in a fixed route.
-    MAP_HAS_DECOY_ENEMY = False  # event_20220428, decoy enemy on map, disappear when fleet reach there.
-    MAP_HAS_SUBMARINE_SUPPORT = False # campaign 16-1 and 16-2 has submarine support fleet.
-    MAP_FOCUS_ENEMY_AFTER_BATTLE = False  # Operation siren
+    MAP_HAS_MAZE = False  # event_20210422_cn 增加迷宫，迷宫墙每 3 回合移动一次
+    MAP_HAS_FORTRESS = False  # event_2021917_cn 清除要塞以解除通往 Boss 的路障
+    MAP_HAS_MISSILE_ATTACK = False  # event_202111229_cn 导弹袭击覆盖塞壬特征区域
+    MAP_HAS_BOUNCING_ENEMY = False  # event_20220224_cn 敌人在固定路线上往返移动
+    MAP_HAS_DECOY_ENEMY = False  # event_20220428 地图诱饵敌人，舰队到达后消失
+    MAP_HAS_SUBMARINE_SUPPORT = False # 主线 16-1 和 16-2 拥有潜艇支援舰队
+    MAP_FOCUS_ENEMY_AFTER_BATTLE = False  # 大世界战后锁定敌人
     MAP_ENEMY_TEMPLATE = ['Light', 'Main', 'Carrier', 'Treasure']
     MAP_SIREN_TEMPLATE = ['DD', 'CL', 'CA', 'BB', 'CV']
-    MAP_ENEMY_GENRE_DETECTION_SCALING = {}  # Key: str, Template name, Value: float, scaling factor
+    MAP_ENEMY_GENRE_DETECTION_SCALING = {}  # 键: str 模板名，值: float 缩放因子
     MAP_ENEMY_GENRE_SIMILARITY = 0.85
-    MAP_SIREN_MOVE_WAIT = 1.5  # The enemy moving takes about 1.2 ~ 1.5s.
+    MAP_SIREN_MOVE_WAIT = 1.5  # 敌人移动耗时约 1.2 ~ 1.5 秒
     MAP_SIREN_COUNT = 0
-    MAP_SIREN_HAS_BOSS_ICON = False  # Anonymous siren with small boss icon at bottom-right
+    MAP_SIREN_HAS_BOSS_ICON = False  # 右下角带小型 Boss 图标的无名塞壬
     MAP_SIREN_HAS_BOSS_ICON_SMALL = False
     MAP_HAS_MYSTERY = True
     MAP_MYSTERY_MAP_CLICK = True
     MAP_MYSTERY_HAS_CARRIER = False
     MAP_GRID_CENTER_TOLERANCE = 0.2
-    # see map_control_init()
+    # 参见 map_control_init()
     MAP_FLEET_REVERSE_WAIT_INFO_BAR = False
 
     MOVABLE_ENEMY_FLEET_STEP = 2
@@ -265,40 +273,38 @@ class ManualConfig:
     MOVABLE_NORMAL_ENEMY_TURN = (1,)
 
     POOR_MAP_DATA = False
-    # Convert map grid distance to swipe distance
-    # Usually range from 1/0.62 to 1/0.61
-    # Value may be different in different maps
-    # Before 2023.05.25
+    # 将地图网格距离转换为滑动距离
+    # 通常范围在 1/0.62 到 1/0.61 之间
+    # 不同地图数值可能不同
+    # 2023.05.25 前
     # MAP_SWIPE_MULTIPLY = 1.626
     # MAP_SWIPE_MULTIPLY_MINITOUCH = 1.572
     # MAP_SWIPE_MULTIPLY_MINITOUCH = 1.525
-    # 2023.05.25, swipe fit in 14-1
+    # 2023.05.25, 适配 14-1 滑动
     # MAP_SWIPE_MULTIPLY = (1.006, 1.025)
     # MAP_SWIPE_MULTIPLY_MINITOUCH = (0.973, 0.991)
     # MAP_SWIPE_MULTIPLY_MAATOUCH = (0.944, 0.961)
-    # 2023.05.25, swipe converts to 7-2 baseline
+    # 2023.05.25, 滑动转换到 7-2 基准
     MAP_SWIPE_MULTIPLY = (1.064, 1.084)
     MAP_SWIPE_MULTIPLY_MINITOUCH = (1.029, 1.048)
     MAP_SWIPE_MULTIPLY_MAATOUCH = (0.999, 1.017)
-    # Swipe distance in map grid lower than this will be dropped,
-    # because a closing swipe will be treat as a click in game.
+    # 地图网格滑动距离低于此值将被丢弃，因为过短的滑动在游戏中会被判定为点击
     MAP_SWIPE_DROP = 0.25
-    # Swipes may stop in middle, due to emulator stuck.
-    # Predict actual swipe distance to correct camera.
+    # 模拟器卡顿时滑动可能在中途停止，预测实际滑动距离以校正相机视角
     MAP_SWIPE_PREDICT = True
     MAP_SWIPE_PREDICT_WITH_CURRENT_FLEET = True
     MAP_SWIPE_PREDICT_WITH_SEA_GRIDS = False
-    # Corner to ensure in ensure_edge_insight.
-    # Value can be 'upper-left', 'upper-right', 'bottom-left', 'bottom-right', or 'upper', 'bottom', 'left', 'right'
-    # Missing axis will be random, and '' for all random
+    # ensure_edge_insight 中需要确保视野的角落
+    # 取值可为 'upper-left', 'upper-right', 'bottom-left', 'bottom-right', 或 'upper', 'bottom', 'left', 'right'
+    # 缺失的轴将随机选择，'' 表示完全随机
     MAP_ENSURE_EDGE_INSIGHT_CORNER = ''
-    # Use the green arrow on current fleet to decide if fleet arrived a certain grid
+    # 使用当前舰队上的绿色箭头判断舰队是否到达指定网格
     MAP_WALK_USE_CURRENT_FLEET = False
-    # Optimize walk path, reducing ambushes
+    # 优化移动路径以减少遭遇伏击
     MAP_WALK_TURNING_OPTIMIZE = True
-    # Optimize swipe path, reducing swipes turn info clicks.
+    # 优化滑动路径以减少滑动误触发点击
     MAP_SWIPE_OPTIMIZE = True
-    # Swipe after boss appear. Could avoid map detection error when camera is on edge.
+    # Boss 出现后重新对焦滑动，避免相机位于边缘时的地图检测错误
     MAP_BOSS_APPEAR_REFOCUS_SWIPE = (0, 0)
 
     """
@@ -308,7 +314,7 @@ class ManualConfig:
     DETECTING_AREA = (123, 55, 1280, 720)
     SCREEN_CENTER = (SCREEN_SIZE[0] / 2, SCREEN_SIZE[1] / 2)
     DETECTION_BACKEND = 'homography'
-    # In event_20200723_cn B3D3, Grid have 1.2x width, images on the grid still remain the same.
+    # event_20200723_cn B3D3 中网格宽度为 1.2 倍，网格上的图片大小保持不变
     GRID_IMAGE_A_MULTIPLY = 1.0
 
     """
@@ -316,7 +322,7 @@ class ManualConfig:
     """
     HOMO_TILE = (140, 140)
     HOMO_CENTER_OFFSET = (48, 48)
-    # [upper-left, upper-right, bottom-left, bottom-right]
+    # [左上, 右上, 左下, 右下]
     HOMO_CORNER_OFFSET_LIST = [(-42, -42), (68, -42), (-42, 69), (69, 69)]
 
     HOMO_CANNY_THRESHOLD = (100, 150)
@@ -328,13 +334,13 @@ class ManualConfig:
     HOMO_EDGE_DETECT = True
     HOMO_EDGE_HOUGHLINES_THRESHOLD = 180
     HOMO_EDGE_COLOR_RANGE = (0, 33)
-    # ((x, y), [upper-left, upper-right, bottom-left, bottom-right])
+    # ((x, y), [左上, 右上, 左下, 右下])
     HOMO_STORAGE = None
 
     """
     module.map_detection.perspective
     """
-    # Parameters for scipy.signal.find_peaks
+    # scipy.signal.find_peaks 参数
     # https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.find_peaks.html
     INTERNAL_LINES_FIND_PEAKS_PARAMETERS = {
         'height': (150, 255 - 33),
@@ -349,18 +355,18 @@ class ManualConfig:
         # 'width': (0, 7),
         'wlen': 1000
     }
-    # Parameters for cv2.HoughLines
+    # cv2.HoughLines 参数
     INTERNAL_LINES_HOUGHLINES_THRESHOLD = 75
     EDGE_LINES_HOUGHLINES_THRESHOLD = 75
-    # Parameters for lines pre-cleansing
+    # 直线预清理参数
     HORIZONTAL_LINES_THETA_THRESHOLD = 0.005
     VERTICAL_LINES_THETA_THRESHOLD = 18
-    TRUST_EDGE_LINES = False  # True to use edge to crop inner, false to use inner to crop edge
+    TRUST_EDGE_LINES = False  # True 表示用边缘线裁剪内部线，False 表示用内部线裁剪边缘线
     TRUST_EDGE_LINES_THRESHOLD = 5
-    # Parameters for perspective calculating
+    # 透视计算参数
     VANISH_POINT_RANGE = ((540, 740), (-3000, -1000))
     DISTANCE_POINT_X_RANGE = ((-3200, -1600),)
-    # Parameters for line cleansing
+    # 直线清理参数
     COINCIDENT_POINT_ENCOURAGE_DISTANCE = 3
     ERROR_LINES_TOLERANCE = (-10, 10)
     MID_DIFF_RANGE_H = (129 - 3, 129 + 3)
@@ -369,14 +375,14 @@ class ManualConfig:
     """
     module.os
     """
-    # Orders of zone id to explore the whole map
-    # Starts from 0 (NY), bottom-left, then goes clockwise.
-    # CL1 and CL2
-    # CL3
-    # CL4
-    # CL5
-    # CL6
-    # Center Zone CL5 and CL6
+    # 探索整张地图的区域 ID 顺序
+    # 从 0 (纽约港) 开始，左下方，顺时针方向遍历
+    # 侵蚀 1 与 侵蚀 2
+    # 侵蚀 3
+    # 侵蚀 4
+    # 侵蚀 5
+    # 侵蚀 6
+    # 核心区 侵蚀 5 与 侵蚀 6
     OS_EXPLORE_FILTER = """
     44 > 24 > 22 > 31 > 21 > 23
     > 83 > 43 > 81 > 84 > 92 > 93
@@ -429,7 +435,7 @@ class ManualConfig:
         'distance': 35,
         'wlen': 500,
     }
-    # On minitouch, Screen swipe (200, 200) = Map swipe (382, 442)
+    # minitouch 下屏幕滑动 (200, 200) 对应地图滑动 (382, 442)
     OS_GLOBE_SWIPE_MULTIPLY = (1.91, 2.21)
 
     # 塞壬装置处理方法
@@ -446,7 +452,7 @@ class ManualConfig:
     """
     module.shop
     """
-    # For dev purpose, auto extract new item templates
+    # 开发调试用途：自动提取新商品模板
     SHOP_EXTRACT_TEMPLATE = False
 
     """

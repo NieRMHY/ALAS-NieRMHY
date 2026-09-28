@@ -1,3 +1,7 @@
+/**
+ * @fileoverview 调度器核心控制卡片与任务数量摘要组件。
+ */
+
 import type { ReactNode } from 'react'
 import { useState } from 'react'
 import { CalendarClock, CirclePlay, Play, Square, TriangleAlert } from 'lucide-react'

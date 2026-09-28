@@ -1,11 +1,16 @@
+/**
+ * @fileoverview 实例实时控制台日志面板组件。
+ */
+
 import { Select } from './FormControls'
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import { useParams } from 'react-router-dom'
-import { ArrowDownUp, Download, Pause, Play, Search, Terminal, Trash2 } from 'lucide-react'
+import { ArrowDownUp, Download, LayoutGrid, Pause, Play, Search, Terminal, Trash2 } from 'lucide-react'
 import { api } from '../api/client'
 import type { Logs as LogsData, LogEntry } from '../api/types'
 import { useApp, useConnection } from '../app/context'
 import { Empty } from '../components/ui'
+import { LogCardView } from './LogCardView'
 
 export const LOG_LINE_RE = /^([A-Z]{4,8})\s+(?:(\d{4}-\d{2}-\d{2})\s+)?(\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?)\s*│\s*([\s\S]*)$/
 export const RULE_RE = /^[═─]{3,}\s*(.*?)\s*[═─]{3,}$/
@@ -15,6 +20,45 @@ export const LOG_ENTRY_LIMIT = 1000
 
 /** 日志跟随的每帧步长上限（像素）；距离更近时按距离收比例。 */
 export const MAX_FOLLOW_STEP = 24
+
+export const safeRaf = (cb: FrameRequestCallback): number => {
+  if (typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function') {
+    return window.requestAnimationFrame(cb)
+  }
+  return setTimeout(cb, 16) as unknown as number
+}
+
+export const safeCancelRaf = (id: number | null) => {
+  if (id === null) return
+  if (typeof window !== 'undefined' && typeof window.cancelAnimationFrame === 'function') {
+    window.cancelAnimationFrame(id)
+  } else {
+    clearTimeout(id)
+  }
+}
+
+export interface LogBufferState {
+  entries: LogEntry[]
+  reset: boolean
+  cursor: number | null
+}
+
+/**
+ * 将高频推送的流式日志加入微批缓冲队列
+ * 若收到 reset 信号，则清除前置缓冲并标记 reset，后序同一批次的 entries 连续追加
+ */
+export function queueLogEvent(
+  buffer: LogBufferState,
+  data: { entries: LogEntry[]; reset?: boolean; cursor: number }
+): void {
+  if (data.reset) {
+    buffer.reset = true
+    buffer.entries = [...data.entries]
+  } else {
+    buffer.entries.push(...data.entries)
+  }
+  buffer.cursor = data.cursor
+}
 
 /** 跟随步长：远时按上限匀速，近时按距离收比例，新日志逐帧滚入而不跳到末尾。 */
 export function followStep(remaining: number, maxStep = MAX_FOLLOW_STEP) {
@@ -38,7 +82,7 @@ function highlightText(text: string, search: string): ReactNode {
   const searchLower = search.trim().toLowerCase()
 
   // 词法正则：匹配高亮目标
-  const tokenRegex = /(\b(?:True|False|None)\b)|(<<<[\s\S]*?>>>)|(\[[a-zA-Z0-9_.-]+\])|([\{\}\[\]\(\)])|((?:[a-zA-Z]:[/\\]|(?:\.{1,2}[/\\]|[/\\]))[\w.\-/\\]+)|(\b\d{2}:\d{2}:\d{2}(?:\.\d+)?\b)/g
+  const tokenRegex = /(\b(?:True|False|None)\b)|(<<<[\s\S]*?>>>)|(\[[a-zA-Z0-9_.\u4e00-\u9fff-]+\])|([\{\}\[\]\(\)])|((?:[a-zA-Z]:[/\\]|(?:\.{1,2}[/\\]|[/\\]))[\w.\-/\\]+)|(\b\d{2}:\d{2}:\d{2}(?:\.\d+)?\b)/g
 
   const nodes: ReactNode[] = []
   let lastIndex = 0
@@ -193,6 +237,14 @@ function loadLogDescending(instance: string): boolean {
   try { return localStorage.getItem(`azurpilot.log.order.${instance}`) === 'desc' } catch { return false }
 }
 
+function loadLogViewMode(): 'cards' | 'classic' {
+  try {
+    const saved = localStorage.getItem('azurpilot.log.viewMode')
+    if (saved === 'cards' || saved === 'classic') return saved
+  } catch { /* 存储不可用时默认卡片视图 */ }
+  return 'cards'
+}
+
 export function LogPanel({active = true}: {active?: boolean}) {
   const {instance = ''} = useParams()
   const [entries, setEntries] = useState<LogEntry[]>([])
@@ -201,12 +253,43 @@ export function LogPanel({active = true}: {active?: boolean}) {
   const [filtersOpen, setFiltersOpen] = useState(false)
   const [follow, setFollow] = useState(true)
   const [descending, setDescending] = useState(() => loadLogDescending(instance))
+  const [viewMode, setViewMode] = useState<'cards' | 'classic'>(() => loadLogViewMode())
   const [floor, setFloor] = useState(0)
   const connection = useConnection()
   const {notify, ui} = useApp()
   const scroll = useRef<HTMLDivElement>(null)
   /* 已渲染到的最大日志 id：大于它的增量行做入场动画（初始加载不播）。 */
   const freshFrom = useRef<number | null>(null)
+
+  /** 流式日志微批处理缓冲队列，防止高频 WebSocket 推送造成密集 React 重绘 */
+  const logBuffer = useRef<LogBufferState & { rafId: number | null }>({
+    entries: [],
+    reset: false,
+    cursor: null,
+    rafId: null,
+  })
+
+  const flushBuffer = useRef(() => {})
+  flushBuffer.current = () => {
+    const buf = logBuffer.current
+    if (buf.rafId !== null) {
+      safeCancelRaf(buf.rafId)
+      buf.rafId = null
+    }
+    const { entries: bufEntries, reset: bufReset, cursor: bufCursor } = buf
+    if (bufEntries.length === 0 && !bufReset && bufCursor === null) return
+
+    buf.entries = []
+    buf.reset = false
+    buf.cursor = null
+
+    if (bufCursor !== null) {
+      setFloor(previous => bufCursor < previous ? 0 : previous)
+    }
+    if (bufEntries.length > 0 || bufReset) {
+      setEntries(previous => mergeLogEntries(previous, bufEntries, bufReset))
+    }
+  }
 
   useEffect(() => {
     setLevel(loadLogLevel(instance))
@@ -216,6 +299,14 @@ export function LogPanel({active = true}: {active?: boolean}) {
   function updateLevel(next: string) {
     setLevel(next)
     try { localStorage.setItem(`azurpilot.log.level.${instance}`, next) } catch { /* 无存储权限时仅本页生效。 */ }
+  }
+
+  function toggleViewMode() {
+    setViewMode(prev => {
+      const next = prev === 'cards' ? 'classic' : 'cards'
+      try { localStorage.setItem('azurpilot.log.viewMode', next) } catch { /* 同上 */ }
+      return next
+    })
   }
 
   function toggleOrder() {
@@ -229,21 +320,61 @@ export function LogPanel({active = true}: {active?: boolean}) {
   useEffect(() => {
     if (connection !== 'ready') return
     let active = true
+    const buf = logBuffer.current
+    if (buf.rafId !== null) {
+      safeCancelRaf(buf.rafId)
+      buf.rafId = null
+    }
+    buf.entries = []
+    buf.reset = false
+    buf.cursor = null
+
     setFloor(0)
     setEntries([])
     void api.request('logs.get', {instance}).then(value => {
       if (active) setEntries(previous => mergeLogEntries(previous, value.entries))
     }).catch(error => notify(error.message, true))
-    return () => { active = false }
+    return () => {
+      active = false
+      if (buf.rafId !== null) {
+        safeCancelRaf(buf.rafId)
+        buf.rafId = null
+      }
+      buf.entries = []
+      buf.reset = false
+      buf.cursor = null
+    }
   }, [connection, instance, notify])
 
-  useEffect(() => api.onEvent(event => {
-    if (event.topic !== 'logs') return
-    const data = event.data as LogsData
-    if (data.instance !== instance) return
-    setFloor(previous => data.cursor < previous ? 0 : previous)
-    setEntries(previous => mergeLogEntries(previous, data.entries, data.reset))
-  }), [instance])
+  useEffect(() => {
+    const unsubscribe = api.onEvent(event => {
+      if (event.topic !== 'logs') return
+      const data = event.data as LogsData
+      if (data.instance !== instance) return
+
+      const buf = logBuffer.current
+      queueLogEvent(buf, data)
+
+      if (buf.rafId === null) {
+        buf.rafId = safeRaf(() => {
+          buf.rafId = null
+          flushBuffer.current()
+        })
+      }
+    })
+
+    return () => {
+      unsubscribe()
+      const buf = logBuffer.current
+      if (buf.rafId !== null) {
+        safeCancelRaf(buf.rafId)
+        buf.rafId = null
+      }
+      buf.entries = []
+      buf.reset = false
+      buf.cursor = null
+    }
+  }, [instance])
 
   useLayoutEffect(() => {
     freshFrom.current = entries.at(-1)?.id ?? null
@@ -254,6 +385,8 @@ export function LogPanel({active = true}: {active?: boolean}) {
     const container = scroll.current
     /* 只改日志容器自身的滚动位置，不会像尾部元素的 scrollIntoView 那样连带滚动整个页面。 */
     const target = descending ? 0 : container.scrollHeight - container.clientHeight
+    /* 与目标相距超过一屏：直接落位，不做逐帧滚入。 */
+    if (Math.abs(target - container.scrollTop) > container.clientHeight) {container.scrollTop = target; return}
     let frame = requestAnimationFrame(function step() {
       const remaining = target - container.scrollTop
       if (Math.abs(remaining) <= 1) {container.scrollTop = target; return}
@@ -272,6 +405,7 @@ export function LogPanel({active = true}: {active?: boolean}) {
   const ordered = descending ? [...visible].reverse().slice(0, LOG_ENTRY_LIMIT) : visible.slice(-LOG_ENTRY_LIMIT)
 
   function download() {
+    flushBuffer.current()
     const url = URL.createObjectURL(new Blob([visible.map(entry => entry.text).join('\n')], {type: 'text/plain;charset=utf-8'}))
     const link = document.createElement('a')
     link.href = url
@@ -291,7 +425,26 @@ export function LogPanel({active = true}: {active?: boolean}) {
           title={descending ? ui('log.orderDesc') : ui('log.orderAsc')}>
           <ArrowDownUp size={15} />
         </button>
-        <button className="icon-button" onClick={() => setFloor(entries.at(-1)?.id ?? 0)} aria-label={ui('log.clearView')}>
+        <button
+          className={`icon-button ${viewMode === 'cards' ? 'filter-active' : ''}`}
+          onClick={toggleViewMode}
+          aria-label={viewMode === 'cards' ? ui('log.viewModeClassic') : ui('log.viewModeCards')}
+          title={viewMode === 'cards' ? ui('log.viewModeCardsTitle') : ui('log.viewModeClassicTitle')}
+        >
+          {viewMode === 'cards' ? <LayoutGrid size={15} /> : <Terminal size={15} />}
+        </button>
+        <button
+          className="icon-button"
+          onClick={() => {
+            const lastId = Math.max(
+              entries.at(-1)?.id ?? 0,
+              logBuffer.current.entries.at(-1)?.id ?? 0
+            )
+            flushBuffer.current()
+            setFloor(lastId)
+          }}
+          aria-label={ui('log.clearView')}
+        >
           <Trash2 size={15} />
         </button>
         <button className="text-button" onClick={download} aria-label={ui('log.export')}>
@@ -310,28 +463,32 @@ export function LogPanel({active = true}: {active?: boolean}) {
         </Select>
         <span>{ui('log.recent', {count: entries.length})}</span>
       </div>}
-      <div className="log-content" ref={scroll} aria-label={ui('log.content')}>
+      <div className={`log-content ${viewMode === 'cards' ? 'log-cards-mode' : ''}`} ref={scroll} aria-label={ui('log.content')}>
         {visible.length ? (
-          ordered.map((entry, index) => {
-            const prev = ordered[index - 1]
-            const next = ordered[index + 1]
-            const isCenterByContext = Boolean(
-              prev && next &&
-              PURE_RULE_RE.test(prev.text.trim()) && prev.text.includes('═') &&
-              PURE_RULE_RE.test(next.text.trim()) && next.text.includes('═') &&
-              !PURE_RULE_RE.test(entry.text.trim()) &&
-              !LOG_LINE_RE.test(entry.text.trim())
-            )
-            return (
-              <LogLine
-                key={entry.id}
-                entry={entry}
-                search={search}
-                isCenter={isCenterByContext}
-                fresh={freshFrom.current !== null && entry.id > freshFrom.current}
-              />
-            )
-          })
+          viewMode === 'cards' ? (
+            <LogCardView entries={ordered} search={search} scrollRef={scroll} />
+          ) : (
+            ordered.map((entry, index) => {
+              const prev = ordered[index - 1]
+              const next = ordered[index + 1]
+              const isCenterByContext = Boolean(
+                prev && next &&
+                PURE_RULE_RE.test(prev.text.trim()) && prev.text.includes('═') &&
+                PURE_RULE_RE.test(next.text.trim()) && next.text.includes('═') &&
+                !PURE_RULE_RE.test(entry.text.trim()) &&
+                !LOG_LINE_RE.test(entry.text.trim())
+              )
+              return (
+                <LogLine
+                  key={entry.id}
+                  entry={entry}
+                  search={search}
+                  isCenter={isCenterByContext}
+                  fresh={freshFrom.current !== null && entry.id > freshFrom.current}
+                />
+              )
+            })
+          )
         ) : (
           <Empty icon={<Terminal size={26} />} title={entries.length ? ui('log.noMatch') : ui('log.ready')}>
             {entries.length ? ui('log.adjustFilter') : ui('log.waiting')}

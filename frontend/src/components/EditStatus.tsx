@@ -1,3 +1,7 @@
+/**
+ * @fileoverview 配置字段即时保存状态指示器组件。
+ */
+
 import type { Edit, EditQueue } from '../config/EditQueue'
 import { Check, CircleAlert, CloudOff, LoaderCircle } from 'lucide-react'
 import { useApp } from '../app/context'

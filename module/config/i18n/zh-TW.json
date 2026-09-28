@@ -624,7 +624,8 @@
       "DroidCast": "DroidCast",
       "DroidCast_raw": "DroidCast_raw",
       "nemu_ipc": "nemu_ipc",
-      "ldopengl": "ldopengl"
+      "ldopengl": "ldopengl",
+      "azurpilot_android": "AzurPilot Android 虛擬螢幕"
     },
     "ControlMethod": {
       "name": "選擇控制方案",
@@ -634,7 +635,8 @@
       "minitouch": "minitouch",
       "Hermit": "Hermit",
       "MaaTouch": "MaaTouch",
-      "nemu_ipc": "nemu_ipc"
+      "nemu_ipc": "nemu_ipc",
+      "azurpilot_android": "AzurPilot Android 虛擬螢幕"
     },
     "GameSettings": {
       "name": "自動套用建議的遊戲設定",
@@ -756,6 +758,12 @@
     "OnePushConfig": {
       "name": "錯誤推送設定",
       "help": "發生無法處理的異常後，使用 Onepush 推送一條錯誤資訊。設定方式見檔案：https://github.com/LmeSzinc/AzurLaneAutoScript/wiki/Onepush-configuration-%5BCN%5D"
+    },
+    "LowPushMode": {
+      "name": "低推送量模式",
+      "help": "只推送需要人工介入的錯誤。遊戲未執行、模擬器離線、遊戲卡住等能自動復原的錯誤只記錄日誌，不再推送",
+      "True": "已啟用",
+      "False": "關閉"
     },
     "ScreenshotLength": {
       "name": "出錯時，保留最後 X 張截圖",
@@ -1074,9 +1082,65 @@
       "do_not": "無操作",
       "save": "儲存"
     },
-    "OpsiRecord": {
-      "name": "大世界掉落截圖",
-      "help": "",
+    "OpsiHazard1Leveling": {
+      "name": "侵蝕一掉落截圖",
+      "help": "侵蝕1練級不進「大世界掉落」統計（收益看「大世界總結」頁）；「儲存」只落盤截圖，「上傳」對它無效",
+      "do_not": "無操作",
+      "save": "儲存",
+      "upload": "上傳",
+      "save_and_upload": "儲存並上傳"
+    },
+    "OpsiMeowfficerFarming": {
+      "name": "短貓掉落截圖",
+      "help": "「儲存」與「上傳」都會把掉落解析進統計頁「大世界掉落」分類，差別只在要不要把截圖落盤",
+      "do_not": "無操作",
+      "save": "儲存",
+      "upload": "上傳",
+      "save_and_upload": "儲存並上傳"
+    },
+    "OpsiDaily": {
+      "name": "大世界每日掉落截圖",
+      "help": "「儲存」與「上傳」都會把掉落解析進統計頁「大世界掉落」分類，差別只在要不要把截圖落盤\n跨月每日共用此開關",
+      "do_not": "無操作",
+      "save": "儲存",
+      "upload": "上傳",
+      "save_and_upload": "儲存並上傳"
+    },
+    "OpsiObscure": {
+      "name": "隱秘海域掉落截圖",
+      "help": "「儲存」與「上傳」都會把掉落解析進統計頁「大世界掉落」分類，差別只在要不要把截圖落盤\n檔案坐標共用此開關",
+      "do_not": "無操作",
+      "save": "儲存",
+      "upload": "上傳",
+      "save_and_upload": "儲存並上傳"
+    },
+    "OpsiAbyssal": {
+      "name": "深淵海域掉落截圖",
+      "help": "「儲存」與「上傳」都會把掉落解析進統計頁「大世界掉落」分類，差別只在要不要把截圖落盤\n月度Boss共用此開關",
+      "do_not": "無操作",
+      "save": "儲存",
+      "upload": "上傳",
+      "save_and_upload": "儲存並上傳"
+    },
+    "OpsiStronghold": {
+      "name": "塞壬要塞掉落截圖",
+      "help": "「儲存」與「上傳」都會把掉落解析進統計頁「大世界掉落」分類，差別只在要不要把截圖落盤",
+      "do_not": "無操作",
+      "save": "儲存",
+      "upload": "上傳",
+      "save_and_upload": "儲存並上傳"
+    },
+    "OpsiExplore": {
+      "name": "每月開荒掉落截圖",
+      "help": "每月開荒Plus 自己的掉落記錄開關，不跟其它任務共用\n「儲存」與「上傳」都會把掉落解析進統計頁「大世界掉落」分類，差別只在要不要把截圖落盤",
+      "do_not": "無操作",
+      "save": "儲存",
+      "upload": "上傳",
+      "save_and_upload": "儲存並上傳"
+    },
+    "OpsiOther": {
+      "name": "其他大世界任務掉落截圖",
+      "help": "兜底沒有單獨開關的大世界任務\n「儲存」與「上傳」都會把掉落解析進統計頁「大世界掉落」分類，差別只在要不要把截圖落盤",
       "do_not": "無操作",
       "save": "儲存",
       "upload": "上傳",
@@ -1485,7 +1549,7 @@
       "event_20260520_cn": "聖印前的同盟",
       "event_20260625_cn": "美夢巡演奇秒夜",
       "event_20260813_cn": "沉溺於星光之城",
-      "event_20260908_cn": "Tales of the Paranormal",
+      "event_20260908_cn": "幽影迷城",
       "raid_20200624": "特別演習埃塞克斯級(復刻)",
       "raid_20210708": "復刻穿越彼方的水線",
       "raid_20220127": "演習神秘事件調查",
@@ -1828,7 +1892,7 @@
     },
     "Mode": {
       "name": "選擇潛艇出擊方案",
-      "help": "僅在自律尋敵關閉的情況下生效，提醒: '狩獵及BOSS戰'為'僅狩獵'與'僅BOSS戰'的混合，它會在道中進行狩獵打擊，並在BOSS戰嘗試召喚潛艇。",
+      "help": "僅在自律尋敵關閉的情況下生效，提醒: '狩獵及BOSS戰'為'僅狩獵'與'僅BOSS戰'的混合，它會在道中進行狩獵打擊，並在BOSS戰嘗試召喚潛艇。\n注意: 在BOSS點召喚潛艇必須使用預設戰鬥介面主題（UI），否則無法召喚。",
       "do_not_use": "不使用",
       "hunt_only": "僅狩獵",
       "boss_only": "僅BOSS戰",

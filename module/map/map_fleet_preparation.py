@@ -3,6 +3,7 @@
 管理战役关卡进入前的舰队准备界面操作，包括：
 - 舰队选择和切换（通过下拉菜单）
 - 舰队推荐按钮
+- 困难图整体推荐配队（Campaign.UseRecommendFleet）
 - 舰队清空操作
 - 困难模式限制条件检测
 - 自动搜索设置（舰队角色分配）
@@ -22,10 +23,12 @@ from module.base.utils import *
 from module.exception import HardNotSatisfied
 from module.handler.assets import AUTO_SEARCH_SET_MOB, AUTO_SEARCH_SET_BOSS, \
     AUTO_SEARCH_SET_ALL, AUTO_SEARCH_SET_STANDBY, \
-    AUTO_SEARCH_SET_SUB_AUTO, AUTO_SEARCH_SET_SUB_STANDBY
+    AUTO_SEARCH_SET_SUB_AUTO, AUTO_SEARCH_SET_SUB_STANDBY, \
+    POPUP_CONFIRM
 from module.handler.info_handler import InfoHandler
 from module.logger import logger
 from module.map.assets import *
+from module.ui_white.assets import POPUP_CONFIRM_WHITE
 
 
 class FleetOperator:
@@ -47,15 +50,16 @@ class FleetOperator:
     OFFSET = (-20, -80, 20, 5)
 
     def __init__(self, choose, advice, bar, clear, in_use, hard_satisfied, main):
-        """
+        """初始化舰队槽位操作器。
+
         Args:
-            choose (Button): Button to activate or deactivate dropdown menu.
-            advice (Button): Button to recommend ships.
-            bar (Button): Dropdown menu for fleet selection。
-            clear (Button): Button to clear current fleet.
-            in_use (Button): Button to detect if it's using current fleet.
-            hard_satisfied (Button): Area to detect if fleet satiesfies hard restrictions.
-            main (InfoHandler): Alas module.
+            choose (Button): 激活或折叠下拉选择菜单的按钮。
+            advice (Button): 推荐配队按钮。
+            bar (Button): 舰队下拉选择菜单区域。
+            clear (Button): 清空当前舰队的按钮。
+            in_use (Button): 检测当前舰队是否在使用的区域按钮。
+            hard_satisfied (Button): 检测当前舰队是否满足困难属性限制的区域按钮。
+            main (InfoHandler): 所属的 Alas 模块实例。
         """
         self._choose = choose
         self._advice = advice
@@ -75,12 +79,13 @@ class FleetOperator:
         return str(self._choose)[:-7]
 
     def parse_fleet_bar(self, image):
-        """
+        """解析下拉菜单图像以获取当前选中的舰队编号。
+
         Args:
-            image (np.ndarray): Image of dropdown menu.
+            image (np.ndarray): 下拉菜单区域的截图。
 
         Returns:
-            list: List of int. Currently selected fleet ranges from 1 to 6.
+            list[int]: 当前选中的舰队编号列表，范围 1 到 6。
         """
         width, height = image_size(image)
         result = []
@@ -93,14 +98,13 @@ class FleetOperator:
         return result
 
     def get_button(self, index):
-        """
-        Convert fleet index to the Button object on dropdown menu.
+        """将舰队编号转换为下拉菜单上的对应点击按钮对象。
 
         Args:
-            index (int): Fleet index, 1-6.
+            index (int): 舰队编号，范围 1 到 6。
 
         Returns:
-            Button: Button instance.
+            Button: 对应舰队槽位的按钮实例。
         """
         bar = self._bar.button
         area = area_offset(area=(
@@ -112,28 +116,28 @@ class FleetOperator:
         return Button(area=(), color=(), button=area, name='%s_INDEX_%s' % (str(self._bar), str(index)))
 
     def allow(self):
-        """
+        """判断当前舰队槽位是否允许选择与编辑。
+
         Returns:
-            bool: If current fleet is allow to be chosen.
+            bool: 是否允许选择当前舰队。
         """
         return self.main.appear(self._clear, offset=FleetOperator.OFFSET)
 
     def is_hard(self):
-        """
+        """判断当前关卡是否为困难模式（是否存在推荐按钮）。
+
         Returns:
-            bool: Whether to have a recommend. If so, this stage is a hard campaign.
+            bool: 是否为困难模式关卡。
         """
         return self.main.appear(self._advice, offset=FleetOperator.OFFSET)
 
     def is_hard_satisfied(self):
-        """
-        Detect how many light orange lines are there.
-        Having lines means current map has stat limits and user has satisfied at least one of them,
-        so this is a hard map.
+        """检测当前舰队是否满足困难模式的属性限制条件。
+
+        通过检测黄色高亮线判断。若有高亮线说明存在限制且已满足。
 
         Returns:
-            bool: If current fleet satisfies hard restrictions.
-                Or None if this is not a hard mode
+            bool | None: 若满足限制返回 True，不满足返回 False；若非困难关卡返回 None。
         """
         if not self.is_hard():
             return None
@@ -148,15 +152,23 @@ class FleetOperator:
         return lines > 0
 
     def raise_hard_not_satisfied(self):
+        """若不满足困难限制条件，抛出 HardNotSatisfied 异常。
+
+        Raises:
+            HardNotSatisfied: 当前舰队未满足困难关卡属性限制时抛出。
+        """
         if self.is_hard_satisfied() is False:
             stage = self.main.config.Campaign_Name
             logger.critical(f'[Map] 关卡 "{stage}" 是困难模式，'
-                            f'请在运行 Alas 之前在游戏中准备好您的舰队 "{str(self)}"')
+                            f'请在运行 Alas 之前在游戏中准备好您的舰队 "{str(self)}"，'
+                            f'或在战斗设置中开启「自动配队」')
             raise HardNotSatisfied
 
     def clear(self, skip_first_screenshot=True):
-        """
-        Clear chosen fleet.
+        """清空当前槽位选中的舰队。
+
+        Args:
+            skip_first_screenshot (bool, optional): 是否跳过首次截图。默认为 True。
         """
         main = self.main
         click_timer = Timer(3, count=6)
@@ -166,24 +178,26 @@ class FleetOperator:
             else:
                 main.device.screenshot()
 
-            # Popups when clearing hard fleets
+            # 清除困难舰队时的弹窗
             if self.main.handle_popup_confirm(str(self._clear)):
                 continue
 
-            # check CLEAR button to avoid early stopped at popup showing animation
+            # 检查清空按钮以避免在弹窗显示动画时过早停止
             if self.allow():
-                # End
+                # 结束判定
                 if not self.in_use():
                     break
 
-                # Click
+                # 点击清空
                 if click_timer.reached():
                     main.device.click(self._clear)
                     click_timer.reset()
 
     def recommend(self, skip_first_screenshot=True):
-        """
-        Recommend fleet
+        """点击推荐配队按钮。
+
+        Args:
+            skip_first_screenshot (bool, optional): 是否跳过首次截图。默认为 True。
         """
         main = self.main
         click_timer = Timer(3, count=6)
@@ -193,18 +207,20 @@ class FleetOperator:
             else:
                 main.device.screenshot()
 
-            # End
+            # 结束判定
             if self.in_use():
                 break
 
-            # Click
+            # 点击选择
             if click_timer.reached():
                 main.device.click(self._choose)
                 click_timer.reset()
 
     def open(self, skip_first_screenshot=True):
-        """
-        Activate dropdown menu for fleet selection.
+        """展开舰队选择下拉菜单。
+
+        Args:
+            skip_first_screenshot (bool, optional): 是否跳过首次截图。默认为 True。
         """
         main = self.main
         click_timer = Timer(3, count=6)
@@ -214,18 +230,20 @@ class FleetOperator:
             else:
                 main.device.screenshot()
 
-            # End
+            # 结束判定
             if self.bar_opened():
                 break
 
-            # Click
+            # 点击展开
             if click_timer.reached():
                 main.device.click(self._choose)
                 click_timer.reset()
 
     def close(self, skip_first_screenshot=True):
-        """
-        Deactivate dropdown menu for fleet selection.
+        """收起舰队选择下拉菜单。
+
+        Args:
+            skip_first_screenshot (bool, optional): 是否跳过首次截图。默认为 True。
         """
         main = self.main
         click_timer = Timer(3, count=6)
@@ -235,22 +253,21 @@ class FleetOperator:
             else:
                 main.device.screenshot()
 
-            # End
+            # 结束判定
             if not self.bar_opened():
                 break
 
-            # Click
+            # 点击折叠
             if click_timer.reached():
                 main.device.click(self._choose)
                 click_timer.reset()
 
     def click(self, index, skip_first_screenshot=True):
-        """
-        Choose a fleet on dropdown menu, and dropdown deactivated.
+        """在下拉菜单中点击选择指定舰队并等待菜单收起。
 
         Args:
-            index (int): Fleet index, 1-6.
-            skip_first_screenshot (bool):
+            index (int): 目标舰队编号，范围 1 到 6。
+            skip_first_screenshot (bool, optional): 是否跳过首次截图。默认为 True。
         """
         main = self.main
         button = self.get_button(index)
@@ -262,48 +279,43 @@ class FleetOperator:
                 main.device.screenshot()
 
             if not self.bar_opened():
-                # End
+                # 结束判定
                 if self.in_use():
                     break
                 else:
                     self.open()
 
-            # Click
+            # 点击对应项
             if click_timer.reached():
                 main.device.click(button)
                 click_timer.reset()
 
     def selected(self):
-        """
+        """获取下拉菜单中当前选中的舰队编号列表。
+
         Returns:
-            list: List of int. Currently selected fleet ranges from 1 to 6.
+            list[int]: 当前选中的舰队编号列表（1 到 6）。
         """
         data = self.parse_fleet_bar(self.main.image_crop(self._bar.button, copy=False))
         return data
 
     def in_use(self):
-        """
-        Returns:
-            bool: If has selected to any fleet.
-        """
-        # Handle the info bar of auto search info.
-        # if area_cross_area(self._in_use.area, INFO_BAR_1.area):
-        #     self.main.handle_info_bar()
+        """检测当前槽位是否已配置并使用了舰队。
 
-        # Cropping FLEET_*_IN_USE to avoid detecting info_bar, also do the trick.
-        # It also avoids wasting time on handling the info_bar.
+        Returns:
+            bool: 是否已选择任意舰队。
+        """
+        # 处理自动搜索信息栏
+        # 裁剪 FLEET_*_IN_USE 区域避免检测到信息栏，同时节省处理信息栏的时间
         image = self.main.image_crop(self._in_use.button, copy=False)
 
-        # special fix for Perseus skin, which color is so flat
-        # https://github.com/LmeSzinc/AzurLaneAutoScript/issues/5678
-        # no ship is in color (71, 70, 63)
+        # 针对英仙座皮肤纯色背景的特殊修正
         color = cv2.mean(image)[:3]
-        # Perseus skin
+        # 英仙座皮肤
         if color_similar(color, (224, 154, 114), threshold=30):
             return True
 
-        # Akane Shinjo skin: Room of Secrets
-        # special fix for fleet card bottom area having a bluish background color
+        # 新条茜皮肤（秘密客室）：舰队卡片底部带有蓝色背景的特殊修正
         if color_similar(color, (124, 141, 171), threshold=30):
             return True
 
@@ -311,21 +323,21 @@ class FleetOperator:
         return np.std(gray.flatten(), ddof=1) > self.FLEET_IN_USE_STD
 
     def bar_opened(self):
-        """
+        """检测舰队下拉菜单是否已处于展开状态。
+
         Returns:
-            bool: If dropdown menu appears.
+            bool: 下拉菜单是否已展开。
         """
-        # Check the brightness of the rightest column of the bar area.
+        # 检查菜单区域最右列的亮度
         luma = rgb2gray(self.main.image_crop(self._bar.button, copy=False))[:, -1]
-        # FLEET_PREPARATION is about 146~155
+        # 舰队准备界面展开时亮度大约在 146~155
         return np.sum(luma > 168) / luma.size > 0.5
 
     def ensure_to_be(self, index):
-        """
-        Set to a specific fleet.
+        """确保当前槽位切换为指定的舰队。
 
         Args:
-            index (int): Fleet index, 1-6.
+            index (int): 目标舰队编号，范围 1 到 6。
         """
         self.open()
         if index in self.selected():
@@ -338,11 +350,47 @@ class FleetPreparation(InfoHandler):
     map_fleet_checked = False
     map_is_hard_mode = False
 
-    def fleet_preparation(self, skip_first_screenshot=True):
-        """更换舰队。
+    def _handle_recommend_confirm(self, name=''):
+        """确认推荐配队后的补齐弹窗。
+
+        舰队槽位已有舰船时，点击推荐会弹出「是否采用推荐配置补齐空余位置」，
+        确定后才会填充剩余位置；舰队为空时点击推荐直接生效，没有弹窗。
+
+        Args:
+            name (str, optional): 弹窗标记，用于区分点击记录中的确认按钮。默认为 ''。
 
         Returns:
-            bool: 是否进行了更换。
+            bool: 是否确认了弹窗。
+        """
+        timeout = Timer(1, count=3).start()
+        while 1:
+            self.device.screenshot()
+            # interval=0：两支舰队的补齐弹窗间隔可能小于默认 2s 的点击间隔限制，
+            # 共用同一个按钮名的计时器会吞掉后续弹窗
+            if self.handle_popup_confirm(name, interval=0):
+                # 等待弹窗消失，填充动画期间弹窗仍在前台，会遮挡下一个推荐按钮
+                disappear = Timer(2, count=6).start()
+                while 1:
+                    self.device.screenshot()
+                    if not self.appear(POPUP_CONFIRM, offset=self._popup_offset) \
+                            and not self.appear(POPUP_CONFIRM_WHITE, offset=self._popup_offset):
+                        break
+                    if disappear.reached():
+                        break
+                return True
+            if timeout.reached():
+                return False
+
+    def fleet_preparation(self, skip_first_screenshot=True):
+        """更换与确认出击舰队。
+
+        包含普通与困难模式的配队检查、推荐配队、困难限制检测与潜艇设置。
+
+        Args:
+            skip_first_screenshot (bool, optional): 是否跳过首次截图。默认为 True。
+
+        Returns:
+            bool: 是否进行了舰队设置或更换。
         """
         logger.info(f'[地图-编队] 使用舰队: {[self.config.Fleet_Fleet1, self.config.Fleet_Fleet2, self.config.Submarine_Fleet]}')
         if self.map_fleet_checked:
@@ -352,7 +400,7 @@ class FleetPreparation(InfoHandler):
         # 适用于舰队槽位未完全解锁的账号，避免下拉菜单检测卡死
         if self.config.Fleet_SkipPreparation:
             logger.info('[地图-编队] 跳过舰队准备 (Fleet_SkipPreparation=True), '
-                        'use current pre-selected fleet in game')
+                        '使用游戏中当前预选的舰队')
             return True
 
         if self.appear(FLEET_1_CLEAR, offset=FleetOperator.OFFSET):
@@ -380,10 +428,56 @@ class FleetPreparation(InfoHandler):
             choose=SUBMARINE_CHOOSE, advice=SUBMARINE_ADVICE, bar=SUBMARINE_BAR, clear=SUBMARINE_CLEAR,
             in_use=SUBMARINE_IN_USE, hard_satisfied=SUBMARINE_HARD_SATIESFIED, main=self)
 
-        # Check if ship is prepared in hard mode
+        # 检查是否为困难模式
         h1, h2, h3 = fleet_1.is_hard_satisfied(), fleet_2.is_hard_satisfied(), submarine.is_hard_satisfied()
-        logger.info(f'[地图-编队] 困难满足: 舰队1: {h1}, 舰队2: {h2}, 潜艇: {h3}')
         self.map_is_hard_mode = h1 is not None or h2 is not None or h3 is not None
+
+        # 潜艇槽位可用性检测
+        # 缓存 submarine.allow() 以免展开 fleet_2 遮挡潜艇按钮后检测不一致
+        map_allow_submarine = submarine.allow()
+        logger.attr('允许潜艇', map_allow_submarine)
+
+        # 困难图自动配队：直接采用游戏内置的推荐阵容，用户不必事先在游戏里配好舰队
+        if self.map_is_hard_mode and self.config.Campaign_UseRecommendFleet:
+            logger.info('[地图-编队] 困难图使用推荐配队')
+            self.device.screenshot()
+
+            if fleet_1.allow():
+                logger.info('[地图-编队] 舰队1使用推荐配队')
+                if self.appear_then_click(RECOMMEND_A, interval=2):
+                    self._handle_recommend_confirm('RecommendFleet1')
+            if fleet_2.allow():
+                logger.info('[地图-编队] 舰队2使用推荐配队')
+                if self.appear_then_click(RECOMMEND_B, interval=2):
+                    self._handle_recommend_confirm('RecommendFleet2')
+            if map_allow_submarine:
+                if self.config.Submarine_Fleet:
+                    logger.info('[地图-编队] 潜艇使用推荐配队')
+                    if self.appear_then_click(RECOMMEND_C, interval=2):
+                        self._handle_recommend_confirm('RecommendSubmarine')
+                else:
+                    submarine.clear()
+            else:
+                self.config.SUBMARINE = 0
+
+            # 复查困难满足状态，等待填充动画结束：连续两次读数一致即认为完成
+            check_timer = Timer(2, count=6).start()
+            prev = None
+            while 1:
+                self.device.screenshot()
+                curr = (
+                    fleet_1.is_hard_satisfied(),
+                    fleet_2.is_hard_satisfied(),
+                    submarine.is_hard_satisfied(),
+                )
+                if curr == prev:
+                    break
+                prev = curr
+                if check_timer.reached():
+                    break
+            h1, h2, h3 = prev
+
+        logger.info(f'[地图-编队] 困难满足: 舰队1: {h1}, 舰队2: {h2}, 潜艇: {h3}')
         if self.config.SERVER in ['cn', 'en', 'jp']:
             # 困难关卡一次只有一支舰队实际出击，另一支在基地待命、不参与战斗，
             # 所以待命舰队不应被强制要求满足困难限制（否则会误报"必须准备两只舰队"）。
@@ -407,10 +501,10 @@ class FleetPreparation(InfoHandler):
             if self.config.Submarine_Fleet:
                 submarine.raise_hard_not_satisfied()
 
-        # Skip fleet preparation in hard mode
+        # 困难模式跳过普通编队设置
         if self.map_is_hard_mode:
             logger.info('[地图-编队] 困难战役，无需舰队准备')
-            # Clear submarine if user did not set a submarine fleet
+            # 若用户未配置潜艇舰队则清空潜艇槽位
             if submarine.allow():
                 if self.config.Submarine_Fleet:
                     pass
@@ -420,21 +514,14 @@ class FleetPreparation(InfoHandler):
                 self.config.SUBMARINE = 0
             return False
 
-        # Submarine.
-        # cache submarine.allow() to avoid inconsistency after setting fleet_2
-        # because the expanded fleet_2 may cover submarine buttons
-        map_allow_submarine = submarine.allow()
-        logger.attr('允许潜艇', map_allow_submarine)
         if map_allow_submarine:
             if self.config.Submarine_Fleet:
                 if fleet_2.allow():
                     self.device.click(fleet_2._clear)
-                    # no need to take new screenshot, because submarine check does not need the fleet 2 part
+                    # 无需重新截图，潜艇检测不需要舰队2部分
                 submarine.ensure_to_be(self.config.Submarine_Fleet)
             else:
-                # clear submarine and fleet2 together using simple click
-                # this is faster because no need to wait clicking animation to disappear
-                # click success can be guaranteed by later calls of clear()
+                # 简单点击同时清空潜艇与舰队2以加快速度
                 op = False
                 if fleet_2.allow():
                     self.device.click(fleet_2._clear)
@@ -445,24 +532,18 @@ class FleetPreparation(InfoHandler):
                 if op:
                     self.device.screenshot()
 
-        # No need, this may clear FLEET_2 by mistake, clear FLEET_2 in map config.
-        # if not fleet_2.allow():
-        #     self.config.FLEET_2 = 0
-
         if self.config.Fleet_Fleet2:
-            # Using both fleets.
-            # Force to set it again.
-            # Fleets may reversed, because AL no longer treat the fleet with smaller index as first fleet
+            # 同时使用两支舰队，强制重新设置
             fleet_2.clear()
             fleet_1.ensure_to_be(self.config.Fleet_Fleet1)
             fleet_2.ensure_to_be(self.config.Fleet_Fleet2)
         else:
-            # Not using fleet 2.
+            # 不使用第二舰队
             if fleet_2.allow():
                 fleet_2.clear()
             fleet_1.ensure_to_be(self.config.Fleet_Fleet1)
 
-        # Check if submarine is empty again.
+        # 再次检查潜艇槽位是否为空
         if map_allow_submarine:
             if self.config.Submarine_Fleet:
                 pass

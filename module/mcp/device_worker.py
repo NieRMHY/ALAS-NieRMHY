@@ -9,6 +9,14 @@ from pathlib import Path
 
 
 def restart_adb():
+    """
+    重启 ADB 服务进程。
+
+    优先寻找部署配置或虚拟环境中的 ADB 二进制，依次执行 kill-server 和 start-server。
+
+    Returns:
+        dict: 包含执行结果描述的字典。
+    """
     from module.runtime.setting import State
 
     adb_path = State.deploy_config.AdbExecutable
@@ -24,6 +32,19 @@ def restart_adb():
 
 
 def perform(operation, instance):
+    """
+    在工作进程中执行具体的设备或模拟器操作。
+
+    Args:
+        operation: 操作指令类型，如 'restart_adb'、'restart_emulator'、'get_screenshot'。
+        instance: Alas 实例配置名称。
+
+    Returns:
+        dict: 包含文本或 base64 图像数据的执行结果字典。
+
+    Raises:
+        ValueError: 当操作指令不受支持时抛出。
+    """
     if operation == 'restart_adb':
         return restart_adb()
     os.environ['ALAS_CONFIG_NAME'] = instance
@@ -48,6 +69,14 @@ def perform(operation, instance):
 
 
 def execute(operation, instance, result_path):
+    """
+    执行设备操作并将结果序列化写入临时文件供父进程读取。
+
+    Args:
+        operation: 操作类型名称。
+        instance: 实例名称。
+        result_path: 结果保存的绝对路径。
+    """
     try:
         result = perform(operation, instance)
     except Exception as exc:

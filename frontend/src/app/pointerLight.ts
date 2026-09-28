@@ -1,3 +1,7 @@
+/**
+ * @fileoverview 顶栏光随鼠标掠光效果监听与 CSS 变量动态更新。
+ */
+
 import { useEffect, useSyncExternalStore } from 'react'
 import { useApp } from './context'
 import { usesMaterial } from './theme'

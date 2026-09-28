@@ -58,7 +58,7 @@ class TalentRef:
     name: str          # 规范名
     line: str          # 天赋线 id（普通天赋取 1 级名；特殊天赋取自身名）
     level: int         # 1/2/3；特殊天赋恒为 1
-    kind: str          # 'normal' | 'special'
+    kind: str          # 天赋类别: 'normal'（普通） | 'special'（特殊）
     effect: str = ''
     fixed_only: bool = False
 
@@ -278,6 +278,15 @@ class ScoreResult:
 
 
 def _find(talents: list[Talent], line: str) -> Talent | None:
+    """在天赋列表中查找指定天赋线的天赋。
+
+    Args:
+        talents (list[Talent]): 天赋列表。
+        line (str): 天赋线标识。
+
+    Returns:
+        Talent | None: 匹配的天赋对象，未找到返回 None。
+    """
     for t in talents:
         if t.line == line:
             return t

@@ -45,6 +45,8 @@ def ensure_frontend(root=None):
     fingerprint = source_fingerprint(directory)
     if (directory / 'dist/index.html').is_file() and marker.is_file() and marker.read_text().strip() == fingerprint:
         return
+    if os.environ.get('AZURPILOT_ANDROID') == '1':
+        raise RuntimeError('Android 运行包缺少与源码匹配的预构建前端，请安装兼容的 APK')
     command = npm_command()
     logger.info('正在构建 React 前端资源')
     flags = {'creationflags': subprocess.CREATE_NO_WINDOW} if hasattr(subprocess, 'CREATE_NO_WINDOW') else {}

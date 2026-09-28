@@ -89,6 +89,10 @@ class Timer:
 
     访问计数可以在慢速设备上提供鲁棒性——当截图耗时超过计时器限制时，
     仍能通过访问次数判断是否达到触发条件。
+
+    Attributes:
+        limit (int | float): 时间限制（秒）。
+        count (int): 访问次数限制。
     """
 
     def __init__(self, limit, count=0):

@@ -122,7 +122,9 @@ class OperationHandover(CampaignRun):
     def run(self):
         """执行一次作战委托。
 
-        Pages: in: any, out: 关卡页
+        Pages:
+            in: 任意页面
+            out: 关卡页
         """
         logger.hr('作战委托', level=1)
         count = self.config.OperationHandover_Count
@@ -304,7 +306,9 @@ class OperationHandover(CampaignRun):
         上一轮领奖没来得及收干净的结算 / 紧急委托 / 新船入手画面也会挡在这里，
         它们把关卡页整个盖住，下面的页面判断一个都命不中，所以循环里先收掉。
 
-        Pages: in: any, out: 关卡页 / 作战委托弹窗
+        Pages:
+            in: 任意页面
+            out: 关卡页 / 作战委托弹窗
         """
         name = to_map_file_name(self.config.Campaign_Name)
         self.load_campaign(name, folder='campaign_main')

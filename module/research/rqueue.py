@@ -39,17 +39,20 @@ class ResearchQueue(ResearchUI):
             因各服务器 UI 布局差异，通过 @Config.when 按服务器分别定义。
     """
     def research_queue_add(self, skip_first_screenshot=True):
-        """
+        """将选中的科研项目加入科研队列。
+
+        Args:
+            skip_first_screenshot (bool): 是否跳过首次截图。默认为 True。
+
         Returns:
-            bool: True if success to add to queue,
-                False if project requirements not satisfied, can't be added to queue
+            bool: 成功加入队列返回 True；项目前置条件不满足无法加入队列返回 False。
 
         Pages:
-            in: RESEARCH_QUEUE_ADD (is_in_research, DETAIL_NEXT)
-            out: is_in_research and stabled
+            in: RESEARCH_QUEUE_ADD（处于 is_in_research 且打开详情 DETAIL_NEXT）
+            out: is_in_research 且画面稳定
         """
         logger.hr('加入科研队列')
-        # POPUP_CONFIRM has just been clicked in research_project_start()
+        # 在 research_project_start() 中刚点击了 POPUP_CONFIRM
         self.popup_interval_clear()
         self.interval_clear([RESEARCH_QUEUE_ADD])
         while 1:
@@ -58,7 +61,7 @@ class ResearchQueue(ResearchUI):
             else:
                 self.device.screenshot()
 
-            # End
+            # 判定结束
             if self.is_research_stabled():
                 break
 
@@ -79,15 +82,14 @@ class ResearchQueue(ResearchUI):
         return True
 
     def _research_queue_add_available(self):
-        """
+        """检查加入队列按钮是否处于可用状态（未置灰）。
+
         Returns:
-            bool: True if able add to queue,
-                False if project requirements not satisfied, can't be added to queue
+            bool: 按钮可用返回 True，置灰（前置条件不足）返回 False。
         """
-        # RESEARCH_QUEUE_ADD.area is the letter `Queue`
-        # RESEARCH_QUEUE_ADD.button is the entire clickable area of button
-        # Available: (90, 142, 203)
-        # Unavailable: (153, 160, 170)
+        # RESEARCH_QUEUE_ADD.area 为 "Queue" 文字区域
+        # RESEARCH_QUEUE_ADD.button 为整个按钮可点击区域
+        # 可用: (90, 142, 203)，不可用: (153, 160, 170)
         r, g, b = get_color(self.device.image, RESEARCH_QUEUE_ADD.button)
         if b - min(r, g) > 60:
             return True
@@ -97,50 +99,43 @@ class ResearchQueue(ResearchUI):
     @cached_property
     @Config.when(SERVER='en')
     def queue_status_grids(self):
-        """
-        Status icons on the left
-        """
+        """左侧队列状态图标网格。"""
         return ButtonGrid(
             origin=(8, 259), delta=(0, 40.5), button_shape=(25, 25), grid_shape=(1, 5), name='QUEUE_STATUS')
 
     @cached_property
     @Config.when(SERVER='jp')
     def queue_status_grids(self):
-        """
-        Status icons on the left
-        """
+        """左侧队列状态图标网格。"""
         return ButtonGrid(
             origin=(18, 259), delta=(0, 40.5), button_shape=(25, 25), grid_shape=(1, 5), name='QUEUE_STATUS')
 
     @cached_property
     @Config.when(SERVER='tw')
     def queue_status_grids(self):
-        """
-        Status icons on the left
-        """
+        """左侧队列状态图标网格。"""
         return ButtonGrid(
             origin=(8, 259), delta=(0, 40.5), button_shape=(25, 25), grid_shape=(1, 5), name='QUEUE_STATUS')
 
     @cached_property
     @Config.when(SERVER=None)
     def queue_status_grids(self):
-        """
-        Status icons on the left
-        """
+        """左侧队列状态图标网格。"""
         return ButtonGrid(
             origin=(18, 259), delta=(0, 40.5), button_shape=(25, 25), grid_shape=(1, 5), name='QUEUE_STATUS')
 
     def _queue_status_detect(self, button):
-        """
+        """检测单个槽位状态图标的颜色状态。
+
         Args:
-            button: Button of status icon
+            button (Button): 槽位状态图标按钮。
 
         Returns:
-            str:
-                'finished': Orange ✓ surrounded by orange border
-                'running': Black ✓ surrounded by research progress, gray and blue
-                'waiting': Gray … surrounded by gray border
-                'empty': Black … surrounded by black border or just nothing
+            str: 槽位状态：
+                'finished'：已完成（橙色边框内有橙色对勾）
+                'running'：运行中（黑色对勾与环形进度条）
+                'waiting'：等待中（灰色边框内灰色省略号）
+                'empty'：空槽位（黑色边框或空白）
         """
         center = button.crop((7, 7, 21, 21))
         if self.image_color_count(center, color=(255, 158, 57), threshold=75, count=20):
@@ -157,9 +152,10 @@ class ResearchQueue(ResearchUI):
         return 'running'
 
     def get_queue_slot(self):
-        """
+        """获取科研队列中当前可用的空槽位数量。
+
         Returns:
-            int: Number of empty slots in queue
+            int: 队列中的空槽位数量（0 到 5）。
 
         Pages:
             in: is_in_queue
@@ -176,15 +172,16 @@ class ResearchQueue(ResearchUI):
         return index
 
     def get_research_ended(self):
-        """
+        """获取队列中首个科研项目的预计结束时间。
+
         Returns:
-            datetime: Time of the end of the first research in the queue.
+            datetime: 队列中首个科研项目的结束时间。队列为空时返回当前时间。
+
+        Raises:
+            GameBugError: 队列中首个科研未运行（游戏卡死或 bug）。
 
         Pages:
             in: is_in_queue
-
-        Raises:
-            GameBugError:
         """
         if self.image_color_count(QUEUE_REMAIN, color=(123, 125, 123), threshold=20, count=100):
             logger.error('[科研-队列] 队列中第一个科研未运行，'

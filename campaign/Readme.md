@@ -2,7 +2,7 @@
 
 The `/campaign` directory is used to place map files.
 
-To add a new event, add a new row in here, and run `python -m module.config.config_updater`. Some date in directory not equal to Aired date, because they use the map files in old events. Use `Ctrl+F` to search what you want.
+To add a new event, add a new row in here, and run `uv run -m module.config.config_updater`. Some date in directory not equal to Aired date, because they use the map files in old events. Use `Ctrl+F` to search what you want.
 
 **Aired Date** The date that the event aired for the first time.
 
@@ -313,3 +313,4 @@ To add a new event, add a new row in here, and run `python -m module.config.conf
 | 20260827   | raid 20260827            | The Big Shot's Proclamation                  | 大人物的预告信             | The Big Shot's Proclamation                        | 偉いやつの予告状                     | -                          |
 | 20260908   | event 20260908 cn        | Tales of the Paranormal                      | 幽影迷城                   | Tales of the Paranormal                            | 妖異奇譚                             | -                          |
 | 20260827   | raid 20260827            | The Big Shot's Proclamation                  | -                          | -                                                  | -                                    | 大人物的預告信             |
+| 20260924   | event 20260908 cn        | Tales of the Paranormal                      | -                          | -                                                  | -                                    | 幽影迷城                   |

@@ -39,9 +39,19 @@ class OSCamera(OSMapOperation, Camera):
     fleet_current: tuple
 
     def _map_swipe(self, vector, box=(239, 128, 993, 628)):
+        """执行地图滑动操作。
+
+        Args:
+            vector (tuple[int, int]): 滑动向量 (dx, dy)。
+            box (tuple[int, int, int, int]): 滑动安全区域。默认 (239, 128, 993, 628)。
+
+        Returns:
+            bool: 滑动操作是否执行成功。
+        """
         return super()._map_swipe(vector, box=box)
 
     def _view_init(self):
+        """初始化大世界地图视图对象及单应性变换参数。"""
         if not hasattr(self, 'view'):
             storage = ((10, 7), [(110.307, 103.657), (1012.311, 103.657), (-32.959, 600.567), (1113.057, 600.567)])
             view = View(self.config, mode='os', grid_class=OSGrid)
@@ -51,20 +61,29 @@ class OSCamera(OSMapOperation, Camera):
 
     @cached_property
     def radar(self):
-        """
+        """获取大世界小地图雷达实例。
+
         Returns:
-            Radar:
+            Radar: 雷达识别实例。
         """
         return Radar(self.config)
 
     def predict_radar(self):
-        """
-        Scan radar and merge it into map
-        """
+        """扫描小地图雷达并将目标合并到地图数据中。"""
         self.radar.predict(self.device.image)
         self.radar.show()
 
     def grid_is_in_sight(self, grid, camera=None, sight=None):
+        """判断指定格子是否在当前相机视野内。
+
+        Args:
+            grid: 目标格子或坐标。
+            camera: 相机位置，为 None 时使用当前相机位置。
+            sight: 视野范围，为 None 时使用地图默认视野。
+
+        Returns:
+            bool: 若在视野范围内返回 True，否则返回 False。
+        """
         location = location_ensure(grid)
         camera = location_ensure(camera) if camera is not None else self.camera
         if sight is None:
@@ -92,9 +111,10 @@ class OSCamera(OSMapOperation, Camera):
     #     return super().focus_to(location, swipe_limit=swipe_limit)
 
     def _get_map_outside_button(self):
-        """
+        """获取地图外的空白点击区域按钮。
+
         Returns:
-            Button: Click outside of map.
+            Button: 地图外部可点击区域按钮。
         """
         for _ in range(2):
             if self.view.left_edge:
@@ -112,8 +132,9 @@ class OSCamera(OSMapOperation, Camera):
             return button
 
     def update_os(self):
-        """
-        Similar to `Camera.update()`, but for OPSI.
+        """更新大世界地图视野与格子检测状态。
+
+        类似于 Camera.update()，专用于大世界场景。
         """
         # self.device.screenshot()
         self._view_init()
@@ -137,20 +158,16 @@ class OSCamera(OSMapOperation, Camera):
             self.view.backend.load = backup
 
     def convert_radar_to_local(self, location):
-        """
-        Converts the coordinate on radar to the coordinate of local map view,
-        also handles a rare game bug.
+        """将雷达相对坐标转换为本地地图视野中的绝对格子对象。
 
-        Usually, OPSI camera focus on current fleet, which is (5, 4) in local view.
-        The convert should be `local = view[np.add(radar, view.center_loca)]`
-        However, Azur Lane may bugged, not focusing current.
-        In this case, the convert should base on fleet position.
+        处理镜头未正对当前舰队的游戏客户端异常。通常情况下大世界相机聚焦于当前舰队，
+        对应本地视野中的 (5, 4)。若出现偏差则根据实际舰队位置进行校正。
 
         Args:
-            location: (x, y), Position on radar.
+            location (tuple[int, int]): 雷达上的相对坐标 (x, y)。
 
         Returns:
-            OSGrid: Grid instance in self.view
+            OSGrid: self.view 中的对应格子对象。
         """
         location = location_ensure(location)
 

@@ -169,7 +169,14 @@ u2.init.Initer = PatchedIniter
 
 
 def is_port_using(port_num):
-    """ if port is using by others, return True. else return False """
+    """检查本地端口是否已被占用。
+
+    Args:
+        port_num (int): 待检测的端口号。
+
+    Returns:
+        bool: 端口被占用返回 True，否则返回 False。
+    """
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.settimeout(2)
 
@@ -177,14 +184,21 @@ def is_port_using(port_num):
         s.bind(('127.0.0.1', port_num))
         return False
     except OSError:
-        # Address already bind
+        # 地址已被绑定
         return True
     finally:
         s.close()
 
 
 def random_port(port_range):
-    """ get a random port from port set """
+    """从指定的端口号范围内随机获取一个未占用的端口。
+
+    Args:
+        port_range (tuple[int, int]): 端口范围 (start, end)。
+
+    Returns:
+        int: 未被占用的可用端口号。
+    """
     new_port = random.choice(list(range(*port_range)))
     if is_port_using(new_port):
         return random_port(port_range)
@@ -193,17 +207,18 @@ def random_port(port_range):
 
 
 def recv_all(stream, chunk_size=4096, recv_interval=0.000) -> bytes:
-    """
+    """从 Socket 或流中持续读取所有可用数据直至结束。
+
     Args:
-        stream:
-        chunk_size:
-        recv_interval (float): Default to 0.000, use 0.001 if receiving as server
+        stream: 可读取数据的 Socket 或流对象。
+        chunk_size (int): 每次读取的缓冲区大小（字节）。
+        recv_interval (float): 每次读取后的休眠间隔（秒）。
 
     Returns:
-        bytes:
+        bytes: 聚合后的二进制数据。
 
     Raises:
-        AdbTimeout
+        AdbTimeout: 读取超时。
     """
     if isinstance(stream, AdbConnection):
         stream = stream.conn
@@ -217,7 +232,7 @@ def recv_all(stream, chunk_size=4096, recv_interval=0.000) -> bytes:
             chunk = stream.recv(chunk_size)
             if chunk:
                 fragments.append(chunk)
-                # See https://stackoverflow.com/questions/23837827/python-server-program-has-high-cpu-usage/41749820#41749820
+                # 参见 https://stackoverflow.com/questions/23837827/python-server-program-has-high-cpu-usage/41749820#41749820
                 time.sleep(recv_interval)
             else:
                 break
@@ -227,11 +242,10 @@ def recv_all(stream, chunk_size=4096, recv_interval=0.000) -> bytes:
 
 
 def possible_reasons(*args):
-    """
-    Show possible reasons
+    """打印可能导致设备连接/操作失败的原因列表。
 
-        Possible reason #1: <reason_1>
-        Possible reason #2: <reason_2>
+    Args:
+        *args: 错误原因描述字符串。
     """
     for index, reason in enumerate(args):
         index += 1
@@ -239,40 +253,50 @@ def possible_reasons(*args):
 
 
 class PackageNotInstalled(Exception):
+    """应用未安装异常。"""
     pass
 
 
 class ImageTruncated(Exception):
+    """截屏图像数据不完整/截断异常。"""
     pass
 
 
 def retry_sleep(trial):
-    # First trial
+    """根据当前重试轮次计算休眠等待时间（秒）。
+
+    Args:
+        trial (int): 重试次数（从 0 开始）。
+
+    Returns:
+        int: 休眠等待秒数。
+    """
+    # 首次尝试
     if trial == 0:
         return 0
-    # Failed once, fast retry
+    # 失败一次，快速重试
     elif trial == 1:
         return 0
-    # Failed twice
+    # 失败两次
     elif trial == 2:
         return 1
-    # Failed more
+    # 失败更多次，按标准间隔等待
     else:
         return RETRY_DELAY
 
 
 def handle_adb_error(e):
-    """
+    """根据 ADB 错误类型判断是否应该触发重试并输出对应的诊断信息。
+
     Args:
-        e (Exception):
+        e (Exception): 捕获到的异常实例。
 
     Returns:
-        bool: If should retry
+        bool: 如果可以通过重连/重试恢复则返回 True，否则返回 False。
     """
     text = str(e)
     if 'not found' in text:
-        # When you call `adb disconnect <serial>`
-        # Or when adb server was killed (low possibility)
+        # 当执行 `adb disconnect <serial>` 或 adb server 意外被杀时触发
         # AdbError(device '127.0.0.1:59865' not found)
         logger.error(e)
         return True
@@ -282,28 +306,23 @@ def handle_adb_error(e):
         return True
     elif 'closed' in text:
         # AdbError(closed)
-        # Usually after AdbTimeout(adb read timeout)
-        # Disconnect and re-connect should fix this.
+        # 通常发生于 AdbTimeout 之后，断开并重连即可恢复
         logger.error(e)
         return True
     elif 'device offline' in text:
         # AdbError(device offline)
-        # When a device that has been connected wirelessly is disconnected passively,
-        # it does not disappear from the adb device list,
-        # but will be displayed as offline.
-        # In many cases, such as disconnection and recovery caused by network fluctuations,
-        # or after VMOS reboot when running Alas on a phone,
-        # the device is still available, but it needs to be disconnected and re-connected.
+        # 无线连接的设备被动断开后不会从 adb 列表消失，而是显示为 offline
+        # 网络波动断开恢复后或手机 VMOS 重启后，需要断开并重新连接
         logger.error(e)
         return True
     elif 'is offline' in text:
         # RuntimeError: USB device 127.0.0.1:7555 is offline
-        # Raised by uiautomator2 when current adb service is killed by another version of adb service.
+        # 当当前 ADB 服务被另一个版本的 ADB 抢占关闭时由 uiautomator2 抛出
         logger.error(e)
         return True
     elif text == 'rest':
         # AdbError(rest)
-        # Response telling adbd service has reset, client should reconnect
+        # 服务端响应表明 adbd 服务已重置，客户端应重新建立连接
         logger.error(e)
         return True
     elif text == '':
@@ -313,29 +332,29 @@ def handle_adb_error(e):
         logger.error(e)
         return True
     else:
-        # AdbError()
+        # 未知 AdbError
         logger.exception(e)
         possible_reasons(
-            'If you are using BlueStacks or LD player or WSA, please enable ADB in the settings of your emulator',
-            'Emulator died, please restart emulator',
-            'Serial incorrect, no such device exists or emulator is not running'
+            '如果使用 BlueStacks、雷电模拟器或 WSA，请在模拟器设置中启用 ADB',
+            '模拟器已崩溃，请重启模拟器',
+            '序列号错误，设备不存在或模拟器未运行'
         )
         return False
 
 
 def handle_unknown_host_service(e):
-    """
+    """处理 unknown host service 错误（通常由不同版本 ADB 相互抢占引发）。
+
     Args:
-        e (Exception):
+        e (Exception): 捕获到的异常实例。
 
     Returns:
-        bool: If should retry
+        bool: 是否应触发重试。
     """
     text = str(e)
     if 'unknown host service' in text:
-        # AdbError(unknown host service)
-        # Another version of ADB service started, current ADB service has been killed.
-        # Usually because user opened a Chinese emulator, which uses ADB from the Stone Age.
+        # 启动了另一个版本的 ADB 服务，导致当前 ADB 服务被终止
+        # 常见于启动了自带古老版本 ADB 的国产模拟器
         logger.error(e)
         return True
     else:
@@ -343,12 +362,13 @@ def handle_unknown_host_service(e):
 
 
 def get_serial_pair(serial):
-    """
+    """将序列号解析为 (port_serial, emulator_serial) 对。
+
     Args:
-        serial (str):
+        serial (str): 原始序列号字符串。
 
     Returns:
-        tuple[Optional[str], Optional[str]]: `127.0.0.1:5555+{X}` and `emulator-5554+{X}`, 0 <= X <= 32
+        tuple[str | None, str | None]: `127.0.0.1:5555+{X}` 和 `emulator-5554+{X}` 二元组 (0 <= X <= 64)。
     """
     if serial.startswith('127.0.0.1:'):
         try:
@@ -385,15 +405,14 @@ def removesuffix(s: bytes, suffix: bytes) -> bytes: ...
 
 
 def removeprefix(s, prefix):
-    """
-    Backport `string.removeprefix(prefix)`, which is on Python>=3.9
+    """移除字符串或字节串的前缀（兼容 Python 3.9 之前版本）。
 
     Args:
-        s (str | bytes):
-        prefix (str | bytes):
+        s (str | bytes): 目标字符串或字节串。
+        prefix (str | bytes): 待移除的前缀。
 
     Returns:
-        str | bytes:
+        str | bytes: 移除前缀后的结果。
     """
     if s.startswith(prefix):
         return s[len(prefix):]
@@ -401,54 +420,54 @@ def removeprefix(s, prefix):
 
 
 def removesuffix(s, suffix):
-    """
-    Backport `string.removesuffix(suffix)`, which is on Python>=3.9
+    """移除字符串或字节串的后缀（兼容 Python 3.9 之前版本）。
 
     Args:
-        s (str | bytes):
-        suffix (str | bytes):
+        s (str | bytes): 目标字符串或字节串。
+        suffix (str | bytes): 待移除的后缀。
 
     Returns:
-        str | bytes:
+        str | bytes: 移除后缀后的结果。
     """
-    # s[:-0] is empty string, so we need to check if suffix is empty
+    # suffix 为空时 s[:-0] 会导致空字符串，故需特别判断
     if suffix and s.endswith(suffix):
         return s[:-len(suffix)]
     return s
 
 
 class IniterNoMinicap(u2.init.Initer):
+    """禁止在模拟器上安装 minicap 的 Initer。"""
+
     @property
     def minicap_urls(self):
-        """
-        Don't install minicap on emulators, return empty urls.
-
-        binary from https://github.com/openatx/stf-binaries
-        only got abi: armeabi-v7a and arm64-v8a
-        """
+        """返回空 URL 列表，禁止在模拟器上下载安装 minicap。"""
         return []
 
 
 class Device(u2.Device):
+    """继承 u2.Device，覆写悬浮窗等行为。"""
+
     def show_float_window(self, show=True):
-        """
-        Don't show float windows.
-        """
+        """禁止弹出悬浮窗。"""
         pass
 
 
-# Monkey patch
+# 猴子补丁
 u2.init.Initer = IniterNoMinicap
 u2.Device = Device
 
 
 class HierarchyButton:
-    """
-    Convert UI hierarchy to an object like the Button in Alas.
-    """
+    """将 UI 层级结构转换为类似 Alas 中 Button 的对象。"""
     _name_regex = re.compile('@.*?=[\'\"](.*?)[\'\"]')
 
     def __init__(self, hierarchy: etree._Element, xpath: str):
+        """初始化层级按钮。
+
+        Args:
+            hierarchy (etree._Element): XML UI 树根节点。
+            xpath (str): 目标节点的 XPath 表达式。
+        """
         self.hierarchy = hierarchy
         self.xpath = xpath
         self.nodes = hierarchy.xpath(xpath)

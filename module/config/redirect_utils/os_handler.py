@@ -6,13 +6,13 @@
 
 
 def action_point_redirect(value):
-    """
-    redirect attr about action point
+    """大世界行动点配置值重定向转换。
 
     Args:
-        value (bool):
-          If Enable, return 5.
-          If Disable, return 0.
+        value (bool): 旧版布尔配置值。如果为 True 则返回 5，否则返回 0。
+
+    Returns:
+        int: 新版对应的行动点数值。
     """
     if value is True:
         return 5

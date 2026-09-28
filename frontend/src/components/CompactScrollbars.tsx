@@ -1,3 +1,7 @@
+/**
+ * @fileoverview 紧凑主题悬停浮层滚动条组件。
+ */
+
 import { useEffect, useRef } from 'react'
 import { useLocation } from 'react-router-dom'
 import { useApp } from '../app/context'

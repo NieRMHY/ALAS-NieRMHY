@@ -24,7 +24,10 @@ except ImportError:
         与 decorator 模块不同，不会保留函数签名。
 
         Args:
-            caller: 调用函数，签名如 caller(f, *args, **kwargs)。
+            caller (Callable): 调用函数，签名如 caller(f, *args, **kwargs)。
+
+        Returns:
+            Callable: 转换后的装饰器函数。
         """
 
         def decor(f):
@@ -42,20 +45,23 @@ def __retry_internal(f, exceptions=Exception, tries=-1, delay=0, max_delay=None,
     """执行函数并在失败时重试。
 
     Args:
-        f: 要执行的函数。
-        exceptions: 需要捕获的异常或异常元组。默认为 Exception。
-        tries: 最大尝试次数。默认为 -1（无限次）。
-        delay: 重试之间的初始延迟秒数。默认为 0。
-        max_delay: 延迟的最大值。默认为 None（无限制）。
-        backoff: 重试延迟的乘数因子。默认为 1（无退避）。
+        f (Callable): 要执行的函数。
+        exceptions (type[Exception] | tuple[type[Exception], ...]): 需要捕获的异常或异常元组。默认为 Exception。
+        tries (int): 最大尝试次数。默认为 -1（无限次）。
+        delay (int | float): 重试之间的初始延迟秒数。默认为 0。
+        max_delay (int | float | None): 延迟的最大值。默认为 None（无限制）。
+        backoff (int | float | tuple): 重试延迟的乘数因子。默认为 1（无退避）。
             如果是数字则为固定值，如果是元组 (min, max) 则为随机范围。
-        jitter: 重试延迟的额外秒数。默认为 0。
+        jitter (int | float | tuple): 重试延迟的额外秒数。默认为 0。
             如果是数字则为固定值，如果是元组 (min, max) 则为随机范围。
-        logger: 失败时调用 logger.warning(fmt, error, delay)。
-            默认为 retry.logging_logger。如果为 None 则禁用日志。
+        logger (logging.Logger | None): 失败时记录日志的 Logger 对象。
+            默认为 logging_logger，为 None 则禁用日志。
 
     Returns:
-        f 函数的返回值。
+        Any: f 函数的返回值。
+
+    Raises:
+        Exception: 达到最大尝试次数后抛出最后一次捕获的异常。
     """
     _tries, _delay = tries, delay
     while _tries:
@@ -88,18 +94,19 @@ def retry(exceptions=Exception, tries=-1, delay=0, max_delay=None, backoff=1, ji
     """返回一个重试装饰器。
 
     Args:
-        exceptions: 需要捕获的异常或异常元组。默认为 Exception。
-        tries: 最大尝试次数。默认为 -1（无限次）。
-        delay: 重试之间的初始延迟秒数。默认为 0。
-        max_delay: 延迟的最大值。默认为 None（无限制）。
-        backoff: 重试延迟的乘数因子。默认为 1（无退避）。
-        jitter: 重试延迟的额外秒数。默认为 0。
+        exceptions (type[Exception] | tuple[type[Exception], ...]): 需要捕获的异常或异常元组。默认为 Exception。
+        tries (int): 最大尝试次数。默认为 -1（无限次）。
+        delay (int | float): 重试之间的初始延迟秒数。默认为 0。
+        max_delay (int | float | None): 延迟的最大值。默认为 None（无限制）。
+        backoff (int | float | tuple): 重试延迟的乘数因子。默认为 1（无退避）。
             如果是数字则为固定值，如果是元组 (min, max) 则为随机范围。
-        logger: 失败时调用 logger.warning(fmt, error, delay)。
-            默认为 retry.logging_logger。如果为 None 则禁用日志。
+        jitter (int | float | tuple): 重试延迟的额外秒数。默认为 0。
+            如果是数字则为固定值，如果是元组 (min, max) 则为随机范围。
+        logger (logging.Logger | None): 失败时记录日志的 Logger 对象。
+            默认为 logging_logger，为 None 则禁用日志。
 
     Returns:
-        重试装饰器。
+        Callable: 重试装饰器包装函数。
     """
 
     @decorator
@@ -118,21 +125,21 @@ def retry_call(f, fargs=None, fkwargs=None, exceptions=Exception, tries=-1, dela
     """调用函数并在失败时重新执行。
 
     Args:
-        f: 要执行的函数。
-        fargs: 函数的位置参数。
-        fkwargs: 函数的关键字参数。
-        exceptions: 需要捕获的异常或异常元组。默认为 Exception。
-        tries: 最大尝试次数。默认为 -1（无限次）。
-        delay: 重试之间的初始延迟秒数。默认为 0。
-        max_delay: 延迟的最大值。默认为 None（无限制）。
-        backoff: 重试延迟的乘数因子。默认为 1（无退避）。
-        jitter: 重试延迟的额外秒数。默认为 0。
+        f (Callable): 要执行的函数。
+        fargs (list | tuple | None): 函数的位置参数。
+        fkwargs (dict | None): 函数的关键字参数。
+        exceptions (type[Exception] | tuple[type[Exception], ...]): 需要捕获的异常或异常元组。默认为 Exception。
+        tries (int): 最大尝试次数。默认为 -1（无限次）。
+        delay (int | float): 重试之间的初始延迟秒数。默认为 0。
+        max_delay (int | float | None): 延迟的最大值。默认为 None（无限制）。
+        backoff (int | float | tuple): 重试延迟的乘数因子。默认为 1（无退避）。
+        jitter (int | float | tuple): 重试延迟的额外秒数。默认为 0。
             如果是数字则为固定值，如果是元组 (min, max) 则为随机范围。
-        logger: 失败时调用 logger.warning(fmt, error, delay)。
-            默认为 retry.logging_logger。如果为 None 则禁用日志。
+        logger (logging.Logger | None): 失败时记录日志的 Logger 对象。
+            默认为 logging_logger，为 None 则禁用日志。
 
     Returns:
-        f 函数的返回值。
+        Any: f 函数的返回值。
     """
     args = fargs if fargs else list()
     kwargs = fkwargs if fkwargs else dict()

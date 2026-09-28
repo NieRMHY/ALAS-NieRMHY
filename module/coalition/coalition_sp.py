@@ -10,11 +10,17 @@ from module.config.config import TaskEnd
 
 
 class CoalitionSP(Coalition):
+    """联合出击 SP 关卡任务处理器。"""
+
     def run(self, *args, **kwargs):
+        """执行 SP 关卡单次挑战任务。
+
+        运行 SP 难度一次，若成功挑战则延期至次日，否则停止任务。
+        """
         try:
             super().run(mode='sp', total=1)
         except TaskEnd:
-            # Catch task switch
+            # 捕获任务切换信号
             pass
         if self.run_count > 0:
             self.config.task_delay(server_update=True)

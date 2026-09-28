@@ -288,7 +288,7 @@ MCP 没有自己的 `<Task>.<Group>.<Argument>` 配置，行为由部署配置�
 
 ## 14. 生命周期
 
-独立模式（`python mcp_server_sse.py`）：
+独立模式（`uv run python mcp_server_sse.py`）：
 
 1. 导入期：创建模块级 `Server`、`SseServerTransport`、默认 `Tools` 与 `app = create_app()`。
 2. `__main__`：`_resolve_standalone_password()`（deploy.yaml → 公网自动生成并落盘）→ `configure_auth(..., public_bind=True)` → uvicorn 监听 `0.0.0.0:22268`。

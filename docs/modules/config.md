@@ -340,7 +340,7 @@ stateDiagram-v2
 
 ### 版本迁移（redirection）
 
-`ConfigUpdater.redirection` 表：`(源路径, 目标路径, 可选转换函数)`。源值缺失则跳过；目标已有值则不覆盖（同键迁移除外）。转换函数放 `redirect_utils/`（如 `upload_redirect` 合并布尔对、`coalition_to_little_academy` 归一联动难度、`execute_fixed_patrol_scan_redirect` 清洗旧枚举）。新增迁移后旧配置在下次 `read_file` 时自动转换，无需用户操作。
+`ConfigUpdater.redirection` 表：`(源路径, 目标路径, 可选转换函数)`。源值缺失则跳过；目标已有值则不覆盖（同键迁移除外）。转换函数放 `redirect_utils/`（如 `upload_redirect` 合并布尔对、`coalition_to_little_academy` 归一联动难度、`execute_fixed_patrol_scan_redirect` 清洗旧枚举、`opsi_record_redirect` 把单一掉落开关铺给按任务拆分的 8 个新开关）。目标路径写成 tuple 时，转换函数需返回等长序列逐个对应。新增迁移后旧配置在下次 `read_file` 时自动转换，无需用户操作。
 
 ### 保存联动
 

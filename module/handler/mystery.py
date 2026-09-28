@@ -61,10 +61,10 @@ class MysteryHandler(StrategyHandler, EnemySearchingHandler):
     def handle_mystery_items(self, button=None, drop=None):
         """处理神秘格子的道具获取事件。
 
-        检测 "获得道具" 界面，记录掉落并关闭界面。
+        检测“获得道具”界面，记录掉落并关闭界面。
 
         Args:
-            button (Button | None): 点击按钮。当 `MAP_MYSTERY_MAP_CLICK` 关闭时
+            button (Button | None): 点击按钮。当 MAP_MYSTERY_MAP_CLICK 关闭时
                 使用默认 MYSTERY_ITEM 按钮。
             drop (DropImage | None): 掉落记录对象。
 

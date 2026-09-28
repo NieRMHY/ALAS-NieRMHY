@@ -125,13 +125,14 @@ class GlobeDetection:
         return perspective_transform(points, data=self.homography.homo_invt)
 
     def find_peaks(self, image, para):
-        """
+        """提取图像中的海域边缘峰值特征。
+
         Args:
-            image (np.ndarray): Screenshot.
-            para (dict): Parameters use in scipy.signal.find_peaks.
+            image (np.ndarray): 输入图像数据。
+            para (dict): 传递给 scipy.signal.find_peaks 的参数字典。
 
         Returns:
-            np.ndarray: Image in monochrome, map borders in white, others in black.
+            np.ndarray: 单色边界图像，边缘为白色，其余为黑色。
         """
         r, g, b = cv2.split(image)
         # b = cv2.add(cv2.multiply(g, 0.6), cv2.multiply(b, 0.4))
@@ -152,12 +153,13 @@ class GlobeDetection:
         return image
 
     def perspective_transform(self, image):
-        """
+        """对截图执行透视校正变换，消除俯视透视畸变。
+
         Args:
-            image (np.ndarray): Screenshot with perspective.
+            image (np.ndarray): 带有透视效果的原始截图。
 
         Returns:
-            np.ndarray: Image without perspective, like normal 2D maps.
+            np.ndarray: 校正为正视平面的 2D 地图图像。
         """
         image = cv2.warpPerspective(image, self.homography.homo_data, self.homography.homo_size)
         return image

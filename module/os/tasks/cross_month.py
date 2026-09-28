@@ -23,10 +23,19 @@ from module.os.tasks.meowfficer_farming import MeowfficerTargetZoneMixin
 
 class OpsiCrossMonth(MeowfficerTargetZoneMixin, OSMap):
     def os_cross_month_end(self):
+        """延迟跨月重置任务至下次重置前 10 分钟并停止任务。"""
         self.config.task_delay(target=get_os_next_reset() - timedelta(minutes=10))
         self.config.task_stop()
 
     def os_cross_month(self):
+        """执行大世界跨月任务主流程。
+
+        在月度重置前 10 分钟内等待重置，重置后依次清理每日任务、深渊坐标、
+        隐秘海域和指挥喵海域。
+
+        Raises:
+            ScriptError: 下次重置时间早于当前时间时抛出。
+        """
         next_reset = get_os_next_reset()
         now = current_time()
         logger.attr('大世界下次重置', next_reset)

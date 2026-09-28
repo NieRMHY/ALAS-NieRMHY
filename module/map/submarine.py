@@ -6,14 +6,22 @@ from module.logger import logger
 
 
 class SubmarineAdvanced:
-    """每张地图独立规划潜艇出击，自律寻敌不使用高级规则。"""
+    """潜艇高级出击规则与地图策略对接类。
+
+    每张地图独立规划潜艇出击，自律寻敌不使用高级规则。
+
+    Attributes:
+        submarine_advanced (SubmarineAdvancedConfig | None): 潜艇高级配置对象。
+        _submarine_advanced_target (tuple | None): 当前规划针对的目标缓存键。
+        submarine_hunt_enabled (bool | None): 当前潜艇狩猎开关状态。
+    """
 
     submarine_advanced = None
     _submarine_advanced_target = None
     submarine_hunt_enabled = None
 
     def submarine_advanced_reset(self):
-        """初始化弹药和支援次数，清除上一张地图的计划。"""
+        """初始化弹药和支援次数，清除上一张地图的规划状态。"""
         self.submarine_advanced = None
         self._submarine_advanced_target = None
         self.submarine_hunt_enabled = None
@@ -22,7 +30,14 @@ class SubmarineAdvanced:
             self.submarine_advanced = SubmarineAdvancedConfig(self.config.Submarine_AdvancedConfig)
 
     def submarine_advanced_prepare(self, location, expected):
-        """在点击敌舰前配置狩猎，必要时将潜艇移到最低代价的覆盖位置。
+        """在点击敌舰前配置潜艇狩猎，必要时将潜艇移到最低代价的覆盖位置。
+
+        Args:
+            location (tuple | str): 目标网格坐标或节点名。
+            expected (str): 预期事件类型。
+
+        Raises:
+            ScriptError: 无法确认潜艇狩猎开关状态时抛出。
 
         Pages:
             in: IN_MAP

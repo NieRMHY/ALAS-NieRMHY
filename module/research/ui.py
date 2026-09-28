@@ -80,7 +80,11 @@ class ResearchUI(UI):
         self.wait_until_stable(STABLE_CHECKER_CENTER)
 
     def queue_enter(self, skip_first_screenshot=True):
-        """
+        """进入科研队列界面。
+
+        Args:
+            skip_first_screenshot (bool): 是否跳过首次截图。默认为 True。
+
         Pages:
             in: is_in_research
             out: is_in_queue
@@ -89,20 +93,20 @@ class ResearchUI(UI):
                       retry_wait=1, skip_first_screenshot=skip_first_screenshot)
 
     def queue_quit(self):
-        """
+        """退出科研队列界面，返回科研主界面。
+
         Pages:
             in: is_in_queue
-            out: is_in_research, project stabled
+            out: is_in_research 且画面稳定
         """
         logger.info('[科研-队列] 退出队列')
         for _ in self.loop():
-            if self.is_in_research():
+            if self.is_research_stabled():
                 break
             if self.is_in_queue(interval=3):
                 self.device.click(BACK_ARROW)
                 continue
-            # handle get_items
-            # get_items should be handled when receiving, but sometimes just slow network
+            # 处理可能延迟弹出的获得道具弹窗
             if self.appear(GET_ITEMS_1, offset=(20, 20), interval=3):
                 logger.info(f'[科研-队列] {GET_ITEMS_1} -> {GET_ITEMS_RESEARCH_SAVE}')
                 self.device.click(GET_ITEMS_RESEARCH_SAVE)
@@ -115,9 +119,10 @@ class ResearchUI(UI):
         self.ensure_research_center_stable()
 
     def get_items(self):
-        """
+        """检测并返回当前出现的获得物资/道具弹窗按钮。
+
         Returns:
-            Button:
+            Button | None: 匹配到的获得道具按钮；未出现时返回 None。
         """
         if self.appear(GET_ITEMS_3, offset=(5, 5)):
             if self.image_color_count(GET_ITEMS_3_CHECK, color=(255, 255, 255), threshold=30, count=100):
@@ -129,9 +134,12 @@ class ResearchUI(UI):
         return None
 
     def drop_record(self, drop):
-        """
+        """记录科研完成后的掉落截图。
+
+        针对不同类型的获得道具弹窗进行截图，大弹窗（GET_ITEMS_3）还会滑动以截取完整掉落。
+
         Args:
-            drop (DropRecord):
+            drop (DropRecord): 掉落记录统计对象。
         """
         if not drop:
             return
@@ -149,12 +157,13 @@ class ResearchUI(UI):
             drop.add(self.device.image)
 
     def get_research_status(self, image):
-        """
+        """检测科研主页 5 个槽位的当前项目状态。
+
         Args:
-            image: Screenshot
+            image (np.ndarray): 游戏画面截图。
 
         Returns:
-            list[str]: List of project status
+            list[str]: 包含 5 个槽位状态的字符串列表（'waiting' / 'running' / 'detail' / 'unknown'）。
         """
         out = []
         for index, status, scaling in zip(range(5), RESEARCH_STATUS, RESEARCH_SCALING):

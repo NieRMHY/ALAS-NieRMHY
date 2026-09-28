@@ -183,8 +183,16 @@ worker 是 spawn 的全新解释器：初始化文件日志（`log/{配置名}.t
 
 | 进程层级 | 退出码 | 常量/触发源 | 场景说明 |
 | :--- | :---: | :--- | :--- |
-| **WebUI 监督父进程** (`gui.py`) | `0` | 正常退出 | 用户按下 Ctrl+C (`KeyboardInterrupt`) 或非重载模式下正常退出 |
-| **WebUI 监督父进程** (`gui.py`) | `70` | `EXIT_STARTUP_FAILURE` | 启动或热重载恢复致命失败（残留 worker 无法回收、依赖同步失败、前端构建失败、子进程连续启动/监听失败、反复意外崩溃超过 3 次等） |
+| **WebUI 监督父进程** (`gui.py`) | `0` | `EXIT_SUCCESS` | 用户按下 Ctrl+C (`KeyboardInterrupt`) 或非重载模式下正常退出 |
+| **WebUI 监督父进程** (`gui.py`) | `70` | `EXIT_STARTUP_FAILURE` | 通用/未分类启动致命失败兜底 |
+| **WebUI 监督父进程** (`gui.py`) | `71` | `EXIT_WORKER_CLEANUP_FAILURE` | 残留 worker 无法回收，无法保证任务唯一 |
+| **WebUI 监督父进程** (`gui.py`) | `72` | `EXIT_DEPENDENCY_SYNC_FAILURE` | 启动前依赖同步失败或服务未就绪 |
+| **WebUI 监督父进程** (`gui.py`) | `73` | `EXIT_FRONTEND_BUILD_FAILURE` | React 前端构建失败（Node.js / npm 缺失或构建报错） |
+| **WebUI 监督父进程** (`gui.py`) | `74` | `EXIT_SUBPROCESS_SPAWN_FAILURE` | WebUI 服务子进程连续拉起失败 |
+| **WebUI 监督父进程** (`gui.py`) | `75` | `EXIT_PORT_LISTEN_TIMEOUT` | WebUI 子进程连续端口监听/就绪超时 |
+| **WebUI 监督父进程** (`gui.py`) | `76` | `EXIT_WEBUI_RUNTIME_CRASH` | WebUI 启动就绪后反复意外崩溃退出（连续 3 次） |
+| **WebUI 监督父进程** (`gui.py`) | `77` | `EXIT_PROCESS_TERMINATE_FAILURE` | 终止旧 WebUI 子进程失败（进程僵死无法回收） |
+| **WebUI 监督父进程** (`gui.py`) | `78` | `EXIT_IPC_FAILURE` | 进程间通信或重载状态读取异常 |
 | **Worker / 调度器** (`alas.py`) | `0` | 正常更新退出 | 调度器检测到 `stop_event.is_set()`，跳出主循环安全退出 |
 | **Worker / 调度器** (`alas.py`) | `1` | 致命异常退出 | 缺少配置文件 (`is_oobe_needed`)、敏感任务失败 (`_check_sensitive_exit`)、连续代码错误超限 (`ScriptError`) |
 | **Worker / 调度器** (`alas.py`) | *(不退出)* | 容错自愈循环 | 游戏卡死 (`GameStuckError`)、客户端崩溃 (`GameBugError`)、网络断开等，通过重启模拟器 + 注入 `Restart` + 指数退避 (20s~300s) 持续自愈 |

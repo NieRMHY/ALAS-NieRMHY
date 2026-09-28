@@ -16,6 +16,11 @@ export default defineConfig(({mode}) => {
       proxy: {
         '/api': { target: backend, ws: true },
         '/healthz': { target: backend },
+        // 物品图标走后端的静态目录（module/api/statistics_service.py 挂的
+        // research-items / opsi-items），开发时也由同一份后端提供，
+        // 不代理的话统计页的图标列全是裂图。
+        '/research-items': { target: backend },
+        '/opsi-items': { target: backend },
       },
     },
     build: {

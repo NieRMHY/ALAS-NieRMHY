@@ -1,3 +1,7 @@
+/**
+ * @fileoverview 页面卡片交错进场动效与拓扑排序计算。
+ */
+
 import { motionReducedActive, motionSpeedValue } from './motionPrefs'
 
 /** 卡片选择器：涵盖各类页面（总览、配置、主页、统计、设置、更新等）的核心卡片与面板。 */

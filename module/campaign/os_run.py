@@ -36,19 +36,39 @@ class OSCampaignRun(OSMapOperation):
     PREVENT_AP_OVERFLOW_TASK = 'OpsiPreventActionPointOverflow'
 
     def load_campaign(self, cls=OperationSiren):
+        """加载并初始化大世界战役实例。
+
+        Args:
+            cls (type): 大世界战役类。默认 OperationSiren。
+
+        Returns:
+            OperationSiren: 初始化后的大世界战役实例。
+        """
         config = self.config.merge(OSConfig())
         campaign = cls(config=config, device=self.device)
         campaign.os_init()
         return campaign
 
     def delay_opsi_tasks_after_ap_limit(self, error):
+        """因行动力限制触发后延迟大世界任务。
+
+        Args:
+            error (ActionPointLimit): 行动力限制异常对象。
+        """
         delay_minutes = getattr(error, 'delay_minutes', None)
         if delay_minutes is not None:
             logger.info(f'[大世界-运行] 延迟大世界行动力任务 {delay_minutes} 分钟直到行动力恢复')
         self.config.opsi_task_delay(ap_limit=True, ap_limit_minutes=delay_minutes)
 
     def _run_opsi_task_with_ap_overflow_guard(self, runner):
-        """运行普通大世界任务时临时关闭防溢出任务，并在结束时恢复调度。"""
+        """运行普通大世界任务时临时关闭防溢出任务，并在结束时恢复调度。
+
+        Args:
+            runner (callable): 接收 campaign 实例的执行函数。
+
+        Returns:
+            Any: runner 函数的执行结果。
+        """
         campaign = None
         prevent_enabled = self.config.is_task_enabled(self.PREVENT_AP_OVERFLOW_TASK)
         if prevent_enabled:
@@ -70,30 +90,35 @@ class OSCampaignRun(OSMapOperation):
                     self.config.cross_set(keys=f'{self.PREVENT_AP_OVERFLOW_TASK}.Scheduler.Enable', value=True)
 
     def opsi_explore(self):
+        """执行大世界海域开荒探索任务。"""
         try:
             self._run_opsi_task_with_ap_overflow_guard(lambda campaign: campaign.os_explore())
         except ActionPointLimit as e:
             self.delay_opsi_tasks_after_ap_limit(e)
 
     def opsi_shop(self):
+        """执行大世界港口商店购买任务。"""
         try:
             self._run_opsi_task_with_ap_overflow_guard(lambda campaign: campaign.os_shop())
         except ActionPointLimit as e:
             self.delay_opsi_tasks_after_ap_limit(e)
 
     def opsi_voucher(self):
+        """执行大世界特别兑换凭证购买任务。"""
         try:
             self._run_opsi_task_with_ap_overflow_guard(lambda campaign: campaign.os_voucher())
         except ActionPointLimit as e:
             self.delay_opsi_tasks_after_ap_limit(e)
 
     def opsi_daily(self):
+        """执行大世界每日任务。"""
         try:
             self._run_opsi_task_with_ap_overflow_guard(lambda campaign: campaign.os_daily())
         except ActionPointLimit as e:
             self.delay_opsi_tasks_after_ap_limit(e)
 
     def opsi_meowfficer_farming(self):
+        """执行大世界指挥喵打捞刷取任务。"""
         try:
             self._run_opsi_task_with_ap_overflow_guard(lambda campaign: campaign.os_meowfficer_farming())
         except ActionPointLimit:
@@ -105,6 +130,7 @@ class OSCampaignRun(OSMapOperation):
                 self.config.task_delay(minute=150, server_update=True)
 
     def opsi_hazard1_leveling(self):
+        """执行大世界侵蚀1练级任务。"""
         try:
             self._run_opsi_task_with_ap_overflow_guard(
                 lambda campaign: (campaign.os_check_leveling(), campaign.os_hazard1_leveling())
@@ -113,15 +139,16 @@ class OSCampaignRun(OSMapOperation):
             self.config.task_delay(server_update=True)
 
     def opsi_obscure(self):
+        """执行大世界隐秘海域任务。"""
         try:
             self._run_opsi_task_with_ap_overflow_guard(lambda campaign: campaign.os_obscure())
         except ActionPointLimit as e:
             self.delay_opsi_tasks_after_ap_limit(e)
 
     def opsi_month_boss(self):
+        """执行大世界月度 Boss 挑战任务。"""
         if self.config.SERVER in ['tw']:
-            logger.info(f'[大世界-运行] OpsiMonthBoss不支持服务器 {self.config.SERVER}，'
-                        ' please contact server maintainers')
+            logger.info(f'[大世界-运行] OpsiMonthBoss不支持服务器 {self.config.SERVER}，请联系服务器维护者')
             self.config.task_delay(server_update=True)
             self.config.task_stop()
             return
@@ -131,24 +158,28 @@ class OSCampaignRun(OSMapOperation):
             self.delay_opsi_tasks_after_ap_limit(e)
 
     def opsi_abyssal(self):
+        """执行大世界深渊海域任务。"""
         try:
             self._run_opsi_task_with_ap_overflow_guard(lambda campaign: campaign.os_abyssal())
         except ActionPointLimit as e:
             self.delay_opsi_tasks_after_ap_limit(e)
 
     def opsi_archive(self):
+        """执行大世界档案海域任务。"""
         try:
             self._run_opsi_task_with_ap_overflow_guard(lambda campaign: campaign.os_archive())
         except ActionPointLimit as e:
             self.delay_opsi_tasks_after_ap_limit(e)
 
     def opsi_stronghold(self):
+        """执行大世界要塞海域任务。"""
         try:
             self._run_opsi_task_with_ap_overflow_guard(lambda campaign: campaign.os_stronghold())
         except ActionPointLimit as e:
             self.delay_opsi_tasks_after_ap_limit(e)
 
     def opsi_scheduling(self):
+        """执行大世界智能调度任务。"""
         # 必须在 load_campaign() 前拦截，否则 os_init() 会执行首次自律寻敌。
         if self.is_in_opsi_explore():
             logger.info('[大世界-智能调度+] 每月开荒+正在运行，初始化前延期智能调度+')
@@ -165,10 +196,12 @@ class OSCampaignRun(OSMapOperation):
         self._run_opsi_task_with_ap_overflow_guard(lambda campaign: campaign.run_smart_scheduling())
 
     def opsi_prevent_action_point_overflow(self):
+        """执行大世界防止行动力溢出任务。"""
         campaign = self.load_campaign()
         campaign.os_prevent_action_point_overflow()
 
     def opsi_cross_month(self):
+        """执行大世界跨月重置前置与收尾任务。"""
         try:
             self._run_opsi_task_with_ap_overflow_guard(lambda campaign: campaign.os_cross_month())
         except ActionPointLimit:

@@ -17,6 +17,11 @@ from module.os_handler.port import PORT_ENTER, PortHandler
 
 
 class AzurLaneDaemon(DaemonBase, OSFleet, PortHandler):
+    """大型作战（大世界）半自动守护处理器。
+
+    在大世界地图中持续监听并自动完成战斗准备、结算、地图事件与进港维修等操作。
+    """
+
     # 半自动模式没有自动搜索在跑，S 评价页面不会自行推进，
     # 无需为防抢点保留 os_combat.Combat 默认的 20 秒兜底延迟
     battle_status_s_autoclick_delay = 3

@@ -62,6 +62,12 @@ class Zone:
     is_azur_port: bool
 
     def __init__(self, zone_id, data):
+        """初始化海域对象。
+
+        Args:
+            zone_id (int): 海域 ID。
+            data (dict): 包含海域配置参数的字典。
+        """
         self.zone_id = zone_id
         self.__dict__.update(data)
         self.location = self.point_convert(self.area_pos)
@@ -71,17 +77,22 @@ class Zone:
 
     @staticmethod
     def point_convert(point):
-        """
-        Convert coordinates in world_chapter_colormask.lua to os_globe_map.png
+        """将 world_chapter_colormask.lua 中的坐标转换为 os_globe_map.png 坐标。
+
+        Args:
+            point (tuple[float, float] | np.ndarray): 原始配置坐标 (x, y)。
+
+        Returns:
+            np.ndarray: 转换后在全球地图中的坐标数组。
         """
         point = np.multiply(point, 1.25)
-        point = np.array((point[0], GLOBE_MAP_SHAPE[1] - point[1]))  # 1694 is the height of os_globe_map.png
+        point = np.array((point[0], GLOBE_MAP_SHAPE[1] - point[1]))  # 1694 为 os_globe_map.png 的高度
         return point
 
     def __str__(self):
         """
         Returns:
-            str: Such as `[3|圣彼得伯格|St. Petersburg|ペテルブルク|聖彼得堡]`
+            str: 如 `[3|圣彼得伯格|St. Petersburg|ペテルブルク|聖彼得堡]`
         """
         return f'[{self.zone_id}|{self.en}]'
 
@@ -92,24 +103,33 @@ class Zone:
 
 
 class ZoneManager:
+    """全球海域管理器。
+
+    管理大世界所有海域实例，提供按区域、名称、侵蚀等级的检索接口。
+
+    Attributes:
+        zone (Zone): 当前所处的海域实例。
+    """
     zone: Zone
 
     @cached_property
     def zones(self):
-        """
+        """获取所有海域的集合对象。
+
         Returns:
-            SelectedGrids:
+            SelectedGrids: 包含所有 Zone 实例的集合对象。
         """
         return SelectedGrids([Zone(zone_id, info) for zone_id, info in DIC_OS_MAP.items()])
 
     def camera_to_zone(self, camera, region=None):
-        """
+        """根据全球地图坐标检索距离最近的海域对象。
+
         Args:
-            camera (tuple): Point in os_globe_map.png
-            region (int): Limit zone in specific region.
+            camera (tuple[float, float]): 全球地图中的相机坐标。
+            region (int | None): 可选的限定区域编号。默认 None。
 
         Returns:
-            Zone:
+            Zone: 距离指定坐标最近的海域对象。
         """
         if region is None:
             zones = self.zones
@@ -119,17 +139,18 @@ class ZoneManager:
         return zones[0]
 
     def name_to_zone(self, name):
-        """
-        Convert a name from various format to zone instance.
+        """将各种格式的海域标识转换为对应的海域实例。
+
+        支持 Zone 实例、海域 ID 数值、字符串以及四服语言名称的匹配。
 
         Args:
-            name (str, int, Zone): Name in CN/EN/JP/TW, zone id, or Zone instance.
+            name (str | int | Zone): 各服语言名称、海域 ID 或 Zone 实例。
 
         Returns:
-            Zone:
+            Zone: 匹配到的海域实例。
 
         Raises:
-            ScriptError: If Unable to find such zone.
+            ScriptError: 无法找到对应海域时抛出。
         """
         if isinstance(name, Zone):
             return name
@@ -167,8 +188,6 @@ class ZoneManager:
                             f'Zone fuzzy match: OCR={name}, Zone={lang_name}'
                         )
                         return zone
-            # Normal arbiter, Hard ar
-            # Normal arbiter, Hard arbiter, BOSS after hard arbiter cleared
             # 普通难度：仲裁者·XXX, 困难难度：仲裁者·XXX, 困难模拟战：仲裁机关
             for keyword in ['普通', '困难', '仲裁']:
                 if keyword in name:
@@ -189,32 +208,37 @@ class ZoneManager:
             raise ScriptError(f'Unable to find OS globe zone: {name}')
 
     def zone_nearest_azur_port(self, zone):
-        """
+        """查找离指定海域最近的碧蓝航线港口。
+
+        优先选择同区域的港口，其次选择直线距离最近的港口。
+
         Args:
-            zone (str, int, Zone): Name in CN/EN/JP/TW, zone id, or Zone instance.
+            zone (str | int | Zone): 海域标识或实例。
 
         Returns:
-            Zone:
+            Zone: 最近的碧蓝航线港口海域对象。
         """
         zone = self.name_to_zone(zone)
         ports = self.zones.select(is_azur_port=True).delete(SelectedGrids([self.zone]))
-        # In same region
+        # 同区域港口
         for port in ports:
             if zone.region == port.region:
                 return port
-        # In different region
+        # 跨区域港口
         ports = ports.sort_by_camera_distance(camera=tuple(zone.location))
         return ports[0]
 
     def zone_select(self, hazard_level):
-        """
-        Similar to `self.zone.select(**kwargs)`, but delete zones in region 5.
+        """筛选指定侵蚀等级的海域集合（排除中央区域 5）。
 
         Args:
-            hazard_level: 1-6, or 10 for center zones.
+            hazard_level (int): 侵蚀等级 (1-6)，或 10 代表中央海域。
 
         Returns:
-            SelectedGrids: SelectedGrids containing zone objects.
+            SelectedGrids: 符合条件的海域集合对象。
+
+        Raises:
+            ScriptError: 侵蚀等级数值无效时抛出。
         """
         if 1 <= hazard_level <= 6:
             return self.zones.select(hazard_level=hazard_level).delete(self.zones.select(region=5))

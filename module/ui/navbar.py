@@ -10,9 +10,25 @@ from module.shop.assets import SHOP_CLICK_SAFE_AREA
 
 
 class Navbar:
+    """页面内标签导航栏。
+
+    通过颜色检测判断标签的激活/非激活状态，支持自动切换到指定标签页。
+
+    Attributes:
+        grids (ButtonGrid): 标签按钮网格。
+        active_color (tuple[int, int, int]): 激活状态的 RGB 颜色。
+        inactive_color (tuple[int, int, int]): 非激活状态的 RGB 颜色。
+        active_threshold (int): 激活状态的颜色匹配阈值。
+        inactive_threshold (int): 非激活状态的颜色匹配阈值。
+        active_count (int): 激活状态的最小像素计数。
+        inactive_count (int): 非激活状态的最小像素计数。
+        name (str): 导航栏名称。
+    """
+
     def __init__(self, grids, active_color=(247, 251, 181), inactive_color=(140, 162, 181), active_threshold=75,
                  inactive_threshold=75, active_count=100, inactive_count=50, name=None):
-        """
+        """初始化导航栏。
+
         Args:
             grids (ButtonGrid): 标签按钮网格。
             active_color (tuple[int, int, int]): 激活状态的 RGB 颜色。
@@ -33,8 +49,7 @@ class Navbar:
         self.name = name if name is not None else grids._name
 
     def is_button_active(self, button, main):
-        """
-        检测按钮是否处于激活状态。
+        """检测按钮是否处于激活状态。
 
         Args:
             button (Button): 要检测的按钮。
@@ -47,8 +62,7 @@ class Navbar:
                     button, color=self.active_color, threshold=self.active_threshold, count=self.active_count)
 
     def is_button_inactive(self, button, main):
-        """
-        检测按钮是否处于非激活状态。
+        """检测按钮是否处于非激活状态。
 
         Args:
             button (Button): 要检测的按钮。
@@ -61,14 +75,13 @@ class Navbar:
             button, color=self.inactive_color, threshold=self.inactive_threshold, count=self.inactive_count)
 
     def get_info(self, main):
-        """
-        获取导航栏信息：当前激活项、最左项和最右项的索引。
+        """获取导航栏信息：当前激活项、最左项和最右项的索引。
 
         Args:
             main (ModuleBase): 模块基类实例。
 
         Returns:
-            int, int, int: 激活项索引、最左项索引、最右项索引。
+            tuple[int | None, int | None, int | None]: 激活项索引、最左项索引、最右项索引。
         """
         total = []
         active = []
@@ -80,7 +93,6 @@ class Navbar:
                 total.append(index)
 
         if len(active) == 0:
-            # logger.warning(f'No active nav item found in {self.name}')
             active = None
         elif len(active) == 1:
             active = active[0]
@@ -98,20 +110,18 @@ class Navbar:
         return active, left, right
 
     def get_active(self, main):
-        """
-        获取当前激活的导航项索引。
+        """获取当前激活的导航项索引。
 
         Args:
             main (ModuleBase): 模块基类实例。
 
         Returns:
-            int: 激活项的索引。
+            int | None: 激活项的索引。
         """
         return self.get_info(main=main)[0]
 
     def get_total(self, main):
-        """
-        获取可见的导航项总数。
+        """获取可见的导航项总数。
 
         Args:
             main (ModuleBase): 模块基类实例。
@@ -125,8 +135,7 @@ class Navbar:
         return right - left + 1
 
     def _shop_obstruct_handle(self, main):
-        """
-        仅在商店中时，处理商店界面的遮挡物。
+        """仅在商店中时，处理商店界面的遮挡物。
 
         Args:
             main (ModuleBase): 模块基类实例。
@@ -139,7 +148,7 @@ class Navbar:
             return False
 
         # 处理商店遮挡物
-        if main.appear(GET_SHIP, interval=1):
+        if main.appear(GET_SHIP, offset=(20, 20), interval=1):
             main.device.click(SHOP_CLICK_SAFE_AREA)
             return True
         if main.appear(GET_ITEMS_1, offset=(30, 30), interval=1):
@@ -152,15 +161,14 @@ class Navbar:
         return False
 
     def set(self, main, left=None, right=None, upper=None, bottom=None, skip_first_screenshot=True):
-        """
-        从一个方向设置导航栏到指定位置。
+        """从一个方向设置导航栏到指定位置。
 
         Args:
             main (ModuleBase): 模块基类实例。
-            left (int): 从左数的导航项索引，从 1 开始。
-            right (int): 从右数的导航项索引，从 1 开始。
-            upper (int): 从上数的导航项索引，从 1 开始。
-            bottom (int): 从下数的导航项索引，从 1 开始。
+            left (int | None): 从左数的导航项索引，从 1 开始。
+            right (int | None): 从右数的导航项索引，从 1 开始。
+            upper (int | None): 从上数的导航项索引，从 1 开始。
+            bottom (int | None): 从下数的导航项索引，从 1 开始。
             skip_first_screenshot (bool): 是否跳过首次截图。
 
         Returns:
@@ -209,7 +217,7 @@ class Navbar:
                     f'[UI-导航栏] 设置索引 ({index}) 不在导航项范围内 ({minimum}, {maximum})')
                 continue
 
-            # End
+            # 结束条件
             if active == index:
                 return True
 

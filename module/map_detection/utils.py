@@ -26,6 +26,11 @@ class Points:
         y (np.ndarray): 所有点的 y 坐标数组。
     """
     def __init__(self, points):
+        """初始化点集对象。
+
+        Args:
+            points (list | np.ndarray | None): 形状为 (N, 2) 的点集或坐标序列。
+        """
         if points is None or len(points) == 0:
             self._bool = False
             self.points = None
@@ -57,6 +62,15 @@ class Points:
         return self._bool
 
     def link(self, point, is_horizontal=False):
+        """将点集与目标点相连生成线段集合。
+
+        Args:
+            point (tuple | None): 目标相交点坐标 (x, y)。为 None 时通常生成水平线。
+            is_horizontal (bool, optional): 是否直接生成水平线。默认为 False。
+
+        Returns:
+            Lines: 生成的线段集合对象。
+        """
         if is_horizontal:
             lines = [[y, np.pi / 2] for y in self.y]
             return Lines(lines, is_horizontal=True)
@@ -68,12 +82,25 @@ class Points:
             return Lines(lines, is_horizontal=False)
 
     def mean(self):
+        """计算点集的均值中心点。
+
+        Returns:
+            np.ndarray | None: 形状为 (2,) 的整数坐标，若点集为空则返回 None。
+        """
         if not self:
             return None
 
         return np.round(np.mean(self.points, axis=0)).astype(int)
 
     def group(self, threshold=3):
+        """将邻近点聚类分组并计算各组均值。
+
+        Args:
+            threshold (int, optional): 聚类距离阈值。默认为 3。
+
+        Returns:
+            np.ndarray: 聚类后的各组中心点数组。
+        """
         if not self:
             return np.array([])
         groups = []
@@ -92,9 +119,24 @@ class Points:
 
 
 class Lines:
+    """线段集合操作类（极坐标参数表示：rho, theta）。
+
+    Attributes:
+        MID_Y (int): Y 轴参考中心高度（默认为 360）。
+        lines (np.ndarray): 形状为 (N, 2) 的线段参数数组 [[rho, theta], ...]。
+        rho (np.ndarray): 各线段的极径数组。
+        theta (np.ndarray): 各线段的极角数组。
+        is_horizontal (bool): 是否为水平线集合。
+    """
     MID_Y = 360
 
     def __init__(self, lines, is_horizontal):
+        """初始化线段集合。
+
+        Args:
+            lines (list | np.ndarray | None): 线段参数数组 [[rho, theta], ...]。
+            is_horizontal (bool): 是否为水平线。
+        """
         if lines is None or len(lines) == 0:
             self._bool = False
             self.lines = None
@@ -128,14 +170,21 @@ class Lines:
 
     @property
     def sin(self):
+        """极角正弦值数组。"""
         return np.sin(self.theta)
 
     @property
     def cos(self):
+        """极角余弦值数组。"""
         return np.cos(self.theta)
 
     @property
     def mean(self):
+        """计算线段集合的平均参数线段。
+
+        Returns:
+            np.ndarray | None: 包含 (rho, theta) 的数组，为空时返回 None。
+        """
         if not self:
             return None
         if self.is_horizontal:
@@ -148,6 +197,13 @@ class Lines:
 
     @property
     def mid(self):
+        """获取线段在中轴上的截距位置。
+
+        水平线返回极径，垂直线返回在 MID_Y 处的 X 坐标。
+
+        Returns:
+            np.ndarray: 截距数组。
+        """
         if not self:
             return np.array([])
         if self.is_horizontal:
@@ -156,12 +212,36 @@ class Lines:
             return (self.rho - self.MID_Y * self.sin) / self.cos
 
     def get_x(self, y):
+        """根据 Y 坐标计算线段上的 X 坐标。
+
+        Args:
+            y (float | np.ndarray): Y 坐标。
+
+        Returns:
+            float | np.ndarray: 对应的 X 坐标。
+        """
         return (self.rho - y * self.sin) / self.cos
 
     def get_y(self, x):
+        """根据 X 坐标计算线段上的 Y 坐标。
+
+        Args:
+            x (float | np.ndarray): X 坐标。
+
+        Returns:
+            float | np.ndarray: 对应的 Y 坐标。
+        """
         return (self.rho - x * self.cos) / self.sin
 
     def add(self, other):
+        """合并另一个线段集合。
+
+        Args:
+            other (Lines): 待合并的线段集合。
+
+        Returns:
+            Lines: 合并后的线段集合。
+        """
         if not other:
             return self
         if not self:
@@ -170,6 +250,15 @@ class Lines:
         return Lines(lines, is_horizontal=self.is_horizontal)
 
     def move(self, x, y):
+        """平移线段集合。
+
+        Args:
+            x (float): X 轴平移距离。
+            y (float): Y 轴平移距离。
+
+        Returns:
+            Lines: 平移后的线段集合。
+        """
         if not self:
             return self
         if self.is_horizontal:
@@ -179,12 +268,25 @@ class Lines:
         return Lines(self.lines, is_horizontal=self.is_horizontal)
 
     def sort(self):
+        """按截距中值升序排序线段。
+
+        Returns:
+            Lines: 排序后的线段集合。
+        """
         if not self:
             return self
         lines = self.lines[np.argsort(self.mid)]
         return Lines(lines, is_horizontal=self.is_horizontal)
 
     def group(self, threshold=3):
+        """按截距距离对相邻线段聚类并合并为均值线。
+
+        Args:
+            threshold (int, optional): 聚类阈值。默认为 3。
+
+        Returns:
+            Lines: 聚类合并后的线段集合。
+        """
         if not self:
             return self
         lines = self.sort()
@@ -208,11 +310,28 @@ class Lines:
         return Lines(regrouped, is_horizontal=self.is_horizontal)
 
     def distance_to_point(self, point):
+        """计算点到各线段的有符号代数距离。
+
+        Args:
+            point (tuple): 点坐标 (x, y)。
+
+        Returns:
+            np.ndarray: 各线段到该点的距离数组。
+        """
         x, y = point
         return self.rho - x * self.cos - y * self.sin
 
     @staticmethod
     def cross_two_lines(lines1, lines2):
+        """求解两组线段的两两交点。
+
+        Args:
+            lines1 (Lines): 第一组线段。
+            lines2 (Lines): 第二组线段。
+
+        Yields:
+            np.ndarray: 各交点的 (x, y) 坐标数组。
+        """
         for rho1, sin1, cos1 in zip(lines1.rho, lines1.sin, lines1.cos):
             for rho2, sin2, cos2 in zip(lines2.rho, lines2.sin, lines2.cos):
                 a = np.array([[cos1, sin1], [cos2, sin2]])
@@ -220,11 +339,28 @@ class Lines:
                 yield np.linalg.solve(a, b)
 
     def cross(self, other):
+        """计算当前线段集合与另一组线段的所有两两交点。
+
+        Args:
+            other (Lines): 另一组线段。
+
+        Returns:
+            Points: 交点集合对象。
+        """
         points = np.vstack(list(self.cross_two_lines(self, other)))
         points = Points(points)
         return points
 
     def delete(self, other, threshold=3):
+        """剔除与另一线段集合重合的线段。
+
+        Args:
+            other (Lines): 参考线段集合。
+            threshold (int, optional): 重合判断阈值。默认为 3。
+
+        Returns:
+            Lines: 剔除重合线后的线段集合。
+        """
         if not self:
             return self
 

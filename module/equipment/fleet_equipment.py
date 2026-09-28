@@ -17,10 +17,24 @@ OCR_FLEET_INDEX = Digit(OCR_FLEET_INDEX, letter=(90, 154, 255), threshold=128, a
 
 
 class FleetEquipment(EquipmentChange):
+    """舰队装备管理类。
+
+    提供在编队界面下切换舰队、批量装卸装备预设方案及进入单船装备界面的功能。
+    """
+
     def fleet_enter(self, fleet):
+        """导航进入编队界面并切换到指定编号的舰队。
+
+        Args:
+            fleet (int): 目标舰队编号（1 到 6）。
+
+        Pages:
+            in: 任意页面
+            out: page_fleet 对应目标舰队
+        """
         self.ui_ensure(page_fleet)
 
-        # ui_ensure_index, set fleet
+        # ui_ensure_index，设置目标舰队
         letter = OCR_FLEET_INDEX
         next_button = FLEET_NEXT
         prev_button = FLEET_PREV
@@ -31,8 +45,7 @@ class FleetEquipment(EquipmentChange):
             current = letter.ocr(self.device.image)
             logger.attr("索引", current)
 
-            # ui_ensure_index but ignore default value 0
-            # otherwise we would have 1 extra click switching from 1 to 4
+            # 类似 ui_ensure_index 但忽略默认值 0，避免从 1 切换到 4 时多余点击
             if current == 0:
                 continue
 
@@ -47,6 +60,18 @@ class FleetEquipment(EquipmentChange):
 
     def fleet_equipment_take_on_preset(self, preset_record, enter=FLEET_DETAIL_ENTER_FLAGSHIP,
                                        long_click=False, out=FLEET_DETAIL_CHECK):
+        """进入编队详情，为舰队成员穿戴预设装备方案。
+
+        Args:
+            preset_record (list[int]): 舰队装备预设方案列表。
+            enter (Button): 进入舰船详情的按钮，默认旗舰按钮。
+            long_click (bool): 是否长按进入，默认 False。
+            out (Button): 退出舰船详情时的确认按钮，默认 FLEET_DETAIL_CHECK。
+
+        Pages:
+            in: page_fleet
+            out: page_fleet
+        """
         self.ui_click(FLEET_DETAIL, appear_button=page_fleet.check_button,
                       check_button=FLEET_DETAIL_CHECK, skip_first_screenshot=True)
         super().fleet_equipment_take_on_preset(preset_record=preset_record, enter=FLEET_DETAIL_ENTER_FLAGSHIP,
@@ -54,16 +79,42 @@ class FleetEquipment(EquipmentChange):
         self.ui_back(FLEET_CHECK)
 
     def fleet_equipment_take_off(self, enter=FLEET_DETAIL_ENTER_FLAGSHIP, long_click=False, out=FLEET_DETAIL_CHECK):
+        """进入编队详情，一键脱下舰队所有成员的装备。
+
+        Args:
+            enter (Button): 进入舰船详情的按钮，默认旗舰按钮。
+            long_click (bool): 是否长按进入，默认 False。
+            out (Button): 退出舰船详情时的确认按钮，默认 FLEET_DETAIL_CHECK。
+
+        Pages:
+            in: page_fleet
+            out: page_fleet
+        """
         self.ui_click(FLEET_DETAIL, appear_button=page_fleet.check_button,
                       check_button=FLEET_DETAIL_CHECK, skip_first_screenshot=True)
         super().fleet_equipment_take_off(enter=enter, long_click=long_click, out=out)
         self.ui_back(FLEET_CHECK)
 
     def fleet_enter_ship(self, button):
+        """从编队界面进入指定舰船的装备详情界面。
+
+        Args:
+            button (Button): 目标舰船按钮。
+
+        Pages:
+            in: page_fleet
+            out: 舰船装备界面（EQUIPMENT_OPEN）
+        """
         self.ui_click(FLEET_DETAIL, appear_button=page_fleet.check_button,
                       check_button=FLEET_DETAIL_CHECK, skip_first_screenshot=True)
         self.equip_enter(button, long_click=False)
 
     def fleet_back(self):
+        """从舰船详情或编队详情逐层返回编队主界面。
+
+        Pages:
+            in: 舰船详情或 FLEET_DETAIL_CHECK
+            out: FLEET_CHECK
+        """
         self.ui_back(FLEET_DETAIL_CHECK)
         self.ui_back(FLEET_CHECK)

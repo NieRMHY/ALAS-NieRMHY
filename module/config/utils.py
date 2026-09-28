@@ -46,6 +46,10 @@ SERVER_TO_TIMEZONE = {
 }
 DEFAULT_TIME = datetime(2023, 1, 1, 0, 0)
 DEFAULT_CONFIG_NAME = 'ap'
+# 实例名会拼进 ./config/<name>.json，含这些字符会越出配置目录或触发 Windows 保留名。
+# 与 module/runtime/deploy_settings.py 的 INVALID_INSTANCE_CHARS 同源，但不拦 `.`：
+# `ap.fpy` 这类模块实例本身就带点，见 filepath_config 的 mod_name。
+INVALID_CONFIG_NAME_CHARS = set('\\/:*?"\'<>|')
 
 
 # https://stackoverflow.com/questions/8640959/how-can-i-control-what-scalar-form-pyyaml-uses-for-my-data/15423007
@@ -226,6 +230,46 @@ def alas_instance():
     return out
 
 
+def parse_config_name(argv):
+    """
+    解析入口参数中的实例名。
+
+    不传参数时回退到 `DEFAULT_CONFIG_NAME`，保持 `python alas.py` 的原有行为；
+    传入实例名时按 `alas_instance()` 校验，使 AUTO-MAS 等外部调度器可以按实例
+    拉起调度器进程，并据 `get_log_file_path()` 定位该实例的运行日志。
+
+    Args:
+        argv (list[str]): 入口脚本参数，不含脚本名本身。
+
+    Returns:
+        str: 实例名。
+
+    Raises:
+        ValueError: 参数多于一个，或实例名非法、不存在。
+    """
+    argv = list(argv)
+
+    if len(argv) > 1:
+        raise ValueError(f'只接受一个实例名，收到 {len(argv)} 个参数：{" ".join(argv)}')
+    if not argv:
+        return DEFAULT_CONFIG_NAME
+
+    name = argv[0].strip()
+    if not name or name in ('.', '..') or set(name) & INVALID_CONFIG_NAME_CHARS:
+        raise ValueError(f'实例名非法：{name!r}')
+
+    try:
+        instances = alas_instance()
+    except OSError:
+        # config 目录尚未创建，交给 OOBE 检查给出首次配置提示
+        return name
+
+    if name not in instances:
+        raise ValueError(f'实例不存在：{name}')
+
+    return name
+
+
 def parse_value(value, data):
     """
     尝试将字符串转换为 float、int 或 datetime。
@@ -354,15 +398,22 @@ def dict_to_kv(dictionary, allow_none=True):
 
 
 def server_timezone() -> timedelta:
+    """获取当前游戏服务器对应的时区时差。
+
+    Returns:
+        timedelta: 与 UTC 的时间差对象。
+    """
     return SERVER_TO_TIMEZONE.get(server_.server, SERVER_TO_TIMEZONE['cn'])
 
 
 def server_time_offset() -> timedelta:
-    """
-    计算本地时间与服务器时间的偏移量。
+    """计算本地时间与服务器时间的偏移量。
 
     本地时间转服务器时间：server_time = local_time - server_time_offset()
     服务器时间转本地时间：local_time = server_time + server_time_offset()
+
+    Returns:
+        timedelta: 本地时区与游戏服务器时区的差值。
     """
     return current_time(timezone.utc).astimezone().utcoffset() - server_timezone()
 
@@ -693,9 +744,15 @@ def time_delta(_timedelta):
     return _time_dict
 
 
-def readable_time(before: str, value: str) -> str:
-    """
-    计算两个时间之间的差值，返回人类可读的时间描述。
+def readable_time(before: str, value: str) -> dict:
+    """计算两个时间之间的差值，返回人类可读的时间描述。
+
+    Args:
+        before: 历史时间 ISO 格式字符串。
+        value: 默认展示值。
+
+    Returns:
+        dict: 包含 value、time 与 time_name 键的人类可读描述字典。
     """
     timedata = {
         'value': value,
@@ -733,7 +790,12 @@ def readable_time(before: str, value: str) -> str:
     return timedata
 
 @run_once
-def is_good_gpu():
+def is_good_gpu() -> bool:
+    """检测当前机器是否拥有显存 >= 1GB 的独立/高性能 GPU。
+
+    Returns:
+        bool: Windows 平台且显存 >= 1GB 返回 True，否则返回 False。
+    """
     if os.name != 'nt':
         logger.info("[Config] 当前系统为非 Windows，不使用 GPU")
         return False

@@ -1,3 +1,7 @@
+/**
+ * @fileoverview 远程访问后端连接状态归并与展示模型。
+ */
+
 /** 远程访问状态在界面上的四档归并。 */
 export type RemoteState = 'disabled' | 'starting' | 'ready' | 'failed'
 

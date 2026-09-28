@@ -1,17 +1,14 @@
-"""
-Web界面部署设置定义。
+"""Web 界面部署设置定义。
 
 定义部署设置的数据结构、主题选项、远程访问模式等配置字段。
 提供设置的序列化、反序列化及启动运行项管理功能。
 """
-
 import json
 from dataclasses import dataclass
 from typing import Any
 
 from module.config.utils import LANGUAGES, alas_instance
 from module.runtime.setting import State
-
 
 THEME_OPTIONS = [
     "default",
@@ -27,16 +24,25 @@ INVALID_INSTANCE_CHARS = set(".\\/:*?\"'<>|")
 
 @dataclass(frozen=True)
 class DeployField:
+    """部署配置项字段元数据。
+
+    Attributes:
+        key: 配置项键名。
+        kind: 字段类型（string, bool, int, select, nullable_string, cdn 等）。
+        options: 可选值元组。
+    """
     key: str
     kind: str = "string"
     options: tuple[str, ...] = ()
 
     @property
     def label_key(self) -> str:
+        """获取界面显示的国际化标签键名。"""
         return f"Gui.DeploySetting.{self.key}"
 
     @property
     def help_key(self) -> str:
+        """获取界面帮助说明的国际化键名。"""
         return f"Gui.DeploySetting.{self.key}Help"
 
 
@@ -128,7 +134,14 @@ DEPLOY_FIELDS = {
 
 
 def deploy_settings_schema(translate) -> dict[str, Any]:
-    """返回部署设置表单结构和值。"""
+    """返回部署设置表单结构和当前配置值。
+
+    Args:
+        translate: 国际化翻译函数。
+
+    Returns:
+        dict[str, Any]: 包含表单分组、字段定义、提示及演示模式标识的字典。
+    """
     with State.deploy_config.transaction() as values:
         values = values.copy()
     groups = []
@@ -159,7 +172,18 @@ def deploy_settings_schema(translate) -> dict[str, Any]:
 
 
 def save_deploy_settings(data: dict[str, Any]) -> dict[str, Any]:
-    """校验并保存部署设置。"""
+    """校验并保存部署设置。
+
+    Args:
+        data: 包含配置键值对字典的请求数据。
+
+    Returns:
+        dict[str, Any]: 包含已更新字段键名的结果字典。
+
+    Raises:
+        PermissionError: 演示模式下禁止修改。
+        ValueError: 包含未知项或字段值校验失败。
+    """
     if is_demo_mode():
         raise PermissionError("演示模式下不能修改部署设置")
 
@@ -181,6 +205,14 @@ def save_deploy_settings(data: dict[str, Any]) -> dict[str, Any]:
 
 
 def get_startup_run(instance: str) -> dict[str, Any]:
+    """获取指定实例在部署配置中的开机自启状态。
+
+    Args:
+        instance: 实例名称。
+
+    Returns:
+        dict[str, Any]: 包含实例名、是否自启以及自启列表数据的字典。
+    """
     instance = _validate_instance_name(instance, require_exists=False)
     with State.deploy_config.transaction() as values:
         raw = values.get("Run")
@@ -194,6 +226,19 @@ def get_startup_run(instance: str) -> dict[str, Any]:
 
 
 def set_startup_run(instance: str, enabled: bool) -> dict[str, Any]:
+    """设置指定实例是否随服务启动自动运行。
+
+    Args:
+        instance: 实例名称。
+        enabled: 是否开启开机自启。
+
+    Returns:
+        dict[str, Any]: 更新后的自启状态字典。
+
+    Raises:
+        PermissionError: 演示模式下禁止修改。
+        ValueError: 参数类型错误或实例不存在。
+    """
     if is_demo_mode():
         raise PermissionError("演示模式下不能修改启动时自动运行")
     if not isinstance(enabled, bool):
@@ -213,7 +258,14 @@ def set_startup_run(instance: str, enabled: bool) -> dict[str, Any]:
 
 
 def parse_run_config(value: Any) -> list[str]:
-    """兼容解析 deploy.yaml 中的 Webui.Run。"""
+    """兼容解析 deploy.yaml 中的 Webui.Run 自启配置。
+
+    Args:
+        value: 原始自启配置值（列表、JSON 字符串或逗号分隔串）。
+
+    Returns:
+        list[str]: 解析出的实例名称列表。
+    """
     if value is None or value is False:
         return []
     if isinstance(value, list):
@@ -245,24 +297,57 @@ def parse_run_config(value: Any) -> list[str]:
 
 
 def format_run_config(runs: list[str]) -> str | None:
+    """将自启实例列表格式化为 JSON 字符串。
+
+    Args:
+        runs: 实例名称列表。
+
+    Returns:
+        str | None: JSON 字符串；若列表为空返回 None。
+    """
     if not runs:
         return None
     return json.dumps(runs, ensure_ascii=False, separators=(",", ":"))
 
 
 def is_demo_mode() -> bool:
+    """检查当前是否处于演示只读模式。
+
+    Returns:
+        bool: 环境变量 DEMO 为 '1' 时返回 True，否则返回 False。
+    """
     import os
 
     return os.environ.get("DEMO") == "1"
 
 
 def _value_for_api(value: Any) -> Any:
+    """将配置值转换为前端 API 友好的输出格式。
+
+    Args:
+        value: 原始配置值。
+
+    Returns:
+        Any: 转换后的值（None 转为空字符串）。
+    """
     if value is None:
         return ""
     return value
 
 
 def _parse_value(field: DeployField, value: Any) -> Any:
+    """根据部署字段类型校验并解析前端传入的值。
+
+    Args:
+        field: 部署字段元数据。
+        value: 待校验的输入值。
+
+    Returns:
+        Any: 校验转换后的配置值。
+
+    Raises:
+        ValueError: 输入值与字段类型要求不符。
+    """
     if field.kind == "bool":
         if isinstance(value, bool):
             return value
@@ -310,6 +395,18 @@ def _parse_value(field: DeployField, value: Any) -> Any:
 
 
 def _validate_instance_name(instance: str, require_exists: bool) -> str:
+    """校验实例名称合法性。
+
+    Args:
+        instance: 待校验的实例名称。
+        require_exists: 是否要求实例在本地配置中必须存在。
+
+    Returns:
+        str: 校验并去除两端空格的实例名称。
+
+    Raises:
+        ValueError: 名称缺失、含非法字符、以 template 开头或实例不存在。
+    """
     instance = str(instance or "").strip()
     if not instance:
         raise ValueError("缺少实例名")

@@ -351,16 +351,15 @@ class PlatformWindows(PlatformBase, EmulatorManager):
             self.execute(f'"{exe}" -m {instance.name}')
         elif instance == Emulator.MuMuPlayer12:
             # MuMuManager.exe api -v 0 launch_player
-            # Launch via MuMuManager instead of MuMuPlayer.exe/MuMuNxMain.exe.
-            # MuMuNxMain.exe is a GUI singleton, if two instances get launched at the same time,
-            # the second launch request is handed over to a MuMuNxMain.exe that is still initializing
-            # and gets silently dropped, while MuMuManager queues requests in backend service.
+            # 通过 MuMuManager 启动而非 MuMuPlayer.exe/MuMuNxMain.exe
+            # MuMuNxMain.exe 为 GUI 单例，若同时启动两个实例，第二个启动请求会被转发到正在初始化的 MuMuNxMain.exe 并被静默丢弃
+            # 而 MuMuManager 会在后台服务中排队处理请求
             if instance.MuMuPlayer12_id is None:
                 logger.warning(f'[设备-Windows] 无法从名称 {instance.name} 获取MuMu实例索引')
             self.execute(f'"{Emulator.single_to_console(exe)}" api -v {instance.MuMuPlayer12_id} launch_player')
         elif instance == Emulator.LDPlayer14 or instance == Emulator.LDPlayer9:
             # ldconsole.exe launch --index 0 --mini
-            # LDPlayer above 9 has `--mini` to start as minimized window, `--hide` to start with no frontend window
+            # 雷电9及以上版本支持 `--mini` 启动为最小化窗口，`--hide` 启动为无前端窗口
             self.execute(f'"{Emulator.single_to_console(exe)}" launch --index {instance.LDPlayer_id} --mini')
         elif instance == Emulator.LDPlayerFamily:
             # ldconsole.exe launch --index 0

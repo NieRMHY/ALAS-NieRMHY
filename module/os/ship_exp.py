@@ -26,6 +26,14 @@ class ShipLevel(Digit):
     """
 
     def after_process(self, result):
+        """后处理校验舰船等级数值。
+
+        Args:
+            result (str): 识别结果字符串。
+
+        Returns:
+            int: 校验后的等级数值，超出 1-125 时返回 0。
+        """
         result = super().after_process(result)
         if result < 1 or result > 125:
             logger.warning('[大世界-经验] 意外的舰船等级')
@@ -41,24 +49,41 @@ class ShipExp(Ocr):
 
     def __init__(self, buttons, lang='azur_lane', letter=(255, 255, 255), threshold=64, alphabet='0123456789IDSBM/',
                  name=None):
+        """初始化经验值识别器。
+
+        Args:
+            buttons: 识别区域。
+            lang (str): 语言模型标识。
+            letter (tuple[int, int, int]): 字符目标颜色 RGB 值。
+            threshold (int): 颜色二值化阈值。
+            alphabet (str): 字符白名单。
+            name (str | None): 识别器标识名称。
+        """
         super().__init__(buttons, lang=lang, letter=letter, threshold=threshold, alphabet=alphabet, name=name)
 
     def after_process(self, result):
+        """修正易混淆字符。
+
+        Args:
+            result (str): 原始识别字符串。
+
+        Returns:
+            str: 修正后的字符串。
+        """
         result = super().after_process(result)
         result = result.replace('I', '1').replace('D', '0').replace('S', '5')
         result = result.replace('B', '8')
         return result
 
     def ocr(self, image, direct_ocr=False):
-        """
-        Do OCR on a exp info, such as `100000/205000` or `3000000/Max`.
+        """识别经验文本，形如 `100000/205000` 或 `3000000/Max`。
 
         Args:
-            image:
-            direct_ocr:
+            image (np.ndarray): 输入图像。
+            direct_ocr (bool): 是否跳过区域裁剪直接识别。默认 False。
 
         Returns:
-            list, int: exp digit, or a list of it.
+            int: 当前经验值数值，解析失败返回 0。
         """
         result_list = super().ocr(image, direct_ocr=direct_ocr)
         result = result_list[0] if isinstance(result_list, list) else result_list
@@ -73,14 +98,14 @@ class ShipExp(Ocr):
             return 0
 
 def ship_info_get_level_exp(main, skip_first_screenshot=True):
-    """
-    Get ship level and exp from image.
+    """从舰船详情截图中识别舰船等级与当前经验值。
 
     Args:
-        image: Image to do OCR on.
+        main: 宿主操作模块对象。
+        skip_first_screenshot (bool): 是否跳过首次截图。默认 True。
 
     Returns:
-        ShipLevel: Ship level and exp.
+        tuple[int, int]: (舰船等级, 当前经验值)。
     """
     ocr_exp = ShipExp(OCR_SHIP_EXP, name='ShipExp')
     ocr_level = ShipLevel(OCR_SHIP_LEVEL, name='ShipLevel')

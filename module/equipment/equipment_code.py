@@ -38,20 +38,39 @@ EQUIPMENT_PREVIEW_OCCUPIED = [
 
 
 class EquipmentCodeHandler(StorageHandler):
+    """装备码（配装码）处理器。
+
+    支持在舰船装备码界面导入、导出及应用 Base64 编码的装备方案，
+    并与用户配置或外部存储交互。
+
+    Attributes:
+        last_code (str): 上一次暂存的装备码字符串。
+        FASTINPUT_IME (str): uiautomator 输入法服务组件名称。
+    """
     last_code: str = None
     FASTINPUT_IME = 'com.github.uiautomator/.FastInputIME'
 
     @property
     def equipment_code_config_key(self):
+        """获取当前任务的装备码配置键，子类可重写。"""
         return None
 
     @property
     def equipment_code_export_to_config(self):
+        """判断是否需要将导出的装备码持久化写入配置中。"""
         if self.equipment_code_config_key:
             return True
         return getattr(self.config, 'EquipmentCode_ExportToConfig', False)
 
     def _code_config_load(self):
+        """加载并解析 YAML 格式的装备码配置映射字典。
+
+        Returns:
+            dict: 舰船名称到装备码的映射字典。
+
+        Raises:
+            RequestHumanTakeover: 装备码配置格式错误时抛出。
+        """
         key = self.equipment_code_config_key
         if key:
             raw = self.config.cross_get(keys=key)
@@ -72,6 +91,14 @@ class EquipmentCodeHandler(StorageHandler):
         return config
 
     def _code_config_save(self, config):
+        """将装备码配置映射字典序列化并保存到对应配置项。
+
+        Args:
+            config (dict): 舰船名称到装备码的映射字典。
+
+        Returns:
+            bool: 保存成功返回 True，无配置目标返回 False。
+        """
         value = yaml.safe_dump(config)
         key = self.equipment_code_config_key
         if key:
@@ -84,17 +111,30 @@ class EquipmentCodeHandler(StorageHandler):
         return True
 
     def equipment_code_supported(self):
+        """检测当前模拟器控制方式是否支持装备码自动输入（需 uiautomator2 系列）。
+
+        Returns:
+            bool: 支持返回 True，否则返回 False。
+        """
         method = self.config.Emulator_ControlMethod
         if method in U2_CONTROL_METHODS:
             return True
 
         logger.warning(
-            f"Equipment code requires uiautomator2 based control method, "
-            f"current control method is {method}, skip equipment change"
+            f"装备码需要基于 uiautomator2 的控制方式，"
+            f"当前控制方式为 {method}，跳过装备更换"
         )
         return False
 
     def get_code(self, name):
+        """获取指定舰船名称已保存的装备码。
+
+        Args:
+            name (str): 舰船名称或类型标识。
+
+        Returns:
+            str | None: 装备码字符串，若未配置或格式无效返回 None。
+        """
         config = self._code_config_load()
         code = config.get(name)
         if code is None or isinstance(code, str) and not code.strip():
@@ -106,6 +146,19 @@ class EquipmentCodeHandler(StorageHandler):
         return code.strip().strip('\'\"')
 
     def set_code(self, name, code):
+        """保存指定舰船名称的装备码到配置。
+
+        Args:
+            name (str): 舰船名称或类型标识。
+            code (str): 待保存的装备码。
+
+        Returns:
+            bool: 保存成功返回 True，格式非法或异常返回 False。
+
+        Raises:
+            EmulatorNotRunningError: 模拟器未运行时抛出。
+            RequestHumanTakeover: 遭遇严重错误需人工介入时抛出。
+        """
         if not self._is_equipment_code(code):
             return False
         config = self._code_config_load()
@@ -119,8 +172,12 @@ class EquipmentCodeHandler(StorageHandler):
             return False
 
     def current_ship(self):
-        """
-        Currently, only supports common CV recognization
+        """识别当前舰船详情界面的舰船种类。
+
+        当前主要支持常见低耗轻航（博格、竞技神、突击者、兰利）模板识别。
+
+        Returns:
+            str: 识别到的舰船名称标识，未知舰船默认返回 'DD'。
 
         Pages:
             in: equipment_code
@@ -128,7 +185,7 @@ class EquipmentCodeHandler(StorageHandler):
         for _ in self.loop():
             if not self.appear(EMPTY_SHIP_R):
                 break
-        if TEMPLATE_BOGUE.match(self.device.image, scaling=1.46):  # image has rotation
+        if TEMPLATE_BOGUE.match(self.device.image, scaling=1.46):  # 图像存在轻微旋转
             logger.info("检测到博格")
             return 'bogue'
         elif TEMPLATE_HERMES.match(self.device.image, scaling=124 / 89):
@@ -145,10 +202,11 @@ class EquipmentCodeHandler(StorageHandler):
             return 'DD'
 
     def _code_enter(self):
-        """
+        """从舰船详情界面点击进入装备码界面。
+
         Pages:
             in: ship_detail
-            out: equipment_code
+            out: equipment_code（EQUIPMENT_CODE_PAGE_CHECK）
         """
         for _ in self.loop():
             if self.appear(EQUIPMENT_CODE_PAGE_CHECK, offset=(5, 5)):
@@ -158,7 +216,8 @@ class EquipmentCodeHandler(StorageHandler):
                 continue
 
     def _code_exit(self):
-        """
+        """退出装备码界面，返回舰船详情界面。
+
         Pages:
             in: equipment_code
             out: ship_detail
@@ -166,6 +225,11 @@ class EquipmentCodeHandler(StorageHandler):
         self.ui_back(check_button=EQUIPMENT_CODE_ENTRANCE)
 
     def is_code_preview_empty(self):
+        """检测当前装备码预览区域所有槽位是否为空。
+
+        Returns:
+            bool: 所有槽位均为空返回 True，否则返回 False。
+        """
         # 只有所有可用槽位都正向命中空槽，才能确认预览已清空。
         return all(
             self.appear(button, offset=(5, 5))
@@ -176,9 +240,22 @@ class EquipmentCodeHandler(StorageHandler):
         )
 
     def _code_preview_slot_occupied(self, button):
+        """检测指定装备预览槽位是否有装备占用。
+
+        Args:
+            button (Button): 待检测的槽位星级模板按钮。
+
+        Returns:
+            bool: 槽位被占用返回 True，否则返回 False。
+        """
         return button.match_luma(self.device.image, offset=(2, 2), similarity=0.85)
 
     def _code_special_equip_occupied(self):
+        """检测特殊装备（兵装）槽位是否有装备占用。
+
+        Returns:
+            bool: 特殊装备槽位有装备返回 True，否则返回 False。
+        """
         x1, y1, x2, y2 = EQUIPMENT_CODE_EQUIP_5.area
         image = self.device.image[y1:y2, x1:x2]
         hsv = cv2.cvtColor(image, cv2.COLOR_RGB2HSV)
@@ -206,6 +283,11 @@ class EquipmentCodeHandler(StorageHandler):
         return float(np.mean(sorted(ratios)[-4:])) >= 0.65
 
     def is_code_preview_loaded(self):
+        """检测装备码预览是否已经加载并显示装备。
+
+        Returns:
+            bool: 预览已加载返回 True，尚未加载或全空返回 False。
+        """
         occupied_states = []
         for empty, occupied in zip(EQUIPMENT_PREVIEW_EMPTY, EQUIPMENT_PREVIEW_OCCUPIED):
             empty_appear = self.appear(empty, offset=(5, 5))
@@ -227,6 +309,11 @@ class EquipmentCodeHandler(StorageHandler):
         return self._code_special_equip_occupied()
 
     def _code_preview_clear(self):
+        """点击清空预览区域已有的装备方案。
+
+        Returns:
+            bool: 成功清空返回 True，超时返回 False。
+        """
         for _ in self.loop(timeout=2):
             if self.is_code_preview_empty():
                 return True
@@ -237,6 +324,7 @@ class EquipmentCodeHandler(StorageHandler):
             return False
 
     def fastinput_ime_enable(self):
+        """通过系统设置页面启用 FastInputIME 虚拟键盘。"""
         self.device.adb_shell(['am', 'start', '-a', 'android.settings.INPUT_METHOD_SETTINGS'])
         timeout = Timer(10).start()
         while 1:
@@ -271,6 +359,7 @@ class EquipmentCodeHandler(StorageHandler):
         self.device.adb_shell(['input', 'keyevent', '4'])
 
     def set_fastinput_ime(self):
+        """设置系统当前输入法为 FastInputIME。"""
         d = self.device.u2
         try:
             name, _ = d.current_ime()
@@ -286,12 +375,28 @@ class EquipmentCodeHandler(StorageHandler):
 
     @staticmethod
     def _adb_input_text_escape(text):
+        """对 ADB input text 命令中的特殊字符进行转义。
+
+        Args:
+            text (str): 原始待输入文本。
+
+        Returns:
+            str: 转义后的文本。
+        """
         text = str(text).replace('%', '%s')
         for char in ['\\', '"', "'", '`', '$', '&', '|', '<', '>', ';', '(', ')', '*']:
             text = text.replace(char, f'\\{char}')
         return text
 
     def _code_input_adb(self, code):
+        """通过 ADB Shell 命令向文本框输入装备码文本。
+
+        Args:
+            code (str): 装备码文本。
+
+        Returns:
+            bool: 输入成功返回 True，失败返回 False。
+        """
         try:
             text = self._adb_input_text_escape(code)
             clear_keys = ' '.join(['KEYCODE_DEL'] * (len(code) + 10))
@@ -307,6 +412,14 @@ class EquipmentCodeHandler(StorageHandler):
             return False
 
     def _code_input_uiautomator2(self, code):
+        """通过 uiautomator2 向输入框输入装备码文本。
+
+        Args:
+            code (str): 装备码文本。
+
+        Returns:
+            bool: 输入成功返回 True，失败返回 False。
+        """
         try:
             d = self.device.u2
             d.send_keys(text=code, clear=True)
@@ -318,7 +431,11 @@ class EquipmentCodeHandler(StorageHandler):
             return False
 
     def _code_wait_preview_loaded(self):
-        """等待装备码预览加载完成。"""
+        """等待装备码预览加载完成。
+
+        Returns:
+            bool: 成功加载预览返回 True，超时返回 False。
+        """
         for _ in self.loop(timeout=10, skip_first=False):
             # End：正向退出判断必须位于点击操作之前。
             if self.is_code_preview_loaded():
@@ -330,6 +447,14 @@ class EquipmentCodeHandler(StorageHandler):
         return False
 
     def _code_input(self, code):
+        """尝试多种输入后端将装备码输入到输入框中并等待预览加载。
+
+        Args:
+            code (str): 装备码文本。
+
+        Returns:
+            bool: 成功输入并加载预览返回 True，否则返回 False。
+        """
         logger.info(f"代码输入: {code}")
         for _ in range(2):
             click_timer = Timer(1, count=3)
@@ -354,6 +479,11 @@ class EquipmentCodeHandler(StorageHandler):
         return False
 
     def _code_confirm(self):
+        """确认应用装备码并退出装备码界面。
+
+        Returns:
+            bool: 成功应用返回 True，仓库已满或超时返回 False。
+        """
         logger.info("代码应用")
         for _ in self.loop(timeout=10):
             if self.appear(EQUIPMENT_CODE_ENTRANCE, offset=(5, 5)):
@@ -368,6 +498,14 @@ class EquipmentCodeHandler(StorageHandler):
             return False
 
     def _code_apply(self, code=None):
+        """执行清空、输入和确认应用装备码的完整流程。
+
+        Args:
+            code (str, optional): 待应用的装备码，None 表示仅清空。
+
+        Returns:
+            bool: 成功应用返回 True，否则返回 False。
+        """
         for _ in range(5):
             if not self._code_preview_clear():
                 continue
@@ -386,6 +524,14 @@ class EquipmentCodeHandler(StorageHandler):
 
     @staticmethod
     def _is_equipment_code(code):
+        """校验字符串是否为合法的 Base64 装备码格式。
+
+        Args:
+            code (str): 待校验文本。
+
+        Returns:
+            bool: 格式合法返回 True，否则返回 False。
+        """
         if not isinstance(code, str):
             return False
         code = code.strip().strip('\'"')
@@ -401,6 +547,14 @@ class EquipmentCodeHandler(StorageHandler):
 
     @staticmethod
     def _code_from_text(text):
+        """从包含多行或杂乱信息的文本中提取出有效装备码。
+
+        Args:
+            text (str): 待解析文本。
+
+        Returns:
+            str | None: 提取出的装备码，未提取到返回 None。
+        """
         for line in reversed(str(text).splitlines()):
             line = line.strip().strip('\'"')
             if not line:
@@ -440,6 +594,14 @@ class EquipmentCodeHandler(StorageHandler):
 
     @staticmethod
     def _parcel_bytes(output):
+        """从 Android service call 输出的十六进制转储中提取二进制字节流。
+
+        Args:
+            output (str): 命令输出的 Hex 文本。
+
+        Returns:
+            bytes: 解析出的二进制数据。
+        """
         data = bytearray()
         for raw in str(output).splitlines():
             line = raw.strip()
@@ -456,6 +618,14 @@ class EquipmentCodeHandler(StorageHandler):
 
     @staticmethod
     def _code_from_parcel_output(output):
+        """从 Parcel 序列化输出中提取装备码。
+
+        Args:
+            output (str): service call 输出。
+
+        Returns:
+            str | None: 装备码字符串，若未提取到返回 None。
+        """
         data = EquipmentCodeHandler._parcel_bytes(output)
         if not data:
             return None
@@ -472,6 +642,14 @@ class EquipmentCodeHandler(StorageHandler):
 
     @staticmethod
     def _code_from_clipboard_output(output):
+        """从剪贴板命令输出中提取有效装备码。
+
+        Args:
+            output (str | bytes): 剪贴板输出数据。
+
+        Returns:
+            str | None: 装备码，未提取到返回 None。
+        """
         if output is None:
             return None
         if isinstance(output, bytes):
@@ -484,6 +662,11 @@ class EquipmentCodeHandler(StorageHandler):
         return EquipmentCodeHandler._code_from_text(output)
 
     def _clipboard_adb(self):
+        """通过 ADB Shell 读取系统剪贴板中的装备码。
+
+        Returns:
+            str | None: 读取到的装备码字符串，失败返回 None。
+        """
         for command in [
             ['cmd', 'clipboard', 'get'],
             ['cmd', 'clipboard', 'get-primary-clip'],
@@ -505,6 +688,11 @@ class EquipmentCodeHandler(StorageHandler):
         return None
 
     def _clipboard_uiautomator2(self):
+        """通过 uiautomator2 读取系统剪贴板中的装备码。
+
+        Returns:
+            str | None: 读取到的装备码字符串，失败返回 None。
+        """
         try:
             output = self.device.clipboard
         except (EmulatorNotRunningError, RequestHumanTakeover):
@@ -519,6 +707,11 @@ class EquipmentCodeHandler(StorageHandler):
         return code
 
     def _clipboard_get(self):
+        """从系统剪贴板获取导出的装备码。
+
+        Returns:
+            str | None: 装备码字符串，获取失败返回 None。
+        """
         code = self._clipboard_adb()
         if code is not None:
             return code
@@ -531,6 +724,11 @@ class EquipmentCodeHandler(StorageHandler):
         return None
 
     def _code_export(self):
+        """在装备码界面点击导出并将装备码复制到系统剪贴板读取。
+
+        Returns:
+            str | None: 导出的装备码字符串，导出失败返回 None。
+        """
         self.handle_info_bar()
         self.set_fastinput_ime()
         for _ in self.loop(timeout=10):
@@ -542,6 +740,14 @@ class EquipmentCodeHandler(StorageHandler):
         return None
 
     def code_clear(self, name=None):
+        """通过装备码功能清空当前舰船的所有装备，若配置开启则自动备份原装备码。
+
+        Args:
+            name (str, optional): 舰船名称或类型标识。
+
+        Returns:
+            bool: 清空成功返回 True，否则返回 False。
+        """
         # 每次卸装独立交接，禁止复用上一艘舰船或上一轮失败留下的缓存。
         self.last_code = None
         if not self.equipment_code_supported():
@@ -567,6 +773,14 @@ class EquipmentCodeHandler(StorageHandler):
         return True
 
     def code_apply(self, name=None):
+        """为当前舰船应用指定名称或暂存的装备码方案。
+
+        Args:
+            name (str, optional): 舰船名称或类型标识。
+
+        Returns:
+            bool: 应用成功返回 True，否则返回 False。
+        """
         if not self.equipment_code_supported():
             return False
 

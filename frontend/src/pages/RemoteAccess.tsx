@@ -1,3 +1,7 @@
+/**
+ * @fileoverview 远程访问隧道状态与 WebUI 部署设置页面。
+ */
+
 import { useRef, useState } from 'react'
 import { Check, Copy, Globe } from 'lucide-react'
 import { useApp } from '../app/context'

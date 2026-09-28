@@ -17,7 +17,15 @@ OPERATORS = {
 
 @dataclass(frozen=True)
 class SubmarinePlan:
-    """一次可执行的出击；移动位置为空表示无需移动。"""
+    """潜艇出击计划。
+
+    一次可执行的出击；移动位置为空表示无需移动。
+
+    Attributes:
+        mode (str): 出击模式，'call' 为战斗中呼叫，'hunt' 为地图狩猎。
+        support (bool): 是否使用远洋支援。默认为 False。
+        location (tuple | None): 潜艇需移动到的目标网格坐标，为 None 表示无需移动。默认为 None。
+    """
 
     mode: str
     support: bool = False
@@ -25,9 +33,28 @@ class SubmarinePlan:
 
 
 class SubmarineAdvancedConfig:
-    """只使用安全 YAML 和显式比较运算，不执行配置中的代码。"""
+    """潜艇高级配置解析器与出击规划器。
+
+    只使用安全 YAML 和显式比较运算，不执行配置中的代码。
+
+    Attributes:
+        ammo (int): 当前潜艇弹药量。
+        support (int): 当前远洋支援次数。
+        offsets (set[tuple[int, int]]): 潜艇狩猎范围相对坐标集合。
+        rules (list[tuple[int, dict]]): 规则列表，包含战斗序号与规则字典。
+        plan (SubmarinePlan | None): 当前规划的出击计划。
+        consumed (bool): 当前计划是否已消耗资源。
+    """
 
     def __init__(self, text):
+        """初始化潜艇高级配置。
+
+        Args:
+            text (str): YAML 格式的潜艇高级配置文本。
+
+        Raises:
+            ScriptError: 配置 YAML 无效或缺少必要键、字段类型错误时抛出。
+        """
         try:
             # 兼容旧版默认示例在行尾注释前附带的制表符。
             data = yaml.safe_load(text.expandtabs(2))
@@ -85,16 +112,44 @@ class SubmarineAdvancedConfig:
 
     @staticmethod
     def _mapping(value, allowed, path):
-        """拒绝拼写错误，避免遗漏条件后意外消耗资源。"""
+        """校验字典键的合法性，拒绝拼写错误避免遗漏条件后意外消耗资源。
+
+        Args:
+            value (dict): 待校验的字典对象。
+            allowed (set[str]): 允许存在的键集合。
+            path (str): 字段路径说明，用于错误提示。
+
+        Raises:
+            ScriptError: 包含未允许的键或不是字典时抛出。
+        """
         if not isinstance(value, dict) or set(value) - allowed:
             raise ScriptError(f'潜艇高级配置 {path} 必须是字典且只能包含：{", ".join(sorted(allowed))}')
 
     def in_range(self, target, origin):
-        """以地图横纵坐标计算相对位置，保留非对称狩猎范围。"""
+        """以地图横纵坐标计算相对位置，判断目标是否在潜艇狩猎范围内。
+
+        保留非对称狩猎范围特性。
+
+        Args:
+            target (tuple[int, int]): 目标敌舰坐标。
+            origin (tuple[int, int]): 潜艇当前坐标。
+
+        Returns:
+            bool: 目标是否在潜艇覆盖范围内。
+        """
         return bool(origin) and (target[0] - origin[0], target[1] - origin[1]) in self.offsets
 
     @staticmethod
     def _compare(value, expression):
+        """执行条件表达式比较。
+
+        Args:
+            value (int): 当前资源数值。
+            expression (str): 比较表达式，如 '>= 1'。
+
+        Returns:
+            bool: 比较结果。
+        """
         match = re.fullmatch(r'\s*(>=|<=|!=|>|<|=)\s*(\d+)\s*', expression)
         return OPERATORS[match[1]](value, int(match[2]))
 
@@ -102,12 +157,12 @@ class SubmarineAdvancedConfig:
         """按召唤、狩猎顺序选取满足条件且可以执行的规则。
 
         Args:
-            battle: 当前战斗序号，从 1 开始。
-            total: 预计最终战斗序号，无法确定时为 None。
-            enemy: 已识别的规模与舰种，例如 3M。
-            target: 目标敌舰坐标。
-            origin: 潜艇当前位置。
-            positions: 可移动位置和移动代价组成的序列。
+            battle (int): 当前战斗序号，从 1 开始。
+            total (int | None): 预计最终战斗序号，无法确定时为 None。
+            enemy (str): 已识别的规模与舰种，例如 '3M'。
+            target (tuple[int, int]): 目标敌舰坐标。
+            origin (tuple[int, int]): 潜艇当前位置。
+            positions (Sequence[tuple[tuple[int, int], int]], optional): 可移动位置和移动代价组成的序列。默认为 ()。
 
         Returns:
             SubmarinePlan | None: 不突破弹药和覆盖范围限制的出击计划。
@@ -144,12 +199,27 @@ class SubmarineAdvancedConfig:
         return None
 
     def set_plan(self, plan):
-        """目标改变或新战斗开始时重置本次消耗标记。"""
+        """设置当前出击计划，重置本次消耗标记。
+
+        目标改变或新战斗开始时调用。
+
+        Args:
+            plan (SubmarinePlan | None): 新的出击计划。
+        """
         self.plan = plan
         self.consumed = False
 
     def consume(self, mode):
-        """狩猎进入战斗或确认召唤后仅扣减一次，点击重试不扣弹药。"""
+        """扣减潜艇出击所消耗的弹药或远洋支援次数。
+
+        狩猎进入战斗或确认召唤后仅扣减一次，点击重试不重复扣减。
+
+        Args:
+            mode (str): 出击模式（'hunt' 或 'call'）。
+
+        Returns:
+            bool: 是否成功扣减了资源。
+        """
         if self.plan is None or self.plan.mode != mode or self.consumed or self.ammo <= 0:
             return False
         self.ammo -= 1

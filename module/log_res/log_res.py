@@ -25,17 +25,32 @@ from datetime import datetime
 
 
 class LogRes:
-    """
-    set attr--->
-    Logres(AzurLaneConfig).<res_name>=resource_value:int
-    OR  ={'Value:int, 'Limit/Total':int}:dict
+    """资源变动记录器。
+
+    通过属性赋值语法动态更新 Dashboard 配置中的资源值和更新时间戳，
+    并同步写入统计数据库快照。
+
+    示例:
+        LogRes(config).Oil = 12000
+        LogRes(config).ActionPoint = {'Total': 200, 'Value': 150}
     """
     YellowCoin: list
 
     def __init__(self, config):
+        """初始化资源记录器。
+
+        Args:
+            config: AzurLaneConfig 配置实例。
+        """
         self.__dict__['config'] = config
 
     def __setattr__(self, key, value):
+        """设置资源属性值，并自动同步更新 Dashboard 及历史快照。
+
+        Args:
+            key (str): 资源名称。
+            value (int | dict): 资源数值，或包含 Value/Total/Limit 的字典。
+        """
         if key in self.groups:
             _key_group = f'Dashboard.{key}'
             _mod = False
@@ -99,7 +114,11 @@ class LogRes:
             super().__setattr__(name=key, value=value)
 
     def _record_all_resource_snapshot(self, overrides=None):
-        """读取当前所有 Dashboard 资源值并记录快照"""
+        """读取当前所有 Dashboard 资源值并记录快照。
+
+        Args:
+            overrides (dict, optional): 需要覆盖的资源键值对。
+        """
         try:
             from module.statistics.resource_stats import record_resource_snapshot
             instance_name = getattr(self.config, 'config_name', 'default')
@@ -125,9 +144,23 @@ class LogRes:
             logger.exception('[日志资源] 记录资源快照失败')
 
     def group(self, name):
+        """获取指定资源的 Dashboard 数据。
+
+        Args:
+            name (str): 资源名称。
+
+        Returns:
+            dict: 包含 Value、Record 等字段的数据字典。
+        """
         return deep_get(self.config.data, f'Dashboard.{name}')
+
     @cached_property
     def groups(self) -> dict:
+        """获取仪表盘中定义的所有资源组字典。
+
+        Returns:
+            dict: 仪表盘资源配置字典。
+        """
         from module.config.utils import read_file, filepath_argument
         return deep_get(d=read_file(filepath_argument("dashboard")), keys='Dashboard')
 

@@ -28,10 +28,23 @@ AIR_STRIKE_OFFSET = (120, 200)
 
 
 class StrategyHandler(InfoHandler):
+    """战斗策略面板处理器。
+
+    管理地图中的策略面板，包括编队阵型切换、潜艇视图与狩猎开关、普通舰队移动以及空袭呼叫等。
+
+    Attributes:
+        fleet_1_formation_fixed (bool): 一队阵型是否已固定确认。
+        fleet_2_formation_fixed (bool): 二队阵型是否已固定确认。
+    """
     fleet_1_formation_fixed = False
     fleet_2_formation_fixed = False
 
     def strategy_open(self, skip_first_screenshot=True):
+        """打开策略面板。
+
+        Args:
+            skip_first_screenshot (bool): 是否跳过首次截图。
+        """
         logger.info('[策略-面板] 打开策略面板')
         while 1:
             if skip_first_screenshot:
@@ -51,6 +64,11 @@ class StrategyHandler(InfoHandler):
                 continue
 
     def strategy_close(self, skip_first_screenshot=True):
+        """关闭策略面板。
+
+        Args:
+            skip_first_screenshot (bool): 是否跳过首次截图。
+        """
         logger.info('[策略-面板] 关闭策略面板')
         while 1:
             if skip_first_screenshot:
@@ -65,16 +83,15 @@ class StrategyHandler(InfoHandler):
                 break
 
     def strategy_set_execute(self, formation=None, sub_view=None, sub_hunt=None):
-        """
-        执行策略设置（编队阵型、潜艇视图、潜艇狩猎）。
-
-        Args:
-            formation (str): 'line_ahead'、'double_line'、'diamond'，或 None 表示不更改。
-            sub_view (bool): 是否开启潜艇视图。
-            sub_hunt (bool): 是否开启潜艇狩猎。
+        """执行策略设置（编队阵型、潜艇视图、潜艇狩猎）。
 
         Pages:
             in: STRATEGY_OPENED
+
+        Args:
+            formation (str | None): 阵型名称（'line_ahead'、'double_line'、'diamond'），或 None 表示不更改。
+            sub_view (bool | None): 是否开启潜艇视图，None 表示不更改。
+            sub_hunt (bool | None): 是否开启潜艇狩猎，None 表示不更改。
         """
         logger.info(f'[策略-设置] 设置: 阵型={formation}, 潜艇视图={sub_view}, 潜艇狩猎={sub_hunt}')
 
@@ -99,8 +116,7 @@ class StrategyHandler(InfoHandler):
                 logger.warning('[策略-设置] 设置潜艇狩猎但图标未出现')
 
     def handle_strategy(self, index):
-        """
-        处理舰队策略设置。
+        """处理舰队策略设置。
 
         Args:
             index (int): 舰队索引。
@@ -127,11 +143,10 @@ class StrategyHandler(InfoHandler):
         return True
 
     def _strategy_get_from_map_buff(self):
-        """
-        从地图增益图标获取当前阵型。
+        """从地图增益图标获取当前阵型。
 
         Returns:
-            str: 阵型名称。
+            str: 阵型名称（'line_ahead'、'double_line'、'diamond' 或 'unknown'）。
         """
         image = self.image_crop(MAP_BUFF, copy=False)
         if TEMPLATE_FORMATION_2.match(image):
@@ -147,8 +162,7 @@ class StrategyHandler(InfoHandler):
         return buff
 
     def is_in_strategy_submarine_move(self):
-        """
-        判断是否处于潜艇移动确认界面。
+        """判断是否处于潜艇移动确认界面。
 
         Returns:
             bool: 是否在潜艇移动确认界面。
@@ -156,12 +170,14 @@ class StrategyHandler(InfoHandler):
         return self.appear(SUBMARINE_MOVE_CONFIRM, offset=(20, 20))
 
     def strategy_submarine_move_enter(self, skip_first_screenshot=True):
-        """
-        进入潜艇移动界面。
+        """进入潜艇移动界面。
 
         Pages:
             in: STRATEGY_OPENED, SUBMARINE_MOVE_ENTER
             out: SUBMARINE_MOVE_CONFIRM
+
+        Args:
+            skip_first_screenshot (bool): 是否跳过首次截图。
         """
         logger.info('潜艇移动进入')
         while 1:
@@ -177,12 +193,14 @@ class StrategyHandler(InfoHandler):
                 break
 
     def strategy_submarine_move_confirm(self, skip_first_screenshot=True):
-        """
-        确认潜艇移动。
+        """确认潜艇移动。
 
         Pages:
             in: SUBMARINE_MOVE_CONFIRM
             out: STRATEGY_OPENED, SUBMARINE_MOVE_ENTER
+
+        Args:
+            skip_first_screenshot (bool): 是否跳过首次截图。
         """
         logger.info('潜艇移动确认')
         while 1:
@@ -200,12 +218,14 @@ class StrategyHandler(InfoHandler):
                 break
 
     def strategy_submarine_move_cancel(self, skip_first_screenshot=True):
-        """
-        取消潜艇移动。
+        """取消潜艇移动。
 
         Pages:
             in: SUBMARINE_MOVE_CONFIRM
             out: STRATEGY_OPENED, SUBMARINE_MOVE_ENTER
+
+        Args:
+            skip_first_screenshot (bool): 是否跳过首次截图。
         """
         logger.info('潜艇移动取消')
         while 1:
@@ -223,8 +243,7 @@ class StrategyHandler(InfoHandler):
                 break
 
     def is_in_strategy_mob_move(self):
-        """
-        判断是否处于普通舰队移动界面。
+        """判断是否处于普通舰队移动界面。
 
         Returns:
             bool: 是否在普通舰队移动界面。
@@ -232,12 +251,14 @@ class StrategyHandler(InfoHandler):
         return self.appear(MOB_MOVE_CANCEL, offset=(20, 20))
 
     def strategy_has_mob_move(self):
-        """
-        检查是否有普通舰队移动选项。
+        """检查是否有普通舰队移动选项。
 
         Pages:
             in: STRATEGY_OPENED
             out: STRATEGY_OPENED
+
+        Returns:
+            bool: 是否存在普通舰队移动选项。
         """
         if self.match_template_color(MOB_MOVE_ENTER, offset=MOB_MOVE_OFFSET):
             return True
@@ -245,12 +266,14 @@ class StrategyHandler(InfoHandler):
             return False
 
     def strategy_mob_move_enter(self, skip_first_screenshot=True):
-        """
-        进入普通舰队移动界面。
+        """进入普通舰队移动界面。
 
         Pages:
             in: STRATEGY_OPENED, MOB_MOVE_ENTER
             out: MOB_MOVE_CANCEL
+
+        Args:
+            skip_first_screenshot (bool): 是否跳过首次截图。
         """
         logger.info('舰队移动进入')
         while 1:
@@ -266,12 +289,14 @@ class StrategyHandler(InfoHandler):
                 continue
 
     def strategy_mob_move_cancel(self, skip_first_screenshot=True):
-        """
-        取消普通舰队移动。
+        """取消普通舰队移动。
 
         Pages:
             in: MOB_MOVE_CANCEL
             out: STRATEGY_OPENED, MOB_MOVE_ENTER
+
+        Args:
+            skip_first_screenshot (bool): 是否跳过首次截图。
         """
         logger.info('舰队移动取消')
         while 1:
@@ -287,13 +312,22 @@ class StrategyHandler(InfoHandler):
                 continue
 
     def is_in_strategy_air_strike(self):
+        """判断是否处于空袭确认界面。
+
+        Returns:
+            bool: 是否在空袭确认界面。
+        """
         return self.appear(AIR_STRIKE_CONFIRM, offset=(20, 20))
 
     def strategy_has_air_strike(self):
-        """
+        """检查是否有空袭选项。
+
         Pages:
             in: STRATEGY_OPENED
             out: STRATEGY_OPENED
+
+        Returns:
+            bool: 是否存在空袭选项。
         """
         if self.match_template_color(AIR_STRIKE_ENTER, offset=(150, 200)):
             return True
@@ -301,10 +335,14 @@ class StrategyHandler(InfoHandler):
             return False
 
     def strategy_air_strike_enter(self, skip_first_screenshot=True):
-        """
+        """进入空袭界面。
+
         Pages:
             in: STRATEGY_OPENED, AIR_STRIKE_ENTER
             out: AIR_STRIKE_CONFIRM
+
+        Args:
+            skip_first_screenshot (bool): 是否跳过首次截图。
         """
         logger.info('空袭进入')
         for _ in self.loop(skip_first=skip_first_screenshot):
@@ -314,10 +352,14 @@ class StrategyHandler(InfoHandler):
                 continue
 
     def strategy_air_strike_cancel(self, skip_first_screenshot=True):
-        """
+        """取消空袭。
+
         Pages:
             in: AIR_STRIKE_CONFIRM
             out: STRATEGY_OPENED, AIR_STRIKE_ENTER
+
+        Args:
+            skip_first_screenshot (bool): 是否跳过首次截图。
         """
         logger.info('空袭取消')
         for _ in self.loop(skip_first=skip_first_screenshot):

@@ -28,14 +28,16 @@ class PQShopClerk(ShopClerk, PQShopUI):
         ])
 
     def shop_buy_execute(self, item, skip_first_screenshot=True):
-        """
-        执行单个商品的购买流程。
+        """执行单个商品的购买流程。
 
         点击商品 -> 最大数量 -> 确认购买 -> 等待购买完成。
 
         Args:
-            item: 要购买的商品按钮
-            skip_first_screenshot (bool): 是否跳过首次截图
+            item: 要购买的商品按钮对象。
+            skip_first_screenshot (bool): 是否跳过首次截图。
+
+        Returns:
+            bool: 成功完成购买返回 True。
 
         Pages:
             in: 私人宿舍商店

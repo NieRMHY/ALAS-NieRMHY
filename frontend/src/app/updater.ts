@@ -1,3 +1,7 @@
+/**
+ * @fileoverview 版本更新状态与检查 Hook。
+ */
+
 import { useCallback, useEffect, useState } from 'react'
 import { api } from '../api/client'
 import type { UpdateStatus } from '../api/types'

@@ -111,16 +111,15 @@ class EventStory(CampaignUI, Combat, LoginHandler):
         return None
 
     def handle_event_20250724(self, interval=2):
-        """
-        处理炼金术士联动2活动的剧情按钮弹出。
+        """处理炼金术士联动2活动的剧情按钮弹出。
 
         该活动中剧情按钮会随机出现在各处，需要持续检测并点击。
 
         Args:
-            interval: 点击间隔（秒），防止重复点击
+            interval (int | float): 点击间隔（秒），防止重复点击。
 
         Returns:
-            bool: 是否点击了按钮
+            bool: 是否点击了按钮。
         """
         interval = self.get_interval_timer(TEMPLATE_ALCHEMIST_STORY, interval=interval)
         if not interval.reached():
@@ -134,26 +133,20 @@ class EventStory(CampaignUI, Combat, LoginHandler):
             return False
 
     def event_story(self, skip_first_screenshot=True):
-        """
-        执行活动剧情的截图-检查循环，推进剧情直到结束。
+        """执行活动剧情的截图-检查循环，推进剧情直到结束。
 
         按优先级处理：战斗检测 > 剧情完成 > 剧情跳过 > 点击推进。
         依次检测首段剧情、末段剧情、中段剧情、战斗中段、炼金术士联动按钮。
 
-        Pages:
-            page_event: 活动主页面
-            STORY_FIRST: 首段剧情入口
-            STORY_MIDDLE: 中段剧情
-            STORY_LAST: 末段剧情
-            BATTLE_MIDDLE: 战斗中段剧情
-            STORY_FINISHED: 剧情已完成标志
-            REWARD_GOT: 奖励领取完成
-
         Args:
-            skip_first_screenshot: 是否复用上一状态循环的截图
+            skip_first_screenshot (bool): 是否复用上一状态循环的截图，默认 True。
 
         Returns:
-            str: 'battle'（进入战斗）或 'finish'（剧情结束）
+            str: 'battle'（进入战斗）或 'finish'（剧情结束）。
+
+        Pages:
+            in: page_event、STORY_FIRST 等活动剧情入口
+            out: STORY_FINISHED、REWARD_GOT 或 combat
         """
         logger.hr('活动剧情', level=1)
         while 1:

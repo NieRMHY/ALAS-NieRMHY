@@ -125,7 +125,10 @@ class TestStatisticsInstanceIsolation(unittest.TestCase):
         self.assertTrue(stats.commit([amount], GENRE, local=True, combat_count=2))
 
     def rows(self, instance):
-        return self.api.report(self.configs, instance, 'loot', None, 7, 'month')['tables'][0]['rows']
+        """取「短猫掉落收益」表：大世界掉落页里还多了收获明细与掉落记录两张表，
+        按标题取才不会被页面版式变化带跑。"""
+        tables = self.api.report(self.configs, instance, 'loot', None, 7, 'month')['tables']
+        return next(table for table in tables if table['title'] == '短猫掉落收益')['rows']
 
     def create_old_database(self):
         row = item_row(None, 5000, imgid='old-image', month=7)
@@ -231,7 +234,8 @@ class TestStatisticsInstanceIsolation(unittest.TestCase):
         self.assertEqual(self.rows('account_a')[0][2:4], [1.0, 100.0])
         self.assertEqual(self.rows('account_b')[0][2:4], [1.0, 900.0])
         report = self.api.report(self.configs, 'account_a', 'loot', None, 7, 'month')
-        self.assertEqual(len(report['tables'][0]['columns']), 7)
+        meow = next(table for table in report['tables'] if table['title'] == '短猫掉落收益')
+        self.assertEqual(len(meow['columns']), 7)
         self.assertEqual(report['instance'], 'account_a')
 
     def test_cache_replacement_failure_preserves_previous_complete_file(self):

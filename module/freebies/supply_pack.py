@@ -16,14 +16,24 @@ from module.ui.page import page_shop, page_supply_pack
 
 
 class SupplyPack(CampaignStatus):
+    """商店免费补给包购买处理器。
+
+    检测并自动购买商店中的免费补给礼包（如每周免费石油补给包）。
+    """
+
     def supply_pack_buy(self, supply_pack, skip_first_screenshot=True):
-        """
+        """购买指定的补给包。
+
         Args:
-            supply_pack (Button): Button of supply pack, click to buy.
-            skip_first_screenshot (bool):
+            supply_pack (Button): 补给包按钮。
+            skip_first_screenshot (bool): 是否跳过首次截图，默认 True。
 
         Returns:
-            bool: If bought.
+            bool: 成功购买返回 True，否则返回 False。
+
+        Pages:
+            in: page_supply_pack
+            out: page_supply_pack
         """
         logger.hr('购买补给包')
         [self.interval_clear(asset) for asset in [GET_ITEMS_1, GET_ITEMS_2, supply_pack, BUY_CONFIRM]]
@@ -59,7 +69,7 @@ class SupplyPack(CampaignStatus):
                     confirm_timer.reset()
                     continue
 
-            # End
+            # 结束条件
             if self.appear(page_supply_pack.check_button, offset=(20, 20)) \
                     and not self.appear(supply_pack, offset=(20, 20)):
                 if confirm_timer.reached():
@@ -71,18 +81,23 @@ class SupplyPack(CampaignStatus):
         return executed
 
     def goto_supply_pack(self, skip_first_screenshot=True):
-        """
+        """导航前往补给包标签页。
+
+        Args:
+            skip_first_screenshot (bool): 是否跳过首次截图，默认 True。
+
         Pages:
             in: page_shop
-            out: page_supply_pack, supply pack tab
+            out: page_supply_pack
         """
         self.ui_goto(page_supply_pack, skip_first_screenshot=skip_first_screenshot)
 
     def run(self):
-        """
+        """执行免费补给包检查与购买流程。
+
         Pages:
-            in: Any page
-            out: page_supply_pack, supply pack tab
+            in: 任意页面
+            out: page_supply_pack
         """
         self.ui_ensure(page_shop)
         self.goto_supply_pack()
@@ -99,10 +114,19 @@ class SupplyPack(CampaignStatus):
 
 
 class SupplyPack_250814(SupplyPack):
+    """2025年8月改版后的商店补给包处理器。
+
+    适配新版商店 UI 下的石油数值识别与补给包页面导航。
+    """
+
     def get_oil(self, skip_first_screenshot=True):
-        """
+        """通过 OCR 识别商店页面顶部的石油存量。
+
+        Args:
+            skip_first_screenshot (bool): 是否跳过首次截图，默认 True。
+
         Returns:
-            int: Oil amount
+            int: 当前石油数量。
         """
         amount = 0
         timeout = Timer(1, count=2).start()
@@ -127,10 +151,14 @@ class SupplyPack_250814(SupplyPack):
         return amount
 
     def goto_supply_pack(self, skip_first_screenshot=True):
-        """
+        """进入新版商店补给包标签页。
+
+        Args:
+            skip_first_screenshot (bool): 是否跳过首次截图，默认 True。
+
         Pages:
             in: page_shop
-            out: page_supply_pack, supply pack tab
+            out: page_supply_pack
         """
         logger.info('前往补给包')
         for _ in self.loop():

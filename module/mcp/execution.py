@@ -20,6 +20,20 @@ class BoundedCalls:
         self.closed = False
 
     async def run(self, function, *args, timeout=90):
+        """
+        在受限并发槽中异步执行同步函数。
+
+        Args:
+            function: 待执行的同步目标函数。
+            *args: 传递给目标函数的位置参数。
+            timeout: 执行超时时间（秒），默认 90 秒。
+
+        Returns:
+            目标函数的返回值。
+
+        Raises:
+            ApiError: 服务关闭 (SERVICE_STOPPING)、槽位已满 (TOOL_BUSY) 或超时 (TOOL_TIMEOUT)。
+        """
         future = Future()
         with self.lock:
             if self.closed:
@@ -72,6 +86,15 @@ class DeviceCleanupError(ApiError):
 
 
 def cleanup_device(process):
+    """
+    清理并终止设备操作子进程及其子进程树。
+
+    Args:
+        process: multiprocessing.Process 实例。
+
+    Raises:
+        DeviceCleanupError: 当进程树未能完全退出时抛出。
+    """
     from module.runtime.process_control import stop_process_tree
 
     if not stop_process_tree(process, name='MCP 设备操作', timeout=2, kill_timeout=3):
@@ -81,7 +104,19 @@ def cleanup_device(process):
 
 
 def run_device(operation, instance):
-    """设备库可能无限重试；到期回收整棵进程树，禁止晚到的设备操作。"""
+    """
+    在独立子进程中执行设备操作，并在超时时回收整棵进程树。
+
+    Args:
+        operation: 操作指令类型，如 'get_screenshot'、'restart_emulator'、'restart_adb'。
+        instance: 目标 Alas 实例名称。
+
+    Returns:
+        dict: 工作进程返回的执行结果数据。
+
+    Raises:
+        ApiError: 设备操作超时、工作进程异常或操作失败。
+    """
     from module.mcp.device_worker import execute
 
     with tempfile.TemporaryDirectory(prefix='azurpilot-mcp-') as directory:

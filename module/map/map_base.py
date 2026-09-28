@@ -92,12 +92,13 @@ class CampaignMap:
         return iter(self.grids.values())
 
     def __getitem__(self, item):
-        """
+        """按坐标获取地图格子。
+
         Args:
-            item: 网格坐标。
+            item (tuple | list): 网格坐标 (x, y)。
 
         Returns:
-            GridInfo:
+            GridInfo: 对应的格子对象。
         """
         return self.grids[tuple(item)]
 
@@ -105,7 +106,7 @@ class CampaignMap:
         """判断坐标是否在地图范围内。
 
         Args:
-            item: 网格坐标。
+            item (tuple | list): 网格坐标。
 
         Returns:
             bool: 坐标是否存在于地图中。
@@ -135,7 +136,7 @@ class CampaignMap:
         设置时会根据尺寸初始化所有格子，生成默认相机数据，并将权重设为 10。
 
         Returns:
-            tuple[int, int]: 地图尺寸 ``(width, height)``。
+            tuple[int, int]: 地图尺寸 (width, height)。
         """
         return self._shape
 
@@ -185,10 +186,10 @@ class CampaignMap:
         self._map_data_loop = text
 
     def load_map_data(self, use_loop=False):
-        """
+        """加载地图数据。
+
         Args:
-            use_loop (bool): 是否为清理模式。
-                             清理模式（正确名称）== 快进模式（旧版 Alas）== loop（lua 文件中）
+            use_loop (bool, optional): 是否为清理模式（快进模式）。默认为 False。
         """
         has_loop = bool(len(self.map_data_loop))
         logger.info(f'[地图-数据] 加载地图数据, 有回路={has_loop}, 使用回路={use_loop}')
@@ -216,7 +217,7 @@ class CampaignMap:
     def wall_data(self):
         """墙壁数据文本。
 
-        设置时仅保存文本，实际加载由 ``grid_connection_initial(wall=True)`` 执行。
+        设置时仅保存文本，实际加载由 grid_connection_initial(wall=True) 执行。
 
         Returns:
             str: 墙壁数据文本。
@@ -234,15 +235,16 @@ class CampaignMap:
         设置时会解析传送门对并标记源格子为传送门。
 
         Returns:
-            list[tuple]: 传送门数据 ``[(start_location, end_location), ...]``。
+            list[tuple]: 传送门数据 [(start_location, end_location), ...]。
         """
         return self._portal_data
 
     @portal_data.setter
     def portal_data(self, portal_list):
-        """
+        """设置传送门数据列表。
+
         Args:
-            portal_list (list[tuple]): [(start, end),]
+            portal_list (list[tuple]): 传送门对列表 [(start, end), ...]。
         """
         for nodes in portal_list:
             node1, node2 = location_ensure(nodes[0]), location_ensure(nodes[1])
@@ -254,7 +256,7 @@ class CampaignMap:
         """陆基机制数据。
 
         Returns:
-            list: 陆基数据，每个元素为 ``[grid_node, rotation]``。
+            list: 陆基数据，每个元素为 [grid_node, rotation]。
         """
         return self._land_based_data
 
@@ -263,11 +265,12 @@ class CampaignMap:
         self._land_based_data = data
 
     def _load_land_base_data(self, data):
-        """
-        land_based_data 需要在 map_data 之后设置。
+        """解析并设置陆基机制格子与阻挡区域。
+
+        需要在 map_data 之后调用。
 
         Args:
-            data (list[list[str]]): 例如 [['H7', 'up'], ['D5', 'left'], ['G3', 'down'], ['C2', 'right']]
+            data (list[list[str]]): 例如 [['H7', 'up'], ['D5', 'left'], ['G3', 'down'], ['C2', 'right']]。
         """
         rotation_dict = {
             'up': [(0, -1), (0, -2), (0, -3)],
@@ -300,10 +303,10 @@ class CampaignMap:
     def _load_maze_data(self, data):
         """加载迷宫机制数据并标记相关格子。
 
-        为每个迷宫组设置 ``is_maze`` 标记和回合范围，并计算迷宫格子附近的可达区域。
+        为每个迷宫组设置 is_maze 标记和回合范围，并计算迷宫格子附近的可达区域。
 
         Args:
-            data (list): 迷宫数据，例如 [('D5', 'I4', 'J6'), ('C4', 'E4', 'D8'), ('C2', 'G2', 'G6')]
+            data (list): 迷宫数据，例如 [('D5', 'I4', 'J6'), ('C4', 'E4', 'D8'), ('C2', 'G2', 'G6')]。
         """
         self._maze_data = data
         self.maze_round = len(data) * 3
@@ -319,7 +322,7 @@ class CampaignMap:
         """堡垒机制数据。
 
         Returns:
-            list: ``[enemy_grids, block_grids]``，敌人格子和阻挡格子。
+            list: [enemy_grids, block_grids]，敌人格子和阻挡格子。
         """
         return self._fortress_data
 
@@ -335,11 +338,11 @@ class CampaignMap:
     def _load_fortress_data(self, data):
         """加载堡垒机制数据并标记相关格子。
 
-        将敌人格子标记为 ``is_fortress=True``，将阻挡格子标记为 ``is_mechanism_block=True``。
+        将敌人格子标记为 is_fortress=True，将阻挡格子标记为 is_mechanism_block=True。
 
         Args:
             data (list): [fortress_enemy, fortress_block]，可以是字符串或字符串的元组/列表。
-                例如 [('B5', 'E2', 'H5', 'E8'), 'G3'] 或 ['F5', 'G1']
+                例如 [('B5', 'E2', 'H5', 'E8'), 'G3'] 或 ['F5', 'G1']。
         """
         self._fortress_data = data
         enemy, block = data
@@ -360,10 +363,11 @@ class CampaignMap:
         self._bouncing_enemy_data = [self.to_selected(route) for route in data]
 
     def _load_bouncing_enemy_data(self, data):
-        """
+        """标记弹跳敌人路线经过的格子。
+
         Args:
-            data (list[SelectedGrids]): 敌人弹跳路线经过的格子。
-                [enemy_route, enemy_route, ...]，例如 [(C2, C3, C4), ]
+            data (list[SelectedGrids]): 敌人弹跳路线经过的格子序列。
+                [enemy_route, enemy_route, ...]，例如 [(C2, C3, C4), ]。
         """
         for route in data:
             route.set(may_bouncing_enemy=True)
@@ -374,10 +378,10 @@ class CampaignMap:
         根据标志位决定加载哪些机制数据到地图格子上。
 
         Args:
-            land_based (bool): 是否加载陆基机制。
-            maze (bool): 是否加载迷宫机制。
-            fortress (bool): 是否加载堡垒机制。
-            bouncing_enemy (bool): 是否加载弹跳敌人机制。
+            land_based (bool, optional): 是否加载陆基机制。默认为 False。
+            maze (bool, optional): 是否加载迷宫机制。默认为 False。
+            fortress (bool, optional): 是否加载堡垒机制。默认为 False。
+            bouncing_enemy (bool, optional): 是否加载弹跳敌人机制。默认为 False。
         """
         logger.info(f'[地图-数据] 加载机制, land_base={land_based}, maze={maze}, fortress={fortress}, '
                     f'bouncing_enemy={bouncing_enemy}')
@@ -391,13 +395,16 @@ class CampaignMap:
             self._load_bouncing_enemy_data(self._bouncing_enemy_data)
 
     def grid_connection_initial(self, wall=False, portal=False):
-        """
+        """初始化地图网格连通图。
+
+        建立相邻格子的四向连通关系，并按需应用墙壁切断与传送门单向/双向连接。
+
         Args:
-            wall (bool): 是否使用 wall_data
-            portal (bool): 是否使用 portal_data
+            wall (bool, optional): 是否使用 wall_data 切断连通。默认为 False。
+            portal (bool, optional): 是否使用 portal_data 创建传送门连通。默认为 False。
 
         Returns:
-            bool: 是否使用了墙壁数据。
+            bool: 是否成功初始化连通关系。
         """
         logger.info(f'[地图-连接] 格子连接: 墙壁={wall}, 传送门={portal}')
 
@@ -671,10 +678,11 @@ class CampaignMap:
         self._map_covered = SelectedGrids([self[node2location(node)] for node in nodes])
 
     def ignore_prediction(self, globe, **local):
-        """
+        """添加预测忽略规则，避免特定位置的误识别反复产生错误。
+
         Args:
-            globe (GridInfo, tuple, str): 全局地图中的网格。
-            **local: 局部网格的任意属性。
+            globe (GridInfo | tuple | str): 全局地图中的网格坐标或对象。
+            **local: 局部网格的属性匹配条件。
 
         Examples:
             MAP.ignore_prediction(D5, enemy_scale=1, enemy_genre='Enemy')
@@ -684,10 +692,11 @@ class CampaignMap:
         self._ignore_prediction.append((globe, local))
 
     def ignore_prediction_match(self, globe, local):
-        """
+        """检查全局坐标与局部网格是否匹配已配置的预测忽略规则。
+
         Args:
             globe (tuple): 全局坐标。
-            local (GridInfo): 局部网格信息。
+            local (GridInfo): 局部网格信息对象。
 
         Returns:
             bool: 是否匹配到错误预测。
@@ -730,11 +739,12 @@ class CampaignMap:
             logger.info(text)
 
     def find_path_initial(self, location, has_ambush=True, has_enemy=True):
-        """
+        """以指定坐标为起点，使用 Dijkstra 算法计算到各格子的最短路径与通行代价。
+
         Args:
-            location (tuple[int]): 网格坐标。
-            has_ambush (bool): 是否有伏击。
-            has_enemy (bool): 是否考虑敌人，False 表示仅考虑海洋和陆地。
+            location (tuple | str): 起点网格坐标。
+            has_ambush (bool, optional): 是否计入伏击格的额外代价。默认为 True。
+            has_enemy (bool, optional): 是否将敌舰格子视作阻挡障碍。默认为 True。
         """
         location = location_ensure(location)
         ambush_cost = 10 if has_ambush else 1
@@ -772,11 +782,12 @@ class CampaignMap:
         # self.show_connection()
 
     def find_path_initial_multi_fleet(self, location_dict, current, has_ambush):
-        """
+        """为多支舰队分别计算寻路代价并写入对应的 cost 属性。
+
         Args:
-            location_dict (dict): 键为舰队索引(int)，值为网格坐标 tuple[int])。
-            current (tuple): 当前位置。
-            has_ambush (bool): 是否有伏击。
+            location_dict (dict): 键为舰队索引 (int)，值为网格坐标 tuple[int, int]。
+            current (tuple): 当前活跃舰队坐标。
+            has_ambush (bool): 是否计入伏击额外代价。
         """
         location_dict = sorted(location_dict.items(), key=lambda kv: (int(kv[1] == current),))
         for fleet, location in location_dict:
@@ -788,12 +799,13 @@ class CampaignMap:
                 grid.__setattr__(attr, grid.cost)
 
     def _find_path(self, location):
-        """
+        """通过逆向回溯连接链获取从起点到目标点的完整格子路径。
+
         Args:
             location (tuple): 目标坐标。
 
         Returns:
-            list[tuple]: 行走路线。
+            list[tuple] | None: 完整网格路径坐标列表；若目标不可达则返回 None。
 
         Examples:
             MAP_7_2._find_path(node2location('H2'))
@@ -823,11 +835,14 @@ class CampaignMap:
         return res
 
     def _find_route_node(self, route, step=0, turning_optimize=False):
-        """
+        """从完整路径中提取关键行走节点。
+
+        处理步数限制拆分和转弯节点优化以降低伏击率。
+
         Args:
             route (list[tuple]): 网格坐标列表。
-            step (int): 活动地图中的舰队步数，默认为 0。
-            turning_optimize (bool): 为 True 时优化路线以减少伏击。
+            step (int, optional): 活动地图中的舰队步数，默认为 0。
+            turning_optimize (bool, optional): 为 True 时优化路线以减少伏击。默认为 False。
 
         Returns:
             list[tuple]: 行走节点列表。
@@ -886,9 +901,9 @@ class CampaignMap:
         最后对每段路径提取关键行走节点。
 
         Args:
-            location (str, tuple): 目标网格坐标或节点名。
-            step (int): 活动地图中的舰队步数，默认为 0（仅走到终点）。
-            turning_optimize (bool): 为 True 时优化路线以减少伏击。
+            location (str | tuple): 目标网格坐标或节点名。
+            step (int, optional): 活动地图中的舰队步数，默认为 0（仅走到终点）。
+            turning_optimize (bool, optional): 为 True 时优化路线以减少伏击。默认为 False。
 
         Returns:
             list[tuple]: 行走节点列表，每个元素为网格坐标。
@@ -923,10 +938,11 @@ class CampaignMap:
         return path
 
     def grid_covered(self, grid, location=None):
-        """
+        """获取指定格子周围被覆盖或关联的格子集合。
+
         Args:
             grid (GridInfo): 格子对象。
-            location (list[tuple[int]]): 被覆盖格子的相对坐标。
+            location (list[tuple], optional): 被覆盖格子的相对坐标。为 None 时调用 grid.covered_grid()。默认为 None。
 
         Returns:
             SelectedGrids: 被覆盖的格子集合。
@@ -946,13 +962,13 @@ class CampaignMap:
 
         Args:
             battle_count (int): 当前战斗次数。
-            mystery_count (int): 已遇到的神秘格子数。
-            siren_count (int): 已击败的塞壬数。
-            carrier_count (int): 已识别的航母数。
-            mode (str): 扫描模式。
+            mystery_count (int, optional): 已遇到的神秘格子数。默认为 0。
+            siren_count (int, optional): 已击败的塞壬数。默认为 0。
+            carrier_count (int, optional): 已识别的航母数。默认为 0。
+            mode (str, optional): 扫描模式。默认为 'normal'。
 
         Returns:
-            tuple[dict, dict]: ``(may, missing)``，may 为各类型可能出现的数量，
+            tuple[dict, dict]: (may, missing)，may 为各类型可能出现的数量，
                 missing 为各类型缺失的数量。
         """
         try:
@@ -998,10 +1014,10 @@ class CampaignMap:
 
         Args:
             battle_count (int): 当前战斗次数。
-            mystery_count (int): 已遇到的神秘格子数。
-            siren_count (int): 已击败的塞壬数。
-            carrier_count (int): 已识别的航母数。
-            mode (str): 扫描模式。
+            mystery_count (int, optional): 已遇到的神秘格子数。默认为 0。
+            siren_count (int, optional): 已击败的塞壬数。默认为 0。
+            carrier_count (int, optional): 已识别的航母数。默认为 0。
+            mode (str, optional): 扫描模式。默认为 'normal'。
 
         Returns:
             bool: 是否所有敌人都已被发现。
@@ -1025,10 +1041,10 @@ class CampaignMap:
 
         Args:
             battle_count (int): 当前战斗次数。
-            mystery_count (int): 已遇到的神秘格子数。
-            siren_count (int): 已击败的塞壬数。
-            carrier_count (int): 已识别的航母数。
-            mode (str): 扫描模式。
+            mystery_count (int, optional): 已遇到的神秘格子数。默认为 0。
+            siren_count (int, optional): 已击败的塞壬数。默认为 0。
+            carrier_count (int, optional): 已识别的航母数。默认为 0。
+            mode (str, optional): 扫描模式。默认为 'normal'。
         """
         if self.poor_map_data:
             return False
@@ -1047,7 +1063,8 @@ class CampaignMap:
                     upper.__setattr__('is_enemy', True)
 
     def select(self, **kwargs):
-        """
+        """筛选符合指定属性条件的格子集合。
+
         Args:
             **kwargs: 格子属性键值对。
 
@@ -1066,9 +1083,10 @@ class CampaignMap:
         return SelectedGrids(result)
 
     def to_selected(self, grids):
-        """
+        """将坐标列表转换为格子集合对象。
+
         Args:
-            grids (list): 坐标列表。
+            grids (list): 坐标或节点名列表。
 
         Returns:
             SelectedGrids: 格子集合。
@@ -1076,8 +1094,9 @@ class CampaignMap:
         return SelectedGrids([self[location_ensure(loca)] for loca in grids])
 
     def flatten(self):
-        """
+        """获取地图中所有格子的集合视图。
+
         Returns:
-            list[GridInfo]: 所有格子的列表。
+            ValuesView[GridInfo]: 所有格子的字典值视图。
         """
         return self.grids.values()

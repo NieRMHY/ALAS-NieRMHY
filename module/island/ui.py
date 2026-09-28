@@ -55,7 +55,7 @@ class IslandUI(UI):
         """
         return self.appear(ISLAND_MANAGEMENT_CHECK, offset=(20, 20), interval=interval)
 
-    #@cached_property
+    # @cached_property（保留备用）
     def _island_season_bottom_navbar(self):
         """
         创建季节活动底部导航栏实例。

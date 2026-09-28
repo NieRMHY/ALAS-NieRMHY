@@ -27,8 +27,10 @@ class Freebies(ModuleBase):
     下次运行时间为服务器刷新时间。
     """
     def run(self):
-        """
-        运行所有免费福利相关模块。
+        """执行所有已开启的免费福利收集任务。
+
+        依次调用通行证、数据钥匙、邮件以及补给包收集模块，
+        完成后将任务延迟至次日服务器刷新。
         """
         if self.config.BattlePass_Collect:
             logger.hr('战斗通行证', level=1)

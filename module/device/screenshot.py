@@ -18,6 +18,7 @@ from module.base.timer import Timer
 from module.base.utils import get_color, image_size, limit_in, save_image, set_template_match_non_native_720p
 from module.config.time_source import now as current_time
 from module.device.method.adb import Adb
+from module.device.method.azurpilot_android import AzurPilotAndroid
 from module.device.method.ascreencap import AScreenCap
 from module.device.method.droidcast import DroidCast
 from module.device.method.ldopengl import LDOpenGL
@@ -27,7 +28,7 @@ from module.device.method.wsa import WSA
 from module.exception import RequestHumanTakeover, ScriptError
 from module.logger import logger
 
-class Screenshot(Adb, WSA, DroidCast, AScreenCap, Scrcpy, NemuIpc, LDOpenGL):
+class Screenshot(AzurPilotAndroid, Adb, WSA, DroidCast, AScreenCap, Scrcpy, NemuIpc, LDOpenGL):
     """设备截图管理器。
 
     通过多重继承组合所有截图后端，根据用户配置的 Emulator_ScreenshotMethod
@@ -59,6 +60,7 @@ class Screenshot(Adb, WSA, DroidCast, AScreenCap, Scrcpy, NemuIpc, LDOpenGL):
                 值为对应的截图方法。
         """
         return {
+            'azurpilot_android': self.screenshot_azurpilot_android,
             'ADB': self.screenshot_adb,
             'ADB_nc': self.screenshot_adb_nc,
             'uiautomator2': self.screenshot_uiautomator2,

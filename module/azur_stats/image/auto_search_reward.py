@@ -13,7 +13,7 @@ import re
 
 from module.azur_stats.image.base import CLASSIFY_CACHE
 from module.azur_stats.image.base import ImageBase
-from module.azur_stats.image.get_items import GetItems, TooManyNewTemplate, ZeroAmountError
+from module.azur_stats.image.get_items import AutoSearchAmount, GetItems, TooManyNewTemplate, ZeroAmountError
 from module.azur_stats.assets import AUTO_SEARCH_REWARD_TITLE
 from module.base.button import ButtonGrid
 from module.base.decorator import cached_property
@@ -21,17 +21,24 @@ from module.base.utils import area_offset, crop
 from module.base.utils import color_similar
 from module.logger import logger
 from module.os_handler.assets import AUTO_SEARCH_REWARD
-from module.statistics.item import AmountOcr, Item, ItemGrid
+from module.statistics.item import Item, ItemGrid
 from module.statistics.utils import ImageError
 
 
 class AutoSearchRewardNoTitle(ImageError):
-    """ Drop title not found """
+    """未找到掉落物标题。"""
 
 
 class AutoSearchItem(Item):
+    """自律寻敌掉落物品条目。"""
+
     def predict_valid(self):
-        # Std of items:
+        """判断物品图像是否有效（非空或非纯背景）。
+
+        Returns:
+            bool: 像素标准差大于阈值时返回 True。
+        """
+        # 物品像素标准差参考：
         # 70.20733640432516
         # 71.35918518046846
         # 68.82552251304783
@@ -39,33 +46,6 @@ class AutoSearchItem(Item):
         # 19.32105580099661
         std = np.std(self.image, ddof=1)
         return std > 40
-
-
-class AutoSearchAmount(AmountOcr):
-    # 奖励页数量区域先放大 2.67 倍再提取文字：
-    # 数字组件高度 24~27px，图标边缘碎片 ≤8px。
-    # 开启碎片过滤避免碎片被误读为数字（如特别兑换券 3 被读成 23）。
-    remove_fragments = True
-    fragment_min_height = 15
-    fragment_min_area = 30
-    # 数字间水平间隙 ≤4px，图标竖笔触与数字间隙 ≥19px，
-    # 用右侧数字簇规则排除图标笔触（如 2 被读成 12）。
-    fragment_max_digit_gap = 10
-
-    def pre_process(self, image):
-        # group.amount_area = (35, 51, 63, 63)
-        # Target height: 32
-        scale = 32 / 12
-        #     CV_INTER_NN       =0,
-        #     CV_INTER_LINEAR   =1,
-        #     CV_INTER_CUBIC    =2,
-        #     CV_INTER_AREA     =3,
-        #     CV_INTER_LANCZOS4 =4,
-        image = cv2.resize(image, (0, 0), fx=scale, fy=scale, interpolation=2)
-
-        image = super().pre_process(image)
-
-        return image
 
 
 class AutoSearchItemGrid(ItemGrid):
@@ -164,24 +144,24 @@ class AutoSearchItemGrid(ItemGrid):
 
     @staticmethod
     def predict_tag(image):
-        """
+        """预测物品上的标签属性（如猫爪标记等）。
+
         Args:
-            image (np.ndarray): The tag_area of the item.
-            Replace this method to predict tags.
+            image (np.ndarray): 物品的标签截取区域。
 
         Returns:
-            str: Tags are like `catchup`, `bonus`. Default to None
+            str: 标签名称（如 'meow'），无标签时返回 None。
         """
         threshold = 35
         color = cv2.mean(np.array(image))[:3]
         if color_similar(color1=color, color2=(181, 205, 255), threshold=threshold):
-            # Blue drops
+            # 蓝色掉落
             return 'meow'
         elif color_similar(color1=color, color2=(231, 187, 255), threshold=threshold):
-            # Purple drops
+            # 紫色掉落
             return 'meow'
         elif color_similar(color1=color, color2=(255, 225, 111), threshold=threshold):
-            # Gold drops
+            # 金色掉落
             return 'meow'
         else:
             return None
@@ -191,18 +171,30 @@ class AutoSearchReward(ImageBase):
     AUTO_SEARCH_ITEM_TEMPLATE_FOLDER = f'./assets/auto_search'
 
     def is_opsi_reward(self, image) -> bool:
+        """判断是否为大世界自律结算奖励界面。
+
+        Args:
+            image (np.ndarray): 待检测图像。
+
+        Returns:
+            bool: 是否为大世界奖励界面。
+        """
         return bool(self.classify_server(AUTO_SEARCH_REWARD, image, offset=(50, 50)))
 
     def parse_auto_search_reward(self, image, name=True, amount=True, tag=True) -> t.Iterator[AutoSearchItem]:
-        """
+        """解析自律结算界面中的掉落物品列表。
+
         Args:
-            image (np.ndarray):
-            name (bool):
-            amount (bool):
-            tag (bool):
+            image (np.ndarray): 结算截图。
+            name (bool): 是否识别物品名称。
+            amount (bool): 是否识别物品数量。
+            tag (bool): 是否识别物品标签。
 
         Yields:
-            AutoSearchItem:
+            AutoSearchItem: 解析出的掉落物品对象。
+
+        Raises:
+            ZeroAmountError: 物品数量识别为 0 时抛出。
         """
         self._auto_search_get_items_load(image)
 
@@ -222,11 +214,14 @@ class AutoSearchReward(ImageBase):
                 yield item
 
     def extract_auto_search_item_template(self, image, folder=None):
-        """
+        """从结算截图中提取未知物品的新模板。
+
         Args:
-            image:
-            folder: Folder to save new templates.
-                If None, use self.ITEM_TEMPLATE_FOLDER
+            image (np.ndarray): 结算截图。
+            folder (str, optional): 模板保存文件夹，默认使用 AUTO_SEARCH_ITEM_TEMPLATE_FOLDER。
+
+        Raises:
+            TooManyNewTemplate: 提取的新模板数量过多时抛出。
         """
         if folder is None:
             folder = self.AUTO_SEARCH_ITEM_TEMPLATE_FOLDER
@@ -239,6 +234,11 @@ class AutoSearchReward(ImageBase):
 
     @cached_property
     def auto_search_item_group(self) -> ItemGrid:
+        """获取自律结算物品网格识别器实例。
+
+        Returns:
+            ItemGrid: 初始化的物品网格对象。
+        """
         group = AutoSearchItemGrid(None, {}, template_area=(40, 21, 89, 70), amount_area=(60, 71, 91, 92))
         group.item_class = AutoSearchItem
         group.similarity = 0.85
@@ -250,12 +250,36 @@ class AutoSearchReward(ImageBase):
         return group
 
     def auto_search_before_revise_items(self, items: t.List[AutoSearchItem]) -> t.List[AutoSearchItem]:
+        """物品修正前的预处理钩子方法。
+
+        Args:
+            items (list[AutoSearchItem]): 识别出的原始物品列表。
+
+        Returns:
+            list[AutoSearchItem]: 预处理后的物品列表。
+        """
         return items
 
     def auto_search_revise_item(self, item: AutoSearchItem) -> AutoSearchItem:
+        """单项物品修正钩子方法。
+
+        Args:
+            item (AutoSearchItem): 待修正的物品。
+
+        Returns:
+            AutoSearchItem: 修正后的物品。
+        """
         return item
 
     def _auto_search_get_items_load(self, image):
+        """定位结算奖励标题并加载计算物品网格区域。
+
+        Args:
+            image (np.ndarray): 结算截图。
+
+        Raises:
+            AutoSearchRewardNoTitle: 未检测到结算标题。
+        """
         # 标题模板只有 35x16，结算页底部的「本次作战出现紧急委托」文字
         # 同样能匹配成功（相似度甚至高于真标题），而 Button.match() 会把
         # 匹配位置缓存在按钮对象上，这里又用该位置推算物品网格原点：

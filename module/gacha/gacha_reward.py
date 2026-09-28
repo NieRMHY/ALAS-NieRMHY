@@ -7,7 +7,7 @@
 from module.base.timer import Timer
 from module.campaign.campaign_status import CampaignStatus
 from module.combat.assets import GET_SHIP
-from module.exception import ScriptError
+from module.exception import GameStuckError, ScriptError
 from module.gacha.assets import *
 from module.gacha.ui import GachaUI
 from module.handler.assets import POPUP_CONFIRM, STORY_SKIP
@@ -18,6 +18,15 @@ from module.log_res import LogRes
 
 RECORD_GACHA_OPTION = ('RewardRecord', 'gacha')
 RECORD_GACHA_SINCE = (0,)
+# 建造数量面板的等待参数。
+# 云手机等慢设备上一帧截图要 2~4 秒，面板淡入本身也要几秒：
+# 点击「开始建造/提交订单」后立刻再点一次，会点到面板外面（等同于点遮罩）
+# 把面板关掉，形成「开面板 → 关面板」的交替，永远等不到 +/-。
+# 因此重新点击必须同时满足秒数和帧数两个下限，整个等待另有超时兜底。
+GACHA_PREP_SUBMIT_WAIT = 10  # 秒
+GACHA_PREP_SUBMIT_WAIT_FRAMES = 2  # 帧
+GACHA_PREP_TIMEOUT = 90  # 秒
+GACHA_PREP_TIMEOUT_FRAMES = 20  # 帧
 OCR_BUILD_CUBE_COUNT = Digit(BUILD_CUBE_COUNT, letter=(255, 247, 247), threshold=64)
 OCR_BUILD_TICKET_COUNT = Digit(BUILD_TICKET_COUNT, letter=(255, 247, 247), threshold=64)
 OCR_BUILD_SUBMIT_COUNT = Digit(BUILD_SUBMIT_COUNT, letter=(255, 247, 247), threshold=64)
@@ -25,6 +34,13 @@ OCR_BUILD_SUBMIT_WW_COUNT = Digit(BUILD_SUBMIT_WW_COUNT, letter=(255, 247, 247),
 
 
 class RewardGacha(GachaUI, Retirement, CampaignStatus):
+    """建造处理器，负责执行舰船建造全流程。
+
+    Attributes:
+        build_coin_count (int): 当前识别到的金币存量。
+        build_cube_count (int): 当前识别到的心智魔方存量。
+        build_ticket_count (int): 当前识别到的建造券存量。
+    """
     build_coin_count = 0
     build_cube_count = 0
     build_ticket_count = 0
@@ -45,51 +61,55 @@ class RewardGacha(GachaUI, Retirement, CampaignStatus):
             out: 提交确认弹窗
 
         Raises:
-            ScriptError: 无法识别 OCR 资源时抛出。
+            GameStuckError: 建造数量面板迟迟不出现时抛出。
         """
         # target 为 0 时无需准备
         if not target:
             return False
 
-        # 确保在正确的页面上才能进行准备
-        if not self.appear(BUILD_SUBMIT_ORDERS) \
-                and not self.appear(BUILD_SUBMIT_WW_ORDERS):
+        # 使用 'appear' 更新资源的实际位置，供 ui_ensure_index 使用。
+        # 用当前页面上的提交按钮判断是普通建造池还是许愿池；
+        # 两者都看不到说明当前不在建造页面，直接退出。
+        if self.appear(BUILD_SUBMIT_WW_ORDERS):
+            ocr_submit = OCR_BUILD_SUBMIT_WW_COUNT
+        elif self.appear(BUILD_SUBMIT_ORDERS):
+            ocr_submit = OCR_BUILD_SUBMIT_COUNT
+        else:
             return False
 
-        # 使用 'appear' 更新资源的实际位置，供 ui_ensure_index 使用
-        confirm_timer = Timer(1, count=2).start()
-        ocr_submit = None
         index_offset = (60, 20)
-        while 1:
-            if skip_first_screenshot:
-                skip_first_screenshot = False
-            else:
-                self.device.screenshot()
+        submit_wait = Timer(GACHA_PREP_SUBMIT_WAIT, count=GACHA_PREP_SUBMIT_WAIT_FRAMES)
+        for _ in self.loop(
+                skip_first=skip_first_screenshot,
+                timeout=Timer(GACHA_PREP_TIMEOUT, count=GACHA_PREP_TIMEOUT_FRAMES)):
+            # 结束——建造数量面板已经打开
+            if self.appear(BUILD_PLUS, offset=index_offset) \
+                    and self.appear(BUILD_MINUS, offset=index_offset):
+                break
+
+            # 即使 UR 兑换点已满也继续建造
+            if self.handle_popup_confirm('GACHA_PREP'):
+                submit_wait.reset()
+                continue
+
+            # 面板还在淡入时不要重复点击，否则会把刚打开的面板点掉
+            if not submit_wait.reached():
+                continue
 
             if self.appear_then_click(BUILD_SUBMIT_ORDERS, interval=3):
                 ocr_submit = OCR_BUILD_SUBMIT_COUNT
-                confirm_timer.reset()
+                submit_wait.reset()
                 continue
 
             if self.appear_then_click(BUILD_SUBMIT_WW_ORDERS, interval=3):
                 ocr_submit = OCR_BUILD_SUBMIT_WW_COUNT
-                confirm_timer.reset()
+                submit_wait.reset()
                 continue
-            # 即使 UR 兑换点已满也继续建造
-            if self.handle_popup_confirm('GACHA_PREP'):
-                confirm_timer.reset()
-                continue
+        else:
+            logger.warning('[建造-准备] 等待建造数量面板超时')
+            raise GameStuckError('[建造-准备] 等待建造数量面板超时')
 
-            # 结束
-            if self.appear(BUILD_PLUS, offset=index_offset) \
-                    and self.appear(BUILD_MINUS, offset=index_offset):
-                if confirm_timer.reached():
-                    break
-
-        # 检查是否异常提前退出，并设置正确的提交数量
-        if ocr_submit is None:
-            raise ScriptError('[建造-准备] 无法识别OCR资产，'
-                              '无法继续准备工作')
+        # 设置正确的提交数量
         area = ocr_submit.buttons[0]
         ocr_submit.buttons = [(BUILD_MINUS.button[2] + 3, area[1], BUILD_PLUS.button[0] - 3, area[3])]
         self.ui_ensure_index(target, letter=ocr_submit, prev_button=BUILD_MINUS,
@@ -237,8 +257,8 @@ class RewardGacha(GachaUI, Retirement, CampaignStatus):
                 confirm_timer.reset()
                 continue
 
-            if self.appear(GET_SHIP, interval=1):
-                self.device.click(STORY_SKIP)  # 多个订单时快进
+            if self.appear(GET_SHIP, offset=(20, 20), interval=1):
+                self.device.click(STORY_SKIP)  # Fast forward for multiple orders
                 confirm_timer.reset()
                 continue
             if self.handle_get_items_ship():

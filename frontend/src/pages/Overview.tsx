@@ -1,3 +1,7 @@
+/**
+ * @fileoverview 实例运行总览页面（资源卡、调度器计划与实时日志）。
+ */
+
 import { useEffect, useState, useSyncExternalStore } from 'react'
 import { useParams } from 'react-router-dom'
 import { api } from '../api/client'

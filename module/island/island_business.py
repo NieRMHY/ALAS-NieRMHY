@@ -1637,7 +1637,7 @@ class IslandBusiness(BusinessStockCheckMixin, Island):
             (698, 90, 818, 125),            # 偏移150px（美食评审模式）
         ]
 
-        best = (None, None, 0.0)  # (shop, button, similarity)
+        best = (None, None, 0.0)  # (商店, 按钮, 相似度)
         for area in areas:
             area_img = crop(self.device.image, area)
             for shop in self.shops:
@@ -1927,7 +1927,7 @@ class IslandBusiness(BusinessStockCheckMixin, Island):
         """
         s = self.device.image
         area_img = crop(s, self.BUSINESS_CHARACTER_AREA)
-        best = (None, None, 0.0)  # (name, button, similarity)
+        best = (None, None, 0.0)  # (角色名, 按钮, 相似度)
 
         # 只遍历优先级列表中的角色模板，跳过不在优先级中的角色
         for name in self.character_priority:

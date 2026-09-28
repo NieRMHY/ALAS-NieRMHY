@@ -182,9 +182,15 @@ def set_server(package_or_server: str):
 
 
 def to_server(package_or_server: str) -> str:
-    """
-    将包名或服务器名称转换为服务器标识。
+    """将包名或服务器名称转换为标准服务器标识。
+
     无法识别的包名默认视为 CN 渠道服。
+
+    Args:
+        package_or_server: 待转换的包名或服务器标识字符串。
+
+    Returns:
+        str: 转换后的服务器标识 ('cn', 'en', 'jp', 'tw')。
     """
     if package_or_server in VALID_SERVER:
         return package_or_server
@@ -197,8 +203,16 @@ def to_server(package_or_server: str) -> str:
 
 
 def to_package(package_or_server: str) -> str:
-    """
-    将包名或服务器名称转换为包名。
+    """将服务器名称或包名转换为官方包名。
+
+    Args:
+        package_or_server: 服务器标识或包名。
+
+    Returns:
+        str: 对应的官方包名。
+
+    Raises:
+        ValueError: 无法找到匹配的包名。
     """
     package_or_server = package_or_server.lower()
     if package_or_server in VALID_PACKAGE:

@@ -58,13 +58,15 @@ class UI(InfoHandler):
     ui_current: Page
 
     def ui_page_appear(self, page, offset=(30, 30), interval=0):
-        """
-        检测指定页面是否出现在屏幕上。
+        """检测指定页面是否出现在屏幕上。
 
         Args:
             page (Page): 要检测的页面。
-            offset: 匹配偏移量。
-            interval: 检测间隔。
+            offset (tuple): 匹配偏移量。
+            interval (int | float): 检测间隔。
+
+        Returns:
+            bool: 页面是否出现。
         """
         if page == page_main:
             return self.appear(page_main.check_button, offset=(5, 5), interval=interval)
@@ -75,17 +77,25 @@ class UI(InfoHandler):
         return self.appear(page.check_button, offset=offset, interval=interval)
 
     def is_in_main(self, offset=(30, 30), interval=0):
+        """检测当前是否处于游戏主界面（支持传统主题与白色主题）。
+
+        Args:
+            offset (tuple): 匹配偏移量。
+            interval (int | float): 检测间隔。
+
+        Returns:
+            bool: 是否在主界面。
+        """
         return (self.ui_page_appear(page_main, offset=offset, interval=interval)
                 or self.ui_page_appear(page_main_white, offset=offset, interval=interval))
 
     def ui_main_appear_then_click(self, page, offset=(30, 30), interval=3):
-        """
-        检测主界面是否出现，若出现则点击前往目标页面的按钮。
+        """检测主界面是否出现，若出现则点击前往目标页面的按钮。
 
         Args:
-            page: 目标页面。
-            offset: 匹配偏移量。
-            interval: 检测间隔。
+            page (Page): 目标页面。
+            offset (tuple): 匹配偏移量。
+            interval (int | float): 检测间隔。
 
         Returns:
             bool: 是否点击了按钮。
@@ -101,6 +111,15 @@ class UI(InfoHandler):
         return False
 
     def ensure_button_execute(self, button, offset=0):
+        """检查按钮是否可见或可调用对象是否返回 True。
+
+        Args:
+            button (Button | callable): 按钮对象或检查回调。
+            offset (int | tuple): 匹配偏移量。
+
+        Returns:
+            bool: 按钮是否出现或条件是否满足。
+        """
         if isinstance(button, Button) and self.appear(button, offset=offset):
             return True
         elif callable(button) and button():
@@ -119,17 +138,16 @@ class UI(InfoHandler):
             retry_wait=10,
             skip_first_screenshot=False,
     ):
-        """
-        点击按钮并等待目标画面出现。
+        """点击按钮并等待目标画面出现。
 
         Args:
             click_button (Button): 要点击的按钮。
-            check_button (Button, callable): 用于确认页面已切换的检测按钮或回调。
-            appear_button (Button, callable): 点击前需先出现的按钮，默认为 click_button。
-            additional (callable): 额外的弹窗处理回调。
-            confirm_wait (int, float): 确认等待时间（秒）。
-            offset (bool, int, tuple): 匹配偏移量。
-            retry_wait (int, float): 重试等待时间（秒）。
+            check_button (Button | callable): 用于确认页面已切换的检测按钮或回调。
+            appear_button (Button | callable | None): 点击前需先出现的按钮，默认为 click_button。
+            additional (callable | None): 额外的弹窗处理回调。
+            confirm_wait (int | float): 确认等待时间（秒）。
+            offset (bool | int | tuple): 匹配偏移量。
+            retry_wait (int | float): 重试等待时间（秒）。
             skip_first_screenshot (bool): 是否跳过首次截图。
         """
         logger.hr("UI 点击")
@@ -164,12 +182,11 @@ class UI(InfoHandler):
                     continue
 
     def ui_process_check_button(self, check_button, offset=(30, 30)):
-        """
-        处理检测按钮，支持 Button、callable、列表或元组等多种类型。
+        """处理检测按钮，支持 Button、callable、列表或元组等多种类型。
 
         Args:
-            check_button (Button, callable, list[Button], tuple[Button]): 检测按钮或回调。
-            offset: 匹配偏移量。
+            check_button (Button | callable | list[Button] | tuple[Button]): 检测按钮或回调。
+            offset (tuple): 匹配偏移量。
 
         Returns:
             bool: 是否检测到目标。
@@ -187,15 +204,18 @@ class UI(InfoHandler):
             return self.appear(check_button, offset=offset)
 
     def ui_get_current_page(self, skip_first_screenshot=True, recover_unknown=True):
-        """
-        获取当前所在的 UI 页面。
+        """获取当前所在的 UI 页面。
 
         Args:
-            skip_first_screenshot: 是否跳过首次截图。
-            recover_unknown: 未知页面时是否通过登录处理器重启游戏。
+            skip_first_screenshot (bool): 是否跳过首次截图。
+            recover_unknown (bool): 未知页面时是否通过登录处理器重启游戏。
 
         Returns:
             Page: 当前页面对象。
+
+        Raises:
+            GameNotRunningError: 游戏进程未运行时抛出。
+            GamePageUnknownError: 未知页面且禁止自动重启时抛出。
         """
         logger.info("UI 获取当前页面")
 
@@ -283,15 +303,14 @@ class UI(InfoHandler):
 
     def ui_goto(self, destination, get_ship=True, offset=(30, 30), skip_first_screenshot=True,
                 recover_unknown=True):
-        """
-        导航到目标页面，使用 A* 寻路算法找到最短路径。
+        """导航到目标页面，使用 A* 寻路算法找到最短路径。
 
         Args:
             destination (Page): 目标页面。
-            get_ship: 是否处理获得舰船的弹窗。
-            offset: 匹配偏移量。
-            skip_first_screenshot: 是否跳过首次截图。
-            recover_unknown: 导航超时时，未知页面是否允许重启游戏恢复。
+            get_ship (bool): 是否处理获得舰船的弹窗。
+            offset (tuple): 匹配偏移量。
+            skip_first_screenshot (bool): 是否跳过首次截图。
+            recover_unknown (bool): 导航超时时，未知页面是否允许重启游戏恢复。
         """
         # 初始化页面连接
         Page.init_connection(destination)
@@ -362,13 +381,12 @@ class UI(InfoHandler):
         Page.clear_connection()
 
     def ui_ensure(self, destination, skip_first_screenshot=True, recover_unknown=True):
-        """
-        确保当前在目标页面，若不在则导航过去。
+        """确保当前在目标页面，若不在则导航过去。
 
         Args:
             destination (Page): 目标页面。
-            skip_first_screenshot: 是否跳过首次截图。
-            recover_unknown: 未知页面时是否允许重启游戏恢复。
+            skip_first_screenshot (bool): 是否跳过首次截图。
+            recover_unknown (bool): 未知页面时是否允许重启游戏恢复。
 
         Returns:
             bool: 是否发生了页面切换。
@@ -397,20 +415,52 @@ class UI(InfoHandler):
     def ui_goto_main(self, recover_unknown=True):
         """导航到主页面。
 
-        Args:
-            recover_unknown: 未知页面时是否允许重启游戏恢复。
+        Pages:
+            in: 任意页面
+            out: page_main
 
-        Pages: in: any, out: page_main
+        Args:
+            recover_unknown (bool): 未知页面时是否允许重启游戏恢复。
+
+        Returns:
+            bool: 是否发生了页面切换。
         """
         return self.ui_ensure(destination=page_main, recover_unknown=recover_unknown)
 
     def ui_goto_campaign(self):
+        """导航到主线战役页面。
+
+        Pages:
+            in: 任意页面
+            out: page_campaign
+
+        Returns:
+            bool: 是否发生了页面切换。
+        """
         return self.ui_ensure(destination=page_campaign)
 
     def ui_goto_event(self):
+        """导航到活动战役页面。
+
+        Pages:
+            in: 任意页面
+            out: page_event
+
+        Returns:
+            bool: 是否发生了页面切换。
+        """
         return self.ui_ensure(destination=page_event)
 
     def ui_goto_sp(self):
+        """导航到 SP 关卡页面。
+
+        Pages:
+            in: 任意页面
+            out: page_sp
+
+        Returns:
+            bool: 是否发生了页面切换。
+        """
         return self.ui_ensure(destination=page_sp)
 
     def ui_ensure_index(
@@ -423,17 +473,16 @@ class UI(InfoHandler):
             fast=True,
             interval=(0.2, 0.3),
     ):
-        """
-        确保翻页到指定索引位置，通过 OCR 识别当前页码并点击翻页按钮。
+        """确保翻页到指定索引位置，通过 OCR 识别当前页码并点击翻页按钮。
 
         Args:
             index (int): 目标索引。
-            letter (Ocr, callable): OCR 识别器或回调函数。
+            letter (Ocr | callable): OCR 识别器或回调函数。
             next_button (Button): 下一页按钮。
             prev_button (Button): 上一页按钮。
             skip_first_screenshot (bool): 是否跳过首次截图。
             fast (bool): 默认为 True。当索引不连续时设为 False。
-            interval (tuple, int, float): 两次点击之间的间隔（秒）。
+            interval (tuple | int | float): 两次点击之间的间隔（秒）。
         """
         logger.hr("UI 确保索引")
         retry = Timer(1, count=2)
@@ -462,6 +511,15 @@ class UI(InfoHandler):
                 retry.reset()
 
     def ui_back(self, check_button, appear_button=None, offset=(30, 30), retry_wait=10, skip_first_screenshot=False):
+        """点击返回按钮并等待目标画面出现。
+
+        Args:
+            check_button (Button | callable): 用于确认返回成功的检测按钮或回调。
+            appear_button (Button | callable | None): 点击前需先出现的按钮。
+            offset (tuple): 匹配偏移量。
+            retry_wait (int | float): 重试等待秒数。
+            skip_first_screenshot (bool): 是否跳过首次截图。
+        """
         return self.ui_click(
             click_button=BACK_ARROW,
             check_button=check_button,
@@ -474,11 +532,13 @@ class UI(InfoHandler):
     _opsi_reset_fleet_preparation_click = 0
 
     def ui_page_main_popups(self, get_ship=True):
-        """
-        处理主界面和奖励页面出现的弹窗。
+        """处理主界面和奖励页面出现的弹窗。
 
         Args:
-            get_ship: 是否处理获得舰船的弹窗。
+            get_ship (bool): 是否处理获得舰船的弹窗。
+
+        Returns:
+            bool: 是否处理了弹窗。
         """
         # 大舰队弹窗
         if self.handle_guild_popup_cancel():
@@ -494,7 +554,7 @@ class UI(InfoHandler):
         if self.appear_then_click(GET_ITEMS_2, offset=True, interval=3):
             return True
         if get_ship:
-            if self.appear_then_click(GET_SHIP, interval=5):
+            if self.appear_then_click(GET_SHIP, offset=(20, 20), interval=5):
                 return True
         if self.appear_then_click(LOGIN_RETURN_SIGN, offset=(30, 30), interval=3):
             return True
@@ -543,8 +603,13 @@ class UI(InfoHandler):
         return False
 
     def ui_page_os_popups(self):
-        """
-        处理大世界页面出现的弹窗。
+        """处理大世界页面出现的弹窗。
+
+        Returns:
+            bool: 是否处理了弹窗。
+
+        Raises:
+            RequestHumanTakeover: 连续多次无法确认出击舰队时请求人工接管。
         """
         # 大世界重置流程：
         # - 大世界已重置，handle_story_skip() 点击确认
@@ -572,11 +637,13 @@ class UI(InfoHandler):
         return False
 
     def ui_additional(self, get_ship=True):
-        """
-        处理 UI 切换过程中出现的各种弹窗。
+        """处理 UI 切换过程中出现的各种弹窗。
 
         Args:
-            get_ship: 是否处理获得舰船的弹窗。
+            get_ship (bool): 是否处理获得舰船的弹窗。
+
+        Returns:
+            bool: 是否处理了弹窗。
         """
         # 大世界页面弹窗
         # 包含 popup_confirm 变体，必须优先处理

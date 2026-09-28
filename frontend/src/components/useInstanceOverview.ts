@@ -1,3 +1,7 @@
+/**
+ * @fileoverview 实例运行总览数据订阅 Hook。
+ */
+
 import { useEffect, useState } from 'react'
 import { api } from '../api/client'
 import type { Overview } from '../api/types'

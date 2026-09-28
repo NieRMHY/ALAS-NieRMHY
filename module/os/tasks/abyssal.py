@@ -22,20 +22,28 @@ from module.os.tasks.scheduling import CoinTaskMixin
 class OpsiAbyssal(CoinTaskMixin, OSMap):
     @staticmethod
     def _has_call_submarine(task_name, config):
+        """检查任务的舰队筛选器是否包含呼叫潜艇指令。
+
+        Args:
+            task_name (str): 任务名称。
+            config: 配置对象。
+
+        Returns:
+            bool: 包含 'callsubmarine' 时返回 True，否则返回 False。
+        """
         filter_str = config.cross_get(
             f"{task_name}.OpsiFleetFilter.Filter", default=""
         )
         return "callsubmarine" in str(filter_str).lower()
 
     def _is_submarine_task(self, task_name):
-        """
-        检查指定任务是否使用潜艇。
+        """检查指定任务是否启用了潜艇支持。
 
         Args:
             task_name (str): 任务名称。
 
         Returns:
-            bool: 如果任务使用潜艇则返回 True。
+            bool: 若启用潜艇支持返回 True，否则返回 False。
         """
         submarine_enabled = self.config.cross_get(
             f"{task_name}.OpsiFleet.Submarine", default=False
@@ -52,13 +60,12 @@ class OpsiAbyssal(CoinTaskMixin, OSMap):
         return False
 
     def _check_submarine_cooldown(self):
-        """
-        检查潜艇是否处于冷却状态。
+        """检查潜艇是否处于冷却状态。
 
         遍历所有已启用的潜艇相关任务，检查是否存在即将到期的冷却。
 
         Returns:
-            tuple: (是否冷却中, 冷却结束时间)
+            tuple[bool, datetime | None]: (是否冷却中, 冷却结束时间)。
         """
         now = current_time()
         submarine_tasks = [
@@ -87,11 +94,10 @@ class OpsiAbyssal(CoinTaskMixin, OSMap):
         return False, None
 
     def _delay_until_submarine_cooldown_end(self, cooldown_end_time):
-        """
-        延迟深渊坐标任务直到潜艇冷却结束。
+        """延迟深渊坐标任务直到潜艇冷却结束。
 
         Args:
-            cooldown_end_time: 潜艇冷却结束的时间。
+            cooldown_end_time (datetime): 潜艇冷却结束的时间。
         """
         if self.is_running_smart_scheduling_task():
             logger.info(f'[大世界-深渊坐标] 智能调度+代理执行中，深渊坐标潜艇冷却至 {cooldown_end_time}，本轮跳过深渊')
@@ -113,12 +119,11 @@ class OpsiAbyssal(CoinTaskMixin, OSMap):
         self.config.task_stop()
 
     def delay_abyssal(self, result=True, submarine_enabled=True):
-        """
-        延迟深渊坐标任务执行。
+        """延迟深渊坐标任务执行。
 
         Args:
-            result (bool): 是否还有深渊日志仪。
-            submarine_enabled (bool): 舰队过滤器是否包含呼叫潜艇。
+            result (bool): 是否还有深渊日志仪。默认 True。
+            submarine_enabled (bool): 舰队过滤器是否包含呼叫潜艇。默认 True。
         """
         if not submarine_enabled:
             logger.info('[大世界-深渊坐标] 本轮深渊过滤器不包含 CallSubmarine，不延迟')
@@ -133,8 +138,7 @@ class OpsiAbyssal(CoinTaskMixin, OSMap):
         self.config.task_stop()
 
     def clear_abyssal(self):
-        """
-        清理一个深渊坐标。
+        """清理一个深渊坐标。
 
         从仓库取出深渊日志仪，攻击深渊 Boss，完成后在港口修理舰队。
         如果检测到潜艇冷却，会延迟任务执行。
@@ -181,6 +185,7 @@ class OpsiAbyssal(CoinTaskMixin, OSMap):
         return submarine_enabled
 
     def os_abyssal(self):
+        """深渊海域任务主循环。"""
         while True:
             submarine_enabled = self.clear_abyssal()
 

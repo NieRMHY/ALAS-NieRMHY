@@ -536,6 +536,12 @@ class Minitouch(Connection):
 
     @Config.when(DEVICE_OVER_HTTP=False)
     def minitouch_send(self, builder: CommandBuilder):
+        """
+        通过 Socket 向 minitouch 发送触控指令序列。
+
+        Args:
+            builder: 构建完成的 minitouch 命令构造器。
+        """
         content = builder.to_minitouch()
         # logger.info("send operation: {}".format(content.replace("\n", "\\n")))
         byte_content = content.encode('utf-8')
@@ -606,6 +612,12 @@ class Minitouch(Connection):
 
     @Config.when(DEVICE_OVER_HTTP=True)
     def minitouch_send(self, builder: CommandBuilder):
+        """
+        通过 WebSocket 向 atx-agent 发送 minitouch 触控指令序列。
+
+        Args:
+            builder: 构建完成的 minitouch 命令构造器。
+        """
         content = builder.to_atx_agent()
 
         async def send():
@@ -619,6 +631,13 @@ class Minitouch(Connection):
 
     @retry
     def click_minitouch(self, x, y):
+        """
+        通过 minitouch 执行点击操作。
+
+        Args:
+            x: 点击横坐标。
+            y: 点击纵坐标。
+        """
         builder = self.minitouch_builder
         builder.down(x, y).commit()
         builder.up().commit()
@@ -626,6 +645,14 @@ class Minitouch(Connection):
 
     @retry
     def long_click_minitouch(self, x, y, duration=1.0):
+        """
+        通过 minitouch 执行长按操作。
+
+        Args:
+            x: 长按横坐标。
+            y: 长按纵坐标。
+            duration: 长按持续时间（秒）。
+        """
         duration = int(duration * 1000)
         builder = self.minitouch_builder
         builder.down(x, y).commit().wait(duration)
@@ -634,6 +661,13 @@ class Minitouch(Connection):
 
     @retry
     def swipe_minitouch(self, p1, p2):
+        """
+        通过 minitouch 执行贝塞尔曲线平滑滑动操作。
+
+        Args:
+            p1: 滑动起点坐标 (x, y)。
+            p2: 滑动终点坐标 (x, y)。
+        """
         points = insert_swipe(p0=p1, p3=p2)
         builder = self.minitouch_builder
 
@@ -649,6 +683,15 @@ class Minitouch(Connection):
 
     @retry
     def drag_minitouch(self, p1, p2, point_random=(-10, -10, 10, 10), hold_duration=0.0):
+        """
+        通过 minitouch 执行拖拽操作。
+
+        Args:
+            p1: 拖拽起始坐标 (x, y)。
+            p2: 拖拽释放坐标 (x, y)。
+            point_random: 起始和结束坐标的随机抖动范围 (x_min, y_min, x_max, y_max)。
+            hold_duration: 到达终点后的按住停顿时间（秒）。
+        """
         p1 = np.array(p1) - random_rectangle_point(point_random)
         p2 = np.array(p2) - random_rectangle_point(point_random)
         points = insert_swipe(p0=p1, p3=p2, speed=20)
@@ -675,6 +718,14 @@ class Minitouch(Connection):
         builder.send()
 
     def island_swipe_hold_minitouch(self, p1, p2, hold_time):
+        """
+        通过 minitouch 在无人岛等活动界面执行滑动并保持按住。
+
+        Args:
+            p1: 滑动起点坐标。
+            p2: 滑动终点坐标。
+            hold_time: 到达终点后按住等待的时间（毫秒）。
+        """
         points = insert_swipe(p0=p1, p3=p2)
         builder = self.minitouch_builder
         builder.down(*points[0]).commit().wait(10)

@@ -142,12 +142,30 @@ class Awaken(Dock):
         return 'invalid'
 
     def handle_awaken_finish(self):
+        """处理觉醒完成提示或结算动画。
+
+        Returns:
+            bool: 是否检测并点击了完成按钮。
+        """
         return self.appear_then_click(AWAKEN_FINISH, offset=(20, 20), interval=1)
 
     def is_in_awaken(self):
+        """判断当前是否位于舰船觉醒界面。
+
+        Returns:
+            bool: 是否检测到觉醒界面特征。
+        """
         return SHIP_LEVEL_CHECK.match_luma(self.device.image, similarity=0.7)
 
     def awaken_popup_close(self, skip_first_screenshot=True):
+        """关闭觉醒相关的弹窗，返回觉醒主界面。
+
+        Args:
+            skip_first_screenshot (bool): 是否跳过首次截图。
+
+        Pages:
+            out: is_in_awaken
+        """
         logger.info('[觉醒] 觉醒弹窗关闭')
         self.interval_clear(AWAKEN_CANCEL)
         while 1:
@@ -420,7 +438,7 @@ class Awaken(Dock):
             self.awaken_exit()
             # 'insufficient'、'no_exp'、'timeout'
             if result in ['no_exp', 'level_max']:
-                # Awaken next ship
+                # 觉醒下一艘舰船
                 continue
             if result == 'insufficient':
                 logger.info('[觉醒] 觉醒运行完成，资源耗尽')
@@ -433,6 +451,14 @@ class Awaken(Dock):
         return result
 
     def run(self):
+        """执行舰船觉醒任务。
+
+        根据配置的目标等级上限（120 级或 125 级）以及是否仅针对收藏舰船，
+        遍历船坞中符合条件的舰船并进行觉醒，直到达到上限或资源耗尽。
+
+        Raises:
+            ScriptError: 未知的等级上限配置。
+        """
         # 优先执行觉醒+（使用心智阵列）
         favourite = self.config.Awaken_Favourite
         if self.config.Awaken_LevelCap == 'level125':
