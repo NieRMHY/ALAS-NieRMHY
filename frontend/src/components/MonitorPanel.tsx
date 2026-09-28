@@ -77,6 +77,8 @@ function RecentLogs({instance}: {instance: string}) {
 export function MonitorPanel({instance, actions}: {instance: string; actions?: ReactNode}) {
   const [view, setView] = useState('logs')
   const [frame, setFrame] = useState<Preview>()
+  /* 日志工具条挂到表头上的槽位：窗口变窄时整行换行，不再叠在日志文字上。 */
+  const [toolbarSlot, setToolbarSlot] = useState<HTMLDivElement | null>(null)
   const {setPreviewEnabled, ui} = useApp()
   useEffect(() => {
     setPreviewEnabled(view === 'preview')
@@ -92,8 +94,9 @@ export function MonitorPanel({instance, actions}: {instance: string; actions?: R
     ]}/>
     {actions}
     {view === 'preview' && frame?.image && <a className="text-button" href={frame.image} download={`${instance}-screenshot.jpg`}><Download size={14}/>{ui('monitor.saveScreenshot')}</a>}
+    <div className="monitor-toolbar-slot" ref={setToolbarSlot}/>
   </div>
-    <div className="monitor-view" hidden={view !== 'logs'}><LogPanel active={view === 'logs'}/></div>
+    <div className="monitor-view" hidden={view !== 'logs'}><LogPanel active={view === 'logs'} toolbarSlot={toolbarSlot}/></div>
     <div className="monitor-view" hidden={view !== 'preview'}>
       <RecentLogs instance={instance}/>
       <div className="preview-stage"><div className="preview-screen">{frame?.image ? <img src={frame.image} alt={ui('monitor.screenshotAlt')}/> : <Empty icon={<Image size={42}/>} title={ui('monitor.waitingScreenshot')}>{ui('monitor.screenshotHint')}</Empty>}</div></div>

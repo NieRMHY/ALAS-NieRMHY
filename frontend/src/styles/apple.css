@@ -230,9 +230,10 @@ main:focus {outline: none}
 .task-row time {font-size: 11px; color: var(--muted)}
 .task-row-name strong {font-size: 13px; font-weight: 550}
 .schedule-summary {font-size: 12px}
-.monitor-tabs {height: 64px; padding: 10px 16px; gap: 10px; display: flex; align-items: center; border-bottom: 1px solid color-mix(in srgb, var(--glass-edge) 54%, var(--border))}
+.monitor-tabs {height: auto; min-height: 64px; padding: 10px 16px; gap: 10px; display: flex; align-items: center; flex-wrap: wrap; border-bottom: 1px solid color-mix(in srgb, var(--glass-edge) 54%, var(--border))}
 .monitor-panel {position: relative}
-.monitor-panel .log-toolbar {position: absolute; top: 10px; right: 16px; z-index: 3; height: 44px; display: flex; align-items: center; gap: 4px}
+/* 工具条改挂在表头槽位（与日志/截图同一行）：窄窗口随表头换行，不再绝对定位压住日志内容。 */
+.monitor-panel .log-toolbar {display: flex; align-items: center; gap: 4px}
 .monitor-panel .log-toolbar .icon-button {width: 36px; height: 36px}
 .monitor-panel .log-toolbar .text-button {min-height: 36px; white-space: nowrap}
 .monitor-segmented {position: relative; display: inline-flex; align-items: center; gap: 2px; padding: 3px; border-radius: 999px; background: #e9eaedb8; border: 1px solid #18181b0a; box-shadow: none; max-width: 100%; overflow-x: auto; vertical-align: middle; -webkit-backdrop-filter: blur(16px) saturate(120%); backdrop-filter: blur(16px) saturate(120%); scrollbar-width: none}
@@ -447,11 +448,11 @@ html.home-active .topbar,
   .task-group-button, .task-submenu-item {min-height: 44px}
   .sidebar-label .icon-button {width: 36px; height: 36px}
   .mobile-close {position: static; margin-left: auto}
-  .monitor-tabs {height: 66px; padding: 8px 12px}
+  .monitor-tabs {height: auto; min-height: 66px; padding: 8px 12px}
   .monitor-segmented button {min-width: 92px; height: 40px; min-height: 40px; padding: 0 12px}
   .monitor-tabs .text-button {font-size: 11px}
   .monitor-tabs > span {font-size: 10px}
-  .monitor-panel .log-toolbar {top: 13px; right: 12px; height: 40px; gap: 2px}
+  .monitor-panel .log-toolbar {gap: 2px}
   .monitor-panel .log-toolbar .icon-button {width: 36px; height: 36px}
   .monitor-panel .log-toolbar .text-button {min-height: 36px; padding: 6px 8px}
   .schedule-panel, .monitor-panel {height: 520px}
@@ -463,9 +464,9 @@ html.home-active .topbar,
 }
 @media (max-width: 300px) {.app-shell.with-rail .breadcrumb {display: none}}
 @media (max-width: 480px) {
-  .monitor-tabs {height: 60px; padding: 8px 10px}
+  .monitor-tabs {height: auto; min-height: 60px; padding: 8px 10px}
   .monitor-segmented button {min-width: 70px; height: 36px; min-height: 36px; padding: 0 8px; gap: 5px}
-  .monitor-panel .log-toolbar {top: 12px; right: 10px; height: 36px; gap: 1px}
+  .monitor-panel .log-toolbar {gap: 1px}
   .monitor-panel .log-toolbar .icon-button {width: 32px; height: 32px}
   .monitor-panel .log-toolbar .text-button {width: 32px; min-height: 32px; padding: 0; gap: 0; justify-content: center; font-size: 0}
 }

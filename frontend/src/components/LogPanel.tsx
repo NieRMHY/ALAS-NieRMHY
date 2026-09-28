@@ -4,6 +4,7 @@
 
 import { Select } from './FormControls'
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 import { useParams } from 'react-router-dom'
 import { ArrowDownUp, Download, LayoutGrid, Pause, Play, Search, Terminal, Trash2 } from 'lucide-react'
 import { api } from '../api/client'
@@ -245,7 +246,7 @@ function loadLogViewMode(): 'cards' | 'classic' {
   return 'cards'
 }
 
-export function LogPanel({active = true}: {active?: boolean}) {
+export function LogPanel({active = true, toolbarSlot}: {active?: boolean; toolbarSlot?: HTMLElement | null}) {
   const {instance = ''} = useParams()
   const [entries, setEntries] = useState<LogEntry[]>([])
   const [search, setSearch] = useState('')
@@ -414,43 +415,48 @@ export function LogPanel({active = true}: {active?: boolean}) {
     URL.revokeObjectURL(url)
   }
 
+  const toolbar = (
+    <div className="log-toolbar" aria-label={ui('log.tools')}>
+      <button className={`icon-button ${search || level !== 'ALL' ? 'filter-active' : ''}`} aria-label={filtersOpen ? ui('log.filtersCollapse') : ui('log.filtersExpand')} title={ui('log.searchAndFilter')} aria-expanded={filtersOpen} aria-controls="log-filters" onClick={() => setFiltersOpen(!filtersOpen)}><Search size={15}/></button>
+      <button className="icon-button" onClick={() => setFollow(!follow)} aria-label={follow ? ui('log.pauseFollow') : ui('log.resumeFollow')}>
+        {follow ? <Pause size={15} /> : <Play size={15} />}
+      </button>
+      <button className="icon-button" onClick={toggleOrder} aria-label={ui('log.order')} aria-pressed={descending}
+        title={descending ? ui('log.orderDesc') : ui('log.orderAsc')}>
+        <ArrowDownUp size={15} />
+      </button>
+      <button
+        className={`icon-button ${viewMode === 'cards' ? 'filter-active' : ''}`}
+        onClick={toggleViewMode}
+        aria-label={viewMode === 'cards' ? ui('log.viewModeClassic') : ui('log.viewModeCards')}
+        title={viewMode === 'cards' ? ui('log.viewModeCardsTitle') : ui('log.viewModeClassicTitle')}
+      >
+        {viewMode === 'cards' ? <LayoutGrid size={15} /> : <Terminal size={15} />}
+      </button>
+      <button
+        className="icon-button"
+        onClick={() => {
+          const lastId = Math.max(
+            entries.at(-1)?.id ?? 0,
+            logBuffer.current.entries.at(-1)?.id ?? 0
+          )
+          flushBuffer.current()
+          setFloor(lastId)
+        }}
+        aria-label={ui('log.clearView')}
+      >
+        <Trash2 size={15} />
+      </button>
+      <button className="text-button" onClick={download} aria-label={ui('log.export')}>
+        <Download size={15} />{ui('log.exportShort')}
+      </button>
+    </div>
+  )
+
   return (
     <section className="log-panel">
-      <div className="log-toolbar" aria-label={ui('log.tools')}>
-        <button className={`icon-button ${search || level !== 'ALL' ? 'filter-active' : ''}`} aria-label={filtersOpen ? ui('log.filtersCollapse') : ui('log.filtersExpand')} title={ui('log.searchAndFilter')} aria-expanded={filtersOpen} aria-controls="log-filters" onClick={() => setFiltersOpen(!filtersOpen)}><Search size={15}/></button>
-        <button className="icon-button" onClick={() => setFollow(!follow)} aria-label={follow ? ui('log.pauseFollow') : ui('log.resumeFollow')}>
-          {follow ? <Pause size={15} /> : <Play size={15} />}
-        </button>
-        <button className="icon-button" onClick={toggleOrder} aria-label={ui('log.order')} aria-pressed={descending}
-          title={descending ? ui('log.orderDesc') : ui('log.orderAsc')}>
-          <ArrowDownUp size={15} />
-        </button>
-        <button
-          className={`icon-button ${viewMode === 'cards' ? 'filter-active' : ''}`}
-          onClick={toggleViewMode}
-          aria-label={viewMode === 'cards' ? ui('log.viewModeClassic') : ui('log.viewModeCards')}
-          title={viewMode === 'cards' ? ui('log.viewModeCardsTitle') : ui('log.viewModeClassicTitle')}
-        >
-          {viewMode === 'cards' ? <LayoutGrid size={15} /> : <Terminal size={15} />}
-        </button>
-        <button
-          className="icon-button"
-          onClick={() => {
-            const lastId = Math.max(
-              entries.at(-1)?.id ?? 0,
-              logBuffer.current.entries.at(-1)?.id ?? 0
-            )
-            flushBuffer.current()
-            setFloor(lastId)
-          }}
-          aria-label={ui('log.clearView')}
-        >
-          <Trash2 size={15} />
-        </button>
-        <button className="text-button" onClick={download} aria-label={ui('log.export')}>
-          <Download size={15} />{ui('log.exportShort')}
-        </button>
-      </div>
+      {/* 挂到表头（日志/截图切换那一行）时用 portal；独立使用时仍在面板内自成一行。 */}
+      {toolbarSlot && active ? createPortal(toolbar, toolbarSlot) : toolbar}
       {filtersOpen && <div className="log-filters" id="log-filters">
         <div className="input-icon">
           <Search size={15} />

@@ -832,3 +832,31 @@ test('指挥喵评分报告面板展示、刷新与空状态', async ({page}) =>
   await expect(page.locator('.meow-panel').getByRole('link', {name: '查看完整报告', exact: true})).toHaveCount(0)
   expect(errors).toEqual([])
 })
+
+test('日志工具条固定在表头，窄窗口下不再压住日志内容', async ({page}) => {
+  await page.addInitScript(() => {
+    localStorage.setItem('azurpilot.theme', 'light')
+    localStorage.setItem('azurpilot.material', 'glass')
+  })
+  // 1060px 会切到紧凑布局：操作按钮进表头，是最容易把工具条挤出表头、压在日志上的场景。
+  await page.setViewportSize({width: 1060, height: 720})
+  await page.goto('/#/i/demo-main/overview')
+  const toolbar = page.locator('.monitor-toolbar-slot .log-toolbar')
+  await expect(toolbar).toBeVisible()
+  await expect(page.locator('.monitor-toolbar-slot .log-toolbar .icon-button').first()).toBeVisible()
+  // 工具条必须在表头内（与日志/截图切换同一行），且与日志内容零重叠。
+  const geometry = await page.evaluate(() => {
+    const bar = document.querySelector('.monitor-toolbar-slot .log-toolbar')!.getBoundingClientRect()
+    const content = document.querySelector('.monitor-panel .log-content')!.getBoundingClientRect()
+    const tabs = document.querySelector('.monitor-panel .monitor-tabs')!.getBoundingClientRect()
+    return {
+      overlap: Math.max(0, Math.min(bar.bottom, content.bottom) - Math.max(bar.top, content.top)),
+      insideHeader: bar.top >= tabs.top - 1 && bar.bottom <= tabs.bottom + 1,
+      headerOverflow: document.querySelector('.monitor-panel .monitor-tabs')!.scrollHeight - document.querySelector('.monitor-panel .monitor-tabs')!.clientHeight,
+    }
+  })
+  expect(geometry.overlap).toBe(0)
+  expect(geometry.insideHeader).toBe(true)
+  expect(geometry.headerOverflow).toBeLessThanOrEqual(1)
+  await page.locator('.monitor-panel').screenshot({path: 'test-results/log-toolbar.png', animations: 'disabled'})
+})

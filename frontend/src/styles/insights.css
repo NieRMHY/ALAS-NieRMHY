@@ -35,12 +35,20 @@
 .schedule-summary {flex-wrap:wrap;gap:8px 12px;padding:12px 16px}.schedule-summary > span {display:none}
 .schedule-panel .task-table {flex:1;min-height:0;max-height:none;overflow-y:auto;padding:0 14px}
 .task-row {grid-template-columns:minmax(0,1fr) 48px 74px 10px;gap:6px}.task-order {display:none}.task-row-name {min-width:0;overflow:hidden}.task-row-name strong {display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.task-state.running {color:#159b88;background:#159b881a;font-weight:700}.task-state.waiting {color:var(--muted)}
-.monitor-tabs {display:flex;flex-direction:row;align-items:center;border-bottom:1px solid var(--border);padding:0 18px;gap:6px;flex-shrink:0;height:49px;box-sizing:border-box}
+.monitor-tabs {display:flex;flex-direction:row;align-items:center;border-bottom:1px solid var(--border);padding:0 18px;gap:6px;flex-shrink:0;height:auto;min-height:49px;box-sizing:border-box}
 .monitor-tabs button {display:inline-flex;align-items:center;gap:8px;padding:0 16px;height:100%;background:none;border:0;color:var(--muted);border-bottom:2px solid transparent;cursor:pointer;box-sizing:border-box}
 .monitor-tabs button[aria-selected=true] {color:var(--text);border-bottom-color:#159b88}
+/* 表头是换行 flex：height:100% 会与表头高度互相依赖，按钮撑高后把工具条挤出表头。
+   操作按钮按内容高度（靠 align-items:center 居中），表头高度才等于各行之和。 */
+.monitor-tabs > .button {height: auto}
 .monitor-tabs > a.text-button {margin-left:auto;font-size:11px}
 .monitor-tabs > a.text-button + span {margin-left:0}
 .monitor-tabs > span {margin-left:auto;font-size:11px;color:var(--muted)}
+/* 日志工具条与日志/截图切换同处表头：窄窗口随表头换行，不再覆盖日志内容。 */
+.monitor-toolbar-slot {margin-left:auto;display:flex;align-items:center;justify-content:flex-end;gap:4px;min-width:0}
+.monitor-toolbar-slot:empty {display:none}
+.monitor-toolbar-slot .icon-button {width:36px;height:36px;padding:0}
+.monitor-toolbar-slot .text-button {height:36px;min-height:36px;padding:6px 10px}
 .monitor-view[hidden] {display:none !important}
 .monitor-view:not([hidden]) {flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden}
 .monitor-panel .log-panel {display:flex;flex-direction:column;flex:1;min-height:0;height:100%}
