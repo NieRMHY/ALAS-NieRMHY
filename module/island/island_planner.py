@@ -37,6 +37,8 @@ SHOP_TASKS = {
 MEAL_SLOTS = 8
 SHELF_SLOTS = 5
 MIN_STOCK = 2
+# 每店 2 个岗位 x 24 小时 = 48 时/天的生产上限（社区方案口径）
+CAPACITY_HOURS = 48.0
 
 
 def load_unproducible(shop):
@@ -141,9 +143,32 @@ def mine_verified(paths):
     return result
 
 
+def seasonal_products(shop):
+    """
+    本店的季节限定商品（来自 island_season.SEASONAL_ITEMS，全季节并集）。
+
+    餐馆/白熊的季节菜是运行时按季节拼进 shop_items 的，源码 AST 里看不到，
+    必须单独补上，否则会被误判成「代码未实现」。
+
+    Args:
+        shop: 店铺类型标识
+
+    Returns:
+        set: 商品英文名集合
+    """
+    try:
+        from module.island.island_season import SEASONAL_ITEMS
+    except ImportError:
+        return set()
+    names = set()
+    for season_items in SEASONAL_ITEMS.values():
+        names.update(season_items.get(shop, []))
+    return names
+
+
 def code_products(shop):
     """
-    解析商店模块源码，取出本店有按钮资源的商品（代码已实现）。
+    本店有按钮资源的商品（代码已实现）：店铺源码 + 季节限定表。
 
     这些商品才能在游戏里排产/上架；经济库里多出来的条目（wiki 有、
     代码没有）必须排除，否则排产时 KeyError。
@@ -175,7 +200,7 @@ def code_products(shop):
         if not ({'var_name', 'template', 'button', 'selection'} & set(fields)):
             continue
         names.add(fields['name'])
-    return names
+    return names | seasonal_products(shop)
 
 
 def shelf_options(shop):
@@ -207,7 +232,10 @@ def shelf_options(shop):
 
 def target_stock(shop, product, shop_level='diamond', economy=None):
     """
-    商品目标库存：单格可售量 + 安全余量。
+    商品目标库存：一个货架堆叠（per_slot）+ 安全余量。
+
+    历史误读：早期按 per_slot * sell_rate / 1.6 计算，得到 5 < per_slot(6)，
+    货架永远填不满一格；per_slot 是「每格可堆叠数量」，不是售出速度。
 
     Args:
         shop: 店铺类型标识
@@ -216,13 +244,73 @@ def target_stock(shop, product, shop_level='diamond', economy=None):
         economy: 经济库实例；None 用默认
 
     Returns:
-        int: 目标库存（不低于 MIN_STOCK）
+        int: 目标库存（不低于 per_slot）
+    """
+    level = SHOP_LEVELS.get(shop_level, SHOP_LEVELS['bronze'])
+    per_slot = int(level.get('per_slot', 6))
+    return max(per_slot, MIN_STOCK)
+
+
+def production_requirements(shop, meals, economy=None):
+    """
+    递归展开生产需求，区分本店产能与跨店原料。
+
+    套餐原料里若有别店商品（如简餐的草莓夏洛特需要咖啡店的芝士），
+    不能算进本店产能，也不能排进本店生产清单。
+
+    Args:
+        shop: 店铺类型标识
+        meals: [(商品英文名, 数量)]
+        economy: 经济库实例；None 用默认
+
+    Returns:
+        tuple: (own, cross, minutes)
+            own: {商品: 数量} 本店需要生产的（含递归原料）
+            cross: {店铺: {商品: 数量}} 需要别店生产的原料
+            minutes: 本店占用的岗位分钟数
     """
     economy = economy or EconomyDatabase()
-    level = SHOP_LEVELS.get(shop_level, SHOP_LEVELS['bronze'])
-    per_slot = level.get('per_slot', 6)
-    sellable = int(per_slot * level.get('sell_rate', 1.0) / 1.6)
-    return max(sellable + 1, MIN_STOCK)
+
+    def walk(name, qty, own, cross, depth=0):
+        info = economy.get_product(name)
+        if not info or depth > 5:
+            return
+        owner = info.get('shop')
+        if owner == shop:
+            own[name] = own.get(name, 0) + qty
+        else:
+            cross.setdefault(owner, {})
+            cross[owner][name] = cross[owner].get(name, 0) + qty
+            return  # 别店商品不再向下展开（由该店自行展开原料）
+        for sub, per in info['materials'].items():
+            if sub in economy.economy_products:
+                walk(sub, qty * per, own, cross, depth + 1)
+
+    own, cross = {}, {}
+    for name, qty in meals:
+        walk(name, qty, own, cross)
+    minutes = sum(economy.get_product(n)['time_min'] * q for n, q in own.items())
+    return own, cross, minutes
+
+
+def merge_requirements(base_meals, extra_requirements, meals_slots=MEAL_SLOTS):
+    """
+    把跨店需求并入本店生产清单（不覆盖已有项，按利润排序后截断）。
+
+    Args:
+        base_meals: [(商品, 数量)] 原清单
+        extra_requirements: {商品: 数量} 追加需求
+        meals_slots: 生产清单槽位数
+
+    Returns:
+        list[(商品, 数量)]
+    """
+    merged = {name: qty for name, qty in base_meals}
+    for name, qty in extra_requirements.items():
+        merged[name] = max(merged.get(name, 0), qty)
+    economy = EconomyDatabase()
+    ordered = sorted(merged.items(), key=lambda kv: -economy.profit_per_min(kv[0]))
+    return ordered[:meals_slots]
 
 
 class ShopPlan(object):
@@ -236,15 +324,16 @@ class ShopPlan(object):
         self.meals = []   # [(商品英文名, 目标库存)]
         self.shelf = []   # [商品英文名]
         self.notes = []   # [说明]
+        self.minutes = 0  # 预计占用的岗位分钟数（含递归原料）
 
     def __repr__(self):
         return f'<ShopPlan {self.cn_name} meals={len(self.meals)} shelf={len(self.shelf)}>'
 
 
 def plan_shop(shop, shop_level='diamond', season=None, warehouse=None,
-              meals_slots=MEAL_SLOTS, shelf_slots=SHELF_SLOTS,
+              meals_slots=MEAL_SLOTS, shelf_slots=None,
               economy=None, producible=None, exclude=None, shelf_pool=None,
-              verified=None):
+              verified=None, manual_shelf=None, capacity_ratio=0.9):
     """
     生成单店方案。
 
@@ -261,56 +350,126 @@ def plan_shop(shop, shop_level='diamond', season=None, warehouse=None,
         shelf_pool: 可上架商品候选；None 自动从配置读取
         verified: 已验证可生产商品集合；非 None 时生产清单只从中取
             （避免排进未解锁商品导致 GameStuckError 重启循环）
+        manual_shelf: 用户/社区方案指定的上架商品，优先占格
+        capacity_ratio: 岗位工时预算占比（默认 0.9，即 43.2 时/天），超出则裁剪
 
     Returns:
         ShopPlan
     """
     economy = economy or EconomyDatabase(season=season)
     plan = ShopPlan(shop, shop_level, season)
+    if shelf_slots is None:
+        # 默认按店铺等级的货架格数（钻石 4 格），多填的格子游戏会忽略
+        shelf_slots = int(SHOP_LEVELS.get(shop_level, SHOP_LEVELS['diamond']).get('slots', SHELF_SLOTS))
     producible = code_products(shop) if producible is None else set(producible)
     exclude = set(exclude or ()) | load_unproducible(shop)
     shelf_pool = shelf_options(shop) if shelf_pool is None else list(shelf_pool)
 
-    # ---- 生产清单：本店可生产、当季、利润优先 ----
-    candidates = []
-    for item in economy.get_products_by_shop(shop):
-        name = item['name']
-        if name not in producible:
-            continue
+    verified_set = set(verified) if verified is not None else None
+
+    # ---- 第一步：定货架（卖什么）----
+    # 货架每格同时只卖一件，所以看「单格售价」而不是生产指标；
+    # 能持续补货（本账号验证过可生产）的商品优先，避免高价格子长期空着。
+    for name in shelf_pool:
         if name in exclude:
             plan.notes.append(f'跳过 {economy.cn_name(name)}：未解锁名单内')
-            continue
-        if verified is not None and name not in verified:
-            plan.notes.append(f'跳过 {economy.cn_name(name)}：本账号未验证可生产')
-            continue
-        candidates.append(name)
-    candidates = economy.filter_products(candidates, season=season)
-    candidates = economy.sort_by_profit(candidates)
-    for name in candidates[:meals_slots]:
-        plan.meals.append((name, target_stock(shop, name, shop_level, economy)))
-
-    plan_names = {n for n, _ in plan.meals}
-    # ---- 上架清单：优先卖自己会补货的商品，其余用仓库现有高利润商品补满 ----
     pool = [n for n in shelf_pool if n not in exclude]
     pool = economy.filter_products(pool, season=season)
-    in_plan = [n for n in economy.sort_by_profit(pool) if n in plan_names]
-    others = [n for n in economy.sort_by_profit(pool) if n not in plan_names]
-    ranked = in_plan + others
 
+    def shelf_rank(name):
+        restockable = 0 if (verified_set is None or name in verified_set) else 1
+        return restockable, -economy.price_of(name)
+
+    ranked = sorted(pool, key=shelf_rank)
+    if manual_shelf:
+        # 玩家手动指定的上架清单优先（社区方案/个人偏好），其余格位由方案补
+        manual = [n for n in manual_shelf if n in pool]
+        ranked = manual + [n for n in ranked if n not in manual]
     if warehouse is not None:
+        # 有库存的优先；但只有库存全为 0 时才整表过滤，避免读数失败导致空货架
         in_stock = [n for n in ranked if warehouse.get(n, 0) > 0]
-        for name in ranked:
-            if name not in in_stock:
-                plan.notes.append(f'上架跳过 {economy.cn_name(name)}：仓库无库存')
-        ranked = in_stock
-
+        if in_stock:
+            for name in ranked:
+                if name not in in_stock:
+                    plan.notes.append(f'上架跳过 {economy.cn_name(name)}：仓库无库存')
+            ranked = in_stock
     plan.shelf = ranked[:shelf_slots]
+
+    # ---- 第二步：按货架排生产（含本店原料）----
+    # 逐项按产能预算接纳：放不下就不上这个货架商品（货架与生产永远一致），
+    # 避免出现「货架摆着、生产却没排」的空格子。
+    budget = CAPACITY_HOURS * capacity_ratio * 60
+    shelf_keep, stock_only, seen = [], [], set()
+
+    def requirements_of(names):
+        acc, seen_local = [], set()
+
+        def walk(n, depth=0):
+            if depth > 5 or n in seen_local or n not in producible or n in exclude:
+                return
+            if verified_set is not None and n not in verified_set:
+                return
+            info = economy.get_product(n)
+            if not info:
+                return
+            seen_local.add(n)
+            acc.append(n)
+            for sub in info['materials']:
+                if sub in economy.economy_products:
+                    walk(sub, depth + 1)
+
+        for n in names:
+            walk(n)
+        return acc
+
+    def top_level_hours(names):
+        """只把顶层商品写进清单（原料交给 ALAS 展开），避免产能重复计算。"""
+        meals = [(n, target_stock(shop, n, shop_level, economy)) for n in names]
+        _, _, minutes = production_requirements(shop, meals, economy)
+        return minutes
+
+    for name in plan.shelf:
+        if verified_set is not None and name not in verified_set:
+            stock_only.append(name)
+            plan.notes.append(f'上架 {economy.cn_name(name)} 未验证可生产，仅靠现有库存')
+            continue
+        minutes = top_level_hours(shelf_keep + [name])
+        if minutes > budget and shelf_keep:
+            plan.notes.append(
+                f'产能不足: {economy.cn_name(name)} 不排产（含原料 {minutes / 60:.1f} 时 > '
+                f'预算 {budget / 60:.1f} 时）')
+            continue
+        shelf_keep.append(name)
+        seen = set(requirements_of(shelf_keep))  # 顶层 + 已覆盖的原料
+
+    plan.shelf = shelf_keep + stock_only
+
+    meals = [(n, target_stock(shop, n, shop_level, economy)) for n in shelf_keep]
+    extra_names = economy.filter_products(
+        [item['name'] for item in economy.get_products_by_shop(shop)], season=season)
+    for name in extra_names:
+        if len(meals) >= meals_slots or name in seen:
+            continue
+        if name not in producible or name in exclude:
+            continue
+        if verified_set is not None and name not in verified_set:
+            continue
+        candidate = meals + [(name, target_stock(shop, name, shop_level, economy))]
+        _, _, minutes = production_requirements(shop, candidate, economy)
+        if minutes > budget:
+            continue  # 产能不够，跳过这个商品（不动已有货架需求）
+        meals = candidate
+        seen.add(name)
+    plan.meals = meals
+    plan_names = {n for n, _ in plan.meals}
+    if plan_names:
+        plan.notes.append(f'在产: {", ".join(economy.cn_name(n) for n in plan_names)}')
     return plan
 
 
 def plan_all(shop_level='diamond', season=None, warehouse=None,
-             shelf_slots=SHELF_SLOTS, shops=None, extra_exclude=None,
-             verified_only=False):
+             shelf_slots=None, shops=None, extra_exclude=None,
+             verified_only=False, manual_shelf=None, capacity_ratio=0.9):
     """
     生成全部店铺方案。
 
@@ -320,6 +479,9 @@ def plan_all(shop_level='diamond', season=None, warehouse=None,
         warehouse: {商品: 库存}；None 不做库存过滤
         shelf_slots: 上架格数
         shops: 限定店铺列表；None 全部
+        extra_exclude: {店铺: {商品}} 额外排除
+        verified_only: 只排已验证可生产的商品
+        manual_shelf: {店铺: [商品]} 用户指定的上架商品，优先占格
 
     Returns:
         dict: {店铺标识: ShopPlan}
@@ -327,13 +489,41 @@ def plan_all(shop_level='diamond', season=None, warehouse=None,
     economy = EconomyDatabase(season=season)
     extra_exclude = extra_exclude or {}
     verified = load_verified() if verified_only else {}
+    order = list(shops or ECONOMY_SHOPS)
     out = {}
-    for shop in (shops or ECONOMY_SHOPS):
+    for shop in order:
         out[shop] = plan_shop(shop, shop_level=shop_level, season=season,
                               warehouse=warehouse, shelf_slots=shelf_slots,
                               economy=economy,
                               exclude=extra_exclude.get(shop, set()),
-                              verified=verified.get(shop) if verified_only else None)
+                              verified=verified.get(shop) if verified_only else None,
+                              manual_shelf=(manual_shelf or {}).get(shop),
+                              capacity_ratio=capacity_ratio)
+    # ---- 跨店原料回填：别店需要的原料排到生产店 ----
+    for shop in order:
+        _, cross, _ = production_requirements(shop, out[shop].meals, economy)
+        for owner, requirements in cross.items():
+            if owner not in out or owner == shop:
+                continue
+            # 别店商品必须是该店可生产、且不在排除名单里
+            usable = {n: q for n, q in requirements.items()
+                      if n in code_products(owner)
+                      and n not in load_unproducible(owner)
+                      and n not in extra_exclude.get(owner, set())}
+            if not usable:
+                continue
+            out[owner].meals = merge_requirements(out[owner].meals, usable)
+            out[shop].notes.append(
+                f"跨店原料: {', '.join(usable)} 由 {SHOP_CN_NAMES.get(owner, owner)} 生产")
+            out[owner].notes.append(
+                f"为 {SHOP_CN_NAMES.get(shop, shop)} 供应: {', '.join(usable)}")
+    # ---- 产能核算：每店 2 个岗位 x 24 小时 ----
+    for shop in order:
+        own, _, minutes = production_requirements(shop, out[shop].meals, economy)
+        out[shop].minutes = minutes
+        out[shop].notes.append(
+            f'预计占用产能 {minutes / 60:.2f} 时（上限 {CAPACITY_HOURS} 时，'
+            f'{minutes / 60 / CAPACITY_HOURS * 100:.0f}%）')
     return out
 
 
@@ -468,6 +658,9 @@ def format_report(plans):
             lines.append(f'  上架清单: {shelf}')
         else:
             lines.append('  上架清单: （空）')
+        if plan.minutes:
+            lines.append(f'  产能: {plan.minutes / 60:.2f} 时 / {CAPACITY_HOURS:.0f} 时 '
+                         f'({plan.minutes / 60 / CAPACITY_HOURS * 100:.0f}%)')
         for note in plan.notes:
             lines.append(f'  注: {note}')
     return '\n'.join(lines)

@@ -211,8 +211,18 @@ class EconomyDatabase:
         return info['profit'] / info['time_min']
 
     def sort_by_profit(self, names, reverse=True):
-        """按利润/分钟排序商品名列表。"""
+        """按利润/分钟排序商品名列表（生产指标）。"""
         return sorted(names, key=lambda n: self.profit_per_min(n), reverse=reverse)
+
+    def price_of(self, name):
+        """商品售价（货架单格收益指标），未知返回 0。"""
+        info = ECONOMY_PRODUCTS.get(name)
+        return info['price'] if info else 0
+
+    def sort_by_price(self, names, reverse=True):
+        """按售价排序商品名列表（货架指标：每格同时只卖一件，价高者收益高）。"""
+        return sorted(names, key=lambda n: (ECONOMY_PRODUCTS.get(n) or {}).get('price', 0),
+                      reverse=reverse)
 
     def is_seasonal(self, name):
         """商品是否季节限定。"""

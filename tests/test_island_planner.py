@@ -12,6 +12,7 @@ import tempfile
 import unittest
 
 import module.island.island_planner as planner
+from module.island.island_economy import ECONOMY_PRODUCTS
 from module.island.island_planner import (
     apply_patch,
     code_products,
@@ -95,12 +96,18 @@ class TestPlanShop(unittest.TestCase):
                 self.assertTrue(plan.shelf)
                 self.assertTrue(set(plan.shelf) <= set(shelf_options(shop)))
 
-    def test_shelf_prefers_planned_products(self):
-        """上架优先卖自己会补货的商品"""
+    def test_shelf_consistent_with_production(self):
+        """货架商品必须在生产清单里（否则那格迟早空掉）"""
         plan = plan_shop('grill', season='autumn', exclude={'crayfish_stir_fry'})
         meals = {n for n, _ in plan.meals}
-        self.assertIn(plan.shelf[0], meals)
-        self.assertGreaterEqual(len(set(plan.shelf) & meals), 4)
+        self.assertTrue(plan.shelf)
+        self.assertTrue(set(plan.shelf) <= meals)
+
+    def test_shelf_sorted_by_price(self):
+        """货架按单格售价排序（不是利润/分钟）"""
+        plan = plan_shop('juu_eatery', season='autumn')
+        prices = [ECONOMY_PRODUCTS[n]['price'] for n in plan.shelf]
+        self.assertEqual(prices, sorted(prices, reverse=True))
 
     def test_seasonal_filter(self):
         """秋季方案不含春夏限定品"""
@@ -178,7 +185,7 @@ class TestConfigPatch(unittest.TestCase):
         """商品不足 8 个时，多余槽位必须清空而不是留旧值"""
         plans = plan_all(shops=['grill'], season='autumn',
                          extra_exclude={'grill': {'crayfish_stir_fry'}})
-        self.assertEqual(len(plans['grill'].meals), 7)
+        self.assertLess(len(plans['grill'].meals), 8)
         group = config_patch(plans)['IslandGrill']['IslandGrill']
         self.assertEqual(group['Meal8'], 'None')
         self.assertEqual(group['MealNumber8'], 0)
