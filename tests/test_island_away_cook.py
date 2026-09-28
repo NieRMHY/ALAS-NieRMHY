@@ -7,6 +7,7 @@ sys.path.insert(0, '.')
 from module.island.island_away_cook import (
     AWAY_COOK_KEYS,
     pick_away_cook,
+    resolve_away_cook,
     rotation_key,
     season_items_for_shop,
 )
@@ -62,6 +63,37 @@ class TestPickAwayCook(unittest.TestCase):
 
     def test_shop_without_season_items(self):
         self.assertEqual(pick_away_cook('juu_eatery', 'autumn', {}), 'None')
+
+
+class TestResolveAwayCook(unittest.TestCase):
+    def test_records_user_default_when_overriding(self):
+        """有赛季缺口时覆盖，并记住用户原值（餐馆的豆腐）"""
+        target, defaults = resolve_away_cook('restaurant', 'autumn', {}, 'tofu', {})
+        self.assertEqual(target, 'salad')
+        self.assertEqual(defaults, {'restaurant': 'tofu'})
+
+    def test_restores_user_default_when_done(self):
+        """赛季物品攒够后还原用户原值，岗位不再空转"""
+        counts = {'salad': 100}
+        target, defaults = resolve_away_cook('restaurant', 'autumn', counts, 'salad',
+                                             {'restaurant': 'tofu'})
+        self.assertEqual(target, 'tofu')
+        self.assertEqual(defaults, {})
+
+    def test_keeps_current_when_no_gap_and_no_backup(self):
+        """没有缺口也没有备份时保持原值（不动用户配置）"""
+        target, defaults = resolve_away_cook('teahouse', 'autumn', {'apple_juice': 250},
+                                             'None', {})
+        self.assertEqual(target, 'None')
+        self.assertEqual(defaults, {})
+
+    def test_switch_between_season_items(self):
+        """同一店多个赛季物品之间切换时不覆盖备份"""
+        counts = {'iced_coffee': 250, 'latte': 0}
+        target, defaults = resolve_away_cook('juu_coffee', 'autumn', counts, 'iced_coffee',
+                                             {'juu_coffee': 'cheese'})
+        self.assertEqual(target, 'latte')
+        self.assertEqual(defaults, {'juu_coffee': 'cheese'})
 
 
 class TestRotationKey(unittest.TestCase):

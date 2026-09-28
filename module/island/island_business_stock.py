@@ -15,8 +15,10 @@ import os
 
 from module.base.template import Template
 from module.island.island_away_cook import (
-    pick_away_cook,
+    load_defaults,
+    resolve_away_cook,
     rotation_key,
+    save_defaults,
     season_items_for_shop,
 )
 from module.island.island_economy import EconomyDatabase
@@ -221,14 +223,17 @@ class BusinessStockCheckMixin:
                 continue
             season_counts[item] = WarehouseOCR().ocr_item_quantity(self.device.image, template)
 
-        target = pick_away_cook(shop_type, season, season_counts)
         current = self.config.cross_get(key, default='None')
-        if target == current:
-            return
-        logger.info(f"[岛屿-常驻餐品] {shop_type}: {current} -> {target}"
-                    f"（赛季缺口 {season}）")
-        self.config.cross_set(key, target)
-        self.config.update()
+        defaults = load_defaults()
+        target, defaults = resolve_away_cook(
+            shop_type, season, season_counts, current, defaults)
+        if target != current:
+            logger.info(f"[岛屿-常驻餐品] {shop_type}: {current} -> {target}"
+                        f"（赛季缺口 {season}）")
+            self.config.cross_set(key, target)
+        save_defaults(defaults)
+        if target != current:
+            self.config.update()
 
     def _check_products_stock_for_batch(self, batch_shops):
         """

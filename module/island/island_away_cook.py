@@ -78,3 +78,65 @@ def pick_away_cook(shop, season, counts, producible=None, exclude=None):
 def rotation_key(shop):
     """该店常驻餐品对应的配置键。"""
     return AWAY_COOK_KEYS.get(shop)
+
+
+DEFAULT_FILE = 'config/island_away_cook_default.json'
+
+
+def load_defaults(path=DEFAULT_FILE):
+    """读取用户原本的常驻餐品设置（轮换前的值）。"""
+    import json
+    import os
+    if not os.path.exists(path):
+        return {}
+    try:
+        with open(path, encoding='utf-8') as f:
+            return json.load(f)
+    except (OSError, ValueError):
+        return {}
+
+
+def save_defaults(defaults, path=DEFAULT_FILE):
+    """记录用户原本的常驻餐品设置，赛季物品攒够后好还原。"""
+    import json
+    import os
+    directory = os.path.dirname(path)
+    if directory and not os.path.exists(directory):
+        os.makedirs(directory, exist_ok=True)
+    with open(path, 'w', encoding='utf-8') as f:
+        json.dump(defaults, f, ensure_ascii=False, indent=2, sort_keys=True)
+
+
+def resolve_away_cook(shop, season, counts, current, defaults=None, producible=None,
+                      exclude=None):
+    """
+    决定该店常驻餐品该写什么，并维护「用户原值」备份。
+
+    规则：
+      - 有赛季缺口 -> 写缺口最大的赛季物品，同时把用户原值记进 defaults
+      - 没有缺口   -> 还原用户原值（例如餐馆的豆腐），避免赛季物品攒够后
+                      岗位又空转
+
+    Args:
+        shop: 店铺类型标识
+        season: 赛季
+        counts: {物品: 仓库库存}
+        current: 当前配置值
+        defaults: {店铺: 用户原值}
+        producible: 可生产集合
+        exclude: 排除集合
+
+    Returns:
+        tuple: (要写入的值, 更新后的 defaults)
+    """
+    defaults = dict(defaults or {})
+    target = pick_away_cook(shop, season, counts,
+                            producible=producible, exclude=exclude)
+    if target != 'None':
+        if shop not in defaults:
+            defaults[shop] = current
+        return target, defaults
+    if shop in defaults:
+        original = defaults.pop(shop)
+        return original, defaults
+    return current, defaults
