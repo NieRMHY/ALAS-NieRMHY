@@ -26,8 +26,8 @@ SEASON_PLAN_TASKS = {
         ('咖啡供应', 'iced_coffee', 250),
         ('烤肉能量', 'roasted_skewer', 250),
         ('调味基础', 'onion', 100),
-        ('健康饮食', 'vegetable_salad', 100),
-        ('营养组合', 'carrot_omelette', 100),
+        ('健康饮食', 'salad', 100),            # 蔬菜沙拉（餐馆）
+        ('营养组合', 'carrot_omelette', 100),  # 胡萝卜厚蛋烧（烤肉）
         ('拿铁时光', 'latte', 100),
         ('禽肉快炒', 'stir_fried_chicken', 100),
         ('便携快餐', 'steak_bowl', 50),
