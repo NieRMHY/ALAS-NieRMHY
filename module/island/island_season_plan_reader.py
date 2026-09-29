@@ -106,6 +106,51 @@ def claim_box(row, col):
     return (x2 + CLAIM_BOX[0], y1 + CLAIM_BOX[1], x2 + CLAIM_BOX[2], y1 + CLAIM_BOX[3])
 
 
+# 两行卡片的行距（真机实测 229px）
+ROW_SPAN = CARD_ROWS[1][1] - CARD_ROWS[0][1]
+
+
+def detect_row_offset(image, ocr, season=None, coarse=20, fine=10):
+    """
+    检测第一行卡片的垂直偏移。
+
+    列表滚动后卡片不再对齐固定坐标（真机实测：滚动一格后固定坐标读到空白，
+    往前找 80px 才是「便携快餐」那一行），所以要先定位行位置再读。
+
+    Args:
+        image: 截图
+        ocr: ocr(image, area, lang) -> str
+        season: 赛季
+        coarse: 粗搜步长
+        fine: 细搜步长
+
+    Returns:
+        int 或 None: 第一行卡片的 y 偏移；找不到返回 None
+    """
+    _, x2 = CARD_COLUMNS[0]
+    y1 = CARD_ROWS[0][1]
+    lo, hi = -260, 300
+
+    def hit(offset):
+        # 锚点用进度数字 N/M 而不是任务名：名字区附近有描述文字，
+        # 模糊匹配会把「…的苹果汁能显著提升岛…」当成任务名（真机踩过）
+        box = (x2 + PROGRESS_BOX[0], y1 + PROGRESS_BOX[1] + offset,
+               x2 + PROGRESS_BOX[2], y1 + PROGRESS_BOX[3] + offset)
+        return parse_progress(ocr(image, box, PROGRESS_LANG)) is not None
+
+    hits = [o for o in range(lo, hi + 1, coarse) if hit(o)]
+    if not hits:
+        return None
+    clusters = [[hits[0]]]
+    for offset in hits[1:]:
+        if offset - clusters[-1][-1] <= coarse:
+            clusters[-1].append(offset)
+        else:
+            clusters.append([offset])
+    centers = [int(sum(c) / len(c)) for c in clusters]
+    return min(centers, key=lambda c: abs(c))
+
+
 def card_boxes(row, col):
     """
     卡片内「任务名」「进度」两块文字的坐标。
@@ -125,7 +170,7 @@ def card_boxes(row, col):
     return name, progress
 
 
-def read_cards(image, ocr, season=None):
+def read_cards(image, ocr, season=None, offset=0):
     """
     读取一屏任务卡片。
 
@@ -142,11 +187,15 @@ def read_cards(image, ocr, season=None):
     for row in range(len(CARD_ROWS)):
         for col in range(len(CARD_COLUMNS)):
             name_box, progress_box = card_boxes(row, col)
+            name_box = (name_box[0], name_box[1] + offset, name_box[2], name_box[3] + offset)
+            progress_box = (progress_box[0], progress_box[1] + offset,
+                            progress_box[2], progress_box[3] + offset)
             name = normalize_name(ocr(image, name_box, NAME_LANG))
             if not name:
                 continue
             have, need = parse_progress(ocr(image, progress_box, PROGRESS_LANG)) or (0, 0)
-            claim = ocr(image, claim_box(row, col), NAME_LANG)
+            cb = claim_box(row, col)
+            claim = ocr(image, (cb[0], cb[1] + offset, cb[2], cb[3] + offset), NAME_LANG)
             card = {'row': row, 'col': col, 'name': name, 'have': have, 'need': need,
                     'claimed': CLAIM_TEXT in str(claim), 'task': None, 'item': None}
             if season:
@@ -168,10 +217,20 @@ TAB_CENTERS = (107, 320, 533, 746, 959, 1172)
 TAB_Y = 694
 PLAN_TAB_INDEX = 3
 
-# 开发计划页列表区（可滑动区域）
-SCROLL_BOX = (150, 110, 1120, 660)
-SCROLL_VECTOR = (0, -420)         # 向上滑一屏多一点
-SCROLL_DURATION = (0.6, 0.9)      # 默认 0.1-0.2s 太快，游戏会当成点击不滚动
+# 列表滚动：抄 ALAS 既有写法（island_business._scroll_business_down）
+#   swipe_vector(vector=(0, -450), box=(688, 120, 725, 656))
+# 关键在 box 是一条**窄条**：起手落在卡片上时手势会被卡片吃掉（真机踩过，
+# 整个列表区宽度的 box 怎么滑都不动）。这里取两列卡片之间的空隙 x 418-437。
+SCROLL_BOX = (420, 130, 435, 650)
+SCROLL_VECTOR = (0, -450)
+SCROLL_TOP_VECTOR = (0, 900)      # 回顶部：一次大距离上滑（同 _scroll_business_to_top）
+SCROLL_DURATION = (0.3, 0.5)
+SCROLL_SETTLE = 1.0               # 滑动后等惯性停下
+MAX_SCROLLS = 12                  # 任务总数十几项，多翻几屏
+EMPTY_LIMIT = 3                   # 连续几屏无新任务才判定到底
+# 进度锚点定位的是「进度框」的偏移，名字区可能还要再挪几像素；
+# 依次尝试直到读出任务名（真机实测两者会差 20px 左右）
+NAME_ADJUST = (0, -10, 10, -20, 20, 30, -30)
 
 
 def tab_brightness(image):
@@ -182,12 +241,12 @@ def tab_brightness(image):
 
 
 
-def scroll_to_top(island, attempts=8):
+def scroll_to_top(island, attempts=3):
     """
-    反复下滑，把任务列表拉回顶部。
+    把任务列表拉回顶部（一次大距离上滑，不够再补）。
 
-    列表滚动位置会保留到下一次进入页面，只滑两三次不够（真机实测：上一轮停在
-    底部时，下一轮直接从底部开始读，只读到零星几项）。
+    列表滚动位置会保留到下一次进入页面（真机实测：上一轮停在底部时，下一轮
+    直接从底部开始读，只读到零星几项）。
 
     Args:
         island: 岛屿任务实例
@@ -196,44 +255,60 @@ def scroll_to_top(island, attempts=8):
     for _ in range(attempts):
         island.device.stuck_record_clear()
         scroll_list(island, down=False)
-        island.device.sleep(0.8)
-    island.device.sleep(1.5)  # 等惯性停下
+    island.device.sleep(1.0)
     island.device.stuck_record_clear()
 
 
-# 列表拖动：普通 swipe 在这个页面上时灵时不灵（真机实测 5 次里成功 1 次），
-# 改用带按压保持的 drag，更接近手指按住列表拖动的手感。
-DRAG_START_Y = {True: 520, False: 240}
-DRAG_END_Y = {True: 180, False: 580}
+# 该页面不吃 swipe/swipe_vector（试过多种 box 与时长，列表纹丝不动），
+# 但「按住 - 慢拖 - 松手」的 drag 能滚动（真机实测：drag 之后的截图里
+# 出现了原本在屏幕外的「便携快餐 / 麦田守望」）。
 DRAG_X = 640
+DRAG_Y = {True: (520, 180), False: (180, 520)}
 
 
 def scroll_list(island, down=True):
     """
-    拖动「开发计划」列表。
+    拖动任务列表一屏。
 
     Args:
         island: 岛屿任务实例
         down: True 向下翻（看后面的任务），False 回到顶部
     """
-    # 该页面不吃快速滑动（swipe/swipe_vector 都无效），用「按住-慢拖-再松手」，
-    # 分段数多一些以产生连续的移动事件
-    island.device.drag((DRAG_X, DRAG_START_Y[down]), (DRAG_X, DRAG_END_Y[down]),
-                       segments=4, shake=(0, 8), hold_duration=0.5,
-                       swipe_duration=1.5, name='SEASON_PLAN_DRAG')
+    start, end = DRAG_Y[down]
+    island.device.drag((DRAG_X, start), (DRAG_X, end), segments=4, shake=(0, 8),
+                       hold_duration=0.5, swipe_duration=1.5, name='SEASON_PLAN_DRAG')
+    island.device.sleep(SCROLL_SETTLE)
 
 
 def _read_screen(island, ocr, season):
-    """读一屏卡片；读空时等一会儿重试一次（页面可能还在绘制）。"""
-    island.device.stuck_record_clear()
-    island.device.screenshot()
-    cards = read_cards(island.device.image, ocr, season=season)
-    island.device.stuck_record_clear()
-    if cards:
-        return cards
-    island.device.sleep(1.5)
-    island.device.screenshot()
-    return read_cards(island.device.image, ocr, season=season)
+    from module.logger import logger
+
+    """
+    读一屏卡片：先定位行偏移（滚动后固定坐标会失效），再按该偏移读。
+
+    读空时等一会儿重试一次（页面可能还在绘制或惯性未停）。
+    """
+    for attempt in range(2):
+        island.device.stuck_record_clear()
+        island.device.screenshot()
+        image = island.device.image
+        offset = detect_row_offset(image, ocr, season)
+        island.device.stuck_record_clear()
+        if offset is None:
+            if attempt == 0:
+                island.device.sleep(1.5)
+            continue
+        for dy in NAME_ADJUST:
+            cards = read_cards(image, ocr, season=season, offset=offset + dy)
+            # 必须至少有一张卡片匹配上任务名：偏移不对时读到的是描述文字，
+            # 那种「读到了内容」不能算成功（真机踩过）
+            if any(card['task'] for card in cards):
+                logger.info(f"[岛屿-赛季计划] 行偏移 {offset}，名字微调 {dy:+d}，"
+                            f"读到 {len(cards)} 张")
+                return cards
+        if attempt == 0:
+            island.device.sleep(1.5)
+    return []
 
 
 def _save_debug_image(island, index):
@@ -279,7 +354,7 @@ def ensure_bottom_tab(island, index=PLAN_TAB_INDEX):
     return False
 
 
-def read_season_plan_page(island, season, max_scrolls=3, ocr=_default_ocr):
+def read_season_plan_page(island, season, max_scrolls=MAX_SCROLLS, ocr=_default_ocr):
     """
     进入赛季「开发计划」页面并读取全部任务卡片。
 
@@ -343,11 +418,10 @@ def read_season_plan_page(island, season, max_scrolls=3, ocr=_default_ocr):
             empty_screens = 0
         else:
             empty_screens += 1
-            if empty_screens >= 2:
-                logger.info('[岛屿-赛季计划] 连续两屏无新任务，判定到底')
+            if empty_screens >= EMPTY_LIMIT:
+                logger.info(f'[岛屿-赛季计划] 连续 {EMPTY_LIMIT} 屏无新任务，判定到底')
                 break
-        scroll_list(island, down=True)
-        island.device.sleep(1.5)
+        scroll_list(island)
 
     # 读完必须退回岛屿页：ALAS 的任务从岛屿页继续，留在赛季页会让上层
     # 识别失败（真机表现为 [UI] 未知UI页面 → 重启游戏）
