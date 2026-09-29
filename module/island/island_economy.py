@@ -11,7 +11,6 @@
 - 制造产线（木工/工业/电子/手工）走 PT 转化体系，不纳入金币经济，故不在本表。
 """
 
-from module.logger import logger
 
 
 # 店铺类型标识（与 IslandShopBase 子类的 shop_type 一致）

@@ -34,7 +34,6 @@ class TestNotifyTitle(unittest.TestCase):
 class TestOpsiSchedulingFormat(unittest.TestCase):
     def test_formatter_strips_internal_prefix(self):
         """大世界调度的内部标记会被剥掉并套统一格式"""
-        import ast
         src = open('module/os/tasks/scheduling.py', encoding='utf-8').read()
         self.assertIn("notify_title(instance_name, '大世界'", src)
         self.assertNotIn('[ALAS <{instance_name}>]', src)

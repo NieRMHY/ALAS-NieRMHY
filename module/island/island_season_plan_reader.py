@@ -110,7 +110,7 @@ def claim_box(row, col):
 ROW_SPAN = CARD_ROWS[1][1] - CARD_ROWS[0][1]
 
 
-def detect_row_offset(image, ocr, season=None, coarse=20, fine=10):
+def detect_row_offset(image, ocr, season=None, coarse=20):
     """
     检测第一行卡片的垂直偏移。
 
@@ -121,8 +121,7 @@ def detect_row_offset(image, ocr, season=None, coarse=20, fine=10):
         image: 截图
         ocr: ocr(image, area, lang) -> str
         season: 赛季
-        coarse: 粗搜步长
-        fine: 细搜步长
+        coarse: 搜索步长
 
     Returns:
         int 或 None: 第一行卡片的 y 偏移；找不到返回 None
@@ -217,15 +216,7 @@ TAB_CENTERS = (107, 320, 533, 746, 959, 1172)
 TAB_Y = 694
 PLAN_TAB_INDEX = 3
 
-# 列表滚动：抄 ALAS 既有写法（island_business._scroll_business_down）
-#   swipe_vector(vector=(0, -450), box=(688, 120, 725, 656))
-# 关键在 box 是一条**窄条**：起手落在卡片上时手势会被卡片吃掉（真机踩过，
-# 整个列表区宽度的 box 怎么滑都不动）。这里取两列卡片之间的空隙 x 418-437。
-SCROLL_BOX = (420, 130, 435, 650)
-SCROLL_VECTOR = (0, -450)
-SCROLL_TOP_VECTOR = (0, 900)      # 回顶部：一次大距离上滑（同 _scroll_business_to_top）
-SCROLL_DURATION = (0.3, 0.5)
-SCROLL_SETTLE = 1.0               # 滑动后等惯性停下
+SCROLL_SETTLE = 1.0               # 拖动后等惯性停下
 MAX_SCROLLS = 12                  # 任务总数十几项，多翻几屏
 EMPTY_LIMIT = 3                   # 连续几屏无新任务才判定到底
 # 进度锚点定位的是「进度框」的偏移，名字区可能还要再挪几像素；
@@ -312,7 +303,7 @@ def _read_screen(island, ocr, season):
 
 
 def _save_debug_image(island, index):
-    """每屏存一张图，方便排查读不到卡片的问题。"""
+    """读不到卡片时存一张现场图，便于排查（正常情况不落盘，避免占用磁盘）。"""
     import os
     try:
         from PIL import Image
@@ -370,7 +361,6 @@ def read_season_plan_page(island, season, max_scrolls=MAX_SCROLLS, ocr=_default_
     Returns:
         dict: {任务名: {'item', 'have', 'need'}}；读取失败返回 {}
     """
-    from module.island.assets import ISLAND_BACK
     from module.island_season_plan.assets import ISLAND_SEASON_ENTRY
     from module.logger import logger
     from module.ui.assets import ISLAND_SEASON_GOTO_ISLAND
@@ -406,6 +396,8 @@ def read_season_plan_page(island, season, max_scrolls=MAX_SCROLLS, ocr=_default_
     empty_screens = 0
     for index in range(max_scrolls):
         cards = _read_screen(island, ocr, season)
+        if not cards:
+            _save_debug_image(island, index)
         fresh = [card for card in cards if card['task'] and card['task'] not in seen]
         for card in fresh:
             seen.add(card['task'])
@@ -413,7 +405,6 @@ def read_season_plan_page(island, season, max_scrolls=MAX_SCROLLS, ocr=_default_
                                     'need': card['need'], 'claimed': card['claimed'],
                                     'row': card['row'], 'col': card['col'],
                                     'offset': offset}
-        _save_debug_image(island, index)
         logger.info(f"[岛屿-赛季计划] 第 {index + 1} 屏读到 {len(fresh)} 个新任务，"
                     f"累计 {len(result)} 个")
         if fresh:

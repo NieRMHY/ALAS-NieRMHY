@@ -50,7 +50,6 @@ class IslandSeasonPlan(Island):
     def _too_soon(self):
         """距上次实际读取是否太近（收餐触发很频繁，需要限流）。"""
         import json
-        import os
         # 注意：时间源是 module.config.time_source.timestamp()，
         # 之前误写成 current_time（那里叫 now），真机直接 ImportError
         from module.config.time_source import timestamp
