@@ -1799,6 +1799,9 @@ class IslandBusiness(BusinessStockCheckMixin, Island):
             timeout += 1
 
     def _select_business_characters(self):
+        # 统计成功分配的槽位：静默失败会导致商店只带 1 个角色开始经营，
+        # 而经营中不会再重新派发，用户只能看到「商店里只有 1 个人」（真机踩过）
+        assigned = 0
         for slot_idx in range(2):
             btn = BUSINESS_PLUS_A if slot_idx == 0 else BUSINESS_PLUS_B
             plus_button = self._appear_at_positions(btn)
@@ -1827,15 +1830,27 @@ class IslandBusiness(BusinessStockCheckMixin, Island):
             self.device.click(plus_button)
             self.device.sleep(0.5)
             if not self._wait_for_character_selection():
-                continue
+                # 原来这里是静默 continue，日志里完全看不出第 2 个槽位消失过
+                logger.warning(f"[岛屿-经营] 第{slot_idx + 1}个角色：角色选择界面未打开，重试一次")
+                self.device.click(plus_button)
+                self.device.sleep(1.0)
+                if not self._wait_for_character_selection():
+                    logger.warning(f"[岛屿-经营] 第{slot_idx + 1}个角色：角色选择界面仍未打开，"
+                                   f"跳过该槽位")
+                    self.device.click(SELECT_UI_BACK)
+                    self.device.sleep(0.5)
+                    continue
             result = self._find_and_select_character()
             if result:
                 selected_name = result
                 logger.info(f"[岛屿-经营] 第{slot_idx + 1}个角色选择成功: {selected_name}")
                 if not self.confirm_selected_character_closed(f"经营第{slot_idx + 1}个角色"):
+                    logger.warning(f"[岛屿-经营] 第{slot_idx + 1}个角色({selected_name})确认失败，"
+                                   f"该槽位可能没生效")
                     self.device.click(SELECT_UI_BACK)
                     self.device.sleep(0.5)
                     continue
+                assigned += 1
                 # 已选角色从优先级中移除，防止下个槽位重复选择
                 if selected_name in self.character_priority:
                     self.character_priority.remove(selected_name)
@@ -1846,6 +1861,9 @@ class IslandBusiness(BusinessStockCheckMixin, Island):
                 logger.info(f"[岛屿-经营] 第{slot_idx + 1}个角色未找到，跳过")
                 self.device.click(SELECT_UI_BACK)
                 self.device.sleep(0.5)
+        if assigned < 2:
+            logger.warning(f"[岛屿-经营] 本次只分配了 {assigned}/2 个经营角色，"
+                           f"商店可能以不满员状态开始经营")
 
     def _wait_for_character_selection(self):
         from module.base.timer import Timer
