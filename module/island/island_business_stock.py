@@ -226,6 +226,12 @@ class BusinessStockCheckMixin:
                 continue
             season_counts[item] = WarehouseOCR().ocr_item_quantity(self.device.image, template)
 
+        # 赛季物品进度写进日志，方便核对（攒够会另发通知）
+        progress = {item: f'{season_counts.get(item, 0)}/{need}'
+                    for item, need, _ in season_items_for_shop(shop_type, season)}
+        if progress:
+            logger.info(f"[岛屿-赛季任务] {shop_type} 进度: {progress}")
+
         # 攒够赛季任务物品时发通知（走 Error_OnePushConfig，配了 smtp 就是邮件）
         self._notify_finished_season_items(shop_type, season, season_counts)
 
