@@ -15,13 +15,11 @@ import os
 
 from module.base.template import Template
 from module.island.island_away_cook import (
-    collect_finished,
     load_defaults,
-    load_notified,
+    notify_finished,
     resolve_away_cook,
     rotation_key,
     save_defaults,
-    save_notified,
     season_items_for_shop,
 )
 from module.island.island_economy import EconomyDatabase
@@ -233,7 +231,7 @@ class BusinessStockCheckMixin:
             logger.info(f"[岛屿-赛季任务] {shop_type} 进度: {progress}")
 
         # 攒够赛季任务物品时发通知（走 Error_OnePushConfig，配了 smtp 就是邮件）
-        self._notify_finished_season_items(shop_type, season, season_counts)
+        notify_finished(self.config, shop_type, season, season_counts)
 
         current = self.config.cross_get(key, default='None')
         defaults = load_defaults()
@@ -246,36 +244,6 @@ class BusinessStockCheckMixin:
         save_defaults(defaults)
         if target != current:
             self.config.update()
-
-    def _notify_finished_season_items(self, shop_type, season, counts):
-        """
-        赛季任务物品攒够时推送通知，提醒去游戏里提交。
-
-        用户提交后仓库数量下降，记录自动重置，下一轮攒够会再次提醒。
-
-        Args:
-            shop_type: 店铺类型标识
-            season: 赛季
-            counts: {物品: 仓库库存}
-        """
-        from module.island.island_season_plan_data import cn_name, task_of_item
-        from module.notify.notify import handle_notify
-
-        notified = load_notified()
-        finished = collect_finished(shop_type, season, counts, notified)
-        if not finished:
-            return
-        save_notified(notified)
-        for item, need, have in finished:
-            task, _ = task_of_item(item, season)
-            logger.info(f"[岛屿-赛季任务] {cn_name(item)} 已攒够 {have}/{need}，通知提交")
-            handle_notify(
-                self.config.Error_OnePushConfig,
-                title='岛屿赛季任务物品已攒够',
-                content=f"<{self.config.config_name}> 赛季任务「{task or item}」"
-                        f"需要的 {cn_name(item)} 已攒够：{have}/{need}，"
-                        f"可以去岛屿「开发季」提交了",
-            )
 
     def _check_products_stock_for_batch(self, batch_shops):
         """

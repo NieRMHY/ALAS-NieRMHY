@@ -204,6 +204,15 @@ class IslandShopBase(Island, WarehouseOCR):
             self.warehouse_counts[dish['name']] = self.ocr_item_quantity(image, dish['template'])
             if self.warehouse_counts[dish['name']]:
                 logger.info(f"{self._item_cn(dish['name'])}: {self.warehouse_counts[dish['name']]}")
+
+        # Add by MHY, 赛季任务物品攒够时推送提醒。店铺任务 20-40 分钟一轮，
+        # 比经营端的库存校验（4-6 小时）及时；异常只记日志，不影响生产。
+        try:
+            from module.island.island_away_cook import notify_finished
+            notify_finished(self.config, self.shop_type, self.season_config.season,
+                            self.warehouse_counts)
+        except Exception:
+            logger.exception('[岛屿-赛季任务] 攒够提醒检查异常，已跳过')
         return self.warehouse_counts
     def select_special_character(self,product):
         return self.select_character(character_list=self.chef_config)
