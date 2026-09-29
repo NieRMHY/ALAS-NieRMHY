@@ -15,7 +15,9 @@ import os
 
 from module.base.template import Template
 from module.island.island_away_cook import (
+    done_items,
     load_defaults,
+    load_notified,
     notify_finished,
     resolve_away_cook,
     rotation_key,
@@ -236,7 +238,8 @@ class BusinessStockCheckMixin:
         current = self.config.cross_get(key, default='None')
         defaults = load_defaults()
         target, defaults = resolve_away_cook(
-            shop_type, season, season_counts, current, defaults)
+            shop_type, season, season_counts, current, defaults,
+            skip=done_items(season, load_notified()))
         if target != current:
             logger.info(f"[岛屿-常驻餐品] {shop_type}: {current} -> {target}"
                         f"（赛季缺口 {season}）")

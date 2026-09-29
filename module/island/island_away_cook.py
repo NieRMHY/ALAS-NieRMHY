@@ -43,11 +43,12 @@ def season_items_for_shop(shop, season):
     return result
 
 
-def pick_away_cook(shop, season, counts, producible=None, exclude=None):
+def pick_away_cook(shop, season, counts, producible=None, exclude=None, skip=None):
     """
     挑该店的常驻餐品：赛季缺口最大的物品优先。
 
     缺口按「还差多少件」算，同缺口时取单件工时短的（更快补上一个任务）。
+    已确认提交完成的任务物品会被跳过，不再重复生产。
 
     Args:
         shop: 店铺类型标识
@@ -55,11 +56,12 @@ def pick_away_cook(shop, season, counts, producible=None, exclude=None):
         counts: {物品: 仓库库存}
         producible: 可生产集合；None 不限制
         exclude: 排除集合（未解锁商品等）
+        skip: 已完成的物品集合（本季不再生产）
 
     Returns:
         str: 物品英文名；没有缺口或没有可生产的返回 'None'
     """
-    exclude = set(exclude or ())
+    exclude = set(exclude or ()) | set(skip or ())
     best, best_key = None, None
     for item, need, time_min in season_items_for_shop(shop, season):
         if producible is not None and item not in producible:
@@ -134,9 +136,64 @@ def save_notified(notified, path=NOTIFIED_FILE):
         json.dump(notified, f, ensure_ascii=False, indent=2, sort_keys=True)
 
 
+SUBMIT_RATIO = 0.9  # 单次扣减达到需求量的 90% 即认定为「已提交任务」
+
+
+def _state_entry(state, item):
+    """
+    取物品状态，兼容早期版本写的 {物品: True} 格式。
+
+    Args:
+        state: {物品: 状态} 字典（就地更新）
+        item: 物品英文名
+
+    Returns:
+        dict: {'notified': bool, 'last': int, 'done': bool}
+    """
+    value = state.get(item)
+    if value is True:
+        entry = {'notified': True, 'last': 0, 'done': False}
+    elif isinstance(value, dict):
+        entry = {'notified': bool(value.get('notified')),
+                 'last': int(value.get('last', 0)),
+                 'done': bool(value.get('done'))}
+    else:
+        entry = {'notified': False, 'last': 0, 'done': False}
+    state[item] = entry
+    return entry
+
+
+def is_done(season, item, notified):
+    """
+    该赛季任务物品是否已确认提交完成（本季不再生产）。
+
+    Args:
+        season: 赛季
+        item: 物品英文名
+        notified: 状态字典
+
+    Returns:
+        bool
+    """
+    entry = (notified.get(season) or {}).get(item)
+    if isinstance(entry, dict):
+        return bool(entry.get('done'))
+    return False
+
+
+def done_items(season, notified):
+    """该赛季已完成的物品集合（轮换时跳过）。"""
+    state = notified.get(season) or {}
+    return {item for item in state if is_done(season, item, notified)}
+
+
 def collect_finished(shop, season, counts, notified):
     """
-    找出「刚攒够、还没通知过」的赛季物品；用户提交后数量掉下来则重置记录。
+    找出「刚攒够、还没通知过」的赛季物品，并识别「已提交」。
+
+    提交任务会一次性扣掉正好 need 个物品（例如 100 个蔬菜沙拉），而货运/订单
+    的零星消耗是渐变的，所以用相邻两次读数判断：上次已攒够、这次掉到需求以下、
+    且单次掉幅达到需求量的 90%，即认定任务已提交，本季不再生产。
 
     Args:
         shop: 店铺类型标识
@@ -147,17 +204,28 @@ def collect_finished(shop, season, counts, notified):
     Returns:
         list[(物品, 需要数量, 当前库存)]: 需要发通知的物品
     """
+    from module.logger import logger
+
     season_state = notified.setdefault(season, {})
     finished = []
     for item, need, _ in season_items_for_shop(shop, season):
         have = int(counts.get(item, 0))
+        entry = _state_entry(season_state, item)
+        if entry['done']:
+            continue
         if have >= need:
-            if not season_state.get(item):
-                season_state[item] = True
+            if not entry['notified']:
+                entry['notified'] = True
                 finished.append((item, need, have))
-        elif season_state.pop(item, None):
-            # 用户提交后数量下降，重新计数，下次攒够再提醒
-            pass
+        elif entry['notified'] and entry['last'] - have >= need * SUBMIT_RATIO:
+            entry['done'] = True
+            entry['notified'] = False
+            logger.info(f"[岛屿-赛季任务] {item} 数量 {entry['last']} -> {have}，"
+                        f"判定为已提交任务，本季不再生产")
+        else:
+            # 数量掉到需求以下（被消耗），重新攒够再提醒
+            entry['notified'] = False
+        entry['last'] = have
     return finished
 
 
@@ -202,7 +270,7 @@ def notify_finished(config, shop, season, counts):
 
 
 def resolve_away_cook(shop, season, counts, current, defaults=None, producible=None,
-                      exclude=None):
+                      exclude=None, skip=None):
     """
     决定该店常驻餐品该写什么，并维护「用户原值」备份。
 
@@ -225,7 +293,7 @@ def resolve_away_cook(shop, season, counts, current, defaults=None, producible=N
     """
     defaults = dict(defaults or {})
     target = pick_away_cook(shop, season, counts,
-                            producible=producible, exclude=exclude)
+                            producible=producible, exclude=exclude, skip=skip)
     if target != 'None':
         if shop not in defaults:
             defaults[shop] = current

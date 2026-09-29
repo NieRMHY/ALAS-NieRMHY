@@ -7,6 +7,8 @@ sys.path.insert(0, '.')
 from module.island.island_away_cook import (
     AWAY_COOK_KEYS,
     collect_finished,
+    done_items,
+    is_done,
     pick_away_cook,
     resolve_away_cook,
     rotation_key,
@@ -106,12 +108,48 @@ class TestFinishedNotification(unittest.TestCase):
         self.assertEqual(first, [('salad', 100, 132)])
         self.assertEqual(collect_finished('restaurant', 'autumn', counts, notified), [])
 
-    def test_reset_after_submit(self):
-        """用户提交后数量下降，下次攒够重新通知"""
+    def test_detect_submit_and_stop_producing(self):
+        """提交会一次性扣掉需求数量 -> 判定已完成，本季不再生产/提醒"""
         notified = {}
-        collect_finished('restaurant', 'autumn', {'salad': 100}, notified)
-        collect_finished('restaurant', 'autumn', {'salad': 0}, notified)
-        self.assertEqual(len(collect_finished('restaurant', 'autumn', {'salad': 100}, notified)), 1)
+        collect_finished('restaurant', 'autumn', {'salad': 132}, notified)   # 攒够，提醒
+        collect_finished('restaurant', 'autumn', {'salad': 32}, notified)    # 提交掉 100
+        self.assertTrue(is_done('autumn', 'salad', notified))
+        self.assertEqual(done_items('autumn', notified), {'salad'})
+        # 之后即使又攒到 100 也不再提醒
+        self.assertEqual(collect_finished('restaurant', 'autumn', {'salad': 100}, notified), [])
+        # 轮换也不会再挑它
+        counts = {'salad': 0}
+        self.assertEqual(
+            pick_away_cook('restaurant', 'autumn', counts,
+                           skip=done_items('autumn', notified)), 'None')
+
+    def test_gradual_consumption_is_not_submit(self):
+        """零星消耗（货运/订单）不是提交，不能误判为完成"""
+        notified = {}
+        collect_finished('restaurant', 'autumn', {'salad': 132}, notified)
+        collect_finished('restaurant', 'autumn', {'salad': 120}, notified)   # 还在需求之上
+        self.assertFalse(is_done('autumn', 'salad', notified))
+        collect_finished('restaurant', 'autumn', {'salad': 90}, notified)    # 掉 30，不足以判定提交
+        self.assertFalse(is_done('autumn', 'salad', notified))
+        # 重新攒够会再次提醒
+        self.assertEqual(len(collect_finished('restaurant', 'autumn', {'salad': 105}, notified)), 1)
+
+    def test_legacy_state_format(self):
+        """兼容早期写入的 {物品: True} 状态格式"""
+        notified = {'autumn': {'salad': True}}
+        self.assertFalse(is_done('autumn', 'salad', notified))
+        self.assertEqual(collect_finished('restaurant', 'autumn', {'salad': 50}, notified), [])
+        self.assertFalse(is_done('autumn', 'salad', notified))
+
+    def test_multi_item_independent(self):
+        """同店多个赛季物品各自独立判断"""
+        notified = {}
+        counts = {'iced_coffee': 250, 'latte': 100}
+        collect_finished('juu_coffee', 'autumn', counts, notified)
+        # 冰咖啡被提交（250 一次性扣掉），拿铁还在仓库里没提交
+        collect_finished('juu_coffee', 'autumn', {'iced_coffee': 0, 'latte': 100}, notified)
+        self.assertTrue(is_done('autumn', 'iced_coffee', notified))
+        self.assertFalse(is_done('autumn', 'latte', notified))
 
     def test_not_enough_no_notify(self):
         notified = {}
