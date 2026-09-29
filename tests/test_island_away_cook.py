@@ -45,6 +45,43 @@ class TestNotifyUsesImportedHelper(unittest.TestCase):
         self.assertIn('[岛屿]', sent[0]['title'])
         self.assertIn('<ALAS>', sent[0]['title'])
 
+    def test_material_tasks_do_not_notify(self):
+        """农田/牧场材料长期溢出，提醒它们只会刷屏（真机一次发了 8 封）"""
+        from unittest import mock
+        from module.island import island_away_cook as away_cook
+
+        sent = []
+        page = {'黄金粮仓': {'item': 'corn', 'have': 500, 'need': 500, 'claimed': False},
+                '麦田守望': {'item': 'wheat', 'have': 500, 'need': 500, 'claimed': False}}
+        with mock.patch.object(away_cook, 'load_notified', return_value={}), \
+                mock.patch.object(away_cook, 'save_notified'), \
+                mock.patch('module.notify.notify.handle_notify',
+                           side_effect=lambda *a, **k: sent.append(k) or True):
+            fired = away_cook.notify_ready_from_page(self._config(), 'autumn', page)
+
+        self.assertEqual(fired, [])
+        self.assertEqual(sent, [])
+
+    def test_multiple_ready_tasks_send_one_mail(self):
+        """多项达标合并成一封，避免刷爆收件箱"""
+        from unittest import mock
+        from module.island import island_away_cook as away_cook
+
+        sent = []
+        page = {'甜蜜引擎': {'item': 'apple_juice', 'have': 250, 'need': 250, 'claimed': False},
+                '健康饮食': {'item': 'salad', 'have': 100, 'need': 100, 'claimed': False}}
+        with mock.patch.object(away_cook, 'load_notified', return_value={}), \
+                mock.patch.object(away_cook, 'save_notified'), \
+                mock.patch('module.notify.notify.handle_notify',
+                           side_effect=lambda *a, **k: sent.append(k) or True):
+            fired = away_cook.notify_ready_from_page(self._config(), 'autumn', page)
+
+        self.assertEqual(sorted(fired), ['健康饮食', '甜蜜引擎'])
+        self.assertEqual(len(sent), 1)
+        self.assertIn('2 项赛季任务可以提交', sent[0]['title'])
+        self.assertIn('甜蜜引擎', sent[0]['content'])
+        self.assertIn('健康饮食', sent[0]['content'])
+
     def test_finished_from_warehouse_counts(self):
         from unittest import mock
         from module.island import island_away_cook as away_cook

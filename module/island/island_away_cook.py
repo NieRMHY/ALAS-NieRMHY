@@ -284,6 +284,24 @@ def ready_to_submit(season, page_result):
     return ready
 
 
+def is_shop_product(item):
+    """
+    是否是店铺生产的餐品（相对农田/牧场的材料而言）。
+
+    材料类任务（小麦/牧草/大豆/大米/玉米/胡萝卜/牛奶/洋葱）在农田牧场长期溢出，
+    用户明确说这部分不需要规划；对它们提醒「可以提交」只会刷屏（真机踩过：
+    一次运行发了 8 封，其中 7 封是材料）。
+
+    Args:
+        item: 物品键
+
+    Returns:
+        bool: 有对应店铺的餐品返回 True
+    """
+    from module.island.island_economy import ECONOMY_PRODUCTS
+    return bool(item) and item in ECONOMY_PRODUCTS
+
+
 def notify_ready_from_page(config, season, page_result):
     """
     页面显示任务已达标但未领取时推送提醒（每项只提醒一次）。
@@ -309,8 +327,10 @@ def notify_ready_from_page(config, season, page_result):
     notified = load_notified()
     state = notified.setdefault(season, {})
     fired = []
+    lines = []
     for task, item, have, need in ready:
-        if not item:
+        # 材料类不提醒：农田牧场长期溢出，提醒只会刷屏（真机一次发了 8 封）
+        if not is_shop_product(item):
             continue
         entry = _state_entry(state, item)
         if entry['notified']:
@@ -318,14 +338,19 @@ def notify_ready_from_page(config, season, page_result):
         entry['notified'] = True
         entry['last'] = have
         fired.append(task)
-        logger.info(f"[岛屿-赛季任务] {task} 已达标（{cn_name(item)} {have}/{need}），推送提醒")
+        lines.append(f"{task}（{cn_name(item)} {have}/{need}）")
+    if fired:
+        # 合并成一封：一项一封会把收件箱刷爆（真机一次 8 封）
+        logger.info(f"[岛屿-赛季任务] {len(fired)} 项已达标，推送提醒: {'、'.join(fired)}")
+        content = (f"<{config.config_name}> 赛季任务已达标："
+                   + '\n' + '\n'.join(lines)
+                   + '\n可以去岛屿「开发季」提交了')
         handle_notify(
             config.Error_OnePushConfig,
-            title=notify_title(config.config_name, '岛屿', '赛季任务可以提交了'),
-            content=f"<{config.config_name}> 赛季任务「{task}」已达标："
-                    f"{cn_name(item)} {have}/{need}，可以去岛屿「开发季」提交了",
+            title=notify_title(config.config_name, '岛屿',
+                               f'{len(fired)} 项赛季任务可以提交'),
+            content=content,
         )
-    if fired:
         save_notified(notified)
     return fired
 
