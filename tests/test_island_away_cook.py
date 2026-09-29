@@ -11,6 +11,7 @@ from module.island.island_away_cook import (
     is_done,
     mark_claimed,
     pick_away_cook,
+    ready_to_submit,
     resolve_away_cook,
     rotation_key,
     season_items_for_shop,
@@ -192,6 +193,25 @@ class TestMarkClaimed(unittest.TestCase):
         notified = {}
         page = {'未知任务': {'item': None, 'claimed': True}}
         self.assertEqual(mark_claimed('autumn', page, notified), {})
+
+
+class TestReadyToSubmit(unittest.TestCase):
+    def test_picks_reached_unclaimed(self):
+        page = {
+            '甜蜜引擎': {'item': 'apple_juice', 'have': 250, 'need': 250, 'claimed': False},
+            '咖啡供应': {'item': 'iced_coffee', 'have': 76, 'need': 250, 'claimed': False},
+            '麦田守望': {'item': 'wheat', 'have': 500, 'need': 500, 'claimed': True},
+        }
+        self.assertEqual(ready_to_submit('autumn', page),
+                         [('甜蜜引擎', 'apple_juice', 250, 250)])
+
+    def test_empty_when_none_ready(self):
+        page = {'咖啡供应': {'item': 'iced_coffee', 'have': 76, 'need': 250, 'claimed': False}}
+        self.assertEqual(ready_to_submit('autumn', page), [])
+
+    def test_ignores_zero_need(self):
+        page = {'发展根基': {'item': None, 'have': 54, 'need': 0, 'claimed': False}}
+        self.assertEqual(ready_to_submit('autumn', page), [])
 
 
 class TestRotationKey(unittest.TestCase):

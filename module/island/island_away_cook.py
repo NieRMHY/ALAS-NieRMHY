@@ -262,6 +262,74 @@ def collect_finished(shop, season, counts, notified):
     return finished
 
 
+def ready_to_submit(season, page_result):
+    """
+    从页面结果里挑出「已达标但还没领取」的任务（可以去提交了）。
+
+    Args:
+        season: 赛季
+        page_result: {任务名: {'item', 'have', 'need', 'claimed'}}
+
+    Returns:
+        list[(任务名, 物品, 当前数量, 需要数量)]
+    """
+    ready = []
+    for task, info in sorted(page_result.items()):
+        if info.get('claimed'):
+            continue
+        need = int(info.get('need') or 0)
+        have = int(info.get('have') or 0)
+        if need and have >= need:
+            ready.append((task, info.get('item'), have, need))
+    return ready
+
+
+def notify_ready_from_page(config, season, page_result):
+    """
+    页面显示任务已达标但未领取时推送提醒（每项只提醒一次）。
+
+    页面是真相来源：仓库读数可能被每日订单/货运消耗影响，而页面显示的是
+    任务本身的进度。
+
+    Args:
+        config: AzurLaneConfig 实例
+        season: 赛季
+        page_result: 页面读取结果
+
+    Returns:
+        list[str]: 本次提醒的任务名
+    """
+    from module.island.island_season_plan_data import cn_name
+    from module.logger import logger
+    from module.notify.notify import handle_notify
+
+    ready = ready_to_submit(season, page_result)
+    if not ready or not season:
+        return []
+    notified = load_notified()
+    state = notified.setdefault(season, {})
+    fired = []
+    for task, item, have, need in ready:
+        if not item:
+            continue
+        entry = _state_entry(state, item)
+        if entry['notified']:
+            continue
+        entry['notified'] = True
+        entry['last'] = have
+        fired.append(task)
+        logger.info(f"[岛屿-赛季任务] {task} 已达标（{cn_name(item)} {have}/{need}），推送提醒")
+        handle_notify(
+            config.Error_OnePushConfig,
+            title='岛屿赛季任务可以提交了',
+            content=f"<{config.config_name}> 赛季任务「{task}」已达标："
+                    f"{cn_name(item)} {have}/{need}，可以去岛屿「开发季」提交了",
+        )
+    if fired:
+        save_notified(notified)
+    return fired
+
+
 def notify_finished(config, shop, season, counts):
     """
     赛季任务物品攒够时推送通知（走 Error_OnePushConfig，配 smtp 即邮件）。

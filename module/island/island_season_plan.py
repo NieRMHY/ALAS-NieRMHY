@@ -10,7 +10,13 @@
 
 提交动作暂未实现（用户手动提交）；页面数据会落盘供排查。
 """
-from module.island.island_away_cook import mark_claimed, load_notified, save_notified
+from module.island.island_away_cook import (
+    load_notified,
+    mark_claimed,
+    notify_ready_from_page,
+    ready_to_submit,
+    save_notified,
+)
 from module.island.island_plan_refresh import PAGE_FILE
 from module.island.island_season import SeasonConfig
 from module.island.island_season_plan_data import cn_name
@@ -46,6 +52,11 @@ class IslandSeasonPlan(Island):
 
         self._log_progress(result)
         self._save_page(result)
+        ready = ready_to_submit(season, result)
+        if ready:
+            logger.info('[岛屿-赛季任务] 可以提交: ' +
+                        '、'.join(f'{t}（{cn_name(i)} {h}/{n}）' for t, i, h, n in ready))
+        notify_ready_from_page(self.config, season, result)
         if self.config.IslandSeasonPlan_SyncDone:
             self._sync_done(season, result)
 
