@@ -10,7 +10,7 @@
 
 from module.exception import ScriptEnd, ScriptError
 from module.logger import logger
-from module.notify import handle_notify
+from module.notify import handle_notify, notify_title
 from module.raid.scuttle import RaidScuttleRun
 
 # 每次出击好感增量：1/16，MVP 双倍不计（刷好感不追求 MVP）
@@ -171,7 +171,7 @@ class RaidAffectionRun(RaidScuttleRun):
         self.config.Scheduler_Enable = False
         handle_notify(
             self.config.Error_OnePushConfig,
-            title='共斗好感已满，任务暂停',
+            title=notify_title(self.config.config_name, '好感', '共斗已满，任务暂停'),
             content=f'<{self.config.config_name}> {detail}，共斗刷好感已暂停',
         )
         self.config.task_stop()
@@ -255,7 +255,7 @@ class RaidAffectionRun(RaidScuttleRun):
                         # Modify by MHY, 真胜利不换船，仅通知（牺牲侧阵容由用户自行管理）
                         handle_notify(
                             self.config.Error_OnePushConfig,
-                            title='共斗刷好感意外胜利',
+                            title=notify_title(self.config.config_name, '好感', '共斗意外胜利，请检查阵容'),
                             content=f'<{self.config.config_name}> 线 {self._last_line_label} '
                                     f'真胜利 (扣油 {oil_drop})，请检查牺牲侧白船阵容',
                         )

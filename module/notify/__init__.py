@@ -1,5 +1,11 @@
 """通知模块。"""
 
+def notify_title(config_name, category, summary):
+    """统一推送标题格式：<实例名> [类别] 简介（实现见 notify.notify）。"""
+    from module.notify.notify import notify_title as _notify_title
+    return _notify_title(config_name, category, summary)
+
+
 def handle_notify(*args, **kwargs):
     """处理推送通知请求。
 

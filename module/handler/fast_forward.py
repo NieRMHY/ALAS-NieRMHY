@@ -463,10 +463,10 @@ class FastForwardHandler(AutoSearchHandler):
         self.fleet_preparation_sidebar_ensure(3)
         if not self.auto_search_setting_ensure(self.config.Fleet_FleetOrder) \
                 and self.config.task.command == 'GemsFarming':
-            from module.notify import handle_notify
+            from module.notify import handle_notify, notify_title
             if not handle_notify(
                 self.config.Error_OnePushConfig,
-                title=f"ALAS <{self.config.config_name}> crashed",
+                title=notify_title(self.config.config_name, '崩溃', 'GemsFarming 自动搜索设置失败'),
                 content=f"<{self.config.config_name}> RequestHumanTakeover\n"
                         f"Task GemsFarming could not set auto search settings",
                                     ):

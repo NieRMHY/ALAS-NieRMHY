@@ -38,6 +38,25 @@ if not getattr(Provider.request, '_timeout_patched', False):
     Provider.request = staticmethod(_provider_request_with_timeout)
 
 
+def notify_title(config_name, category, summary):
+    """
+    统一推送标题格式：<实例名> [类别] 简介。
+
+    Add by MHY：此前各处标题格式不一（ALAS <X> 警告 / AzurPilot <X> xxx /
+    裸中文标题 / [ALAS <X>]xxx / DEBUG TEST <X>），邮件混在一起不好认。
+    类别用短名词，如 警告、崩溃、好感、钻石、委托、战役、岛屿、任务。
+
+    Args:
+        config_name (str): 实例名，如 ALAS
+        category (str): 类别
+        summary (str): 一句话简介
+
+    Returns:
+        str: 形如 <ALAS> [警告] 敏感任务出错
+    """
+    return f'<{config_name}> [{category}] {summary}'
+
+
 def handle_notify(_config: str, **kwargs) -> bool:
     """处理推送通知请求。
 

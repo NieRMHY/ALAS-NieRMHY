@@ -25,7 +25,7 @@ from module.config.config import AzurLaneConfig
 from module.exception import CampaignEnd, RequestHumanTakeover, ScriptEnd
 from module.handler.fast_forward import map_files, to_map_file_name
 from module.logger import logger
-from module.notify import handle_notify
+from module.notify import handle_notify, notify_title
 from module.ui.page import page_campaign
 
 
@@ -124,7 +124,7 @@ class CampaignRun(CampaignEvent, ShopStatus):
             self.config.Scheduler_Enable = False
             handle_notify(
                 self.config.Error_OnePushConfig,
-                title=f"ALAS <{self.config.config_name}> campaign finished",
+                title=notify_title(self.config.config_name, '战役', '达到运行次数上限'),
                 content=f"<{self.config.config_name}> {self.name} reached run count limit"
             )
             return True
@@ -134,7 +134,7 @@ class CampaignRun(CampaignEvent, ShopStatus):
             self.config.Scheduler_Enable = False
             handle_notify(
                 self.config.Error_OnePushConfig,
-                title=f"ALAS <{self.config.config_name}> campaign finished",
+                title=notify_title(self.config.config_name, '战役', '达到等级上限'),
                 content=f"<{self.config.config_name}> {self.name} reached level limit"
             )
             return True
@@ -163,7 +163,7 @@ class CampaignRun(CampaignEvent, ShopStatus):
             self.config.Scheduler_Enable = False
             handle_notify(
                 self.config.Error_OnePushConfig,
-                title=f"ALAS <{self.config.config_name}> campaign finished",
+                title=notify_title(self.config.config_name, '战役', '获得新舰船'),
                 content=f"<{self.config.config_name}> {self.name} got new ship"
             )
             return True

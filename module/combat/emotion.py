@@ -583,10 +583,10 @@ class Emotion:
         limit = float(getattr(self.config, f'{command}Affection_AffectionLimit') or 0)
         logger.hr(f'{command} 好感达 {limit:.0f}，暂停任务')
         self.config.Scheduler_Enable = False
-        from module.notify import handle_notify
+        from module.notify import handle_notify, notify_title
         handle_notify(
             self.config.Error_OnePushConfig,
-            title='好感已达阈值，任务暂停',
+            title=notify_title(self.config.config_name, '好感', '已达阈值，任务暂停'),
             content=f'<{self.config.config_name}> {command} '
                     f'舰队{fleet_index}好感达 {limit:.0f}，任务已暂停',
         )

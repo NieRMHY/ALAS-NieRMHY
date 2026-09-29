@@ -27,7 +27,7 @@ from module.config.utils import (
 )
 from module.exception import *
 from module.logger import logger
-from module.notify import handle_notify, notify_webui
+from module.notify import handle_notify, notify_title, notify_webui
 
 
 # 看门狗配置
@@ -766,7 +766,7 @@ class AzurLaneAutoScript:
         )
         handle_notify(
             self.config.Error_OnePushConfig,
-            title=f"ALAS <{self.config_name}> 敏感任务出错",
+            title=notify_title(self.config_name, '警告', '敏感任务出错'),
             content=f"<{self.config_name}> 敏感任务 `{task_name}` 出错，ALAS 已停止运行\n{error}",
         )
         notify_webui(
@@ -823,7 +823,7 @@ class AzurLaneAutoScript:
             )
             self._check_sensitive_exit(command, e)
             self._notify_recoverable(
-                title=f"ALAS <{self.config_name}> 警告",
+                title=notify_title(self.config_name, '警告', '游戏未运行，将自动重启'),
                 content=f"<{self.config_name}> 游戏未运行 - 将自动重启游戏",
                 webui_title=f" <{self.config_name}> 发出了警告！",
                 webui_content=f"<{self.config_name}> 游戏未运行 将自动重启游戏",
@@ -856,7 +856,7 @@ class AzurLaneAutoScript:
             logger.warning(f'[Alas] 游戏卡住，{self.device.package} 将在10秒后重启')
             logger.warning('[Alas] 如果您正在手动操作，请停止 ALAS')
             self._notify_recoverable(
-                title=f"ALAS <{self.config_name}> 警告",
+                title=notify_title(self.config_name, '警告', '游戏卡住，将自动重启'),
                 content=f"<{self.config_name}> 游戏卡住 - 将自动重启游戏",
                 webui_title=f"<{self.config_name}> 发出了警告！",
                 webui_content=f"<{self.config_name}> 游戏卡住 将自动重启游戏",
@@ -878,7 +878,7 @@ class AzurLaneAutoScript:
             logger.warning('[Alas] 碧蓝航线游戏客户端发生错误，ALAS 无法处理')
             logger.warning(f'[Alas] 正在重启 {self.device.package} 以修复问题')
             self._notify_recoverable(
-                title=f"ALAS <{self.config_name}> 警告",
+                title=notify_title(self.config_name, '警告', '游戏客户端错误，将自动重启'),
                 content=f"<{self.config_name}> 游戏客户端错误 - 将自动重启游戏",
                 webui_title=f"<{self.config_name}> 发出了警告！",
                 webui_content=f"<{self.config_name}> 游戏客户端错误 将自动重启游戏",
@@ -902,7 +902,7 @@ class AzurLaneAutoScript:
                 self._check_sensitive_exit(command, e)
                 logger.warning('[Alas] 无法识别游戏页面，尝试重启游戏恢复')
                 self._notify_recoverable(
-                    title=f"ALAS <{self.config_name}> 警告",
+                    title=notify_title(self.config_name, '警告', '无法识别页面，将自动重启'),
                     content=f"<{self.config_name}> 无法识别页面 - 将自动重启游戏",
                     webui_title=f"<{self.config_name}> 发出了警告！",
                     webui_content=f"<{self.config_name}> 无法识别页面 将自动重启游戏",
@@ -934,7 +934,7 @@ class AzurLaneAutoScript:
                 )
                 handle_notify(
                     self.config.Error_OnePushConfig,
-                    title=f"ALAS <{self.config_name}> 崩溃",
+                    title=notify_title(self.config_name, '崩溃', 'ScriptError'),
                     content=f"<{self.config_name}> ScriptError (连续 {self.script_error_count} 次)",
                 )
                 notify_webui(
@@ -946,7 +946,7 @@ class AzurLaneAutoScript:
 
             logger.warning(f'[Alas] ScriptError 第 {self.script_error_count}/3 次，尝试重启恢复')
             self._notify_recoverable(
-                title=f"ALAS <{self.config_name}> 警告",
+                title=notify_title(self.config_name, '警告', 'ScriptError，将尝试重启恢复'),
                 content=f"<{self.config_name}> ScriptError - 将尝试重启恢复 ({self.script_error_count}/3)",
                 webui_title=f"<{self.config_name}> 发出了警告！",
                 webui_content=f"<{self.config_name}> ScriptError 将尝试重启恢复",
@@ -968,7 +968,7 @@ class AzurLaneAutoScript:
             self._try_restart_emulator()
             self.config.task_call('Restart')
             self._notify_recoverable(
-                title=f"ALAS <{self.config_name}> 警告",
+                title=notify_title(self.config_name, '警告', '模拟器离线，正在重启模拟器'),
                 content=f"<{self.config_name}> 模拟器离线 - 正在尝试重启模拟器",
                 webui_title=f"{self.config_name} 警告",
                 webui_content=f"模拟器离线 正在重启模拟器",
@@ -987,7 +987,7 @@ class AzurLaneAutoScript:
             self._check_sensitive_exit(command, e)
             handle_notify(
                 self.config.Error_OnePushConfig,
-                title=f"ALAS <{self.config_name}> 崩溃",
+                title=notify_title(self.config_name, '崩溃', 'RequestHumanTakeover'),
                 content=f"<{self.config_name}> RequestHumanTakeover",
             )
             notify_webui(
@@ -1010,7 +1010,7 @@ class AzurLaneAutoScript:
             logger.warning('[Alas] 自动搜索设置失败，尝试重启游戏恢复')
             self.config.task_call('Restart')
             self._notify_recoverable(
-                title=f"ALAS <{self.config_name}> 警告",
+                title=notify_title(self.config_name, '警告', '自动搜索设置失败，将自动重启游戏'),
                 content=f"<{self.config_name}> 自动搜索设置失败 - 将自动重启游戏",
                 webui_title=f"<{self.config_name}> 发出了警告！",
                 webui_content=f"<{self.config_name}> 自动搜索设置失败 将自动重启游戏",
@@ -1029,7 +1029,7 @@ class AzurLaneAutoScript:
             logger.warning('[Alas] 未处理异常，尝试重启游戏恢复')
             self.config.task_call('Restart')
             self._notify_recoverable(
-                title=f"ALAS <{self.config_name}> 警告",
+                title=notify_title(self.config_name, '警告', '发生异常，正在尝试重启游戏'),
                 content=f"<{self.config_name}> 发生异常 - 正在尝试重启游戏",
                 webui_title=f"{self.config_name} 警告",
                 webui_content=f"{self.config_name} 发生异常 正在尝试重启游戏",
@@ -2139,7 +2139,8 @@ class AzurLaneAutoScript:
                             task_display = _get_task_display_name(task)
                             handle_notify(
                                 self.config.Error_OnePushConfig,
-                                title=f"[ALAS] <{self.config_name}> {task_display} {status}",
+                                title=notify_title(self.config_name, '任务',
+                                                    f'{task_display} {status}'),
                                 content=f"<{self.config_name}> 任务 {task_display} —— {status}",
                             )
                     except Exception:
@@ -2172,7 +2173,7 @@ class AzurLaneAutoScript:
                     )
                     handle_notify(
                         self.config.Error_OnePushConfig,
-                        title=f"ALAS <{self.config_name}> crashed",
+                        title=notify_title(self.config_name, '崩溃', 'RequestHumanTakeover'),
                         content=f"<{self.config_name}> RequestHumanTakeover\nTask `{task}` failed {failed} or more times.",
                     )
                     notify_webui(
@@ -2191,7 +2192,7 @@ class AzurLaneAutoScript:
                     )
                     handle_notify(
                         self.config.Error_OnePushConfig,
-                        title=f"ALAS <{self.config_name}> 警告",
+                        title=notify_title(self.config_name, '警告', f'任务 {task} 连续失败，将重启游戏'),
                         content=f"<{self.config_name}> 任务 `{task}` 连续失败 {failed} 次，将强制重启游戏",
                     )
                     notify_webui(

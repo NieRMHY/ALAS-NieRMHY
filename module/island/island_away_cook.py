@@ -321,7 +321,7 @@ def notify_ready_from_page(config, season, page_result):
         logger.info(f"[岛屿-赛季任务] {task} 已达标（{cn_name(item)} {have}/{need}），推送提醒")
         handle_notify(
             config.Error_OnePushConfig,
-            title='岛屿赛季任务可以提交了',
+            title=notify_title(config.config_name, '岛屿', '赛季任务可以提交了'),
             content=f"<{config.config_name}> 赛季任务「{task}」已达标："
                     f"{cn_name(item)} {have}/{need}，可以去岛屿「开发季」提交了",
         )
@@ -362,7 +362,7 @@ def notify_finished(config, shop, season, counts):
         logger.info(f"[岛屿-赛季任务] {cn_name(item)} 已攒够 {have}/{need}，推送提醒")
         handle_notify(
             config.Error_OnePushConfig,
-            title='岛屿赛季任务物品已攒够',
+            title=notify_title(config.config_name, '岛屿', '赛季任务物品已攒够'),
             content=f"<{config.config_name}> 赛季任务「{task or item}」"
                     f"需要的 {cn_name(item)} 已攒够：{have}/{need}，"
                     f"可以去岛屿「开发季」提交了",

@@ -26,7 +26,7 @@ from module.handler.mystery import MysteryHandler
 from module.logger import logger
 from module.map.assets import *
 from module.map.map_fleet_preparation import FleetPreparation
-from module.notify import handle_notify
+from module.notify import handle_notify, notify_title
 from module.retire.retirement import Retirement
 from module.ui.assets import BACK_ARROW, DAILY_CHECK
 
@@ -188,7 +188,7 @@ class MapOperation(MysteryHandler, FleetPreparation, Retirement, FastForwardHand
         if self.config.is_task_enabled('OperationHandover'):
             handle_notify(
                 self.config.Error_OnePushConfig,
-                title=f'AzurPilot <{self.config.config_name}> 功能冲突',
+                title=notify_title(self.config.config_name, '警告', '功能冲突：作战委托未结束'),
                 content=f'<{self.config.config_name}> 作战委托未结束，'
                         f'{self.config.task.command} 无法出击，已推迟到 {target}',
             )
