@@ -145,3 +145,117 @@ def read_cards(image, ocr, season=None):
                     card['need'] = need_cfg
             cards.append(card)
     return cards
+
+def _default_ocr(image, area, lang):
+    """真机 OCR：按坐标裁剪识别。"""
+    from module.ocr.ocr import Ocr
+    return Ocr(area, lang=lang).ocr(image)
+
+
+# 赛季页底部页签：1=活动总览 2=累积PT 3=开发计划 4=开发商店 5=开发排行榜 6=开发回顾
+TAB_CENTERS = (107, 320, 533, 746, 959, 1172)
+TAB_Y = 694
+PLAN_TAB_INDEX = 3
+
+# 开发计划页列表区（可滑动区域）
+SCROLL_BOX = (150, 110, 1120, 660)
+SCROLL_VECTOR = (0, -260)   # 向上滑一屏多一点
+
+
+def tab_brightness(image):
+    """取 6 个底部页签的亮度（选中的白色胶囊明显更亮）。"""
+    return [float(image[TAB_Y - 12:TAB_Y + 12, cx - 60:cx + 60].mean())
+            for cx in TAB_CENTERS]
+
+
+def ensure_bottom_tab(island, index=PLAN_TAB_INDEX):
+    """
+    切换到赛季页底部第 index 个页签。
+
+    不走 IslandUI.island_season_bottom_navbar_ensure：那个方法在 IslandUI 上，
+    而店铺/农场类只继承 Island，真机会 AttributeError。这里自包含实现，
+    用「选中页签是白色胶囊、亮度最高」判断是否已切换成功。
+
+    Args:
+        island: 岛屿任务实例
+        index: 1-6，3 为「开发计划」
+
+    Returns:
+        bool: 是否已切到目标页签
+    """
+    from module.logger import logger
+
+    target = TAB_CENTERS[index - 1]
+    for _ in island.loop(timeout=12):
+        island.device.screenshot()
+        values = tab_brightness(island.device.image)
+        if values[index - 1] >= max(values) - 5:
+            logger.info(f"[岛屿-赛季计划] 已切到第 {index} 个页签（亮度 "
+                        f"{values[index - 1]:.0f}，其它 {max(v for i, v in enumerate(values) if i != index - 1):.0f}）")
+            return True
+        island.device.click_minitouch(target, TAB_Y)
+    return False
+
+
+def read_season_plan_page(island, season, max_scrolls=3, ocr=_default_ocr):
+    """
+    进入赛季「开发计划」页面并读取全部任务卡片。
+
+    导航复用 ALAS 既有设施：岛屿主页 → 右上角「开发季」→ 底部第 3 页签
+    「开发计划」（island_season_bottom_navbar_ensure(left=3)）。
+
+    Args:
+        island: 带 UI 能力的岛屿任务实例（Island 子类）
+        season: 赛季
+        max_scrolls: 最多向下翻几屏
+        ocr: 可调用对象 ocr(image, area, lang) -> str，便于离线测试注入
+
+    Returns:
+        dict: {任务名: {'item', 'have', 'need'}}；读取失败返回 {}
+    """
+    from module.island.assets import ISLAND_BACK
+    from module.island_season_plan.assets import ISLAND_SEASON_ENTRY
+    from module.logger import logger
+    from module.ui.assets import ISLAND_SEASON_GOTO_ISLAND
+    from module.ui.page import page_island
+
+    # 页面标记用「返回岛屿」白色按钮，而不是 ISLAND_SEASON_CHECK：
+    # 后者注册色是蓝调 (99,106,117)，秋季主题是橙褐调 (99,84,76)，差值 42
+    # 超出容差，真机上永远匹配不上（页面开了也识别不到）。
+    result = {}
+    island.ui_goto(page_island, get_ship=False)
+    for _ in island.loop(timeout=20):
+        if island.appear(ISLAND_SEASON_GOTO_ISLAND):
+            break
+        # 不加 offset：按钮区域加宽后点击会落到图标外的空白处（真机踩过）
+        if island.appear_then_click(ISLAND_SEASON_ENTRY, interval=2):
+            continue
+    if not island.appear(ISLAND_SEASON_GOTO_ISLAND):
+        logger.warning('[岛屿-赛季计划] 进入开发季页面失败，退回岛屿页')
+        for _ in island.loop(timeout=6):
+            if island.appear_then_click(ISLAND_BACK, interval=2):
+                continue
+            break
+        return {}
+
+    if not ensure_bottom_tab(island, index=3):
+        logger.warning('[岛屿-赛季计划] 切换到「开发计划」页签失败')
+        return {}
+
+    seen = set()
+    per_screen = len(CARD_ROWS) * len(CARD_COLUMNS)
+    for index in range(max_scrolls):
+        island.device.screenshot()
+        cards = read_cards(island.device.image, ocr, season=season)
+        fresh = [card for card in cards if card['task'] and card['task'] not in seen]
+        for card in fresh:
+            seen.add(card['task'])
+            result[card['task']] = {'item': card['item'], 'have': card['have'],
+                                    'need': card['need']}
+        logger.info(f"[岛屿-赛季计划] 第 {index + 1} 屏读到 {len(fresh)} 个新任务，"
+                    f"累计 {len(result)} 个")
+        if len(cards) < per_screen:
+            break  # 卡片不满一屏，说明到底了
+        island.device.swipe_vector(SCROLL_VECTOR, box=SCROLL_BOX, name='SEASON_PLAN_SCROLL')
+    return result
+

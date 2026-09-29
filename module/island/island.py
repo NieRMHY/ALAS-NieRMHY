@@ -184,7 +184,7 @@ class Island(SelectCharacter):
         # 失败只记日志，绝不影响任务本身。
         try:
             from module.island.island_plan_refresh import refresh_plan_if_requested
-            refresh_plan_if_requested(self.config)
+            refresh_plan_if_requested(self.config, self)
         except Exception:
             from module.logger import logger as _logger
             _logger.exception("[岛屿-方案刷新] 执行异常，已跳过")
