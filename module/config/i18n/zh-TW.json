@@ -315,8 +315,8 @@
       "help": "島嶼計劃的全域設定，包括季節設定"
     },
     "IslandSeasonPlan": {
-      "name": "Task.IslandSeasonPlan.name",
-      "help": "Task.IslandSeasonPlan.help"
+      "name": "賽季任務（開發計畫）",
+      "help": "讀取島嶼「開發季 → 開發計畫」頁面：記錄每項任務的進度、依「已領取」同步已完成狀態，並在物品湊齊時提醒；可選自動提交"
     },
     "IslandBusiness": {
       "name": "經營模組",

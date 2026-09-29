@@ -315,8 +315,8 @@
       "help": "Global configuration for Island Plan, including season settings."
     },
     "IslandSeasonPlan": {
-      "name": "Task.IslandSeasonPlan.name",
-      "help": "Task.IslandSeasonPlan.help"
+      "name": "Season Tasks (Development Plan)",
+      "help": "Read the island \"Development Season - Development Plan\" page: track each task progress, sync claimed state, notify when items are ready; optional auto submit"
     },
     "IslandBusiness": {
       "name": "Business Module",

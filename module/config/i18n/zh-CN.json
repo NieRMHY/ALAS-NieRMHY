@@ -315,8 +315,8 @@
       "help": "岛屿计划的全局配置，包括季节设定"
     },
     "IslandSeasonPlan": {
-      "name": "Task.IslandSeasonPlan.name",
-      "help": "Task.IslandSeasonPlan.help"
+      "name": "赛季任务（开发计划）",
+      "help": "读取岛屿「开发季 → 开发计划」页面：记录每项任务的进度、按「已领取」同步已完成状态，并在物品攒够时提醒；可选自动提交"
     },
     "IslandBusiness": {
       "name": "经营模块",

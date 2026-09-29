@@ -315,8 +315,8 @@
       "help": "アイランドプランのグローバル設定。季節設定を含みます。"
     },
     "IslandSeasonPlan": {
-      "name": "Task.IslandSeasonPlan.name",
-      "help": "Task.IslandSeasonPlan.help"
+      "name": "シーズン任務（開発計画）",
+      "help": "島の「開発季 → 開発計画」ページを読み取り、各任務の進捗を記録し、「受取済み」で完了状態を同期、物品が揃ったら通知します（自動提出は任意）"
     },
     "IslandBusiness": {
       "name": "経営モジュール",
