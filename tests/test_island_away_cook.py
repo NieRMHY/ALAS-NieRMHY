@@ -18,6 +18,49 @@ from module.island.island_away_cook import (
 )
 
 
+class TestNotifyUsesImportedHelper(unittest.TestCase):
+    """通知函数必须真的跑一遍：写过 notify_title 却忘了 import 只有调用时才暴露。"""
+
+    def _config(self):
+        from unittest import mock
+        config = mock.Mock()
+        config.config_name = 'ALAS'
+        config.Error_OnePushConfig = 'provider: smtp'
+        return config
+
+    def test_ready_from_page(self):
+        from unittest import mock
+        from module.island import island_away_cook as away_cook
+
+        sent = []
+        page = {'甜蜜引擎': {'item': 'apple_juice', 'have': 250, 'need': 250, 'claimed': False}}
+        with mock.patch.object(away_cook, 'load_notified', return_value={}), \
+                mock.patch.object(away_cook, 'save_notified'), \
+                mock.patch('module.notify.notify.handle_notify',
+                           side_effect=lambda *a, **k: sent.append(k) or True):
+            fired = away_cook.notify_ready_from_page(self._config(), 'autumn', page)
+
+        self.assertEqual(fired, ['甜蜜引擎'])
+        self.assertEqual(len(sent), 1)
+        self.assertIn('[岛屿]', sent[0]['title'])
+        self.assertIn('<ALAS>', sent[0]['title'])
+
+    def test_finished_from_warehouse_counts(self):
+        from unittest import mock
+        from module.island import island_away_cook as away_cook
+
+        sent = []
+        with mock.patch.object(away_cook, 'load_notified', return_value={}), \
+                mock.patch.object(away_cook, 'save_notified'), \
+                mock.patch('module.notify.notify.handle_notify',
+                           side_effect=lambda *a, **k: sent.append(k) or True):
+            away_cook.notify_finished(self._config(), 'restaurant', 'autumn',
+                                      {'salad': 100})
+
+        self.assertEqual(len(sent), 1)
+        self.assertIn('[岛屿]', sent[0]['title'])
+
+
 class TestSeasonItemsForShop(unittest.TestCase):
     def test_coffee_items(self):
         """咖啡店要交冰咖啡和拿铁"""

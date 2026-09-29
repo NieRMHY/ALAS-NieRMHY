@@ -301,7 +301,7 @@ def notify_ready_from_page(config, season, page_result):
     """
     from module.island.island_season_plan_data import cn_name
     from module.logger import logger
-    from module.notify.notify import handle_notify
+    from module.notify.notify import handle_notify, notify_title
 
     ready = ready_to_submit(season, page_result)
     if not ready or not season:
@@ -348,7 +348,7 @@ def notify_finished(config, shop, season, counts):
     """
     from module.island.island_season_plan_data import cn_name, task_of_item
     from module.logger import logger
-    from module.notify.notify import handle_notify
+    from module.notify.notify import handle_notify, notify_title
 
     if not season:
         return []

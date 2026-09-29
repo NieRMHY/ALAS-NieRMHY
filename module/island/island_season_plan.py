@@ -94,6 +94,10 @@ class IslandSeasonPlan(Island):
             logger.info('[岛屿-赛季任务] 可以提交: ' +
                         '、'.join(f'{t}（{cn_name(i)} {h}/{n}）' for t, i, h, n in ready))
         notify_ready_from_page(self.config, season, result)
+        if self.config.IslandSeasonPlan_SyncDone:
+            # 用页面上的「已领取」同步已完成状态（之前这段被误插到 _submit_card
+            # 的 return 之后，成了死代码，F821 报 season/result 未定义才发现）
+            self._sync_done(season, result)
         if self.config.IslandSeasonPlan_Submit and ready:
             self._submit_ready(ready, result)
 
@@ -146,8 +150,6 @@ class IslandSeasonPlan(Island):
         logger.info(f'[岛屿-赛季任务] {task} 提交点击完成'
                     f'{"（含确认弹窗）" if clicked_popup else "（未出现确认弹窗）"}')
         return True
-        if self.config.IslandSeasonPlan_SyncDone:
-            self._sync_done(season, result)
 
     def _save_page(self, result):
         """页面结果落盘，便于事后排查（config/island_season_plan_page.json）。"""

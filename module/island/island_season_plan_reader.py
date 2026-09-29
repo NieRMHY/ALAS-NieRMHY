@@ -196,7 +196,10 @@ def read_cards(image, ocr, season=None, offset=0):
             cb = claim_box(row, col)
             claim = ocr(image, (cb[0], cb[1] + offset, cb[2], cb[3] + offset), NAME_LANG)
             card = {'row': row, 'col': col, 'name': name, 'have': have, 'need': need,
-                    'claimed': CLAIM_TEXT in str(claim), 'task': None, 'item': None}
+                    'claimed': CLAIM_TEXT in str(claim), 'task': None, 'item': None,
+                    # 带上本次读屏用的行偏移：外面要按偏移点「提交」按钮，
+                    # 之前在这里漏传过一次，导致 NameError（真机每轮崩一次）
+                    'offset': offset}
             if season:
                 task, item, need_cfg = match_task(name, season)
                 card.update({'task': task, 'item': item})
@@ -404,7 +407,7 @@ def read_season_plan_page(island, season, max_scrolls=MAX_SCROLLS, ocr=_default_
             result[card['task']] = {'item': card['item'], 'have': card['have'],
                                     'need': card['need'], 'claimed': card['claimed'],
                                     'row': card['row'], 'col': card['col'],
-                                    'offset': offset}
+                                    'offset': card['offset']}
         logger.info(f"[岛屿-赛季计划] 第 {index + 1} 屏读到 {len(fresh)} 个新任务，"
                     f"累计 {len(result)} 个")
         if fresh:
