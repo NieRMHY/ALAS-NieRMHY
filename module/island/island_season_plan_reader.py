@@ -180,6 +180,62 @@ def tab_brightness(image):
             for cx in TAB_CENTERS]
 
 
+
+
+def scroll_to_top(island, attempts=8):
+    """
+    反复下滑，把任务列表拉回顶部。
+
+    列表滚动位置会保留到下一次进入页面，只滑两三次不够（真机实测：上一轮停在
+    底部时，下一轮直接从底部开始读，只读到零星几项）。
+
+    Args:
+        island: 岛屿任务实例
+        attempts: 最多滑几次
+    """
+    for _ in range(attempts):
+        island.device.stuck_record_clear()
+        scroll_list(island, down=False)
+        island.device.sleep(0.8)
+    island.device.sleep(1.5)  # 等惯性停下
+    island.device.stuck_record_clear()
+
+
+# 列表拖动：普通 swipe 在这个页面上时灵时不灵（真机实测 5 次里成功 1 次），
+# 改用带按压保持的 drag，更接近手指按住列表拖动的手感。
+DRAG_START_Y = {True: 520, False: 240}
+DRAG_END_Y = {True: 180, False: 580}
+DRAG_X = 640
+
+
+def scroll_list(island, down=True):
+    """
+    拖动「开发计划」列表。
+
+    Args:
+        island: 岛屿任务实例
+        down: True 向下翻（看后面的任务），False 回到顶部
+    """
+    # 该页面不吃快速滑动（swipe/swipe_vector 都无效），用「按住-慢拖-再松手」，
+    # 分段数多一些以产生连续的移动事件
+    island.device.drag((DRAG_X, DRAG_START_Y[down]), (DRAG_X, DRAG_END_Y[down]),
+                       segments=4, shake=(0, 8), hold_duration=0.5,
+                       swipe_duration=1.5, name='SEASON_PLAN_DRAG')
+
+
+def _read_screen(island, ocr, season):
+    """读一屏卡片；读空时等一会儿重试一次（页面可能还在绘制）。"""
+    island.device.stuck_record_clear()
+    island.device.screenshot()
+    cards = read_cards(island.device.image, ocr, season=season)
+    island.device.stuck_record_clear()
+    if cards:
+        return cards
+    island.device.sleep(1.5)
+    island.device.screenshot()
+    return read_cards(island.device.image, ocr, season=season)
+
+
 def _save_debug_image(island, index):
     """每屏存一张图，方便排查读不到卡片的问题。"""
     import os
@@ -267,27 +323,14 @@ def read_season_plan_page(island, season, max_scrolls=3, ocr=_default_ocr):
         leave_season_page(island, timeout=6)
         return {}
 
-    # 页面滚动位置会保留：先把列表拉回顶部，保证每次读到完整列表
-    for _ in range(4):
-        island.device.swipe_vector((0, 420), box=SCROLL_BOX, duration=SCROLL_DURATION,
-                                   name='SEASON_PLAN_SCROLL_TOP')
-    island.device.sleep(2)  # 列表有惯性，滑完立刻截图会读到空白（真机踩过）
-    island.device.stuck_record_clear()
+    # 页面滚动位置会保留：先反复下滑回到顶部。之前只滑 3-4 次不够，
+    # 上一轮停在底部时新的一轮会从底部开始读，只读到零星几项。
+    scroll_to_top(island)
 
     seen = set()
-    per_screen = len(CARD_ROWS) * len(CARD_COLUMNS)
+    empty_screens = 0
     for index in range(max_scrolls):
-        # 本屏要跑十几次 OCR，耗时可能超过 ALAS 的卡死阈值（截图未变化），
-        # 先清空卡死记录，读完再清一次
-        island.device.stuck_record_clear()
-        island.device.screenshot()
-        cards = read_cards(island.device.image, ocr, season=season)
-        island.device.stuck_record_clear()
-        if not cards:
-            # 偶发读空（页面还在滚动/绘制），等一会儿重试一次
-            island.device.sleep(1.5)
-            island.device.screenshot()
-            cards = read_cards(island.device.image, ocr, season=season)
+        cards = _read_screen(island, ocr, season)
         fresh = [card for card in cards if card['task'] and card['task'] not in seen]
         for card in fresh:
             seen.add(card['task'])
@@ -296,11 +339,15 @@ def read_season_plan_page(island, season, max_scrolls=3, ocr=_default_ocr):
         _save_debug_image(island, index)
         logger.info(f"[岛屿-赛季计划] 第 {index + 1} 屏读到 {len(fresh)} 个新任务，"
                     f"累计 {len(result)} 个")
-        if len(cards) < per_screen:
-            break  # 卡片不满一屏，说明到底了
-        island.device.swipe_vector(SCROLL_VECTOR, box=SCROLL_BOX,
-                                   duration=SCROLL_DURATION, name='SEASON_PLAN_SCROLL')
-        island.device.sleep(1)
+        if fresh:
+            empty_screens = 0
+        else:
+            empty_screens += 1
+            if empty_screens >= 2:
+                logger.info('[岛屿-赛季计划] 连续两屏无新任务，判定到底')
+                break
+        scroll_list(island, down=True)
+        island.device.sleep(1.5)
 
     # 读完必须退回岛屿页：ALAS 的任务从岛屿页继续，留在赛季页会让上层
     # 识别失败（真机表现为 [UI] 未知UI页面 → 重启游戏）
