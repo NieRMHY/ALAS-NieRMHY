@@ -35,22 +35,25 @@ class IslandSeasonPlan(Island):
 
     def run(self):
         logger.hr('岛屿赛季任务', level=1)
-        if self._too_soon():
-            logger.info(f'[岛屿-赛季任务] 距上次不足 {self.MIN_INTERVAL_MINUTE} 分钟，跳过')
-            self.config.task_delay(minute=self.DELAY_MINUTE)
-            return
         try:
+            if self._too_soon():
+                logger.info(f'[岛屿-赛季任务] 距上次不足 {self.MIN_INTERVAL_MINUTE} 分钟，跳过')
+                return
             self._run()
-        finally:
             self._mark_ran()
-            # 不设延迟会被调度器反复触发（真机踩过：一分钟内跑了三次）
+        finally:
+            # 无论成功、跳过还是抛异常都必须排下次运行时间：否则任务会立刻被
+            # 调度器再次触发，配合店铺的 task_call 形成连环重启（真机事故：
+            # _too_soon 里的 ImportError 导致 18:14 起反复重启游戏）
             self.config.task_delay(minute=self.DELAY_MINUTE)
 
     def _too_soon(self):
         """距上次实际读取是否太近（收餐触发很频繁，需要限流）。"""
         import json
         import os
-        from module.config.time_source import current_time
+        # 注意：时间源是 module.config.time_source.timestamp()，
+        # 之前误写成 current_time（那里叫 now），真机直接 ImportError
+        from module.config.time_source import timestamp
         try:
             with open(self.LAST_RUN_FILE, encoding='utf-8') as f:
                 last = json.load(f).get('last')
@@ -58,19 +61,19 @@ class IslandSeasonPlan(Island):
             return False
         if not last:
             return False
-        return (current_time().timestamp() - float(last)) < self.MIN_INTERVAL_MINUTE * 60
+        return (timestamp() - float(last)) < self.MIN_INTERVAL_MINUTE * 60
 
     def _mark_ran(self):
         """记录本次实际读取时间。"""
         import json
         import os
-        from module.config.time_source import current_time
+        from module.config.time_source import timestamp
         try:
             directory = os.path.dirname(self.LAST_RUN_FILE)
             if directory and not os.path.exists(directory):
                 os.makedirs(directory, exist_ok=True)
             with open(self.LAST_RUN_FILE, 'w', encoding='utf-8') as f:
-                json.dump({'last': current_time().timestamp()}, f)
+                json.dump({'last': timestamp()}, f)
         except OSError:
             logger.warning('[岛屿-赛季任务] 记录运行时间失败')
 
