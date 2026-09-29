@@ -107,6 +107,60 @@ def save_defaults(defaults, path=DEFAULT_FILE):
         json.dump(defaults, f, ensure_ascii=False, indent=2, sort_keys=True)
 
 
+NOTIFIED_FILE = 'config/island_season_notified.json'
+
+
+def load_notified(path=NOTIFIED_FILE):
+    """读取「已通知过攒够」的赛季物品记录：{赛季: {物品: True}}。"""
+    import json
+    import os
+    if not os.path.exists(path):
+        return {}
+    try:
+        with open(path, encoding='utf-8') as f:
+            return json.load(f)
+    except (OSError, ValueError):
+        return {}
+
+
+def save_notified(notified, path=NOTIFIED_FILE):
+    """保存通知记录，避免同一件物品反复发邮件。"""
+    import json
+    import os
+    directory = os.path.dirname(path)
+    if directory and not os.path.exists(directory):
+        os.makedirs(directory, exist_ok=True)
+    with open(path, 'w', encoding='utf-8') as f:
+        json.dump(notified, f, ensure_ascii=False, indent=2, sort_keys=True)
+
+
+def collect_finished(shop, season, counts, notified):
+    """
+    找出「刚攒够、还没通知过」的赛季物品；用户提交后数量掉下来则重置记录。
+
+    Args:
+        shop: 店铺类型标识
+        season: 赛季
+        counts: {物品: 仓库库存}
+        notified: load_notified() 的结果（会被就地修改）
+
+    Returns:
+        list[(物品, 需要数量, 当前库存)]: 需要发通知的物品
+    """
+    season_state = notified.setdefault(season, {})
+    finished = []
+    for item, need, _ in season_items_for_shop(shop, season):
+        have = int(counts.get(item, 0))
+        if have >= need:
+            if not season_state.get(item):
+                season_state[item] = True
+                finished.append((item, need, have))
+        elif season_state.pop(item, None):
+            # 用户提交后数量下降，重新计数，下次攒够再提醒
+            pass
+    return finished
+
+
 def resolve_away_cook(shop, season, counts, current, defaults=None, producible=None,
                       exclude=None):
     """

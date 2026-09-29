@@ -6,6 +6,7 @@ sys.path.insert(0, '.')
 
 from module.island.island_away_cook import (
     AWAY_COOK_KEYS,
+    collect_finished,
     pick_away_cook,
     resolve_away_cook,
     rotation_key,
@@ -94,6 +95,37 @@ class TestResolveAwayCook(unittest.TestCase):
                                              {'juu_coffee': 'cheese'})
         self.assertEqual(target, 'latte')
         self.assertEqual(defaults, {'juu_coffee': 'cheese'})
+
+
+class TestFinishedNotification(unittest.TestCase):
+    def test_notify_once_per_item(self):
+        """攒够只通知一次，重复读取不再发"""
+        notified = {}
+        counts = {'salad': 132}
+        first = collect_finished('restaurant', 'autumn', counts, notified)
+        self.assertEqual(first, [('salad', 100, 132)])
+        self.assertEqual(collect_finished('restaurant', 'autumn', counts, notified), [])
+
+    def test_reset_after_submit(self):
+        """用户提交后数量下降，下次攒够重新通知"""
+        notified = {}
+        collect_finished('restaurant', 'autumn', {'salad': 100}, notified)
+        collect_finished('restaurant', 'autumn', {'salad': 0}, notified)
+        self.assertEqual(len(collect_finished('restaurant', 'autumn', {'salad': 100}, notified)), 1)
+
+    def test_not_enough_no_notify(self):
+        notified = {}
+        self.assertEqual(collect_finished('restaurant', 'autumn', {'salad': 99}, notified), [])
+
+    def test_missing_template_counts_as_not_ready(self):
+        """没有仓库模板读不到数量时按 0 处理，不能误报"""
+        notified = {}
+        self.assertEqual(collect_finished('restaurant', 'autumn', {}, notified), [])
+
+    def test_task_name_lookup(self):
+        from module.island.island_season_plan_data import task_of_item
+        self.assertEqual(task_of_item('salad', 'autumn'), ('健康饮食', 100))
+        self.assertEqual(task_of_item('nonexistent', 'autumn'), (None, 0))
 
 
 class TestRotationKey(unittest.TestCase):

@@ -54,6 +54,23 @@ def plan_tasks(season):
     return list(SEASON_PLAN_TASKS.get(season, []))
 
 
+def task_of_item(item, season):
+    """
+    反查物品对应的赛季任务。
+
+    Args:
+        item: 物品英文名
+        season: 赛季
+
+    Returns:
+        tuple: (任务名, 需要数量)；没有该物品返回 (None, 0)
+    """
+    for name, task_item, need in plan_tasks(season):
+        if task_item == item:
+            return name, need
+    return None, 0
+
+
 def cn_name(item):
     """物品中文名：经济库优先，其次基础材料表，最后回原名。"""
     from module.island.island_economy import ECONOMY_PRODUCTS
