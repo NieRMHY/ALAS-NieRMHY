@@ -30,7 +30,12 @@ NAME_BOX = (30, 18, 220, 50)
 PROGRESS_BOX = (-110, 18, -20, 46)
 # 「已领取」徽章区（相对卡片右下角）：提交过的任务会沉到列表末尾并标记
 CLAIM_BOX = (-150, 150, -5, 210)
-CLAIM_TEXT = '已领取'
+# 兜底区域：徽章位置会随卡片状态（可提交 / 已领取）变化。真机上只认窄框时，
+# 16 项里只认出 1 项已领取，而用户看到的那些其实都已经提交过了。
+CLAIM_BOX_WIDE = (-210, 118, -5, 215)
+# 提交过的卡片可能显示不同文案，命中任一即算已领取；
+# 注意不能用「提交」单独匹配——可提交的卡片也有「提交 玉米*500」字样
+CLAIM_TEXTS = ('已领取', '已提交')
 
 NAME_LANG = 'ppocr_v6'
 PROGRESS_LANG = 'azur_lane'
@@ -104,6 +109,47 @@ def claim_box(row, col):
     x1, x2 = CARD_COLUMNS[col]
     y1, _ = CARD_ROWS[row]
     return (x2 + CLAIM_BOX[0], y1 + CLAIM_BOX[1], x2 + CLAIM_BOX[2], y1 + CLAIM_BOX[3])
+
+
+def claim_boxes(row, col):
+    """
+    徽章的候选区域（先窄后宽）。
+
+    Args:
+        row: 行号 0-1
+        col: 列号 0-2
+
+    Returns:
+        list[tuple]: 依次尝试的区域
+    """
+    x2 = CARD_COLUMNS[col][1]
+    y1 = CARD_ROWS[row][1]
+    return [
+        (x2 + CLAIM_BOX[0], y1 + CLAIM_BOX[1], x2 + CLAIM_BOX[2], y1 + CLAIM_BOX[3]),
+        (x2 + CLAIM_BOX_WIDE[0], y1 + CLAIM_BOX_WIDE[1],
+         x2 + CLAIM_BOX_WIDE[2], y1 + CLAIM_BOX_WIDE[3]),
+    ]
+
+
+def read_claim(ocr, image, row, col, offset=0):
+    """
+    读卡片是否已领取：任一候选区域命中任意已知文案即算已领取。
+
+    Args:
+        ocr: ocr(image, area, lang) -> str
+        image: 截图
+        row: 行号
+        col: 列号
+        offset: 本次读屏的行偏移
+
+    Returns:
+        bool: 是否已领取
+    """
+    for box in claim_boxes(row, col):
+        text = str(ocr(image, (box[0], box[1] + offset, box[2], box[3] + offset), NAME_LANG))
+        if any(claim in text for claim in CLAIM_TEXTS):
+            return True
+    return False
 
 
 # 两行卡片的行距（真机实测 229px）
@@ -193,10 +239,9 @@ def read_cards(image, ocr, season=None, offset=0):
             if not name:
                 continue
             have, need = parse_progress(ocr(image, progress_box, PROGRESS_LANG)) or (0, 0)
-            cb = claim_box(row, col)
-            claim = ocr(image, (cb[0], cb[1] + offset, cb[2], cb[3] + offset), NAME_LANG)
             card = {'row': row, 'col': col, 'name': name, 'have': have, 'need': need,
-                    'claimed': CLAIM_TEXT in str(claim), 'task': None, 'item': None,
+                    'claimed': read_claim(ocr, image, row, col, offset),
+                    'task': None, 'item': None,
                     # 带上本次读屏用的行偏移：外面要按偏移点「提交」按钮，
                     # 之前在这里漏传过一次，导致 NameError（真机每轮崩一次）
                     'offset': offset}

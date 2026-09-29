@@ -102,6 +102,28 @@ class TestReadSeasonPlanPage(unittest.TestCase):
                                                     badge='已领取'))
         self.assertTrue(result['麦田守望']['claimed'])
 
+    def test_claim_detected_in_fallback_box(self):
+        """窄框读不到时退到宽框——真机上只认窄框会导致已提交的任务被当成未领取"""
+        from module.island.island_season_plan_reader import read_claim
+
+        calls = []
+
+        def ocr(image, area, lang):
+            calls.append(area)
+            # 第一次（窄框）读不到，第二次（宽框）读到已领取
+            return '' if len(calls) == 1 else '已领取'
+
+        self.assertTrue(read_claim(ocr, make_image(), 0, 0, offset=0))
+
+    def test_claim_text_does_not_match_submit_row(self):
+        """可提交卡片的「提交 玉米*500」不能被当成已领取"""
+        from module.island.island_season_plan_reader import read_claim
+
+        def ocr(image, area, lang):
+            return '提交 玉米*500'
+
+        self.assertFalse(read_claim(ocr, make_image(), 0, 0, offset=0))
+
     def test_no_cards_returns_empty(self):
         """读不到任务时返回空字典，不抛异常"""
         island = FakeIsland(make_image())
