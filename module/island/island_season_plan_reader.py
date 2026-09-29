@@ -27,7 +27,8 @@ CARD_ROWS = ((177, 388), (406, 602))
 
 # 卡片内文字区（相对卡片左上角 / 右上角）
 NAME_BOX = (30, 18, 220, 50)
-PROGRESS_BOX = (-110, 18, -20, 46)
+# 右边界原来取 -20，最后一位数字会被切掉（真机读到 500/50、250/25），放宽到 -8
+PROGRESS_BOX = (-135, 18, -8, 46)
 # 「已领取」徽章区（相对卡片右下角）：提交过的任务会沉到列表末尾并标记
 CLAIM_BOX = (-150, 150, -5, 210)
 # 兜底区域：徽章位置会随卡片状态（可提交 / 已领取）变化。真机上只认窄框时，
@@ -104,6 +105,17 @@ def match_task(name, season):
     return None, None, 0
 
 
+def card_top(row):
+    """
+    卡片的上边缘 y 坐标（CARD_ROWS 是 (上边缘, 下边缘) 二元组）。
+
+    这里曾经写成 CARD_ROWS[row][1]（下边缘），所有基于它的区域整体下移了
+    一个卡片高度：徽章区域偏了 361px，「已领取」永远读不到；名字区也只在
+    进度锚点恰好补偿回来时才对。统一走这个函数，别再直接索引。
+    """
+    return CARD_ROWS[row][0]
+
+
 def claim_box(row, col):
     """卡片右下角的「提交/已领取」按钮区。"""
     x1, x2 = CARD_COLUMNS[col]
@@ -123,7 +135,7 @@ def claim_boxes(row, col):
         list[tuple]: 依次尝试的区域
     """
     x2 = CARD_COLUMNS[col][1]
-    y1 = CARD_ROWS[row][1]
+    y1 = card_top(row)
     return [
         (x2 + CLAIM_BOX[0], y1 + CLAIM_BOX[1], x2 + CLAIM_BOX[2], y1 + CLAIM_BOX[3]),
         (x2 + CLAIM_BOX_WIDE[0], y1 + CLAIM_BOX_WIDE[1],
@@ -153,15 +165,18 @@ def read_claim(ocr, image, row, col, offset=0):
 
 
 # 两行卡片的行距（真机实测 229px）
-ROW_SPAN = CARD_ROWS[1][1] - CARD_ROWS[0][1]
+ROW_SPAN = CARD_ROWS[1][0] - CARD_ROWS[0][0]
 
 
-def detect_row_offset(image, ocr, season=None, coarse=20):
+def detect_row_offsets(image, ocr, season=None, coarse=20):
     """
-    检测第一行卡片的垂直偏移。
+    用进度数字 N/M 做锚点，粗定位每一行卡片的垂直偏移。
 
-    列表滚动后卡片不再对齐固定坐标（真机实测：滚动一格后固定坐标读到空白，
-    往前找 80px 才是「便携快餐」那一行），所以要先定位行位置再读。
+    列表滚动后卡片不再对齐固定坐标（真机实测：滚动一格后固定坐标读到空白），
+    所以要先定位行位置。锚点选进度数字而不是任务名：名字区附近有描述文字，
+    模糊匹配会把「…的苹果汁能显著提升岛…」当成任务名（真机踩过）。
+
+    这里只做粗定位（步长 20），精确到像素由 find_row_offset 按任务名补。
 
     Args:
         image: 截图
@@ -170,30 +185,37 @@ def detect_row_offset(image, ocr, season=None, coarse=20):
         coarse: 搜索步长
 
     Returns:
-        int 或 None: 第一行卡片的 y 偏移；找不到返回 None
+        dict: {行号: 偏移}，没找到的行不出现
     """
     _, x2 = CARD_COLUMNS[0]
-    y1 = CARD_ROWS[0][1]
+    anchors = {row: card_top(row) + PROGRESS_BOX[1] for row in range(len(CARD_ROWS))}
+    base = anchors[0]
     lo, hi = -260, 300
 
     def hit(offset):
-        # 锚点用进度数字 N/M 而不是任务名：名字区附近有描述文字，
-        # 模糊匹配会把「…的苹果汁能显著提升岛…」当成任务名（真机踩过）
-        box = (x2 + PROGRESS_BOX[0], y1 + PROGRESS_BOX[1] + offset,
-               x2 + PROGRESS_BOX[2], y1 + PROGRESS_BOX[3] + offset)
+        box = (x2 + PROGRESS_BOX[0], base + offset,
+               x2 + PROGRESS_BOX[2], base + PROGRESS_BOX[3] - PROGRESS_BOX[1] + offset)
         return parse_progress(ocr(image, box, PROGRESS_LANG)) is not None
 
     hits = [o for o in range(lo, hi + 1, coarse) if hit(o)]
     if not hits:
-        return None
+        return {}
     clusters = [[hits[0]]]
     for offset in hits[1:]:
         if offset - clusters[-1][-1] <= coarse:
             clusters[-1].append(offset)
         else:
             clusters.append([offset])
-    centers = [int(sum(c) / len(c)) for c in clusters]
-    return min(centers, key=lambda c: abs(c))
+    result = {}
+    for cluster in clusters:
+        center = int(sum(cluster) / len(cluster))
+        absolute = base + center
+        row = min(anchors, key=lambda r: abs(anchors[r] - absolute))
+        offset = absolute - anchors[row]
+        # 同一行命中多次时取离标准位置最近的那个
+        if row not in result or abs(offset) < abs(result[row]):
+            result[row] = offset
+    return result
 
 
 def card_boxes(row, col):
@@ -215,7 +237,43 @@ def card_boxes(row, col):
     return name, progress
 
 
-def read_cards(image, ocr, season=None, offset=0):
+def find_row_offset(image, ocr, season, row, base=0, span=50, step=10):
+    """
+    在 base 附近按「任务名精确匹配」定位某一行的垂直偏移。
+
+    为什么必须按行独立定位：进度数字的位置和名字区并不一致（真机实测同一屏
+    进度锚点给出 +30，而名字区需要 0），用全局偏移会让某一行整体错位——错位后
+    名字读到的是卡片里的描述文字，徽章区域也一起偏掉，于是「已领取」永远读不到。
+    列与列之间水平位置是固定的，所以只搜第一列即可。
+
+    Args:
+        image: 截图
+        ocr: ocr(image, area, lang) -> str
+        season: 赛季
+        row: 行号 0-1
+        base: 起始偏移（一般来自进度锚点）
+        span: 上下搜索范围
+        step: 搜索步长
+
+    Returns:
+        int: 该行的偏移（找不到时返回 base）
+    """
+    names = {normalize_name(name) for name, _, _ in plan_tasks(season)}
+    x1, _ = CARD_COLUMNS[0]
+    y1 = card_top(row)
+    for delta in (0, -step, step, -2 * step, 2 * step, -3 * step, 3 * step,
+                  -4 * step, 4 * step, -5 * step, 5 * step):
+        if abs(delta) > span:
+            continue
+        offset = base + delta
+        box = (x1 + NAME_BOX[0], y1 + NAME_BOX[1] + offset,
+               x1 + NAME_BOX[2], y1 + NAME_BOX[3] + offset)
+        if normalize_name(ocr(image, box, NAME_LANG)) in names:
+            return offset
+    return base
+
+
+def read_cards(image, ocr, season=None, offsets=None):
     """
     读取一屏任务卡片。
 
@@ -229,7 +287,9 @@ def read_cards(image, ocr, season=None, offset=0):
             识别不到任务名的卡片会被跳过
     """
     cards = []
+    offsets = offsets or {}
     for row in range(len(CARD_ROWS)):
+        offset = offsets.get(row, 0)
         for col in range(len(CARD_COLUMNS)):
             name_box, progress_box = card_boxes(row, col)
             name_box = (name_box[0], name_box[1] + offset, name_box[2], name_box[3] + offset)
@@ -267,9 +327,7 @@ PLAN_TAB_INDEX = 3
 SCROLL_SETTLE = 1.0               # 拖动后等惯性停下
 MAX_SCROLLS = 12                  # 任务总数十几项，多翻几屏
 EMPTY_LIMIT = 3                   # 连续几屏无新任务才判定到底
-# 进度锚点定位的是「进度框」的偏移，名字区可能还要再挪几像素；
-# 依次尝试直到读出任务名（真机实测两者会差 20px 左右）
-NAME_ADJUST = (0, -10, 10, -20, 20, 30, -30)
+
 
 
 def tab_brightness(image):
@@ -331,20 +389,18 @@ def _read_screen(island, ocr, season):
         island.device.stuck_record_clear()
         island.device.screenshot()
         image = island.device.image
-        offset = detect_row_offset(image, ocr, season)
+        # 进度锚点先粗定各行位置（能覆盖滚动后的任意偏移），再按行用任务名精定位
+        anchors = detect_row_offsets(image, ocr, season)
+        offsets = {row: find_row_offset(image, ocr, season, row,
+                                        base=anchors.get(row, 0))
+                   for row in range(len(CARD_ROWS))}
         island.device.stuck_record_clear()
-        if offset is None:
-            if attempt == 0:
-                island.device.sleep(1.5)
-            continue
-        for dy in NAME_ADJUST:
-            cards = read_cards(image, ocr, season=season, offset=offset + dy)
-            # 必须至少有一张卡片匹配上任务名：偏移不对时读到的是描述文字，
-            # 那种「读到了内容」不能算成功（真机踩过）
-            if any(card['task'] for card in cards):
-                logger.info(f"[岛屿-赛季计划] 行偏移 {offset}，名字微调 {dy:+d}，"
-                            f"读到 {len(cards)} 张")
-                return cards
+        cards = read_cards(image, ocr, season=season, offsets=offsets)
+        # 必须至少有一张卡片匹配上任务名：偏移不对时读到的是描述文字，
+        # 那种「读到了内容」不能算成功（真机踩过）
+        if any(card['task'] for card in cards):
+            logger.info(f"[岛屿-赛季计划] 行偏移 {offsets}，读到 {len(cards)} 张")
+            return cards
         if attempt == 0:
             island.device.sleep(1.5)
     return []

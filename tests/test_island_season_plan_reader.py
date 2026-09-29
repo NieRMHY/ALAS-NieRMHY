@@ -62,6 +62,51 @@ class TestCardBoxes(unittest.TestCase):
                     self.assertLessEqual(box[3], ry2)
 
 
+class TestBoxGeometry(unittest.TestCase):
+    """区域必须落在卡片范围内。
+
+    CARD_ROWS 是 (上边缘, 下边缘)，取错成 [1]（下边缘）时所有区域会整体下移
+    一个卡片高度：徽章区域偏了 361px，永远读不到「已领取」；名字区只在进度锚点
+    恰好补偿回来时才对。真机排查了很久，用几何断言钉死。
+    """
+
+    def test_name_and_progress_inside_card(self):
+        from module.island.island_season_plan_reader import (CARD_COLUMNS, CARD_ROWS,
+                                                             card_boxes)
+
+        for row in range(len(CARD_ROWS)):
+            top, bottom = CARD_ROWS[row]
+            for col in range(len(CARD_COLUMNS)):
+                name_box, progress_box = card_boxes(row, col)
+                for label, box in (('名字', name_box), ('进度', progress_box)):
+                    self.assertGreaterEqual(box[1], top - 20,
+                                            f'行{row}列{col} {label}区域越过卡片上边缘')
+                    self.assertLessEqual(box[3], bottom + 5,
+                                         f'行{row}列{col} {label}区域越过卡片下边缘')
+
+    def test_claim_boxes_inside_card(self):
+        from module.island.island_season_plan_reader import (CARD_COLUMNS, CARD_ROWS,
+                                                             claim_boxes)
+
+        for row in range(len(CARD_ROWS)):
+            top, bottom = CARD_ROWS[row]
+            for col in range(len(CARD_COLUMNS)):
+                for box in claim_boxes(row, col):
+                    self.assertGreaterEqual(box[1], top,
+                                            f'行{row}列{col} 徽章区域在卡片上方')
+                    # 第二行卡片的「下边缘」是屏幕裁出来的，留 20px 余量；
+                    # 取错上下边缘时会偏一个卡片高度（211px），照样能抓到
+                    self.assertLessEqual(box[3], bottom + 20,
+                                         f'行{row}列{col} 徽章区域越过卡片下边缘')
+
+    def test_row_span_is_row_distance(self):
+        """ROW_SPAN 是两行卡片的间距（约 229），不是卡片高度"""
+        from module.island.island_season_plan_reader import CARD_ROWS, ROW_SPAN
+
+        self.assertEqual(ROW_SPAN, CARD_ROWS[1][0] - CARD_ROWS[0][0])
+        self.assertGreater(ROW_SPAN, 200)
+
+
 class TestReadCards(unittest.TestCase):
     def _fake_ocr(self, mapping):
         def ocr(image, area, lang):
