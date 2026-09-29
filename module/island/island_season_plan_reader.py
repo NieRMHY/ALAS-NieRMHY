@@ -410,7 +410,9 @@ def read_season_plan_page(island, season, max_scrolls=MAX_SCROLLS, ocr=_default_
         for card in fresh:
             seen.add(card['task'])
             result[card['task']] = {'item': card['item'], 'have': card['have'],
-                                    'need': card['need'], 'claimed': card['claimed']}
+                                    'need': card['need'], 'claimed': card['claimed'],
+                                    'row': card['row'], 'col': card['col'],
+                                    'offset': offset}
         _save_debug_image(island, index)
         logger.info(f"[岛屿-赛季计划] 第 {index + 1} 屏读到 {len(fresh)} 个新任务，"
                     f"累计 {len(result)} 个")

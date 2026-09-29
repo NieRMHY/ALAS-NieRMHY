@@ -5608,6 +5608,12 @@
       "help": "Sync with the in-game \"Claimed\" badge: claimed task items stop being produced, visible-but-unclaimed ones clear the done flag",
       "True": "On",
       "False": "Off"
+    },
+    "Submit": {
+      "name": "Auto submit",
+      "help": "When enabled, automatically click submit and claim rewards once a season task is ready; verify manually once before enabling",
+      "True": "On",
+      "False": "Off"
     }
   },
   "IslandDailyInteract": {

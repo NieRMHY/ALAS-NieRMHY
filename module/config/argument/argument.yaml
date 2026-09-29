@@ -1978,6 +1978,10 @@ IslandSeasonPlan:
     type: checkbox
     value: true
     option: [ true, false ]
+  Submit:
+    type: checkbox
+    value: false
+    option: [ true, false ]
 
 IslandDailyInteract:
   WeeklyPhoto:

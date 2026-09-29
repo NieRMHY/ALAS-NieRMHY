@@ -693,6 +693,15 @@ class IslandShopBase(Island, WarehouseOCR):
         finish_times.append(hours_later)
         finish_times.sort()
         self.config.task_delay(target=finish_times)
+
+        # Add by MHY, 收完餐品后触发一次赛季任务读取：赛季页的进度只在收餐/生产
+        # 后变化，跟着收餐节奏走比固定 3 小时定时更贴合实际（赛季任务自己限流，
+        # 不会每个店铺都真跑一遍）。
+        try:
+            self.config.task_call('IslandSeasonPlan', force_call=False)
+        except Exception:
+            logger.warning('[岛屿] 触发赛季任务失败，忽略')
+
         if self.island_error:
             from module.exception import GameBugError
             raise GameBugError("检测到岛屿ERROR1，需要重启")

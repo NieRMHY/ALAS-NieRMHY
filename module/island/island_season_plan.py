@@ -28,16 +28,51 @@ from module.logger import logger
 class IslandSeasonPlan(Island):
     """赛季任务：读取开发计划页面并同步已完成状态。"""
 
-    # 页面进度变化只跟生产挂钩，几小时同步一次足够
-    DELAY_MINUTE = 180
+    # 收餐会触发本任务；限流避免每家店铺跑完都真读一遍页面
+    MIN_INTERVAL_MINUTE = 20
+    DELAY_MINUTE = 30
+    LAST_RUN_FILE = 'config/island_season_plan_last.json'
 
     def run(self):
         logger.hr('岛屿赛季任务', level=1)
+        if self._too_soon():
+            logger.info(f'[岛屿-赛季任务] 距上次不足 {self.MIN_INTERVAL_MINUTE} 分钟，跳过')
+            self.config.task_delay(minute=self.DELAY_MINUTE)
+            return
         try:
             self._run()
         finally:
+            self._mark_ran()
             # 不设延迟会被调度器反复触发（真机踩过：一分钟内跑了三次）
             self.config.task_delay(minute=self.DELAY_MINUTE)
+
+    def _too_soon(self):
+        """距上次实际读取是否太近（收餐触发很频繁，需要限流）。"""
+        import json
+        import os
+        from module.config.time_source import current_time
+        try:
+            with open(self.LAST_RUN_FILE, encoding='utf-8') as f:
+                last = json.load(f).get('last')
+        except (OSError, ValueError):
+            return False
+        if not last:
+            return False
+        return (current_time().timestamp() - float(last)) < self.MIN_INTERVAL_MINUTE * 60
+
+    def _mark_ran(self):
+        """记录本次实际读取时间。"""
+        import json
+        import os
+        from module.config.time_source import current_time
+        try:
+            directory = os.path.dirname(self.LAST_RUN_FILE)
+            if directory and not os.path.exists(directory):
+                os.makedirs(directory, exist_ok=True)
+            with open(self.LAST_RUN_FILE, 'w', encoding='utf-8') as f:
+                json.dump({'last': current_time().timestamp()}, f)
+        except OSError:
+            logger.warning('[岛屿-赛季任务] 记录运行时间失败')
 
     def _run(self):
         season = SeasonConfig(self.config).season
@@ -57,6 +92,58 @@ class IslandSeasonPlan(Island):
             logger.info('[岛屿-赛季任务] 可以提交: ' +
                         '、'.join(f'{t}（{cn_name(i)} {h}/{n}）' for t, i, h, n in ready))
         notify_ready_from_page(self.config, season, result)
+        if self.config.IslandSeasonPlan_Submit and ready:
+            self._submit_ready(ready, result)
+
+    def _submit_ready(self, ready, result):
+        """
+        自动提交已达标的任务（开关默认关闭）。
+
+        只对页面上读到的、进度已满且未领取的卡片动手；任何一步没成功就停下，
+        本轮不再继续点，避免误点。提交成功与否由下一轮页面读取确认。
+        """
+        for task, item, have, need in ready:
+            info = result.get(task) or {}
+            if not self._submit_card(task, info):
+                logger.warning(f'[岛屿-赛季任务] {task} 自动提交未成功，本轮停止提交')
+                return
+
+    def _submit_card(self, task, info):
+        """
+        点掉一张已达标卡片的「提交」按钮，并处理确认弹窗。
+
+        Args:
+            task: 任务名
+            info: 页面读取结果里的卡片信息（含 row/col/offset）
+
+        Returns:
+            bool: 是否完成了点击流程
+        """
+        from module.handler.assets import POPUP_CONFIRM
+        from module.island.island_season_plan_reader import claim_box
+
+        row, col, offset = info.get('row'), info.get('col'), int(info.get('offset') or 0)
+        if row is None or col is None:
+            # 卡片位置未知（本轮由其它屏读到），下轮再试
+            logger.info(f'[岛屿-赛季任务] {task} 缺少卡片位置，跳过本次提交')
+            return False
+
+        box = claim_box(row, col)
+        x = (box[0] + box[2]) // 2
+        y = (box[1] + box[3]) // 2 + offset
+        logger.info(f'[岛屿-赛季任务] 提交 {task}：点击 ({x}, {y})')
+        self.device.click_minitouch(x, y)
+        self.device.sleep(1)
+
+        clicked_popup = False
+        for _ in self.loop(timeout=8):
+            if self.appear_then_click(POPUP_CONFIRM, interval=1):
+                clicked_popup = True
+                continue
+            break
+        logger.info(f'[岛屿-赛季任务] {task} 提交点击完成'
+                    f'{"（含确认弹窗）" if clicked_popup else "（未出现确认弹窗）"}')
+        return True
         if self.config.IslandSeasonPlan_SyncDone:
             self._sync_done(season, result)
 

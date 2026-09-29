@@ -1038,6 +1038,7 @@ class GeneratedConfig:
 
     # 配置组 `IslandSeasonPlan`
     IslandSeasonPlan_SyncDone = True  # True, False
+    IslandSeasonPlan_Submit = False  # True, False
 
     # 配置组 `IslandDailyInteract`
     IslandDailyInteract_WeeklyPhoto = True  # True, False
