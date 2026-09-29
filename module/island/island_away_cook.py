@@ -187,6 +187,39 @@ def done_items(season, notified):
     return {item for item in state if is_done(season, item, notified)}
 
 
+def mark_claimed(season, page_result, notified):
+    """
+    用页面读取结果同步「已完成」状态。
+
+    页面是真相来源：带「已领取」标记的物品即任务已提交，本季不再生产；
+    页面可见但未领取的物品要取消 done（避免旧的库存掉幅误判一直生效）。
+
+    Args:
+        season: 赛季
+        page_result: {任务名: {'item', 'have', 'need', 'claimed'}}
+        notified: load_notified() 的结果（会被就地修改）
+
+    Returns:
+        dict: {物品: '已领取'/'取消'} 本次发生变化的项
+    """
+    state = notified.setdefault(season, {})
+    changed = {}
+    for info in page_result.values():
+        item = info.get('item')
+        if not item:
+            continue
+        entry = _state_entry(state, item)
+        claimed = bool(info.get('claimed'))
+        if claimed and not entry['done']:
+            entry['done'] = True
+            entry['notified'] = False
+            changed[item] = '已领取'
+        elif not claimed and entry['done']:
+            entry['done'] = False
+            changed[item] = '取消'
+    return changed
+
+
 def collect_finished(shop, season, counts, notified):
     """
     找出「刚攒够、还没通知过」的赛季物品，并识别「已提交」。

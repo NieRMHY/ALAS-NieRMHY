@@ -28,6 +28,9 @@ CARD_ROWS = ((177, 388), (406, 602))
 # 卡片内文字区（相对卡片左上角 / 右上角）
 NAME_BOX = (30, 18, 220, 50)
 PROGRESS_BOX = (-110, 18, -20, 46)
+# 「已领取」徽章区（相对卡片右下角）：提交过的任务会沉到列表末尾并标记
+CLAIM_BOX = (-150, 150, -5, 210)
+CLAIM_TEXT = '已领取'
 
 NAME_LANG = 'ppocr_v6'
 PROGRESS_LANG = 'azur_lane'
@@ -96,6 +99,13 @@ def match_task(name, season):
     return None, None, 0
 
 
+def claim_box(row, col):
+    """卡片右下角的「提交/已领取」按钮区。"""
+    x1, x2 = CARD_COLUMNS[col]
+    y1, _ = CARD_ROWS[row]
+    return (x2 + CLAIM_BOX[0], y1 + CLAIM_BOX[1], x2 + CLAIM_BOX[2], y1 + CLAIM_BOX[3])
+
+
 def card_boxes(row, col):
     """
     卡片内「任务名」「进度」两块文字的坐标。
@@ -136,8 +146,9 @@ def read_cards(image, ocr, season=None):
             if not name:
                 continue
             have, need = parse_progress(ocr(image, progress_box, PROGRESS_LANG)) or (0, 0)
+            claim = ocr(image, claim_box(row, col), NAME_LANG)
             card = {'row': row, 'col': col, 'name': name, 'have': have, 'need': need,
-                    'task': None, 'item': None}
+                    'claimed': CLAIM_TEXT in str(claim), 'task': None, 'item': None}
             if season:
                 task, item, need_cfg = match_task(name, season)
                 card.update({'task': task, 'item': item})
@@ -159,13 +170,28 @@ PLAN_TAB_INDEX = 3
 
 # 开发计划页列表区（可滑动区域）
 SCROLL_BOX = (150, 110, 1120, 660)
-SCROLL_VECTOR = (0, -260)   # 向上滑一屏多一点
+SCROLL_VECTOR = (0, -420)         # 向上滑一屏多一点
+SCROLL_DURATION = (0.6, 0.9)      # 默认 0.1-0.2s 太快，游戏会当成点击不滚动
 
 
 def tab_brightness(image):
     """取 6 个底部页签的亮度（选中的白色胶囊明显更亮）。"""
     return [float(image[TAB_Y - 12:TAB_Y + 12, cx - 60:cx + 60].mean())
             for cx in TAB_CENTERS]
+
+
+def _save_debug_image(island, index):
+    """每屏存一张图，方便排查读不到卡片的问题。"""
+    import os
+    try:
+        from PIL import Image
+        directory = 'log'
+        if not os.path.exists(directory):
+            os.makedirs(directory, exist_ok=True)
+        Image.fromarray(island.device.image).save(
+            os.path.join(directory, f'island_season_plan_p{index + 1}.png'))
+    except Exception:
+        pass
 
 
 def ensure_bottom_tab(island, index=PLAN_TAB_INDEX):
@@ -230,32 +256,88 @@ def read_season_plan_page(island, season, max_scrolls=3, ocr=_default_ocr):
         # 不加 offset：按钮区域加宽后点击会落到图标外的空白处（真机踩过）
         if island.appear_then_click(ISLAND_SEASON_ENTRY, interval=2):
             continue
+    island.device.stuck_record_clear()
     if not island.appear(ISLAND_SEASON_GOTO_ISLAND):
         logger.warning('[岛屿-赛季计划] 进入开发季页面失败，退回岛屿页')
-        for _ in island.loop(timeout=6):
-            if island.appear_then_click(ISLAND_BACK, interval=2):
-                continue
-            break
+        leave_season_page(island, timeout=6)
         return {}
 
     if not ensure_bottom_tab(island, index=3):
         logger.warning('[岛屿-赛季计划] 切换到「开发计划」页签失败')
+        leave_season_page(island, timeout=6)
         return {}
+
+    # 页面滚动位置会保留：先把列表拉回顶部，保证每次读到完整列表
+    for _ in range(4):
+        island.device.swipe_vector((0, 420), box=SCROLL_BOX, duration=SCROLL_DURATION,
+                                   name='SEASON_PLAN_SCROLL_TOP')
+    island.device.sleep(2)  # 列表有惯性，滑完立刻截图会读到空白（真机踩过）
+    island.device.stuck_record_clear()
 
     seen = set()
     per_screen = len(CARD_ROWS) * len(CARD_COLUMNS)
     for index in range(max_scrolls):
+        # 本屏要跑十几次 OCR，耗时可能超过 ALAS 的卡死阈值（截图未变化），
+        # 先清空卡死记录，读完再清一次
+        island.device.stuck_record_clear()
         island.device.screenshot()
         cards = read_cards(island.device.image, ocr, season=season)
+        island.device.stuck_record_clear()
+        if not cards:
+            # 偶发读空（页面还在滚动/绘制），等一会儿重试一次
+            island.device.sleep(1.5)
+            island.device.screenshot()
+            cards = read_cards(island.device.image, ocr, season=season)
         fresh = [card for card in cards if card['task'] and card['task'] not in seen]
         for card in fresh:
             seen.add(card['task'])
             result[card['task']] = {'item': card['item'], 'have': card['have'],
-                                    'need': card['need']}
+                                    'need': card['need'], 'claimed': card['claimed']}
+        _save_debug_image(island, index)
         logger.info(f"[岛屿-赛季计划] 第 {index + 1} 屏读到 {len(fresh)} 个新任务，"
                     f"累计 {len(result)} 个")
         if len(cards) < per_screen:
             break  # 卡片不满一屏，说明到底了
-        island.device.swipe_vector(SCROLL_VECTOR, box=SCROLL_BOX, name='SEASON_PLAN_SCROLL')
+        island.device.swipe_vector(SCROLL_VECTOR, box=SCROLL_BOX,
+                                   duration=SCROLL_DURATION, name='SEASON_PLAN_SCROLL')
+        island.device.sleep(1)
+
+    # 读完必须退回岛屿页：ALAS 的任务从岛屿页继续，留在赛季页会让上层
+    # 识别失败（真机表现为 [UI] 未知UI页面 → 重启游戏）
+    leave_season_page(island)
     return result
+
+
+def leave_season_page(island, timeout=8):
+    """
+    从赛季页退回岛屿页，避免把上层任务留在无法识别的页面。
+
+    Args:
+        island: 岛屿任务实例
+        timeout: 超时时间（秒）
+
+    Returns:
+        bool: 是否已回到岛屿页
+    """
+    from module.island.assets import ISLAND_BACK
+    from module.logger import logger
+    from module.ui.assets import ISLAND_SEASON_GOTO_ISLAND
+
+    # 不用 ui_get_current_page：它会遍历所有页面模板，单次就要好几秒，
+    # 循环里根本来不及点击（真机踩过）。改用「赛季页返回按钮是否还在」判断。
+    for _ in island.loop(timeout=timeout):
+        if not island.appear(ISLAND_SEASON_GOTO_ISLAND):
+            logger.info('[岛屿-赛季计划] 已退出赛季页')
+            return True
+        if island.appear_then_click(ISLAND_SEASON_GOTO_ISLAND, interval=1):
+            continue
+        if island.appear_then_click(ISLAND_BACK, interval=1):
+            continue
+
+    # 兜底：再补点两次返回，宁可多退一层也不要留在赛季页
+    for _ in range(2):
+        island.appear_then_click(ISLAND_SEASON_GOTO_ISLAND, interval=1)
+        island.appear_then_click(ISLAND_BACK, interval=1)
+    logger.warning('[岛屿-赛季计划] 未能确认退回岛屿页，已补点返回')
+    return False
 

@@ -1973,6 +1973,12 @@ IslandDailyOrder:
   UrgentDetectRefreshTime:
     value: "2020-01-01 00:00:00"
 
+IslandSeasonPlan:
+  SyncDone:
+    type: checkbox
+    value: true
+    option: [ true, false ]
+
 IslandDailyInteract:
   WeeklyPhoto:
     type: checkbox

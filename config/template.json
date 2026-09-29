@@ -3094,6 +3094,24 @@
       "Storage": {}
     }
   },
+  "IslandSeasonPlan": {
+    "Scheduler": {
+      "Enable": false,
+      "PushNotification": false,
+      "NextRun": "2020-01-01 00:00:00",
+      "Command": "IslandSeasonPlan",
+      "SuccessInterval": 0,
+      "FailureInterval": 120,
+      "ServerUpdate": "00:00",
+      "Sensitive": false
+    },
+    "IslandSeasonPlan": {
+      "SyncDone": true
+    },
+    "Storage": {
+      "Storage": {}
+    }
+  },
   "IslandBusiness": {
     "Scheduler": {
       "Enable": false,

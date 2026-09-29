@@ -314,6 +314,10 @@
       "name": "全局配置",
       "help": "岛屿计划的全局配置，包括季节设定"
     },
+    "IslandSeasonPlan": {
+      "name": "Task.IslandSeasonPlan.name",
+      "help": "Task.IslandSeasonPlan.help"
+    },
     "IslandBusiness": {
       "name": "经营模块",
       "help": "自动经营岛屿计划中的5个商店（有鱼餐馆、白熊饮品、乌鱼烤肉、啾啾简餐、啾咖啡）\n包括：选择角色、选择餐品、开始经营等自动化操作"
@@ -5592,6 +5596,18 @@
     "UrgentDetectRefreshTime": {
       "name": "紧急委托检测刷新时间",
       "help": "紧急委托检测的冷却时间。在此时间之前跳过紧急委托检测。格式: YYYY-MM-DD HH:mm:ss"
+    }
+  },
+  "IslandSeasonPlan": {
+    "_info": {
+      "name": "赛季任务（开发计划）",
+      "help": "读取岛屿「开发季 → 开发计划」页面：记录每项任务的进度，并按「已领取」同步已完成状态（已提交的任务不再重复生产）"
+    },
+    "SyncDone": {
+      "name": "同步已完成状态",
+      "help": "用页面上的「已领取」标记同步：已领取的任务物品不再生产；页面可见但未领取的会取消已完成",
+      "True": "开启",
+      "False": "关闭"
     }
   },
   "IslandDailyInteract": {

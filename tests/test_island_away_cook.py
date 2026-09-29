@@ -9,6 +9,7 @@ from module.island.island_away_cook import (
     collect_finished,
     done_items,
     is_done,
+    mark_claimed,
     pick_away_cook,
     resolve_away_cook,
     rotation_key,
@@ -164,6 +165,33 @@ class TestFinishedNotification(unittest.TestCase):
         from module.island.island_season_plan_data import task_of_item
         self.assertEqual(task_of_item('salad', 'autumn'), ('健康饮食', 100))
         self.assertEqual(task_of_item('nonexistent', 'autumn'), (None, 0))
+
+
+class TestMarkClaimed(unittest.TestCase):
+    def test_marks_claimed_as_done(self):
+        """页面标记已领取 -> 记为已完成"""
+        notified = {}
+        page = {'麦田守望': {'item': 'wheat', 'have': 500, 'need': 500, 'claimed': True}}
+        self.assertEqual(mark_claimed('autumn', page, notified), {'wheat': '已领取'})
+        self.assertTrue(is_done('autumn', 'wheat', notified))
+
+    def test_unmarks_visible_unclaimed(self):
+        """页面可见但未领取 -> 取消 done（清掉旧的库存掉幅误判）"""
+        notified = {'autumn': {'salad': {'done': True}}}
+        page = {'健康饮食': {'item': 'salad', 'have': 40, 'need': 100, 'claimed': False}}
+        self.assertEqual(mark_claimed('autumn', page, notified), {'salad': '取消'})
+        self.assertFalse(is_done('autumn', 'salad', notified))
+
+    def test_idempotent(self):
+        notified = {}
+        page = {'麦田守望': {'item': 'wheat', 'have': 500, 'need': 500, 'claimed': True}}
+        mark_claimed('autumn', page, notified)
+        self.assertEqual(mark_claimed('autumn', page, notified), {})
+
+    def test_skips_unknown_item(self):
+        notified = {}
+        page = {'未知任务': {'item': None, 'claimed': True}}
+        self.assertEqual(mark_claimed('autumn', page, notified), {})
 
 
 class TestRotationKey(unittest.TestCase):

@@ -314,6 +314,10 @@
       "name": "グローバル設定",
       "help": "アイランドプランのグローバル設定。季節設定を含みます。"
     },
+    "IslandSeasonPlan": {
+      "name": "Task.IslandSeasonPlan.name",
+      "help": "Task.IslandSeasonPlan.help"
+    },
     "IslandBusiness": {
       "name": "経営モジュール",
       "help": "アイランドプランの5つの店舗（有魚レストラン、白熊ドリンク、イカ焼き、ジュウ簡餐、ジュウコーヒー）を自動経営します。\nキャラクター選択、メニュー選択、営業開始などの自動化操作を含みます。"
@@ -5592,6 +5596,18 @@
     "UrgentDetectRefreshTime": {
       "name": "緊急委託検出更新時間",
       "help": "緊急委託検出のクールダウン時間。この時間前は緊急委託検出をスキップします。形式：YYYY-MM-DD HH:mm:ss"
+    }
+  },
+  "IslandSeasonPlan": {
+    "_info": {
+      "name": "シーズン任務（開発計画）",
+      "help": "島の「開発シーズン → 開発計画」ページを読み取り、各任務の進捗を記録し、「受取済み」で完了状態を同期します（受取済みの物品は生産しません）"
+    },
+    "SyncDone": {
+      "name": "完了状態を同期",
+      "help": "ページの「受取済み」表示で同期：受取済みの物品は生産を停止し、未受取のものは完了を取り消します",
+      "True": "オン",
+      "False": "オフ"
     }
   },
   "IslandDailyInteract": {

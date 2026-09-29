@@ -1036,6 +1036,9 @@ class GeneratedConfig:
     IslandDailyOrder_RejectFilter = 'Cheese > Tofu'
     IslandDailyOrder_UrgentDetectRefreshTime = datetime.datetime(2020, 1, 1, 0, 0)
 
+    # 配置组 `IslandSeasonPlan`
+    IslandSeasonPlan_SyncDone = True  # True, False
+
     # 配置组 `IslandDailyInteract`
     IslandDailyInteract_WeeklyPhoto = True  # True, False
 
