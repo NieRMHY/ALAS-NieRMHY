@@ -18,7 +18,7 @@ from module.island.island_away_cook import (
     done_items,
     load_defaults,
     load_notified,
-    notify_finished,
+
     resolve_away_cook,
     rotation_key,
     save_defaults,
@@ -232,8 +232,9 @@ class BusinessStockCheckMixin:
         if progress:
             logger.info(f"[岛屿-赛季任务] {shop_type} 进度: {progress}")
 
-        # 攒够赛季任务物品时发通知（走 Error_OnePushConfig，配了 smtp 就是邮件）
-        notify_finished(self.config, shop_type, season, season_counts)
+        # 这里曾按仓库读数发「攒够」提醒，已去掉：仓库读数不等于任务进度
+        # （真机实测仓库 ≥250 而赛季页面只有 222/250，差额被每日订单/货运吃掉），
+        # 会误报「可以提交了」。提醒与提交统一以赛季页面的读数为准。
 
         current = self.config.cross_get(key, default='None')
         defaults = load_defaults()

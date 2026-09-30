@@ -82,20 +82,11 @@ class TestNotifyUsesImportedHelper(unittest.TestCase):
         self.assertIn('甜蜜引擎', sent[0]['content'])
         self.assertIn('健康饮食', sent[0]['content'])
 
-    def test_finished_from_warehouse_counts(self):
-        from unittest import mock
+    def test_no_notification_from_warehouse_counts(self):
+        """仓库读数不再触发提醒：它不等于任务进度（真机 250 vs 页面 222/250）"""
         from module.island import island_away_cook as away_cook
 
-        sent = []
-        with mock.patch.object(away_cook, 'load_notified', return_value={}), \
-                mock.patch.object(away_cook, 'save_notified'), \
-                mock.patch('module.notify.notify.handle_notify',
-                           side_effect=lambda *a, **k: sent.append(k) or True):
-            away_cook.notify_finished(self._config(), 'restaurant', 'autumn',
-                                      {'salad': 100})
-
-        self.assertEqual(len(sent), 1)
-        self.assertIn('[岛屿]', sent[0]['title'])
+        self.assertFalse(hasattr(away_cook, 'notify_finished'))
 
 
 class TestSeasonItemsForShop(unittest.TestCase):

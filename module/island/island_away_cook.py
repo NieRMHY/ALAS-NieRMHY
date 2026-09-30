@@ -355,45 +355,6 @@ def notify_ready_from_page(config, season, page_result):
     return fired
 
 
-def notify_finished(config, shop, season, counts):
-    """
-    赛季任务物品攒够时推送通知（走 Error_OnePushConfig，配 smtp 即邮件）。
-
-    调用点有两处：经营端库存校验（4-6 小时一次）与店铺仓库读取
-    （店铺任务 20-40 分钟一次），后者让提醒更及时。
-
-    Args:
-        config: AzurLaneConfig 实例
-        shop: 店铺类型标识
-        season: 赛季
-        counts: {物品: 仓库库存}
-
-    Returns:
-        list[str]: 本次通知的物品
-    """
-    from module.island.island_season_plan_data import cn_name, task_of_item
-    from module.logger import logger
-    from module.notify.notify import handle_notify, notify_title
-
-    if not season:
-        return []
-    notified = load_notified()
-    finished = collect_finished(shop, season, counts, notified)
-    if not finished:
-        return []
-    save_notified(notified)
-    for item, need, have in finished:
-        task, _ = task_of_item(item, season)
-        logger.info(f"[岛屿-赛季任务] {cn_name(item)} 已攒够 {have}/{need}，推送提醒")
-        handle_notify(
-            config.Error_OnePushConfig,
-            title=notify_title(config.config_name, '岛屿', '赛季任务物品已攒够'),
-            content=f"<{config.config_name}> 赛季任务「{task or item}」"
-                    f"需要的 {cn_name(item)} 已攒够：{have}/{need}，"
-                    f"可以去岛屿「开发季」提交了",
-        )
-    return [item for item, _, _ in finished]
-
 
 def resolve_away_cook(shop, season, counts, current, defaults=None, producible=None,
                       exclude=None, skip=None):
