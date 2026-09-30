@@ -471,9 +471,10 @@ def plan_shop(shop, shop_level='diamond', season=None, warehouse=None,
     for name, target in sorted(stockpile.items()):
         if name not in producible or name in exclude or name in seen:
             continue
-        if verified_set is not None and name not in verified_set:
-            plan.notes.append(f'囤积 {economy.cn_name(name)} 未验证可生产，跳过')
-            continue
+        # 赛季物品不受「只排已验证商品」限制：它们没有别的生产途径，
+        # 而白名单是靠历史成功记录挖出来的——没排过就永远不会进白名单。
+        # 真机踩过：胡萝卜厚蛋烧/拿铁/便携快餐因此一直是 0。
+        # 真正的不可能生产由 exclude（island_unproducible.json）兜底。
         if len(meals) >= meals_slots:
             break
         candidate = meals + [(name, int(target))]

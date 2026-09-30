@@ -30,6 +30,42 @@ SEASON_KEY = 'IslandPlan.IslandPlan.Season'
 PAGE_FILE = 'config/island_season_plan_page.json'
 
 
+def season_stockpile():
+    """
+    从赛季页面读数算出各店还要生产到什么数量（排进基础需求用）。
+
+    之前方案刷新从不传 stockpile，导致「只在赛季任务里需要、却不在货架也不在
+    基础需求里」的物品永远生产不出来——真机实测胡萝卜厚蛋烧、拿铁、便携快餐
+    一直是 0，赛季任务卡死。页面读数是权威来源；材料类（农田牧场产物）没有
+    对应店铺，交给农田牧场，直接跳过。
+
+    Returns:
+        dict: {店铺: {物品: 目标数量}}，没有缺口时返回 {}
+    """
+    import json
+    from module.island.island_economy import ECONOMY_PRODUCTS
+
+    try:
+        with open(PAGE_FILE, encoding='utf-8') as f:
+            data = json.load(f)
+    except (OSError, ValueError):
+        return {}
+
+    stockpile = {}
+    for info in data.values():
+        item = info.get('item')
+        if not item or info.get('claimed') or item not in ECONOMY_PRODUCTS:
+            continue
+        shop = ECONOMY_PRODUCTS[item].get('shop')
+        need = int(info.get('need') or 0)
+        have = int(info.get('have') or 0)
+        if not shop or need <= have:
+            continue
+        # 目标给的是总量：planner 按目标库存排产
+        stockpile.setdefault(shop, {})[item] = need
+    return stockpile
+
+
 def refresh_plan_if_requested(config, island=None):
     """
     总览开关勾选时刷新一次生产/上架方案。
@@ -45,6 +81,7 @@ def refresh_plan_if_requested(config, island=None):
         return False
 
     logger.hr('岛屿方案刷新', level=2)
+    stockpile = season_stockpile()
     try:
         # 赛季页读取已独立成 IslandSeasonPlan 任务（不再搭在每个岛屿任务上）
         season = config.cross_get(SEASON_KEY, default=None)
@@ -69,8 +106,12 @@ def refresh_plan_if_requested(config, island=None):
             logger.info(f"[岛屿-方案刷新] 保留手动上架: "
                         f"{ {SHOP_CN_NAMES.get(k, k): v for k, v in manual_shelf.items()} }")
 
+        if stockpile:
+            logger.info(f"[岛屿-方案刷新] 赛季缺口排产: "
+                        f"{ {SHOP_CN_NAMES.get(k, k): v for k, v in stockpile.items()} }")
         plans = plan_all(season=season, shelf_slots=shelf_slots,
-                         verified_only=verified_only, manual_shelf=manual_shelf)
+                         verified_only=verified_only, manual_shelf=manual_shelf,
+                         stockpile=stockpile)
         values = config_key_values(plans)
         config.cross_set_many(values)
         logger.info(f"[岛屿-方案刷新] 已写入 {len(values)} 项配置（季节 {season}，"
