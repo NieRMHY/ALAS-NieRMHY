@@ -15,9 +15,11 @@ from module.island.island_planner import (
     SHELF_SLOTS,
     SHOP_TASKS,
     config_key_values,
+    load_verified,
     plan_all,
     refresh_verified_from_logs,
 )
+from module.island.island_state import state_file
 from module.logger import logger
 
 REFRESH_KEY = 'IslandPlan.IslandPlan.RefreshPlan'
@@ -27,7 +29,9 @@ SHELF_KEY = 'IslandPlan.IslandPlan.PlanShelfSlots'
 SEASON_KEY = 'IslandPlan.IslandPlan.Season'
 
 
-PAGE_FILE = 'config/island_season_plan_page.json'
+PAGE_FILE = state_file('island_season_plan_page.json')
+# 上次自动生成的上架清单，用于区分「用户手填」与「上次方案」（见 _manual_shelf）
+GENERATED_FILE = state_file('island_plan_generated.json')
 
 
 def season_stockpile():
@@ -66,13 +70,69 @@ def season_stockpile():
     return stockpile
 
 
-def refresh_plan_if_requested(config, island=None):
+def load_generated():
+    """读取上次自动生成的上架清单。"""
+    import json
+    try:
+        with open(GENERATED_FILE, encoding='utf-8') as f:
+            return json.load(f)
+    except (OSError, ValueError):
+        return {}
+
+
+def save_generated(plans):
+    """记录本次自动生成的上架清单，供下次刷新区分自动方案与手动配置。"""
+    import json
+    import os
+    data = {shop: list(plan.shelf) for shop, plan in plans.items()}
+    directory = os.path.dirname(GENERATED_FILE)
+    try:
+        if directory and not os.path.exists(directory):
+            os.makedirs(directory, exist_ok=True)
+        with open(GENERATED_FILE, 'w', encoding='utf-8') as f:
+            json.dump(data, f, ensure_ascii=False, indent=2, sort_keys=True)
+    except OSError:
+        logger.warning('[岛屿-方案刷新] 上架清单落盘失败，下次可能误判为手动配置')
+
+
+def _manual_shelf(config):
+    """
+    取出玩家真正手动填写的上架清单。
+
+    Product1-5 正是上一次刷新自己写进去的键。不加区分的话，第二次刷新起会把
+    「上次的自动方案」当成用户手动清单无条件置顶，货架从此再也换不了品
+    （离线实测：带 manual_shelf 时 5 家店的 shelf 与线上完全一致，等于没刷）。
+    因此只有当前值与上次自动生成值**不同**时，才认定为手动配置。
+
+    Args:
+        config: AzurLaneConfig 实例
+
+    Returns:
+        dict: {店铺: [商品]}
+    """
+    generated = load_generated()
+    manual = {}
+    for shop, (task, index, _) in SHOP_TASKS.items():
+        current = []
+        for i in range(1, SHELF_SLOTS + 1):
+            value = config.cross_get(
+                f'IslandBusiness.IslandBusinessShop{index}.Product{i}', default='None')
+            if value and value != 'None':
+                current.append(value)
+        if not current:
+            continue
+        if current == list(generated.get(shop, [])):
+            continue  # 与上次自动生成一致：仍是方案的产物，不该钉死
+        manual[shop] = current
+    return manual
+
+
+def refresh_plan_if_requested(config):
     """
     总览开关勾选时刷新一次生产/上架方案。
 
     Args:
         config: AzurLaneConfig 实例
-        island: 岛屿任务实例；传入时会顺带读取赛季「开发计划」页面
 
     Returns:
         bool: 是否执行了刷新
@@ -90,18 +150,18 @@ def refresh_plan_if_requested(config, island=None):
         if config.cross_get(MINE_KEY, default=True):
             counts = refresh_verified_from_logs()
             logger.info(f"[岛屿-方案刷新] 已验证可生产白名单已更新: {counts}")
+        if verified_only:
+            # 某店没有白名单条目时 plan_all 会整个跳过可生产过滤（fail-open）。
+            # 这道闸门本是防「未解锁商品选品失败 -> GameStuckError -> 重启游戏」，
+            # 静默失效代价很高，所以显式告警。
+            verified = load_verified()
+            missing = [SHOP_CN_NAMES.get(s, s) for s in SHOP_TASKS if not verified.get(s)]
+            if missing:
+                logger.warning(f"[岛屿-方案刷新] 以下店铺没有已验证名单，本次不做可生产"
+                               f"过滤（未解锁商品可能触发选品失败重启）: {missing}")
 
         # 玩家手动配置的上架清单优先保留（例如照抄社区方案），其余格位由方案补
-        manual_shelf = {}
-        for shop, (task, index, _) in SHOP_TASKS.items():
-            manual = []
-            for i in range(1, SHELF_SLOTS + 1):
-                value = config.cross_get(
-                    f'IslandBusiness.IslandBusinessShop{index}.Product{i}', default='None')
-                if value and value != 'None':
-                    manual.append(value)
-            if manual:
-                manual_shelf[shop] = manual
+        manual_shelf = _manual_shelf(config)
         if manual_shelf:
             logger.info(f"[岛屿-方案刷新] 保留手动上架: "
                         f"{ {SHOP_CN_NAMES.get(k, k): v for k, v in manual_shelf.items()} }")
@@ -114,6 +174,7 @@ def refresh_plan_if_requested(config, island=None):
                          stockpile=stockpile)
         values = config_key_values(plans)
         config.cross_set_many(values)
+        save_generated(plans)
         logger.info(f"[岛屿-方案刷新] 已写入 {len(values)} 项配置（季节 {season}，"
                     f"只排已验证商品 {verified_only}）")
         for shop, plan in plans.items():

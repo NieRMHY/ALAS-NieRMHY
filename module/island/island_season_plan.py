@@ -22,6 +22,7 @@ from module.island.island_season import SeasonConfig
 from module.island.island_season_plan_data import cn_name
 from module.island.island_season_plan_reader import read_season_plan_page
 from module.island.island import Island
+from module.island.island_state import state_file
 from module.logger import logger
 
 
@@ -31,7 +32,7 @@ class IslandSeasonPlan(Island):
     # 收餐会触发本任务；限流避免每家店铺跑完都真读一遍页面
     MIN_INTERVAL_MINUTE = 20
     DELAY_MINUTE = 30
-    LAST_RUN_FILE = 'config/island_season_plan_last.json'
+    LAST_RUN_FILE = state_file('island_season_plan_last.json')
 
     def run(self):
         logger.hr('岛屿赛季任务', level=1)
@@ -152,7 +153,7 @@ class IslandSeasonPlan(Island):
         return True
 
     def _save_page(self, result):
-        """页面结果落盘，便于事后排查（config/island_season_plan_page.json）。"""
+        """页面结果落盘，便于事后排查（config/island/ 下）。"""
         import json
         import os
         try:

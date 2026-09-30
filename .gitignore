@@ -14,6 +14,8 @@ config/*.db
 config/*/config.db*
 config/*/account.destroyed
 config/tmp*
+# 岛屿运行时状态（已验证名单/赛季通知/页面读数/生成的上架清单）：非用户配置，不入库
+config/island/
 !config/template*.json
 *.pyw
 dev_tools/debug_tools

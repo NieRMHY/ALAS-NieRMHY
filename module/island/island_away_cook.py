@@ -12,6 +12,7 @@
 """
 from module.island.island_economy import ECONOMY_PRODUCTS
 from module.island.island_season_plan_data import SEASON_PLAN_TASKS
+from module.island.island_state import state_file
 
 # 店铺类型 -> 常驻餐品配置键
 # 路径格式 <Task>.<Group>.<Arg>，与 config/template.json 一致
@@ -82,7 +83,7 @@ def rotation_key(shop):
     return AWAY_COOK_KEYS.get(shop)
 
 
-DEFAULT_FILE = 'config/island_away_cook_default.json'
+DEFAULT_FILE = state_file('island_away_cook_default.json')
 
 
 def load_defaults(path=DEFAULT_FILE):
@@ -109,7 +110,7 @@ def save_defaults(defaults, path=DEFAULT_FILE):
         json.dump(defaults, f, ensure_ascii=False, indent=2, sort_keys=True)
 
 
-NOTIFIED_FILE = 'config/island_season_notified.json'
+NOTIFIED_FILE = state_file('island_season_notified.json')
 
 
 def load_notified(path=NOTIFIED_FILE):

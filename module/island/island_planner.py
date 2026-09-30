@@ -19,11 +19,12 @@ from module.island.island_economy import (
     SHOP_LEVELS,
     EconomyDatabase,
 )
+from module.island.island_state import state_file
 
-UNPRODUCIBLE_FILE = os.path.join('config', 'island_unproducible.json')
+UNPRODUCIBLE_FILE = state_file('island_unproducible.json')
 # Add by MHY: 本账号「验证过能生产」的商品名单（从 ALAS 日志挖掘），
 # 用于避免把未解锁商品排进生产清单（会 GameStuckError→重启→死循环）
-VERIFIED_FILE = os.path.join('config', 'island_verified.json')
+VERIFIED_FILE = state_file('island_verified.json')
 
 # Add by MHY: 店铺标识 -> (生产任务名, 经营端配置序号, 商店模块源码)
 SHOP_TASKS = {
@@ -624,7 +625,13 @@ def config_key_values(plans):
 
 def refresh_verified_from_logs(log_glob='log/*_ALAS.txt', keep=3):
     """
-    从最近的 ALAS 日志重建「已验证可生产」名单并落盘。
+    从最近的 ALAS 日志**补充**「已验证可生产」名单并落盘。
+
+    Add by MHY：原来是整体覆盖，且只挖最近 keep 个日志。真机后果：log/ 下只有
+    一个匹配文件时只挖出 4 个商品，把已有的 40 个冲成 4 个；某商品只要连续几天
+    没被排产就会永久退出白名单——与 8b9bece27 修的 verified_only 死锁同源。
+    改为并集，只增不减：历史验证过的商品不会因为近期没排产而被遗忘。
+    商品若真的不再可生产，由 island_unproducible.json 兜底。
 
     Args:
         log_glob: 日志通配路径（相对 ALAS 根目录）
@@ -635,9 +642,13 @@ def refresh_verified_from_logs(log_glob='log/*_ALAS.txt', keep=3):
     """
     import glob
     paths = sorted(glob.glob(log_glob))[-keep:]
-    data = mine_verified(paths)
-    save_verified(data)
-    return {shop: len(names) for shop, names in data.items()}
+    mined = mine_verified(paths)
+    current = load_verified()
+    merged = {}
+    for shop in set(mined) | set(current):
+        merged[shop] = set(mined.get(shop, ())) | set(current.get(shop, ()))
+    save_verified(merged)
+    return {shop: len(names) for shop, names in sorted(merged.items())}
 
 
 def apply_patch(config_path, patch):
