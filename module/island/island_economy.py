@@ -3,11 +3,13 @@
 
 提供五家餐饮店铺全部商品的经济数据查询：
 材料配方、制作时间、体力成本、材料费用、售价、结算利润、利润/分钟。
-数据来源：biligame 碧蓝航线 wiki「岛屿计划」页（2026-09 抓取，59 个餐饮商品）。
+数据来源：biligame 碧蓝航线 wiki「岛屿计划」页（2026-09 人工整理，59 个餐饮商品）。
+仓库内没有抓取脚本，数值为手工维护；dev_tools/island_economy_table.py 只把本表
+单向导出成 Markdown，不会回写本文件。
 
 设计约束（Add by MHY, 岛屿经济闭环）：
 - 纯数据模块，不依赖游戏 UI 与设备，可独立单测；
-- 数值更新只改 ECONOMY_PRODUCTS（由 dev_tools 生成，勿手改数值）；
+- 数值更新只改 ECONOMY_PRODUCTS，改完必须过 validate_economy() 自检；
 - 制造产线（木工/工业/电子/手工）走 PT 转化体系，不纳入金币经济，故不在本表。
 """
 
@@ -75,7 +77,8 @@ CHEF_SPEED_RECOMMENDATIONS = {
 }
 
 
-# 自动生成自 biligame wiki 岛屿计划页（勿手改数值，更新走 dev_tools）
+# 商品表：数据来自 biligame wiki 岛屿计划页，手工维护；dev_tools 只导出 Markdown，不回写本表。
+# Modify by MHY, 改数值后跑 validate_economy()（tests/test_island_economy_validate.py）自检。
 ECONOMY_PRODUCTS = {
     'persimmon_cake': dict(shop='restaurant', cn_name='柿子饼', materials={'persimmon': 1}, time_min=30.0, stamina=6, cost=45.0, price=210.0, profit=165.0, seasonal='秋季特产'),
     'matsutake_chicken_soup': dict(shop='restaurant', cn_name='松茸鸡汤', materials={'chicken': 2, 'matsutake': 1}, time_min=30.0, stamina=6, cost=10.0, price=900.0, profit=890.0, seasonal='秋季特产'),
@@ -109,7 +112,7 @@ ECONOMY_PRODUCTS = {
     'fruit_paradise': dict(shop='teahouse', cn_name='缤纷果乐园', materials={'banana_mango': 1, 'strawberry_honey': 1}, time_min=5.0, stamina=1, cost=106.67, price=1000.0, profit=893.33, seasonal=''),
     'sunny_honey': dict(shop='teahouse', cn_name='阳光蜜水', materials={'strawberry_lemon': 1, 'honey_lemon': 1}, time_min=5.0, stamina=1, cost=66.67, price=410.0, profit=343.33, seasonal=''),
     'corn_cup': dict(shop='juu_eatery', cn_name='玉米杯', materials={'corn': 3, 'milk': 1}, time_min=5.0, stamina=1, cost=9.17, price=45.0, profit=35.83, seasonal=''),
-    'apple_pie': dict(shop='juu_eatery', cn_name='苹果派', materials={'apple': 3, 'wheat_flour': 5}, time_min=30.0, stamina=6, cost=70.85, price=385.0, profit=314.35, seasonal=''),
+    'apple_pie': dict(shop='juu_eatery', cn_name='苹果派', materials={'apple': 3, 'wheat_flour': 5}, time_min=30.0, stamina=6, cost=70.85, price=385.0, profit=314.15, seasonal=''),  # Modify by MHY, profit 按 price-cost 修正（原 314.35）
     'orange_pie': dict(shop='juu_eatery', cn_name='香橙派', materials={'citrus': 3, 'wheat_flour': 6}, time_min=30.0, stamina=6, cost=85.02, price=375.0, profit=289.98, seasonal=''),
     'rice_mango': dict(shop='juu_eatery', cn_name='芒果糯米饭', materials={'mango': 3, 'rice': 2}, time_min=20.0, stamina=4, cost=71.94, price=510.0, profit=438.06, seasonal=''),
     'banana_crepe': dict(shop='juu_eatery', cn_name='香蕉可丽饼', materials={'banana': 2, 'wheat_flour': 2}, time_min=15.0, stamina=3, cost=48.34, price=230.0, profit=181.66, seasonal=''),
@@ -120,10 +123,10 @@ ECONOMY_PRODUCTS = {
     'succulently_sweet': dict(shop='juu_eatery', cn_name='香甜组合', materials={'corn_cup': 1, 'rice_mango': 1}, time_min=5.0, stamina=1, cost=81.11, price=560.0, profit=478.89, seasonal=''),
     'roasted_skewer': dict(shop='grill', cn_name='碳烤肉串', materials={'pork': 4}, time_min=20.0, stamina=4, cost=13.33, price=390.0, profit=376.67, seasonal=''),
     'chicken_potato': dict(shop='grill', cn_name='禽肉土豆拼盘', materials={'chicken': 5, 'potato': 6}, time_min=30.0, stamina=6, cost=29.44, price=370.0, profit=340.56, seasonal=''),
-    'stir_fried_chicken': dict(shop='grill', cn_name='爆炒禽肉', materials={'chicken': 3, 'onion': 1}, time_min=25.0, stamina=5, cost=45.0, price=580.0, profit=480.0, seasonal=''),
+    'stir_fried_chicken': dict(shop='grill', cn_name='爆炒禽肉', materials={'chicken': 3, 'onion': 1}, time_min=25.0, stamina=5, cost=45.0, price=580.0, profit=535.0, seasonal=''),  # Modify by MHY, profit 按 price-cost 修正（原 480.0，差 55）
     'carrot_omelette': dict(shop='grill', cn_name='胡萝卜厚蛋烧', materials={'egg': 5, 'carrot': 2}, time_min=10.0, stamina=2, cost=23.32, price=170.0, profit=146.68, seasonal=''),
     'steak_bowl': dict(shop='grill', cn_name='汉堡肉饭', materials={'pork': 6, 'rice': 12, 'chinese_cabbage': 2}, time_min=25.0, stamina=5, cost=59.95, price=845.0, profit=785.05, seasonal=''),
-    'lemon_shrimp': dict(shop='grill', cn_name='柠檬虾', materials={'shrimp': 4, 'lemon': 1}, time_min=10.0, stamina=2, cost=73.3, price=500.0, profit=426.0, seasonal=''),
+    'lemon_shrimp': dict(shop='grill', cn_name='柠檬虾', materials={'shrimp': 4, 'lemon': 1}, time_min=10.0, stamina=2, cost=73.3, price=500.0, profit=426.7, seasonal=''),  # Modify by MHY, profit 按 price-cost 修正（原 426.0）
     'crayfish_stir_fry': dict(shop='grill', cn_name='爆炒小龙虾', materials={'crayfish': 5}, time_min=15.0, stamina=3, cost=125.0, price=720.0, profit=595.0, seasonal=''),
     'carnival': dict(shop='grill', cn_name='烤肉狂欢', materials={'roasted_skewer': 1, 'chicken_potato': 1}, time_min=10.0, stamina=2, cost=42.77, price=760.0, profit=717.23, seasonal=''),
     'double_energy': dict(shop='grill', cn_name='能量双拼套餐', materials={'stir_fried_chicken': 1, 'steak_bowl': 1}, time_min=10.0, stamina=2, cost=104.95, price=1430.0, profit=1325.05, seasonal=''),
@@ -134,9 +137,59 @@ ECONOMY_PRODUCTS = {
     'citrus_coffee': dict(shop='juu_coffee', cn_name='柑橘咖啡', materials={'citrus': 1, 'coffee_bean': 3}, time_min=15.0, stamina=3, cost=55.0, price=190.0, profit=135.0, seasonal=''),
     'strawberry_milkshake': dict(shop='juu_coffee', cn_name='草莓奶绿', materials={'tea': 1, 'strawberry': 1, 'milk': 1}, time_min=20.0, stamina=4, cost=21.67, price=260.0, profit=238.33, seasonal=''),
     'morning_light': dict(shop='juu_coffee', cn_name='晨光活力套餐', materials={'omelette': 1, 'latte': 1}, time_min=10.0, stamina=2, cost=46.33, price=300.0, profit=253.67, seasonal=''),
-    'wake_up_call': dict(shop='juu_coffee', cn_name='醒神套餐', materials={'iced_coffee': 1, 'cheese': 1}, time_min=10.0, stamina=2, cost=46.67, price=650.0, profit=603.34, seasonal=''),
+    'wake_up_call': dict(shop='juu_coffee', cn_name='醒神套餐', materials={'iced_coffee': 1, 'cheese': 1}, time_min=10.0, stamina=2, cost=46.67, price=650.0, profit=603.33, seasonal=''),  # Modify by MHY, profit 按 price-cost 修正（原 603.34，0.01 舍入）
     'fruity_fruitier': dict(shop='juu_coffee', cn_name='果香双杯乐', materials={'citrus_coffee': 1, 'strawberry_milkshake': 1}, time_min=10.0, stamina=2, cost=76.67, price=450.0, profit=373.33, seasonal=''),
 }
+
+
+# 基础材料白名单（Add by MHY, 经济表自检）：农田/渔场/牧场/磨坊直接产出的原料，
+# 本身不是岛屿商品、也不该出现在本表里。materials 的每一项必须落在
+# 「本表商品（自产中间产物）」或本白名单内 —— expand_materials 会把无法识别的名字
+# 当成基础材料静默放过，所以拼写错误的自产材料只能靠这张白名单兜住。
+BASE_MATERIALS = frozenset({
+    'amaranth', 'apple', 'asparagus', 'bamboo_shoot', 'banana', 'carrot', 'chicken',
+    'chinese_cabbage', 'chrysanthemum', 'citrus', 'coffee_bean', 'corn', 'crab',
+    'crayfish', 'cucumber', 'egg', 'fresh_fish', 'fresh_honey', 'lavender', 'lemon',
+    'mango', 'matsutake', 'milk', 'onion', 'pear', 'persimmon', 'pineapple', 'pork',
+    'potato', 'rice', 'sea_cucumber', 'sea_fish', 'shrimp', 'soybean', 'squid',
+    'strawberry', 'tea', 'tomato', 'watermelon', 'wheat_flour', 'winter_jasmine',
+})
+
+
+def validate_economy(products=None):
+    """
+    经济表自检（Add by MHY）：返回问题描述列表，空列表表示全部通过。
+
+    检查项：
+    - profit == price - cost（浮点比较留 1e-6 余量）
+    - time_min > 0
+    - shop 在 ECONOMY_SHOPS 内
+    - materials 非空，且每项要么是本表商品（自产中间产物），要么在 BASE_MATERIALS 内
+
+    Args:
+        products: 待检查的商品表，默认 ECONOMY_PRODUCTS（单测注入坏数据时传入副本）
+
+    Returns:
+        list[str]: 问题列表
+    """
+    table = ECONOMY_PRODUCTS if products is None else products
+    problems = []
+    for name, info in table.items():
+        if info['shop'] not in ECONOMY_SHOPS:
+            problems.append(f'{name}: 店铺非法 {info["shop"]!r}')
+        if info['time_min'] <= 0:
+            problems.append(f'{name}: 生产时间非法 {info["time_min"]!r}')
+        diff = round(info['price'] - info['cost'] - info['profit'], 6)
+        if diff != 0:
+            problems.append(
+                f'{name}: profit {info["profit"]} != price - cost '
+                f'{round(info["price"] - info["cost"], 2)}（差 {diff}）')
+        if not info['materials']:
+            problems.append(f'{name}: materials 为空')
+        for mat in info['materials']:
+            if mat not in table and mat not in BASE_MATERIALS:
+                problems.append(f'{name}: 材料 {mat!r} 既不在经济表内也不是已知基础材料')
+    return problems
 
 
 # ==================== 查询 API ====================
