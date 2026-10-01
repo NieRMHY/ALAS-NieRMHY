@@ -248,9 +248,15 @@ class TestMarkClaimed(unittest.TestCase):
         self.assertTrue(is_done('autumn', 'wheat', notified))
 
     def test_unmarks_visible_unclaimed(self):
-        """页面可见但未领取 -> 取消 done（清掉旧的库存掉幅误判）"""
+        """页面可见但未领取 -> 连续漏读 CLAIM_MISS_LIMIT 次后取消 done
+
+        单次漏读不取消：真机实测「已领取」徽章漏读远多于误读（32 次里 28 次），
+        一次漏读就取消会让已提交的物品重新投入生产、并重复发「可以提交」邮件。
+        """
         notified = {'autumn': {'salad': {'done': True}}}
         page = {'健康饮食': {'item': 'salad', 'have': 40, 'need': 100, 'claimed': False}}
+        self.assertEqual(mark_claimed('autumn', page, notified), {})
+        self.assertTrue(is_done('autumn', 'salad', notified))
         self.assertEqual(mark_claimed('autumn', page, notified), {'salad': '取消'})
         self.assertFalse(is_done('autumn', 'salad', notified))
 

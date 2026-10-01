@@ -138,6 +138,8 @@ def save_notified(notified, path=NOTIFIED_FILE):
 
 
 SUBMIT_RATIO = 0.9  # 单次扣减达到需求量的 90% 即认定为「已提交任务」
+# 连续漏读多少次才取消 done（Add by MHY）：徽章漏读远多于误读，一次漏读不该打掉状态
+CLAIM_MISS_LIMIT = 2
 
 
 def _state_entry(state, item):
@@ -149,7 +151,7 @@ def _state_entry(state, item):
         item: 物品英文名
 
     Returns:
-        dict: {'notified': bool, 'last': int, 'done': bool}
+        dict: {'notified': bool, 'last': int, 'done': bool, 'miss': int}
     """
     value = state.get(item)
     if value is True:
@@ -160,6 +162,8 @@ def _state_entry(state, item):
                  'done': bool(value.get('done'))}
     else:
         entry = {'notified': False, 'last': 0, 'done': False}
+    # 连续漏读计数（Add by MHY），见 mark_claimed
+    entry['miss'] = int(value.get('miss', 0)) if isinstance(value, dict) else 0
     state[item] = entry
     return entry
 
@@ -211,13 +215,21 @@ def mark_claimed(season, page_result, notified):
             continue
         entry = _state_entry(state, item)
         claimed = bool(info.get('claimed'))
-        if claimed and not entry['done']:
-            entry['done'] = True
-            entry['notified'] = False
-            changed[item] = '已领取'
-        elif not claimed and entry['done']:
-            entry['done'] = False
-            changed[item] = '取消'
+        if claimed:
+            entry['miss'] = 0
+            if not entry['done']:
+                entry['done'] = True
+                entry['notified'] = False
+                changed[item] = '已领取'
+        elif entry['done']:
+            # Add by MHY, 单次漏读不取消 done：「已领取」徽章漏读远多于误读（真机
+            # 32 次读里 28 次漏读）。一次漏读就把 done 打掉，会让已提交的物品重新
+            # 投入生产，同时让 notified 的抑制失效、重复发「可以提交」邮件。
+            entry['miss'] = entry.get('miss', 0) + 1
+            if entry['miss'] >= CLAIM_MISS_LIMIT:
+                entry['done'] = False
+                entry['miss'] = 0
+                changed[item] = '取消'
     return changed
 
 

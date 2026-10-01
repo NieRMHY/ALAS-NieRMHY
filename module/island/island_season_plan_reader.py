@@ -502,16 +502,32 @@ def read_season_plan_page(island, season, max_scrolls=MAX_SCROLLS, ocr=_default_
         cards = _read_screen(island, ocr, season)
         if not cards:
             _save_debug_image(island, index)
-        fresh = [card for card in cards if card['task'] and card['task'] not in seen]
-        for card in fresh:
-            seen.add(card['task'])
-            result[card['task']] = {'item': card['item'], 'have': card['have'],
-                                    'need': card['need'], 'claimed': card['claimed'],
-                                    'row': card['row'], 'col': card['col'],
-                                    'offset': card['offset']}
-        logger.info(f"[岛屿-赛季计划] 第 {index + 1} 屏读到 {len(fresh)} 个新任务，"
+        new = 0
+        for card in cards:
+            task = card['task']
+            if not task:
+                continue
+            prev = result.get(task)
+            if prev is None:
+                result[task] = {'item': card['item'], 'have': card['have'],
+                                'need': card['need'], 'claimed': card['claimed'],
+                                'row': card['row'], 'col': card['col'],
+                                'offset': card['offset']}
+                seen.add(task)
+                new += 1
+                continue
+            # Add by MHY, 同一张卡会被相邻两屏重复读到：滚动步长 340px 与卡片行距
+            # 229px 不整除，卡片必然重现在下一屏。原先「首次读到即定稿」，第一次
+            # 漏读徽章就永远算未领取——真机实测 32 次读里 28 次漏读，导致 done 被
+            # 反复取消（已提交的苹果汁继续生产）、还重复发「可以提交」邮件。
+            # 「已领取」字样不会出现在未完成的卡片上（未完成显示的是「提交」），
+            # 所以取「或」只补漏读，不会把未完成误判成已领取。
+            if card['claimed'] and not prev['claimed']:
+                prev['claimed'] = True
+                logger.info(f"[岛屿-赛季计划] {task} 补读到「已领取」（第 {index + 1} 屏）")
+        logger.info(f"[岛屿-赛季计划] 第 {index + 1} 屏读到 {new} 个新任务，"
                     f"累计 {len(result)} 个")
-        if fresh:
+        if new:
             empty_screens = 0
         else:
             empty_screens += 1
