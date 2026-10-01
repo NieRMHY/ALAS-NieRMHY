@@ -37,6 +37,11 @@ CLAIM_BOX_WIDE = (-210, 118, -5, 215)
 # 提交过的卡片可能显示不同文案，命中任一即算已领取；
 # 注意不能用「提交」单独匹配——可提交的卡片也有「提交 玉米*500」字样
 CLAIM_TEXTS = ('已领取', '已提交')
+# 徽章竖向兜底搜索：单步 / 最大范围（Add by MHY）
+# 真机实测同一页各屏的行偏移会跳到 0/40/80/-20/-30，而徽章框只能容忍 ±25~44px，
+# 于是名字和进度都读对了、徽章却整体错开。落空时按下面参数上下再找一遍。
+CLAIM_SEARCH_STEP = 10
+CLAIM_SEARCH_SPAN = 60
 
 NAME_LANG = 'ppocr_v6'
 PROGRESS_LANG = 'azur_lane'
@@ -161,6 +166,15 @@ def read_claim(ocr, image, row, col, offset=0):
         text = str(ocr(image, (box[0], box[1] + offset, box[2], box[3] + offset), NAME_LANG))
         if any(claim in text for claim in CLAIM_TEXTS):
             return True
+    # Add by MHY, 竖向兜底：行偏移有残差时徽章会整体错开，上面的固定框就落空。
+    # 只在上面全落空时才搜，代价只落在真正漏读的那几张卡上。
+    wide = claim_boxes(row, col)[-1]
+    for delta in range(CLAIM_SEARCH_STEP, CLAIM_SEARCH_SPAN + 1, CLAIM_SEARCH_STEP):
+        for shift in (-delta, delta):
+            y = offset + shift
+            text = str(ocr(image, (wide[0], wide[1] + y, wide[2], wide[3] + y), NAME_LANG))
+            if any(claim in text for claim in CLAIM_TEXTS):
+                return True
     return False
 
 

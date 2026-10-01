@@ -16,7 +16,12 @@ sys.path.insert(0, '.')
 sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
 
 from module.island import island_away_cook
-from module.island.island_season_plan_reader import read_season_plan_page
+from module.island.island_season_plan_reader import (
+    CLAIM_SEARCH_SPAN,
+    claim_boxes,
+    read_claim,
+    read_season_plan_page,
+)
 from test_island_season_plan_page import FakeIsland, make_image
 
 
@@ -63,6 +68,37 @@ class TestClaimedMergedAcrossScreens(unittest.TestCase):
 
         result = read_season_plan_page(island, 'autumn', max_scrolls=2, ocr=ocr)
         self.assertFalse(result['甜蜜引擎']['claimed'])
+
+
+class TestClaimVerticalSearch(unittest.TestCase):
+    """行偏移有残差时，固定框落空，竖向兜底要把徽章找回来。
+
+    真机实测同一页各屏的行偏移会跳到 0/40/80/-20/-30，而徽章框只能容忍 ±25~44px。
+    """
+
+    def test_found_by_vertical_search(self):
+        wide = claim_boxes(0, 0)[-1]
+        target = wide[1] - 30          # 徽章实际比固定框高 30px
+
+        def ocr(image, area, lang):
+            return '已领取' if area[1] == target else ''
+
+        self.assertTrue(read_claim(ocr, make_image(), 0, 0, offset=0))
+
+    def test_search_is_bounded(self):
+        """超出搜索范围的偏移不该被当成已领取，避免误判。"""
+        wide = claim_boxes(0, 0)[-1]
+
+        def ocr(image, area, lang):
+            return '已领取' if area[1] == wide[1] - (CLAIM_SEARCH_SPAN + 100) else ''
+
+        self.assertFalse(read_claim(ocr, make_image(), 0, 0, offset=0))
+
+    def test_no_badge_anywhere(self):
+        def ocr(image, area, lang):
+            return ''
+
+        self.assertFalse(read_claim(ocr, make_image(), 0, 0, offset=0))
 
 
 class TestDoneDebounce(unittest.TestCase):
