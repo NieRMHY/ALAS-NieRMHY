@@ -169,7 +169,9 @@ class IslandSeasonPlan(Island):
         """把页面读到的进度写进日志，便于核对。"""
         for task, info in sorted(result.items(), key=lambda kv: kv[1]['have'] / max(kv[1]['need'], 1)):
             flag = '已领取' if info.get('claimed') else f"{info['have']}/{info['need']}"
-            logger.info(f"[岛屿-赛季任务] {task}: {flag}（{cn_name(info['item'])}）")
+            # 订单里程碑没有对应物品，不留空括号
+            item_cn = cn_name(info['item'])
+            logger.info(f"[岛屿-赛季任务] {task}: {flag}" + (f"（{item_cn}）" if item_cn else ""))
         claimed = [t for t, i in result.items() if i.get('claimed')]
         logger.info(f"[岛屿-赛季任务] 页面共 {len(result)} 项，已领取 {len(claimed)} 项: {claimed}")
 
