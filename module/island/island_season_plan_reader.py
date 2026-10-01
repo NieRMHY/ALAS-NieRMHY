@@ -42,6 +42,10 @@ CLAIM_TEXTS = ('已领取', '已提交')
 # 于是名字和进度都读对了、徽章却整体错开。落空时按下面参数上下再找一遍。
 CLAIM_SEARCH_STEP = 10
 CLAIM_SEARCH_SPAN = 60
+# 任务列表可视区下沿（1280x720 真机实测约 618，再往下被底部页签盖住并淡出）。
+# Add by MHY：卡片滚到这里时奖励区连同「已领取」徽章一起被裁掉，读不到徽章
+# 并不代表未领取——这种情况判成 None（未知），交给后面滚到完整位置的那一屏补。
+LIST_BOTTOM = 615
 
 NAME_LANG = 'ppocr_v6'
 PROGRESS_LANG = 'azur_lane'
@@ -148,6 +152,15 @@ def claim_boxes(row, col):
     ]
 
 
+def claim_visible(row, col, offset=0):
+    """
+    徽章区是否完整落在可视列表内。
+
+    卡片被滚到屏幕下沿时奖励区会被底部页签裁掉，徽章跟着消失。
+    """
+    return claim_boxes(row, col)[0][3] + offset <= LIST_BOTTOM
+
+
 def read_claim(ocr, image, row, col, offset=0):
     """
     读卡片是否已领取：任一候选区域命中任意已知文案即算已领取。
@@ -161,7 +174,10 @@ def read_claim(ocr, image, row, col, offset=0):
 
     Returns:
         bool: 是否已领取
+        None: 徽章区被屏幕下沿裁掉，读不到不能当成「未领取」
     """
+    if not claim_visible(row, col, offset):
+        return None
     for box in claim_boxes(row, col):
         text = str(ocr(image, (box[0], box[1] + offset, box[2], box[3] + offset), NAME_LANG))
         if any(claim in text for claim in CLAIM_TEXTS):
@@ -287,6 +303,27 @@ def find_row_offset(image, ocr, season, row, base=0, span=50, step=10):
     return base
 
 
+def merge_claimed(old, new):
+    """
+    合并同一张卡在多屏上的领取状态。
+
+    优先级 True > False > None：读到过徽章就是已领取；只有完整可见却没读到才算
+    未领取；两屏都被裁掉则仍是未知。
+
+    Args:
+        old: 已有的 claimed
+        new: 本次读到的 claimed
+
+    Returns:
+        bool|None: 合并结果
+    """
+    if old is True or new is True:
+        return True
+    if old is False or new is False:
+        return False
+    return None
+
+
 def read_cards(image, ocr, season=None, offsets=None):
     """
     读取一屏任务卡片。
@@ -314,7 +351,7 @@ def read_cards(image, ocr, season=None, offsets=None):
                 continue
             have, need = parse_progress(ocr(image, progress_box, PROGRESS_LANG)) or (0, 0)
             card = {'row': row, 'col': col, 'name': name, 'have': have, 'need': need,
-                    'claimed': read_claim(ocr, image, row, col, offset),
+                    'claimed': read_claim(ocr, image, row, col, offset),  # 可能为 None：徽章被裁掉
                     'task': None, 'item': None,
                     # 带上本次读屏用的行偏移：外面要按偏移点「提交」按钮，
                     # 之前在这里漏传过一次，导致 NameError（真机每轮崩一次）
@@ -538,13 +575,13 @@ def read_season_plan_page(island, season, max_scrolls=MAX_SCROLLS, ocr=_default_
                 continue
             # Add by MHY, 同一张卡会被相邻两屏重复读到：滚动步长 340px 与卡片行距
             # 229px 不整除，卡片必然重现在下一屏。原先「首次读到即定稿」，第一次
-            # 漏读徽章就永远算未领取——真机实测 32 次读里 28 次漏读，导致 done 被
-            # 反复取消（已提交的苹果汁继续生产）、还重复发「可以提交」邮件。
-            # 「已领取」字样不会出现在未完成的卡片上（未完成显示的是「提交」），
-            # 所以取「或」只补漏读，不会把未完成误判成已领取。
-            if card['claimed'] and not prev['claimed']:
-                prev['claimed'] = True
-                logger.info(f"[岛屿-赛季计划] {task} 补读到「已领取」（第 {index + 1} 屏）")
+            # 漏读徽章就永远算未领取——真机实测 32 次读里 28 次漏读；滚到屏幕下沿
+            # 时徽章更是直接被裁掉。合并规则见 merge_claimed。
+            merged = merge_claimed(prev['claimed'], card['claimed'])
+            if merged != prev['claimed']:
+                flag = '已领取' if merged is True else ('未领取' if merged is False else '未知')
+                logger.info(f"[岛屿-赛季计划] {task} 修正为「{flag}」（第 {index + 1} 屏）")
+                prev['claimed'] = merged
         logger.info(f"[岛屿-赛季计划] 第 {index + 1} 屏读到 {new} 个新任务，"
                     f"累计 {len(result)} 个")
         if new:

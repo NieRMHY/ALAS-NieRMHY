@@ -168,7 +168,13 @@ class IslandSeasonPlan(Island):
     def _log_progress(self, result):
         """把页面读到的进度写进日志，便于核对。"""
         for task, info in sorted(result.items(), key=lambda kv: kv[1]['have'] / max(kv[1]['need'], 1)):
-            flag = '已领取' if info.get('claimed') else f"{info['have']}/{info['need']}"
+            # Add by MHY, claimed 为 None 表示徽章被裁掉、状态未知
+            if info.get('claimed') is True:
+                flag = '已领取'
+            elif info.get('claimed') is None:
+                flag = f"{info['have']}/{info['need']}？"
+            else:
+                flag = f"{info['have']}/{info['need']}"
             # 订单里程碑没有对应物品，不留空括号
             item_cn = cn_name(info['item'])
             logger.info(f"[岛屿-赛季任务] {task}: {flag}" + (f"（{item_cn}）" if item_cn else ""))

@@ -214,6 +214,9 @@ def mark_claimed(season, page_result, notified):
         if not item:
             continue
         entry = _state_entry(state, item)
+        if info.get('claimed') is None:
+            # 徽章被屏幕下沿裁掉，状态未知：既不能记已领取，也不能抵消 done
+            continue
         claimed = bool(info.get('claimed'))
         if claimed:
             entry['miss'] = 0
@@ -288,7 +291,9 @@ def ready_to_submit(season, page_result):
     """
     ready = []
     for task, info in sorted(page_result.items()):
-        if info.get('claimed'):
+        # Add by MHY, 只有「确定未领取」（claimed is False）才算可提交：
+        # claimed 为 None 表示徽章被屏幕下沿裁掉、状态未知，不能据此判定
+        if info.get('claimed') is not False:
             continue
         need = int(info.get('need') or 0)
         have = int(info.get('have') or 0)

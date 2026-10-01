@@ -18,7 +18,10 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
 from module.island import island_away_cook
 from module.island.island_season_plan_reader import (
     CLAIM_SEARCH_SPAN,
+    LIST_BOTTOM,
     claim_boxes,
+    claim_visible,
+    merge_claimed,
     read_claim,
     read_season_plan_page,
 )
@@ -99,6 +102,63 @@ class TestClaimVerticalSearch(unittest.TestCase):
             return ''
 
         self.assertFalse(read_claim(ocr, make_image(), 0, 0, offset=0))
+
+
+class TestClippedCardIsUnknown(unittest.TestCase):
+    """卡片滚到屏幕下沿时徽章被裁掉——读不到不等于「未领取」。
+
+    真机截图 s009：row 0 完整可见，读到 3 张「已领取」；row 1 只露出名字和进度，
+    奖励区和徽章都在可视区外，被误判成未领取 250/250 并触发提交点击。
+    """
+
+    def test_visible_when_fully_inside(self):
+        self.assertTrue(claim_visible(0, 0, offset=0))
+
+    def test_not_visible_when_pushed_below_list(self):
+        # row 1 卡片顶 406，徽章框到 406+210=616，偏移 +51 就压到下沿之外
+        self.assertFalse(claim_visible(1, 0, offset=51))
+
+    def test_clipped_card_returns_none(self):
+        def ocr(image, area, lang):
+            return ''          # 徽章确实不在可视区
+
+        self.assertIsNone(read_claim(ocr, make_image(), 1, 0, offset=51))
+
+    def test_visible_card_without_badge_is_false(self):
+        def ocr(image, area, lang):
+            return ''
+
+        self.assertIs(read_claim(ocr, make_image(), 0, 0, offset=0), False)
+
+    def test_merge_priority(self):
+        self.assertIs(merge_claimed(None, True), True)
+        self.assertIs(merge_claimed(True, None), True)
+        self.assertIs(merge_claimed(None, False), False)
+        self.assertIs(merge_claimed(False, True), True)
+        self.assertIs(merge_claimed(None, None), None)
+
+
+class TestUnknownStateIsNotSubmittable(unittest.TestCase):
+    """状态未知的卡片：不能提交，也不能抵消 done。"""
+
+    def test_ready_to_submit_skips_unknown(self):
+        page = {'甜蜜引擎': {'item': 'apple_juice', 'have': 250, 'need': 250,
+                            'claimed': None}}
+        self.assertEqual(island_away_cook.ready_to_submit('autumn', page), [])
+
+    def test_ready_to_submit_includes_definite_unclaimed(self):
+        page = {'甜蜜引擎': {'item': 'apple_juice', 'have': 250, 'need': 250,
+                            'claimed': False}}
+        self.assertEqual(len(island_away_cook.ready_to_submit('autumn', page)), 1)
+
+    def test_mark_claimed_ignores_unknown(self):
+        notified = {}
+        island_away_cook.mark_claimed(
+            'autumn', {'甜蜜引擎': {'item': 'apple_juice', 'claimed': True}}, notified)
+        changed = island_away_cook.mark_claimed(
+            'autumn', {'甜蜜引擎': {'item': 'apple_juice', 'claimed': None}}, notified)
+        self.assertEqual(changed, {})
+        self.assertTrue(notified['autumn']['apple_juice']['done'])
 
 
 class TestDoneDebounce(unittest.TestCase):
