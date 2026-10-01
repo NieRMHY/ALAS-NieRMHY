@@ -14,10 +14,12 @@ import numpy as np
 sys.path.insert(0, '.')
 
 from module.island.island_season_plan_reader import (
+    DRAG_NAME,
     PLAN_TAB_INDEX,
     TAB_CENTERS,
     TAB_Y,
     read_season_plan_page,
+    scroll_list,
 )
 
 
@@ -25,6 +27,9 @@ class FakeDevice:
     def __init__(self, image):
         self.image = image
         self.clicks = []
+
+    def click_record_remove(self, name):
+        """真机会把拖拽记进点击保护；假设备只需要接住调用。"""
 
     def stuck_record_clear(self):
         pass
@@ -38,7 +43,10 @@ class FakeDevice:
     def click_minitouch(self, x, y):
         self.clicks.append((x, y))
 
+    drag_count = 0
+
     def drag(self, *args, **kwargs):
+        self.drag_count += 1
         pass
 
 
@@ -130,6 +138,32 @@ class TestReadSeasonPlanPage(unittest.TestCase):
         result = read_season_plan_page(island, 'autumn', max_scrolls=1,
                                        ocr=make_ocr(name='无关文字'))
         self.assertEqual(result, {})
+
+
+class TestDragDoesNotTripClickGuard(unittest.TestCase):
+    """拖拽必须每次清掉自己的记录。
+
+    一轮要拖十几次（回顶 3 次 + 读屏最多 MAX_SCROLLS 次），而单操作 12 次就会
+    抛 GameTooManyClickError 并重启游戏（真机 21:23 / 21:25 各一次，读到第 9 屏时）。
+    """
+
+    def test_scroll_list_removes_its_record(self):
+        island = FakeIsland(make_image())
+        removed = []
+        island.device.click_record_remove = removed.append
+        scroll_list(island)
+        self.assertEqual(removed, [DRAG_NAME])
+        self.assertEqual(island.device.drag_count, 1)
+
+    def test_record_clean_after_many_scrolls(self):
+        """连续拖 15 次（超过 12 次阈值）时，清除次数必须与拖拽次数一致。"""
+        island = FakeIsland(make_image())
+        removed = []
+        island.device.click_record_remove = removed.append
+        for _ in range(15):
+            scroll_list(island)
+        self.assertEqual(island.device.drag_count, 15)
+        self.assertEqual(removed, [DRAG_NAME] * 15)
 
 
 if __name__ == '__main__':

@@ -375,6 +375,7 @@ def scroll_to_top(island, attempts=3):
 # 出现了原本在屏幕外的「便携快餐 / 麦田守望」）。
 DRAG_X = 640
 DRAG_Y = {True: (520, 180), False: (180, 520)}
+DRAG_NAME = 'SEASON_PLAN_DRAG'
 
 
 def scroll_list(island, down=True):
@@ -387,7 +388,12 @@ def scroll_list(island, down=True):
     """
     start, end = DRAG_Y[down]
     island.device.drag((DRAG_X, start), (DRAG_X, end), segments=4, shake=(0, 8),
-                       hold_duration=0.5, swipe_duration=1.5, name='SEASON_PLAN_DRAG')
+                       hold_duration=0.5, swipe_duration=1.5, name=DRAG_NAME)
+    # Add by MHY, 立刻清掉本次拖拽记录：一轮要拖十几次（回顶 3 次 + 读屏最多 12 次），
+    # 累计超过单操作 12 次阈值会抛 GameTooManyClickError 并把游戏重启
+    # （真机 21:23、21:25 各一次，读到第 9 屏时触发）。drag 不是点击，
+    # 本来就不该计入点击保护；清记录不会掩盖真正的连点问题（那些走的是 click）。
+    island.device.click_record_remove(DRAG_NAME)
     island.device.sleep(SCROLL_SETTLE)
 
 
