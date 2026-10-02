@@ -30,6 +30,8 @@ SEASON_KEY = 'IslandPlan.IslandPlan.Season'
 
 
 PAGE_FILE = state_file('island_season_plan_page.json')
+# 上次自动请求刷新时的赛季缺口快照（见 request_refresh_on_gap_change）
+GAP_FILE = state_file('island_season_gap.json')
 # 上次自动生成的上架清单，用于区分「用户手填」与「上次方案」（见 _manual_shelf）
 GENERATED_FILE = state_file('island_plan_generated.json')
 
@@ -144,6 +146,80 @@ def _manual_shelf(config):
             continue  # 与上次自动生成一致：仍是方案的产物，不该钉死
         manual[shop] = current
     return manual
+
+
+def load_gap():
+    """上次自动请求刷新时记录的赛季缺口与已提交集合。"""
+    import json
+    try:
+        with open(GAP_FILE, encoding='utf-8') as f:
+            data = json.load(f)
+    except (OSError, ValueError):
+        return set(), set()
+    return set(data.get('gap') or ()), set(data.get('done') or ())
+
+
+def save_gap(gap, done):
+    """记录本次快照。"""
+    import json
+    import os
+    try:
+        directory = os.path.dirname(GAP_FILE)
+        if directory and not os.path.exists(directory):
+            os.makedirs(directory, exist_ok=True)
+        with open(GAP_FILE, 'w', encoding='utf-8') as f:
+            json.dump({'gap': sorted(gap), 'done': sorted(done)}, f,
+                      ensure_ascii=False, indent=1)
+    except OSError:
+        logger.warning('[岛屿-方案刷新] 赛季缺口快照保存失败')
+
+
+def flatten_gap(stockpile):
+    """{店铺: {物品: 数量}} -> {'店铺/物品'} 集合，便于比对。"""
+    return {f'{shop}/{item}' for shop, items in (stockpile or {}).items()
+            for item in items}
+
+
+def request_refresh_on_gap_change(config, season):
+    """
+    赛季缺口变化时自动请求一次方案刷新（Add by MHY）。
+
+    货架方案是一次性快照：物品进囤积时会被从货架剔除（摆上货架就会被顾客买走，
+    赛季任务就凑不齐），而攒够之后也不会自己回到货架——必须重新生成方案。
+    靠手勾「刷新生产/上架方案」容易忘，所以这里比对快照自动触发。
+
+    只在两种变化上触发：
+      - 出现新缺口：要把该物品从货架挪进囤积
+      - 已提交（done）集合变化：任务交掉了，物品该回货架正常售卖
+
+    「攒够目标」本身不触发：那时物品正停在囤积里、既不上架也不被买走，刷新反而
+    会把它推回货架，被买空后又变成缺口，来回翻。
+
+    Args:
+        config: AzurLaneConfig 实例
+        season: 赛季
+
+    Returns:
+        bool: 是否请求了刷新
+    """
+    from module.island.island_away_cook import done_items, load_notified
+
+    gap = flatten_gap(season_stockpile(season)) if season else set()
+    done = done_items(season, load_notified()) if season else set()
+    old_gap, old_done = load_gap()
+    if gap == old_gap and done == old_done:
+        return False
+    save_gap(gap, done)
+    if not (gap - old_gap) and done == old_done:
+        # 只是有物品攒够了：让它留在囤积里，不动方案
+        return False
+    config.cross_set(REFRESH_KEY, True)
+    try:
+        config.update()
+    except Exception:
+        logger.exception('[岛屿-方案刷新] 自动刷新请求保存失败')
+        return False
+    return True
 
 
 def refresh_plan_if_requested(config):

@@ -17,7 +17,7 @@ from module.island.island_away_cook import (
     ready_to_submit,
     save_notified,
 )
-from module.island.island_plan_refresh import PAGE_FILE
+from module.island.island_plan_refresh import PAGE_FILE, request_refresh_on_gap_change
 from module.island.island_season import SeasonConfig
 from module.island.island_season_plan_data import cn_name
 from module.island.island_season_plan_reader import read_season_plan_page
@@ -106,6 +106,14 @@ class IslandSeasonPlan(Island):
 
         self._log_progress(result)
         self._save_page(result)
+        # Add by MHY, 赛季缺口变化时自动请求刷新生产/上架方案：货架方案是一次性
+        # 快照，物品攒够或任务交掉之后不会自己回到货架，靠手勾容易忘。
+        # 判据与「攒够不触发」的理由见 request_refresh_on_gap_change。
+        try:
+            if request_refresh_on_gap_change(self.config, season):
+                logger.info('[岛屿-赛季任务] 赛季缺口变化，已请求刷新生产/上架方案')
+        except Exception:
+            logger.exception('[岛屿-赛季任务] 自动请求方案刷新失败')
         ready = ready_to_submit(season, result)
         if ready:
             logger.info('[岛屿-赛季任务] 可以提交: ' +

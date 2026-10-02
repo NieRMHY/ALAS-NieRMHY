@@ -469,8 +469,14 @@ def plan_shop(shop, shop_level='diamond', season=None, warehouse=None,
         seen.add(name)
 
     # ---- 空闲产能生产囤积物（赛季任务物品：攒够就行，不上架）----
+    # Add by MHY, 这里**不**排除「已经是货架商品原料」的物品：原料需求是按货架
+    # 销量算的，和赛季任务要交的数量根本不是一个量级，跳过就永远攒不够。
+    # 真机实测禽肉快炒一直停在 20/100、便携快餐停在 20/50，就是因为它们分别是
+    # 能量双拼套餐、烤肉狂欢的原料，被上面的 seen 挡在囤积之外。
+    # 囤积是追加需求，merge_requirements 按 max 合并，不会重复生产；产能不够时
+    # 下面的 budget 检查会跳过，所以正常上架销售不受影响。
     for name, target in sorted(stockpile.items()):
-        if name not in producible or name in exclude or name in seen:
+        if name not in producible or name in exclude:
             continue
         # 赛季物品不受「只排已验证商品」限制：它们没有别的生产途径，
         # 而白名单是靠历史成功记录挖出来的——没排过就永远不会进白名单。

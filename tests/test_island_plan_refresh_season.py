@@ -103,3 +103,69 @@ class TestSeasonStockpile(unittest.TestCase):
 
     def test_missing_file_returns_empty(self):
         self.assertEqual(self.module.season_stockpile(), {})
+
+
+class TestAutoRefreshOnGapChange(unittest.TestCase):
+    """赛季缺口变化时自动请求刷新方案（Add by MHY）。
+
+    货架方案是一次性快照：物品进囤积会被从货架剔除，攒够之后也不会自己回到
+    货架。靠手勾「刷新生产/上架方案」容易忘，所以比对快照自动触发。
+
+    关键取舍：「攒够目标」本身不触发——那时物品正停在囤积里、既不上架也不被
+    买走，刷新反而会把它推回货架、被买空后又成缺口，来回翻。
+    """
+
+    def setUp(self):
+        import tempfile
+        from pathlib import Path
+        from unittest.mock import MagicMock
+        from module.island import island_plan_refresh
+
+        self.module = island_plan_refresh
+        self.tmp = tempfile.TemporaryDirectory()
+        self.original = island_plan_refresh.GAP_FILE
+        island_plan_refresh.GAP_FILE = str(Path(self.tmp.name) / 'gap.json')
+        self.config = MagicMock()
+
+    def tearDown(self):
+        self.module.GAP_FILE = self.original
+        self.tmp.cleanup()
+
+    def _call(self, gap, done):
+        from unittest.mock import patch
+        with patch.object(self.module, 'season_stockpile',
+                          lambda season=None: gap), \
+             patch('module.island.island_away_cook.load_notified', lambda: {}), \
+             patch('module.island.island_away_cook.done_items',
+                   lambda season, notified: done):
+            return self.module.request_refresh_on_gap_change(self.config, 'autumn')
+
+    def test_flatten_gap(self):
+        self.assertEqual(self.module.flatten_gap({'grill': {'steak_bowl': 70}}),
+                         {'grill/steak_bowl'})
+        self.assertEqual(self.module.flatten_gap({}), set())
+
+    def test_new_gap_requests_refresh(self):
+        """出现新缺口：要把物品从货架挪进囤积。"""
+        self.assertTrue(self._call({'grill': {'steak_bowl': 70}}, set()))
+        self.config.cross_set.assert_called_once()
+
+    def test_satisfied_item_does_not_request_refresh(self):
+        """只是攒够了：留在囤积里，不动方案，免得来回翻。"""
+        self._call({'grill': {'steak_bowl': 70}}, set())
+        self.config.reset_mock()
+        self.assertFalse(self._call({}, set()))
+        self.config.cross_set.assert_not_called()
+
+    def test_done_change_requests_refresh(self):
+        """任务交掉了：物品该回货架正常售卖。"""
+        self._call({'grill': {'steak_bowl': 70}}, set())
+        self.config.reset_mock()
+        self.assertTrue(self._call({}, {'steak_bowl'}))
+        self.config.cross_set.assert_called_once()
+
+    def test_no_change_is_noop(self):
+        self._call({'grill': {'steak_bowl': 70}}, set())
+        self.config.reset_mock()
+        self.assertFalse(self._call({'grill': {'steak_bowl': 70}}, set()))
+        self.config.cross_set.assert_not_called()
