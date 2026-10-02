@@ -480,8 +480,14 @@ def plan_shop(shop, shop_level='diamond', season=None, warehouse=None,
     #     来估（真机会因此误判产能不足）。排不下就按剩余产能做一部分。
     # 囤积是追加需求，merge_requirements 按 max 合并不会重复生产，正常上架销售
     # 不受影响——shelf 先定，囤积只用剩下的产能。
+    # Add by MHY, 独占式：一个店一次只放**一件**赛季物品进生产清单，做完再做下一件。
+    # 用户口径：绝对不能影响上架销售（货架份额是硬的），赛季任务慢慢排队即可。
+    # 为什么不按预算小时数判：真机 grill 货架本身只占 19.0 时（预算 43.2 时），
+    # 余量 24.2 时；而爆炒禽肉要 63.8 时、碳烤肉串要 65.6 时——按预算判就是
+    # 永远「排不下」、永远排队，一件也做不成。同时只放一件的话，货架那 19 时
+    # 份额不会被抢，那件做多久都只是慢，符合「时间足够」。
+    # 顺序按「还差得少」：最接近完成的先做完，先释放位置给下一件。
     stock_have = dict(stock_have or {})
-    est = list(meals)          # 估算用清单：囤积项记「还差多少」
     for name, target in sorted(
             stockpile.items(),
             key=lambda kv: (max(0, int(kv[1]) - int(stock_have.get(kv[0], 0))), kv[0])):
@@ -495,20 +501,16 @@ def plan_shop(shop, shop_level='diamond', season=None, warehouse=None,
             break
         target = int(target)
         remaining = max(0, target - int(stock_have.get(name, 0)))
-        # 严格按预算：货架必须优先（shelf_keep 在上面已经排完并占满了预算内的份额），
-        # 囤积只用剩下的产能，排不下就排队等下一轮——绝不能挤占上架销售。
-        # 用户口径：这个任务慢慢做就行，时间足够。
-        _, _, minutes = production_requirements(shop, est + [(name, remaining)], economy)
-        if minutes > budget:
-            plan.notes.append(
-                f'囤积 {economy.cn_name(name)}x{target}（还差 {remaining}）：'
-                f'累计需 {minutes / 60:.1f} 时 > 预算 {budget / 60:.1f} 时，'
-                f'本轮排队等产能')
+        if remaining <= 0:
+            # 已经攒够，不需要再生产；它仍留在囤积名单里（不上架、不被买走），
+            # 等任务提交后由自动刷新放回货架
             continue
-        est = est + [(name, remaining)]
+        plan.notes.append(f'囤积 {economy.cn_name(name)}x{target}（还差 {remaining}）：'
+                          f'本轮独占排产，做完/提交后再排下一件')
         meals = meals + [(name, target)]
         seen.add(name)
         plan.stockpile.append((name, target))
+        break
     plan.meals = meals
     plan_names = {n for n, _ in plan.meals}
     if plan_names:
