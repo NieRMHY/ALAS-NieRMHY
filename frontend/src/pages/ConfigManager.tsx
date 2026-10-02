@@ -36,8 +36,8 @@ export function ConfigManager() {
   async function exportConfig(name: string) {
     setBusy(name); setError('')
     try {
-      const config = await api.request('config.get', {instance: name})
-      downloadJson(`${name}.json`, config.values)
+      const config = await api.request('config.export', {instance: name})
+      downloadJson(`${name}.json`, config)
       notify(ui('config.exported', {name}))
     } catch (error) { setError((error as Error).message) } finally { setBusy('') }
   }

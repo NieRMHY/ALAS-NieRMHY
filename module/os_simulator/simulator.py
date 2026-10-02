@@ -63,9 +63,33 @@ def _simulate_one(
     deterministic,
     record_history=False
 ):
-    """
-    模拟单个样本的核心循环。
+    """模拟单个样本的核心循环。
+
     支持 record_history 模式以记录轨迹。
+
+    Args:
+        init_ap (float): 初始行动力。
+        init_coin (float): 初始黄币。
+        total_time (float): 模拟总时长（秒）。
+        meow_hazard_level (int): 耄耋相接侵蚀等级。
+        coin_preserve (float): 保留黄币。
+        coin_threshold (float): 离开耄耋相接所需获得的黄币阈值。
+        ap_preserve (float): 保留行动力（低于此值判定坠机）。
+        coin_expect_cl1 (float): 侵蚀1每轮期望黄币。
+        coin_expect_meow (float): 耄耋相接每轮期望黄币。
+        modified_cl1_time (float): 考虑利用率修正后的侵蚀1单轮耗时。
+        modified_meow_time (float): 考虑利用率修正后的耄耋相接单轮耗时。
+        akashi_prob (float): 遇见明石概率。
+        daily_reward (float): 每日任务黄币。
+        stronghold_reward (float): 要塞黄币。
+        cross_week (bool): 是否计算跨周。
+        buy_ap (bool): 是否每周购买行动力。
+        days_until_next_monday (int): 距离下周一的天数。
+        deterministic (bool): 是否为确定性模式。
+        record_history (bool, optional): 是否记录历史轨迹。默认 False。
+
+    Returns:
+        tuple: (最终状态向量, 时间数组, 行动力数组, 黄币数组, 状态数组, 轨迹长度)。
     """
     s = np.zeros(8, dtype=np.float64)
     s[AP], s[COIN], s[STATUS] = init_ap, init_coin, 0.0
@@ -144,6 +168,16 @@ def _simulate_one(
 
 @nb.njit(cache=True, parallel=True, fastmath=True)
 def _simulate_batch_kernel(results, record_multi, grid_ap, grid_coin, grid_crash, *params):
+    """批量模拟内核函数（并行加速执行）。
+
+    Args:
+        results (np.ndarray): 存储各样本最终结果的二维数组。
+        record_multi (bool): 是否记录多样本轨迹网格数据。
+        grid_ap (np.ndarray): 批次行动力网格数组。
+        grid_coin (np.ndarray): 批次黄币网格数组。
+        grid_crash (np.ndarray): 批次坠机标记网格数组。
+        *params: 传递给 _simulate_one 的各项模拟参数。
+    """
     for i in nb.prange(len(results)):
         res, h_time, h_ap, h_coin, h_status, h_len = _simulate_one(*params, record_multi)
         results[i] = res
@@ -169,7 +203,14 @@ def _simulate_batch_kernel(results, record_multi, grid_ap, grid_coin, grid_crash
                 grid_crash[i, j] = has_crashed
 
 class OSSimulator:
+    """大世界蒙特卡洛模拟器。
+
+    负责加载模拟参数、调用 JIT 内核分批执行模拟计算，
+    并汇总统计最终行动力、黄币、刷图次数、坠机概率等指标。
+    """
+
     def __init__(self):
+        """初始化大世界模拟器。"""
         self.logger = OSSLogger()
         self.plotter = OSSimulatorPlotter(self.logger)
         self.config = None
@@ -178,6 +219,7 @@ class OSSimulator:
         self._stop_event = threading.Event()
 
     def _get_azurstat_data(self):
+        """读取海域黄币期望与明石概率等统计基准数据。"""
         # 预计之后使用azurstat统计数据，目前先这样吧（
         
         # 目前包括吊机
@@ -201,6 +243,7 @@ class OSSimulator:
         self.logger.info(f'[大世界模拟器] 每周要塞期望获得黄币: {self.stronghold_reward}')
     
     def get_paras(self):
+        """从配置中加载大世界模拟器所需的所有参数。"""
         self.config.load()
         
         self.samples = self.config.cross_get('OpsiSimulator.OpsiSimulatorParameters.Samples')
@@ -289,8 +332,8 @@ class OSSimulator:
         self._get_azurstat_data()
 
     def precompile(self):
-        """
-        预编译 Numba 函数，确保正式模拟时达到最高速度。
+        """预编译 Numba 函数，确保正式模拟时达到最高速度。
+
         即使已从缓存加载，也会在日志输出时间。
         """
         self.logger.info("[大世界模拟器] 检查预编译状态（第一次运行时会耗费一定时间）...")
@@ -321,13 +364,24 @@ class OSSimulator:
     
     @property
     def is_running(self):
+        """判断模拟线程是否正在运行。
+
+        Returns:
+            bool: 线程是否活跃。
+        """
         return bool(self._thread and self._thread.is_alive())
     
     @property
     def figure(self):
+        """获取生成的图表路径。
+
+        Returns:
+            str: 图表文件路径。
+        """
         return self.plotter.result_figure_path
     
     def _run(self):
+        """模拟器线程工作主函数。"""
         try:
             if not self.config:
                 raise ValueError('缺少配置')
@@ -348,9 +402,15 @@ class OSSimulator:
             self.logger.exception(f"[大世界模拟器] 运行中出现错误: {e}")
     
     def set_config(self, config: AzurLaneConfig):
+        """设置模拟器配置对象。
+
+        Args:
+            config (AzurLaneConfig): 配置实例。
+        """
         self.config = config
 
     def start(self):
+        """启动后台线程开始模拟计算。"""
         if self.is_running:
             self.logger.warning("[大世界模拟器] 模拟正在进行，请耐心等待")
             return
@@ -360,6 +420,7 @@ class OSSimulator:
         self._thread.start()
     
     def interrupt(self):
+        """中断当前正在运行的模拟。"""
         if self.is_running:
             self.logger.info("[大世界模拟器] 等待模拟中断")
             self._stop_event.set()
@@ -367,6 +428,11 @@ class OSSimulator:
             self.logger.info("[大世界模拟器] 无正在进行的模拟")
 
     def _get_remaining_seconds(self):
+        """计算距离次月1日重置的剩余秒数。
+
+        Returns:
+            float: 剩余秒数。
+        """
         now = datetime.now()
         if now.month == 12:
             next_month = datetime(now.year + 1, 1, 1)
@@ -375,12 +441,22 @@ class OSSimulator:
         return (next_month - now).total_seconds()
 
     def _get_days_until_next_monday(self):
+        """计算距离下周一的天数。
+
+        Returns:
+            int: 距离天数（1-7）。
+        """
         now = datetime.now()
         current_weekday = now.weekday()
         days_ahead = 7 - current_weekday
         return days_ahead
     
     def simulate(self):
+        """执行全量蒙特卡洛模拟。
+
+        Returns:
+            np.ndarray: 所有样本的模拟结果矩阵。
+        """
         if not hasattr(self, 'init_ap'):
             self.get_paras()
         
@@ -498,6 +574,11 @@ class OSSimulator:
         return results
     
     def _handle_result(self, result):
+        """处理并打印模拟结果，触发图表绘制。
+
+        Args:
+            result (np.ndarray): 模拟结果数组。
+        """
         self.logger.info('[大世界模拟器] ====================模拟结果====================')
 
         self.result_cl1_count = np.mean(result[:, CL1_COUNT])

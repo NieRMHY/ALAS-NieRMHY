@@ -23,6 +23,12 @@ OUTPUT_NAME = "out0"
 
 @dataclass(frozen=True)
 class ConvertSpec:
+    """模型转换规格描述类。
+
+    Attributes:
+        name (str): 模型名称标识。
+        onnx_path (Path): 源 ONNX 模型文件路径。
+    """
     name: str
     onnx_path: Path
 
@@ -36,7 +42,17 @@ MODEL_SPECS = {
 
 
 def resolve_pnnx_command(pnnx: str | None) -> list[str]:
-    """解析 pnnx 命令；未安装时优先通过 uvx 临时运行。"""
+    """解析 pnnx 命令；未安装时优先通过 uvx 临时运行。
+
+    Args:
+        pnnx (str | None): 指定的 pnnx 命令名或执行路径。
+
+    Returns:
+        list[str]: 可执行命令参数列表。
+
+    Raises:
+        RuntimeError: 找不到指定的 pnnx、系统 PATH 中无 pnnx 且未安装 uvx 时抛出。
+    """
     if pnnx:
         resolved = shutil.which(pnnx) if len(Path(pnnx).parts) == 1 else pnnx
         if resolved:
@@ -55,11 +71,27 @@ def resolve_pnnx_command(pnnx: str | None) -> list[str]:
 
 
 def shape_arg() -> str:
+    """生成 pnnx 输入张量形状参数字符串。
+
+    Returns:
+        str: 格式为 'inputshape=[...]' 的参数文本。
+    """
     return "inputshape=[" + ",".join(str(value) for value in INPUT_SHAPE) + "]"
 
 
 def validate_ncnn_model(param_path: Path, bin_path: Path) -> tuple[int, ...]:
-    """用 Python ncnn 加载模型并执行一次零输入推理。"""
+    """用 Python ncnn 加载模型并执行一次全零输入推理以校验有效性。
+
+    Args:
+        param_path (Path): ncnn .param 参数配置文件路径。
+        bin_path (Path): ncnn .bin 权重文件路径。
+
+    Returns:
+        tuple[int, ...]: 推理输出张量的形状 (shape)。
+
+    Raises:
+        RuntimeError: 环境缺少 ncnn 或模型加载/推理执行失败。
+    """
     try:
         import ncnn
     except ImportError as exc:
@@ -104,6 +136,20 @@ def convert_model(
     validate: bool,
     keep_temp: bool,
 ) -> None:
+    """将指定规格的 ONNX 模型转换为 ncnn 模型。
+
+    Args:
+        spec (ConvertSpec): 模型转换配置规格。
+        output_dir (Path): 转换后模型输出目录。
+        pnnx_command (list[str]): pnnx 执行命令列表。
+        fp16 (int): 是否启用 FP16 精度 (1 为启用，0 为禁用)。
+        validate (bool): 转换完成后是否进行推理验证。
+        keep_temp (bool): 是否保留中间文件到临时目录。
+
+    Raises:
+        FileNotFoundError: 找不到源 ONNX 文件时抛出。
+        subprocess.CalledProcessError: pnnx 转换执行失败时抛出。
+    """
     if not spec.onnx_path.is_file():
         raise FileNotFoundError(f"找不到 ONNX 模型：{spec.onnx_path}")
 
@@ -148,13 +194,22 @@ def convert_model(
 
 
 def cleanup_pnnx_sidecar(onnx_path: Path) -> None:
-    """清理 pnnx 在源 ONNX 旁边生成的简化模型。"""
+    """清理 pnnx 在源 ONNX 旁边生成的简化模型。
+
+    Args:
+        onnx_path (Path): 源 ONNX 模型路径。
+    """
     sidecar = onnx_path.with_name(f"{onnx_path.stem}.pnnxsim.onnx")
     if sidecar.is_file():
         sidecar.unlink()
 
 
 def parse_args() -> argparse.Namespace:
+    """解析命令行参数。
+
+    Returns:
+        argparse.Namespace: 解析后的命令行参数命名空间。
+    """
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "models",
@@ -171,6 +226,11 @@ def parse_args() -> argparse.Namespace:
 
 
 def main() -> int:
+    """模型转换入口函数。
+
+    Returns:
+        int: 退出状态码，0 表示执行成功。
+    """
     args = parse_args()
     pnnx_command = resolve_pnnx_command(args.pnnx)
     model_names = args.models or sorted(MODEL_SPECS)

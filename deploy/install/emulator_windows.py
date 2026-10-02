@@ -10,13 +10,21 @@ from module.config.utils import iter_folder
 
 @dataclass
 class RegValue:
+    """注册表键值条目数据类。"""
     name: str
     value: str
     typ: int
 
 
 def list_reg(reg) -> t.List[RegValue]:
-    """列出注册表键下的所有值。"""
+    """列出注册表键下的所有值。
+
+    Args:
+        reg: 已打开的 Windows 注册表句柄。
+
+    Returns:
+        list[RegValue]: 注册表值条目列表。
+    """
     rows = []
     index = 0
     try:
@@ -30,7 +38,14 @@ def list_reg(reg) -> t.List[RegValue]:
 
 
 def list_key(reg) -> t.List[RegValue]:
-    """列出注册表键下的所有子键。"""
+    """列出注册表键下的所有子键名称。
+
+    Args:
+        reg: 已打开的 Windows 注册表句柄。
+
+    Returns:
+        list[str]: 子键名称列表。
+    """
     rows = []
     index = 0
     try:
@@ -44,11 +59,20 @@ def list_key(reg) -> t.List[RegValue]:
 
 
 def abspath(path):
+    """将路径转换为正斜杠分隔的标准绝对路径。
+
+    Args:
+        path (str): 输入文件或目录路径。
+
+    Returns:
+        str: 标准化后的绝对路径。
+    """
     return os.path.abspath(path).replace('\\', '/')
 
 
 @dataclass
 class EmulatorInstance:
+    """模拟器实例信息，包含 ADB 序列号、实例名称及程序路径。"""
     # ADB 连接序列号
     serial: str
     # 模拟器实例名称，用于启动/停止模拟器
@@ -70,7 +94,11 @@ class EmulatorInstance:
 
     @cached_property
     def start_command(self) -> t.List[str]:
-        """获取模拟器启动命令。"""
+        """获取模拟器启动命令。
+
+        Returns:
+            list[str]: 启动命令参数列表。
+        """
         if self.emulator in [Emulator.NoxPlayer, Emulator.NoxPlayer64]:
             # Nox.exe -clone:Nox64_7
             return [self.path, f'-clone:{self.name}']
@@ -78,7 +106,11 @@ class EmulatorInstance:
 
     @cached_property
     def quit_command(self) -> t.List[str]:
-        """获取模拟器退出命令。"""
+        """获取模拟器退出命令。
+
+        Returns:
+            list[str]: 退出命令参数列表。
+        """
         if self.emulator in [Emulator.NoxPlayer, Emulator.NoxPlayer64]:
             # Nox.exe -clone:Nox64_7 -quit
             return [self.path, f'-clone:{self.name}', '-quit']
@@ -86,6 +118,7 @@ class EmulatorInstance:
 
 
 class Emulator:
+    """模拟器类型识别与多开实例发现类。"""
     NoxPlayer = 'NoxPlayer'
     NoxPlayer64 = 'NoxPlayer64'
     BlueStacks4 = 'BlueStacks4'
@@ -138,6 +171,14 @@ class Emulator:
 
     @classmethod
     def is_emulator(cls, path: str) -> bool:
+        """检查指定可执行文件是否为支持的模拟器程序。
+
+        Args:
+            path (str): 可执行文件路径。
+
+        Returns:
+            bool: 是否属于已知模拟器类型。
+        """
         return bool(cls.path_to_emulator(path))
 
     def __init__(self, path):
@@ -155,6 +196,15 @@ class Emulator:
         return hash(self.path)
 
     def abspath(self, path, folder=None):
+        """基于模拟器主目录解析相对路径。
+
+        Args:
+            path (str): 相对路径。
+            folder (str, optional): 基准目录，默认使用模拟器所在目录。
+
+        Returns:
+            str: 解析后的绝对路径。
+        """
         if folder is None:
             folder = self.dir
         return abspath(os.path.join(folder, path))
@@ -261,6 +311,8 @@ class Emulator:
 
 
 class EmulatorManager:
+    """Windows 系统已安装模拟器扫描与实例管理类。"""
+
     @staticmethod
     def get_install_dir_from_reg(path, key):
         """从注册表获取模拟器安装目录。
@@ -333,7 +385,11 @@ class EmulatorManager:
 
     @cached_property
     def all_emulators(self) -> t.List[Emulator]:
-        """获取当前计算机上所有已安装的模拟器。"""
+        """获取当前计算机上所有已安装的模拟器。
+
+        Returns:
+            list[Emulator]: 模拟器对象列表。
+        """
         exe = set([])
 
         # 通过 MuiCache 注册表查找已运行过的模拟器
@@ -373,7 +429,11 @@ class EmulatorManager:
 
     @cached_property
     def all_emulator_instances(self) -> t.List[EmulatorInstance]:
-        """获取当前计算机上所有已安装的模拟器实例。"""
+        """获取当前计算机上所有已安装的模拟器实例。
+
+        Returns:
+            list[EmulatorInstance]: 模拟器多开实例列表。
+        """
         instances = []
         for emulator in self.all_emulators:
             instances += list(emulator.iter_instances())

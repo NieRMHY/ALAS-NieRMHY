@@ -1,3 +1,4 @@
+"""安装器输出模拟测试脚本。"""
 import time
 
 from deploy.Windows.logger import logger
@@ -106,6 +107,7 @@ Process: [ 100% ]
 
 
 def run():
+    """按行模拟输出安装器运行日志及进度信息。"""
     for row in output.split('\n'):
         time.sleep(0.05)
         if row:

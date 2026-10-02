@@ -2,7 +2,7 @@
  * @fileoverview 前端应用主入口，初始化主题并挂载 React 根节点。
  */
 
-import { Component, type ReactNode } from 'react'
+import { Component, lazy, Suspense, type ReactNode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { createHashRouter, RouterProvider, Navigate } from 'react-router-dom'
 import { App } from './app/App'
@@ -20,6 +20,8 @@ import { Settings } from './pages/Settings'
 import { DevControls } from './pages/DevControls'
 import { ConfigManager } from './pages/ConfigManager'
 import { translateCurrentUi } from './i18n'
+
+const SchedulerProgram = lazy(() => import('./pages/SchedulerProgram').then(module => ({default: module.SchedulerProgram})))
 
 /* 顶层兜底与路由级兜底共用同一页：路由渲染出错时 React Router 会先接住，
    没有 errorElement 就落到它自带的崩溃页（带堆栈），所以两级都要挂上。 */
@@ -39,6 +41,8 @@ const router = createHashRouter([
   {path: '/i/:instance', element: <App/>, errorElement: <ErrorPage/>, children: [
     {index: true, element: <Navigate to="overview" replace/>},
     {path: 'overview', element: <Overview/>}, {path: 'task/:task', element: <TaskConfig/>},
+    {path: 'task/SchedulerProgram', element: <Suspense fallback={<div>正在加载卡片编辑器…</div>}><SchedulerProgram/></Suspense>},
+    {path: 'scheduler', element: <Navigate to="../task/SchedulerProgram" replace/>},
     {path: 'logs', element: <Navigate to="../overview" replace/>}, {path: 'statistics', element: <Statistics/>}, {path: 'settings', element: <Navigate to="/settings" replace/>},
   ]},
   {path: '*', element: <Navigate to="/" replace/>},

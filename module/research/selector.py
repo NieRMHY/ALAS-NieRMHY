@@ -101,14 +101,13 @@ class ResearchSelector(ResearchUI):
                 break
 
     def _research_jp_detect(self, skip_first_screenshot=True):
-        """
-        包装 research_jp_detect()，增加错误处理。
+        """包装 research_jp_detect()，增加错误重试与超时控制。
 
         Args:
-            skip_first_screenshot:
+            skip_first_screenshot (bool): 是否跳过首次截图。
 
         Returns:
-            ResearchProjectJp
+            ResearchProjectJp: 识别出的日服科研项目对象。
         """
         timeout = Timer(2, count=6).start()
         while 1:
@@ -131,33 +130,22 @@ class ResearchSelector(ResearchUI):
 
     @Config.when(SERVER='jp')
     def research_detect(self):
-        """
-        实际上此处不需要截图。'image' 是一个空参数。
-        添加此参数仅是为了确保所有 "research_detect" 具有相同的参数签名。
+        """检测日服当前的 5 个科研项目。
+
+        通过逐个进入项目详情页识别项目属性，并按原始顺序重排。
         """
         projects = []
         proj_sorted = []
 
         for _ in range(5):
             self.device.click_record_clear()
-            """
-            每次进入第 4 个（中右侧）入口时，
-            所有科研项目会从右向左移动 1 个位置。
-            """
+            # 每次进入第 4 个（中右侧）入口时，所有科研项目会从右向左移动 1 个位置
             self.research_goto_detail(3)
-            """
-            'image' 是上述的空参数。
-            我们需要的是当前屏幕 'self.device.image'。
-            """
             project = self._research_jp_detect()
             logger.attr('科研项目', project)
             projects.append(project)
             self.research_detail_quit()
-        """
-        page_research 应与之前保持一致。
-        由于我们首先进入了第 4 个入口，
-        从左到右的索引为 (2, 3, 4, 0, 1)。
-        """
+        # 从左到右的索引重排为 (2, 3, 4, 0, 1) 以恢复原顺序
         for pos in range(5):
             proj_sorted.append(projects[(pos + 2) % 5])
 
@@ -165,6 +153,10 @@ class ResearchSelector(ResearchUI):
 
     @Config.when(SERVER=None)
     def research_detect(self):
+        """检测当前屏幕上的 5 个科研项目。
+
+        使用 OCR 识别项目名称与模板匹配识别系列编号。
+        """
         timeout = Timer(5, count=5).start()
         while 1:
             projects = research_detect(self.device.image)

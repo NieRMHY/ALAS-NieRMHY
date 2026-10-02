@@ -15,7 +15,10 @@ import os
 
 from module.base.template import Template
 from module.island.island_away_cook import (
+    done_items,
     load_defaults,
+    load_notified,
+
     resolve_away_cook,
     rotation_key,
     save_defaults,
@@ -223,10 +226,21 @@ class BusinessStockCheckMixin:
                 continue
             season_counts[item] = WarehouseOCR().ocr_item_quantity(self.device.image, template)
 
+        # 赛季物品进度写进日志，方便核对（攒够会另发通知）
+        progress = {item: f'{season_counts.get(item, 0)}/{need}'
+                    for item, need, _ in season_items_for_shop(shop_type, season)}
+        if progress:
+            logger.info(f"[岛屿-赛季任务] {shop_type} 进度: {progress}")
+
+        # 这里曾按仓库读数发「攒够」提醒，已去掉：仓库读数不等于任务进度
+        # （真机实测仓库 ≥250 而赛季页面只有 222/250，差额被每日订单/货运吃掉），
+        # 会误报「可以提交了」。提醒与提交统一以赛季页面的读数为准。
+
         current = self.config.cross_get(key, default='None')
         defaults = load_defaults()
         target, defaults = resolve_away_cook(
-            shop_type, season, season_counts, current, defaults)
+            shop_type, season, season_counts, current, defaults,
+            skip=done_items(season, load_notified()))
         if target != current:
             logger.info(f"[岛屿-常驻餐品] {shop_type}: {current} -> {target}"
                         f"（赛季缺口 {season}）")

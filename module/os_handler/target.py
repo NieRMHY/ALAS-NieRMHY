@@ -27,18 +27,40 @@ ZONE_ID = Digit(OCR_TARGET_ZONE_ID, name='TARGET_ZONE_ID')
 
 class OSTarget:
     """大世界目标数据。"""
+
     def is_file(self, zone, index):
-        """判断是否为文件类目标。"""
+        """判断指定海域的目标项是否为档案文件类目标。
+
+        Args:
+            zone (int): 海域 ID。
+            index (int): 目标项索引。
+
+        Returns:
+            bool: 是否为文件类目标。
+        """
         return not isinstance(DIC_OS_TARGET[zone][index], bool)
 
     def is_safe(self, zone, index):
-        """判断是否为安全目标。"""
+        """判断指定海域的目标项是否可在安全海域完成。
+
+        Args:
+            zone (int): 海域 ID。
+            index (int): 目标项索引。
+
+        Returns:
+            bool: 是否可在安全海域完成。
+        """
         return DIC_OS_TARGET[zone][index] == True
 
+
 class OSTargetHandler(OSTarget, Combat, UI):
+    """大世界目标面板处理器。"""
+
     def _receive_reward_all(self, skip_first_screenshot=True):
-        """
-        领取所有目标奖励（如果有两个或更多）。
+        """领取所有目标奖励（如果有两个或更多）。
+
+        Args:
+            skip_first_screenshot (bool): 是否跳过首次截图。默认 True。
 
         Returns:
             bool: 是否领取成功。
@@ -62,7 +84,7 @@ class OSTargetHandler(OSTarget, Combat, UI):
                 confirm_timer.reset()
                 continue
                 
-            # End
+            # 结束
             if not self.image_color_count(TARGET_RECEIVE_ALL, color=(230, 187, 67), threshold=35, count=400):
                 if confirm_timer.reached():
                     break
@@ -70,8 +92,10 @@ class OSTargetHandler(OSTarget, Combat, UI):
         return received
     
     def find_unreceived_zone(self, skip_first_screenshot=True):
-        """
-        切换到有奖励的海域（如果只有一个需要领取）。
+        """切换到有奖励待领取的单项海域。
+
+        Args:
+            skip_first_screenshot (bool): 是否跳过首次截图。默认 True。
 
         Returns:
             bool: 是否找到。
@@ -98,8 +122,10 @@ class OSTargetHandler(OSTarget, Combat, UI):
                 continue
                      
     def _receive_reward_single(self, skip_first_screenshot=True):
-        """
-        领取单个目标奖励。
+        """领取单个目标奖励。
+
+        Args:
+            skip_first_screenshot (bool): 是否跳过首次截图。默认 True。
 
         Returns:
             bool: 是否领取成功。
@@ -121,7 +147,7 @@ class OSTargetHandler(OSTarget, Combat, UI):
                 confirm_timer.reset()
                 continue
 
-            # End
+            # 结束
             if not self.image_color_count(TARGET_RECEIVE_SINGLE, color=(76, 117, 184), threshold=35, count=400):
                 if confirm_timer.reached():
                     break
@@ -129,8 +155,7 @@ class OSTargetHandler(OSTarget, Combat, UI):
         return received
 
     def receive_reward(self):
-        """
-        领取目标奖励。
+        """领取目标奖励。
 
         Returns:
             bool: 是否领取成功。
@@ -149,9 +174,22 @@ class OSTargetHandler(OSTarget, Combat, UI):
         return received
     
     def _is_finished(self, area):
+        """检查指定星星区域是否已完成（亮黄色）。
+
+        Args:
+            area (tuple): 检查区域。
+
+        Returns:
+            bool: 是否已完成。
+        """
         return self.image_color_count(area, color=(255, 239, 156), threshold=34, count=100)
     
     def _star_grid(self):
+        """获取目标面板的五颗星按钮网格。
+
+        Returns:
+            ButtonGrid: 五颗星按钮网格。
+        """
         return ButtonGrid(
             origin=(665, 405),
             delta=(32, 41),
@@ -160,12 +198,10 @@ class OSTargetHandler(OSTarget, Combat, UI):
         )
     
     def scan_current_zone(self):
-        """
-        扫描当前海域信息。
+        """扫描当前海域的目标完成信息。
 
         Returns:
-            zone_id: 海域 ID。
-            finished: 完成状态列表。
+            tuple[int, list[bool]]: (海域 ID, 5 个星标项的完成状态列表)。
         """
         zone_id = ZONE_ID.ocr(self.device.image)
         finished = [self._is_finished(button.area) for button in self._star_grid().buttons]
@@ -173,8 +209,10 @@ class OSTargetHandler(OSTarget, Combat, UI):
         return zone_id, finished
 
     def find_unfinished_safe_star_zone(self, skip_first_screenshot=True):
-        """
-        通过搜索未完成的海域，查找有未完成安全星标的海域。
+        """通过搜索未完成的海域，查找有未完成安全星标的海域。
+
+        Args:
+            skip_first_screenshot (bool): 是否跳过首次截图。默认 True。
 
         Returns:
             int: 有未完成安全星标的海域 ID，如果不存在则返回 0。
@@ -216,6 +254,7 @@ class OSTargetHandler(OSTarget, Combat, UI):
                 return 0
 
     def run(self):
+        """执行目标扫描与配置更新主逻辑。"""
         TARGET_SWITCH.set('unfinished', main=self)
         zone = self.find_unfinished_safe_star_zone()
         with self.config.multi_set():

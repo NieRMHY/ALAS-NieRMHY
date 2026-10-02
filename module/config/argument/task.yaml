@@ -404,6 +404,9 @@ Island:
   tasks:
     IslandPlan:
       - IslandPlan
+    IslandSeasonPlan:
+      - Scheduler
+      - IslandSeasonPlan
     IslandBusiness:
       - Scheduler
       - IslandBusiness

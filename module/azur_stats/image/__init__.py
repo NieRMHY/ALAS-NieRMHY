@@ -1,1 +1,1 @@
-"""AzurStats统计模块。"""
+"""AzurStats 图像识别统计模块。"""

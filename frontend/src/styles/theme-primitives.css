@@ -22,16 +22,24 @@ button:focus-visible, a:focus-visible, summary:focus-visible {outline-color: var
   -webkit-backdrop-filter: var(--theme-sidebar-filter, none);
   backdrop-filter: var(--theme-sidebar-filter, none);
 }
-.panel, .resource-card {
+.panel {
   background: var(--theme-surface-bg);
   border-color: var(--theme-glass-edge);
-  box-shadow: var(--theme-shadow-panel);
+  box-shadow: var(--theme-surface-shadow, var(--theme-shadow-panel));
   -webkit-backdrop-filter: var(--theme-surface-filter, none);
   backdrop-filter: var(--theme-surface-filter, none);
+  border-radius: var(--theme-surface-radius, var(--theme-radius-panel));
 }
-.sidebar {background: var(--theme-sidebar); border-radius: 0 var(--theme-radius-panel) var(--theme-radius-panel) 0}
-.right-rail {border-radius: 0 0 0 var(--theme-radius-panel); border-top: 0 !important; box-shadow: var(--theme-shadow-floating)}
-.panel, .resource-card {border-radius: var(--theme-radius-panel)}
+.resource-card, .instance-card, .plate {
+  background: var(--theme-plate-bg, var(--theme-surface-bg));
+  border-color: var(--theme-glass-edge);
+  box-shadow: var(--theme-plate-shadow, var(--theme-shadow-panel));
+  -webkit-backdrop-filter: var(--theme-plate-filter, var(--theme-surface-filter, none));
+  backdrop-filter: var(--theme-plate-filter, var(--theme-surface-filter, none));
+  border-radius: var(--theme-plate-radius, var(--theme-radius-card));
+}
+.sidebar {background: var(--theme-sidebar); border-radius: 0 var(--theme-sidebar-radius, var(--theme-radius-panel)) var(--theme-sidebar-radius, var(--theme-radius-panel)) 0}
+.right-rail {border-radius: 0 0 0 var(--theme-sidebar-radius, var(--theme-radius-panel)); border-top: 0 !important; box-shadow: var(--theme-shadow-floating)}
 .summary-metrics-panel .summary-metric-card,
 .summary-metrics-panel .summary-metrics section {
   border-radius: var(--theme-radius-control, 12px);
@@ -39,7 +47,6 @@ button:focus-visible, a:focus-visible, summary:focus-visible {outline-color: var
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
 }
-.instance-card {border-radius: var(--theme-radius-card)}
 
 .glass-material {background: var(--theme-glass); -webkit-backdrop-filter: var(--theme-chrome-filter, none); backdrop-filter: var(--theme-chrome-filter, none)}
 .glass-material-lens > .glass {box-shadow: inset 0 1px 0 var(--theme-glass-edge) !important}
@@ -62,16 +69,13 @@ button:focus-visible, a:focus-visible, summary:focus-visible {outline-color: var
 .task-submenu-flyout, .instance-menu {
   background: var(--theme-menu-bg);
   border-color: var(--theme-nav-popover-edge);
-  border-radius: var(--theme-radius-popover);
-  box-shadow: var(--theme-nav-popover-shadow);
-  -webkit-backdrop-filter: var(--theme-popover-filter, none);
-  backdrop-filter: var(--theme-popover-filter, none);
+  border-radius: var(--theme-menu-radius, var(--theme-radius-popover));
+  box-shadow: var(--theme-menu-shadow, var(--theme-nav-popover-shadow));
+  -webkit-backdrop-filter: var(--theme-menu-filter, none);
+  backdrop-filter: var(--theme-menu-filter, none);
 }
 .task-submenu-flyout {
   isolation: isolate;
-  background: var(--theme-surface);
-  -webkit-backdrop-filter: none;
-  backdrop-filter: none;
 }
 .task-submenu-item {border: 1px solid transparent}
 .task-submenu-item.active {border-color: transparent}
@@ -82,7 +86,7 @@ button:focus-visible, a:focus-visible, summary:focus-visible {outline-color: var
 .connection-label, .eyebrow, .text-button, .data-table summary {color: var(--theme-accent)}
 .connection-banner {background: var(--theme-warning-soft); color: var(--theme-warning)}
 
-.button {border-radius: var(--theme-radius-button)}
+.button {border-radius: var(--theme-control-radius, var(--theme-radius-button)); box-shadow: var(--theme-control-shadow, none)}
 .button.primary, [data-theme='dark'] .button.primary {background: var(--theme-primary-bg); color: var(--theme-on-accent)}
 .button.primary:hover:not(:disabled) {background: var(--theme-primary-hover)}
 .button.secondary {background: var(--theme-surface); color: var(--theme-text); border-color: var(--theme-border)}
@@ -149,7 +153,15 @@ button:focus-visible, a:focus-visible, summary:focus-visible {outline-color: var
 .error-box {color: var(--theme-danger); background: var(--theme-error-bg); border-color: var(--theme-error-border)}
 .toast {background: var(--theme-toast-bg); color: var(--theme-toast-text); box-shadow: var(--theme-shadow-popover)}
 .toast.error {background: var(--theme-toast-error-bg); color: var(--theme-on-accent)}
-.modal {background: var(--theme-modal-bg); color: var(--theme-text); border-color: var(--theme-glass-edge); border-radius: var(--theme-radius-panel); box-shadow: var(--theme-shadow-modal)}
+.modal {
+  background: var(--theme-modal-bg);
+  color: var(--theme-text);
+  border-color: var(--theme-glass-edge);
+  border-radius: var(--theme-modal-radius, var(--theme-radius-panel));
+  box-shadow: var(--theme-modal-shadow, var(--theme-shadow-modal));
+  -webkit-backdrop-filter: var(--theme-modal-filter, none);
+  backdrop-filter: var(--theme-modal-filter, none);
+}
 /* 弹窗只是小窗，遮罩要能让背后的页面仍然看得见：一律半透明且不模糊。 */
 .modal::backdrop {background: var(--theme-overlay, color-mix(in srgb, var(--bg) 30%, transparent)); backdrop-filter: none}
 

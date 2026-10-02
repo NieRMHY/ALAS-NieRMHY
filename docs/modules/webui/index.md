@@ -19,6 +19,8 @@ WebUI 不是一个目录，而是一个跨四层协作的体系：
 
 本篇是 WebUI 文档体系的导航篇：画全貌、定边界、解释跨层机制；各层细节见 [WebUI 启动器](../entry/gui.md)、[API 服务](api.md)、[运行时服务](runtime.md)、[前端](frontend.md)。独立实例密码、账号快照及 TPM 自动解锁见 [实例账号管理](accounts.md)。
 
+可视化自定义调度的编辑操作、三种运行模式、SQLite 保存及模拟边界见 [卡片式自定义调度](scheduler-program.md)。
+
 ## 2. 模块职责
 
 ### 负责（体系整体）

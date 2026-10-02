@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { applyFamilyCustom, clearFamilyKnob, clearFamilyPalette, clearFamilyRegion, readFamilyCustom, resetFamilyCustom, writeFamilyCustom } from './themeCustom'
+import { applyFamilyCustom, clearFamilyKnob, clearFamilyPalette, clearFamilyRegion, readFamilyCustom, resetFamilyCustom, subscribeFamilyCustom, writeFamilyCustom } from './themeCustom'
 
 const storage = (initial: Record<string, string> = {}) => {
   const data = {...initial}
@@ -26,6 +26,21 @@ const fakeRoot = () => {
 afterEach(() => vi.unstubAllGlobals())
 
 describe('按大类的区域参数', () => {
+  it('同族编辑与全部重置通知配色订阅者重新读取', () => {
+    storage()
+    const listener = vi.fn()
+    const unsubscribe = subscribeFamilyCustom(listener)
+    try {
+      writeFamilyCustom('new', {palette: 'ocean'})
+      expect(listener).toHaveBeenLastCalledWith('new')
+      expect(readFamilyCustom('new').palette).toBe('ocean')
+      resetFamilyCustom('new')
+      expect(listener).toHaveBeenCalledTimes(2)
+      expect(readFamilyCustom('new').palette).toBeUndefined()
+    } finally { unsubscribe() }
+    writeFamilyCustom('legacy', {params: {'plate.alpha': 80}})
+    expect(listener).toHaveBeenCalledTimes(2)
+  })
   it('没有存过时是空集（默认态零变化的来源）', () => {
     storage()
     expect(readFamilyCustom('new')).toEqual({params: {}})

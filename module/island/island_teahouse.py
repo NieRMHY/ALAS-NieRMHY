@@ -62,6 +62,22 @@ SEASONAL_DRINK_CONFIG = {
 
 
 class IslandTeahouse(IslandShopBase):
+    """岛屿白熊饮品（茶馆）自动化管理器。
+
+    继承 IslandShopBase，管理白熊饮品店的饮品制作、季节限定饮品切换、
+    固定坐标选品以及蜂蜜特殊原材料库存约束。
+
+    Attributes:
+        shop_type (str): 店铺类型标识 ('teahouse')。
+        time_prefix (str): 记录岗位完成时间的变量名前缀 ('time_tea')。
+        chef_config (str): 厨师选择配置字符串。
+        seasonal_high_priority_drink (dict | None): 当前季节高优先级限定饮品配置。
+        fresh_honey (int): 仓库中识别到的新鲜蜂蜜库存。
+        shop_items (list): 茶馆商品配置列表。
+        meal_compositions (dict): 套餐组成与所需单品配置。
+        post_buttons (dict): 岗位按钮映射字典。
+        filter_asset (str): 仓库筛选分类标识 ('teahouse')。
+    """
     # 季节菜品只在优先阶段生产，余岗仅安排用户配置的常驻餐品。
     FILL_SPECIAL_FOOD = False
 
@@ -214,12 +230,10 @@ class IslandTeahouse(IslandShopBase):
         self.initialize_shop()
 
     def _auto_switch_seasonal_meals(self):
-        """
-        自动切换用户配置中的春季限定餐品到当前季节对应餐品。
-        迎春花茶(spring_flower_tea) -> 春季保持，夏季切换为西瓜汁(watermelon_juice)，
-        秋季切换为胡萝卜秋梨汁(carrot_pear_juice)。
-        鲜榨菠萝汁(pineapple_juice) -> 春季保持，夏季切换为黄瓜汁(cucumber_juice)，
-        秋季切换为菊花茶(chrysanthemum_tea)。
+        """自动切换用户配置中的春季限定饮品到当前季节对应槽位饮品。
+
+        迎春花茶在夏季切换为西瓜汁，秋季切换为胡萝卜秋梨汁；
+        鲜榨菠萝汁在夏季切换为黄瓜汁，秋季切换为菊花茶。
         """
         SEASONAL_TEAHOUSE_SWITCH = {
             'spring_flower_tea': 0,  # 迎春花茶 -> 槽位0
@@ -259,7 +273,11 @@ class IslandTeahouse(IslandShopBase):
                 )
 
     def get_warehouse_counts(self):
-        """覆盖：获取仓库数量，包括蜂蜜"""
+        """获取仓库饮品及特殊材料（新鲜蜂蜜）的库存数量。
+
+        Returns:
+            dict[str, int]: 各饮品及蜂蜜的仓库库存映射字典。
+        """
         # 先调用父类方法获取基础库存
         super().get_warehouse_counts()
 
@@ -275,10 +293,17 @@ class IslandTeahouse(IslandShopBase):
         return self.warehouse_counts
 
     def check_special_materials(self, product, batch_size):
-        """覆盖：检查特殊材料（蜂蜜）限制。
+        """检查特殊材料（蜂蜜）对饮品制作批次的限制。
 
         蜂蜜只用于制作蜂蜜柠檬水（每 1 个）与草莓蜂蜜冰沙（每 4 个），
         不直接参与阳光蜜水等套餐；套餐原料由父类按套餐组成检查。
+
+        Args:
+            product (str): 目标饮品名称。
+            batch_size (int): 计划制作批次数。
+
+        Returns:
+            int: 考虑蜂蜜库存后允许的最大批次数。
         """
         if batch_size <= 0:
             return 0
@@ -296,11 +321,22 @@ class IslandTeahouse(IslandShopBase):
         return batch_size
 
     def post_produce(self, post_id, product, number, time_var_name, product2=None):
-        """
-        覆盖父类 post_produce：
-        季节高优先级饮品（迎春花茶/西瓜汁等）：点击岗位 → ISLAND_POST_SELECT进入选择 → 处理选人 → 点击固定坐标。
-        不调用父类select_product（跳过图像匹配和滑动）。
-        其他餐品走父类逻辑。
+        """安排茶馆岗位生产指定饮品。
+
+        季节高优先级饮品（迎春花茶/西瓜汁等）采用固定坐标点击，其他饮品走基类通用流程。
+
+        Args:
+            post_id (str): 岗位标识。
+            product (str): 目标饮品名称。
+            number (int): 计划生产数量。
+            time_var_name (str): 存储完成时间的属性名。
+            product2 (str, optional): 备选饮品名称。
+
+        Returns:
+            int: 实际安排生产的数量，原料不足返回 0。
+
+        Raises:
+            GameStuckError: 派遣流程超时或界面卡死时抛出。
         """
         seasonal_drink_name = self.seasonal_high_priority_drink['name'] if self.seasonal_high_priority_drink else ''
         if product == seasonal_drink_name:
@@ -363,13 +399,22 @@ class IslandTeahouse(IslandShopBase):
         return super().post_produce(post_id, product, number, time_var_name, product2)
 
     def get_priority_production(self):
-        """季节饮品先排一批，产量随后计入基础需求。"""
+        """返回季节高优先级饮品的排产计划。
+
+        Returns:
+            dict[str, int]: 优先排产饮品名称到数量的映射。
+        """
         if not self.seasonal_high_priority_drink:
             return {}
         return {self.seasonal_high_priority_drink['name']: self.POST_PRODUCE_LIMIT}
 
     def deduct_materials(self, product, number):
-        """覆盖：扣除前置材料（蜂蜜柠檬水与草莓蜂蜜冰沙消耗蜂蜜）"""
+        """扣除制作饮品消耗的原材料（包括蜂蜜和套餐原材料）。
+
+        Args:
+            product (str): 制作的饮品名称。
+            number (int): 制作批次数量。
+        """
         # 先调用父类方法扣除套餐原材料
         super().deduct_materials(product, number)
 
@@ -390,11 +435,17 @@ class IslandTeahouse(IslandShopBase):
             logger.info(f"[岛屿-白熊饮品] 扣除蜂蜜：{self._item_cn('fresh_honey')} -{deducted} (用于制作{self._item_cn('strawberry_honey')})")
 
     def apply_special_material_constraints(self, requirements):
-        """覆盖：根据蜂蜜库存调整需求。
+        """根据蜂蜜库存按优先级调整蜂蜜柠檬水与草莓蜂蜜冰沙的需求计划。
 
         蜂蜜只用于蜂蜜柠檬水（每 1 个）与草莓蜂蜜冰沙（每 4 个）；
         两者按顺序共享蜂蜜：先满足蜂蜜柠檬水，剩余蜂蜜再分配给草莓蜂蜜冰沙。
         阳光蜜水的原料（草莓蜜沁 + 蜂蜜柠檬水）由基类套餐需求分解处理。
+
+        Args:
+            requirements (dict[str, int]): 各饮品的原始需求映射。
+
+        Returns:
+            dict[str, int]: 调整后的饮品需求映射。
         """
         result = requirements.copy()
         remaining_honey = self.fresh_honey

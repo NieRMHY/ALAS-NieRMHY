@@ -41,16 +41,24 @@ from module.meowfficer.scan_utils import (CATTERY_PANEL_AREA, CATTERY_SCREEN_HEI
 
 
 class MeowfficerScanner(MeowfficerBase):
-    """自动遍历猫窝并识别每只猫的天赋。
+    """自动遍历猫窝并识别每只猫天赋的扫描器。
 
     只负责「取图 + 识别」，评分与报告由 :class:`~module.meowfficer.score_task.MeowfficerScore`
     负责，保持这个类没有配置耦合。
 
     Attributes:
-        scanned (list): ``(猫名, [Talent, ...])``，按扫描顺序。
+        scanned (list[tuple[str, list[Talent], int | None]]): 扫描结果列表，按扫描顺序存储 (猫名, 天赋列表, 等级)。
+        _popup_warned (bool): 是否已对阻挡界面的陪玩结算弹窗输出过告警提示。
     """
 
     def __init__(self, config, device=None, task=None):
+        """初始化指挥喵扫描器。
+
+        Args:
+            config (AzurLaneConfig): 任务配置对象。
+            device (Device, optional): 设备交互实例。
+            task (str, optional): 任务名称。
+        """
         super().__init__(config, device, task)
         self.scanned = []
         # 已经提示过「疑似弹窗挡住页面」（只提示一次，避免刷屏）
@@ -67,11 +75,11 @@ class MeowfficerScanner(MeowfficerBase):
         所以「消失」就代表天赋页已经打开。
 
         Args:
-            appear: True 等它出现（回到列表），False 等它消失（进入天赋页）。
-            timeout: 超时秒数。
+            appear (bool): True 表示等待其出现（回到列表），False 表示等待其消失（进入天赋页）。
+            timeout (float): 超时等待时间（秒）。
 
         Returns:
-            bool: 是否等到了期望状态。
+            bool: 是否在超时时间内等到了期望状态。
         """
         timer = Timer(timeout, count=int(timeout / 0.3) + 3).start()
         while 1:
@@ -87,12 +95,12 @@ class MeowfficerScanner(MeowfficerBase):
         """等待画面稳定：连续两次截图的面板区域平均差小于阈值。
 
         Args:
-            area: 参与比较的面板区域。
-            timeout: 超时秒数。
-            tolerance: 平均像素差阈值。
+            area (tuple[int, int, int, int]): 参与比较的面板区域 (x1, y1, x2, y2)。
+            timeout (float): 超时等待时间（秒）。
+            tolerance (float): 平均像素差阈值。
 
         Returns:
-            bool: 是否判定为稳定。
+            bool: 是否在超时前判定为稳定。
         """
         timer = Timer(timeout, count=int(timeout / 0.2) + 3).start()
         last = None
@@ -112,7 +120,7 @@ class MeowfficerScanner(MeowfficerBase):
     # ------------------------------------------------------------------
 
     def _dump_popup_debug(self) -> None:
-        """把当前画面存到 ``log/meowfficer_popup_debug.png``（弹窗关不掉时用来定位）。"""
+        """把当前画面存到 log/meowfficer_popup_debug.png 以供异常排查。"""
         import os
 
         import cv2
@@ -126,7 +134,7 @@ class MeowfficerScanner(MeowfficerBase):
             logger.warning(f'[指挥喵-扫描] 现场截图保存失败：{e}')
 
     def _dismiss_play_popup(self) -> bool:
-        """检测「陪玩」结算弹窗，只提示、**不再自动点击**。
+        """检测「陪玩」结算弹窗，只提示、不再自动点击。
 
         历史教训：这里原本会自动点右下角「确定」。但实测这个判据在正常画面上并不稳定 ——
         主界面底部导航、天赋页右下角的猫立绘都可能凑出足够的金色像素；误判后点下去会落到
@@ -136,7 +144,7 @@ class MeowfficerScanner(MeowfficerBase):
         所以现在改成：**导航流程不再自动点它**，只提示用户手点；用户点掉之后循环会自动继续。
 
         Returns:
-            bool: 恒为 ``False``（不再代替用户点击）。
+            bool: 恒为 False（不再代替用户点击）。
         """
         if not self.image_color_count(MEOWFFICER_PLAY_CONFIRM,
                                       color=MEOWFFICER_PLAY_CONFIRM.color,
@@ -151,7 +159,7 @@ class MeowfficerScanner(MeowfficerBase):
         return False
 
     def _looks_like_meowfficer_entry(self) -> bool:
-        """当前画面像不像「指挥喵相关」的页面。
+        """检查当前画面是否属于指挥喵相关的页面。
 
         只用在**盲点之后**做验证：盲点前没法判断是不是主界面，但点完必须能判断
         有没有真的进到生活区/指挥喵，否则就该收手。
@@ -175,7 +183,7 @@ class MeowfficerScanner(MeowfficerBase):
         自身的资源做两步导航（实测 0.998 / 0.990），都识别不到就交给用户手动打开。
 
         Raises:
-            RequestHumanTakeover: 无法识别当前页面时给出可操作的提示。
+            RequestHumanTakeover: 无法识别当前页面或多次尝试后仍无法进入时抛出。
         """
         from module.ui.assets import (DORMMENU_CHECK, DORMMENU_GOTO_MEOWFFICER, MAIN_GOTO_DORMMENU,
                                       MEOWFFICER_CHECK)
@@ -261,10 +269,10 @@ class MeowfficerScanner(MeowfficerBase):
         （这一窝就有 3 只「潜艇参谋」、4 只「潜艇火猫」）。
 
         Args:
-            ocr: 已初始化的 OCR 实例。
+            ocr (AlOcr): 已初始化的 OCR 实例。
 
         Returns:
-            ``(猫名, 等级)``；猫名读不到返回空串，等级读不到返回 ``None``。
+            tuple[str, int | None]: (猫名, 等级)；猫名读不到返回空串，等级读不到返回 None。
         """
         from module.meowfficer.score_ocr import _iter_det_results
 
@@ -286,7 +294,15 @@ class MeowfficerScanner(MeowfficerBase):
 
     @staticmethod
     def _crop_scale(image: np.ndarray, scale: float = 3.0) -> np.ndarray:
-        """放大图像以提升小字识别率（天赋名实拍校准用的就是 3 倍）。"""
+        """放大图像以提升小字识别率（天赋名实拍校准用的就是 3 倍）。
+
+        Args:
+            image (np.ndarray): 输入图像数组。
+            scale (float): 放大倍率，默认为 3.0。
+
+        Returns:
+            np.ndarray: 放大插值后的图像数组。
+        """
         import cv2
         return cv2.resize(image, None, fx=scale, fy=scale, interpolation=cv2.INTER_LANCZOS4)
 
@@ -297,9 +313,9 @@ class MeowfficerScanner(MeowfficerBase):
         「已扫过的猫」跳过、从而整只猫漏掉。
 
         Args:
-            button: 卡片按钮。
-            ocr: 已初始化的 OCR 实例。
-            previous: 点击前显示的猫名。
+            button (Button): 卡片按钮对象。
+            ocr (AlOcr): 已初始化的 OCR 实例。
+            previous (str, optional): 点击前显示的猫名，默认为空。
 
         Returns:
             str: 选中后的猫名；读不到返回空串。
@@ -318,7 +334,11 @@ class MeowfficerScanner(MeowfficerBase):
         return name
 
     def _open_talent(self) -> bool:
-        """点开「天赋」页签。"""
+        """点开「天赋」页签。
+
+        Returns:
+            bool: 是否成功进入天赋页。
+        """
         if not self.appear(MEOWFFICER_TALENT_TAB, offset=TALENT_TAB_OFFSET):
             # 找不到页签多半是被结算弹窗盖住了，点掉再来一次
             if self._dismiss_play_popup():
@@ -336,7 +356,11 @@ class MeowfficerScanner(MeowfficerBase):
         return True
 
     def _back_to_cattery(self) -> bool:
-        """从天赋页返回猫窝列表。"""
+        """从天赋页返回猫窝列表。
+
+        Returns:
+            bool: 是否成功返回猫窝列表。
+        """
         if not self.appear(MEOWFFICER_GOTO_DORMMENU, offset=TALENT_TAB_OFFSET):
             logger.warning('[指挥喵-扫描] 天赋页上找不到返回箭头')
             return False
@@ -354,7 +378,7 @@ class MeowfficerScanner(MeowfficerBase):
         而 ``recognize`` 里的天赋库白名单会把说明文字、按钮文字自动过滤掉。
 
         Args:
-            ocr: 已初始化的 OCR 实例。
+            ocr (AlOcr): 已初始化的 OCR 实例。
 
         Returns:
             list[Talent]: 按天赋线去重、保留最高等级的天赋列表。
@@ -395,9 +419,9 @@ class MeowfficerScanner(MeowfficerBase):
         有整行猫被跳过的风险。
 
         Args:
-            area: 面板区域。
-            distance: 滑动距离（像素）；**正数向上滑（看后面的内容），负数向下滑（回到顶部）**。
-            duration: 滑动耗时（秒），越长越不容易触发惯性。
+            area (tuple[int, int, int, int]): 面板区域 (x1, y1, x2, y2)。
+            distance (int): 滑动距离（像素）；**正数向上滑（看后面的内容），负数向下滑（回到顶部）**。
+            duration (float): 滑动耗时（秒），越长越不容易触发惯性。
         """
         x0, y0, x1, y1 = area
         x = (x0 + x1) // 2
@@ -470,17 +494,17 @@ class MeowfficerScanner(MeowfficerBase):
     def scan_all(self, limit: int = 0, passes: int = 12) -> list:
         """遍历猫窝列表，返回每只猫的天赋。
 
-        Args:
-            limit: 最多扫描多少只猫；``0`` 表示不限。
-            passes: 最多翻几屏（每屏 12 张卡片）。
-
-        Returns:
-            list[tuple[str, list[Talent], int | None]]: ``(猫名, 天赋列表, 等级)``；
-            等级读不到时为 ``None``。
-
         指挥喵**可以自定义名字**，自定义名甚至可能和天赋名一样（用户就有一只猫叫
         「不动如山」），而且**可以重名**，所以这里刻意**不做任何按内容的去重**：
         改成每屏整屏前进、不重叠地扫，保证每只猫只被访问一次。
+
+        Args:
+            limit (int): 最多扫描多少只猫；``0`` 表示不限。
+            passes (int): 最多翻几屏（每屏 12 张卡片）。
+
+        Returns:
+            list[tuple[str, list[Talent], int | None]]: ``(猫名, 天赋列表, 等级)`` 列表；
+            等级读不到时为 ``None``。
         """
         self.scanned = []
         ocr = self._load_ocr()
@@ -551,7 +575,14 @@ class MeowfficerScanner(MeowfficerBase):
         return self.scanned
 
     def _load_ocr(self):
-        """加载中文 OCR 模型（与评分任务一致的失败提示）。"""
+        """加载中文 OCR 模型（与评分任务一致的失败提示）。
+
+        Returns:
+            AlOcr: 已初始化成功的 OCR 实例。
+
+        Raises:
+            RequestHumanTakeover: OCR 模型加载失败时抛出。
+        """
         from module.exception import RequestHumanTakeover
         from module.ocr.al_ocr import AlOcr
         try:

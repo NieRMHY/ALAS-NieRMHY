@@ -165,7 +165,8 @@ export function TaskQueue({instance, data, onNavigate}: {instance: string; data?
       )
       animation.finished.then(() => source.remove()).catch(() => source.remove())
     }
-  })
+  /* 条目位置只在 data 变化时改变。 */
+  }, [data])
 
   return <div className="rail-task-list" ref={list}>
     {data?.tasks.length ? taskGroups.map(group => {

@@ -95,6 +95,11 @@ class Retirement(Enhancement, QuickRetireSettingHandler):
 
     @property
     def retire_keep_common_cv(self):
+        """检查当前是否需要保留普通稀有度航母（用于钻石打捞或三油低耗任务）。
+
+        Returns:
+            bool: 若启用了 GemsFarming 或 ThreeOilLowCost 则返回 True。
+        """
         return self.config.is_task_enabled('GemsFarming') or self.config.is_task_enabled('ThreeOilLowCost')
 
     def _retirement_choose(self, amount=10, target_rarity=('N',)):
@@ -653,8 +658,7 @@ class Retirement(Enhancement, QuickRetireSettingHandler):
         return total
 
     def _retire_select_one(self, button, skip_first_screenshot=True):
-        """
-        在退役确认界面中选择一艘舰船（取消其退役）。
+        """在退役确认界面中选择一艘舰船（取消其退役）。
 
         通过检测 RETIRE_COIN 模板是否变化来判断是否成功选中。
         最多重试 3 次。
@@ -662,6 +666,9 @@ class Retirement(Enhancement, QuickRetireSettingHandler):
         Args:
             button (Button): 要选择的舰船按钮。
             skip_first_screenshot (bool): 是否跳过首次截图。默认 True。
+
+        Returns:
+            bool: 成功取消选中返回 True，尝试 3 次失败返回 False。
         """
         count = 0
         RETIRE_COIN.load_color(self.device.image)

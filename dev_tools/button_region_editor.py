@@ -35,11 +35,16 @@ TASKS = [
 
 
 def process_button_image(img_path, area):
-    """
-    处理普通 Button 图片：
-    - 将区域 (x1,y1,x2,y2) 之外的像素全部置黑 (0,0,0)
-    - 区域内像素保持不变
-    - 图片尺寸保持 1280x720 不变
+    """处理普通 Button 图片，保留区域内像素并将区域外像素置黑。
+
+    图片尺寸保持 1280x720 不变，便于 button_extract.py 自动识别边界。
+
+    Args:
+        img_path (str): 图片绝对路径。
+        area (tuple[int, int, int, int]): 目标有效区域坐标 (x1, y1, x2, y2)。
+
+    Returns:
+        bool: 处理是否成功。
     """
     print(f"  [Button] 处理: {os.path.basename(img_path)}, 区域={area}")
 
@@ -63,10 +68,14 @@ def process_button_image(img_path, area):
 
 
 def process_template_image(img_path, area):
-    """
-    处理 TEMPLATE 图片：
-    - 从原图中裁剪出 area 区域
-    - 另存为小图（只包含区域内像素）
+    """处理 TEMPLATE 图片，从原图裁剪出目标区域并保存为独立模板小图。
+
+    Args:
+        img_path (str): 图片绝对路径。
+        area (tuple[int, int, int, int]): 目标有效区域坐标 (x1, y1, x2, y2)。
+
+    Returns:
+        bool: 处理是否成功。
     """
     print(f"  [Template] 处理: {os.path.basename(img_path)}, 区域={area}")
 
@@ -82,6 +91,7 @@ def process_template_image(img_path, area):
 
 
 def run():
+    """根据任务配置逐个裁剪或擦除按钮图片，并输出处理报告。"""
     print("=" * 60)
     print("按钮区域图像编辑器 - button_extract 逆向工具")
     print("=" * 60)

@@ -17,7 +17,6 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from module.island.island_planner import (  # noqa: E402
-    SHELF_SLOTS,
     apply_patch,
     config_patch,
     format_report,

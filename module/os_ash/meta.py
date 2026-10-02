@@ -40,13 +40,18 @@ class MetaDigitCounter(DigitCounter):
     """META 数字计数器，修正 OCR 常见识别错误。"""
 
     def after_process(self, result):
-        """
-        后处理 OCR 结果，修正常见误识别。
+        """后处理 OCR 结果，修正常见误识别。
 
         处理逻辑：
         - "00/200" -> "100/200"（首位 0 被识别为数字 0）
         - "23" -> "2/3"（斜杠丢失，仅当首位为 0-3 时修正）
         - "1/40/1400" -> "140/1400"（多余的斜杠）
+
+        Args:
+            result (str): OCR 原始字符串。
+
+        Returns:
+            str: 修正后的字符串。
         """
         result = super().after_process(result)
 
@@ -72,12 +77,11 @@ class Meta(UI, MapEventHandler):
     """META 战斗基础模块，处理地图事件和 OCR 识别。"""
 
     def digit_ocr_point_and_check(self, button: Button, check_number: int):
-        """
-        OCR 读取按钮上的数字，判断是否达到阈值。
+        """OCR 读取按钮上的数字，判断是否达到阈值。
 
         Args:
-            button: 要识别的按钮区域。
-            check_number: 判断阈值。
+            button (Button): 要识别的按钮区域。
+            check_number (int): 判断阈值。
 
         Returns:
             bool: 识别值是否 >= 阈值。
@@ -89,13 +93,12 @@ class Meta(UI, MapEventHandler):
         return False
 
     def handle_map_event(self, drop=None):
-        """
-        处理 META 地图中的各种事件弹窗。
+        """处理 META 地图中的各种事件弹窗。
 
         处理自动攻击完成确认、误入帮助页面、误入战斗准备页面等情况。
 
         Args:
-            drop: 掉落图像处理器。
+            drop (DropImage, optional): 掉落图像处理器。
 
         Returns:
             bool: 是否采取了行动。
@@ -121,12 +124,20 @@ class Meta(UI, MapEventHandler):
 
 
 def _server_support():
-    """当前服务器是否支持信标和 OneHitMode。"""
+    """当前服务器是否支持信标和 OneHitMode。
+
+    Returns:
+        bool: 当前服务器是否支持。
+    """
     return server.server in ['cn', 'en', 'jp', 'tw']
 
 
 def _server_support_dossier_auto_attack():
-    """当前服务器是否支持档案自动攻击。"""
+    """当前服务器是否支持档案自动攻击。
+
+    Returns:
+        bool: 当前服务器是否支持。
+    """
     return server.server in ['cn', 'en']
 
 
@@ -136,11 +147,13 @@ class OpsiAshBeacon(Meta):
     _meta_category = "undefined"
 
     def _attack_meta(self, skip_first_screenshot=True):
-        """
-        处理 META 攻击的完整流程。
+        """处理 META 攻击的完整流程。
 
         根据页面状态分发：INIT 时选择信标或档案，ATTACKING 时执行攻击，
         COMPLETE 时领取奖励。
+
+        Args:
+            skip_first_screenshot (bool): 是否跳过首次截图。默认 True。
 
         Pages:
             in: in_meta
@@ -165,7 +178,7 @@ class OpsiAshBeacon(Meta):
                     # 正常结束
                     break
             if MetaState.ATTACKING == state:
-                # Exit beacon pages when in dossier-only mode
+                # 仅档案模式下退出信标页面
                 if self.config.OpsiAshBeacon_AttackMode == 'current_dossier_only' \
                         and self.appear(BEACON_LIST, offset=(20, 20)):
                     self.appear_then_click(ASH_QUIT, offset=(10, 10), interval=2)
@@ -295,10 +308,12 @@ class OpsiAshBeacon(Meta):
         return OCR_META_DAMAGE.ocr(self.device.image)
 
     def _ensure_meta_inner_page_damage(self, skip_first_screenshot=True):
-        """
-        切换 META 内部页面到伤害标签页。
+        """切换 META 内部页面到伤害标签页。
 
         如果当前在详情页，则点击切换到伤害页。
+
+        Args:
+            skip_first_screenshot (bool): 是否跳过首次截图。默认 True。
 
         Pages:
             in: in_meta, ASH_START
@@ -319,8 +334,7 @@ class OpsiAshBeacon(Meta):
                 continue
 
     def _pre_attack(self):
-        """
-        攻击前的准备工作。
+        """攻击前的准备工作。
 
         信标模式下：根据配置请求协助。
         档案模式下：cn/en 服务器支持自动攻击，其他服务器暂不处理。
@@ -546,14 +560,23 @@ class OpsiAshBeacon(Meta):
         return MetaState.UNDEFINED
 
     def _in_meta_page(self):
-        """判断当前是否在 META 相关页面（主页面、信标或档案）。"""
+        """判断当前是否在 META 相关页面（主页面、信标或档案）。
+
+        Returns:
+            bool: 是否在 META 相关页面。
+        """
         return self.appear(ASH_SHOWDOWN, offset=(30, 30)) \
                or self.appear(BEACON_LIST, offset=(20, 20)) \
                or self.appear(DOSSIER_LIST, offset=(20, 20))
 
     def _ensure_meta_page(self, skip_first_screenshot=True):
-        """
-        确保当前在 META 页面，不在则通过点击入口进入。
+        """确保当前在 META 页面，不在则通过点击入口进入。
+
+        Args:
+            skip_first_screenshot (bool): 是否跳过首次截图。默认 True。
+
+        Returns:
+            bool: 是否成功进入 META 页面。
 
         Pages:
             in: page_reward
@@ -575,10 +598,15 @@ class OpsiAshBeacon(Meta):
                 continue
 
     def ensure_dossier_page(self, skip_first_screenshot=True):
-        """
-        确保当前在档案页面。
+        """确保当前在档案页面。
 
         先导航到奖励页面，再进入 META 页面，最后切换到档案标签。
+
+        Args:
+            skip_first_screenshot (bool): 是否跳过首次截图。默认 True。
+
+        Returns:
+            bool: 是否成功进入档案页面。
 
         Pages:
             in: page_reward
@@ -630,10 +658,12 @@ class AshBeaconAssist(Meta):
     """余烬信标协助任务，处理他人的信标求助。"""
 
     def _attack_meta(self, skip_first_screenshot=True):
-        """
-        协助攻击 META 信标。
+        """协助攻击 META 信标。
 
         在信标列表中查找可用的信标，检查剩余协助次数后发起攻击。
+
+        Args:
+            skip_first_screenshot (bool): 是否跳过首次截图。默认 True。
 
         Returns:
             bool: 是否找到了可攻击的信标。
@@ -669,8 +699,7 @@ class AshBeaconAssist(Meta):
         return appeared
 
     def _make_an_attack(self):
-        """
-        执行一次 META 协助战斗。
+        """执行一次 META 协助战斗。
 
         战斗结束后确认回到协助页面，处理误入战斗准备和主页的异常情况。
 
@@ -705,8 +734,7 @@ class AshBeaconAssist(Meta):
         combat.combat(expected_end=expected_end, save_get_items=False, emotion_reduce=False)
 
     def _ensure_meta_level(self):
-        """
-        选择满足等级要求的 META 信标。
+        """选择满足等级要求的 META 信标。
 
         等待信标等级数字显示后，通过 OCR 读取等级，
         不满足则翻页查找，最多尝试 5 次。
@@ -736,14 +764,23 @@ class AshBeaconAssist(Meta):
         logger.info(f'[META支援] 找到等级 {current} 的信标')
 
     def _in_meta_assist_page(self):
-        """判断当前是否在信标协助页面。"""
+        """判断当前是否在信标协助页面。
+
+        Returns:
+            bool: 是否在信标协助页面。
+        """
         return self.appear(BEACON_MY, offset=(20, 20))
 
     def _ensure_meta_assist_page(self, skip_first_screenshot=True):
-        """
-        确保当前在信标协助页面。
+        """确保当前在信标协助页面。
 
         从 META 入口进入，处理各种中间页面跳转。
+
+        Args:
+            skip_first_screenshot (bool): 是否跳过首次截图。默认 True。
+
+        Returns:
+            bool: 是否成功进入信标协助页面。
 
         Pages:
             in: page_reward or in_meta
@@ -774,7 +811,11 @@ class AshBeaconAssist(Meta):
                 continue
 
     def _begin_meta_assist(self):
-        """开始信标协助流程，确保进入协助页面后执行攻击。"""
+        """开始信标协助流程，确保进入协助页面后执行攻击。
+
+        Returns:
+            bool: 是否成功找到并攻击信标。
+        """
         logger.hr('META支援')
         self._ensure_meta_assist_page()
         return self._attack_meta(skip_first_screenshot=False)

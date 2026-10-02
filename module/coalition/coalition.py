@@ -138,7 +138,7 @@ class Coalition(CoalitionCombat, CampaignEvent):
                 break
         else:
             logger.warning('等待PT超时，假设已达到')
-        LogRes(self.config).Pt = pt
+        LogRes(self.config).record('Pt', pt, observed=pt != 999999 and bool(getattr(ocr, 'last_valid', False)))
         self.config.update()
         return pt
 

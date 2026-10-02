@@ -5,6 +5,13 @@ import type { LogEntry } from '../api/types'
 const line = (id: number, text: string, level = 'INFO'): LogEntry => ({id, level, text})
 
 describe('MonitorPanel 截图视图的最近日志', () => {
+  it('连续帧归并保留时间且大批日志缓存有界', () => {
+    let pending = mergeLines([], [line(0, 'WARNING  2026-09-13 23:24:47.008 │ 开始')], true)
+    expect(mergeLines([], pending, true)[0].time).toBe('2026-09-13 23:24:47.008')
+    for (let id = 1; id <= 1000; id++) pending = mergeLines(pending, [line(id, `步骤 ${id}`)], false)
+    expect(pending.map(item => item.id)).toEqual([998, 999, 1000])
+    expect(mergeLines(pending, [line(1, '重置')], true).map(item => item.text)).toEqual(['重置'])
+  })
   it('丢弃没有信息量的纯分割线', () => {
     expect(compactLine(line(1, '═'.repeat(60)))).toBeNull()
     expect(compactLine(line(2, '─'.repeat(40)))).toBeNull()

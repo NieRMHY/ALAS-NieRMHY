@@ -314,6 +314,10 @@
       "name": "Global Config",
       "help": "Global configuration for Island Plan, including season settings."
     },
+    "IslandSeasonPlan": {
+      "name": "Season Tasks (Development Plan)",
+      "help": "Read the island \"Development Season - Development Plan\" page: track each task progress, sync claimed state, notify when items are ready; optional auto submit"
+    },
     "IslandBusiness": {
       "name": "Business Module",
       "help": "Auto-manage 5 shops: Fish Restaurant, Polar Bear Drinks, Squid Grill, Juu Eatery, Juu Coffee."
@@ -2184,8 +2188,8 @@
       "help": "After enabling, the front row level limit is changed to level 30 or above. If it is hard mode (such as the CD map), it is changed to level 70."
     },
     "DelayTaskIFNoFlagship": {
-      "name": "Delay task when no replacement flagship is available",
-      "help": "When changing the flagship, if a white aircraft carrier that meets the conditions cannot be found, the mission will be postponed."
+      "name": "Delay task when no suitable replacement ship is available",
+      "help": "On: postpone the task when no replacement ship meets the level and other requirements. Off: continue sorties with the current fleet and retry replacement after battle. Low morale or errors during ship replacement or equipment transfer still interrupt the task."
     },
     "CommissionLimit": {
       "name": "Prevent too many urgent commissions",
@@ -2607,7 +2611,11 @@
     },
     "MinLevel": {
       "name": "Only add ships at level >= X",
-      "help": ""
+      "help": "0 means no limit"
+    },
+    "MaxLevel": {
+      "name": "Only add ships at level <= X",
+      "help": "0 means no limit\nWhen it conflicts with the minimum level, both are treated as 0 (disabled)"
     }
   },
   "Research": {
@@ -5592,6 +5600,24 @@
     "UrgentDetectRefreshTime": {
       "name": "Urgent commission detect refresh time",
       "help": "Cooldown time for urgent commission detection. Skips urgent commission detection before this time. Format: YYYY-MM-DD HH:mm:ss"
+    }
+  },
+  "IslandSeasonPlan": {
+    "_info": {
+      "name": "Season Tasks (Development Plan)",
+      "help": "Read the island \"Development Season → Development Plan\" page: log each task progress and sync the done state from the \"Claimed\" badge (claimed tasks are no longer produced)"
+    },
+    "SyncDone": {
+      "name": "Sync done state",
+      "help": "Sync with the in-game \"Claimed\" badge: claimed task items stop being produced, visible-but-unclaimed ones clear the done flag",
+      "True": "On",
+      "False": "Off"
+    },
+    "Submit": {
+      "name": "Auto submit",
+      "help": "When enabled, automatically click submit and claim rewards once a season task is ready; verify manually once before enabling",
+      "True": "On",
+      "False": "Off"
     }
   },
   "IslandDailyInteract": {

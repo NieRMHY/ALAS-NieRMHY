@@ -50,7 +50,6 @@ class TestDeployLocation(unittest.TestCase):
                 config.config_redirect()
 
                 self.assertEqual(config.config['Repository'], config_module.GIT_OVER_CDN_REPOSITORY)
-                self.assertTrue(config.GitOverCdn)
                 self.assertEqual(config.Repository, config_module.GIT_OVER_CDN_FALLBACK_REPOSITORY)
                 get_country_code.assert_called_once_with()
 
@@ -65,7 +64,6 @@ class TestDeployLocation(unittest.TestCase):
                 config.config_redirect()
 
                 self.assertEqual(config.config['Repository'], config_module.GITHUB_REPOSITORY)
-                self.assertFalse(config.GitOverCdn)
                 self.assertEqual(config.Repository, config_module.GITHUB_REPOSITORY)
                 get_country_code.assert_called_once_with()
 
@@ -79,7 +77,6 @@ class TestDeployLocation(unittest.TestCase):
                 config.config_redirect()
 
                 self.assertEqual(config.config['Repository'], config_module.GITHUB_REPOSITORY)
-                self.assertFalse(config.GitOverCdn)
 
     def test_custom_repository_does_not_query_location(self):
         for config_module in (deploy_config, windows_config):

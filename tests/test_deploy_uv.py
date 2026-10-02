@@ -1,3 +1,4 @@
+import os
 import queue
 import subprocess
 import unittest
@@ -5,6 +6,35 @@ from pathlib import Path
 from unittest.mock import Mock, patch
 
 from deploy import uv
+
+
+class TestUvEnvironmentPath(unittest.TestCase):
+    def test_default_environment_remains_project_local(self):
+        with patch.dict(os.environ, {"UV_PROJECT_ENVIRONMENT": ""}):
+            self.assertEqual(uv.venv_path(Path("project")), Path("project/.venv"))
+
+    def test_relative_environment_is_resolved_from_project(self):
+        with patch.dict(os.environ, {"UV_PROJECT_ENVIRONMENT": "env"}):
+            self.assertEqual(uv.venv_path(Path("project")), Path("project/env"))
+
+    def test_external_environment_is_used_by_dependency_sync(self):
+        external = Path.cwd() / "external-env"
+        with (
+            patch.dict(os.environ, {"UV_PROJECT_ENVIRONMENT": str(external), "UV_PYTHON_DOWNLOADS": "never"}),
+            patch("deploy.uv._deploy_bool", return_value=True),
+            patch("deploy.uv._resolve_uv", return_value=Path("uv")),
+            patch("deploy.uv._venv_python_works", return_value=True),
+            patch("deploy.uv._run_and_collect") as run,
+        ):
+            uv.sync_project_venv(root=Path("project"))
+
+        # 只同步依赖，不能下载解释器或重新创建项目内的 .venv。
+        run.assert_called_once()
+        command, _, env, *_ = run.call_args.args
+        self.assertEqual(command[1], "sync")
+        python = external / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
+        self.assertEqual(command[command.index("--python") + 1], python)
+        self.assertEqual(env["UV_PROJECT_ENVIRONMENT"], str(external))
 
 
 class TestUvCommandOutput(unittest.TestCase):

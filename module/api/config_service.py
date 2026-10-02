@@ -106,6 +106,7 @@ class ConfigService:
         self.menu = self.read_json(argument / 'menu.json')
         self.translations = self.read_json(root / 'module/config/i18n/zh-CN.json')
         self.template = self.read_json(self.directory / 'template.json')
+        self.record_metadata_stamps()
 
     @staticmethod
     def read_json(path):
@@ -119,6 +120,51 @@ class ConfigService:
         """
         return json.loads(path.read_text(encoding='utf-8'))
 
+    # Add by MHY, 元数据自动重载：更新链路替换 args.json/menu.json/i18n 后，
+    # 运行中的 WebUI 仍握着启动时的快照，导致新增任务与配置项必须重启 gui.py
+    # 才可见（真机踩过：任务名回退成 IslandSeasonPlan、提示「此任务没有独立配置」）。
+    def metadata_paths(self):
+        """返回需要跟随磁盘变化的元数据文件。"""
+        argument = self.root / 'module/config/argument'
+        return {
+            'args': argument / 'args.json',
+            'menu': argument / 'menu.json',
+            'translations': self.root / 'module/config/i18n/zh-CN.json',
+            'template': self.directory / 'template.json',
+        }
+
+    def record_metadata_stamps(self):
+        """记录元数据文件当前 mtime，作为后续「文件是否被替换」的基线。"""
+        for name, path in self.metadata_paths().items():
+            try:
+                setattr(self, f'_{name}_mtime', path.stat().st_mtime_ns)
+            except OSError:
+                setattr(self, f'_{name}_mtime', None)
+
+    def reload_metadata_if_stale(self):
+        """
+        按文件 mtime 重读被替换过的元数据，避免必须重启 WebUI。
+
+        只在文件 mtime 变化时重读：调用方（含测试）会就地修改 args/menu 做
+        临时覆盖，无条件重读会把这些内存改动冲掉。
+        """
+        with self.lock:
+            for name, path in self.metadata_paths().items():
+                try:
+                    mtime = path.stat().st_mtime_ns
+                except OSError:
+                    continue
+                stamp = f'_{name}_mtime'
+                if getattr(self, stamp, None) == mtime:
+                    continue
+                try:
+                    value = self.read_json(path)
+                except (OSError, ValueError):
+                    # 更新写入过程中的半成品文件跳过，下次请求再试
+                    continue
+                setattr(self, stamp, mtime)
+                setattr(self, name, value)
+
     def translate(self, key):
         """根据路径键翻译文本。
 
@@ -128,6 +174,7 @@ class ConfigService:
         Returns:
             str: 翻译后的显示文本或键的最后一段。
         """
+        self.reload_metadata_if_stale()
         value = self.translations
         for part in key.split('.'):
             value = value.get(part, {}) if isinstance(value, dict) else {}
@@ -183,6 +230,12 @@ class ConfigService:
             raise ApiError('INVALID_PARAMS', '不是合法的 JSON 配置文件') from exc
         if not isinstance(data, dict) or not isinstance(data.get('Alas'), dict):
             raise ApiError('INVALID_PARAMS', '配置文件缺少 Alas 段')
+        if '_schedulerProgram' in data:
+            from module.scheduler.store import ProgramStore
+            try:
+                ProgramStore.import_bundle(data['_schedulerProgram'])
+            except (ValueError, KeyError, TypeError) as exc:
+                raise ApiError('INVALID_PARAMS', f'调度方案导入失败：{exc}') from exc
         self.import_directory.mkdir(parents=True, exist_ok=True)
         path = self.import_directory / f'{name}.json'
         if path.is_symlink() or path.resolve().parent != self.import_directory.resolve():
@@ -278,8 +331,10 @@ class ConfigService:
         Raises:
             ApiError: 不支持的语言代码时抛出 INVALID_PARAMS。
         """
-        if language not in {'zh-CN', 'zh-MIAO', 'en-US', 'ja-JP', 'zh-TW'}:
+# Modify by MHY, 移除喵语（MIAO）中文语言包（nanoda 傲娇风格）
+        if language not in {'zh-CN', 'en-US', 'ja-JP', 'zh-TW'}:
             raise ApiError('INVALID_PARAMS', '不支持的界面语言')
+        self.reload_metadata_if_stale()
         translations = self.translations if language == 'zh-CN' else self.read_json(
             self.root / 'module/config/i18n' / f'{language}.json')
         return {'menu': self.menu, 'args': self.args, 'translations': translations}
@@ -295,6 +350,15 @@ class ConfigService:
         """
         data, revision = self.read(name)
         return {'instance': name, 'revision': revision, 'values': data}
+
+    def export(self, name):
+        """配置导出携带方案，排除调度运行变量和资源历史。"""
+        from module.scheduler.store import ProgramStore
+        data, _ = self.read(name)
+        store = ProgramStore(self.directory)
+        if store.exists(name):
+            data['_schedulerProgram'] = store.export(name)
+        return data
 
     def create(self, name, source=None, import_file=None):
         """创建新的实例配置文件。
@@ -319,6 +383,14 @@ class ConfigService:
                 data = self.read(source)[0]
             else:
                 data = copy.deepcopy(self.template)
+            bundle = data.pop('_schedulerProgram', None)
+            from module.scheduler.store import ProgramStore
+            store = ProgramStore(self.directory)
+            if bundle is not None:
+                try:
+                    bundle = store.import_bundle(bundle)
+                except (ValueError, KeyError, TypeError) as exc:
+                    raise ApiError('INVALID_PARAMS', f'调度方案导入失败：{exc}') from exc
             path = self.path(name, exists=False)
             # 排他创建避免不同会话覆盖已有配置。
             try:
@@ -326,6 +398,14 @@ class ConfigService:
                     json.dump(data, file, ensure_ascii=False, indent=2)
             except FileExistsError as exc:
                 raise ApiError('ALREADY_EXISTS', '同名实例已存在') from exc
+            try:
+                if source:
+                    store.copy(source, name)
+                elif bundle is not None:
+                    store.import_program(name, {key: bundle[key] for key in ('mode', 'draft', 'active')})
+            except Exception:
+                path.unlink(missing_ok=True)
+                raise
             return self.get(name)
 
     @staticmethod
@@ -392,6 +472,7 @@ class ConfigService:
         parts = path.split('.')
         if len(parts) != 3:
             raise ApiError('INVALID_PARAMS', '配置路径必须为 Task.Group.Argument')
+        self.reload_metadata_if_stale()
         field = self.args
         for part in parts:
             field = field.get(part, {})
@@ -519,4 +600,6 @@ class ConfigService:
             backup.mkdir(exist_ok=True)
             target = backup / f'{name}-{datetime.now():%Y%m%d-%H%M%S-%f}.json'
             self.path(name).replace(target)
+            from module.scheduler.store import ProgramStore
+            ProgramStore(self.directory).archive(name, backup / target.stem)
             return {'deleted': name}

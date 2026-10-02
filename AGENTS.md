@@ -23,6 +23,7 @@ AzurPilot 是面向安卓模拟器的碧蓝航线自动化框架，支持 CN/EN/
 | 同步 Python 依赖 | `uv sync --frozen` |
 | 安装前端锁定依赖 | `npm ci --prefix frontend` |
 | 启动 WebUI | `uv run python gui.py` |
+| 启动终端交互界面 (TUI) | `uv run python tui.py` |
 | 启动游戏调度器 | `uv run python alas.py` |
 | 启动独立 MCP SSE 服务 | `uv run python mcp_server_sse.py` |
 | Python 单个测试模块（示例） | `uv run python -m unittest tests.test_api` |
@@ -38,7 +39,7 @@ AzurPilot 是面向安卓模拟器的碧蓝航线自动化框架，支持 CN/EN/
 
 ## 按任务查阅
 
-先定位相关实现；需要背景时再打开对应文档。小范围文案或局部修改不要求通读架构。模块文档位于 [docs/modules/](docs/modules/README.md)（按模块职责组织的 20 节标准文档，入口见其索引）；目录、依赖和行为以当前代码、清单及 CI 为准。`.agent/` 仅存历史分析，已由 docs/modules/ 取代；其中旧流程或固定格式要求与本文件冲突时，以本文件为准。
+先定位相关实现；需要背景时再打开对应文档。小范围文案或局部修改不要求通读架构。模块文档位于 [docs/modules/](docs/modules/README.md)（按模块职责组织的 20 节标准文档，入口见其索引）；目录、依赖和行为以当前代码、清单及 CI 为准。
 
 | 涉及的工作 | 实现与参考入口 |
 | --- | --- |
@@ -95,7 +96,7 @@ def some_function(self, skip_first_screenshot=True):
 
 修改相关 YAML 后运行 `uv run -m module.config.config_updater`。`args.json`、`menu.json`、`module/config/config_generated.py` 与 `config/template.json` 由生成器维护，不直接修改，也不把真实用户配置当作模板。
 
-`module/config/i18n/*.json` 是例外：生成器保留已有翻译，新增名称和说明可能只是键路径（如 `Campaign.Event.name`）。生成后补齐 `zh-CN`、`zh-MIAO`、`en-US`、`ja-JP`、`zh-TW` 的新增翻译，选项文案也需检查；繁体用词需校对，不能假设生成器已完成翻译。
+`module/config/i18n/*.json` 是例外：生成器保留已有翻译，新增名称和说明可能只是键路径（如 `Campaign.Event.name`）。生成后补齐 `zh-CN`、`zh-TW`、`en-US`、`ja-JP` 的新增翻译，选项文案也需检查；繁体用词需校对，不能假设生成器已完成翻译。
 
 配置路径为 `<Task>.<Group>.<Argument>`，绑定任务后通过 `self.config.Group_Argument` 访问。涉及加载或迁移时注意 `AzurLaneConfig` 初始化可能保存配置，测试使用临时配置目录。
 
@@ -112,17 +113,18 @@ def some_function(self, skip_first_screenshot=True):
 
 根据行为影响选择验证，不因修改一个文件就默认运行全部检查：
 
-- 纯文档改动核对事实、链接及差异即可；生成规则改动需验证对应产物。
-- Python 逻辑先运行受影响的 `unittest` 模块；跨模块、导入或运行时改动再扩大到相关集成检查、全量测试或导入冒烟。
 - 前端改动按影响选择类型检查、相关单元测试和构建；交互或布局变化还需浏览器验证。Playwright 主配置使用 `tests/serve_frontend.py` 的临时配置并禁止真实游戏进程，运行前需有最新前端构建；模拟服务测试使用独立 mock。
-- 本地隔离测试可以连续执行、修复并重跑，无需逐次确认。检查通过后，只有新的修改、失败或未解决风险才需要扩大或重复验证。
-- 游戏识别改动优先使用已有截图离线验证；模拟器实测按本次授权执行。未实测时明确说明，不能用静态检查替代实测结论。
 
-交付前审阅本次差异，重点检查需求完整性、兼容性、并发与状态、隐私及无关修改。可修复的问题直接修复；报告实际发现和验证结果，不要求每次输出固定审查模板。
+AI 自行创建 PR 或执行任何涉及提 PR 的操作时，必须按 [.github/PULL_REQUEST_TEMPLATE.md](.github/PULL_REQUEST_TEMPLATE.md) 模板填写：如实勾选变更类型与代码质量确认项（未执行的检查不勾选），并在描述中说明变更原因、验证结果与相关 Issue。描述保持简洁（标题 + 3–4 条要点），不必逐项展开模板，复杂细节仅在必要时补充。
 
-提交前查看全部 staged、unstaged 和 untracked 修改，区分本次变更与已有工作，按功能目的组织提交。独立的格式、依赖或工程调整应分开；实现、必要配置、生成产物和回归测试可在同一功能提交中。排除缓存、构建产物和调试残留。提交信息采用中文 Conventional Commits，例如 `fix(config): 避免热重载覆盖并发配置更新`，说明为什么修改。
+## 部署纪律（Add by MHY）
 
-AI 自行创建 PR 或执行任何涉及提 PR 的操作时，必须按 [.github/PULL_REQUEST_TEMPLATE.md](.github/PULL_REQUEST_TEMPLATE.md) 模板填写：如实勾选变更类型与代码质量确认项（未执行的检查不勾选），并在描述中说明变更原因、验证结果与相关 Issue。
+远端运行实例（模拟器主机、MCP 服务、测试服）只用于验证与排查，不是部署目标。
+
+- 禁止用 `scp`、远端写文件或直接编辑远端代码来让改动生效：远端工作区会与提交历史脱节，更新链路的 `git reset --hard` 会静默丢弃这些改动，出问题时也无从判断线上跑的是哪一版
+- 正式改动一律：本地修改 → 本地验证 → `commit` → `push` → 由用户在更新入口执行更新
+- 排查远端问题只读（日志、`git status`、运行配置）；需要复现就在本地或隔离环境做
+- 用户明确要求直接改远端时才照做，并在交付说明中列出改动过的文件
 
 ## 维护这些指令
 

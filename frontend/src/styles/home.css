@@ -180,8 +180,8 @@
   max-width: 38em;
   padding: 20px 22px;
   border-radius: var(--theme-radius-card, 20px);
-  -webkit-backdrop-filter: blur(24px) saturate(140%);
-  backdrop-filter: blur(24px) saturate(140%);
+  -webkit-backdrop-filter: var(--theme-plate-filter);
+  backdrop-filter: var(--theme-plate-filter);
   transition: transform .2s cubic-bezier(.16, 1, .3, 1), box-shadow .2s ease;
   overflow: hidden;
 }
@@ -417,7 +417,7 @@
 .home-instance-empty {grid-column: 1 / -1; width: 100%; min-height: 180px; display: flex; align-items: center; justify-content: center; gap: 12px; border: 1px dashed var(--border); border-radius: 16px; color: var(--accent); background: transparent; font-size: 14px}
 .home-instance-empty:hover {border-color: var(--accent)}
 [data-theme='light'] .home-deck, [data-theme='dark'] .home-deck {color: #fff; text-shadow: 0 2px 18px rgb(0 0 0 / .45)}
-[data-theme='light'] .home-deck-link, [data-theme='dark'] .home-deck-link {border-color: rgb(255 255 255 / .42); background: rgb(255 255 255 / .14); color: #fff; -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px)}
+[data-theme='light'] .home-deck-link, [data-theme='dark'] .home-deck-link {border-color: rgb(255 255 255 / .42); background: rgb(255 255 255 / .14); color: #fff; -webkit-backdrop-filter: var(--theme-control-filter); backdrop-filter: var(--theme-control-filter)}
 [data-theme='light'] .home-deck-link:hover, [data-theme='dark'] .home-deck-link:hover {border-color: rgb(255 255 255 / .78); background: rgb(255 255 255 / .24); color: #fff}
 @media (prefers-reduced-transparency: reduce), (forced-colors: active) {
   .home-deck {color: var(--text); background: var(--surface-muted); text-shadow: none}

@@ -50,7 +50,7 @@ RESOURCE_COLUMNS = {
 
 
 def _ensure_table():
-    """确保 resource_snapshots 表存在（仅首次调用时执行）"""
+    """确保 resource_snapshots 表存在（仅首次调用时执行）。"""
     global _table_ensured
     if _table_ensured:
         return
@@ -176,7 +176,16 @@ def get_resource_timeline(
 
 
 def _validate_interval(start: datetime, end: datetime) -> None:
-    """校验日报区间使用的本地 naive datetime 参数。"""
+    """校验日报区间使用的本地 naive datetime 参数。
+
+    Args:
+        start (datetime): 区间起始时间。
+        end (datetime): 区间结束时间。
+
+    Raises:
+        TypeError: 若参数不是 datetime 对象时抛出。
+        ValueError: 若时间带时区或 start > end 时抛出。
+    """
     if not isinstance(start, datetime) or not isinstance(end, datetime):
         raise TypeError('start 和 end 必须是 datetime')
     if start.tzinfo is not None or end.tzinfo is not None:
@@ -186,7 +195,14 @@ def _validate_interval(start: datetime, end: datetime) -> None:
 
 
 def _parse_snapshot_timestamp(value: Any) -> datetime | None:
-    """解析历史快照时间，遇到旧数据或损坏数据时跳过。"""
+    """解析历史快照时间，遇到旧数据或损坏数据时跳过。
+
+    Args:
+        value (Any): 快照时间字符串。
+
+    Returns:
+        datetime | None: 解析出的 naive datetime 对象，失败返回 None。
+    """
     if not isinstance(value, str):
         return None
     try:

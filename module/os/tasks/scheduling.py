@@ -253,7 +253,7 @@ class CoinTaskMixin:
         Notes:
             - 仅在启用智能调度+时生效
             - 启动器推送和 OnePush 推送分别由各自配置控制
-            - 标题会自动格式化为 "[ALAS <实例名>] 原标题" 的形式
+            - 标题会自动格式化为 "<实例名> [大世界] 原标题" 的形式
 
         Returns:
             bool: True 表示推送成功发送，False 表示未发送或发送失败
@@ -267,18 +267,15 @@ class CoinTaskMixin:
         if not launcher_enabled and not onepush_enabled:
             return False
 
-        # 获取实例名称并格式化标题
+        # 获取实例名称并格式化标题（统一 <实例> [类别] 简介）
+        from module.notify import notify_title
         instance_name = getattr(self.config, 'config_name', 'ALAS')
-        if title.startswith('[ALAS]'):
-            formatted_title = f"[ALAS <{instance_name}>]{title[len('[ALAS]'):]}"
-        elif title.startswith('[ALAS info]'):
-            formatted_title = f"[ALAS <{instance_name}>]{title[len('[ALAS info]'):]}"
-        elif title.startswith('[Alas]'):
-            formatted_title = f"[ALAS <{instance_name}>]{title[len('[Alas]'):]}"
-        elif title.startswith('[Alas info]'):
-            formatted_title = f"[ALAS <{instance_name}>]{title[len('[Alas info]'):]}"
-        else:
-            formatted_title = f"[ALAS <{instance_name}>] {title}"
+        summary = title
+        for prefix in ('[ALAS info]', '[Alas info]', '[ALAS]', '[Alas]'):
+            if summary.startswith(prefix):
+                summary = summary[len(prefix):]
+                break
+        formatted_title = notify_title(instance_name, '大世界', summary.strip())
 
         webui_success = False
         if launcher_enabled:

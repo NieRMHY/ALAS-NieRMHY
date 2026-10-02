@@ -63,6 +63,23 @@ class TestConfigKeyValues(unittest.TestCase):
 
 class TestRefreshSwitch(unittest.TestCase):
 
+    def setUp(self):
+        # 刷新会写「上次自动生成的上架清单」，指到临时文件，别落到工作区里
+        import module.island.island_plan_refresh as refresh
+        fd, path = tempfile.mkstemp(suffix='.json')
+        os.close(fd)
+        os.remove(path)
+        self._orig_generated = refresh.GENERATED_FILE
+        refresh.GENERATED_FILE = path
+
+    def tearDown(self):
+        import module.island.island_plan_refresh as refresh
+        try:
+            os.remove(refresh.GENERATED_FILE)
+        except OSError:
+            pass
+        refresh.GENERATED_FILE = self._orig_generated
+
     def test_noop_when_switch_off(self):
         config = FakeConfig()
         self.assertFalse(refresh_plan_if_requested(config))

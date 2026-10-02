@@ -1,3 +1,7 @@
+"""作战档案更新脚本。
+
+用于将往期活动战役目录迁移并生成作战档案关卡、更新 README 表格及字典注册表。
+"""
 import os
 import re
 import shutil
@@ -18,32 +22,41 @@ SERVER_INDEXS = {
     'tw': 6
 }
 
+
 class WarArchivesUpdater:
+    """作战档案更新器。
+
+    负责将活动战役代码迁移、复制并配置为常驻作战档案。
+    """
     aired_date = None
     event = None
 
     def __init__(self):
+        """初始化更新器各服标识与行缓存。"""
         self.cn, self.en, self.jp, self.tw = '-', '-', '-', '-'
         self.lines: List[str]
 
     def reset(self):
+        """重置各服状态并重新读取 campaign/Readme.md 内容。"""
         self.cn, self.en, self.jp, self.tw = '-', '-', '-', '-'
         with open('./campaign/Readme.md', 'r', encoding='utf-8') as f:
             self.lines = f.readlines()
 
     @cached_property
     def lines(self):
+        """获取 campaign/Readme.md 中的全部文本行列表。"""
         with open('./campaign/Readme.md', 'r', encoding='utf-8') as f:
             return f.readlines()
 
     @cached_property
     def latest_event_cn(self):
+        """解析获取国服最新活动的八位日期编号。"""
         for text in self.lines[::-1]:
             if not re.search(r'^\|.+\|$', text):
-                # not a table line
+                # 非表格行
                 continue
             elif re.search(r'^.*\-{3,}.*$', text):
-                # is a delimiter line
+                # 表格分隔线
                 continue
             else:
                 latest = [x.strip() for x in text.strip('| \n').split('|')]
@@ -52,13 +65,13 @@ class WarArchivesUpdater:
         return re.search(r'\d{8}', self.lines[-1].strip('| \n').split('|')[1].strip()).group(0)
 
     def event_name_to_time(self, name):
-        """
+        """将活动名称转换为八位日期字符串。
+
         Args:
-            name (str): event name, such as '虹彩的终幕曲'
+            name (str): 活动名称（如 '虹彩的终幕曲'）或八位日期。
 
         Returns:
-            str: event time, such as '20220428'
-                 If cannot find, return the time of the latest event
+            str: 对应的活动日期（如 '20220428'），未找到时返回最新国服活动日期。
         """
         if len(name) == 8 and re.search(r'\d{8}', name):
             return name
@@ -68,20 +81,20 @@ class WarArchivesUpdater:
         return self.latest_event_cn
 
     def event_time_to_name(self, time):
-        """
+        """将活动日期转换为美服活动名称。
+
         Args:
-            time (str): event time, such as '20220428'
+            time (str): 八位活动日期（如 '20220428'）。
 
         Returns:
-            str: event name in EN server, such as 'Rondo at Rainbow's End'
-                 If cannot find, return the name of the latest event
+            str: 对应的美服活动名称（如 "Rondo at Rainbow's End"），未找到时返回最新活动名称。
         """
         for text in self.lines:
             if not re.search(r'^\|.+\|$', text):
-                # not a table line
+                # 非表格行
                 continue
             elif re.search(r'^.*\-{3,}.*$', text):
-                # is a delimiter line
+                # 表格分隔线
                 continue
             else:
                 line = [x.strip() for x in text.strip('| \n').split('|')]
@@ -90,6 +103,15 @@ class WarArchivesUpdater:
         return self.lines[-1].strip('| \n').split('|')[SERVER_INDEXS['en']].strip()
 
     def create_campaign_files(self, old_path, new_path):
+        """从活动战役目录复制文件生成作战档案战役目录。
+
+        Args:
+            old_path (str): 源活动战役目录路径。
+            new_path (str): 目标作战档案目录路径。
+
+        Returns:
+            bool: 是否成功创建目录。
+        """
         if os.path.exists(old_path):
             if not os.path.exists(new_path):
                 logger.info(f'Creating files at {new_path}')
@@ -107,6 +129,12 @@ class WarArchivesUpdater:
         return True
 
     def modify_campaign_files(self, old_path, new_path):
+        """遍历并修改新作战档案目录中的所有 Python 关卡脚本。
+
+        Args:
+            old_path (str): 原活动目录路径。
+            new_path (str): 目标作战档案目录路径。
+        """
         if os.path.exists(old_path) and os.path.exists(new_path):
             files = os.listdir(new_path)
             for file_name in tqdm(files):
@@ -116,6 +144,11 @@ class WarArchivesUpdater:
             logger.warning('No such directory, skip modifying files')
 
     def modify_single_campaign_file(self, file_path):
+        """修改单个关卡脚本中的基类导入路径。
+
+        Args:
+            file_path (str): 关卡 Python 文件路径。
+        """
         with open(file_path, 'r', encoding='utf-8') as f:
             lines = f.readlines()
 
@@ -137,10 +170,11 @@ class WarArchivesUpdater:
 
     @timer
     def update_readme(self, aired_date, event):
-        """
+        """在 campaign/Readme.md 表格中追加作战档案收录记录。
+
         Args:
-            aired_date (str): war archives update time
-            event (str): event time
+            aired_date (str): 作战档案实装上线日期。
+            event (str): 对应的活动日期编号。
         """
         insert = True
         for row, text in enumerate(self.lines):
@@ -148,10 +182,10 @@ class WarArchivesUpdater:
                 insert = False
                 break
             if not re.search(r'^\|.+\|$', text):
-                # not a table line
+                # 非表格行
                 continue
             elif re.search(r'^.*\-{3,}.*$', text):
-                # is a delimiter line
+                # 表格分隔线
                 continue
             else:
                 line_entries = [x.strip() for x in text.strip('| \n').split('|')]
@@ -174,9 +208,10 @@ class WarArchivesUpdater:
 
     @timer
     def update_campaign_files(self, event):
-        """
+        """复制并更新指定活动的战役代码文件。
+
         Args:
-            event (str):
+            event (str): 八位活动日期编号。
         """
         folder = './campaign'
         raw_directory = 'event_' + event + '_cn'
@@ -188,9 +223,10 @@ class WarArchivesUpdater:
 
     @timer
     def update_directory(self, event):
-        """
+        """在 module/war_archives/dictionary.py 中注册新增的作战档案模板。
+
         Args:
-            event (str):
+            event (str): 八位活动日期编号。
         """
         directory = 'war_archives_' + event + '_cn'
         name = self.event_time_to_name(event).replace('\'', '').replace('-', '_').replace(' ', '_').upper()
@@ -215,14 +251,11 @@ class WarArchivesUpdater:
 
     @timer
     def war_archives_update(self, aired_date=None, event=None):
-        """
+        """执行作战档案的批量迁移与更新。
+
         Args:
-            aired_date (str, list[str], None):
-                use the YYYYMMDD format, such as '20220428',
-                'today' or None for datetime.today()
-            event (str, list[str], None):
-                use the YYYYMMDD format, also can use the event name, such as ['雄鹰的叙事歌', '20220428']
-                'recent' or None for the lastest event for CN server
+            aired_date (str | list[str] | None): 作战档案实装日期，支持 'YYYYMMDD' 格式、'today' 或列表。
+            event (str | list[str] | None): 活动标识，支持 'YYYYMMDD' 日期、中文活动名、'recent' 或列表。
         """
         if aired_date is None or aired_date == 'today':
             dates = [datetime.today().strftime("%Y%m%d")]
@@ -251,28 +284,25 @@ class WarArchivesUpdater:
             self.reset()
 
     def run(self):
+        """执行作战档案更新、配置定义生成与模板配置同步。"""
         self.war_archives_update(aired_date=self.aired_date, event=self.event)
         ConfigGenerator().generate()
         ConfigUpdater().update_file('template', is_template=True)
 
+
 if __name__ == '__main__':
-    # Date of update of war archives
-    # input strings in YYYYMMDD format for war archives update time
-    # use 'today' for today, use a list to input multiple values,
-    # such as '20250717', 'today', ['20250619' , '20250717', 'today']
+    # 作战档案更新上线日期
+    # 输入 YYYYMMDD 格式的字符串，支持 'today' 表示今天，或列表传入多个值
+    # 如 '20250717', 'today', ['20250619', '20250717', 'today']
     WarArchivesUpdater.aired_date = '20250717'
-    # Event name or date of update of war archives
-    # input strings in YYYYMMDD format for event time, or input event name
-    # use 'recent' for the latest CN enent, use a list to input multiple values,
-    # such as '20220428', '虹彩的终幕曲', 'recent', ['雄鹰的叙事歌' , '20220428', 'recent']
+    # 活动名称或活动更新日期
+    # 输入 YYYYMMDD 格式的字符串或活动名称
+    # 'recent' 表示国服最新活动，也可传入列表同时处理多个
+    # 如 '20220428', '虹彩的终幕曲', 'recent', ['雄鹰的叙事歌', '20220428', 'recent']
     WarArchivesUpdater.event = '20220428'
 
     updater = WarArchivesUpdater()
 
-    """
-    Step 1:
-        Run these code.
-    """
-    # Ensure running in ALAS root folder
+    # 确保在 AzurPilot 根目录运行
     os.chdir(os.path.join(os.path.dirname(__file__), '../'))
     updater.run()

@@ -9,9 +9,6 @@ from module.island.island_economy import (
     EconomyDatabase,
     ECONOMY_PRODUCTS,
     ECONOMY_SHOPS,
-    SHOP_LEVELS,
-    SALES_BOOST_CHARACTERS,
-    CAPACITY_BOOST_CHARACTERS,
 )
 
 

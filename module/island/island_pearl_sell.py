@@ -58,6 +58,11 @@ class IslandPearlSell(Island):
     PHASE_DELAYED = "delayed"
 
     def run(self):
+        """运行珍珠采购与售卖自动化调度主流程。
+
+        判断交易与每日价格刷新触发条件，执行低价采购、高价售卖或价格刷新，
+        并计算更新下一次执行时间。
+        """
         logger.hr("岛屿珍珠出售运行", level=1)
         now = current_time().replace(microsecond=0)
 
@@ -116,7 +121,11 @@ class IslandPearlSell(Island):
     # ==================== 采购 / 售卖阶段 ====================
 
     def run_buy_phase(self):
-        """执行采购阶段。"""
+        """执行采购阶段。
+
+        Returns:
+            str: 采购阶段状态（PHASE_DONE / PHASE_SKIPPED / PHASE_DELAYED）。
+        """
         logger.hr("珍珠购买阶段", level=2)
         self._purchase_quota_exhausted = False
 
@@ -139,7 +148,13 @@ class IslandPearlSell(Island):
         return self.PHASE_SKIPPED
 
     def run_buy_phase_once(self):
-        """执行一次采购流程，返回阶段状态和是否需要重试。"""
+        """执行一次采购流程。
+
+        对比本岛价格与配置阈值，必要时检索并拜访好友低价岛，在港口采购珍珠。
+
+        Returns:
+            tuple[str, str | None]: 阶段状态与重试原因（无需重试时为 None）。
+        """
         buy_price_limit = int(self.config.IslandPearlSell_BuyPrice)
 
         if not self._enter_home_pearl_shop("assembly"):
@@ -223,7 +238,11 @@ class IslandPearlSell(Island):
         return self.PHASE_DONE, None
 
     def run_sell_phase(self):
-        """执行售卖阶段。"""
+        """执行售卖阶段。
+
+        Returns:
+            str: 售卖阶段状态（PHASE_DONE / PHASE_SKIPPED / PHASE_DELAYED）。
+        """
         logger.hr("珍珠出售阶段", level=2)
         sell_price_limit = int(self.config.IslandPearlSell_SellPrice)
 
@@ -312,18 +331,31 @@ class IslandPearlSell(Island):
         return True
 
     def move_to_assembly_role_a(self):
+        """移动角色到集会所珍珠售卖 NPC 身旁。"""
         self.island_up(2500)
         self.island_right(1700)
         self.island_down(1700)
         self.island_right(500)
 
     def move_to_port_role_b(self):
+        """移动角色到港口珍珠采购 NPC 身旁。"""
         self.island_left(2500)
         self.device.click(ISLAND_JUMP)
         self.island_left(3000)
         self.island_down(1000)
 
     def pearl_shop_enter_button(self, destination):
+        """获取对应地点的珍珠商店交互对话入口按钮。
+
+        Args:
+            destination (str): 目的地名称（'assembly' 或 'port'）。
+
+        Returns:
+            Button: 入口按钮实例。
+
+        Raises:
+            ValueError: 传入未知地点时抛出。
+        """
         if getattr(self, "_island_expect_friend", False):
             if destination in ("assembly", "port"):
                 return ISLAND_PEARL_SHOP_FRIEND_ENTER
@@ -336,6 +368,17 @@ class IslandPearlSell(Island):
 
     @staticmethod
     def pearl_shop_check_button(destination):
+        """获取对应地点珍珠商店成功进入的界面检测按钮。
+
+        Args:
+            destination (str): 目的地名称（'assembly' 或 'port'）。
+
+        Returns:
+            Button: 界面检测按钮实例。
+
+        Raises:
+            ValueError: 传入未知地点时抛出。
+        """
         if destination == "assembly":
             return ISLAND_PEARL_SHOP_SELL_CHECK
         if destination == "port":
@@ -343,6 +386,11 @@ class IslandPearlSell(Island):
         raise ValueError(f"未知珍珠商店检查地点: {destination}")
 
     def current_pearl_shop_check_button(self):
+        """获取当前活跃珍珠商店的界面检测按钮。
+
+        Returns:
+            Button: 当前检测按钮。
+        """
         return getattr(self, "_pearl_shop_check_button", ISLAND_PEARL_SHOP_SELL_CHECK)
 
     def enter_pearl_shop(self, enter_button, check_button):
@@ -455,7 +503,15 @@ class IslandPearlSell(Island):
         self.device.click_record_clear()
 
     def find_rank_visit_target(self, mode, threshold):
-        """通过拜访按钮模板匹配查找满足价格条件的好友。"""
+        """通过拜访按钮模板匹配查找满足价格条件的好友。
+
+        Args:
+            mode (str): 交易模式，'buy' 找低价，'sell' 找高价。
+            threshold (int): 价格阈值。
+
+        Returns:
+            dict | None: 最优好友候选信息字典，未找到则返回 None。
+        """
         candidates = self.find_rank_visit_candidates()
         if not candidates:
             logger.info("[岛屿-珍珠采购] 当前好友排名区域未识别到拜访按钮")
@@ -477,11 +533,13 @@ class IslandPearlSell(Island):
         return max(valid, key=lambda item: item["price"])
 
     def find_rank_visit_candidates(self):
-        """
-        在固定区域内匹配拜访按钮，并按固定偏移 OCR 对应珍珠价格。
+        """在固定区域内匹配拜访按钮，并按固定偏移 OCR 对应珍珠价格。
 
         价格区域以拜访按钮区域为基准偏移，后续实测只需要调整
         RANK_VISIT_SEARCH_AREA 和 RANK_VISIT_PRICE_OFFSET。
+
+        Returns:
+            list[dict]: 包含拜访按钮与价格的候选字典列表。
         """
         self.device.screenshot()
         region_image = self.image_crop(self.RANK_VISIT_SEARCH_AREA, copy=False)
@@ -511,14 +569,29 @@ class IslandPearlSell(Island):
         return candidates
 
     def offset_rank_visit_button(self, button):
-        """将固定搜索区域内的局部拜访按钮转换为全屏按钮。"""
+        """将固定搜索区域内的局部拜访按钮转换为全屏按钮。
+
+        Args:
+            button (Button): 局部裁剪区域内的按钮。
+
+        Returns:
+            Button: 换算为全屏坐标的按钮实例。
+        """
         sx, sy, _, _ = self.RANK_VISIT_SEARCH_AREA
         x1, y1, x2, y2 = button.area
         area = (x1 + sx, y1 + sy, x2 + sx, y2 + sy)
         return self._area_button(area, "ISLAND_PEARL_RANK_VISIT_MATCH")
 
     def rank_price_button_from_visit(self, visit_button, index):
-        """按拜访按钮固定偏移计算价格 OCR 区域。"""
+        """按拜访按钮固定偏移计算价格 OCR 区域。
+
+        Args:
+            visit_button (Button): 全屏坐标拜访按钮。
+            index (int): 候选列表序号。
+
+        Returns:
+            Button: 对应的价格 OCR 按钮区域。
+        """
         x1, y1, x2, y2 = visit_button.area
         dx1, dy1, dx2, dy2 = self.RANK_VISIT_PRICE_OFFSET
         area = self._normalize_area((x1 + dx1, y1 + dy1, x2 + dx2, y2 + dy2))
@@ -533,6 +606,12 @@ class IslandPearlSell(Island):
         1. 等待 ISLAND_ACCESS_MAP（右上角地图入口）出现，表示已开始加载好友岛
         2. 等待 AIR_DROP_RUN_AWAY（顶部"离开"按钮）也出现，确认场景完全加载完毕
         只有两者同时出现（is_in_friend_island() 为 True），才视为成功进入好友岛屿。
+
+        Args:
+            visit_button (Button): 目标好友的拜访按钮。
+
+        Returns:
+            bool: 是否成功进入好友岛屿。
         """
         click_timer = Timer(3).start()
         self.device.click(visit_button)
@@ -556,7 +635,14 @@ class IslandPearlSell(Island):
     # ==================== OCR ====================
 
     def ocr_pearl_price(self, kind):
-        """OCR 珍珠价格，kind=sell/buy 控制合法范围。"""
+        """识别珍珠价格。
+
+        Args:
+            kind (str): 价格类型，'sell' 为售卖价，'buy' 为采购价。
+
+        Returns:
+            int | None: 识别到的价格数值，失败则返回 None。
+        """
         valid_range = (200, 1000) if kind == "sell" else (220, 1100)
         for _ in range(self.PRICE_RETRY):
             self.device.screenshot()
@@ -568,7 +654,13 @@ class IslandPearlSell(Island):
         return None
 
     def ocr_weekly_purchase_count(self):
-        """OCR 本周可采购数量，识别"本周可采购数量xxx/200"中的 xxx。"""
+        """识别本周可采购数量。
+
+        识别“本周可采购数量xxx/200”中的 xxx。
+
+        Returns:
+            int | None: 可采购数量，失败则返回 None。
+        """
         for _ in range(self.PRICE_RETRY):
             self.device.screenshot()
             text = self._ocr_counter_text(
@@ -586,6 +678,14 @@ class IslandPearlSell(Island):
 
     @staticmethod
     def parse_weekly_purchase_count(text):
+        """从 OCR 文本中解析本周可采购数量。
+
+        Args:
+            text (str): OCR 原始识别文本。
+
+        Returns:
+            int | None: 解析出的采购数量，非法则返回 None。
+        """
         digits = re.sub(r"\D", "", text)
         if not digits.endswith("200") or len(digits) <= 3:
             return None
@@ -617,7 +717,11 @@ class IslandPearlSell(Island):
             return ""
 
     def ocr_current_pearl_count(self):
-        """OCR 当前持有珍珠数量。"""
+        """识别当前背包内持有的珍珠数量。
+
+        Returns:
+            int: 当前珍珠数量。
+        """
         self.device.screenshot()
         count = self._ocr_digit(
             OCR_ISLAND_PEARL_CURRENT_COUNT, name="pearl_current_count"
@@ -626,7 +730,11 @@ class IslandPearlSell(Island):
         return count
 
     def ocr_trade_count(self):
-        """OCR 购买/售卖弹窗中间数量。"""
+        """识别购买/售卖弹窗中间输入的交易数量。
+
+        Returns:
+            int: 当前输入的交易数量。
+        """
         return self._ocr_digit(OCR_ISLAND_PEARL_TRADE_COUNT, name="pearl_trade_count")
 
     def _ocr_digit(self, button, name):
@@ -650,7 +758,14 @@ class IslandPearlSell(Island):
     # ==================== 交易数量与确认 ====================
 
     def sell_all_current_pearls(self, current_pearl):
-        """售卖后复检珍珠数量，直到识别为 0 或达到最大轮次。"""
+        """售卖全部持有的珍珠并循环复检，直到数量归零。
+
+        Args:
+            current_pearl (int): 初始持有的珍珠数量。
+
+        Returns:
+            bool: 是否全部成功售出。
+        """
         for round_index in range(1, self.SELL_UNTIL_ZERO_MAX_ROUNDS + 1):
             logger.info(f"[岛屿-珍珠采购] 珍珠售卖轮次 {round_index}: {current_pearl}")
             if current_pearl <= 0:
@@ -668,7 +783,15 @@ class IslandPearlSell(Island):
         return False
 
     def trade_pearl(self, action, count):
-        """执行购买或售卖。"""
+        """打开交易弹窗并执行指定数量的珍珠买卖。
+
+        Args:
+            action (str): 操作类型，'buy' 或 'sell'。
+            count (int): 交易数量。
+
+        Returns:
+            bool: 交易是否成功完成。
+        """
         if count <= 0:
             logger.info(f"[岛屿-珍珠采购] 珍珠{self._action_name(action)}数量为 0，跳过")
             return False
@@ -692,7 +815,14 @@ class IslandPearlSell(Island):
         return True
 
     def adjust_trade_count(self, target):
-        """调整交易数量，严格等于目标后才允许确认。"""
+        """在弹窗中通过加减按钮微调交易数量至目标值。
+
+        Args:
+            target (int): 目标交易数量。
+
+        Returns:
+            bool: 是否成功将数量调整至与目标值严格一致。
+        """
         target = int(target)
         last_count = -1
         stable_count = 0
@@ -718,6 +848,15 @@ class IslandPearlSell(Island):
 
     @staticmethod
     def trade_count_adjust_buttons(current, target):
+        """根据当前数值与目标差额生成点击的增减按钮序列。
+
+        Args:
+            current (int): 当前识别数量。
+            target (int): 目标数量。
+
+        Returns:
+            tuple[Button, ...]: 待点击的按钮元组。
+        """
         diff = target - current
         if diff >= 10:
             return IslandPearlSell._repeat_buttons(
@@ -741,6 +880,17 @@ class IslandPearlSell(Island):
 
     @staticmethod
     def pearl_trade_confirm_button(action):
+        """获取交易确认按钮。
+
+        Args:
+            action (str): 交易类型，'buy' 或 'sell'。
+
+        Returns:
+            Button: 确认按钮实例。
+
+        Raises:
+            ValueError: 传入未知交易类型时抛出。
+        """
         if action == "buy":
             return ISLAND_PEARL_TRADE_BUY_CONFIRM
         if action == "sell":
@@ -748,7 +898,14 @@ class IslandPearlSell(Island):
         raise ValueError(f"未知珍珠交易类型: {action}")
 
     def confirm_trade(self, action):
-        """确认购买/售卖。"""
+        """确认购买/售卖。
+
+        Args:
+            action (str): 交易类型，'buy' 或 'sell'。
+
+        Returns:
+            bool: 是否确认成功并返回商店界面。
+        """
         confirm_button = self.pearl_trade_confirm_button(action)
         confirm_timer = Timer(1, count=2).start()
         check_button = self.current_pearl_shop_check_button()
@@ -773,6 +930,11 @@ class IslandPearlSell(Island):
         return False
 
     def handle_pearl_get_items(self):
+        """处理交易后出现的获得物资弹窗。
+
+        Returns:
+            bool: 是否检测并点击了获得物资。
+        """
         if self.appear_then_click(GET_ITEMS_ISLAND, offset=(20, 20), interval=2):
             return True
         return False
@@ -784,7 +946,19 @@ class IslandPearlSell(Island):
     # ==================== 价格刷新 ====================
 
     def run_price_refresh(self):
-        """每日 03:00 进入珍珠售卖商店后立即退出，刷新价格显示。"""
+        """每日 03:00 进入珍珠售卖商店后立即退出，刷新价格显示。
+
+        Returns:
+            bool: 价格刷新是否执行成功。
+        """
+        logger.hr("珍珠价格刷新", level=2)
+        if not self._enter_home_pearl_shop("assembly"):
+            logger.warning("[岛屿-珍珠采购] 价格刷新：进入珍珠商店失败")
+            return False
+        logger.info("[岛屿-珍珠采购] 价格刷新：已进入珍珠商店")
+        self.back_to_pearl_shop_or_map()
+        logger.info("[岛屿-珍珠采购] 价格刷新完成")
+        return True
         logger.hr("珍珠价格刷新", level=2)
         if not self._enter_home_pearl_shop("assembly"):
             logger.warning("[岛屿-珍珠采购] 价格刷新：进入珍珠商店失败")
@@ -889,7 +1063,14 @@ class IslandPearlSell(Island):
 
     @staticmethod
     def next_day_1am(now=None):
-        """服务器时间次日凌晨 1 点，换算为本机时间轴。"""
+        """计算服务器时间次日凌晨 01:00 换算至本机时间轴的具体时间。
+
+        Args:
+            now (datetime, optional): 基准时间。
+
+        Returns:
+            datetime: 次日 01:00 对应的时间。
+        """
         now = now or current_time().replace(microsecond=0)
         diff = server_time_offset()
         server_tomorrow = now - diff + timedelta(days=1)

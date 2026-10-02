@@ -8,6 +8,7 @@ import { createPortal } from 'react-dom'
 import { NavLink, useLocation, useParams } from 'react-router-dom'
 import { Anchor, CalendarDays, ChevronRight, Compass, Gift, Palmtree, Search, Settings2, Ship, Sparkles, Swords, Wrench, type LucideIcon } from 'lucide-react'
 import { useApp } from '../app/context'
+import {taskNavItems, SCHEDULER_EDITOR} from './taskNavItems'
 
 const groupIcons: Record<string, LucideIcon> = {
   Alas: Settings2, Farm: Swords, Event: Sparkles, EventDaily: CalendarDays,
@@ -188,10 +189,11 @@ export function TaskNavFlyout({ defaultOpenKey, onNavigate }: { defaultOpenKey?:
   }
 
   const activeGroup = schema && openMenuKey ? schema.menu[openMenuKey] : null
+  const taskLabel = (task: string) => task === SCHEDULER_EDITOR ? ui('nav.schedulerProgram') : t(`Task.${task}.name`)
   const activeTasks = activeGroup
-    ? activeGroup.tasks.filter(
+    ? taskNavItems(openMenuKey, activeGroup.tasks).filter(
         task =>
-          t(`Task.${task}.name`).toLowerCase().includes(search.toLowerCase()) ||
+          taskLabel(task).toLowerCase().includes(search.toLowerCase()) ||
           task.toLowerCase().includes(search.toLowerCase())
       )
     : []
@@ -213,14 +215,15 @@ export function TaskNavFlyout({ defaultOpenKey, onNavigate }: { defaultOpenKey?:
       <nav className="task-nav">
         {schema &&
           Object.entries(schema.menu).map(([key, group]) => {
-            const filteredTasks = group.tasks.filter(
+            const items = taskNavItems(key, group.tasks)
+            const filteredTasks = items.filter(
               task =>
-                t(`Task.${task}.name`).toLowerCase().includes(search.toLowerCase()) ||
+                taskLabel(task).toLowerCase().includes(search.toLowerCase()) ||
                 task.toLowerCase().includes(search.toLowerCase())
             )
             if (!filteredTasks.length) return null
 
-            const isGroupActive = group.tasks.some(task =>
+            const isGroupActive = items.some(task =>
               location.pathname.endsWith(`/task/${task}`)
             )
             const isExpanded = openMenuKey === key
@@ -281,7 +284,7 @@ export function TaskNavFlyout({ defaultOpenKey, onNavigate }: { defaultOpenKey?:
                 role="menuitem"
               >
                 <span className="task-submenu-dot" />
-                <MarqueeText className="task-submenu-item-text" text={t(`Task.${task}.name`)}/>
+                <MarqueeText className="task-submenu-item-text" text={taskLabel(task)}/>
               </NavLink>
             ))}
           </div>

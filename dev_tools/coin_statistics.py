@@ -18,6 +18,7 @@ SHIP_RETIRE_COINS = {
 }
 
 class CoinStatistics:
+    """关卡掉落金币与退役收益统计分析器。"""
     DROP_FOLDER = './screenshots'
     CSV_FILE = 'drop_result.csv'
     MAP_BATTLE_COUNT = 6
@@ -35,13 +36,24 @@ class CoinStatistics:
 
     @property
     def csv_file(self):
+        """获取掉落 CSV 文件的绝对或相对路径。
+
+        Returns:
+            str: 拼接后的文件路径。
+        """
         return os.path.join(CoinStatistics.DROP_FOLDER, CoinStatistics.CSV_FILE)
 
     def _read_csv(self):
+        """读取掉落记录 CSV 数据。
+
+        Returns:
+            pd.DataFrame: 包含掉落明细的 Pandas DataFrame。
+        """
         column_name = ['timestamp', 'campaign', 'enemy_name', 'drop_type', 'item', 'amount']
         return pd.read_csv(self.csv_file, header=None, names=column_name)
 
     def get_total_profits(self):
+        """计算掉落金币及舰船退役拆解装备的总物资收益与油耗比。"""
         data = self._read_csv()
 
         coins = data.loc[data['item'] == 'Coin', 'amount'].sum()
@@ -50,7 +62,7 @@ class CoinStatistics:
         ship_rows[['ship_info', 'ship_type', 'ship_name']] = ship_rows['item'].str.extract(
             r'ship(({})(\d+))'.format(self.SHIP_REGEX))
 
-        # sort by key of SHIP_RETIRE_COINS
+        # 按 SHIP_RETIRE_COINS 的键顺序排序
         def sort_key(s):
             ship_type, amount = re.match(r'({})(\d+)'.format(self.SHIP_REGEX), s).groups()
             return (
@@ -77,23 +89,19 @@ class CoinStatistics:
         print(f'物资比: {total_profit / oil_cost}')
 
 if __name__ == '__main__':
-    # Drop screenshot folder. Default to './screenshots'
+    # 掉落截图目录，默认为 './screenshots'
     CoinStatistics.DROP_FOLDER = './screenshots'
-    # Name of the input csv file.
-    # This will read from {DROP_FOLDER}/{CSV_FILE}.
+    # 输入 CSV 文件名，从 {DROP_FOLDER}/{CSV_FILE} 读取
     CoinStatistics.CSV_FILE = 'drop_results.csv'
-    # Total battle count of this map
+    # 关卡总战斗场次
     CoinStatistics.MAP_BATTLE_COUNT = 6
-    # Oil used for each battle
+    # 每场战斗消耗的石油量
     CoinStatistics.OIL_PER_BATTTLE = 3
-    # If has 10 oil for entering map
+    # 是否包含 10 点入场门票油耗
     CoinStatistics.HAS_ENTER_OIL = True
 
     stat = CoinStatistics()
 
-    """
-    Step 1:
-        Set CoinStatistics.SHIP_EQUIP_COINS by the order of SHIP_RETIRE_COINS first.
-        Run these code.
-    """
+    # 第一步：首先按照 SHIP_RETIRE_COINS 顺序设定 CoinStatistics.SHIP_EQUIP_COINS
+    # 然后运行计算
     stat.get_total_profits()

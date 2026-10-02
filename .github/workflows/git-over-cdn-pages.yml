@@ -72,7 +72,7 @@ jobs:
             --branch master \
             --history "${{ github.event.inputs.history || '15' }}" \
             --output dist/git-over-cdn \
-            --fetch-full
+            --no-fetch
 
       - name: Upload Worker version and optionally release traffic
         env:

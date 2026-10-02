@@ -722,5 +722,14 @@ class IslandDailyOrder(Island):
         return False
 
     def image_crop(self, area, copy=True):
+        """按指定区域裁剪当前截图。
+
+        Args:
+            area: 裁剪区域 (x1, y1, x2, y2)。
+            copy: 是否返回独立副本，默认为 True。
+
+        Returns:
+            np.ndarray: 裁剪后的图像。
+        """
         from module.base.utils import crop
         return crop(self.device.image, area, copy=copy)

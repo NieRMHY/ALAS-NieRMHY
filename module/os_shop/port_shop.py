@@ -30,6 +30,9 @@ class PortShop(OSStatus, OSShopUI, Selector, MapEventHandler):
         """加载货币图标模板。
 
         加载正常货币和售罄货币的模板图像，用于匹配识别。
+
+        Returns:
+            list[Template]: 货币模板列表。
         """
         TEMPLATES = []
         coins = load_folder('./assets/shop/os_cost')
@@ -55,7 +58,11 @@ class PortShop(OSStatus, OSShopUI, Selector, MapEventHandler):
 
     @cached_property
     def os_shop_items(self) -> ItemGrid:
-        """获取商店物品网格配置。"""
+        """获取商店物品网格配置。
+
+        Returns:
+            ItemGrid: 商店物品网格配置实例。
+        """
         os_shop_items = ItemGrid(
             grids=None, templates={}, amount_area=(77, 77, 96, 96),
             counter_area=(70, 167, 134, 186), price_area=(52, 132, 130, 165)

@@ -488,6 +488,7 @@ class GeneratedConfig:
     AddNewStudent_Enable = False
     AddNewStudent_Favorite = False
     AddNewStudent_MinLevel = 50
+    AddNewStudent_MaxLevel = 0
 
     # 配置组 `Research`
     Research_UseCube = 'only_05_hour'  # always_use, only_05_hour, only_no_project, do_not_use
@@ -1035,6 +1036,10 @@ class GeneratedConfig:
     IslandDailyOrder_RejectCount = 0
     IslandDailyOrder_RejectFilter = 'Cheese > Tofu'
     IslandDailyOrder_UrgentDetectRefreshTime = datetime.datetime(2020, 1, 1, 0, 0)
+
+    # 配置组 `IslandSeasonPlan`
+    IslandSeasonPlan_SyncDone = True  # True, False
+    IslandSeasonPlan_Submit = False  # True, False
 
     # 配置组 `IslandDailyInteract`
     IslandDailyInteract_WeeklyPhoto = True  # True, False

@@ -54,7 +54,7 @@ class ShopStatus(UI):
             in: page_shop、补给商店
         """
         amount = OCR_SHOP_GOLD_COINS.ocr(self.device.image)
-        LogRes(self.config).Coin = amount
+        LogRes(self.config).record('Coin', amount, observed=bool(getattr(OCR_SHOP_GOLD_COINS, 'last_valid', False)))
         self.config.update()
         return amount
 
@@ -68,7 +68,7 @@ class ShopStatus(UI):
             in: page_shop、勋章商店等
         """
         amount = OCR_SHOP_GEMS.ocr(self.device.image)
-        LogRes(self.config).Gem = amount
+        LogRes(self.config).record('Gem', amount, observed=bool(getattr(OCR_SHOP_GEMS, 'last_valid', False)))
         self.config.update()
         return amount
 
@@ -82,7 +82,7 @@ class ShopStatus(UI):
             in: page_shop、勋章商店
         """
         amount = OCR_SHOP_MEDAL.ocr(self.device.image)
-        LogRes(self.config).Medal = amount
+        LogRes(self.config).record('Medal', amount, observed=bool(getattr(OCR_SHOP_MEDAL, 'last_valid', False)))
         self.config.update()
         return amount
 
@@ -96,7 +96,7 @@ class ShopStatus(UI):
             in: page_shop、功勋商店
         """
         amount = OCR_SHOP_MERIT.ocr(self.device.image)
-        LogRes(self.config).Merit = amount
+        LogRes(self.config).record('Merit', amount, observed=bool(getattr(OCR_SHOP_MERIT, 'last_valid', False)))
         self.config.update()
         return amount
 
@@ -110,7 +110,7 @@ class ShopStatus(UI):
             in: page_shop、舰队商店
         """
         amount = OCR_SHOP_GUILD_COINS.ocr(self.device.image)
-        LogRes(self.config).GuildCoin = amount
+        LogRes(self.config).record('GuildCoin', amount, observed=bool(getattr(OCR_SHOP_GUILD_COINS, 'last_valid', False)))
         self.config.update()
         return amount
 
@@ -124,7 +124,7 @@ class ShopStatus(UI):
             in: page_shop、核心商店
         """
         amount = OCR_SHOP_CORE.ocr(self.device.image)
-        LogRes(self.config).Core = amount
+        LogRes(self.config).record('Core', amount, observed=bool(getattr(OCR_SHOP_CORE, 'last_valid', False)))
         self.config.update()
         return amount
 

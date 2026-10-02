@@ -11358,7 +11358,19 @@
       },
       "MinLevel": {
         "type": "input",
-        "value": 50
+        "value": 50,
+        "validate": [
+          0,
+          125
+        ]
+      },
+      "MaxLevel": {
+        "type": "input",
+        "value": 0,
+        "validate": [
+          0,
+          125
+        ]
       }
     },
     "Storage": {
@@ -15464,6 +15476,85 @@
       "PlanShelfSlots": {
         "type": "input",
         "value": 5
+      }
+    },
+    "Storage": {
+      "Storage": {
+        "type": "storage",
+        "value": {},
+        "valuetype": "ignore",
+        "display": "disabled"
+      }
+    }
+  },
+  "IslandSeasonPlan": {
+    "Scheduler": {
+      "Enable": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "PushNotification": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "NextRun": {
+        "type": "datetime",
+        "value": "2020-01-01 00:00:00",
+        "validate": "datetime"
+      },
+      "Command": {
+        "type": "input",
+        "value": "IslandSeasonPlan",
+        "display": "hide"
+      },
+      "SuccessInterval": {
+        "type": "input",
+        "value": 0,
+        "display": "hide"
+      },
+      "FailureInterval": {
+        "type": "input",
+        "value": 120,
+        "display": "hide"
+      },
+      "ServerUpdate": {
+        "type": "input",
+        "value": "00:00",
+        "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      }
+    },
+    "IslandSeasonPlan": {
+      "SyncDone": {
+        "type": "checkbox",
+        "value": true,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "Submit": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "Storage": {

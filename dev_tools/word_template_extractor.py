@@ -1,25 +1,22 @@
+"""游戏敏感词字典提取工具。
+
+从解密的 word_template.lua 脚本中提取屏蔽词前缀树，还原为完整的敏感词黑名单列表。
+数据来源参考：https://github.com/Dimbreath/AzurLaneData
+"""
 import re
 
 from dev_tools.slpp import slpp
 
-"""
-This file is used to extract `word_template.lua`, aka, the blacklist words file.
-
-Git clone the repository here, https://github.com/Dimbreath/AzurLaneData, to get the decrypted scripts.
-Then put your filepath here, like `<your_folder>/<server>/sharecfg/word_template.lua`
-Server list: en-US, ja-JP, ko-KR, zh-CN, zh-TW
-"""
 file = ''
 count = 0
-with open(file, 'r', encoding='utf-8') as f:
-    text = f.read()
 
 
 def extract(dic, word_list):
-    """
+    """递归遍历敏感词 Trie 树提取完整词语。
+
     Args:
-        dic (dict):
-        word_list (list[str]):
+        dic (dict): 当前节点的子树字典。
+        word_list (list[str]): 当前已累积的字符列表。
     """
     global count
     for word, data in dic.items():
@@ -34,13 +31,20 @@ def extract(dic, word_list):
             extract(data, word_list=new)
 
 
-# CN server
-for result in re.findall('word_template = (.*?)return', text, re.DOTALL):
-    pg = slpp.decode(result)
-    extract(pg, word_list=[])
-# Other server
-for result in re.findall('uv0\.{0,1}(.*?)end', text, re.DOTALL):
-    pg = slpp.decode('{%s}' % result)
-    extract(pg, word_list=[])
+if __name__ == '__main__':
+    # 将解密脚本路径填入下方 file 变量，如 '<your_folder>/<server>/sharecfg/word_template.lua'
+    # 支持的服务器列表: en-US, ja-JP, ko-KR, zh-CN, zh-TW
+    if file:
+        with open(file, 'r', encoding='utf-8') as f:
+            text = f.read()
 
-print(f'Total count: {count}')
+        # 国服提取
+        for result in re.findall(r'word_template = (.*?)return', text, re.DOTALL):
+            pg = slpp.decode(result)
+            extract(pg, word_list=[])
+        # 其他外服提取
+        for result in re.findall(r'uv0\.{0,1}(.*?)end', text, re.DOTALL):
+            pg = slpp.decode('{%s}' % result)
+            extract(pg, word_list=[])
+
+        print(f'Total count: {count}')

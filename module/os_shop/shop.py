@@ -50,8 +50,8 @@ class OSShop(PortShop, AkashiShop):
         处理购买确认、数量选择、弹窗确认等交互流程。
 
         Args:
-            button: 待购买的物品按钮。
-            skip_first_screenshot: 是否跳过首次截图。
+            button (Button): 待购买的物品按钮。
+            skip_first_screenshot (bool): 是否跳过首次截图。默认 True。
 
         Returns:
             bool: 购买成功返回 True，失败返回 False。
@@ -131,7 +131,7 @@ class OSShop(PortShop, AkashiShop):
         循环调用选择函数获取待购买物品，执行购买直到无物品或达到上限。
 
         Args:
-            select_func: 物品选择函数，返回待购买物品或 None。
+            select_func (callable): 物品选择函数，返回待购买物品或 None。
 
         Returns:
             int: 成功购买的物品数量。
@@ -205,7 +205,7 @@ class OSShop(PortShop, AkashiShop):
         通过点击安全区域关闭数量选择弹窗。
 
         Args:
-            skip_first_screenshot: 是否跳过首次截图。
+            skip_first_screenshot (bool): 是否跳过首次截图。默认 True。
 
         Pages:
             in: SHOP_BUY_CONFIRM_AMOUNT
@@ -231,8 +231,8 @@ class OSShop(PortShop, AkashiShop):
         通过加减按钮调整到目标数量。
 
         Args:
-            item: 待购买的物品。
-            skip_first_screenshot: 是否跳过首次截图。
+            item (OSShopItem): 待购买的物品。
+            skip_first_screenshot (bool): 是否跳过首次截图。默认 True。
 
         Returns:
             bool: 数量设置成功返回 True，失败返回 False。
@@ -342,7 +342,11 @@ class OSShop(PortShop, AkashiShop):
         return True
 
     def handle_port_supply_buy(self) -> bool:
-        """在港口商店作用域内执行购买，避免策略泄漏到明石地图事件。"""
+        """在港口商店作用域内执行购买，避免策略泄漏到明石地图事件。
+
+        Returns:
+            bool: 成功购买或无可购买物品返回 True，金币不足返回 False。
+        """
         with self.opsi_shop_strategy_scope():
             return self._handle_port_supply_buy()
 
@@ -428,7 +432,7 @@ class OSShop(PortShop, AkashiShop):
         点击明石所在的网格进入商店，执行购买后返回地图。
 
         Args:
-            grid: 明石所在的网格位置。
+            grid (Button): 明石所在的网格位置。
 
         Pages:
             in: is_in_map
@@ -450,7 +454,7 @@ class OSShop(PortShop, AkashiShop):
         根据大世界重置剩余时间决定是否扣除保留数量。
 
         Args:
-            item: 待购买的物品。
+            item (OSShopItem): 待购买的物品。
 
         Returns:
             int: 可用货币数量。
@@ -471,7 +475,7 @@ class OSShop(PortShop, AkashiShop):
         """获取不限制的货币数量（不扣除保留量）。
 
         Args:
-            item: 待购买的物品。
+            item (OSShopItem): 待购买的物品。
 
         Returns:
             int: 货币总量。

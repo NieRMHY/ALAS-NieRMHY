@@ -1,13 +1,14 @@
-from module.base.button import Button, ButtonGrid
-"""指挥喵扫描用到的纯图像/文本工具函数。
+"""指挥喵扫描用到的纯图像与文本工具函数。
 
-从 :mod:`module.meowfficer.scan` 拆出来，一是让扫描主流程保持在 500 行以内
-（仓库约定），二是这些函数不依赖设备，可以单独测试。
+从 :mod:`module.meowfficer.scan` 拆出，使扫描主流程代码量保持紧凑，
+同时将无设备依赖的纯算法函数解耦以便于独立单元测试。
 """
 
 import re
 
 import numpy as np
+
+from module.base.button import Button, ButtonGrid
 
 # 相关能测到的最大位移（超过面板高度就没有重叠可对了）
 MAX_SCROLL_SHIFT = 300
@@ -18,31 +19,47 @@ NAME_NOISE = ('空闲中', '后勤', '指挥', '战术', '加成', '一览', '�
 
 
 def _crop(image: np.ndarray, area: tuple) -> np.ndarray:
-    """按 ``(x0, y0, x1, y1)`` 裁剪图像。"""
+    """按 (x0, y0, x1, y1) 区域坐标裁剪图像。
+
+    Args:
+        image (np.ndarray): 输入图像数组。
+        area (tuple[int, int, int, int]): 裁剪边界 (x0, y0, x1, y1)。
+
+    Returns:
+        np.ndarray: 裁剪后的图像数组。
+    """
     x0, y0, x1, y1 = area
     return image[y0:y1, x0:x1]
 
 
 def _mean_diff(a: np.ndarray, b: np.ndarray) -> float:
-    """两张同尺寸图像的平均像素差，用于判断画面是否还在变化。"""
+    """计算两张同尺寸图像的平均像素差，用于判断画面是否还在变化。
+
+    Args:
+        a (np.ndarray): 第一张图像数组。
+        b (np.ndarray): 第二张图像数组。
+
+    Returns:
+        float: 平均像素绝对差值；尺寸不一致或任一为空时返回 255.0。
+    """
     if a is None or b is None or a.shape != b.shape:
         return 255.0
     return float(np.abs(a.astype(np.int16) - b.astype(np.int16)).mean())
 
 
 def scroll_offset(before: np.ndarray, after: np.ndarray, max_shift: int = MAX_SCROLL_SHIFT) -> int:
-    """估算 ``after`` 相对 ``before`` 内容向上滚动了多少像素。
+    """估算 after 相对 before 内容向上滚动的像素位移量。
 
-    内容向上滚（看到更后面的猫）时，``before`` 里 y 处的图像会出现在 ``after`` 的 y-dy 处，
-    所以拿 ``before[dy:]`` 和 ``after[:h-dy]`` 逐 dy 比较，取平均差最小的那个 dy。
+    内容向上滚（看到更后面的猫）时，before 里 y 处的图像会出现在 after 的 y-dy 处，
+    所以拿 before[dy:] 和 after[:h-dy] 逐 dy 比较，取平均差最小的那个 dy。
 
     Args:
-        before: 滚动前裁剪的面板图像。
-        after: 滚动后同区域的面板图像。
-        max_shift: 最大可测位移（超出面板高度就没有重叠可对了）。
+        before (np.ndarray): 滚动前裁剪的面板图像。
+        after (np.ndarray): 滚动后同区域的面板图像。
+        max_shift (int): 最大可测位移（超出面板高度就没有重叠可对比了）。
 
     Returns:
-        int: 向上滚动的像素数；画面基本没动时返回 0。
+        int: 向上滚动的像素数；画面基本无位移时返回 0。
     """
     if before is None or after is None or before.shape != after.shape or before.size == 0:
         return 0
@@ -60,16 +77,16 @@ def scroll_offset(before: np.ndarray, after: np.ndarray, max_shift: int = MAX_SC
 
 
 def pick_cat_name(texts) -> str:
-    """从一组 OCR 文本里挑出猫名。
+    """从一组 OCR 文本结果里提取指挥喵名称。
 
     猫名可能是玩家自定义的，所以不强行匹配天赋库，只做去噪：
     取 2~6 个字、含汉字、且不含界面词的最长候选。
 
     Args:
-        texts: OCR 出来的文本序列。
+        texts (list[str]): OCR 识别出的文本序列。
 
     Returns:
-        str: 猫名；没有合格候选时返回空串。
+        str: 提取的猫名；无合格候选时返回空字符串。
     """
     best = ''
     for text in texts:
@@ -86,17 +103,17 @@ def pick_cat_name(texts) -> str:
 
 
 def parse_level(texts):
-    """从一组 OCR 文本里取指挥喵等级。
+    """从一组 OCR 文本结果里提取指挥喵等级数值。
 
-    等级条在左下角，OCR 常见结果是 ``LV30`` / ``LV:30`` / ``IV:30``，
-    所以优先认带 ``v``/``lv`` 的候选，其余只收「纯数字或单字母+数字」的形态，
+    等级条在左下角，OCR 常见结果是 LV30 / LV:30 / IV:30，
+    所以优先认带 v/lv 的候选，其余只收「纯数字或单字母+数字」的形态，
     避免把「后勤 101」之类的属性值当成等级。
 
     Args:
-        texts: OCR 出来的文本序列。
+        texts (list[str]): OCR 识别出的文本序列。
 
     Returns:
-        int | None: 等级；识别不到返回 ``None``。
+        int | None: 等级数值；识别不到时返回 None。
     """
     weak = None
     for text in texts:

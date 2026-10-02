@@ -17,18 +17,23 @@ from module.meowfficer.score_report import render_summary
 
 
 class MeowfficerCollectScore:
-    """给 ``MeowfficerCollect`` 用的评分混入类。
+    """指挥喵收集流程天赋评分混入类。
 
+    为 ``MeowfficerCollect`` 提供基于天赋 OCR 识别与攻略口径的量化评分能力。
     混入类不定义 ``__init__``，状态在每次收集开始时由 :meth:`meow_score_reset`
     惰性初始化，避免影响原有构造流程。
     """
 
     def meow_score_enabled(self):
-        """评分功能是否开启。"""
+        """检查评分功能是否在配置中开启。
+
+        Returns:
+            bool: 评分功能是否开启。
+        """
         return bool(getattr(self.config, 'MeowfficerTrain_ScoreTalents', False))
 
     def meow_score_reset(self):
-        """开始收集一只新猫前清空上一次的识别结果。"""
+        """重置当前收集流程中的天赋识别缓存与评分状态。"""
         self._meow_score_talents = []
         self._meow_score_result = None
         self._meow_score_cat = None
@@ -38,6 +43,9 @@ class MeowfficerCollectScore:
 
         OCR 不可用时返回 ``None`` 并记住失败，避免每只猫都重试、也避免异常
         顺着收集流程抛出去把原有自动化带崩。
+
+        Returns:
+            AlOcr | None: 初始化成功的 OCR 实例，失败时返回 None。
         """
         if getattr(self, '_meow_score_ocr_failed', False):
             return None
@@ -61,7 +69,7 @@ class MeowfficerCollectScore:
         识别失败只记警告：评分是附加功能，不应该影响收集本身。
 
         Args:
-            image (np.ndarray): 当前天赋详情面板的截图。
+            image (np.ndarray): 当前天赋详情面板的截图画面。
         """
         if not self.meow_score_enabled():
             return
@@ -83,13 +91,13 @@ class MeowfficerCollectScore:
                 known.add(talent.line)
 
     def meow_score_finish(self, cat=None):
-        """本只猫的天赋都识别完后，评分并写日志。
+        """本只猫的天赋都识别完后，执行评分并输出日志。
 
         Args:
-            cat (str): 指挥喵名字，用于挑选评分口径；未知时传 ``None``。
+            cat (str, optional): 指挥喵名称，用于挑选专属评分口径；未知时传 None。
 
         Returns:
-            ScoreResult: 评分结果；未开启评分或没识别到天赋时返回 ``None``。
+            ScoreResult | None: 评分结果对象；未开启评分或未识别到天赋时返回 None。
         """
         if not self.meow_score_enabled():
             return None
@@ -105,11 +113,10 @@ class MeowfficerCollectScore:
         return result
 
     def meow_score_passes(self):
-        """评分是否达到「锁定保留」的门槛。
+        """检查当前评分是否达到配置的锁定保留门槛。
 
         Returns:
-            bool: 未开启评分、门槛为 0、或评分失败时一律返回 ``True``，
-            保证不改变原有的保留行为。
+            bool: 是否达到门槛；未开启评分、门槛为 0 或无有效评分时返回 True。
         """
         if not self.meow_score_enabled():
             return True

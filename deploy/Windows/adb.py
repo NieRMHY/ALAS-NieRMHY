@@ -6,6 +6,11 @@ from deploy.Windows.logger import Progress, logger
 
 
 def show_fix_tip(module):
+    """显示依赖缺失时的修复提示。
+
+    Args:
+        module (str): 缺失的模块名称。
+    """
     logger.info(f"""
     To fix this:
     1. Re-run the launcher so uv can refresh the local .venv
@@ -16,7 +21,10 @@ def show_fix_tip(module):
 
 
 class AdbManager(EmulatorManager):
+    """Windows 下 ADB 服务初始化与设备连接管理器。"""
+
     def adb_install(self):
+        """启动并初始化 ADB 服务，完成模拟器连接与环境检查。"""
         logger.hr('Start ADB service', 0)
 
         if self.ReplaceAdb:

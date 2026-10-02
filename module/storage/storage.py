@@ -44,10 +44,10 @@ class StorageHandler(StorageUI):
         """根据稀有度返回对应的装备箱模板。
 
         Args:
-            rarity: 装备箱稀有度等级，1=T1, 2=T2, 3=T3, 4=T4。
+            rarity (int): 装备箱稀有度等级，1=T1, 2=T2, 3=T3, 4=T4。
 
         Returns:
-            对应稀有度的 TEMPLATE_BOX_T* 模板对象。
+            Button: 对应稀有度的 TEMPLATE_BOX_T* 模板对象。
 
         Raises:
             ScriptError: 传入未知的稀有度等级时抛出。
@@ -70,7 +70,7 @@ class StorageHandler(StorageUI):
         如果箱子数量不足，实际设置值可能小于期望值。
 
         Args:
-            amount: 期望设置的开箱数量。
+            amount (int): 期望设置的开箱数量。
 
         Returns:
             int: 实际设置的开箱数量，当箱子不足时可能小于期望值。
@@ -138,8 +138,8 @@ class StorageHandler(StorageUI):
         流程：点击箱子 -> 确认使用 -> 设置数量 -> 确认数量 -> 处理获得物品 -> 确认装备。
 
         Args:
-            button: 要点击的装备箱 Button 对象。
-            amount: 期望开箱数量，默认为 1。
+            button (Button): 要点击的装备箱 Button 对象。
+            amount (int): 期望开箱数量，默认为 1。
 
         Returns:
             int: 实际使用的箱子数量，不完全精确。
@@ -225,9 +225,9 @@ class StorageHandler(StorageUI):
         直到达到目标数量或页面中无更多箱子。
 
         Args:
-            rarity: 装备箱稀有度等级，1=T1, 2=T2, 3=T3。
-            amount: 期望使用的箱子数量。
-            skip_first_screenshot: 是否跳过首次截图复用上一状态的截图。
+            rarity (int): 装备箱稀有度等级，1=T1, 2=T2, 3=T3。
+            amount (int): 期望使用的箱子数量。
+            skip_first_screenshot (bool): 是否跳过首次截图复用上一状态的截图。
 
         Returns:
             int: 实际使用的箱子数量，不完全精确。
@@ -270,8 +270,8 @@ class StorageHandler(StorageUI):
         逐页查找并使用箱子，直到达到目标数量或无更多箱子。
 
         Args:
-            rarity: 装备箱稀有度等级，1=T1, 2=T2, 3=T3。
-            amount: 最多使用的箱子数量。
+            rarity (int): 装备箱稀有度等级，1=T1, 2=T2, 3=T3。
+            amount (int): 最多使用的箱子数量。
 
         Returns:
             int: 实际使用的箱子数量，不完全精确。
@@ -315,7 +315,7 @@ class StorageHandler(StorageUI):
         流程：选取装备 -> 确认拆解 -> 处理弹窗 -> 等待结果。
 
         Args:
-            amount: 最多拆解的装备数量，上限为 40。
+            amount (int): 最多拆解的装备数量，上限为 40。
 
         Returns:
             int: 实际拆解的装备数量。
@@ -437,8 +437,8 @@ class StorageHandler(StorageUI):
         设置装备筛选条件后，逐页拆解装备直到达到目标数量或装备列表为空。
 
         Args:
-            rarity: 装备稀有度筛选，1=普通, 2=稀有, 3=精锐, 4=超稀有, 5=最高稀有。
-            amount: 期望拆解的装备数量，实际数量 >= 期望值。
+            rarity (int): 装备稀有度筛选，1=普通, 2=稀有, 3=精锐, 4=超稀有, 5=最高稀有。
+            amount (int): 期望拆解的装备数量，实际数量 >= 期望值。
 
         Returns:
             int: 实际拆解的装备数量。
@@ -477,8 +477,8 @@ class StorageHandler(StorageUI):
         如果箱子用完或仓库已满无法继续则停止。
 
         Args:
-            rarity: 装备稀有度筛选，1=普通, 2=稀有, 3=精锐, 4=超稀有。
-            amount: 期望拆解的装备数量，实际数量 >= 期望值。
+            rarity (int): 装备稀有度筛选，1=普通, 2=稀有, 3=精锐, 4=超稀有。
+            amount (int): 期望拆解的装备数量，实际数量 >= 期望值。
 
         Returns:
             int: 实际拆解的装备数量。
@@ -531,8 +531,8 @@ class StorageHandler(StorageUI):
         如果箱子用完或仓库满且无法拆解则停止。
 
         Args:
-            rarity: 装备箱稀有度等级，1=普通, 2=稀有, 3=精锐, 4=超稀有。
-            amount: 最多使用的箱子数量。
+            rarity (int): 装备箱稀有度等级，1=普通, 2=稀有, 3=精锐, 4=超稀有。
+            amount (int): 最多使用的箱子数量。
 
         Returns:
             int: 实际使用的箱子数量。
@@ -583,8 +583,8 @@ class StorageHandler(StorageUI):
         处理完成后返回到弹窗出现前的页面。
 
         Args:
-            rarity: 拆解时使用的装备稀有度筛选，1=普通, 2=稀有, 3=精锐, 4=超稀有。
-            amount: 期望拆解的装备数量，实际数量 >= 期望值。
+            rarity (int): 拆解时使用的装备稀有度筛选，1=普通, 2=稀有, 3=精锐, 4=超稀有。
+            amount (int): 期望拆解的装备数量，实际数量 >= 期望值。
 
         Returns:
             bool: 是否检测到并处理了满仓弹窗。

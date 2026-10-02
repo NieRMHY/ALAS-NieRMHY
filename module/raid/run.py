@@ -12,12 +12,25 @@ from module.ui.page import page_campaign_menu, page_raid, page_rpg_stage
 
 
 class RaidRun(Raid, CampaignEvent):
+    """突袭任务运行器。
+
+    管理突袭活动海域的进入、次数检测、战斗执行和停止条件判定。
+
+    Attributes:
+        run_count (int): 当前已运行次数。
+        run_limit (int): 运行次数限制。
+    """
+
     run_count: int
     run_limit: int
 
     def triggered_stop_condition(self, oil_check=False, pt_check=False, coin_check=False):
-        """
-        检查是否触发了停止条件，包括运行次数限制和父类条件。
+        """检查是否触发了停止条件，包括运行次数限制和父类条件。
+
+        Args:
+            oil_check (bool): 是否检查石油量。默认 False。
+            pt_check (bool): 是否检查活动 PT 点数。默认 False。
+            coin_check (bool): 是否检查金币。默认 False。
 
         Returns:
             bool: 是否触发了停止条件。
@@ -32,12 +45,11 @@ class RaidRun(Raid, CampaignEvent):
         return super().triggered_stop_condition(oil_check=oil_check, pt_check=pt_check, coin_check=coin_check)
 
     def get_remain(self, mode, skip_first_screenshot=True):
-        """
-        获取指定难度的剩余挑战次数。
+        """获取指定难度的剩余挑战次数。
 
         Args:
-            mode (str): 难度模式，easy、normal、hard 或 ex。
-            skip_first_screenshot (bool): 是否跳过首次截图。
+            mode (str): 难度模式，如 'easy'、'normal'、'hard' 或 'ex'。
+            skip_first_screenshot (bool): 是否跳过首次截图。默认 True。
 
         Returns:
             int: 剩余挑战次数。
@@ -74,13 +86,15 @@ class RaidRun(Raid, CampaignEvent):
         return remain
 
     def run(self, name='', mode='', total=0):
-        """
-        运行突袭任务主循环，处理战斗执行、停止条件和调度器切换。
+        """运行突袭任务主循环，处理战斗执行、停止条件和调度器切换。
 
         Args:
-            name (str): 突袭活动名称，如 'raid_20200624'。
-            mode (str): 突袭难度，如 'hard'、'normal'、'easy'。
-            total (int): 总运行次数，0 表示不限制。
+            name (str, optional): 突袭活动名称，如 'raid_20200624'。默认空字符串（从配置读取）。
+            mode (str, optional): 突袭难度，如 'hard'、'normal'、'easy'。默认空字符串（从配置读取）。
+            total (int, optional): 总运行次数，0 表示不限制。默认 0。
+
+        Raises:
+            ScriptError: 活动名称或难度参数为空时抛出。
         """
         name = name if name else self.config.Campaign_Event
         mode = mode if mode else self.config.Raid_Mode

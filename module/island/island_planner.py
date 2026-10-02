@@ -19,11 +19,12 @@ from module.island.island_economy import (
     SHOP_LEVELS,
     EconomyDatabase,
 )
+from module.island.island_state import state_file
 
-UNPRODUCIBLE_FILE = os.path.join('config', 'island_unproducible.json')
+UNPRODUCIBLE_FILE = state_file('island_unproducible.json')
 # Add by MHY: 本账号「验证过能生产」的商品名单（从 ALAS 日志挖掘），
 # 用于避免把未解锁商品排进生产清单（会 GameStuckError→重启→死循环）
-VERIFIED_FILE = os.path.join('config', 'island_verified.json')
+VERIFIED_FILE = state_file('island_verified.json')
 
 # Add by MHY: 店铺标识 -> (生产任务名, 经营端配置序号, 商店模块源码)
 SHOP_TASKS = {
@@ -334,6 +335,7 @@ class ShopPlan(object):
 def plan_shop(shop, shop_level='diamond', season=None, warehouse=None,
               meals_slots=MEAL_SLOTS, shelf_slots=None,
               economy=None, producible=None, exclude=None, shelf_pool=None,
+              stock_have=None,
               verified=None, manual_shelf=None, capacity_ratio=0.9,
               stockpile=None):
     """
@@ -468,24 +470,47 @@ def plan_shop(shop, shop_level='diamond', season=None, warehouse=None,
         seen.add(name)
 
     # ---- 空闲产能生产囤积物（赛季任务物品：攒够就行，不上架）----
-    for name, target in sorted(stockpile.items()):
-        if name not in producible or name in exclude or name in seen:
+    # Add by MHY, 三条规则：
+    #  1) 不排除「已经是货架商品原料」的物品：原料需求按货架销量算，和赛季任务要
+    #     交的数量不是一个量级，跳过就永远攒不够（真机：禽肉快炒停在 20/100）。
+    #  2) 按「还差得最少」排序，一个个做：先做完的先释放产能。真机 grill 一次要
+    #     碳烤肉串(差 22 个=8.3 时) + 爆炒禽肉(差 100 个=76 时)，整店预算只有
+    #     43.2 时，一起排必然都排不下；顺序做则前者做完产能就让给后者。
+    #  3) 估算按「还差多少」而不是目标总量：仓库已有 248/270 时不该按从零做 270
+    #     来估（真机会因此误判产能不足）。排不下就按剩余产能做一部分。
+    # 囤积是追加需求，merge_requirements 按 max 合并不会重复生产，正常上架销售
+    # 不受影响——shelf 先定，囤积只用剩下的产能。
+    # Add by MHY, 独占式：一个店一次只放**一件**赛季物品进生产清单，做完再做下一件。
+    # 用户口径：绝对不能影响上架销售（货架份额是硬的），赛季任务慢慢排队即可。
+    # 为什么不按预算小时数判：真机 grill 货架本身只占 19.0 时（预算 43.2 时），
+    # 余量 24.2 时；而爆炒禽肉要 63.8 时、碳烤肉串要 65.6 时——按预算判就是
+    # 永远「排不下」、永远排队，一件也做不成。同时只放一件的话，货架那 19 时
+    # 份额不会被抢，那件做多久都只是慢，符合「时间足够」。
+    # 顺序按「还差得少」：最接近完成的先做完，先释放位置给下一件。
+    stock_have = dict(stock_have or {})
+    for name, target in sorted(
+            stockpile.items(),
+            key=lambda kv: (max(0, int(kv[1]) - int(stock_have.get(kv[0], 0))), kv[0])):
+        if name not in producible or name in exclude:
             continue
-        if verified_set is not None and name not in verified_set:
-            plan.notes.append(f'囤积 {economy.cn_name(name)} 未验证可生产，跳过')
-            continue
+        # 赛季物品不受「只排已验证商品」限制：它们没有别的生产途径，
+        # 而白名单是靠历史成功记录挖出来的——没排过就永远不会进白名单。
+        # 真机踩过：胡萝卜厚蛋烧/拿铁/便携快餐因此一直是 0。
+        # 真正的不可能生产由 exclude（island_unproducible.json）兜底。
         if len(meals) >= meals_slots:
             break
-        candidate = meals + [(name, int(target))]
-        _, _, minutes = production_requirements(shop, candidate, economy)
-        if minutes > budget:
-            plan.notes.append(
-                f'囤积 {economy.cn_name(name)}x{int(target)}：剩余产能不足'
-                f'（{minutes / 60:.1f} 时 > 预算 {budget / 60:.1f} 时），本轮不排')
+        target = int(target)
+        remaining = max(0, target - int(stock_have.get(name, 0)))
+        if remaining <= 0:
+            # 已经攒够，不需要再生产；它仍留在囤积名单里（不上架、不被买走），
+            # 等任务提交后由自动刷新放回货架
             continue
-        meals = candidate
+        plan.notes.append(f'囤积 {economy.cn_name(name)}x{target}（还差 {remaining}）：'
+                          f'本轮独占排产，做完/提交后再排下一件')
+        meals = meals + [(name, target)]
         seen.add(name)
-        plan.stockpile.append((name, int(target)))
+        plan.stockpile.append((name, target))
+        break
     plan.meals = meals
     plan_names = {n for n, _ in plan.meals}
     if plan_names:
@@ -496,7 +521,7 @@ def plan_shop(shop, shop_level='diamond', season=None, warehouse=None,
 def plan_all(shop_level='diamond', season=None, warehouse=None,
              shelf_slots=None, shops=None, extra_exclude=None,
              verified_only=False, manual_shelf=None, capacity_ratio=0.9,
-             stockpile=None):
+             stockpile=None, stock_have=None):
     """
     生成全部店铺方案。
 
@@ -526,7 +551,8 @@ def plan_all(shop_level='diamond', season=None, warehouse=None,
                               verified=verified.get(shop) if verified_only else None,
                               manual_shelf=(manual_shelf or {}).get(shop),
                               capacity_ratio=capacity_ratio,
-                              stockpile=(stockpile or {}).get(shop))
+                              stockpile=(stockpile or {}).get(shop),
+                              stock_have=stock_have)
     # ---- 跨店原料回填：别店需要的原料排到生产店 ----
     for shop in order:
         _, cross, _ = production_requirements(shop, out[shop].meals, economy)
@@ -623,7 +649,13 @@ def config_key_values(plans):
 
 def refresh_verified_from_logs(log_glob='log/*_ALAS.txt', keep=3):
     """
-    从最近的 ALAS 日志重建「已验证可生产」名单并落盘。
+    从最近的 ALAS 日志**补充**「已验证可生产」名单并落盘。
+
+    Add by MHY：原来是整体覆盖，且只挖最近 keep 个日志。真机后果：log/ 下只有
+    一个匹配文件时只挖出 4 个商品，把已有的 40 个冲成 4 个；某商品只要连续几天
+    没被排产就会永久退出白名单——与 8b9bece27 修的 verified_only 死锁同源。
+    改为并集，只增不减：历史验证过的商品不会因为近期没排产而被遗忘。
+    商品若真的不再可生产，由 island_unproducible.json 兜底。
 
     Args:
         log_glob: 日志通配路径（相对 ALAS 根目录）
@@ -634,9 +666,13 @@ def refresh_verified_from_logs(log_glob='log/*_ALAS.txt', keep=3):
     """
     import glob
     paths = sorted(glob.glob(log_glob))[-keep:]
-    data = mine_verified(paths)
-    save_verified(data)
-    return {shop: len(names) for shop, names in data.items()}
+    mined = mine_verified(paths)
+    current = load_verified()
+    merged = {}
+    for shop in set(mined) | set(current):
+        merged[shop] = set(mined.get(shop, ())) | set(current.get(shop, ()))
+    save_verified(merged)
+    return {shop: len(names) for shop, names in sorted(merged.items())}
 
 
 def apply_patch(config_path, patch):

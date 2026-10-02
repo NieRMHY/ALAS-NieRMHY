@@ -11,6 +11,23 @@ from module.logger import logger
 
 
 class IslandJuuEatery(IslandShopBase):
+    """岛屿啾啾简餐店自动化管理器。
+
+    继承 IslandShopBase，管理简餐店的菜品烹饪、芝士与牛奶原料约束及岗位派遣。
+
+    Attributes:
+        shop_type (str): 店铺类型标识。
+        time_prefix (str): 岗位完成时间前缀。
+        chef_config (str): 厨师角色筛选配置。
+        post_open_retry_swipe (bool): 打开岗位失败时是否重试滑动。
+        shop_items (list): 简餐店商品配置列表。
+        meal_compositions (dict): 套餐组成与所需单品数量。
+        post_buttons (dict): 岗位按钮资源映射。
+        filter_asset (str): 仓库筛选分类。
+        cheese_stock (int): 芝士库存数量。
+        milk_stock (int): 牛奶库存数量。
+        special_materials (dict): 特殊材料库存映射。
+    """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -100,7 +117,11 @@ class IslandJuuEatery(IslandShopBase):
         self.initialize_shop()
 
     def get_warehouse_counts(self):
-        """覆盖：获取仓库数量，包括cheese和milk"""
+        """获取简餐店商品以及芝士、牛奶等特殊材料的仓库库存。
+
+        Returns:
+            dict[str, int]: 包含所有商品与特殊原料库存的映射。
+        """
         # 先调用父类方法获取基础库存
         super().get_warehouse_counts()
 
@@ -128,7 +149,15 @@ class IslandJuuEatery(IslandShopBase):
         return self.warehouse_counts
 
     def check_special_materials(self, product, batch_size):
-        """覆盖：检查特殊材料（芝士和牛奶）限制"""
+        """检查特殊材料（芝士和牛奶）对生产批次的限制。
+
+        Args:
+            product (str): 目标商品名称。
+            batch_size (int): 计划生产的批次数。
+
+        Returns:
+            int: 考虑材料限制后允许的最大批次数。
+        """
         if batch_size <= 0:
             return 0
 
@@ -152,7 +181,12 @@ class IslandJuuEatery(IslandShopBase):
         return batch_size
 
     def deduct_materials(self, product, number):
-        """覆盖：扣除前置材料，包括芝士、牛奶和套餐原材料"""
+        """扣除制作指定餐品消耗的前置材料（包括芝士、牛奶和套餐原材料）。
+
+        Args:
+            product (str): 生产的餐品名称。
+            number (int): 生产的餐品批次数。
+        """
         # 先调用父类方法扣除套餐原材料
         super().deduct_materials(product, number)
 
@@ -175,7 +209,14 @@ class IslandJuuEatery(IslandShopBase):
             logger.info(f"[岛屿-啾啾简餐] 扣除牛奶：{self._item_cn('milk')} -{milk_needed} (用于制作 {self._item_cn(product)})")
 
     def apply_special_material_constraints(self, requirements):
-        """覆盖：根据芝士和牛奶库存调整需求"""
+        """根据芝士和牛奶的实际库存调整各餐品的需求排产计划。
+
+        Args:
+            requirements (dict[str, int]): 各餐品的原始需求数量映射。
+
+        Returns:
+            dict[str, int]: 调整后受原料库存约束的需求数量映射。
+        """
         result = requirements.copy()
 
         # 处理strawberry_charlotte的芝士限制
@@ -206,7 +247,7 @@ class IslandJuuEatery(IslandShopBase):
 
     # 新增方法：处理特殊任务（如果需要）
     def process_special_task(self):
-        """处理特殊任务（如芝士消耗）"""
+        """处理特殊任务（如芝士消耗生产等扩展逻辑）。"""
         # 这里可以添加处理芝士相关任务的逻辑
         # 例如：如果芝士过多，强制生产strawberry_charlotte来消耗芝士
         pass

@@ -1,10 +1,14 @@
 """导出岛屿经济库全表（Markdown），便于查阅生产时间/成本/售价/利润。
 
-用法:
+用法（输出路径可选，默认 docs/island_economy_table.md）:
+    uv run python -m dev_tools.island_economy_table [输出路径]
     uv run python dev_tools/island_economy_table.py [输出路径]
-默认输出 docs/island_economy_table.md（docs/ 不入库）。
+
+单向导出：读 module/island/island_economy.py 的表写 Markdown，不回写代码表。
+docs/ 被 .gitignore 忽略，产物不入库；数值仍手工维护，改完跑 validate_economy() 自检。
 """
 import sys
+from pathlib import Path
 
 sys.path.insert(0, '.')
 from module.island.island_economy import ECONOMY_PRODUCTS, SHOP_CN_NAMES, SHOP_LEVELS
@@ -44,6 +48,8 @@ for level, cfg in SHOP_LEVELS.items():
 lines.append('')
 lines.append('售价系数说明：wiki 口径的实际售出为 售价 x 系数 / 1.6；系数越高，同件商品实收越高。')
 
-out = 'docs/island_economy_table.md'
-open(out, 'w', encoding='utf-8').write('\n'.join(lines) + '\n')
+# Modify by MHY, 输出路径改为真正取 argv（原实现写死 docs/，docstring 却声称支持 argv）
+out = Path(sys.argv[1]) if len(sys.argv) > 1 else Path('docs/island_economy_table.md')
+out.parent.mkdir(parents=True, exist_ok=True)
+out.write_text('\n'.join(lines) + '\n', encoding='utf-8')
 print('已写入', out, '商品总数:', len(ECONOMY_PRODUCTS))

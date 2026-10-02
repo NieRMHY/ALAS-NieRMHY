@@ -44,11 +44,11 @@ def resolve_panel(stored: Any, cached: Any) -> str:
     直接落回默认值，避免异常取值把界面卡在空白状态。
 
     Args:
-        stored: 服务端偏好值。
-        cached: 浏览器 ``localStorage`` 镜像值。
+        stored (Any): 服务端偏好值。
+        cached (Any): 浏览器 ``localStorage`` 镜像值。
 
     Returns:
-        ``"log"`` 或 ``"stat"``。
+        str: ``"log"`` 或 ``"stat"``。
     """
     for candidate in (stored, cached):
         if isinstance(candidate, str) and candidate in PANEL_CHOICES:
@@ -57,6 +57,11 @@ def resolve_panel(stored: Any, cached: Any) -> str:
 
 
 def _read_prefs() -> dict:
+    """读取偏好配置文件。
+
+    Returns:
+        dict: 偏好配置字典，若文件缺失或损坏则返回空字典。
+    """
     try:
         with open(_PREFS_FILE, 'r', encoding='utf-8') as f:
             data = json.load(f)
@@ -69,15 +74,27 @@ def _read_prefs() -> dict:
 
 
 def get_pref(key: str, default: Any = None) -> Any:
-    """读取一个界面偏好；文件缺失或损坏时返回 ``default``。"""
+    """读取一个界面偏好。
+
+    Args:
+        key (str): 偏好键名。
+        default (Any): 默认值。若文件缺失或损坏则返回此值。默认为 None。
+
+    Returns:
+        Any: 偏好配置值。
+    """
     return _read_prefs().get(key, default)
 
 
 def set_pref(key: str, value: Any) -> bool:
     """写入一个界面偏好，保留其余键。
 
+    Args:
+        key (str): 偏好键名。
+        value (Any): 待写入的偏好配置值。
+
     Returns:
-        是否写入成功。失败只告警不抛出——界面偏好不该影响主流程。
+        bool: 是否写入成功。失败只告警不抛出——界面偏好不该影响主流程。
     """
     data = _read_prefs()
     data[key] = value
@@ -94,12 +111,26 @@ def set_pref(key: str, value: Any) -> bool:
 
 
 def get_overview_panel(cached: Optional[str] = None) -> str:
-    """解析概览页右栏面板。``cached`` 为浏览器 ``localStorage`` 镜像值。"""
+    """解析概览页右栏面板。
+
+    Args:
+        cached (Optional[str]): 浏览器 ``localStorage`` 镜像值。默认为 None。
+
+    Returns:
+        str: 面板名称（"log" 或 "stat"）。
+    """
     return resolve_panel(get_pref('overview_panel'), cached)
 
 
 def set_overview_panel(panel: str) -> bool:
-    """记住概览页右栏面板选择。非法值拒绝写入。"""
+    """记住概览页右栏面板选择。非法值拒绝写入。
+
+    Args:
+        panel (str): 面板名称。
+
+    Returns:
+        bool: 是否成功保存。
+    """
     if panel not in PANEL_CHOICES:
         return False
     return set_pref('overview_panel', panel)
@@ -113,10 +144,10 @@ def normalize_background_urls(value: Any) -> list:
     其余丢弃——这些值会被当作加载地址用，不能放行脏数据。
 
     Args:
-        value: 原始值（列表、或换行/逗号分隔的字符串）。
+        value (Any): 原始值（列表、或换行/逗号分隔的字符串）。
 
     Returns:
-        去重后的网址列表，最多 :data:`BACKGROUND_URL_MAX` 条。
+        list: 去重后的网址列表，最多 :data:`BACKGROUND_URL_MAX` 条。
     """
     if isinstance(value, str):
         raw = value.replace(',', '\n').splitlines()
@@ -142,10 +173,21 @@ def normalize_background_urls(value: Any) -> list:
 
 
 def get_background_urls() -> list:
-    """读取自定义背景图网址列表；缺失或损坏时返回空列表。"""
+    """读取自定义背景图网址列表。
+
+    Returns:
+        list: 自定义背景图网址列表；缺失或损坏时返回空列表。
+    """
     return normalize_background_urls(get_pref('background_urls'))
 
 
 def set_background_urls(urls: Any) -> bool:
-    """记住自定义背景图网址列表，写入前先做校验整理。"""
+    """记住自定义背景图网址列表，写入前先做校验整理。
+
+    Args:
+        urls (Any): 原始网址列表或字符串。
+
+    Returns:
+        bool: 是否成功保存。
+    """
     return set_pref('background_urls', normalize_background_urls(urls))

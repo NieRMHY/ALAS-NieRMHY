@@ -2,7 +2,7 @@
  * @fileoverview 模拟器画面监控与截图捕获面板组件。
  */
 
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Download, Image, Terminal } from 'lucide-react'
 import { api } from '../api/client'
 import type { LogEntry, Logs as LogsData, Preview } from '../api/types'
@@ -29,10 +29,10 @@ export function compactLine(entry: LogEntry): CompactLine | null {
 }
 
 // 按 id 合并增量，服务端重置游标时整体替换，最后只保留尾部若干条。
-export function mergeLines(previous: CompactLine[], entries: LogEntry[], reset: boolean): CompactLine[] {
+export function mergeLines(previous: CompactLine[], entries: (LogEntry | CompactLine)[], reset: boolean): CompactLine[] {
   const byId = new Map((reset ? [] : previous).map(line => [line.id, line]))
   entries.forEach(entry => {
-    const line = compactLine(entry)
+    const line = 'time' in entry ? entry : compactLine(entry)
     if (line) byId.set(line.id, line)
   })
   return [...byId.values()].sort((a, b) => a.id - b.id).slice(-RECENT_LOG_LINES)
@@ -57,12 +57,33 @@ function RecentLogs({instance}: {instance: string}) {
     }).catch(error => notify(error.message, true))
     return () => { active = false }
   }, [connection, instance, notify])
-  useEffect(() => api.onEvent(event => {
-    if (event.topic !== 'logs') return
-    const data = event.data as LogsData
-    if (data.instance !== instance) return
-    setLines(previous => mergeLines(previous, data.entries, data.reset))
-  }), [instance])
+  /* 服务端每条日志发一个事件；这里按帧归并后再进 state。 */
+  const pending = useRef<{entries: CompactLine[]; reset: boolean}>({entries: [], reset: false})
+  const frame = useRef<number | null>(null)
+  useEffect(() => {
+    const flush = () => {
+      frame.current = null
+      const batch = pending.current
+      if (!batch.entries.length && !batch.reset) return
+      pending.current = {entries: [], reset: false}
+      setLines(previous => mergeLines(previous, batch.entries, batch.reset))
+    }
+    const unsubscribe = api.onEvent(event => {
+      if (event.topic !== 'logs') return
+      const data = event.data as LogsData
+      if (data.instance !== instance) return
+      const batch = pending.current
+      batch.entries = mergeLines(batch.entries, data.entries, !!data.reset)
+      batch.reset ||= !!data.reset
+      if (frame.current === null) frame.current = requestAnimationFrame(flush)
+    })
+    return () => {
+      unsubscribe()
+      if (frame.current !== null) cancelAnimationFrame(frame.current)
+      frame.current = null
+      pending.current = {entries: [], reset: false}
+    }
+  }, [instance])
   if (!lines.length) return null
   return <div className="preview-log" aria-label={ui('monitor.recentLogs')}>
     {lines.map(line => <div className="preview-log-line" key={line.id} title={line.text}>
@@ -77,6 +98,8 @@ function RecentLogs({instance}: {instance: string}) {
 export function MonitorPanel({instance, actions}: {instance: string; actions?: ReactNode}) {
   const [view, setView] = useState('logs')
   const [frame, setFrame] = useState<Preview>()
+  /* 日志工具条挂到表头上的槽位：窗口变窄时整行换行，不再叠在日志文字上。 */
+  const [toolbarSlot, setToolbarSlot] = useState<HTMLDivElement | null>(null)
   const {setPreviewEnabled, ui} = useApp()
   useEffect(() => {
     setPreviewEnabled(view === 'preview')
@@ -92,8 +115,9 @@ export function MonitorPanel({instance, actions}: {instance: string; actions?: R
     ]}/>
     {actions}
     {view === 'preview' && frame?.image && <a className="text-button" href={frame.image} download={`${instance}-screenshot.jpg`}><Download size={14}/>{ui('monitor.saveScreenshot')}</a>}
+    <div className="monitor-toolbar-slot" ref={setToolbarSlot}/>
   </div>
-    <div className="monitor-view" hidden={view !== 'logs'}><LogPanel active={view === 'logs'}/></div>
+    <div className="monitor-view" hidden={view !== 'logs'}><LogPanel active={view === 'logs'} toolbarSlot={toolbarSlot}/></div>
     <div className="monitor-view" hidden={view !== 'preview'}>
       <RecentLogs instance={instance}/>
       <div className="preview-stage"><div className="preview-screen">{frame?.image ? <img src={frame.image} alt={ui('monitor.screenshotAlt')}/> : <Empty icon={<Image size={42}/>} title={ui('monitor.waitingScreenshot')}>{ui('monitor.screenshotHint')}</Empty>}</div></div>

@@ -33,22 +33,7 @@ from module.logger import logger
 
 
 def show_function_call():
-    """
-    INFO     21:07:31.554 │ Function calls:
-                       <string>   L1 <module>
-                   spawn.py L116 spawn_main()
-                   spawn.py L129 _main()
-                 process.py L314 _bootstrap()
-                 process.py L108 run()
-         process_manager.py L149 run_process()
-                    alas.py L285 loop()
-                    alas.py  L69 run()
-                     src.py  L55 rogue()
-                   rogue.py  L36 run()
-                   rogue.py  L18 rogue_once()
-                   entry.py L335 rogue_world_enter()
-                    path.py L193 rogue_path_select()
-    """
+    """打印当前调用栈回溯信息，用于诊断卡死或点击异常来源。"""
     import os
     import traceback
     stack = traceback.extract_stack()
@@ -373,13 +358,16 @@ class Device(Screenshot, Control, AppControl, Input):
         return self.image
 
     def dump_hierarchy(self) -> etree._Element:
+        """导出当前界面 UI 控件树层次结构。
+
+        Returns:
+            界面控件树的根节点 Element 对象。
+        """
         self.stuck_record_check()
         return super().dump_hierarchy()
 
     def release_during_wait(self):
-        """
-        等待期间释放截图资源，避免后台持续占用。
-        """
+        """等待期间释放截图资源，避免后台持续占用。"""
         # Scrcpy 服务端持续发送视频流，等待期间需要停止
         if self.config.Emulator_ScreenshotMethod == 'scrcpy':
             self._scrcpy_server_stop()
@@ -387,8 +375,10 @@ class Device(Screenshot, Control, AppControl, Input):
             self.nemu_ipc_release()
 
     def get_orientation(self):
-        """
-        获取屏幕方向，方向变化时触发回调。
+        """获取屏幕方向，方向变化时触发底层控制回调。
+
+        Returns:
+            int: 屏幕方向角度（0, 90, 180, 270）。
         """
         o = super().get_orientation()
 
@@ -398,9 +388,15 @@ class Device(Screenshot, Control, AppControl, Input):
         return o
 
     def stuck_record_add(self, button):
+        """记录检测到的界面按钮或元素标识。
+
+        Args:
+            button: 按钮实例或名称标识。
+        """
         self.detect_record.add(str(button))
 
     def stuck_record_clear(self):
+        """清除卡死检测记录并重置所有防卡死定时器。"""
         self.detect_record = set()
         self.stuck_timer.reset()
         self.stuck_timer_long.reset()
@@ -408,15 +404,14 @@ class Device(Screenshot, Control, AppControl, Input):
 
     @contextmanager
     def stuck_timeout_override(self, image_stuck=None, long_wait=None):
-        """
-        临时覆盖卡死检测的超时阈值，退出上下文后自动恢复。
+        """临时覆盖卡死检测的超时阈值，退出上下文后自动恢复。
 
         用于登录等待等已知会长时间保持静态画面的场景（如后台模拟器慢启动），
         避免 _stuck_image_timer 过早触发 GameStuckError 造成重启死循环。
 
         Args:
-            image_stuck (int | float): 截图无变化判卡死的时间上限，None 表示不修改。
-            long_wait (int | float): 长等待判卡死的时间上限，None 表示不修改。
+            image_stuck (int | float, optional): 截图无变化判卡死的时间上限，None 表示不修改。
+            long_wait (int | float, optional): 长等待判卡死的时间上限，None 表示不修改。
 
         Yields:
             None
@@ -435,6 +430,12 @@ class Device(Screenshot, Control, AppControl, Input):
                 timer_obj.limit = limit
 
     def _check_image_stuck(self):
+        """检查截图是否长时间处于静止未变化状态。
+
+        Raises:
+            GameStuckError: 截图长时间未发生变化且游戏仍在运行。
+            GameNotRunningError: 截图未发生变化且游戏进程已退出。
+        """
         if self.image is None:
             return
 
@@ -456,8 +457,7 @@ class Device(Screenshot, Control, AppControl, Input):
             self._stuck_image_timer.clear()
 
     def stuck_record_check(self):
-        """
-        检查是否卡死（操作超时或长时间无有效截图操作）。
+        """检查是否卡死（操作超时或长时间无有效截图操作）。
 
         Raises:
             GameStuckError: 游戏卡死。
@@ -484,25 +484,35 @@ class Device(Screenshot, Control, AppControl, Input):
             raise GameNotRunningError('[设备-卡死] 游戏已退出')
 
     def handle_control_check(self, button):
+        """控制前置检查，重置卡死记录并检测点击频率是否异常。
+
+        Args:
+            button: 即将点击或操作的按钮对象或操作名。
+        """
         self.stuck_record_clear()
         self.click_record_add(button)
         self.click_record_check()
 
     def click_record_add(self, button):
+        """将操作记录追加到最近点击队列中。
+
+        Args:
+            button: 按钮实例或操作标识。
+        """
         self.click_record.append(str(button))
 
     def click_record_clear(self):
+        """清空最近点击记录队列。"""
         self.click_record.clear()
 
     def click_record_remove(self, button):
-        """
-        从点击记录中移除指定按钮的所有记录。
+        """从点击记录中移除指定按钮的所有记录。
 
         Args:
             button: 要移除的按钮对象。
 
         Returns:
-            移除的记录数量。
+            int: 移除的记录数量。
         """
         removed = 0
         for _ in range(self.click_record.maxlen):
@@ -516,8 +526,7 @@ class Device(Screenshot, Control, AppControl, Input):
         return removed
 
     def click_record_check(self):
-        """
-        检查点击频率是否异常（同一按钮被点击过多或两个按钮交替点击过多）。
+        """检查点击频率是否异常（同一按钮被点击过多或两个按钮交替点击过多）。
 
         Raises:
             GameTooManyClickError: 点击频率异常。
@@ -537,9 +546,7 @@ class Device(Screenshot, Control, AppControl, Input):
             raise GameTooManyClickError(f'[设备-点击] 两个按钮交替点击次数过多: {count[0][0]}, {count[1][0]}')
 
     def disable_stuck_detection(self):
-        """
-        禁用卡死检测，用于半自动模式和调试场景。
-        """
+        """禁用卡死检测，用于半自动模式和调试场景。"""
         logger.info('[设备-检测] 禁用卡死检测')
 
         def empty_function(*arg, **kwargs):
@@ -549,6 +556,13 @@ class Device(Screenshot, Control, AppControl, Input):
         self.stuck_record_check = empty_function
 
     def app_start(self):
+        """启动游戏应用。
+
+        检查配置是否允许自动处理错误，执行账号恢复与画质设置同步后启动游戏并清空卡死记录。
+
+        Raises:
+            RequestHumanTakeover: 当未启用错误处理配置时抛出。
+        """
         if not self.config.Error_HandleError:
             logger.critical('[Device] 错误 没有启动/停止应用，因为 HandleError 已禁用')
             logger.critical('[Device] 请启用 Alas.Error.HandleError 或手动登录碧蓝航线')
@@ -567,6 +581,13 @@ class Device(Screenshot, Control, AppControl, Input):
         self.click_record_clear()
 
     def app_stop(self):
+        """停止游戏应用。
+
+        检查配置是否允许自动处理错误，停止应用并清空卡死和点击记录。
+
+        Raises:
+            RequestHumanTakeover: 当未启用错误处理配置时抛出。
+        """
         if not self.config.Error_HandleError:
             logger.critical('[Device] 错误 没有启动/停止应用，因为 HandleError 已禁用')
             logger.critical('[Device] 请启用 Alas.Error.HandleError 或手动登录碧蓝航线')

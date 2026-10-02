@@ -4,7 +4,7 @@ import time
 import module.config.server as server
 from module.base.utils import *
 
-server.server = 'cn'  # Don't need to edit, it's used to avoid error.
+server.server = 'cn'  # 无需修改，用于避免服务器配置未初始化的异常。
 
 from module.config.config import AzurLaneConfig
 from module.map_detection.view import View
@@ -12,9 +12,7 @@ from module.base.utils import load_image
 
 
 class Config:
-    """
-    粘贴 campaign/event_20260813_cn/d1.py 的生成配置。
-    """
+    """地图临时配置类，用于模拟战役地图运行时的预测参数。"""
     MAP_SIREN_TEMPLATE = ['haorenlichade_m_zhanlie']
     MOVABLE_ENEMY_TURN = (2,)
     MAP_HAS_SIREN = True
@@ -35,9 +33,9 @@ cfg = AzurLaneConfig('alas2')
 # 合并地图文件的配置，使 predict 能标记塞壬格子
 cfg = cfg.merge(Config())
 
-# Folder to save temp images
+# 临时图片保存目录
 folder = './screenshots/relative_crop'
-# Put Screenshot here（把 A1 图、含塞壬的截图放到这里）
+# 战役截图路径（将包含 A1 关卡或塞壬的截图放置于此）
 file = './screenshots/266F9A78004631A264669859C3BDFF8D.png'
 
 i = load_image(file)
@@ -49,8 +47,8 @@ grids.show()
 
 os.makedirs(folder, exist_ok=True)
 for grid in grids:
-    # Find more relative_crop area in module/map/grid_predictor.py
-    # This one is for `predict_enemy_genre`
+    # 更多相对裁剪区域定义可参见 module/map/grid_predictor.py
+    # 此处裁剪区域用于 predict_enemy_genre 敌舰类型预测
     piece = rgb2gray(grid.relative_crop((-0.5, -1, 0.5, 0), shape=(60, 60)))
 
     file = '%s_%s_%s.png' % (int(time.time()), grid.location[0], grid.location[1])

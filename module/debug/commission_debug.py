@@ -4,7 +4,7 @@
 并测试 OnePush 与 WebUI 的消息推送链路。
 """
 
-from module.notify.notify import handle_notify, notify_webui
+from module.notify.notify import handle_notify, notify_title, notify_webui
 
 
 class CommissionDebugHandler:
@@ -49,7 +49,7 @@ class CommissionDebugHandler:
     def trigger_notify_only(self):
         """仅验证推送链路，不写入统计库。"""
         self._notify(
-            title=f'DEBUG TEST <{self.instance}>',
+            title=notify_title(self.instance, '调试', '推送测试'),
             content='仅推送测试，未写入统计库',
         )
 
@@ -66,7 +66,7 @@ class CommissionDebugHandler:
         cl1_db.add_commission_income(self.instance, items, commission_count=1)
 
         self._notify(
-            title=f'DEBUG TEST <{self.instance}>',
+            title=notify_title(self.instance, '调试', '推送测试'),
             content=f'钻石 x {gem}\n魔方 x {cube}',
         )
 

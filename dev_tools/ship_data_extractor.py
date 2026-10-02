@@ -99,15 +99,33 @@ SERVER_DIRS = {
 # ---------------------------------------------------------------------------
 
 class LuaParser:
-    """简单快速的行级 Lua 解析器。"""
+    """简单快速的行级 Lua 解析器。
+
+    Attributes:
+        text (str): 待解析的 Lua 文本内容。
+        lines (list[str]): 按行切分后的文本列表。
+        pos (int): 当前解析到的行指针位置。
+    """
 
     def __init__(self, text: str):
+        """初始化解析器。
+
+        Args:
+            text (str): 待解析的 Lua 文本内容。
+        """
         self.text = text
         self.lines = text.splitlines()
         self.pos = 0
 
     def skip_to(self, pattern: re.Pattern) -> bool:
-        """移动指针到下一个匹配行，返回是否找到。"""
+        """移动指针到下一个匹配行。
+
+        Args:
+            pattern (re.Pattern): 用于行匹配的正则表达式模式。
+
+        Returns:
+            bool: 是否成功找到匹配行。
+        """
         while self.pos < len(self.lines):
             if pattern.search(self.lines[self.pos]):
                 return True
@@ -115,9 +133,12 @@ class LuaParser:
         return False
 
     def parse_block(self) -> dict:
-        """从当前位置解析一个 Lua table，返回 Python dict。
+        """从当前位置解析一个 Lua 表块并转换为字典。
 
         支持嵌套表（转为 list/dict）、简单值。只处理前两层深度。
+
+        Returns:
+            dict: 解析后的键值对字典。
         """
         result: dict = {}
         line = self.lines[self.pos]
@@ -145,7 +166,14 @@ class LuaParser:
         return self._parse_top_level(block_lines)
 
     def _parse_top_level(self, lines: list[str]) -> dict:
-        """解析顶层 KV（brace_depth=0 相对于块内第一层）。"""
+        """解析顶层键值对映射。
+
+        Args:
+            lines (list[str]): 当前块内部的文本行列表。
+
+        Returns:
+            dict: 提取到的顶层属性键值字典。
+        """
         result: dict = {}
         i = 0
         while i < len(lines):
@@ -171,7 +199,16 @@ class LuaParser:
         return result
 
     def _collect_nested_table(self, lines: list[str], start_i: int, start_line: str) -> tuple[list | dict, int]:
-        """收集嵌套表，返回 (parsed_value, new_index)。"""
+        """收集并解析跨行的嵌套表。
+
+        Args:
+            lines (list[str]): 当前块文本行列表。
+            start_i (int): 嵌套表起始行索引。
+            start_line (str): 包含嵌套表开头的起始行内容。
+
+        Returns:
+            tuple[list | dict, int]: (解析后的嵌套表对象, 嵌套表闭合结束行索引)。
+        """
         clean_start = _remove_string_content(start_line)
         brace_count = clean_start.count("{") - clean_start.count("}")
 
@@ -195,7 +232,14 @@ class LuaParser:
 
 
 def _remove_string_content(line: str) -> str:
-    """移除字符串字面量内容，避免括号计数干扰。"""
+    """移除行内字符串字面量内容，避免引号与括号计数互相干扰。
+
+    Args:
+        line (str): 原始代码文本行。
+
+    Returns:
+        str: 替换字符串字面量为空引号后的文本行。
+    """
     return re.sub(r'"[^"\\]*(?:\\.[^"\\]*)*"', '""', line)
 
 
@@ -204,7 +248,14 @@ _KV_LINE_RE = re.compile(r'^\s*(\w+)\s*=\s*(.*)$')
 
 
 def _parse_value(raw: str) -> int | float | bool | str | None:
-    """将 Lua 字面量转换为 Python 值。"""
+    """将 Lua 字面量字符串解析转换为 Python 对应类型的值。
+
+    Args:
+        raw (str): Lua 原始字面量字符串。
+
+    Returns:
+        int | float | bool | str | None: 解析后的 Python 基础类型数据。
+    """
     raw = raw.strip().rstrip(",").strip().rstrip(",").strip()
     if raw == "" or raw == "nil":
         return None
@@ -225,10 +276,15 @@ def _parse_value(raw: str) -> int | float | bool | str | None:
 
 
 def _parse_lua_table(text: str) -> list | dict:
-    """解析 Lua 表字符串为 Python list 或 dict。
+    """解析 Lua 表字符串为 Python 列表或字典。
 
-    - 纯数字索引 → list
-    - 混合或字符串 key → dict
+    纯数字索引转为 list，包含键值对或混合结构转为 dict。
+
+    Args:
+        text (str): 待解析的 Lua 表字符串。
+
+    Returns:
+        list | dict: 解析后的 Python 集合结构。
     """
     text = text.strip()
     if not text.startswith("{"):
@@ -265,7 +321,14 @@ def _parse_lua_table(text: str) -> list | dict:
 
 
 def _extract_brace_content(text: str) -> str:
-    """提取最外层 {...} 的内容。"""
+    """提取最外层花括号 {...} 内部的文本内容。
+
+    Args:
+        text (str): 包含花括号的表字符串。
+
+    Returns:
+        str: 花括号内部的纯文本。
+    """
     if not text.startswith("{"):
         return text
     depth = 0
@@ -280,7 +343,14 @@ def _extract_brace_content(text: str) -> str:
 
 
 def _split_table_parts(inner: str) -> list[str]:
-    """按逗号拆分表内容，正确处理嵌套括号和引号。"""
+    """按逗号拆分表内部成员，正确识别并跳过嵌套括号和字符串引号。
+
+    Args:
+        inner (str): 表花括号内部的字符串。
+
+    Returns:
+        list[str]: 拆分后的独立元素表达式列表。
+    """
     parts = []
     depth = 0
     in_string = False
@@ -309,9 +379,13 @@ _SHIP_ENTRY_RE = re.compile(r'\[(\d+)\]\s*=\s*\{')
 
 
 def parse_lua_ship_blocks(filepath: str) -> dict[int, dict]:
-    """解析 ship_data_statistics 或 ship_data_template 的舰船块。
+    """解析 ship_data_statistics 或 ship_data_template 的舰船配置块。
 
-    每块格式: _G.pg.base.xxx[ship_id] = { ... }
+    Args:
+        filepath (str): Lua 数据文件的绝对或相对路径。
+
+    Returns:
+        dict[int, dict]: 舰船 ID 映射到属性字典的字典。
     """
     with open(filepath, "r", encoding="utf-8") as f:
         text = f.read()
@@ -344,7 +418,14 @@ def parse_lua_ship_blocks(filepath: str) -> dict[int, dict]:
 # ---------------------------------------------------------------------------
 
 def parse_ship_data_by_type(filepath: str) -> dict[int, str]:
-    """返回 {type_id: type_name}。"""
+    """解析 ship_data_by_type.lua 提取舰种类型 ID 与类型名称映射。
+
+    Args:
+        filepath (str): ship_data_by_type.lua 文件路径。
+
+    Returns:
+        dict[int, str]: 舰种类型 ID 对应类型中文名称的映射字典。
+    """
     with open(filepath, "r", encoding="utf-8") as f:
         text = f.read()
     type_blocks = re.findall(
@@ -364,12 +445,27 @@ def parse_ship_data_by_type(filepath: str) -> dict[int, str]:
 # ---------------------------------------------------------------------------
 
 def _index_arr(arr: list, idx1: int) -> int | float | None:
-    """从 1-based Lua 数组中取值。"""
+    """从 1-based 的 Lua 数组中安全提取对应下标的值。
+
+    Args:
+        arr (list): 待检索的列表。
+        idx1 (int): 1-based 数组索引。
+
+    Returns:
+        int | float | None: 取出的对应元素值，越界或空数组时返回 None。
+    """
     return arr[idx1 - 1] if arr and len(arr) >= idx1 else None
 
 
 def extract_ship_data(lua_repo: str) -> dict:
-    """主提取函数。"""
+    """解析各服 Lua 脚本并提取汇总全部舰船数据为标准结构。
+
+    Args:
+        lua_repo (str): AzurLaneLuaScripts 仓库根目录路径。
+
+    Returns:
+        dict: 以 ship_id 为键的舰船完整元数据字典。
+    """
     repo = Path(lua_repo)
 
     # ---- 1) CN statistics（主数据） ----
@@ -523,6 +619,7 @@ def extract_ship_data(lua_repo: str) -> dict:
 
 
 def main():
+    """解析命令行参数并执行舰船数据提取与 JSON 导出。"""
     parser = argparse.ArgumentParser(description="从 AzurLaneLuaScripts 提取舰船数据生成 JSON")
     parser.add_argument(
         "--lua-repo", type=str,

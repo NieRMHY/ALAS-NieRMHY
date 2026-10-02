@@ -26,7 +26,7 @@ from module.config.config_updater import COALITIONS, EVENTS, GEMS_FARMINGS, HOSP
 from module.config.time_source import now as current_time
 from module.config.utils import DEFAULT_TIME
 from module.logger import logger
-from module.notify import handle_notify
+from module.notify import handle_notify, notify_title
 from module.ui.assets import CAMPAIGN_MENU_NO_EVENT
 from module.ui.page import page_campaign_menu, page_coalition, page_event, page_sp
 from module.war_archives.assets import WAR_ARCHIVES_CAMPAIGN_CHECK
@@ -150,7 +150,7 @@ class CampaignEvent(CampaignStatus):
             self.config.task_delay(minute=(120, 240))
             handle_notify(
                 self.config.Error_OnePushConfig,
-                title=f"ALAS <{self.config.config_name}> campaign delayed",
+                title=notify_title(self.config.config_name, '战役', '达到物资上限，已推迟'),
                 content=f"<{self.config.config_name}> {self.config.Campaign_Name} reached coin limit"
             )
             return True

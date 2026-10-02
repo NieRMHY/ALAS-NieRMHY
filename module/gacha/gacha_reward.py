@@ -150,7 +150,7 @@ class RewardGacha(GachaUI, Retirement, CampaignStatus):
         logger.info(f'最多可提交 {target_count} 个建造订单')
         self.build_coin_count -= gold_total
         self.build_cube_count -= cube_total
-        LogRes(self.config).Cube = self.build_cube_count
+        LogRes(self.config).record('Cube', self.build_cube_count, observed=False)
         self.config.update()
         return target_count
 
@@ -329,6 +329,7 @@ class RewardGacha(GachaUI, Retirement, CampaignStatus):
         # OCR 识别金币和魔方数量
         self.build_coin_count = self.get_coin()
         self.build_cube_count = OCR_BUILD_CUBE_COUNT.ocr(self.device.image)
+        LogRes(self.config).record('Cube', self.build_cube_count, observed=bool(getattr(OCR_BUILD_CUBE_COUNT, 'last_valid', False)))
 
         # 导航到目标建造池，同时返回对应的建造消耗
         actual_pool = self.gacha_goto_pool(self.config.Gacha_Pool)
@@ -353,7 +354,7 @@ class RewardGacha(GachaUI, Retirement, CampaignStatus):
             # 根据配置和资源计算允许的建造次数
             buy[1] = self.gacha_calculate(self.config.Gacha_Amount - self.build_ticket_count, gold_cost, cube_cost)
         else:
-            LogRes(self.config).Cube = self.build_cube_count
+            LogRes(self.config).record('Cube', self.build_cube_count, observed=False)
             self.config.update()
 
         # 提交 buy_count 并执行

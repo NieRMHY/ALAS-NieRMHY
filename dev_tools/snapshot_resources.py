@@ -26,7 +26,14 @@ if _project_root not in sys.path:
 
 
 def snapshot_from_config(instance: str = "alas"):
-    """从配置 Dashboard 读取缓存值并记录快照"""
+    """从配置 Dashboard 读取缓存值并记录快照。
+
+    Args:
+        instance (str): 目标实例名，默认为 "alas"。
+
+    Returns:
+        bool: 快照记录是否成功。
+    """
     from module.config.config import AzurLaneConfig
     from module.log_res.log_res import LogRes
     from module.config.utils import alas_instance
@@ -77,7 +84,14 @@ def snapshot_from_config(instance: str = "alas"):
 
 
 def snapshot_from_ocr(instance: str = "alas"):
-    """从游戏截图 OCR 读取实际资源值并记录快照"""
+    """从游戏截图 OCR 读取实际资源值并记录快照。
+
+    Args:
+        instance (str): 目标实例名，默认为 "alas"。
+
+    Returns:
+        bool: 快照记录是否成功。
+    """
     try:
         from module.config.config import AzurLaneConfig
         from module.config.utils import alas_instance
@@ -198,7 +212,11 @@ def snapshot_from_ocr(instance: str = "alas"):
 
 
 def show_count(instance: str = "alas"):
-    """查看当前已记录的快照数量"""
+    """查看指定实例当前已记录的快照数量。
+
+    Args:
+        instance (str): 目标实例名，默认为 "alas"。
+    """
     from module.statistics.resource_stats import get_resource_timeline
     from module.config.utils import alas_instance
 
@@ -218,7 +236,12 @@ def show_count(instance: str = "alas"):
 
 
 def show_recent(instance: str = "alas", n: int = 3):
-    """显示最近 n 条快照"""
+    """显示指定实例最近记录的快照数据表格。
+
+    Args:
+        instance (str): 目标实例名，默认为 "alas"。
+        n (int): 显示的最新快照条数，默认为 3。
+    """
     from module.statistics.resource_stats import get_resource_timeline
     from module.config.utils import alas_instance
 
@@ -256,6 +279,7 @@ def show_recent(instance: str = "alas", n: int = 3):
 
 
 def main():
+    """解析命令行参数并执行快照记录或查询。"""
     parser = argparse.ArgumentParser(description="强制获取资源数据并记录快照")
     parser.add_argument("--instance", default="alas", help="实例名称 (默认: alas)")
     parser.add_argument("--ocr", action="store_true", help="从游戏截图 OCR 读取（需模拟器运行中）")

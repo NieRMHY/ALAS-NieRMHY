@@ -97,7 +97,11 @@ class Selector():
         return item.count >= 1 and item.total_count >= 1 and item.count <= item.total_count
 
     def _opsi_shop_strategy_enabled(self):
-        """仅在 OpsiShop 的港口购买作用域内启用高级策略。"""
+        """仅在 OpsiShop 的港口购买作用域内启用高级策略。
+
+        Returns:
+            bool: 是否启用高级策略。
+        """
         task = getattr(getattr(self.config, 'task', None), 'command', None)
         return (
             getattr(self, '_opsi_shop_strategy_scope_active', False)
@@ -107,7 +111,11 @@ class Selector():
 
     @contextmanager
     def opsi_shop_strategy_scope(self):
-        """将高级策略限制在 OpsiShop 明确拥有的港口商店流程。"""
+        """将高级策略限制在 OpsiShop 明确拥有的港口商店流程。
+
+        Yields:
+            None: 上下文管理器控制范围。
+        """
         previous = getattr(self, '_opsi_shop_strategy_scope_active', False)
         self._opsi_shop_strategy_scope_active = True
         try:
@@ -116,7 +124,11 @@ class Selector():
             self._opsi_shop_strategy_scope_active = previous
 
     def _opsi_shop_strategy_state(self):
-        """保存明石商店多次刷新间的策略会话记录。"""
+        """保存明石商店多次刷新间的策略会话记录。
+
+        Returns:
+            dict: 策略会话记录字典。
+        """
         state = getattr(self, '_opsi_shop_strategy_session', None)
         if state is None:
             state = {'spent': {}, 'purchased': {}, 'inventory_purchased': {}, 'cap_usage': {}}
@@ -124,7 +136,14 @@ class Selector():
         return state
 
     def _opsi_shop_strategy_currency(self, items):
-        """以现有保留币规则计算脚本可支配的黄币和紫币。"""
+        """以现有保留币规则计算脚本可支配的黄币和紫币。
+
+        Args:
+            items (list[Item]): 商店物品列表。
+
+        Returns:
+            dict[str, int]: 各货币种类的可用额度映射。
+        """
         currencies = {}
         for item in items:
             cost = getattr(item, 'cost', None)
@@ -137,7 +156,14 @@ class Selector():
         return currencies
 
     def _opsi_shop_strategy_max_quantity(self, item):
-        """用实际库存和保留后的币量限制单个大世界商品数量。"""
+        """用实际库存和保留后的币量限制单个大世界商品数量。
+
+        Args:
+            item (Item): 目标商品。
+
+        Returns:
+            int: 允许购买的最大数量。
+        """
         if item.price <= 0:
             return 0
         try:
@@ -148,7 +174,15 @@ class Selector():
         return min(stock, currency // item.price)
 
     def _opsi_shop_strategy_actions(self, items, eligible):
-        """将大世界商品投影给策略，并将已校验的动作绑定回原商品。"""
+        """将大世界商品投影给策略，并将已校验的动作绑定回原商品。
+
+        Args:
+            items (list[Item]): 商店物品列表。
+            eligible (callable): 商品资格校验函数。
+
+        Returns:
+            list | None: 策略动作列表，若策略执行失败则返回 None。
+        """
         from module.shop_strategy.adapter import run_shop_strategy
 
         self._opsi_shop_strategy_failed = False
@@ -188,7 +222,11 @@ class Selector():
         return result.actions
 
     def _opsi_shop_strategy_record_purchase(self, item):
-        """将大世界商店实际购买量加入当前高级策略会话。"""
+        """将大世界商店实际购买量加入当前高级策略会话。
+
+        Args:
+            item (Item): 已完成购买的商品对象。
+        """
         if not self._opsi_shop_strategy_enabled():
             return
         candidate_id = getattr(item, '_shop_strategy_candidate_id', None)

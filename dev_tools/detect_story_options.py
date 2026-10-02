@@ -6,6 +6,15 @@ import numpy as np
 
 
 def merge_ranges(ranges, gap=6):
+    """合并距离过近的区间段。
+
+    Args:
+        ranges (list[tuple[int, int]]): 待合并的区间元组列表。
+        gap (int): 允许合并的最大间隔。
+
+    Returns:
+        list[tuple[int, int]]: 合并后的区间列表。
+    """
     merged = []
     for start, end in ranges:
         if not merged or start - merged[-1][1] > gap:
@@ -16,13 +25,21 @@ def merge_ranges(ranges, gap=6):
 
 
 def detect_options(image):
-    # White story options in the middle of the screen.
+    """从游戏截图中识别剧情选项按钮的矩形区域。
+
+    Args:
+        image (np.ndarray): 游戏截图 BGR 图像。
+
+    Returns:
+        list[tuple[int, int, int, int]]: 识别到的选项边界盒列表 (x1, y1, x2, y2)，按 Y 轴自上而下排序。
+    """
+    # 屏幕中央的白色剧情选项按钮
     lower = np.array([235, 235, 235], dtype=np.uint8)
     upper = np.array([255, 255, 255], dtype=np.uint8)
     mask = cv2.inRange(image, lower, upper)
 
     height, width = mask.shape
-    # Keep the central story area, avoiding top HUD and bottom dialog text.
+    # 截取中央剧情区域，排除顶部 HUD 和底部对话框
     roi = mask[int(height * 0.16):int(height * 0.78), int(width * 0.15):int(width * 0.85)]
     y_offset = int(height * 0.16)
     x_offset = int(width * 0.15)
@@ -47,6 +64,7 @@ def detect_options(image):
 
 
 def main():
+    """解析命令行参数并检测截图中的剧情选项。"""
     parser = argparse.ArgumentParser(description='Detect story option button coordinates from a screenshot.')
     parser.add_argument('image', type=Path, help='Screenshot path')
     parser.add_argument('--annotate', type=Path, help='Optional output path for an annotated image')

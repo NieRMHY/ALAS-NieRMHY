@@ -55,13 +55,26 @@ hm.load_homography(image=np.array(az.device.image))
 
 
 class SwipeSimulate:
+    """地图滑动参数拟合模拟器，计算并校验不同触摸控制方式的滑动乘数。"""
+
     def __init__(self, swipe, simulate_count=4):
+        """初始化滑动模拟器。
+
+        Args:
+            swipe (tuple[float, float]): 初始滑动的向量 (x, y)。
+            simulate_count (int): 每次拟合测试的模拟重复次数。
+        """
         self.simulate_count = simulate_count
         self.swipe = np.array(swipe, dtype=float)
         self.swipe_base = self.cal_swipe_base()
         logger.info(f'Swipe base {self.swipe_base}')
 
     def cal_swipe_base(self):
+        """计算视野内网格基准像素距离。
+
+        Returns:
+            np.ndarray: [横向网格基准, 纵向网格基准]。
+        """
         swipe_base = None
         for loca, grid in az.view.grids.items():
             offset = grid.screen2grid([az.config.SCREEN_CENTER])[0].astype(int)
@@ -77,9 +90,15 @@ class SwipeSimulate:
 
     @staticmethod
     def normalise_offset(offset):
-        """
-        Convert hm.homo_loca (range from 0 to 140),
-        to swipe difference (range from -70 to 70)
+        """将透视单应性坐标转换为滑动偏移量。
+
+        将范围在 0 到 140 的单应坐标归一化到 -70 到 70 的差值范围。
+
+        Args:
+            offset (np.ndarray): 原始单应性定位坐标。
+
+        Returns:
+            np.ndarray: 归一化后的偏移量。
         """
         if offset[0] > 70:
             offset[0] -= 140
@@ -88,6 +107,11 @@ class SwipeSimulate:
         return offset
 
     def simulate(self):
+        """执行一组滑动模拟，测量误差并调整滑动手势向量。
+
+        Returns:
+            float: 拟合后的横向偏差绝对值。
+        """
         logger.hr(f'Swipe: {self.swipe}', level=1)
         record = []
         for n in range(self.simulate_count):
@@ -124,6 +148,7 @@ class SwipeSimulate:
         # return abs(fit[1])
 
     def show(self):
+        """打印最终计算得到的滑动乘数配置代码。"""
         print()
         print(f'Last swipe: {self.swipe}')
         print('Result to copy:')
@@ -136,12 +161,22 @@ class SwipeSimulate:
         print()
 
     def run(self):
+        """持续运行模拟直至滑动误差收敛在阈值范围内。"""
         while 1:
             result = self.simulate()
             if result <= 1:
                 break
 
+
 def get_multiplier(minitouch_x):
+    """根据横向乘数换算 ADB、minitouch 和 maatouch 对应的配置元组。
+
+    Args:
+        minitouch_x (float): minitouch 的横向基准比例。
+
+    Returns:
+        tuple[str, str, str]: 分别对应 ADB、minitouch、maatouch 的格式化配置字符串。
+    """
     # MAP_SWIPE_MULTIPLY = (1.064, 1.084)
     # MAP_SWIPE_MULTIPLY_MINITOUCH = (1.029, 1.048)
     # MAP_SWIPE_MULTIPLY_MAATOUCH = (0.999, 1.017)

@@ -6,7 +6,18 @@ from typing import Any, Mapping
 
 
 def _normalise_amounts(value: Mapping[str, int], name: str) -> dict[str, int]:
-    """复制金额映射，阻止运行期共享调用方的可变字典。"""
+    """复制金额映射，阻止运行期共享调用方的可变字典。
+
+    Args:
+        value (Mapping[str, int]): 输入的货币金额映射。
+        name (str): 字段名称，用于错误信息。
+
+    Returns:
+        dict[str, int]: 规范化并复制后的字典。
+
+    Raises:
+        ValueError: 若输入格式或数值无效时抛出。
+    """
     if not isinstance(value, Mapping):
         raise ValueError(f'{name} 必须是货币金额映射')
     output: dict[str, int] = {}
@@ -20,7 +31,18 @@ def _normalise_amounts(value: Mapping[str, int], name: str) -> dict[str, int]:
 
 
 def cap_usage_key(field: str, value: str | int | float | bool | None) -> str:
-    """生成跨货架保存配额用量的稳定键，不暴露候选对象。"""
+    """生成跨货架保存配额用量的稳定键，不暴露候选对象。
+
+    Args:
+        field (str): 配额限制字段名。
+        value (str | int | float | bool | None): 配额字段的目标值。
+
+    Returns:
+        str: 序列化生成的稳定 JSON 键。
+
+    Raises:
+        ValueError: 若字段名或目标值类型不合法时抛出。
+    """
     if not isinstance(field, str) or not field:
         raise ValueError('配额字段必须为非空字符串')
     if isinstance(value, bool) or value is None or isinstance(value, (str, int, float)):
@@ -105,7 +127,14 @@ class ShopCap:
 
 
 def merge_caps(caps: tuple[ShopCap, ...]) -> tuple[ShopCap, ...]:
-    """合并同一字段值的重复配额，取最严格上限并保留首次声明顺序。"""
+    """合并同一字段值的重复配额，取最严格上限并保留首次声明顺序。
+
+    Args:
+        caps (tuple[ShopCap, ...]): 原始配额元组。
+
+    Returns:
+        tuple[ShopCap, ...]: 合并后的配额元组。
+    """
     merged: dict[str, ShopCap] = {}
     for cap in caps:
         key = cap_usage_key(cap.field, cap.value)

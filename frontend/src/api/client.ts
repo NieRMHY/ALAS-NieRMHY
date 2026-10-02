@@ -62,8 +62,8 @@ export class ApiClient {
       if (socket !== this.socket) return
       this.lastReceived = Date.now()
       let message: ApiResponse | ApiEvent
-      try { message = JSON.parse(event.data) } catch { socket.close(1002); return }
-      if (message.v !== 1) { socket.close(1002); return }
+      try { message = JSON.parse(event.data) } catch { socket.close(4002); return }
+      if (message.v !== 1) { socket.close(4002); return }
       if (message.type === 'response') {
         const pending = this.pending.get(message.id)
         if (!pending) return

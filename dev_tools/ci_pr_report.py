@@ -54,7 +54,17 @@ _STATUS_ICON = {
 
 
 def api(url: str, token: str, method: str = "GET", payload=None):
-    """调用 GitHub REST API。"""
+    """调用 GitHub REST API 并解析响应。
+
+    Args:
+        url (str): 请求目标 API 地址。
+        token (str): GitHub API 鉴权令牌。
+        method (str): HTTP 请求方法，默认为 'GET'。
+        payload (dict, optional): 请求载荷数据。
+
+    Returns:
+        dict | list | None: JSON 解析结果。
+    """
     req = urllib.request.Request(url, method=method)
     req.add_header("Authorization", f"Bearer {token}")
     req.add_header("Accept", "application/vnd.github+json")
@@ -77,6 +87,15 @@ def get_pr_number(event_path: str, token: str = "", repo: str = "", run_id: str 
       2) 按 head 分支查询 GET /repos/{repo}/pulls?head={owner}:{branch}
          （fork PR 的 run 拉取不到 pull_requests，但 head 分支查询有效）；
       3) 事件负载中的 workflow_run.pull_requests 作为最后回退。
+
+    Args:
+        event_path (str): 事件负载 JSON 文件路径。
+        token (str): GitHub 访问令牌。
+        repo (str): 仓库名称 (owner/repo)。
+        run_id (str): Actions 运行 ID。
+
+    Returns:
+        int | None: 提取到的 PR 编号，非 PR 时返回 None。
     """
     try:
         with open(event_path, encoding="utf-8") as fp:
@@ -127,7 +146,16 @@ def get_pr_number(event_path: str, token: str = "", repo: str = "", run_id: str 
 
 
 def get_jobs(repo: str, run_id: str, token: str) -> list[dict]:
-    """获取本次运行的全部 job 及其结论/耗时。"""
+    """获取本次运行的全部 job 及其结论与耗时。
+
+    Args:
+        repo (str): 仓库名称 (owner/repo)。
+        run_id (str): Actions 运行 ID。
+        token (str): GitHub 访问令牌。
+
+    Returns:
+        list[dict]: 包含 job 名称、结论和耗时的字典列表。
+    """
     url = f"https://api.github.com/repos/{repo}/actions/runs/{run_id}/jobs?per_page=100"
     data = api(url, token)
     jobs = []
@@ -153,7 +181,14 @@ def get_jobs(repo: str, run_id: str, token: str) -> list[dict]:
 
 
 def load_smoke_summary(path: str) -> dict | None:
-    """读取导入冒烟测试汇总 JSON；文件不存在时返回 None。"""
+    """读取导入冒烟测试汇总 JSON；文件不存在时返回 None。
+
+    Args:
+        path (str): 汇总 JSON 文件路径。
+
+    Returns:
+        dict | None: 解析后的测试汇总字典，失败时返回 None。
+    """
     if not path or not os.path.isfile(path):
         return None
     try:
@@ -164,6 +199,14 @@ def load_smoke_summary(path: str) -> dict | None:
 
 
 def format_duration(seconds: int | None) -> str:
+    """将耗时秒数格式化为人类可读的字符串。
+
+    Args:
+        seconds (int | None): 耗时秒数。
+
+    Returns:
+        str: 格式化后的耗时文本（如 '30s', '1m20s'），为 None 时返回 '-'。
+    """
     if seconds is None:
         return "-"
     if seconds < 60:
@@ -173,7 +216,18 @@ def format_duration(seconds: int | None) -> str:
 
 def build_report(repo: str, run_id: str, commit: str, jobs: list[dict],
                  smoke: dict | None) -> str:
-    """构造 Markdown 报告。"""
+    """构造 CI 运行结果的 Markdown 报告。
+
+    Args:
+        repo (str): 仓库名称 (owner/repo)。
+        run_id (str): Actions 运行 ID。
+        commit (str): Git 提交哈希。
+        jobs (list[dict]): 各 job 的执行状态数据。
+        smoke (dict | None): 导入冒烟测试结果。
+
+    Returns:
+        str: 完整的 Markdown 报告文本。
+    """
     run_url = f"https://github.com/{repo}/actions/runs/{run_id}"
     lines = [
         "## CI 检查报告",
@@ -219,8 +273,14 @@ def find_self_comment(comments: list[dict]) -> int | None:
     """查找我们自己的评论（带标记 + 由 GitHub Actions bot 发布）。
 
     只按标记文本识别会误伤其他 bot：例如审查机器人（sourcery-ai）的评论
-    可能引用 PR 描述中出现的 ``<!-- ci-report -->`` 字样。因此同时校验
+    可能引用 PR 描述中出现的 <!-- ci-report --> 字样。因此同时校验
     评论作者必须是 github-actions[bot]，绝不更新其他 bot/用户的评论。
+
+    Args:
+        comments (list[dict]): PR 下的所有评论列表。
+
+    Returns:
+        int | None: 匹配到的评论 ID，未找到时返回 None。
     """
     for comment in comments:
         body = comment.get("body") or ""
@@ -233,6 +293,11 @@ def find_self_comment(comments: list[dict]) -> int | None:
 
 
 def main() -> int:
+    """CI PR 检查报告发布主入口。
+
+    Returns:
+        int: 执行退出状态码。
+    """
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--summary-file", default=None,
                         help="导入冒烟测试汇总 JSON 路径（可缺省）")

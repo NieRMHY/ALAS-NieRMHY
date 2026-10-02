@@ -88,7 +88,14 @@ class GeneralShop_250814(ShopClerk, ShopUI, ShopStatus):
         return self._currency
 
     def shop_strategy_currency(self, items):
-        """向高级策略提供金币和钻石两种实际余额。"""
+        """向高级策略提供金币和钻石两种实际余额。
+
+        Args:
+            items: 当前货架商品列表（本方法中未直接使用）。
+
+        Returns:
+            dict[str, int]: 包含 'Coins' 和 'Gems' 实际余额的字典。
+        """
         return {
             'Coins': max(0, int(self._currency)),
             'Gems': max(0, int(self.gems)),

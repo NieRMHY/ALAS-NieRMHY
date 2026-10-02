@@ -1,0 +1,1043 @@
+/* 调度程序编辑页占满整个内容区：清空外层内边距，外壳不滚动，内容区自身撑满 100% 视口高度 */
+.app-shell.scheduler-editor-shell,
+.app-shell:has(.program-editor) {
+  height: var(--viewport-height);
+  overflow: hidden;
+}
+.app-shell.scheduler-editor-shell > .main-shell,
+.app-shell:has(.program-editor) > .main-shell {
+  min-height: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.app-shell.scheduler-editor-shell > .main-shell > main,
+.app-shell:has(.program-editor) > .main-shell > main {
+  padding: 0 !important;
+  margin: 0 !important;
+  min-height: 0 !important;
+  height: 100% !important;
+  flex: 1 1 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+  max-width: none !important;
+  width: 100% !important;
+}
+
+.program-editor {
+  --program-panel: var(--surface, #fff);
+  --program-chrome: var(--theme-surface-bg, var(--program-panel));
+  --program-panel-material: var(--theme-sidebar-bg, var(--program-panel));
+  container: scheduler-editor / inline-size;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0;
+  min-height: 0;
+  height: 100%;
+  width: 100%;
+  min-width: 0;
+  padding: 0;
+  margin: 0;
+  gap: 0;
+  overflow: hidden;
+  position: relative;
+  background: transparent;
+}
+
+/* 新版主题的编辑区与顶栏共用左侧基线和轮廓，避免玻璃面板出现突兀的直角。 */
+:root:is([data-theme='light'], [data-theme='dark']) .program-editor {
+  width: calc(100% - 24px);
+  margin-left: 24px;
+  border-radius: var(--theme-topbar-radius, 26px) 0 0 var(--theme-topbar-radius, 26px);
+}
+
+@media (max-width: 950px) {
+  :root:is([data-theme='light'], [data-theme='dark']) .program-editor {
+    width: calc(100% - 12px);
+    margin-left: 12px;
+  }
+}
+
+.program-toolbar, .program-toolbar>div, .program-actions, .program-subtoolbar {display:flex; align-items:center; gap:8px; flex-wrap:wrap}
+.program-toolbar {justify-content:space-between; padding:8px 16px; background:var(--program-chrome); border-bottom:1px solid var(--border,#d7dce3); flex-shrink:0; -webkit-backdrop-filter:var(--theme-surface-filter); backdrop-filter:var(--theme-surface-filter)}
+.program-toolbar h1 {font-size:18px; margin:0 0 2px}.program-toolbar small {color:var(--muted); font-size:11px}
+.program-editor input, .program-editor select, .program-editor textarea {max-width:100%; min-width:0; padding:6px 8px; border:1px solid var(--border, #d7dce3); background:var(--surface-muted, var(--program-panel)); color:var(--text); border-radius:7px; font-size:12px}
+.program-subtoolbar {padding:6px 16px; background:var(--program-chrome); border-bottom:1px solid var(--border,#d7dce3); flex-shrink:0; -webkit-backdrop-filter:var(--theme-surface-filter); backdrop-filter:var(--theme-surface-filter)}
+.program-subtoolbar>input {max-width:180px}.program-subtoolbar select {max-width:200px}
+.program-editor .button {font-size:12px; min-height:30px; padding:5px 9px; display:inline-flex; align-items:center; gap:5px}
+
+/* 编辑区工作台：作为全屏舞台容器，画布全屏铺底，控件悬浮在画布上方 */
+.program-workspace {
+  position: relative;
+  flex: 1 1 0;
+  min-height: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg, var(--surface-muted, #f6f8fb));
+}
+
+/* 画布：绝对定位 100% 铺满编辑区全屏 */
+.program-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  z-index: 1;
+  outline: none;
+  background: transparent;
+}
+
+:root[data-material='glass'] .program-workspace {
+  background: var(--theme-surface-bg, color-mix(in srgb, var(--bg) 70%, transparent));
+  -webkit-backdrop-filter: var(--theme-surface-filter);
+  backdrop-filter: var(--theme-surface-filter);
+}
+.program-canvas-hint {
+  position: absolute;
+  bottom: 14px;
+  left: 310px;
+  pointer-events: none;
+  font-size: 10px;
+  color: var(--muted);
+  background: var(--theme-control-bg, var(--program-panel));
+  -webkit-backdrop-filter: var(--theme-control-filter);
+  backdrop-filter: var(--theme-control-filter);
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border,#d7dce3);
+  z-index: 4;
+  transition: left 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* 控件：悬浮在编辑区画布上方（Overlay Controls） */
+.program-library, .program-properties {
+  position: absolute;
+  top: 14px;
+  bottom: 14px;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  padding: 12px;
+  background: var(--program-panel-material);
+  -webkit-backdrop-filter: var(--theme-sidebar-filter);
+  backdrop-filter: var(--theme-sidebar-filter);
+  border: 1px solid var(--border, #d7dce3);
+  border-radius: var(--theme-sidebar-radius, 12px);
+  box-shadow: var(--theme-sidebar-shadow, 0 8px 30px rgba(0, 0, 0, 0.08));
+  overflow-y: auto;
+  box-sizing: border-box;
+  touch-action: pan-y;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--border, #d7dce3) 70%, var(--muted, #8191a5)) transparent;
+  transition: transform .2s ease, opacity .2s ease, left .2s ease, right .2s ease;
+}
+.program-library::-webkit-scrollbar,
+.program-properties::-webkit-scrollbar {
+  width: 6px;
+}
+.program-library::-webkit-scrollbar-thumb,
+.program-properties::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--border, #d7dce3) 70%, var(--muted, #8191a5));
+  border-radius: 4px;
+}
+.program-library {
+  left: 14px;
+  width: 230px;
+}
+.program-library .program-search {
+  position: sticky;
+  top: -12px;
+  z-index: 2;
+  padding: 4px 0 8px;
+  background: var(--program-panel-material);
+}
+.program-properties {
+  right: 14px;
+  width: 300px;
+}
+@container scheduler-editor (min-width: 981px) {
+  .program-workspace:not(.has-selection) > .program-properties {display: none}
+  .program-workspace:not(.has-selection) > .program-default-guide {right: 14px}
+  .program-workspace:not(.has-selection) .react-flow__minimap {right: 14px !important}
+}
+
+.program-library h3, .program-properties h3 {font-size:11px; text-transform:uppercase; letter-spacing:.04em; margin:14px 0 6px; color:var(--muted)}.program-library button {display:flex; align-items:center; gap:6px; text-align:left; width:100%; padding:7px 5px; border:0; border-radius:6px; background:transparent; color:var(--text); font-size:12px; cursor:pointer}.program-library button:hover {background:var(--hover,rgba(90,120,160,.1))}
+.program-search {display:flex; align-items:center; gap:5px; margin-bottom:6px}.program-search input {width:100%; font-size:12px}.program-library-composite {display:flex}.program-library-composite>button:last-child {width:25px; flex-shrink:0}
+
+/* 卡片节点样式：现代化一体化节点流图设计（Blender / Unreal / ComfyUI 范式） */
+.program-card {
+  width: 236px;
+  border: 1px solid color-mix(in srgb, var(--card-color) 45%, var(--border, #d7dce3));
+  border-radius: 12px;
+  color: var(--text, #273244);
+  background: var(--program-panel);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+  padding: 0;
+  overflow: visible;
+}
+.program-card.selected {outline: 2px solid var(--card-color); outline-offset: 2px}
+.program-card.current {box-shadow: 0 0 0 4px #39b99060}
+.program-card.invalid {border-color: #d85b65; box-shadow: 0 0 0 2px #d85b6540}
+
+.program-card-heading {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border-bottom: 1px solid color-mix(in srgb, var(--card-color) 25%, var(--border, #d7dce3));
+  background: color-mix(in srgb, var(--card-color) 12%, var(--program-panel));
+  border-radius: 11px 11px 0 0;
+  padding: 10px 14px;
+}
+.program-card-heading > span, .program-card-category {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--card-color);
+  letter-spacing: 0.03em;
+}
+.program-card-heading strong {font-size: 15px}
+.program-card-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.25;
+  min-width: 0;
+  color: var(--text);
+}
+.program-card-icon {flex-shrink: 0; color: var(--card-color)}
+.program-card-summary {display: none}
+
+/* 端口与 Handle 对齐规范 */
+.program-card .react-flow__handle {
+  width: 11px;
+  height: 11px;
+  background: #8191a5;
+  border: 2px solid var(--program-panel);
+  top: 50%;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--text) 20%, transparent);
+  z-index: 5;
+  transition: transform 0.15s ease;
+}
+.program-card .react-flow__handle:hover {
+  transform: scale(1.3);
+}
+.program-card .react-flow__handle-left {
+  left: 0;
+  transform: translate(-50%, -50%);
+}
+.program-card .react-flow__handle-left:hover {
+  transform: translate(-50%, -50%) scale(1.3);
+}
+.program-card .react-flow__handle-right {
+  right: 0;
+  transform: translate(50%, -50%);
+}
+.program-card .react-flow__handle-right:hover {
+  transform: translate(50%, -50%) scale(1.3);
+}
+.program-card .control-handle {
+  background: var(--card-color);
+  border-radius: 3px;
+}
+.program-card-heading .control-handle {
+  top: 50%;
+}
+.program-card-exits {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--border);
+}
+.program-card-exits .exit-port {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-height: 26px;
+  padding: 3px 14px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+}
+.program-card-exits .exit-port:hover {
+  color: var(--text);
+}
+.program-category-dot {display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:6px; background:var(--card-color)}.program-library button>svg {color:var(--card-color,var(--text)); flex-shrink:0}
+
+/* 节点位置由画布直接更新，不对拖拽坐标或连线附加主题转场 */
+.program-canvas .react-flow__node, .program-canvas .react-flow__viewport, .program-card {transition:none; animation:none}
+.program-canvas .react-flow__edge-text {fill:var(--text)}.program-canvas .react-flow__edge-textbg {fill:var(--program-panel)}
+.program-mobile-back-bar, .program-mobile-back {display:none}
+.program-properties-title-row {display:flex; align-items:center; justify-content:space-between; margin-bottom:12px}
+.program-properties-title-row h2 {display:flex; align-items:center; gap:7px; font-size:15px; margin:0}
+.program-properties-icon {flex-shrink:0}
+.program-properties h2 {font-size:15px; margin:0 0 12px}
+.program-properties>label,.program-properties details label {display:flex; flex-direction:column; gap:5px; font-size:11px; margin-bottom:10px}
+.program-properties fieldset {border:1px solid var(--border); border-radius:8px; margin:8px 0; padding:8px 10px; max-height:none; overflow:visible}
+.program-properties fieldset label,.program-checkbox {display:flex; align-items:center; gap:7px; margin:5px 0; font-size:11px}
+.program-properties p {font-size:12px; line-height:1.65}
+.program-json {width:100%; font:11px/1.55 var(--theme-font-mono, "JetBrains Mono", Consolas, monospace); min-height:72px; max-height:none; resize:vertical; overflow:visible; box-sizing:border-box}
+.program-priority-row {display:flex; align-items:center; gap:4px; padding:4px 0; font-size:11px}.program-priority-row span {flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis}.program-priority-row button {padding:3px; background:none; border:0; color:var(--text); cursor:pointer}.program-priority-row button:disabled {opacity:.3}
+.program-connect {margin-top:14px; font-size:11px}.program-connect summary {cursor:pointer; margin-bottom:10px}.program-file input {display:none}
+
+/* 原调度业务流程引导条：悬浮在画布上方顶部 */
+.program-default-guide {
+  position: absolute;
+  top: 14px;
+  left: 258px;
+  right: 328px;
+  z-index: 9;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 14px;
+  border: 1px solid var(--border, #d7dce3);
+  border-radius: 10px;
+  background: var(--theme-control-bg, var(--program-panel));
+  -webkit-backdrop-filter: var(--theme-control-filter);
+  backdrop-filter: var(--theme-control-filter);
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--muted);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+}
+.program-guide-close {
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 3px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+.program-guide-close:hover {
+  color: var(--text);
+  background: var(--hover, rgba(90, 120, 160, 0.1));
+}
+
+.program-debug-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.program-debug-btn.active {
+  background: var(--accent, #3b82f6) !important;
+  color: #fff !important;
+  border-color: var(--accent, #3b82f6) !important;
+}
+
+/* 调试控制台：从右上角展开的右侧滑入浮岛抽屉 */
+.program-console {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  bottom: 14px;
+  width: 440px;
+  max-width: calc(100% - 28px);
+  z-index: 25;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border, #d7dce3);
+  border-radius: 12px;
+  background: var(--theme-modal-bg, var(--program-panel));
+  -webkit-backdrop-filter: var(--theme-modal-filter);
+  backdrop-filter: var(--theme-modal-filter);
+  box-shadow: -8px 0 32px rgba(0, 0, 0, 0.12), 0 8px 30px rgba(0, 0, 0, 0.08);
+  padding: 0;
+  overflow: hidden;
+  touch-action: pan-y;
+  transition: transform .22s cubic-bezier(0.16, 1, 0.3, 1), opacity .2s ease, visibility .22s ease;
+}
+.program-console.open {
+  transform: translateX(0);
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+.program-console.closed {
+  transform: translateX(calc(100% + 24px));
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+.program-console-tabs {
+  height: 44px;
+  min-height: 44px;
+  padding: 0 12px 0 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 12px;
+  user-select: none;
+  border-bottom: 1px solid var(--border, #d7dce3);
+  background: color-mix(in srgb, var(--program-panel) 70%, transparent);
+  flex-shrink: 0;
+}
+.program-console-tab-buttons {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.program-console-tabs button {
+  border: 0;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 5px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  transition: all .15s ease;
+}
+.program-console-tabs button:hover {
+  color: var(--text);
+  background: var(--hover, rgba(90, 120, 160, 0.08));
+}
+.program-console-tabs button.active {
+  color: var(--accent);
+  background: var(--hover, rgba(90, 120, 160, 0.14));
+  font-weight: 600;
+}
+.program-console-status {
+  margin-left: auto;
+  color: var(--muted);
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
+}
+.program-debug-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  border-radius: 6px;
+  padding: 0;
+  flex-shrink: 0;
+  transition: all .15s ease;
+}
+.program-debug-close:hover {
+  background: var(--hover, rgba(90, 120, 160, 0.12));
+  color: var(--text);
+}
+.program-console-body {
+  flex: 1 1 0;
+  min-height: 0;
+  height: 100%;
+  overflow-y: auto !important;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  padding: 12px 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  touch-action: pan-y;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--border, #d7dce3) 70%, var(--muted, #8191a5)) transparent;
+}
+.program-console-body::-webkit-scrollbar {
+  width: 6px;
+}
+.program-console-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+.program-console-body::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--border, #d7dce3) 70%, var(--muted, #8191a5));
+  border-radius: 4px;
+}
+.program-console-body::-webkit-scrollbar-thumb:hover {
+  background: var(--muted, #8191a5);
+}
+
+.program-sim-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 2px 0;
+  flex-shrink: 0;
+}
+.program-sim-actions .button {
+  flex: 1;
+  min-height: 32px;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: 6px;
+}
+.program-sim-actions .button.primary {
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.25);
+}
+
+.program-sim-params {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--program-panel) 60%, transparent);
+  overflow: hidden;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+.program-sim-params summary {
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  user-select: none;
+  background: color-mix(in srgb, var(--program-panel) 85%, transparent);
+}
+.program-sim-params summary:hover {
+  background: var(--hover, rgba(90, 120, 160, 0.08));
+}
+.program-sim-params summary small {
+  font-size: 11px;
+  font-weight: normal;
+  color: var(--muted);
+}
+.program-sim-params-content {
+  padding: 10px 12px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  border-top: 1px solid var(--border);
+}
+.program-sim-params-content label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--muted);
+}
+.program-sim-params-content label input {
+  width: 100%;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--input-bg, transparent);
+  color: var(--text);
+  font-size: 12px;
+  box-sizing: border-box;
+}
+.program-sim-params-content label:first-child,
+.program-sim-params-content label:nth-last-of-type(1) {
+  grid-column: span 2;
+}
+
+.program-sim-tasks-details {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--program-panel) 60%, transparent);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.program-sim-tasks-details summary {
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+  user-select: none;
+  background: color-mix(in srgb, var(--program-panel) 85%, transparent);
+}
+.program-sim-tasks-details summary:hover {
+  background: var(--hover, rgba(90, 120, 160, 0.08));
+}
+
+.program-trace {
+  flex: 1 1 auto;
+  min-height: 160px;
+  max-height: none;
+  overflow: visible;
+  font-size: 11px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--program-panel);
+}
+.program-trace>div {display:flex;gap:10px;padding:6px 8px;border-top:1px solid var(--border)}.program-trace span {color:var(--muted);width:24px}.program-trace button {display:inline-flex;align-items:center;gap:5px;border:0;background:transparent;color:var(--accent);cursor:pointer;flex-shrink:0}.program-trace code {white-space:pre-wrap;overflow-wrap:anywhere}.program-diagnostics {display:flex;flex-direction:column;gap:4px;color:#c25461;font-size:12px;margin:8px 0}.program-diagnostics.valid {color:#329071}.program-diagnostics button {display:inline-flex;align-items:center;gap:6px;text-align:left;border:0;background:transparent;color:inherit;cursor:pointer}
+.program-schema-panel {border-bottom:1px solid var(--border); background:var(--program-panel); padding:10px 16px; display:flex; flex-direction:column; gap:8px; font-size:12px; flex-shrink:0}.program-schema-panel>div:first-child {display:flex;align-items:center;gap:10px}.program-schema-row {display:flex;gap:10px;align-items:center;flex-wrap:wrap}.program-schema-row>label {display:flex;align-items:center;gap:5px}.program-schema-row textarea {min-height:32px;max-height:none;width:180px}
+
+/* React Flow 控制器与小地图：自动退避左右悬浮面板与抽屉，杜绝遮挡 */
+.program-editor .react-flow__controls {
+  left: 258px !important;
+  bottom: 14px !important;
+  z-index: 5 !important;
+  margin: 0 !important;
+  border-radius: 8px !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08) !important;
+  overflow: hidden !important;
+  transition: left 0.22s cubic-bezier(0.16, 1, 0.3, 1), bottom 0.2s ease !important;
+}
+.program-editor .react-flow__controls button {
+  background: var(--program-panel);
+  color: var(--text);
+  border-color: var(--border);
+}
+.program-editor .react-flow__controls button svg {
+  fill: currentColor;
+}
+.program-editor .react-flow__minimap {
+  right: 328px !important;
+  bottom: 14px !important;
+  width: 150px;
+  height: 100px;
+  z-index: 5 !important;
+  margin: 0 !important;
+  background: var(--program-panel) !important;
+  border-radius: 8px !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08) !important;
+  transition: right 0.22s cubic-bezier(0.16, 1, 0.3, 1), bottom 0.2s ease !important;
+}
+
+/* React Flow 控制器按钮在各主题下的背景与前景色适配 */
+.program-editor .react-flow__controls-button {
+  background: var(--program-panel) !important;
+  color: var(--text) !important;
+  border-bottom: 1px solid var(--border) !important;
+  fill: var(--text) !important;
+}
+.program-editor .react-flow__controls-button:hover {
+  background: var(--hover, rgba(90, 120, 160, 0.12)) !important;
+}
+.program-editor .react-flow__controls-button svg {
+  fill: currentColor !important;
+}
+
+/* React Flow 小地图在各主题下的遮罩与网格点适配 */
+.program-editor .react-flow__minimap-mask {
+  fill: color-mix(in srgb, var(--accent, #3b82f6) 14%, transparent) !important;
+  stroke: var(--accent, #3b82f6) !important;
+  stroke-width: 1.5 !important;
+}
+.program-editor .react-flow__background-pattern {
+  stroke: var(--border) !important;
+  fill: var(--border) !important;
+  opacity: 0.5 !important;
+}
+
+/* Minimal 与 Extreme 紧凑主题：禁用模糊材质，统一使用纯色实体面板 */
+[data-theme='minimal'] .program-library,
+[data-theme='minimal'] .program-properties,
+[data-theme='minimal'] .program-console,
+[data-theme='minimal'] .program-mobile-panels,
+[data-theme='minimal'] .program-default-guide,
+[data-theme='extreme'] .program-library,
+[data-theme='extreme'] .program-properties,
+[data-theme='extreme'] .program-console,
+[data-theme='extreme'] .program-mobile-panels,
+[data-theme='extreme'] .program-default-guide {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  background: var(--program-panel) !important;
+}
+
+/* 紧凑主题沿用全站的平面、直角语言，避免编辑区独自出现悬浮玻璃卡片。 */
+:root[data-theme='minimal'] .program-card,
+:root[data-theme='minimal'] .program-library,
+:root[data-theme='minimal'] .program-properties,
+:root[data-theme='minimal'] .program-console,
+:root[data-theme='minimal'] .program-default-guide,
+:root[data-theme='minimal'] .program-editor .react-flow__controls,
+:root[data-theme='minimal'] .program-editor .react-flow__minimap,
+:root[data-theme='extreme'] .program-card,
+:root[data-theme='extreme'] .program-library,
+:root[data-theme='extreme'] .program-properties,
+:root[data-theme='extreme'] .program-console,
+:root[data-theme='extreme'] .program-default-guide,
+:root[data-theme='extreme'] .program-editor .react-flow__controls,
+:root[data-theme='extreme'] .program-editor .react-flow__minimap {
+  box-shadow: none !important;
+}
+:root[data-theme='extreme'] .program-card,
+:root[data-theme='extreme'] .program-card-heading,
+:root[data-theme='extreme'] .program-library,
+:root[data-theme='extreme'] .program-properties,
+:root[data-theme='extreme'] .program-console,
+:root[data-theme='extreme'] .program-default-guide,
+:root[data-theme='extreme'] .program-editor .react-flow__controls,
+:root[data-theme='extreme'] .program-editor .react-flow__minimap,
+:root[data-theme='extreme'] .program-editor input,
+:root[data-theme='extreme'] .program-editor select,
+:root[data-theme='extreme'] .program-editor textarea {
+  border-radius: 0 !important;
+}
+
+/* 当右侧调试面板展开时，小地图自动向左退避 */
+.program-workspace:has(.program-console.open) .react-flow__minimap {
+  right: 468px !important;
+}
+
+/* 展开画布模式下（左右面板收起），控制器与小地图退回到画布两边缘 */
+.program-workspace.canvas-expanded .react-flow__controls {
+  left: 14px !important;
+}
+.program-workspace.canvas-expanded:not(:has(.program-console.open)) .react-flow__minimap {
+  right: 14px !important;
+}
+.program-workspace.canvas-expanded .program-canvas-hint {
+  left: 66px;
+}
+
+/* 展开画布模式：收起左右浮岛，顶部提示条向两侧拓展，画布完整裸露 */
+.program-workspace.canvas-expanded > .program-library,
+.program-workspace.canvas-expanded > .program-properties {
+  display: none;
+}
+.program-workspace.canvas-expanded > .program-default-guide {
+  left: 14px;
+  right: 14px;
+}
+
+.program-mobile-panels {display:none}
+.program-flow {width:100%; height:100%; min-width:0}
+/* 卡片设置与一体化端口 */
+.program-card-settings {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  border-top: 1px solid var(--border);
+}
+
+/* 顶部纯配置字段区 */
+.program-card-configs {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 12px;
+  background: color-mix(in srgb, var(--card-color) 4%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
+}
+.program-card-configs .program-card-field {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.program-card-configs label, .program-card-field label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+}
+.program-card-configs input, .program-card-configs select {
+  width: 100%;
+  height: 28px;
+  min-height: 28px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  color: var(--text);
+  background: var(--surface, var(--program-panel));
+  border: 1px solid var(--border);
+}
+.program-card-configs .program-card-checkbox {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  padding: 2px 0;
+}
+.program-card-configs .program-card-checkbox label {
+  font-size: 11px;
+  color: var(--text);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+.program-card-configs .program-card-checkbox input {
+  width: 15px;
+  height: 15px;
+  min-height: 0;
+  accent-color: var(--card-color);
+  cursor: pointer;
+}
+.program-card-resource-note {
+  font-size: 10px;
+  color: var(--muted);
+  line-height: 1.4;
+  margin-top: 2px;
+}
+
+/* 输入与输出端口区 */
+.program-card-inputs {
+  display: flex;
+  flex-direction: column;
+  padding: 4px 0;
+}
+.program-card-outputs {
+  display: flex;
+  flex-direction: column;
+  padding: 4px 0;
+  border-top: 1px dashed color-mix(in srgb, var(--border) 80%, transparent);
+  background: color-mix(in srgb, var(--text) 1.5%, transparent);
+}
+
+/* 统一端口行（Handle + 标签 + 类型 + 内联控件/连线状态） */
+.program-port-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 32px;
+  padding: 3px 12px;
+  gap: 8px;
+  transition: background 0.12s ease;
+}
+.program-port-row:hover {
+  background: color-mix(in srgb, var(--card-color) 6%, transparent);
+}
+
+.program-port-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  flex: 1;
+}
+.program-port-info.output {
+  justify-content: flex-end;
+  width: 100%;
+}
+.program-port-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin: 0;
+  cursor: default;
+}
+.program-port-type-tag {
+  font-size: 9px;
+  font-weight: 500;
+  color: var(--muted);
+  background: color-mix(in srgb, var(--muted) 12%, transparent);
+  padding: 1px 5px;
+  border-radius: 4px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.program-port-control {
+  flex-shrink: 0;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+.program-port-control input {
+  width: 76px;
+  height: 24px;
+  min-height: 24px;
+  padding: 2px 6px;
+  font-size: 12px;
+  text-align: right;
+  border-radius: 5px;
+  border: 1px solid var(--border);
+  background: var(--surface, var(--program-panel));
+  color: var(--text);
+}
+.program-port-control select {
+  width: 92px;
+  height: 24px;
+  min-height: 24px;
+  padding: 1px 4px;
+  font-size: 11px;
+  border-radius: 5px;
+  border: 1px solid var(--border);
+  background: var(--surface, var(--program-panel));
+  color: var(--text);
+}
+.program-port-badge {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--card-color);
+  background: color-mix(in srgb, var(--card-color) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--card-color) 25%, transparent);
+  padding: 1px 5px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+.program-card-settings :disabled {
+  opacity: 0.65;
+}
+.program-observation {font-size:10px;white-space:pre-wrap;overflow-wrap:anywhere}
+.program-card-alias {font-size:11px;font-weight:400;color:var(--muted);overflow-wrap:anywhere}.program-card-comment {padding:9px 14px;border-bottom:1px solid var(--border);font-size:12px;line-height:1.5;color:var(--muted);white-space:pre-wrap;overflow-wrap:anywhere}
+
+@container scheduler-editor (max-width: 1200px) {
+  .program-library {width:200px}
+  .program-properties {width:250px}
+  .program-default-guide {left:218px; right:268px}
+  .program-console {width:380px}
+  .program-editor .react-flow__controls {left:228px !important}
+  .program-canvas-hint {left:280px}
+  .program-editor .react-flow__minimap {right:278px !important}
+  .program-workspace:has(.program-console.open) .react-flow__minimap {right:408px !important}
+}
+
+@container scheduler-editor (max-width: 980px) {
+  .program-mobile-panels {
+    display: flex;
+    gap: 6px;
+    padding: 6px 12px;
+    background: var(--program-chrome);
+    -webkit-backdrop-filter: var(--theme-surface-filter);
+    backdrop-filter: var(--theme-surface-filter);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .program-mobile-panels .button {
+    flex: 1;
+    min-height: 32px;
+    justify-content: center;
+    font-size: 12px;
+    border-radius: 6px;
+  }
+  .program-mobile-panels .button.active {
+    background: var(--accent, #3b82f6) !important;
+    color: #fff !important;
+    border-color: var(--accent, #3b82f6) !important;
+    font-weight: 600;
+  }
+  .program-subtoolbar {
+    overflow-x: auto;
+    flex-wrap: nowrap !important;
+    padding: 6px 12px;
+    gap: 6px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .program-subtoolbar::-webkit-scrollbar {
+    display: none;
+  }
+  .program-subtoolbar > * {
+    flex-shrink: 0;
+  }
+  .program-toolbar {
+    padding: 8px 12px;
+    gap: 6px;
+  }
+  .program-toolbar h1 {
+    font-size: 15px;
+  }
+  .program-toolbar small {
+    display: none;
+  }
+  .program-actions {
+    gap: 6px;
+  }
+  .program-actions .button {
+    padding: 4px 8px;
+    min-height: 28px;
+    font-size: 11px;
+  }
+  .program-mobile-back-bar {
+    display: flex;
+    margin-bottom: 8px;
+  }
+  .program-mobile-back {
+    display: inline-flex !important;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    font-size: 12px;
+    min-height: 30px;
+    border-radius: 6px;
+  }
+  .program-library, .program-properties {
+    position: absolute;
+    inset: 0;
+    width: 100% !important;
+    max-width: none !important;
+    height: 100% !important;
+    border-radius: 0;
+    box-shadow: none;
+    border: none;
+    z-index: 20;
+    background: color-mix(in srgb, var(--surface) 82%, var(--program-panel-material));
+    -webkit-backdrop-filter: var(--theme-sidebar-filter);
+    backdrop-filter: var(--theme-sidebar-filter);
+    padding: 14px;
+  }
+  .program-library button {
+    min-height: 40px;
+    padding: 8px 12px;
+    font-size: 13px;
+    border-radius: 8px;
+  }
+  .program-properties input,
+  .program-properties select,
+  .program-properties textarea {
+    min-height: 34px;
+    font-size: 13px;
+  }
+  .program-workspace {
+    display: flex;
+    flex-direction: column;
+    position: relative;
+  }
+  /* 三态展示：画布、卡片库、属性面板 */
+  .program-workspace.mobile-canvas .program-library,
+  .program-workspace.mobile-canvas .program-properties {
+    display: none !important;
+  }
+  .program-workspace.mobile-library .program-properties {
+    display: none !important;
+  }
+  .program-workspace.mobile-library .program-library {
+    display: flex !important;
+  }
+  .program-workspace.mobile-properties .program-library {
+    display: none !important;
+  }
+  .program-workspace.mobile-properties .program-properties {
+    display: flex !important;
+  }
+  .program-default-guide {
+    display: none;
+  }
+  .program-console {
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 100% !important;
+    max-width: none !important;
+    height: 100% !important;
+    border-radius: 0;
+    border: none;
+    z-index: 30;
+    background: color-mix(in srgb, var(--surface) 82%, var(--theme-modal-bg, var(--program-panel)));
+    -webkit-backdrop-filter: var(--theme-modal-filter);
+    backdrop-filter: var(--theme-modal-filter);
+  }
+  .program-editor .react-flow__controls {
+    left: 14px !important;
+    bottom: 14px !important;
+  }
+  .program-editor .react-flow__minimap {
+    right: 14px !important;
+    bottom: 14px !important;
+    width: 90px;
+    height: 60px;
+  }
+  .program-canvas-hint {
+    display: none;
+  }
+}

@@ -5,6 +5,7 @@
 
 import argparse
 import asyncio
+import secrets
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -109,21 +110,33 @@ def create_app(*, root: Path = ROOT, password=None, manage_runtime=True, mount_m
         return FileResponse(path, media_type='text/html', headers={'Cache-Control': 'no-cache'})
 
     from module.api.android import routes as android_routes
+    def background_authorized(request, *, allow_query=False):
+        """背景 HTTP 能力令牌只通过已授权的 WebSocket 下发，不复用访问密码。"""
+        supplied = request.headers.get('x-azurpilot-background-token', '')
+        if not supplied and allow_query:
+            supplied = request.query_params.get('token', '')
+        return bool(supplied) and secrets.compare_digest(
+            supplied.encode('utf-8'), gateway.router.background_token.encode('ascii'))
+
     async def background_upload(request):
         """接收浏览器上传的本地背景图，存进 cache/background/library（本地图片的唯一落点）。"""
-        form = await request.form()
-        upload = form.get('file')
-        if upload is None or not hasattr(upload, 'read'):
-            return JSONResponse({'error': '没有收到文件。'}, status_code=400)
-        data = await upload.read()
-        try:
-            entry = gallery_add_bytes(data, getattr(upload, 'filename', '') or '', getattr(upload, 'content_type', '') or '')
-        except Exception as error:
-            return JSONResponse({'error': str(error)}, status_code=400)
-        return JSONResponse({'entry': entry})
+        if not background_authorized(request):
+            return JSONResponse({'error': '请先登录'}, status_code=401)
+        async with request.form() as form:
+            upload = form.get('file')
+            if upload is None or not hasattr(upload, 'read'):
+                return JSONResponse({'error': '没有收到文件。'}, status_code=400)
+            data = await upload.read()
+            try:
+                entry = gallery_add_bytes(data, getattr(upload, 'filename', '') or '', getattr(upload, 'content_type', '') or '')
+            except Exception as error:
+                return JSONResponse({'error': str(error)}, status_code=400)
+            return JSONResponse({'entry': entry})
 
     async def background_media(request):
         """同源代理一张网图：解析出的直链由这里回给浏览器，避免防盗链或跨域让显示的图与直链分叉。"""
+        if not background_authorized(request, allow_query=True):
+            return JSONResponse({'error': '请先登录'}, status_code=401)
         target = request.query_params.get('url', '')
         if not target:
             return JSONResponse({'error': '缺少 url 参数。'}, status_code=400)

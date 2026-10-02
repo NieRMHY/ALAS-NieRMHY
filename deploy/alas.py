@@ -6,8 +6,15 @@ from deploy.utils import *
 
 
 class AlasManager(DeployConfig):
+    """AzurPilot 进程管理器，负责定位和终止已有进程。"""
+
     @cached_property
     def alas_folder(self):
+        """获取属于当前实例的程序根目录与 Python 路径列表。
+
+        Returns:
+            list[str]: 包含 Python 可执行路径与项目根路径的列表。
+        """
         return [
             self.filepath("PythonExecutable"),
             self.root_filepath
@@ -15,6 +22,11 @@ class AlasManager(DeployConfig):
 
     @cached_property
     def self_pid(self):
+        """获取当前进程的 PID。
+
+        Returns:
+            int: 进程 ID。
+        """
         return os.getpid()
 
     def iter_process_by_name(self, name):
@@ -88,6 +100,7 @@ class AlasManager(DeployConfig):
             self.execute(f'taskkill /f /pid {row[2]}', allow_failure=True, output=False)
 
     def alas_kill(self):
+        """终止当前正在运行的 AzurPilot 相关进程（alas.exe 和 python.exe）。"""
         logger.hr(f'Kill existing AzurPilot', 0)
         self.kill_by_name('alas.exe')
         self.kill_by_name('python.exe')

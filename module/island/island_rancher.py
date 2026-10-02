@@ -15,6 +15,19 @@ from module.logger import logger
 
 
 class IslandRancher(Island, WarehouseOCR, LoginHandler):
+    """岛屿牧场与磨坊自动化管理器。
+
+    继承 Island、WarehouseOCR 和 LoginHandler，管理饲料加工、鸡猪牛羊养殖及任务调度。
+
+    Attributes:
+        ranch_chicken_threshold (int): 鸡肉最低库存阈值。
+        ranch_pork_threshold (int): 猪肉最低库存阈值。
+        INVENTORY_CONFIG (dict): 农场、磨坊和牧场物品的 OCR 识别配置。
+        posts_ranch (dict): 牧场岗位按钮映射。
+        ranch_feed_map (dict): 牧场岗位对应的饲料类型映射。
+        inventory_counts (dict): 各区域仓库库存数量字典。
+        ranch_last_finish_time (datetime | None): 最近一次读取到的岗位完成时间。
+    """
     def __init__(self, *args, **kwargs):
         Island.__init__(self, *args, **kwargs)
         WarehouseOCR.__init__(self)
@@ -84,11 +97,25 @@ class IslandRancher(Island, WarehouseOCR, LoginHandler):
         self.ranch_last_finish_time = None
 
     def raise_if_island_error(self):
+        """若检测到岛屿异常弹窗则抛出 GameBugError。
+
+        Raises:
+            GameBugError: 检测到岛屿 ERROR1 异常时抛出。
+        """
         if self.island_error:
             from module.exception import GameBugError
             raise GameBugError("检测到岛屿ERROR1，需要重启")
 
     def process_mill_item(self, mill_item, quantity=None):
+        """在磨坊界面加工指定物品。
+
+        Args:
+            mill_item (str): 磨坊加工品名称（如 'chicken_feed'、'wheat_flour'）。
+            quantity (int, optional): 加工数量，默认为 None 使用配置数量。
+
+        Returns:
+            bool: 是否加工成功。
+        """
         mill_config = self.name_to_config[mill_item]
         mill_button = mill_config['mill']
         target = mill_config['number'] if quantity is None else max(1, int(quantity))
@@ -125,6 +152,14 @@ class IslandRancher(Island, WarehouseOCR, LoginHandler):
         return True
 
     def check_feed_needs(self, target_quantity=50):
+        """检查牧场饲料库存缺口。
+
+        Args:
+            target_quantity (int): 目标安全饲料库存，默认为 50。
+
+        Returns:
+            list[tuple[str, str]]: 需补充饲料的岗位与饲料名称元组列表。
+        """
         feed_needs = []
         for post_id, feed_item in self.ranch_feed_map.items():
             current_quantity = self.inventory_counts['mill'].get(feed_item, 0)
@@ -135,17 +170,43 @@ class IslandRancher(Island, WarehouseOCR, LoginHandler):
 
     @staticmethod
     def mill_material_needed(mill_item, quantity):
+        """计算磨坊加工指定数量所需的前置农作物原料数量。
+
+        Args:
+            mill_item (str): 加工品内部名称。
+            quantity (int): 加工批次或数量。
+
+        Returns:
+            int: 消耗的原材料数量。
+        """
         if mill_item == 'wheat_flour':
             return quantity * 6
         return quantity * 30
 
     @staticmethod
     def mill_output_quantity(mill_item, quantity):
+        """计算磨坊加工实际产出数量。
+
+        Args:
+            mill_item (str): 加工品内部名称。
+            quantity (int): 加工批次数。
+
+        Returns:
+            int: 实际产出成品数量。
+        """
         if mill_item == 'wheat_flour':
             return quantity
         return quantity * 10
 
     def check_mill_supplement_needs(self, feed_target_quantity=50):
+        """检查磨坊需要补充加工的所有项目（面粉及各类饲料）。
+
+        Args:
+            feed_target_quantity (int): 饲料安全库存阈值，默认为 50。
+
+        Returns:
+            list[tuple[str, int]]: 待加工的项目名称与目标加工数量元组列表。
+        """
         mill_needs = []
 
         wheat_flour_count = self.inventory_counts['mill'].get('wheat_flour', 0)
@@ -164,6 +225,14 @@ class IslandRancher(Island, WarehouseOCR, LoginHandler):
         return mill_needs
 
     def process_mill_supplements(self, feed_target_quantity=50):
+        """执行磨坊饲料和面粉加工补充流程。
+
+        Args:
+            feed_target_quantity (int): 饲料安全库存阈值，默认为 50。
+
+        Returns:
+            list[str]: 实际成功加工的项目名称列表。
+        """
         mill_needs = self.check_mill_supplement_needs(feed_target_quantity=feed_target_quantity)
         if not mill_needs:
             logger.info("[岛屿-牧场] 牧场饲料和面粉库存充足")
@@ -192,6 +261,15 @@ class IslandRancher(Island, WarehouseOCR, LoginHandler):
         return processed_items
 
     def process_mill_item_with_inventory(self, mill_item, quantity):
+        """结合当前原料库存检查并执行磨坊加工。
+
+        Args:
+            mill_item (str): 加工品内部名称。
+            quantity (int): 加工数量。
+
+        Returns:
+            bool: 是否成功完成加工并更新库存。
+        """
         mill_config = self.name_to_config[mill_item]
         required_material = mill_config['required_material']
         material_needed = self.mill_material_needed(mill_item, quantity)
@@ -219,7 +297,11 @@ class IslandRancher(Island, WarehouseOCR, LoginHandler):
         return True
 
     def back_to_postmanage_after_mill_purchase(self):
-        """从派遣详情页进入磨坊加工后，逐层返回岗位管理页。"""
+        """从派遣详情页进入磨坊加工后，逐层返回岗位管理页。
+
+        Returns:
+            bool: 是否成功返回岗位管理主界面。
+        """
         self.interval_clear([ISLAND_MILL_BACK, SELECT_UI_BACK, POST_CLOSE])
         for _ in self.loop(timeout=20, skip_first=False):
             if (
@@ -252,9 +334,19 @@ class IslandRancher(Island, WarehouseOCR, LoginHandler):
         return False
 
     def back_to_postmanage_after_feed_purchase(self):
+        """购买饲料后返回岗位管理页面。
+
+        Returns:
+            bool: 是否成功返回岗位管理主界面。
+        """
         return self.back_to_postmanage_after_mill_purchase()
 
     def goto_mill_from_any_ranch_post(self):
+        """尝试通过任意一个牧场岗位详情进入磨坊界面。
+
+        Returns:
+            bool: 是否成功进入磨坊。
+        """
         for post_id in self.posts_ranch:
             logger.info(f"[岛屿-牧场] 尝试通过牧场岗位{post_id}进入磨坊")
             if self.goto_mill_from_ranch_post(post_id):
@@ -264,6 +356,14 @@ class IslandRancher(Island, WarehouseOCR, LoginHandler):
         return False
 
     def goto_mill_from_ranch_post(self, post_id):
+        """通过指定牧场岗位的材料快捷入口进入磨坊界面。
+
+        Args:
+            post_id (str): 牧场岗位标识。
+
+        Returns:
+            bool: 是否成功进入磨坊。
+        """
         post_button = self.posts_ranch.get(post_id)
         if post_button is None:
             logger.warning(f"[岛屿-牧场] 未知的牧场岗位: {post_id}")
@@ -326,6 +426,15 @@ class IslandRancher(Island, WarehouseOCR, LoginHandler):
         return False
 
     def ranch_post_get_and_add(self, post_id, character='WorkerJuu'):
+        """在牧场岗位中收取产物并追加派遣角色。
+
+        Args:
+            post_id (str): 岗位标识。
+            character (str): 派遣角色名称或筛选，默认为 'WorkerJuu'。
+
+        Returns:
+            bool: 操作是否成功。
+        """
         add_opened = False
         self.ranch_last_finish_time = None
         for _ in self.loop(timeout=40, skip_first=False):
@@ -407,7 +516,14 @@ class IslandRancher(Island, WarehouseOCR, LoginHandler):
         return False
 
     def ranch_ocr_finish_time(self, post_id):
-        """读取当前牧场岗位详情页的剩余时间并换算为完成时间。"""
+        """读取当前牧场岗位详情页的剩余时间并换算为完成时间。
+
+        Args:
+            post_id (str): 岗位标识。
+
+        Returns:
+            datetime | None: 换算出的完成时间，未在工作或识别失败返回 None。
+        """
         if (
                 self.appear(ISLAND_POST_VACANT_CHECK, offset=1)
                 or self.appear(ISLAND_WORK_COMPLETE, offset=1)
@@ -444,7 +560,14 @@ class IslandRancher(Island, WarehouseOCR, LoginHandler):
         return None
 
     def post_mode_check(self, post_id):
-        """检查岗位是否使用特定角色配置"""
+        """检查岗位是否使用特定角色配置。
+
+        Args:
+            post_id (str): 岗位标识。
+
+        Returns:
+            bool: 配置是否使用了非 WorkerJuu 的指定角色。
+        """
         if post_id == 'ISLAND_RANCH_POST1':
             config_str = self.config.IslandRancher_ChickenFilter
         elif post_id == 'ISLAND_RANCH_POST2':
@@ -458,7 +581,15 @@ class IslandRancher(Island, WarehouseOCR, LoginHandler):
         return not config_str.strip() == 'WorkerJuu'
 
     def ranch_post(self, post_id, time_var_name):
-        """执行牧场岗位任务"""
+        """执行牧场岗位任务。
+
+        Args:
+            post_id (str): 岗位标识。
+            time_var_name (str): 存储完成时间的实例属性名。
+
+        Returns:
+            bool: 执行是否成功。
+        """
         if post_id not in self.posts_ranch:
             logger.error(f"[岛屿-牧场] 未知的岗位ID: {post_id}")
             return
@@ -510,6 +641,7 @@ class IslandRancher(Island, WarehouseOCR, LoginHandler):
         return True
 
     def warehouse_mill_ranch(self):
+        """通过仓库 OCR 识别农场、磨坊和牧场的所有相关物品库存。"""
         self.warehouse_filter('processed')
         image = self.device.screenshot()
         self.inventory_counts['mill'] = {}
@@ -535,6 +667,11 @@ class IslandRancher(Island, WarehouseOCR, LoginHandler):
             logger.info(f"{self._item_cn(item_config['name'])}: {count}")
 
     def check_ranch_needs(self):
+        """根据鸡肉和猪肉库存阈值确定需要执行的牧场岗位。
+
+        Returns:
+            list[str]: 需要执行的牧场岗位 ID 列表。
+        """
         ranch_needs = []
 
         chicken_count = self.inventory_counts['ranch'].get('chicken', 0)
@@ -555,6 +692,13 @@ class IslandRancher(Island, WarehouseOCR, LoginHandler):
         return ranch_needs
 
     def run(self):
+        """运行牧场与磨坊自动化管理主流程。
+
+        巡检库存、补充饲料与面粉、排产牧场岗位，并将完成时间转交渔场模块合并调度。
+
+        Raises:
+            GameBugError: 遇到游戏内部错误需要重启时抛出。
+        """
         self.island_error = False
         self.ui_ensure(page_island)
         time_vars = ['time_ranch1', 'time_ranch2', 'time_ranch3', 'time_ranch4']

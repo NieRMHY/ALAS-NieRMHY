@@ -2132,7 +2132,8 @@
     "AddNewStudent": {
       "Enable": false,
       "Favorite": false,
-      "MinLevel": 50
+      "MinLevel": 50,
+      "MaxLevel": 0
     },
     "Storage": {
       "Storage": {}
@@ -3089,6 +3090,25 @@
       "PlanVerifiedOnly": true,
       "PlanMineVerified": true,
       "PlanShelfSlots": 5
+    },
+    "Storage": {
+      "Storage": {}
+    }
+  },
+  "IslandSeasonPlan": {
+    "Scheduler": {
+      "Enable": false,
+      "PushNotification": false,
+      "NextRun": "2020-01-01 00:00:00",
+      "Command": "IslandSeasonPlan",
+      "SuccessInterval": 0,
+      "FailureInterval": 120,
+      "ServerUpdate": "00:00",
+      "Sensitive": false
+    },
+    "IslandSeasonPlan": {
+      "SyncDone": true,
+      "Submit": false
     },
     "Storage": {
       "Storage": {}

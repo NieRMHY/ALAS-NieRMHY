@@ -14,23 +14,55 @@ MAX_ABSOLUTE_EXPONENT = 64
 
 
 def runtime_error(code: str, message: str, node: Any | None = None) -> StrategyRuntimeError:
-    """创建带源码位置的运行期错误。"""
+    """创建带源码位置的运行期错误。
+
+    Args:
+        code (str): 错误代码。
+        message (str): 错误描述信息。
+        node (Any | None): 发生错误的 AST 节点。
+
+    Returns:
+        StrategyRuntimeError: 策略运行期异常对象。
+    """
     line, column = _node_location(node)
     return StrategyRuntimeError(StrategyDiagnostic(code, message, line, column))
 
 
 def lua_truthy(value: Any) -> bool:
-    """Lua 只有 nil 和 false 为假，0 与空字符串仍为真。"""
+    """判断值在 Lua 语义下是否为真。
+
+    Lua 只有 nil 和 false 为假，0 与空字符串仍为真。
+
+    Args:
+        value (Any): 待测试的值。
+
+    Returns:
+        bool: 在 Lua 语义下是否为真。
+    """
     return value is not None and value is not False
 
 
 def candidate_values(candidate: ShopCandidate) -> dict[str, Any]:
-    """生成脚本可见字段，避免反射读取 dataclass 内部状态。"""
+    """生成脚本可见字段，避免反射读取 dataclass 内部状态。
+
+    Args:
+        candidate (ShopCandidate): 候选商品对象。
+
+    Returns:
+        dict[str, Any]: 包含白名单字段的字典。
+    """
     return {field: getattr(candidate, field) for field in CANDIDATE_FIELDS}
 
 
 def context_values(context: ShopContext) -> dict[str, Any]:
-    """生成脚本可见的只读会话上下文。"""
+    """生成脚本可见的只读会话上下文。
+
+    Args:
+        context (ShopContext): 策略上下文对象。
+
+    Returns:
+        dict[str, Any]: 脚本可见的上下文属性字典。
+    """
     return {
         'domain': context.domain,
         'currency': context.currency,
@@ -40,7 +72,18 @@ def context_values(context: ShopContext) -> dict[str, Any]:
 
 
 def number(value: Any, node: Any) -> int | float:
-    """验证算术操作数或评分为有限数值。"""
+    """验证算术操作数或评分为有限数值。
+
+    Args:
+        value (Any): 待验证的数值对象。
+        node (Any): 当前 AST 节点。
+
+    Returns:
+        int | float: 验证后的有效数值。
+
+    Raises:
+        StrategyRuntimeError: 若值不是有限数值或超出安全范围时抛出。
+    """
     if isinstance(value, bool) or not isinstance(value, (int, float)):
         raise runtime_error('number_required', '此表达式必须返回有限数值', node)
     try:
@@ -53,6 +96,18 @@ def number(value: Any, node: Any) -> int | float:
 
 
 def _index_key(node: Any, env: Mapping[str, Any] | None = None) -> str:
+    """解析表索引键为字符串。
+
+    Args:
+        node (Any): 索引 AST 节点。
+        env (Mapping[str, Any] | None): 环境变量字典。
+
+    Returns:
+        str: 解析出的键字符串。
+
+    Raises:
+        StrategyRuntimeError: 若键无法解析为有效字符串时抛出。
+    """
     name = _name_id(node)
     if name is not None:
         return name
@@ -68,7 +123,18 @@ def _index_key(node: Any, env: Mapping[str, Any] | None = None) -> str:
 
 
 def evaluate_expression(node: Any, env: Mapping[str, Any]) -> Any:
-    """解释一条已校验表达式，不使用 Python eval。"""
+    """解释一条已校验表达式，不使用 Python eval。
+
+    Args:
+        node (Any): 表达式 AST 节点。
+        env (Mapping[str, Any]): 环境变量字典。
+
+    Returns:
+        Any: 表达式求值结果。
+
+    Raises:
+        StrategyRuntimeError: 若表达式求值失败或引用未定义变量时抛出。
+    """
     name = _node_name(node)
     if name in {'Number', 'String', 'True', 'False', 'Nil'}:
         return _literal_value(node)
@@ -141,7 +207,16 @@ def evaluate_expression(node: Any, env: Mapping[str, Any]) -> Any:
 
 
 def run_item_function(node: Any, candidate: ShopCandidate, env: Mapping[str, Any]) -> Any:
-    """以只读商品投影调用已验证的 ``function(item) return ... end``。"""
+    """以只读商品投影调用已验证的 ``function(item) return ... end``。
+
+    Args:
+        node (Any): 函数 AST 节点。
+        candidate (ShopCandidate): 当前候选商品。
+        env (Mapping[str, Any]): 环境变量字典。
+
+    Returns:
+        Any: 函数体单表达式求值结果。
+    """
     body = getattr(node, 'body', None)
     statement = next(
         statement for statement in getattr(body, 'body', [])

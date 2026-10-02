@@ -283,20 +283,84 @@ export function Statistics() {
   /* 控件名不再常驻在工具栏上：紧凑主题把文字收进 hover/聚焦提示（data-tip），
      横向空间让给数据；其它主题仍按原样显示标签文字。 */
   const rangeControls = <>
-    {category === 'resources' && <label className="statistics-inline-control" data-tip={ui('stats.range')}><span className="statistics-inline-label">{ui('stats.range')}</span><Select aria-label={ui('stats.days')} value={days} onChange={event => setDays(Number(event.target.value))}>{[1, 7, 30, 90, 365].map(value => <option value={value} key={value}>{ui('stats.recentDays', {days: value})}</option>)}</Select></label>}
+    {category === 'resources' && (
+      condensed ? (
+        <label className="statistics-inline-control" data-tip={ui('stats.range')}>
+          <span className="statistics-inline-label">{ui('stats.range')}</span>
+          <Select aria-label={ui('stats.days')} value={days} onChange={event => setDays(Number(event.target.value))}>
+            {[1, 7, 30, 90, 365].map(value => <option value={value} key={value}>{ui('stats.recentDays', {days: value})}</option>)}
+          </Select>
+        </label>
+      ) : (
+        <SegmentedControl
+          className="statistics-range-segmented"
+          label={ui('stats.range')}
+          value={String(days)}
+          onChange={value => setDays(Number(value))}
+          options={[1, 7, 30, 90, 365].map(value => ({
+            value: String(value),
+            label: ui('stats.recentDays', {days: value}),
+          }))}
+        />
+      )
+    )}
+    {(category === 'commission' || category === 'research' || category === 'loot') && (
+      condensed ? (
+        <label className="statistics-inline-control" data-tip={ui('stats.period')}>
+          <span className="statistics-inline-label">{ui('stats.period')}</span>
+          <Select aria-label={ui('stats.period')} value={period} onChange={event => setPeriod(event.target.value as typeof period)}>
+            <option value="day">{ui('stats.today')}</option>
+            <option value="week">{ui('stats.thisWeek')}</option>
+            <option value="month">{ui('stats.selectedMonth')}</option>
+          </Select>
+        </label>
+      ) : (
+        <SegmentedControl
+          className="statistics-range-segmented"
+          label={ui('stats.period')}
+          value={period}
+          onChange={value => setPeriod(value as typeof period)}
+          options={[
+            {value: 'day', label: ui('stats.today')},
+            {value: 'week', label: ui('stats.thisWeek')},
+            {value: 'month', label: ui('stats.selectedMonth')},
+          ]}
+        />
+      )
+    )}
     {/* 月份输入框本身就显示「2026年09月」，标签只在提示里出现 */}
-    {(['action', 'opsi', 'commission', 'loot'].includes(category!) || category === 'research') && <label className="statistics-inline-control" data-tip={ui('stats.month')}><input aria-label={ui('stats.month')} type="month" min="2020-01" max="9998-12" value={month} disabled={(category === 'commission' || category === 'research' || category === 'loot') && period !== 'month'} onChange={event => {if (event.target.value) setMonth(event.target.value)}}/></label>}
-    {category === 'research' && <label className="statistics-inline-control" data-tip={ui('stats.researchSeries')}><span className="statistics-inline-label">{ui('stats.researchSeries')}</span><Select aria-label={ui('stats.researchSeries')} value={researchSeries} onChange={event => setResearchSeries(String(event.target.value))}>{[1, 2, 3, 4, 5, 6, 7, 8, 9].map(value => <option value={String(value)} key={value}>{ui('stats.seriesN', {n: value})}</option>)}<option value="consumable">{ui('stats.consumableScope')}</option></Select></label>}
-    {category === 'commission' && <label className="statistics-inline-control" data-tip={ui('stats.period')}><span className="statistics-inline-label">{ui('stats.period')}</span><Select aria-label={ui('stats.commissionPeriod')} value={period} onChange={event => setPeriod(event.target.value as typeof period)}><option value="day">{ui('stats.today')}</option><option value="week">{ui('stats.thisWeek')}</option><option value="month">{ui('stats.selectedMonth')}</option></Select></label>}
-    {category === 'research' && <label className="statistics-inline-control" data-tip={ui('stats.period')}><span className="statistics-inline-label">{ui('stats.period')}</span><Select aria-label={ui('stats.period')} value={period} onChange={event => setPeriod(event.target.value as typeof period)}><option value="day">{ui('stats.today')}</option><option value="week">{ui('stats.thisWeek')}</option><option value="month">{ui('stats.selectedMonth')}</option></Select></label>}
+    {(['action', 'opsi', 'commission', 'loot'].includes(category!) || category === 'research') && (
+      <label className="statistics-inline-control" data-tip={ui('stats.month')}>
+        <span className="statistics-inline-label">{ui('stats.month')}</span>
+        <input aria-label={ui('stats.month')} type="month" min="2020-01" max="9998-12" value={month} disabled={(category === 'commission' || category === 'research' || category === 'loot') && period !== 'month'} onChange={event => {if (event.target.value) setMonth(event.target.value)}}/>
+      </label>
+    )}
+    {category === 'research' && (
+      <label className="statistics-inline-control" data-tip={ui('stats.researchSeries')}>
+        <span className="statistics-inline-label">{ui('stats.researchSeries')}</span>
+        <Select aria-label={ui('stats.researchSeries')} value={researchSeries} onChange={event => setResearchSeries(String(event.target.value))}>
+          {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(value => <option value={String(value)} key={value}>{ui('stats.seriesN', {n: value})}</option>)}
+          <option value="consumable">{ui('stats.consumableScope')}</option>
+        </Select>
+      </label>
+    )}
     {/* 大世界掉落：任务筛选的选项来自后端（含当前窗口内没记录的任务），值就是任务标识 */}
-    {category === 'loot' && <label className="statistics-inline-control" data-tip={ui('stats.lootTask')}><span className="statistics-inline-label">{ui('stats.lootTask')}</span><Select aria-label={ui('stats.lootTask')} value={lootTask} onChange={event => setLootTask(String(event.target.value))}><option value="">{ui('stats.lootTaskAll')}</option>{(data?.taskOptions ?? []).map(item => <option value={item.key} key={item.key}>{item.count ? `${item.label}（${item.count}）` : item.label}</option>)}</Select></label>}
-    {category === 'loot' && <label className="statistics-inline-control" data-tip={ui('stats.period')}><span className="statistics-inline-label">{ui('stats.period')}</span><Select aria-label={ui('stats.period')} value={period} onChange={event => setPeriod(event.target.value as typeof period)}><option value="day">{ui('stats.today')}</option><option value="week">{ui('stats.thisWeek')}</option><option value="month">{ui('stats.selectedMonth')}</option></Select></label>}
+    {category === 'loot' && (
+      <label className="statistics-inline-control" data-tip={ui('stats.lootTask')}>
+        <span className="statistics-inline-label">{ui('stats.lootTask')}</span>
+        <Select aria-label={ui('stats.lootTask')} value={lootTask} onChange={event => setLootTask(String(event.target.value))}>
+          <option value="">{ui('stats.lootTaskAll')}</option>
+          {(data?.taskOptions ?? []).map(item => <option value={item.key} key={item.key}>{item.count ? `${item.label}（${item.count}）` : item.label}</option>)}
+        </Select>
+      </label>
+    )}
   </>
-  const hints = <>
-    {category === 'ships' && <span>{ui('stats.shipHint')}</span>}
-    {category === 'loot' && <span>{ui('stats.lootHint')}</span>}
-  </>
+  const hints = (
+    <span className="statistics-hints">
+      {category === 'ships' && <span>{ui('stats.shipHint')}</span>}
+      {category === 'loot' && <span>{ui('stats.lootHint')}</span>}
+    </span>
+  )
   /* 页面级卡片视图：键、组合链、顺序与渲染序列都由该页自身的数据决定。 */
   /* 单页的卡片键与默认连接：组合链的整链键表由链上各页拼出。 */
   const pageCards = (page: Category, report: StatisticsReport | undefined) => {
@@ -552,6 +616,8 @@ export function Statistics() {
     )
   }
 
+  const hasHints = Boolean(category === 'ships' || category === 'loot')
+
   const content = <>
     {condensed
       ? <div className={`statistics-toolbar-row${compact ? ' is-compact' : ''}`} ref={toolbarRow}>
@@ -560,16 +626,20 @@ export function Statistics() {
           <Select openOnFocus className="statistics-category-select" aria-label={ui('stats.categoryLabel')} value={category} onChange={event => setCategory(event.target.value as Category)}>
             {visiblePageEntries.map(([value, label]) => <option value={value} key={value}>{ui(label)}</option>)}
           </Select>
-          <div className="statistics-toolbar-right" ref={toolbarRight}>{hasChart && activeView.foldControl(activeView.chartKey)}{hasChart && <button className="text-button" onClick={() => category && toggleExpanded(category)}>{expandedChart === category ? ui('stats.collapseChart') : ui('stats.expandChart')}</button>}{rangeControls}<div className="statistics-actions">{actions}</div></div>
+          <div className="statistics-toolbar-right" ref={toolbarRight}>
+            {hasChart && activeView.foldControl(activeView.chartKey)}
+            {hasChart && <button className="text-button" onClick={() => category && toggleExpanded(category)}>{expandedChart === category ? ui('stats.collapseChart') : ui('stats.expandChart')}</button>}
+            {rangeControls}
+            <div className="statistics-actions">{actions}</div>
+          </div>
         </div>
       : <>
           <div className="statistics-toolbar-row">
             <SegmentedControl className="statistics-category-control" label={ui('stats.categoryLabel')} value={category} onChange={selectPage} onItemContextMenu={editMode ? id => togglePage(id, false) : undefined} onItemMove={editMode ? movePageBy : undefined} itemClassName={id => `${isPageEnabled(layout, id) ? '' : 'is-disabled'}${!editMode && chainOf(id).length > 1 ? ' is-chained' : ''}`.trim()} trailing={singleViewToggle} options={visiblePageEntries.map(([value, label]) => ({value: value as Category, label: ui(label)}))}/>
             {legacy && <div className="statistics-actions">{actions}</div>}
           </div>
-          <div className="statistics-controls period-controls"><strong>{ui(categories[category!])}</strong>{rangeControls}{hints}</div>
+          {(rangeControls || hasHints) && <div className="statistics-filter-bar">{rangeControls}{hasHints && hints}</div>}
         </>}
-    {condensed && (category === 'ships' || category === 'loot') && <div className="statistics-controls period-controls">{hints}</div>}
     {editMode && <StatisticsEditConsole customized={customized} pages={fixedPageOrder.map(id => ({id, label: ui(categories[id]), enabled: isPageEnabled(layout, id)}))} onTogglePage={id => togglePage(id, !isPageEnabled(layout, id))} onReset={resetLayout}>
       {/* 顺序控件：一次挪一格，组合链整体挪动。 */}
       <div className="statistics-page-order">

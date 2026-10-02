@@ -20,7 +20,17 @@ from module.ui.switch import Switch
 
 
 class FleetLockSwitch(Switch):
+    """舰队锁定开关。"""
+
     def handle_additional(self, main):
+        """处理切换过程中的附加弹窗。
+
+        Args:
+            main: 包含 appear_then_click 方法的主控制器实例。
+
+        Returns:
+            bool: 是否处理了附加弹窗。
+        """
         # 游戏 bug：上一个已清除海域的 AUTO_SEARCH_REWARD 弹出
         if main.appear_then_click(AUTO_SEARCH_REWARD, offset=(50, 50), interval=3):
             return True
@@ -33,9 +43,20 @@ fleet_lock.add_state('off', check_button=OS_FLEET_UNLOCKED)
 
 
 class MapEventHandler(EnemySearchingHandler):
+    """大世界地图事件处理类。"""
+
     ash_popup_canceled = False
 
     def handle_map_get_items(self, interval=2, drop=None):
+        """处理大世界地图中掉落物品的获取弹窗。
+
+        Args:
+            interval (int): 点击间隔秒数。默认 2。
+            drop (DropImage, optional): 掉落记录对象。
+
+        Returns:
+            bool: 是否检测到并点击关闭了物品弹窗。
+        """
         if self.is_in_map():
             return False
 
@@ -79,6 +100,14 @@ class MapEventHandler(EnemySearchingHandler):
         return False
 
     def handle_map_archives(self, drop=None):
+        """处理大世界档案文件获取弹窗。
+
+        Args:
+            drop (DropImage, optional): 掉落记录对象。
+
+        Returns:
+            bool: 是否处理了档案弹窗。
+        """
         if self.appear(MAP_ARCHIVES, interval=5):
             if drop:
                 drop.add(self.device.image)
@@ -91,6 +120,11 @@ class MapEventHandler(EnemySearchingHandler):
         return False
 
     def handle_os_game_tips(self):
+        """处理并关闭大世界首次开启自动搜索时的游戏提示。
+
+        Returns:
+            bool: 是否点击关闭了提示。
+        """
         # 关闭首次开启自动搜索时的游戏提示
         if self.appear_then_click(OS_GAME_TIPS, offset=(20, 20), interval=3):
             return True
@@ -98,6 +132,11 @@ class MapEventHandler(EnemySearchingHandler):
         return False
 
     def handle_ash_popup(self):
+        """处理余烬坐标收集满时的弹窗，点击取消以避免误入挑战。
+
+        Returns:
+            bool: 是否处理了余烬弹窗。
+        """
         name = 'ASH'
         # 2021.12.09
         # 余烬弹窗不再显示红色文字，改为检测 "Ashes Coordinates" 文字
@@ -111,6 +150,22 @@ class MapEventHandler(EnemySearchingHandler):
             return True
         else:
             return False
+
+    def handle_leave_os_popup(self):
+        """处理「需要暂时离开大型作战么?」弹窗，点击右上角 X 留在大型作战。
+
+        点击过快、点到海域地图外时游戏会弹出该确认框，点击确定会退出大型作战。
+        检测到「暂时离开」提示时点击关闭按钮取消，并返回 True 阻止后续弹窗
+        处理器把它当成普通确认框点掉。
+
+        Returns:
+            bool: 弹窗存在返回 True（已点击或处于点击冷却中）。
+        """
+        if self.appear(LEAVE_OS_POPUP_CHECK, offset=(20, 20)):
+            if self.appear_then_click(LEAVE_OS_POPUP_CLOSE, offset=(20, 20), interval=2):
+                logger.info('[大世界处理-事件] 检测到离开大型作战弹窗，点击关闭按钮')
+            return True
+        return False
 
     def handle_map_event(self, drop=None):
         """
@@ -150,6 +205,14 @@ class MapEventHandler(EnemySearchingHandler):
     _story_timeout = Timer(60)
 
     def handle_story_skip(self, drop=None):
+        """处理大世界剧情跳过及卡剧情超时恢复。
+
+        Args:
+            drop (DropImage, optional): 掉落记录对象。
+
+        Returns:
+            bool: 是否处理了剧情跳过。
+        """
         if super().handle_story_skip(drop):
             self._story_timeout.reset()
             return True
@@ -181,8 +244,7 @@ class MapEventHandler(EnemySearchingHandler):
     _os_in_map_confirm_timer = Timer(1.5, count=3)
 
     def handle_os_in_map(self):
-        """
-        确认是否已返回大世界地图。
+        """确认是否已返回大世界地图。
 
         Returns:
             bool: 是否在地图中并已确认。
@@ -197,12 +259,13 @@ class MapEventHandler(EnemySearchingHandler):
             return False
 
     def ensure_no_map_event(self):
+        """确保地图上没有未处理的事件，直到稳定回到地图。"""
         self._os_in_map_confirm_timer.reset()
 
         for _ in self.loop():
             if self.handle_map_event():
                 continue
-            # End
+            # 结束
             if self.handle_os_in_map():
                 break
 

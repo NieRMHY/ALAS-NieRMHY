@@ -24,7 +24,13 @@ class Control(Hermit, Minitouch, Scrcpy, MaaTouch, NemuIpc):
     提供统一的点击、长按、滑动、拖拽接口。
     """
     def handle_control_check(self, button):
-        # 将在 Device 中被重写
+        """控制前置检查。
+
+        将在 Device 类中被重写，用于记录点击历史、检测循环点击卡死等。
+
+        Args:
+            button (Button | str): 待点击的按钮实例或操作名称。
+        """
         pass
 
     @cached_property

@@ -22,7 +22,14 @@ class FleetManagement(Dock):
 
     @staticmethod
     def _normalize_result(result):
-        """将舰队编号规范化为 JSON 对象可用的字符串键。"""
+        """将舰队编号规范化为 JSON 对象可用的字符串键。
+
+        Args:
+            result (dict): 扫描器返回的舰队舰船字典，键为舰队编号，值为舰船属性字典列表。
+
+        Returns:
+            dict: 规范化后的字典，键为字符串类型的舰队编号。
+        """
         return {
             str(fleet): [
                 {
@@ -35,7 +42,11 @@ class FleetManagement(Dock):
         }
 
     def _save_result(self, result) -> None:
-        """一次性保存全部扫描结果，避免留下不完整的分类数据。"""
+        """一次性保存全部扫描结果，避免留下不完整的分类数据。
+
+        Args:
+            result (dict): 包含各分类舰队舰船信息的最终结果字典。
+        """
         self.config.modified[self.RESULT_PATH] = result
         self.config.modified[self.RECORD_PATH] = current_time().replace(microsecond=0)
         self.config.save()

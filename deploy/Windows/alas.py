@@ -8,8 +8,15 @@ from deploy.Windows.utils import DataProcessInfo, cached_property, iter_process
 
 
 class AlasManager(DeployConfig):
+    """Windows 下 AzurPilot 进程管理器，支持进程枚举与定向终止。"""
+
     @cached_property
     def alas_folder(self):
+        """获取当前 AzurPilot 相关的 Python 可执行路径与项目根路径列表。
+
+        Returns:
+            list[str]: 路径字符串列表。
+        """
         return [
             self.filepath(self.PythonExecutable),
             self.root_filepath
@@ -17,9 +24,19 @@ class AlasManager(DeployConfig):
 
     @cached_property
     def self_pid(self):
+        """获取当前进程 PID。
+
+        Returns:
+            int: 进程 ID。
+        """
         return os.getpid()
 
     def list_process(self) -> t.List[DataProcessInfo]:
+        """枚举当前系统正在运行的所有进程。
+
+        Returns:
+            list[DataProcessInfo]: 进程信息列表。
+        """
         logger.info('List process')
         process = list(iter_process())
         logger.info(f'Found {len(process)} processes')
@@ -56,9 +73,19 @@ class AlasManager(DeployConfig):
             return False
 
     def kill_process(self, process: DataProcessInfo):
+        """强制终止指定进程树。
+
+        Args:
+            process (DataProcessInfo): 待终止的进程信息对象。
+        """
         self.execute(f'taskkill /f /t /pid {process.pid}', allow_failure=True, output=False)
 
     def alas_kill(self):
+        """终止当前正在运行的 AzurPilot 相关 Python 进程。
+
+        Returns:
+            bool: 是否成功终止所有相关进程。
+        """
         for _ in range(10):
             logger.hr(f'Kill existing AzurPilot', 0)
             proc_list = list(self.iter_process_by_names(['python.exe'], in_alas=True))

@@ -990,7 +990,12 @@ ControlExpOverflow:
 AddNewStudent:
   Enable: false
   Favorite: false
-  MinLevel: 50
+  MinLevel:
+    value: 50
+    validate: [0, 125]
+  MaxLevel:
+    value: 0
+    validate: [0, 125]
 Research:
   UseCube:
     value: only_05_hour
@@ -1972,6 +1977,16 @@ IslandDailyOrder:
     value: "Cheese > Tofu"
   UrgentDetectRefreshTime:
     value: "2020-01-01 00:00:00"
+
+IslandSeasonPlan:
+  SyncDone:
+    type: checkbox
+    value: true
+    option: [ true, false ]
+  Submit:
+    type: checkbox
+    value: false
+    option: [ true, false ]
 
 IslandDailyInteract:
   WeeklyPhoto:

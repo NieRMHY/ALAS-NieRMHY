@@ -41,22 +41,60 @@ ITEM_CN = {
 }
 
 
+# 开发季的「累计交付岛屿订单」里程碑（Add by MHY，2026-10-01 真机抓图确认）。
+# 与季节无关，同一开发季内一直显示，通常早已全部领取。加进来是为了让读取器认识
+# 它们：否则这一屏会被判成「0 个新任务」，连续三屏就触发 EMPTY_LIMIT「判定到底」
+# 提前收工，后面的已知任务可能读不到。
+# item 为 None：它们不产出也不消耗岛屿物品——排产目标、库存计算、常驻餐品轮换
+# 都会跳过 None（各处都有 if not item 的判断），也不会进入 season_items_for_shop。
+ORDER_MILESTONES = [
+    ('稳定交付', None, 30),
+    ('坚实后盾', None, 50),
+    ('订单专家', None, 100),
+    ('发展支柱', None, 150),
+    ('开发核心', None, 200),
+    ('繁荣之基', None, 300),
+]
+
+
 def plan_tasks(season):
     """
-    取某赛季的提交任务列表。
+    取某赛季的提交任务列表（含与季节无关的订单里程碑）。
 
     Args:
         season: spring/summer/autumn/winter
 
     Returns:
-        list[(任务名, 物品英文名, 需要数量)]
+        list[(任务名, 物品英文名, 需要数量)]；订单里程碑的物品名为 None
     """
-    return list(SEASON_PLAN_TASKS.get(season, []))
+    return list(SEASON_PLAN_TASKS.get(season, [])) + list(ORDER_MILESTONES)
+
+
+def task_of_item(item, season):
+    """
+    反查物品对应的赛季任务。
+
+    Args:
+        item: 物品英文名
+        season: 赛季
+
+    Returns:
+        tuple: (任务名, 需要数量)；没有该物品返回 (None, 0)
+    """
+    if not item:
+        # 订单里程碑没有对应物品，反查直接给空（None == None 会误命中）
+        return None, 0
+    for name, task_item, need in plan_tasks(season):
+        if task_item == item:
+            return name, need
+    return None, 0
 
 
 def cn_name(item):
-    """物品中文名：经济库优先，其次基础材料表，最后回原名。"""
+    """物品中文名：经济库优先，其次基础材料表，最后回原名；无物品返回空串。"""
     from module.island.island_economy import ECONOMY_PRODUCTS
+    if not item:
+        return ''
     info = ECONOMY_PRODUCTS.get(item)
     if info:
         return info['cn_name']
@@ -79,6 +117,8 @@ def submit_priority(season, warehouse, producible=None):
     """
     result = []
     for name, item, need in plan_tasks(season):
+        if not item:
+            continue
         have = int(warehouse.get(item, 0))
         if producible is not None and item not in producible:
             continue

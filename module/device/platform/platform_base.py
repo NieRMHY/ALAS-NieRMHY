@@ -29,15 +29,18 @@ class EmulatorInfo(BaseModel):
 
 
 def serial_to_id(serial: str):
-    """
-    根据 serial 推算实例 ID。
+    """根据 serial 端口推算 MuMu12 等模拟器的实例 ID。
+
     例如:
         "127.0.0.1:16384" -> 0
         "127.0.0.1:16416" -> 1
         端口 16414 到 16418 -> 1
 
+    Args:
+        serial (str): 设备序列号，格式如 "127.0.0.1:16384"。
+
     Returns:
-        int: 实例 ID，推算失败则返回 None
+        int: 推算出的实例 ID，若推算失败或超出范围则返回 None。
     """
     try:
         port = int(serial.split(':')[1])

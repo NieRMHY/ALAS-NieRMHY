@@ -7,6 +7,7 @@ import { MarqueeText } from './MarqueeText'
 import { NavLink, useLocation, useParams } from 'react-router-dom'
 import { Anchor, CalendarDays, ChevronDown, Compass, Gift, Palmtree, Search, Settings2, Ship, Sparkles, Swords, Wrench, type LucideIcon } from 'lucide-react'
 import { useApp } from '../app/context'
+import {taskNavItems, SCHEDULER_EDITOR} from './taskNavItems'
 
 const groupIcons: Record<string, LucideIcon> = {
   Alas: Settings2, Farm: Swords, Event: Sparkles, EventDaily: CalendarDays,
@@ -42,8 +43,9 @@ export function TaskNavTree({ defaultOpenKey, onNavigate }: { defaultOpenKey?: s
   }
 
   const keyword = search.trim().toLowerCase()
+  const taskLabel = (task: string) => task === SCHEDULER_EDITOR ? ui('nav.schedulerProgram') : t(`Task.${task}.name`)
   const matches = (task: string) =>
-    t(`Task.${task}.name`).toLowerCase().includes(keyword) || task.toLowerCase().includes(keyword)
+    taskLabel(task).toLowerCase().includes(keyword) || task.toLowerCase().includes(keyword)
 
   return (
     <div className="task-nav-container">
@@ -62,10 +64,11 @@ export function TaskNavTree({ defaultOpenKey, onNavigate }: { defaultOpenKey?: s
       <nav className="task-nav">
         {schema &&
           Object.entries(schema.menu).map(([key, group]) => {
-            const tasks = keyword ? group.tasks.filter(matches) : group.tasks
+            const items = taskNavItems(key, group.tasks)
+            const tasks = keyword ? items.filter(matches) : items
             if (!tasks.length) return null
 
-            const isGroupActive = group.tasks.some(task =>
+            const isGroupActive = items.some(task =>
               location.pathname.endsWith(`/task/${task}`)
             )
             const collapsedHere = collapsed?.key === key && collapsed.from === location.pathname
@@ -103,7 +106,7 @@ export function TaskNavTree({ defaultOpenKey, onNavigate }: { defaultOpenKey?: s
                         onClick={onNavigate}
                       >
                         <span className="task-submenu-dot" />
-                        <MarqueeText className="task-submenu-item-text" text={t(`Task.${task}.name`)}/>
+                        <MarqueeText className="task-submenu-item-text" text={taskLabel(task)}/>
                       </NavLink>
                     ))}
                   </div>

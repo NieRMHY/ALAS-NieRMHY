@@ -6,7 +6,7 @@ from module.ui.page import page_profile, page_main
 from module.secretary.scanner import SecretaryScanner
 from module.secretary.dock import SecretaryDockMixin
 from module.secretary.ship_scanner import ShipScanner
-from module.notify.notify import handle_notify, notify_webui
+from module.notify.notify import handle_notify, notify_title, notify_webui
 from datetime import timedelta
 from threading import Thread
 import yaml
@@ -532,7 +532,7 @@ class Secretary(SecretaryDockMixin, UI):
         )
 
         self.notify(
-            title=f"AzurPilot <{self.config.config_name}> 秘书舰提醒",
+            title=notify_title(self.config.config_name, '秘书舰', '即将更换'),
             content=content,
         )
 
@@ -581,7 +581,7 @@ class Secretary(SecretaryDockMixin, UI):
         )
 
         self.notify(
-            title=f"AzurPilot <{self.config.config_name}> 秘书舰更换完成",
+            title=notify_title(self.config.config_name, '秘书舰', '更换完成'),
             content=content,
         )   
 

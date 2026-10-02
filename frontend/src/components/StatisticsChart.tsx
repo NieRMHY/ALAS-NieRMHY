@@ -229,6 +229,9 @@ export function StatisticsChart({series, heading = true, expanded = false, onTog
     const container = element.current
     const chart = echarts.getInstanceByDom(container) ?? echarts.init(container, undefined, {locale: language.startsWith('zh') ? 'ZH' : 'EN'})
 
+    /* 重绘只取决于下面这几个 CSS 变量。这个观察者还会被与图表无关的 <html> style
+       写入触发（例如指针光效的 --mx/--my），所以先比签名再决定要不要重建。 */
+    let renderedSignature = ''
     function render() {
       const colors = getComputedStyle(document.documentElement)
       const text = colors.getPropertyValue('--text').trim() || '#82929f'
@@ -237,6 +240,10 @@ export function StatisticsChart({series, heading = true, expanded = false, onTog
       const secondary = minimal ? colors.getPropertyValue('--secondary').trim() : '#de7861'
       const surface = colors.getPropertyValue('--surface').trim()
       const border = colors.getPropertyValue('--border').trim()
+      const accentSoft = colors.getPropertyValue('--accent-soft').trim()
+      const signature = `${theme}|${text}|${primary}|${secondary}|${surface}|${border}|${accentSoft}`
+      if (signature === renderedSignature) return
+      renderedSignature = signature
       const colorFor = (item: typeof seriesData[number]) => isSingle ? (minimal ? primary : item.color) : item.color
 
       let yAxes: any[] = []
@@ -483,9 +490,18 @@ export function StatisticsChart({series, heading = true, expanded = false, onTog
         <>
           {isSingle ? (
             <div className="stat-metrics">
-              {[[ui('stats.latest'), single.latest], [ui('stats.change'), single.change], [ui('stats.maximum'), single.maximum], [ui('stats.minimum'), single.minimum], [ui('stats.rawCount'), single.points.length]].map(([label, value]) => (
-                <div key={String(label)}><span>{label}</span><strong>{Number(value).toLocaleString(undefined, {maximumFractionDigits: 2})}</strong></div>
-              ))}
+              {[[ui('stats.latest'), single.latest], [ui('stats.change'), single.change], [ui('stats.maximum'), single.maximum], [ui('stats.minimum'), single.minimum], [ui('stats.rawCount'), single.points.length]].map(([label, value]) => {
+                const isChange = label === ui('stats.change')
+                const numVal = Number(value)
+                const diffClass = isChange ? (numVal > 0 ? 'positive' : numVal < 0 ? 'negative' : 'neutral') : ''
+                const formatted = isChange && numVal > 0 ? `+${numVal.toLocaleString(undefined, {maximumFractionDigits: 2})}` : numVal.toLocaleString(undefined, {maximumFractionDigits: 2})
+                return (
+                  <div key={String(label)}>
+                    <span>{label}</span>
+                    <strong className={diffClass}>{formatted}</strong>
+                  </div>
+                )
+              })}
             </div>
           ) : (
             <div className={`stat-multi-metrics${compact ? ' is-compact' : ''}`}>

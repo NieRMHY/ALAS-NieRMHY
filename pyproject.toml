@@ -22,7 +22,7 @@ dependencies = [
     "aiohttp>=3.13.2",
     "aiortc>=1.14.0",
     "pypresence==4.2.1",
-    "rich==11.2.0",
+    "rich>=13.7.0",
     "zerorpc==0.6.3",
     "pyzmq==27.1.0",
     "onepush==1.2.0",
@@ -46,6 +46,7 @@ dependencies = [
     "openai==2.30.0",
     "mcp==1.23.0",
     "luaparser==4.2.0",
+    "textual>=0.80.0",
 ]
 
 [dependency-groups]

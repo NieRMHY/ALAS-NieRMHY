@@ -120,8 +120,10 @@ input[aria-invalid='true'], textarea[aria-invalid='true'], .select-trigger[aria-
 
 body {background-attachment: scroll}
 .app-shell {gap: 0}
-/* 旧版侧栏贴边、只有一条右边框，顶栏与右栏不带圆角。 */
-.sidebar, .right-rail, .topbar {border-radius: 0}
+/* 旧版侧栏贴边、默认不带圆角，允许通过材质设置微调。 */
+.sidebar {border-radius: 0 var(--theme-sidebar-radius, 0) var(--theme-sidebar-radius, 0) 0; box-shadow: var(--theme-sidebar-shadow, none)}
+.right-rail {border-radius: 0 0 0 var(--theme-sidebar-radius, 0); box-shadow: var(--theme-sidebar-shadow, none)}
+.topbar {border-radius: var(--theme-topbar-radius, 0); box-shadow: var(--theme-topbar-shadow, none)}
 /* 侧栏与顶栏各走自己的区域材质；普通材质分支会把它们压回不透明（见 theme-material.css）。 */
 .sidebar, .right-rail {background: var(--theme-sidebar-bg); -webkit-backdrop-filter: var(--theme-sidebar-filter); backdrop-filter: var(--theme-sidebar-filter)}
 .topbar {background: var(--theme-topbar-bg); -webkit-backdrop-filter: var(--theme-topbar-filter); backdrop-filter: var(--theme-topbar-filter)}
@@ -153,7 +155,8 @@ main:focus {outline: none}
 .home-summary strong {color: var(--text); font-size: 20px; font-variant-numeric: tabular-nums}
 .title-actions {position: relative; gap: 8px; padding: 4px}
 .panel-heading h2 {font-size: 15px}
-.panel, .resource-card, .instance-card {border-radius: var(--theme-radius-panel)}
+.panel {border-radius: var(--theme-surface-radius, var(--theme-radius-panel, 16px)); box-shadow: var(--theme-surface-shadow, var(--theme-shadow-panel))}
+.resource-card, .instance-card, .stat-metric-card {border-radius: var(--theme-plate-radius, var(--theme-radius-card, 12px)); box-shadow: var(--theme-plate-shadow, none)}
 
 /* MD3 按钮规范：高度 40px，全胶囊圆角 20px，文字 14px Medium，标准状态层 */
 .button {
@@ -162,7 +165,8 @@ main:focus {outline: none}
   letter-spacing: .1px;
   height: 40px;
   min-height: 40px;
-  border-radius: var(--theme-radius-button, 20px);
+  border-radius: var(--theme-control-radius, var(--theme-radius-button, 20px));
+  box-shadow: var(--theme-control-shadow, none);
   padding: 0 24px;
   display: inline-flex;
   align-items: center;
@@ -187,7 +191,7 @@ main:focus {outline: none}
   background: transparent;
   color: var(--accent);
   border-color: var(--border);
-  box-shadow: none;
+  box-shadow: var(--theme-control-shadow, none);
 }
 .button.secondary:hover:not(:disabled) {
   background: var(--accent-soft);
@@ -826,7 +830,7 @@ button:disabled, input:disabled, textarea:disabled, select:disabled, .select-tri
 .badge-pill {
   border-radius: 999px;
 }
-.monitor-segmented {display: inline-flex; align-items: center; gap: 0; padding: 0; border: 1px solid var(--border); border-radius: 20px; background: transparent; max-width: 100%; overflow: hidden}
+.monitor-segmented {display: inline-flex; align-items: center; gap: 0; padding: 0; border: 1px solid var(--border); border-radius: 20px; background: var(--theme-segment-bg, var(--surface-muted)); max-width: 100%; overflow: hidden}
 .statistics-edit-actions.monitor-segmented {border-radius: 0}
 .monitor-segmented button {display: inline-flex; align-items: center; justify-content: center; gap: 7px; flex-shrink: 0; min-height: 36px; padding: 6px 16px; border: 0; border-right: 1px solid var(--border); border-radius: 0; color: var(--muted); font-size: 13px; font-weight: 500; white-space: nowrap; transition: background-color .15s, color .15s}
 .monitor-segmented button:last-child {border-right: 0}
@@ -855,13 +859,13 @@ button:disabled, input:disabled, textarea:disabled, select:disabled, .select-tri
 .rail-task-item small {font-size: 11px}
 .modal {
   border: 0;
-  border-radius: var(--theme-radius-modal, 28px);
+  border-radius: var(--theme-modal-radius, var(--theme-radius-modal, 28px));
   padding: 24px;
   /* 弹窗走弹窗区，别再写死一级面色。 */
   background: var(--theme-modal-bg);
   -webkit-backdrop-filter: var(--theme-modal-filter);
   backdrop-filter: var(--theme-modal-filter);
-  box-shadow: var(--theme-shadow-modal);
+  box-shadow: var(--theme-modal-shadow, var(--theme-shadow-modal));
 }
 .toast {
   border: 0;

@@ -50,12 +50,9 @@ interface DomainInfo {
   rule: LocalizedText
 }
 
-function miaoize(text: string): string {
-  return text.endsWith('。') ? `${text.slice(0, -1)}喵。` : `${text}喵`
-}
-
-function localized(zhCN: string, enUS: string, jaJP: string, zhTW: string, zhMiao = miaoize(zhCN)): LocalizedText {
-  return {'zh-CN': zhCN, 'en-US': enUS, 'ja-JP': jaJP, 'zh-TW': zhTW, 'zh-MIAO': zhMiao}
+// Modify by MHY, 移除喵语（MIAO）中文语言包（nanoda 傲娇风格）
+function localized(zhCN: string, enUS: string, jaJP: string, zhTW: string): LocalizedText {
+  return {'zh-CN': zhCN, 'en-US': enUS, 'ja-JP': jaJP, 'zh-TW': zhTW}
 }
 
 const domainByTask: Record<ShopStrategyTask, DomainInfo> = {
@@ -314,54 +311,12 @@ const zhTW: HelpCopy = {
   ],
 }
 
-const zhMiao: HelpCopy = {
-  ...zhCN,
-  ariaLabel: miaoize(zhCN.ariaLabel),
-  title: miaoize(zhCN.title),
-  overview: miaoize(zhCN.overview),
-  headings: {
-    modes: miaoize(zhCN.headings.modes),
-    syntax: miaoize(zhCN.headings.syntax),
-    candidates: miaoize(zhCN.headings.candidates),
-    context: miaoize(zhCN.headings.context),
-    domains: miaoize(zhCN.headings.domains),
-    taskRules: miaoize(zhCN.headings.taskRules),
-    plan: miaoize(zhCN.headings.plan),
-  },
-  modeItems: zhCN.modeItems.map(miaoize),
-  syntax: miaoize(zhCN.syntax),
-  candidateIntro: miaoize(zhCN.candidateIntro),
-  methods: {
-    where: miaoize(zhCN.methods.where),
-    score: miaoize(zhCN.methods.score),
-    orderBy: miaoize(zhCN.methods.orderBy),
-    cap: miaoize(zhCN.methods.cap),
-    take: miaoize(zhCN.methods.take),
-  },
-  table: {
-    object: miaoize(zhCN.table.object),
-    fields: miaoize(zhCN.table.fields),
-    description: miaoize(zhCN.table.description),
-    task: miaoize(zhCN.table.task),
-    domain: zhCN.table.domain,
-    rules: miaoize(zhCN.table.rules),
-    currency: miaoize(zhCN.table.currency),
-  },
-  itemIdentity: miaoize(zhCN.itemIdentity),
-  itemPurchase: miaoize(zhCN.itemPurchase),
-  contextDomain: miaoize(zhCN.contextDomain),
-  contextSession: miaoize(zhCN.contextSession),
-  contextNote: miaoize(zhCN.contextNote),
-  currentDomain: miaoize(zhCN.currentDomain),
-  planItems: zhCN.planItems.map(miaoize),
-}
-
+// Modify by MHY, 移除喵语（MIAO）中文语言包（nanoda 傲娇风格）
 const copyByLanguage: Record<Language, HelpCopy> = {
   'zh-CN': zhCN,
   'en-US': enUS,
   'ja-JP': jaJP,
   'zh-TW': zhTW,
-  'zh-MIAO': zhMiao,
 }
 
 function interpolate(template: string, domain: string): string {

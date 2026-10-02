@@ -1,3 +1,4 @@
+"""部署与安装阶段的基础日志输出模块。"""
 import logging
 import os
 import sys
@@ -15,6 +16,12 @@ logger.setLevel(logging.INFO)
 
 
 def hr(title, level=3):
+    """输出带修饰边框的分隔标题。
+
+    Args:
+        title (str): 标题文本。
+        level (int): 标题级别（0: 大框, 1: 双横线, 2: 单横线, 3: 尖括号）。
+    """
     if logger is not _logger:
         return logger.hr(title, level)
 
@@ -34,6 +41,12 @@ def hr(title, level=3):
 
 
 def attr(name, text):
+    """格式化输出属性名称与取值。
+
+    Args:
+        name (str): 属性名称。
+        text (str): 属性内容。
+    """
     print(f'[{name}] {text}')
 
 

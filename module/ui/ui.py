@@ -510,7 +510,8 @@ class UI(InfoHandler):
                     self.device.click(button)
                 retry.reset()
 
-    def ui_back(self, check_button, appear_button=None, offset=(30, 30), retry_wait=10, skip_first_screenshot=False):
+    def ui_back(self, check_button, appear_button=None, offset=(30, 30), retry_wait=10, skip_first_screenshot=False,
+                additional=None):
         """点击返回按钮并等待目标画面出现。
 
         Args:
@@ -519,6 +520,7 @@ class UI(InfoHandler):
             offset (tuple): 匹配偏移量。
             retry_wait (int | float): 重试等待秒数。
             skip_first_screenshot (bool): 是否跳过首次截图。
+            additional (callable | None): 额外的弹窗处理回调。
         """
         return self.ui_click(
             click_button=BACK_ARROW,
@@ -527,6 +529,7 @@ class UI(InfoHandler):
             offset=offset,
             retry_wait=retry_wait,
             skip_first_screenshot=skip_first_screenshot,
+            additional=additional,
         )
 
     _opsi_reset_fleet_preparation_click = 0

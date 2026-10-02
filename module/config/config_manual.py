@@ -59,6 +59,10 @@ class ManualConfig:
     > Daily > Hard > OpsiAshBeacon > OpsiAshAssist > OpsiMonthBoss
     > Sos > EventSp > EventA > EventB > EventC > EventD
     > RaidDaily > CoalitionSp > WarArchives > MaritimeEscort
+    # Add by MHY: 赛季任务读取排在岛屿生产任务之前。它只读「开发季-开发计划」页面，
+    # 结果决定已提交的物品要不要继续生产；原先未登记默认优先级，被追加到全表最后
+    # （78/78），长期被其它任务插队饿死——真机表现为 NextRun 已过期却始终不执行。
+    > IslandSeasonPlan
     > IslandJuuEatery > IslandJuuCoffee > IslandGrill > IslandTeahouse > IslandRestaurant
     > IslandFarm > IslandRancher > IslandMineForest > IslandDailyGather > IslandManufacture
     > IslandAirDrop > IslandBusiness

@@ -52,6 +52,8 @@ class LogRes:
             value (int | dict): 资源数值，或包含 Value/Total/Limit 的字典。
         """
         if key in self.groups:
+            if self.__dict__.get('_observation_enabled', True):
+                self._observe(key, value)
             _key_group = f'Dashboard.{key}'
             _mod = False
             original = deep_get(self.config.data, keys=_key_group)
@@ -112,6 +114,31 @@ class LogRes:
         else:
             logger.info('[日志资源] 仪表盘中无此资源')
             super().__setattr__(name=key, value=value)
+
+    def record(self, name, value, *, observed=True, source=None):
+        """缓存回退与失败读数可以保留旧记录，但不能更新成功观察时间。"""
+        self.__dict__['_observation_enabled'] = observed
+        self.__dict__['_observation_source'] = source
+        try:
+            setattr(self, name, value)
+        finally:
+            self.__dict__.pop('_observation_enabled', None)
+            self.__dict__.pop('_observation_source', None)
+
+    def _observe(self, name, value):
+        from pathlib import Path
+        from module.config.utils import filepath_config
+        instance = getattr(self.config, 'config_name', None)
+        if not isinstance(instance, str) or not Path(filepath_config(instance)).exists():
+            return
+        current = value.get('Value') if isinstance(value, dict) else value
+        if type(current) not in (int, float) or current < 0 or (current == 0 and '_observation_enabled' not in self.__dict__):
+            return
+        from module.scheduler.store import ProgramStore
+        from module.config.time_source import now
+        task = getattr(getattr(self.config, 'task', None), 'command', None)
+        source = self.__dict__.get('_observation_source') or task or 'task_observation'
+        ProgramStore().observe(instance, name, value, now().isoformat(sep=' '), source)
 
     def _record_all_resource_snapshot(self, overrides=None):
         """读取当前所有 Dashboard 资源值并记录快照。

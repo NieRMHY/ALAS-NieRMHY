@@ -45,4 +45,4 @@ class Input(Uiautomator2):
             except EnvironmentError as e:
                 if fail_count >= 2:
                     raise e
-                logger.exception(str(e) + f'Retrying {fail_count + 1}/3')
+                logger.exception(f'{e} 正在重试 {fail_count + 1}/3')

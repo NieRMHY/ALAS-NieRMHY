@@ -5,14 +5,20 @@ from dev_tools.utils import LuaLoader
 
 
 class IslandItem:
+    """岛屿道具数据封装类。"""
+
     def __init__(self, item):
-        """
-        In the file 'sharecfg/island_item_data_template.lua':
-        id: serial of this item
-        name: name in server, default to CN
-        pt_num: pt value of this item
-        manage_influence: restaurant influence
-        order_price: price in order system
+        """解析岛屿道具数据。
+
+        在 'sharecfg/island_item_data_template.lua' 中：
+        id: 道具序号
+        name: 服务器中道具名称，默认国服
+        pt_num: 该道具的 PT 值
+        manage_influence: 餐厅经营影响力
+        order_price: 订单系统价格
+
+        Args:
+            item (dict): 道具源数据字典。
         """
         self.id = item['id']
         # self.name = item['name']
@@ -21,6 +27,11 @@ class IslandItem:
         self.order_price = item['order_price']
 
     def encode(self):
+        """将道具信息转换为字典保存格式。
+
+        Returns:
+            dict: 包含各语言名称与数值属性的道具数据字典。
+        """
         data = {
             # 'id': self.id,
             'name': {
@@ -37,7 +48,10 @@ class IslandItem:
 
 
 class IslandItemExtractor:
+    """岛屿道具提取器，负责从游戏 Lua 数据提取并格式化道具配置。"""
+
     def __init__(self):
+        """初始化提取器并从 Lua 脚本中读取道具数据。"""
         self.item = {}
 
         data = LOADER.load('sharecfg/island_item_data_template.lua', keyword='pg.base.island_item_data_template')
@@ -57,6 +71,14 @@ class IslandItemExtractor:
         #     self.item[index]['name']['tw'] = name
 
     def extract_item_name(self, server):
+        """提取指定服务器语言下的道具名称映射。
+
+        Args:
+            server (str): 服务器语言标识（例如 'zh-CN', 'en-US', 'ja-JP'）。
+
+        Returns:
+            dict[int, str]: 道具 ID 到道具名称的映射字典。
+        """
         LOADER.server = server
         data = LOADER.load('sharecfg/island_item_data_template.lua', keyword='pg.base.island_item_data_template')
         out = {}
@@ -68,6 +90,11 @@ class IslandItemExtractor:
         return out
 
     def encode(self):
+        """将提取的道具数据编码为 Python 字典代码行列表。
+
+        Returns:
+            list[str]: 格式化后的代码行列表。
+        """
         lines = []
         lines.append('DIC_ISLAND_ITEM = {')
         lines.append("    0: {'name': {'cn': '岛屿开发PT', 'en': 'Island Development Points', 'jp': '離島開発Pt'}, 'pt_num': 1, 'manage_influence': 0, 'order_price': 0},")
@@ -77,6 +104,11 @@ class IslandItemExtractor:
         return lines
 
     def write(self, file):
+        """将提取的道具数据写入指定文件。
+
+        Args:
+            file (str): 目标输出文件路径。
+        """
         print(f'writing {file}')
         with open(file, 'w', encoding='utf-8') as f:
             for text in self.encode():
@@ -84,6 +116,17 @@ class IslandItemExtractor:
 
 
 def unpack_ingredient_dic(dic):
+    """解包配方原料或产物字典。
+
+    Args:
+        dic (dict): 包含原料或产物键值对的字典。
+
+    Returns:
+        dict: 解包后的道具 ID 到数量的映射字典。
+
+    Raises:
+        TypeError: 输入数据不是字典或结构无法解包时抛出。
+    """
     try:
         result = {}
         for _, entry in dic.items():
@@ -96,16 +139,22 @@ def unpack_ingredient_dic(dic):
 
 
 class IslandRecipe:
+    """岛屿配方数据封装类。"""
+
     def __init__(self, recipe):
-        """
-        In the file 'sharecfg/island_formula.lua':
-        id: serial of this recipe
-        name: name in server, default to CN
-        workload: using time with unit 0.1 second.
-        commission_cost: a nested dict of ingredients, each being a pair of item id and count
-        production_limit: consecutive commission upper bound for one commission handle
-        commission_product: a nested dict of products, each (only one) being a pair of item id and count
-        second_product_display: a nested dict of products, each being a pair of item id and count.
+        """解析岛屿配方数据。
+
+        在 'sharecfg/island_formula.lua' 中：
+        id: 配方序号
+        name: 服务器名称，默认国服
+        workload: 耗时，单位为 0.1 秒
+        commission_cost: 嵌套原料字典，每项为道具 ID 和数量元组
+        production_limit: 单次委托连续生产上限
+        commission_product: 嵌套产物字典，为道具 ID 和数量
+        second_product_display: 嵌套副产物字典，为道具 ID 和数量
+
+        Args:
+            recipe (dict): 配方数据字典。
         """
         self.id = recipe['id']
         # self.name = recipe['name']
@@ -116,6 +165,11 @@ class IslandRecipe:
         self.second_product_display = recipe['second_product_display']
 
     def encode(self):
+        """将配方信息转换为字典结构。
+
+        Returns:
+            dict: 配方 ID 到详细参数的字典。
+        """
         data = {
             self.id: {
                 # 'name': self.name,
@@ -130,7 +184,10 @@ class IslandRecipe:
 
 
 class IslandRecipeExtractor:
+    """岛屿配方提取器。"""
+
     def __init__(self):
+        """初始化提取器并加载解析配方数据。"""
         self.recipe = {}
         data = LOADER.load('sharecfg/island_formula.lua')
         for index, item in data.items():
@@ -148,6 +205,11 @@ class IslandRecipeExtractor:
                 #       item['second_product_display'])
 
     def encode(self):
+        """将配方列表编码为 Python 代码行列表。
+
+        Returns:
+            list[str]: 格式化后的代码行列表。
+        """
         lines = []
         lines.append('DIC_ISLAND_RECIPE = {')
         for index, recipe in self.recipe.items():
@@ -156,6 +218,11 @@ class IslandRecipeExtractor:
         return lines
 
     def write(self, file):
+        """将配方数据写入文件。
+
+        Args:
+            file (str): 目标输出文件路径。
+        """
         print(f'writing {file}')
         with open(file, '', encoding='utf-8') as f:
             for text in self.encode():
@@ -163,6 +230,14 @@ class IslandRecipeExtractor:
 
 
 def unpack_activity_formula(dic):
+    """解包活动配方列表。
+
+    Args:
+        dic (dict): 活动配方嵌套字典。
+
+    Returns:
+        list: 解包后的配方 ID 列表。
+    """
     try:
         result = []
         for _, entry in dic.items():
@@ -173,14 +248,20 @@ def unpack_activity_formula(dic):
 
 
 class IslandProduction:
+    """岛屿生产槽位封装类。"""
+
     def __init__(self, slot):
-        """
-        In the file 'sharecfg/island_production_slot.lua':
-        type: 1 = agriculture, 2 = mineral, 3 = animal, 4 = restaurant, 6 = industry
-        place: slot position
-        exclusion_slot: id of slots that are exclusive to this slot, not necessary for our implementation
-        formula: applicable recipes
-        activity_formula: activity id and activity recipes
+        """解析生产槽位数据。
+
+        在 'sharecfg/island_production_slot.lua' 中：
+        type: 1 = 农业, 2 = 矿业, 3 = 牧业, 4 = 餐饮, 6 = 工业
+        place: 槽位位置
+        exclusion_slot: 互斥槽位 ID
+        formula: 适用配方
+        activity_formula: 活动 ID 与活动配方
+
+        Args:
+            slot (dict): 槽位配置字典。
         """
         self.id = slot['id']
         self.attribute = slot['attribute']
@@ -189,6 +270,11 @@ class IslandProduction:
         self.activity_formula = unpack_activity_formula(slot['activity_formula'])
 
     def encode(self):
+        """编码生产槽位数据。
+
+        Returns:
+            dict: 槽位 ID 映射的属性字典。
+        """
         data = {
             self.id: {
                 'attribute': self.attribute,
@@ -201,7 +287,10 @@ class IslandProduction:
 
 
 class IslandProductionExtractor:
+    """岛屿生产槽位提取器。"""
+
     def __init__(self):
+        """初始化提取器并加载生产槽位数据。"""
         self.slot = {}
         data = LOADER.load('sharecfg/island_production_slot.lua')
         for index, item in data.items():
@@ -211,6 +300,11 @@ class IslandProductionExtractor:
             self.slot.update(IslandProduction(item).encode())
 
     def encode(self):
+        """将生产槽位编码为代码行列表。
+
+        Returns:
+            list[str]: 代码行列表。
+        """
         lines = []
         lines.append('DIC_ISLAND_SLOT = {')
         for index, slot in self.slot.items():
@@ -219,6 +313,11 @@ class IslandProductionExtractor:
         return lines
 
     def write(self, file):
+        """将槽位数据写入文件。
+
+        Args:
+            file (str): 目标文件路径。
+        """
         print(f'writing {file}')
         with open(file, 'w', encoding='utf-8') as f:
             for text in self.encode():
@@ -226,7 +325,10 @@ class IslandProductionExtractor:
 
 
 class IslandShopItemExtractor:
+    """岛屿商店商品提取器。"""
+
     def __init__(self):
+        """初始化提取器并加载商店商品数据。"""
         self.item = {}
         data = LOADER.load('sharecfg/island_shop_goods.lua', keyword='pg.base.island_shop_goods')
         for index, item in data.items():
@@ -245,6 +347,11 @@ class IslandShopItemExtractor:
                 raise
 
     def encode(self):
+        """将商店商品编码为代码行列表。
+
+        Returns:
+            list[str]: 代码行列表。
+        """
         lines = []
         lines.append('DIC_ISLAND_SHOP_ITEM = {')
         for index, item in self.item.items():
@@ -253,6 +360,11 @@ class IslandShopItemExtractor:
         return lines
 
     def write(self, file):
+        """将商店商品数据写入文件。
+
+        Args:
+            file (str): 目标输出文件路径。
+        """
         print(f'writing {file}')
         with open(file, 'w', encoding='utf-8') as f:
             for text in self.encode():
@@ -260,7 +372,10 @@ class IslandShopItemExtractor:
 
 
 class IslandExchangeRecipeExtractor:
+    """岛屿物资兑换配方提取器。"""
+
     def __init__(self):
+        """初始化提取器并加载兑换模板。"""
         self.item = {}
         data = LOADER.load('sharecfg/island_exchange_template.lua')
         for index, item in data.items():
@@ -278,6 +393,11 @@ class IslandExchangeRecipeExtractor:
                 raise
 
     def encode(self):
+        """将兑换配方编码为代码行列表。
+
+        Returns:
+            list[str]: 代码行列表。
+        """
         lines = []
         lines.append('DIC_ISLAND_EXCHANGE_RECIPE = {')
         for index, item in self.item.items():
@@ -287,8 +407,15 @@ class IslandExchangeRecipeExtractor:
 
 
 def island_time_to_sql_time(island_time):
-    """
-    island_time is like {0: {0: 2026, 1: 2, 2: 5}, 1: {0: 12, 1: 0, 2: 0}}
+    """将游戏内部岛屿时间格式转换为 SQL 标准日期时间字符串。
+
+    时间格式形如: {0: {0: 2026, 1: 2, 2: 5}, 1: {0: 12, 1: 0, 2: 0}}
+
+    Args:
+        island_time (dict): 包含年月日、时分秒的嵌套字典。
+
+    Returns:
+        str: 格式化后的时间字符串 (YYYY-MM-DD HH:MM:SS)。
     """
     year = island_time[0][0]
     month = island_time[0][1]
@@ -300,18 +427,29 @@ def island_time_to_sql_time(island_time):
 
 
 class IslandSeason:
+    """岛屿赛季数据封装类。"""
+
     def __init__(self, season):
-        """
-        In the file 'sharecfg/island_season.lua':
-        id: serial of this season
-        time: time range of this season
-        task_list: list of tasks in this season
+        """解析赛季配置数据。
+
+        在 'sharecfg/island_season.lua' 中：
+        id: 赛季序号
+        time: 赛季有效时间范围
+        task_list: 该赛季的任务列表
+
+        Args:
+            season (dict): 赛季配置字典。
         """
         # self.id = season['id']
         self.end_time = island_time_to_sql_time(season['time'][1])
         self.task_list = [task for _, task in season['task_list'].items()]
 
     def encode(self):
+        """编码赛季数据。
+
+        Returns:
+            dict: 包含结束时间与任务列表的字典。
+        """
         data = {
             'end_time': self.end_time,
             'task_list': self.task_list,
@@ -319,7 +457,10 @@ class IslandSeason:
         return data
 
 class IslandSeasonExtractor:
+    """岛屿赛季数据提取器。"""
+
     def __init__(self):
+        """初始化提取器并加载赛季数据。"""
         self.season = {}
         data = LOADER.load('sharecfg/island_season.lua')
         for index, item in data.items():
@@ -330,6 +471,11 @@ class IslandSeasonExtractor:
         # print(self.season)
 
     def encode(self):
+        """将赛季数据编码为代码行列表。
+
+        Returns:
+            list[str]: 代码行列表。
+        """
         lines = []
         lines.append('DIC_ISLAND_SEASON = {')
         for index, season in self.season.items():
@@ -338,16 +484,29 @@ class IslandSeasonExtractor:
         return lines
 
     def write(self, file):
+        """将赛季数据写入文件。
+
+        Args:
+            file (str): 目标输出文件路径。
+        """
         print(f'writing {file}')
         with open(file, 'w', encoding='utf-8') as f:
             for text in self.encode():
                 f.write(text + '\n')
 
     def get_latest_season(self):
+        """获取最新的赛季 ID。
+
+        Returns:
+            int: 最新赛季编号。
+        """
         return list(self.season.keys())[-1]
 
 class IslandSeasonalTaskExtractor(IslandSeasonExtractor):
+    """岛屿赛季任务提取器。"""
+
     def __init__(self):
+        """初始化提取器并加载当前最新赛季关联的任务数据。"""
         super().__init__()
         self.target_id_to_task_id = {}
         current_season = self.get_latest_season()
@@ -391,6 +550,14 @@ class IslandSeasonalTaskExtractor(IslandSeasonExtractor):
                 self.task[task_id]['target'] = {}
 
     def extract_item_name(self, server):
+        """提取指定服务器语言下的任务名称。
+
+        Args:
+            server (str): 服务器标识。
+
+        Returns:
+            dict[int, str]: 任务 ID 到任务名称的映射。
+        """
         LOADER.server = server
         data = LOADER.load('sharecfg/island_task.lua', keyword='pg.base.island_task')
         out = {}
@@ -402,6 +569,11 @@ class IslandSeasonalTaskExtractor(IslandSeasonExtractor):
         return out
 
     def encode(self):
+        """将赛季任务编码为代码行列表。
+
+        Returns:
+            list[str]: 代码行列表。
+        """
         lines = []
         lines.append('DIC_ISLAND_SEASONAL_TASK = {')
         for index, task in self.task.items():
@@ -410,13 +582,21 @@ class IslandSeasonalTaskExtractor(IslandSeasonExtractor):
         return lines
 
     def write(self, file):
+        """将赛季任务数据写入文件。
+
+        Args:
+            file (str): 目标输出文件路径。
+        """
         print(f'writing {file}')
         with open(file, 'w', encoding='utf-8') as f:
             for text in self.encode():
                 f.write(text + '\n')
 
 class IslandRestaurantExtractor:
+    """岛屿餐厅料理配方提取器。"""
+
     def __init__(self):
+        """初始化提取器并加载餐厅配方数据。"""
         self.restaurant = {}
         data = LOADER.load('sharecfg/island_manage_restaurant.lua')
         for index, item in data.items():
@@ -429,6 +609,11 @@ class IslandRestaurantExtractor:
             })
 
     def encode(self):
+        """将餐厅配方编码为代码行列表。
+
+        Returns:
+            list[str]: 代码行列表。
+        """
         lines = []
         lines.append('DIC_ISLAND_RESTAURANT_RECIPE = {')
         for index, restaurant in self.restaurant.items():
@@ -437,6 +622,11 @@ class IslandRestaurantExtractor:
         return lines
 
     def write(self, file):
+        """将餐厅配方写入文件。
+
+        Args:
+            file (str): 目标输出文件路径。
+        """
         print(f'writing {file}')
         with open(file, 'w', encoding='utf-8') as f:
             for text in self.encode():
@@ -444,7 +634,14 @@ class IslandRestaurantExtractor:
 
 
 class IslandTechnology:
+    """岛屿科技项数据封装类。"""
+
     def __init__(self, item):
+        """解析岛屿科技项数据。
+
+        Args:
+            item (dict): 科技配置项字典。
+        """
         self.id = item['id']
         self.tech_belong = item['tech_belong']
         self.axis_x = item['axis'][0]
@@ -452,6 +649,11 @@ class IslandTechnology:
         self.island_level = item['island_level']
 
     def encode(self):
+        """编码科技项信息。
+
+        Returns:
+            dict: 科技详情字典。
+        """
         data = {
             'name': {
                 'cn': '',
@@ -466,7 +668,10 @@ class IslandTechnology:
         return data
 
 class IslandTechnologyExtractor:
+    """岛屿科技树提取器。"""
+
     def __init__(self):
+        """初始化提取器并加载科技树数据。"""
         self.item = {}
 
         data = LOADER.load('sharecfg/island_technology_template.lua', keyword='pg.base.island_technology_template')
@@ -486,6 +691,14 @@ class IslandTechnologyExtractor:
         #     self.item[index]['name']['tw'] = name
 
     def extract_item_name(self, server):
+        """提取指定服务器语言下的科技名称。
+
+        Args:
+            server (str): 服务器标识。
+
+        Returns:
+            dict[int, str]: 科技 ID 到名称的映射。
+        """
         LOADER.server = server
         data = LOADER.load('sharecfg/island_technology_template.lua', keyword='pg.base.island_technology_template')
         out = {}
@@ -497,6 +710,11 @@ class IslandTechnologyExtractor:
         return out
 
     def encode(self):
+        """将科技数据编码为代码行列表。
+
+        Returns:
+            list[str]: 代码行列表。
+        """
         lines = []
         lines.append('DIC_ISLAND_TECHNOLOGY = {')
         for index, item in self.item.items():
@@ -505,6 +723,11 @@ class IslandTechnologyExtractor:
         return lines
 
     def write(self, file):
+        """将科技数据写入文件。
+
+        Args:
+            file (str): 目标输出文件路径。
+        """
         print(f'writing {file}')
         with open(file, 'w', encoding='utf-8') as f:
             for text in self.encode():

@@ -120,7 +120,15 @@ def build_shop_context(
 
 
 def _normalise_text(value: object, default: str = '') -> str:
-    """将商品展示字段压缩为脚本可见的字符串基本类型。"""
+    """将商品展示字段压缩为脚本可见的字符串基本类型。
+
+    Args:
+        value (object): 待转换的原始字段值。
+        default (str): 当值为 None 时的默认返回值。
+
+    Returns:
+        str: 转换后的字符串。
+    """
     if value is None:
         return default
     if isinstance(value, str):
@@ -129,14 +137,32 @@ def _normalise_text(value: object, default: str = '') -> str:
 
 
 def _normalise_optional_text(value: object) -> str | None:
-    """将商品可选分类字段压缩为字符串或 ``None``。"""
+    """将商品可选分类字段压缩为字符串或 ``None``。
+
+    Args:
+        value (object): 待转换的原始字段值。
+
+    Returns:
+        str | None: 转换后的字符串或 None。
+    """
     if value is None:
         return None
     return _normalise_text(value)
 
 
 def _normalise_non_negative_int(value: object, field_name: str) -> int:
-    """拒绝模糊的数值输入，防止数量和价格在边界处被截断。"""
+    """拒绝模糊的数值输入，防止数量和价格在边界处被截断。
+
+    Args:
+        value (object): 待检查的数值对象。
+        field_name (str): 字段名称，用于错误提示。
+
+    Returns:
+        int: 规范化后的非负整数。
+
+    Raises:
+        _AdapterFailure: 若数值不为非负整数或为布尔值时抛出。
+    """
     if isinstance(value, bool) or not isinstance(value, Integral):
         raise _AdapterFailure('invalid_item_field', f'商品 {field_name} 必须为非负整数')
     value = int(value)
@@ -146,7 +172,15 @@ def _normalise_non_negative_int(value: object, field_name: str) -> int:
 
 
 def _item_stock(item: object, resolver: StockResolver) -> int:
-    """解析库存；无 OCR 库存的商店可显式传入保守静态上限。"""
+    """解析库存；无 OCR 库存的商店可显式传入保守静态上限。
+
+    Args:
+        item (object): 商品对象。
+        resolver (StockResolver): 库存解析器或固定库存数值。
+
+    Returns:
+        int: 规范化后的商品库存。
+    """
     if resolver is None:
         value = getattr(item, 'stock', None)
         if value is None:
@@ -159,7 +193,14 @@ def _item_stock(item: object, resolver: StockResolver) -> int:
 
 
 def _item_is_available(item: object) -> bool:
-    """将商品自身的有效性作为不可由脚本绕过的硬条件。"""
+    """将商品自身的有效性作为不可由脚本绕过的硬条件。
+
+    Args:
+        item (object): 商品对象。
+
+    Returns:
+        bool: 商品是否有效可用。
+    """
     value = getattr(item, 'available', None)
     if value is None:
         value = getattr(item, 'is_valid', True)
@@ -167,7 +208,16 @@ def _item_is_available(item: object) -> bool:
 
 
 def _resolve_max_quantity(item: object, stock: int, resolver: QuantityResolver) -> int:
-    """计算单个候选商品可购买数量，并始终受识别库存限制。"""
+    """计算单个候选商品可购买数量，并始终受识别库存限制。
+
+    Args:
+        item (object): 商品对象。
+        stock (int): 解析出的商品库存。
+        resolver (QuantityResolver): 最大购买数量解析器或数值。
+
+    Returns:
+        int: 最终允许的最大购买数量。
+    """
     if resolver is None:
         value = stock
     elif callable(resolver):
@@ -178,7 +228,14 @@ def _resolve_max_quantity(item: object, stock: int, resolver: QuantityResolver) 
 
 
 def _location_part(value: object) -> str | None:
-    """将可识别的位置值转换为稳定、无对象引用的候选 ID 片段。"""
+    """将可识别的位置值转换为稳定、无对象引用的候选 ID 片段。
+
+    Args:
+        value (object): 位置相关的值。
+
+    Returns:
+        str | None: 格式化后的位置字符串片段，无效返回 None。
+    """
     if isinstance(value, bool):
         return None
     if isinstance(value, Integral):
@@ -189,7 +246,14 @@ def _location_part(value: object) -> str | None:
 
 
 def _id_text(value: object) -> str:
-    """仅接受基本类型作为稳定 ID 指纹，避免把宿主对象序列化进来。"""
+    """仅接受基本类型作为稳定 ID 指纹，避免把宿主对象序列化进来。
+
+    Args:
+        value (object): 基础类型字段值。
+
+    Returns:
+        str: 转换后的指文字符串。
+    """
     if value is None:
         return ''
     if isinstance(value, str):
@@ -204,7 +268,14 @@ def _id_text(value: object) -> str:
 
 
 def _default_candidate_id(item: object) -> str:
-    """以白名单字段、位置和重复出现序号构造稳定候选 ID 的基础部分。"""
+    """以白名单字段、位置和重复出现序号构造稳定候选 ID 的基础部分。
+
+    Args:
+        item (object): 原始商品对象。
+
+    Returns:
+        str: 候选商品 ID。
+    """
     explicit = getattr(item, 'strategy_id', None)
     if isinstance(explicit, str) and explicit:
         return f'item-{explicit}'
@@ -243,7 +314,19 @@ def _resolve_candidate_id(
         resolver: CandidateIdResolver,
         existing: Mapping[str, object],
 ) -> str:
-    """构造唯一候选 ID；完全同构且无位置的商品按本轮出现顺序加后缀。"""
+    """构造唯一候选 ID；完全同构且无位置的商品按本轮出现顺序加后缀。
+
+    Args:
+        item (object): 原始商品对象。
+        resolver (CandidateIdResolver): 可选的自定义 ID 解析回调。
+        existing (Mapping[str, object]): 已存在的候选 ID 映射。
+
+    Returns:
+        str: 唯一的候选 ID 字符串。
+
+    Raises:
+        _AdapterFailure: 解析出的 ID 无效时抛出。
+    """
     value = resolver(item) if resolver is not None else _default_candidate_id(item)
     if not isinstance(value, str) or not value:
         raise _AdapterFailure('invalid_candidate_id', '候选商品 ID 必须为非空字符串')
@@ -336,7 +419,18 @@ def project_shop_items(
 
 
 def _normalise_plan_amounts(value: object, name: str) -> dict[str, int]:
-    """读取引擎返回的金额表，拒绝未知形状和负数。"""
+    """读取引擎返回的金额表，拒绝未知形状和负数。
+
+    Args:
+        value (object): 金额映射对象。
+        name (str): 字段名称，用于错误提示。
+
+    Returns:
+        dict[str, int]: 规范化后的货币金额字典。
+
+    Raises:
+        _AdapterFailure: 若金额表格式错误时抛出。
+    """
     if not isinstance(value, Mapping):
         raise _AdapterFailure('invalid_plan', f'策略计划的 {name} 必须为货币金额表')
 
@@ -353,7 +447,16 @@ def _validate_plan_budget(
         plan: ShopPlan,
         context: ShopContext,
 ) -> None:
-    """在执行前根据真实上下文重新验证策略输出的资金边界。"""
+    """在执行前根据真实上下文重新验证策略输出的资金边界。
+
+    Args:
+        action_totals (Mapping[str, int]): 各货币购买总计。
+        plan (ShopPlan): 策略计划对象。
+        context (ShopContext): 商店上下文。
+
+    Raises:
+        _AdapterFailure: 预算超支或金额不匹配时抛出。
+    """
     reserve = _normalise_plan_amounts(plan.reserve, 'reserve')
     max_spend = _normalise_plan_amounts(plan.max_spend, 'max_spend')
     plan_spent = _normalise_plan_amounts(plan.spent, 'spent')
@@ -480,7 +583,15 @@ def _failure_result(
         exc: Exception,
         candidates: tuple[ShopCandidate, ...] = (),
 ) -> ShopStrategyResult:
-    """将所有策略和适配错误收敛为调用方可记录的失败结果。"""
+    """将所有策略和适配错误收敛为调用方可记录的失败结果。
+
+    Args:
+        exc (Exception): 捕获到的异常对象。
+        candidates (tuple[ShopCandidate, ...]): 已投影的候选商品元组。
+
+    Returns:
+        ShopStrategyResult: 带有诊断信息的失败结果对象。
+    """
     if isinstance(exc, ShopStrategyError):
         diagnostic = exc.diagnostic
     elif isinstance(exc, _AdapterFailure):

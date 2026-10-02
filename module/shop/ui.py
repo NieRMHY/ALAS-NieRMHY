@@ -17,14 +17,13 @@ from module.ui.ui import UI
 class ShopUI(UI):
     @cached_property
     def _shop_bottom_navbar(self):
-        """
-        以下信息基于 shop_swipe 之后的布局。
-        shop_bottom_navbar 有 5 个选项：
-            medal（勋章）
-            guild（舰队）
-            prototype（原型）
-            core（核心）
-            merit（功勋）
+        """商店底部导航栏组件。
+
+        包含 5 个选项：medal（勋章）、guild（舰队）、prototype（原型）、
+        core（核心）、merit（功勋）。
+
+        Returns:
+            Navbar: 底部导航栏控制器实例。
         """
         shop_bottom_navbar = ButtonGrid(
             origin=(399, 619), delta=(182, 0),
@@ -36,9 +35,7 @@ class ShopUI(UI):
                       inactive_color=(181, 178, 181))
 
     def shop_bottom_navbar_ensure(self, left=None, right=None):
-        """
-        确保能够跳转到对应页面，且页面已完全加载。
-        以下信息基于 shop_swipe 之后的布局。
+        """确保能够跳转到对应页面，且页面已完全加载。
 
         Args:
             left (int): 取决于商店导航栏的位置
@@ -53,14 +50,15 @@ class ShopUI(UI):
 
     @cached_property
     def shop_nav_250814(self):
-        """
-        250814 版商店顶部导航栏切换器。
+        """250814 版商店顶部导航栏切换器。
 
-        包含「通用」和「月度」两个导航选项，
-        用于在不同商店大类之间切换。
+        包含「通用」和「月度」两个导航选项，用于在不同商店大类之间切换。
 
         Pages:
             in: page_munitions
+
+        Returns:
+            Switch: 顶部导航栏 Switch 状态机。
         """
         switch = Switch('shop_nav_250814', is_selector=True, offset=(20, 20))
         switch.add_state(NAV_GENERAL, check_button=NAV_GENERAL)
@@ -69,14 +67,16 @@ class ShopUI(UI):
 
     @cached_property
     def shop_tab_250814(self):
-        """
-        250814 版商店分类标签切换器。
+        """250814 版商店分类标签切换器。
 
         包含 9 个标签页：通用、功勋、舰队、META、奖励、
         核心限定、核心月度、勋章、原型，用于切换不同商店分类。
 
         Pages:
             in: page_munitions
+
+        Returns:
+            Switch: 分类标签 Switch 状态机。
         """
         switch = Switch('shop_tab_250814', is_selector=True, offset=(20, 20))
         switch.add_state(TAB_GENERAL, check_button=TAB_GENERAL)

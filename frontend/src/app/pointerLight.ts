@@ -39,7 +39,8 @@ export function useGlassPointerLight() {
     let raf = 0
     let clientX: number | null = null
     let clientY: number | null = null
-    const style = document.documentElement.style
+    /* 唯一消费者是 .topbar::after；自定义属性向子树继承。 */
+    const style = target.style
     const flush = () => {
       raf = 0
       const rect = target.getBoundingClientRect()

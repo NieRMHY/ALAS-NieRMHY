@@ -18,6 +18,7 @@ class ExecutionError(Exception):
 
 
 class ConfigModel:
+    """部署配置模型，定义所有配置项及其默认值。"""
     # Git 配置
     Repository: str = GITHUB_REPOSITORY
     Branch: str = "master"
@@ -78,11 +79,11 @@ class ConfigModel:
     DisableBranchWatermark: bool = False
     Run: Optional[str] = None
 
-    # 动态配置
-    GitOverCdn: bool = False
 
 
 class DeployConfig(DeployConfigTransaction, ConfigModel):
+    """部署配置管理器，负责配置的读取、保存、重定向与执行环境管理。"""
+
     def __init__(self, file=DEPLOY_CONFIG):
         """初始化部署配置。
 
@@ -99,6 +100,7 @@ class DeployConfig(DeployConfigTransaction, ConfigModel):
         self.show_config()
 
     def show_config(self):
+        """打印与默认模板不同的配置项。"""
         logger.hr("Show deploy config", 1)
         for k, v in self.config.items():
             if k in ("Password", "SSHUser"):
@@ -139,11 +141,6 @@ class DeployConfig(DeployConfigTransaction, ConfigModel):
             object.__setattr__(self, 'PypiMirror', 'https://mirrors.aliyun.com/pypi/simple')
             self.config['PypiMirror'] = 'https://mirrors.aliyun.com/pypi/simple'
 
-        # 绕过 webui.config.DeployConfig.__setattr__()，不写入 deploy.yaml
-        super().__setattr__(
-            'GitOverCdn',
-            self.Repository == GIT_OVER_CDN_REPOSITORY and self.Branch == 'master'
-        )
         if self.Repository == GIT_OVER_CDN_REPOSITORY:
             super().__setattr__('Repository', GIT_OVER_CDN_FALLBACK_REPOSITORY)
         if self.Repository in ['global']:
@@ -185,6 +182,11 @@ class DeployConfig(DeployConfigTransaction, ConfigModel):
 
     @cached_property
     def root_filepath(self):
+        """获取项目根目录绝对路径。
+
+        Returns:
+            str: 格式化为斜杠分隔的根目录绝对路径。
+        """
         return (
             os.path.abspath(os.path.join(os.path.dirname(__file__), "../"))
             .replace(r"\\", "/")
@@ -221,6 +223,11 @@ class DeployConfig(DeployConfigTransaction, ConfigModel):
             return True
 
     def show_error(self, command=None):
+        """展示更新失败信息及排查指引。
+
+        Args:
+            command (str, optional): 导致失败的命令。
+        """
         logger.hr("Update failed", 0)
         self.show_config()
         logger.info("")

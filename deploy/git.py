@@ -4,8 +4,15 @@ from deploy.utils import *
 
 
 class GitManager(DeployConfig):
+    """Git 仓库与更新管理类，负责源码拉取、分支同步及 GitOverCDN 更新。"""
+
     @cached_property
     def git(self):
+        """获取 Git 可执行文件路径。
+
+        Returns:
+            str: Git 可执行文件绝对路径或回退命令 'git'。
+        """
         exe = self.filepath('GitExecutable')
         if os.path.exists(exe):
             return exe
@@ -15,6 +22,11 @@ class GitManager(DeployConfig):
 
     @staticmethod
     def remove(file):
+        """安全删除指定文件。
+
+        Args:
+            file (str): 待删除的文件路径。
+        """
         try:
             os.remove(file)
             logger.info(f'Removed file: {file}')
@@ -69,6 +81,7 @@ class GitManager(DeployConfig):
 
     # Modify by MHY, 移除 nanoda 云端更新开关(kill-switch)与 git_over_cdn，改为纯 git pull
     def git_install(self):
+        """根据云端状态与本地配置执行 Git 源码拉取与更新。"""
         logger.hr('Update AzurPilot', 0)
         self.git_repository_init(
             repo=self.Repository,

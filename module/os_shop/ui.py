@@ -41,7 +41,7 @@ class OSShopUI(UI):
         切换侧边栏后需要等待页面加载完成，类似舰队后勤的加载逻辑。
 
         Args:
-            skip_first_screenshot: 是否跳过首次截图。
+            skip_first_screenshot (bool): 是否跳过首次截图。默认 True。
 
         Returns:
             bool: 页面加载完成返回 True。
@@ -72,6 +72,9 @@ class OSShopUI(UI):
 
         侧边栏包含 4 个选项：
             NY（纽约）、Liverpool（利物浦）、Gibraltar（直布罗陀）、St. Petersburg（圣彼得堡）
+
+        Returns:
+            Navbar: 侧边栏导航组件。
         """
         os_shop_side_navbar = ButtonGrid(
             origin=(44, 266), delta=(0, 87),
@@ -86,18 +89,10 @@ class OSShopUI(UI):
         """确保侧边栏导航到指定页面。
 
         Args:
-            upper: 从上往下的索引。
-                limited|regular
-                    1     NY
-                    2     Liverpool
-                    3     Gibraltar
-                    4     St. Petersburg
-            bottom: 从下往上的索引。
-                limited|regular
-                    4     NY
-                    3     Liverpool
-                    2     Gibraltar
-                    1     St. Petersburg
+            upper (int, optional): 从上往下的索引（1-4）。
+                1: NY, 2: Liverpool, 3: Gibraltar, 4: St. Petersburg。
+            bottom (int, optional): 从下往上的索引（1-4）。
+                4: NY, 3: Liverpool, 2: Gibraltar, 1: St. Petersburg。
 
         Pages:
             in: PORT_SUPPLY_CHECK
@@ -136,7 +131,7 @@ class OSShopUI(UI):
         当滚动条不可见时，通过拖拽操作使其重新出现。
 
         Args:
-            distance: 拖拽距离，默认 200 像素。
+            distance (int): 拖拽距离，默认 200 像素。
         """
         detection_area = (1130, 230, 1170, 710)
         direction_vector = (0, distance)
@@ -152,8 +147,8 @@ class OSShopUI(UI):
         当滚动失败时尝试救援滚动条并重试。
 
         Args:
-            pre_pos: 前一位置。
-            cur_pos: 当前位置。
+            pre_pos (float): 前一位置。
+            cur_pos (float): 当前位置。
 
         Returns:
             float: 滚动后的位置。

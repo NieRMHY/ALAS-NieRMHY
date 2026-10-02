@@ -53,7 +53,8 @@ class AuthParams(Params):
 
 class SchemaParams(Params):
     """配置界面架构查询参数模型。"""
-    language: Literal['zh-CN', 'zh-MIAO', 'en-US', 'ja-JP', 'zh-TW'] = 'zh-CN'
+    # Modify by MHY, 移除喵语（MIAO）中文语言包（nanoda 傲娇风格）
+    language: Literal['zh-CN', 'en-US', 'ja-JP', 'zh-TW'] = 'zh-CN'
 
 
 class BackgroundUrlParams(Params):
@@ -77,6 +78,30 @@ class BackgroundPreferenceParams(Params):
 class InstanceParams(Params):
     """单实例操作通用入参模型。"""
     instance: StrictStr = Field(min_length=1, max_length=64)
+
+
+from module.scheduler.models import Mode, ProgramDocument
+
+
+class ProgramValidateParams(InstanceParams):
+    document: ProgramDocument
+    mode: Mode = 'takeover'
+
+
+class ProgramSaveParams(InstanceParams):
+    document: ProgramDocument
+    revision: StrictStr
+
+
+class ProgramApplyParams(InstanceParams):
+    revision: StrictStr
+    mode: Mode
+
+
+class ProgramSimulateParams(ProgramValidateParams):
+    context: dict[str, Any] = Field(default_factory=dict)
+    outcomes: list[Literal['completed', 'yielded', 'recoverable', 'failed']] = Field(default_factory=list, max_length=1000)
+    steps: StrictInt = Field(default=100, ge=1, le=1000)
 
 
 class CreateParams(Params):

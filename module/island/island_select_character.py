@@ -13,6 +13,17 @@ from module.logger import logger
 
 
 class SelectCharacter(UI):
+    """岛屿角色选择与状态识别管理器。
+
+    继承 UI，基于网格布局识别待派遣角色的头像、工作状态、体力数值及选中状态。
+
+    Attributes:
+        DISPATCH_STAMINA_DEFAULT (int): 角色派遣默认最低体力门槛。
+        select_character_grid (ButtonGrid): 角色选择网格布局。
+        unavailable_characters (set): 本轮已判定不可用的角色集合。
+        dispatch_stamina_min (int): 当前派遣设定的最低体力门槛。
+        character_templates (dict): 角色模板映射字典。
+    """
     # 岗位派遣角色的默认最低体力门槛（子模块可按生产消耗覆盖）
     DISPATCH_STAMINA_DEFAULT = 35
 
@@ -84,7 +95,14 @@ class SelectCharacter(UI):
         }
 
     def recognize_all_characters(self, screenshot):
-        """识别网格中所有角色的状态"""
+        """识别网格中所有角色的状态。
+
+        Args:
+            screenshot (np.ndarray): 游戏画面截图。
+
+        Returns:
+            list[dict]: 包含网格位置、按钮区域及各角色状态信息的字典列表。
+        """
         results = []
 
         for row, col, button in self.select_character_grid.generate():
@@ -100,15 +118,14 @@ class SelectCharacter(UI):
         return results
 
     def recognize_target_characters(self, screenshot, character_names):
-        """
-        只识别指定角色在网格中的位置和状态，跳过其他角色
+        """只识别指定角色在网格中的位置和状态，跳过其他无关角色。
 
         Args:
-            screenshot: 游戏截图
-            character_names (list): 需要识别的角色名列表
+            screenshot (np.ndarray): 游戏画面截图。
+            character_names (list[str]): 需要识别的目标角色名称列表。
 
         Returns:
-            list: 包含匹配角色信息的字典列表
+            list[dict]: 包含匹配角色信息的字典列表。
         """
         results = []
 
@@ -140,13 +157,15 @@ class SelectCharacter(UI):
         return results
 
     def _recognize_character_status(self, screenshot, button, character_targets=None):
-        """识别单个角色的状态
+        """识别单个网格单元内角色的完整状态。
 
         Args:
-            screenshot: 游戏截图
-            button: 角色按钮
-            character_targets (dict, optional): 限定的角色模板字典 {name: template}，
-                                                为 None 时检查所有角色
+            screenshot (np.ndarray): 游戏画面截图。
+            button (Button): 网格单元按钮对象。
+            character_targets (dict[str, Template], optional): 限定的角色模板字典，为 None 时检查所有角色。
+
+        Returns:
+            dict | None: 包含角色名、工作中标识、体力值、是否达标及选中状态的字典；未识别到角色则返回 None。
         """
         # 1. 识别角色身份
         character_name = self._recognize_character_identity(
@@ -175,13 +194,15 @@ class SelectCharacter(UI):
         }
 
     def _recognize_character_identity(self, screenshot, button, character_targets=None):
-        """识别角色身份
+        """识别指定单元格中的角色身份。
 
         Args:
-            screenshot: 游戏截图
-            button: 角色按钮
-            character_targets (dict, optional): 限定的角色模板字典 {name: template}，
-                                                为 None 时检查所有角色
+            screenshot (np.ndarray): 游戏画面截图。
+            button (Button): 网格单元按钮对象。
+            character_targets (dict[str, Template], optional): 限定的角色模板字典，为 None 时匹配所有角色。
+
+        Returns:
+            str | None: 匹配到的角色名称，低于阈值或无匹配时返回 None。
         """
         # 获取角色识别区域
         char_area = self._get_absolute_area(button, self.character_area_relative)
@@ -203,7 +224,15 @@ class SelectCharacter(UI):
         return best_match
 
     def _check_working_status(self, screenshot, button):
-        """检查是否工作中"""
+        """检查角色是否处于工作中状态。
+
+        Args:
+            screenshot (np.ndarray): 游戏画面截图。
+            button (Button): 网格单元按钮对象。
+
+        Returns:
+            bool: 角色是否在工作中。
+        """
         working_area = self._get_absolute_area(button, self.working_area_relative)
         working_image = crop(screenshot, working_area)
 
@@ -212,13 +241,31 @@ class SelectCharacter(UI):
         return similarity >= 0.85
 
     def _check_stamina_status(self, screenshot, button):
-        """检查体力是否充沛"""
+        """检查角色体力是否充沛（青色判定）。
+
+        Args:
+            screenshot (np.ndarray): 游戏画面截图。
+            button (Button): 网格单元按钮对象。
+
+        Returns:
+            bool: 是否判定为体力充沛。
+        """
         stamina_area = self._get_absolute_area(button, (26, 165, 27, 166))
         stamina_color = get_color(screenshot, stamina_area)
         return color_similar(stamina_color, (18.0, 211.0, 186.0), 80)
 
     def _get_stamina_value(self, screenshot, button):
-        """识别角色当前体力值。"""
+        """识别角色当前体力值。
+
+        若常规 OCR 解析失败，尝试分别识别当前值与上限值，最后回退至青色进度条长度估算。
+
+        Args:
+            screenshot (np.ndarray): 游戏画面截图。
+            button (Button): 网格单元按钮对象。
+
+        Returns:
+            int: 识别或估算出的体力数值。
+        """
         stamina_area = self._get_absolute_area(button, self.stamina_ocr_area_relative)
         ocr = DigitCounter(
             stamina_area,
@@ -241,7 +288,17 @@ class SelectCharacter(UI):
         return self._get_stamina_percentage_fallback(screenshot, button)
 
     def _ocr_stamina_area(self, screenshot, button, relative_area, name):
-        """对体力区域内的子区域执行数字 OCR，无法解析时返回 None。"""
+        """对体力区域内的指定子区域执行数字 OCR 识别。
+
+        Args:
+            screenshot (np.ndarray): 游戏画面截图。
+            button (Button): 网格单元按钮对象。
+            relative_area (tuple[int, int, int, int]): 相对体力识别区的坐标范围。
+            name (str): OCR 识别器名称。
+
+        Returns:
+            int | None: 识别出的数字；解析失败或含非法字符时返回 None。
+        """
         area = self._get_absolute_area(button, relative_area)
         ocr = Digit(
             area,
@@ -256,7 +313,15 @@ class SelectCharacter(UI):
             return None
 
     def _get_stamina_current_ocr(self, screenshot, button):
-        """在斜杠左侧识别当前体力值。"""
+        """在斜杠左侧识别当前体力数值。
+
+        Args:
+            screenshot (np.ndarray): 游戏画面截图。
+            button (Button): 网格单元按钮对象。
+
+        Returns:
+            int | None: 识别出的当前体力数值，超出范围返回 None。
+        """
         area = self.stamina_ocr_area_relative
         value = self._ocr_stamina_area(
             screenshot, button,
@@ -268,7 +333,17 @@ class SelectCharacter(UI):
         return None
 
     def _get_stamina_total_ocr(self, screenshot, button):
-        """在斜杠右侧识别体力上限，依次尝试不同起点以避开被破坏的斜杠。"""
+        """在斜杠右侧识别体力上限数值。
+
+        依次尝试不同左边界起点以避开被破坏的斜杠残影。
+
+        Args:
+            screenshot (np.ndarray): 游戏画面截图。
+            button (Button): 网格单元按钮对象。
+
+        Returns:
+            int | None: 识别出的体力上限数值，无有效结果返回 None。
+        """
         area = self.stamina_ocr_area_relative
         for left in (28, 30, 32, 34):
             value = self._ocr_stamina_area(
@@ -281,7 +356,15 @@ class SelectCharacter(UI):
         return None
 
     def _get_stamina_percentage_fallback(self, screenshot, button):
-        """OCR 失败时用体力条绿色长度估算体力。"""
+        """OCR 失败时通过体力条绿色填充长度估算体力数值。
+
+        Args:
+            screenshot (np.ndarray): 游戏画面截图。
+            button (Button): 网格单元按钮对象。
+
+        Returns:
+            int: 估算出的体力百分比数值（0~100）。
+        """
         stamina_area = self._get_absolute_area(button, self.stamina_area_relative)
         stamina_image = crop(screenshot, stamina_area, copy=False)
         similarity = color_similarity_2d(stamina_image, color=(18.0, 211.0, 186.0))
@@ -291,13 +374,29 @@ class SelectCharacter(UI):
         return min(100, int(round((columns[-1] + 1) / stamina_image.shape[1] * 100)))
 
     def _check_selected_status(self, screenshot, button):
-        """检查是否已选中"""
+        """检查角色是否处于已选中状态。
+
+        Args:
+            screenshot (np.ndarray): 游戏画面截图。
+            button (Button): 网格单元按钮对象。
+
+        Returns:
+            bool: 角色是否被选中。
+        """
         selected_area = self._get_absolute_area(button, self.selected_area_relative)
         selected_color = get_color(screenshot, selected_area)
         return color_similar(selected_color, (19.0, 182.0, 234.0), 80)
 
     def _get_absolute_area(self, button, relative_area):
-        """将相对坐标转换为绝对坐标"""
+        """将相对于按钮的相对坐标转换为屏幕绝对坐标。
+
+        Args:
+            button (Button): 基准按钮对象。
+            relative_area (tuple[int, int, int, int]): 相对坐标元组 (x1, y1, x2, y2)。
+
+        Returns:
+            tuple[int, int, int, int]: 转换后的屏幕绝对坐标。
+        """
         x1 = button.area[0] + relative_area[0]
         y1 = button.area[1] + relative_area[1]
         x2 = button.area[0] + relative_area[2]
@@ -305,7 +404,14 @@ class SelectCharacter(UI):
         return (x1, y1, x2, y2)
 
     def find_available_characters(self, screenshot):
-        """查找可用的角色（非工作中、体力充沛）"""
+        """查找当前视野中所有可派遣的角色（非工作中且体力充足）。
+
+        Args:
+            screenshot (np.ndarray): 游戏画面截图。
+
+        Returns:
+            list[dict]: 可用角色状态信息字典列表。
+        """
         all_characters = self.recognize_all_characters(screenshot)
         available = []
 
@@ -316,7 +422,14 @@ class SelectCharacter(UI):
         return available
 
     def find_working_characters(self, screenshot):
-        """查找工作中的角色"""
+        """查找当前视野中所有正在工作中的角色。
+
+        Args:
+            screenshot (np.ndarray): 游戏画面截图。
+
+        Returns:
+            list[dict]: 工作中角色状态信息字典列表。
+        """
         all_characters = self.recognize_all_characters(screenshot)
         working = []
 
@@ -328,6 +441,14 @@ class SelectCharacter(UI):
 
     @staticmethod
     def _normalize_grid_positions(positions):
+        """将各种格式的位置输入规范化为 (row, col) 元组列表。
+
+        Args:
+            positions: 单个坐标元组、坐标列表或 NumPy 数组。
+
+        Returns:
+            list[tuple[int, int]]: 规范化后的二维网格坐标列表。
+        """
         if positions is None:
             return []
 
@@ -355,6 +476,14 @@ class SelectCharacter(UI):
         return normalized
 
     def _iter_grid_position_buttons(self, positions):
+        """迭代指定网格位置并在边界内返回 (row, col, button)。
+
+        Args:
+            positions: 待迭代的位置集合。
+
+        Yields:
+            tuple[int, int, Button]: 网格行号、列号及对应的按钮对象。
+        """
         width, height = self.select_character_grid.grid_shape
         for row, col in self._normalize_grid_positions(positions):
             if row < 0 or col < 0 or row >= width or col >= height:
@@ -363,7 +492,16 @@ class SelectCharacter(UI):
             yield row, col, self.select_character_grid[row, col]
 
     def get_characters_by_positions(self, screenshot, positions, character_names=None):
-        """获取指定格子位置的角色状态，支持单个位置或多个位置。"""
+        """获取指定格子位置的角色状态，支持单个位置或多个位置。
+
+        Args:
+            screenshot (np.ndarray): 游戏画面截图。
+            positions: 单个或多个网格坐标。
+            character_names (list[str], optional): 限定的角色名称列表。
+
+        Returns:
+            list[dict]: 匹配到的角色状态信息字典列表。
+        """
         results = []
         if character_names is None:
             character_targets = None
@@ -390,7 +528,16 @@ class SelectCharacter(UI):
         return results
 
     def get_character_by_position(self, screenshot, position, col=None):
-        """获取指定网格位置的字符状态"""
+        """获取指定网格位置的角色状态。
+
+        Args:
+            screenshot (np.ndarray): 游戏画面截图。
+            position: 网格坐标元组 (row, col) 或行号 row。
+            col (int, optional): 网格列号（当 position 为行号时传入）。
+
+        Returns:
+            dict | None: 该位置的角色状态信息，无角色返回 None。
+        """
         if col is not None:
             position = (position, col)
         characters = self.get_characters_by_positions(screenshot, position)
@@ -399,13 +546,26 @@ class SelectCharacter(UI):
         return None
 
     def is_any_character_selected_by_positions(self, screenshot, positions):
-        """检查指定格子位置中是否已有角色被选中。"""
+        """检查指定格子位置中是否已有角色被选中。
+
+        Args:
+            screenshot (np.ndarray): 游戏画面截图。
+            positions: 待检查的网格坐标或坐标列表。
+
+        Returns:
+            bool: 是否存在被选中的角色。
+        """
         for _, _, button in self._iter_grid_position_buttons(positions):
             if self._check_selected_status(screenshot, button):
                 return True
         return False
 
     def select_character_filter(self):
+        """切换角色选择面板中的筛选与排序方式为按体力排序。
+
+        Returns:
+            bool: 是否成功完成筛选切换操作。
+        """
         if self.appear_then_click(SELECT_CHARACTER_FILTER):
             self.device.sleep(0.5)
             self.device.click(SELECT_CHARACTER_FILTER_STAMINA)
@@ -417,8 +577,7 @@ class SelectCharacter(UI):
 
     @staticmethod
     def parse_character_filter(character_list):
-        """
-        解析角色优先级配置。
+        """解析角色优先级配置。
 
         Args:
             character_list: 使用 > 分隔的字符串，或角色名列表。
@@ -433,12 +592,15 @@ class SelectCharacter(UI):
         return [str(char).strip() for char in character_list if str(char).strip()]
 
     def _select_first_available_character(self, character_list):
-        """
-        从指定角色列表中选择第一个空闲且体力充沛的角色
-        如果无可选角色则选择WorkerJuu
+        """从指定角色列表中选择第一个空闲且体力充沛的角色网格坐标。
+
+        无符合条件的指定角色时回退至 WorkerJuu。
+
+        Args:
+            character_list (list[str]): 待筛选的角色优先级列表。
 
         Returns:
-            tuple: (row, col) 或 None
+            tuple[int, int] | None: 目标角色的网格坐标 (row, col)，无可用角色则返回 None。
         """
         # 如果传入了空列表，回退到全量匹配
         if not character_list:
@@ -509,15 +671,14 @@ class SelectCharacter(UI):
         return None
 
     def find_strict_available_character(self, character_list, min_stamina=35):
-        """
-        只从指定角色中寻找可选角色，不回退 WorkerJuu。
+        """严格从指定角色列表中寻找空闲且体力达标的角色，不回退 WorkerJuu。
 
         Args:
-            character_list: 使用 > 分隔的字符串，或角色名列表。
-            min_stamina: 最低体力阈值。
+            character_list (str | list[str]): 使用 '>' 分隔的字符串或角色名称列表。
+            min_stamina (int): 最低体力阈值，默认为 35。
 
         Returns:
-            dict | None: 可点击角色状态，找不到则返回 None。
+            dict | None: 可点击角色状态信息字典，找不到则返回 None。
         """
         characters = self.parse_character_filter(character_list)
         if not characters:
@@ -544,11 +705,14 @@ class SelectCharacter(UI):
         return None
 
     def select_specific_character(self, character_list, min_stamina=35):
-        """
-        只尝试选择指定角色，不回退 WorkerJuu。
+        """尝试点击并选中指定列表中的角色，不回退 WorkerJuu。
+
+        Args:
+            character_list (str | list[str]): 角色优先级字符串或列表。
+            min_stamina (int): 最低体力阈值，默认为 35。
 
         Returns:
-            bool: 成功选择角色返回 True，否则返回 False。
+            bool: 是否成功点击并选择角色。
         """
         char_info = self.find_strict_available_character(character_list, min_stamina=min_stamina)
         if not char_info:
@@ -583,9 +747,17 @@ class SelectCharacter(UI):
         self.device.sleep(1.0)
 
     def _find_character_button_in_area(self, screenshot, character_names, area=None):
-        """在角色选择列表全区域内模板匹配指定角色，返回 (角色名, Button) 或 None。
+        """在角色选择列表区域内通过模板匹配定位指定角色。
 
         与经营模块 _find_best_character 一致，用于网格未命中（滑动错位）时定位角色。
+
+        Args:
+            screenshot (np.ndarray): 游戏画面截图。
+            character_names (list[str]): 待查找的角色名称列表。
+            area (tuple[int, int, int, int], optional): 模板匹配区域，默认为全列表搜索区域。
+
+        Returns:
+            tuple[str, Button] | None: 匹配到的角色名与绝对坐标按钮，未找到返回 None。
         """
         if area is None:
             area = self.CHARACTER_LIST_SEARCH_AREA
@@ -612,6 +784,13 @@ class SelectCharacter(UI):
 
         角色列表可处于任意滚动偏移，固定网格行不可靠；
         头像框左上角相对单元格左上角偏移为 (33, 45)，由当前布局实测得出。
+
+        Args:
+            portrait_button (Button): 匹配到的头像按钮。
+            name (str, optional): 生成的按钮名称。
+
+        Returns:
+            Button: 重建的角色单元格按钮对象。
         """
         x0 = portrait_button.area[0] - 33
         y0 = portrait_button.area[1] - 45
@@ -625,6 +804,16 @@ class SelectCharacter(UI):
         """读取指定网格单元的角色状态。
 
         character_name 给定时跳过二次身份识别（用于全区域模板匹配已确认身份的场景）。
+
+        Args:
+            screenshot (np.ndarray): 游戏画面截图。
+            row (int): 网格行号。
+            col (int): 网格列号。
+            cell_button (Button): 单元格按钮对象。
+            character_name (str, optional): 已知角色名称，传入时跳过身份识别。
+
+        Returns:
+            dict | None: 角色状态信息字典，无角色返回 None。
         """
         if character_name is None:
             status = self._recognize_character_status(screenshot, cell_button)
@@ -641,7 +830,15 @@ class SelectCharacter(UI):
         }
 
     def _check_character_strict(self, char_info, stamina_threshold):
-        """严格检查角色是否可派遣：未工作、未选中、体力大于阈值。任一不满足返回 None。"""
+        """严格检查角色是否满足派遣条件（未工作、未选中、体力大于阈值）。
+
+        Args:
+            char_info (dict | None): 角色状态信息字典。
+            stamina_threshold (int): 最低体力门槛。
+
+        Returns:
+            dict | None: 满足条件返回原始状态字典，任一条件不满足返回 None。
+        """
         if char_info is None:
             return None
         char_name = char_info.get("character_name")
@@ -659,16 +856,15 @@ class SelectCharacter(UI):
 
     def find_strict_available_character_with_scroll(self, character_list, stamina_threshold=50,
                                                     max_swipes=5, search_area=None):
-        """
-        滚动查找指定角色（模仿经营模块的选角逻辑）。
+        """滚动查找指定角色（模仿经营模块的选角逻辑）。
 
         只接受指定角色且体力大于 stamina_threshold；不切换排序、不回退其他角色。
         找到后返回角色状态字典，未找到或体力不达标返回 None。
 
         Args:
             character_list: 角色名或 ">" 分隔的优先级字符串。
-            stamina_threshold: 体力必须大于该阈值。
-            max_swipes: 最多向下滑动次数。
+            stamina_threshold (int): 体力必须大于该阈值。
+            max_swipes (int): 最多向下滑动次数。
             search_area: 全区域模板匹配范围，默认 CHARACTER_LIST_SEARCH_AREA。
 
         Returns:
@@ -739,11 +935,15 @@ class SelectCharacter(UI):
         return None
 
     def select_specific_character_with_scroll(self, character_list, stamina_threshold=50, max_swipes=5):
-        """
-        只选择指定角色（支持向下滚动查找，模仿经营模块选角逻辑）。
+        """只选择指定角色（支持向下滚动查找，模仿经营模块选角逻辑）。
 
         体力不达标或未找到时返回 False，不切换排序、不回退其他角色、不重复尝试。
         点击后校验是否选中，最多点击 5 次（纯计数有限循环）。
+
+        Args:
+            character_list (str | list[str]): 角色优先级字符串或列表。
+            stamina_threshold (int): 体力门槛，必须大于该值。
+            max_swipes (int): 最多向下滑动次数，默认为 5。
 
         Returns:
             bool: 成功选中指定角色返回 True，否则返回 False。
@@ -768,7 +968,15 @@ class SelectCharacter(UI):
         return False
 
     def find_specific_character(self, screenshot, character_name="WorkerJuu"):
-        """查找指定角色的位置信息，只检查目标角色的模板，不做全量匹配"""
+        """查找指定角色的位置信息，只检查目标角色的模板，不做全量匹配。
+
+        Args:
+            screenshot (np.ndarray): 游戏画面截图。
+            character_name (str): 目标角色名称，默认为 'WorkerJuu'。
+
+        Returns:
+            tuple[int, int] | None: 角色的网格坐标 (row, col)，未找到返回 None。
+        """
         target_characters = self.recognize_target_characters(screenshot, [character_name])
         for char_info in target_characters:
             if char_info["character_name"] == character_name:
@@ -776,16 +984,15 @@ class SelectCharacter(UI):
         return None
 
     def select_character(self, character_list="WorkerJuu"):
-        """
-        按照角色列表优先级选择角色
-        如果没有可选角色则选择工作啾
+        """按照角色列表优先级选择角色。
+
+        如果没有可选角色则选择工作啾。
 
         Args:
-            character_list: 角色列表字符串，用">"分隔，如"Cheshire > YingSwei"
-                          也可以传入单个角色名，如"Cheshire"
+            character_list (str | list[str]): 角色列表字符串，用">"分隔，如"Cheshire > YingSwei"，也可以传入单个角色名。
 
         Returns:
-            bool: 成功选择角色返回True，无角色可选返回False
+            bool: 成功选择角色返回 True，无角色可选返回 False。
         """
         # 解析角色列表
         characters = self.parse_character_filter(character_list)

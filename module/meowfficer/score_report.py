@@ -154,12 +154,26 @@ table.mini td.name{font-weight:600}
 
 
 def _e(text) -> str:
-    """HTML 转义。"""
+    """对文本执行 HTML 转义。
+
+    Args:
+        text (Any): 待转义的原始文本或对象。
+
+    Returns:
+        str: 转义后的安全 HTML 字符串。
+    """
     return html.escape(str(text if text is not None else ''))
 
 
 def _tier_theme(tier: str) -> str:
-    """把档位文案映射到颜色主题。"""
+    """将档位文案映射为对应的 CSS 颜色主题类名。
+
+    Args:
+        tier (str): 评级档位描述文本。
+
+    Returns:
+        str: 颜色主题类名（如 'gold', 'good', 'ok', 'warn', 'bad'）。
+    """
     for keyword, theme in TIER_THEMES:
         if keyword in (tier or ''):
             return theme
@@ -167,7 +181,14 @@ def _tier_theme(tier: str) -> str:
 
 
 def _score_theme(score: int) -> str:
-    """按分数取颜色。"""
+    """根据分数区间返回对应的颜色主题标识。
+
+    Args:
+        score (int): 百分制评分值。
+
+    Returns:
+        str: 颜色主题标识字符串。
+    """
     if score >= 80:
         return 'good'
     if score >= 60:
@@ -178,14 +199,30 @@ def _score_theme(score: int) -> str:
 
 
 def _ring(score: int) -> str:
-    """环形分数。"""
+    """渲染环形分数进度条的 HTML 片段。
+
+    Args:
+        score (int): 百分制评分值。
+
+    Returns:
+        str: 环形分数的 HTML 字符串。
+    """
     return (f'<div class="ring" style="--p:{int(score)};'
             f'--ring-color:var(--{_score_theme(score)})">'
             f'<i>{int(score)}<small>/100</small></i></div>')
 
 
 def _talent_chips(talents) -> str:
-    """天赋标签：彩天赋描金带星，推断/未匹配用虚线框，等级用小徽章。"""
+    """渲染天赋标签集合的 HTML 片段。
+
+    彩天赋描金带星，推断/未匹配天赋使用虚线边框，等级使用罗马数字小徽章。
+
+    Args:
+        talents (list[Talent]): 指挥喵天赋对象列表。
+
+    Returns:
+        str: 天赋标签集合的 HTML 字符串。
+    """
     if not talents:
         return '<span class="empty">没有识别到天赋</span>'
     out = []
@@ -205,7 +242,16 @@ def _talent_chips(talents) -> str:
 
 
 def _hit_chips(hits) -> str:
-    """命中明细标签：把 ``名字 Lv3`` 拆成「等级徽章 + 名字」。"""
+    """渲染命中明细标签集合的 HTML 片段。
+
+    把 ``名字 Lv3`` 拆分成「等级徽章 + 名字」。
+
+    Args:
+        hits (list[str]): 命中的天赋条目列表。
+
+    Returns:
+        str: 标签集合的 HTML 字符串。
+    """
     if not hits:
         return '<span class="empty">无</span>'
     out = []
@@ -219,7 +265,15 @@ def _hit_chips(hits) -> str:
 
 
 def _rubric_block(rubric, is_primary: bool) -> str:
-    """单个评分口径区块。"""
+    """渲染单个评分口径区块的 HTML 片段。
+
+    Args:
+        rubric (RubricResult): 单个口径的评分详情结果。
+        is_primary (bool): 是否为主口径。
+
+    Returns:
+        str: 口径区块的 HTML 字符串。
+    """
     theme = _tier_theme(rubric.tier)
     mark = '<span class="star-mark">★</span>' if is_primary else '<span class="star-mark">☆</span>'
     parts = [f'<div class="rubric{" primary" if is_primary else ""}">',
@@ -253,7 +307,15 @@ def _rubric_block(rubric, is_primary: bool) -> str:
 
 
 def _cat_card(name: str, result) -> str:
-    """单只猫的卡片。"""
+    """渲染单只猫的 HTML 卡片片段。
+
+    Args:
+        name (str): 来源标识或指挥喵名称。
+        result (ScoreResult): 指挥喵评分计算结果。
+
+    Returns:
+        str: 单只猫卡片的 HTML 字符串。
+    """
     info = result.cat_info or {}
     badges = []
     for value in (info.get('rarity'), info.get('faction'),
@@ -315,11 +377,11 @@ def to_payload(results, generated_at: str = '') -> dict:
     影响前端契约。
 
     Args:
-        results: ``[(来源名, ScoreResult), ...]``。
-        generated_at: 生成时间文本。
+        results (list[tuple[str, ScoreResult]]): ``[(来源名, ScoreResult), ...]`` 元组列表。
+        generated_at (str, optional): 生成时间文本。
 
     Returns:
-        dict: ``{'generatedAt', 'count', 'cats': [...]}``。
+        dict: ``{'generatedAt', 'count', 'cats': [...]}`` 数据字典。
     """
     cats = []
     for name, result in results:
@@ -386,10 +448,10 @@ def render_summary(result) -> str:
     """把评分结果压成一行摘要（日志里用，避免每只猫刷二十多行）。
 
     Args:
-        result: :func:`module.meowfficer.score.evaluate` 的结果。
+        result (ScoreResult): :func:`module.meowfficer.score.evaluate` 的评分结果。
 
     Returns:
-        str: 形如 ``克雷喵（SSR·铁血·潜艇）→ 潜艇猫 准毕业 100/100 | x+y=1+6 | 彩:狼群之首``
+        str: 单行摘要文本，形如 ``克雷喵（SSR·铁血·潜艇）→ 潜艇猫 准毕业 100/100 | x+y=1+6 | 彩:狼群之首``。
     """
     info = result.cat_info
     tags = '·'.join(str(x) for x in (info.get('rarity'), info.get('faction'),
@@ -416,7 +478,14 @@ def render_summary(result) -> str:
 
 
 def render_text(result) -> str:
-    """把评分结果渲染成纯文本评分卡（Markdown 报告与终端用）。"""
+    """把评分结果渲染成纯文本评分卡（Markdown 报告与终端用）。
+
+    Args:
+        result (ScoreResult): 指挥喵评分计算结果。
+
+    Returns:
+        str: 纯文本评分卡字符串。
+    """
     info = result.cat_info
     meta = ' · '.join(str(x) for x in (
         info.get('rarity'), info.get('faction'),
@@ -471,12 +540,12 @@ def render_html(results, title: str = '指挥喵天赋评分报告', generated_a
     """把若干 (来源名, ScoreResult) 渲染成自包含 HTML。
 
     Args:
-        results: ``[(来源名, ScoreResult), ...]``。
-        title: 报告标题。
-        generated_at: 生成时间文本。
+        results (list[tuple[str, ScoreResult]]): ``[(来源名, ScoreResult), ...]`` 元组列表。
+        title (str, optional): 报告标题。
+        generated_at (str, optional): 生成时间文本。
 
     Returns:
-        str: 完整 HTML 文档。
+        str: 完整 HTML 文档字符串。
     """
     cards = ''.join(_cat_card(name, result) for name, result in results)
 

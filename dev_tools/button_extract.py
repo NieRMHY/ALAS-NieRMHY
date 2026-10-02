@@ -22,11 +22,14 @@ IMPORT_EXP = IMPORT_EXP.strip().split('\n') + ['']
 
 
 class ImageExtractor:
+    """单个按钮图像资源提取器，解析各服务器对应的点击区域与特征颜色。"""
+
     def __init__(self, module, file):
-        """
+        """初始化图像提取器。
+
         Args:
-            module(str):
-            file(str): xxx.png or xxx.gif
+            module (str): 模块名称。
+            file (str): 资源文件名（如 xxx.png 或 xxx.gif）。
         """
         self.module = module
         self.name, self.ext = os.path.splitext(file)
@@ -35,6 +38,15 @@ class ImageExtractor:
             self.load(server)
 
     def get_file(self, genre='', server='cn'):
+        """获取特定服务器与类型的资源文件路径。
+
+        Args:
+            genre (str): 类型后缀（如 'AREA', 'COLOR', 'BUTTON'）。
+            server (str): 服务器代码（如 'cn', 'en', 'jp', 'tw'）。
+
+        Returns:
+            str: 格式化为正斜杠的资源文件路径。
+        """
         for ext in ['.png', '.gif']:
             file = f'{self.name}.{genre}{ext}' if genre else f'{self.name}{ext}'
             file = os.path.join(AzurLaneConfig.ASSETS_FOLDER, server, self.module, file).replace('\\', '/')
@@ -47,8 +59,16 @@ class ImageExtractor:
         return file
 
     def extract(self, file):
+        """提取图像文件的边界盒与平均颜色。
+
+        Args:
+            file (str): 图像文件路径。
+
+        Returns:
+            tuple[tuple[int, int, int, int], tuple[int, int, int]]: 边界区域与 RGB 均值。
+        """
         if os.path.splitext(file)[1] == '.gif':
-            # In a gif Button, use the first image.
+            # 针对 gif 按钮，使用首帧图像
             bbox = None
             mean = None
             for image in imageio.mimread(file):
@@ -67,6 +87,15 @@ class ImageExtractor:
 
     @staticmethod
     def _extract(image, file):
+        """从图像数组提取边界区域与颜色均值。
+
+        Args:
+            image (np.ndarray): 图像像素矩阵。
+            file (str): 源文件名。
+
+        Returns:
+            tuple[tuple[int, int, int, int], tuple[int, int, int]]: 边界区域与 RGB 均值。
+        """
         size = image_size(image)
         if size != (1280, 720):
             logger.warning(f'{file} has wrong resolution: {size}')
@@ -76,6 +105,11 @@ class ImageExtractor:
         return bbox, mean
 
     def load(self, server='cn'):
+        """加载并解析指定服务器的资源配置，不存在时回退至国服资源。
+
+        Args:
+            server (str): 服务器代码，默认为 'cn'。
+        """
         file = self.get_file(server=server)
         if os.path.exists(file):
             area, color = self.extract(file)
@@ -103,23 +137,28 @@ class ImageExtractor:
 
     @property
     def expression(self):
+        """生成 Python 代码中的 Button 定义表达式。
+
+        Returns:
+            str: 代码语句字符串。
+        """
         return '%s = Button(area=%s, color=%s, button=%s, file=%s)' % (
             self.name, self.area, self.color, self.button, self.file)
 
 
 class TemplateExtractor(ImageExtractor):
-    # def __init__(self, module, file, config):
-    #     """
-    #     Args:
-    #         module(str):
-    #         file(str): xxx.png
-    #         config(AzurLaneConfig):
-    #     """
-    #     self.module = module
-    #     self.file = file
-    #     self.config = config
+    """模板匹配图像资源提取器。"""
+
     @staticmethod
     def extract(file):
+        """提取模板图像的有效区域与平均颜色。
+
+        Args:
+            file (str): 图像文件路径。
+
+        Returns:
+            tuple[tuple[int, int, int, int], tuple[int, int, int]]: 边界区域与 RGB 均值。
+        """
         image = load_image(file)
         bbox = get_bbox(image)
         mean = get_color(image=image, area=bbox)
@@ -128,38 +167,60 @@ class TemplateExtractor(ImageExtractor):
 
     @property
     def expression(self):
+        """生成 Python 代码中的 Template 定义表达式。
+
+        Returns:
+            str: 代码语句字符串。
+        """
         return '%s = Template(file=%s)' % (
             self.name, self.file)
-        # return '%s = Template(area=%s, color=%s, button=%s, file=\'%s\')' % (
-        #     self.name, self.area, self.color, self.button,
-        #     self.config.ASSETS_FOLDER + '/' + self.module + '/' + self.name + '.png')
-
-
-# class OcrExtractor(ImageExtractor):
-#     @property
-#     def expression(self):
-#         return '%s = OcrArea(area=%s, color=%s, button=%s, file=\'%s\')' % (
-#             self.name, self.area, self.color, self.button,
-#             self.config.ASSETS_FOLDER + '/' + self.module + '/' + self.name + '.png')
 
 
 class ModuleExtractor:
+    """模块级别资源提取器，汇总目录下所有按钮与模板并生成 assets.py。"""
+
     def __init__(self, name):
+        """初始化模块提取器。
+
+        Args:
+            name (str): 模块名称。
+        """
         self.name = name
         self.folder = os.path.join(AzurLaneConfig.ASSETS_FOLDER, 'cn', name)
 
     @staticmethod
     def split(file):
+        """拆分文件名为基本名、覆盖属性后缀和扩展名。
+
+        Args:
+            file (str): 文件名。
+
+        Returns:
+            tuple[str, str, str]: 主名称、子属性名（如 .AREA）及扩展名。
+        """
         name, ext = os.path.splitext(file)
         name, sub = os.path.splitext(name)
         return name, sub, ext
 
     def is_base_image(self, file):
+        """判断是否为基础资源图片（不带 .AREA 等属性后缀）。
+
+        Args:
+            file (str): 文件名。
+
+        Returns:
+            bool: 是否为基础图片。
+        """
         _, sub, _ = self.split(file)
         return sub == ''
 
     @property
     def expression(self):
+        """生成当前模块 assets.py 的全部导入与对象定义语句行列表。
+
+        Returns:
+            list[str]: 代码文本行列表。
+        """
         exp = []
         for file in os.listdir(self.folder):
             if file[0].isdigit():
@@ -167,9 +228,6 @@ class ModuleExtractor:
             if file.startswith('TEMPLATE_'):
                 exp.append(TemplateExtractor(module=self.name, file=file).expression)
                 continue
-            # if file.startswith('OCR_'):
-            #     exp.append(OcrExtractor(module=self.name, file=file, config=self.config).expression)
-            #     continue
             if self.is_base_image(file):
                 exp.append(ImageExtractor(module=self.name, file=file).expression)
                 continue
@@ -181,6 +239,7 @@ class ModuleExtractor:
         return exp
 
     def write(self):
+        """将生成的代码写入对应模块下的 assets.py 文件中。"""
         folder = os.path.join(MODULE_FOLDER, self.name)
         if not os.path.exists(folder):
             os.mkdir(folder)
@@ -190,30 +249,28 @@ class ModuleExtractor:
 
 
 def worker(module):
+    """多进程处理单个模块的资源生成任务。
+
+    Args:
+        module (str): 模块名。
+    """
     me = ModuleExtractor(name=module)
     me.write()
 
 
 class AssetExtractor:
-    """
-    Extract Asset to asset.py.
-    All the filename of assets should be in uppercase.
+    """批量资源提取器，将 assets/ 目录下的所有资源提取并生成到各个模块的 assets.py。
 
-    Asset name starts with digit will be ignore.
-        E.g. 2020XXXX.png.
-    Asset name starts with 'TEMPLATE_' will treat as template.
-        E.g. TEMPLATE_AMBUSH_EVADE_SUCCESS.png
-             > TEMPLATE_AMBUSH_EVADE_SUCCESS = Template(file='./assets/handler/TEMPLATE_AMBUSH_EVADE_SUCCESS.png')
-    Asset name starts other will treat as button.
-        E.g. GET_MISSION.png
-             > Button(area=(553, 482, 727, 539), color=(93, 142, 203), button=(553, 482, 727, 539), name='GET_MISSION')
-    Asset name like XXX.AREA.png, XXX.COLOR.png, XXX.BUTTON.png, will overwrite the attribute of XXX.png.
-        E.g. BATTLE_STATUS_S.BUTTON.png overwrites the attribute 'button' of BATTLE_STATUS_S
-    Asset name starts with 'OCR_' will be treat as button.
-        E.g. OCR_EXERCISE_TIMES.png.
+    命名规范与规则说明：
+        1. 资源文件名建议全部大写。
+        2. 数字开头的文件会被忽略（例如 2020XXXX.png）。
+        3. 以 'TEMPLATE_' 开头的文件被视为模板对象，生成 Template(...)。
+        4. 其余文件视为按钮对象，生成 Button(...)。
+        5. 形如 XXX.AREA.png, XXX.COLOR.png, XXX.BUTTON.png 的文件会覆盖 XXX 对应属性。
     """
 
     def __init__(self):
+        """初始化并并发提取所有模块的资源。"""
         logger.info('Assets extract')
 
         modules = [m for m in os.listdir(AzurLaneConfig.ASSETS_FOLDER + '/cn')

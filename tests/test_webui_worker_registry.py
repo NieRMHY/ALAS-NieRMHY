@@ -206,6 +206,39 @@ class TestWorkerRegistry(unittest.TestCase):
                     json.loads(registry_file.read_text(encoding="utf-8")),
                 )
 
+    def test_current_owner_creation_time_is_stable_after_clock_adjustment(self):
+        with patch.object(worker_registry, "_current_process_created_at", None), patch(
+            "module.runtime.worker_registry.process_created_at", side_effect=[10.5, 11.5]
+        ):
+            self.assertEqual(10.5, worker_registry._process_created_at(os.getpid()))
+            self.assertEqual(10.5, worker_registry._process_created_at(os.getpid()))
+
+    def test_owner_can_manage_workers_after_clock_adjustment(self):
+        owner = os.getpid()
+        with tempfile.TemporaryDirectory() as directory, \
+                patch.object(worker_registry, "WORKER_REGISTRY_FILE", Path(directory) / "workers.json"), \
+                patch.object(worker_registry, "_current_process_created_at", None), \
+                patch.object(worker_registry, "process_created_at", side_effect=[10.5, 20.5]) as created:
+            worker_registry.claim_owner(owner)
+            worker_registry.register_worker(owner, "alas", owner + 1)
+            worker_registry.claim_owner(owner)
+            self.assertTrue(worker_registry.is_current_owner(owner))
+            self.assertIn("alas", worker_registry.get_workers(owner))
+            self.assertTrue(worker_registry.unregister_worker(owner, "alas"))
+            self.assertEqual(2, created.call_count)
+
+    def test_other_process_identity_is_not_cached(self):
+        with patch.object(worker_registry, "_current_process_created_at", None), \
+                patch.object(worker_registry, "process_created_at", side_effect=[10.5, 11.5]):
+            pid = os.getpid() + 1
+            self.assertEqual(10.5, worker_registry._process_created_at(pid))
+            self.assertEqual(11.5, worker_registry._process_created_at(pid))
+
+    def test_inherited_cache_does_not_authorize_another_process(self):
+        with patch.object(worker_registry, "_current_process_created_at", (os.getpid() + 1, 10.5)), \
+                patch.object(worker_registry, "process_created_at", return_value=11.5):
+            self.assertEqual(11.5, worker_registry._process_created_at(os.getpid()))
+
     def test_repeated_owner_claim_preserves_registered_workers(self):
         with tempfile.TemporaryDirectory() as directory:
             registry_file = Path(directory) / "workers.json"

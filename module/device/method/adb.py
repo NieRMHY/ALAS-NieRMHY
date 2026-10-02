@@ -27,6 +27,16 @@ from module.logger import logger
 
 
 def _retry_recover(self, error, trial):
+    """ADB 操作失败后的异常恢复策略。
+
+    Args:
+        self: 设备实例。
+        error: 捕获的异常对象。
+        trial: 当前重试轮次。
+
+    Returns:
+        可调用的恢复函数，若无法恢复则返回 None。
+    """
     if isinstance(error, (ConnectionResetError, AdbError)):
         return recover_adb(self, error)
     if isinstance(error, PackageNotInstalled):
@@ -84,6 +94,19 @@ class Adb(Connection):
 
     @staticmethod
     def __load_screenshot(screenshot, method):
+        """将截图原始字节数据根据不同换行符模式解析为 RGB 图像。
+
+        Args:
+            screenshot (bytes): 截图二进制数据。
+            method (int): 换行符替换模式（0: 原样, 1: \\r\\n -> \\n, 2: \\r\\r\\n -> \\n）。
+
+        Returns:
+            np.ndarray: 解析得到的 RGB 图像。
+
+        Raises:
+            ScriptError: 未知的解析模式。
+            ImageTruncated: 图像数据为空或截断损坏。
+        """
         if method == 0:
             pass
         elif method == 1:
@@ -113,6 +136,17 @@ class Adb(Connection):
         return image
 
     def __process_screenshot(self, screenshot):
+        """尝试多种换行符模式解析截图数据，并记录成功模式。
+
+        Args:
+            screenshot (bytes): screencap 输出的原始字节流。
+
+        Returns:
+            np.ndarray: 解析成功的 RGB 图像。
+
+        Raises:
+            OSError: 所有解析模式均失败。
+        """
         for method in self.__screenshot_method_fixed:
             try:
                 result = self.__load_screenshot(screenshot, method=method)
@@ -129,6 +163,11 @@ class Adb(Connection):
     @retry(on_exhausted=EmulatorNotRunningError)
     @Config.when(DEVICE_OVER_HTTP=False)
     def screenshot_adb(self):
+        """通过 ADB screencap -p 截取屏幕图像（非 HTTP 设备流式传输）。
+
+        Returns:
+            np.ndarray: RGB 格式的屏幕截图。
+        """
         data = self.adb_shell(['screencap', '-p'], stream=True)
         if len(data) < 500:
             logger.warning(f'[设备-ADB] 异常截图: {data}')
@@ -138,6 +177,11 @@ class Adb(Connection):
     @retry(on_exhausted=EmulatorNotRunningError)
     @Config.when(DEVICE_OVER_HTTP=True)
     def screenshot_adb(self):
+        """通过 ADB screencap 截取屏幕原始图像（HTTP 设备流式传输）。
+
+        Returns:
+            np.ndarray: RGB 格式的屏幕截图。
+        """
         data = self.adb_shell(['screencap'], stream=True)
         data = remove_screenshot_warning(data)
         if len(data) < 500:
@@ -147,6 +191,11 @@ class Adb(Connection):
 
     @retry(on_exhausted=EmulatorNotRunningError)
     def screenshot_adb_nc(self):
+        """通过 netcat 直连 ADB 截取屏幕原始图像。
+
+        Returns:
+            np.ndarray: RGB 格式的屏幕截图。
+        """
         data = self.adb_shell_nc(['screencap'])
         data = remove_screenshot_warning(data)
         if len(data) < 500:
@@ -156,6 +205,12 @@ class Adb(Connection):
 
     @retry
     def click_adb(self, x, y):
+        """通过 ADB input tap 点击指定坐标。
+
+        Args:
+            x (int): 目标 X 坐标。
+            y (int): 目标 Y 坐标。
+        """
         start = time.time()
         self.adb_shell(['input', 'tap', x, y])
         if time.time() - start <= 0.05:
@@ -163,6 +218,13 @@ class Adb(Connection):
 
     @retry
     def swipe_adb(self, p1, p2, duration=0.1):
+        """通过 ADB input swipe 执行滑动操作。
+
+        Args:
+            p1 (tuple[int, int]): 起始坐标 (x, y)。
+            p2 (tuple[int, int]): 终点坐标 (x, y)。
+            duration (float): 滑动持续时间（秒）。
+        """
         duration = int(duration * 1000)
         self.adb_shell(['input', 'swipe', *p1, *p2, duration])
 
@@ -310,7 +372,7 @@ class Adb(Connection):
                 return False
             else:
                 logger.error(ret)
-                logger.error('[设备-ADB] Permission Denial while starting app, probably because activity invalid')
+                logger.error('[设备-ADB] 启动应用权限被拒绝，可能是 Activity 无效')
                 return False
         # 启动成功
         # Starting: Intent...
@@ -352,7 +414,11 @@ class Adb(Connection):
 
     @retry
     def app_stop_adb(self, package_name=None):
-        """停止应用：am force-stop。"""
+        """通过 am force-stop 强制停止应用。
+
+        Args:
+            package_name (str, optional): 待停止的应用包名，默认为当前配置包名。
+        """
         if not package_name:
             package_name = self.package
         self.adb_shell(['am', 'force-stop', package_name])

@@ -13,7 +13,7 @@ from module.coalition.combat import CoalitionCombat
 from module.coalition.coalition import Coalition
 from module.exception import ScriptEnd, ScriptError
 from module.logger import logger
-from module.notify import handle_notify
+from module.notify import handle_notify, notify_title
 from module.ui.page import page_coalition
 
 
@@ -373,7 +373,7 @@ class CoalitionScuttleRun(Coalition, CoalitionScuttleCombat):
             # 通知渠道由 Error_OnePushConfig 配置（配 smtp 即发邮件）
             handle_notify(
                 self.config.Error_OnePushConfig,
-                title='好感已满，连战暂停',
+                title=notify_title(self.config.config_name, '好感', '已满，连战暂停'),
                 content=f'<{self.config.config_name}> 编队1好感: {a1:.2f}，'
                         f'编队2好感: {a2:.2f}，连战刷好感已暂停',
             )
