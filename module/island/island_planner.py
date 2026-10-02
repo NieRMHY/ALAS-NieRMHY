@@ -495,15 +495,16 @@ def plan_shop(shop, shop_level='diamond', season=None, warehouse=None,
             break
         target = int(target)
         remaining = max(0, target - int(stock_have.get(name, 0)))
-        # 不再因为超预算就整个跳过：配置里写的是目标库存，游戏厨房本来就是几口锅
-        # 轮着做，超了就慢一点，不会把货架的单子挤掉（货架在上面已经排完了）。
-        # 这里只做提示，方便事后看出产能被压到什么程度。
+        # 严格按预算：货架必须优先（shelf_keep 在上面已经排完并占满了预算内的份额），
+        # 囤积只用剩下的产能，排不下就排队等下一轮——绝不能挤占上架销售。
+        # 用户口径：这个任务慢慢做就行，时间足够。
         _, _, minutes = production_requirements(shop, est + [(name, remaining)], economy)
         if minutes > budget:
             plan.notes.append(
                 f'囤积 {economy.cn_name(name)}x{target}（还差 {remaining}）：'
                 f'累计需 {minutes / 60:.1f} 时 > 预算 {budget / 60:.1f} 时，'
-                f'会拉长完成时间，但不挤占上架销售')
+                f'本轮排队等产能')
+            continue
         est = est + [(name, remaining)]
         meals = meals + [(name, target)]
         seen.add(name)
