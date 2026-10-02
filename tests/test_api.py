@@ -547,7 +547,15 @@ class ProducerCadenceTests(unittest.IsolatedAsyncioTestCase):
         session.subscription = SimpleNamespace(topics=['overview', 'instances'], instance='testpilot')
         session.event = AsyncMock()
         task = asyncio.create_task(session.producer())
-        await asyncio.sleep(2.2)
+        # Modify by MHY, 不用固定 sleep：周期是 overview 1s / instances 2s，首轮两者
+        # 都会采样（topic_seen 初值 0），此后每次 tick 采 overview、每两次采一次
+        # instances。原先睡满 2.2 秒，CI runner 上首轮偏慢时只跑完一轮就成了 1:1
+        # （真机 CI 实测失败：AssertionError: 1 not greater than 1）。
+        # 改成等实例列表采到 2 次再断言，此时 overview 必然至少多采一次。
+        loop = asyncio.get_running_loop()
+        deadline = loop.time() + 30
+        while counts['instances'] < 2 and loop.time() < deadline:
+            await asyncio.sleep(0.05)
         task.cancel()
         with self.assertRaises(asyncio.CancelledError):
             await task
