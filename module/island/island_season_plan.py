@@ -87,8 +87,14 @@ class IslandSeasonPlan(Island):
         # 旧实现是读完退出页面后再回头点，点击全部落在岛屿主页上（10-01 的 111 次、
         # 10-02 的 41 次零效果）；改成读完再重新进页面扫描也不稳，两次扫描撞上的
         # 屏不同，卡片可能恰好停在被屏幕下沿裁掉的位置而读不出状态。
+        # Add by MHY, 自动提交暂时停用（储备）。提交点击依赖赛季页的实时定位，
+        # 链路长且脆弱（前后返工三次）；改成「按任务需求 +20 生产」之后，物品攒够
+        # 就能在游戏里直接领，不再需要机器人代点。「可以提交」的邮件提醒仍然保留，
+        # 它现在是唯一的提示手段。
+        # 恢复时把下面两行的注释放开即可，_submit_on_screen 一整套逻辑都还在。
         self._submitted = set()
-        result = read_season_plan_page(self, season, on_cards=self._submit_on_screen)
+        # result = read_season_plan_page(self, season, on_cards=self._submit_on_screen)
+        result = read_season_plan_page(self, season)
         if not result:
             logger.warning('[岛屿-赛季任务] 未读到赛季任务，跳过')
             return
@@ -114,6 +120,8 @@ class IslandSeasonPlan(Island):
     def _submit_on_screen(self, cards):
         """
         读取过程中就地提交达标的卡片（开关默认关闭）。
+
+        当前停用，作为储备保留（见 _run 里的说明）。
 
         Add by MHY, 必须就地提交：卡片此刻就在这一屏，坐标是现场读到的，可以直接点。
         旧实现是读完退出页面后再按记录坐标点，点击全部落在岛屿主页上（真机 10-01 的

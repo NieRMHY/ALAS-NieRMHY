@@ -31,15 +31,22 @@ class TestSeasonStockpile(unittest.TestCase):
         self.tmp.cleanup()
 
     def test_collects_gaps_by_shop(self):
+        """按「任务需求 + SEASON_BUFFER」排产，不是按需求本身。"""
+        buffer = self.module.SEASON_BUFFER
         self.write({
             '营养组合': {'item': 'carrot_omelette', 'have': 0, 'need': 100, 'claimed': False},
             '拿铁时光': {'item': 'latte', 'have': 5, 'need': 100, 'claimed': False},
             '甜蜜引擎': {'item': 'apple_juice', 'have': 250, 'need': 250, 'claimed': False},
+            '咖啡供应': {'item': 'iced_coffee', 'have': 250 + buffer, 'need': 250,
+                         'claimed': False},
         })
         result = self.module.season_stockpile()
-        self.assertEqual(result.get('grill'), {'carrot_omelette': 100})
-        self.assertEqual(result.get('juu_coffee'), {'latte': 100})
-        self.assertNotIn('teahouse', result, '已攒够的不该再排')
+        self.assertEqual(result.get('grill'), {'carrot_omelette': 100 + buffer})
+        self.assertEqual(result.get('juu_coffee'), {'latte': 100 + buffer})
+        self.assertEqual(result.get('teahouse'), {'apple_juice': 250 + buffer},
+                         '刚好卡在需求线上还不够，要留出余量')
+        self.assertNotIn('iced_coffee', result.get('juu_coffee', {}),
+                         '已经到需求+余量就不该再排')
 
     def test_materials_and_claimed_are_skipped(self):
         self.write({
@@ -67,7 +74,8 @@ class TestSeasonStockpile(unittest.TestCase):
         with patch.object(island_away_cook, 'load_notified', lambda: notified):
             result = self.module.season_stockpile('autumn')
         self.assertNotIn('salad', result.get('restaurant', {}), '已提交的不该再排产')
-        self.assertEqual(result.get('grill'), {'carrot_omelette': 100})
+        self.assertEqual(result.get('grill'),
+                         {'carrot_omelette': 100 + self.module.SEASON_BUFFER})
 
     def test_done_filter_needs_season(self):
         """不传赛季时判断不了 done，退回「只按页面读数排」的旧行为。"""
@@ -80,7 +88,18 @@ class TestSeasonStockpile(unittest.TestCase):
         notified = {'autumn': {'salad': {'done': True}}}
         with patch.object(island_away_cook, 'load_notified', lambda: notified):
             result = self.module.season_stockpile()
-        self.assertEqual(result.get('restaurant'), {'salad': 100})
+        self.assertEqual(result.get('restaurant'),
+                         {'salad': 100 + self.module.SEASON_BUFFER})
+
+    def test_buffer_keeps_a_margin_after_submit(self):
+        """提交会把物品扣走，余量保证扣完还剩一点，不会立刻又排产。"""
+        buffer = self.module.SEASON_BUFFER
+        self.assertGreater(buffer, 0)
+        self.write({
+            '健康饮食': {'item': 'salad', 'have': 100, 'need': 100, 'claimed': False},
+        })
+        self.assertEqual(self.module.season_stockpile().get('restaurant'),
+                         {'salad': 100 + buffer})
 
     def test_missing_file_returns_empty(self):
         self.assertEqual(self.module.season_stockpile(), {})

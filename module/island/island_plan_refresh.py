@@ -34,6 +34,12 @@ PAGE_FILE = state_file('island_season_plan_page.json')
 GENERATED_FILE = state_file('island_plan_generated.json')
 
 
+# 赛季任务物品的囤积余量（Add by MHY）：按任务提交数量生产，再多留这么多。
+# 提交会把物品扣走，留一点免得刚达标就被别的菜谱消耗掉、又要反复补产。
+# 真机实测不设余量时严重超产：蔬菜沙拉 102、苹果汁 317，而任务只需要 100 / 250。
+SEASON_BUFFER = 20
+
+
 def season_stockpile(season=None):
     """
     从赛季页面读数算出各店还要生产到什么数量（排进基础需求用）。
@@ -47,6 +53,8 @@ def season_stockpile(season=None):
     别的菜谱消耗到需求线以下时又会被排回生产目标——真机上「提交过了还在产」
     就是这么来的。蔬菜沙拉真机实测：done 之后库存 2100 只是碰巧高过需求 100 才
     没被排产，掉下来就会被重新排进去。
+
+    目标数量是「任务需求 + SEASON_BUFFER」：按需生产，不再让物品无限堆积。
 
     Args:
         season: 赛季；传入时排除已提交的物品
@@ -73,10 +81,11 @@ def season_stockpile(season=None):
         shop = ECONOMY_PRODUCTS[item].get('shop')
         need = int(info.get('need') or 0)
         have = int(info.get('have') or 0)
-        if not shop or need <= have:
+        if not shop or need + SEASON_BUFFER <= have:
             continue
-        # 目标给的是总量：planner 按目标库存排产
-        stockpile.setdefault(shop, {})[item] = need
+        # 目标给的是总量：planner 按目标库存排产。多留 SEASON_BUFFER 份余量，
+        # 刚好够提交一次又不至于堆在仓库里。
+        stockpile.setdefault(shop, {})[item] = need + SEASON_BUFFER
     return stockpile
 
 
