@@ -34,7 +34,7 @@ PAGE_FILE = state_file('island_season_plan_page.json')
 GENERATED_FILE = state_file('island_plan_generated.json')
 
 
-def season_stockpile():
+def season_stockpile(season=None):
     """
     从赛季页面读数算出各店还要生产到什么数量（排进基础需求用）。
 
@@ -43,10 +43,19 @@ def season_stockpile():
     一直是 0，赛季任务卡死。页面读数是权威来源；材料类（农田牧场产物）没有
     对应店铺，交给农田牧场，直接跳过。
 
+    Add by MHY, 已提交（done）的物品必须排除：提交后本季不再需要它，否则库存被
+    别的菜谱消耗到需求线以下时又会被排回生产目标——真机上「提交过了还在产」
+    就是这么来的。蔬菜沙拉真机实测：done 之后库存 2100 只是碰巧高过需求 100 才
+    没被排产，掉下来就会被重新排进去。
+
+    Args:
+        season: 赛季；传入时排除已提交的物品
+
     Returns:
         dict: {店铺: {物品: 目标数量}}，没有缺口时返回 {}
     """
     import json
+    from module.island.island_away_cook import done_items, load_notified
     from module.island.island_economy import ECONOMY_PRODUCTS
 
     try:
@@ -55,10 +64,11 @@ def season_stockpile():
     except (OSError, ValueError):
         return {}
 
+    done = done_items(season, load_notified()) if season else set()
     stockpile = {}
     for info in data.values():
         item = info.get('item')
-        if not item or info.get('claimed') or item not in ECONOMY_PRODUCTS:
+        if not item or item in done or info.get('claimed') or item not in ECONOMY_PRODUCTS:
             continue
         shop = ECONOMY_PRODUCTS[item].get('shop')
         need = int(info.get('need') or 0)
@@ -141,10 +151,11 @@ def refresh_plan_if_requested(config):
         return False
 
     logger.hr('岛屿方案刷新', level=2)
-    stockpile = season_stockpile()
+    # 赛季页读取已独立成 IslandSeasonPlan 任务（不再搭在每个岛屿任务上）
+    season = config.cross_get(SEASON_KEY, default=None)
+    # 排产目标要排除本赛季已提交的物品，否则库存掉下来会被重新排产
+    stockpile = season_stockpile(season)
     try:
-        # 赛季页读取已独立成 IslandSeasonPlan 任务（不再搭在每个岛屿任务上）
-        season = config.cross_get(SEASON_KEY, default=None)
         verified_only = bool(config.cross_get(VERIFIED_KEY, default=True))
         shelf_slots = int(config.cross_get(SHELF_KEY, default=5) or 5)
         if config.cross_get(MINE_KEY, default=True):

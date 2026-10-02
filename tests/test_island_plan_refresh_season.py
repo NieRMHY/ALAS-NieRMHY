@@ -48,5 +48,39 @@ class TestSeasonStockpile(unittest.TestCase):
         })
         self.assertEqual(self.module.season_stockpile(), {})
 
+    def test_done_items_are_skipped(self):
+        """已提交（done）的物品不再排产。
+
+        真机：蔬菜沙拉 done 之后库存 2100 只是碰巧高过需求 100 才没被排产，
+        一旦被别的菜谱消耗到 100 以下就会被重新排进生产目标——这正是
+        「提交过了还在产」的成因之一。
+        """
+        from unittest.mock import patch
+        from module.island import island_away_cook
+
+        self.write({
+            '健康饮食': {'item': 'salad', 'have': 0, 'need': 100, 'claimed': False},
+            '营养组合': {'item': 'carrot_omelette', 'have': 0, 'need': 100,
+                         'claimed': False},
+        })
+        notified = {'autumn': {'salad': {'done': True, 'notified': True, 'last': 100}}}
+        with patch.object(island_away_cook, 'load_notified', lambda: notified):
+            result = self.module.season_stockpile('autumn')
+        self.assertNotIn('salad', result.get('restaurant', {}), '已提交的不该再排产')
+        self.assertEqual(result.get('grill'), {'carrot_omelette': 100})
+
+    def test_done_filter_needs_season(self):
+        """不传赛季时判断不了 done，退回「只按页面读数排」的旧行为。"""
+        from unittest.mock import patch
+        from module.island import island_away_cook
+
+        self.write({
+            '健康饮食': {'item': 'salad', 'have': 0, 'need': 100, 'claimed': False},
+        })
+        notified = {'autumn': {'salad': {'done': True}}}
+        with patch.object(island_away_cook, 'load_notified', lambda: notified):
+            result = self.module.season_stockpile()
+        self.assertEqual(result.get('restaurant'), {'salad': 100})
+
     def test_missing_file_returns_empty(self):
         self.assertEqual(self.module.season_stockpile(), {})
