@@ -335,6 +335,7 @@ class ShopPlan(object):
 def plan_shop(shop, shop_level='diamond', season=None, warehouse=None,
               meals_slots=MEAL_SLOTS, shelf_slots=None,
               economy=None, producible=None, exclude=None, shelf_pool=None,
+              stock_have=None,
               verified=None, manual_shelf=None, capacity_ratio=0.9,
               stockpile=None):
     """
@@ -469,13 +470,21 @@ def plan_shop(shop, shop_level='diamond', season=None, warehouse=None,
         seen.add(name)
 
     # ---- 空闲产能生产囤积物（赛季任务物品：攒够就行，不上架）----
-    # Add by MHY, 这里**不**排除「已经是货架商品原料」的物品：原料需求是按货架
-    # 销量算的，和赛季任务要交的数量根本不是一个量级，跳过就永远攒不够。
-    # 真机实测禽肉快炒一直停在 20/100、便携快餐停在 20/50，就是因为它们分别是
-    # 能量双拼套餐、烤肉狂欢的原料，被上面的 seen 挡在囤积之外。
-    # 囤积是追加需求，merge_requirements 按 max 合并，不会重复生产；产能不够时
-    # 下面的 budget 检查会跳过，所以正常上架销售不受影响。
-    for name, target in sorted(stockpile.items()):
+    # Add by MHY, 三条规则：
+    #  1) 不排除「已经是货架商品原料」的物品：原料需求按货架销量算，和赛季任务要
+    #     交的数量不是一个量级，跳过就永远攒不够（真机：禽肉快炒停在 20/100）。
+    #  2) 按「还差得最少」排序，一个个做：先做完的先释放产能。真机 grill 一次要
+    #     碳烤肉串(差 22 个=8.3 时) + 爆炒禽肉(差 100 个=76 时)，整店预算只有
+    #     43.2 时，一起排必然都排不下；顺序做则前者做完产能就让给后者。
+    #  3) 估算按「还差多少」而不是目标总量：仓库已有 248/270 时不该按从零做 270
+    #     来估（真机会因此误判产能不足）。排不下就按剩余产能做一部分。
+    # 囤积是追加需求，merge_requirements 按 max 合并不会重复生产，正常上架销售
+    # 不受影响——shelf 先定，囤积只用剩下的产能。
+    stock_have = dict(stock_have or {})
+    est = list(meals)          # 估算用清单：囤积项记「还差多少」
+    for name, target in sorted(
+            stockpile.items(),
+            key=lambda kv: (max(0, int(kv[1]) - int(stock_have.get(kv[0], 0))), kv[0])):
         if name not in producible or name in exclude:
             continue
         # 赛季物品不受「只排已验证商品」限制：它们没有别的生产途径，
@@ -484,16 +493,21 @@ def plan_shop(shop, shop_level='diamond', season=None, warehouse=None,
         # 真正的不可能生产由 exclude（island_unproducible.json）兜底。
         if len(meals) >= meals_slots:
             break
-        candidate = meals + [(name, int(target))]
-        _, _, minutes = production_requirements(shop, candidate, economy)
+        target = int(target)
+        remaining = max(0, target - int(stock_have.get(name, 0)))
+        # 不再因为超预算就整个跳过：配置里写的是目标库存，游戏厨房本来就是几口锅
+        # 轮着做，超了就慢一点，不会把货架的单子挤掉（货架在上面已经排完了）。
+        # 这里只做提示，方便事后看出产能被压到什么程度。
+        _, _, minutes = production_requirements(shop, est + [(name, remaining)], economy)
         if minutes > budget:
             plan.notes.append(
-                f'囤积 {economy.cn_name(name)}x{int(target)}：剩余产能不足'
-                f'（{minutes / 60:.1f} 时 > 预算 {budget / 60:.1f} 时），本轮不排')
-            continue
-        meals = candidate
+                f'囤积 {economy.cn_name(name)}x{target}（还差 {remaining}）：'
+                f'累计需 {minutes / 60:.1f} 时 > 预算 {budget / 60:.1f} 时，'
+                f'会拉长完成时间，但不挤占上架销售')
+        est = est + [(name, remaining)]
+        meals = meals + [(name, target)]
         seen.add(name)
-        plan.stockpile.append((name, int(target)))
+        plan.stockpile.append((name, target))
     plan.meals = meals
     plan_names = {n for n, _ in plan.meals}
     if plan_names:
@@ -504,7 +518,7 @@ def plan_shop(shop, shop_level='diamond', season=None, warehouse=None,
 def plan_all(shop_level='diamond', season=None, warehouse=None,
              shelf_slots=None, shops=None, extra_exclude=None,
              verified_only=False, manual_shelf=None, capacity_ratio=0.9,
-             stockpile=None):
+             stockpile=None, stock_have=None):
     """
     生成全部店铺方案。
 
@@ -534,7 +548,8 @@ def plan_all(shop_level='diamond', season=None, warehouse=None,
                               verified=verified.get(shop) if verified_only else None,
                               manual_shelf=(manual_shelf or {}).get(shop),
                               capacity_ratio=capacity_ratio,
-                              stockpile=(stockpile or {}).get(shop))
+                              stockpile=(stockpile or {}).get(shop),
+                              stock_have=stock_have)
     # ---- 跨店原料回填：别店需要的原料排到生产店 ----
     for shop in order:
         _, cross, _ = production_requirements(shop, out[shop].meals, economy)

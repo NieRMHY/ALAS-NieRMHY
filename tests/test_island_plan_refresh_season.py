@@ -101,6 +101,20 @@ class TestSeasonStockpile(unittest.TestCase):
         self.assertEqual(self.module.season_stockpile().get('restaurant'),
                          {'salad': 100 + buffer})
 
+    def test_season_have_feeds_capacity_estimate(self):
+        """产能估算要按「还差多少」：仓库已有 248/270 不该按从零做 270 估。
+
+        真机：碳烤肉串就差 22 个却被估成 102 时，远超整店预算 43.2 时而被误判
+        「产能不足」整个跳过。
+        """
+        self.write({
+            '营养组合': {'item': 'carrot_omelette', 'have': 86, 'need': 100,
+                         'claimed': False},
+            '健康饮食': {'item': 'salad', 'have': 2100, 'need': 100, 'claimed': None},
+        })
+        self.assertEqual(self.module.season_have(),
+                         {'carrot_omelette': 86, 'salad': 2100})
+
     def test_missing_file_returns_empty(self):
         self.assertEqual(self.module.season_stockpile(), {})
 

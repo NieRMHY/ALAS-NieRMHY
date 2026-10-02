@@ -148,6 +148,27 @@ def _manual_shelf(config):
     return manual
 
 
+def season_have():
+    """
+    赛季页面读数里各物品的当前数量（供 planner 按「还差多少」估算产能）。
+
+    不按目标总量估算：仓库已有 248/270 时，按从零做 270 估会被误判产能不足
+    （真机：碳烤肉串就差 22 个却被估成 102 时，远超整店预算 43.2 时）。
+
+    Returns:
+        dict: {物品: 当前数量}
+    """
+    import json
+
+    try:
+        with open(PAGE_FILE, encoding='utf-8') as f:
+            data = json.load(f)
+    except (OSError, ValueError):
+        return {}
+    return {info['item']: int(info.get('have') or 0)
+            for info in data.values() if info.get('item')}
+
+
 def load_gap():
     """上次自动请求刷新时记录的赛季缺口与已提交集合。"""
     import json
@@ -240,6 +261,8 @@ def refresh_plan_if_requested(config):
     season = config.cross_get(SEASON_KEY, default=None)
     # 排产目标要排除本赛季已提交的物品，否则库存掉下来会被重新排产
     stockpile = season_stockpile(season)
+    # 产能估算按「还差多少」，不是按目标总量
+    stock_have = season_have()
     try:
         verified_only = bool(config.cross_get(VERIFIED_KEY, default=True))
         shelf_slots = int(config.cross_get(SHELF_KEY, default=5) or 5)
@@ -267,7 +290,7 @@ def refresh_plan_if_requested(config):
                         f"{ {SHOP_CN_NAMES.get(k, k): v for k, v in stockpile.items()} }")
         plans = plan_all(season=season, shelf_slots=shelf_slots,
                          verified_only=verified_only, manual_shelf=manual_shelf,
-                         stockpile=stockpile)
+                         stockpile=stockpile, stock_have=stock_have)
         values = config_key_values(plans)
         config.cross_set_many(values)
         save_generated(plans)
