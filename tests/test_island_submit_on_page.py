@@ -1,87 +1,99 @@
-"""自动提交必须「在赛季页里、按现场定位的坐标」点击（Add by MHY）。
+"""自动提交必须「在读到卡片的那一屏就地点击」（Add by MHY）。
 
-旧实现拿到的是读取阶段记录的 row/col/offset，而 read_season_plan_page 结束时
-已经退回岛屿页——于是点击全落在岛屿主页上。真机代价：10-01 的 111 次、10-02 的
-41 次点击零效果，营养组合停在 100/100 九个小时、被点 10 次也没领到。
+历史坑：旧实现是读完退出赛季页后再按读取阶段记录的 row/col/offset 点绝对坐标，
+点击全部落在岛屿主页上——真机 10-01 的 111 次、10-02 的 41 次零效果，营养组合
+停在 100/100 九个小时、被点 10 次也没领到。
+
+改成「读完再重新进页面扫描」也不稳：两次扫描的起始滚动位置不同，卡片可能恰好停在
+被屏幕下沿裁掉的位置（claimed 为 None），读不出状态就没法点。
 """
 import os
 import sys
 import unittest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 sys.path.insert(0, '.')
 
 from module.island import island_season_plan as M
-from module.island import island_season_plan_reader as R
 
 
-def make_card(claimed=False, task='营养组合'):
-    return {'task': task, 'item': 'carrot_omelette', 'have': 100, 'need': 100,
+def make_task(submit=True):
+    task = M.IslandSeasonPlan.__new__(M.IslandSeasonPlan)
+    task.config = MagicMock()
+    task.config.IslandSeasonPlan_Submit = submit
+    task._submitted = set()
+    task.clicks = []
+    task._submit_card = lambda name, info: task.clicks.append(name) or True
+    return task
+
+
+def make_card(task='营养组合', claimed=False, have=100, need=100):
+    return {'task': task, 'item': 'carrot_omelette', 'have': have, 'need': need,
             'claimed': claimed, 'row': 0, 'col': 0, 'offset': 0}
 
 
-class TestSubmitHappensOnSeasonPage(unittest.TestCase):
+class TestSubmitOnScreen(unittest.TestCase):
 
-    def _run_submit(self, card, ready=None):
-        events = []
-        task = M.IslandSeasonPlan.__new__(M.IslandSeasonPlan)
-        task.config = MagicMock()
+    def test_clicks_ready_card(self):
+        task = make_task()
+        task._submit_on_screen([make_card()])
+        self.assertEqual(task.clicks, ['营养组合'])
 
-        def fake_submit(name, info):
-            events.append(('click', name))
+    def test_skips_unknown_state(self):
+        """徽章被屏幕下沿裁掉（None）时状态未知，不动手。"""
+        task = make_task()
+        task._submit_on_screen([make_card(claimed=None)])
+        self.assertEqual(task.clicks, [])
 
-        task._submit_card = fake_submit
+    def test_skips_already_claimed(self):
+        task = make_task()
+        task._submit_on_screen([make_card(claimed=True)])
+        self.assertEqual(task.clicks, [])
 
-        with patch.object(R, 'enter_season_page',
-                          lambda island: (events.append(('enter',)), True)[1]), \
-             patch.object(R, 'read_screen',
-                          lambda island, season: (events.append(('read',)), [card])[1]), \
-             patch.object(R, 'leave_season_page',
-                          lambda island: (events.append(('leave',)), True)[1]), \
-             patch.object(R, 'scroll_to_top', lambda island: events.append(('top',))), \
-             patch.object(R, 'scroll_list', lambda island: events.append(('scroll',))), \
-             patch.object(M, 'SeasonConfig') as season_cfg:
-            season_cfg.return_value.season = 'autumn'
-            if ready is None:
-                ready = [('营养组合', 'carrot_omelette', 100, 100)]
-            task._submit_ready(ready)
-        return events
+    def test_skips_not_reached(self):
+        task = make_task()
+        task._submit_on_screen([make_card(have=99)])
+        self.assertEqual(task.clicks, [])
 
-    def test_enters_page_before_clicking(self):
-        events = self._run_submit(make_card())
-        kinds = [e[0] for e in events]
-        self.assertIn('enter', kinds)
-        self.assertIn('click', kinds)
-        self.assertLess(kinds.index('enter'), kinds.index('click'),
-                        '必须先进入赛季页再点击，否则点击落在岛屿主页上')
-        self.assertEqual(kinds[-1], 'leave', '无论如何都要退回岛屿页')
+    def test_skips_card_without_task(self):
+        task = make_task()
+        task._submit_on_screen([make_card(task=None)])
+        self.assertEqual(task.clicks, [])
 
-    def test_clicks_relocated_card(self):
-        """点击用的是现场重新读到的卡片位置，不是读取阶段留下的坐标。"""
-        card = make_card()
-        card['offset'] = 77
-        events = self._run_submit(card)
-        self.assertIn(('click', '营养组合'), events)
+    def test_clicks_once_per_task(self):
+        """同一张卡在多屏重复读到，只点一次。"""
+        task = make_task()
+        task._submit_on_screen([make_card()])
+        task._submit_on_screen([make_card()])
+        self.assertEqual(task.clicks, ['营养组合'])
 
-    def test_unknown_state_is_not_clicked(self):
-        """徽章被裁掉（None）不该动手。"""
-        events = self._run_submit(make_card(claimed=None))
-        self.assertNotIn('click', [e[0] for e in events])
+    def test_disabled_switch_does_nothing(self):
+        task = make_task(submit=False)
+        task._submit_on_screen([make_card()])
+        self.assertEqual(task.clicks, [])
 
-    def test_already_claimed_is_not_clicked(self):
-        events = self._run_submit(make_card(claimed=True))
-        self.assertNotIn('click', [e[0] for e in events])
 
-    def test_leaves_page_even_when_target_missing(self):
-        """页面上找不到目标也要退回岛屿页，不能把人留在赛季页。"""
-        events = self._run_submit(make_card(task=None), ready=[('不存在的任务', None, 1, 1)])
-        kinds = [e[0] for e in events]
-        self.assertNotIn('click', kinds)
-        self.assertEqual(kinds[-1], 'leave')
+class TestReadPassInvokesCallback(unittest.TestCase):
+    """读取器每读完一屏要回调一次——提交靠它拿到现场坐标。"""
 
-    def test_no_enter_when_nothing_ready(self):
-        events = self._run_submit(make_card(), ready=[])
-        self.assertEqual(events, [])
+    def test_on_cards_called_per_screen(self):
+        from test_island_season_plan_page import FakeIsland, make_image, make_ocr
+        from module.island.island_season_plan_reader import read_season_plan_page
+
+        seen = []
+        island = FakeIsland(make_image())
+        read_season_plan_page(island, 'autumn', max_scrolls=2, ocr=make_ocr(),
+                              on_cards=seen.append)
+        self.assertTrue(seen, '每读完一屏都应回调一次')
+        self.assertTrue(any(c.get('task') for cards in seen for c in cards))
+
+    def test_callback_optional(self):
+        from test_island_season_plan_page import FakeIsland, make_image, make_ocr
+        from module.island.island_season_plan_reader import read_season_plan_page
+
+        island = FakeIsland(make_image())
+        result = read_season_plan_page(island, 'autumn', max_scrolls=1, ocr=make_ocr())
+        self.assertIn('甜蜜引擎', result)
 
 
 if __name__ == '__main__':

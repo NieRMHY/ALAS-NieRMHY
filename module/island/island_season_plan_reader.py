@@ -547,25 +547,8 @@ def enter_season_page(island):
     return True
 
 
-def read_screen(island, season, ocr=_default_ocr):
-    """
-    读当前一屏的任务卡片（不导航、不滚动）。
-
-    提交时要用它重新定位卡片：读取阶段的坐标是当时那一屏的位置，列表一滚就失效，
-    不能拿来点击（真机踩过，111 次点击全落在岛屿主页上）。
-
-    Args:
-        island: 岛屿任务实例
-        season: 赛季
-        ocr: 可调用对象 ocr(image, area, lang) -> str
-
-    Returns:
-        list[dict]: read_cards 的结果
-    """
-    return _read_screen(island, ocr, season)
-
-
-def read_season_plan_page(island, season, max_scrolls=MAX_SCROLLS, ocr=_default_ocr):
+def read_season_plan_page(island, season, max_scrolls=MAX_SCROLLS, ocr=_default_ocr,
+                         on_cards=None):
     """
     进入赛季「开发计划」页面并读取全部任务卡片。
 
@@ -574,6 +557,9 @@ def read_season_plan_page(island, season, max_scrolls=MAX_SCROLLS, ocr=_default_
         season: 赛季
         max_scrolls: 最多向下翻几屏
         ocr: 可调用对象 ocr(image, area, lang) -> str，便于离线测试注入
+        on_cards: 每读完一屏调用一次 on_cards(cards)。提交要靠它就地完成：
+            卡片此刻就在这一屏、坐标是现场读到的；等整页读完再回头找，列表已经
+            滚走，两次扫描撞上的屏还不一样（真机踩过，10-01 的 111 次点击全落空）
 
     Returns:
         dict: {任务名: {'item', 'have', 'need'}}；读取失败返回 {}
@@ -619,6 +605,8 @@ def read_season_plan_page(island, season, max_scrolls=MAX_SCROLLS, ocr=_default_
                 prev['claimed'] = merged
         logger.info(f"[岛屿-赛季计划] 第 {index + 1} 屏读到 {new} 个新任务，"
                     f"累计 {len(result)} 个")
+        if on_cards is not None:
+            on_cards(cards)
         if new:
             empty_screens = 0
         else:

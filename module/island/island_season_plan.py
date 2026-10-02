@@ -83,10 +83,20 @@ class IslandSeasonPlan(Island):
             logger.warning('[岛屿-赛季任务] 未配置赛季，跳过')
             return
 
-        result = read_season_plan_page(self, season)
+        # Add by MHY, 提交在读取过程中就地完成：卡片就在那一屏时坐标才准。
+        # 旧实现是读完退出页面后再回头点，点击全部落在岛屿主页上（10-01 的 111 次、
+        # 10-02 的 41 次零效果）；改成读完再重新进页面扫描也不稳，两次扫描撞上的
+        # 屏不同，卡片可能恰好停在被屏幕下沿裁掉的位置而读不出状态。
+        self._submitted = set()
+        result = read_season_plan_page(self, season, on_cards=self._submit_on_screen)
         if not result:
             logger.warning('[岛屿-赛季任务] 未读到赛季任务，跳过')
             return
+        # 刚就地交掉的卡片，页面上马上会变成已领取；先按已领取算，
+        # 免得同一轮刚交完又发一封「可以提交」
+        for task in self._submitted:
+            if task in result:
+                result[task]['claimed'] = True
 
         self._log_progress(result)
         self._save_page(result)
@@ -99,60 +109,37 @@ class IslandSeasonPlan(Island):
             # 用页面上的「已领取」同步已完成状态（之前这段被误插到 _submit_card
             # 的 return 之后，成了死代码，F821 报 season/result 未定义才发现）
             self._sync_done(season, result)
-        if self.config.IslandSeasonPlan_Submit and ready:
-            self._submit_ready(ready)
 
-    def _submit_ready(self, ready):
+
+    def _submit_on_screen(self, cards):
         """
-        自动提交已达标的任务（开关默认关闭）。
+        读取过程中就地提交达标的卡片（开关默认关闭）。
 
-        Add by MHY, 必须重新进入赛季页、在页面里重新定位卡片再点：
-        read_season_plan_page 结束时已经退回岛屿页，而读到的坐标只对当时那一屏
-        有效。旧实现直接按记录坐标点击，于是所有点击都落在岛屿主页上——真机
-        10-01 的 111 次、10-02 的 41 次点击全部无效，营养组合停在 100/100
-        九个小时、被点了 10 次也没领到。
+        Add by MHY, 必须就地提交：卡片此刻就在这一屏，坐标是现场读到的，可以直接点。
+        旧实现是读完退出页面后再按记录坐标点，点击全部落在岛屿主页上（真机 10-01 的
+        111 次、10-02 的 41 次零效果，营养组合停在 100/100 九个小时没领到）；改成
+        「读完再重新进页面扫描」也不稳——两次扫描撞上的屏不同，卡片可能恰好停在被
+        屏幕下沿裁掉的位置，读不出状态就没法点。
 
         Args:
-            ready: ready_to_submit() 的结果 [(任务名, 物品, 当前, 需求)]
+            cards: 本屏 read_cards 的结果
         """
-        from module.island.island_season_plan_reader import (
-            MAX_SCROLLS,
-            enter_season_page,
-            leave_season_page,
-            read_screen,
-            scroll_list,
-            scroll_to_top,
-        )
-
-        targets = {task for task, _, _, _ in ready}
-        if not targets:
+        if not self.config.IslandSeasonPlan_Submit:
             return
-        season = SeasonConfig(self.config).season
-        if not enter_season_page(self):
-            logger.warning('[岛屿-赛季任务] 无法进入赛季页，跳过本次提交')
-            return
-        try:
-            scroll_to_top(self)
-            done = set()
-            for _ in range(MAX_SCROLLS):
-                cards = read_screen(self, season)
-                for card in cards:
-                    task = card.get('task')
-                    if task not in targets or task in done:
-                        continue
-                    if card.get('claimed') is not False:
-                        # 徽章被屏幕下沿裁掉（None）或已领取，都不动手
-                        continue
-                    if not self._submit_card(task, card):
-                        return
-                    done.add(task)
-                    if done >= targets:
-                        return
-                scroll_list(self)
-            logger.warning('[岛屿-赛季任务] 页面上没找到: ' +
-                           '、'.join(sorted(targets - done)))
-        finally:
-            leave_season_page(self)
+        for card in cards:
+            task = card.get('task')
+            if not task or task in self._submitted:
+                continue
+            if card.get('claimed') is not False:
+                # None 是徽章被屏幕下沿裁掉，状态未知；True 是已领取，都不动手
+                continue
+            need = int(card.get('need') or 0)
+            if not need or int(card.get('have') or 0) < need:
+                continue
+            self._submitted.add(task)
+            if not self._submit_card(task, card):
+                logger.warning(f'[岛屿-赛季任务] {task} 缺少卡片位置，本轮不再提交')
+                return
 
     def _submit_card(self, task, info):
         """
