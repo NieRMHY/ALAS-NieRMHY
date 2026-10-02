@@ -10,6 +10,14 @@ from module.device.platform.utils import cached_property, iter_folder
 
 
 def abspath(path):
+    """将路径转换为规范化的绝对路径并使用正斜杠。
+
+    Args:
+        path (str): 待转换路径。
+
+    Returns:
+        str: 正斜杠分隔的绝对路径。
+    """
     return os.path.abspath(path).replace('\\', '/')
 
 
@@ -219,6 +227,11 @@ class EmulatorBase:
         pass
 
     def __init__(self, path):
+        """初始化模拟器基础对象。
+
+        Args:
+            path (str): 模拟器可执行文件路径。
+        """
         # .exe 文件路径
         self.path = path.replace('\\', '/')
         # 模拟器安装目录
@@ -245,6 +258,15 @@ class EmulatorBase:
         return True
 
     def abspath(self, path, folder=None):
+        """获取相对于模拟器目录或指定目录的绝对路径。
+
+        Args:
+            path (str): 相对路径。
+            folder (str, optional): 基准目录，默认为模拟器安装目录。
+
+        Returns:
+            str: 解析后的绝对路径。
+        """
         if folder is None:
             folder = self.dir
         return abspath(os.path.join(folder, path))

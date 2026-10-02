@@ -2188,8 +2188,8 @@
       "help": "打开后，前排等级限制改为30级以上。若为困难模式（如CD图）则改为70级。"
     },
     "DelayTaskIFNoFlagship": {
-      "name": "没有可更换的旗舰时推迟任务",
-      "help": "更换旗舰时，若找不到满足条件的白皮航母，则推迟任务"
+      "name": "没有合适舰船时推迟任务",
+      "help": "开启：找不到符合等级等条件的替换舰船时推迟任务。关闭：使用当前舰队继续出击，战后再尝试换船。情绪不足或换船、装备交接异常时仍会中止。"
     },
     "CommissionLimit": {
       "name": "防止高价值委托数量过多",
@@ -2611,7 +2611,11 @@
     },
     "MinLevel": {
       "name": "仅添加等级 >= X 的角色",
-      "help": ""
+      "help": "0 表示不限制"
+    },
+    "MaxLevel": {
+      "name": "仅添加等级 <= X 的角色",
+      "help": "0 表示不限制；与最低等级冲突时两者均按 0（关闭）处理"
     }
   },
   "Research": {
@@ -3993,7 +3997,7 @@
     },
     "MinimumActionPointReserve": {
       "name": "保留 X 点行动力",
-      "help": "搏一搏，单车变摩托，雪风大人已经把幸运分给指挥官了，上吧！"
+      "help": "侵蚀一最低保留行动力，月初200赌明石，月末500打跨月"
     },
     "ExecuteFixedPatrolScan": {
       "name": "舰队强制移动",
@@ -4007,7 +4011,7 @@
     },
     "Cl1Filter": {
       "name": "明石购买筛选",
-      "help": "默认只购买体力。如果要同时购买紫币，设置为 'ActionPoint > PurpleCoins'"
+      "help": "明石商店过滤器，默认只买体力：ActionPoint。如果要购买紫币：PurpleCoins，都买设置为 'ActionPoint > PurpleCoins'"
     },
     "RecordNonCL1AP": {
       "name": "统计非侵蚀1来源体力",

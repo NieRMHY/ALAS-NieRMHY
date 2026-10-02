@@ -40,6 +40,20 @@ SEASONAL_HANDMADE_ITEMS = {
 
 
 class IslandManufacture(IslandShopBase):
+    """岛屿制造工坊自动化管理器。
+
+    继承 IslandShopBase，管理木料加工、电子加工、工业生产和手工制作四大区域的自动化排产。
+
+    Attributes:
+        shop_type (str): 店铺类型标识。
+        time_prefix (str): 岗位完成时间前缀。
+        post_manage_swipe_count (int): 岗位管理界面滑动次数。
+        filter_asset (str): 仓库筛选分类。
+        manufacture (dict): 制造业各分类的产品配置。
+        post_buttons (dict): 岗位按钮映射。
+        shop_items (list): 展平的所有产品配置列表。
+        unavailable_products (set): 当前批次已确认材料不足的产品集合。
+    """
     def __init__(self, *args, **kwargs):
         # 先初始化基类
         IslandShopBase.__init__(self, *args, **kwargs)
@@ -136,7 +150,11 @@ class IslandManufacture(IslandShopBase):
         self.unavailable_products = set()
 
     def _init_post_buttons(self):
-        """根据配置初始化岗位按钮"""
+        """根据配置初始化启用的制造业岗位按钮。
+
+        Returns:
+            dict[str, Button]: 岗位标识到按钮资源的映射字典。
+        """
         post_buttons = {}
         if self.config.WoodProcessing_Positions >= 1:
             post_buttons['ISLAND_WOOD_PROCESSING_POST1'] = ISLAND_WOOD_PROCESSING_POST1
@@ -161,7 +179,14 @@ class IslandManufacture(IslandShopBase):
         return post_buttons
 
     def get_idle_posts_by_category(self, category):
-        """获取指定类别的空闲岗位ID列表"""
+        """获取指定制造类别的空闲岗位 ID 列表。
+
+        Args:
+            category (str): 制造类别（'wood_processing'、'electronic_processing'、'industrial_production'、'handmade'）。
+
+        Returns:
+            list[str]: 属于该类别的空闲岗位 ID 列表。
+        """
         category_posts = []
         if category == 'wood_processing':
             category_posts = ['ISLAND_WOOD_PROCESSING_POST1', 'ISLAND_WOOD_PROCESSING_POST2']
@@ -177,10 +202,16 @@ class IslandManufacture(IslandShopBase):
                 if post_id in self.posts and self.posts[post_id]['status'] == 'idle']
 
     def select_product(self, product_selection, product_selection_check):
-        """
-        覆盖父类 select_product：
-        荠菜使用固定坐标点击；其他产品走父类逻辑（向下滑动搜索查找）。
-        靴子等产品位于列表下方，必须向下滑动列表才能找到。
+        """选择制造产品。
+
+        荠菜使用固定坐标点击；其他产品调用父类模板匹配与滑动搜索逻辑。
+
+        Args:
+            product_selection (Button): 产品选择按钮或坐标。
+            product_selection_check (Button): 产品选择确认检测按钮。
+
+        Returns:
+            bool: 是否成功选中目标产品。
         """
         # 荠菜 → 直接点击固定位置
         if product_selection == FIXED_SELECT_SHEPHERD_PURSE:
@@ -192,12 +223,16 @@ class IslandManufacture(IslandShopBase):
         return super().select_product(product_selection, product_selection_check)
 
     def select_product_with_material_check(self, post_id, product_list):
-        """选择产品并检查材料是否充足（覆盖基类方法）
+        """选择产品并检查材料是否充足。
 
-        靴子等产品位于列表下方，靠父类向下滑动搜索查找。
-        产品无法制作（材料不足或找不到）时，退出岗位重新进入，
-        重置列表滚动进度后再检测下一个产品。
-        本批内已确认材料不足的物品会记忆下来，后续岗位直接跳过。
+        按候选列表顺序尝试进入岗位选择；若材料不足则记忆并退出重置滑动，尝试下一个产品。
+
+        Args:
+            post_id (str): 目标岗位标识。
+            product_list (list[dict]): 待尝试的产品配置列表。
+
+        Returns:
+            dict | None: 成功安排生产的产品配置，全部失败则返回 None。
         """
         post_button = self.posts[post_id]['button']
 
@@ -316,7 +351,7 @@ class IslandManufacture(IslandShopBase):
         return None
 
     def schedule_manufacture(self):
-        """安排制造业生产（覆盖基类方法）"""
+        """安排制造业四大门类的生产排期。"""
         self.schedule_wood_processing()
 
         self.schedule_electronic_processing()
@@ -326,7 +361,7 @@ class IslandManufacture(IslandShopBase):
         self.schedule_handmade()
 
     def schedule_wood_processing(self):
-        """安排木料加工生产"""
+        """安排木料加工生产（生产文件柜）。"""
         idle_posts = self.get_idle_posts_by_category('wood_processing')
         if not idle_posts:
             return
@@ -336,7 +371,7 @@ class IslandManufacture(IslandShopBase):
             self.select_product_with_material_check(post_id, product_list)
 
     def schedule_electronic_processing(self):
-        """安排电子加工生产"""
+        """安排电子加工生产（生产滤芯）。"""
         idle_posts = self.get_idle_posts_by_category('electronic_processing')
         if not idle_posts:
             return
@@ -346,7 +381,7 @@ class IslandManufacture(IslandShopBase):
             self.select_product_with_material_check(post_id, product_list)
 
     def schedule_industrial_production(self):
-        """安排工业生产"""
+        """安排工业生产（根据铁钉库存切换铁钉或餐具生产）。"""
         idle_posts = self.get_idle_posts_by_category('industrial_production')
         if not idle_posts:
             return
@@ -364,7 +399,7 @@ class IslandManufacture(IslandShopBase):
             self.select_product_with_material_check(post_id, product_list)
 
     def schedule_handmade(self):
-        """安排手工生产"""
+        """安排手工制品生产（优先季节限定品、皮靴与皮革）。"""
         idle_posts = self.get_idle_posts_by_category('handmade')
         if not idle_posts:
             return
@@ -395,7 +430,14 @@ class IslandManufacture(IslandShopBase):
             self.select_product_with_material_check(post_id, product_list)
 
     def run(self):
-        """运行制造业逻辑（完全覆盖基类方法）"""
+        """运行制造业工坊自动化主流程。
+
+        巡检各岗位状态、收取成品、读取原料库存并为各类别空闲岗位分配生产，
+        最后计算并推迟调度时间。
+
+        Raises:
+            GameBugError: 遇到游戏内部错误需要重启时抛出。
+        """
         self.island_error = False
         # 每批生产开始时清空“材料不足”记忆，避免跨批沿用旧库存状态
         self.unavailable_products = set()
@@ -460,32 +502,68 @@ class IslandManufacture(IslandShopBase):
 
     # 以下方法重写以适配基类
     def process_meal_requirements(self, source_products):
-        """制造业不需要处理套餐需求"""
+        """处理套餐需求。
+
+        制造业无需拆解套餐，直接透传输入需求。
+
+        Args:
+            source_products (dict[str, int]): 输入需求。
+
+        Returns:
+            dict[str, int]: 原始需求。
+        """
         return source_products
 
     def schedule_production(self):
-        """覆盖：制造业使用自己的生产调度"""
+        """安排生产排期，调用制造业专属调度方法。"""
         self.schedule_manufacture()
 
     def process_away_cook(self):
-        """覆盖：制造业不需要常驻餐品模式"""
+        """处理常驻餐品模式，制造业无需常驻配置。"""
         # 制造业有自己的生产规则，不依赖常驻餐品
         self.to_post_products = {}
         logger.info("[岛屿-制造业] 制造业使用内置生产规则，不设置常驻餐品")
 
     def get_max_producible(self, product, requested_quantity, skip_zero_materials=False):
-        """覆盖：制造业的生产数量由材料检查决定"""
+        """获取产品最大可生产数量。
+
+        制造业生产数量由派遣界面材料检测决定。
+
+        Args:
+            product (str): 产品名称。
+            requested_quantity (int): 请求数量。
+            skip_zero_materials (bool, optional): 是否跳过零材料检查。
+
+        Returns:
+            int: 允许生产的数量。
+        """
         return requested_quantity
 
     def check_special_materials(self, product, batch_size):
-        """覆盖：制造业没有特殊材料检查"""
+        """检查特殊材料限制，制造业无特殊材料直接返回原批次数。
+
+        Args:
+            product (str): 产品名称。
+            batch_size (int): 计划批次数。
+
+        Returns:
+            int: 允许生产的批次数。
+        """
         return batch_size
 
     def apply_special_material_constraints(self, requirements):
-        """覆盖：制造业没有特殊材料限制"""
+        """应用特殊材料约束，制造业无特殊限制直接返回。
+
+        Args:
+            requirements (dict[str, int]): 原始需求映射。
+
+        Returns:
+            dict[str, int]: 调整后需求映射。
+        """
         return requirements
 
     def test(self):
+        """测试制造业配置状态。"""
         if self.config.Industrial_Positions > 1:
             logger.info(2)
 

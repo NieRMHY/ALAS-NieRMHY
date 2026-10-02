@@ -17,9 +17,23 @@ class cached_property(Generic[T]):
     """
 
     def __init__(self, func: Callable[..., T]):
+        """初始化缓存属性描述符。
+
+        Args:
+            func (Callable): 用于计算属性值的函数。
+        """
         self.func = func
 
     def __get__(self, obj, cls) -> T:
+        """获取属性值，未计算时调用底层函数并写入实例字典。
+
+        Args:
+            obj: 宿主对象实例。
+            cls: 宿主类。
+
+        Returns:
+            T: 属性值。
+        """
         if obj is None:
             return self
 
@@ -114,11 +128,17 @@ def poor_yaml_write(data, file, template_file=DEPLOY_TEMPLATE):
 
 @dataclass
 class DataProcessInfo:
+    """系统进程信息封装类。"""
     proc: object  # psutil.Process or psutil._pswindows.Process
     pid: int
 
     @cached_property
     def name(self):
+        """获取进程名称。
+
+        Returns:
+            str: 进程名称字符串。
+        """
         try:
             name = self.proc.name()
         except:
@@ -127,6 +147,11 @@ class DataProcessInfo:
 
     @cached_property
     def cmdline(self):
+        """获取进程启动命令行。
+
+        Returns:
+            str: 格式化为正斜杠的完整命令行字符串。
+        """
         try:
             cmdline = self.proc.cmdline()
         except:

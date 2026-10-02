@@ -95,7 +95,11 @@ def _collect_expired(folder, deadline, now, pattern=None):
 
 
 def _remove_empty_folders(folder):
-    """移除清空后的空目录，保留来源根目录与 ``bak``。"""
+    """移除清空后的空目录，保留来源根目录与 ``bak``。
+
+    Args:
+        folder (str): 待检查并清理空目录的根目录路径。
+    """
     for path, _, _ in os.walk(folder, topdown=False):
         if path == folder or os.path.basename(os.path.normpath(path)) == BAK_FOLDER:
             continue

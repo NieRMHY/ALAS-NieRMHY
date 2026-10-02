@@ -12,7 +12,13 @@ from module.config.utils import get_server_last_update
 
 
 class IslandAirDrop(Island):
+    """岛屿空投日常任务执行器。"""
+
     def run(self):
+        """执行岛屿空投任务流程。
+
+        包含自己岛屿空投领取、好友岛屿补给拜访、冷却调度与卡死异常处理。
+        """
         self.island_error = False
         now = current_time()
         # 每日边界以服务器 0 点为准（换算为本机时间轴）
@@ -110,6 +116,11 @@ class IslandAirDrop(Island):
         self.device.sleep(1)
 
     def find_air_drop(self):
+        """在好友岛屿拜访列表中搜索可用的空投目标。
+
+        Returns:
+            bool: 找到并成功进入可用好友岛屿返回 True，未找到或不可用返回 False。
+        """
         search_area = (662, 90, 720, 660)
         VISIT_SCROLL = Scroll(
             VISIT_SCROLL_AREA, color=(255, 255, 255), name="VISIT_SCROLL"
@@ -198,7 +209,15 @@ class IslandAirDrop(Island):
         return False
 
     def calculate_visit_position(self, air_drop_button_x, air_drop_button_y):
+        """根据空投图标位置计算对应的拜访按钮区域。
 
+        Args:
+            air_drop_button_x (int): 空投图标左上角 X 坐标。
+            air_drop_button_y (int): 空投图标左上角 Y 坐标。
+
+        Returns:
+            Button: 计算得到的拜访按钮实例。
+        """
         visit_button_x1 = air_drop_button_x + 225  # x偏移
         visit_button_y1 = air_drop_button_y + 25  # y偏移
         visit_button_width = 73  # 960 - 887 = 73
@@ -215,6 +234,11 @@ class IslandAirDrop(Island):
         return visit_button
 
     def visit_swipe(self, distance):
+        """在好友拜访列表中向上滑动并点击停止滑动惯性。
+
+        Args:
+            distance (int): 滑动距离像素值。
+        """
         stop_button = Button(
             area=(500, 90, 630, 660),
             color=(),
@@ -228,6 +252,7 @@ class IslandAirDrop(Island):
         self.device.click_record_clear()
 
     def island_air_drop(self):
+        """执行空投交互点击动作组合。"""
         self.device.click(ISLAND_AIR_DROP_A)
         sleep(0.1)
         self.device.click(ISLAND_AIR_DROP_B)
@@ -242,6 +267,7 @@ class IslandAirDrop(Island):
         sleep(0.5)
 
     def run_and_get(self):
+        """在好友岛屿上跑位寻路并拾取空投补给。"""
         self.island_up(3000)
         self.island_right(800)
         self.island_up(2000)
@@ -277,6 +303,7 @@ class IslandAirDrop(Island):
         self.exit_friend_island()
 
     def test(self):
+        """测试 OCR 参数提取效果。"""
         image = self.device.screenshot()
         area = OCR_AIR_DROP.area if hasattr(OCR_AIR_DROP, "area") else OCR_AIR_DROP
         cropped = crop(image, area)
@@ -292,6 +319,7 @@ class IslandAirDrop(Island):
         cv2.destroyAllWindows()
 
     def test1(self):
+        """测试进入岛屿管理页面。"""
         self.goto_management()
 
 

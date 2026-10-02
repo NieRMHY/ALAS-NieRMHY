@@ -12,7 +12,13 @@ from typing import TypedDict
 
 
 class TalentLine(TypedDict):
-    """普通天赋线。"""
+    """普通天赋线定义。
+
+    Attributes:
+        id (str): 天赋线标识，取 1 级天赋名。
+        levels (list[tuple[str, str]]): [(天赋名, 效果描述)]，下标 0/1/2 对应 1/2/3 级。
+        fixed_only (bool): 是否仅固定天赋指挥喵可获得。
+    """
 
     id: str                        # 线标识，取 1 级天赋名
     levels: list[tuple[str, str]]  # [(天赋名, 效果)]，下标 0/1/2 对应 1/2/3 级
@@ -20,7 +26,13 @@ class TalentLine(TypedDict):
 
 
 class SpecialTalent(TypedDict):
-    """特殊天赋（不可升级）。"""
+    """特殊天赋（不可升级）定义。
+
+    Attributes:
+        name (str): 特殊天赋名称。
+        effect (str): 效果描述。
+        fixed_only (bool): 是否仅固定天赋指挥喵可获得。
+    """
 
     name: str
     effect: str

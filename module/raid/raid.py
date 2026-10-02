@@ -561,7 +561,7 @@ class Raid(MapOperation, RaidCombat, CampaignEvent):
                 pt = ocr.ocr(self.device.image)
                 if timeout.reached():
                     logger.warning('等待PT超时，假设已达到')
-                    LogRes(self.config).Pt = pt
+                    LogRes(self.config).record('Pt', pt, observed=False)
                     return pt
                 if pt in [70000, 70001]:
                     continue

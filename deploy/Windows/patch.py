@@ -7,6 +7,14 @@ from deploy.uv import venv_python
 
 
 def site_package_file(*parts):
+    """获取 site-packages 目录下特定文件或子目录的绝对路径。
+
+    Args:
+        *parts: 相对路径组成片段。
+
+    Returns:
+        str | None: 拼接后的绝对路径，未找到 site-packages 时返回 None。
+    """
     python = venv_python()
     if not python.exists():
         return None
@@ -32,8 +40,8 @@ def patch_trust_env(file):
     虽然在代码中设置了 `session.trust_env = False`，但这不影响 pip 命令。
     因此直接修补 requests 源码，将 trust_env 强制设为 False。
 
-    Returns:
-        bool: 是否已修补。
+    Args:
+        file (str): 待修补的目标文件路径。
     """
     try:
         with open(file, 'r', encoding='utf-8') as f:
@@ -160,6 +168,7 @@ def patch_apkutils2():
 
 
 def pre_checks():
+    """执行安装前的预检查与第三方库补丁修复。"""
     check_running_directory()
 
     patch_uiautomator2()

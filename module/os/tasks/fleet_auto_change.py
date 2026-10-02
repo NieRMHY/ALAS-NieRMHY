@@ -12,6 +12,7 @@
 
 from datetime import timedelta
 
+from module.base.timer import Timer
 from module.config.time_source import now as current_time
 from module.equipment.assets import EQUIPMENT_OPEN
 from module.exception import ScriptError
@@ -23,6 +24,7 @@ from module.os.ship_exp import ship_info_get_level_exp
 from module.os.ship_exp_data import LIST_SHIP_EXP
 from module.os.tasks.scheduling import CoinTaskMixin
 from module.os_handler.assets import (
+    AUTO_SEARCH_REWARD,
     DEPART_CONFIRM_BUTTON,
     DEPART_CONFIRM_TEMPLATE,
     DEPART_IMMEDIATELY_BUTTON,
@@ -113,27 +115,57 @@ class OpsiFleetAutoChange(CoinTaskMixin, DockMixin, OSMap):
         except Exception as e:
             logger.warning(f"[大世界-自动配队] 经验检测失败: {e}")
 
+    def _wait_until_back_in_os_map(self, timeout=60):
+        """等待离开港口并回到大世界海域地图。
+
+        途中处理加载界面、延迟弹出的通关奖励，以及点击过快、点到海域地图外
+        出现的「需要暂时离开大型作战么?」弹窗（点击 X 取消，避免退出大型作战）。
+
+        Args:
+            timeout (int): 超时秒数，识别到加载界面时重新计时。
+
+        Returns:
+            bool: 成功回到大世界海域地图返回 True。
+
+        Pages:
+            in: 舰队部署界面出发后、港口界面或加载界面
+            out: is_in_map
+        """
+        timer = Timer(timeout).start()
+        for _ in self.loop():
+            if timer.reached():
+                break
+            # 误触地图外出现的「需要暂时离开大型作战么?」弹窗，点击 X 留在大型作战
+            if self.handle_leave_os_popup():
+                continue
+            # 出发后经过加载界面，等待加载完成后再识别
+            if self.is_combat_loading():
+                timer.reset()
+                continue
+            # 游戏偶尔出现上一次通关弹窗 AUTO_SEARCH_REWARD 延迟弹出的 Bug
+            if self.appear_then_click(AUTO_SEARCH_REWARD, offset=(50, 50), interval=3):
+                continue
+            # 仍在港口界面，退出港口
+            if self.appear(PORT_GOTO_SUPPLY, offset=(20, 20)):
+                logger.info("[大世界-自动配队] 检测到港口界面，退出港口")
+                self.port_quit(skip_first_screenshot=True)
+                self.wait_os_map_buttons()
+                continue
+            # 已回到大世界海域地图
+            if self.is_in_map():
+                logger.info("[大世界-自动配队] 已返回大世界地图")
+                return True
+
+        return False
+
     def _ensure_return_to_os_map(self):
         """确保当前界面已返回大世界地图。
 
         Returns:
             bool: 是否成功返回大世界地图。
         """
-        timeout = 10
-        for _ in range(timeout * 2):
-            self.device.screenshot()
-            
-            if self.appear(PORT_GOTO_SUPPLY, offset=(20, 20)):
-                logger.info("[大世界-自动配队] 检测到仍在港口界面，退出港口")
-                self.port_quit(skip_first_screenshot=True)
-                self.wait_os_map_buttons()
-                continue
-            
-            if self.is_in_map():
-                if not self.appear(PORT_GOTO_SUPPLY, offset=(20, 20)):
-                    logger.info("[大世界-自动配队] 已确认返回大世界地图")
-                    return True
-        
+        if self._wait_until_back_in_os_map(timeout=30):
+            return True
         logger.warning("[大世界-自动配队] 超时未能返回大世界地图")
         return False
     
@@ -305,7 +337,7 @@ class OpsiFleetAutoChange(CoinTaskMixin, DockMixin, OSMap):
             else:
                 logger.info(f"[大世界-自动配队] 舰位 {position} 未设置常用标记")
             
-            self.ui_back(check_button=self.is_in_map)
+            self.ui_back(check_button=self.is_in_map, additional=self.handle_leave_os_popup)
             self.device.sleep(0.5)
     
     def _enter_fleet_deploy(self):
@@ -414,12 +446,25 @@ class OpsiFleetAutoChange(CoinTaskMixin, DockMixin, OSMap):
         """
         logger.info("[大世界-自动配队] 确认出发")
 
+        # 配队过程中点击过快可能点到海域地图外，弹出「需要暂时离开大型作战么?」，
+        # 先关闭弹窗，否则「立即前往」会点空
+        for _ in self.loop(timeout=3):
+            if self.handle_leave_os_popup():
+                continue
+            break
+
         self.device.click(DEPART_IMMEDIATELY_BUTTON)
 
         confirm_timeout = 0
         confirm_max_timeout = 10
         while confirm_timeout < confirm_max_timeout * 2:
             self.device.screenshot()
+
+            # 出发确认弹窗与离开大型作战弹窗的确定按钮位置相同，
+            # 必须先关闭离开弹窗，否则会把它当成出发确认点成确定，直接退出大型作战
+            if self.handle_leave_os_popup():
+                confirm_timeout += 1
+                continue
 
             if self.appear(DEPART_CONFIRM_TEMPLATE, offset=(20, 20)):
                 logger.info("[大世界-自动配队] 检测到出发确认弹窗，点击确认")
@@ -430,26 +475,9 @@ class OpsiFleetAutoChange(CoinTaskMixin, DockMixin, OSMap):
         else:
             logger.info("[大世界-自动配队] 未检测到出发确认弹窗，继续执行")
 
-        for _ in range(5):
-            self.device.screenshot()
-
-        timeout = 15
-        for _ in range(timeout * 2):
-            self.device.screenshot()
-
-            if self.appear(PORT_GOTO_SUPPLY, offset=(20, 20)):
-                logger.info("[大世界-自动配队] 检测到进入港口界面，退出港口")
-                self.port_quit(skip_first_screenshot=True)
-                self.wait_os_map_buttons()
-                continue
-
-            if self.is_in_map():
-                if not self.appear(PORT_GOTO_SUPPLY, offset=(20, 20)):
-                    logger.info("[大世界-自动配队] 已返回大世界地图")
-                    return
-
-        logger.error("[大世界-自动配队] 出发确认超时")
-        raise ScriptError("出发确认超时，无法返回大世界地图")
+        if not self._wait_until_back_in_os_map(timeout=60):
+            logger.error("[大世界-自动配队] 出发确认超时")
+            raise ScriptError("出发确认超时，无法返回大世界地图")
 
     def _set_cooldown(self):
         """设置自动配队冷却时间。"""
@@ -513,7 +541,8 @@ class OpsiFleetAutoChange(CoinTaskMixin, DockMixin, OSMap):
                     break
                 position += 1
 
-            self.ui_back(appear_button=EQUIPMENT_OPEN, check_button=self.is_in_map)
+            self.ui_back(appear_button=EQUIPMENT_OPEN, check_button=self.is_in_map,
+                         additional=self.handle_leave_os_popup)
 
             validation_result = self._validate_ship_data(ship_data_list)
             if validation_result['valid']:

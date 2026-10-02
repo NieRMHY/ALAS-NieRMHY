@@ -1,6 +1,8 @@
 import { readFileSync } from 'node:fs'
 import { createHash } from 'node:crypto'
 import Ajv from 'ajv'
+import {spawnSync} from 'node:child_process'
+import {fileURLToPath} from 'node:url'
 
 // 只读取公开的模板、元数据和翻译，绝不读取用户实例或部署文件。
 const read = path => JSON.parse(readFileSync(new URL(path, import.meta.url), 'utf8'))
@@ -162,6 +164,28 @@ function validateField(path, value) {
 
 export function createMockState({ empty = false } = {}) {
   const instances = new Map()
+  const programs = new Map()
+  let cardCatalog
+  function programPython(action, config, params = {}) {
+    const run = spawnSync('uv', ['run', '--no-sync', 'python', '-X', 'utf8', '-m', 'dev_tools.scheduler_mock'], {
+      cwd: fileURLToPath(new URL('../../', import.meta.url)), input: JSON.stringify({action, config, ...params}),
+      encoding: 'utf8', timeout: 15000, windowsHide: true,
+    })
+    if (run.error || run.status) fail('INTERNAL_ERROR', '模拟解释器运行失败')
+    const result = JSON.parse(run.stdout)
+    if (result.error) fail('INVALID_PARAMS', result.error)
+    return result
+  }
+  function program(name) {
+    if (!cardCatalog) cardCatalog = programPython('catalog', get(name).values)
+    if (!programs.has(name)) {
+      const isShowcase = name === 'demo-main' && cardCatalog.templates.all
+      const draft = isShowcase ? structuredClone(cardCatalog.templates.all) : structuredClone(cardCatalog.templates.takeover)
+      programs.set(name, {mode: 'native', draft, active:null, generation:0})
+    }
+    const current = programs.get(name)
+    return {...structuredClone(current), revision:revision(current)}
+  }
   const startup = new Set()
   const remember = new Set()
   const commits = Array.from({ length: 123 }, (_, index) => ({ sha: createHash('sha1').update(`mock-commit-${123 - index}`).digest('hex'), author: 'AzurPilot', date: new Date(Date.UTC(2026, 8, 14, 0, -index)).toISOString(), message: index === 0 ? 'feat(webui): 新增主页与实例状态\n\n统一全局设置和更新入口。' : `fix(runtime): 改善任务运行稳定性 ${123 - index}` }))
@@ -515,14 +539,43 @@ export function createMockState({ empty = false } = {}) {
         if (!/^[A-Za-z0-9\u3041-\u3096\u30a1-\u30fa\u30fc\u31f0-\u31ff\uff66-\uff9f\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff][A-Za-z0-9_. \u3041-\u3096\u30a1-\u30fa\u30fc\u31f0-\u31ff\uff66-\uff9f\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\-]{0,63}$/.test(params.name) || /^(template|deploy|backup|con|prn|aux|nul|com[1-9]|lpt[1-9])(\.|$)/i.test(params.name)) fail('INVALID_PARAMS', '实例名称无效')
         if ([...instances.keys()].some(name => name.toLowerCase() === params.name.toLowerCase())) fail('ALREADY_EXISTS', '同名实例已存在')
         add(params.name, params.source ? get(params.source).values : template)
+        if (params.source && programs.has(params.source)) {const {mode,draft,active} = program(params.source); programs.set(params.name,{mode,draft,active,generation:0})}
         return snapshot(params.name)
       }
       case 'instances.delete':
         if (get(name).status === 'running') fail('INSTANCE_RUNNING', '请先停止实例再删除')
         if (params.revision !== snapshot(name).revision) fail('CONFLICT', '配置已变化，请重新加载后删除')
-        instances.delete(name); startup.delete(name)
+        instances.delete(name); startup.delete(name); programs.delete(name)
         return { deleted: name }
       case 'config.get': return snapshot(name)
+      case 'config.export': {
+        if (!programs.has(name)) return snapshot(name).values
+        const {mode, draft, active} = program(name)
+        return {...snapshot(name).values, ...(programs.has(name) ? {_schedulerProgram: {mode,draft,active}} : {})}
+      }
+      case 'scheduler.program.catalog': {
+        const catalog = programPython('catalog', get(name).values)
+        catalog.resources.forEach(r => {r.label = translate(`${r.name}._info.name`)})
+        return catalog
+      }
+      case 'scheduler.program.get': return program(name)
+      case 'scheduler.program.save': {
+        const current = program(name)
+        if (params.revision !== current.revision) fail('CONFLICT', '方案已变化，请重新加载')
+        delete current.revision; current.draft = params.document; programs.set(name, current)
+        return program(name)
+      }
+      case 'scheduler.program.validate': return programPython('validate', get(name).values, params)
+      case 'scheduler.program.simulate': return programPython('simulate', get(name).values, params)
+      case 'scheduler.program.apply': {
+        const current = program(name)
+        if (params.revision !== current.revision) fail('CONFLICT', '方案已变化，请重新加载')
+        const result = programPython('validate', get(name).values, {document:current.draft, mode:params.mode})
+        if (params.mode !== 'native' && !result.valid) fail('INVALID_PARAMS', '程序校验失败', result.diagnostics)
+        delete current.revision; current.mode = params.mode; current.active = structuredClone(current.draft); current.generation += 1
+        programs.set(name, current); return program(name)
+      }
+      case 'scheduler.program.state': return {mode:program(name).mode, generation:program(name).generation, state:{status:'idle',trace:[]}}
       case 'shop_strategy.validate': return validateMockStrategy(params.script)
       case 'config.patch': {
         const data = snapshot(name)
@@ -865,6 +918,7 @@ export function createMockState({ empty = false } = {}) {
         if (params.enabled !== undefined) { if (params.enabled) startup.add(name); else startup.delete(name) }
         if (params.remember !== undefined) { if (params.remember) remember.add(name); else remember.delete(name) }
         return { enabled: startup.has(name), remember: remember.has(name) }
+      case 'background.access': return {token: 'mock-background-token'}
       case 'announcement.get':
         return {
           announcementId: 'mock-announcement-v2',
@@ -922,6 +976,10 @@ export function createMockState({ empty = false } = {}) {
       case 'events.subscribe':
         if (params.topics.some(topic => topic !== 'instances') && !name) fail('INVALID_PARAMS', '订阅此主题需要指定实例')
         return { topics: params.topics, instance: name ?? null }
+      case 'background.gallery.list': return []
+      case 'background.gallery.open': return { path: 'cache/background/library' }
+      case 'background.gallery.remove': return { removed: true }
+      case 'background.gallery.add': return { entry: { id: 'mock_bg', name: params.name || 'mock', kind: 'image', size: 1024, added: Date.now() } }
       default: fail('METHOD_NOT_FOUND', '此方法由连接层处理')
     }
   }

@@ -8,6 +8,11 @@ export type FamilyCustom = {params: Record<string, number>; palette?: Palette}
 const knobsKey = (family: Family) => `azurpilot.custom.${family}`
 /** 自定义配色的定义是全局资产，只有「选哪套」按大类各存。 */
 const customPalettesKey = 'azurpilot.custom-palettes'
+const listeners = new Set<(family: Family) => void>()
+export function subscribeFamilyCustom(listener: (family: Family) => void) {
+  listeners.add(listener)
+  return () => { listeners.delete(listener) }
+}
 
 const isPalette = (value: unknown): value is Palette =>
   typeof value === 'string' && ((palettes as readonly string[]).includes(value) || /^custom:[\w-]+$/.test(value))
@@ -43,6 +48,7 @@ function save(family: Family, custom: FamilyCustom) {
     if (Object.keys(custom.params).length || custom.palette) localStorage.setItem(knobsKey(family), JSON.stringify(custom))
     else localStorage.removeItem(knobsKey(family))
   } catch { /* 存储不可用时本次会话内仍生效。 */ }
+  listeners.forEach(listener => listener(family))
 }
 
 /** 写入该大类动过的参数 token，返回写入的 token 名供调用方记账清理。 */
@@ -96,4 +102,5 @@ export function clearFamilyPalette(family: Family) {
 
 export function resetFamilyCustom(family: Family) {
   try { localStorage.removeItem(knobsKey(family)) } catch { /* 忽略：内联 token 由 applyTheme 清理。 */ }
+  listeners.forEach(listener => listener(family))
 }

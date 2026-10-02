@@ -3,7 +3,7 @@
  */
 
 import { Select } from './FormControls'
-import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
+import { memo, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { useParams } from 'react-router-dom'
 import { ArrowDownUp, Download, LayoutGrid, Pause, Play, Search, Terminal, Trash2 } from 'lucide-react'
@@ -151,7 +151,7 @@ function renderSearchHighlights(text: string, searchLower: string, keyPrefix: st
   return <span key={keyPrefix}>{nodes}</span>
 }
 
-export function LogLine({entry, search, isCenter, fresh}: {entry: LogEntry; search: string; isCenter?: boolean; fresh?: boolean}) {
+export const LogLine = memo(function LogLine({entry, search, isCenter, fresh}: {entry: LogEntry; search: string; isCenter?: boolean; fresh?: boolean}) {
   const rawText = entry.text.replace(/[\r\n]+$/, '')
   const trimmed = rawText.trim()
   const freshClass = fresh ? ' motion-enter' : ''
@@ -221,7 +221,7 @@ export function LogLine({entry, search, isCenter, fresh}: {entry: LogEntry; sear
       <span className="log-msg">{highlightText(rawText, search)}</span>
     </div>
   )
-}
+})
 
 const LOG_LEVELS = ['ALL', 'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']
 
@@ -384,23 +384,27 @@ export function LogPanel({active = true, toolbarSlot}: {active?: boolean; toolba
   useLayoutEffect(() => {
     if (!active || !follow || !scroll.current) return
     const container = scroll.current
-    /* 只改日志容器自身的滚动位置，不会像尾部元素的 scrollIntoView 那样连带滚动整个页面。 */
-    const target = descending ? 0 : container.scrollHeight - container.clientHeight
-    /* 与目标相距超过一屏：直接落位，不做逐帧滚入。 */
-    if (Math.abs(target - container.scrollTop) > container.clientHeight) {container.scrollTop = target; return}
+    /* 量与写都放进 rAF：layout effect 阶段刚改完 DOM，此刻读 scrollHeight 会强制同步布局；
+       每帧只在帧首读一次 scrollTop、帧尾写一次。
+       只改日志容器自身的滚动位置，不会像尾部元素的 scrollIntoView 那样连带滚动整个页面。 */
     let frame = requestAnimationFrame(function step() {
-      const remaining = target - container.scrollTop
-      if (Math.abs(remaining) <= 1) {container.scrollTop = target; return}
-      container.scrollTop += followStep(remaining)
+      const top = container.scrollTop
+      const target = descending ? 0 : container.scrollHeight - container.clientHeight
+      const remaining = target - top
+      /* 与目标相距超过一屏：直接落位，不做逐帧滚入。 */
+      if (Math.abs(remaining) > container.clientHeight) {container.scrollTop = target; return}
+      if (Math.abs(remaining) <= 1) {if (remaining !== 0) container.scrollTop = target; return}
+      container.scrollTop = top + followStep(remaining)
       frame = requestAnimationFrame(step)
     })
     return () => cancelAnimationFrame(frame)
   }, [entries, follow, active, descending])
 
+  const searchLower = search.trim().toLowerCase()
   const visible = entries.filter(entry =>
     entry.id > floor &&
     (level === 'ALL' || entry.level === level) &&
-    entry.text.toLowerCase().includes(search.toLowerCase())
+    (!searchLower || entry.text.toLowerCase().includes(searchLower))
   )
   // 倒序只反转渲染顺序；相邻行的居中标题判断是对称的（前后都要求是分割线），不受影响。
   const ordered = descending ? [...visible].reverse().slice(0, LOG_ENTRY_LIMIT) : visible.slice(-LOG_ENTRY_LIMIT)

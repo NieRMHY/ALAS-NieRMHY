@@ -43,11 +43,12 @@ class MeowfficerScore:
     """
 
     def __init__(self, config, device=None, task=None):
-        """
+        """初始化指挥喵天赋评分任务。
+
         Args:
-            config: ``AzurLaneConfig`` 实例，或配置名（如 ``'alas'``）。
-            device: 设备实例；``screenshot`` 模式下不会被使用。
-            task: 任务名，传入时会 ``init_task`` 以绑定配置。
+            config (AzurLaneConfig | str): ``AzurLaneConfig`` 实例或配置名（如 ``'alas'``）。
+            device (Device, optional): 设备实例；``screenshot`` 模式下可为 ``None``。
+            task (str, optional): 任务名，传入时会调用 ``init_task`` 绑定配置。
         """
         if isinstance(config, AzurLaneConfig):
             self.config = config
@@ -63,7 +64,15 @@ class MeowfficerScore:
     # ------------------------------------------------------------------
 
     def _cfg(self, name, default=None):
-        """读取本任务的配置项，缺省时回退到默认值。"""
+        """读取本任务的配置项，缺省时回退到默认值。
+
+        Args:
+            name (str): 配置项名称后缀（如 'Folder', 'Source' 等）。
+            default (Any, optional): 缺省默认值。
+
+        Returns:
+            Any: 配置项的取值。
+        """
         return getattr(self.config, f'MeowfficerScore_{name}', default)
 
     # ------------------------------------------------------------------
@@ -71,13 +80,13 @@ class MeowfficerScore:
     # ------------------------------------------------------------------
 
     def _collect_images(self, folder):
-        """列出待评分的截图。
+        """列出指定目录下待评分的截图文件。
 
         Args:
-            folder: 截图所在目录。
+            folder (str): 截图所在目录路径。
 
         Returns:
-            list[str]: 按修改时间升序排列的图片绝对路径。
+            list[str]: 按修改时间升序排列的图片绝对路径列表。
         """
         if not folder or not os.path.isdir(folder):
             logger.warning(f'[指挥喵-评分] 截图目录不存在：{folder}')
@@ -94,16 +103,16 @@ class MeowfficerScore:
         return files
 
     def _score_image(self, image, ocr, name, cat=None):
-        """识别单张截图并评分。
+        """识别单张截图中的天赋并执行评分。
 
         Args:
-            image: BGR 图像。
-            ocr: 已初始化的 OCR 实例。
-            name: 来源名（文件名或设备截图序号），用于日志与报告。
-            cat: 手动指定的猫名；为 ``None`` 时自动识别。
+            image (np.ndarray): 截图 BGR 图像数组。
+            ocr (AlOcr): 已初始化的 OCR 实例。
+            name (str): 来源标识（文件名或设备截图序号），用于日志与报告。
+            cat (str, optional): 手动指定的猫名；为 ``None`` 时自动识别。
 
         Returns:
-            ``ScoreResult``；这张图里没有天赋时返回 ``None``。
+            ScoreResult | None: 评分结果对象；截图未识别到有效天赋时返回 ``None``。
         """
         from module.meowfficer.score_ocr import recognize
 
@@ -128,6 +137,12 @@ class MeowfficerScore:
 
         首次运行需要联网下载模型；失败时给出可操作的提示，而不是抛原始堆栈 ——
         否则每个模式都会在每张图上报一次 warning、最后"成功"却没有任何结果。
+
+        Returns:
+            AlOcr: 初始化成功的 OCR 实例。
+
+        Raises:
+            RequestHumanTakeover: OCR 模型下载或加载失败时抛出。
         """
         from module.ocr.al_ocr import AlOcr
         try:
@@ -164,10 +179,10 @@ class MeowfficerScore:
         """画面粗指纹：用于跳过没有变化的画面，避免空转 OCR。
 
         Args:
-            image: BGR 图像。
+            image (np.ndarray): BGR 图像数组。
 
         Returns:
-            str: 下采样后的 MD5，画面不变则指纹不变。
+            str: 下采样后的 MD5 哈希字符串，画面不变则指纹不变。
         """
         import hashlib
 
@@ -365,8 +380,8 @@ def run_meowfficer_score(config, device=None):
     """工具任务包装函数，异常处理与 ``run_ocr_benchmark`` 保持一致。
 
     Args:
-        config (AzurLaneConfig): 配置实例。
-        device (Device): 设备实例；``device`` 模式必须传入，否则会请求人工接管。
+        config (AzurLaneConfig | str): 配置实例或配置标识。
+        device (Device, optional): 设备实例；``device`` 模式必须传入，否则会请求人工接管。
 
     Returns:
         bool: 成功为 ``True``，需要人工接管为 ``False``。

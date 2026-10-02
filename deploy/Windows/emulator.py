@@ -16,17 +16,26 @@ if sys.platform.startswith("win"):
 
 @dataclass
 class DataAdbDevice:
+    """ADB 设备连接状态数据类。"""
     serial: str
     status: str
 
 
 class EmulatorManager(AlasManager):
+    """Windows 下模拟器 ADB 管理器，支持批量端口连接与 ADB 文件替换。"""
+
     @cached_property
     def emulator_manager(self):
+        """获取平台模拟器管理器底层实例。
+
+        Returns:
+            EmulatorManager: 模拟器发现与管理对象。
+        """
         from module.device.platform.emulator_windows import EmulatorManager
         return EmulatorManager()
 
     def adb_kill(self):
+        """强制终止系统内所有已知的 ADB 进程。"""
         # 直接杀进程，因为部分 ADB 不遵守 kill-server 协议
         logger.hr('Kill all known ADB', level=2)
         for proc in self.iter_process_by_names([
@@ -60,7 +69,11 @@ class EmulatorManager(AlasManager):
         return devices
 
     def brute_force_connect(self):
-        """暴力连接所有可用的模拟器实例。"""
+        """并发尝试连接所有扫描到的模拟器端口。
+
+        Returns:
+            list[DataAdbDevice]: 连接完成后的设备列表。
+        """
         devices = self.adb_devices()
 
         # 断开离线设备
@@ -116,6 +129,11 @@ class EmulatorManager(AlasManager):
         return f'{adb}.bak'
 
     def iter_adb_to_replace(self) -> t.Iterable[str]:
+        """遍历与当前 ADB 版本不同、需要替换的模拟器 ADB 路径。
+
+        Yields:
+            str: 需要被替换的模拟器 adb.exe 路径。
+        """
         for adb in self.emulator_manager.all_adb_binaries:
             if filecmp.cmp(adb, self.adb, shallow=True):
                 logger.info(f'{adb} is same as {self.adb}, skip')

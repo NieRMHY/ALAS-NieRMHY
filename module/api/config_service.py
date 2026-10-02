@@ -230,6 +230,12 @@ class ConfigService:
             raise ApiError('INVALID_PARAMS', '不是合法的 JSON 配置文件') from exc
         if not isinstance(data, dict) or not isinstance(data.get('Alas'), dict):
             raise ApiError('INVALID_PARAMS', '配置文件缺少 Alas 段')
+        if '_schedulerProgram' in data:
+            from module.scheduler.store import ProgramStore
+            try:
+                ProgramStore.import_bundle(data['_schedulerProgram'])
+            except (ValueError, KeyError, TypeError) as exc:
+                raise ApiError('INVALID_PARAMS', f'调度方案导入失败：{exc}') from exc
         self.import_directory.mkdir(parents=True, exist_ok=True)
         path = self.import_directory / f'{name}.json'
         if path.is_symlink() or path.resolve().parent != self.import_directory.resolve():
@@ -344,6 +350,15 @@ class ConfigService:
         data, revision = self.read(name)
         return {'instance': name, 'revision': revision, 'values': data}
 
+    def export(self, name):
+        """配置导出携带方案，排除调度运行变量和资源历史。"""
+        from module.scheduler.store import ProgramStore
+        data, _ = self.read(name)
+        store = ProgramStore(self.directory)
+        if store.exists(name):
+            data['_schedulerProgram'] = store.export(name)
+        return data
+
     def create(self, name, source=None, import_file=None):
         """创建新的实例配置文件。
 
@@ -367,6 +382,14 @@ class ConfigService:
                 data = self.read(source)[0]
             else:
                 data = copy.deepcopy(self.template)
+            bundle = data.pop('_schedulerProgram', None)
+            from module.scheduler.store import ProgramStore
+            store = ProgramStore(self.directory)
+            if bundle is not None:
+                try:
+                    bundle = store.import_bundle(bundle)
+                except (ValueError, KeyError, TypeError) as exc:
+                    raise ApiError('INVALID_PARAMS', f'调度方案导入失败：{exc}') from exc
             path = self.path(name, exists=False)
             # 排他创建避免不同会话覆盖已有配置。
             try:
@@ -374,6 +397,14 @@ class ConfigService:
                     json.dump(data, file, ensure_ascii=False, indent=2)
             except FileExistsError as exc:
                 raise ApiError('ALREADY_EXISTS', '同名实例已存在') from exc
+            try:
+                if source:
+                    store.copy(source, name)
+                elif bundle is not None:
+                    store.import_program(name, {key: bundle[key] for key in ('mode', 'draft', 'active')})
+            except Exception:
+                path.unlink(missing_ok=True)
+                raise
             return self.get(name)
 
     @staticmethod
@@ -568,4 +599,6 @@ class ConfigService:
             backup.mkdir(exist_ok=True)
             target = backup / f'{name}-{datetime.now():%Y%m%d-%H%M%S-%f}.json'
             self.path(name).replace(target)
+            from module.scheduler.store import ProgramStore
+            ProgramStore(self.directory).archive(name, backup / target.stem)
             return {'deleted': name}

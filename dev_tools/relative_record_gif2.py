@@ -5,51 +5,59 @@ from tqdm import tqdm
 
 import module.config.server as server
 
-server.server = 'cn'  # Don't need to edit, it's used to avoid error.
+server.server = 'cn'  # 无需修改，用于避免服务器配置未初始化的异常。
 
 from dev_tools.relative_record import FOLDER, NAME
 from module.base.utils import *
 from module.map_detection.utils import *
 
 """
-Generate better siren template with brute-force.
+通过暴力搜索生成最优塞壬 GIF 动态模板。
 
-Usage:
-    See relative_record.py
+使用说明：
+    参见 relative_record.py。
 
-Arguments:
-    FOLDER:     Save folder from relative_record.
-    NAME:       Siren name from relative_record.
-                Save gif file to <FOLDER>/<NAME>_gif/<frame_count>_<average_similarity>_<size>.gif
-    THRESHOLD:  If the similarity between a template and existing templates greater than THRESHOLD,
-                this template will be dropped.
-                Threshold in real detection is 0.85, for higher accuracy, threshold here should higher than 0.85.
-    MAX_FRAME:  Maximum number of frames in gif.
+参数说明：
+    FOLDER:     来自 relative_record 的保存目录。
+    NAME:       来自 relative_record 的塞壬名称。
+                生成的 GIF 文件保存至 <FOLDER>/<NAME>_gif/<frame_count>_<average_similarity>_<size>.gif。
+    THRESHOLD:  去重相似度阈值，高于该阈值的候选帧将被丢弃。
+                实际检测阈值为 0.85，为保证提取精度，此处的阈值应高于 0.85。
+    MAX_FRAME:  GIF 模板的最大允许帧数。
 """
-# Argument `FOLDER` import from relative_record.py by default. If you want to modify, change here.
+# 参数 FOLDER 默认从 relative_record.py 导入，如需修改在此处赋值。
 # FOLDER = ''
-# Argument `NAME` import from relative_record.py by default. If you want to modify, change here.
+# 参数 NAME 默认从 relative_record.py 导入，如需修改在此处赋值。
 # NAME = 'Dace'
 THRESHOLD = 0.92
 MAX_FRAME = 6
 
 
 def crop(image, area):
-    """Crop image like pillow, when using opencv / numpy
+    """在 OpenCV / NumPy 下实现类似 PIL 的图像区域裁剪。
 
     Args:
-        image (np.ndarray):
-        area:
+        image (np.ndarray): 原始输入图像。
+        area (tuple[int, int, int, int]): 裁剪区域 (x1, y1, x2, y2)。
 
     Returns:
-        np.ndarray:
+        np.ndarray: 裁剪后的图像数组。
     """
     x1, y1, x2, y2 = area
     return image[y1:y2, x1:x2]
 
 
 class RelativeRecord:
+    """塞壬 GIF 动态模板暴力搜索与生成器。
+
+    Attributes:
+        images (np.ndarray): 录制的所有帧图像数组。
+        images_amount (int): 图像总帧数。
+        folder (str): GIF 模板保存目录。
+    """
+
     def __init__(self):
+        """初始化生成器并加载录制的图像序列。"""
         self.images = [np.array(Image.open(os.path.join(FOLDER, NAME, file)).convert('RGB')) for file in
                        os.listdir(os.path.join(FOLDER, NAME))
                        if file[-4:] == '.png']
@@ -60,6 +68,14 @@ class RelativeRecord:
             os.mkdir(self.folder)
 
     def count(self, area):
+        """计算覆盖所有帧所需的最少模板帧数。
+
+        Args:
+            area (tuple[int, int, int, int]): 候选裁剪区域。
+
+        Returns:
+            int: 覆盖所需的帧数。
+        """
         mask = np.full(self.images_amount, False, dtype=bool)
 
         template = crop(self.images[0], area=area)
@@ -82,9 +98,18 @@ class RelativeRecord:
         return count
 
     def count_by_size(self, size, padding=10):
+        """在指定尺寸下网格化搜索满足最大帧数限制的候选区域。
+
+        Args:
+            size (tuple[int, int]): 裁剪窗口的 (宽度, 高度)。
+            padding (int): 边缘留白像素，默认为 10。
+
+        Returns:
+            set[tuple[int, int, int, int]]: 满足条件的裁剪区域集合。
+        """
         image_size = self.images[0].shape
         stats = set()
-        print('Trying templates in 2x2 grid')
+        print('正在 2x2 网格中尝试候选模板')
         area_list = [(x, y, x + size[0], y + size[1])
                      for x in range(padding, image_size[0] - size[0] - padding, 2)
                      for y in range(padding, image_size[1] - size[1] - padding, 2)]
@@ -93,7 +118,7 @@ class RelativeRecord:
                 if count < MAX_FRAME:
                     stats.add(area)
 
-        print('Generating all template area')
+        print('正在生成所有候选模板区域')
         offset_list = np.array([(1, 0, 1, 0), (-1, 0, -1, 0), (0, 1, 0, 1), (0, -1, 0, -1)])
         out = stats.copy()
         visited = set()
@@ -109,6 +134,14 @@ class RelativeRecord:
         return out
 
     def get_gif(self, area):
+        """为指定区域提取动态模板帧序列并计算平均匹配相似度。
+
+        Args:
+            area (tuple[int, int, int, int]): 裁剪区域。
+
+        Returns:
+            tuple[float, list[np.ndarray]]: (平均相似度, 模板帧列表)。
+        """
         templates = [crop(self.images[0], area=area)]
         sim_list = []
         for n, image in enumerate(self.images):
@@ -130,10 +163,15 @@ class RelativeRecord:
         return np.mean(sim_list), templates
 
     def run_by_size(self, size):
+        """针对指定尺寸搜索最佳模板并保存为 GIF 文件。
+
+        Args:
+            size (tuple[int, int]): 裁剪区域尺寸 (宽度, 高度)。
+        """
         sim_dict = {}
         template_dict = {}
         area_list = self.count_by_size(size)
-        print('Trying all templates')
+        print('正在测试所有候选模板')
         for area in tqdm(area_list):
             sim, templates = self.get_gif(area)
             count = len(templates)
@@ -142,7 +180,7 @@ class RelativeRecord:
                 sim_dict[count] = sim
                 template_dict[count] = templates
 
-        print('Saving gif')
+        print('正在保存 GIF 模板')
         for count, sim, templates in zip(sim_dict.keys(), sim_dict.values(), template_dict.values()):
             sim = str(int((1 - sim) * 1000000)).rjust(6, '0')
             name = f'{count}_{sim}_{"-".join([str(x) for x in size])}'
@@ -155,9 +193,9 @@ class RelativeRecord:
                 file, save_all=True, append_images=frames[1:],
                 duration=1000 / 3, loop=0,
             )
-        print(f'{size} done')
+        print(f'{size} 处理完成')
 
 
 r = RelativeRecord()
 r.run_by_size((15, 18))
-print('relative_record_gif2 done')
+print('relative_record_gif2 处理完成')

@@ -31,7 +31,14 @@ DEFAULT_SERVER_REFRESH_HORIZON = 12 * 60 * 60
 
 
 def format_duration(seconds):
-    """把秒数格式化为紧凑且适合表格阅读的时长。"""
+    """把秒数格式化为紧凑且适合表格阅读的时长。
+
+    Args:
+        seconds (float | None): 秒数。
+
+    Returns:
+        str: 格式化后的时间文本，为 None 时返回 '不限'。
+    """
     if seconds is None:
         return '不限'
     seconds = max(round(seconds), 0)
@@ -40,12 +47,34 @@ def format_duration(seconds):
     minutes, seconds = divmod(seconds, 60)
     prefix = f'{days}天 ' if days else ''
     return f'{prefix}{hours:02d}:{minutes:02d}:{seconds:02d}'
+
+
 def format_number(value):
-    """避免在参数和标题中输出无意义的小数尾零。"""
+    """避免在参数和标题中输出无意义的小数尾零。
+
+    Args:
+        value (float | int): 数值。
+
+    Returns:
+        str: 格式化后的紧凑字符串。
+    """
     return f'{value:g}'
 
+
 def parse_number_list(value, name, *, maximum=None):
-    """解析逗号分隔的浮点数列表，并保持用户给定顺序。"""
+    """解析逗号分隔的浮点数列表，并保持用户给定顺序。
+
+    Args:
+        value (str): 待解析的逗号分隔字符串。
+        name (str): 参数名称。
+        maximum (float, optional): 上限阈值。
+
+    Returns:
+        tuple[float, ...]: 解析后的浮点数元组。
+
+    Raises:
+        argparse.ArgumentTypeError: 参数不合规时抛出。
+    """
     try:
         values = tuple(float(item.strip()) for item in value.split(',') if item.strip())
     except ValueError as error:
@@ -58,13 +87,31 @@ def parse_number_list(value, name, *, maximum=None):
         raise argparse.ArgumentTypeError(f'{name} 中的数字必须小于 {maximum}')
     return values
 
+
 def factor_percent(model, seconds, deadline):
-    """返回指定等待场景的运行时价值百分比。"""
+    """返回指定等待场景的运行时价值百分比。
+
+    Args:
+        model (CommissionValueModel): 委托价值模型。
+        seconds (int): 等待秒数。
+        deadline (int): 剩余最晚启动秒数。
+
+    Returns:
+        float: 剩余价值百分比（0-100）。
+    """
     return model.delay_factor(seconds, deadline) / VALUE_SCALE * 100
 
 
 def build_parameter_section(model, server_refresh_horizon):
-    """解释五个模型参数及当前值的直接含义。"""
+    """解释五个模型参数及当前值的直接含义。
+
+    Args:
+        model (CommissionValueModel): 委托价值模型。
+        server_refresh_horizon (int): 服务器刷新剩余秒数。
+
+    Returns:
+        list[str]: Markdown 格式文本行列表。
+    """
     adjacent = 100 / model.tier_value_ratio
     return [
         '## 一眼看懂当前参数',
@@ -99,7 +146,15 @@ def build_parameter_section(model, server_refresh_horizon):
     ]
 
 def build_tier_section(model, max_tier_gap):
-    """展示跨 tier 的基础价值比例。"""
+    """展示跨 tier 的基础价值比例。
+
+    Args:
+        model (CommissionValueModel): 委托价值模型。
+        max_tier_gap (int): 最大展示 tier 差距。
+
+    Returns:
+        list[str]: Markdown 格式文本行列表。
+    """
     lines = [
         '## Tier 基础价值',
         '',
@@ -114,7 +169,15 @@ def build_tier_section(model, max_tier_gap):
     return lines
 
 def build_filter_section(model, max_filter_index):
-    """展示同一 tier 内过滤器编号造成的价值修正。"""
+    """展示同一 tier 内过滤器编号造成的价值修正。
+
+    Args:
+        model (CommissionValueModel): 委托价值模型。
+        max_filter_index (int): 最大过滤器编号。
+
+    Returns:
+        list[str]: Markdown 格式文本行列表。
+    """
     lines = [
         '## 层内价值衰减表（同 Tier 内的过滤器顺序）',
         '',
@@ -130,7 +193,16 @@ def build_filter_section(model, max_filter_index):
     return lines
 
 def build_baseline_delay_section(model, delay_minutes, server_refresh_horizon):
-    """展示普通委托使用服务器刷新时间时的完整折现。"""
+    """展示普通委托使用服务器刷新时间时的完整折现。
+
+    Args:
+        model (CommissionValueModel): 委托价值模型。
+        delay_minutes (tuple[float, ...]): 等待分钟数列表。
+        server_refresh_horizon (int): 服务器刷新剩余秒数。
+
+    Returns:
+        list[str]: Markdown 格式文本行列表。
+    """
     refresh_text = format_duration(server_refresh_horizon)
     lines = [
         f'## 普通委托的等待损失（d = 刷新剩余时间 {refresh_text}）',
@@ -149,7 +221,15 @@ def build_baseline_delay_section(model, delay_minutes, server_refresh_horizon):
     return lines
 
 def build_deadline_fraction_section(model, deadline_horizon_ratios):
-    """展示不同 d/T 下相对窗口指数和完整折现。"""
+    """展示不同 d/T 下相对窗口指数和完整折现。
+
+    Args:
+        model (CommissionValueModel): 委托价值模型。
+        deadline_horizon_ratios (tuple[float, ...]): d 与 T 的比例元组。
+
+    Returns:
+        list[str]: Markdown 格式文本行列表。
+    """
     lines = [
         '## Deadline 相对窗口强度',
         '',
@@ -172,7 +252,17 @@ def build_deadline_fraction_section(model, deadline_horizon_ratios):
 
 
 def build_deadline_matrix(model, deadline_hours, delay_minutes, server_refresh_horizon):
-    """展示绝对等待时间与剩余 deadline 共同作用后的总损失。"""
+    """展示绝对等待时间与剩余 deadline 共同作用后的总损失。
+
+    Args:
+        model (CommissionValueModel): 委托价值模型。
+        deadline_hours (tuple[float, ...]): deadline 小时数列表。
+        delay_minutes (tuple[float, ...]): 等待分钟数列表。
+        server_refresh_horizon (int): 服务器刷新剩余秒数。
+
+    Returns:
+        list[str]: Markdown 格式文本行列表。
+    """
     lines = [
         '## 不同 Deadline 下的总等待损失',
         '',
@@ -209,7 +299,19 @@ def build_threshold_table(
     delayed_filter_index,
     deadline,
 ):
-    """生成低 tier 委托抢槽的延迟临界值矩阵。"""
+    """生成低 tier 委托抢槽的延迟临界值矩阵。
+
+    Args:
+        model (CommissionValueModel): 委托价值模型。
+        max_tier_gap (int): 最大展示 tier 差距。
+        max_delayed_count (int): 最大被延迟委托数量。
+        delaying_filter_index (int): 抢槽委托层内编号。
+        delayed_filter_index (int): 被延迟委托层内编号。
+        deadline (int): 剩余有效秒数。
+
+    Returns:
+        list[str]: Markdown 格式文本行列表。
+    """
     title = f'd={format_duration(deadline)}'
     lines = [
         f'### {title}',
@@ -245,7 +347,20 @@ def build_threshold_section(
     threshold_deadline_hours,
     server_refresh_horizon,
 ):
-    """解释并展示不同 deadline 下的抢槽盈亏边界。"""
+    """解释并展示不同 deadline 下的抢槽盈亏边界。
+
+    Args:
+        model (CommissionValueModel): 委托价值模型。
+        max_tier_gap (int): 最大展示 tier 差距。
+        max_delayed_count (int): 最大被延迟委托数量。
+        delaying_filter_index (int): 抢槽委托层内编号。
+        delayed_filter_index (int): 被延迟委托层内编号。
+        threshold_deadline_hours (tuple[float, ...]): 临界值 deadline 小时列表。
+        server_refresh_horizon (int): 服务器刷新剩余秒数。
+
+    Returns:
+        list[str]: Markdown 格式文本行列表。
+    """
     delaying_ratio = model.filter_factor(delaying_filter_index) / VALUE_SCALE * 100
     delayed_ratio = model.filter_factor(delayed_filter_index) / VALUE_SCALE * 100
     lines = [
@@ -287,7 +402,17 @@ def build_example_section(
     example_delay_minutes,
     server_refresh_horizon,
 ):
-    """生成一个不依赖 tier 配置的直观抢槽例子。"""
+    """生成一个不依赖 tier 配置的直观抢槽例子。
+
+    Args:
+        model (CommissionValueModel): 委托价值模型。
+        low_value_ratio (float): 低价值委托相对高价值委托的价值比例。
+        example_delay_minutes (float): 示例延迟分钟数。
+        server_refresh_horizon (int): 服务器刷新剩余秒数。
+
+    Returns:
+        list[str]: Markdown 格式文本行列表。
+    """
     delay = round(example_delay_minutes * 60)
     low_value = low_value_ratio * 100
     deadlines = (server_refresh_horizon, 6 * 3600, 2 * 3600, 1 * 3600)
@@ -334,7 +459,29 @@ def build_report(
     example_delay_minutes=30,
     server_refresh_horizon=DEFAULT_SERVER_REFRESH_HORIZON,
 ):
-    """构造完整 Markdown 模型评估报告。"""
+    """构造完整 Markdown 模型评估报告。
+
+    Args:
+        model (CommissionValueModel): 委托价值模型。
+        max_tier_gap (int): 最大展示 tier 差距。
+        max_delayed_count (int): 最大被延迟委托数量。
+        delaying_filter_index (int): 抢槽委托层内编号。
+        delayed_filter_index (int): 被延迟委托层内编号。
+        max_filter_index (int): 最大过滤器编号，默认为 16。
+        deadline_hours (tuple[float, ...]): deadline 小时列表。
+        delay_minutes (tuple[float, ...]): 等待分钟数列表。
+        deadline_horizon_ratios (tuple[float, ...]): 机会窗口比例列表。
+        threshold_deadline_hours (tuple[float, ...]): 临界值 deadline 小时列表。
+        example_low_value_ratio (float): 示例低价值比例。
+        example_delay_minutes (float): 示例延迟分钟数。
+        server_refresh_horizon (int): 服务器刷新剩余秒数。
+
+    Returns:
+        str: 拼接完整的 Markdown 报告文本。
+
+    Raises:
+        ValueError: 输入参数不合法时抛出。
+    """
     if max_tier_gap <= 0:
         raise ValueError('最大 tier 间隔必须为正整数')
     if max_delayed_count <= 0:
@@ -392,7 +539,19 @@ def build_table(
     delayed_filter_index,
     max_filter_index=16,
 ):
-    """兼容旧调用名称，返回新的完整评估报告。"""
+    """兼容旧调用名称，返回新的完整评估报告。
+
+    Args:
+        model (CommissionValueModel): 委托价值模型。
+        max_tier_gap (int): 最大展示 tier 差距。
+        max_delayed_count (int): 最大被延迟委托数量。
+        delaying_filter_index (int): 抢槽委托层内编号。
+        delayed_filter_index (int): 被延迟委托层内编号。
+        max_filter_index (int): 最大过滤器编号，默认为 16。
+
+    Returns:
+        str: 拼接完整的 Markdown 报告文本。
+    """
     return build_report(
         model=model,
         max_tier_gap=max_tier_gap,
@@ -404,7 +563,11 @@ def build_table(
 
 
 def parse_args():
-    """解析模型参数、报告场景范围和输出位置。"""
+    """解析模型参数、报告场景范围和输出位置。
+
+    Returns:
+        argparse.Namespace: 命令行解析得到的参数命名空间。
+    """
     parser = argparse.ArgumentParser(
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter,

@@ -8,19 +8,18 @@ on:
 jobs:
   repo-sync:
     env:
-      gitcode_key: ${{ secrets.GITCODE_PRIVATE_KEY }}
       gitcode_token: ${{ secrets.GITCODE_TOKEN }}
       gitcode_user: ${{ secrets.GITCODE_USER }}
+      gitcode_repo: ${{ secrets.GITCODE_REPO_NAME }}
     runs-on: ubuntu-latest
     concurrency:
       group: gitcode-sync-${{ github.ref }}
       cancel-in-progress: false
-    # 初次浅克隆 300 层；不足以覆盖固定基线时，脚本按需加深。
     steps:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
-          fetch-depth: 300
+          fetch-depth: 0
 
       - name: Mask sensitive values
         env:
@@ -32,28 +31,27 @@ jobs:
           echo "::add-mask::${MASK_REPO}"
           echo "::add-mask::${MASK_TARGET}"
 
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.14'
-
-      # 普通服务端可能拒绝浅仓库推送，因此先截断父链接，生成独立的普通仓库。
-      # 基线固定在共享配置中，同一提交的镜像 SHA 稳定，新增提交继续往后累加。
-      - name: Build fixed baseline mirror history
-        env:
-          MIRROR_OUTPUT: ${{ runner.temp }}/gitcode-mirror.git
-          MIRROR_BRANCH: ${{ github.ref_name }}
-        run: |
-          python .github/scripts/build_mirror_history.py \
-            --fetch-branch "$MIRROR_BRANCH" --output "$MIRROR_OUTPUT"
-
       - name: sync
-        if: env.gitcode_key && env.gitcode_token && env.gitcode_user
+        if: env.gitcode_token && env.gitcode_user && env.gitcode_repo
         run: |
-          cd "$MIRROR_OUTPUT"
+          # 直接同步源提交，GitHub、GitCode 与 CDN 使用相同 SHA。
+          git remote remove upstream-mirror 2>/dev/null || true
           git remote add upstream-mirror "https://${GITCODE_USER}:${GITCODE_TOKEN}@gitcode.com/${GITCODE_USER}/${REPO_NAME}.git"
-          git push --force --progress upstream-mirror "HEAD:${GITHUB_REF_NAME}"
+          # GitCode 会对默认 Git UA 返回 418，与本地更新器采用相同的 UA 重试方式。
+          for attempt in 1 2 3 4 5; do
+            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/$((120 + RANDOM % 20)).0.$RANDOM.0 Safari/537.36"
+            if git -c "http.userAgent=$user_agent" push --force --progress upstream-mirror "HEAD:refs/heads/${GITHUB_REF_NAME}"; then
+              exit 0
+            else
+              status=$?
+            fi
+            if [ "$attempt" -eq 5 ]; then
+              exit "$status"
+            fi
+            echo "GitCode 推送失败，准备第 $((attempt + 1))/5 次尝试"
+            sleep "$((attempt * 2))"
+          done
         env:
           GITCODE_USER: ${{ secrets.GITCODE_USER }}
           GITCODE_TOKEN: ${{ secrets.GITCODE_TOKEN }}
           REPO_NAME: ${{ secrets.GITCODE_REPO_NAME }}
-          MIRROR_OUTPUT: ${{ runner.temp }}/gitcode-mirror.git

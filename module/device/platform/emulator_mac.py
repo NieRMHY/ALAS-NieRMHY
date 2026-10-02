@@ -15,6 +15,14 @@ from module.logger import logger
 
 
 def abspath(path):
+    """将路径转换为规范化的绝对路径并使用正斜杠。
+
+    Args:
+        path (str): 待转换路径。
+
+    Returns:
+        str: 正斜杠分隔的绝对路径。
+    """
     return os.path.abspath(path).replace('\\', '/')
 
 

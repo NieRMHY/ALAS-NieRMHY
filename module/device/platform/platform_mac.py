@@ -21,22 +21,22 @@ from module.logger import logger
 
 
 class PlatformMac(PlatformBase, EmulatorManagerMac):
-    """
-    macOS 平台的模拟器控制接口。
-    支持 BlueStacks Air 和 MuMu Pro。
+    """macOS 平台模拟器生命周期与控制管理器。
+
+    继承 PlatformBase 和 EmulatorManagerMac，提供 macOS 平台上
+    BlueStacks Air、MuMu Pro 及 SSH 远程模拟器的启动、停止、优先级提升与健康监视。
     """
 
     @classmethod
     def execute(cls, command, wait=True):
-        """
-        执行外部命令。
+        """执行外部命令。
 
         Args:
-            command (str): 要执行的命令
-            wait (bool): 是否等待命令完成
+            command (str): 要执行的 shell 命令字符串。
+            wait (bool): 是否等待命令执行完成，默认为 True。
 
         Returns:
-            subprocess.CompletedProcess 或 subprocess.Popen: 命令执行结果
+            subprocess.CompletedProcess | subprocess.Popen: 命令执行结果或进程句柄。
         """
         # 在 Mac 上使用 shell=True 执行复杂命令
         logger.info(f'[设备-模拟器Mac] 执行: {command}')
@@ -53,14 +53,13 @@ class PlatformMac(PlatformBase, EmulatorManagerMac):
 
     @classmethod
     def kill_process_by_regex(cls, regex: str) -> int:
-        """
-        终止名称匹配给定正则表达式的进程。
+        """终止名称匹配给定正则表达式的进程。
 
         Args:
-            regex: 匹配进程名称的正则表达式
+            regex (str): 匹配进程名称的正则表达式。
 
         Returns:
-            int: 已终止的进程数量
+            int: 已成功终止的进程数量。
         """
         count = 0
         for proc in psutil.process_iter():
@@ -76,15 +75,14 @@ class PlatformMac(PlatformBase, EmulatorManagerMac):
 
     @classmethod
     def renice_process_by_regex(cls, regex: str, priority: int = -20) -> int:
-        """
-        修改匹配正则表达式的进程优先级。
+        """修改匹配正则表达式的进程调度优先级。
 
         Args:
-            regex: 匹配进程名称的正则表达式
-            priority: Nice 值（-20 最高优先级，19 最低优先级）
+            regex (str): 匹配进程名称的正则表达式。
+            priority (int): Nice 优先级数值（-20 为最高优先级，19 为最低优先级），默认为 -20。
 
         Returns:
-            int: 已修改优先级的进程数量
+            int: 已修改优先级的进程数量。
         """
         count = 0
         for proc in psutil.process_iter():
@@ -109,11 +107,10 @@ class PlatformMac(PlatformBase, EmulatorManagerMac):
         return count
 
     def boost_emulator_priority(self, instance: EmulatorInstanceMac):
-        """
-        启动后提升模拟器进程优先级。
+        """启动后提升模拟器相关进程的优先级。
 
         Args:
-            instance: 要提升优先级的模拟器实例
+            instance (EmulatorInstanceMac): 要提升优先级的模拟器实例。
         """
         if instance == EmulatorMac.BlueStacksAir:
             time.sleep(3)
@@ -129,8 +126,8 @@ class PlatformMac(PlatformBase, EmulatorManagerMac):
                 self.renice_process_by_regex(instance.name, -20)
 
     def boost_running_emulator_priority(self):
-        """
-        提升当前正在运行的模拟器的进程优先级。
+        """提升当前正在运行的模拟器的进程优先级。
+
         在 Alas 启动且检测到已有模拟器运行时调用。
         """
         # 尝试提升 MuMu 进程优先级
@@ -148,11 +145,13 @@ class PlatformMac(PlatformBase, EmulatorManagerMac):
         logger.info('[设备-模拟器Mac] 未找到运行中的模拟器进程可提升')
 
     def _emulator_start(self, instance: EmulatorInstanceMac):
-        """
-        启动模拟器（不含错误处理）。
+        """启动指定模拟器实例（底层实现，不含重试处理）。
 
         Args:
-            instance: 模拟器实例
+            instance (EmulatorInstanceMac): 待启动的模拟器实例。
+
+        Raises:
+            Exception: 模拟器应用未找到或无法识别模拟器类型时抛出。
         """
         exe: str = instance.emulator.path
 
@@ -200,11 +199,10 @@ class PlatformMac(PlatformBase, EmulatorManagerMac):
                 raise Exception(f'Cannot start unknown emulator: {instance}')
 
     def _emulator_stop(self, instance: EmulatorInstanceMac):
-        """
-        停止模拟器（不含错误处理）。
+        """停止指定模拟器实例（底层实现，不含错误重试）。
 
         Args:
-            instance: 模拟器实例
+            instance (EmulatorInstanceMac): 待停止的模拟器实例。
         """
         if instance == EmulatorMac.BlueStacksAir:
             # 尝试查找并终止 BlueStacks 进程
@@ -238,14 +236,13 @@ class PlatformMac(PlatformBase, EmulatorManagerMac):
                 self.kill_process_by_regex(instance.name)
 
     def _emulator_function_wrapper(self, func):
-        """
-        模拟器启停操作的统一包装器，处理异常。
+        """模拟器启停操作的统一包装器，捕获并记录异常。
 
         Args:
-            func (callable): _emulator_start 或 _emulator_stop
+            func (Callable): ``_emulator_start`` 或 ``_emulator_stop`` 操作函数。
 
         Returns:
-            bool: 是否成功
+            bool: 操作是否成功执行。
         """
         try:
             func(self.emulator_instance)
@@ -257,11 +254,10 @@ class PlatformMac(PlatformBase, EmulatorManagerMac):
         return False
 
     def emulator_start_watch(self):
-        """
-        监控模拟器启动过程，等待启动完成。
+        """监控模拟器启动流程，轮询等待模拟器 ADB 连通与游戏包加载完成。
 
         Returns:
-            bool: True 表示启动完成，False 表示超时
+            bool: 启动成功且检测通过返回 True，超时返回 False。
         """
         logger.hr('[设备-模拟器Mac] 模拟器启动', level=2)
         serial = self.emulator_instance.serial
@@ -339,7 +335,10 @@ class PlatformMac(PlatformBase, EmulatorManagerMac):
         Args:
             deep (bool): 深度重启标志，仅 MuMu12（Windows）有对应实现，
                 本平台忽略该参数——保留它是为了让调用方无需按平台分支传参。
-            failures (int): 本次之前已连续失败几次，本平台忽略。
+            failures (int): 本次之前已连续失败次数，本平台忽略。
+
+        Returns:
+            bool: 启动成功返回 True，失败返回 False。
         """
         logger.hr('[设备-模拟器Mac] 模拟器启动', level=1)
         for _ in range(3):
@@ -369,7 +368,11 @@ class PlatformMac(PlatformBase, EmulatorManagerMac):
         return False
 
     def emulator_stop(self):
-        """停止模拟器，最多重试 3 次。"""
+        """停止模拟器，最多重试 3 次。
+
+        Returns:
+            bool: 停止成功返回 True，失败返回 False。
+        """
         logger.hr('[设备-模拟器Mac] 模拟器停止', level=1)
         for _ in range(3):
             # 停止

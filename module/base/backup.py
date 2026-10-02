@@ -120,6 +120,18 @@ def backup_config(backup_dir):
     logger.info('开始备份用户配置')
 
     files = []
+    scheduler = CONFIG_DIR / 'scheduler'
+    if scheduler.exists():
+        from module.scheduler.store import ProgramStore
+        store = ProgramStore(CONFIG_DIR)
+        for source in scheduler.glob('*.sqlite3'):
+            relative = source.relative_to(CONFIG_DIR)
+            target = backup_dir / relative
+            try:
+                store.backup(source.stem, target)
+                files.append({'name': str(relative), 'size': target.stat().st_size})
+            except Exception as exc:
+                logger.warning(f'调度数据库备份失败：{source}，{exc}')
 
     deploy = CONFIG_DIR / 'deploy.yaml'
 
@@ -224,4 +236,3 @@ def clean_backup(keep_days=BACKUP_KEEP_DAYS):
             logger.info(f'已删除过期备份：{folder.name}')
         except Exception as e:
             logger.warning(f'删除过期备份失败：{folder.name}，{e}')
-

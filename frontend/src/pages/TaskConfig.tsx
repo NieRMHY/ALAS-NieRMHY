@@ -3,7 +3,7 @@
  */
 
 import { useCallback, useEffect, useState, useSyncExternalStore } from 'react'
-import { useParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 import { CalendarClock, Clock3, ListTree, Play, Search, Settings2, Ship, Terminal } from 'lucide-react'
 import { api } from '../api/client'
 import type { Config } from '../api/types'
@@ -168,6 +168,7 @@ export function TaskConfig() {
                 {readonly && <span className="small-label">{ui('task.readonly')}</span>}
               </label>
               {help && help !== 'help' && help !== arg && <p>{htmlToPlainText(help)}</p>}
+              {task === 'General' && group === 'YukikazeTaskManager' && arg === 'TaskPriorityAdjustment' && <Link className="button secondary" to={`/i/${instance}/task/SchedulerProgram`}>{ui('nav.schedulerProgram')}</Link>}
               {/* 多行控件的提示跟标题同一行，浮在它右端。 */}
               {isMultiline && <EditStatus id={path} edit={edit} retry={queue.retry} queue={queue} />}
             </div>

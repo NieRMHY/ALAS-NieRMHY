@@ -305,18 +305,26 @@ PROJECT_TABLE_S4 = """
 
 
 class cached_property:
-    """
-    cached-property from https://github.com/pydanny/cached-property
-
-    A property that is only computed once per instance and then replaces itself
-    with an ordinary attribute. Deleting the attribute resets the property.
-    Source: https://github.com/bottlepy/bottle/commit/fa7733e075da0d790d809aa3d2f53071897e6f76
-    """
+    """缓存属性装饰器，属性仅计算一次并缓存到实例属性中。"""
 
     def __init__(self, func):
+        """初始化缓存属性装饰器。
+
+        Args:
+            func (callable): 待计算的属性方法。
+        """
         self.func = func
 
     def __get__(self, obj, cls):
+        """获取属性值，若未计算则执行计算并缓存到实例属性字典中。
+
+        Args:
+            obj (object): 实例对象。
+            cls (type): 实例所属类。
+
+        Returns:
+            Any: 属性计算值。
+        """
         if obj is None:
             return self
 
@@ -325,6 +333,14 @@ class cached_property:
 
 
 def timer(function):
+    """函数执行耗时计时器装饰器。
+
+    Args:
+        function (callable): 待计时的函数。
+
+    Returns:
+        callable: 装饰后的计时函数。
+    """
     @wraps(function)
     def function_timer(*args, **kwargs):
         t0 = time.time()
@@ -338,12 +354,15 @@ def timer(function):
 
 
 class Filter:
+    """通用对象过滤器与排序器。"""
+
     def __init__(self, regex, attr, preset=()):
-        """
+        """初始化过滤器。
+
         Args:
-            regex: Regular expression.
-            attr: Attribute name.
-            preset: Build-in string preset.
+            regex (str | re.Pattern): 匹配过滤器的正则表达式。
+            attr (tuple[str, ...]): 提取的属性名称元组。
+            preset (tuple[str, ...]): 内置预设字符串元组。
         """
         if isinstance(regex, str):
             regex = re.compile(regex)
@@ -354,23 +373,35 @@ class Filter:
         self.filter = []
 
     def load(self, string):
+        """加载并解析过滤器选择表达式。
+
+        Args:
+            string (str): 优先级表达式字符串（如 'A > B > C'）。
+        """
         string = str(string)
         self.filter_raw = [f.strip(' \t\r\n') for f in string.split('>')]
         self.filter = [self.parse_filter(f) for f in self.filter_raw]
 
     def is_preset(self, filter):
+        """判断是否为内置预设。
+
+        Args:
+            filter (str): 过滤器项。
+
+        Returns:
+            bool: 是否为预设。
+        """
         return len(filter) and filter.lower() in self.preset
 
     def apply(self, objs, func=None):
-        """
+        """对对象列表应用过滤规则并排序。
+
         Args:
-            objs (list): List of objects and strings
-            func (callable): A function to filter object.
-                Function should receive an object as arguments, and return a bool.
-                True means add it to output.
+            objs (list): 待过滤的对象与预设字符串列表。
+            func (callable, optional): 自定义过滤函数，接收对象并返回 bool。
 
         Returns:
-            list: A list of objects and preset strings, such as [object, object, object, 'reset']
+            list: 过滤与优先级排序后的对象列表。
         """
         out = []
         for raw, filter in zip(self.filter_raw, self.filter):
@@ -391,19 +422,20 @@ class Filter:
                 elif func(obj):
                     out.append(obj)
                 else:
-                    # Drop this object
+                    # 丢弃该对象
                     pass
 
         return out
 
     def apply_filter_to_obj(self, obj, filter):
-        """
+        """检查单个对象是否满足过滤条件。
+
         Args:
-            obj (object):
-            filter (list[str]):
+            obj (object): 目标对象。
+            filter (list[str | None]): 属性值过滤条件列表。
 
         Returns:
-            bool: If an object satisfy a filter.
+            bool: 是否满足条件。
         """
         for attr, value in zip(self.attr, filter):
             if not value:
@@ -414,12 +446,13 @@ class Filter:
         return True
 
     def parse_filter(self, string):
-        """
+        """解析单个过滤器选择子项。
+
         Args:
-            string (str):
+            string (str): 单项选择文本。
 
         Returns:
-            list[strNone]:
+            list[str | None]: 提取的属性列表。
         """
         string = string.replace(' ', '').lower()
         result = re.search(self.regex, string)
@@ -431,13 +464,19 @@ class Filter:
             return [result.group(index + 1) for index, attr in enumerate(self.attr)]
         else:
             print(f'Invalid filter: "{string}". This selector does not match the regex, nor a preset.')
-            # Invalid filter will be ignored.
-            # Return strange things and make it impossible to match
+            # 无效过滤器将被忽略
             return ['1nVa1d'] + [None] * (len(self.attr) - 1)
 
 
 class SelectedGrids:
+    """项目与网格集合封装类。"""
+
     def __init__(self, grids):
+        """初始化网格集合。
+
+        Args:
+            grids (list): 网格或项目对象列表。
+        """
         self.grids = grids
 
     def __iter__(self):
@@ -453,7 +492,6 @@ class SelectedGrids:
         return item in self.grids
 
     def __str__(self):
-        # return str([str(grid) for grid in self])
         return '[' + ', '.join([str(grid) for grid in self]) + ']'
 
     def __len__(self):
@@ -462,48 +500,50 @@ class SelectedGrids:
     def __bool__(self):
         return self.count > 0
 
-    # def __getattr__(self, item):
-    #     return [grid.__getattribute__(item) for grid in self.grids]
-
     @property
     def location(self):
-        """
+        """获取所有网格的坐标列表。
+
         Returns:
-            list[tuple]:
+            list[tuple]: 坐标元组列表。
         """
         return [grid.location for grid in self.grids]
 
     @property
     def cost(self):
-        """
+        """获取所有网格的代价列表。
+
         Returns:
-            list[int]:
+            list[int]: 代价值列表。
         """
         return [grid.cost for grid in self.grids]
 
     @property
     def weight(self):
-        """
+        """获取所有网格的权重列表。
+
         Returns:
-            list[int]:
+            list[int]: 权重值列表。
         """
         return [grid.weight for grid in self.grids]
 
     @property
     def count(self):
-        """
+        """获取集合中元素数量。
+
         Returns:
-            int:
+            int: 元素总数。
         """
         return len(self.grids)
 
     def select(self, **kwargs):
-        """
+        """按属性精确筛选集合中的对象。
+
         Args:
-            **kwargs: Attributes of Grid.
+            **kwargs: 目标对象的属性值键值对。
 
         Returns:
-            SelectedGrids:
+            SelectedGrids: 筛选出的子集合。
         """
         result = []
         for grid in self:
@@ -518,72 +558,68 @@ class SelectedGrids:
         return SelectedGrids(result)
 
     def filter(self, func):
-        """
-        Filter grids by a function.
+        """使用谓词函数过滤集合。
 
         Args:
-            func (callable): Function should receive an grid as argument, and return a bool.
+            func (callable): 接收对象并返回布尔值的过滤函数。
 
         Returns:
-            SelectedGrids:
+            SelectedGrids: 过滤后的集合。
         """
         return SelectedGrids([grid for grid in self if func(grid)])
 
     def set(self, **kwargs):
-        """
-        Set attribute to each grid.
+        """为集合中的每个对象批量设置属性。
 
         Args:
-            **kwargs:
+            **kwargs: 待设置的属性键值对。
         """
         for grid in self:
             for key, value in kwargs.items():
                 grid.__setattr__(key, value)
 
     def get(self, attr):
-        """
-        Get an attribute from each grid.
+        """获取集合中所有对象的指定属性列表。
 
         Args:
-            attr: Attribute name.
+            attr (str): 属性名称。
 
         Returns:
-            list:
+            list: 属性值列表。
         """
         return [grid.__getattribute__(attr) for grid in self.grids]
 
     def call(self, func, **kwargs):
-        """
-        Call a function in reach grid, and get results.
+        """调用集合中所有对象的同名方法。
 
         Args:
-            func (str): Function name to call.
-            **kwargs:
+            func (str): 方法名称。
+            **kwargs: 传递给方法的参数。
 
         Returns:
-            list:
+            list: 各对象方法调用的返回值列表。
         """
         return [grid.__getattribute__(func)(**kwargs) for grid in self]
 
     def add(self, grids):
-        """
+        """合并两个集合（基于集合元素去重）。
+
         Args:
-            grids(SelectedGrids):
+            grids (SelectedGrids): 待合并的集合。
 
         Returns:
-            SelectedGrids:
+            SelectedGrids: 合并后的集合。
         """
         return SelectedGrids(list(set(self.grids + grids.grids)))
 
     def add_by_eq(self, grids):
-        """
-        Another `add()` method, but de-duplicates with `__eq__` instead of `__hash__`.
+        """按相等性合并两个集合（基于 __eq__ 去重）。
 
         Args:
-            grids(SelectedGrids):
+            grids (SelectedGrids): 待合并的集合。
 
         Returns:
-            SelectedGrids:
+            SelectedGrids: 合并后的集合。
         """
         new = []
         for grid in self.grids + grids.grids:
@@ -593,24 +629,24 @@ class SelectedGrids:
         return SelectedGrids(new)
 
     def intersect(self, grids):
-        """
+        """计算两个集合的交集（基于 hash）。
+
         Args:
-            grids(SelectedGrids):
+            grids (SelectedGrids): 目标集合。
 
         Returns:
-            SelectedGrids:
+            SelectedGrids: 交集结果。
         """
         return SelectedGrids(list(set(self.grids).intersection(set(grids.grids))))
 
     def intersect_by_eq(self, grids):
-        """
-        Another `intersect()` method, but de-duplicates with `__eq__` instead of `__hash__`.
+        """计算两个集合的交集（基于 __eq__）。
 
         Args:
-            grids(SelectedGrids):
+            grids (SelectedGrids): 目标集合。
 
         Returns:
-            SelectedGrids:
+            SelectedGrids: 交集结果。
         """
         new = []
         for grid in self.grids:
@@ -620,18 +656,24 @@ class SelectedGrids:
         return SelectedGrids(new)
 
     def delete(self, grids):
-        """
+        """从当前集合中删除指定集合的元素。
+
         Args:
-            grids(SelectedGrids):
+            grids (SelectedGrids | list): 待剔除的元素集合。
 
         Returns:
-            SelectedGrids:
+            SelectedGrids: 差集结果。
         """
         g = [grid for grid in self.grids if grid not in grids]
         return SelectedGrids(g)
 
 
 def hr0(title):
+    """打印一级标题横幅。
+
+    Args:
+        title (str): 标题文本。
+    """
     middle = '|' + ' ' * 20 + title + ' ' * 20 + '|'
     border = '+' + '-' * (len(middle) - 2) + '+'
     print(border)
@@ -640,14 +682,29 @@ def hr0(title):
 
 
 def hr1(title):
+    """打印等号分割标题。
+
+    Args:
+        title (str): 标题文本。
+    """
     print('=' * 20 + ' ' + title + ' ' + '=' * 20)
 
 
 def hr2(title):
+    """打印短横线分割标题。
+
+    Args:
+        title (str): 标题文本。
+    """
     print('-' * 20 + ' ' + title + ' ' + '-' * 20)
 
 
 def hr3(title):
+    """打印尖括号分割标题。
+
+    Args:
+        title (str): 标题文本。
+    """
     print('<' * 3 + ' ' + title + ' ' + '>' * 3)
 
 
@@ -672,6 +729,14 @@ FILTER = Filter(FILTER_REGEX, FILTER_ATTR, FILTER_PRESET)
 
 
 def parse_value(value):
+    """解析字符串数值为 int、float 或保留原字符串。
+
+    Args:
+        value (str): 待解析文本。
+
+    Returns:
+        int | float | str: 解析后的值。
+    """
     if '.' in value:
         try:
             return float(value)
@@ -686,6 +751,15 @@ def parse_value(value):
 
 
 def parse_text_table(string, data_class):
+    """解析制表符分隔的文本表格为对象集合。
+
+    Args:
+        string (str): 表格纯文本。
+        data_class (type): 用于封装每行的数据类。
+
+    Returns:
+        SelectedGrids: 解析后的对象集合。
+    """
     out = []
     for row in string.split('\n'):
         row = row.strip(' \r\n\t')
@@ -698,9 +772,7 @@ def parse_text_table(string, data_class):
 
 @dataclass()
 class Research:
-    """
-    储存每个科研项目的信息
-    """
+    """储存每个科研项目的信息。"""
     index: int
     series: str
     name: str
@@ -740,6 +812,14 @@ PROJECTS_S4 = parse_text_table(PROJECT_TABLE_S4, Research)
 
 
 def product_dict(func):
+    """为所有科研项目按 index 生成指定函数计算结果的映射字典。
+
+    Args:
+        func (callable): 处理 Research 对象的函数。
+
+    Returns:
+        dict[int, Any]: 项目索引到计算值的映射字典。
+    """
     out = {}
     for project in PROJECTS:
         out[project.index] = func(project)
@@ -758,10 +838,16 @@ PROJECT_DURATION_ARRAY = np.array(list(PROJECT_DURATION.values()))
 
 
 class ResearchPool:
+    """科研项目池与选择优先级管理器。"""
     remove_projects = 'B > T > E'
     all_ships = TARGET_SHIPS
 
     def __init__(self, string):
+        """初始化科研项目池。
+
+        Args:
+            string (str): 科研优先级过滤字符串。
+        """
         FILTER.load(string)
         self.filter = SelectedGrids(FILTER.apply(PROJECTS.grids))
         self.reset_index = 1000
@@ -772,11 +858,10 @@ class ResearchPool:
 
     @cached_property
     def project_select_index(self):
-        """
-        将过滤器字符串转换为项目选择索引，越低表示越优先选择，1000表示不选择，需要刷新
+        """将过滤器字符串转换为项目选择索引数组。
 
         Returns:
-            np.ndarray: Shape (188,), lower index means to be selected first. 1000 for not selected projects.
+            np.ndarray: 形状为 (188,) 的索引数组，值越小表示优先级越高，1000 表示不选择。
         """
         out = np.ones((PROJECTS.count,), dtype=int) * 1000
         for index, project in enumerate(self.filter):
@@ -791,12 +876,13 @@ class ResearchPool:
 
     @classmethod
     def cal_project_spawn_rate(cls, projects):
-        """
-        计算不同完成条件下的出现概率
+        """计算不同完成条件下的出现概率。
+
+        Args:
+            projects (SelectedGrids): 科研项目集合。
 
         Returns:
-            dict(tuple, np.ndarray): Key: Combinations of conditions, such as b'\x00\x00\x00\x00\x00\x00'
-                value: project appear rate.
+            dict[int, np.ndarray]: 完成条件组合索引到项目出现概率分布的映射。
         """
         out = {}
         for condition in itertools.product([False, True], repeat=len(PROJECT_DROP[0])):
@@ -830,14 +916,17 @@ SPAWN_RATE_S4 = np.array([np.cumsum(SPAWN_RATE_S4[n]) for n in range(64)])
 
 @jit(nopython=True, fastmath=True)
 def random_choice(size, possibility_cumsum):
-    """
-    numpy.random.choice()的土法实现
-    因为numba不支持numpy.random.choice()的p参数（概率数组）
+    """numpy.random.choice() 的土法实现。
+
+    因 numba 不支持带概率数组 p 参数的 numpy.random.choice()。
     https://numba.pydata.org/numba-doc/dev/reference/numpysupported.html
 
     Args:
-        size (int): 只能生成一维数组
-        possibility_cumsum (np.ndarray): 经过累加后的出现概率
+        size (int): 抽样数量（仅支持生成一维数组）。
+        possibility_cumsum (np.ndarray): 经过累加后的出现概率分布数组。
+
+    Returns:
+        np.ndarray: 抽样得到的索引数组。
     """
     rdm_unif = np.random.rand(size)
     return np.searchsorted(possibility_cumsum, rdm_unif)
@@ -845,16 +934,15 @@ def random_choice(size, possibility_cumsum):
 
 @jit(nopython=True, fastmath=True)
 def sample(condition, project_select_index, reset_index):
-    """
-    随机生成科研项目并选择
+    """随机生成一组科研项目并根据优先级进行选择。
 
     Args:
-        condition (np.ndarray):Shape: (6,) 各种物品的完成情况
-        project_select_index (np.ndarray): Shape: (188,) 项目的选择优先级，越低表示越优先选择，1000表示不选择，需要刷新
-        reset_index (int): 刷新所对应的优先级数值
+        condition (np.ndarray): 形状为 (6,) 的各物品完成情况布尔数组。
+        project_select_index (np.ndarray): 形状为 (188,) 的项目选择优先级数组，数值越小越优先，1000 表示不选择。
+        reset_index (int): 刷新操作对应的优先级数值。
 
     Returns:
-        int, int: 有刷新时选择的科研项目, 无刷新时选择的科研项目
+        tuple[int, int]: (有刷新时选择的项目索引, 无刷新时选择的项目索引)。
     """
     while 1:
         # 将完成情况转换成数组索引
@@ -888,29 +976,37 @@ def sample(condition, project_select_index, reset_index):
 
 @jit(nopython=True, fastmath=True)
 def events_add(rewards, condition):
+    """模拟活动代币兑换蓝图对掉落进度的补充。
+
+    Args:
+        rewards (np.ndarray): 当前已获得的蓝图统计数组。
+        condition (np.ndarray): 各蓝图未毕业状态数组。
+
+    Returns:
+        np.ndarray: 更新后的蓝图统计数组。
+    """
     # 活动兑换蓝图给进度最慢的，有利于提高整体速度
     # 因为G系给的是随机的，早毕业的就溢出了，给进度最慢的不会溢出，就快了
     index = np.argmin(rewards[:2])
-    rewards[index] += 0.5  # 15 DR blueprints in each event
+    rewards[index] += 0.5  # 每次活动约 15 张决战蓝图
     index = np.argmin(rewards[2:5])
-    rewards[index + 2] += 1  # 30 PRY blueprints in each event
+    rewards[index + 2] += 1  # 每次活动约 30 张最高方案蓝图
     return rewards
 
 
 @jit(nopython=True, fastmath=True)
 def simulate(project_select_index, reset_index, target, active=1., interval=0.):
-    """
-    模拟一个玩家做科研到毕业
+    """模拟一个玩家做科研到毕业的过程。
 
     Args:
-        project_select_index (np.ndarray):Shape: (188,) 项目的选择优先级，越低表示越优先选择，1000表示不选择，需要刷新
-        reset_index (int): 刷新所对应的优先级数值
-        target  (np.ndarray): Shape: (6,) 目标物品数量
-        active (float): 每日活跃时间，单位 天，超出活跃时间后，仍在挂项目，但不再开始新项目
-        interval (float): 收菜时间，单位 天，项目完成后，过多长时间才收获
+        project_select_index (np.ndarray): 形状为 (188,) 的项目选择优先级数组，越小越优先，1000 表示不选择。
+        reset_index (int): 刷新所对应的优先级数值。
+        target (np.ndarray): 形状为 (6,) 的目标物品数量。
+        active (float): 每日活跃时间（单位：天），超出活跃时间后仍在挂项目，但不再开始新项目。
+        interval (float): 收菜延迟（单位：天），项目完成后隔多久才收获。
 
     Returns:
-        float, np.ndarray: 消耗时间，累计获得物品 Shape: (6,)
+        tuple[float, np.ndarray]: (消耗总天数, 累计获得物品数组)。
     """
     rewards = np.array([0., 0., 0., 0., 0., 0.])
     condition = rewards != 0  # 每样物品是否达到目标数量，True未达到，False已达到
@@ -973,6 +1069,19 @@ def simulate(project_select_index, reset_index, target, active=1., interval=0.):
 
 @jit(nopython=True, fastmath=True, parallel=True)
 def simulate_many(project_select_index, reset_index, target, active, interval, sample_count):
+    """并行多样本模拟，统计平均耗时与各物品产出。
+
+    Args:
+        project_select_index (np.ndarray): 项目选择优先级数组。
+        reset_index (int): 刷新操作的优先级索引。
+        target (np.ndarray): 毕业目标数量数组。
+        active (float): 每日活跃时间（天）。
+        interval (float): 收菜延迟（天）。
+        sample_count (int): 模拟玩家总样本数。
+
+    Returns:
+        tuple[float, np.ndarray]: (平均消耗天数, 平均累计获得物品数组)。
+    """
     day_cost_array = np.empty(sample_count)
     rewards_array = np.empty((sample_count, 6))
     for index in prange(sample_count):
@@ -986,17 +1095,31 @@ def simulate_many(project_select_index, reset_index, target, active, interval, s
 
 
 class FilterSimulator:
+    """科研过滤器模拟器，用于评估过滤策略的毕业时间。"""
     active = 24 / 24
     interval = 0 / 60 / 24
     target = np.array([513, 513, 343, 343, 343, 150])
 
     def __init__(self, string):
+        """初始化模拟器。
+
+        Args:
+            string (str): 待评估的过滤器字符串。
+        """
         string = string.replace('E-315', 'A2')
         string = string.replace('E-031', 'Z2')
         self.string = string
         self.pool = ResearchPool(string)
 
     def run(self, sample_count=1000):
+        """执行模拟并统计毕业耗时。
+
+        Args:
+            sample_count (int): 模拟样本数量，默认为 1000。
+
+        Returns:
+            float: 平均毕业天数。
+        """
         if QUIET:
             day_cost, rewards = simulate_many(
                 self.pool.project_select_index,
@@ -1032,18 +1155,42 @@ class FilterSimulator:
 
 
 def split_filter(string):
+    """拆分过滤器字符串为项列表。
+
+    Args:
+        string (str | list[str]): 过滤器字符串或列表。
+
+    Returns:
+        list[str]: 拆分修剪后的子项列表。
+    """
     if isinstance(string, list):
         return string
     return [f.strip(' \t\r\n') for f in string.split('>')]
 
 
 def join_filter(selection):
+    """将选择项列表连接为过滤器字符串。
+
+    Args:
+        selection (str | list[str]): 选择项列表。
+
+    Returns:
+        str: 用 ' > ' 连接后的字符串。
+    """
     if isinstance(selection, str):
         return selection
     return ' > '.join(selection)
 
 
 def beautify_filter(list_filter):
+    """美化排版过滤器字符串。
+
+    Args:
+        list_filter (str | list[str]): 待排版的过滤器。
+
+    Returns:
+        str: 格式化换行后的过滤器字符串。
+    """
     if isinstance(list_filter, str):
         list_filter = split_filter(list_filter)
 
@@ -1060,18 +1207,45 @@ def beautify_filter(list_filter):
 
 
 def position_change(string, position):
+    """交换过滤器中相邻两个选项的位置。
+
+    Args:
+        string (str): 过滤器字符串。
+        position (int): 待交换的索引位置。
+
+    Returns:
+        str: 交换后的过滤器字符串。
+    """
     selection = split_filter(string)
     selection[position], selection[position + 1] = selection[position + 1], selection[position]
     return join_filter(selection)
 
 
 def position_insert(string, insert, position):
+    """向过滤器指定位置插入新选项。
+
+    Args:
+        string (str): 过滤器字符串。
+        insert (str): 待插入的选项。
+        position (int): 插入目标位置索引。
+
+    Returns:
+        str: 插入后的过滤器字符串。
+    """
     selection = split_filter(string)
     selection.insert(position, insert)
     return join_filter(selection)
 
 
 def epoch_worker(data):
+    """单次迭代测试的子进程工作函数。
+
+    Args:
+        data (tuple): 包含索引、总数、样本量和过滤器字符串的测试元组。
+
+    Returns:
+        float: 模拟得到的平均毕业天数。
+    """
     index, total, sample_count, select_index, forward_index, string = data
     if not QUIET:
         hr3(f'Start Testing: {index}/{total}')
@@ -1079,8 +1253,16 @@ def epoch_worker(data):
 
 
 class BruteForceOptimizer:
+    """科研过滤器暴力搜索优化器。"""
+
     @timer
     def optimize(self, string, diff=10):
+        """对过滤器进行多轮迭代优化，直至收敛。
+
+        Args:
+            string (str): 初始过滤器字符串。
+            diff (float): 初始差异步长，默认为 10。
+        """
         for epoch in range(100):
             hr0(f'Epoch: {epoch}')
             new, diff = self.epoch(string, diff=diff)
@@ -1091,6 +1273,15 @@ class BruteForceOptimizer:
                 continue
 
     def gen(self, string, look_forward):
+        """生成向前移动候选位置的变体序列。
+
+        Args:
+            string (str): 当前过滤器字符串。
+            look_forward (int): 最大向前尝试移动的距离。
+
+        Yields:
+            tuple[int, int, str]: (选中项原索引, 相对前移距离, 变体过滤器字符串)。
+        """
         string = split_filter(string)
         yield 0, 0, join_filter(string)
 
@@ -1106,6 +1297,15 @@ class BruteForceOptimizer:
                 yield select_index, select_index - forward_index, string_added
 
     def epoch(self, string, diff=10):
+        """执行单个优化周期的搜索与比较。
+
+        Args:
+            string (str): 当前周期的基准过滤器。
+            diff (float): 前一轮的耗时改进差值。
+
+        Returns:
+            tuple[str, float]: (本轮产生的优化过滤器, 本轮获得的耗时缩短差值)。
+        """
         diff = min(abs(diff), 1)
         level = np.log(diff) / np.log(10) + 1
         sample_count = int(np.power(10, 5 - level / 2))

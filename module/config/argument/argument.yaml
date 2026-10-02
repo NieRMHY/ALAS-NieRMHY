@@ -990,7 +990,12 @@ ControlExpOverflow:
 AddNewStudent:
   Enable: false
   Favorite: false
-  MinLevel: 50
+  MinLevel:
+    value: 50
+    validate: [0, 125]
+  MaxLevel:
+    value: 0
+    validate: [0, 125]
 Research:
   UseCube:
     value: only_05_hour

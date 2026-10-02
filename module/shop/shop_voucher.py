@@ -70,7 +70,7 @@ class VoucherShop(ShopClerk, ShopStatus):
         此方法等待任意凭证图标出现。
 
         Args:
-            skip_first_screenshot: 是否跳过首次截图
+            skip_first_screenshot (bool): 是否跳过首次截图。默认 True。
         """
         timeout = Timer(1, count=3).start()
         while 1:
@@ -187,6 +187,14 @@ class VoucherShop(ShopClerk, ShopStatus):
 
     @staticmethod
     def shop_strategy_max_quantity(item):
+        """获取商品单次允许购买的最大数量。
+
+        Args:
+            item: 待购买商品对象。
+
+        Returns:
+            int: 允许购买的最大数量（凭证商店固定返回 99）。
+        """
         return 99
 
     def shop_interval_clear(self):
@@ -211,6 +219,7 @@ class VoucherShop(ShopClerk, ShopStatus):
 
         Args:
             item: 待购买的商品对象
+            skip_first_screenshot: 是否跳过首次截图
 
         Returns:
             bool: 是否检测到购买界面并进行了处理
@@ -239,8 +248,11 @@ class VoucherShop(ShopClerk, ShopStatus):
         处理退役、遮挡、信息栏等意外情况。
 
         Args:
-            item: 待购买的商品对象
-            skip_first_screenshot: 是否跳过首次截图
+            item: 待购买的商品对象。
+            skip_first_screenshot (bool): 是否跳过首次截图。默认 True。
+
+        Returns:
+            bool: 购买是否成功。
         """
         success = False
         confirmed_purchase = False

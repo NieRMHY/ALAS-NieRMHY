@@ -83,6 +83,10 @@ def replace_tmp(tmp: str, file: str):
 
     在 Windows 上，如果其他进程正在读取文件，会进行指数退避重试。
 
+    Args:
+        tmp: 临时文件路径。
+        file: 目标文件路径。
+
     Raises:
         PermissionError: （仅 Windows）其他进程仍在读取文件且所有重试均失败。
         FileNotFoundError: 临时文件被意外删除。
@@ -134,6 +138,10 @@ def atomic_replace(replace_from: str, replace_to: str):
 
     Windows 上如果其他进程正在读取，会进行指数退避重试。
 
+    Args:
+        replace_from: 源文件或源目录路径。
+        replace_to: 目标文件或目标目录路径。
+
     Raises:
         PermissionError: （仅 Windows）其他进程仍在读取且所有重试均失败。
         FileNotFoundError: 源文件不存在。
@@ -168,6 +176,10 @@ def file_write(file: str, data: Union[str, bytes]):
 
     根据数据类型自动选择写入模式（文本或二进制）。
     写入后强制刷新到磁盘。
+
+    Args:
+        file: 目标文件路径。
+        data: 待写入的数据（str 或 bytes）。
     """
     if isinstance(data, str):
         mode = 'w'
@@ -463,6 +475,12 @@ def atomic_read_bytes(file: str) -> bytes:
     """原子读取二进制文件。
 
     Windows 上如果其他进程正在替换文件，会进行指数退避重试。
+
+    Args:
+        file: 文件路径。
+
+    Returns:
+        bytes: 文件内容。
     """
     if IS_WINDOWS:
         # Windows 上其他进程正在替换时会抛出 PermissionError
@@ -513,7 +531,11 @@ def atomic_read_bytes_stream(file: str, chunk_size: int = 8192) -> Iterable[byte
 
 
 def file_remove(file: str):
-    """非原子删除文件。"""
+    """非原子删除文件。
+
+    Args:
+        file: 文件路径。
+    """
     try:
         os.unlink(file)
     except FileNotFoundError:
@@ -600,6 +622,9 @@ def atomic_rmtree(folder: str):
 
     先将目录重命名为临时目录再删除，如果删除过程中断，
     下次启动时可由 atomic_failure_cleanup 清理残留。
+
+    Args:
+        folder: 待删除的目录路径。
     """
     temp = to_tmp_file(folder)
     try:

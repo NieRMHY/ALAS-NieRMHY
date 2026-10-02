@@ -8,6 +8,10 @@ from module.island.island_shop_base import IslandShopBase
 from module.logger import logger
 
 class IslandGrill(IslandShopBase):
+    """岛屿烧烤店铺自动化管理器。
+
+    继承 IslandShopBase，管理烧烤店的商品生产与岗位派遣。
+    """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -79,6 +83,7 @@ class IslandGrill(IslandShopBase):
         self.initialize_shop()
 
     def test(self):
+        """测试烧烤店收获与关闭岗位弹窗。"""
         self.island_error = False
         self.post_get_and_close()
         if self.island_error:

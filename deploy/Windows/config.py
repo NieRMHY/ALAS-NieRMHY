@@ -19,6 +19,7 @@ class ExecutionError(Exception):
 
 
 class ConfigModel:
+    """Windows 部署配置模型，定义所有配置项及其默认值。"""
     # Git 配置
     Repository: str = GITHUB_REPOSITORY
     Branch: str = "master"
@@ -84,6 +85,8 @@ class ConfigModel:
 
 
 class DeployConfig(DeployConfigTransaction, ConfigModel):
+    """Windows 环境部署配置管理器，维护配置加载、事务同步与工具路径解析。"""
+
     def __init__(self, file=DEPLOY_CONFIG):
         """初始化部署配置。
 
@@ -100,6 +103,7 @@ class DeployConfig(DeployConfigTransaction, ConfigModel):
         self.show_config()
 
     def show_config(self):
+        """展示非默认的部署配置项。"""
         logger.hr("Show deploy config", 1)
         for k, v in self.config.items():
             if k in ("Password", "SSHUser"):
@@ -160,6 +164,11 @@ class DeployConfig(DeployConfigTransaction, ConfigModel):
 
     @cached_property
     def root_filepath(self):
+        """获取项目根目录绝对路径。
+
+        Returns:
+            str: 格式化为正斜杠的绝对路径。
+        """
         return (
             os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
             .replace(r"\\", "/")
@@ -168,6 +177,11 @@ class DeployConfig(DeployConfigTransaction, ConfigModel):
 
     @cached_property
     def adb(self) -> str:
+        """获取 ADB 可执行文件路径。
+
+        Returns:
+            str: ADB 绝对路径或回退命令 'adb'。
+        """
         exe = self.filepath(self.AdbExecutable)
         if os.path.exists(exe):
             return exe
@@ -177,6 +191,11 @@ class DeployConfig(DeployConfigTransaction, ConfigModel):
 
     @cached_property
     def git(self) -> str:
+        """获取 Git 可执行文件路径。
+
+        Returns:
+            str: Git 绝对路径或回退命令 'git'。
+        """
         exe = self.filepath(self.GitExecutable)
         if os.path.exists(exe):
             return exe
@@ -186,6 +205,11 @@ class DeployConfig(DeployConfigTransaction, ConfigModel):
 
     @cached_property
     def python(self) -> str:
+        """获取 Python 可执行文件路径。
+
+        Returns:
+            str: Python 绝对路径或当前解释器路径。
+        """
         exe = self.filepath(self.PythonExecutable)
         if os.path.exists(exe):
             return exe
@@ -244,6 +268,11 @@ class DeployConfig(DeployConfigTransaction, ConfigModel):
         return stdout.decode()
 
     def show_error(self, command=None):
+        """展示更新失败信息及排查指引。
+
+        Args:
+            command (str, optional): 触发失败的命令。
+        """
         logger.hr("Update failed", 0)
         self.show_config()
         logger.info("")

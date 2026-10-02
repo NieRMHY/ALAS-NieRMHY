@@ -8,10 +8,12 @@ test('生产构建保留高斯模糊且资源图标能够解码', async ({page})
   }))
   await page.goto('/#/i/testpilot/overview')
   await expect(page.locator('.instance-page-title h1')).toHaveText('testpilot')
-  for (const selector of ['.sidebar', '.right-rail', '.resource-card', '.panel']) {
+  for (const selector of ['.sidebar', '.right-rail', '.panel']) {
     await expect(page.locator(selector).first()).toHaveCSS('backdrop-filter', 'blur(24px) saturate(1.3)')
   }
-  // 主题原语现在统一由 --theme-chrome-filter 接管，glass-material 与主玻璃面保持同一默认强度。
+  // 二级贴片使用独立的较轻滤镜，资源卡不再沿用一级面的默认强度。
+  await expect(page.locator('.resource-card').first()).toHaveCSS('backdrop-filter', 'blur(12px) saturate(1.2)')
+  // 装饰玻璃层仍与一级面保持同一默认强度。
   await expect(page.locator('.glass-material').first()).toHaveCSS('backdrop-filter', 'blur(24px) saturate(1.3)')
   const icons = page.locator('.resource-icon-image')
   await expect(icons.first()).toBeVisible()
@@ -21,4 +23,5 @@ test('生产构建保留高斯模糊且资源图标能够解码', async ({page})
   // 无障碍模式仍应关闭模糊，防止调整前缀顺序破坏降级样式。
   await page.emulateMedia({forcedColors: 'active'})
   await expect(page.locator('.sidebar')).toHaveCSS('backdrop-filter', 'none')
+  await expect(page.locator('.resource-card').first()).toHaveCSS('backdrop-filter', 'none')
 })

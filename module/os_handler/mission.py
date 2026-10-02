@@ -24,11 +24,12 @@ class MissionAtCurrentZone(Exception):
 
 
 class MissionHandler(GlobeOperation, ZoneManager):
+    """大世界任务处理器。"""
+
     _os_mission_submitted = False
 
     def _os_find_checkout_offset_skip_monthly_boss(self, checkout_offset):
-        """
-        查找非月度Boss的任务结算行。
+        """查找非月度Boss的任务结算行。
 
         Args:
             checkout_offset (tuple): 初始结算按钮偏移量。
@@ -48,8 +49,7 @@ class MissionHandler(GlobeOperation, ZoneManager):
         return None
 
     def get_mission_zone(self):
-        """
-        获取任务所在的海域。
+        """获取任务所在的海域。
 
         Returns:
             Zone: 任务海域对象。
@@ -70,6 +70,11 @@ class MissionHandler(GlobeOperation, ZoneManager):
         return zone
 
     def is_in_os_mission(self):
+        """判断是否处于大世界任务列表界面。
+
+        Returns:
+            bool: 是否在任务列表界面。
+        """
         return self.appear(MISSION_CHECK, offset=(20, 20))
 
     def os_mission_enter(self, skip_siren_mission=False, skip_first_screenshot=True):
@@ -138,8 +143,11 @@ class MissionHandler(GlobeOperation, ZoneManager):
         return checkout_offset
 
     def os_mission_quit(self):
-        """
-        退出任务列表。
+        """退出任务列表。
+
+        Pages:
+            in: MISSION_QUIT
+            out: is_in_map
         """
         logger.info('[大世界处理-任务] 退出大世界任务')
         for _ in self.loop():

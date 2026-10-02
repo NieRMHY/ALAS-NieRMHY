@@ -7,14 +7,18 @@ import numpy as np
 print(os.getcwd())
 import module.config.server as server
 
-server.server = 'cn'  # Don't need to edit, it's used to avoid error.
+# 设置默认服务器为国服以防报错
+server.server = 'cn'
 
 from module.config.config import AzurLaneConfig
 from module.device.device import Device
 
 
 class EmulatorChecker(Device):
+    """模拟器截图与点击性能压力测试工具。"""
+
     def stress_test(self):
+        """循环执行截图并统计平均耗时与标准差。"""
         record = []
         count = 0
         self._screenshot_adb()
@@ -39,11 +43,11 @@ class Config:
     # SERIAL = 'emulator-5554'
     # SERIAL = '127.0.0.1:21503'
 
-    # Speed: aScreenCap >> uiautomator2 > ADB
-    DEVICE_SCREENSHOT_METHOD = 'aScreenCap'  # ADB, uiautomator2, aScreenCap
+    # 速度对比：aScreenCap >> uiautomator2 > ADB
+    DEVICE_SCREENSHOT_METHOD = 'aScreenCap'  # 可选: ADB, uiautomator2, aScreenCap
 
-    # Speed: uiautomator2 >> ADB
-    DEVICE_CONTROL_METHOD = 'uiautomator2'  # ADB, uiautomator2
+    # 速度对比：uiautomator2 >> ADB
+    DEVICE_CONTROL_METHOD = 'uiautomator2'  # 可选: ADB, uiautomator2
 
 
 az = EmulatorChecker(AzurLaneConfig('template').merge(Config()))

@@ -142,6 +142,12 @@ class AzurLaneConfig(ConfigUpdater, ManualConfig, GeneratedConfig, ConfigWatcher
     is_hoarding_task = True
 
     def __setattr__(self, key, value):
+        overlay = self.__dict__.get('_scheduler_overrides', {})
+        if key in overlay:
+            # 调度卡片的任务参数只属于本次调用；任务自身修改也不回写用户配置。
+            overlay[key] = value
+            super().__setattr__(key, value)
+            return
         if key in self.bound:
             self.cross_set(self.bound[key], value)
         else:
@@ -265,6 +271,8 @@ class AzurLaneConfig(ConfigUpdater, ManualConfig, GeneratedConfig, ConfigWatcher
 
         # 覆盖参数
         for arg, value in self.overridden.items():
+            super().__setattr__(arg, value)
+        for arg, value in self.__dict__.get('_scheduler_overrides', {}).items():
             super().__setattr__(arg, value)
 
 
@@ -452,6 +460,10 @@ class AzurLaneConfig(ConfigUpdater, ManualConfig, GeneratedConfig, ConfigWatcher
         注意：此方法不可逆。
         """
         for arg, value in kwargs.items():
+            if arg in self.__dict__.get('_scheduler_overrides', {}):
+                self._scheduler_overrides[arg] = value
+                super().__setattr__(arg, value)
+                continue
             self.overridden[arg] = value
             super().__setattr__(arg, value)
 
@@ -507,7 +519,9 @@ class AzurLaneConfig(ConfigUpdater, ManualConfig, GeneratedConfig, ConfigWatcher
         Args:
             values (dict[str, Any]): 配置路径到新值的映射。
         """
-        self.modified.update(values)
+        overlay = self.__dict__.get('_scheduler_overrides', {})
+        protected = {self.bound[key] for key in overlay if key in self.bound}
+        self.modified.update({path: value for path, value in values.items() if path not in protected})
         if self.auto_update:
             self.update()
 
@@ -713,6 +727,11 @@ class AzurLaneConfig(ConfigUpdater, ManualConfig, GeneratedConfig, ConfigWatcher
         Returns:
             bool: 是否成功调用。
         """
+        runtime = self.__dict__.get('_scheduler_runtime')
+        if runtime is not None and runtime.mode == 'takeover':
+            return runtime.request(task)
+        if runtime is not None and task == 'Restart' and runtime.mode == 'enhance':
+            runtime.request(task)
         if deep_get(self.data, keys=f"{task}.Scheduler.NextRun", default=None) is None:
             raise ScriptError(f"[配置] 要调用的任务: `{task}` 在用户配置中不存在")
 
@@ -755,6 +774,9 @@ class AzurLaneConfig(ConfigUpdater, ManualConfig, GeneratedConfig, ConfigWatcher
         if self.stop_event is not None:
             if self.stop_event.is_set():
                 return True
+        runtime = self.__dict__.get('_scheduler_runtime')
+        if runtime is not None and runtime.mode != 'native':
+            return runtime.should_yield(self)
         prev = getattr(self, '_task_switch_owner', self.task)
         self.load()
         new = self.get_next()

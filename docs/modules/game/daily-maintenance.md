@@ -136,7 +136,7 @@ module/
 
 `run()` 进 `page_reward` 后进入 `tactical_class_receive()` 的单一状态循环，每帧依次尝试一组处理器：添加学员（`ADD_NEW_STUDENT`）→ 急速训练（`RAPID_TRAINING`，按 `Tactical_RapidTrainingSlot` 槽位偏移匹配）→ 完成时间 OCR 与退出 → 各类弹窗 → 教材选择（`TACTICAL_CLASS_START`）→ 船坞 → 技能确认 → META 技能退出 → 教材空弹窗。
 
-选教材是核心决策点：`_tactical_books_get()` 轮询至教材数量稳定（15 次失败抛 `ScriptError`）→ 先选中第一本 → 按当前技能进度做**经验溢出过滤**（OCR `current/total`，10 级满级总经验 5800，`current + 教材经验 > total + 允许溢出量` 的教材被剔除）→ `BOOK_FILTER` 按配置排序 → 点击最优教材开课；过滤器无命中则取消本次课程。技能满级时（OCR 结果含 `MA`，即 `NEXT:MAX`），`Tactical_SkillAutoSwitch` 开启则自动切到下一个未满级技能；`AddNewStudent_Enable` 开启时从船坞选一名等级 ≥ `AddNewStudent_MinLevel` 的舰娘（阵营过滤自然跳过 META 舰）开始新课程。
+选教材是核心决策点：`_tactical_books_get()` 轮询至教材数量稳定（15 次失败抛 `ScriptError`）→ 先选中第一本 → 按当前技能进度做**经验溢出过滤**（OCR `current/total`，10 级满级总经验 5800，`current + 教材经验 > total + 允许溢出量` 的教材被剔除）→ `BOOK_FILTER` 按配置排序 → 点击最优教材开课；过滤器无命中则取消本次课程。技能满级时（OCR 结果含 `MA`，即 `NEXT:MAX`），`Tactical_SkillAutoSwitch` 开启则自动切到下一个未满级技能；`AddNewStudent_Enable` 开启时从船坞选一名等级在 `AddNewStudent_MinLevel` ~ `AddNewStudent_MaxLevel` 之间的舰娘（等级限制为 0 表示该方向不限，`MaxLevel` 默认 0；阵营过滤自然跳过 META 舰）开始新课程。
 
 排程：OCR 各槽位剩余时间得 `tactical_finish`，`task_delay(target=...)` 精确到课程完成时刻；教材耗尽则延迟到次日服务器刷新。
 
@@ -236,7 +236,7 @@ flowchart TD
 | `Tactical_RapidTrainingSlot` | select | do_not_use | 急速训练槽位（活动期间每天限次） |
 | `Tactical_SkillAutoSwitch` | checkbox | true | 技能满级自动切换下一个 |
 | `ControlExpOverflow_Enable` + `T1~T4Allow` | checkbox/int | true / 100~200 | 满级前（总 5800）允许各档教材溢出的经验量 |
-| `AddNewStudent_Enable` / `Favorite` / `MinLevel` | checkbox/bool/int | false / false / 50 | 自动添加学员、仅收藏舰娘、最低等级 |
+| `AddNewStudent_Enable` / `Favorite` / `MinLevel` / `MaxLevel` | checkbox/bool/int | false / false / 50 / 0 | 自动添加学员、仅收藏舰娘、最低等级、最高等级（等级限制 0 表示不限制；两者都启用且最低 > 最高时都按 0 关闭处理） |
 
 ### 后宅（任务 Dorm，组 Dorm / BuyFurniture）
 

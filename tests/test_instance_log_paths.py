@@ -13,6 +13,18 @@ from module.mcp.tools import Tools
 
 
 class InstanceLogPathTests(unittest.TestCase):
+    def test_rotating_logger_does_not_create_or_delete_shared_placeholder(self):
+        with self.windows_logging('gui') as root:
+            logging_module.set_file_logger('fresh')
+            self.assertFalse((root / 'log' / 'fresh.txt').exists())
+            self.assertIsNone(logging_module.logger.handlers[0].stream)
+            existing = root / 'log' / 'existing.txt'
+            existing.write_text('旧日志', encoding='utf-8')
+            logging_module.set_file_logger('existing')
+            logging_module.logger.info('写入带日期文件')
+            self.assertEqual(existing.read_text(encoding='utf-8'), '旧日志')
+            self.assertIn('写入带日期文件', logging_module.get_log_file_path('existing').read_text(encoding='utf-8'))
+
     def test_log_writers_keep_full_instance_names(self):
         original = Path.cwd()
         with tempfile.TemporaryDirectory() as directory:

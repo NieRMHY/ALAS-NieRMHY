@@ -2,6 +2,8 @@
  * @fileoverview 后端 WebSocket API 接口与数据模型类型定义。
  */
 
+import type {Catalog, ProgramSaved, ProgramSimulation, ProgramValidation, RuntimeProgramState} from '../scheduler/types'
+
 export type Scalar = string | number | boolean | null
 export type Value = Scalar | Value[] | {[key: string]: Value}
 export type Values = Record<string, Record<string, Record<string, Value>>>
@@ -99,8 +101,17 @@ export interface BackgroundGalleryEntry {
 }
 
 export interface Results {
+  'config.export': Values & {_schedulerProgram?: Pick<ProgramSaved, 'mode' | 'draft' | 'active'>}
+  'scheduler.program.catalog': Catalog
+  'scheduler.program.get': ProgramSaved
+  'scheduler.program.save': ProgramSaved
+  'scheduler.program.apply': ProgramSaved
+  'scheduler.program.validate': ProgramValidation
+  'scheduler.program.simulate': ProgramSimulation
+  'scheduler.program.state': RuntimeProgramState
   'accounts.status': AccountStatus
   'accounts.manage': AccountStatus
+  'background.access': {token: string}
   'background.resolve': {final_url: string; content_type: string}
   'background.preference.get': ServerBackgrounds
   'background.preference.set': ServerBackgrounds

@@ -12,7 +12,17 @@ from typing import TypedDict
 
 
 class CatInfo(TypedDict, total=False):
-    """指挥喵资料。"""
+    """指挥喵静态资料结构定义。
+
+    Attributes:
+        rarity (str): 稀有度（SSR / SR / R）。
+        faction (str): 所属阵营（白鹰 / 皇家 / 重樱 / 铁血 / 飓风）。
+        types (tuple[str, ...]): 适用的舰种标签元组（如战列、航母、驱逐等）。
+        position (str): 推荐或限定岗位（司令 / 参谋）。
+        score (float): 攻略主观评分（满分 10 分）。
+        note (str): 攻略评语与养成建议。
+        fixed (bool): 是否为固定天赋指挥喵。
+    """
 
     rarity: str                 # SSR / SR / R
     faction: str                # 白鹰 / 皇家 / 重樱 / 铁血 / 飓风

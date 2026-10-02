@@ -7,8 +7,10 @@ from module.base.utils import location2node
 from module.logger import logger
 from module.map.utils import *
 
-"""
-This an auto-tool to extract map files used in ALAS.
+"""碧蓝航线战役地图配置自动化提取工具。
+
+从已解密的 Lua 脚本数据中提取关卡地图网格、敌人刷新机制、塞壬模板与相机路径，
+并生成 Alas 战役模块可直接执行的 Python 地图文件。
 """
 
 DIC_SIREN_NAME_CHI_TO_ENG = {
@@ -341,6 +343,17 @@ DIC_SIREN_NAME_CHI_TO_ENG = {
 
 
 class MapData:
+    """单个关卡地图数据解析与代码生成器。
+
+    Attributes:
+        data (dict): 关卡源数据字典。
+        data_loop (dict | None): 周回模式下的关卡数据字典。
+        chapter_name (str): 关卡章节名称（例如 '7-2', 'A1'）。
+        name (str): 关卡中文全名。
+        profiles (str): 关卡描述文本。
+        map_id (int): 关卡 ID。
+    """
+
     dic_grid_info = {
         0: '--',
         1: 'SP',
@@ -355,6 +368,12 @@ class MapData:
     }
 
     def __init__(self, data, data_loop):
+        """初始化关卡地图数据对象并解析网格与敌人刷新信息。
+
+        Args:
+            data (dict): 来自 chapter_template.lua 的关卡配置。
+            data_loop (dict | None): 来自 chapter_template_loop.lua 的周回关卡配置。
+        """
         self.data = data
         self.data_loop = data_loop
         self.chapter_name = data['chapter_name'].replace('–', '-')
@@ -419,7 +438,7 @@ class MapData:
             # config
             self.MAP_SIREN_TEMPLATE = []
             self.MOVABLE_ENEMY_TURN = set()
-            # Aquilifers Ballade (event_20220728_cn) has different sirens in clear mode
+            # 神圣的悲喜剧活动在清图模式下有不同的塞壬配置
             sirens = list(data['ai_expedition_list'].values())
             if data_loop is not None and data_loop['ai_expedition_list'] is not None:
                 sirens += list(data_loop['ai_expedition_list'].values())
@@ -452,6 +471,15 @@ class MapData:
     __repr__ = __str__
 
     def parse_map_data(self, grids, event_enemy_data=None):
+        """解析地图格子布局信息。
+
+        Args:
+            grids (dict): 网格源数据字典。
+            event_enemy_data (list, optional): 事件触发生成的敌人数据。
+
+        Returns:
+            dict[tuple[int, int], str]: 坐标到地块标记（如 'SP', 'ME', '++'）的映射。
+        """
         map_data = {}
         offset_y = min([grid[0] for grid in grids.values()])
         offset_x = min([grid[1] for grid in grids.values()])
@@ -474,6 +502,15 @@ class MapData:
 
     @staticmethod
     def parse_spawn_data(data, event_enemy_data=None):
+        """解析各战斗轮次刷新的敌方舰船及物资类型数量。
+
+        Args:
+            data (dict): 关卡配置字典。
+            event_enemy_data (list, optional): 事件刷新敌人列表。
+
+        Returns:
+            list[dict]: 各战斗轮次刷新配置字典列表。
+        """
         try:
             battle_count = max(data['boss_refresh'], max(data['enemy_refresh'].keys()))
         except ValueError:
@@ -489,7 +526,7 @@ class MapData:
                 if len(wave):
                     spawn = spawn_data[index]
                     spawn['enemy'] = spawn.get('enemy', 0) + len(wave)
-        if ''.join([str(item) for item in data['elite_refresh'].values()]) != '100':  # Some data is incorrect
+        if ''.join([str(item) for item in data['elite_refresh'].values()]) != '100':  # 部分数据异常兼容
             for index, count in data['elite_refresh'].items():
                 if count:
                     spawn = spawn_data[index]
@@ -510,6 +547,14 @@ class MapData:
         return spawn_data
 
     def extract_event_enemy_data(self, data):
+        """从关卡事件列表中提取动态生成的敌人波次。
+
+        Args:
+            data (dict): 事件列表字典。
+
+        Returns:
+            list: 提取出的事件敌人配置列表。
+        """
         extracted_data = []
         for event_id in data.values():
             event = MAP_EVENT_TEMPLATE[event_id]
@@ -519,18 +564,24 @@ class MapData:
         return extracted_data
 
     def map_file_name(self):
+        """生成战役地图 Python 文件名。
+
+        Returns:
+            str: 格式化后的文件名（如 'campaign_7_2.py' 或 'a1.py'）。
+        """
         name = self.chapter_name.replace('-', '_').lower()
         if name[0].isdigit():
             name = f'campaign_{name}'
         return name + '.py'
 
     def get_file_lines(self, has_modified_campaign_base):
-        """
+        """生成地图 Python 文件的完整代码行列表。
+
         Args:
-            has_modified_campaign_base (bool): If target folder has modified campaign_base.py
+            has_modified_campaign_base (bool): 目标目录是否存在定制的 campaign_base.py。
 
         Returns:
-            list(str): Python code in map file.
+            list[str]: 地图代码行列表。
         """
         if IS_WAR_ARCHIVES:
             base_import = 'from ..campaign_war_archives.campaign_base import CampaignBase'
@@ -667,6 +718,14 @@ class MapData:
         return lines
 
     def write(self, path):
+        """将生成的地图代码写入目标目录。
+
+        Args:
+            path (str): 目标存储目录。
+
+        Returns:
+            bool: 成功提取写入返回 True，文件存在且不覆盖返回 False。
+        """
         file = os.path.join(path, self.map_file_name())
         has_modified_campaign_base = os.path.exists(os.path.join(path, 'campaign_base.py'))
         if has_modified_campaign_base:
@@ -685,30 +744,33 @@ class MapData:
 
 
 class ChapterTemplate:
+    """章节模板检索与批量提取控制器。"""
+
     def __init__(self):
+        """初始化章节模板提取器。"""
         pass
 
     def get_chapter_by_name(self, name, select=False):
-        """
-        11004 (map id) --> 10-4 Hard
-        ↑-- ↑
-        | | +-- stage index
-        | +---- chapter index
-        +------ 1 for hard, 0 for normal
+        """根据关卡名称关键字或 map_id 检索匹配的关卡地图。
 
-        1140017 (map id) --> Iris of Light and Dark D2
+        11004 (map id) --> 10-4 困难模式
+        ↑-- ↑
+        | | +-- 关卡索引 (stage index)
+        | +---- 章节索引 (chapter index)
+        +------ 1 为困难模式，0 为普通模式
+
+        1140017 (map id) --> 光与影的鸢尾之华 D2
         ---  ↑↑
-         ↑   |+-- stage index
-         |   +--- chapter index
-         +------- event index, >=210 for war achieve
+         ↑   |+-- 关卡索引
+         |   +--- 章节索引
+         +------- 活动索引，>=210 表示作战档案
 
         Args:
-            name (str, int): A keyword from chapter name, such as '短兵相接', '正义的怒吼'
-                Or map_id such as 702, 1140017
-            select (bool): False means only extract this map, True means all maps from this event
+            name (str | int): 章节名关键字（如 '短兵相接', '正义的怒吼'）或 map_id（如 702, 1140017）。
+            select (bool): 为 False 时仅提取当前关卡；为 True 时提取同一活动下的所有关卡。
 
         Returns:
-            list(MapData):
+            list[MapData]: 匹配到的地图数据对象列表。
         """
         def is_extra(name):
             name = name.lower().replace('.', '')
@@ -762,10 +824,11 @@ class ChapterTemplate:
         return maps
 
     def extract(self, maps, folder):
-        """
+        """确认并批量写入选中的关卡地图文件。
+
         Args:
-            maps (list[MapData]):
-            folder (str):
+            maps (list[MapData]): 待提取的地图数据列表。
+            folder (str): 目标输出目录路径。
         """
         print('<<< CONFIRM >>>')
         print('Please confirm selected the correct maps before extracting.\n'
@@ -779,19 +842,17 @@ class ChapterTemplate:
 
 
 """
-This an auto-tool to extract map files used in ALAS.
+碧蓝航线战役地图配置自动化提取工具。
 
-Git clone https://github.com/AzurLaneTools/AzurLaneLuaScripts, to get the decrypted scripts.
-Arguments:
-    FILE:            Path to your AzurLaneLuaScripts directory
-    FOLDER:          Folder to save, './campaign/test'
-    KEYWORD:         A keyword in map name, such as '短兵相接' (7-2, zh-CN), 'Counterattack!' (3-4, en-US)
-                     Or map id, such as 702 (7-2), 1140017 (Iris of Light and Dark D2)
-    SELECT:          True if select all maps in the same event
-                     False if extract this map only
-    OVERWRITE:       If overwrite existing files
-    IS_WAR_ARCHIVES: True if retrieved map is to be
-                     adapted for war_archives usage
+克隆 https://github.com/AzurLaneTools/AzurLaneLuaScripts 以获取解密后的 Lua 脚本。
+参数说明：
+    FILE:            AzurLaneLuaScripts 目录路径。
+    FOLDER:          生成文件保存目录，如 './campaign/test'。
+    KEYWORD:         关卡名称关键字，如 '短兵相接' (7-2, zh-CN), 'Counterattack!' (3-4, en-US)，
+                     或地图 ID，如 702 (7-2), 1140017 (光与影的鸢尾之华 D2)。
+    SELECT:          为 True 则选择同一活动下的全部关卡；为 False 则仅提取指定单张地图。
+    OVERWRITE:       是否覆盖已有文件。
+    IS_WAR_ARCHIVES: 提取的地图是否适配作战档案模式。
 """
 FILE = '../AzurLaneLuaScripts'
 FOLDER = './campaign/event_20260908_cn'

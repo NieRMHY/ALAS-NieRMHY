@@ -64,6 +64,11 @@ class CargoPreparationTransport:
         self.create_time = current_time()
 
     def parse_transport(self, main):
+        """解析当前货运栏位的状态、倒计时和货物格子列表。
+
+        Args:
+            main (IslandCargoPreparation): 货物筹备任务实例。
+        """
         offset = (-20, -20, 20, 20)
         delta = 176
         self.offset = area_offset(offset, (0, delta * self.index))
@@ -131,6 +136,14 @@ class CargoPreparationTransport:
             self.refresh = True
 
     def get_transport_status(self, main):
+        """获取当前货运栏位的状态字符串。
+
+        Args:
+            main (IslandCargoPreparation): 货物筹备任务实例。
+
+        Returns:
+            str: 状态标识（'pending', 'running', 'finished', 'refreshing', 'empty', 'unknown'）。
+        """
         if main.appear(TRANSPORT_STATUS_PENDING, offset=self.offset):
             return 'pending'
         if main.appear(TRANSPORT_STATUS_RUNNING, offset=self.offset):
@@ -144,6 +157,7 @@ class CargoPreparationTransport:
         return 'unknown'
 
     def convert_to_running(self):
+        """将栏位状态本地转换为进行中，并记录创建时间。"""
         if self.valid:
             self.status = 'running'
             self.start = False
@@ -152,6 +166,11 @@ class CargoPreparationTransport:
 
     @property
     def finish_time(self):
+        """获取货运委托预计完成时间。
+
+        Returns:
+            datetime.datetime | None: 预计完成时间点，无效时返回 None。
+        """
         if self.valid and self.duration is not None:
             return (self.create_time + self.duration).replace(microsecond=0)
         return None
@@ -182,6 +201,11 @@ class CargoPreparationTransportItem:
         self.load = self.predict_load()
 
     def predict_valid(self):
+        """检测当前货物格子是否为有效格子。
+
+        Returns:
+            bool: 有效返回 True，否则返回 False。
+        """
         mean = np.mean(np.max(self.image, axis=2) > 234)
         blue_bar_check = image_color_count(
             self.image[:10, :, :],
@@ -192,6 +216,11 @@ class CargoPreparationTransportItem:
         return mean > 0.3 and not blue_bar_check
 
     def predict_load(self):
+        """预测货物格子是否满足装载条件或命中黑名单。
+
+        Returns:
+            bool: 满足装载且未命中黑名单返回 True，否则返回 False。
+        """
         if not self.valid:
             return False
         self.refresh = self.handle_blacklist_items()
@@ -200,6 +229,11 @@ class CargoPreparationTransportItem:
         return TEMPLATE_ITEM_SATISFIED.match(rgb2gray(self.image))
 
     def handle_blacklist_items(self):
+        """匹配当前货物格子是否命中黑名单物品模板。
+
+        Returns:
+            bool: 命中黑名单返回 True，否则返回 False。
+        """
         for template in self.blacklist:
             if template.match(self.image, similarity=0.80):
                 return True

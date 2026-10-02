@@ -24,10 +24,21 @@ from module.logger import logger
 
 
 class DroidCastVersionIncompatible(Exception):
+    """DroidCast 版本与请求模式不兼容。"""
     pass
 
 
 def _retry_recover(self, error, trial):
+    """DroidCast 操作失败后的异常恢复策略。
+
+    Args:
+        self: 设备实例。
+        error: 捕获的异常对象。
+        trial: 当前重试轮次。
+
+    Returns:
+        可调用的恢复函数，若无法恢复则返回 None。
+    """
     if isinstance(error, (ConnectionResetError, AdbError)):
         return recover_adb(self, error)
     if isinstance(error, PackageNotInstalled):
@@ -46,10 +57,7 @@ retry = partial(retry_backend, recover=_retry_recover, label='设备-DroidCast')
 
 
 class DroidCast(Uiautomator2):
-    """
-    DroidCast 截图方案，https://github.com/rayworks/DroidCast
-    DroidCast_raw，DroidCast 的修改版本，发送原始位图和 PNG，https://github.com/Torther/DroidCastS
-    """
+    """DroidCast 截图方案与 DroidCast_raw 高性能位图传输方案。"""
 
     _droidcast_port: int = 0
     droidcast_width: int = 0
@@ -57,6 +65,11 @@ class DroidCast(Uiautomator2):
 
     @cached_property
     def droidcast_session(self):
+        """获取或创建与 DroidCast 服务通信的 HTTP Session。
+
+        Returns:
+            requests.Session: 已配置端口映射和直连环境的 Session 对象。
+        """
         session = requests.Session()
         session.trust_env = False  # 忽略代理
         self._droidcast_port = self.adb_forward('tcp:53516')
@@ -73,6 +86,14 @@ class DroidCast(Uiautomator2):
     """
 
     def droidcast_url(self, url='/preview'):
+        """获取标准 DroidCast 服务的请求 URL。
+
+        Args:
+            url (str): 接口路由路径，默认为 '/preview'。
+
+        Returns:
+            str: 包含端口与尺寸参数的完整 HTTP 请求地址。
+        """
         if self.is_mumu_over_version_356:
             w, h = self.droidcast_width, self.droidcast_height
             if self.orientation == 0:
@@ -86,6 +107,14 @@ class DroidCast(Uiautomator2):
         return f'http://127.0.0.1:{self._droidcast_port}{url}'
 
     def droidcast_raw_url(self, url='/screenshot'):
+        """获取 DroidCast_raw 服务的请求 URL。
+
+        Args:
+            url (str): 接口路由路径，默认为 '/screenshot'。
+
+        Returns:
+            str: 包含端口与尺寸参数的完整 HTTP 请求地址。
+        """
         if self.is_mumu_over_version_356:
             w, h = self.droidcast_width, self.droidcast_height
             if self.orientation == 0:
@@ -99,6 +128,7 @@ class DroidCast(Uiautomator2):
         return f'http://127.0.0.1:{self._droidcast_port}{url}'
 
     def droidcast_init(self):
+        """初始化并启动设备上的 DroidCast 服务。"""
         logger.hr('[设备-DroidCast] DroidCast初始化')
         self.droidcast_stop()
         self._droidcast_update_resolution()
@@ -132,6 +162,7 @@ class DroidCast(Uiautomator2):
             logger.error(f'未知的DROIDCAST版本: {self.config.DROIDCAST_VERSION}')
 
     def _droidcast_update_resolution(self):
+        """更新设备屏幕分辨率缓存，用于特定模拟器版本的尺寸校准。"""
         if self.is_mumu_over_version_356:
             logger.info('[设备-DroidCast] 更新DroidCast分辨率')
             w, h = self.resolution_uiautomator2(cal_rotation=False)
@@ -143,6 +174,15 @@ class DroidCast(Uiautomator2):
 
     @retry(on_exhausted=EmulatorNotRunningError)
     def screenshot_droidcast(self):
+        """通过 DroidCast 接口截取屏幕图像（PNG/JPEG 模式）。
+
+        Returns:
+            np.ndarray: RGB 格式的屏幕截图。
+
+        Raises:
+            DroidCastVersionIncompatible: 服务端未提供对应接口或版本不匹配。
+            ImageTruncated: 图像数据截断或解析失败。
+        """
         self.config.DROIDCAST_VERSION = 'DroidCast'
         if self.is_mumu_over_version_356:
             if not self.droidcast_width or not self.droidcast_height:
@@ -177,6 +217,16 @@ class DroidCast(Uiautomator2):
 
     @retry(on_exhausted=EmulatorNotRunningError)
     def screenshot_droidcast_raw(self):
+        """通过 DroidCast_raw 接口截取原始像素并转换为 RGB 图像。
+
+        Returns:
+            np.ndarray: RGB 格式的屏幕截图。
+
+        Raises:
+            ConnectionError: 服务端返回错误信息或连接中断。
+            DroidCastVersionIncompatible: 服务端版本与 raw 模式不匹配。
+            ImageTruncated: 原始位图数据损坏或尺寸不匹配。
+        """
         self.config.DROIDCAST_VERSION = 'DroidCast_raw'
         shape = (720, 1280)
         if self.is_mumu_over_version_356:
@@ -221,7 +271,7 @@ class DroidCast(Uiautomator2):
                     raise DroidCastVersionIncompatible(
                         'Requesting screenshots from `DroidCast_raw` but server is `DroidCast`')
             # ValueError: cannot reshape array of size 0 into shape (720,1280)
-            raise ImageTruncated(str(e)+'\nIf your emulator resolution not 1280x720, please set emulator resolution to 1280x720')
+            raise ImageTruncated(f'{e}\n如果模拟器分辨率不是 1280x720，请将模拟器分辨率设置为 1280x720')
 
         # 将 RGB565 转换为 RGB888
         # https://blog.csdn.net/happy08god/article/details/10516871
@@ -229,7 +279,7 @@ class DroidCast(Uiautomator2):
         # r = (arr & 0b1111100000000000) >> (11 - 3)
         # g = (arr & 0b0000011111100000) >> (5 - 2)
         # b = (arr & 0b0000000000011111) << 3
-        # r |= (r & 0b11100000) >> 5
+        # r |= (r & 0b11000000) >> 5
         # g |= (g & 0b11000000) >> 6
         # b |= (b & 0b11100000) >> 5
         # r = r.astype(np.uint8)
@@ -253,7 +303,11 @@ class DroidCast(Uiautomator2):
         return image
 
     def droidcast_wait_startup(self):
-        """等待 DroidCast 启动完成。"""
+        """等待 DroidCast 启动完成。
+
+        Returns:
+            bool: 启动成功返回 True，超时返回 False。
+        """
         timeout = Timer(10).start()
         while 1:
             self.sleep(0.25)
@@ -273,8 +327,8 @@ class DroidCast(Uiautomator2):
         return False
 
     def droidcast_uninstall(self):
-        """
-        停止 DroidCast 进程并删除 DroidCast APK。
+        """停止 DroidCast 进程并删除 DroidCast APK。
+
         DroidCast 并非真正安装，而是通过 JAVA 类调用，卸载即删除文件。
         """
         self.droidcast_stop()
@@ -282,7 +336,11 @@ class DroidCast(Uiautomator2):
         self.adb_shell(["rm", self.config.DROIDCAST_FILEPATH_REMOTE])
 
     def _iter_droidcast_proc(self) -> t.Iterable[ProcessInfo]:
-        """列出所有 DroidCast 进程。"""
+        """迭代查找运行中的 DroidCast 进程。
+
+        Yields:
+            ProcessInfo: 匹配到的进程信息对象。
+        """
         processes = self.proc_list_uiautomator2()
         for proc in processes:
             if 'com.rayworks.droidcast.Main' in proc.cmdline:

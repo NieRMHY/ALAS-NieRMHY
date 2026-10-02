@@ -2132,7 +2132,8 @@
     "AddNewStudent": {
       "Enable": false,
       "Favorite": false,
-      "MinLevel": 50
+      "MinLevel": 50,
+      "MaxLevel": 0
     },
     "Storage": {
       "Storage": {}

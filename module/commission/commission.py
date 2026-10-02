@@ -753,7 +753,8 @@ class RewardCommission(UI, InfoHandler):
             is_urgent (bool):
         """
         self.device.click_record_clear()
-        comm = copy.deepcopy(comm)
+        # 浅拷贝：只复位本条委托的 repeat_count，不递归 config 引用的运行时对象
+        comm = copy.copy(comm)
         comm.repeat_count = 1
         for _ in range(3):
             logger.hr('查找并启动委托', level=2)

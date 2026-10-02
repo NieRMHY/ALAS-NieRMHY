@@ -79,6 +79,30 @@ class InstanceParams(Params):
     instance: StrictStr = Field(min_length=1, max_length=64)
 
 
+from module.scheduler.models import Mode, ProgramDocument
+
+
+class ProgramValidateParams(InstanceParams):
+    document: ProgramDocument
+    mode: Mode = 'takeover'
+
+
+class ProgramSaveParams(InstanceParams):
+    document: ProgramDocument
+    revision: StrictStr
+
+
+class ProgramApplyParams(InstanceParams):
+    revision: StrictStr
+    mode: Mode
+
+
+class ProgramSimulateParams(ProgramValidateParams):
+    context: dict[str, Any] = Field(default_factory=dict)
+    outcomes: list[Literal['completed', 'yielded', 'recoverable', 'failed']] = Field(default_factory=list, max_length=1000)
+    steps: StrictInt = Field(default=100, ge=1, le=1000)
+
+
 class CreateParams(Params):
     """新建实例请求参数模型。"""
     name: StrictStr = Field(min_length=1, max_length=64)

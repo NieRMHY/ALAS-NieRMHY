@@ -865,6 +865,9 @@ class TestMonthEndCleanupGrace(unittest.TestCase):
 
         with (
             patch('module.os.tasks.scheduling.current_time', return_value=moment),
+            # 本用例验证任务派发，重置时刻固定在夹具时区，避免宿主时区改变断言。
+            patch('module.os.tasks.scheduling.get_os_next_reset_after',
+                  return_value=datetime(2026, 11, 1)),
             self.assertRaises(TaskEnd),
             patch.object(
                 scheduling,

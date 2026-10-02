@@ -12,6 +12,11 @@ DEPLOY_TEMPLATE = './deploy/template'
 
 
 def get_deploy_template():
+    """根据当前操作系统平台获取对应的部署配置模板文件路径。
+
+    Returns:
+        str: 部署模板文件路径。
+    """
     if sys.platform == 'win32':
         return './config/deploy.template.yaml'
     if sys.platform == 'darwin':
@@ -29,9 +34,23 @@ class cached_property(Generic[T]):
     """
 
     def __init__(self, func: Callable[..., T]):
+        """初始化缓存属性描述符。
+
+        Args:
+            func (Callable): 用于计算属性值的函数。
+        """
         self.func = func
 
     def __get__(self, obj, cls) -> T:
+        """获取属性值，未计算时调用底层函数并写入实例字典。
+
+        Args:
+            obj: 宿主对象实例。
+            cls: 宿主类。
+
+        Returns:
+            T: 属性值。
+        """
         if obj is None:
             return self
 

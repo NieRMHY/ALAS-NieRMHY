@@ -57,27 +57,26 @@ pan_origin = None
 
 
 def get_view():
+    """根据当前的缩放倍率和平移偏移裁剪并缩放视野图像。
 
+    Returns:
+        tuple[np.ndarray, int, int]: 缩放后的显示画布、左上角 X 偏移、左上角 Y 偏移。
+    """
     h, w = orig.shape[:2]
 
     view_w = int(w / scale)
     view_h = int(h / scale)
 
-
     x1 = int(offset_x)
     y1 = int(offset_y)
-
 
     x1 = max(0, min(x1, w - view_w))
     y1 = max(0, min(y1, h - view_h))
 
-
     x2 = x1 + view_w
     y2 = y1 + view_h
 
-
     crop = orig[y1:y2, x1:x2]
-
 
     show = cv2.resize(
         crop,
@@ -87,33 +86,35 @@ def get_view():
         interpolation=cv2.INTER_LINEAR
     )
 
-
     return show, x1, y1
 
 
-
 def screen_to_image(x, y):
+    """将窗口屏幕坐标转换为原图像像素坐标。
 
+    Args:
+        x (int): 窗口 X 坐标。
+        y (int): 窗口 Y 坐标。
+
+    Returns:
+        tuple[int, int]: 转换后的图像坐标 (ix, iy)。
+    """
     ix = int(offset_x + x / scale)
     iy = int(offset_y + y / scale)
 
     return ix, iy
 
 
-
 def redraw():
-
+    """重新绘制选框、尺寸信息并刷新 OpenCV 窗口。"""
     show, xoff, yoff = get_view()
 
-
     if p1 and p2:
-
         sx1 = int((p1[0] - xoff) * scale)
         sy1 = int((p1[1] - yoff) * scale)
 
         sx2 = int((p2[0] - xoff) * scale)
         sy2 = int((p2[1] - yoff) * scale)
-
 
         cv2.rectangle(
             show,
@@ -123,17 +124,13 @@ def redraw():
             2
         )
 
-
         x1, y1 = p1
         x2, y2 = p2
-
 
         x1, x2 = sorted((x1, x2))
         y1, y2 = sorted((y1, y2))
 
-
         txt = f"({x1},{y1},{x2},{y2}) {x2-x1}x{y2-y1}"
-
 
         cv2.putText(
             show,
@@ -145,16 +142,22 @@ def redraw():
             2
         )
 
-
     cv2.imshow(
         "Coordinate Picker",
         show
     )
 
 
-
 def mouse(event, x, y, flags, param):
+    """处理鼠标事件，包括拖拽框选、平移与滚轮缩放。
 
+    Args:
+        event (int): OpenCV 鼠标事件类型。
+        x (int): 鼠标当前 X 坐标。
+        y (int): 鼠标当前 Y 坐标。
+        flags (int): 事件标志（滚轮方向等）。
+        param: 附加参数。
+    """
     global p1, p2, drag
     global pan_drag, pan_start, pan_origin
     global scale, offset_x, offset_y

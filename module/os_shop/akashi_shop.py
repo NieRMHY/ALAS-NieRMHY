@@ -16,6 +16,8 @@ from module.os_shop.item import OSShopItem as Item, OSShopItemGrid as ItemGrid
 
 
 class AkashiShop(OSStatus, OSShopUI, Selector, MapEventHandler):
+    """大世界明石商店处理器。"""
+
     @cached_property
     @Config.when(SERVER='tw')
     def os_akashi_shop_items(self) -> ItemGrid:

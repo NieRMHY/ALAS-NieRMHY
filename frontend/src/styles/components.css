@@ -1087,22 +1087,20 @@
 .nav-restore:hover {color: var(--theme-accent); background: var(--surface)}
 .nav-restore:focus-visible {outline: 2px solid var(--theme-focus); outline-offset: 2px}
 @media (min-width: 951px) {
-  /* 侧栏宽度动画：grid 轨道用 auto，宽度由 .sidebar 自己的 width 过渡。 */
+  /* 收起/展开为瞬时切换，避免低帧率下宽度动画挤压主内容。
+     grid 轨道用 auto，宽度由 .sidebar 自己的 width 承担。 */
   .sidebar {width: var(--sidebar-width); min-width: 0}
-  .sidebar {transition: width .28s ease, opacity .2s ease, padding .28s ease, border-width .28s ease}
   /* 收起时把侧栏那一列收到 0，展开时回到主题的侧栏宽度。 */
   :root body .app-shell {grid-template-columns: auto minmax(0, 1fr)}
   :root body .app-shell.with-rail {grid-template-columns: auto minmax(0, 1fr) auto}
-  .right-rail {width: var(--right-rail-width); transition: width .28s ease, opacity .2s ease}
-  /* 收起时宽度收到 0：与展开态同属性，过渡才会生效。 */
+  .right-rail {width: var(--right-rail-width)}
   /* 收起规则统一带 :root body 前缀：皮肤里 .app-shell.with-rail .sidebar 这类规则与它们特异性打平，
      靠源码顺序决胜时 components.css 在前会输，导致类名加上了却不生效。 */
   :root body .app-shell.nav-collapsed .sidebar {width: 0; opacity: 0; pointer-events: none; padding-left: 0; padding-right: 0; border-width: 0; overflow: hidden}
-  /* 右栏（调度器 / 任务计划）是 .main-shell 的兄弟，需一并淡出。 */
-  /* 全隐藏：shell 的直接子元素（含右栏与顶栏）一起淡出，只留把手。 */
+  /* 右栏（调度器 / 任务计划）是 .main-shell 的兄弟，需一并隐藏。 */
+  /* 全隐藏：shell 的直接子元素（含右栏与顶栏）一起隐藏，只留把手。 */
   :root body .app-shell.nav-collapsed > *:not(.nav-handle) {opacity: 0; pointer-events: none}
   :root body .app-shell.nav-collapsed .right-rail {width: 0; overflow: hidden}
-  .main-shell, .topbar, .right-rail {transition: opacity .22s ease}
   /* 收起/展开把手：侧栏边缘一条很细的竖带，带上一枚扁的指示标记。 */
   /* 隐形按键：常态没有底色也没有投影，只剩那枚图标（人类要求：展开态别和背后侧栏有区分度）。 */
   .nav-handle {position: fixed; left: 0; top: 50%; transform: translateY(-50%); z-index: 70; display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 64px; padding: 0; border: 0; border-radius: 0 8px 8px 0; background: transparent; box-shadow: none; color: var(--theme-muted); cursor: pointer; transition: color .15s ease, background .15s ease}
@@ -1113,4 +1111,203 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .app-shell, .sidebar, .nav-collapse, .nav-restore {transition: none}
+}
+
+/* ==========================================================================
+   全真模拟实例预览与材质检视器 (MockInstancePreview & Inspector)
+   ========================================================================== */
+.mock-instance-preview-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background: transparent;
+  animation: mock-preview-in 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes mock-preview-in {
+  from { opacity: 0; transform: scale(0.985); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.mock-preview-shell {
+  height: 100vh !important;
+  width: 100vw !important;
+  overflow: hidden !important;
+  transition: width 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.mock-instance-preview-overlay.has-docked-inspector .mock-preview-shell,
+.app-shell.has-docked-inspector {
+  width: calc(100vw - 420px) !important;
+  max-width: calc(100vw - 420px) !important;
+  transition: width 0.24s cubic-bezier(0.16, 1, 0.3, 1), max-width 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* 窄屏不为检视器扣除宽度，检视器覆盖在完整画布上方。 */
+@media (max-width: 420px) {
+  .mock-instance-preview-overlay.has-docked-inspector .mock-preview-shell,
+  .app-shell.has-docked-inspector {
+    width: 100vw !important;
+    max-width: 100vw !important;
+  }
+}
+
+.mock-preview-sidebar {
+  overflow-y: auto;
+}
+
+.mock-preview-rail {
+  overflow-y: auto;
+}
+
+/* 材质检视器：停靠与浮动形态 */
+.mock-preview-inspector {
+  transition: all 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.mock-preview-inspector.is-docked {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 420px;
+  max-width: 90vw;
+  z-index: 130;
+  background: var(--theme-menu-bg, var(--surface));
+  -webkit-backdrop-filter: var(--theme-menu-filter, blur(28px));
+  backdrop-filter: var(--theme-menu-filter, blur(28px));
+  box-shadow: -8px 0 36px rgba(0, 0, 0, 0.25);
+  border-left: 1px solid var(--theme-glass-edge, var(--border));
+  display: flex;
+  flex-direction: column;
+}
+
+.mock-preview-inspector.is-floating {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 420px;
+  max-width: calc(100vw - 48px);
+  max-height: 82vh;
+  z-index: 130;
+  border-radius: var(--theme-modal-radius, 22px);
+  background: var(--theme-modal-bg, var(--surface));
+  -webkit-backdrop-filter: var(--theme-modal-filter, blur(28px));
+  backdrop-filter: var(--theme-modal-filter, blur(28px));
+  box-shadow: 0 20px 56px rgba(0, 0, 0, 0.32);
+  border: 1px solid var(--theme-glass-edge, var(--border));
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.mock-preview-inspector.is-minimized {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 130;
+  width: auto;
+  height: auto;
+  background: transparent;
+  box-shadow: none;
+  border: none;
+}
+
+.inspector-expand-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--theme-on-accent, #fff);
+  font-size: 13.5px;
+  font-weight: 600;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+  border: none;
+  transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.inspector-expand-button:hover {
+  transform: translateY(-2px) scale(1.02);
+}
+
+.inspector-panel-inner {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.inspector-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+  gap: 10px;
+}
+
+.inspector-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  min-width: 0;
+}
+
+.inspector-title strong {
+  white-space: nowrap;
+}
+
+.inspector-title .theme-tag {
+  font-size: 11px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.inspector-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.inspector-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 16px 18px;
+}
+
+.inspector-body .material-detail-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.inspector-body .material-detail-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.inspector-footer {
+  padding: 12px 18px;
+  border-top: 1px solid var(--border);
+  background: var(--surface-muted);
+}
+
+.inspector-footer .button.full-width {
+  width: 100%;
 }

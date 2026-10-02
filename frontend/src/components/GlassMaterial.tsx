@@ -18,6 +18,6 @@ export function GlassMaterial() {
 
 export function ThemeWallpaper() {
   const {theme} = useApp()
-  const background = useSyncExternalStore(subscribeBackground, getBackground)
+  const background = useSyncExternalStore(subscribeBackground, getBackground, getBackground)
   return showsWallpaper(theme, background.source) ? <Suspense fallback={null}><Wallpaper/></Suspense> : null
 }

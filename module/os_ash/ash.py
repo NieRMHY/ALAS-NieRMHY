@@ -28,6 +28,14 @@ class DailyDigitCounter(DigitCounter):
     """每日计数器，对图像左侧进行裁剪以去除干扰区域。"""
 
     def pre_process(self, image):
+        """对输入图像进行预处理，去除左侧干扰像素。
+
+        Args:
+            image (np.ndarray): 待处理的原始图像。
+
+        Returns:
+            np.ndarray: 裁剪预处理后的图像。
+        """
         image = super().pre_process(image)
         image = image_left_strip(image, threshold=120, length=35)
         return image
@@ -78,21 +86,26 @@ class AshCombat(Combat):
         return False
 
     def handle_exp_info(self):
-        """
-        META 战斗不掉落经验，无需处理经验信息。
+        """处理经验信息界面。
 
+        META 战斗不掉落经验，无需处理经验信息。
         BATTLE_STATUS 的随机背景可能误触发 EXP_INFO_B，直接忽略。
+
+        Returns:
+            bool: 始终返回 False。
         """
         return False
 
     def handle_battle_preparation(self):
-        """
-        处理战斗准备页面，点击开始战斗按钮。
+        """处理战斗准备页面，点击开始战斗按钮。
 
         如果信标已完成或为空，则抛出 AshBeaconFinished。
 
         Returns:
             bool: 是否采取了行动。
+
+        Raises:
+            AshBeaconFinished: 当信标已完成、为空或已在 META 对决页面时抛出。
         """
         if super().handle_battle_preparation():
             return True
@@ -114,11 +127,12 @@ class AshCombat(Combat):
         return False
 
     def combat(self, *args, expected_end=None, **kwargs):
-        """
-        执行战斗，捕获信标完成异常以正常退出。
+        """执行战斗，捕获信标完成异常以正常退出。
 
         Args:
-            expected_end: 战斗结束判断函数。
+            *args: 传递给父类 combat 的位置参数。
+            expected_end (callable, optional): 战斗结束判断函数。
+            **kwargs: 传递给父类 combat 的关键字参数。
         """
         try:
             super().combat(*args, expected_end=expected_end, **kwargs)

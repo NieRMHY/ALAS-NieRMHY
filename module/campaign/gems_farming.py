@@ -769,7 +769,7 @@ class GemsFarming(FleetSelectionMixin, CampaignRun, FleetEquipment, GemsEquipmen
                     vanguard_success = self.vanguard_change()
                 if self.change_flagship and (vanguard_success or self._trigger_lv32):
                     flagship_success = self.flagship_change()
-                    # 失败后下次调度必须重新检查，不能让补位的高等级舰船直接出击。
+                    # 未找到替换舰船时，下次调度仍需检查；本次是否继续由推迟任务开关决定。
                     if not self.config.GemsFarming_AllowHighFlagshipLevel:
                         GemsFarming._initial_flagship_check_done = flagship_success
                     if not flagship_success and self.config.GemsFarming_AllowHighFlagshipLevel:
@@ -791,13 +791,13 @@ class GemsFarming(FleetSelectionMixin, CampaignRun, FleetEquipment, GemsEquipmen
                     self._trigger_emotion = False
                     self.campaign.ensure_auto_search_exit()
                     self.config.task_stop()
-                elif not success and (self.config.GemsFarming_DelayTaskIFNoFlagship \
-                        or self._trigger_emotion
-                        or (self.change_flagship and not self.config.GemsFarming_AllowHighFlagshipLevel)):
+                elif not success and (self.config.GemsFarming_DelayTaskIFNoFlagship or self._trigger_emotion):
                     self._trigger_emotion = False
                     self.campaign.ensure_auto_search_exit()
                     self.config.task_delay(minute=60)
                     self.config.task_stop()
+                elif not success:
+                    logger.info('没有符合条件的替换舰船，按配置使用当前舰队继续出击')
 
                 self._trigger_emotion = False
                 continue

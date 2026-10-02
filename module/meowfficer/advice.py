@@ -42,18 +42,19 @@ MAX_TARGET_NORMALS = 2
 
 @dataclass
 class ResetAdvice:
-    """一只猫的洗点推荐。
+    """一只猫的洗点推荐数据结构。
 
     Attributes:
-        verdict: 结论，取值见 ``VERDICT_*``。
-        headline: 一句话结论，报告与面板直接显示。
-        reason: 依据（引用主口径的档位与参考分）。
-        cost: 重置消耗的物资；只有已知投入点数时才有值。
-        cost_estimated: ``cost`` 是否由天赋等级推算而来。
-        targets: 该补哪些天赋，取自主口径备注。
-        label: 主口径名称，方便前端单独排版。
-        score: 主口径参考分。
-        tier: 主口径档位。
+        verdict (str): 结论标识，取值见 ``VERDICT_*``。
+        headline (str): 一句话结论标题，报告与面板直接显示。
+        reason (str): 判定依据（引用主口径的档位与参考分说明）。
+        label (str): 主口径名称，方便前端单独排版。
+        score (int): 主口径参考分。
+        tier (str): 主口径档位。
+        cost (int | None): 重置消耗的物资数量；只有已知投入点数时才有值。
+        cost_estimated (bool): ``cost`` 是否由天赋等级推算而来。
+        points_spent (int): 已投入的天赋点数。
+        targets (list[str]): 推荐补充的目标天赋列表，取自主口径备注。
     """
 
     verdict: str
@@ -69,7 +70,7 @@ class ResetAdvice:
 
 
 def estimate_points_spent(result: ScoreResult) -> int:
-    """按天赋等级推算已投入的天赋点。
+    """按天赋等级推算已投入的天赋点数。
 
     游戏规则是「指挥喵每升 5 级获得 1 点天赋点」，初始天赋为 1 级，
     升到 N 级要花 ``N - 1`` 点，所以总投入约为各条天赋 ``level - 1`` 之和，上限 6。
@@ -78,27 +79,27 @@ def estimate_points_spent(result: ScoreResult) -> int:
     报告里会标注「约」，仅用于给出洗点成本量级。
 
     Args:
-        result: 评分结果。
+        result (ScoreResult): 指挥喵评分结果。
 
     Returns:
-        int: 推算的已投入点数（0 表示没投过点）。
+        int: 推算的已投入点数（0 表示未投入点数）。
     """
     spent = sum(max(0, t.level - 1) for t in result.talents)
     return max(0, min(6, spent))
 
 
 def missing_targets(result: ScoreResult, key: str) -> list:
-    """算出主口径下**还缺哪些高权重天赋**。
+    """算出主口径下还缺哪些高权重天赋。
 
     直接复用评分用的权重表：挑出权重最高、但这只猫没有的条目。
-    这样「该补什么」和「现在几分」永远一致，不会互相矛盾。
+    保证推荐目标与当前评分完全一致，避免产生矛盾。
 
     Args:
-        result: 评分结果。
-        key: 主口径标识。
+        result (ScoreResult): 指挥喵评分结果。
+        key (str): 主口径标识键。
 
     Returns:
-        list[str]: 可直接显示的目标描述；口径没有权重表时返回空列表。
+        list[str]: 格式化后的推荐目标描述列表；口径缺少权重表时返回空列表。
     """
     tables = _RUBRIC_TABLES.get(key)
     if not tables:
@@ -119,23 +120,20 @@ def missing_targets(result: ScoreResult, key: str) -> list:
 
 
 def reset_advice(result: ScoreResult) -> ResetAdvice:
-    """根据评分结果给出洗点推荐。
+    """根据评分结果生成指挥喵洗点推荐。
 
-    判断依据只有两样，都来自评分本身：**主口径档位**与**是否已经投入过天赋点**
-    （``maxed`` 即有没有天赋点到 3 级）。
+    判断依据主要来自评分本身：**主口径档位**与**是否已经投入过天赋点**
+    （``maxed`` 即是否有天赋升至 3 级）。
 
-    - 档位本身写着建议喂掉的：没投入过就**直接喂掉**；已经投入过则**建议洗点** ——
-      已经花掉的点数喂掉就一起没了，重置至少还有博一手的机会。
-    - 档位过得去的：没投入过就**先补点**；已投入就**保留**。
-
-    这里刻意**不判断「这个品种值不值得养」**：那取决于玩家自己的取舍（图鉴、代替品、
-    物资余量），工具只给出成本与方向，不替玩家做这个决定。
+    - 档位本身写着建议喂掉的：未投入点数则**直接喂掉**；已投入点数则**建议洗点** ——
+      已花掉的点数直接喂掉会损失经验，重置至少保留重选机会。
+    - 档位过得去的：未投入点数则**先补点**；已投入点数则**保留**。
 
     Args:
-        result: :func:`module.meowfficer.score.evaluate` 的返回值。
+        result (ScoreResult): 指挥喵评分结果对象。
 
     Returns:
-        :class:`ResetAdvice`；没有主口径（一条天赋都没识别到）时返回 ``None``。
+        ResetAdvice | None: 洗点建议对象；若无有效主口径（未识别出天赋）则返回 None。
     """
     key = result.primary[0] if result.primary else None
     rubric = result.rubrics.get(key) if key else None

@@ -68,7 +68,14 @@ KNOWN_FAILURES = {
 
 
 def discover_modules(include_campaign: bool) -> list[str]:
-    """遍历扫描目录，生成点分模块名列表。"""
+    """遍历扫描目录，生成点分模块名列表。
+
+    Args:
+        include_campaign (bool): 是否包含 campaign 战役目录下的模块。
+
+    Returns:
+        list[str]: 发现的 Python 模块点分路径列表。
+    """
     roots = list(SCAN_DIRS)
     if include_campaign:
         roots.append(CAMPAIGN_DIR)
@@ -90,18 +97,28 @@ def discover_modules(include_campaign: bool) -> list[str]:
 
 
 def platform_skip(module: str) -> bool:
-    """当前平台不适用的模块直接跳过（不报告失败）。"""
+    """当前平台不适用的模块直接跳过（不报告失败）。
+
+    Args:
+        module (str): 待检查的模块名。
+
+    Returns:
+        bool: 是否应在当前平台上跳过。
+    """
     return module in PLATFORM_SKIP.get(sys.platform, set())
 
 
 def import_in_subprocess(module: str, timeout: int) -> tuple[bool, str]:
-    """在独立子进程中导入模块，返回 (是否成功, 错误摘要)。"""
-    # `python -c` 默认把 sys.argv[0] 设为 "-c"。大量模块导入时都会初始化
-    # module.logger，若并行子进程共享同一个 argv[0]，就会竞争 log/-c.txt，
-    # 造成偶发 FileNotFoundError。为每个待导入模块设置稳定且唯一的进程名，
-    # 让导入副作用写入彼此独立的日志文件。
-    import_name = f"import-smoke-{module.replace('.', '_')}"
-    code = f"import sys; sys.argv[0] = {import_name!r}; import {module}"
+    """在独立子进程中导入模块，返回导入状态与错误摘要。
+
+    Args:
+        module (str): 模块名称。
+        timeout (int): 导入超时时限（秒）。
+
+    Returns:
+        tuple[bool, str]: (是否导入成功, 错误信息摘要)。
+    """
+    code = f"import {module}"
     env = {**os.environ, "AZURPILOT_NTP_DISABLE": "1"}
     try:
         proc = subprocess.run(
@@ -123,7 +140,16 @@ def import_in_subprocess(module: str, timeout: int) -> tuple[bool, str]:
 
 
 def run_scan(include_campaign: bool, timeout: int, workers: int) -> dict:
-    """执行扫描，返回 {module: (ok, error_or_reason)} 汇总。"""
+    """多进程并发执行模块导入扫描。
+
+    Args:
+        include_campaign (bool): 是否扫描 campaign 目录。
+        timeout (int): 单模块导入超时秒数。
+        workers (int): 并发进程池大小。
+
+    Returns:
+        dict: 模块名映射到 (成功标志, 错误或跳过说明) 的字典。
+    """
     modules = discover_modules(include_campaign)
     results = {}
 
@@ -140,7 +166,14 @@ def run_scan(include_campaign: bool, timeout: int, workers: int) -> dict:
 
 
 def summarize(results: dict) -> tuple[list, list, list, list]:
-    """把结果分成四类：通过 / 已知失败 / 意外失败 / 过期白名单。"""
+    """把扫描结果分类汇总。
+
+    Args:
+        results (dict): 扫描结果字典。
+
+    Returns:
+        tuple[list, list, list, list]: 分别为通过、已知失败、意外失败与过期白名单列表。
+    """
     passed = []
     known = []
     unexpected = []
@@ -160,6 +193,11 @@ def summarize(results: dict) -> tuple[list, list, list, list]:
 
 
 def main() -> int:
+    """运行导入冒烟测试并输出检测报告。
+
+    Returns:
+        int: 全部通过返回 0，存在意外失败或过期白名单返回 1。
+    """
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--include-campaign", action="store_true", help="额外扫描 campaign/（耗时较长）")
     parser.add_argument("--timeout", type=int, default=DEFAULT_TIMEOUT, help="单模块导入超时（秒）")

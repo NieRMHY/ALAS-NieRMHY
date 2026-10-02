@@ -1,3 +1,4 @@
+"""循环发送推送通知测试工具。"""
 import sys
 import time
 from pathlib import Path

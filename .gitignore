@@ -10,6 +10,7 @@ config/*.ini
 config/*.yaml
 !config/deploy.*.yaml
 config/*.json
+config/scheduler/
 config/*.db
 config/*/config.db*
 config/*/account.destroyed

@@ -59,10 +59,10 @@ class OcrDataKey(DigitCounter):
         例如：识别结果 "1560" 会被修正为 "15/60"。
 
         Args:
-            result: OCR 原始识别结果字符串。
+            result (str): OCR 原始识别结果字符串。
 
         Returns:
-            修正后的数据密钥数量字符串。
+            str: 修正后的数据密钥数量字符串。
         """
         result = super().after_process(result)
         result = re.sub(r'(\d{1,2})60$', r'\1/60', result)
@@ -116,7 +116,11 @@ class CampaignWarArchives(CampaignRun, CampaignBase):
                 self.config.WarArchives_DailyRunCountLimit = limit
 
     def daily_run_limit_triggered(self):
-        """检查作战档案每日出击额度是否用尽。"""
+        """检查作战档案每日出击额度是否用尽。
+
+        Returns:
+            bool: 额度用尽时返回 True，否则返回 False。
+        """
         limit = self.config.WarArchives_DailyRunCount
         if limit <= 0:
             return False
@@ -157,10 +161,10 @@ class CampaignWarArchives(CampaignRun, CampaignBase):
             in: WAR_ARCHIVES_CAMPAIGN_CHECK（档案战役界面）
 
         Args:
-            oil_check: 是否检查燃油停止条件。
+            oil_check (bool): 是否检查燃油停止条件。
 
         Returns:
-            True 表示触发了停止条件，False 表示未触发。
+            bool: True 表示触发了停止条件，False 表示未触发。
         """
         if self.daily_run_limit_triggered():
             return True
@@ -186,7 +190,7 @@ class CampaignWarArchives(CampaignRun, CampaignBase):
         因此作战档案中禁用自动搜索续战功能。
 
         Returns:
-            始终返回 False，不支持自动搜索续战。
+            bool: 始终返回 False，不支持自动搜索续战。
         """
         return False
 
@@ -199,11 +203,10 @@ class CampaignWarArchives(CampaignRun, CampaignBase):
         c1 > cs1 > c2 > cs2 > c3 交错剧情关。
 
         Args:
-            name: 关卡文件名，如 'c1'、'cs1'、'ht2'。
+            name (str): 关卡文件名，如 'c1'、'cs1'、'ht2'。
 
         Returns:
-            tuple[str, int]: (章节组, 组内权重)，剧情关权重为同号
-            战斗关 +1。
+            tuple[str, int]: (章节组, 组内权重)，剧情关权重为同号战斗关 +1。
         """
         chapter, story, index = re.fullmatch(r'([a-z]+?)(s?)(\d+)', name).groups()
         return chapter, int(index) * 2 + (1 if story else 0)
@@ -223,10 +226,13 @@ class CampaignWarArchives(CampaignRun, CampaignBase):
         普通图的活动在全图三星下只推普通图。
 
         Args:
-            folder: 活动地图文件夹名称，如 'war_archives_20190321_en'。
+            folder (str): 活动地图文件夹名称，如 'war_archives_20190321_en'。
 
         Returns:
             list[str]: 关卡序列，如 ['a1', 'as1', 'a2', 'a3']。
+
+        Raises:
+            RequestHumanTakeover: 若活动中未找到符合开荒目标的关卡时抛出。
         """
         files = map_files(folder)
         sort_key = self._auto_clear_stage_sort_key
@@ -260,8 +266,8 @@ class CampaignWarArchives(CampaignRun, CampaignBase):
         弹窗界面）时才走原有导航恢复。
 
         Args:
-            name: 战役名称或地图文件 stem。
-            folder: 战役文件夹路径。
+            name (str): 战役名称或地图文件 stem。
+            folder (str): 战役文件夹路径。
         """
         prev_campaign = getattr(self, 'campaign', None)
         prev_name = getattr(self, 'name', None)
@@ -276,7 +282,7 @@ class CampaignWarArchives(CampaignRun, CampaignBase):
         """读取持久化的开荒进度。
 
         Args:
-            folder: 活动地图文件夹名称，如 'war_archives_20190321_en'。
+            folder (str): 活动地图文件夹名称，如 'war_archives_20190321_en'。
 
         Returns:
             list[str]: 当前活动、当前开荒目标下已确认完成开荒的关卡列表。
@@ -301,8 +307,8 @@ class CampaignWarArchives(CampaignRun, CampaignBase):
         的关卡。
 
         Args:
-            folder: 活动地图文件夹名称。
-            stage: 已完成开荒的关卡，如 't1'。
+            folder (str): 活动地图文件夹名称。
+            stage (str): 已完成开荒的关卡，如 't1'。
         """
         progress = self.config.WarArchives_AutoClearProgress
         if not isinstance(progress, dict):
@@ -330,9 +336,9 @@ class CampaignWarArchives(CampaignRun, CampaignBase):
         真实文件名转成不存在的 a1/c1 文件名。
 
         Args:
-            name: 战役名称或地图文件 stem。
-            folder: 战役文件夹。
-            mode: 战役模式。
+            name (str): 战役名称或地图文件 stem。
+            folder (str): 战役文件夹。
+            mode (str): 战役模式。
 
         Returns:
             tuple[str, str]: 自动开荒返回原始真实文件名；否则返回父类结果。
@@ -348,7 +354,7 @@ class CampaignWarArchives(CampaignRun, CampaignBase):
         通关一次即视为完成开荒。
 
         Args:
-            stage: 关卡文件名，如 'c1'、'cs1'。
+            stage (str): 关卡文件名，如 'c1'、'cs1'。
 
         Returns:
             bool: 是否为剧情关。
@@ -364,9 +370,9 @@ class CampaignWarArchives(CampaignRun, CampaignBase):
         断定该剧情关早已通关。
 
         Args:
-            stage: 剧情关文件名，如 'cs1'。
-            stages: 完整开荒序列。
-            entrance: 界面识别出的关卡入口字典。
+            stage (str): 剧情关文件名，如 'cs1'。
+            stages (list[str]): 完整开荒序列。
+            entrance (dict): 界面识别出的关卡入口字典。
 
         Returns:
             bool: 是否已被通关。
@@ -378,11 +384,11 @@ class CampaignWarArchives(CampaignRun, CampaignBase):
         """运行单个开荒关卡并判断是否达标。
 
         Args:
-            stage: 关卡文件名，如 'c2'、'cs1'。
-            folder: 活动地图文件夹名称。
-            mode: 战役模式，'normal' 或 'hard'。
-            total: 总运行次数限制，0 表示无限。
-            farm_full_stars: 是否需要打满三星；False 时全清一次即达标。
+            stage (str): 关卡文件名，如 'c2'、'cs1'。
+            folder (str): 活动地图文件夹名称。
+            mode (str): 战役模式，'normal' 或 'hard'。
+            total (int): 总运行次数限制，0 表示无限。
+            farm_full_stars (bool): 是否需要打满三星；False 时全清一次即达标。
 
         Returns:
             bool: 是否达成开荒目标。未达标说明停止条件收尾（密钥、
@@ -408,7 +414,13 @@ class CampaignWarArchives(CampaignRun, CampaignBase):
         return self.campaign.map_is_100_percent_clear
 
     def _finish_auto_clear_stage(self, stage, folder, finished):
-        """记录达标关卡并处理任务切换。"""
+        """记录达标关卡并处理任务切换。
+
+        Args:
+            stage (str): 达标的关卡名称。
+            folder (str): 活动地图文件夹名称。
+            finished (set[str]): 已完成关卡集合。
+        """
         self._record_auto_clear_progress(folder, stage)
         finished.add(stage)
 
@@ -443,10 +455,10 @@ class CampaignWarArchives(CampaignRun, CampaignBase):
             out: page_main（主界面，任务完成后）
 
         Args:
-            name: 战役名称，如 'war_archives_20190321_en'。
-            folder: 战役文件夹路径，默认 'campaign_main'。
-            mode: 战役模式，'normal' 或 'hard'。
-            total: 总运行次数，0 表示无限。仅限制单关内的运行次数，
+            name (str | None): 战役名称，如 'war_archives_20190321_en'。
+            folder (str): 战役文件夹路径，默认 'campaign_main'。
+            mode (str): 战役模式，'normal' 或 'hard'。
+            total (int): 总运行次数，0 表示无限。仅限制单关内的运行次数，
                    不限制跨关递进。
         """
         self.config.override(USE_DATA_KEY=True)
@@ -482,9 +494,9 @@ class CampaignWarArchives(CampaignRun, CampaignBase):
         """对单个活动执行自动开荒。
 
         Args:
-            folder: 活动地图文件夹名称。
-            mode: 战役模式，'normal' 或 'hard'。
-            total: 总运行次数限制，0 表示无限。
+            folder (str): 活动地图文件夹名称。
+            mode (str): 战役模式，'normal' 或 'hard'。
+            total (int): 总运行次数限制，0 表示无限。
 
         Returns:
             bool: 活动是否已全部完成开荒。False 说明被停止条件
@@ -585,7 +597,7 @@ class CampaignWarArchives(CampaignRun, CampaignBase):
         """判断活动的开荒是否已全部完成。
 
         Args:
-            folder: 活动地图文件夹名称。
+            folder (str): 活动地图文件夹名称。
 
         Returns:
             bool: 是否全部完成。

@@ -19,6 +19,14 @@ class PriceOcr(DigitYuv):
     """
 
     def after_process(self, result):
+        """后处理识别结果，修正常见误识别字符和前导零。
+
+        Args:
+            result (str): 原始 OCR 结果。
+
+        Returns:
+            str: 修正后的价格字符串。
+        """
         result = result.replace('I', '1').replace('D', '0').replace('S', '5')
         result = result.replace('B', '8')
 
@@ -42,6 +50,14 @@ class CounterOcr(Ocr):
         super().__init__(buttons, lang=lang, letter=letter, threshold=threshold, alphabet=alphabet, name=name)
 
     def after_process(self, result):
+        """后处理计数器识别结果，替换易混淆字符。
+
+        Args:
+            result (str): 原始 OCR 结果。
+
+        Returns:
+            str: 修正后的字符串。
+        """
         result = super().after_process(result)
         result = result.replace('I', '1').replace('D', '0').replace('S', '5')
         result = result.replace('B', '8')
@@ -115,6 +131,11 @@ class OSShopItem(Item):
 
     @shop_index.setter
     def shop_index(self, value):
+        """设置商店索引。
+
+        Args:
+            value (int): 商店索引。
+        """
         self._shop_index = value
 
     @property
@@ -124,6 +145,11 @@ class OSShopItem(Item):
 
     @scroll_pos.setter
     def scroll_pos(self, value):
+        """设置滚动位置。
+
+        Args:
+            value (float): 滚动位置。
+        """
         self._scroll_pos = value
 
     def is_known_item(self) -> bool:

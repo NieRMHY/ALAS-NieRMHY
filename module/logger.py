@@ -164,6 +164,8 @@ class RichTimedRotatingHandler(TimedRotatingFileHandler):
             **kwargs: 透传给 TimedRotatingFileHandler 的关键字参数。
         """
         count, bak_method, zip_method = self._read_file_logger_config(pname)
+        # 实际输出直接写入带日期的文件，父类无需创建共享的无日期占位文件。
+        kwargs['delay'] = True
         TimedRotatingFileHandler.__init__(self, backupCount=count, *args, **kwargs)
         self.console = Console(file=io.StringIO(), no_color=True, highlight=False, width=119)
         self.richd = RichHandler(
@@ -194,9 +196,6 @@ class RichTimedRotatingHandler(TimedRotatingFileHandler):
         self.rolloverAt = time.time()
         self.doRollover()
 
-        # 关闭不必要的文件流
-        self.stream.close()
-        self.stream = None
 
     def _read_file_logger_config(self, process_name):
         """读取日志相关配置项。
@@ -533,11 +532,6 @@ def set_file_logger(name=None):
 
     logger.addHandler(hdlr)
     logger.log_file = hdlr.log_file
-    try:
-        if log_file.exists():
-            log_file.unlink()
-    except Exception:
-        pass
 
 
 def set_func_logger(func):

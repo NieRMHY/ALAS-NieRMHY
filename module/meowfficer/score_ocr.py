@@ -23,14 +23,14 @@ MAX_SIDE = 3840
 
 
 def build_variants(image: np.ndarray, scale: float = DEFAULT_SCALE) -> dict[str, np.ndarray]:
-    """构造用于 OCR 的预处理变体。
+    """构造用于 OCR 的预处理变体图像字典。
 
     Args:
-        image: BGR 图像（``device.image`` 或 ``cv2.imread`` 的结果）。
-        scale: 放大倍数，放大后长边受 :data:`MAX_SIDE` 限制。
+        image (np.ndarray): BGR 图像数组（``device.image`` 或 ``cv2.imread`` 的结果）。
+        scale (float): 放大倍数，放大后长边受 :data:`MAX_SIDE` 限制。
 
     Returns:
-        变体名 -> BGR 图像。``plain`` 为仅放大，``clahe`` 为灰度增强后转回 BGR。
+        dict[str, np.ndarray]: 变体名到处理后图像的映射字典。包含 'plain'（仅缩放）与 'clahe'（灰度自适应直方图均衡化增强）。
     """
     height, width = image.shape[:2]
     factor = max(1.0, float(scale))
@@ -50,7 +50,14 @@ def build_variants(image: np.ndarray, scale: float = DEFAULT_SCALE) -> dict[str,
 
 
 def _iter_det_results(results):
-    """兼容 ``det()`` 可能返回的多种元素形态，统一产出 ``(text, score)``。"""
+    """兼容 ``det()`` 可能返回的多种元素形态，统一产出 ``(text, score)`` 生成器。
+
+    Args:
+        results (list | tuple | None): OCR det 方法返回的结果集。
+
+    Yields:
+        tuple[str, float]: (识别文本, 置信度得分)。
+    """
     for item in results or []:
         text, score = '', 0.0
         if isinstance(item, dict):
@@ -72,14 +79,14 @@ def recognize(image: np.ndarray, ocr=None, scale: float = DEFAULT_SCALE,
     """识别一张截图里的指挥喵天赋与猫名。
 
     Args:
-        image: BGR 图像。既可以是整块天赋面板（一次识别多条），
+        image (np.ndarray): BGR 图像数组。既可以是整块天赋面板（一次识别多条），
             也可以是单条天赋的详情面板（只识别那一条）。
-        ocr: 已初始化的 OCR 实例；为 ``None`` 时内部创建 ``AlOcr(name='cn')``。
-        scale: 放大倍数。
-        variants: 参与识别的预处理变体，取并集。
+        ocr (AlOcr, optional): 已初始化的 OCR 实例；为 ``None`` 时内部创建 ``AlOcr(name='cn')``。
+        scale (float): 放大倍数。
+        variants (tuple[str, ...]): 参与识别的预处理变体，取并集。
 
     Returns:
-        ``(talents, cat)``：天赋列表（按天赋线去重并保留最高等级）与识别到的猫名
+        tuple[list[Talent], str | None]: ``(talents, cat)`` 元组；天赋列表（按天赋线去重并保留最高等级）与识别到的猫名
         （没识别到则为 ``None``）。
     """
     if ocr is None:
@@ -124,7 +131,17 @@ def recognize(image: np.ndarray, ocr=None, scale: float = DEFAULT_SCALE,
 
 def recognize_talents(image: np.ndarray, ocr=None, scale: float = DEFAULT_SCALE,
                       variants: tuple[str, ...] = ('plain', 'clahe')) -> list[Talent]:
-    """只取天赋，不关心猫名时的便捷封装（参数含义见 :func:`recognize`）。"""
+    """识别并仅返回截图中的指挥喵天赋列表。
+
+    Args:
+        image (np.ndarray): BGR 图像数组。
+        ocr (AlOcr, optional): 已初始化的 OCR 实例。
+        scale (float): 放大倍数。
+        variants (tuple[str, ...]): 预处理变体名称元组。
+
+    Returns:
+        list[Talent]: 识别出的天赋列表。
+    """
     talents, _cat = recognize(image, ocr=ocr, scale=scale, variants=variants)
     return talents
 

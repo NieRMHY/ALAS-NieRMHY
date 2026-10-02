@@ -5,25 +5,24 @@ from PIL import Image
 
 import module.config.server as server
 
-server.server = 'cn'  # Don't need to edit, it's used to avoid error.
+server.server = 'cn'  # 无需修改，用于避免服务器配置未初始化的异常。
 
 from dev_tools.relative_record import FOLDER, NAME
 from module.base.utils import *
 from module.map_detection.utils import *
 
 """
-Usage:
-    See relative_record.py
+使用说明：
+    参见 relative_record.py。
 
-Arguments:
-    FOLDER:     Save folder from relative_record.
-    NAME:       Siren name from relative_record.
-                Save gif file to <FOLDER>/TEMPLATE_SIREN_<NAME>.gif
-    AREA:       Area to crop, such as (32, 32, 54, 52).
-                Choose an area where things don't rotate too much.
-    THRESHOLD:  If the similarity between a template and existing templates greater than THRESHOLD,
-                this template will be dropped.
-                Threshold in real detection is 0.85, for higher accuracy, threshold here should higher than 0.85.
+参数说明：
+    FOLDER:     来自 relative_record 的保存目录。
+    NAME:       来自 relative_record 的塞壬名称。
+                生成的 GIF 文件保存至 <FOLDER>/TEMPLATE_SIREN_<NAME>.gif。
+    AREA:       裁剪区域，例如 (32, 32, 54, 52)。
+                选择物体旋转幅度较小的局部特征区域。
+    THRESHOLD:  相似度阈值。若候选模板与已有模板的最大相似度高于 THRESHOLD，则丢弃该候选帧。
+                实际检测阈值为 0.85，为保证提取精度，此处的去重阈值应高于 0.85。
 """
 # FOLDER = ''
 # NAME = 'Deutschland'
@@ -37,6 +36,14 @@ if __name__ == '__main__':
 
 
     def match(im):
+        """在当前图像中匹配已有模板，返回最高相似度及其匹配坐标。
+
+        Args:
+            im (np.ndarray): 待匹配的单通道灰度图像。
+
+        Returns:
+            tuple[float, tuple[int, int]]: (最高相似度, 最佳匹配左上角坐标)。
+        """
         max_sim = 0
         max_loca = (0, 0)
         for template in templates:

@@ -51,7 +51,21 @@ def _generate_timeline(
     base: int, trend: float, amp: int, lo: int, hi: int,
     n: int, gap_prob: float, noise: float = 0.1,
 ) -> list:
-    """生成一条带趋势、波动和空值的时间序列。"""
+    """生成一条带趋势、波动和空值的时间序列。
+
+    Args:
+        base (int): 基准数值。
+        trend (float): 每日线性增减趋势量。
+        amp (int): 正弦波动幅度。
+        lo (int): 允许的数值下限。
+        hi (int): 允许的数值上限。
+        n (int): 生成的时间点样本总数。
+        gap_prob (float): 出现 None 空值缺失数据的概率。
+        noise (float): 高斯白噪声比例，默认为 0.1。
+
+    Returns:
+        list[int | None]: 生成的时间序列数据点列表。
+    """
     values = []
     for i in range(n):
         if random.random() < gap_prob:
@@ -76,11 +90,11 @@ def seed_snapshots(
     """生成随机快照并写入数据库。
 
     Args:
-        instance: 实例名
-        count: 快照条数
-        interval_minutes: 每条快照的时间间隔（分钟）
-        gap_prob: 每条资源出现 None 的概率
-        dry_run: 只打印不写入
+        instance (str): 实例名，默认为 "alas"。
+        count (int): 快照条数，默认为 120。
+        interval_minutes (int): 每条快照的时间间隔（分钟），默认为 15。
+        gap_prob (float): 每条资源出现 None 的概率，默认为 0.05。
+        dry_run (bool): 是否仅打印预览而不实际写入数据库。
     """
     end_time = datetime.now()
     start_time = end_time - timedelta(minutes=interval_minutes * (count - 1))
@@ -177,7 +191,12 @@ def seed_snapshots(
 
 
 def clear_snapshots(instance: str = "alas", dry_run: bool = False):
-    """清空指定实例的快照数据。"""
+    """清空指定实例的快照数据。
+
+    Args:
+        instance (str): 待清空的实例名称，默认为 "alas"。
+        dry_run (bool): 是否仅模拟运行而不实际删除。
+    """
     db_path = os.path.join(os.getcwd(), _DB)
     if not os.path.exists(db_path):
         print("数据库文件不存在，无需清空")
@@ -199,6 +218,7 @@ def clear_snapshots(instance: str = "alas", dry_run: bool = False):
 
 
 def main():
+    """解析命令行参数并执行快照数据生成与写入。"""
     parser = argparse.ArgumentParser(description="向 azurstats_local.db 插入随机资源快照测试数据")
     parser.add_argument("--instance", default="alas", help="实例名 (默认: alas)")
     parser.add_argument("--count", type=int, default=120, help="快照条数 (默认: 120, ≈ 30小时 @ 15min间隔)")

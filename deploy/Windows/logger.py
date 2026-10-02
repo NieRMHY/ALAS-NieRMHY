@@ -1,3 +1,4 @@
+"""Windows 安装器日志与百分比进度上报模块。"""
 import logging
 import os
 import sys
@@ -15,6 +16,12 @@ logger.setLevel(logging.INFO)
 
 
 def hr(title, level=3):
+    """输出带修饰边框的分隔标题。
+
+    Args:
+        title (str): 标题文本。
+        level (int): 标题级别（0: 大框, 1: 双横线, 2: 单横线, 3: 尖括号）。
+    """
     if logger is not _logger:
         return logger.hr(title, level)
 
@@ -34,6 +41,12 @@ def hr(title, level=3):
 
 
 def attr(name, text):
+    """格式化输出属性名称与取值。
+
+    Args:
+        name (str): 属性名称。
+        text (str): 属性内容。
+    """
     print(f'[{name}] {text}')
 
 
@@ -42,14 +55,23 @@ logger.attr = attr
 
 
 class Percentage:
+    """百分比进度回调类。"""
+
     def __init__(self, progress):
+        """初始化百分比进度节点。
+
+        Args:
+            progress (int): 进度数值（0-100）。
+        """
         self.progress = progress
 
     def __call__(self, *args, **kwargs):
+        """记录当前进度百分比到日志。"""
         logger.info(f'Process: [ {self.progress}% ]')
 
 
 class Progress:
+    """安装器各阶段对应的百分比进度预设定义。"""
     Start = Percentage(0)
     ShowDeployConfig = Percentage(10)
 

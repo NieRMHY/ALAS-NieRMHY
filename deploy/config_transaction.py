@@ -13,7 +13,17 @@ _local = threading.local()
 
 @contextmanager
 def config_transaction(path):
-    """对同一个配置文件串行化读改写；进程退出时操作系统自动释放锁。"""
+    """对同一个配置文件串行化读改写；进程退出时操作系统自动释放锁。
+
+    Args:
+        path (str | Path): 配置文件路径。
+
+    Yields:
+        None: 获得文件锁后进入上下文。
+
+    Raises:
+        TimeoutError: 等待配置事务锁超时。
+    """
     key = str(Path(path).resolve())
     with _guard:
         lock = _locks.setdefault(key, threading.RLock())
@@ -59,12 +69,18 @@ class DeployConfigTransaction:
     """将读取迁移、增量写入和运行时属性同步纳入同一文件事务。"""
 
     def _sync_config(self):
+        """将字典配置同步到实例属性中并执行重定向。"""
         for key, value in self.config.items():
             if hasattr(type(self), key):
                 object.__setattr__(self, key, value)
         self.config_redirect()
 
     def _load_config(self):
+        """加载配置模板和用户配置文件。
+
+        Returns:
+            dict: 用户原始配置字典。
+        """
         from deploy.utils import poor_yaml_read
 
         self.config_template = poor_yaml_read(self.template_file)
@@ -74,14 +90,21 @@ class DeployConfigTransaction:
         return origin
 
     def _write_config(self):
+        """将当前配置写回配置文件。"""
         from deploy.utils import poor_yaml_write
 
         poor_yaml_write(self.config, self.file, template_file=self.template_file)
 
     def _remember_config(self):
+        """深拷贝并记录当前加载的配置快照。"""
         self._loaded_config = copy.deepcopy(self.config)
 
     def _restore_config(self, state):
+        """恢复实例状态字典。
+
+        Args:
+            state (dict): 原有的实例属性字典。
+        """
         self.__dict__.clear()
         self.__dict__.update(state)
 
@@ -129,7 +152,11 @@ class DeployConfigTransaction:
 
     @contextmanager
     def transaction(self):
-        """在最新配置上执行完整读改写；嵌套修改随最外层一起提交。"""
+        """在最新配置上执行完整读改写；嵌套修改随最外层一起提交。
+
+        Yields:
+            dict: 当前配置字典。
+        """
         with config_transaction(self.file):
             if getattr(self, '_config_transaction_active', False):
                 yield self.config
@@ -148,6 +175,10 @@ class DeployConfigTransaction:
                 self._config_transaction_active = False
 
     def update_config(self, updates):
-        """统一保存设置接口与属性赋值产生的增量修改。"""
+        """统一保存设置接口与属性赋值产生的增量修改。
+
+        Args:
+            updates (dict): 增量修改的键值字典。
+        """
         with self.transaction() as values:
             values.update(updates)

@@ -11,7 +11,10 @@ from deploy.pip import PipManager
 
 
 class Installer(GitManager, PipManager, AdbManager, AppManager, AlasManager):
+    """集成安装器，统筹 Git 更新、进程清理、依赖安装、前端构建及 ADB 服务。"""
+
     def install(self):
+        """执行完整的安装与环境部署流程。"""
         from deploy.atomic import atomic_failure_cleanup
         atomic_failure_cleanup('./config')
         try:

@@ -1,24 +1,14 @@
+"""Lua 与 Python 数据结构转换解析器 (SLPP)。
+
+基于 SirAnthony/slpp 的 Alas 定制分支，修复了复杂嵌套表中的序号索引解析问题。
+原始仓库：https://github.com/SirAnthony/slpp
+分支仓库：https://github.com/LmeSzinc/slpp
+"""
 import re
 import sys
 from numbers import Number
 
 import six
-
-"""
-SLPP is a simple lua-python data structures parser.
-
-This is my fork of SLPP, https://github.com/LmeSzinc/slpp
-Origin repository here, https://github.com/SirAnthony/slpp
-
-I found some error in it
-lua example: '{点={2={0={叫={醒={我={this=true}}}}}}}'
-wrong result: {'点': {2: [{'叫': {'醒': {'我': {'this': True}}}}]}}
-fixed result: {'点': {2: {0: {'叫': {'醒': {'我': {'this': True}}}}}}}
-
-They seems to treat this as a feature not a bug, https://github.com/SirAnthony/slpp/issues/21
-So I made my own fork for Alas.
-"""
-
 
 ERRORS = {
     'unexp_end_string': u'Unexpected end of string while parsing Lua string.',
@@ -30,6 +20,14 @@ ERRORS = {
 
 
 def sequential(lst):
+    """检查整数列表是否为从 0 开始连续递增的序列。
+
+    Args:
+        lst (list[int]): 待检查的键列表。
+
+    Returns:
+        bool: 若为从 0 开始连续递增的序列则返回 True，否则返回 False。
+    """
     length = len(lst)
     if length == 0 or lst[0] != 0:
         return False
@@ -41,30 +39,37 @@ def sequential(lst):
 
 
 class ParseError(Exception):
+    """Lua 语法解析异常。"""
     pass
 
 
 class SLPP(object):
+    """Lua 数据结构编码与解码器。"""
 
     def __init__(self):
+        """初始化解析器内部状态与正则匹配模式。"""
         self.text = ''
         self.ch = ''
         self.at = 0
         self.len = 0
         self.depth = 0
-        self.space = re.compile('\s', re.M)
-        self.alnum = re.compile('\w', re.M)
+        self.space = re.compile(r'\s', re.M)
+        self.alnum = re.compile(r'\w', re.M)
         self.newline = '\n'
         self.tab = '\t'
 
     def decode(self, text):
+        """将 Lua 表或数据字符串反序列化为 Python 对象。
+
+        Args:
+            text (str): 待解析的 Lua 数据字符串。
+
+        Returns:
+            Any: 解析生成的 Python 字典、列表或基础类型对象。
+        """
         if not text or not isinstance(text, six.string_types):
             return
-        # Game scripts don't have comments
-        # Deleting comments may cause error. This will be treat as comment, for example.
-        # `profiles = "现世与梦境夹缝中的蝴蝶，狂风与巨浪蹂躏中的小舟。跨越虚无，驱散黑暗，为重樱带来希望和未来吧---------- ",`
-        # reg = re.compile('--.*$', re.M)
-        # text = reg.sub('', text, 0)
+        # 游戏脚本无注释，删除注释可能误伤长字符串内容，因此跳过正则过滤
         self.text = text
         self.at, self.ch, self.depth = 0, '', 0
         self.len = len(text)
@@ -73,10 +78,26 @@ class SLPP(object):
         return result
 
     def encode(self, obj):
+        """将 Python 数据结构序列化为 Lua 格式字符串。
+
+        Args:
+            obj (Any): 待序列化的 Python 对象。
+
+        Returns:
+            str: 生成的 Lua 表或字面量字符串。
+        """
         self.depth = 0
         return self.__encode(obj)
 
     def __encode(self, obj):
+        """递归序列化 Python 对象的内部实现。
+
+        Args:
+            obj (Any): 当前待序列化的节点对象。
+
+        Returns:
+            str: 节点对应的 Lua 表达式字符串。
+        """
         s = ''
         tab = self.tab
         newline = self.newline
@@ -114,6 +135,7 @@ class SLPP(object):
         return s
 
     def white(self):
+        """跳过连续的空白字符。"""
         while self.ch:
             if self.space.match(self.ch):
                 self.next_chr()
@@ -121,6 +143,11 @@ class SLPP(object):
                 break
 
     def next_chr(self):
+        """前进到下一个字符。
+
+        Returns:
+            bool | None: 成功推进返回 True，到达字符串末尾返回 None。
+        """
         if self.at >= self.len:
             self.ch = None
             return None
@@ -129,6 +156,11 @@ class SLPP(object):
         return True
 
     def value(self):
+        """解析并返回当前位置的 Lua 值（对象、字符串、数字或关键字）。
+
+        Returns:
+            Any: 解析出的 Python 对应值。
+        """
         self.white()
         if not self.ch:
             return
@@ -143,6 +175,17 @@ class SLPP(object):
         return self.word()
 
     def string(self, end=None):
+        """解析 Lua 字符串字面量。
+
+        Args:
+            end (str | None): 字符串结束闭合符号。
+
+        Returns:
+            str: 解析提取出的字符串内容。
+
+        Raises:
+            ParseError: 遇到未闭合的意外字符串结尾时抛出。
+        """
         s = ''
         start = self.ch
         if end == '[':
@@ -161,6 +204,14 @@ class SLPP(object):
         raise ParseError(ERRORS['unexp_end_string'])
 
     def object(self):
+        """解析 Lua table 对象结构（转换为 dict 或 list）。
+
+        Returns:
+            dict | list: 解析得到的 Python 集合。
+
+        Raises:
+            ParseError: 遇到结构损坏或未闭合的 table 时抛出。
+        """
         o = {}
         k = None
         idx = 0
@@ -170,7 +221,7 @@ class SLPP(object):
         if self.ch and self.ch == '}':
             self.depth -= 1
             self.next_chr()
-            return o  # Exit here
+            return o  # 正常空表退出
         else:
             while self.ch:
                 self.white()
@@ -190,7 +241,7 @@ class SLPP(object):
                             for key in o:
                                 ar.insert(key, o[key])
                             o = ar
-                    return o  # or here
+                    return o  # 正常闭合退出
                 else:
                     if self.ch == ',':
                         self.next_chr()
@@ -210,11 +261,16 @@ class SLPP(object):
                             o[idx] = k
                         idx += 1
                         k = None
-        raise ParseError(ERRORS['unexp_end_table'])  # Bad exit here
+        raise ParseError(ERRORS['unexp_end_table'])  # 异常退出
 
     words = {'true': True, 'false': False, 'nil': None}
 
     def word(self):
+        """解析标识符或保留字（如 true, false, nil）。
+
+        Returns:
+            bool | None | str: 关键字映射值或原始标识符。
+        """
         s = ''
         if self.ch != '\n':
             s = self.ch
@@ -225,6 +281,11 @@ class SLPP(object):
         return self.words.get(s, s)
 
     def number(self):
+        """解析数值（包括整数、浮点数、十六进制和科学计数法）。
+
+        Returns:
+            int | float: 解析后的数值。
+        """
         def next_digit(err):
             n = self.ch
             self.next_chr()
@@ -263,6 +324,11 @@ class SLPP(object):
         return float(n)
 
     def digit(self):
+        """连续读取十进制数字串。
+
+        Returns:
+            str: 提取到的连续数字字符串。
+        """
         n = ''
         while self.ch and self.ch.isdigit():
             n += self.ch
@@ -270,6 +336,11 @@ class SLPP(object):
         return n
 
     def hex(self):
+        """连续读取十六进制数字串。
+
+        Returns:
+            str: 提取到的十六进制数字字符。
+        """
         n = ''
         while self.ch and (self.ch in 'ABCDEFabcdef' or self.ch.isdigit()):
             n += self.ch

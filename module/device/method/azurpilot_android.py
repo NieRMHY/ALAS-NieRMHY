@@ -30,6 +30,7 @@ AZURPILOT_ANDROID_DEFAULT_ADDR = '127.0.0.1:22301'
 
 
 class AzurPilotAndroidBridgeError(Exception):
+    """AzurPilot Android 特权桥通信异常。"""
     pass
 
 
@@ -46,17 +47,44 @@ class AzurPilotAndroid:
         return os.environ.get('AZURPILOT_ANDROID_PROXY_ADDR', AZURPILOT_ANDROID_DEFAULT_ADDR)
 
     def _azurpilot_android_connect(self) -> socket.socket:
+        """建立到 AzurPilot Android 代理服务的套接字连接。
+
+        Returns:
+            socket.socket: 已连接的套接字对象。
+        """
         host, _, port = self.azurpilot_android_addr.partition(':')
         sock = socket.create_connection((host, int(port)), timeout=10)
         sock.settimeout(60)
         return sock
 
     def _azurpilot_android_call(self, payload: dict, frame: bytes = None) -> dict:
-        """发送一条请求（可随附一帧二进制），返回响应 dict。连接错误重连重试一次。"""
+        """发送一条请求（可随附一帧二进制），返回响应字典。
+
+        连接错误时自动重连并重试一次。
+
+        Args:
+            payload: JSON 请求体字典。
+            frame: 随附的二进制数据帧，默认为 None。
+
+        Returns:
+            dict: 代理返回的响应字典。
+        """
         with self._azurpilot_android_lock:
             return self._azurpilot_android_call_locked(payload, frame)
 
     def _azurpilot_android_call_locked(self, payload: dict, frame: bytes = None) -> dict:
+        """在互斥锁保护下执行代理请求调用。
+
+        Args:
+            payload: JSON 请求体字典。
+            frame: 随附的二进制数据帧。
+
+        Returns:
+            dict: 代理返回的响应字典。
+
+        Raises:
+            RequestHumanTakeover: 代理服务不可达或通信严重异常。
+        """
         AzurPilotAndroid._azurpilot_android_req_id += 1
         payload = dict(payload)
         payload['id'] = AzurPilotAndroid._azurpilot_android_req_id
@@ -82,23 +110,46 @@ class AzurPilotAndroid:
                 return json.loads(buf.decode('utf-8'))
             except (OSError, AzurPilotAndroidBridgeError, json.JSONDecodeError) as e:
                 last_error = e
-                logger.warning(f'AzurPilotAndroid proxy error: {e}, reconnect')
+                logger.warning(f'AzurPilotAndroid 代理异常: {e}，正在重连')
                 try:
                     if AzurPilotAndroid._azurpilot_android_sock is not None:
                         AzurPilotAndroid._azurpilot_android_sock.close()
                 except OSError:
                     pass
                 AzurPilotAndroid._azurpilot_android_sock = None
-        logger.critical(f'AzurPilotAndroid proxy unreachable: {last_error}')
+        logger.critical(f'AzurPilotAndroid 代理不可达: {last_error}')
         raise RequestHumanTakeover
 
     def _azurpilot_android_call_ok(self, payload: dict, frame: bytes = None) -> dict:
+        """发送请求并验证响应状态 ok 为 True。
+
+        Args:
+            payload: JSON 请求体字典。
+            frame: 随附的二进制数据帧。
+
+        Returns:
+            dict: 响应字典。
+
+        Raises:
+            ScriptError: 代理返回执行失败。
+        """
         resp = self._azurpilot_android_call(payload, frame)
         if not resp.get('ok'):
             raise ScriptError(f'AzurPilotAndroid proxy error: {resp.get("error", "unknown")}')
         return resp
 
     def _azurpilot_android_read_exact(self, n: int) -> bytes:
+        """从套接字中精确读取指定字节数。
+
+        Args:
+            n: 需要读取的字节数。
+
+        Returns:
+            bytes: 读取到的完整字节数据。
+
+        Raises:
+            AzurPilotAndroidBridgeError: 数据传输过程中连接意外关闭。
+        """
         sock = AzurPilotAndroid._azurpilot_android_sock
         chunks = []
         while n > 0:
@@ -112,6 +163,11 @@ class AzurPilotAndroid:
     # ---------------------------------------------------------------- 截图 / 触控
 
     def screenshot_azurpilot_android(self) -> np.ndarray:
+        """通过 AzurPilot Android 代理截取虚拟屏屏幕图像。
+
+        Returns:
+            np.ndarray: RGB 格式的屏幕截图数组。
+        """
         with self._azurpilot_android_lock:
             resp = self._azurpilot_android_call_ok({'method': 'screencap'})
             try:
@@ -131,9 +187,22 @@ class AzurPilotAndroid:
         return np.ascontiguousarray(image)
 
     def click_azurpilot_android(self, x, y):
+        """通过 AzurPilot Android 代理点击指定坐标。
+
+        Args:
+            x (int): 目标 X 坐标。
+            y (int): 目标 Y 坐标。
+        """
         self._azurpilot_android_call_ok({'method': 'click', 'x': int(x), 'y': int(y)})
 
     def long_click_azurpilot_android(self, x, y, duration):
+        """通过 AzurPilot Android 代理在指定坐标执行长按（原地滑动）。
+
+        Args:
+            x (int): 目标 X 坐标。
+            y (int): 目标 Y 坐标。
+            duration (float): 长按持续时间（秒）。
+        """
         # 等效长按：原地滑动，duration 单位为秒（ALAS 约定），代理侧为毫秒
         self._azurpilot_android_call_ok({
             'method': 'swipe',
@@ -142,6 +211,13 @@ class AzurPilotAndroid:
         })
 
     def swipe_azurpilot_android(self, p1, p2, duration=0.1):
+        """通过 AzurPilot Android 代理执行两点间滑动。
+
+        Args:
+            p1 (tuple[int, int]): 起始坐标 (x, y)。
+            p2 (tuple[int, int]): 终点坐标 (x, y)。
+            duration (float): 滑动持续时间（秒）。
+        """
         self._azurpilot_android_call_ok({
             'method': 'swipe',
             'x1': int(p1[0]), 'y1': int(p1[1]),
@@ -152,10 +228,30 @@ class AzurPilotAndroid:
     # ---------------------------------------------------------------- shell 通道
 
     def azurpilot_android_shell(self, cmd: str, timeout: float = 30) -> dict:
-        """经代理以 shell uid 执行系统命令，返回 {ok, code, stdout, stderr}。"""
+        """经代理以 shell 权限执行系统命令。
+
+        Args:
+            cmd: 待执行的 shell 命令字符串。
+            timeout: 命令超时时间（秒）。
+
+        Returns:
+            dict: 包含 ok、code、stdout、stderr 的执行结果字典。
+        """
         return self._azurpilot_android_call({'method': 'shell', 'cmd': cmd, 'timeout': timeout})
 
     def azurpilot_android_shell_output(self, cmd: str, timeout: float = 30) -> str:
+        """经代理执行 shell 命令并返回标准输出。
+
+        Args:
+            cmd: 待执行的 shell 命令字符串。
+            timeout: 命令超时时间（秒）。
+
+        Returns:
+            str: 命令的标准输出内容。
+
+        Raises:
+            ScriptError: 命令执行失败。
+        """
         resp = self.azurpilot_android_shell(cmd, timeout)
         if not resp.get('ok'):
             raise ScriptError(f'AzurPilotAndroid shell failed: {cmd!r}: {resp.get("stderr", "")[:200]}')
@@ -163,6 +259,14 @@ class AzurPilotAndroid:
 
     @property
     def azurpilot_android_display_id(self) -> int:
+        """获取当前虚拟屏的 displayId。
+
+        Returns:
+            int: 虚拟显示器的 displayId。
+
+        Raises:
+            ScriptError: 虚拟屏尚未就绪或返回值非法。
+        """
         response = self._azurpilot_android_call_ok({'method': 'ping'})
         display_id = response.get('displayId')
         if not isinstance(display_id, int) or display_id < 1:
@@ -173,6 +277,16 @@ class AzurPilotAndroid:
     # ---------------------------------------------------------------- App 控制
 
     def app_start_azurpilot_android(self, package=None, activity=None, wait=True):
+        """在虚拟屏上启动指定应用 Activity。
+
+        Args:
+            package: 应用包名，默认为当前配置包名。
+            activity: 目标 Activity 名称，默认为映射表中的默认入口。
+            wait: 启动后是否休眠 1 秒等待生效。
+
+        Raises:
+            ScriptError: 未知应用包名对应的 Activity。
+        """
         from module.config.server import DICT_PACKAGE_TO_ACTIVITY
         package = package or self.package
         if activity is None:
@@ -185,11 +299,24 @@ class AzurPilotAndroid:
             time.sleep(1)
 
     def app_stop_azurpilot_android(self, package=None):
+        """强制停止指定应用。
+
+        Args:
+            package: 待停止的应用包名，默认为当前配置包名。
+        """
         self.azurpilot_android_shell_output(f'am force-stop {shlex.quote(package or self.package)}')
 
     def app_current_azurpilot_android(self, timeout: float = 30) -> str:
-        """虚拟屏的前台应用包名。dumpsys window displays 按 displayId 分块，
-        取目标块内的 mCurrentFocus；找不到即视为未在本虚拟屏运行。"""
+        """虚拟屏的前台应用包名。
+
+        dumpsys window displays 按 displayId 分块，取目标块内的 mCurrentFocus；找不到即视为未在本虚拟屏运行。
+
+        Args:
+            timeout: 命令超时时间（秒）。
+
+        Returns:
+            str: 前台应用包名，未在当前虚拟屏运行则返回空字符串。
+        """
         out = self.azurpilot_android_shell_output('dumpsys window displays', timeout=timeout)
         vid = self.azurpilot_android_display_id
         current = ''
@@ -204,12 +331,21 @@ class AzurPilotAndroid:
 
     def get_orientation(self):
         """桥接模式下虚拟屏始终横屏 1280x720，直接返回 0。
-        注意：本方法在 AzurPilotAndroid 混入类上，MRO 先于 Connection 的 adb 实现。"""
+
+        注意：本方法在 AzurPilotAndroid 混入类上，MRO 先于 Connection 的 adb 实现。
+
+        Returns:
+            int: 屏幕方向角度（固定返回 0）。
+        """
         if self.serial == 'azurpilot_android':
             self.orientation = 0
             return 0
         return super().get_orientation()
 
     def dump_hierarchy_azurpilot_android(self):
-        """系统 uiautomator 只看主屏，不能把其结果误认为虚拟屏。"""
+        """系统 uiautomator 只看主屏，不能把其结果误认为虚拟屏。
+
+        Raises:
+            ScriptError: Android 虚拟屏不支持 uiautomator 层级树。
+        """
         raise ScriptError('Android 虚拟屏不支持 uiautomator 层级树，请使用截图识别')

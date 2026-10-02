@@ -13,6 +13,7 @@ asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
 
 
 class VirtualBoxEmulator:
+    """基于 VirtualBox 架构的模拟器配置与管理基类。"""
     UNINSTALL_REG = "SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall"
     UNINSTALL_REG_2 = "Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall"
 
@@ -92,10 +93,20 @@ class VirtualBoxEmulator:
 
     @cached_property
     def adb_binary(self):
+        """获取模拟器内 ADB 可执行文件的绝对路径列表。
+
+        Returns:
+            list[str]: adb.exe 绝对路径列表。
+        """
         return [os.path.abspath(os.path.join(self.root, a)) for a in self.adb_path]
 
     @cached_property
     def adb_backup(self):
+        """获取模拟器内 ADB 文件的备份目标路径列表。
+
+        Returns:
+            list[str]: 备份文件绝对路径列表。
+        """
         files = []
         for adb in self.adb_binary:
             for n in range(10):
@@ -227,6 +238,7 @@ mumu_player = VirtualBoxEmulator(
 
 
 class EmulatorConnect:
+    """模拟器连接管理类，提供多模拟器发现、连接与 ADB 冲突处理。"""
     SUPPORTED_EMULATORS = [
         nox_player,
         nox_player_64,
@@ -306,6 +318,7 @@ class EmulatorConnect:
         return devices
 
     def adb_kill(self):
+        """强制终止系统中所有已知的 ADB 进程。"""
         # 直接杀进程，因为部分 ADB 不遵守 kill-server 协议
         logger.info('Kill all known ADB')
         for exe in [
@@ -341,7 +354,11 @@ class EmulatorConnect:
         return serial
 
     def brute_force_connect(self):
-        """暴力连接所有可用的模拟器实例。"""
+        """并发尝试连接所有可用的模拟器实例端口。
+
+        Returns:
+            list[str]: 成功连接后的设备序列号列表。
+        """
         self.devices()
 
         async def connect():

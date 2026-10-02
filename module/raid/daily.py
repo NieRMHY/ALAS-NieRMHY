@@ -1,5 +1,4 @@
-"""
-突袭每日（Daily Raid）任务模块。
+"""突袭每日（Daily Raid）任务模块。
 
 负责按配置依次刷完各难度（easy、normal、hard）的每日突袭次数。
 支持以下功能：
@@ -18,8 +17,7 @@ from module.ui.page import page_raid
 
 
 class RaidStage:
-    """
-    突袭难度阶段数据类。
+    """突袭难度阶段数据类。
 
     用于在 StageFilter 过滤器中表示一个突袭难度选项。
 
@@ -28,19 +26,28 @@ class RaidStage:
     """
 
     def __init__(self, name):
+        """初始化难度阶段。
+
+        Args:
+            name (str): 阶段名称。
+        """
         self.name = name
 
     def __str__(self):
+        """返回阶段名称。
+
+        Returns:
+            str: 阶段名称。
+        """
         return self.name
 
 
 STAGES = ['easy', 'normal', 'hard']
-STAGE_FILTER = Filter(regex=re.compile('(\w+)'), attr=['name'])
+STAGE_FILTER = Filter(regex=re.compile(r'(\w+)'), attr=['name'])
 
 
 class RaidDaily(RaidRun):
-    """
-    突袭每日任务执行器。
+    """突袭每日任务执行器。
 
     按配置依次执行各难度的突袭每日任务。执行流程：
     1. 检查是否为 RPG 类型（RPG 无每日模式，直接禁用）
@@ -50,12 +57,12 @@ class RaidDaily(RaidRun):
 
     继承自 RaidRun，使用其战斗执行和停止条件检查逻辑。
     """
+
     def run(self, name=''):
-        """
-        运行突袭每日任务，依次刷完各难度次数。
+        """运行突袭每日任务，依次刷完各难度次数。
 
         Args:
-            name (str): 突袭活动名称，如 'raid_20200624'。
+            name (str, optional): 突袭活动名称，如 'raid_20200624'。默认空字符串（从配置读取）。
         """
         if self.is_raid_rpg():
             logger.info('[突袭-日常] RPG突袭没有每日任务')

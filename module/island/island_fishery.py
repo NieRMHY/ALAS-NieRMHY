@@ -9,7 +9,14 @@ from module.island.island import *
 from module.base.button import Button
 
 def _click_area(device, area):
-    """从区域坐标创建临时Button并点击，避免多服务器Button兼容问题"""
+    """从区域坐标创建临时按钮并点击。
+
+    避免多服务器 Button 实例的定义兼容性差异。
+
+    Args:
+        device: 设备交互实例。
+        area (dict | tuple): 点击区域或包含服务器键名坐标的字典。
+    """
     a = area.get('cn', area) if isinstance(area, dict) else area
     btn = Button(area=a, color=(0,0,0), button=a, file='')
     device.click(btn)
@@ -43,6 +50,24 @@ DISPATCH_STAMINA_MIN = 98
 
 
 class IslandFishery(Island, WarehouseOCR, LoginHandler):
+    """岛屿渔场自动化管理器。
+
+    继承 Island（岛屿基础操作）、WarehouseOCR（仓库 OCR 识别）和
+    LoginHandler（登录处理），实现渔场岗位巡检、鱼获收获、鱼苗补购与养殖派遣。
+
+    Attributes:
+        dispatch_stamina_min (int): 角色派遣最低体力阈值。
+        fishery_positions (int): 渔场岗位配置数量。
+        fishery_threshold (dict): 各鱼获库存最低阈值配置。
+        plant_yellowfin_tuna (int): 默认养殖黄鳍金枪鱼的目标岗位数。
+        rancher_filter (str): 渔场角色筛选配置。
+        FISHERY_ITEMS (list): 渔场产品及其对应商店、产量与页签配置。
+        name_to_config (dict): 产品内部名称到配置的映射。
+        posts (dict): 岗位按钮、当前养殖品与状态字典。
+        to_plant_list (list): 待补养殖的产品需求队列。
+        inventory_counts (dict): 仓库库存统计。
+        fishery_times (list): 各岗位预计完成时间列表。
+    """
     def __init__(self, *args, **kwargs):
         Island.__init__(self, *args, **kwargs)
         WarehouseOCR.__init__(self)
@@ -113,7 +138,10 @@ class IslandFishery(Island, WarehouseOCR, LoginHandler):
         self.fishery_times = [None] * self.fishery_positions
 
     def check_inventory_and_prepare_list(self):
-        """检查库存并准备需要补种的列表（根据产量计算需购买鱼苗数）"""
+        """检查库存并准备需要补种的列表。
+
+        根据各产品单次产量向上取整计算所需鱼苗数，并加入待养殖队列。
+        """
         inventory = self.warehouse_inventory()
         self.inventory_counts = inventory
         self.to_plant_list = []
@@ -132,7 +160,15 @@ class IslandFishery(Island, WarehouseOCR, LoginHandler):
                     self.to_plant_list.append(item_name)
 
     def _remove_plant_demand(self, product, quantity):
-        """从补种需求中扣除已在岗位中的鱼苗数量。"""
+        """从补种需求中扣除已在岗位中的鱼苗数量。
+
+        Args:
+            product (str): 目标产品内部名称。
+            quantity (int): 需要扣除的鱼苗数量。
+
+        Returns:
+            int: 实际成功扣除的数量。
+        """
         removed = 0
         for _ in range(max(0, quantity)):
             try:
@@ -143,7 +179,17 @@ class IslandFishery(Island, WarehouseOCR, LoginHandler):
         return removed
 
     def _build_supply_plant_products(self, idle_count):
-        """按库存升序轮转分配岗位，未达标物品优先补足（如 A B C A B ...）。"""
+        """按库存升序轮转分配岗位，未达标物品优先补足。
+
+        Args:
+            idle_count (int): 当前可用空闲岗位数。
+
+        Returns:
+            tuple[list[str], int, dict[str, int]]:
+                - products_to_plant: 安排养殖的产品名称列表。
+                - remaining_idle: 剩余未分配的空闲岗位数。
+                - supply_post_counts: 各产品分配的补库存岗位数映射。
+        """
         # 收集未达标产品及其所需岗位数，按当前库存升序排序（库存最少的最优先）
         demand = []
         for item_config in self.FISHERY_ITEMS:
@@ -193,11 +239,35 @@ class IslandFishery(Island, WarehouseOCR, LoginHandler):
 
     @staticmethod
     def _post_available_for_dispatch(post_info):
-        """只有检测后处于空闲状态的岗位才可在本轮派遣。"""
+        """检查岗位是否可用于本轮派遣。
+
+        只有检测后处于空闲状态的岗位才可在本轮派遣。
+
+        Args:
+            post_info (dict): 岗位信息字典。
+
+        Returns:
+            bool: 岗位是否处于空闲可派遣状态。
+        """
         return post_info.get('state') == 'idle'
 
     def _planned_fry_target_quantity(self, product, post_count, supply_post_counts, default_post_counts):
-        """计算岗位需要的鱼苗总量；已有库存与补购差额由派遣页确认。"""
+        """计算岗位需要的鱼苗总量。
+
+        已有库存与补购差额由派遣页确认。
+
+        Args:
+            product (str): 目标产品内部名称。
+            post_count (int): 分配给该产品的岗位数量。
+            supply_post_counts (dict): 补库存岗位数映射。
+            default_post_counts (dict): 默认产品岗位数映射。
+
+        Returns:
+            tuple[int, int, int]:
+                - 本轮目标鱼苗总量。
+                - 该产品总需求缺口。
+                - 单岗位最大容量。
+        """
         post_capacity = self.name_to_config[product].get('buy_max', 4) + 1
         supply_posts = supply_post_counts.get(product, 0)
         default_posts = default_post_counts.get(product, 0)
@@ -206,7 +276,11 @@ class IslandFishery(Island, WarehouseOCR, LoginHandler):
         return min(post_count * post_capacity, total_target), supply_demand, post_capacity
 
     def warehouse_inventory(self):
-        """获取仓库库存信息"""
+        """获取渔场仓库库存信息。
+
+        Returns:
+            dict[str, int]: 各渔场产品名称到库存数量的映射。
+        """
         self.warehouse_filter('fishery')
         image = self.device.screenshot()
         results = {}
@@ -218,13 +292,25 @@ class IslandFishery(Island, WarehouseOCR, LoginHandler):
         return results
 
     def post_plant_check(self):
-        """检查岗位正在生产什么"""
+        """检查岗位当前正在生产的产品类型。
+
+        Returns:
+            str | None: 正在生产的产品内部名称，未识别到则返回 None。
+        """
         for item in self.FISHERY_ITEMS:
             if self.appear(item['post_action']):
                 return item['name']
         return None
 
     def _fishery_tab_buttons(self, target_tab):
+        """获取鱼苗商店指定分类页签的检测与切换按钮。
+
+        Args:
+            target_tab (str): 目标分类页签（'freshwater'、'seawater' 或 'other'）。
+
+        Returns:
+            tuple[Button, Button] | tuple[None, None]: 页签检测按钮与点击切换按钮。
+        """
         if target_tab == 'freshwater':
             return ISLAND_FISH_FRY_SHOP_FRESHWATER_CHECK, ISLAND_FISH_FRY_SHOP_FRESHWATER
         if target_tab == 'seawater':
@@ -235,7 +321,16 @@ class IslandFishery(Island, WarehouseOCR, LoginHandler):
         return None, None
 
     def decided_lists(self, post_button, post_id, post_index):
-        """检查岗位状态并更新列表，同时记录完成时间"""
+        """检查岗位状态并更新列表，同时记录完成时间与收取成品。
+
+        Args:
+            post_button (Button): 岗位按钮。
+            post_id (str): 岗位标识，如 'ISLAND_FISHERY_POST1'。
+            post_index (int): 岗位索引下标（从 0 开始）。
+
+        Returns:
+            bool: 是否在本轮成功收取了已完成鱼获。
+        """
         collected = False
         was_complete = False
         self.post_close()
@@ -284,7 +379,17 @@ class IslandFishery(Island, WarehouseOCR, LoginHandler):
         return collected
 
     def post_plant(self, post_button, product, post_index, required_quantity=1):
-        """在指定岗位种植指定产品，并记录完成时间"""
+        """在指定岗位养殖指定产品，并记录完成时间。
+
+        Args:
+            post_button (Button): 岗位按钮。
+            product (str): 养殖产品内部名称。
+            post_index (int): 岗位索引下标。
+            required_quantity (int): 计划养殖数量，默认为 1。
+
+        Returns:
+            bool: 养殖操作是否成功。
+        """
         self.post_close()
         self.post_open(post_button)
         self.device.screenshot()
@@ -358,7 +463,16 @@ class IslandFishery(Island, WarehouseOCR, LoginHandler):
         return True
 
     def _build_fry_quantity_queue(self, products_to_plant, supply_post_counts, default_post_counts):
-        """按岗位顺序分配本轮每个渔场岗位需要补足的鱼苗数量。"""
+        """按岗位顺序分配本轮每个渔场岗位需要补足的鱼苗数量。
+
+        Args:
+            products_to_plant (list[str]): 待养殖产品队列。
+            supply_post_counts (dict): 补库存岗位数映射。
+            default_post_counts (dict): 默认产品岗位数映射。
+
+        Returns:
+            list[int]: 各岗位目标鱼苗数量队列。
+        """
         product_counts = {}
         for product_name in products_to_plant:
             product_counts[product_name] = product_counts.get(product_name, 0) + 1
@@ -393,6 +507,17 @@ class IslandFishery(Island, WarehouseOCR, LoginHandler):
         return quantity_queue
 
     def run(self, ranch_finish_times=None):
+        """运行渔场自动化管理主流程。
+
+        首轮巡检并收获鱼获，读取库存，分配空闲岗位补种或默认养殖，
+        并计算合并下次运行时间。
+
+        Args:
+            ranch_finish_times (list[datetime], optional): 牧场任务的完成时间列表，用于合并调度。
+
+        Raises:
+            GameBugError: 遇到游戏内部错误需要重启时抛出。
+        """
         self.island_error = False
 
         # 重置渔场时间追踪列表

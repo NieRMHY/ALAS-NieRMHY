@@ -100,7 +100,14 @@ def ensure_public_url(url: str) -> str:
 
 
 def first_image_url(payload: Any) -> Optional[str]:
-    """从 JSON 型 API 的响应里取第一个图片地址。"""
+    """从 JSON 型 API 的响应里取第一个图片地址。
+
+    Args:
+        payload: JSON 解析后的数据对象（字符串、字典或列表）。
+
+    Returns:
+        匹配到的首个有效图片/视频 URL，未找到则返回 None。
+    """
     if isinstance(payload, str):
         return payload if payload.lower().split('?')[0].endswith(IMAGE_SUFFIX + VIDEO_SUFFIX) else None
     if isinstance(payload, dict):
@@ -169,11 +176,28 @@ def fetch_once(url: str, *, allow_json: bool) -> Dict[str, str]:
 
 
 def resolve(url: str) -> Dict[str, str]:
-    """把随机图 API 解析成真实直链。**不落盘**，字节只在这里读一点判断类型。"""
+    """把随机图 API 解析成真实直链。
+
+    只抓取一次并追踪重定向，不将图片字节写入磁盘。
+
+    Args:
+        url: 随机图 API 或图片直链地址。
+
+    Returns:
+        包含 final_url 和 content_type 的字典。
+
+    Raises:
+        BackgroundError: 地址非法、重定向过多或抓取失败。
+    """
     return fetch_once(url, allow_json=True)
 
 
 def _read_index() -> List[Dict[str, Any]]:
+    """读取图库索引文件。
+
+    Returns:
+        图库条目列表，索引不存在或损坏时返回空列表。
+    """
     if not INDEX_FILE.exists():
         return []
     try:
@@ -185,6 +209,11 @@ def _read_index() -> List[Dict[str, Any]]:
 
 
 def _write_index(entries: List[Dict[str, Any]]) -> None:
+    """将图库条目列表写入索引文件。
+
+    Args:
+        entries: 待写入的图库条目列表。
+    """
     LIBRARY_DIR.mkdir(parents=True, exist_ok=True)
     INDEX_FILE.write_text(json.dumps(entries, ensure_ascii=False, indent=2), encoding='utf-8')
 
@@ -193,12 +222,20 @@ PROXY_DIR = PROJECT_ROOT / 'cache' / 'background' / 'proxy'
 
 
 def proxy_fetch(url: str) -> tuple:
-    """抓取一张图供前端同源显示：返回 (字节, 内容类型)。
+    """抓取一张图供前端同源显示。
 
     为什么不让浏览器直接加载直链：不少图库有防盗链或跨域限制，服务端能抓到、浏览器却加载不出来，
     于是界面显示的图与直链行会对不上。让壁纸走这条同源通道，两边必然是同一份字节。
-
     抓到的字节按地址哈希缓存在 cache/background/proxy（可重建，随时可删）。
+
+    Args:
+        url: 图片直链地址。
+
+    Returns:
+        包含图片二进制数据和内容类型的元组 (bytes, content_type)。
+
+    Raises:
+        BackgroundError: 抓取失败或文件体积超过上限。
     """
     meta = fetch_once(url, allow_json=False)
     digest = hashlib.sha1(meta['final_url'].encode('utf-8')).hexdigest()
@@ -224,7 +261,13 @@ def proxy_fetch(url: str) -> tuple:
 
 
 def gallery_list() -> List[Dict[str, Any]]:
-    """列出图库条目：``[{id, name, size, added, kind}]``。文件缺失的条目会被剔除。"""
+    """列出图库条目。
+
+    自动剔除磁盘文件已缺失的无效条目。
+
+    Returns:
+        包含条目信息的字典列表，每个条目包含 id、name、size、added、kind 等字段。
+    """
     entries = [entry for entry in _read_index() if isinstance(entry, dict) and (LIBRARY_DIR / str(entry.get('id', ''))).exists()]
     return entries
 
@@ -322,7 +365,14 @@ def gallery_add_bytes(data: bytes, filename: str, content_type: str = '') -> Dic
 
 
 def gallery_remove(identifier: str) -> bool:
-    """从图库删除一个条目（文件 + 索引）。"""
+    """从图库删除一个条目（包括文件与索引）。
+
+    Args:
+        identifier: 条目的唯一标识符（文件名）。
+
+    Returns:
+        若成功删除返回 True，若条目不存在则返回 False。
+    """
     entries = _read_index()
     kept = [item for item in entries if item.get('id') != identifier]
     if len(kept) == len(entries):
@@ -335,8 +385,14 @@ def gallery_remove(identifier: str) -> bool:
 def gallery_open() -> Dict[str, str]:
     """在系统文件管理器里打开图库目录。
 
-    打开的路径是**服务端固定的**图库目录，不接受任何调用方输入，因此不存在越权打开任意目录的问题；
-    服务本身只监听本机（gui.py 绑 127.0.0.1），所以这个动作等同于用户自己在资源管理器里打开那个文件夹。
+    打开的路径是服务端固定的图库目录，不接受任何调用方输入，因此不存在越权打开任意目录的问题；
+    服务本身只监听本机（gui.py 绑定 127.0.0.1），所以该操作等同于用户自己在资源管理器中打开该文件夹。
+
+    Returns:
+        包含已打开目录路径 'path' 的字典。
+
+    Raises:
+        BackgroundError: 调用系统命令打开目录失败。
     """
     LIBRARY_DIR.mkdir(parents=True, exist_ok=True)
     try:
@@ -352,7 +408,14 @@ def gallery_open() -> Dict[str, str]:
 
 
 def gallery_path(identifier: str) -> Optional[Path]:
-    """取图库里某个条目的文件路径；不存在或不在图库目录内时返回 None。"""
+    """获取图库中某个条目的本地文件路径。
+
+    Args:
+        identifier: 条目的唯一标识符（文件名）。
+
+    Returns:
+        条目文件的 Path 对象；若不存在、为空或包含非法路径字符则返回 None。
+    """
     if not identifier or '/' in identifier or '\\' in identifier or identifier.startswith('.'):
         return None
     path = LIBRARY_DIR / identifier

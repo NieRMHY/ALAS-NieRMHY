@@ -211,6 +211,8 @@ class Digit(Ocr):
         result = result.replace('B', '8')
 
         prev = result
+        # 数字 0 与空文本回退都返回 0；资源新鲜度必须区分二者。
+        self.last_valid = bool(result and result.isdigit())
         result = int(result) if result else 0
         if self.SHOW_REVISE_WARNING:
             if str(result) != prev:

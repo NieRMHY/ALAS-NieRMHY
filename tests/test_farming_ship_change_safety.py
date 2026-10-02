@@ -1,4 +1,4 @@
-"""换船失败必须停止当前任务，模式切换和船坞提示不能伪造成功。"""
+"""无候选舰船时遵循推迟开关，换船与装备交接异常仍须停止任务。"""
 
 import unittest
 from unittest.mock import Mock, patch
@@ -7,7 +7,7 @@ from module.campaign.gems_farming import GemsFarming
 from module.campaign.run import CampaignRun
 from module.config.config import TaskEnd
 from module.exception import (
-    EmulatorNotRunningError, GameStuckError, GameTooManyClickError, HardNotSatisfied, RequestHumanTakeover,
+    CampaignEnd, EmulatorNotRunningError, GameStuckError, GameTooManyClickError, HardNotSatisfied, RequestHumanTakeover,
 )
 from tests.test_fleet_selection import TASKS, runner
 
@@ -65,7 +65,8 @@ class ShipChangeSafetyTests(unittest.TestCase):
             for position in ('flagship', 'vanguard'):
                 for failed_step in ('clear_all_equip', position + '_change_execute', 'apply_equip_code'):
                     with self.subTest(task=task.__name__, position=position, failed=failed_step):
-                        instance = runner(task, GemsFarming_ChangeFlagship='ship_equip', GemsFarming_ChangeVanguard='ship_equip')
+                        instance = runner(task, GemsFarming_ChangeFlagship='ship_equip', GemsFarming_ChangeVanguard='ship_equip',
+                                          GemsFarming_DelayTaskIFNoFlagship=False)
                         instance.hard_mode_override()
                         instance.config.Scheduler_Enable = True
                         instance.config.task_stop = Mock(side_effect=TaskEnd)
@@ -86,8 +87,8 @@ class ShipChangeSafetyTests(unittest.TestCase):
                         if failed_step != 'apply_equip_code':
                             events.apply_equip_code.assert_not_called()
 
-    def test_no_low_level_replacement_delays_instead_of_starting_another_battle(self):
-        instance = runner(GemsFarming, StopCondition_RunCount=0, GemsFarming_DelayTaskIFNoFlagship=False)
+    def farming_runner(self, delay):
+        instance = runner(GemsFarming, StopCondition_RunCount=0, GemsFarming_DelayTaskIFNoFlagship=delay)
         instance.config.task_switched = Mock(return_value=False)
         instance.config.task_delay = Mock()
         instance.config.task_stop = Mock(side_effect=TaskEnd)
@@ -95,6 +96,10 @@ class ShipChangeSafetyTests(unittest.TestCase):
         instance.vanguard_change = Mock(return_value=True)
         instance.flagship_change = Mock(return_value=False)
         instance.campaign.ensure_auto_search_exit = Mock()
+        return instance
+
+    def test_no_low_level_replacement_delays_when_enabled(self):
+        instance = self.farming_runner(delay=True)
         with patch.object(GemsFarming, '_initial_flagship_check_done', False), \
                 patch.object(CampaignRun, 'run') as campaign_run:
             with self.assertRaises(TaskEnd):
@@ -104,11 +109,61 @@ class ShipChangeSafetyTests(unittest.TestCase):
         instance.config.task_delay.assert_called_once_with(minute=60)
         instance.campaign.ensure_auto_search_exit.assert_called_once_with()
 
+    def test_no_low_level_replacement_continues_and_retries_after_battles(self):
+        instance = self.farming_runner(delay=False)
+        instance.flagship_change.side_effect = [False, False, True]
+        battles = []
+
+        def run_campaign(**kwargs):
+            if not battles:
+                # 启动时先检查旗舰，还没有出击。
+                self.assertTrue(instance.triggered_stop_condition())
+            else:
+                # 找不到替换船也允许下一次出击；战后等级检测再次触发换船。
+                self.assertFalse(instance.triggered_stop_condition())
+                if len(battles) < 3:
+                    instance.campaign.config.LV32_TRIGGERED = True
+                    self.assertTrue(instance.triggered_stop_condition())
+            battles.append(True)
+
+        with patch.object(GemsFarming, '_initial_flagship_check_done', False), \
+                patch.object(CampaignRun, 'triggered_stop_condition', return_value=False), \
+                patch.object(CampaignRun, 'run', side_effect=run_campaign) as campaign_run:
+            instance.run('C2', folder='event_test')
+            self.assertTrue(GemsFarming._initial_flagship_check_done)
+        self.assertEqual(campaign_run.call_count, 4)
+        self.assertEqual(instance.flagship_change.call_count, 3)
+        instance.config.task_delay.assert_not_called()
+        instance.config.task_stop.assert_not_called()
+        instance.campaign.ensure_auto_search_exit.assert_not_called()
+
+    def test_continue_without_replacement_keeps_next_scheduled_initial_check(self):
+        instance = self.farming_runner(delay=False)
+        with patch.object(GemsFarming, '_initial_flagship_check_done', False), \
+                patch.object(CampaignRun, 'run') as campaign_run:
+            instance.run('C2', folder='event_test')
+            self.assertFalse(GemsFarming._initial_flagship_check_done)
+            instance.run('C2', folder='event_test')
+        self.assertEqual(campaign_run.call_count, 4)
+        self.assertEqual(instance.flagship_change.call_count, 2)
+        instance.config.task_delay.assert_not_called()
+        instance.config.task_stop.assert_not_called()
+
+    def test_no_replacement_with_low_emotion_still_delays_when_disabled(self):
+        instance = self.farming_runner(delay=False)
+        with patch.object(GemsFarming, '_initial_flagship_check_done', True), \
+                patch.object(CampaignRun, 'run', side_effect=CampaignEnd('Emotion control')) as campaign_run:
+            with self.assertRaises(TaskEnd):
+                instance.run('C2', folder='event_test')
+        campaign_run.assert_called_once()
+        instance.config.task_delay.assert_called_once_with(minute=60)
+        instance.campaign.ensure_auto_search_exit.assert_called_once_with()
+
     def test_hard_fleet_recovery_preserves_stop_and_does_not_ignore_failed_selection(self):
         for error in (HardNotSatisfied(), RequestHumanTakeover('Hard not satisfied')):
             for stops in (True, False):
                 with self.subTest(error=type(error).__name__, stops=stops):
-                    instance = runner(GemsFarming, StopCondition_RunCount=0)
+                    instance = runner(GemsFarming, StopCondition_RunCount=0, GemsFarming_DelayTaskIFNoFlagship=False)
                     instance.config.task_delay = Mock()
                     instance.config.task_stop = Mock(side_effect=TaskEnd)
                     instance.campaign.ensure_auto_search_exit = Mock()

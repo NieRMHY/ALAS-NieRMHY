@@ -30,8 +30,20 @@ export function StatisticsEditConsole({customized, pages, onTogglePage, onReset,
     {children}
     <p className="panel-note">{ui('stats.editConsoleHint')}</p>
     <p className="panel-note">{ui('stats.orderHint')}</p>
-    <div className="statistics-edit-actions monitor-segmented">
-      {pages.map(page => <button key={page.id} className={page.enabled ? '' : 'is-disabled'} aria-pressed={page.enabled} onClick={() => onTogglePage(page.id)}>{page.label}</button>)}
+    <div className="statistics-edit-actions">
+      {pages.map(page => (
+        <button
+          key={page.id}
+          type="button"
+          className={`statistics-page-toggle-chip ${page.enabled ? 'active' : 'is-disabled'}`}
+          aria-pressed={page.enabled}
+          onClick={() => onTogglePage(page.id)}
+          title={page.enabled ? `${page.label}（已启用，点击隐藏）` : `${page.label}（已隐藏，点击显示）`}
+        >
+          <span className="stat-chip-dot" style={{backgroundColor: page.enabled ? 'var(--accent)' : 'var(--muted)'}}/>
+          <span>{page.label}</span>
+        </button>
+      ))}
     </div>
   </section>
 }

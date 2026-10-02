@@ -715,11 +715,40 @@ class RewardTacticalClass(Dock):
 
         return True
 
+    @staticmethod
+    def _level_limits(min_level, max_level):
+        """规范化最低/最高等级限制，返回 (最低等级, 最高等级)。
+
+        配置中的 0（含无效值）表示该方向不限制。两个限制同时启用却相互矛盾
+        （最低 > 最高）时选不出任何舰船，此时两者都按 0（关闭）处理。
+
+        Args:
+            min_level: 最低等级配置原始值。
+            max_level: 最高等级配置原始值。
+
+        Returns:
+            tuple[int, int]: 规范化后的等级限制，0 表示不限制。
+        """
+        def normalize(value, name):
+            try:
+                limit = int(value)
+            except (ValueError, TypeError) as e:
+                logger.warning(f'[战术-船坞] 无效的{name}配置: {value}, {e}')
+                return 0
+            return limit if limit > 0 else 0
+
+        min_level = normalize(min_level, '最低等级')
+        max_level = normalize(max_level, '最高等级')
+        if min_level and max_level and min_level > max_level:
+            logger.warning(f'[战术-船坞] 最低等级 {min_level} 大于最高等级 {max_level}，两者均按 0（关闭）处理')
+            return 0, 0
+        return min_level, max_level
+
     def select_suitable_ship(self):
         """在船坞中筛选并选中一艘适合学习技能的舰船。
 
         根据配置设置收藏过滤和阵营筛选（跳过 META 舰船），
-        选择等级大于等于配置最低要求的舰船并确认。
+        选择等级在配置的最低/最高要求之间的舰船并确认。
 
         Returns:
             bool: 成功选中舰船返回 True，无可用舰船返回 False。
@@ -755,24 +784,24 @@ class RewardTacticalClass(Dock):
         else:
             logger.warning('[战术-船坞] 等待舰船卡片超时')
 
-        try:
-            min_level = int(self.config.AddNewStudent_MinLevel)
-            if min_level < 1:
-                min_level = 1
-        except (ValueError, TypeError) as e:
-            logger.warning(f'[战术-船坞] 无效的最低等级配置: {self.config.AddNewStudent_MinLevel}, {e}')
-            min_level = 1
-        logger.attr('最低等级要求', min_level)
+        min_level, max_level = self._level_limits(
+            self.config.AddNewStudent_MinLevel, self.config.AddNewStudent_MaxLevel)
+        logger.attr('等级要求', f'{min_level or "不限"} ~ {max_level or "不限"}')
 
         should_select_button = None
         for button, level in list(zip(CARD_GRIDS.buttons, list_level))[self.dock_select_index:]:
-            # 仅选择等级 >= min_level 的舰船
-            if level >= min_level:
-                should_select_button = button
-                break
+            # level 为 0 是空槽位；等级限制为 0 表示该方向不限制
+            if level <= 0:
+                continue
+            if min_level and level < min_level:
+                continue
+            if max_level and level > max_level:
+                continue
+            should_select_button = button
+            break
 
         if should_select_button is None:
-            logger.info(f'[战术-船坞] 船坞中没有等级 >= {min_level} 的舰船')
+            logger.info(f'[战术-船坞] 船坞中没有等级在 {min_level or "不限"} ~ {max_level or "不限"} 之间的舰船')
             return False
 
         # 选择舰船

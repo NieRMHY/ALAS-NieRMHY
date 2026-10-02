@@ -21,25 +21,18 @@ GATHER_STAMINA_THRESHOLD = 100
 
 
 class IslandDailyGather(Island):
-    """
-    每日采集逻辑（UI模拟点击版）
-    
-    执行时间：每日凌晨3:10 和 下午6:00
-    流程：
-      1. 进入管理界面 → 切换到"采集"页签
-      2. 领取已有采集奖励（如果有）
-      3. 选择采集目标（_handle_target_selection内依次完成：点击选择目标按钮 → 切换两个toggle开关 → 点击确定）
-      4. 依次点击三个"+"按钮，每个点击后：
-         a. 等待角色选择界面出现
-         b. 对角色列表按"生活等级"升序排序
-         c. 优先选择体力达标且非工作中的角色
-      5. 点击"出发"按钮完成采集
+    """岛屿每日资源采集自动化执行器。
+
+    支持每日凌晨 3:10 和下午 18:00 自动采集岛屿资源。
+    包含采集奖励领取、目标选择开关切换、空闲角色智能派遣以及采集完成弹窗关闭。
     """
 
     def run(self):
-        """
-        任务入口：执行采集流程，并根据当前时间调度下次运行
-        每日自动运行两次：凌晨3:10 和 下午6:00
+        """任务主入口，执行采集流程并根据当前时间调度下次运行时间。
+
+        Pages:
+            in: page_island
+            out: page_island
         """
         now = current_time()
 
@@ -53,15 +46,15 @@ class IslandDailyGather(Island):
         logger.info(f"[岛屿-每日采集] 下次运行时间: {next_run}")
 
     def _schedule_next_run(self, now):
-        """
-        计算下次运行时间
-        规则：凌晨执行后调度到下午6:00，下午执行后调度到次日凌晨3:10
+        """计算下次自动采集的调度时间。
+
+        调度规则：凌晨 3:10 执行后调度至当天下午 18:00，下午 18:00 执行后调度至次日凌晨 3:10。
 
         Args:
-            now: 当前时间
+            now (datetime): 当前时间对象。
 
         Returns:
-            datetime: 下次运行时间
+            datetime: 下次运行的期望时间点。
         """
         morning = now.replace(hour=3, minute=10, second=0, microsecond=0)
         evening = now.replace(hour=18, minute=0, second=0, microsecond=0)
@@ -79,9 +72,7 @@ class IslandDailyGather(Island):
         return target
 
     def dispatch_collection(self):
-        """
-        完整的UI模拟点击采集流程
-        """
+        """执行完整的岛屿资源采集 UI 交互流程。"""
         logger.info("[岛屿-每日采集] === 开始UI模拟点击采集流程 ===")
 
         # 1. 进入管理界面
@@ -130,9 +121,7 @@ class IslandDailyGather(Island):
     # ==================== 步骤方法 ====================
 
     def _claim_existing_rewards(self):
-        """
-        检查并领取已有采集奖励（到达时间后领取完成）
-        """
+        """检查并领取已完成的前次采集奖励。"""
         max_attempts = 5
         for _ in range(max_attempts):
             self.device.screenshot()
@@ -150,9 +139,7 @@ class IslandDailyGather(Island):
             break
 
     def _click_select_target(self):
-        """
-        点击"选择采集目标"按钮并等待弹窗出现
-        """
+        """点击「选择采集目标」按钮并等待目标配置弹窗出现。"""
         while True:
             self.device.screenshot()
             # 检查弹窗是否已经出现
@@ -166,9 +153,7 @@ class IslandDailyGather(Island):
             self.device.sleep(0.3)
 
     def _toggle_switches(self):
-        """
-        将弹窗中的两个toggle开关切换至激活状态
-        """
+        """将采集目标配置弹窗中的两个分类开关切换至激活状态。"""
         for toggle_name, toggle_on, toggle_off in [
             ("开关A", ISLAND_GATHER_TOGGLE_A_ON, ISLAND_GATHER_TOGGLE_A_OFF),
             ("开关B", ISLAND_GATHER_TOGGLE_B_ON, ISLAND_GATHER_TOGGLE_B_OFF),
@@ -176,13 +161,15 @@ class IslandDailyGather(Island):
             self._ensure_toggle_active(toggle_name, toggle_on, toggle_off)
 
     def _ensure_toggle_active(self, toggle_name, toggle_on, toggle_off):
-        """
-        确保指定的toggle开关处于激活状态
+        """确保指定的分类开关处于激活状态。
 
         Args:
-            toggle_name: 开关名称（日志用）
-            toggle_on: 开关已激活状态的Button
-            toggle_off: 开关未激活状态的Button
+            toggle_name (str): 开关名称（用于日志记录）。
+            toggle_on (Button): 开关激活状态的按钮资源。
+            toggle_off (Button): 开关未激活状态的按钮资源。
+
+        Returns:
+            bool: 开关是否成功处于激活状态。
         """
         max_attempts = 5
         for attempt in range(max_attempts):
@@ -208,9 +195,12 @@ class IslandDailyGather(Island):
         return False
 
     def _confirm_selection(self):
-        """
-        点击弹窗中的"确定"按钮关闭弹窗
-        最多尝试3次，如果出现已全部采集弹窗则停止
+        """点击采集目标弹窗中的「确定」按钮并处理弹窗关闭。
+
+        最多尝试 3 次，如果检测到「已全部采集」提示弹窗则停止。
+
+        Returns:
+            bool: 成功确认并可继续派遣返回 True；若已全部采集或确认超时返回 False。
         """
         max_attempts = 3
         for attempt in range(max_attempts):
@@ -246,10 +236,12 @@ class IslandDailyGather(Island):
         return False
 
     def _daily_gather_worker_list(self):
-        """
-        解析每日采集自定义角色配置。
+        """解析并返回每日采集自定义角色派遣配置列表。
 
-        每日采集界面没有 WorkerJuu，配置中出现时必须忽略。
+        每日采集界面无 WorkerJuu（黄鸡），若配置中包含会自动忽略；最多保留前 3 个有效角色。
+
+        Returns:
+            list[str]: 过滤后的有效自定义角色名称列表。
         """
         config = self.config.IslandDailyGather_WorkerFilter
         characters = self.parse_character_filter(config)
@@ -275,12 +267,14 @@ class IslandDailyGather(Island):
         return filtered
 
     def _click_plus_and_select_character(self, index, worker_list=None):
-        """
-        点击第index个"+"按钮并选择角色
+        """点击指定槽位的「+」按钮并派遣空闲角色。
 
         Args:
-            index: 槽位索引 (0, 1, 2)
-            worker_list: 每日采集自定义角色列表。
+            index (int): 槽位索引 (0, 1, 2)。
+            worker_list (list[str], optional): 每日采集自定义角色列表。
+
+        Returns:
+            bool: 角色选择并确认成功返回 True，失败返回 False。
         """
         plus_buttons = [ISLAND_GATHER_PLUS_A, ISLAND_GATHER_PLUS_B, ISLAND_GATHER_PLUS_C]
         plus_button = plus_buttons[index]
@@ -325,8 +319,13 @@ class IslandDailyGather(Island):
         return True
 
     def _wait_for_character_select(self, timeout=8):
-        """
-        等待角色选择界面出现
+        """等待角色选择界面出现。
+
+        Args:
+            timeout (float): 最长等待时间（秒），默认为 8。
+
+        Returns:
+            bool: 角色选择界面是否成功出现。
         """
         for _ in self.loop(timeout=timeout, skip_first=False):
             if self.appear(ISLAND_SELECT_CHARACTER_CHECK, offset=1):
@@ -336,10 +335,9 @@ class IslandDailyGather(Island):
         return False
 
     def _sort_by_life_level(self):
-        """
-        通过模板匹配检测升序箭头，确保按生活等级升序排序
+        """通过模板匹配检测升序箭头，确保按生活等级升序排序。
 
-        按钮颜色不变仅箭头不同，截取按钮区域图像后匹配升序箭头模板来判断
+        按钮颜色不变仅箭头不同，截取按钮区域图像后匹配升序箭头模板来判断。
         """
         # 截取排序按钮区域，检测当前是否为升序
         self.device.screenshot()
@@ -366,14 +364,13 @@ class IslandDailyGather(Island):
         logger.info("[岛屿-每日采集] 生活等级升序排序完成")
 
     def _select_character_with_stamina_check(self):
-        """
-        从当前角色列表中选择体力达标且非工作中的角色。
+        """从当前角色列表中选择体力达标且非工作中的角色。
 
         若没有达到阈值的角色，则回退选择当前页体力最高的空闲角色，避免流程卡住。
-        注：采集界面的角色选择没有黄鸡角色
+        注：采集界面的角色选择没有黄鸡角色。
 
         Returns:
-            bool: 是否成功选择角色
+            bool: 是否成功选择角色。
         """
         screenshot = self.device.screenshot()
         detected = False
@@ -414,15 +411,14 @@ class IslandDailyGather(Island):
         return self._click_character(best_char, "体力最高回退")
 
     def _click_character(self, char_info, reason):
-        """
-        点击角色选择网格。
+        """点击指定角色网格槽位。
 
         Args:
-            char_info: recognize_all_characters() 返回的角色信息。
-            reason: 日志中的选择原因。
+            char_info (dict): 角色信息字典（包含 grid_position、character_name、stamina 等）。
+            reason (str): 选择原因说明（日志用）。
 
         Returns:
-            bool: 是否成功点击。
+            bool: 恒返回 True。
         """
         row, col = char_info["grid_position"]
         stamina = char_info.get("stamina", 0)
@@ -436,8 +432,10 @@ class IslandDailyGather(Island):
         return True
 
     def _select_first_idle_character(self):
-        """
-        兼容旧调用：选择第一个空闲角色。
+        """选择第一个空闲角色（兼容旧调用）。
+
+        Returns:
+            bool: 是否成功选择空闲角色。
         """
         screenshot = self.device.screenshot()
         characters = self.recognize_all_characters(screenshot)
@@ -450,8 +448,10 @@ class IslandDailyGather(Island):
         return False
 
     def _click_depart(self):
-        """
-        点击"出发"按钮开始采集
+        """点击「出发」按钮开始采集。
+
+        Returns:
+            bool: 是否成功点击出发按钮。
         """
         max_attempts = 10
         for attempt in range(max_attempts):
@@ -466,12 +466,12 @@ class IslandDailyGather(Island):
         return False
 
     def _handle_target_selection(self):
-        """
-        处理选择采集目标的确认流程。
+        """处理选择采集目标的确认流程。
+
         如果所有采集物已采集完毕，确定时会弹出提示弹窗，需要关闭后退出。
 
         Returns:
-            bool: True=成功选择目标可继续, False=已全部采集需退出
+            bool: True 表示成功选择目标可继续，False 表示已全部采集需退出。
         """
         # 点击"选择采集目标"按钮
         self._click_select_target()
@@ -493,8 +493,10 @@ class IslandDailyGather(Island):
         return True
 
     def _handle_collection_complete(self):
-        """
-        处理采集完成页面：等待采集完成，点击安全区域关闭完成界面
+        """处理采集完成页面：等待采集完成，点击安全区域关闭完成界面。
+
+        Returns:
+            bool: 采集完成页面是否出现并成功关闭。
         """
         max_wait = 30  # 最多等待30秒
         for i in range(max_wait):
@@ -510,8 +512,10 @@ class IslandDailyGather(Island):
         return False
 
     def _exit_management(self):
-        """
-        退出管理界面，返回到小岛主界面
+        """退出管理界面，返回到小岛主界面。
+
+        Returns:
+            bool: 恒返回 True。
         """
         logger.info("[岛屿-每日采集] 退出管理界面")
         # 先点击安全区域关闭可能残留的弹窗

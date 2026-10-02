@@ -49,6 +49,14 @@ class EmotionDigit(Digit):
     并修正唐斯头发区域的随机误识别 (044 -> 0)。
     """
     def pre_process(self, image):
+        """对情绪数字区域进行预处理。
+
+        Args:
+            image (np.ndarray): 输入图像。
+
+        Returns:
+            np.ndarray: 预处理后的图像。
+        """
         if server.server == 'jp':
             image_gray = extract_letters(image, letter=(255, 255, 255), threshold=self.threshold)
             right_side = np.nonzero(image_gray[0:16, :].max(axis=0) > 192)[-1]
@@ -60,6 +68,14 @@ class EmotionDigit(Digit):
         return image
 
     def after_process(self, result):
+        """对情绪数字识别结果进行后处理。
+
+        Args:
+            result (str): 原始识别字符串。
+
+        Returns:
+            int: 修正后的情绪数值。
+        """
         # 唐斯头发区域的随机 OCR 误识别
         # DOCK_EMOTION_OCR 识别结果 "044" 修正为 "44"
         if result == '044' or result == 'D44':
@@ -132,6 +148,15 @@ class DHash:
 
     @staticmethod
     def gen_hash(image, size=8) -> str:
+        """生成图像的 DHash 感知哈希十六进制字符串。
+
+        Args:
+            image (np.ndarray): 输入图像。
+            size (int): 缩放网格边长，默认 8。
+
+        Returns:
+            str: 拼接后的行与列差异哈希十六进制字符串。
+        """
         if len(image.shape) > 2:
             image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
         image = cv2.resize(image, (size + 1, size + 1))
@@ -144,6 +169,15 @@ class DHash:
 
     @staticmethod
     def distance(__x, __y) -> int:
+        """计算两个 DHash 之间的汉明距离。
+
+        Args:
+            __x (DHash | str): 第一个哈希对象或哈希字符串。
+            __y (DHash | str): 第二个哈希对象或哈希字符串。
+
+        Returns:
+            int: 汉明距离（不同比特位的个数）。
+        """
         if isinstance(__x, DHash) and isinstance(__y, DHash):
             __x, __y = int(__x.code, 16), int(__y.code, 16)
         elif isinstance(__x, str) and isinstance(__y, str):
@@ -447,6 +481,12 @@ class FleetScanner(Scanner):
 
         将图像转为灰度后二值化，使数字与背景分离更明显。
         若需更新 TEMPLATE_FLEET 素材，必须先执行此预处理。
+
+        Args:
+            image (np.ndarray): 输入图像。
+
+        Returns:
+            np.ndarray: 二值化处理后的三通道图像。
         """
         _, g, _ = cv2.split(image)
         _, image = cv2.threshold(g, 205, 255, cv2.THRESH_BINARY)
@@ -459,6 +499,12 @@ class FleetScanner(Scanner):
 
         彩虹稀有度卡片因闪光干扰，识别效果较差。
         未匹配到任何舰队时返回 0（不在任何编队中）。
+
+        Args:
+            image (np.ndarray): 裁剪后的舰队标识区域图像。
+
+        Returns:
+            int: 舰队编号 (1-6)，未匹配返回 0。
         """
         for template, fleet in self.templates.items():
             if template.match(image, similarity=self.TEMPLATE_SIMILARITY):
@@ -582,7 +628,14 @@ class FleetManagementScanner:
         )
 
     def scan(self, image) -> Dict[int, List[Dict[str, Union[str, int]]]]:
-        """返回按舰队编号分组的舰娘名称与等级 OCR 结果。"""
+        """返回按舰队编号分组的舰娘名称与等级 OCR 结果。
+
+        Args:
+            image (np.ndarray): 船坞截图图像。
+
+        Returns:
+            dict: 键为舰队编号，值为包含 name 与 level 的字典列表。
+        """
         fleets = self.fleet_scanner.scan(image, output=False)
         names = self.name_scanner.scan(image, output=False)
         levels = self.level_scanner.scan(image, output=False)
@@ -618,6 +671,14 @@ class StatusScanner(Scanner):
         }
 
     def _match(self, image) -> str:
+        """通过模板匹配识别舰船状态。
+
+        Args:
+            image (np.ndarray): 卡片区域图像。
+
+        Returns:
+            str: 舰船状态 ('battle', 'commission', 'in_hard_fleet', 'in_event_fleet', 'free')。
+        """
         for template, status in self.templates.items():
             if template.match(image, similarity=0.8):
                 return status
@@ -876,6 +937,12 @@ class DockScanner(ShipScanner):
 
         空白行的标准差会出现明显波谷，通过定位波谷位置即可获得
         空白行的大致位置。精度不高，但只需其中心点即可。
+
+        Args:
+            image (np.ndarray): 截图图像。
+
+        Returns:
+            list[int]: 空白行的 Y 坐标列表。
         """
         image = crop(image, self.scan_zone)
         image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
@@ -896,6 +963,7 @@ class DockScanner(ShipScanner):
         return bound
 
     def reset_position(self) -> None:
+        """重置网格位置至初始顶部，并同步更新内部扫描器。"""
         offset = 76 - self.grids_top
         self.grids_top += offset
         self.scanner.move((0, offset))
@@ -906,6 +974,10 @@ class DockScanner(ShipScanner):
 
         从 bound 给出的空白行中心点向下搜索，第一个颜色与 mean_color
         差异较大的行即为新 CARD_GRIDS 的顶部位置。
+
+        Args:
+            image (np.ndarray): 截图图像。
+            bound (list[int]): 空白行位置列表。
         """
         scan_image = crop(image, self.scan_zone)
         if self.mean_color is not None:
@@ -925,6 +997,12 @@ class DockScanner(ShipScanner):
             整页重复：新结果与上一次完全相同。
             半页重复：新结果前半部分与上次后半部分相同。
         两种情况下，len(results) < 14 表示已到达底部。
+
+        Args:
+            results (list[Ship]): 本次扫描到的舰船列表。
+
+        Returns:
+            int: 新增的舰船数量。
         """
         if self._results:
             if all([old.hash_ == new.hash_ for new, old in zip(results, self._results[-len(results):])]):
@@ -1009,6 +1087,9 @@ class DockScanner(ShipScanner):
 
         舰船间空白区域的颜色变化很小，将图像灰度化后用 np.std
         过滤即可获得空白行的位置。
+
+        Args:
+            main: 具有截图和操作能力的宿主任务实例。
         """
         from module.retire.enhancement import OCR_DOCK_AMOUNT
         self.debug_info['dock_size'], _, _ = OCR_DOCK_AMOUNT.ocr(main.device.image)

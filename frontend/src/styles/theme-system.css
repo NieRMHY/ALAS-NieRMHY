@@ -46,55 +46,59 @@
   --theme-surface-alpha: 72.16%;
   --theme-surface-blur: 24px;
   --theme-surface-saturation: 130%;
-  --theme-surface-radius: var(--theme-radius-panel);
+  --theme-surface-radius: 26px;
   --theme-surface-bg: color-mix(in srgb, var(--surface) var(--theme-surface-alpha), transparent);
   --theme-surface-filter: blur(var(--theme-surface-blur)) saturate(var(--theme-surface-saturation));
   --theme-surface-edge: var(--theme-glass-edge);
   --theme-surface-shadow: var(--theme-glass-shadow);
   --theme-plate-alpha: var(--theme-surface-alpha); --theme-plate-blur: 12px; --theme-plate-saturation: 120%;
-  --theme-plate-radius: var(--theme-radius-card);
+  --theme-plate-radius: 24px;
   --theme-plate-bg: color-mix(in srgb, var(--surface) var(--theme-plate-alpha), transparent);
   --theme-plate-filter: blur(var(--theme-plate-blur)) saturate(var(--theme-plate-saturation));
   --theme-plate-edge: var(--theme-glass-edge); --theme-plate-shadow: var(--theme-glass-shadow);
-  --theme-sidebar-alpha: var(--theme-surface-alpha); --theme-sidebar-blur: var(--theme-surface-blur); --theme-sidebar-saturation: var(--theme-surface-saturation); --theme-sidebar-radius: var(--theme-surface-radius);
+  --theme-sidebar-alpha: var(--theme-surface-alpha); --theme-sidebar-blur: var(--theme-surface-blur); --theme-sidebar-saturation: var(--theme-surface-saturation);
+  --theme-sidebar-radius: var(--theme-surface-radius);
   --theme-sidebar-bg: color-mix(in srgb, var(--surface) var(--theme-sidebar-alpha), transparent);
   --theme-sidebar-filter: blur(var(--theme-sidebar-blur)) saturate(var(--theme-sidebar-saturation));
   --theme-sidebar-edge: var(--theme-glass-edge); --theme-sidebar-shadow: var(--theme-glass-shadow);
-  --theme-topbar-alpha: var(--theme-surface-alpha); --theme-topbar-blur: var(--theme-surface-blur); --theme-topbar-saturation: var(--theme-surface-saturation); --theme-topbar-radius: var(--theme-surface-radius);
+  --theme-topbar-alpha: var(--theme-surface-alpha); --theme-topbar-blur: var(--theme-surface-blur); --theme-topbar-saturation: var(--theme-surface-saturation);
+  --theme-topbar-radius: var(--theme-surface-radius);
   --theme-topbar-bg: color-mix(in srgb, var(--surface) var(--theme-topbar-alpha), transparent);
   --theme-topbar-filter: blur(var(--theme-topbar-blur)) saturate(var(--theme-topbar-saturation));
   --theme-topbar-edge: var(--theme-glass-edge); --theme-topbar-shadow: var(--theme-glass-shadow);
-  --theme-modal-alpha: var(--theme-surface-alpha); --theme-modal-blur: var(--theme-surface-blur); --theme-modal-saturation: var(--theme-surface-saturation); --theme-modal-radius: var(--theme-surface-radius);
+  --theme-modal-alpha: var(--theme-surface-alpha); --theme-modal-blur: var(--theme-surface-blur); --theme-modal-saturation: var(--theme-surface-saturation);
+  --theme-modal-radius: var(--theme-surface-radius);
   --theme-modal-bg: color-mix(in srgb, var(--surface) var(--theme-modal-alpha), transparent);
   --theme-modal-filter: blur(var(--theme-modal-blur)) saturate(var(--theme-modal-saturation));
-  --theme-modal-edge: var(--theme-glass-edge); --theme-modal-shadow: var(--theme-glass-shadow);
-  --theme-menu-alpha: var(--theme-surface-alpha); --theme-menu-blur: var(--theme-surface-blur); --theme-menu-saturation: var(--theme-surface-saturation); --theme-menu-radius: var(--theme-surface-radius);
+  --theme-modal-edge: var(--theme-glass-edge); --theme-modal-shadow: 0 24px 100px #0003;
+  --theme-menu-alpha: var(--theme-surface-alpha); --theme-menu-blur: var(--theme-surface-blur); --theme-menu-saturation: var(--theme-surface-saturation);
+  --theme-menu-radius: var(--theme-surface-radius);
   --theme-menu-bg: color-mix(in srgb, var(--surface) var(--theme-menu-alpha), transparent);
   --theme-menu-filter: blur(var(--theme-menu-blur)) saturate(var(--theme-menu-saturation));
-  --theme-menu-edge: var(--theme-glass-edge); --theme-menu-shadow: var(--theme-glass-shadow);
+  --theme-menu-edge: var(--theme-glass-edge); --theme-menu-shadow: 0 12px 40px #0002;
   --theme-control-alpha: 92%; --theme-control-blur: 8px; --theme-control-saturation: 110%;
-  --theme-control-radius: var(--theme-radius-control);
+  --theme-control-radius: 10px;
   --theme-control-bg: color-mix(in srgb, var(--surface) var(--theme-control-alpha), transparent);
   --theme-control-filter: blur(var(--theme-control-blur)) saturate(var(--theme-control-saturation));
-  --theme-control-edge: var(--theme-glass-edge); --theme-control-shadow: var(--theme-glass-shadow);
-  --theme-popover-blur: 28px;
+  --theme-control-edge: var(--theme-glass-edge); --theme-control-shadow: 0 1px 2px rgb(0 0 0 / .04);
+  --theme-popover-blur: var(--theme-menu-blur);
   --theme-overlay: #11111b40;
-  --theme-overlay-blur: 8px;
+  --theme-overlay-blur: var(--theme-modal-blur);
 
   /* Shape */
-  --theme-radius-control: 10px;
+  --theme-radius-control: var(--theme-control-radius, 10px);
   --theme-radius-button: 20px;
-  --theme-radius-panel: 26px;
-  --theme-radius-card: 24px;
-  --theme-radius-popover: 16px;
+  --theme-radius-panel: var(--theme-surface-radius, 26px);
+  --theme-radius-card: var(--theme-plate-radius, 24px);
+  --theme-radius-popover: var(--theme-menu-radius, 16px);
   --theme-radius-pill: 999px;
-  --theme-radius-modal: 16px;
+  --theme-radius-modal: var(--theme-modal-radius, 26px);
 
   /* Shadows */
-  --theme-shadow-panel: var(--glass-shadow, var(--shadow));
-  --theme-shadow-popover: 0 12px 40px #0002;
-  --theme-shadow-modal: 0 24px 100px #0003;
-  --theme-shadow-floating: 0 18px 56px #0003;
+  --theme-shadow-panel: var(--theme-surface-shadow, var(--glass-shadow, var(--shadow)));
+  --theme-shadow-popover: var(--theme-menu-shadow, 0 12px 40px #0002);
+  --theme-shadow-modal: var(--theme-modal-shadow, 0 24px 100px #0003);
+  --theme-shadow-floating: var(--theme-sidebar-shadow, 0 18px 56px #0003);
   --theme-shadow-hover: 0 12px 36px color-mix(in srgb, var(--accent) 7%, transparent);
 
   /* Navigation */
@@ -202,7 +206,7 @@
 
 :root {
   --theme-material-filter: var(--theme-surface-filter);
-  --theme-chrome-filter: blur(18px) saturate(125%);
-  --theme-popover-filter: blur(var(--theme-popover-blur)) saturate(145%) brightness(1.04);
-  --theme-overlay-filter: blur(var(--theme-overlay-blur));
+  --theme-chrome-filter: var(--theme-sidebar-filter);
+  --theme-popover-filter: var(--theme-menu-filter);
+  --theme-overlay-filter: blur(var(--theme-modal-blur));
 }
