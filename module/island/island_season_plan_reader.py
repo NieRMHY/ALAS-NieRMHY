@@ -506,21 +506,18 @@ def ensure_bottom_tab(island, index=PLAN_TAB_INDEX):
     return False
 
 
-def read_season_plan_page(island, season, max_scrolls=MAX_SCROLLS, ocr=_default_ocr):
+def enter_season_page(island):
     """
-    进入赛季「开发计划」页面并读取全部任务卡片。
+    从岛屿主页进入赛季「开发计划」页。
 
     导航复用 ALAS 既有设施：岛屿主页 → 右上角「开发季」→ 底部第 3 页签
-    「开发计划」（island_season_bottom_navbar_ensure(left=3)）。
+    「开发计划」。
 
     Args:
         island: 带 UI 能力的岛屿任务实例（Island 子类）
-        season: 赛季
-        max_scrolls: 最多向下翻几屏
-        ocr: 可调用对象 ocr(image, area, lang) -> str，便于离线测试注入
 
     Returns:
-        dict: {任务名: {'item', 'have', 'need'}}；读取失败返回 {}
+        bool: 是否已停在「开发计划」页；失败时已退回岛屿页
     """
     from module.island_season_plan.assets import ISLAND_SEASON_ENTRY
     from module.logger import logger
@@ -530,7 +527,6 @@ def read_season_plan_page(island, season, max_scrolls=MAX_SCROLLS, ocr=_default_
     # 页面标记用「返回岛屿」白色按钮，而不是 ISLAND_SEASON_CHECK：
     # 后者注册色是蓝调 (99,106,117)，秋季主题是橙褐调 (99,84,76)，差值 42
     # 超出容差，真机上永远匹配不上（页面开了也识别不到）。
-    result = {}
     island.ui_goto(page_island, get_ship=False)
     for _ in island.loop(timeout=20):
         if island.appear(ISLAND_SEASON_GOTO_ISLAND):
@@ -542,11 +538,50 @@ def read_season_plan_page(island, season, max_scrolls=MAX_SCROLLS, ocr=_default_
     if not island.appear(ISLAND_SEASON_GOTO_ISLAND):
         logger.warning('[岛屿-赛季计划] 进入开发季页面失败，退回岛屿页')
         leave_season_page(island, timeout=6)
-        return {}
+        return False
 
-    if not ensure_bottom_tab(island, index=3):
+    if not ensure_bottom_tab(island, index=PLAN_TAB_INDEX):
         logger.warning('[岛屿-赛季计划] 切换到「开发计划」页签失败')
         leave_season_page(island, timeout=6)
+        return False
+    return True
+
+
+def read_screen(island, season, ocr=_default_ocr):
+    """
+    读当前一屏的任务卡片（不导航、不滚动）。
+
+    提交时要用它重新定位卡片：读取阶段的坐标是当时那一屏的位置，列表一滚就失效，
+    不能拿来点击（真机踩过，111 次点击全落在岛屿主页上）。
+
+    Args:
+        island: 岛屿任务实例
+        season: 赛季
+        ocr: 可调用对象 ocr(image, area, lang) -> str
+
+    Returns:
+        list[dict]: read_cards 的结果
+    """
+    return _read_screen(island, ocr, season)
+
+
+def read_season_plan_page(island, season, max_scrolls=MAX_SCROLLS, ocr=_default_ocr):
+    """
+    进入赛季「开发计划」页面并读取全部任务卡片。
+
+    Args:
+        island: 带 UI 能力的岛屿任务实例（Island 子类）
+        season: 赛季
+        max_scrolls: 最多向下翻几屏
+        ocr: 可调用对象 ocr(image, area, lang) -> str，便于离线测试注入
+
+    Returns:
+        dict: {任务名: {'item', 'have', 'need'}}；读取失败返回 {}
+    """
+    from module.logger import logger
+
+    result = {}
+    if not enter_season_page(island):
         return {}
 
     # 页面滚动位置会保留：先反复下滑回到顶部。之前只滑 3-4 次不够，

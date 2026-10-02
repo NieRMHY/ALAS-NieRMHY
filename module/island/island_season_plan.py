@@ -100,20 +100,59 @@ class IslandSeasonPlan(Island):
             # 的 return 之后，成了死代码，F821 报 season/result 未定义才发现）
             self._sync_done(season, result)
         if self.config.IslandSeasonPlan_Submit and ready:
-            self._submit_ready(ready, result)
+            self._submit_ready(ready)
 
-    def _submit_ready(self, ready, result):
+    def _submit_ready(self, ready):
         """
         自动提交已达标的任务（开关默认关闭）。
 
-        只对页面上读到的、进度已满且未领取的卡片动手；任何一步没成功就停下，
-        本轮不再继续点，避免误点。提交成功与否由下一轮页面读取确认。
+        Add by MHY, 必须重新进入赛季页、在页面里重新定位卡片再点：
+        read_season_plan_page 结束时已经退回岛屿页，而读到的坐标只对当时那一屏
+        有效。旧实现直接按记录坐标点击，于是所有点击都落在岛屿主页上——真机
+        10-01 的 111 次、10-02 的 41 次点击全部无效，营养组合停在 100/100
+        九个小时、被点了 10 次也没领到。
+
+        Args:
+            ready: ready_to_submit() 的结果 [(任务名, 物品, 当前, 需求)]
         """
-        for task, item, have, need in ready:
-            info = result.get(task) or {}
-            if not self._submit_card(task, info):
-                logger.warning(f'[岛屿-赛季任务] {task} 自动提交未成功，本轮停止提交')
-                return
+        from module.island.island_season_plan_reader import (
+            MAX_SCROLLS,
+            enter_season_page,
+            leave_season_page,
+            read_screen,
+            scroll_list,
+            scroll_to_top,
+        )
+
+        targets = {task for task, _, _, _ in ready}
+        if not targets:
+            return
+        season = SeasonConfig(self.config).season
+        if not enter_season_page(self):
+            logger.warning('[岛屿-赛季任务] 无法进入赛季页，跳过本次提交')
+            return
+        try:
+            scroll_to_top(self)
+            done = set()
+            for _ in range(MAX_SCROLLS):
+                cards = read_screen(self, season)
+                for card in cards:
+                    task = card.get('task')
+                    if task not in targets or task in done:
+                        continue
+                    if card.get('claimed') is not False:
+                        # 徽章被屏幕下沿裁掉（None）或已领取，都不动手
+                        continue
+                    if not self._submit_card(task, card):
+                        return
+                    done.add(task)
+                    if done >= targets:
+                        return
+                scroll_list(self)
+            logger.warning('[岛屿-赛季任务] 页面上没找到: ' +
+                           '、'.join(sorted(targets - done)))
+        finally:
+            leave_season_page(self)
 
     def _submit_card(self, task, info):
         """
