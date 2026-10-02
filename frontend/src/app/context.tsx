@@ -15,8 +15,9 @@ import type { ResolvedMode } from './palettes'
 export { languages }
 
 type SchemaLanguage = NonNullable<Parameters['schema.get']['language']>
+// Modify by MHY, 移除喵语（MIAO）中文语言包（nanoda 傲娇风格）
 const _languageCompatibility: Record<Language, SchemaLanguage> = {
-  'zh-CN': 'zh-CN', 'zh-TW': 'zh-TW', 'en-US': 'en-US', 'ja-JP': 'ja-JP', 'zh-MIAO': 'zh-MIAO',
+  'zh-CN': 'zh-CN', 'zh-TW': 'zh-TW', 'en-US': 'en-US', 'ja-JP': 'ja-JP',
 }
 void _languageCompatibility
 

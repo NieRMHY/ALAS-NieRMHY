@@ -84,7 +84,7 @@
 
 更新器接口不接收实例名；三个写方法沿用认证和 DEMO 只读限制。前端每三秒读取一次更新状态，重连后重新读取；后台操作立即响应，不占用 WebSocket 请求等待时间。HEAD 变化时提交列表返回第一页。`upstreamHead` 指配置分支的 `origin/<Branch>` 远程跟踪引用，获取更新后刷新；未获取时为 null。本地与上游分叉、没有新提交、更新器忙碌或监督器重启/依赖同步事件不可用时，`canApply` 为 false。
 
-`schema.get.language` 支持 `zh-CN`、`zh-TW`、`en-US`、`ja-JP`、`zh-MIAO`，只影响本次返回的翻译，不修改运行器或其他浏览器的语言。参数定义保留 `mode: yaml`，供前端选择多行 YAML 编辑器。
+`schema.get.language` 支持 `zh-CN`、`zh-TW`、`en-US`、`ja-JP`，只影响本次返回的翻译，不修改运行器或其他浏览器的语言。参数定义保留 `mode: yaml`，供前端选择多行 YAML 编辑器。
 
 ## 高级商店策略校验
 

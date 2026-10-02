@@ -26,7 +26,6 @@ from typing import Any
 
 from module.os.ship_exp_data import LIST_SHIP_EXP
 from module.logger import logger
-from module.config.time_source import now as current_time
 
 
 class ShipExpStats:
@@ -104,14 +103,12 @@ class ShipExpStats:
         self,
         fleet_index: int = 1,
         source: str = "cl1",
-        record_daily_summary: bool = False,
     ) -> float | None:
         """战斗结束时调用，记录战斗耗时和经验。
 
         Args:
             fleet_index (int): 舰队索引（1-6），用于确定经验值。默认为 1。
             source (str): 战斗来源。"cl1" 表示侵蚀1练级，"meow" 表示耄耋相接。默认为 "cl1"。
-            record_daily_summary (bool): 是否记录日报专用的精确侵蚀1事件。默认为 False。
 
         Returns:
             float | None: 本场战斗耗时（秒）。若未记录开始时间则返回 None。
@@ -135,16 +132,8 @@ class ShipExpStats:
         # 旗舰 431 + 其他位置 288*5 = 1871, 平均 312
         avg_exp = self.AVG_EXP_PER_BATTLE
 
-        # 每日经验效率用于侵蚀1练级预估，避免被耄耋相接耗时混入。
-        if source == "cl1" and record_daily_summary:
-            from module.statistics.daily_summary_store import get_daily_summary_store
-
-            get_daily_summary_store().record_cl1_battle_event(
-                instance=self._instance_name,
-                timestamp=current_time(),
-                duration_seconds=duration,
-                estimated_exp=avg_exp,
-            )
+        # Modify by MHY, 日报第三方上报（daily_summary_store）已剔除，
+        # 这里不再记录精确侵蚀1事件
         if source == "cl1":
             self._update_daily_stats(exp_gained=avg_exp, battle_duration=duration)
 
@@ -482,22 +471,8 @@ def save_ship_exp_data(
     )
 
 
-def get_cl1_interval_summary(
-    instance_name: str | None,
-    start: datetime,
-    end: datetime,
-) -> dict[str, Any]:
-    """便捷函数：获取指定实例的侵蚀1精确区间统计。"""
-    from module.statistics.daily_summary_store import get_daily_summary_store
-
-    return get_daily_summary_store().get_cl1_interval_summary(
-        instance=instance_name or 'default', start=start, end=end
-    )
-
-
 __all__ = [
     'ShipExpStats',
     'get_ship_exp_stats',
     'save_ship_exp_data',
-    'get_cl1_interval_summary',
 ]

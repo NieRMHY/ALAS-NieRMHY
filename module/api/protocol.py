@@ -53,7 +53,8 @@ class AuthParams(Params):
 
 class SchemaParams(Params):
     """配置界面架构查询参数模型。"""
-    language: Literal['zh-CN', 'zh-MIAO', 'en-US', 'ja-JP', 'zh-TW'] = 'zh-CN'
+    # Modify by MHY, 移除喵语（MIAO）中文语言包（nanoda 傲娇风格）
+    language: Literal['zh-CN', 'en-US', 'ja-JP', 'zh-TW'] = 'zh-CN'
 
 
 class BackgroundUrlParams(Params):

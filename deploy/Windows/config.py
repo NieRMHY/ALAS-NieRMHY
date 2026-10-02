@@ -80,8 +80,6 @@ class ConfigModel:
     AppAsarUpdate: bool = True
     NoSandbox: bool = True
 
-    # 动态配置
-    GitOverCdn: bool = False
 
 
 class DeployConfig(DeployConfigTransaction, ConfigModel):
@@ -121,8 +119,6 @@ class DeployConfig(DeployConfigTransaction, ConfigModel):
         """
         self.config.pop('AutoUpdate', None)
         self._redirect_github_repository()
-        # 绕过 webui.config.DeployConfig.__setattr__()，不写入 deploy.yaml
-        super().__setattr__('GitOverCdn', self.Repository in ['cn', GIT_OVER_CDN_REPOSITORY])
         if self.Repository in ['global']:
             super().__setattr__('Repository', 'https://github.com/wess09/AzurPilot')
         if self.Repository in ['cn', GIT_OVER_CDN_REPOSITORY]:

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { detectLanguage, translateUi } from './i18n'
 
 describe('WebUI i18n', () => {
+  // Modify by MHY, 移除喵语（MIAO）中文语言包（nanoda 傲娇风格）
   it('detects supported browser locales', () => {
     expect(detectLanguage(['zh-HK'])).toBe('zh-TW')
     expect(detectLanguage(['ja'])).toBe('ja-JP')
@@ -15,17 +16,11 @@ describe('WebUI i18n', () => {
 
   it('offers a different delete-instance warning at each of the three confirmations', () => {
     const prompts = ['instance.deletePrompt', 'instance.deletePrompt2', 'instance.deletePrompt3'] as const
-    for (const language of ['zh-CN', 'zh-TW', 'en-US', 'ja-JP', 'zh-MIAO'] as const) {
+    for (const language of ['zh-CN', 'zh-TW', 'en-US', 'ja-JP'] as const) {
       const texts = prompts.map(key => translateUi(language, key, {name: 'alas-main'}))
       expect(new Set(texts).size).toBe(prompts.length)
       /* 键不存在时 translateUi 会把键名原样返回，那样三条也「互不相同」，所以这里必须排除。 */
       expect(texts.some(text => text.includes('instance.deletePrompt'))).toBe(false)
-    }
-  })
-
-  it('translates the Miao locale instead of falling back to Simplified Chinese', () => {
-    for (const key of ['nav.statistics', 'common.retry', 'dashboard.fitCards'] as const) {
-      expect(translateUi('zh-MIAO', key)).toContain('喵')
     }
   })
 
@@ -49,7 +44,6 @@ describe('WebUI i18n', () => {
     expect(translateUi('en-US', 'script.modeRequiresScript')).toContain('non-empty strategy script')
     expect(translateUi('ja-JP', 'script.modeRequiresScript')).toContain('空でない戦略スクリプト')
     expect(translateUi('zh-TW', 'script.modeRequiresScript')).toContain('非空策略指令碼')
-    expect(translateUi('zh-MIAO', 'script.modeRequiresScript')).toContain('喵')
   })
 
   it('translates developer playground UI instead of leaving hardcoded labels', () => {

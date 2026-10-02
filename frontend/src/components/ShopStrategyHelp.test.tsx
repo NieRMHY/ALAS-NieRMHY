@@ -24,11 +24,11 @@ describe('高级策略说明', () => {
     expect(html).toContain('候选链总调用数最多 16')
   })
 
+  // Modify by MHY, 移除喵语（MIAO）中文语言包（nanoda 傲娇风格）
   it('按界面语言展示完整说明，而非始终显示简体中文', () => {
     const english = renderToStaticMarkup(<ShopStrategyHelp task="EventShop" language="en-US"/>)
     const japanese = renderToStaticMarkup(<ShopStrategyHelp task="EventShop" language="ja-JP"/>)
     const traditional = renderToStaticMarkup(<ShopStrategyHelp task="EventShop" language="zh-TW"/>)
-    const miao = renderToStaticMarkup(<ShopStrategyHelp task="EventShop" language="zh-MIAO"/>)
 
     expect(english).toContain('Advanced Shop Strategy Reference')
     expect(english).toContain('sum(score × quantity)')
@@ -38,6 +38,5 @@ describe('高级策略说明', () => {
     expect(japanese).toContain('sum(スコア × 購入数量)')
     expect(traditional).toContain('進階商店策略說明')
     expect(traditional).toContain('sum(分數 × 購買數量)')
-    expect(miao).toContain('高级商店策略说明喵')
   })
 })

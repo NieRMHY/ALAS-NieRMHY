@@ -21,7 +21,6 @@
             "default": "zh-CN",
             "enum": [
               "zh-CN",
-              "zh-MIAO",
               "en-US",
               "ja-JP",
               "zh-TW"

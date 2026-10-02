@@ -685,7 +685,7 @@ logger.table(title="跑分结果", columns=[...], rows=[...])
 
 3. **双模自由切换与多语言覆盖**：
    - 顶栏常驻卡片视图 (`<LayoutGrid />`) 与经典黑框终端 (`<Terminal />`) 切换按钮，偏好设置持久化至 `localStorage`（默认激活现代卡片模式）。
-   - 全面支持 `zh-CN`、`zh-TW`、`en-US`、`ja-JP`、`zh-MIAO` 五种语言的无缝国际化切换。
+   - 全面支持 `zh-CN`、`zh-TW`、`en-US`、`ja-JP` 四种语言的无缝国际化切换。
 
 ---
 

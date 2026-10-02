@@ -79,8 +79,6 @@ class ConfigModel:
     DisableBranchWatermark: bool = False
     Run: Optional[str] = None
 
-    # 动态配置
-    GitOverCdn: bool = False
 
 
 class DeployConfig(DeployConfigTransaction, ConfigModel):
@@ -143,11 +141,6 @@ class DeployConfig(DeployConfigTransaction, ConfigModel):
             object.__setattr__(self, 'PypiMirror', 'https://mirrors.aliyun.com/pypi/simple')
             self.config['PypiMirror'] = 'https://mirrors.aliyun.com/pypi/simple'
 
-        # 绕过 webui.config.DeployConfig.__setattr__()，不写入 deploy.yaml
-        super().__setattr__(
-            'GitOverCdn',
-            self.Repository == GIT_OVER_CDN_REPOSITORY and self.Branch == 'master'
-        )
         if self.Repository == GIT_OVER_CDN_REPOSITORY:
             super().__setattr__('Repository', GIT_OVER_CDN_FALLBACK_REPOSITORY)
         if self.Repository in ['global']:

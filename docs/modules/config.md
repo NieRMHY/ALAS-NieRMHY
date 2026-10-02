@@ -162,7 +162,7 @@ flowchart LR
 3. `override.yaml` 经 `check_override` 后落位，规则见第 15 节。
 4. 每个有 `Scheduler.Command` 的任务：`Command.value` 设为任务名并 `display: hide`；非主线任务隐藏 `Campaign.Mode`。
 
-`generate_i18n` 对通过 `deep_load` 读取的普通翻译保留旧值；**新增的 name/help 缺翻译时值就是键路径本身**（如 `Main.Campaign.Name`），需人工补齐五语言，选项文案缺失时回落到选项值。活动名、游戏服务器名称等动态条目会重新生成，手改这些值不保证保留。zh-TW 额外套一张小的用词替换表（設置→設定、文件→檔案等），并非完整简繁转换，生成后仍需校对。活动名按「同语言服务器 > en > cn > jp > tw」取自 `campaign/Readme.md` 的活动表；zh-MIAO 没有对应服务器语言，直接按 en → cn → jp → tw 回退。`generate()` 还会把该活动表重新对齐列宽写回。
+`generate_i18n` 对通过 `deep_load` 读取的普通翻译保留旧值；**新增的 name/help 缺翻译时值就是键路径本身**（如 `Main.Campaign.Name`），需人工补齐四语言，选项文案缺失时回落到选项值。活动名、游戏服务器名称等动态条目会重新生成，手改这些值不保证保留。zh-TW 额外套一张小的用词替换表（設置→設定、文件→檔案等），并非完整简繁转换，生成后仍需校对。活动名按「同语言服务器 > en > cn > jp > tw」取自 `campaign/Readme.md` 的活动表。`generate()` 还会把该活动表重新对齐列宽写回。
 
 ### 运行时加载与保存
 
@@ -365,7 +365,7 @@ stateDiagram-v2
 - `save_callback` 成为无调用方的遗留代码，黄币保留「双向同步」的旧行为已不存在；文档与直觉若基于旧行为会产生误判。
 - `deep_iter_diff` / `deep_iter_patch` / `deep_values` / `deep_get_with_error` / `deep_exist` 目前没有调用方（热重载基于 mtime + 整体重建，不做差异比较）。
 - `is_hoarding_task`、`stop_event` 是类属性，依赖「一进程一实例」的部署形态。
-- zh-MIAO（喵语）同样参与 `LANGUAGES` 的生成循环：普通译文由人工补充并在生成时保留，活动名、游戏服务器名称等动态条目会重建。活动名无喵语服务器来源时使用 en → cn → jp → tw 回退，不能通过直接修改动态键来持久保留喵语译名。
+- 本项目已移除 zh-MIAO（喵语）语言包（nanoda 傲娇风格），`LANGUAGES` 只含 `zh-CN`/`zh-TW`/`en-US`/`ja-JP` 四种；历史上喵语相关条目不再生成。
 
 ## 18. 示例
 

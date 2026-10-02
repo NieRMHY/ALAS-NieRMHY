@@ -331,7 +331,8 @@ class ConfigService:
         Raises:
             ApiError: 不支持的语言代码时抛出 INVALID_PARAMS。
         """
-        if language not in {'zh-CN', 'zh-MIAO', 'en-US', 'ja-JP', 'zh-TW'}:
+# Modify by MHY, 移除喵语（MIAO）中文语言包（nanoda 傲娇风格）
+        if language not in {'zh-CN', 'en-US', 'ja-JP', 'zh-TW'}:
             raise ApiError('INVALID_PARAMS', '不支持的界面语言')
         self.reload_metadata_if_stale()
         translations = self.translations if language == 'zh-CN' else self.read_json(

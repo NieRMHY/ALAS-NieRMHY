@@ -13,7 +13,8 @@ from pathlib import Path
 sys.path.insert(0, '.')
 
 ROOT = Path(__file__).resolve().parents[1]
-LANGUAGES = ('zh-CN', 'zh-MIAO', 'en-US', 'ja-JP', 'zh-TW')
+# Modify by MHY, 移除喵语（MIAO）中文语言包（nanoda 傲娇风格）
+LANGUAGES = ('zh-CN', 'en-US', 'ja-JP', 'zh-TW')
 
 
 def menu_tasks():

@@ -96,7 +96,7 @@ def some_function(self, skip_first_screenshot=True):
 
 修改相关 YAML 后运行 `uv run -m module.config.config_updater`。`args.json`、`menu.json`、`module/config/config_generated.py` 与 `config/template.json` 由生成器维护，不直接修改，也不把真实用户配置当作模板。
 
-`module/config/i18n/*.json` 是例外：生成器保留已有翻译，新增名称和说明可能只是键路径（如 `Campaign.Event.name`）。生成后补齐 `zh-CN`、`zh-MIAO`、`en-US`、`ja-JP`、`zh-TW` 的新增翻译，选项文案也需检查；繁体用词需校对，不能假设生成器已完成翻译。
+`module/config/i18n/*.json` 是例外：生成器保留已有翻译，新增名称和说明可能只是键路径（如 `Campaign.Event.name`）。生成后补齐 `zh-CN`、`zh-TW`、`en-US`、`ja-JP` 的新增翻译，选项文案也需检查；繁体用词需校对，不能假设生成器已完成翻译。
 
 配置路径为 `<Task>.<Group>.<Argument>`，绑定任务后通过 `self.config.Group_Argument` 访问。涉及加载或迁移时注意 `AzurLaneConfig` 初始化可能保存配置，测试使用临时配置目录。
 
