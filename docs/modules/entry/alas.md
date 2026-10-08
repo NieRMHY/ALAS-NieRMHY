@@ -1,6 +1,6 @@
 # 调度器（alas.py）
 
-> 每个实例一个调度器进程，主线程串行执行游戏任务，后台线程承担看门狗、日报检查等辅助工作；通过分级异常恢复支持长期运行。
+> 每个实例一个调度器进程，主线程串行执行游戏任务，后台线程承担运行监护、日报检查等辅助工作；通过分级异常恢复支持长期运行。
 
 ## 1. 模块概述
 
@@ -22,7 +22,7 @@
 - 任务分发：把任务命令名动态分发给 `AzurLaneAutoScript` 上的同名方法，方法内再委托给具体业务模块。
 - 错误恢复：分类处理运行异常，决定重启游戏、重启模拟器还是终止进程。
 - 模拟器管理：计划内定时重启、离线后强制重启、长等待期间省资源关闭与预热。
-- 看门狗：任务超时或到达强制定时重启条件时，杀死模拟器进程强制中断任务。
+- 运行监护：任务超时或到达强制定时重启条件时，杀死模拟器进程强制中断任务。
 - 服务器维护感知：游戏服务器维护期间暂停调度，恢复后重启游戏。
 - 配置热重载：在任务边界与空闲等待中检测配置文件变更，无重启生效。
 - 附带生命周期事务：每日备份、每日日报定时检查、错误现场保存与上报。
@@ -84,7 +84,7 @@ AUTO-MAS 一类外部调度器把 AzurPilot 当黑箱驱动，只用以下四个
 | --- | --- |
 | 启动 | `uv run python alas.py <实例名>`（或在已配置的环境中 `python alas.py <实例名>`），在 AzurPilot 根目录下创建且已配置的实例 |
 | 配置 | 读写 `./config/<实例名>.json`，字段语义归配置系统所有 |
-| 日志 | `get_log_file_path(实例名)` → `./log/{日期}_{实例名}.txt`，当天追加；`[Alas] 调度器: 开始任务/结束任务` 可作任务边界标记 |
+| 日志 | `get_log_file_path(实例名)` → `./log/{日期}_{实例名}.txt`，当天追加；`[AzurPilot] 调度器: 开始任务/结束任务` 可作任务边界标记 |
 | 停止 | 外部工具终止进程树。调度器不主动退出，也没有停止文件；长跑与卡死恢复由自身机制负责 |
 
 `module/logger.py` 在导入时把工作目录切到项目根，因此外部工具无需设置工作目录，但一个实例必须独占一个进程。
@@ -93,7 +93,7 @@ AUTO-MAS 一类外部调度器把 AzurPilot 当黑箱驱动，只用以下四个
 
 ### AzurLaneAutoScript
 
-调度器本体。任务执行与失败计数主要由主线程维护；看门狗、日报与模拟器启停辅助线程另有生命周期和共享状态，不能将整个实例视为单线程对象。修改跨线程状态时需核对第 12 节的事件、读写边界与启停互斥机制。
+调度器本体。任务执行与失败计数主要由主线程维护；运行监护、日报与模拟器启停辅助线程另有生命周期和共享状态，不能将整个实例视为单线程对象。修改跨线程状态时需核对第 12 节的事件、读写边界与启停互斥机制。
 
 | 字段 | 类型 | 说明 |
 | --- | --- | --- |
@@ -104,7 +104,7 @@ AUTO-MAS 一类外部调度器把 AzurPilot 当黑箱驱动，只用以下四个
 | `consecutive_game_stuck` / `consecutive_adb_offline` / `consecutive_unexpected_error` | int | 各类连续故障计数，驱动「重启游戏 → 重启模拟器」的升级 |
 | `script_error_count` | int | `ScriptError` 连续计数，达到 3 次退出（代码 bug 重试无意义） |
 | `last_emulator_restart_time` | float | 上次计划重启模拟器的 `time.monotonic()`，用于定时重启间隔 |
-| `_watchdog_*` | 线程与标志 | 看门狗线程及其「激活」标志，仅任务执行期间激活 |
+| `_watchdog_*` | 线程与标志 | 运行监护线程及其「激活」标志，仅任务执行期间激活 |
 | `_warmup_measured_cold_seconds` 等 | float/None | 预热实测耗时，用于动态计算下次提前量 |
 | `_daily_summary_*` | 线程与服务 | 日报定时检查，默认关闭且完全不创建 |
 
@@ -122,7 +122,7 @@ AUTO-MAS 一类外部调度器把 AzurPilot 当黑箱驱动，只用以下四个
 
 ```mermaid
 flowchart TD
-    A[启动 loop] --> B[启动日报线程与看门狗<br>OOBE 检查 / 每日备份 / 调试服务]
+    A[启动 loop] --> B[启动日报线程与运行监护<br>OOBE 检查 / 每日备份 / 调试服务]
     B --> C{stop_event 置位?}
     C -- 是 --> Z[退出循环, 原因: 更新]
     C -- 否 --> D[checker.wait_until_available<br>服务器维护则阻塞等待]
@@ -134,7 +134,7 @@ flowchart TD
     F -- 否 --> G
     F1 --> G[get_next_task 选任务<br>含空闲等待与预热]
     G --> H[初始化 device<br>跳过启动后的首个 Restart]
-    H --> I[激活看门狗<br>run 任务]
+    H --> I[激活运行监护<br>run 任务]
     I --> J{run 返回值}
     J -- True --> K[重置该任务失败计数与全局计数]
     J -- recoverable --> L[失败计数不变<br>刷新配置后继续]
@@ -159,7 +159,7 @@ flowchart TD
 2. **维护等待**：`checker.wait_until_available()` 在服务器维护或状态 API 与网关都不可达时反复退避查询，不推进任务。恢复瞬间（`is_recovered`）刷新配置并注入 `Restart`，因为阻塞期间游戏状态必然已失效。
 3. **计划重启**：`EmulatorManagement_ScheduledEmulatorRestart` 开启时，距上次重启超过 `RestartIntervalHours`（默认 4 小时）就在任务间隙重启模拟器——刻意放在任务之间而非中断正在运行的任务。
 4. **选任务**：`get_next_task()`（见下）。
-5. **执行**：刷新 `device.config` 指向最新配置，清除卡死与连点记录，置看门狗为活跃，然后 `run(inflection.underscore(task))`。
+5. **执行**：刷新 `device.config` 指向最新配置，清除卡死与连点记录，置运行监护为活跃，然后 `run(inflection.underscore(task))`。
 6. **结果结算**：更新失败计数、触发敏感任务停机判断或连续失败强制恢复、按结果重置各计数器，进入下一轮。
 
 ### 空闲等待 `get_next_task()`
@@ -171,6 +171,16 @@ flowchart TD
 - 预热开启（`Optimization_WarmupEnable`）且剩余等待超过提前量时，在任务开始前提前启动模拟器/游戏并登录到主界面，任务到点后直接执行。提前量按场景分别实测记忆：「上次实测 + 2 分钟」，无实测时用 `Optimization_WarmupMinutes`（默认 15 分钟）兜底。预热失败不外抛，注入 `Restart` 交给常规恢复。
 
 等待通过 `wait_until()` 实现：每 5 秒检查一次 `stop_event` 与配置文件 mtime。配置一旦被 WebUI 修改，`should_reload()` 命中，返回 `False`，外层丢弃 config 缓存重新走选择流程——这就是空闲期的配置热重载。
+
+### 原调度石油自动控制
+
+通用设置的 `General.OilControl.Enable` 默认关闭，需显式开启；`Target` 默认 24000（可设 1000–24999）。石油超过控制线时进入清理，低于控制线后结束；恰好等于控制线不新触发。自然恢复上限 `Dashboard.Oil.Limit` 不参与计算。仅原调度生效，增强调度与完全接管仍由卡片程序决定业务任务。
+
+`module/scheduler/oil_control.py` 在已有任务准备执行时观察石油，执行后及现有任务切换检查点重新判断；没有独立定时任务，也不提前唤醒等待中的游戏。只读的 `StorageStatistics` 直接放行，不为仓库扫描先跳转战役页，清油状态和待观察标记保留给下一项业务；系统恢复仍优先。观察采用战役页正向确认和连续两帧有效读数。读数不确定时不消费资源，五分钟后随现有任务再检查。
+
+清理中的临时顺序为「用户停止／系统恢复 → 清油 → 原业务优先级」，不改写用户优先级配置。先从 Main/Main2/Main3/Event/Event2/Event3 中按原优先级选已启用、已到期、非故障冷却的普通模式任务；每轮每个候选最多调用一次，任务自身仍正常记录实际运行次数、心情和安全停止。清油调用临时提高石油停止线并关闭本次任务均衡器，退出时移除覆盖；达到清油控制线不添加日常低油等待，真实心情冷却和故障恢复照常生效。清油期间暂缓委托红点跳转，任务切换检查也暂缓普通业务抢占。
+
+没有可运行的图时调用后宅石油购粮，与日常后宅开关独立；价格、数量及购买后石油均需确认，每轮最多三批。无有效消耗时结束本轮并退避五分钟。委托的 `OilMaxed` 在启用原调度清油时安全退出领取并请求清理；必要时再释放至少 500 空间（保留 500 安全下限），确认消耗后恢复领取。最多三轮清理后仍受阻，或清理失败，将受阻任务延后五分钟并放行其他任务。清油运行状态保存在当前 worker 内存，重启后重新观察。
 
 ### 任务执行 `run(command)`
 
@@ -256,7 +266,7 @@ stateDiagram-v2
 | 状态 | 载体 | 含义 |
 | --- | --- | --- |
 | Waiting / Pending | `Scheduler.NextRun`（持久化） | 未到期 / 已到期待选 |
-| Running | 调度器主线程 | 正在执行；期间看门狗计时 |
+| Running | 调度器主线程 | 正在执行；期间运行监护计时 |
 | 失败计数 | `failure_record`（内存） | `True` 清零，`'recoverable'` 保持不变，`False` 加一 |
 
 「囤积」用于延后唤醒、聚合任务。`Optimization_TaskHoardingDuration` 大于 0 时，等待任务的返回副本会在原 `next_run` 上加上囤积时长，例如 12:00 到期、囤积 10 分钟，返回的等待目标为 12:10，不会提前执行。处于 `is_hoarding_task` 状态时，待执行判断使用 `now - hoarding`，与延后策略配套；该等待副本不会直接改写持久化计划。选出待执行任务或进入实际执行阶段时会复位囤积标志。
@@ -278,7 +288,7 @@ stateDiagram-v2
 | `Error.StrictRestart` | bool | false | 严格重启总开关（配合 `Sensitive` 生效） |
 | `Error.GameStuckRestart` / `GameStuckThreshold` | bool/int | false / 3 | 卡死是否允许升级到模拟器重启及阈值 |
 | `Error.AdbOfflineThreshold` | int | 3 | 模拟器重启超过该次数后拉长等待间隔（不放弃） |
-| `Error.WatchdogEnable` / `WatchdogTaskEnable` / `WatchdogTaskTimeout` | bool/bool/分钟 | false/false/120 | 看门狗总开关、任务超时子开关与阈值；超时为 0 表示禁用 |
+| `Error.WatchdogEnable` / `WatchdogTaskEnable` / `WatchdogTaskTimeout` | bool/bool/分钟 | false/false/120 | 运行监护总开关、任务超时子开关与阈值；超时为 0 表示禁用 |
 | `Error.LlmAnalysis` | bool | true | 异常时调用 LLM 分析 |
 | `Optimization.WhenTaskQueueEmpty` | option | goto_main | 空闲行为：stay_there / goto_main / close_game |
 | `Optimization.CloseEmulatorDuringLongWait` | checkbox | true | 等待超过 3 小时关闭模拟器 |
@@ -292,7 +302,7 @@ stateDiagram-v2
 | `Restart.RandomDelay` | str | "5, 50" | 每日重启在服务器刷新后的随机延后区间（分钟） |
 | `YukikazeTaskManager.TaskPriorityAdjustment` | textarea | 空 | 用户自定义任务优先级，覆盖默认值 |
 
-配置间关联：严格停机 = `Error.StrictRestart` 与 `{Task}.Scheduler.Sensitive` 同时为真，两处分别独立可配，因此可以对单个任务精细控制；看门狗的两项检测共用一个线程，但由各自的子开关单独控制。`Emulator_PackageName` / `Emulator_ServerName` 既决定游戏包名，也是日报判断服务器的依据。
+配置间关联：严格停机 = `Error.StrictRestart` 与 `{Task}.Scheduler.Sensitive` 同时为真，两处分别独立可配，因此可以对单个任务精细控制；运行监护的两项检测共用一个线程，但由各自的子开关单独控制。`Emulator_PackageName` / `Emulator_ServerName` 既决定游戏包名，也是日报判断服务器的依据。
 
 ## 11. 异常与错误处理
 
@@ -335,16 +345,16 @@ stateDiagram-v2
 | 线程 | 创建者 | 生命周期 | 职责 |
 | --- | --- | --- | --- |
 | 主线程 | ProcessManager | 进程全程 | `loop()` 调度与任务执行 |
-| 看门狗 `alas-watchdog`（daemon） | `_start_watchdog()`，任一子功能开启才创建 | 随进程退出 | 每 30 秒检查任务是否超时、是否到达强制定时重启条件 |
+| 运行监护 `alas-watchdog`（daemon） | `_start_watchdog()`，任一子功能开启才创建 | 随进程退出 | 每 30 秒检查任务是否超时、是否到达强制定时重启条件 |
 | 日报 `daily-summary-scheduler-<config>`（daemon） | `_start_daily_summary_scheduler()`，仅日报开启时创建 | 随进程退出或功能关闭 | 每秒检查是否到达日报触发窗口 |
 | 模拟器启停 worker（daemon，瞬时） | `_emulator_op_with_timeout()` | 操作结束或被超时放弃 | 真正执行 stop/start，超时放弃后仍持有平台启停锁直到完成 |
 
 关键约定：
 
-- **看门狗激活窗口**。`_watchdog_active` 仅在 `run()` 前后置位/复位，空闲等待与退避 `sleep` 期间自动暂停，避免把正常的长等待误判为卡死。
-- **看门狗为什么杀模拟器而不是杀任务**：任务主线程可能阻塞在 uiohook 级的底层 I/O（uiautomator2 HTTP、ADB shell）中，Python 层无法安全中断线程；杀死模拟器进程会让主线程的下一次 I/O 调用失败并抛异常，从而自然汇入统一的异常恢复流程。这比从外部强杀线程安全得多。
+- **运行监护激活窗口**。`_watchdog_active` 仅在 `run()` 前后置位/复位，空闲等待与退避 `sleep` 期间自动暂停，避免把正常的长等待误判为卡死。
+- **运行监护为什么杀模拟器而不是杀任务**：任务主线程可能阻塞在 uiohook 级的底层 I/O（uiautomator2 HTTP、ADB shell）中，Python 层无法安全中断线程；杀死模拟器进程会让主线程的下一次 I/O 调用失败并抛异常，从而自然汇入统一的异常恢复流程。这比从外部强杀线程安全得多。
 - **模拟器启停的并发保护**：`_emulator_op_with_timeout` 用独立线程执行操作并设硬超时（600 秒，覆盖模拟器完整冷启动预算）；超时放弃的线程仍在真实操作模拟器并持有平台层启停互斥锁，后续任何启停请求都会收到 `EmulatorOpBusy` 而被跳过，防止「一个线程正在启动、另一个随即关闭」的踩踏。
-- **跨进程停止信号**：WebUI 生命周期通过 `State.manager.Event()` 创建事件代理并交给 `ProcessManager`，worker 将其挂到 `AzurLaneConfig.stop_event` 与 `AzurLaneAutoScript.stop_event`。主循环和 `wait_until()` 轮询该代理，在检查点响应停止请求；普通 `threading.Event` 不能替代这条跨进程信号链。看门狗自身的 `_watchdog_stop` 才是进程内线程事件。
+- **跨进程停止信号**：WebUI 生命周期通过 `State.manager.Event()` 创建事件代理并交给 `ProcessManager`，worker 将其挂到 `AzurLaneConfig.stop_event` 与 `AzurLaneAutoScript.stop_event`。主循环和 `wait_until()` 轮询该代理，在检查点响应停止请求；普通 `threading.Event` 不能替代这条跨进程信号链。运行监护自身的 `_watchdog_stop` 才是进程内线程事件。
 - **线程间不共享 config 对象**：日报线程刻意不访问 `self.config`（任务执行期间它绑定着当前任务参数，跨线程重载会破坏一致性），而是直接读配置文件并按 mtime 缓存只读快照。
 
 ## 13. 缓存与持久化
@@ -363,7 +373,7 @@ stateDiagram-v2
 ## 14. 生命周期
 
 1. **创建**：WebUI 请求启动实例时，`ProcessManager` 拉起 worker 进程，注入 `stop_event`，构造 `AzurLaneAutoScript(config_name)` 并调用 `loop()`。`__init__` 只初始化轻量状态，不碰配置与设备。
-2. **初始化**（`loop()` 开头）：文件日志 → 日报线程（可选）→ 看门狗（可选）→ OOBE 检查 → 每日备份 → 调试服务（`ALAS_DEBUG_SERVER=1` 时）。`config` 在此处首次加载；失败即 `exit(1)`，由父进程感知退出。
+2. **初始化**（`loop()` 开头）：文件日志 → 日报线程（可选）→ 运行监护（可选）→ OOBE 检查 → 每日备份 → 调试服务（`ALAS_DEBUG_SERVER=1` 时）。`config` 在此处首次加载；失败即 `exit(1)`，由父进程感知退出。
 3. **运行**：无限调度循环。`config` / `device` / `checker` 在首次访问时惰性构造，之后按需失效重建。
 4. **销毁**：三条正常退出路径（`stop_event` 置位、`loop()` 返回 `False`、内部 `exit`）最终都结束进程；日报线程在 `stop_event` 路径被显式停止，其余 daemon 线程随进程消亡。模拟器与游戏进程不随 worker 退出而关闭（收尾动作由 WebUI 侧的独立收尾进程按配置执行）。
 
@@ -393,7 +403,7 @@ def my_feature(self):
 - **不要让 `loop()` 在任何新分支中主动退出**。「永不主动退出」是 7×24 运行的根基；新故障一律转为 `'recoverable'` 或带退避的重试。
 - **删除 `config` 缓存的时机有讲究**：成功后删除是为了让任务期间用户的新修改生效；模拟器重启后删除 `device` 缓存是为了强制重建连接。新增恢复路径时想清楚哪些缓存已经失效。
 - **模拟器启停必须经 `_emulator_op_with_timeout` 包装**，且遇到 `EmulatorOpBusy` 只能放弃本轮。绕过它直接调用平台启停会打破互斥锁保护，复现「模拟器永远起不来」的历史故障。
-- **看门狗的时间窗语义**：`_watchdog_active` 在任务执行前置位、`finally` 复位，并覆盖退避等待。在调度器里新增长时间非任务阻塞（如新的等待循环）时，确认它不在看门狗激活窗口内，或已有对应的豁免。
+- **运行监护的时间窗语义**：`_watchdog_active` 在任务执行前置位、`finally` 复位，并覆盖退避等待。在调度器里新增长时间非任务阻塞（如新的等待循环）时，确认它不在运行监护激活窗口内，或已有对应的豁免。
 - **任务方法的惰性导入是有意设计**，新增任务方法应保持该形态：启动时只加载调度与配置，任务模块在首次执行时才导入——既压低首帧延迟，也让单个业务模块的导入失败只影响该任务而非整个调度器；同时任务参数绑定先于模块导入，识别资源才能按当前实例的服务器加载。
 - **`wait_until()` 中的 `exit(0)`** 是故意的：等待期收到更新信号时直接终止进程，`SystemExit` 由父进程的 worker 包装层捕获并归类为「更新退出」。改动退出方式前先看 `process_manager` 如何解释退出码。
 
@@ -402,7 +412,7 @@ def my_feature(self):
 - `run()` 与 `loop()` 都是数百行的长方法，异常矩阵以内联分支表达，新增异常类型时容易遗漏对称的通知与计数处理。
 - 返回值 `True / False / 'recoverable'` 是弱类型协议，调用方靠字符串字面量判断，重构时需全局搜索。
 - 每任务失败计数只存内存，调度器重启后清零；对「连续失败即停」的敏感任务意味着重启本身会重置保护。
-- `loop()` 顶部关于看门狗「监测日志心跳」的注释与实际实现有出入：看门狗当前实现的是两项基于时间的检查（任务超时、强制定时重启），并无日志心跳检测；长时间无日志导致的卡死实际由设备层的 `GameStuckError` 机制兜底。阅读时以 `_watchdog_loop()` 为准。
+- `loop()` 顶部关于运行监护「监测日志心跳」的注释与实际实现有出入：运行监护当前实现的是两项基于时间的检查（任务超时、强制定时重启），并无日志心跳检测；长时间无日志导致的卡死实际由设备层的 `GameStuckError` 机制兜底。阅读时以 `_watchdog_loop()` 为准。
 - 空闲「关闭模拟器」的省资源分支依赖本地模拟器实例，无线 ADB / SSH 远程设备会跳过该优化。
 - `emulator_manager()` 任务方法内联了完整的 SSH 远程执行逻辑（含临时密钥文件处理），是任务方法中唯一不遵循「委托业务模块」统一形态的特例。
 
@@ -429,7 +439,7 @@ get_next() 选中 MyFeature（Enable=true，NextRun 已过期）
 
 ## 19. 调试方法
 
-- **日志文件**：`loop()` 启动即按实例名设置文件日志；任务边界用 `logger.hr(task)` 分隔，全文检索 `[Alas]` 可看到调度决策链（等待、注入 Restart、重启模拟器、看门狗触发）。
+- **日志文件**：`loop()` 启动即按实例名设置文件日志；任务边界用 `logger.hr(task)` 分隔，全文检索 `[AzurPilot]` 可看到调度决策链（等待、注入 Restart、重启模拟器、运行监护触发）。
 - **错误现场**：`./log/error/<config_name>/<时间戳>/` 内含最近截图与裁剪后的 `log.txt`，已做敏感信息遮罩；保留天数由 `Error_SaveErrorRetentionDays` 控制（0 = 不清理），过期现场按 `Error_SaveErrorBackUpMethod` 删除、拷贝备份或压缩备份到 `log/error/<实例名>/bak/`。
 - **常见问题排查顺序**：模拟器反复离线先看 `连续次数 X/阈值` 与 `_try_restart_emulator` 的退避日志；任务反复失败看 `failure_record` 相关的「连续失败 N 次」日志；任务卡住但日志还在动，怀疑逻辑死循环，开 `Error.WatchdogEnable` + `WatchdogTaskEnable` 验证；服务器相关看 `[服务器检查]` 前缀日志。
 - **WebUI 侧**：worker 通过日志队列与 `set_task()` 向父进程发布实时日志与当前任务名，前端「日志」页即来源于此。

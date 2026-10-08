@@ -151,15 +151,6 @@ wheels = [
 ]
 
 [[package]]
-name = "antlr4-python3-runtime"
-version = "4.13.2"
-source = { registry = "https://mirrors.aliyun.com/pypi/simple/" }
-sdist = { url = "https://mirrors.aliyun.com/pypi/packages/33/5f/2cdf6f7aca3b20d3f316e9f505292e1f256a32089bd702034c29ebde6242/antlr4_python3_runtime-4.13.2.tar.gz", hash = "sha256:909b647e1d2fc2b70180ac586df3933e38919c85f98ccc656a96cd3f25ef3916" }
-wheels = [
-    { url = "https://mirrors.aliyun.com/pypi/packages/89/03/a851e84fcbb85214dc637b6378121ef9a0dd61b4c65264675d8a5c9b1ae7/antlr4_python3_runtime-4.13.2-py3-none-any.whl", hash = "sha256:fe3835eb8d33daece0e799090eda89719dbccee7aa39ef94eed3818cafa5a7e8" },
-]
-
-[[package]]
 name = "anyio"
 version = "4.13.0"
 source = { registry = "https://mirrors.aliyun.com/pypi/simple/" }
@@ -235,7 +226,6 @@ dependencies = [
     { name = "inflection" },
     { name = "jellyfish" },
     { name = "keyring" },
-    { name = "luaparser" },
     { name = "lz4" },
     { name = "matplotlib" },
     { name = "mcp" },
@@ -254,8 +244,6 @@ dependencies = [
     { name = "pycryptodome" },
     { name = "pydantic" },
     { name = "pypresence" },
-    { name = "pystray", marker = "sys_platform == 'win32'" },
-    { name = "pywin32", marker = "sys_platform == 'win32'" },
     { name = "pyyaml" },
     { name = "pyzmq" },
     { name = "rapidocr" },
@@ -292,7 +280,6 @@ requires-dist = [
     { name = "inflection", specifier = "==0.5.1" },
     { name = "jellyfish", specifier = "==1.2.1" },
     { name = "keyring", specifier = ">=25.6.0" },
-    { name = "luaparser", specifier = "==4.2.0" },
     { name = "lz4", specifier = "==4.4.5" },
     { name = "matplotlib", specifier = "==3.11.0" },
     { name = "mcp", specifier = "==1.23.0" },
@@ -312,8 +299,6 @@ requires-dist = [
     { name = "pycryptodome", specifier = "==3.23.0" },
     { name = "pydantic", specifier = ">=2.12.5" },
     { name = "pypresence", specifier = "==4.2.1" },
-    { name = "pystray", marker = "sys_platform == 'win32'", specifier = "==0.19.5" },
-    { name = "pywin32", marker = "sys_platform == 'win32'", specifier = "==311" },
     { name = "pyyaml", specifier = "==6.0.3" },
     { name = "pyzmq", specifier = "==27.1.0" },
     { name = "rapidocr", specifier = "==3.9.0" },
@@ -1158,19 +1143,6 @@ wheels = [
 ]
 
 [[package]]
-name = "luaparser"
-version = "4.2.0"
-source = { registry = "https://mirrors.aliyun.com/pypi/simple/" }
-dependencies = [
-    { name = "antlr4-python3-runtime" },
-    { name = "multimethod" },
-]
-sdist = { url = "https://mirrors.aliyun.com/pypi/packages/24/64/574e8dadf7dcc08b5c8435756b6a44ea382d14b4d3c19669dbbab112532f/luaparser-4.2.0.tar.gz", hash = "sha256:315e1588b23500befaf824604c2d0ea75daf894b5507126636a8cfa9dc3d7636" }
-wheels = [
-    { url = "https://mirrors.aliyun.com/pypi/packages/5f/49/6d585ffffd47732c497ca3a4137f20b817fdf41598668619652d8b11d7e2/luaparser-4.2.0-py3-none-any.whl", hash = "sha256:f73b1a66ff51351d28f067348ebbb4533401fc761926654d0448e34531ce3a34" },
-]
-
-[[package]]
 name = "lxml"
 version = "6.1.1"
 source = { registry = "https://mirrors.aliyun.com/pypi/simple/" }
@@ -1438,15 +1410,6 @@ wheels = [
     { url = "https://mirrors.aliyun.com/pypi/packages/0c/f7/addf1087b860ac60e6f382240f64fb99f8bfb532bb06f7c542b83c29ca61/multidict-6.7.1-cp314-cp314t-win_amd64.whl", hash = "sha256:497bde6223c212ba11d462853cfa4f0ae6ef97465033e7dc9940cdb3ab5b48e5" },
     { url = "https://mirrors.aliyun.com/pypi/packages/4c/81/4629d0aa32302ef7b2ec65c75a728cc5ff4fa410c50096174c1632e70b3e/multidict-6.7.1-cp314-cp314t-win_arm64.whl", hash = "sha256:2bbd113e0d4af5db41d5ebfe9ccaff89de2120578164f86a5d17d5a576d1e5b2" },
     { url = "https://mirrors.aliyun.com/pypi/packages/81/08/7036c080d7117f28a4af526d794aab6a84463126db031b007717c1a6676e/multidict-6.7.1-py3-none-any.whl", hash = "sha256:55d97cc6dae627efa6a6e548885712d4864b81110ac76fa4e534c03819fa4a56" },
-]
-
-[[package]]
-name = "multimethod"
-version = "2.1"
-source = { registry = "https://mirrors.aliyun.com/pypi/simple/" }
-sdist = { url = "https://mirrors.aliyun.com/pypi/packages/cb/5c/556c53f25a75c7ec1b467a5871a22461615139dab72578166df7f8ad1104/multimethod-2.1.tar.gz", hash = "sha256:c59e75fbe51516ed632d3df4b56df0876747be001c068d3ee1e83e9f65c2846f" }
-wheels = [
-    { url = "https://mirrors.aliyun.com/pypi/packages/a7/9e/3538af4267d2e29d871e7a1ae390e8ff32122b3c560fe718569c4cd7624a/multimethod-2.1-py3-none-any.whl", hash = "sha256:54b5256562351762a275dd65571b5d6db750848f1eb6bb21c61cb5ff2748b663" },
 ]
 
 [[package]]
@@ -2041,17 +2004,6 @@ wheels = [
 ]
 
 [[package]]
-name = "pystray"
-version = "0.19.5"
-source = { registry = "https://mirrors.aliyun.com/pypi/simple/" }
-dependencies = [
-    { name = "pillow" },
-    { name = "six" },
-]
-wheels = [
-    { url = "https://mirrors.aliyun.com/pypi/packages/5c/64/927a4b9024196a4799eba0180e0ca31568426f258a4a5c90f87a97f51d28/pystray-0.19.5-py2.py3-none-any.whl", hash = "sha256:a0c2229d02cf87207297c22d86ffc57c86c227517b038c0d3c59df79295ac617" },
-]
-[[package]]
 name = "pytest"
 version = "9.1.1"
 source = { registry = "https://mirrors.aliyun.com/pypi/simple/" }
@@ -2099,12 +2051,12 @@ wheels = [
 
 [[package]]
 name = "pywin32"
-version = "311"
+version = "312"
 source = { registry = "https://mirrors.aliyun.com/pypi/simple/" }
 wheels = [
-    { url = "https://mirrors.aliyun.com/pypi/packages/c9/31/097f2e132c4f16d99a22bfb777e0fd88bd8e1c634304e102f313af69ace5/pywin32-311-cp314-cp314-win32.whl", hash = "sha256:b7a2c10b93f8986666d0c803ee19b5990885872a7de910fc460f9b0c2fbf92ee" },
-    { url = "https://mirrors.aliyun.com/pypi/packages/90/4b/07c77d8ba0e01349358082713400435347df8426208171ce297da32c313d/pywin32-311-cp314-cp314-win_amd64.whl", hash = "sha256:3aca44c046bd2ed8c90de9cb8427f581c479e594e99b5c0bb19b29c10fd6cb87" },
-    { url = "https://mirrors.aliyun.com/pypi/packages/c0/d2/21af5c535501a7233e734b8af901574572da66fcc254cb35d0609c9080dd/pywin32-311-cp314-cp314-win_arm64.whl", hash = "sha256:a508e2d9025764a8270f93111a970e1d0fbfc33f4153b388bb649b7eec4f9b42" },
+    { url = "https://mirrors.aliyun.com/pypi/packages/fc/2b/1f3cded5822fd49c02f40544cbb5f58c7cfd6b1694869fd476cb6170ee97/pywin32-312-cp314-cp314-win32.whl", hash = "sha256:a77a90fbb6881238d2ca9c6fd797b25817f3768fe78d214a90137ff055a75f5b" },
+    { url = "https://mirrors.aliyun.com/pypi/packages/21/82/3bf86d2e2808902013132e1ce905a7da0da53790f3836c64bf44d55e24f3/pywin32-312-cp314-cp314-win_amd64.whl", hash = "sha256:a4dd3a848290ef724347b19f301045831d8e802fa4464f491b98b1e0a081432e" },
+    { url = "https://mirrors.aliyun.com/pypi/packages/a4/0e/73f6d6800b4f27655abd9e9f6aaeaefcddb2b946e4674efa2bab184a7f7b/pywin32-312-cp314-cp314-win_arm64.whl", hash = "sha256:9fce94568364e0155e6dfb781ac5d95903be8baf28670632beab1b523f300daa" },
 ]
 
 [[package]]

@@ -109,7 +109,7 @@
       "WatchdogTaskEnable": false,
       "WatchdogTaskTimeout": 120,
       "RestartOperationTimeoutEnable": false,
-      "RestartOperationTimeout": 120
+      "RestartOperationTimeout": "mimo-v2.5-pro"
     },
     "Optimization": {
       "OcrDevice": "auto",
@@ -198,6 +198,10 @@
       "FleetRecover": "not_in_dormitory",
       "FleetOath": false,
       "FleetOnsen": false
+    },
+    "OilControl": {
+      "Enable": false,
+      "Target": 24000
     },
     "YukikazeTaskManager": {
       "TaskPriorityAdjustment": "Restart\n> OpsiCrossMonth\n> Commission > Tactical > Research\n> Exercise\n> Dorm > Meowfficer > Guild > Gacha\n> Reward > StorageStatistics\n> ShopFrequent > ShopOnce > Shipyard > Freebies\n> PrivateQuarters\n> OpsiExplore > OpsiExploreCleanup\n> OpsiPreventActionPointOverflow\n> Minigame > Awaken\n> OpsiAshBeacon\n> OpsiDaily > OpsiShop > OpsiVoucher > EventShop\n> OpsiAbyssal > OpsiStronghold > OpsiObscure > OpsiArchive\n> Daily > Hard > OpsiAshBeacon > OpsiAshAssist > OpsiMonthBoss\n> Sos > EventSp > EventA > EventB > EventC > EventD\n> RaidDaily > CoalitionSp > WarArchives > MaritimeEscort\n> IslandJuuEatery > IslandJuuCoffee > IslandGrill > IslandTeahouse > IslandRestaurant\n> IslandFarm > IslandRancher > IslandMineForest > IslandDailyGather > IslandManufacture\n> IslandAirDrop > IslandBusiness > IslandDailyOrder > IslandDailyInteract > IslandPearlSell > IslandCargoPreparation\n> Event > Event2 > Event3 > Raid > Hospital > HospitalEvent > Coalition > RaidAffection > Main > Main2 > Main3\n> OpsiScheduling\n> OpsiMeowfficerFarming\n> GemsFarming\n> Ambush11\n> OpsiHazard1Leveling\n> ThreeOilLowCost\n> OperationHandover"
@@ -1418,10 +1422,6 @@
       "PresetFilter": "all",
       "CustomFilter": "EquipUR > EquipSSR > Cube > GachaTicket\n> Array > Chip > CatT3 \n> Meta > SkinBox\n> Oil > Coin > Medal > ExpBookT1 > FoodT1\n> DR > PR\n> AugmentCore > AugmentEnhanceT2 > AugmentChangeT2 > AugmentChangeT1\n> CatT2 > CatT1 > PlateGeneralT3 > PlateT3 > BoxT4\n> ShipSSR"
     },
-    "ShopAdvanced": {
-      "Mode": "legacy",
-      "Script": ""
-    },
     "Storage": {
       "Storage": {}
     }
@@ -2102,7 +2102,11 @@
       "DetectShipDrop": false,
       "GemNotify": true,
       "GemStatistics": false,
-      "GemStatisticsPeriod": "month"
+      "GemStatisticsPeriod": "month",
+      "AutoPickShip": false,
+      "PickMinRarity": "rare",
+      "PickLevelOrder": "low_first",
+      "NoFreeShipPolicy": "skip"
     },
     "Storage": {
       "Storage": {}
@@ -2172,10 +2176,13 @@
       "PushNotification": false,
       "NextRun": "2020-01-01 00:00:00",
       "Command": "StorageStatistics",
-      "SuccessInterval": 1440,
+      "SuccessInterval": 10080,
       "FailureInterval": 60,
       "ServerUpdate": "04:00",
       "Sensitive": false
+    },
+    "StorageStatistics": {
+      "RunIntervalDays": 7
     },
     "Storage": {
       "Storage": {}
@@ -2470,10 +2477,6 @@
       "OverflowCoins": 0,
       "Filter": "BookRedT3 > BookYellowT3 > BookBlueT3 > BookRedT2\n> Cube\n> FoodT6 > FoodT5"
     },
-    "ShopAdvanced": {
-      "Mode": "legacy",
-      "Script": ""
-    },
     "Storage": {
       "Storage": {}
     }
@@ -2525,10 +2528,6 @@
     "CoreShop": {
       "Enable": true,
       "Filter": "Array"
-    },
-    "ShopAdvanced": {
-      "Mode": "legacy",
-      "Script": ""
     },
     "Storage": {
       "Storage": {}
@@ -2645,10 +2644,6 @@
       "BuyCake": false,
       "TargetInteract": true,
       "TargetShip": "anchorage"
-    },
-    "ShopAdvanced": {
-      "Mode": "legacy",
-      "Script": ""
     },
     "Storage": {
       "Storage": {}
@@ -2785,10 +2780,6 @@
       "CustomFilter": "LoggerAbyssalT6 > LoggerAbyssalT5 > LoggerAbyssalT4 > LoggerObscureT6 > LoggerObscureT5 > LoggerObscureT4 > LoggerObscureT3 > ActionPoint > PurpleCoins\n> GearDesignPlanT3 > PlateRandomT4 > DevelopmentMaterialT3 > GearDesignPlanT2 > GearPart\n> OrdnanceTestingReportT3 > OrdnanceTestingReportT2 > DevelopmentMaterialT2 > OrdnanceTestingReportT1\n> METARedBook > CrystallizedHeatResistantSteel > NanoceramicAlloy > NeuroplasticProstheticArm > SupercavitationGenerator",
       "DisableBeforeDate": 0
     },
-    "ShopAdvanced": {
-      "Mode": "legacy",
-      "Script": ""
-    },
     "Storage": {
       "Storage": {}
     }
@@ -2806,10 +2797,6 @@
     },
     "OpsiVoucher": {
       "Filter": "LoggerAbyssal > LoggerObscure > Book > Coin > Fragment"
-    },
-    "ShopAdvanced": {
-      "Mode": "legacy",
-      "Script": ""
     },
     "Storage": {
       "Storage": {}
@@ -3695,6 +3682,64 @@
     "FleetInfo": {
       "Result": {},
       "Record": "2020-01-01 00:00:00"
+    },
+    "Storage": {
+      "Storage": {}
+    }
+  },
+  "RunParams": {
+    "Watchdog": {
+      "CheckInterval": 30,
+      "DailySummaryCheckInterval": 1
+    },
+    "Reboot": {
+      "Tries": 3,
+      "FirstTryWaitSeconds": 30,
+      "SubsequentTryWaitSeconds": 20,
+      "ObserveSeconds": 180,
+      "ObserveInterval": 15
+    },
+    "Device": {
+      "EmulatorStartProgressInterval": 30,
+      "EmulatorStartDialogCheckInterval": 2,
+      "Mumu12StatePollInterval": 2,
+      "Mumu12StopWaitTimeout": 60,
+      "Mumu12DeepWaitTimeout": 30
+    },
+    "ScreenRecord": {
+      "StartTimeout": 0.6,
+      "StopTimeout": 6.0,
+      "PollInterval": 0.2,
+      "TranscodeBaseTimeout": 60.0,
+      "TranscodeMaxTimeout": 600.0
+    },
+    "UiWait": {
+      "IslandMapConfirmWait": 3,
+      "IslandMapDestinationWait": 45,
+      "IslandMapConfirmRetryWait": 10,
+      "IslandCharacterConfirmRetryWait": 3,
+      "IslandEntryRetryWait": 3,
+      "PqInteractButtonTimeout": 24,
+      "PqInteractClickWait": 8,
+      "PqInteractStartTimeout": 24,
+      "PqInteractEndTimeout": 40,
+      "PqInteractExitTimeout": 24,
+      "GachaPrepSubmitWait": 10,
+      "GachaPrepTimeout": 90,
+      "ChannelFloatHoldDuration": 0.2,
+      "ChannelFloatMaxAttempts": 4,
+      "GuildSupplyMaxRetry": 2,
+      "GuildExchangeBugRetry": 5,
+      "BuyFurnitureCheckIntervalDays": 6,
+      "AutoEquipAfterEquipWait": 3,
+      "CommissionSkipTimeout": 90,
+      "CommissionRewardScreenshotKeep": 50
+    },
+    "Handover": {
+      "ConsumeRetryMinutes": 30,
+      "MaintainLeadMinutes": 10,
+      "MaintainCheckMinutes": 120,
+      "ConflictRetryMinutes": 15
     },
     "Storage": {
       "Storage": {}

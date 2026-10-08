@@ -76,6 +76,8 @@ class StubIsland:
 
     goto_management = Island.goto_management
 
+    # read_run_param 对 None config 回退默认值,测试默认使用内置节奏
+    config = None
     def __init__(self, device, current_page="page_main"):
         self.device = device
         self.interval_timer = {}

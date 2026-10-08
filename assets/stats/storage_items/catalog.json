@@ -45,7 +45,8 @@
       "name": "鱼雷研发图纸UR型",
       "group": "装备研发图纸",
       "templates": [
-        "assets/stats/opsi_reward_items/GearDesignPlanTorpedoT5.png"
+        "assets/stats/opsi_reward_items/GearDesignPlanTorpedoT5.png",
+        "assets/stats/storage_items/GearDesignPlanTorpedoT5_warehouse.png"
       ],
       "reference": {
         "page": 1,

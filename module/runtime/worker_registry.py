@@ -1,5 +1,6 @@
 """将 WebUI worker 的身份写入父进程可读取的运行时登记文件。"""
 
+from module.base.runtime_params import REGISTRY_LOCK_RETRY_INTERVAL, REGISTRY_LOCK_TIMEOUT
 import errno
 import json
 import os
@@ -20,8 +21,6 @@ from module.runtime.process_control import (
 WORKER_REGISTRY_FILE = Path("./cache/webui-workers.json")
 LEGACY_WORKER_REGISTRY_FILE = Path("./config/webui-workers.json")
 DEFAULT_WORKER_REGISTRY_FILE = WORKER_REGISTRY_FILE
-REGISTRY_LOCK_TIMEOUT = 10.0
-REGISTRY_LOCK_RETRY_INTERVAL = 0.05
 
 # 同一 Python 进程内先串行化，避免重复竞争系统级文件锁。
 _registry_lock = threading.RLock()

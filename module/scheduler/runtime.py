@@ -23,6 +23,8 @@ class SchedulerRuntime:
         self.fault = ''
         self.overlay = {}
         self.last_saved = None
+        from module.scheduler.oil_control import NativeOilControl
+        self.oil_control = NativeOilControl(self)
 
     def __deepcopy__(self, memo):
         """共享运行时宿主：持有脚本实例与调度存储，深拷贝复用同一实例。"""
@@ -44,6 +46,8 @@ class SchedulerRuntime:
             return False
         self.mode, self.generation = current['mode'], current['generation']
         self.overlay, self.invocation, self.fault = {}, None, ''
+        from module.scheduler.oil_control import NativeOilControl
+        self.oil_control = NativeOilControl(self)
         self.engine = None
         if self.mode != 'native':
             document = ProgramDocument.model_validate(current['active'])
@@ -120,7 +124,7 @@ class SchedulerRuntime:
                 self.load_program()
                 self.attach(self.script.config)
                 if self.mode == 'native':
-                    return None
+                    return self.oil_control.select()
                 if self.recovery_requested:
                     self.recovery_requested = False
                     return 'Restart'
@@ -200,6 +204,9 @@ class SchedulerRuntime:
             self.script._watchdog_active, self.script._watchdog_task_start, self.script._watchdog_task_name = previous
 
     def task_finished(self, task, success):
+        if self.mode == 'native':
+            self.oil_control.task_finished(task, success)
+            return
         if not self.invocation or task != self.invocation['task']:
             return
         status = 'yielded' if self.yield_reason else 'completed' if success is True else 'recoverable' if success == 'recoverable' else 'failed'

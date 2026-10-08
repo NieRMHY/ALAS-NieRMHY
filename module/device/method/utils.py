@@ -53,12 +53,9 @@ except ImportError:
     adbutils._device.BaseDevice.shell = shell
 
 from module.base.decorator import cached_property
+from module.base.runtime_params import RETRY_DELAY, RETRY_TRIES, IMAGE_TRUNCATED_THRESHOLD
 from module.exception import EmulatorNotRunningError, RequestHumanTakeover
 from module.logger import logger
-
-RETRY_TRIES = 5
-RETRY_DELAY = 3
-IMAGE_TRUNCATED_THRESHOLD = 3
 
 # Track consecutive ImageTruncated counts per device serial
 _image_truncated_counts: dict = {}

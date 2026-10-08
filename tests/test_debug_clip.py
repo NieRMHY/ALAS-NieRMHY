@@ -326,12 +326,15 @@ class TestRecorderCommand(ClipTestCase):
 class TestStart(ClipTestCase):
     def setUp(self):
         super().setUp()
-        self._saved = (debug_clip.START_TIMEOUT, debug_clip.POLL_INTERVAL)
-        debug_clip.START_TIMEOUT = 0.05
-        debug_clip.POLL_INTERVAL = 0.01
+        self._read_patcher = patch.object(
+            debug_clip, 'read_run_param',
+            side_effect=lambda c, attr, default, *a, **k:
+                0.05 if 'StartTimeout' in attr else (
+                    0.01 if 'PollInterval' in attr else default))
+        self._read_patcher.start()
 
     def tearDown(self):
-        debug_clip.START_TIMEOUT, debug_clip.POLL_INTERVAL = self._saved
+        self._read_patcher.stop()
         super().tearDown()
 
     def start(self, adb, launch_output='4321\n', serial='127.0.0.1:16384'):
@@ -401,12 +404,15 @@ class TestStart(ClipTestCase):
 class TestFinalize(ClipTestCase):
     def setUp(self):
         super().setUp()
-        self._saved = (debug_clip.START_TIMEOUT, debug_clip.POLL_INTERVAL)
-        debug_clip.START_TIMEOUT = 0.05
-        debug_clip.POLL_INTERVAL = 0.01
+        self._read_patcher = patch.object(
+            debug_clip, 'read_run_param',
+            side_effect=lambda c, attr, default, *a, **k:
+                0.05 if 'StartTimeout' in attr else (
+                    0.01 if 'PollInterval' in attr else default))
+        self._read_patcher.start()
 
     def tearDown(self):
-        debug_clip.START_TIMEOUT, debug_clip.POLL_INTERVAL = self._saved
+        self._read_patcher.stop()
         super().tearDown()
 
     def started_clip(self, adb=None, prefix=debug_clip.CLIP_PREFIX_EH1):

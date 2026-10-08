@@ -59,11 +59,12 @@ class StorageCatalog:
                 path = ROOT / relative
                 fingerprint.update(path.read_bytes())
                 image = cv2.resize(load_image(str(path)), (96, 96), interpolation=cv2.INTER_AREA)
-                self.templates.append((item['id'], image[14:70, 14:82], np.array(item['background'])))
+                self.templates.append((item['id'], image[14:70, 14:82].astype(np.float32),
+                                       np.array(item['background'])))
         self.version = fingerprint.hexdigest()
 
-    def identify(self, icon, context=None):
-        """模板分数、次优差距与稀有度底色均通过才接受身份。"""
+    def _scores(self, icon, context=None, identifier=None):
+        """保留原始模板和采样相位；已确认身份时只匹配该物品的变体。"""
         image = cv2.resize(icon, (96, 96), interpolation=cv2.INTER_AREA)
         color = image[5:13, 5:13].mean(axis=(0, 1))
         candidates = [image]
@@ -73,15 +74,24 @@ class StorageCatalog:
             candidates = [cv2.resize(context[y:y + 128, x:x + 128], (96, 96),
                                     interpolation=cv2.INTER_AREA)
                           for y in range(1, 4) for x in range(1, 4)]
+        # 预转浮点，避免数千次匹配重复处理类型；缩放像素、搜索范围和门槛保持一致。
+        candidates = [candidate.astype(np.float32) for candidate in candidates]
         scores = {}
-        for identifier, template, template_color in self.templates:
+        for candidate_id, template, template_color in self.templates:
+            if identifier is not None and candidate_id != identifier:
+                continue
             # SSR 和 UR 纸张图形几乎相同，另外核对稀有度底色。
             if np.max(np.abs(color - template_color)) > 45:
                 continue
             score = max(cv2.minMaxLoc(cv2.matchTemplate(candidate[:74], template,
                                                        cv2.TM_CCOEFF_NORMED))[1]
                         for candidate in candidates)
-            scores[identifier] = max(scores.get(identifier, -1.), score)
+            scores[candidate_id] = max(scores.get(candidate_id, -1.), score)
+        return scores
+
+    def identify(self, icon, context=None):
+        """模板分数、次优差距与稀有度底色均通过才接受身份。"""
+        scores = self._scores(icon, context)
         ranks = sorted(scores.items(), key=lambda entry: entry[1], reverse=True)
         if not ranks or ranks[0][1] < .78:
             return None
@@ -90,6 +100,29 @@ class StorageCatalog:
         if score < .90 or margin < .035:
             raise StorageRecognitionError(f'物品身份不确定：候选 {first}，相似度 {score:.3f}，差距 {margin:.3f}')
         return first
+
+    def verify(self, card, reference):
+        """同页仅核对已确认目标的模板和完整数量，不重跑整个目录。"""
+        identifier = reference.identifier
+        score = self._scores(card.image, card.context, identifier).get(identifier, -1.)
+        if score < .90:
+            raise StorageRecognitionError(f'{identifier} 的同页图标变化，相似度 {score:.3f}')
+        card.identifier = identifier
+        try:
+            card.amount = self.read_amount(card.image)
+        except StorageRecognitionError as error:
+            raise StorageRecognitionError(f'{identifier}（位置 {card.area}）：{error}') from error
+        if card.amount != reference.amount:
+            raise StorageRecognitionError(f'{identifier} 的同页数量不一致：{reference.amount} → {card.amount}')
+
+    def is_target_rarity(self, icon):
+        """先筛目录中的金/彩底色，紫色等非目标格不执行模板及数量匹配。"""
+        if is_purple(icon):
+            return False
+        image = cv2.resize(icon, (96, 96), interpolation=cv2.INTER_AREA)
+        color = image[5:13, 5:13].mean(axis=(0, 1))
+        return any(np.max(np.abs(color - background)) <= 45
+                   for _, _, background in self.templates)
 
     @cached_property
     def digits(self):
@@ -313,13 +346,26 @@ def same_row(left, right):
 
 
 class StorageTraversal:
-    """页面必须与已读行重叠；缺行、歧义或数量变化时拒绝拼接。"""
+    """用标定行号或唯一重叠拼接；缺行、歧义或数量变化时拒绝。"""
 
     def __init__(self):
         self.rows = []
         self.pages = 0
 
-    def append(self, rows, *, at_bottom=False):
+    def append(self, rows, *, at_bottom=False, row_start=None):
+        if row_start is not None:
+            # 三行分页没有完整重叠，由已标定的滚动距离和首行纵坐标确认行号。
+            if type(row_start) is not int or not 0 <= row_start <= len(self.rows):
+                raise StorageRecognitionError('三行分页出现缺行或无效行号')
+            count = len(self.rows) - row_start
+            if count > len(rows) or not all(same_targets(a, b)
+                                           for a, b in zip(self.rows[row_start:], rows[:count])):
+                raise StorageRecognitionError('仓库末页重叠物品或数量不一致')
+            if count == len(rows) and not at_bottom:
+                raise StorageNoProgressError('滚动后未出现新行')
+            self.rows[row_start:] = rows
+            self.pages += 1
+            return
         if not self.rows:
             self.rows.extend(rows)
             self.pages += 1
@@ -343,11 +389,43 @@ class StorageTraversal:
         self.pages += 1
 
 
-def recognize_rows(image, catalog):
-    rows = detect_rows(image)
+def same_targets(left, right):
+    """已验证物理行位置后，只复核统计目标与空格；忽略非目标动画。"""
+    return len(left) == len(right) and all(
+        (a.present, a.identifier, a.amount) == (b.present, b.identifier, b.amount)
+        for a, b in zip(left, right))
+
+
+def is_purple(icon):
+    """普通紫色底的红绿分量接近；彩色纸张左上角仍偏蓝绿。"""
+    image = cv2.resize(icon, (96, 96), interpolation=cv2.INTER_AREA)
+    red, green, blue = image[5:13, 5:13].mean(axis=(0, 1))
+    return blue - green >= 35 and abs(red - green) <= 22
+
+
+def calibrate_scroll(before, after, thumb_delta):
+    """以至少五列完整格的唯一位移标定比例，保留单格图像匹配门槛。"""
+    offsets = [a[0].area[1] - b[0].area[1]
+               for a in before for b in after
+               if len(a) == len(b) == 7 and all(card.present for card in a + b)
+               and sum(same_card(left, right) for left, right in zip(a, b)) >= 5]
+    if not offsets or max(offsets) - min(offsets) > 2 or thumb_delta <= 0:
+        raise StorageRecognitionError('滚动条距离标定缺少唯一完整重叠行')
+    pitch = float(round(np.median([b[0].area[1] - a[0].area[1] for a, b in zip(before, before[1:])])))
+    moved = float(np.median(offsets))
+    if not 156 <= pitch <= 190 or not .5 * pitch <= moved <= 2 * pitch:
+        raise StorageRecognitionError('滚动条标定的行距或移动距离无效')
+    return pitch, moved / thumb_delta
+
+
+def recognize_rows(image, catalog, *, rows=None, target_only=False):
+    if rows is None:
+        rows = detect_rows(image)
     for row in rows:
         for card in row:
             if not card.present:
+                continue
+            if target_only and not catalog.is_target_rarity(card.image):
                 continue
             card.identifier = catalog.identify(card.image, card.context)
             if card.identifier is not None:
@@ -355,10 +433,30 @@ def recognize_rows(image, catalog):
                     card.amount = catalog.read_amount(card.image)
                 except StorageRecognitionError as error:
                     raise StorageRecognitionError(f'{card.identifier}（位置 {card.area}）：{error}') from error
-            else:
+            elif not target_only:
                 # 未登记物品的完整数量只帮助核对同一格，不进入统计或推断其身份。
                 try:
                     card.comparison_amount = catalog.read_amount(card.image)
                 except StorageRecognitionError:
                     pass
+    return rows
+
+
+def verify_targets(rows, reference, catalog):
+    """稳定页面的后续帧只复核目标，横向轮廓允许 2px 抖动。"""
+    if len(rows) != len(reference):
+        raise StorageRecognitionError('同页完整行数变化')
+    for row_index, (row, previous) in enumerate(zip(rows, reference), 1):
+        if len(row) != len(previous):
+            raise StorageRecognitionError('同页材料列数变化')
+        for column_index, (card, old) in enumerate(zip(row, previous), 1):
+            # 动画亮点会让边框横坐标波动；纵向位置仍必须完全一致，避免接受滚动中的画面。
+            position_changed = (card.area[1::2] != old.area[1::2]
+                                or any(abs(card.area[index] - old.area[index]) > 2 for index in (0, 2)))
+            if position_changed or card.present != old.present:
+                raise StorageRecognitionError(
+                    f'同页材料位置或空格变化：第 {row_index} 行第 {column_index} 列，'
+                    f'位置 {old.area} → {card.area}，存在 {old.present} → {card.present}')
+            if old.identifier is not None:
+                catalog.verify(card, old)
     return rows

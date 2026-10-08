@@ -2,76 +2,42 @@
 活动商店界面导航与状态检测。
 
 提供活动商店的页面检测、余额 OCR、滚动条控制和标签栏导航。
-包含自定义滚动条 EventShopScroll 以适配活动商店特有样式，
+复用官源商店滚动条以识别活动商店滑块，
 支持商店页面可用性检测（时间窗口校验）和货币余额读取。
 
 Pages: in: EVENT_SHOP
 """
-import numpy as np
+
 import re
 from datetime import datetime, timedelta
+
+import numpy as np
 
 import module.config.server as server
 from module.base.button import ButtonGrid
 from module.base.decorator import cached_property
 from module.base.timer import Timer
-from module.base.utils import rgb2luma, crop, color_similarity_2d
+from module.base.utils import color_similarity_2d, crop
 from module.config.time_source import now as current_time
 from module.config.utils import server_time_offset
 from module.exception import GameStuckError
 from module.logger import logger
 from module.meowfficer.assets import MEOWFFICER_GET_CHECK, MEOWFFICER_TRAIN_CLICK_SAFE_AREA
 from module.meowfficer.collect import SWITCH_LOCK
-from module.ocr.ocr import Ocr, Digit
-from module.shop.assets import SHOP_OCR_BALANCE, SHOP_OCR_OIL_CHECK, SHOP_OCR_OIL
+from module.ocr.ocr import Digit, Ocr
+from module.shop.assets import SHOP_OCR_BALANCE, SHOP_OCR_OIL, SHOP_OCR_OIL_CHECK
+from module.shop.shop_medal import ShopScroll
 from module.shop_event.assets import *
 from module.ui.navbar import Navbar
-from module.ui.scroll import Scroll
 from module.ui.ui import UI
 
-
-class EventShopScroll(Scroll):
-    """活动商店滚动条识别。"""
-
-    def match_color(self, main):
-        """匹配并提取滚动条滑块的颜色掩码与长度。
-
-        Args:
-            main: 包含当前截图的 UI 实例。
-
-        Returns:
-            np.ndarray: 表示滑块所在纵向范围的布尔掩码。
-        """
-        background_transparency = 0.2
-        button_transparency = 0.5
-        delta_x = 3
-        area = (
-            self.area[0] - delta_x,
-            self.area[1],
-            self.area[2] + delta_x,
-            self.area[3]
-        )
-        image = main.image_crop(area, copy=False).astype(float)
-        baseline_color = np.mean(image[:, [0, -1], :], axis=1)
-        masked_color = image[:, image.shape[1] // 2, :]
-        background_mask = background_transparency * np.array(self.color) + (1 - background_transparency) * baseline_color
-        button_mask = button_transparency * np.array(self.color) + (1 - button_transparency) * baseline_color
-        err_background = np.sum((masked_color - background_mask) ** 2, axis=1)
-        err_button = np.sum((masked_color - button_mask) ** 2, axis=1)
-        mask = err_button < err_background
-        self.length = np.sum(mask)
-        # print(mask)
-        return mask
-
-
-EVENT_SHOP_SCROLL = EventShopScroll(
+EVENT_SHOP_SCROLL = ShopScroll(
     EVENT_SHOP_SCROLL_AREA,
     color=(44, 48, 56),
     name="EVENT_SHOP_SCROLL"
 )
-EVENT_SHOP_SCROLL.drag_threshold = 0.1
-EVENT_SHOP_SCROLL.edge_threshold = 0.12
-
+EVENT_SHOP_SCROLL.drag_threshold = 0.08
+EVENT_SHOP_SCROLL.edge_threshold = 0.1
 
 if server.server == 'tw':
     EVENT_SHOP_DEADLINE_COLOR = (102, 204, 255)
@@ -85,8 +51,6 @@ OCR_EVENT_SHOP_URPT = Digit(SHOP_OCR_BALANCE_SECOND, letter=(100, 100, 100), nam
 
 
 class EventShopUI(UI):
-    """活动商店 UI 导航与状态检测基类。"""
-
     @cached_property
     def event_shop_tab_count_and_navbar(self):
         """动态计算活动商店标签数量并构建导航栏。
@@ -180,12 +144,10 @@ class EventShopUI(UI):
 
     @cached_property
     def is_pt_reversed(self):
-        """检测特殊活动中 PT 与 URpt 显示位置是否颠倒。
-
-        Returns:
-            bool: 颠倒返回 True，否则返回 False。
-        """
-        return self.ui_process_check_button(check_button=[SHOP_EVENT_20240521])
+        blacklist = [
+            SHOP_EVENT_20240521
+        ]
+        return self.ui_process_check_button(check_button=blacklist)
 
     def event_shop_get_pt(self):
         """识别并获取当前活动 PT 点数余额。
@@ -193,9 +155,12 @@ class EventShopUI(UI):
         Returns:
             int: PT 点数数量。
         """
-        if self.is_pt_reversed:
-            return OCR_EVENT_SHOP_URPT.ocr(self.device.image)
-        return OCR_EVENT_SHOP_PT.ocr(self.device.image)
+        ocr = OCR_EVENT_SHOP_URPT if self.is_pt_reversed else OCR_EVENT_SHOP_PT
+        value = ocr.ocr(self.device.image)
+        if getattr(ocr, 'last_valid', False):
+            from module.log_res import LogRes
+            LogRes(self.config).record('Pt', value, observed=True)
+        return value
 
     def event_shop_get_urpt(self):
         """识别并获取当前活动 URpt 点数余额。
@@ -203,9 +168,12 @@ class EventShopUI(UI):
         Returns:
             int: URpt 点数数量。
         """
-        if self.is_pt_reversed:
-            return OCR_EVENT_SHOP_PT.ocr(self.device.image)
-        return OCR_EVENT_SHOP_URPT.ocr(self.device.image)
+        ocr = OCR_EVENT_SHOP_PT if self.is_pt_reversed else OCR_EVENT_SHOP_URPT
+        value = ocr.ocr(self.device.image)
+        if getattr(ocr, 'last_valid', False):
+            from module.statistics.resource_flow import observe
+            observe(self.config, 'URPt', value)
+        return value
 
     def get_oil(self, skip_first_screenshot=True):
         """获取当前石油余额。

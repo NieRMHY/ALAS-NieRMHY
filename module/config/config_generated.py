@@ -130,7 +130,60 @@ class GeneratedConfig:
     Error_WatchdogTaskEnable = False
     Error_WatchdogTaskTimeout = 120
     Error_RestartOperationTimeoutEnable = False
-    Error_RestartOperationTimeout = 120
+    Error_RestartOperationTimeout = 'mimo-v2.5-pro'
+
+    # 配置组 `Watchdog`
+    Watchdog_CheckInterval = 30
+    Watchdog_DailySummaryCheckInterval = 1
+
+    # 配置组 `Reboot`
+    Reboot_Tries = 3
+    Reboot_FirstTryWaitSeconds = 30
+    Reboot_SubsequentTryWaitSeconds = 20
+    Reboot_ObserveSeconds = 180
+    Reboot_ObserveInterval = 15
+
+    # 配置组 `Device`
+    Device_EmulatorStartProgressInterval = 30
+    Device_EmulatorStartDialogCheckInterval = 2
+    Device_Mumu12StatePollInterval = 2
+    Device_Mumu12StopWaitTimeout = 60
+    Device_Mumu12DeepWaitTimeout = 30
+
+    # 配置组 `ScreenRecord`
+    ScreenRecord_StartTimeout = 0.6
+    ScreenRecord_StopTimeout = 6.0
+    ScreenRecord_PollInterval = 0.2
+    ScreenRecord_TranscodeBaseTimeout = 60.0
+    ScreenRecord_TranscodeMaxTimeout = 600.0
+
+    # 配置组 `UiWait`
+    UiWait_IslandMapConfirmWait = 3
+    UiWait_IslandMapDestinationWait = 45
+    UiWait_IslandMapConfirmRetryWait = 10
+    UiWait_IslandCharacterConfirmRetryWait = 3
+    UiWait_IslandEntryRetryWait = 3
+    UiWait_PqInteractButtonTimeout = 24
+    UiWait_PqInteractClickWait = 8
+    UiWait_PqInteractStartTimeout = 24
+    UiWait_PqInteractEndTimeout = 40
+    UiWait_PqInteractExitTimeout = 24
+    UiWait_GachaPrepSubmitWait = 10
+    UiWait_GachaPrepTimeout = 90
+    UiWait_ChannelFloatHoldDuration = 0.2
+    UiWait_ChannelFloatMaxAttempts = 4
+    UiWait_GuildSupplyMaxRetry = 2
+    UiWait_GuildExchangeBugRetry = 5
+    UiWait_BuyFurnitureCheckIntervalDays = 6
+    UiWait_AutoEquipAfterEquipWait = 3
+    UiWait_CommissionSkipTimeout = 90
+    UiWait_CommissionRewardScreenshotKeep = 50
+
+    # 配置组 `Handover`
+    Handover_ConsumeRetryMinutes = 30
+    Handover_MaintainLeadMinutes = 10
+    Handover_MaintainCheckMinutes = 120
+    Handover_ConflictRetryMinutes = 15
 
     # 配置组 `Optimization`
     Optimization_OcrDevice = 'auto'  # auto, qnn_npu, openvino_npu, openvino_gpu, gpu, openvino_cpu, cpu, ane
@@ -452,10 +505,6 @@ class GeneratedConfig:
     EventShop_PresetFilter = 'all'  # all, custom
     EventShop_CustomFilter = 'EquipUR > EquipSSR > Cube > GachaTicket\n> Array > Chip > CatT3 \n> Meta > SkinBox\n> Oil > Coin > Medal > ExpBookT1 > FoodT1\n> DR > PR\n> AugmentCore > AugmentEnhanceT2 > AugmentChangeT2 > AugmentChangeT1\n> CatT2 > CatT1 > PlateGeneralT3 > PlateT3 > BoxT4\n> ShipSSR'
 
-    # 配置组 `ShopAdvanced`
-    ShopAdvanced_Mode = 'legacy'  # legacy, advanced
-    ShopAdvanced_Script = ''
-
     # 配置组 `Commission`
     Commission_PresetFilter = 'cube'  # cube, cube_24h, chip, chip_24h, oil, custom
     Commission_DynamicProgramming = True
@@ -473,6 +522,10 @@ class GeneratedConfig:
     Commission_GemNotify = True
     Commission_GemStatistics = False
     Commission_GemStatisticsPeriod = 'month'  # today, week, month
+    Commission_AutoPickShip = False
+    Commission_PickMinRarity = 'rare'  # common, rare, elite, super_rare
+    Commission_PickLevelOrder = 'low_first'  # low_first, high_first
+    Commission_NoFreeShipPolicy = 'skip'  # skip, use_fleet
 
     # 配置组 `Tactical`
     Tactical_TacticalFilter = 'SameT4 > SameT3 > SameT2 > SameT1\n> BlueT2 > YellowT2 > RedT2\n> BlueT3 > YellowT3 > RedT3\n> BlueT4 > YellowT4 > RedT4\n> BlueT1 > YellowT1 > RedT1\n> first'
@@ -492,6 +545,9 @@ class GeneratedConfig:
     AddNewStudent_MinLevel = 50
     AddNewStudent_MaxLevel = 0
 
+    # 配置组 `StorageStatistics`
+    StorageStatistics_RunIntervalDays = 7
+
     # 配置组 `Research`
     Research_UseCube = 'only_05_hour'  # always_use, only_05_hour, only_no_project, do_not_use
     Research_UseCoin = 'always_use'  # always_use, only_05_hour, only_no_project, do_not_use
@@ -501,6 +557,10 @@ class GeneratedConfig:
     Research_RemainingCommissions = -1
     Research_PresetFilter = 'series_9_blueprint_ta152'  # custom, series_9_blueprint_ta152, series_9_blueprint_only, series_9_ta152_only, series_8_blueprint_305, series_8_blueprint_only, series_8_305_only, series_8_305_e_first, series_7_blueprint_la9, series_7_blueprint_only, series_7_la9_only, series_6_blueprint_203, series_6_blueprint_only, series_6_203_only, series_5_blueprint_152, series_5_blueprint_only, series_5_152_only, series_4_blueprint_tenrai, series_4_blueprint_only, series_4_tenrai_only, series_3_blueprint_234, series_3_blueprint_only, series_3_234_only, series_2_than_3_457_234, series_2_blueprint_457, series_2_blueprint_only, series_2_457_only
     Research_CustomFilter = 'S9-DR0.5 > S9-PRY0.5 > S9-Q0.5 > S9-H0.5 > Q0.5 > S9-DR2.5\n> S9-G1.5 > S9-Q1 > S9-DR5 > 0.5 > S9-G4 > S9-Q2 > S9-PRY2.5 > reset\n> S9-DR8 > Q1 > 1 > S9-E-315 > S9-G2.5 > G1.5 > 1.5 > S9-E-031\n> S9-Q4 > Q2 > E2 > 2 > DR2.5 > PRY2.5 > G2.5 > 2.5 > S9-PRY5\n> S9-PRY8 > Q4 > G4 > 4 > S9-C6 > DR5 > PRY5 > 5 > C6 > 6 > S9-C8\n> S9-C12 > DR8 > PRY8 > C8 > 8 > C12 > 12'
+
+    # 配置组 `OilControl`
+    OilControl_Enable = False
+    OilControl_Target = 24000
 
     # 配置组 `Dorm`
     Dorm_Collect = True

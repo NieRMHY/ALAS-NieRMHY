@@ -496,14 +496,12 @@ class PortActionPointTests(unittest.TestCase):
         return SimpleNamespace(name=name, count=count, total_count=5, price=100,
                                cost='YellowCoins', is_known_item=lambda: name != 'DefaultItem')
 
-    def test_selector_buys_only_action_point_and_bypasses_advanced_strategy(self):
+    def test_selector_buys_only_action_point(self):
         runner = Selector()
-        runner.config = SimpleNamespace(task=SimpleNamespace(command='OpsiShop'), ShopAdvanced_Mode='advanced')
+        runner.config = SimpleNamespace()
         runner._opsi_action_point_purchase = True
-        runner._opsi_shop_strategy_scope_active = True
         ap, material, sold = self.item(), self.item('DevelopmentMaterialT1'), self.item(count=0)
         self.assertEqual(runner.items_filter_in_os_shop([ap, material, sold]), [ap])
-        self.assertFalse(runner._opsi_shop_strategy_enabled())
 
     def test_action_point_purchase_can_use_reserved_coins(self):
         runner = OSShop.__new__(OSShop)
@@ -523,7 +521,6 @@ class PortActionPointTests(unittest.TestCase):
         with patch('module.os_shop.shop.OCR_SHOP_AMOUNT.ocr', return_value=1):
             self.assertTrue(runner.shop_buy_amount_handler(item))
         self.assertEqual(runner.ui_ensure_index.call_args.args[0], 25)
-        self.assertEqual(item._shop_strategy_executed_quantity, 25)
 
     def test_purchase_does_not_rescan_locked_or_unrecognized_goods(self):
         runner = OperationSiren.__new__(OperationSiren)

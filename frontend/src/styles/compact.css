@@ -366,6 +366,4 @@
   :root[data-theme='extreme'] .storage-field pre {padding: 9px 11px; line-height: 1.6}
   :root[data-theme='extreme'] .remote-address {padding: 12px 14px}
   :root[data-theme='extreme'] .fleet-column {padding: 12px 14px}
-  :root[data-theme='extreme'] .shop-strategy-help summary {min-height: 36px; padding: 0 14px}
-  :root[data-theme='extreme'] .shop-strategy-help-body {padding: 2px 14px 14px}
 }

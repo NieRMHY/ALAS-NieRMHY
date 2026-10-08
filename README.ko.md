@@ -216,7 +216,13 @@ URL만 입력할 수 있고 요청 헤더를 설정할 수 없는 클라이언�
 <div align="center">
   <img src="doc/loading.png" alt="loading" width="500" />
   <p>로딩 화면</p>
-  <img src="doc/GUI.png" alt="GUI" width="500" />
+  <table align="center">
+    <tr>
+      <td align="center"><img src="doc/GUI.png" alt="신버전" width="260"><br>신버전</td>
+      <td align="center"><img src="doc/GUI-legacy.webp" alt="구버전" width="260"><br>구버전</td>
+      <td align="center"><img src="doc/GUI-minimal.png" alt="심플" width="260"><br>심플</td>
+    </tr>
+  </table>
   <p>Windows 클라이언트 화면</p>
   <img src="doc/macGUI.png" alt="macGUI" width="500" />
   <p>Mac 클라이언트 화면</p>

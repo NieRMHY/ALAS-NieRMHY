@@ -342,7 +342,7 @@ class Updater(DeployConfig, GitManager):
         for alas in instances:
             names.append(alas.config_name + "\n")
 
-        logger.info("[WebUI-更新] 等待所有运行中的 Alas 完成")
+        logger.info("[WebUI-更新] 等待所有运行中的 AzurPilot 完成")
         return self._wait_update(instances, names)
 
     def _wait_update(self, instances: List[ProcessManager], names) -> bool:
@@ -366,7 +366,7 @@ class Updater(DeployConfig, GitManager):
             for alas in _instances:
                 if not alas.alive:
                     _instances.remove(alas)
-                    logger.info(f"[WebUI-更新] Alas [{alas.config_name}] 已停止")
+                    logger.info(f"[WebUI-更新] AzurPilot [{alas.config_name}] 已停止")
                     logger.info(f"[WebUI-更新] 剩余: {[alas.config_name for alas in _instances]}")
             if self.state == "cancel":
                 self.state = 1
@@ -375,7 +375,7 @@ class Updater(DeployConfig, GitManager):
                 return True
             time.sleep(0.25)
             if time.time() - start_time > 60 * 10:
-                logger.warning("[WebUI-更新] 等待 Alas 关闭超时，强制终止")
+                logger.warning("[WebUI-更新] 等待 AzurPilot 关闭超时，强制终止")
                 failed = []
                 for alas in _instances:
                     stopped = alas.stop()
@@ -417,7 +417,7 @@ class Updater(DeployConfig, GitManager):
                 return False
 
             self.state = "run update"
-            logger.info("[WebUI-更新] 所有 Alas 已停止，开始更新")
+            logger.info("[WebUI-更新] 所有 AzurPilot 已停止，开始更新")
 
             # 更新前先持久化恢复计划。Git 的 reset/pull 即使报错也可能已修改源码，
             # 因而一旦开始更新，worker 只能由父进程完成依赖同步后恢复。

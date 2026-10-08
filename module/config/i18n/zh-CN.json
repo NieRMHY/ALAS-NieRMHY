@@ -36,6 +36,10 @@
       "name": "舰队管理",
       "help": ""
     },
+    "RunParams": {
+      "name": "运行参数",
+      "help": ""
+    },
     "Tool": {
       "name": "工具",
       "help": ""
@@ -60,19 +64,19 @@
     },
     "Main": {
       "name": "主线图-1",
-      "help": ""
+      "help": "启用此任务需解锁至少四只舰队编队，可以启用“跳过编队检测”以临时满足需求。"
     },
     "Main2": {
       "name": "主线图-2",
-      "help": ""
+      "help": "启用此任务需解锁至少四只舰队编队，可以启用“跳过编队检测”以临时满足需求。"
     },
     "Main3": {
       "name": "主线图-3",
-      "help": ""
+      "help": "启用此任务需解锁至少四只舰队编队，可以启用“跳过编队检测”以临时满足需求。"
     },
     "GemsFarming": {
       "name": "紧急委托",
-      "help": ""
+      "help": "紧急委托和三油低耗只能开启一个"
     },
     "ThreeOilLowCost": {
       "name": "三油低耗",
@@ -88,15 +92,15 @@
     },
     "Event": {
       "name": "活动图-1",
-      "help": ""
+      "help": "此功能是为常规活动设计的，共斗类活动通常拥有独立设置页"
     },
     "Event2": {
       "name": "活动图-2",
-      "help": ""
+      "help": "此功能是为常规活动设计的，共斗类活动通常拥有独立设置页"
     },
     "Event3": {
       "name": "活动图-3",
-      "help": ""
+      "help": "此功能是为常规活动设计的，共斗类活动通常拥有独立设置页"
     },
     "Raid": {
       "name": "共斗活动",
@@ -372,7 +376,7 @@
     },
     "IslandAirDrop": {
       "name": "每日补给",
-      "help": "仅支持minitouch"
+      "help": "移动仅支持 minitouch / MaaTouch / uiautomator2 / azurpilot_android 控制方式。每日收取本岛空中补给，并可拜访其他玩家岛屿拿补给。"
     },
     "IslandCargoPreparation": {
       "name": "货物筹备",
@@ -384,15 +388,19 @@
     },
     "IslandDailyInteract": {
       "name": "每日/周任务",
-      "help": "仅支持minitouch。处理岛屿摸猫、JUU速运、商区外送服务与每周照相任务。相关按钮资源生成后可启用。"
+      "help": "移动仅支持 minitouch / MaaTouch / uiautomator2 / azurpilot_android 控制方式。处理岛屿摸猫、JUU速运、商区外送服务与每周照相任务。相关按钮资源生成后可启用。"
     },
     "IslandPearlSell": {
       "name": "每周珍珠采购与售卖",
-      "help": "仅支持minitouch。每周二 01:00 自动处理珍珠：先采购本周珍珠，再售卖已有珍珠。金币一定要够购买200x220个，这是最低要求，能一次买光本周珍珠，否则可能会报错。"
+      "help": "移动仅支持 minitouch / MaaTouch / uiautomator2 / azurpilot_android 控制方式。每周二 01:00 自动处理珍珠：先采购本周珍珠，再售卖已有珍珠。金币一定要够购买200x220个，这是最低要求，能一次买光本周珍珠，否则可能会报错。"
     },
     "FleetInfo": {
       "name": "舰队信息",
       "help": "查看最近一次舰队扫描结果"
+    },
+    "RunParams": {
+      "name": "运行参数",
+      "help": "调度器、运行监护、设备与各功能等待节奏的可调参数。普通使用保持默认即可。"
     },
     "FleetScan": {
       "name": "舰队扫描",
@@ -514,11 +522,11 @@
     },
     "Serial": {
       "name": "模拟器 Serial",
-      "help": "常见的模拟器 Serial 可以查询下方列表\n填 \"auto\" 自动检测模拟器，多个模拟器正在运行或使用不支持自动检测的模拟器时无法使用 \"auto\"，必须手动填写\n\n模拟器默认 Serial：\n- 蓝叠模拟器 127.0.0.1:5555\n- 蓝叠模拟器4 Hyper-v版，填\"bluestacks4-hyperv\"自动连接，多开填\"bluestacks4-hyperv-2\"以此类推\n- 蓝叠模拟器5 Hyper-v版，填\"bluestacks5-hyperv\"自动连接，多开填\"bluestacks5-hyperv-1\"以此类推\n- 夜神模拟器 127.0.0.1:62001\n- 夜神模拟器64位 127.0.0.1:59865\n- MuMu模拟器/MuMu模拟器X 127.0.0.1:7555\n- MuMu模拟器12 127.0.0.1:16384\n- MuMu Pro (macOS) 127.0.0.1:16384，多开依次为 127.0.0.1:16416, 127.0.0.1:16448 ...\n- 逍遥模拟器 127.0.0.1:21503\n- 雷电模拟器 emulator-5554 或 127.0.0.1:5555\n如果你使用了模拟器的多开功能，它们的 Serial 将不是默认的，可以在 console.bat 中执行 `adb devices` 查询，或根据模拟器官方的教程填写"
+      "help": "*AP监听的模拟器端口号，必填。\n常见的模拟器 Serial 可以查询下方列表。如果不懂或不知道，填 \"auto\" 自动检测模拟器，多个模拟器正在运行或使用不支持自动检测的模拟器时无法使用 \"auto\"，必须手动填写。\n\n模拟器默认 Serial：\n- 蓝叠模拟器 127.0.0.1:5555\n- 蓝叠模拟器4 Hyper-v版，填\"bluestacks4-hyperv\"自动连接，多开填\"bluestacks4-hyperv-2\"以此类推\n- 蓝叠模拟器5 Hyper-v版，填\"bluestacks5-hyperv\"自动连接，多开填\"bluestacks5-hyperv-1\"以此类推\n- 夜神模拟器 127.0.0.1:62001\n- 夜神模拟器64位 127.0.0.1:59865\n- MuMu模拟器/MuMu模拟器X 127.0.0.1:7555\n- MuMu模拟器12 127.0.0.1:16384\n- MuMu Pro (macOS) 127.0.0.1:16384，多开依次为 127.0.0.1:16416, 127.0.0.1:16448 ...\n- 逍遥模拟器 127.0.0.1:21503\n- 雷电模拟器 emulator-5554 或 127.0.0.1:5555\n如果你使用了模拟器的多开功能，它们的 Serial 将不是默认的，可以在 console.bat 中执行 `adb devices` 查询，或根据模拟器官方的教程填写"
     },
     "PackageName": {
       "name": "游戏服务器",
-      "help": "模拟器上装有多个游戏客户端时，需要手动选择服务器",
+      "help": "模拟器上装有多个游戏客户端时，需要手动选择服务器（B服、渠道服等……）\n*此项不是必填项",
       "auto": "自动检测",
       "com.bilibili.azurlane": "国服",
       "com.YoStarEN.AzurLane": "国际服",
@@ -544,7 +552,7 @@
     },
     "ServerName": {
       "name": "游戏内服务器",
-      "help": "选择游戏内所在的服务器以启用服务器状态检测\n当服务器维护或网络不可用时挂起直到恢复",
+      "help": "选择游戏内所在的服务器以启用服务器状态检测；\n当服务器维护或网络不可用时可以自动挂起直到恢复，避免维护时Azurpilot循环重启模拟器。\n*这一项不是必填的。如检测服务器状态api不可达请禁用此功能。",
       "disabled": "不使用检测",
       "cn_android-0": "[国服] 莱茵演习",
       "cn_android-1": "[国服] 巴巴罗萨",
@@ -626,7 +634,7 @@
     },
     "ScreenshotMethod": {
       "name": "选择截图方案",
-      "help": "使用自动选择时，将执行一次性能测试并自动更改为最快的截图方案\n一般情况下的速度: DroidCast_raw >> aScreenCap_nc > ADB_nc >>> aScreenCap > uiautomator2 ~= ADB\n运行 工具 - 性能测试 以寻找最快的方案",
+      "help": "使用自动选择时，将执行一次性能测试并自动更改为最快的截图方案；\n一般情况下的速度: DroidCast_raw >> aScreenCap_nc > ADB_nc >>> aScreenCap > uiautomator2 ~= ADB；\nmumu、雷电分别拥有专用的截图方案：nemu_ipc、ldopengl；\nAzurPilot for Android用户必须使用安卓虚拟屏；\n运行 工具 - 性能测试 以寻找最快的方案；\n*部分情况下部分方案不能通过自动性能测试，请手动指定。",
       "auto": "自动选择最快的",
       "ADB": "ADB",
       "ADB_nc": "ADB_nc",
@@ -672,7 +680,7 @@
     },
     "Emulator": {
       "name": "选择模拟器类型",
-      "help": "",
+      "help": "一般自动检测即可，多个模拟器需要手动填写。",
       "auto": "自动检测",
       "NoxPlayer": "夜神模拟器",
       "NoxPlayer64": "夜神模拟器64位",
@@ -694,7 +702,7 @@
     },
     "name": {
       "name": "模拟器实例名称",
-      "help": ""
+      "help": "*留空将自动抓取，只有填写正确的实例名与路径，自动重启模拟器功能才能正常运行。"
     },
     "path": {
       "name": "模拟器安装路径",
@@ -802,12 +810,12 @@
       "help": "连续检测不到设备多少次后触发重启。"
     },
     "WatchdogEnable": {
-      "name": "启用看门狗总开关",
-      "help": "看门狗总开关。关闭后，所有看门狗检测均不生效。开启后，仍需单独开启下面的子开关。默认关闭。"
+      "name": "启用运行监护总开关",
+      "help": "运行监护总开关。关闭后，所有运行监护检测均不生效。开启后，仍需单独开启下面的子开关。默认关闭。"
     },
     "WatchdogTaskEnable": {
       "name": "任务跑太久自动重启",
-      "help": "开了之后，如果某个任务跑得太久（比如一直卡在某个剧情跳不过去、地图走不动了），就会自动重启模拟器把它打断。\n得先开上面的「看门狗总开关」才管用。默认关。"
+      "help": "开了之后，如果某个任务跑得太久（比如一直卡在某个剧情跳不过去、地图走不动了），就会自动重启模拟器把它打断。\n得先开上面的「运行监护总开关」才管用。默认关。"
     },
     "WatchdogTaskTimeout": {
       "name": "任务卡死保护超时（分钟）",
@@ -820,6 +828,206 @@
     "RestartOperationTimeout": {
       "name": "重启游戏卡多久算死（秒）",
       "help": "重启游戏时，关游戏或开游戏这一步卡住超过这个秒数，就当模拟器卡死了，直接去重启模拟器。\n得先开上面的「重启游戏超时保护」才管用。\n默认 120 秒。"
+    }
+  },
+  "Watchdog": {
+    "_info": {
+      "name": "调度与运行监护",
+      "help": "运行监护与后台定时线程的检查节奏。"
+    },
+    "CheckInterval": {
+      "name": "运行监护检查间隔（秒）",
+      "help": "守护线程每隔多少秒检查一次任务运行状态，任务超时判定的检测精度由它决定。值越小响应越快、开销略增。\n默认 30 秒。"
+    },
+    "DailySummaryCheckInterval": {
+      "name": "日报检查间隔（秒）",
+      "help": "日报定时线程每隔多少秒核对一次触发时刻。值越小触发越准、开销略增。\n默认 1 秒。"
+    }
+  },
+  "Reboot": {
+    "_info": {
+      "name": "登录与重启",
+      "help": "游戏应用重启的尝试次数、等待与观察节奏。"
+    },
+    "Tries": {
+      "name": "重启尝试次数",
+      "help": "游戏启动失败后自动重试的次数。连续失败达到该次数后进入观察阶段，观察仍无恢复则触发模拟器重启。\n默认 3 次。"
+    },
+    "FirstTryWaitSeconds": {
+      "name": "首次失败等待（秒）",
+      "help": "第一次启动失败后等待多少秒再重试。\n默认 30 秒。"
+    },
+    "SubsequentTryWaitSeconds": {
+      "name": "后续失败等待（秒）",
+      "help": "第二次及之后的启动失败后等待多少秒再重试。\n默认 20 秒。"
+    },
+    "ObserveSeconds": {
+      "name": "观察阶段时长（秒）",
+      "help": "连续重启失败后进入观察阶段，等待应用自行恢复的时长；超时仍未恢复则触发模拟器重启。\n默认 180 秒。"
+    },
+    "ObserveInterval": {
+      "name": "观察检查间隔（秒）",
+      "help": "观察阶段内每隔多少秒检查一次应用是否恢复。\n默认 15 秒。"
+    }
+  },
+  "Device": {
+    "_info": {
+      "name": "设备与模拟器",
+      "help": "模拟器启动监视与 MuMu12 状态等待的节奏。"
+    },
+    "EmulatorStartProgressInterval": {
+      "name": "启动进度打印间隔（秒）",
+      "help": "模拟器启动监视期间每隔多少秒打印一次进度，避免长时间静默看起来像卡死。\n默认 30 秒。"
+    },
+    "EmulatorStartDialogCheckInterval": {
+      "name": "错误对话框检查间隔（秒）",
+      "help": "启动监视期间每隔多少秒检查一次 MuMu 错误对话框。枚举窗口开销较大，不宜过小。\n默认 2 秒。"
+    },
+    "Mumu12StatePollInterval": {
+      "name": "MuMu12 状态轮询间隔（秒）",
+      "help": "查询 MuMu12 实例状态（关闭/启动）的轮询间隔。\n默认 2 秒。"
+    },
+    "Mumu12StopWaitTimeout": {
+      "name": "MuMu12 关闭确认等待（秒）",
+      "help": "发出关闭命令后，等待 MuMu12 实例真正退出的最长时长。关闭是异步的，等不到就继续启动会失败。\n默认 60 秒。"
+    },
+    "Mumu12DeepWaitTimeout": {
+      "name": "MuMu12 深度重启等待（秒）",
+      "help": "深度重启结束后等待全部 MuMu 进程退出的最长时长（实测 5 秒内就干净了）。\n默认 30 秒。"
+    }
+  },
+  "ScreenRecord": {
+    "_info": {
+      "name": "录屏调试",
+      "help": "录屏录制与转码的等待节奏。"
+    },
+    "StartTimeout": {
+      "name": "启动确认等待（秒）",
+      "help": "启动 screenrecord 后等待录制进程确认存活的最长时间。立刻退出说明设备端跑不起来。\n默认 0.6 秒。"
+    },
+    "StopTimeout": {
+      "name": "停止确认等待（秒）",
+      "help": "发出停止信号后等待录制进程写完文件并退出的最长时间，超时则录像可能不完整。\n默认 6 秒。"
+    },
+    "PollInterval": {
+      "name": "状态轮询间隔（秒）",
+      "help": "轮询录制进程是否退出的间隔。\n默认 0.2 秒。"
+    },
+    "TranscodeBaseTimeout": {
+      "name": "转码基础超时（秒）",
+      "help": "收尾转码的基础超时，实际按片段时长线性放宽（基础 + 时长×2）。\n默认 60 秒。"
+    },
+    "TranscodeMaxTimeout": {
+      "name": "转码最大超时（秒）",
+      "help": "转码超时的硬上限。\n默认 600 秒。"
+    }
+  },
+  "UiWait": {
+    "_info": {
+      "name": "界面等待",
+      "help": "各功能界面交互的等待与重试节奏。慢设备/云手机可适当放宽。"
+    },
+    "IslandMapConfirmWait": {
+      "name": "岛屿地图确认等待（秒）",
+      "help": "岛屿地图弹窗内确认按钮出现前的等待预算。\n默认 3 秒。"
+    },
+    "IslandMapDestinationWait": {
+      "name": "岛屿目的地加载上限（秒）",
+      "help": "从岛屿地图跳转目的地时等待场景加载的上限，慢设备可放宽。\n默认 45 秒。"
+    },
+    "IslandMapConfirmRetryWait": {
+      "name": "目的地确认补点间隔（秒）",
+      "help": "目的地确认弹窗内补点重试的最小间隔，防止反复点击同一按钮触发点击保护。\n默认 10 秒。"
+    },
+    "IslandCharacterConfirmRetryWait": {
+      "name": "角色确认补点间隔（秒）",
+      "help": "选人页确认按钮补点的最小间隔，须大于云手机页面转场时间，否则会误点选餐页的同位按钮。\n默认 3 秒。"
+    },
+    "IslandEntryRetryWait": {
+      "name": "岛屿入口点击间隔（秒）",
+      "help": "进入岛屿管理页的入口按钮两次点击的最小间隔，等待场景转场。\n默认 3 秒。"
+    },
+    "PqInteractButtonTimeout": {
+      "name": "互动按钮等待（秒）",
+      "help": "私人小屋等待互动按钮出现的超时；今日精力耗尽时按钮不会出现。\n默认 24 秒。"
+    },
+    "PqInteractClickWait": {
+      "name": "互动点击间隔（秒）",
+      "help": "私人小屋互动循环中两次点击的最小间隔。\n默认 8 秒。"
+    },
+    "PqInteractStartTimeout": {
+      "name": "互动开始等待（秒）",
+      "help": "点击互动后等待互动画面开始的超时。\n默认 24 秒。"
+    },
+    "PqInteractEndTimeout": {
+      "name": "互动结束等待（秒）",
+      "help": "等待一轮互动结束（互动按钮重新出现）的超时。\n默认 40 秒。"
+    },
+    "PqInteractExitTimeout": {
+      "name": "互动退出等待（秒）",
+      "help": "退出舰船房间互动画面时的超时。\n默认 24 秒。"
+    },
+    "GachaPrepSubmitWait": {
+      "name": "建造提交重击间隔（秒）",
+      "help": "点击开始建造后重新点击的最小间隔，过短会点到面板外把面板关掉。\n默认 10 秒。"
+    },
+    "GachaPrepTimeout": {
+      "name": "建造面板超时（秒）",
+      "help": "等待建造数量面板打开（出现 +/- 按钮）的超时。\n默认 90 秒。"
+    },
+    "ChannelFloatHoldDuration": {
+      "name": "悬浮球按住时长（秒）",
+      "help": "拖拽渠道服悬浮球到终点后的按住停留时长，停留片刻再松手才会触发隐藏。\n默认 0.2 秒。"
+    },
+    "ChannelFloatMaxAttempts": {
+      "name": "悬浮球尝试次数",
+      "help": "处理渠道服悬浮球的最大尝试次数，超过即跳过。\n默认 4 次。"
+    },
+    "GuildSupplyMaxRetry": {
+      "name": "补给重试次数",
+      "help": "大舰队补给点击无响应时的重试上限，超过即跳过。\n默认 2 次。"
+    },
+    "GuildExchangeBugRetry": {
+      "name": "兑换无响应判定次数",
+      "help": "大舰队兑换连续无响应多少次后判定触发游戏 Bug。\n默认 5 次。"
+    },
+    "BuyFurnitureCheckIntervalDays": {
+      "name": "家具店检查间隔（天）",
+      "help": "家具店购买任务每多少天运行一次检查。\n默认 6 天。"
+    },
+    "AutoEquipAfterEquipWait": {
+      "name": "换装后等待（秒）",
+      "help": "自动装备完成后的固定等待，给画面变化留时间。\n默认 3 秒。"
+    },
+    "CommissionSkipTimeout": {
+      "name": "单个委托超时（秒）",
+      "help": "单个委托收发的绝对超时，超时即放弃该委托。\n默认 90 秒。"
+    },
+    "CommissionRewardScreenshotKeep": {
+      "name": "委托截图保留张数",
+      "help": "委托收益截图的保留张数上限，仅在按天数清理关闭时生效。\n默认 50 张。"
+    }
+  },
+  "Handover": {
+    "_info": {
+      "name": "作战交接",
+      "help": "作战委托与停服维护的交接节奏。"
+    },
+    "ConsumeRetryMinutes": {
+      "name": "一键消耗重试间隔（分）",
+      "help": "一键消耗委托书当天还没触发时，隔多少分钟重试。每次重试都要重新进游戏，不宜过短。\n默认 30 分钟。"
+    },
+    "MaintainLeadMinutes": {
+      "name": "维护前提前运行（分）",
+      "help": "停服维护前多少分钟跑最后一次作战委托（作战次数拉满）。\n默认 10 分钟。"
+    },
+    "MaintainCheckMinutes": {
+      "name": "维护核对间隔（分）",
+      "help": "只等维护时没查到维护公告，隔多少分钟再查一次。\n默认 120 分钟。"
+    },
+    "ConflictRetryMinutes": {
+      "name": "功能冲突重试间隔（分）",
+      "help": "读不到作战委托结束时间时，功能冲突推迟多少分钟重试。\n默认 15 分钟。"
     }
   },
   "Optimization": {
@@ -1946,7 +2154,7 @@
     },
     "Mode": {
       "name": "心情设置",
-      "help": "",
+      "help": "Azurpilot使用内置的心情计算器，并不通过OCR实时读取心情值，因此请尽量应用正确的心情设置。",
       "calculate": "计算心情消耗",
       "ignore": "无视红脸出击警告",
       "calculate_ignore": "计算心情消耗 + 无视红脸出击警告"
@@ -2464,22 +2672,6 @@
       "help": "使用自定义过滤器需将“活动商店过滤器”设置为“自定义”，并使用过滤器语法生成过滤器；过滤器设置不当可能导致异常，请阅读 https://github.com/LmeSzinc/AzurLaneAutoScript/wiki/filter_string_cn"
     }
   },
-  "ShopAdvanced": {
-    "_info": {
-      "name": "高级商店策略",
-      "help": "使用受限 Lua 风格规则生成商店购买计划。"
-    },
-    "Mode": {
-      "name": "策略模式",
-      "help": "简单模式继续使用现有过滤器；高级模式使用下方策略脚本。",
-      "legacy": "简单模式",
-      "advanced": "高级模式"
-    },
-    "Script": {
-      "name": "策略脚本",
-      "help": "仅支持受限 Lua 规则语法。校验失败时本轮不会购买任何物品。"
-    }
-  },
   "Commission": {
     "_info": {
       "name": "委托",
@@ -2559,6 +2751,30 @@
       "today": "今日",
       "week": "本周",
       "month": "本月"
+    },
+    "AutoPickShip": {
+      "name": "委托通用选船兜底（按稀有度/等级）",
+      "help": "新手船不够等级不够时，自动选取任务锁定船；会按委托的等级要求先选一艘达标的船，其余按下方偏好选取；没有可用船时，按「没有空闲的船」处理。"
+    },
+    "PickMinRarity": {
+      "name": "└ 选船兜底 · 派船的最低品质",
+      "help": "勾选「委托通用选船兜底」后生效。",
+      "common": "白色（普通）及以上",
+      "rare": "蓝色（稀有）及以上",
+      "elite": "紫色（精英）及以上",
+      "super_rare": "金色（超稀有）及以上"
+    },
+    "PickLevelOrder": {
+      "name": "└ 选船兜底 · 同品质内按等级",
+      "help": "勾选「委托通用选船兜底」后生效。",
+      "low_first": "等级低的优先",
+      "high_first": "等级高的优先"
+    },
+    "NoFreeShipPolicy": {
+      "name": "没有空闲的船时",
+      "help": "",
+      "skip": "跳过该委托",
+      "use_fleet": "用舰队中的船"
     }
   },
   "Tactical": {
@@ -2632,6 +2848,16 @@
     "MaxLevel": {
       "name": "仅添加等级 <= X 的角色",
       "help": "0 表示不限制；与最低等级冲突时两者均按 0（关闭）处理"
+    }
+  },
+  "StorageStatistics": {
+    "_info": {
+      "name": "仓库统计",
+      "help": ""
+    },
+    "RunIntervalDays": {
+      "name": "运行间隔（天）",
+      "help": "成功完成后，间隔指定天数再运行，默认 7 天，可设为 1–3650 天。失败仍按失败间隔重试；启用任务后自动运行，也可手动运行。"
     }
   },
   "Research": {
@@ -2709,6 +2935,20 @@
     "CustomFilter": {
       "name": "自定义科研过滤器",
       "help": "使用自定义过滤器需将 \"科研过滤器\" 设置为 \"自定义\"，并使用过滤器语法生成过滤器；过滤器设置不当可能导致异常，请阅读 https://github.com/LmeSzinc/AzurLaneAutoScript/wiki/filter_string_cn"
+    }
+  },
+  "OilControl": {
+    "_info": {
+      "name": "石油自动控制",
+      "help": "仅原调度生效，随现有任务检查。优先运行已启用且已到期的图，冷却时后宅购粮；清油临时优先于委托等任务。"
+    },
+    "Enable": {
+      "name": "启用石油自动控制",
+      "help": "独立于后宅喂食和收取开关，不定时唤醒游戏。"
+    },
+    "Target": {
+      "name": "石油控制线",
+      "help": "石油超过此值时清理，低于此值时结束。默认 24000，给 25000 上限留出 1000 空间；范围 1000–24999。"
     }
   },
   "Dorm": {
@@ -5650,7 +5890,7 @@
   "IslandAirDrop": {
     "_info": {
       "name": "每日补给",
-      "help": ""
+      "help": "移动仅支持 minitouch / MaaTouch / uiautomator2 / azurpilot_android 控制方式。每日收取本岛空中补给，并可拜访其他玩家岛屿拿补给。"
     },
     "LastSteal": {
       "name": "上次运行时间",
@@ -5700,7 +5940,7 @@
   "IslandDailyInteract": {
     "_info": {
       "name": "每日/周任务",
-      "help": "仅支持minitouch。控制岛屿每日与每周互动任务，包含晨露农场摸猫、开发计划中的 JUU 速运、商区外送服务和每周照相任务。"
+      "help": "移动仅支持 minitouch / MaaTouch / uiautomator2 / azurpilot_android 控制方式。控制岛屿每日与每周互动任务，包含晨露农场摸猫、开发计划中的 JUU 速运、商区外送服务和每周照相任务。"
     },
     "WeeklyPhoto": {
       "name": "每周照相任务",
@@ -5712,7 +5952,7 @@
   "IslandPearlSell": {
     "_info": {
       "name": "每周珍珠采购与售卖",
-      "help": "仅支持minitouch。每周二 01:00 自动处理珍珠：先按最高采购价采购本周珍珠，再按最低售卖价售卖已有珍珠。其他未完成流程会延迟到次日 01:00 重试。金币一定要够购买200x220个，这是最低要求，能一次买光本周珍珠，否则可能会报错。"
+      "help": "移动仅支持 minitouch / MaaTouch / uiautomator2 / azurpilot_android 控制方式。每周二 01:00 自动处理珍珠：先按最高采购价采购本周珍珠，再按最低售卖价售卖已有珍珠。其他未完成流程会延迟到次日 01:00 重试。金币一定要够购买200x220个，这是最低要求，能一次买光本周珍珠，否则可能会报错。"
     },
     "BuyPrice": {
       "name": "最高采购价格",

@@ -21,7 +21,7 @@ from module.campaign.campaign_event import CampaignEvent
 from module.campaign.stage_name import normalize_event_stage, normalize_post_loop_stage
 from module.shop.shop_status import ShopStatus
 from module.campaign.campaign_ui import MODE_SWITCH_1
-from module.config.config import AzurLaneConfig
+from module.config.config import AzurLaneConfig, TaskEnd
 from module.exception import CampaignEnd, RequestHumanTakeover, ScriptEnd
 from module.handler.fast_forward import map_files, to_map_file_name
 from module.logger import logger
@@ -73,7 +73,7 @@ class CampaignRun(CampaignEvent, ShopStatus):
         Raises:
             RequestHumanTakeover: 地图文件不存在时抛出。
         """
-        if hasattr(self, 'name') and name == self.name:
+        if name == getattr(self, 'name', None) and folder == getattr(self, 'folder', None):
             return False
 
         self.name = name
@@ -96,7 +96,7 @@ class CampaignRun(CampaignEvent, ShopStatus):
                 logger.warning(f'[战役-运行] 现有文件: {files}')
 
             logger.critical(f'[战役] 可能的原因1: 这个活动 ({folder}) 没有 {name}')
-            logger.critical(f'[战役] 可能的原因2: 你使用的Alas版本太旧，请检查更新，或者使用dev_tools/map_extractor.py自行制作地图文件')
+            logger.critical(f'[战役] 可能的原因2: 你使用的AzurPilot版本太旧，请检查更新，或者使用dev_tools/map_extractor.py自行制作地图文件')
             raise RequestHumanTakeover
 
         config = copy.deepcopy(self.config).merge(self.module.Config())
@@ -144,7 +144,12 @@ class CampaignRun(CampaignEvent, ShopStatus):
             self.status_get_gems()
             # 金币限制
             self.get_coin()
-            if self.get_oil() < max(self.config.StopCondition_OilLimitHardFloor, self.config.StopCondition_OilLimit):
+            oil = self.get_oil()
+            runtime = self.config.__dict__.get('_scheduler_runtime')
+            if runtime is not None and runtime.oil_control.target_reached(self.config, oil):
+                logger.hr('石油控制: 已降到目标以下')
+                return True
+            if oil < max(self.config.StopCondition_OilLimitHardFloor, self.config.StopCondition_OilLimit):
                 logger.hr('触发停止条件: 石油上限')
                 self.config.task_delay(minute=(120, 240))
                 return True
@@ -154,6 +159,10 @@ class CampaignRun(CampaignEvent, ShopStatus):
             return True
         # 自动搜索石油限制
         if self.campaign.auto_search_oil_limit_triggered:
+            runtime = self.config.__dict__.get('_scheduler_runtime')
+            if runtime is not None and runtime.oil_control.target_reached(self.config):
+                logger.hr('石油控制: 已降到目标以下')
+                return True
             logger.hr('触发停止条件: 自动搜索石油上限')
             self.config.task_delay(minute=(120, 240))
             return True
@@ -392,12 +401,26 @@ class CampaignRun(CampaignEvent, ShopStatus):
         Pages:
             in: page_campaign
         """
+        runtime = self.config.__dict__.get('_scheduler_runtime')
+        if runtime is not None and runtime.oil_control.is_farming(self.config):
+            return
         if self.config.is_task_enabled('Commission') and self.campaign.commission_notice_show_at_campaign():
             logger.info('[战役-运行] 发现委托通知')
             self.config.task_call('Commission')
             self.config.task_stop('Commission notice found')
 
     def run(self, name, folder='campaign_main', mode='normal', total=0):
+        """完成战役调用后，在同一任务归因范围内核对末轮资源。"""
+        from module.statistics.resource_tracking import observe_campaign_end
+        try:
+            result = self._run(name, folder=folder, mode=mode, total=total)
+        except TaskEnd:
+            observe_campaign_end(self.config, self.device)
+            raise
+        observe_campaign_end(self.config, self.device)
+        return result
+
+    def _run(self, name, folder='campaign_main', mode='normal', total=0):
         """运行战役任务主流程。
 
         Args:

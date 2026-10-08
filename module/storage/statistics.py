@@ -1,4 +1,4 @@
-"""独立仓库统计任务：只浏览材料并在完整复核后提交快照。"""
+"""独立仓库统计任务：只浏览材料并在完整扫描后提交快照。"""
 
 from datetime import datetime
 import sqlite3
@@ -6,19 +6,18 @@ import numpy as np
 
 import module.config.server as server
 from module.base.timer import Timer
-from module.base.utils import random_rectangle_point
 from module.exception import StorageStatisticsError
 from module.logger import logger
 from module.statistics.storage_snapshot import save_snapshot
 from module.storage.assets import MATERIAL_STATISTICS_SCROLL
-from module.storage.statistics_recognition import (StorageCatalog, StorageNoProgressError, StorageRecognitionError,
-    StorageTraversal, recognize_rows, same_row)
+from module.storage.statistics_recognition import (StorageCatalog, StorageRecognitionError,
+    StorageTraversal, calibrate_scroll, detect_rows, is_purple, recognize_rows, verify_targets)
 from module.storage.ui import StorageUI
 from module.ui.scroll import Scroll
 
 
 class StorageStatistics(StorageUI):
-    """进入材料仓库，从顶到底扫描两遍；识别或复核失败保留旧快照。"""
+    """材料仓库金/彩区域按三行扫描一遍；识别或同页核对失败立即保留旧快照。"""
 
     def _scroll_materials(self, start, end):
         """精确拖动列表；不支持拖拽的后端只滑动，避免设备层回退点击物品。"""
@@ -29,147 +28,157 @@ class StorageStatistics(StorageUI):
             self.device.swipe(start, end, duration=.3, name='StorageStatistics', distance_check=False)
 
     def _scan_pass(self, catalog):
-        """同一截图状态循环完成回顶、滚动、稳定复读与到底确认。
+        """标定滚动条后按三行定位，同页核对后推进；识别错误立即退出。
 
         Pages:
             in: page_storage, material
             out: page_storage, material
         """
         scroll = Scroll(MATERIAL_STATISTICS_SCROLL, color=(247, 211, 66))
-        scroll.edge_threshold = .006
         traversal = StorageTraversal()
-        target = 0.
-        moving = True
-        dragged = False
-        previous = None
-        previous_position = None
-        recovery_origin = None
-        recovery_count = 0
-        stable = Timer(.4, count=1)
+        phase = 'top'
+        calibrated = False
+        origin_rows = None
+        origin_thumb = None
+        origin_length = None
+        origin_y = None
+        pitch = scale = None
+        goal_thumb = None
+        goal_bottom = False
+        attempts = 0
+        layout = previous = None
+        settle = Timer(1.5, count=2)
+        stable = Timer(.8)
         action = Timer(2, count=2)
-        # 慢截图不能把 20 秒读取窗口延长到数十帧；仍给随后截图机会。
-        timeout = Timer(20, count=2).start()
+        timeout = Timer(30, count=2).start()
         last_error = '等待材料仓库稳定'
+        regular_seen = False
+        x = (scroll.area[0] + scroll.area[2]) // 2
         for image in self.loop(skip_first=False):
-            # 访问计数对应截图帧；不能只在首次失败时才开始累计恢复间隔。
             action_ready = action.reached()
             if timeout.reached():
                 raise StorageRecognitionError(last_error)
-            if self.handle_info_bar():
-                previous = None
-                continue
-            if not self._storage_in_material():
-                # 页签的动画或短暂遮挡不能覆盖此前真实的识别错误，也不能盲目滑动。
-                previous = None
+            if self.handle_info_bar() or not self._storage_in_material():
+                if previous is not None:
+                    raise StorageRecognitionError('同页核对期间材料页面变化')
+                layout = previous = None
                 continue
             mask = scroll.match_color(self)
-            if not mask.any():
-                raise StorageRecognitionError('无法确认仓库滚动条位置')
             pixels = np.flatnonzero(mask)
+            if not len(pixels):
+                raise StorageRecognitionError('无法确认仓库滚动条位置')
             if pixels[-1] - pixels[0] + 1 != len(pixels):
+                if previous is not None:
+                    raise StorageRecognitionError('同页核对期间滚动条被遮挡')
                 last_error = '仓库滚动条被光点或遮挡干扰'
-                previous = None
+                layout = previous = None
                 continue
-            position = 0. if scroll.length == scroll.total else scroll.cal_position(self)
-            if not np.isfinite(position):
-                raise StorageRecognitionError('仓库滚动条位置无效')
+            thumb = scroll.area[1] + float(np.mean(pixels))
             at_top = pixels[0] <= 1
             at_bottom = pixels[-1] >= scroll.total - 2
-            if moving:
-                edge_ready = (scroll.length == scroll.total
-                              or (target == 0. and at_top or target == 1. and at_bottom) and dragged)
-                if edge_ready:
-                    moving = False
-                    previous = None
-                    if not recovery_count:
-                        timeout.reset()
-                    continue
+            single_page = at_top and at_bottom
+            if phase == 'top' and not at_top or phase == 'position' and not (
+                    at_bottom if goal_bottom else abs(thumb - goal_thumb) <= 1.5):
+                if previous is not None:
+                    raise StorageRecognitionError('同页核对期间滚动条位置变化')
                 if action_ready:
-                    if 0. < target < 1. or target == 1. and not at_bottom:
-                        # 滑块的长度和响应会变化，不能用百分比保证重叠。
-                        # 拖动一行并在松手前停住，避免快速滑动的惯性跨过未读行。
-                        self._scroll_materials((1180, 540), (1180, 362))
-                        moving = False
-                    else:
-                        start = random_rectangle_point(scroll.position_to_screen(position, (0, 0)), n=1)
-                        # 顶/底额外拖过边界，再用当前滚动条端点确认，避免漏首末行。
-                        destination = -.1 if target == 0. else 1.1
-                        end = random_rectangle_point(scroll.position_to_screen(destination, (0, 0)), n=1)
-                        self.device.swipe(start, end, name='StorageStatistics', distance_check=False)
-                    dragged = True
+                    if attempts >= 3:
+                        raise StorageRecognitionError('滚动条未到达指定三行位置')
+                    destination = scroll.area[1] - 50 if phase == 'top' else goal_thumb
+                    self._scroll_materials((x, round(thumb)), (x, round(destination)))
+                    attempts += 1
                     action.reset()
+                    timeout.reset()
+                    layout = previous = None
                 continue
-            if at_bottom and target < 1. and scroll.length < scroll.total:
-                # 中途位置被取整到端点附近时，先实际拖到底，再读取末行。
-                target, moving, dragged = 1., True, False
-                previous = None
-                action.clear()
+            rows = detect_rows(image)
+            current_layout = (tuple(row[0].area[1] for row in rows), tuple(pixels))
+            if current_layout != layout:
+                if previous is not None:
+                    raise StorageRecognitionError('同页核对期间材料位置变化')
+                layout, previous = current_layout, None
+                settle.reset()
+                continue
+            if not settle.reached():
+                continue
+            if phase == 'top' and not calibrated and not single_page:
+                if len(rows) < 2:
+                    raise StorageRecognitionError('滚动条标定需要至少两行完整材料')
+                origin_rows, origin_thumb, origin_y = rows, thumb, rows[0][0].area[1]
+                origin_length = scroll.length
+                # 只在开扫时标定一次：用重叠行测实际响应，不用最小滑块长度推算内容。
+                delta = max(12, round(scroll.length * .22))
+                self._scroll_materials((x, round(thumb)), (x, round(thumb + delta)))
+                phase = 'calibrate'
+                layout = previous = None
+                action.reset()
                 timeout.reset()
                 continue
-            try:
-                rows = recognize_rows(image, catalog)
-                partial = [i for i, row in enumerate(rows) if any(not card.present for card in row)]
-                if partial and (partial != [len(rows) - 1] or not at_bottom):
-                    raise StorageRecognitionError('只有确认到底后的末行才允许空格')
-                equal = (previous is not None and len(previous) == len(rows)
-                         and abs(position - previous_position) <= .002
-                         and all(same_row(a, b) and abs(a[0].area[1] - b[0].area[1]) <= 1
-                                 for a, b in zip(previous, rows)))
-                if not equal:
-                    previous, previous_position = rows, position
-                    stable.reset()
-                    continue
-                if not stable.reached():
-                    continue
-                traversal.append(rows, at_bottom=at_bottom)
-            except StorageRecognitionError as error:
-                if last_error != str(error):
-                    logger.warning(f'仓库当前页待重读：{error}')
-                last_error = str(error)
-                previous = None
-                if action_ready:
-                    if recovery_count >= 4 or scroll.length == scroll.total:
-                        raise
-                    if recovery_origin is None:
-                        recovery_origin = position
-                    if not traversal.rows or at_bottom:
-                        # 首末行必须在端点读取。先移开遮挡再回到同一端点，禁止漏首尾行。
-                        delta = 64 if at_top else -64
-                        target, moving, dragged = (0. if not traversal.rows else 1.), True, False
-                    elif isinstance(error, StorageNoProgressError):
-                        # 已读页面无需来回找字形；继续精确前进一行，重叠校验仍然生效。
-                        delta = 178
-                    else:
-                        # 围绕失败位置上下微调；拼接仍须唯一重叠，不能把跳页当成成功。
-                        offsets = (-64, 64, -96, 96)
-                        shift = (position - recovery_origin) * (scroll.total - scroll.length) / scroll.length * 572
-                        delta = int(np.clip(offsets[recovery_count] - shift, -256, 256))
-                        if abs(delta) < 24:
-                            delta = 64 if delta >= 0 else -64
-                    self._scroll_materials((1180, 365), (1180, 365 - delta))
-                    recovery_count += 1
-                    logger.attr('仓库重读', f'第 {recovery_count} 次微调，向{"下" if delta > 0 else "上"}滚动 {abs(delta)}px')
-                    action.reset()
-                    # 微调后的画面必须获得独立读取窗口，最后一次恢复也须先观察再判失败。
-                    timeout.reset()
+            if phase == 'calibrate':
+                if abs(scroll.length - origin_length) > 2:
+                    raise StorageRecognitionError('标定期间滚动条长度变化，无法确认材料行距')
+                pitch, scale = calibrate_scroll(origin_rows, rows, thumb - origin_thumb)
+                logger.attr('仓库滚动标定', f'行距 {pitch:.0f}px，三行滑块距离 {3 * pitch / scale:.2f}px')
+                calibrated = True
+                phase = 'top'
+                attempts = 0
+                self._scroll_materials((x, round(thumb)), (x, scroll.area[1] - 50))
+                layout = previous = None
+                action.reset()
+                timeout.reset()
                 continue
-            recovery_origin, recovery_count = None, 0
-            # 只有完整页面经稳定复读和拼接确认后才重置防连点记录。
+            if len(rows) != 3 and not at_bottom:
+                raise StorageRecognitionError('三行页面未完整显示')
+            if single_page:
+                row_start = 0
+            else:
+                if abs(scroll.length - origin_length) > 2:
+                    raise StorageRecognitionError('滚动条长度变化，拒绝沿用旧标定距离')
+                offset = (thumb - origin_thumb) * scale
+                estimated = (offset + rows[0][0].area[1] - origin_y) / pitch
+                row_start = int(round(estimated))
+                if abs(estimated - row_start) > .12:
+                    raise StorageRecognitionError('滚动距离与材料行位置不一致')
+                if not at_bottom and row_start != len(traversal.rows):
+                    raise StorageRecognitionError('三行定位未到达下一组完整材料')
+            partial = [i for i, row in enumerate(rows) if any(not card.present for card in row)]
+            if partial and (partial != [len(rows) - 1] or not at_bottom):
+                raise StorageRecognitionError('只有确认到底后的末行才允许空格')
+            # Lua 材料排序为 order 降序、rarity 降序、id 升序；目录目标均为 order=0。
+            # 前面的活动紫色礼物不可作终点，已读普通目标后的整页紫色才确认金/彩区结束。
+            if regular_seen and all(is_purple(card.image) for row in rows for card in row if card.present):
+                logger.info('仓库金/彩材料区域已完整读取，整页紫色物品不再识别')
+                return traversal
+            if previous is None:
+                stable.reset()
+                previous = recognize_rows(image, catalog, rows=rows, target_only=True)
+                continue
+            if not stable.reached():
+                continue
+            rows = verify_targets(rows, previous, catalog)
+            traversal.append(rows, at_bottom=at_bottom, row_start=row_start)
+            if row_start > 0 and not at_bottom:
+                # 滑块中心取整会影响短距离标定；用已确认的三行位移累计消除量化误差。
+                scale = (row_start * pitch + origin_y - rows[0][0].area[1]) / (thumb - origin_thumb)
             self.device.click_record_clear()
-            logger.attr('仓库扫描', f'第 {traversal.pages} 页，累计 {len(traversal.rows)} 行')
+            regular_seen = regular_seen or any(card.identifier for row in rows for card in row)
+            logger.attr('仓库扫描', f'第 {traversal.pages} 页，累计 {len(traversal.rows)} 行，仅识别金/彩目标')
             if at_bottom:
                 return traversal
-            # 中途按行翻页；百分比只用于确认端点，不再用滑块长度推算翻页距离。
-            target = .5
-            moving = True
-            dragged = False
-            previous = None
+            goal_thumb = origin_thumb + len(traversal.rows) * pitch / scale
+            goal_bottom = goal_thumb >= scroll.area[3] - scroll.length / 2 - 1
+            if goal_bottom:
+                goal_thumb = scroll.area[3] + 50
+            phase = 'position'
+            attempts = 0
+            layout = previous = None
+            last_error = '等待下一组三行材料稳定'
             action.clear()
             timeout.reset()
         raise StorageRecognitionError('仓库扫描中断')
 
     def run(self):
-        """只在两次完整扫描一致时更新物品。
+        """单遍完整扫描及同页核对通过后原子更新，出错立即停止。
 
         Pages:
             in: 任意可导航页面
@@ -178,23 +187,25 @@ class StorageStatistics(StorageUI):
         logger.hr('仓库统计', level=1)
         started_at = datetime.now().isoformat(sep=' ', timespec='seconds')
         try:
+            interval_days = self.config.StorageStatistics_RunIntervalDays
+            if type(interval_days) is not int or not 1 <= interval_days <= 3650:
+                raise StorageRecognitionError('仓库统计运行间隔必须为 1–3650 的整数天数')
             catalog = StorageCatalog()
             if server.server not in catalog.servers:
                 raise StorageRecognitionError('当前仓库模板仅经国服截图验证，尚不支持此服务器')
             self.ui_goto_storage()
             self._storage_enter_material()
-            first = self._scan_pass(catalog)
-            logger.hr('仓库统计复核', level=2)
-            second = self._scan_pass(catalog)
-            if len(first.rows) != len(second.rows) or any(
-                not same_row(a, b) for a, b in zip(first.rows, second.rows)
-            ):
-                raise StorageRecognitionError('两次完整扫描不一致，可能仍在滚动或物品数量已变化')
-            save_snapshot(self.config.config_name, server.server, catalog.snapshot_items(second.rows),
-                          started_at=started_at, pages=first.pages + second.pages,
-                          catalog_version=catalog.version)
+            scan = self._scan_pass(catalog)
+            items = catalog.snapshot_items(scan.rows)
+            save_snapshot(self.config.config_name, server.server, items,
+                          started_at=started_at, pages=scan.pages, catalog_version=catalog.version)
+            from module.statistics.resource_flow import observe, session_for
+            if session_for(self.config) is not None:
+                for item in items:
+                    if item['amount'] is not None:
+                        observe(self.config, item['id'], item['amount'])
         except (ValueError, sqlite3.Error, OSError) as error:
             self.config.task_delay(success=False)
             raise StorageStatisticsError(f'仓库统计未更新，保留上次完整快照：{error}') from error
-        logger.info('仓库统计完整复核并保存成功')
-        self.config.task_delay(success=True)
+        logger.info('仓库统计单遍扫描并保存成功')
+        self.config.task_delay(minute=interval_days * 1440)

@@ -52,7 +52,7 @@ async def run(rpc: AioPresence):
     """
     try:
         await rpc.connect()
-        await rpc.update(state="Alas is playing Azurlane", start=time.time(), large_image="alas")
+        await rpc.update(state="AzurPilot is playing Azurlane", start=time.time(), large_image="alas")
     except Exception:
         logger.exception('Discord RPC 连接或状态更新失败')
         await _close_writer(rpc)

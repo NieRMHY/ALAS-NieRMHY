@@ -175,6 +175,8 @@ class TestEmulatorWindow(unittest.TestCase):
 class TestEmulatorStartWindow(unittest.TestCase):
     def setUp(self):
         self.platform = PlatformWindows.__new__(PlatformWindows)
+        # read_run_param 对 None config 回退默认值,本测试无需真实配置
+        self.platform.config = None
         self.platform.emulator_instance = SimpleNamespace(serial='127.0.0.1:5555')
         self.platform.serial = '127.0.0.1:5555'
         devices = Mock()

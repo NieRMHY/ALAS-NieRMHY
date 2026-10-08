@@ -4,6 +4,7 @@ import Ajv from 'ajv'
 import {spawnSync} from 'node:child_process'
 import {fileURLToPath} from 'node:url'
 import {createStockProxy} from './stock.mjs'
+import {resourceFlows} from './resource-flows.mjs'
 
 // 只读取公开的模板、元数据和翻译，绝不读取用户实例或部署文件。
 const read = path => JSON.parse(readFileSync(new URL(path, import.meta.url), 'utf8'))
@@ -20,129 +21,6 @@ const revision = values => createHash('sha256').update(JSON.stringify(values)).d
 const timestamp = date => date.toISOString().slice(0, 19).replace('T', ' ')
 const translate = key => key.split('.').reduce((value, part) => value?.[part], locales['zh-CN']) ?? key
 export const fail = (code, message, details = null) => { throw Object.assign(new Error(message), { code, details }) }
-
-function strategyLocation(source, index) {
-  const prefix = source.slice(0, Math.max(0, index))
-  return { line: prefix.split(/\r?\n/).length, column: prefix.length - Math.max(prefix.lastIndexOf('\n'), prefix.lastIndexOf('\r')) }
-}
-
-function invalidStrategy(source, code, message, index = 0) {
-  return { valid: false, diagnostics: [{ code, message, ...strategyLocation(source, index) }] }
-}
-
-function maskLuaStringsAndComments(source) {
-  let output = ''
-  for (let index = 0; index < source.length;) {
-    if (source.startsWith('--[[', index)) {
-      const end = source.indexOf(']]', index + 4)
-      if (end < 0) return { masked: output, error: invalidStrategy(source, 'syntax_error', '多行注释没有结束', index) }
-      const comment = source.slice(index, end + 2)
-      output += comment.replace(/[^\r\n]/g, ' ')
-      index = end + 2
-      continue
-    }
-    if (source.startsWith('--', index)) {
-      const end = source.indexOf('\n', index)
-      const comment = source.slice(index, end < 0 ? source.length : end)
-      output += comment.replace(/[^\r\n]/g, ' ')
-      index = end < 0 ? source.length : end
-      continue
-    }
-    const quote = source[index]
-    if (quote === '"' || quote === "'") {
-      const start = index++
-      output += ' '
-      let closed = false
-      while (index < source.length) {
-        const char = source[index++]
-        if (char === '\\') {
-          output += ' '
-          if (index < source.length) output += source[index++] === '\n' ? '\n' : ' '
-          continue
-        }
-        output += char === '\n' || char === '\r' ? char : ' '
-        if (char === quote) { closed = true; break }
-      }
-      if (!closed) return { masked: output, error: invalidStrategy(source, 'syntax_error', '字符串没有结束', start) }
-      continue
-    }
-    output += source[index++]
-  }
-  return { masked: output, error: null }
-}
-
-function validateMockStrategy(script) {
-  // Mock 不执行 Lua；这里只复现不会误伤有效分支策略的明显语法和白名单错误。
-  if (!script.trim()) return { valid: true, diagnostics: [] }
-  const { masked, error } = maskLuaStringsAndComments(script)
-  if (error) return error
-
-  const pairs = { '(': ')', '[': ']', '{': '}' }
-  const opening = []
-  for (let index = 0; index < masked.length; index++) {
-    const character = masked[index]
-    if (character in pairs) opening.push({ character, index })
-    else if (Object.values(pairs).includes(character)) {
-      const previous = opening.pop()
-      if (!previous || pairs[previous.character] !== character) return invalidStrategy(script, 'syntax_error', '括号或花括号不匹配', index)
-    }
-  }
-  if (opening.length) return invalidStrategy(script, 'syntax_error', '括号或花括号没有结束', opening.at(-1).index)
-
-  const forbiddenStatement = /\b(?:while|repeat|for|goto|break)\b/.exec(masked)
-  if (forbiddenStatement) return invalidStrategy(script, 'forbidden_statement', `不支持 ${forbiddenStatement[0]} 语句`, forbiddenStatement.index)
-  const namedFunction = /\bfunction\s+(?!\()/.exec(masked)
-  if (namedFunction) return invalidStrategy(script, 'forbidden_statement', '不支持具名 function 语句', namedFunction.index)
-  const forbiddenCall = /\b((?:os|io|debug|package|math|string|table|coroutine)\s*[.:]\s*[A-Za-z_]\w*|require|load|dofile|loadfile|collectgarbage|setmetatable|getmetatable|pairs|ipairs|next|type|tonumber|tostring|error|assert|pcall|xpcall)\s*\(/.exec(masked)
-  if (forbiddenCall) {
-    return invalidStrategy(script, 'forbidden_call', `不允许调用 ${forbiddenCall[1].replace(/\s/g, '')}`, forbiddenCall.index)
-  }
-  const plan = /\breturn\s+shop\s*\.\s*plan\s*(?:\(\s*)?\{/.exec(masked)
-  if (!plan) return invalidStrategy(script, 'missing_return', '必须返回 shop.plan {...}', 0)
-
-  const unknownShopField = /\bshop\s*\.\s*(?!plan\b)([A-Za-z_]\w*)/.exec(masked)
-  if (unknownShopField) return invalidStrategy(script, 'forbidden_field', `不支持 shop.${unknownShopField[1]}`, unknownShopField.index)
-  const allowedContextFields = new Set(['domain', 'currency', 'spent', 'purchased'])
-  for (const match of masked.matchAll(/\bcontext\s*\.\s*([A-Za-z_]\w*)/g)) {
-    if (!allowedContextFields.has(match[1])) return invalidStrategy(script, 'unknown_context_field', `不支持 context.${match[1]}`, match.index)
-  }
-  const allowedCandidateFields = new Set(['id', 'key', 'name', 'group', 'sub_genre', 'tier', 'price', 'cost', 'stock', 'max_quantity', 'available'])
-  for (const match of masked.matchAll(/\bitem\s*\.\s*([A-Za-z_]\w*)/g)) {
-    if (!allowedCandidateFields.has(match[1])) return invalidStrategy(script, 'unknown_candidate_field', `不支持商品字段 ${match[1]}`, match.index)
-  }
-  const allowedPipelineMethods = new Set(['where', 'score', 'order_by', 'cap', 'take'])
-  for (const match of masked.matchAll(/:\s*([A-Za-z_]\w*)\s*\(/g)) {
-    const method = match[1]
-    if (!allowedPipelineMethods.has(method)) return invalidStrategy(script, 'forbidden_call', '候选管道只允许 where、score、order_by、cap、take', match.index)
-  }
-  for (const match of masked.matchAll(/:\s*take\s*\(([^)]*)\)/g)) {
-    const rawAmount = match[1].trim()
-    if (!/^\d+$/.test(rawAmount)) return invalidStrategy(script, 'invalid_take', 'take 必须是 0 到 100 之间的整数', match.index)
-    const amount = Number(rawAmount)
-    if (amount > 100) return invalidStrategy(script, 'invalid_take', 'take 必须在 0 到 100 之间', match.index)
-  }
-  for (const match of masked.matchAll(/\b([A-Za-z_]\w*)\s*\(/g)) {
-    const before = masked.slice(0, match.index).trimEnd().at(-1)
-    if (before === ':' || before === '.' || ['function', 'if', 'elseif'].includes(match[1])) continue
-    return invalidStrategy(script, 'forbidden_call', `不允许调用 ${match[1]}`, match.index)
-  }
-  return { valid: true, diagnostics: [] }
-}
-
-function requireValidMockStrategy(script) {
-  const result = validateMockStrategy(script)
-  if (!result.valid) fail('INVALID_PARAMS', `高级商店策略脚本无效：${result.diagnostics[0].message}`, result.diagnostics)
-}
-
-function validateMockAdvancedGroups(values, tasks) {
-  for (const task of tasks) {
-    const group = values[task]?.ShopAdvanced
-    if (group?.Mode !== 'advanced') continue
-    const script = group.Script
-    if (typeof script !== 'string' || !script.trim()) fail('INVALID_PARAMS', `${task} 的高级模式需要先保存非空且有效的策略脚本`)
-    requireValidMockStrategy(script)
-  }
-}
 
 function validateField(path, value) {
   const parts = path.split('.')
@@ -598,22 +476,16 @@ export function createMockState({ empty = false } = {}) {
         programs.set(name, current); return program(name)
       }
       case 'scheduler.program.state': return {mode:program(name).mode, generation:program(name).generation, state:{status:'idle',trace:[]}}
-      case 'shop_strategy.validate': return validateMockStrategy(params.script)
       case 'config.patch': {
         const data = snapshot(name)
         const seen = new Set()
-        const affectedShopTasks = new Set()
         for (const { path, value } of params.changes) {
           const [task, group, arg] = validateField(path, value)
           if (seen.has(path)) fail('INVALID_PARAMS', '同一次保存不能重复修改同一个参数')
           seen.add(path)
-          const field = args[task][group][arg]
-          if (field.mode === 'restricted_lua') requireValidMockStrategy(value)
           data.values[task] ??= {}; data.values[task][group] ??= {}
           data.values[task][group][arg] = value
-          if (group === 'ShopAdvanced') affectedShopTasks.add(task)
         }
-        validateMockAdvancedGroups(data.values, affectedShopTasks)
         get(name).values = data.values
         log(name, `已保存 ${params.changes.length} 项配置。`)
         return snapshot(name)
@@ -699,6 +571,7 @@ export function createMockState({ empty = false } = {}) {
         }]
         return { instance: name, generatedAt: timestamp(new Date()), count: cats.length, cats: cats.slice(-(params.limit ?? 100)) }
       }
+      case 'statistics.resourceFlows': return resourceFlows(params, snapshot(name), storageCatalog, name === 'demo-alt')
       case 'statistics.report': {
         const makePoints = (res, days = 7) => {
           if (name === 'demo-alt') return []

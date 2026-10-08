@@ -381,6 +381,11 @@
 /* 参数卡的内容层：与统计页同一套二级贴片——微弱边距取 --theme-plate-margin，
    圆角 = 面板圆角 − 边距，两层同心。 */
 .config-group {position: relative; isolation: isolate; padding: var(--theme-plate-margin, 8px); margin-bottom: var(--config-card-gap, 19px); scroll-margin-top: calc(var(--topbar-height, 69px) + 16px)}
+/* 任务级帮助卡：文案短，两级同尺寸——贴片与一级面重合，不留版心边距。 */
+.task-help-panel {position: relative; isolation: isolate; margin-bottom: var(--config-card-gap, 19px)}
+.task-help-panel::before {content: ''; position: absolute; inset: 0; border-radius: var(--theme-radius-panel, 26px); background: var(--theme-plate-bg); -webkit-backdrop-filter: var(--theme-plate-filter); backdrop-filter: var(--theme-plate-filter)}
+.task-help-panel > * {position: relative}
+.task-help-panel .task-help {font-size: 12px; color: var(--muted); line-height: 1.9; white-space: pre-line; overflow-wrap: anywhere; margin: 0; padding: 14px 20px}
 .config-group::before {content: ''; position: absolute; inset: var(--theme-plate-margin, 8px); border-radius: calc(var(--theme-radius-panel, 26px) - var(--theme-plate-margin, 8px)); background: var(--theme-plate-bg); -webkit-backdrop-filter: var(--theme-plate-filter); backdrop-filter: var(--theme-plate-filter)}
 .config-group > * {position: relative}
 .group-indicator {width: 4px; height: 15px; border-radius: 3px; background: #74bda8}
@@ -454,39 +459,6 @@
 .yaml-editor .cm-activeLine {background: var(--accent-soft)}
 .yaml-editor .cm-cursor {border-left-color: var(--text)}
 .yaml-editor.is-disabled {opacity: .65}
-.restricted-lua-editor .editor-heading {letter-spacing: 0}
-.restricted-lua-actions {display: flex; flex-wrap: wrap; gap: 8px; padding: 10px 14px; border-top: 1px solid var(--border)}
-.restricted-lua-status {display: flex; flex-wrap: wrap; gap: 7px; padding: 0 14px 10px; color: var(--muted); font-size: 12px; line-height: 1.6; overflow-wrap: anywhere}
-.restricted-lua-status.is-error {color: var(--red)}
-.restricted-lua-diagnostics {display: grid; gap: 6px; margin: 0; padding: 0 14px 12px; list-style: none}
-.restricted-lua-diagnostics li {display: grid; grid-template-columns: 14px auto minmax(0, 1fr); align-items: start; gap: 7px; color: var(--muted); font-size: 12px; line-height: 1.6; overflow-wrap: anywhere}
-.restricted-lua-diagnostics li.is-error {color: var(--red)}
-.restricted-lua-diagnostics li.is-warning {color: var(--theme-warning, #a56d16)}
-.restricted-lua-diagnostics strong {font-weight: 500}
-.shop-strategy-help {border-top: 1px solid var(--border)}
-.shop-strategy-help details {border-bottom: 1px solid var(--border)}
-.shop-strategy-help summary {display: flex; align-items: center; gap: 8px; min-height: 46px; padding: 0 20px; color: var(--text); cursor: pointer; font-size: 13px; font-weight: 600; list-style: none}
-.shop-strategy-help summary::-webkit-details-marker {display: none}
-.shop-strategy-help summary::after {content: '+'; margin-left: auto; color: var(--muted); font-size: 18px; font-weight: 400}
-.shop-strategy-help details[open] summary::after {content: '−'}
-.shop-strategy-help-body {display: grid; gap: 14px; padding: 4px 20px 20px; color: var(--muted); font-size: 13px; line-height: 1.75}
-.shop-strategy-help-body > * {margin: 0}
-.shop-strategy-help-body h3 {color: var(--text); font-size: 14px; font-weight: 600}
-.shop-strategy-help-body ul {display: grid; gap: 6px; padding-left: 20px}
-.shop-strategy-help-body code, .shop-strategy-help-body pre {font-family: var(--theme-font-mono, "JetBrains Mono", "JetBrains Mono NL", "Cascadia Code", "Consolas", "Microsoft YaHei", monospace)}
-.shop-strategy-help-body pre {max-width: 100%; padding: 12px 14px; overflow: auto; border: 1px solid var(--border); border-radius: 6px; background: var(--surface-muted); color: var(--text); font-size: 12px; line-height: 1.7; white-space: pre}
-.shop-strategy-api {display: grid; gap: 8px}
-.shop-strategy-api > div {display: grid; grid-template-columns: minmax(250px, 1fr) minmax(0, 1fr); gap: 14px; align-items: baseline}
-.shop-strategy-api dt {color: var(--text); overflow-wrap: anywhere}
-.shop-strategy-api dd {margin: 0}
-.shop-strategy-table-wrap {max-width: 100%; overflow-x: auto; border: 1px solid var(--border); border-radius: 6px}
-.shop-strategy-table-wrap table {width: 100%; min-width: 650px; border-collapse: collapse; color: var(--muted); font-size: 12px}
-.shop-strategy-table-wrap th, .shop-strategy-table-wrap td {padding: 9px 11px; border-bottom: 1px solid var(--border); text-align: left; vertical-align: top; overflow-wrap: anywhere}
-.shop-strategy-table-wrap th {color: var(--text); font-weight: 600; background: var(--surface-muted)}
-.shop-strategy-table-wrap tr:last-child td {border-bottom: 0}
-.shop-strategy-table-wrap .is-current td {background: var(--accent-soft); color: var(--text)}
-.shop-strategy-current {color: var(--text)}
-@media (max-width: 700px) {.shop-strategy-help summary, .shop-strategy-help-body {padding-left: 14px; padding-right: 14px}.shop-strategy-api > div {grid-template-columns: 1fr; gap: 2px}.shop-strategy-help-body pre {font-size: 11px}}
 .storage-field {display: grid; gap: 12px}
 .storage-field pre {margin: 0; padding: 12px 14px; border: 1px solid var(--border); border-radius: 7px; background: var(--surface-muted); font: 13px/1.9 var(--theme-font-mono, "JetBrains Mono", "JetBrains Mono NL", "Cascadia Code", "Consolas", "Microsoft YaHei", monospace); white-space: pre-wrap; overflow-wrap: anywhere; max-height: 480px; overflow-y: auto}
 .storage-field .button {justify-self: start}

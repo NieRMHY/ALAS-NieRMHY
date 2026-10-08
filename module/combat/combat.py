@@ -611,8 +611,8 @@ class Combat(Level, HPBalancer, Retirement, SubmarineCall, CombatAuto, CombatMan
         """
         if self.is_combat_executing():
             return False
-        if self.appear_then_click(EXP_INFO_S):
-            self.device.sleep((0.25, 0.5))
+        # 保留点击兜底，给自律结算动画留出自动跳转时间，避免短时间连击。
+        if self.appear_then_click(EXP_INFO_S, interval=2):
             return True
         if self.appear_then_click(EXP_INFO_A):
             self.device.sleep((0.25, 0.5))

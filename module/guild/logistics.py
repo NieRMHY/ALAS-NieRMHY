@@ -16,8 +16,10 @@ import re
 from module.base.button import ButtonGrid
 from module.base.decorator import Config, cached_property
 from module.base.filter import Filter
+from module.base.runtime_params import GUILD_EXCHANGE_BUG_RETRY, GUILD_SUPPLY_MAX_RETRY
 from module.base.timer import Timer
 from module.base.utils import *
+from module.config.utils import read_run_param
 from module.combat.assets import GET_ITEMS_1
 from module.exception import GameBugError
 from module.guild.assets import *
@@ -31,8 +33,8 @@ EXCHANGE_GRIDS = ButtonGrid(
 EXCHANGE_BUTTONS = ButtonGrid(
     origin=(440, 609), delta=(198.5, 0), button_shape=(144, 31), grid_shape=(3, 1), name='EXCHANGE_BUTTONS')
 EXCHANGE_FILTER = Filter(regex=re.compile('^(.*?)$'), attr=('name',))
-GUILD_SUPPLY_MAX_RETRY = 2
-GUILD_EXCHANGE_BUG_RETRY = 5
+# 补给重试与兑换 BUG 判定阈值走 WebUI「运行参数」页（RunParams.UiWait），
+# 默认值集中在 module/base/runtime_params.py（界面等待域）。
 
 
 class ExchangeLimitOcr(Digit):
@@ -307,7 +309,9 @@ class GuildLogistics(GuildBase):
         if not result_timer.reached():
             return True
 
-        if state['click_count'] >= GUILD_SUPPLY_MAX_RETRY:
+        supply_max_retry = int(read_run_param(
+            self.config, 'UiWait_GuildSupplyMaxRetry', GUILD_SUPPLY_MAX_RETRY, 1, 10))
+        if state['click_count'] >= supply_max_retry:
             logger.warning('[大舰队-后勤] 重试后大舰队补给仍可用，本次跳过')
             self._guild_logistics_supply_check_finished(state)
             return False
@@ -330,7 +334,9 @@ class GuildLogistics(GuildBase):
         Raises:
             GameBugError: 连续多次兑换无响应，判定触发游戏 Bug。
         """
-        if exchange_count < GUILD_EXCHANGE_BUG_RETRY:
+        exchange_bug_retry = int(read_run_param(
+            self.config, 'UiWait_GuildExchangeBugRetry', GUILD_EXCHANGE_BUG_RETRY, 1, 20))
+        if exchange_count < exchange_bug_retry:
             return
 
         # 跨天挂机时若执行大舰队兑换，可能出现提示时间未到的游戏 Bug

@@ -4,7 +4,6 @@
 
 import cv2
 
-
 from module.base.decorator import cached_property
 from module.base.utils import color_similar
 from module.logger import logger
@@ -53,11 +52,6 @@ class ShopItemGrid_250814(BaseShopItemGrid_250814):
 
 
 class MeritShop_250814(ShopClerk, ShopUI, ShopStatus):
-    """功勋商店处理器 (2025-08-14 新 UI)。
-
-    Pages: in: page_shop (merit shop tab)
-    """
-
     shop_template_folder = './assets/shop/merit'
 
     @cached_property
@@ -69,7 +63,7 @@ class MeritShop_250814(ShopClerk, ShopUI, ShopStatus):
         """
         return self.config.MeritShop_Filter.strip()
 
-    # 2025-08-14 新 UI
+    # New UI in 2025-08-14
     @cached_property
     def shop_merit_items(self):
         """加载功勋商店商品模板和配置。
@@ -140,20 +134,21 @@ class MeritShop_250814(ShopClerk, ShopUI, ShopStatus):
 
         按照过滤器配置购买功勋商店商品，支持刷新。
         """
-        # 过滤器为空且未启用"购买未获得舰船"时直接退出
-        if not self.shop_filter and not self.config.MeritShop_BuyUnobtainedShip and not self.shop_strategy_enabled():
+        # Base case; exit run if filter and custom-item purchase are both disabled
+        if not self.shop_filter and not self.config.MeritShop_BuyUnobtainedShip:
             return
 
-        # 调用时应已在功勋商店界面
-        logger.hr('[商店-功勋] 功勋商店', level=1)
+        # When called, expected to be in
+        # correct Merit Shop interface
+        logger.hr('Merit Shop', level=1)
 
-        # 刷新会绕开高级脚本的 reserve / max_spend，故高级模式不执行。
-        refresh = self.config.MeritShop_Refresh and not self.shop_strategy_enabled()
+        # Execute buy operations
+        # Refresh if enabled and available
+        refresh = self.config.MeritShop_Refresh
         for _ in range(2):
             success = self.shop_buy()
             if not success:
                 break
             if refresh and self.shop_refresh():
-                self.shop_strategy_reset_inventory()
                 continue
             break

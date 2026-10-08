@@ -181,6 +181,8 @@ INTERNAL_ERROR 不向浏览器返回堆栈；参数校验详情不回显输入�
 
 ## 分类统计
 
+`statistics.resourceFlows` 提供独立资源管理页数据：`instance` 必填，`days` 默认 7；可指定本地 `start` / `end`（递增、最多 366 天）、`resource` / `task`、`offset`、`limit`（最多 1000）与 `through_id`。响应包含 `resources`、`tasks`、`flows`、`entries`、`total`、`throughId` 和 `oilControl`。聚合不受分页影响；完整导出固定时间区间与 `throughId`，库存校正单列为 `adjustment`。查询不操作游戏，控制设置使用已有 `config.get` / `config.patch`。
+
 `category` 支持 `resources`（12 种资源）、`action`（行动力、资产、海里、黄币、紫币）、`opsi`（侵蚀1与短猫运行）、`commission`（收益与结算记录）、`ships`（升级进度、经验与时长）、`loot`（累计短猫掉落）。
 
 资源页支持最近 1–365 天，最多读取最近 50,000 行快照并明确提示截断。大世界与行动力按月份读取；委托支持今日、本周、选定月份，周统计跨月读取。舰船展示最新检测与保留的历史日记录；掉落缓存沿用旧版全设备累计口径，不假装按实例或月份隔离。

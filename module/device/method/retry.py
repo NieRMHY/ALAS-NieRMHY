@@ -3,8 +3,8 @@
 import time
 from functools import partial, wraps
 
+from module.base.runtime_params import RETRY_TRIES
 from module.device.method.utils import (
-    RETRY_TRIES,
     handle_adb_error,
     handle_image_truncated,
     handle_unknown_host_service,

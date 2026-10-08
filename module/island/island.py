@@ -16,19 +16,18 @@ from module.handler.login import LoginHandler
 from module.ui.ui import *
 from module.exception import GameStuckError
 from module.logger import logger
+from module.base.runtime_params import (
+    ISLAND_CHARACTER_CONFIRM_RETRY_WAIT,
+    ISLAND_ENTRY_RETRY_WAIT,
+    ISLAND_MAP_CONFIRM_RETRY_WAIT,
+    ISLAND_MAP_CONFIRM_WAIT,
+    ISLAND_MAP_DESTINATION_WAIT,
+)
+from module.config.utils import read_run_param
 import re
 
-ISLAND_MAP_CONFIRM_WAIT = 3
-# 低端设备从岛屿地图跳转目的地时，场景加载可能明显超过 20s，
-# 放宽进入目的地前的等待上限，避免加载稍慢即被误判为失败。
-ISLAND_MAP_DESTINATION_WAIT = 45
-# 目的地确认按钮只允许在点击后前 10s 内补点重试，
-# 防止地图一直停留在确认弹窗时反复点击同一按钮触发 GameTooManyClickError。
-ISLAND_MAP_CONFIRM_RETRY_WAIT = 10
-# 角色确认（选人页确认按钮）补点的最小间隔。必须大于云手机上“选人页→选餐页”的
-# 转场时间，否则上一次点击已经生效、页面正在切换时仍会补点一次确认按钮，
-# 而选餐页的确认按钮与角色页确认按钮坐标重叠，会把默认餐品直接下单。
-ISLAND_CHARACTER_CONFIRM_RETRY_WAIT = 3
+# 等待/重试参数走 WebUI「运行参数」页（RunParams.UiWait），兜底默认值与
+# 帧数类内部常量集中在 module/base/runtime_params.py（界面等待域）。
 # 角色确认最多补点次数。次数用尽后不再点击，只观察页面是否切换，避免死循环点击。
 ISLAND_CHARACTER_CONFIRM_MAX_CLICKS = 8
 # 岗位列表定位滑动：单步距离、回顶部滑动距离与补滑上限。
@@ -40,9 +39,6 @@ ISLAND_POST_SWIPE_STEP = 450
 ISLAND_POST_SWIPE_DISTANCE = 550
 ISLAND_POST_SWIPE_TO_TOP_MAX = 5
 ISLAND_POST_SWIPE_SEARCH_MAX = 8
-# 进入岛屿管理页的入口按钮（岛屿右上角“管理”）点击间隔：点击后岛屿场景需要转场，
-# 间隔不足会在云机上对同一入口按钮反复点击。
-ISLAND_ENTRY_RETRY_WAIT = 3
 
 # 岗位产品选择滑动惯性消除安全区域
 SELECT_PRODUCT_INERTIA_STOP = Button(
@@ -376,7 +372,8 @@ class Island(SelectCharacter):
             self.ui_goto(page_island, get_ship=False)
             # 入口按钮点击后岛屿场景需要转场，这里限制两次点击的间隔，
             # 避免云机上因为画面还没切走而反复点击同一个入口按钮
-            entry_timer = Timer(ISLAND_ENTRY_RETRY_WAIT).clear()
+            entry_timer = Timer(read_run_param(
+                self.config, 'UiWait_IslandEntryRetryWait', ISLAND_ENTRY_RETRY_WAIT, 1, 60)).clear()
             for _ in self.loop(timeout=20, skip_first=False):
                 if self.appear(ISLAND_MANAGEMENT_CHECK, offset=1):
                     break
@@ -596,9 +593,14 @@ class Island(SelectCharacter):
             logger.warning(f"[岛屿] 岛屿地图目的地选择超时: {destination}")
             return False
 
-        confirm_wait = Timer(ISLAND_MAP_CONFIRM_WAIT).start()
-        confirm_retry = Timer(ISLAND_MAP_CONFIRM_RETRY_WAIT).start()
-        for _ in self.loop(timeout=ISLAND_MAP_DESTINATION_WAIT, skip_first=False):
+        confirm_wait = Timer(read_run_param(
+            self.config, 'UiWait_IslandMapConfirmWait', ISLAND_MAP_CONFIRM_WAIT, 1, 60)).start()
+        confirm_retry = Timer(read_run_param(
+            self.config, 'UiWait_IslandMapConfirmRetryWait',
+            ISLAND_MAP_CONFIRM_RETRY_WAIT, 1, 60)).start()
+        for _ in self.loop(timeout=read_run_param(
+                self.config, 'UiWait_IslandMapDestinationWait',
+                ISLAND_MAP_DESTINATION_WAIT, 10, 600), skip_first=False):
             if self.ui_additional(get_ship=False):
                 continue
 
@@ -1013,7 +1015,9 @@ class Island(SelectCharacter):
         """
         self.interval_clear([SELECT_UI_CONFIRM])
         # 首次确认立即点击，之后每次补点至少间隔 ISLAND_CHARACTER_CONFIRM_RETRY_WAIT 秒
-        retry_timer = Timer(ISLAND_CHARACTER_CONFIRM_RETRY_WAIT).clear()
+        retry_timer = Timer(read_run_param(
+            self.config, 'UiWait_IslandCharacterConfirmRetryWait',
+            ISLAND_CHARACTER_CONFIRM_RETRY_WAIT, 1, 60)).clear()
         confirm_clicks = 0
         skipped_clicks = 0
         role_seen = False
@@ -1083,7 +1087,9 @@ class Island(SelectCharacter):
         if not self.click_selected_character_confirm(context=context):
             return False
 
-        retry_timer = Timer(ISLAND_CHARACTER_CONFIRM_RETRY_WAIT).start()
+        retry_timer = Timer(read_run_param(
+            self.config, 'UiWait_IslandCharacterConfirmRetryWait',
+            ISLAND_CHARACTER_CONFIRM_RETRY_WAIT, 1, 60)).start()
         for _ in self.loop(timeout=timeout, skip_first=False):
             if not self.appear(ISLAND_SELECT_CHARACTER_CHECK, offset=1):
                 return True

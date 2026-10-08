@@ -77,6 +77,50 @@ module/storage/
 | `Equipment.equipment_take_on/off()` | 演习、困难模式等按 `fleet` 记录装卸装备的底层入口 |
 | `EquipmentCodeHandler.code_apply()` / `code_clear()` | GemsFarming/Ambush11 换船时回装/卸下配装 |
 
+### 舰队信息扫描
+
+`FleetManagement.run()` 复用 `Dock.dock_filter_set()`，依次扫描前排、后排、潜艇。
+第一次在同一个筛选面板选择 `index='vanguard'` 与 `sort='mood'`，统一确认；
+后续分类传 `sort=None`，保留游戏记住的心情排序。任务期间关闭 `Setting.reset_first`，
+避免默认重置先清掉心情排序，`finally` 恢复该标志并执行原有 `dock_reset()`。
+舰种索引支持多选，切换不能只点下一舰种：每次传 `reset_index=True`，在同一面板
+先选“全部”取消旧舰种，再选择目标舰种，最后统一确认；清除索引时保留心情排序。
+此选项默认为 `False`，不改变其他船坞调用方的筛选行为。
+
+`FleetManagementScanner` 保持原有舰队归属、名称纠正和等级识别，增加
+`FleetEmotionScanner`，复用 `CARD_EMOTION_GRIDS` 裁剪与 OCR 框架，网格形状与排除位置保持一致。
+心情只接受完整的 0–150 数字，空白、非法文字或越界为 `None`；不使用通用心情扫描器的
+颜色纠正或截位猜数。单个心情未知不会删掉对应名称、等级记录。
+
+三类扫描完成后仍一次性保存到 `FleetInfo.FleetInfo.Result` 和 `Record`，单船结构扩展为
+`{'name': str, 'level': int, 'emotion': int | None}`，JSON 中未知心情为 `null`。
+WebUI 舰队信息同时显示名称、等级与心情；旧字符串/缺少心情的对象仍可显示，心情标为未知。
+定向验证入口：`tests/test_fleet_emotion.py`（匿名心情裁剪、筛选顺序、失败保留和真实配置落盘）
+及 `frontend/e2e/fleet-info.spec.ts`（隔离服务页面显示）。截图夹具不包含账号信息。
+
+### 舰队舰船名称确认
+
+`FleetNameScanner` 先使用现有白色/婚舰粉色预处理读取名称，再交给 `ShipNameMatcher` 确认。
+名称名单使用 `assets/ship/ship_names.json`，不再依赖可能过期的舰船属性表。
+通过 `uv run python -m dev_tools.ship_data_extractor --lua-repo <Lua仓库路径> --names-only`
+更新名单：复用现有 Lua 解析器读取 CN/EN/JP/TW 的 `ship_data_statistics`、`name_code`
+和 `ship_skin_template`（含 sublist），解析名称引用，仅加入 `skin_type=2` 的改造皮肤名称，
+不加入普通皮肤标题。只生成轻量名称表，原有属性提取功能与 `ship_data.json` 保持不变。
+生成结果按服去重排序，可重复生成；运行时不访问 Lua 仓库，也不跨服猜测名称。
+
+完整名称只接受唯一规范化精确匹配；仅在游戏名称尾部有 `..`、`…` 或 `⋯` 截断标记，
+且至少保留两个字符、补全候选唯一时补全。短名称、歧义或无匹配均保留 OCR 原文，
+不按字符串相似度强行替换，不删掉 `.改`、`META` 等身份信息。
+
+未确认的名称在同一截图、同一名称区域追加一次原彩色批量 OCR，既不放大也不重扫页面。
+只有彩色结果精确命中名单，且保留首轮可读前缀（空白首轮除外）时采用；已有精确身份、
+改造身份或 META 身份不能被彩色结果覆盖。失败仍保留首轮原文，日志记录确认依据或拒绝原因。
+等级、心情和结果格式保持不变；更新代码后需重新运行 FleetScan，历史错误名称不会自动改写。
+
+`tests/test_fleet_ship_names.py` 验证名单引用解析、普通皮肤排除、名单不可用、保守匹配、
+复识别条件以及三张匿名卡片区域截图的真实扫描与配置落盘。夹具只保留名称、舰队编号、
+等级和心情区域，不含账号信息；离线测试不操作真实账号。
+
 ## 6. 工作流程
 
 ### 退役（module/retire）

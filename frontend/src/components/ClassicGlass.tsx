@@ -5,7 +5,7 @@
 import { useSyncExternalStore } from 'react'
 import LiquidGlass from 'liquid-glass-react'
 
-const reducedEffects = '(prefers-reduced-motion: reduce), (prefers-reduced-transparency: reduce), (forced-colors: active)'
+const reducedEffects = '(prefers-reduced-motion: reduce), (forced-colors: active)'
 function subscribe(callback: () => void) {
   const query = window.matchMedia(reducedEffects)
   query.addEventListener('change', callback)

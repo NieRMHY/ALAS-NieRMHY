@@ -59,7 +59,6 @@ class Router:
             'config.get': Method(p.InstanceParams, lambda x: configs.get(x.instance)),
             'config.export': Method(p.InstanceParams, lambda x: configs.export(x.instance)),
             'config.patch': Method(p.PatchParams, lambda x: configs.patch(x.instance, x.revision, x.changes), True),
-            'shop_strategy.validate': Method(p.ShopStrategyValidateParams, self.validate_shop_strategy),
             'overview.get': Method(p.InstanceParams, lambda x: runtime.overview(x.instance)),
             'stock.status': Method(p.InstanceParams, lambda x: self.stock_exchange.status(x.instance)),
             'stock.rebuild': Method(p.StockRebuildParams, lambda x: self.stock_exchange.rebuild(x.instance, x.confirm, x.scope), True),
@@ -82,6 +81,7 @@ class Router:
             'preview.capture': Method(p.InstanceParams, lambda x: runtime.capture(x.instance)),
             'statistics.refreshLoot': Method(p.InstanceParams, self.refresh_loot, True),
             'statistics.report': Method(p.StatisticsReportParams, self.statistics_report),
+            'statistics.resourceFlows': Method(p.ResourceFlowsParams, self.resource_flows),
             'meowfficer.scoreReport': Method(p.MeowfficerScoreReportParams, self.meowfficer_score_report),
             'meowfficer.clearReport': Method(p.MeowfficerClearReportParams,
                                              self.meowfficer_clear_report, True),
@@ -183,25 +183,6 @@ class Router:
         from module.api.statistics_service import refresh_loot
         return refresh_loot(self.configs, params.instance)
 
-    def validate_shop_strategy(self, params: p.ShopStrategyValidateParams):
-        """校验高级商店策略，禁止客户端指定任意执行上下文。
-
-        Args:
-            params: 商店策略校验参数。
-
-        Returns:
-            list[dict]: 策略语法或语义诊断结果列表。
-
-        Raises:
-            p.ApiError: 指定任务不支持高级商店策略时抛出 INVALID_PARAMS。
-        """
-        self.configs.path(params.instance)
-        if 'ShopAdvanced' not in self.configs.args.get(params.task, {}):
-            raise p.ApiError('INVALID_PARAMS', '不支持的商店任务')
-        from module.shop_strategy import validate_strategy
-
-        # 显式检查返回诊断而不是抛出参数错误，编辑器才能标出行列位置。
-        return validate_strategy(params.script)
 
     def statistics_report(self, params: p.StatisticsReportParams):
         """生成并获取指定维度的统计报表。
@@ -217,6 +198,11 @@ class Router:
                         params.days, params.period, research_series=params.series,
                         research_scope=params.scope, loot_task=params.task)
         return {**result, **compact_axis(result.get('series') or [])}
+
+    def resource_flows(self, params: p.ResourceFlowsParams):
+        """查询库存与资源流向；沿用现有实例访问边界。"""
+        from module.api.resource_service import resource_flows
+        return resource_flows(self.configs, params)
 
     def meowfficer_score_report(self, params: p.MeowfficerScoreReportParams):
         """获取指挥喵评分报告。

@@ -112,59 +112,7 @@ describe('前端模拟服务', () => {
     expect(() => dispatch('meowfficer.scoreReport', {instance: 'demo-alt'})).toThrow(/尚未生成/)
   })
 
-  it('高级商店策略校验不写配置，最终高级模式必须保留有效脚本', () => {
-    const {dispatch} = createMockState()
-    const initial = dispatch('config.get', {instance: 'demo-main'})
-    const invalid = dispatch('shop_strategy.validate', {
-      instance: 'demo-main', task: 'EventShop', script: 'os.execute("bad")',
-    })
-    expect(invalid).toMatchObject({valid: false, diagnostics: [{code: 'forbidden_call', message: '不允许调用 os.execute', line: 1, column: 1}]})
-    expect(dispatch('shop_strategy.validate', {instance: 'demo-main', task: 'EventShop', script: ''})).toEqual({valid: true, diagnostics: []})
-    expect(dispatch('config.get', {instance: 'demo-main'})).toEqual(initial)
 
-    expect(() => dispatch('config.patch', {
-      instance: 'demo-main', changes: [{path: 'EventShop.ShopAdvanced.Script', value: 'os.execute("bad")'}],
-    })).toThrow(/不允许调用 os.execute/)
-    expect(dispatch('config.get', {instance: 'demo-main'})).toEqual(initial)
-
-    expect(() => dispatch('config.patch', {
-      instance: 'demo-main', changes: [{path: 'EventShop.ShopAdvanced.Mode', value: 'advanced'}],
-    })).toThrow(/需要先保存非空且有效的策略脚本/)
-    expect(dispatch('config.get', {instance: 'demo-main'})).toEqual(initial)
-
-    const script = 'return shop.plan { candidates = candidates:take(0) }'
-    const saved = dispatch('config.patch', {
-      instance: 'demo-main',
-      changes: [
-        {path: 'EventShop.ShopAdvanced.Mode', value: 'advanced'},
-        {path: 'EventShop.ShopAdvanced.Script', value: script},
-      ],
-    })
-    expect(saved.values.EventShop.ShopAdvanced).toEqual({Mode: 'advanced', Script: script})
-    expect(() => dispatch('config.patch', {
-      instance: 'demo-main', changes: [{path: 'EventShop.ShopAdvanced.Script', value: ''}],
-    })).toThrow(/需要先保存非空且有效的策略脚本/)
-    expect(dispatch('config.get', {instance: 'demo-main'})).toEqual(saved)
-  })
-
-  it('高级策略 mock 接受复杂分支模板并拒绝明显的非白名单调用', () => {
-    const {dispatch} = createMockState()
-    const valid = `local pool = candidates:where(function(item)
-  return item.tier == 't4' and item.available
-end):score(function(item)
-  return 100 - item.price
-end)
-if context.domain == 'event' then
-  return shop.plan { reserve = { Pt = 2 }, candidates = pool:cap('key', 'Cube', 1):take(20) }
-else
-  return shop.plan { candidates = candidates:take(0) }
-end`
-    expect(dispatch('shop_strategy.validate', {instance: 'demo-main', task: 'EventShop', script: valid})).toEqual({valid: true, diagnostics: []})
-    expect(dispatch('shop_strategy.validate', {
-      instance: 'demo-main', task: 'EventShop',
-      script: 'return shop.plan { candidates = candidates:where(function(item) return math.abs(item.price) > 0 end):take(1) }',
-    })).toMatchObject({valid: false, diagnostics: [{code: 'forbidden_call', message: '不允许调用 math.abs'}]})
-  })
 
   it('统计服务提供完整的 9 种资源、5 种大世界趋势及全部分类明细，空实例返回空数据', () => {
     const {dispatch} = createMockState()

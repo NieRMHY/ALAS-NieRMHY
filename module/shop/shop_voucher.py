@@ -27,14 +27,6 @@ TEMPLATE_VOUCHER_ICON = Template('./assets/shop/cost/Voucher.png')
 
 
 class VoucherShop(ShopClerk, ShopStatus):
-    """代币商店处理器（大世界商店）。
-
-    通过模板匹配定位代币图标来动态计算商品网格，
-    结合过滤器配置自动购买代币商店商品。
-    支持普通购买流程和单次购买日志档案两种模式。
-
-    Pages: in: page_shop (voucher shop tab)
-    """
     @cached_property
     def shop_filter(self):
         """获取凭证商店过滤器。
@@ -43,10 +35,6 @@ class VoucherShop(ShopClerk, ShopStatus):
             str: 过滤器字符串
         """
         return voucher_redirect(self.config.OpsiVoucher_Filter.strip())
-
-    def shop_strategy_domain(self):
-        """凭证商店使用独立策略域，避免与普通商店混用预算。"""
-        return 'opsi_voucher'
 
     def _get_vouchers(self):
         """检测截图中的凭证图标位置。
@@ -180,23 +168,6 @@ class VoucherShop(ShopClerk, ShopStatus):
         logger.info(f'凭证: {self._currency}')
         return self._currency
 
-    @staticmethod
-    def shop_strategy_stock(item):
-        """凭证商店会在购买弹窗复核库存，策略允许多件计划。"""
-        return 99
-
-    @staticmethod
-    def shop_strategy_max_quantity(item):
-        """获取商品单次允许购买的最大数量。
-
-        Args:
-            item: 待购买商品对象。
-
-        Returns:
-            int: 允许购买的最大数量（凭证商店固定返回 99）。
-        """
-        return 99
-
     def shop_interval_clear(self):
         """清除购买界面相关按钮的点击间隔。
 
@@ -251,16 +222,12 @@ class VoucherShop(ShopClerk, ShopStatus):
             item: 待购买的商品对象。
             skip_first_screenshot (bool): 是否跳过首次截图。默认 True。
 
-        Returns:
-            bool: 购买是否成功。
         """
         success = False
         confirmed_purchase = False
-        if self.shop_strategy_enabled():
-            # 未出现数量选择框时，游戏只会执行一次兑换确认。
-            item._shop_strategy_executed_quantity = min(
-                getattr(item, '_shop_strategy_quantity', 1), 1,
-            )
+        from module.statistics.resource_tracking import receipt_totals
+        receipts = receipt_totals(self.config)
+        item._resource_purchase_quantity = 1
         self.shop_interval_clear()
 
         while 1:
@@ -283,8 +250,7 @@ class VoucherShop(ShopClerk, ShopStatus):
                 continue
             if self.shop_purchase_result_handle():
                 self.interval_reset(BACK_ARROW)
-                success = True
-                confirmed_purchase = True
+                success = confirmed_purchase = True
                 continue
             if self.shop_obstruct_handle():
                 self.interval_reset(BACK_ARROW)
@@ -295,9 +261,12 @@ class VoucherShop(ShopClerk, ShopStatus):
                 success = True
                 continue
 
-            # 结束条件
+            # End
             if success and self.appear(BACK_ARROW, offset=(30, 30)):
-                return confirmed_purchase if self.shop_strategy_enabled() else True
+                if confirmed_purchase:
+                    from module.statistics.resource_tracking import record_purchase
+                    record_purchase(self.config, item, item._resource_purchase_quantity, receipts)
+                break
 
     def run(self):
         """运行凭证商店购买流程。
@@ -306,24 +275,24 @@ class VoucherShop(ShopClerk, ShopStatus):
 
         按照过滤器配置购买凭证商店商品，自动翻页直到列表底部。
         """
-        # 过滤器为空时直接退出
-        if not self.shop_filter and not self.shop_strategy_enabled():
+        # Base case; exit run if filter empty
+        if not self.shop_filter:
             return
 
-        # 调用时应已在凭证商店界面
-        logger.hr('[商店-代币] 代币商店', level=1)
+        # When called, expected to be in
+        # correct Voucher Shop interface
+        logger.hr('Voucher Shop', level=1)
         self.wait_until_voucher_appear()
 
-        # 执行购买操作
+        # Execute buy operations
         VOUCHER_SHOP_SCROLL.set_top(main=self)
         while 1:
             self.shop_buy()
             if VOUCHER_SHOP_SCROLL.at_bottom(main=self):
-                logger.info('[商店-代币] 代币商店到达底部，停止')
+                logger.info('Voucher Shop reach bottom, stop')
                 break
             else:
                 VOUCHER_SHOP_SCROLL.next_page(main=self)
-                self.shop_strategy_reset_inventory()
                 del_cached_property(self, 'shop_grid')
                 del_cached_property(self, 'shop_voucher_items')
                 continue

@@ -1,4 +1,4 @@
-"""困难图自动配队（推荐配队）在舰队准备阶段的回归测试。
+"""舰队准备阶段的回归测试（困难图推荐配队、跳过编队检测时的按钮校准）。
 
 全程内存操作，不读取实例配置，也不连接设备。
 """
@@ -7,10 +7,14 @@ import unittest
 from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
+import numpy as np
+
 from module.config import server as server_module
 from module.exception import HardNotSatisfied
+from module.handler.assets import AUTO_SEARCH_SET_ALL, AUTO_SEARCH_SET_BOSS, \
+    AUTO_SEARCH_SET_MOB, AUTO_SEARCH_SET_STANDBY
 from module.map import map_fleet_preparation
-from module.map.assets import RECOMMEND_A, RECOMMEND_B, RECOMMEND_C
+from module.map.assets import FLEET_1_CLEAR, RECOMMEND_A, RECOMMEND_B, RECOMMEND_C
 from module.map.map_fleet_preparation import FleetPreparation
 from tests.test_farming_combat_config import make_config
 
@@ -139,6 +143,44 @@ class RecommendFleetTests(unittest.TestCase):
             self.assertFalse(instance.fleet_preparation())
 
         instance.appear_then_click.assert_not_called()
+
+
+class SkipPreparationTests(unittest.TestCase):
+    """跳过编队检测（Fleet_SkipPreparation）时，按钮校准仍须执行。"""
+
+    def test_skip_preparation_still_calibrates_auto_search_buttons(self):
+        """提前返回不应跳过 load_offset：自动搜索设置扫描依赖它，缺了就整排扫不到高亮。"""
+        config = make_config('WarArchives', Campaign={'UseRecommendFleet': False})
+        config.override(
+            Fleet_Fleet1=1, Fleet_Fleet2=2, Submarine_Fleet=0, Fleet_SkipPreparation=True)
+        instance = object.__new__(FleetPreparation)
+        instance.config = config
+        instance.device = SimpleNamespace(click=Mock(), screenshot=Mock(), sleep=Mock())
+        instance.map_fleet_checked = False
+        instance.map_is_hard_mode = False
+
+        def appear(button, offset=(0, 0), **kwargs):
+            if button is FLEET_1_CLEAR:
+                # 模拟 W15/16 章新布局：清空按钮整体上移 44px
+                button._button_offset = tuple(np.array(button._button) + (0, -44, 0, -44))
+                return True
+            return False
+
+        instance.appear = Mock(side_effect=appear)
+
+        try:
+            self.assertTrue(instance.fleet_preparation())
+            # 跳过编队本身不点击界面
+            instance.device.click.assert_not_called()
+            # 四个舰队分工按钮必须已按清空按钮的实测位移校准
+            for button in (AUTO_SEARCH_SET_MOB, AUTO_SEARCH_SET_BOSS,
+                           AUTO_SEARCH_SET_ALL, AUTO_SEARCH_SET_STANDBY):
+                self.assertEqual(button.button[1], button.area[1] - 44)
+        finally:
+            FLEET_1_CLEAR.clear_offset()
+            for button in (AUTO_SEARCH_SET_MOB, AUTO_SEARCH_SET_BOSS,
+                           AUTO_SEARCH_SET_ALL, AUTO_SEARCH_SET_STANDBY):
+                button.clear_offset()
 
 
 if __name__ == '__main__':

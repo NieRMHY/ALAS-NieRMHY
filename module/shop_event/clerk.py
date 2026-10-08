@@ -7,6 +7,7 @@
 
 Pages: in: EVENT_SHOP
 """
+
 import cv2
 
 from module.base.button import ButtonGrid
@@ -80,19 +81,6 @@ class EventShopClerk(EventShopUI):
         return event_shop_items
 
     def event_shop_get_items(self, scroll_pos=None):
-        """获取当前可见屏幕中的活动商店物品列表。
-
-        自动检测网格并识别名称、价格、库存等属性，若出现异常计数会重试识别。
-
-        Args:
-            scroll_pos (float, optional): 关联的滚动条纵向相对位置。默认为 None。
-
-        Returns:
-            list[EventShopItem]: 当前视野内识别出的物品列表。
-
-        Raises:
-            ItemNotFoundError: 多次重试后仍存在计数识别异常的物品。
-        """
         self.ensure_no_info_bar()
         for attempt in range(3):
             self.event_shop_items.grids = self._get_event_shop_grid()
@@ -101,26 +89,26 @@ class EventShopClerk(EventShopUI):
             self.event_shop_items.predict(self.device.image, name=True, amount=True, cost=False,
                                           price=True, tag=True, counter=True, scroll_pos=scroll_pos)
             shop_items = self.event_shop_items.items
-            # OCR 识别失败时使用 0/0；正常售罄计数为 0/N。
+            # Invalid OCR uses 0/0; a valid sold-out counter is 0/N.
             invalid = [item for item in shop_items if item.count == 0 and item.total_count == 0]
             if not invalid:
                 break
             if attempt >= 2:
-                message = f'扫描 {attempt + 1} 次后仍存在无效的活动商店计数: {[str(item) for item in invalid]}'
+                message = f'Invalid event shop counter after {attempt + 1} scans: {[str(item) for item in invalid]}'
                 logger.error(message)
                 raise ItemNotFoundError(message)
-            logger.warning(f'活动商店物品计数无效，重试中: {[str(item) for item in invalid]}')
+            logger.warning(f'Invalid event shop counter, retrying: {[str(item) for item in invalid]}')
             self.device.screenshot()
 
         if len(shop_items):
             min_row = self.event_shop_items.grids[0, 0].area[1]
             row = [str(item) for item in shop_items if item.button[1] == min_row]
-            logger.info(f'[活动商店-购买] 第1行: {row}')
+            logger.info(f'Shop row 1: {row}')
             row = [str(item) for item in shop_items if item.button[1] != min_row]
-            logger.info(f'[活动商店-购买] 第2行: {row}')
+            logger.info(f'Shop row 2: {row}')
             return shop_items
         else:
-            logger.info('未找到商店物品')
+            logger.info('No shop items found')
             return []
 
     def scan_all(self):

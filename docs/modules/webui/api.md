@@ -4,6 +4,8 @@
 
 ## 1. 模块概述
 
+`statistics.resourceFlows` 是资源管理的只读查询方法，参数模型为 `ResourceFlowsParams`，`resource_service.py` 核验实例、日期与分页后委托本地资源账本聚合，并补充可靠仪表盘及仓库库存。它不访问设备或启动游戏；石油控制设置继续通过原有配置 API 读写。数据与导出快照语义见 [资源管理](resource-management.md)。
+
 module/api 是 React WebUI 的全部后端。浏览器加载 `http://{host}:{port}` 后，页面资源由静态文件服务提供，而之后的一切业务——读配置、改配置、启动调度器、看日志、看截图、读统计、管理更新——都通过同一条 `/api/v1/ws` WebSocket 连接完成。这个「业务全走 WS」的决策是模块的设计核心：
 
 - **单一通道**：认证、限流、背压、请求去重集中在一个会话对象里实现，不需要每个 HTTP 端点重复一套防护；服务器推送事件（实例状态、日志、截图帧）与请求响应复用同一条连接，避免 HTTP 轮询。
@@ -171,7 +173,6 @@ flowchart TD
 | [配置系统](../config.md) | `args.json`/`menu.json`/`i18n` 作为校验依据与下发数据；`config_transaction` 跨进程写锁 |
 | [调度器](../entry/alas.md) | `scheduler.start`/`tasks.run` 最终拉起的进程 |
 | `module/statistics/*` | 资源时间线、大世界月度、委托收益、舰船经验、掉落缓存 |
-| `module/shop_strategy` | 高级商店策略的静态校验（不执行脚本） |
 | `deploy/atomic` | 配置与 `password.txt` 的原子写 |
 
 ## 8. 数据流

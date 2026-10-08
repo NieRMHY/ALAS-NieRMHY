@@ -258,6 +258,7 @@ WebUI 涉及三类配置，读写路径与生效时机各不相同：
 
 关键关联：
 
+- 背景与透明效果由应用的背景设置和玻璃／普通材质决定，不随 Windows 透明效果开关或 `prefers-reduced-transparency` 降级；高对比度、强制颜色及减少动画的现有降级规则仍保留。
 - `config/deploy.yaml` 的 `Webui.WebuiPort`（默认 25548）、`Webui.WebuiHost`、`Webui.WebuiSSLKey/SSLCert` 决定监听；CLI 参数优先。`Update.EnableReload` 决定是否有热重载监督。
 - `Webui.Run`（或 CLI `--run`）列出启动时自动运行的实例，由应用 lifespan 消费。
 - 公网监听且未设密码时自动生成 32 位随机密码，写入根目录 `password.txt` 并回写部署配置；本机连接免密。

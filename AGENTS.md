@@ -42,19 +42,6 @@ AzurPilot 是面向安卓模拟器的碧蓝航线自动化框架，支持 CN/EN/
 
 先定位相关实现；需要背景时再打开对应文档。小范围文案或局部修改不要求通读架构。模块文档位于 [docs/modules/](docs/modules/README.md)（按模块职责组织的 20 节标准文档，入口见其索引）；目录、依赖和行为以当前代码、清单及 CI 为准。
 
-| 涉及的工作 | 实现与参考入口 |
-| --- | --- |
-| 服务边界、跨模块改动 | [目录与任务映射](docs/modules/overview/directory-map.md)、[编码规范与设计模式](docs/modules/overview/conventions.md)、[调度器](docs/modules/entry/alas.md) |
-| 调度、失败恢复、任务派发 | `alas.py`、[调度器](docs/modules/entry/alas.md)、[运行时服务](docs/modules/webui/runtime.md) |
-| 配置定义、迁移、热重载 | `module/config/`、[配置系统](docs/modules/config.md)，以及下方配置生成约束 |
-| WebUI、接口、运行进程 | `gui.py`、[WebUI 总览](docs/modules/webui/index.md)、[API 服务](docs/modules/webui/api.md)、[运行时服务](docs/modules/webui/runtime.md)、[frontend/README.md](frontend/README.md)、[frontend/API.md](frontend/API.md) |
-| MCP 集成 | `mcp_server_sse.py`、[MCP SSE 服务器](docs/modules/entry/mcp-server.md) |
-| 游戏页面、弹窗、识别资源 | [UI 导航](docs/modules/ui.md)、[处理器层](docs/modules/handler.md)、[基础层](docs/modules/base/index.md) |
-| 设备、截图或 OCR | [设备层](docs/modules/device.md)、[OCR 系统](docs/modules/ocr.md) |
-| 战斗、地图、活动适配 | `campaign/` 下相近关卡、[战役执行](docs/modules/campaign.md)、[战斗系统](docs/modules/combat.md)、[地图系统与检测](docs/modules/map.md) |
-| 大世界或具体游戏功能 | [大世界核心](docs/modules/os/index.md)、[大世界辅助模块](docs/modules/os/auxiliary.md)、[其他游戏功能](docs/modules/game/misc.md) |
-| 构建、部署或 CI | `deploy/`、[.github/workflows/ci.yml](.github/workflows/ci.yml) |
-
 ## 游戏交互约束
 
 游戏流程采用持续的「截图 → 识别 → 操作」状态循环。用当前画面的正向状态确认退出，点击后继续循环获取新截图；不要用固定休眠猜测界面已就绪。
@@ -112,9 +99,7 @@ def some_function(self, skip_first_screenshot=True):
 
 ## 验证与交付
 
-根据行为影响选择验证，不因修改一个文件就默认运行全部检查：
-
-- 前端改动按影响选择类型检查、相关单元测试和构建；交互或布局变化还需浏览器验证。Playwright 主配置使用 `tests/serve_frontend.py` 的临时配置并禁止真实游戏进程，运行前需有最新前端构建；模拟服务测试使用独立 mock。
+- 修改过程中优先运行本次改动直接相关的测试及必要的关联模块测试，不在每次修改后重跑全量套件。非大规模重构且实际行为影响少于三个模块时不跑全量；仅在用户明确要求、大规模重构或实际行为影响至少三个模块时考虑扩大范围。生成文件、翻译、文档数量不计为行为模块数量；针对性验证通过后，只在新增修改、失败或尚未验证的关联风险出现时追加检查。
 
 AI 自行创建 PR 或执行任何涉及提 PR 的操作时，必须按 [.github/PULL_REQUEST_TEMPLATE.md](.github/PULL_REQUEST_TEMPLATE.md) 模板填写：如实勾选变更类型与代码质量确认项（未执行的检查不勾选），并在描述中说明变更原因、验证结果与相关 Issue。描述保持简洁（标题 + 3–4 条要点），不必逐项展开模板，复杂细节仅在必要时补充。
 

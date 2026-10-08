@@ -10,6 +10,7 @@
 
 FleetOperator 类封装了单个舰队槽位的操作逻辑，
 支持舰队的激活、停用和状态检测。
+下拉菜单的选项位置不写死，由 FleetBarDetector 在每轮截图上动态检测。
 
 继承自 InfoHandler，可处理准备界面中的弹窗。
 """
@@ -17,7 +18,6 @@ FleetOperator 类封装了单个舰队槽位的操作逻辑，
 import numpy as np
 from scipy import signal
 
-from module.base.button import Button
 from module.base.timer import Timer
 from module.base.utils import *
 from module.exception import HardNotSatisfied
@@ -28,6 +28,7 @@ from module.handler.assets import AUTO_SEARCH_SET_MOB, AUTO_SEARCH_SET_BOSS, \
 from module.handler.info_handler import InfoHandler
 from module.logger import logger
 from module.map.assets import *
+from module.map.fleet_bar import FleetBarDetector
 from module.ui_white.assets import POPUP_CONFIRM_WHITE
 
 
@@ -35,16 +36,13 @@ class FleetOperator:
     """单个舰队槽位的操作器。
 
     管理舰队准备界面中单个舰队槽位的选择、推荐和状态检测。
+    下拉菜单的选项不依赖固定坐标，由 FleetBarDetector 逐轮从截图检测。
 
     Attributes:
-        FLEET_BAR_SHAPE_Y (int): 舰队选择条的高度像素。
-        FLEET_BAR_MARGIN_Y (int): 舰队选择条的间距像素。
-        FLEET_BAR_ACTIVE_STD (int): 活跃状态的标准差阈值（活跃: 67, 非活跃: 12）。
         FLEET_IN_USE_STD (int): 使用中状态的标准差阈值（使用中: 52, 未使用: 3-6）。
+        OFFSET (tuple[int, int, int, int]): 检测舰队相关按钮时相对清空按钮的偏移搜索范围。
+        options (dict): 当前检测到的下拉菜单选项，键为舰队编号，值为 FleetOption。
     """
-    FLEET_BAR_SHAPE_Y = 33
-    FLEET_BAR_MARGIN_Y = 9
-    FLEET_BAR_ACTIVE_STD = 45  # Active: 67, inactive: 12.
     FLEET_IN_USE_STD = 27  # In use 52, not in use (3, 6).
 
     OFFSET = (-20, -80, 20, 5)
@@ -68,6 +66,7 @@ class FleetOperator:
         self._in_use = in_use
         self._hard_satisfied = hard_satisfied
         self.main = main
+        self.options = {}
 
         if main.appear(clear, offset=FleetOperator.OFFSET):
             choose.load_offset(clear)
@@ -77,43 +76,6 @@ class FleetOperator:
 
     def __str__(self):
         return str(self._choose)[:-7]
-
-    def parse_fleet_bar(self, image):
-        """解析下拉菜单图像以获取当前选中的舰队编号。
-
-        Args:
-            image (np.ndarray): 下拉菜单区域的截图。
-
-        Returns:
-            list[int]: 当前选中的舰队编号列表，范围 1 到 6。
-        """
-        width, height = image_size(image)
-        result = []
-        for index, y in enumerate(range(0, height, self.FLEET_BAR_SHAPE_Y + self.FLEET_BAR_MARGIN_Y)):
-            area = (0, y, width, y + self.FLEET_BAR_SHAPE_Y)
-            mean = get_color(image, area)
-            if np.std(mean, ddof=1) > self.FLEET_BAR_ACTIVE_STD:
-                result.append(index + 1)
-        logger.info('[地图-编队] 当前选择: %s' % str(result))
-        return result
-
-    def get_button(self, index):
-        """将舰队编号转换为下拉菜单上的对应点击按钮对象。
-
-        Args:
-            index (int): 舰队编号，范围 1 到 6。
-
-        Returns:
-            Button: 对应舰队槽位的按钮实例。
-        """
-        bar = self._bar.button
-        area = area_offset(area=(
-            0,
-            (self.FLEET_BAR_SHAPE_Y + self.FLEET_BAR_MARGIN_Y) * (index - 1),
-            bar[2] - bar[0],
-            (self.FLEET_BAR_SHAPE_Y + self.FLEET_BAR_MARGIN_Y) * (index - 1) + self.FLEET_BAR_SHAPE_Y
-        ), offset=(bar[0:2]))
-        return Button(area=(), color=(), button=area, name='%s_INDEX_%s' % (str(self._bar), str(index)))
 
     def allow(self):
         """判断当前舰队槽位是否允许选择与编辑。
@@ -160,7 +122,7 @@ class FleetOperator:
         if self.is_hard_satisfied() is False:
             stage = self.main.config.Campaign_Name
             logger.critical(f'[Map] 关卡 "{stage}" 是困难模式，'
-                            f'请在运行 Alas 之前在游戏中准备好您的舰队 "{str(self)}"，'
+                            f'请在运行 AzurPilot 之前在游戏中准备好您的舰队 "{str(self)}"，'
                             f'或在战斗设置中开启「自动配队」')
             raise HardNotSatisfied
 
@@ -216,6 +178,14 @@ class FleetOperator:
                 main.device.click(self._choose)
                 click_timer.reset()
 
+    def update_options(self):
+        """重新检测下拉菜单的舰队选项。
+
+        每次都用当前截图新建检测器，确保选项不是上一次检测的缓存。
+        """
+        det = FleetBarDetector(self.main, bar=self._bar, choose=self._choose)
+        self.options = det.options
+
     def open(self, skip_first_screenshot=True):
         """展开舰队选择下拉菜单。
 
@@ -224,14 +194,16 @@ class FleetOperator:
         """
         main = self.main
         click_timer = Timer(3, count=6)
+        # TODO: 为 FleetBarDetector 补充测试
         while 1:
             if skip_first_screenshot:
                 skip_first_screenshot = False
             else:
                 main.device.screenshot()
+                self.update_options()
 
             # 结束判定
-            if self.bar_opened():
+            if self.options:
                 break
 
             # 点击展开
@@ -252,9 +224,10 @@ class FleetOperator:
                 skip_first_screenshot = False
             else:
                 main.device.screenshot()
+                self.update_options()
 
             # 结束判定
-            if not self.bar_opened():
+            if not self.options:
                 break
 
             # 点击折叠
@@ -263,41 +236,46 @@ class FleetOperator:
                 click_timer.reset()
 
     def click(self, index, skip_first_screenshot=True):
-        """在下拉菜单中点击选择指定舰队并等待菜单收起。
+        """在下拉菜单中点击选择指定舰队，并等待菜单收起。
 
         Args:
             index (int): 目标舰队编号，范围 1 到 6。
             skip_first_screenshot (bool, optional): 是否跳过首次截图。默认为 True。
         """
         main = self.main
-        button = self.get_button(index)
         click_timer = Timer(3, count=6)
         while 1:
             if skip_first_screenshot:
                 skip_first_screenshot = False
             else:
                 main.device.screenshot()
+                self.update_options()
 
-            if not self.bar_opened():
+            if not self.options:
                 # 结束判定
                 if self.in_use():
                     break
                 else:
                     self.open()
 
+            button = self.options.get(index)
+            if button is None:
+                if click_timer.reached():
+                    logger.error(f'[地图-编队] 找不到舰队选项 {index}，无法切换')
+                    self.close()
+                    break
+                else:
+                    # 刚刚点过：点击动画可能盖住选项，菜单还没那么快收起
+                    continue
+            if button.selected:
+                logger.info(f'[地图-编队] 舰队选项 {index} 已被选中')
+                self.close()
+                break
+
             # 点击对应项
             if click_timer.reached():
                 main.device.click(button)
                 click_timer.reset()
-
-    def selected(self):
-        """获取下拉菜单中当前选中的舰队编号列表。
-
-        Returns:
-            list[int]: 当前选中的舰队编号列表（1 到 6）。
-        """
-        data = self.parse_fleet_bar(self.main.image_crop(self._bar.button, copy=False))
-        return data
 
     def in_use(self):
         """检测当前槽位是否已配置并使用了舰队。
@@ -322,28 +300,15 @@ class FleetOperator:
         gray = rgb2gray(image)
         return np.std(gray.flatten(), ddof=1) > self.FLEET_IN_USE_STD
 
-    def bar_opened(self):
-        """检测舰队下拉菜单是否已处于展开状态。
-
-        Returns:
-            bool: 下拉菜单是否已展开。
-        """
-        # 检查菜单区域最右列的亮度
-        luma = rgb2gray(self.main.image_crop(self._bar.button, copy=False))[:, -1]
-        # 舰队准备界面展开时亮度大约在 146~155
-        return np.sum(luma > 168) / luma.size > 0.5
-
     def ensure_to_be(self, index):
         """确保当前槽位切换为指定的舰队。
 
         Args:
             index (int): 目标舰队编号，范围 1 到 6。
         """
+        logger.info(f'[地图-编队] {self} 设置为 {index}')
         self.open()
-        if index in self.selected():
-            self.close()
-        else:
-            self.click(index)
+        self.click(index)
 
 
 class FleetPreparation(InfoHandler):
@@ -396,13 +361,10 @@ class FleetPreparation(InfoHandler):
         if self.map_fleet_checked:
             return False
 
-        # 跳过编队检测：信任游戏内当前预选的舰队，不操作下拉菜单
-        # 适用于舰队槽位未完全解锁的账号，避免下拉菜单检测卡死
-        if self.config.Fleet_SkipPreparation:
-            logger.info('[地图-编队] 跳过舰队准备 (Fleet_SkipPreparation=True), '
-                        '使用游戏中当前预选的舰队')
-            return True
-
+        # 校准自动搜索设置按钮（AUTO_SEARCH_SET_*）的坐标：以清空按钮为锚点。
+        # enter_map() 在 fleet_preparation() 之后紧接着就会调用 handle_auto_search_setting()，
+        # 这里只做识别与内存偏移、不点击界面，因此跳过编队检测时也必须执行，
+        # 否则 W15/16 章等新布局下会扫不到高亮项（误报「未找到活跃的自动搜索设置」）
         if self.appear(FLEET_1_CLEAR, offset=FleetOperator.OFFSET):
             AUTO_SEARCH_SET_MOB.load_offset(FLEET_1_CLEAR)
             AUTO_SEARCH_SET_BOSS.load_offset(FLEET_1_CLEAR)
@@ -411,6 +373,13 @@ class FleetPreparation(InfoHandler):
         if self.appear(SUBMARINE_CLEAR, offset=FleetOperator.OFFSET):
             AUTO_SEARCH_SET_SUB_AUTO.load_offset(SUBMARINE_CLEAR)
             AUTO_SEARCH_SET_SUB_STANDBY.load_offset(SUBMARINE_CLEAR)
+
+        # 跳过编队检测：信任游戏内当前预选的舰队，不操作下拉菜单
+        # 适用于舰队槽位未完全解锁的账号，避免下拉菜单检测卡死
+        if self.config.Fleet_SkipPreparation:
+            logger.info('[地图-编队] 跳过舰队准备 (Fleet_SkipPreparation=True), '
+                        '使用游戏中当前预选的舰队')
+            return True
 
         fleet_1 = FleetOperator(
             choose=FLEET_1_CHOOSE, advice=FLEET_1_ADVICE, bar=FLEET_1_BAR, clear=FLEET_1_CLEAR,

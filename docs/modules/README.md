@@ -70,6 +70,7 @@
 | [webui/api.md](webui/api.md) | API 服务（WebSocket v1） |
 | [webui/runtime.md](webui/runtime.md) | 运行时服务与进程管理 |
 | [webui/frontend.md](webui/frontend.md) | 前端（React + TypeScript + Vite） |
+| [webui/resource-management.md](webui/resource-management.md) | 资源管理：任务来源、用途、库存对账、桑基图与石油控制 |
 | [webui/frontend-state.md](webui/frontend-state.md) | 前端状态机制：保存队列、草稿恢复与连接状态 |
 | [webui/accounts.md](webui/accounts.md) | 实例账号管理：保险库加密、TPM/DPAPI 密钥与应用私有目录一致性 |
 

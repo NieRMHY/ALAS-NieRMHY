@@ -30,7 +30,7 @@
   - 相机控制：滑动、聚焦、全图扫描、边缘定位、坐标转换（`Camera`）。
   - 舰队行走与事件处理：点击、战斗、伏击、神秘格、回合制移动敌人（`Fleet`）。
   - 敌人清除策略：按规模/类型/距离选目标、清路障、清 Boss、双舰队协作（`Map`）。
-  - 进图与舰队准备界面操作（`MapOperation`、`FleetPreparation`）、潜艇出击规划（`SubmarineAdvanced`）。
+  - 进图与舰队准备界面操作（`MapOperation`、`FleetPreparation`、`FleetBarDetector`）、潜艇出击规划（`SubmarineAdvanced`）。
 
 ### 不负责
 
@@ -51,7 +51,8 @@ module/
 │   ├── fleet.py                # Fleet：行走、回合、舰队追踪、双舰队协作
 │   ├── camera.py               # Camera：滑动、扫描、边缘定位、坐标转换
 │   ├── map_operation.py        # MapOperation：进图/撤退/模式切换
-│   ├── map_fleet_preparation.py# 舰队准备界面（下拉选队、困难校验、推荐配队）
+│   ├── map_fleet_preparation.py# 舰队准备界面（检测式选队、困难校验、推荐配队）
+│   ├── fleet_bar.py            # FleetBarDetector：舰队下拉菜单选项检测（轮廓 + 颜色掩膜）
 │   ├── submarine.py            # 潜艇高级出击规划
 │   ├── utils.py                # 坐标转换、相机位计算、移动敌人匹配
 │   └── assets.py               # 进图/编队界面按钮（生成产物）

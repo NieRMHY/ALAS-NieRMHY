@@ -160,12 +160,10 @@ class PortShop(OSStatus, OSShopUI, Selector, MapEventHandler):
             list[Item]: 扫描到的所有物品列表。
         """
         items = []
-        # 使用 set 记录已扫描物品的键，实现 O(1) 去重
-        scanned_keys = set()
         self.device.click_record.clear()
 
         for i in range(4):
-            logger.hr(f'大世界商店+扫描 {i}')
+            logger.hr(f'OpsiShop scan {i}')
             self.os_shop_side_navbar_ensure(upper=i + 1)
             pre_pos, cur_pos = self.init_slider()
 
@@ -176,23 +174,19 @@ class PortShop(OSStatus, OSShopUI, Selector, MapEventHandler):
                 for _ in range(3):
                     _items = self.os_shop_get_items(i, cur_pos)
                     if not len(_items) or any(not item.is_known_item() for item in _items):
-                        logger.warning('[大世界商店-港口] 大世界商店+为空或物品为空，正在确认')
+                        logger.warning('Empty OS shop or empty items, confirming')
                         self.device.sleep((0.3, 0.5))
                         self.device.screenshot()
                         continue
                     else:
-                        logger.info(f'[大世界商店-港口] 在商店 {i + 1} 的位置 {cur_pos:.2f} 找到 {len(_items)} 个物品')
+                        logger.info(f'Found {len(_items)} items in shop {i + 1} at pos {cur_pos:.2f}')
                         break
-                # 始终添加物品，即使最后的物品列表包含未知物品
-                # 这样可以扫描到所有已知物品
-                for item in _items:
-                    key = (item.name, item.price, item.shop_index)
-                    if key not in scanned_keys:
-                        scanned_keys.add(key)
-                        items.append(item)
+                # always add items, even if last item list contains unknown items
+                # so any known items can be scanned
+                items += _items
 
                 if OS_SHOP_SCROLL.at_bottom(main=self):
-                    logger.info('[大世界商店-港口] 大世界商店+已滚动到底部，停止扫描')
+                    logger.info('OS shop reach bottom, stop')
                     break
                 else:
                     OS_SHOP_SCROLL.next_page(main=self, page=0.5, skip_first_screenshot=False)

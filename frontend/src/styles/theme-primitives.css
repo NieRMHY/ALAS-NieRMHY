@@ -197,7 +197,7 @@ button:focus-visible, a:focus-visible, summary:focus-visible {outline-color: var
 .rail-queue-group.waiting {background: var(--theme-inset-bg); border-color: color-mix(in srgb, var(--theme-border) 42%, transparent)}
 .rail-task-item:hover {background: color-mix(in srgb, var(--theme-surface) 86%, transparent)}
 
-@media (prefers-reduced-transparency: reduce), (prefers-contrast: more), (forced-colors: active) {
+@media (prefers-contrast: more), (forced-colors: active) {
   .glass-material, .sidebar, .right-rail, .instance-menu, .task-submenu-flyout, .group-nav, .panel, .resource-card {background: var(--theme-surface); -webkit-backdrop-filter: none; backdrop-filter: none}
 }
 

@@ -4,11 +4,11 @@ import string
 import time
 from typing import Iterable, Union
 
-IS_WINDOWS = os.name == 'nt'
 # 其他进程正在读写时的最大重试次数，仅在 Windows 上生效
 WINDOWS_MAX_ATTEMPT = 5
 # 重试之间的基础等待时间（秒）
 WINDOWS_RETRY_DELAY = 0.05
+IS_WINDOWS = os.name == 'nt'
 
 
 def random_id():

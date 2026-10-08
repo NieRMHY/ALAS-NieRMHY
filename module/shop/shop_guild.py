@@ -12,11 +12,6 @@ from module.shop.ui import ShopUI
 
 
 class GuildShop_250814(ShopClerk, ShopUI, ShopStatus):
-    """舰队商店处理器 (2025-08-14 新 UI)。
-
-    Pages: in: page_shop (guild shop tab)
-    """
-
     shop_template_folder = './assets/shop/guild'
 
     @cached_property
@@ -28,7 +23,7 @@ class GuildShop_250814(ShopClerk, ShopUI, ShopStatus):
         """
         return self.config.GuildShop_Filter.strip()
 
-    # 2025-08-14 新 UI
+    # New UI in 2025-08-14
     @cached_property
     def shop_guild_items(self):
         """加载舰队商店商品模板和配置。
@@ -73,23 +68,6 @@ class GuildShop_250814(ShopClerk, ShopUI, ShopStatus):
         logger.info(f'[商店-舰队] 舰队币: {self._currency}')
         return self._currency
 
-    @staticmethod
-    def shop_strategy_stock(item):
-        """舰队商店可在选择弹窗读取真实库存，策略先保留较高上限。"""
-        return 99
-
-    @staticmethod
-    def shop_strategy_max_quantity(item):
-        """获取策略规划中单次购买数量上限。
-
-        Args:
-            item: 待购买商品对象。
-
-        Returns:
-            int: 允许购买的最大数量。
-        """
-        return 99
-
     def shop_interval_clear(self):
         """清除购买界面相关按钮的点击间隔。
 
@@ -124,23 +102,26 @@ class GuildShop_250814(ShopClerk, ShopUI, ShopStatus):
         按照过滤器配置购买舰队商店商品，支持刷新。
         刷新消耗 50 舰队币，T4 部件箱价格 60，余额不足 110 时跳过刷新。
         """
-        if not self.shop_filter and not self.shop_strategy_enabled():
+        # Base case; exit run if filter empty
+        if not self.shop_filter:
             return
 
-        logger.hr('[商店-舰队] 舰队商店', level=1)
+        # When called, expected to be in
+        # correct Guild Shop interface
+        logger.hr('Guild Shop', level=1)
 
-        # 刷新会额外消耗舰队币，但不属于高级脚本的购买计划。
-        refresh = self.config.GuildShop_Refresh and not self.shop_strategy_enabled()
+        # Execute buy operations
+        # Refresh if enabled and available
+        refresh = self.config.GuildShop_Refresh
         for _ in range(2):
             success = self.shop_buy()
             if not success:
                 break
             if refresh:
-                # 刷新消耗 50，T4 部件箱价格 60
+                # Refresh costs 50 and PlateT4 costs 60
                 if self._currency >= 110:
                     if self.shop_refresh():
-                        self.shop_strategy_reset_inventory()
                         continue
                 else:
-                    logger.info('[商店-舰队] 舰队币 < 110，跳过刷新')
+                    logger.info('Guild coins < 110, skip refreshing')
             break

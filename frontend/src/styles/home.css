@@ -370,7 +370,7 @@
 :root[data-material='glass'][data-theme='legacy-light'] .home-deck-link,
 :root[data-material='glass'][data-theme='legacy-dark'] .home-deck-link {border-color: rgb(255 255 255 / .42); background: rgb(255 255 255 / .14); color: #fff; -webkit-backdrop-filter: var(--theme-control-filter); backdrop-filter: var(--theme-control-filter)}
 [data-theme='light'] .home-deck-link:hover, [data-theme='dark'] .home-deck-link:hover {border-color: rgb(255 255 255 / .78); background: rgb(255 255 255 / .24); color: #fff}
-@media (prefers-reduced-transparency: reduce), (forced-colors: active) {
+@media (forced-colors: active) {
   .home-deck {color: var(--text); background: var(--surface-muted); text-shadow: none}
   .home-deck-link {border-color: var(--border); background: var(--surface); color: var(--text)}
 }
@@ -524,9 +524,9 @@
    否则它们按旧值算出来的高度会把整壳顶出视口，页面就能滚、接缝就露出来了。 */
 :root[data-tab-size] .app-shell.legacy-shell:has(.topbar-tab-size) {--legacy-page-nav-height: calc(56px * var(--row-scale, 1))}
 
-/* 拉开「栏底边线 → 实例名」这一段，三个新版主题一致。
+/* 「栏底边线 → 实例名」之间只留一小段空隙，三个新版主题一致。
    只给实例名加上外边距：顶栏高度、标签页位置、栏底边线都不动。 */
-:root[data-tab-size] .app-shell:not(.legacy-shell) .main-shell main .page-title {margin-top: 48px}
+:root[data-tab-size] .app-shell:not(.legacy-shell) .main-shell main .page-title {margin-top: 16px}
 /* 旧版族有材质轴，又没有 apple.css 那份皮肤，一级面在这里直接由契约键给出：
    玻璃材质是半透明加磨砂，普通材质被材质轴压成不透明、无滤镜。 */
 :root[data-theme='legacy-light'] .home-main,

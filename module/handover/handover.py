@@ -46,7 +46,13 @@ from datetime import datetime, timedelta, timezone
 
 import requests
 
+from module.base.runtime_params import (
+    HANDOVER_CONSUME_RETRY_MINUTES,
+    HANDOVER_MAINTAIN_CHECK_MINUTES,
+    HANDOVER_MAINTAIN_LEAD_MINUTES,
+)
 from module.base.timer import Timer
+from module.config.utils import read_run_param
 from module.base.utils import crop
 from module.campaign.run import CampaignRun
 from module.config.time_source import now as current_time
@@ -89,20 +95,14 @@ HANDOVER_BOOK_SECONDS = HANDOVER_BOOK_HOURS * 3600
 HANDOVER_WEEKDAYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']
 HANDOVER_WEEKDAY_NAMES = ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
 
-# 触发日当天还没开始时，隔多久再看一眼。直接用「推迟到次日」会跳到触发日之后，
-# 整周都错过一键消耗
-HANDOVER_CONSUME_RETRY_MINUTES = 30
+# 消耗重试、维护前提前量与维护核对间隔走 WebUI「运行参数」页
+# （RunParams.Handover），默认值集中在 module/base/runtime_params.py。
 
 # 停服维护时间接口，顶层是国服公告的聚合结果，servers 里按 cn/jp/en/tw 分别给出
 # maintenance_date(YYYY-MM-DD) 与 start_time(HH:MM)
 HANDOVER_MAINTAIN_API = 'https://api-blhx-maintain.nanoda.work/api/maintenance'
 # 接口里服务器时区的形状，如 `UTC+8`、`UTC-7`、`UTC+08:00`
 HANDOVER_MAINTAIN_TIMEZONE = re.compile(r'^UTC([+-])(\d{1,2})(?::?(\d{2}))?$')
-# 维护开始前多久跑最后一次作战委托
-HANDOVER_MAINTAIN_LEAD_MINUTES = 10
-# 委托次数为 0、只等维护时，这次没查到公告就隔这么久再查一次。
-# 查到了就不必重复查——今天有没有维护是确定的，下次运行直接排到第二天 0 点
-HANDOVER_MAINTAIN_CHECK_MINUTES = 120
 # 委托结束时间的初始值，表示脚本手上没有开过委托
 HANDOVER_COMMISSION_NONE = datetime(2020, 1, 1)
 
@@ -147,12 +147,15 @@ class OperationHandover(CampaignRun):
                     else f'否（{maintain_reason}）')
 
         if maintain_run:
-            run_at = maintain - timedelta(minutes=HANDOVER_MAINTAIN_LEAD_MINUTES)
+            lead_minutes = int(read_run_param(
+                self.config, 'Handover_MaintainLeadMinutes',
+                HANDOVER_MAINTAIN_LEAD_MINUTES, 2, 60))
+            run_at = maintain - timedelta(minutes=lead_minutes)
             if current_time() < run_at:
                 logger.info(f'[作战委托] 还没到维护前的运行时间，推迟到 {run_at}')
                 self.config.task_delay(target=run_at)
                 return
-            logger.info(f'[作战委托] 到维护前 {HANDOVER_MAINTAIN_LEAD_MINUTES} 分钟了，'
+            logger.info(f'[作战委托] 到维护前 {lead_minutes} 分钟了，'
                         f'作战次数拉满跑最后一次')
 
         # 委托次数为 0：这个任务平时没事可做，只在开启的定时功能触发时才动。
@@ -842,8 +845,11 @@ class OperationHandover(CampaignRun):
             return start, f'今天 {start} 的维护已经过去', True
 
         name = payload.get('name') or self.config.SERVER
+        lead_minutes = int(read_run_param(
+            self.config, 'Handover_MaintainLeadMinutes',
+            HANDOVER_MAINTAIN_LEAD_MINUTES, 2, 60))
         return start, (f'今天 {start} 停服维护（{name}），'
-                       f'维护前 {HANDOVER_MAINTAIN_LEAD_MINUTES} 分钟运行'), True
+                       f'维护前 {lead_minutes} 分钟运行'), True
 
     def handover_commission_end(self):
         """脚本上一次开的委托预计什么时候结束。
@@ -902,7 +908,9 @@ class OperationHandover(CampaignRun):
                 candidates.append(
                     (now + timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0))
             else:
-                candidates.append(now + timedelta(minutes=HANDOVER_MAINTAIN_CHECK_MINUTES))
+                candidates.append(now + timedelta(minutes=int(read_run_param(
+                    self.config, 'Handover_MaintainCheckMinutes',
+                    HANDOVER_MAINTAIN_CHECK_MINUTES, 15, 720))))
 
         if not candidates:
             return None
@@ -1167,9 +1175,12 @@ class OperationHandover(CampaignRun):
         """
         if delay is None:
             if self.handover_consume_all_book_waiting():
+                consume_retry = int(read_run_param(
+                    self.config, 'Handover_ConsumeRetryMinutes',
+                    HANDOVER_CONSUME_RETRY_MINUTES, 5, 240))
                 logger.warning(f'[作战委托] 本次未开始委托，一键消耗委托书今天还没触发，'
-                               f'{HANDOVER_CONSUME_RETRY_MINUTES} 分钟后再试')
-                self.config.task_delay(minute=HANDOVER_CONSUME_RETRY_MINUTES)
+                               f'{consume_retry} 分钟后再试')
+                self.config.task_delay(minute=consume_retry)
             else:
                 logger.warning('[作战委托] 本次未开始委托，推迟到下一个可用时间额度刷新')
                 self.config.task_delay(server_update=True)

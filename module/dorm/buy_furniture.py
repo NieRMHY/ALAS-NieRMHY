@@ -13,6 +13,8 @@ from module.combat.assets import GET_SHIP
 from module.config.time_source import now as current_time
 from module.dorm.assets import *
 from module.exercise.assets import EXERCISE_PREPARATION
+from module.base.runtime_params import CHECK_INTERVAL
+from module.config.utils import read_run_param
 from module.logger import logger
 from module.ocr.ocr import Digit
 from module.ui.assets import DORM_CHECK
@@ -21,7 +23,8 @@ from module.ui.ui import UI
 OCR_FURNITURE_COIN = Digit(OCR_DORM_FURNITURE_COIN, letter=(107, 89, 82), threshold=128, alphabet='0123456789', name='OCR_FURNITURE_COIN')
 OCR_FURNITURE_PRICE = Digit(OCR_DORM_FURNITURE_PRICE, letter=(255, 247, 247), threshold=64, alphabet='0123456789', name='OCR_FURNITURE_PRICE')
 
-CHECK_INTERVAL = 6  # 检查间隔天数（每 6 天检查一次）
+# 检查间隔（天）走 WebUI「运行参数」页（RunParams.UiWait），
+# 默认值集中在 module/base/runtime_params.py（界面等待域）。
 # 购买按钮映射
 FURNITURE_BUY_BUTTON = {
     "all": DORM_FURNITURE_BUY_ALL,
@@ -254,10 +257,12 @@ class BuyFurniture(UI):
 
         根据配置的检查间隔判断是否到期，到期则进入商店购买限时家具。
         """
+        check_days = int(read_run_param(
+            self.config, 'UiWait_BuyFurnitureCheckIntervalDays', CHECK_INTERVAL, 1, 30))
         logger.attr("上次运行时间", self.config.BuyFurniture_LastRun)
-        logger.attr("检查间隔", CHECK_INTERVAL)
+        logger.attr("检查间隔", check_days)
 
-        time_run = self.config.BuyFurniture_LastRun + timedelta(days=CHECK_INTERVAL)
+        time_run = self.config.BuyFurniture_LastRun + timedelta(days=check_days)
         logger.info(f"[宿舍-家具] 任务运行时间: {time_run}")
 
         if current_time().replace(microsecond=0) < time_run:

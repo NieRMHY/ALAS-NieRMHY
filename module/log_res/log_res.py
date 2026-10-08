@@ -138,7 +138,9 @@ class LogRes:
         from module.config.time_source import now
         task = getattr(getattr(self.config, 'task', None), 'command', None)
         source = self.__dict__.get('_observation_source') or task or 'task_observation'
-        ProgramStore().observe(instance, name, value, now().isoformat(sep=' '), source)
+        ProgramStore(Path(filepath_config(instance)).parent).observe(instance, name, value, now().isoformat(sep=' '), source)
+        from module.statistics.resource_flow import observe
+        observe(self.config, name, current, source)
 
     def _record_all_resource_snapshot(self, overrides=None):
         """读取当前所有 Dashboard 资源值并记录快照。

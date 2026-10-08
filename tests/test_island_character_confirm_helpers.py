@@ -88,6 +88,8 @@ class StubIsland:
     confirm_selected_character_closed = Island.confirm_selected_character_closed
     click_selected_character_confirm = Island.click_selected_character_confirm
 
+    # read_run_param 对 None config 回退默认值,测试默认使用内置节奏
+    config = None
     def __init__(self, device):
         self.device = device
         self.interval_timer = {}

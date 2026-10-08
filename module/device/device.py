@@ -355,6 +355,8 @@ class Device(Screenshot, Control, AppControl, Input):
             super().screenshot()
 
         self._check_image_stuck()
+        from module.statistics.resource_flow import reward_frame
+        reward_frame(self.config, self.image)
         return self.image
 
     def dump_hierarchy(self) -> etree._Element:
@@ -532,7 +534,9 @@ class Device(Screenshot, Control, AppControl, Input):
             GameTooManyClickError: 点击频率异常。
         """
         count = collections.Counter(self.click_record).most_common(2)
-        if count[0][1] >= 12:
+        # S 经验结算可能等待动画结束，适当放宽但仍保留连击保护。
+        click_limit = 15 if count[0][0] == 'EXP_INFO_S' else 12
+        if count[0][1] >= click_limit:
             show_function_call()
             logger.warning(f'[设备-点击] 按钮点击次数过多: {count[0][0]}')
             logger.warning(f'[设备-点击] 点击历史: {[str(prev) for prev in self.click_record]}')

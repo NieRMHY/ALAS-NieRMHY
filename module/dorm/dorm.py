@@ -34,6 +34,8 @@ DORM_CAMERA_SWIPE = (300, 250)
 DORM_CAMERA_RANDOM = (-20, -20, 20, 20)
 OCR_SLOT = DigitCounter(OCR_DORM_SLOT, letter=(107, 89, 82), threshold=128, name='OCR_DORM_SLOT')
 OCR_BUY_FOOD_AMOUNT = Digit(OCR_DORM_BUY_FOOD_AMOUNT, letter=(96, 96, 100), threshold=128, name='OCR_DORM_BUY_FOOD_AMOUNT')
+OCR_BUY_OIL_COST = Digit(OCR_FUEL_COST, letter=(107, 89, 82), threshold=128, name='OCR_DORM_BUY_OIL_COST')
+TEMPLATE_DORM_OIL_COST = DORM_BUY_FOOD_CHECK.crop((0, 0, 28, 32), name='TEMPLATE_DORM_OIL_COST')
 
 
 class OcrDormFood(DigitCounter):
@@ -577,12 +579,18 @@ class RewardDorm(UI):
             out: DORM_FEED_CHECK
         """
         self.interval_clear(DORM_BUY_FOOD_CONFIRM)
+        purchase = self.dorm_oil_price()
+        sent = False
         for _ in self.loop():
             # 结束
             if self.match_template_color(DORM_FEED_CHECK, offset=(20, 20)):
+                if sent and purchase:
+                    from module.statistics.resource_flow import record
+                    record(self.config, {'Oil': -purchase[1], 'Food': purchase[0]}, '后宅购粮')
                 break
 
             if self.appear_then_click(DORM_BUY_FOOD_CONFIRM, offset=(20, 20), interval=5):
+                sent = True
                 continue
 
     def dorm_food_run(self, amount):
@@ -608,6 +616,113 @@ class RewardDorm(UI):
         self.dorm_buy_food(amount=amount)
         self.dorm_buy_food_confirm()
         self.dorm_feed_quit()
+
+    def dorm_oil_price(self):
+        """购买弹窗同时确认石油图标、数量和总价，拒绝钻石计价。"""
+        if not self.appear(TEMPLATE_DORM_OIL_COST, offset=(20, 20)):
+            return None
+        amount = OCR_BUY_FOOD_AMOUNT.ocr(self.device.image)
+        cost = OCR_BUY_OIL_COST.ocr(self.device.image)
+        if (not OCR_BUY_FOOD_AMOUNT.last_valid or not OCR_BUY_OIL_COST.last_valid
+                or amount <= 0 or cost <= 0 or cost % amount):
+            return None
+        return amount, cost
+
+    def dorm_oil_quantity(self, amount, unit_cost):
+        """有界调整数量；界面限制数量时使用已确认的较小数量。"""
+        self.appear(FOOD_PLUS, offset=(20, 20))
+        self.appear(FOOD_MINUS, offset=(20, 20))
+        previous = None
+        observation = None
+        for _ in self.loop(skip_first=False, timeout=30):
+            row = self.dorm_oil_price()
+            if row is None:
+                observation = None
+                continue
+            if row != observation:
+                observation = row
+                continue
+            current, cost = row
+            if cost != current * unit_cost:
+                return None
+            if current == amount or (current == previous and current < amount):
+                return current, cost
+            previous = current
+            observation = None
+            self.device.multi_click(FOOD_PLUS if current < amount else FOOD_MINUS,
+                                    n=min(abs(amount - current), 50), interval=(0.1, 0.15))
+        logger.warning('[宿舍-购粮] 数量调整超时，取消购买')
+        return None
+
+    def dorm_buy_oil_food(self, oil, target):
+        """为原调度清油购买以石油计价的食物，不修改日常后宅设置。
+
+        Args:
+            oil (int): 购买前可靠观察的石油。
+            target (int): 需要降到其以下的石油控制线。
+
+        Returns:
+            bool: 购买已确认并返回喂食页；实际消耗由调度器重新观察。
+
+        Pages:
+            in: 任意页面
+            out: page_dorm
+        """
+        from module.scheduler.resources import stable_read
+        self._oil_food_purchase = None
+        if oil < target or oil <= 500:
+            return False
+        self.ui_ensure(page_dormmenu)
+        self.handle_info_bar()
+        self.ui_goto(page_dorm, skip_first_screenshot=True)
+        self.dorm_feed_enter()
+        entered = False
+        for _ in self.loop(skip_first=False, timeout=10):
+            if self.appear(TEMPLATE_DORM_OIL_COST, offset=(20, 20)):
+                entered = True
+                break
+            if self.match_template_color(DORM_FEED_CHECK, offset=(20, 20), interval=3):
+                self.device.click(DORM_BUY_FOOD_ENTER)
+                continue
+            if self.handle_info_bar():
+                continue
+        if not entered:
+            logger.warning('[宿舍-购粮] 无法进入石油购粮弹窗')
+            self.dorm_feed_quit()
+            return False
+        row = stable_read(self, lambda: self.appear(TEMPLATE_DORM_OIL_COST, offset=(20, 20)), self.dorm_oil_price)
+        if row is None:
+            logger.warning('[宿舍-购粮] 无法可靠确认石油价格')
+            self.dorm_feed_quit()
+            return False
+        unit_cost = row[1] // row[0]
+        # 最小数量使余油严格低于目标，且不突破已有的 500 石油安全网。
+        amount = min((oil - target) // unit_cost + 1, (oil - 500) // unit_cost)
+        row = self.dorm_oil_quantity(amount, unit_cost) if amount > 0 else None
+        if row is None or row[1] > oil - 500:
+            self.dorm_feed_quit()
+            return False
+        logger.attr('石油控制-购粮数量', row[0])
+        logger.attr('石油控制-购粮花费', row[1])
+        confirmed = False
+        sent = False
+        for _ in self.loop(skip_first=False, timeout=10):
+            if self.match_template_color(DORM_FEED_CHECK, offset=(20, 20)):
+                confirmed = sent
+                break
+            stop = getattr(getattr(self, 'config', None), 'stop_event', None)
+            if stop and stop.is_set():
+                break
+            if self.appear(TEMPLATE_DORM_OIL_COST, offset=(20, 20)):
+                if self.appear_then_click(DORM_BUY_FOOD_CONFIRM, offset=(20, 20), interval=3):
+                    sent = True
+                    continue
+            if self.handle_info_bar():
+                continue
+        self.dorm_feed_quit()
+        if confirmed:
+            self._oil_food_purchase = row
+        return confirmed
 
     def dorm_run(self, feed=True, collect=True, buy_furniture=False):
         """
