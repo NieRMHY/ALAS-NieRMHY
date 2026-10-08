@@ -1,4 +1,4 @@
-"""AzurPilot WebUI 启动器与多进程监督服务。
+"""ALAS WebUI 启动器与多进程监督服务。
 
 负责管理 WebUI 子进程（Uvicorn / FastAPI / Starlette）、处理热重载、
 跨平台进程清理以及在独立子进程中执行 Python 依赖同步（uv sync）。
@@ -241,7 +241,7 @@ def func(
     ensure_frontend()
 
     # 解析命令行参数
-    parser = argparse.ArgumentParser(description="AzurPilot Web 服务")
+    parser = argparse.ArgumentParser(description="ALAS Web 服务")
     parser.add_argument(
         "--host",
         type=str,
@@ -274,7 +274,7 @@ def func(
         "--run",
         nargs="+",
         type=str,
-        help="启动时运行指定配置的AzurPilot",
+        help="启动时运行指定配置的 ALAS",
     )
     args, _ = parser.parse_known_args()
 
@@ -352,7 +352,7 @@ def func(
         logger.exception_context(
             title='WebUI 服务启动失败',
             exc=e,
-            impact='WebUI 进程将退出，无法管理 AzurPilot。',
+            impact='WebUI 进程将退出，无法管理 ALAS。',
             action='检查端口是否被占用、SSL 证书和密钥是否匹配，并确认依赖已通过 uv sync --frozen 安装。',
             level=50,
         )
@@ -545,7 +545,7 @@ def _stop_dependency_sync_service_tree(process) -> bool:
 
 
 def _stop_webui_process_tree(process) -> bool:
-    """终止 WebUI 及其 AzurPilot worker 子进程，避免重启后重复控制设备。
+    """终止 WebUI 及其 ALAS worker 子进程，避免重启后重复控制设备。
 
     Args:
         process: WebUI 进程对象。
@@ -835,7 +835,7 @@ def run_webui_supervisor() -> int:
             exit_code=EXIT_WORKER_CLEANUP_FAILURE,
         )
         logger.error(
-            "[GUI] AzurPilot Web服务启动失败：%s (退出码: %d)",
+            "[GUI] ALAS Web 服务启动失败：%s (退出码: %d)",
             fatal_error.reason,
             fatal_error.exit_code,
         )
@@ -905,7 +905,7 @@ def run_webui_supervisor() -> int:
                     )
                 time.sleep(startup_failures)
                 continue
-            logger.info(f"[GUI] 启动AzurPilot Web服务 (PID: {process.pid})")
+            logger.info(f"[GUI] 启动 ALAS Web 服务 (PID: {process.pid})")
 
             try:
                 ready = _wait_for_webui_ready(process, ready_event)
@@ -1012,7 +1012,7 @@ def run_webui_supervisor() -> int:
                     runtime_failures += 1
                     if runtime_failures >= WEBUI_RUNTIME_RETRY_LIMIT:
                         logger.error_context(
-                            title='AzurPilot Web 服务反复意外退出',
+                            title='ALAS Web 服务反复意外退出',
                             reason=(
                                 f'已连续 {runtime_failures} 次在稳定运行前退出（最近退出码 {process.exitcode}），'
                                 '且没有收到正常重启事件。'
@@ -1057,7 +1057,7 @@ def run_webui_supervisor() -> int:
             logger.info("[GUI] ALAS Web服务已成功退出")
         else:
             logger.error(
-                "[GUI] AzurPilot Web服务启动失败：%s (退出码: %d)",
+                "[GUI] ALAS Web 服务启动失败：%s (退出码: %d)",
                 fatal_error.reason,
                 fatal_error.exit_code,
             )

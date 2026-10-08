@@ -8,6 +8,8 @@ import os
 import sys
 import subprocess
 import webbrowser
+from datetime import datetime
+from urllib.parse import urlsplit
 
 from PIL import Image
 import pystray
@@ -15,6 +17,37 @@ import pystray
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 WEBUI_URL = "http://127.0.0.1:22267"
+
+
+def log(message):
+    # Modify by MHY, pythonw 没有控制台，异常与崩溃不留痕迹，排查只能靠猜。
+    # 统一写 log/launcher.txt，失败也不影响启动。
+    try:
+        path = os.path.join(ROOT, "log", "launcher.txt")
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "a", encoding="utf-8") as f:
+            f.write(f"{datetime.now():%Y-%m-%d %H:%M:%S} {message}\n")
+    except Exception:
+        pass
+
+
+def webui_alive(timeout=1.5):
+    """探测 WebUI 是否真的在监听端口。
+
+    只信互斥量是不够的：更新链的 alas_kill 杀 python.exe（gui.py）却杀不到
+    pythonw 启动器，残留的启动器仍持有互斥量，此时单看互斥量会把「WebUI 已死」
+    误判成「已在运行」，双击快捷方式只会打开一个打不开的死页面。
+
+    Returns:
+        bool: 端口可连接返回 True。
+    """
+    url = urlsplit(WEBUI_URL)
+    try:
+        import socket
+        with socket.create_connection((url.hostname or "127.0.0.1", url.port or 80), timeout=timeout):
+            return True
+    except OSError:
+        return False
 
 
 def _venv_python():
@@ -52,10 +85,16 @@ def main():
             import win32event, win32api, winerror
             _mutex = win32event.CreateMutex(None, False, "Global\\ALAS-Launcher")
             if win32api.GetLastError() == winerror.ERROR_ALREADY_EXISTS:
-                webbrowser.open(WEBUI_URL)
-                return
-        except Exception:
-            pass
+                # Modify by MHY, 互斥量只说明「有启动器活着」，不代表 WebUI 活着。
+                # 更新中断后 gui.py 会被杀掉而启动器残留，这里再探一次端口：
+                # WebUI 真的在跑才开浏览器，否则继续往下走重新拉起 gui.py。
+                if webui_alive():
+                    log("已有实例在运行，打开浏览器")
+                    webbrowser.open(WEBUI_URL)
+                    return
+                log("互斥量被残留启动器占用但 WebUI 未监听，接管并重新拉起 gui.py")
+        except Exception as exc:
+            log(f"互斥量检查失败，按无实例继续：{exc!r}")
     py = _venv_python()
     # Modify by MHY, CREATE_NEW_CONSOLE 给 gui.py 一个新 console，其 worker 继承有效的
     # console 句柄（pythonw 无 console 会导致 worker spawn 崩溃）；SW_HIDE 让窗口创建即
@@ -79,6 +118,7 @@ def main():
         [py, os.path.join(ROOT, "gui.py")],
         **popen_kwargs,
     )
+    log(f"已拉起 gui.py (PID: {gui_proc.pid})")
 
     icon_path = os.path.join(ROOT, "deploy", "launcher", "icon.ico")
     if os.path.exists(icon_path):
@@ -102,4 +142,10 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    # Modify by MHY, pythonw 下异常没有任何可见输出，统一记到日志再抛出
+    try:
+        main()
+    except Exception:
+        import traceback
+        log("启动器异常退出：\n" + traceback.format_exc())
+        raise
