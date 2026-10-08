@@ -176,7 +176,7 @@ class OSAsh(UI, MapEventHandler):
             ocr_daily = DailyDigitCounter(
                 ASH_DAILY_STATUS, letter=(140, 142, 140), threshold=160, name='OCR_ASH_DAILY_STATUS')
         else:
-            # 大世界每日+任务领取或完成时，弹窗会遮挡信标状态
+            # 大世界每日任务领取或完成时，弹窗会遮挡信标状态
             logger.info('[META作战] 信标状态被遮挡，下次再检查')
             return 0
 

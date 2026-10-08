@@ -167,19 +167,23 @@ function readableColor(color: string, background: string, mode: ResolvedMode) {
   return target
 }
 
-/** 只改强调色一族，不碰中性色（表面/文字/边框归主题自己管）——材质与旧版要的就是这一份。 */
-export function accentTokens(colors: BrandColors, mode: ResolvedMode): Record<string, string> {
+/** 品牌色一族从哪几个中性色算起；两份 token 共用这一套取值。 */
+const brandBases = (mode: ResolvedMode) => ({
+  dark: mode === 'dark',
+  surface: mode === 'dark' ? '#20252d' : '#ffffff',
+  mutedSurface: mode === 'dark' ? '#282f39' : '#edf2f7',
+})
+
+/** 只写强调色这一族：强调色、悬停、浅底与前景字色。 */
+function accentTokensOn(colors: BrandColors, surface: string, mutedSurface: string, mode: ResolvedMode): Record<string, string> {
   const dark = mode === 'dark'
-  const surface = dark ? '#20252d' : '#ffffff'
-  const mutedSurface = dark ? '#282f39' : '#edf2f7'
   const primary = readableColor(colors.primary, mutedSurface, mode)
   const secondary = readableColor(colors.secondary, mutedSurface, mode)
-  const onAccent = contrastRatio(primary, '#ffffff') >= contrastRatio(primary, '#17202b') ? '#ffffff' : '#17202b'
   return {
     '--accent': primary, '--accent-hover': mixColor(primary, dark ? '#ffffff' : '#000000', .85),
     '--accent-soft': mixColor(primary, surface, dark ? .12 : .07),
     '--secondary': secondary, '--secondary-soft': mixColor(secondary, surface, dark ? .12 : .07),
-    '--theme-on-accent': onAccent,
+    '--theme-on-accent': contrastRatio(primary, '#ffffff') >= contrastRatio(primary, '#17202b') ? '#ffffff' : '#17202b',
   }
 }
 
@@ -191,21 +195,20 @@ export const stockBrands: Record<Family, Record<ResolvedMode, BrandColors>> = {
   extreme: {light: {primary: '#245dbe', secondary: '#147d83'}, dark: {primary: '#245dbe', secondary: '#147d83'}},
 }
 
+/** 只改强调色一族，不碰中性色（表面/文字/边框归主题自己管）——材质与旧版要的就是这一份。 */
+export function accentTokens(colors: BrandColors, mode: ResolvedMode): Record<string, string> {
+  const {surface, mutedSurface} = brandBases(mode)
+  return accentTokensOn(colors, surface, mutedSurface, mode)
+}
+
+/** 整块换色：中性色也一起换，简约与紧凑走这一份。 */
 export function paletteTokens(colors: BrandColors, mode: ResolvedMode): Record<string, string> {
-  const dark = mode === 'dark'
-  const surface = dark ? '#20252d' : '#ffffff'
-  const mutedSurface = dark ? '#282f39' : '#edf2f7'
-  const primary = readableColor(colors.primary, mutedSurface, mode)
-  const secondary = readableColor(colors.secondary, mutedSurface, mode)
-  const onAccent = contrastRatio(primary, '#ffffff') >= contrastRatio(primary, '#17202b') ? '#ffffff' : '#17202b'
+  const {dark, surface, mutedSurface} = brandBases(mode)
   return {
+    ...accentTokensOn(colors, surface, mutedSurface, mode),
     '--bg': mixColor(colors.primary, dark ? '#14181e' : '#f5f7fa', .025),
     '--surface': surface, '--surface-muted': mutedSurface,
     '--text': dark ? '#e5ebf3' : '#243447', '--muted': dark ? '#a5b2c3' : '#5b6d80',
     '--border': dark ? '#424d5d' : '#d5dee8',
-    '--accent': primary, '--accent-hover': mixColor(primary, dark ? '#ffffff' : '#000000', .85),
-    '--accent-soft': mixColor(primary, surface, dark ? .12 : .07),
-    '--secondary': secondary, '--secondary-soft': mixColor(secondary, surface, dark ? .12 : .07),
-    '--theme-on-accent': onAccent,
   }
 }

@@ -31,13 +31,14 @@ export function AccountPanel({instance}: {instance: string}) {
     const frame = requestAnimationFrame(() => passwordInput.current?.focus())
     return () => cancelAnimationFrame(frame)
   }, [pending])
+  const clearFields = () => { setPassword(''); setConfirm(''); setNewPassword(''); setLabel(''); setPending(undefined) }
   const hide = () => {
     setStatus(value => value ? {...value, profiles: undefined, selected: undefined} : value)
-    setPassword(''); setConfirm(''); setNewPassword(''); setLabel(''); setPending(undefined)
+    clearFields()
   }
   useEffect(() => {
     const current = ++epoch.current
-    setStatus(undefined); setPassword(''); setConfirm(''); setNewPassword(''); setLabel(''); setPending(undefined); setError(''); setBusy(false)
+    setStatus(undefined); clearFields(); setError(''); setBusy(false)
     if (connection === 'ready') void api.request('accounts.status', {instance}).then(value => {
       if (epoch.current === current) setStatus(value)
     }).catch(error => { if (epoch.current === current) setError((error as Error).message) })
@@ -72,10 +73,10 @@ export function AccountPanel({instance}: {instance: string}) {
     finally { if (epoch.current === current) setBusy(false) }
   }
   const ask = (action: Parameters['accounts.manage']['action'], title: string, extra: Partial<Parameters['accounts.manage']> = {}) => {
-    setPassword(''); setConfirm(''); setNewPassword(''); setLabel(''); setError('')
+    clearFields(); setError('')
     setPending({action, title, extra})
   }
-  const cancel = () => { setPassword(''); setConfirm(''); setNewPassword(''); setLabel(''); setPending(undefined) }
+  const cancel = () => clearFields()
   const disabled = busy || connection !== 'ready' || !status
   const canSubmit = !disabled && !!password && (!(pending?.action === 'create' || pending?.action === 'password') || !!confirm) && (pending?.action !== 'password' || !!newPassword)
   return <section className="panel config-group" aria-label={text.title} data-testid="account-panel">

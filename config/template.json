@@ -94,6 +94,7 @@
       "HandleError": true,
       "SaveError": true,
       "StrictRestart": false,
+      "TaskRestartLimit": 3,
       "SaveErrorRetentionDays": 30,
       "SaveErrorBackUpMethod": "zip",
       "SaveErrorZipMethod": "zip",
@@ -178,7 +179,8 @@
     "Enhance": {
       "ShipToEnhance": "all",
       "Filter": null,
-      "CheckPerCategory": 5
+      "CheckPerCategory": 5,
+      "KeepCommonCV": true
     },
     "OldRetire": {
       "N": true,
@@ -198,7 +200,7 @@
       "FleetOnsen": false
     },
     "YukikazeTaskManager": {
-      "TaskPriorityAdjustment": "Restart\n> OpsiCrossMonth\n> Commission > Tactical > Research\n> Exercise\n> Dorm > Meowfficer > Guild > Gacha\n> Reward\n> ShopFrequent > ShopOnce > Shipyard > Freebies\n> PrivateQuarters\n> OpsiExplore\n> OpsiPreventActionPointOverflow\n> Minigame > Awaken\n> OpsiAshBeacon\n> OpsiDaily > OpsiShop > OpsiVoucher > EventShop\n> OpsiAbyssal > OpsiStronghold > OpsiObscure > OpsiArchive\n> Daily > Hard > OpsiAshBeacon > OpsiAshAssist > OpsiMonthBoss\n> Sos > EventSp > EventA > EventB > EventC > EventD\n> RaidDaily > CoalitionSp > WarArchives > MaritimeEscort\n> IslandJuuEatery > IslandJuuCoffee > IslandGrill > IslandTeahouse > IslandRestaurant\n> IslandFarm > IslandRancher > IslandMineForest > IslandDailyGather > IslandManufacture\n> IslandAirDrop > IslandBusiness > IslandDailyOrder > IslandDailyInteract > IslandPearlSell > IslandCargoPreparation\n> Event > Event2 > Event3 > Raid > Hospital > HospitalEvent > Coalition > RaidAffection > Main > Main2 > Main3\n> OpsiScheduling\n> OpsiMeowfficerFarming\n> GemsFarming\n> Ambush11\n> OpsiHazard1Leveling\n> ThreeOilLowCost\n> OperationHandover"
+      "TaskPriorityAdjustment": "Restart\n> OpsiCrossMonth\n> Commission > Tactical > Research\n> Exercise\n> Dorm > Meowfficer > Guild > Gacha\n> Reward > StorageStatistics\n> ShopFrequent > ShopOnce > Shipyard > Freebies\n> PrivateQuarters\n> OpsiExplore > OpsiExploreCleanup\n> OpsiPreventActionPointOverflow\n> Minigame > Awaken\n> OpsiAshBeacon\n> OpsiDaily > OpsiShop > OpsiVoucher > EventShop\n> OpsiAbyssal > OpsiStronghold > OpsiObscure > OpsiArchive\n> Daily > Hard > OpsiAshBeacon > OpsiAshAssist > OpsiMonthBoss\n> Sos > EventSp > EventA > EventB > EventC > EventD\n> RaidDaily > CoalitionSp > WarArchives > MaritimeEscort\n> IslandJuuEatery > IslandJuuCoffee > IslandGrill > IslandTeahouse > IslandRestaurant\n> IslandFarm > IslandRancher > IslandMineForest > IslandDailyGather > IslandManufacture\n> IslandAirDrop > IslandBusiness > IslandDailyOrder > IslandDailyInteract > IslandPearlSell > IslandCargoPreparation\n> Event > Event2 > Event3 > Raid > Hospital > HospitalEvent > Coalition > RaidAffection > Main > Main2 > Main3\n> OpsiScheduling\n> OpsiMeowfficerFarming\n> GemsFarming\n> Ambush11\n> OpsiHazard1Leveling\n> ThreeOilLowCost\n> OperationHandover"
     },
     "Storage": {
       "Storage": {}
@@ -2164,6 +2166,21 @@
       "Storage": {}
     }
   },
+  "StorageStatistics": {
+    "Scheduler": {
+      "Enable": false,
+      "PushNotification": false,
+      "NextRun": "2020-01-01 00:00:00",
+      "Command": "StorageStatistics",
+      "SuccessInterval": 1440,
+      "FailureInterval": 60,
+      "ServerUpdate": "04:00",
+      "Sensitive": false
+    },
+    "Storage": {
+      "Storage": {}
+    }
+  },
   "Dorm": {
     "Scheduler": {
       "Enable": false,
@@ -2653,7 +2670,8 @@
       "LauncherPush": true,
       "IndependentPush": false,
       "OpsiOnePushConfig": "provider: null",
-      "AutoSearchTimeLimit": 5
+      "AutoSearchTimeLimit": 5,
+      "SkipStrategicSearchCheck": false
     },
     "Storage": {
       "Storage": {}
@@ -2716,7 +2734,32 @@
       "ForceRun": false,
       "LastZone": 0,
       "AllowHazard1Leveling": false,
+      "MeowfficerCleanup": false,
+      "MeowfficerCleanupState": null,
       "ExploreProgress": null
+    },
+    "OpsiFleet": {
+      "Fleet": 1,
+      "Submarine": false
+    },
+    "Storage": {
+      "Storage": {}
+    }
+  },
+  "OpsiExploreCleanup": {
+    "Scheduler": {
+      "Enable": false,
+      "PushNotification": false,
+      "NextRun": "2020-01-01 00:00:00",
+      "Command": "OpsiExploreCleanup",
+      "SuccessInterval": 0,
+      "FailureInterval": 30,
+      "ServerUpdate": "00:00",
+      "Sensitive": false
+    },
+    "OpsiExploreCleanup": {
+      "Progress": null,
+      "State": null
     },
     "OpsiFleet": {
       "Fleet": 1,
@@ -2789,6 +2832,7 @@
       "SkipSirenResearchMission": false,
       "KeepMissionZone": false,
       "MissionZones": null,
+      "DeferredMissions": null,
       "CollectTargetReward": false
     },
     "OpsiFleet": {
@@ -3005,6 +3049,7 @@
       "Sensitive": false
     },
     "OpsiScheduling": {
+      "BuyActionPoint": false,
       "UseSmartSchedulingOperationCoinsPreserve": true,
       "OperationCoinsPreserve": 40000,
       "ActionPointPreserve": 200,
@@ -3018,7 +3063,14 @@
       "MonthEndActionPointCleanupEnable": false,
       "MonthEndActionPointCleanupDays": 0,
       "MonthEndActionPointPreserve": 0,
+      "MonthEndMeowTargetZone": 0,
       "MonthEndShopPurchase": true
+    },
+    "OpsiSmartExplore": {
+      "Enable": false,
+      "EventCleanup": false,
+      "ForceRun": false,
+      "Progress": null
     },
     "Storage": {
       "Storage": {}

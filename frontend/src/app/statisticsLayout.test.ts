@@ -213,8 +213,6 @@ describe('统计页卡片组合', () => {
     expect(readChains(stored, 'commission', [[chart, first]])).toEqual([[chart], [first, second]])
   })
 
-  it('只有含表格的一对才允许连接', () => {
-  })
 
   it('连接合并两链，已经同链时原样返回', () => {
     const linked = linkChains([[chart], [first]], chart, first)
@@ -273,46 +271,6 @@ describe('统计页链的存档语义', () => {
     expect(readChains(untouched, 'commission', fallback)).toEqual(fallback)
     const cleared: StatisticsLayout = {...DEFAULT_STATISTICS_LAYOUT, cards: {commission: []}}
     expect(readChains(cleared, 'commission', fallback)).toEqual([])
-  })
-})
-
-describe('页面各自的取数参数', () => {
-  const fallback = {days: 7, month: '2026-01', period: 'day' as const, researchSeries: 'a', lootTask: 'b'}
-
-  it('未单独设置时用调用方的默认值', async () => {
-    const layout = await loadLayout()
-    const loaded = layout.readStatisticsLayout()
-
-    expect(layout.readPageView(loaded, VALID_CATEGORIES[0], fallback)).toEqual(fallback)
-  })
-
-  it('写入后从存储读回', async () => {
-    const layout = await loadLayout()
-    const next = layout.writePageView(layout.readStatisticsLayout(), VALID_CATEGORIES[1], {days: 30, period: 'month'})
-    layout.writeStatisticsLayout(next)
-
-    const loaded = layout.readStatisticsLayout()
-    const view = layout.readPageView(loaded, VALID_CATEGORIES[1], fallback)
-    expect(view.days).toBe(30)
-    expect(view.period).toBe('month')
-    expect(view.month).toBe(fallback.month)
-  })
-
-  it('旧存档没有该字段时读作未设置', async () => {
-    const layout = await loadLayout()
-    localStorage.setItem(LAYOUT_KEY, JSON.stringify({version: 1, pages: [[VALID_CATEGORIES[0]]]}))
-
-    const loaded = layout.readStatisticsLayout()
-    expect(loaded.views).toEqual({})
-    expect(layout.readPageView(loaded, VALID_CATEGORIES[0], fallback)).toEqual(fallback)
-  })
-
-  it('字段类型不符的项被丢弃，合法项保留', async () => {
-    const layout = await loadLayout()
-    localStorage.setItem(LAYOUT_KEY, JSON.stringify({version: 1, views: {[VALID_CATEGORIES[2]]: {days: 'x', period: 'week', unknown: 1}}}))
-
-    const loaded = layout.readStatisticsLayout()
-    expect(loaded.views[VALID_CATEGORIES[2]]).toEqual({period: 'week'})
   })
 })
 

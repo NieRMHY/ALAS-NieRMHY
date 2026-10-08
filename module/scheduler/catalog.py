@@ -1,4 +1,4 @@
-"""基础卡片注册表：后端解释与前端属性面板共用同一份定义。"""
+"""基础卡片注册表：定义经目录接口下发给前端属性面板，也供后端解释器使用。"""
 from typing import get_args
 from module.scheduler.models import CardDefinition, PortDefinition, PortType
 

@@ -1,0 +1,472 @@
+{
+  "version": 1,
+  "servers": [
+    "cn"
+  ],
+  "items": [
+    {
+      "id": "PrototypeGearPartsT5",
+      "name": "特装型突破部件",
+      "group": "突破部件",
+      "templates": [
+        "assets/stats/opsi_items/PrototypeGearPartsT5.png"
+      ],
+      "reference": {
+        "page": 1,
+        "row": 0,
+        "column": 1
+      },
+      "background": [
+        27.828,
+        187.359,
+        246.641
+      ]
+    },
+    {
+      "id": "GearDesignPlanGunT5",
+      "name": "舰炮研发图纸UR型",
+      "group": "装备研发图纸",
+      "templates": [
+        "assets/stats/opsi_reward_items/GearDesignPlanGunT5.png"
+      ],
+      "reference": {
+        "page": 1,
+        "row": 0,
+        "column": 2
+      },
+      "background": [
+        90.453,
+        144.719,
+        206.219
+      ]
+    },
+    {
+      "id": "GearDesignPlanTorpedoT5",
+      "name": "鱼雷研发图纸UR型",
+      "group": "装备研发图纸",
+      "templates": [
+        "assets/stats/opsi_reward_items/GearDesignPlanTorpedoT5.png"
+      ],
+      "reference": {
+        "page": 1,
+        "row": 0,
+        "column": 3
+      },
+      "background": [
+        97.922,
+        144.703,
+        206.844
+      ]
+    },
+    {
+      "id": "GearDesignPlanAntiAirT5",
+      "name": "防空炮研发图纸UR型",
+      "group": "装备研发图纸",
+      "templates": [
+        "assets/stats/opsi_reward_items/GearDesignPlanAntiAirT5.png",
+        "assets/stats/opsi_reward_items/GearDesignPlanAntiAirT5_2.png"
+      ],
+      "reference": {
+        "page": 1,
+        "row": 0,
+        "column": 4
+      },
+      "background": [
+        109.641,
+        146.422,
+        208.891
+      ]
+    },
+    {
+      "id": "GearDesignPlanPlaneT5",
+      "name": "舰载机研发图纸UR型",
+      "group": "装备研发图纸",
+      "templates": [
+        "assets/stats/opsi_reward_items/GearDesignPlanPlaneT5.png"
+      ],
+      "reference": {
+        "page": 1,
+        "row": 0,
+        "column": 5
+      },
+      "background": [
+        106.547,
+        145.984,
+        209.828
+      ]
+    },
+    {
+      "id": "SecretDesignPlanT5",
+      "name": "绝密实验计划",
+      "group": "实验计划",
+      "templates": [
+        "assets/stats/storage_items/SecretDesignPlanT5.png"
+      ],
+      "reference": {
+        "page": 1,
+        "row": 0,
+        "column": 6
+      },
+      "background": [
+        98.359,
+        145.875,
+        207.859
+      ]
+    },
+    {
+      "id": "CognitiveChips",
+      "name": "心智单元",
+      "group": "心智单元",
+      "templates": [
+        "assets/stats/commission_items/CognitiveChips.png",
+        "assets/stats/commission_items/CognitiveChips_2.png",
+        "assets/stats/commission_items/CognitiveChips_3.png"
+      ],
+      "reference": {
+        "page": 2,
+        "row": 2,
+        "column": 3
+      },
+      "background": [
+        219.297,
+        181.016,
+        100.969
+      ]
+    },
+    {
+      "id": "CognitiveChipsII",
+      "name": "心智单元II",
+      "group": "心智单元",
+      "templates": [
+        "assets/stats/storage_items/CognitiveChipsII.png"
+      ],
+      "reference": {
+        "page": 2,
+        "row": 2,
+        "column": 4
+      },
+      "background": [
+        219.141,
+        180.891,
+        100.359
+      ]
+    },
+    {
+      "id": "PlateGeneralT4",
+      "name": "通用部件T4",
+      "group": "强化部件",
+      "templates": [
+        "assets/stats/opsi_items/PlateGeneralT4.png"
+      ],
+      "reference": {
+        "page": 3,
+        "row": 0,
+        "column": 5
+      },
+      "background": [
+        218.891,
+        180.438,
+        100.031
+      ]
+    },
+    {
+      "id": "PlateGunT4",
+      "name": "主炮部件T4",
+      "group": "强化部件",
+      "templates": [
+        "assets/stats/opsi_items/PlateGunT4.png"
+      ],
+      "reference": {
+        "page": 3,
+        "row": 0,
+        "column": 6
+      },
+      "background": [
+        218.75,
+        180.281,
+        100.141
+      ]
+    },
+    {
+      "id": "PlateTorpedoT4",
+      "name": "鱼雷部件T4",
+      "group": "强化部件",
+      "templates": [
+        "assets/stats/opsi_items/PlateTorpedoT4.png"
+      ],
+      "reference": {
+        "page": 3,
+        "row": 1,
+        "column": 0
+      },
+      "background": [
+        218.797,
+        180.359,
+        100.141
+      ]
+    },
+    {
+      "id": "PlateAntiAirT4",
+      "name": "防空炮部件T4",
+      "group": "强化部件",
+      "templates": [
+        "assets/stats/opsi_items/PlateAntiAirT4.png"
+      ],
+      "reference": {
+        "page": 3,
+        "row": 1,
+        "column": 1
+      },
+      "background": [
+        219.109,
+        180.641,
+        99.969
+      ]
+    },
+    {
+      "id": "PlatePlaneT4",
+      "name": "舰载机部件T4",
+      "group": "强化部件",
+      "templates": [
+        "assets/stats/opsi_items/PlatePlaneT4.png",
+        "assets/stats/opsi_items/PlatePlaneT4_2.png"
+      ],
+      "reference": {
+        "page": 3,
+        "row": 1,
+        "column": 2
+      },
+      "background": [
+        218.938,
+        180.406,
+        100.031
+      ]
+    },
+    {
+      "id": "PrototypeGearPartsT4",
+      "name": "试作型突破部件",
+      "group": "突破部件",
+      "templates": [
+        "assets/stats/opsi_reward_items/PrototypeGearPartsT4.png"
+      ],
+      "reference": {
+        "page": 3,
+        "row": 1,
+        "column": 3
+      },
+      "background": [
+        219.0,
+        180.547,
+        100.016
+      ]
+    },
+    {
+      "id": "Ultra_High_Purity_Metals",
+      "name": "特种钢材",
+      "group": "兵装研发材料",
+      "templates": [
+        "assets/stats/opsi_items/Ultra_High_Purity_Metals.png",
+        "assets/stats/opsi_items/Ultra_High_Purity_Metals_2.png"
+      ],
+      "reference": {
+        "page": 3,
+        "row": 2,
+        "column": 1
+      },
+      "background": [
+        219.141,
+        180.641,
+        99.969
+      ]
+    },
+    {
+      "id": "Military_Grade_Electronic_Components",
+      "name": "军工级电子元件",
+      "group": "兵装研发材料",
+      "templates": [
+        "assets/stats/opsi_items/Military_Grade_Electronic_Components.png",
+        "assets/stats/opsi_items/Military_Grade_Electronic_Components_2.png",
+        "assets/stats/opsi_items/Military_Grade_Electronic_Components_5.png",
+        "assets/stats/opsi_items/Military_Grade_Electronic_Components_6.png"
+      ],
+      "reference": {
+        "page": 3,
+        "row": 2,
+        "column": 2
+      },
+      "background": [
+        219.141,
+        180.594,
+        100.031
+      ]
+    },
+    {
+      "id": "HBX_Blend_Gunpowder",
+      "name": "HBX炸药",
+      "group": "兵装研发材料",
+      "templates": [
+        "assets/stats/opsi_items/HBX_Blend_Gunpowder.png",
+        "assets/stats/opsi_items/HBX_Blend_Gunpowder_3.png",
+        "assets/stats/opsi_items/HBX_Blend_Gunpowder_4.png"
+      ],
+      "reference": {
+        "page": 3,
+        "row": 2,
+        "column": 3
+      },
+      "background": [
+        219.125,
+        180.672,
+        100.016
+      ]
+    },
+    {
+      "id": "High_Durability_Elastomers",
+      "name": "氟橡胶",
+      "group": "兵装研发材料",
+      "templates": [
+        "assets/stats/opsi_items/High_Durability_Elastomers.png",
+        "assets/stats/opsi_items/High_Durability_Elastomers_2.png"
+      ],
+      "reference": {
+        "page": 3,
+        "row": 2,
+        "column": 4
+      },
+      "background": [
+        218.922,
+        180.5,
+        100.016
+      ]
+    },
+    {
+      "id": "Superconductive_Metals",
+      "name": "超导铜",
+      "group": "兵装研发材料",
+      "templates": [
+        "assets/stats/opsi_items/Superconductive_Metals.png",
+        "assets/stats/opsi_items/Superconductive_Metals_2.png",
+        "assets/stats/opsi_items/Superconductive_Metals_3.png"
+      ],
+      "reference": {
+        "page": 3,
+        "row": 2,
+        "column": 5
+      },
+      "background": [
+        204.188,
+        168.359,
+        94.172
+      ]
+    },
+    {
+      "id": "Corrosion_Resistant_Alloys",
+      "name": "钛合金",
+      "group": "兵装研发材料",
+      "templates": [
+        "assets/stats/opsi_items/Corrosion_Resistant_Alloys.png",
+        "assets/stats/opsi_items/Corrosion_Resistant_Alloys_2.png"
+      ],
+      "reference": {
+        "page": 3,
+        "row": 2,
+        "column": 6
+      },
+      "background": [
+        219.0,
+        180.547,
+        100.141
+      ]
+    },
+    {
+      "id": "GearDesignPlanGunT4",
+      "name": "舰炮研发图纸SSR型",
+      "group": "装备研发图纸",
+      "templates": [
+        "assets/stats/opsi_items/GearDesignPlanGunT4.png"
+      ],
+      "reference": {
+        "page": 4,
+        "row": 0,
+        "column": 0
+      },
+      "background": [
+        194.562,
+        159.812,
+        82.625
+      ]
+    },
+    {
+      "id": "GearDesignPlanTorpedoT4",
+      "name": "鱼雷研发图纸SSR型",
+      "group": "装备研发图纸",
+      "templates": [
+        "assets/stats/opsi_items/GearDesignPlanTorpedoT4.png"
+      ],
+      "reference": {
+        "page": 4,
+        "row": 0,
+        "column": 1
+      },
+      "background": [
+        194.656,
+        160.844,
+        84.953
+      ]
+    },
+    {
+      "id": "GearDesignPlanAntiAirT4",
+      "name": "防空炮研发图纸SSR型",
+      "group": "装备研发图纸",
+      "templates": [
+        "assets/stats/opsi_items/GearDesignPlanAntiAirT4.png"
+      ],
+      "reference": {
+        "page": 4,
+        "row": 0,
+        "column": 2
+      },
+      "background": [
+        188.5,
+        154.062,
+        78.594
+      ]
+    },
+    {
+      "id": "GearDesignPlanPlaneT4",
+      "name": "舰载机研发图纸SSR型",
+      "group": "装备研发图纸",
+      "templates": [
+        "assets/stats/opsi_items/GearDesignPlanPlaneT4.png"
+      ],
+      "reference": {
+        "page": 4,
+        "row": 0,
+        "column": 3
+      },
+      "background": [
+        195.031,
+        160.844,
+        85.359
+      ]
+    },
+    {
+      "id": "SecretDesignPlanT4",
+      "name": "机密实验计划",
+      "group": "实验计划",
+      "templates": [
+        "assets/stats/storage_items/SecretDesignPlanT4.png"
+      ],
+      "reference": {
+        "page": 4,
+        "row": 0,
+        "column": 4
+      },
+      "background": [
+        189.844,
+        155.875,
+        78.109
+      ]
+    }
+  ]
+}

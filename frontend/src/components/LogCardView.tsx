@@ -39,7 +39,7 @@ import {
   Zap,
 } from 'lucide-react'
 import type { LogEntry } from '../api/types'
-import { MarkdownView } from './MarkdownView'
+import { LazyMarkdown } from './LazyMarkdown'
 
 // 提取日志消息正文（剥离 LEVEL HH:MM:SS.mmm │ 前缀）
 export function extractLogMessage(raw: string): { level: string; time: string; message: string } {
@@ -89,7 +89,6 @@ function setCachedTokens(key: string, node: ReactNode): void {
   tokenCache.set(key, node)
 }
 
-// 词法高亮辅助（带高效 LRU / Map 缓存与正则复用）
 export function renderTokens(text: string, search = ''): ReactNode {
   if (!text) return null
   const cacheKey = text + '\0' + search
@@ -168,22 +167,6 @@ function renderSearchHighlights(text: string, searchLower: string, keyPrefix: st
   return <span key={keyPrefix}>{nodes}</span>
 }
 
-function splitLogFields(value: string): string[] {
-  const fields: string[] = []
-  let current = ''
-  for (const char of value.trim()) {
-    if (char === ' ' || char === '\t') {
-      if (current) {
-        fields.push(current)
-        current = ''
-      }
-    } else {
-      current += char
-    }
-  }
-  if (current) fields.push(current)
-  return fields
-}
 
 function isAsciiDigits(value: string, minLength: number, maxLength: number): boolean {
   if (value.length < minLength || value.length > maxLength) return false
@@ -197,7 +180,6 @@ function isCostValue(value: string): boolean {
   return value === '-' || value === '--' || isAsciiDigits(value, 1, 4)
 }
 
-// 复制按钮小组件
 function CopyButton({ text, label = '复制' }: { text: string; label?: string }) {
   const [copied, setCopied] = useState(false)
   function handleCopy(e: React.MouseEvent) {
@@ -476,7 +458,7 @@ function aggregateSlice(
 
       while (rIdx < entries.length) {
         const rMsg = extractLogMessage(entries[rIdx].text).message
-        const fields = splitLogFields(rMsg)
+        const fields = rMsg.trim().split(/[ \t]+/).filter(Boolean)
         const rowToken = fields[0] ?? ''
         const values = fields.slice(1)
         if (isAsciiDigits(rowToken, 1, 2) && values.length > 0 && values.every(isCostValue)) {
@@ -773,7 +755,7 @@ export function aggregateEntriesToCards(entries: LogEntry[]): CardItem[] {
     return []
   }
 
-  // 1. 若完全是同一引用数组且长度相同，直接返回上次结果
+  // 1. 同一数组引用直接复用上次结果
   if (entries === lastEntries) {
     return lastCards
   }
@@ -938,12 +920,12 @@ export function renderCellContent(code: string): ReactNode {
     )
   }
 
-  // 5. 海域航道 (--, ==): 纯净蓝色方格，不展示冗余波浪图标
+  // 5. 海域航道 (--, ==)：只留底色方格
   if (code === '--' || code === '==') {
     return null
   }
 
-  // 6. 大世界专属图标全面覆盖 (ME, EX, SD, AR, PO)
+  // 6. 大世界专属图标 (ME, EX, SD, AR, PO)
   if (code === 'ME') {
     return (
       <span className="cell-icon-wrap" title="大世界指挥喵搜索点 (ME)">
@@ -1651,7 +1633,7 @@ export const LlmReportCard = memo(
           </div>
         </div>
         <div className="card-body">
-          <MarkdownView content={card.content} className="llm-markdown-view" />
+          <LazyMarkdown content={card.content} className="llm-markdown-view" />
         </div>
       </div>
     )
@@ -1919,14 +1901,14 @@ export const VIRTUAL_THRESHOLD = 40
 export const OVERSCAN_BUFFER_PX = 800
 export const CARD_GAP_PX = 8
 
-const safeRaf = (cb: FrameRequestCallback): number => {
+export const safeRaf = (cb: FrameRequestCallback): number => {
   if (typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function') {
     return window.requestAnimationFrame(cb)
   }
   return setTimeout(cb, 16) as unknown as number
 }
 
-const safeCancelRaf = (id: number | null) => {
+export const safeCancelRaf = (id: number | null) => {
   if (id === null) return
   if (typeof window !== 'undefined' && typeof window.cancelAnimationFrame === 'function') {
     window.cancelAnimationFrame(id)

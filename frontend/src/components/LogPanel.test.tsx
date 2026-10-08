@@ -7,6 +7,8 @@ import {
   PURE_RULE_RE,
   CENTER_TITLE_RE,
   LOG_ENTRY_LIMIT,
+  LINE_HEIGHT_ESTIMATE,
+  buildLineLayout,
   mergeLogEntries,
   queueLogEvent,
   type LogBufferState,
@@ -184,5 +186,29 @@ describe('LogPanel 日志解析与渲染', () => {
       expect(buffer.entries.map(e => e.id)).toEqual([10, 11])
       expect(buffer.cursor).toBe(21)
     })
+  })
+
+  it('行高布局用实测均高占位未渲染行，偏移逐行累加', () => {
+    const entries = [
+      {id: 1, level: 'INFO', text: '第一行'},
+      {id: 2, level: 'INFO', text: '第二行'},
+      {id: 3, level: 'INFO', text: '第三行'},
+    ]
+    const measured = new Map([[1, 40], [2, 60]])
+
+    const layout = buildLineLayout(entries, measured, LINE_HEIGHT_ESTIMATE)
+
+    expect(layout.heights).toEqual([40, 60, 50])
+    expect(layout.offsets).toEqual([0, 40, 100])
+    expect(layout.total).toBe(150)
+  })
+
+  it('一条都没实测时用固定估值占位', () => {
+    const entries = [{id: 1, level: 'INFO', text: '唯一行'}]
+
+    const layout = buildLineLayout(entries, new Map(), LINE_HEIGHT_ESTIMATE)
+
+    expect(layout.heights).toEqual([LINE_HEIGHT_ESTIMATE])
+    expect(layout.total).toBe(LINE_HEIGHT_ESTIMATE)
   })
 })

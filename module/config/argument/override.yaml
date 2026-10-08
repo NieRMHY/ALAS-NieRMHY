@@ -483,6 +483,11 @@ Research:
     SuccessInterval: 30-60
     FailureInterval: 30-60
     ServerUpdate: 00:00
+StorageStatistics:
+  Scheduler:
+    SuccessInterval: 1440
+    FailureInterval: 60
+    ServerUpdate: 04:00
 Dorm:
   Scheduler:
     SuccessInterval: 278
@@ -598,6 +603,11 @@ OpsiExplore:
   Scheduler:
     SuccessInterval: 0
     FailureInterval: 0
+    ServerUpdate: 00:00
+OpsiExploreCleanup:
+  Scheduler:
+    SuccessInterval: 0
+    FailureInterval: 30
     ServerUpdate: 00:00
 OpsiShop:
   Scheduler:

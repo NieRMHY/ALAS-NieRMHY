@@ -39,6 +39,7 @@ class GetItemsStatistics:
     # 物品网格。默认共用模块级的 ITEM_GROUP（战斗掉落那份）；科研统计等
     # 需要另一套模板的场景传入自己的 ItemGrid，避免两套模板互相污染。
     grid = None
+    amount_area = (60, 71, 91, 92)
 
     def _target_grid(self):
         """返回本次识别使用的物品网格。
@@ -84,7 +85,7 @@ class GetItemsStatistics:
         grid = self._target_grid()
         grid.item_class = Item
         grid.similarity = 0.92
-        grid.amount_area = (60, 71, 91, 92)
+        grid.amount_area = self.amount_area
         grid.grids = None
         if INFO_BAR_1.appear_on(image):
             raise ImageError('Stat image has info_bar')

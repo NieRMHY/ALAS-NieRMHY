@@ -1,5 +1,5 @@
 /** 卡片公共模型；程序请求结构来自后端生成的契约。 */
-import type {Parameters, SchedulerModels} from '../api/generated'
+import type {SchedulerModels} from '../api/generated'
 
 export type ProgramMode = 'native' | 'enhance' | 'takeover'
 export type PortType = 'any' | 'number' | 'boolean' | 'string' | 'time' | 'duration' | 'resource' | 'task' | 'tasks' | 'result' | 'list' | 'object'
@@ -13,7 +13,6 @@ export interface ProgramDocument extends Graph {
   variables: Array<{name: string; type: PortType; initial: unknown; persistent: boolean}>
   viewport: {x: number; y: number; zoom: number}
 }
-export type ProgramRequest = Parameters['scheduler.program.save']['document']
 export interface CardDefinition {type: string; label: string; category: string; pure: boolean; entry?: boolean; inputs: Port[]; outputs: Port[]; exits: string[]; params: Record<string, unknown>}
 export interface Catalog {
   cards: CardDefinition[]; builtins: Subgraph[]; templates: Record<'takeover' | 'enhance' | 'all', ProgramDocument>

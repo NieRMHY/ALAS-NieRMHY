@@ -1,4 +1,9 @@
 {
+ "Corrosion_Resistant_Alloys": {
+  "en": "Corrosion-Resistant Alloys",
+  "rarity": 4,
+  "zh": "钛合金"
+ },
  "GearDesignPlanAntiAirT4": {
   "en": "SR Anti-Air Gun Design Plans",
   "rarity": 4,
@@ -29,6 +34,16 @@
   "rarity": 5,
   "zh": "舰载机研发图纸UR型"
  },
+ "GearDesignPlanT4": {
+  "zh": "装备研发图纸SSR型",
+  "en": "SR Gear Design Plans",
+  "rarity": 4
+ },
+ "GearDesignPlanT5": {
+  "zh": "装备研发图纸UR型",
+  "en": "UR Gear Design Plans",
+  "rarity": 5
+ },
  "GearDesignPlanTorpedoT4": {
   "en": "SR Torpedo Design Plans",
   "rarity": 4,
@@ -38,6 +53,31 @@
   "en": "UR Torpedo Design Plans",
   "rarity": 5,
   "zh": "鱼雷研发图纸UR型"
+ },
+ "HBX_Blend_Gunpowder": {
+  "en": "HBX Blend Gunpowder",
+  "rarity": 4,
+  "zh": "HBX炸药"
+ },
+ "High_Durability_Elastomers": {
+  "en": "High-Durability Elastomers",
+  "rarity": 4,
+  "zh": "氟橡胶"
+ },
+ "Military_Grade_Electronic_Components": {
+  "en": "Military-Grade Electronic Components",
+  "rarity": 4,
+  "zh": "军工级电子元件"
+ },
+ "OrdnanceTestingReportT4": {
+  "en": "T2 Ordnance Testing Report",
+  "rarity": 4,
+  "zh": "机密实验计划"
+ },
+ "OrdnanceTestingReportT5": {
+  "en": "T3 Ordnance Testing Report",
+  "rarity": 5,
+  "zh": "绝密实验计划"
  },
  "PlateAntiAirT4": {
   "en": "T4 Anti-Air Gun Part",
@@ -63,5 +103,20 @@
   "en": "T4 Torpedo Part",
   "rarity": 4,
   "zh": "鱼雷部件T4"
+ },
+ "PrototypeGearPartsT5": {
+  "en": "Specialized Gear Upgrade Part",
+  "rarity": 5,
+  "zh": "特装型突破部件"
+ },
+ "Superconductive_Metals": {
+  "en": "Superconductive Metals",
+  "rarity": 4,
+  "zh": "超导铜"
+ },
+ "Ultra_High_Purity_Metals": {
+  "en": "Ultra High-Purity Metals",
+  "rarity": 4,
+  "zh": "特种钢材"
  }
 }

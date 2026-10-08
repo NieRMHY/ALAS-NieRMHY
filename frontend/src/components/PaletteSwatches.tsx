@@ -46,7 +46,7 @@ export function PaletteSwatches({value, onChange, legend, stock = false}: {value
   const paletteIds = [...palettes, ...customPalettes.map(item => item.id)]
   function createPalette() {
     const id = `custom:${crypto.getRandomValues(new Uint32Array(2)).join('-')}` as const
-    /* 新增方案从当前选中的配色起稿；没选（跟随主题）时取预置里的第一套，用户随后可改。 */
+    /* 新增方案从当前选中的配色起稿；没选（跟随主题）时取预置里的第一套。 */
     const current = paletteColors(value ?? palettes[0], customPalettes, resolvedMode)
     setEditing({id, primary: current.primary, secondary: current.secondary})
   }

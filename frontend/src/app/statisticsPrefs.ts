@@ -8,7 +8,7 @@
  * 与其它界面偏好一致：关掉再打开接着上次的样子，直到用户自己调整。
  * 只存本浏览器，不区分实例。
  */
-export type StatisticsCategory = 'resources' | 'action' | 'opsi' | 'commission' | 'ships' | 'loot' | 'research'
+export type StatisticsCategory = 'resources' | 'action' | 'opsi' | 'commission' | 'ships' | 'loot' | 'research' | 'storage'
 export type ChartMode = 'line' | 'candlestick'
 export type ChartAxisMode = 'separate' | 'unified'
 export type CommissionPeriod = 'day' | 'week' | 'month'
@@ -34,7 +34,7 @@ export interface StatisticsPrefs {
 
 export const PREFS_KEY = 'azurpilot.statistics'
 
-export const VALID_CATEGORIES: readonly StatisticsCategory[] = ['resources', 'action', 'opsi', 'commission', 'ships', 'loot', 'research']
+export const VALID_CATEGORIES: readonly StatisticsCategory[] = ['resources', 'action', 'opsi', 'commission', 'ships', 'loot', 'research', 'storage']
 export const VALID_DAYS: readonly number[] = [1, 7, 30, 90, 365]
 export const VALID_PERIODS: readonly CommissionPeriod[] = ['day', 'week', 'month']
 export const VALID_BUCKETS: readonly number[] = [0, 5, 60, 1440]
@@ -59,6 +59,7 @@ export const DEFAULT_STATISTICS_PREFS: StatisticsPrefs = {
   selectedKeys: {},
 }
 
+/** 逐项校验存储里的偏好：不合法或缺失的项一律回默认值。 */
 export function readStatisticsPrefs(): StatisticsPrefs {
   try {
     const raw = typeof localStorage !== 'undefined' ? localStorage.getItem(PREFS_KEY) : null
@@ -66,34 +67,8 @@ export function readStatisticsPrefs(): StatisticsPrefs {
     const parsed: unknown = JSON.parse(raw)
     if (parsed && typeof parsed === 'object') {
       const obj = parsed as Record<string, unknown>
-      const category = VALID_CATEGORIES.includes(obj.category as StatisticsCategory)
-        ? (obj.category as StatisticsCategory)
-        : DEFAULT_STATISTICS_PREFS.category
-      const days = typeof obj.days === 'number' && VALID_DAYS.includes(obj.days)
-        ? obj.days
-        : DEFAULT_STATISTICS_PREFS.days
-      const period = VALID_PERIODS.includes(obj.period as CommissionPeriod)
-        ? (obj.period as CommissionPeriod)
-        : DEFAULT_STATISTICS_PREFS.period
-      const researchSelect = VALID_RESEARCH_SELECTS.includes(obj.researchSelect as string)
-        ? (obj.researchSelect as string)
-        : DEFAULT_STATISTICS_PREFS.researchSelect
-      const lootTask = typeof obj.lootTask === 'string' && (obj.lootTask === '' || LOOT_TASK_PATTERN.test(obj.lootTask))
-        ? obj.lootTask
-        : DEFAULT_STATISTICS_PREFS.lootTask
-      const chartMode = VALID_CHART_MODES.includes(obj.chartMode as ChartMode)
-        ? (obj.chartMode as ChartMode)
-        : DEFAULT_STATISTICS_PREFS.chartMode
-      const chartAxisMode = VALID_AXIS_MODES.includes(obj.chartAxisMode as ChartAxisMode)
-        ? (obj.chartAxisMode as ChartAxisMode)
-        : DEFAULT_STATISTICS_PREFS.chartAxisMode
-      const chartZeroBase = typeof obj.chartZeroBase === 'boolean' ? obj.chartZeroBase : DEFAULT_STATISTICS_PREFS.chartZeroBase
-      const bucket = typeof obj.bucket === 'number' && VALID_BUCKETS.includes(obj.bucket)
-        ? obj.bucket
-        : DEFAULT_STATISTICS_PREFS.bucket
-
-      const rangeFrom = typeof obj.rangeFrom === 'string' ? obj.rangeFrom : ''
-      const rangeTo = typeof obj.rangeTo === 'string' ? obj.rangeTo : ''
+      const stored = <T,>(value: unknown, valid: readonly T[], fallback: T): T => valid.includes(value as T) ? value as T : fallback
+      const d = DEFAULT_STATISTICS_PREFS
 
       const selectedKeys: Record<string, string[]> = {}
       if (obj.selectedKeys && typeof obj.selectedKeys === 'object') {
@@ -105,17 +80,17 @@ export function readStatisticsPrefs(): StatisticsPrefs {
       }
 
       return {
-        category,
-        days,
-        period,
-        researchSelect,
-        lootTask,
-        chartMode,
-        chartAxisMode,
-        chartZeroBase,
-        bucket,
-              rangeFrom,
-              rangeTo,
+        category: stored(obj.category, VALID_CATEGORIES, d.category),
+        days: stored(obj.days, VALID_DAYS, d.days),
+        period: stored(obj.period, VALID_PERIODS, d.period),
+        researchSelect: stored(obj.researchSelect, VALID_RESEARCH_SELECTS, d.researchSelect),
+        lootTask: typeof obj.lootTask === 'string' && (obj.lootTask === '' || LOOT_TASK_PATTERN.test(obj.lootTask)) ? obj.lootTask : d.lootTask,
+        chartMode: stored(obj.chartMode, VALID_CHART_MODES, d.chartMode),
+        chartAxisMode: stored(obj.chartAxisMode, VALID_AXIS_MODES, d.chartAxisMode),
+        chartZeroBase: typeof obj.chartZeroBase === 'boolean' ? obj.chartZeroBase : d.chartZeroBase,
+        bucket: stored(obj.bucket, VALID_BUCKETS, d.bucket),
+        rangeFrom: typeof obj.rangeFrom === 'string' ? obj.rangeFrom : '',
+        rangeTo: typeof obj.rangeTo === 'string' ? obj.rangeTo : '',
         selectedKeys,
       }
     }

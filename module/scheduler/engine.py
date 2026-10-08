@@ -16,12 +16,16 @@ class ProgramError(Exception):
 
 
 class RefreshNeeded(Exception):
+    """资源快照过期时由卡片求值抛出；引擎捕获后转成 `refresh` 效果交宿主处理。"""
+
     def __init__(self, name):
         self.name = name
 
 
 @dataclass
 class Effect:
+    """解释器交给宿主的动作：`kind` 为 `execute` 时带回任务调用，为 `refresh` 时带回待刷新资源。"""
+
     kind: str
     node: str | None
     payload: dict

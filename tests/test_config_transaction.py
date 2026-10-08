@@ -20,6 +20,54 @@ def increment(path, count):
 
 
 class ConfigTransactionTests(unittest.TestCase):
+    def test_exploration_clear_resets_own_checkpoint_and_preserves_purchase_record(self):
+        from module.api.config_service import ConfigService
+        from module.api.protocol import ConfigChange
+        from tests.test_api import fixture
+
+        for mode in ('monthly', 'smart'):
+            with self.subTest(mode=mode), tempfile.TemporaryDirectory() as directory:
+                service = ConfigService(fixture(directory))
+                data = service.get('testpilot')['values']
+                monthly = data['OpsiExplore']['OpsiExplore']
+                monthly.update(ExploreProgress='已完成百分之100.00', LastZone=121,
+                               MeowfficerCleanupState={'reset': '2026-11-01T00:00:00', 'phase': 'done'})
+                scheduling = data['OpsiScheduling']
+                scheduling['OpsiSmartExplore']['Progress'] = '已开荒 34/72，阶段：开荒'
+                scheduling['Storage']['Storage'] = {'SmartExplore': {'next': [30, 7, 0]},
+                                                     'ActionPointPurchase': {'phase': 'done'}, 'Unrelated': 12}
+                service.path('testpilot').write_text(json.dumps(data, ensure_ascii=False), encoding='utf-8')
+                before = copy.deepcopy(data)
+                path = ('OpsiExplore.OpsiExplore.ExploreProgress' if mode == 'monthly'
+                        else 'OpsiScheduling.OpsiSmartExplore.Progress')
+                result = service.patch('testpilot', None, [ConfigChange(path=path, value='')])['values']
+                if mode == 'monthly':
+                    expected = before['OpsiExplore']['OpsiExplore']
+                    expected.update(ExploreProgress='', LastZone=0, MeowfficerCleanupState=None)
+                else:
+                    before['OpsiScheduling']['OpsiSmartExplore']['Progress'] = ''
+                    before['OpsiScheduling']['Storage']['Storage'].pop('SmartExplore')
+                self.assertEqual(result, before)
+
+    def test_exploration_progress_only_allows_empty_text_and_clear_is_atomic(self):
+        from module.api.config_service import ConfigService
+        from module.api.protocol import ApiError, ConfigChange
+        from tests.test_api import fixture
+
+        with tempfile.TemporaryDirectory() as directory:
+            service = ConfigService(fixture(directory))
+            for path in ('OpsiExplore.OpsiExplore.ExploreProgress', 'OpsiScheduling.OpsiSmartExplore.Progress'):
+                for value in ('fake 100%', None, False, {}, []):
+                    with self.subTest(path=path, value=value), self.assertRaises(ApiError):
+                        service.patch('testpilot', None, [ConfigChange(path=path, value=value)])
+            original = service.path('testpilot').read_bytes()
+            with self.assertRaises(ApiError):
+                service.patch('testpilot', None, [
+                    ConfigChange(path='OpsiExplore.OpsiExplore.ExploreProgress', value=''),
+                    ConfigChange(path='OpsiExplore.OpsiExplore.MeowfficerCleanupState', value=None),
+                ])
+            self.assertEqual(service.path('testpilot').read_bytes(), original)
+
     def test_stale_worker_cannot_undo_same_field_edit(self):
         from module.config.config import AzurLaneConfig
         from module.api.config_service import ConfigService

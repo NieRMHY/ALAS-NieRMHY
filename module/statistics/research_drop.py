@@ -54,8 +54,7 @@ ITEM_TEMPLATE_FOLDER = './assets/stats/research_items'
 # 心智单元能到 100+，不能沿用大世界那边的 50 上限。
 RESEARCH_AMOUNT_MAX = {'CognitiveChips': 300}
 # 科研掉落的图纸（舰船图纸与全部装备图纸）一次都不超过 10 张。
-# 超限即认为读错，交给 AmountOcr 重试并在仍超限时截断末位：
-# 实测「真值 7 被读成 71」正是这样被修正回 7 的。
+# 超限触发重新识别；仍无法确认时跳过本格，不靠丢掉首位或末位猜数量。
 RESEARCH_SURE_MAX = 10
 RESEARCH_SURE_PREFIXES = ('Blueprint',)
 # 装备图纸的模板名以 _T<数字> 结尾，可能还带 _2/_3 变体后缀
@@ -128,9 +127,9 @@ def right_digit_column_left(image, min_height=8, max_valley=2, dark=120):
 class ResearchAmountOcr(AmountOcr):
     """科研掉落的数量读数器。
 
-    在通用 ``AmountOcr`` 的碎片过滤之上，再按列剖面只保留最右侧的数字簇
-    （见 ``right_digit_column_left``），并把两道兜底改成适配左侧残影的方向。
-    科研网格专用：不动全局 AMOUNT_OCR，战斗掉落那边的行为保持原样。
+    优先匹配原始小字的逐位模板；不确定时使用配置中的 OCR 后端。
+    OCR 兜底只对图纸启用列剖面，读空时提高阈值重读；仍超限则跳过本格。
+    科研网格专用，不改变全局 AMOUNT_OCR 的行为。
 
     Attributes:
         digit_min_height (int): 数字笔画的最小列高。
@@ -139,12 +138,10 @@ class ResearchAmountOcr(AmountOcr):
     """
 
     threshold = 96
+    use_digit_templates = True
+    strict_amount_max = True
     digit_min_height = 8
     digit_max_valley = 2
-    # 兜底截断方向：科研的数量残影总在数字左侧，超限读数里多出来的正是首位。
-    # 列剖面漏掉的残影（与数字无「谷」相隔时）会走这条兜底：实测「真值 3 被读成
-    # 73」时截断末位留下 7（错），丢首位得 3（对）。
-    drop_leading_on_overflow = True
     # 首轮读数为 0 时的兜底阈值：数字被灰色残影加粗成「I」时，中等阈值下
     # 整块都被当成字，只有近白像素能还原出「1」（实测 9 格 96 读空、180 全读出 1）。
     retry_threshold = 180
@@ -153,7 +150,7 @@ class ResearchAmountOcr(AmountOcr):
 
     def ocr_with_validation(self, image, item_name=None, direct_ocr=False, trim=True,
                             amount_max=None, amount_default_max=None):
-        """同 AmountOcr，另加两道科研专属处理。
+        """逐位字形匹配之后，按图纸上限选择 OCR 兜底预处理。
 
         一、只有「图纸」这类**个位数掉落**（数量上限 ≤10）才启用列剖面：
         它们的真值最多两位数，读数里的多位数必然含残影；物资、心智单元能有
@@ -285,13 +282,13 @@ class ResearchDropParser:
         grid.load_template_folder(ITEM_TEMPLATE_FOLDER)
         grid.amount_max = dict(RESEARCH_AMOUNT_MAX)
         grid.amount_default_max = research_amount_default_max
-        # 数量识别用科研自己的读数器：碎片过滤 + 列剖面取最右数字簇，专门对付
-        # 图标底部白色纹理被拼进数字（「图纸 1 张」读成 71）。不动全局
-        # AMOUNT_OCR，战斗掉落那边要原样保留。委托收入与自律寻敌场景同样开了碎片过滤。
+        # 独立读数器优先匹配数量字形，OCR 兜底过滤纸角；超限不截断猜数。
         grid.amount_ocr = ResearchAmountOcr([], threshold=96, name='RESEARCH_AMOUNT_OCR')
 
         self.stats = GetItemsStatistics()
         self.stats.grid = grid
+        # 向右留出字形边缘，向左容纳完整心智/物资数；图标残影由逐位匹配排除。
+        self.stats.amount_area = (50, 72, 94, 94)
         self.ocr = Ocr(
             [Button(area=area, color=(255, 255, 255), button=area) for area in QUEUE_CARD_AREAS],
             threshold=64, alphabet=RESEARCH_ALPHABET, name='RESEARCH_QUEUE',
@@ -415,6 +412,9 @@ class ResearchDropParser:
                 continue
             for item in items:
                 if not item.is_known_item():
+                    continue
+                if item.amount <= 0:
+                    logger.warning(f'[科研统计] {item.name} 数量无法确认，跳过本格')
                     continue
                 drop.items[item.name] = drop.items.get(item.name, 0) + item.amount
 

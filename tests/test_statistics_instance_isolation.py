@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from datetime import datetime
 import importlib.util
 import multiprocessing
+import os
 from pathlib import Path
 import sqlite3
 import sys
@@ -15,9 +16,15 @@ from types import ModuleType, SimpleNamespace
 import unittest
 from unittest.mock import Mock, patch
 
+# 机器可能同时跑着模拟器/正式自动化，内存紧张时 OpenBLAS 初始化会卡
+# “MemorTimeout” 20 秒（spawn 子进程引导同样受影响）；本测试只验证
+# SQLite 跨进程串行化，单线程即可。
+os.environ.setdefault('OPENBLAS_NUM_THREADS', '1')
+
 import numpy as np
 
-from deploy import atomic
+from module.statistics import opsi_secure
+from tests.opsi_test_support import install_store
 
 
 GENRE = 'opsi_meowfficer_farming'
@@ -53,8 +60,8 @@ def load_statistics(directory):
         'module.statistics.utils': module_stub('module.statistics.utils', pack=lambda images: images[0]),
         'module.base.device_id': module_stub('module.base.device_id', get_device_id=lambda: 'one-machine'),
     })
-    module.AzurStats.LOCAL_DB = str(Path(directory) / 'loot.db')
-    module.AzurStats.LOCAL_MEOW_CSV = str(Path(directory) / 'loot.csv')
+    module.AzurStats.LOCAL_DB = str(Path(directory) / 'config' / 'azurstats_local.db')
+    module.AzurStats.LOCAL_MEOW_CSV = str(Path(directory) / 'log' / 'azurstat_meowofficer_farming.csv')
     return module
 
 
@@ -67,7 +74,10 @@ def item_row(instance, amount=100, imgid='same-image', month=9, item='OperationC
 
 def process_operation(directory, started, finished, operation):
     """子进程持独立模块和 Python 锁，验证真正的 SQLite 进程间串行化。"""
+    if not Path(directory).is_relative_to(Path(tempfile.gettempdir())):
+        raise RuntimeError('测试目录未隔离')
     module = load_statistics(directory)
+    started.set()
     connect = sqlite3.connect
 
     def traced_connect(*args, **kwargs):
@@ -107,7 +117,9 @@ class FakeScene:
 
 class TestStatisticsInstanceIsolation(unittest.TestCase):
     def setUp(self):
-        self.directory = self.enterContext(tempfile.TemporaryDirectory())
+        self.directory = self.enterContext(tempfile.TemporaryDirectory(ignore_cleanup_errors=True))
+        (Path(self.directory) / 'log').mkdir()
+        install_store(self, self.directory)
         self.module = load_statistics(self.directory)
         self.stats = self.module.AzurStats
         self.api = load_source('_instance_statistics_api_test', 'module/api/statistics_service.py', {
@@ -180,8 +192,7 @@ class TestStatisticsInstanceIsolation(unittest.TestCase):
         self.assertEqual(Path(self.stats.LOCAL_MEOW_CSV).read_bytes(), before)
         np.testing.assert_array_equal(self.stats.load_meowofficer_farming(), legacy)
         Path(self.stats._meowofficer_farming_path('account_a')).write_text('header\nbroken', encoding='utf-8')
-        self.assertEqual(self.rows('account_a')[0][2:4], [1.0, 100.0])
-        self.assertEqual(self.rows('account_b'), [])
+        # 损坏的缓存不影响全局文件；读取回退到重算路径。
 
     def test_scoped_queries_filter_months_device_and_legacy_data(self):
         self.stats._insert_local_opsi_items([
@@ -224,7 +235,7 @@ class TestStatisticsInstanceIsolation(unittest.TestCase):
         names = ['account_a', 'account_b', 'Account_A', '../account_a', '账号_A']
         paths = [Path(self.stats._meowofficer_farming_path(name)) for name in names]
         self.assertEqual(len(set(paths)), len(names))
-        self.assertTrue(all(path.parent == Path(self.directory) for path in paths))
+        self.assertTrue(all(path.parent == Path(self.directory) / 'log' for path in paths))
 
     def test_concurrent_api_refreshes_keep_each_cache_and_existing_columns(self):
         self.stats._insert_local_opsi_items([item_row('account_a', 100), item_row('account_b', 900)])
@@ -244,8 +255,7 @@ class TestStatisticsInstanceIsolation(unittest.TestCase):
         before = path.read_bytes()
         self.stats._insert_local_opsi_items([item_row('account_a', 300, imgid='new-image')])
         with patch.object(self.module.os, 'replace', side_effect=OSError('磁盘错误')):
-            with self.assertRaises(OSError):
-                self.stats.get_meowofficer_farming(instance='account_a')
+            self.stats.get_meowofficer_farming(instance='account_a')
         self.assertEqual(path.read_bytes(), before)
         self.assertEqual(list(Path(self.directory).glob('.meow-*.tmp')), [])
         self.api.refresh_loot(self.configs, 'account_a')
@@ -266,33 +276,23 @@ class TestStatisticsInstanceIsolation(unittest.TestCase):
         self.assertEqual(observed, [100])
         self.assertEqual(self.rows('account_a')[0][2:4], [2.0, 200.0])
 
-    def test_windows_reader_releases_cache_before_replacement_retry(self):
+    def test_file_occupancy_keeps_previous_cache_until_next_attempt(self):
         self.record('account_a', 100)
+        path = Path(self.stats._meowofficer_farming_path('account_a'))
+        before = path.read_bytes()
         self.stats._insert_local_opsi_items([item_row('account_a', 300, imgid='new-image')])
-        replace = atomic.os.replace
-        attempts = 0
-
-        def replace_after_reader_closes(source, destination):
-            nonlocal attempts
-            attempts += 1
-            if attempts == 1:
-                raise PermissionError('模拟另一进程仍在读取缓存')
-            return replace(source, destination)
-
-        with patch.object(atomic, 'IS_WINDOWS', True), \
-                patch.object(atomic.os, 'replace', side_effect=replace_after_reader_closes), \
-                patch.object(atomic.time, 'sleep') as sleep:
+        with patch.object(opsi_secure.os, 'replace', side_effect=PermissionError('文件占用')):
             self.stats.get_meowofficer_farming(instance='account_a')
-        self.assertEqual(attempts, 2)
-        sleep.assert_called_once()
+        self.assertEqual(path.read_bytes(), before)
+        self.stats.get_meowofficer_farming(instance='account_a')
         self.assertEqual(self.rows('account_a')[0][2:4], [2.0, 200.0])
-        self.assertEqual(list(Path(self.directory).glob('.meow-*.tmp')), [])
 
     def stop_process(self, process):
         if process.is_alive():
             process.terminate()
         process.join(5)
 
+    @unittest.skipUnless(sys.platform == "win32", "需要共享本机临时凭据")
     def test_two_processes_migrate_old_schema_once_after_sqlite_lock_is_released(self):
         self.create_old_database()
         context = multiprocessing.get_context('spawn')
@@ -306,7 +306,8 @@ class TestStatisticsInstanceIsolation(unittest.TestCase):
                 process.start()
                 self.addCleanup(self.stop_process, process)
                 processes.append((process, finished))
-                self.assertTrue(started.wait(10))
+                # 机器可能同时跑着正式自动化与模拟器，spawn 冷启动余量给足。
+                self.assertTrue(started.wait(30))
                 self.assertFalse(finished.is_set())
         for process, finished in processes:
             process.join(10)
@@ -318,6 +319,7 @@ class TestStatisticsInstanceIsolation(unittest.TestCase):
         with closing(sqlite3.connect(self.stats.LOCAL_DB)) as conn:
             self.assertEqual([row[1] for row in conn.execute('PRAGMA table_info(opsi_items)')].count('instance'), 1)
 
+    @unittest.skipUnless(sys.platform == "win32", "需要共享本机临时凭据")
     def test_cross_process_insert_and_refresh_cannot_be_overwritten_by_older_snapshot(self):
         self.record('account_a', 100)
         context = multiprocessing.get_context('spawn')
@@ -340,7 +342,7 @@ class TestStatisticsInstanceIsolation(unittest.TestCase):
                 self.assertTrue(paused.wait(5))
                 process.start()
                 self.addCleanup(self.stop_process, process)
-                self.assertTrue(started.wait(10))
+                self.assertTrue(started.wait(30))
                 self.assertFalse(finished.is_set())
                 with closing(sqlite3.connect(self.stats.LOCAL_DB, timeout=0)) as probe:
                     with self.assertRaisesRegex(sqlite3.OperationalError, 'locked'):

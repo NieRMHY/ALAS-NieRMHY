@@ -438,7 +438,7 @@ class AzurLaneConfig(ConfigUpdater, ManualConfig, GeneratedConfig, ConfigWatcher
 
         limit_next_run(["Commission", "Reward"], limit=now + timedelta(hours=12, seconds=-1))
         limit_next_run(["Research"], limit=now + timedelta(hours=24, seconds=-1))
-        limit_next_run(["OpsiExplore", "OpsiCrossMonth", "OpsiVoucher", "OpsiMonthBoss", "OpsiShop"],
+        limit_next_run(["OpsiExplore", "OpsiExploreCleanup", "OpsiCrossMonth", "OpsiVoucher", "OpsiMonthBoss", "OpsiShop"],
                        limit=now + timedelta(days=31, seconds=-1))
         limit_next_run(["OpsiArchive"], limit=now + timedelta(days=7, seconds=-1))
         # 防溢出任务会按当前行动力恢复到 200 的时间延后，最长可能超过 24 小时。
@@ -683,6 +683,7 @@ class AzurLaneConfig(ConfigUpdater, ManualConfig, GeneratedConfig, ConfigWatcher
             tasks = SelectedGrids(
                 [
                     "OpsiExplore",
+                    "OpsiExploreCleanup",
                     "OpsiDaily",
                     "OpsiObscure",
                     "OpsiAbyssal",

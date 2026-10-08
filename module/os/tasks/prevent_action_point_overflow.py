@@ -93,7 +93,7 @@ class OpsiPreventActionPointOverflow(OpsiScheduling):
             self.TASK_NAME_HAZARD1_LEVELING,
             self.TASK_NAME_MEOWFFICER_FARMING,
         ):
-            logger.warning(f'[大世界-防止行动力溢出] 防止行动力溢出的执行任务无效: {task}，回退到智能调度+')
+            logger.warning(f'[大世界-防止行动力溢出] 防止行动力溢出的执行任务无效: {task}，回退到智能调度')
             task = self.TASK_NAME_SCHEDULING
         return task
 
@@ -162,19 +162,21 @@ class OpsiPreventActionPointOverflow(OpsiScheduling):
         with prevent_overflow_context(self.config):
             return self._run_with_opsi_task_context(task_name, func, *args, **kwargs)
 
-    def _run_scheduled_coin_task_once(self, task_name, ap_preserve):
+    def _run_scheduled_coin_task_once(self, task_name, ap_preserve, fresh_ap=None):
         """由防止行动力溢出上下文直接执行一轮补黄币任务。
 
         Args:
             task_name (str): 代币任务名称。
             ap_preserve (int): 行动力保留阈值。
+            fresh_ap (tuple[int, int] | None): 智能调度决策读的复用读数，
+                原样透传。
 
         Returns:
             Any: 任务执行结果。
         """
         if self.is_running_prevent_action_point_overflow_task():
             logger.info(f'[大世界-防止行动力溢出] 直接执行一轮{self.TASK_NAMES.get(task_name, task_name)}')
-        return super()._run_scheduled_coin_task_once(task_name, ap_preserve)
+        return super()._run_scheduled_coin_task_once(task_name, ap_preserve, fresh_ap=fresh_ap)
 
     def _run_prevent_action_point_overflow_target_once(self, task_name, lowerbound):
         """按配置执行一轮防止行动力溢出目标任务。

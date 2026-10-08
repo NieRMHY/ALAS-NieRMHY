@@ -192,7 +192,7 @@ class Tools:
         data, _ = self.configs.read(arguments['instance'])
         queue = []
         for name, groups in data.items():
-            if name in {'Alas', 'Error', 'MUMU', 'MumuPlayer12', 'EmulatorManagement', 'Dashboard'}:
+            if not isinstance(groups, dict) or name in {'Alas', 'Error', 'MUMU', 'MumuPlayer12', 'EmulatorManagement', 'Dashboard'}:
                 continue
             scheduler = groups.get('Scheduler', {})
             if scheduler.get('Enable', False):
@@ -209,6 +209,8 @@ class Tools:
         data, _ = self.configs.read(arguments['instance'])
         cleared, retained = [], []
         for task, groups in data.items():
+            if not isinstance(groups, dict):
+                continue
             if not groups.get('Scheduler', {}).get('Enable', False):
                 continue
             try:

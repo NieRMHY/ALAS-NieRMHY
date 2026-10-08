@@ -1,6 +1,6 @@
 """提供完整前端构建目录，区分页面导航与静态资源请求。"""
 import mimetypes
-from pathlib import PurePosixPath
+from pathlib import Path, PurePosixPath
 
 from starlette.exceptions import HTTPException
 from starlette.staticfiles import StaticFiles
@@ -22,6 +22,15 @@ def ensure_static_mime_types() -> None:
 
 
 ensure_static_mime_types()
+
+
+class ItemTemplateFiles(StaticFiles):
+    """按优先级提供物品图标，缺图时从其他领奖模板目录查找同名图片。"""
+
+    def __init__(self, directories: list[Path]):
+        super().__init__(directory=None)
+        # 沿用 StaticFiles 的路径边界与缓存校验，不复制图片或公开模板库之外的目录。
+        self.all_directories = [str(directory) for directory in directories if directory.is_dir()]
 
 
 class FrontendFiles(StaticFiles):

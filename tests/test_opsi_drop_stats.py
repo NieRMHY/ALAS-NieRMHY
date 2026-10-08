@@ -2,8 +2,8 @@
 
 背景：掉落统计原先只认短猫相接、且只有「上传」档才解析入库（2026-09-25 改）。
 现在除侵蚀1练级外的所有大世界任务都会解析，且「保存」与「上传」都算，区别只在
-要不要把截图落盘。展示口径暂时只认金菜（部件T4）与彩图纸（研发图纸UR型），
-其余物品照常入库、只是不展示。这里用真临时 SQLite 锁定这三件事。
+要不要把截图落盘。展示金菜、SSR/UR研发图纸、指定研发材料、实验计划及突破部件，
+其余物品照常入库、只是不展示。这里用真临时 SQLite 验证范围与汇总。
 """
 
 import sqlite3
@@ -12,11 +12,14 @@ import unittest
 from contextlib import closing
 from datetime import datetime, timedelta
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import patch
 
 from module.config.config import AzurLaneConfig, Function
 from module.config.redirect_utils.utils import OPSI_RECORD_ARGS
 from module.statistics import azurstats, opsi_drop_stats
+from tests.opsi_test_support import install_store
+from module.statistics import opsi_secure
 from module.statistics.azurstats import AzurStats, is_opsi_drop_genre
 
 DEVICE = 'test-device'
@@ -122,7 +125,7 @@ class TestDropRecordSwitch(unittest.TestCase):
 
 
 class TestShowScope(unittest.TestCase):
-    """展示口径：金菜与彩图纸。"""
+    """统计范围与模板名称、游戏物品名称保持一致。"""
 
     def test_kind_of(self):
         for name in ('PlateGeneralT4', 'PlateGunT4', 'PlateTorpedoT4',
@@ -130,13 +133,24 @@ class TestShowScope(unittest.TestCase):
             with self.subTest(name=name):
                 self.assertEqual(opsi_drop_stats.kind_of(name), opsi_drop_stats.KIND_PLATE)
         for name in ('GearDesignPlanGunT5', 'GearDesignPlanTorpedoT5',
-                     'GearDesignPlanAntiAirT5', 'GearDesignPlanPlaneT5'):
+                     'GearDesignPlanAntiAirT5', 'GearDesignPlanPlaneT5',
+                     'GearDesignPlanGunT4', 'GearDesignPlanTorpedoT4',
+                     'GearDesignPlanAntiAirT4', 'GearDesignPlanPlaneT4'):
             with self.subTest(name=name):
                 self.assertEqual(opsi_drop_stats.kind_of(name), opsi_drop_stats.KIND_DESIGN)
+        for name in ('Ultra_High_Purity_Metals', 'Military_Grade_Electronic_Components',
+                     'HBX_Blend_Gunpowder', 'High_Durability_Elastomers',
+                     'Superconductive_Metals', 'Corrosion_Resistant_Alloys'):
+            with self.subTest(name=name):
+                self.assertEqual(opsi_drop_stats.kind_of(name), opsi_drop_stats.KIND_MATERIAL)
+        for name in ('OrdnanceTestingReportT4', 'OrdnanceTestingReportT5'):
+            self.assertEqual(opsi_drop_stats.kind_of(name), opsi_drop_stats.KIND_REPORT)
+        self.assertEqual(opsi_drop_stats.kind_of('PrototypeGearPartsT5'), opsi_drop_stats.KIND_PROTOTYPE)
 
     def test_scope_excludes_other_items(self):
-        """低级部件、金图纸、金机密、黄币等都不进明细；将来放开口径改这里。"""
-        for name in ('PlateGeneralT3', 'GearDesignPlanGunT4', 'OrdnanceTestingReportT4',
+        """仍排除低级物品及本次未指定的材料、部件和货币。"""
+        for name in ('PlateGeneralT3', 'GearDesignPlanGunT3', 'OrdnanceTestingReportT3',
+                     'PrototypeGearPartsT4', 'SpecialGearPrototype', 'Specially_Smelted_Metals',
                      'CoordinateAbyssal', 'CatT3', 'OperationCoin', 'Coins'):
             with self.subTest(name=name):
                 self.assertFalse(opsi_drop_stats.should_show(name))
@@ -144,6 +158,34 @@ class TestShowScope(unittest.TestCase):
     def test_item_info_falls_back_to_template_name(self):
         self.assertEqual(opsi_drop_stats.item_info('PlateGeneralT4')['zh'], '通用部件T4')
         self.assertEqual(opsi_drop_stats.item_info('UnknownThing')['zh'], 'UnknownThing')
+
+    def test_legacy_popup_report_name_uses_its_actual_rarity(self):
+        self.assertTrue(opsi_drop_stats.should_show('OrdnanceTestingReportT2'))
+        self.assertEqual(opsi_drop_stats.item_info('OrdnanceTestingReportT2')['zh'], '机密实验计划')
+
+    def test_requested_items_have_names_rarities_and_icons(self):
+        expected = {
+            'GearDesignPlanGunT4': ('舰炮研发图纸SSR型', 4),
+            'GearDesignPlanTorpedoT4': ('鱼雷研发图纸SSR型', 4),
+            'GearDesignPlanAntiAirT4': ('防空炮研发图纸SSR型', 4),
+            'GearDesignPlanPlaneT4': ('舰载机研发图纸SSR型', 4),
+            'Ultra_High_Purity_Metals': ('特种钢材', 4),
+            'Military_Grade_Electronic_Components': ('军工级电子元件', 4),
+            'HBX_Blend_Gunpowder': ('HBX炸药', 4),
+            'High_Durability_Elastomers': ('氟橡胶', 4),
+            'Superconductive_Metals': ('超导铜', 4),
+            'Corrosion_Resistant_Alloys': ('钛合金', 4),
+            'OrdnanceTestingReportT4': ('机密实验计划', 4),
+            'OrdnanceTestingReportT5': ('绝密实验计划', 5),
+            'PrototypeGearPartsT5': ('特装型突破部件', 5),
+        }
+        for name, (zh, rarity) in expected.items():
+            with self.subTest(name=name):
+                self.assertIn(name, opsi_drop_stats.SHOW_ITEMS)
+                info = opsi_drop_stats.item_info(name)
+                self.assertEqual((info['zh'], info['rarity']), (zh, rarity))
+                self.assertTrue(info['en'])
+                self.assertTrue(Path('assets/stats/opsi_reward_items', f'{name}.png').is_file())
 
     def test_zone_text(self):
         self.assertEqual(
@@ -156,8 +198,9 @@ class TestCollect(unittest.TestCase):
     """按时间窗口汇总掉落明细（真临时 SQLite）。"""
 
     def setUp(self):
-        self.directory = self.enterContext(tempfile.TemporaryDirectory())
-        AzurStats.LOCAL_DB = str(Path(self.directory) / 'loot.db')
+        self.directory = self.enterContext(tempfile.TemporaryDirectory(ignore_cleanup_errors=True))
+        install_store(self, self.directory)
+        self.enterContext(patch.object(AzurStats, 'LOCAL_DB', str(Path(self.directory) / 'config' / 'azurstats_local.db')))
         self.enterContext(patch.object(azurstats, 'get_device_id', return_value=DEVICE))
         self.now = datetime.now().replace(microsecond=0)
         self.patch = patch.object(opsi_drop_stats, '_task_names', None)
@@ -198,6 +241,68 @@ class TestCollect(unittest.TestCase):
         self.assertNotIn('Coins', by_name)
         self.assertEqual(summary['total'], 6)
         self.assertEqual(summary['record_count'], 2)
+
+    def test_existing_records_include_new_items_without_database_migration(self):
+        """已入库的指定物品立即纳入汇总，同包多格累加但只计一次掉落记录。"""
+        items = {
+            'GearDesignPlanGunT4': 2, 'GearDesignPlanTorpedoT4': 3,
+            'GearDesignPlanAntiAirT4': 1, 'GearDesignPlanPlaneT4': 4,
+            'Ultra_High_Purity_Metals': 5, 'Military_Grade_Electronic_Components': 6,
+            'HBX_Blend_Gunpowder': 7, 'High_Durability_Elastomers': 8,
+            'Superconductive_Metals': 9, 'Corrosion_Resistant_Alloys': 10,
+            'OrdnanceTestingReportT4': 2, 'OrdnanceTestingReportT5': 1,
+            'PrototypeGearPartsT5': 1,
+        }
+        self.insert('opsi_month_boss', {**items, 'OperationCoin': 500},
+                    self.now - timedelta(hours=1), 'new-items')
+        self.insert('opsi_month_boss', {'PrototypeGearPartsT5': 2},
+                    self.now - timedelta(hours=1), 'new-items')
+        summary = self.collect(task='opsi_month_boss')
+        by_name = {item['name']: item for item in summary['items']}
+        self.assertEqual(summary['total'], sum(items.values()) + 2)
+        self.assertEqual(summary['record_count'], 1)
+        for name, amount in items.items():
+            with self.subTest(name=name):
+                expected = amount + 2 if name == 'PrototypeGearPartsT5' else amount
+                self.assertEqual(by_name[name]['amount'], expected)
+                self.assertEqual(by_name[name]['count'], 1)
+                self.assertEqual(by_name[name]['avg'], expected)
+                self.assertIn(f"{by_name[name]['zh']} x{expected}", summary['records'][0][3])
+        self.assertNotIn('作战补给凭证', summary['records'][0][3])
+        self.assertEqual(self.collect(days=0)['record_count'], 0)
+        self.assertEqual(self.collect(task='opsi_daily')['total'], 0)
+
+    def test_legacy_gold_report_merges_with_current_name(self):
+        self.insert('opsi_daily', {'OrdnanceTestingReportT2': 2},
+                    self.now - timedelta(hours=1), 'legacy-report')
+        self.insert('opsi_daily', {'OrdnanceTestingReportT4': 1},
+                    self.now - timedelta(hours=2), 'current-report')
+        summary = self.collect()
+        by_name = {item['name']: item for item in summary['items']}
+        self.assertEqual(by_name['OrdnanceTestingReportT4']['amount'], 3)
+        self.assertEqual(by_name['OrdnanceTestingReportT4']['count'], 2)
+        self.assertNotIn('OrdnanceTestingReportT2', by_name)
+        self.assertEqual(summary['total'], 3)
+
+    def test_report_keeps_new_item_metrics_icons_and_records(self):
+        """验证真正的统计 API 结果，避免只有 mock 页面增加了物品。"""
+        from module.api.statistics_service import report
+
+        self.insert('opsi_daily', {'Ultra_High_Purity_Metals': 2, 'OrdnanceTestingReportT5': 1,
+                                   'PrototypeGearPartsT5': 1}, self.now - timedelta(minutes=1), 'api-items')
+        with patch.object(AzurStats, 'load_meowofficer_farming', return_value=[]):
+            result = report(SimpleNamespace(path=lambda instance: None), INSTANCE, 'loot',
+                            self.now.strftime('%Y-%m'), 7, 'month')
+        metrics = {item['label']: item for item in result['metrics']}
+        self.assertEqual(metrics['特种钢材']['value'], 2)
+        self.assertEqual(metrics['绝密实验计划']['icon'], 'opsi:OrdnanceTestingReportT5')
+        self.assertEqual(metrics['特装型突破部件']['value'], 1)
+        self.assertEqual(metrics['选定月份总计']['value'], 4)
+        detail = next(table for table in result['tables'] if table['title'] == '大世界掉落明细')
+        self.assertIn(['opsi:OrdnanceTestingReportT5', '绝密实验计划', '彩', 1, 1, 1.0], detail['rows'])
+        self.assertIn('六种金色研发材料', detail['note'])
+        records = next(table for table in result['tables'] if table['title'] == '掉落记录')
+        self.assertIn('特装型突破部件 x1', records['rows'][0][3])
 
     def test_corrosion_one_rows_are_ignored(self):
         self.insert('opsi_hazard1_leveling', {'OperationCoin': 100},
@@ -243,6 +348,35 @@ class TestCollect(unittest.TestCase):
         # 时间倒序；只列口径内的物品
         self.assertEqual(summary['records'][0][3], '防空炮部件T4 x1')
 
+    def test_filter_keeps_other_task_options_and_counts(self):
+        self.insert('opsi_stronghold', {'PlateGeneralT4': 4}, self.now - timedelta(hours=1), 'filter-a')
+        self.insert('opsi_month_boss', {'GearDesignPlanT5': 1}, self.now - timedelta(hours=2), 'filter-b')
+        summary = self.collect(task='opsi_stronghold')
+        self.assertEqual(summary['total'], 4)
+        self.assertEqual(summary['record_count'], 1)
+        options = {item['key']: item['count'] for item in summary['tasks']}
+        self.assertEqual(options['opsi_stronghold'], 1)
+        self.assertEqual(options['opsi_month_boss'], 1)
+
+    def test_shared_tasks_and_generic_design_plan_are_always_visible(self):
+        summary = self.collect()
+        options = {item['key'] for item in summary['tasks']}
+        self.assertTrue({'opsi_month_boss', 'opsi_archive', 'opsi_cross_month'} <= options)
+        self.assertIn('GearDesignPlanT5', {item['name'] for item in summary['items']})
+
+    def test_unknown_month_boss_zone_uses_known_task_type(self):
+        self.insert('opsi_month_boss', {'GearDesignPlanT5': 1}, self.now - timedelta(hours=1), 'boss')
+        with closing(sqlite3.connect(AzurStats.LOCAL_DB)) as connection, opsi_secure.immediate_transaction(connection):
+            connection.row_factory = sqlite3.Row
+            row = dict(connection.execute("SELECT * FROM opsi_items WHERE imgid='boss'").fetchone())
+            payload = opsi_secure.decode_record('loot', row['secure_payload'], opsi_secure.row_context('loot', row))
+            payload.update(zone='', zone_type='UNKNOWN', hazard_level=0)
+            connection.execute("UPDATE opsi_items SET secure_payload=? WHERE imgid='boss'",
+                               (opsi_secure.serialize_obj(payload),))
+        summary = self.collect()
+        self.assertEqual(summary['records'][0][2], '月度Boss海域')
+        self.assertEqual(summary['total'], 1)
+
     def test_task_label_falls_back_to_genre(self):
         self.assertEqual(opsi_drop_stats.task_label('opsi_month_boss'), '月度Boss')
         self.assertEqual(opsi_drop_stats.task_label('opsi_unknown_task'), 'opsi_unknown_task')
@@ -252,8 +386,9 @@ class TestSchema(unittest.TestCase):
     """明细库的查询直接由那套常量生成，不应在 SQL 里再抄一份任务范围。"""
 
     def test_load_query_excludes_corrosion_one(self):
-        with tempfile.TemporaryDirectory() as directory:
-            AzurStats.LOCAL_DB = str(Path(directory) / 'loot.db')
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as directory:
+            install_store(self, directory)
+            self.enterContext(patch.object(AzurStats, 'LOCAL_DB', str(Path(directory) / 'config' / 'azurstats_local.db')))
             with patch.object(azurstats, 'get_device_id', return_value=DEVICE):
                 AzurStats._ensure_local_db()
                 AzurStats._insert_local_opsi_items([
@@ -268,8 +403,9 @@ class TestSchema(unittest.TestCase):
 
     def test_database_rows_survive_a_reopen(self):
         """明细写入后能被独立连接读到（提交不是靠连接关闭时的隐式提交）。"""
-        with tempfile.TemporaryDirectory() as directory:
-            AzurStats.LOCAL_DB = str(Path(directory) / 'loot.db')
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as directory:
+            install_store(self, directory)
+            self.enterContext(patch.object(AzurStats, 'LOCAL_DB', str(Path(directory) / 'config' / 'azurstats_local.db')))
             AzurStats._ensure_local_db()
             AzurStats._insert_local_opsi_items([
                 {'imgid': 'y', 'server': 'cn', 'zone': None, 'zone_type': None,

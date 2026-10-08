@@ -12,11 +12,13 @@ Classes:
 import numpy as np
 
 from module.config.config import TaskEnd
-from module.config.utils import get_os_reset_remain
+from module.config.utils import get_os_next_reset, get_os_reset_remain
 from module.exception import ScriptError
 from module.logger import logger
 from module.map.map_grids import SelectedGrids
+from module.os.globe_operation import OSExploreError
 from module.os.map import OSMap
+from module.os.tasks.smart_explore import monthly_explore_complete
 from module.os_handler.action_point import ActionPointLimit
 from module.os_handler.assets import MISSION_COMPLETE_POPUP
 from module.ui.assets import OS_CHECK
@@ -24,6 +26,25 @@ from module.ui.page import page_os
 
 
 class OpsiDaily(OSMap):
+    def _os_daily_needs_recon_scan(self):
+        """仅每日任务在两种开荒均未完成的普通海域中检查空域侦察。"""
+        if (self.config.task.command != 'OpsiDaily'
+                or self.zone.is_port or self.is_zone_name_hidden):
+            return False
+        if self.is_in_special_zone() or monthly_explore_complete(self.config):
+            return False
+        storage = self.config.cross_get('OpsiScheduling.Storage.Storage', default={})
+        state = storage.get('SmartExplore') if isinstance(storage, dict) else None
+        return not (isinstance(state, dict)
+                    and state.get('reset') == get_os_next_reset().isoformat()
+                    and state.get('phase') in ('cleanup', 'done'))
+
+    def run_first_auto_search(self):
+        """每日初始化也先照亮未开荒海域，避免恢复任务时直接扫描迷雾。"""
+        if self._os_daily_needs_recon_scan():
+            self.os_order_execute(recon_scan=True, submarine_call=False)
+        super().run_first_auto_search()
+
     def os_port_mission(self):
         """
         遍历所有港口并执行每日任务。
@@ -32,14 +53,14 @@ class OpsiDaily(OSMap):
             in: page_os, 大世界地图
             out: page_os, 大世界地图
         """
-        logger.hr('大世界-大世界每日+ 港口任务', level=1)
+        logger.hr('大世界-大世界每日 港口任务', level=1)
         ports = ['NY City', 'Dakar', 'Taranto', 'Gibraltar', 'Brest', 'Liverpool', 'Kiel', 'St. Petersburg']
         if np.random.uniform() > 0.5:
             ports.reverse()
 
         for port in ports:
             port = self.name_to_zone(port)
-            logger.hr(f'大世界-大世界每日+ 港口每日, port={port}', level=2)
+            logger.hr(f'大世界-大世界每日 港口每日, port={port}', level=2)
             self.globe_goto(port)
 
             self.run_auto_search()
@@ -87,7 +108,7 @@ class OpsiDaily(OSMap):
             ActionPointLimit: 行动力不足时跳过当前区域。
         """
         if get_os_reset_remain() > 0:
-            logger.info('距离大世界重置超过 1 天，跳过大世界每日+任务海域清理')
+            logger.info('距离大世界重置超过 1 天，跳过大世界每日任务海域清理')
             return
 
         def os_daily_check_zone(zone):
@@ -101,14 +122,18 @@ class OpsiDaily(OSMap):
                 .filter(os_daily_check_zone) \
                 .sort_by_clock_degree(center=(1252, 1012), start=self.zone.location)
         except ScriptError:
-            logger.warning('任务海域配置无效，跳过大世界每日+任务海域清理')
+            logger.warning('任务海域配置无效，跳过大世界每日任务海域清理')
             zones = []
 
         for zone in clear_zones:
-            logger.hr(f'大世界-大世界每日+ 清理任务海域, zone_id={zone.zone_id}', level=1)
+            logger.hr(f'大世界-大世界每日 清理任务海域, zone_id={zone.zone_id}', level=1)
             try:
                 self.globe_goto(zone, types='SAFE', refresh=True)
             except ActionPointLimit:
+                continue
+            except OSExploreError:
+                self._os_defer_mission_zone(zone)
+                self._os_return_from_unavailable_mission()
                 continue
             self.fleet_set(self.config.OpsiFleet_Fleet)
             self.os_order_execute(recon_scan=False, submarine_call=False)
@@ -175,26 +200,52 @@ class OpsiDaily(OSMap):
             in: page_os, 大世界地图
             out: page_os, 大世界地图
         """
-        logger.hr('大世界-大世界每日+ 完成每日任务', level=1)
+        logger.hr('大世界-大世界每日 完成每日任务', level=1)
         count = 0
+        mission_index = 0
+        skip_unavailable = self.config.task.command == 'OpsiDaily'
+        self._os_daily_mission_unavailable = False
         # 防止港口类型每日任务的无限刷新循环（如对话/拾取/商店交互等自动搜索无法完成的情况）
         stuck_port_zone_id = None
         stuck_port_retry = 0
         abort_due_to_stuck_port = False
         while True:
-            result = self.os_get_next_mission(skip_siren_mission=skip_siren_mission)
+            if skip_unavailable:
+                result = self.os_get_next_mission(skip_siren_mission=skip_siren_mission,
+                                                 skip_unavailable=True, mission_index=mission_index)
+                mission_index = self._os_mission_index
+            else:
+                result = self.os_get_next_mission(skip_siren_mission=skip_siren_mission)
             if not result:
                 break
+            if result == 'mission_zone_unavailable':
+                self._os_daily_mission_unavailable = True
+                mission_index += 1
+                continue
 
             if result != 'pinned_at_archive_zone':
                 # 档案海域的名称是 "archive zone"，不是已存在的区域。
                 # 完成档案海域后会自动返回之前的区域。
                 self.zone_init()
             if result == 'already_at_mission_zone':
-                self.globe_goto(self.zone, refresh=True)
+                zone = self.zone
+                if skip_unavailable and zone.zone_id in self._os_deferred_mission_zones():
+                    self._os_daily_mission_unavailable = True
+                    mission_index += 1
+                    continue
+                try:
+                    self.globe_goto(zone, refresh=True)
+                except OSExploreError:
+                    if not skip_unavailable:
+                        raise
+                    self._os_defer_mission_zone(zone)
+                    self._os_return_from_unavailable_mission()
+                    self._os_daily_mission_unavailable = True
+                    mission_index += 1
+                    continue
             self.fleet_set(self.config.OpsiFleet_Fleet)
             self.os_order_execute(
-                recon_scan=False,
+                recon_scan=result != 'pinned_at_archive_zone' and self._os_daily_needs_recon_scan(),
                 submarine_call=self.config.OpsiFleet_Submarine and result != 'pinned_at_archive_zone')
             if keep_mission_zone and not self.zone.is_port:
                 interrupt = [self.daily_interrupt_check, self.is_meowfficer_searching]
@@ -223,8 +274,8 @@ class OpsiDaily(OSMap):
 
                 if stuck_port_retry >= 3:
                     logger.warning(
-                        f'大世界每日+港口任务疑似卡在海域 {zone_id} ({self.zone})，'
-                        f'{stuck_port_retry} 次重试后自律寻敌仍无进展，停止大世界每日+以避免无限刷新海域。')
+                        f'大世界每日港口任务疑似卡在海域 {zone_id} ({self.zone})，'
+                        f'{stuck_port_retry} 次重试后自律寻敌仍无进展，停止大世界每日以避免无限刷新海域。')
                     abort_due_to_stuck_port = True
                     break
             else:
@@ -245,6 +296,7 @@ class OpsiDaily(OSMap):
 
         依次处理调谐样本使用、记录仪使用、接取每日任务并执行。
         若配置了保留任务海域，将在接近月末时统一清理。
+        任务海域尚未解锁或无法进入时，仅延期对应委托并继续其他委托。
         执行完毕后延迟至次日服务器刷新。
         """
         # 清理调谐样本
@@ -261,20 +313,22 @@ class OpsiDaily(OSMap):
             self.config.OpsiDaily_KeepMissionZone = False
 
         skip_siren_mission = self.config.OpsiDaily_SkipSirenResearchMission
+        self._os_daily_mission_unavailable = False
         while True:
             # 如果无法接收更多每日任务，先完成已有任务再重试
             success = self.os_mission_overview_accept(skip_siren_mission=skip_siren_mission)
             # 重新初始化区域名称
             # MISSION_ENTER 从右侧出现，需确认动画结束，否则会点击到 MAP_GOTO_GLOBE
             self.zone_init()
-            if self.os_finish_daily_mission(
-                    skip_siren_mission=skip_siren_mission,
-                    keep_mission_zone=self.config.OpsiDaily_KeepMissionZone) and skip_siren_mission:
+            finished = self.os_finish_daily_mission(
+                skip_siren_mission=skip_siren_mission,
+                keep_mission_zone=self.config.OpsiDaily_KeepMissionZone)
+            if finished and skip_siren_mission:
                 continue
             if self.is_in_opsi_explore():
                 self.os_port_mission()
                 break
-            if success:
+            if success or (not finished and self._os_daily_mission_unavailable):
                 break
 
         if self.config.OpsiDaily_KeepMissionZone:

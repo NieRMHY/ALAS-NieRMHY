@@ -1,5 +1,5 @@
 /**
- * @fileoverview 存储项字段占位与辅助渲染组件。
+ * @fileoverview 存储项字段的内容展示与清空组件。
  */
 
 import { Trash2 } from 'lucide-react'

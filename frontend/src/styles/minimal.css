@@ -26,6 +26,7 @@
 }
 body {background-attachment: scroll}
 .app-shell {gap: 0}
+
 .sidebar, .right-rail, .topbar {border-radius: 0; background: var(--surface)}
 .sidebar {padding: 0 14px 14px}
 .sidebar-brand {height: var(--topbar-height); padding: 0 8px; margin-bottom: 14px}
@@ -44,7 +45,7 @@ body {background-attachment: scroll}
 .breadcrumb, .breadcrumb .instance-caption strong {font-size: 13px}
 .connection-dot {background: var(--theme-warning)}
 .connection-dot.online {background: var(--green)}
-/* 上内边距只留一点：控件行与下面那个大容器之间的距离要紧凑。 */
+/* 不留上内边距：控件行与下面那个大容器之间的距离要紧凑。 */
 main {padding: 0 28px 24px}
 main:focus {outline: none}
 .page-title h1 {font-size: clamp(26px, 2.5vw, 34px); letter-spacing: -.6px; overflow-wrap: anywhere}
@@ -77,9 +78,9 @@ button:disabled, input:disabled, textarea:disabled, select:disabled, .select-tri
 .button:disabled {background: var(--surface-muted); border-color: var(--border)}
 .toggle:disabled::before {background: var(--theme-toggle-off)}
 .toggle:disabled > span {background: var(--surface-muted)}
-.toggle {position: relative}
-.toggle::before {content: ''; position: absolute}
 .input-icon, .scheduler-widget, .schedule-summary, .count-badge, .nav-search {background: var(--surface-muted)}
+/* 右栏里的调度器组件与新版本同层：二级贴片。 */
+.right-rail .scheduler-widget, .instance-page-rail .scheduler-widget {background: var(--theme-plate-bg)}
 .status, .task-state {border-radius: 6px}
 .resource-foot > svg, .resource-editor-grip {color: var(--muted)}
 .resource-editor-card, .resource-picker {background: var(--surface); border-color: var(--border)}
@@ -88,7 +89,7 @@ button:disabled, input:disabled, textarea:disabled, select:disabled, .select-tri
 .resource-editor-add-icon {background: var(--accent-soft)}
 .resource-editor-add, .resource-editor-add:hover, .resource-editor-add.open {background: var(--accent-soft)}
 .statistics-note {border-left-color: var(--secondary)}
-.chart-expanded {inset: 0; border-radius: 0; z-index: 150}
+.panel.chart-expanded {inset: 0; border-radius: 0; z-index: 150}
 @media (min-width: 951px) {
   /* 外壳给确定高度，内层 height:100% 才解析得到；只设 min-height 时整条链按内容长。 */
   .app-shell:has(.overview-page) {height: var(--viewport-height)}
@@ -151,7 +152,6 @@ button:disabled, input:disabled, textarea:disabled, select:disabled, .select-tri
 }
 .log-filters {background: var(--surface-muted)}
 .monitor-segmented {display: inline-flex; align-items: center; gap: 3px; padding: 3px; border: 1px solid var(--border); border-radius: 9px; background: var(--surface-muted); max-width: 100%; overflow-x: auto}
-.statistics-edit-actions.monitor-segmented {border-radius: 0}
 .monitor-segmented button {display: inline-flex; align-items: center; justify-content: center; gap: 7px; flex-shrink: 0; min-height: 34px; padding: 6px 12px; border: 0; border-radius: 6px; color: var(--muted); font-size: 13px; white-space: nowrap}
 .monitor-segmented button[aria-selected='true'] {background: var(--accent-soft); color: var(--accent)}
 .monitor-segmented button:focus-visible {outline-offset: -2px}
@@ -164,8 +164,8 @@ button:disabled, input:disabled, textarea:disabled, select:disabled, .select-tri
 .group-nav a {border-radius: 6px}
 .rail-task-list {display: flex; flex-direction: column; gap: 12px}
 .rail-queue-group {flex-shrink: 0; border: 1px solid var(--border); border-radius: 10px; overflow: hidden}
-.rail-queue-group.running, .rail-queue-group.pending, .rail-queue-group.waiting {background: var(--surface); border-color: var(--border)}
-.rail-queue-heading {display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 12px; background: var(--surface-muted); border-bottom: 1px solid var(--border)}
+.rail-queue-group.running, .rail-queue-group.pending, .rail-queue-group.waiting {background: var(--theme-inset-bg); border-color: var(--border)}
+.rail-queue-heading {display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 12px}
 .rail-queue-heading > div {display: flex; align-items: center; gap: 8px; font-size: 12px}
 .rail-queue-heading > span {color: var(--muted); font-size: 11px}
 .rail-queue-heading svg {color: var(--secondary)}
@@ -179,7 +179,7 @@ button:disabled, input:disabled, textarea:disabled, select:disabled, .select-tri
 .modal::backdrop {background: color-mix(in srgb, var(--bg) 22%, transparent)}
 .modal {border: 2px solid var(--border)}
 .toast {border: 1px solid var(--border)}
-.skip-link {position: fixed; top: -100px; left: 16px; z-index: 200; background: var(--surface); color: var(--accent); padding: 14px; border-radius: 8px}
+.skip-link {position: fixed; top: -100px; left: 16px; z-index: 200; background: var(--theme-control-bg); color: var(--accent); padding: 14px; border-radius: 8px}
 .skip-link:focus {top: 12px}
 .layout-options {display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; min-width: 0; max-width: 280px; border: 0; margin: 0; padding: 0; width: 100%}
 .layout-options legend {position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%)}

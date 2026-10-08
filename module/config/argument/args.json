@@ -459,6 +459,14 @@
         "type": "checkbox",
         "value": false
       },
+      "TaskRestartLimit": {
+        "type": "input",
+        "value": 3,
+        "validate": [
+          0,
+          999
+        ]
+      },
       "SaveErrorRetentionDays": {
         "type": "input",
         "value": 30,
@@ -969,6 +977,10 @@
       "CheckPerCategory": {
         "type": "input",
         "value": 5
+      },
+      "KeepCommonCV": {
+        "type": "checkbox",
+        "value": true
       }
     },
     "OldRetire": {
@@ -1047,7 +1059,7 @@
     "YukikazeTaskManager": {
       "TaskPriorityAdjustment": {
         "type": "task_priority",
-        "value": "Restart\n> OpsiCrossMonth\n> Commission > Tactical > Research\n> Exercise\n> Dorm > Meowfficer > Guild > Gacha\n> Reward\n> ShopFrequent > ShopOnce > Shipyard > Freebies\n> PrivateQuarters\n> OpsiExplore\n> OpsiPreventActionPointOverflow\n> Minigame > Awaken\n> OpsiAshBeacon\n> OpsiDaily > OpsiShop > OpsiVoucher > EventShop\n> OpsiAbyssal > OpsiStronghold > OpsiObscure > OpsiArchive\n> Daily > Hard > OpsiAshBeacon > OpsiAshAssist > OpsiMonthBoss\n> Sos > EventSp > EventA > EventB > EventC > EventD\n> RaidDaily > CoalitionSp > WarArchives > MaritimeEscort\n> IslandJuuEatery > IslandJuuCoffee > IslandGrill > IslandTeahouse > IslandRestaurant\n> IslandFarm > IslandRancher > IslandMineForest > IslandDailyGather > IslandManufacture\n> IslandAirDrop > IslandBusiness > IslandDailyOrder > IslandDailyInteract > IslandPearlSell > IslandCargoPreparation\n> Event > Event2 > Event3 > Raid > Hospital > HospitalEvent > Coalition > RaidAffection > Main > Main2 > Main3\n> OpsiScheduling\n> OpsiMeowfficerFarming\n> GemsFarming\n> Ambush11\n> OpsiHazard1Leveling\n> ThreeOilLowCost\n> OperationHandover"
+        "value": "Restart\n> OpsiCrossMonth\n> Commission > Tactical > Research\n> Exercise\n> Dorm > Meowfficer > Guild > Gacha\n> Reward > StorageStatistics\n> ShopFrequent > ShopOnce > Shipyard > Freebies\n> PrivateQuarters\n> OpsiExplore > OpsiExploreCleanup\n> OpsiPreventActionPointOverflow\n> Minigame > Awaken\n> OpsiAshBeacon\n> OpsiDaily > OpsiShop > OpsiVoucher > EventShop\n> OpsiAbyssal > OpsiStronghold > OpsiObscure > OpsiArchive\n> Daily > Hard > OpsiAshBeacon > OpsiAshAssist > OpsiMonthBoss\n> Sos > EventSp > EventA > EventB > EventC > EventD\n> RaidDaily > CoalitionSp > WarArchives > MaritimeEscort\n> IslandJuuEatery > IslandJuuCoffee > IslandGrill > IslandTeahouse > IslandRestaurant\n> IslandFarm > IslandRancher > IslandMineForest > IslandDailyGather > IslandManufacture\n> IslandAirDrop > IslandBusiness > IslandDailyOrder > IslandDailyInteract > IslandPearlSell > IslandCargoPreparation\n> Event > Event2 > Event3 > Raid > Hospital > HospitalEvent > Coalition > RaidAffection > Main > Main2 > Main3\n> OpsiScheduling\n> OpsiMeowfficerFarming\n> GemsFarming\n> Ambush11\n> OpsiHazard1Leveling\n> ThreeOilLowCost\n> OperationHandover"
       }
     },
     "Storage": {
@@ -11524,6 +11536,67 @@
       }
     }
   },
+  "StorageStatistics": {
+    "Scheduler": {
+      "Enable": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "PushNotification": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "NextRun": {
+        "type": "datetime",
+        "value": "2020-01-01 00:00:00",
+        "validate": "datetime"
+      },
+      "Command": {
+        "type": "input",
+        "value": "StorageStatistics",
+        "display": "hide"
+      },
+      "SuccessInterval": {
+        "type": "input",
+        "value": 1440,
+        "display": "hide"
+      },
+      "FailureInterval": {
+        "type": "input",
+        "value": 60,
+        "display": "hide"
+      },
+      "ServerUpdate": {
+        "type": "input",
+        "value": "04:00",
+        "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      }
+    },
+    "Storage": {
+      "Storage": {
+        "type": "storage",
+        "value": {},
+        "valuetype": "ignore",
+        "display": "disabled"
+      }
+    }
+  },
   "Dorm": {
     "Scheduler": {
       "Enable": {
@@ -13632,7 +13705,8 @@
           "new_jersey",
           "taihou",
           "aegir",
-          "nakhimov"
+          "nakhimov",
+          "implacable"
         ]
       }
     },
@@ -13735,6 +13809,10 @@
           1,
           240
         ]
+      },
+      "SkipStrategicSearchCheck": {
+        "type": "checkbox",
+        "value": false
       }
     },
     "Storage": {
@@ -13974,10 +14052,109 @@
         "type": "checkbox",
         "value": false
       },
+      "MeowfficerCleanup": {
+        "type": "checkbox",
+        "value": false,
+        "display": "hide"
+      },
+      "MeowfficerCleanupState": {
+        "type": "stored",
+        "value": null,
+        "display": "hide"
+      },
       "ExploreProgress": {
         "type": "textarea",
         "value": "",
         "display": "disabled"
+      }
+    },
+    "OpsiFleet": {
+      "Fleet": {
+        "type": "select",
+        "value": 1,
+        "option": [
+          1,
+          2,
+          3,
+          4
+        ]
+      },
+      "Submarine": {
+        "type": "checkbox",
+        "value": false
+      }
+    },
+    "Storage": {
+      "Storage": {
+        "type": "storage",
+        "value": {},
+        "valuetype": "ignore",
+        "display": "disabled"
+      }
+    }
+  },
+  "OpsiExploreCleanup": {
+    "Scheduler": {
+      "Enable": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "PushNotification": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "NextRun": {
+        "type": "datetime",
+        "value": "2020-01-01 00:00:00",
+        "validate": "datetime"
+      },
+      "Command": {
+        "type": "input",
+        "value": "OpsiExploreCleanup",
+        "display": "hide"
+      },
+      "SuccessInterval": {
+        "type": "input",
+        "value": 0,
+        "display": "hide"
+      },
+      "FailureInterval": {
+        "type": "input",
+        "value": 30,
+        "display": "hide"
+      },
+      "ServerUpdate": {
+        "type": "input",
+        "value": "00:00",
+        "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      }
+    },
+    "OpsiExploreCleanup": {
+      "Progress": {
+        "type": "textarea",
+        "value": "",
+        "display": "disabled"
+      },
+      "State": {
+        "type": "stored",
+        "value": null,
+        "display": "hide"
       }
     },
     "OpsiFleet": {
@@ -14256,6 +14433,11 @@
         "value": false
       },
       "MissionZones": {
+        "type": "stored",
+        "value": null,
+        "display": "hide"
+      },
+      "DeferredMissions": {
         "type": "stored",
         "value": null,
         "display": "hide"
@@ -15109,6 +15291,10 @@
       }
     },
     "OpsiScheduling": {
+      "BuyActionPoint": {
+        "type": "checkbox",
+        "value": false
+      },
       "UseSmartSchedulingOperationCoinsPreserve": {
         "type": "checkbox",
         "value": true,
@@ -15185,6 +15371,11 @@
         "type": "input",
         "value": 0
       },
+      "MonthEndMeowTargetZone": {
+        "type": "input",
+        "value": "0",
+        "mode": "text"
+      },
       "MonthEndShopPurchase": {
         "type": "checkbox",
         "value": true,
@@ -15192,6 +15383,25 @@
           true,
           false
         ]
+      }
+    },
+    "OpsiSmartExplore": {
+      "Enable": {
+        "type": "checkbox",
+        "value": false
+      },
+      "EventCleanup": {
+        "type": "checkbox",
+        "value": false
+      },
+      "ForceRun": {
+        "type": "checkbox",
+        "value": false
+      },
+      "Progress": {
+        "type": "textarea",
+        "value": "",
+        "display": "disabled"
       }
     },
     "Storage": {
@@ -15382,10 +15592,10 @@
       "MeowHazardLevel": {
         "type": "select",
         "value": "level5",
-        "option": {
-          "level3": 3,
-          "level5": 5
-        }
+        "option": [
+          "level3",
+          "level5"
+        ]
       },
       "CrossWeek": {
         "type": "checkbox",

@@ -27,7 +27,7 @@ const mockSchema: Schema = {
 
 const mockTranslations: Record<string, string> = {
   'Menu.Alas.name': '系统',
-  'Menu.Farm.name': '出击Plus',
+  'Menu.Farm.name': '出击',
   'Task.Alas.name': '系统设置',
   'Task.General.name': '通用设置',
   'Task.Restart.name': '游戏重启',
@@ -87,7 +87,7 @@ describe('TaskNav 导航组件', () => {
     expect(html).toContain('aria-expanded="false"')
     expect(html).toContain('aria-controls="task-group-Alas"')
     expect(html).toContain('系统')
-    expect(html).toContain('出击Plus')
+    expect(html).toContain('出击')
 
     // 子菜单常驻以便高度过渡；收起态不带 expanded，侧栏一上来不会是长列表
     expect(html).toContain('task-submenu-list')
@@ -119,9 +119,9 @@ describe('TaskNav 导航组件', () => {
   it('旧版主题处于某任务页时，所属分组自动展开并高亮', () => {
     const html = render('/i/default/task/Main')
 
-    // Main 任务属于 Farm 分组（出击Plus）
+    // Main 任务属于 Farm 分组（出击）
     expect(html).toContain('task-group-button expanded active')
-    expect(html).toContain('出击Plus')
+    expect(html).toContain('出击')
     expect(html).toContain('href="/i/default/task/Main"')
   })
 

@@ -1,5 +1,19 @@
 import { describe, expect, it } from 'vitest'
-import {aggregatePoints, isActionPointSeries, mergeMultiSeriesRows, riseFallDeltas, riseFallSegments} from './statisticsData'
+import {aggregatePoints, isActionPointSeries, mergeMultiSeriesRows, normalizeReport, riseFallDeltas, riseFallSegments} from './statisticsData'
+
+describe('仓库趋势传输', () => {
+  it('逐点和共用时间轴都保留物品模板图标与真实数量', () => {
+    const base = {instance: 'test', category: 'storage', month: '2026-10', metrics: [], tables: [], notes: []}
+    const icon = 'storage:storage_items/CognitiveChipsII'
+    for (const wire of [
+      {...base, series: [{key: 'chips', label: '心智单元II', icon, points: [{t: 1790985600000000, v: 1204, s: '仓库统计'}]}]},
+      {...base, axis: [1790985600000000], series: [{key: 'chips', label: '心智单元II', icon, values: [1204], sources: ['仓库统计']}]},
+    ]) {
+      expect(normalizeReport(wire).series[0]).toEqual({key: 'chips', label: '心智单元II', icon,
+        points: [{time: '2026-10-03 00:00:00', value: 1204, source: '仓库统计'}]})
+    }
+  })
+})
 
 describe('统计时间聚合', () => {
   it('K 线保留开高低收以及零值，不用平均值代替收盘', () => {

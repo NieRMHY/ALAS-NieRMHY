@@ -10,9 +10,9 @@
 - **os_ash** 处理余烬（META）体系：信标收集、信标攻击、信标协助。它与大世界联动（战斗结算会检查信标收集进度）但有自己的页面与调度节奏，因此单独成包。
 - **os_combat** 只有一件事：把通用 `Combat` 适配到大世界的结算时序（连续战斗、S 评价自动点击、掉落收集）。
 - **os_shop** 实现大世界两类商店（港口商店、明石商店）的货架扫描与购买策略，被 `PortHandler` 与智能调度的购买流程复用。
-- **os_simulator** 是一个离线蒙特卡洛模拟器，估算不同侵蚀等级刷黄币的收益。**当前没有任何生产代码调用它**（`alas.py`、API、前端均无引用），属于保留的实验工具。
+- **os_simulator** 是一个离线蒙特卡洛模拟器，估算不同侵蚀等级刷黄币的收益。WebUI 的「大世界模拟器 Alpha」页面通过 `opsi.simulator.*` 接口控制它，独立于游戏调度器。
 
-五个包的共同点：都是被组合（mixin）而非被调用的库，最终都汇入 `OSMap` 或其任务类。
+前四个包作为 mixin 汇入 `OSMap` 或其任务类；模拟器由 WebUI 运行时服务独立管理。
 
 ## 2. 模块职责
 
@@ -81,7 +81,7 @@ module/os_simulator/
 | `OpsiAshBeacon.run()` / `AshBeaconAssist.run()` | os_ash | 两个独立调度任务 |
 | `os_combat.Combat` | os_combat | `OSFleet` 的战斗基类 |
 | `OSShop.os_shop_buy(select_func)` / `handle_port_supply_buy` | os_shop | 购买执行；港口扫货由智能调度与 OpsiShop 共用 |
-| `OSSimulator.start()/interrupt()` | os_simulator | 手动触发（无生产调用方） |
+| `OSSimulator.start()/interrupt()` | os_simulator | WebUI 模拟器页启动和中断离线计算 |
 
 ## 5. 核心组件
 
@@ -89,7 +89,7 @@ module/os_simulator/
 
 | 类 | 要点 |
 | --- | --- |
-| `ActionPointHandler(UI, MapEventHandler)` | 行动力核心。`ActionPointLimit` 异常携带 `current/total/cost/preserve`，`delay_minutes` 属性可按恢复速率换算延迟；`ActionPointBuyCounter` 把 OCR 结果 `05` 修正为 `0/5`（购买次数），JP 服字体单独分支。`handle_action_point(..., avoid_ap_overflow=True)` 在开箱会溢出时拒绝并抛 `ActionPointLimit`——这是智能调度与防溢出任务所有「资源延迟」的源头 |
+| `ActionPointHandler(UI, MapEventHandler)` | 行动力核心。`ActionPointLimit` 异常携带 `current/total/cost/preserve`，`delay_minutes` 属性可按恢复速率换算延迟；`ActionPointBuyCounter` 把 OCR 结果 `05` 修正为 `0/5`（购买次数），JP 服字体单独分支。`handle_action_point(..., avoid_ap_overflow=True)` 在开箱会溢出时拒绝并抛 `ActionPointLimit`。智能调度在同一面板已安全首读且含箱口径一致时传 `skip_first_read=True`，只省掉补充前的重复读取，使用或购买后的确认读取保留 |
 | `MapEventHandler(EnemySearchingHandler)` | 大世界地图事件总入口：掉落页、档案弹窗、游戏提示、余烬弹窗、剧情跳过、`FleetLockSwitch`（带 `handle_additional` 清理遮挡）、自动搜索选项与退出。雾天（enemy_searching）用 `is_in_map` 特判 |
 | `StorageHandler(GlobeOperation, ZoneManager)` | 大世界仓库。注意与 `module/storage/storage.py` 的通用 `StorageHandler` 同名不同类。`RepairResult` 枚举表达修理结果；`storage_get_next_item` 是「取下一个隐秘/深渊坐标并进入」的封装；日志仪与调谐样本的一键使用 |
 | `OSStatus(UI)` | 黄币/紫币 OCR（双读确认 + `_cache_lock` 缓存降级）；`is_in_task_explore`/`is_running_cl1_leveling` 等属性读取 `_bind_task_override`，是代理身份判断的唯一实现点 |
@@ -105,7 +105,7 @@ module/os_simulator/
 | `Meta(UI, MapEventHandler)` | META 页面基类；`MetaState` 枚举（INIT/ATTACKING/COMPLETE/UNDEFINED）驱动页面状态机 |
 | `OpsiAshBeacon(Meta)` | 信标攻击任务：`ui_ensure(page_reward)` → 攻击 → `MetaReward` 领奖 → `task_delay(server_update=True)` → **必须 `ui_goto_main`**（MetaReward 停在 META 页，不回主界面会让下一个任务页面识别失败） |
 | `AshBeaconAssist(Meta)` | 协助好友信标：成功领奖延迟到服务器刷新，失败 `task_delay(minute=(10, 20))` 重试 |
-| `handle_ash_beacon_attack()` | 在大世界战斗链路中调用：收集 ≥100 且可调度时 `task_call('OpsiAshBeacon')`；`AttackMode=current_dossier_only`（只打档案）时不触发——该模式下信标数据永不消耗，触发条件会永久成立并反复打断智能调度+ |
+| `handle_ash_beacon_attack()` | 在大世界战斗链路中调用：收集 ≥100 且可调度时 `task_call('OpsiAshBeacon')`；`AttackMode=current_dossier_only`（只打档案）时不触发——该模式下信标数据永不消耗，触发条件会永久成立并反复打断智能调度|
 
 ### os_combat
 
@@ -123,7 +123,9 @@ module/os_simulator/
 
 ### os_simulator
 
-`OSSimulator` 用 Numba `@njit` 加速蒙特卡洛，`start()` 起 `threading.Thread` 跑模拟、`stop_event` 支持中断，参数读 `OpsiSimulator.OpsiSimulatorParameters.*`（Cl1Coin/Meow3Coin/Meow5Coin/明石概率等）。**孤儿模块**：`alas.py` 无对应任务、API 与前端无引用，且 numba 曾在 `import_smoke_test` 的已知失败名单中。文档保留其说明，避免后来者误以为有隐藏入口。
+`OSSimulator` 用 Numba `@njit` 加速蒙特卡洛，`start()` 起后台线程跑模拟、`stop_event` 在批次边界中断，参数读 `OpsiSimulator.OpsiSimulatorParameters.*`（Cl1Coin/Meow3Coin/Meow5Coin/明石概率等）。`module/runtime/os_simulator.py` 按实例管理只读配置快照、独立日志与图表，`module/api/opsi_simulator_service.py` 校验实例并提供 WebSocket 接口。页面刷新不终止模拟，服务关闭时请求中断并回收线程。
+
+初始行动力、黄币、耗时和总时长为 0 时沿用原来的仪表盘、统计及月末默认值；无短猫耗时统计时使用 3 级 100 秒、5 级 200 秒。模拟器保留原收益模型，提供不绘图、单样本轨迹、多样本平均轨迹三种模式。中断只汇总已完成样本，不将未计算的数组尾部计入结果。
 
 ## 6. 工作流程
 
@@ -151,6 +153,10 @@ OpsiAshBeacon.run() → META 页攻击 → MetaReward 领奖 → task_delay(serv
 ### 港口商店购买
 
 `os_shop` / 智能调度月末清理都调 `perform_port_shop_purchase()`：找最近友方港口 → `port_shop_enter` → `os_shop_get_items`（ItemGrid 扫描 + 滚动翻页）→ `Selector` 过滤 → 逐项 `os_shop_buy`（金额确认、黄/紫币校验）→ 退出。返回「是否买到了东西」，任务层据此决定延迟策略。
+
+智能调度的 `OpsiScheduling.OpsiScheduling.BuyActionPoint` 默认关闭，独立于两种开荒任务；仅本月每月开荒达到 100% 或智能开荒第一轮完成后允许执行。专购通过 `perform_port_shop_purchase(action_point_only=True)` 只买全部行动力箱，正常退出港口即在 `OpsiScheduling.Storage.Storage` 的 `ActionPointPurchase` 中记录本月完成，不修改普通商店购买状态。购买中断保留断点；恢复时已无可购行动力也正常收尾。进入商店失败、购买异常或跨月不会记录完成。
+
+行动力箱在普通海域开满 25 个后全部解锁，智能第一轮开完 29 个海域已满足条件（本地 Lua `world_newshop_data.lua` 的行动力商品 `unlock_num` 为 0、10、25）。其他商品仍可能未解锁，不能在购买后复扫全商店、要求所有货架都有可识别商品来确认行动力购买完成；旧版由此留下的购买失败计数也不应阻止恢复。
 
 ## 7. 调用关系
 
@@ -226,15 +232,15 @@ META 页截图 → MetaState 状态机 → 攻击/领奖循环
 ## 16. 修改注意事项
 
 - **两个 `StorageHandler` 不要混改**：`module/os_handler/storage.py`（大世界仓库，依赖 `GlobeOperation`）与 `module/storage/storage.py`（普通仓库，依赖 `StorageUI`）是同名异构类，改名或提取公共基类前先确认两处调用面。
-- **`handle_ash_beacon_attack` 的「只打档案」例外**是修 bug 的产物：不判断 AttackMode 会导致 OpsiAshBeacon 每轮被触发并打断智能调度+ 的自动搜索。
+- **`handle_ash_beacon_attack` 的「只打档案」例外**是修 bug 的产物：不判断 AttackMode 会导致 OpsiAshBeacon 每轮被触发并打断智能调度的自动搜索。
 - **`MetaReward` 领奖后必须回主界面**：`OpsiAshBeacon.run`/`AshBeaconAssist.run` 末尾的 `ui_goto_main` 有注释说明——删掉会让下个任务在 META 页启动而卡识别。
 - **明石货架是 `@Config.when(SERVER=...)` 三分支**，新服务器适配要新增分支而不是改默认分支。
 - **`ActionPointLimit.delay_minutes` 的换算依赖行动力恢复速率**，修改恢复速率常量（如游戏改动）时同步检查大世界核心的延迟逻辑。
-- **os_simulator 无生产调用方**：修改 `module/os` 调度时无需考虑它，但也不要顺手「清理」其配置组（前端仍可编辑参数，删除会破坏配置兼容）。
+- **os_simulator 独立于游戏调度**：保留配置兼容，WebUI 只用配置快照和已有统计模拟，不运行实际游戏任务；启动前需等待页面参数保存完成。
 
 ## 17. 已知限制
 
-- `OSSimulator` 是孤儿模块：无任务入口、无 API/前端调用，numba 依赖曾列入 `import_smoke_test` 已知失败白名单；其结论只具参考价值。
+- `OSSimulator` 沿用 Alpha 收益模型，结论只具参考价值；中断需等待当前计算批次（或首次 JIT 编译）结束，部分结果以已完成样本为分母。
 - 行动力 OCR 对面板动画敏感，`action_point_safe_get` 的重试能容忍常见动画，但极端卡顿时仍会把动画帧读成错误值。
 - 商店货架识别依赖固定阈值与模板，游戏改版后需重新采集资源离线验证。
 - 信标数字 OCR（`MetaDigitCounter` 左裁剪）与 META 伤害 OCR 按 JP 服单独调色，其他服务器改版需补分支。
@@ -259,7 +265,7 @@ if self.appear(PORT_ENTER, offset=(20, 20), interval=30):
 
 ## 19. 调试方法
 
-- 日志前缀：`[大世界处理-状态]`（os_status）、`[大世界处理-存储]`（storage）、`[大世界-智能调度+]` 中引用的行动力/黄币数值。
+- 日志前缀：`[大世界处理-状态]`（os_status）、`[大世界处理-存储]`（storage）、`[大世界-智能调度]` 中引用的行动力/黄币数值。
 - 商店问题先看 `scan_all` 输出的条目列表（名称/价格/数量），确认是识别错还是策略错。
 - 信标不触发：按 `handle_ash_beacon_attack` 的三个条件逐项查（任务启用？AttackMode？收集 ≥100？）。
 

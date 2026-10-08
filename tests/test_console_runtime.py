@@ -15,7 +15,7 @@ from PIL import Image
 
 from module.api.runtime_service import RuntimeService
 from module.api.socket import Gateway, Session
-from module.api.statistics_service import report, series
+from module.api.statistics_service import report, series, wallclock_micros
 from module.runtime.preview import PreviewHub
 
 
@@ -175,10 +175,26 @@ class RuntimeTests(unittest.TestCase):
 
 
 class StatisticsTests(unittest.TestCase):
+    def setUp(self):
+        from tests.opsi_test_support import install_store
+        from module.statistics.cl1_database import Cl1Database
+        from module.statistics.ship_exp_stats import ShipExpStats
+        from module.statistics.azurstats import AzurStats
+        directory = self.enterContext(tempfile.TemporaryDirectory(ignore_cleanup_errors=True))
+        self.root = Path(directory)
+        self.vault = install_store(self, directory)
+        database = Cl1Database(self.root / 'config/cl1_data.db')
+        self.enterContext(patch('module.statistics.cl1_database.db', database))
+        self.enterContext(patch('module.statistics.opsi_month.cl1_db', database))
+        self.enterContext(patch.object(AzurStats, 'LOCAL_DB', str(self.root / 'config/azurstats_local.db')))
+        self.enterContext(patch('module.statistics.ship_exp_stats.ShipExpStats',
+            side_effect=lambda **kwargs: ShipExpStats(
+                path=kwargs.pop('path', self.root / 'log/cl1/pilot/ship_exp_data.json'), **kwargs)))
+
     def test_series_keeps_zero_skips_missing_and_sorts(self):
         data = series([{'ts': '2026-09-13 12:00:00', 'ap': 0}, {'ts': '2026-09-13 10:00:00', 'ap': 10},
                        {'ts': '2026-09-13 11:00:00'}, {'ts': 'bad', 'ap': 2}, {'ts': '2026-09-13', 'ap': float('nan')}], 'ap', '行动力')
-        self.assertEqual([10, 0], [point['value'] for point in data['points']])
+        self.assertEqual([10, 0], [point['v'] for point in data['points']])
 
     def test_opsi_preserves_old_rounding_and_five_ap_cost(self):
         summary = {'total_battles': 5, 'akashi_encounters': 2, 'siren_research_devices': 1}
@@ -214,28 +230,28 @@ class StatisticsTests(unittest.TestCase):
                 patch('module.statistics.commission_income_stats.cl1_db', database):
             action = report(configs, 'pilot', 'action', '2026-09', 7, 'month')
             self.assertEqual(5, len(action['series']))
-            self.assertEqual(0, action['series'][0]['points'][0]['value'])
-            self.assertEqual('2026-09-02 13:00:00', action['series'][3]['points'][0]['time'])
+            self.assertEqual(0, action['series'][0]['points'][0]['v'])
+            self.assertEqual(wallclock_micros(datetime(2026, 9, 2, 13, 0, 0)), action['series'][3]['points'][0]['t'])
             income = report(configs, 'pilot', 'commission', '2026-09', 7, 'month')
             metrics = {item['label']: item['value'] for item in income['metrics']}
             self.assertEqual(7, metrics['钻石'])
             self.assertEqual(3, metrics['完成委托'])
             self.assertEqual(2, len(income['tables'][1]['rows']))
             self.assertEqual({'index': 0, 'descending': True}, income['tables'][1]['defaultSort'])
-            self.assertEqual(3, income['series'][1]['points'][0]['value'])
+            self.assertEqual(3, income['series'][1]['points'][0]['v'])
             database.get_commission_income.assert_called_with('pilot', 2026, 9)
 
     def test_ship_progress_and_daily_efficiency_are_exposed(self):
         from module.statistics.ship_exp_stats import ShipExpStats
         with tempfile.TemporaryDirectory() as directory:
-            stats = ShipExpStats(path=Path(directory) / 'ships.json')
+            stats = ShipExpStats(path=self.root / 'log/cl1/pilot/ship_exp_data.json')
             stats.data = {'target_level': 125, 'ships': [{'position': 1, 'level': 100, 'current_exp': 500, 'total_exp': 100000}],
                           'daily_stats': {'2026-09-01': {'battle_count': 10, 'total_exp_gained': 1000, 'total_run_time': 500}}}
             with patch('module.statistics.ship_exp_stats.ShipExpStats', return_value=stats), \
                     patch('module.statistics.opsi_month.get_opsi_stats', return_value=SimpleNamespace(summary=lambda: {'total_battles': 10})):
                 result = report(SimpleNamespace(path=lambda _: None), 'pilot', 'ships', None, 7, 'month')
             self.assertEqual(9, len(result['tables'][0]['rows'][0]))
-            self.assertEqual(1000, result['series'][0]['points'][0]['value'])
+            self.assertEqual(1000, result['series'][0]['points'][0]['v'])
 
     def test_loot_keeps_legacy_columns_and_refreshes_local_cache(self):
         from module.api.statistics_service import refresh_loot

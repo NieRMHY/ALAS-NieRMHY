@@ -35,7 +35,6 @@
   --theme-info: #0ea5e9;
 
   /* Chrome / glass */
-  --theme-sidebar: var(--theme-sidebar-bg);
   --theme-glass: var(--theme-surface-bg);
   --theme-glass-edge: var(--glass-edge, var(--border));
   --theme-glass-shadow: var(--glass-shadow, var(--shadow));
@@ -46,16 +45,36 @@
   --theme-surface-alpha: 72.16%;
   --theme-surface-blur: 24px;
   --theme-surface-saturation: 130%;
-  --theme-surface-radius: 26px;
+  --theme-surface-radius: var(--theme-radius-panel);
   --theme-surface-bg: color-mix(in srgb, var(--surface) var(--theme-surface-alpha), transparent);
   --theme-surface-filter: blur(var(--theme-surface-blur)) saturate(var(--theme-surface-saturation));
   --theme-surface-edge: var(--theme-glass-edge);
   --theme-surface-shadow: var(--theme-glass-shadow);
   --theme-plate-alpha: var(--theme-surface-alpha); --theme-plate-blur: 12px; --theme-plate-saturation: 120%;
-  --theme-plate-radius: 24px;
+  /* 二级贴片与一级层之间的微弱边距；无玻璃材质的族由自己的调色板取 0，两层完整对齐。 */
+  --theme-plate-margin: 8px;
+  --theme-plate-radius: var(--theme-radius-card);
   --theme-plate-bg: color-mix(in srgb, var(--surface) var(--theme-plate-alpha), transparent);
   --theme-plate-filter: blur(var(--theme-plate-blur)) saturate(var(--theme-plate-saturation));
   --theme-plate-edge: var(--theme-glass-edge); --theme-plate-shadow: var(--theme-glass-shadow);
+  /* 三级嵌面：贴在二级贴片内部的面（右栏的队列分组等）。 */
+  --theme-inset-alpha: var(--theme-plate-alpha); --theme-inset-blur: 8px; --theme-inset-saturation: 115%;
+  --theme-inset-radius: var(--theme-radius-control);
+  --theme-inset-bg: color-mix(in srgb, var(--surface) var(--theme-inset-alpha), transparent);
+  --theme-inset-filter: blur(var(--theme-inset-blur)) saturate(var(--theme-inset-saturation));
+  --theme-inset-edge: var(--theme-glass-edge); --theme-inset-shadow: var(--theme-glass-shadow);
+
+  --theme-control-alpha: 92%; --theme-control-blur: 8px; --theme-control-saturation: 110%;
+  --theme-control-radius: var(--theme-radius-control);
+  --theme-control-bg: color-mix(in srgb, var(--surface) var(--theme-control-alpha), transparent);
+  --theme-control-marker-bg: color-mix(in srgb, var(--surface) min(100%, calc(var(--theme-control-alpha) + 8%)), transparent);
+  /* 图表画布内的颜色。数值与曲线都是画在 canvas 上的，只能用组件 token 交给脚本读。 */
+  --theme-chart-primary: #159b88; --theme-chart-secondary: #de7861;
+  --theme-chart-rise: #dc2626; --theme-chart-fall: #16a34a;
+  --theme-control-filter: blur(var(--theme-control-blur)) saturate(var(--theme-control-saturation));
+  --theme-control-edge: var(--theme-glass-edge); --theme-control-shadow: var(--theme-glass-shadow);
+  /* 区域面：侧栏、顶栏、弹窗、菜单各一套参数键与合成键，默认从一级面派生；
+     旋钮动过哪个区，哪个区就写自己的参数键，没动过的跟着一级面走。 */
   --theme-sidebar-alpha: var(--theme-surface-alpha); --theme-sidebar-blur: var(--theme-surface-blur); --theme-sidebar-saturation: var(--theme-surface-saturation);
   --theme-sidebar-radius: var(--theme-surface-radius);
   --theme-sidebar-bg: color-mix(in srgb, var(--surface) var(--theme-sidebar-alpha), transparent);
@@ -70,35 +89,34 @@
   --theme-modal-radius: var(--theme-surface-radius);
   --theme-modal-bg: color-mix(in srgb, var(--surface) var(--theme-modal-alpha), transparent);
   --theme-modal-filter: blur(var(--theme-modal-blur)) saturate(var(--theme-modal-saturation));
-  --theme-modal-edge: var(--theme-glass-edge); --theme-modal-shadow: 0 24px 100px #0003;
-  --theme-menu-alpha: var(--theme-surface-alpha); --theme-menu-blur: var(--theme-surface-blur); --theme-menu-saturation: var(--theme-surface-saturation);
-  --theme-menu-radius: var(--theme-surface-radius);
+  --theme-modal-edge: var(--theme-glass-edge); --theme-modal-shadow: var(--theme-glass-shadow);
+  --theme-menu-alpha: var(--theme-surface-alpha); --theme-menu-blur: 28px; --theme-menu-saturation: 145%;
+  --theme-menu-radius: var(--theme-radius-popover);
   --theme-menu-bg: color-mix(in srgb, var(--surface) var(--theme-menu-alpha), transparent);
-  --theme-menu-filter: blur(var(--theme-menu-blur)) saturate(var(--theme-menu-saturation));
-  --theme-menu-edge: var(--theme-glass-edge); --theme-menu-shadow: 0 12px 40px #0002;
-  --theme-control-alpha: 92%; --theme-control-blur: 8px; --theme-control-saturation: 110%;
-  --theme-control-radius: 10px;
-  --theme-control-bg: color-mix(in srgb, var(--surface) var(--theme-control-alpha), transparent);
-  --theme-control-filter: blur(var(--theme-control-blur)) saturate(var(--theme-control-saturation));
-  --theme-control-edge: var(--theme-glass-edge); --theme-control-shadow: 0 1px 2px rgb(0 0 0 / .04);
-  --theme-popover-blur: var(--theme-menu-blur);
+  /* 弹出层比一级面亮一档：提亮写进合成键，不开放成旋钮。 */
+  --theme-menu-filter: blur(var(--theme-menu-blur)) saturate(var(--theme-menu-saturation)) brightness(1.04);
+  --theme-menu-edge: var(--theme-glass-edge); --theme-menu-shadow: var(--theme-glass-shadow);
+  /* 标签页是材质层：圆角、阴影与磨砂程度都不接受调节，只有不透明度跟随一级面，
+     并按 --theme-tab-fill-boost 加浓；自己不叠磨砂，于是下方标签栏的材质直接透出来。 */
+  --theme-tab-current-bg: var(--theme-tab-surface-bg);
+
   --theme-overlay: #11111b40;
-  --theme-overlay-blur: var(--theme-modal-blur);
+  --theme-overlay-blur: 8px;
 
   /* Shape */
-  --theme-radius-control: var(--theme-control-radius, 10px);
+  --theme-radius-control: 10px;
   --theme-radius-button: 20px;
-  --theme-radius-panel: var(--theme-surface-radius, 26px);
-  --theme-radius-card: var(--theme-plate-radius, 24px);
-  --theme-radius-popover: var(--theme-menu-radius, 16px);
+  --theme-radius-panel: 26px;
+  --theme-radius-card: 24px;
+  --theme-radius-popover: 16px;
   --theme-radius-pill: 999px;
-  --theme-radius-modal: var(--theme-modal-radius, 26px);
+  --theme-radius-modal: 16px;
 
   /* Shadows */
-  --theme-shadow-panel: var(--theme-surface-shadow, var(--glass-shadow, var(--shadow)));
-  --theme-shadow-popover: var(--theme-menu-shadow, 0 12px 40px #0002);
-  --theme-shadow-modal: var(--theme-modal-shadow, 0 24px 100px #0003);
-  --theme-shadow-floating: var(--theme-sidebar-shadow, 0 18px 56px #0003);
+  --theme-shadow-panel: var(--glass-shadow, var(--shadow));
+  --theme-shadow-popover: 0 12px 40px #0002;
+  --theme-shadow-modal: 0 24px 100px #0003;
+  --theme-shadow-floating: 0 18px 56px #0003;
   --theme-shadow-hover: 0 12px 36px color-mix(in srgb, var(--accent) 7%, transparent);
 
   /* Navigation */
@@ -108,7 +126,6 @@
   --theme-nav-active-text: var(--accent);
   --theme-nav-expanded-bg: color-mix(in srgb, var(--accent) 20%, transparent);
   --theme-nav-hover-bg: color-mix(in srgb, var(--accent) 8%, transparent);
-  --theme-nav-popover-bg: var(--theme-menu-bg);
   --theme-nav-popover-edge: color-mix(in srgb, #fff 62%, var(--border));
   --theme-nav-popover-shadow: 0 18px 48px #1d1d1f24, 0 2px 10px #1d1d1f0d, inset 0 1px 0 color-mix(in srgb, #fff 78%, transparent);
 
@@ -117,11 +134,12 @@
   --theme-primary-hover: var(--accent-hover);
 
   /* Form controls */
-  --theme-input-bg: var(--surface-muted);
+  --theme-input-bg: var(--theme-control-bg);
   --theme-input-text: var(--text);
   --theme-input-border: var(--border);
   --theme-focus: var(--accent);
-  /* 材质主题的焦点表现靠 --theme-focus 的边框色，额外焦点环保持透明以维持现有观感。 */
+  /* 无自定义主题时焦点环的兜底：焦点表现靠 --theme-focus 的边框色；
+     新版与旧版四个主题由 public/theme.css 覆写成强调色的淡环，简约与紧凑走各自调色板。 */
   --theme-focus-ring: transparent;
   --theme-toggle-off: #bcbcc2;
   --theme-toggle-on: #34c759;
@@ -129,9 +147,9 @@
   --theme-toggle-shadow: 0 2px 4px #0003;
 
   /* Segmented controls */
-  --theme-segment-bg: #e9eaedb8;
+
   --theme-segment-border: #18181b0a;
-  --theme-segment-indicator: #fffffff2;
+  --theme-segment-indicator: var(--theme-control-marker-bg);
 
   /* Feedback */
   --theme-toast-bg: var(--text);
@@ -191,22 +209,22 @@
   --theme-surface-alpha: 85.1%;
   --theme-on-accent: #fff;
   --theme-toggle-off: #515154;
-  --theme-segment-bg: #252529c7;
+
   --theme-segment-border: #ffffff0d;
-  --theme-segment-indicator: #62626be6;
+  --theme-segment-indicator: var(--theme-control-marker-bg);
   --theme-resource-0-bg: #ffffff08;
   --theme-resource-1-bg: #ffffff08;
   --theme-resource-2-bg: #ffffff08;
   --theme-resource-3-bg: #ffffff08;
   --theme-nav-expanded-bg: color-mix(in srgb, var(--accent) 20%, transparent);
-  --theme-nav-popover-bg: var(--theme-menu-bg);
   --theme-nav-popover-edge: color-mix(in srgb, #fff 14%, var(--border));
   --theme-nav-popover-shadow: 0 20px 56px #0006, 0 2px 10px #0004, inset 0 1px 0 #ffffff12;
 }
 
 :root {
   --theme-material-filter: var(--theme-surface-filter);
+
   --theme-chrome-filter: var(--theme-sidebar-filter);
   --theme-popover-filter: var(--theme-menu-filter);
-  --theme-overlay-filter: blur(var(--theme-modal-blur));
+  --theme-overlay-filter: blur(var(--theme-overlay-blur));
 }

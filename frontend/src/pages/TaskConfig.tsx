@@ -2,9 +2,9 @@
  * @fileoverview 任务参数设置与自定义策略脚本编辑页面。
  */
 
-import { useCallback, useEffect, useState, useSyncExternalStore } from 'react'
+import { Suspense, lazy, useCallback, useEffect, useState, useSyncExternalStore } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { CalendarClock, Clock3, ListTree, Play, Search, Settings2, Ship, Terminal } from 'lucide-react'
+import { CalendarClock, Clock3, ListTree, Play, RotateCcw, Search, Settings2, Ship, Terminal } from 'lucide-react'
 import { api } from '../api/client'
 import type { Config } from '../api/types'
 import { useApp, useConnection } from '../app/context'
@@ -12,11 +12,12 @@ import { usesLegacyLayout } from '../app/theme'
 import { htmlToPlainText } from '../app/htmlText'
 import { readRailView, setRailView, subscribeRailView } from '../app/railPrefs'
 import { smoothScrollToElement } from '../app/scroll'
+import { clearSearchTarget, peekSearchTarget, subscribeSearchTarget } from '../app/searchTarget'
 import { Empty, ErrorBox, Loading, Modal, PageTitle } from '../components/ui'
 import { LogPanel } from '../components/LogPanel'
 import { MeowfficerScorePanel } from '../components/MeowfficerScorePanel'
+import { OpsiSimulatorPanel } from '../components/OpsiSimulatorPanel'
 import { FieldInput } from '../components/FieldInput'
-import { RestrictedLuaEditor } from '../components/RestrictedLuaEditor'
 import { ShopStrategyHelp } from '../components/ShopStrategyHelp'
 import { StorageField } from '../components/StorageField'
 import { SchedulerWidget } from '../components/SchedulerWidget'
@@ -27,11 +28,12 @@ import { EditStatus } from '../components/EditStatus'
 import { AccountPanel } from '../components/AccountPanel'
 import { isFieldVisible } from './configVisibility'
 
+const RestrictedLuaEditor = lazy(() => import('../components/RestrictedLuaEditor').then(module => ({default: module.RestrictedLuaEditor})))
 export function TaskConfig() {
   const {instance = '', task = ''} = useParams()
   const {schema, t, ui, notify, language, theme} = useApp()
   const connection = useConnection()
-  const railView = useSyncExternalStore(subscribeRailView, readRailView)
+  const railView = useSyncExternalStore(subscribeRailView, readRailView, readRailView)
   // 只在真的切到调度器时才请求总览数据，否则这一页白拉一份队列。
   const [railData, setRailData] = useInstanceOverview(instance, railView === 'scheduler')
   const [config, setConfig] = useState<Config>()
@@ -42,9 +44,9 @@ export function TaskConfig() {
   const [shopModeError, setShopModeError] = useState('')
 
   const queue = editor(`config:${instance}`)
-  const {edits, storageError} = useSyncExternalStore(queue.subscribe, queue.getSnapshot)
+  const {edits, storageError} = useSyncExternalStore(queue.subscribe, queue.getSnapshot, queue.getSnapshot)
   const startupQueue = editor(`startup:${instance}`)
-  const startupEdits = useSyncExternalStore(startupQueue.subscribe, startupQueue.getSnapshot)
+  const startupEdits = useSyncExternalStore(startupQueue.subscribe, startupQueue.getSnapshot, startupQueue.getSnapshot)
   const [startupEnabled, setStartupEnabled] = useState<boolean>()
   const [startupRemember, setStartupRemember] = useState<boolean>()
   const legacy = usesLegacyLayout(theme)
@@ -125,6 +127,44 @@ export function TaskConfig() {
   const scorePanel = task === 'MeowfficerScore' ? <MeowfficerScorePanel instance={instance}/> : null
   const showConfigToolbar = task !== 'FleetInfo' && Boolean(groups) && (visibleGroups.length > 0 || Boolean(search))
 
+  // 侧栏搜索点进来的定位：字段要等配置加载、分组渲染完才存在，所以轮询等它出现。
+  // 挂载时查一次，覆盖从别的任务跳过来的情形；订阅覆盖命中项就在本页的情形，那时路由没变。
+  useEffect(() => {
+    let find: number | undefined
+
+    const locate = () => {
+      const path = peekSearchTarget()
+      if (!path || !path.startsWith(`${task}.`)) return
+      if (find) window.clearInterval(find)
+      let attempts = 0
+      find = window.setInterval(() => {
+        const field = document.getElementById(path)
+        attempts += 1
+        if (field) {
+          window.clearInterval(find)
+          find = undefined
+          clearSearchTarget()
+          const row = field.closest('.field-row') ?? field
+          row.scrollIntoView({block: 'center'})
+          row.classList.add('is-search-target')
+          window.setTimeout(() => row.classList.remove('is-search-target'), 3000)
+        } else if (attempts > 20) {
+          // 等不到字段（被隐藏或该任务下没有这一项）就放弃，不再重试
+          window.clearInterval(find)
+          find = undefined
+          clearSearchTarget()
+        }
+      }, 150)
+    }
+
+    locate()
+    const unsubscribe = subscribeSearchTarget(locate)
+    return () => {
+      unsubscribe()
+      if (find) window.clearInterval(find)
+    }
+  }, [config, task])
+
   if (!config) return error ? <ErrorBox message={error} retry={reload} /> : <Loading />
 
   const modal = confirmRun && (
@@ -158,6 +198,8 @@ export function TaskConfig() {
         const shopMode = group === 'ShopAdvanced' && arg === 'Mode'
         // 「立刻运行」只对每个任务的调度时间有意义，其他时间字段（如仪表盘记录时间）不显示。
         const runNow = group === 'Scheduler' && arg === 'NextRun' && !readonly
+        const clearProgress = path === 'OpsiExplore.OpsiExplore.ExploreProgress'
+          || path === 'OpsiScheduling.OpsiSmartExplore.Progress'
         const isMultiline = ['textarea', 'task_priority', 'yaml', 'storage'].includes(field.type) || field.mode === 'yaml' || restrictedLua
 
         return (
@@ -168,6 +210,7 @@ export function TaskConfig() {
                 {readonly && <span className="small-label">{ui('task.readonly')}</span>}
               </label>
               {help && help !== 'help' && help !== arg && <p>{htmlToPlainText(help)}</p>}
+              {/* 优先级调整直接跳到图形调度编辑器：它才是真正编排顺序的地方。 */}
               {task === 'General' && group === 'YukikazeTaskManager' && arg === 'TaskPriorityAdjustment' && <Link className="button secondary" to={`/i/${instance}/task/SchedulerProgram`}>{ui('nav.schedulerProgram')}</Link>}
               {/* 多行控件的提示跟标题同一行，浮在它右端。 */}
               {isMultiline && <EditStatus id={path} edit={edit} retry={queue.retry} queue={queue} />}
@@ -176,19 +219,21 @@ export function TaskConfig() {
               {field.type === 'storage' ? (
                 <StorageField value={value} disabled={false} onClear={() => queue.change(path, {})} />
               ) : restrictedLua ? (
-                <RestrictedLuaEditor
-                  id={path}
-                  value={String(value ?? '')}
-                  draftKey={`${instance}.${path}`}
-                  label={label}
-                  disabled={readonly}
-                  offline={connection !== 'ready'}
-                  onCheck={script => api.request('shop_strategy.validate', {instance, task: task as 'EventShop' | 'ShopFrequent' | 'ShopOnce' | 'PrivateQuarters' | 'OpsiShop' | 'OpsiVoucher', script})}
-                  onApply={async script => {
-                    setConfig(await api.request('config.patch', {instance, changes: [{path, value: script}]}))
-                    setShopModeError('')
-                  }}
-                />
+                <Suspense fallback={<div role="status">{ui('field.loadingEditor')}</div>}>
+                  <RestrictedLuaEditor
+                    id={path}
+                    value={String(value ?? '')}
+                    draftKey={`${instance}.${path}`}
+                    label={label}
+                    disabled={readonly}
+                    offline={connection !== 'ready'}
+                    onCheck={script => api.request('shop_strategy.validate', {instance, task: task as 'EventShop' | 'ShopFrequent' | 'ShopOnce' | 'PrivateQuarters' | 'OpsiShop' | 'OpsiVoucher', script})}
+                    onApply={async script => {
+                      setConfig(await api.request('config.patch', {instance, changes: [{path, value: script}]}))
+                      setShopModeError('')
+                    }}
+                  />
+                </Suspense>
               ) : (
                 <FieldInput
                   id={path}
@@ -225,6 +270,13 @@ export function TaskConfig() {
                     }}><Play size={15}/></button>
                 </div>
               )}
+              {clearProgress && (
+                <div className="field-actions">
+                  <button type="button" className="button subtle icon-only" aria-label={ui('task.clearExploreProgress')}
+                    title={ui('task.clearExploreProgressHelp')} disabled={connection !== 'ready' || edit?.status === 'saving'}
+                    onClick={() => queue.change(path, '')}><RotateCcw size={15}/></button>
+                </div>
+              )}
               {!isMultiline && (shopMode && shopModeError && !edit ? (
                 <div id={`${path}-status`} className="edit-status edit-error" role="alert">{shopModeError}</div>
               ) : <EditStatus id={path} edit={edit} retry={queue.retry} queue={queue} />)}
@@ -233,7 +285,8 @@ export function TaskConfig() {
         )
       })}
     </section>
-  ))}    {search && !visibleGroups.length && <Empty icon={<Search size={26} />} title={ui('task.noConfigFound')}>{ui('task.tryOtherKeyword')}</Empty>}
+  ))}
+  {search && !visibleGroups.length && <Empty icon={<Search size={26} />} title={ui('task.noConfigFound')}>{ui('task.tryOtherKeyword')}</Empty>}
   </>
 
   const hasGroups = task !== 'FleetInfo' && Boolean(groups) && visibleGroups.length > 0
@@ -310,10 +363,12 @@ export function TaskConfig() {
           </section>
         </div>
       : <div className="task-rail-directory">
-          <div className="rail-section-heading">
-            <div>{railToggle}<span>{ui('task.groupNav')}</span></div>
+          <div className="rail-plate">
+            <div className="rail-section-heading">
+              <div>{railToggle}<span>{ui('task.groupNav')}</span></div>
+            </div>
+            {groupNav}
           </div>
-          {groupNav}
         </div>}
   </aside>
 
@@ -338,7 +393,9 @@ export function TaskConfig() {
     </Empty>
   ) : groupCardsBlock
 
-  const toolPanel = tool && <section className="panel tool-log-panel" aria-label={ui('monitor.logs')}>
+  const toolPanel = task === 'OpsiSimulator'
+    ? <OpsiSimulatorPanel key={instance} instance={instance} beforeStart={() => queue.settled()}/>
+    : tool && <section className="panel tool-log-panel" aria-label={ui('monitor.logs')}>
     <div className="panel-heading">
       <div><Terminal size={18}/><h2>{ui('monitor.logs')}</h2></div>
       <button className="button primary" onClick={() => setConfirmRun(true)} disabled={busy || connection !== 'ready'}>

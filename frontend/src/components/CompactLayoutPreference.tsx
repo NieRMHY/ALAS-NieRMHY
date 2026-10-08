@@ -6,8 +6,7 @@ import { COMPACT_RAIL_WIDTHS, type CompactRailSide, type CompactRailWidth } from
 import { useApp } from '../app/context'
 import { Select } from './FormControls'
 
-/** 三格示意图：左边是侧栏窄条，另外两格分别是内容区与计划栏，计划栏用主色标出落在哪一侧。
-    两边的 rect 只换 x，宽度不变 —— 换位只交换顺序，不改变两栏的宽度关系。 */
+/** 三格示意图：左边是侧栏窄条，另外两格分别是内容区与计划栏，计划栏用主色标出落在哪一侧。 */
 function LayoutPreview({railSide}: {railSide: CompactRailSide}) {
   const railLeft = railSide === 'left'
   return <svg className="layout-preview" viewBox="0 0 58 36" aria-hidden="true" focusable="false">

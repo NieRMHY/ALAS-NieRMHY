@@ -22,6 +22,8 @@ BACKUP_KEEP_DAYS = 7
 DATABASE_FILES = (
     'azurstats_local.db',
     'cl1_data.db',
+    'storage_statistics.db',
+    'daily_summary.db',
 )
 
 
@@ -89,10 +91,7 @@ def backup_database(backup_dir):
         target = backup_dir / name
 
         try:
-            sqlite_backup(
-                source=source,
-                target=target,
-            )
+            sqlite_backup(source=source, target=target)
 
             files.append({
                 'name': name,
@@ -166,6 +165,7 @@ def backup_config(backup_dir):
             logger.warning(f'用户配置备份失败：{file.name}，{e}')
 
     return files
+
 
 def sqlite_backup(source, target):
     """使用 SQLite 原生 backup() 接口备份数据库。

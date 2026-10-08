@@ -1,0 +1,177 @@
+[
+  {
+    "page": 1,
+    "row": 0,
+    "column": 1,
+    "id": "PrototypeGearPartsT5",
+    "amount": 153
+  },
+  {
+    "page": 1,
+    "row": 0,
+    "column": 2,
+    "id": "GearDesignPlanGunT5",
+    "amount": 46
+  },
+  {
+    "page": 1,
+    "row": 0,
+    "column": 3,
+    "id": "GearDesignPlanTorpedoT5",
+    "amount": 20
+  },
+  {
+    "page": 1,
+    "row": 0,
+    "column": 4,
+    "id": "GearDesignPlanAntiAirT5",
+    "amount": 46
+  },
+  {
+    "page": 1,
+    "row": 0,
+    "column": 5,
+    "id": "GearDesignPlanPlaneT5",
+    "amount": 58
+  },
+  {
+    "page": 1,
+    "row": 0,
+    "column": 6,
+    "id": "SecretDesignPlanT5",
+    "amount": 1
+  },
+  {
+    "page": 2,
+    "row": 2,
+    "column": 3,
+    "id": "CognitiveChips",
+    "amount": 13393
+  },
+  {
+    "page": 2,
+    "row": 2,
+    "column": 4,
+    "id": "CognitiveChipsII",
+    "amount": 9873
+  },
+  {
+    "page": 3,
+    "row": 0,
+    "column": 5,
+    "id": "PlateGeneralT4",
+    "amount": 881
+  },
+  {
+    "page": 3,
+    "row": 0,
+    "column": 6,
+    "id": "PlateGunT4",
+    "amount": 497
+  },
+  {
+    "page": 3,
+    "row": 1,
+    "column": 0,
+    "id": "PlateTorpedoT4",
+    "amount": 1659
+  },
+  {
+    "page": 3,
+    "row": 1,
+    "column": 1,
+    "id": "PlateAntiAirT4",
+    "amount": 1266
+  },
+  {
+    "page": 3,
+    "row": 1,
+    "column": 2,
+    "id": "PlatePlaneT4",
+    "amount": 1628
+  },
+  {
+    "page": 3,
+    "row": 1,
+    "column": 3,
+    "id": "PrototypeGearPartsT4",
+    "amount": 745
+  },
+  {
+    "page": 3,
+    "row": 2,
+    "column": 1,
+    "id": "Ultra_High_Purity_Metals",
+    "amount": 5015
+  },
+  {
+    "page": 3,
+    "row": 2,
+    "column": 2,
+    "id": "Military_Grade_Electronic_Components",
+    "amount": 3584
+  },
+  {
+    "page": 3,
+    "row": 2,
+    "column": 3,
+    "id": "HBX_Blend_Gunpowder",
+    "amount": 3785
+  },
+  {
+    "page": 3,
+    "row": 2,
+    "column": 4,
+    "id": "High_Durability_Elastomers",
+    "amount": 5634
+  },
+  {
+    "page": 3,
+    "row": 2,
+    "column": 5,
+    "id": "Superconductive_Metals",
+    "amount": 4230
+  },
+  {
+    "page": 3,
+    "row": 2,
+    "column": 6,
+    "id": "Corrosion_Resistant_Alloys",
+    "amount": 5297
+  },
+  {
+    "page": 4,
+    "row": 0,
+    "column": 0,
+    "id": "GearDesignPlanGunT4",
+    "amount": 699
+  },
+  {
+    "page": 4,
+    "row": 0,
+    "column": 1,
+    "id": "GearDesignPlanTorpedoT4",
+    "amount": 859
+  },
+  {
+    "page": 4,
+    "row": 0,
+    "column": 2,
+    "id": "GearDesignPlanAntiAirT4",
+    "amount": 884
+  },
+  {
+    "page": 4,
+    "row": 0,
+    "column": 3,
+    "id": "GearDesignPlanPlaneT4",
+    "amount": 753
+  },
+  {
+    "page": 4,
+    "row": 0,
+    "column": 4,
+    "id": "SecretDesignPlanT4",
+    "amount": 767
+  }
+]

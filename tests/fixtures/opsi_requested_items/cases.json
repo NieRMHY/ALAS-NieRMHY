@@ -1,0 +1,170 @@
+[
+  {
+    "file": "Superconductive_Metals_popup.png",
+    "layout": "popup",
+    "item": "Superconductive_Metals",
+    "amount": 1,
+    "source": "screenshots/opsi_month_boss/1790872111832.png",
+    "frame": 1,
+    "area": [
+      336,
+      223,
+      432,
+      319
+    ]
+  },
+  {
+    "file": "High_Durability_Elastomers_popup.png",
+    "layout": "popup",
+    "item": "High_Durability_Elastomers",
+    "amount": 1,
+    "source": "screenshots/opsi_month_boss/1790872111832.png",
+    "frame": 1,
+    "area": [
+      464,
+      223,
+      560,
+      319
+    ]
+  },
+  {
+    "file": "Military_Grade_Electronic_Components_popup.png",
+    "layout": "popup",
+    "item": "Military_Grade_Electronic_Components",
+    "amount": 2,
+    "source": "screenshots/opsi_month_boss/1790872111832.png",
+    "frame": 1,
+    "area": [
+      592,
+      223,
+      688,
+      319
+    ]
+  },
+  {
+    "file": "Ultra_High_Purity_Metals_popup.png",
+    "layout": "popup",
+    "item": "Ultra_High_Purity_Metals",
+    "amount": 1,
+    "source": "screenshots/opsi_month_boss/1790872111832.png",
+    "frame": 1,
+    "area": [
+      720,
+      223,
+      816,
+      319
+    ]
+  },
+  {
+    "file": "Corrosion_Resistant_Alloys_popup.png",
+    "layout": "popup",
+    "item": "Corrosion_Resistant_Alloys",
+    "amount": 2,
+    "source": "screenshots/opsi_month_boss/1790872111832.png",
+    "frame": 2,
+    "area": [
+      336,
+      223,
+      432,
+      319
+    ]
+  },
+  {
+    "file": "HBX_Blend_Gunpowder_popup.png",
+    "layout": "popup",
+    "item": "HBX_Blend_Gunpowder",
+    "amount": 1,
+    "source": "screenshots/opsi_month_boss/1790872111832.png",
+    "frame": 2,
+    "area": [
+      720,
+      223,
+      816,
+      319
+    ]
+  },
+  {
+    "file": "PrototypeGearPartsT5_popup.png",
+    "layout": "popup",
+    "item": "PrototypeGearPartsT5",
+    "amount": 1,
+    "source": "screenshots/opsi_month_boss/1790872111832.png",
+    "frame": 6,
+    "area": [
+      848,
+      223,
+      944,
+      319
+    ]
+  },
+  {
+    "file": "OrdnanceTestingReportT3_popup_0000.png",
+    "layout": "popup",
+    "item": "OrdnanceTestingReportT3",
+    "amount": 1,
+    "source": "screenshots\\opsi_abyssal\\1790326758635.png",
+    "frame": 3,
+    "area": [
+      336,
+      223,
+      432,
+      319
+    ]
+  },
+  {
+    "file": "OrdnanceTestingReportT4_popup_0001.png",
+    "layout": "popup",
+    "item": "OrdnanceTestingReportT4",
+    "amount": 1,
+    "source": "screenshots\\opsi_abyssal\\1790326881455.png",
+    "frame": 4,
+    "area": [
+      336,
+      223,
+      432,
+      319
+    ]
+  },
+  {
+    "file": "PrototypeGearPartsT4_reward_0019.png",
+    "layout": "reward",
+    "item": "PrototypeGearPartsT4",
+    "amount": 1,
+    "source": "screenshots\\opsi_explore\\1790793477834.png",
+    "frame": 0,
+    "area": [
+      542,
+      258,
+      606,
+      322
+    ]
+  },
+  {
+    "file": "PrototypeGearPartsT5_reward_0061.png",
+    "layout": "reward",
+    "item": "PrototypeGearPartsT5",
+    "amount": 1,
+    "source": "screenshots\\opsi_meowfficer_farming\\1790020975296.png",
+    "frame": 0,
+    "area": [
+      397,
+      334,
+      461,
+      398
+    ]
+  },
+  {
+    "file": "OrdnanceTestingReportT4_reward_0004.png",
+    "layout": "reward",
+    "item": "OrdnanceTestingReportT4",
+    "amount": 1,
+    "source": "screenshots\\opsi_cross_month\\1790785078974.png",
+    "frame": 0,
+    "area": [
+      397,
+      258,
+      461,
+      322
+    ]
+  }
+]

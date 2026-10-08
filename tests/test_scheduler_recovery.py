@@ -1,6 +1,7 @@
 """使用真实调度循环验证恢复边界，所有设备、通知和后台服务均隔离。"""
 
 import unittest
+from datetime import datetime, timedelta
 from unittest.mock import Mock, call, patch
 
 from alas import AzurLaneAutoScript
@@ -15,6 +16,7 @@ from module.exception import (
     GameTooManyClickError,
     RequestHumanTakeover,
     ScriptError,
+    StorageStatisticsError,
 )
 
 
@@ -48,6 +50,7 @@ class TestSchedulerRecovery(unittest.TestCase):
             EmulatorManagement_ScheduledEmulatorRestart=False,
             Scheduler_PushNotification=False,
             Error_StrictRestart=strict,
+            Error_TaskRestartLimit=0,
             Error_GameStuckRestart=True,
             Error_GameStuckThreshold=3,
             Error_HandleError=True,
@@ -85,6 +88,16 @@ class TestSchedulerRecovery(unittest.TestCase):
         script._stop_daily_summary_scheduler.assert_called_once_with()
         script._try_restart_emulator.assert_not_called()
         script.config.task_call.assert_not_called()
+
+    def test_repeated_storage_recognition_failures_do_not_restart_or_stop_scheduler(self):
+        script = self.make_script()
+        script.config.Error_HandleError = False
+        script.storage_statistics = Mock(side_effect=StorageStatisticsError('数量无法确认，已延后'))
+        self.run_tasks(script, ['StorageStatistics'] * 3)
+        self.assertEqual(script.storage_statistics.call_count, 3)
+        script._try_restart_emulator.assert_not_called()
+        script.config.task_call.assert_not_called()
+        self.assertNotIn('StorageStatistics', script.failure_record)
 
     def test_initial_device_offline_is_recovered_by_scheduler(self):
         script = self.make_script()
@@ -239,6 +252,202 @@ class TestSchedulerRecovery(unittest.TestCase):
                 self.assertTrue(script.run('commission'))
                 script.handle_channel_float.assert_called_once_with()
                 script.commission.assert_called_once_with()
+
+    def test_repeated_recovery_defers_only_failing_task_and_pushes_in_low_mode(self):
+        script = self.make_script()
+        script.config.Error_TaskRestartLimit = 3
+        script.config.Error_LowPushMode = True
+        script.config.Error_OnePushConfig = 'provider: null'
+        script.commission.side_effect = GameStuckError('重复故障')
+        script.research = Mock()
+        tomorrow = datetime.now().replace(microsecond=0) + timedelta(days=1)
+        with patch('alas.get_server_next_update', return_value=tomorrow):
+            self.run_tasks(script, ['Commission', 'Restart', 'Research',
+                                    'Commission', 'Restart', 'Commission'])
+
+        script.config.task_delay.assert_called_once_with(target=tomorrow, task='Commission')
+        self.assertEqual(script.task_restart_delays, {'Commission': tomorrow})
+        self.assertNotIn('Commission', script.task_restart_record)
+        self.assertEqual(script.restart.call_count, 2)
+        script.research.assert_called_once_with()
+        alerts = [c for c in self.notify.call_args_list if '已达上限' in c.kwargs['title']]
+        self.assertEqual(len(alerts), 1)
+        self.assertEqual(alerts[0].args, ('provider: null',))
+        self.assertIn('连续恢复 3 次', alerts[0].kwargs['content'])
+
+    def test_success_resets_only_its_own_restart_streak(self):
+        script = self.make_script()
+        script.config.Error_TaskRestartLimit = 3
+        script.task_restart_record = {'Commission': 2, 'Research': 2}
+        self.run_tasks(script, ['Restart', 'Commission'])
+        self.assertEqual(script.task_restart_record, {'Research': 2})
+        script.config.task_delay.assert_not_called()
+
+    def test_disabled_limit_keeps_existing_recovery(self):
+        script = self.make_script()
+        script.commission.side_effect = GameNotRunningError('未运行')
+        self.run_tasks(script, ['Commission'] * 5)
+        script.config.task_delay.assert_not_called()
+        self.assertEqual(script.config.task_call.call_count, 5)
+
+    def test_failed_restart_task_is_never_deferred(self):
+        script = self.make_script()
+        script.config.Error_TaskRestartLimit = 2
+        script.restart.side_effect = GameNotRunningError('无法启动')
+        self.run_tasks(script, ['Restart'] * 5)
+        self.assertEqual(script.restart.call_count, 5)
+        self.assertEqual(script.config.task_call.call_args_list, [call('Restart')] * 5)
+        script.config.task_delay.assert_not_called()
+        self.assertNotIn('Restart', script.task_restart_record)
+        self.assertNotIn('Restart', script.task_restart_delays)
+
+    def test_restart_bypasses_stale_cooldown_in_all_scheduler_modes(self):
+        for mode in ('native', 'enhance', 'takeover'):
+            with self.subTest(mode=mode):
+                script = self.make_script()
+                script.config.Error_TaskRestartLimit = 1
+                script.task_restart_record = {'Restart': 3, 'Commission': 2}
+                deadline = datetime.now() + timedelta(days=1)
+                script.task_restart_delays = {'Restart': deadline, 'Commission': deadline}
+                script.__dict__['_program_runtime'] = Mock(mode=mode)
+                script.wait_until = Mock()
+                self.run_tasks(script, ['Restart'])
+                script.restart.assert_called_once_with()
+                script.config.task_delay.assert_not_called()
+                script.wait_until.assert_not_called()
+                self.assertEqual(script.task_restart_record, {'Commission': 2})
+                self.assertEqual(script.task_restart_delays, {'Commission': deadline})
+
+    def test_restart_global_failures_keep_recovering_emulator_and_game(self):
+        script = self.make_script()
+        script.config.Error_TaskRestartLimit = 2
+        script.device.stuck_record_clear.side_effect = EmulatorNotRunningError('设备离线')
+        self.run_tasks(script, ['Restart'] * 4)
+        self.assertEqual(script._try_restart_emulator.call_count, 4)
+        self.assertEqual(script.config.task_call.call_args_list, [call('Restart')] * 4)
+        script.config.task_delay.assert_not_called()
+        self.assertEqual(script.task_restart_record, {})
+        self.assertEqual(script.task_restart_delays, {})
+
+    def test_restart_failed_results_still_escalate_to_emulator_recovery(self):
+        script = self.make_script()
+        script.config.Error_TaskRestartLimit = 1
+        script.run = Mock(return_value=False)
+        self.run_tasks(script, ['Restart'] * 3)
+        script._try_restart_emulator.assert_called_once_with()
+        script.config.task_call.assert_called_once_with('Restart')
+        script.config.task_delay.assert_not_called()
+
+    def test_custom_dispatch_cannot_bypass_cooldown_and_resumes_after_deadline(self):
+        script = self.make_script()
+        script.config.Error_TaskRestartLimit = 3
+        now = datetime(2026, 10, 1, 12)
+        deadline = datetime(2026, 10, 2)
+        script.task_restart_delays['Commission'] = deadline
+        runtime = script.__dict__['_program_runtime'] = Mock(mode='takeover')
+        script.wait_until = Mock()
+        with patch('alas.current_time', return_value=now):
+            self.run_tasks(script, ['Commission'])
+        script.commission.assert_not_called()
+        runtime.task_finished.assert_called_once_with('Commission', False)
+        script.wait_until.assert_called_once_with(now + timedelta(seconds=4))
+        with patch('alas.current_time', return_value=deadline):
+            self.run_tasks(script, ['Commission'])
+        script.commission.assert_called_once_with()
+        self.assertEqual(script.task_restart_delays, {})
+
+    def test_global_failure_after_task_selection_counts_toward_limit(self):
+        script = self.make_script()
+        script.config.Error_TaskRestartLimit = 2
+        script.device.stuck_record_clear.side_effect = RuntimeError('设备故障')
+        tomorrow = datetime.now() + timedelta(days=1)
+        with patch('alas.get_server_next_update', return_value=tomorrow):
+            self.run_tasks(script, ['Commission', 'Commission'])
+        script.config.task_delay.assert_called_once_with(target=tomorrow, task='Commission')
+        self.assertEqual(script._try_restart_emulator.call_count, 2)
+        self.assertEqual(script.config.task_call.call_args_list, [call('Restart')] * 2)
+
+    def test_global_failure_recovers_before_deferring_business_task(self):
+        script = self.make_script()
+        script.config.Error_TaskRestartLimit = 1
+        script.device.stuck_record_clear.side_effect = EmulatorNotRunningError('设备离线')
+        recovery = Mock()
+        recovery.attach_mock(script._try_restart_emulator, 'emulator')
+        recovery.attach_mock(script.config.task_call, 'game')
+        recovery.attach_mock(script.config.task_delay, 'defer')
+        tomorrow = datetime.now() + timedelta(days=1)
+        with patch('alas.get_server_next_update', return_value=tomorrow):
+            self.run_tasks(script, ['Commission'])
+        self.assertEqual(recovery.mock_calls, [
+            call.emulator(), call.game('Restart'),
+            call.defer(target=tomorrow, task='Commission'),
+        ])
+
+    def test_global_failure_preserves_sensitive_task_protection(self):
+        for strict, sensitive in ((False, False), (False, True), (True, False), (True, True)):
+            with self.subTest(strict=strict, sensitive=sensitive):
+                script = self.make_script(strict=strict, sensitive=sensitive)
+                script.config.Error_TaskRestartLimit = 1
+                script.device.stuck_record_clear.side_effect = RuntimeError('任务初始化失败')
+                tomorrow = datetime.now() + timedelta(days=1)
+                with patch('alas.get_server_next_update', return_value=tomorrow):
+                    if strict and sensitive:
+                        with self.assertRaises(SystemExit) as caught:
+                            self.run_tasks(script, ['OpsiCrossMonth'])
+                        self.assertEqual(caught.exception.code, 1)
+                        script._try_restart_emulator.assert_not_called()
+                        script.config.task_call.assert_not_called()
+                        script.config.task_delay.assert_not_called()
+                    else:
+                        self.run_tasks(script, ['OpsiCrossMonth'])
+                        script._try_restart_emulator.assert_called_once_with()
+                        script.config.task_call.assert_called_once_with('Restart')
+                        script.config.task_delay.assert_called_once_with(
+                            target=tomorrow, task='OpsiCrossMonth')
+
+    def test_notification_failure_does_not_undo_deferral(self):
+        script = self.make_script()
+        script.config.Error_TaskRestartLimit = 1
+        self.notify.side_effect = RuntimeError('推送失败')
+        tomorrow = datetime.now() + timedelta(days=1)
+        with patch('alas.get_server_next_update', return_value=tomorrow):
+            self.assertTrue(script._record_task_restart('Commission', 'recoverable'))
+        self.assertEqual(script.task_restart_delays['Commission'], tomorrow)
+        self.webui.assert_called_once()
+        self.assertEqual(self.webui.call_args.args, ('test',))
+        self.assertEqual(self.webui.call_args.kwargs['title'], '任务已延后至次日')
+
+    def test_webui_notification_failure_does_not_undo_deferral_or_push(self):
+        script = self.make_script()
+        script.config.Error_TaskRestartLimit = 1
+        self.webui.side_effect = RuntimeError('WebUI 通知失败')
+        tomorrow = datetime.now() + timedelta(days=1)
+        with patch('alas.get_server_next_update', return_value=tomorrow):
+            self.assertTrue(script._record_task_restart('Commission', 'recoverable'))
+        self.assertEqual(script.task_restart_delays['Commission'], tomorrow)
+        self.notify.assert_called_once()
+        self.webui.assert_called_once()
+
+    def test_emulator_restart_does_not_reset_task_restart_limit(self):
+        script = self.make_script()
+        script.config.Error_TaskRestartLimit = 5
+        script.run = Mock(return_value=False)
+        tomorrow = datetime.now() + timedelta(days=1)
+        with patch('alas.get_server_next_update', return_value=tomorrow):
+            self.run_tasks(script, ['Commission'] * 5)
+        script._try_restart_emulator.assert_called_once_with()
+        script.config.task_delay.assert_called_once_with(target=tomorrow, task='Commission')
+
+    def test_midnight_deferral_is_always_in_the_future(self):
+        script = self.make_script()
+        script.config.Error_TaskRestartLimit = 1
+        now = datetime(2026, 10, 1)
+        with (patch('alas.current_time', return_value=now),
+              patch('alas.get_server_next_update', return_value=now) as next_update):
+            script._record_task_restart('Commission', False)
+        next_update.assert_called_once_with('00:00')
+        script.config.task_delay.assert_called_once_with(
+            target=now + timedelta(days=1), task='Commission')
 
 
 if __name__ == '__main__':

@@ -13,7 +13,7 @@ interface DisplayItem {
 
 /** 背景支持远程图片、远程视频和保存在当前浏览器中的上传文件。 */
 export function Wallpaper() {
-  const background = useSyncExternalStore(subscribeBackground, getBackground)
+  const background = useSyncExternalStore(subscribeBackground, getBackground, getBackground)
   const [active, setActive] = useState<DisplayItem | null>(null)
   const [videoReady, setVideoReady] = useState(false)
   const [failed, setFailed] = useState(false)
@@ -46,7 +46,7 @@ export function Wallpaper() {
       return
     }
 
-    // 图片预载与显存解码：彻底杜绝大图网络流式传输时的逐行扫描线撕裂感
+    // 图片预载与解码：解码完成再上屏，避免大图流式加载时的逐行扫出。
     let cancelled = false
     const img = new Image()
     img.src = targetUrl

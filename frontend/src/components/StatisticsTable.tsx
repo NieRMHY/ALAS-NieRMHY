@@ -34,10 +34,14 @@ export const resourceIcons: Record<string, string> = {
 // 不走前端构建，补了新模板立刻生效。单元格值形如 'research:BlueprintValparaiso'。
 export const RESEARCH_PREFIX = 'research:'
 // 大世界掉落同理，值形如 'opsi:PlateGeneralT4'，后端把 /opsi-items 挂到
-// assets/stats/opsi_reward_items。
+// assets/stats/opsi_reward_items，缺失时回退到 opsi_items 中的同名领奖模板。
 export const OPSI_PREFIX = 'opsi:'
-export const TEMPLATE_PREFIXES = [RESEARCH_PREFIX, OPSI_PREFIX]
+export const STORAGE_PREFIX = 'storage:'
+export const TEMPLATE_PREFIXES = [RESEARCH_PREFIX, OPSI_PREFIX, STORAGE_PREFIX]
 export function resolveIcon(value: string, resources = true): {src: string, label: string} | undefined {
+  if (value.startsWith(STORAGE_PREFIX)) {
+    return {src: `${iconBase}storage-items/${value.slice(STORAGE_PREFIX.length)}.png`, label: ''}
+  }
   if (value.startsWith(RESEARCH_PREFIX)) {
     const name = value.slice(RESEARCH_PREFIX.length)
     // 图标列不重复显示模板名：它很长（Prototype_Quadruple_610mm_Cruiser_...）会把列撑爆，

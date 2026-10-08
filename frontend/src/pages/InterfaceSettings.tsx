@@ -7,7 +7,7 @@ import { languages, useApp, useConnection } from '../app/context'
 import { familyOf, hasMaterialAxis, supportsBackground, usesPaletteOptions, type Theme } from '../app/theme'
 import { PageTitle } from '../components/ui'
 import { SegmentedControl } from '../components/SegmentedControl'
-import { BrandColorPreference, MaterialDetailPreference } from '../components/ThemeCustomPreference'
+import { ThemeCustomPreference } from '../components/ThemeCustomPreference'
 import { ThemePreferences } from '../components/ThemePreferences'
 import { CompactLayoutPreference } from '../components/CompactLayoutPreference'
 import { BackgroundPreferences } from '../components/BackgroundPreferences'
@@ -57,8 +57,6 @@ export function InterfaceSettings() {
             ]}/>
           </div>
         </div>}
-        {/* 材质细节紧跟材质选项（玻璃材质下可见） */}
-        <MaterialDetailPreference/>
         {hasMaterialAxis(theme) && <div className="field-row">
           <div className="field-label">
             <label>{ui('settings.mode')}</label>
@@ -73,8 +71,8 @@ export function InterfaceSettings() {
             ]}/>
           </div>
         </div>}
-        {/* 品牌配色 */}
-        <BrandColorPreference/>
+        {/* 有材质轴的家族各自一套自定义外观；没有旋钮的家族不渲染。 */}
+        <ThemeCustomPreference/>
         {/* 紧凑主题的列布局选项紧跟主题选择，切到其它主题即隐藏，偏好仍保存在当前浏览器。 */}
         {theme === 'extreme' && <CompactLayoutPreference/>}
         {usesPaletteOptions(theme) && <ThemePreferences/>}

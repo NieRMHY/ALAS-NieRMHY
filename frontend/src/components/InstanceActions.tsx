@@ -1,5 +1,5 @@
 /**
- * @fileoverview 实例卡片快捷操作按钮组（启停、日志、设置）。
+ * @fileoverview 实例资源卡片设置入口与选项弹窗。
  */
 
 import { useState, useSyncExternalStore } from 'react'

@@ -1,9 +1,128 @@
 """构建本地 React 静态资源，取代旧桌面应用更新步骤。"""
 import hashlib
+import json
 import os
 import shutil
 import subprocess
+import tarfile
+import urllib.request
 from pathlib import Path
+
+# 安卓运行包永不本地编译前端：源码变更后由宿主从其 CI 发布渠道拉取按提交发布的
+# 预构建 dist（frontend-<commit>.tar.xz + .sha256）。基址由宿主注入（含镜像前缀）。
+ANDROID_DIST_BASE_ENV = 'AZURPILOT_ANDROID_DIST_BASE'
+_ANDROID_UA = 'Mozilla/5.0 (X11; Linux x86_64) AzurPilot-Android-Frontend'
+
+
+def android_dist_base():
+    """读取宿主注入的预构建 dist 下载基址。
+
+    Returns:
+        str: 去尾斜杠的基址；未注入返回空串。
+    """
+    return os.environ.get(ANDROID_DIST_BASE_ENV, '').rstrip('/')
+
+
+def android_manifest(root=None):
+    """读取根目录 BUILD_MANIFEST（构建期由宿主生成、热更后由更新服务改写）。
+
+    Args:
+        root (str | Path, optional): 项目根目录。
+
+    Returns:
+        dict: 清单元数据；读取失败返回空字典。
+    """
+    root = Path(root) if root else Path(__file__).resolve().parents[1]
+    try:
+        return json.loads((root / 'BUILD_MANIFEST').read_text(encoding='utf-8'))
+    except (OSError, ValueError):
+        return {}
+
+
+def android_dist_ready(commit, root=None):
+    """探测宿主渠道是否已发布该提交的预构建 dist（更新前置条件）。
+
+    只做 HEAD 探测不下载；探测失败（断网/未发布/未注入基址）一律返回 False，
+    让更新检查把该提交视作"暂不可更新"，从源头规避源码与 dist 失配启动崩溃。
+
+    Args:
+        commit (str): 目标上游提交完整哈希。
+        root (str | Path, optional): 项目根目录，仅用于缺参时回退读当前提交。
+
+    Returns:
+        bool: dist 资产存在返回 True。
+    """
+    if not commit:
+        commit = android_manifest(root).get('azurpilot_commit')
+    base = android_dist_base()
+    if not base or not commit:
+        return False
+    url = f'{base}/frontend-{commit}.tar.xz.sha256'
+    try:
+        request = urllib.request.Request(url, method='HEAD', headers={'User-Agent': _ANDROID_UA})
+        with urllib.request.urlopen(request, timeout=10) as response:
+            return response.status == 200
+    except OSError:
+        return False
+
+
+def _android_download(url, target, timeout=300):
+    """下载文件到 target 并返回字节数；网络错误统一转 RuntimeError。"""
+    request = urllib.request.Request(url, headers={'User-Agent': _ANDROID_UA})
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response, open(target, 'wb') as f:
+            shutil.copyfileobj(response, f)
+    except OSError as exc:
+        raise RuntimeError(f'下载失败: {url} ({exc})') from exc
+    return target.stat().st_size
+
+
+def _android_fetch_dist(directory, root):
+    """拉取与当前源码提交匹配的预构建 dist 并校验指纹。
+
+    Args:
+        directory (Path): 前端工程目录（frontend/）。
+        root (Path): 项目根目录（读 BUILD_MANIFEST 定提交）。
+
+    Raises:
+        RuntimeError: 未注入基址、清单元数据缺失、下载/校验失败或指纹失配。
+    """
+    from module.logger import logger
+
+    commit = android_manifest(root).get('azurpilot_commit')
+    base = android_dist_base()
+    if not base:
+        raise RuntimeError(f'安卓环境缺少 {ANDROID_DIST_BASE_ENV}，无法获取预构建前端')
+    if not commit:
+        raise RuntimeError('安卓环境缺少 BUILD_MANIFEST 提交信息，无法获取预构建前端')
+
+    stem = f'frontend-{commit}'
+    tar_path = directory / f'.{stem}.tar.xz.tmp'
+    try:
+        size = _android_download(f'{base}/{stem}.tar.xz', tar_path)
+        logger.info(f'预构建前端下载完成: {size} bytes')
+        request = urllib.request.Request(
+            f'{base}/{stem}.tar.xz.sha256', headers={'User-Agent': _ANDROID_UA})
+        with urllib.request.urlopen(request, timeout=30) as response:
+            expected = response.read().decode('ascii', 'replace').strip().split()[0]
+        digest = hashlib.sha256(tar_path.read_bytes()).hexdigest()
+        if not expected or digest != expected.lower():
+            raise RuntimeError(f'预构建前端校验失败: 期望 {expected[:12]}…, 实际 {digest[:12]}…')
+
+        dist = directory / 'dist'
+        if dist.exists():
+            shutil.rmtree(dist)
+        with tarfile.open(tar_path, 'r:xz') as tar:
+            tar.extractall(directory, filter='data')
+        marker = dist / '.source-fingerprint'
+        if not (dist / 'index.html').is_file() or not marker.is_file():
+            raise RuntimeError('预构建前端包缺少 dist/index.html 或指纹标记')
+        if marker.read_text().strip() != source_fingerprint(directory):
+            raise RuntimeError('预构建前端与当前源码指纹不匹配，包可能与该提交不符')
+        logger.info(f'预构建前端就绪: {commit[:12]}')
+    finally:
+        if tar_path.exists():
+            tar_path.unlink()
 
 
 def npm_command():
@@ -117,7 +236,10 @@ def ensure_frontend(root=None):
     if (directory / 'dist/index.html').is_file() and marker.is_file() and marker.read_text().strip() == fingerprint:
         return
     if os.environ.get('AZURPILOT_ANDROID') == '1':
-        raise RuntimeError('Android 运行包缺少与源码匹配的预构建前端，请安装兼容的 APK')
+        # 安卓永不本地编译：宿主按提交发布预构建 dist，缺失即报错，
+        # 更新服务在应用前会先探测 dist 可用性，正常流程不会走到这里。
+        _android_fetch_dist(directory, Path(root) if root else Path(__file__).resolve().parents[1])
+        return
     command = npm_command()
     logger.info('正在构建 React 前端资源')
     flags = {'creationflags': subprocess.CREATE_NO_WINDOW} if hasattr(subprocess, 'CREATE_NO_WINDOW') else {}

@@ -52,12 +52,14 @@ class OpsiTaskContext:
     """共享配置上的单一代理上下文，嵌套任务沿用防溢出延迟容器。
 
     Attributes:
-        smart_scheduling (bool): 是否处于智能调度+上下文中。
+        smart_scheduling (bool): 是否处于智能调度上下文中。
         overflow (OverflowDelay | None): 防溢出延迟容器。
+        parent_task (str | None): 当前代理任务的直接来源，用于区分直接防溢出与嵌套智能调度。
     """
 
     smart_scheduling: bool = False
     overflow: OverflowDelay | None = None
+    parent_task: str | None = None
 
 
 def current_opsi_context(config):
@@ -101,6 +103,48 @@ def _temporary_attributes(config, **values):
 
 
 @contextmanager
+def _temporary_config_overrides(config):
+    """代理子任务的强制覆盖只在本次调用生效，保留持久化修改与统计状态。
+
+    Args:
+        config (AzurLaneConfig): 配置对象；无强制覆盖字典的测试桩也可使用。
+
+    Yields:
+        None: 临时强制覆盖作用域。
+    """
+    attributes = dict(config.__dict__)
+    snapshots = {
+        name: (values, dict(values) if isinstance(values, dict) else None)
+        for name in ('overridden', '_scheduler_overrides')
+        for values in (attributes.get(name, _MISSING),)
+    }
+    try:
+        yield
+    finally:
+        keys = set()
+        for name, (original, snapshot) in snapshots.items():
+            current = config.__dict__.get(name, _MISSING)
+            if isinstance(current, dict):
+                keys.update(current)
+            if snapshot is not None:
+                keys.update(snapshot)
+                original.clear()
+                original.update(snapshot)
+            if original is _MISSING:
+                if name in config.__dict__:
+                    object.__delattr__(config, name)
+            else:
+                # 运行时持有调度覆盖字典的引用，恢复时必须保留原对象身份。
+                object.__setattr__(config, name, original)
+
+        for key in keys:
+            if key in attributes:
+                object.__setattr__(config, key, attributes[key])
+            elif key in config.__dict__:
+                object.__delattr__(config, key)
+
+
+@contextmanager
 def opsi_task_context(config, task, *, bind_task, disable_task_switch):
     """切换子任务身份；正常返回、TaskEnd 和绑定失败都恢复原身份。
 
@@ -115,18 +159,23 @@ def opsi_task_context(config, task, *, bind_task, disable_task_switch):
     """
     previous_task = config.task
     previous_bind = getattr(config, '_bind_task_override', None)
-    context = replace(current_opsi_context(config), smart_scheduling=True)
+    # 嵌套代理仍由最外层调度任务占有运行时间，不能把中间代理误认为调度任务。
+    task_switch_owner = getattr(config, '_task_switch_owner', None) or previous_task
+    context = replace(
+        current_opsi_context(config), smart_scheduling=True, parent_task=previous_task.command,
+    )
     try:
         with _temporary_attributes(
             config,
             task=task,
             _bind_task_override=bind_task,
-            _task_switch_owner=previous_task,
+            _task_switch_owner=task_switch_owner,
             _disable_task_switch=disable_task_switch,
             _opsi_task_context=context,
         ):
             config.bind(bind_task)
-            yield context
+            with _temporary_config_overrides(config):
+                yield context
     finally:
         config.bind(previous_bind if previous_bind is not None else previous_task)
 

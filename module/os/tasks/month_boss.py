@@ -43,7 +43,7 @@ class OpsiMonthBoss(OSMap):
             out: page_os, 大世界地图
         """
         if self.is_in_opsi_explore():
-            logger.info('每月开荒+正在运行，停止月度Boss')
+            logger.info('每月开荒正在运行，停止月度Boss')
             self.config.task_delay(server_update=True)
             self.config.task_stop()
 

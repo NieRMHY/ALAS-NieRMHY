@@ -8,7 +8,7 @@ from typing import Optional
 
 from module.base.timer import Timer
 from module.combat.assets import *
-from module.exception import CampaignEnd
+from module.exception import CampaignEnd, GameTooManyClickError
 from module.handler.assets import POPUP_CANCEL, POPUP_CONFIRM, STORY_SKIP_3
 from module.logger import logger
 from module.os.assets import GLOBE_GOTO_MAP
@@ -204,6 +204,19 @@ class MapEventHandler(EnemySearchingHandler):
 
     _story_timeout = Timer(60)
 
+    def story_skip(self, drop=None):
+        """大世界按新截图快速点击右上角跳过，必选项仍优先处理。"""
+        click_interval = 0.5
+        if self.__dict__.get('_os_story_click_interval') != click_interval:
+            # 计时器属于本对象，避免改动其他页面共用的基类计时器。
+            self._os_story_click_interval = click_interval
+            self._story_option_timer = Timer(click_interval)
+            self._story_option_confirm = Timer(0.3).start()
+            self._story_option_record = 0
+            self._story_confirm = Timer(0.2, count=1).start()
+        # 游戏的世界剧情跳过会停在重要选项；仍逐帧先处理选项，不改全局配置。
+        return super().story_skip(drop=drop, click_interval=click_interval, prefer_skip=True)
+
     def handle_story_skip(self, drop=None):
         """处理大世界剧情跳过及卡剧情超时恢复。
 
@@ -283,10 +296,13 @@ class MapEventHandler(EnemySearchingHandler):
         cleared = False
         for _ in self.loop():
             if self.appear(AUTO_SEARCH_REWARD, offset=(50, 50), interval=2):
-                if self.ensure_no_info_bar():
-                    cleared = True
                 if drop:
+                    if self.ensure_no_info_bar():
+                        cleared = True
                     drop.handle_add(main=self, before=4)
+                elif self.info_bar_count():
+                    # 不记录掉落时只检查当前截图中的清除提示，直接确认奖励。
+                    cleared = True
                 self.device.click(AUTO_SEARCH_REWARD)
                 self.interval_reset([
                     AUTO_SEARCH_REWARD,
@@ -322,6 +338,38 @@ class MapEventHandler(EnemySearchingHandler):
 
         return cleared
 
+    _os_auto_search_enable_timeout = 45
+
+    def _os_auto_search_enable_click(self, button):
+        """开启自律寻敌的带预算重试点击。
+
+        装置探测演出、剧情收尾期间游戏可能持续数秒不响应该按钮，
+        连续重试是有意行为：与剧情选项处理同法，点击后清空共用点击
+        记录，避免被「15 次内同一按钮 ≥12 次」的防连点阈值在快刷
+        间隔下约 7 秒就判死；改由 _os_auto_search_enable_timeout 秒
+        预算兜底，超时仍未生效才按点击无效上报。
+
+        Args:
+            button: AUTO_SEARCH_OS_MAP_OPTION_OFF 或 _OFF_DISABLED。
+        """
+        if '_os_auto_search_enable_timer' not in self.__dict__:
+            self._os_auto_search_enable_timer = Timer(self._os_auto_search_enable_timeout)
+        if not self._os_auto_search_enable_timer.started():
+            self._os_auto_search_enable_timer.start()
+        elif self._os_auto_search_enable_timer.reached():
+            self._os_auto_search_enable_timer.clear()
+            raise GameTooManyClickError(
+                f'[大世界-搜索] 自律寻敌连续点击 {self._os_auto_search_enable_timeout} 秒仍未生效')
+        self.device.click(button)
+        # 连续重试会累积共用点击记录，点击后清空；卡死检测由上方预算兜底
+        self.device.click_record_clear()
+
+    def _os_auto_search_enable_budget_clear(self):
+        """关闭外观消失或界面被剧情挡住时，清零开启自律的重试预算。"""
+        timer = self.__dict__.get('_os_auto_search_enable_timer')
+        if timer is not None:
+            timer.clear()
+
     def handle_os_auto_search_map_option(self, drop=None, enable: Optional[bool] = True):
         """
         处理大世界自动搜索地图选项。
@@ -333,6 +381,8 @@ class MapEventHandler(EnemySearchingHandler):
         Returns:
             bool: 是否点击了选项。
         """
+        command = getattr(getattr(self.config, 'task', None), 'command', None)
+        fast_farming = command in ('OpsiHazard1Leveling', 'OpsiMeowfficerFarming')
         if self.match_template_color(AUTO_SEARCH_OS_MAP_OPTION_OFF, offset=(5, 120)):
             if self.info_bar_count() >= 2:
                 self.device.screenshot_interval_set()
@@ -345,7 +395,16 @@ class MapEventHandler(EnemySearchingHandler):
                 raise CampaignEnd
         if self.appear(AUTO_SEARCH_REWARD, offset=(50, 50)):
             self.device.screenshot_interval_set()
-            if self.os_auto_search_quit(drop=drop):
+            cleared = self.os_auto_search_quit(drop=drop)
+            if fast_farming and enable is True \
+                    and getattr(self, '_os_auto_search_started', False):
+                # 正常刷图奖励表示本次搜索已结束，不再开一次空自律探测。
+                # 未确认本轮已开启时，奖励可能是上一海域延迟弹出的，保留原恢复。
+                # META、退役等中断仍由 os_auto_search_run 的外层恢复分支处理。
+                task_name = '侵蚀1' if command == 'OpsiHazard1Leveling' else '耄耋相接'
+                logger.info(f'[大世界-搜索] {task_name}奖励已确认，结束本次搜索')
+                raise CampaignEnd
+            if cleared:
                 # 当前地图没有更多物品
                 raise CampaignEnd
             else:
@@ -355,15 +414,31 @@ class MapEventHandler(EnemySearchingHandler):
         if enable is None:
             pass
         elif enable:
-            if self.match_template_color(AUTO_SEARCH_OS_MAP_OPTION_OFF, offset=(5, 120), interval=3):
-                self.device.click(AUTO_SEARCH_OS_MAP_OPTION_OFF)
-                self.interval_reset(AUTO_SEARCH_OS_MAP_OPTION_OFF_DISABLED)
+            click_interval = 0.5 if fast_farming else 3
+            if click_interval < 3:
+                # 剧情可能透出地图按钮，先处理剧情；回到地图后才重试开启自律。
+                if self.appear(STORY_SKIP_3, offset=(20, 20)):
+                    self._os_auto_search_enable_budget_clear()
+                    return False
+                if not self.is_in_map():
+                    self._os_auto_search_enable_budget_clear()
+                    return False
+            if self.match_template_color(AUTO_SEARCH_OS_MAP_OPTION_OFF,
+                                         offset=(5, 120), interval=click_interval):
+                self._os_auto_search_enable_click(AUTO_SEARCH_OS_MAP_OPTION_OFF)
+                # 两种关闭外观共用重试间隔，避免按钮变灰后在下一帧重复点击。
+                self.get_interval_timer(AUTO_SEARCH_OS_MAP_OPTION_OFF_DISABLED,
+                                        interval=click_interval, renew=True).reset()
                 return True
             # 游戏客户端有时会 bug，AUTO_SEARCH_OS_MAP_OPTION_OFF 灰显但仍可点击
-            if self.match_template_color(AUTO_SEARCH_OS_MAP_OPTION_OFF_DISABLED, offset=(5, 120), interval=3):
-                self.device.click(AUTO_SEARCH_OS_MAP_OPTION_OFF_DISABLED)
-                self.interval_reset(AUTO_SEARCH_OS_MAP_OPTION_OFF)
+            if self.match_template_color(AUTO_SEARCH_OS_MAP_OPTION_OFF_DISABLED,
+                                         offset=(5, 120), interval=click_interval):
+                self._os_auto_search_enable_click(AUTO_SEARCH_OS_MAP_OPTION_OFF_DISABLED)
+                self.get_interval_timer(AUTO_SEARCH_OS_MAP_OPTION_OFF,
+                                        interval=click_interval, renew=True).reset()
                 return True
+            # 关闭外观消失：自律已开启或界面已切换，重试预算清零
+            self._os_auto_search_enable_budget_clear()
         else:
             if self.match_template_color(AUTO_SEARCH_OS_MAP_OPTION_ON, offset=(5, 120), interval=3):
                 self.device.click(AUTO_SEARCH_OS_MAP_OPTION_ON)

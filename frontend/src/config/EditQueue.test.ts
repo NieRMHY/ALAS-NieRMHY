@@ -127,7 +127,7 @@ describe('即时配置队列', () => {
   it('恢复草稿时丢弃服务端已拒绝的空值，字段回到配置里的值', () => {
     const memory = storage()
     // 空值没有可修正的内容，却会把字段永久钉死：字段本来就是空的，用户再清空
-    // 不会触发输入事件，草稿永远换不掉。旧版本拒绝空时间后正是这样卡住的。
+    // 不会触发输入事件，草稿永远换不掉。
     memory.setItem('instance-stuck', JSON.stringify({
       'Main.Scheduler.NextRun': {value: '', payload: '', sequence: 1, status: 'error', retryable: false, error: '日期格式应为 YYYY-MM-DD HH:mm:ss：Main.Scheduler.NextRun'},
     }))

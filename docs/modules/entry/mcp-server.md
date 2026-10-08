@@ -124,6 +124,8 @@ module/config/mcp_helper.py    # McpConfigHelper：args.json + i18n 的任务元
 | 设备类 | `restart_emulator` | 重启实例对应模拟器进程（含上游退出缓冲，硬超时 150 秒） |
 | 设备类 | `restart_adb` | 重启 ADB 服务（kill-server/start-server），`instance` 可选 |
 
+`get_scheduler_queue` 与 `clear_scheduler_queue` 遍历配置时只读取字典形式的任务节点，跳过 `_stockInstance` 等非字典内部元数据；清空队列仍通过配置事务修改可编辑的 `Scheduler.Enable`，保留实例身份及只读任务。
+
 ### 与 module/runtime 的关系
 
 工具「作用于实例」的路径有四条，都不直接操作进程：

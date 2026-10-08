@@ -48,7 +48,7 @@ module/api/
 ├── socket.py              Gateway（连接准入/认证/退避）+ Session（会话/订阅/背压）
 ├── config_service.py      实例白名单、配置读取与跨进程事务写
 ├── runtime_service.py     实例状态/总览/增量日志/被动截图适配层
-├── statistics_service.py  六类统计报告的聚合
+├── statistics_service.py  分类统计报告的聚合（含只读仓库快照）
 ├── meowfficer_service.py  指挥喵评分报告的只读读取与清理
 ├── update_service.py      Git 快照/提交历史与后台 fetch/apply（模块级单例）
 ├── static.py              FrontendFiles：MIME 修正、SPA 回退、隐藏文件拦截
@@ -56,6 +56,10 @@ module/api/
 ```
 
 配套生成产物与契约：`dev_tools/export_api_schema.py` 从 `protocol.py` + `router.py` 生成 `frontend/src/api/generated.ts`（参数类型）与 `frontend/src/api/contract.json`（机器可审契约）。
+
+仓库报告使用 `statistics.report(category='storage', days=7)` 只读查询最近完整快照及时间窗口内成功扫描的历史序列。序列的可选 `icon` 在逐点与共用时间轴两种格式中保留，物品图标由 `/storage-items/` 静态挂载提供。主动扫描沿用 `tasks.run(task='StorageStatistics')` 与实例运行互斥；页面刷新不启动扫描。
+
+其他分类报表在同一请求内共用一次受保护数据校验及协调锁，避免每个指标扫描全部历史。`CategorySection` 仅按 `statistics` 事件更新，同一分类最多保留一个正在执行的请求；期间收到的多次通知合并为一次后续刷新。运行概览事件不触发统计查询，SQLite WAL 的修改也纳入更新指纹；切换实例或参数后忽略旧响应。
 
 ## 4. 核心入口
 
@@ -109,6 +113,8 @@ module/api/
 ### RuntimeService（runtime_service.py）
 
 把 `ProcessManager` 的进程世界翻译成前端视图：`STATES = {1: running, 2: stopped, 3: error, 4: updating}` 是进程状态与前端枚举的唯一映射；`logs()` 用对象身份匹配 `renderables` 的裁剪重叠区，保证游标单调递增；`capture()` 只读 `preview.hub` 的最新帧，**绝不主动触发截图**。
+
+`overview()` 枚举任务时跳过非字典根节点，例如内部身份 `_stockInstance`。该字段仍由 `ConfigService.read()` 保留，不能当作任务参数组；总览请求、订阅推送以及启停后返回的总览共用这一读取路径。
 
 ## 6. 工作流程
 
@@ -269,7 +275,7 @@ API 模块自身的行为参数来自部署配置 `config/deploy.yaml`（经 `St
 
 一个 uvicorn 事件循环承载全部会话；阻塞操作一律离开事件循环：
 
-- **Session 的五个 asyncio 任务**（`run()` 启动）：`reader`（收请求）、`writer`（发消息）、`producer`（overview/instances 分频采样）、`log_producer`（日志到达即推送）、`preview_producer`（截图推送）。任一任务结束即触发全会话收尾；收尾用 `anyio.CancelScope(shield=True)` 屏蔽外层取消，保证归还连接计数前收发任务真正结束——ASGI 服务器可能在客户端退出时取消整个会话作用域。
+- **Session 的六个 asyncio 任务**（`run()` 启动）：`reader`（收请求）、`writer`（发消息）、`producer`（overview/instances 分频采样）、`log_producer`（日志到达即推送）、`preview_producer`（截图推送）、`stock_producer`（交易所事件即时推送）。任一任务结束即触发全会话收尾；收尾用 `anyio.CancelScope(shield=True)` 屏蔽外层取消，保证归还连接计数前收发任务真正结束——ASGI 服务器可能在客户端退出时取消整个会话作用域。
 - **业务线程**：`asyncio.to_thread` 派发，`Gateway.workers = Semaphore(8)` 同时约束 dispatch 与订阅采样的并发总量，防止一次大批量统计查询耗尽默认线程池。
 - **跨进程写保护**：`ConfigService.patch/delete` 持有 `self.lock`（RLock）+ `config_transaction` 文件锁（`.json.lock`，msvcrt/fcntl，等待上限 15 秒），与核心运行器的配置写回互斥。
 - **实例生命周期锁**：`start/stop/delete` 全部走 `ProcessManager._get_lifecycle_lock(instance)`，与 worker 线程内的状态变更互斥。
@@ -407,3 +413,11 @@ ws.send_json({'v':1,'type':'request','id':'2','method':'events.subscribe',
 - [MCP SSE 服务器](../entry/mcp-server.md) — 挂载于 `/mcp` 的独立协议子应用
 - [配置系统](../config.md) — 被校验与读写的数据来源（argument YAML、i18n、事务）
 - [外部桥接与开发工具](../infra/submodule-tools.md) — `dev_tools/export_api_schema` 所在的开发工具层
+
+### 茗交所实时订阅
+
+`events.subscribe` 接受实例级 `stock` 主题。`Session.stock_producer()` 订阅 `StockExchangeService` 的共享远端 SSE，回调用 `loop.call_soon_threadsafe()` 唤醒独立生产者，发送 `{instance,revision,serverTime,online}`；不占用 RPC 工作槽，也不回传凭据。普通主题仍遵循原采样机制。`stock.request` 与 `stock.status` 不计入通用请求频率限制；股票公开数据和本人账户/完整委托/自选接口仍由代理白名单与实例永久绑定保护。
+
+游戏历史后台每 250 毫秒检查文件修改状态，新记录立即转发；待传月份完整签名并连续补传，无 15 秒节流、1024 点或 3 秒配额。断网时指数退避，日志、身份、哈希链及跨实例隔离语义保留。同步完整性只涵盖已采集、保存且认证通过的记录。
+
+玩家数据校验仅阻断交易请求与同步，不阻断配置管理、实例创建/复制/导入/删除或普通调度资源事务。`stock.rebuild` 默认预览 `{instance,scope,affectedInstances,rebuilt:false}`；确认实际范围后用 `confirm=true` 和同一 `scope` 重建。单实例身份和历史错误只重建当前账户，共享密钥、登记或绑定损坏时范围为所有本地账户；范围变化返回 `STOCK_REBUILD_SCOPE_CHANGED`，不得自动扩大。先备份原件，再清理本地交易身份、绑定、会话与历史，保留配置及普通运行数据。重建不释放或转移远端永久绑定，新身份重新开户须使用新用户名。入参与结果见 [前端 API](../../../frontend/API.md#原生证券交易终端)。

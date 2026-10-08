@@ -59,6 +59,23 @@ class McpToolsTest(unittest.IsolatedAsyncioTestCase):
         self.assertIn('NOT_FOUND', await self.invoke('get_config', instance='missing'))
         self.assertFalse((self.root / 'config/missing.json').exists())
 
+    async def test_scheduler_queue_ignores_and_preserves_instance_identity(self):
+        """计划队列读取与清空只处理任务，不能破坏内部身份。"""
+        path = self.root / 'config/demo.json'
+        data = self.configs.read_json(path)
+        data['_stockInstance'] = 'test-identity'
+        data['Main']['Scheduler']['Enable'] = True
+        path.write_text(json.dumps(data), encoding='utf-8')
+        before = path.read_bytes(), path.stat().st_mtime_ns
+        queue = json.loads(await self.invoke('get_scheduler_queue', instance='demo'))
+        self.assertEqual([{'task': 'Main', 'next_run': '2026-01-01 00:00:00'}], queue)
+        self.assertEqual(before, (path.read_bytes(), path.stat().st_mtime_ns))
+        result = await self.invoke('clear_scheduler_queue', instance='demo')
+        self.assertIn('Success: Cleared tasks: Main', result)
+        saved = self.configs.read_json(path)
+        self.assertFalse(saved['Main']['Scheduler']['Enable'])
+        self.assertEqual('test-identity', saved['_stockInstance'])
+
     async def test_invalid_updates_are_rejected_without_writes(self):
         before = (self.root / 'config/demo.json').read_bytes()
         for arg, value in [('Count', True), ('Count', 99), ('Locked', True), ('Choice', 'invalid'), ('Unknown', 1)]:

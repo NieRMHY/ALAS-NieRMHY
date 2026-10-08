@@ -52,7 +52,7 @@ module/
 │   ├── buy.py / fort.py / train.py / collect.py / enhance.py  # 四大子能力
 │   ├── collect_score.py      # 收集时评分混入（默认关）
 │   ├── score.py / score_ocr.py / score_report.py / advice.py   # 评分引擎与报告
-│   ├── score_task.py / scan.py / scan_utils.py                 # 工具Plus 评分任务与猫窝扫描
+│   ├── score_task.py / scan.py / scan_utils.py                 # 工具评分任务与猫窝扫描
 │   └── cat_data.py / talent_data.py   # 自动生成的静态资料
 └── guild/
     ├── guild_reward.py       # RewardGuild：编排三个子任务
@@ -72,7 +72,7 @@ module/
 | `Dorm` | `RewardDorm(config, device).run()` | 喂食、收取、买家具 |
 | `Meowfficer` | `RewardMeowfficer(config, device).run()` | 编排 Buy/Fort/Train/Enhance |
 | `Guild` | `RewardGuild(config, device).run()` | 编排大厅/后勤/作战 |
-| `MeowfficerScore`（工具Plus） | `run_meowfficer_score(config, device)` | 手动评分工具，无 Scheduler 组，不参与调度 |
+| `MeowfficerScore`（工具） | `run_meowfficer_score(config, device)` | 手动评分工具，无 Scheduler 组，不参与调度 |
 
 ## 5. 核心组件
 
@@ -114,7 +114,7 @@ module/
 | `MeowfficerTrain(MeowfficerCollect, MeowfficerEnhance)` | 训练入队（降序自动排队）、收取、锁定；`Collect` 内混入 `MeowfficerCollectScore` 做天赋评分 |
 | `SWITCH_LOCK` | 锁定/解锁开关（`Switch` 组件），用于保留带特殊天赋的猫 |
 | `score.py` + `talent_data/cat_data` | 纯逻辑评分引擎：天赋库白名单匹配 + 四套攻略口径（水面/潜艇/低耗/雷暴），不依赖设备，可单测 |
-| `MeowfficerScore` / `MeowfficerScanner` | 工具Plus 评分任务（screenshot/device/scan 三种取图）与猫窝遍历器 |
+| `MeowfficerScore` / `MeowfficerScanner` | 工具评分任务（screenshot/device/scan 三种取图）与猫窝遍历器 |
 
 ### 大舰队（module/guild）
 
@@ -356,7 +356,7 @@ for _ in self.loop():
 
 - **日志前缀**：`[奖励-领取]`、`[战术-教材/技能/船坞]`、`[宿舍-喂食/收取/调度]`、`[指挥喵-购买/训练/收集/强化/评分]`、`[大舰队-大厅/后勤/作战]`；`logger.attr` 输出的中间状态（教材列表、兑换排序、舰队切换）是定位误识别的第一手材料。
 - **WebUI 单任务运行**：在对应任务页点「立即执行」，观察 `task_delay` 日志确认排程是否符合预期。
-- **指挥喵评分**：先跑一次「工具Plus → 指挥喵评分」，产物在 `log/` 下；HTML 版可在 WebUI `/reports/meowfficer_score` 直接打开；识别率问题先看 `[指挥喵-评分] OCR 原始命中` 调试日志。
+- **指挥喵评分**：先跑一次「工具 → 指挥喵评分」，产物在 `log/` 下；HTML 版可在 WebUI `/reports/meowfficer_score` 直接打开；识别率问题先看 `[指挥喵-评分] OCR 原始命中` 调试日志。
 - **常见问题**：战术卡在选教材 → 查 `[战术-教材] 尝试15次` 是否伴随加载动画；指挥喵没买箱 → 查「剩余次数/金币」OCR 值与每日上限修正日志；大舰队反复重启 → 是否命中 `GameBugError` 的两个已知场景。
 
 ## 20. 相关模块

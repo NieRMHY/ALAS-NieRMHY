@@ -28,6 +28,7 @@ def get_available_func():
         'OpsiDaemon',
         'EventStory',
         'BoxDisassemble',
+        'StorageStatistics',
         'AutoEquip',
         'AzurLaneUncensored',
         'Benchmark',

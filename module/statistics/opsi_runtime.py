@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 import time
+from concurrent.futures import Future
 from datetime import datetime
 from typing import Any
 
@@ -205,7 +206,7 @@ def start_meow_search_timer(main: Any) -> tuple[float, int | None]:
     """记录耄耋相接开始搜索当前海域时的时间与行动力。
 
     行动力取当前缓存值，不为了统计再开一次弹窗：搜索开始时 ALAS 刚读过行动力
-    （智能调度+ 决策、短猫前置检查），多开一次弹窗就多一组 REMAIN_OS + CANCEL
+    （智能调度决策、短猫前置检查），多开一次弹窗就多一组 REMAIN_OS + CANCEL
     点击，会加速触发「两个按钮交替点击次数过多」。
     """
     start_ap = int(getattr(main, "_action_point_total", 0) or 0) or None
@@ -270,26 +271,31 @@ def finish_meow_search_timer(
     return duration
 
 
-def record_cl1_akashi_encounter(config: Any) -> int | None:
-    """记录侵蚀1明石事件，并返回当月累计次数。"""
+def record_cl1_akashi_encounter(config: Any) -> Future | None:
+    """异步记录侵蚀1明石事件，提交成功后输出累计次数并返回写入 Future。"""
     try:
         from module.statistics.cl1_database import db as cl1_db
 
         instance_name = instance_name_from_config(config)
-        cl1_db.async_increment_akashi_encounter(instance_name)
         month_key = datetime.now().strftime("%Y-%m")
-        future = cl1_db.async_get_stats(instance_name, month_key)
-        data = future.result(timeout=5.0)
-        encounters = int(data.get("akashi_encounters", 0))
-        logger.attr("侵蚀1明石月度次数", encounters)
-        return encounters
+        future = cl1_db.async_increment_akashi_encounter(instance_name, month_key)
+
+        def log_committed_count(completed):
+            try:
+                # 回调只在 Future 完成后运行，结果来自已经提交的数据库事务。
+                logger.attr("侵蚀1明石月度次数", completed.result())
+            except Exception:
+                logger.exception("[统计-大世界] 持久化侵蚀1明石月度次数失败")
+
+        future.add_done_callback(log_committed_count)
+        return future
     except Exception:
         logger.exception("[统计-大世界] 持久化侵蚀1明石月度次数失败")
         return None
 
 
-def record_meow_akashi_encounter(main: Any) -> int | None:
-    """记录耄耋相接明石事件，并返回当月该侵蚀等级的累计次数。"""
+def record_meow_akashi_encounter(main: Any) -> Future | None:
+    """异步记录耄耋相接明石事件，提交成功后输出该侵蚀等级累计次数。"""
     try:
         from module.statistics.cl1_database import db as cl1_db
 
@@ -298,9 +304,19 @@ def record_meow_akashi_encounter(main: Any) -> int | None:
         if hazard_level is None:
             logger.debug("[统计-大世界] 耄耋相接侵蚀等级未知，跳过明石事件记录")
             return None
-        cl1_db.async_increment_meow_akashi_encounter(instance_name, hazard_level)
-        logger.attr("耄耋相接明石次数", f"侵蚀{hazard_level}")
-        return None
+        month_key = datetime.now().strftime("%Y-%m")
+        future = cl1_db.async_increment_meow_akashi_encounter(instance_name, hazard_level, month_key)
+
+        def log_committed_count(completed):
+            try:
+                count = completed.result()
+                if count is not None:
+                    logger.attr("耄耋相接明石月度次数", f"侵蚀{hazard_level}: {count}")
+            except Exception:
+                logger.exception("[统计-大世界] 持久化耄耋相接明石次数失败")
+
+        future.add_done_callback(log_committed_count)
+        return future
     except Exception:
         logger.exception("[统计-大世界] 持久化耄耋相接明石次数失败")
         return None

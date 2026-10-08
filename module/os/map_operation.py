@@ -348,9 +348,12 @@ class OSMapOperation(MapOrderHandler, MissionHandler, PortHandler, StorageHandle
         """
         return self.appear(MAP_EXIT, offset=(20, 20), similarity=0.75)
 
-    def map_exit(self):
+    def map_exit(self, drop=None):
         """
         从隐秘海域、深渊海域或要塞中退出。
+
+        Args:
+            drop (DropImage, optional): 收集退出海域时出现的结算与领奖弹窗。
 
         Pages:
             in: is_in_map
@@ -376,11 +379,14 @@ class OSMapOperation(MapOrderHandler, MissionHandler, PortHandler, StorageHandle
             if self.handle_popup_confirm('MAP_EXIT'):
                 self.interval_reset(MAP_EXIT)
                 continue
-            if self.appear_then_click(AUTO_SEARCH_REWARD, offset=(50, 50)):
+            if self.appear(AUTO_SEARCH_REWARD, offset=(50, 50), interval=2):
                 # 偶尔会出现
+                if drop:
+                    drop.add(self.device.image)
+                self.device.click(AUTO_SEARCH_REWARD)
                 self.device.screenshot_interval_set()
                 continue
-            if self.handle_map_event():
+            if self.handle_map_event(drop=drop):
                 self.interval_reset(MAP_EXIT)
                 changed = True
                 continue

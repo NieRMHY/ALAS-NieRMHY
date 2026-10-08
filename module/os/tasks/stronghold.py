@@ -9,6 +9,7 @@
 """
 
 from module.config.config import TaskEnd
+from module.exception import RequestHumanTakeover
 from module.logger import logger
 from module.os.fleet import BossFleet
 from module.os.map import OSMap
@@ -51,7 +52,8 @@ class OpsiStronghold(CoinTaskMixin, OSMap):
         self.globe_enter(zone)
         self.zone_init()
         self.os_order_execute(recon_scan=True, submarine_call=False)
-        self.run_stronghold(submarine=self.config.OpsiStronghold_SubmarineEveryCombat)
+        if not self.run_stronghold(submarine=self.config.OpsiStronghold_SubmarineEveryCombat):
+            raise RequestHumanTakeover
 
         if self.config.OpsiStronghold_SubmarineEveryCombat:
             if self.zone.is_azur_port:

@@ -1,5 +1,5 @@
 /**
- * @fileoverview 材质细节检视器状态管理：支持在真实例及各页面上悬浮/停靠展示。
+ * @fileoverview 材质检视器状态：整站悬浮/停靠的开关、停靠与最小化三态，跨组件共享。
  */
 
 export interface MaterialInspectorState {
@@ -15,6 +15,7 @@ const readDocked = (): boolean => {
     const val = localStorage.getItem(STORAGE_DOCKED_KEY)
     return val !== null ? val === '1' : true
   } catch {
+    /* 存储不可用时用默认值：停靠与否只影响观感，不必阻断渲染。 */
     return true
   }
 }
@@ -37,11 +38,14 @@ export function subscribeMaterialInspector(listener: () => void) {
 }
 
 function publish(patch: Partial<MaterialInspectorState>) {
+  const previous = state
   state = { ...state, ...patch }
-  try {
-    localStorage.setItem(STORAGE_DOCKED_KEY, state.docked ? '1' : '0')
-  } catch {
-    /* 存储不可用时仅当前会话有效 */
+  if (state.docked !== previous.docked) {
+    try {
+      localStorage.setItem(STORAGE_DOCKED_KEY, state.docked ? '1' : '0')
+    } catch {
+      /* 存储不可用时仅当前会话有效 */
+    }
   }
   listeners.forEach(l => l())
 }

@@ -1,7 +1,7 @@
 /**
  * @fileoverview 全真模拟实例预览组件 (MockInstancePreview)。
  * 允许用户在真实的实例全景环境（包含顶栏、侧栏、资源卡、运行卡片、日志、右栏调度器以及菜单与弹窗）中，
- * 实时调整 7 大材质区域 × 5 项属性并获得即时视觉反馈。
+ * 逐区域实时调整材质并获得即时视觉反馈。
  */
 
 import { useState, useEffect, useRef } from 'react'
@@ -36,16 +36,15 @@ import {
 } from 'lucide-react'
 
 import { useApp } from '../app/context'
-import { applyCustomLayer, familyOf, usesLegacyLayout } from '../app/theme'
+import { familyOf, usesLegacyLayout } from '../app/theme'
 import {
   clearFamilyKnob,
   clearFamilyRegion,
-  readFamilyCustom,
   resetFamilyCustom,
   writeFamilyCustom,
-  type FamilyCustom,
 } from '../app/themeCustom'
 import { familyRegions, type RegionId } from '../app/themeKnobs'
+import { useFamilyCustom, useSampleLayers } from '../app/useMaterialInspector'
 import { MaterialDetailPanel } from './ThemeCustomPreference'
 import { ThemeWallpaper } from './GlassMaterial'
 
@@ -87,47 +86,19 @@ export function MockInstancePreview({onClose, initialRegion}: MockInstancePrevie
   const {ui, theme} = useApp()
   const family = familyOf(theme)
   const isLegacy = usesLegacyLayout(theme)
-  const [custom, setCustom] = useState<FamilyCustom>(() => readFamilyCustom(family))
-  const [activeRegion, setActiveRegion] = useState<RegionId>(initialRegion ?? 'surface')
+  const {custom, refresh} = useFamilyCustom(family)
+  const {region: activeRegion, showModal, showMenu, select: handleRegionSelect, setShowModal, setShowMenu} = useSampleLayers(initialRegion ?? 'surface')
 
-  // 交互演示状态：菜单与弹窗
-  const [showMenu, setShowMenu] = useState(false)
-  const [showModal, setShowModal] = useState(false)
   const [isRunning, setIsRunning] = useState(true)
 
   // 检视面板状态：折叠/浮动/停靠
   const [isInspectorMinimized, setIsInspectorMinimized] = useState(false)
   const [isDocked, setIsDocked] = useState(true)
-
-  useEffect(() => {
-    setCustom(readFamilyCustom(family))
-  }, [family])
-
-  const refresh = () => {
-    applyCustomLayer()
-    setCustom(readFamilyCustom(family))
-  }
-
-  // 切换区域时若切到 modal 或 menu，自动触发对应展示方便用户查看；切到其他区域时自动关闭覆盖层
-  const handleRegionSelect = (r: RegionId) => {
-    setActiveRegion(r)
-    if (r === 'modal') {
-      setShowModal(true)
-      setShowMenu(false)
-    } else if (r === 'menu') {
-      setShowMenu(true)
-      setShowModal(false)
-    } else {
-      setShowModal(false)
-      setShowMenu(false)
-    }
-  }
-
   const isDockedActive = isDocked && !isInspectorMinimized
   const overlay = (
     <div ref={overlayRef} role="dialog" aria-modal="true" aria-label={ui('settings.materialLivePreview')} tabIndex={-1} className={`mock-instance-preview-overlay ${isLegacy ? 'legacy-shell-preview' : 'apple-shell-preview'} ${isDockedActive ? 'has-docked-inspector' : ''}`}>
       <ThemeWallpaper />
-      {/* 全真模拟 AppShell 容器 */}
+      {/* 全真模拟 AppShell 容器；里面的实例名、资源、任务与日志是写死的样本数据，用来撑起外壳，不随语言切换。 */}
       <div className={`app-shell with-rail ${isLegacy ? 'legacy-shell' : ''} mock-preview-shell`}>
         {/* 侧栏 (sidebar 区域) */}
         <aside className="sidebar mock-preview-sidebar">
@@ -161,7 +132,7 @@ export function MockInstancePreview({onClose, initialRegion}: MockInstancePrevie
             </a>
           </nav>
 
-          <div className="mock-task-groups" style={{marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '8px'}}>
+          <div style={{marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '8px'}}>
             <div className="sidebar-label" style={{fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--muted)', padding: '0 8px'}}>
               任务目录 (Tasks)
             </div>
@@ -234,7 +205,7 @@ export function MockInstancePreview({onClose, initialRegion}: MockInstancePrevie
               {/* 模拟下拉菜单 (menu 区域) */}
               {showMenu && (
                 <div
-                  className="instance-menu mock-test-menu"
+                  className="instance-menu"
                   style={{
                     position: 'absolute',
                     top: 'calc(100% + 8px)',
@@ -452,7 +423,7 @@ export function MockInstancePreview({onClose, initialRegion}: MockInstancePrevie
           }}
           onClick={e => { if (e.target === e.currentTarget) setShowModal(false) }}
         >
-          <div className="modal mock-test-modal" style={{width: '90%', maxWidth: '440px', display: 'flex', flexDirection: 'column', gap: '16px'}}>
+          <div className="modal" style={{width: '90%', maxWidth: '440px', display: 'flex', flexDirection: 'column', gap: '16px'}}>
             <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between'}}>
               <h3 style={{margin: 0, fontSize: '18px', fontWeight: 650}}>{ui('settings.sampleModalTitle')}</h3>
               <button type="button" className="icon-button" onClick={() => setShowModal(false)} aria-label="Close">
@@ -516,14 +487,14 @@ export function MockInstancePreview({onClose, initialRegion}: MockInstancePrevie
                   type="button"
                   className="icon-button"
                   onClick={() => setIsInspectorMinimized(true)}
-                  title="最小化面板"
+                  title={ui('settings.inspectorMinimize')}
                 >
                   <Minimize2 size={15} />
                 </button>
                 {/* 关闭预览 */}
                 <button
                   type="button"
-                  className="icon-button close-preview-btn"
+                  className="icon-button"
                   onClick={onClose}
                   title={ui('settings.closePreview')}
                 >

@@ -3,7 +3,7 @@
  */
 
 import { Select } from './FormControls'
-import { memo, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
+import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useParams } from 'react-router-dom'
 import { ArrowDownUp, Download, LayoutGrid, Pause, Play, Search, Terminal, Trash2 } from 'lucide-react'
@@ -11,32 +11,19 @@ import { api } from '../api/client'
 import type { Logs as LogsData, LogEntry } from '../api/types'
 import { useApp, useConnection } from '../app/context'
 import { Empty } from '../components/ui'
-import { LogCardView } from './LogCardView'
+import { LogCardView, findVisibleRange, renderTokens, safeRaf, safeCancelRaf, OVERSCAN_BUFFER_PX } from './LogCardView'
 
 export const LOG_LINE_RE = /^([A-Z]{4,8})\s+(?:(\d{4}-\d{2}-\d{2})\s+)?(\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?)\s*│\s*([\s\S]*)$/
 export const RULE_RE = /^[═─]{3,}\s*(.*?)\s*[═─]{3,}$/
 export const PURE_RULE_RE = /^[═─]{3,}$/
 export const CENTER_TITLE_RE = /^\s{3,}(.*?)\s{3,}$/
 export const LOG_ENTRY_LIMIT = 1000
+const VIRTUAL_LINE_THRESHOLD = 120
+/* 未实测到高度的日志行先按这个值占位，实测后替换。 */
+export const LINE_HEIGHT_ESTIMATE = 18
 
 /** 日志跟随的每帧步长上限（像素）；距离更近时按距离收比例。 */
 export const MAX_FOLLOW_STEP = 24
-
-export const safeRaf = (cb: FrameRequestCallback): number => {
-  if (typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function') {
-    return window.requestAnimationFrame(cb)
-  }
-  return setTimeout(cb, 16) as unknown as number
-}
-
-export const safeCancelRaf = (id: number | null) => {
-  if (id === null) return
-  if (typeof window !== 'undefined' && typeof window.cancelAnimationFrame === 'function') {
-    window.cancelAnimationFrame(id)
-  } else {
-    clearTimeout(id)
-  }
-}
 
 export interface LogBufferState {
   entries: LogEntry[]
@@ -66,6 +53,27 @@ export function followStep(remaining: number, maxStep = MAX_FOLLOW_STEP) {
   return Math.sign(remaining) * Math.min(maxStep, Math.max(1, Math.abs(remaining) * .35))
 }
 
+/** 逐行高度表：已实测的行用实测值，其余用实测均高占位（无实测时用估值），并给出每行的偏移与总高。 */
+export function buildLineLayout(entries: LogEntry[], measured: Map<number, number>, fallback: number) {
+  let sum = 0
+  let count = 0
+  for (const height of measured.values()) {
+    sum += height
+    count += 1
+  }
+  const estimate = count ? sum / count : fallback
+  const heights = new Array<number>(entries.length)
+  const offsets = new Array<number>(entries.length)
+  let total = 0
+  for (let index = 0; index < entries.length; index++) {
+    const height = measured.get(entries[index].id) ?? estimate
+    heights[index] = height
+    offsets[index] = total
+    total += height
+  }
+  return {heights, offsets, total}
+}
+
 /**
  * 所有日志入口先在纯数据层截断，避免异常历史 payload 进入 React state 后创建数万 DOM。
  * 正常后端只保留约 400 条；这里的 1000 条是客户端独立的防御上限。
@@ -78,79 +86,6 @@ export function mergeLogEntries(previous: LogEntry[], incoming: LogEntry[], rese
   return [...entries.values()].sort((a, b) => a.id - b.id).slice(-LOG_ENTRY_LIMIT)
 }
 
-function highlightText(text: string, search: string): ReactNode {
-  if (!text) return null
-  const searchLower = search.trim().toLowerCase()
-
-  // 词法正则：匹配高亮目标
-  const tokenRegex = /(\b(?:True|False|None)\b)|(<<<[\s\S]*?>>>)|(\[[a-zA-Z0-9_.\u4e00-\u9fff-]+\])|([\{\}\[\]\(\)])|((?:[a-zA-Z]:[/\\]|(?:\.{1,2}[/\\]|[/\\]))[\w.\-/\\]+)|(\b\d{2}:\d{2}:\d{2}(?:\.\d+)?\b)/g
-
-  const nodes: ReactNode[] = []
-  let lastIndex = 0
-  let match: RegExpExecArray | null
-
-  while ((match = tokenRegex.exec(text)) !== null) {
-    if (match.index > lastIndex) {
-      nodes.push(renderSearchHighlights(text.slice(lastIndex, match.index), searchLower, `seg-${lastIndex}`))
-    }
-    const [full, boolVal, title, attrTag, brace, pathVal, timeVal] = match
-    const key = `hl-${match.index}`
-
-    if (boolVal) {
-      const cls = boolVal === 'True' ? 'hl-bool-true' : boolVal === 'False' ? 'hl-bool-false' : 'hl-none'
-      nodes.push(<span key={key} className={cls}>{renderSearchHighlights(full, searchLower, `${key}-s`)}</span>)
-    } else if (title) {
-      nodes.push(<span key={key} className="hl-title">{renderSearchHighlights(full, searchLower, `${key}-s`)}</span>)
-    } else if (attrTag) {
-      nodes.push(<span key={key} className="hl-attr">{renderSearchHighlights(full, searchLower, `${key}-s`)}</span>)
-    } else if (brace) {
-      nodes.push(<span key={key} className="hl-brace">{full}</span>)
-    } else if (pathVal) {
-      nodes.push(<span key={key} className="hl-path">{renderSearchHighlights(full, searchLower, `${key}-s`)}</span>)
-    } else if (timeVal) {
-      nodes.push(<span key={key} className="hl-time">{full}</span>)
-    } else {
-      nodes.push(renderSearchHighlights(full, searchLower, `${key}-s`))
-    }
-    lastIndex = match.index + full.length
-  }
-
-  if (lastIndex < text.length) {
-    nodes.push(renderSearchHighlights(text.slice(lastIndex), searchLower, `seg-${lastIndex}`))
-  }
-
-  return <>{nodes}</>
-}
-
-function renderSearchHighlights(text: string, searchLower: string, keyPrefix: string): ReactNode {
-  if (!text) return null
-  if (!searchLower) return <span key={keyPrefix}>{text}</span>
-  const lower = text.toLowerCase()
-  const idx = lower.indexOf(searchLower)
-  if (idx === -1) return <span key={keyPrefix}>{text}</span>
-
-  const nodes: ReactNode[] = []
-  let current = text
-  let curLower = lower
-  let k = 0
-
-  while (true) {
-    const matchIdx = curLower.indexOf(searchLower)
-    if (matchIdx === -1) {
-      if (current) nodes.push(<span key={`${keyPrefix}-t-${k}`}>{current}</span>)
-      break
-    }
-    if (matchIdx > 0) {
-      nodes.push(<span key={`${keyPrefix}-t-${k++}`}>{current.slice(0, matchIdx)}</span>)
-    }
-    nodes.push(<mark key={`${keyPrefix}-m-${k++}`} className="log-search-match">{current.slice(matchIdx, matchIdx + searchLower.length)}</mark>)
-    current = current.slice(matchIdx + searchLower.length)
-    curLower = curLower.slice(matchIdx + searchLower.length)
-  }
-
-  return <span key={keyPrefix}>{nodes}</span>
-}
-
 export const LogLine = memo(function LogLine({entry, search, isCenter, fresh}: {entry: LogEntry; search: string; isCenter?: boolean; fresh?: boolean}) {
   const rawText = entry.text.replace(/[\r\n]+$/, '')
   const trimmed = rawText.trim()
@@ -161,7 +96,7 @@ export const LogLine = memo(function LogLine({entry, search, isCenter, fresh}: {
   if (isPureRule) {
     const char = trimmed.includes('═') ? '═' : '─'
     return (
-      <div className={`log-rule ${char === '═' ? 'rule-double' : 'rule-single'}${freshClass}`}>
+      <div className={`log-rule ${char === '═' ? 'rule-double' : 'rule-single'}${freshClass}`} data-line-id={entry.id}>
         <span className="rule-bar" />
         <span className="rule-bar" />
       </div>
@@ -174,9 +109,9 @@ export const LogLine = memo(function LogLine({entry, search, isCenter, fresh}: {
     const title = ruleMatch[1].trim()
     const char = trimmed.includes('═') ? '═' : '─'
     return (
-      <div className={`log-rule ${char === '═' ? 'rule-double' : 'rule-single'}${freshClass}`}>
+      <div className={`log-rule ${char === '═' ? 'rule-double' : 'rule-single'}${freshClass}`} data-line-id={entry.id}>
         <span className="rule-bar" />
-        <span className="rule-title">{highlightText(title, search)}</span>
+        <span className="rule-title">{renderTokens(title, search)}</span>
         <span className="rule-bar" />
       </div>
     )
@@ -188,11 +123,11 @@ export const LogLine = memo(function LogLine({entry, search, isCenter, fresh}: {
     const [, levelStr, dateStr, timeStr, messageStr] = logMatch
     const levelKey = levelStr.toLowerCase()
     return (
-      <div className={`log-line log-entry-line level-${levelKey}${freshClass}`}>
+      <div className={`log-line log-entry-line level-${levelKey}${freshClass}`} data-line-id={entry.id}>
         <span className={`log-lvl lvl-${levelKey}`}>{levelStr}</span>
         <span className="log-ts">{dateStr ? `${dateStr} ` : ''}{timeStr}</span>
         <span className="log-divider">│</span>
-        <span className="log-msg">{highlightText(messageStr, search)}</span>
+        <span className="log-msg">{renderTokens(messageStr, search)}</span>
       </div>
     )
   }
@@ -209,16 +144,16 @@ export const LogLine = memo(function LogLine({entry, search, isCenter, fresh}: {
   if (shouldCenter) {
     const title = trimmed
     return (
-      <div className={`log-line log-entry-line log-center-title${freshClass}`}>
-        <span className="center-title-text">{highlightText(title, search)}</span>
+      <div className={`log-line log-entry-line log-center-title${freshClass}`} data-line-id={entry.id}>
+        <span className="center-title-text">{renderTokens(title, search)}</span>
       </div>
     )
   }
 
   // 5. 其他非标准行或多行 Traceback
   return (
-    <div className={`log-line log-entry-line log-raw level-${entry.level.toLowerCase()}${freshClass}`}>
-      <span className="log-msg">{highlightText(rawText, search)}</span>
+    <div className={`log-line log-entry-line log-raw level-${entry.level.toLowerCase()}${freshClass}`} data-line-id={entry.id}>
+      <span className="log-msg">{renderTokens(rawText, search)}</span>
     </div>
   )
 })
@@ -246,7 +181,7 @@ function loadLogViewMode(): 'cards' | 'classic' {
   return 'cards'
 }
 
-export function LogPanel({active = true, toolbarSlot}: {active?: boolean; toolbarSlot?: HTMLElement | null}) {
+export function LogPanel({active = true, toolbarSlot, logs}: {active?: boolean; toolbarSlot?: HTMLElement | null; logs?: LogsData | null}) {
   const {instance = ''} = useParams()
   const [entries, setEntries] = useState<LogEntry[]>([])
   const [search, setSearch] = useState('')
@@ -257,6 +192,7 @@ export function LogPanel({active = true, toolbarSlot}: {active?: boolean; toolba
   const [viewMode, setViewMode] = useState<'cards' | 'classic'>(() => loadLogViewMode())
   const [floor, setFloor] = useState(0)
   const connection = useConnection()
+  const external = logs !== undefined
   const {notify, ui} = useApp()
   const scroll = useRef<HTMLDivElement>(null)
   /* 已渲染到的最大日志 id：大于它的增量行做入场动画（初始加载不播）。 */
@@ -319,7 +255,7 @@ export function LogPanel({active = true, toolbarSlot}: {active?: boolean; toolba
   }
 
   useEffect(() => {
-    if (connection !== 'ready') return
+    if (connection !== 'ready' || external) return
     let active = true
     const buf = logBuffer.current
     if (buf.rafId !== null) {
@@ -345,9 +281,16 @@ export function LogPanel({active = true, toolbarSlot}: {active?: boolean; toolba
       buf.reset = false
       buf.cursor = null
     }
-  }, [connection, instance, notify])
+  }, [connection, instance, notify, external])
 
   useEffect(() => {
+    if (!logs || logs.instance !== instance) return
+    queueLogEvent(logBuffer.current, logs)
+    flushBuffer.current()
+  }, [logs, instance])
+
+  useEffect(() => {
+    if (external) return
     const unsubscribe = api.onEvent(event => {
       if (event.topic !== 'logs') return
       const data = event.data as LogsData
@@ -375,7 +318,7 @@ export function LogPanel({active = true, toolbarSlot}: {active?: boolean; toolba
       buf.reset = false
       buf.cursor = null
     }
-  }, [instance])
+  }, [instance, external])
 
   useLayoutEffect(() => {
     freshFrom.current = entries.at(-1)?.id ?? null
@@ -408,6 +351,87 @@ export function LogPanel({active = true, toolbarSlot}: {active?: boolean; toolba
   )
   // 倒序只反转渲染顺序；相邻行的居中标题判断是对称的（前后都要求是分割线），不受影响。
   const ordered = descending ? [...visible].reverse().slice(0, LOG_ENTRY_LIMIT) : visible.slice(-LOG_ENTRY_LIMIT)
+
+  /* 经典视图行数超过阈值时只渲染视口附近的行，其余用占位高度撑住滚动条。 */
+  const virtualLines = viewMode === 'classic' && ordered.length >= VIRTUAL_LINE_THRESHOLD
+  const lineHeights = useRef(new Map<number, number>())
+  const lineNodes = useRef(new Map<Element, number>())
+  const lineObserver = useRef<ResizeObserver | null>(null)
+  const [lineVersion, setLineVersion] = useState(0)
+  const [lineScroll, setLineScroll] = useState({top: 0, client: 0})
+
+  useEffect(() => {
+    if (!virtualLines) return
+    const container = scroll.current
+    if (!container) return
+    const sync = () => setLineScroll({top: container.scrollTop, client: container.clientHeight})
+    sync()
+    let rafId: number | null = null
+    const onScroll = () => {
+      if (rafId !== null) return
+      rafId = safeRaf(() => {
+        rafId = null
+        sync()
+      })
+    }
+    container.addEventListener('scroll', onScroll, {passive: true})
+    let observer: ResizeObserver | null = null
+    if (typeof ResizeObserver !== 'undefined') {
+      observer = new ResizeObserver(sync)
+      observer.observe(container)
+    }
+    return () => {
+      container.removeEventListener('scroll', onScroll)
+      if (rafId !== null) safeCancelRaf(rafId)
+      observer?.disconnect()
+    }
+  }, [virtualLines])
+
+  /* 只观察窗口内已渲染的行：高度实测后替换占位值，未渲染的行继续用估算高度。 */
+  useLayoutEffect(() => {
+    if (!virtualLines || typeof ResizeObserver === 'undefined') return
+    const container = scroll.current
+    if (!container) return
+    if (!lineObserver.current) {
+      lineObserver.current = new ResizeObserver(entries => {
+        let changed = false
+        for (const entry of entries) {
+          const id = lineNodes.current.get(entry.target)
+          /* contentRect 不含 padding，行高要按 border box 取。 */
+          const height = entry.borderBoxSize?.[0]?.blockSize ?? entry.contentRect.height
+          if (id === undefined || height <= 0 || lineHeights.current.get(id) === height) continue
+          lineHeights.current.set(id, height)
+          changed = true
+        }
+        if (changed) setLineVersion(version => version + 1)
+      })
+    }
+    const live = new Set<Element>()
+    for (const node of container.querySelectorAll('[data-line-id]')) {
+      live.add(node)
+      lineNodes.current.set(node, Number((node as HTMLElement).dataset.lineId))
+      lineObserver.current.observe(node)
+    }
+    for (const node of [...lineNodes.current.keys()]) {
+      if (live.has(node)) continue
+      lineObserver.current.unobserve(node)
+      lineNodes.current.delete(node)
+    }
+  })
+
+  useEffect(() => () => {
+    lineObserver.current?.disconnect()
+    lineObserver.current = null
+  }, [])
+
+  const lineLayout = useMemo(
+    () => buildLineLayout(ordered, lineHeights.current, LINE_HEIGHT_ESTIMATE),
+    [ordered, lineVersion]
+  )
+
+  const [lineStart, lineEnd] = virtualLines
+    ? findVisibleRange(lineLayout.offsets, lineLayout.heights, lineScroll.top - OVERSCAN_BUFFER_PX, lineScroll.top + (lineScroll.client || 800) + OVERSCAN_BUFFER_PX, ordered.length)
+    : [0, Math.max(0, ordered.length - 1)]
 
   function download() {
     flushBuffer.current()
@@ -478,26 +502,33 @@ export function LogPanel({active = true, toolbarSlot}: {active?: boolean; toolba
           viewMode === 'cards' ? (
             <LogCardView entries={ordered} search={search} scrollRef={scroll} />
           ) : (
-            ordered.map((entry, index) => {
-              const prev = ordered[index - 1]
-              const next = ordered[index + 1]
-              const isCenterByContext = Boolean(
-                prev && next &&
-                PURE_RULE_RE.test(prev.text.trim()) && prev.text.includes('═') &&
-                PURE_RULE_RE.test(next.text.trim()) && next.text.includes('═') &&
-                !PURE_RULE_RE.test(entry.text.trim()) &&
-                !LOG_LINE_RE.test(entry.text.trim())
-              )
-              return (
-                <LogLine
-                  key={entry.id}
-                  entry={entry}
-                  search={search}
-                  isCenter={isCenterByContext}
-                  fresh={freshFrom.current !== null && entry.id > freshFrom.current}
-                />
-              )
-            })
+            <>
+              {virtualLines && lineStart > 0 && <div style={{height: lineLayout.offsets[lineStart]}} aria-hidden="true" />}
+              {ordered.slice(lineStart, lineEnd + 1).map((entry, offset) => {
+                const index = lineStart + offset
+                const prev = ordered[index - 1]
+                const next = ordered[index + 1]
+                const isCenterByContext = Boolean(
+                  prev && next &&
+                  PURE_RULE_RE.test(prev.text.trim()) && prev.text.includes('═') &&
+                  PURE_RULE_RE.test(next.text.trim()) && next.text.includes('═') &&
+                  !PURE_RULE_RE.test(entry.text.trim()) &&
+                  !LOG_LINE_RE.test(entry.text.trim())
+                )
+                return (
+                  <LogLine
+                    key={entry.id}
+                    entry={entry}
+                    search={search}
+                    isCenter={isCenterByContext}
+                    fresh={freshFrom.current !== null && entry.id > freshFrom.current}
+                  />
+                )
+              })}
+              {virtualLines && lineEnd < ordered.length - 1 && (
+                <div style={{height: lineLayout.total - lineLayout.offsets[lineEnd] - lineLayout.heights[lineEnd]}} aria-hidden="true" />
+              )}
+            </>
           )
         ) : (
           <Empty icon={<Terminal size={26} />} title={entries.length ? ui('log.noMatch') : ui('log.ready')}>

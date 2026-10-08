@@ -71,7 +71,7 @@ class OpsiCrossMonth(MeowfficerTargetZoneMixin, OSMap):
         self.is_in_opsi_explore = false_func
         self.config.override(_disable_task_switch=True)
 
-        logger.hr('跨月每日清理大世界每日+', level=1)
+        logger.hr('跨月每日清理大世界每日', level=1)
         self.config.override(
             OpsiGeneral_DoRandomMapEvent=True,
             OpsiFleet_Fleet=self.config.cross_get('OpsiDaily.OpsiFleet.Fleet'),
@@ -89,11 +89,11 @@ class OpsiCrossMonth(MeowfficerTargetZoneMixin, OSMap):
             # MISSION_ENTER 从右侧出现，需确认动画结束，否则会点击到 MAP_GOTO_GLOBE
             self.zone_init()
             if empty_trial >= 5:
-                logger.warning('5 分钟内没有找到大世界每日+，停止等待')
+                logger.warning('5 分钟内没有找到大世界每日，停止等待')
                 break
             count += self.os_finish_daily_mission()
             if not count:
-                logger.warning('未接取到大世界每日+，可能游戏每日尚未刷新，等待 1 分钟')
+                logger.warning('未接取到大世界每日，可能游戏每日尚未刷新，等待 1 分钟')
                 empty_trial += 1
                 self.device.sleep(60)
                 continue
@@ -134,8 +134,7 @@ class OpsiCrossMonth(MeowfficerTargetZoneMixin, OSMap):
                 self.os_order_execute(
                     recon_scan=True,
                     submarine_call=False)
-                self.run_auto_search(rescan='current')
-                self.map_exit()
+                self.run_auto_search(rescan='current', exit_map=True)
                 self.handle_after_auto_search()
             else:
                 break

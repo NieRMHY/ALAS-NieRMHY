@@ -8,22 +8,22 @@ import { DEFAULT_BACKGROUND_URLS, applyGalleryEntry, disableBackground, galleryU
 import { useApp } from '../app/context'
 import { Select } from './FormControls'
 
-/** 图片与视频背景属于当前浏览器偏好；上传文件保存在 IndexedDB，避免进入部署配置。
-    背景记录按材质各存一档，所以切换材质后表单要跟着换成那一档的值。 */
 /** 地址行的稳定 id：用数组下标当 key，删一行后 React 会复用错误的输入节点。 */
 type Row = {id: string, value: string}
 let rowSeed = 0
 const newRow = (value = ''): Row => ({id: `row-${++rowSeed}`, value})
 const toRows = (urls: string[]): Row[] => [...urls.map(url => newRow(url)), newRow()]
 
+/** 图片与视频背景属于当前浏览器偏好；上传文件保存在 IndexedDB，避免进入部署配置。
+    背景记录按材质各存一档，所以切换材质后表单要跟着换成那一档的值。 */
 export function BackgroundPreferences() {
   const {ui, notify, material} = useApp()
-  const background = useSyncExternalStore(subscribeBackground, getBackground)
+  const background = useSyncExternalStore(subscribeBackground, getBackground, getBackground)
   const [source, setSource] = useState<BackgroundSource>(background.source)
   const [kind, setKind] = useState<BackgroundKind>(background.kind)
   const [rows, setRows] = useState<Row[]>(() => toRows(background.urls))
   const [busy, setBusy] = useState(false)
-  const gallery = useSyncExternalStore(subscribeBackground, getGallery)
+  const gallery = useSyncExternalStore(subscribeBackground, getGallery, getGallery)
   const [error, setError] = useState('')
 
   useEffect(() => { void initBackgroundGallery() }, [])
@@ -52,7 +52,6 @@ export function BackgroundPreferences() {
   function removeRow(index: number) {
     setRows(current => {
       const next = current.filter((_, position) => position !== index)
-      /* 删光了留一个空行；留下的那一行是空的就没必要再多删一次。 */
       return next.length ? next : [newRow()]
     })
   }
@@ -109,7 +108,6 @@ export function BackgroundPreferences() {
         <option value="upload">{ui('settings.backgroundUpload')}</option>
       </Select>
       {source === 'url' && <form className="background-url-form" onSubmit={applyUrls}>
-        {/* 一行一个随机图 API：填满一行自动长出下一行；全清空会自动回填内置 API。 */}
         <div className="background-url-rows">
           {rows.map((row, index) => <div className="background-url-row" key={row.id}>
             <input

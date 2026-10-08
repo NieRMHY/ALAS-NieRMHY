@@ -6,23 +6,13 @@ import type { Parameters } from './generated'
 import type { ApiEvent, ApiResponse, Results } from './types'
 import { translateCurrentUi } from '../i18n'
 
-/** API 业务错误封装类。 */
+/** API 业务错误。 */
 export class ApiError extends Error {
-  /**
-   * 构造 API 错误实例。
-   *
-   * @param code 错误代码。
-   * @param message 错误描述信息。
-   * @param details 可选的附加错误详情。
-   */
   constructor(public code: string, message: string, public details?: unknown) { super(message) }
 }
-export type Connection = 'connecting' | 'ready' | 'auth' | 'offline'
+type Connection = 'connecting' | 'ready' | 'auth' | 'offline'
 type Pending = { resolve: (value: unknown) => void; reject: (error: Error) => void; timer: ReturnType<typeof setTimeout> }
 
-/**
- * WebSocket API 客户端核心类。
- */
 export class ApiClient {
   private socket?: WebSocket
   private pending = new Map<string, Pending>()
@@ -45,9 +35,6 @@ export class ApiClient {
   onEvent = (listener: (event: ApiEvent) => void) => { this.events.add(listener); return () => { this.events.delete(listener) } }
   private setState(state: Connection) { this.state = state; this.listeners.forEach(listener => listener()) }
 
-  /**
-   * 建立 WebSocket 连接。
-   */
   connect = () => {
     if (this.socket && this.socket.readyState < 2) return
     if (!this.password) { try { this.password = window.localStorage.getItem('azurpilot.access-password') ?? '' } catch { /* 浏览器禁用存储时保留会话登录。 */ } }
@@ -108,8 +95,6 @@ export class ApiClient {
 
   /**
    * 使用访问密码执行鉴权登录。
-   *
-   * @param password 访问密码。
    */
   async login(password: string) {
     try { await this.request('auth.login', {password}) } catch (error) {
@@ -126,10 +111,6 @@ export class ApiClient {
 
   /**
    * 发送 RPC 请求并等待返回结果。
-   *
-   * @param method 调用的方法名。
-   * @param params 请求参数对象。
-   * @returns 响应结果 Promise。
    */
   request<M extends keyof Results & keyof Parameters>(method: M, params: Parameters[M]): Promise<Results[M]> {
     if (!this.socket || this.socket.readyState !== WebSocket.OPEN || (this.state !== 'ready' && method !== 'auth.login')) {

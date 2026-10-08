@@ -96,6 +96,10 @@ class CampaignNameError(Exception):
     pass
 
 
+class StorageStatisticsError(Exception):
+    """仓库识别或提交失败；保留旧数据，不重启模拟器掩盖识别问题。"""
+
+
 class ScriptError(Exception):
     """脚本逻辑错误。
 

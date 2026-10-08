@@ -13,5 +13,5 @@
   font-display: swap;
 }
 
-/* 日志区域统一继承等宽字体变量。 */
+/* 日志区用等宽字体变量，与共享层的取值同源。 */
 .log-content {font-family: var(--theme-font-mono)}

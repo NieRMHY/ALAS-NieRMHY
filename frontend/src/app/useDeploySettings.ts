@@ -19,7 +19,7 @@ export function useDeploySettings() {
   const [error, setError] = useState('')
   const connection = useConnection()
   const queue = editor('deploy')
-  const edits = useSyncExternalStore(queue.subscribe, queue.getSnapshot)
+  const edits = useSyncExternalStore(queue.subscribe, queue.getSnapshot, queue.getSnapshot)
 
   useEffect(() => {
     if (connection !== 'ready') return

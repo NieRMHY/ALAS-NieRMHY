@@ -15,44 +15,21 @@
   --dur-3: calc(200ms * var(--motion-speed, 2));   /* 标准 UI 变化：菜单、分段滑块、弹窗 */
   --dur-4: calc(260ms * var(--motion-speed, 2));   /* 结构性变化：抽屉、右栏、折叠展开、列表入场 */
   --dur-5: calc(320ms * var(--motion-speed, 2));   /* 页面级转场：路由切换、大面板 */
-  --dur-pulse: 1800ms;
-  --dur-spin: 1200ms;
 
   /* 缓动 */
-  --ease-standard: cubic-bezier(.2, 0, 0, 1);        /* 维护者主缓动（现状 13 处） */
-  --ease-decelerate: cubic-bezier(.22, .61, .36, 1); /* 入场（现状 5 处，含 legacy-page-in） */
+  --ease-standard: cubic-bezier(.2, 0, 0, 1);        /* 维护者主缓动 */
+  --ease-decelerate: cubic-bezier(.22, .61, .36, 1); /* 入场 */
   --ease-emphasized: cubic-bezier(.16, 1, .3, 1);    /* 页面级转场（近似 easeOutExpo） */
-  --ease-accelerate: cubic-bezier(.4, 0, 1, 1);      /* 出场 */
-  --ease-spring: var(--ease-decelerate);             /* 兜底；下面的 linear() 为真弹簧 */
 
   /* 位移与缩放 */
-  --shift-page: 8px;      /* 页面级横向位移 */
-  --shift-page-y: 0px;    /* 页面级纵向位移（已移除整页上浮，保持底板稳定） */
   --shift-entry: 8px;     /* 列表/卡片入场位移 */
   --press-scale: .97;
   --scale-modal: .97;
 }
 
-/* 真·弹簧：stiffness 360 / damping 28 / mass 1 → 过冲约 1.5%，沉降 320ms。
-   仅用于单元素（toast/按压回弹），不进列表。 */
-@supports (transition-timing-function: linear(0, 1)) {
-  :root {
-    --ease-spring: linear(
-      0.0278 4.17%, 0.0976 8.33%, 0.1928 12.5%, 0.3004 16.67%, 0.4107 20.83%,
-      0.5171 25%, 0.6151 29.17%, 0.7022 33.33%, 0.7771 37.5%, 0.8396 41.67%,
-      0.8903 45.83%, 0.9302 50%, 0.9604 54.17%, 0.9825 58.33%, 0.9978 62.5%,
-      1.0075 66.67%, 1.013 70.83%, 1.0152 75%, 1.015 79.17%, 1.0132 83.33%,
-      1.0104 87.5%, 1.0071 91.67%, 1.0035 95.83%, 1 100%
-    );
-  }
-}
-
 /* 力度档位（开发者工具「动效控制台」可切换；默认标准＝PR 取值） */
 :root[data-motion-strength='strong'] {
-  --shift-page: 12px;
-  --shift-page-y: 0px;
   --shift-entry: 12px;
-  --card-stagger-shift: 24px;
   --dur-4: calc(300ms * var(--motion-speed, 2));
   --dur-5: calc(380ms * var(--motion-speed, 2));
   --scale-modal: .95;
@@ -64,25 +41,6 @@
 :root[data-motion-reduced] *::after {
   animation: none !important;
   transition: none !important;
-}
-
-/* 旧版主题保持接近现状；minimal / extreme 由主题自身明确禁用全部动效。 */
-:root[data-theme='legacy-light'], :root[data-theme='legacy-dark'] { --shift-page: 7px; --shift-page-y: 0px; --motion-page-dur: var(--dur-3) }
-:root { --motion-page-dur: var(--dur-3) }
-
-/* ============================================================================
-   1 · 页面转场（由 usePageMotion 给 #main-content 挂类触发；首屏与同路径不播）
-   ============================================================================ */
-@keyframes motion-page-forward { from { opacity: 0; transform: translateX(var(--shift-page)) } to { opacity: 1; transform: none } }
-@keyframes motion-page-back { from { opacity: 0; transform: translateX(calc(-1 * var(--shift-page))) } to { opacity: 1; transform: none } }
-@keyframes motion-page-fade { from { opacity: 0 } to { opacity: 1 } }
-
-/* 页面转场已完全交由内部卡片从左上角逐个错峰上浮接管；
-   main#main-content 底板保持无图层隔离状态，避免破坏子元素 backdrop-filter 对背景壁纸的实时采样模糊。 */
-main#main-content.motion-nav-forward,
-main#main-content.motion-nav-back,
-main#main-content.motion-nav-fade {
-  animation: none !important;
 }
 
 /* 桌面端侧边栏招牌首次入场：与 SidebarTransition 从左至右保持视觉统一 */
@@ -138,7 +96,7 @@ dialog.modal[open]::backdrop { animation: motion-backdrop-in var(--dur-3) var(--
 .text-button:active { transform: scale(var(--press-scale)) }
 
 /* ============================================================================
-   5 · 卡片从左上角逐个上浮出现（柔和弹簧阻尼与景深微缩放，彻底消除傻快与线性感）
+   5 · 卡片从左上角逐个上浮出现（柔和弹簧阻尼与景深微缩放）
    ============================================================================ */
 :root {
   --card-stagger-shift: 12px;

@@ -39,15 +39,17 @@ class AutoSearchAmount(AmountOcr):
             （如 2 被读成 12）。
     """
 
-    # 数量区域先放大 2.67 倍再提取文字：数字组件高度 24~27px，图标边缘碎片 ≤8px。
+    # 字形匹配不缩放；OCR 兜底统一高度后过滤图标边缘碎片。
     remove_fragments = True
+    use_digit_templates = True
+    strict_amount_max = True
     fragment_min_height = 15
     fragment_min_area = 30
     fragment_max_digit_gap = 10
 
     def pre_process(self, image):
-        # 自律寻敌页 group.amount_area = (35, 51, 63, 63)，目标高度 32
-        scale = 32 / 12
+        # 两类奖励页的数量框高度不同，统一放大到 32px 再做 OCR 兜底。
+        scale = 32 / image.shape[0]
         #     CV_INTER_NN       =0,
         #     CV_INTER_LINEAR   =1,
         #     CV_INTER_CUBIC    =2,
@@ -115,6 +117,7 @@ class GetItems(ImageBase):
     """
 
     ITEM_TEMPLATE_FOLDER = f'./assets/stats_basic'
+    ITEM_GRID_CLASS = ItemGrid
     # 提取新场景模板时为 True，常规运行时为 False
     ALLOW_TOO_MANY_NEW_TEMPLATE = False
 
@@ -122,13 +125,13 @@ class GetItems(ImageBase):
     # 于是四位数被切掉首位（作战补给凭证 1638 读成 638，实测 6/9 张吃亏）；
     # 而白纸类（图纸/实验计划）的数字压在右下角的灰色齿轮上，齿轮的齿在默认区里
     # 会被读成「7」（1 读成 71）。两者都不能靠调一个通用区解决，只能按物品换区。
-    ITEM_AMOUNT_AREA = (60, 71, 91, 92)
+    ITEM_AMOUNT_AREA = (50, 72, 94, 94)
     ITEM_AMOUNT_AREA_RULES = (
         # 数字在齿轮下方，下移一档避开齿轮的齿
-        ('GearDesignPlan', (60, 76, 90, 94)),
-        ('OrdnanceTestingReport', (60, 76, 90, 94)),
+        ('GearDesignPlan', (50, 76, 94, 94)),
+        ('OrdnanceTestingReport', (50, 76, 94, 94)),
         # 只有这一格会到四位数，且右下角没有压住数字的装饰，可以整体左扩
-        ('OperationCoin', (50, 71, 92, 92)),
+        ('OperationCoin', (28, 72, 94, 94)),
     )
 
     @cached_property
@@ -138,7 +141,7 @@ class GetItems(ImageBase):
         Returns:
             ItemGrid: 初始化的物品网格对象。
         """
-        grid = ItemGrid(None, {}, template_area=(40, 21, 89, 70), amount_area=self.ITEM_AMOUNT_AREA)
+        grid = self.ITEM_GRID_CLASS(None, {}, template_area=(40, 21, 89, 70), amount_area=self.ITEM_AMOUNT_AREA)
         grid.item_class = Item
         grid.similarity = 0.92
         grid.amount_area = self.ITEM_AMOUNT_AREA
@@ -156,7 +159,7 @@ class GetItems(ImageBase):
         Returns:
             bool: 是否为获得物品弹窗。
         """
-        return bool(self.classify_server(GET_ITEMS_1, image)) or bool(self.classify_server(GET_ITEMS_2, image))
+        return any(self.classify_server(button, image) for button in (GET_ITEMS_1, GET_ITEMS_2, GET_ITEMS_3))
 
     def parse_get_items(self, image, name=True, amount=True, tag=True) -> t.Iterator[Item]:
         """解析单张获得物品截图中的所有掉落道具。
@@ -170,8 +173,7 @@ class GetItems(ImageBase):
         Yields:
             Item: 解析出的物品对象。
 
-        Raises:
-            ZeroAmountError: 物品数量识别为 0 时抛出。
+        数量无法确认的单格保留日志并跳过，其他已确认物品照常返回。
         """
         self._get_items_load(image)
 
@@ -186,8 +188,9 @@ class GetItems(ImageBase):
                 after = str(item)
                 if before != after:
                     logger.info(f'[统计-物品] 物品 {before} 修正为 {after}')
-                if item.amount == 0:
-                    raise ZeroAmountError(f'Invalid item amount: {item}')
+                if item.amount <= 0:
+                    logger.warning(f'[统计-物品] {item.name} 数量无法确认，跳过本格并保留其他物品')
+                    continue
                 yield item
 
     def extract_item_template(self, image, folder=None):

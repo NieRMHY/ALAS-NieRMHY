@@ -16,6 +16,8 @@ from module.config.utils import (
 )
 from module.device.device import Device
 from module.os.operation_siren import OperationSiren
+from module.os.tasks.hazard_leveling import OpsiHazard1Leveling
+from module.os.tasks.meowfficer_farming import OpsiMeowfficerFarming
 from module.os.tasks.prevent_action_point_overflow import OpsiPreventActionPointOverflow
 from module.os.tasks.scheduling import OpsiScheduling
 from module.os.tasks.stronghold import OpsiStronghold
@@ -180,9 +182,11 @@ class SchedulingMeowHarness:
         self.config = MeowPreserveConfig()
         self.executed_task_name = None
         self.received_ap_checked = None
+        self.received_fresh_ap = None
 
-    def run_meowfficer_farming_once(self, ap_preserve=None, ap_checked=False, prepared=False):
+    def run_meowfficer_farming_once(self, ap_preserve=None, ap_checked=False, prepared=False, fresh_ap=None):
         self.received_ap_checked = ap_checked
+        self.received_fresh_ap = fresh_ap
         self.config.OS_ACTION_POINT_PRESERVE = ap_preserve
         raise ActionPointLimit(total=5985, preserve=ap_preserve)
 
@@ -190,13 +194,14 @@ class SchedulingMeowHarness:
         self.executed_task_name = task_name
         return func(**kwargs)
 
-    def run_scheduled_meowfficer_farming(self, ap_preserve):
-        return OpsiScheduling._run_scheduled_meowfficer_farming(self, ap_preserve)
+    def run_scheduled_meowfficer_farming(self, ap_preserve, fresh_ap=None):
+        return OpsiScheduling._run_scheduled_meowfficer_farming(self, ap_preserve, fresh_ap=fresh_ap)
 
 
 class SchedulingMeowCostLimitHarness(SchedulingMeowHarness):
-    def run_meowfficer_farming_once(self, ap_preserve=None, ap_checked=False, prepared=False):
+    def run_meowfficer_farming_once(self, ap_preserve=None, ap_checked=False, prepared=False, fresh_ap=None):
         self.received_ap_checked = ap_checked
+        self.received_fresh_ap = fresh_ap
         self.config.OS_ACTION_POINT_PRESERVE = ap_preserve
         raise ActionPointLimit(current=15, total=15, cost=120)
 
@@ -214,6 +219,15 @@ class TestSmartSchedulingMeowPreserve(unittest.TestCase):
         self.assertEqual(scheduling.config.OS_ACTION_POINT_PRESERVE, 180)
         # 本轮的智能调度决策已经验证过行动力充足，代跑短猫时不该再开一次弹窗检查
         self.assertTrue(scheduling.received_ap_checked)
+        self.assertIsNone(scheduling.received_fresh_ap)
+
+    def test_forwards_decision_read_to_meow_round(self):
+        scheduling = SchedulingMeowHarness()
+
+        scheduling.run_scheduled_meowfficer_farming(ap_preserve=6000, fresh_ap=(3000, 200))
+
+        # 决策读数原样传给短猫，指定海域循环的开工检查复用它跳过弹窗
+        self.assertEqual(scheduling.received_fresh_ap, (3000, 200))
 
     def test_propagates_real_ap_shortage_and_still_restores_global_preserve(self):
         scheduling = SchedulingMeowCostLimitHarness()
@@ -393,7 +407,7 @@ class TestStrongholdCheckPostpone(unittest.TestCase):
         """派发一轮补黄币，返回真正被代理执行的任务名。"""
         executed = []
 
-        def run_once(task_name, ap_preserve):
+        def run_once(task_name, ap_preserve, fresh_ap=None):
             executed.append(task_name)
             return True
 
@@ -550,7 +564,7 @@ class TestObscureAbyssalCheckDelay(unittest.TestCase):
         """派发一轮补黄币，返回真正被代理执行的任务名。"""
         executed = []
 
-        def run_once(task_name, ap_preserve):
+        def run_once(task_name, ap_preserve, fresh_ap=None):
             executed.append(task_name)
             return True
 
@@ -881,7 +895,7 @@ class TestMonthEndCleanupGrace(unittest.TestCase):
             patch.object(
                 scheduling,
                 '_get_scheduling_action_point',
-                side_effect=[(5000, 1000), (400, 100), (400, 100)],
+                side_effect=[(5000, 1000), (4900, 1000), (4800, 1000), (400, 100), (400, 100)],
             ),
         ):
             # 记录仍在推迟期内（正常派发路径会跳过），但月末清理照样拉起隐秘/深渊
@@ -913,6 +927,7 @@ class ActionPointPopupStub:
     def __init__(self):
         self.device = _ClickRecordDevice()
         self.cancel_clicked = False
+        self.interval_clear = Mock()
 
     def open(self):
         """模拟点击 ACTION_POINT_REMAIN_OS 打开弹窗。"""
@@ -953,7 +968,7 @@ class TestActionPointPopupClickRecord(unittest.TestCase):
             stub.device.click_record_add(name)
             stub.device.click_record_check()
 
-        # 智能调度+ 代理一轮短猫会连续读 4 次行动力，清完图时几秒就是一轮
+        # 智能调度代理一轮短猫会连续读 4 次行动力，清完图时几秒就是一轮
         for _ in range(10):
             stub.open()
             ActionPointHandler.action_point_quit(stub)
@@ -961,3 +976,156 @@ class TestActionPointPopupClickRecord(unittest.TestCase):
 
         self.assertNotIn(str(ACTION_POINT_REMAIN_OS), list(stub.device.click_record))
         self.assertNotIn(str(ACTION_POINT_CANCEL), list(stub.device.click_record))
+        self.assertEqual(stub.interval_clear.call_args_list, [unittest.mock.call(OS_CHECK)] * 10)
+
+
+class TestActionPointReuse(unittest.TestCase):
+    """行动力读数复用：只有与开弹窗行为完全一致时才允许跳过弹窗。"""
+
+    @staticmethod
+    def make_handler(preserve=200):
+        handler = ActionPointHandler.__new__(ActionPointHandler)
+        handler.config = SimpleNamespace(OS_ACTION_POINT_PRESERVE=preserve)
+        return handler
+
+    def test_rule_matches_popup_behavior(self):
+        handler = self.make_handler(preserve=200)
+        cases = (
+            # (fresh_ap, cost, avoid_ap_overflow, 是否可跳过)
+            ((2381, 131), 120, False, True),   # 当前 >= cost，弹窗只会「行动点充足」
+            ((2381, 131), 120, True, True),
+            ((2381, 100), 120, True, True),    # 防溢出模式达到开工线 100 即直接开工
+            ((2381, 100), 120, False, False),  # 非防溢出下弹窗会开箱补到 cost
+            ((2381, 99), 120, True, False),    # 低于开工线，弹窗要开箱/购买
+            ((200, 131), 120, False, False),   # 总行动力等于保留值，弹窗会触发保留拦截
+            ((201, 131), 120, False, True),
+            ((5000, 0), 0, False, True),       # cost=0 的前置检查口径
+            (None, 120, False, False),         # 没有可复用的读数
+        )
+        for fresh_ap, cost, avoid, expected in cases:
+            with self.subTest(fresh_ap=fresh_ap, cost=cost, avoid_ap_overflow=avoid):
+                self.assertEqual(
+                    handler.action_point_reusable(
+                        fresh_ap, cost=cost, avoid_ap_overflow=avoid,
+                    ),
+                    expected,
+                )
+
+
+class TestHazard1FreshActionPoint(unittest.TestCase):
+    """智能调度代跑侵蚀 1 时复用决策读数，跳过重复的行动点弹窗。"""
+
+    @staticmethod
+    def make_runner(preserve=200):
+        runner = OpsiHazard1Leveling.__new__(OpsiHazard1Leveling)
+        runner.config = SimpleNamespace(
+            OS_ACTION_POINT_PRESERVE=preserve,
+            OpsiHazard1Leveling_TargetZone=0,
+            OpsiHazard1Leveling_RecordSeaMiles=False,
+            OpsiFleet_Fleet=1,
+            override=Mock(),
+            is_task_enabled=Mock(return_value=False),
+        )
+        runner.zone = SimpleNamespace(zone_id=1, hazard_level=2)
+        return runner
+
+    def run_once(self, runner, fresh_ap, smart_scheduling=True):
+        with (
+            patch.object(runner, 'get_current_zone'),
+            patch.object(runner, 'name_to_zone', return_value=Mock()),
+            patch.object(runner, 'globe_goto'),
+            patch.object(runner, 'fleet_set'),
+            patch.object(runner, 'get_yellow_coins', return_value=999) as get_yellow_coins,
+            patch.object(runner, 'is_running_smart_scheduling_task', return_value=smart_scheduling),
+            patch.object(runner, '_cl1_resource_check') as resource_check,
+            patch.object(runner, '_cl1_ap_check'),
+            patch.object(runner, 'check_and_notify_action_point_threshold'),
+            patch.object(runner, '_record_ap_and_coins'),
+            patch.object(runner, '_cl1_run_battle'),
+            patch.object(runner, 'action_point_set') as action_point_set,
+        ):
+            runner.run_hazard1_leveling_once(ap_preserve=200, fresh_ap=fresh_ap)
+            if smart_scheduling:
+                get_yellow_coins.assert_not_called()
+                resource_check.assert_not_called()
+            else:
+                get_yellow_coins.assert_called_once()
+                resource_check.assert_called_once_with(999)
+        return action_point_set
+
+    def test_skips_popup_when_fresh_read_is_sufficient(self):
+        runner = self.make_runner()
+        self.run_once(runner, fresh_ap=(2381, 131)).assert_not_called()
+
+    def test_independent_task_still_reads_coins_for_resource_protection(self):
+        runner = self.make_runner()
+        self.run_once(runner, fresh_ap=(2381, 131), smart_scheduling=False)
+
+    def test_keeps_popup_when_fresh_read_is_below_start_line(self):
+        runner = self.make_runner()
+        self.run_once(runner, fresh_ap=(2381, 99)).assert_called_once()
+
+    def test_keeps_popup_when_preserve_blocks_reuse(self):
+        runner = self.make_runner()
+        self.run_once(runner, fresh_ap=(200, 131)).assert_called_once()
+
+    def test_keeps_popup_without_fresh_read(self):
+        runner = self.make_runner()
+        self.run_once(runner, fresh_ap=None).assert_called_once()
+
+
+class TestMeowStayInZoneFreshActionPoint(unittest.TestCase):
+    """智能调度代跑短猫时复用决策读数，跳过指定海域循环的行动点弹窗。"""
+
+    @staticmethod
+    def make_runner(preserve=0):
+        runner = OpsiMeowfficerFarming.__new__(OpsiMeowfficerFarming)
+        runner.config = SimpleNamespace(
+            OS_ACTION_POINT_PRESERVE=preserve,
+            OpsiFleet_Fleet=1,
+            OpsiFleet_Submarine=False,
+            check_task_switch=Mock(),
+        )
+        runner.zone = SimpleNamespace(zone_id=1)
+        runner.is_zone_name_hidden = True
+        return runner
+
+    def run_zone(self, runner, fresh_ap):
+        zone = SimpleNamespace(zone_id=1)
+        with (
+            patch.object(runner, 'get_current_zone'),
+            patch.object(runner, 'globe_goto'),
+            patch.object(runner, 'fleet_set'),
+            patch.object(runner, 'os_order_execute'),
+            patch.object(runner, 'meow_search_metrics_start'),
+            patch.object(runner, 'meow_search_metrics_end'),
+            patch.object(runner, 'run_strategic_search', return_value=False),
+            patch.object(runner, '_meow_debug_clip', return_value=nullcontext()),
+            patch.object(runner, 'handle_after_auto_search'),
+            patch.object(runner, '_meow_record_akashi_if_solved'),
+            patch.object(runner, 'action_point_set') as action_point_set,
+        ):
+            runner._meow_handle_stay_in_zone(zone, fresh_ap=fresh_ap)
+        return action_point_set
+
+    def test_skips_popup_when_fresh_read_is_sufficient(self):
+        runner = self.make_runner()
+        self.run_zone(runner, fresh_ap=(2381, 131)).assert_not_called()
+
+    def test_keeps_popup_below_cost(self):
+        runner = self.make_runner()
+        # 非防溢出模式要 >= cost(120)，119 时弹窗会开箱补足
+        self.run_zone(runner, fresh_ap=(2381, 119)).assert_called_once()
+
+    def test_keeps_popup_when_preserve_blocks_reuse(self):
+        runner = self.make_runner(preserve=200)
+        self.run_zone(runner, fresh_ap=(200, 131)).assert_called_once()
+
+    def test_keeps_popup_without_fresh_read(self):
+        runner = self.make_runner()
+        self.run_zone(runner, fresh_ap=None).assert_called_once()
+
+    def test_zone_change_invalidates_fresh_action_point(self):
+        runner = self.make_runner()
+        runner.zone = SimpleNamespace(zone_id=999)
+        self.run_zone(runner, fresh_ap=(2381, 131)).assert_called_once()

@@ -41,7 +41,7 @@ class OSStatus(UI):
 
     @property
     def is_in_task_explore(self) -> bool:
-        return self.config.task.command == 'OpsiExplore'
+        return self.config.task.command in ('OpsiExplore', 'OpsiExploreCleanup')
 
     @property
     def is_in_task_cl1_leveling(self) -> bool:
@@ -66,7 +66,7 @@ class OSStatus(UI):
 
     @property
     def is_cl1_mode_enabled(self) -> bool:
-        """判断侵蚀1相关策略是否启用，包括智能调度+代理模式。"""
+        """判断侵蚀1相关策略是否启用，包括智能调度代理模式。"""
         is_smart_scheduling_enabled = getattr(self, 'is_smart_scheduling_enabled', None)
         return self.is_cl1_enabled or (
             is_smart_scheduling_enabled is not None
