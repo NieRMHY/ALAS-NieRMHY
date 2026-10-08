@@ -216,7 +216,13 @@ MCP 沿用 WebUI 的密碼（`--key` / `config/deploy.yaml` 的 `Password`），
 <div align="center">
   <img src="doc/loading.png" alt="loading" width="500" />
   <p>啟動載入畫面</p>
-  <img src="doc/GUI.png" alt="GUI" width="500" />
+  <table align="center">
+    <tr>
+      <td align="center"><img src="doc/GUI.png" alt="新版" width="260"><br>新版</td>
+      <td align="center"><img src="doc/GUI-legacy.webp" alt="舊版" width="260"><br>舊版</td>
+      <td align="center"><img src="doc/GUI-minimal.png" alt="簡約" width="260"><br>簡約</td>
+    </tr>
+  </table>
   <p>Windows 用戶端介面</p>
   <img src="doc/macGUI.png" alt="macGUI" width="500" />
   <p>Mac 用戶端介面</p>

@@ -59,6 +59,17 @@ from module.device.pkg_resources import get_distribution
 _ = get_distribution
 from adbutils import AdbClient, AdbDevice
 
+from module.base.runtime_params import (
+    ADB_TIMEOUT,
+    SCREEN_RECORD_CLEANUP_INTERVAL,
+    SCREEN_RECORD_POLL_INTERVAL,
+    SCREEN_RECORD_START_TIMEOUT,
+    SCREEN_RECORD_STOP_TIMEOUT,
+    SCREEN_RECORD_TMP_MAX_AGE,
+    TRANSCODE_BASE_TIMEOUT,
+    TRANSCODE_MAX_TIMEOUT,
+)
+from module.config.utils import read_run_param
 from module.logger import logger
 
 DEFAULT_OUTPUT_DIR = "./log/clips"
@@ -73,10 +84,8 @@ TMP_PREFIX = "_tmp_clip_"
 TMP_PREFIXES = (TMP_PREFIX, "_tmp_eh1_")
 # 产物小于此字节数视为无效（正常 720p 首帧就在 10KB 以上）
 MIN_VALID_BYTES = 4096
-# 残留临时文件（本地）的保留秒数
-TMP_MAX_AGE = 3600
-# 清理节流：两次扫描目录至少间隔这么久
-CLEANUP_INTERVAL = 3600
+# 残留临时文件保留秒数与清理节流间隔集中在 module/base/runtime_params.py
+# （录屏进程级）：它们是防止误删用户文件的安全阀，不开放配置。
 
 # ------------------------------------------------ 设备端录制参数
 # 设备上的临时目录；用 /data/local/tmp 是因为它一定可写、且能直接 pull
@@ -86,19 +95,10 @@ DEVICE_TMP_DIR = "/data/local/tmp"
 DEVICE_BITRATE = 4_000_000
 # screenrecord 的单段时长上限（--time-limit 的默认值与最大值都是 180）
 DEVICE_TIME_LIMIT = 180
-# 启动后等待进程存活的时间（秒）：立刻退出说明设备上根本跑不起来。
-# 这里只拦「一行命令都跑不起来」的情况（例如设备没有 nohup），编码器起不来
-# 会在收尾时通过设备端 stderr 报出来，所以不必在这里等太久。
-START_TIMEOUT = 0.6
-# SIGINT 后等待 recorder 写完文件并退出的上限（秒）
-STOP_TIMEOUT = 6.0
-# 轮询设备状态的间隔（秒）。抽成常量是为了让单测不必真的等
-POLL_INTERVAL = 0.2
-# 单条 adb 命令的超时（秒）
-ADB_TIMEOUT = 20
-# 转码超时：按片段长度放宽，但不超过这个上限（秒）
-TRANSCODE_BASE_TIMEOUT = 60.0
-TRANSCODE_MAX_TIMEOUT = 600.0
+# 启动/停止等待、轮询间隔与转码超时的默认值集中在
+# module/base/runtime_params.py（录屏域），可调参数走 WebUI
+# 「运行参数」页（RunParams.ScreenRecord）；单条 adb 命令超时
+# ADB_TIMEOUT 属进程级，也在该文件中。
 
 _ACTIVE = None  # 当前活动的录制会话
 _FFMPEG_CACHE = None  # ffmpeg 探测结果缓存，None 表示尚未探测
@@ -240,7 +240,7 @@ def _parse_progress_duration(stdout):
     return seconds
 
 
-def _stale_device_files(listing, now=None, max_age=TMP_MAX_AGE):
+def _stale_device_files(listing, now=None, max_age=SCREEN_RECORD_TMP_MAX_AGE):
     """从设备目录列表里挑出过期的临时文件。
 
     录像文件名里带的是本机时间戳（`<前缀>YYYYMMDD_HHMMSS.mp4`），所以可以直接
@@ -364,7 +364,7 @@ def cleanup_clips(retention_days, output_dir=DEFAULT_OUTPUT_DIR):
             continue
 
         if name.startswith(TMP_PREFIXES):
-            deadline = TMP_MAX_AGE
+            deadline = SCREEN_RECORD_TMP_MAX_AGE
         elif name.startswith(CLIP_PREFIXES) and name.endswith(".mp4"):
             if retention_days <= 0:
                 continue
@@ -405,7 +405,7 @@ def cleanup_clips_if_due(config, output_dir=DEFAULT_OUTPUT_DIR):
     """
     global _LAST_CLEANUP
     now = time.time()
-    if now - _LAST_CLEANUP < CLEANUP_INTERVAL:
+    if now - _LAST_CLEANUP < SCREEN_RECORD_CLEANUP_INTERVAL:
         return 0
     _LAST_CLEANUP = now
 
@@ -560,7 +560,13 @@ class _ScreenRecordClip:
             logger.error(f"[录屏] 启动 screenrecord 失败，设备未回显进程号: {output!r}")
             return False
 
-        deadline = time.time() + START_TIMEOUT
+        start_timeout = read_run_param(
+            self.config, 'ScreenRecord_StartTimeout',
+            SCREEN_RECORD_START_TIMEOUT, 0.1, 60)
+        poll = read_run_param(
+            self.config, 'ScreenRecord_PollInterval',
+            SCREEN_RECORD_POLL_INTERVAL, 0.05, 5)
+        deadline = time.time() + start_timeout
         while time.time() < deadline:
             if not self._pid_alive():
                 logger.error(
@@ -568,7 +574,7 @@ class _ScreenRecordClip:
                     f"{self._device_error()}"
                 )
                 return False
-            time.sleep(POLL_INTERVAL)
+            time.sleep(poll)
         return True
 
     def _pid_alive(self):
@@ -616,12 +622,18 @@ class _ScreenRecordClip:
         except Exception as e:
             self._set_error(f"停止 screenrecord 失败: {e}")
         stopped = False
-        deadline = time.time() + STOP_TIMEOUT
+        stop_timeout = read_run_param(
+            self.config, 'ScreenRecord_StopTimeout',
+            SCREEN_RECORD_STOP_TIMEOUT, 1, 120)
+        poll = read_run_param(
+            self.config, 'ScreenRecord_PollInterval',
+            SCREEN_RECORD_POLL_INTERVAL, 0.05, 5)
+        deadline = time.time() + stop_timeout
         while time.time() < deadline:
             if not self._pid_alive():
                 stopped = True
                 break
-            time.sleep(POLL_INTERVAL)
+            time.sleep(poll)
         if not stopped:
             self._set_error("等待 screenrecord 退出超时，录像可能不完整")
         self._stopped_at = time.perf_counter()
@@ -725,7 +737,13 @@ class _ScreenRecordClip:
             "-movflags", "+faststart",
             dst,
         ]
-        timeout = min(TRANSCODE_MAX_TIMEOUT, TRANSCODE_BASE_TIMEOUT + elapsed * 2)
+        base = read_run_param(
+            self.config, 'ScreenRecord_TranscodeBaseTimeout',
+            TRANSCODE_BASE_TIMEOUT, 10, 3600)
+        max_timeout = read_run_param(
+            self.config, 'ScreenRecord_TranscodeMaxTimeout',
+            TRANSCODE_MAX_TIMEOUT, 60, 7200)
+        timeout = min(max_timeout, base + elapsed * 2)
         reason = None
         try:
             proc = subprocess.run(

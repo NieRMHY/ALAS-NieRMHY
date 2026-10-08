@@ -358,7 +358,7 @@ class CoinTaskMixin:
             else self.config.Error_OnePushConfig
         )
         if not self._is_push_config_valid(push_config):
-            logger.warning("[大世界-智能调度] 推送配置未设置或 provider 为 null，跳过 OnePush 推送。请在 ALAS 设置 -> 错误处理 -> OnePush 配置中设置有效的推送渠道。")
+            logger.warning("[大世界-智能调度] 推送配置未设置或 provider 为 null，跳过 OnePush 推送。请在 AzurPilot 设置 -> 错误处理 -> OnePush 配置中设置有效的推送渠道。")
             return webui_success
 
         try:
@@ -1467,7 +1467,7 @@ class OpsiScheduling(SmartExploreMixin, CoinTaskMixin, OSMap):
             return
 
         pushed = self.notify_push(
-            title="[ALAS] 智能调度 - 黄币与行动力双重不足",
+            title="[Alas] 智能调度- 黄币与行动力双重不足",
             content=(
                 f"黄币: {yellow_coins}，补黄币阈值: {coin_target}\n"
                 f"总行动力 {total_ap} 不足 (需要 {meow_ap_preserve})\n推迟任务"
@@ -1490,7 +1490,7 @@ class OpsiScheduling(SmartExploreMixin, CoinTaskMixin, OSMap):
             return
 
         pushed = self.notify_push(
-            title="[ALAS] 智能调度 - 行动力不足",
+            title="[Alas] 智能调度- 行动力不足",
             content=f"总行动力 {total_ap} 低于最低保留 {min_reserve}，推迟任务"
         )
         if pushed:
@@ -1513,7 +1513,7 @@ class OpsiScheduling(SmartExploreMixin, CoinTaskMixin, OSMap):
         if not all_coin_tasks:
             logger.error('[大世界-智能调度] 没有启用任何黄币补充任务，停止智能调度')
             self.notify_push(
-                title='[ALAS] 智能调度 - 未启用黄币补充任务',
+                title='[Alas] 智能调度- 未启用黄币补充任务',
                 content='请至少启用耄耋相接、隐秘海域、深渊坐标或塞壬要塞中的一项',
             )
             self._delay_smart_scheduling_to_server_update('未启用黄币补充任务')
@@ -1593,7 +1593,7 @@ class OpsiScheduling(SmartExploreMixin, CoinTaskMixin, OSMap):
 
         task_display = self.TASK_NAMES.get(task_name, task_name)
         pushed = self.notify_push(
-            title="[ALAS] 智能调度 - 已代理执行黄币补充任务",
+            title="[Alas] 智能调度- 已代理执行黄币补充任务",
             content=(f"黄币: {yellow_coins}，补黄币阈值: {coin_target}\n"
                      f"总行动力: {total_ap} (需要 {meow_ap_preserve})\n"
                      f"已代理执行一轮{task_display}获取黄币")
@@ -1913,7 +1913,7 @@ class OpsiScheduling(SmartExploreMixin, CoinTaskMixin, OSMap):
             f'当前行动力={current_ap}, 保留值={month_end_preserve}'
         )
         self.notify_push(
-            title='[ALAS] 智能调度 - 月末清理行动力完成',
+            title='[Alas] 智能调度- 月末清理行动力完成',
             content=(
                 f'月末清理行动力已完成\n'
                 f'总行动力: {total_ap} (保留值 {month_end_preserve})\n'

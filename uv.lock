@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 5
 requires-python = ">=3.14.6, <3.15"
 resolution-markers = [
     "sys_platform == 'win32'",
@@ -151,15 +151,6 @@ wheels = [
 ]
 
 [[package]]
-name = "antlr4-python3-runtime"
-version = "4.13.2"
-source = { registry = "https://mirrors.aliyun.com/pypi/simple/" }
-sdist = { url = "https://mirrors.aliyun.com/pypi/packages/33/5f/2cdf6f7aca3b20d3f316e9f505292e1f256a32089bd702034c29ebde6242/antlr4_python3_runtime-4.13.2.tar.gz", hash = "sha256:909b647e1d2fc2b70180ac586df3933e38919c85f98ccc656a96cd3f25ef3916" }
-wheels = [
-    { url = "https://mirrors.aliyun.com/pypi/packages/89/03/a851e84fcbb85214dc637b6378121ef9a0dd61b4c65264675d8a5c9b1ae7/antlr4_python3_runtime-4.13.2-py3-none-any.whl", hash = "sha256:fe3835eb8d33daece0e799090eda89719dbccee7aa39ef94eed3818cafa5a7e8" },
-]
-
-[[package]]
 name = "anyio"
 version = "4.13.0"
 source = { registry = "https://mirrors.aliyun.com/pypi/simple/" }
@@ -235,7 +226,6 @@ dependencies = [
     { name = "inflection" },
     { name = "jellyfish" },
     { name = "keyring" },
-    { name = "luaparser" },
     { name = "lz4" },
     { name = "matplotlib" },
     { name = "mcp" },
@@ -292,7 +282,6 @@ requires-dist = [
     { name = "inflection", specifier = "==0.5.1" },
     { name = "jellyfish", specifier = "==1.2.1" },
     { name = "keyring", specifier = ">=25.6.0" },
-    { name = "luaparser", specifier = "==4.2.0" },
     { name = "lz4", specifier = "==4.4.5" },
     { name = "matplotlib", specifier = "==3.11.0" },
     { name = "mcp", specifier = "==1.23.0" },
@@ -1158,19 +1147,6 @@ wheels = [
 ]
 
 [[package]]
-name = "luaparser"
-version = "4.2.0"
-source = { registry = "https://mirrors.aliyun.com/pypi/simple/" }
-dependencies = [
-    { name = "antlr4-python3-runtime" },
-    { name = "multimethod" },
-]
-sdist = { url = "https://mirrors.aliyun.com/pypi/packages/24/64/574e8dadf7dcc08b5c8435756b6a44ea382d14b4d3c19669dbbab112532f/luaparser-4.2.0.tar.gz", hash = "sha256:315e1588b23500befaf824604c2d0ea75daf894b5507126636a8cfa9dc3d7636" }
-wheels = [
-    { url = "https://mirrors.aliyun.com/pypi/packages/5f/49/6d585ffffd47732c497ca3a4137f20b817fdf41598668619652d8b11d7e2/luaparser-4.2.0-py3-none-any.whl", hash = "sha256:f73b1a66ff51351d28f067348ebbb4533401fc761926654d0448e34531ce3a34" },
-]
-
-[[package]]
 name = "lxml"
 version = "6.1.1"
 source = { registry = "https://mirrors.aliyun.com/pypi/simple/" }
@@ -1441,15 +1417,6 @@ wheels = [
 ]
 
 [[package]]
-name = "multimethod"
-version = "2.1"
-source = { registry = "https://mirrors.aliyun.com/pypi/simple/" }
-sdist = { url = "https://mirrors.aliyun.com/pypi/packages/cb/5c/556c53f25a75c7ec1b467a5871a22461615139dab72578166df7f8ad1104/multimethod-2.1.tar.gz", hash = "sha256:c59e75fbe51516ed632d3df4b56df0876747be001c068d3ee1e83e9f65c2846f" }
-wheels = [
-    { url = "https://mirrors.aliyun.com/pypi/packages/a7/9e/3538af4267d2e29d871e7a1ae390e8ff32122b3c560fe718569c4cd7624a/multimethod-2.1-py3-none-any.whl", hash = "sha256:54b5256562351762a275dd65571b5d6db750848f1eb6bb21c61cb5ff2748b663" },
-]
-
-[[package]]
 name = "ncnn"
 version = "1.0.20260526"
 source = { registry = "https://mirrors.aliyun.com/pypi/simple/" }
@@ -1558,10 +1525,10 @@ name = "onnxruntime"
 version = "1.27.0"
 source = { registry = "https://mirrors.aliyun.com/pypi/simple/" }
 dependencies = [
-    { name = "flatbuffers", marker = "(platform_machine == 'arm64' and sys_platform == 'darwin') or sys_platform == 'linux'" },
-    { name = "numpy", marker = "(platform_machine == 'arm64' and sys_platform == 'darwin') or sys_platform == 'linux'" },
-    { name = "packaging", marker = "(platform_machine == 'arm64' and sys_platform == 'darwin') or sys_platform == 'linux'" },
-    { name = "protobuf", marker = "(platform_machine == 'arm64' and sys_platform == 'darwin') or sys_platform == 'linux'" },
+    { name = "flatbuffers" },
+    { name = "numpy" },
+    { name = "packaging" },
+    { name = "protobuf" },
 ]
 wheels = [
     { url = "https://mirrors.aliyun.com/pypi/packages/3a/37/48ab79c39b58a7c9f6f5aac1fa0ff2b993eb2643393d6ed9e839ddb6f347/onnxruntime-1.27.0-cp314-cp314-macosx_14_0_arm64.whl", hash = "sha256:0874edc171f470fc4dd2bbb60bc0989612ed1a8b89b365cda016630a93227f13" },
@@ -1576,10 +1543,10 @@ name = "onnxruntime-windowsml"
 version = "1.27.1.202607110137"
 source = { registry = "https://mirrors.aliyun.com/pypi/simple/" }
 dependencies = [
-    { name = "flatbuffers", marker = "sys_platform == 'win32'" },
-    { name = "numpy", marker = "sys_platform == 'win32'" },
-    { name = "packaging", marker = "sys_platform == 'win32'" },
-    { name = "protobuf", marker = "sys_platform == 'win32'" },
+    { name = "flatbuffers" },
+    { name = "numpy" },
+    { name = "packaging" },
+    { name = "protobuf" },
 ]
 wheels = [
     { url = "https://mirrors.aliyun.com/pypi/packages/e8/c0/ddeafb4d50468a72e9b0b9adaf8cd95137052db85a0274cbd4b6e645a8ce/onnxruntime_windowsml-1.27.1.202607110137-cp314-cp314-win_amd64.whl", hash = "sha256:9fede36a96faa866026ad8b255cfed1a240fe6791df56c3144317363fb78cb98" },
@@ -2051,6 +2018,7 @@ dependencies = [
 wheels = [
     { url = "https://mirrors.aliyun.com/pypi/packages/5c/64/927a4b9024196a4799eba0180e0ca31568426f258a4a5c90f87a97f51d28/pystray-0.19.5-py2.py3-none-any.whl", hash = "sha256:a0c2229d02cf87207297c22d86ffc57c86c227517b038c0d3c59df79295ac617" },
 ]
+
 [[package]]
 name = "pytest"
 version = "9.1.1"
@@ -2346,8 +2314,8 @@ name = "secretstorage"
 version = "3.5.0"
 source = { registry = "https://mirrors.aliyun.com/pypi/simple/" }
 dependencies = [
-    { name = "cryptography", marker = "sys_platform == 'linux'" },
-    { name = "jeepney", marker = "sys_platform == 'linux'" },
+    { name = "cryptography" },
+    { name = "jeepney" },
 ]
 sdist = { url = "https://mirrors.aliyun.com/pypi/packages/1c/03/e834bcd866f2f8a49a85eaff47340affa3bfa391ee9912a952a1faa68c7b/secretstorage-3.5.0.tar.gz", hash = "sha256:f04b8e4689cbce351744d5537bf6b1329c6fc68f91fa666f60a380edddcd11be" }
 wheels = [

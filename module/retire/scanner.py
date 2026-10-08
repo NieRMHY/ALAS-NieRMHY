@@ -526,7 +526,7 @@ class FleetScanner(Scanner):
 
 
 class FleetNameScanner(Scanner):
-    """识别船坞卡片中的舰娘名称，保留 OCR 原始结果。"""
+    """识别船坞舰名，仅依据精确身份或唯一截断补全，未确认时保留原文。"""
     OCR_LANG = {
         'cn': 'ppocr_v6',
         'en': 'ppocr_v6',
@@ -593,10 +593,31 @@ class FleetNameScanner(Scanner):
 
     def _scan(self, image) -> List:
         names = self.ocr_model.ocr(image)
-        corrected = [self.name_matcher.correct(name) for name in names]
-        for raw, name in zip(names, corrected):
-            if raw != name:
-                logger.info(f'[舰队扫描-OCR] 舰娘名修正: {raw!r} -> {name!r}')
+        names = names if isinstance(names, list) else [names]
+        resolved = [self.name_matcher.resolve(name) for name in names]
+        corrected = [name for name, _ in resolved]
+        unresolved = [i for i, (_, status) in enumerate(resolved) if self.name_matcher.names
+                      if status not in ('exact', 'prefix', 'missing_catalog')]
+        if unresolved:
+            # 同一截图、相同名称裁剪；只对未确认名称追加一次原彩色识别，不放大猜字。
+            regions = [crop(image, self.ocr_model.buttons[i])[
+                self.NameOcr.TEXT_ROWS[0]:self.NameOcr.TEXT_ROWS[1], self.NameOcr.TEXT_LEFT:
+            ] for i in unresolved]
+            retries = self.ocr_model.cnocr.atomic_ocr_for_single_lines(regions, None)
+            for i, retry in zip(unresolved, retries):
+                retry = ''.join(retry)
+                candidate = self.name_matcher.retry_candidate(names[i], retry)
+                if candidate is not None:
+                    corrected[i] = candidate
+                    logger.info(f'[舰队扫描-OCR] 彩色复识别确认: {names[i]!r} -> {candidate!r}')
+                else:
+                    logger.info(f'[舰队扫描-OCR] 名称未确认，保留原文: {names[i]!r}，'
+                                f'依据={resolved[i][1]}，彩色结果={retry!r}')
+        for raw, name, (_, status) in zip(names, corrected, resolved):
+            if raw != name and status in ('exact', 'prefix'):
+                logger.info(f'[舰队扫描-OCR] 舰娘名确认: {raw!r} -> {name!r}，依据={status}')
+            elif status == 'missing_catalog':
+                logger.info(f'[舰队扫描-OCR] 名单不可用，保留原文: {raw!r}')
         return corrected
 
     def limit_value(self, value) -> str:
@@ -607,8 +628,44 @@ class FleetNameScanner(Scanner):
         self.ocr_model.buttons = self._buttons()
 
 
+class FleetEmotionDigit(Digit):
+    """舰队信息专用心情解析：未知为 None，不截位猜数或把空白当零。"""
+
+    def after_process(self, result):
+        if not result or not result.isascii() or not result.isdigit():
+            return None
+        if len(result) > 1 and result.startswith('0'):
+            return None
+        value = int(result)
+        return value if 0 <= value <= 150 else None
+
+
+class FleetEmotionScanner(EmotionScanner):
+    """复用船坞心情区域，按舰队扫描网格读取原始心情值。"""
+
+    def __init__(self, grid_shape=(7, 3), excluded_positions=()):
+        super().__init__()
+        card_grids = ButtonGrid(
+            origin=CARD_GRIDS.origin, delta=CARD_GRIDS.delta,
+            button_shape=CARD_GRIDS.button_shape, grid_shape=grid_shape, name='CARD',
+        )
+        origin = CARD_EMOTION_GRIDS.origin - CARD_GRIDS.origin
+        area = tuple(np.append(origin, origin + CARD_EMOTION_GRIDS.button_shape))
+        self.grids = card_grids.crop(area=area, name='EMOTION')
+        excluded = set(excluded_positions)
+        self.ocr_model = FleetEmotionDigit(
+            [button for x, y, button in self.grids.generate() if (x, y) not in excluded],
+            letter=self.ocr_model.letter, threshold=self.ocr_model.threshold,
+            alphabet='0123456789', name='FLEET_EMOTION_OCR',
+        )
+
+    def _scan(self, image):
+        # 不使用通用 EmotionScanner 的情绪颜色纠正，保留失败空值。
+        return self.ocr_model.ocr(image)
+
+
 class FleetManagementScanner:
-    """扫描当前船坞页面，并按舰队归属聚合舰娘名称与等级。"""
+    """扫描当前船坞页面，并按舰队归属聚合舰娘名称、等级与心情。"""
     def __init__(
         self,
         grid_shape: Tuple[int, int] = (7, 3),
@@ -626,23 +683,30 @@ class FleetManagementScanner:
             grid_shape=grid_shape,
             excluded_positions=excluded_positions,
         )
+        self.emotion_scanner = FleetEmotionScanner(
+            grid_shape=grid_shape,
+            excluded_positions=excluded_positions,
+        )
 
-    def scan(self, image) -> Dict[int, List[Dict[str, Union[str, int]]]]:
-        """返回按舰队编号分组的舰娘名称与等级 OCR 结果。
+    def scan(self, image) -> Dict[int, List[Dict[str, Union[str, int, None]]]]:
+        """返回按舰队编号分组的舰娘名称、等级与心情 OCR 结果。
 
         Args:
             image (np.ndarray): 船坞截图图像。
 
         Returns:
-            dict: 键为舰队编号，值为包含 name 与 level 的字典列表。
+            dict: 键为舰队编号，值为包含 name、level 与 emotion 的字典列表。
+                心情识别失败时 emotion 为 None，不影响名称与等级。
         """
         fleets = self.fleet_scanner.scan(image, output=False)
         names = self.name_scanner.scan(image, output=False)
         levels = self.level_scanner.scan(image, output=False)
+        emotions = self.emotion_scanner.scan(image, output=False)
         result = defaultdict(list)
-        for fleet, name, level in zip(fleets, names, levels):
+        for index, (fleet, name, level) in enumerate(zip(fleets, names, levels)):
             if fleet:
-                result[fleet].append({'name': name, 'level': level})
+                emotion = emotions[index] if index < len(emotions) else None
+                result[fleet].append({'name': name, 'level': level, 'emotion': emotion})
         return dict(result)
 
 

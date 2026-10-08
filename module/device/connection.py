@@ -23,7 +23,8 @@ from module.device.connection_attr import ConnectionAttr
 from module.device.env import IS_LINUX, IS_MACINTOSH, IS_WINDOWS
 from module.device.method.pool import WORKER_POOL
 from module.device.method.remove_warning import remove_shell_warning
-from module.device.method.utils import (PackageNotInstalled, RETRY_TRIES, get_serial_pair, handle_adb_error,
+from module.base.runtime_params import RETRY_TRIES
+from module.device.method.utils import (PackageNotInstalled, get_serial_pair, handle_adb_error,
                                         handle_unknown_host_service, possible_reasons, random_port, recv_all,
                                         retry_sleep)
 from module.exception import EmulatorNotRunningError, RequestHumanTakeover
@@ -1096,7 +1097,7 @@ class Connection(ConnectionAttr):
             logger.error(e)
             if '强迫关闭' in str(e):
                 logger.critical('[Device] 无法连接至ADB服务，请关闭UU加速器、原神私服、以及一些劣质代理软件。'
-                                '它们会劫持电脑上所有的网络连接，包括Alas与模拟器之间的本地连接。')
+                                '它们会劫持电脑上所有的网络连接，包括AzurPilot与模拟器之间的本地连接。')
         return SelectedGrids(devices)
 
     def detect_device(self):

@@ -1,5 +1,6 @@
 """WebSocket API 的认证、配置事务及订阅回归测试。"""
 import asyncio
+import json
 import shutil
 import tempfile
 import unittest
@@ -43,6 +44,20 @@ class ConfigApiTests(unittest.TestCase):
         self.assertEqual(['testpilot'], self.configs.names())
         self.configs.get('testpilot')
         self.assertEqual(before, path.stat().st_mtime_ns)
+
+    def test_instance_identity_is_preserved_and_hidden_from_editable_config(self):
+        """内部身份随配置读取与保存保留，但不作为可编辑参数返回。"""
+        path = self.configs.path('testpilot')
+        data = self.configs.read_json(path)
+        data['_stockInstance'] = 'test-identity'
+        path.write_text(json.dumps(data), encoding='utf-8')
+        before = path.read_bytes(), path.stat().st_mtime_ns
+        values, revision = self.configs.read('testpilot')
+        self.assertEqual('test-identity', values['_stockInstance'])
+        self.assertNotIn('_stockInstance', self.configs.get('testpilot')['values'])
+        self.assertEqual(before, (path.read_bytes(), path.stat().st_mtime_ns))
+        self.configs.patch('testpilot', revision, [ConfigChange(path='Main.Scheduler.Enable', value=True)])
+        self.assertEqual('test-identity', self.configs.read_json(path)['_stockInstance'])
 
     def test_importable_lists_configs_in_import_folder(self):
         """可导入列表只来自导入目录；解不开的 JSON、符号链接、以及实例目录里的文件都不算。"""
@@ -209,51 +224,26 @@ class ConfigApiTests(unittest.TestCase):
             self.assertEqual(original, self.configs.get('testpilot'))
         self.configs.patch('testpilot', None, [ConfigChange(path='Alas.Error.OnePushConfig', value='provider: null')])
 
-    def test_restricted_lua_script_is_validated_before_config_write(self):
-        """高级策略语法错误不能写入实例配置，空脚本仍可作为默认值保存。"""
-        original = self.configs.get('testpilot')
-        path = 'EventShop.ShopAdvanced.Script'
-        valid = 'return shop.plan { candidates = candidates:take(1) }'
 
-        updated = self.configs.patch('testpilot', None, [ConfigChange(path=path, value=valid)])
-        self.assertEqual(valid, updated['values']['EventShop']['ShopAdvanced']['Script'])
-        with self.assertRaises(ApiError) as caught:
-            self.configs.patch('testpilot', None, [ConfigChange(path=path, value='return os.execute("bad")')])
-        self.assertEqual('INVALID_PARAMS', caught.exception.code)
-        self.assertIsInstance(caught.exception.details, list)
-        self.assertEqual(valid, self.configs.get('testpilot')['values']['EventShop']['ShopAdvanced']['Script'])
-        cleared = self.configs.patch('testpilot', None, [ConfigChange(path=path, value='')])
-        self.assertEqual('', cleared['values']['EventShop']['ShopAdvanced']['Script'])
-        # 空脚本是默认值；清空后内容可以回到初始快照及其内容哈希。
-        self.assertEqual(original['revision'], cleared['revision'])
-
-    def test_advanced_shop_mode_requires_final_nonempty_valid_script(self):
-        """模式和脚本按最终事务快照校验，禁止保存不可执行高级模式。"""
-        mode_path = 'EventShop.ShopAdvanced.Mode'
-        script_path = 'EventShop.ShopAdvanced.Script'
-        original = self.configs.get('testpilot')
-
-        with self.assertRaises(ApiError) as caught:
-            self.configs.patch('testpilot', None, [ConfigChange(path=mode_path, value='advanced')])
-        self.assertEqual('INVALID_PARAMS', caught.exception.code)
-        self.assertEqual(original, self.configs.get('testpilot'))
-
-        script = 'return shop.plan { candidates = candidates:take(1) }'
-        enabled = self.configs.patch('testpilot', None, [
-            ConfigChange(path=mode_path, value='advanced'),
-            ConfigChange(path=script_path, value=script),
-        ])
-        self.assertEqual('advanced', enabled['values']['EventShop']['ShopAdvanced']['Mode'])
-        self.assertEqual(script, enabled['values']['EventShop']['ShopAdvanced']['Script'])
-
-        with self.assertRaises(ApiError):
-            self.configs.patch('testpilot', None, [ConfigChange(path=script_path, value='')])
-        disabled = self.configs.patch('testpilot', None, [
-            ConfigChange(path=mode_path, value='legacy'),
-            ConfigChange(path=script_path, value=''),
-        ])
-        self.assertEqual('legacy', disabled['values']['EventShop']['ShopAdvanced']['Mode'])
-        self.assertEqual('', disabled['values']['EventShop']['ShopAdvanced']['Script'])
+    def test_retired_shop_options_are_visible_as_paused_and_saved_on_confirmation(self):
+        """只读预览不写文件，确认启用时保存已迁移的普通商店配置。"""
+        path = self.configs.path('testpilot')
+        data = self.configs.read_json(path)
+        data['EventShop']['Scheduler']['Enable'] = True
+        data['EventShop']['ShopAdvanced'] = {'Mode': 'advanced', 'Script': 'old'}
+        data['EventShop']['EventShop']['CustomFilter'] = 'Cube:5 > Oil:2'
+        path.write_text(json.dumps(data), encoding='utf-8')
+        raw = path.read_bytes()
+        preview = self.configs.get('testpilot')['values']['EventShop']
+        self.assertFalse(preview['Scheduler']['Enable'])
+        self.assertNotIn('ShopAdvanced', preview)
+        self.assertEqual('Cube > Oil', preview['EventShop']['CustomFilter'])
+        self.assertEqual(raw, path.read_bytes())
+        self.configs.patch('testpilot', None, [ConfigChange(path='EventShop.Scheduler.Enable', value=True)])
+        saved = self.configs.read_json(path)['EventShop']
+        self.assertTrue(saved['Scheduler']['Enable'])
+        self.assertNotIn('ShopAdvanced', saved)
+        self.assertTrue(self.configs.get('testpilot')['values']['EventShop']['Scheduler']['Enable'])
 
     def test_duplicate_creation_and_recoverable_deletion(self):
         created = self.configs.create('second', 'testpilot')
@@ -389,29 +379,60 @@ class SocketApiTests(unittest.TestCase):
             self.assertTrue(merged['ok'])
             self.assertEqual('5555', merged['result']['values']['Alas']['Emulator']['Serial'])
 
-    def test_shop_strategy_validation_returns_diagnostics_without_writing(self):
-        with self.client.websocket_connect('/api/v1/ws') as ws:
-            self.login(ws)
-            params = {
-                'instance': 'testpilot',
-                'task': 'EventShop',
-                'script': 'return shop.plan { candidates = candidates:where(function(item) return item.hidden end):take(1) }',
-            }
-            response = self.call(ws, 'shop_strategy.validate', params)
-            self.assertTrue(response['ok'])
-            self.assertFalse(response['result']['valid'])
-            diagnostic = response['result']['diagnostics'][0]
-            self.assertEqual('unknown_candidate_field', diagnostic['code'])
-            self.assertEqual(1, diagnostic['line'])
-            self.assertIsInstance(diagnostic['column'], int)
 
-    def test_subscribe_sends_scoped_snapshot(self):
+    def test_overview_and_scheduler_controls_accept_instance_identity(self):
+        """启停实际完成后，总览响应不能因内部身份字段而失败。"""
+        from module.runtime.process_manager import ProcessManager
+
+        path = Path(self.temp.name) / 'config/testpilot.json'
+        data = json.loads(path.read_text(encoding='utf-8'))
+        data['_stockInstance'] = 'test-identity'
+        data['Main']['Scheduler']['Enable'] = True
+        path.write_text(json.dumps(data), encoding='utf-8')
+        before = path.read_bytes()
+        manager = SimpleNamespace(alive=False, state=2, current_task=None)
+
+        def start(*args, **kwargs):
+            manager.alive, manager.state = True, 1
+
+        def stop():
+            manager.alive, manager.state = False, 2
+            return True
+
+        manager.start = Mock(side_effect=start)
+        manager.stop_by_user = Mock(side_effect=stop)
+        stop_event = object()
+        with patch.object(ProcessManager, 'get_manager', return_value=manager), \
+                patch.dict(ProcessManager._processes, {'testpilot': manager}, clear=True), \
+                patch.object(RuntimeService, '_record_running_now'), \
+                patch('module.runtime.updater.updater', SimpleNamespace(event=stop_event)), \
+                self.client.websocket_connect('/api/v1/ws') as ws:
+            self.login(ws)
+            for method, status in [('overview.get', 'stopped'), ('scheduler.start', 'running'),
+                                   ('scheduler.stop', 'stopped')]:
+                with self.subTest(method=method):
+                    response = self.call(ws, method, {'instance': 'testpilot'})
+                    self.assertTrue(response['ok'], response)
+                    self.assertEqual(status, response['result']['status'])
+                    tasks = [task['name'] for task in response['result']['tasks']]
+                    self.assertIn('Main', tasks)
+                    self.assertNotIn('_stockInstance', tasks)
+        manager.start.assert_called_once_with('alas', ev=stop_event)
+        manager.stop_by_user.assert_called_once_with()
+        self.assertEqual(before, path.read_bytes())
+
+    def test_subscribe_sends_scoped_snapshot_with_instance_identity(self):
+        path = Path(self.temp.name) / 'config/testpilot.json'
+        data = json.loads(path.read_text(encoding='utf-8'))
+        data['_stockInstance'] = 'test-identity'
+        path.write_text(json.dumps(data), encoding='utf-8')
         with self.client.websocket_connect('/api/v1/ws') as ws:
             self.login(ws)
             self.assertTrue(self.call(ws, 'events.subscribe', {'instance': 'testpilot', 'topics': ['overview']})['ok'])
             event = ws.receive_json()
             self.assertEqual('overview', event['topic'])
             self.assertEqual('testpilot', event['data']['instance'])
+            self.assertNotIn('_stockInstance', [task['name'] for task in event['data']['tasks']])
             self.assertTrue(self.call(ws, 'events.subscribe', {'topics': []})['ok'])
 
     def test_log_arrival_pushes_websocket_event_without_polling(self):
@@ -533,9 +554,42 @@ class LogCursorTests(unittest.TestCase):
             self.assertEqual([], runtime.logs('test', second['cursor'])['entries'])
 
 
-
 class ProducerCadenceTests(unittest.IsolatedAsyncioTestCase):
     """日志按到达事件即时推送，重主题继续按各自节奏采样。"""
+
+    async def test_stock_events_wake_immediately_and_unsubscribe_when_leaving(self):
+        from module.api.protocol import SubscribeParams
+        subscribed, delivered, unsubscribed = asyncio.Event(), asyncio.Event(), asyncio.Event()
+        callbacks, updates = [], []
+        def subscribe(listener):
+            callbacks.append(listener)
+            subscribed.set()
+            return unsubscribed.set
+        service = SimpleNamespace(subscribe=subscribe)
+        session = Session(SimpleNamespace(router=SimpleNamespace(stock_exchange=service)), ws=None, local=True)
+        session.subscription = SubscribeParams(instance='testpilot', topics=['stock'])
+        async def event(topic, data):
+            self.assertEqual('stock', topic)
+            updates.append(data)
+            if data.get('revision') == 42:
+                delivered.set()
+        session.event = event
+        task = asyncio.create_task(session.stock_producer())
+        try:
+            session.stock_changed.set()
+            await asyncio.wait_for(subscribed.wait(), 1)
+            await asyncio.to_thread(callbacks[0], {'instance': 'another', 'revision': 41})
+            await asyncio.to_thread(callbacks[0], {'revision': 42, 'online': True})
+            await asyncio.wait_for(delivered.wait(), 1)
+            self.assertEqual({'revision': 42, 'online': True, 'instance': 'testpilot'}, updates[-1])
+            self.assertFalse(any(value.get('revision') == 41 for value in updates))
+            session.subscription = SubscribeParams(topics=[])
+            session.stock_changed.set()
+            await asyncio.wait_for(unsubscribed.wait(), 1)
+        finally:
+            task.cancel()
+            with self.assertRaises(asyncio.CancelledError):
+                await task
 
     async def test_heavy_topics_keep_independent_cadence(self):
         counts = {'overview': 0, 'instances': 0}

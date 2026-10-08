@@ -11,7 +11,6 @@ export interface Parameters {
   "config.get": { instance: string }
   "config.export": { instance: string }
   "config.patch": { instance: string; revision?: string | null; changes: Array<{ path: string; value: unknown }> }
-  "shop_strategy.validate": { instance: string; task: "EventShop" | "ShopFrequent" | "ShopOnce" | "PrivateQuarters" | "OpsiShop" | "OpsiVoucher"; script: string }
   "overview.get": { instance: string }
   "stock.status": { instance: string }
   "stock.rebuild": { instance: string; confirm?: boolean; scope?: "instance" | "all" }
@@ -34,6 +33,7 @@ export interface Parameters {
   "preview.capture": { instance: string }
   "statistics.refreshLoot": { instance: string }
   "statistics.report": { instance: string; category?: "resources" | "action" | "opsi" | "commission" | "ships" | "loot" | "research" | "storage"; month?: string | null; days?: number; period?: "day" | "week" | "month"; series?: number; scope?: "series" | "consumable"; task?: string | null }
+  "statistics.resourceFlows": { instance: string; days?: number; start?: string | null; end?: string | null; resource?: string | null; task?: string | null; offset?: number; limit?: number; through_id?: number | null }
   "meowfficer.scoreReport": { instance: string; limit?: number }
   "meowfficer.clearReport": { instance: string }
   "statistics.resources": { instance: string; days?: number; resource?: "Oil" | "Coin" | "Gem" | "Cube" | "Pt" | "ActionPoint" | "Core" | "Medal" | "Merit" | "GuildCoin" | "YellowCoin" | "PurpleCoin" }

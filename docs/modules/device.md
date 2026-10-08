@@ -24,6 +24,7 @@
 - 应用（碧蓝航线客户端）生命周期：前台包名检测、启动（am/monkey 双链）、停止、清缓存；UI 层级 dump 与 XPath 查询。
 - 模拟器发现与管理：注册表/进程扫描（Windows）、/Applications 扫描（macOS）、SSH 远程命令；启停命令按模拟器类型分发，含 MuMu12 专属的僵死进程清理与深度重启。
 - 运行稳定性检测：卡死检测（截图指纹 + 等待计时器双通道）、点击频率检测（最近 15 次点击统计）。
+- 单按钮连击保护阈值为 12 次；仅 S 经验结算按钮 `EXP_INFO_S` 放宽为 15 次，配合普通战斗处理器的 2 秒点击间隔等待自动跳转。双按钮各 6 次的交替点击保护不变。
 - 基准测试入口：首次连接时自动为截图方式与 OCR 设备跑简化基准并写回配置。
 
 ### 不负责
@@ -88,6 +89,8 @@ module/device/
 ## 5. 核心组件
 
 ### Device（device.py）
+
+现有截图完成卡死检查后，`resource_flow.reward_frame()` 旁路解析当前任务已知奖励；点击前也复核当前奖励画面以覆盖快速领取。它不额外截图、点击或导航，重复弹窗只入账一次，任务身份由 `alas.py::run()` 的归因范围提供；解析或账本故障记录原因后保留原游戏控制流程。详见 [资源管理](webui/resource-management.md)。
 
 | 成员 | 类型 | 说明 |
 | --- | --- | --- |
@@ -369,7 +372,7 @@ image = device.screenshot()
 
 ## 20. 相关模块
 
-- [调度器（alas.py）](entry/alas.md)——异常恢复决策方：`_try_restart_emulator`、失败阶梯、看门狗强杀。
+- [调度器（alas.py）](entry/alas.md)——异常恢复决策方：`_try_restart_emulator`、失败阶梯、运行监护强杀。
 - [基础层 module/base](base/index.md)——消费 `Device.screenshot()/click()` 的上层原语；`appear()` 每次检测都会登记卡死记录。
 - [OCR 系统](ocr.md)——`Optimization_OcrDevice` 基准决定 OCR 跑在 GPU 还是 CPU。
 - [WebUI 总览](webui/index.md)——手动停止后的 `close_game`/`close_emulator` 收尾与实时截图预览都走设备层。

@@ -41,6 +41,14 @@ class ProgramStore:
 
     @contextmanager
     def connection(self, instance, write=False, baseline=None, strict_history=False):
+        """打开调度数据库，普通资源事务不因交易所认证失败而中断。
+
+        Args:
+            instance: 实例名。
+            write: 是否以可写方式打开。
+            baseline: 迁移行动力历史时使用的初始值。
+            strict_history: 交易所读取时启用历史强校验，损坏时抛出异常。
+        """
         path = self.path(instance)
         protection = GameDataProtector(self.directory.parent.parent)
         for suffix in ('', '-wal', '-shm', '-journal'):

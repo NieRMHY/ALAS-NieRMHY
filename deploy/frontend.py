@@ -125,6 +125,28 @@ def _android_fetch_dist(directory, root):
             tar_path.unlink()
 
 
+# Modify by MHY, 仓库自带便携版 Node 的兜底查找。
+# 部分部署（例如远端 Windows 实例）把 Node 解压到仓库根的 nodejs/ 下，
+# 只在启动脚本里临时加 PATH。此时从其它入口跑安装器，which('npm') 找不到，
+# 但 Node 其实是可用的，于是白报「请安装 Node.js」。这里直接扫目录兜底。
+def bundled_node_directory():
+    """查找仓库内自带的便携 Node.js 目录。
+
+    Returns:
+        Path | None: 含 node 可执行文件的目录；未找到时返回 None。
+    """
+    root = Path(__file__).resolve().parents[1] / 'nodejs'
+    if not root.is_dir():
+        return None
+    executable = 'node.exe' if os.name == 'nt' else 'node'
+    # 版本目录按名字倒序，优先用较新的那份
+    candidates = [root, *sorted((path for path in root.iterdir() if path.is_dir()), reverse=True)]
+    for directory in candidates:
+        if (directory / executable).is_file():
+            return directory
+    return None
+
+
 def npm_command():
     """Windows 直接使用 Node 执行 npm，避免将批处理当作可执行文件。
 
@@ -135,6 +157,12 @@ def npm_command():
         RuntimeError: 当缺少 Node.js 或未找到 npm-cli.js 时抛出。
     """
     npm = shutil.which('npm')
+    if not npm:
+        directory = bundled_node_directory()
+        if directory:
+            # 挂到 PATH 后重试，后续 which('node') 也能一并命中
+            os.environ['PATH'] = str(directory) + os.pathsep + os.environ.get('PATH', '')
+            npm = shutil.which('npm')
     if not npm:
         raise RuntimeError('前端需要构建，请安装 Node.js 22.12+，在 frontend 中运行 npm ci 和 npm run build')
     if os.name != 'nt':

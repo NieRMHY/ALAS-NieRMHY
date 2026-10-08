@@ -485,7 +485,7 @@ Research:
     ServerUpdate: 00:00
 StorageStatistics:
   Scheduler:
-    SuccessInterval: 1440
+    SuccessInterval: 10080
     FailureInterval: 60
     ServerUpdate: 04:00
 Dorm:

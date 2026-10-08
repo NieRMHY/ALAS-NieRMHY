@@ -2,6 +2,9 @@
 """
 从 AzurLaneLuaScripts 仓库的 Lua 脚本中提取舰船数据，生成统一 JSON。
 
+使用 --names-only 时，仅生成 assets/ship/ship_names.json：各服统计表名称加改造皮肤名称，
+通过 name_code 解析名称引用，不更新原有舰船属性，也不收录普通皮肤标题。
+
 数据来源：
   - {SERVER}/sharecfgdata/ship_data_statistics.lua  → 属性、名称、面板数据
   - CN/sharecfgdata/ship_data_template.lua          → 模板、装备槽、改造信息
@@ -618,6 +621,39 @@ def extract_ship_data(lua_repo: str) -> dict:
     return output
 
 
+def extract_ship_names(lua_repo: str) -> dict[str, list[str]]:
+    """提取各服舰名与改造名，解析 namecode，不收录普通皮肤标题。"""
+    output = {}
+    for server in ('cn', 'en', 'jp', 'tw'):
+        root = Path(lua_repo) / SERVER_DIRS[server]
+        codes = parse_lua_ship_blocks(str(root / 'sharecfg/name_code.lua'))
+
+        def resolve(name):
+            def replace(match):
+                code = int(match.group(1))
+                value = codes.get(code, {}).get('name')
+                if not isinstance(value, str) or not value:
+                    raise ValueError(f'{server}: 未解析的名称引用 {match.group(0)}')
+                return value
+
+            return re.sub(r'\{namecode:(\d+)\}', replace, name).strip()
+
+        stats = parse_lua_ship_blocks(str(root / 'sharecfgdata/ship_data_statistics.lua'))
+        names = {resolve(entry['name']) for entry in stats.values() if isinstance(entry.get('name'), str)}
+        # 当前版本将皮肤分散到 sublist；同时支持旧版内联表。
+        skin_files = [root / 'sharecfg/ship_skin_template.lua']
+        skin_files.extend(sorted((root / 'sharecfg/ship_skin_template_sublist').glob('*.lua')))
+        for path in skin_files:
+            for skin in parse_lua_ship_blocks(str(path)).values():
+                if skin.get('skin_type') == 2 and isinstance(skin.get('name'), str):
+                    names.add(resolve(skin['name']))
+        output[server] = sorted(name for name in names if any(c.isalnum() for c in name))
+        if not output[server]:
+            raise ValueError(f'{server}: 舰船名称名单为空')
+        print(f'[{server}] {len(output[server])} 个舰船及改造名称')
+    return output
+
+
 def main():
     """解析命令行参数并执行舰船数据提取与 JSON 导出。"""
     parser = argparse.ArgumentParser(description="从 AzurLaneLuaScripts 提取舰船数据生成 JSON")
@@ -627,9 +663,15 @@ def main():
         help="AzurLaneLuaScripts 仓库路径",
     )
     parser.add_argument("-o", "--output", type=str, default=None, help="输出路径")
+    parser.add_argument('--names-only', action='store_true', help='仅导出舰名及改造名，不更新舰船属性')
     args = parser.parse_args()
 
-    output_path = Path(args.output) if args.output else Path(__file__).resolve().parent / "ship_data.json"
+    if args.output:
+        output_path = Path(args.output)
+    elif args.names_only:
+        output_path = Path(__file__).resolve().parents[1] / 'assets/ship/ship_names.json'
+    else:
+        output_path = Path(__file__).resolve().parent / "ship_data.json"
 
     if not os.path.isdir(args.lua_repo):
         print(f"错误: Lua 脚本仓库不存在: {args.lua_repo}", file=sys.stderr)
@@ -641,7 +683,7 @@ def main():
         sys.exit(1)
 
     try:
-        data = extract_ship_data(args.lua_repo)
+        data = extract_ship_names(args.lua_repo) if args.names_only else extract_ship_data(args.lua_repo)
     except Exception:
         import traceback
         traceback.print_exc()
@@ -650,6 +692,10 @@ def main():
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with open(output_path, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
+
+    if args.names_only:
+        print(f'完成! 名称名单输出: {output_path}')
+        return
 
     kb = output_path.stat().st_size / 1024
     print(f"\n完成! 输出: {output_path} ({kb:.1f} KB)")

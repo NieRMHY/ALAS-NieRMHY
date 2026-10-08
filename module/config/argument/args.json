@@ -556,12 +556,13 @@
         "value": false
       },
       "RestartOperationTimeout": {
-        "type": "input",
-        "value": 120,
+        "type": "textarea",
+        "value": "mimo-v2.5-pro",
         "validate": [
           10,
           600
-        ]
+        ],
+        "valuetype": "str"
       }
     },
     "Optimization": {
@@ -1054,6 +1055,20 @@
       "FleetOnsen": {
         "type": "checkbox",
         "value": false
+      }
+    },
+    "OilControl": {
+      "Enable": {
+        "type": "checkbox",
+        "value": false
+      },
+      "Target": {
+        "type": "input",
+        "value": 24000,
+        "validate": [
+          1000,
+          24999
+        ]
       }
     },
     "YukikazeTaskManager": {
@@ -2838,21 +2853,53 @@
         "type": "select",
         "value": "campaign_main",
         "option": [
+          "event_20240815_cn",
+          "event_20240912_cn",
+          "event_20241219_cn",
+          "event_20250227_cn",
+          "event_20250520_cn",
+          "event_20250814_cn",
+          "event_20250912_cn",
           "event_20260908_cn"
         ],
         "option_cn": [
-          "event_20260908_cn"
+          "event_20241219_cn",
+          "event_20250912_cn",
+          "event_20250814_cn",
+          "event_20250520_cn",
+          "event_20250227_cn",
+          "event_20240912_cn",
+          "event_20240815_cn"
         ],
         "option_en": [
-          "event_20260908_cn"
+          "event_20241219_cn",
+          "event_20250912_cn",
+          "event_20250814_cn",
+          "event_20250520_cn",
+          "event_20250227_cn",
+          "event_20240912_cn",
+          "event_20240815_cn"
         ],
         "option_jp": [
-          "event_20260908_cn"
+          "event_20241219_cn",
+          "event_20250912_cn",
+          "event_20250814_cn",
+          "event_20250520_cn",
+          "event_20250227_cn",
+          "event_20240912_cn",
+          "event_20240815_cn"
         ],
         "option_tw": [
           "event_20260908_cn"
         ],
         "option_bold": [
+          "event_20240815_cn",
+          "event_20240912_cn",
+          "event_20241219_cn",
+          "event_20250227_cn",
+          "event_20250520_cn",
+          "event_20250814_cn",
+          "event_20250912_cn",
           "event_20260908_cn"
         ]
       },
@@ -3383,21 +3430,53 @@
         "type": "select",
         "value": "campaign_main",
         "option": [
+          "event_20240815_cn",
+          "event_20240912_cn",
+          "event_20241219_cn",
+          "event_20250227_cn",
+          "event_20250520_cn",
+          "event_20250814_cn",
+          "event_20250912_cn",
           "event_20260908_cn"
         ],
         "option_cn": [
-          "event_20260908_cn"
+          "event_20241219_cn",
+          "event_20250912_cn",
+          "event_20250814_cn",
+          "event_20250520_cn",
+          "event_20250227_cn",
+          "event_20240912_cn",
+          "event_20240815_cn"
         ],
         "option_en": [
-          "event_20260908_cn"
+          "event_20241219_cn",
+          "event_20250912_cn",
+          "event_20250814_cn",
+          "event_20250520_cn",
+          "event_20250227_cn",
+          "event_20240912_cn",
+          "event_20240815_cn"
         ],
         "option_jp": [
-          "event_20260908_cn"
+          "event_20241219_cn",
+          "event_20250912_cn",
+          "event_20250814_cn",
+          "event_20250520_cn",
+          "event_20250227_cn",
+          "event_20240912_cn",
+          "event_20240815_cn"
         ],
         "option_tw": [
           "event_20260908_cn"
         ],
         "option_bold": [
+          "event_20240815_cn",
+          "event_20240912_cn",
+          "event_20241219_cn",
+          "event_20250227_cn",
+          "event_20250520_cn",
+          "event_20250814_cn",
+          "event_20250912_cn",
           "event_20260908_cn"
         ]
       },
@@ -4376,21 +4455,53 @@
         "type": "select",
         "value": "campaign_main",
         "option": [
+          "event_20240815_cn",
+          "event_20240912_cn",
+          "event_20241219_cn",
+          "event_20250227_cn",
+          "event_20250520_cn",
+          "event_20250814_cn",
+          "event_20250912_cn",
           "event_20260908_cn"
         ],
         "option_cn": [
-          "event_20260908_cn"
+          "event_20241219_cn",
+          "event_20250912_cn",
+          "event_20250814_cn",
+          "event_20250520_cn",
+          "event_20250227_cn",
+          "event_20240912_cn",
+          "event_20240815_cn"
         ],
         "option_en": [
-          "event_20260908_cn"
+          "event_20241219_cn",
+          "event_20250912_cn",
+          "event_20250814_cn",
+          "event_20250520_cn",
+          "event_20250227_cn",
+          "event_20240912_cn",
+          "event_20240815_cn"
         ],
         "option_jp": [
-          "event_20260908_cn"
+          "event_20241219_cn",
+          "event_20250912_cn",
+          "event_20250814_cn",
+          "event_20250520_cn",
+          "event_20250227_cn",
+          "event_20240912_cn",
+          "event_20240815_cn"
         ],
         "option_tw": [
           "event_20260908_cn"
         ],
         "option_bold": [
+          "event_20240815_cn",
+          "event_20240912_cn",
+          "event_20241219_cn",
+          "event_20250227_cn",
+          "event_20250520_cn",
+          "event_20250814_cn",
+          "event_20250912_cn",
           "event_20260908_cn"
         ]
       },
@@ -4857,21 +4968,53 @@
         "type": "select",
         "value": "campaign_main",
         "option": [
+          "event_20240815_cn",
+          "event_20240912_cn",
+          "event_20241219_cn",
+          "event_20250227_cn",
+          "event_20250520_cn",
+          "event_20250814_cn",
+          "event_20250912_cn",
           "event_20260908_cn"
         ],
         "option_cn": [
-          "event_20260908_cn"
+          "event_20241219_cn",
+          "event_20250912_cn",
+          "event_20250814_cn",
+          "event_20250520_cn",
+          "event_20250227_cn",
+          "event_20240912_cn",
+          "event_20240815_cn"
         ],
         "option_en": [
-          "event_20260908_cn"
+          "event_20241219_cn",
+          "event_20250912_cn",
+          "event_20250814_cn",
+          "event_20250520_cn",
+          "event_20250227_cn",
+          "event_20240912_cn",
+          "event_20240815_cn"
         ],
         "option_jp": [
-          "event_20260908_cn"
+          "event_20241219_cn",
+          "event_20250912_cn",
+          "event_20250814_cn",
+          "event_20250520_cn",
+          "event_20250227_cn",
+          "event_20240912_cn",
+          "event_20240815_cn"
         ],
         "option_tw": [
           "event_20260908_cn"
         ],
         "option_bold": [
+          "event_20240815_cn",
+          "event_20240912_cn",
+          "event_20241219_cn",
+          "event_20250227_cn",
+          "event_20250520_cn",
+          "event_20250814_cn",
+          "event_20250912_cn",
           "event_20260908_cn"
         ]
       },
@@ -5338,21 +5481,53 @@
         "type": "select",
         "value": "campaign_main",
         "option": [
+          "event_20240815_cn",
+          "event_20240912_cn",
+          "event_20241219_cn",
+          "event_20250227_cn",
+          "event_20250520_cn",
+          "event_20250814_cn",
+          "event_20250912_cn",
           "event_20260908_cn"
         ],
         "option_cn": [
-          "event_20260908_cn"
+          "event_20241219_cn",
+          "event_20250912_cn",
+          "event_20250814_cn",
+          "event_20250520_cn",
+          "event_20250227_cn",
+          "event_20240912_cn",
+          "event_20240815_cn"
         ],
         "option_en": [
-          "event_20260908_cn"
+          "event_20241219_cn",
+          "event_20250912_cn",
+          "event_20250814_cn",
+          "event_20250520_cn",
+          "event_20250227_cn",
+          "event_20240912_cn",
+          "event_20240815_cn"
         ],
         "option_jp": [
-          "event_20260908_cn"
+          "event_20241219_cn",
+          "event_20250912_cn",
+          "event_20250814_cn",
+          "event_20250520_cn",
+          "event_20250227_cn",
+          "event_20240912_cn",
+          "event_20240815_cn"
         ],
         "option_tw": [
           "event_20260908_cn"
         ],
         "option_bold": [
+          "event_20240815_cn",
+          "event_20240912_cn",
+          "event_20241219_cn",
+          "event_20250227_cn",
+          "event_20250520_cn",
+          "event_20250814_cn",
+          "event_20250912_cn",
           "event_20260908_cn"
         ]
       },
@@ -7377,22 +7552,6 @@
         "value": "EquipUR > EquipSSR > Cube > GachaTicket\n> Array > Chip > CatT3 \n> Meta > SkinBox\n> Oil > Coin > Medal > ExpBookT1 > FoodT1\n> DR > PR\n> AugmentCore > AugmentEnhanceT2 > AugmentChangeT2 > AugmentChangeT1\n> CatT2 > CatT1 > PlateGeneralT3 > PlateT3 > BoxT4\n> ShipSSR"
       }
     },
-    "ShopAdvanced": {
-      "Mode": {
-        "type": "select",
-        "value": "legacy",
-        "option": [
-          "legacy",
-          "advanced"
-        ]
-      },
-      "Script": {
-        "type": "textarea",
-        "value": "",
-        "mode": "restricted_lua",
-        "preserve_empty": true
-      }
-    },
     "Storage": {
       "Storage": {
         "type": "storage",
@@ -8255,21 +8414,53 @@
         "type": "select",
         "value": "campaign_main",
         "option": [
+          "event_20240815_cn",
+          "event_20240912_cn",
+          "event_20241219_cn",
+          "event_20250227_cn",
+          "event_20250520_cn",
+          "event_20250814_cn",
+          "event_20250912_cn",
           "event_20260908_cn"
         ],
         "option_cn": [
-          "event_20260908_cn"
+          "event_20241219_cn",
+          "event_20250912_cn",
+          "event_20250814_cn",
+          "event_20250520_cn",
+          "event_20250227_cn",
+          "event_20240912_cn",
+          "event_20240815_cn"
         ],
         "option_en": [
-          "event_20260908_cn"
+          "event_20241219_cn",
+          "event_20250912_cn",
+          "event_20250814_cn",
+          "event_20250520_cn",
+          "event_20250227_cn",
+          "event_20240912_cn",
+          "event_20240815_cn"
         ],
         "option_jp": [
-          "event_20260908_cn"
+          "event_20241219_cn",
+          "event_20250912_cn",
+          "event_20250814_cn",
+          "event_20250520_cn",
+          "event_20250227_cn",
+          "event_20240912_cn",
+          "event_20240815_cn"
         ],
         "option_tw": [
           "event_20260908_cn"
         ],
         "option_bold": [
+          "event_20240815_cn",
+          "event_20240912_cn",
+          "event_20241219_cn",
+          "event_20250227_cn",
+          "event_20250520_cn",
+          "event_20250814_cn",
+          "event_20250912_cn",
           "event_20260908_cn"
         ]
       },
@@ -8727,21 +8918,53 @@
         "type": "select",
         "value": "campaign_main",
         "option": [
+          "event_20240815_cn",
+          "event_20240912_cn",
+          "event_20241219_cn",
+          "event_20250227_cn",
+          "event_20250520_cn",
+          "event_20250814_cn",
+          "event_20250912_cn",
           "event_20260908_cn"
         ],
         "option_cn": [
-          "event_20260908_cn"
+          "event_20241219_cn",
+          "event_20250912_cn",
+          "event_20250814_cn",
+          "event_20250520_cn",
+          "event_20250227_cn",
+          "event_20240912_cn",
+          "event_20240815_cn"
         ],
         "option_en": [
-          "event_20260908_cn"
+          "event_20241219_cn",
+          "event_20250912_cn",
+          "event_20250814_cn",
+          "event_20250520_cn",
+          "event_20250227_cn",
+          "event_20240912_cn",
+          "event_20240815_cn"
         ],
         "option_jp": [
-          "event_20260908_cn"
+          "event_20241219_cn",
+          "event_20250912_cn",
+          "event_20250814_cn",
+          "event_20250520_cn",
+          "event_20250227_cn",
+          "event_20240912_cn",
+          "event_20240815_cn"
         ],
         "option_tw": [
           "event_20260908_cn"
         ],
         "option_bold": [
+          "event_20240815_cn",
+          "event_20240912_cn",
+          "event_20241219_cn",
+          "event_20250227_cn",
+          "event_20250520_cn",
+          "event_20250814_cn",
+          "event_20250912_cn",
           "event_20260908_cn"
         ]
       },
@@ -9199,21 +9422,53 @@
         "type": "select",
         "value": "campaign_main",
         "option": [
+          "event_20240815_cn",
+          "event_20240912_cn",
+          "event_20241219_cn",
+          "event_20250227_cn",
+          "event_20250520_cn",
+          "event_20250814_cn",
+          "event_20250912_cn",
           "event_20260908_cn"
         ],
         "option_cn": [
-          "event_20260908_cn"
+          "event_20241219_cn",
+          "event_20250912_cn",
+          "event_20250814_cn",
+          "event_20250520_cn",
+          "event_20250227_cn",
+          "event_20240912_cn",
+          "event_20240815_cn"
         ],
         "option_en": [
-          "event_20260908_cn"
+          "event_20241219_cn",
+          "event_20250912_cn",
+          "event_20250814_cn",
+          "event_20250520_cn",
+          "event_20250227_cn",
+          "event_20240912_cn",
+          "event_20240815_cn"
         ],
         "option_jp": [
-          "event_20260908_cn"
+          "event_20241219_cn",
+          "event_20250912_cn",
+          "event_20250814_cn",
+          "event_20250520_cn",
+          "event_20250227_cn",
+          "event_20240912_cn",
+          "event_20240815_cn"
         ],
         "option_tw": [
           "event_20260908_cn"
         ],
         "option_bold": [
+          "event_20240815_cn",
+          "event_20240912_cn",
+          "event_20241219_cn",
+          "event_20250227_cn",
+          "event_20250520_cn",
+          "event_20250814_cn",
+          "event_20250912_cn",
           "event_20260908_cn"
         ]
       },
@@ -9671,21 +9926,53 @@
         "type": "select",
         "value": "campaign_main",
         "option": [
+          "event_20240815_cn",
+          "event_20240912_cn",
+          "event_20241219_cn",
+          "event_20250227_cn",
+          "event_20250520_cn",
+          "event_20250814_cn",
+          "event_20250912_cn",
           "event_20260908_cn"
         ],
         "option_cn": [
-          "event_20260908_cn"
+          "event_20241219_cn",
+          "event_20250912_cn",
+          "event_20250814_cn",
+          "event_20250520_cn",
+          "event_20250227_cn",
+          "event_20240912_cn",
+          "event_20240815_cn"
         ],
         "option_en": [
-          "event_20260908_cn"
+          "event_20241219_cn",
+          "event_20250912_cn",
+          "event_20250814_cn",
+          "event_20250520_cn",
+          "event_20250227_cn",
+          "event_20240912_cn",
+          "event_20240815_cn"
         ],
         "option_jp": [
-          "event_20260908_cn"
+          "event_20241219_cn",
+          "event_20250912_cn",
+          "event_20250814_cn",
+          "event_20250520_cn",
+          "event_20250227_cn",
+          "event_20240912_cn",
+          "event_20240815_cn"
         ],
         "option_tw": [
           "event_20260908_cn"
         ],
         "option_bold": [
+          "event_20240815_cn",
+          "event_20240912_cn",
+          "event_20241219_cn",
+          "event_20250227_cn",
+          "event_20250520_cn",
+          "event_20250814_cn",
+          "event_20250912_cn",
           "event_20260908_cn"
         ]
       },
@@ -10133,21 +10420,53 @@
         "type": "select",
         "value": "campaign_main",
         "option": [
+          "event_20240815_cn",
+          "event_20240912_cn",
+          "event_20241219_cn",
+          "event_20250227_cn",
+          "event_20250520_cn",
+          "event_20250814_cn",
+          "event_20250912_cn",
           "event_20260908_cn"
         ],
         "option_cn": [
-          "event_20260908_cn"
+          "event_20241219_cn",
+          "event_20250912_cn",
+          "event_20250814_cn",
+          "event_20250520_cn",
+          "event_20250227_cn",
+          "event_20240912_cn",
+          "event_20240815_cn"
         ],
         "option_en": [
-          "event_20260908_cn"
+          "event_20241219_cn",
+          "event_20250912_cn",
+          "event_20250814_cn",
+          "event_20250520_cn",
+          "event_20250227_cn",
+          "event_20240912_cn",
+          "event_20240815_cn"
         ],
         "option_jp": [
-          "event_20260908_cn"
+          "event_20241219_cn",
+          "event_20250912_cn",
+          "event_20250814_cn",
+          "event_20250520_cn",
+          "event_20250227_cn",
+          "event_20240912_cn",
+          "event_20240815_cn"
         ],
         "option_tw": [
           "event_20260908_cn"
         ],
         "option_bold": [
+          "event_20240815_cn",
+          "event_20240912_cn",
+          "event_20241219_cn",
+          "event_20250227_cn",
+          "event_20250520_cn",
+          "event_20250814_cn",
+          "event_20250912_cn",
           "event_20260908_cn"
         ]
       },
@@ -11249,6 +11568,36 @@
           "week",
           "month"
         ]
+      },
+      "AutoPickShip": {
+        "type": "checkbox",
+        "value": false
+      },
+      "PickMinRarity": {
+        "type": "select",
+        "value": "rare",
+        "option": [
+          "common",
+          "rare",
+          "elite",
+          "super_rare"
+        ]
+      },
+      "PickLevelOrder": {
+        "type": "select",
+        "value": "low_first",
+        "option": [
+          "low_first",
+          "high_first"
+        ]
+      },
+      "NoFreeShipPolicy": {
+        "type": "select",
+        "value": "skip",
+        "option": [
+          "skip",
+          "use_fleet"
+        ]
       }
     },
     "Storage": {
@@ -11566,7 +11915,7 @@
       },
       "SuccessInterval": {
         "type": "input",
-        "value": 1440,
+        "value": 10080,
         "display": "hide"
       },
       "FailureInterval": {
@@ -11585,6 +11934,16 @@
         "option": [
           true,
           false
+        ]
+      }
+    },
+    "StorageStatistics": {
+      "RunIntervalDays": {
+        "type": "input",
+        "value": 7,
+        "validate": [
+          1,
+          3650
         ]
       }
     },
@@ -12885,22 +13244,6 @@
         "value": "BookRedT3 > BookYellowT3 > BookBlueT3 > BookRedT2\n> Cube\n> FoodT6 > FoodT5"
       }
     },
-    "ShopAdvanced": {
-      "Mode": {
-        "type": "select",
-        "value": "legacy",
-        "option": [
-          "legacy",
-          "advanced"
-        ]
-      },
-      "Script": {
-        "type": "textarea",
-        "value": "",
-        "mode": "restricted_lua",
-        "preserve_empty": true
-      }
-    },
     "Storage": {
       "Storage": {
         "type": "storage",
@@ -13198,22 +13541,6 @@
       "Filter": {
         "type": "textarea",
         "value": "Array"
-      }
-    },
-    "ShopAdvanced": {
-      "Mode": {
-        "type": "select",
-        "value": "legacy",
-        "option": [
-          "legacy",
-          "advanced"
-        ]
-      },
-      "Script": {
-        "type": "textarea",
-        "value": "",
-        "mode": "restricted_lua",
-        "preserve_empty": true
       }
     },
     "Storage": {
@@ -13708,22 +14035,6 @@
           "nakhimov",
           "implacable"
         ]
-      }
-    },
-    "ShopAdvanced": {
-      "Mode": {
-        "type": "select",
-        "value": "legacy",
-        "option": [
-          "legacy",
-          "advanced"
-        ]
-      },
-      "Script": {
-        "type": "textarea",
-        "value": "",
-        "mode": "restricted_lua",
-        "preserve_empty": true
       }
     },
     "Storage": {
@@ -14255,22 +14566,6 @@
         "value": 0
       }
     },
-    "ShopAdvanced": {
-      "Mode": {
-        "type": "select",
-        "value": "legacy",
-        "option": [
-          "legacy",
-          "advanced"
-        ]
-      },
-      "Script": {
-        "type": "textarea",
-        "value": "",
-        "mode": "restricted_lua",
-        "preserve_empty": true
-      }
-    },
     "Storage": {
       "Storage": {
         "type": "storage",
@@ -14336,22 +14631,6 @@
       "Filter": {
         "type": "textarea",
         "value": "LoggerAbyssal > LoggerObscure > Book > Coin > Fragment"
-      }
-    },
-    "ShopAdvanced": {
-      "Mode": {
-        "type": "select",
-        "value": "legacy",
-        "option": [
-          "legacy",
-          "advanced"
-        ]
-      },
-      "Script": {
-        "type": "textarea",
-        "value": "",
-        "mode": "restricted_lua",
-        "preserve_empty": true
       }
     },
     "Storage": {
@@ -19103,6 +19382,356 @@
         "value": "2020-01-01 00:00:00",
         "validate": "datetime",
         "display": "hide"
+      }
+    },
+    "Storage": {
+      "Storage": {
+        "type": "storage",
+        "value": {},
+        "valuetype": "ignore",
+        "display": "disabled"
+      }
+    }
+  },
+  "RunParams": {
+    "Watchdog": {
+      "CheckInterval": {
+        "type": "input",
+        "value": 30,
+        "validate": [
+          5,
+          600
+        ]
+      },
+      "DailySummaryCheckInterval": {
+        "type": "input",
+        "value": 1,
+        "validate": [
+          1,
+          60
+        ]
+      }
+    },
+    "Reboot": {
+      "Tries": {
+        "type": "input",
+        "value": 3,
+        "validate": [
+          1,
+          10
+        ]
+      },
+      "FirstTryWaitSeconds": {
+        "type": "input",
+        "value": 30,
+        "validate": [
+          5,
+          300
+        ]
+      },
+      "SubsequentTryWaitSeconds": {
+        "type": "input",
+        "value": 20,
+        "validate": [
+          5,
+          300
+        ]
+      },
+      "ObserveSeconds": {
+        "type": "input",
+        "value": 180,
+        "validate": [
+          30,
+          600
+        ]
+      },
+      "ObserveInterval": {
+        "type": "input",
+        "value": 15,
+        "validate": [
+          1,
+          60
+        ]
+      }
+    },
+    "Device": {
+      "EmulatorStartProgressInterval": {
+        "type": "input",
+        "value": 30,
+        "validate": [
+          10,
+          300
+        ]
+      },
+      "EmulatorStartDialogCheckInterval": {
+        "type": "input",
+        "value": 2,
+        "validate": [
+          1,
+          30
+        ]
+      },
+      "Mumu12StatePollInterval": {
+        "type": "input",
+        "value": 2,
+        "validate": [
+          1,
+          30
+        ]
+      },
+      "Mumu12StopWaitTimeout": {
+        "type": "input",
+        "value": 60,
+        "validate": [
+          10,
+          300
+        ]
+      },
+      "Mumu12DeepWaitTimeout": {
+        "type": "input",
+        "value": 30,
+        "validate": [
+          10,
+          120
+        ]
+      }
+    },
+    "ScreenRecord": {
+      "StartTimeout": {
+        "type": "input",
+        "value": 0.6,
+        "validate": [
+          0.1,
+          60
+        ]
+      },
+      "StopTimeout": {
+        "type": "input",
+        "value": 6.0,
+        "validate": [
+          1,
+          120
+        ]
+      },
+      "PollInterval": {
+        "type": "input",
+        "value": 0.2,
+        "validate": [
+          0.05,
+          5
+        ]
+      },
+      "TranscodeBaseTimeout": {
+        "type": "input",
+        "value": 60.0,
+        "validate": [
+          10,
+          3600
+        ]
+      },
+      "TranscodeMaxTimeout": {
+        "type": "input",
+        "value": 600.0,
+        "validate": [
+          60,
+          7200
+        ]
+      }
+    },
+    "UiWait": {
+      "IslandMapConfirmWait": {
+        "type": "input",
+        "value": 3,
+        "validate": [
+          1,
+          60
+        ]
+      },
+      "IslandMapDestinationWait": {
+        "type": "input",
+        "value": 45,
+        "validate": [
+          10,
+          600
+        ]
+      },
+      "IslandMapConfirmRetryWait": {
+        "type": "input",
+        "value": 10,
+        "validate": [
+          1,
+          60
+        ]
+      },
+      "IslandCharacterConfirmRetryWait": {
+        "type": "input",
+        "value": 3,
+        "validate": [
+          1,
+          60
+        ]
+      },
+      "IslandEntryRetryWait": {
+        "type": "input",
+        "value": 3,
+        "validate": [
+          1,
+          60
+        ]
+      },
+      "PqInteractButtonTimeout": {
+        "type": "input",
+        "value": 24,
+        "validate": [
+          5,
+          120
+        ]
+      },
+      "PqInteractClickWait": {
+        "type": "input",
+        "value": 8,
+        "validate": [
+          2,
+          60
+        ]
+      },
+      "PqInteractStartTimeout": {
+        "type": "input",
+        "value": 24,
+        "validate": [
+          5,
+          120
+        ]
+      },
+      "PqInteractEndTimeout": {
+        "type": "input",
+        "value": 40,
+        "validate": [
+          10,
+          300
+        ]
+      },
+      "PqInteractExitTimeout": {
+        "type": "input",
+        "value": 24,
+        "validate": [
+          5,
+          120
+        ]
+      },
+      "GachaPrepSubmitWait": {
+        "type": "input",
+        "value": 10,
+        "validate": [
+          2,
+          120
+        ]
+      },
+      "GachaPrepTimeout": {
+        "type": "input",
+        "value": 90,
+        "validate": [
+          10,
+          600
+        ]
+      },
+      "ChannelFloatHoldDuration": {
+        "type": "input",
+        "value": 0.2,
+        "validate": [
+          0.05,
+          5
+        ]
+      },
+      "ChannelFloatMaxAttempts": {
+        "type": "input",
+        "value": 4,
+        "validate": [
+          1,
+          20
+        ]
+      },
+      "GuildSupplyMaxRetry": {
+        "type": "input",
+        "value": 2,
+        "validate": [
+          1,
+          10
+        ]
+      },
+      "GuildExchangeBugRetry": {
+        "type": "input",
+        "value": 5,
+        "validate": [
+          1,
+          20
+        ]
+      },
+      "BuyFurnitureCheckIntervalDays": {
+        "type": "input",
+        "value": 6,
+        "validate": [
+          1,
+          30
+        ]
+      },
+      "AutoEquipAfterEquipWait": {
+        "type": "input",
+        "value": 3,
+        "validate": [
+          1,
+          30
+        ]
+      },
+      "CommissionSkipTimeout": {
+        "type": "input",
+        "value": 90,
+        "validate": [
+          10,
+          600
+        ]
+      },
+      "CommissionRewardScreenshotKeep": {
+        "type": "input",
+        "value": 50,
+        "validate": [
+          5,
+          500
+        ]
+      }
+    },
+    "Handover": {
+      "ConsumeRetryMinutes": {
+        "type": "input",
+        "value": 30,
+        "validate": [
+          5,
+          240
+        ]
+      },
+      "MaintainLeadMinutes": {
+        "type": "input",
+        "value": 10,
+        "validate": [
+          2,
+          60
+        ]
+      },
+      "MaintainCheckMinutes": {
+        "type": "input",
+        "value": 120,
+        "validate": [
+          15,
+          720
+        ]
+      },
+      "ConflictRetryMinutes": {
+        "type": "input",
+        "value": 15,
+        "validate": [
+          5,
+          120
+        ]
       }
     },
     "Storage": {

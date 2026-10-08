@@ -216,7 +216,13 @@ After changing the password, restart the WebUI so that MCP picks it up.
 <div align="center">
   <img src="doc/loading.png" alt="loading" width="500" />
   <p>Loading screen</p>
-  <img src="doc/GUI.png" alt="GUI" width="500" />
+  <table align="center">
+    <tr>
+      <td align="center"><img src="doc/GUI.png" alt="New" width="260"><br>New</td>
+      <td align="center"><img src="doc/GUI-legacy.webp" alt="Legacy" width="260"><br>Legacy</td>
+      <td align="center"><img src="doc/GUI-minimal.png" alt="Minimal" width="260"><br>Minimal</td>
+    </tr>
+  </table>
   <p>Windows client UI</p>
   <img src="doc/macGUI.png" alt="macGUI" width="500" />
   <p>macOS client UI</p>

@@ -8,7 +8,7 @@ from pathlib import Path
 from unittest.mock import patch
 from urllib.parse import urlsplit
 
-from deploy.frontend import ensure_frontend, npm_command, source_fingerprint
+from deploy.frontend import bundled_node_directory, ensure_frontend, npm_command, source_fingerprint
 
 
 class FrontendLockfileTests(unittest.TestCase):
@@ -56,6 +56,33 @@ class FrontendBuildTests(unittest.TestCase):
             command = npm_command()
             self.assertTrue(command[0].endswith('node.exe'))
             self.assertTrue(command[1].endswith('npm-cli.js'))
+
+
+class BundledNodeTests(unittest.TestCase):
+    """仓库自带便携 Node 时的兜底查找。
+
+    部分部署把 Node 解压到仓库根的 nodejs/ 下而不加入系统 PATH，
+    从非启动脚本入口跑安装器时 which('npm') 会落空，需要有兜底。
+    """
+
+    def test_finds_versioned_node_directory_and_prepends_to_path(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            node_dir = root / 'nodejs' / 'node-v24.21.0-win-x64'
+            node_dir.mkdir(parents=True)
+            (node_dir / ('node.exe' if os.name == 'nt' else 'node')).write_text('')
+            with patch('deploy.frontend.__file__', str(root / 'deploy/frontend.py')), \
+                    patch('deploy.frontend.shutil.which', return_value=None), \
+                    patch.dict(os.environ, {'PATH': '/usr/bin'}, clear=False):
+                self.assertEqual(bundled_node_directory(), node_dir)
+                with self.assertRaises(RuntimeError):
+                    npm_command()
+                self.assertTrue(os.environ['PATH'].startswith(str(node_dir)))
+
+    def test_missing_directory_returns_none(self):
+        with tempfile.TemporaryDirectory() as directory:
+            with patch('deploy.frontend.__file__', str(Path(directory) / 'deploy/frontend.py')):
+                self.assertIsNone(bundled_node_directory())
 
 
 class FrontendInstallFallbackTests(unittest.TestCase):

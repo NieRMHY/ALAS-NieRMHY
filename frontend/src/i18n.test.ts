@@ -39,12 +39,6 @@ describe('WebUI i18n', () => {
     expect(translateUi('zh-CN', 'stats.candlestickOverlay')).toBe('K 线 + 折线叠加')
   })
 
-  it('translates the advanced-mode script prerequisite in every UI language', () => {
-    expect(translateUi('zh-CN', 'script.modeRequiresScript')).toContain('非空策略脚本')
-    expect(translateUi('en-US', 'script.modeRequiresScript')).toContain('non-empty strategy script')
-    expect(translateUi('ja-JP', 'script.modeRequiresScript')).toContain('空でない戦略スクリプト')
-    expect(translateUi('zh-TW', 'script.modeRequiresScript')).toContain('非空策略指令碼')
-  })
 
   it('translates developer playground UI instead of leaving hardcoded labels', () => {
     expect(translateUi('en-US', 'developer.pageTitle')).toBe('Developer · Control Preview')

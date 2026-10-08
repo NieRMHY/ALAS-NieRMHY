@@ -234,7 +234,10 @@ class TestMumu12StateQuery(unittest.TestCase):
 
         with (
             patch.object(platform_windows, 'run_mumu_manager', side_effect=responses),
-            patch.object(platform_windows, 'MUMU12_STATE_POLL_INTERVAL', 0),
+            # 轮询间隔取 0 加速循环，等待预算保持默认（本测试要在预算内轮询成功）
+            patch.object(platform_windows, 'read_run_param',
+                         side_effect=lambda c, attr, default, *a, **k:
+                             0 if 'PollInterval' in attr else default),
         ):
             self.assertTrue(platform._mumu12_wait_stopped('F:/mumu/shell/MuMuPlayer.exe', 0))
 
@@ -243,8 +246,7 @@ class TestMumu12StateQuery(unittest.TestCase):
         with (
             patch.object(platform_windows, 'run_mumu_manager',
                          return_value=mumu_info({'is_process_started': True})),
-            patch.object(platform_windows, 'MUMU12_STATE_POLL_INTERVAL', 0),
-            patch.object(platform_windows, 'MUMU12_STOP_WAIT_TIMEOUT', 0),
+            patch.object(platform_windows, 'read_run_param', return_value=0),
         ):
             self.assertFalse(platform._mumu12_wait_stopped('F:/mumu/shell/MuMuPlayer.exe', 0))
 
@@ -253,7 +255,7 @@ class TestMumu12StateQuery(unittest.TestCase):
         platform = make_platform()
         with (
             patch.object(platform_windows, 'run_mumu_manager', return_value=''),
-            patch.object(platform_windows, 'MUMU12_STATE_POLL_INTERVAL', 0),
+            patch.object(platform_windows, 'read_run_param', return_value=0),
         ):
             self.assertTrue(platform._mumu12_wait_stopped('F:/mumu/shell/MuMuPlayer.exe', 0))
 
@@ -322,7 +324,7 @@ class TestDeepRestart(unittest.TestCase):
         alive = [self.fake_process('MuMuVMMHeadless.exe')]
         with (
             patch.object(platform_windows.psutil, 'process_iter', return_value=alive),
-            patch.object(platform_windows, 'MUMU12_DEEP_WAIT_TIMEOUT', 0),
+            patch.object(platform_windows, 'read_run_param', return_value=0),
         ):
             self.assertFalse(platform._deep_clean_mumu12('F:/mumu/shell/MuMuPlayer.exe'))
 

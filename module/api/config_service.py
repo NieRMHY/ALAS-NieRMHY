@@ -329,6 +329,14 @@ class ConfigService:
                             if 'KeepCommonCV' not in fields and isinstance(legacy, bool):
                                 merged[task][group]['KeepCommonCV'] = legacy
                             merged[task][group].pop('SkipSingleCommonCV', None)
+        from module.config.redirect_utils.shop import migrate_shop_options
+
+        merged, shop_warnings = migrate_shop_options(data, merged)
+        if shop_warnings:
+            from module.logger import logger
+
+            for task, reason in shop_warnings:
+                logger.warning(f'{task}：{reason}，已暂停任务，请检查购买配置后重新启用')
         return merged, hashlib.sha256(raw).hexdigest()
 
     def schema(self, language='zh-CN'):
@@ -427,53 +435,6 @@ class ConfigService:
                 raise
             return self.get(name)
 
-    @staticmethod
-    def validate_shop_strategy(script):
-        """校验受限 Lua 风格商店策略，不执行脚本。
-
-        Args:
-            script (str): 策略脚本源码。
-
-        Returns:
-            dict: 校验诊断结果。
-
-        Raises:
-            ApiError: 脚本语法不合法时抛出。
-        """
-        from module.shop_strategy import validate_strategy
-
-        result = validate_strategy(script)
-        if not result['valid']:
-            diagnostics = result.get('diagnostics', [])
-            first = diagnostics[0]['message'] if diagnostics else '脚本不符合受限策略语法'
-            raise ApiError('INVALID_PARAMS', f'高级商店策略脚本无效：{first}', diagnostics)
-        return result
-
-    def validate_shop_advanced_groups(self, data, tasks):
-        """校验最终配置快照中的高级模式与脚本组合。
-
-        ``Mode`` 与 ``Script`` 能在同一事务中一并修改，因此不能在逐字段
-        校验阶段提前判定。高级模式必须保存可执行的非空脚本；简单模式允许
-        清空脚本以恢复默认配置。
-
-        Args:
-            data (dict): 当前配置字典快照。
-            tasks (Iterable[str]): 涉及变更的商店任务名称集合。
-
-        Raises:
-            ApiError: 高级模式开启但未配置有效策略脚本时抛出。
-        """
-        for task in tasks:
-            group = data.get(task, {}).get('ShopAdvanced')
-            if not isinstance(group, dict) or group.get('Mode') != 'advanced':
-                continue
-            script = group.get('Script')
-            if not isinstance(script, str) or not script.strip():
-                raise ApiError(
-                    'INVALID_PARAMS',
-                    f'{task} 的高级模式需要先保存非空且有效的策略脚本',
-                )
-            self.validate_shop_strategy(script)
 
     def validate(self, path, value):
         """严格校验单项参数的修改路径与取值范围。
@@ -538,8 +499,6 @@ class ConfigService:
         elif isinstance(rule, str) and isinstance(value, (str, int, float)):
             if not re.fullmatch(rule, str(value)):
                 raise ApiError('INVALID_PARAMS', f'参数格式不正确：{path}')
-        if field.get('mode') == 'restricted_lua':
-            self.validate_shop_strategy(value)
         if field.get('mode') == 'yaml' or kind == 'yaml':
             try:
                 parsed = yaml.safe_load(value)
@@ -570,7 +529,6 @@ class ConfigService:
             # 无关字段的运行状态更新不应拒绝用户输入；同字段按事务顺序生效。
             data, _ = self.read(name)
             seen = set()
-            affected_shop_tasks = set()
             for change in changes:
                 task, group, arg = self.validate(change.path, change.value)
                 if change.path in seen:
@@ -580,9 +538,6 @@ class ConfigService:
                 if change.path in OPSI_EXPLORE_PROGRESS:
                     self._reset_opsi_explore_progress(data, change.path)
                 self._sync_record_time(data[task][group], arg)
-                if group == 'ShopAdvanced':
-                    affected_shop_tasks.add(task)
-            self.validate_shop_advanced_groups(data, affected_shop_tasks)
             atomic_write(str(self.path(name)), json.dumps(data, ensure_ascii=False, indent=2))
             return self.get(name)
 

@@ -6,7 +6,7 @@ from unittest.mock import Mock, PropertyMock, call, patch
 from alas import AzurLaneAutoScript
 from module.device.device import Device
 from module.device.connection import AdbError, retry
-from module.device.method.utils import RETRY_TRIES
+from module.base.runtime_params import RETRY_TRIES
 from module.exception import EmulatorNotRunningError, RequestHumanTakeover
 
 

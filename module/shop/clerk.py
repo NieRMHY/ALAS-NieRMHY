@@ -18,12 +18,6 @@ from module.ui.assets import SHOP_BACK_ARROW
 
 
 class StockCounter(DigitCounter):
-    """库存计数器 OCR，用于识别商店选择界面的库存数量。
-
-    预处理将图像转为灰度并反转，后处理修正常见 OCR 错误
-    （如 '55' 修正为 '5/5'，'1515' 修正为 '15/15'）。
-    """
-
     def pre_process(self, image):
         """OCR 预处理：转为灰度并反转。
 
@@ -67,12 +61,6 @@ OCR_SHOP_AMOUNT = Digit(SHOP_AMOUNT, letter=(239, 239, 239), name='OCR_SHOP_AMOU
 
 
 class ShopClerk(ShopBase, Retirement):
-    """商店购买处理器基类。
-
-    提供商品选择、数量输入、购买确认等通用逻辑。
-    子类通过重写 shop_buy_handle 和 shop_interval_clear 实现差异化处理。
-    """
-
     def shop_get_choice(self, item):
         """获取商品的配置选择项。
 
@@ -166,9 +154,11 @@ class ShopClerk(ShopBase, Retirement):
         Returns:
             bool: 是否成功执行购买
         """
+        # Search for appropriate select grid button for item
         select = self.shop_get_select(item)
 
-        # 获取库存上限，不同商店可能不同
+        # Get displayed stock limit; varies between shops
+        # If read 0, then warn and exit as cannot safely buy
         timeout = Timer(5, count=10).start()
         skip_first_screenshot = True
         limit = 0
@@ -184,10 +174,12 @@ class ShopClerk(ShopBase, Retirement):
                 break
 
         if not limit:
-            logger.critical(f"[商店] 无法识别 {item.name} 的库存数量")  # Modify by MHY, 去傲娇语
+            logger.critical(f'{item.name}\'s stock count cannot be '
+                            'extracted. Advised to re-cut the asset '
+                            'OCR_SHOP_SELECT_STOCK')
             raise ScriptError
 
-        # 间隔点击直到加减按钮出现
+        # Click in intervals until plus/minus are onscreen
         click_timer = Timer(3, count=6)
         select_offset = (500, 400)
         while 1:
@@ -195,21 +187,24 @@ class ShopClerk(ShopBase, Retirement):
                 self.device.click(select)
                 click_timer.reset()
 
+            # Scan for plus/minus locations; searching within
+            # offset will update the click position automatically
             self.device.screenshot()
             if self.appear(SELECT_MINUS, offset=select_offset) and self.appear(SELECT_PLUS, offset=select_offset):
                 break
             else:
                 continue
 
-        # 计算可购买总数（货币 / 单价）
+        # Total number to purchase altogether
         total = int(self._currency // item.price)
         diff = limit - total
         if diff > 0:
             limit = total
-        limit = self.shop_strategy_plan_quantity(item, limit)
-        item._shop_strategy_executed_quantity = limit
 
-        # 包装 OCR 函数适配 ui_ensure_index，防止库存不足时超买
+        # Alias OCR_SHOP_SELECT_STOCK to adapt with
+        # ui_ensure_index; prevent overbuying when
+        # out of stock; item.price may still evaluate
+        # incorrectly
         def shop_buy_select_ensure_index(image):
             """读取自选商品库存并适配索引控制。
 
@@ -229,6 +224,7 @@ class ShopClerk(ShopBase, Retirement):
         self.ui_ensure_index(limit, letter=shop_buy_select_ensure_index, prev_button=SELECT_MINUS,
                              next_button=SELECT_PLUS,
                              skip_first_screenshot=True)
+        item._resource_purchase_quantity = limit
         self.device.click(SHOP_BUY_CONFIRM_SELECT)
         return True
 
@@ -248,13 +244,16 @@ class ShopClerk(ShopBase, Retirement):
         """
         index_offset = (40, 20)
 
-        # 使用船坞 OCR 技巧精确定位数量输入区域
+        # In case either -/+ shift position, use
+        # shipyard ocr trick to accurately parse
         self.appear(AMOUNT_MINUS, offset=index_offset)
         self.appear(AMOUNT_PLUS, offset=index_offset)
         area = OCR_SHOP_AMOUNT.buttons[0]
         OCR_SHOP_AMOUNT.buttons = [(AMOUNT_MINUS.button[2] + 3, area[1], AMOUNT_PLUS.button[0] - 3, area[3])]
 
-        # 点击最大按钮获取可购买总数，等待图像稳定
+        # Total number that can be purchased
+        # altogether based on clicking max
+        # Needs small delay for stable image
         self.appear_then_click(AMOUNT_MAX, offset=(50, 50))
         self.device.sleep((0.3, 0.5))
         timeout = Timer(5, count=10).start()
@@ -268,19 +267,19 @@ class ShopClerk(ShopBase, Retirement):
                 break
 
         if not limit:
-            logger.critical("[商店] OCR_SHOP_AMOUNT 识别数量为 0")  # Modify by MHY, 去傲娇语
+            logger.critical('OCR_SHOP_AMOUNT resulted in zero (0); '
+                            'asset may be compromised')
             raise ScriptError
 
-        # 调整购买数量（货币 / 单价）
+        # Adjust purchase amount if needed
         total = int(self._currency // item.price)
         diff = limit - total
         if diff > 0:
             limit = total
-        limit = self.shop_strategy_plan_quantity(item, limit)
-        item._shop_strategy_executed_quantity = limit
 
         self.ui_ensure_index(limit, letter=OCR_SHOP_AMOUNT, prev_button=AMOUNT_MINUS, next_button=AMOUNT_PLUS,
                              skip_first_screenshot=True)
+        item._resource_purchase_quantity = limit
         self.device.click(SHOP_BUY_CONFIRM_AMOUNT)
         return True
 
@@ -317,11 +316,10 @@ class ShopClerk(ShopBase, Retirement):
         """
         success = False
         confirmed_purchase = False
-        if self.shop_strategy_enabled():
-            # 无数量选择框的商品默认只会确认一次；有数量框时由对应处理器覆盖。
-            item._shop_strategy_executed_quantity = min(
-                getattr(item, '_shop_strategy_quantity', 1), 1,
-            )
+        from module.statistics.resource_tracking import receipt_totals
+        receipts = receipt_totals(self.config)
+        # 每次成交独立记录；数量选择框确认后再覆盖默认的一次购买。
+        item._resource_purchase_quantity = 1
         self.shop_interval_clear()
 
         while 1:
@@ -344,8 +342,7 @@ class ShopClerk(ShopBase, Retirement):
                 continue
             if self.shop_purchase_result_handle():
                 self.interval_reset(SHOP_BACK_ARROW)
-                success = True
-                confirmed_purchase = True
+                success = confirmed_purchase = True
                 continue
             if self.shop_obstruct_handle():
                 self.interval_reset(SHOP_BACK_ARROW)
@@ -356,9 +353,12 @@ class ShopClerk(ShopBase, Retirement):
                 success = True
                 continue
 
-            # 结束条件
+            # End
             if success and self.appear(SHOP_BACK_ARROW, offset=(30, 30)):
-                return confirmed_purchase if self.shop_strategy_enabled() else True
+                if confirmed_purchase:
+                    from module.statistics.resource_tracking import record_purchase
+                    record_purchase(self.config, item, item._resource_purchase_quantity, receipts)
+                break
 
     def shop_buy(self):
         """执行商店购买主循环。
@@ -370,27 +370,22 @@ class ShopClerk(ShopBase, Retirement):
             bool: 是否成功（True 表示购买完成或余额不足，False 表示余额为 0）
         """
         for _ in range(12):
-            logger.hr('商店购买', level=2)
-            # 先获取商品列表，利用固有延迟等待 OCR 货币识别更准确
+            logger.hr('Shop buy', level=2)
+            # Get first for innate delay to ocr
+            # shop currency for accurate parse
             items = self.shop_get_items()
             self.shop_currency()
-            strategy_currency = self.shop_strategy_currency(items) if self.shop_strategy_enabled() else {}
-            if self._currency <= 0 and not any(amount > 0 for amount in strategy_currency.values()):
-                logger.warning(f'[商店-购买] 当前资金: {self._currency}，停止')
+            if self._currency <= 0:
+                logger.warning(f'Current funds: {self._currency}, stopped')
                 return False
 
             item = self.shop_get_item_to_buy(items)
             if item is None:
-                logger.info('[商店-购买] 购买完成')
+                logger.info('Shop buy finished')
                 return True
             else:
-                completed = self.shop_buy_execute(item)
-                if completed:
-                    self.shop_strategy_record_purchase(item)
-                elif self.shop_strategy_enabled():
-                    logger.warning('[高级商店策略] 未获得明确购买结果，停止本轮以避免错误记账')
-                    return True
+                self.shop_buy_execute(item)
                 continue
 
-        logger.warning('购买物品过多，停止')
+        logger.warning('Too many items to buy, stopped')
         return True

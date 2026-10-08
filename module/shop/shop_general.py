@@ -87,19 +87,6 @@ class GeneralShop_250814(ShopClerk, ShopUI, ShopStatus):
 
         return self._currency
 
-    def shop_strategy_currency(self, items):
-        """向高级策略提供金币和钻石两种实际余额。
-
-        Args:
-            items: 当前货架商品列表（本方法中未直接使用）。
-
-        Returns:
-            dict[str, int]: 包含 'Coins' 和 'Gems' 实际余额的字典。
-        """
-        return {
-            'Coins': max(0, int(self._currency)),
-            'Gems': max(0, int(self.gems)),
-        }
 
     def shop_check_item(self, item):
         """检查商品是否可购买（基于货币余额）。
@@ -234,27 +221,24 @@ class GeneralShop_250814(ShopClerk, ShopUI, ShopStatus):
         按照过滤器配置购买通用商店商品，支持刷新。
         购买完成后，若金币超过溢出阈值则自动购买猫箱。
         """
-        # 配置值验证：检测并修正异常值
+        # Base case; exit run if filter empty
         self._validate_config_values()
-
-        if not self.shop_filter and not self.shop_strategy_enabled():
+        if not self.shop_filter:
+            self._meowfficer_overflow_buy()
             return
 
-        logger.hr('通用商店', level=1)
+        # When called, expected to be in
+        # corrected General Shop interface
+        logger.hr('General Shop', level=1)
 
-        # 刷新与金币溢出购买属于旧过滤器工作流，未纳入高级脚本的 reserve /
-        # max_spend 计划；高级模式必须完全由脚本预算控制。
-        advanced = self.shop_strategy_enabled()
-        refresh = self.config.GeneralShop_Refresh and not advanced
+        # Execute buy operations
+        # Refresh if enabled and available
+        refresh = self.config.GeneralShop_Refresh
         for _ in range(2):
             success = self.shop_buy()
             if not success:
                 break
             if refresh and self.shop_refresh():
-                self.shop_strategy_reset_inventory()
                 continue
             break
-
-        if not advanced:
-            # 金币溢出购买猫箱
-            self._meowfficer_overflow_buy()
+        self._meowfficer_overflow_buy()

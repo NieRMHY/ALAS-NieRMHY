@@ -278,3 +278,6 @@ S9-DR0.5 > S9-Q1 > 0.5 > reset > S9-E-315 > G1.5 > shortest
 - [OCR 系统](../ocr.md) —— 项目名 OCR 与 `Duration` 时长识别。
 - [基础层 module/base](../base/index.md) —— `Filter` 优先级串引擎、`Config` 服务器分发装饰器。
 - [商店系统](shop.md) —— 同样基于 `Filter` 优先级串的选品模式，可对照理解过滤器语言。
+### 资源收支记录
+
+科研项目确实启动、正向检测到 `RESEARCH_STOP` 且本轮执行过启动操作后，按项目目录明确数量记录物资、魔方与心智单元支出；已经运行的项目不重复扣账。完成奖励使用任务已有画面的已知模板与数量旁路记录。未知用量不推测，详细规则见 [资源管理](../webui/resource-management.md)。

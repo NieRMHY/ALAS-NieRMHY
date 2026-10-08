@@ -623,7 +623,7 @@ html.home-active .topbar,
   .monitor-panel .log-toolbar .icon-button {width: 32px; height: 32px}
   .monitor-panel .log-toolbar .text-button {width: 32px; min-height: 32px; padding: 0; gap: 0; justify-content: center; font-size: 0}
 }
-@media (prefers-reduced-transparency: reduce), (prefers-contrast: more), (forced-colors: active) {
+@media (prefers-contrast: more), (forced-colors: active) {
   .wallpaper {display: none}
   .glass-material, .sidebar, .home-main, .instance-menu, .task-submenu-flyout {background: var(--surface); -webkit-backdrop-filter: none; backdrop-filter: none}
   .glass-material-lens {display: none}

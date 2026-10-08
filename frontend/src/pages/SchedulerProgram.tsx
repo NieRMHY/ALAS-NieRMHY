@@ -444,7 +444,7 @@ function Editor() {
       </aside>
       {!guideDismissed && graph.edges.some(e => e.kind === 'control') && graph.nodes.some(n => n.type === 'original_settings') && (
         <div className="program-default-guide">
-          <span>原调度业务流程：读取任务 → 过滤启用与到期状态 → 按当前实例优先级排序 → 执行；没有到期任务时等待最近计划。任务结束后立即重新判断。维护检测、登录恢复和看门狗由原执行器处理。</span>
+          <span>原调度业务流程：读取任务 → 过滤启用与到期状态 → 按当前实例优先级排序 → 执行；没有到期任务时等待最近计划。任务结束后立即重新判断。维护检测、登录恢复和运行监护由原执行器处理。</span>
           <button type="button" className="program-guide-close" title="关闭说明" onClick={() => setGuideDismissed(true)}><X size={13}/></button>
         </div>
       )}

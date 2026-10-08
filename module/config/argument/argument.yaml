@@ -219,6 +219,141 @@ Error:
     value: 120
     validate: [10, 600]
   # Modify by MHY, 不采纳上游 LLM 外联配置项与依赖 LLM 的每日总结
+    type: textarea
+    value: ""
+    type: textarea
+    value: "https://api.xiaomimimo.com/v1"
+    value: "mimo-v2.5-pro"
+    valuetype: str
+Watchdog:
+  CheckInterval:
+    value: 30
+    validate: [5, 600]
+  DailySummaryCheckInterval:
+    value: 1
+    validate: [1, 60]
+Reboot:
+  Tries:
+    value: 3
+    validate: [1, 10]
+  FirstTryWaitSeconds:
+    value: 30
+    validate: [5, 300]
+  SubsequentTryWaitSeconds:
+    value: 20
+    validate: [5, 300]
+  ObserveSeconds:
+    value: 180
+    validate: [30, 600]
+  ObserveInterval:
+    value: 15
+    validate: [1, 60]
+Device:
+  EmulatorStartProgressInterval:
+    value: 30
+    validate: [10, 300]
+  EmulatorStartDialogCheckInterval:
+    value: 2
+    validate: [1, 30]
+  Mumu12StatePollInterval:
+    value: 2
+    validate: [1, 30]
+  Mumu12StopWaitTimeout:
+    value: 60
+    validate: [10, 300]
+  Mumu12DeepWaitTimeout:
+    value: 30
+    validate: [10, 120]
+ScreenRecord:
+  StartTimeout:
+    value: 0.6
+    validate: [0.1, 60]
+  StopTimeout:
+    value: 6.0
+    validate: [1, 120]
+  PollInterval:
+    value: 0.2
+    validate: [0.05, 5]
+  TranscodeBaseTimeout:
+    value: 60.0
+    validate: [10, 3600]
+  TranscodeMaxTimeout:
+    value: 600.0
+    validate: [60, 7200]
+UiWait:
+  IslandMapConfirmWait:
+    value: 3
+    validate: [1, 60]
+  IslandMapDestinationWait:
+    value: 45
+    validate: [10, 600]
+  IslandMapConfirmRetryWait:
+    value: 10
+    validate: [1, 60]
+  IslandCharacterConfirmRetryWait:
+    value: 3
+    validate: [1, 60]
+  IslandEntryRetryWait:
+    value: 3
+    validate: [1, 60]
+  PqInteractButtonTimeout:
+    value: 24
+    validate: [5, 120]
+  PqInteractClickWait:
+    value: 8
+    validate: [2, 60]
+  PqInteractStartTimeout:
+    value: 24
+    validate: [5, 120]
+  PqInteractEndTimeout:
+    value: 40
+    validate: [10, 300]
+  PqInteractExitTimeout:
+    value: 24
+    validate: [5, 120]
+  GachaPrepSubmitWait:
+    value: 10
+    validate: [2, 120]
+  GachaPrepTimeout:
+    value: 90
+    validate: [10, 600]
+  ChannelFloatHoldDuration:
+    value: 0.2
+    validate: [0.05, 5]
+  ChannelFloatMaxAttempts:
+    value: 4
+    validate: [1, 20]
+  GuildSupplyMaxRetry:
+    value: 2
+    validate: [1, 10]
+  GuildExchangeBugRetry:
+    value: 5
+    validate: [1, 20]
+  BuyFurnitureCheckIntervalDays:
+    value: 6
+    validate: [1, 30]
+  AutoEquipAfterEquipWait:
+    value: 3
+    validate: [1, 30]
+  CommissionSkipTimeout:
+    value: 90
+    validate: [10, 600]
+  CommissionRewardScreenshotKeep:
+    value: 50
+    validate: [5, 500]
+Handover:
+  ConsumeRetryMinutes:
+    value: 30
+    validate: [5, 240]
+  MaintainLeadMinutes:
+    value: 10
+    validate: [2, 60]
+  MaintainCheckMinutes:
+    value: 120
+    validate: [15, 720]
+  ConflictRetryMinutes:
+    value: 15
+    validate: [5, 120]
 Optimization:
   OcrDevice:
     value: auto
@@ -892,15 +1027,6 @@ EventShop:
     > CatT2 > CatT1 > PlateGeneralT3 > PlateT3 > BoxT4
     > ShipSSR
 
-ShopAdvanced:
-  Mode:
-    value: legacy
-    option: [legacy, advanced]
-  Script:
-    type: textarea
-    mode: restricted_lua
-    preserve_empty: true
-    value: ""
 
 # ==================== Reward ====================
 
@@ -970,6 +1096,16 @@ Commission:
   GemStatisticsPeriod:
     value: month
     option: [today, week, month]
+  AutoPickShip: false
+  PickMinRarity:
+    value: rare
+    option: [ common, rare, elite, super_rare ]
+  PickLevelOrder:
+    value: low_first
+    option: [ low_first, high_first ]
+  NoFreeShipPolicy:
+    value: skip
+    option: [ skip, use_fleet ]
 Tactical:
   TacticalFilter: |-
     SameT4 > SameT3 > SameT2 > SameT1
@@ -1000,6 +1136,10 @@ AddNewStudent:
   MaxLevel:
     value: 0
     validate: [0, 125]
+StorageStatistics:
+  RunIntervalDays:
+    value: 7
+    validate: [1, 3650]
 Research:
   UseCube:
     value: only_05_hour
@@ -1050,6 +1190,12 @@ Research:
     > S9-Q4 > Q2 > E2 > 2 > DR2.5 > PRY2.5 > G2.5 > 2.5 > S9-PRY5
     > S9-PRY8 > Q4 > G4 > 4 > S9-C6 > DR5 > PRY5 > 5 > C6 > 6 > S9-C8
     > S9-C12 > DR8 > PRY8 > C8 > 8 > C12 > 12
+OilControl:
+  # 清理会临时抢占用户任务优先级并自动后宅购粮，属侵入性行为，默认关闭，由用户显式开启
+  Enable: false
+  Target:
+    value: 24000
+    validate: [1000, 24999]
 Dorm:
   Collect: true
   Feed: true

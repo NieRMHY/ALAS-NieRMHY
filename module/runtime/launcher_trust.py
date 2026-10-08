@@ -10,14 +10,13 @@ WebUI 密码或由 WebUI 自动生成密码，启动器依旧免密。手动 ``g
 
 本模块只依赖标准库，便于独立单元测试。
 """
+from module.base.runtime_params import TOKEN_TTL_SECONDS
 import secrets
 import threading
 import time
 
 #: 启动器注入信任密钥的环境变量名（与 alas-launcher 保持一致）
 TRUST_SECRET_ENV = "ALAS_WEBUI_TRUST_SECRET"
-#: 免密令牌有效期（秒），短时一次性
-TOKEN_TTL_SECONDS = 60
 
 _lock = threading.Lock()
 _secret: str | None = None       #: 启动器信任密钥，None 表示未启用

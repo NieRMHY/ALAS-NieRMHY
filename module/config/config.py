@@ -252,6 +252,10 @@ class AzurLaneConfig(ConfigUpdater, ManualConfig, GeneratedConfig, ConfigWatcher
             func_list.insert(0, "Alas")
         if "General" not in func_list:
             func_list.insert(0, "General")
+        if "RunParams" not in func_list:
+            # 「运行参数」页是全局参数（调度器、运行监护、设备与等待节奏），
+            # 对所有任务生效，因此随任意任务一起绑定。
+            func_list.append("RunParams")
         logger.info(f"[配置] 绑定任务 {func_list}")
 
         # 绑定参数
@@ -778,6 +782,10 @@ class AzurLaneConfig(ConfigUpdater, ManualConfig, GeneratedConfig, ConfigWatcher
         runtime = self.__dict__.get('_scheduler_runtime')
         if runtime is not None and runtime.mode != 'native':
             return runtime.should_yield(self)
+        if runtime is not None:
+            decision = runtime.oil_control.should_yield(self)
+            if decision is not None:
+                return decision
         prev = getattr(self, '_task_switch_owner', self.task)
         self.load()
         new = self.get_next()

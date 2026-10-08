@@ -177,6 +177,10 @@ flowchart TD
 
 `stage_name.py` 刻意做成不访问配置与文件系统的纯函数，便于离线单测；`T_CHAPTER_FOLDERS` 等「哪些活动接受 A1 作为 T1 别名」的清单以集合维护，新活动复用旧命名时在此登记。
 
+### 首发与复刻的选关布局
+
+活动地图目录可能同时用于首发和复刻。`event_20240912_cn` 在进入选关页后按实际按钮识别布局：左下角作战／剧情选择器走 `20241219` 侧边栏导航，普通／困难开关走旧导航；未知画面通过 `CampaignNameError` 回到选关循环重截图，不盲点模式按钮。布局标记仅覆盖当前战役配置副本，每次导航重新判断；普通和困难关卡在新版地图准备页切换难度，SP 不启用该难度开关。不要按服务器或单一当前活动全局替换导航逻辑。
+
 ### 大世界入口聚合（os_run.py）
 
 `OSCampaignRun` 自身不实现任何游戏操作。每个 `opsi_*` 方法都是同一模板：
@@ -194,6 +198,8 @@ opsi_shop():
 ```
 
 关闭防溢出任务的原因：普通大世界任务运行时行动力会被消耗，防溢出任务此时插入调度没有意义且可能冲突；结束后按实际状态重新排程。个别方法有专属分支：`opsi_meowfficer_farming` 行动力不足时按「距重置是否不足一天」分流到次日或 2.5 小时；`opsi_scheduling` 须在 `os_init()` 前拦截（否则会先执行一次自律寻敌）；`opsi_month_boss` 在 TW 服直接停用。
+
+原调度的石油清理复用 `CampaignRun`：临时提高 `StopCondition_OilLimit`，实际战斗照常扣减运行次数和记录心情；达到清油目标时结束本次调用并移除临时覆盖，不添加日常低油等待。此时 `handle_commission_notice()` 暂缓委托红点跳转，任务切换检查采用清油临时优先级，防止委托在出击前反复抢占。系统恢复、用户停止、次数限制及真实心情冷却继续生效。候选仅包含已启用且到期的普通模式 Main/Main2/Main3/Event/Event2/Event3，不通过 `task_call()` 提前唤醒冷却任务；没有可运行的图时由调度器转后宅购粮。
 
 ## 7. 调用关系
 
@@ -311,6 +317,7 @@ stateDiagram-v2
 
 ## 13. 缓存与持久化
 
+- 地图加载缓存以活动目录与关卡文件名共同判断；两个活动都有 `a1` 时必须重新加载各自地图，只有目录和文件名都相同才复用。
 - `stage_entrance` 字典：每次 `_get_stage_name()` 整体重建，不跨截图缓存；`_stage_image` / `_stage_image_gray` 是 `cached_property`，OCR 前后用 `del_cached_property` 显式失效。
 - `_map_battle`（Boss 前战斗数）为 `cached_property`，随每次 `load_campaign` 新建的 campaign 实例自然失效。
 - 用户配置中的持久化状态：`EventDaily_LastStage`（活动日常断点续刷）、`WarArchives_DailyRunCountRemain/Record`（档案每日额度，跨天按服务器刷新时间重置）、`Emotion.Fleet1Value` 等心情记录、`Dashboard.*`（`LogRes` 写入的油/金币/PT 快照）。
@@ -319,7 +326,7 @@ stateDiagram-v2
 ## 14. 生命周期
 
 1. **创建**：`alas.py` 任务方法构造 `CampaignRun(config, device)`，全部能力经继承链就位，无单独初始化。
-2. **加载**：`load_campaign()` 若关卡名未变则直接复用；否则 `importlib.import_module` 加载地图模块（进程内缓存），深拷贝配置合并地图 `Config`，实例化 `module.Campaign`。GemsFarming/Ambush11 在此步骤动态构造覆写子类替换实例。
+2. **加载**：`load_campaign()` 若目录和关卡名均未变则直接复用；否则 `importlib.import_module` 加载地图模块（进程内缓存），深拷贝配置合并地图 `Config`，实例化 `module.Campaign`。GemsFarming/Ambush11 在此步骤动态构造覆写子类替换实例。
 3. **运行**：`run()` 的多轮循环；每轮先做 UI 状态恢复，再出击，再判停止条件。地图模块类对象进程内缓存，实例随关卡切换重建。
 4. **收尾**：`ensure_auto_search_exit()` 保证退出自动搜索菜单后任务结束；`config.update()` 把仪表盘与计数写回；实例整体丢弃，无显式销毁。
 
@@ -418,3 +425,6 @@ CampaignRun(config=self.config, device=self.device).run(
 - [配置系统](config.md) —— `override`、`cross_set`、`task_delay`/`task_call` 的语义
 - [处理器层](handler.md) —— 快进/成就判定（`FastForwardHandler`）、自动搜索菜单处理
 - [OCR 系统](ocr.md) —— `Ocr`/`Digit` 底层与 `PtOcr` 预处理
+### 末轮资源归因
+
+战役正常结束或安全切换后，仅在正向确认的选图页连续两帧核对石油、物资及可见活动 PT，仍处于原任务的记账范围。达到次数上限的最后一轮耗油也因此归给实际刷图任务，已记录的奖励在库存差额中扣除。此核对不导航、不增加战斗、不修改停止或心情条件；游戏异常直接走原恢复机制。记录依据和无法归因的变化见 [资源管理](webui/resource-management.md)。

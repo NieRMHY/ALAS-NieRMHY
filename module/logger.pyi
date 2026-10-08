@@ -32,6 +32,9 @@ def get_log_file_path(
 def set_file_logger(
     name: str | None = None,
 ) -> None: ...
+def set_console_logger(
+    enabled: bool = True,
+) -> None: ...
 def set_func_logger(
     func: Callable[[ConsoleRenderable], None],
 ) -> None: ...

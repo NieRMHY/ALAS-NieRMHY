@@ -21,12 +21,22 @@
 """
 
 import copy
+import re
 from datetime import datetime, timedelta
 
-from scipy import signal
+import numpy as np
 
+from scipy import signal
+from scipy.ndimage import uniform_filter1d
+
+from module.base.button import Button, ButtonGrid
+from module.base.runtime_params import (
+    COMMISSION_REWARD_SCREENSHOT_KEEP,
+    COMMISSION_SKIP_TIMEOUT,
+)
 from module.base.timer import Timer
 from module.base.utils import *
+from module.config.utils import read_run_param
 from module.combat.assets import *
 from module.commission.assets import *
 from module.commission.planner import (
@@ -41,13 +51,17 @@ from module.config.config_generated import GeneratedConfig
 from module.config.time_source import now as current_time
 from module.config.utils import get_server_last_update, get_server_next_update, nearest_future
 from module.dorm.dorm import RewardDorm
-from module.exception import GameStuckError, OilMaxed, RequestHumanTakeover
+from module.exception import OilMaxed, RequestHumanTakeover
+from module.handler.assets import POPUP_CANCEL, POPUP_CONFIRM
 from module.handler.info_handler import InfoHandler
 from module.logger import logger
 from module.notify.notify import handle_notify, notify_title, notify_webui
 from module.map.map_grids import SelectedGrids
-from module.retire.assets import DOCK_CHECK
+from module.retire.assets import DOCK_CHECK, SORTING_CLICK
 from module.statistics.item import AmountOcr
+from module.combat.level import LevelOcr
+from module.retire.dock import CARD_GRIDS, CARD_LEVEL_GRIDS, DOCK_SCROLL, Dock, OCR_DOCK_SELECTED
+from module.retire.scanner import FleetScanner, LevelScanner
 from module.ui.assets import BACK_ARROW, REWARD_GOTO_COMMISSION
 from module.tactical.assets import TACTICAL_CLASS_START, TACTICAL_CLASS_CANCEL
 from module.ui.page import page_commission, page_reward
@@ -61,9 +75,180 @@ COMMISSION_SWITCH.add_state('daily', COMMISSION_DAILY)
 COMMISSION_SWITCH.add_state('urgent', COMMISSION_URGENT)
 COMMISSION_SCROLL = Scroll(COMMISSION_SCROLL_AREA, color=(247, 211, 66), name='COMMISSION_SCROLL')
 
-# 委托收益截图保留张数：与统计页「最近委托记录」的 50 条上限保持一致。
-# 仅在「掉落记录 - 截图保留天数」为 0 时生效，填了天数就改按天数清理。
-COMMISSION_REWARD_SCREENSHOT_KEEP = 50
+# 委托收益截图保留张数走 WebUI「运行参数」页（RunParams.UiWait），
+# 默认值集中在 module/base/runtime_params.py（界面等待域）。
+# 委托详情面板的 6 个舰船槽位（1280x720 国服实机截图标定，2026-10-07），
+# 第一格中心 (270,347) 与「推荐」按钮左下按固定距离对齐。
+# 点击已有舰船的槽位不会打开船坞，只有点空槽位（'+'）才会，
+# 且空槽位首次点击有时只展开面板，需要再点一次。
+COMMISSION_SHIP_SLOTS = ButtonGrid(
+    origin=(229, 306), delta=(101.5, 0), button_shape=(82, 82),
+    grid_shape=(6, 1), name='COMMISSION_SHIP_SLOTS')
+
+# 空槽判别：槽中心区域的平均亮度。实测空槽 ≈85（深色底 + 灰 '+'），
+# 有舰船立绘 ≥180，阈值取 130（实机截图 recommended_5 / empty_slots 标定）。
+_SLOT_CENTER_INSET = 20
+_SLOT_EMPTY_LUMINANCE = 130
+
+# 无法开始的委托（如等级不足）在短暂等待后放弃，而不是循环到
+# GameStuckError 重启游戏。单个委托的绝对超时走 WebUI「运行参数」页
+# （RunParams.UiWait），默认值集中在 module/base/runtime_params.py。
+COMMISSION_SKIP_AFTER_RECOMMEND = 3   # 推荐后开始按钮仍灰多久算失败（秒）。
+COMMISSION_SKIP_MAX_RECOMMEND = 3     # 触发闪烁 bug 前的推荐点击上限。
+
+# 舰队询问弹窗（"舰船在已有舰队编成中，是否移出编队？"）的红色关闭按钮区域，
+# 基于 1280x720 国服截图校准（2026-10-07）：弹窗出现时该区域红色占比
+# 实测 0.93，无弹窗时 < 0.05。该弹窗的"取消/确定"是无背板白字与蓝底按钮，
+# 与仓库 POPUP_CONFIRM 的橙色模板不匹配，只能单独检测。
+COMMISSION_FLEET_QUESTION_AREA = (859, 172, 929, 220)
+
+# 委托船坞的筛选面板，基于 1280x720 国服截图校准（2026-09-30）。
+# 状态通过区域均值颜色回读。
+DOCK_FILTER_OPEN = Button(area=(1088, 5, 1177, 45), color=(96, 124, 168),
+                          button=(1088, 5, 1177, 45), name='DOCK_FILTER_OPEN')
+DOCK_FILTER_LEVEL = Button(area=(360, 28, 505, 78), color=(199, 144, 62),
+                           button=(360, 28, 505, 78), name='DOCK_FILTER_LEVEL')
+DOCK_FILTER_CONFIRM = Button(area=(712, 642, 888, 702), color=(64, 99, 160),
+                             button=(712, 642, 888, 702), name='DOCK_FILTER_CONFIRM')
+DOCK_FILTER_CANCEL_AREA = (400, 650, 560, 695)
+DOCK_FILTER_CANCEL = Button(area=(390, 642, 567, 702), color=(160, 84, 84),
+                            button=(390, 642, 567, 702), name='DOCK_FILTER_CANCEL')
+DOCK_FILTER_ALL_RARITY = Button(area=(218, 427, 357, 469), color=(131, 142, 154),
+                                button=(218, 427, 357, 469), name='DOCK_FILTER_ALL_RARITY')
+DOCK_FILTER_RARITY = {
+    'common': Button(area=(365, 427, 505, 469), color=(103, 132, 175),
+                     button=(365, 427, 505, 469), name='FILTER_COMMON'),
+    'rare': Button(area=(512, 427, 652, 469), color=(103, 132, 175),
+                   button=(512, 427, 652, 469), name='FILTER_RARE'),
+    'elite': Button(area=(659, 427, 799, 469), color=(103, 132, 175),
+                    button=(659, 427, 799, 469), name='FILTER_ELITE'),
+    'super_rare': Button(area=(806, 427, 946, 469), color=(103, 132, 175),
+                         button=(806, 427, 946, 469), name='FILTER_SUPER_RARE'),
+    'ultra': Button(area=(953, 427, 1093, 469), color=(103, 132, 175),
+                    button=(953, 427, 1093, 469), name='FILTER_ULTRA'),
+}
+# 稀有度档位，从用户设定的最低档向上遍历。
+_COMMISSION_RARITY_STAGES = ['common', 'rare', 'elite', 'super_rare', 'ultra']
+# 每次翻页拖动滚动条约两行，并测量行间缝对齐到 OCR 网格线。
+CARD_GRIDS_ROW3 = ButtonGrid(
+    origin=(93, 530), delta=(164 + 2 / 3, 227), button_shape=(138, 204),
+    grid_shape=(7, 1), name='CARD_ROW3')
+# 第三行等级区的相对偏移：由 CARD_LEVEL_GRIDS 反推，
+# 与第一行一致且自动跟随 jp 服务器的不同等级位置。
+_row3_level = CARD_LEVEL_GRIDS.origin - CARD_GRIDS.origin
+_ROW3_LEVEL_AREA = tuple(
+    int(v) for v in np.append(_row3_level, _row3_level + CARD_LEVEL_GRIDS.button_shape))
+
+# 船坞列表到底时 DOCK_SCROLL.cal_position 实测封顶约 0.93：既达不到
+# Scroll.at_bottom 的 0.95 阈值，也进不了 Scroll.set(1) 的收敛范围
+# （滚动条可见时 set 没有拖动上限，会一直拖到防连点崩溃），
+# 因此翻页与到底判定在委托内自行实现。
+_DOCK_SCROLL_BOTTOM = 0.9
+# 列表翻页直接拖动右侧滚动条（DOCK_SCROLL）。不得在卡片区做手势：
+# 内容区落点不可控、拖不到列表两端，且会误触舰船卡片。
+# 手势必须用 device.drag（到达目标后按住再松手）：swipe 的小位移
+# 手势（<~25px）会被游戏回弹，drag 松手速度为 0、滑块精确停在目标处。
+#
+# 下列几何常量基于 1280x720 国服实机截图（2026-10-07）测量：
+# 行距 = CARD_GRIDS.delta[1] = 227；两行卡片之间暗缝的中心
+# = 第一行卡片下缘 76+204 加上缝宽（227-204）的一半 ≈ 292。
+_DOCK_ROW_PITCH = 227
+_DOCK_SEAM_Y = 292
+# 滚动视口约 2.85 行：卡片顶 76 到屏幕下缘 720 的可见区域
+# （底部按钮条半透明覆盖在列表上）。
+_DOCK_VIEWPORT_ROWS = 2.85
+# 每屏向下翻约 1.7 行：给位置换算误差留出余量，确保实际推进
+# 不超过 2 行（图像扫描每次只读顶部两行，超过 2 行会整行漏读）。
+_DOCK_PAGE_ROWS = 1.7
+# 实测游戏会吃掉拖拽起手约 10px 的位移（23px 的拖动实际只走 11px），
+# 拖拽终点按方向外扩作为补偿；每轮对齐会重新测量，残差可继续收敛。
+_DOCK_DRAG_SLOP = 8
+
+# 每个委托要求的最低舰船等级（按游戏自身补位规则，至少一艘达标）。
+# 键为国服 OCR 读到的委托名；未知则为 0。
+# 来源：wiki.biligame.com/blhx/军事委托，「需求舰娘等级」列。
+_COMMISSION_LEVEL_GROUP = {
+    '日常资源开发': {'I': 1, 'II': 1, 'III': 10, 'IV': 10, 'V': 30, 'VI': 30},
+    '高阶战术研发': {'I': 100, 'II': 100},
+    '小型油田开发': {'I': 1, 'II': 10, 'III': 30},
+    '中型油田开发': {'I': 1, 'II': 10, 'III': 30},
+    '大型油田开发': {'I': 1, 'II': 10, 'III': 30},
+    '保卫运输部队': {'I': 5, 'II': 25, 'III': 50},
+    '解救商船': {'I': 5, 'II': 25, 'III': 50},
+    '敌袭': {'I': 12, 'II': 35, 'III': 60},
+}
+_COMMISSION_LEVEL_SINGLE = {
+    '初级矿脉护卫委托': 1, '中级矿脉护卫委托': 10, '高级矿脉护卫委托': 30,
+    '初级林木护卫委托': 1, '中级林木护卫委托': 10, '高级林木护卫委托': 30,
+    '小型商船护卫': 1, '中型商船护卫': 10, '大型商船护卫': 30,
+    '短距离航行训练': 1, '中距离航行训练': 10, '远距离航行训练': 30,
+    '舰队护卫演习': 1, '舰队运输演习': 10, '舰队实战演习': 30,
+    '近海防卫巡逻': 1, '海域浮标检查作业': 10, '前沿基地防卫巡逻': 30,
+    '舰队初阶演习': 1, '舰队中阶演习': 10, '舰队高阶演习': 30,
+    '初阶自主训练': 10, '中阶自主训练': 30, '高阶自主训练': 70,
+    '初阶对抗演习': 10, '中阶对抗演习': 30, '高阶对抗演习': 70,
+    '初阶科研任务': 10, '中阶科研任务': 30, '高阶科研任务': 70,
+    '初阶工具整备': 10, '中阶工具整备': 30, '高阶工具整备': 70,
+    '初阶战术课程': 10, '中阶战术课程': 30, '高阶战术课程': 70,
+    '初阶货物运输': 10, '中阶货物运输': 30, '高阶货物运输': 70,
+    '支援土豪尔岛': 5, '支援姆波罗岛': 12, '支援马拉基岛': 25,
+    '支援卡波罗岛': 35, '支援玛丽岛': 50, '支援特林岛': 60,
+    '支援维拉维拉岛': 5, '支援伊岛': 12, '支援多伦瓦岛': 25,
+    '支援恐班纳': 35, '支援马内岛': 50, '支援萌岛': 60,
+    'BIW装备运输': 5, 'BIW要员护卫': 12, 'BIW物资交接': 25,
+    'BIW度假护卫': 35, 'BIW装备研发': 50, 'BIW巡视护卫': 60,
+    'NYB装备运输': 5, 'NYB要员护卫': 12, 'NYB物资交接': 25,
+    'NYB度假护卫': 35, 'NYB装备研发': 50, 'NYB巡视护卫': 60,
+    '小型观舰仪式': 20, '联合观舰仪式': 45, '同盟观舰仪式': 80,
+    '歼灭敌侦查部队': 12, '歼灭敌主力部队': 35, '歼灭敌精锐部队': 60,
+}
+_ROMAN_MAP = {'Ⅰ': 'I', 'Ⅱ': 'II', 'Ⅲ': 'III',
+              'Ⅳ': 'IV', 'Ⅴ': 'V', 'Ⅵ': 'VI'}
+_ROMAN_TRANS = str.maketrans(_ROMAN_MAP)
+
+
+def commission_level_requirement(name):
+    """委托要求的最低舰船等级（至少一艘达标），未知返回 0。"""
+    raw = (name or '').upper().replace(' ', '')
+    raw = re.sub(r'[「」『』“”\'\“（）()]', '', raw)
+    # OCR 会把一个罗马数字字形拆成 ascii 字母加数字字符
+    # （敌袭IⅡ 实为 敌袭Ⅱ），所以最后一个 unicode 数字字符决定档位，
+    # 它前面的 ascii 字母属于同一字形。
+    numerals = list(re.finditer(r'[ⅠⅡⅢⅣⅤⅥ]', raw))
+    if numerals:
+        last = numerals[-1]
+        # 敌袭IⅡ：字形前的 ascii 字母属于该字形，
+        # 组名是去掉整个数字后剩下的部分。
+        group = _COMMISSION_LEVEL_GROUP.get(raw[:last.start()].rstrip('IV'))
+        if group:
+            return group.get(_ROMAN_MAP[last.group()], 0)
+        return 0
+    name = raw.translate(_ROMAN_TRANS)
+    for key, value in _COMMISSION_LEVEL_SINGLE.items():
+        if name.startswith(key):
+            return value
+    match = re.search(r'(III|IV|VI|II|V|I)$', name)
+    if match:
+        group = _COMMISSION_LEVEL_GROUP.get(name[:match.start()])
+        if group:
+            return group.get(match.group(1), 0)
+    return 0
+
+
+def commission_slot_is_empty(image, button):
+    """槽位中心是深色底（空槽 '+'）还是舰船立绘。
+
+    Args:
+        image (np.ndarray): RGB 截图。
+        button (Button): 槽位按钮。
+
+    Returns:
+        bool: True 表示空槽位。
+    """
+    x0, y0, x1, y1 = button.area
+    center = image[y0 + _SLOT_CENTER_INSET:y1 - _SLOT_CENTER_INSET,
+                   x0 + _SLOT_CENTER_INSET:x1 - _SLOT_CENTER_INSET]
+    return center.mean() < _SLOT_EMPTY_LUMINANCE
 
 
 class CommissionAmount(AmountOcr):
@@ -116,10 +301,10 @@ def lines_detect(image):
     return np.array(peaks)
 
 
-class RewardCommission(UI, InfoHandler):
+class RewardCommission(Dock, UI, InfoHandler):
     """委托任务处理器。
 
-    继承 UI 和 InfoHandler，负责委托系统的完整自动化流程，
+    继承 Dock、UI 和 InfoHandler，负责委托系统的完整自动化流程，
     包括委托检测、过滤选择、启动执行和奖励领取。
 
     Attributes:
@@ -525,7 +710,6 @@ class RewardCommission(UI, InfoHandler):
             return False
         if not self.config.Commission_DoMajorCommission and commission.category_str == 'major':
             return False
-
         return True
 
     def _commission_ensure_mode(self, mode):
@@ -540,6 +724,13 @@ class RewardCommission(UI, InfoHandler):
         Returns:
             bool: 切换是否成功。
         """
+        # Switch.set 没有重试上限：不在委托列表时它会一直点同一个按钮，
+        # 直到 GameTooManyClickError 重启游戏。先截一张新图，
+        # 缓存的旧帧会在页面已离开后仍显示委托列表。
+        self.device.screenshot()
+        if not COMMISSION_SWITCH.appear(main=self):
+            logger.warning('[委托-模式] 不在委托列表，跳过模式切换')
+            return False
         if COMMISSION_SWITCH.set(mode, main=self):
             # 当每日委托列表超过 4 个（通常为 5 个），且紧急委托在 1 到 4 个之间时，
             # 委托列表会出现滚动动画，
@@ -568,6 +759,9 @@ class RewardCommission(UI, InfoHandler):
             bool: 重置是否成功。无法识别当前模式时返回 False。
         """
         logger.hr('委托模式重置')
+        # 缓存截图可能早于最后一次点击，旧帧会让切换点击落在
+        # 不是委托列表的页面上。
+        self.device.screenshot()
         if self.appear(COMMISSION_DAILY):
             current, another = 'daily', 'urgent'
         elif self.appear(COMMISSION_URGENT):
@@ -663,9 +857,595 @@ class RewardCommission(UI, InfoHandler):
         self.daily_choose, self.urgent_choose = self._commission_choose(self.daily, self.urgent)
         return daily, urgent
 
+    def _commission_dock_ship_count(self):
+        """读取船坞已选计数，无法识别时返回 (-1, -1)。"""
+        current, _, total = OCR_DOCK_SELECTED.ocr(self.device.image)
+        if total <= 0 or current < 0 or current > total:
+            return -1, -1
+        return current, total
+
+    def _commission_dock_fleet_question(self):
+        """游戏询问是否把点击的舰船移出舰队时为 True。"""
+        image = np.asarray(self.device.image).astype(int)
+        x0, y0, x1, y1 = COMMISSION_FLEET_QUESTION_AREA
+        region = image[y0:y1, x0:x1]
+        red = (region[:, :, 0] > 140) \
+            & (region[:, :, 0] > region[:, :, 1] + 40) \
+            & (region[:, :, 0] > region[:, :, 2] + 40)
+        return red.mean() > 0.5
+
+    def _commission_dock_answer_fleet_question(self, confirm):
+        """应答舰队询问；confirm 表示把舰船移出所在舰队。"""
+        button = POPUP_CONFIRM if confirm else POPUP_CANCEL
+        # 清除仓库按钮上次匹配残留的 offset。
+        button.clear_offset()
+        self.device.click(button)
+        # 弹窗关闭与选中刷新期间计数会短暂读不到，等充分再截图。
+        self.device.sleep(0.8)
+        self.device.screenshot()
+
+    def _commission_dock_click_ship(self, button, allow_fleet=False):
+        """点击一张卡片一次、应答弹窗，返回点击后的已选计数；
+        无法识别或游戏拒绝该舰船时返回 -1。
+        调用方用它和点击前的计数比较。"""
+        before, _ = self._commission_dock_ship_count()
+        if before < 0:
+            return -1
+        self.device.click(button)
+        self.device.sleep(0.4)
+        self.device.screenshot()
+        if self._commission_dock_fleet_question():
+            if not allow_fleet:
+                # 该卡片属于某个舰队，而此选项不允许从舰队拆船，
+                # 跳过这张卡。
+                self._commission_dock_answer_fleet_question(confirm=False)
+                return -1
+            logger.warning('[委托-选船] 舰船属于某个舰队，'
+                           '将其拆出该舰队以用于此委托')
+            self._commission_dock_answer_fleet_question(confirm=True)
+            after, _ = self._commission_dock_ship_count()
+            return after
+        if self.handle_popup_confirm('COMMISSION_DOCK_SHIP'):
+            # 游戏拒绝的舰船会以弹窗应答而不是选中，
+            # 关闭弹窗后计数保持不变。
+            return -1
+        after, _ = self._commission_dock_ship_count()
+        return after
+
+    def _commission_protected_fleets(self):
+        """任何已启用调度任务使用的舰队都不能被拆船，
+        否则任务下次出击时会缺少这些舰船。"""
+        fleets = set()
+        try:
+            data = self.config.data
+        except Exception:
+            return fleets
+        for node in data.values():
+            if not isinstance(node, dict):
+                continue
+            if not node.get('Scheduler', {}).get('Enable'):
+                continue
+            stack = [node]
+            while stack:
+                d = stack.pop(0)
+                for key, value in d.items():
+                    if isinstance(value, dict):
+                        stack.append(value)
+                        continue
+                    if not isinstance(value, int) or not 1 <= value <= 6:
+                        continue
+                    if key in ('Fleet1', 'Fleet2', 'Fleet') or key.endswith('Fleet'):
+                        fleets.add(value)
+        return fleets
+
+    def _commission_dock_ship_occupied(self, button):
+        """卡片带红色占用横幅（如 大型作战中）时为 True。
+        横幅是实心长条，卡面立绘不会形成这种条带。"""
+        image = np.asarray(self.device.image).astype(int)
+        x0, y0, x1, y1 = button.area
+        strip = image[y0 + 118:y0 + 170, x0:x1]
+        red = (strip[:, :, 0] > 90) & (strip[:, :, 0] > strip[:, :, 1] + 20) \
+            & (strip[:, :, 0] > strip[:, :, 2] + 20)
+        rows = 0
+        for line in red:
+            run = best = 0
+            for v in line:
+                run = run + 1 if v else 0
+                best = max(best, run)
+            if best >= 85:
+                rows += 1
+                if rows >= 2:
+                    return True
+        return False
+
+    def _commission_dock_scan_page(self, level_scanner, fleet_scanner):
+        """读取顶部两行卡片：等级 OCR、舰队徽标、占用状态。"""
+        image = self.device.image
+        levels = level_scanner.scan(image)
+        fleets = fleet_scanner.scan(image)
+        ships = []
+        for idx, button in enumerate(CARD_GRIDS.buttons):
+            ships.append({
+                'idx': idx,
+                'level': int(levels[idx]) if idx < len(levels) else 0,
+                'fleet': fleets[idx] if idx < len(fleets) else 0,
+                'occupied': self._commission_dock_ship_occupied(button),
+                'button': button,
+            })
+        return ships
+
+    def _commission_dock_scan_row3(self, row3_scanner):
+        """读取第三行卡片，仅在列表底部有效。
+        其舰队徽标被底栏遮挡，因此不报告舰队。"""
+        image = self.device.image
+        levels = row3_scanner.scan(image)
+        ships = []
+        for idx, button in enumerate(CARD_GRIDS_ROW3.buttons):
+            ships.append({
+                'idx': 14 + idx,
+                'level': int(levels[idx]) if idx < len(levels) else 0,
+                'occupied': self._commission_dock_ship_occupied(button),
+                'button': button,
+            })
+        return ships
+
+    def _commission_dock_pick_row3(self, row3_scanner, required, picked, count, total):
+        """扫描并点击第三行（列表末行）的候选舰船，返回新的已选计数。
+
+        末行的舰队徽标被底栏遮挡，无法识别舰队归属，
+        只应在不允许拆舰队的档位（allow_fleet=False）使用。
+        """
+        for ship in self._commission_dock_scan_row3(row3_scanner):
+            if count >= total:
+                break
+            if ship['idx'] in picked:
+                continue
+            if ship['occupied']:
+                continue
+            if not 1 <= ship['level'] <= 125 or ship['level'] < required:
+                continue
+            after = self._commission_dock_click_ship(ship['button'], allow_fleet=False)
+            if after < 0:
+                continue
+            if after == count - 1:
+                # 这张卡已被推荐选中，刚才的点击把它取消了，
+                # 点回来且不计数。
+                self.device.click(ship['button'])
+                self.device.sleep(0.4)
+                self.device.screenshot()
+                restored, _ = self._commission_dock_ship_count()
+                if restored >= 0:
+                    count = restored
+                continue
+            count = after
+            picked.add(ship['idx'])
+            logger.attr('已选舰船', f'Lv{ship["level"]} (末行)')
+        return count
+
+    def _commission_dock_wait_stable(self, timeout=4):
+        """等待滚动条停止移动，列表已稳定。"""
+        timer = Timer(timeout)
+        timer.reset()
+        last = None
+        while not timer.reached():
+            self.device.screenshot()
+            position = DOCK_SCROLL.cal_position(main=self)
+            if last is not None and abs(position - last) < 0.01:
+                return True
+            last = position
+        return False
+
+    def _commission_dock_pixels_per_position(self):
+        """滚动条位置每 1.0 对应的内容像素数。
+
+        滑块长度占轨道的比例 = 视口 / 内容，由此反推：
+        内容 = 行高 x 视口行数 / 比例，可滚动像素 = 内容 - 视口。
+        列表被稀有度筛选缩短后滑块会变长，只能按滑块估算，
+        不能用船坞总容量推行数。
+        """
+        total = DOCK_SCROLL.total
+        length = DOCK_SCROLL.length
+        if total <= 0 or length <= 0:
+            return _DOCK_ROW_PITCH * _DOCK_VIEWPORT_ROWS
+        fraction = min(max(length / total, 0.05), 0.95)
+        return _DOCK_ROW_PITCH * _DOCK_VIEWPORT_ROWS * (1 - fraction) / fraction
+
+    def _commission_dock_scroll_drag(self, target):
+        """把右侧滚动条滑块拖到 target 位置（0-1），返回拖动后的位置。
+
+        直接拖滚动条，起点终点都在滚动条上（x≈1239-1248），不会
+        误触舰船卡片；device.drag 到达目标后按住再松手，滑块精确
+        停在目标处、不带惯性。终点按拖动方向外扩一点，
+        补偿游戏吃掉的手势起手位移。
+        """
+        current = DOCK_SCROLL.cal_position(main=self)
+        p1 = random_rectangle_point(DOCK_SCROLL.position_to_screen(current), n=1)
+        p2 = random_rectangle_point(DOCK_SCROLL.position_to_screen(target), n=1)
+        dy = p2[1] - p1[1]
+        if dy:
+            p2 = (p2[0], p2[1] + (_DOCK_DRAG_SLOP if dy > 0 else -_DOCK_DRAG_SLOP))
+            p2 = (p2[0], min(max(p2[1], 78), 639))
+        self.device.drag(p1, p2, name='COMMISSION_DOCK_SCROLL',
+                         point_random=(-2, -3, 2, 3), hold_duration=0.15)
+        self.device.click_record.pop()
+        self._commission_dock_wait_stable()
+        return DOCK_SCROLL.cal_position(main=self)
+
+    def _commission_dock_scroll_page(self, before):
+        """滚动条向下拖约两行，返回拖动后的位置。"""
+        pixels = self._commission_dock_pixels_per_position()
+        target = min(before + _DOCK_PAGE_ROWS * _DOCK_ROW_PITCH / max(pixels, 1), 1.0)
+        return self._commission_dock_scroll_drag(target)
+
+    def _commission_dock_scroll_top(self):
+        """把滚动条拖回顶部。"""
+        for _ in range(4):
+            position = DOCK_SCROLL.cal_position(main=self)
+            if position <= 0.05:
+                return True
+            self._commission_dock_scroll_drag(0.0)
+        return DOCK_SCROLL.cal_position(main=self) <= 0.05
+
+    def _commission_dock_gap_offset(self):
+        """行间缝相对网格线（_DOCK_SEAM_Y）的偏移，折算到一个行距内。
+
+        窗口取网格线上下各约半行，缝滚到哪里都落在窗口内。
+        亮度剖面先做 17px 平滑再取最暗点：单像素暗线（卡片顶边
+        阴影等，实测比行间缝更暗）会被平滑抹掉，只有约 20px 宽的
+        行间缝保留下来。
+        """
+        image = np.asarray(self.device.image).astype(float)
+        y0 = _DOCK_SEAM_Y - 113 - 8
+        y1 = _DOCK_SEAM_Y + 114 + 8
+        band = image[y0:y1, 93:1219].mean(axis=2).mean(axis=1)
+        smooth = uniform_filter1d(band, size=17, mode='nearest')
+        inner = smooth[8:len(smooth) - 8]
+        y = int(np.argmin(inner)) + 8 + y0
+        return (y - _DOCK_SEAM_Y + 113) % _DOCK_ROW_PITCH - 113
+
+    def _commission_dock_align(self, pixels_per_position):
+        """把行间缝拖回网格线，全程只动滚动条，不碰卡片区。
+
+        修正量按位置换算后重拖，逐轮逼近（起手死区会吃掉一部分
+        位移）。顶部/底部钳制导致拉不动时按当前位置接受。
+        返回是否对齐；调用方无论结果都继续扫描。
+        """
+        for _ in range(3):
+            self.device.screenshot()
+            offset = self._commission_dock_gap_offset()
+            if abs(offset) <= 9:
+                # 9px 内的错位接受：等级文字带高 22px，
+                # 偏移 9px 仍完整落在 OCR 区域内。
+                return True
+            position = DOCK_SCROLL.cal_position(main=self)
+            if offset < 0 and position <= 0.02:
+                # 已在顶部：缝偏上需要向下拉，游戏钳制拉不动，
+                # 游戏自然停靠的顶部位置就是对齐位置。
+                return True
+            if offset > 0 and position >= 0.98:
+                # 已在底部同理。
+                return True
+            target = position + offset / max(pixels_per_position, 1)
+            self._commission_dock_scroll_drag(min(max(target, 0.0), 1.0))
+        self.device.screenshot()
+        return abs(self._commission_dock_gap_offset()) <= 9
+
+    def _commission_filter_panel_open(self):
+        """面板自身的红色取消按钮覆盖该区域时说明面板已打开。"""
+        image = np.asarray(self.device.image).astype(int)
+        x0, y0, x1, y1 = DOCK_FILTER_CANCEL_AREA
+        button = image[y0:y1, x0:x1]
+        mean = button.mean(axis=(0, 1))
+        return mean[0] > 110 and mean[0] > mean[2] + 35
+
+    def _commission_filter_rarity_selected(self, button):
+        """选中的筛选按钮会变成亮蓝色，未选中保持灰色。"""
+        image = np.asarray(self.device.image).astype(int)
+        x0, y0, x1, y1 = button.area
+        area = image[y0:y1, x0:x1]
+        return float(area[:, :, 2].mean() - area[:, :, 0].mean()) > 50
+
+    def _commission_dock_set_filter(self, stage, descending):
+        """通过游戏自带筛选面板设置稀有度档位，按等级排序。
+        面板无法控制时返回 False。"""
+        for _ in range(3):
+            if self._commission_filter_panel_open():
+                break
+            self.device.click(DOCK_FILTER_OPEN)
+            self.device.sleep(0.8)
+            self.device.screenshot()
+        if not self._commission_filter_panel_open():
+            logger.warning('[委托-选船] 船坞筛选面板未打开')
+            return False
+        # 必须先让「等级」成为生效的排序类型，档位才有意义。
+        if not self._commission_filter_sort_is_level():
+            self.device.click(DOCK_FILTER_LEVEL)
+            self.device.sleep(0.4)
+            self.device.screenshot()
+        if self._commission_filter_rarity_selected(DOCK_FILTER_ALL_RARITY):
+            self.device.click(DOCK_FILTER_ALL_RARITY)
+            self.device.sleep(0.3)
+            self.device.screenshot()
+        for name, button in DOCK_FILTER_RARITY.items():
+            if name == stage:
+                continue
+            if self._commission_filter_rarity_selected(button):
+                logger.info(f'[委托-选船] 取消选择稀有度: {name}')
+                self.device.click(button)
+                self.device.sleep(0.3)
+                self.device.screenshot()
+        if not self._commission_filter_rarity_selected(DOCK_FILTER_RARITY[stage]):
+            self.device.click(DOCK_FILTER_RARITY[stage])
+            self.device.sleep(0.4)
+            self.device.screenshot()
+        if not self._commission_filter_rarity_selected(DOCK_FILTER_RARITY[stage]):
+            logger.warning(f'[委托-选船] 筛选档位 {stage} 未选中')
+            self.device.click(DOCK_FILTER_CANCEL)
+            return False
+        logger.attr('筛选档位', stage)
+        self.device.click(DOCK_FILTER_CONFIRM)
+        timer = Timer(3)
+        timer.reset()
+        while not timer.reached():
+            self.device.screenshot()
+            if not self._commission_filter_panel_open():
+                break
+        self.handle_dock_cards_loading()
+        self._commission_dock_set_sort(descending)
+        return True
+
+    def _commission_dock_sort_direction(self):
+        """读取排序按钮旁的小箭头，两个箭头像素都不匹配时返回 unknown。"""
+        image = np.asarray(self.device.image).astype(int)
+        for name, (x0, y0, x1, y1) in (('asc', (1014, 22, 1020, 27)),
+                                       ('desc', (1014, 29, 1020, 34))):
+            pixel = image[y0:y1, x0:x1]
+            if np.abs(pixel.mean(axis=(0, 1)) - np.array([189, 207, 231])).mean() < 35:
+                return name
+        return 'unknown'
+
+    def _commission_dock_set_sort(self, descending):
+        """有界重试地把箭头摆到需要的方向，
+        箭头读不出时绝不盲点。"""
+        target = 'desc' if descending else 'asc'
+        for _ in range(3):
+            self.device.screenshot()
+            current = self._commission_dock_sort_direction()
+            if current == target:
+                return True
+            if current == 'unknown':
+                logger.warning('[委托-选船] 排序箭头无法识别，未设置方向')
+                return False
+            self.device.click(SORTING_CLICK)
+            self.device.sleep(0.6)
+        logger.warning('[委托-选船] 排序方向未稳定')
+        return False
+
+    def _commission_filter_sort_is_level(self):
+        image = np.asarray(self.device.image).astype(int)
+        area = image[35:72, 370:495]
+        mean = area.mean(axis=(0, 1))
+        return mean[0] > 150 and mean[0] > mean[2] + 40
+
+    def _commission_wait_dock(self, timeout=10):
+        """点击舰船槽位后等待船坞打开。
+        船坞一直不出现时返回 False。"""
+        timer = Timer(timeout)
+        timer.reset()
+        while not timer.reached():
+            self.device.screenshot()
+            if self.appear(DOCK_CHECK, offset=(20, 20)):
+                return True
+            if self.info_bar_count():
+                # 游戏拒绝了开始，该委托确实无法开始。
+                return False
+        return self.appear(DOCK_CHECK, offset=(20, 20))
+
+    def _commission_empty_slot(self):
+        """最右侧空槽位的 Button；6 格全满时返回 None。"""
+        image = np.asarray(self.device.image)
+        for button in reversed(COMMISSION_SHIP_SLOTS.buttons):
+            if commission_slot_is_empty(image, button):
+                return button
+        return None
+
+    def _commission_enter_dock_by_slot(self):
+        """从委托详情面板的空槽位进入船坞。
+
+        点击已有舰船的槽位不会打开船坞，必须点空槽位（'+'）；
+        空槽位首次点击有时只展开面板，未进船坞时再点一次。
+
+        Returns:
+            bool: 是否已进入船坞（DOCK_CHECK 出现）。
+        """
+        slot = self._commission_empty_slot()
+        if slot is None:
+            # 6 格全满：先取消最后一艘，腾出空槽位。
+            logger.info('[委托-启动] 槽位已满，取消最后一艘以腾出空槽')
+            self.device.click(COMMISSION_SHIP_SLOTS[(5, 0)])
+            self.device.sleep(0.6)
+            self.device.screenshot()
+            slot = self._commission_empty_slot()
+            if slot is None:
+                logger.warning('[委托-启动] 没有空槽位可用，无法进入船坞')
+                return False
+        for attempt in range(2):
+            self.device.click(slot)
+            if self._commission_wait_dock(timeout=3 if attempt == 0 else 10):
+                return True
+            if attempt == 0:
+                logger.info('[委托-启动] 空槽位首次点击未进入船坞，再点一次')
+                self.device.screenshot()
+                recheck = self._commission_empty_slot()
+                if recheck is not None:
+                    slot = recheck
+        return False
+
+    def _commission_dock_fill_stage(self, allow_fleet, protected, required,
+                                    scanners, picked):
+        """在一个稀有度档位内填充槽位，每次翻一屏，只读顶部两行。
+        已挑中的卡片跨档位保持选中，绝不能再次点击，
+        再次点击会取消选择。"""
+        level_scanner, fleet_scanner, row3_scanner = scanners
+        count, total = self._commission_dock_ship_count()
+        if count < 0 or total <= 0:
+            logger.warning('[委托-选船] 船坞已选计数无法识别')
+            return False
+        if count >= total:
+            return True
+        # 列表可能停在上一档扫完的位置，先回到顶部再扫描。
+        self._commission_dock_scroll_top()
+        steps = 0
+        while 1:
+            steps += 1
+            if steps > 30:
+                logger.warning('[委托-选船] 翻页次数过多，停止扫描')
+                return False
+            if not self.appear(DOCK_CHECK, offset=(20, 20)):
+                # 选满后船坞可能自行关闭，停止扫描，
+                # 不要扫描留在身后的任意画面。
+                logger.warning('[委托-选船] 扫描中船坞关闭，停止选船')
+                return False
+            for ship in self._commission_dock_scan_page(level_scanner, fleet_scanner):
+                if count >= total:
+                    break
+                if ship['idx'] in picked:
+                    continue
+                if ship['occupied']:
+                    continue
+                if not allow_fleet and ship['fleet']:
+                    continue
+                if allow_fleet and ship['fleet'] and ship['fleet'] in protected:
+                    continue
+                if not 1 <= ship['level'] <= 125 or ship['level'] < required:
+                    continue
+                after = self._commission_dock_click_ship(
+                    ship['button'], allow_fleet=allow_fleet)
+                if after < 0:
+                    continue
+                if after == count - 1:
+                    # 这张卡已被推荐选中，刚才的点击把它取消了，
+                    # 点回来且不计数。
+                    self.device.click(ship['button'])
+                    self.device.sleep(0.4)
+                    self.device.screenshot()
+                    restored, _ = self._commission_dock_ship_count()
+                    if restored >= 0:
+                        count = restored
+                    continue
+                count = after
+                picked.add(ship['idx'])
+                logger.attr('已选舰船', f'Lv{ship["level"]} fleet{ship["fleet"]}')
+            if count >= total:
+                return True
+            before = DOCK_SCROLL.cal_position(main=self)
+            at_bottom = before >= _DOCK_SCROLL_BOTTOM
+            if not at_bottom:
+                after = self._commission_dock_scroll_page(before)
+                if abs(after - before) < 0.005:
+                    # 偶尔一次手势丢帧，重试一次再放弃。
+                    after = self._commission_dock_scroll_page(before)
+                if abs(after - before) < 0.005 and after < _DOCK_SCROLL_BOTTOM:
+                    # 两次拖动都没动：列表已到末端被游戏钳制，或设备丢帧。
+                    # 按已到底处理，读完末行收尾，不再中止整个档位。
+                    logger.warning('[委托-选船] 滚动条无法继续移动，按已到底处理')
+                    at_bottom = True
+            if at_bottom:
+                # 已经到底，读最后一行；最后一行露出在底栏上方，
+                # 其舰队徽标被遮挡，因此拆舰队时跳过它。
+                if not allow_fleet:
+                    count = self._commission_dock_pick_row3(
+                        row3_scanner, required, picked, count, total)
+                return count >= total
+            # 对齐失败不中止：按当前画面继续扫描，错位行读不到等级
+            # 会被跳过，比整个档位白扫好。
+            if not self._commission_dock_align(self._commission_dock_pixels_per_position()):
+                logger.warning('[委托-选船] 船坞页面未能对齐，按当前画面继续')
+            if DOCK_SCROLL.cal_position(main=self) <= before + 0.02:
+                # 对齐把刚才的翻页抵消了（列表末端附近），按已到底处理。
+                logger.info('[委托-选船] 无法继续向下翻页')
+                if not allow_fleet:
+                    count = self._commission_dock_pick_row3(
+                        row3_scanner, required, picked, count, total)
+                return count >= total
+
+    def _commission_dock_pick_ships(self, comm=None):
+        """通过船坞自带筛选面板手动填充槽位：按等级排序，
+        从用户设定的最低稀有度向上遍历，先只用空闲舰船直到所有档位用尽。
+        拆舰队放在最后，且绝不拆其他已启用任务使用的舰队。"""
+        logger.hr('委托船坞选船')
+        required = commission_level_requirement(comm.name) if comm is not None else 0
+        if required:
+            logger.info(f'[委托-选船] 委托等级要求: Lv{required}+')
+        # 高等级要求从低等级里找不到，从列表顶部读起，
+        # 避免翻过数百艘低级船；用户指定的等级顺序优先。
+        descending = self.config.Commission_PickLevelOrder == 'high_first' \
+            or required >= 100
+        min_rarity = self.config.Commission_PickMinRarity
+        if min_rarity not in _COMMISSION_RARITY_STAGES:
+            min_rarity = 'rare'
+        stages = _COMMISSION_RARITY_STAGES[_COMMISSION_RARITY_STAGES.index(min_rarity):]
+        protected = self._commission_protected_fleets()
+        if protected:
+            logger.attr('受保护舰队', sorted(protected))
+        level_scanner = LevelScanner()
+        fleet_scanner = FleetScanner()
+        row3_grids = CARD_GRIDS_ROW3.crop(area=_ROW3_LEVEL_AREA, name='LEVEL_ROW3')
+        row3_scanner = LevelScanner()
+        row3_scanner.grids = row3_grids
+        row3_scanner.ocr_model = LevelOcr(row3_grids.buttons, name='DOCK_LEVEL_OCR', threshold=64)
+        scanners = (level_scanner, fleet_scanner, row3_scanner)
+
+        count, total = self._commission_dock_ship_count()
+        if count < 0 or total <= 0:
+            logger.warning('[委托-选船] 船坞已选计数无法识别')
+            return False
+        if count >= total and required <= 1:
+            self.dock_select_confirm(check_button=COMMISSION_ADVICE)
+            return True
+        if count >= total:
+            # 槽位已满但开始仍灰：已选舰船不满足等级要求。
+            # 释放第一张卡，以便选一艘达标的。
+            after = self._commission_dock_click_ship(CARD_GRIDS[(0, 0)])
+            if after != count - 1:
+                logger.warning('[委托-选船] 无法释放槽位，第一张卡未被选中')
+                return False
+            count = after
+
+        picked = set()
+
+        def fill(allow_fleet):
+            for stage in stages:
+                current, _ = self._commission_dock_ship_count()
+                if current >= total:
+                    return True
+                if not self._commission_dock_set_filter(stage, descending):
+                    logger.warning(f'[委托-选船] 筛选档位 {stage} 失败，进入下一档')
+                    continue
+                if self._commission_dock_fill_stage(
+                        allow_fleet, protected, required, scanners, picked):
+                    return True
+            return False
+
+        # picked 是已选卡片集合（fill 的闭包用它判重），
+        # fill 的返回值必须用另一个名字，覆盖会破坏集合语义。
+        filled = fill(allow_fleet=False)
+        if not filled and self.config.Commission_NoFreeShipPolicy == 'use_fleet':
+            logger.info('[委托-选船] 重试并允许使用舰队中的舰船')
+            self.device.click_record_clear()
+            filled = fill(allow_fleet=True)
+        if not filled:
+            count, _ = self._commission_dock_ship_count()
+            if count <= 0:
+                logger.warning('[委托-选船] 没有为委托选到船，跳过')
+                return False
+            logger.warning(f'[委托-选船] 舰船仍不足 ({count}/{total})，照常开始')
+        self.dock_select_confirm(check_button=COMMISSION_ADVICE)
+        return True
+
     def _commission_start_click(self, comm, is_urgent=False, skip_first_screenshot=True):
         """
-        启动一个委托。
+        启动一个委托，无法开始的委托由调用方跳过（见 COMMISSION_SKIP_*）。
 
         Args:
             comm (Commission):
@@ -683,6 +1463,13 @@ class RewardCommission(UI, InfoHandler):
         self.interval_clear(COMMISSION_ADVICE)
         self.interval_clear(COMMISSION_START)
         comm_timer = Timer(7)
+        skip_timer = Timer(read_run_param(
+            self.config, 'UiWait_CommissionSkipTimeout', COMMISSION_SKIP_TIMEOUT, 10, 600))
+        skip_timer.reset()
+        # 点击推荐后设置，倒计时至开始按钮应点亮的时间点。未用过推荐时为 None。
+        recommend_timer = None
+        # 确认灰色开始按钮强行打开船坞也只尝试一次。
+        enter_dock_tried = False
         count = 0
         while 1:
             if skip_first_screenshot:
@@ -693,29 +1480,71 @@ class RewardCommission(UI, InfoHandler):
             # 结束
             if self.info_bar_count():
                 break
-            if count >= 3:
-                # 重启游戏以处理委托推荐 bug。
-                # 点击"推荐"后，舰船出现后突然消失。
+            # 无法开始：跳过而不是抛 GameStuckError，
+            # 后者会重启游戏并丢掉所有运行中的委托。
+            if skip_timer.reached():
+                logger.warning(f'[委托-启动] 启动超时，跳过: {comm.name}')
+                return False
+            if count >= COMMISSION_SKIP_MAX_RECOMMEND:
+                # 点击「推荐」后，舰船出现后突然消失，
                 # 同时委托图标闪烁。
-                logger.warning('[委托-启动] 触发了委托列表闪烁bug')
-                raise GameStuckError('[委托-启动] 触发了委托列表闪烁bug')
+                logger.warning('[委托-启动] 触发了委托列表闪烁bug，跳过该委托')
+                return False
+            if recommend_timer is not None and recommend_timer.reached():
+                # 推荐已填充舰队但开始按钮仍灰：舰船不满足等级要求，
+                # 放弃这个委托。
+                if self.match_template_color(COMMISSION_START, offset=(5, 20)):
+                    recommend_timer = None
+                elif self.config.Commission_AutoPickShip and not enter_dock_tried \
+                        and self.match_template_color(COMMISSION_ADVICE, offset=(10, 10)):
+                    # 推荐后开始仍灰：从空槽位打开船坞，船坞一次最多可
+                    # 选六艘船。以橙色「推荐」按钮为门卫——槽位行位于其
+                    # 左侧固定距离处；点已有舰船的槽位不会进船坞，
+                    # 由亮度判别找空槽位。
+                    logger.info('[委托-启动] 推荐后开始仍灰，点击空槽位进入船坞')
+                    enter_dock_tried = True
+                    if not self._commission_enter_dock_by_slot():
+                        logger.warning(f'[委托-启动] 船坞未从舰船槽位打开，跳过: {comm.name}')
+                        return False
+                    recommend_timer = None
+                    comm_timer.reset()
+                    continue
+                else:
+                    # 仅作最后手段：未启用任何补位选项，或所有已启用选项在船坞
+                    # 内都试过且开始仍灰时才会走到这里。跳过绝不是第一选择。
+                    logger.warning(f'[委托-启动] 舰船不满足要求，跳过: {comm.name}')
+                    # 只有当船坞在屏幕上时才离开它，详情面板的返回箭头会退出整个页面。
+                    if self.appear(DOCK_CHECK, offset=(20, 20)):
+                        self.device.click(BACK_ARROW)
+                        self.device.sleep(1)
+                    return False
 
             # 点击
             if self.match_template_color(COMMISSION_START, offset=(5, 20), interval=7):
                 self.device.click(COMMISSION_START)
                 self.interval_reset(COMMISSION_ADVICE)
                 comm_timer.reset()
+                recommend_timer = None
                 continue
             if self.handle_popup_confirm('COMMISSION_START'):
                 self.interval_reset(COMMISSION_ADVICE)
                 comm_timer.reset()
                 continue
-            # 误入船坞
+            # 进入船坞：确认灰色开始按钮或误入时都会到这里。
             if self.appear(DOCK_CHECK, offset=(20, 20), interval=3):
-                logger.info(f'[委托-启动] 误入船坞 {DOCK_CHECK} -> {BACK_ARROW}')
+                picked = self.config.Commission_AutoPickShip and self._commission_dock_pick_ships(comm=comm)
+                if picked:
+                    # 回到详情面板后，给开始按钮一段点亮窗口，
+                    # 再进入灰色检查跳过委托。
+                    recommend_timer = Timer(COMMISSION_SKIP_AFTER_RECOMMEND)
+                    recommend_timer.reset()
+                    comm_timer.reset()
+                    continue
+                logger.warning(f'[委托-启动] 推荐后被送入船坞，跳过: {comm.name}')
+                # 离开船坞，让调用方看到预期的委托页面。
                 self.device.click(BACK_ARROW)
-                comm_timer.reset()
-                continue
+                self.device.sleep(1)
+                return False
             # 检查是否是正确的委托
             if self.appear(COMMISSION_ADVICE, offset=(5, 20), interval=7):
                 area = (0, 0, image_size(self.device.image)[0], COMMISSION_ADVICE.button[1])
@@ -736,6 +1565,8 @@ class RewardCommission(UI, InfoHandler):
                     logger.warning('[委托-启动] 未检测到选择的委托，假设正确')
                 self.device.click(COMMISSION_ADVICE)
                 count += 1
+                recommend_timer = Timer(COMMISSION_SKIP_AFTER_RECOMMEND)
+                recommend_timer.reset()
                 self.interval_reset(COMMISSION_ADVICE)
                 self.interval_clear(COMMISSION_START)
                 comm_timer.reset()
@@ -796,7 +1627,9 @@ class RewardCommission(UI, InfoHandler):
                 self.device.click_record_clear()
                 continue
             else:
-                logger.warning(f'[委托-查找] 未找到委托: {comm}')
+                # _commission_start_click 已放弃（委托错误或无法开始），
+                # 离开这条，继续下一条。
+                logger.warning(f'[委托-查找] 放弃委托: {comm}')
                 self.device.click_record_clear()
                 return False
 
@@ -1118,7 +1951,9 @@ class RewardCommission(UI, InfoHandler):
         from module.statistics.drop_cleanup import BAK_FOLDER
 
         if max_keep is None:
-            max_keep = COMMISSION_REWARD_SCREENSHOT_KEEP
+            max_keep = int(read_run_param(
+                self.config, 'UiWait_CommissionRewardScreenshotKeep',
+                COMMISSION_REWARD_SCREENSHOT_KEEP, 5, 500))
 
         if base is None:
             base = os.path.join('.', 'log', 'commission_rewards', instance)
@@ -1311,6 +2146,17 @@ class RewardCommission(UI, InfoHandler):
             try:
                 return self._commission_receive()
             except OilMaxed:
+                runtime = self.config.__dict__.get('_scheduler_runtime')
+                if runtime is not None and runtime.oil_control.enabled:
+                    for _ in self.loop(skip_first=False):
+                        if self.handle_popup_confirm('COMMISSION_OIL_MAXED'):
+                            continue
+                        if self.ui_page_appear(page_reward) or self.ui_page_appear(page_commission):
+                            break
+                        if self.ui_additional():
+                            continue
+                    runtime.oil_control.request_blocked(self.config.task.command)
+                    self.config.task_stop('石油溢出，交回调度器优先清理')
                 logger.info("[委托-石油] 石油溢出，购买食物消耗石油")
                 RewardDorm(self.config, self.device).dorm_food_run(amount=10)
                 self.ui_ensure(page_reward)

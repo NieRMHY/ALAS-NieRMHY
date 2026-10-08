@@ -270,6 +270,39 @@ def parse_config_name(argv):
     return name
 
 
+def read_run_param(config, attr, default, minimum=None, maximum=None):
+    """读取「运行参数」页（RunParams）的参数值，非法时回退默认值。
+
+    参数在 argument.yaml 的 RunParams 页定义，config.bind() 会将该页
+    随任意任务一并绑定，以 `<Group>_<Argument>` 属性挂到 config 实例。
+    属性值在任务绑定时确定，修改配置后在下一次任务绑定（任务切换）
+    或调度器重启时生效，任务运行中途不会变化。
+
+    Args:
+        config: AzurLaneConfig 实例。
+        attr (str): 绑定属性名，如 `Watchdog_CheckInterval`。
+        default: 读取失败、类型非法时的回退值，取自
+            module/base/runtime_params.py 中对应的兜底常量。
+        minimum: 合法下限（闭区间），越界时取下限并告警。
+        maximum: 合法上限（闭区间），越界时取上限并告警。
+
+    Returns:
+        float: 参数值。
+    """
+    try:
+        value = float(getattr(config, attr, default))
+    except (TypeError, ValueError):
+        logger.warning(f'运行参数 {attr} 类型非法，回退默认值 {default}')
+        return default
+    if minimum is not None and value < minimum:
+        logger.warning(f'运行参数 {attr}={value} 低于下限 {minimum}，取下限')
+        value = minimum
+    if maximum is not None and value > maximum:
+        logger.warning(f'运行参数 {attr}={value} 高于上限 {maximum}，取上限')
+        value = maximum
+    return value
+
+
 def parse_value(value, data):
     """
     尝试将字符串转换为 float、int 或 datetime。

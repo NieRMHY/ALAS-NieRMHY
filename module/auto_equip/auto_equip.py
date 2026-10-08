@@ -13,6 +13,8 @@ from module.base.button import Button, ButtonGrid
 from module.equipment.equipment import SWIPE_AREA, SWIPE_DISTANCE, SWIPE_RANDOM_RANGE
 from module.ui.switch import Switch
 from module.exception import ScriptError
+from module.base.runtime_params import AUTO_EQUIP_AFTER_EQUIP_WAIT
+from module.config.utils import read_run_param
 from module.logger import logger
 from module.retire.assets import SHIP_DETAIL_CHECK
 from module.retire.dock import Dock
@@ -97,7 +99,8 @@ AUTO_EQUIP_EMPTY_SLOT_PLUS_SIMILARITY = 0.8
 AUTO_EQUIP_NO_EQUIPMENT_TEMPLATE_FILE = Path(__file__).with_name('no_equipment.png')
 AUTO_EQUIP_NO_EQUIPMENT_SIMILARITY = 0.85
 AUTO_EQUIP_NO_EQUIPMENT_SEARCH_AREA = (695, 282, 1238, 622)
-AUTO_EQUIP_AFTER_EQUIP_WAIT = 3
+# 换装后等待时长走 WebUI「运行参数」页（RunParams.UiWait），
+# 默认值集中在 module/base/runtime_params.py（界面等待域）。
 AUTO_EQUIP_CLICK_RECORD_NAMES = (
     AUTO_EQUIP_QUICK_CHANGE.name,
     AUTO_EQUIP_EQUIPPING_CLICK.name,
@@ -350,7 +353,9 @@ class AutoEquip(Dock):
         else:
             logger.info(f'[自动装备] 从仓库第一件装备填充 {slot.name}')
             self.device.click(AUTO_EQUIP_WAREHOUSE_FIRST)
-        self.device.sleep(AUTO_EQUIP_AFTER_EQUIP_WAIT)
+        self.device.sleep(read_run_param(
+            self.config, 'UiWait_AutoEquipAfterEquipWait',
+            AUTO_EQUIP_AFTER_EQUIP_WAIT, 1, 30))
         self.wait_until_stable(AUTO_EQUIP_EQUIPMENT_SLOT_ROW)
         return True
 

@@ -60,10 +60,9 @@ class OSShop(PortShop, AkashiShop):
             in: PORT_SUPPLY_CHECK
         """
         success = False
-        if self._opsi_shop_strategy_enabled():
-            button._shop_strategy_executed_quantity = min(
-                getattr(button, '_shop_strategy_quantity', 1), 1,
-            )
+        from module.statistics.resource_tracking import receipt_totals
+        receipts = receipt_totals(self.config)
+        button._resource_purchase_quantity = 1
         amount_finish = False
         self.interval_clear([
             PORT_SUPPLY_CHECK, SHOP_BUY_CONFIRM_AMOUNT,
@@ -71,9 +70,6 @@ class OSShop(PortShop, AkashiShop):
             SHOP_CLICK_SAFE_AREA
         ])
         set_amount_retry = 0
-        # 购买重试计数器，防止代币不足时无限重试点击商品和确认按钮
-        buy_retry = 0
-        buy_retry_limit = 3
 
         while True:
             if skip_first_screenshot:
@@ -98,7 +94,7 @@ class OSShop(PortShop, AkashiShop):
                 amount_finish = self.shop_buy_amount_handler(button)
                 set_amount_retry += 1
                 if not amount_finish and set_amount_retry > 3:
-                    logger.warning(f'[大世界商店] 物品 {button.name} 无法识别购买数量')
+                    logger.warning(f'Item {button.name} cant get amount.')
                     self.close_shop_buy_confirm_amount(skip_first_screenshot)
                     break
                 continue
@@ -111,18 +107,17 @@ class OSShop(PortShop, AkashiShop):
                 continue
 
             if not success and self.appear(PORT_SUPPLY_CHECK, offset=(20, 20), interval=5):
-                buy_retry += 1
-                if buy_retry > buy_retry_limit:
-                    logger.warning(f'[大世界商店] 物品 {button.name} 达到购买重试上限，可能货币不足')
-                    break
                 amount_finish = False
                 self.device.click(button)
                 continue
 
-            # 结束条件
+            # End
             if success and self.appear(PORT_SUPPLY_CHECK, offset=(20, 20)):
                 break
 
+        if success:
+            from module.statistics.resource_tracking import record_purchase
+            record_purchase(self.config, button, button._resource_purchase_quantity, receipts)
         return success
 
     def os_shop_buy(self, select_func) -> int:
@@ -149,7 +144,6 @@ class OSShop(PortShop, AkashiShop):
                 if not self.os_shop_buy_execute(button):
                     logger.warning(f'[大世界商店] 物品 {button.name} 无法购买，停止本轮选择')
                     continue
-                self._opsi_shop_strategy_record_purchase(button)
                 try:
                     if not getattr(self, 'is_running_cl1_leveling', False) \
                             and not getattr(self, '_meow_searching_active', False):
@@ -251,7 +245,7 @@ class OSShop(PortShop, AkashiShop):
             limit = OCR_SHOP_AMOUNT.ocr(self.device.image)
 
             if limit == 0:
-                logger.warning('[大世界商店] OCR_SHOP_AMOUNT 识别为 0，正在重试')
+                logger.warning('OCR_SHOP_AMOUNT resulted 0, retrying')
                 self.close_shop_buy_confirm_amount()
                 return False
 
@@ -259,40 +253,32 @@ class OSShop(PortShop, AkashiShop):
                 break
 
             if retry.reached():
-                logger.critical('[大世界商店+] OCR_SHOP_AMOUNT 识别结果错误，请检查资源文件')
+                logger.critical('OCR_SHOP_AMOUNT resulted error; '
+                                'asset may be compromised')
                 raise ScriptError
         retry.reset()
 
 
         currency = self.get_currency_coins(item)
-        stock = max(1, int(getattr(item, 'count', 0)))
-        count = min(int(currency // item.price), stock)
-        planned = getattr(item, '_shop_strategy_quantity', None)
-        if isinstance(planned, int) and not isinstance(planned, bool) and planned > 0:
-            count = min(count, planned)
+        count = min(int(currency // item.price), item.count)
+
         if count <= 0:
             return False
-        item._shop_strategy_executed_quantity = count
-
-        if count == 1:
+        if getattr(self, '_opsi_action_point_purchase', False):
+            self.ui_ensure_index(count, letter=OCR_SHOP_AMOUNT, prev_button=AMOUNT_MINUS,
+                                 next_button=AMOUNT_PLUS, skip_first_screenshot=True)
+            item._resource_purchase_quantity = count
             return True
 
-        if self._opsi_shop_strategy_enabled() or getattr(self, '_opsi_action_point_purchase', False):
-            # 高级策略和行动力专购都要按核算数量购买，避免旧的批量启发式改写数量。
-            self.ui_ensure_index(
-                count,
-                letter=OCR_SHOP_AMOUNT,
-                prev_button=AMOUNT_MINUS,
-                next_button=AMOUNT_PLUS,
-                skip_first_screenshot=True,
-            )
+        if count == 1:
+            item._resource_purchase_quantity = 1
             return True
 
         coins = self.get_coins_no_limit(item)
         total_count = min(int(coins // item.price), item.count)
 
         set_to_max = False
-        # 所有物品平均数量（不含紫币）约为 8.9，因此使用 10 作为阈值
+        # Avg count of all items(no PurpleCoins) is 8.9, so use 10.
         if count <= 10:
             if count - 1 > total_count - count:
                 set_to_max = True
@@ -307,9 +293,6 @@ class OSShop(PortShop, AkashiShop):
             limit = 10
 
         self.interval_clear(AMOUNT_MAX)
-        # amount_max_stall: 记录AMOUNT_MAX点击后数量未变化的次数，防止按钮无效时死循环
-        amount_max_stall = 0
-        amount_max_stall_limit = 5
         while set_to_max:
             if skip_first_screenshot:
                 skip_first_screenshot = False
@@ -319,37 +302,15 @@ class OSShop(PortShop, AkashiShop):
             if self.appear_then_click(AMOUNT_MAX, offset=(50, 50), interval=3):
                 continue
 
-            current_amount = OCR_SHOP_AMOUNT.ocr(self.device.image)
-            if current_amount > 1:
+            if OCR_SHOP_AMOUNT.ocr(self.device.image) > 1:
                 break
-
-            # AMOUNT_MAX点击后数量仍为1，说明按钮可能被游戏禁用（如商品只能逐个购买）
-            amount_max_stall += 1
-            if amount_max_stall >= amount_max_stall_limit:
-                logger.info(f'[大世界商店] AMOUNT_MAX 点击 {amount_max_stall} 次后数量仍为 {current_amount}，改用 AMOUNT_PLUS')
-                break
-
-        # 仅在已点击AMOUNT_MAX且数量成功增加时，才能读取游戏端实际允许的最大数量
-        if set_to_max:
-            game_max = OCR_SHOP_AMOUNT.ocr(self.device.image)
-            if game_max > 1 and limit > game_max:
-                logger.info(f'计算购买上限 {limit} 超过游戏上限 {game_max}，使用游戏上限')
-                limit = game_max
 
         self.ui_ensure_index(limit, letter=OCR_SHOP_AMOUNT, prev_button=AMOUNT_MINUS, next_button=AMOUNT_PLUS,
                              skip_first_screenshot=True)
+        item._resource_purchase_quantity = limit
         return True
 
     def handle_port_supply_buy(self) -> bool:
-        """在港口商店作用域内执行购买，避免策略泄漏到明石地图事件。
-
-        Returns:
-            bool: 成功购买或无可购买物品返回 True，金币不足返回 False。
-        """
-        with self.opsi_shop_strategy_scope():
-            return self._handle_port_supply_buy()
-
-    def _handle_port_supply_buy(self) -> bool:
         """处理港口商店购买。
 
         扫描所有商店页面，过滤可购买物品，按顺序执行购买。
@@ -360,10 +321,6 @@ class OSShop(PortShop, AkashiShop):
         Pages:
             in: PORT_SUPPLY_CHECK
         """
-        if self._opsi_shop_strategy_enabled():
-            self._opsi_shop_strategy_session = {
-                'spent': {}, 'purchased': {}, 'inventory_purchased': {}, 'cap_usage': {},
-            }
         self.os_shop_get_coins()
         items = self.scan_all()
         if not len(items):
@@ -373,9 +330,6 @@ class OSShop(PortShop, AkashiShop):
             return False
         items = self.items_filter_in_os_shop(items)
         if not len(items):
-            if getattr(self, '_opsi_shop_strategy_failed', False):
-                logger.warning('[高级商店策略] 港口商店策略失败，保留任务状态等待配置修复')
-                return True
             logger.warning('大世界商店+没有可购买物品')
             if not getattr(self, '_opsi_action_point_purchase', False):
                 self.config.cross_set("OpsiShop.Storage.Storage.BoughtAllYellowCoinItems", True)
@@ -412,15 +366,8 @@ class OSShop(PortShop, AkashiShop):
             if not self.check_item_count(_item):
                 logger.warning(f'物品 {_item.name} 数量识别错误，跳过')
                 continue
-            for name in (
-                    '_shop_strategy_candidate_id', '_shop_strategy_quantity',
-                    '_shop_strategy_cost', '_shop_strategy_cap_usage_keys',
-            ):
-                if hasattr(item, name):
-                    setattr(_item, name, getattr(item, name))
             if self.os_shop_buy_execute(_item):
                 logger.info(f'已购买物品 {_item.name}')
-                self._opsi_shop_strategy_record_purchase(_item)
                 skip_get_coins = False
                 count += 1
             else:
@@ -441,11 +388,6 @@ class OSShop(PortShop, AkashiShop):
             in: is_in_map
             out: is_in_map
         """
-        if self._opsi_shop_strategy_enabled():
-            # 每个海域明石货架是独立会话；避免同格商品复用上一个商店的候选 ID。
-            self._opsi_shop_strategy_session = {
-                'spent': {}, 'purchased': {}, 'inventory_purchased': {}, 'cap_usage': {},
-            }
         self.ui_click(grid, appear_button=self.is_in_map, check_button=PORT_SUPPLY_CHECK,
                       additional=self.handle_story_skip, skip_first_screenshot=True)
         self.os_shop_buy(select_func=self.os_shop_get_item_to_buy_in_akashi)

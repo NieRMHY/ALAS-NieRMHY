@@ -146,6 +146,8 @@ module/
 
 排程是本模块特色：OCR 宿舍栏位得到舰船数 0~6，查表得 278~1000 分钟的任务延迟（舰船越多吃粮越快，下次喂食越近），`task_delay(minute=delay)`。
 
+原调度石油控制通过 `RewardDorm.dorm_buy_oil_food(oil, target)` 独立购粮，不要求开启后宅喂食、收取或日常任务。调度器先尝试可运行的图，图全部冷却或受限后才进入后宅；默认控制线为 24000，可在通用设置调整。购买弹窗必须识别石油图标、连续两帧有效数量与总价，计算最小购买量使余油严格低于目标，并保留 500 石油安全下限。数量调整和确认有时间边界，库存限制时只接受已核实的较小数量；钻石图标、无效价格和调整超时均取消购买。方法返回是否已确认购买，实际消耗由调度器重新观察石油验证，未减少时终止本轮。
+
 ### 指挥喵
 
 ```mermaid
@@ -189,7 +191,7 @@ flowchart TD
 | `alas.py` 任务方法 `reward/tactical/dorm/meowfficer/guild` | 唯一调度入口，惰性导入后调 `run()` |
 | `module/config`（优先级表） | 日常任务在 `_DEFAULT_SCHEDULER_PRIORITY` 中的相对顺序决定了执行批次 |
 | `module/shop`（通用商店） | 金币溢出时导航到指挥喵页调用 `MeowfficerBuy.meow_overflow_buy()` |
-| `module/commission` | 石油溢出（`OilMaxed`）时调用 `RewardDorm.dorm_food_run(amount=10)` 购粮烧石油 |
+| `module/commission` / `module/scheduler` | 原调度启用石油控制时，领奖受阻先交回调度器优先刷图；无可运行的图时调用 `dorm_buy_oil_food`。关闭控制或使用自定义调度时保留委托固定购粮兜底 |
 | `module/api` | `meowfficer.scoreReport` 接口与 `/reports/meowfficer_score` 路由读取评分任务产物 |
 
 ### 下游
@@ -245,7 +247,8 @@ flowchart TD
 | `Dorm_Collect` | checkbox | true | 一键收取爱心与家具币 |
 | `Dorm_Feed` | checkbox | true | 喂食 |
 | `Dorm_FeedFilter` | textarea | `20000 > ... > 1000` | 喂食优先级（按单次喂食量） |
-| `Dorm_BuyFood` | 隐藏 | false | 已停用（`display: disabled`），仅作状态显示；购粮由委托模块在石油溢出时自动触发 |
+| `Dorm_BuyFood` | 隐藏 | false | 已停用（`display: disabled`）；自动购粮由原调度石油控制或委托溢出兜底调用 |
+| `General.OilControl.Enable` / `Target` | checkbox / int | false / 24000 | 原调度石油控制，范围 1000–24999；独立于日常后宅开关 |
 | `BuyFurniture_Enable` / `BuyOption` / `LastRun` | checkbox/select/datetime | false / all / 2020-01-01 | 限时家具购买，检查间隔 6 天由代码常量 `CHECK_INTERVAL` 决定 |
 
 ### 指挥喵（任务 Meowfficer，组 Meowfficer / MeowfficerTrain；工具任务 MeowfficerScore）
@@ -362,7 +365,8 @@ for _ in self.loop():
 ## 20. 相关模块
 
 - [商店系统](shop.md) —— 通用商店金币溢出时调用本合集的指挥喵溢出购买
-- [委托系统](commission.md) —— 石油溢出时调用后宅的 `dorm_food_run` 购粮
+- [委托系统](commission.md) —— 石油溢出时提交原调度清油请求；关闭控制或自定义调度保留 `dorm_food_run` 重试
+- [资源管理](../webui/resource-management.md) —— 按界面石油价格和确认数量记录后宅购粮收支
 - [科研系统](research.md) / [其他游戏功能模块](misc.md) —— 同属「自动收获」菜单的姊妹任务
 - [UI 导航](../ui.md) —— `Page` 图谱、`Navbar`/`Switch` 组件，五个模块的导航地基
 - [处理器层](../handler.md) —— 弹窗、info_bar 与紧急委托的统一处理

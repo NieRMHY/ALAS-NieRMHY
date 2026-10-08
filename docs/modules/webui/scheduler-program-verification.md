@@ -4,7 +4,7 @@
 
 ## 验收方法
 
-`tests/test_scheduler_live_loop.py` 使用临时实例与 SQLite，运行真实 `AzurLaneConfig`、`AzurLaneAutoScript.get_next_task/run/loop`。替换设备、游戏任务方法、通知、备份与看门狗启动；虚拟时间驱动等待。禁止真实设备初始化，意外进入生产退避路径立即结束测试，避免异常被无限重试掩盖。
+`tests/test_scheduler_live_loop.py` 使用临时实例与 SQLite，运行真实 `AzurLaneConfig`、`AzurLaneAutoScript.get_next_task/run/loop`。替换设备、游戏任务方法、通知、备份与运行监护启动；虚拟时间驱动等待。禁止真实设备初始化，意外进入生产退避路径立即结束测试，避免异常被无限重试掩盖。
 
 接口验收通过 Starlette TestClient 连接 `/api/v1/ws`，依次认证、读取目录、校验、保存、模拟、应用与查询状态；关闭连接后由真实调度宿主加载数据库并选出任务。读取与模拟过程没有创建 worker 或连接设备。
 

@@ -1,19 +1,35 @@
-### AzurLaneAutoScript
+# AzurPilot
+
+# Runtime
 log
 cache/
-.codex
+screenshots/
+debug_ocr/
+ocr_debug/
+
+config/reloadflag
+config/reloadalas
+config/webui-dependency-sync-pending
+
+# User configuration and runtime data
 config/backup/*
-# 每日备份目录（AzurPilot_Data_Backup/）：默认落在项目根目录，含个人统计数据与配置，不应入库
 /AzurPilot_Data_Backup/
+
 config/*.ini
 !config/template.ini
+
 config/*.yaml
 !config/deploy.*.yaml
+
 config/*.json
+!config/template*.json
+
 config/scheduler/
 config/stock-exchange/
 # 统计运行环境：keyring、wipe 记录与 transition 令牌，设备绑定，不入库
 config/opsi_secure/
+config/opsi_secure/
+
 config/*.db
 config/*/config.db*
 config/*/account.destroyed
@@ -21,10 +37,12 @@ config/tmp*
 # 岛屿运行时状态（已验证名单/赛季通知/页面读数/生成的上架清单）：非用户配置，不入库
 config/island/
 !config/template*.json
+
+/password.txt
+
+# Development and debugging
 *.pyw
 dev_tools/debug_tools
-.idea
-/screenshots
 /campaign/test/
 /toolkit
 *.lock
@@ -38,104 +56,52 @@ config/webui-dependency-sync-pending
 test.py
 test/
 !test/
+PaddleOCR
+
+# Tests
 test/*
 !test/ncnn_ocr_benchmark.py
-!test/ncnn_models
+!test/ncnn_models/
 !test/ncnn_ocr_benchmark.zh-CN.md
-debug_ocr/
-PaddleOCR
-.trae
+
+# Documentation
 docs/*
 !docs/modules/
-.claude
-.dsh
-.agents
-# Created by .ignore support plugin (hsz.mobi)
 
-### JetBrains template
-# Covers JetBrains IDEs: IntelliJ, RubyMine, PhpStorm, AppCode, PyCharm, CLion, Android Studio and WebStorm
-# Reference: https://intellij-support.jetbrains.com/hc/en-us/articles/206544839
+# Local directories
+/Alasio
+/f
+/workers
+/debug_img
 
-# User-specific stuff
-.idea/**/workspace.xml
-.idea/**/tasks.xml
-.idea/**/usage.statistics.xml
-.idea/**/dictionaries
-.idea/**/shelf
+# AI and coding tools
+.codex/
+.claude/
+.dsh/
+.agents/
+.trae/
+.workbuddy/
+.zcode/
+.cursor/
+.graphflow-cache/
+.zcodeignore
+RTK.md
 
-# Generated files
+# Frontend
+frontend/node_modules/
+frontend/test-results/
+frontend/playwright-report/
+frontend/*.tsbuildinfo
+
 .github/scripts/node_modules/
 .github/scripts/package-lock.json
-.idea/**/contentModel.xml
 
-# Sensitive or high-churn files
-.idea/**/dataSources/
-.idea/**/dataSources.ids
-.idea/**/dataSources.local.xml
-.idea/**/sqlDataSources.xml
-.idea/**/dynamic.xml
-.idea/**/uiDesigner.xml
-.idea/**/dbnavigator.xml
-
-# Gradle
-.idea/**/gradle.xml
-.idea/**/libraries
-
-# Gradle and Maven with auto-import
-# When using Gradle or Maven with auto-import, you should exclude module files,
-# since they will be recreated, and may cause churn.  Uncomment if using
-# auto-import.
-# .idea/modules.xml
-# .idea/*.iml
-# .idea/modules
-# *.iml
-# *.ipr
-
-# CMake
-cmake-build-*/
-
-# Mongo Explorer plugin
-.idea/**/mongoSettings.xml
-
-# File-based project format
-*.iws
-
-# IntelliJ
-out/
-
-# Visual Studio
-.vs
-
-# mpeltonen/sbt-idea plugin
-.idea_modules/
-
-# JIRA plugin
-atlassian-ide-plugin.xml
-
-# Cursive Clojure plugin
-.idea/replstate.xml
-# Crashlytics plugin (for Android Studio and IntelliJ)
-com_crashlytics_export_strings.xml
-crashlytics.properties
-crashlytics-build.properties
-fabric.properties
-
-# Editor-based Rest Client
-.idea/httpRequests
-
-# Android studio 3.1+ serialized cache file
-.idea/caches/build_file_checksums.ser
-
-### Python template
-# Byte-compiled / optimized / DLL files
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
-
-# C extensions
 *.so
 
-# Distribution / packaging
 .Python
 build/
 develop-eggs/
@@ -156,17 +122,12 @@ share/python-wheels/
 *.egg
 MANIFEST
 
-# PyInstaller
-#  Usually these files are written by a python script from a template
-#  before PyInstaller builds the exe, so as to inject date/other infos into it.
 *.manifest
 *.spec
 
-# Installer logs
 pip-log.txt
 pip-delete-this-directory.txt
 
-# Unit test / coverage reports
 htmlcov/
 .tox/
 .nox/
@@ -179,110 +140,89 @@ coverage.xml
 .hypothesis/
 .pytest_cache/
 
-# Translations
 *.mo
 *.pot
 
-# Django stuff:
 *.log
 local_settings.py
 db.sqlite3
 
-# Flask stuff:
 instance/
 .webassets-cache
-
-# Scrapy stuff:
 .scrapy
-
-# Sphinx documentation
 docs/_build/
-
-# PyBuilder
 target/
 
-# Jupyter Notebook
 .ipynb_checkpoints
-
-# IPython
 profile_default/
 ipython_config.py
-
-# pyenv
 .python-version
 
-# pipenv
-#   According to pypa/pipenv#598, it is recommended to include Pipfile.lock in version control.
-#   However, in case of collaboration, if having platform-specific dependencies or dependencies
-#   having no cross-platform support, pipenv may install dependencies that don't work, or not
-#   install all needed dependencies.
-#Pipfile.lock
-
-# celery beat schedule file
 celerybeat-schedule
-
-# SageMath parsed files
 *.sage.py
 
-# Environments
+# Python environments
 .env
-.venv
+.venv/
 env/
 venv/
 ENV/
 env.bak/
 venv.bak/
 
-# Spyder project settings
 .spyderproject
 .spyproject
-
-# Rope project settings
 .ropeproject
 
-# mkdocs documentation
-/site
-
-# mypy
 .mypy_cache/
 .dmypy.json
 dmypy.json
-
-# Pyre type checker
 .pyre/
 
-### Windows template
-# Windows thumbnail cache files
+pyrightconfig.json
+
+# Lock files
+*.lock
+!uv.lock
+
+# IDE and editor files
+.idea/
+.vs/
+.vscode/*
+.idea_modules/
+
+*.iws
+out/
+cmake-build-*/
+
+atlassian-ide-plugin.xml
+com_crashlytics_export_strings.xml
+crashlytics.properties
+crashlytics-build.properties
+fabric.properties
+
+# Windows
 Thumbs.db
 Thumbs.db:encryptable
 ehthumbs.db
 ehthumbs_vista.db
-
-# Dump file
 *.stackdump
-
-# Folder config file
 [Dd]esktop.ini
-
-# Recycle Bin used on file shares
 $RECYCLE.BIN/
 
-# Windows Installer files
 *.cab
 *.msi
 *.msix
 *.msm
 *.msp
-
-# Windows shortcuts
 *.lnk
+
 adb_port.txt
 adb_port.ini
 alas.exe
 !popup.exe
 *.zip
 console.bat
-.vscode/*
 
 # IDE / tool configs (local only, not for sync)
 .claude/
@@ -341,16 +281,26 @@ RTK.md
 # （Windows 上 os.devnull == 'nul'），而 MSYS2 版 ssh 不把裸的 'nul' 当设备名，
 # 于是在工作目录建出真实文件，并在 StrictHostKeyChecking=no 下往里追加主机密钥。
 # 触发点：module/webui/remote_access.py、alas.py、module/device/platform/platform_base.py
+# Accidental "nul" file on Windows
+# MSYS2 ssh may treat os.devnull == "nul" as a regular file instead of
+# the Windows null device, causing SSH known_hosts data to be written
+# into a real file named "nul" in the working directory.
 /nul
 
-.workbuddy
+# macOS
+.DS_Store
 
-# React 前端本地依赖与测试产物
-frontend/node_modules/
-frontend/test-results/
-frontend/playwright-report/
-frontend/*.tsbuildinfo
-!uv.lock
+# Cursor Helper
+cursor-helper/**/diff/
+cursor-helper/**/docs/
+cursor-helper/**/rule_improvements.md
+cursor-helper/**/fix/fix_plan.md
+cursor-helper/**/review/reports/files/
 
-# GraphFlow 工具的本地缓存（graphflow MCP 在工作目录运行时产生）
-.graphflow-cache/
+# Backup files
+*.bak
+
+# Intentionally tracked:
+# cursor-helper/**/review/reports/summary/**
+# cursor-helper/**/fix/fix_report.md
+# cursor-helper/**/organize-rules/**

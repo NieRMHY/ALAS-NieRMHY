@@ -11,11 +11,6 @@ from module.shop.shop_status import ShopStatus
 
 
 class CoreShop_250814(ShopClerk, ShopStatus):
-    """核心商店处理器 (2025-08-14 新 UI)。
-
-    Pages: in: page_shop (core shop tab)
-    """
-
     shop_template_folder = './assets/shop/core'
 
     @cached_property
@@ -27,7 +22,7 @@ class CoreShop_250814(ShopClerk, ShopStatus):
         """
         return self.config.CoreShop_Filter.strip()
 
-    # 2025-08-14 新 UI
+    # New UI in 2025-08-14
     @cached_property
     def shop_core_items(self):
         """加载核心商店商品模板和配置。
@@ -71,23 +66,6 @@ class CoreShop_250814(ShopClerk, ShopStatus):
         logger.info(f'[商店-核心] 核心数据: {self._currency}')
         return self._currency
 
-    @staticmethod
-    def shop_strategy_stock(item):
-        """核心商店数量弹窗会二次钳制库存，策略可生成多件计划。"""
-        return 99
-
-    @staticmethod
-    def shop_strategy_max_quantity(item):
-        """获取策略规划中单次购买数量上限。
-
-        Args:
-            item: 待购买商品对象。
-
-        Returns:
-            int: 允许购买的最大数量。
-        """
-        return 99
-
     def shop_interval_clear(self):
         """清除购买界面相关按钮的点击间隔。
 
@@ -121,10 +99,13 @@ class CoreShop_250814(ShopClerk, ShopStatus):
 
         按照过滤器配置购买核心商店商品。
         """
-        if not self.shop_filter and not self.shop_strategy_enabled():
+        # Base case; exit run if filter empty
+        if not self.shop_filter:
             return
 
-        logger.hr('[商店-核心] 核心商店', level=1)
+        # When called, expected to be in
+        # correct Core Shop interface
+        logger.hr('Core Shop', level=1)
 
-        # 执行购买操作
+        # Execute buy operations
         self.shop_buy()

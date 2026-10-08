@@ -216,7 +216,13 @@ URL しか指定できずリクエストヘッダーを設定できないクラ�
 <div align="center">
   <img src="doc/loading.png" alt="loading" width="500" />
   <p>起動読み込み画面</p>
-  <img src="doc/GUI.png" alt="GUI" width="500" />
+  <table align="center">
+    <tr>
+      <td align="center"><img src="doc/GUI.png" alt="新版" width="260"><br>新版</td>
+      <td align="center"><img src="doc/GUI-legacy.webp" alt="旧版" width="260"><br>旧版</td>
+      <td align="center"><img src="doc/GUI-minimal.png" alt="シンプル" width="260"><br>シンプル</td>
+    </tr>
+  </table>
   <p>Windows クライアント画面</p>
   <img src="doc/macGUI.png" alt="macGUI" width="500" />
   <p>Mac クライアント画面</p>

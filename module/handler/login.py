@@ -31,9 +31,18 @@ _ = get_distribution
 
 import module.config.server as server
 from module.base.button import Button
+from module.base.runtime_params import (
+    RESTART_FIRST_TRY_WAIT_SECONDS,
+    RESTART_OBSERVE_INTERVAL,
+    RESTART_OBSERVE_SECONDS,
+    RESTART_OPERATION_TIMEOUT,
+    RESTART_SUBSEQUENT_TRY_WAIT_SECONDS,
+    RESTART_TRIES,
+)
 from module.base.timer import Timer
 from module.base.utils import color_similarity_2d, crop
 from module.config.deep import deep_get
+from module.config.utils import read_run_param
 from module.handler.assets import *
 from module.logger import logger
 from module.map.assets import *
@@ -42,21 +51,9 @@ from module.ui.page import page_campaign_menu
 from module.ui.ui import UI
 
 
-# 应用重启恢复策略：3 次启动失败后进入观察阶段，观察期间仍无恢复则
-# 由上层调度器执行模拟器重启，避免长时间无效重试。
-RESTART_TRIES = 3
-RESTART_FIRST_TRY_WAIT_SECONDS = 30
-RESTART_SUBSEQUENT_TRY_WAIT_SECONDS = 20
-RESTART_OBSERVE_SECONDS = 180
-RESTART_OBSERVE_INTERVAL = 15
-# 单次 app_stop/app_start 操作的硬超时秒数。
-# 仅作为配置读取失败的兜底默认值；实际值从配置 Error.RestartOperationTimeout
-# 读取，可在 WebUI「调试设置」中修改。
-# atx-agent 自恢复可能耗时 70 秒以上，给 120 秒余量；超过则判定模拟器或
-# atx-agent 卡死，立即抛出 EmulatorNotRunningError 触发模拟器重启，
-# 避免 u2 调用无限挂起导致 LoginWaitTimeout / GameStuckRestart 等保护机制
-# （依赖 screenshot() 中的 stuck_record_check）均无法触发的死锁。
-RESTART_OPERATION_TIMEOUT = 120
+# 应用重启恢复策略的默认值与单次操作硬超时常量集中在
+# module/base/runtime_params.py（登录与重启域）；可调参数走
+# WebUI「运行参数」页（RunParams.Reboot），此处 import 兜底默认值。
 
 
 class LoginHandler(UI):
@@ -377,6 +374,17 @@ class LoginHandler(UI):
         logger.hr('应用重启')
         is_restart_success = False
 
+        # 从「运行参数」页读取重启策略，读取失败时回退兜底默认值
+        restart_tries = int(read_run_param(self.config, 'Reboot_Tries', RESTART_TRIES, 1, 10))
+        first_try_wait = read_run_param(
+            self.config, 'Reboot_FirstTryWaitSeconds', RESTART_FIRST_TRY_WAIT_SECONDS, 5, 300)
+        subsequent_try_wait = read_run_param(
+            self.config, 'Reboot_SubsequentTryWaitSeconds', RESTART_SUBSEQUENT_TRY_WAIT_SECONDS, 5, 300)
+        observe_seconds = read_run_param(
+            self.config, 'Reboot_ObserveSeconds', RESTART_OBSERVE_SECONDS, 30, 600)
+        observe_interval = read_run_param(
+            self.config, 'Reboot_ObserveInterval', RESTART_OBSERVE_INTERVAL, 1, 60)
+
         # 检查是否启用了重启操作硬超时保护
         op_timeout_enabled = self._restart_operation_timeout_enabled()
         if op_timeout_enabled:
@@ -387,8 +395,8 @@ class LoginHandler(UI):
             logger.info('[重启] app_stop/app_start 硬超时保护未启用，回退原有行为')
 
         clear_cache = getattr(self.config, 'Restart_ClearCache', False)
-        for i in range(RESTART_TRIES):
-            logger.info(f"[重启] 应用重启尝试 {i + 1}/{RESTART_TRIES}...")
+        for i in range(restart_tries):
+            logger.info(f"[重启] 应用重启尝试 {i + 1}/{restart_tries}...")
             # 启用硬超时时，用 _call_with_restart_deadline 包装 app_stop/app_start，
             # 防止 atx-agent 异常时 u2 HTTP 调用无限挂起导致
             # LoginWaitTimeout/GameStuckRestart 等保护机制失效
@@ -411,7 +419,7 @@ class LoginHandler(UI):
                 )
             else:
                 self.device.app_start()
-            wait_seconds = RESTART_FIRST_TRY_WAIT_SECONDS if i == 0 else RESTART_SUBSEQUENT_TRY_WAIT_SECONDS
+            wait_seconds = first_try_wait if i == 0 else subsequent_try_wait
             logger.info(f"[重启] 等待 {wait_seconds} 秒让应用启动和稳定...")
             self.device.sleep(wait_seconds)
 
@@ -423,16 +431,16 @@ class LoginHandler(UI):
                 break  # 成功启动，跳出循环
             else:
                 logger.warning(f"[重启] 尝试 {i + 1} 失败。应用启动后未运行（可能崩溃）")
-                if i < RESTART_TRIES - 1:
+                if i < restart_tries - 1:
                     logger.info("[重启] 重试中...")
 
         # 连续失败后先进入观察阶段，给慢启动/游戏更新留出恢复时间
         if not is_restart_success:
             logger.critical(
-                f"[重启] 应用重启连续失败 {RESTART_TRIES} 次，"
-                f"进入观察阶段，最多等待 {RESTART_OBSERVE_SECONDS} 秒"
+                f"[重启] 应用重启连续失败 {restart_tries} 次，"
+                f"进入观察阶段，最多等待 {observe_seconds} 秒"
             )
-            deadline = time.monotonic() + RESTART_OBSERVE_SECONDS
+            deadline = time.monotonic() + observe_seconds
             while 1:
                 if time.monotonic() >= deadline:
                     break
@@ -442,7 +450,7 @@ class LoginHandler(UI):
                     break
                 remaining = max(0, int(deadline - time.monotonic()))
                 logger.info(f"[重启] 观察阶段应用仍未恢复，剩余 {remaining} 秒后触发模拟器重启")
-                self.device.sleep(min(RESTART_OBSERVE_INTERVAL, remaining))
+                self.device.sleep(min(observe_interval, remaining))
 
         # 观察阶段仍失败则抛出 EmulatorNotRunningError，
         # 由上层调度器触发模拟器重启流程，而非直接终止。
@@ -453,8 +461,8 @@ class LoginHandler(UI):
             )
             from module.exception import EmulatorNotRunningError
             raise EmulatorNotRunningError(
-                f"[重启] 应用重启连续失败 {RESTART_TRIES} 次，"
-                f"观察 {RESTART_OBSERVE_SECONDS} 秒后仍未恢复，"
+                f"[重启] 应用重启连续失败 {restart_tries} 次，"
+                f"观察 {observe_seconds} 秒后仍未恢复，"
                 "判定模拟器或游戏环境异常，触发模拟器重启"
             )
         self.handle_app_login()

@@ -121,7 +121,7 @@ flowchart TD
 
 run() 先处理一个已知 bug：卡在战术课堂界面（`TACTICAL_CLASS_START` 误检测）时先点取消，否则 A* 导航无法到达 `page_reward`。
 
-**领奖**（`commission_receive`，最多重试 3 次）：在奖励页与委托页之间循环，点击 `REWARD_1`/`REWARD_1_WHITE` 小红点、`REWARD_GOTO_COMMISSION` 跳转、`EXP_INFO_S_REWARD`（经验弹窗，一次代表一条委托完成）与 `GET_ITEMS_1/2/3`（物品弹窗）。物品弹窗出现时复制截图到本地队列；下一次经验弹窗出现即认为上一组物品弹窗结束，触发收入识别与持久化。CN 服遇到 `OIL_MAXED` 抛 `OilMaxed`，外层转宿舍喂食消耗石油后重试。每次经验弹窗计数会进入 `finally` 块更新 T 类科研剩余委托数。
+**领奖**（`commission_receive`）：在奖励页与委托页之间循环，点击 `REWARD_1`/`REWARD_1_WHITE` 小红点、`REWARD_GOTO_COMMISSION` 跳转、`EXP_INFO_S_REWARD`（经验弹窗，一次代表一条委托完成）与 `GET_ITEMS_1/2/3`（物品弹窗）。物品弹窗出现时复制截图到本地队列；下一次经验弹窗出现即认为上一组物品弹窗结束，触发收入识别与持久化。CN 服遇到 `OIL_MAXED` 抛 `OilMaxed`：原调度开启石油控制时安全关闭提示、退出本轮并提交清油请求，受阻领取保留待恢复；先刷可运行的图，图冷却时购粮。实际油量下降后重试，最多三次清理仍受阻则将委托延后五分钟，让其他可运行任务继续。关闭石油控制或自定义调度保留原先最多三次固定后宅购粮重试。每次经验弹窗计数会进入 `finally` 块更新 T 类科研剩余委托数。独立资源账本旁路解析这些已有奖励画面，详见 [资源管理](../webui/resource-management.md)。
 
 **扫描**（`_commission_scan_all`）：紧急列表是懒加载的，先切到 urgent 强制刷新；再分别切到 daily/urgent，滚动条翻页（上限 15 页）逐屏 `commission_detect`。检测用 `lines_detect` 找委托卡片底部白色分割线（scipy `find_peaks`），对每条分割线裁剪出 `(188, y-119, 1199, y)` 区域交给 `Commission` 解析；发现无效委托（通常 info_bar 未消失）时重试。紧急列表中的 `extra_*` 委托统一 `convert_to_night` 归类为 `night_*`，与 21:00~次日 02:00 生效的 `_night` 过滤预设对应。
 
@@ -131,6 +131,15 @@ run() 先处理一个已知 bug：卡在战术课堂界面（`TACTICAL_CLASS_STA
 - 动态规划 `_commission_choose_dynamic`（默认开启）：`apply_tiers` 把过滤器按 `tier` 分成价值层级，构造 `CommissionPlanJob` 列表（时长、deadline、层内编号），交给 `optimize_commission_plan` 求折现价值最优计划。**只启动计划中 `start == 0` 的委托**；计划中「预计稍后启动」的动作只写入日志时间线，等委托完成释放槽位后由下次运行重新扫描决策。规划视野（horizon）取下次 `Scheduler_ServerUpdate`，无游戏内 deadline 的委托以该时刻作为最晚启动时间。
 
 **启动**（`commission_start`）：对每个选中委托，切到对应列表模式、回到顶部后进入 `_commission_find_and_start`（最多 3 轮，每轮重新翻页扫描并用 `__eq__` 找到同一条委托——不同扫描中同一条委托位置可能不同）。`_commission_start_click` 是点击状态循环：点委托卡片 → `COMMISSION_START` → 弹确认框 → 出现推荐界面 `COMMISSION_ADVICE` 时先重新识别顶部委托并校验与目标一致（不一致直接放弃本次启动），再点推荐确认。启动成功后本地 `convert_to_running`；若是钻石委托（`genre == 'urgent_gem'`）则写入数据库运行列表并按 `Commission_GemNotify` 推送。
+
+**船坞选船兜底**（`Commission_AutoPickShip` 开启时）：推荐后「开始」仍灰（推荐舰船不满足等级要求等）时进船坞手动补船。先从详情面板的空槽位进入船坞（6 格全满则先取消最后一艘腾出空槽；首次点击只展开面板时再点一次），随后 `_commission_dock_pick_ships` 按以下流程填充：
+
+1. 按 `Commission_PickMinRarity` 从低到高遍历稀有度档位，每档用游戏筛选面板设为「仅该档稀有度 + 按等级排序」（`required >= 100` 或 `PickLevelOrder=high_first` 时降序）。选中数用「已选中 N/M」OCR 读取，点击后按计数变化判断选中还是被游戏拒绝。
+2. `_commission_dock_fill_stage` 逐屏扫描：每屏只读顶部两行卡片（等级 OCR + 舰队徽标 + 红色占用横幅），跳过已选、占用中、等级不符的船；不允许拆舰队时（第一遍）还跳过带舰队徽标的卡。`NoFreeShipPolicy=use_fleet` 时加跑第二遍，允许确认弹窗把船拆出舰队（受其他已启用任务使用的舰队除外）。
+3. 翻页全部拖右侧滚动条完成（不得在卡片区做手势：落点不可控且会误触卡片），翻页后把行间缝拖回 OCR 网格线再扫描；列表末端读第三行（末行）补足，末行舰队徽标被底栏遮挡，只在第一遍读取。
+4. 结束仍未选满：一艘都没选到时按「没有空闲的船」跳过该委托；选到但不足则照常点确认开始。
+
+翻页几何按 1280×720 国服实机截图（2026-10-07）校准：行距 227、行间缝网格线 y=292、视口约 2.85 行；每屏向下翻约 1.7 行（不超过 2 行，否则图像扫描会整行漏读）。行间缝用亮度剖面定位（17px 平滑，滤掉比缝更暗的卡片顶边细线，窗口取网格线上下各半行折算）。拖动必须用 `device.drag`（到点按住再松手）：swipe 的小位移会被游戏回弹，且实测游戏会吃掉手势起手约 10px 位移，拖拽终点需按方向外扩补偿。
 
 ## 7. 调用关系
 
@@ -200,6 +209,10 @@ stateDiagram-v2
 | `Commission_DoMajorCommission` | checkbox | `false` | 是否做 major 委托（1200/1000 油委托，收益低默认关闭） |
 | `Commission_CommissionNotifyReward` / `...RewardStatistics` | checkbox | `false` / `true` | 委托奖励推送及其统计附件 |
 | `Commission_DetectShipDrop` | checkbox | `false` | 领奖时检测并关闭「获得舰船」画面；不做掉船委托可关闭避免误识别 |
+| `Commission_AutoPickShip` | checkbox | `false` | 推荐后开始仍灰时进船坞按稀有度/等级手动补船（见「船坞选船兜底」） |
+| `Commission_PickMinRarity` | option | `rare` | 选船兜底遍历的最低稀有度档位，从该档向上（common/rare/elite/super_rare） |
+| `Commission_PickLevelOrder` | option | `low_first` | 同品质内按等级升序还是降序取船 |
+| `Commission_NoFreeShipPolicy` | option | `skip` | 空闲船不足时：`skip` 只用空闲船，`use_fleet` 允许拆舰队中的船 |
 | `Commission_GemNotify` / `GemStatistics` / `GemStatisticsPeriod` | checkbox/option | `true` / `false` / `month` | 钻石委托执行推送与统计详情 |
 
 关联配置：
@@ -211,14 +224,14 @@ stateDiagram-v2
 
 | 异常 | 原因 | 处理 |
 | --- | --- | --- |
-| `OilMaxed` | CN 服石油溢出（`OIL_MAXED`） | `commission_receive` 捕获后调用宿舍喂食消耗石油，重试 3 次；仍失败抛 `RequestHumanTakeover` 请求人工接管 |
+| `OilMaxed` | CN 服石油溢出（`OIL_MAXED`） | 原调度启用石油控制时关闭弹窗并通过 `TaskEnd` 让出领取，调度器优先清油后恢复；最多三轮清理，仍受阻或无有效消耗则延后五分钟。关闭控制或自定义调度保留固定购粮重试三次、失败请求人工接管的旧兜底 |
 | `GameStuckError` | 委托推荐后舰船列表闪烁 bug（连续 3 次校验不通过） | 主动抛出，交给调度器按卡死恢复（重启游戏） |
 | 委托校验失败 | 启动时发现所选委托与目标不一致 | 返回 False，重置列表模式后重试或放弃，不抛异常 |
 | 收入识别/持久化失败 | 模板缺失、数据库异常等 | 捕获并警告；`income_recorded` 为 False 时跳过本轮「到期未获钻石」的失败结算，避免把实际成功误记为失败 |
 | 通知失败 | OnePush/WebUI 推送异常 | 仅告警，不影响已提交的收益数据 |
 | 跨数据库异常 | 统计库写入失败 | 全部 try/except 包裹并告警；委托主流程不因统计失败中断 |
 
-自动恢复的边界：本模块抛出的 `GameStuckError`、`RequestHumanTakeover` 由调度器统一分级处理（见[调度器](../entry/alas.md)）；`OilMaxed` 是唯一在模块内自处理的业务异常。
+自动恢复的边界：本模块抛出的 `GameStuckError`、`RequestHumanTakeover` 由调度器统一分级处理（见[调度器](../entry/alas.md)）。`OilMaxed` 根据原调度石油控制开关选择让出业务执行或使用旧购粮兜底；让出不是任务失败，委托保持待恢复，次数与清理结果由当前 worker 的清油状态记录。
 
 ## 13. 缓存与持久化
 
@@ -246,6 +259,7 @@ stateDiagram-v2
 - **`__eq__` 的 120 秒阈值**是跨截图 OCR 误差的容忍度，收紧会导致扫描去重失败、同一条委托被重复计数；放宽会让不同委托互相混淆。
 - **列表切换后必须等滚动动画结束**：`_commission_ensure_mode` 通过对比两次 `lines_detect` 的首个峰值确认列表静止；跳过该步骤会系统性漏检顶部委托。
 - **启动后校验**：`_commission_start_click` 在推荐界面重新检测并比较委托对象，防止点错行；`count >= 3` 触发的 `GameStuckError` 是有意为之（触发游戏闪烁 bug 时重启游戏是唯一恢复手段），不要改成静默重试。
+- **船坞选船翻页只走滚动条**：几何常量（行距 227、缝 292、视口 2.85 行、起手死区补偿 `_DOCK_DRAG_SLOP`）由实机截图校准，重新校准前不要改动；列表被筛选缩短后滑块会变长，行数只能按滑块占轨道比例估算（`_commission_dock_pixels_per_position`），不能用船坞总容量推算。内容区手势与 swipe 均已被实机验证不可靠，不要回退。
 
 ## 17. 已知限制
 

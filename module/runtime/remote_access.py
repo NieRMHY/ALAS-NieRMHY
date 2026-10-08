@@ -3,6 +3,7 @@
 默认使用 localshare 的 P2P bootstrap：优先 WebRTC 直连/TURN 中继，失败后回到
 localshare 现有 SSH 反向隧道。`RemoteAccessMode=ssh` 时保持旧行为。
 """
+from module.base.runtime_params import P2P_SETUP_TIMEOUT, SSH_RECONNECT_DELAY, SSH_RECONNECT_MAX_DELAY
 import asyncio
 import base64
 import fnmatch
@@ -27,9 +28,6 @@ if TYPE_CHECKING:
     from module.runtime.task_handler import TaskHandler
 
 HTTP_BODY_CHUNK = 12 * 1024
-P2P_SETUP_TIMEOUT = 60
-SSH_RECONNECT_DELAY = 2
-SSH_RECONNECT_MAX_DELAY = 30
 HOST_KEY_CHANGED_MARKER = "REMOTE HOST IDENTIFICATION HAS CHANGED"
 
 

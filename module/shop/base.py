@@ -48,7 +48,7 @@ FILTER_REGEX = re.compile(
     '|red|blue|yellow'
     '|general|gun|torpedo|antiair|plane|wild'
     '|dd|cl|bb|cv'
-    '|iris|sardegna'
+    '|iris'
     '|abyssal|archive|obscure|unlock'
     '|combat|offense|survival)?'
 
@@ -59,13 +59,9 @@ FILTER = Filter(FILTER_REGEX, FILTER_ATTR)
 
 
 class ShopItem_250814(Item):
-    """2025-08-14 新版商店物品，增加售罄状态检测。
-
-    通过像素亮度判断商品是否已售罄。阈值 0.3：
-    未售出商品的亮度均值 > 0.36，已售出商品 < 0.2。
-
-    Attributes:
-        无额外属性，继承自 Item。
+    """
+    Calculation result of unsold ship_T2 is 0.36, so 0.3 is taken as threshold,
+    result of sold product is < 0.2
     """
 
     def predict_valid(self):
@@ -82,13 +78,6 @@ class ShopItem_250814(Item):
 
 
 class ShopItemGrid(ItemGrid):
-    """商店物品网格，在基类基础上扩展正则过滤属性。
-
-    为每个 Item 追加 group、sub_genre、tier 三个属性，
-    供 FILTER 进行匹配和排序。书籍类物品会通过模板匹配
-    修正颜色和等级的误识别。
-    """
-
     def predict(self, image, name=True, amount=True, cost=False, price=False, tag=False):
         """
         预测商店物品并填充过滤所需的扩展属性。
@@ -142,11 +131,6 @@ class ShopItemGrid(ItemGrid):
 
 
 class ShopItemGrid_250814(ShopItemGrid):
-    """2025-08-14 新版商店物品网格，使用 ShopItem_250814 作为物品类。
-
-    增加售罄计数功能，通过像素亮度区分在售和已售罄商品。
-    """
-
     item_class = ShopItem_250814
 
     def get_soldout_count(self, image):
@@ -173,18 +157,8 @@ class ShopItemGrid_250814(ShopItemGrid):
 
 
 class ShopBase(UI):
-    """
-    商店系统基类。
-
-    提供商店物品检测、过滤、购买决策的通用框架。
-    子类重写 shop_items()、shop_filter、shop_currency() 等方法
-    以适配不同商店的布局和货币类型。
-
-    Pages: in: page_shop
-    """
     _currency = 0
     shop_template_folder = ''
-    SHOP_STRATEGY_TASKS = frozenset({'ShopFrequent', 'ShopOnce', 'PrivateQuarters', 'OpsiVoucher'})
 
     @cached_property
     def shop_filter(self):
@@ -236,140 +210,6 @@ class ShopBase(UI):
             int: 当前货币数量。
         """
         return self._currency
-
-    def shop_strategy_enabled(self):
-        """仅在声明了该配置组的实际任务中启用高级策略。
-
-        配置绑定会保留前一任务的 Python 属性，因此不能只读取
-        ``ShopAdvanced_Mode``，否则 OpsiArchive 等复用商店的任务会误继承策略。
-        """
-        task = getattr(getattr(self.config, 'task', None), 'command', None)
-        return task in self.SHOP_STRATEGY_TASKS and getattr(self.config, 'ShopAdvanced_Mode', 'legacy') == 'advanced'
-
-    def shop_strategy_domain(self):
-        """返回通用商店策略域，子类可为专用购买流程覆盖。"""
-        return 'general'
-
-    def shop_strategy_currency(self, items):
-        """按当前商品货币名称投影已 OCR 的通用余额。"""
-        try:
-            amount = max(0, int(self._currency))
-        except (TypeError, ValueError):
-            amount = 0
-
-        currencies = {}
-        for item in items:
-            cost = getattr(item, 'cost', None)
-            if isinstance(cost, str) and cost:
-                currencies[cost] = amount
-        return currencies
-
-    @staticmethod
-    def shop_strategy_stock(item):
-        """普通确认式商店在策略层按单件处理，避免虚构未知库存。"""
-        return 1
-
-    @staticmethod
-    def shop_strategy_max_quantity(item):
-        """子类只有在可可靠识别数量选择框时才会放宽该上限。"""
-        return 1
-
-    def _shop_strategy_state(self):
-        """返回当前商店会话的已消费金额和已购候选记录。"""
-        state = getattr(self, '_shop_strategy_session', None)
-        if state is None:
-            state = {'spent': {}, 'purchased': {}, 'inventory_purchased': {}, 'cap_usage': {}}
-            self._shop_strategy_session = state
-        return state
-
-    def shop_strategy_reset_inventory(self):
-        """在商店刷新后清空已购货架记录，保留预算与分类配额累计值。"""
-        if not self.shop_strategy_enabled():
-            return
-        self._shop_strategy_state()['inventory_purchased'].clear()
-
-    def shop_strategy_plan_quantity(self, item, limit):
-        """将策略数量上限与游戏实际可购数量取较小值。"""
-        planned = getattr(item, '_shop_strategy_quantity', None)
-        if isinstance(planned, int) and not isinstance(planned, bool) and planned > 0:
-            return min(limit, planned)
-        return limit
-
-    def shop_strategy_select_item(self, items, eligible=None):
-        """在高级模式下生成并验证当前页面的下一项购买动作。
-
-        脚本只接收商品 DTO。余额、库存和业务前置条件由 Python 在投影前后
-        分别检查；任意策略错误都会返回 ``None``，从而安全跳过本轮购买。
-        """
-        if not self.shop_strategy_enabled():
-            return None
-
-        from module.shop_strategy.adapter import run_shop_strategy
-
-        if eligible is None:
-            eligible = self.shop_check_item
-        state = self._shop_strategy_state()
-        result = run_shop_strategy(
-            self.config.ShopAdvanced_Script,
-            items,
-            domain=self.shop_strategy_domain(),
-            currency=self.shop_strategy_currency(items),
-            eligible=eligible,
-            stock=self.shop_strategy_stock,
-            max_quantity=self.shop_strategy_max_quantity,
-            spent=state['spent'],
-            purchased=state['purchased'],
-            inventory_purchased=state['inventory_purchased'],
-            cap_usage=state['cap_usage'],
-        )
-        if not result.success:
-            diagnostic = result.diagnostic
-            location = ''
-            if diagnostic is not None and diagnostic.line is not None:
-                location = f'（第 {diagnostic.line} 行，第 {diagnostic.column or 1} 列）'
-            message = diagnostic.message if diagnostic is not None else '未知策略错误'
-            logger.warning(f'[高级商店策略] {message}{location}；本轮不购买')
-            return None
-        if not result.actions:
-            logger.info('[高级商店策略] 当前候选未生成可执行购买计划')
-            return None
-
-        action = result.actions[0]
-        item = action.item
-        # 仅附着基本类型执行信息，原商品从未传递给策略运行时。
-        item._shop_strategy_candidate_id = action.candidate.id
-        item._shop_strategy_quantity = action.quantity
-        item._shop_strategy_cost = action.cost
-        item._shop_strategy_total_price = action.total_price
-        item._shop_strategy_cap_usage_keys = action.cap_usage_keys
-        logger.attr('高级策略计划', ' > '.join(
-            f'{entry.candidate.name} x{entry.quantity}' for entry in result.actions
-        ))
-        return item
-
-    def shop_strategy_record_purchase(self, item):
-        """在一次购买流程正常返回后记录实际执行量，供下一次重算计划。"""
-        if not self.shop_strategy_enabled():
-            return
-        candidate_id = getattr(item, '_shop_strategy_candidate_id', None)
-        cost = getattr(item, '_shop_strategy_cost', None)
-        quantity = getattr(item, '_shop_strategy_executed_quantity',
-                           getattr(item, '_shop_strategy_quantity', None))
-        price = getattr(item, 'price', None)
-        if not isinstance(candidate_id, str) or not isinstance(cost, str):
-            return
-        if not isinstance(quantity, int) or isinstance(quantity, bool) or quantity <= 0:
-            return
-        if not isinstance(price, int) or isinstance(price, bool) or price < 0:
-            return
-
-        state = self._shop_strategy_state()
-        state['spent'][cost] = state['spent'].get(cost, 0) + price * quantity
-        state['purchased'][candidate_id] = state['purchased'].get(candidate_id, 0) + quantity
-        state['inventory_purchased'][candidate_id] = state['inventory_purchased'].get(candidate_id, 0) + quantity
-        for key in getattr(item, '_shop_strategy_cap_usage_keys', ()):
-            state['cap_usage'][key] = state['cap_usage'].get(key, 0) + quantity
-        logger.attr('高级策略已购', f'{getattr(item, "name", candidate_id)} x{quantity}')
 
     def shop_has_loaded(self, items):
         """
@@ -439,7 +279,7 @@ class ShopBase(UI):
             return []
 
     def shop_purchase_result_handle(self):
-        """关闭已获得物品界面，并报告本次购买已得到明确确认。"""
+        """关闭已获得物品界面，供购买流程确认真实成交后记录资源收支。"""
         if self.appear(GET_SHIP, offset=(20, 20), interval=1):
             logger.info(f'商店遮挡: {GET_SHIP} -> {SHOP_CLICK_SAFE_AREA}')
             self.device.click(SHOP_CLICK_SAFE_AREA)
@@ -466,7 +306,7 @@ class ShopBase(UI):
         """
         if self.shop_purchase_result_handle():
             return True
-        # 锁定新获得的舰船
+        # To lock new ships
         if self.handle_popup_confirm('SHOP_OBSTRUCT'):
             return True
         return False
@@ -596,18 +436,14 @@ class ShopBase(UI):
         Returns:
             Item: 待购买的物品，无可用物品时返回 None。
         """
-        if self.shop_strategy_enabled():
-            return self.shop_strategy_select_item(
-                items,
-                eligible=lambda item: self.shop_check_item(item) or self.shop_check_custom_item(item),
-            )
-
-        # 首先扫描自定义物品，因其没有模板或过滤器支持
+        # First, must scan for custom items
+        # as has no template or filter support
         for item in items:
             if self.shop_check_custom_item(item):
                 return item
 
-        # 然后加载选择、应用过滤器，并返回结果中的第一个物品
+        # Second, load selection, apply filter,
+        # and return 1st item in result if any
         if not self.shop_filter:
             return None
         FILTER.load(self.shop_filter)
@@ -615,6 +451,6 @@ class ShopBase(UI):
 
         if not filtered:
             return None
-        logger.attr('物品排序', ' > '.join([str(item) for item in filtered]))
+        logger.attr('Item_sort', ' > '.join([str(item) for item in filtered]))
 
         return filtered[0]

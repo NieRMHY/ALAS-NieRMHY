@@ -92,6 +92,8 @@ module/
 
 ### 建造（module/gacha）
 
+建造订单在数量面板核对、提交成功后向资源账本写入实际支付的物资、魔方或建造券，准备或提交失败不预扣；计算阶段的预计库存仍标为未观测，不作为收支。规则见 [资源管理](../webui/resource-management.md)。
+
 `RewardGacha(GachaUI, Retirement, CampaignStatus)` 执行建造完整流程：清空已有队列收菜 → OCR 金币/魔方/建造券 → 按池（light 600 金 +1 魔方，heavy/special/event/wishing_well 1500 金 +2 魔方）计算可建次数 → 提交订单。活动池优先消耗建造券（`Gacha_UseTicket`），差额按 `Gacha_UseDrill` 与资源上限折算；收菜时新船走快速跳过并交给退役流程。资源计数写入 `LogRes` 统计。
 
 ### 每日任务（module/daily）

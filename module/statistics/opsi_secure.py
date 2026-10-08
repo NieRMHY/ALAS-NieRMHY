@@ -14,6 +14,7 @@ daily_summary_cl1_events.secure_payload 存 JSON 文本，daily_summary_periods.
    按原样保留，读取路径与后续启动自动重试（可用性优先，绝不丢数据）。
 """
 from __future__ import annotations
+from module.base.runtime_params import DECODER_RETRY_INTERVAL, MIGRATION_LOCK_TIMEOUT
 import base64
 import csv
 import hashlib
@@ -81,8 +82,6 @@ DATABASE_LAYOUT = (
 # 加密时代收尾遗留的标记文件：数据解密完成后一并移除。
 RESIDUE_FILES = ('keyring.json', 'pending.json', 'wipe.json', 'integrity.json', 'transition.bin', 'state.json')
 
-MIGRATION_LOCK_TIMEOUT = 20.0
-DECODER_RETRY_INTERVAL = 60.0
 
 
 class StoreError(RuntimeError):

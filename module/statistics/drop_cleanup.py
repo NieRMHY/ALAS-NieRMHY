@@ -15,6 +15,7 @@
 文件不会被误删，``bak/`` 里的备份也不会被重复处理。
 """
 
+from module.base.runtime_params import DROP_SCREENSHOT_CLEANUP_INTERVAL
 import os
 import re
 import time
@@ -24,7 +25,6 @@ from module.logger import logger
 
 # 两次实际清理之间的最小间隔（秒）。掉落记录提交非常频繁（每场战斗一次），
 # 扫目录的成本没必要每次都付。
-CLEANUP_INTERVAL = 3600
 
 # 备份目录名，落在各来源目录下（与日志轮转的 bak 约定一致）
 BAK_FOLDER = 'bak'
@@ -199,7 +199,7 @@ def cleanup_drop_screenshots_if_due(config):
         return 0
 
     now = time.time()
-    if now - _LAST_CLEANUP < CLEANUP_INTERVAL:
+    if now - _LAST_CLEANUP < DROP_SCREENSHOT_CLEANUP_INTERVAL:
         return 0
     _LAST_CLEANUP = now
 

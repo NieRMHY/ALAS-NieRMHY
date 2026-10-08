@@ -312,7 +312,7 @@ class InventoryDevice:
         self.content = np.concatenate(strips)
         self.base = images[0]
         self.position = .37
-        self.length = round(572 / len(self.content) * 472)
+        self.length = round(572 / len(self.content) * 496)
         self.swipes = []
         self.click_record_clear = Mock()
         self.screenshot()
@@ -321,8 +321,8 @@ class InventoryDevice:
         image = self.base.copy()
         offset = round((len(self.content) - 572) * self.position)
         image[65:637, 130:1235] = self.content[offset:offset + 572]
-        image[104:576, 1256:1265] = (25, 26, 38)
-        y = 104 + round(self.position * (472 - self.length))
+        image[92:588, 1256:1265] = (25, 26, 38)
+        y = 92 + round(self.position * (496 - self.length))
         image[y:y + self.length, 1256:1265] = (247, 211, 66)
         self.image = image
         return image
@@ -332,7 +332,7 @@ class InventoryDevice:
         if start[0] < 1235:
             self.position = min(1., max(0., self.position + (start[1] - end[1]) / (len(self.content) - 572)))
         else:
-            self.position = min(1., max(0., (end[1] - 104 - self.length / 2) / (472 - self.length)))
+            self.position = min(1., max(0., (end[1] - 92 - self.length / 2) / (496 - self.length)))
 
     def drag(self, start, end, **kwargs):
         self.swipe(start, end, **kwargs)
@@ -390,7 +390,8 @@ class TaskTests(unittest.TestCase):
         from module.storage.statistics import StorageStatistics
         self.module = __import__('module.storage.statistics', fromlist=['StorageStatistics'])
         self.task = StorageStatistics.__new__(StorageStatistics)
-        self.task.config = SimpleNamespace(config_name='test', task_delay=Mock(), Emulator_ControlMethod='MaaTouch')
+        self.task.config = SimpleNamespace(config_name='test', task_delay=Mock(), Emulator_ControlMethod='MaaTouch',
+                                           StorageStatistics_RunIntervalDays=7)
         self.task.device = InventoryDevice()
         self.task.ui_goto_storage = Mock()
         self.task._storage_enter_material = Mock()
@@ -407,33 +408,54 @@ class TaskTests(unittest.TestCase):
         self.enterContext(patch.object(self.module, 'save_snapshot',
             side_effect=lambda *args, **kwargs: save_snapshot(*args, **kwargs, database=self.path)))
 
-    def test_task_navigates_and_scans_twice_before_atomic_commit(self):
-        self.task.run()
+    def test_task_navigates_and_scans_once_before_atomic_commit(self):
+        with patch.object(self.task, '_scan_pass', wraps=self.task._scan_pass) as scanner, \
+             patch.object(self.module, 'recognize_rows', wraps=recognize_rows) as reader:
+            self.task.run()
+        scanner.assert_called_once()
         self.task.ui_goto_storage.assert_called_once()
         self.task._storage_enter_material.assert_called_once()
         snapshot = latest_snapshot('test', database=self.path)
         expected = json.loads((FIXTURES / 'expected.json').read_text(encoding='utf-8'))
         self.assertEqual({item['id']: item['amount'] for item in snapshot['items']},
                          {item['id']: item['amount'] for item in expected})
-        self.assertGreater(snapshot['pages'], 4)
+        self.assertEqual(snapshot['pages'], 4)
+        self.assertEqual(reader.call_count, snapshot['pages'])
         self.assertGreater(len(self.task.device.swipes), 4)
         self.assertEqual(self.task.device.click_record_clear.call_count, snapshot['pages'])
-        self.task.config.task_delay.assert_called_once_with(success=True)
+        self.task.config.task_delay.assert_called_once_with(minute=10080)
 
-    def test_failed_second_pass_does_not_write_a_snapshot(self):
-        original = self.task._scan_pass
-        calls = 0
-        def scan(catalog):
-            nonlocal calls
-            calls += 1
-            if calls == 2:
-                raise StorageRecognitionError('复核失败')
-            return original(catalog)
-        self.task._scan_pass = scan
-        with self.assertRaises(StorageStatisticsError):
-            self.task.run()
+    def test_failed_next_page_stops_immediately_without_partial_commit_or_second_pass(self):
+        def read(*args, **kwargs):
+            if reader.call_count == 2:
+                raise StorageRecognitionError('数量不确定')
+            return recognize_rows(*args, **kwargs)
+        with patch.object(self.task, '_scan_pass', wraps=self.task._scan_pass) as scanner, \
+             patch.object(self.module, 'recognize_rows', side_effect=read) as reader:
+            with self.assertRaisesRegex(StorageStatisticsError, '数量不确定'):
+                self.task.run()
+        scanner.assert_called_once()
+        self.assertEqual(reader.call_count, 2)
+        self.assertEqual(self.task.device.click_record_clear.call_count, 1)
         self.assertFalse(self.path.exists())
         self.task.config.task_delay.assert_called_once_with(success=False)
+
+    def test_same_page_movement_stops_without_repeating_confirmed_data(self):
+        def frames(**kwargs):
+            for _ in range(100):
+                if reader.call_count:
+                    self.task.device.position += .02
+                yield self.task.device.screenshot()
+        self.task.loop = frames
+        with patch.object(self.module, 'recognize_rows', wraps=recognize_rows) as reader, \
+             patch.object(self.module, 'verify_targets') as verifier:
+            with self.assertRaisesRegex(StorageStatisticsError, '同页核对期间滚动条位置变化'):
+                self.task.run()
+        reader.assert_called_once()
+        verifier.assert_not_called()
+        self.assertFalse(self.path.exists())
+        self.assertEqual(len(self.task.device.swipes), 3)
+        self.task.device.click_record_clear.assert_not_called()
 
     def test_adb_scan_avoids_drag_fallback_clicks_and_preserves_all_items(self):
         self.task.config.Emulator_ControlMethod = 'ADB'
@@ -445,58 +467,53 @@ class TaskTests(unittest.TestCase):
         self.assertEqual({item['id']: item['amount'] for item in snapshot['items']},
                          {item['id']: item['amount'] for item in expected})
 
-    def test_obstructed_rows_recover_in_both_directions_without_missing_items(self):
+    def test_pages_use_only_the_scrollbar_and_preserve_all_items(self):
         self.task.device = ObstructedInventoryDevice()
         self.task.run()
         snapshot = latest_snapshot('test', database=self.path)
         expected = json.loads((FIXTURES / 'expected.json').read_text(encoding='utf-8'))
         self.assertEqual({item['id']: item['amount'] for item in snapshot['items']},
                          {item['id']: item['amount'] for item in expected})
-        gestures = [(start, end) for start, end in self.task.device.swipes if start[0] < 1235]
-        self.assertTrue(any(start[1] < end[1] for start, end in gestures))
-        self.assertTrue(any(start[1] > end[1] for start, end in gestures))
+        self.assertTrue(all(start[0] == end[0] == 1260 for start, end in self.task.device.swipes))
 
-    def test_persistent_recognition_failure_keeps_old_snapshot_and_bounds_nudges(self):
+    def test_persistent_recognition_failure_keeps_old_snapshot_without_nudges(self):
         save_snapshot('test', 'cn', [dict(id='old', name='旧记录', group='材料', amount=99)],
                       started_at='2026-10-01', pages=2, catalog_version='old', database=self.path)
         before = self.path.read_bytes()
-        with patch.object(self.module, 'recognize_rows', side_effect=StorageRecognitionError('残缺数量')):
+        with patch.object(self.module, 'recognize_rows', side_effect=StorageRecognitionError('残缺数量')) as reader:
             with self.assertRaisesRegex(StorageStatisticsError, '残缺数量'):
                 self.task.run()
+        reader.assert_called_once()
         nudges = [start for start, _ in self.task.device.swipes if start[0] < 1235]
-        self.assertEqual(len(nudges), 4)
+        self.assertEqual(len(nudges), 0)
         self.task.device.click_record_clear.assert_not_called()
         self.assertEqual(before, self.path.read_bytes())
 
-    def test_changing_scrollbar_and_transient_material_marker_do_not_stall(self):
+    def test_changing_scrollbar_rejects_invalid_calibration(self):
         self.task.device = ChangingScrollbarDevice()
         self.task._storage_in_material = Mock(side_effect=[False] + [True] * 249)
-        result = self.task._scan_pass(StorageCatalog())
-        expected = json.loads((FIXTURES / 'expected.json').read_text(encoding='utf-8'))
-        self.assertEqual({item['id']: item['amount'] for item in StorageCatalog().snapshot_items(result.rows)},
-                         {item['id']: item['amount'] for item in expected})
+        with self.assertRaisesRegex(StorageRecognitionError, '标定期间滚动条长度变化'):
+            self.task._scan_pass(StorageCatalog())
         self.assertTrue(self.task.device.changed)
 
-    def test_nudging_endpoints_never_skips_first_or_last_row(self):
+    def test_obstructed_endpoint_fails_without_skipping_first_row(self):
         self.task.device = EndpointObstructedDevice()
-        result = self.task._scan_pass(StorageCatalog())
-        self.assertEqual(len(result.rows), 12)
-        self.assertEqual(result.rows[0][1].amount, 153)
-        last_row = recognize_rows(load_image(str(FIXTURES / 'page_4.png')), StorageCatalog())[-1]
-        self.assertTrue(same_row(result.rows[-1], last_row))
-        self.assertEqual(self.task.device.position, 1.)
+        with self.assertRaisesRegex(StorageRecognitionError, '材料行被遮挡或边框不完整'):
+            self.task._scan_pass(StorageCatalog())
+        self.assertTrue(all(start[0] == 1260 for start, _ in self.task.device.swipes))
+        self.assertEqual(self.task.device.position, 0.)
 
     def test_single_page_with_full_scroll_handle_is_complete(self):
         device = self.task.device
         padding = np.full((38, device.content.shape[1], 3), (32, 36, 50), dtype=np.uint8)
         device.content = np.concatenate([device.content[:534], padding])
-        device.length = 472
+        device.length = 496
         self.task.run()
         snapshot = latest_snapshot('test', database=self.path)
         quantities = {item['id']: item['amount'] for item in snapshot['items']}
         self.assertEqual(quantities['PrototypeGearPartsT5'], 153)
         self.assertIsNone(quantities['CognitiveChips'])
-        self.assertEqual(snapshot['pages'], 2)
+        self.assertEqual(snapshot['pages'], 1)
         self.assertEqual(device.swipes, [])
 
 

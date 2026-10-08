@@ -376,6 +376,8 @@ macOS 同样使用该游戏密钥方案，无需账号保险库的本机提供�
 
 配置创建和删除不调用交易保护登记；新配置的 `_stockInstance` 为空占位，后续采集或交易使用时登记身份。普通 `ProgramStore` 读取跳过交易历史校验，采集行动力时尽力维护认证链，认证失败或交易历史表损坏仍提交正常资源记录和调度事务。交易历史采集显式使用 `strict_history=True`，继续拒绝损坏、回滚和跨实例历史。`stock_exchange_recovery.StockExchangeRecovery` 先返回重建范围，再在确认后保留 `config/backup/stock-rebuild-*/` 快照并重建；身份或单实例历史问题只重建当前实例，共享密钥、登记或绑定不可读时须确认所有本地账户。重建与代理请求、后台同步互斥，清除旧本地会话及补传历史，保留调度程序、变量和最新资源观察。
 
+交易所存储只约束交易所自身：`ProgramStore.connection` 默认按尽力记账处理，保护存储不可用时回滚可选历史认证步骤，实例的调度存储、普通资源观测与实例创建/删除继续执行；交易所自身的读取路径传入 `strict_history=True`，损坏仍按 `STOCK_STORAGE_DAMAGED` 失败。交易所页面可通过 `stock.rebuild` 先预览范围，再确认备份与重建。因此 `config/stock-exchange/` 与 `cache/stock-exchange/` 的丢失或损坏只中断交易所页面与后台同步，不再阻断实例运行。
+
 ## 14. 生命周期
 
 - **创建**：`gui.py` 父监督器 spawn 服务子进程 → uvicorn 加载 `create_app` → lifespan 启动（`manage_runtime=True`）。

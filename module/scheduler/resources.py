@@ -20,6 +20,24 @@ def stable_read(ui, visible, read):
     return None
 
 
+def observe_oil(config, device, publish=True):
+    """在战役页可靠观察绝对石油数量，不使用自然恢复上限作清油阈值。"""
+    from module.campaign.campaign_status import CampaignStatus
+    from module.campaign.assets import OCR_OIL
+    from module.log_res import LogRes
+    from module.ui.page import page_campaign
+    ui = CampaignStatus(config, device)
+    ui.ui_ensure(page_campaign)
+    def read():
+        value = ui._get_num(OCR_OIL, 'OIL_CONTROL', (247, 247, 247), require_valid=True)
+        return value if type(value) is int and 0 <= value <= 25000 else None
+    value = stable_read(ui, lambda: ui.ui_page_appear(page_campaign), read)
+    if value is not None and publish:
+        LogRes(config).record('Oil', value, source='oil_control')
+        config.save()
+    return value
+
+
 def refresh_resources(config, device, names):
     from module.log_res import LogRes
     from module.ui.page import page_campaign, page_os

@@ -29,6 +29,7 @@ class LiveLoopTests(unittest.TestCase):
     def setUp(self):
         self.directory = self.enterContext(tempfile.TemporaryDirectory())
         self.root = fixture(self.directory)
+        self.enterContext(patch('module.statistics.resource_stats._LOCAL_DB', str(self.root / 'config/azurstats_local.db')))
         self.path = self.root / 'config/testpilot.json'
         self.time = datetime(2026, 9, 28, 10)
         data = json.loads(self.path.read_text(encoding='utf-8'))
@@ -43,6 +44,7 @@ class LiveLoopTests(unittest.TestCase):
             data['Alas']['DailySummary']['Enable'] = False
         data['Alas']['Backup']['Enable'] = False
         data['Alas']['EmulatorManagement']['ScheduledEmulatorRestart'] = False
+        data['General']['OilControl']['Enable'] = False
         data['General']['YukikazeTaskManager']['TaskPriorityAdjustment'] = 'Main > Research > Commission'
         self.path.write_text(json.dumps(data), encoding='utf-8')
         for module in ('module.config.config', 'module.config.config_updater', 'module.config.utils', 'module.config.watcher'):

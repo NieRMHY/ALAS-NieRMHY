@@ -6,12 +6,15 @@
 使用自适应滚动条实现商品列表翻页。
 """
 
+import cv2
 import numpy as np
+from scipy import signal
 
 import module.config.server as server
 from module.base.button import ButtonGrid
 from module.base.decorator import cached_property, del_cached_property
 from module.base.timer import Timer
+from module.base.utils import rgb2gray
 from module.logger import logger
 from module.map_detection.utils import Points
 from module.ocr.ocr import Digit, DigitYuv, Ocr
@@ -23,28 +26,21 @@ from module.ui.scroll import Scroll
 
 
 class ShopScroll(Scroll):
-    """勋章商店自定义滚动条检测。"""
-
     def match_color(self, main):
-        """匹配并提取滚动条滑块的颜色掩码与长度。
-
-        Args:
-            main: 包含当前截图的 UI 实例。
-
-        Returns:
-            np.ndarray: 表示滑块所在纵向范围的布尔掩码。
-        """
+        background_transparency = 0.2
+        button_transparency = 0.5
+        delta_x = 3
         area = (
-            self.area[0] - 3,
+            self.area[0] - delta_x,
             self.area[1],
-            self.area[2] + 3,
-            self.area[3],
+            self.area[2] + delta_x,
+            self.area[3]
         )
         image = main.image_crop(area, copy=False).astype(np.float32)
         baseline_color = np.mean(image[:, [0, -1], :], axis=1)
         masked_color = image[:, image.shape[1] // 2, :]
-        background_mask = 0.2 * np.array(self.color) + 0.8 * baseline_color
-        button_mask = 0.5 * np.array(self.color) + 0.5 * baseline_color
+        background_mask = background_transparency * np.array(self.color) + (1 - background_transparency) * baseline_color
+        button_mask = button_transparency * np.array(self.color) + (1 - button_transparency) * baseline_color
         err_background = np.sum((masked_color - background_mask) ** 2, axis=1)
         err_button = np.sum((masked_color - button_mask) ** 2, axis=1)
         mask = err_button < err_background
@@ -58,16 +54,11 @@ MEDAL_SHOP_SCROLL_250814 = ShopScroll(
     name="MEDAL_SHOP_SCROLL_250814"
 )
 MEDAL_SHOP_SCROLL_250814.drag_threshold = 0.1
-# 略大于 0.1 以处理底部边界
+# A little bit larger than 0.1 to handle bottom
 MEDAL_SHOP_SCROLL_250814.edge_threshold = 0.12
 
 
 class ShopPriceOcr(DigitYuv):
-    """商店价格 OCR 识别器，修正改造图纸的价格识别错误。
-
-    在 YUV 色彩空间中识别商品价格，修正 '00' -> '100' 的常见误识别。
-    """
-
     def after_process(self, result):
         """OCR 后处理，修正 '00' 为 '100'（改造图纸场景）。"""
         result = Ocr.after_process(self, result)
@@ -88,11 +79,6 @@ TEMPLATE_MEDAL_ICON_3 = Template('./assets/shop/cost/Medal_3.png')
 
 
 class MedalShop2_250814(ShopClerk, ShopStatus):
-    """勋章商店处理器 (2025-08-14 新 UI)。
-
-    Pages: in: page_shop (medal shop tab)
-    """
-
     @cached_property
     def shop_filter(self):
         """获取勋章商店过滤器。
@@ -102,7 +88,7 @@ class MedalShop2_250814(ShopClerk, ShopStatus):
         """
         return self.config.MedalShop2_Filter.strip()
 
-    # 2025-08-14 新 UI
+    # New UI in 2025-08-14
     def _get_medals(self):
         """检测截图中的勋章图标位置。
 
@@ -236,23 +222,6 @@ class MedalShop2_250814(ShopClerk, ShopStatus):
         logger.info(f'[商店-勋章] 勋章: {self._currency}')
         return self._currency
 
-    @staticmethod
-    def shop_strategy_stock(item):
-        """勋章商店购买弹窗可确认实际库存，策略允许多件候选。"""
-        return 99
-
-    @staticmethod
-    def shop_strategy_max_quantity(item):
-        """获取策略规划中单次购买数量上限。
-
-        Args:
-            item: 待购买商品对象。
-
-        Returns:
-            int: 允许购买的最大数量。
-        """
-        return 99
-
     def shop_has_loaded(self, items):
         """检查商品列表是否已加载完成。
 
@@ -309,28 +278,31 @@ class MedalShop2_250814(ShopClerk, ShopStatus):
         按照过滤器配置购买勋章商店商品，自动翻页直到列表底部。
         已售罄商品会自动排序到后方，发现售罄时提前终止。
         """
+        # Base case; exit run if filter empty
         import time
-        if not self.shop_filter and not self.shop_strategy_enabled():
+        if not self.shop_filter:
             return
 
-        logger.hr('[商店-勋章] 勋章商店', level=1)
-        # 执行购买操作
+        # When called, expected to be in
+        # correct Medal Shop interface
+        logger.hr('Medal Shop', level=1)
+        # Execute buy operations
         MEDAL_SHOP_SCROLL_250814.set_top(main=self)
         time.sleep(0.5)
         while 1:
-            # 已售罄商品自动排序到后方，发现售罄则无需继续
+            # sold items are auto sorted behind
+            # if we find any soldout items, no need to check behind
             if self.shop_items().get_soldout_count(self.device.image):
-                logger.info('勋章商店提前停止')
+                logger.info('Medal shop early stop')
                 break
 
             self.shop_buy()
 
             if MEDAL_SHOP_SCROLL_250814.at_bottom(main=self):
-                logger.info('勋章商店到达底部，停止')
+                logger.info('Medal shop reach bottom, stop')
                 break
             else:
                 MEDAL_SHOP_SCROLL_250814.next_page(main=self, page=0.66)
-                self.shop_strategy_reset_inventory()
                 del_cached_property(self, 'shop_grid')
                 del_cached_property(self, 'shop_medal_items')
                 continue

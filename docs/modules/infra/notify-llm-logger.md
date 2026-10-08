@@ -106,8 +106,8 @@ module/
 
 全局 `logging.getLogger('alas')`，级别 INFO（模块常量 `logger_debug` 默认关闭）。导入即完成初始化：stdout/stderr 重配为 UTF-8、把 `logging.basicConfig` 替换为空函数（防 cnocr 在 root logger 上重复输出）、`os.chdir` 到仓库根目录、挂控制台处理器并执行首次 `set_file_logger()`。三个 sink 各自独立：
 
-- **控制台**：`RichHandler`，本地调试用；Electron 环境下会被移除。
-- **文件**：`RichTimedRotatingHandler`，每天午夜轮转到 `./log/<日期>_<实例名>.txt`；保留份数与过期处理方式读自 `./config/<实例>.json` 的 `General.Log`，过期文件在 daemon 线程中按 `LogBackUpMethod` 移入 `./log/bak/`（压缩/复制）或删除。每个进程只挂一次（幂等），Windows 下 SyncManager/MainProcess 等辅助进程跳过。
+- **控制台**：`RichHandler`，本地调试用；Electron、TUI 与 WebUI 子进程用 `set_console_logger(False)` 关闭。
+- **文件**：`RichTimedRotatingHandler`，每天午夜轮转到 `./log/<日期>_<实例名>.txt`；保留份数与过期处理方式读自 `./config/<实例>.json` 的 `General.Log`，过期文件在 daemon 线程中按 `LogBackUpMethod` 移入 `./log/bak/`（压缩/复制）或删除。每个进程只挂一次（幂等），Windows 下 SyncManager/MainProcess 等辅助进程跳过。WebUI 子进程用 `set_file_logger('webui')` 只写 `./log/<日期>_webui.txt`，不动 stdout/stderr，任务子进程照常继承控制台。
 - **WebUI**：`set_func_logger(q.put)` 把每条日志渲染成 Rich 渲染对象塞进 multiprocessing 队列 → `ProcessManager` 消费线程存入 `renderables` 列表（上限约 400 条）→ API 的 `logs()` 方法用无色 Console 把渲染对象捕获为文本、正则提取日志级别，前端经 WebSocket `logs.get` 按游标增量拉取。
 
 高频 API 的分级语义（全项目通用约定）：

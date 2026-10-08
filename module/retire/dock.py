@@ -267,7 +267,8 @@ class Dock(Equipment):
             faction='all',
             rarity='all',
             extra='no_limit',
-            wait_loading=True
+            wait_loading=True,
+            reset_index=False,
     ):
         """快速设置船坞的多维度筛选条件并确认。
 
@@ -278,11 +279,15 @@ class Dock(Equipment):
             rarity (str | list): 稀有度筛选（'all', 'common', 'rare', 'elite', 'super_rare', 'ultra'）。
             extra (str | list): 额外特性（'no_limit', 'has_skin', 'can_retrofit', 'enhanceable', 'can_limit_break', 'not_level_max', 'can_awaken' 等）。
             wait_loading (bool): 是否等待船坞卡片加载完成。默认为 True。
+            reset_index (bool): 在同一面板先选“全部”清除旧舰种，再选择目标舰种；
+                不重置排序及其他筛选。用于需要独立扫描各舰种的流程。
 
         Pages:
             in: page_dock
         """
         self.dock_filter_enter()
+        if reset_index:
+            self.dock_filter.set(sort=None, index='all', faction=None, rarity=None, extra=None)
         self.dock_filter.set(sort=sort, index=index, faction=faction, rarity=rarity, extra=extra)
         self.dock_filter_confirm(wait_loading=wait_loading)
 

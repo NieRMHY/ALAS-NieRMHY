@@ -7,6 +7,7 @@
 
 Pages: in: PRIVATE_QUARTERS_SHOP
 """
+
 from module.base.timer import Timer
 from module.logger import logger
 from module.private_quarters.assets import *
@@ -44,10 +45,8 @@ class PQShopClerk(ShopClerk, PQShopUI):
             out: 私人宿舍商店
         """
 
-        if self.shop_strategy_enabled():
-            item._shop_strategy_executed_quantity = 1
-
-        # 辅助函数：检测购买确认前后的界面状态
+        # Helper funcs to ensure the appearance for pre and post
+        # conditions for after confirm of purchase
         def after_confirm_state():
             return (self.appear(PRIVATE_QUARTERS_SHOP_WEEKLY_ROSES_GET, offset=(20, 20)) or
                     self.appear(PRIVATE_QUARTERS_SHOP_WEEKLY_CAKES_GET, offset=(20, 20)))
@@ -62,25 +61,23 @@ class PQShopClerk(ShopClerk, PQShopUI):
 
         for _ in self.loop():
 
-            # 结束条件：购买确认状态
+            # End
             if after_confirm_state():
                 break
 
             if self.appear(PRIVATE_QUARTERS_SHOP_CHECK, interval=3):
                 self.device.click(item)
                 continue
-            if not self.shop_strategy_enabled() and self.appear_then_click(
-                    PRIVATE_QUARTERS_SHOP_AMOUNT_MAX, offset=(20, 20), interval=1,
-            ):
+            if self.appear_then_click(PRIVATE_QUARTERS_SHOP_AMOUNT_MAX, offset=(20, 20), interval=1):
                 continue
             if self.appear_then_click(PRIVATE_QUARTERS_SHOP_CONFIRM_AMOUNT, offset=(20, 20), interval=1):
                 continue
 
         click_timer = Timer(3, count=6)
         for _ in self.loop():
-            # 结束条件：购买完成状态
+            # End
             if after_purchase_state():
-                return True
+                break
 
             if click_timer.reached() and after_confirm_state():
                 self.device.click(PRIVATE_QUARTERS_SHOP_CHECK)
@@ -101,32 +98,29 @@ class PQShopClerk(ShopClerk, PQShopUI):
             out: 私人宿舍商店
         """
         for _ in range(12):
-            logger.hr('商店购买', level=2)
-            # 先获取商品列表，再读取货币以获得更准确的 OCR 结果
+            logger.hr('Shop buy', level=2)
+            # Get first for innate delay to ocr
+            # shop currency for accurate parse
             items = self.shop_get_items()
             self.shop_currency()
-            strategy_currency = self.shop_strategy_currency(items) if self.shop_strategy_enabled() else {}
-            if self._currency <= 0 and not any(amount > 0 for amount in strategy_currency.values()):
-                logger.warning(f'[私人休息室-店员] 当前资金: {self._currency}，停止购买')
+            if self._currency <= 0:
+                logger.warning(f'Current funds: {self._currency}, stopped')
                 return False
 
             item = self.shop_get_item_to_buy(items)
             if item is None:
-                logger.info('[私人休息室-店员] 商店购买完成')
+                logger.info('Shop buy finished')
                 return True
             else:
-                completed = self.shop_buy_execute(item)
-                if completed:
-                    self.shop_strategy_record_purchase(item)
-                elif self.shop_strategy_enabled():
-                    logger.warning('[高级商店策略] 未获得明确购买结果，停止本轮以避免错误记账')
-                    return True
+                self.shop_buy_execute(item)
 
-                # 购买后导航栏会重置到默认位置，需要重新定位
+                # After purchase, navbars are weirdly
+                # reset to default positions
+                # So move back for next scan
                 self.shop_left_navbar_ensure(2)
                 self.shop_bottom_navbar_ensure(2)
 
                 continue
 
-        logger.warning('[私人休息室-店员] 购买物品过多，停止')
+        logger.warning('Too many items to buy, stopped')
         return True

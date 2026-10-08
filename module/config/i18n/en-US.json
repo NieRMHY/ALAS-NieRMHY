@@ -36,6 +36,10 @@
       "name": "Fleet Management",
       "help": ""
     },
+    "RunParams": {
+      "name": "Run Params",
+      "help": ""
+    },
     "Tool": {
       "name": "Tools",
       "help": ""
@@ -60,19 +64,19 @@
     },
     "Main": {
       "name": "Main Campaign-1",
-      "help": ""
+      "help": "This task requires at least four unlocked fleet formations. Enable \"Skip formation check\" to satisfy the requirement temporarily."
     },
     "Main2": {
       "name": "Main Campaign-2",
-      "help": ""
+      "help": "This task requires at least four unlocked fleet formations. Enable \"Skip formation check\" to satisfy the requirement temporarily."
     },
     "Main3": {
       "name": "Main Campaign-3",
-      "help": ""
+      "help": "This task requires at least four unlocked fleet formations. Enable \"Skip formation check\" to satisfy the requirement temporarily."
     },
     "GemsFarming": {
       "name": "Urgent Commission",
-      "help": ""
+      "help": "Urgent Commission and 3-oil low-cost farming cannot be enabled at the same time."
     },
     "ThreeOilLowCost": {
       "name": "3-Oil Low Cost",
@@ -88,15 +92,15 @@
     },
     "Event": {
       "name": "Event Map-1",
-      "help": ""
+      "help": "This function is designed for regular events; co-op raid events usually have a dedicated settings page."
     },
     "Event2": {
       "name": "Event Map-2",
-      "help": ""
+      "help": "This function is designed for regular events; co-op raid events usually have a dedicated settings page."
     },
     "Event3": {
       "name": "Event Map-3",
-      "help": ""
+      "help": "This function is designed for regular events; co-op raid events usually have a dedicated settings page."
     },
     "Raid": {
       "name": "Raid Event",
@@ -304,7 +308,7 @@
     },
     "OpsiScheduling": {
       "name": "Smart Scheduling",
-      "help": "Operation Siren smart scheduling function, used to coordinate switching between Corrosion 1 leveling and gold coin replenishment tasks.\nOnce enabled, it will automatically switch between different tasks and send push notifications based on gold coins and action points."
+      "help": "Operation Siren smart scheduling. It can take over these tasks: Corrosion 1 Leveling (on by default), Meowfficer Farming, Obscured Zone, Abyssal Zone, Siren Stronghold.\nAfter taking over, settings other than the ones on this page follow the corresponding task's own page.\n*Unless it is necessary and you understand how AzurPilot works, avoid running smart scheduling together with its sub-tasks."
     },
     "OpsiPreventActionPointOverflow": {
       "name": "Prevent AP Overflow",
@@ -372,7 +376,7 @@
     },
     "IslandAirDrop": {
       "name": "Daily Supply",
-      "help": "Only supports minitouch."
+      "help": "Island movement only supports the minitouch / MaaTouch / uiautomator2 / azurpilot_android control methods. Collects your own island's daily airdrop and can visit other players' islands for supplies."
     },
     "IslandCargoPreparation": {
       "name": "Cargo Preparation",
@@ -384,15 +388,19 @@
     },
     "IslandDailyInteract": {
       "name": "Daily/Weekly Tasks",
-      "help": "Only supports minitouch. Handles island petting, JUU Express, Business Delivery, and weekly photo tasks. Enable after related button assets are generated."
+      "help": "Island movement only supports the minitouch / MaaTouch / uiautomator2 / azurpilot_android control methods. Handles island petting, JUU Express, Business Delivery, and weekly photo tasks. Enable after related button assets are generated."
     },
     "IslandPearlSell": {
       "name": "Weekly Pearl Trade",
-      "help": "Only supports minitouch. Process pearls every Tuesday at 01:00."
+      "help": "Island movement only supports the minitouch / MaaTouch / uiautomator2 / azurpilot_android control methods. Process pearls every Tuesday at 01:00."
     },
     "FleetInfo": {
       "name": "Fleet Information",
       "help": "View the latest fleet scan result"
+    },
+    "RunParams": {
+      "name": "Run Params",
+      "help": "Tunable runtime parameters for scheduler, watchdog, devices and UI wait pacing. Keep defaults for normal use."
     },
     "FleetScan": {
       "name": "Fleet Scan",
@@ -514,11 +522,11 @@
     },
     "Serial": {
       "name": "Emulator serial",
-      "help": "Common emulator Serial can be found in the list below\nFill in \"auto\" to automatically detect the emulator. \"auto\" cannot be used when multiple emulators are running or an emulator that does not support automatic detection is used and must be filled in manually.\n\nEmulator default Serial:\n- BlueStacks 127.0.0.1:5555\n- BlueStacks 4 Hyper-v version, fill in \"bluestacks4-hyperv\" to automatically connect, fill in \"bluestacks4-hyperv-2\" for more options, and so on.\n- BlueStacks 5 Hyper-v version, fill in \"bluestacks5-hyperv\" to automatically connect, fill in \"bluestacks5-hyperv-1\" for more options, and so on.\n- NoxPlayer 127.0.0.1:62001\n- NoxPlayer 64-bit 127.0.0.1:59865\n- MuMu Player/MuMu Player X 127.0.0.1:7555\n- MuMu Player 12 127.0.0.1:16384\n- MuMu Pro (macOS) 127.0.0.1:16384, the order of opening is 127.0.0.1:16416, 127.0.0.1:16448...\n- MEmu 127.0.0.1:21503\n- LDPlayer emulator-5554 or 127.0.0.1:5555\nIf you use the multi-instance function of the emulator, their Serial will not be the default. You can execute `adb devices` query in console.bat, or fill it in according to the official tutorial of the emulator."
+      "help": "*The emulator port AzurPilot listens on; required.\nCommon emulator serials are listed below. If you are unsure, enter \"auto\" to detect the emulator automatically; \"auto\" does not work when several emulators are running or when the emulator does not support auto-detection, so fill it in manually.\n\nDefault emulator serials:\n- BlueStacks 127.0.0.1:5555\n- BlueStacks 4 Hyper-V: enter \"bluestacks4-hyperv\" to connect automatically; for multiple instances enter \"bluestacks4-hyperv-2\" and so on\n- BlueStacks 5 Hyper-V: enter \"bluestacks5-hyperv\" to connect automatically; for multiple instances enter \"bluestacks5-hyperv-1\" and so on\n- Nox 127.0.0.1:62001\n- Nox 64-bit 127.0.0.1:59865\n- MuMu / MuMu X 127.0.0.1:7555\n- MuMu 12 127.0.0.1:16384\n- MuMu Pro (macOS) 127.0.0.1:16384; further instances 127.0.0.1:16416, 127.0.0.1:16448 ...\n- MEmu 127.0.0.1:21503\n- LDPlayer emulator-5554 or 127.0.0.1:5555\nIf you use multiple instances, their serials are not the defaults; run `adb devices` in console.bat to look them up, or follow the emulator's own guide."
     },
     "PackageName": {
       "name": "Game Server",
-      "help": "When multiple game clients are installed on the emulator, you need to manually select the server",
+      "help": "When several game clients are installed on the emulator, select the server manually (Bilibili, channel versions, ...)\n*This field is optional",
       "auto": "Automatic detection",
       "com.bilibili.azurlane": "National service",
       "com.YoStarEN.AzurLane": "International server",
@@ -544,7 +552,7 @@
     },
     "ServerName": {
       "name": "In-game server",
-      "help": "Select the server where the game is located to enable server status detection\nSuspend until resumed during server maintenance or network unavailability",
+      "help": "Select the in-game server to enable server status detection.\nWhen the server is under maintenance or the network is unavailable, the task suspends until it recovers, so AzurPilot will not keep restarting the emulator during maintenance.\n*This field is optional. Disable it if the server status API is unreachable.",
       "disabled": "Don't use detection",
       "cn_android-0": "[国服] 莱茵演习",
       "cn_android-1": "[国服] 巴巴罗萨",
@@ -626,7 +634,7 @@
     },
     "ScreenshotMethod": {
       "name": "Select screenshot method",
-      "help": "When using auto-select, a performance test will be performed and automatically changed to the fastest screenshot method\nGeneral speed: DroidCast_raw >> aScreenCap_nc > ADB_nc >>> aScreenCap > uiautomator2 ~= ADB\nRun Tools - Performance Test to find the fastest method",
+      "help": "With auto-select, a benchmark runs once and the fastest screenshot method is applied automatically.\nTypical speed: DroidCast_raw >> aScreenCap_nc > ADB_nc >>> aScreenCap > uiautomator2 ~= ADB;\nMuMu and LDPlayer have dedicated methods: nemu_ipc and ldopengl;\nAzurPilot for Android users must use the Android virtual display;\nRun Tools - Benchmark to find the fastest method;\n*In some cases a method cannot pass the automatic benchmark, so select it manually.",
       "auto": "Auto-select fastest",
       "ADB": "ADB",
       "ADB_nc": "ADB_nc",
@@ -672,7 +680,7 @@
     },
     "Emulator": {
       "name": "Select emulator type",
-      "help": "",
+      "help": "Auto-detection is usually enough; with several emulators, fill it in manually.",
       "auto": "Automatic detection",
       "NoxPlayer": "NoxPlayer",
       "NoxPlayer64": "NoxPlayer 64-bit",
@@ -694,7 +702,7 @@
     },
     "name": {
       "name": "Emulator instance name",
-      "help": ""
+      "help": "*Leave it empty to auto-detect; the automatic emulator restart works only when the instance name and path are correct."
     },
     "path": {
       "name": "Emulator installation path",
@@ -820,6 +828,206 @@
     "RestartOperationTimeout": {
       "name": "How long before game restart is considered stuck (sec)",
       "help": "During game restart, if stopping or starting the game is stuck for longer than this many seconds, the emulator is considered dead and gets restarted.\nRequires 'Game restart timeout protection' above to be on.\nDefault 120 sec."
+    }
+  },
+  "Watchdog": {
+    "_info": {
+      "name": "Scheduler & Watchdog",
+      "help": "Check pacing of the watchdog and background timer threads."
+    },
+    "CheckInterval": {
+      "name": "Watchdog check interval (seconds)",
+      "help": "How often the watchdog thread checks task status; determines the detection granularity of task timeouts. Smaller values react faster at slightly higher cost.\nDefault 30."
+    },
+    "DailySummaryCheckInterval": {
+      "name": "Daily summary check interval (seconds)",
+      "help": "How often the daily summary timer thread checks its trigger time. Smaller values trigger more precisely at slightly higher cost.\nDefault 1."
+    }
+  },
+  "Reboot": {
+    "_info": {
+      "name": "Login & Reboot",
+      "help": "Retry count, wait and observe pacing of the game app restart."
+    },
+    "Tries": {
+      "name": "Restart attempts",
+      "help": "How many times to retry after the app fails to start. After this many consecutive failures, the observe phase begins; if the app still does not recover, an emulator restart is triggered.\nDefault 3."
+    },
+    "FirstTryWaitSeconds": {
+      "name": "First failure wait (seconds)",
+      "help": "Seconds to wait before retrying after the first start failure.\nDefault 30."
+    },
+    "SubsequentTryWaitSeconds": {
+      "name": "Subsequent failure wait (seconds)",
+      "help": "Seconds to wait before retrying after the second and later start failures.\nDefault 20."
+    },
+    "ObserveSeconds": {
+      "name": "Observe phase duration (seconds)",
+      "help": "After consecutive restart failures, how long to wait for the app to recover on its own before triggering an emulator restart.\nDefault 180."
+    },
+    "ObserveInterval": {
+      "name": "Observe check interval (seconds)",
+      "help": "How often to check whether the app has recovered during the observe phase.\nDefault 15."
+    }
+  },
+  "Device": {
+    "_info": {
+      "name": "Devices & Emulator",
+      "help": "Pacing of emulator start watch and MuMu12 state waits."
+    },
+    "EmulatorStartProgressInterval": {
+      "name": "Start progress log interval (seconds)",
+      "help": "How often to log progress while watching the emulator start, so long silent waits do not look like a hang.\nDefault 30."
+    },
+    "EmulatorStartDialogCheckInterval": {
+      "name": "Error dialog check interval (seconds)",
+      "help": "How often to check for MuMu error dialogs while watching the start. Enumerating windows is costly; avoid very small values.\nDefault 2."
+    },
+    "Mumu12StatePollInterval": {
+      "name": "MuMu12 state poll interval (seconds)",
+      "help": "Polling interval for querying MuMu12 instance state (stopped/started).\nDefault 2."
+    },
+    "Mumu12StopWaitTimeout": {
+      "name": "MuMu12 stop confirm wait (seconds)",
+      "help": "After issuing shutdown, the longest wait for the MuMu12 instance to really exit. Shutdown is async; launching too early fails.\nDefault 60."
+    },
+    "Mumu12DeepWaitTimeout": {
+      "name": "MuMu12 deep restart wait (seconds)",
+      "help": "Longest wait for all MuMu processes to exit after a deep restart (observed to finish within 5 seconds).\nDefault 30."
+    }
+  },
+  "ScreenRecord": {
+    "_info": {
+      "name": "Screen Record Debug",
+      "help": "Wait pacing of screen recording and transcoding."
+    },
+    "StartTimeout": {
+      "name": "Start confirm wait (seconds)",
+      "help": "Longest wait for the recorder process to confirm it is alive after starting screenrecord. An immediate exit means it cannot run on the device.\nDefault 0.6."
+    },
+    "StopTimeout": {
+      "name": "Stop confirm wait (seconds)",
+      "help": "Longest wait for the recorder to finish writing and exit after the stop signal; on timeout the clip may be incomplete.\nDefault 6."
+    },
+    "PollInterval": {
+      "name": "Status poll interval (seconds)",
+      "help": "Interval for polling whether the recorder process has exited.\nDefault 0.2."
+    },
+    "TranscodeBaseTimeout": {
+      "name": "Transcode base timeout (seconds)",
+      "help": "Base transcoding timeout; scaled linearly with clip length (base + length×2).\nDefault 60."
+    },
+    "TranscodeMaxTimeout": {
+      "name": "Transcode max timeout (seconds)",
+      "help": "Hard cap of the transcoding timeout.\nDefault 600."
+    }
+  },
+  "UiWait": {
+    "_info": {
+      "name": "UI Wait",
+      "help": "Wait and retry pacing of UI interactions. Relax for slow devices or emulators on cloud phones."
+    },
+    "IslandMapConfirmWait": {
+      "name": "Island map confirm wait (seconds)",
+      "help": "Budget for the confirm button to appear in the island map popup.\nDefault 3."
+    },
+    "IslandMapDestinationWait": {
+      "name": "Island destination load limit (seconds)",
+      "help": "Upper limit waiting for the scene to load when jumping from the island map; relax on slow devices.\nDefault 45."
+    },
+    "IslandMapConfirmRetryWait": {
+      "name": "Destination confirm re-click interval (seconds)",
+      "help": "Minimum interval before re-clicking the destination confirm popup, preventing repeated clicks on the same button from tripping the click guard.\nDefault 10."
+    },
+    "IslandCharacterConfirmRetryWait": {
+      "name": "Character confirm re-click interval (seconds)",
+      "help": "Minimum interval between re-clicks of the character confirm button; must exceed the cloud-phone page transition, otherwise the same slot on the next page gets clicked.\nDefault 3."
+    },
+    "IslandEntryRetryWait": {
+      "name": "Island entry click interval (seconds)",
+      "help": "Minimum interval between clicks of the island management entry button while the scene transitions.\nDefault 3."
+    },
+    "PqInteractButtonTimeout": {
+      "name": "Interact button wait (seconds)",
+      "help": "Timeout waiting for the interact button in private quarters; it never appears when daily stamina is exhausted.\nDefault 24."
+    },
+    "PqInteractClickWait": {
+      "name": "Interact click interval (seconds)",
+      "help": "Minimum interval between clicks within a private-quarters interaction loop.\nDefault 8."
+    },
+    "PqInteractStartTimeout": {
+      "name": "Interact start wait (seconds)",
+      "help": "Timeout waiting for the interaction scene to begin after clicking Interact.\nDefault 24."
+    },
+    "PqInteractEndTimeout": {
+      "name": "Interact end wait (seconds)",
+      "help": "Timeout waiting for one interaction round to finish (interact button reappears).\nDefault 40."
+    },
+    "PqInteractExitTimeout": {
+      "name": "Interact exit wait (seconds)",
+      "help": "Timeout when leaving the ship-room interaction scene.\nDefault 24."
+    },
+    "GachaPrepSubmitWait": {
+      "name": "Build submit re-click interval (seconds)",
+      "help": "Minimum interval before re-clicking after starting a build; too short closes the panel by clicking outside it.\nDefault 10."
+    },
+    "GachaPrepTimeout": {
+      "name": "Build panel timeout (seconds)",
+      "help": "Timeout waiting for the build quantity panel (plus/minus buttons) to appear.\nDefault 90."
+    },
+    "ChannelFloatHoldDuration": {
+      "name": "Float ball hold duration (seconds)",
+      "help": "How long to hold the channel float ball at the drag end; a brief hold before release triggers the hide dialog.\nDefault 0.2."
+    },
+    "ChannelFloatMaxAttempts": {
+      "name": "Float ball max attempts",
+      "help": "Max attempts to handle the channel float ball before skipping.\nDefault 4."
+    },
+    "GuildSupplyMaxRetry": {
+      "name": "Supply retry count",
+      "help": "Retry limit when guild supply clicks get no response before skipping.\nDefault 2."
+    },
+    "GuildExchangeBugRetry": {
+      "name": "Exchange no-response threshold",
+      "help": "Consecutive unresponsive guild exchanges before concluding an in-game bug.\nDefault 5."
+    },
+    "BuyFurnitureCheckIntervalDays": {
+      "name": "Furniture shop check interval (days)",
+      "help": "How often the furniture shop task runs its check.\nDefault 6."
+    },
+    "AutoEquipAfterEquipWait": {
+      "name": "After-equip wait (seconds)",
+      "help": "Fixed wait after auto-equipping to let the UI settle.\nDefault 3."
+    },
+    "CommissionSkipTimeout": {
+      "name": "Per-commission timeout (seconds)",
+      "help": "Absolute timeout for a single commission collection; give up after it elapses.\nDefault 90."
+    },
+    "CommissionRewardScreenshotKeep": {
+      "name": "Commission screenshots to keep",
+      "help": "Upper limit of kept commission reward screenshots; only active when day-based cleanup is off.\nDefault 50."
+    }
+  },
+  "Handover": {
+    "_info": {
+      "name": "Operation Handover",
+      "help": "Handover pacing between commissions and server maintenance."
+    },
+    "ConsumeRetryMinutes": {
+      "name": "Book consume retry interval (min)",
+      "help": "When the one-click commission book consume has not triggered today, retry after this many minutes. Each retry re-enters the game; keep it not too short.\nDefault 30."
+    },
+    "MaintainLeadMinutes": {
+      "name": "Run before maintenance (min)",
+      "help": "How many minutes before server maintenance to run the last commission with sorties maxed.\nDefault 10."
+    },
+    "MaintainCheckMinutes": {
+      "name": "Maintenance re-check interval (min)",
+      "help": "While only waiting for maintenance, re-check the maintenance notice after this many minutes.\nDefault 120."
+    },
+    "ConflictRetryMinutes": {
+      "name": "Task conflict retry interval (min)",
+      "help": "When the commission end time cannot be read, postpone the conflicting task by this many minutes.\nDefault 15."
     }
   },
   "Optimization": {
@@ -1946,7 +2154,7 @@
     },
     "Mode": {
       "name": "Morale mode",
-      "help": "",
+      "help": "AzurPilot uses a built-in morale calculator and does not read morale values through OCR in real time, so please apply the correct morale settings.",
       "calculate": "Calculate morale consumption",
       "ignore": "Ignore low morale warning",
       "calculate_ignore": "Calculate morale + ignore low morale warning"
@@ -2464,22 +2672,6 @@
       "help": "To use a custom filter, set \"Event Shop Filter\" to \"Custom\" and read https://github.com/LmeSzinc/AzurLaneAutoScript/wiki/filter_string_cn"
     }
   },
-  "ShopAdvanced": {
-    "_info": {
-      "name": "Advanced shop strategy",
-      "help": "Generate a shop purchase plan with restricted Lua-style rules."
-    },
-    "Mode": {
-      "name": "Strategy mode",
-      "help": "Simple mode keeps the existing filter. Advanced mode uses the strategy script below.",
-      "legacy": "Simple",
-      "advanced": "Advanced"
-    },
-    "Script": {
-      "name": "Strategy script",
-      "help": "Only restricted Lua-style rules are supported. A validation error skips purchases for this run."
-    }
-  },
   "Commission": {
     "_info": {
       "name": "Commission",
@@ -2559,6 +2751,30 @@
       "today": "Today",
       "week": "This week",
       "month": "This month"
+    },
+    "AutoPickShip": {
+      "name": "Commission ship pick fallback (by rarity/level)",
+      "help": "When ships are short, locked ships are picked automatically; one ship meeting the commission's level requirement is picked first, then the rest follow the preferences below; when no ship is available, it follows the \"no free ship\" setting."
+    },
+    "PickMinRarity": {
+      "name": "└ Pick fallback - lowest rarity to send",
+      "help": "Active only when \"Commission ship pick fallback\" is on.",
+      "common": "White (common) and above",
+      "rare": "Blue (rare) and above",
+      "elite": "Purple (elite) and above",
+      "super_rare": "Gold (super rare) and above"
+    },
+    "PickLevelOrder": {
+      "name": "└ Pick fallback - level order within a rarity",
+      "help": "Active only when \"Commission ship pick fallback\" is on.",
+      "low_first": "Lowest level first",
+      "high_first": "Highest level first"
+    },
+    "NoFreeShipPolicy": {
+      "name": "When no free ship exists",
+      "help": "",
+      "skip": "Skip the commission",
+      "use_fleet": "Use ships in fleets"
     }
   },
   "Tactical": {
@@ -2632,6 +2848,16 @@
     "MaxLevel": {
       "name": "Only add ships at level <= X",
       "help": "0 means no limit\nWhen it conflicts with the minimum level, both are treated as 0 (disabled)"
+    }
+  },
+  "StorageStatistics": {
+    "_info": {
+      "name": "Storage statistics",
+      "help": ""
+    },
+    "RunIntervalDays": {
+      "name": "Run interval (days)",
+      "help": "Run again this many days after a successful scan. Default: 7 days; range: 1–3650. Failed scans keep the existing retry interval. Enable the task for automatic runs; manual runs are also available."
     }
   },
   "Research": {
@@ -2709,6 +2935,20 @@
     "CustomFilter": {
       "name": "Custom research filters",
       "help": "To use a custom filter, you need to set \"Research Filter\" to \"Custom\" and read https://github.com/LmeSzinc/AzurLaneAutoScript/wiki/filter_string_cn"
+    }
+  },
+  "OilControl": {
+    "_info": {
+      "name": "Automatic oil control",
+      "help": "Native scheduling only, checked alongside existing tasks. Runs enabled and due farming tasks first, then buys dorm food during cooldown. Oil cleanup temporarily takes priority over commissions and other tasks."
+    },
+    "Enable": {
+      "name": "Enable automatic oil control",
+      "help": "Independent of dorm feeding and collection. Does not wake the game on a timer."
+    },
+    "Target": {
+      "name": "Oil target",
+      "help": "Cleanup starts above this value and stops below it. Default: 24000, leaving 1000 room below the 25000 cap. Range: 1000–24999."
     }
   },
   "Dorm": {
@@ -5650,7 +5890,7 @@
   "IslandAirDrop": {
     "_info": {
       "name": "Daily Supply",
-      "help": ""
+      "help": "Island movement only supports the minitouch / MaaTouch / uiautomator2 / azurpilot_android control methods. Collects your own island's daily airdrop and can visit other players' islands for supplies."
     },
     "LastSteal": {
       "name": "Last run time",
@@ -5700,7 +5940,7 @@
   "IslandDailyInteract": {
     "_info": {
       "name": "Daily/Weekly Tasks",
-      "help": "Only supports minitouch. Controls island daily and weekly interactions, including Morningdew Farm petting, JUU Express, Business Delivery, and weekly photo tasks in Development Plan."
+      "help": "Island movement only supports the minitouch / MaaTouch / uiautomator2 / azurpilot_android control methods. Controls island daily and weekly interactions, including Morningdew Farm petting, JUU Express, Business Delivery, and weekly photo tasks in Development Plan."
     },
     "WeeklyPhoto": {
       "name": "Weekly photo task",
@@ -5712,7 +5952,7 @@
   "IslandPearlSell": {
     "_info": {
       "name": "Weekly Pearl Trade",
-      "help": "Only supports minitouch. Every Tuesday at 01:00, automatically handle pearls: first purchase this week's pearls at the highest purchase price, then sell existing pearls at the lowest selling price. Other incomplete processes will be delayed to 01:00 the next day for retry. Make sure you have enough coins to purchase 200x220 units, which is the minimum requirement to buy out all pearls for the week, otherwise errors may occur."
+      "help": "Island movement only supports the minitouch / MaaTouch / uiautomator2 / azurpilot_android control methods. Every Tuesday at 01:00, automatically handle pearls: first purchase this week's pearls at the highest purchase price, then sell existing pearls at the lowest selling price. Other incomplete processes will be delayed to 01:00 the next day for retry. Make sure you have enough coins to purchase 200x220 units, which is the minimum requirement to buy out all pearls for the week, otherwise errors may occur."
     },
     "BuyPrice": {
       "name": "Max purchase price",

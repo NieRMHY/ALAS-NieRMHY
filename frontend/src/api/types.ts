@@ -112,9 +112,6 @@ interface RemoteAccessStatus { enabled: boolean; state: string; address: string;
 export interface Settings { groups: {key: string; label: string; fields: DeployField[]}[]; notice: string; demo: boolean; remote?: RemoteAccessStatus }
 export interface ApiEvent { v: 1; type: 'event'; topic: string; seq: number; data: unknown }
 export interface ApiResponse { v: 1; type: 'response'; id: string; ok: boolean; result?: unknown; error?: {code: string; message: string; details?: unknown} }
-export interface ScriptDiagnostic { code?: string; message: string; line?: number | null; column?: number | null; severity?: 'error' | 'warning' }
-export interface ShopStrategyValidation { valid: boolean; diagnostics: ScriptDiagnostic[]; summary?: string }
-export type ShopStrategyTask = 'EventShop' | 'ShopFrequent' | 'ShopOnce' | 'PrivateQuarters' | 'OpsiShop' | 'OpsiVoucher'
 /** 服务端保存的背景记录：与前端 BackgroundPreference 同构，所有浏览器与访问地址共用一份。 */
 export interface ServerBackgroundPreference {
   source: 'off' | 'url' | 'upload'
@@ -136,6 +133,7 @@ export interface BackgroundGalleryEntry {
 }
 
 export interface Results {
+  'statistics.resourceFlows': ResourceFlowReport
   'stock.status': StockExchangeStatus
   'stock.rebuild': StockExchangeRebuild
   'stock.request': {status:number;data:unknown;etag:string;serverTime:number}
@@ -178,7 +176,6 @@ export interface Results {
   'instances.delete': {deleted: string}
   'config.get': Config
   'config.patch': Config
-  'shop_strategy.validate': ShopStrategyValidation
   'overview.get': Overview
   'scheduler.start': Overview
   'scheduler.stop': Overview
@@ -194,6 +191,19 @@ export interface Results {
   'settings.patch': {updated: string[]}
   'startup.get': {enabled: boolean; remember: boolean}
   'startup.set': {enabled: boolean; remember: boolean}
+}
+
+export interface ResourceFlowEntry {
+  id: number; ts: string; resource: string; amount: number; task: string; operation: string
+  evidence: 'confirmed' | 'recognition' | 'observed' | 'adjustment'; run_id: string | null
+}
+export interface ResourceFlowReport {
+  instance: string; start: string; end: string; offset: number; limit: number; total: number; throughId: number
+  resources: {key: string; label: string; group: string; current: number | null; observedAt: string | null; income: number; expense: number; adjustment: number; count: number}[]
+  tasks: string[]
+  flows: {resource: string; task: string; operation: string; evidence: ResourceFlowEntry['evidence']; income: number; expense: number; count: number}[]
+  entries: ResourceFlowEntry[]
+  oilControl: {enable: boolean; target: number}
 }
 
 export interface StockExchangeStatus {url: string; instance:string; instanceId:string; bindingKey:string; bound: boolean; boundUsername:string; authenticated:boolean; message: string; lastObservedAt: number; snapshot: {instance: string; actionPoints: number; observedAt: number} | null}
