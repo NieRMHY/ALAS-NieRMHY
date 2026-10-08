@@ -6,28 +6,54 @@
 
 AzurPilot 在执行任务时天然经过大量战斗结算与资源画面。这些画面里藏着用户关心的数字：打到了什么掉落、练级效率多少、行动力循环是否为正、委托攒了多少钻石。`module/statistics` 及其两个伴生目录就是把这些瞬时画面沉淀为可查数据的统计层。
 
-这一层由三条相对独立的链路组成：
+这一层由四条相对独立的链路组成：
 
 - **掉落统计链路**：战斗结算截图经 `AzurStats` 保存或解析入库。实时侧（`azurstats.py`）在战斗结束的上下文里收集截图；离线侧（`drop_statistics.py`）对历史截图文件夹做批量模板匹配与 OCR，导出 CSV。大世界掉落（除侵蚀1练级外）在「保存」与「上传」两个档位都会解析入库，`opsi_drop_stats.py` 把它们按窗口聚合成「大世界掉落」页的金菜与彩图纸收益。
 - **CL1 统计链路**：`Cl1Database` 按「实例 × 月份」记录大世界侵蚀 1（CL1）与耄耋相接的战斗、明石、行动力等指标；`Cl1DataSubmitter` 把当月汇总匿名化后提交到官方遥测端点。
 - **日报链路**：`DailySummaryStore` 持续采集任务运行与侵蚀 1 战斗事件，`DailySummaryService` 在触发窗口聚合事实、调用 LLM 生成文案并经 OnePush 推送。
+- **仓库快照链路**：独立 `StorageStatistics` 任务进入普通仓库材料页，两次完整扫描一致后，把指定物品数量原子保存到 `config/storage_statistics.db`。统计页面只读最近快照及成功扫描的历史趋势，刷新不启动游戏扫描。
 
 `module/azur_stats/` 是掉落解析的场景层（原远程 AzurStats 上传的遗留名），复用 `module/statistics` 的物品识别原语；`module/log_res/` 则是资源变动的写入口，游戏代码通过属性赋值声明「资源变了」，由它决定写配置还是写快照库。
 
-统计层与调度器共享一个设计前提：**统计永远不能影响游戏调度**。所有落库调用要么被吞异常、要么走异步执行器，写入失败的周期在日报中被标为「数据不完整」而不是让任务中断。
+被动采集的统计不得影响游戏调度：落库失败不应中断正在进行的游戏业务。独立仓库统计则把完整性作为任务成功条件，识别或写入失败时保留旧快照、设置失败间隔并返回任务失败，不为此重启游戏。
 
 ## 2. 模块职责
+
+### 仓库统计任务
+
+入口为 `alas.py::storage_statistics()` → `module/storage/statistics.py`，默认关闭；可从统计页「仓库」分类手动运行，也可启用原生定时任务。任务复用 `StorageUI` 导航到材料页，不打开物品或消耗材料。
+
+`statistics_recognition.py` 从完整方框动态定位物品，结合图标模板相似度、次优差距和稀有度底色确认身份，不读取物品名称文字。数量在图标右下角逐位匹配，并先核对全部首末位、字高、基线与间距；残缺首位不能被当成噪声删除。只有几何完整但二值字形匹配失败时，才使用 `amount_glyphs.py` 的原生灰度模板补充：以基线锚定 24×20 画布，保留抗锯齿，不随滚动后的二值包围盒变化缩放。灰度均方误差必须小于 0.006，与次优数字的差距必须大于 0.006；粘连字形仍使用已有的有界拆分，不强取灰度候选。灰度仍不确定时才尝试有限二值阈值，至少两个合格读数一致且无冲突才接受，不改变通用数字匹配门槛。
+
+仓库专用模板位于 `assets/stats/storage_items/amount_digits.png` 和 `amount_glyphs.png`。灰度模板由 `uv run -m dev_tools.storage_amount_templates` 从人工核对的 125 个滚动数量切片与 25 个原始目录样本生成，覆盖金材料等不同原生字形。只合成横纵各四种有限采样相位，不使用 OCR 输出作标签；独立失败帧不参与生成。模板及生成机制不影响科研或大世界数字识别。
+
+仓库目录只登记实际物品的同一身份变体，不能直接沿用共享掉落模板的别名。`PlateGeneralT4_2.png` 的 ALL 图案是定向部件 T4（Lua 30114/30900，使用后选择一类部件），与通用部件 T4（17004）不同，因此不作为仓库通用部件模板；未使用的定向道具参与未知格重叠，不折算或合并数量。
+
+每一页稳定复读后，用唯一重叠行拼接，未知物品也参与重叠核对。已知格已经通过图标模板、次优差距和完整数量确认，按相同身份与数量核对，不再让虹彩、闪光或采样差异导致整格像素比较推翻结果；没有读出数量的已知格不能通过。未知格先匹配 RGB，再在核对稀有度底色后匹配灰度、平滑结构及去除低频背景的主体结构，四种比较均保持 0.985 门槛。主体分支以 3×3 与 31×31 灰度高斯滤波的有符号浮点差分消除虹彩渐变，保留蓝图主体和数量边缘，不能只比共同边框或把负边缘截成零。成功拼接后，重叠行更新为刚通过核对的图像，避免后续页一直比较更早的虹彩或采样相位；歧义、数量变化和未出现新行的失败路径不改已读行。首末端额外拖过边界并确认滚动条端点，半格留给下一页。到达底部才结束，再从顶部扫描一次。两次物品行和数量全部一致后，`storage_snapshot.save_snapshot()` 在单个 SQLite 事务中提交。
+
+未运行显示「未扫描」，完整扫描未发现的目标显示未知数量，均不能推断为零。扫描或落库失败不会覆盖旧快照；数据库按实例隔离并纳入备份。目录版本包括清单、图标和数量字形，资源变化后旧快照会提示重新运行。
+
+未知格另尝试严格读取完整数量，仅保存在 `comparison_amount` 供翻页核对，不赋予物品身份或计入清单。两格已确认数量不同立即拒绝；数量无法确认时仍可使用上述 0.985 图像分支，但不能使用强虹彩补充。只有两格完整数量独立确认一致后，补充分支才比较去背景主体：7×7 与 31×31 高斯差分，主体区 `(12, 12, 116, 100)` 排除共同边框和数量，允许 3px 对齐且相似度须达到 0.97。同数量的不同头像仍须拒绝，不能只凭数量认为是同一格。
+
+中途在列表内精确拖动一行（178px），释放前停住手指，滚动条只用于端点与稳定性判断。不能按滑块长度推算翻页距离或追赶旧目标百分比：真实滑块长度会变化，快速滑动还有惯性，二次拖动可能越过重叠行。不支持拖拽的控制后端使用慢速滑动，禁止触发设备层「滑动后点击」的拖拽回退。
+
+页面识别失败会记录具体物品或网格原因，并在同一个截图状态循环内围绕失败位置上下微调，最多四次；已读页面未出现新行时继续向下移动一行，每次仍须稳定复读并与已读行唯一重叠。读取窗口使用 `Timer(20, count=2)`，避免慢截图被四十次访问条件拖长；每次实际微调后重置窗口，第四次恢复也必须读取后续画面再判失败。操作间隔按每个截图帧累计，避免慢速稳定复读后首次拼接失败时，恢复计数才刚开始而窗口已经到期。首末端先移开再回到原端点，不能通过跳过首尾行完成扫描。只有页面成功稳定复读并拼接后才清除连续操作记录，失败重试仍受防连点和次数限制；页签短暂无法确认时只等待新截图，不立即把数量识别失败误报为离开仓库。
+
+`storage_snapshot.get_storage_timeline()` 在只读连接中用单条 SQL 查询成功扫描历史，按实例、完成时间窗口与条数过滤。仓库分类复用资源趋势的指标选择、折线/K 线、采样粒度、缩放、起止时间、原始记录与导出，支持最近 1/7/30/90/365 天。图表仅使用已确认数量，不补零或在区间边缘补造点；最新清单仍展示最近完整扫描。没有历史扫描时不会创建数据库。
+
+当前模板仅经过国服 1280×720 截图验证。离线验证入口为 `tests/test_storage_statistics.py`、`tests/test_storage_amount_glyphs.py`、`tests/test_storage_statistics_recovery.py` 和 `tests/test_storage_overlap_history.py`，覆盖仓库完整性、独立原生失败帧及采样相位、受限恢复窗口和连续三页的重叠参考图。合成相位与离线回放不能代替整仓实机验收；真实验证需指定实例与任务范围，并使用设备内置原生截图。
 
 ### 负责
 
 - 战斗/搜索结算截图的保存（`DropRecord_SaveFolder`）与本地解析入库（SQLite `config/azurstats_local.db`）
 - 物品识别原语：`Item`/`ItemGrid`/`AmountOcr`（模板匹配 + 带上限验证的数量 OCR）——商店、委托、仓库等模块都复用这一层
-- CL1 月度统计库（`config/cl1_data.db`）的读写与旧加密数据迁移
+- CL1 月度统计库（`config/cl1_data.db`）的读写与旧数据迁移
 - 侵蚀 1 遥测提交（`Cl1DataSubmitter` → `ApiClient`）
 - 日报运行时事件采集、周期去重、LLM 文案生成与推送
 - 资源快照记录（`resource_stats`）与资源变动入口（`LogRes`）
 - 掉落截图按保留天数清理，过期后删除或备份到 `bak/`（`drop_cleanup`）
 - 大世界运行期统计事件的统一落库入口（`opsi_runtime`）
+- 大世界统计数据的本地存储与旧加密数据的一次性解密（`opsi_secure`）
 - 离线批量掉落分析工具（`DropStatistics`，独立运行）
 
 ### 不负责
@@ -52,14 +78,17 @@ module/statistics/
 ├── research_drop.py          # 科研掉落解析（队列页角标读期数 + 收获帧识别）
 ├── research_stats.py         # 科研掉落聚合（按期 / 心智物资两种口径）
 ├── resource_stats.py         # resource_snapshots 快照与区间摘要
+├── storage_snapshot.py       # 独立仓库扫描的完整快照与只读查询
 ├── ship_exp_stats.py         # ShipExpStats：战斗计时与经验效率
 ├── opsi_month.py             # OpsiMonthStats：月度大世界汇总与时间线
 ├── opsi_runtime.py           # 大世界运行期事件 → 落库的集中入口
-├── opsi_drop_stats.py        # 大世界掉落聚合（金菜/彩图纸口径，供「大世界掉落」页）
+├── opsi_drop_stats.py        # 大世界掉落聚合（部件、图纸、材料、计划及突破部件）
+├── opsi_secure.py            # 大世界统计载荷的明文编解码与旧加密数据自动解密
 ├── drop_statistics.py        # 离线批量掉落分析（可独立运行）
 ├── drop_cleanup.py           # 掉落截图保留天数清理与备份
 ├── get_items.py / item.py / battle_status.py / campaign_bonus.py
 │                             # 物品/敌人识别器（被 azur_stats 与离线分析复用）
+├── amount_digits.py          # 原生数量字形匹配与有界粘连拆分
 ├── utils.py                  # pack/unpack、ImageError、load_folder
 └── assets.py                 # 识别资源（button_extract 生成，勿手改）
 
@@ -78,9 +107,19 @@ module/log_res/
 
 模板资源：`assets/stats_basic/`（基础物品模板，掉落统计启动时复制到用户目录）、`assets/stats/`（opsi_items、opsi_reward_items 等场景模板）。
 
-**两个模板集不能互相顶替**：`opsi_reward_items`（自律寻敌结算页）与 `opsi_items`（获得道具页）里的图标缩放不同，跨页匹配常在 0.6~0.9，低于阈值就不会命中，金菜/图纸会退化成数字代号。`SceneOperationSiren.ITEM_TEMPLATE_FOLDER` 用的是 `opsi_items`，其中新增的模板都是从获得道具页真实截图里裁的；例外是 `opsi_items/PlatePlaneT4.png`——舰载机部件T4 在现有素材里没在获得道具页出现过，只能先复用结算奖励页的模板，跨页匹配会弱一些，拿到实机素材后应换成原生裁图。
+**两个模板集不能互相顶替**：`opsi_reward_items`（自律寻敌结算页）与 `opsi_items`（获得道具页）里的图标缩放不同。`SceneOperationSiren.ITEM_TEMPLATE_FOLDER` 用的是 `opsi_items`；舰载机部件 T4 的原生弹窗变体为 `PlatePlaneT4_2.png`，通用部件、军用电子元件和彩色原型部件也有原生弹窗模板。通用装备研发图纸 `GearDesignPlanT4/T5` 与舰炮、鱼雷、防空炮、舰载机专用图纸是不同物品，名称按 Lua 物品定义确认，不能合并。
 
-**数量区按物品换**（`ItemGrid.amount_area_rules`，前缀匹配）：获得道具页的数字右对齐，位数多时左侧会超出默认区 `(60, 71, 91, 92)`（作战补给凭证 1638 被读成 638）；而图纸/实验计划的数字压在右下角灰色齿轮上，默认区会把齿轮的齿读成「7」（1 读成 71）。两者不能用同一个区——整体左扩会让材料把底衬读成数字（氟橡胶 2 读成 12）。
+大世界掉落页固定展示部件 T4、舰炮/鱼雷/防空炮/舰载机研发图纸 SSR/UR 型、通用装备研发图纸 UR 型，以及特种钢材、军工级电子元件、HBX炸药、氟橡胶、超导铜、钛合金、机密/绝密实验计划和特装型突破部件。范围在 `opsi_drop_stats.py`，名称和稀有度在 `assets/stats/opsi_item_names.json`；这些物品进入收益、明细、记录和总计，仍受实例、时间与任务筛选。已入库的物品直接纳入查询，不重写数据库；尚未识别的数字编号不会自动改名。
+
+实验计划模板统一按图标稀有度命名：紫色 T3、金色 T4、彩色 T5，与英文物品名称中的 T1/T2/T3 不同。获得道具页原来的 `OrdnanceTestingReportT1/T2` 模板改为 `T3/T4`，历史金计划 `OrdnanceTestingReportT2` 在展示时归入 T4，避免分成两行。两类奖励页都按底色排除错误等级的图纸、实验计划和突破部件；两种布局仅对纸类同级候选放宽匹配阈值，突破部件保持原阈值，并接收第三种 Boss 奖励布局。
+
+新增模板来源记录在 `assets/stats/opsi_template_sources.json`。机密计划与突破部件的弹窗模板来自 `screenshots/opsi_abyssal/1790326881455.png` 和 `screenshots/opsi_month_boss/1790872111832.png` 的原始 1280×720 帧。绝密计划未在本地掉落截图及归档中找到，暂复用已有 1280×720 仓库原图中的模板并归一为 96×96；它的真实结算识别仍待获得样本后验证，不能把仓库参考图验证当作实机掉落验证。
+
+**保留完整数量，再排除图标干扰**：科研、委托与大世界弹窗的默认数量区为 `(50, 72, 94, 94)`；大世界图纸/实验计划为 `(50, 76, 94, 94)`，作战补给凭证为 `(28, 72, 94, 94)`。自律寻敌原生 64px 格使用 `(15, 49, 63, 63)`，容纳五位凭证数量。数字由 `amount_digits.py` 按字高、基线、间距和模板逐位匹配，既保留重复数字与首尾位，也排除纸角、齿轮等残影；匹配不确定时才使用配置中的 OCR 后端。普通战斗的 `GetItemsStatistics` 默认数量区保持原值，科研通过实例属性覆盖。
+
+**大世界的稀有度与单格上限**：白纸图标先根据金/彩/紫底色限定等级，再匹配图案；降低到 0.6 的阈值只适用于纸类候选，其他物品保持原阈值。`SceneOperationSiren` 在两种布局中均将彩色装备研发图纸和原型部件的单格数量限制为 2，多格、多帧仍按真实数量累加。特装原型是另一种物品，不能套用此上限。数量无法确认只跳过该格，保留同页其他有效物品。
+
+**复用解析器时保留已知物品身份**：`ItemGrid` 先在达到阈值的已知模板中选择最佳匹配；只有没有合格的已知候选时，才查询数字编号的临时未知模板。前一张动画画面生成的未知模板即使与当前像素更接近，也不能覆盖已确认的物品名。
 
 ## 4. 核心入口
 
@@ -103,7 +142,8 @@ module/log_res/
 | --- | --- |
 | `Item` | 单个物品：模板匹配名 + 数量。名称 setter 自动剥离数字后缀（`Javelin_2` → `Javelin`）；`__eq__`/`__hash__` 基于名称，支撑两页掉落的去重合并 |
 | `ItemGrid` | 物品网格：按 ButtonGrid 定位槽位，模板匹配（优先命中频率高的模板，未命中自动建数字编号新模板）+ 数量/价格 OCR + 标签颜色识别 |
-| `AmountOcr` | 带验证的数量 OCR：读数超过 `ITEM_AMOUNT_MAX` 上限时重试（可选碎片过滤抹灰版），仍超限截断末位；`remove_small_fragments` 剔除图标残影连通域，防「3 被读成 73」类误读 |
+| `AmountOcr` | 场景可启用逐位字形匹配和严格上限；模板不确定时回退 OCR 与碎片过滤。科研、委托、大世界超限仍无法确认时返回 0，不截断猜值；未启用的旧调用方保留原行为 |
+| `DigitTemplates` | 匹配 `assets/stats/amount_digits/` 的原生普通/粗体数字模板，有界拆分粘连字形；候选接近或相似度不足时返回 `None` |
 | `GetItemsStatistics` / `CampaignBonusStatistics` / `BattleStatusStatistics` | 三个离线统计器：获得物品页（1/2/3 行网格自动判断奇偶布局）、战役加成弹窗（金币数量校验截图有效性）、敌方舰队名 OCR |
 | `DropStatistics` | 离线批量处理器：两步工作流（`extract_template` 提模板 → 手动重命名 → `extract_drop` 导出 CSV） |
 
@@ -118,6 +158,20 @@ module/log_res/
 | `AzurStats` | `get_meowofficer_farming()` | 从明细库重算 6 侵蚀等级的「平均黄币/轮、平均金菜/轮……」写入 `log/azurstat_meowofficer_farming.csv`，WebUI「大世界掉落」页最下面的「短猫掉落收益」表直接读取 |
 | `AzurStats` | `is_opsi_drop_genre()` | 判定某个 genre 是否要解析入库：大世界任务都算，唯侵蚀1练级除外（它的收益在「大世界总结」页看） |
 | `AzurStats` | `load_opsi_drop_rows()` | 按实例/时间窗口/任务读明细，供 `opsi_drop_stats.collect()` 汇总；任务范围直接由上面那套常量生成 |
+
+大世界采集必须把同一个 `DropImage` 传入自律守护的地图事件、`interrupt_auto_search(drop=...)` 和 `map_exit(drop=...)`。隐秘海域使用 `run_auto_search(exit_map=True)`，将退出时的奖励一起提交；深渊与月度 Boss 在 `boss_clear()` 内退出。`SceneOperationSiren` 接收三种获得道具布局；单帧出现信息栏遮挡等 `ImageError` 时只跳过该帧，保留同包其他奖励。海域 OCR 失败不丢物品，展示可根据独立任务确定来源类型，但不猜海域编号或侵蚀等级。
+
+统计页仍按金菜（部件 T4）与彩图纸（研发图纸 T5，包括通用装备研发图纸）展示。独立或共用掉落开关的任务始终可筛选；任务次数取完整时间窗口，筛选仅影响收获明细。窗口内没有这两类物品的奖励不显示在掉落记录表。`/opsi-items/` 先查 `opsi_reward_items`，缺图时回退到 `opsi_items` 同名模板；`/research-items/` 先查 `research_items`，再查 `stats_basic`。图标回退只影响展示，不改变识别模板选择。
+
+### 大世界统计存储（opsi_secure.py）
+
+大世界统计自 2026-10 起不再加密：载荷以明文 JSON 存放在既有列位（`cl1_data.secure_json`、`opsi_items.secure_payload`、`resource_snapshots.opsi_payload`、`daily_summary_cl1_events.secure_payload` 存 JSON 文本，`daily_summary_periods.report_text` 存正文），日志文件为普通 JSON/CSV。公共字段列与路由元数据不变；WebUI 历史展示不受影响。
+
+旧版加密数据（`OPSIV1.`/`OPSIV2.` 前缀）由启动钩子 `initialize()` 自动解密：有界等待，超时转后台；按描述文件恢复当时的本机凭据（安装目录被移动时按安装标识找回），逐库、逐文件、含备份归档一并转成明文，并移除加密时代的触发器与辅助表。只有确认本机不再有任何密文后才删除描述文件并撤销密钥；密钥暂不可用或个别行解不开时按原样保留，读取路径按行兼容解密，后续启动自动重试，绝不丢数据。
+
+补救与回退：若某条旧载荷**确认本机无法解密**（密钥可用但记录解不开，或凭据干净的未命中，如跨机器迁移），对应写入不再被永久冻结——原载荷原样另存到 `config/opsi_secure/unreadable-<时间戳>.json` 旁路备份后，按现状继续写入；凭据服务报错的暂时性不可用仍保持原样等待重试，不会替换还能救回的数据。
+
+资源趋势等只使用非大世界列的查询保留 `include_opsi=False` 优化，跳过载荷解析。解密失败的行在读取时表现为缺失（显示降级），写回路径保留原载荷而不是用空值覆盖。
 
 ### CL1 月度库（cl1_database.py）
 
@@ -134,7 +188,9 @@ module/log_res/
 | `commission_income_entries` / `running_gem_commissions` | 委托收益明细（上限 5000）与运行中钻石委托（跨月合并） |
 | `research_drop_entries` | 科研掉落明细：项目代号、期数、物品（上限 5000，imgid 去重） |
 
-关键机制：`_stats_transaction()` 用 `BEGIN IMMEDIATE` 取写锁，跨线程/进程串行化整个「读-改-写」，避免并发覆盖；`save_stats` 只做整体替换，增量修改必须走事务内方法。旧版 AES-GCM 密文（密钥由 device_id 派生）在初始化时自动解密迁移为明文 JSON。
+关键机制：`_stats_transaction()` 用 `BEGIN IMMEDIATE` 取写锁，跨线程/进程串行化整个「读-改-写」，避免并发覆盖；`save_stats` 只做整体替换，增量修改必须走事务内方法。旧版 device_id 派生密钥的历史行在读取时解码，并在下一次写入时就地转换为载荷列明文；`OPSIV1.`/`OPSIV2.` 遗留密文由启动时的一次性解密处理。
+
+证券历史的旧数据来源由 `cl1_legacy.read_ap_snapshots()` 在只读连接中提供，复用 CL1 的旧密钥派生和 AES-GCM 解码格式，不创建、删除或改写统计库。原实例首次升级时仅导入上海时区当月 `ap_snapshots` 中带 `ap_total` 的实际记录，再与中央认证历史合并进入持久补传队列；上月及更早月份不读取，注册时间不作为截断条件。已开户账户同样补传，数量不设 2000 条上限。同毫秒冲突以中央来源为准。当月旧统计读取失败时保留原件与重试资格，状态消息说明原因，每五分钟重试，不回滚中央历史、不阻断注册、登录及新记录同步；中央来源或补传队列的认证失败仍停止同步。迁移完成状态由实例身份和补传检查点认证，重命名保留原统计来源，复制及重建实例不继承；完成后不再读取旧库修改。没有总量的 `ap` 只表示当前行动力，不能当作证券股价。
 
 ### 日报（daily_summary*.py）
 
@@ -218,7 +274,7 @@ flowchart TD
       ├─ save → {DropRecord_SaveFolder}/{genre}/{ts}.png（后台线程）
       └─ local → SceneOperationSiren.parse_scene() → DataOpsiItems
               → opsi_items 表（azurstats_local.db）→ 重算 farming CSV
-              └─ 统计页「大世界掉落」= opsi_drop_stats.collect()（金菜/彩图纸口径）
+              └─ 统计页「大世界掉落」= opsi_drop_stats.collect()（指定部件、图纸、材料、计划及突破部件）
               └─ 有未识别物品 → unknown_items/ 红框标注图
 
 任务事件（alas.py 打点）          → daily_summary_task_runs
@@ -273,14 +329,14 @@ stateDiagram-v2
 | `Alas.Error.LlmApiKey/LlmApiBase/LlmModel` | str | "" | 日报 LLM 配置（与错误上报共用） |
 | `Alas.Error.OnePushConfig` | str | "" | 推送通道配置 |
 
-关联关系：日报的 LLM 与推送配置刻意复用 `Error` 组，避免两套密钥；掉落记录各场景开关决定 `DropImage.save/local`，而 `LOCAL_GENRES` 判定让大世界记录里耄耋相接（`OpsiMeowfficerFarming`）的 `upload` 档位对接本地解析，其余大世界任务选 `upload` 不落盘也不解析。日报线程不持有完整配置对象——`alas.py` 只传 `SimpleNamespace` 快照并按配置文件 mtime 热读，避免与任务线程争用配置对象。
+关联关系：日报的 LLM 与推送配置刻意复用 `Error` 组，避免两套密钥；掉落记录各场景开关决定 `DropImage.save/local`。除侵蚀1练级外，大世界任务的 `save` / `upload` / `save_and_upload` 均本地解析，`do_not` 不统计。日报线程不持有完整配置对象——`alas.py` 只传 `SimpleNamespace` 快照并按配置文件 mtime 热读，避免与任务线程争用配置对象。
 
 ## 11. 异常与错误处理
 
 | 异常/失败 | 原因 | 处理 |
 | --- | --- | --- |
-| `ImageError` 族（GetItemsInvalid、OpsiZoneInvalid、ZeroAmountError…） | 截图不是预期结算页 / 信息栏遮挡 / 数量为 0 | `commit`/离线解析捕获后记 warning 跳过该截图，不影响战斗流程 |
-| OCR 读数超上限 | 图标残影被拼进数字 | `AmountOcr` 重试 + 抹灰兜底 + 末位截断，仍失败则返回原值 |
+| `ImageError` 族（GetItemsInvalid、OpsiZoneInvalid…） | 截图不是预期结算页 / 信息栏遮挡 | `commit`/离线解析捕获后记 warning 跳过该截图，不影响战斗流程 |
+| 掉落数量为 0 或仍超上限 | 数字不完整、图标残影或字形不确定 | 科研、委托、大世界按格记 warning 并跳过，保留同页其他掉落及原截图；不截断猜值 |
 | SQLite 锁竞争 | WebUI 线程与调度线程并发写 | 日报库 `busy_timeout=50ms` 快速失败 + 内存暂存降级事件；CL1 库用 `BEGIN IMMEDIATE` 串行化 |
 | 日报数据库写失败 | 磁盘/锁异常 | 记入 `daily_summary_collection_gaps`，该周期日报标「数据不完整」 |
 | LLM 空响应 / 调用失败 | 网络、配额 | 最多 3 次重试，仍失败置 `failed(error_kind='llm')`，本期不发送 |
@@ -292,6 +348,10 @@ stateDiagram-v2
 ## 12. 并发与线程模型
 
 统计层被至少四类线程同时访问：游戏任务线程（同步写）、`async_executor` 工作线程（异步写）、日报后台线程（生成与推送）、WebUI 工作线程（查询）。
+
+侵蚀1明石遭遇由 `opsi_runtime.record_cl1_akashi_encounter()` 提交到串行异步队列，并返回写入 Future，主游戏流程不做同步回读。`increment_akashi_encounter(instance, month=None)` 在事务提交后返回实际累计次数；传入事件发生月份避免跨月排队计入下个月。完成回调只在提交成功后打印累计次数，失败记录异常并保留事务回滚；进程正常退出沿用异步执行器的队列刷新。
+
+耄耋相接同样通过 `record_meow_akashi_encounter()` 返回写入 Future。`increment_meow_akashi_encounter(instance, hazard_level, month=None)` 保留侵蚀等级分桶，提交后才返回该桶累计次数；月份在事件入队时固定，回调打印实际次数或记录写入异常。任务的 `_meow_record_akashi_if_solved()` 消费已解决的明石标记，避免后续轮次重复计数。该链路原本已异步，本次语义是确认实际落库，不增加游戏主线程等待。
 
 | 对象 | 保护方式 |
 | --- | --- |
@@ -307,13 +367,15 @@ stateDiagram-v2
 | 存储 | 内容 | 写入时机 | 清理 |
 | --- | --- | --- | --- |
 | `config/azurstats_local.db` | `opsi_items` 掉落明细 + `resource_snapshots` 资源快照 | 每次 commit / LogRes 资源变化 | 不自动清理明细 |
+| `config/opsi_secure/` | 旧加密环境的描述文件与凭据状态 | 仅历史版本产生 | 全部旧密文解密成功后自动移除 |
 | `config/cl1_data.db` | CL1 月度统计（instance×month） | 各 `async_*` 方法即时写 | 快照列表内部截断（500/5000 条） |
+| `config/storage_statistics.db` | 按实例保存完整仓库物品快照 | `StorageStatistics` 两次完整扫描一致后原子提交 | 保留已完成扫描 |
 | `config/daily_summary.db` | 日报任务事件、周期状态、采集缺口 | 任务前后、战斗结束、日报流程 | `cleanup()` 保留 35 天 |
-| `log/azurstat_meowofficer_farming.csv` | farming 汇总（可被 dev_tools 直接读取） | 每次本地解析成功后重算 | 覆写 |
+| `log/azurstat_meowofficer_farming.csv` | farming 汇总 | 每次本地解析成功后重算 | 覆写 |
 | `log/cl1/<instance>/ship_exp_data.json` | 战斗耗时样本、每日经验、升级进度 | 每场战斗结束 | 样本 100 条 / 日统计 30 天 |
 | `screenshots/<genre>/`、`log/commission_rewards/<instance>/<月份>/` | 掉落与委托截图 | commit / 委托结算 | `DropRecord_RetentionDays` 天数清理（节流 1 小时），过期后按 `DropRecord_BackUpMethod` 删除 / 拷贝备份 / 压缩备份到 `bak/` |
 
-CL1 库的兼容性迁移是自动的：启动时把旧位置 `log/cl1/cl1_data.db` 移入 `config/`，AES-GCM 旧密文行（密钥由新旧 device_id 派生尝试）解密为明文 JSON，旧 JSON 月度文件经 `migrate_from_json` 归档后重命名为 `.bak`。
+CL1 库的兼容性迁移是自动的：启动时把旧位置 `log/cl1/cl1_data.db` 移入 `config/`；旧 JSON 与 `.bak` 在原路径保存明文载荷。每日备份对四个数据库做普通 SQLite 复制，备份是可直接打开的明文库。
 
 ## 14. 生命周期
 
@@ -328,26 +390,27 @@ CL1 库的兼容性迁移是自动的：启动时把旧位置 `log/cl1/cl1_data.
 3. 在 `module/api/statistics_service.py` 的对应 category 里把指标加进 `report()` 输出；API 模型变更后运行 `uv run python -m dev_tools.export_api_schema`。
 4. 需要进日报时，在 `DailySummaryService.build_facts()` 的 facts 里补字段并在 prompt 术语表加映射。
 
-新增掉落识别模板：把结算截图交给 `DropStatistics.extract_template()` 提取，人工重命名后放回模板目录；白纸类物品（设计图/测试报告）的稀有度由 `AutoSearchItemGrid.match_candidates` 按底色限定，新等级需要同时补 `TIER_BY_COLOR` 可识别的底色。
+新增掉落识别模板：把结算截图交给 `DropStatistics.extract_template()` 提取，人工重命名后放回对应场景的模板目录；图纸、实验计划和突破部件的稀有度由 `AutoSearchItemGrid.match_candidates` 按底色限定，新等级需要同时补 `TIER_BY_COLOR` 可识别的底色。新增物品同时检查 `opsi_drop_stats.py`、名称表、静态图标及五种语言的 `stats.lootHint`；回归入口为 `tests.test_opsi_drop_stats`、`tests.test_opsi_item_recognition` 和前端「大世界掉落展示新增」模拟服务测试。
 
 ## 16. 修改注意事项
 
 - **不要在任务代码里直接写 `cl1_db`**。大世界事件的落库口径（侵蚀等级折算、轮次闭合、来源判定）集中在 `opsi_runtime.py`，绕过它会产生口径分裂的统计。
+- **正常代码升级不得清空统计**：新增保护字段、变更身份或格式必须先实现兼容迁移；未完成迁移或普通故障绝不能删除数据；唯一允许的自动删除是「旧密文已全部解密成功」后的描述文件清理。
 - **`ItemGrid` 是被多处共享的单例状态**（`get_items.ITEM_GROUP` 是模块级实例）：`GetItemsStatistics`、`CampaignBonusStatistics`、`azur_stats.GetItems`、商店与仓库都改它的 `grids/item_class/similarity`。新增使用方时必须在使用前完整设置这些属性，如同 `_stats_get_items_load` 所做的那样，否则会带着上一场景的网格布局去匹配。数量侧同理：`amount_area` / `amount_area_rules` / `amount_ocr` / `amount_max` 都是按场景设置的，`azur_stats.GetItems` 会把前三个一起设好。
 - **删除是不可逆的**：`drop_cleanup` 只处理文件名匹配 `^\d{13}(_.+)?\.png$` 的文件，配置异常时按 0 处理（不清理）；`bak/` 内的备份不参与扫描（拷贝备份保留原修改时间，只看时间会被反复处理），压缩或拷贝失败时保留原文件。改清理逻辑时保持这些保守默认。
 - **日报的 `period_key` 含服务器与时区信息**，改动 `get_daily_summary_window` 的窗口语义会让已存在库里的 period_key 失配，导致重复推送。
-- **OCR 数量的修正逻辑是按具体误读样本反复校准的**（`remove_small_fragments`、`revise_item`、`AmountOcr` 截断），注释里记录了每个阈值的来源案例；调整阈值前先用真实截图回归验证，不要「顺手简化」。
+- **数量识别先用真实切片回归**：`amount_digits` 的字形阈值、粘连拆分与 `remove_small_fragments` 的 OCR 兜底均需覆盖原生数字；不要把 OCR 旧输出作为真值，也不要凭删首位或末位修正超限值。回归包含重复数字、五位凭证、纸角和粗体图纸数字。
 - **遥测提交只发聚合指标**（battle_count/明石次数 + MD5 前缀 instance_id），不要往 `calculate_metrics` 里加可识别个人的字段。
 - `module/statistics/assets.py` 与 `module/azur_stats/assets.py` 是 `dev_tools.button_extract` 的生成物，改按钮资源后重新生成，不要手改。
 - **科研的期数只能看队列页卡片的罗马数字角标**（`research_drop._read_series`，复用 `module/research/series.py` 的模板）。项目代号在每一期都存在、判不了期；掉落物也判不了——只有彩装备与舰船图纸绑期数，金装备各期混着出，项目还会「额外赠送」别期的图纸。
-- **科研的数量残影按「列剖面」清理，且只对图纸类启用**：科研的数量框紧挨物品图标，图标底部的白色纹理（纸角、斜边、横条）会被 `extract_white_letters` 提取成笔画拼进数字——「图纸 1 张」读成 71、超上限截断后又变成 7（六倍误差），「装备设计图 1 张」读成 9。`research_drop.ResearchAmountOcr` 在通用碎片过滤之后按列高取最右侧数字簇（数字笔画列高 12~17px，残影通常 ≤6px，两者之间隔着矮列组成的「谷」），并把两道兜底改成适配左侧残影的方向：超限时丢首位（不是截断末位）、读数为 0 时提高阈值重读。**列剖面只对数量上限 ≤10 的图纸启用**——物资、心智单元能有三位数，切列会误伤真数字（实测物资 97 被切成 7、心智 44 被切成 4）。
+- **科研的列剖面只用于图纸的 OCR 兜底**：先匹配完整数量字形，图纸纸角粘连且完整匹配不确定时可核对最右单字；末位为 0 不返回单字数量，保留真实的 10。神经 OCR 兜底仅在上限 ≤10 时取最右数字簇，读空时提高阈值重读，仍超限则跳过本格。物资、心智单元不能按图纸切列，避免三位数丢失首位。
 - **心智单元不属于任何一期**：它有自己的「心智/物资」视图，也不计入每期的总收益。两个视图**共用同一套版式**（收益卡片 + 收获明细 + 掉落记录，只是心智/物资不分期）。**金装备已不再统计**（2026-09-24 撤掉原「金装统计」视图：它各期混着出、不绑期数，图标又与彩装备相近，容易被认成彩装）。`research_stats.should_show()` 按 `scope` 分这两套口径。
 - 科研模板的新增/重命名走 `dev_tools/research_template_extract.py`（从游戏 Lua 数据推导仓库命名，含底色变体与 `{namecode:XXX}` 占位符处理），不要手裁素材。
 - **模板改名只改了模板，改不动库里已写入的记录**：记录里存的是模板文件名，显示时才按名称表翻译，所以旧记录会张冠李戴（实测把「四联装610mm鱼雷」显示成八期彩装、把九期彩装 Ta 152C 显示成四期天雷）。名字级的历史映射救不了——一个旧名可能同时盖住两件不同装备——只能用原截图重放：`dev_tools/research_drop_repair.py`（只覆盖 `items`，不动期数与项目代号，动库前先备份）。
 
 ## 17. 已知限制
 
-- `AzurStats` 的远程上传路径已废弃（类 docstring 自述），`upload` 语义名不副实，仅对 `opsi_meowfficer_farming` 表示本地解析。
+- `AzurStats` 的远程上传路径已废弃；大世界 `upload` 表示本地解析、不保存截图，侵蚀1练级除外。
 - `AzurStats.get_meow_loot_monthly_totals` / `get_meow_loot_available_months` 目前在仓库内没有调用方，属于预留接口。
 - 委托收益条目没有「已检查但零结算」的心跳记录，日报侧只能把空列表标为 `available=False` 而非零收益（`commission_income_stats` 有注释说明）。
 - 遥测域名 `ApiClient.PRIMARY_DOMAIN` 与 `FALLBACK_DOMAIN` 当前相同，故障转移实际未生效。
@@ -379,9 +442,9 @@ record_siren_research_device(self)          # opsi_runtime 内部决定来源与
 
 ## 19. 调试方法
 
-- 日志前缀：`[统计-物品]`（识别修正）、`[统计-资源]`、`[统计-经验]`、`[统计-大世界]`（运行期事件）、`[日报]`（日报全链路）、`[掉落记录]`（清理）、`[基础-API]`（遥测提交）。`logger.attr('CL1单轮耗时', ...)` 等属性行适合 grep 单轮耗时。
+- 日志前缀：`[统计-物品]`（识别修正）、`[统计-资源]`、`[统计-经验]`、`[统计-大世界]`（运行期事件）、`[统计-解密]`（旧加密数据自动解密）、`[日报]`（日报全链路）、`[掉落记录]`（清理）、`[基础-API]`（遥测提交）。`logger.attr('CL1单轮耗时', ...)` 等属性行适合 grep 单轮耗时。
 - 本地调试服务：`ALAS_DEBUG_SERVER=1` 启动调度器后，`module/debug/commission_debug.py` 可以不开游戏注入伪造委托收益并触发推送，验证统计口径与推送链路。
-- 测试：`tests/test_statistics_transactions.py`（CL1 事务与并发）、`tests/test_daily_summary*.py`（日报窗口与聚合）、`tests/test_drop_cleanup.py`（清理与 `AzurStats.new` 节流）、`tests/test_archive.py`（删除/拷贝/压缩三种过期处理方式）、`tests/test_commission_settlement.py`、`tests/test_research_stats.py` / `test_research_drop.py` / `test_research_drop_repair.py`（科研口径、角标识别与记录订正）。
+- 测试：`tests/test_statistics_amount_digits.py` / `test_item_amount_area.py`（真实数量切片、严格上限、裁剪边界与单格失败保留其余物品）、`tests/test_statistics_transactions.py`（CL1 事务与并发）、`tests/test_daily_summary*.py`（日报窗口与聚合）、`tests/test_drop_cleanup.py`（清理与 `AzurStats.new` 节流）、`tests/test_archive.py`（删除/拷贝/压缩三种过期处理方式）、`tests/test_commission_settlement.py`、`tests/test_research_stats.py` / `test_research_drop.py` / `test_research_drop_repair.py`（科研口径、角标识别与记录订正）。
 - 数据核查入口：直接用 sqlite3 打开 `config/cl1_data.db`（明文 JSON）、`config/azurstats_local.db`、`config/daily_summary.db`； farming 汇总看 `log/azurstat_meowofficer_farming.csv`。科研记录里出现「当前 `assets/stats/research_items/` 与名称表都没有的模板名」基本就是模板改名残留，用 `dev_tools/research_drop_repair.py` 拿原截图重放订正。
 - 未识别物品：检查 `screenshots/unknown_items/` 下的红框标注图，补模板后重跑 `DropStatistics.extract_template`。
 

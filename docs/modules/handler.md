@@ -154,6 +154,8 @@ flowchart TD
 
 ### 6.5 剧情跳过
 
+`InfoHandler.story_skip(drop=None, *, click_interval=2, prefer_skip=False)` 可由领域处理器调整重试间隔和对话跳过策略。大世界 `MapEventHandler` 对所有大世界任务使用 0.5 秒间隔、实例独立计时器及 `prefer_skip=True`；无选项对话点击右上角 `STORY_SKIP`，不修改 `os_init()` 设置的全局剧情配置。游戏世界剧情把选项步骤标为重要步骤，跳过会停在这些选项；快速路径仍逐帧检测选项，在 0.3 秒稳定确认后选择，显式 `STORY_OPTION`、跳过确认弹窗及卡死保护继续生效。大世界之外的通用处理器保留原配置和间隔，领奖界面的空白关闭保持原行为。
+
 `story_skip()` 按优先级处理四类画面：剧情确认弹窗（`story_popup_timeout` 窗口内）、黑底纯文字对话（`STORY_LETTERS_ONLY`）、剧情选项（三套峰值检测适配旧版/新版大白色/右侧白色三种样式）、关闭按钮。选项选择支持 `STORY_OPTION` 指定序号；大世界塞壬装置由 `_identify_siren_device_option()` 按选项数量与跨任务配置识别。每次剧情点击后清空设备点击记录，防止不同剧情段复用同一按钮名触发 `GameTooManyClickError`，卡死改由 `_story_option_click` 连续计数兜底。
 
 ## 7. 调用关系
@@ -264,6 +266,7 @@ device.screenshot()
 - **点击记录改名技巧**：点击前把 `POPUP_CONFIRM.name` 临时拼上业务名（`POPUP_CONFIRM_XXX`）再还原，让设备层的防连点统计能区分不同来源对同一按钮的点击。新增弹窗处理时沿用该模式，否则可能触发 `GameTooManyClickError` 误报。
 - **类属性地图状态**：`map_*` 是类属性，同一进程内跨任务保留旧值，正确性依赖每次进图时 `map_get_info()`/`handle_fast_forward()` 重置。新增字段必须在 `handle_fast_forward` 的重置分支里覆盖。
 - **剧情与点击记录**：`story_skip` 的 `click_record_clear()` 与 `_story_option_click` 兜底是为绕开「按钮名复用导致防连点误判」而设计的成对机制，单独改动任一侧会重新引入卡死误报。
+- **自律寻敌重试与点击记录**：`handle_os_auto_search_map_option` 开启自律的连续重试（装置探测演出后游戏数秒不响应是常态）同样以 `click_record_clear()` 与 `_os_auto_search_enable_timeout` 预算成对工作；改成只动一侧会让快刷在约 7 秒被防连点阈值误杀，或失去超时兜底而无限重试。
 - **重启相关常量与配置回退**成对出现（如 `RESTART_OPERATION_TIMEOUT` 仅是配置读取失败的兜底），调整时保持「配置优先、非法回退默认并告警」的行为。
 - **assets.py 与 `Mask` 遮罩图**由生成器/资源流程维护，手改会被 CI 差异检查打回。
 - 伏击类模板依赖 `info_letter_preprocess()` 提升信息栏文字对比度，替换识别方式时需保留预处理。

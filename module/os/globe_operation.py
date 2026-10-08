@@ -451,14 +451,12 @@ class GlobeOperation(ActionPointHandler):
                 continue
 
         confirm_timer = Timer(1, count=2).start()
-        unpinned = 0
         for _ in self.loop():
             if unpin:
                 if self.handle_zone_pinned():
-                    unpinned += 1
                     confirm_timer.reset()
                 else:
-                    if unpinned and confirm_timer.reached():
+                    if self.is_in_globe() and confirm_timer.reached():
                         break
             else:
                 if self.is_zone_pinned():

@@ -16,7 +16,6 @@ import { LegacyRail } from '../components/LegacyRail'
 import { Statistics } from './Statistics'
 import { readOverviewPanel, setOverviewPanel, subscribeOverviewPanel } from '../app/overviewPanelPrefs'
 
-
 function loadResourceSelection(instance: string) {
   try {
     const saved: unknown = JSON.parse(localStorage.getItem(`azurpilot.resources.${instance}`) ?? 'null')
@@ -32,7 +31,7 @@ export function Overview() {
   const [error, setError] = useState('')
   const [selectedResources, setSelectedResources] = useState<string[]>(() => loadResourceSelection(instance))
   const connection = useConnection()
-  const panel = useSyncExternalStore(subscribeOverviewPanel, readOverviewPanel)
+  const panel = useSyncExternalStore(subscribeOverviewPanel, readOverviewPanel, readOverviewPanel)
 
   useEffect(() => setSelectedResources(loadResourceSelection(instance)), [instance])
 

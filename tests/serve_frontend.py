@@ -25,7 +25,6 @@ def main():
             patch('module.api.app.LIBRARY_DIR', Path(directory) / 'background-library'), \
             patch('module.api.background_service.LIBRARY_DIR', Path(directory) / 'background-library'), \
             patch('module.api.background_service.INDEX_FILE', Path(directory) / 'background-library/index.json'), \
-            patch('module.api.announcement_service.AnnouncementService.get', return_value=None), \
             patch('module.runtime.account_tpm.TpmProtector.available', return_value=False), \
             patch('module.api.background_service.resolve',
                   side_effect=lambda url: {'final_url': url, 'content_type': 'image/svg+xml'}), \

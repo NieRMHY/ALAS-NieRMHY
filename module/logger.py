@@ -174,7 +174,7 @@ class RichTimedRotatingHandler(TimedRotatingFileHandler):
             show_time=False,
             show_level=False,
             rich_tracebacks=True,
-            tracebacks_show_locals=True,
+            tracebacks_show_locals=False,
             tracebacks_extra_lines=3,
             highlighter=NullHighlighter(),
         )
@@ -440,7 +440,7 @@ console_hdlr = RichHandler(
     show_path=False,
     show_time=False,
     rich_tracebacks=True,
-    tracebacks_show_locals=True,
+    tracebacks_show_locals=False,
     tracebacks_extra_lines=3,
 )
 console_hdlr.setFormatter(console_formatter)
@@ -557,7 +557,7 @@ def set_func_logger(func):
         show_time=False,
         show_level=True,
         rich_tracebacks=True,
-        tracebacks_show_locals=True,
+        tracebacks_show_locals=False,
         tracebacks_extra_lines=2,
         highlighter=Highlighter(),
     )

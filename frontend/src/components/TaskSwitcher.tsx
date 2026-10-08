@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { Check, ChevronDown } from 'lucide-react'
 import { useApp } from '../app/context'
-import {taskNavItems, SCHEDULER_EDITOR} from './taskNavItems'
+import { taskNavItems, taskLabel } from './taskNavItems'
 
 /**
  * 顶栏的「任务配置」下拉：列出该实例的全部任务，点一下直接跳到对应任务页。
@@ -58,7 +58,7 @@ export function TaskSwitcher() {
         {taskNavItems(key, group.tasks).map(task => <button key={task} role="menuitemradio" aria-checked={task === currentTask} onClick={() => {
           setOpen(false); trigger.current?.focus()
           if (task !== currentTask) navigate(`/i/${instance}/task/${task}`)
-        }}><span>{task === SCHEDULER_EDITOR ? ui('nav.schedulerProgram') : t(`Task.${task}.name`)}</span>{task === currentTask && <Check size={15}/>}</button>)}
+        }}><span>{taskLabel(task, ui, t)}</span>{task === currentTask && <Check size={15}/>}</button>)}
       </div>) : <div className="task-picker-empty">{ui('nav.taskJumpEmpty')}</div>}
     </div>}
   </div>

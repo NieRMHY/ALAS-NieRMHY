@@ -13,7 +13,7 @@ import re
 
 from module.azur_stats.image.base import CLASSIFY_CACHE
 from module.azur_stats.image.base import ImageBase
-from module.azur_stats.image.get_items import AutoSearchAmount, GetItems, TooManyNewTemplate, ZeroAmountError
+from module.azur_stats.image.get_items import AutoSearchAmount, GetItems, TooManyNewTemplate
 from module.azur_stats.assets import AUTO_SEARCH_REWARD_TITLE
 from module.base.button import ButtonGrid
 from module.base.decorator import cached_property
@@ -61,8 +61,8 @@ class AutoSearchItemGrid(ItemGrid):
 
     # 图标底色 -> 等级后缀
     TIER_BY_COLOR = {'purple': 'T3', 'gold': 'T4', 'rainbow': 'T5'}
-    # 需要按底色限定等级的物品种类（白纸类，底色即稀有度）
-    TIER_ITEM_PREFIXES = ('GearDesignPlan', 'OrdnanceTestingReport')
+    # 这些物品的中央图案相近，需要按底色限定稀有度。
+    TIER_ITEM_PREFIXES = ('GearDesignPlan', 'OrdnanceTestingReport', 'PrototypeGearParts')
     # 同等级候选之间只比图案，底纸缩放会拉低相似度，故放宽阈值
     TIER_SIMILARITY = 0.6
 
@@ -129,6 +129,7 @@ class AutoSearchItemGrid(ItemGrid):
             tuple[list[str], float]: 过滤后的候选与阈值。
         """
         tier = self.TIER_BY_COLOR.get(self.frame_color(image))
+        self._matching_tier = tier
         if tier is None:
             return names, similarity
 
@@ -136,11 +137,16 @@ class AutoSearchItemGrid(ItemGrid):
             name for name in names
             if self.template_tier(name) in (None, tier)
         ]
-        if not filtered:
-            # 该等级尚无模板（新形态）时不做限制，仍按默认阈值识别
-            return names, similarity
+        # 没有本级模板时保持未知，不能重新放回其他稀有度的纸类候选。
+        return filtered, similarity
 
-        return filtered, min(similarity, self.TIER_SIMILARITY)
+    def template_similarity_for(self, name, similarity):
+        # 仅白纸类模板有缩放动画，不能同时降低金材料等其他物品的匹配门槛。
+        if (getattr(self, '_matching_tier', None) is not None
+                and name.startswith(('GearDesignPlan', 'OrdnanceTestingReport'))
+                and self.template_tier(name) is not None):
+            return min(similarity, self.TIER_SIMILARITY)
+        return similarity
 
     @staticmethod
     def predict_tag(image):
@@ -193,8 +199,7 @@ class AutoSearchReward(ImageBase):
         Yields:
             AutoSearchItem: 解析出的掉落物品对象。
 
-        Raises:
-            ZeroAmountError: 物品数量识别为 0 时抛出。
+        数量无法确认的单格保留日志并跳过，其他已确认物品照常返回。
         """
         self._auto_search_get_items_load(image)
 
@@ -209,8 +214,9 @@ class AutoSearchReward(ImageBase):
                 after = str(item)
                 if before != after:
                     logger.info(f'[统计-物品] 物品 {before} 修正为 {after}')
-                if item.amount == 0:
-                    raise ZeroAmountError(f'Invalid item amount: {item}')
+                if item.amount <= 0:
+                    logger.warning(f'[统计-物品] {item.name} 数量无法确认，跳过本格并保留其他物品')
+                    continue
                 yield item
 
     def extract_auto_search_item_template(self, image, folder=None):

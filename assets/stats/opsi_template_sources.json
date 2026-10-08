@@ -1,0 +1,68 @@
+[
+  {
+    "template": "opsi_items/OrdnanceTestingReportT4.png",
+    "source": "screenshots\\opsi_abyssal\\1790326881455.png",
+    "frame": 4,
+    "area": [
+      336,
+      223,
+      432,
+      319
+    ],
+    "source_sha256": "8f18fc5fd4db50feb42149806ed25540f61d506e490fee1d34e17bab059897b4"
+  },
+  {
+    "template": "opsi_items/PrototypeGearPartsT5.png",
+    "source": "screenshots\\opsi_month_boss\\1790872111832.png",
+    "frame": 6,
+    "area": [
+      848,
+      223,
+      944,
+      319
+    ],
+    "source_sha256": "0aa7d4c9c6f0a254b5218b93b1e18821705a83aaa3bd1c7ed6f0c2f4b4ab0d02"
+  },
+  {
+    "template": "opsi_items/OrdnanceTestingReportT5.png",
+    "source": "tests/fixtures/opsi_requested_items/secret_plan_storage.png",
+    "original_size": [
+      128,
+      128
+    ],
+    "template_size": [
+      96,
+      96
+    ],
+    "source_sha256": "eaa0dc6cfb40b308f70e0e053511b92245c56f0345771081d76f60e02331981f",
+    "note": "复用1280×720仓库原图提取的已有模板；尚无真实掉落结算样本。",
+    "frame": 0,
+    "area": [
+      1096,
+      77,
+      1224,
+      205
+    ]
+  },
+  {
+    "template": "opsi_reward_items/OrdnanceTestingReportT5.png",
+    "source": "tests/fixtures/opsi_requested_items/secret_plan_storage.png",
+    "original_size": [
+      128,
+      128
+    ],
+    "template_size": [
+      96,
+      96
+    ],
+    "source_sha256": "eaa0dc6cfb40b308f70e0e053511b92245c56f0345771081d76f60e02331981f",
+    "note": "复用1280×720仓库原图提取的已有模板；尚无真实掉落结算样本。",
+    "frame": 0,
+    "area": [
+      1096,
+      77,
+      1224,
+      205
+    ]
+  }
+]

@@ -21,7 +21,7 @@ class OpsiArchive(OSMap):
         循环执行直到耗尽。建议每周运行一次，开发团队会在维护后添加新档案。
         """
         if self.is_in_opsi_explore():
-            logger.info('每月开荒+正在运行，停止档案坐标')
+            logger.info('每月开荒正在运行，停止档案坐标')
             self.config.task_delay(server_update=True)
             self.config.task_stop()
 

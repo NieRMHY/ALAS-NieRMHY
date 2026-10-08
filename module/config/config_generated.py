@@ -115,6 +115,7 @@ class GeneratedConfig:
     Error_HandleError = True
     Error_SaveError = True
     Error_StrictRestart = False
+    Error_TaskRestartLimit = 3
     Error_SaveErrorRetentionDays = 30
     Error_SaveErrorBackUpMethod = 'zip'  # delete, zip, copy
     Error_SaveErrorZipMethod = 'zip'  # bz2, gzip, xz, zip
@@ -222,7 +223,7 @@ class GeneratedConfig:
     PublicEmotion_FleetOnsen = False
 
     # 配置组 `YukikazeTaskManager`
-    YukikazeTaskManager_TaskPriorityAdjustment = 'Restart\n> OpsiCrossMonth\n> Commission > Tactical > Research\n> Exercise\n> Dorm > Meowfficer > Guild > Gacha\n> Reward\n> ShopFrequent > ShopOnce > Shipyard > Freebies\n> PrivateQuarters\n> OpsiExplore\n> OpsiPreventActionPointOverflow\n> Minigame > Awaken\n> OpsiAshBeacon\n> OpsiDaily > OpsiShop > OpsiVoucher > EventShop\n> OpsiAbyssal > OpsiStronghold > OpsiObscure > OpsiArchive\n> Daily > Hard > OpsiAshBeacon > OpsiAshAssist > OpsiMonthBoss\n> Sos > EventSp > EventA > EventB > EventC > EventD\n> RaidDaily > CoalitionSp > WarArchives > MaritimeEscort\n> IslandJuuEatery > IslandJuuCoffee > IslandGrill > IslandTeahouse > IslandRestaurant\n> IslandFarm > IslandRancher > IslandMineForest > IslandDailyGather > IslandManufacture\n> IslandAirDrop > IslandBusiness > IslandDailyOrder > IslandDailyInteract > IslandPearlSell > IslandCargoPreparation\n> Event > Event2 > Event3 > Raid > Hospital > HospitalEvent > Coalition > RaidAffection > Main > Main2 > Main3\n> OpsiScheduling\n> OpsiMeowfficerFarming\n> GemsFarming\n> Ambush11\n> OpsiHazard1Leveling\n> ThreeOilLowCost\n> OperationHandover'
+    YukikazeTaskManager_TaskPriorityAdjustment = 'Restart\n> OpsiCrossMonth\n> Commission > Tactical > Research\n> Exercise\n> Dorm > Meowfficer > Guild > Gacha\n> Reward > StorageStatistics\n> ShopFrequent > ShopOnce > Shipyard > Freebies\n> PrivateQuarters\n> OpsiExplore > OpsiExploreCleanup\n> OpsiPreventActionPointOverflow\n> Minigame > Awaken\n> OpsiAshBeacon\n> OpsiDaily > OpsiShop > OpsiVoucher > EventShop\n> OpsiAbyssal > OpsiStronghold > OpsiObscure > OpsiArchive\n> Daily > Hard > OpsiAshBeacon > OpsiAshAssist > OpsiMonthBoss\n> Sos > EventSp > EventA > EventB > EventC > EventD\n> RaidDaily > CoalitionSp > WarArchives > MaritimeEscort\n> IslandJuuEatery > IslandJuuCoffee > IslandGrill > IslandTeahouse > IslandRestaurant\n> IslandFarm > IslandRancher > IslandMineForest > IslandDailyGather > IslandManufacture\n> IslandAirDrop > IslandBusiness > IslandDailyOrder > IslandDailyInteract > IslandPearlSell > IslandCargoPreparation\n> Event > Event2 > Event3 > Raid > Hospital > HospitalEvent > Coalition > RaidAffection > Main > Main2 > Main3\n> OpsiScheduling\n> OpsiMeowfficerFarming\n> GemsFarming\n> Ambush11\n> OpsiHazard1Leveling\n> ThreeOilLowCost\n> OperationHandover'
 
     # 配置组 `OneClickRetire`
     OneClickRetire_KeepLimitBreak = 'keep_limit_break'  # keep_limit_break, do_not_keep
@@ -231,6 +232,7 @@ class GeneratedConfig:
     Enhance_ShipToEnhance = 'all'  # all, favourite
     Enhance_Filter = None
     Enhance_CheckPerCategory = 5
+    Enhance_KeepCommonCV = True
 
     # 配置组 `OldRetire`
     OldRetire_N = True
@@ -646,7 +648,7 @@ class GeneratedConfig:
     PrivateQuarters_BuyRoses = True
     PrivateQuarters_BuyCake = False
     PrivateQuarters_TargetInteract = True
-    PrivateQuarters_TargetShip = 'anchorage'  # anchorage, noshiro, sirius, new_jersey, taihou, aegir, nakhimov
+    PrivateQuarters_TargetShip = 'anchorage'  # anchorage, noshiro, sirius, new_jersey, taihou, aegir, nakhimov, implacable
 
     # 配置组 `Daily`
     Daily_UseDailySkip = True
@@ -707,6 +709,7 @@ class GeneratedConfig:
     OpsiGeneral_IndependentPush = False
     OpsiGeneral_OpsiOnePushConfig = 'provider: null'
     OpsiGeneral_AutoSearchTimeLimit = 5
+    OpsiGeneral_SkipStrategicSearchCheck = False
 
     # 配置组 `OpsiAshBeacon`
     OpsiAshBeacon_AttackMode = 'current'  # current, current_dossier, current_dossier_only
@@ -728,7 +731,13 @@ class GeneratedConfig:
     OpsiExplore_ForceRun = False
     OpsiExplore_LastZone = 0
     OpsiExplore_AllowHazard1Leveling = False
+    OpsiExplore_MeowfficerCleanup = False
+    OpsiExplore_MeowfficerCleanupState = None
     OpsiExplore_ExploreProgress = None
+
+    # 配置组 `OpsiExploreCleanup`
+    OpsiExploreCleanup_Progress = None
+    OpsiExploreCleanup_State = None
 
     # 配置组 `OpsiShop`
     OpsiShop_PresetFilter = 'max_benefit_meta'  # max_benefit, max_benefit_meta, no_meta, all, custom
@@ -744,6 +753,7 @@ class GeneratedConfig:
     OpsiDaily_SkipSirenResearchMission = False
     OpsiDaily_KeepMissionZone = False
     OpsiDaily_MissionZones = None
+    OpsiDaily_DeferredMissions = None
     OpsiDaily_CollectTargetReward = False
 
     # 配置组 `OpsiObscure`
@@ -806,6 +816,7 @@ class GeneratedConfig:
     OpsiFleetAutoChange_LastRun = datetime.datetime(2020, 1, 1, 0, 0)
 
     # 配置组 `OpsiScheduling`
+    OpsiScheduling_BuyActionPoint = False
     OpsiScheduling_UseSmartSchedulingOperationCoinsPreserve = True  # True, False
     OpsiScheduling_OperationCoinsPreserve = 40000
     OpsiScheduling_ActionPointPreserve = 200
@@ -819,7 +830,14 @@ class GeneratedConfig:
     OpsiScheduling_MonthEndActionPointCleanupEnable = False  # True, False
     OpsiScheduling_MonthEndActionPointCleanupDays = 0
     OpsiScheduling_MonthEndActionPointPreserve = 0
+    OpsiScheduling_MonthEndMeowTargetZone = 0
     OpsiScheduling_MonthEndShopPurchase = True  # True, False
+
+    # 配置组 `OpsiSmartExplore`
+    OpsiSmartExplore_Enable = False
+    OpsiSmartExplore_EventCleanup = False
+    OpsiSmartExplore_ForceRun = False
+    OpsiSmartExplore_Progress = None
 
     # 配置组 `OpsiPreventActionPointOverflow`
     OpsiPreventActionPointOverflow_Task = 'OpsiScheduling'  # OpsiScheduling, OpsiHazard1Leveling, OpsiMeowfficerFarming

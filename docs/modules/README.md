@@ -45,7 +45,7 @@
 
 | 文档 | 主题 |
 | --- | --- |
-| [os/index.md](os/index.md) | 大世界核心：导航、行动力经济、智能调度+ |
+| [os/index.md](os/index.md) | 大世界核心：导航、行动力经济、智能调度 |
 | [os/auxiliary.md](os/auxiliary.md) | 大世界辅助包：os_handler/os_ash/os_combat/os_shop/os_simulator |
 
 ### 游戏功能

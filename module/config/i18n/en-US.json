@@ -5,11 +5,11 @@
       "help": ""
     },
     "Farm": {
-      "name": "Sortie Plus",
+      "name": "Sortie",
       "help": ""
     },
     "Event": {
-      "name": "Event Plus",
+      "name": "Event",
       "help": ""
     },
     "EventDaily": {
@@ -25,7 +25,7 @@
       "help": ""
     },
     "Opsi": {
-      "name": "Operation Siren Plus",
+      "name": "Operation Siren",
       "help": ""
     },
     "Island": {
@@ -37,7 +37,7 @@
       "help": ""
     },
     "Tool": {
-      "name": "Tools Plus",
+      "name": "Tools",
       "help": ""
     }
   },
@@ -59,23 +59,23 @@
       "help": ""
     },
     "Main": {
-      "name": "Main Campaign-1 Plus",
+      "name": "Main Campaign-1",
       "help": ""
     },
     "Main2": {
-      "name": "Main Campaign-2 Plus",
+      "name": "Main Campaign-2",
       "help": ""
     },
     "Main3": {
-      "name": "Main Campaign-3 Plus",
+      "name": "Main Campaign-3",
       "help": ""
     },
     "GemsFarming": {
-      "name": "Urgent Commission Plus",
+      "name": "Urgent Commission",
       "help": ""
     },
     "ThreeOilLowCost": {
-      "name": "3-Oil Low Cost Plus",
+      "name": "3-Oil Low Cost",
       "help": "Use a 3-oil low-cost fleet to fight. Automatically replaces and retires the flagship when it reaches level 32."
     },
     "Ambush11": {
@@ -87,19 +87,19 @@
       "help": ""
     },
     "Event": {
-      "name": "Event Map-1 Plus",
+      "name": "Event Map-1",
       "help": ""
     },
     "Event2": {
-      "name": "Event Map-2 Plus",
+      "name": "Event Map-2",
       "help": ""
     },
     "Event3": {
-      "name": "Event Map-3 Plus",
+      "name": "Event Map-3",
       "help": ""
     },
     "Raid": {
-      "name": "Raid Event Plus",
+      "name": "Raid Event",
       "help": ""
     },
     "RaidAffection": {
@@ -119,7 +119,7 @@
       "help": "Chain battle affection farming: fleets 1/2 win to gain affection, fleet 3 sinks to fail the stage with minimal loss. Recommend multiple fleets."
     },
     "MaritimeEscort": {
-      "name": "Trade Convoy Plus",
+      "name": "Trade Convoy",
       "help": ""
     },
     "EventShop": {
@@ -163,15 +163,19 @@
       "help": ""
     },
     "Tactical": {
-      "name": "Tactical Class Plus",
+      "name": "Tactical Class",
       "help": ""
     },
     "Research": {
-      "name": "Research Lab Plus",
+      "name": "Research Lab",
       "help": ""
     },
+    "StorageStatistics": {
+      "name": "Inventory statistics",
+      "help": "Scan and verify the material inventory twice before updating Statistics. Disabled by default; can be run manually. Does not consume items. Currently verified for CN only."
+    },
     "Dorm": {
-      "name": "Dorm Plus",
+      "name": "Dorm",
       "help": ""
     },
     "Meowfficer": {
@@ -207,11 +211,11 @@
       "help": ""
     },
     "Exercise": {
-      "name": "Exercises Plus",
+      "name": "Exercises",
       "help": ""
     },
     "ShopFrequent": {
-      "name": "Arms Dealer Plus",
+      "name": "Arms Dealer",
       "help": ""
     },
     "ShopOnce": {
@@ -223,7 +227,7 @@
       "help": ""
     },
     "Gacha": {
-      "name": "Daily Build Plus",
+      "name": "Daily Build",
       "help": ""
     },
     "Freebies": {
@@ -235,7 +239,7 @@
       "help": "Automatically collects game coins when they won't overflow. Automatically plays mini-games when there are game coins and rewards are not full."
     },
     "PrivateQuarters": {
-      "name": "Private Quarters Plus",
+      "name": "Private Quarters",
       "help": ""
     },
     "OpsiGeneral": {
@@ -251,11 +255,15 @@
       "help": ""
     },
     "OpsiExplore": {
-      "name": "Monthly Exploration Plus",
+      "name": "Monthly Exploration",
       "help": ""
     },
+    "OpsiExploreCleanup": {
+      "name": "Ordinary-zone event cleanup",
+      "help": "Requires 100% monthly exploration. Revisit original DANGEROUS zones in exploration order, scan the full map and every fleet radar, and handle missed events and their enemies. Never enter SAFE zones. Uses separate monthly checkpoints saved after leaving each zone, without repeating completed months. If exploration is incomplete, ask to rerun monthly exploration."
+    },
     "OpsiShop": {
-      "name": "OpSi Shop Plus",
+      "name": "OpSi Shop",
       "help": ""
     },
     "OpsiVoucher": {
@@ -263,7 +271,7 @@
       "help": ""
     },
     "OpsiDaily": {
-      "name": "OpSi Daily Plus",
+      "name": "OpSi Daily",
       "help": ""
     },
     "OpsiObscure": {
@@ -279,7 +287,7 @@
       "help": "Purchase archive coordinates from the Voucher Shop and run them. Archive zones do not consume action points.\nThe following conditions must be met before using this feature:\n- Clear the Operation Siren main story and complete Simulation + Siren Proving Grounds\n- Enable Operation Siren exploration missions or use Campaign Data Logger (5000 oil item)"
     },
     "OpsiStronghold": {
-      "name": "Siren Stronghold Plus",
+      "name": "Siren Stronghold",
       "help": ""
     },
     "OpsiMonthBoss": {
@@ -295,7 +303,7 @@
       "help": ""
     },
     "OpsiScheduling": {
-      "name": "Smart Scheduling Plus",
+      "name": "Smart Scheduling",
       "help": "Operation Siren smart scheduling function, used to coordinate switching between Corrosion 1 leveling and gold coin replenishment tasks.\nOnce enabled, it will automatically switch between different tasks and send push notifications based on gold coins and action points."
     },
     "OpsiPreventActionPointOverflow": {
@@ -740,6 +748,10 @@
       "name": "Prohibit restarting when errors occur in sensitive tasks",
       "help": "When an error occurs, directly terminate ALAS without restarting the game. Use for debugging, commission tasks, research tasks, Obscured Zones, Abyssal Zones, and other critical timing tasks"
     },
+    "TaskRestartLimit": {
+      "name": "Consecutive restart limit per task",
+      "help": "After this many consecutive failed recovery attempts, defer the task until the next server midnight and send an alert using error notification settings. Only success of that task resets its count; other tasks and successful game restarts do not. 0 = unlimited."
+    },
     "SaveErrorRetentionDays": {
       "name": "Error log expiration (days)",
       "help": "Error scenes older than this are handled by the method below\n0 = keep everything"
@@ -1136,7 +1148,7 @@
     },
     "OpsiExplore": {
       "name": "Monthly exploration drop screenshot",
-      "help": "Its own switch for Monthly Exploration Plus, not shared with other tasks\nSave and Upload both parse drops into the \"Operation Siren drops\" page; the only difference is whether the screenshot is kept",
+      "help": "Its own switch for Monthly Exploration, not shared with other tasks\nSave and Upload both parse drops into the \"Operation Siren drops\" page; the only difference is whether the screenshot is kept",
       "do_not": "No action",
       "save": "Save",
       "upload": "Upload",
@@ -1310,6 +1322,10 @@
     "CheckPerCategory": {
       "name": "Check X ships per category",
       "help": "Prioritizes checking whether enhancement materials are available"
+    },
+    "KeepCommonCV": {
+      "name": "Preserve Common carriers during enhancement",
+      "help": "Enabled by default. When Gems Farming is enabled, deselect Common carriers according to its carrier settings; skip the current ship if the only material is a carrier to preserve. Disable to use all recommended materials, including Common carriers, for normal enhancement. Retirement and full-dock handling are unchanged."
     }
   },
   "OldRetire": {
@@ -3376,7 +3392,8 @@
       "new_jersey": "New Jersey",
       "taihou": "Taihou",
       "aegir": "Aegir",
-      "nakhimov": "Nakhimov"
+      "nakhimov": "Nakhimov",
+      "implacable": "Implacable"
     }
   },
   "Daily": {
@@ -3678,7 +3695,7 @@
     },
     "RepairPackThresholdHazard1": {
       "name": "Use Repair Toolkit when any ship HP is below X (Corrosion 1)",
-      "help": "Only takes effect when \"Use Repair Toolkit to repair ships\" is enabled.\nOnly attempts repair during Corrosion 1 Leveling Plus.\n0.0 ~ 1.0"
+      "help": "Only takes effect when \"Use Repair Toolkit to repair ships\" is enabled.\nOnly attempts repair during Corrosion 1 Leveling.\n0.0 ~ 1.0"
     },
     "DoRandomMapEvent": {
       "name": "Complete random map events",
@@ -3711,6 +3728,10 @@
     "AutoSearchTimeLimit": {
       "name": "Auto-search time limit",
       "help": "Unit: minutes. During auto search, the script will assume the game is stuck if no event is detected for this period."
+    },
+    "SkipStrategicSearchCheck": {
+      "name": "Skip plan battle option checks",
+      "help": "When looping a single zone (Corrosion 1 leveling / Meowfficer farming), open the plan battle panel and confirm directly without scroll-checking every option. The panel options must already be configured in-game (zone mode: repeat, stop on merchant/device, auto-submit missions); let the task run once normally, or configure them manually first."
     }
   },
   "OpsiAshBeacon": {
@@ -3776,8 +3797,8 @@
   },
   "OpsiExplore": {
     "_info": {
-      "name": "Monthly exploration plus",
-      "help": "Explore all sea zones in Operation Siren at the beginning of each month, without needing to buy a Campaign Information Recorder (5000 Oil item).\nThis function will clear a sea zone every 27 minutes to ensure airspace search cooldown.\nThe following conditions must be met before using this feature:\n- Complete Operation Siren main story and finish Simulation Battle + Siren Proving Ground"
+      "name": "Monthly exploration",
+      "help": "Explore all sea zones in Operation Siren at the beginning of each month, without needing to buy a Campaign Information Recorder (5000 Oil item).\nThis function will clear a sea zone every 27 minutes to ensure airspace search cooldown.\nThe following conditions must be met before using this feature:\n- Complete Operation Siren main story and finish Simulation Battle + Siren Proving Ground\nSmart and monthly exploration cannot be enabled together. Disable the monthly exploration task before enabling smart exploration. If monthly exploration reached 100% this month, smart exploration is unnecessary and skips all three routes."
     },
     "SpecialRadar": {
       "name": "Campaign Information Recorder has been purchased (5000 Oil item)",
@@ -3795,14 +3816,36 @@
       "name": "Allow Corrosion 1 leveling during exploration",
       "help": "If enabled, Corrosion 1 Leveling will not be postponed. Use with caution, as you might run out of Action Points for exploration."
     },
+    "MeowfficerCleanup": {
+      "name": "Post-exploration event cleanup",
+      "help": "After all monthly exploration zones are confirmed complete, revisit ordinary zones in exploration order and scan the full map and every fleet radar for missed events, including Akashi shops, logging towers, scanning devices and exploration rewards. Progress is saved per zone and completed only once per month. Stop for inspection after three unfinished attempts in one zone. Only enter the original ordinary (DANGEROUS) zones; never enter or refresh SAFE zones. Fight enemies generated by missed events using existing event logic, without repeatedly farming zones."
+    },
+    "MeowfficerCleanupState": {
+      "name": "Monthly cleanup state",
+      "help": ""
+    },
     "ExploreProgress": {
       "name": "Monthly exploration progress",
       "help": "Shows the current completion percentage of monthly exploration."
     }
   },
+  "OpsiExploreCleanup": {
+    "_info": {
+      "name": "Ordinary-zone event cleanup",
+      "help": "Requires 100% monthly exploration. Revisit original DANGEROUS zones in exploration order, scan the full map and every fleet radar, and handle missed events and their enemies. Never enter SAFE zones. Uses separate monthly checkpoints saved after leaving each zone, without repeating completed months. If exploration is incomplete, ask to rerun monthly exploration."
+    },
+    "Progress": {
+      "name": "Cleanup progress",
+      "help": "Completed zones for this task only; monthly exploration progress is unchanged."
+    },
+    "State": {
+      "name": "Cleanup state",
+      "help": ""
+    }
+  },
   "OpsiShop": {
     "_info": {
-      "name": "Operation Siren shop plus",
+      "name": "Operation Siren shop",
       "help": "The following conditions must be met before using this feature:\n- Complete Operation Siren main story and finish Simulation Battle + Siren Proving Ground\n- Enable Operation Siren exploration or use Campaign Information Recorder (5000 Oil item)\n- The month after completing Operation Siren main story, i.e. when the Port Shop becomes the new version."
     },
     "PresetFilter": {
@@ -3819,7 +3862,7 @@
       "help": "To use a custom filter, set \"Port Shop Filter\" to \"Custom\" and read https://github.com/LmeSzinc/AzurLaneAutoScript/wiki/filter_string_cn"
     },
     "DisableBeforeDate": {
-      "name": "Do not purchase from OpSi shop plus before the Xth day of each month",
+      "name": "Do not purchase from OpSi shop before the Xth day of each month",
       "help": "Starting from the day after the specified date, buy from Operation Siren Shop once a day.\n0 means no limit, buy every day."
     }
   },
@@ -3835,11 +3878,11 @@
   },
   "OpsiDaily": {
     "_info": {
-      "name": "Operation Siren daily plus",
+      "name": "Operation Siren daily",
       "help": "The following conditions must be met before using this feature:\n- Clear the Operation Siren main storyline and complete Simulation Battle + Siren Proving Ground\n- Enable Operation Siren Exploration mission or use the Campaign Information Recorder (5000 Oil item)"
     },
     "DoMission": {
-      "name": "Do Operation Siren daily plus",
+      "name": "Do Operation Siren daily",
       "help": "Pick up dailies at port and complete all dailies"
     },
     "UseTuningSample": {
@@ -3857,6 +3900,10 @@
     "MissionZones": {
       "name": "Sea zones to be cleaned at month end",
       "help": "This value is automatically recorded and generally does not need to be modified."
+    },
+    "DeferredMissions": {
+      "name": "Deferred mission records",
+      "help": "Stores unavailable mission zones and retry times. Other daily missions continue normally."
     },
     "CollectTargetReward": {
       "name": "Collect achievement rewards",
@@ -4114,23 +4161,27 @@
       "name": "Smart Scheduling Plus",
       "help": "Operation Siren smart scheduling function, used to coordinate switching between Corrosion 1 Leveling and yellow coin replenishment tasks.\nOnce enabled, it will automatically switch between different tasks and send push notifications based on coins and Action Points.\n\nSome safety restrictions of the original ALAS have been lifted, please set parameters carefully"
     },
+    "BuyActionPoint": {
+      "name": "Buy port AP when AP is insufficient",
+      "help": "Allowed only after monthly exploration reaches 100% or smart round one finishes this month. Neither exploration task needs to remain enabled. Once per month, buy all port-shop AP boxes without spending oil. Also triggers at 1360 AP or below after round one; otherwise at the CL1 AP reserve or when a subtask runs out of AP. May spend coins reserved for leveling; sufficient currency is required. Record the monthly purchase when the buying flow finishes, without rescanning other goods. Interrupted purchases can resume; no AP stock left also completes the flow."
+    },
     "UseSmartSchedulingOperationCoinsPreserve": {
-      "name": "Reserve X operation supply coins",
-      "help": "When enabled, will use the 'Obtain X Combat Supply Vouchers' configuration below. When disabled, will use the Corrosion 1 Leveling yellow coin retention configuration.\nWhen disabled, Action Points are used for control.\nWhen enabled, yellow coins are used for control.",
+      "name": "Coin target scheduling",
+      "help": "When enabled, replenish coins to the coin reserve plus the refill amount before returning to corrosion 1 leveling. When disabled, use AP scheduling and replenish coins until AP reaches its reserve. Both modes use Smart Scheduling's own coin reserve.",
       "True": "Enabled",
       "False": "Disabled"
     },
     "OperationCoinsPreserve": {
-      "name": "Corrosion 1 leveling: preserve X combat supply vouchers",
+      "name": "Smart Scheduling: preserve X combat supply vouchers",
       "help": "When Combat Supply Vouchers are lower than X, run yellow coin replenishment task. Not recommended to modify."
     },
     "ActionPointPreserve": {
-      "name": "Meowfficer farming: preserve X action points",
-      "help": "Stop when Action Points are lower than X, and automatically open AP boxes. X includes AP in boxes. It is recommended to preserve 1000 AP for Corrosion 1 Leveling."
+      "name": "Coin replenishment: preserve X action points",
+      "help": "Stop coin replenishment when total AP reaches X. Total AP includes AP in boxes. Set to 0 to use the Meowfficer Farming AP reserve."
     },
     "OperationCoinsReturnThreshold": {
-      "name": "Return when supply coins below X",
-      "help": "During the yellow coin acquisition task, obtain (increase) X Combat Supply Vouchers in total, then return to Corrosion 1 Leveling."
+      "name": "Coin refill amount",
+      "help": "In coin target scheduling, replenish coins to the coin reserve plus X before returning to corrosion 1 leveling. AP scheduling does not use this amount."
     },
     "EnableMeowfficerFarming": {
       "name": "Enable meowfficer farming",
@@ -4178,11 +4229,37 @@
       "name": "Month-end action point preserve",
       "help": "Action Point preserve value in month-end cleanup mode. If the cross-month daily task is enabled, at least 200 Action Points are reserved. When this value is larger than the minimum reserve, this value is used."
     },
+    "MonthEndMeowTargetZone": {
+      "name": "Month-end meowfficer target zone",
+      "help": "When month-end cleanup delegates to Meowfficer farming, only sortie into the designated sea zone. Supports zone IDs and names. Use 0 or leave empty to follow the Meowfficer farming settings. Multiple zones or an invalid zone fall back to 0; whether the task keeps cycling in that zone follows the \"Planned operation in target zone\" option of Meowfficer farming."
+    },
     "MonthEndShopPurchase": {
       "name": "Month-end shop purchase",
       "help": "Whether to buy from the Operation Siren shop during month-end Action Point cleanup. When disabled, the cleanup loop skips the shop purchase step.",
       "True": "Enabled",
       "False": "Disabled"
+    }
+  },
+  "OpsiSmartExplore": {
+    "_info": {
+      "name": "Smart exploration",
+      "help": "Smart and monthly exploration cannot be enabled together. Disable the monthly exploration task before enabling smart exploration. If monthly exploration reached 100% this month, smart exploration is unnecessary and skips all three routes."
+    },
+    "Enable": {
+      "name": "Enable smart exploration",
+      "help": "Smart and monthly exploration cannot be enabled together. Disable the monthly exploration task before enabling smart exploration. If monthly exploration reached 100% this month, smart exploration is unnecessary and skips all three routes.Only the default coin-target scheduling mode is supported. Keep coin-target scheduling enabled. Round one starts at NY. If total AP exceeds 1360 afterward, complete round two immediately. At 1360 or below, buy AP first when purchasing is enabled; otherwise resume CL1. Replenishment explores round two before round three, returning to CL1 at the coin reserve plus return threshold."
+    },
+    "EventCleanup": {
+      "name": "Normal-zone event cleanup",
+      "help": "After all 72 normal zones are explored, check the original normal zones for missed events, then resume normal coin replenishment."
+    },
+    "ForceRun": {
+      "name": "Run without the exploration interval",
+      "help": "Skip the 27-minute reconnaissance interval for smart exploration. This may spend additional AP. Monthly exploration settings, AP limits, monthly completion and mutual exclusion still apply."
+    },
+    "Progress": {
+      "name": "Smart exploration progress",
+      "help": "Normal zones completed across all three rounds this month. Progress is saved automatically and resets with the Operation Siren monthly cycle."
     }
   },
   "OpsiPreventActionPointOverflow": {
@@ -6680,8 +6757,8 @@
       "help": "Automatically restart the emulator every few hours."
     },
     "DeepRestartAfterFailures": {
-      "name": "EmulatorManagement.DeepRestartAfterFailures.name",
-      "help": "EmulatorManagement.DeepRestartAfterFailures.help"
+      "name": "Deep restart after N failures",
+      "help": "Once the emulator has failed to restart this many times in a row, switch to a deep restart: kill every MuMu process (including background services and the VM) and start over.\nA last-resort escape hatch for weak machines where normal restarts never come up.\nNote: a deep restart also kills any other MuMu instances you are running.\n0 disables it (restart the instance only). Default 0."
     }
   },
   "EmulatorManager": {

@@ -23,8 +23,9 @@ OPSI_DROP_RECORD_TASKS = (
     'OpsiExplore',
 )
 # 与上面某个开关共用记录方式的任务：任务名 → 开关名。共用只影响存图与否，
-# 掉落统计仍按各自的 genre 归类（本地解析只放行耄耋相接这一个 genre）。
+# 掉落统计仍按各自的 genre 归类，除侵蚀1练级外均支持本地解析。
 OPSI_DROP_RECORD_SHARED = {
+    'OpsiExploreCleanup': 'OpsiExplore',
     'OpsiCrossMonth': 'OpsiDaily',
     'OpsiArchive': 'OpsiObscure',
     'OpsiMonthBoss': 'OpsiAbyssal',

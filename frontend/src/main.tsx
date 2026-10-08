@@ -19,9 +19,8 @@ import { RemoteAccess } from './pages/RemoteAccess'
 import { Settings } from './pages/Settings'
 import { DevControls } from './pages/DevControls'
 import { ConfigManager } from './pages/ConfigManager'
+import {StockExchangeBoundary,StockExchangeFallback} from './stock/OverviewLink'
 import { translateCurrentUi } from './i18n'
-
-const SchedulerProgram = lazy(() => import('./pages/SchedulerProgram').then(module => ({default: module.SchedulerProgram})))
 
 /* 顶层兜底与路由级兜底共用同一页：路由渲染出错时 React Router 会先接住，
    没有 errorElement 就落到它自带的崩溃页（带堆栈），所以两级都要挂上。 */
@@ -36,14 +35,17 @@ class ErrorBoundary extends Component<{children: ReactNode}, {failed: boolean}> 
     return this.props.children
   }
 }
+const SchedulerProgram = lazy(() => import('./pages/SchedulerProgram').then(module => ({default: module.SchedulerProgram})))
+const StockExchange = lazy(() => import('./pages/StockExchange').then(module => ({default: module.StockExchange})))
+
 const router = createHashRouter([
   {path: '/', element: <App/>, errorElement: <ErrorPage/>, children: [{index: true, element: <Home/>}, {path: 'interface', element: <InterfaceSettings/>}, {path: 'remote', element: <RemoteAccess/>}, {path: 'settings', element: <Settings/>}, {path: 'updater', element: <Updater/>}, {path: 'configs', element: <ConfigManager/>}, {path: 'dev', element: <DevControls/>}]},
   {path: '/i/:instance', element: <App/>, errorElement: <ErrorPage/>, children: [
     {index: true, element: <Navigate to="overview" replace/>},
     {path: 'overview', element: <Overview/>}, {path: 'task/:task', element: <TaskConfig/>},
-    {path: 'task/SchedulerProgram', element: <Suspense fallback={<div>正在加载卡片编辑器…</div>}><SchedulerProgram/></Suspense>},
-    {path: 'scheduler', element: <Navigate to="../task/SchedulerProgram" replace/>},
-    {path: 'logs', element: <Navigate to="../overview" replace/>}, {path: 'statistics', element: <Statistics/>}, {path: 'settings', element: <Navigate to="/settings" replace/>},
+    {path: 'stock-exchange', element: <StockExchangeBoundary><Suspense fallback={<StockExchangeFallback/>}><StockExchange/></Suspense></StockExchangeBoundary>},
+    {path: 'logs', element: <Navigate to="../overview" replace/>}, {path: 'statistics', element: <Statistics/>}, {path: 'scheduler', element: <Navigate to="../task/SchedulerProgram" replace/>}, {path: 'settings', element: <Navigate to="/settings" replace/>},
+    {path: 'task/SchedulerProgram', element: <Suspense fallback={<div>{translateCurrentUi('common.loading')}</div>}><SchedulerProgram/></Suspense>},
   ]},
   {path: '*', element: <Navigate to="/" replace/>},
 ])

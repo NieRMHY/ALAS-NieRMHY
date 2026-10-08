@@ -54,13 +54,18 @@ describe('材质轴取值', () => {
   })
 })
 
-/* 区域化材质：7 区 × 8 键。参数键（alpha/blur/saturation/radius）由旋钮写入，
-   合成键（bg/filter/edge/shadow）由皮肤消费；五区默认取一级面的参数（默认值关系，不是界面锁定）。 */
-const REGIONS = ['surface', 'plate', 'sidebar', 'topbar', 'modal', 'menu', 'control'] as const
+/* 拥有层参数键的区域：四个层级（一级面、二级贴片、三级嵌面、控件）与四个按位置命名的区域
+   （侧栏、顶栏、弹窗、菜单）。每区各 8 键——参数键（alpha/blur/saturation/radius）由旋钮写入，
+   合成键（bg/filter/edge/shadow）由皮肤消费。侧栏与顶栏不在旋钮目录里（见 themeKnobs 的 REGIONS），
+   但它们的键在，供皮肤直接消费。 */
+const REGIONS = ['surface', 'plate', 'inset', 'control', 'sidebar', 'topbar', 'modal', 'menu'] as const
 const REGION_PROPS = ['alpha', 'blur', 'saturation', 'radius', 'bg', 'filter', 'edge', 'shadow'] as const
-const INHERITING = ['sidebar', 'topbar', 'modal', 'menu'] as const
+/* 已溶解的语义区：按叠加层重新指派后不再有自己的层参数键——`--theme-segment-border` 这类部件级绘制细节不算。
+   `chrome` 已不在此列：顶栏与侧栏的磨砂各自有了区域键，外壳滤镜改为引用侧栏区域键。 */
+const DISSOLVED = ['tab', 'segment'] as const
 
 const declaration = (css: string, key: string) => {
+
   const needle = `${key}:`
   const start = css.indexOf(needle)
   if (start < 0) return ''
@@ -70,30 +75,25 @@ const declaration = (css: string, key: string) => {
   return css.slice(valueStart, semicolon).trim()
 }
 
-describe('区域化材质契约', () => {
-  it('七个区域各八键齐备', () => {
+describe('三层画布契约', () => {
+  it('三个区各八键齐备', () => {
     for (const css of Object.values(palettes)) {
       for (const region of REGIONS) {
         for (const prop of REGION_PROPS) {
           expect(declaration(css, `--theme-${region}-${prop}`), `${region}-${prop}`).not.toBe('')
         }
       }
-    }
-  })
-
-  it('四区的参数默认取自一级面', () => {
-    for (const css of Object.values(palettes)) {
-      for (const region of INHERITING) {
-        for (const prop of ['alpha', 'blur', 'saturation', 'radius'] as const) {
-          expect(declaration(css, `--theme-${region}-${prop}`), `${region}-${prop}`).toContain('--theme-surface-')
+      for (const region of DISSOLVED) {
+        for (const prop of REGION_PROPS) {
+          expect(css.includes(`--theme-${region}-${prop}`), `${region}-${prop}`).toBe(false)
         }
       }
     }
   })
 
-  /* 二级贴片的不透明度跟随一级面，
-     但它自己的模糊与圆角仍是独立默认值；控件区整体独立。 */
-  it('控件区独立，二级贴片保留自己的模糊与圆角', () => {
+
+  /* 各层只声明自己的默认值，不引用别的层。 */
+  it('三层之间不互相继承', () => {
     for (const css of Object.values(palettes)) {
       for (const prop of ['alpha', 'blur', 'saturation'] as const) {
         expect(declaration(css, `--theme-control-${prop}`), `control-${prop}`).not.toContain('var(--theme-surface-')
@@ -107,7 +107,9 @@ describe('区域化材质契约', () => {
     for (const css of Object.values(palettes)) {
       for (const region of REGIONS) {
         expect(declaration(css, `--theme-${region}-bg`), `${region}-bg`).toContain(`var(--theme-${region}-alpha)`)
-        expect(declaration(css, `--theme-${region}-filter`), `${region}-filter`).toContain(`var(--theme-${region}-blur)`)
+        /* 扁平族有意把滤镜写成 none：0 半径的模糊仍会单独成合成层，它们连这一层都不建。 */
+        const filter = declaration(css, `--theme-${region}-filter`)
+        expect(filter === 'none' || filter.includes(`var(--theme-${region}-blur)`), `${region}-filter`).toBe(true)
       }
     }
   })

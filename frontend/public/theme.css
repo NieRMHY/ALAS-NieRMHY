@@ -38,7 +38,6 @@
   --glass-tint: #ffffffb8;
   --glass-edge: #ffffffd9;
   --glass-shadow: 0 8px 32px #1d1d1f08, inset 0 1px 0 #ffffffb3;
-  --theme-sidebar: var(--glass-tint);
   --theme-glass: var(--glass-tint);
   --theme-glass-edge: var(--glass-edge);
   --theme-glass-shadow: var(--glass-shadow);
@@ -65,7 +64,6 @@
   --theme-nav-active-text: var(--accent);
   --theme-nav-expanded-bg: color-mix(in srgb, var(--accent) 20%, transparent);
   --theme-nav-hover-bg: color-mix(in srgb, var(--accent) 8%, transparent);
-  --theme-nav-popover-bg: color-mix(in srgb, var(--surface) 66%, transparent);
   --theme-nav-popover-edge: color-mix(in srgb, #fff 62%, var(--border));
   --theme-nav-popover-shadow: 0 18px 48px #1d1d1f24, 0 2px 10px #1d1d1f0d, inset 0 1px 0 color-mix(in srgb, #fff 78%, transparent);
 
@@ -74,7 +72,7 @@
   --theme-primary-hover: #0062c4;
 
   /* Controls */
-  --theme-input-bg: var(--surface-muted);
+  --theme-input-bg: var(--theme-control-bg);
   --theme-input-text: var(--text);
   --theme-input-border: var(--border);
   --theme-focus: var(--accent);
@@ -84,13 +82,9 @@
   --theme-toggle-knob: #ffffff;
   --theme-toggle-shadow: 0 2px 4px #0003;
 
-  /* Segmented controls / tabs */
-  --theme-segment-bg: #e9eaedb8;
+  /* Segmented controls */
   --theme-segment-border: #18181b0a;
-  --theme-segment-indicator: #fffffff2;
-  --theme-tabs-bg: #ffffff52;
-  --theme-tabs-border: #ffffff8c;
-  --theme-tabs-indicator: #ffffff9e;
+  --theme-segment-indicator: var(--theme-control-marker-bg);
 
   /* Semantic feedback */
   --theme-on-accent: #ffffff;
@@ -190,18 +184,13 @@
   --glass-shadow: 0 8px 32px #0002, inset 0 1px 0 #ffffff0d;
 
   --theme-toggle-off: #515154;
-  --theme-segment-bg: #252529c7;
   --theme-segment-border: #ffffff0d;
-  --theme-segment-indicator: #62626be6;
-  --theme-tabs-bg: #ffffff14;
-  --theme-tabs-border: #ffffff20;
-  --theme-tabs-indicator: #ffffff28;
+  --theme-segment-indicator: var(--theme-control-marker-bg);
   --theme-resource-0-bg: #ffffff08;
   --theme-resource-1-bg: #ffffff08;
   --theme-resource-2-bg: #ffffff08;
   --theme-resource-3-bg: #ffffff08;
   --theme-nav-expanded-bg: color-mix(in srgb, var(--accent) 20%, transparent);
-  --theme-nav-popover-bg: color-mix(in srgb, var(--surface) 72%, transparent);
   --theme-nav-popover-edge: color-mix(in srgb, #fff 14%, var(--border));
   --theme-nav-popover-shadow: 0 20px 56px #0006, 0 2px 10px #0004, inset 0 1px 0 #ffffff12;
 

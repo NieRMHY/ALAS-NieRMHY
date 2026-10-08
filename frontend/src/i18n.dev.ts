@@ -164,7 +164,7 @@ export const developerZhCN = {
   'developer.sampleInput': '示例输入',
 } as const
 
-export type DeveloperUiKey = keyof typeof developerZhCN
+type DeveloperUiKey = keyof typeof developerZhCN
 
 export const developerEnUS: Record<DeveloperUiKey, string> = {
   'developer.disabled': 'Developer mode disabled',

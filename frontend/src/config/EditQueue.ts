@@ -68,9 +68,9 @@ export class EditQueue {
     return edit.status === 'saved' && Date.now() - (edit.readyAt ?? 0) < SAVED_QUIET_MS
   }
 
-  /** 当前状态是否可以呈现给用户。静默期只作用于已保存。 */
+  /** 静默期内的「已保存」不呈现给用户。 */
   savedVisible(edit: Edit) {
-    return !this.idle(edit) || edit.status !== 'saved'
+    return !this.idle(edit)
   }
 
 

@@ -2,6 +2,8 @@
  * @fileoverview 旧版总览页主区域显示模式（日志或资源统计）偏好。
  */
 
+import { prefStore } from './prefStore'
+
 /**
  * 旧版总览页主区显示什么。
  *
@@ -12,20 +14,8 @@
  */
 export type OverviewPanel = 'logs' | 'stats'
 
-const PANEL_KEY = 'azurpilot.legacy-overview-panel'
+const store = prefStore<OverviewPanel>('azurpilot.legacy-overview-panel', raw => raw === 'stats' ? 'stats' : 'logs')
 
-const listeners = new Set<() => void>()
-
-export function readOverviewPanel(): OverviewPanel {
-    try { return localStorage.getItem(PANEL_KEY) === 'stats' ? 'stats' : 'logs' } catch { return 'logs' }
-}
-
-export const subscribeOverviewPanel = (listener: () => void) => {
-    listeners.add(listener)
-    return () => { listeners.delete(listener) }
-}
-
-export function setOverviewPanel(panel: OverviewPanel) {
-    try { localStorage.setItem(PANEL_KEY, panel) } catch { /* 存储不可用时本次会话内仍生效。 */ }
-    listeners.forEach(listener => listener())
-}
+export const readOverviewPanel = store.read
+export const subscribeOverviewPanel = store.subscribe
+export const setOverviewPanel = store.write

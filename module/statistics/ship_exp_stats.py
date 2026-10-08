@@ -26,6 +26,8 @@ from typing import Any
 
 from module.os.ship_exp_data import LIST_SHIP_EXP
 from module.logger import logger
+from module.config.time_source import now as current_time
+from module.statistics import opsi_secure
 
 
 class ShipExpStats:
@@ -65,33 +67,46 @@ class ShipExpStats:
         self._battle_start_time: float | None = None
 
     def _load(self) -> dict[str, Any]:
-        """加载数据文件。
+        """加载数据文件；旧版本的包装载荷由读取路径解密。
+
+        旧密文暂不可解密时返回空并禁止覆盖（恢复后继续）。
 
         Returns:
             dict[str, Any]: 舰船经验统计数据字典。
         """
+        self._locked = False
         if not self._path.exists():
             return {}
         try:
             text = self._path.read_text(encoding='utf-8')
             data = json.loads(text)
+            if isinstance(data, dict) and (data.get(opsi_secure.WRAPPER_KEY)
+                                           or data.get(opsi_secure.LEGACY_WRAPPER_KEY)):
+                opened = opsi_secure.decode_file_payload('ships', self._path, data)
+                if opened is None:
+                    if opsi_secure.get_store().vault_keys().definitive():
+                        # 旧载荷确认无法在本机读取：另存到旁路备份后从空数据重新开始。
+                        opsi_secure.quarantine_unreadable('ships', str(self._path), text)
+                        return {}
+                    self._locked = True
+                    logger.warning('[统计-经验] 舰船经验数据暂不可用，暂不加载（恢复后继续）')
+                    return {}
+                return opened if isinstance(opened, dict) else {}
             if isinstance(data, dict):
                 return data
             return {}
         except Exception as e:
-            logger.warning(f'[统计-经验] 加载舰船经验数据失败: {e}')
+            logger.warning(f'[统计-经验] 加载舰船经验数据失败: {type(e).__name__}')
             return {}
 
     def _save(self) -> None:
-        """保存数据文件到本地。"""
+        """保存数据文件到本地（普通 JSON，原子替换）。"""
         try:
-            self._path.parent.mkdir(parents=True, exist_ok=True)
-            self._path.write_text(
-                json.dumps(self.data, ensure_ascii=False, indent=2),
-                encoding='utf-8'
-            )
+            if self._locked:
+                return
+            opsi_secure.write_file('ships', self._path, self.data)
         except Exception as e:
-            logger.warning(f'[统计-经验] 保存舰船经验数据失败: {e}')
+            logger.warning(f'[统计-经验] 保存舰船经验数据失败: {type(e).__name__}')
 
     # ========== 战斗时间记录 ==========
 

@@ -26,7 +26,7 @@
 .icon-button:hover {background: var(--surface-muted); color: var(--accent)}
 .text-button {display: inline-flex; gap: 6px; align-items: center; color: var(--accent); font-size: 10px; padding: 5px; transition: color var(--dur-2) var(--ease-standard), transform var(--dur-1) var(--ease-standard)}
 .panel {background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden}
-.panel-heading {padding: 19px 21px; display: flex; align-items: center; justify-content: space-between; gap: 10px; border-bottom: 1px solid var(--border)}
+.panel-heading {padding: 19px 21px; display: flex; align-items: center; justify-content: space-between; gap: 10px}
 .panel-heading > div {display: flex; align-items: center; gap: 10px}
 .panel-heading > div > svg {color: #8596a3}
 .status {font-size: 10px; border-radius: 5px; display: inline-flex; gap: 5px; align-items: center; padding: 4px 7px; font-weight: 450; white-space: nowrap}
@@ -37,7 +37,13 @@
 .status.updating {background: #d9b25a16; color: #b2954a}
 .tiny-dot.teal {color: #269a81}
 .resource-grid {display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-bottom: 10px}
-.resource-card {padding: 9px 16px 8px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); box-shadow: var(--shadow)}
+/* 资源卡自己是一级面，卡内嵌一张缩进 4px 的二级贴片，
+   卡片因此像嵌在底上，形成阶梯。合并成单卡时整张卡共用这一张贴片，
+   卡内各分段仍无面，所以不会出现缝。 */
+.resource-card {position: relative; isolation: isolate; padding: var(--resource-card-inset, 4px); border: 0; border-radius: 10px; background: var(--surface); box-shadow: var(--shadow)}
+/* 卡内嵌的二级面：内缩量取 --resource-card-inset（与卡片内边距同源），圆角与卡片同心；
+   合并成单卡时整张卡共用这一个面。 */
+.resource-card-body {padding: 6px 12px 5px; border-radius: max(0px, calc(var(--theme-radius-panel, 26px) - var(--resource-card-inset, 4px))); background: var(--theme-plate-bg); -webkit-backdrop-filter: var(--theme-plate-filter); backdrop-filter: var(--theme-plate-filter)}
 .resource-heading {display: flex; justify-content: space-between; align-items: center; color: #81919c; font-size: 10px; margin-bottom: 3px}
 .resource-heading > div {border-radius: 8px; width: 32px; height: 32px; display: grid; place-items: center; background: #eaf5fa; color: #6d9cbb}
 .resource-heading > div.resource-image-wrap {width:26px;height:26px;background:transparent !important;color:inherit;overflow:visible}
@@ -340,7 +346,8 @@
 .error-box button {margin-left: auto; text-decoration: underline; white-space: nowrap}
 .toast {position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%); z-index: 100; max-width: 90vw; padding: 14px 23px; border-radius: 9px; color: white; background: #1c7466; box-shadow: 0 5px 25px #102b4e30; font-size: 12px}
 .toast.error {background: #a45159}
-.modal {background: var(--theme-modal-bg); -webkit-backdrop-filter: var(--theme-modal-filter); backdrop-filter: var(--theme-modal-filter); color: var(--text); border: 1px solid var(--border); border-radius: 14px; padding: 24px; width: 440px; max-width: calc(100vw / var(--ui-scale) - 30px); box-shadow: 0 20px 80px #132b4830}
+/* 只留布局：材质（背景/滤镜/圆角/投影）由令牌层 .modal 规则提供，两处写会各说各话。 */
+.modal {color: var(--text); border: 1px solid var(--border); padding: 24px; width: 440px; max-width: calc(100vw / var(--ui-scale) - 30px)}
 .modal::backdrop {background: #1323301a}
 .mismatch-note {display: flex; gap: 8px; align-items: center; margin: 0 0 16px; padding: 10px 14px; border-radius: 8px; background: var(--theme-warning-soft); color: var(--theme-warning); font-size: 12px; line-height: 1.7}
 .mismatch-note svg {flex-shrink: 0}
@@ -350,23 +357,32 @@
 .form-stack {display: flex; flex-direction: column; gap: 19px}
 .form-stack label {display: flex; flex-direction: column; gap: 9px; font-size: 12px}
 .form-stack p {font-size: 12px; line-height: 1.8}
-.toggle {background: #cdd7de; width: 34px; height: 20px; border-radius: 12px; padding: 3px; display: inline-flex; align-items: center; flex-shrink: 0; transition: background .2s}
-.toggle > span {display: block; width: 14px; height: 14px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px #0002; transition: transform .2s}
-.toggle.on {background: var(--accent)}
-.toggle.on > span {transform: translateX(14px)}
+.toggle {display: inline-flex; align-items: center; flex-shrink: 0; border-radius: 12px}
+.toggle > span {display: block; border-radius: 50%; transition: transform .2s}
 .input-icon {display: flex; align-items: center; padding: 0 11px; gap: 8px; border: 1px solid var(--border); border-radius: 7px; color: #98a7b2; background: var(--surface)}
 .input-icon > input {border: 0; background: transparent; box-shadow: none; flex: 1; width: 100%; padding-left: 0; font-size: 11px}
-.config-toolbar {display: flex; gap: 16px; align-items: center; margin-bottom: 22px; font-size: 10px; color: var(--muted)}
+.config-toolbar {display: flex; gap: 16px; align-items: center; margin-bottom: var(--config-card-gap, 19px); font-size: 10px; color: var(--muted)}
 .config-toolbar .input-icon {flex: 1; max-width: 440px}
 .config-toolbar > span {display: flex; align-items: center; gap: 7px}
 .config-toolbar > button {margin-left: auto}
 .tool-log-panel {margin-top: 22px}
 .tool-log-panel .panel-heading {padding-bottom: 13px}
+.simulator-status {color: var(--muted); font-variant-numeric: tabular-nums; margin: 0 24px 16px}
+.simulator-results {display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; margin: 20px 24px}
+.simulator-results dt {color: var(--muted); font-size: 12px}
+.simulator-results dd {margin: 5px 0 0; font-variant-numeric: tabular-nums}
+.simulator-figure {display: block; width: calc(100% - 48px); height: auto; margin: 20px 24px}
 .config-layout {display: grid; grid-template-columns: 145px minmax(0, 1fr); gap: 22px; align-items: start}
 .group-nav {position: sticky; top: calc(var(--topbar-height, 69px) + 16px); display: flex; flex-direction: column; border-left: 1px solid var(--border); padding-left: 8px; font-size: 11px; max-height: calc(var(--viewport-height) - var(--topbar-height, 69px) - 32px); overflow-y: auto}
 .group-nav a {padding: 10px; color: var(--muted); border-radius: 5px; line-height: 1.7}
 .group-nav a:hover {color: var(--accent); background: var(--accent-soft)}
-.config-group {margin-bottom: 19px; scroll-margin-top: calc(var(--topbar-height, 69px) + 16px)}
+/* 设置页的竖向节奏：搜索栏与参数卡用同一个间距，两者互不粘连。 */
+.app-shell {--config-card-gap: 19px}
+/* 参数卡的内容层：与统计页同一套二级贴片——微弱边距取 --theme-plate-margin，
+   圆角 = 面板圆角 − 边距，两层同心。 */
+.config-group {position: relative; isolation: isolate; padding: var(--theme-plate-margin, 8px); margin-bottom: var(--config-card-gap, 19px); scroll-margin-top: calc(var(--topbar-height, 69px) + 16px)}
+.config-group::before {content: ''; position: absolute; inset: var(--theme-plate-margin, 8px); border-radius: calc(var(--theme-radius-panel, 26px) - var(--theme-plate-margin, 8px)); background: var(--theme-plate-bg); -webkit-backdrop-filter: var(--theme-plate-filter); backdrop-filter: var(--theme-plate-filter)}
+.config-group > * {position: relative}
 .group-indicator {width: 4px; height: 15px; border-radius: 3px; background: #74bda8}
 .field-row {padding: 19px 22px; display: flex; align-items: center; justify-content: space-between; gap: 25px; border-bottom: 1px solid var(--border)}
 .field-row:last-child {border-bottom: 0}
@@ -377,7 +393,7 @@
 .field-control {width: 260px; flex-shrink: 0; text-align: right}
 .field-control > input, .field-control > select, .field-control > textarea {width: 100%; font-size: 13px}
 .field-control textarea {resize: none; overflow-y: hidden; min-height: 0; line-height: 1.9}
-.field-actions {display: flex; justify-content: flex-end; margin-top: 7px}
+.field-actions {display: flex; flex-wrap: wrap; justify-content: flex-end; margin-top: 7px}
 /* 控件行内带动作按钮时：整行改成 flex，输入框在前、按钮在后。 */
 .field-control:has(> .field-actions) {display: flex; align-items: center; gap: 7px}
 .field-control > .field-actions {margin-top: 0; flex-shrink: 0}
@@ -392,7 +408,7 @@
 @keyframes run-button-press {40% {transform: scale(.88)} 100% {transform: none}}
 .field-control > .field-actions .icon-only:active:not(:disabled) {animation: run-button-press .2s ease-out}
 .settings-notice {font-size: 11px; color: var(--muted); line-height: 1.9; margin: 24px 0 16px}
-.panel-note {font-size: 10px; color: var(--muted); padding: 13px 20px; border-top: 1px solid var(--border)}
+.panel-note {font-size: 10px; color: var(--muted); padding: 13px 20px}
 .chart-panel .empty {height: 350px}
 .chart-panel select {font-size: 11px; padding: 7px 10px}
 .chart-metrics {padding: 27px 30px 15px; display: flex; gap: 60px}
@@ -420,7 +436,6 @@
 .field-row-multiline .field-control {width: 100%; min-width: 0; text-align: left}
 /* 控件占满整行时，提示浮在标题行右上角：进流会触发换行撑高整行，把输入框顶下去。 */
 .field-row-multiline .field-label {position: relative}
-/* 提示浮在标题行右上角：它进了流就会触发换行、把整行撑高，输入框跟着往下走。 */
 .field-row-multiline .field-label > .edit-status {position: absolute; top: 0; right: 0; margin: 0; max-width: 100px; transform: none; text-align: right}
 @media (max-width: 950px) {
   /* 窄屏下所有控件都撑满整行，同样要给提示腾一行。 */
@@ -1039,9 +1054,7 @@
   gap: 6px;
 }
 
-
 /* 主页公告栏样式 */
-
 .home-announcement-wrap {
   margin-bottom: 24px;
 }
@@ -1050,8 +1063,7 @@
   box-shadow: 0 0 6px var(--red, #e05252);
 }
 
-/* 配色选择器：原来只写在简约皮肤里，材质与旧版因此完全没有布局（色板球宽度塌成 0）。
-   这套是四个大类共用的选择器样式，放在共享层。 */
+/* 配色选择器：四个大类共用，放共享层（材质与旧版没有自己的版本，色板球宽度会塌成 0）。 */
 .palette-field {align-items: flex-start}
 .palette-options {display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; min-width: 0; border: 0; margin: 0; padding: 0; width: 100%}
 .palette-options legend {position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%)}
@@ -1077,8 +1089,8 @@
 .palette-swatch i {display: block; width: 12px; height: 22px; border: 1px solid var(--border); border-radius: 3px; background: var(--accent)}
 .palette-swatch i + i {background: var(--secondary)}
 
-/* 收起侧栏（看图模式）：那一列宽由 --sidebar-width 决定，所以过渡 grid-template-columns
-   才会真的滑过去。只在桌面生效，窄屏侧栏是抽屉形态，不吃这套。 */
+/* 收起侧栏（看图模式）：收起时把承载它的那一列宽度收到 0，宽度由 --sidebar-width 决定；
+   只在桌面生效，窄屏侧栏是抽屉形态，不吃这套。 */
 .nav-collapse {display: inline-flex; align-items: center; justify-content: center; gap: 8px; margin-top: 8px; padding: 7px 10px; border: 0; border-radius: var(--theme-radius-control); background: transparent; color: var(--theme-muted); font-size: 13px; cursor: pointer; transition: color .15s ease, background .15s ease}
 .nav-collapse:hover {color: var(--theme-accent); background: var(--theme-accent-soft)}
 .nav-collapse:focus-visible {outline: 2px solid var(--theme-focus); outline-offset: 2px}
@@ -1097,12 +1109,12 @@
   /* 收起规则统一带 :root body 前缀：皮肤里 .app-shell.with-rail .sidebar 这类规则与它们特异性打平，
      靠源码顺序决胜时 components.css 在前会输，导致类名加上了却不生效。 */
   :root body .app-shell.nav-collapsed .sidebar {width: 0; opacity: 0; pointer-events: none; padding-left: 0; padding-right: 0; border-width: 0; overflow: hidden}
-  /* 右栏（调度器 / 任务计划）是 .main-shell 的兄弟，需一并隐藏。 */
   /* 全隐藏：shell 的直接子元素（含右栏与顶栏）一起隐藏，只留把手。 */
   :root body .app-shell.nav-collapsed > *:not(.nav-handle) {opacity: 0; pointer-events: none}
+  /* 右栏（调度器 / 任务计划）在未合并的版式里是 .main-shell 的兄弟，需一并隐藏。 */
   :root body .app-shell.nav-collapsed .right-rail {width: 0; overflow: hidden}
   /* 收起/展开把手：侧栏边缘一条很细的竖带，带上一枚扁的指示标记。 */
-  /* 隐形按键：常态没有底色也没有投影，只剩那枚图标（人类要求：展开态别和背后侧栏有区分度）。 */
+  /* 隐形按键：常态没有底色也没有投影，只剩那枚图标。 */
   .nav-handle {position: fixed; left: 0; top: 50%; transform: translateY(-50%); z-index: 70; display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 64px; padding: 0; border: 0; border-radius: 0 8px 8px 0; background: transparent; box-shadow: none; color: var(--theme-muted); cursor: pointer; transition: color .15s ease, background .15s ease}
   /* 悬停/聚焦才浮出淡淡的底：既保持"隐形"，又不至于让人找不到它。 */
   .nav-handle:hover {color: var(--theme-accent); background: color-mix(in srgb, var(--surface) 55%, transparent)}
@@ -1114,7 +1126,7 @@
 }
 
 /* ==========================================================================
-   全真模拟实例预览与材质检视器 (MockInstancePreview & Inspector)
+   全真模拟实例预览与材质检视器
    ========================================================================== */
 .mock-instance-preview-overlay {
   position: fixed;
@@ -1124,48 +1136,45 @@
   display: flex;
   flex-direction: column;
   background: transparent;
-  animation: mock-preview-in 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: mock-preview-in var(--dur-3) var(--ease-emphasized);
 }
 
 @keyframes mock-preview-in {
-  from { opacity: 0; transform: scale(0.985); }
-  to { opacity: 1; transform: scale(1); }
+  from {opacity: 0; transform: scale(0.985)}
+  to {opacity: 1; transform: scale(1)}
 }
 
+/* 预览外壳是真实例外壳的复刻，铺满视口；检视器停靠时整块让出 420px。 */
 .mock-preview-shell {
-  height: 100vh !important;
-  width: 100vw !important;
-  overflow: hidden !important;
-  transition: width 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+  height: var(--viewport-height, 100vh);
+  width: 100vw;
+  overflow: hidden;
+  transition: width var(--dur-4) var(--ease-emphasized);
 }
 
 .mock-instance-preview-overlay.has-docked-inspector .mock-preview-shell,
 .app-shell.has-docked-inspector {
-  width: calc(100vw - 420px) !important;
-  max-width: calc(100vw - 420px) !important;
-  transition: width 0.24s cubic-bezier(0.16, 1, 0.3, 1), max-width 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+  width: calc(100vw - 420px);
+  max-width: calc(100vw - 420px);
+  transition: width var(--dur-4) var(--ease-emphasized), max-width var(--dur-4) var(--ease-emphasized);
 }
 
 /* 窄屏不为检视器扣除宽度，检视器覆盖在完整画布上方。 */
 @media (max-width: 420px) {
   .mock-instance-preview-overlay.has-docked-inspector .mock-preview-shell,
   .app-shell.has-docked-inspector {
-    width: 100vw !important;
-    max-width: 100vw !important;
+    width: 100vw;
+    max-width: 100vw;
   }
 }
 
-.mock-preview-sidebar {
-  overflow-y: auto;
-}
+.mock-preview-sidebar {overflow-y: auto}
+.mock-preview-rail {overflow-y: auto}
 
-.mock-preview-rail {
-  overflow-y: auto;
-}
-
-/* 材质检视器：停靠与浮动形态 */
+/* 材质检视器：停靠形态贴右边、浮动形态悬在右下角，两种形态的面都跟随菜单与弹窗区域的材质。 */
 .mock-preview-inspector {
-  transition: all 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: width var(--dur-4) var(--ease-emphasized), background-color var(--dur-4) var(--ease-emphasized),
+    box-shadow var(--dur-4) var(--ease-emphasized), border-radius var(--dur-4) var(--ease-emphasized);
 }
 
 .mock-preview-inspector.is-docked {
@@ -1176,11 +1185,11 @@
   width: 420px;
   max-width: 90vw;
   z-index: 130;
-  background: var(--theme-menu-bg, var(--surface));
-  -webkit-backdrop-filter: var(--theme-menu-filter, blur(28px));
-  backdrop-filter: var(--theme-menu-filter, blur(28px));
-  box-shadow: -8px 0 36px rgba(0, 0, 0, 0.25);
-  border-left: 1px solid var(--theme-glass-edge, var(--border));
+  background: var(--theme-menu-bg);
+  -webkit-backdrop-filter: var(--theme-menu-filter);
+  backdrop-filter: var(--theme-menu-filter);
+  box-shadow: var(--theme-menu-shadow);
+  border-left: 1px solid var(--theme-menu-edge);
   display: flex;
   flex-direction: column;
 }
@@ -1193,12 +1202,12 @@
   max-width: calc(100vw - 48px);
   max-height: 82vh;
   z-index: 130;
-  border-radius: var(--theme-modal-radius, 22px);
-  background: var(--theme-modal-bg, var(--surface));
-  -webkit-backdrop-filter: var(--theme-modal-filter, blur(28px));
-  backdrop-filter: var(--theme-modal-filter, blur(28px));
-  box-shadow: 0 20px 56px rgba(0, 0, 0, 0.32);
-  border: 1px solid var(--theme-glass-edge, var(--border));
+  border-radius: var(--theme-modal-radius);
+  background: var(--theme-modal-bg);
+  -webkit-backdrop-filter: var(--theme-modal-filter);
+  backdrop-filter: var(--theme-modal-filter);
+  box-shadow: var(--theme-modal-shadow);
+  border: 1px solid var(--theme-modal-edge);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -1221,27 +1230,20 @@
   align-items: center;
   gap: 8px;
   padding: 12px 20px;
-  border-radius: 999px;
+  border-radius: var(--theme-radius-pill);
   background: var(--accent);
   color: var(--theme-on-accent, #fff);
   font-size: 13.5px;
   font-weight: 600;
-  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--theme-control-shadow);
   cursor: pointer;
   border: none;
-  transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: transform var(--dur-2) var(--ease-standard);
 }
 
-.inspector-expand-button:hover {
-  transform: translateY(-2px) scale(1.02);
-}
+.inspector-expand-button:hover {transform: translateY(-2px) scale(1.02)}
 
-.inspector-panel-inner {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  min-height: 0;
-}
+.inspector-panel-inner {display: flex; flex-direction: column; height: 100%; min-height: 0}
 
 .inspector-header {
   display: flex;
@@ -1252,46 +1254,23 @@
   gap: 10px;
 }
 
-.inspector-title {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 14px;
-  min-width: 0;
-}
-
-.inspector-title strong {
-  white-space: nowrap;
-}
+.inspector-title {display: flex; align-items: center; gap: 8px; font-size: 14px; min-width: 0}
+.inspector-title strong {white-space: nowrap}
 
 .inspector-title .theme-tag {
   font-size: 11px;
   padding: 2px 7px;
-  border-radius: 999px;
+  border-radius: var(--theme-radius-pill);
   background: var(--accent-soft);
   color: var(--accent);
   font-weight: 600;
   white-space: nowrap;
 }
 
-.inspector-controls {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
+.inspector-controls {display: flex; align-items: center; gap: 4px}
 
-.inspector-body {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  padding: 16px 18px;
-}
-
-.inspector-body .material-detail-body {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
+.inspector-body {flex: 1; min-height: 0; overflow-y: auto; padding: 16px 18px}
+.inspector-body .material-detail-body {display: flex; flex-direction: column; gap: 12px}
 
 .inspector-body .material-detail-actions {
   display: flex;
@@ -1302,12 +1281,22 @@
   border-top: 1px solid var(--border);
 }
 
-.inspector-footer {
-  padding: 12px 18px;
-  border-top: 1px solid var(--border);
-  background: var(--surface-muted);
-}
+.inspector-footer {padding: 12px 18px; border-top: 1px solid var(--border); background: var(--surface-muted)}
+.inspector-footer .button.full-width {width: 100%}
 
-.inspector-footer .button.full-width {
-  width: 100%;
-}
+/* 检视器只有 420px：旋钮行的标签列与滑块列按面板宽度收窄，默认给宽弹窗的宽度在这里会把标签截断。 */
+.inspector-body .field-row {padding: 12px 0; gap: 10px}
+.inspector-body .field-label {flex: 0 0 62px; min-width: 0}
+.inspector-body .field-control {width: auto; flex: 1 1 auto; min-width: 0}
+
+/* 侧栏搜索命中的配置项列表：任务树之外的第二组结果。 */
+.nav-search-hits { display: flex; flex-direction: column; gap: 2px; padding: 4px 8px 8px; overflow-y: auto; }
+.nav-search-hit { display: flex; flex-direction: column; gap: 2px; align-items: flex-start; padding: 6px 8px; border: 1px solid transparent; border-radius: 8px; background: transparent; color: inherit; text-align: left; cursor: pointer; }
+.nav-search-hit:hover { background: var(--theme-inset-bg, var(--theme-plate-bg)); border-color: var(--theme-inset-edge, transparent); }
+.nav-search-hit-label { font-size: 13px; }
+.nav-search-hit-path { font-size: 11px; opacity: 0.6; }
+.nav-search-hit-help { font-size: 11px; opacity: 0.72; white-space: pre-wrap; }
+.nav-search-empty { padding: 6px 8px; font-size: 12px; opacity: 0.6; }
+
+/* 从搜索跳进来的那一项：短暂描边，说明"就是这一项"。 */
+.field-row.is-search-target { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }

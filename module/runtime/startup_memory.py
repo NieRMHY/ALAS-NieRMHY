@@ -4,6 +4,7 @@
 更新触发重启时落的标记放在应用 root 的 cache/ 下，不混进部署配置目录。
 """
 import json
+import time
 from pathlib import Path
 from typing import Any, Iterable
 
@@ -15,6 +16,7 @@ MEMORY_NAME = 'startup_memory.json'
 
 # 更新触发重启时落这个标记，新进程据此只按记忆恢复，不套用启动时自动运行清单。
 UPDATE_RESTART_NAME = 'webui-update-restart-pending'
+UPDATE_RESTART_TTL = 1800
 
 
 def memory_path() -> Path:
@@ -39,30 +41,44 @@ def update_restart_path() -> Path:
 
 
 def mark_update_restart() -> None:
-    """记下本次重启由更新触发；写不进去只记录日志，不阻断重启。"""
+    """记下本次重启由更新触发；写不进去只记录日志，不阻断重启。
+
+    标记里带上写入时间：若中间某次启动没有消费它，超时即视为过期，不会在很久以后误判。
+    """
     path = update_restart_path()
     try:
         path.parent.mkdir(parents=True, exist_ok=True)
-        atomic_write(str(path), 'pending\n')
+        atomic_write(str(path), str(int(time.time())) + chr(10))
+        logger.info(f'更新重启标记已写入: {path}')
     except OSError:
         logger.exception('更新重启标记无法写入，本次重启仍按配置清单恢复')
-
 
 def consume_update_restart() -> bool:
     """读取并清除标记，使它只影响紧接着的那一次启动。
 
+    由决定启动清单的那次启动消费（见 app.py）：只做依赖同步之类的中间启动不消费它，
+    否则标记会被提前吃掉，真正拉起调度器时反而看不到；超时的标记按过期处理。
+
     Returns:
-        bool: 存在有效更新标记返回 True，否则返回 False。
+        bool: 存在未过期的更新标记返回 True，否则返回 False。
     """
     path = update_restart_path()
     if not path.is_file():
+        logger.info(f'未找到更新重启标记: {path}')
         return False
+    try:
+        written = int(path.read_text(encoding='utf-8').strip())
+    except (OSError, ValueError):
+        written = int(time.time())
     try:
         atomic_remove(str(path))
     except OSError:
         logger.exception('更新重启标记无法清除，本次启动仍按记忆恢复')
+    if time.time() - written > UPDATE_RESTART_TTL:
+        logger.info(f'更新重启标记已过期（{int(time.time() - written)} 秒前），按普通启动处理: {path}')
+        return False
+    logger.info(f'读到更新重启标记，本次按更新重启处理: {path}')
     return True
-
 
 def startup_runs(configured: Iterable[str], update_restart: bool = False) -> list[str]:
     """计算本次启动需要运行的实例列表。

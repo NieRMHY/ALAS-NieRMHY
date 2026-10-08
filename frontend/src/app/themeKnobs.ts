@@ -1,11 +1,12 @@
 import type { UiKey } from '../i18n'
 import type { Family } from './theme'
 
-/** 材质区域：每个区域都能独立调，默认值多数取自一级面（见契约层 `--theme-<区>-*`）。 */
-export const REGIONS = ['surface', 'plate', 'sidebar', 'topbar', 'modal', 'menu', 'control'] as const
+/** 可调区域：四个层级（一级面、二级贴片、三级嵌面、控件）加两个按位置命名的区域（弹窗、菜单）。
+    控件独立成组，因为它挂在哪一层随放置位置漂移；弹窗与菜单同理，它们不是某一层，而是分层覆盖不到的两类面。 */
+export const REGIONS = ['surface', 'plate', 'inset', 'control', 'modal', 'menu'] as const
 export type RegionId = typeof REGIONS[number]
 
-/** 每个区域的五组旋钮：界面里就是 7×5 的矩阵。 */
+/** 参数全集。契约层给每个区域都铺了圆角与阴影的键，界面只暴露实测有可见效果的那几组（见 regionProps）。 */
 export const PROPS = ['alpha', 'blur', 'saturation', 'radius', 'shadow'] as const
 export type KnobProp = typeof PROPS[number]
 
@@ -36,7 +37,6 @@ const propSpec: Record<KnobProp, {labelKey: UiKey; unit: 'px' | '%'; min: number
   blur: {labelKey: 'settings.glassBlur', unit: 'px', min: 0, max: 48, step: 1, fallback: 16, format: px},
   saturation: {labelKey: 'settings.glassSaturation', unit: '%', min: 70, max: 180, step: 5, fallback: 120, format: percent},
   radius: {labelKey: 'settings.customRadius', unit: 'px', min: 0, max: 48, step: 1, fallback: 12, format: px},
-  /* 阴影不是单个数字：这一格直接写合成键，0 即无阴影（沿用早期阴影旋钮的写法）。 */
   shadow: {labelKey: 'settings.customShadow', unit: 'px', min: 0, max: 48, step: 1, fallback: 24, format: value => value === 0 ? 'none' : `0 ${Math.round(value / 3)}px ${value * 2}px rgb(0 0 0 / .18)`},
 }
 
@@ -44,15 +44,25 @@ const propSpec: Record<KnobProp, {labelKey: UiKey; unit: 'px' | '%'; min: number
 export const regionLabels: Record<RegionId, UiKey> = {
   surface: 'settings.regionSurface',
   plate: 'settings.regionPlate',
-  sidebar: 'settings.regionSidebar',
-  topbar: 'settings.regionTopbar',
+  inset: 'settings.regionInset',
+  control: 'settings.regionControl',
   modal: 'settings.regionModal',
   menu: 'settings.regionMenu',
-  control: 'settings.regionControl',
+}
+
+/** 每个区域实际接入界面的旋钮，只列实测有可见效果的参数：磨砂给带材质的面（一至三级与弹窗、菜单），
+    控件只有不透明度，圆角与阴影一个都不放。 */
+export const regionProps: Record<RegionId, readonly KnobProp[]> = {
+  surface: ['alpha', 'blur', 'saturation'],
+  plate: ['alpha', 'blur', 'saturation'],
+  inset: ['alpha', 'blur', 'saturation'],
+  control: ['alpha'],
+  modal: ['alpha', 'blur', 'saturation'],
+  menu: ['alpha', 'blur', 'saturation'],
 }
 
 export const regionKnobs: readonly RegionKnob[] = REGIONS.flatMap(region =>
-  PROPS.map(prop => {
+  regionProps[region].map(prop => {
     const spec = propSpec[prop]
     return {id: `${region}.${prop}`, region, prop, token: `--theme-${region}-${prop}`, ...spec}
   }))

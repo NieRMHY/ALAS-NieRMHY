@@ -19,7 +19,7 @@ export function PasswordInput(props: ComponentProps<'input'>) {
   return <span className="password-control"><input {...props} type={visible ? 'text' : 'password'}/><button type="button" className="password-reveal" disabled={props.disabled} aria-label={visible ? ui('common.hidePassword') : ui('common.showPassword')} aria-pressed={visible} onClick={() => setVisible(!visible)}>{visible ? <EyeOff size={18} aria-hidden="true"/> : <Eye size={18} aria-hidden="true"/>}</button></span>
 }
 
-/** 输入草稿：键入期间只改本地值，失焦或回车才提交；提交时仍为空则回填外部值。 */
+/** 输入草稿：键入期间只改本地值，失焦或回车才提交；提交后外部值没跟着变，输入框回到外部值。 */
 export function useDraftInput(value: string, commit: (draft: string) => void) {
   const [draft, setDraft] = useState(value)
   const [editing, setEditing] = useState(false)

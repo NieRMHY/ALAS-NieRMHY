@@ -39,6 +39,13 @@ OCR_BUY_FOOD_AMOUNT = Digit(OCR_DORM_BUY_FOOD_AMOUNT, letter=(96, 96, 100), thre
 class OcrDormFood(DigitCounter):
     """宿舍食物 OCR，识别食物数量格式如 `1000/5800`。"""
 
+    # The OCR area includes the icon left of the number, OCR may read it as an extra
+    # '7' in front of the number. The image is cut at the leftmost orange pixel, so
+    # the icon is not OCRed. Orange scores about 250 in the color similarity map,
+    # the icon, the gray total (40000) and the background score below 130.
+    ORANGE_THRESHOLD = 150
+    ORANGE_MARGIN = 5
+
     def pre_process(self, image):
         orange = color_similarity_2d(image, color=(239, 158, 49))
         gray = color_similarity_2d(image, color=(99, 97, 99))
@@ -47,6 +54,12 @@ class OcrDormFood(DigitCounter):
         cv2.max(orange, gray, dst=gray)
         cv2.bitwise_not(gray, dst=gray)
         cv2.convertScaleAbs(gray, alpha=2, dst=gray)
+
+        # Keep the orange number and ORANGE_MARGIN pixels on its left, cut the rest.
+        columns = np.where(orange.max(axis=0) > self.ORANGE_THRESHOLD)[0]
+        if len(columns):
+            gray = gray[:, max(int(columns[0]) - self.ORANGE_MARGIN, 0):]
+
         return gray
 
     def after_process(self, result):

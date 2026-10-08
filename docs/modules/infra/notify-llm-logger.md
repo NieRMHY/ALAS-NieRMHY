@@ -13,6 +13,8 @@
 
 它们都被 [调度器](../entry/alas.md) 的异常恢复链调用：异常 → 记日志（error_context）→ 保存错误现场（触发 LLM 分析）→ 推送通知（OnePush + WebUI 双通道）→ 决定恢复或等待服务器。理解这条链是读懂任何崩溃日志的前提。
 
+普通统计数值日志与既有 CL1 遥测保留；所有 Rich 异常渲染关闭 `tracebacks_show_locals`，避免敏感运行状态随局部变量落盘。
+
 ## 2. 模块职责
 
 ### 负责
@@ -136,7 +138,7 @@ module/
 | --- | --- |
 | 调度器 `alas.py` | 异常恢复链的主要消费方：各 except 分支双通道推送，错误现场触发 LLM 分析，循环头部做服务器检查 |
 | 战役/委托/秘书舰等业务 | 收益与状态事件推送（委托奖励、秘书舰替换、作战委托冲突等） |
-| 大世界智能调度+ | `notify_push` 统一封装启动器推送与 OnePush（可独立渠道） |
+| 大世界智能调度 | `notify_push` 统一封装启动器推送与 OnePush（可独立渠道） |
 | 日报服务 | 复用 `Error_Llm*` 配置生成日报，并经 `handle_notify` 推送（最多 3 次重试） |
 | WebUI 进程管理 | worker 启动时调用 `set_file_logger` / `set_func_logger`，消费日志队列 |
 
@@ -164,7 +166,7 @@ module/
 | `Alas.Error.SaveError` / `SaveErrorRetentionDays` / `SaveErrorBackUpMethod` / `SaveErrorZipMethod` | checkbox / 数值 / 选项 | true / 30 / zip / zip | 错误现场保存；过期天数（0 = 不清理）、过期处理方式（delete/copy/zip）与压缩格式，备份落 `log/error/<实例>/bak/`；LLM 分析在保存流程最前执行 |
 | `Alas.Emulator.ServerName` | 选项 | `disabled` | 服务器检查目标；disabled 跳过检查 |
 | `Secretary.Secretary.Notify` / `OnePushConfig` | checkbox / YAML | true / `provider: null` | 秘书舰推送，专用配置留空回退全局 OnePushConfig |
-| `OpsiGeneral.OpsiGeneral.LauncherPush` / `NotifyOpsiMail` / `IndependentPush` / `OpsiOnePushConfig` | — | true / true / false / `provider: null` | 大世界智能调度+的启动器/OnePush 双通道与独立渠道 |
+| `OpsiGeneral.OpsiGeneral.LauncherPush` / `NotifyOpsiMail` / `IndependentPush` / `OpsiOnePushConfig` | — | true / true / false / `provider: null` | 大世界智能调度的启动器/OnePush 双通道与独立渠道 |
 | `Commission.CommissionNotifyReward` / `GemNotify` | checkbox | false / true | 委托奖励、钻石委托推送开关 |
 | `General.Log.LogKeepCount` / `LogBackUpMethod` / `ZipMethod` | — | 3 / zip / zip | 文件日志保留份数、过期处理（delete/copy/zip）与压缩格式 |
 

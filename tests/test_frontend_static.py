@@ -50,6 +50,46 @@ class FrontendStaticTests(unittest.TestCase):
                 self.assertEqual(self.client.get(path).status_code, 404)
 
 
+class ItemTemplateStaticTests(unittest.TestCase):
+    """缺少专用图标时，领奖模板仍通过同一个资源地址提供。"""
+
+    def setUp(self):
+        temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(temporary.cleanup)
+        self.root = fixture(temporary.name)
+
+    def write_template(self, directory, name, data):
+        path = self.root / 'assets' / directory / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(data)
+
+    def client(self):
+        return TestClient(create_app(root=self.root, password='', manage_runtime=False, mount_mcp=False))
+
+    def test_opsi_popup_template_fills_missing_reward_icon(self):
+        self.write_template('stats/opsi_items', 'GearDesignPlanT5.png', b'popup-template')
+        response = self.client().get('/opsi-items/GearDesignPlanT5.png')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.content, b'popup-template')
+        self.assertEqual(response.headers['content-type'], 'image/png')
+
+    def test_reward_icon_has_priority_over_popup_template(self):
+        self.write_template('stats/opsi_reward_items', 'PlateGeneralT4.png', b'reward-template')
+        self.write_template('stats/opsi_items', 'PlateGeneralT4.png', b'popup-template')
+        self.assertEqual(self.client().get('/opsi-items/PlateGeneralT4.png').content, b'reward-template')
+
+    def test_research_icon_uses_basic_template_when_missing(self):
+        self.write_template('stats_basic', 'CognitiveChips.png', b'basic-template')
+        self.assertEqual(self.client().get('/research-items/CognitiveChips.png').content, b'basic-template')
+
+    def test_missing_or_outside_template_returns_404(self):
+        self.write_template('stats/opsi_items', 'GearDesignPlanT5.png', b'popup-template')
+        client = self.client()
+        for path in ('/opsi-items/missing.png', '/opsi-items/..%2F..%2F..%2Fconfig/testpilot.json'):
+            with self.subTest(path=path):
+                self.assertEqual(client.get(path).status_code, 404)
+
+
 class StaticMimeTypeTests(unittest.TestCase):
     """系统把 .js 关联成 text/plain 时，服务端必须自己写回标准 MIME。
 

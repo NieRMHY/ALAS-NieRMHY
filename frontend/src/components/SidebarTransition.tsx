@@ -6,8 +6,6 @@ import { useMemo, type ReactNode } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { motionReducedActive } from '../app/motionPrefs'
 
-export type SidebarTransitionDirection = 'forward' | 'back' | 'switch'
-
 interface SidebarTransitionProps {
   /** 区分视图状态的唯一键，例如 'global' 或 `instance:${instance}` */
   viewKey: string
@@ -22,9 +20,7 @@ interface SidebarTransitionProps {
 export function SidebarTransition({ viewKey, children }: SidebarTransitionProps) {
   const isReduced = motionReducedActive()
 
-  // 动效变体定义：
-  // 统一为单向一致的「从左到右」流动效果：
-  // 新内容始终自左侧滑入（x: -10 -> 0），旧内容向右侧滑出淡退（0 -> +10）。
+  // 动效变体：新内容自左侧滑入，旧内容向右侧滑出并淡出。
   const variants = useMemo(() => {
     if (isReduced) {
       return {
@@ -47,7 +43,7 @@ export function SidebarTransition({ viewKey, children }: SidebarTransitionProps)
     if (isReduced) return { duration: 0 }
     return {
       duration: 0.22,
-      ease: [0.16, 1, 0.3, 1] as const, // 与系统 --ease-emphasized 呼应，入场更具沉浸感
+      ease: [0.16, 1, 0.3, 1] as const, // 与 motion.css 的 --ease-emphasized 同一条曲线
     }
   }, [isReduced])
 

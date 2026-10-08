@@ -21,6 +21,7 @@ export default defineConfig(({mode}) => {
         // 不代理的话统计页的图标列全是裂图。
         '/research-items': { target: backend },
         '/opsi-items': { target: backend },
+        '/storage-items': { target: backend },
       },
     },
     build: {

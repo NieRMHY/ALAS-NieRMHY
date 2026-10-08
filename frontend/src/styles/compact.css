@@ -17,7 +17,8 @@
   --theme-radius-control: 0px;
   --theme-radius-button: 0px;
   --theme-radius-popover: 0px;
-  --instance-tab-radius: 0px;
+  /* 紧凑主题整族直角：圆角半径归零，标签下侧的「脚」也随之为零。 */
+  --instance-tab-radius-ratio: 0;
 }
 :root[data-theme='extreme'] .sidebar,
 :root[data-theme='extreme'] .right-rail,
@@ -53,12 +54,13 @@
 :root[data-theme='extreme'] .glass-material > *,
 :root[data-theme='extreme'] .glass-material-lens,
 :root[data-theme='extreme'] .glass-material-lens > * {border-radius: 0 !important}
+
 /* 分段控件（日志/截图）：经典主题是 999px 药丸形，简约是 9px，含滑动指示器 */
 :root[data-theme='extreme'] .monitor-segmented,
 :root[data-theme='extreme'] .monitor-segmented .segmented-indicator,
 :root[data-theme='extreme'] .monitor-segmented button {border-radius: 0}
 /* 标签页的新建按钮与启停/关闭悬浮钮：其它主题是 999px 与 50%，且不读变量。 */
-:root[data-theme='extreme'] .instance-tab-create,
+:root[data-theme='extreme'] .instance-tab-create::after,
 :root[data-theme='extreme'] .instance-tab-power,
 :root[data-theme='extreme'] .instance-tab-remove:hover {border-radius: 0}
 :root[data-theme='extreme'] .resource-heading > div,
@@ -77,8 +79,8 @@
 :root[data-theme='extreme'] .resource-picker-option {border-radius: 0}
 
 /* 开关（.toggle）保持其它主题的圆形药丸与圆形滑块：直角化只针对容器与按钮。 */
-/* 浮层与控件补充：这些不在上面的骨架 / 卡片清单里，是圆角审计逐页扫出来的漏网项
-   （下拉浮层、指标芯片、复选框、标签、logo 等）。新增控件后可用同样的扫描方式复查。 */
+
+/* 浮层与控件补充：下拉浮层、指标芯片、复选框、标签、logo 等不在上面清单里的控件。 */
 :root[data-theme='extreme'] .select-menu,
 :root[data-theme='extreme'] .select-option,
 :root[data-theme='extreme'] .stat-chip,
@@ -98,21 +100,7 @@
 :root[data-theme='extreme'] .dev-nav-preview,
 :root[data-theme='extreme'] .dev-submenu-list,
 :root[data-theme='extreme'] .live-label,
-:root[data-theme='extreme'] .nav-pill,
-:root[data-theme='extreme'] .log-card,
-:root[data-theme='extreme'] .card-btn-action,
-:root[data-theme='extreme'] .card-btn-icon,
-:root[data-theme='extreme'] .badge-shape,
-:root[data-theme='extreme'] .badge-pill,
-:root[data-theme='extreme'] .trapezoid-visual,
-:root[data-theme='extreme'] .prop-pill,
-:root[data-theme='extreme'] .prop-badge,
-:root[data-theme='extreme'] .error-tag,
-:root[data-theme='extreme'] .section-action,
-:root[data-theme='extreme'] .traceback-viewer,
-:root[data-theme='extreme'] .traceback-frame-card,
-:root[data-theme='extreme'] .traceback-exc-banner,
-:root[data-theme='extreme'] .log-card-line {border-radius: 0}
+:root[data-theme='extreme'] .nav-pill {border-radius: 0}
 
 /* 常驻滚动条：全局规则是 5px 宽、8px 圆角，既占内容宽度又难拖，也不符合直角风格。
    Chromium 的原生滚动条只有「占位」和「彻底消失」两种状态，所以这里把 CompactScrollbars
@@ -152,7 +140,7 @@
 :root[data-theme='extreme'] .main-shell {min-height: calc(var(--viewport-height) - 48px)}
 /* 标题行用 flex-start：标题字形 28px 而行盒被按钮撑到 32px 以上，居中会多出半行空白 */
 :root[data-theme='extreme'] .page-title {min-height: 0; margin-top: 0; margin-bottom: 8px; align-items: flex-start}
-/* overview-page 原本用 ::after 预留约 5% 底部占位，这里把空间还给日志面板 */
+/* 把 overview-page 的 ::after 预留的底部占位让给日志面板 */
 :root[data-theme='extreme'] .overview-page {height: calc(var(--viewport-height) - 48px - 8px); min-height: 0}
 :root[data-theme='extreme'] .overview-page::after {display: none}
 :root[data-theme='extreme'] .overview-main {flex: 1; margin-bottom: 0}
@@ -181,8 +169,7 @@
 :root[data-theme='extreme'] .panel.chart-expanded .panel-heading {padding-right: 160px !important}
 :root[data-theme='extreme'] .panel-heading h2 {font-size: 13px}
 :root[data-theme='extreme'] .log-panel .panel-heading {padding-top: 6px !important; padding-bottom: 6px !important}
-:root[data-theme='extreme'] .config-toolbar {margin-bottom: 10px}
-:root[data-theme='extreme'] .config-group {margin-bottom: 9px}
+:root[data-theme='extreme'] .app-shell {--config-card-gap: 9px}
 :root[data-theme='extreme'] .group-nav a {padding: 4px 6px}
 :root[data-theme='extreme'] .field-row {padding: 7px 12px; gap: 12px !important}
 :root[data-theme='extreme'] .field-row-multiline {gap: 6px}
@@ -244,8 +231,7 @@
 :root[data-theme='extreme'] .empty {padding: 20px 14px; min-height: 120px}
 :root[data-theme='extreme'] .chart-metrics {padding: 14px 16px 8px; gap: 34px}
 :root[data-theme='extreme'] .summary-metrics-panel {padding: 0}
-:root[data-theme='extreme'] .summary-metrics-panel .summary-metrics {padding: 18px 26px}
-:root[data-theme='extreme'] .summary-metrics-panel .summary-metrics {gap: 8px 12px; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr))}
+:root[data-theme='extreme'] .summary-metrics-panel .summary-metrics {padding: 18px 26px; gap: 8px 12px; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr))}
 :root[data-theme='extreme'] .summary-metrics-panel .summary-metric-card {padding: 6px 8px; border-radius: 0; min-height: auto; background: transparent; border: none}
 :root[data-theme='extreme'] .summary-metrics-panel .summary-metric-card strong {font-size: 16px}
 :root[data-theme='extreme'] .home-intro {padding: 2px 0 12px}
@@ -272,7 +258,7 @@
 }
 :root[data-theme='extreme'] .app-shell:not(.with-rail) .topbar {width: 100%}
 
-/* 面包屑里的实例切换按钮原本是侧栏那种大块选择器，收成与面包屑文字对齐的单行小按钮 */
+/* 面包屑里的实例切换按钮：收成与面包屑文字对齐的单行小按钮 */
 :root[data-theme='extreme'] .breadcrumb {gap: 8px}
 :root[data-theme='extreme'] .breadcrumb .instance-picker {margin: 0}
 :root[data-theme='extreme'] .breadcrumb .instance-switcher {width: auto; min-height: 0; height: 26px; padding: 0 8px; gap: 6px; border-radius: 0}

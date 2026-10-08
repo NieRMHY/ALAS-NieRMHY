@@ -104,7 +104,8 @@ class Selector():
         """
         task = getattr(getattr(self.config, 'task', None), 'command', None)
         return (
-            getattr(self, '_opsi_shop_strategy_scope_active', False)
+            not getattr(self, '_opsi_action_point_purchase', False)
+            and getattr(self, '_opsi_shop_strategy_scope_active', False)
             and task == 'OpsiShop'
             and getattr(self.config, 'ShopAdvanced_Mode', 'legacy') == 'advanced'
         )
@@ -291,6 +292,8 @@ class Selector():
             list[Item]: 可购买的物品列表。
         """
         items = self.pretreatment(items)
+        if getattr(self, '_opsi_action_point_purchase', False):
+            return [item for item in items if item.group == 'actionpoint' and self.check_item_count(item)]
         if self._opsi_shop_strategy_enabled():
             actions = self._opsi_shop_strategy_actions(
                 items,

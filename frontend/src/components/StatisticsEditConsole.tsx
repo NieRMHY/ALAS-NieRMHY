@@ -10,7 +10,7 @@ import type { PageId } from '../app/statisticsLayout'
 interface StatisticsEditConsoleProps {
   /** 存储里是否已有自定义布局，决定还原按钮是否可用。 */
   customized: boolean
-  /** 全部页面及其启用状态，顺序与入口条一致。 */
+  /** 全部页面及其启用状态，按默认页序排列。 */
   pages: {id: PageId; label: string; enabled: boolean}[]
   onTogglePage: (id: PageId) => void
   onReset: () => void
@@ -18,7 +18,7 @@ interface StatisticsEditConsoleProps {
   children?: ReactNode
 }
 
-/** 样式编辑的控制台：收纳不便放在卡片上的控件，并给出还原入口。 */
+/** 布局编辑的控制台：收纳不便放在卡片上的控件，并给出还原入口。 */
 export function StatisticsEditConsole({customized, pages, onTogglePage, onReset, children}: StatisticsEditConsoleProps) {
   const {ui} = useApp()
   return <section className="panel statistics-edit-console" aria-label={ui('stats.editConsole')}>
@@ -38,9 +38,8 @@ export function StatisticsEditConsole({customized, pages, onTogglePage, onReset,
           className={`statistics-page-toggle-chip ${page.enabled ? 'active' : 'is-disabled'}`}
           aria-pressed={page.enabled}
           onClick={() => onTogglePage(page.id)}
-          title={page.enabled ? `${page.label}（已启用，点击隐藏）` : `${page.label}（已隐藏，点击显示）`}
         >
-          <span className="stat-chip-dot" style={{backgroundColor: page.enabled ? 'var(--accent)' : 'var(--muted)'}}/>
+          <span className="stat-chip-dot" style={{backgroundColor: page.enabled ? 'var(--theme-accent)' : 'var(--theme-muted)'}}/>
           <span>{page.label}</span>
         </button>
       ))}

@@ -91,8 +91,36 @@ class OSCampaignRun(OSMapOperation):
 
     def opsi_explore(self):
         """执行大世界海域开荒探索任务。"""
+        from module.os.tasks.smart_explore import smart_explore_enabled
+
+        if smart_explore_enabled(self.config):
+            logger.info('智能开荒已接管普通海域，唤起智能调度')
+            self.config.task_call('OpsiScheduling', force_call=False)
+            self.config.task_delay(server_update=True)
+            self.config.task_stop()
+            return
         try:
             self._run_opsi_task_with_ap_overflow_guard(lambda campaign: campaign.os_explore())
+        except ActionPointLimit as e:
+            self.delay_opsi_tasks_after_ap_limit(e)
+
+    def opsi_explore_cleanup(self):
+        """先检查每月开荒进度，满足条件后才初始化设备与独立补扫任务。"""
+        from module.os.tasks.explore_cleanup import OpsiExploreCleanup
+        OpsiExploreCleanup.reset_monthly_state(self.config)
+        if not OpsiExploreCleanup.explore_complete(self.config):
+            logger.warning('本月每月开荒进度未达到 100%，请重新运行一遍每月开荒')
+            self.config.task_delay(server_update=True)
+            self.config.task_stop()
+            return
+        state = self.config.OpsiExploreCleanup_State
+        if isinstance(state, dict) and state.get('phase') == 'done':
+            from module.config.utils import get_os_next_reset
+            self.config.task_delay(target=get_os_next_reset())
+            self.config.task_stop()
+            return
+        try:
+            self._run_opsi_task_with_ap_overflow_guard(lambda campaign: campaign.os_explore_cleanup())
         except ActionPointLimit as e:
             self.delay_opsi_tasks_after_ap_limit(e)
 
@@ -182,7 +210,7 @@ class OSCampaignRun(OSMapOperation):
         """执行大世界智能调度任务。"""
         # 必须在 load_campaign() 前拦截，否则 os_init() 会执行首次自律寻敌。
         if self.is_in_opsi_explore():
-            logger.info('[大世界-智能调度+] 每月开荒+正在运行，初始化前延期智能调度+')
+            logger.info('[大世界-智能调度] 每月开荒正在运行，初始化前延期智能调度')
             self.config.task_delay(
                 server_update=self.config.cross_get(
                     keys='OpsiScheduling.Scheduler.ServerUpdate',

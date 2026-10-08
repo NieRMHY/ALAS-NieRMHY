@@ -12,7 +12,7 @@ import { CreateInstance } from '../app/App'
 import { StatusBadge } from '../components/ui'
 
 /** 「切换旧版界面」快捷按钮用：恢复目标限定在现代主题里，避免来回落到别的档位。 */
-const MODERN_THEMES: readonly string[] = ['light', 'dark', 'minimal']
+const MODERN_THEMES: readonly string[] = ['light', 'dark', 'minimal', 'extreme']
 
 function getGreeting(ui: UiTranslator): string {
   const hour = new Date().getHours()
@@ -72,6 +72,8 @@ export function Home() {
           <h2>{ui('home.instances')}</h2>
           <button className="button primary" disabled={connection !== 'ready'} onClick={() => setCreating(true)}><Plus size={16}/>{ui('home.newInstance')}</button>
         </header>
+        {/* 一级面上挖出来的透明容器：不画底、不画边、不渲染材质，只为让溢出的实例卡在这里滚。 */}
+        <div className="home-scroll">
         <div className="home-instance-grid">
           {instances.map(item => {
             const task = item.status === 'running' ? item.currentTask ? t(`Task.${item.currentTask}.name`) : ui('home.waitingSchedule') : item.status === 'error' ? ui('status.error') : item.status === 'updating' ? ui('status.updating') : ui('home.notRunning')
@@ -83,6 +85,7 @@ export function Home() {
             </Link>
           })}
           {!instances.length && <button className="home-instance-empty" disabled={connection !== 'ready'} onClick={() => setCreating(true)}><Plus size={28}/><span>{ui('instance.createFirst')}</span></button>}
+        </div>
         </div>
       </section>
     </div>

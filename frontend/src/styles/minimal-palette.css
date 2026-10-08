@@ -21,9 +21,10 @@
   --theme-danger: var(--red); --theme-danger-soft: #fcebec;
   --theme-success: var(--green); --theme-success-soft: var(--green-soft);
   --theme-warning: #805a14; --theme-warning-soft: #faf0d6; --theme-info: var(--secondary);
-  --theme-sidebar: var(--theme-sidebar-bg); --theme-glass: var(--theme-surface-bg); --theme-glass-edge: var(--border);
-  --theme-glass-shadow: none; --theme-material-filter: none; --theme-chrome-filter: none;
-  --theme-popover-filter: none; --theme-overlay-filter: none; --theme-overlay: color-mix(in srgb, var(--bg) 30%, transparent);
+  --theme-glass: var(--theme-surface-bg); --theme-glass-edge: var(--border);
+  --theme-glass-shadow: none; --theme-material-filter: none;
+
+  --theme-popover-filter: var(--theme-menu-filter); --theme-overlay-filter: none; --theme-overlay: color-mix(in srgb, var(--bg) 30%, transparent); --theme-chrome-filter: var(--theme-sidebar-filter);
   /* 该族没有玻璃层：参数存在但不起作用，契约键必须齐。 */
   --theme-glass-blur: 0px; --theme-glass-saturation: 100%;
   /* 区域化材质：参数键由旋钮写入、合成键由皮肤消费；默认值关系是一级面为基准，
@@ -37,32 +38,55 @@
   --theme-surface-edge: var(--theme-glass-edge);
   --theme-surface-shadow: var(--theme-glass-shadow);
   --theme-plate-alpha: 100%; --theme-plate-blur: 0px; --theme-plate-saturation: 100%;
+  /* 这一族不走分层质感：两层完整对齐，不带微弱边距。 */
+  --theme-plate-margin: 0px;
   --theme-plate-radius: var(--theme-radius-card);
   --theme-plate-bg: color-mix(in srgb, var(--surface) var(--theme-plate-alpha), transparent);
   --theme-plate-filter: blur(var(--theme-plate-blur)) saturate(var(--theme-plate-saturation));
   --theme-plate-edge: var(--theme-glass-edge); --theme-plate-shadow: var(--theme-glass-shadow);
-  --theme-sidebar-alpha: var(--theme-surface-alpha); --theme-sidebar-blur: var(--theme-surface-blur); --theme-sidebar-saturation: var(--theme-surface-saturation); --theme-sidebar-radius: var(--theme-surface-radius);
-  --theme-sidebar-bg: color-mix(in srgb, var(--surface) var(--theme-sidebar-alpha), transparent);
-  --theme-sidebar-filter: blur(var(--theme-sidebar-blur)) saturate(var(--theme-sidebar-saturation));
-  --theme-sidebar-edge: var(--theme-glass-edge); --theme-sidebar-shadow: var(--theme-glass-shadow);
-  --theme-topbar-alpha: var(--theme-surface-alpha); --theme-topbar-blur: var(--theme-surface-blur); --theme-topbar-saturation: var(--theme-surface-saturation); --theme-topbar-radius: var(--theme-surface-radius);
-  --theme-topbar-bg: color-mix(in srgb, var(--surface) var(--theme-topbar-alpha), transparent);
-  --theme-topbar-filter: blur(var(--theme-topbar-blur)) saturate(var(--theme-topbar-saturation));
-  --theme-topbar-edge: var(--theme-glass-edge); --theme-topbar-shadow: var(--theme-glass-shadow);
-  --theme-modal-alpha: var(--theme-surface-alpha); --theme-modal-blur: var(--theme-surface-blur); --theme-modal-saturation: var(--theme-surface-saturation); --theme-modal-radius: var(--theme-surface-radius);
-  --theme-modal-bg: color-mix(in srgb, var(--surface) var(--theme-modal-alpha), transparent);
-  --theme-modal-filter: blur(var(--theme-modal-blur)) saturate(var(--theme-modal-saturation));
-  --theme-modal-edge: var(--theme-glass-edge); --theme-modal-shadow: var(--theme-glass-shadow);
-  --theme-menu-alpha: var(--theme-surface-alpha); --theme-menu-blur: var(--theme-surface-blur); --theme-menu-saturation: var(--theme-surface-saturation); --theme-menu-radius: var(--theme-surface-radius);
-  --theme-menu-bg: color-mix(in srgb, var(--surface) var(--theme-menu-alpha), transparent);
-  --theme-menu-filter: blur(var(--theme-menu-blur)) saturate(var(--theme-menu-saturation));
-  --theme-menu-edge: var(--theme-glass-edge); --theme-menu-shadow: var(--theme-glass-shadow);
+  --theme-inset-alpha: 100%; --theme-inset-blur: 0px; --theme-inset-saturation: 100%;
+  --theme-inset-radius: var(--theme-radius-control);
+  --theme-inset-bg: color-mix(in srgb, var(--surface) var(--theme-inset-alpha), transparent);
+  --theme-inset-filter: blur(var(--theme-inset-blur)) saturate(var(--theme-inset-saturation));
+  --theme-inset-edge: var(--theme-glass-edge); --theme-inset-shadow: var(--theme-glass-shadow);
+
   --theme-control-alpha: 100%; --theme-control-blur: 0px; --theme-control-saturation: 100%;
   --theme-control-radius: var(--theme-radius-control);
   --theme-control-bg: color-mix(in srgb, var(--surface) var(--theme-control-alpha), transparent);
+  --theme-control-marker-bg: color-mix(in srgb, var(--surface) min(100%, calc(var(--theme-control-alpha) + 8%)), transparent);
+  /* 简约族本来就用强调色画曲线，这里显式接过去。 */
+  --theme-chart-primary: var(--accent); --theme-chart-secondary: var(--secondary);
+  --theme-chart-rise: #dc2626; --theme-chart-fall: #16a34a;
   --theme-control-filter: blur(var(--theme-control-blur)) saturate(var(--theme-control-saturation));
   --theme-control-edge: var(--theme-glass-edge); --theme-control-shadow: var(--theme-glass-shadow);
-  --theme-overlay-blur: 0px; --theme-popover-blur: 0px;
+  /* 区域面：本族全平（无磨砂、无阴影），四个区域与一级面同底同圆角。 */
+  --theme-sidebar-alpha: 100%; --theme-sidebar-blur: 0px; --theme-sidebar-saturation: 100%;
+  --theme-sidebar-radius: var(--theme-surface-radius);
+  --theme-sidebar-bg: color-mix(in srgb, var(--surface) var(--theme-sidebar-alpha), transparent);
+  --theme-sidebar-filter: none;
+  --theme-sidebar-edge: var(--theme-glass-edge); --theme-sidebar-shadow: none;
+  --theme-topbar-alpha: 100%; --theme-topbar-blur: 0px; --theme-topbar-saturation: 100%;
+  --theme-topbar-radius: var(--theme-surface-radius);
+  --theme-topbar-bg: color-mix(in srgb, var(--surface) var(--theme-topbar-alpha), transparent);
+  --theme-topbar-filter: none;
+  --theme-topbar-edge: var(--theme-glass-edge); --theme-topbar-shadow: none;
+  --theme-modal-alpha: 100%; --theme-modal-blur: var(--theme-surface-blur); --theme-modal-saturation: var(--theme-surface-saturation);
+  --theme-modal-radius: var(--theme-surface-radius);
+  --theme-modal-bg: color-mix(in srgb, var(--surface) var(--theme-modal-alpha), transparent);
+  --theme-modal-filter: blur(var(--theme-modal-blur)) saturate(var(--theme-modal-saturation));
+  --theme-modal-edge: var(--theme-glass-edge); --theme-modal-shadow: none;
+  --theme-menu-alpha: 100%; --theme-menu-blur: 0px; --theme-menu-saturation: 100%;
+  --theme-menu-radius: var(--theme-radius-popover);
+  --theme-menu-bg: color-mix(in srgb, var(--surface) var(--theme-menu-alpha), transparent);
+  --theme-menu-filter: none;
+  --theme-menu-edge: var(--theme-glass-edge); --theme-menu-shadow: none;
+
+  /* 这一族没有半透明叠加：一级面是不透明实色，标签页选中态只能另给一个手工填充色。 */
+  --theme-tab-current-bg: var(--surface-muted);
+  /* 简约族不画标签下侧的「脚」。 */
+  --instance-tab-foot: 0;
+
+  --theme-overlay-blur: 0px;
   --theme-radius-control: 8px; --theme-radius-button: 8px; --theme-radius-panel: 14px;
   --theme-radius-card: 14px; --theme-radius-popover: 10px; --theme-radius-pill: 999px; --theme-radius-modal: 12px;
   --theme-shadow-panel: none; --theme-shadow-popover: none; --theme-shadow-modal: none;
@@ -70,12 +94,12 @@
   --theme-nav-text: var(--text); --theme-nav-icon: var(--secondary);
   --theme-nav-active-bg: var(--accent-soft); --theme-nav-active-text: var(--accent);
   --theme-nav-expanded-bg: var(--accent-soft); --theme-nav-hover-bg: var(--surface-muted);
-  --theme-nav-popover-bg: var(--theme-menu-bg); --theme-nav-popover-edge: var(--border); --theme-nav-popover-shadow: none;
+  --theme-nav-popover-edge: var(--border); --theme-nav-popover-shadow: none;
   --theme-primary-bg: var(--accent); --theme-primary-hover: var(--accent-hover);
-  --theme-input-bg: var(--surface); --theme-input-text: var(--text); --theme-input-border: var(--border);
+  --theme-input-bg: var(--theme-control-bg); --theme-input-text: var(--text); --theme-input-border: var(--border);
   --theme-focus: var(--accent); --theme-focus-ring: var(--accent-soft);
   --theme-toggle-off: #8290a0; --theme-toggle-on: var(--accent); --theme-toggle-knob: #ffffff; --theme-toggle-shadow: none;
-  --theme-segment-bg: var(--surface-muted); --theme-segment-border: var(--border); --theme-segment-indicator: var(--accent-soft);
+   --theme-segment-border: var(--border); --theme-segment-indicator: var(--accent-soft);
   --theme-toast-bg: var(--text); --theme-toast-text: var(--surface); --theme-toast-error-bg: var(--red);
   --theme-error-bg: var(--theme-danger-soft); --theme-error-border: var(--red);
   --theme-selection: var(--accent-soft); --theme-scrollbar-thumb: #9caab8;
@@ -104,7 +128,7 @@
   --theme-log-search: #72551a;
 }
 
-/* 同旧版族：本族圆角 token 是 0（简约/紧凑），按钮不该保持药丸形；
-   带 data-theme 前缀以压过 apple.css 的同名规则。 */
+/* 同旧版族：按钮取本族的控件圆角（8px），不跟共享骨架里 .button 的 7px；
+   带 data-theme 前缀以压过 components.css 的同名规则（同为单类，靠文件顺序会输给它）。 */
 :root[data-theme='minimal'] .button, :root[data-theme='minimal'] .icon-button,
 :root[data-theme='extreme'] .button, :root[data-theme='extreme'] .icon-button {border-radius: var(--theme-radius-control)}

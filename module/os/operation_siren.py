@@ -42,13 +42,14 @@ from module.os.tasks.archive import OpsiArchive
 from module.os.tasks.stronghold import OpsiStronghold
 from module.os.tasks.month_boss import OpsiMonthBoss
 from module.os.tasks.explore import OpsiExplore
+from module.os.tasks.explore_cleanup import OpsiExploreCleanup
 from module.os.tasks.cross_month import OpsiCrossMonth
 
 
 class OperationSiren(
     OpsiDaily, OpsiShop, OpsiVoucher, OpsiMeowfficerFarming,
     OpsiHazard1Leveling, OpsiFleetAutoChange, OpsiPreventActionPointOverflow, OpsiObscure, OpsiAbyssal,
-    OpsiArchive, OpsiStronghold, OpsiMonthBoss, OpsiExplore,
+    OpsiArchive, OpsiStronghold, OpsiMonthBoss, OpsiExplore, OpsiExploreCleanup,
     OpsiCrossMonth,
 ):
     """大世界（Operation Siren）主类，组合所有任务模块。"""

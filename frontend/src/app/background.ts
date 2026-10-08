@@ -44,7 +44,6 @@ export const DEFAULT_BACKGROUND_URL = DEFAULT_BACKGROUND_URLS[0] ?? ''
 
 /** 历史上唯一的那条内置 API：只用来识别"老用户的列表还是旧默认"，从而升级成整份列表。 */
 const LEGACY_DEFAULT_URL = 'https://api.yppp.net/api.php'
-export const MAX_BACKGROUND_FILE_SIZE = 200 * 1024 * 1024
 const STORAGE_KEY = 'azurpilot.background'
 
 /** 背景记录按材质各存一档：玻璃用原键（老用户设置不变），普通用新键。 */
@@ -122,7 +121,7 @@ export function readBackgroundPreference(material: Material): BackgroundPreferen
 export const activeBackgroundUrl = (preference: BackgroundPreference) => preference.source === 'url' ? preference.urls[preference.active] ?? '' : ''
 
 /** 这一条地址本身就是图片/视频文件时才可直接铺；随机图 API 端点每次请求都换图，必须先解析。 */
-const directMediaUrl = (url: string) => /.(?:jpe?g|png|webp|gif|bmp|avif|mp4|webm)(?:[?#]|$)/i.test(url) ? url : ''
+const directMediaUrl = (url: string) => /\.(?:jpe?g|png|webp|gif|bmp|avif|mp4|webm)(?:[?#]|$)/i.test(url) ? url : ''
 /** 记着上一张真正铺出来的图：解析失败时保留它，避免回退到随机端点换出新图。 */
 let lastGoodAssetUrl = ''
 
@@ -316,7 +315,6 @@ export async function loadUploadedBackground() {
   return uploadLoad
 }
 
-/** 设置 URL 模式的多行 API：一行一条，本次随机生效一条；全清空自动回填内置随机图 API。 */
 /** 把当前生效的那条 API 交给服务端解析成真实直链（跨域时浏览器读不到最终地址）。 */
 export async function resolveActiveBackground() {
   if (snapshot.source !== 'url') return
@@ -337,6 +335,7 @@ export async function resolveActiveBackground() {
   }
 }
 
+/** 设置 URL 模式的多行 API：一行一条，本次随机生效一条；全清空自动回填内置随机图 API。 */
 export function setBackgroundUrls(values: string[], kind: BackgroundKind) {
   const cleaned = normalizeBackgroundUrls(values)
   const urls = cleaned.length ? cleaned : [...DEFAULT_BACKGROUND_URLS]
@@ -348,18 +347,6 @@ export function setBackgroundUrls(values: string[], kind: BackgroundKind) {
   void resolveActiveBackground()
 }
 
-export async function setBackgroundUpload(file: File) {
-  const kind: BackgroundKind | undefined = file.type.startsWith('image/') ? 'image' : file.type.startsWith('video/') ? 'video' : undefined
-  if (!kind) throw new Error('请选择图片或视频文件。')
-  if (!file.size) throw new Error('所选文件为空。')
-  if (file.size > MAX_BACKGROUND_FILE_SIZE) throw new Error('背景文件不能超过 200 MB。')
-  await storedFile('readwrite', file)
-  const url = URL.createObjectURL(file)
-  const preference: BackgroundPreference = {source: 'upload', kind, urls: [], active: 0, name: file.name}
-  replaceObjectUrl(url)
-  savePreference(preference)
-  publish({...preference, assetUrl: url, loading: false})
-}
 
 /** 启动时把图库拉回来：图库模式随机铺一张，并把旧的浏览器上传图迁移进图库（只做一次）。 */
 export async function initBackgroundGallery() {
@@ -409,7 +396,7 @@ export async function openGalleryFolder() {
 export async function refreshGallery() {
   try {
     gallery = await api.request('background.gallery.list', {})
-  } catch { gallery = [] }
+  } catch { /* 拉取失败按空图库处理，界面显示为空。 */ gallery = [] }
   listeners.forEach(listener => listener())
   return gallery
 }

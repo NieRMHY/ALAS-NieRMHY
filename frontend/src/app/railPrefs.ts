@@ -2,6 +2,8 @@
  * @fileoverview 旧版实例页右列内容（目录或调度器）偏好管理。
  */
 
+import { prefStore } from './prefStore'
+
 /**
  * 旧版实例页右列显示什么。
  *
@@ -12,20 +14,8 @@
  */
 export type RailView = 'directory' | 'scheduler'
 
-const VIEW_KEY = 'azurpilot.legacy-rail-view'
+const store = prefStore<RailView>('azurpilot.legacy-rail-view', raw => raw === 'scheduler' ? 'scheduler' : 'directory')
 
-const listeners = new Set<() => void>()
-
-export function readRailView(): RailView {
-    try { return localStorage.getItem(VIEW_KEY) === 'scheduler' ? 'scheduler' : 'directory' } catch { return 'directory' }
-}
-
-export const subscribeRailView = (listener: () => void) => {
-    listeners.add(listener)
-    return () => { listeners.delete(listener) }
-}
-
-export function setRailView(view: RailView) {
-    try { localStorage.setItem(VIEW_KEY, view) } catch { /* 存储不可用时本次会话内仍生效。 */ }
-    listeners.forEach(listener => listener())
-}
+export const readRailView = store.read
+export const subscribeRailView = store.subscribe
+export const setRailView = store.write

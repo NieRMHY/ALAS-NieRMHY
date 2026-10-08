@@ -4,10 +4,11 @@
 多轮模拟的行动力/代币/完成海域数分布直方图以及
 综合报告图，使用 matplotlib 生成并保存为 PNG 图像。
 """
-import os
 import numpy as np
 import matplotlib
 from datetime import datetime
+from pathlib import Path
+from threading import RLock
 
 from module.os_simulator.constants import *
 
@@ -22,6 +23,7 @@ plt.rcParams['font.sans-serif'] = [
     'Droid Sans Fallback'  # Fallback
 ]
 plt.rcParams['axes.unicode_minus'] = False
+PLOT_LOCK = RLock()
 
 class OSSimulatorPlotter:
     """大世界模拟器图表绘制器。
@@ -33,7 +35,7 @@ class OSSimulatorPlotter:
         result_figure_path (str): 最近一次保存图表的文件路径。
     """
 
-    def __init__(self, logger):
+    def __init__(self, logger, directory=None):
         """初始化图表绘制器。
 
         Args:
@@ -41,6 +43,7 @@ class OSSimulatorPlotter:
         """
         self.logger = logger
         self.result_figure_path = ''
+        self.directory = Path(directory or './log/oss/figures')
 
     def plot_single_sample_history(self, history_single):
         """绘制单样本轨迹图。
@@ -167,9 +170,10 @@ class OSSimulatorPlotter:
         Returns:
             str: 保存的文件相对路径。
         """
-        os.makedirs('./log/oss/figures', exist_ok=True)
-        self.result_figure_path = f'./log/oss/figures/{datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}_{name}.png'
-        plt.savefig(self.result_figure_path)
+        self.directory.mkdir(parents=True, exist_ok=True)
+        path = self.directory / f'{datetime.now().strftime("%Y-%m-%d_%H-%M-%S_%f")}_{name}.png'
+        fig.savefig(path)
+        self.result_figure_path = str(path)
         self.logger.info(f"[大世界模拟器] 图表已保存至: {self.result_figure_path}")
-        plt.close()
+        plt.close(fig)
         return self.result_figure_path

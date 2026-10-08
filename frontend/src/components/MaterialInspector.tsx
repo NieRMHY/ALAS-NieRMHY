@@ -1,8 +1,8 @@
 /**
- * @fileoverview 全局真实例材质细节检视器：叠加在当前真实页面/真实例上方，实时调整 7 大区域 × 5 项材质属性。
+ * @fileoverview 全局真实例材质细节检视器：叠加在当前真实页面/真实例上方，实时调整六个区域的材质属性。
  */
 
-import { useEffect, useState, useSyncExternalStore } from 'react'
+import { useSyncExternalStore } from 'react'
 import { createPortal } from 'react-dom'
 import { useLocation, useNavigate } from 'react-router-dom'
 import {
@@ -28,54 +28,31 @@ import {
   toggleMaterialInspectorDocked,
   toggleMaterialInspectorMinimized,
 } from '../app/materialInspectorState'
-import { applyCustomLayer, familyOf, showsWallpaper } from '../app/theme'
+import { familyOf, showsWallpaper } from '../app/theme'
 import {
   clearFamilyKnob,
   clearFamilyRegion,
-  readFamilyCustom,
   resetFamilyCustom,
   writeFamilyCustom,
-  type FamilyCustom,
 } from '../app/themeCustom'
-import { familyRegions, type RegionId } from '../app/themeKnobs'
+import { familyRegions } from '../app/themeKnobs'
+import { useFamilyCustom, useSampleLayers } from '../app/useMaterialInspector'
 import { MaterialDetailPanel } from './ThemeCustomPreference'
 
 export function MaterialInspector() {
-  const inspector = useSyncExternalStore(subscribeMaterialInspector, getMaterialInspector)
-  const background = useSyncExternalStore(subscribeBackground, getBackground)
+  const inspector = useSyncExternalStore(subscribeMaterialInspector, getMaterialInspector, getMaterialInspector)
+  const background = useSyncExternalStore(subscribeBackground, getBackground, getBackground)
   const { ui, theme } = useApp()
   const location = useLocation()
   const navigate = useNavigate()
 
   const family = familyOf(theme)
-  const [custom, setCustom] = useState<FamilyCustom>(() => readFamilyCustom(family))
-  useEffect(() => setCustom(readFamilyCustom(family)), [family])
-  const [activeRegion, setActiveRegion] = useState<RegionId>('surface')
-  const [showModal, setShowModal] = useState(false)
-  const [showMenu, setShowMenu] = useState(false)
+  const {custom, refresh} = useFamilyCustom(family)
+  const {region: activeRegion, showModal, showMenu, select: handleRegionSelect, setShowModal, setShowMenu} = useSampleLayers()
 
   if (!inspector.open) return null
 
-  const refresh = () => {
-    applyCustomLayer()
-    setCustom(readFamilyCustom(family))
-  }
-
   const wallpaperActive = showsWallpaper(theme, background.source)
-
-  const handleRegionSelect = (r: RegionId) => {
-    setActiveRegion(r)
-    if (r === 'modal') {
-      setShowModal(true)
-      setShowMenu(false)
-    } else if (r === 'menu') {
-      setShowMenu(true)
-      setShowModal(false)
-    } else {
-      setShowModal(false)
-      setShowMenu(false)
-    }
-  }
 
   const isDocked = inspector.docked
   const isMinimized = inspector.minimized
@@ -102,21 +79,21 @@ export function MaterialInspector() {
         ) : (
           <div className="inspector-panel-inner">
             <header className="inspector-header">
-              <div className="inspector-header-left">
-                <Sliders size={16} className="inspector-icon" />
+              <div>
+                <Sliders size={16} />
                 <span className="inspector-title">{ui('settings.materialDetail')}</span>
-                <span className="inspector-badge">
+                <span>
                   {family === 'new' ? 'Apple HIG' : 'Google M3'}
                 </span>
               </div>
-              <div className="inspector-header-right">
+              <div>
                 {location.pathname !== '/interface' && (
                   <button
                     type="button"
                     className="icon-button"
                     onClick={() => navigate('/interface')}
-                    title="返回界面设置"
-                    aria-label="返回界面设置"
+                    title={ui('nav.interface')}
+                    aria-label={ui('nav.interface')}
                   >
                     <ArrowLeft size={15} />
                   </button>
@@ -125,8 +102,8 @@ export function MaterialInspector() {
                   type="button"
                   className="icon-button"
                   onClick={toggleMaterialInspectorDocked}
-                  title={isDocked ? '切换为悬浮模式' : '停靠在右侧'}
-                  aria-label={isDocked ? '切换为悬浮模式' : '停靠在右侧'}
+                  title={isDocked ? ui('settings.inspectorFloat') : ui('settings.inspectorDock')}
+                  aria-label={isDocked ? ui('settings.inspectorFloat') : ui('settings.inspectorDock')}
                 >
                   {isDocked ? <PanelRightClose size={15} /> : <Dock size={15} />}
                 </button>
@@ -134,8 +111,8 @@ export function MaterialInspector() {
                   type="button"
                   className="icon-button"
                   onClick={() => setMaterialInspectorMinimized(true)}
-                  title="最小化"
-                  aria-label="最小化"
+                  title={ui('settings.inspectorMinimize')}
+                  aria-label={ui('settings.inspectorMinimize')}
                 >
                   <Minimize2 size={15} />
                 </button>
@@ -143,8 +120,8 @@ export function MaterialInspector() {
                   type="button"
                   className="icon-button"
                   onClick={closeMaterialInspector}
-                  title="关闭"
-                  aria-label="关闭"
+                  title={ui('common.close')}
+                  aria-label={ui('common.close')}
                 >
                   <X size={16} />
                 </button>
@@ -169,9 +146,9 @@ export function MaterialInspector() {
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <ImageIcon size={14} style={{ color: 'var(--theme-warning, #f59e0b)', flexShrink: 0 }} />
-                  <strong>当前未启用壁纸背景</strong>
+                  <strong>{ui('settings.wallpaperOffHint')}</strong>
                 </div>
-                <div>纯单色底色下无法观察到毛玻璃滤镜（模糊与饱和度）的折射效果。</div>
+                <div>{ui('settings.wallpaperOffHelp')}</div>
                 <button
                   type="button"
                   className="button secondary"
@@ -205,7 +182,7 @@ export function MaterialInspector() {
                     setShowMenu(false)
                   }}
                 >
-                  {showModal ? '关闭测试弹窗' : '测试弹窗 (Modal)'}
+                  {showModal ? ui('common.close') : ui('settings.sampleModal')}
                 </button>
                 <button
                   type="button"
@@ -216,7 +193,7 @@ export function MaterialInspector() {
                     setShowModal(false)
                   }}
                 >
-                  {showMenu ? '收起测试选单' : '测试选单 (Menu)'}
+                  {showMenu ? ui('common.close') : ui('settings.sampleMenu')}
                 </button>
               </div>
 
@@ -252,7 +229,7 @@ export function MaterialInspector() {
                 style={{ width: '100%' }}
                 onClick={closeMaterialInspector}
               >
-                完成调节
+                {ui('common.close')}
               </button>
             </footer>
           </div>
@@ -262,7 +239,6 @@ export function MaterialInspector() {
       {/* 测试用弹出菜单 (menu 区域) */}
       {showMenu && (
         <div
-          className="mock-popover-menu"
           style={{
             position: 'fixed',
             top: '70px',
@@ -342,7 +318,7 @@ export function MaterialInspector() {
             }}
             onClick={() => setShowMenu(false)}
           >
-            <span>关闭选单</span>
+            <span>{ui('common.close')}</span>
           </button>
         </div>
       )}
@@ -350,7 +326,6 @@ export function MaterialInspector() {
       {/* 测试用弹窗 (modal 区域) */}
       {showModal && (
         <div
-          className="mock-modal-scrim"
           style={{
             position: 'fixed',
             inset: 0,
@@ -392,7 +367,7 @@ export function MaterialInspector() {
                 type="button"
                 className="icon-button"
                 onClick={() => setShowModal(false)}
-                title="关闭"
+                title={ui('common.close')}
               >
                 <X size={18} />
               </button>

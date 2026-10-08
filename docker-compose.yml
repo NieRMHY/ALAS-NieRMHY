@@ -18,6 +18,7 @@ services:
             PYTHONDONTWRITEBYTECODE: "1"
             PYTHONUNBUFFERED: "1"
         volumes:
+            # 完整项目挂载包含茗交所需要的 config/stock-exchange 与 cache/stock-exchange。
             - '.:/app/AzurPilot:rw'
             - 'alas-venv:/app/AzurPilot/.venv'
             # - '../MAA:/app/MAA:rw'

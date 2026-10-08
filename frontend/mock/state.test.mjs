@@ -3,6 +3,27 @@ import { describe, expect, it } from 'vitest'
 import { createMockState } from './state.mjs'
 
 describe('前端模拟服务', () => {
+  it('大世界模拟独立于游戏进程，支持完成、绘图、中断和重跑', () => {
+    const {dispatch, tick} = createMockState()
+    const name = 'demo-main'
+    dispatch('config.patch', {instance: name, changes: [{path: 'OpsiSimulator.OpsiSimulatorParameters.Draw', value: 'multi_sample'}]})
+    const game = dispatch('overview.get', {instance: name})
+    const started = dispatch('opsi.simulator.start', {instance: name})
+    expect(started.state).toBe('running')
+    expect(dispatch('opsi.simulator.status', {instance: 'demo-alt'}).state).toBe('idle')
+    expect(() => dispatch('opsi.simulator.start', {instance: name})).toThrow(/模拟正在进行/)
+    tick()
+    const status = dispatch('opsi.simulator.status', {instance: name})
+    expect(status.state).toBe('completed')
+    expect(status.completedSamples).toBe(status.totalSamples)
+    expect(status.result.ap).toBe(485.3)
+    expect(dispatch('opsi.simulator.figure', {instance: name}).image).toMatch(/^data:image/)
+    expect(dispatch('overview.get', {instance: name}).status).toBe(game.status)
+    expect(dispatch('opsi.simulator.status', {instance: name, after: status.logs.cursor}).logs.entries).toEqual([])
+    expect(dispatch('opsi.simulator.start', {instance: name}).runId).toBe(started.runId + 1)
+    expect(dispatch('opsi.simulator.figure', {instance: name}).image).toBeNull()
+    expect(dispatch('opsi.simulator.stop', {instance: name}).state).toBe('interrupted')
+  })
   it('配置按实例隔离，合并过期快照的字段修改并拒绝非原子保存', () => {
     const {dispatch} = createMockState()
     const initial = dispatch('config.get', {instance: 'demo-main'})

@@ -18,3 +18,4 @@ frontend/dist
 frontend/test-results
 frontend/playwright-report
 cache
+config/stock-exchange

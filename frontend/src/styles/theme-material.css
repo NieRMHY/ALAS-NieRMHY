@@ -10,11 +10,17 @@
   --glass-tint: var(--surface);
   --glass-edge: var(--border);
   --glass-shadow: none;
-  /* 普通材质没有材质层：七个区域一并压成不透明、无滤镜。 */
-  --theme-surface-alpha: 100%; --theme-plate-alpha: 100%; --theme-sidebar-alpha: 100%; --theme-topbar-alpha: 100%; --theme-modal-alpha: 100%; --theme-menu-alpha: 100%; --theme-control-alpha: 100%;
-  --theme-surface-bg: var(--surface); --theme-sidebar-bg: var(--surface); --theme-topbar-bg: var(--surface); --theme-modal-bg: var(--surface); --theme-menu-bg: var(--surface);
-  --theme-plate-bg: var(--surface-muted); --theme-control-bg: var(--surface-muted);
-  --theme-surface-filter: none; --theme-plate-filter: none; --theme-sidebar-filter: none; --theme-topbar-filter: none; --theme-modal-filter: none; --theme-menu-filter: none; --theme-control-filter: none;
+  /* 普通材质没有材质层：四个层级与四个区域一并压成不透明、无滤镜。 */
+  --theme-surface-alpha: 100%; --theme-plate-alpha: 100%; --theme-inset-alpha: 100%; --theme-control-alpha: 100%;
+  --theme-sidebar-alpha: 100%; --theme-topbar-alpha: 100%; --theme-modal-alpha: 100%; --theme-menu-alpha: 100%;
+  --theme-surface-bg: var(--surface);
+  --theme-plate-bg: var(--surface-muted); --theme-inset-bg: var(--surface); --theme-control-bg: var(--surface-muted); --theme-control-marker-bg: var(--surface);
+  /* 四个区域与一级面同底：普通材质下它们只是位置不同，不再是独立材质层。 */
+  --theme-sidebar-bg: var(--surface); --theme-topbar-bg: var(--surface); --theme-modal-bg: var(--surface); --theme-menu-bg: var(--surface);
+  --theme-surface-filter: none; --theme-plate-filter: none; --theme-inset-filter: none; --theme-control-filter: none;
+  --theme-sidebar-filter: none; --theme-topbar-filter: none; --theme-modal-filter: none; --theme-menu-filter: none;
+  /* 普通材质下标签页与标签栏同为一个不透明底色，选中态显不出来，只能另给一个手工填充色。 */
+  --theme-tab-current-bg: var(--surface-muted);
 }
 
 /* 普通材质没有磨砂层：与紧凑皮肤同一种做法，整棵子树关掉背景滤镜。 */

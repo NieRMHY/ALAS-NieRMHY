@@ -8,26 +8,34 @@ export type FamilyCustom = {params: Record<string, number>; palette?: Palette}
 const knobsKey = (family: Family) => `azurpilot.custom.${family}`
 /** 自定义配色的定义是全局资产，只有「选哪套」按大类各存。 */
 const customPalettesKey = 'azurpilot.custom-palettes'
-const listeners = new Set<(family: Family) => void>()
-export function subscribeFamilyCustom(listener: (family: Family) => void) {
-  listeners.add(listener)
-  return () => { listeners.delete(listener) }
-}
 
 const isPalette = (value: unknown): value is Palette =>
   typeof value === 'string' && ((palettes as readonly string[]).includes(value) || /^custom:[\w-]+$/.test(value))
 
 /* 早期版本按「玻璃参数 + 圆角 + 阴影」五个全局旋钮存，键名没有区域；读到就折算到一级面。
-   阴影不再是旋钮（人类定的四组参数是不透明度/模糊/饱和度/圆角），旧值丢弃。 */
+   圆角与阴影已不在界面旋钮目录里（见 themeKnobs 的 regionProps），旧值折算后一并落空。 */
 const legacyKeys: Record<string, string> = {blur: 'surface.blur', saturation: 'surface.saturation', opacity: 'surface.alpha', radius: 'surface.radius'}
+
+/* 已溶解的旧区域名搬到对应的层：侧栏、顶栏、外壳并进一级面，标签页与分段控件并进控件层。
+   弹窗与菜单不在此列——它们在新模型里是独立区域，旧值按本区生效。
+   参数在目标层没有旋钮时（如标签页的圆角）自然落空。同名冲突时后读到的胜出。 */
+const legacyRegion: Record<string, RegionId> = {
+  sidebar: 'surface', topbar: 'surface', chrome: 'surface',
+  tab: 'control', segment: 'control',
+}
+const toLayer = (id: string) => {
+  const dot = id.indexOf('.')
+  const layer = dot > 0 ? legacyRegion[id.slice(0, dot)] : undefined
+  return layer ? `${layer}${id.slice(dot)}` : id
+}
 
 function readParams(input: Record<string, unknown>) {
   const source = (input.params && typeof input.params === 'object' ? input.params : {}) as Record<string, unknown>
   const params: Record<string, number> = {}
   const accept = (id: string, value: unknown) => {
-    const knob = knobFor(id)
+    const knob = knobFor(toLayer(id))
     if (!knob || typeof value !== 'number' || !Number.isFinite(value)) return
-    params[id] = Math.min(knob.max, Math.max(knob.min, value))
+    params[toLayer(id)] = Math.min(knob.max, Math.max(knob.min, value))
   }
   for (const [key, value] of Object.entries(source)) accept(key, value)
   for (const [oldKey, id] of Object.entries(legacyKeys)) accept(id, input[oldKey])
@@ -48,7 +56,6 @@ function save(family: Family, custom: FamilyCustom) {
     if (Object.keys(custom.params).length || custom.palette) localStorage.setItem(knobsKey(family), JSON.stringify(custom))
     else localStorage.removeItem(knobsKey(family))
   } catch { /* 存储不可用时本次会话内仍生效。 */ }
-  listeners.forEach(listener => listener(family))
 }
 
 /** 写入该大类动过的参数 token，返回写入的 token 名供调用方记账清理。 */
@@ -102,5 +109,4 @@ export function clearFamilyPalette(family: Family) {
 
 export function resetFamilyCustom(family: Family) {
   try { localStorage.removeItem(knobsKey(family)) } catch { /* 忽略：内联 token 由 applyTheme 清理。 */ }
-  listeners.forEach(listener => listener(family))
 }

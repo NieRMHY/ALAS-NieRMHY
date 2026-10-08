@@ -30,9 +30,16 @@ class MeowfficerTargetZoneMixin:
     def _meow_target_zone_tokens(self):
         """解析耄耋相接指定海域输入，保留原始顺序用于后续校验。
 
+        智能调度月末清理代跑时经 ``_meow_target_zone_override`` 传入调度层
+        已解析好的单个海域，直接覆盖用户配置的指定海域。
+
         Returns:
             list[str | int]: 分割后的海域标识字符串或整数列表。
         """
+        override = getattr(self, '_meow_target_zone_override', None)
+        if override is not None:
+            return [override.zone_id]
+
         target_zone = self.config.OpsiMeowfficerFarming_TargetZone
         if target_zone is None:
             return []
@@ -261,18 +268,31 @@ class OpsiMeowfficerFarming(MeowfficerTargetZoneMixin, CoinTaskMixin, OSMap):
         self._meow_record_akashi_if_solved()
         self.config.check_task_switch()
 
-    def _meow_handle_stay_in_zone(self, zone):
+    def _meow_handle_stay_in_zone(self, zone, fresh_ap=None):
         """处理驻留指定海域的连续循环搜索流程。
 
         Args:
             zone (Zone): 目标海域对象。
+            fresh_ap (tuple[int, int] | None): 调用方刚读到的
+                (总行动力, 当前行动力)，开工检查足够时复用它跳过弹窗。
         """
         logger.hr(f'大世界-耄耋相接（指定海域循环）, zone_id={zone.zone_id}', level=1)
         self.get_current_zone()
         if self.zone.zone_id != zone.zone_id or not self.is_zone_name_hidden:
             self.globe_goto(zone, types='SAFE', refresh=True)
+            # 换海域会消耗行动力，开工检查必须重新读取。
+            fresh_ap = None
 
-        self.action_point_set(cost=120, keep_current_ap=True, check_rest_ap=True)
+        # 智能调度代跑时决策读刚读过行动力：达到开工线时弹窗只会
+        # 读数再关掉，复用它跳过；不足 120 时仍需弹窗开箱/购买。
+        if self.action_point_reusable(fresh_ap, cost=120):
+            _fresh_total, _fresh_current = fresh_ap
+            logger.info(
+                f'[大世界-耄耋相接] 复用刚读到的行动力'
+                f'(当前={_fresh_current}, 总={_fresh_total})，跳过行动点弹窗'
+            )
+        else:
+            self.action_point_set(cost=120, keep_current_ap=True, check_rest_ap=True)
         self.fleet_set(self.config.OpsiFleet_Fleet)
         self.os_order_execute(recon_scan=False, submarine_call=self.config.OpsiFleet_Submarine)
 
@@ -435,7 +455,7 @@ class OpsiMeowfficerFarming(MeowfficerTargetZoneMixin, CoinTaskMixin, OSMap):
                 self.config.task_stop()
 
         if self.is_in_opsi_explore():
-            logger.warning(f'[大世界-耄耋相接] 每月开荒+正在运行，无法执行 {self.config.task.command}')
+            logger.warning(f'[大世界-耄耋相接] 每月开荒正在运行，无法执行 {self.config.task.command}')
             self.delay_opsi_active_task(server_update=True)
             self.config.task_stop()
 
@@ -443,6 +463,7 @@ class OpsiMeowfficerFarming(MeowfficerTargetZoneMixin, CoinTaskMixin, OSMap):
             self._meow_target_checked = True
             if self.config.SERVER in ['cn', 'jp']:
                 if hasattr(self, '_os_target'):
+                    self._close_scheduling_action_point()
                     self._os_target()
             else:
                 logger.info(f'服务器 {self.config.SERVER} 暂不支持海域成就，请联系开发者')
@@ -474,13 +495,16 @@ class OpsiMeowfficerFarming(MeowfficerTargetZoneMixin, CoinTaskMixin, OSMap):
                 prepared=True,
             )
 
-    def run_meowfficer_farming_once(self, ap_preserve=None, ap_checked=False, prepared=False):
+    def run_meowfficer_farming_once(self, ap_preserve=None, ap_checked=False, prepared=False, fresh_ap=None):
         """执行单轮耄耋相接任务。
 
         Args:
             ap_preserve (int | None): 行动力保留值。
             ap_checked (bool): 是否已完成本轮前的行动力检查。
             prepared (bool): 是否已完成运行环境准备。
+            fresh_ap (tuple[int, int] | None): 调用方刚读到的
+                (总行动力, 当前行动力)；仅在读数与本次调用之间没有任何
+                行动力消耗时传入（智能调度决策读），供开工检查复用。
 
         Returns:
             bool: 最新的行动力检查状态标志。
@@ -498,7 +522,20 @@ class OpsiMeowfficerFarming(MeowfficerTargetZoneMixin, CoinTaskMixin, OSMap):
             if preserve is None:
                 return ap_checked
 
+        if not ap_checked:
+            self._close_scheduling_action_point()
         ap_checked = self._meow_ap_check(preserve, ap_checked)
+
+        if getattr(self, '_scheduling_ap_panel_open', False):
+            target_zones = getattr(self, '_meow_target_zone_list', [])
+            if self.config.OpsiMeowfficerFarming_StayInZone and len(target_zones) == 1 \
+                    and getattr(getattr(self, 'zone', None), 'zone_id', None) == target_zones[0].zone_id \
+                    and self.is_zone_name_hidden:
+                # 已在单个指定安全海域时，首读面板可直接完成本轮开工补充。
+                fresh_ap = self._prepare_scheduling_action_point(fresh_ap, cost=120)
+            else:
+                # 换图、多海域或传统模式先关闭面板，沿各自的进入海域流程补充。
+                self._close_scheduling_action_point()
 
         # ===== 传统目标海域模式 =====
         traditional_zone = getattr(self, '_meow_traditional_zone', None)
@@ -512,7 +549,7 @@ class OpsiMeowfficerFarming(MeowfficerTargetZoneMixin, CoinTaskMixin, OSMap):
             zone, _ = self._meow_target_zone_at(target_zones, getattr(self, '_meow_target_zone_index', 0))
             self._meow_target_zone_index = getattr(self, '_meow_target_zone_index', 0) + 1
             if len(target_zones) == 1:
-                self._meow_handle_stay_in_zone(zone)
+                self._meow_handle_stay_in_zone(zone, fresh_ap=fresh_ap)
             else:
                 self._meow_handle_target_zone_search(zone)
             return ap_checked

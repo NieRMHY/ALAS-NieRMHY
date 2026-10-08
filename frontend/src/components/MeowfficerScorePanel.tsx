@@ -158,7 +158,7 @@ export function MeowfficerScoreList({report}: {report: MeowfficerScoreReport}) {
 }
 
 /**
- * 「工具Plus → 指挥喵评分」的结果面板。
+ * 「工具 → 指挥喵评分」的结果面板。
  *
  * 报告按机器共享一份，未跑过任务时后端返回 NOT_FOUND，这里显示空状态而不是错误。
  */
@@ -193,10 +193,8 @@ export function MeowfficerScorePanel({instance}: {instance: string}) {
     setRevision(value => value + 1)
   }
 
-  // 自动刷新：报告是任务**结束时**一次性写入的，所以轮询能及时接住扫描完成，
-  // 不用再手动点「刷新」。只在页面可见时轮询，并且**只有数据真的变了才更新**，
-  // 避免每次轮询都重渲染、也不会把正在看的展开状态冲掉。
-  // 后端读的是本地 JSON，成本很低。
+  // 报告在任务结束时一次性写入，轮询能接住扫描完成；后端读本地 JSON，成本很低。
+  // 只在页面可见时轮询，且仅数据变化才更新 state——避免每次轮询重渲染、冲掉展开状态。
   useEffect(() => {
     if (connection !== 'ready') return
     const timer = setInterval(() => {
@@ -235,7 +233,7 @@ export function MeowfficerScorePanel({instance}: {instance: string}) {
       <div><PawPrint size={18}/><h2>{ui('meow.title')}</h2></div>
       <div className="meow-panel-actions">
         {report && <span className="meow-summary">{ui('meow.summary', {count: report.cats.length, time: report.generatedAt || '—'})}</span>}
-        {/* HTML 报告与面板读的是同一份产物，有数据即存在；新开标签页避免离开当前配置页。 */}
+        {/* HTML 报告与面板读的是同一份产物，有数据即存在。 */}
         {!!report?.cats.length && <a className="button secondary" href="/reports/meowfficer_score" target="_blank" rel="noopener noreferrer">
           <FileText size={15}/>{ui('meow.openReport')}
         </a>}

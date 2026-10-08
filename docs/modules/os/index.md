@@ -1,17 +1,17 @@
 # 大世界核心 module/os
 
-> Operation Siren（大世界）的任务编排与地图引擎：球面/海域双视图导航、行动力与硬币经济、智能调度+ 的统一实现。
+> Operation Siren（大世界）的任务编排与地图引擎：球面/海域双视图导航、行动力与硬币经济、智能调度的统一实现。
 
 ## 1. 模块概述
 
 大世界是碧蓝航线中的开放世界模式：一张由约 22 个区域组成的全球地图（globe），每个区域是一张独立的网格海域（map）。它在技术上同时具备两套系统的复杂度——既要像战役模块那样做网格地图识别与舰队行走，又要管理一套独有的资源系统（行动力 AP、黄币/紫币、侵蚀等级、隐秘/深渊/要塞等特殊海域），还要应对每月重置带来的周期性任务循环。
 
-`module/os` 是这套机制的核心：它把「海域地图」与「球面地图」统一成一个可编程的导航空间（`globe_goto(zone)` 即可跨区域移动），把行动力/硬币的检查、购买、保留策略收敛到 `ActionPointHandler` 与 `CoinTaskMixin`，并实现了一个面向 7×24 运行的任务协调器——**智能调度+**（`OpsiScheduling`）：黄币不足时代理执行补币任务、行动力接近上限时提前消耗、月末清理行动力，全部在一个决策循环里完成。
+`module/os` 是这套机制的核心：它把「海域地图」与「球面地图」统一成一个可编程的导航空间（`globe_goto(zone)` 即可跨区域移动），把行动力/硬币的检查、购买、保留策略收敛到 `ActionPointHandler` 与 `CoinTaskMixin`，并实现了一个面向 7×24 运行的任务协调器——**智能调度**（`OpsiScheduling`）：黄币不足时代理执行补币任务、行动力接近上限时提前消耗、月末清理行动力，全部在一个决策循环里完成。
 
 架构上有三个显著特征：
 
 - **浅包深链**。`module/os` 顶层文件各自是一个能力层（相机、球面、舰队、雷达），通过多继承组合成 `OSMap`；17 个具体玩法任务放在 `tasks/` 子目录，全部继承 `OSMap` 获得完整导航能力。
-- **一切任务可被代理**。任意 os 任务都能以 `opsi_task_context` 临时身份由 `OpsiScheduling`（或防溢出任务）代跑一轮，配置归属与统计数据仍记到子任务名下——这是智能调度+ 能统一「侵蚀 1 练级、耄耋相接、隐秘海域……」而不破坏各自调度记录的机制基础。
+- **一切任务可被代理**。任意 os 任务都能以 `opsi_task_context` 临时身份由 `OpsiScheduling`（或防溢出任务）代跑一轮，配置归属与统计数据仍记到子任务名下——这是智能调度能统一「侵蚀 1 练级、耄耋相接、隐秘海域……」而不破坏各自调度记录的机制基础。
 - **与战役模块共享底座**。`OSMap` 继承 `Map`（寻路）与 `Combat`（战斗），用 `OSGrid` 替换感知格子、用固定单应性参数替代动态标定，因此地图/战斗系统的改进自动惠及大世界。
 
 ## 2. 模块职责
@@ -24,7 +24,7 @@
 - 舰队维护：血量监控与撤退判定、港口修理 `fleet_repair`、士气恢复、EMP 处理、`limit_walk` 曼哈顿步数约束。
 - 行动力（AP）机制：检查、油箱购买、`ActionPointLimit` 语义、自然恢复防溢出。
 - 黄币/紫币读取与保留策略（`CoinTaskMixin`），补黄币任务的选派与代理执行。
-- 智能调度+ `OpsiScheduling`：决策循环、月末清理、代理上下文 `task_context`。
+- 智能调度 `OpsiScheduling`：决策循环、月末清理、代理上下文 `task_context`。
 - 17 个玩法任务的编排：日常、商店、兑换、耄耋相接、侵蚀 1 练级、隐秘、深渊、要塞、档案、月度 Boss、每月开荒、跨月重置等。
 
 ### 不负责
@@ -75,7 +75,7 @@ module/os/
 | --- | --- | --- |
 | `OperationSiren`（组合类） | —— | 全部 `Opsi*` 能力的汇聚点，仅用于类型组合与少量通用方法（海域成就、`os_daily` 收尾） |
 | `OSMap.os_init()` | 全部任务前置 | 进入海域、识别区域、决定首次自律寻敌 |
-| `OpsiScheduling.run_smart_scheduling()` | OpsiScheduling | 智能调度+ 主循环（while + `check_task_switch`） |
+| `OpsiScheduling.run_smart_scheduling()` | OpsiScheduling | 智能调度主循环（while + `check_task_switch`） |
 | `OpsiHazard1Leveling.run_hazard1_leveling()` | OpsiHazard1Leveling | 侵蚀 1 练级（while + 单轮方法） |
 | `OpsiPreventActionPointOverflow.run_prevent_action_point_overflow()` | OpsiPreventActionPointOverflow | 行动力防溢出 |
 | `OpsiDaily.os_daily()` 等 `os_*` 方法 | 各玩法任务 | 一轮执行后按各自规则 `task_delay` |
@@ -112,12 +112,12 @@ flowchart BT
 
 | 文件 | 类 | 入口方法 | 一句话职责 |
 | --- | --- | --- | --- |
-| `scheduling.py` | `OpsiScheduling(CoinTaskMixin, OSMap)` | `run_smart_scheduling` | 智能调度+：黄币/AP 决策与子任务代理 |
+| `scheduling.py` | `OpsiScheduling(CoinTaskMixin, OSMap)` | `run_smart_scheduling` | 智能调度：黄币/AP 决策与子任务代理 |
 | `coin_task_mixin.py` | `CoinTaskMixin` | —— | 补黄币任务的公共逻辑（阈值/通知/选派/月末清理） |
 | `prevent_action_point_overflow.py` | `OpsiPreventActionPointOverflow(OpsiScheduling)` | `run_prevent_action_point_overflow` | 防行动力自然恢复溢出（每 600 秒 1 点，上限 200） |
 | `hazard_leveling.py` | `OpsiHazard1Leveling` | `os_hazard1_leveling` / `run_hazard1_leveling_once` / `os_check_leveling` | 侵蚀 1 练级（120 AP 一轮）与练度检查 |
 | `meowfficer_farming.py` | `OpsiMeowfficerFarming` | `run_meowfficer_farming(_once)` | 耄耋相接（指挥喵刷黄币，多种目标海域模式） |
-| `daily.py` | `OpsiDaily` | `os_daily` | 大世界日常+：接任务→完成→领成就 |
+| `daily.py` | `OpsiDaily` | `os_daily` | 大世界日常：接任务→完成→领成就 |
 | `shop.py` | `OpsiShop` | `os_shop` / `perform_port_shop_purchase` | 港口商店扫货（购买流程供智能调度复用） |
 | `voucher.py` | `OpsiVoucher` | `os_voucher` | 白票兑换商店 |
 | `obscure.py` | `OpsiObscure` | `os_obscure` | 隐秘海域坐标使用与清理 |
@@ -125,18 +125,21 @@ flowchart BT
 | `stronghold.py` | `OpsiStronghold` | `os_stronghold` / `run_stronghold` | 塞壬要塞（双舰队/潜艇配合攻坚） |
 | `archive.py` | `OpsiArchive` | `os_archive` | 档案坐标购买与清理（延迟到周三） |
 | `month_boss.py` | `OpsiMonthBoss` | `clear_month_boss` | 月度 Boss（适应性预检查 203/203/156） |
-| `explore.py` | `OpsiExplore` | `os_explore` | 每月开荒+（逐区解锁，失败重试后抛 `GameStuckError`） |
-| `cross_month.py` | `OpsiCrossMonth` | `os_cross_month(_end)` | 等到重置前 10 分钟抢清每日+ |
+| `explore.py` | `OpsiExplore` | `os_explore` | 每月开荒（逐区解锁，失败重试后抛 `GameStuckError`） |
+| `explore_cleanup.py` | `OpsiExploreCleanup` | `os_explore_cleanup` | 普通海域事件补扫（开荒完成后按原顺序补查，使用独立月度断点） |
+| `cross_month.py` | `OpsiCrossMonth` | `os_cross_month(_end)` | 等到重置前 10 分钟抢清每日 |
 | `fleet_auto_change.py` | `OpsiFleetAutoChange` | `run()` | 练级队列轮换舰队 |
 | `task_context.py` | 上下文管理器 | —— | 代理任务的临时身份与延迟请求（见下） |
 
-### 智能调度+ 的身份机制（tasks/task_context.py）
+### 智能调度的身份机制（tasks/task_context.py）
 
 代理执行的核心问题：`OpsiScheduling` 以自己的配置身份跑 `OpsiHazard1Leveling` 的逻辑时，「当前任务是谁」必须临时换成子任务，否则延迟、统计、日志都记错账。`opsi_task_context` 用一组临时属性完成这件事：
 
 - `config.task` 换成子任务的 `Function`，`config.bind(task_name)` 重新绑定读取路径；
 - `_bind_task_override` 记录代理身份（`OSStatus.is_running_cl1_leveling` 等据此判断）；
+- `_task_switch_owner` 保持最外层调度任务身份，嵌套代理不会误判切换；`OpsiTaskContext.parent_task` 记录直接代理来源，用于区分直接防溢出与嵌套智能调度；
 - `_temporary_attributes` 精确恢复属性的三种先前状态（缺失 / None / 原值），不把三者混为一谈；
+- 子任务的强制配置覆盖在代理结束后恢复，包括地图检测、潜艇配置和调度覆盖；持久化进度与统计仍保留；
 - 防溢出任务代理时通过 `prevent_overflow_context` 共享一个 `OverflowDelay` 容器，子任务在代理上下文里申请的 `task_delay` 不立即生效，退出本轮后由防溢出任务统一改写到自己头上。
 
 ### 行动力与硬币机制
@@ -153,11 +156,20 @@ flowchart BT
 - `GlobeCamera.globe_update()` 保证进入球面视图并加载 `GlobeDetection`（模板匹配 + 单应性定位相机在全球地图上的位置），`globe_focus_to(zone)` 拖动球面对准目标区，`zone_type_select` 按类型顺序择优进入。
 - `OSCamera._view_init()` 直接注入固定标定参数 `load_homography(storage=...)`——大世界 45° 恒定俯视使标定可硬编码，普通地图则需现场标定。
 
+### 每日任务的未开荒海域处理
+
+- `OpsiDaily` 在委托进图或刷新当前委托海域时，若抛出 `OSExploreError`，取消选中海域并返回原海域，仅延期该目标海域的委托，继续执行其余每日委托。隐藏配置 `OpsiDaily.OpsiDaily.DeferredMissions` 保存海域编号和下次服务器日更时间；当天重跑跳过这些目标海域，次日刷新后重新尝试，仍无法进入就再延期。游戏内委托保持未完成，不修改整个每日任务的调度时间。
+- 延期委托仍留在游戏列表中，选择器跳过本轮已处理的延期行；领取完成奖励后重置行号，避免列表前移误跳过其他委托。延期行占满一页时滚动查找后续任务，以截图确认滚动位置；只剩延期委托且接取队列已满时结束接取循环。其余委托执行后，每日任务仍按原有逻辑收尾并 `task_delay(server_update=True)`。保留任务海域清理遇到同类进图失败时保留该海域记录并继续清理其他海域。
+- 只捕获进图锁定/无法进入异常；行动力不足、识别异常和恢复导航失败仍走原有上层处理。档案、月度 Boss、跨月与开荒任务复用每日委托处理方法时，不获得这个延期分支。
+- 当前任务为 `OpsiDaily`、海域不是港口/安全海域/特殊海域，且两种开荒都未完成时，在初始化首次自律和任务海域自律前检查空域侦察。复用 `os_order_execute(recon_scan=True)` → `order_execute(ORDER_SCAN)` 的截图状态循环，可用按钮才点击，灰显时退出指令面板；已开荒普通海域不额外执行侦察。
+- 完成状态不依赖任务开关：每月开荒复用 `monthly_explore_complete()` 的本月 100% 判定；智能开荒读取 `OpsiScheduling.Storage.Storage.SmartExplore`，本月 `cleanup` / `done` 表示路线已完成。旧月份或缺少月份的进度不能跳过侦察检查，不改写开荒断点。
+- 离线回归见 `tests/test_opsi_daily.py`，覆盖逐条延期后继续其他委托、次日重试、任务列表前移与滚动、亮/灰按钮、初始化与任务进图顺序，以及其他任务和异常的隔离。
+
 ### `OSMap` 关键方法
 
 | 方法 | 说明 |
 | --- | --- |
-| `os_init()` | 所有任务的前置：强制潜艇每战出击、禁剧情跳过 → 进入海域 → `zone_init`/`hp_reset` → 从特殊海域退出 → 按任务身份决定是否 `run_first_auto_search()`（智能调度+ 会把该决策延后到决策点） |
+| `os_init()` | 所有任务的前置：强制潜艇每战出击、覆盖通用剧情配置（大世界处理器局部使用 SKIP）→ 进入海域 → `zone_init`/`hp_reset` → 从特殊海域退出 → 按任务身份决定是否 `run_first_auto_search()`（智能调度会把该决策延后到决策点） |
 | `globe_goto(zone, types, refresh, stop_if_safe)` | 跨海域导航的标准路径：特殊海域先退出 → 海域图进球面 → 聚焦/类型选择/进入 → `zone_init` |
 | `os_map_goto_globe()` | 包装重试 3 次：`RewardUncollectedError`（探索奖励未领不能离开海域）时先 `run_auto_search(rescan=True, after_auto_search=False)` 再试；禁用 after_auto_search 防止递归退出海域 |
 | `run_auto_search(question, rescan, after_auto_search, interrupt)` | 自律寻敌主循环：drop 统计上下文内跑战斗、清问号、按 `rescan` 重扫（`current`/`full`），特殊任务可整体关闭 |
@@ -181,25 +193,29 @@ flowchart TD
     C -. ActionPointLimit .-> I[opsi_task_delay 按恢复时间延迟全部 AP 任务]
 ```
 
-### 智能调度+ 决策循环
+### 智能调度决策循环
+
+完整决策图、配置来源与数值示例见[智能调度流程图](scheduling-flowchart.md)，用于核对两种调度模式、月末清理和防溢出代理的实际行为。
 
 `run_smart_scheduling()` = `while True: run_smart_scheduling_once(); check_task_switch()`。单轮决策优先级：
 
 1. **开荒拦截**：`is_in_opsi_explore()`（OpsiExplore 已启用且 next_run 早于重置前 12 小时）→ 延迟到服务器刷新。
-2. **月末清理**（若启用）：总行动力高于保留值时先清行动力；月底最后一天行动力不足则 2 小时后重查。
-3. **黄币判定**：黄币低于保留值或补币态激活 → 走补币分支（`_dispatch_coin_task` 代理执行一轮补币任务）；黄币充足 → 恢复侵蚀 1 练级（CL1）。
-4. **AP 判定**：总行动力低于 CL1 保留 → 考虑执行耄耋相接或按恢复时间延迟；触发阈值通知。
-5. 无事可做 → `task_delay` 到行动力恢复时间或服务器刷新。
+2. **月末清理**（若启用）：各子任务使用月末行动力保留值，子任务之间重新读取行动力；达到保留线后停止清理及普通调度。月底最后一天 2 小时后重查，其余日期延迟到服务器刷新；首次要塞检查按大世界重置周期记录。短猫轮次可经「月末清理耄耋相接海域」指定单个海域作战，填 0、留空或填多个/无效海域时跟随短猫自身设置。
+3. **黄币判定**：两种模式均读取智能调度自身的黄币保留值；黄币目标调度补到「保留值 + 回补阈值」后返回侵蚀 1，体力调度补到行动力保留线后结束补币，黄币仍不足则延期。`_dispatch_coin_task` 每次代理执行一轮补币任务。
+4. **AP 判定**：总行动力达到 CL1 保留线时发送通知并延迟到服务器刷新；补币行动力不足时，普通智能调度同样延期，防溢出代理可改为清理当前真实行动力。
+5. 启用的补币任务均无内容或仍在推迟检查期间 → 延迟到服务器刷新并结束本轮。
 
 代理执行用 `_run_with_opsi_task_context(任务名, 函数)`：临时换身份 → 调用子任务的 `run_*_once` → 恢复身份。`ActionPointLimit` 在代理层被翻译为「达到保留值，正常返回」。
 
+智能调度决策首读暂留行动力面板，确定子任务后才关闭或补充。侵蚀 1 绑定自身配置及保留值后，在同一面板完成开工准备；耄耋相接仅在已处于单个指定安全海域时合并补充。低行动力可直接沿用首读，不再关闭后重新打开、重复读取；开箱或购买后的实际读数仍刷新，并通过 `fresh_ap` 传给子任务。侵蚀 1 当前行动力达到 100、短猫达到 120 时不开箱。练度检查、海域成就、开荒、换图等地图操作先关闭面板，任务提前结束也会关闭；卡死异常交给原恢复机制。月末清理的跨任务读取保持独立。
+
 ### 防溢出任务（OpsiPreventActionPointOverflow）
 
-继承 `OpsiScheduling` 但方向相反：它自己不消耗行动力，而是**在其他任务运行时被临时关闭**（`os_run.py` 的 guard：`cross_set` 关 Enable → 运行任务 → finally 里按当前 AP 重算下次运行时间并重新启用）。它自身运行时按「距上限的分钟数 = (上限 − 当前 AP) × 600 秒」排期，到达上限后以当前真实 AP 代跑一轮目标任务（智能调度+ / 侵蚀 1 / 耄耋相接），把行动力压到下限。代理上下文里的 `TaskEnd` 延迟请求会被截获改写到防溢出任务自身，保证子任务的延迟意图不丢失。
+继承 `OpsiScheduling` 但方向相反：它自己不消耗行动力，而是**在其他任务运行时被临时关闭**（`os_run.py` 的 guard：`cross_set` 关 Enable → 运行任务 → finally 里按当前 AP 重算下次运行时间并重新启用）。它自身运行时按「距上限的分钟数 = (上限 − 当前 AP) × 600 秒」排期，到达上限后以当前真实 AP 代跑一轮目标任务（智能调度/ 侵蚀 1 / 耄耋相接），把行动力压到下限。代理上下文里的 `TaskEnd` 延迟请求会被截获改写到防溢出任务自身，保证子任务的延迟意图不丢失。
 
 ### 跨月重置
 
-`os_cross_month` 在重置前 ≤10 分钟进入等待循环（分段 sleep，最长 60 秒/次，不用状态循环禁令例外——这里确实没有画面可判断），重置后以 `is_in_opsi_explore = false_func` 覆盖探索判断、强制开随机事件，抢在月度成就结算前清完每日+。失败兜底 `os_cross_month_end` 延迟到下次重置前 10 分钟。
+`os_cross_month` 在重置前 ≤10 分钟进入等待循环（分段 sleep，最长 60 秒/次，不用状态循环禁令例外——这里确实没有画面可判断），重置后以 `is_in_opsi_explore = false_func` 覆盖探索判断、强制开随机事件，抢在月度成就结算前清完每日。失败兜底 `os_cross_month_end` 延迟到下次重置前 10 分钟。
 
 ## 7. 调用关系
 
@@ -226,19 +242,19 @@ flowchart TD
 ```
 配置（Opsi* 组） ──os_init override──▶ 运行参数（潜艇/剧情/保留值）
 截图 ──OSGrid/雷达──▶ 海域格子状态 ──策略──▶ 点击/战斗
-OCR：行动力面板 / 黄币 / 紫币 ──▶ 决策（智能调度+ 状态机）
+OCR：行动力面板 / 黄币 / 紫币 ──▶ 决策（智能调度状态机）
 代理上下文：子任务身份 + 延迟请求容器 ──▶ 退出时代理方统一提交 task_delay
 掉落截图 ──stat.new（记录方式按任务取自 DropRecord.Opsi*）──▶ 存图 / 掉落统计解析（除侵蚀1外都入库）
 ```
 
-智能调度+ 的核心数据是三个数：黄币（OCR 双读确认）、总行动力/当前行动力（行动力面板安全读取）、各保留值（配置）。所有分支都由这三个数与时间阈值推导。
+智能调度的核心数据是三个数：黄币（OCR 双读确认）、总行动力/当前行动力（行动力面板安全读取）、各保留值（配置）。所有分支都由这三个数与时间阈值推导。
 
 ## 10. 配置
 
 | 配置组 | 关键项 | 说明 |
 | --- | --- | --- |
 | `OpsiGeneral.*` | `DoRandomMapEvent`、`UseLogger`、`BuyActionPointLimit` | 随机事件、日志仪、月度购买上限等通用行为 |
-| `OpsiScheduling.*` | `Scheduler.Enable`、黄币保留、行动力保留、通知阈值 | 智能调度+ 开关与决策参数 |
+| `OpsiScheduling.*` | `Scheduler.Enable`、黄币保留、行动力保留、通知阈值 | 智能调度开关与决策参数 |
 | `OpsiHazard1Leveling.*` | `TargetZone`（0/44/22）、`MinimumActionPointReserve` | 侵蚀 1 目标海域与保留 |
 | `OpsiMeowfficerFarming.*` | `StayInZone` 等 | 耄耋相接模式 |
 | `OpsiPreventActionPointOverflow.*` | `Task`（OpsiScheduling/OpsiHazard1Leveling/OpsiMeowfficerFarming）、上下限 | 防溢出目标任务与阈值（上限 ≤200） |
@@ -255,8 +271,8 @@ OCR：行动力面板 / 黄币 / 紫币 ──▶ 决策（智能调度+ 状态�
 | 异常 | 原因 | 处理 |
 | --- | --- | --- |
 | `ActionPointLimit`（os_handler） | 行动力不足以进入目标海域/开箱会溢出 | 任务入口捕获 → `delay_opsi_tasks_after_ap_limit` 按恢复分钟数批量延迟全部 AP 任务；CL1/跨月有专门分支 |
-| `TaskEnd` | 子任务在代理上下文中主动结束 | 防溢出任务截获延迟请求改写归属后重抛；智能调度+ 用它实现一轮一决策 |
-| `OSExploreError` | 海域被锁定（探索未完成） | `os_explore` 回 NY 重试，两次失败升格 `GameStuckError` |
+| `TaskEnd` | 子任务在代理上下文中主动结束 | 防溢出任务截获延迟请求改写归属后重抛；智能调度用它实现一轮一决策 |
+| `OSExploreError` | 海域被锁定（探索未完成）或无法进入 | `OpsiDaily` 仅延期对应海域的委托并继续其余委托，次日日更后重试；`os_explore` 回 NY 重试，两次失败升格 `GameStuckError` |
 | `RewardUncollectedError` | 海域内有未领奖励无法离开 | `os_map_goto_globe` 包装先补自律寻敌再重试（3 次上限） |
 | `MapWalkError` | 走格超步/被挡 | `port_goto` 包装换港口绕行重试 |
 | `GameTooManyClickError` / `GameStuckError` | 底层死循环保护 | 上抛调度器恢复；敏感任务（Sensitive: true）直接停机等待人工 |
@@ -272,7 +288,10 @@ OCR：行动力面板 / 黄币 / 紫币 ──▶ 决策（智能调度+ 状态�
 
 ## 13. 缓存与持久化
 
-- 进度状态全部持久化在配置文件：`OpsiExplore_LastZone`、智能调度+ 的状态键（`_get_smart_scheduling_state_value`，存于配置而非内存，防进程重启丢账）、各任务 `NextRun/LastRun`。
+- 进度状态全部持久化在配置文件：`OpsiExplore_LastZone`、`OpsiExploreCleanup_State`、智能调度的状态键（`_get_smart_scheduling_state_value`，存于配置而非内存，防进程重启丢账）、各任务 `NextRun/LastRun`。
+- “普通海域事件补扫”是独立任务 `OpsiExploreCleanup`，使用自己的 `Scheduler.Enable`、`Progress` 和 `State`。初始化游戏前检查 `OpsiExplore.ExploreProgress` 是否为 `已完成百分之100.00`，已有开荒月度标记时还检查月份，避免沿用上月完成状态；不满足则提示重新运行每月开荒并延期。每月开荒完成后只唤起已启用的补扫任务，不在开荒任务内部执行补扫。
+- 补扫按原开荒顺序严格进入普通海域（`DANGEROUS`），不选择或刷新安全海域（`SAFE`）。每张图先全图识别，再处理地图事件并逐队检查雷达；找到一种事件后仍检查其他舰队。沿用现有事件及战斗逻辑，不使用侵蚀一的固定坐标挪队。进入同一海域也重新确认类型，不把“当前海域相同”当作已经进入目标地图。
+- 补扫状态保存月份、原始顺序、下一海域索引和尝试次数，成功退出当前图才推进断点。重启续扫，本月完成后延迟到下次重置；跨月先清除补扫自己的旧进度。单图三次未完成后请求检查，修复原因后可在停止实例时将 `OpsiExploreCleanup.OpsiExploreCleanup.State.attempts` 改为 `0`。旧开关和旧补扫断点通过配置迁移进入独立任务；开荒自身的月度标记不会被当成补扫进度。
 - `OSStatus._last_yellow_coins` 内存缓存仅作 OCR 失败降级。
 - 代理上下文（`_opsi_task_context`）存活于一次任务调用栈，退出即恢复——它刻意不持久化，防止代理身份泄漏到下一个任务。
 
@@ -292,19 +311,21 @@ OCR：行动力面板 / 黄币 / 紫币 ──▶ 决策（智能调度+ 状态�
 3. `os_run.py` 加 `opsi_xxx()` 入口：套 `_run_opsi_task_with_ap_overflow_guard`，按需捕获 `ActionPointLimit`。
 4. `alas.py` 加同名方法转发；`module/config/argument/` 登记任务与参数并跑 `config_updater`；`default.yaml` 视需要加 `Sensitive: true`。
 
-**给智能调度+ 增加补币任务**：实现 `run_xxx_once(ap_preserve)` 单轮接口，在 `CoinTaskMixin` 的任务表中登记，即可被代理调用（代理执行时不启用子任务自己的调度器）。
+**给智能调度增加补币任务**：实现 `run_xxx_once(ap_preserve)` 单轮接口，在 `CoinTaskMixin` 的任务表中登记，即可被代理调用（代理执行时不启用子任务自己的调度器）。
 
 ## 16. 修改注意事项
 
 - **代理模式的三态恢复不可简化**。`_temporary_attributes` 必须区分「属性原本缺失 / 为 None / 有值」，合并处理会让 `config.task` 等关键属性泄漏，直接破坏下一次任务调度。
 - **防溢出任务与其他任务的互斥靠 guard**。新增 `opsi_*` 入口必须套 `_run_opsi_task_with_ap_overflow_guard`，否则防溢出任务会在运行中被自己的目标任务重入（两者 Enable 互写）。
 - **`is_in_opsi_explore` 是全包的路由闸门**。开荒期间（任务启用且 next_run 早于重置前 12 小时）几乎所有任务都要让路；新任务不要绕过这个检查。跨月任务用 `false_func` 覆盖它是刻意的例外。
-- **`os_init` 的首次自律寻敌是决策点不是固定动作**。智能调度+ 与防溢出代理会把该决策延后（`_smart_scheduling_first_auto_search_pending`），改动 `os_init` 时保持该挂起机制，否则会重复全图扫描浪费 AP。
+- **`os_init` 的首次自律寻敌是决策点不是固定动作**。智能调度与防溢出代理会把该决策延后（`_smart_scheduling_first_auto_search_pending`），改动 `os_init` 时保持该挂起机制，否则会重复全图扫描浪费 AP。
 - **行动力语义分「总/当前」**：决策用总行动力（含箱子），实际进入海域用当前行动力；混用会造成 `ActionPointLimit` 误判或箱子漏开。
+- **行动力读数复用有严格前提**。`fresh_ap` 只允许在「刚读到、且读数与复用点之间没有任何行动力消耗」时传入（智能调度决策首读或同一面板补充后的新读数），且必须保持 `OS_ACTION_POINT_BOX_USE` 含箱口径一致。暂留面板由 `_prepare_scheduling_action_point()` 在子任务配置下处理，只有同口径首读可传 `handle_action_point(skip_first_read=True)`；操作后的确认读数不能省。面板已关闭时，复用判定 `action_point_reusable()` 必须与开弹窗行为等价，不满足则照常 `action_point_set`；短猫换海域后清空旧 `fresh_ap`，独立任务保持原路径。
 - **黄币 OCR 必须双读**。单次读取会拿到弹窗遮挡下的错误值；`get_yellow_coins` 的连续一致确认与缓存回退是有意为之。
 - **敏感任务默认值**：`OpsiCrossMonth/OpsiObscure/OpsiAbyssal` 的 `Sensitive: true` 意味着运行到一半失败会让调度器停机（等待人工），新增高危任务时才追加，勿扩大范围。
 - **月末清理优先于黄币/CL1 调度**。`run_smart_scheduling_once` 的分支顺序是产品行为（月底清 AP 避免浪费），重排决策顺序会改变玩家收益。
 - **`ALREADY_SOLVED_MAP_EVENTS`**（明石/扫描装置/伐木塔）控制重扫的去重；新事件加入前确认它能被 `map_rescan` 处理，否则会无限重扫。
+- **刷图交互确认**：侵蚀 1 与耄耋相接在明石退出商店、首次提交探测资源选项及剧情领奖后，使用 0.8 秒且至少三次检测确认地图稳定；初始行军及信息装置后续剧情仍等待原条件。回到地图后开启自律的重试间隔为 0.5 秒，正常和灰显关闭按钮共用冷却，剧情显示时先处理剧情；其他任务及停止自律仍为 3 秒。每轮正向确认自律已开启后，正常奖励收尾不再重开一次空搜索；未确认开启的旧奖励、META/退役恢复与战后重扫继续执行。所有大世界任务的普通对话都由 `MapEventHandler.story_skip()` 使用快速 SKIP，重要选项仍优先选择。
 
 ## 17. 已知限制
 
@@ -327,7 +348,7 @@ class OpsiExample(OSMap):
         self.config.task_delay(server_update=True)
 ```
 
-代理执行一轮子任务（智能调度+ 视角）：
+代理执行一轮子任务（智能调度视角）：
 
 ```python
 def _proxy(self, task_name):
@@ -339,7 +360,7 @@ def _proxy(self, task_name):
 
 ## 19. 调试方法
 
-- 阶段日志：`大世界初始化`（`os_init`）、`地球仪前往: <zone>`、`[大世界-搜索]`（自律寻敌）、`[大世界-智能调度+]`（每步决策带黄币/AP/保留值数值）。决策异常时先对比这几个数值与配置预期。
+- 阶段日志：`大世界初始化`（`os_init`）、`地球仪前往: <zone>`、`[大世界-搜索]`（自律寻敌）、`[大世界-智能调度]`（每步决策带黄币/AP/保留值数值）。决策异常时先对比这几个数值与配置预期。
 - 单任务调试：仿各文件 `__main__` 块直接构造 `OperationSiren('alas', task='OpsiMonthBoss')` + `merge(OSConfig())` + `os_init()`，无需起调度器。
 - 配置侧：`Scheduler.NextRun` 与 `*.LastRun` 是所有延迟决策的事实来源；「任务不跑」先看这两个值，再查 `is_in_opsi_explore` 拦截与 `Sensitive` 停机日志。
 - 防溢出相关：日志中「临时关闭防止行动力溢出任务」/「按当前行动力更新…」成对出现；只出现前者说明任务异常退出，检查 guard 的 finally 分支日志。

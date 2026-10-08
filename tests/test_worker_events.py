@@ -268,6 +268,7 @@ class TestWorkerEvents(unittest.TestCase):
                       patch.dict("os.environ", {"DEMO": "0"}),
                       patch("module.runtime.process_manager.set_file_logger"),
                       patch("module.runtime.process_manager.set_func_logger"),
+                      patch("module.runtime.process_manager.prepare_statistics"),
                       patch("module.runtime.process_manager.logger"),
                       patch("module.runtime.process_manager.get_available_func", return_value=["Main"])):
                     ProcessManager.run_process("test", "Main", output, event, run_id="run")

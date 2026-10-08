@@ -55,7 +55,7 @@ export function DevControls() {
   const [demoTab, setDemoTab] = useState('resources')
   const [throwing, setThrowing] = useState(false)
   const override = useDevOverride()
-  const motionPrefs = useSyncExternalStore(subscribeMotionPrefs, readMotionPrefs)
+  const motionPrefs = useSyncExternalStore(subscribeMotionPrefs, readMotionPrefs, readMotionPrefs)
   const motionAvailable = theme !== 'minimal' && theme !== 'extreme'
   const statusLabel = override.status ? ui(STATUS_LABELS[override.status]) : ''
 

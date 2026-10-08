@@ -39,14 +39,13 @@ describe('MockInstancePreview (全真模拟实例页预览)', () => {
     expect(html).toContain('settings.inspectorTitle')
     expect(html).toContain('settings.closePreview')
 
-    // 包含 7 大材质区域的调节选单
+    // 包含六个材质区域的调节选单
     expect(html).toContain('settings.regionSurface')
     expect(html).toContain('settings.regionPlate')
-    expect(html).toContain('settings.regionSidebar')
-    expect(html).toContain('settings.regionTopbar')
+    expect(html).toContain('settings.regionInset')
+    expect(html).toContain('settings.regionControl')
     expect(html).toContain('settings.regionModal')
     expect(html).toContain('settings.regionMenu')
-    expect(html).toContain('settings.regionControl')
   })
 
   it('支持传入初始区域', () => {
@@ -68,10 +67,9 @@ describe('MockInstancePreview (全真模拟实例页预览)', () => {
     expect(html).toContain('legacy-shell-preview')
     expect(html).toContain('settings.regionSurface')
     expect(html).toContain('settings.regionPlate')
-    expect(html).toContain('settings.regionSidebar')
-    expect(html).toContain('settings.regionTopbar')
+    expect(html).toContain('settings.regionInset')
+    expect(html).toContain('settings.regionControl')
     expect(html).toContain('settings.regionModal')
     expect(html).toContain('settings.regionMenu')
-    expect(html).toContain('settings.regionControl')
   })
 })

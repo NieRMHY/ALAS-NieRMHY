@@ -8,6 +8,7 @@ import json
 import shutil
 import tempfile
 import unittest
+from tests.opsi_test_support import install_store
 from datetime import datetime, timedelta
 from pathlib import Path
 from unittest.mock import patch
@@ -41,6 +42,7 @@ class BackupTestCase(unittest.TestCase):
         self.backup_root.mkdir()
         self.config_dir = self.root / 'config'
         self.config_dir.mkdir()
+        install_store(self, self.root)
 
         self._patches = [
             patch.object(backup_module, 'BACKUP_ROOT', self.backup_root),
@@ -123,6 +125,24 @@ class BackupSwitchTestCase(BackupTestCase):
 
         self.assertTrue(sentinel.exists(), msg='已存在的今日备份被覆盖')
         self.assertFalse((folder / 'backup_info.json').exists())
+
+    def test_stats_backup_is_a_plain_readable_database(self):
+        from tests.test_opsi_secure import make_cl1_db
+        import sqlite3
+        from contextlib import closing
+        make_cl1_db(self.config_dir / 'cl1_data.db')
+        backup_module.backup(enable=True)
+        path = self.backup_root / self.date_name(0) / 'cl1_data.db'
+        self.assertEqual(path.read_bytes()[:16], b'SQLite format 3\x00')
+        with closing(sqlite3.connect(path)) as conn:
+            row = conn.execute('SELECT data_json FROM cl1_data').fetchone()
+        self.assertIn('akashi_ap_entries', row[0])
+
+    def test_old_stats_backup_expiry_is_removed(self):
+        folder = make_backup_dir(self.backup_root, 30)
+        (folder / 'daily_summary.db').write_bytes(b'old preserved snapshot')
+        backup_module.clean_backup(keep_days=7)
+        self.assertFalse(folder.exists())
 
 
 class BackupCleanupTestCase(BackupTestCase):

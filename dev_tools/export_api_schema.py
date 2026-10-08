@@ -48,7 +48,7 @@ def main():
         lines.append(f'  "{name}": {typescript(schema, schema.get("$defs", {}))}')
     lines.append('}')
     from module.scheduler.models import (ProgramDocument, CardDefinition, PortDefinition, ResourceObservation,
-                                         TaskInvocation, TaskOutcome, ProgramState)
+                                        TaskInvocation, TaskOutcome, ProgramState)
     models = {}
     lines.append('export interface SchedulerModels {')
     for model in (ProgramDocument, CardDefinition, PortDefinition, ResourceObservation, TaskInvocation, TaskOutcome, ProgramState):

@@ -1,0 +1,182 @@
+[
+  {
+    "file": "commission_112.png",
+    "amount": 2,
+    "layout": "popup"
+  },
+  {
+    "file": "commission_161.png",
+    "amount": 71,
+    "layout": "popup"
+  },
+  {
+    "file": "commission_215.png",
+    "amount": 5,
+    "layout": "popup"
+  },
+  {
+    "file": "research_5401.png",
+    "amount": 77,
+    "layout": "popup"
+  },
+  {
+    "file": "research_5510.png",
+    "amount": 3,
+    "layout": "popup"
+  },
+  {
+    "file": "research_6158.png",
+    "amount": 1,
+    "layout": "popup"
+  },
+  {
+    "file": "research_6421.png",
+    "amount": 2,
+    "layout": "popup"
+  },
+  {
+    "file": "research_6448.png",
+    "amount": 5,
+    "layout": "popup"
+  },
+  {
+    "file": "opsi_1692.png",
+    "amount": 14202,
+    "layout": "reward"
+  },
+  {
+    "file": "opsi_2111.png",
+    "amount": 11,
+    "layout": "reward"
+  },
+  {
+    "file": "opsi_2750.png",
+    "amount": 10532,
+    "layout": "reward"
+  },
+  {
+    "file": "opsi_4607.png",
+    "amount": 1,
+    "layout": "popup"
+  },
+  {
+    "file": "opsi_4631.png",
+    "amount": 1,
+    "layout": "popup"
+  },
+  {
+    "file": "research_blueprint_0.png",
+    "amount": 3,
+    "layout": "popup"
+  },
+  {
+    "file": "research_blueprint_1.png",
+    "amount": 3,
+    "layout": "popup"
+  },
+  {
+    "file": "research_blueprint_2.png",
+    "amount": 3,
+    "layout": "popup"
+  },
+  {
+    "file": "research_blueprint_3.png",
+    "amount": 3,
+    "layout": "popup"
+  },
+  {
+    "file": "research_blueprint_4.png",
+    "amount": 3,
+    "layout": "popup"
+  },
+  {
+    "file": "research_blueprint_5.png",
+    "amount": 3,
+    "layout": "popup"
+  },
+  {
+    "file": "research_blueprint_6.png",
+    "amount": 2,
+    "layout": "popup"
+  },
+  {
+    "file": "research_blueprint_7.png",
+    "amount": 2,
+    "layout": "popup"
+  },
+  {
+    "file": "research_blueprint_8.png",
+    "amount": 3,
+    "layout": "popup"
+  },
+  {
+    "file": "research_blueprint_9.png",
+    "amount": 2,
+    "layout": "popup"
+  },
+  {
+    "file": "research_blueprint_10.png",
+    "amount": 1,
+    "layout": "popup"
+  },
+  {
+    "file": "research_blueprint_11.png",
+    "amount": 1,
+    "layout": "popup"
+  },
+  {
+    "file": "research_core_2.png",
+    "amount": 8,
+    "layout": "popup"
+  },
+  {
+    "file": "research_core_3.png",
+    "amount": 8,
+    "layout": "popup"
+  },
+  {
+    "file": "research_core_4.png",
+    "amount": 3,
+    "layout": "popup"
+  },
+  {
+    "file": "research_core_7.png",
+    "amount": 5,
+    "layout": "popup"
+  },
+  {
+    "file": "research_core_8.png",
+    "amount": 5,
+    "layout": "popup"
+  },
+  {
+    "file": "research_core_9.png",
+    "amount": 8,
+    "layout": "popup"
+  },
+  {
+    "file": "opsi_prototype_18.png",
+    "amount": 10,
+    "layout": "reward"
+  },
+  {
+    "file": "opsi_prototype_20.png",
+    "amount": 10,
+    "layout": "reward"
+  },
+  {
+    "file": "opsi_prototype_29.png",
+    "amount": 10,
+    "layout": "reward"
+  },
+  {
+    "file": "research_halford_1.png",
+    "amount": 1,
+    "layout": "popup"
+  },
+  {
+    "file": "opsi_prototype_connected.png",
+    "amount": 10,
+    "layout": "reward"
+  }
+]

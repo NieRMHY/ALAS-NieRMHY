@@ -6,11 +6,7 @@ import { VALID_CATEGORIES, type StatisticsCategory } from './statisticsPrefs'
 
 export type PageId = StatisticsCategory
 
-/**
- * 统计页布局文档：页面顺序与组合、每页卡片顺序与组合、隐藏与折叠的卡片。
- * 文档缺省即上游原版布局，一键还原等于删除存储键。
- */
-/** 整链的落盘键：平时是链首页面，单页视图下是全部启用页面共用的一个键。 */
+/** 卡片顺序、组合链与隐藏名单共用的落盘键：平时是链首页面，单页视图下是全部启用页面共用的一个键。 */
 export type SpaceKey = string
 
 export interface StatisticsLayout {
@@ -35,16 +31,6 @@ export interface StatisticsLayout {
   tables: Record<string, TableDisplay>
   /** 被点掉曲线的资源键，按页记：表头保留该资源，只是不画进图里。 */
   filteredSeries: Partial<Record<PageId, string[]>>
-  views: Partial<Record<PageId, PageView>>
-}
-
-/** 单个页面自己的取数参数；缺项由调用方的默认值补齐。 */
-export interface PageView {
-  days?: number
-  month?: string
-  period?: 'day' | 'week' | 'month'
-  researchSeries?: string
-  lootTask?: string
 }
 
 /** 表格卡每页行数的默认值，也是未设置时的取值。 */
@@ -85,7 +71,6 @@ export function defaultStatisticsLayout(): StatisticsLayout {
     stackedRise: [],
     tables: {},
     filteredSeries: {},
-    views: {},
   }
 }
 
@@ -139,7 +124,6 @@ function normalizeEnabled(value: unknown): Record<PageId, boolean> {
   return enabled as Record<PageId, boolean>
 }
 
-/** 整链键：平时是页面 id，单页视图下是全部启用页面共用的那个键。 */
 function isSpaceKey(key: string): boolean {
   return isPageId(key) || key === SINGLE_VIEW_SPACE
 }
@@ -224,27 +208,7 @@ function normalizeLayout(value: unknown): StatisticsLayout {
     stackedRise: (normalizeKeyList(source.stackedRise) ?? []).filter(isPageId),
     tables: normalizeTables(source.tables),
     filteredSeries: normalizeFilteredSeries(source.filteredSeries),
-    views: normalizeViews(source.views),
   }
-}
-
-/** 逐项校验页面参数；一项类型不符只丢该项，其余保留。 */
-function normalizeViews(value: unknown): Partial<Record<PageId, PageView>> {
-  const source = value && typeof value === 'object' ? (value as Record<string, unknown>) : {}
-  const views: Partial<Record<PageId, PageView>> = {}
-  for (const id of PAGE_IDS) {
-    const entry = source[id]
-    if (!entry || typeof entry !== 'object') continue
-    const raw = entry as Record<string, unknown>
-    const view: PageView = {}
-    if (typeof raw.days === 'number') view.days = raw.days
-    if (typeof raw.month === 'string') view.month = raw.month
-    if (raw.period === 'day' || raw.period === 'week' || raw.period === 'month') view.period = raw.period
-    if (typeof raw.researchSeries === 'string') view.researchSeries = raw.researchSeries
-    if (typeof raw.lootTask === 'string') view.lootTask = raw.lootTask
-    if (Object.keys(view).length) views[id] = view
-  }
-  return views
 }
 
 /** 卡片键带页面前缀，跨页唯一；折叠状态以它为准。 */
@@ -341,10 +305,10 @@ export function unfoldCard(layout: StatisticsLayout, key: string): StatisticsLay
   return isCardFolded(layout, key) ? {...layout, folded: layout.folded.filter(item => item !== key)} : layout
 }
 
-/** 卡片空间的键：组合链内的页面共用一套卡片顺序与连接，取链首页面。 */
 /** 单页视图把全部启用页面当成一条整链，链与顺序表都落在同一个键上；退出单页视图后这个键读不到，等于自动回滚。 */
 export const SINGLE_VIEW_SPACE = 'single'
 
+/** 卡片空间的键：组合链内的页面共用一套卡片顺序与连接，取链首页面。 */
 export function cardSpace(layout: StatisticsLayout, page: PageId): string {
   if (layout.singleView) return SINGLE_VIEW_SPACE
   return layout.pages.find(chain => chain.includes(page))?.[0] ?? page
@@ -408,7 +372,6 @@ export function isLinked(chains: string[][], left: string, right: string): boole
   return chains.some(chain => chain.includes(left) && chain.includes(right))
 }
 
-/** 卡片本身是否是一张表：表卡与图表内置的原始记录表都算。 */
 /** 接上两张相邻卡：两链合并为一，已经同链时原样返回。 */
 export function linkChains(chains: string[][], left: string, right: string): string[][] {
   if (isLinked(chains, left, right)) return chains
@@ -535,26 +498,7 @@ export function isPageEnabled(layout: StatisticsLayout, page: PageId): boolean {
 export function setPageEnabled(layout: StatisticsLayout, page: PageId, enabled: boolean): StatisticsLayout {
   return {...layout, enabled: {...layout.enabled, [page]: enabled}}
 }
-
-/** 页面自己的取数参数；该页面尚未单独设置时用传入的默认值。 */
-export function readPageView(layout: StatisticsLayout, page: PageId, fallback: PageView): PageView {
-  return {...fallback, ...layout.views[page]}
-}
-
-export function writePageView(layout: StatisticsLayout, page: PageId, view: PageView): StatisticsLayout {
-  return {...layout, views: {...layout.views, [page]: view}}
-}
-
-/** 把该页所在的链移到目标位置，越界时贴到首尾。 */
-export function movePage(layout: StatisticsLayout, page: PageId, index: number): StatisticsLayout {
-  const chain = layout.pages.find(item => item.includes(page))
-  if (!chain) return layout
-  const pages = layout.pages.filter(item => item !== chain)
-  pages.splice(Math.max(0, Math.min(index, pages.length)), 0, chain)
-  return {...layout, pages}
-}
-
-/* 按 key 先删后插。 */
+/** 把该页所在的链移到目标页之前或之后，越界时贴到首尾。 */
 export function movePageBeside(layout: StatisticsLayout, page: PageId, target: PageId, after: boolean): StatisticsLayout {
   const chain = layout.pages.find(item => item.includes(page))
   const anchor = layout.pages.find(item => item.includes(target))

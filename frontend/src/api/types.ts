@@ -6,7 +6,7 @@ import type {Catalog, ProgramSaved, ProgramSimulation, ProgramValidation, Runtim
 
 export type Scalar = string | number | boolean | null
 export type Value = Scalar | Value[] | {[key: string]: Value}
-export type Values = Record<string, Record<string, Record<string, Value>>>
+type Values = Record<string, Record<string, Record<string, Value>>>
 export type Status = 'running' | 'stopped' | 'error' | 'updating'
 export interface Instance { name: string; status: Status; serial: string; server: string; currentTask?: string | null }
 export interface UpdateStatus {
@@ -16,16 +16,40 @@ export interface UpdateStatus {
   shaMismatch?: boolean
   managedByAndroid?: boolean
 }
-export interface Commit { sha: string; author: string; date: string; message: string }
+interface Commit { sha: string; author: string; date: string; message: string }
 export interface CommitHistory { entries: Commit[]; total: number; hasMore: boolean; localHead: string | null; upstreamHead: string | null }
 export interface Field { type: string; value: Value; mode?: string; display?: string; option?: Value[]; validate?: string | number[]; preserve_empty?: boolean }
+/** 侧栏内容检索的一条命中：要么是任务名，要么是某个配置项。 */
+export interface SearchContentHit {
+  task: string
+  key: string
+  label: string
+  help: string
+  values: string
+}
+
+export interface SearchContentResult {
+  tasks: SearchContentHit[]
+  options: SearchContentHit[]
+}
+
 export interface Schema {
   menu: Record<string, { menu: string; page: string; tasks: string[] }>
   args: Record<string, Record<string, Record<string, Field>>>
   translations: Record<string, unknown>
 }
 export interface Config { instance: string; revision: string; values: Values }
-export interface ScheduledTask { name: string; nextRun: string; pending: boolean; state: 'running' | 'pending' | 'waiting' }
+export interface OpsiSimulatorResult {
+  cl1Count: number; meowCount: number; crashedProbability: number
+  cl1Time: number; meowTime: number; ap: number; coin: number
+}
+export interface OpsiSimulatorStatus {
+  instance: string; state: 'idle' | 'running' | 'stopping' | 'completed' | 'interrupted' | 'failed'
+  running: boolean; completedSamples: number; totalSamples: number; error: string
+  runId: number
+  result: OpsiSimulatorResult | null; figure: string | null; logs: Logs
+}
+interface ScheduledTask { name: string; nextRun: string; pending: boolean; state: 'running' | 'pending' | 'waiting' }
 export interface Resource { name: string; label: string; value: number | null; limit?: number; total?: number | null; record?: string }
 export interface Overview {
   instance: string; revision: string; status: Status; tasks: ScheduledTask[]
@@ -36,7 +60,12 @@ export interface Logs { instance: string; cursor: number; reset: boolean; entrie
 export interface Preview { instance: string; image: string | null; capturedAt: string | null }
 export interface Statistics { instance: string; resource: string; points: {time: string; value: number}[]; truncated: boolean }
 export interface StatPoint {time: string; value: number; source?: string}
-export interface StatSeries {key: string; label: string; points: StatPoint[]}
+export interface StatSeries {key: string; label: string; icon?: string; points: StatPoint[]}
+export interface StatPointCompact {t: number; v: number; s?: string}
+export interface StatSeriesCompact {key: string; label: string; icon?: string; points: StatPointCompact[]}
+/** 数值按顺序对应报表的共用时间轴。 */
+export interface StatSeriesColumn {key: string; label: string; icon?: string; values: number[]; sources?: string[]}
+export type StatSeriesWire = StatSeriesCompact | StatSeriesColumn
 export interface StatTable {title: string; columns: string[]; rows: Scalar[][]; note?: string; defaultSort?: TableSort}
 export interface TableSort {index: number; descending: boolean}
 export interface StatisticsReport {
@@ -46,6 +75,12 @@ export interface StatisticsReport {
   series: StatSeries[]; tables: StatTable[]; notes: string[]
   /** 大世界掉落专用：任务筛选选项（含当前时间窗口内没有记录的任务），count 表示窗口内掉落记录数。 */
   taskOptions?: {key: string; label: string; count: number}[]
+}
+
+export interface StatisticsReportWire extends Omit<StatisticsReport, 'series'> {
+  /** 共用时间轴（微秒整数）。 */
+  axis?: number[]
+  series: StatSeriesWire[]
 }
 /** 指挥喵评分的单条天赋。`kind` 为 `special`（彩天赋）时高亮，`inferred` 表示这条由识别推断而来。 */
 export interface MeowfficerTalent { name: string; level?: number; kind?: string; inferred?: boolean }
@@ -72,8 +107,8 @@ export interface MeowfficerCat {
 }
 /** 「指挥喵评分」任务写入 log/meowfficer_score.json 的结构化结果，报告不存在时后端返回 NOT_FOUND。 */
 export interface MeowfficerScoreReport { instance: string; generatedAt: string; count: number; cats: MeowfficerCat[] }
-export interface DeployField { key: string; type: string; label: string; help: string; value: Value; options: Value[] }
-export interface RemoteAccessStatus { enabled: boolean; state: string; address: string; error: string }
+interface DeployField { key: string; type: string; label: string; help: string; value: Value; options: Value[] }
+interface RemoteAccessStatus { enabled: boolean; state: string; address: string; error: string }
 export interface Settings { groups: {key: string; label: string; fields: DeployField[]}[]; notice: string; demo: boolean; remote?: RemoteAccessStatus }
 export interface ApiEvent { v: 1; type: 'event'; topic: string; seq: number; data: unknown }
 export interface ApiResponse { v: 1; type: 'response'; id: string; ok: boolean; result?: unknown; error?: {code: string; message: string; details?: unknown} }
@@ -101,7 +136,15 @@ export interface BackgroundGalleryEntry {
 }
 
 export interface Results {
+  'stock.status': StockExchangeStatus
+  'stock.rebuild': StockExchangeRebuild
+  'stock.request': {status:number;data:unknown;etag:string;serverTime:number}
+  'opsi.simulator.status': OpsiSimulatorStatus
+  'opsi.simulator.start': OpsiSimulatorStatus
+  'opsi.simulator.stop': OpsiSimulatorStatus
+  'opsi.simulator.figure': {instance: string; image: string | null}
   'config.export': Values & {_schedulerProgram?: Pick<ProgramSaved, 'mode' | 'draft' | 'active'>}
+  'background.access': {token: string}
   'scheduler.program.catalog': Catalog
   'scheduler.program.get': ProgramSaved
   'scheduler.program.save': ProgramSaved
@@ -111,7 +154,6 @@ export interface Results {
   'scheduler.program.state': RuntimeProgramState
   'accounts.status': AccountStatus
   'accounts.manage': AccountStatus
-  'background.access': {token: string}
   'background.resolve': {final_url: string; content_type: string}
   'background.preference.get': ServerBackgrounds
   'background.preference.set': ServerBackgrounds
@@ -128,6 +170,7 @@ export interface Results {
   'auth.login': {authenticated: boolean}
   'events.subscribe': {topics: string[]; instance: string | null}
   'schema.get': Schema
+  'search.content': SearchContentResult
   'instances.list': Instance[]
   'instances.create': Config
   'instances.importable': Array<{name: string; modified: number}>
@@ -143,7 +186,7 @@ export interface Results {
   'logs.get': Logs
   'preview.capture': Preview
   'statistics.resources': Statistics
-  'statistics.report': StatisticsReport
+  'statistics.report': StatisticsReportWire
   'statistics.refreshLoot': {refreshed: boolean}
   'meowfficer.scoreReport': MeowfficerScoreReport
   'meowfficer.clearReport': {cleared: boolean; removed: string[]}
@@ -152,6 +195,9 @@ export interface Results {
   'startup.get': {enabled: boolean; remember: boolean}
   'startup.set': {enabled: boolean; remember: boolean}
 }
+
+export interface StockExchangeStatus {url: string; instance:string; instanceId:string; bindingKey:string; bound: boolean; boundUsername:string; authenticated:boolean; message: string; lastObservedAt: number; snapshot: {instance: string; actionPoints: number; observedAt: number} | null}
+export interface StockExchangeRebuild {instance:string;scope:'instance'|'all';affectedInstances:string[];rebuilt:boolean}
 
 export interface AccountStatus {
   destroyed?: boolean

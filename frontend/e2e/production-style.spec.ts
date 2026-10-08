@@ -1,5 +1,17 @@
 import { expect, test } from '@playwright/test'
 
+/** 元素实际读到的令牌值：把令牌挂到探针元素上，让浏览器把 var() 解析并归一化成与计算样式同样的写法。 */
+async function resolvedFilter(page: import('@playwright/test').Page, token: string) {
+  return page.evaluate(tokenName => {
+    const probe = document.createElement('div')
+    probe.style.backdropFilter = `var(${tokenName})`
+    document.body.appendChild(probe)
+    const value = getComputedStyle(probe).backdropFilter
+    probe.remove()
+    return value
+  }, token)
+}
+
 test('生产构建保留高斯模糊且资源图标能够解码', async ({page}) => {
   // 使用固定背景隔离外部图片服务，直接验证构建后的浏览器计算样式。
   await page.route('https://api.yppp.net/**', route => route.fulfill({
@@ -8,13 +20,21 @@ test('生产构建保留高斯模糊且资源图标能够解码', async ({page})
   }))
   await page.goto('/#/i/testpilot/overview')
   await expect(page.locator('.instance-page-title h1')).toHaveText('testpilot')
-  for (const selector of ['.sidebar', '.right-rail', '.panel']) {
-    await expect(page.locator(selector).first()).toHaveCSS('backdrop-filter', 'blur(24px) saturate(1.3)')
+  // 断言元素与它该读的令牌一致，而不是把数值写死：调令牌不该让这条用例变红，改错接线才该变红。
+  const expectFilterFrom = async (selector: string, token: string) => {
+    await expect(page.locator(selector).first()).toHaveCSS('backdrop-filter', await resolvedFilter(page, token))
   }
-  // 二级贴片使用独立的较轻滤镜，资源卡不再沿用一级面的默认强度。
-  await expect(page.locator('.resource-card').first()).toHaveCSS('backdrop-filter', 'blur(12px) saturate(1.2)')
-  // 装饰玻璃层仍与一级面保持同一默认强度。
-  await expect(page.locator('.glass-material').first()).toHaveCSS('backdrop-filter', 'blur(24px) saturate(1.3)')
+  await expectFilterFrom('.sidebar', '--theme-sidebar-filter')
+  // 面归外壳容器：容器内的右栏只留内容，不叠第二层材质。
+  await expectFilterFrom('.shell-frame', '--theme-surface-filter')
+  await expect(page.locator('.right-rail')).toHaveCSS('backdrop-filter', 'none')
+  // 一级面：面板与资源卡都走一级面滤镜。
+  await expectFilterFrom('.panel', '--theme-surface-filter')
+  await expectFilterFrom('.resource-card', '--theme-surface-filter')
+  // 装饰玻璃层与一级面同一强度：容器内的那层会被压平，所以断言至少有一层真的在画模糊。
+  const glassFilters = await page.locator('.glass-material').evaluateAll(elements =>
+    elements.map(element => getComputedStyle(element).backdropFilter || 'none'))
+  expect(glassFilters).toContain(await resolvedFilter(page, '--theme-surface-filter'))
   const icons = page.locator('.resource-icon-image')
   await expect(icons.first()).toBeVisible()
   await expect.poll(() => icons.evaluateAll(elements => elements.every(element =>

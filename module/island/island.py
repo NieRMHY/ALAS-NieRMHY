@@ -34,10 +34,12 @@ ISLAND_CHARACTER_CONFIRM_MAX_CLICKS = 8
 # 岗位列表定位滑动：单步距离、回顶部滑动距离与补滑上限。
 # 模拟器/云手机上一次滑动实际滚动的距离会明显小于期望值（滑动距离不够），
 # 固定 2 次 450 经常停在中途，因此定位改为“滑动→检测锚点→继续补滑”的闭环。
+# 低端机帧率低，快滑会被压缩进一两帧、单次实际滚动进一步缩水（惯性被停止点击
+# 掐掉后每步只剩 450 拖拽），补滑上限必须能覆盖整份列表。
 ISLAND_POST_SWIPE_STEP = 450
 ISLAND_POST_SWIPE_DISTANCE = 550
 ISLAND_POST_SWIPE_TO_TOP_MAX = 5
-ISLAND_POST_SWIPE_SEARCH_MAX = 4
+ISLAND_POST_SWIPE_SEARCH_MAX = 8
 # 进入岛屿管理页的入口按钮（岛屿右上角“管理”）点击间隔：点击后岛屿场景需要转场，
 # 间隔不足会在云机上对同一入口按钮反复点击。
 ISLAND_ENTRY_RETRY_WAIT = 3
@@ -176,8 +178,9 @@ class Island(SelectCharacter):
         )
         self.warehouse_area_relative = (116, 4, 133, 39)
         self.post_open_retry_swipe = False
-        self.post_open_retry_swipe_limit = 1
-        self.post_open_full_retry_limit = 1
+        # 低端机上单轮补滑可能仍差一步，放宽到两轮；完整重试同样多给一次机会。
+        self.post_open_retry_swipe_limit = 2
+        self.post_open_full_retry_limit = 2
 
         # Add by MHY, 岛屿计划总览：一次性「刷新生产/上架方案」开关。
         # 勾选后由下一次岛屿任务（任意子任务）执行刷新并自动复位；
@@ -1146,7 +1149,9 @@ class Island(SelectCharacter):
         retry_swipe_timer = Timer(3, count=3).start()
         retry_swipe_used = 0
         full_retry_used = 0
-        for image in self.loop(timeout=45, skip_first=False):
+        # 补滑轮次放宽后单轮可达十几秒，45 秒预算在低端机上撑不满整条重试链，
+        # 放宽到 90 秒；正常路径在补滑命中时就退出，不受影响。
+        for image in self.loop(timeout=90, skip_first=False):
             post_appear = self.appear(post, offset=300)
             if post_appear:
                 retry_swipe_timer.reset()
@@ -1202,19 +1207,26 @@ class Island(SelectCharacter):
     def post_manage_up_swipe(self, distance):
         """在岗位列表中向上滑动指定距离。
 
+        滑动放慢到 0.4-0.6 秒：默认 0.1-0.2 秒的快滑在低端机低帧率下会被压缩进
+        一两帧，游戏侧实际滚动缩水，多滑也停在原地（老机型滑不到列表底部）。
+
         Args:
             distance (int): 滑动距离像素。
         """
-        self.device.swipe_vector(vector=(0, -distance), box=(688, 69, 725, 656), name="PostUpSwipe")
+        self.device.swipe_vector(
+            vector=(0, -distance), box=(688, 69, 725, 656), name="PostUpSwipe", duration=(0.4, 0.6))
         self.device.click(POST_MANAGE_SWIPE_STOP, control_check=False)
 
     def post_manage_down_swipe(self, distance):
         """在岗位列表中向下滑动指定距离。
 
+        滑动节奏与 [post_manage_up_swipe](up) 保持一致，原因同上。
+
         Args:
             distance (int): 滑动距离像素。
         """
-        self.device.swipe_vector(vector=(0, distance), box=(688, 69, 725, 656), name="PostDownSwipe")
+        self.device.swipe_vector(
+            vector=(0, distance), box=(688, 69, 725, 656), name="PostDownSwipe", duration=(0.4, 0.6))
         self.device.click(POST_MANAGE_SWIPE_STOP, control_check=False)
 
     def post_manage_swipe_to_top(self, max_swipes=None):

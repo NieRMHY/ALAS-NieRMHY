@@ -42,7 +42,7 @@ def report(configs, instance, limit=100):
     configs.path(instance)
     path = report_path(configs.root)
     if not path.is_file():
-        raise ApiError('NOT_FOUND', '评分报告尚未生成，请先在「工具Plus → 指挥喵评分」运行一次任务')
+        raise ApiError('NOT_FOUND', '评分报告尚未生成，请先在「工具 → 指挥喵评分」运行一次任务')
     try:
         data = json.loads(path.read_text(encoding='utf-8'))
     except (OSError, ValueError) as exc:

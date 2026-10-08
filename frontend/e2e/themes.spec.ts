@@ -335,14 +335,14 @@ test('自定义背景支持 URL 与上传文件并在刷新后恢复', async ({p
   const source = page.getByRole('combobox', {name: '自定义背景'})
   await source.click()
   await page.getByRole('option', {name: '填写 URL'}).click()
-  // URL 模式现在是一行一个 API。把默认列表清空后只留下测试地址，
+  // URL 模式一行一个 API。把默认列表清空后只留下测试地址，
   // 避免“本次随机生效”挑到其它内置地址。
   const urlRows = page.getByRole('textbox', {name: '填写 URL'})
   for (let index = await urlRows.count() - 1; index >= 0; index -= 1) await urlRows.nth(index).fill('')
   await urlRows.first().fill(remote)
   await page.getByRole('button', {name: '应用背景'}).click()
   await expect(page.locator('#ui-background-direct')).toHaveValue(remote)
-  // URL 背景解析完成后统一走同源代理，不再把第三方直链直接挂到壁纸节点。
+  // URL 背景解析完成后统一走同源代理，壁纸节点不挂第三方直链。
   await expect(page.locator('.wallpaper img')).toHaveAttribute('src', /\/api\/v1\/background\/media\?url=/)
   expect(await page.evaluate(() => {
     const value = JSON.parse(localStorage.getItem('azurpilot.background') ?? '{}')

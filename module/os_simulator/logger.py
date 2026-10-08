@@ -7,6 +7,7 @@
 import logging
 import os
 from datetime import datetime
+from uuid import uuid4
 
 from module.logger import file_formatter
 
@@ -50,18 +51,20 @@ class OSSLogger:
 
     def __init__(self):
         """初始化大世界模拟器日志处理器。"""
-        self.logger = logging.getLogger('alas.OSSimulator')
-        self.logger.setLevel(logging.INFO)
+        base = logging.getLogger('alas.OSSimulator')
+        base.setLevel(logging.INFO)
         
         # 仅在未初始化 handler 时添加，防止重复
-        if not self.logger.handlers:
+        if not base.handlers:
             os.makedirs('./log/oss', exist_ok=True)
             self.logger_path = f'./log/oss/{datetime.now().strftime("%Y-%m-%d")}.log'
             fh = logging.FileHandler(self.logger_path, encoding='utf-8')
             fh.setFormatter(file_formatter)
-            self.logger.addHandler(fh)
+            base.addHandler(fh)
             # 通过 propagate 让日志显示在原有项目的控制台流中
-            self.logger.propagate = True
+            base.propagate = True
+        # 每个模拟器使用独立子日志器，避免不同实例的 WebUI 缓冲互相串入。
+        self.logger = base.getChild(uuid4().hex)
 
     def __getattr__(self, name):
         """委托属性访问到底层日志器。

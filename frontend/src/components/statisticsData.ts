@@ -2,7 +2,7 @@
  * @fileoverview 统计数据聚合、图表计算与表格排序辅助工具。
  */
 
-import type { StatSeries,  Scalar, StatPoint } from '../api/types'
+import type { StatSeries,  Scalar, StatPoint, StatisticsReport, StatisticsReportWire } from '../api/types'
 import type { ChartMode } from '../app/statisticsPrefs'
 
 export function aggregatePoints(points: StatPoint[], minutes: number) {
@@ -62,8 +62,6 @@ export function mergeMultiSeriesRows(
   })
 }
 
-
-
 /** 图表与原始记录表共用的视图：同一份选中、聚合与时间范围，两边各自算出同一结果。 */
 export interface StatisticsView {
   selectedSeries: StatSeries[]
@@ -83,7 +81,7 @@ export interface StatisticsView {
 }
 
 /* 选中系列按保存顺序排列；没有可用记录时取第一条有数据的系列。 */
-export function resolveSelectedKeys(series: StatSeries[], saved: string[]): string[] {
+function resolveSelectedKeys(series: StatSeries[], saved: string[]): string[] {
   const valid = saved.filter(key => series.some(item => item.key === key))
   if (valid.length) return valid
   const active = series.find(item => item.points.length)?.key ?? series[0]?.key
@@ -142,4 +140,30 @@ export function riseFallDeltas(values: (number | null)[]): number[] {
     if (value == null || previous == null) return 0
     return value - previous
   })
+}
+
+/** 微秒整数还原为墙上时钟文本，与原格式逐字一致。 */
+const wallClock = (micros: number) => {
+  const seconds = Math.floor(micros / 1000000)
+  const fraction = micros - seconds * 1000000
+  const date = new Date(seconds * 1000)
+  const pad = (value: number, width = 2) => String(value).padStart(width, '0')
+  const base = `${date.getUTCFullYear()}-${pad(date.getUTCMonth() + 1)}-${pad(date.getUTCDate())} ` +
+    `${pad(date.getUTCHours())}:${pad(date.getUTCMinutes())}:${pad(date.getUTCSeconds())}`
+  return fraction ? `${base}.${pad(fraction, 6)}` : base
+}
+
+/** 把传输用的紧凑点还原成内部点位。 */
+export function normalizeReport(report: StatisticsReportWire): StatisticsReport {
+  const {axis, series, ...rest} = report
+  return {
+    ...rest,
+    series: series.map(item => 'values' in item
+      ? {key: item.key, label: item.label, icon: item.icon, points: item.values.map((value, index) => ({
+        time: wallClock(axis![index]), value, source: item.sources?.[index] ?? '',
+      }))}
+      : {key: item.key, label: item.label, icon: item.icon, points: item.points.map(point => ({
+        time: wallClock(point.t), value: point.v, source: point.s ?? '',
+      }))}),
+  }
 }

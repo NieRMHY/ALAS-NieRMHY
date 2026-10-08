@@ -176,6 +176,8 @@ class Session:
         self.logs_changed = asyncio.Event()
         self.preview_changed = asyncio.Event()
         self.preview_pending = None
+        self.stock_changed = asyncio.Event()
+        self.stock_update = {}
 
     async def enqueue(self, message: dict):
         """将消息放入发送队列，遇到慢客户端时主动断开连接以实现背压保护。
@@ -229,8 +231,9 @@ class Session:
         reader = asyncio.create_task(self.reader())
         logs = asyncio.create_task(self.log_producer())
         preview = asyncio.create_task(self.preview_producer())
+        stock = asyncio.create_task(self.stock_producer())
         await self.event('session', {'authRequired': not self.authorized, 'protocolVersion': 1})
-        tasks = [writer, producer, reader, logs, preview]
+        tasks = [writer, producer, reader, logs, preview, stock]
         try:
             done, _ = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
             for task in done:
@@ -260,12 +263,14 @@ class Session:
                 if now - self.window > 1:
                     self.window, self.requests = now, 0
                 self.requests += 1
-                if self.requests > 30:
-                    raise ApiError('RATE_LIMITED', '请求过于频繁')
                 decoded = json.loads(raw)
                 if isinstance(decoded, dict) and isinstance(decoded.get('id'), str):
                     request_id = decoded['id'][:100]
                 request = Request.model_validate(decoded)
+                if request.method in ('stock.request', 'stock.status'):
+                    self.requests -= 1
+                if self.requests > 30 and request.method not in ('stock.request', 'stock.status'):
+                    raise ApiError('RATE_LIMITED', '请求过于频繁')
                 request_id = request.id
                 if request.method == 'accounts.manage' and not self.gateway.is_local(self.ws) and self.ws.url.scheme != 'wss':
                     raise ApiError('TLS_REQUIRED', '远程账号操作必须通过 HTTPS/WSS 连接')
@@ -290,6 +295,7 @@ class Session:
                     self.topic_seen.clear()
                     self.logs_changed.set()
                     self.preview_changed.set()
+                    self.stock_changed.set()
                     result = {'topics': subscription.topics, 'instance': subscription.instance}
                 else:
                     async with self.gateway.workers:
@@ -325,7 +331,7 @@ class Session:
             runtime = self.gateway.router.runtime
             for topic in subscription.topics:
                 try:
-                    if topic in ('logs', 'preview'):
+                    if topic in ('logs', 'preview', 'stock'):
                         continue
                     if (now := time.monotonic()) - self.topic_seen.get(topic, 0) < TOPIC_INTERVAL.get(topic, 2):
                         continue
@@ -373,6 +379,42 @@ class Session:
                     raise
                 except Exception:
                     pass
+
+    async def stock_producer(self):
+        """交易所提交事件直接唤醒 WebSocket，不占用请求处理线程。"""
+        loop = asyncio.get_running_loop()
+        unsubscribe = None
+
+        def changed(data):
+            if data.get('instance') not in (None, self.subscription.instance):
+                return
+            if not loop.is_closed():
+                def wake():
+                    self.stock_update.update(data)
+                    self.stock_changed.set()
+                with contextlib.suppress(RuntimeError):
+                    loop.call_soon_threadsafe(wake)
+
+        try:
+            while True:
+                await self.stock_changed.wait()
+                self.stock_changed.clear()
+                subscription = self.subscription
+                if not self.authorized or 'stock' not in subscription.topics:
+                    if unsubscribe:
+                        unsubscribe()
+                        unsubscribe = None
+                    self.stock_update = {}
+                    continue
+                if unsubscribe is None:
+                    service = await asyncio.to_thread(lambda: self.gateway.router.stock_exchange)
+                    unsubscribe = service.subscribe(changed)
+                update, self.stock_update = self.stock_update, {}
+                if subscription is self.subscription:
+                    await self.event('stock', {**update, 'instance': subscription.instance})
+        finally:
+            if unsubscribe:
+                unsubscribe()
 
     async def log_producer(self):
         """日志生产者协程。

@@ -14,6 +14,11 @@
 @import './legacy-fonts.css';
 @import './motion.css';
 
+/* 旧版侧栏贴边、只有一条右边框，顶栏与右栏不带圆角。 */
+.sidebar, .right-rail, .topbar {border-radius: 0}
+/* 背景随内容滚，不固定在视口上（主题骨架默认 fixed）。 */
+body {background-attachment: scroll}
+
 /* MD3 输入框：底部强调指示线与浅色容器背景，聚焦时底线加粗变主色 */
 :root {--form-shadow: none}
 input:where(:not([type='checkbox']):not([type='radio']):not([type='range'])),
@@ -115,18 +120,12 @@ input[aria-invalid='true'], textarea[aria-invalid='true'], .select-trigger[aria-
 }
 
 /* 跳转链接必须在网格流之外，否则会占掉侧栏那一列。 */
-.skip-link {position: fixed; top: -100px; left: 16px; z-index: 200; background: var(--surface); color: var(--accent); padding: 14px; border-radius: 8px}
+.skip-link {position: fixed; top: -100px; left: 16px; z-index: 200; background: var(--theme-control-bg); color: var(--accent); padding: 14px; border-radius: 8px}
 .skip-link:focus {top: 12px}
 
-body {background-attachment: scroll}
-.app-shell {gap: 0}
-/* 旧版侧栏贴边、默认不带圆角，允许通过材质设置微调。 */
-.sidebar {border-radius: 0 var(--theme-sidebar-radius, 0) var(--theme-sidebar-radius, 0) 0; box-shadow: var(--theme-sidebar-shadow, none)}
-.right-rail {border-radius: 0 0 0 var(--theme-sidebar-radius, 0); box-shadow: var(--theme-sidebar-shadow, none)}
-.topbar {border-radius: var(--theme-topbar-radius, 0); box-shadow: var(--theme-topbar-shadow, none)}
 /* 侧栏与顶栏各走自己的区域材质；普通材质分支会把它们压回不透明（见 theme-material.css）。 */
-.sidebar, .right-rail {background: var(--theme-sidebar-bg); -webkit-backdrop-filter: var(--theme-sidebar-filter); backdrop-filter: var(--theme-sidebar-filter)}
-.topbar {background: var(--theme-topbar-bg); -webkit-backdrop-filter: var(--theme-topbar-filter); backdrop-filter: var(--theme-topbar-filter)}
+.sidebar, .right-rail {background: var(--theme-surface-bg); -webkit-backdrop-filter: var(--theme-surface-filter); backdrop-filter: var(--theme-surface-filter)}
+.topbar {background: var(--theme-surface-bg); -webkit-backdrop-filter: var(--theme-surface-filter); backdrop-filter: var(--theme-surface-filter)}
 .sidebar {padding: 0 14px 14px}
 .sidebar-brand {height: var(--topbar-height); padding: 0 8px; margin-bottom: 14px}
 .brand-title {font-size: 22px}
@@ -141,8 +140,8 @@ body {background-attachment: scroll}
 .topbar {position: sticky; top: 0; z-index: 80; height: var(--topbar-height); margin: 0; padding: 0 24px}
 .right-rail {top: var(--topbar-height); height: calc(var(--viewport-height) - var(--topbar-height)); z-index: 70}
 .breadcrumb, .breadcrumb .instance-caption strong {font-size: 13px}
-/* 上内边距归零：旧版内容区顶部那条「主页 / 实例」行已经和下方留出了距离，再加 24px 就成了
-   「主页文字底到容器顶边框」上那段多余空隙（实测从 7px 变成 36.8px），按用户要求消掉。 */
+/* 上内边距归零：内容区顶部那条「主页 / 实例」行已与下方留出距离，再加 24px 会在
+   「主页文字底到容器顶边框」之间多出一段空隙。 */
 main {padding: 0 28px 24px}
 main:focus {outline: none}
 .page-title h1 {font-size: clamp(24px, 2.4vw, 32px); letter-spacing: -.6px; overflow-wrap: anywhere}
@@ -155,8 +154,7 @@ main:focus {outline: none}
 .home-summary strong {color: var(--text); font-size: 20px; font-variant-numeric: tabular-nums}
 .title-actions {position: relative; gap: 8px; padding: 4px}
 .panel-heading h2 {font-size: 15px}
-.panel {border-radius: var(--theme-surface-radius, var(--theme-radius-panel, 16px)); box-shadow: var(--theme-surface-shadow, var(--theme-shadow-panel))}
-.resource-card, .instance-card, .stat-metric-card {border-radius: var(--theme-plate-radius, var(--theme-radius-card, 12px)); box-shadow: var(--theme-plate-shadow, none)}
+.panel, .resource-card, .instance-card {border-radius: var(--theme-radius-panel)}
 
 /* MD3 按钮规范：高度 40px，全胶囊圆角 20px，文字 14px Medium，标准状态层 */
 .button {
@@ -165,8 +163,7 @@ main:focus {outline: none}
   letter-spacing: .1px;
   height: 40px;
   min-height: 40px;
-  border-radius: var(--theme-control-radius, var(--theme-radius-button, 20px));
-  box-shadow: var(--theme-control-shadow, none);
+  border-radius: var(--theme-radius-button, 20px);
   padding: 0 24px;
   display: inline-flex;
   align-items: center;
@@ -188,13 +185,16 @@ main:focus {outline: none}
   box-shadow: var(--theme-shadow-hover);
 }
 .button.secondary {
-  background: transparent;
+  /* 按钮是控件族，面取控件区域的 token。 */
+  background: var(--theme-control-bg);
+  -webkit-backdrop-filter: var(--theme-control-filter);
+  backdrop-filter: var(--theme-control-filter);
   color: var(--accent);
   border-color: var(--border);
-  box-shadow: var(--theme-control-shadow, none);
+  box-shadow: none;
 }
 .button.secondary:hover:not(:disabled) {
-  background: var(--accent-soft);
+  background: color-mix(in srgb, var(--theme-accent) 14%, transparent);
   border-color: var(--accent);
 }
 .button.subtle:not(.danger) {
@@ -286,19 +286,13 @@ button:disabled, input:disabled, textarea:disabled, select:disabled, .select-tri
 .scheduler-widget-heading > div > svg {
   color: var(--accent);
 }
+/* 状态提示与新版本同层：无面，只留文字与间距。 */
 .scheduler-status {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   font-size: 12px;
   font-weight: 500;
-  padding: 3px 10px;
-  border-radius: 999px;
-  /* 状态胶囊跟着控件区走，否则在玻璃材质下是一块不透明的浅灰。 */
-  background: var(--theme-control-bg);
-  -webkit-backdrop-filter: var(--theme-control-filter);
-  backdrop-filter: var(--theme-control-filter);
-  border: 1px solid var(--border);
   color: var(--muted);
   line-height: 1.3;
 }
@@ -320,9 +314,11 @@ button:disabled, input:disabled, textarea:disabled, select:disabled, .select-tri
 .scheduler-stats > div {
   padding: 10px 12px;
   border-radius: 12px;
-  background: var(--surface-muted);
+  background: var(--theme-inset-bg);
   border: 1px solid var(--border);
   box-sizing: border-box;
+  -webkit-backdrop-filter: var(--theme-inset-filter);
+  backdrop-filter: var(--theme-inset-filter);
   transition: border-color .15s ease, background-color .15s ease;
 }
 .scheduler-stats > div:hover {
@@ -362,7 +358,7 @@ button:disabled, input:disabled, textarea:disabled, select:disabled, .select-tri
 .resource-editor-remove:hover {background: var(--theme-danger-soft)}
 .resource-editor-add-icon, .resource-editor-add, .resource-editor-add:hover, .resource-editor-add.open {background: var(--accent-soft)}
 .statistics-note {border-left-color: var(--secondary)}
-.chart-expanded {inset: 0; border-radius: 0; z-index: 150}
+.panel.chart-expanded {inset: 0; border-radius: 0; z-index: 150}
 /* 旧版版式：只在实例视图生效（App.tsx 的 .legacy-shell）。
    旧版外壳是「顶栏跨全宽 + 文字菜单在顶栏下方」，与共享层的「侧栏整列 + 顶栏在主内容列内」
    是两套网格，所以在这里整块重排，主页视图不受影响。 */
@@ -439,27 +435,37 @@ button:disabled, input:disabled, textarea:disabled, select:disabled, .select-tri
 /* 旧版顶栏的第三列是居中的页面名。 */
 .legacy-topbar-title {flex: 1; min-width: 0; text-align: center; font-size: 1.2rem; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap}
 /* 旧版实例页的页名由顶栏居中显示，内容区只留一个给读屏的标题。 */
-.legacy-sr-title {position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap}
-/* 传统模式：1:1 对齐用户参考图的 Edge/Chrome 沉浸式现代浏览器标签页：
-   - 激活标签纯白底色，顶部 9px 圆角，底部完全无下横线开口融入下方内容区；
-   - 激活标签左右底脚采用经典 radial-gradient 反向倒角，呈现完美的流线型连接；
-   - 关闭 × 按钮默认不绘制，标签悬停微亮、按钮悬停高亮，带精致居中分割线。 */
-
-/* 导航条基础排版：必须严格垂直居中（align-items: center），上下内边距归零，
-   彻底根除图标与文字沉在底部“往下掉”的问题，保证下拉菜单与常规导航绝对居中 */
-:root[data-tab-size] .app-shell.legacy-shell .legacy-page-nav,
+.legacy-sr-title {position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; opacity: 1 !important; z-index: 4}
+/* 旧版标签栏：槽是一级面加磨砂；内容盒 = 标签高 + 上缝 + 下边框——
+   上面那条缝是标签上边框与栏上边框之间的间距，下面 1px 是栏自己的下边框。标签贴底，底边因此落在栏的下边框上。
+   标签的形状、竖线、加号与状态色由 theme-primitives 统一给出，这里只给皮相。 */
 :root[data-theme='legacy-light'] .legacy-page-nav,
 :root[data-theme='legacy-dark'] .legacy-page-nav,
 .app-shell.legacy-shell .legacy-page-nav {
+  background: var(--theme-surface-bg);
+  -webkit-backdrop-filter: var(--theme-surface-filter);
+  backdrop-filter: var(--theme-surface-filter);
+  height: calc(var(--instance-tab-height) + var(--instance-tab-gap-y) + 1px);
   padding: 0 16px !important;
   display: flex !important;
   align-items: center !important;
-  /* 底色走变量：标签页模式下由下面那条规则把它换成二级贴片，不靠提升优先级打架。 */
-  background: var(--surface) !important;
   border-bottom: 1px solid var(--border) !important;
   box-sizing: border-box !important;
 }
+/* 轨道贴底：标签的下边缘压在栏的下边框上。 */
+.app-shell.legacy-shell .legacy-page-nav .instance-tabs {align-self: flex-end}
+/* 竖线取固定色，不跟主题的文字色走。 */
+:root[data-theme='legacy-light'] {--instance-tab-divider-color: rgba(0, 0, 0, .22)}
+:root[data-theme='legacy-dark'] {--instance-tab-divider-color: rgba(255, 255, 255, .26)}
 .legacy-page-nav .instance-picker {margin: 0}
+
+/* 「主页」链接：与标签同高、同一条基准线；纵向内边距归零，选中框因此不会探出栏外。 */
+.legacy-page-nav .breadcrumb .topbar-actions > a {
+  padding-top: 0;
+  padding-bottom: 0;
+  height: var(--instance-tab-height);
+  align-self: flex-end;
+}
 
 :root[data-tab-size] .app-shell.legacy-shell .legacy-page-nav .breadcrumb,
 .app-shell.legacy-shell .legacy-page-nav .breadcrumb {
@@ -469,6 +475,7 @@ button:disabled, input:disabled, textarea:disabled, select:disabled, .select-tri
   gap: 8px !important;
 }
 
+/* 选中或悬浮时的容器必须留在标签栏内：去掉上下内边距，高度与文字行齐平并纵向居中。 */
 .legacy-page-nav .breadcrumb > a {
   align-self: center;
   height: 26px;
@@ -481,183 +488,16 @@ button:disabled, input:disabled, textarea:disabled, select:disabled, .select-tri
   font-weight: 500;
   transition: all .15s ease;
   margin-bottom: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  max-height: 26px;
 }
 .legacy-page-nav .breadcrumb > a:hover {
-  background: color-mix(in srgb, var(--surface) 50%, transparent);
+  background: color-mix(in srgb, var(--theme-plate-bg) 50%, transparent);
   color: var(--text);
 }
 
-.legacy-page-nav .topbar-mode-toggle,
-.legacy-page-nav .topbar-tab-size {
-  align-self: center;
-  margin-bottom: 0;
-}
 
-/* 标签列表轨道：仅有标签页存在时，轨道自身撑满高度并下沉贴底，左侧主页/图标仍严格垂直居中 */
-:root[data-theme='legacy-light'] .instance-tabs,
-:root[data-theme='legacy-dark'] .instance-tabs,
-.app-shell.legacy-shell .instance-tabs {
-  align-self: stretch !important;
-  display: flex !important;
-  align-items: flex-end !important;
-  gap: 0 !important;
-  height: 100% !important;
-  margin-bottom: -1px !important;
-  padding: 0 4px !important;
-}
-
-/* 标签页主体 */
-:root[data-theme='legacy-light'] .instance-tab,
-:root[data-theme='legacy-dark'] .instance-tab,
-.app-shell.legacy-shell .instance-tab {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  height: var(--instance-tab-height);
-  padding: 0 var(--instance-tab-pad);
-  border: 1px solid transparent !important;
-  border-bottom: none !important;
-  border-radius: 9px 9px 0 0 !important;
-  background: transparent !important;
-  color: var(--muted) !important;
-  font-size: var(--instance-tab-font);
-  font-weight: 450;
-  box-shadow: none !important;
-  margin-bottom: 0 !important;
-  transition: background-color .15s ease, color .15s ease;
-}
-
-/* 未激活标签悬停微亮 */
-:root[data-theme='legacy-light'] .instance-tab:hover,
-:root[data-theme='legacy-dark'] .instance-tab:hover,
-.app-shell.legacy-shell .instance-tab:hover {
-  background: color-mix(in srgb, var(--surface) 40%, transparent) !important;
-  color: var(--text) !important;
-  border-color: transparent !important;
-}
-
-/* 标签右侧精细分割竖线（类似浏览器未激活标签） */
-.app-shell.legacy-shell .instance-tab::after {
-  content: '';
-  position: absolute;
-  right: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 1px;
-  height: 14px;
-  background: color-mix(in srgb, var(--border) 70%, transparent);
-  pointer-events: none;
-  transition: opacity .15s ease;
-}
-.app-shell.legacy-shell .instance-tab:last-of-type::after,
-.app-shell.legacy-shell .instance-tab.current::after,
-.app-shell.legacy-shell .instance-tab:hover::after,
-.app-shell.legacy-shell .instance-tab:has(+ .instance-tab.current)::after,
-.app-shell.legacy-shell .instance-tab:has(+ .instance-tab:hover)::after {
-  opacity: 0;
-}
-
-/* 激活标签：纯白底色，下边缘无横线阻隔，完全开口与下方融合，顶部大圆角，底边平整干净 */
-:root[data-theme='legacy-light'] .instance-tab.current,
-:root[data-theme='legacy-dark'] .instance-tab.current,
-.app-shell.legacy-shell .instance-tab.current {
-  background: var(--theme-surface-bg) !important;
-  color: var(--text) !important;
-  font-weight: 600;
-  border: 1px solid var(--border) !important;
-  border-bottom: 1px solid var(--theme-surface-bg) !important;
-  border-radius: 8px 8px 0 0 !important;
-  box-shadow: 0 -1px 3px rgba(0, 0, 0, 0.03) !important;
-  z-index: 3;
-  margin-bottom: -1px !important;
-  height: var(--instance-tab-height);
-}
-
-.app-shell.legacy-shell .instance-tab.current.running {
-  color: var(--theme-success, #16a34a) !important;
-}
-.app-shell.legacy-shell .instance-tab.current.running .instance-tab-name {
-  color: var(--theme-success, #16a34a) !important;
-}
-.app-shell.legacy-shell .instance-tab.current.error {
-  color: var(--theme-danger, #dc2626) !important;
-}
-.app-shell.legacy-shell .instance-tab.current.error .instance-tab-name {
-  color: var(--theme-danger, #dc2626) !important;
-}
-
-/* 状态色只落在图标与实例名上，标签页底色与外框不跟状态走。 */
-.app-shell.legacy-shell .instance-tab.running .instance-tab-icon,
-.app-shell.legacy-shell .instance-tab.running .instance-tab-name {
-  color: var(--theme-success, #16a34a);
-}
-.app-shell.legacy-shell .instance-tab.error .instance-tab-icon,
-.app-shell.legacy-shell .instance-tab.error .instance-tab-name {
-  color: var(--theme-danger, #dc2626);
-}
-
-/* 标签内的关闭 × 按钮：平时不绘制，鼠标悬浮到标签上才现形；格子定宽，显隐不改变标签宽度。 */
-.app-shell.legacy-shell .instance-tab .instance-tab-remove {
-  border-radius: 50%;
-  width: 18px;
-  height: 18px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  margin-left: 2px;
-}
-.app-shell.legacy-shell .instance-tab .instance-tab-remove .lucide {
-  opacity: 0;
-  display: block;
-  transition: opacity .15s ease;
-}
-.app-shell.legacy-shell .instance-tab:hover .instance-tab-remove .lucide {
-  opacity: .7;
-}
-.app-shell.legacy-shell .instance-tab .instance-tab-remove:hover .lucide {
-  opacity: 1;
-}
-.app-shell.legacy-shell .instance-tab .instance-tab-remove:hover {
-  background: color-mix(in srgb, var(--text) 10%, transparent);
-  color: var(--text);
-}
-
-/* 新建标签按钮：静态只有加号，悬停现出虚线圆圈，按下时圆圈与图标一起放缩。 */
-:root[data-theme='legacy-light'] .instance-tab-create,
-:root[data-theme='legacy-dark'] .instance-tab-create,
-.app-shell.legacy-shell .instance-tab-create {
-  width: calc(var(--instance-tab-height) * .85);
-  height: calc(var(--instance-tab-height) * .85);
-  border-color: transparent;
-  transition: color .15s ease, border-color .15s ease, transform .15s ease;
-}
-:root[data-theme='legacy-light'] .instance-tab-create > .lucide,
-:root[data-theme='legacy-dark'] .instance-tab-create > .lucide,
-.app-shell.legacy-shell .instance-tab-create > .lucide {
-  transition: transform .15s ease;
-}
-:root[data-theme='legacy-light'] .instance-tab-create:hover,
-:root[data-theme='legacy-dark'] .instance-tab-create:hover,
-.app-shell.legacy-shell .instance-tab-create:hover {
-  border-color: var(--accent);
-}
-:root[data-theme='legacy-light'] .instance-tab-create:hover > .lucide,
-:root[data-theme='legacy-dark'] .instance-tab-create:hover > .lucide,
-.app-shell.legacy-shell .instance-tab-create:hover > .lucide {
-  transform: scale(1.12);
-}
-:root[data-theme='legacy-light'] .instance-tab-create:active,
-:root[data-theme='legacy-dark'] .instance-tab-create:active,
-.app-shell.legacy-shell .instance-tab-create:active {
-  border-color: var(--accent);
-  transform: scale(.9);
-}
-:root[data-theme='legacy-light'] .instance-tab-create:active > .lucide,
-:root[data-theme='legacy-dark'] .instance-tab-create:active > .lucide,
-.app-shell.legacy-shell .instance-tab-create:active > .lucide {
-  transform: scale(.86);
-}
 /* 侧栏任务菜单：分组展开后具体任务往下列（旧版树状格式）。 */
 .task-group-button:hover .task-group-arrow {transform: none}
 .task-group-button.expanded .task-group-arrow {color: var(--accent); transform: rotate(180deg)}
@@ -673,7 +513,7 @@ button:disabled, input:disabled, textarea:disabled, select:disabled, .select-tri
 .task-picker {position: relative; flex-shrink: 0}
 .task-picker-trigger {display: inline-flex; align-items: center; gap: 4px; color: var(--muted); font-size: 13px; white-space: nowrap}
 .task-picker-trigger:hover, .task-picker-trigger[aria-expanded='true'] {color: var(--accent)}
-.task-picker-menu {position: absolute; top: calc(100% + 8px); left: 0; z-index: 40; width: min(22rem, 70vw); max-height: min(30rem, 70vh); overflow-y: auto; padding: 8px; border: 1px solid var(--border); border-radius: var(--theme-radius-popover); background: var(--surface); box-shadow: var(--theme-shadow-popover)}
+.task-picker-menu {position: absolute; top: calc(100% + 8px); left: 0; z-index: 40; width: min(22rem, 70vw); max-height: min(30rem, 70vh); overflow-y: auto; padding: 8px; border: 1px solid var(--theme-menu-edge); border-radius: var(--theme-radius-popover); background: var(--theme-menu-bg); -webkit-backdrop-filter: var(--theme-menu-filter); backdrop-filter: var(--theme-menu-filter); box-shadow: var(--theme-shadow-popover)}
 .task-picker-group + .task-picker-group {margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--border)}
 .task-picker-group-name {display: block; padding: 6px 8px 4px; color: var(--muted); font-size: 11px}
 .task-picker-menu button {display: flex; align-items: center; gap: 8px; width: 100%; padding: 8px; border-radius: 4px; text-align: left; font-size: 13px}
@@ -706,6 +546,8 @@ button:disabled, input:disabled, textarea:disabled, select:disabled, .select-tri
   }
   /* 左列整体滚动；队列列表自身填满剩余高度并在内部滚动，与其它主题一致。 */
   .instance-page-rail {display: flex; flex-direction: column; gap: 12px; min-height: 0; overflow-y: auto}
+/* 调度栏一级容器与内部贴片同心：顶部对齐 16px 的调度器组件，底部对齐 12px 的队列区。 */
+.instance-page-rail {border-radius: 16px 16px 12px 12px}
   .instance-page-rail .rail-task-list {flex: 1 1 0%; min-height: 0; overflow-y: auto}
   /* 右栏那套边距会让调度器与任务计划比同列其他卡片窄，这里清零让三块左右对齐。 */
   .instance-page-rail .scheduler-widget {margin: 0}
@@ -714,9 +556,8 @@ button:disabled, input:disabled, textarea:disabled, select:disabled, .select-tri
   .instance-page-main {display: flex; flex-direction: column; gap: 12px; min-height: 0; overflow: hidden}
   .instance-page-main .resource-grid {margin-bottom: 0}
   .instance-page-panel {display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; overflow-y: auto}
-  /* 搜索框与参数卡同宽，「任务设置和搜索对齐」。 */
+  /* 搜索框与参数卡同宽，「任务设置和搜索对齐」；下方间距交给 --config-card-gap，与卡片之间保持一致。 */
   .task-config-settings .config-toolbar .input-icon {max-width: none}
-  .task-config-settings .config-toolbar {margin-bottom: 0}
   /* 资源统计在旧版下没有左列，整页一条内容带；和 .instance-page-grid 一样撑满 main 的剩余高度。 */
   .statistics-legacy {
     display: flex;
@@ -732,7 +573,10 @@ button:disabled, input:disabled, textarea:disabled, select:disabled, .select-tri
   .statistics-legacy .statistics-toolbar-row {display: flex; align-items: center; gap: 12px; flex-wrap: wrap}
   /* 分段控件按内容自然宽度排，不拉伸：upstream 的紧凑版式靠 offsetWidth 量它的自然宽度。 */
   .statistics-legacy .statistics-toolbar-row .statistics-category-control {margin-bottom: 0; flex: 0 0 auto; width: max-content}
-  .statistics-legacy .statistics-actions {display: flex; align-items: center; gap: 8px; margin-left: auto}
+/* 旧版统计页的内容容器没有内边距，切换入口的衬底外扩 6px 会被容器边缘裁掉；
+   工具栏行让出 6px，使衬底外缘正好落在内容边界上。 */
+.statistics-legacy .statistics-toolbar-row {padding: 6px 0 0 6px}
+  .statistics-legacy .statistics-toolbar-row .title-actions {margin-left: auto}
 
   /* 旧版的任务详细设置：参数卡在左、分组导航在右（旧版是 13rem≈208px 的右列）。
      和总览一样定高 + 内部滚动，顶栏与侧栏才不会跟着滚走。 */
@@ -745,28 +589,63 @@ button:disabled, input:disabled, textarea:disabled, select:disabled, .select-tri
     gap: 22px;
     align-items: stretch;
   }
-  /* 右列换成外层容器后，行数预算归它管，这里改用普通列；高度吃满网格行。 */
   /* 高度逐层传到右列：网格行高必须能压住这两层，内层的滚动才拿得到约束。 */
   .task-config-rail-slot {display: flex; flex-direction: column; min-height: 0; overflow: hidden}
-  .task-config-rail {display: flex; flex-direction: column; gap: 10px; min-height: 0; max-height: 100%; overflow: hidden}
+  /* 一级面与二级贴片之间的间隙。 */
+  .task-config-rail {--rail-plate-gap: 4px; display: flex; flex-direction: column; gap: 10px; min-height: 0; max-height: 100%; overflow: hidden}
   /* 切换按钮即各视图标题左侧的图标，两态共用同一坐标与尺寸。 */
   .task-rail-toggle {display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; padding: 0; margin-right: 1px; border: 0; background: none; color: var(--muted); cursor: pointer; flex-shrink: 0}
   .task-rail-toggle:hover {color: var(--accent)}
   /* 两个视图的标题行共用同一套字号、图标与间距。 */
   .task-rail-scheduler .scheduler-widget-heading, .task-rail-directory .rail-section-heading {margin-bottom: 13px; color: var(--text)}
+/* 调度块的外边距归零，内边距与目录卡片一致。 */
   .task-rail-scheduler .scheduler-widget-heading > div, .task-rail-directory .rail-section-heading > div {gap: 7px; font-size: 12px; font-weight: 650; color: var(--text)}
-  /* 调度块的外边距归零，内边距与目录卡片一致。 */
   /* 整列面板即一张卡片，内部层次靠分隔线而非嵌套卡片。 */
-  .task-rail-scheduler {border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); padding: 16px 14px}
-  .task-rail-scheduler .scheduler-widget {margin: 0; padding: 0; border: 0; background: none; box-shadow: none; flex-shrink: 0}
+  .task-rail-scheduler {border: 1px solid var(--border); border-radius: var(--radius); padding: var(--rail-plate-gap); background: var(--theme-surface-bg); -webkit-backdrop-filter: var(--theme-surface-filter); backdrop-filter: var(--theme-surface-filter)}
+  .task-rail-scheduler .scheduler-widget {margin: 0; flex-shrink: 0; border-radius: calc(var(--radius) - var(--rail-plate-gap))}
+/* 右栏里的调度器组件与新版本同层：二级贴片。 */
+.scheduler-widget {background: var(--theme-plate-bg); -webkit-backdrop-filter: var(--theme-plate-filter); backdrop-filter: var(--theme-plate-filter)}
   .task-rail-scheduler .rail-schedule {border-top: 1px solid var(--border); padding-top: 14px; margin-top: 4px}
   /* 高度逐层传递：滚动只放在最外层，内层任务列表随内容撑开。 */
   .task-rail-scheduler {flex: 1 1 auto; display: flex; flex-direction: column; gap: 12px; min-height: 0; overflow-y: auto}
   .task-rail-scheduler .rail-schedule {flex: 0 0 auto; min-height: 0; margin: 0; border-top: 0; padding: 0}
   .task-rail-scheduler .rail-task-list {flex: 0 0 auto; min-height: 0}
-  .task-rail-directory {flex: 1 1 auto; display: flex; flex-direction: column; min-height: 0; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); padding: 16px 14px}
+  /* 目录视图与调度视图同构：外层装饰容器画一级面，内层贴片画二级层，视图切换按钮因此落在同一坐标上。 */
+  .task-rail-directory {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    padding: var(--rail-plate-gap);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--theme-surface-bg);
+    -webkit-backdrop-filter: var(--theme-surface-filter);
+    backdrop-filter: var(--theme-surface-filter);
+  }
+  .task-rail-directory .rail-plate {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    padding: 16px 18px;
+    border: 1px solid var(--border);
+    border-radius: calc(var(--radius) - var(--rail-plate-gap));
+    background: var(--theme-plate-bg);
+    -webkit-backdrop-filter: var(--theme-plate-filter);
+    backdrop-filter: var(--theme-plate-filter);
+  }
   .task-rail-directory .rail-section-heading {justify-content: space-between}
-  .task-rail-directory .group-nav {flex: 1 1 auto}
+  /* 贴片自己就是那张面，目录列表不再叠一层。 */
+  .task-rail-directory .group-nav {
+    flex: 1 1 auto;
+    padding: 0;
+    border: 0;
+    background: none;
+    box-shadow: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
   /* 切视图时按方向滑入并淡入。 */
   .task-rail-scheduler, .task-rail-directory {animation: rail-view-in .26s cubic-bezier(.22, .61, .36, 1)}
   .task-rail-scheduler {animation-name: rail-view-in-right}
@@ -774,12 +653,13 @@ button:disabled, input:disabled, textarea:disabled, select:disabled, .select-tri
   @media (prefers-reduced-motion: reduce) {.task-rail-scheduler, .task-rail-directory {animation: none}}
   /* 参数列给宽度上限：宽屏下与输入框等宽的控件会被拉到读不过来的一整行。
      只限定这一列，不动外壳，所以中列填满视口的行为不受影响。 */
-  .task-config-settings {min-width: 0; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; max-width: 1108px; margin-inline: auto}
+  .task-config-settings {width: 100%; min-width: 0; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; max-width: 1108px; margin-inline: auto}
   .task-config-legacy .group-nav {max-height: 100%}
   /* 参数列自己滚，锚点跳转不需要再给吸顶的顶栏留出 72px。 */
   .task-config-legacy .config-group {scroll-margin-top: 0}
 }
-.legacy-stat-card {display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 16px; flex-shrink: 0}
+/* 旧版总览页左栏里的统计小卡：二级贴片，与调度器组件同层。 */
+.legacy-stat-card {display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 16px; flex-shrink: 0; background: var(--theme-plate-bg); -webkit-backdrop-filter: var(--theme-plate-filter); backdrop-filter: var(--theme-plate-filter)}
 /* 切换主区显示日志还是统计：两个状态都要有隐藏式的悬停选取框。
    选中态不用手型指针：它已不可再点，避免鼠标压在按钮上时看起来像还残留着高亮。 */
 .legacy-stat-title {padding: 3px 8px; margin-left: -8px; border: 1px solid transparent; border-radius: var(--theme-radius-control, 8px); background: none; color: var(--text); font: inherit; font-size: 15px; font-weight: 600; line-height: 1.4; cursor: pointer; transition: background-color .15s, border-color .15s, color .15s}
@@ -797,17 +677,21 @@ button:disabled, input:disabled, textarea:disabled, select:disabled, .select-tri
 /* MD3 卡片式日志体系适配 (LogCardView Legacy) */
 .log-content.log-cards-mode,
 .monitor-panel .log-content.log-cards-mode {
-  background: var(--surface-muted);
+  /* 卡片视图下日志栏自身也是二级贴片：接上它才随一/二级滑块变化。 */
+  background: var(--theme-plate-bg);
 }
 .log-card {
   border-radius: var(--theme-radius-card, 12px);
   box-shadow: var(--theme-shadow-panel);
   border: 1px solid var(--border);
-  background: var(--surface);
+  background: var(--theme-plate-bg);
 }
 .card-header {
   border-bottom: 1px solid var(--border);
-  background: var(--surface-muted);
+  background: var(--theme-plate-bg);
+}
+.log-card .native-log-table th {
+  background: var(--theme-plate-bg);
 }
 .card-btn-action {
   border-radius: 12px;
@@ -830,13 +714,16 @@ button:disabled, input:disabled, textarea:disabled, select:disabled, .select-tri
 .badge-pill {
   border-radius: 999px;
 }
-.monitor-segmented {display: inline-flex; align-items: center; gap: 0; padding: 0; border: 1px solid var(--border); border-radius: 20px; background: var(--theme-segment-bg, var(--surface-muted)); max-width: 100%; overflow: hidden}
-.statistics-edit-actions.monitor-segmented {border-radius: 0}
+.monitor-segmented {display: inline-flex; align-items: center; gap: 0; padding: 0; border: 1px solid var(--border); border-radius: 20px; background: transparent; max-width: 100%; overflow: hidden}
 .monitor-segmented button {display: inline-flex; align-items: center; justify-content: center; gap: 7px; flex-shrink: 0; min-height: 36px; padding: 6px 16px; border: 0; border-right: 1px solid var(--border); border-radius: 0; color: var(--muted); font-size: 13px; font-weight: 500; white-space: nowrap; transition: background-color .15s, color .15s}
 .monitor-segmented button:last-child {border-right: 0}
+/* 页面切换入口要让一级衬底探出轨道，轨道因此不裁剪子元素；
+   旧版按钮是直角，首末两个的选中填充会探出轨道圆角，按同心圆角收掉内缩的那 1px。 */
+:root[data-theme^='legacy'] .statistics-category-control > button:first-of-type {border-top-left-radius: calc(20px - 1px); border-bottom-left-radius: calc(20px - 1px)}
+:root[data-theme^='legacy'] .statistics-category-control > button:last-of-type {border-top-right-radius: calc(20px - 1px); border-bottom-right-radius: calc(20px - 1px)}
 .monitor-segmented button[aria-selected='true'] {background: var(--accent-soft); color: var(--accent)}
 .monitor-segmented button:focus-visible {outline-offset: -2px}
-/* 统计页类别目录栏原先没有底衬，淡色文字压在底图上几乎不可见；补一层二级贴片。 */
+/* 统计页类别目录栏补一层二级贴片：淡色文字直接压在底图上几乎不可见。 */
 .statistics-category-control {background: var(--theme-plate-bg); -webkit-backdrop-filter: var(--theme-plate-filter); backdrop-filter: var(--theme-plate-filter)}
 .checkbox-mark input[type='checkbox'] {border-radius: 2px}
 .statistics-category-control {margin-bottom: 20px}
@@ -846,8 +733,8 @@ button:disabled, input:disabled, textarea:disabled, select:disabled, .select-tri
 .live-label {border-color: var(--green)}
 .rail-task-list {display: flex; flex-direction: column; gap: 12px}
 .rail-queue-group {flex-shrink: 0; border: 1px solid var(--border); border-radius: var(--theme-radius-panel); overflow: hidden}
-.rail-queue-group.running, .rail-queue-group.pending, .rail-queue-group.waiting {background: var(--theme-surface-bg); border-color: var(--border); -webkit-backdrop-filter: var(--theme-surface-filter); backdrop-filter: var(--theme-surface-filter)}
-.rail-queue-heading {display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 12px; background: var(--theme-control-bg); -webkit-backdrop-filter: var(--theme-control-filter); backdrop-filter: var(--theme-control-filter); border-bottom: 1px solid var(--border)}
+.rail-queue-group.running, .rail-queue-group.pending, .rail-queue-group.waiting {background: var(--theme-inset-bg); border-color: var(--border); -webkit-backdrop-filter: var(--theme-surface-filter); backdrop-filter: var(--theme-surface-filter)}
+.rail-queue-heading {display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 12px; border-bottom: 1px solid var(--border)}
 .rail-queue-heading > div {display: flex; align-items: center; gap: 8px; font-size: 12px}
 .rail-queue-heading > span {color: var(--muted); font-size: 11px}
 .rail-queue-heading svg {color: var(--secondary)}
@@ -859,13 +746,13 @@ button:disabled, input:disabled, textarea:disabled, select:disabled, .select-tri
 .rail-task-item small {font-size: 11px}
 .modal {
   border: 0;
-  border-radius: var(--theme-modal-radius, var(--theme-radius-modal, 28px));
+  border-radius: var(--theme-radius-modal, 28px);
   padding: 24px;
-  /* 弹窗走弹窗区，别再写死一级面色。 */
+  /* 弹窗取弹窗区的面。 */
   background: var(--theme-modal-bg);
   -webkit-backdrop-filter: var(--theme-modal-filter);
   backdrop-filter: var(--theme-modal-filter);
-  box-shadow: var(--theme-modal-shadow, var(--theme-shadow-modal));
+  box-shadow: var(--theme-shadow-modal);
 }
 .toast {
   border: 0;
@@ -915,15 +802,6 @@ button:disabled, input:disabled, textarea:disabled, select:disabled, .select-tri
 .app-shell.legacy-shell .task-nav::-webkit-scrollbar,
 .app-shell.legacy-shell .group-nav::-webkit-scrollbar {width: 0}
 
-/* 调度栏视图下的容器与其中的任务列表不显示滚动条。 */
-.app-shell.legacy-shell .task-rail-scheduler,
-.app-shell.legacy-shell .rail-task-list {scrollbar-width: none}
-.app-shell.legacy-shell .task-rail-scheduler::-webkit-scrollbar,
-.app-shell.legacy-shell .rail-task-list::-webkit-scrollbar {width: 0}
-
-/* 总览页的统计面板只留分类切换那一行：紧凑版式的工具栏与周期控件是为独占整页的
-   独立统计页排的三行结构，落在这个窄面板里会换行留白。
-   周期控件在面板下方还有一份，隐藏这里不影响选择时间范围与各类筛选。 */
-.instance-panel-stats .statistics-actions,
-.instance-panel-stats .statistics-toolbar-right,
+/* 总览页的统计面板只留分类切换那一行与操作按钮：周期控件是为独占整页的独立统计页排的，
+   落在窄面板里会换行留白；它在面板下方还有一份，隐藏这里不影响选择时间范围与各类筛选。 */
 .instance-panel-stats .statistics-controls.period-controls {display: none}

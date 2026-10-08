@@ -13,8 +13,10 @@ test('总览、配置实时更新与刷新持久化', async ({page}) => {
   await page.locator('.task-submenu-flyout a[href$="/task/Alas"]').click()
   const serial = page.locator('[id="Alas.Emulator.Serial"]')
   await expect(serial).toBeVisible()
-  await expect(page.getByRole('button', {name: /保存/})).toHaveCount(0)
-  await expect(page.getByRole('button', {name: '撤销修改'})).toHaveCount(0)
+  // 配置页此刻不该有未保存修改：只在内容区里查这两个按钮。
+  const configPane = page.locator('main')
+  await expect(configPane.getByRole('button', {name: /保存/})).toHaveCount(0)
+  await expect(configPane.getByRole('button', {name: '撤销修改'})).toHaveCount(0)
   await expect(page.locator('.save-bar')).toHaveCount(0)
   await serial.fill('127.0.0.1:5557')
   // 输入框失焦才提交：键入期间不写配置。

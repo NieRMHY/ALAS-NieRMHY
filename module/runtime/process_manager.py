@@ -42,6 +42,28 @@ from module.submodule.utils import (
 _STOP_ACTION_UNSET = object()
 
 
+def memory_governs(instance: str) -> bool:
+    """该实例是否由「记忆运行」接管。
+
+    读取失败时按未开启处理，保持原有的缓存清单恢复行为。
+    """
+    try:
+        from module.runtime.startup_memory import get_startup_remember
+        return get_startup_remember(instance)
+    except Exception:
+        logger.warning(f'[WebUI-进程管理] 读取 [{instance}] 的记忆运行开关失败，按缓存清单恢复')
+        return False
+
+
+def prepare_statistics() -> None:
+    """初始化统计数据环境（旧加密数据自动解密；有界等待，异常环境不阻塞启动）。"""
+    try:
+        from module.statistics.opsi_secure import initialize
+        initialize()
+    except Exception:
+        logger.exception('[统计-运行] 启动时初始化未完成（稍后自动重试）')
+
+
 class ProcessManager:
     """单个 Alas 配置实例的进程生命周期管理器。
 
@@ -829,6 +851,7 @@ class ProcessManager:
 
         # 初始化日志器
         set_file_logger(name=config_name)
+        prepare_statistics()
         if State.electron or os.environ.get("AZURPILOT_TUI") == "1":
             # 运行于 Electron 或 TUI 终端界面时，移除标准输出处理器避免污染终端渲染
             from module.logger import console_hdlr
@@ -952,6 +975,10 @@ class ProcessManager:
             with open("./config/reloadalas", mode="r", encoding="utf-8") as f:
                 for line in f.readlines():
                     line = line.strip()
+                    if line and memory_governs(line):
+                        # 开了记忆运行的实例由启动清单按记忆决定，不由这份更新前缓存恢复
+                        logger.info(f'[WebUI-进程管理] [{line}] 已开启记忆运行，交由启动清单恢复')
+                        continue
                     _instances.add(ProcessManager.get_manager(line))
         except FileNotFoundError:
             pass

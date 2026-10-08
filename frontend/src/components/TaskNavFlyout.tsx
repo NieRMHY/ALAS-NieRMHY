@@ -8,7 +8,8 @@ import { createPortal } from 'react-dom'
 import { NavLink, useLocation, useParams } from 'react-router-dom'
 import { Anchor, CalendarDays, ChevronRight, Compass, Gift, Palmtree, Search, Settings2, Ship, Sparkles, Swords, Wrench, type LucideIcon } from 'lucide-react'
 import { useApp } from '../app/context'
-import {taskNavItems, SCHEDULER_EDITOR} from './taskNavItems'
+import { taskNavItems, taskLabel } from './taskNavItems'
+import { SearchHits } from './SearchHits'
 
 const groupIcons: Record<string, LucideIcon> = {
   Alas: Settings2, Farm: Swords, Event: Sparkles, EventDaily: CalendarDays,
@@ -97,7 +98,6 @@ export function TaskNavFlyout({ defaultOpenKey, onNavigate }: { defaultOpenKey?:
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [openMenuKey, clearCloseTimer])
 
-  // 浮层挂到 body，避免主侧栏的 backdrop 上下文阻断二次模糊。
   const updateFlyoutPosition = useCallback(() => {
     if (!openMenuKey || !flyoutRef.current) return
     const btn = buttonRefs.current[openMenuKey]
@@ -113,7 +113,7 @@ export function TaskNavFlyout({ defaultOpenKey, onNavigate }: { defaultOpenKey?:
       // 电脑端：上边缘对齐
       idealTopInViewport = btnRect.top
     } else {
-      // 手机端：原来的中线和点击的那一项中线对齐
+      // 手机端：浮层中线对齐所点项的中线
       const itemCenterInViewport = btnRect.top + btnRect.height / 2
       idealTopInViewport = itemCenterInViewport - flyoutRect.height / 2
     }
@@ -143,7 +143,6 @@ export function TaskNavFlyout({ defaultOpenKey, onNavigate }: { defaultOpenKey?:
     }
   }, [openMenuKey, updateFlyoutPosition])
 
-  // 鼠标悬停一级菜单：仅电脑端有效
   const handleGroupMouseEnter = (key: string) => {
     if (!isDesktopDevice()) return
     clearCloseTimer()
@@ -158,13 +157,11 @@ export function TaskNavFlyout({ defaultOpenKey, onNavigate }: { defaultOpenKey?:
     setOpenMenuKey(key)
   }
 
-  // 鼠标离开一级菜单：仅电脑端有效
   const handleGroupMouseLeave = () => {
     if (!isDesktopDevice()) return
     scheduleClose()
   }
 
-  // 点击一级菜单处理
   const handleGroupClick = (key: string) => {
     clearCloseTimer()
     if (isDesktopDevice()) {
@@ -176,27 +173,21 @@ export function TaskNavFlyout({ defaultOpenKey, onNavigate }: { defaultOpenKey?:
     }
   }
 
-  // 鼠标进入二级菜单浮层
   const handleFlyoutMouseEnter = () => {
     if (!isDesktopDevice()) return
     clearCloseTimer()
   }
 
-  // 鼠标离开二级菜单浮层
   const handleFlyoutMouseLeave = () => {
     if (!isDesktopDevice()) return
     scheduleClose()
   }
 
+  const matchesSearch = (task: string) =>
+    taskLabel(task, ui, t).toLowerCase().includes(search.toLowerCase()) ||
+    task.toLowerCase().includes(search.toLowerCase())
   const activeGroup = schema && openMenuKey ? schema.menu[openMenuKey] : null
-  const taskLabel = (task: string) => task === SCHEDULER_EDITOR ? ui('nav.schedulerProgram') : t(`Task.${task}.name`)
-  const activeTasks = activeGroup
-    ? taskNavItems(openMenuKey, activeGroup.tasks).filter(
-        task =>
-          taskLabel(task).toLowerCase().includes(search.toLowerCase()) ||
-          task.toLowerCase().includes(search.toLowerCase())
-      )
-    : []
+  const activeTasks = activeGroup ? taskNavItems(openMenuKey, activeGroup.tasks).filter(matchesSearch) : []
 
   return (
     <div className="task-nav-container" ref={navContainerRef}>
@@ -216,11 +207,7 @@ export function TaskNavFlyout({ defaultOpenKey, onNavigate }: { defaultOpenKey?:
         {schema &&
           Object.entries(schema.menu).map(([key, group]) => {
             const items = taskNavItems(key, group.tasks)
-            const filteredTasks = items.filter(
-              task =>
-                taskLabel(task).toLowerCase().includes(search.toLowerCase()) ||
-                task.toLowerCase().includes(search.toLowerCase())
-            )
+            const filteredTasks = items.filter(matchesSearch)
             if (!filteredTasks.length) return null
 
             const isGroupActive = items.some(task =>
@@ -257,6 +244,8 @@ export function TaskNavFlyout({ defaultOpenKey, onNavigate }: { defaultOpenKey?:
           })}
       </nav>
 
+      <SearchHits search={search} onNavigate={onNavigate}/>
+
       {openMenuKey && activeGroup && (() => {
         const flyout = (
         <div
@@ -284,12 +273,13 @@ export function TaskNavFlyout({ defaultOpenKey, onNavigate }: { defaultOpenKey?:
                 role="menuitem"
               >
                 <span className="task-submenu-dot" />
-                <MarqueeText className="task-submenu-item-text" text={taskLabel(task)}/>
+                <MarqueeText className="task-submenu-item-text" text={taskLabel(task, ui, t)}/>
               </NavLink>
             ))}
           </div>
         </div>
         )
+        /* 浮层挂到 body，避免主侧栏的 backdrop 上下文阻断二次模糊。 */
         return portalReady ? createPortal(flyout, document.body) : flyout
       })()}
     </div>

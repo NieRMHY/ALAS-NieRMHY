@@ -229,3 +229,10 @@ def opsi_record_redirect(value):
     升级后各任务的截图行为与升级前一致，不会突然多出或丢掉截图。
     """
     return [value] * len(OPSI_RECORD_ARGS)
+
+
+def opsi_explore_cleanup_state_redirect(value):
+    """只迁移已有补扫断点；原开荒月度标记不能当成补扫进度。"""
+    if isinstance(value, dict) and value.get('phase') in ('cleanup', 'done') and 'order' in value:
+        return dict(value)
+    return None

@@ -3,9 +3,10 @@
 import unittest
 from contextlib import nullcontext
 from datetime import datetime, timedelta
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, PropertyMock, patch
 
 from module.config.config import AzurLaneConfig, Function, TaskEnd
+from module.os.operation_siren import OperationSiren
 from module.os.tasks.prevent_action_point_overflow import OpsiPreventActionPointOverflow
 from module.os.tasks.scheduling import OpsiScheduling
 from module.os.tasks.task_context import current_opsi_context
@@ -63,7 +64,8 @@ class TestOpsiTaskContext(unittest.TestCase):
 
                 def child():
                     self.assertEqual(runner.config.task.command, 'OpsiMeowfficerFarming')
-                    self.assertEqual(runner.config._task_switch_owner.command, 'OpsiScheduling')
+                    self.assertIs(runner.config._task_switch_owner, owner)
+                    self.assertEqual(current_opsi_context(runner.config).parent_task, 'OpsiScheduling')
                     self.assertEqual(runner.config._bind_task_override, 'OpsiMeowfficerFarming')
                     self.assertEqual(runner.config.Scheduler_ServerUpdate, '03:00')
                     self.assertFalse(runner.config._disable_task_switch)
@@ -95,6 +97,34 @@ class TestOpsiTaskContext(unittest.TestCase):
                     self.assertIs(caught.exception, error)
                 self.assert_restored(runner, owner, bound)
 
+    def test_nested_proxy_checks_switch_against_the_outer_scheduler_task(self):
+        for child_task in ('OpsiMeowfficerFarming', 'OpsiHazard1Leveling'):
+            with self.subTest(child_task=child_task):
+                runner = self.make_runner('OpsiPreventActionPointOverflow')
+                config = runner.config
+                owner, bound = config.task, dict(config.bound)
+                config.stop_event = None
+                config.load = Mock()
+                config.get_next = Mock(return_value=owner)
+
+                def child():
+                    self.assertIs(config._task_switch_owner, owner)
+                    self.assertFalse(runner._is_direct_prevent_overflow_coin_task())
+                    self.assertFalse(config.task_switched())
+                    config.check_task_switch()
+                    config.task_stop.assert_not_called()
+                    config.get_next.return_value = Function({'Scheduler': {'Command': 'Reward'}})
+                    self.assertTrue(config.task_switched())
+                    with self.assertRaises(TaskEnd):
+                        config.check_task_switch()
+                    config.task_stop.assert_called_once()
+
+                def scheduling():
+                    runner._run_with_opsi_task_context(child_task, child)
+
+                runner._run_with_prevent_action_point_overflow_context('OpsiScheduling', scheduling)
+                self.assert_restored(runner, owner, bound)
+
     def test_preserves_existing_none_and_override_values(self):
         for previous_bind in (None, 'OpsiHazard1Leveling'):
             with self.subTest(previous_bind=previous_bind):
@@ -113,6 +143,86 @@ class TestOpsiTaskContext(unittest.TestCase):
                 self.assertIsNone(config._opsi_task_context)
                 self.assertTrue(config._disable_task_switch)
                 self.assertEqual(config._bind_task_override, previous_bind)
+
+    def test_meow_overrides_do_not_disable_the_next_obscure_task_submarine(self):
+        runner = OperationSiren.__new__(OperationSiren)
+        runner.config = self.make_runner().config
+        config = runner.config
+        config.data['OpsiMeowfficerFarming'].update({
+            'OpsiFleet': {'Submarine': True},
+            'OpsiMeowfficerFarming': {'HazardLevel': 5, 'TargetZone': 0, 'StayInZone': False},
+            'OpsiTarget': {'TargetFarming': False},
+        })
+        config.data['OpsiObscure']['OpsiFleet'] = {'Submarine': True}
+        overrides = config.overridden
+        with (
+            patch.object(OperationSiren, 'is_cl1_mode_enabled', new_callable=PropertyMock, return_value=True),
+            patch.object(OperationSiren, 'nearest_task_cooling_down', new_callable=PropertyMock, return_value=None),
+            patch.object(runner, 'is_in_opsi_explore', return_value=False),
+            patch('module.os.tasks.meowfficer_farming.get_os_reset_remain', return_value=20),
+        ):
+            runner._run_with_opsi_task_context(
+                'OpsiMeowfficerFarming', runner._prepare_meowfficer_farming, ap_preserve=0,
+            )
+        self.assertIs(config.overridden, overrides)
+        self.assertEqual(config.overridden, {})
+
+        def obscure():
+            self.assertTrue(config.OpsiFleet_Submarine)
+
+        runner._run_with_opsi_task_context('OpsiObscure', obscure)
+
+    def test_nested_overrides_restore_manual_attributes_and_existing_overlays(self):
+        for error in (None, TaskEnd('结束'), RuntimeError('失败')):
+            with self.subTest(error=error):
+                runner = self.make_runner('OpsiPreventActionPointOverflow')
+                config = runner.config
+                owner, bound = config.task, dict(config.bound)
+                config.override(STORY_OPTION=-2)
+                overrides = config.overridden
+                config._scheduler_overrides = {'OpsiFleet_Submarine': True}
+                overlay = config._scheduler_overrides
+                config.bind(config.task)
+                self.assertNotIn('HOMO_EDGE_DETECT', config.__dict__)
+
+                def child():
+                    config.override(
+                        STORY_OPTION=0, HOMO_EDGE_DETECT=False, OpsiFleet_Submarine=False,
+                        PROXY_OVERRIDE_TEST=True,
+                    )
+                    self.assertFalse(config.OpsiFleet_Submarine)
+                    self.assertFalse(config.HOMO_EDGE_DETECT)
+                    self.assertEqual(config.STORY_OPTION, 0)
+                    config.modified['OpsiObscure.Test.Progress'] = 1
+                    if error is not None:
+                        raise error
+
+                def scheduling():
+                    config.override(STORY_OPTION=1)
+                    try:
+                        runner._run_with_opsi_task_context('OpsiObscure', child)
+                    finally:
+                        self.assertEqual(config.STORY_OPTION, 1)
+                        self.assertEqual(config.overridden, {'STORY_OPTION': 1})
+                        self.assertIs(config.overridden, overrides)
+                        self.assertIs(config._scheduler_overrides, overlay)
+                        self.assertEqual(overlay, {'OpsiFleet_Submarine': True})
+                        self.assertTrue(config.HOMO_EDGE_DETECT)
+                        self.assertNotIn('HOMO_EDGE_DETECT', config.__dict__)
+                        self.assertNotIn('PROXY_OVERRIDE_TEST', config.__dict__)
+
+                if error is None:
+                    runner._run_with_prevent_action_point_overflow_context('OpsiScheduling', scheduling)
+                else:
+                    with self.assertRaises(type(error)) as caught:
+                        runner._run_with_prevent_action_point_overflow_context('OpsiScheduling', scheduling)
+                    self.assertIs(caught.exception, error)
+                self.assertEqual(config.STORY_OPTION, -2)
+                self.assertEqual(config.overridden, {'STORY_OPTION': -2})
+                self.assertIs(config.overridden, overrides)
+                self.assertIs(config._scheduler_overrides, overlay)
+                self.assertEqual(config.modified, {'OpsiObscure.Test.Progress': 1})
+                self.assert_restored(runner, owner, bound)
 
     def test_failed_initial_bind_restores_original_binding(self):
         runner = self.make_runner()

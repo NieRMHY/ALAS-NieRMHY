@@ -100,7 +100,7 @@ class OpsiAbyssal(CoinTaskMixin, OSMap):
             cooldown_end_time (datetime): 潜艇冷却结束的时间。
         """
         if self.is_running_smart_scheduling_task():
-            logger.info(f'[大世界-深渊坐标] 智能调度+代理执行中，深渊坐标潜艇冷却至 {cooldown_end_time}，本轮跳过深渊')
+            logger.info(f'[大世界-深渊坐标] 智能调度代理执行中，深渊坐标潜艇冷却至 {cooldown_end_time}，本轮跳过深渊')
             self._smart_scheduling_no_content_task = 'OpsiAbyssal'
             return
 
@@ -130,7 +130,7 @@ class OpsiAbyssal(CoinTaskMixin, OSMap):
             return
 
         if self.is_running_smart_scheduling_task():
-            logger.info('[大世界-深渊坐标] 智能调度+代理执行中，跳过深渊坐标任务延迟')
+            logger.info('[大世界-深渊坐标] 智能调度代理执行中，跳过深渊坐标任务延迟')
             return
 
         logger.info('[大世界-深渊坐标] 本轮深渊过滤器包含 CallSubmarine，当前任务延迟 60 分钟后再运行')

@@ -59,6 +59,25 @@ deploy/
 | `python -m deploy.app` | 只重建前端产物 |
 | `deploy/docker/Dockerfile` | 容器构建（多阶段，预装前端产物） |
 
+### 茗交所持久化
+
+所有交易数据统一持久化在 `config/stock-exchange/`：`game.key` 是随机游戏密钥，`registry.json` 保存加密实例登记、文件摘要和历史检查点，同目录保存密文身份、绑定与补传日志。它们不绑定主机、运行用户或项目绝对路径，不需要额外挂载用户 HOME 或提供 Linux `machine-id`。仓库的 Compose 与 Docker 运行示例挂载完整项目目录；迁移完成后只挂载配置目录也能保留交易账户。例如使用 `/app/AzurPilot` 镜像时：
+
+```yaml
+volumes:
+  - ./config:/app/AzurPilot/config:rw
+```
+
+国内 Dockerfile 的工作目录是 `/app/AzurLaneAutoScript`，挂载目标需使用对应路径。新容器运行用户须有数据目录的读写权限；备份、迁移或恢复应停掉服务和 worker，再整体复制配置、中央 SQLite、旧 CL1 统计库与上述游戏数据，避免不同时刻的检查点和历史混用。包含 `game.key` 的备份可解密交易凭据，按私有数据管理。每日自动备份不会覆盖全部交易数据，不能替代这份完整备份。
+
+首次升级须让旧 `cache/stock-exchange/` 可见且可写。检测到旧目录后仅移动文件到 config，支持不同磁盘或容器挂载间的移动；同名冲突静默以默认加载的 config 数据为准，旧 cache 副本被覆盖。搬运后统一执行常规读取、格式升级与校验，文件有问题只在茗交所提示，不阻断正常配置操作。
+
+已有本机保护数据在常规读取时认证并升级，保留原 UUID、私钥、绑定和检查点。旧版应先在原项目路径下升级，再移动部署；升级前需保留原用户密钥目录中的游戏 `.game` 登记和配套 `.key`。Windows 旧密钥须由原用户 DPAPI 解封，Linux 需旧密钥目录可见且文件可读取，容器的 machine-id 变化不阻止升级。若旧容器已被删除且这些文件没有备份，程序无法恢复其加密密钥；可恢复原密钥/登记，也可在茗交所页面查看实际范围并确认完全重建本地账户。重建保留 `config/backup/stock-rebuild-*/` 原件备份；共享数据损坏时须确认所有本地交易账户范围，原远端账户仍保留，新身份不能登录原账户，须用新用户名开户。
+
+macOS 本机部署（Apple Silicon 与 Intel）使用相同的游戏密钥存储，不要求 Keychain、TPM、DPAPI 或机器标识；POSIX 文件权限与跨进程文件锁用于保护持久化读写。`GameDataProtector` 统一解析项目物理路径，兼容 macOS `/var` 等系统路径别名，不放开受保护目录内自定义符号链接的检查。Windows/Linux 数据须先按上述流程升级，再整体迁移 config 到 Mac，继续沿用身份和账户绑定。macOS 上的 Docker 部署同样持久化配置目录。CI 的 `game-data` 任务分别在原生 Apple Silicon、Intel macOS、Windows 与 Linux 执行 `tests.test_game_data`、`tests.test_stock_exchange`、`tests.test_stock_exchange_history` 和 `tests.test_stock_exchange_recovery`；平台专属用例只在对应系统运行。
+
+完整运行环境仍按 `pyproject.toml` 与 `uv.lock` 安装：当前 Apple Silicon 的 ONNX Runtime wheel 最低为 macOS 14，较旧系统不能直接安装这份锁定环境。跨平台依赖预检使用 `MACOSX_DEPLOYMENT_TARGET=14.0 uv sync --frozen --dry-run --python-platform aarch64-apple-darwin`；这只验证安装计划，不替代原生 Mac 上的安装、测试或模拟器验收。茗交所密钥方案本身没有这项 ONNX 系统版本要求。
+
 ## 6. 工作流程
 
 ### 安装器链条

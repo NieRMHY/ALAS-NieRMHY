@@ -47,8 +47,3 @@ export function previewUpdate(active: boolean) {
   publish({...snapshot, updatePreview: active})
 }
 
-/** 清掉全部模拟状态。 */
-export function clearDevOverride() {
-  stopTimer()
-  publish(OFF)
-}
