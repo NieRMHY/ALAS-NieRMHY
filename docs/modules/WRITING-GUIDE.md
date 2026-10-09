@@ -157,7 +157,7 @@
 | `webui/runtime.md` | 运行时服务 | S |
 | `webui/frontend.md` | 前端 | B |
 | `infra/statistics.md` | 统计与数据提交 | A |
-| `infra/notify-llm-logger.md` | 通知、LLM 与日志 | B |
+| `infra/notify-llm-logger.md` | 通知与日志 | B |
 | `infra/daemon.md` | 守护模式 | B |
 | `infra/submodule-tools.md` | 外部桥接与开发工具 | B |
 | `overview/conventions.md` | 编码规范与设计模式 | S |

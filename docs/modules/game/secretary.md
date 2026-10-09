@@ -102,4 +102,4 @@
 - [配置系统](../config.md)
 - [UI 导航](../ui.md)
 - [OCR 系统](../ocr.md)
-- [通知、LLM 与日志](../infra/notify-llm-logger.md)
+- [通知与日志](../infra/notify-llm-logger.md)

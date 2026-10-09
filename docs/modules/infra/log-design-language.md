@@ -287,7 +287,7 @@ export interface TracebackLogEntry extends BaseLogEntry {
 ```
 
 #### 9. `llm_diagnosis` (AI 智能错误分析)
-对应 `module/llm.py` 生成的错误原因分析与解决方案，独立卡片化展示，与常规堆栈区分。
+前端保留的 AI 错误分析卡片类型；后端 LLM 错误分析（`module/llm.py`）已移除，当前后端不再产出此类日志。
 
 ```typescript
 export interface LlmDiagnosisLogEntry extends BaseLogEntry {
@@ -379,7 +379,7 @@ export interface ProgressLogEntry extends BaseLogEntry {
 | **四段式错误上下文** | `logger.error_context` | 换行符 `\n` 连接的单条多行日志 | **结构化处置指南**。被当成长文本换行，建议不突出 | `<LogErrorCard />` 警示操作指南 |
 | **富异常堆栈** | Python 未捕获异常 (Rich Traceback) | 150 列宽边框字符 + locals 框 | **深层调试栈**。在窄屏下被 `break-all` 撕裂为碎片 | `<LogTracebackViewer />` 折叠源码栈 |
 | **富边框二维表格** | `benchmark.py` / `score_task.py` | Rich `Table` (Unicode 框线) | **多维量化报表**。字符边框折行错位，无法列排序与拷贝 | `<LogDataTable />` 原生滚动表格 |
-| **LLM 智能分析报告** | `module/llm.py` | `[LLM]` 开始/结束内的多行 Markdown | **AI 故障诊断**。缺失 Markdown 语法渲染，排版粗糙 | `<LogAiSummaryCard />` 格式化分析卡片 |
+| **LLM 智能分析报告** | 已移除（原 `module/llm.py`） | `[LLM]` 开始/结束内的多行 Markdown | **AI 故障诊断**。缺失 Markdown 语法渲染，排版粗糙 | `<LogAiSummaryCard />` 格式化分析卡片 |
 
 ---
 
