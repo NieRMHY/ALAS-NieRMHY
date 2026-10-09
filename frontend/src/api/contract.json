@@ -296,116 +296,6 @@
         "type": "object"
       }
     },
-    "stock.status": {
-      "mutates": false,
-      "params": {
-        "additionalProperties": false,
-        "description": "单实例操作通用入参模型。",
-        "properties": {
-          "instance": {
-            "maxLength": 64,
-            "minLength": 1,
-            "title": "Instance",
-            "type": "string"
-          }
-        },
-        "required": [
-          "instance"
-        ],
-        "title": "InstanceParams",
-        "type": "object"
-      }
-    },
-    "stock.rebuild": {
-      "mutates": true,
-      "params": {
-        "additionalProperties": false,
-        "description": "先返回实际重建范围，用户确认后才重建本地交易账户。",
-        "properties": {
-          "instance": {
-            "maxLength": 64,
-            "minLength": 1,
-            "title": "Instance",
-            "type": "string"
-          },
-          "confirm": {
-            "default": false,
-            "title": "Confirm",
-            "type": "boolean"
-          },
-          "scope": {
-            "default": "instance",
-            "enum": [
-              "instance",
-              "all"
-            ],
-            "title": "Scope",
-            "type": "string"
-          }
-        },
-        "required": [
-          "instance"
-        ],
-        "title": "StockRebuildParams",
-        "type": "object"
-      }
-    },
-    "stock.request": {
-      "mutates": true,
-      "params": {
-        "additionalProperties": false,
-        "description": "实例专属交易请求；实例身份和远端凭据由后端补充。",
-        "properties": {
-          "instance": {
-            "maxLength": 64,
-            "minLength": 1,
-            "title": "Instance",
-            "type": "string"
-          },
-          "path": {
-            "maxLength": 100,
-            "minLength": 1,
-            "title": "Path",
-            "type": "string"
-          },
-          "method": {
-            "default": "GET",
-            "enum": [
-              "GET",
-              "POST",
-              "DELETE"
-            ],
-            "title": "Method",
-            "type": "string"
-          },
-          "body": {
-            "anyOf": [
-              {
-                "additionalProperties": true,
-                "type": "object"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "default": null,
-            "title": "Body"
-          },
-          "etag": {
-            "default": "",
-            "maxLength": 128,
-            "title": "Etag",
-            "type": "string"
-          }
-        },
-        "required": [
-          "instance",
-          "path"
-        ],
-        "title": "StockRequestParams",
-        "type": "object"
-      }
-    },
     "scheduler.start": {
       "mutates": true,
       "params": {
@@ -2482,12 +2372,11 @@
                 "instances",
                 "overview",
                 "logs",
-                "preview",
-                "stock"
+                "preview"
               ],
               "type": "string"
             },
-            "maxItems": 5,
+            "maxItems": 4,
             "title": "Topics",
             "type": "array"
           }

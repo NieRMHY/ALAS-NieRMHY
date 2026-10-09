@@ -229,7 +229,7 @@ DAILY_SUMMARY_NOTIFY_ATTEMPTS = 3
 DROP_SCREENSHOT_CLEANUP_INTERVAL = 3600
 # 配置/数据库备份的保留天数
 BACKUP_KEEP_DAYS = 7
-# 茗交所存储迁移文件锁的等待超时（秒）
+# 大世界统计存储迁移文件锁的等待超时（秒）
 MIGRATION_LOCK_TIMEOUT = 20.0
-# 茗交所存储解密失败后的重试等待（秒）
+# 大世界统计存储解密失败后的重试等待（秒）
 DECODER_RETRY_INTERVAL = 60.0
