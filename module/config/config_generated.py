@@ -130,7 +130,7 @@ class GeneratedConfig:
     Error_WatchdogTaskEnable = False
     Error_WatchdogTaskTimeout = 120
     Error_RestartOperationTimeoutEnable = False
-    Error_RestartOperationTimeout = 'mimo-v2.5-pro'
+    Error_RestartOperationTimeout = 120
 
     # 配置组 `Watchdog`
     Watchdog_CheckInterval = 30

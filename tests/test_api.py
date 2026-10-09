@@ -45,20 +45,6 @@ class ConfigApiTests(unittest.TestCase):
         self.configs.get('testpilot')
         self.assertEqual(before, path.stat().st_mtime_ns)
 
-    def test_instance_identity_is_preserved_and_hidden_from_editable_config(self):
-        """内部身份随配置读取与保存保留，但不作为可编辑参数返回。"""
-        path = self.configs.path('testpilot')
-        data = self.configs.read_json(path)
-        data['_stockInstance'] = 'test-identity'
-        path.write_text(json.dumps(data), encoding='utf-8')
-        before = path.read_bytes(), path.stat().st_mtime_ns
-        values, revision = self.configs.read('testpilot')
-        self.assertEqual('test-identity', values['_stockInstance'])
-        self.assertNotIn('_stockInstance', self.configs.get('testpilot')['values'])
-        self.assertEqual(before, (path.read_bytes(), path.stat().st_mtime_ns))
-        self.configs.patch('testpilot', revision, [ConfigChange(path='Main.Scheduler.Enable', value=True)])
-        self.assertEqual('test-identity', self.configs.read_json(path)['_stockInstance'])
-
     def test_importable_lists_configs_in_import_folder(self):
         """可导入列表只来自导入目录；解不开的 JSON、符号链接、以及实例目录里的文件都不算。"""
         imports = self.configs.import_directory
@@ -380,13 +366,12 @@ class SocketApiTests(unittest.TestCase):
             self.assertEqual('5555', merged['result']['values']['Alas']['Emulator']['Serial'])
 
 
-    def test_overview_and_scheduler_controls_accept_instance_identity(self):
-        """启停实际完成后，总览响应不能因内部身份字段而失败。"""
+    def test_overview_and_scheduler_controls_complete(self):
+        """启停实际完成后，总览响应正常返回且不改写配置。"""
         from module.runtime.process_manager import ProcessManager
 
         path = Path(self.temp.name) / 'config/testpilot.json'
         data = json.loads(path.read_text(encoding='utf-8'))
-        data['_stockInstance'] = 'test-identity'
         data['Main']['Scheduler']['Enable'] = True
         path.write_text(json.dumps(data), encoding='utf-8')
         before = path.read_bytes()
@@ -416,15 +401,13 @@ class SocketApiTests(unittest.TestCase):
                     self.assertEqual(status, response['result']['status'])
                     tasks = [task['name'] for task in response['result']['tasks']]
                     self.assertIn('Main', tasks)
-                    self.assertNotIn('_stockInstance', tasks)
         manager.start.assert_called_once_with('alas', ev=stop_event)
         manager.stop_by_user.assert_called_once_with()
         self.assertEqual(before, path.read_bytes())
 
-    def test_subscribe_sends_scoped_snapshot_with_instance_identity(self):
+    def test_subscribe_sends_scoped_snapshot(self):
         path = Path(self.temp.name) / 'config/testpilot.json'
         data = json.loads(path.read_text(encoding='utf-8'))
-        data['_stockInstance'] = 'test-identity'
         path.write_text(json.dumps(data), encoding='utf-8')
         with self.client.websocket_connect('/api/v1/ws') as ws:
             self.login(ws)
@@ -432,7 +415,6 @@ class SocketApiTests(unittest.TestCase):
             event = ws.receive_json()
             self.assertEqual('overview', event['topic'])
             self.assertEqual('testpilot', event['data']['instance'])
-            self.assertNotIn('_stockInstance', [task['name'] for task in event['data']['tasks']])
             self.assertTrue(self.call(ws, 'events.subscribe', {'topics': []})['ok'])
 
     def test_log_arrival_pushes_websocket_event_without_polling(self):
@@ -556,40 +538,6 @@ class LogCursorTests(unittest.TestCase):
 
 class ProducerCadenceTests(unittest.IsolatedAsyncioTestCase):
     """日志按到达事件即时推送，重主题继续按各自节奏采样。"""
-
-    async def test_stock_events_wake_immediately_and_unsubscribe_when_leaving(self):
-        from module.api.protocol import SubscribeParams
-        subscribed, delivered, unsubscribed = asyncio.Event(), asyncio.Event(), asyncio.Event()
-        callbacks, updates = [], []
-        def subscribe(listener):
-            callbacks.append(listener)
-            subscribed.set()
-            return unsubscribed.set
-        service = SimpleNamespace(subscribe=subscribe)
-        session = Session(SimpleNamespace(router=SimpleNamespace(stock_exchange=service)), ws=None, local=True)
-        session.subscription = SubscribeParams(instance='testpilot', topics=['stock'])
-        async def event(topic, data):
-            self.assertEqual('stock', topic)
-            updates.append(data)
-            if data.get('revision') == 42:
-                delivered.set()
-        session.event = event
-        task = asyncio.create_task(session.stock_producer())
-        try:
-            session.stock_changed.set()
-            await asyncio.wait_for(subscribed.wait(), 1)
-            await asyncio.to_thread(callbacks[0], {'instance': 'another', 'revision': 41})
-            await asyncio.to_thread(callbacks[0], {'revision': 42, 'online': True})
-            await asyncio.wait_for(delivered.wait(), 1)
-            self.assertEqual({'revision': 42, 'online': True, 'instance': 'testpilot'}, updates[-1])
-            self.assertFalse(any(value.get('revision') == 41 for value in updates))
-            session.subscription = SubscribeParams(topics=[])
-            session.stock_changed.set()
-            await asyncio.wait_for(unsubscribed.wait(), 1)
-        finally:
-            task.cancel()
-            with self.assertRaises(asyncio.CancelledError):
-                await task
 
     async def test_heavy_topics_keep_independent_cadence(self):
         counts = {'overview': 0, 'instances': 0}

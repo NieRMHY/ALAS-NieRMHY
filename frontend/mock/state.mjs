@@ -3,7 +3,6 @@ import { createHash } from 'node:crypto'
 import Ajv from 'ajv'
 import {spawnSync} from 'node:child_process'
 import {fileURLToPath} from 'node:url'
-import {createStockProxy} from './stock.mjs'
 import {resourceFlows} from './resource-flows.mjs'
 
 // 只读取公开的模板、元数据和翻译，绝不读取用户实例或部署文件。
@@ -45,7 +44,6 @@ function validateField(path, value) {
 
 export function createMockState({ empty = false } = {}) {
   const instances = new Map()
-  const stock = createStockProxy(name=>{const r=get(name).values.Dashboard.ActionPoint;return r?.Total!=null&&r.Record?{instance:name,actionPoints:r.Total,observedAt:Math.floor(new Date(r.Record.replace(' ','T')+'Z').getTime()/1000)}:null})
   const programs = new Map()
   const simulations = new Map()
   function simulation(name) {
@@ -491,9 +489,6 @@ export function createMockState({ empty = false } = {}) {
         return snapshot(name)
       }
       case 'overview.get': return overview(name)
-      case 'stock.status': return stock.status(name)
-      case 'stock.rebuild': return stock.rebuild(name,params)
-      case 'stock.request': return stock.request(name,params)
       case 'scheduler.start': case 'tasks.run':
         if (get(name).status === 'running') fail('INSTANCE_RUNNING', '实例已在运行')
         if (method === 'tasks.run' && !['FleetScan', 'StorageStatistics'].includes(params.task) && !Object.values(menu).some(group => group.page === 'tool' && group.tasks.includes(params.task))) fail('INVALID_PARAMS', '该任务不支持单独运行')
@@ -957,5 +952,5 @@ export function createMockState({ empty = false } = {}) {
       log(name, '模拟任务正在运行，等待下一轮调度。')
     }
   }
-  return { dispatch, tick, setUpdateScenario, subscribeStock:stock.subscribe, close:stock.close }
+  return { dispatch, tick, setUpdateScenario }
 }

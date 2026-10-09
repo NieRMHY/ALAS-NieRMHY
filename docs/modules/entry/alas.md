@@ -1,6 +1,6 @@
 # 调度器（alas.py）
 
-> 每个实例一个调度器进程，主线程串行执行游戏任务，后台线程承担运行监护、日报检查等辅助工作；通过分级异常恢复支持长期运行。
+> 每个实例一个调度器进程，主线程串行执行游戏任务，后台线程承担运行监护等辅助工作；通过分级异常恢复支持长期运行。
 
 ## 1. 模块概述
 
@@ -25,7 +25,7 @@
 - 运行监护：任务超时或到达强制定时重启条件时，杀死模拟器进程强制中断任务。
 - 服务器维护感知：游戏服务器维护期间暂停调度，恢复后重启游戏。
 - 配置热重载：在任务边界与空闲等待中检测配置文件变更，无重启生效。
-- 附带生命周期事务：每日备份、每日日报定时检查、错误现场保存与上报。
+- 附带生命周期事务：每日备份、错误现场保存与上报。
 
 ### 不负责
 
@@ -54,8 +54,7 @@
     │   ├── process_manager.py     # WebUI 侧：创建本模块所在 worker 进程、注入 stop_event
     │   ├── task_handler.py        # WebUI 自用后台任务（更新检查等），不是游戏调度器
     │   └── preview.py             # set_task：向 WebUI 发布当前任务边界
-    ├── base/backup.py             # 每日备份
-    └── statistics/daily_summary.py # 每日日报服务（惰性创建）
+    └── base/backup.py             # 每日备份
 ```
 
 | 文件 | 作用 |
@@ -93,7 +92,7 @@ AUTO-MAS 一类外部调度器把 AzurPilot 当黑箱驱动，只用以下四个
 
 ### AzurLaneAutoScript
 
-调度器本体。任务执行与失败计数主要由主线程维护；运行监护、日报与模拟器启停辅助线程另有生命周期和共享状态，不能将整个实例视为单线程对象。修改跨线程状态时需核对第 12 节的事件、读写边界与启停互斥机制。
+调度器本体。任务执行与失败计数主要由主线程维护；运行监护与模拟器启停辅助线程另有生命周期和共享状态，不能将整个实例视为单线程对象。修改跨线程状态时需核对第 12 节的事件、读写边界与启停互斥机制。
 
 | 字段 | 类型 | 说明 |
 | --- | --- | --- |
@@ -106,7 +105,6 @@ AUTO-MAS 一类外部调度器把 AzurPilot 当黑箱驱动，只用以下四个
 | `last_emulator_restart_time` | float | 上次计划重启模拟器的 `time.monotonic()`，用于定时重启间隔 |
 | `_watchdog_*` | 线程与标志 | 运行监护线程及其「激活」标志，仅任务执行期间激活 |
 | `_warmup_measured_cold_seconds` 等 | float/None | 预热实测耗时，用于动态计算下次提前量 |
-| `_daily_summary_*` | 线程与服务 | 日报定时检查，默认关闭且完全不创建 |
 
 ### 协作对象
 
@@ -122,7 +120,7 @@ AUTO-MAS 一类外部调度器把 AzurPilot 当黑箱驱动，只用以下四个
 
 ```mermaid
 flowchart TD
-    A[启动 loop] --> B[启动日报线程与运行监护<br>OOBE 检查 / 每日备份 / 调试服务]
+    A[启动 loop] --> B[启动运行监护<br>OOBE 检查 / 每日备份 / 调试服务]
     B --> C{stop_event 置位?}
     C -- 是 --> Z[退出循环, 原因: 更新]
     C -- 否 --> D[checker.wait_until_available<br>服务器维护则阻塞等待]
@@ -198,7 +196,7 @@ flowchart TD
 
 ### 全局异常兜底
 
-`loop()` 的最外层 `except` 是最后一道防线：上报错误日志（仅首次）、可选触发 LLM 错误分析、尽力重启模拟器、注入 `Restart`，然后按 `min(300, 20 × 2^(连续失败-1))` 秒指数退避后重试。调度器**永不因连续失败而退出**，退出只保留给代码 bug 与敏感任务。
+`loop()` 的最外层 `except` 是最后一道防线：上报错误日志（仅首次）、尽力重启模拟器、注入 `Restart`，然后按 `min(300, 20 × 2^(连续失败-1))` 秒指数退避后重试。调度器**永不因连续失败而退出**，退出只保留给代码 bug 与敏感任务。
 
 ## 7. 调用关系
 
@@ -219,9 +217,7 @@ flowchart TD
 | `module/research` 等约 90 个业务模块 | 任务方法的实际实现，全部方法内惰性导入 |
 | `module/handler/login.py`、`module/ui/ui.py` | `restart` / `start` / `goto_main` 三个基础任务 |
 | `module/notify` | onepush 推送与 WebUI 通知；可恢复告警经 `_notify_recoverable()` 双通道发出，可被 `Error_LowPushMode` 抑制 |
-| `module/llm.py` | 可选的异常 AI 分析（`Error_LlmAnalysis`） |
 | `module/base/backup.py` | 每日备份 |
-| `module/statistics/daily_summary.py` | 日报生成与推送 |
 | `module/base/api_client.ApiClient` | 崩溃日志上报 |
 
 ### 与 `TaskHandler` 的区别
@@ -289,7 +285,6 @@ stateDiagram-v2
 | `Error.GameStuckRestart` / `GameStuckThreshold` | bool/int | false / 3 | 卡死是否允许升级到模拟器重启及阈值 |
 | `Error.AdbOfflineThreshold` | int | 3 | 模拟器重启超过该次数后拉长等待间隔（不放弃） |
 | `Error.WatchdogEnable` / `WatchdogTaskEnable` / `WatchdogTaskTimeout` | bool/bool/分钟 | false/false/120 | 运行监护总开关、任务超时子开关与阈值；超时为 0 表示禁用 |
-| `Error.LlmAnalysis` | bool | true | 异常时调用 LLM 分析 |
 | `Optimization.WhenTaskQueueEmpty` | option | goto_main | 空闲行为：stay_there / goto_main / close_game |
 | `Optimization.CloseEmulatorDuringLongWait` | checkbox | true | 等待超过 3 小时关闭模拟器 |
 | `Optimization.WarmupEnable` / `WarmupMinutes` | bool/分钟 | true/15 | 任务预热开关与无实测时的提前量 |
@@ -298,11 +293,10 @@ stateDiagram-v2
 | `EmulatorManagement.RestartIntervalHours` | int | 4 | 计划重启间隔 |
 | `EmulatorManagement.DeepRestartAfterFailures` | int | 0 | 连续重启失败 N 次后改用 MuMu 深度重启；0 禁用 |
 | `Backup.Enable` / `Backup.KeepDays` | bool/int | true/7 | 每日备份与保留天数 |
-| `DailySummary.Enable` / `TriggerTime` | bool/str | false / 20:00 | 每日日报 |
 | `Restart.RandomDelay` | str | "5, 50" | 每日重启在服务器刷新后的随机延后区间（分钟） |
 | `YukikazeTaskManager.TaskPriorityAdjustment` | textarea | 空 | 用户自定义任务优先级，覆盖默认值 |
 
-配置间关联：严格停机 = `Error.StrictRestart` 与 `{Task}.Scheduler.Sensitive` 同时为真，两处分别独立可配，因此可以对单个任务精细控制；运行监护的两项检测共用一个线程，但由各自的子开关单独控制。`Emulator_PackageName` / `Emulator_ServerName` 既决定游戏包名，也是日报判断服务器的依据。
+配置间关联：严格停机 = `Error.StrictRestart` 与 `{Task}.Scheduler.Sensitive` 同时为真，两处分别独立可配，因此可以对单个任务精细控制；运行监护的两项检测共用一个线程，但由各自的子开关单独控制。`Emulator_PackageName` / `Emulator_ServerName` 既决定游戏包名，也是服务器检查的依据。
 
 ## 11. 异常与错误处理
 
@@ -346,7 +340,6 @@ stateDiagram-v2
 | --- | --- | --- | --- |
 | 主线程 | ProcessManager | 进程全程 | `loop()` 调度与任务执行 |
 | 运行监护 `alas-watchdog`（daemon） | `_start_watchdog()`，任一子功能开启才创建 | 随进程退出 | 每 30 秒检查任务是否超时、是否到达强制定时重启条件 |
-| 日报 `daily-summary-scheduler-<config>`（daemon） | `_start_daily_summary_scheduler()`，仅日报开启时创建 | 随进程退出或功能关闭 | 每秒检查是否到达日报触发窗口 |
 | 模拟器启停 worker（daemon，瞬时） | `_emulator_op_with_timeout()` | 操作结束或被超时放弃 | 真正执行 stop/start，超时放弃后仍持有平台启停锁直到完成 |
 
 关键约定：
@@ -355,7 +348,6 @@ stateDiagram-v2
 - **运行监护为什么杀模拟器而不是杀任务**：任务主线程可能阻塞在 uiohook 级的底层 I/O（uiautomator2 HTTP、ADB shell）中，Python 层无法安全中断线程；杀死模拟器进程会让主线程的下一次 I/O 调用失败并抛异常，从而自然汇入统一的异常恢复流程。这比从外部强杀线程安全得多。
 - **模拟器启停的并发保护**：`_emulator_op_with_timeout` 用独立线程执行操作并设硬超时（600 秒，覆盖模拟器完整冷启动预算）；超时放弃的线程仍在真实操作模拟器并持有平台层启停互斥锁，后续任何启停请求都会收到 `EmulatorOpBusy` 而被跳过，防止「一个线程正在启动、另一个随即关闭」的踩踏。
 - **跨进程停止信号**：WebUI 生命周期通过 `State.manager.Event()` 创建事件代理并交给 `ProcessManager`，worker 将其挂到 `AzurLaneConfig.stop_event` 与 `AzurLaneAutoScript.stop_event`。主循环和 `wait_until()` 轮询该代理，在检查点响应停止请求；普通 `threading.Event` 不能替代这条跨进程信号链。运行监护自身的 `_watchdog_stop` 才是进程内线程事件。
-- **线程间不共享 config 对象**：日报线程刻意不访问 `self.config`（任务执行期间它绑定着当前任务参数，跨线程重载会破坏一致性），而是直接读配置文件并按 mtime 缓存只读快照。
 
 ## 13. 缓存与持久化
 
@@ -365,7 +357,6 @@ stateDiagram-v2
 | `failure_record` | 内存 dict | 进程内累计；成功清零，进程重启清零 |
 | `_warmup_measured_cold_seconds` / `_warmup_measured_game_only_seconds` | 实例属性 | 每次预热成功后覆盖，用于动态计算提前量 |
 | `_i18n_task_names` | 模块级缓存 | 进程内一次加载，供推送通知使用本地化任务名 |
-| `_daily_summary_settings` | 实例属性 + 文件 mtime 比对 | 配置文件变更后重读 |
 | 错误现场 | `./log/error/<config>/<时间戳>/` | 截图与日志均经敏感信息遮罩后落盘，按 `Error_SaveErrorRetentionDays` 过期后删除或备份到 `bak/` |
 
 缓存失效是本模块的「配置热重载」机制：**不做增量合并，直接丢弃整个 `config` 缓存让下轮任务重新加载**。这保证每次任务绑定参数时拿到的是磁盘最新值，代价是任务之间才生效、任务执行中途不切换（任务中途的配置感知由配置系统的 `check_task_switch` 负责，见 [配置系统](../config.md)）。注意：`module/config/deep.py` 中的 `deep_iter_diff` 目前没有调用方，热重载并不基于字典差异比较，而是基于 mtime 检查 + 整体重建。
@@ -373,9 +364,9 @@ stateDiagram-v2
 ## 14. 生命周期
 
 1. **创建**：WebUI 请求启动实例时，`ProcessManager` 拉起 worker 进程，注入 `stop_event`，构造 `AzurLaneAutoScript(config_name)` 并调用 `loop()`。`__init__` 只初始化轻量状态，不碰配置与设备。
-2. **初始化**（`loop()` 开头）：文件日志 → 日报线程（可选）→ 运行监护（可选）→ OOBE 检查 → 每日备份 → 调试服务（`ALAS_DEBUG_SERVER=1` 时）。`config` 在此处首次加载；失败即 `exit(1)`，由父进程感知退出。
+2. **初始化**（`loop()` 开头）：文件日志 → 运行监护（可选）→ OOBE 检查 → 每日备份 → 调试服务（`ALAS_DEBUG_SERVER=1` 时）。`config` 在此处首次加载；失败即 `exit(1)`，由父进程感知退出。
 3. **运行**：无限调度循环。`config` / `device` / `checker` 在首次访问时惰性构造，之后按需失效重建。
-4. **销毁**：三条正常退出路径（`stop_event` 置位、`loop()` 返回 `False`、内部 `exit`）最终都结束进程；日报线程在 `stop_event` 路径被显式停止，其余 daemon 线程随进程消亡。模拟器与游戏进程不随 worker 退出而关闭（收尾动作由 WebUI 侧的独立收尾进程按配置执行）。
+4. **销毁**：三条正常退出路径（`stop_event` 置位、`loop()` 返回 `False`、内部 `exit`）最终都结束进程；daemon 线程随进程消亡。模拟器与游戏进程不随 worker 退出而关闭（收尾动作由 WebUI 侧的独立收尾进程按配置执行）。
 
 ## 15. 扩展方式
 

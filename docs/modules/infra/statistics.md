@@ -1,16 +1,15 @@
 # 统计与数据提交（module/statistics、module/azur_stats、module/log_res）
 
-> 把游戏运行期产生的掉落、战斗、资源与委托数据落成本地统计库，供 WebUI 统计页、LLM 日报与遥测提交消费。
+> 把游戏运行期产生的掉落、战斗、资源与委托数据落成本地统计库，供 WebUI 统计页与遥测提交消费。
 
 ## 1. 模块概述
 
 AzurPilot 在执行任务时天然经过大量战斗结算与资源画面。这些画面里藏着用户关心的数字：打到了什么掉落、练级效率多少、行动力循环是否为正、委托攒了多少钻石。`module/statistics` 及其两个伴生目录就是把这些瞬时画面沉淀为可查数据的统计层。
 
-这一层由五条相对独立的链路组成：
+这一层由四条相对独立的链路组成：
 
 - **掉落统计链路**：战斗结算截图经 `AzurStats` 保存或解析入库。实时侧（`azurstats.py`）在战斗结束的上下文里收集截图；离线侧（`drop_statistics.py`）对历史截图文件夹做批量模板匹配与 OCR，导出 CSV。大世界掉落（除侵蚀1练级外）在「保存」与「上传」两个档位都会解析入库，`opsi_drop_stats.py` 把它们按窗口聚合成「大世界掉落」页的金菜与彩图纸收益。
 - **CL1 统计链路**：`Cl1Database` 按「实例 × 月份」记录大世界侵蚀 1（CL1）与耄耋相接的战斗、明石、行动力等指标；`Cl1DataSubmitter` 把当月汇总匿名化后提交到官方遥测端点。
-- **日报链路**：`DailySummaryStore` 持续采集任务运行与侵蚀 1 战斗事件，`DailySummaryService` 在触发窗口聚合事实、调用 LLM 生成文案并经 OnePush 推送。
 - **仓库快照链路**：独立 `StorageStatistics` 任务进入普通仓库材料页，单遍完整扫描及同页核对通过后，把指定物品数量原子保存到 `config/storage_statistics.db`。统计页面只读最近快照及成功扫描的历史趋势，刷新不启动游戏扫描。
 - **资源收支链路**：`resource_flow.py` 在现有本地统计库中维护实例隔离的交易账本与库存基线；`resource_tracking.py` 旁路解析任务已有奖励画面，并记录已确认购买和科研启动的明确消耗。`LogRes` 对库存差额扣除已记交易，同一运行范围内的净变化归给任务，离线、跨任务及活动重置单列待归因。独立资源管理页按完整区间聚合来源、用途及依据，规则与扩展入口见 [资源管理](../webui/resource-management.md)。
 
@@ -58,7 +57,6 @@ AzurPilot 在执行任务时天然经过大量战斗结算与资源画面。这�
 - 物品识别原语：`Item`/`ItemGrid`/`AmountOcr`（模板匹配 + 带上限验证的数量 OCR）——商店、委托、仓库等模块都复用这一层
 - CL1 月度统计库（`config/cl1_data.db`）的读写与旧数据迁移
 - 侵蚀 1 遥测提交（`Cl1DataSubmitter` → `ApiClient`）
-- 日报运行时事件采集、周期去重、LLM 文案生成与推送
 - 资源快照记录（`resource_stats`）与资源变动入口（`LogRes`）
 - 掉落截图按保留天数清理，过期后删除或备份到 `bak/`（`drop_cleanup`）
 - 大世界运行期统计事件的统一落库入口（`opsi_runtime`）
@@ -69,7 +67,7 @@ AzurPilot 在执行任务时天然经过大量战斗结算与资源画面。这�
 
 - 掉落截图的实时采集时机——由战斗/地图流程决定（`drop.handle_add()`），统计层只被动接收
 - WebUI 的图表渲染与 API 编排——`module/api/statistics_service.py` 只是聚合查询本层导出的函数
-- 推送通道实现——OnePush 由 `module/notify` 承担，日报只调用 `handle_notify()`
+- 推送通道实现——OnePush 由 `module/notify` 承担
 - 经验表数据本身——`LIST_SHIP_EXP` 来自 `module/os/ship_exp_data.py`
 - 设备识别——`get_device_id()` 属于 `module/base/device_id.py`
 
@@ -80,9 +78,6 @@ module/statistics/
 ├── azurstats.py              # AzurStats：掉落记录提交、指挥喵 farming 汇总
 ├── cl1_database.py           # Cl1Database：月度统计库（单例 db）
 ├── cl1_data_submitter.py     # CL1 遥测提交器
-├── daily_summary.py          # DailySummaryService：日报触发与生成
-├── daily_summary_store.py    # DailySummaryStore：日报事件库
-├── daily_summary_text.py     # 日报 system prompt
 ├── commission_income_stats.py# 委托收益聚合（day/week/month/interval）
 ├── research_drop.py          # 科研掉落解析（队列页角标读期数 + 收获帧识别）
 ├── research_stats.py         # 科研掉落聚合（按期 / 心智物资两种口径）
@@ -139,7 +134,6 @@ module/log_res/
 | `Cl1Database.db`（模块级单例） | 各任务写入月度统计；同步方法 + `async_*` 系列（走 `async_executor`） |
 | `opsi_runtime.record_*` / `start_/finish_battle_timer` | 大世界任务上报战斗、明石、吊机等事件的规范入口，避免任务代码直接写库 |
 | `LogRes(config).<Res> = value` | 资源变动的声明式入口：写 `Dashboard.<Res>` 配置 + 触发资源快照 |
-| `alas.py _start_daily_summary_scheduler` | 日报独立检查线程（启用时随调度器启动） |
 | `statistics.report` / `statistics.refreshLoot` / `statistics.resources`（API 方法） | WebUI 统计页读取本层数据 |
 | `python -m module.statistics.drop_statistics` | 离线批量掉落分析脚本 |
 
@@ -174,7 +168,7 @@ module/log_res/
 
 ### 大世界统计存储（opsi_secure.py）
 
-大世界统计自 2026-10 起不再加密：载荷以明文 JSON 存放在既有列位（`cl1_data.secure_json`、`opsi_items.secure_payload`、`resource_snapshots.opsi_payload`、`daily_summary_cl1_events.secure_payload` 存 JSON 文本，`daily_summary_periods.report_text` 存正文），日志文件为普通 JSON/CSV。公共字段列与路由元数据不变；WebUI 历史展示不受影响。
+大世界统计自 2026-10 起不再加密：载荷以明文 JSON 存放在既有列位（`cl1_data.secure_json`、`opsi_items.secure_payload`、`resource_snapshots.opsi_payload` 存 JSON 文本），日志文件为普通 JSON/CSV。公共字段列与路由元数据不变；WebUI 历史展示不受影响。
 
 旧版加密数据（`OPSIV1.`/`OPSIV2.` 前缀）由启动钩子 `initialize()` 自动解密：有界等待，超时转后台；按描述文件恢复当时的本机凭据（安装目录被移动时按安装标识找回），逐库、逐文件、含备份归档一并转成明文，并移除加密时代的触发器与辅助表。只有确认本机不再有任何密文后才删除描述文件并撤销密钥；密钥暂不可用或个别行解不开时按原样保留，读取路径按行兼容解密，后续启动自动重试，绝不丢数据。
 
@@ -199,18 +193,6 @@ module/log_res/
 
 关键机制：`_stats_transaction()` 用 `BEGIN IMMEDIATE` 取写锁，跨线程/进程串行化整个「读-改-写」，避免并发覆盖；`save_stats` 只做整体替换，增量修改必须走事务内方法。旧版 device_id 派生密钥的历史行在读取时解码，并在下一次写入时就地转换为载荷列明文；`OPSIV1.`/`OPSIV2.` 遗留密文由启动时的一次性解密处理。
 
-证券历史的旧数据来源由 `cl1_legacy.read_ap_snapshots()` 在只读连接中提供，复用 CL1 的旧密钥派生和 AES-GCM 解码格式，不创建、删除或改写统计库。原实例首次升级时仅导入上海时区当月 `ap_snapshots` 中带 `ap_total` 的实际记录，再与中央认证历史合并进入持久补传队列；上月及更早月份不读取，注册时间不作为截断条件。已开户账户同样补传，数量不设 2000 条上限。同毫秒冲突以中央来源为准。当月旧统计读取失败时保留原件与重试资格，状态消息说明原因，每五分钟重试，不回滚中央历史、不阻断注册、登录及新记录同步；中央来源或补传队列的认证失败仍停止同步。迁移完成状态由实例身份和补传检查点认证，重命名保留原统计来源，复制及重建实例不继承；完成后不再读取旧库修改。没有总量的 `ap` 只表示当前行动力，不能当作证券股价。
-
-### 日报（daily_summary*.py）
-
-| 组件 | 说明 |
-| --- | --- |
-| `DailySummaryService.check_due()` | 校验触发时间格式与服务器归属，计算最近一个服务器日窗口；错过宽限期（5 分钟）则 `mark_period_skipped` 防补发，到点则 `claim_period` 原子抢占后起后台线程 |
-| `build_facts()` | 聚合任务运行、资源首末值、委托收益、侵蚀 1 事件四类事实；任何读取失败降级为 `data_quality.unavailable` 的明确缺失项，模型只拿可信数据 |
-| `DailySummaryStore` | SQLite `config/daily_summary.db`；`busy_timeout=50ms`——写不进就放弃，宁可在日报里标「未采集」也不让调度等锁 |
-| `daily_summary_periods` | 周期状态：`generating → sending → sent / failed(配置/LLM/推送/中断)`；`skipped` 表示已错过不补发 |
-| `DAILY_SUMMARY_SYSTEM_PROMPT` | 猫娘角色设定 + 术语表，要求只使用 facts 中明确的数据 |
-
 ## 6. 工作流程
 
 ### 掉落记录链路（以一次大世界自动搜索为例）
@@ -231,25 +213,6 @@ flowchart LR
 
 关键分叉在 `new()` 的 `method` 参数：配置值 `do_not` 产生空的 DropImage（零开销）；大世界掉落（`is_opsi_drop_genre()` 认可的任务，侵蚀1练级除外）的 `save` 与 `upload` **都会**解析入库，区别只在要不要把截图落盘——`upload` 这个名字是远程 AzurStats 时代的遗留，现在的「上传」就是「解析入本地库、不落盘」。解析中发现只有数字代号的未识别物品时，把结算截图画上红框另存到 `screenshots/unknown_items/`，供人工补模板。
 
-### 日报流程
-
-```mermaid
-flowchart TD
-    A[日报线程每秒检查] --> B{Enable?}
-    B -->|否| A
-    B -->|是| C[解析触发时间/服务器<br/>计算服务器日窗口]
-    C --> D{在触发窗口内?}
-    D -->|错过| E[mark_period_skipped<br/>本期不补发]
-    D -->|到点| F[claim_period 原子抢占]
-    F --> G[后台线程 build_facts<br/>聚合 automation/resources/commission/cl1]
-    G --> H[OpenAI 兼容接口生成文案<br/>最多 3 次]
-    H --> I[OnePush 推送<br/>最多 3 次]
-    I --> J[(daily_summary_periods<br/>sent/failed)]
-    J --> K[cleanup 清理 35 天前记录<br/>超 1 天的 generating/sending 标为 interrupted]
-```
-
-事实聚合的四个来源各自独立降级：任务运行摘要来自日报库自身（调度器在任务前后打点）、资源变化来自 `resource_stats` 的窗口首末快照、委托收益来自 `cl1_db` 的按月条目、侵蚀 1 事件来自 `record_cl1_battle_event` 逐场打点。LLM 配置不完整或 OnePush 无 provider 时直接置 `failed(error_kind='configuration')`，不调用模型。
-
 ## 7. 调用关系
 
 ### 上游
@@ -260,7 +223,6 @@ flowchart TD
 | `module/combat`、`module/os`、`module/os_combat`、`module/meowfficer`、`module/research` | 掉落记录的主要产生方；大世界战斗还调用 `opsi_runtime` 的计时器 |
 | `module/commission` | 委托结算时调 `cl1_db.add_commission_income`（含钻石委托的事务内结算）与收益截图落盘 |
 | `module/shop_status` / `os_status` / `campaign_status` 等 | 通过 `LogRes` 属性赋值上报资源变化 |
-| `alas.py` | 日报调度线程 + 任务运行打点 |
 | `module/api/statistics_service.py` / `runtime_service.py` | WebUI 统计页的聚合查询层 |
 
 ### 下游
@@ -271,8 +233,7 @@ flowchart TD
 | `module/os/globe_zone.ZoneManager` | OCR 地图名 → 标准区域（zone_id/hazard_level）映射 |
 | `module/base/api_client.py` | CL1 遥测 POST（双端点故障转移，仅含哈希 device_id） |
 | `module/base/async_executor` | 所有 `async_*` 统计写入的执行器 |
-| `module/notify` | 日报与委托收益推送（`handle_notify`） |
-| `openai` SDK | 日报文案生成（复用 Error 任务组的 LLM 配置） |
+| `module/notify` | 委托收益推送（`handle_notify`） |
 
 ## 8. 数据流
 
@@ -286,9 +247,8 @@ flowchart TD
               └─ 统计页「大世界掉落」= opsi_drop_stats.collect()（指定部件、图纸、材料、计划及突破部件）
               └─ 有未识别物品 → unknown_items/ 红框标注图
 
-任务事件（alas.py 打点）          → daily_summary_task_runs
 侵蚀1战斗（ShipExpStats.on_battle_end）
-  ├─ source=cl1 → ship_exp_data.json 日效率 + daily_summary_cl1_events
+  ├─ source=cl1 → ship_exp_data.json 日效率
   └─ meow 来源只进 cl1_db 耙耋桶
 资源 OCR（LogRes 赋值）
   ├─ Dashboard.<Res>.Value/Record → 配置文件（WebUI 仪表盘）
@@ -297,36 +257,16 @@ flowchart TD
 查询侧：
   statistics.report → opsi_month / commission_income_stats / research_stats / ship_exp_stats
                     / azurstats / resource_stats → metrics + series + tables
-  日报窗口 → 日报库 + resource_stats + cl1_db → facts JSON → LLM
 ```
 
 ## 9. 状态模型
 
-日报周期是本层唯一显式的状态机（`daily_summary_periods.status`）：
-
-```mermaid
-stateDiagram-v2
-    [*] --> generating: claim_period（INSERT OR IGNORE 抢占）
-    generating --> sending: 文案生成成功
-    generating --> failed: 配置缺失 / LLM 三次失败
-    sending --> sent
-    sending --> failed: 推送三次失败
-    generating --> skipped: 错过触发窗口（mark_period_skipped）
-    generating --> failed: 进程中断后 cleanup 补记
-```
-
-| 状态 | 含义 |
-| --- | --- |
-| generating / sending | 生成中 / 推送中；进程意外退出后由 `cleanup()` 在次日改判 `failed(error_kind='interrupted')`，不补发 |
-| sent / failed | 终态；`error_kind` 区分 configuration / llm / notify / internal / interrupted |
-| skipped | 已错过窗口，防止进程恢复后补发旧日报 |
+本层没有显式状态机，统计数据均为即时写入。
 
 ## 10. 配置
 
 | 配置 | 类型 | 默认值 | 说明 |
 | --- | --- | --- | --- |
-| `Alas.DailySummary.Enable` | checkbox | false | 日报开关；关闭时调度器不创建任何日报线程与存储 |
-| `Alas.DailySummary.TriggerTime` | str | "20:00" | 触发时刻（服务器时区，24 小时制 HH:MM），由 `parse_daily_summary_trigger` 校验 |
 | `Alas.DropRecord.SaveFolder` | str | ./screenshots | 掉落截图根目录（按 genre 分子目录） |
 | `Alas.DropRecord.RetentionDays` | int | 0 | 截图保留天数，0 = 不清理 |
 | `Alas.DropRecord.BackUpMethod` / `ZipMethod` | option | zip / zip | 过期截图的处理方式（delete / zip / copy）与压缩格式（bz2 / gzip / xz / zip）；备份落在各来源目录下的 `bak/` |
@@ -335,10 +275,9 @@ stateDiagram-v2
 | `Alas.DropRecord.CommissionIncomeScreenshot` | option | save | 委托收益截图开关 |
 | `Alas.DropRecord.ResearchRecord` | option | do_not | 科研掉落截图开关；`save` / `upload` / `save_and_upload` 都会统计（区别只在要不要把截图落盘） |
 | `Alas.DropRecord.TelemetryReport` | bool | true | CL1 遥测提交开关（hazard_leveling 里检查） |
-| `Alas.Error.LlmApiKey/LlmApiBase/LlmModel` | str | "" | 日报 LLM 配置（与错误上报共用） |
 | `Alas.Error.OnePushConfig` | str | "" | 推送通道配置 |
 
-关联关系：日报的 LLM 与推送配置刻意复用 `Error` 组，避免两套密钥；掉落记录各场景开关决定 `DropImage.save/local`。除侵蚀1练级外，大世界任务的 `save` / `upload` / `save_and_upload` 均本地解析，`do_not` 不统计。日报线程不持有完整配置对象——`alas.py` 只传 `SimpleNamespace` 快照并按配置文件 mtime 热读，避免与任务线程争用配置对象。
+关联关系：掉落记录各场景开关决定 `DropImage.save/local`。除侵蚀1练级外，大世界任务的 `save` / `upload` / `save_and_upload` 均本地解析，`do_not` 不统计。
 
 ## 11. 异常与错误处理
 
@@ -346,17 +285,14 @@ stateDiagram-v2
 | --- | --- | --- |
 | `ImageError` 族（GetItemsInvalid、OpsiZoneInvalid…） | 截图不是预期结算页 / 信息栏遮挡 | `commit`/离线解析捕获后记 warning 跳过该截图，不影响战斗流程 |
 | 掉落数量为 0 或仍超上限 | 数字不完整、图标残影或字形不确定 | 科研、委托、大世界按格记 warning 并跳过，保留同页其他掉落及原截图；不截断猜值 |
-| SQLite 锁竞争 | WebUI 线程与调度线程并发写 | 日报库 `busy_timeout=50ms` 快速失败 + 内存暂存降级事件；CL1 库用 `BEGIN IMMEDIATE` 串行化 |
-| 日报数据库写失败 | 磁盘/锁异常 | 记入 `daily_summary_collection_gaps`，该周期日报标「数据不完整」 |
-| LLM 空响应 / 调用失败 | 网络、配额 | 最多 3 次重试，仍失败置 `failed(error_kind='llm')`，本期不发送 |
-| OnePush 失败 | 配置错误、服务不可达 | 同一文案重发 3 次，仍失败置 `failed`，不重试整期 |
+| SQLite 锁竞争 | WebUI 线程与调度线程并发写 | CL1 库用 `BEGIN IMMEDIATE` 串行化 |
 | 遥测提交失败 | 网络不通 | 仅 debug 日志，下个 10 分钟窗口再试 |
 
 原则：**统计链路的异常一律不向游戏调度传播**。`record_task_start/finish`、资源快照、战斗计时等都有 try/except 包裹；只有 `Cl1Database.save_stats` 这类显式写接口会把异常传给调用方（由调用方决定回滚语义）。
 
 ## 12. 并发与线程模型
 
-统计层被至少四类线程同时访问：游戏任务线程（同步写）、`async_executor` 工作线程（异步写）、日报后台线程（生成与推送）、WebUI 工作线程（查询）。
+统计层被至少三类线程同时访问：游戏任务线程（同步写）、`async_executor` 工作线程（异步写）、WebUI 工作线程（查询）。
 
 侵蚀1明石遭遇由 `opsi_runtime.record_cl1_akashi_encounter()` 提交到串行异步队列，并返回写入 Future，主游戏流程不做同步回读。`increment_akashi_encounter(instance, month=None)` 在事务提交后返回实际累计次数；传入事件发生月份避免跨月排队计入下个月。完成回调只在提交成功后打印累计次数，失败记录异常并保留事务回滚；进程正常退出沿用异步执行器的队列刷新。
 
@@ -366,10 +302,7 @@ stateDiagram-v2
 | --- | --- |
 | `Cl1Database` | 每次读改写都在 `_stats_transaction()`（`BEGIN IMMEDIATE`）内完成，跨线程与跨进程串行化；不依赖调用方持锁。跨月结算在一个事务里同时写来源月与归档月 |
 | `AzurStats` | `_record_lock` 串行化本地解析（解析是 CPU 密集的 OCR），`_local_lock` 串行化 SQLite 插入；save 单独开短命线程避免阻塞战斗 |
-| `DailySummaryStore` | `RLock` + 每次操作新建短连接（`_ClosingConnection` 立即释放，防 Windows 文件锁残留）；采集失败先缓存内存、下次可写时补记 |
-| `DailySummaryService` | `_lock` 保护 `_active/_processed_periods` 集合；周期幂等性主要靠数据库 `claim_period` 的 INSERT OR IGNORE，进程内集合只是去重快路径 |
 | `resource_stats` / `_loot_lock` | 模块级锁串行化快照写入与 farming 重算 |
-| 日报线程生命周期 | 由 `alas.py` 的调度器 loop 启停；`check_due` 里启动的生成线程是 daemon，异常全部隔离在 `_generate_and_send` 内 |
 
 ## 13. 缓存与持久化
 
@@ -379,7 +312,6 @@ stateDiagram-v2
 | `config/opsi_secure/` | 旧加密环境的描述文件与凭据状态 | 仅历史版本产生 | 全部旧密文解密成功后自动移除 |
 | `config/cl1_data.db` | CL1 月度统计（instance×month） | 各 `async_*` 方法即时写 | 快照列表内部截断（500/5000 条） |
 | `config/storage_statistics.db` | 按实例保存完整仓库物品快照 | `StorageStatistics` 单遍完整扫描及同页核对后原子提交 | 保留已完成扫描 |
-| `config/daily_summary.db` | 日报任务事件、周期状态、采集缺口 | 任务前后、战斗结束、日报流程 | `cleanup()` 保留 35 天 |
 | `log/azurstat_meowofficer_farming.csv` | farming 汇总 | 每次本地解析成功后重算 | 覆写 |
 | `log/cl1/<instance>/ship_exp_data.json` | 战斗耗时样本、每日经验、升级进度 | 每场战斗结束 | 样本 100 条 / 日统计 30 天 |
 | `screenshots/<genre>/`、`log/commission_rewards/<instance>/<月份>/` | 掉落与委托截图 | commit / 委托结算 | `DropRecord_RetentionDays` 天数清理（节流 1 小时），过期后按 `DropRecord_BackUpMethod` 删除 / 拷贝备份 / 压缩备份到 `bak/` |
@@ -388,7 +320,7 @@ CL1 库的兼容性迁移是自动的：启动时把旧位置 `log/cl1/cl1_data.
 
 ## 14. 生命周期
 
-`Cl1Database.db`、日报 `DailySummaryStore`、遥测提交器 `_submitters` 都是进程级单例，随首次 import 惰性创建，无显式销毁。`AzurStats` 不是单例——每个 `ModuleBase` 持有自己的实例（只封装 config），共享的锁在类属性上。日报线程随调度器 `loop()` 启动、更新事件或进程退出时通过 `_stop_daily_summary_scheduler` 停止；日报关闭的实例从初始化起就不创建任何线程与数据库连接。
+`Cl1Database.db`、遥测提交器 `_submitters` 都是进程级单例，随首次 import 惰性创建，无显式销毁。`AzurStats` 不是单例——每个 `ModuleBase` 持有自己的实例（只封装 config），共享的锁在类属性上。
 
 ## 15. 扩展方式
 
@@ -397,7 +329,6 @@ CL1 库的兼容性迁移是自动的：启动时把旧位置 `log/cl1/cl1_data.
 1. 在 `cl1_database.py` 的 `_empty_data()` 加默认字段，新增 `add_xxx`/`get_xxx` 方法——读改写必须包在 `_stats_transaction()` 里，并按需提供 `async_` 包装。
 2. 在 `opsi_runtime.py` 加运行期入口（或在对应任务里直接调用），任务代码只上报领域事件。
 3. 在 `module/api/statistics_service.py` 的对应 category 里把指标加进 `report()` 输出；API 模型变更后运行 `uv run python -m dev_tools.export_api_schema`。
-4. 需要进日报时，在 `DailySummaryService.build_facts()` 的 facts 里补字段并在 prompt 术语表加映射。
 
 新增掉落识别模板：把结算截图交给 `DropStatistics.extract_template()` 提取，人工重命名后放回对应场景的模板目录；图纸、实验计划和突破部件的稀有度由 `AutoSearchItemGrid.match_candidates` 按底色限定，新等级需要同时补 `TIER_BY_COLOR` 可识别的底色。新增物品同时检查 `opsi_drop_stats.py`、名称表、静态图标及五种语言的 `stats.lootHint`；回归入口为 `tests.test_opsi_drop_stats`、`tests.test_opsi_item_recognition` 和前端「大世界掉落展示新增」模拟服务测试。
 
@@ -407,7 +338,6 @@ CL1 库的兼容性迁移是自动的：启动时把旧位置 `log/cl1/cl1_data.
 - **正常代码升级不得清空统计**：新增保护字段、变更身份或格式必须先实现兼容迁移；未完成迁移或普通故障绝不能删除数据；唯一允许的自动删除是「旧密文已全部解密成功」后的描述文件清理。
 - **`ItemGrid` 是被多处共享的单例状态**（`get_items.ITEM_GROUP` 是模块级实例）：`GetItemsStatistics`、`CampaignBonusStatistics`、`azur_stats.GetItems`、商店与仓库都改它的 `grids/item_class/similarity`。新增使用方时必须在使用前完整设置这些属性，如同 `_stats_get_items_load` 所做的那样，否则会带着上一场景的网格布局去匹配。数量侧同理：`amount_area` / `amount_area_rules` / `amount_ocr` / `amount_max` 都是按场景设置的，`azur_stats.GetItems` 会把前三个一起设好。
 - **删除是不可逆的**：`drop_cleanup` 只处理文件名匹配 `^\d{13}(_.+)?\.png$` 的文件，配置异常时按 0 处理（不清理）；`bak/` 内的备份不参与扫描（拷贝备份保留原修改时间，只看时间会被反复处理），压缩或拷贝失败时保留原文件。改清理逻辑时保持这些保守默认。
-- **日报的 `period_key` 含服务器与时区信息**，改动 `get_daily_summary_window` 的窗口语义会让已存在库里的 period_key 失配，导致重复推送。
 - **数量识别先用真实切片回归**：`amount_digits` 的字形阈值、粘连拆分与 `remove_small_fragments` 的 OCR 兜底均需覆盖原生数字；不要把 OCR 旧输出作为真值，也不要凭删首位或末位修正超限值。回归包含重复数字、五位凭证、纸角和粗体图纸数字。
 - **遥测提交只发聚合指标**（battle_count/明石次数 + MD5 前缀 instance_id），不要往 `calculate_metrics` 里加可识别个人的字段。
 - `module/statistics/assets.py` 与 `module/azur_stats/assets.py` 是 `dev_tools.button_extract` 的生成物，改按钮资源后重新生成，不要手改。
@@ -421,7 +351,6 @@ CL1 库的兼容性迁移是自动的：启动时把旧位置 `log/cl1/cl1_data.
 
 - `AzurStats` 的远程上传路径已废弃；大世界 `upload` 表示本地解析、不保存截图，侵蚀1练级除外。
 - `AzurStats.get_meow_loot_monthly_totals` / `get_meow_loot_available_months` 目前在仓库内没有调用方，属于预留接口。
-- 委托收益条目没有「已检查但零结算」的心跳记录，日报侧只能把空列表标为 `available=False` 而非零收益（`commission_income_stats` 有注释说明）。
 - 遥测域名 `ApiClient.PRIMARY_DOMAIN` 与 `FALLBACK_DOMAIN` 当前相同，故障转移实际未生效。
 - farming CSV（`azurstat_meowofficer_farming.csv`）是全量重算而非增量，明细库很大时刷新会变慢。
 - `drop_statistics.py` 离线分析依赖手动重命名模板与改脚本常量，没有命令行参数化。
@@ -451,17 +380,16 @@ record_siren_research_device(self)          # opsi_runtime 内部决定来源与
 
 ## 19. 调试方法
 
-- 日志前缀：`[统计-物品]`（识别修正）、`[统计-资源]`、`[统计-经验]`、`[统计-大世界]`（运行期事件）、`[统计-解密]`（旧加密数据自动解密）、`[日报]`（日报全链路）、`[掉落记录]`（清理）、`[基础-API]`（遥测提交）。`logger.attr('CL1单轮耗时', ...)` 等属性行适合 grep 单轮耗时。
+- 日志前缀：`[统计-物品]`（识别修正）、`[统计-资源]`、`[统计-经验]`、`[统计-大世界]`（运行期事件）、`[统计-解密]`（旧加密数据自动解密）、`[掉落记录]`（清理）、`[基础-API]`（遥测提交）。`logger.attr('CL1单轮耗时', ...)` 等属性行适合 grep 单轮耗时。
 - 本地调试服务：`ALAS_DEBUG_SERVER=1` 启动调度器后，`module/debug/commission_debug.py` 可以不开游戏注入伪造委托收益并触发推送，验证统计口径与推送链路。
-- 测试：`tests/test_statistics_amount_digits.py` / `test_item_amount_area.py`（真实数量切片、严格上限、裁剪边界与单格失败保留其余物品）、`tests/test_statistics_transactions.py`（CL1 事务与并发）、`tests/test_daily_summary*.py`（日报窗口与聚合）、`tests/test_drop_cleanup.py`（清理与 `AzurStats.new` 节流）、`tests/test_archive.py`（删除/拷贝/压缩三种过期处理方式）、`tests/test_commission_settlement.py`、`tests/test_research_stats.py` / `test_research_drop.py` / `test_research_drop_repair.py`（科研口径、角标识别与记录订正）。
-- 数据核查入口：直接用 sqlite3 打开 `config/cl1_data.db`（明文 JSON）、`config/azurstats_local.db`、`config/daily_summary.db`； farming 汇总看 `log/azurstat_meowofficer_farming.csv`。科研记录里出现「当前 `assets/stats/research_items/` 与名称表都没有的模板名」基本就是模板改名残留，用 `dev_tools/research_drop_repair.py` 拿原截图重放订正。
+- 测试：`tests/test_statistics_amount_digits.py` / `test_item_amount_area.py`（真实数量切片、严格上限、裁剪边界与单格失败保留其余物品）、`tests/test_statistics_transactions.py`（CL1 事务与并发）、`tests/test_drop_cleanup.py`（清理与 `AzurStats.new` 节流）、`tests/test_archive.py`（删除/拷贝/压缩三种过期处理方式）、`tests/test_commission_settlement.py`、`tests/test_research_stats.py` / `test_research_drop.py` / `test_research_drop_repair.py`（科研口径、角标识别与记录订正）。
+- 数据核查入口：直接用 sqlite3 打开 `config/cl1_data.db`（明文 JSON）、`config/azurstats_local.db`； farming 汇总看 `log/azurstat_meowofficer_farming.csv`。科研记录里出现「当前 `assets/stats/research_items/` 与名称表都没有的模板名」基本就是模板改名残留，用 `dev_tools/research_drop_repair.py` 拿原截图重放订正。
 - 未识别物品：检查 `screenshots/unknown_items/` 下的红框标注图，补模板后重跑 `DropStatistics.extract_template`。
 
 ## 20. 相关模块
 
-- [调度器（alas.py）](../entry/alas.md)——日报调度线程、任务运行打点的宿主
 - [API 服务](../webui/api.md)——`statistics_service` 的 6 类报表与 `statistics.refreshLoot`
-- [通知、LLM 与日志](notify-llm-logger.md)——`handle_notify` 推送通道与 LLM 配置复用
+- [通知与日志](notify-llm-logger.md)——`handle_notify` 推送通道
 - [战斗系统](../combat.md)——`combat()` 是掉落截图最主要的产生方
 - [大世界核心](../os/index.md)——CL1/耄耋相接任务与 `opsi_runtime` 事件的来源
 - [委托系统](../game/commission.md)——委托收益识别、截图落盘与钻石委托结算的调用方

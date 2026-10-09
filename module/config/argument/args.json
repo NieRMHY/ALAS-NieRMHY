@@ -556,13 +556,12 @@
         "value": false
       },
       "RestartOperationTimeout": {
-        "type": "textarea",
-        "value": "mimo-v2.5-pro",
+        "type": "input",
+        "value": 120,
         "validate": [
           10,
           600
-        ],
-        "valuetype": "str"
+        ]
       }
     },
     "Optimization": {

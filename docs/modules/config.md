@@ -350,7 +350,7 @@ stateDiagram-v2
 
 - **生成产物绝不手改**：args.json、menu.json、config_generated.py、template.json、i18n 结构均由生成器维护。CI 的 `button-config-check` 会重新运行 `button_extract` + `config_updater` 并 `git diff --exit-code`，手改或漏跑生成器都会挂 CI。i18n 是唯一例外——生成器保留已有翻译，翻译可以直接改 JSON。
 - **不要把真实用户配置当模板**；模板只能由生成器产出（其中 AzurStatsID 置空）。
-- **配置根节点不全是任务**：`_stockInstance` 是运行器与 API 读取、保存时保留的内部身份字符串，不属于可编辑参数。遍历任务时先确认节点是字典，再读取 `Scheduler`；不能为修复队列读取而删除身份字段。
+- **配置根节点不全是任务**：遍历任务时先确认节点是字典，再读取 `Scheduler`，避免非字典的内部元数据导致队列读取失败。
 - **改 `server.py` 时保持 `SERVER_CHECKER_SERVER_LIST` 条目顺序**：配置值按列表下标持久化，重排等于给全体用户换服。
 - **`import module.config.server as server`**，不要 `from ... import server`——它是要被 `set_server()` 就地替换的全局变量；切换服务器须在导入游戏模块前完成，否则资源已按旧服务器加载。
 - **`override()` 的逐任务 NextRun 夹限是有意为之**：不要加「所有任务不得超过 N 小时」的通用兜底，历史上它把秘书舰等合法长休眠打成热循环（38 分钟被调起 219 次）。新任务需要上限就在 `override()` 里逐个声明。

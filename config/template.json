@@ -109,7 +109,7 @@
       "WatchdogTaskEnable": false,
       "WatchdogTaskTimeout": 120,
       "RestartOperationTimeoutEnable": false,
-      "RestartOperationTimeout": "mimo-v2.5-pro"
+      "RestartOperationTimeout": 120
     },
     "Optimization": {
       "OcrDevice": "auto",

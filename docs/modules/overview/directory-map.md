@@ -41,7 +41,7 @@
 | 游戏功能 | `module/research`、`commission`、`reward`、`daily`、`exercise`、`gacha`、`hard`、`sos`、`war_archives`、`raid`、`event`、`event_hospital`、`coalition`、`eventstory`、`private_quarters`、`shipyard`、`freebies`、`minigame`、`awaken`、`shop`、`storage`、`retire`、`equipment`、`dock` 等 | 各玩法任务（见[日常维护合集](../game/daily-maintenance.md)、[其他游戏功能](../game/misc.md)） |
 | 岛屿系 | `module/island` | 岛屿季度玩法 |
 | 统计 | `module/statistics` | 掉落/收益统计与 azurstat 提交 |
-| 通知 | `module/notify`、`module/llm.py`、`module/logger.py` | 推送、LLM 错误分析、日志 |
+| 通知 | `module/notify`、`module/logger.py` | 推送、日志 |
 | WebUI | `module/api`、`module/runtime` | WebSocket API v1、进程管理与运行服务 |
 | 桥接 | `module/submodule`（+ `submodule/` git 子模块） | MAA/FGO 桥接加载 |
 | 调试 | `module/debug` | 委托调试与本地调试 web 服务 |

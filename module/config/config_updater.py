@@ -744,10 +744,6 @@ class ConfigUpdater:
             更新后的配置字典。
         """
         new = {}
-        # 交易玩家身份不是可编辑参数，运行器迁移必须原样保留。
-        if not is_template and '_stockInstance' in old:
-            new['_stockInstance'] = old['_stockInstance']
-
         for keys, data in deep_iter(self.args, depth=3):
             # 跳过非字典项（叶子值，如字符串、数字等）
             if not isinstance(data, dict):
