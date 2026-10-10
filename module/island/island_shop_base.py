@@ -258,7 +258,11 @@ class IslandShopBase(Island, WarehouseOCR):
         # 282），而这里每次收取/生产前读的是准确库存。记录失败不能影响生产排产。
         try:
             from module.island.island_season_progress import record_readings
-            record_readings(self.config, dict(self.warehouse_counts))
+            changed = record_readings(dict(self.warehouse_counts))
+            if changed:
+                from module.island.island_season_plan_data import cn_name
+                logger.info('[岛屿-赛季进度] ' + '、'.join(
+                    f'{cn_name(item)} {old}->{new}' for item, (old, new) in changed.items()))
         except Exception:
             logger.exception('[岛屿-赛季进度] 仓库读数记录失败，已跳过')
         return self.warehouse_counts

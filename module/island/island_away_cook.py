@@ -25,26 +25,35 @@ AWAY_COOK_KEYS = {
 }
 
 
-def season_items_for_shop(shop, season):
+def season_items_for_shop(shop, season, slots=None):
     """
     该店在赛季任务里要交的物品。
+
+    Modify by MHY, 清单来自配置槽位（IslandSeasonPlan.Item/Need/Done）：已标记完成或
+    需求为 0 的槽位不在其中，所以不会再被轮换成常驻餐品。没传 slots 时退回代码里的
+    赛季表（离线测试与新赛季预置用）。
 
     Args:
         shop: 店铺类型标识
         season: 赛季
+        slots: island_season_progress.read_slots() 的结果；None 用赛季表
 
     Returns:
         list[(物品, 需要数量, 单件工时)]
     """
+    if slots is not None:
+        pairs = [(s['item'], s['need']) for s in slots if not s['done'] and s['need'] > 0]
+    else:
+        pairs = [(item, need) for _, item, need in SEASON_PLAN_TASKS.get(season, [])]
     result = []
-    for _, item, need in SEASON_PLAN_TASKS.get(season, []):
+    for item, need in pairs:
         info = ECONOMY_PRODUCTS.get(item)
         if info and info['shop'] == shop:
             result.append((item, need, info['time_min']))
     return result
 
 
-def pick_away_cook(shop, season, counts, producible=None, exclude=None, skip=None):
+def pick_away_cook(shop, season, counts, producible=None, exclude=None, skip=None, slots=None):
     """
     挑该店的常驻餐品：赛季缺口最大的物品优先。
 
@@ -58,13 +67,14 @@ def pick_away_cook(shop, season, counts, producible=None, exclude=None, skip=Non
         producible: 可生产集合；None 不限制
         exclude: 排除集合（未解锁商品等）
         skip: 已完成的物品集合（本季不再生产）
+        slots: 配置槽位；已完成的槽位不参与
 
     Returns:
         str: 物品英文名；没有缺口或没有可生产的返回 'None'
     """
     exclude = set(exclude or ()) | set(skip or ())
     best, best_key = None, None
-    for item, need, time_min in season_items_for_shop(shop, season):
+    for item, need, time_min in season_items_for_shop(shop, season, slots):
         if producible is not None and item not in producible:
             continue
         if item in exclude:
@@ -199,6 +209,9 @@ def notify_ready_from_progress(config, season, progress):
 
     if not season or not progress:
         return []
+    # 总开关：关闭后完全不发邮件（提交过的任务仓库数量仍可能高于需求，会反复打扰）
+    if not config.cross_get('IslandSeasonPlan.IslandSeasonPlan.NotifyEnable', default=True):
+        return []
     notified = load_notified()
     state = notified.setdefault(season, {})
     dirty = False
@@ -237,7 +250,7 @@ def notify_ready_from_progress(config, season, progress):
 
 
 def resolve_away_cook(shop, season, counts, current, defaults=None, producible=None,
-                      exclude=None, skip=None):
+                      exclude=None, skip=None, slots=None):
     """
     决定该店常驻餐品该写什么，并维护「用户原值」备份。
 
@@ -260,7 +273,7 @@ def resolve_away_cook(shop, season, counts, current, defaults=None, producible=N
     """
     defaults = dict(defaults or {})
     target = pick_away_cook(shop, season, counts,
-                            producible=producible, exclude=exclude, skip=skip)
+                            producible=producible, exclude=exclude, skip=skip, slots=slots)
     if target != 'None':
         if shop not in defaults:
             defaults[shop] = current

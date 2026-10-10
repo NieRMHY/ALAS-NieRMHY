@@ -204,7 +204,7 @@
       "Target": 24000
     },
     "YukikazeTaskManager": {
-      "TaskPriorityAdjustment": "Restart\n> OpsiCrossMonth\n> Commission\n> Tactical\n> Research\n> Exercise\n> Dorm\n> Meowfficer\n> Guild\n> Gacha\n> Reward\n> StorageStatistics\n> ShopFrequent\n> ShopOnce\n> Shipyard\n> Freebies\n> PrivateQuarters\n> OpsiExplore\n> OpsiExploreCleanup\n> OpsiPreventActionPointOverflow\n> Minigame\n> Awaken\n> OpsiAshBeacon\n> OpsiDaily\n> OpsiShop\n> OpsiVoucher\n> EventShop\n> OpsiAbyssal\n> OpsiStronghold\n> OpsiObscure\n> OpsiArchive\n> Daily\n> Hard\n> OpsiAshAssist\n> OpsiMonthBoss\n> EventSp\n> EventA\n> EventB\n> EventC\n> EventD\n> RaidDaily\n> CoalitionSp\n> WarArchives\n> MaritimeEscort\n> IslandJuuEatery\n> IslandJuuCoffee\n> IslandGrill\n> IslandTeahouse\n> IslandRestaurant\n> IslandFarm\n> IslandRancher\n> IslandMineForest\n> IslandDailyGather\n> IslandManufacture\n> IslandAirDrop\n> IslandBusiness\n> IslandDailyOrder\n> IslandDailyInteract\n> IslandPearlSell\n> IslandCargoPreparation\n> Event\n> Event2\n> Event3\n> Raid\n> Hospital\n> Coalition\n> RaidAffection\n> Main\n> Main2\n> Main3\n> OpsiScheduling\n> OpsiMeowfficerFarming\n> GemsFarming\n> Ambush11\n> OpsiHazard1Leveling\n> ThreeOilLowCost\n> OperationHandover\n> CoalitionScuttle\n> Secretary\n> IslandSeasonPlan"
+      "TaskPriorityAdjustment": "Restart\n> OpsiCrossMonth\n> Commission > Tactical > Research\n> Exercise\n> Dorm > Meowfficer > Guild > Gacha\n> Reward > StorageStatistics\n> ShopFrequent > ShopOnce > Shipyard > Freebies\n> PrivateQuarters\n> OpsiExplore > OpsiExploreCleanup\n> OpsiPreventActionPointOverflow\n> Minigame > Awaken\n> OpsiAshBeacon\n> OpsiDaily > OpsiShop > OpsiVoucher > EventShop\n> OpsiAbyssal > OpsiStronghold > OpsiObscure > OpsiArchive\n> Daily > Hard > OpsiAshBeacon > OpsiAshAssist > OpsiMonthBoss\n> Sos > EventSp > EventA > EventB > EventC > EventD\n> RaidDaily > CoalitionSp > WarArchives > MaritimeEscort\n> IslandJuuEatery > IslandJuuCoffee > IslandGrill > IslandTeahouse > IslandRestaurant\n> IslandFarm > IslandRancher > IslandMineForest > IslandDailyGather > IslandManufacture\n> IslandAirDrop > IslandBusiness > IslandDailyOrder > IslandDailyInteract > IslandPearlSell > IslandCargoPreparation\n> Event > Event2 > Event3 > Raid > Hospital > HospitalEvent > Coalition > RaidAffection > Main > Main2 > Main3\n> OpsiScheduling\n> OpsiMeowfficerFarming\n> GemsFarming\n> Ambush11\n> OpsiHazard1Leveling\n> ThreeOilLowCost\n> OperationHandover"
     },
     "Storage": {
       "Storage": {}
@@ -567,7 +567,7 @@
     },
     "Campaign": {
       "Name": "12-4",
-      "Event": "event_20250912_cn",
+      "Event": "campaign_main",
       "Mode": "normal",
       "UseClearMode": true,
       "UseFleetLock": true,
@@ -662,7 +662,7 @@
     },
     "Campaign": {
       "Name": "12-4",
-      "Event": "event_20250912_cn",
+      "Event": "campaign_main",
       "Mode": "normal",
       "UseClearMode": true,
       "UseFleetLock": true,
@@ -843,7 +843,7 @@
     },
     "Campaign": {
       "Name": "D3",
-      "Event": "event_20250912_cn",
+      "Event": "campaign_main",
       "Mode": "normal",
       "UseClearMode": true,
       "UseFleetLock": true,
@@ -933,7 +933,7 @@
     },
     "Campaign": {
       "Name": "D3",
-      "Event": "event_20250912_cn",
+      "Event": "campaign_main",
       "Mode": "normal",
       "UseClearMode": true,
       "UseFleetLock": true,
@@ -1023,7 +1023,7 @@
     },
     "Campaign": {
       "Name": "D3",
-      "Event": "event_20250912_cn",
+      "Event": "campaign_main",
       "Mode": "normal",
       "UseClearMode": true,
       "UseFleetLock": true,
@@ -1117,7 +1117,7 @@
     },
     "Campaign": {
       "Name": "dynamic",
-      "Event": "raid_20260827",
+      "Event": "campaign_main",
       "Mode": "normal",
       "UseClearMode": true,
       "UseFleetLock": true,
@@ -1184,7 +1184,7 @@
     },
     "Campaign": {
       "Name": "dynamic",
-      "Event": "raid_20260827",
+      "Event": "campaign_main",
       "Mode": "normal",
       "UseClearMode": true,
       "UseFleetLock": true,
@@ -1281,7 +1281,7 @@
     },
     "Campaign": {
       "Name": "dynamic",
-      "Event": "coalition_20260723",
+      "Event": "campaign_main",
       "Mode": "normal",
       "UseClearMode": true,
       "UseFleetLock": true,
@@ -1343,7 +1343,7 @@
     },
     "Campaign": {
       "Name": "dynamic",
-      "Event": "coalition_20260723",
+      "Event": "campaign_main",
       "Mode": "normal",
       "UseClearMode": true,
       "UseFleetLock": true,
@@ -1538,7 +1538,7 @@
     },
     "Campaign": {
       "Name": "dynamic",
-      "Event": "event_20250912_cn",
+      "Event": "campaign_main",
       "Mode": "normal",
       "UseClearMode": true,
       "UseFleetLock": true,
@@ -1627,7 +1627,7 @@
     },
     "Campaign": {
       "Name": "dynamic",
-      "Event": "event_20250912_cn",
+      "Event": "campaign_main",
       "Mode": "normal",
       "UseClearMode": true,
       "UseFleetLock": true,
@@ -1716,7 +1716,7 @@
     },
     "Campaign": {
       "Name": "dynamic",
-      "Event": "event_20250912_cn",
+      "Event": "campaign_main",
       "Mode": "normal",
       "UseClearMode": true,
       "UseFleetLock": true,
@@ -1805,7 +1805,7 @@
     },
     "Campaign": {
       "Name": "dynamic",
-      "Event": "event_20250912_cn",
+      "Event": "campaign_main",
       "Mode": "normal",
       "UseClearMode": true,
       "UseFleetLock": true,
@@ -1890,7 +1890,7 @@
     },
     "Campaign": {
       "Name": "sp",
-      "Event": "event_20250912_cn",
+      "Event": "campaign_main",
       "Mode": "normal",
       "UseClearMode": true,
       "UseFleetLock": true,
@@ -1978,7 +1978,7 @@
     },
     "Campaign": {
       "Name": "dynamic",
-      "Event": "raid_20260827",
+      "Event": "campaign_main",
       "Mode": "normal",
       "UseClearMode": true,
       "UseFleetLock": true,
@@ -2031,7 +2031,7 @@
     },
     "Campaign": {
       "Name": "sp",
-      "Event": "coalition_20260723",
+      "Event": "campaign_main",
       "Mode": "normal",
       "UseClearMode": true,
       "UseFleetLock": true,
@@ -3124,7 +3124,7 @@
   },
   "IslandPlan": {
     "IslandPlan": {
-      "Season": "autumn",
+      "Season": "spring",
       "RefreshPlan": false,
       "PlanVerifiedOnly": true,
       "PlanMineVerified": true,
@@ -3146,7 +3146,37 @@
       "Sensitive": false
     },
     "IslandSeasonPlan": {
-      "Progress": "apple_juice=0/250\ncarrot_omelette=0/100\niced_coffee=250/250\nlatte=82/100\nroasted_skewer=0/250\nsalad=2100/100\nsteak_bowl=0/50\nstir_fried_chicken=0/100"
+      "NotifyEnable": true,
+      "Item1": "None",
+      "Need1": 0,
+      "Done1": false,
+      "Item2": "None",
+      "Need2": 0,
+      "Done2": false,
+      "Item3": "None",
+      "Need3": 0,
+      "Done3": false,
+      "Item4": "None",
+      "Need4": 0,
+      "Done4": false,
+      "Item5": "None",
+      "Need5": 0,
+      "Done5": false,
+      "Item6": "None",
+      "Need6": 0,
+      "Done6": false,
+      "Item7": "None",
+      "Need7": 0,
+      "Done7": false,
+      "Item8": "None",
+      "Need8": 0,
+      "Done8": false,
+      "Item9": "None",
+      "Need9": 0,
+      "Done9": false,
+      "Item10": "None",
+      "Need10": 0,
+      "Done10": false
     },
     "Storage": {
       "Storage": {}

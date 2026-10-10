@@ -2162,12 +2162,169 @@ IslandDailyOrder:
   UrgentDetectRefreshTime:
     value: "2020-01-01 00:00:00"
 
+_IslandSeasonItem: &IslandSeasonItem
+  type: select
+  value: None
+  option:
+    - None
+    - amaranth_rice_ball
+    - apple_juice
+    - apple_pie
+    - asparagus_shrimp
+    - banana_crepe
+    - banana_mango
+    - berry_orange
+    - cabbage_tofu
+    - carnival
+    - carrot_omelette
+    - carrot_pear_juice
+    - cheese
+    - chicken_potato
+    - chrysanthemum_tea
+    - citrus_coffee
+    - corn_cup
+    - crayfish_stir_fry
+    - cucumber_juice
+    - double_bamboo_shoots
+    - double_energy
+    - fish_chip
+    - floral_fruity
+    - fo_tiao
+    - fruit_paradise
+    - fruity_fruitier
+    - hearty_meal
+    - honey_lemon
+    - iced_coffee
+    - latte
+    - lavender_tea
+    - lemon_shrimp
+    - matsutake_chicken_soup
+    - morning_light
+    - omelette
+    - omurice
+    - onion_fish
+    - orange_pie
+    - orchard_duo
+    - persimmon_cake
+    - pineapple_juice
+    - rice_mango
+    - roasted_skewer
+    - salad
+    - seafood_rice
+    - spring_flower_tea
+    - steak_bowl
+    - stir_fried_chicken
+    - strawberry_charlotte
+    - strawberry_honey
+    - strawberry_lemon
+    - strawberry_milkshake
+    - succulently_sweet
+    - sunny_honey
+    - tofu
+    - tofu_combo
+    - tofu_meat
+    - tomato_egg
+    - wake_up_call
+    - watermelon_juice
+
 IslandSeasonPlan:
-  # Add by MHY, 赛季任务进度：每行「物品=当前数量/需求数量」。当前数量由店铺每次收取
-  # 生产、核对销售时读仓库自动更新，需求数量默认取赛季数据，两项都可以手动改。
-  Progress:
-    type: textarea
-    value: ""
+  # Add by MHY, 赛季任务：每个槽位 = 物品 + 需求数量 + 已完成。
+  # 当前数量由店铺每次收取/核对销售时读仓库自动更新（不进配置）；已完成的物品不再
+  # 排产、不再发邮件，空闲产能自动转去做下一个缺口最大的物品。
+  NotifyEnable:
+    type: checkbox
+    value: true
+    option: [ true, false ]
+  Item1:
+    <<: *IslandSeasonItem
+  Need1:
+    type: input
+    value: 0
+  Done1:
+    type: checkbox
+    value: false
+    option: [ true, false ]
+  Item2:
+    <<: *IslandSeasonItem
+  Need2:
+    type: input
+    value: 0
+  Done2:
+    type: checkbox
+    value: false
+    option: [ true, false ]
+  Item3:
+    <<: *IslandSeasonItem
+  Need3:
+    type: input
+    value: 0
+  Done3:
+    type: checkbox
+    value: false
+    option: [ true, false ]
+  Item4:
+    <<: *IslandSeasonItem
+  Need4:
+    type: input
+    value: 0
+  Done4:
+    type: checkbox
+    value: false
+    option: [ true, false ]
+  Item5:
+    <<: *IslandSeasonItem
+  Need5:
+    type: input
+    value: 0
+  Done5:
+    type: checkbox
+    value: false
+    option: [ true, false ]
+  Item6:
+    <<: *IslandSeasonItem
+  Need6:
+    type: input
+    value: 0
+  Done6:
+    type: checkbox
+    value: false
+    option: [ true, false ]
+  Item7:
+    <<: *IslandSeasonItem
+  Need7:
+    type: input
+    value: 0
+  Done7:
+    type: checkbox
+    value: false
+    option: [ true, false ]
+  Item8:
+    <<: *IslandSeasonItem
+  Need8:
+    type: input
+    value: 0
+  Done8:
+    type: checkbox
+    value: false
+    option: [ true, false ]
+  Item9:
+    <<: *IslandSeasonItem
+  Need9:
+    type: input
+    value: 0
+  Done9:
+    type: checkbox
+    value: false
+    option: [ true, false ]
+  Item10:
+    <<: *IslandSeasonItem
+  Need10:
+    type: input
+    value: 0
+  Done10:
+    type: checkbox
+    value: false
+    option: [ true, false ]
 
 IslandDailyInteract:
   WeeklyPhoto:

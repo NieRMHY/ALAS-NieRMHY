@@ -23,7 +23,8 @@ from module.island.island_away_cook import (
 )
 from module.island.island_economy import EconomyDatabase
 from module.island.island_season import SeasonConfig
-from module.island.island_season_progress import record_readings
+from module.island.island_economy import ECONOMY_PRODUCTS
+from module.island.island_season_progress import ensure_slots, record_readings
 from module.island.warehouse import WarehouseOCR
 from module.logger import logger
 
@@ -213,9 +214,14 @@ class BusinessStockCheckMixin:
         if not season:
             return
 
+        # Modify by MHY, 清单来自配置槽位：已勾选「已完成」的物品不再轮换成常驻餐品，
+        # 空闲产能自动转去做下一个缺口最大的
+        slots = ensure_slots(self.config, season, set(ECONOMY_PRODUCTS))
+        shop_items = season_items_for_shop(shop_type, season, slots)
+
         # 赛季物品的库存：有仓库模板的才读得到，没有的按 0 处理
         season_counts = dict(counts)
-        for item, _, _ in season_items_for_shop(shop_type, season):
+        for item, _, _ in shop_items:
             if item in season_counts:
                 continue
             template = self._stock_check_template(shop_type, item)
@@ -227,20 +233,18 @@ class BusinessStockCheckMixin:
         # Modify by MHY, 赛季进度直接取仓库读数（不再 OCR 赛季页）：核对销售前读到的
         # 就是准确库存，顺带记进进度，缺口与达标邮件都按它算。只记有仓库模板的项，
         # 读不到的按 0 处理只用于本次轮换，不覆盖进度。
-        readable = {item: season_counts[item]
-                    for item, _, _ in season_items_for_shop(shop_type, season)
+        readable = {item: season_counts[item] for item, _, _ in shop_items
                     if item in counts or self._stock_check_template(shop_type, item) is not None}
-        record_readings(self.config, readable, season)
+        record_readings(readable)
 
-        progress = {item: f'{season_counts.get(item, 0)}/{need}'
-                    for item, need, _ in season_items_for_shop(shop_type, season)}
+        progress = {item: f'{season_counts.get(item, 0)}/{need}' for item, need, _ in shop_items}
         if progress:
             logger.info(f"[岛屿-赛季任务] {shop_type} 进度: {progress}")
 
         current = self.config.cross_get(key, default='None')
         defaults = load_defaults()
         target, defaults = resolve_away_cook(
-            shop_type, season, season_counts, current, defaults)
+            shop_type, season, season_counts, current, defaults, slots=slots)
         if target != current:
             logger.info(f"[岛屿-常驻餐品] {shop_type}: {current} -> {target}"
                         f"（赛季缺口 {season}）")
