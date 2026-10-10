@@ -308,6 +308,7 @@ stateDiagram-v2
 - **OCR 兜底链是有意设计**：材料 `150/(2+6)`、体力 `26/110` 都存在斜杠被误识别的已知问题，`island.py`/`island_select_character.py` 中多组候选区域、前缀读取、颜色条估算是踩坑后的补偿，勿简化为单区域 OCR。
 - **季节单例**：`get_global_season_config` 在进程内缓存，单测中需像 `tests/test_island_shop_production.py` 那样 patch 掉它，否则配置泄漏到其他测试。
 - **渔场与牧场共享资产**：`island_fishery.py` 同时导入 `island_fishery` 与 `island_rancher` 的 assets，且后置导入覆盖 `island.assets` 的旧同名定义——调整资源目录时保持导入顺序。
+- **赛季入口模板必须是整屏图**：`assets/cn/island_season_plan/ISLAND_SEASON_ENTRY.png` 是 1280×720 的整屏图（只在右上角「开发季」图标处有内容），`button_extract` 才会把检测区域生成为 `(926, 16, 982, 70)`。若退化成 56×54 的局部裁剪，区域会变成左上角 `(0, 0, 56, 54)`，`enter_season_page` 永远认不出入口，赛季页快照停更、缺口不再刷新、独占排产换不到下一件（真机 2026-10-02 至 10-10 的事故）。回归测试见 `tests/test_island_season_entry_asset.py`。
 - **岛屿内禁用舰船获取弹窗**：`IslandUI.ui_additional` 固定 `get_ship=False`，岛屿流程的状态循环必须带 `get_ship=False` 的导航调用，否则可能误点宿舍相关弹窗。
 
 ## 17. 已知限制

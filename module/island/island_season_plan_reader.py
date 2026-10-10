@@ -536,7 +536,11 @@ def enter_season_page(island):
             continue
     island.device.stuck_record_clear()
     if not island.appear(ISLAND_SEASON_GOTO_ISLAND):
-        logger.warning('[岛屿-赛季计划] 进入开发季页面失败，退回岛屿页')
+        # Add by MHY, 入口区域被生成器覆盖成左上角 (0,0,56,54) 时这里只留一行告警，
+        # 十天都没人发现；带上匹配区域与实测均色，下次一眼能看出是识别还是导航的问题
+        entry_seen = island.appear(ISLAND_SEASON_ENTRY)
+        logger.warning(f'[岛屿-赛季计划] 进入开发季页面失败，退回岛屿页'
+                       f'（入口区域 {ISLAND_SEASON_ENTRY.area}，入口识别 {entry_seen}）')
         leave_season_page(island, timeout=6)
         return False
 
