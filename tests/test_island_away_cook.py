@@ -45,6 +45,38 @@ class TestNotifyUsesImportedHelper(unittest.TestCase):
         self.assertIn('[岛屿]', sent[0]['title'])
         self.assertIn('<ALAS>', sent[0]['title'])
 
+    def test_below_target_resets_notified(self):
+        """误读达标发过一次邮件后，读数回落要复位，真攒够时才能再提醒（拿铁 282 误读事故）"""
+        from unittest import mock
+        from module.island import island_away_cook as away_cook
+
+        saved = []
+        notified = {'autumn': {'latte': {'notified': True, 'last': 282, 'done': False, 'miss': 0}}}
+        page = {'拿铁时光': {'item': 'latte', 'have': 82, 'need': 100, 'claimed': False}}
+        with mock.patch.object(away_cook, 'load_notified', return_value=notified), \
+                mock.patch.object(away_cook, 'save_notified', side_effect=saved.append), \
+                mock.patch('module.notify.notify.handle_notify') as handle:
+            fired = away_cook.notify_ready_from_page(self._config(), 'autumn', page)
+
+        self.assertEqual(fired, [])
+        handle.assert_not_called()
+        self.assertFalse(notified['autumn']['latte']['notified'])
+        self.assertEqual(len(saved), 1)
+
+    def test_unknown_claim_does_not_reset_notified(self):
+        """徽章被裁掉（claimed=None）时状态未知，不能复位"""
+        from unittest import mock
+        from module.island import island_away_cook as away_cook
+
+        notified = {'autumn': {'latte': {'notified': True, 'last': 100, 'done': False, 'miss': 0}}}
+        page = {'拿铁时光': {'item': 'latte', 'have': 82, 'need': 100, 'claimed': None}}
+        with mock.patch.object(away_cook, 'load_notified', return_value=notified), \
+                mock.patch.object(away_cook, 'save_notified'), \
+                mock.patch('module.notify.notify.handle_notify'):
+            away_cook.notify_ready_from_page(self._config(), 'autumn', page)
+
+        self.assertTrue(notified['autumn']['latte']['notified'])
+
     def test_material_tasks_do_not_notify(self):
         """农田/牧场材料长期溢出，提醒它们只会刷屏（真机一次发了 8 封）"""
         from unittest import mock

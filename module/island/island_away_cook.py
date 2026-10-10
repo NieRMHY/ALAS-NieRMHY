@@ -339,11 +339,30 @@ def notify_ready_from_page(config, season, page_result):
     from module.logger import logger
     from module.notify.notify import handle_notify, notify_title
 
-    ready = ready_to_submit(season, page_result)
-    if not ready or not season:
+    if not season:
         return []
     notified = load_notified()
     state = notified.setdefault(season, {})
+    # Add by MHY, 页面读数没达标的物品要复位 notified：10-10 拿铁真实 82/100 被误读成
+    # 282/100，错发了一次达标邮件并把 notified 留成 True，之后真攒够 100 时提醒会被
+    # 吞掉。只复位页面上确定未领取（claimed is False）且读数不足的项；
+    # 必须在「没有达标项就提前返回」之前做，否则恰好没有达标项时永远复位不了。
+    reset = False
+    for info in page_result.values():
+        item = info.get('item')
+        if not item or info.get('claimed') is not False:
+            continue
+        need = int(info.get('need') or 0)
+        if need and int(info.get('have') or 0) < need:
+            entry = state.get(item)
+            if isinstance(entry, dict) and entry.get('notified'):
+                entry['notified'] = False
+                reset = True
+    ready = ready_to_submit(season, page_result)
+    if not ready:
+        if reset:
+            save_notified(notified)
+        return []
     fired = []
     lines = []
     for task, item, have, need in ready:
