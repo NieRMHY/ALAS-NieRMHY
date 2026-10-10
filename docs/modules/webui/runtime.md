@@ -54,8 +54,8 @@ module/runtime/
 ├── remote_access.py       # SSH / WebRTC 远程访问 provider
 ├── mcp_auth.py            # MCP 鉴权：凭据提取、常数时间比对、会话表、日志脱敏
 ├── password_utils.py      # 密码生成/校验、本机判定、远程访问标记头
-├── launcher.py            # LauncherControl：外部启动器命令通道（当前未接线）
-├── launcher_trust.py      # 启动器信任免密令牌（当前未接线）
+├── launcher.py            # LauncherControl：外部启动器命令通道
+├── launcher_trust.py      # 启动器信任免密令牌
 ├── discord_presence.py    # Discord Rich Presence（pypresence 异步客户端）
 └── event_calculator.py    # Wiki 活动计算器数据服务（当前无前端消费者）
 ```
@@ -399,7 +399,7 @@ stateDiagram-v2
 
 ## 17. 已知限制
 
-- **`launcher.py`、`launcher_trust.py`、`event_calculator.py` 当前没有生产消费者**（截至 2026-09）：三者自旧 PyWebIO 前端迁移而来，逻辑与单测完整，但新 React 前端尚未实现启动器命令通道（`/api/launcher/*` 端点已随旧前端移除）、启动器免密令牌签发（无生产代码调用 `configure`/`issue_token`）与活动计算器页面。它们是预留能力，接线前不会生效。
+- **`event_calculator.py` 当前没有生产消费者**（截至 2026-09）：自旧 PyWebIO 前端迁移而来，逻辑与单测完整，但新 React 前端尚未实现活动计算器页面。它是预留能力，接线前不会生效。启动器命令通道与免密令牌已由 `module/api/launcher_api.py` 接入 `create_app`。
 - worker 的更新退出依赖任务边界轮询（`wait_until` 每 5 秒、任务间每次循环），**正在执行的长任务会推迟更新等待**，因此事务里有 10 分钟超时强停兜底；强停可能让该实例下次启动时状态不完整。
 - `alive` 在登记不可验证时保守返回 False，配合 `start()` 的二次验证避免重复启动；但这意味着登记文件损坏期间（自愈前）实例可能显示为已停止。
 - 远程访问线程是非 daemon 线程，其退出依赖 `stop_event` 或「进程内唯一线程」检测；极端情况下（其他线程意外全部退出）可能延迟进程退出。

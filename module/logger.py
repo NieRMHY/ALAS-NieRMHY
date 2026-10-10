@@ -505,7 +505,7 @@ def set_file_logger(name=None):
     pname = name
     if os.name == "nt" and automatic and name == "gui":
         pname = multiprocessing.current_process().name.replace(":", "_")
-        if pname == "MainProcess" or pname.startswith(("SyncManager-", "Process-")):
+        if pname == "MainProcess" or pname.startswith(("SyncManager-", "Process-", "dependency-sync")):
             return
 
     log_dir = Path("./log")

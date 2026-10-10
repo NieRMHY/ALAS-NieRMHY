@@ -158,7 +158,7 @@ flowchart TB
 | 模块 | 关系 |
 | --- | --- |
 | 浏览器（用户） | 唯一常规交互方；静态资源 + 单条 WebSocket |
-| Electron 桌面启动器 | 以 `--electron` 拉起 gui.py 并内嵌页面；免密信任逻辑见 `module/runtime/launcher_trust.py`（现状见第 17 节） |
+| Electron 桌面启动器 | 以 `--electron` 拉起 gui.py 并内嵌页面；免密信任令牌与命令通道分别见 `module/runtime/launcher_trust.py`、`module/runtime/launcher.py`，接线在 `module/api/launcher_api.py` |
 | MCP 客户端 | 经 `/mcp` 挂载或独立 SSE 服务访问，与 WebUI 共享同一份服务对象与密码 |
 
 ### 下游
@@ -373,7 +373,7 @@ v1 只允许兼容性新增；删除方法或更改语义需要新版本路径�
 - **无跨连接事件重放**：重连后重新认证并重建订阅，服务不提供历史事件重放；日志靠游标增量，落后过多元数据会触发 reset。
 - **配额是硬限制**：32 个并发连接、单连接 30 请求/秒、单请求 1 MiB、单连接近 128 个请求 ID 去重——超限是拒绝而非排队。
 - **直连模式无热重载**：`EnableReload=false` 时没有监督器与重启通道，更新器拒绝执行需要重载的更新。
-- **迁移遗留未清理**：`module/webui/webui_prefs.py`（及 `config/webui_prefs.json`）与 `module/runtime/launcher.py`（`LauncherControl`）、`launcher_trust.py` 在当前活跃代码中没有调用方——前者消费方随旧版总览面板功能移除，后两者是启动器命令通道的实现，尚未接入 `create_app`。`notify_webui` 仍向 `http://127.0.0.1:<port>/api/notify` 发 POST，但当前 `create_app` 未注册该端点，调用会静默失败。
+- **迁移遗留未清理**：`module/webui/webui_prefs.py`（及 `config/webui_prefs.json`）在当前活跃代码中没有调用方——消费方随旧版总览面板功能移除。启动器命令通道（`module/runtime/launcher.py`、`launcher_trust.py`）已由 `module/api/launcher_api.py` 接入 `create_app`。`notify_webui` 仍向 `http://127.0.0.1:<port>/api/notify` 发 POST，但当前 `create_app` 未注册该端点，调用会静默失败。
 - **预览是被动快照**：API 不主动截图；worker 未运行或未产生新帧时保持最后画面或空。
 
 ## 18. 示例

@@ -1,15 +1,18 @@
 """委托结算只操作临时 SQLite，验证提交、回滚、跨月及通知边界。"""
 
+import os
 import sqlite3
 import tempfile
 import threading
 import unittest
 from concurrent.futures import ThreadPoolExecutor
-from contextlib import closing
+from contextlib import chdir, closing
 from datetime import datetime
 from pathlib import Path
 from types import MethodType, SimpleNamespace
 from unittest.mock import MagicMock, Mock, patch
+
+import numpy as np
 
 from module.statistics import cl1_database as database
 from tests.opsi_test_support import install_store
@@ -223,6 +226,131 @@ class TestCommissionSettlement(unittest.TestCase):
         with patch.object(self.db, "_decrypt", return_value=decoded), \
                 patch.object(self.db, "_save_stats_in_connection", side_effect=sqlite3.OperationalError("readonly")):
             self.assertEqual(self.db.get_stats("test", "2025-12"), decoded)
+
+
+class TestCommissionIncomePersistence(unittest.TestCase):
+    """串联真实截图保存、缺省清理参数、SQLite 入账与统计读回。"""
+
+    def setUp(self):
+        from module.commission import commission as module
+        from module.statistics import commission_income_stats
+
+        self.directory = tempfile.TemporaryDirectory(ignore_cleanup_errors=True)
+        self.addCleanup(self.directory.cleanup)
+        self.root = Path(self.directory.name)
+        install_store(self, self.root)
+        with patch.object(database.Cl1Database, "_get_legacy_decryption_keys", return_value=[]):
+            self.db = database.Cl1Database(self.root / "config" / "cl1_data.db")
+        self.enterContext(patch.object(database, "db", self.db))
+        self.enterContext(patch.object(database, "datetime", FixedDatetime))
+        self.enterContext(patch.object(module, "current_time", return_value=NOW))
+        self.enterContext(patch.object(commission_income_stats, "cl1_db", self.db))
+        self.enterContext(chdir(self.root))
+        self.module = module
+        self.income_stats = commission_income_stats
+        # 跳过设备与真实配置初始化，保留生产代码的方法绑定和持久化调用链。
+        self.reward = module.RewardCommission.__new__(module.RewardCommission)
+        self.reward.config = SimpleNamespace(
+            config_name="test", DropRecord_CommissionIncomeScreenshot="save",
+            DropRecord_RetentionDays=0, UiWait_CommissionRewardScreenshotKeep=5,
+        )
+        self.reward._recognize_commission_income = Mock(return_value=(
+            {"Oil": 367}, [np.zeros((720, 1280, 3), dtype=np.uint8)],
+        ))
+        self.reward._notify_commission_income = Mock()
+
+    def assert_saved_income(self, expected_items, screenshots=True):
+        entries = self.db.get_commission_income("test", NOW.year, NOW.month)
+        self.assertEqual(len(entries), 1)
+        self.assertEqual(entries[0]["items"], expected_items)
+        self.assertEqual(entries[0]["commission_count"], 1)
+        self.assertEqual(entries[0]["ts"], NOW.isoformat())
+        paths = entries[0].get("screenshots", [])
+        self.assertEqual(len(paths), int(screenshots))
+        for path in paths:
+            self.assertTrue((self.root / "log" / "commission_rewards" / path).is_file())
+        summary = self.income_stats.get_commission_income_summary(
+            "test", year=NOW.year, month=NOW.month,
+        )
+        self.assertEqual(summary["total_commissions"], 1)
+        for name, amount in expected_items.items():
+            self.assertEqual(summary["items"][name]["total"], amount)
+        self.reward._notify_commission_income.assert_called_once_with(expected_items)
+
+    def test_count_cleanup_reaches_income_write_and_summary(self):
+        folder = self.root / "log" / "commission_rewards" / "test" / "2025-12"
+        folder.mkdir(parents=True)
+        for index in range(6):
+            path = folder / f"20251201_000000_000000_{index}.png"
+            path.write_bytes(b"old screenshot")
+            os.utime(path, (index + 1, index + 1))
+
+        self.assertTrue(self.reward._record_commission_income())
+
+        self.assert_saved_income({"Oil": 367})
+        self.assertEqual(len(list((folder.parent).rglob("*.png"))), 5)
+        self.assertFalse((folder / "20251201_000000_000000_0.png").exists())
+        self.assertTrue((folder / "20251201_000000_000000_5.png").exists())
+
+    def test_missing_count_setting_uses_default_and_records_income(self):
+        del self.reward.config.UiWait_CommissionRewardScreenshotKeep
+
+        self.assertTrue(self.reward._record_commission_income())
+
+        self.assert_saved_income({"Oil": 367})
+
+    def test_day_retention_still_records_income(self):
+        self.reward.config.DropRecord_RetentionDays = 7
+
+        self.assertTrue(self.reward._record_commission_income())
+
+        self.assert_saved_income({"Oil": 367})
+
+    def test_disabled_screenshots_still_record_income(self):
+        self.reward.config.DropRecord_CommissionIncomeScreenshot = "do_not"
+
+        self.assertTrue(self.reward._record_commission_income())
+
+        self.assert_saved_income({"Oil": 367}, screenshots=False)
+        self.assertFalse((self.root / "log" / "commission_rewards").exists())
+
+    def test_screenshot_write_failure_still_records_income(self):
+        with patch.object(self.module, "save_image", side_effect=OSError("截图写入失败")):
+            self.assertTrue(self.reward._record_commission_income())
+
+        self.assert_saved_income({"Oil": 367}, screenshots=False)
+
+    def test_saved_screenshot_and_cross_month_gem_settlement_commit_together(self):
+        entry = commission()
+        self.db.save_stats("test", "2025-12", {"running_gem_commissions": [entry]})
+        self.reward._recognize_commission_income.return_value[0]["Gem"] = 60
+
+        self.assertTrue(self.reward._record_commission_income())
+
+        self.assert_saved_income({"Oil": 367, "Gem": 60})
+        self.assertEqual(self.db.get_stats("test", "2025-12")["running_gem_commissions"], [])
+        current = self.db.get_stats("test", "2026-01")
+        self.assertEqual(current["gem_commission_entries"], [{
+            "ts": NOW.isoformat(), "duration": 8, "reward": 60, "success": True,
+        }])
+
+    def test_database_failure_keeps_running_commission_and_does_not_notify(self):
+        entry = commission()
+        self.db.save_stats("test", "2025-12", {"running_gem_commissions": [entry]})
+        self.reward._recognize_commission_income.return_value[0]["Gem"] = 60
+        with closing(sqlite3.connect(self.db.db_path)) as conn, conn:
+            conn.execute("""
+                CREATE TRIGGER reject_income BEFORE INSERT ON cl1_data
+                WHEN NEW.month = '2026-01'
+                BEGIN SELECT RAISE(ABORT, 'income rejected'); END
+            """)
+
+        self.assertFalse(self.reward._record_commission_income())
+
+        self.reward._notify_commission_income.assert_not_called()
+        self.assertEqual(self.db.get_commission_income("test", NOW.year, NOW.month), [])
+        self.assertEqual(self.db.get_stats("test", "2025-12")["running_gem_commissions"], [entry])
+        self.assertEqual(len(list((self.root / "log" / "commission_rewards").rglob("*.png"))), 1)
 
 
 class TestCommissionIncomeBoundary(unittest.TestCase):

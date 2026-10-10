@@ -50,7 +50,6 @@ h1 {font-size: 30px; letter-spacing: -.8px; font-weight: 700; line-height: 1.3}
 h2 {font-size: 14px; font-weight: 650}
 small {font-size: 11px}
 svg {flex-shrink: 0; vertical-align: middle}
-::selection {background: #6ed4bc45}
 /* 滚动条不显示也不占位：折叠会改变页面高度，占位一变内容宽度就会跟着跳。 */
 ::-webkit-scrollbar {width: 0; height: 0}
 ::-webkit-scrollbar-thumb {background: #95a5b73c; border-radius: 8px}

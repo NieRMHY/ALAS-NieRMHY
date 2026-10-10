@@ -112,8 +112,6 @@
   --theme-shadow-floating: 0 18px 56px #0003;
   --theme-shadow-hover: 0 12px 36px color-mix(in srgb, var(--accent) 7%, transparent);
 
-  /* Selection / scrollbar */
-  --theme-selection: #6ed4bc45;
   --theme-scrollbar-thumb: #95a5b73c;
 
   /* Logs */

@@ -1802,7 +1802,12 @@ class IslandBusiness(BusinessStockCheckMixin, Island):
         # 统计成功分配的槽位：静默失败会导致商店只带 1 个角色开始经营，
         # 而经营中不会再重新派发，用户只能看到「商店里只有 1 个人」（真机踩过）
         assigned = 0
-        for slot_idx in range(2):
+        # Modify by MHY, 合并上游：只填充用户配置了角色的槽位，低等级单角色店铺
+        # 只有 1 个角色槽，继续探测第二个槽位必然失败，还可能误点其它按钮
+        slot_total = min(len(self.character_priority), 2)
+        if slot_total < 2:
+            logger.info(f"[岛屿-经营] 本店铺配置 {slot_total} 个经营角色，跳过多余槽位探测")
+        for slot_idx in range(slot_total):
             btn = BUSINESS_PLUS_A if slot_idx == 0 else BUSINESS_PLUS_B
             plus_button = self._appear_at_positions(btn)
             if not plus_button:
@@ -1861,8 +1866,8 @@ class IslandBusiness(BusinessStockCheckMixin, Island):
                 logger.info(f"[岛屿-经营] 第{slot_idx + 1}个角色未找到，跳过")
                 self.device.click(SELECT_UI_BACK)
                 self.device.sleep(0.5)
-        if assigned < 2:
-            logger.warning(f"[岛屿-经营] 本次只分配了 {assigned}/2 个经营角色，"
+        if assigned < slot_total:
+            logger.warning(f"[岛屿-经营] 本次只分配了 {assigned}/{slot_total} 个经营角色，"
                            f"商店可能以不满员状态开始经营")
 
     def _wait_for_character_selection(self):
@@ -1913,9 +1918,8 @@ class IslandBusiness(BusinessStockCheckMixin, Island):
             if result:
                 char_name, button = result
                 logger.info(f"[岛屿-经营] 选择角色: {char_name}")
-                self.device.click(button)
-                self.device.sleep(0.5)
-                return char_name
+                if self._select_character_by_portrait(button, char_name):
+                    return char_name
             # 短距离向下滑动继续搜索
             self._swipe_down_short()
 
@@ -1930,12 +1934,43 @@ class IslandBusiness(BusinessStockCheckMixin, Island):
             if result:
                 char_name, button = result
                 logger.info(f"[岛屿-经营] 切换排序后选择角色: {char_name}")
-                self.device.click(button)
-                self.device.sleep(0.5)
-                return char_name
+                if self._select_character_by_portrait(button, char_name):
+                    return char_name
             self._swipe_down_short()
 
         return False
+
+    def _select_character_by_portrait(self, portrait_button, character_name=None):
+        """点击角色头像完成选择，已处于选中状态时跳过点击。
+
+        经营角色槽可能默认已选中目标角色（例如店铺原有角色恰好是优先级首位），
+        此时再次点击同一格会取消选中，导致确认按钮不可用、槽位为空。
+        因此先检查选中状态，只有未选中才点击。
+
+        点击后不再重复点击：该界面上点击是“切换”语义，选中标记漏检时重复点击
+        会把刚选中的角色取消；是否真正选中交给后续确认流程（确认按钮）判定。
+
+        Args:
+            portrait_button (Button): 头像模板匹配得到的按钮。
+            character_name (str, optional): 角色名，用于日志与单元格命名。
+
+        Returns:
+            bool: 是否可以进入确认流程。
+        """
+        cell_button = self._cell_button_from_portrait(portrait_button, name=character_name)
+        label = character_name or '角色'
+
+        if self._check_selected_status(self.device.image, cell_button):
+            logger.info(f"[岛屿-经营] {label} 已处于选中状态，跳过点击避免取消选择")
+            return True
+
+        # 只点击一次：重复点击会把刚选中的角色取消
+        self.device.click(portrait_button)
+        self.device.sleep(0.5)
+        if not self._check_selected_status(self.device.screenshot(), cell_button):
+            # 识别标记漏检时仅记录日志，交由确认按钮流程判定是否真的选中
+            logger.warning(f"[岛屿-经营] {label} 点击后未检测到选中标记，交由确认按钮校验")
+        return True
 
     def _find_best_character(self):
         """

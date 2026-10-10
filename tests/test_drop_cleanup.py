@@ -344,7 +344,7 @@ class TestCommissionCountCapSkipsBackup(unittest.TestCase):
         from module.commission.commission import RewardCommission
 
         RewardCommission._prune_commission_reward_screenshots(
-            'alas', max_keep=max_keep, base=base)
+            SimpleNamespace(config=SimpleNamespace()), 'alas', max_keep=max_keep, base=base)
 
     def test_backup_folder_is_ignored(self):
         base = self.make_base()
@@ -372,6 +372,24 @@ class TestCommissionCountCapSkipsBackup(unittest.TestCase):
 
         self.assertEqual(len(os.listdir(month)), 1)
         self.assertTrue(os.path.isdir(base))
+
+    def test_missing_max_keep_reads_configured_limit(self):
+        """max_keep 缺省时从运行参数页读上限，而不是要求调用方给值。"""
+        base = self.make_base()
+        month = os.path.join(base, '2020-01')
+        os.makedirs(month)
+        for index in range(6):
+            name = f'2020010{index + 1}_000000_000000_0.png'
+            with open(os.path.join(month, name), 'wb') as f:
+                f.write(b'x')
+
+        from module.commission.commission import RewardCommission
+
+        RewardCommission._prune_commission_reward_screenshots(
+            SimpleNamespace(config=SimpleNamespace(UiWait_CommissionRewardScreenshotKeep=5)),
+            'alas', base=base)
+
+        self.assertEqual(len(os.listdir(month)), 5)
 
 
 class TestConfigWiring(unittest.TestCase):

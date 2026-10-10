@@ -14,6 +14,7 @@ from starlette.responses import FileResponse, JSONResponse, PlainTextResponse, R
 from starlette.routing import Mount, Route, WebSocketRoute
 from starlette.staticfiles import StaticFiles
 
+from module.api import launcher_api
 from module.api.background_service import LIBRARY_DIR, gallery_add_bytes, proxy_fetch
 from module.api.config_service import ConfigService, ROOT
 from module.api.router import Router
@@ -52,6 +53,7 @@ def create_app(*, root: Path = ROOT, password=None, manage_runtime=True, mount_m
         # 公网监听不再自动生成密码——未配置 Password 即免登录
         password = key
     gateway = Gateway(Router(configs, runtime), password)
+    launcher_api.configure_trust(password)
 
     @asynccontextmanager
     async def lifespan(application):
@@ -156,6 +158,7 @@ def create_app(*, root: Path = ROOT, password=None, manage_runtime=True, mount_m
               Route('/reports/meowfficer_score', meowfficer_score_report),
               WebSocketRoute('/api/v1/ws', gateway.endpoint)]
     routes.extend(android_routes(configs, runtime))
+    routes.extend(launcher_api.routes())
     # 背景图库：图片直接由 StaticFiles 提供（与 research-items 等模板图同一套做法），
     # 上传走下面那个 POST；目录不存在时先建出来，免得挂载失败。
     LIBRARY_DIR.mkdir(parents=True, exist_ok=True)

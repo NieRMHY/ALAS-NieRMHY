@@ -30,6 +30,7 @@ export interface SearchContentHit {
 
 export interface SearchContentResult {
   tasks: SearchContentHit[]
+  groups: SearchContentHit[]
   options: SearchContentHit[]
 }
 

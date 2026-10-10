@@ -400,6 +400,7 @@ ws.send_json({'v':1,'type':'request','id':'2','method':'events.subscribe',
 ## 19. 调试方法
 
 - **健康检查**：`GET /healthz` 应返回 `{'status': 'ok', 'protocolVersion': 1}`；`GET /` 返回 503 说明前端未构建（在 `frontend/` 执行 `npm ci && npm run build`）。
+- **启动器通道**：`/api/launcher/{status,startup,stream,report,trusted-login}` 与 `/launcher-login` 只服务外部启动器，全部限定本机回环，非本机一律 403（控制台的启动器卡片读同一组端点，远端访问时即显示「只能在本机 WebUI 中设置」）。
 - **单测夹具**：`create_app(root=临时目录, password='...', manage_runtime=False, mount_mcp=False)` 是标准隔离模式，见 `tests/test_api.py` 的 `fixture()`。相关模块：`tests.test_api`（协议/认证/配置事务）、`tests.test_api_lifecycle`（真实 Manager 生命周期）、`tests.test_api_mcp_integration`（MCP 挂载与关闭顺序）、`tests.test_frontend_static`（MIME 与 SPA 回退）。
 - **契约差异**：前端类型对不上时先跑 `uv run python -m dev_tools.export_api_schema` 看 diff，再查是不是手改了生成物。
 - **日志**：业务异常在服务日志中带 `WebSocket API 执行失败` 标题（含完整堆栈）；订阅异常有 `订阅数据读取失败`。客户端只会看到无堆栈的 `INTERNAL_ERROR`。

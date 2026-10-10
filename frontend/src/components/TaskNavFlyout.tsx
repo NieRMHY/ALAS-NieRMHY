@@ -203,6 +203,8 @@ export function TaskNavFlyout({ defaultOpenKey, onNavigate }: { defaultOpenKey?:
         />
       </div>}
 
+      <SearchHits search={search} onNavigate={onNavigate}/>
+
       <nav className="task-nav">
         {schema &&
           Object.entries(schema.menu).map(([key, group]) => {
@@ -243,8 +245,6 @@ export function TaskNavFlyout({ defaultOpenKey, onNavigate }: { defaultOpenKey?:
             )
           })}
       </nav>
-
-      <SearchHits search={search} onNavigate={onNavigate}/>
 
       {openMenuKey && activeGroup && (() => {
         const flyout = (

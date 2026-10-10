@@ -68,6 +68,39 @@ class PQInteract(UI):
             retry_wait=1.5
         )
 
+    def _pq_target_appear(self):
+        """通过头顶气泡确认房间内的舰娘已就绪。
+
+        进房对话由入口流程处理；视角偏离时最多微量上拖一次，
+        随后在有限窗口内等待气泡，未就绪交由房间导航退出重试。
+
+        Returns:
+            bool: 检测到舰娘气泡返回 True，等待超时返回 False。
+
+        Pages:
+            in: 舰娘房间，进入对话已处理。
+            out: 舰娘房间。
+        """
+        camera_adjusted = False
+        for _ in self.loop(timeout=Timer(1.5, count=3)):
+            if self.appear(PRIVATE_QUARTERS_ROOM_TARGET_CHECK_1, offset=(100, 100)):
+                return True
+            if self.appear(PRIVATE_QUARTERS_ROOM_TARGET_CHECK_2, offset=(100, 100)):
+                return True
+            if self.appear(PRIVATE_QUARTERS_ROOM_TARGET_CHECK_3, offset=(100, 100)):
+                return True
+
+            if not camera_adjusted and self.appear(PRIVATE_QUARTERS_ROOM_CHECK, offset=(20, 20)):
+                p1, p2 = random_rectangle_vector(
+                    (0, -30), box=PRIVATE_QUARTERS_ROOM_SAFE_CLICK_AREA.area,
+                    random_range=(-10, -10, 10, 10), padding=5)
+                self.device.drag(p1, p2, segments=2,
+                                 shake=(0, 25), point_random=(0, 0, 0, 0),
+                                 shake_random=(0, -5, 0, 5))
+                camera_adjusted = True
+
+        return False
+
     def _pq_goto_room_seek(self, target_ship):
         """翻页寻找目标舰船所在的宿舍区域。
 
@@ -274,26 +307,6 @@ class PQInteract(UI):
         Returns:
             bool: 成功进入且舰船就绪返回 True，否则返回 False。
         """
-        success = False
-        target_title = target_ship.title().replace('_', ' ')
-        logger.hr(f'[私人休息室-互动] 进入 {target_title} 房间', level=1)
-
-        if not self._pq_goto_room_seek(target_ship):
-            return success
-
-        for _ in range(retry):
-            if not self._pq_goto_room_enter(target_ship):
-                break
-
-            if self._pq_target_appear():
-                logger.info(f'[私人休息室-互动] {target_title} 正在等待你的到来！')
-                success = True
-                break
-            logger.warning(f'[私人休息室-互动] {target_title} 未就绪，退出重试; 剩余次数={retry - (_ + 1)}')
-
-            self._pq_goto_room_exit()
-
-        return success
         success = False
         target_title = target_ship.title().replace('_', ' ')
         logger.hr(f'[私人休息室-互动] 进入 {target_title} 房间', level=1)

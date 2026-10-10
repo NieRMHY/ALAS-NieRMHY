@@ -312,6 +312,37 @@ class ResourceFlowTests(unittest.TestCase):
                 gacha.gacha_run()
         self.assertEqual(2, self.report()['total'])
 
+    def test_build_tickets_and_configured_pool_orders_keep_separate_expenses(self):
+        from module.gacha.gacha_reward import RewardGacha
+        gacha = RewardGacha.__new__(RewardGacha)
+        config = SimpleNamespace(config_name='testpilot', Gacha_Pool='light', Gacha_Amount=3,
+                                 Gacha_UseTicket=True, Gacha_UseDrill=False, update=Mock())
+        gacha.config = config
+        gacha.device = Mock()
+        gacha.gacha_flush_queue = Mock()
+        gacha.ui_goto_gacha = Mock()
+        gacha.get_coin = Mock(return_value=10000)
+        gacha.gacha_goto_pool = Mock(side_effect=lambda pool: pool)
+        gacha.gacha_side_navbar_ensure = Mock(return_value=True)
+        gacha.appear = Mock(return_value=True)
+        gacha.gacha_prep = Mock(side_effect=lambda amount: amount > 0)
+        gacha.gacha_submit = Mock()
+        with flow.task_session('testpilot', 'Gacha'), \
+                patch('module.gacha.gacha_reward.OCR_BUILD_CUBE_COUNT') as cubes, \
+                patch('module.gacha.gacha_reward.OCR_BUILD_TICKET_COUNT') as tickets, \
+                patch('module.gacha.gacha_reward.LogRes'):
+            cubes.ocr.return_value = 100
+            tickets.ocr.return_value = 1
+            self.assertTrue(gacha.gacha_run())
+
+        result = self.report()
+        self.assertEqual(3, result['total'])
+        self.assertEqual({'GachaTicket': 1, 'Coin': 1200, 'Cube': 2},
+                         {row['resource']: row['expense'] for row in result['flows']})
+        self.assertEqual({'建造 event × 1', '建造 light × 2'},
+                         {row['operation'] for row in result['entries']})
+        self.assertEqual({'Gacha'}, {row['task'] for row in result['flows']})
+
     def test_oil_food_price_is_kept_when_natural_recovery_offsets_the_net_cost(self):
         from module.scheduler.oil_control import NativeOilControl
         self.config.save = Mock()

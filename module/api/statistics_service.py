@@ -228,6 +228,18 @@ def _month_end(moment: datetime) -> datetime:
     return (moment.replace(day=28) + timedelta(days=4)).replace(day=1)
 
 
+def _trend_window(selected: datetime, now: datetime, period: str, days: int) -> tuple:
+    """给出资源类趋势窗口的起止时间：日取最近 N 天，周取本周，月取选定月份。"""
+    if period == 'month':
+        start = selected.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        # 窗口两端都含，上界取本月最后一刻。
+        return start, _month_end(start) - timedelta(microseconds=1)
+    if period == 'week':
+        start = now.replace(hour=0, minute=0, second=0, microsecond=0) - timedelta(days=now.weekday())
+        return start, now
+    return now - timedelta(days=days), now
+
+
 def report(configs, instance: str, category: str, month: str, days: int, period: str,
            research_series: int = 0, research_scope: str = 'series', loot_task: str = None) -> dict:
     """生成并获取指定维度的统计报表。"""
@@ -300,7 +312,8 @@ def _report(configs, instance: str, category: str, month: str, days: int, period
               '未扫描' if snapshot is None else '已复核' if item['amount'] is not None else '未发现']
              for item in items])]
         result['tables'][0]['note'] = ' '.join(result['notes'])
-        rows = (get_storage_timeline(instance, since=(now - timedelta(days=days)).isoformat(sep=' '),
+        start, end = _trend_window(selected, now, period, days)
+        rows = (get_storage_timeline(instance, since=start.isoformat(sep=' '), until=end.isoformat(sep=' '),
                                      through_id=snapshot['id'], database=database) if snapshot else [])
         if len(rows) > 50000:
             rows = rows[-50000:]
@@ -312,10 +325,11 @@ def _report(configs, instance: str, category: str, month: str, days: int, period
 
     if category == 'resources':
         from module.statistics.resource_stats import RESOURCE_COLUMNS, get_resource_timeline
-        cutoff = (now - timedelta(days=days)).isoformat(sep=' ')
+        start, end = _trend_window(selected, now, period, days)
         # 窗口过滤下推到 SQL，只读窗口内的行。
         # 该分类展示的序列不含大世界货币，跳过密文解密（它们是资源快照里解密开销最大的一批）。
-        rows = get_resource_timeline(instance, limit=50001, since=cutoff.replace(' ', 'T'), include_opsi=False)
+        rows = get_resource_timeline(instance, limit=50001, since=start.isoformat(sep='T'),
+                                     until=end.isoformat(sep='T'), include_opsi=False)
         if len(rows) > 50000:
             result['notes'].append('记录超过 50,000 条，当前展示最近 50,000 条，请缩短时间范围查看细节。')
             rows = rows[-50000:]

@@ -133,15 +133,19 @@ export function TaskConfig() {
       if (!path || !path.startsWith(`${task}.`)) return
       if (find) window.clearInterval(find)
       let attempts = 0
+      // 卡片命中给两段路径（任务.分组），配置项命中给三段；据此选 DOM id 与滚动方式
+      const segments = path.split('.')
+      const isCard = segments.length <= 2
+      const elementId = isCard ? `group-${segments[1]}` : path
       find = window.setInterval(() => {
-        const field = document.getElementById(path)
+        const field = document.getElementById(elementId)
         attempts += 1
         if (field) {
           window.clearInterval(find)
           find = undefined
           clearSearchTarget()
           const row = field.closest('.field-row') ?? field
-          row.scrollIntoView({block: 'center'})
+          row.scrollIntoView({block: isCard ? 'start' : 'center'})
           row.classList.add('is-search-target')
           window.setTimeout(() => row.classList.remove('is-search-target'), 3000)
         } else if (attempts > 20) {

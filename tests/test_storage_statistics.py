@@ -239,6 +239,18 @@ class SnapshotTests(unittest.TestCase):
         self.assertEqual(get_storage_timeline('gamma', database=self.path), [])
         self.assertEqual(before, self.path.read_bytes())
 
+    def test_history_until_drops_scans_after_window(self):
+        """窗口上界同样下推到 SQL：看历史月份时不得混入其后的扫描。"""
+        identifiers = [self.save(), self.save(items=[dict(self.items[0], amount=14), self.items[1]]), self.save()]
+        with closing(sqlite3.connect(self.path)) as connection, connection:
+            for identifier, timestamp in zip(identifiers, ['2026-09-01 00:00:00', '2026-10-01 00:00:00', '2026-10-03 00:00:00']):
+                connection.execute('UPDATE storage_scans SET finished_at=? WHERE id=?', (timestamp, identifier))
+
+        rows = get_storage_timeline('alpha', since='2026-09-01 00:00:00', until='2026-10-01 00:00:00',
+                                    database=self.path)
+
+        self.assertEqual([row['chips'] for row in rows], [13393, 14])
+
     def test_storage_trends_only_use_completed_known_counts_and_preserve_icons(self):
         from module.api.statistics_service import compact_axis, report
         catalog = StorageCatalog()
@@ -258,6 +270,26 @@ class SnapshotTests(unittest.TestCase):
         compressed = compact_axis([chips])
         self.assertEqual(compressed['series'][0]['icon'], chips['icon'])
         self.assertEqual(before, self.path.read_bytes())
+
+    def test_storage_report_month_window_excludes_scans_after_the_month(self):
+        """仓库趋势按选定月份取窗口：月内的扫描全在，月外的不带。"""
+        from module.api.statistics_service import report
+        catalog = StorageCatalog()
+        base = [dict(id=item['id'], name=item['name'], group=item['group'], amount=1) for item in catalog.items]
+        first = self.save(items=base)
+        second = self.save(items=[dict(base[0], amount=9)] + base[1:])
+        third = self.save(items=[dict(base[0], amount=99)] + base[1:])
+        with closing(sqlite3.connect(self.path)) as connection, connection:
+            for identifier, timestamp in ((first, '2026-01-05 00:00:00'),
+                                          (second, '2026-01-20 00:00:00'),
+                                          (third, '2026-03-02 00:00:00')):
+                connection.execute('UPDATE storage_scans SET finished_at=? WHERE id=?', (timestamp, identifier))
+
+        configs = SimpleNamespace(path=Mock(return_value=self.path.parent / 'alpha.json'))
+        result = report(configs, 'alpha', 'storage', '2026-01', 7, 'month')
+        chips = next(item for item in result['series'] if item['key'] == base[0]['id'])
+
+        self.assertEqual([point['v'] for point in chips['points']], [1.0, 9.0])
 
     def test_invalid_counts_and_partial_transaction_keep_old_snapshot(self):
         scan_id = self.save()
