@@ -16028,21 +16028,9 @@
       }
     },
     "IslandSeasonPlan": {
-      "SyncDone": {
-        "type": "checkbox",
-        "value": true,
-        "option": [
-          true,
-          false
-        ]
-      },
-      "Submit": {
-        "type": "checkbox",
-        "value": false,
-        "option": [
-          true,
-          false
-        ]
+      "Progress": {
+        "type": "textarea",
+        "value": ""
       }
     },
     "Storage": {

@@ -2163,14 +2163,11 @@ IslandDailyOrder:
     value: "2020-01-01 00:00:00"
 
 IslandSeasonPlan:
-  SyncDone:
-    type: checkbox
-    value: true
-    option: [ true, false ]
-  Submit:
-    type: checkbox
-    value: false
-    option: [ true, false ]
+  # Add by MHY, 赛季任务进度：每行「物品=当前数量/需求数量」。当前数量由店铺每次收取
+  # 生产、核对销售时读仓库自动更新，需求数量默认取赛季数据，两项都可以手动改。
+  Progress:
+    type: textarea
+    value: ""
 
 IslandDailyInteract:
   WeeklyPhoto:

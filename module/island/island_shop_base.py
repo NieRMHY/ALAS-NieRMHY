@@ -254,21 +254,13 @@ class IslandShopBase(Island, WarehouseOCR):
             if self.warehouse_counts[dish['name']]:
                 logger.info(f"{self._item_cn(dish['name'])}: {self.warehouse_counts[dish['name']]}")
 
-        # Add by MHY, 赛季任务物品进度写日志。这里只用仓库读数做记录，
-        # 不再据此推送「攒够」提醒：
-        # 1) 仓库读数不等于任务进度（真机实测仓库 ≥250 而页面只有 222/250，
-        #    差额被每日订单/货运吃掉），照它发提醒会误报
-        # 2) 顺带踩过 IslandGrill 没有 season_config 属性，每次都抛异常被吞
-        # 真正权威的是赛季任务页面，提醒与提交都以页面读数为准。
+        # Modify by MHY, 赛季任务进度直接取仓库读数：赛季页 OCR 会误读（拿铁 82 读成
+        # 282），而这里每次收取/生产前读的是准确库存。记录失败不能影响生产排产。
         try:
-            from module.island.island_season_plan_data import cn_name
-            from module.island.island_economy import ECONOMY_PRODUCTS
-            progress = {cn_name(name): count for name, count in self.warehouse_counts.items()
-                        if count and name in ECONOMY_PRODUCTS}
-            if progress:
-                logger.info(f'[岛屿-赛季任务] {self.shop_type} 仓库读数: {progress}')
+            from module.island.island_season_progress import record_readings
+            record_readings(self.config, dict(self.warehouse_counts))
         except Exception:
-            logger.warning('[岛屿-赛季任务] 仓库读数记录失败，已跳过')
+            logger.exception('[岛屿-赛季进度] 仓库读数记录失败，已跳过')
         return self.warehouse_counts
 
     def select_special_character(self, product):

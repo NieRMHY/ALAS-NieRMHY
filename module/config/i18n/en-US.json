@@ -328,7 +328,7 @@
     },
     "IslandSeasonPlan": {
       "name": "Season Tasks (Development Plan)",
-      "help": "Read the island \"Development Season - Development Plan\" page: track each task progress, sync claimed state, notify when items are ready; optional auto submit"
+      "help": "No longer reads the Development Plan page (it misreads digits). Every time production is collected or sales are checked, the warehouse is read and each task's current amount below is updated. An email is sent when the warehouse has enough, and gaps are scheduled automatically (idle-capacity production is unchanged)."
     },
     "IslandBusiness": {
       "name": "Business Module",
@@ -5922,19 +5922,11 @@
   "IslandSeasonPlan": {
     "_info": {
       "name": "Season Tasks (Development Plan)",
-      "help": "Read the island \"Development Season → Development Plan\" page: log each task progress and sync the done state from the \"Claimed\" badge (claimed tasks are no longer produced)"
+      "help": "No longer reads the Development Plan page (it misreads digits). Every time production is collected or sales are checked, the warehouse is read and each task's current amount below is updated. An email is sent when the warehouse has enough, and gaps are scheduled automatically (idle-capacity production is unchanged)."
     },
-    "SyncDone": {
-      "name": "Sync done state",
-      "help": "Sync with the in-game \"Claimed\" badge: claimed task items stop being produced, visible-but-unclaimed ones clear the done flag",
-      "True": "On",
-      "False": "Off"
-    },
-    "Submit": {
-      "name": "Auto submit",
-      "help": "When enabled, automatically click submit and claim rewards once a season task is ready; verify manually once before enabling",
-      "True": "On",
-      "False": "Off"
+    "Progress": {
+      "name": "Task progress",
+      "help": "One item per line: item_key=current/required. Lines starting with # are comments. The current amount is updated from warehouse readings; after you submit a task the amount drops and production resumes. Required defaults to the season data. Both can be edited by hand. Set required to 0 to stop producing and notifying for an item.\nExample: latte=82/100"
     }
   },
   "IslandDailyInteract": {

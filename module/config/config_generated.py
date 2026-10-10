@@ -1116,8 +1116,7 @@ class GeneratedConfig:
     IslandDailyOrder_UrgentDetectRefreshTime = datetime.datetime(2020, 1, 1, 0, 0)
 
     # 配置组 `IslandSeasonPlan`
-    IslandSeasonPlan_SyncDone = True  # True, False
-    IslandSeasonPlan_Submit = False  # True, False
+    IslandSeasonPlan_Progress = None
 
     # 配置组 `IslandDailyInteract`
     IslandDailyInteract_WeeklyPhoto = True  # True, False

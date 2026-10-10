@@ -137,169 +137,26 @@ def save_notified(notified, path=NOTIFIED_FILE):
         json.dump(notified, f, ensure_ascii=False, indent=2, sort_keys=True)
 
 
-SUBMIT_RATIO = 0.9  # 单次扣减达到需求量的 90% 即认定为「已提交任务」
-# 连续漏读多少次才取消 done（Add by MHY）：徽章漏读远多于误读，一次漏读不该打掉状态
-CLAIM_MISS_LIMIT = 2
-
-
 def _state_entry(state, item):
     """
-    取物品状态，兼容早期版本写的 {物品: True} 格式。
+    取物品的提醒状态，兼容早期版本写的 {物品: True} 格式。
 
     Args:
         state: {物品: 状态} 字典（就地更新）
         item: 物品英文名
 
     Returns:
-        dict: {'notified': bool, 'last': int, 'done': bool, 'miss': int}
+        dict: {'notified': bool}
     """
     value = state.get(item)
     if value is True:
-        entry = {'notified': True, 'last': 0, 'done': False}
+        entry = {'notified': True}
     elif isinstance(value, dict):
-        entry = {'notified': bool(value.get('notified')),
-                 'last': int(value.get('last', 0)),
-                 'done': bool(value.get('done'))}
+        entry = {'notified': bool(value.get('notified'))}
     else:
-        entry = {'notified': False, 'last': 0, 'done': False}
-    # 连续漏读计数（Add by MHY），见 mark_claimed
-    entry['miss'] = int(value.get('miss', 0)) if isinstance(value, dict) else 0
+        entry = {'notified': False}
     state[item] = entry
     return entry
-
-
-def is_done(season, item, notified):
-    """
-    该赛季任务物品是否已确认提交完成（本季不再生产）。
-
-    Args:
-        season: 赛季
-        item: 物品英文名
-        notified: 状态字典
-
-    Returns:
-        bool
-    """
-    entry = (notified.get(season) or {}).get(item)
-    if isinstance(entry, dict):
-        return bool(entry.get('done'))
-    return False
-
-
-def done_items(season, notified):
-    """该赛季已完成的物品集合（轮换时跳过）。"""
-    state = notified.get(season) or {}
-    return {item for item in state if is_done(season, item, notified)}
-
-
-def mark_claimed(season, page_result, notified):
-    """
-    用页面读取结果同步「已完成」状态。
-
-    页面是真相来源：带「已领取」标记的物品即任务已提交，本季不再生产；
-    页面可见但未领取的物品要取消 done（避免旧的库存掉幅误判一直生效）。
-
-    Args:
-        season: 赛季
-        page_result: {任务名: {'item', 'have', 'need', 'claimed'}}
-        notified: load_notified() 的结果（会被就地修改）
-
-    Returns:
-        dict: {物品: '已领取'/'取消'} 本次发生变化的项
-    """
-    state = notified.setdefault(season, {})
-    changed = {}
-    for info in page_result.values():
-        item = info.get('item')
-        if not item:
-            continue
-        entry = _state_entry(state, item)
-        if info.get('claimed') is None:
-            # 徽章被屏幕下沿裁掉，状态未知：既不能记已领取，也不能抵消 done
-            continue
-        claimed = bool(info.get('claimed'))
-        if claimed:
-            entry['miss'] = 0
-            if not entry['done']:
-                entry['done'] = True
-                entry['notified'] = False
-                changed[item] = '已领取'
-        elif entry['done']:
-            # Add by MHY, 单次漏读不取消 done：「已领取」徽章漏读远多于误读（真机
-            # 32 次读里 28 次漏读）。一次漏读就把 done 打掉，会让已提交的物品重新
-            # 投入生产，同时让 notified 的抑制失效、重复发「可以提交」邮件。
-            entry['miss'] = entry.get('miss', 0) + 1
-            if entry['miss'] >= CLAIM_MISS_LIMIT:
-                entry['done'] = False
-                entry['miss'] = 0
-                changed[item] = '取消'
-    return changed
-
-
-def collect_finished(shop, season, counts, notified):
-    """
-    找出「刚攒够、还没通知过」的赛季物品，并识别「已提交」。
-
-    提交任务会一次性扣掉正好 need 个物品（例如 100 个蔬菜沙拉），而货运/订单
-    的零星消耗是渐变的，所以用相邻两次读数判断：上次已攒够、这次掉到需求以下、
-    且单次掉幅达到需求量的 90%，即认定任务已提交，本季不再生产。
-
-    Args:
-        shop: 店铺类型标识
-        season: 赛季
-        counts: {物品: 仓库库存}
-        notified: load_notified() 的结果（会被就地修改）
-
-    Returns:
-        list[(物品, 需要数量, 当前库存)]: 需要发通知的物品
-    """
-    from module.logger import logger
-
-    season_state = notified.setdefault(season, {})
-    finished = []
-    for item, need, _ in season_items_for_shop(shop, season):
-        have = int(counts.get(item, 0))
-        entry = _state_entry(season_state, item)
-        if entry['done']:
-            continue
-        if have >= need:
-            if not entry['notified']:
-                entry['notified'] = True
-                finished.append((item, need, have))
-        elif entry['notified'] and entry['last'] - have >= need * SUBMIT_RATIO:
-            entry['done'] = True
-            entry['notified'] = False
-            logger.info(f"[岛屿-赛季任务] {item} 数量 {entry['last']} -> {have}，"
-                        f"判定为已提交任务，本季不再生产")
-        else:
-            # 数量掉到需求以下（被消耗），重新攒够再提醒
-            entry['notified'] = False
-        entry['last'] = have
-    return finished
-
-
-def ready_to_submit(season, page_result):
-    """
-    从页面结果里挑出「已达标但还没领取」的任务（可以去提交了）。
-
-    Args:
-        season: 赛季
-        page_result: {任务名: {'item', 'have', 'need', 'claimed'}}
-
-    Returns:
-        list[(任务名, 物品, 当前数量, 需要数量)]
-    """
-    ready = []
-    for task, info in sorted(page_result.items()):
-        # Add by MHY, 只有「确定未领取」（claimed is False）才算可提交：
-        # claimed 为 None 表示徽章被屏幕下沿裁掉、状态未知，不能据此判定
-        if info.get('claimed') is not False:
-            continue
-        need = int(info.get('need') or 0)
-        have = int(info.get('have') or 0)
-        if need and have >= need:
-            ready.append((task, info.get('item'), have, need))
-    return ready
 
 
 def is_shop_product(item):
@@ -320,77 +177,63 @@ def is_shop_product(item):
     return bool(item) and item in ECONOMY_PRODUCTS
 
 
-def notify_ready_from_page(config, season, page_result):
+def notify_ready_from_progress(config, season, progress):
     """
-    页面显示任务已达标但未领取时推送提醒（每项只提醒一次）。
+    赛季进度达标时推送提醒（每项只提醒一次，进度回落后复位）。
 
-    页面是真相来源：仓库读数可能被每日订单/货运消耗影响，而页面显示的是
-    任务本身的进度。
+    Modify by MHY, 进度来自仓库读数（见 island_season_progress），不再依赖赛季页 OCR。
+    提醒的是「仓库里已经攒够了」，具体是否已提交以你为准：提交任务后仓库数量
+    掉下去，物品自然回到缺口，复位 notified，下次攒够会再提醒。
 
     Args:
         config: AzurLaneConfig 实例
         season: 赛季
-        page_result: 页面读取结果
+        progress: {物品: [当前数量, 需求数量]}
 
     Returns:
-        list[str]: 本次提醒的任务名
+        list[str]: 本次提醒的物品
     """
-    from module.island.island_season_plan_data import cn_name
+    from module.island.island_season_plan_data import cn_name, task_of_item
     from module.logger import logger
     from module.notify.notify import handle_notify, notify_title
 
-    if not season:
+    if not season or not progress:
         return []
     notified = load_notified()
     state = notified.setdefault(season, {})
-    # Add by MHY, 页面读数没达标的物品要复位 notified：10-10 拿铁真实 82/100 被误读成
-    # 282/100，错发了一次达标邮件并把 notified 留成 True，之后真攒够 100 时提醒会被
-    # 吞掉。只复位页面上确定未领取（claimed is False）且读数不足的项；
-    # 必须在「没有达标项就提前返回」之前做，否则恰好没有达标项时永远复位不了。
-    reset = False
-    for info in page_result.values():
-        item = info.get('item')
-        if not item or info.get('claimed') is not False:
-            continue
-        need = int(info.get('need') or 0)
-        if need and int(info.get('have') or 0) < need:
-            entry = state.get(item)
-            if isinstance(entry, dict) and entry.get('notified'):
-                entry['notified'] = False
-                reset = True
-    ready = ready_to_submit(season, page_result)
-    if not ready:
-        if reset:
-            save_notified(notified)
-        return []
-    fired = []
-    lines = []
-    for task, item, have, need in ready:
-        # 材料类不提醒：农田牧场长期溢出，提醒只会刷屏（真机一次发了 8 封）
-        if not is_shop_product(item):
-            continue
+    dirty = False
+    ready = []
+    for item, (have, need) in sorted(progress.items()):
         entry = _state_entry(state, item)
-        if entry['notified']:
+        if not need or have < need:
+            # 进度回落（提交后掉下去、或需求被调高）：复位，下次攒够再提醒
+            if entry['notified']:
+                entry['notified'] = False
+                dirty = True
+            continue
+        if entry['notified'] or not is_shop_product(item):
             continue
         entry['notified'] = True
-        entry['last'] = have
-        fired.append(task)
-        lines.append(f"{task}（{cn_name(item)} {have}/{need}）")
-    if fired:
-        # 合并成一封：一项一封会把收件箱刷爆（真机一次 8 封）
-        logger.info(f"[岛屿-赛季任务] {len(fired)} 项已达标，推送提醒: {'、'.join(fired)}")
-        content = (f"<{config.config_name}> 赛季任务已达标："
-                   + '\n' + '\n'.join(lines)
-                   + '\n可以去岛屿「开发季」提交了')
-        handle_notify(
-            config.Error_OnePushConfig,
-            title=notify_title(config.config_name, '岛屿',
-                               f'{len(fired)} 项赛季任务可以提交'),
-            content=content,
-        )
+        dirty = True
+        ready.append((item, have, need))
+    if dirty:
         save_notified(notified)
-    return fired
-
+    if not ready:
+        return []
+    lines = []
+    for item, have, need in ready:
+        task, _ = task_of_item(item, season)
+        lines.append(f"{task or cn_name(item)}（{cn_name(item)} {have}/{need}）")
+    logger.info(f"[岛屿-赛季任务] {len(ready)} 项已达标，推送提醒: {'、'.join(lines)}")
+    content = (f"<{config.config_name}> 赛季任务已达标："
+               + '\n' + '\n'.join(lines)
+               + '\n可以去岛屿「开发季」提交了')
+    handle_notify(
+        config.Error_OnePushConfig,
+        title=notify_title(config.config_name, '岛屿', f'{len(ready)} 项赛季任务可以提交'),
+        content=content,
+    )
+    return [item for item, _, _ in ready]
 
 
 def resolve_away_cook(shop, season, counts, current, defaults=None, producible=None,

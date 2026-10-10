@@ -190,6 +190,28 @@ flowchart TD
 手动配置（角色不全也能用），经济库的 `SALES_BOOST_CHARACTERS`
 只作为日志参考，不强制选人。
 
+### 赛季任务进度（仓库读数，不再 OCR 赛季页）
+
+赛季「开发计划」页的进度数字会被 OCR 误读（拿铁 82 读成 282、牛奶 7250 这类前缀多读），
+而邮件、方案刷新、常驻餐品轮换都依赖它，所以进度改为直接取仓库读数：
+
+- **记录点**：`IslandShopBase.get_warehouse_counts`（每次收取/排产前）与经营端
+  `_rotate_away_cook`（核对销售前）读到仓库库存后调用 `island_season_progress.record_readings`，
+  把赛季任务里的物品写进配置 `IslandSeasonPlan.Progress`（textarea，每行
+  `物品=当前数量/需求数量`，# 为注释）。读数直接覆盖当前数量，不累加，也不封顶——
+  蔬菜沙拉库存 2100 就是 2100。
+- **手动修改**：当前数量与需求数量都可以在 WebUI「赛季任务」里直接改；需求数量改成 0
+  可停止该项的生产与提醒。需求数量默认取 `SEASON_PLAN_TASKS`，只覆盖店铺餐品类任务，
+  农田/牧场材料不进进度。
+- **`IslandSeasonPlan` 任务**：纯逻辑，不继承 `Island`、不碰设备；只做三件事——进度达标
+  发一封邮件（`notify_ready_from_progress`，每项只提醒一次，进度回落后复位）、缺口出现新项时
+  自动请求方案刷新、写日志。收餐会触发它，20 分钟限流，异常也必排下次运行。
+- **排产**：`season_stockpile` 按「需求 + `SEASON_BUFFER`」把缺口排进各店基础需求，
+  `season_have` 供产能估算，空闲产能生产逻辑不变。已提交任务后仓库数量掉下去，缺口自然
+  重新出现，不再依赖「已领取/done」标记。
+- **储备代码**：`island_season_plan_reader`（进开发季页读卡片）与 `island_season_submit`
+  （读到卡片就地点击提交）不再接入任何任务，仅作储备；入口模板见 §16。
+
 ## 7. 调用关系
 
 ### 上游
