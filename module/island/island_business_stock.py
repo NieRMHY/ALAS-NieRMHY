@@ -24,7 +24,7 @@ from module.island.island_away_cook import (
 from module.island.island_economy import EconomyDatabase
 from module.island.island_season import SeasonConfig
 from module.island.island_economy import ECONOMY_PRODUCTS
-from module.island.island_season_progress import ensure_slots, record_readings
+from module.island.island_season_progress import read_slots, record_readings
 from module.island.warehouse import WarehouseOCR
 from module.logger import logger
 
@@ -214,9 +214,9 @@ class BusinessStockCheckMixin:
         if not season:
             return
 
-        # Modify by MHY, 清单来自配置槽位：已勾选「已完成」的物品不再轮换成常驻餐品，
+        # Modify by MHY, 需求数量与已完成来自配置：已勾选「已完成」的物品不再轮换成常驻餐品，
         # 空闲产能自动转去做下一个缺口最大的
-        slots = ensure_slots(self.config, season, set(ECONOMY_PRODUCTS))
+        slots = read_slots(self.config, season, set(ECONOMY_PRODUCTS))
         shop_items = season_items_for_shop(shop_type, season, slots)
 
         # 赛季物品的库存：有仓库模板的才读得到，没有的按 0 处理

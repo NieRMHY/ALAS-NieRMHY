@@ -158,8 +158,8 @@ def current_progress(config, season):
     """
     读取当前赛季进度：{物品: [当前数量, 需求数量]}，读不到赛季时返回 None。
 
-    Modify by MHY, 清单来自配置槽位（物品/需求/已完成），当前数量来自最近一次仓库读数。
-    已勾选「已完成」或需求为 0 的槽位不在其中，所以不会参与排产、方案刷新与提醒。
+    Modify by MHY, 餐品清单来自代码赛季表，需求数量与已完成来自配置，当前数量来自最近一次
+    仓库读数。已勾选「已完成」或需求为 0 的餐品不在其中，不参与排产、方案刷新与提醒。
 
     Args:
         config: AzurLaneConfig 实例
@@ -169,11 +169,11 @@ def current_progress(config, season):
         dict | None: {物品: [当前数量, 需求数量]}
     """
     from module.island.island_economy import ECONOMY_PRODUCTS
-    from module.island.island_season_progress import build_progress, ensure_slots, load_have
+    from module.island.island_season_progress import build_progress, load_have, read_slots
 
     if not season:
         return None
-    slots = ensure_slots(config, season, set(ECONOMY_PRODUCTS))
+    slots = read_slots(config, season, set(ECONOMY_PRODUCTS))
     return build_progress(slots, load_have())
 
 

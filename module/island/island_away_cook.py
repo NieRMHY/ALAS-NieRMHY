@@ -29,14 +29,14 @@ def season_items_for_shop(shop, season, slots=None):
     """
     该店在赛季任务里要交的物品。
 
-    Modify by MHY, 清单来自配置槽位（IslandSeasonPlan.Item/Need/Done）：已标记完成或
-    需求为 0 的槽位不在其中，所以不会再被轮换成常驻餐品。没传 slots 时退回代码里的
-    赛季表（离线测试与新赛季预置用）。
+    Modify by MHY, 需求数量与已完成来自配置（IslandSeasonPlan.Need_<物品>/Done_<物品>）：
+    已标记完成或需求为 0 的餐品不在其中，所以不会再被轮换成常驻餐品。没传 slots 时退回
+    代码里的赛季表（离线测试用）。
 
     Args:
         shop: 店铺类型标识
         season: 赛季
-        slots: island_season_progress.read_slots() 的结果；None 用赛季表
+        slots: island_season_progress.read_slots() 的结果；None 用赛季表默认需求
 
     Returns:
         list[(物品, 需要数量, 单件工时)]
