@@ -5,6 +5,7 @@ import threading
 from dataclasses import dataclass
 from typing import Callable
 
+from module.persistence.database import configured_database
 from module.api import background_service as background
 from module.api import protocol as p
 from module.api import search_service as search
@@ -58,6 +59,14 @@ class Router:
             'config.export': Method(p.InstanceParams, lambda x: configs.export(x.instance)),
             'config.patch': Method(p.PatchParams, lambda x: configs.patch(x.instance, x.revision, x.changes), True),
             'overview.get': Method(p.InstanceParams, lambda x: runtime.overview(x.instance)),
+            # Modify by MHY, 保留心智计算器接口，永久移除证券接口
+            'mind.catalog': Method(p.InstanceParams, lambda x: self.mind.catalog(x.instance)),
+            'mind.report': Method(p.InstanceParams, lambda x: self.mind.report(x.instance)),
+            'mind.calculate': Method(p.MindCalculateParams, lambda x: self.mind.calculate(x.instance, [ship.model_dump() for ship in x.ships])),
+            'mind.save': Method(p.MindSaveParams, lambda x: self.mind.save(x.instance, x.revision, [ship.model_dump() for ship in x.ships]), True),
+            'mind.import': Method(p.MindFileParams, lambda x: self.mind.import_file(x.instance, x.filename, x.content)),
+            'mind.recognize': Method(p.MindFileParams, lambda x: self.mind.recognize(x.instance, x.filename, x.content)),
+            'mind.export': Method(p.MindExportParams, lambda x: self.mind.export(x.instance, x.format)),
             'scheduler.start': Method(p.InstanceParams, lambda x: runtime.start(x.instance), True),
             'scheduler.stop': Method(p.InstanceParams, lambda x: runtime.stop(x.instance), True),
             'scheduler.program.catalog': Method(p.InstanceParams, lambda x: self.programs.catalog(x.instance)),
@@ -105,6 +114,11 @@ class Router:
             'background.preference.set': Method(p.BackgroundPreferenceParams,
                                                 lambda x: background.save_preference(x.material, x.preference), True),
         }
+
+    @property
+    def mind(self):
+        from module.api.mind_calculator_service import MindCalculatorService
+        return MindCalculatorService(self.configs)
 
     @property
     def opsi_simulator(self):
@@ -179,7 +193,8 @@ class Router:
         from module.api.statistics_service import compact_axis, report
         result = report(self.configs, params.instance, params.category, params.month,
                         params.days, params.period, research_series=params.series,
-                        research_scope=params.scope, loot_task=params.task)
+                        research_scope=params.scope, loot_task=params.task,
+                        include_series=params.include_series)
         return {**result, **compact_axis(result.get('series') or [])}
 
     def resource_flows(self, params: p.ResourceFlowsParams):
@@ -211,6 +226,7 @@ class Router:
         from module.api.meowfficer_service import clear
         return clear(self.configs, params.instance)
 
+    @configured_database
     def dispatch(self, method: str, params: dict):
         """分发并执行指定的 API 方法。
 

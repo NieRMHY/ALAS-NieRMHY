@@ -95,7 +95,8 @@ class UpdateServiceTest(unittest.TestCase):
         self.assertEqual(self.service.commits()['total'], 1)
 
     def test_fetch_reserves_operation_and_keeps_local_head(self):
-        self.updater._fetch_with_retry = Mock()
+        # Modify by MHY, 纯 Git 更新链直接调用 execute，不使用上游 CDN 重试入口。
+        self.updater.execute = Mock()
         with patch('module.api.update_service.Thread') as thread:
             self.assertTrue(self.service.start('fetch')['accepted'])
             with self.assertRaises(ApiError):
@@ -107,7 +108,7 @@ class UpdateServiceTest(unittest.TestCase):
         self.assertEqual(self.git('rev-parse', 'HEAD'), self.base)
 
     def test_fetch_failure_is_reported_and_can_retry(self):
-        self.updater._fetch_with_retry = Mock(side_effect=RuntimeError('凭据不可回显'))
+        self.updater.execute = Mock(side_effect=RuntimeError('凭据不可回显'))
         self.service._run('fetch')
         self.assertEqual(self.updater.state, 'failed')
         self.assertNotIn('凭据', self.service.status()['error'])

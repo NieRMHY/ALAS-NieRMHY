@@ -14,7 +14,7 @@ import {
   DataTableCard,
   ErrorContextCard,
   TracebackCard,
-  LlmReportCard,
+  // Modify by MHY, 卡片稳定性断言不再包含已删除的智能分析报告。
   MatrixGridCard,
   CostGridCard,
   SystemBannerCard,
@@ -598,7 +598,7 @@ describe('LogCardView 块级聚合器与卡片组件', () => {
         const cardComponents = [
           MapGridCard,
           TracebackCard,
-          LlmReportCard,
+          // Modify by MHY, 卡片稳定性断言不再包含已删除的智能分析报告。
           MatrixGridCard,
           SystemBannerCard,
           StageHeaderCard,

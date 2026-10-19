@@ -23,7 +23,9 @@ detect_owner_home() {
     printf '%s\n' "${HOME}"
 }
 
-REPOSITORY="${REPOSITORY:-https://gitcode.com/ddl2/AzurLaneAutoScript}"
+# Modify by MHY, 新部署默认使用自有 GitHub 正式渠道，允许显式选择 dev_essex
+REPOSITORY="${REPOSITORY:-https://github.com/NieRMHY/ALAS-NieRMHY.git}"
+BRANCH="${BRANCH:-essex}"
 IMAGE="${IMAGE:-crpi-gukwnnx8iuh9qpez.cn-shanghai.personal.cr.aliyuncs.com/hajiming/ap:latest}"
 OWNER_HOME="${OWNER_HOME:-$(detect_owner_home)}"
 APP_DIR="${APP_DIR:-${OWNER_HOME}/AP}"
@@ -568,7 +570,7 @@ if [ -d "${APP_DIR}/.git" ]; then
     git_cmd -C "${APP_DIR}" pull --ff-only --verbose --progress
 else
     info "$(t source_clone)"
-    git_cmd clone --verbose --progress "${REPOSITORY}" "${APP_DIR}"
+    git_cmd clone --branch "${BRANCH}" --verbose --progress "${REPOSITORY}" "${APP_DIR}"
 fi
 
 step "$(t image_pull)"

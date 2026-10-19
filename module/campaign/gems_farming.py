@@ -20,11 +20,10 @@
 """
 
 from module.base.decorator import cached_property
-from module.campaign.assets import CHAPTER_NEXT, CHAPTER_PREV
 from module.campaign.campaign_base import CampaignBase
 from module.campaign.fleet_selection import FleetSelectionMixin
 from module.campaign.run import CampaignRun
-from module.combat.assets import BATTLE_PREPARATION, EXP_INFO_C, EXP_INFO_D, OPTS_INFO_D
+from module.combat.assets import BATTLE_PREPARATION
 from module.combat.emotion import Emotion
 from module.equipment.assets import EMPTY_SHIP_R, FLEET_DETAIL, FLEET_DETAIL_CHECK, FLEET_NEXT, FLEET_PREV
 from module.equipment.equipment_code import EquipmentCodeHandler
@@ -88,9 +87,9 @@ class GemsEmotion(Emotion):
 class GemsCampaignOverride(CampaignBase):
     """钻石 farming 专用战役覆写类。
 
-    覆写 CampaignBase 的战斗低情绪处理和经验结算处理：
+    覆写 CampaignBase 的战斗低情绪处理，结算复用公共结果记录：
     - 低情绪时根据配置选择忽略警告或撤退换船
-    - 支持多种经验结算弹窗的点击处理
+    - 经验结算、战败恢复与心情去重由公共战斗层负责
     """
 
     def handle_combat_low_emotion(self):
@@ -144,27 +143,6 @@ class GemsCampaignOverride(CampaignBase):
                     self.enter_map_cancel()
                     break
             raise CampaignEnd('Emotion withdraw')
-
-    def handle_exp_info(self):
-        """处理战后经验结算弹窗。
-
-        Returns:
-            bool: 是否检测并点击了结算弹窗。
-        """
-        if self.is_combat_executing():
-            return False
-        if super().handle_exp_info():
-            return True
-        if self.appear_then_click(EXP_INFO_C, threshold=10):
-            self.device.sleep((0.25, 0.5))
-            return True
-        if self.appear_then_click(EXP_INFO_D):
-            self.device.sleep((0.25, 0.5))
-            return True
-        if self.appear_then_click(OPTS_INFO_D, offset=True, similarity=0.9):
-            self.device.sleep((0.25, 0.5))
-            return True
-        return False
 
 
 class GemsEquipmentHandler(EquipmentCodeHandler):

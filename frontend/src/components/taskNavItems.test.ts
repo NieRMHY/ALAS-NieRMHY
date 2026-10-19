@@ -3,7 +3,7 @@ import { ownerTaskOf, ownerTaskOfGroup } from './taskNavItems'
 
 describe('ownerTaskOf', () => {
   const args = {
-    OpsiAshBeacon: {OpsiAshBeacon: {AttackMode: {}, OneHitMode: {}}},
+    OpsiAshBeacon: {OpsiAshBeacon: {AttackMode: {}, AssistRequestLimit: {}}},
     Campaign: {Campaign: {Use2xBook: {}}},
   }
 

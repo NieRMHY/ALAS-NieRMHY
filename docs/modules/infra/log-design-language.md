@@ -110,7 +110,7 @@ export type LogCategory =
   | 'map'        // 海图识别、坐标系、路径规划、迷宫与机关
   | 'opsi'       // 大型作战（大世界）、行动力、区域移动、信标
   | 'game'       // 日常维护、委托、科研、指挥喵、商店、退役
-  | 'diagnostics'; // 错误诊断、崩溃现场、LLM 分析
+  | 'diagnostics'; // 错误诊断、崩溃现场
 ```
 
 ### 3.3 核心 Kind 载荷规范 (Discriminated Payloads)
@@ -286,21 +286,9 @@ export interface TracebackLogEntry extends BaseLogEntry {
 }
 ```
 
-#### 9. `llm_diagnosis` (AI 智能错误分析)
-前端保留的 AI 错误分析卡片类型；后端 LLM 错误分析（`module/llm.py`）已移除，当前后端不再产出此类日志。
+#### 9. 预留类型
 
-```typescript
-export interface LlmDiagnosisLogEntry extends BaseLogEntry {
-  kind: 'llm_diagnosis';
-  payload: {
-    summary: string;
-    probableCauses: string[];
-    recommendedFixes: string[];
-    confidence: number;
-    cached: boolean;
-  };
-}
-```
+本分支已移除自动分析卡片及其解析器。
 
 #### 10. `progress` (进度更新)
 用于耗时循环、批次任务、下载更新或战斗轮次的即时进度。
@@ -379,7 +367,6 @@ export interface ProgressLogEntry extends BaseLogEntry {
 | **四段式错误上下文** | `logger.error_context` | 换行符 `\n` 连接的单条多行日志 | **结构化处置指南**。被当成长文本换行，建议不突出 | `<LogErrorCard />` 警示操作指南 |
 | **富异常堆栈** | Python 未捕获异常 (Rich Traceback) | 150 列宽边框字符 + locals 框 | **深层调试栈**。在窄屏下被 `break-all` 撕裂为碎片 | `<LogTracebackViewer />` 折叠源码栈 |
 | **富边框二维表格** | `benchmark.py` / `score_task.py` | Rich `Table` (Unicode 框线) | **多维量化报表**。字符边框折行错位，无法列排序与拷贝 | `<LogDataTable />` 原生滚动表格 |
-| **LLM 智能分析报告** | 已移除（原 `module/llm.py`） | `[LLM]` 开始/结束内的多行 Markdown | **AI 故障诊断**。缺失 Markdown 语法渲染，排版粗糙 | `<LogAiSummaryCard />` 格式化分析卡片 |
 
 ---
 
@@ -579,7 +566,6 @@ LogPanel (主容器，虚拟滚动，快捷键)
     ├── [kind: 'table']          -> <LogDataTable /> (水平自适应或独立横向滚动)
     ├── [kind: 'error_context']  -> <LogErrorCard /> (警示高亮，结构化建议)
     ├── [kind: 'traceback']      -> <LogTracebackViewer /> (默认折叠，源码高亮，复制)
-    ├── [kind: 'llm_diagnosis']  -> <LogAiSummaryCard /> (AI 智能分析卡片)
     └── [kind: 'progress']       -> <LogProgressBar />
 ```
 
@@ -672,7 +658,7 @@ logger.table(title="跑分结果", columns=[...], rows=[...])
 
 1. **流式块级聚合状态机 (`aggregateEntriesToCards`)**：
    - 实现了对 160 列无颜色终端日志流的高性能线性聚合（单趟扫描 $O(N)$）。
-   - 涵盖 11 种标准化卡片形态：系统横幅 (`system_banner`)、任务阶段标题 (`stage_header`)、2.5D 海域透视拓扑 (`perspective`)、海域战术地图 (`map_grid`)、寻路移动代价热力图 (`cost_grid`)、局部/雷达扫描矩阵 (`matrix_grid`)、紧凑状态属性清单 (`property_sheet`)、原生数据表格 (`data_table`)、四段式错误上下文 (`error_context`)、AI 智能诊断报告 (`llm_report`) 及经典单行高亮 (`single`)。
+   - 涵盖 10 种标准化卡片形态：系统横幅 (`system_banner`)、任务阶段标题 (`stage_header`)、2.5D 海域透视拓扑 (`perspective`)、海域战术地图 (`map_grid`)、寻路移动代价热力图 (`cost_grid`)、局部/雷达扫描矩阵 (`matrix_grid`)、紧凑状态属性清单 (`property_sheet`)、原生数据表格 (`data_table`)、四段式错误上下文 (`error_context`) 及经典单行高亮 (`single`)。
 
 2. **核心视觉约束与工业级质感**：
    - **零动效准则**：移除所有不必要的 CSS 动画、渐变过渡与悬停高亮效果，界面响应零延迟，维持工程级高信息密度。
@@ -815,7 +801,7 @@ LDL 卡片式日志系统已全面完成对 AzurPilot 全量 6 套主题（Class
   * 当卡片总数 $\le 40$ 时，直接执行纯扁平渲染，完全避免虚拟窗口计算、滚动监听和占位计算的开销。
   * 当卡片总数 $> 40$ 时，自动无缝切换为虚拟视口裁剪模式。
 - **动态预估与测量高度表 (Dynamic Height Cache)**：
-  * 针对不同类型的卡片（如单行卡片、海图、透视梯形、热力图、表格、Traceback、LLM 报告等）设置不同的初始估算高度（42px ~ 420px），结合数据行数动态微调。
+  * 针对不同类型的卡片（如单行卡片、海图、透视梯形、热力图、表格、Traceback等）设置不同的初始估算高度（42px ~ 420px），结合数据行数动态微调。
   * 真实渲染时通过组件回调动态更新实测高度，实现高度缓存自愈。
 - **$O(\log N)$ 二分查找与过采样缓冲 (`OVERSCAN_BUFFER_PX = 800`)**：
   * 借助前缀高度累加表（Prefix Sum Offset），滚动时通过二分查找（`findVisibleRange`）在毫秒级时间内定位视口当前可见范围。
@@ -844,7 +830,7 @@ LDL 卡片式日志系统已全面完成对 AzurPilot 全量 6 套主题（Class
 
 ### 10.5 精细化组件记忆化 (Component Memoization)
 - **全量卡片封装 `React.memo`**：
-  * 12 种不同卡片组件（`SingleLogLineCard`、`MapGridCard`、`PerspectiveCard`、`CostGridCard`、`MatrixGridCard`、`PropertySheetCard`、`DataTableCard`、`ErrorContextCard`、`TracebackCard`、`LlmReportCard`、`SystemBannerCard`、`StageHeaderCard`）均用 `memo` 严密包裹。
+  * 11 种不同卡片组件（`SingleLogLineCard`、`MapGridCard`、`PerspectiveCard`、`CostGridCard`、`MatrixGridCard`、`PropertySheetCard`、`DataTableCard`、`ErrorContextCard`、`TracebackCard`、`SystemBannerCard`、`StageHeaderCard`）均用 `memo` 严密包裹。
   * 自定义 Props 浅比对函数（`prev.card === next.card && prev.search === next.search`），确保当日志微批刷新追加新卡片时，视口内所有已有历史卡片节点跳过重渲染，DOM 更新操作量降至最低。
 
 

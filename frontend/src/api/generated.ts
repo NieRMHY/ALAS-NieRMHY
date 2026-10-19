@@ -12,6 +12,13 @@ export interface Parameters {
   "config.export": { instance: string }
   "config.patch": { instance: string; revision?: string | null; changes: Array<{ path: string; value: unknown }> }
   "overview.get": { instance: string }
+  "mind.catalog": { instance: string }
+  "mind.report": { instance: string }
+  "mind.calculate": { instance: string; ships: Array<{ name: string; level: number; rarity?: "" | "N" | "R" | "SR" | "SSR" | "UR"; base_rarity?: "" | "N" | "R" | "SR" | "SSR" | "UR"; excluded?: boolean; review?: boolean; source?: string }> }
+  "mind.save": { instance: string; ships: Array<{ name: string; level: number; rarity?: "" | "N" | "R" | "SR" | "SSR" | "UR"; base_rarity?: "" | "N" | "R" | "SR" | "SSR" | "UR"; excluded?: boolean; review?: boolean; source?: string }>; revision: string }
+  "mind.import": { instance: string; filename: string; content: string }
+  "mind.recognize": { instance: string; filename: string; content: string }
+  "mind.export": { instance: string; format?: "json" | "csv" | "xlsx" }
   "scheduler.start": { instance: string }
   "scheduler.stop": { instance: string }
   "scheduler.program.catalog": { instance: string }
@@ -29,7 +36,7 @@ export interface Parameters {
   "opsi.simulator.figure": { instance: string }
   "preview.capture": { instance: string }
   "statistics.refreshLoot": { instance: string }
-  "statistics.report": { instance: string; category?: "resources" | "action" | "opsi" | "commission" | "ships" | "loot" | "research" | "storage"; month?: string | null; days?: number; period?: "day" | "week" | "month"; series?: number; scope?: "series" | "consumable"; task?: string | null }
+  "statistics.report": { instance: string; category?: "resources" | "action" | "opsi" | "commission" | "ships" | "loot" | "research" | "storage"; month?: string | null; days?: number; period?: "day" | "week" | "month"; series?: number; scope?: "series" | "consumable"; task?: string | null; include_series?: boolean }
   "statistics.resourceFlows": { instance: string; days?: number; start?: string | null; end?: string | null; resource?: string | null; task?: string | null; offset?: number; limit?: number; through_id?: number | null }
   "meowfficer.scoreReport": { instance: string; limit?: number }
   "meowfficer.clearReport": { instance: string }
@@ -54,7 +61,7 @@ export interface Parameters {
   "background.preference.get": Record<string, never>
   "background.preference.set": { material: "glass" | "plain"; preference?: Record<string, unknown> }
   "auth.login": { password?: string }
-  "events.subscribe": { instance?: string | null; topics: Array<"instances" | "overview" | "logs" | "preview"> }
+  "events.subscribe": { instance?: string | null; topics: Array<"instances" | "overview" | "logs" | "preview" | "notifications"> }
 }
 export interface SchedulerModels {
   ProgramDocument: { entry: string; nodes: Array<{ id: string; type: string; label?: string; comment?: string; params?: Record<string, unknown>; position?: Record<string, unknown> }>; edges?: Array<{ id: string; source: string; sourcePort: string; target: string; targetPort?: string; kind?: "control" | "data" }>; schemaVersion?: number; name?: string; subgraphs?: Array<{ entry: string; nodes: Array<{ id: string; type: string; label?: string; comment?: string; params?: Record<string, unknown>; position?: Record<string, unknown> }>; edges?: Array<{ id: string; source: string; sourcePort: string; target: string; targetPort?: string; kind?: "control" | "data" }>; id: string; name: string; pure?: boolean; inputs?: Array<{ name: string; type?: "any" | "number" | "boolean" | "string" | "time" | "duration" | "resource" | "task" | "tasks" | "result" | "list" | "object"; required?: boolean }>; outputs?: Array<{ name: string; type?: "any" | "number" | "boolean" | "string" | "time" | "duration" | "resource" | "task" | "tasks" | "result" | "list" | "object"; required?: boolean }> }>; variables?: Array<{ name: string; type?: "any" | "number" | "boolean" | "string" | "time" | "duration" | "resource" | "task" | "tasks" | "result" | "list" | "object"; initial?: unknown; persistent?: boolean }>; viewport?: Record<string, unknown> }

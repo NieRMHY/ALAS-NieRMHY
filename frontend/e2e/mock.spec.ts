@@ -749,7 +749,8 @@ test('移动端放大布局无横向溢出，单栏导航可以收起', async ({
   await page.getByRole('menuitemradio', {name: 'demo-alt', exact: true}).click()
   await expect(page.locator('.app-shell')).not.toHaveClass(/mobile-open/)
   await page.getByRole('button', {name: '打开导航'}).click()
-  await page.getByRole('link', {name: 'AzurPilot 主页'}).click()
+  // Modify by MHY, 首页品牌链接沿用本地 ALAS 可访问名称。
+  await page.getByRole('link', {name: 'ALAS 主页'}).click()
   await page.getByRole('button', {name: '打开导航'}).click()
   await page.locator('.primary-nav').getByRole('link', {name: '界面设置'}).click()
   await expect(page.getByLabel('界面主题')).toBeVisible()
@@ -810,7 +811,8 @@ test('主页实例状态、任务搜索收起与导航固定', async ({page}) =>
   await expect(page.getByLabel('搜索任务', {exact: true})).toHaveCount(0)
   expect(await page.locator('.task-group-button').count()).toBeGreaterThan(1)
   await page.getByRole('button', {name: '启动调度器'}).click()
-  await page.getByRole('link', {name: 'AzurPilot 主页'}).click()
+  // Modify by MHY, 首页品牌链接沿用本地 ALAS 可访问名称。
+  await page.getByRole('link', {name: 'ALAS 主页'}).click()
   await expect(page.locator('.instance-card').filter({hasText: 'demo-main'})).toContainText('运行中')
   await expect(page.locator('.instance-card').filter({hasText: 'demo-main'})).toContainText('委托')
   await page.locator('.instance-card').filter({hasText: 'demo-main'}).click()
@@ -1144,4 +1146,27 @@ test('商店配置只显示官源购买设置并保留普通过滤器保存', as
   await filter.scrollIntoViewIfNeeded()
   await expect(filter).toBeInViewport()
   await page.screenshot({path: 'test-results/shop-upstream-mobile.png', fullPage: true})
+})
+
+test('关闭背景后切回填写 URL 直接铺上，不必再点应用背景', async ({page}) => {
+  await page.route('https://api.yppp.net/api.php', route => route.fulfill({
+    contentType: 'image/svg+xml',
+    body: '<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720"><rect width="1280" height="720" fill="#9acbff"/></svg>',
+  }))
+  /* 「关闭背景」档只在普通材质出现。 */
+  await page.addInitScript(() => {
+    localStorage.setItem('azurpilot.theme', 'light')
+    localStorage.setItem('azurpilot.material', 'plain')
+  })
+  await page.goto('/#/interface')
+  const source = page.locator('#ui-background-source')
+  await source.click()
+  await page.getByRole('option', {name: '填写 URL', exact: true}).click()
+  await expect(page.locator('.wallpaper img')).toBeVisible()
+  await source.click()
+  await page.getByRole('option', {name: '关闭背景', exact: true}).click()
+  await expect(page.locator('.wallpaper img')).toHaveCount(0)
+  await source.click()
+  await page.getByRole('option', {name: '填写 URL', exact: true}).click()
+  await expect(page.locator('.wallpaper img')).toBeVisible()
 })

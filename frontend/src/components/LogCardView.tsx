@@ -31,7 +31,6 @@ import {
   Radar,
   Ship,
   Skull,
-  Sparkles,
   Swords,
   Table as TableIcon,
   Terminal,
@@ -39,7 +38,7 @@ import {
   Zap,
 } from 'lucide-react'
 import type { LogEntry } from '../api/types'
-import { LazyMarkdown } from './LazyMarkdown'
+// Modify by MHY, 移除智能分析专用类型、解析与报告卡片，历史消息仍按普通运行日志展示。
 
 // 提取日志消息正文（剥离 LEVEL HH:MM:SS.mmm │ 前缀）
 export function extractLogMessage(raw: string): { level: string; time: string; message: string } {
@@ -272,14 +271,6 @@ export type CardItem =
       id: number
       time: string
       excName: string
-      rawText: string
-    }
-  | {
-      type: 'llm_report'
-      id: number
-      time: string
-      model: string
-      content: string
       rawText: string
     }
   | {
@@ -670,37 +661,6 @@ function aggregateSlice(
         id: entry.id,
         time,
         excName: excMatch ? `${excMatch[1]}: ${excMatch[2]}` : 'Python 异常堆栈',
-        rawText: raw,
-      }
-      cards.push(card)
-      ranges.push({ card, start: cardStart, end: index })
-      continue
-    }
-
-    // 11. LLM 智能分析报告
-    if (raw.includes('[LLM 分析报告') || raw.includes('[LLM] LLM 错误分析')) {
-      const lines = raw.split('\n')
-      const filtered: string[] = []
-      let model = 'gpt-4o-mini'
-      for (const line of lines) {
-        const trimmed = line.trim()
-        const modelMatch = trimmed.match(/由\s*([a-zA-Z0-9_.-]+)\s*提供/)
-        if (modelMatch) {
-          model = modelMatch[1]
-        }
-        if (/^[A-Z]{4,8}\s+.*?[│]\s*\[LLM\]\s*$/.test(trimmed) || trimmed === '[LLM]') continue
-        if (trimmed.startsWith('[LLM 分析报告') || trimmed.startsWith('[LLM] 分析结束')) continue
-        filtered.push(line)
-      }
-      const content = filtered.join('\n').trim()
-
-      index++
-      const card: CardItem = {
-        type: 'llm_report',
-        id: entry.id,
-        time,
-        model,
-        content,
         rawText: raw,
       }
       cards.push(card)
@@ -1616,31 +1576,6 @@ export const TracebackCard = memo(
   (prev, next) => prev.card === next.card
 )
 
-// 7. LLM 智能分析报告卡片 (MarkdownView 格式化渲染)
-export const LlmReportCard = memo(
-  function LlmReportCard({ card }: { card: Extract<CardItem, { type: 'llm_report' }> }) {
-    return (
-      <div className="log-card llm-card">
-        <div className="card-header llm-header">
-          <div className="card-title">
-            <Sparkles size={16} className="text-llm" />
-            <span className="title-bold">AI 错误智能分析诊断报告</span>
-            <span className="badge-pill llm-model">{card.model}</span>
-            <span className="card-time">{card.time}</span>
-          </div>
-          <div className="card-actions">
-            <CopyButton text={card.content} label="复制报告" />
-          </div>
-        </div>
-        <div className="card-body">
-          <LazyMarkdown content={card.content} className="llm-markdown-view" />
-        </div>
-      </div>
-    )
-  },
-  (prev, next) => prev.card === next.card
-)
-
 // 8. 矩阵切片卡片 (Radar / View)
 export const MatrixGridCard = memo(
   function MatrixGridCard({ card }: { card: Extract<CardItem, { type: 'matrix_grid' }> }) {
@@ -1944,8 +1879,6 @@ export function getCardEstimatedHeight(card: CardItem): number {
       return 280
     case 'traceback':
       return 220
-    case 'llm_report':
-      return 260
     default:
       return 34
   }
@@ -2029,8 +1962,6 @@ export function renderCardItem(card: CardItem, search: string): ReactNode {
       return <ErrorContextCard key={card.id} card={card} />
     case 'traceback':
       return <TracebackCard key={card.id} card={card} />
-    case 'llm_report':
-      return <LlmReportCard key={card.id} card={card} />
     case 'system_banner':
       return <SystemBannerCard key={card.id} card={card} />
     case 'stage_header':

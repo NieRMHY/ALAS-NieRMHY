@@ -27,6 +27,7 @@
 | [handler.md](handler.md) | 处理器层：弹窗、登录、通用游戏处理 |
 | [infra/daemon.md](infra/daemon.md) | 守护模式：画面守护、大世界守护、基准测试 |
 | [infra/statistics.md](infra/statistics.md) | 统计与数据提交（drop 记录、azurstat） |
+| [infra/persistence.md](infra/persistence.md) | 普通总库：SQLite v1 表结构、类型化兼容值、迁移与恢复 |
 | [infra/notify-llm-logger.md](infra/notify-llm-logger.md) | 通知推送、日志 |
 | [infra/log-design-language.md](infra/log-design-language.md) | 日志设计语言规范（LDL）：数据模型、全项目语义词典与 WebUI 解析渲染标准 |
 | [infra/submodule-tools.md](infra/submodule-tools.md) | 外部桥接（MAA/FGO）与 dev_tools 工具集 |
@@ -38,6 +39,7 @@
 | 文档 | 主题 |
 | --- | --- |
 | [combat.md](combat.md) | 战斗系统：战斗循环、结算、阵容 |
+| [defeat-handling.md](defeat-handling.md) | 战败与结果记账：C/D 共用画面、自动换队、撤退策略与心情政策 |
 | [map.md](map.md) | 地图系统与检测：网格感知、透视、寻路 |
 | [campaign.md](campaign.md) | 战役执行：关卡选择、进图、任务入口聚合 |
 
@@ -71,6 +73,7 @@
 | [webui/runtime.md](webui/runtime.md) | 运行时服务与进程管理 |
 | [webui/frontend.md](webui/frontend.md) | 前端（React + TypeScript + Vite） |
 | [webui/resource-management.md](webui/resource-management.md) | 资源管理：任务来源、用途、库存对账、桑基图与石油控制 |
+| [webui/mind-calculator.md](webui/mind-calculator.md) | 心智单元计算器：船坞扫描、人工核对、费用计算及文件互通 |
 | [webui/frontend-state.md](webui/frontend-state.md) | 前端状态机制：保存队列、草稿恢复与连接状态 |
 | [webui/accounts.md](webui/accounts.md) | 实例账号管理：保险库加密、TPM/DPAPI 密钥与应用私有目录一致性 |
 

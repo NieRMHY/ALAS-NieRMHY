@@ -223,9 +223,7 @@ Watchdog:
   CheckInterval:
     value: 30
     validate: [5, 600]
-  DailySummaryCheckInterval:
-    value: 1
-    validate: [1, 60]
+# Modify by MHY, 保留独立重启参数组，移除日报轮询不改变相邻配置归属。
 Reboot:
   Tries:
     value: 3
@@ -348,6 +346,109 @@ Handover:
   ConflictRetryMinutes:
     value: 15
     validate: [5, 120]
+IslandWalk:
+  AirDrop:
+    type: textarea
+    value: "up 3000, right 800, up 2000, jump, up 1200, right 2000, up 6500, right 1000, up 2300, right 2000, up 4000, right 2600, up 500, jump, up 1300"
+    valuetype: str
+  AirDropEnable:
+    value: false
+  AirDropRetry:
+    type: textarea
+    value: "up 500, right 500, down 500"
+    valuetype: str
+  AirDropRetryEnable:
+    value: false
+  AirDropSelf:
+    type: textarea
+    value: "down 1000"
+    valuetype: str
+  AirDropSelfEnable:
+    value: false
+  DailyLakeniya:
+    type: textarea
+    value: "up 2000, right 1800, up 500"
+    valuetype: str
+  DailyLakeniyaEnable:
+    value: false
+  DailyLuxi:
+    type: textarea
+    value: "left 800, up 5500, left 1000, up 3700"
+    valuetype: str
+  DailyLuxiEnable:
+    value: false
+  DailyAobulaien:
+    type: textarea
+    value: "right 4600, up 5100, right 1100"
+    valuetype: str
+  DailyAobulaienEnable:
+    value: false
+  DailyQiaoan:
+    type: textarea
+    value: "right 6000, down 3000, right 2300"
+    valuetype: str
+  DailyQiaoanEnable:
+    value: false
+  DailyMorningdewFarm:
+    type: textarea
+    value: "left 500, down 200"
+    valuetype: str
+  DailyMorningdewFarmEnable:
+    value: false
+  DailyHemo:
+    type: textarea
+    value: "left 600, up 2000, left 800"
+    valuetype: str
+  DailyHemoEnable:
+    value: false
+  DailyMeili:
+    type: textarea
+    value: "right 1800, down 600"
+    valuetype: str
+  DailyMeiliEnable:
+    value: false
+  DailyAolipike:
+    type: textarea
+    value: "left 500, down 1500, left 1700, down 1900"
+    valuetype: str
+  DailyAolipikeEnable:
+    value: false
+  DailyAmoma:
+    type: textarea
+    value: "up 1500, left 400"
+    valuetype: str
+  DailyAmomaEnable:
+    value: false
+  DailyPateli:
+    type: textarea
+    value: "left 2200, jump, left 1200, up 500"
+    valuetype: str
+  DailyPateliEnable:
+    value: false
+  DailyBulaimei:
+    type: textarea
+    value: "up 2600, switch, left 600"
+    valuetype: str
+  DailyBulaimeiEnable:
+    value: false
+  DailyLisha:
+    type: textarea
+    value: "up 3000, left 2000, up 5500, right 300, up 2200, left 1100"
+    valuetype: str
+  DailyLishaEnable:
+    value: false
+  PearlAssembly:
+    type: textarea
+    value: "up 2500, right 1700, down 1700, right 500"
+    valuetype: str
+  PearlAssemblyEnable:
+    value: false
+  PearlPort:
+    type: textarea
+    value: "left 2500, jump, left 3000, down 1000"
+    valuetype: str
+  PearlPortEnable:
+    value: false
 Optimization:
   OcrDevice:
     value: auto
@@ -498,10 +599,16 @@ PublicEmotion:
   Tasks:
     type: textarea
     value: null
-  FleetValue: 119
+  FleetValue:
+    value: 119
+    validate: [0, 150]
   FleetRecord:
     value: 2020-01-01 00:00:00
     display: disabled
+  FleetRecoveryState:
+    type: stored
+    value: null
+    display: hide
   FleetControl:
     value: prevent_yellow_face
     option:
@@ -534,7 +641,7 @@ YukikazeTaskManager:
       > OpsiAshBeacon
       > OpsiDaily > OpsiShop > OpsiVoucher > EventShop
       > OpsiAbyssal > OpsiStronghold > OpsiObscure > OpsiArchive
-      > Daily > Hard > OpsiAshBeacon > OpsiAshAssist > OpsiMonthBoss
+      > Daily > LimitChallenge > Hard > OpsiAshBeacon > OpsiAshAssist > OpsiMonthBoss
       > Sos > EventSp > EventA > EventB > EventC > EventD
       > RaidDaily > CoalitionSp > WarArchives > MaritimeEscort
       > IslandJuuEatery > IslandJuuCoffee > IslandGrill > IslandTeahouse > IslandRestaurant
@@ -825,10 +932,16 @@ Emotion:
     value: calculate
     option: [calculate, ignore, calculate_ignore]
   IgnoreShipwreck: false
-  Fleet1Value: 119
+  Fleet1Value:
+    value: 119
+    validate: [0, 150]
   Fleet1Record:
     value: 2020-01-01 00:00:00
     display: disabled
+  Fleet1RecoveryState:
+    type: stored
+    value: null
+    display: hide
   Fleet1Control:
     value: prevent_green_face
     option: [ keep_exp_bonus, prevent_green_face, prevent_yellow_face, prevent_red_face ]
@@ -837,10 +950,16 @@ Emotion:
     option: [not_in_dormitory, dormitory_floor_1, dormitory_floor_2]
   Fleet1Oath: false
   Fleet1Onsen: false
-  Fleet2Value: 119
+  Fleet2Value:
+    value: 119
+    validate: [0, 150]
   Fleet2Record:
     value: 2020-01-01 00:00:00
     display: disabled
+  Fleet2RecoveryState:
+    type: stored
+    value: null
+    display: hide
   Fleet2Control:
     value: prevent_green_face
     option: [ keep_exp_bonus, prevent_green_face, prevent_yellow_face, prevent_red_face ]
@@ -939,7 +1058,10 @@ TaskBalancer:
 EventDaily:
   StageFilter: |-
     A1 > A2 > A3
-  LastStage: 0
+  LastStage:
+    # 关卡名包含字母；文本模式兼容旧配置和跨天重置留下的数字 0。
+    mode: text
+    value: '0'
 Raid:
   Mode:
     value: hard
@@ -1442,6 +1564,26 @@ Daily:
   EmergencyModuleDevelopmentFleet:
     value: 1
     option: [1, 2, 3, 4, 5, 6]
+LimitChallenge:
+  TargetLevel:
+    value: easy
+    option: [easy, normal, hard]
+  Month:
+    type: stored
+    value: 0
+    display: hide
+  CompletedLevel:
+    type: stored
+    value: 0
+    display: hide
+  AttemptedLevel:
+    type: stored
+    value: 0
+    display: hide
+  Failed:
+    type: stored
+    value: false
+    display: hide
 Hard:
   HardStage: 11-4
   HardFleet:
@@ -1528,7 +1670,13 @@ OpsiAshBeacon:
   AttackMode:
     value: current
     option: [current, current_dossier, current_dossier_only]
-  OneHitMode: true
+  AssistRequestLimit:
+    value: 0
+    validate: '^(-1|[0-9]+)$'
+  AssistRequestState:
+    type: stored
+    value: null
+    display: hide
   DossierAutoAttackMode: false
   RequestAssist: true
   EnsureFullyCollected: true
@@ -2512,6 +2660,18 @@ IslandBusinessShop5:
 
 # ==================== Fleet Management ====================
 
+MindCalculator:
+  MinLevel:
+    value: 95
+    validate: "^[1-9][0-9]?$|^1[01][0-9]$|^12[0-5]$"
+  MaxLevel:
+    value: 120
+    validate: "^[1-9][0-9]?$|^1[01][0-9]$|^12[0-5]$"
+  Result:
+    type: stored
+    value: {}
+    display: hide
+
 FleetInfo:
   Result:
     type: stored
@@ -2575,6 +2735,7 @@ Benchmark:
         phone_cloud_without_adb,
         android_phone,
         android_phone_vmos,
+        azurpilot_android,
       ]
   TestScene:
     value: screenshot_click

@@ -134,7 +134,6 @@ class GeneratedConfig:
 
     # 配置组 `Watchdog`
     Watchdog_CheckInterval = 30
-    Watchdog_DailySummaryCheckInterval = 1
 
     # 配置组 `Reboot`
     Reboot_Tries = 3
@@ -184,6 +183,42 @@ class GeneratedConfig:
     Handover_MaintainLeadMinutes = 10
     Handover_MaintainCheckMinutes = 120
     Handover_ConflictRetryMinutes = 15
+
+    # 配置组 `IslandWalk`
+    IslandWalk_AirDrop = 'up 3000, right 800, up 2000, jump, up 1200, right 2000, up 6500, right 1000, up 2300, right 2000, up 4000, right 2600, up 500, jump, up 1300'
+    IslandWalk_AirDropEnable = False
+    IslandWalk_AirDropRetry = 'up 500, right 500, down 500'
+    IslandWalk_AirDropRetryEnable = False
+    IslandWalk_AirDropSelf = 'down 1000'
+    IslandWalk_AirDropSelfEnable = False
+    IslandWalk_DailyLakeniya = 'up 2000, right 1800, up 500'
+    IslandWalk_DailyLakeniyaEnable = False
+    IslandWalk_DailyLuxi = 'left 800, up 5500, left 1000, up 3700'
+    IslandWalk_DailyLuxiEnable = False
+    IslandWalk_DailyAobulaien = 'right 4600, up 5100, right 1100'
+    IslandWalk_DailyAobulaienEnable = False
+    IslandWalk_DailyQiaoan = 'right 6000, down 3000, right 2300'
+    IslandWalk_DailyQiaoanEnable = False
+    IslandWalk_DailyMorningdewFarm = 'left 500, down 200'
+    IslandWalk_DailyMorningdewFarmEnable = False
+    IslandWalk_DailyHemo = 'left 600, up 2000, left 800'
+    IslandWalk_DailyHemoEnable = False
+    IslandWalk_DailyMeili = 'right 1800, down 600'
+    IslandWalk_DailyMeiliEnable = False
+    IslandWalk_DailyAolipike = 'left 500, down 1500, left 1700, down 1900'
+    IslandWalk_DailyAolipikeEnable = False
+    IslandWalk_DailyAmoma = 'up 1500, left 400'
+    IslandWalk_DailyAmomaEnable = False
+    IslandWalk_DailyPateli = 'left 2200, jump, left 1200, up 500'
+    IslandWalk_DailyPateliEnable = False
+    IslandWalk_DailyBulaimei = 'up 2600, switch, left 600'
+    IslandWalk_DailyBulaimeiEnable = False
+    IslandWalk_DailyLisha = 'up 3000, left 2000, up 5500, right 300, up 2200, left 1100'
+    IslandWalk_DailyLishaEnable = False
+    IslandWalk_PearlAssembly = 'up 2500, right 1700, down 1700, right 500'
+    IslandWalk_PearlAssemblyEnable = False
+    IslandWalk_PearlPort = 'left 2500, jump, left 3000, down 1000'
+    IslandWalk_PearlPortEnable = False
 
     # 配置组 `Optimization`
     Optimization_OcrDevice = 'auto'  # auto, qnn_npu, openvino_npu, openvino_gpu, gpu, openvino_cpu, cpu, ane
@@ -270,13 +305,14 @@ class GeneratedConfig:
     PublicEmotion_Tasks = None
     PublicEmotion_FleetValue = 119
     PublicEmotion_FleetRecord = datetime.datetime(2020, 1, 1, 0, 0)
+    PublicEmotion_FleetRecoveryState = None
     PublicEmotion_FleetControl = 'prevent_yellow_face'  # keep_exp_bonus, prevent_green_face, prevent_yellow_face, prevent_red_face
     PublicEmotion_FleetRecover = 'not_in_dormitory'  # not_in_dormitory, dormitory_floor_1, dormitory_floor_2
     PublicEmotion_FleetOath = False
     PublicEmotion_FleetOnsen = False
 
     # 配置组 `YukikazeTaskManager`
-    YukikazeTaskManager_TaskPriorityAdjustment = 'Restart\n> OpsiCrossMonth\n> Commission > Tactical > Research\n> Exercise\n> Dorm > Meowfficer > Guild > Gacha\n> Reward > StorageStatistics\n> ShopFrequent > ShopOnce > Shipyard > Freebies\n> PrivateQuarters\n> OpsiExplore > OpsiExploreCleanup\n> OpsiPreventActionPointOverflow\n> Minigame > Awaken\n> OpsiAshBeacon\n> OpsiDaily > OpsiShop > OpsiVoucher > EventShop\n> OpsiAbyssal > OpsiStronghold > OpsiObscure > OpsiArchive\n> Daily > Hard > OpsiAshBeacon > OpsiAshAssist > OpsiMonthBoss\n> Sos > EventSp > EventA > EventB > EventC > EventD\n> RaidDaily > CoalitionSp > WarArchives > MaritimeEscort\n> IslandJuuEatery > IslandJuuCoffee > IslandGrill > IslandTeahouse > IslandRestaurant\n> IslandFarm > IslandRancher > IslandMineForest > IslandDailyGather > IslandManufacture\n> IslandAirDrop > IslandBusiness > IslandDailyOrder > IslandDailyInteract > IslandPearlSell > IslandCargoPreparation\n> Event > Event2 > Event3 > Raid > Hospital > HospitalEvent > Coalition > RaidAffection > Main > Main2 > Main3\n> OpsiScheduling\n> OpsiMeowfficerFarming\n> GemsFarming\n> Ambush11\n> OpsiHazard1Leveling\n> ThreeOilLowCost\n> OperationHandover'
+    YukikazeTaskManager_TaskPriorityAdjustment = 'Restart\n> OpsiCrossMonth\n> Commission > Tactical > Research\n> Exercise\n> Dorm > Meowfficer > Guild > Gacha\n> Reward > StorageStatistics\n> ShopFrequent > ShopOnce > Shipyard > Freebies\n> PrivateQuarters\n> OpsiExplore > OpsiExploreCleanup\n> OpsiPreventActionPointOverflow\n> Minigame > Awaken\n> OpsiAshBeacon\n> OpsiDaily > OpsiShop > OpsiVoucher > EventShop\n> OpsiAbyssal > OpsiStronghold > OpsiObscure > OpsiArchive\n> Daily > LimitChallenge > Hard > OpsiAshBeacon > OpsiAshAssist > OpsiMonthBoss\n> Sos > EventSp > EventA > EventB > EventC > EventD\n> RaidDaily > CoalitionSp > WarArchives > MaritimeEscort\n> IslandJuuEatery > IslandJuuCoffee > IslandGrill > IslandTeahouse > IslandRestaurant\n> IslandFarm > IslandRancher > IslandMineForest > IslandDailyGather > IslandManufacture\n> IslandAirDrop > IslandBusiness > IslandDailyOrder > IslandDailyInteract > IslandPearlSell > IslandCargoPreparation\n> Event > Event2 > Event3 > Raid > Hospital > HospitalEvent > Coalition > RaidAffection > Main > Main2 > Main3\n> OpsiScheduling\n> OpsiMeowfficerFarming\n> GemsFarming\n> Ambush11\n> OpsiHazard1Leveling\n> ThreeOilLowCost\n> OperationHandover'
 
     # 配置组 `OneClickRetire`
     OneClickRetire_KeepLimitBreak = 'keep_limit_break'  # keep_limit_break, do_not_keep
@@ -392,12 +428,14 @@ class GeneratedConfig:
     Emotion_IgnoreShipwreck = False
     Emotion_Fleet1Value = 119
     Emotion_Fleet1Record = datetime.datetime(2020, 1, 1, 0, 0)
+    Emotion_Fleet1RecoveryState = None
     Emotion_Fleet1Control = 'prevent_green_face'  # keep_exp_bonus, prevent_green_face, prevent_yellow_face, prevent_red_face
     Emotion_Fleet1Recover = 'not_in_dormitory'  # not_in_dormitory, dormitory_floor_1, dormitory_floor_2
     Emotion_Fleet1Oath = False
     Emotion_Fleet1Onsen = False
     Emotion_Fleet2Value = 119
     Emotion_Fleet2Record = datetime.datetime(2020, 1, 1, 0, 0)
+    Emotion_Fleet2RecoveryState = None
     Emotion_Fleet2Control = 'prevent_green_face'  # keep_exp_bonus, prevent_green_face, prevent_yellow_face, prevent_red_face
     Emotion_Fleet2Recover = 'not_in_dormitory'  # not_in_dormitory, dormitory_floor_1, dormitory_floor_2
     Emotion_Fleet2Oath = False
@@ -726,6 +764,13 @@ class GeneratedConfig:
     Daily_EmergencyModuleDevelopment = 'first'  # skip, first, second
     Daily_EmergencyModuleDevelopmentFleet = 1  # 1, 2, 3, 4, 5, 6
 
+    # 配置组 `LimitChallenge`
+    LimitChallenge_TargetLevel = 'easy'  # easy, normal, hard
+    LimitChallenge_Month = 0
+    LimitChallenge_CompletedLevel = 0
+    LimitChallenge_AttemptedLevel = 0
+    LimitChallenge_Failed = False
+
     # 配置组 `Hard`
     Hard_HardStage = '11-4'
     Hard_HardFleet = 1  # 1, 2
@@ -773,7 +818,8 @@ class GeneratedConfig:
 
     # 配置组 `OpsiAshBeacon`
     OpsiAshBeacon_AttackMode = 'current'  # current, current_dossier, current_dossier_only
-    OpsiAshBeacon_OneHitMode = True
+    OpsiAshBeacon_AssistRequestLimit = 0
+    OpsiAshBeacon_AssistRequestState = None
     OpsiAshBeacon_DossierAutoAttackMode = False
     OpsiAshBeacon_RequestAssist = True
     OpsiAshBeacon_EnsureFullyCollected = True
@@ -1208,6 +1254,11 @@ class GeneratedConfig:
     IslandBusinessShop5_Product5 = 'None'  # None, cheese, citrus_coffee, strawberry_milkshake, morning_light, wake_up_call, fruity_fruitier
     IslandBusinessShop5_BoostReplaceFilter = '30 > 20 > cheese > 10'
 
+    # 配置组 `MindCalculator`
+    MindCalculator_MinLevel = 95
+    MindCalculator_MaxLevel = 120
+    MindCalculator_Result = {}
+
     # 配置组 `FleetInfo`
     FleetInfo_Result = {}
     FleetInfo_Record = datetime.datetime(2020, 1, 1, 0, 0)
@@ -1239,7 +1290,7 @@ class GeneratedConfig:
     AutoEquip_EnableSlot5 = True  # True, False
 
     # 配置组 `Benchmark`
-    Benchmark_DeviceType = 'emulator'  # emulator, plone_cloud_with_adb, phone_cloud_without_adb, android_phone, android_phone_vmos
+    Benchmark_DeviceType = 'emulator'  # emulator, plone_cloud_with_adb, phone_cloud_without_adb, android_phone, android_phone_vmos, azurpilot_android
     Benchmark_TestScene = 'screenshot_click'  # screenshot_click, screenshot, click
 
     # 配置组 `AzurLaneUncensored`

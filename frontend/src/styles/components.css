@@ -297,15 +297,7 @@
 .exc-banner-text {word-break: break-word}
 .traceback-raw-pre {margin: 0; padding: 8px 10px; font-size: 10px; font-family: var(--theme-font-mono); line-height: 1.4; color: var(--text); overflow-x: auto; white-space: pre}
 
-/* LLM 智能诊断卡片与 Markdown 格式化排版 */
-.llm-header {background: #8b5cf610}
-.text-llm {color: #8b5cf6}
-.llm-model {background: #8b5cf620; color: #8b5cf6}
-.llm-markdown-view {font-size: 12px; line-height: 1.6}
-.llm-markdown-view .md-h3 {font-size: 13px; font-weight: 700; margin: 8px 0 4px; color: var(--text)}
-.llm-markdown-view .md-p {margin-bottom: 6px; font-size: 12px}
-.llm-markdown-view .md-ol, .llm-markdown-view .md-ul {margin-bottom: 6px; padding-left: 18px; font-size: 12px}
-.llm-markdown-view .md-li {margin-bottom: 2px}
+/* Modify by MHY, 已移除智能分析报告卡片专用样式。 */
 
 /* 寻路移动代价热力图与无缝网格 (Cost Grid Heatmap) */
 .cost-table {border-collapse: collapse; font-family: var(--theme-font-mono); font-size: 11px; line-height: 1}

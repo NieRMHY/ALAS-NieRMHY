@@ -5,11 +5,13 @@ OCR、伤害输出识别、META 战斗状态页面的检测与导航、奖励
 领取、以及自动搜索可用信标并发起挑战的完整战斗流程。
 """
 import re
+from datetime import datetime, timedelta
 from enum import Enum
 
 import module.config.server as server
 from module.base.timer import Timer
 from module.combat.combat import BATTLE_PREPARATION
+from module.config.time_source import now as current_time
 from module.logger import logger
 from module.meta_reward.meta_reward import MetaReward
 from module.ocr.ocr import Digit, DigitCounter
@@ -124,7 +126,7 @@ class Meta(UI, MapEventHandler):
 
 
 def _server_support():
-    """当前服务器是否支持信标和 OneHitMode。
+    """当前服务器是否支持信标和求援后自行作战。
 
     Returns:
         bool: 当前服务器是否支持。
@@ -194,6 +196,8 @@ class OpsiAshBeacon(Meta):
                 elif self.appear(DOSSIER_LIST, offset=(20, 20)):
                     self._meta_category = "dossier"
                 self._handle_ash_beacon_reward()
+                if self._meta_category == 'beacon':
+                    self._reset_assist_request_state()
                 if not self._meta_category in self._meta_receive:
                     self._meta_receive.append(self._meta_category)
                 # 击杀 META 后检查其他任务是否需要切换
@@ -273,19 +277,26 @@ class OpsiAshBeacon(Meta):
         """
         检查当前 META 是否满足攻击条件。
 
-        信标模式下：开启 OneHitMode 且已造成伤害时，不再攻击。
+        信标模式下：首刀后按求援次数与等待时间决定是否自行收尾。
         档案模式下：META 正在自动攻击时，不再手动攻击。
 
         Returns:
             bool: 是否满足攻击条件（始终返回 True，不满足时通过 task_stop 提前终止）。
         """
         if self.appear(BEACON_LIST, offset=(20, 20)):
-            # 开启 OneHitMode 且已对当前 META 造成伤害
-            if _server_support() and self.config.OpsiAshBeacon_OneHitMode:
+            limit = self.config.OpsiAshBeacon_AssistRequestLimit
+            if _server_support() and limit >= 0:
+                count, next_request = self._get_assist_request_state()
+                if limit > 0 and count >= limit and current_time() >= next_request:
+                    logger.info(f'[META作战] 已求援 {count} 轮仍未完成，开始自行击破')
+                    return True
                 damage = self._get_meta_damage()
                 if damage > 0:
-                    logger.info(f'[META作战] 已启用一刀模式且当前 META 已造成 {damage} 伤害，30 分钟后检查')
-                    self.config.task_delay(minute=30)
+                    logger.info(f'[META作战] 当前 META 已造成 {damage} 伤害，等待支援后再检查')
+                    if limit > 0 and next_request is not None:
+                        self.config.task_delay(target=next_request)
+                    else:
+                        self.config.task_delay(minute=30)
                     self.ui_goto_main()
                     self.config.task_stop()
         if self.appear(DOSSIER_LIST, offset=(20, 20)):
@@ -296,6 +307,27 @@ class OpsiAshBeacon(Meta):
                 self.ui_goto_main()
                 self.config.task_stop()
         return True
+
+    def _get_assist_request_state(self):
+        """读取本轮信标的求援断点；损坏记录重新求援，避免提前消耗作战资源。"""
+        state = self.config.OpsiAshBeacon_AssistRequestState
+        if state is None:
+            return 0, None
+        if isinstance(state, dict):
+            count = state.get('count')
+            try:
+                next_request = datetime.fromisoformat(state['next_request'])
+            except (KeyError, TypeError, ValueError):
+                next_request = None
+            if type(count) is int and count > 0 and next_request is not None and next_request.tzinfo is None:
+                return count, next_request
+        logger.warning('[META作战] 求援记录无效，将重新累计本轮信标的求援次数')
+        return 0, None
+
+    def _reset_assist_request_state(self):
+        """确认信标已领奖或为空时清除断点，不让下一信标继承求援次数。"""
+        if self.config.OpsiAshBeacon_AssistRequestState is not None:
+            self.config.OpsiAshBeacon_AssistRequestState = None
 
     def _get_meta_damage(self):
         """
@@ -344,9 +376,21 @@ class OpsiAshBeacon(Meta):
         """
         # 信标页面
         if self.appear(BEACON_LIST, offset=(20, 20)):
-            if self.config.OpsiAshBeacon_OneHitMode or self.config.OpsiAshBeacon_RequestAssist:
+            limit = self.config.OpsiAshBeacon_AssistRequestLimit
+            if limit >= 0 or self.config.OpsiAshBeacon_RequestAssist:
+                if limit > 0:
+                    count, next_request = self._get_assist_request_state()
+                    # 首刀后立即回到此分支时仍在求援冷却；最后一轮也要留足等待时间。
+                    if count >= limit or (next_request is not None and current_time() < next_request):
+                        return True
                 if not self._ask_for_help():
                     return False
+                if limit > 0:
+                    self.config.OpsiAshBeacon_AssistRequestState = {
+                        'count': count + 1,
+                        'next_request': (current_time() + timedelta(minutes=30)).isoformat(),
+                    }
+                    logger.attr('META求援轮数', f'{count + 1}/{limit}')
             return True
         # 档案页面
         if self.appear(DOSSIER_LIST, offset=(20, 20)):
@@ -493,6 +537,8 @@ class OpsiAshBeacon(Meta):
             if attack_mode == 'current_dossier_only':
                 self.appear_then_click(ASH_QUIT, offset=(10, 10), interval=2)
                 return True
+            # 只有 INIT 状态会进入这里；主 META 入口不能证明旧信标已消失。
+            self._reset_assist_request_state()
             if self._check_beacon_point():
                 self.device.click(META_BEGIN_ENTRANCE)
                 logger.info('[META作战] 开始信标')

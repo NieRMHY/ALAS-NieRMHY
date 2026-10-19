@@ -364,7 +364,8 @@ class TestUpdaterForceUpdate(unittest.TestCase):
         updater._force_update_checking = False
         return updater
 
-    def test_detected_update_starts_immediately_when_force_update_is_enabled(self):
+    # Modify by MHY, 加快轮询不恢复上游云端开关或自动应用行为。
+    def test_fast_polling_still_waits_for_explicit_update(self):
         updater = self._updater()
         updater.force_update = True
         updater._check_update = Mock(return_value=True)
@@ -373,7 +374,7 @@ class TestUpdaterForceUpdate(unittest.TestCase):
         updater._check_update_thread()
 
         self.assertEqual(1, updater.state)
-        updater.run_update.assert_called_once_with()
+        updater.run_update.assert_not_called()
 
     def test_detected_update_waits_for_manual_or_scheduled_update_when_force_is_disabled(self):
         updater = self._updater()
@@ -385,17 +386,18 @@ class TestUpdaterForceUpdate(unittest.TestCase):
         self.assertEqual(1, updater.state)
         updater.run_update.assert_not_called()
 
-    def test_existing_update_starts_when_force_update_is_later_enabled(self):
+    def test_enabling_fast_polling_does_not_apply_existing_update(self):
         updater = self._updater()
-        updater._check_cloud_update = Mock(return_value=True)
-        updater._check_cloud_force_update = Mock(return_value=True)
+        updater.state = 1
+        updater.force_update = True
         updater.run_update = Mock()
+        updater._check_update_thread = Mock()
 
-        updater._check_force_update_thread()
+        updater.check_update()
 
-        self.assertTrue(updater.force_update)
-        self.assertFalse(updater._force_update_checking)
-        updater.run_update.assert_called_once_with()
+        self.assertEqual(1, updater.state)
+        updater._check_update_thread.assert_not_called()
+        updater.run_update.assert_not_called()
 
     def test_force_update_uses_one_second_check_schedule(self):
         updater = self._updater()

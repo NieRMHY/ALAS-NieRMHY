@@ -146,6 +146,77 @@ class Benchmark(DaemonBase, CampaignUI):
         return Text('Very Slow', style="bright_red")
 
     @staticmethod
+    def evaluate_ping(cost):
+        """根据特权桥通信 RTT 耗时评估速度等级。
+
+        Args:
+            cost: 通信往返耗时（秒），非数值时表示失败。
+
+        Returns:
+            Text: 带颜色标签的速度描述文本。
+        """
+        if not isinstance(cost, (float, int)):
+            return Text(str(cost), style="bold bright_red")
+
+        if cost < 0.002:
+            return Text('Insane Fast', style="bold bright_green")
+        if cost < 0.005:
+            return Text('Ultra Fast', style="bold bright_green")
+        if cost < 0.010:
+            return Text('Very Fast', style="bright_green")
+        if cost < 0.020:
+            return Text('Fast', style="green")
+        if cost < 0.050:
+            return Text('Medium', style="yellow")
+        return Text('Slow', style="red")
+
+    @staticmethod
+    def evaluate_fps(fps):
+        """根据截图吞吐帧率评估性能等级。
+
+        Args:
+            fps: 吞吐帧率 (FPS)。
+
+        Returns:
+            Text: 带颜色标签的性能描述文本。
+        """
+        if not isinstance(fps, (float, int)):
+            return Text(str(fps), style="bold bright_red")
+
+        if fps >= 40.0:
+            return Text('Insane Fast', style="bold bright_green")
+        if fps >= 25.0:
+            return Text('Ultra Fast', style="bold bright_green")
+        if fps >= 15.0:
+            return Text('Very Fast', style="bright_green")
+        if fps >= 10.0:
+            return Text('Fast', style="green")
+        return Text('Medium', style="yellow")
+
+    @staticmethod
+    def evaluate_bandwidth(bw_mb):
+        """根据回环数据传输带宽评估性能等级。
+
+        Args:
+            bw_mb: 回环带宽吞吐 (MB/s)。
+
+        Returns:
+            Text: 带颜色标签的带宽描述文本。
+        """
+        if not isinstance(bw_mb, (float, int)):
+            return Text(str(bw_mb), style="bold bright_red")
+
+        if bw_mb >= 100.0:
+            return Text('Insane High', style="bold bright_green")
+        if bw_mb >= 60.0:
+            return Text('Ultra High', style="bold bright_green")
+        if bw_mb >= 30.0:
+            return Text('Very High', style="bright_green")
+        if bw_mb >= 15.0:
+            return Text('High', style="green")
+        return Text('Medium', style="yellow")
+
+    @staticmethod
     def show(test, data, evaluate_func):
         """以表格形式展示基准测试结果。
 
@@ -231,6 +302,21 @@ class Benchmark(DaemonBase, CampaignUI):
 
         return fastest_screenshot, fastest_click
 
+    @property
+    def is_virtual_display(self) -> bool:
+        """判断当前运行环境是否为 Android 虚拟屏（azurpilot_android）。
+
+        Returns:
+            bool: 处于虚拟屏环境返回 True。
+        """
+        serial = getattr(self.device, 'serial', '') or ''
+        return (
+            serial.startswith('azurpilot_android')
+            or self.config.Benchmark_DeviceType == 'azurpilot_android'
+            or self.config.Emulator_ScreenshotMethod == 'azurpilot_android'
+            or self.config.Emulator_ControlMethod == 'azurpilot_android'
+        )
+
     def get_test_methods(self) -> t.Tuple[t.Tuple[str], t.Tuple[str]]:
         """根据设备类型和 SDK 版本，筛选出可用的截图和点击测试方法。
 
@@ -238,6 +324,17 @@ class Benchmark(DaemonBase, CampaignUI):
             tuple: (可用截图方法元组, 可用点击方法元组)。
         """
         device = self.config.Benchmark_DeviceType
+
+        if self.is_virtual_display:
+            screenshot = ['azurpilot_android']
+            click = ['azurpilot_android']
+            scene = self.config.Benchmark_TestScene
+            if 'screenshot' not in scene:
+                screenshot = []
+            if 'click' not in scene:
+                click = []
+            return tuple(screenshot), tuple(click)
+
         screenshot = ['ADB', 'ADB_nc', 'uiautomator2', 'aScreenCap', 'aScreenCap_nc', 'DroidCast', 'DroidCast_raw']
         click = ['ADB', 'uiautomator2', 'minitouch', 'MaaTouch']
 
@@ -281,14 +378,18 @@ class Benchmark(DaemonBase, CampaignUI):
 
     def run(self):
         """执行完整基准测试任务，评估当前配置下的所有可用截图与点击方法。"""
-        self.config.override(Emulator_ScreenshotMethod='ADB')
-        self.device.uninstall_minicap()
+        if not self.is_virtual_display:
+            self.config.override(Emulator_ScreenshotMethod='ADB')
+            self.device.uninstall_minicap()
         self.ensure_campaign_ui('7-2', mode='normal')
 
         logger.attr('设备类型', self.config.Benchmark_DeviceType)
         logger.attr('测试场景', self.config.Benchmark_TestScene)
         screenshot, click = self.get_test_methods()
         self.benchmark(screenshot, click)
+
+        if self.is_virtual_display:
+            self.benchmark_virtual_display()
 
     def run_simple_screenshot_benchmark(self):
         """执行简化版截图基准测试，仅测试 3 次取最优结果。
@@ -298,6 +399,10 @@ class Benchmark(DaemonBase, CampaignUI):
         Returns:
             str: 当前设备最快的截图方法名称。
         """
+        if self.is_virtual_display:
+            logger.info('[守护-基准测试] 运行环境为 Android 虚拟屏，固定使用 azurpilot_android')
+            return 'azurpilot_android'
+
         screenshot = ['ADB', 'ADB_nc', 'uiautomator2', 'aScreenCap', 'aScreenCap_nc', 'DroidCast', 'DroidCast_raw']
 
         def remove(*args):
@@ -323,6 +428,151 @@ class Benchmark(DaemonBase, CampaignUI):
         method, _ = self.benchmark(screenshot, tuple(), quiet=True)
 
         return method
+
+    def benchmark_virtual_display(self, rounds: int = 15):
+        """执行 Android 虚拟屏专用性能基准测试。
+
+        评测桥接往返 RTT、全分辨率单帧截图耗时、极限连续捕获吞吐 (FPS)、
+        回环传输数据带宽 (MB/s)、触控与滑动注入耗时、以及画面帧递增健康度。
+
+        Args:
+            rounds (int): 测试轮数，默认 15 次。
+        """
+        logger.hr('Android 虚拟屏性能基准测试', level=1)
+
+        # 1. Ping RTT 测试
+        logger.info('正在测试特权桥通信 RTT (Ping)...')
+        ping_records = []
+        ping_info = {}
+        for _ in range(rounds):
+            t0 = time.perf_counter()
+            try:
+                resp = self.device._azurpilot_android_call_ok({'method': 'ping'})
+                ping_records.append(time.perf_counter() - t0)
+                if not ping_info and isinstance(resp, dict):
+                    ping_info = resp
+            except Exception as e:
+                logger.warning(f'Ping 测试异常: {e}')
+
+        best_n = max(1, int(len(ping_records) * 0.8))
+        avg_ping = float(np.mean(np.sort(ping_records)[:best_n])) if ping_records else 'Failed'
+
+        # 2. 连续极速截图吞吐 (Saturated FPS & Bandwidth)
+        logger.info('正在测试虚拟屏极限连拍吞吐与回环带宽...')
+        sc_records = []
+        frames_tracked = []
+        saturated_start = time.perf_counter()
+        captured_count = 0
+        for _ in range(rounds):
+            t0 = time.perf_counter()
+            try:
+                with self.device._azurpilot_android_lock:
+                    resp = self.device._azurpilot_android_call_ok({'method': 'screencap'})
+                    raw = self.device._azurpilot_android_read_exact(int(resp['length']))
+                    if 'frames' in resp:
+                        frames_tracked.append(resp['frames'])
+                w, h, c = int(resp['width']), int(resp['height']), int(resp['channels'])
+                _ = np.frombuffer(raw, dtype=np.uint8).reshape(h, w, c)
+                sc_records.append(time.perf_counter() - t0)
+                captured_count += 1
+            except Exception as e:
+                logger.warning(f'连拍测试异常: {e}')
+                break
+
+        saturated_total_time = time.perf_counter() - saturated_start
+        sc_best_n = max(1, int(len(sc_records) * 0.8))
+        avg_sc = float(np.mean(np.sort(sc_records)[:sc_best_n])) if sc_records else 'Failed'
+
+        if captured_count > 0 and saturated_total_time > 0:
+            fps = float(captured_count / saturated_total_time)
+            # 单帧 1280*720*3 字节 = 2,764,800 bytes
+            bytes_per_frame = 1280 * 720 * 3
+            bandwidth_mb = float((captured_count * bytes_per_frame) / (1024 * 1024 * saturated_total_time))
+        else:
+            fps = 'Failed'
+            bandwidth_mb = 'Failed'
+
+        # 3. 触控与手势注入延迟 (安全区域点击与小行程滑动)
+        logger.info('正在测试特权桥输入注入延迟 (Click & Swipe)...')
+        click_records = []
+        safe_x, safe_y = 200, 20
+        scene = self.config.Benchmark_TestScene
+        if 'click' in scene:
+            for _ in range(min(5, rounds)):
+                t0 = time.perf_counter()
+                try:
+                    self.device.click_azurpilot_android(safe_x, safe_y)
+                    click_records.append(time.perf_counter() - t0)
+                except Exception as e:
+                    logger.warning(f'点击测试异常: {e}')
+                    break
+
+            avg_click = float(np.mean(click_records)) if click_records else 'Failed'
+
+            swipe_records = []
+            for _ in range(min(5, rounds)):
+                t0 = time.perf_counter()
+                try:
+                    self.device.swipe_azurpilot_android((safe_x, safe_y), (safe_x + 15, safe_y), duration=0.05)
+                    swipe_records.append(time.perf_counter() - t0)
+                except Exception as e:
+                    logger.warning(f'滑动测试异常: {e}')
+                    break
+
+            avg_swipe = float(np.mean(swipe_records)) if swipe_records else 'Failed'
+        else:
+            avg_click = 'Skipped'
+            avg_swipe = 'Skipped'
+
+        # 4. 画面新鲜度与帧递增健康度 (Surface Freshness)
+        if len(frames_tracked) >= 2:
+            frame_delta = frames_tracked[-1] - frames_tracked[0]
+            if frame_delta > 0:
+                freshness_status = f'活跃 (+{frame_delta} 帧)'
+                freshness_rating = Text('Healthy', style='bold bright_green')
+                freshness_desc = f'ImageReader 正在持续推送新帧 (序号 {frames_tracked[0]} -> {frames_tracked[-1]})'
+            else:
+                freshness_status = f'静止 (+0 帧)'
+                freshness_rating = Text('Static', style='yellow')
+                freshness_desc = f'画面内容无变化或已被 ROM 节电冻结 (序号恒为 {frames_tracked[0]})'
+        else:
+            freshness_status = '未知'
+            freshness_rating = Text('N/A', style='white')
+            freshness_desc = '未采集到有效帧计数'
+
+        # 5. 格式化输出 Rich 报告表格
+        table = Table(
+            title='Android 虚拟屏性能综合评测 (Virtual Display Benchmark)',
+            show_lines=True,
+            header_style='bold bright_cyan',
+        )
+        table.add_column('指标项 (Metric)', style='cyan', no_wrap=True)
+        table.add_column('实测数值 (Value)', style='magenta', justify='right')
+        table.add_column('评级 (Rating)', justify='center')
+        table.add_column('详细说明 (Architecture Notes)', style='white')
+
+        ping_desc = '127.0.0.1:22301 本地回环通信'
+        if 'displayId' in ping_info:
+            ping_desc += f' (VirtualDisplay ID={ping_info["displayId"]})'
+        table.add_row('Bridge Ping RTT', f"{avg_ping * 1000:.2f} ms" if isinstance(avg_ping, (int, float)) else str(avg_ping), self.evaluate_ping(avg_ping), ping_desc)
+
+        table.add_row('Screencap Latency', f"{avg_sc * 1000:.2f} ms" if isinstance(avg_sc, (int, float)) else str(avg_sc), self.evaluate_screenshot(avg_sc), '1280x720 RGB 单帧截取、读取及解析耗时')
+
+        table.add_row('Saturated FPS', f"{fps:.1f} FPS" if isinstance(fps, (int, float)) else str(fps), self.evaluate_fps(fps), '无间隔连续抓帧极限吞吐能力')
+
+        table.add_row('Loopback Bandwidth', f"{bandwidth_mb:.1f} MB/s" if isinstance(bandwidth_mb, (int, float)) else str(bandwidth_mb), self.evaluate_bandwidth(bandwidth_mb), 'Linux 内核套接字纯内存缓冲传输 (零闪存磨损)')
+
+        if 'click' in scene:
+            click_overhead = f"含特权桥标称 50ms 保持 (净开销 ~{max(0.0, avg_click * 1000 - 50):.1f}ms)" if isinstance(avg_click, (int, float)) else "触控点击注入异常"
+            table.add_row('Click Latency', f"{avg_click * 1000:.2f} ms" if isinstance(avg_click, (int, float)) else str(avg_click), self.evaluate_click(avg_click), click_overhead)
+
+            swipe_overhead = f"含手势标称 50ms 时长 (净开销 ~{max(0.0, avg_swipe * 1000 - 50):.1f}ms)" if isinstance(avg_swipe, (int, float)) else "手势滑动注入异常"
+            table.add_row('Swipe Latency', f"{avg_swipe * 1000:.2f} ms" if isinstance(avg_swipe, (int, float)) else str(avg_swipe), self.evaluate_click(avg_swipe), swipe_overhead)
+
+        table.add_row('Surface Freshness', freshness_status, freshness_rating, freshness_desc)
+
+        logger.print(table, justify='center')
+        logger.info('Android 虚拟屏专项基准测试完成')
 
 
 def run_benchmark(config):

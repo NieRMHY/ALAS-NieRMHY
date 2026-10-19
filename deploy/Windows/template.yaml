@@ -1,11 +1,10 @@
 Deploy:
   Git:
     # URL of AzurPilot repository
+    # Modify by MHY, 仅从自有 GitHub 仓库更新，不使用 CDN 或国内镜像分流
     Repository: 'https://github.com/NieRMHY/ALAS-NieRMHY.git'
-    # Branch of AzurPilot
-    # [Developer] Use 'dev', 'app', etc, to try new features
-    # [Other] Use 'master', the stable branch
-    Branch: 'master'
+    # Modify by MHY, 正式渠道为 essex，开发测试使用 dev_essex
+    Branch: 'essex'
     # Filepath of git executable `git.exe`
     # [Other] Use you own git
     GitExecutable: './.venv/Scripts/git/cmd/git.exe'

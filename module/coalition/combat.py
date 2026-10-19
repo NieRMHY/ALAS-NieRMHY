@@ -18,6 +18,12 @@ class CoalitionCombat(CoalitionUI, CampaignBase):
     """联合出击战斗处理器。"""
 
     battle_status_click_interval = 2
+    auto_search_defeat_recovery = False
+    coalition_result_confirm_buttons = (COALITION_REWARD_CONFIRM,)
+
+    def coalition_emotion_reduce(self):
+        """多队整关扣一次基础心情，单队每次重新进入战斗都扣减。"""
+        return self.battle_count == 0 or self.config.Coalition_Fleet == 'single'
 
     def coalition_combat_re_enter(self, skip_first_screenshot=True):
         """处理一轮战斗结束到下一轮战斗重新加载进入的过程。
@@ -33,6 +39,7 @@ class CoalitionCombat(CoalitionUI, CampaignBase):
             CampaignEnd: 检测到回到联合出击主页面，本次战役全部战斗已结束。
         """
         logger.info('[联动-战斗] 联动战斗重新进入')
+        self.device.screenshot_interval_set()
         status_clicked = False
         click_timer = Timer(0.3)
         click_last = Timer(1, count=3)
@@ -50,10 +57,15 @@ class CoalitionCombat(CoalitionUI, CampaignBase):
             if self.in_coalition():
                 raise CampaignEnd
 
+            if self.handle_combat_defeat():
+                continue
+            # 执行阶段可能错过结果帧；在活动通用按钮推进前补充观察与记账。
+            self.combat_result_observe()
             if self.appear_then_click(BATTLE_STATUS, offset=(80, 20), interval=2):
                 # 偏移约 (+53, +3)
                 continue
-            if self.appear_then_click(COALITION_REWARD_CONFIRM, offset=(20, 20), interval=2):
+            if any(self.appear_then_click(button, offset=(20, 20), interval=2)
+                   for button in self.coalition_result_confirm_buttons):
                 # 战斗结束，停止点击战斗状态
                 status_clicked = False
                 continue
@@ -63,6 +75,8 @@ class CoalitionCombat(CoalitionUI, CampaignBase):
             if self.handle_battle_status():
                 status_clicked = True
                 click_last.reset()
+                continue
+            if self.handle_exp_info():
                 continue
             # 持续点击 BATTLE_STATUS 以快速跳过结算动画
             if status_clicked:
@@ -95,7 +109,8 @@ class CoalitionCombat(CoalitionUI, CampaignBase):
             while 1:
                 logger.hr(f'{self.FUNCTION_NAME_BASE}{self.battle_count}', level=2)
                 self.auto_search_combat_execute(
-                    emotion_reduce=self.battle_count == 0 or self.config.Coalition_Fleet == 'single',
+                    emotion_reduce=self.coalition_emotion_reduce() and self.emotion.is_calculate,
+                    shipwreck_reduce=self.emotion.is_calculate,
                     fleet_index=1,
                     expected_end=self.auto_search_combat_end
                 )

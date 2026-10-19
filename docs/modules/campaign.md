@@ -118,6 +118,8 @@ OSMapOperation
 | `FleetSelectionMixin` | 低耗任务共用的船坞选船：普通稀有度 CV/DD 模板匹配、`ShipScanner` 等级/情绪/编队过滤、困难模式换用准备界面按钮 |
 | `OSCampaignRun` | 大世界任务入口：每个 `opsi_*` = 行动力溢出守卫 + 调用 `OperationSiren` 对应方法 + `ActionPointLimit` 延迟策略 |
 
+紧急委托和三油低耗共用 `GemsCampaignOverride.handle_exp_info()`。手动地图保留 C/D 经验页及沉船提示的点击兜底；自律寻敌的沉船提示交给 `handle_auto_search_shipwreck()`，必须保留公共战败确认、撤退状态与心情记账，不能只点掉提示后重新开启自律。`withdraw_stop` 的三次连续战败计数在同一战役实例中跨出击保留，正常战斗结束后重置；第三次战败退出关卡后抛出的专用 `ScriptEnd` 由 `CampaignRun._run()` 捕获并禁用当前任务。
+
 ### 地图文件的三方接口
 
 每个 `campaign/**/*.py` 必须提供三个模块级名字，`load_campaign()` 逐一消费：
@@ -304,7 +306,7 @@ stateDiagram-v2
 | `ActionPointLimit` | 大世界行动力不足 | 各 `opsi_*` 捕获后按任务语义延迟（次日刷新 / 定长分钟） |
 | `TaskEnd` | `task_stop()` 抛出 | 上层调度器捕获，属正常任务切换 |
 
-自动恢复与终止的边界：情绪 bug（客户端长时间运行心情计算错误）触发 `task_call('Restart')` 重启游戏而非停止任务；委托通知则调用 `task_call('Commission')` 后停止当前任务。设备层的 `GameStuckError` / `GameTooManyClickError` 由 `module/device` 统一恢复，本模块不吞异常。
+自动恢复与终止的边界：心情不足按恢复时间等待或延后任务；纯计算模式遇到红脸时，取消出击、退出关卡并从 0 建立有效恢复状态，满足下次出击需求后自动重试。累计心情扣减不触发客户端重启。委托通知调用 `task_call('Commission')` 后停止当前任务；`GameStuckError` / `GameTooManyClickError` 等实际异常仍交给上层恢复，本模块不吞异常。
 
 ## 12. 并发与线程模型
 

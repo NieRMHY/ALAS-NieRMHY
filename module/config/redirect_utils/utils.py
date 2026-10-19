@@ -73,6 +73,14 @@ def dossier_redirect(value):
         return 'current'
 
 
+def meta_assist_limit_redirect(value):
+    """将一击即走开关迁移为求援次数上限，保持原有作战策略。"""
+    # 核心重定向会跳过 null，WebUI 的只读迁移也应保留默认的无限求援。
+    if value is None:
+        return 0
+    return 0 if value else -1
+
+
 def enhance_favourite_redirect(value):
     """重定向强化目标舰船选择（EnhanceFavourite -> ShipToEnhance）。
 

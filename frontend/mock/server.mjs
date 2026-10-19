@@ -57,7 +57,7 @@ export function createMockServer({password = '', empty = false} = {}) {
     response.writeHead(request.url === '/healthz' ? 200 : 404)
     response.end(JSON.stringify(request.url === '/healthz' ? {status: 'ok', protocolVersion: 1, mock: true} : {message: '请通过 Vite 打开前端'}))
   })
-  const sockets = new WebSocketServer({noServer: true, maxPayload: 1024 * 1024})
+  const sockets = new WebSocketServer({noServer: true, maxPayload: 8 * 1024 * 1024})
   server.on('upgrade', (request, socket, head) => {
     let validOrigin = false
     try {validOrigin = new URL(request.headers.origin).host === request.headers.host} catch { /* 缺少来源时拒绝连接。 */ }
@@ -80,6 +80,7 @@ export function createMockServer({password = '', empty = false} = {}) {
       try {
         request = JSON.parse(raw.toString())
         if (!request || request.v !== 1 || request.type !== 'request' || typeof request.id !== 'string' || !request.id.length || request.id.length > 100 || typeof request.method !== 'string') fail('INVALID_REQUEST', '请求信封无效')
+        if (raw.length > 1024 * 1024 && !['mind.import', 'mind.recognize', 'mind.save', 'mind.calculate'].includes(request.method)) fail('INVALID_REQUEST', '请求超过 1 MiB 限制')
         if (session.ids.has(request.id)) fail('DUPLICATE_REQUEST', '请求 ID 重复')
         session.ids.add(request.id)
         if (session.ids.size > 128) session.ids.delete(session.ids.values().next().value)
@@ -100,13 +101,17 @@ export function createMockServer({password = '', empty = false} = {}) {
         send({v: 1, type: 'response', id: request?.id ?? '', ok: false, error: {code: error.code ?? 'INVALID_REQUEST', message: error.code ? error.message : '请求格式无效', details: error.details ?? null}})
       }
     })
+// Modify by MHY, 连接关闭或出错时清理会话，不恢复已删除的第三方证券订阅。
     socket.on('close', () => sessions.delete(session))
+    socket.on('error', () => sessions.delete(session))
   })
   function publish() {
     for (const session of sessions) {
       if (!session.authenticated) continue
       for (const topic of session.topics) {
         try {
+          // Modify by MHY, 通知是后端主动推送的全局事件，不调用快照接口轮询。
+          if (topic === 'notifications') continue
           if (topic === 'preview' && session.last.has(topic) && Date.now() - (session.previewAt ?? 0) < 3000) continue
           if (topic === 'preview') session.previewAt = Date.now()
           const method = {instances: 'instances.list', overview: 'overview.get', logs: 'logs.get', preview: 'preview.capture'}[topic]

@@ -82,7 +82,7 @@ module/
 3. 特殊渠道修正：`Custom` 渠道强制 JSON 并注入 `data.title`/`data.content`（支持 `${content}` 占位符）；go-cqhttp 把 `access_token` 映射为 `token` 并解析响应中的失败状态。
 4. 发送失败一律只记日志并返回 `False`：onepush 内部吞掉请求异常时返回 `None`，必须显式检查，否则推送不可达时日志里无失败痕迹。
 
-`notify_webui` 是独立通道：读部署配置的 `WebuiPort`（默认 25548），向本机 `/api/notify` 发 2 秒超时的 POST，异常静默。业务方几乎总是双通道一起调用——OnePush 送达手机，WebUI 送达正在看启动器的用户。
+`notify_webui` 是独立通道：读部署配置的 `WebuiPort`（默认 25548），向本机 `/api/notify` 发 2 秒超时的 POST，异常静默。业务方几乎总是双通道一起调用——OnePush 送达手机，WebUI 送达正在看页面的用户：`/api/notify` 收到后兵分两路，经 notify_hub 以 `notifications` 主题实时广播给浏览器（前端 Notification API 弹 Windows 原生通知），同时进队列供外部启动器经 `/api/notify_stream`（SSE）订阅。
 
 调度器额外套了一层**低推送量模式**：`alas.py` 的可恢复异常分支（`GameNotRunningError`、`EmulatorNotRunningError`、`GameStuckError`、`GamePageUnknownError`、未满 3 次的 `ScriptError`、`RequestHumanTakeover`、`AutoSearchSetError` 与兜底 `Exception`）统一经 `_notify_recoverable()` 发双通道；开启 `Error_LowPushMode` 时该方法是空操作，只记一条 info 日志。这些错误都会被自动重启游戏/模拟器消化，逐个推送会在无人值守时形成轰炸。需要人工介入的路径（`_check_sensitive_exit`、`ScriptError` 满 3 次退出、调度循环的任务连败判定）仍直接调用 `handle_notify`，不受该模式影响。
 

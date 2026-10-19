@@ -34,6 +34,7 @@ module/
 ├── exercise/         # 演习 PvP：exercise.py 主任务，combat/opponent 战斗与对手选择，hp_daemon 血量监控，equipment 装备编辑
 ├── gacha/            # 建造：gacha_reward.py 主任务，ui.py 建造页导航
 ├── daily/            # 每日任务：daily.py 单文件（含关卡/舰队映射与执行）
+├── limit_challenge/  # 限界挑战：月度顺序挑战与出击去重
 ├── hard/             # 困难模式：hard.py 主任务，equipment.py 困难专属装备装卸
 ├── sos/              # SOS 信号：sos.py 单文件（含各服务器 UI 适配）
 ├── war_archives/     # 作战档案：war_archives.py 主任务，dictionary.py 活动→模板映射
@@ -63,6 +64,7 @@ module/
 | Exercise（DailyMission） | `exercise()` | `module.exercise.exercise.Exercise` | `Exercise.*` |
 | Gacha（DailyMission） | `gacha()` | `module.gacha.gacha_reward.RewardGacha` | `Gacha.*` |
 | Daily（DailyMission） | `daily()` | `module.daily.daily.Daily` | `Daily.*` |
+| LimitChallenge（DailyMission） | `limit_challenge()` | `module.limit_challenge.limit_challenge.LimitChallenge` | `LimitChallenge.*` |
 | Hard（DailyMission） | `hard()` | `module.hard.hard.CampaignHard` | `Hard.*` |
 | Shipyard（DailyMission） | `shipyard()` | `module.shipyard.shipyard_reward.RewardShipyard` | `Shipyard.*` / `ShipyardDr.*` |
 | Freebies（DailyMission） | `freebies()` | `module.freebies.freebies.Freebies` | `BattlePass.*` / `DataKey.*` / `Mail.*` / `SupplyPack.*` |
@@ -100,6 +102,18 @@ module/
 
 `Daily(Combat)` 按页签轮询每日出击（`daily_current` 1~7）：检测活跃状态与剩余次数（`OCR_REMAIN`），按 `Daily_*` 配置选择关卡与舰队后进入 `combat()`。限时出现「紧急模块开发」入口时（`ENTRANCE_EMERGENCY_MODULE_DEVELOPMENT`），切换到另一套关卡/舰队映射表。每打完一关就退出重进战役菜单重置页签顺序（顺序会乱，因此任务不能停留在 `page_daily`）；破交作战需 `Daily_UseDailySkip`，否则跳过。
 
+### 限界挑战（module/limit_challenge）
+
+任务位于每日任务菜单，默认关闭、目标为窥探。先在游戏内配置专用限界挑战舰队，随后从出击菜单进入限界挑战，点击「开始挑战」与专用编队页的「出击」。`LimitChallenge.TargetLevel` 表示最高目标：窥探为本月通关 1 关，审视为依次通关 2 关，洞察为依次通关 3 关。S/A/B 通关并领奖后，游戏自动选择下一难度，任务继续点击开始；C/D 立即停止剩余难度。
+
+共用选中菱形用于确认难度和恢复已解锁进度。左侧难度未识别或出现多行匹配时，保留本月已通关数，在确认挑战页与「开始挑战」按钮、且待挑战行未命中锁定文字后，直接开始游戏当前关卡，不因缺失难度识别而卡住，也不据此增加通关数。只有已明确选中其他难度时才切换行。国服窥探、审视、洞察与获得道具原图均已离线验证；其他服务器在导航前请求人工处理。
+
+`Month`、`CompletedLevel`、`AttemptedLevel`、`Failed` 是隐藏的月度进度。真正点击出击前，将尝试等级与下次运行时间一并保存，保存失败不点击。已完成的等级本月不重复出击；战败或出击后结果未确认都等到下月。重新运行时，选中更高已解锁等级可确认前级已通关领奖；挑战记录时间可能来自往期，不能作为本月通关证据。游戏解锁依据为前一级奖励已领取，因此结算与领奖完成后才进入下一等级。
+
+每月按服务器时间 1 日零点重置，复用 `get_os_next_reset_after()` 计算本地调度时刻，不用固定 30 天间隔。出击前、战斗后均检查月份，跨月结果不记入新月份；到达目标、战败与未知结果均仅预约下月，不同时传入更短的成功间隔。战斗显式 `emotion_reduce=False`、关闭血量平衡并复用普通执行／结算与潜艇呼叫，不读取或修改心情账本，不受石油停止线限制；原调度清油控制直接放行本任务，保留状态给下一项业务。
+
+机制依据为本地 Lua 的 `LimitChallengeProxy.isLevelUnlock()`、`LimitChallengeConst.GetNextMonthTS()`、`BattleGateLimitChallenge.Exit()` 和 `battle_cost_template[14]`（石油、入场心情与沉船心情均为 0）。原始 1280×720 截图位于 `tests/fixtures/limit_challenge/`，素材来源及裁剪范围见 [限界挑战识别素材](limit-challenge-assets.md)。回归入口 `uv run python -m unittest tests.test_limit_challenge tests.test_oil_control`，覆盖三档原图、自动切换、获得道具弹窗、左侧识别缺失、持久化去重、失败与跨月调度；道具弹窗复用普通战斗处理，关闭后继续截图，由无遮挡挑战页确认退出。截图回放不作为完整实机验收证据。
+
 ### 困难模式（module/hard）
 
 `CampaignHard(CampaignRun)` 复用普通模式地图：从 `campaign.campaign_main` 导入同名 `MAP`，以 `folder='campaign_hard'` 加载困难战役壳；强制舰队锁定、自动搜索，`Fleet_FleetOrder` 由 `Hard_HardFleet` 推导（另一支舰队待命）。OCR 读取每日剩余次数（0~3）后循环出击；心情按「不计算也不忽略」处理。结束调用 `task_call('Reward')`。困难专属装备装卸由 `HardEquipment` 在编队准备阶段完成。
@@ -114,11 +128,13 @@ module/
 
 ### 突袭共斗（module/raid）
 
-`raid.py` 是资源映射层：`raid_name_shorten()` 把 `raid_YYYYMMDD` 映射到资源前缀（ESSEX…BIGSHOT），`raid_entrance()/raid_ocr()` 按活动+难度取按钮与 OCR 实例（各活动字体颜色不同，部分需 `RaidCounter` 预处理或 `RaidCounterPostMixin` 修正）。`RaidRun.run()` 主循环：检查总次数/油/币/PT 停止条件，无油图标的活动先到战役菜单检查，EX 模式门票为 0 即停，RPG 型活动走 `page_rpg_stage`。`RaidDaily` 用 `RaidDaily_StageFilter` 依次刷 easy/normal/hard，EX 最后执行且先领通关奖励，RPG 型无每日直接禁用。`RaidScuttleRun`（弃船）与联盟沉船一致：整关只扣一次 2 点心情、红脸弹窗直接确认、D 评价不额外扣心情且不算失败。
+`raid.py` 是资源映射层：`raid_name_shorten()` 把 `raid_YYYYMMDD` 映射到资源前缀（ESSEX…BIGSHOT），`raid_entrance()/raid_ocr()` 按活动+难度取按钮与 OCR 实例（各活动字体颜色不同，部分需 `RaidCounter` 预处理或 `RaidCounterPostMixin` 修正）。`RaidRun.run()` 主循环：检查总次数/油/币/PT 停止条件，无油图标的活动先到战役菜单检查，EX 模式门票为 0 即停，RPG 型活动走 `page_rpg_stage`。`RaidDaily` 用 `RaidDaily_StageFilter` 依次刷 easy/normal/hard，EX 最后执行且先领通关奖励，RPG 型无每日直接禁用。`RaidScuttleRun`（弃船）整关只扣一次基础心情、红脸弹窗直接确认，通过 `combat_shipwreck_emotion=False` 豁免额外 10 点；仍记录 C/D 战败，但不执行主线自律寻敌的撤退策略。
 
 ### 活动日常与 SP（module/event）
 
 `EventBase(CampaignRun)` 统一加载活动地图并强制关闭一次性关卡标记，`convert_stages()` 兼容字符串/列表/Filter 三种输入。`CampaignABCD`（EventA~D 四个任务共用）：扫描 `campaign/{活动}/` 下 `.py` 文件生成关卡列表 → `EventDaily_StageFilter` 过滤排序 → 从 `EventDaily_LastStage` 断点续刷（记录过期则重置）→ 每关 `total=1`，逐关推进，全部完成延迟到次日；关卡名错误时提示应改用 Event 任务解锁。`CampaignSP` 检查 `sp.py` 存在后执行 1 次，成功与否都延迟到次日。`MaritimeEscort`（海上护卫）进图即撤退，以低消耗拿约 70% 奖励，OCR 剩余次数为 0 则延迟到次日。
+
+`EventA`～`EventD` 的 `EventDaily.LastStage`（上一个完成的关卡）按文本编辑，可保存 `a3`、`D3` 等关卡名；输入 `0` 重置进度。参数默认值使用字符串 `'0'`，并声明 `mode: text`，避免 WebUI 按数字校验，也兼容旧配置及跨天重置产生的数字 `0`。运行器继续按关卡名恢复进度，跨天自动重置。
 
 ### 活动剧情（module/eventstory）
 
@@ -130,7 +146,7 @@ module/
 
 ### 联动活动（module/coalition）
 
-`Coalition(CoalitionCombat, CampaignEvent)` 主循环：`Coalition_Mode`（含 tc1/tc2/tc3 与 easy/normal/hard 的双向兼容转换）与 `Coalition_Fleet` 决定目标，`coalition_ensure_mode()` 切换 story/battle，按 PT 与金币停止条件刷战斗；无油图标的活动先到战役菜单检查停止条件。`CoalitionSP` 只跑一次 SP 后延迟到次日。`CoalitionScuttleRun`（沉船）重写心情预估（整关只扣一次）、红脸弹窗确认与结算按钮识别，不因舰船被击沉而停止。
+`Coalition(CoalitionCombat, CampaignEvent)` 主循环：`Coalition_Mode`（含 tc1/tc2/tc3 与 easy/normal/hard 的双向兼容转换）与 `Coalition_Fleet` 决定目标，`coalition_ensure_mode()` 切换 story/battle，按 PT 与金币停止条件刷战斗；无油图标的活动先到战役菜单检查停止条件。`CoalitionSP` 只跑一次 SP 后延迟到次日。正常多队整关扣一次基础心情，单队每轮扣基础心情，各内部战斗独立记录非 S 额外消耗。`CoalitionScuttleRun`（沉船）整关只扣一次基础心情并豁免额外消耗，通过确认按钮集合处理 `SCUTTLE_CONFIRM`，复用公共战斗循环；SP 只有明确 S 且没有战败才按成功收尾。
 
 ### 私人休息室（module/private_quarters）
 
@@ -192,7 +208,7 @@ module/
 - **assets.py 一律生成**：各目录 `assets.py` 由 `uv run -m dev_tools.button_extract` 从截图提取，手改会被覆盖；新活动按钮先补对应服务器的截图资源。
 - **服务器差异有两套写法**：`@Config.when(SERVER=...)`（SOS、装备更换等按服务器生成属性）与 `module.config.server` 的模块级 if 分支（minigame、private_quarters.status、daily 的 OCR 颜色）。新增适配时沿用所在模块的既有写法，避免混用。
 - **活动映射是手工维护点**：`raid.raid_name_shorten`、`war_archives.dictionary.dic_archives_template`、`eventstory` 的特判活动列表、`raid_ocr` 的各活动 OCR 参数。新活动要同时补 assets、映射与（必要时）campaign 地图；作战档案优先用 `dev_tools.war_archives_update` 生成而不是手写。
-- **沉船链路重写了战斗结算**：`RaidScuttleRun`、`CoalitionScuttleRun` 覆写心情扣减、红脸弹窗与 D 评价格子。修改 `module/combat` 结算或心情逻辑时，必须回归验证这两条链路。
+- **沉船链路通过政策复用结算**：`RaidScuttleRun`、`CoalitionScuttleRun` 豁免额外心情，联盟沉船再指定整关基础消耗及专用确认按钮；红脸继续确认。修改公共结算时同时回归正常/沉船的共斗和联盟，详见 [战败与结果记账](../defeat-handling.md)。
 - **收尾语义不要混用**：日常类任务用 `task_delay(server_update=True)`；一次性/耗尽类用 `Scheduler_Enable=False`（必要时配合 `task_stop()`）；进度型状态（`EventDaily_LastStage`、`WarArchives_DailyRunCountRemain`、演习刷新计数）依赖配置持久化，不要在循环中无保护地直写。
 - **每日任务顺序依赖退出重进**：`Daily` 与 `EventStory` 等模块对「打完一关后界面顺序会乱」做了退出重进处理，改动导航逻辑时保持该行为。
 - **OCR 修正绑定当前字体**：`DatedDuration`、`RaidCounterPostMixin`、`OcrDataKey` 等后处理针对当前游戏 UI 字体，游戏改版后先拿旧截图离线验证。

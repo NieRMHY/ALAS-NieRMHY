@@ -2,7 +2,8 @@ import { defineConfig } from '@playwright/test'
 
 export default defineConfig({
   testDir: './e2e',
-  testIgnore: ['**/mock.spec.ts'],
+  // Modify by MHY, 心智用例使用独立 mock 配置，默认后端套件不重复执行。
+  testIgnore: ['**/mock.spec.ts', '**/mind-*.spec.ts'],
   fullyParallel: false,
   workers: 1,
   retries: process.env.CI ? 1 : 0,

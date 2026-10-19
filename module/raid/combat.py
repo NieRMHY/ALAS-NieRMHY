@@ -2,7 +2,6 @@
 处理大世界风格的战斗状态按钮和经验值显示。
 """
 
-from module.combat.assets import EXP_INFO_C, EXP_INFO_D
 from module.combat.combat import Combat
 from module.guild.assets import BATTLE_STATUS_CF, EXP_INFO_CF
 
@@ -29,8 +28,6 @@ class RaidCombat(Combat):
         if self.appear(BATTLE_STATUS_CF, interval=self.battle_status_click_interval):
             if drop:
                 drop.handle_add(self)
-            else:
-                self.device.sleep((0.25, 0.5))
             self.device.click(BATTLE_STATUS_CF)
             return True
 
@@ -61,14 +58,7 @@ class RaidCombat(Combat):
             return False
         if super().handle_exp_info():
             return True
-        if self.appear_then_click(EXP_INFO_C):
-            self.device.sleep((0.25, 0.5))
-            return True
-        if self.appear_then_click(EXP_INFO_D):
-            self.device.sleep((0.25, 0.5))
-            return True
-        if self.appear_then_click(EXP_INFO_CF):
-            self.device.sleep((0.25, 0.5))
+        if self.appear_then_click(EXP_INFO_CF, interval=2):
             return True
 
         return False

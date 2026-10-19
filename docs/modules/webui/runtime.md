@@ -366,10 +366,14 @@ stateDiagram-v2
 | `cache/wiki_event_calculator.json` | `event_calculator` | `load_event_calculator` | Wiki 解析结果缓存（`cache_version=2`），网络失败时回退 |
 | 内存 `renderables` / `PreviewHub.frames` | 转发线程 / worker | RuntimeService | 日志环形缓冲（≤400）与每实例最新一帧，进程级不持久化 |
 
+普通调度、变量和最新资源观察统一保存在 `azurpilot.db`；实例删除先备份配置及普通调度切片，统计保留原实例名。
+
+TUI 使用相同服务边界；配置弹窗显示时，时钟刷新查询主屏幕的 `HeaderBar`，避免把弹窗当前屏幕当作主布局。
+
 ## 14. 生命周期
 
 - **创建**：`gui.py` 父监督器 spawn 服务子进程 → uvicorn 加载 `create_app` → lifespan 启动（`manage_runtime=True`）。
-- **初始化**（`module/api/lifecycle.startup`）：`State.init()` 创建 Manager 并认领登记所有权 → `updater.event = State.manager.Event()` → 按 `CheckUpdateInterval`/`AutoRestartTime` 装载更新任务、按 `EnableRemoteAccess` 挂载保活任务 → `TaskHandler.start()` → 可选启动 OCR 服务进程 → `ProcessManager.restart_processes(runs)`（CLI `--run` 或 `Webui.Run`）拉起实例。
+- **初始化**：lifespan 先执行普通总库安装级迁移，失败停止启动；随后 `module/api/lifecycle.startup`：`State.init()` 创建 Manager 并认领登记所有权 → `updater.event = State.manager.Event()` → 按 `CheckUpdateInterval`/`AutoRestartTime` 装载更新任务、按 `EnableRemoteAccess` 挂载保活任务 → `TaskHandler.start()` → 可选启动 OCR 服务进程 → `ProcessManager.restart_processes(runs)`（CLI `--run` 或 `Webui.Run`）拉起实例。
 - **运行**：TaskHandler 线程驱动周期任务；uvicorn 事件循环承载 API 与 MCP；worker 进程各自运行调度器。
 - **更新**：见第 6 节事务；结束时 `State._restart_requested = True`，clearup 逐项回收（TaskHandler → OCR → 远程访问 → 全部 worker），全部成功才 `State.clearup()`（关闭 Manager、清除 owner），随后父监督器终止本进程并重建。
 - **销毁**：父监督器 `_stop_webui_process_tree` 先停根（WebUI 及 SyncManager 等整树），再按登记回收 worker；父进程被强杀的场景由下一次启动的孤儿恢复兜底。

@@ -57,7 +57,7 @@ class ManualConfig:
     > OpsiDaily > OpsiShop > OpsiVoucher
     > OpsiScheduling
     > OpsiAbyssal > OpsiStronghold > OpsiObscure > OpsiArchive
-    > Daily > Hard > OpsiAshBeacon > OpsiAshAssist > OpsiMonthBoss
+    > Daily > LimitChallenge > Hard > OpsiAshBeacon > OpsiAshAssist > OpsiMonthBoss
     > Sos > EventSp > EventA > EventB > EventC > EventD
     > RaidDaily > CoalitionSp > WarArchives > MaritimeEscort
     # Add by MHY: 赛季任务读取排在岛屿生产任务之前。它只读「开发季-开发计划」页面，

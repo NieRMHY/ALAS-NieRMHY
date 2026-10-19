@@ -176,6 +176,9 @@ class Session:
         self.logs_changed = asyncio.Event()
         self.preview_changed = asyncio.Event()
         self.preview_pending = None
+        # Modify by MHY, 仅保留任务通知事件
+        self.notification_changed = asyncio.Event()
+        self.notification_pending: list[dict] = []
 
     async def enqueue(self, message: dict):
         """将消息放入发送队列，遇到慢客户端时主动断开连接以实现背压保护。
@@ -229,8 +232,9 @@ class Session:
         reader = asyncio.create_task(self.reader())
         logs = asyncio.create_task(self.log_producer())
         preview = asyncio.create_task(self.preview_producer())
+        notifications = asyncio.create_task(self.notification_producer())
         await self.event('session', {'authRequired': not self.authorized, 'protocolVersion': 1})
-        tasks = [writer, producer, reader, logs, preview]
+        tasks = [writer, producer, reader, logs, preview, notifications]
         try:
             done, _ = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
             for task in done:
@@ -254,8 +258,9 @@ class Session:
             request_id = None
             decoded = None
             try:
-                if len(raw.encode()) > 1024 * 1024:
-                    raise ApiError('INVALID_REQUEST', '请求超过 1 MiB 限制')
+                size = len(raw.encode())
+                if size > 8 * 1024 * 1024:
+                    raise ApiError('INVALID_REQUEST', '请求超过 8 MiB 限制')
                 now = time.monotonic()
                 if now - self.window > 1:
                     self.window, self.requests = now, 0
@@ -264,6 +269,8 @@ class Session:
                 if isinstance(decoded, dict) and isinstance(decoded.get('id'), str):
                     request_id = decoded['id'][:100]
                 request = Request.model_validate(decoded)
+                if size > 1024 * 1024 and request.method not in ('mind.import', 'mind.recognize', 'mind.save', 'mind.calculate'):
+                    raise ApiError('INVALID_REQUEST', '请求超过 1 MiB 限制')
                 if self.requests > 30:
                     raise ApiError('RATE_LIMITED', '请求过于频繁')
                 request_id = request.id
@@ -281,7 +288,7 @@ class Session:
                     raise ApiError('UNAUTHORIZED', '请先登录')
                 elif request.method == 'events.subscribe':
                     subscription = SubscribeParams.model_validate(request.params)
-                    if any(topic != 'instances' for topic in subscription.topics):
+                    if any(topic not in ('instances', 'notifications') for topic in subscription.topics):
                         self.gateway.router.configs.path(subscription.instance)
                     self.subscription = subscription
                     self.cache.clear()
@@ -325,7 +332,7 @@ class Session:
             runtime = self.gateway.router.runtime
             for topic in subscription.topics:
                 try:
-                    if topic in ('logs', 'preview'):
+                    if topic in ('logs', 'preview', 'notifications'):
                         continue
                     if (now := time.monotonic()) - self.topic_seen.get(topic, 0) < TOPIC_INTERVAL.get(topic, 2):
                         continue
@@ -361,7 +368,7 @@ class Session:
                 self.topic_seen['statistics'] = time.monotonic()
                 try:
                     from module.api.statistics_service import get_statistics_fingerprint
-                    stats_fp = await asyncio.to_thread(get_statistics_fingerprint, subscription.instance)
+                    stats_fp = await asyncio.to_thread(get_statistics_fingerprint, subscription.instance, self.gateway.router.configs.directory)
                     if subscription is self.subscription:
                         old_fp = self.cache.get('statistics')
                         if old_fp is not None and old_fp != stats_fp:
@@ -462,5 +469,35 @@ class Session:
                     continue
                 frame = hub.get(subscription.instance)
                 await self.event('preview', frame)
+        finally:
+            hub.unsubscribe(changed)
+
+    async def notification_producer(self):
+        """任务通知生产者协程。
+
+        通知是一次性消息，跨实例推送、不按当前工作区过滤；未订阅时不缓存，
+        错过即错过，符合「送达正在看 WebUI 的用户」的定位。
+        """
+        from module.runtime.notify_hub import hub
+        loop = asyncio.get_running_loop()
+
+        def changed(notification):
+            if not loop.is_closed():
+                def wake():
+                    self.notification_pending.append(notification)
+                    self.notification_changed.set()
+                with contextlib.suppress(RuntimeError):
+                    loop.call_soon_threadsafe(wake)
+
+        hub.subscribe(changed)
+        try:
+            while True:
+                await self.notification_changed.wait()
+                self.notification_changed.clear()
+                pending, self.notification_pending = self.notification_pending, []
+                if not self.authorized or 'notifications' not in self.subscription.topics:
+                    continue
+                for notification in pending:
+                    await self.event('notifications', notification)
         finally:
             hub.unsubscribe(changed)

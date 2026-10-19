@@ -101,6 +101,19 @@ class OilControlTests(unittest.TestCase):
         buy.assert_called_once_with(25000, 24000)
         self.assertEqual(deadline, self.script.config.cross_get('Main.Scheduler.NextRun'))
 
+    def test_limit_challenge_does_not_start_oil_cleanup(self):
+        self.enable('LimitChallenge', 'Main')
+        self.script.config.cross_set('Main.Scheduler.NextRun', self.time + timedelta(hours=1))
+        read = self.readings(25000)
+        self.assertEqual('LimitChallenge', self.script.get_next_task())
+        read.assert_not_called()
+        self.assertTrue(self.oil.check_pending)
+        self.script.config.task_delay(target=self.time + timedelta(days=20))
+        self.runtime.task_finished('LimitChallenge', True)
+        self.script.config.cross_set('Main.Scheduler.NextRun', self.time)
+        self.assertEqual('Main', self.script.get_next_task())
+        read.assert_called_once()
+
     def test_new_emotion_cooldown_is_saved_then_dorm_runs(self):
         self.enable('Commission', 'Main')
         self.readings(25000, 25000, 23950)

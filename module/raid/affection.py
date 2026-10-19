@@ -8,6 +8,7 @@
 （或其他组合），两条线各绑一组心情追踪，心情不足的线自动跳过另一线继续。
 """
 
+from module.config.time_source import now as current_time
 from module.exception import ScriptEnd, ScriptError
 from module.logger import logger
 from module.notify import handle_notify, notify_title
@@ -65,17 +66,22 @@ class RaidAffectionRun(RaidScuttleRun):
     def _line_emotion_ready(self, fleet_index):
         """预检线的心情是否可支撑一场出击（出击后仍不低于控制阈值与好感门槛）。
 
-        判定与 emotion.check_reduce 对齐：value 扣除本场消耗后仍需
+        判定与 emotion.check_reduce 对齐：恢复下限扣除本场消耗后仍需
         不低于 max(好感门槛, 控制阈值)，否则该线跳过换另一线。
         不做等待与延迟，仅用于双线间的切换决策。
         """
-        fleet = self.emotion.fleets[fleet_index - 1]
+        # Modify by MHY, 公共模式复用共享账本，独立模式保持双线各自记账。
+        fleet = self.emotion.public_fleet if self.emotion.using_public else self.emotion.fleets[fleet_index - 1]
+        if not self.emotion.is_calculate:
+            return True
         threshold = max(AFFECTION_EMOTION_MIN, fleet.limit)
-        return fleet.value - self.emotion.reduce_per_battle >= threshold
+        # Modify by MHY, 沿用新版恢复下限与旧存档迁移，不能用显示中间值授权出击。
+        return fleet.get_recovered(threshold - fleet.limit + self.emotion.reduce_per_battle) <= current_time()
 
     def _line_recovered(self, fleet_index):
         """计算线的心情恢复到可出击阈值的时间。"""
-        fleet = self.emotion.fleets[fleet_index - 1]
+        # Modify by MHY, 公共模式复用共享账本，独立模式保持双线各自记账。
+        fleet = self.emotion.public_fleet if self.emotion.using_public else self.emotion.fleets[fleet_index - 1]
         threshold = max(AFFECTION_EMOTION_MIN, fleet.limit) + self.emotion.reduce_per_battle
         return fleet.get_recovered(threshold - fleet.limit)
 
@@ -134,8 +140,11 @@ class RaidAffectionRun(RaidScuttleRun):
         出击时心情低于 40 不计；计数写回配置自动持久化，
         计数器按线拆分，两队进度互不干扰。
         """
-        fleet = self.emotion.fleets[fleet_index - 1]
-        if fleet.value + self.emotion.reduce_per_battle < AFFECTION_EMOTION_MIN:
+        # Modify by MHY, 公共模式复用共享账本，独立模式保持双线各自记账。
+        fleet = self.emotion.public_fleet if self.emotion.using_public else self.emotion.fleets[fleet_index - 1]
+        # Add by MHY, 无视模式仍按出击累计好感，门槛读取配置值，不要求恢复相位。
+        start_emotion = fleet.lower + self.emotion.reduce_per_battle if self.emotion.is_calculate else fleet.value
+        if start_emotion < AFFECTION_EMOTION_MIN:
             logger.info(f'[共斗好感] 出击时心情不足{AFFECTION_EMOTION_MIN}，不计好感')
             return
         key = self._counter_key(fleet_index, target)
@@ -210,9 +219,9 @@ class RaidAffectionRun(RaidScuttleRun):
             # Modify by MHY, 选线前按实际经过时间恢复心情并落盘：
             # update() 只在出击路径被调用，预检直接读配置值，
             # 任务延迟重跑后会读到冻结的旧值导致无限推迟
-            if not self.emotion.using_public:
-                self.emotion.update()
-                self.emotion.record()
+            # Modify by MHY, 公共账本也按实际时间推进，避免共享模式读取旧心情。
+            self.emotion.update()
+            self.emotion.record()
 
             # 心情驱动选线：从轮转起点扫描一周，跳过已满线，取第一条心情可用的线
             picked = None
@@ -299,9 +308,7 @@ class RaidAffectionRun(RaidScuttleRun):
             if self.config.StopCondition_RunCount:
                 self.config.StopCondition_RunCount -= 1
 
-            # Modify by MHY, 石油校验用的正常结算标记读后清零
-            self.triggered_normal_end = False
-
+            # Modify by MHY, 正常结算标记由战斗入口重置，此处保留到油耗复核登记后再清零。
             # Add by MHY, 无论胜负，出击即累计好感
             self._affection_add(fleet_index, target)
             self._last_line_label = label
