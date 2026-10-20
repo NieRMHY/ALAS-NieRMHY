@@ -267,12 +267,16 @@ class EconomyDatabase:
         return sorted(names, key=lambda n: self.profit_per_min(n), reverse=reverse)
 
     def price_of(self, name):
-        """商品售价（货架单格收益指标），未知返回 0。"""
+        """商品售价，未知返回 0。
+
+        Modify by MHY, 售价不是货架指标：每格每天固定卖 per_slot 件，一格收益是
+        per_slot x 单件利润，货架排序用 profit（见 island_planner.shelf_rank）。
+        """
         info = ECONOMY_PRODUCTS.get(name)
         return info['price'] if info else 0
 
     def sort_by_price(self, names, reverse=True):
-        """按售价排序商品名列表（货架指标：每格同时只卖一件，价高者收益高）。"""
+        """按售价排序商品名列表（仅作参考；货架排序按单件利润，不是售价）。"""
         return sorted(names, key=lambda n: (ECONOMY_PRODUCTS.get(n) or {}).get('price', 0),
                       reverse=reverse)
 

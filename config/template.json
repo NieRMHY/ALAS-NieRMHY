@@ -3206,7 +3206,8 @@
       "RefreshPlan": false,
       "PlanVerifiedOnly": true,
       "PlanMineVerified": true,
-      "PlanShelfSlots": 4
+      "PlanShelfSlots": 4,
+      "PlanExtraMeals": false
     },
     "IslandWalk": {
       "AirDrop": "up 3000, right 800, up 2000, jump, up 1200, right 2000, up 6500, right 1000, up 2300, right 2000, up 4000, right 2600, up 500, jump, up 1300",

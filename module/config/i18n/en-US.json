@@ -4748,6 +4748,12 @@
     "PlanShelfSlots": {
       "name": "Shelf slots",
       "help": "How many shelf slots the generated list should use"
+    },
+    "PlanExtraMeals": {
+      "name": "Extra meal production",
+      "help": "When off, the production list only covers shelf restock and season stockpiles; turn it on to spend leftover work hours on high-profit items that are not on the shelf",
+      "True": "Enabled",
+      "False": "Disabled"
     }
   },
   "IslandFarm": {

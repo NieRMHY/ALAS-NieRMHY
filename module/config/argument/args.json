@@ -16522,6 +16522,14 @@
       "PlanShelfSlots": {
         "type": "input",
         "value": 4
+      },
+      "PlanExtraMeals": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
       }
     },
     "IslandWalk": {

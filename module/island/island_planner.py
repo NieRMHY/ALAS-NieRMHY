@@ -379,7 +379,7 @@ def plan_shop(shop, shop_level='diamond', season=None, warehouse=None,
               economy=None, producible=None, exclude=None, shelf_pool=None,
               stock_have=None,
               verified=None, manual_shelf=None, capacity_ratio=0.9,
-              stockpile=None, post_number=None):
+              stockpile=None, post_number=None, extra_meals=False):
     """
     生成单店方案。
 
@@ -402,6 +402,9 @@ def plan_shop(shop, shop_level='diamond', season=None, warehouse=None,
         stockpile: {商品: 目标库存} 需要囤积的物品（赛季任务等）：用空闲产能生产，
             并且**不上架**，避免被卖掉或被每日订单/货运消耗
         post_number: 本店岗位数（配置 <Task>.PostNumber）；None 取 DEFAULT_POST_NUMBERS
+        extra_meals: 是否用剩余工时生产不在货架上的商品（默认关闭）。
+            货架每格每天固定卖 per_slot 件，不在货架上的商品卖不掉——排进生产清单
+            只会占满槽位、把赛季囤积挤到排不进去，所以默认只排货架补货 + 囤积
 
     Returns:
         ShopPlan
@@ -418,8 +421,10 @@ def plan_shop(shop, shop_level='diamond', season=None, warehouse=None,
     verified_set = set(verified) if verified is not None else None
 
     # ---- 第一步：定货架（卖什么）----
-    # 货架每格同时只卖一件，所以看「单格售价」而不是生产指标；
-    # 能持续补货（本账号验证过可生产）的商品优先，避免高价格子长期空着。
+    # Modify by MHY, 每格每天固定卖 per_slot 件（钻石店 6 件），一格的收益 =
+    # per_slot x 单件利润，所以衡量一格该摆什么要用**单件利润**而不是售价：
+    # 售价高但材料成本也高的菜（售价 2000、利润 1785）可能不如售价低但成本低的菜。
+    # 能持续补货（本账号验证过可生产）的商品优先，避免高利润格子长期空着。
     stockpile = dict(stockpile or {})
     for name in shelf_pool:
         if name in exclude:
@@ -428,9 +433,14 @@ def plan_shop(shop, shop_level='diamond', season=None, warehouse=None,
     pool = [n for n in shelf_pool if n not in exclude and n not in stockpile]
     pool = economy.filter_products(pool, season=season)
 
+    def profit_of(name):
+        """单件利润（元/件）：经济库没有现成取法，直接读商品表的 profit 字段。"""
+        info = economy.get_product(name) or {}
+        return float(info.get('profit') or 0)
+
     def shelf_rank(name):
         restockable = 0 if (verified_set is None or name in verified_set) else 1
-        return restockable, -economy.price_of(name)
+        return restockable, -profit_of(name)
 
     ranked = sorted(pool, key=shelf_rank)
     if manual_shelf:
@@ -498,21 +508,33 @@ def plan_shop(shop, shop_level='diamond', season=None, warehouse=None,
     plan.shelf = shelf_keep + stock_only
 
     meals = [(n, target_stock(shop, n, shop_level, economy)) for n in shelf_keep]
-    extra_names = economy.filter_products(
-        [item['name'] for item in economy.get_products_by_shop(shop)], season=season)
-    for name in extra_names:
-        if len(meals) >= meals_slots or name in seen:
-            continue
-        if name not in producible or name in exclude:
-            continue
-        if verified_set is not None and name not in verified_set:
-            continue
-        candidate = meals + [(name, target_stock(shop, name, shop_level, economy))]
-        _, _, minutes = production_requirements(shop, candidate, economy)
-        if minutes > budget:
-            continue  # 产能不够，跳过这个商品（不动已有货架需求）
-        meals = candidate
-        seen.add(name)
+    stock_have = dict(stock_have or {})
+    # Modify by MHY, 有囤积待排时给囤积留最后一格：额外餐品排在囤积之前，
+    # 8 格被额外项填满时囤积那条分支直接 break，赛季任务永远排不进去。
+    pending_stockpile = any(
+        name in producible and name not in exclude
+        and int(target) - int(stock_have.get(name, 0)) > 0
+        for name, target in stockpile.items())
+    if extra_meals:
+        # Modify by MHY, 额外餐品默认不排（extra_meals=False）：货架每格每天固定卖
+        # per_slot 件，不在货架上的商品根本卖不掉，排进生产清单只是白占槽位。
+        # 打开后才会用货架之外的剩余工时生产高利润商品（囤货/跨店原料时有用）。
+        extra_names = economy.filter_products(
+            [item['name'] for item in economy.get_products_by_shop(shop)], season=season)
+        extra_limit = meals_slots - 1 if pending_stockpile else meals_slots
+        for name in extra_names:
+            if len(meals) >= extra_limit or name in seen:
+                continue
+            if name not in producible or name in exclude:
+                continue
+            if verified_set is not None and name not in verified_set:
+                continue
+            candidate = meals + [(name, target_stock(shop, name, shop_level, economy))]
+            _, _, minutes = production_requirements(shop, candidate, economy)
+            if minutes > budget:
+                continue  # 产能不够，跳过这个商品（不动已有货架需求）
+            meals = candidate
+            seen.add(name)
 
     # ---- 空闲产能生产囤积物（赛季任务物品：攒够就行，不上架）----
     # Add by MHY, 三条规则：
@@ -535,7 +557,6 @@ def plan_shop(shop, shop_level='diamond', season=None, warehouse=None,
     # MealNumber 是库存目标，写小了运行端做到就停，而缺口没消失时不会再触发刷新，
     # 赛季任务会卡在半路。超一天的量运行端本来就会跨天继续做，如实报预期即可。
     # 顺序按「还差得少」：最接近完成的先做完，先释放位置给下一件。
-    stock_have = dict(stock_have or {})
     for name, target in sorted(
             stockpile.items(),
             key=lambda kv: (max(0, int(kv[1]) - int(stock_have.get(kv[0], 0))), kv[0])):
@@ -584,7 +605,8 @@ def plan_shop(shop, shop_level='diamond', season=None, warehouse=None,
 def plan_all(shop_level='diamond', season=None, warehouse=None,
              shelf_slots=None, shops=None, extra_exclude=None,
              verified_only=False, manual_shelf=None, capacity_ratio=0.9,
-             stockpile=None, stock_have=None, post_numbers=None):
+             stockpile=None, stock_have=None, post_numbers=None,
+             extra_meals=False):
     """
     生成全部店铺方案。
 
@@ -600,6 +622,7 @@ def plan_all(shop_level='diamond', season=None, warehouse=None,
         stockpile: {店铺: {商品: 目标库存}} 赛季任务等囤积目标
         stock_have: {商品: 库存} 供囤积按「还差多少」估产能
         post_numbers: {店铺: 岗位数} 各店实际岗位数；缺省用 DEFAULT_POST_NUMBERS
+        extra_meals: 是否把不在货架上的商品也排进生产清单（默认关闭，见 plan_shop）
 
     Returns:
         dict: {店铺标识: ShopPlan}
@@ -619,7 +642,8 @@ def plan_all(shop_level='diamond', season=None, warehouse=None,
                               capacity_ratio=capacity_ratio,
                               stockpile=(stockpile or {}).get(shop),
                               stock_have=stock_have,
-                              post_number=(post_numbers or {}).get(shop))
+                              post_number=(post_numbers or {}).get(shop),
+                              extra_meals=extra_meals)
     # ---- 跨店原料回填：别店需要的原料排到生产店 ----
     for shop in order:
         _, cross, _ = production_requirements(shop, out[shop].meals, economy)

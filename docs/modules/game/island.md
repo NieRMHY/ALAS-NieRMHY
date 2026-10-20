@@ -233,7 +233,7 @@ flowchart TD
 
 ### 方案生成器（island_planner）的产能与格数口径
 
-改动排产相关逻辑前先读这三条口径，它们都是被真机事故修正过的：
+改动排产相关逻辑前先读这几条口径，它们都是被真机事故修正过的：
 
 - **产能 = 本店岗位数 × 24 时 × `capacity_ratio`**：岗位数读配置 `<Task>.<Task>.PostNumber`
   （如 `IslandGrill.IslandGrill.PostNumber`），缺省值镜像 `argument.yaml`：餐馆/白熊/咖啡 2、
@@ -246,6 +246,19 @@ flowchart TD
   等级的 `SHOP_LEVELS[...]['slots']`（钻石 4 格；等级也读不到就退回钻石），不再写死 5——多出来的
   那格游戏直接忽略，方案却按 5 格排产。注意 `argument.yaml` 里该配置的默认值是 5，所以「未配置」
   只在配置里没有这个键时才成立。
+- **货架按单件利润排序，不是按售价**：`shelf_rank` 的排序键是「(能否持续补货, -单件利润)」。
+  货架每格每天固定卖 `per_slot` 件（钻石店 6 件），一格带来的收益 = 6 × 单件利润
+  （`ECONOMY_PRODUCTS[name]['profit']`），跟售价不是一回事——售价高但材料成本也高的菜（佛跳墙
+  售价 2000、利润 1785）可能不如售价略低但成本更低的菜（肉沫烧豆腐 1300 / 1230 之类）。
+  旧版按 `price_of` 排序，等于把「进货贵」当成「赚得多」。`manual_shelf` 手动指定的上架商品
+  仍然优先，不受排序影响。
+- **额外餐品排产默认关闭（`IslandPlan.PlanExtraMeals`）**：销量是封顶的（每格每天只卖
+  `per_slot` 件），不在货架上的商品根本卖不掉。旧版定完货架后会把本店其余商品依次塞进生产清单，
+  直到 8 个槽位填满或工时用完——纯白做，还会把赛季囤积项挤出槽位。现在默认只排「货架补货 +
+  赛季囤积」，只有开关打开才用货架之外的剩余工时生产高利润商品（需要备货或喂跨店原料时才有意义）。
+- **囤积预留一个槽位**：本店有囤积项待排（`stockpile` 里存在可生产且有缺口的商品）时，额外餐品
+  循环的上限降到 `meals_slots - 1`，把最后一格留给囤积项。否则货架 + 额外项填满 8 格时，
+  囤积那段 `len(meals) >= meals_slots` 直接 `break`，赛季任务永远排不进生产清单。
 
 ## 7. 调用关系
 
@@ -322,7 +335,8 @@ stateDiagram-v2
 | `IslandPearlSell.BuyPrice` / `SellPrice` / `DailyPriceRefresh` | 数值/checkbox | 200 / 1000 / false | 珍珠交易价格阈值与每日刷新开关 |
 | `IslandCargoPreparation.Blacklist` | 文件串 | "Milk" | 货物黑名单（当前仅支持 Milk） |
 | `IslandPlan.IslandWalk.*` | 多行文本（走位规则） | 见 `module/island/island_walk.py` | 每条路线的走位规则，如 `up 3000, right 800, jump`（对所有控制方式生效）；`<路线>Enable` 勾选后由「全局配置」任务走一遍做校验 |
-| `IslandPlan.PlanShelfSlots` / `PlanVerifiedOnly` / `PlanMineVerified` | input/checkbox | 5 / true / true | 方案生成参数：上架格数（见 §6.5 口径，未配置时按店铺等级）、只排已验证可生产的商品、刷新前从日志挖掘白名单 |
+| `IslandPlan.PlanShelfSlots` / `PlanVerifiedOnly` / `PlanMineVerified` | input/checkbox | 4 / true / true | 方案生成参数：上架格数（见 §6.5 口径，未配置时按店铺等级）、只排已验证可生产的商品、刷新前从日志挖掘白名单 |
+| `IslandPlan.PlanExtraMeals` | checkbox | false | 额外餐品排产：关闭时生产清单只排货架补货与赛季囤积，打开才用剩余工时生产不在货架上的商品（见 §6.5 口径） |
 | `IslandRestaurant/Teahouse/Grill/JuuEatery/JuuCoffee.PostNumber` | 数值 | 2/2/1/1/2 | 各店岗位数，方案生成器的日产能上限 = 岗位数 × 24 时 × 0.9（真机五家店都填 2） |
 
 关联关系：季节是唯一贯穿所有模块的横切配置，由 `SeasonConfig` 在各任务 `__init__` 时读取并缓存；店铺类任务的 `Meal{i}`+`MealNumber{i}` 成对声明 8 个排产槽位；`WorkerFilter`/`ChefFilter` 均为 `>` 分隔的角色优先级串，`WorkerJuu`（工作啾）作为通用回退。

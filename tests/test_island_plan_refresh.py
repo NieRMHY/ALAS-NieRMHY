@@ -4,6 +4,7 @@
 import os
 import tempfile
 import unittest
+from unittest.mock import patch
 
 import module.island.island_planner as planner
 from module.island.island_planner import config_key_values, plan_all
@@ -109,6 +110,54 @@ class TestRefreshSwitch(unittest.TestCase):
         saved_before = config.saved
         self.assertFalse(refresh_plan_if_requested(config))
         self.assertEqual(config.saved, saved_before)
+
+
+class TestExtraMealsSwitch(unittest.TestCase):
+    """PlanExtraMeals（额外餐品排产，默认关）被读取并透传给 plan_all。
+
+    销量封顶口径下不在货架上的商品卖不掉，额外餐品循环只会占满槽位、把赛季囤积
+    挤掉，所以默认必须关闭；配置里显式打开才排。
+    """
+
+    def setUp(self):
+        import module.island.island_plan_refresh as refresh
+        self.refresh = refresh
+        fd, path = tempfile.mkstemp(suffix='.json')
+        os.close(fd)
+        os.remove(path)
+        self._orig_generated = refresh.GENERATED_FILE
+        refresh.GENERATED_FILE = path
+
+    def tearDown(self):
+        try:
+            os.remove(self.refresh.GENERATED_FILE)
+        except OSError:
+            pass
+        self.refresh.GENERATED_FILE = self._orig_generated
+
+    def _refresh_with(self, extra):
+        values = {
+            'IslandPlan.IslandPlan.RefreshPlan': True,
+            'IslandPlan.IslandPlan.Season': 'autumn',
+            # 别去挖真实日志更新白名单，测试不该动工作区里的名单文件
+            'IslandPlan.IslandPlan.PlanMineVerified': False,
+            'IslandPlan.IslandPlan.PlanVerifiedOnly': False,
+        }
+        if extra:
+            values['IslandPlan.IslandPlan.PlanExtraMeals'] = extra
+        config = FakeConfig(values)
+        with patch.object(self.refresh, 'plan_all', return_value={}) as plan_all:
+            self.assertTrue(refresh_plan_if_requested(config))
+        return plan_all.call_args
+
+    def test_default_off(self):
+        """配置里没有该键时按关闭处理"""
+        call = self._refresh_with(None)
+        self.assertFalse(call.kwargs['extra_meals'])
+
+    def test_switch_on_passed_through(self):
+        call = self._refresh_with(True)
+        self.assertTrue(call.kwargs['extra_meals'])
 
 
 if __name__ == '__main__':

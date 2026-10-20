@@ -28,6 +28,9 @@ REFRESH_KEY = 'IslandPlan.IslandPlan.RefreshPlan'
 VERIFIED_KEY = 'IslandPlan.IslandPlan.PlanVerifiedOnly'
 MINE_KEY = 'IslandPlan.IslandPlan.PlanMineVerified'
 SHELF_KEY = 'IslandPlan.IslandPlan.PlanShelfSlots'
+# Add by MHY, 额外餐品开关（默认关闭）：货架每格每天固定卖 per_slot 件，不在货架上的
+# 商品卖不掉，用剩余工时生产只会占满槽位、把赛季囤积挤掉
+EXTRA_MEALS_KEY = 'IslandPlan.IslandPlan.PlanExtraMeals'
 SEASON_KEY = 'IslandPlan.IslandPlan.Season'
 # 店铺等级：货架格数的兜底来源（见 plan_shelf_slots）
 LEVEL_KEY = 'IslandBusiness.IslandBusiness.ShopLevel'
@@ -353,6 +356,7 @@ def refresh_plan_if_requested(config):
     stock_have = season_have(progress)
     try:
         verified_only = bool(config.cross_get(VERIFIED_KEY, default=True))
+        extra_meals = bool(config.cross_get(EXTRA_MEALS_KEY, default=False))
         shelf_slots = plan_shelf_slots(config)
         post_numbers = shop_post_numbers(config)
         if config.cross_get(MINE_KEY, default=True):
@@ -380,12 +384,12 @@ def refresh_plan_if_requested(config):
         plans = plan_all(season=season, shelf_slots=shelf_slots,
                          verified_only=verified_only, manual_shelf=manual_shelf,
                          stockpile=stockpile, stock_have=stock_have,
-                         post_numbers=post_numbers)
+                         post_numbers=post_numbers, extra_meals=extra_meals)
         values = config_key_values(plans)
         config.cross_set_many(values)
         save_generated(plans)
         logger.info(f"[岛屿-方案刷新] 已写入 {len(values)} 项配置（季节 {season}，"
-                    f"只排已验证商品 {verified_only}）")
+                    f"只排已验证商品 {verified_only}，额外餐品排产 {extra_meals}）")
         for shop, plan in plans.items():
             meals = '、'.join(f'{n}x{q}' for n, q in plan.meals) or '（空）'
             logger.info(f"[岛屿-方案刷新] {plan.cn_name}: 生产 {meals}；"

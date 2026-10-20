@@ -1930,6 +1930,12 @@ IslandPlan:
   PlanShelfSlots:
     type: input
     value: 4
+  # Add by MHY, 额外餐品排产：默认关闭。货架每格每天固定卖 per_slot 件，
+  # 不在货架上的商品卖不掉，用剩余工时生产它们只会占满槽位、把赛季囤积挤掉
+  PlanExtraMeals:
+    type: checkbox
+    value: false
+    option: [ true, false ]
 IslandFarm:
   Positions:
     value: 3

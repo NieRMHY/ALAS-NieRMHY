@@ -103,11 +103,64 @@ class TestPlanShop(unittest.TestCase):
         self.assertTrue(plan.shelf)
         self.assertTrue(set(plan.shelf) <= meals)
 
-    def test_shelf_sorted_by_price(self):
-        """货架按单格售价排序（不是利润/分钟）"""
-        plan = plan_shop('juu_eatery', season='autumn')
-        prices = [ECONOMY_PRODUCTS[n]['price'] for n in plan.shelf]
-        self.assertEqual(prices, sorted(prices, reverse=True))
+    def test_shelf_sorted_by_profit(self):
+        """货架按单件利润排序：每格每天固定卖 per_slot 件，一格收益 = 6 x 单件利润"""
+        for shop in ('restaurant', 'teahouse', 'juu_eatery', 'grill', 'juu_coffee'):
+            plan = plan_shop(shop, season='autumn')
+            profits = [ECONOMY_PRODUCTS[n]['profit'] for n in plan.shelf]
+            with self.subTest(shop=shop):
+                self.assertTrue(plan.shelf)
+                self.assertEqual(profits, sorted(profits, reverse=True))
+
+    def test_shelf_prefers_profit_over_price(self):
+        """售价高但单件利润低的商品不该排在售价低但利润高的前面。
+
+        货架每格每天固定卖 6 件，一格的价值是 6 x 单件利润；按售价排序会把
+        「进货贵」当成「赚得多」。洋葱蒸鱼售价 420 < 白菜豆腐汤 425，但单件利润
+        356.67 > 351.65（材料成本更低）。
+        """
+        cheap_price, high_price = 'onion_fish', 'cabbage_tofu'
+        self.assertLess(ECONOMY_PRODUCTS[cheap_price]['price'],
+                        ECONOMY_PRODUCTS[high_price]['price'])
+        self.assertGreater(ECONOMY_PRODUCTS[cheap_price]['profit'],
+                           ECONOMY_PRODUCTS[high_price]['profit'])
+        plan = plan_shop('restaurant', season='autumn',
+                         shelf_pool=[high_price, cheap_price],
+                         producible={high_price, cheap_price}, shelf_slots=1)
+        self.assertEqual(plan.shelf, [cheap_price])
+
+    def test_extra_meals_off_by_default(self):
+        """默认只排货架补货：不在货架上的商品卖不掉，排进清单只是白占槽位"""
+        plan = plan_shop('restaurant', season='autumn')
+        meals = {n for n, _ in plan.meals}
+        self.assertTrue(plan.shelf)
+        self.assertTrue(meals <= set(plan.shelf), f'多出非货架商品: {meals - set(plan.shelf)}')
+
+    def test_extra_meals_on_adds_items(self):
+        """打开开关才用剩余工时生产货架之外的额外商品"""
+        off = plan_shop('restaurant', season='autumn')
+        on = plan_shop('restaurant', season='autumn', extra_meals=True)
+        extra = {n for n, _ in on.meals} - set(on.shelf)
+        self.assertTrue(extra, '打开开关后应多出不在货架上的商品')
+        self.assertLessEqual(len(on.meals), planner.MEAL_SLOTS)
+        self.assertLess(len(off.meals), len(on.meals))
+
+    def test_stockpile_reserves_a_meal_slot(self):
+        """有囤积待排时留最后一格：货架 + 额外项本来会占满 8 格，囤积仍要排得进去。
+
+        真机风险：额外餐品循环排在囤积之前，8 格填满后囤积那段直接 break，
+        赛季任务永远排不进生产清单。
+        """
+        full = plan_shop('teahouse', season='autumn', extra_meals=True)
+        self.assertEqual(len(full.meals), planner.MEAL_SLOTS,
+                         '此用例依赖「额外项本身能填满 8 格」的前提')
+        plan = plan_shop('teahouse', season='autumn', extra_meals=True,
+                         stockpile={'apple_juice': 250}, stock_have={'apple_juice': 0})
+        names = {n for n, _ in plan.meals}
+        self.assertLessEqual(len(plan.meals), planner.MEAL_SLOTS)
+        self.assertIn('apple_juice', names)
+        self.assertEqual(plan.meals[-1], ('apple_juice', 250))
+        self.assertEqual(plan.stockpile, [('apple_juice', 250)])
 
     def test_seasonal_filter(self):
         """秋季方案不含春夏限定品"""

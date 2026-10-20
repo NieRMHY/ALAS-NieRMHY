@@ -956,6 +956,7 @@ class GeneratedConfig:
     IslandPlan_PlanVerifiedOnly = True  # True, False
     IslandPlan_PlanMineVerified = True  # True, False
     IslandPlan_PlanShelfSlots = 4
+    IslandPlan_PlanExtraMeals = False  # True, False
 
     # 配置组 `IslandFarm`
     IslandFarm_Positions = 3  # 1, 2, 3, 4
