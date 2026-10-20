@@ -1925,9 +1925,11 @@ IslandPlan:
     type: checkbox
     value: true
     option: [ true, false ]
+  # Modify by MHY, 默认 4：钻石店货架只有 4 格；默认 5 会让方案按 5 格排产，
+  # 多出来的那格游戏直接忽略
   PlanShelfSlots:
     type: input
-    value: 5
+    value: 4
 IslandFarm:
   Positions:
     value: 3

@@ -16521,7 +16521,7 @@
       },
       "PlanShelfSlots": {
         "type": "input",
-        "value": 5
+        "value": 4
       }
     },
     "IslandWalk": {
