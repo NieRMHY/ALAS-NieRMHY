@@ -134,6 +134,92 @@ class TestPlanShop(unittest.TestCase):
         self.assertTrue(all(q >= 2 for _, q in plan.meals))
 
 
+class TestPostNumberCapacity(unittest.TestCase):
+    """产能按各店岗位数算，不再是「每店 2 岗」的固定口径。
+
+    真机五家店的 PostNumber 都是 2，而代码默认值镜像 argument.yaml 是
+    2/2/1/1/2；旧的固定口径把 1 岗的店高估一倍产能，方案排到货架上的东西
+    根本做不出来。
+    """
+
+    def setUp(self):
+        fd, path = tempfile.mkstemp(suffix='.json')
+        os.close(fd)
+        os.remove(path)
+        self._orig = planner.UNPRODUCIBLE_FILE
+        planner.UNPRODUCIBLE_FILE = path
+
+    def tearDown(self):
+        try:
+            os.remove(planner.UNPRODUCIBLE_FILE)
+        except OSError:
+            pass
+        planner.UNPRODUCIBLE_FILE = self._orig
+
+    def test_capacity_follows_post_number(self):
+        self.assertEqual(planner.capacity_hours('grill', 1), 24.0)
+        self.assertEqual(planner.capacity_hours('grill', 2), 48.0)
+        # 缺省取 argument.yaml 的默认岗位数（烤肉/简餐 1，餐馆/白熊/咖啡 2）
+        self.assertEqual(planner.capacity_hours('grill'), 24.0)
+        self.assertEqual(planner.capacity_hours('restaurant'), 48.0)
+
+    def test_one_post_cuts_shelf_by_budget(self):
+        one = plan_shop('restaurant', season='autumn', post_number=1)
+        two = plan_shop('restaurant', season='autumn', post_number=2)
+        self.assertEqual((one.post_number, one.capacity_hours), (1, 24.0))
+        self.assertEqual((two.post_number, two.capacity_hours), (2, 48.0))
+        # 1 岗预算 21.6 时：装不下的货架商品要被裁掉
+        self.assertLess(len(one.shelf), len(two.shelf))
+        self.assertTrue(any('预算 21.6 时' in note for note in one.notes))
+
+    def test_plan_all_passes_post_numbers(self):
+        plans = plan_all(shops=['restaurant', 'grill'], season='autumn',
+                         post_numbers={'restaurant': 1, 'grill': 2})
+        self.assertEqual(plans['restaurant'].post_number, 1)
+        self.assertEqual(plans['grill'].post_number, 2)
+        self.assertIn('1 岗位 x 24 时', ' '.join(plans['restaurant'].notes))
+        self.assertIn('2 岗位 x 24 时', ' '.join(plans['grill'].notes))
+
+    def test_stockpile_keeps_target_and_reports_days(self):
+        """囤积目标数量照排，只用剩余日产能算「预计几天」。
+
+        MealNumber 是库存目标：写小了运行端做到那个数就停，而缺口没消失时不会再有
+        事件触发刷新，赛季任务会卡在半路。
+        """
+        one = plan_shop('grill', season='autumn', post_number=1,
+                        exclude={'crayfish_stir_fry'},
+                        stockpile={'stir_fried_chicken': 120},
+                        stock_have={'stir_fried_chicken': 20})
+        two = plan_shop('grill', season='autumn', post_number=2,
+                        exclude={'crayfish_stir_fry'},
+                        stockpile={'stir_fried_chicken': 120},
+                        stock_have={'stir_fried_chicken': 20})
+        for plan in (one, two):
+            self.assertEqual(plan.meals[-1], ('stir_fried_chicken', 120),
+                             '目标数量不该被产能截断')
+            self.assertEqual(plan.stockpile[-1], ('stir_fried_chicken', 120))
+        notes_one = ' '.join(one.notes)
+        notes_two = ' '.join(two.notes)
+        self.assertIn('预计', notes_one, '超一天的量要报预期天数')
+        self.assertIn('天完成', notes_one)
+        # 2 岗比 1 岗每天能做的多，预计天数更短
+        self.assertLess(self._days(notes_two), self._days(notes_one))
+
+    @staticmethod
+    def _days(notes):
+        """从说明里取「预计 X 天」的 X。"""
+        import re
+        match = re.search(r'预计 ([0-9.]+) 天完成', notes)
+        return float(match.group(1)) if match else 0.0
+
+    def test_stockpile_never_blocked_by_budget(self):
+        """预算装不下整件也照样排：不做 = 赛季任务永远不推进。"""
+        plan = plan_shop('restaurant', season='autumn', post_number=1,
+                         stockpile={'persimmon_cake': 120})
+        self.assertEqual(plan.meals[-1], ('persimmon_cake', 120))
+        self.assertIn('预计', ' '.join(plan.notes))
+
+
 class TestUnproducibleList(unittest.TestCase):
     """未解锁名单（方案侧的排除输入）"""
 

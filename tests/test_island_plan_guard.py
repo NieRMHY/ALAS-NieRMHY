@@ -137,5 +137,45 @@ class TestManualShelfSource(TempStateMixin, unittest.TestCase):
         self.assertEqual(refresh._manual_shelf(config), {})
 
 
+class TestPlanShelfSlots(unittest.TestCase):
+    """上架格数默认值：没配 PlanShelfSlots 时按店铺等级（钻石 4 格），不是写死的 5。"""
+
+    def test_unset_falls_back_to_shop_level(self):
+        self.assertEqual(refresh.plan_shelf_slots(FakeConfig()), 4)
+        config = FakeConfig({'IslandBusiness.IslandBusiness.ShopLevel': 'gold'})
+        self.assertEqual(refresh.plan_shelf_slots(config), 3)
+
+    def test_configured_value_wins(self):
+        config = FakeConfig({'IslandPlan.IslandPlan.PlanShelfSlots': 5})
+        self.assertEqual(refresh.plan_shelf_slots(config), 5)
+        config = FakeConfig({'IslandPlan.IslandPlan.PlanShelfSlots': 2})
+        self.assertEqual(refresh.plan_shelf_slots(config), 2)
+
+    def test_bad_value_falls_back_to_level(self):
+        config = FakeConfig({'IslandPlan.IslandPlan.PlanShelfSlots': 'abc',
+                             'IslandBusiness.IslandBusiness.ShopLevel': 'silver'})
+        self.assertEqual(refresh.plan_shelf_slots(config), 2)
+
+
+class TestRefreshShelfSlotsEnd2End(TempStateMixin, unittest.TestCase):
+    """未配置上架格数时，刷新写出的第 5 格必须是 None（钻石店只有 4 格）。"""
+
+    module = refresh
+    attr = 'GENERATED_FILE'
+
+    def test_fifth_slot_cleared_without_config(self):
+        config = FakeConfig({
+            'IslandPlan.IslandPlan.RefreshPlan': True,
+            'IslandPlan.IslandPlan.Season': 'autumn',
+            'IslandPlan.IslandPlan.PlanVerifiedOnly': False,
+            'IslandPlan.IslandPlan.PlanMineVerified': False,
+        })
+        self.assertTrue(refresh.refresh_plan_if_requested(config))
+        for index in '12345':
+            with self.subTest(shop=index):
+                self.assertEqual(
+                    config.values[f'IslandBusiness.IslandBusinessShop{index}.Product5'], 'None')
+
+
 if __name__ == '__main__':
     unittest.main()

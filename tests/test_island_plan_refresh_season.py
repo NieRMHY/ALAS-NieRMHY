@@ -51,8 +51,8 @@ class TestSeasonStockpile(unittest.TestCase):
     def test_season_have_feeds_capacity_estimate(self):
         """产能估算要按「还差多少」：仓库已有 248/270 不该按从零做 270 估。
 
-        真机：碳烤肉串就差 22 个却被估成 102 时，远超整店预算 43.2 时而被误判
-        「产能不足」整个跳过。
+        真机：碳烤肉串就差 22 个却被估成 102 时，远超整店一天的岗位工时（按岗位数
+        只有 1~2 个岗位 x 24 时）而被误判「产能不足」整个跳过。
         """
         self.assertEqual(
             self.module.season_have({'carrot_omelette': [86, 100], 'salad': [2100, 100]}),
@@ -80,9 +80,11 @@ class TestAutoRefreshOnGapChange(unittest.TestCase):
         island_plan_refresh.GAP_FILE = self.original
         self.tmp.cleanup()
 
-    def _call(self, gap):
+    def _call(self, gap, done=()):
         with patch.object(island_plan_refresh, 'current_progress', lambda config, season: {}), \
-                patch.object(island_plan_refresh, 'season_stockpile', lambda progress: gap):
+                patch.object(island_plan_refresh, 'season_stockpile', lambda progress: gap), \
+                patch.object(island_plan_refresh, 'season_done',
+                             lambda config, season: set(done)):
             return island_plan_refresh.request_refresh_on_gap_change(self.config, 'autumn')
 
     def test_flatten_gap(self):
@@ -115,6 +117,40 @@ class TestAutoRefreshOnGapChange(unittest.TestCase):
         self.config.reset_mock()
         self.assertFalse(self._call({'grill': {'steak_bowl': 70}}))
         self.config.cross_set.assert_not_called()
+
+    def test_gap_narrowing_without_done_change_is_noop(self):
+        """只是某项攒够了（缺口收窄成子集、done 没动）：仍不触发。"""
+        self._call({'grill': {'steak_bowl': 70, 'carnival': 20}})
+        self.config.reset_mock()
+        self.assertFalse(self._call({'grill': {'steak_bowl': 70}}))
+        self.config.cross_set.assert_not_called()
+
+    def test_ticking_done_requests_refresh(self):
+        """勾上「已完成」后该项从缺口消失（子集变化）：必须刷新，否则过期囤积占产能。"""
+        self._call({'grill': {'steak_bowl': 70}})
+        self.config.reset_mock()
+        self.assertTrue(self._call({}, done={'steak_bowl'}))
+        self.config.cross_set.assert_called_once()
+
+    def test_done_change_alone_requests_refresh(self):
+        """缺口没变、只有已完成集合变了，也要刷新（把该物品放回货架或停掉排产）。"""
+        self._call({'grill': {'steak_bowl': 70}})
+        self.config.reset_mock()
+        self.assertTrue(self._call({'grill': {'steak_bowl': 70}}, done={'steak_bowl'}))
+
+    def test_unticking_done_requests_refresh(self):
+        self._call({}, done={'steak_bowl'})
+        self.config.reset_mock()
+        self.assertTrue(self._call({}, done=()))
+
+    def test_snapshot_keeps_done_set(self):
+        """快照要记下已完成集合，否则每次都会认为「done 变了」。"""
+        self._call({'grill': {'steak_bowl': 70}}, done={'salad'})
+        gap, done = island_plan_refresh.load_gap()
+        self.assertEqual(gap, {'grill/steak_bowl'})
+        self.assertEqual(done, {'salad'})
+        self.config.reset_mock()
+        self.assertFalse(self._call({'grill': {'steak_bowl': 70}}, done={'salad'}))
 
 
 if __name__ == '__main__':

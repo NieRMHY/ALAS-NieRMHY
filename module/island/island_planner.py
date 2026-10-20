@@ -38,8 +38,47 @@ SHOP_TASKS = {
 MEAL_SLOTS = 8
 SHELF_SLOTS = 5
 MIN_STOCK = 2
-# 每店 2 个岗位 x 24 小时 = 48 时/天的生产上限（社区方案口径）
-CAPACITY_HOURS = 48.0
+# Modify by MHY, 产能按岗位数算：一个岗位一天 24 小时，不再按「每店 2 岗」写死
+POST_HOURS = 24.0
+# 各店岗位数默认值，镜像 argument.yaml 的 <Task>.PostNumber（餐馆/白熊/咖啡 2，烤肉/简餐 1）
+DEFAULT_POST_NUMBERS = {
+    'restaurant': 2,
+    'teahouse': 2,
+    'juu_eatery': 1,
+    'grill': 1,
+    'juu_coffee': 2,
+}
+def shop_post_number(shop, post_number=None):
+    """
+    本店实际岗位数：传入值优先，非法/缺省时取 DEFAULT_POST_NUMBERS。
+
+    Args:
+        shop: 店铺类型标识
+        post_number: 配置里的 <Task>.PostNumber；None 用默认值
+
+    Returns:
+        int: 岗位数（至少 1）
+    """
+    if post_number is not None:
+        try:
+            return max(int(post_number), 1)
+        except (TypeError, ValueError):
+            pass
+    return DEFAULT_POST_NUMBERS.get(shop, 2)
+
+
+def capacity_hours(shop, post_number=None):
+    """
+    本店每日岗位工时上限：岗位数 x 24 小时。
+
+    Args:
+        shop: 店铺类型标识
+        post_number: 岗位数；None 用默认值
+
+    Returns:
+        float: 每日可用岗位工时
+    """
+    return POST_HOURS * shop_post_number(shop, post_number)
 
 
 def load_unproducible(shop):
@@ -317,11 +356,14 @@ def merge_requirements(base_meals, extra_requirements, meals_slots=MEAL_SLOTS):
 class ShopPlan(object):
     """单店方案：生产清单 + 上架清单。"""
 
-    def __init__(self, shop, shop_level, season):
+    def __init__(self, shop, shop_level, season, post_number=None):
         self.shop = shop
         self.cn_name = SHOP_CN_NAMES.get(shop, shop)
         self.shop_level = shop_level
         self.season = season
+        # Modify by MHY, 岗位数决定本店每日产能上限，预算与报告都读这两个字段
+        self.post_number = shop_post_number(shop, post_number)
+        self.capacity_hours = POST_HOURS * self.post_number
         self.meals = []   # [(商品英文名, 目标库存)]
         self.shelf = []   # [商品英文名]
         self.notes = []   # [说明]
@@ -337,7 +379,7 @@ def plan_shop(shop, shop_level='diamond', season=None, warehouse=None,
               economy=None, producible=None, exclude=None, shelf_pool=None,
               stock_have=None,
               verified=None, manual_shelf=None, capacity_ratio=0.9,
-              stockpile=None):
+              stockpile=None, post_number=None):
     """
     生成单店方案。
 
@@ -355,15 +397,17 @@ def plan_shop(shop, shop_level='diamond', season=None, warehouse=None,
         verified: 已验证可生产商品集合；非 None 时生产清单只从中取
             （避免排进未解锁商品导致 GameStuckError 重启循环）
         manual_shelf: 用户/社区方案指定的上架商品，优先占格
-        capacity_ratio: 岗位工时预算占比（默认 0.9，即 43.2 时/天），超出则裁剪
+        capacity_ratio: 岗位工时预算占比（默认 0.9），预算 = 本店岗位数 x 24 时 x 占比，
+            超出则裁剪
         stockpile: {商品: 目标库存} 需要囤积的物品（赛季任务等）：用空闲产能生产，
             并且**不上架**，避免被卖掉或被每日订单/货运消耗
+        post_number: 本店岗位数（配置 <Task>.PostNumber）；None 取 DEFAULT_POST_NUMBERS
 
     Returns:
         ShopPlan
     """
     economy = economy or EconomyDatabase(season=season)
-    plan = ShopPlan(shop, shop_level, season)
+    plan = ShopPlan(shop, shop_level, season, post_number=post_number)
     if shelf_slots is None:
         # 默认按店铺等级的货架格数（钻石 4 格），多填的格子游戏会忽略
         shelf_slots = int(SHOP_LEVELS.get(shop_level, SHOP_LEVELS['diamond']).get('slots', SHELF_SLOTS))
@@ -406,7 +450,8 @@ def plan_shop(shop, shop_level='diamond', season=None, warehouse=None,
     # ---- 第二步：按货架排生产（含本店原料）----
     # 逐项按产能预算接纳：放不下就不上这个货架商品（货架与生产永远一致），
     # 避免出现「货架摆着、生产却没排」的空格子。
-    budget = CAPACITY_HOURS * capacity_ratio * 60
+    # Modify by MHY, 预算按本店岗位数算（原来固定按 2 岗 x 24 时，岗位 1 的店被高估一倍）
+    budget = plan.capacity_hours * capacity_ratio * 60
     shelf_keep, stock_only, seen = [], [], set()
 
     def requirements_of(names):
@@ -474,18 +519,21 @@ def plan_shop(shop, shop_level='diamond', season=None, warehouse=None,
     #  1) 不排除「已经是货架商品原料」的物品：原料需求按货架销量算，和赛季任务要
     #     交的数量不是一个量级，跳过就永远攒不够（真机：禽肉快炒停在 20/100）。
     #  2) 按「还差得最少」排序，一个个做：先做完的先释放产能。真机 grill 一次要
-    #     碳烤肉串(差 22 个=8.3 时) + 爆炒禽肉(差 100 个=76 时)，整店预算只有
-    #     43.2 时，一起排必然都排不下；顺序做则前者做完产能就让给后者。
+    #     碳烤肉串(差 22 个=8.3 时) + 爆炒禽肉(差 100 个=76 时)，而整店预算只有
+    #     岗位数 x 24 时 x 0.9，一起排必然都排不下；顺序做则前者做完产能让给后者。
     #  3) 估算按「还差多少」而不是目标总量：仓库已有 248/270 时不该按从零做 270
     #     来估（真机会因此误判产能不足）。排不下就按剩余产能做一部分。
     # 囤积是追加需求，merge_requirements 按 max 合并不会重复生产，正常上架销售
     # 不受影响——shelf 先定，囤积只用剩下的产能。
     # Add by MHY, 独占式：一个店一次只放**一件**赛季物品进生产清单，做完再做下一件。
     # 用户口径：绝对不能影响上架销售（货架份额是硬的），赛季任务慢慢排队即可。
-    # 为什么不按预算小时数判：真机 grill 货架本身只占 19.0 时（预算 43.2 时），
-    # 余量 24.2 时；而爆炒禽肉要 63.8 时、碳烤肉串要 65.6 时——按预算判就是
-    # 永远「排不下」、永远排队，一件也做不成。同时只放一件的话，货架那 19 时
-    # 份额不会被抢，那件做多久都只是慢，符合「时间足够」。
+    # 为什么不按「整件做完才算排得下」判：真机 grill 货架本身只占 19.0 时，剩下的
+    # 零头产能装不下整件（爆炒禽肉 63.8 时、碳烤肉串 65.6 时），按整件判就是永远
+    # 「排不下」、一件也做不成。
+    # Modify by MHY, 目标数量照排，产能只用来算「预计几天」：原来这里完全不看预算，
+    # 报告里会出现 149% 这种数字；但也不能反过来把目标数量截到当天做得完的量——
+    # MealNumber 是库存目标，写小了运行端做到就停，而缺口没消失时不会再触发刷新，
+    # 赛季任务会卡在半路。超一天的量运行端本来就会跨天继续做，如实报预期即可。
     # 顺序按「还差得少」：最接近完成的先做完，先释放位置给下一件。
     stock_have = dict(stock_have or {})
     for name, target in sorted(
@@ -500,13 +548,28 @@ def plan_shop(shop, shop_level='diamond', season=None, warehouse=None,
         if len(meals) >= meals_slots:
             break
         target = int(target)
-        remaining = max(0, target - int(stock_have.get(name, 0)))
+        have = int(stock_have.get(name, 0))
+        remaining = max(0, target - have)
         if remaining <= 0:
             # 已经攒够，不需要再生产；它仍留在囤积名单里（不上架、不被买走），
             # 等任务提交后由自动刷新放回货架
             continue
-        plan.notes.append(f'囤积 {economy.cn_name(name)}x{target}（还差 {remaining}）：'
-                          f'本轮独占排产，做完/提交后再排下一件')
+        # Modify by MHY, 目标数量照排，产能只用来算「要做几天」：
+        # MealNumber 是库存目标（配置帮助原文），写小了运行端做到那个数就停，而缺口
+        # 没消失时不会再有事件触发方案刷新——赛季任务会卡在半路，反而要人工兜底。
+        # 超过一天的量运行端本来就会跨天继续做，所以这里只报预期，不截断。
+        _, _, used = production_requirements(shop, meals, economy)
+        info = economy.get_product(name) or {}
+        time_min = float(info.get('time_min') or 0)
+        per_day = max(0.0, budget - used) / 60.0
+        days = (remaining * time_min / 60.0 / per_day) if per_day > 0 and time_min > 0 else 0.0
+        note = f'囤积 {economy.cn_name(name)}x{target}（还差 {remaining}，已有 {have}）'
+        if days > 1:
+            note += (f'：独占排产，货架之后约 {per_day:.1f} 时/天可用，'
+                     f'预计 {days:.1f} 天完成')
+        else:
+            note += '：本轮独占排产，做完/提交后再排下一件'
+        plan.notes.append(note)
         meals = meals + [(name, target)]
         seen.add(name)
         plan.stockpile.append((name, target))
@@ -521,7 +584,7 @@ def plan_shop(shop, shop_level='diamond', season=None, warehouse=None,
 def plan_all(shop_level='diamond', season=None, warehouse=None,
              shelf_slots=None, shops=None, extra_exclude=None,
              verified_only=False, manual_shelf=None, capacity_ratio=0.9,
-             stockpile=None, stock_have=None):
+             stockpile=None, stock_have=None, post_numbers=None):
     """
     生成全部店铺方案。
 
@@ -534,6 +597,9 @@ def plan_all(shop_level='diamond', season=None, warehouse=None,
         extra_exclude: {店铺: {商品}} 额外排除
         verified_only: 只排已验证可生产的商品
         manual_shelf: {店铺: [商品]} 用户指定的上架商品，优先占格
+        stockpile: {店铺: {商品: 目标库存}} 赛季任务等囤积目标
+        stock_have: {商品: 库存} 供囤积按「还差多少」估产能
+        post_numbers: {店铺: 岗位数} 各店实际岗位数；缺省用 DEFAULT_POST_NUMBERS
 
     Returns:
         dict: {店铺标识: ShopPlan}
@@ -552,7 +618,8 @@ def plan_all(shop_level='diamond', season=None, warehouse=None,
                               manual_shelf=(manual_shelf or {}).get(shop),
                               capacity_ratio=capacity_ratio,
                               stockpile=(stockpile or {}).get(shop),
-                              stock_have=stock_have)
+                              stock_have=stock_have,
+                              post_number=(post_numbers or {}).get(shop))
     # ---- 跨店原料回填：别店需要的原料排到生产店 ----
     for shop in order:
         _, cross, _ = production_requirements(shop, out[shop].meals, economy)
@@ -571,13 +638,15 @@ def plan_all(shop_level='diamond', season=None, warehouse=None,
                 f"跨店原料: {', '.join(usable)} 由 {SHOP_CN_NAMES.get(owner, owner)} 生产")
             out[owner].notes.append(
                 f"为 {SHOP_CN_NAMES.get(shop, shop)} 供应: {', '.join(usable)}")
-    # ---- 产能核算：每店 2 个岗位 x 24 小时 ----
+    # ---- 产能核算：各店岗位数 x 24 小时（Modify by MHY，不再按固定 2 岗算）----
     for shop in order:
         own, _, minutes = production_requirements(shop, out[shop].meals, economy)
         out[shop].minutes = minutes
+        cap = out[shop].capacity_hours
         out[shop].notes.append(
-            f'预计占用产能 {minutes / 60:.2f} 时（上限 {CAPACITY_HOURS} 时，'
-            f'{minutes / 60 / CAPACITY_HOURS * 100:.0f}%）')
+            f'预计占用产能 {minutes / 60:.2f} 时（上限 {cap:.1f} 时 = '
+            f'{out[shop].post_number} 岗位 x {POST_HOURS:.0f} 时，'
+            f'{minutes / 60 / cap * 100:.0f}%）')
     return out
 
 
@@ -711,7 +780,7 @@ def format_report(plans):
     lines = []
     for shop, plan in plans.items():
         lines.append(f'== {plan.cn_name}（{shop}, 等级 {plan.shop_level}, '
-                     f'季节 {plan.season or "未指定"}）==')
+                     f'{plan.post_number} 岗位, 季节 {plan.season or "未指定"}）==')
         if plan.meals:
             meals = ' ｜ '.join(f'{economy.cn_name(n)}x{q}' for n, q in plan.meals)
             lines.append(f'  生产清单: {meals}')
@@ -723,8 +792,9 @@ def format_report(plans):
         else:
             lines.append('  上架清单: （空）')
         if plan.minutes:
-            lines.append(f'  产能: {plan.minutes / 60:.2f} 时 / {CAPACITY_HOURS:.0f} 时 '
-                         f'({plan.minutes / 60 / CAPACITY_HOURS * 100:.0f}%)')
+            lines.append(f'  产能: {plan.minutes / 60:.2f} 时 / {plan.capacity_hours:.1f} 时 '
+                         f'({plan.minutes / 60 / plan.capacity_hours * 100:.0f}%，'
+                         f'{plan.post_number} 岗位)')
         for note in plan.notes:
             lines.append(f'  注: {note}')
     return '\n'.join(lines)

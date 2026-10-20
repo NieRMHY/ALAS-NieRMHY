@@ -135,7 +135,7 @@ flowchart TD
 | `island_rancher.py` | 磨坊 + 牧场 | `IslandRancher` | 按岗位固定饲料种类补磨坊加工（小麦→鸡饲料等）；`run()` 末尾内联 `IslandFishery(...).run(ranch_finish_times=...)` 合并计时器 |
 | `island_fishery.py` | 渔场养殖 | `IslandFishery` | 鱼苗商店分淡水/海水/其他页签；按每苗产量反推购买数；体力门槛 98 |
 | `island_mine_forest.py` | 矿山/林场 | `IslandMineForest` | 仓库顺序不固定，自实现「OCR 中文品名 → 读数字」库存扫描；每岗产 4 个、各产物有最大连续次数；体力门槛 80 |
-| `island_grill.py` | 乌鱼烤肉店 | `IslandGrill` | 最薄的店铺：仅声明 8 菜品、2 套餐、2 岗位，全部逻辑走基类 |
+| `island_grill.py` | 乌鱼烤肉店 | `IslandGrill` | 最薄的店铺：仅声明 8 菜品、2 套餐、2 个岗位按钮（实际岗位数由 `IslandGrill.PostNumber` 决定，默认 1），全部逻辑走基类 |
 | `island_teahouse.py` | 白熊饮品 | `IslandTeahouse` | 季节高优先级饮品走固定坐标（不滑动不比色）；「迎春花茶优先生产」开关；为手动配置的季节饮品补注册防止 KeyError |
 | `island_restaurant.py` | 有鱼餐馆 | `IslandRestaurant` | 季节菜品自动切换槽位；覆盖 `select_product` 支持固定坐标季节菜 |
 | `island_juu_coffee.py` | 啾咖啡 | `IslandJuuCoffee` | 牛奶为特殊材料，扩展仓库读取与 `deduct_materials`；Friedrich 特殊角色开关 |
@@ -206,11 +206,22 @@ flowchart TD
 - **已完成**：勾选后该餐品整体退出进度——不排产、不发邮件、不再被轮换成常驻餐品，空闲产能自动转去
   做下一个缺口最大的；取消勾选即恢复。需求数量改成 0 同样会停掉该项。提交任务后仓库数量掉下去、又
   重新出现缺口时，会再次触发方案刷新。
+- **方案刷新触发条件**（`request_refresh_on_gap_change`，两条件并列，任一成立即刷新）：
+  出现**新缺口**（要把该物品从货架挪进囤积），或**「已完成」集合与快照不同**。后者是必需的：
+  勾上「已完成」后该项从缺口集合里消失，只比较「是否出现新缺口」的旧判据看不见这种子集变化，
+  过期的大数量囤积项会一直留在生产清单里占产能（真机：蔬菜沙拉 x120、苹果汁 x270、拿铁 x120、
+  汉堡肉饭 x70 占掉当天产能的 43%~78%）。「只是攒够／缺口收窄」**仍然不触发**——那时物品正停在
+  囤积里、既不上架也不被买走，刷新反而把它推回货架、被买空后又成缺口，来回翻。快照同时记录缺口与
+  已完成集合（`config/island/island_season_gap.json`）；旧版快照的已完成集合恒为空，若你已经勾过
+  某项「已完成」，升级后第一次比对必然不同、会多触发一次刷新（可接受，正好把过期囤积清出生产清单）。
 - **`IslandSeasonPlan` 任务**：纯逻辑，不继承 `Island`、不碰设备；只做进度达标发一封邮件
   （`notify_ready_from_progress`，每项只提醒一次，进度回落后复位）、缺口出现新项时请求方案刷新、写日志。
   收餐会触发它，20 分钟限流，异常也必排下次运行。
 - **排产**：`season_stockpile` 按「需求 + `SEASON_BUFFER`」把缺口排进各店基础需求，`season_have` 供产能
-  估算；空闲产能生产逻辑（常驻餐品轮换、独占排产）不变，只是清单改读赛季表 + 配置。
+  估算；空闲产能生产逻辑（常驻餐品轮换、独占排产）不变，只是清单改读赛季表 + 配置。独占囤积物的
+  **目标数量照排、不截断**：`MealNumber` 是库存目标，写小了运行端做到那个数就停，而缺口没消失时
+  不会再有事件触发刷新，赛季任务会卡在半路；超过一天的量由运行端跨天继续做完，方案只按剩余日产能
+  算出「预计几天完成」写进说明（见下节）。
 - **新赛季上线（改代码，不是用户操作）**：在 `island_season_plan_data.SEASON_PLAN_TASKS` 里换餐品；
   `argument.yaml` 的 `IslandSeasonPlan` 为新餐品追加 `Need_<物品>` / `Done_<物品>`，补四语翻译，
   然后跑 `config_updater`。`tests/test_island_season_progress.py` 会检查赛季表里每个店铺餐品都有
@@ -219,6 +230,22 @@ flowchart TD
   若你手动把任务餐品放上货架，仓库数量会被持续消耗、永远攒不够。
 - **储备代码**：`island_season_plan_reader`（进开发季页读卡片）与 `island_season_submit`（读到卡片
   就地点击提交）不再接入任何任务，仅作储备；入口模板见 §16。
+
+### 方案生成器（island_planner）的产能与格数口径
+
+改动排产相关逻辑前先读这三条口径，它们都是被真机事故修正过的：
+
+- **产能 = 本店岗位数 × 24 时 × `capacity_ratio`**：岗位数读配置 `<Task>.<Task>.PostNumber`
+  （如 `IslandGrill.IslandGrill.PostNumber`），缺省值镜像 `argument.yaml`：餐馆/白熊/咖啡 2、
+  烤肉/简餐 1。旧版按「每店 2 岗 × 24 时」写死，1 岗的店被高估一倍产能——货架排上去了却做不出来。
+  `ShopPlan.post_number` / `ShopPlan.capacity_hours` 记录这两个值，容量日志与报告都读它们。
+- **囤积独占排产不截断目标数量**：见上节。旧版完全不看预算，报告里会出现「149%」这类数字；
+  现在用剩余日产能算出「预计 X 天完成」写进说明，目标数量与 `MealNumber` 语义（库存目标）保持不变。
+  货架份额永远优先：囤积项排在生产清单末尾，超一天的量由运行端跨天推进。
+- **上架格数**：`IslandPlan.PlanShelfSlots` 有值照用；没配时按 `IslandBusiness.ShopLevel` 对应
+  等级的 `SHOP_LEVELS[...]['slots']`（钻石 4 格；等级也读不到就退回钻石），不再写死 5——多出来的
+  那格游戏直接忽略，方案却按 5 格排产。注意 `argument.yaml` 里该配置的默认值是 5，所以「未配置」
+  只在配置里没有这个键时才成立。
 
 ## 7. 调用关系
 
@@ -295,6 +322,8 @@ stateDiagram-v2
 | `IslandPearlSell.BuyPrice` / `SellPrice` / `DailyPriceRefresh` | 数值/checkbox | 200 / 1000 / false | 珍珠交易价格阈值与每日刷新开关 |
 | `IslandCargoPreparation.Blacklist` | 文件串 | "Milk" | 货物黑名单（当前仅支持 Milk） |
 | `IslandPlan.IslandWalk.*` | 多行文本（走位规则） | 见 `module/island/island_walk.py` | 每条路线的走位规则，如 `up 3000, right 800, jump`（对所有控制方式生效）；`<路线>Enable` 勾选后由「全局配置」任务走一遍做校验 |
+| `IslandPlan.PlanShelfSlots` / `PlanVerifiedOnly` / `PlanMineVerified` | input/checkbox | 5 / true / true | 方案生成参数：上架格数（见 §6.5 口径，未配置时按店铺等级）、只排已验证可生产的商品、刷新前从日志挖掘白名单 |
+| `IslandRestaurant/Teahouse/Grill/JuuEatery/JuuCoffee.PostNumber` | 数值 | 2/2/1/1/2 | 各店岗位数，方案生成器的日产能上限 = 岗位数 × 24 时 × 0.9（真机五家店都填 2） |
 
 关联关系：季节是唯一贯穿所有模块的横切配置，由 `SeasonConfig` 在各任务 `__init__` 时读取并缓存；店铺类任务的 `Meal{i}`+`MealNumber{i}` 成对声明 8 个排产槽位；`WorkerFilter`/`ChefFilter` 均为 `>` 分隔的角色优先级串，`WorkerJuu`（工作啾）作为通用回退。
 
