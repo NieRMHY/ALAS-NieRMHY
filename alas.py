@@ -784,7 +784,14 @@ class AzurLaneAutoScript:
     def run(self, command, skip_first_screenshot=False):
         """任务调用边界同时隔离资源归因，恢复和清油调用各自拥有独立记录。"""
         from module.statistics.resource_flow import task_session
-        with task_session(self.config_name, inflection.camelize(inflection.underscore(command))):
+        from module.campaign.recovery import campaign_recovery_scope
+        recovery = self.__dict__.get('_campaign_recovery')
+        if recovery is not None and inflection.underscore(command) not in (
+                'restart', inflection.underscore(recovery.runner.config.task.command)):
+            logger.info('[战役续接] 已切换到其他任务，丢弃原关卡续接凭据')
+            self._campaign_recovery = None
+        with task_session(self.config_name, inflection.camelize(inflection.underscore(command))), \
+                campaign_recovery_scope(self):
             return self._run(command, skip_first_screenshot)
 
     def _run(self, command, skip_first_screenshot=False):
@@ -817,6 +824,19 @@ class AzurLaneAutoScript:
             # screencap 会 no-frame，导致永远执行不到 restart() -> app_restart()。
             if not skip_first_screenshot and command != 'restart':
                 self.device.screenshot()
+            # 异常重启后保留的原关卡：Restart 已完成时由原任务直接接管，不再进入新的战役调用。
+            # 渠道服悬浮球检查属本地剔除体系，续接分支无需为其让路。
+            recovery = self.__dict__.get('_campaign_recovery')
+            if recovery is not None and command != 'restart':
+                self._campaign_recovery = None
+                if recovery.ready and recovery.matches(self.config):
+                    self._resuming_campaign_recovery = recovery
+                    try:
+                        recovery.resume(self.config, self.device)
+                    finally:
+                        self._resuming_campaign_recovery = None
+                    return True
+                logger.warning('[战役续接] 重启未完成、凭据过期或配置已改变，回退原任务流程')
             self.__getattribute__(command)()
             return True
         except StorageStatisticsError as e:
@@ -825,7 +845,7 @@ class AzurLaneAutoScript:
             return False
         except MindCalculatorScanError as e:
             logger.error_context(
-                title='心智单元船坞扫描未完成', reason=str(e), exc=e,
+                title='舰船科技扫描未完成' if command == 'fleet_tech_scan' else '心智单元船坞扫描未完成', reason=str(e), exc=e,
                 impact='本次扫描结束，保留上次完整舰船清单，不重启模拟器。',
                 action='查看错误截图和具体原因，确认船坞布局及控制方式后重新启动扫描。',
                 level=50,
@@ -1229,7 +1249,25 @@ class AzurLaneAutoScript:
         from module.handler.login import LoginHandler
         if self.delay_due_restart():
             return
-        LoginHandler(self.config, device=self.device).app_restart()
+        login = LoginHandler(self.config, device=self.device)
+        recovery = self.__dict__.get('_campaign_recovery')
+        if recovery is not None and (recovery.ready or not recovery.matches(
+                self.config, task=recovery.runner.config.task.command)):
+            logger.info('[战役续接] 重启来源或原任务配置已改变，丢弃续接凭据')
+            self._campaign_recovery = None
+            recovery = None
+        if recovery is not None and recovery.restart_attempts >= recovery.MAX_ATTEMPTS:
+            logger.warning('[战役续接] 关联 Restart 次数已达上限，停止续接并回退原重启流程')
+            self._campaign_recovery = None
+            recovery = None
+        if recovery is not None:
+            recovery.restart_attempts += 1
+            recovery.bind_device(self.device)
+            login.campaign_recovery_check = recovery.runner.campaign.auto_search_recovery_state
+        login.app_restart()
+        if recovery is not None:
+            recovery.ready = True
+            logger.info('[战役续接] 异常 Restart 已完成，等待原任务接管')
         self.delay_next_restart()
 
     def restart_random_delay_minutes(self):
@@ -1576,35 +1614,29 @@ class AzurLaneAutoScript:
         from module.campaign.os_run import OSCampaignRun
         OSCampaignRun(config=self.config, device=self.device).opsi_daily_delay()
 
-    def main(self):
+    def _run_campaign(self):
+        """主线与普通活动槽位的战役调用；断点由公共 CampaignRun 保存。"""
         from module.campaign.run import CampaignRun
         CampaignRun(config=self.config, device=self.device).run(
             name=self.config.Campaign_Name, folder=self.config.Campaign_Event, mode=self.config.Campaign_Mode)
+
+    def main(self):
+        self._run_campaign()
 
     def main2(self):
-        from module.campaign.run import CampaignRun
-        CampaignRun(config=self.config, device=self.device).run(
-            name=self.config.Campaign_Name, folder=self.config.Campaign_Event, mode=self.config.Campaign_Mode)
+        self._run_campaign()
 
     def main3(self):
-        from module.campaign.run import CampaignRun
-        CampaignRun(config=self.config, device=self.device).run(
-            name=self.config.Campaign_Name, folder=self.config.Campaign_Event, mode=self.config.Campaign_Mode)
+        self._run_campaign()
 
     def event(self):
-        from module.campaign.run import CampaignRun
-        CampaignRun(config=self.config, device=self.device).run(
-            name=self.config.Campaign_Name, folder=self.config.Campaign_Event, mode=self.config.Campaign_Mode)
+        self._run_campaign()
 
     def event2(self):
-        from module.campaign.run import CampaignRun
-        CampaignRun(config=self.config, device=self.device).run(
-            name=self.config.Campaign_Name, folder=self.config.Campaign_Event, mode=self.config.Campaign_Mode)
+        self._run_campaign()
 
     def event3(self):
-        from module.campaign.run import CampaignRun
-        CampaignRun(config=self.config, device=self.device).run(
-            name=self.config.Campaign_Name, folder=self.config.Campaign_Event, mode=self.config.Campaign_Mode)
+        self._run_campaign()
 
     def raid(self):
         from module.raid.run import RaidRun
@@ -1711,6 +1743,10 @@ class AzurLaneAutoScript:
     def mind_calculator_scan(self):
         from module.retire.mind_scan import MindCalculatorScan
         MindCalculatorScan(config=self.config, device=self.device, task="MindCalculatorScan").run()
+
+    def fleet_tech_scan(self):
+        from module.retire.fleet_tech_scan import FleetTechScan
+        FleetTechScan(config=self.config, device=self.device, task="FleetTechScan").run()
 
     def game_manager(self):
         from module.daemon.game_manager import GameManager

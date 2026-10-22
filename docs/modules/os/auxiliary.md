@@ -36,6 +36,7 @@
 ```
 module/os_handler/    # 约 3000 行，12 个功能文件 + assets
 ├── action_point.py   # 行动力面板全套（读/买/限/溢出）
+├── resource_state.py # 任务上下文、库存版本与运行期缓存失效
 ├── map_event.py      # MapEventHandler：地图事件、舰队锁开关、自动搜索收尾
 ├── storage.py        # StorageHandler：大世界仓库（隐秘坐标/修理/日志仪）
 ├── os_status.py      # OSStatus：黄币/紫币 OCR 与任务上下文判断
@@ -101,17 +102,21 @@ module/os_simulator/
 
 | 类 | 要点 |
 | --- | --- |
-| `AshCombat(Combat)` | 战斗中持续采集信标收集进度（`ash_collect_status`，`DailyDigitCounter` 左裁剪适配信标数字） |
+| `AshCombat(Combat)` | META 战斗中的战斗状态、战前检查及完成信号处理 |
+| `OSAsh(UI, MapEventHandler)` | 地图侧读取信标持有量与每日进度；`AshDigitCounter` 核对持有量的计数格式、范围和完整字形数量，`DailyDigitCounter` 裁掉每日进度左侧文字 |
 | `Meta(UI, MapEventHandler)` | META 页面基类；`MetaState` 枚举（INIT/ATTACKING/COMPLETE/UNDEFINED）驱动页面状态机 |
 | `OpsiAshBeacon(Meta)` | 信标攻击任务：`ui_ensure(page_reward)` → 攻击 → `MetaReward` 领奖 → `task_delay(server_update=True)` → **必须 `ui_goto_main`**（MetaReward 停在 META 页，不回主界面会让下一个任务页面识别失败） |
 | `AshBeaconAssist(Meta)` | 协助好友信标：成功领奖延迟到服务器刷新，失败 `task_delay(minute=(10, 20))` 重试 |
-| `handle_ash_beacon_attack()` | 在大世界战斗链路中调用：收集 ≥100 且可调度时 `task_call('OpsiAshBeacon')`；`AttackMode=current_dossier_only`（只打档案）时不触发——该模式下信标数据永不消耗，触发条件会永久成立并反复打断智能调度|
+| `handle_ash_beacon_attack()` | 在大世界战斗链路中调用：持有量通过字形校验、≥100 且可调度时 `task_call('OpsiAshBeacon')`；读数不可信时不覆盖 META 排期。`AttackMode=current_dossier_only`（只打档案）时不触发——该模式下信标数据永不消耗，触发条件会永久成立并反复打断智能调度 |
+
+地图持有量不能只信任 OCR 文本：两位数若被补出百位，会反复召回数据不足的 META 任务，并中断正在执行的自动搜索。`AshDigitCounter` 用同一原生字图的完整连通字形数核对文字长度，拒绝不一致或越界结果，不截掉首位猜数；下一张地图截图可重新识别。持有量无效时仍独立读取每日进度，已达每日上限的状态继续用于侵蚀一行动力保留判断。离线回归与匿名原生字图见 `tests/test_opsi_ash_status.py`、`tests/fixtures/opsi_beacon/`。
 
 `OpsiAshBeacon.AssistRequestLimit` 替代原「一击即走」开关：`0`（默认）打一刀后持续每半小时求援；`-1` 自行连续出击，是否求援仍由 `RequestAssist` 控制；正整数在求援指定轮数、最后等待半小时后，若信标仍未击破则自行连续打完。首次战斗前的求援计入，好友/大舰队/世界的一次操作合计一轮。正整数模式将轮数及下次检查时刻保存到隐藏的 `AssistRequestState`，防止首刀后立即重复计数，并在重启后继续；确认信标为空或本信标奖励领取完毕时清除。META 主入口、每日刷新和档案信标不会自行清零该记录。旧布尔值迁移为 `true → 0`、`false → -1`。离线回归见 `tests/test_meta_beacon.py`。
 
 ### os_combat
 
 - `ContinuousCombat`：塞壬扫描装置触发的连续战斗控制流异常，守护与任务循环捕获后继续。
+- `auto_search_combat(drop)`：自动搜索战斗的加载/执行两阶段循环。执行阶段确认 S/A/B/C/D 经验结算页不再受 `OpsiGeneral_RepairThreshold` 门控——关闭自动修理时也必须点掉结算页，否则战斗会停在该页直到卡死重启；点击沿用战斗结算冷却，不再用固定休眠猜测页面已关闭。战斗结束返回地图后记录 2 秒过渡窗口，期间不操作地图自律开关，避免按钮仍是界面重建的过渡外观时把仍在执行的自律寻敌点停（塞壬装置「探测敌人」连续战斗即触发该场景）。离线回归见 `tests/test_opsi_auto_search_combat.py`，夹具为故障截图脱敏。
 - `Combat(Combat_, MapEventHandler)` 覆写四个关键点：`_handle_auto_battle_status_s`（S 评价页自动点击，`battle_status_s_autoclick_delay` 可被子类改短）、`_os_combat_expected_end`（预期结束判定，大世界守护优先点 AUTO_SEARCH_REWARD）、`combat_status` 的结束判定、`handle_exp_info`。普通守护任务若用 `expected_end='no_searching'` 在大世界永不成立，会卡死在奖励页——`os_daemon` 的注释记录了这个坑。
 
 ### os_shop
@@ -183,6 +188,18 @@ OpsiAshBeacon.run() → META 页攻击 → MetaReward 领奖 → task_delay(serv
 
 ## 8. 数据流
 
+石油购买缓存按实例与服务器周记录实际已购数，配置上限增减不重置实际次数；已达上限或月末封锁直接跳过石油选项，无效计数不当作买满。`OpsiHazard1Leveling.ActionPointCheckInterval` 与 `SkipStrategicSearchCheck` 位于献祭流血量开关下方，旧通用配置值自动迁移。常规行动力仅在定时到期时从已有地图帧后台读取；0 关闭定时读取。未到期不截图、不 OCR，按已确认的出击扣减库存下界；奖励增加箱子不强制开面板。首次确认、补给和恢复仍实时读取，开箱与购买后确认实际值。
+
+侵蚀一与短猫的事件检索通过 `wait_until_walk_stable(allow_event_finish=True)` 在商店正常退出、最终领奖、档案领取或战斗处理完成后，用新截图确认地图及计划作战入口并快速收尾。后续选项会撤销旧完成标记，意外页面恢复仍要求重新定位；下一轮保留任务收尾、EMP、修理和任务切换检查；同一海域完成事件后复用刚确认的地图位置，省略开工前重复的海域名称 OCR，随即进入计划作战。
+
+地图黄币使用 `resource_read.py` 的有界后台队列识别固定截图，两张有效地图帧同值才接受；每次最多一个待识别帧。地图不显示商店紫币栏，不识别或记录该区域，也不以紫币结果阻塞黄币。侵蚀一与短猫都会验收结果，数字变化后重新采样。识别器状态与按钮坐标在提交时复制，实例、服务器、货币修订不匹配，以及数字变化或同步确认之前采样的结果均丢弃；在途任务保留队列槽，完成后排空，不堆积替代任务。
+
+`get_routine_yellow_coins()` 只有在当前数字区域、实例、服务器、页面及交易修订均与已确认值相同时才复用；变化后先同步双读再决定补币或返回侵蚀一，不能直接返回 `_last_yellow_coins`。到期时后台同帧附带当前行动力，扣除采样后的已知消耗，补给后拒绝旧结果。当前行动力只更新运行判断、库存观察和仪表盘；只有本次完整面板确认的含箱总量进入行动力与资产统计，不能用旧配置或缓存箱子补齐。海里数独立记录，不附带估算行动力。商店预算及开箱决策保留同步识别。
+
+代理任务可能已经结算奖励或购买物品，但运行器仍保留进入任务前的截图。`OpsiScheduling._run_with_opsi_task_context()` 因此在 `finally` 中更新货币修订，使旧预算和在途结果失效；覆盖正常返回、`TaskEnd`、异常及防溢出嵌套代理。下一次黄币预算必须通过新截图重新确认，不能只比较旧截图上的数字区域。独立隐秘、深渊、要塞等不启用常规缓存，直接沿同步预算读取。
+
+资源观察、收支复核及仪表盘保存由 `resource_write.py` 串行提交；固定采样时间和任务上下文，后台只事务合并仪表盘字段，不修改运行中的配置对象。收支复核按采样时间计算已发生交易，旧观察不能覆盖新读数。后台确认侵蚀一黄币低于当前保留值时，由主线程通过 `interrupt_auto_search(goto_main=False, end_task=False)` 返回地图，智能调度下一轮立即执行补币决策；补币任务不被自己的低黄币状态打断。后台正常采样使用 `ocr_batch(..., show_log=False)`，不输出逐帧批量结果和黄币确认日志；`[大世界-资源后台]` 仅保留识别异常与低币切换提示。离线回归见 `tests/test_opsi_background_resources.py`。
+
 ```
 行动力面板截图 → OCR(当前/总/购买次数) → ActionPointLimit 或放行
 货架截图 → ItemGrid(名称/价格/数量) → Selector 过滤 → 购买点击 → 货币 OCR 校验
@@ -196,6 +213,7 @@ META 页截图 → MetaState 状态机 → 攻击/领奖循环
 | 配置 | 说明 |
 | --- | --- |
 | `OpsiGeneral.BuyActionPointLimit` 等行动力参数 | 决定 `action_point_buy` 的行为 |
+| `OpsiHazard1Leveling.ActionPointCheckInterval` | 非负整数分钟，默认 0 关闭定时读取；侵蚀一、智能调度和短猫共用 |
 | `OpsiAshBeacon.*`（Enable/AttackMode/EnsureFullyCollected） | 信标任务开关与触发条件 |
 | `OpsiMeowfficerFarming.OpsiShopFilter` 等货架策略 | 经 `Selector` 生效 |
 | `OpsiSimulator.OpsiSimulatorParameters.*` | 模拟器参数（仅模拟器读取） |
@@ -280,3 +298,7 @@ if self.appear(PORT_ENTER, offset=(20, 20), interval=30):
 - [商店系统](../game/shop.md) —— 通用商店框架与 `ShopClerk` 的复用关系
 - [战斗系统](../combat.md) —— `Combat_` 基类与本页 `os_combat` 的适配关系
 - [统计与数据提交](../infra/statistics.md) —— 黄币/紫币写入 LogRes 的去向
+
+配置页效果（模拟服务）：
+
+![侵蚀一资源检查配置](images/cl1-resource-settings.png)

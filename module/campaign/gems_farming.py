@@ -25,10 +25,11 @@ from module.campaign.fleet_selection import FleetSelectionMixin
 from module.campaign.run import CampaignRun
 from module.combat.assets import BATTLE_PREPARATION
 from module.combat.emotion import Emotion
+from module.config.time_source import now as current_time
 from module.equipment.assets import EMPTY_SHIP_R, FLEET_DETAIL, FLEET_DETAIL_CHECK, FLEET_NEXT, FLEET_PREV
 from module.equipment.equipment_code import EquipmentCodeHandler
 from module.equipment.fleet_equipment import FleetEquipment, OCR_FLEET_INDEX
-from module.exception import CampaignEnd, HardNotSatisfied, ScriptError, RequestHumanTakeover
+from module.exception import CampaignEnd, HardNotSatisfied, ScriptEnd, ScriptError, RequestHumanTakeover
 from module.retire.retirement import Retirement
 from module.retire.assets import (
     DOCK_CHECK,
@@ -82,6 +83,14 @@ class GemsEmotion(Emotion):
             fleet_index (int): 舰队编号。
         """
         pass
+
+    def check_fleet(self, fleet_index, after_restart=False):
+        """续接预检不足时交回紧急委托换船，不安排普通任务的心情等待。"""
+        if not after_restart:
+            return super().check_fleet(fleet_index)
+        if self.is_calculate and self._check_fleet(fleet_index) > current_time():
+            self.config.GEMS_EMOTION_TRIGGERED = True
+            raise ScriptEnd('[战役-紧急委托] 续接舰队心情不足，撤退后换船')
 
 
 class GemsCampaignOverride(CampaignBase):
@@ -704,11 +713,14 @@ class GemsFarming(FleetSelectionMixin, CampaignRun, FleetEquipment, GemsEquipmen
         # 解决脚本以 32 级旗舰启动但未退役的问题。
         initial_check = (
             self.change_flagship
+            and not self.__dict__.get('_resume_campaign_run', False)
             and not self.config.GemsFarming_AllowHighFlagshipLevel
             and not GemsFarming._initial_flagship_check_done
         )
         while 1:
-            self._trigger_lv32 = initial_check
+            resuming = self.__dict__.get('_resume_campaign_run', False)
+            if not resuming:
+                self._trigger_lv32 = initial_check
             initial_check = False
             is_limit = self.config.StopCondition_RunCount
             try:
@@ -735,6 +747,9 @@ class GemsFarming(FleetSelectionMixin, CampaignRun, FleetEquipment, GemsEquipmen
                     self.campaign.ensure_auto_search_exit()
                     self.config.task_delay(minute=60)
                     self.config.task_stop()
+
+            if resuming and self.campaign.config.GEMS_EMOTION_TRIGGERED:
+                self._trigger_emotion = True
 
             # 结束条件
             if self._trigger_lv32 or self._trigger_emotion:

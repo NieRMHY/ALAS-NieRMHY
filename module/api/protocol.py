@@ -103,6 +103,31 @@ class InstanceParams(Params):
     instance: StrictStr = Field(min_length=1, max_length=64)
 
 
+def _partial_update_schema(schema):
+    """局部更新的缺失字段必须保持缺失，禁止客户端填入默认 null。"""
+    for field in schema.get('properties', {}).values():
+        field.pop('default', None)
+
+
+class FleetTechChange(Params):
+    """只修改明确提供的人工字段；恢复自动记录使用独立标记。"""
+    model_config = ConfigDict(extra='forbid', strict=True, json_schema_extra=_partial_update_schema)
+    group_type: StrictInt = Field(ge=1)
+    owned: StrictBool | None = None
+    full_star: StrictBool | None = None
+    lv120: StrictBool | None = None
+    level: StrictInt | None = Field(default=None, ge=1, le=125)
+    restore: StrictBool = False
+    toggle: Literal['owned', 'complete', 'star'] | None = None
+    target: StrictBool | None = None
+
+
+class FleetTechPatchParams(InstanceParams):
+    revision: StrictStr = Field(min_length=64, max_length=64)
+    changes: list[FleetTechChange] = Field(default_factory=list, max_length=1000)
+    nations: dict[str, StrictInt | None] = Field(default_factory=dict, max_length=4)
+
+
 class MindCalculateParams(InstanceParams):
     ships: list[MindShip] = Field(max_length=5000)
 

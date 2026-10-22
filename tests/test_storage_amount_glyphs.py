@@ -56,6 +56,20 @@ class GrayAmountTests(unittest.TestCase):
             with self.subTest(fill=fill):
                 self.assertIsNone(self.catalog.gray_digits.classify(np.full((24, 20), fill, dtype=np.uint8)))
 
+    def test_native_gold_frame_combines_gray_digits_and_connected_binary_digits(self):
+        # 独立原始帧：8/9 需要灰度匹配，粘连的 71/77 需要二值拆分，不新增训练模板。
+        rows = recognize_rows(load_image(str(FIXTURES / 'live_connected_gold_amounts.png')),
+                              self.catalog, target_only=True)
+        self.assertEqual({card.identifier: card.amount for row in rows for card in row if card.identifier}, {
+            'PlateGunT4': 104, 'PlateTorpedoT4': 1732, 'PlateAntiAirT4': 980, 'PlatePlaneT4': 1750,
+            'PrototypeGearPartsT4': 767, 'Ultra_High_Purity_Metals': 5126,
+            'Military_Grade_Electronic_Components': 3683, 'HBX_Blend_Gunpowder': 3865,
+            'High_Durability_Elastomers': 5759, 'Superconductive_Metals': 4296,
+            'Corrosion_Resistant_Alloys': 5396, 'GearDesignPlanGunT4': 716,
+            'GearDesignPlanTorpedoT4': 871, 'GearDesignPlanAntiAirT4': 913,
+            'GearDesignPlanPlaneT4': 779, 'SecretDesignPlanT4': 794})
+        self.assertTrue(all(card.error is None for row in rows for card in row))
+
 
 if __name__ == '__main__':
     unittest.main()

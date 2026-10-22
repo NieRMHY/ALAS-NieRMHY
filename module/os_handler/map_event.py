@@ -14,6 +14,7 @@ from module.logger import logger
 from module.os.assets import GLOBE_GOTO_MAP
 from module.os_handler.assets import *
 from module.os_handler.enemy_searching import EnemySearchingHandler
+from module.os_handler.resource_state import reset_resource_caches
 from module.statistics.azurstats import DropImage
 from module.ui.assets import BACK_ARROW
 from module.ui.switch import Switch
@@ -236,6 +237,7 @@ class MapEventHandler(EnemySearchingHandler):
                 self._story_timeout.reset()
 
                 # 重启应用
+                reset_resource_caches(self)
                 self.device.app_stop()
                 self.device.app_start()
 
@@ -370,6 +372,26 @@ class MapEventHandler(EnemySearchingHandler):
         if timer is not None:
             timer.clear()
 
+    _os_auto_search_battle_settle_time = 2
+
+    def _os_auto_search_battle_settle_start(self):
+        """记录一场战斗刚刚结束。
+
+        战斗结算返回地图后的短暂时间内，自律寻敌按钮可能仍显示关闭外观
+        但游戏尚未完成状态切换，此时点击会把仍在执行的自律寻敌点停。
+        """
+        if '_os_auto_search_battle_settle_timer' not in self.__dict__:
+            self._os_auto_search_battle_settle_timer = Timer(
+                self._os_auto_search_battle_settle_time)
+        self._os_auto_search_battle_settle_timer.reset()
+
+    def _os_auto_search_battle_settling(self):
+        """是否处于战斗结算返回地图后的过渡窗口。"""
+        timer = self.__dict__.get('_os_auto_search_battle_settle_timer')
+        if timer is None:
+            return False
+        return not timer.reached()
+
     def handle_os_auto_search_map_option(self, drop=None, enable: Optional[bool] = True):
         """
         处理大世界自动搜索地图选项。
@@ -414,6 +436,10 @@ class MapEventHandler(EnemySearchingHandler):
         if enable is None:
             pass
         elif enable:
+            if self._os_auto_search_battle_settling():
+                # 战斗结算刚回到地图，按钮可能还是界面重建的过渡外观；
+                # 此期间点击会把仍在执行的自律寻敌关掉，等状态稳定后再处理。
+                return False
             click_interval = 0.5 if fast_farming else 3
             if click_interval < 3:
                 # 剧情可能透出地图按钮，先处理剧情；回到地图后才重试开启自律。

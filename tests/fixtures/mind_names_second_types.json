@@ -1,0 +1,102 @@
+[
+  {
+    "name": "约克城II",
+    "source_sha256": "9e678d03df2c21e120912cddc27478080065713ee02fe07aee9de572a65a3b1f",
+    "source_size": [
+      1280,
+      720
+    ],
+    "region": [
+      742,
+      414,
+      894,
+      444
+    ],
+    "atlas_region": [
+      0,
+      0,
+      152,
+      30
+    ]
+  },
+  {
+    "name": "列克星敦II",
+    "source_sha256": "9e678d03df2c21e120912cddc27478080065713ee02fe07aee9de572a65a3b1f",
+    "source_size": [
+      1280,
+      720
+    ],
+    "region": [
+      906,
+      414,
+      1058,
+      444
+    ],
+    "atlas_region": [
+      0,
+      30,
+      152,
+      60
+    ]
+  },
+  {
+    "name": "约克城II",
+    "source_sha256": "6cd1dc74c6560f8a0cff0e8c0b92c78cecacfc87801df75c6f9a45f8f6fb0ab0",
+    "source_size": [
+      1280,
+      720
+    ],
+    "region": [
+      742,
+      455,
+      894,
+      485
+    ],
+    "atlas_region": [
+      0,
+      60,
+      152,
+      90
+    ]
+  },
+  {
+    "name": "列克星敦II",
+    "source_sha256": "6cd1dc74c6560f8a0cff0e8c0b92c78cecacfc87801df75c6f9a45f8f6fb0ab0",
+    "source_size": [
+      1280,
+      720
+    ],
+    "region": [
+      906,
+      455,
+      1058,
+      485
+    ],
+    "atlas_region": [
+      0,
+      90,
+      152,
+      120
+    ]
+  },
+  {
+    "name": "北安普敦II",
+    "source_sha256": "1ca0337c04838b85bb3dc8795092afbf363a4a99e2288f2a16d21089383fd7b8",
+    "source_size": [
+      1280,
+      720
+    ],
+    "region": [
+      577,
+      694,
+      729,
+      720
+    ],
+    "atlas_region": [
+      0,
+      120,
+      152,
+      146
+    ]
+  }
+]

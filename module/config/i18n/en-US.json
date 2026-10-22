@@ -414,6 +414,10 @@
       "name": "Cognitive chip dock scan",
       "help": "Scan a CN dock at 1280×720 and review results in the cognitive chip calculator. Keeps old data until completion; resets dock filters."
     },
+    "FleetTechScan": {
+      "name": "Fleet technology scan",
+      "help": "Record ship identities and levels independently of cognitive chip exclusions."
+    },
     "Daemon": {
       "name": "Semi-Auto Click",
       "help": ""
@@ -1928,6 +1932,7 @@
       "event_20260625_cn": "Miracle by Midnight",
       "event_20260813_cn": "Depths of the Astrarium",
       "event_20260908_cn": "Tales of the Paranormal",
+      "event_20261022_cn": "Tempesta and the Corridor of Mist",
       "raid_20200624": "Air Raid Drills with Essex Rerun",
       "raid_20210708": "Cross Wave rerun",
       "raid_20220127": "Mystery Investigation",
@@ -2006,6 +2011,10 @@
     "UseAutoSearch": {
       "name": "Use auto-search",
       "help": ""
+    },
+    "ContinueAfterRestart": {
+      "name": "Continue battle after restart",
+      "help": "Available for main and event map tasks, including daily event stages, SP, urgent commissions and three-oil farming; off by default. Requires clearing mode and auto search. After an abnormal restart returns to the original map, enable auto search and account for morale normally in each subsequent battle. Does not resume a pre-restart battle or settlement. Map context exists only in this scheduler process; changed settings or exhausted retries fall back to the existing flow."
     },
     "Use2xBook": {
       "name": "Use high-efficiency combat manual",
@@ -2177,12 +2186,12 @@
     "Fleet1": {
       "name": "Fleet 1 uses fleet number X",
       "help": "",
-      "1": "1 ",
-      "2": "2 ",
-      "3": "3 ",
-      "4": "4 ",
-      "5": "5 ",
-      "6": "6 "
+      "1": "1",
+      "2": "2",
+      "3": "3",
+      "4": "4",
+      "5": "5",
+      "6": "6"
     },
     "Fleet1Formation": {
       "name": "Fleet 1 formation",
@@ -2203,21 +2212,21 @@
     "Fleet1Step": {
       "name": "Fleet 1 step size",
       "help": "Limit movement distance in event maps",
-      "2": "2 ",
-      "3": "3 ",
-      "4": "4 ",
-      "5": "5 "
+      "2": "2",
+      "3": "3",
+      "4": "4",
+      "5": "5"
     },
     "Fleet2": {
       "name": "Fleet 2 uses fleet number X",
       "help": "",
       "0": "Not used",
-      "1": "1 ",
-      "2": "2 ",
-      "3": "3 ",
-      "4": "4 ",
-      "5": "5 ",
-      "6": "6 "
+      "1": "1",
+      "2": "2",
+      "3": "3",
+      "4": "4",
+      "5": "5",
+      "6": "6"
     },
     "Fleet2Formation": {
       "name": "Fleet 2 formation",
@@ -2238,10 +2247,10 @@
     "Fleet2Step": {
       "name": "Fleet 2 step size",
       "help": "Limit movement distance in event maps",
-      "2": "2 ",
-      "3": "3 ",
-      "4": "4 ",
-      "5": "5 "
+      "2": "2",
+      "3": "3",
+      "4": "4",
+      "5": "5"
     },
     "FleetOrder": {
       "name": "Fleet role",
@@ -2265,8 +2274,8 @@
       "name": "Use submarine fleet X",
       "help": "",
       "0": "Not used",
-      "1": "1 ",
-      "2": "2 "
+      "1": "1",
+      "2": "2"
     },
     "Mode": {
       "name": "Select submarine sortie plan",
@@ -2312,6 +2321,14 @@
     "IgnoreShipwreck": {
       "name": "Ignore shipwreck morale penalty",
       "help": "When enabled, the extra 10 morale penalty for sinking ships in battle (non-S rating) is no longer counted. Only effective when the morale mode includes \"Calculate morale consumption\"."
+    },
+    "MinReserve": {
+      "name": "Minimum morale reserve",
+      "help": "0 disables this setting; range: 0–150. Applies only to modes that calculate morale consumption. When morale cannot cover the next sortie while staying above the control threshold, delay the task until morale recovers to this value. After recovery, keep running with the original control threshold. For example, reserve 150 with threshold 30 waits for 150 when the next sortie cannot maintain 30. The reserve is capped at the current recovery maximum; a higher sortie requirement takes precedence."
+    },
+    "RecoveryWait": {
+      "name": "Morale reserve recovery state",
+      "help": ""
     },
     "Fleet1Value": {
       "name": "Fleet 1 morale value",
@@ -3126,6 +3143,14 @@
       "name": "Feed filter",
       "help": "Generally no modification is required"
     },
+    "ReserveFood": {
+      "name": "Keep one food item for the next day",
+      "help": "Keep one item across all six food types. Days reset at server midnight. No exemption on the first enabled day. On each following day's first eligible feeding, a single remaining item may be used; more than one item cancels that day's exemption. Keep one item from food obtained later that day."
+    },
+    "FeedReserveState": {
+      "name": "Food reserve state",
+      "help": "Automatically records the server date of the first eligible feeding check to prevent repeated exemptions after restarting."
+    },
     "BuyFood": {
       "name": "Automatically purchase food",
       "help": "For status display only. Disable setting. Do not ask anything about this switch."
@@ -3682,6 +3707,28 @@
       "name": "Use single build permit",
       "help": "When enabled, first visit the event pool to use single build permits, regardless of the selected pool type. If the event pool has no available permits or not enough for the requested amount, complete the remaining builds in the selected pool using Cubes and Coins."
     },
+    "TicketAmount": {
+      "name": "Use X single build permits daily",
+      "help": "Requires single build permits to be enabled. Use all remaining permits if fewer are available; this amount may exceed the daily build minimum. When the event pool is selected, also use remaining permits to meet the minimum.",
+      "1": "1",
+      "2": "2",
+      "3": "3",
+      "4": "4",
+      "5": "5",
+      "6": "6",
+      "7": "7",
+      "8": "8",
+      "9": "9",
+      "10": "10"
+    },
+    "ClearTicket": {
+      "name": "Use all permits on the last event day",
+      "help": "Requires single build permits to be enabled. Event date recognition currently supports CN only. Use all permits in batches on the event end date once the configured time is reached. With more than 10 permits, force Quick Finishers for intermediate batches; the final batch follows the Quick Finisher setting. Still complete the daily build minimum afterward."
+    },
+    "ClearTicketTime": {
+      "name": "Time to use all build permits",
+      "help": "Enter a time in the game server's time zone (HH:MM), default 09:30. Requires single build permits and last-day permit clearing to be enabled. Before this time on the last event day, postpone the build task until the configured time."
+    },
     "UseDrill": {
       "name": "Use quick finisher to complete build",
       "help": "If set to No, will wait until tomorrow to launch. Use this to save Quick Finishers"
@@ -3962,6 +4009,10 @@
       "1": "1",
       "2": "2"
     },
+    "RunAt18": {
+      "name": "Run at 18:00",
+      "help": "Disabled by default. When enabled, daily runs move from midnight to 18:00 server time. Runs due before 18:00 are postponed."
+    },
     "HardNewMode": {
       "name": "Balanced Mode",
       "help": "When enabled, rotates across stages by blueprint type over multiple days. When disabled, runs a single fixed stage.",
@@ -4155,10 +4206,6 @@
     "AutoSearchTimeLimit": {
       "name": "Auto-search time limit",
       "help": "Unit: minutes. During auto search, the script will assume the game is stuck if no event is detected for this period."
-    },
-    "SkipStrategicSearchCheck": {
-      "name": "Skip plan battle option checks",
-      "help": "When looping a single zone (Corrosion 1 leveling / Meowfficer farming), open the plan battle panel and confirm directly without scroll-checking every option. The panel options must already be configured in-game (zone mode: repeat, stop on merchant/device, auto-submit missions); let the task run once normally, or configure them manually first."
     }
   },
   "OpsiAshBeacon": {
@@ -4487,6 +4534,14 @@
       "True": "Enabled",
       "False": "Disabled"
     },
+    "ActionPointCheckInterval": {
+      "name": "Routine AP check interval (minutes)",
+      "help": "0 disables scheduled checks. Read AP only for resupply, when the interval expires, or for the first confirmation after recovery. Otherwise skip screenshots and OCR. Applies to CL1, smart scheduling and Meowfficer farming."
+    },
+    "SkipStrategicSearchCheck": {
+      "name": "Skip plan battle option checks",
+      "help": "When looping a single zone (Corrosion 1 leveling / Meowfficer farming), open the plan battle panel and confirm directly without scroll-checking every option. The panel options must already be configured in-game (zone mode: repeat, stop on merchant/device, auto-submit missions); let the task run once normally, or configure them manually first."
+    },
     "Cl1Filter": {
       "name": "Akashi Purchase Filter",
       "help": "By default, only Action Points are purchased. If you want to also buy purple coins, set it to ‘ActionPoint > PurpleCoins’"
@@ -4497,9 +4552,15 @@
     },
     "RecordSeaMiles": {
       "name": "Sea miles recording",
-      "help": "Record sea miles to statistics after each Corrosion 1 leveling cycle",
-      "True": "Enabled",
-      "False": "Disabled"
+      "help": "Record sea miles to statistics after each Corrosion 1 leveling cycle"
+    },
+    "SeaMilesLastRecord": {
+      "name": "Last sea miles check",
+      "help": "Internal timestamp of the last successful sea miles check, used to calculate the check interval."
+    },
+    "PendingMapEvent": {
+      "name": "Pending map event",
+      "help": "Internal record of a map event that has already been spotted but not finished (Akashi / scanning device / Siren research device). Used to resume it after a stuck restart. No need to edit manually."
     },
     "DebugClip": {
       "name": "Post-battle debug recording",
@@ -7104,6 +7165,28 @@
     "Result": {
       "name": "Ship scan results",
       "help": "Stores ships, levels and review states per instance."
+    },
+    "FleetTechRecord": {
+      "name": "Fleet technology records",
+      "help": "Stores cumulative scan evidence, manual overrides and faction technology levels per instance."
+    }
+  },
+  "FleetTech": {
+    "_info": {
+      "name": "Technology scan",
+      "help": "Defaults to 95–125. Only a complete unfiltered 1–125 scan can confirm absence."
+    },
+    "MinLevel": {
+      "name": "Minimum level",
+      "help": "Inclusive; preserve existing records outside the range."
+    },
+    "MaxLevel": {
+      "name": "Maximum level",
+      "help": "Inclusive, up to level 125."
+    },
+    "Record": {
+      "name": "Fleet technology records",
+      "help": "Store groups, manual corrections, level toggle history and scan coverage per instance."
     }
   },
   "FleetInfo": {
@@ -7923,34 +8006,34 @@
       "NoResourceData": "No resource data yet. It will be recorded automatically when the script runs.",
       "NoValidResourceData": "No valid resource data",
       "BackgroundBtn": "Background",
-      "ChartAp": "AP: ",
+      "ChartAp": "AP:",
       "ChartApLabel": "AP",
-      "ChartAsset": "Assets: ",
-      "ChartChange": "Change: ",
+      "ChartAsset": "Assets:",
+      "ChartChange": "Change:",
       "ChartChangeLabel": "Change",
-      "ChartClose": "Close: ",
-      "ChartDelta": "Change: ",
-      "ChartDensity": "Point density: ",
-      "ChartDistance": "Distance: ",
-      "ChartHigh": "High: ",
-      "ChartLow": "Low: ",
-      "ChartMa10": "  MA10 (10-period avg): ",
-      "ChartMa5": "  MA5 (5-period avg): ",
+      "ChartClose": "Close:",
+      "ChartDelta": "Change:",
+      "ChartDensity": "Point density:",
+      "ChartDistance": "Distance:",
+      "ChartHigh": "High:",
+      "ChartLow": "Low:",
+      "ChartMa10": "  MA10 (10-period avg):",
+      "ChartMa5": "  MA5 (5-period avg):",
       "ChartMaxLabel": "Max",
-      "ChartMean": "Mean: ",
+      "ChartMean": "Mean:",
       "ChartMeanLabel": "Mean",
       "ChartMinLabel": "Min",
-      "ChartOpen": "Open: ",
+      "ChartOpen": "Open:",
       "ChartPanelTitle": "AP Trend - {view}",
-      "ChartPurple": "Purple Coins: ",
+      "ChartPurple": "Purple Coins:",
       "ChartResetBtn": "Reset",
       "ChartSeriesAp": "AP",
       "ChartSeriesAsset": "Assets",
       "ChartSeriesDistance": "Distance",
       "ChartSeriesPurple": "Purple Coins",
       "ChartSeriesYellow": "Yellow Coins",
-      "ChartSource": "Source: ",
-      "ChartYellow": "Yellow Coins: ",
+      "ChartSource": "Source:",
+      "ChartYellow": "Yellow Coins:",
       "ExtractAlreadyLocal": "The current background is already a local image; nothing to extract.",
       "ExtractDone": "Extracted to bg/{sub}/{name}",
       "ExtractFailed": "Extraction failed: {error}",

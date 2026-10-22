@@ -140,7 +140,7 @@ class MindCalculatorService:
         ships = saved.get('ships', [])
         fields = data.get(TASK, {}).get(GROUP, {})
         return dict(instance=instance, revision=revision(ships), updated_at=saved.get('updated_at', ''),
-                    min_level=fields.get('MinLevel', 95), max_level=fields.get('MaxLevel', 120),
+                    min_level=fields.get('MinLevel', 95), max_level=fields.get('MaxLevel', 125),
                     **calculate(ships))
 
     def save(self, instance, expected_revision, ships):

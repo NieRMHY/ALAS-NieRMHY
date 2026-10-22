@@ -83,6 +83,7 @@ def patch_uiautomator2():
     1. 将资源下载目录从默认路径修补为本地缓存 uiautomator2cache/cache。
     2. 移除 minicap 安装，因为模拟器不需要它。
     3. 修复 ARM Mac 的 atx_agent_url，使其能正确安装 ATX。
+    4. 将 ATX Agent 下载地址修补为 atx.azurpilot.com。
     """
     init_file = site_package_file('uiautomator2', 'init.py')
     cache_dir = site_package_file('uiautomator2cache', 'cache')
@@ -115,6 +116,16 @@ def patch_uiautomator2():
         logger.info(f'{init_file} atx_agent_url patched')
     else:
         logger.info(f'{init_file} atx_agent_url no need to patch')
+
+    res = re.search(r"return GITHUB_BASEURL \+ '/atx-agent/releases/download/%s/%s'", content)
+    if res:
+        content = re.sub(
+            r"return GITHUB_BASEURL \+ '/atx-agent/releases/download/%s/%s' % \(\s*__atx_agent_version__,\s*name\.format\(v=__atx_agent_version__\)\)",
+            r"return 'https://atx.azurpilot.com/%s' % (name.format(v=__atx_agent_version__))",
+            content,
+        )
+        modified = True
+        logger.info(f'{init_file} atx_agent_url download link patched to atx.azurpilot.com')
 
     # 修补 appdir
     if cache_dir and os.path.exists(cache_dir):

@@ -53,11 +53,11 @@ def _overlay_opsi_snapshot(row: Dict[str, Any]) -> Dict[str, Any]:
     return row
 
 
-def record_resource_snapshot(instance: str, resources: Dict[str, Any]) -> bool:
+def record_resource_snapshot(instance: str, resources: Dict[str, Any], *, observed_at: datetime = None) -> bool:
     """以同一事务保存各项资源的当前读数。"""
     from module.persistence.database import register_instance
     try:
-        row = {'instance': instance, 'ts': datetime.now().isoformat()}
+        row = {'instance': instance, 'ts': (observed_at or datetime.now()).isoformat()}
         row.update({column: resources.get(name) for name, column in RESOURCE_COLUMNS.items()})
         with _local_lock, _connect() as conn:
             register_instance(conn, instance)
@@ -68,6 +68,20 @@ def record_resource_snapshot(instance: str, resources: Dict[str, Any]) -> bool:
     except Exception as error:
         logger.warning(f'[统计-资源] 记录资源快照失败: {type(error).__name__}')
         return False
+
+
+def async_record_resource_snapshot(instance: str, resources: Dict[str, Any], *, observed_at: datetime = None):
+    """固定主线程采样值与时间后排队，不向后台传递可变配置对象。"""
+    from module.base.async_executor import async_executor
+    future = async_executor.submit(record_resource_snapshot, instance, dict(resources),
+                                   observed_at=observed_at or datetime.now())
+
+    def finished(result):
+        if result.cancelled() or result.exception() is not None:
+            logger.warning('[统计-资源] 后台快照写入失败')
+
+    future.add_done_callback(finished)
+    return future
 
 
 def get_resource_timeline(

@@ -110,6 +110,16 @@ def create_app(*, root: Path = ROOT, password=None, manage_runtime=True, mount_m
         """健康检查接口，返回协议版本及正常状态。"""
         return JSONResponse({'status': 'ok', 'protocolVersion': 1})
 
+    ROBOTS_TXT_CONTENT = (
+        '# AzurPilot WebUI - Private Control Console\n\n'
+        'User-agent: *\n'
+        'Disallow: /\n'
+    )
+
+    async def robots_txt(request):
+        """返回 robots.txt，禁止搜索引擎收录私有 WebUI。"""
+        return PlainTextResponse(ROBOTS_TXT_CONTENT, media_type='text/plain')
+
     async def meowfficer_score_report(request):
         """指挥喵评分报告（自包含 HTML），供浏览器直接打开查看。"""
         path = root / 'log' / 'meowfficer_score.html'
@@ -157,6 +167,7 @@ def create_app(*, root: Path = ROOT, password=None, manage_runtime=True, mount_m
         return Response(data, media_type=content_type, headers={'Cache-Control': 'no-cache'})
 
     routes = [Route('/healthz', health),
+              Route('/robots.txt', robots_txt),
               Route('/api/v1/background/media', background_media),
               Route('/reports/meowfficer_score', meowfficer_score_report),
               WebSocketRoute('/api/v1/ws', gateway.endpoint)]

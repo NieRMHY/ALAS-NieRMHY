@@ -22,6 +22,12 @@ class NativeStorageTests(unittest.TestCase):
         self.assertEqual([], self.connection.execute('PRAGMA foreign_key_check').fetchall())
         self.assertEqual('ok', self.connection.execute('PRAGMA integrity_check').fetchone()[0])
 
+    def test_delayed_observation_does_not_replace_newer_value(self):
+        write_observation(self.connection, 'isolated', 'YellowCoin', 51000, '2026-10-15 19:00:01', 'new')
+        write_observation(self.connection, 'isolated', 'YellowCoin', 49000, '2026-10-15 19:00:00', 'old')
+        reading = read_observations(self.connection, 'isolated')['YellowCoin']
+        self.assertEqual((reading['Value'], reading['source']), (51000, 'new'))
+
     def test_schema_is_strict_and_contains_no_payload_columns(self):
         tables = [row for row in self.connection.execute('PRAGMA table_list') if row['name'] != 'sqlite_sequence' and not row['name'].startswith('sqlite_')]
         # Modify by MHY, 本分支移除日报表，普通业务库保留 51 张表。

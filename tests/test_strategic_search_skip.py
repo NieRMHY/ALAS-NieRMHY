@@ -7,11 +7,12 @@ from module.os_handler.strategic import StrategicSearchHandler
 
 
 class TestStrategicSearchSkipCheck(unittest.TestCase):
-    """用 Mock 替换面板交互，验证 OpsiGeneral.SkipStrategicSearchCheck 对启动流程的分派。"""
+    """用 Mock 替换面板交互，验证侵蚀一配置对启动流程的分派。"""
 
     def make_handler(self, skip):
         handler = StrategicSearchHandler.__new__(StrategicSearchHandler)
-        handler.config = Mock(OpsiGeneral_SkipStrategicSearchCheck=skip)
+        handler.config = Mock()
+        handler.config.cross_get.return_value = skip
         handler.strategy_search_enter = Mock()
         handler.strategic_search_set_tab = Mock()
         handler.strategic_search_set_option = Mock(return_value=True)

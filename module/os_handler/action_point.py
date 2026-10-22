@@ -6,18 +6,24 @@
 """
 # 此文件处理大世界（Operation Siren）模式下的行动力（Action Point, AP）管理。
 # 包含行动力数值 OCR 识别、药剂（AP Box）库存解析以及自动购买或使用补给的交互逻辑。
+from dataclasses import replace
 from datetime import timedelta
+from pathlib import Path
+from time import monotonic, perf_counter
 
 import module.config.server as server
 from module.base.button import ButtonGrid
 from module.base.timer import Timer
 from module.base.utils import *
 from module.config.time_source import now as current_time
-from module.config.utils import get_server_next_update, server_time_offset
+from module.config.deep import deep_get
+from module.config.utils import filepath_config, get_server_next_update, read_file, server_time_offset
 from module.logger import logger
 from module.ocr.ocr import Digit, DigitCounter
 from module.os_handler.assets import *
 from module.os_handler.map_event import MapEventHandler
+from module.os_handler.resource_state import ActionPointSnapshot, resource_fast_path
+from module.os_handler.resource_write import record_resources_background
 from module.statistics.item import Item, ItemGrid
 from module.ui.assets import OS_CHECK
 from module.ui.ui import UI
@@ -25,7 +31,7 @@ from module.log_res import LogRes
 
 OCR_ACTION_POINT_REMAIN = Digit(ACTION_POINT_REMAIN, letter=(255, 219, 66), name='OCR_ACTION_POINT_REMAIN')
 OCR_ACTION_POINT_REMAIN_OS = Digit(ACTION_POINT_REMAIN_OS, letter=(239, 239, 239),
-                                   threshold=160, name='OCR_SHOP_YELLOW_COINS_OS')
+                                   threshold=160, name='OCR_ACTION_POINT_REMAIN_OS')
 
 OCR_OS_ADAPTABILITY = Digit([
     OS_ADAPTABILITY_ATTACK,
@@ -194,6 +200,112 @@ class ActionPointHandler(UI, MapEventHandler):
     _action_point_total = 0
     _action_point_total_with_box = 0
 
+    def _action_point_identity(self):
+        return (getattr(self.config, 'config_name', None), server.server)
+
+    def invalidate_action_point_cache(self):
+        """初始化或恢复后不能沿用旧画面的箱子库存。"""
+        self.__dict__.pop('_ap_snapshot', None)
+        self._ap_read_epoch = self.__dict__.get('_ap_read_epoch', 0) + 1
+
+    def _remember_action_point_snapshot(self):
+        if (not bool(getattr(OCR_ACTION_POINT_REMAIN, 'last_valid', False))
+                or not self.__dict__.get('_ap_inventory_valid', False)
+                or not 0 <= self._action_point_current <= 600
+                or len(self._action_point_box) != 4 or self._action_point_box[0] <= 100):
+            self.invalidate_action_point_cache()
+            return
+        self._ap_snapshot = ActionPointSnapshot(
+            self._action_point_identity(), monotonic(),
+            getattr(self.config, '_opsi_ap_inventory_revision', 0), tuple(self._action_point_box),
+            int(self._action_point_current),
+        )
+
+    def action_point_cached_read(self):
+        """未到检查时间时只使用保守库存，不截图、不 OCR，也不续期。
+
+        Returns:
+            tuple[int, int] | None: (当前口径总行动力, 当前行动力)，缓存不可用时为 None。
+
+        Pages:
+            in: page_os
+            out: page_os
+        """
+        getattr(self, 'poll_background_resources', lambda: None)()
+        snapshot = self.__dict__.get('_ap_snapshot')
+        if not resource_fast_path(self.config) or snapshot is None:
+            return None
+        elapsed = monotonic() - snapshot.checked_at
+        if (snapshot.identity != self._action_point_identity()
+                or elapsed < 0):
+            self.invalidate_action_point_cache()
+            return None
+        # 奖励和明石购买只会增加箱子；计时内不为它们重新开面板。
+        # 开箱、石油购买及未知消耗走原有实时补给读取，不能依赖此下界。
+        current = snapshot.current
+        box_sum = sum(amount * ACTION_POINT_BOX[index] for index, amount in enumerate(snapshot.boxes))
+        self._action_point_current = int(current)
+        self._action_point_box = list(snapshot.boxes)
+        self._action_point_total_with_box = int(current + box_sum)
+        self.config._action_point_total_with_box = self._action_point_total_with_box
+        self._action_point_total = int(current + box_sum if self.config.OS_ACTION_POINT_BOX_USE else current)
+        logger.info(f'[大世界-行动点] 复用行动力下界，不等待截图与识别，距实测 {elapsed:.1f}s')
+        return self._action_point_total, self._action_point_current
+
+    def action_point_check_due(self):
+        """定时读取在已有地图截图上后台执行；0 关闭定时读取。"""
+        snapshot = self.__dict__.get('_ap_snapshot')
+        interval = self._action_point_policy_value('OpsiHazard1Leveling_ActionPointCheckInterval')
+        return (snapshot is not None and snapshot.identity == self._action_point_identity()
+                and type(interval) is int and interval > 0
+                and monotonic() - snapshot.checked_at >= interval * 60)
+
+    def apply_background_action_point(self, reading):
+        """扣除采样后确认的消耗；补给、恢复和实例变化后拒绝旧结果。"""
+        snapshot = self.__dict__.get('_ap_snapshot')
+        if (snapshot is None or reading.ap is None or reading.ap_epoch != self.__dict__.get('_ap_read_epoch', 0)
+                or snapshot.identity != self._action_point_identity()):
+            return
+        spent_since = self.__dict__.get('_ap_spent', 0) - reading.ap_spent
+        current = max(0, reading.ap - max(0, spent_since))
+        box_sum = sum(amount * ACTION_POINT_BOX[index] for index, amount in enumerate(snapshot.boxes))
+        self._ap_snapshot = replace(snapshot, current=current, checked_at=reading.sampled_at)
+        self._action_point_current = current
+        self._action_point_total_with_box = current + box_sum
+        self._action_point_total = current + box_sum if self.config.OS_ACTION_POINT_BOX_USE else current
+        # 箱子仍是下界，不伪装成新的实测总库存。当前 AP 的时间固定在采样帧。
+        record_resources_background(self.config, {'ActionPoint': {'Value': reading.ap}},
+                                    observed_at=reading.observed_at)
+
+    def consume_cached_action_point(self, amount):
+        """按已确认的出击扣减行动力下界；不把估计值作为成功观察写库。"""
+        self._ap_spent = self.__dict__.get('_ap_spent', 0) + amount
+        snapshot = self.__dict__.get('_ap_snapshot')
+        if snapshot is not None:
+            self._ap_snapshot = replace(snapshot, current=max(0, snapshot.current - amount))
+            self._action_point_current = self._ap_snapshot.current
+            self._action_point_total = max(0, self._action_point_total - amount)
+            self._action_point_total_with_box = max(0, self._action_point_total_with_box - amount)
+
+    def _action_point_panel_values(self):
+        """同帧合并四种库存的首轮推理，异常数量仍逐项重试。"""
+        image = self.device.image
+        OIL_ITEM._load_image(image)
+        ACTION_POINT_ITEMS._load_image(image)
+        entries = [(OIL_ITEM, item) for item in OIL_ITEM.items]
+        entries += [(ACTION_POINT_ITEMS, item) for item in ACTION_POINT_ITEMS.items]
+        amounts = OIL_ITEM.amount_ocr.ocr_batch_with_validation(
+            [item.crop(grid.amount_area_for(item.name)) for grid, item in entries],
+            item_names=[item.name for _, item in entries],
+            amount_max=OIL_ITEM.amount_max, amount_default_max=OIL_ITEM.amount_default_max,
+            batch_first=True,
+        )
+        if len(amounts) != 4:
+            raise ValueError('行动力面板库存必须包含石油与三种箱子')
+        validities = getattr(OIL_ITEM.amount_ocr, 'last_batch_validity', ())
+        self._ap_inventory_valid = len(validities) == 4 and all(validities)
+        return amounts, OCR_ACTION_POINT_REMAIN.ocr(image)
+
     @staticmethod
     def _is_in_month_end_purchase_block_week():
         """判断当前是否处于月末购买封锁周。
@@ -257,18 +369,29 @@ class ActionPointHandler(UI, MapEventHandler):
         Returns:
             int: 总行动力，包括行动力药剂。
         """
-        oil = OIL_ITEM.predict(self.device.image, name=False, amount=True)
-        items = ACTION_POINT_ITEMS.predict(self.device.image, name=False, amount=True)
-        box = [item.amount for item in oil] + [item.amount for item in items]
-        current = OCR_ACTION_POINT_REMAIN.ocr(self.device.image)
+        started = perf_counter()
+        fast = resource_fast_path(self.config)
+        if fast:
+            box, current = self._action_point_panel_values()
+        else:
+            oil = OIL_ITEM.predict(self.device.image, name=False, amount=True)
+            items = ACTION_POINT_ITEMS.predict(self.device.image, name=False, amount=True)
+            box = [item.amount for item in oil] + [item.amount for item in items]
+            validities = (getattr(OIL_ITEM.amount_ocr, 'last_batch_validity', ())
+                          + getattr(ACTION_POINT_ITEMS.amount_ocr, 'last_batch_validity', ()))
+            self._ap_inventory_valid = len(validities) == 4 and all(validities)
+            current = OCR_ACTION_POINT_REMAIN.ocr(self.device.image)
+        ocr_finished = perf_counter()
         box_sum = np.sum(np.array(box) * tuple(ACTION_POINT_BOX.values()))
         total = current
         if self.config.OS_ACTION_POINT_BOX_USE:
             total += box_sum
         oil = box[0]
 
-        if oil > 100:
-            LogRes(self.config).record('Oil', oil, observed=True)
+        resource_log = LogRes(self.config)
+        record_options = {'defer_history': True} if fast else {}
+        if oil > 100 and not fast:
+            resource_log.record('Oil', oil, observed=True, **record_options)
         logger.info(f'[大世界-行动点] 行动点: {current}({total}), 石油: {oil}')
         # 统计口径的总行动力始终包含体力箱，不受 OS_ACTION_POINT_BOX_USE 临时关闭的影响
         # （防止行动力溢出任务会临时关闭该开关，导致统计快照丢箱、图表出现深坑）
@@ -276,15 +399,31 @@ class ActionPointHandler(UI, MapEventHandler):
         self.config._action_point_total_with_box = self._action_point_total_with_box
         # 仪表盘的 Total 同样使用恒含体力箱口径：写入受开关影响的 total 时，
         # 防溢出任务运行期间它会退化成 current，WebUI 的行动力卡片会在整段时间里不显示总行动力
-        LogRes(self.config).record('ActionPoint', {'Value': current, 'Total': self._action_point_total_with_box},
-                                   observed=0 <= current <= 600 and bool(getattr(OCR_ACTION_POINT_REMAIN, 'last_valid', False)))
-        self.config.update()
+        ap_valid = 0 <= current <= 600 and bool(getattr(OCR_ACTION_POINT_REMAIN, 'last_valid', False))
+        if fast and ap_valid and self.__dict__.get('_ap_inventory_valid', False):
+            values = {'ActionPoint': {'Value': int(current), 'Total': self._action_point_total_with_box}}
+            if oil > 100:
+                values['Oil'] = int(oil)
+            record_resources_background(self.config, values)
+        elif not fast:
+            values = {'Value': current}
+            if ap_valid and self.__dict__.get('_ap_inventory_valid', False):
+                values['Total'] = self._action_point_total_with_box
+            resource_log.record('ActionPoint', values, observed=ap_valid, **record_options)
+        recorded = perf_counter()
+        if not fast:
+            if self.__dict__.get('_ap_defer_config_update', False):
+                self._ap_config_dirty = True
+            else:
+                self.config.update()
         self._action_point_current = current
         self._action_point_box = box
         self._action_point_total = total
         # 处理超出上限的情况
         if total > 3000:
             self.config.override(OpsiGeneral_DoRandomMapEvent=False)
+        logger.info(f'[大世界-行动力耗时] OCR={ocr_finished - started:.3f}s，'
+                    f'记录={recorded - ocr_finished:.3f}s，配置={perf_counter() - recorded:.3f}s')
 
     def action_point_safe_get(self):
         """
@@ -292,6 +431,7 @@ class ActionPointHandler(UI, MapEventHandler):
 
         等待行动力弹窗完全加载，并处理可能的地图事件。
         """
+        self.invalidate_action_point_cache()
         timeout = Timer(3, count=6).start()
         for _ in self.loop():
             # 结束
@@ -331,6 +471,7 @@ class ActionPointHandler(UI, MapEventHandler):
             # 拥有药剂
             if sum(boxes) > 0:
                 if oil > 100:
+                    self._remember_action_point_snapshot()
                     break
                 else:
                     # [11, 0, 1, 0]
@@ -339,6 +480,7 @@ class ActionPointHandler(UI, MapEventHandler):
             # 页面未完全加载时可能为 0 或 1
             # [1, 0, 0, 0]
             if oil > 100:
+                self._remember_action_point_snapshot()
                 break
 
     @staticmethod
@@ -415,25 +557,62 @@ class ActionPointHandler(UI, MapEventHandler):
         获取行动力剩余购买次数。
 
         Returns:
-            int: 剩余购买次数。
+            int | None: 有效剩余购买次数；识别失败时不把未知值当成已买满。
 
         Pages:
             in: ACTION_POINT_USE
         """
-        current = 0
         for _ in self.loop(timeout=1):
 
             current, _, total = OCR_ACTION_POINT_BUY_REMAIN.ocr(self.device.image)
 
             # 可能的结果: 0/5, 05
-            if total == 0:
+            if total != 5 or not 0 <= current <= total:
                 continue
-
-            break
+            return current
         else:
             logger.warning('[大世界-行动点] 获取行动点购买剩余超时')
 
-        return current
+        return None
+
+    def _action_point_purchase_key(self):
+        server_now = current_time() - server_time_offset()
+        monday = server_now.date() - timedelta(days=server_now.weekday())
+        return self._action_point_identity(), monday
+
+    def _action_point_policy_value(self, argument):
+        """文件变更时轻量读取购买上限和检查间隔，保留代理参数的优先级。"""
+        current = getattr(self.config, argument, 0)
+        if (argument in getattr(self.config, 'overridden', {})
+                or argument in getattr(self.config, '_scheduler_overrides', {})):
+            return current
+        name = getattr(self.config, 'config_name', None)
+        bound = getattr(self.config, 'bound', None)
+        if not isinstance(name, str) or not isinstance(bound, dict):
+            return current
+        try:
+            path = Path(filepath_config(name))
+            stamp = path.stat().st_mtime_ns
+            policy = self.__dict__.get('_ap_resource_policy')
+            if policy is None or policy[:2] != (str(path), stamp):
+                data = read_file(str(path))
+                values = {}
+                for attr in ('OpsiGeneral_BuyActionPointLimit', 'OpsiHazard1Leveling_ActionPointCheckInterval'):
+                    group, field = attr.split('_', 1)
+                    key = bound.get(attr, f'{group}.{group}.{field}')
+                    value = deep_get(data, key, default=getattr(self.config, attr, 0))
+                    if type(value) is int and value >= 0 and (attr.endswith('Interval') or value <= 5):
+                        values[attr] = value
+                self._ap_resource_policy = (str(path), stamp, values)
+            policy = self.__dict__.get('_ap_resource_policy')
+            return policy[2].get(argument, current) if policy is not None and policy[0] == str(path) else current
+        except (OSError, ValueError):
+            logger.warning('[大世界-行动点] 无法读取最新行动力策略，沿用当前有效配置')
+            return current
+
+    def _action_point_purchase_limit(self):
+        """在下一个安全购买点使上限增减生效，实际已购次数保持不变。"""
+        return self._action_point_policy_value('OpsiGeneral_BuyActionPointLimit')
 
     def action_point_buy(self, preserve=1000):
         """
@@ -448,14 +627,25 @@ class ActionPointHandler(UI, MapEventHandler):
         Pages:
             in: ACTION_POINT_USE
         """
-        self.action_point_set_button(0)
-        current = self.action_point_get_buy_remain()
-        buy_max = 5  # 当前版本中，玩家每周可购买 5 次行动力
-        buy_count = buy_max - current
-        buy_limit = self.config.OpsiGeneral_BuyActionPointLimit
+        buy_limit = self._action_point_purchase_limit()
+        if buy_limit <= 0:
+            return False
         if self._is_in_month_end_purchase_block_week():
             logger.info('[大世界-行动点] 跳过本周购买行动点，因为是月末封锁周')
             return False
+        key = self._action_point_purchase_key()
+        cached = self.__dict__.get('_ap_purchase_count')
+        if cached is not None and cached[0] == key and cached[1] >= buy_limit:
+            logger.info(f'[大世界-行动点] 本周购买缓存命中：已购={cached[1]}，当前上限={buy_limit}')
+            return False
+        if not self.action_point_set_button(0):
+            return False
+        current = self.action_point_get_buy_remain()
+        if current is None:
+            return False
+        buy_count = 5 - current
+        self._ap_purchase_count = (key, buy_count)
+        buy_limit = self._action_point_purchase_limit()
         if buy_count >= buy_limit:
             logger.info('[大世界-行动点] 达到本周购买行动点上限')
             return False
@@ -463,7 +653,20 @@ class ActionPointHandler(UI, MapEventHandler):
         oil = self._action_point_box[0]
         logger.info(f'[大世界-行动点] 购买行动点将消耗 {cost}, 当前石油: {oil}, 保留: {preserve}')
         if oil >= cost + preserve:
-            self.action_point_use()
+            if key != self._action_point_purchase_key() or self._is_in_month_end_purchase_block_week():
+                return False
+            try:
+                self.action_point_use()
+            except Exception:
+                self.__dict__.pop('_ap_purchase_count', None)
+                self.invalidate_action_point_cache()
+                raise
+            remaining = self.action_point_get_buy_remain()
+            if remaining == current - 1:
+                self._ap_purchase_count = (key, 5 - remaining)
+            else:
+                self.__dict__.pop('_ap_purchase_count', None)
+                logger.warning('[大世界-行动点] 购买后次数尚未确认，下次重新读取')
             return True
         else:
             logger.info('[大世界-行动点] 石油不足无法购买')
@@ -502,6 +705,24 @@ class ActionPointHandler(UI, MapEventHandler):
 
     def handle_action_point(self, zone, pinned, cost=None, keep_current_ap=True, check_rest_ap=False,
                             avoid_ap_overflow=False, *, skip_first_read=False):
+        """同一次补充只合并提交一次仪表盘配置，操作后的实际读数仍刷新。"""
+        fast = resource_fast_path(self.config)
+        previous = self.__dict__.get('_ap_defer_config_update', False)
+        self._ap_defer_config_update = fast or previous
+        try:
+            return self._handle_action_point(
+                zone, pinned, cost, keep_current_ap, check_rest_ap, avoid_ap_overflow,
+                skip_first_read=skip_first_read,
+            )
+        finally:
+            self._ap_defer_config_update = previous
+            if not previous and self.__dict__.pop('_ap_config_dirty', False):
+                started = perf_counter()
+                self.config.update()
+                logger.info(f'[大世界-行动力耗时] 补充后合并配置={perf_counter() - started:.3f}s')
+
+    def _handle_action_point(self, zone, pinned, cost=None, keep_current_ap=True, check_rest_ap=False,
+                            avoid_ap_overflow=False, *, skip_first_read=False):
         """
         处理行动力，包括购买和使用药剂。
 
@@ -535,7 +756,7 @@ class ActionPointHandler(UI, MapEventHandler):
             self.action_point_safe_get()
         if cost is None:
             cost = self.action_point_get_cost(zone, pinned)
-        buy_checked = False
+        buy_checked = None
 
         # 检查剩余行动力
         if check_rest_ap:
@@ -572,12 +793,13 @@ class ActionPointHandler(UI, MapEventHandler):
                 return True
 
             # 购买行动力
-            if self.config.OpsiGeneral_BuyActionPointLimit > 0 and not buy_checked:
+            buy_limit = self._action_point_purchase_limit()
+            if buy_limit > 0 and buy_checked != buy_limit:
                 if self.action_point_buy(preserve=self.config.OpsiGeneral_OilLimit):
-                    self.action_point_safe_get()
+                    # action_point_use 已确认并刷新了购买后的实际行动力。
                     continue
                 else:
-                    buy_checked = True
+                    buy_checked = buy_limit
 
             # 重新检查总行动力是否小于消耗
             # 如果是，则跳过使用药剂
@@ -690,7 +912,8 @@ class ActionPointHandler(UI, MapEventHandler):
             return fresh_current >= ACTION_POINT_AVOID_OVERFLOW_START
         return fresh_current >= cost
 
-    def action_point_set(self, zone=None, pinned=None, cost=None, keep_current_ap=True, check_rest_ap=False, avoid_ap_overflow=False):
+    def action_point_set(self, zone=None, pinned=None, cost=None, keep_current_ap=True, check_rest_ap=False,
+                         avoid_ap_overflow=False, *, routine=False):
         """
         设置行动力，进入行动力弹窗并处理。
 
@@ -701,6 +924,7 @@ class ActionPointHandler(UI, MapEventHandler):
             keep_current_ap (bool): 是否先检查行动力，避免在不足时使用剩余行动力。
             check_rest_ap (bool): 如果当前行动力与今天可获得的剩余行动力之和超过 200，则跳过 keep_current_ap 检查。
             avoid_ap_overflow (bool): 防溢出模式，见 handle_action_point。
+            routine (bool): 只有指定的常规练级/调度入口可按间隔复用，入场检查默认强制读取。
 
         Returns:
             bool: 是否处理成功。
@@ -708,6 +932,11 @@ class ActionPointHandler(UI, MapEventHandler):
         Raises:
             ActionPointLimit: 行动力不足时抛出。
         """
+        if routine:
+            fresh_ap = self.action_point_cached_read()
+            effective_cost = cost if cost is not None else self.action_point_get_cost(zone, pinned)
+            if self.action_point_reusable(fresh_ap, effective_cost, avoid_ap_overflow):
+                return True
         self.action_point_enter()
         if not self.handle_action_point(zone, pinned, cost, keep_current_ap, check_rest_ap, avoid_ap_overflow):
             return False

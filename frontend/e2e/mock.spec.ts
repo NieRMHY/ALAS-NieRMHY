@@ -1,4 +1,135 @@
 import { expect, test } from '@playwright/test'
+import { readFileSync } from 'node:fs'
+
+for (const [server, packageName, language] of [
+  ['cn', 'com.bilibili.azurlane', 'zh-CN'],
+  ['en', 'com.YoStarEN.AzurLane', 'en-US'],
+  ['jp', 'com.YoStarJP.AzurLane', 'ja-JP'],
+  ['tw', 'com.hkmanjuu.azurlane.gp', 'zh-TW'],
+]) {
+  test(`活动候选只显示当前服务器并使用有效选择：${server}`, async ({page}) => {
+    await page.addInitScript(language => {
+      localStorage.setItem('azurpilot.language', language)
+      localStorage.setItem('azurpilot.theme', 'light')
+    }, language)
+    await page.goto('/#/i/demo-main/task/Event')
+    // 仅修改内存模拟实例，通过真实 WebSocket 确认保存后重新加载页面。
+    await page.evaluate(packageName => new Promise<void>((resolve, reject) => {
+      const socket = new WebSocket(`ws://${location.host}/api/v1/ws`)
+      const send = (id: string, method: string, params: object) => socket.send(JSON.stringify({v: 1, type: 'request', id, method, params}))
+      socket.onopen = () => send('login', 'auth.login', {password: ''})
+      socket.onerror = () => {socket.close(); reject(new Error('模拟 WebSocket 连接失败'))}
+      socket.onmessage = event => {
+        const response = JSON.parse(String(event.data))
+        if (response.type !== 'response') return
+        if (!response.ok) {socket.close(); reject(new Error(response.error?.message)); return}
+        if (response.id === 'login') send('save', 'config.patch', {instance: 'demo-main', changes: [
+          {path: 'Alas.Emulator.PackageName', value: packageName},
+        ]})
+        if (response.id === 'save') {socket.close(); resolve()}
+      }
+    }), packageName)
+    await page.reload()
+    const args = JSON.parse(readFileSync(new URL('../../module/config/argument/args.json', import.meta.url), 'utf8'))
+    const translations = JSON.parse(readFileSync(new URL(`../../module/config/i18n/${language}.json`, import.meta.url), 'utf8'))
+    const candidates: string[] = args.Event.Campaign.Event[`option_${server}`]
+    const labels = candidates.map(value => translations.Campaign.Event[value])
+    const control = page.locator('[id="Event.Campaign.Event"]')
+    await expect(control).toContainText(labels[0])
+    await control.click()
+    await expect(page.getByRole('listbox').getByRole('option')).toHaveText(labels)
+    await page.screenshot({path: test.info().outputPath(`event-options-${server}.png`), animations: 'disabled'})
+  })
+}
+
+test('侵蚀一资源检查配置位于献祭流下方且通用页不再显示', async ({page}) => {
+  await page.addInitScript(() => localStorage.setItem('azurpilot.theme', 'light'))
+  await page.goto('/#/i/demo-main/task/OpsiHazard1Leveling')
+  const group = page.locator('#group-OpsiHazard1Leveling')
+  await expect(group).toBeVisible()
+  const fields = await group.locator('.field-row label').evaluateAll(labels => labels.map(label => label.getAttribute('for')))
+  const hp = fields.indexOf('OpsiHazard1Leveling.OpsiHazard1Leveling.SkipHpCheck')
+  expect(hp).toBeGreaterThanOrEqual(0)
+  expect(fields.slice(hp + 1, hp + 3)).toEqual([
+    'OpsiHazard1Leveling.OpsiHazard1Leveling.ActionPointCheckInterval',
+    'OpsiHazard1Leveling.OpsiHazard1Leveling.SkipStrategicSearchCheck',
+  ])
+  await expect(group).toContainText('其余时候不截图、不识别')
+  const moved = group.locator('label[for$=".SkipStrategicSearchCheck"]')
+  await moved.scrollIntoViewIfNeeded()
+  await expect(group.locator('label[for$=".SkipHpCheck"]')).toBeInViewport()
+  await expect(group.locator('label[for$=".ActionPointCheckInterval"]')).toBeInViewport()
+  await page.screenshot({path: test.info().outputPath('cl1-resource-settings.png'), animations: 'disabled'})
+  await page.goto('/#/i/demo-main/task/OpsiGeneral')
+  await expect(page.locator('#group-OpsiGeneral')).toBeVisible()
+  await expect(page.locator('label[for$=".ActionPointCheckInterval"]')).toHaveCount(0)
+  await expect(page.locator('label[for$=".SkipStrategicSearchCheck"]')).toHaveCount(0)
+})
+
+test('舰队科技本轮快照缩小和清空不混入累计记录，人工历史仍可查看', async ({page}) => {
+  let pairs: [number, number][] = [[10102, 100], [10103, 105], [10104, 120]]
+  await page.routeWebSocket('**/api/v1/ws', socket => {
+    const server = socket.connectToServer()
+    const methods = new Map<string, string>()
+    socket.onMessage(message => {
+      const request = JSON.parse(String(message))
+      methods.set(request.id, request.method)
+      server.send(message)
+    })
+    server.onMessage(message => {
+      const response = JSON.parse(String(message))
+      if (response.ok && methods.get(response.id) === 'fleetTech.report') {
+        const report = response.result
+        report.ships = report.ships.map((ship: any) => [10102, 10103, 10104].includes(ship.group_type)
+          ? {...ship, owned: true, level: 125, observed_level: 125, lv120: true, status: 'complete', manual: true}
+          : ship)
+        report.completed = 3
+        report.last_scan = {min_level: 95, max_level: 125, complete: false, reached_bottom: false,
+          physical_count: pairs.length, expected_count: 100, matched_count: pairs.length,
+          review_count: 0, updated_at: '2026-10-16T00:00:00', fingerprint: JSON.stringify(pairs), ships: pairs}
+        socket.send(JSON.stringify(response))
+      } else socket.send(message)
+    })
+  })
+  await page.addInitScript(() => {
+    localStorage.setItem('azurpilot.language', 'zh-CN')
+    localStorage.setItem('azurpilot.theme', 'light')
+  })
+  await page.goto('/#/i/demo-main/task/FleetTechnology')
+  const views = page.getByRole('region', {name: '结果视图'})
+  const table = page.locator('.ft-table-wrap')
+  await expect(views.getByRole('button', {name: '本轮扫描', exact: true})).toHaveAttribute('aria-pressed', 'true')
+  await expect(table.locator('tbody tr')).toHaveCount(3)
+  await expect(table.locator('tr[data-group="10102"]')).toContainText('Lv.100')
+  await expect(table.locator('tr[data-group="10102"]')).toHaveClass('ft-unfinished')
+  pairs = [[10102, 100]]
+  await page.reload()
+  await expect(table.locator('tbody tr')).toHaveCount(1)
+  await expect(table.locator('tr[data-group="10103"]')).toHaveCount(0)
+  await views.getByRole('button', {name: '累计记录', exact: true}).click()
+  await page.getByLabel('搜索舰名或编号').fill('杜威')
+  await expect(table.locator('tr[data-group="10102"]')).toHaveClass('ft-complete')
+  await expect(table.locator('tr[data-group="10102"]')).toHaveAttribute('title', /Lv\.125/)
+  await page.screenshot({path: test.info().outputPath('fleet-scan-history-desktop.png'), fullPage: true, animations: 'disabled'})
+  await views.getByRole('button', {name: '本轮扫描', exact: true}).click()
+  await expect(table.locator('tr[data-group="10102"]')).toHaveClass('ft-unfinished')
+  await expect(table.locator('tr[data-group="10102"]')).toContainText('Lv.100')
+  await page.screenshot({path: test.info().outputPath('fleet-scan-latest-desktop.png'), fullPage: true, animations: 'disabled'})
+  await page.setViewportSize({width: 412, height: 950})
+  expect(await page.evaluate(() => document.body.scrollWidth <= innerWidth)).toBe(true)
+  await page.screenshot({path: test.info().outputPath('fleet-scan-latest-mobile.png'), fullPage: true, animations: 'disabled'})
+  await table.scrollIntoViewIfNeeded()
+  await expect(table.locator('tr[data-group="10102"]')).toBeVisible()
+  expect(await table.evaluate(element => element.scrollWidth > element.clientWidth)).toBe(true)
+  await page.screenshot({path: test.info().outputPath('fleet-scan-latest-mobile-table.png'), animations: 'disabled'})
+  pairs = []
+  await page.reload()
+  await expect(views.getByRole('button', {name: '本轮扫描', exact: true})).toHaveAttribute('aria-pressed', 'true')
+  await expect(table.locator('tbody tr')).toHaveCount(0)
+  await views.getByRole('button', {name: '累计记录', exact: true}).click()
+  await page.getByLabel('搜索舰名或编号').fill('卡辛')
+  await expect(table.locator('tr[data-group="10103"]')).toHaveClass('ft-complete')
+})
 
 test('统计慢请求合并更新且概览事件不重复取数', async ({page}) => {
   const ids = new Set<string>()

@@ -63,6 +63,8 @@ dev = [
 ]
 
 [tool.uv]
+# 直接运行与启动器使用同一个项目缓存，避免依赖 Windows 全局缓存的权限。
+cache-dir = ".uv-cache"
 index = [
     # 云厂商镜像
     { url = "https://mirrors.aliyun.com/pypi/simple/" },

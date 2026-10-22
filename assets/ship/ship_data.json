@@ -51797,7 +51797,10 @@
     ],
     "oil_at_start": 1,
     "oil_at_end": 9,
-    "max_level": 100
+    "max_level": 100,
+    "retrofit_names": [
+      "勇敢·改"
+    ]
   },
   "201191": {
     "name": {
@@ -60323,7 +60326,10 @@
     ],
     "oil_at_start": 1,
     "oil_at_end": 11,
-    "max_level": 100
+    "max_level": 100,
+    "retrofit_names": [
+      "贝尔法斯特·改"
+    ]
   },
   "202131": {
     "name": {
@@ -142845,7 +142851,10 @@
     ],
     "oil_at_start": 1,
     "oil_at_end": 11,
-    "max_level": 100
+    "max_level": 100,
+    "retrofit_names": [
+      "希佩尔海军上将·改"
+    ]
   },
   "403021": {
     "name": {
@@ -231686,6 +231695,222 @@
     "oil_at_end": 9,
     "max_level": 100
   },
+  "900563": {
+    "name": {
+      "cn": "皇家财富号（前排）",
+      "en": null,
+      "jp": "皇家财富号（前排）",
+      "tw": null,
+      "kr": null
+    },
+    "english_name": "MOT Royal Fortune",
+    "nationality": 96,
+    "nation_name": "MOT",
+    "type": 23,
+    "type_name": "风帆",
+    "rarity": 5,
+    "rarity_name": "SSR",
+    "star": 6,
+    "star_max": 6,
+    "group_type": 960010,
+    "is_retrofit": false,
+    "retrofit_base_id": null,
+    "is_type2": false,
+    "type2_base_id": null,
+    "armor_type": 1,
+    "attrs": {
+      "durability": 955,
+      "cannon": 91,
+      "torpedo": 0,
+      "antiaircraft": 0,
+      "air": 0,
+      "reload": 66,
+      "armor": 0,
+      "hit": 57,
+      "dodge": 31,
+      "speed": 18,
+      "luck": 51,
+      "antisub": 0
+    },
+    "attrs_growth": {
+      "durability": 9932,
+      "cannon": 506,
+      "torpedo": 0,
+      "antiaircraft": 0,
+      "air": 0,
+      "reload": 462,
+      "armor": 0,
+      "hit": 830,
+      "dodge": 528,
+      "speed": 0,
+      "luck": 0,
+      "antisub": 0
+    },
+    "equip_slots": [
+      [
+        1
+      ],
+      [
+        1
+      ],
+      [
+        10
+      ],
+      [
+        10
+      ],
+      [
+        10
+      ]
+    ],
+    "oil_at_start": 1,
+    "oil_at_end": 10,
+    "max_level": 100
+  },
+  "900564": {
+    "name": {
+      "cn": "铁角号（前排）",
+      "en": null,
+      "jp": "铁角号（前排）",
+      "tw": null,
+      "kr": null
+    },
+    "english_name": "MOT Jernbarden",
+    "nationality": 96,
+    "nation_name": "MOT",
+    "type": 23,
+    "type_name": "风帆",
+    "rarity": 5,
+    "rarity_name": "SSR",
+    "star": 6,
+    "star_max": 6,
+    "group_type": 960010,
+    "is_retrofit": false,
+    "retrofit_base_id": null,
+    "is_type2": false,
+    "type2_base_id": null,
+    "armor_type": 1,
+    "attrs": {
+      "durability": 955,
+      "cannon": 91,
+      "torpedo": 0,
+      "antiaircraft": 0,
+      "air": 0,
+      "reload": 66,
+      "armor": 0,
+      "hit": 57,
+      "dodge": 31,
+      "speed": 18,
+      "luck": 51,
+      "antisub": 0
+    },
+    "attrs_growth": {
+      "durability": 9932,
+      "cannon": 506,
+      "torpedo": 0,
+      "antiaircraft": 0,
+      "air": 0,
+      "reload": 462,
+      "armor": 0,
+      "hit": 830,
+      "dodge": 528,
+      "speed": 0,
+      "luck": 0,
+      "antisub": 0
+    },
+    "equip_slots": [
+      [
+        1
+      ],
+      [
+        1
+      ],
+      [
+        10
+      ],
+      [
+        10
+      ],
+      [
+        10
+      ]
+    ],
+    "oil_at_start": 1,
+    "oil_at_end": 10,
+    "max_level": 100
+  },
+  "900565": {
+    "name": {
+      "cn": "雷伊尔·贝号（后排）",
+      "en": null,
+      "jp": "雷伊尔·贝号（后排）",
+      "tw": null,
+      "kr": null
+    },
+    "english_name": "MOT Real bey",
+    "nationality": 96,
+    "nation_name": "MOT",
+    "type": 24,
+    "type_name": "风帆",
+    "rarity": 5,
+    "rarity_name": "SSR",
+    "star": 6,
+    "star_max": 6,
+    "group_type": 960003,
+    "is_retrofit": false,
+    "retrofit_base_id": null,
+    "is_type2": false,
+    "type2_base_id": null,
+    "armor_type": 1,
+    "attrs": {
+      "durability": 1340,
+      "cannon": 80,
+      "torpedo": 0,
+      "antiaircraft": 0,
+      "air": 0,
+      "reload": 62,
+      "armor": 0,
+      "hit": 57,
+      "dodge": 26,
+      "speed": 32,
+      "luck": 78,
+      "antisub": 0
+    },
+    "attrs_growth": {
+      "durability": 13483,
+      "cannon": 447,
+      "torpedo": 0,
+      "antiaircraft": 0,
+      "air": 0,
+      "reload": 431,
+      "armor": 0,
+      "hit": 841,
+      "dodge": 519,
+      "speed": 0,
+      "luck": 0,
+      "antisub": 0
+    },
+    "equip_slots": [
+      [
+        4
+      ],
+      [
+        1
+      ],
+      [
+        1
+      ],
+      [
+        10
+      ],
+      [
+        10
+      ]
+    ],
+    "oil_at_start": 1,
+    "oil_at_end": 10,
+    "max_level": 100
+  },
   "900801": {
     "name": {
       "cn": "白上吹雪",
@@ -241081,6 +241306,1446 @@
     ],
     "oil_at_start": 1,
     "oil_at_end": 6,
+    "max_level": 100
+  },
+  "9600171": {
+    "name": {
+      "cn": "水星号",
+      "en": null,
+      "jp": "メルクーリィ",
+      "tw": null,
+      "kr": null
+    },
+    "english_name": "MOT Merkuriy",
+    "nationality": 96,
+    "nation_name": "MOT",
+    "type": 23,
+    "type_name": "风帆",
+    "rarity": 5,
+    "rarity_name": "SSR",
+    "star": 3,
+    "star_max": 6,
+    "group_type": 960017,
+    "is_retrofit": false,
+    "retrofit_base_id": null,
+    "is_type2": false,
+    "type2_base_id": null,
+    "armor_type": 1,
+    "attrs": {
+      "durability": 806,
+      "cannon": 49,
+      "torpedo": 0,
+      "antiaircraft": 0,
+      "air": 0,
+      "reload": 71,
+      "armor": 0,
+      "hit": 45,
+      "dodge": 15,
+      "speed": 14.4,
+      "luck": 85,
+      "antisub": 0
+    },
+    "attrs_growth": {
+      "durability": 20827,
+      "cannon": 669,
+      "torpedo": 0,
+      "antiaircraft": 0,
+      "air": 0,
+      "reload": 492,
+      "armor": 0,
+      "hit": 667,
+      "dodge": 356,
+      "speed": 0,
+      "luck": 0,
+      "antisub": 0
+    },
+    "equip_slots": [
+      [
+        1
+      ],
+      [
+        1
+      ],
+      [
+        10
+      ],
+      [
+        10
+      ],
+      [
+        10
+      ]
+    ],
+    "oil_at_start": 1,
+    "oil_at_end": 5,
+    "max_level": 100
+  },
+  "9600172": {
+    "name": {
+      "cn": "水星号",
+      "en": null,
+      "jp": "メルクーリィ",
+      "tw": null,
+      "kr": null
+    },
+    "english_name": "MOT Merkuriy",
+    "nationality": 96,
+    "nation_name": "MOT",
+    "type": 23,
+    "type_name": "风帆",
+    "rarity": 5,
+    "rarity_name": "SSR",
+    "star": 4,
+    "star_max": 6,
+    "group_type": 960017,
+    "is_retrofit": false,
+    "retrofit_base_id": null,
+    "is_type2": false,
+    "type2_base_id": null,
+    "armor_type": 1,
+    "attrs": {
+      "durability": 1003,
+      "cannon": 61,
+      "torpedo": 0,
+      "antiaircraft": 0,
+      "air": 0,
+      "reload": 71,
+      "armor": 0,
+      "hit": 45,
+      "dodge": 15,
+      "speed": 19.4,
+      "luck": 85,
+      "antisub": 0
+    },
+    "attrs_growth": {
+      "durability": 20827,
+      "cannon": 669,
+      "torpedo": 0,
+      "antiaircraft": 0,
+      "air": 0,
+      "reload": 492,
+      "armor": 0,
+      "hit": 667,
+      "dodge": 356,
+      "speed": 0,
+      "luck": 0,
+      "antisub": 0
+    },
+    "equip_slots": [
+      [
+        1
+      ],
+      [
+        1
+      ],
+      [
+        10
+      ],
+      [
+        10
+      ],
+      [
+        10
+      ]
+    ],
+    "oil_at_start": 1,
+    "oil_at_end": 7,
+    "max_level": 100
+  },
+  "9600173": {
+    "name": {
+      "cn": "水星号",
+      "en": null,
+      "jp": "メルクーリィ",
+      "tw": null,
+      "kr": null
+    },
+    "english_name": "MOT Merkuriy",
+    "nationality": 96,
+    "nation_name": "MOT",
+    "type": 23,
+    "type_name": "风帆",
+    "rarity": 5,
+    "rarity_name": "SSR",
+    "star": 5,
+    "star_max": 6,
+    "group_type": 960017,
+    "is_retrofit": false,
+    "retrofit_base_id": null,
+    "is_type2": false,
+    "type2_base_id": null,
+    "armor_type": 1,
+    "attrs": {
+      "durability": 1396,
+      "cannon": 85,
+      "torpedo": 0,
+      "antiaircraft": 0,
+      "air": 0,
+      "reload": 71,
+      "armor": 0,
+      "hit": 45,
+      "dodge": 15,
+      "speed": 24.4,
+      "luck": 85,
+      "antisub": 0
+    },
+    "attrs_growth": {
+      "durability": 20827,
+      "cannon": 669,
+      "torpedo": 0,
+      "antiaircraft": 0,
+      "air": 0,
+      "reload": 492,
+      "armor": 0,
+      "hit": 667,
+      "dodge": 356,
+      "speed": 0,
+      "luck": 0,
+      "antisub": 0
+    },
+    "equip_slots": [
+      [
+        1
+      ],
+      [
+        1
+      ],
+      [
+        10
+      ],
+      [
+        10
+      ],
+      [
+        10
+      ]
+    ],
+    "oil_at_start": 1,
+    "oil_at_end": 9,
+    "max_level": 100
+  },
+  "9600174": {
+    "name": {
+      "cn": "水星号",
+      "en": null,
+      "jp": "メルクーリィ",
+      "tw": null,
+      "kr": null
+    },
+    "english_name": "MOT Merkuriy",
+    "nationality": 96,
+    "nation_name": "MOT",
+    "type": 23,
+    "type_name": "风帆",
+    "rarity": 5,
+    "rarity_name": "SSR",
+    "star": 6,
+    "star_max": 6,
+    "group_type": 960017,
+    "is_retrofit": false,
+    "retrofit_base_id": null,
+    "is_type2": false,
+    "type2_base_id": null,
+    "armor_type": 1,
+    "attrs": {
+      "durability": 1986,
+      "cannon": 122,
+      "torpedo": 0,
+      "antiaircraft": 0,
+      "air": 0,
+      "reload": 71,
+      "armor": 0,
+      "hit": 45,
+      "dodge": 15,
+      "speed": 29.4,
+      "luck": 85,
+      "antisub": 0
+    },
+    "attrs_growth": {
+      "durability": 20827,
+      "cannon": 669,
+      "torpedo": 0,
+      "antiaircraft": 0,
+      "air": 0,
+      "reload": 492,
+      "armor": 0,
+      "hit": 667,
+      "dodge": 356,
+      "speed": 0,
+      "luck": 0,
+      "antisub": 0
+    },
+    "equip_slots": [
+      [
+        1
+      ],
+      [
+        1
+      ],
+      [
+        10
+      ],
+      [
+        10
+      ],
+      [
+        10
+      ]
+    ],
+    "oil_at_start": 1,
+    "oil_at_end": 11,
+    "max_level": 100
+  },
+  "9600181": {
+    "name": {
+      "cn": "铁角号",
+      "en": null,
+      "jp": "ヤーンバアデン",
+      "tw": null,
+      "kr": null
+    },
+    "english_name": "MOT Jernbarden",
+    "nationality": 96,
+    "nation_name": "MOT",
+    "type": 22,
+    "type_name": "风帆",
+    "rarity": 5,
+    "rarity_name": "SSR",
+    "star": 3,
+    "star_max": 6,
+    "group_type": 960018,
+    "is_retrofit": false,
+    "retrofit_base_id": null,
+    "is_type2": false,
+    "type2_base_id": null,
+    "armor_type": 1,
+    "attrs": {
+      "durability": 420,
+      "cannon": 35,
+      "torpedo": 0,
+      "antiaircraft": 0,
+      "air": 0,
+      "reload": 69,
+      "armor": 0,
+      "hit": 58,
+      "dodge": 28,
+      "speed": 18,
+      "luck": 70,
+      "antisub": 0
+    },
+    "attrs_growth": {
+      "durability": 11960,
+      "cannon": 485,
+      "torpedo": 0,
+      "antiaircraft": 0,
+      "air": 0,
+      "reload": 478,
+      "armor": 0,
+      "hit": 893,
+      "dodge": 532,
+      "speed": 0,
+      "luck": 0,
+      "antisub": 0
+    },
+    "equip_slots": [
+      [
+        1
+      ],
+      [
+        1
+      ],
+      [
+        10
+      ],
+      [
+        10
+      ],
+      [
+        10
+      ]
+    ],
+    "oil_at_start": 1,
+    "oil_at_end": 4,
+    "max_level": 100
+  },
+  "9600182": {
+    "name": {
+      "cn": "铁角号",
+      "en": null,
+      "jp": "ヤーンバアデン",
+      "tw": null,
+      "kr": null
+    },
+    "english_name": "MOT Jernbarden",
+    "nationality": 96,
+    "nation_name": "MOT",
+    "type": 22,
+    "type_name": "风帆",
+    "rarity": 5,
+    "rarity_name": "SSR",
+    "star": 4,
+    "star_max": 6,
+    "group_type": 960018,
+    "is_retrofit": false,
+    "retrofit_base_id": null,
+    "is_type2": false,
+    "type2_base_id": null,
+    "armor_type": 1,
+    "attrs": {
+      "durability": 522,
+      "cannon": 44,
+      "torpedo": 0,
+      "antiaircraft": 0,
+      "air": 0,
+      "reload": 69,
+      "armor": 0,
+      "hit": 58,
+      "dodge": 28,
+      "speed": 18,
+      "luck": 70,
+      "antisub": 0
+    },
+    "attrs_growth": {
+      "durability": 11960,
+      "cannon": 485,
+      "torpedo": 0,
+      "antiaircraft": 0,
+      "air": 0,
+      "reload": 478,
+      "armor": 0,
+      "hit": 893,
+      "dodge": 532,
+      "speed": 0,
+      "luck": 0,
+      "antisub": 0
+    },
+    "equip_slots": [
+      [
+        1
+      ],
+      [
+        1
+      ],
+      [
+        10
+      ],
+      [
+        10
+      ],
+      [
+        10
+      ]
+    ],
+    "oil_at_start": 1,
+    "oil_at_end": 5,
+    "max_level": 100
+  },
+  "9600183": {
+    "name": {
+      "cn": "铁角号",
+      "en": null,
+      "jp": "ヤーンバアデン",
+      "tw": null,
+      "kr": null
+    },
+    "english_name": "MOT Jernbarden",
+    "nationality": 96,
+    "nation_name": "MOT",
+    "type": 22,
+    "type_name": "风帆",
+    "rarity": 5,
+    "rarity_name": "SSR",
+    "star": 5,
+    "star_max": 6,
+    "group_type": 960018,
+    "is_retrofit": false,
+    "retrofit_base_id": null,
+    "is_type2": false,
+    "type2_base_id": null,
+    "armor_type": 1,
+    "attrs": {
+      "durability": 727,
+      "cannon": 61,
+      "torpedo": 0,
+      "antiaircraft": 0,
+      "air": 0,
+      "reload": 69,
+      "armor": 0,
+      "hit": 58,
+      "dodge": 28,
+      "speed": 18,
+      "luck": 70,
+      "antisub": 0
+    },
+    "attrs_growth": {
+      "durability": 11960,
+      "cannon": 485,
+      "torpedo": 0,
+      "antiaircraft": 0,
+      "air": 0,
+      "reload": 478,
+      "armor": 0,
+      "hit": 893,
+      "dodge": 532,
+      "speed": 0,
+      "luck": 0,
+      "antisub": 0
+    },
+    "equip_slots": [
+      [
+        1
+      ],
+      [
+        1
+      ],
+      [
+        10
+      ],
+      [
+        10
+      ],
+      [
+        10
+      ]
+    ],
+    "oil_at_start": 1,
+    "oil_at_end": 6,
+    "max_level": 100
+  },
+  "9600184": {
+    "name": {
+      "cn": "铁角号",
+      "en": null,
+      "jp": "ヤーンバアデン",
+      "tw": null,
+      "kr": null
+    },
+    "english_name": "MOT Jernbarden",
+    "nationality": 96,
+    "nation_name": "MOT",
+    "type": 22,
+    "type_name": "风帆",
+    "rarity": 5,
+    "rarity_name": "SSR",
+    "star": 6,
+    "star_max": 6,
+    "group_type": 960018,
+    "is_retrofit": false,
+    "retrofit_base_id": null,
+    "is_type2": false,
+    "type2_base_id": null,
+    "armor_type": 1,
+    "attrs": {
+      "durability": 1034,
+      "cannon": 87,
+      "torpedo": 0,
+      "antiaircraft": 0,
+      "air": 0,
+      "reload": 69,
+      "armor": 0,
+      "hit": 58,
+      "dodge": 28,
+      "speed": 18,
+      "luck": 70,
+      "antisub": 0
+    },
+    "attrs_growth": {
+      "durability": 11960,
+      "cannon": 485,
+      "torpedo": 0,
+      "antiaircraft": 0,
+      "air": 0,
+      "reload": 478,
+      "armor": 0,
+      "hit": 893,
+      "dodge": 532,
+      "speed": 0,
+      "luck": 0,
+      "antisub": 0
+    },
+    "equip_slots": [
+      [
+        1
+      ],
+      [
+        1
+      ],
+      [
+        10
+      ],
+      [
+        10
+      ],
+      [
+        10
+      ]
+    ],
+    "oil_at_start": 1,
+    "oil_at_end": 7,
+    "max_level": 100
+  },
+  "9600191": {
+    "name": {
+      "cn": "塞利米耶号",
+      "en": null,
+      "jp": "セリミエ",
+      "tw": null,
+      "kr": null
+    },
+    "english_name": "MOT Selimiye",
+    "nationality": 96,
+    "nation_name": "MOT",
+    "type": 24,
+    "type_name": "风帆",
+    "rarity": 5,
+    "rarity_name": "SSR",
+    "star": 3,
+    "star_max": 6,
+    "group_type": 960019,
+    "is_retrofit": false,
+    "retrofit_base_id": null,
+    "is_type2": false,
+    "type2_base_id": null,
+    "armor_type": 1,
+    "attrs": {
+      "durability": 982,
+      "cannon": 89,
+      "torpedo": 0,
+      "antiaircraft": 0,
+      "air": 0,
+      "reload": 73,
+      "armor": 0,
+      "hit": 20,
+      "dodge": 6,
+      "speed": 26,
+      "luck": 50,
+      "antisub": 0
+    },
+    "attrs_growth": {
+      "durability": 27987,
+      "cannon": 1069,
+      "torpedo": 0,
+      "antiaircraft": 0,
+      "air": 0,
+      "reload": 510,
+      "armor": 0,
+      "hit": 291,
+      "dodge": 227,
+      "speed": 0,
+      "luck": 0,
+      "antisub": 0
+    },
+    "equip_slots": [
+      [
+        4
+      ],
+      [
+        1
+      ],
+      [
+        1
+      ],
+      [
+        10
+      ],
+      [
+        10
+      ]
+    ],
+    "oil_at_start": 1,
+    "oil_at_end": 8,
+    "max_level": 100
+  },
+  "9600192": {
+    "name": {
+      "cn": "塞利米耶号",
+      "en": null,
+      "jp": "セリミエ",
+      "tw": null,
+      "kr": null
+    },
+    "english_name": "MOT Selimiye",
+    "nationality": 96,
+    "nation_name": "MOT",
+    "type": 24,
+    "type_name": "风帆",
+    "rarity": 5,
+    "rarity_name": "SSR",
+    "star": 4,
+    "star_max": 6,
+    "group_type": 960019,
+    "is_retrofit": false,
+    "retrofit_base_id": null,
+    "is_type2": false,
+    "type2_base_id": null,
+    "armor_type": 1,
+    "attrs": {
+      "durability": 1222,
+      "cannon": 111,
+      "torpedo": 0,
+      "antiaircraft": 0,
+      "air": 0,
+      "reload": 73,
+      "armor": 0,
+      "hit": 20,
+      "dodge": 6,
+      "speed": 26,
+      "luck": 50,
+      "antisub": 0
+    },
+    "attrs_growth": {
+      "durability": 27987,
+      "cannon": 1069,
+      "torpedo": 0,
+      "antiaircraft": 0,
+      "air": 0,
+      "reload": 510,
+      "armor": 0,
+      "hit": 291,
+      "dodge": 227,
+      "speed": 0,
+      "luck": 0,
+      "antisub": 0
+    },
+    "equip_slots": [
+      [
+        4
+      ],
+      [
+        1
+      ],
+      [
+        1
+      ],
+      [
+        10
+      ],
+      [
+        10
+      ]
+    ],
+    "oil_at_start": 1,
+    "oil_at_end": 10,
+    "max_level": 100
+  },
+  "9600193": {
+    "name": {
+      "cn": "塞利米耶号",
+      "en": null,
+      "jp": "セリミエ",
+      "tw": null,
+      "kr": null
+    },
+    "english_name": "MOT Selimiye",
+    "nationality": 96,
+    "nation_name": "MOT",
+    "type": 24,
+    "type_name": "风帆",
+    "rarity": 5,
+    "rarity_name": "SSR",
+    "star": 5,
+    "star_max": 6,
+    "group_type": 960019,
+    "is_retrofit": false,
+    "retrofit_base_id": null,
+    "is_type2": false,
+    "type2_base_id": null,
+    "armor_type": 1,
+    "attrs": {
+      "durability": 1701,
+      "cannon": 155,
+      "torpedo": 0,
+      "antiaircraft": 0,
+      "air": 0,
+      "reload": 73,
+      "armor": 0,
+      "hit": 20,
+      "dodge": 6,
+      "speed": 26,
+      "luck": 50,
+      "antisub": 0
+    },
+    "attrs_growth": {
+      "durability": 27987,
+      "cannon": 1069,
+      "torpedo": 0,
+      "antiaircraft": 0,
+      "air": 0,
+      "reload": 510,
+      "armor": 0,
+      "hit": 291,
+      "dodge": 227,
+      "speed": 0,
+      "luck": 0,
+      "antisub": 0
+    },
+    "equip_slots": [
+      [
+        4
+      ],
+      [
+        1
+      ],
+      [
+        1
+      ],
+      [
+        10
+      ],
+      [
+        10
+      ]
+    ],
+    "oil_at_start": 1,
+    "oil_at_end": 12,
+    "max_level": 100
+  },
+  "9600194": {
+    "name": {
+      "cn": "塞利米耶号",
+      "en": null,
+      "jp": "セリミエ",
+      "tw": null,
+      "kr": null
+    },
+    "english_name": "MOT Selimiye",
+    "nationality": 96,
+    "nation_name": "MOT",
+    "type": 24,
+    "type_name": "风帆",
+    "rarity": 5,
+    "rarity_name": "SSR",
+    "star": 6,
+    "star_max": 6,
+    "group_type": 960019,
+    "is_retrofit": false,
+    "retrofit_base_id": null,
+    "is_type2": false,
+    "type2_base_id": null,
+    "armor_type": 1,
+    "attrs": {
+      "durability": 2420,
+      "cannon": 221,
+      "torpedo": 0,
+      "antiaircraft": 0,
+      "air": 0,
+      "reload": 73,
+      "armor": 0,
+      "hit": 20,
+      "dodge": 6,
+      "speed": 26,
+      "luck": 50,
+      "antisub": 0
+    },
+    "attrs_growth": {
+      "durability": 27987,
+      "cannon": 1069,
+      "torpedo": 0,
+      "antiaircraft": 0,
+      "air": 0,
+      "reload": 510,
+      "armor": 0,
+      "hit": 291,
+      "dodge": 227,
+      "speed": 0,
+      "luck": 0,
+      "antisub": 0
+    },
+    "equip_slots": [
+      [
+        4
+      ],
+      [
+        1
+      ],
+      [
+        1
+      ],
+      [
+        10
+      ],
+      [
+        10
+      ]
+    ],
+    "oil_at_start": 1,
+    "oil_at_end": 14,
+    "max_level": 100
+  },
+  "9600201": {
+    "name": {
+      "cn": "长蛇号",
+      "en": null,
+      "jp": "オーメン・ランゲ",
+      "tw": null,
+      "kr": null
+    },
+    "english_name": "MOT Ormen Lange",
+    "nationality": 96,
+    "nation_name": "MOT",
+    "type": 23,
+    "type_name": "风帆",
+    "rarity": 4,
+    "rarity_name": "SR",
+    "star": 2,
+    "star_max": 5,
+    "group_type": 960020,
+    "is_retrofit": false,
+    "retrofit_base_id": null,
+    "is_type2": false,
+    "type2_base_id": null,
+    "armor_type": 1,
+    "attrs": {
+      "durability": 714,
+      "cannon": 29,
+      "torpedo": 0,
+      "antiaircraft": 0,
+      "air": 0,
+      "reload": 74,
+      "armor": 0,
+      "hit": 58,
+      "dodge": 14,
+      "speed": 16,
+      "luck": 22,
+      "antisub": 0
+    },
+    "attrs_growth": {
+      "durability": 20331,
+      "cannon": 401,
+      "torpedo": 0,
+      "antiaircraft": 0,
+      "air": 0,
+      "reload": 513,
+      "armor": 0,
+      "hit": 834,
+      "dodge": 405,
+      "speed": 0,
+      "luck": 0,
+      "antisub": 0
+    },
+    "equip_slots": [
+      [
+        1
+      ],
+      [
+        1
+      ],
+      [
+        10
+      ],
+      [
+        10
+      ],
+      [
+        10
+      ]
+    ],
+    "oil_at_start": 1,
+    "oil_at_end": 3,
+    "max_level": 100
+  },
+  "9600202": {
+    "name": {
+      "cn": "长蛇号",
+      "en": null,
+      "jp": "オーメン・ランゲ",
+      "tw": null,
+      "kr": null
+    },
+    "english_name": "MOT Ormen Lange",
+    "nationality": 96,
+    "nation_name": "MOT",
+    "type": 23,
+    "type_name": "风帆",
+    "rarity": 4,
+    "rarity_name": "SR",
+    "star": 3,
+    "star_max": 5,
+    "group_type": 960020,
+    "is_retrofit": false,
+    "retrofit_base_id": null,
+    "is_type2": false,
+    "type2_base_id": null,
+    "armor_type": 1,
+    "attrs": {
+      "durability": 888,
+      "cannon": 36,
+      "torpedo": 0,
+      "antiaircraft": 0,
+      "air": 0,
+      "reload": 74,
+      "armor": 0,
+      "hit": 58,
+      "dodge": 14,
+      "speed": 24,
+      "luck": 22,
+      "antisub": 0
+    },
+    "attrs_growth": {
+      "durability": 20331,
+      "cannon": 401,
+      "torpedo": 0,
+      "antiaircraft": 0,
+      "air": 0,
+      "reload": 513,
+      "armor": 0,
+      "hit": 834,
+      "dodge": 405,
+      "speed": 0,
+      "luck": 0,
+      "antisub": 0
+    },
+    "equip_slots": [
+      [
+        1
+      ],
+      [
+        1
+      ],
+      [
+        10
+      ],
+      [
+        10
+      ],
+      [
+        10
+      ]
+    ],
+    "oil_at_start": 1,
+    "oil_at_end": 5,
+    "max_level": 100
+  },
+  "9600203": {
+    "name": {
+      "cn": "长蛇号",
+      "en": null,
+      "jp": "オーメン・ランゲ",
+      "tw": null,
+      "kr": null
+    },
+    "english_name": "MOT Ormen Lange",
+    "nationality": 96,
+    "nation_name": "MOT",
+    "type": 23,
+    "type_name": "风帆",
+    "rarity": 4,
+    "rarity_name": "SR",
+    "star": 4,
+    "star_max": 5,
+    "group_type": 960020,
+    "is_retrofit": false,
+    "retrofit_base_id": null,
+    "is_type2": false,
+    "type2_base_id": null,
+    "armor_type": 1,
+    "attrs": {
+      "durability": 1236,
+      "cannon": 50,
+      "torpedo": 0,
+      "antiaircraft": 0,
+      "air": 0,
+      "reload": 74,
+      "armor": 0,
+      "hit": 58,
+      "dodge": 14,
+      "speed": 32,
+      "luck": 22,
+      "antisub": 0
+    },
+    "attrs_growth": {
+      "durability": 20331,
+      "cannon": 401,
+      "torpedo": 0,
+      "antiaircraft": 0,
+      "air": 0,
+      "reload": 513,
+      "armor": 0,
+      "hit": 834,
+      "dodge": 405,
+      "speed": 0,
+      "luck": 0,
+      "antisub": 0
+    },
+    "equip_slots": [
+      [
+        1
+      ],
+      [
+        1
+      ],
+      [
+        10
+      ],
+      [
+        10
+      ],
+      [
+        10
+      ]
+    ],
+    "oil_at_start": 1,
+    "oil_at_end": 7,
+    "max_level": 100
+  },
+  "9600204": {
+    "name": {
+      "cn": "长蛇号",
+      "en": null,
+      "jp": "オーメン・ランゲ",
+      "tw": null,
+      "kr": null
+    },
+    "english_name": "MOT Ormen Lange",
+    "nationality": 96,
+    "nation_name": "MOT",
+    "type": 23,
+    "type_name": "风帆",
+    "rarity": 4,
+    "rarity_name": "SR",
+    "star": 5,
+    "star_max": 5,
+    "group_type": 960020,
+    "is_retrofit": false,
+    "retrofit_base_id": null,
+    "is_type2": false,
+    "type2_base_id": null,
+    "armor_type": 1,
+    "attrs": {
+      "durability": 1758,
+      "cannon": 72,
+      "torpedo": 0,
+      "antiaircraft": 0,
+      "air": 0,
+      "reload": 74,
+      "armor": 0,
+      "hit": 58,
+      "dodge": 14,
+      "speed": 40,
+      "luck": 22,
+      "antisub": 0
+    },
+    "attrs_growth": {
+      "durability": 20331,
+      "cannon": 401,
+      "torpedo": 0,
+      "antiaircraft": 0,
+      "air": 0,
+      "reload": 513,
+      "armor": 0,
+      "hit": 834,
+      "dodge": 405,
+      "speed": 0,
+      "luck": 0,
+      "antisub": 0
+    },
+    "equip_slots": [
+      [
+        1
+      ],
+      [
+        1
+      ],
+      [
+        10
+      ],
+      [
+        10
+      ],
+      [
+        10
+      ]
+    ],
+    "oil_at_start": 1,
+    "oil_at_end": 9,
+    "max_level": 100
+  },
+  "9600211": {
+    "name": {
+      "cn": "雷伊尔·贝号",
+      "en": null,
+      "jp": "リヤラ・ベイ",
+      "tw": null,
+      "kr": null
+    },
+    "english_name": "MOT Real bey",
+    "nationality": 96,
+    "nation_name": "MOT",
+    "type": 24,
+    "type_name": "风帆",
+    "rarity": 4,
+    "rarity_name": "SR",
+    "star": 2,
+    "star_max": 5,
+    "group_type": 960021,
+    "is_retrofit": false,
+    "retrofit_base_id": null,
+    "is_type2": false,
+    "type2_base_id": null,
+    "armor_type": 1,
+    "attrs": {
+      "durability": 897,
+      "cannon": 82,
+      "torpedo": 0,
+      "antiaircraft": 0,
+      "air": 0,
+      "reload": 66,
+      "armor": 0,
+      "hit": 19,
+      "dodge": 6,
+      "speed": 26,
+      "luck": 50,
+      "antisub": 0
+    },
+    "attrs_growth": {
+      "durability": 25546,
+      "cannon": 1008,
+      "torpedo": 0,
+      "antiaircraft": 0,
+      "air": 0,
+      "reload": 459,
+      "armor": 0,
+      "hit": 274,
+      "dodge": 227,
+      "speed": 0,
+      "luck": 0,
+      "antisub": 0
+    },
+    "equip_slots": [
+      [
+        4
+      ],
+      [
+        1
+      ],
+      [
+        1
+      ],
+      [
+        10
+      ],
+      [
+        10
+      ]
+    ],
+    "oil_at_start": 1,
+    "oil_at_end": 7,
+    "max_level": 100
+  },
+  "9600212": {
+    "name": {
+      "cn": "雷伊尔·贝号",
+      "en": null,
+      "jp": "リヤラ・ベイ",
+      "tw": null,
+      "kr": null
+    },
+    "english_name": "MOT Real bey",
+    "nationality": 96,
+    "nation_name": "MOT",
+    "type": 24,
+    "type_name": "风帆",
+    "rarity": 4,
+    "rarity_name": "SR",
+    "star": 3,
+    "star_max": 5,
+    "group_type": 960021,
+    "is_retrofit": false,
+    "retrofit_base_id": null,
+    "is_type2": false,
+    "type2_base_id": null,
+    "armor_type": 1,
+    "attrs": {
+      "durability": 1116,
+      "cannon": 102,
+      "torpedo": 0,
+      "antiaircraft": 0,
+      "air": 0,
+      "reload": 66,
+      "armor": 0,
+      "hit": 19,
+      "dodge": 6,
+      "speed": 26,
+      "luck": 50,
+      "antisub": 0
+    },
+    "attrs_growth": {
+      "durability": 25546,
+      "cannon": 1008,
+      "torpedo": 0,
+      "antiaircraft": 0,
+      "air": 0,
+      "reload": 459,
+      "armor": 0,
+      "hit": 274,
+      "dodge": 227,
+      "speed": 0,
+      "luck": 0,
+      "antisub": 0
+    },
+    "equip_slots": [
+      [
+        4
+      ],
+      [
+        1
+      ],
+      [
+        1
+      ],
+      [
+        10
+      ],
+      [
+        10
+      ]
+    ],
+    "oil_at_start": 1,
+    "oil_at_end": 9,
+    "max_level": 100
+  },
+  "9600213": {
+    "name": {
+      "cn": "雷伊尔·贝号",
+      "en": null,
+      "jp": "リヤラ・ベイ",
+      "tw": null,
+      "kr": null
+    },
+    "english_name": "MOT Real bey",
+    "nationality": 96,
+    "nation_name": "MOT",
+    "type": 24,
+    "type_name": "风帆",
+    "rarity": 4,
+    "rarity_name": "SR",
+    "star": 4,
+    "star_max": 5,
+    "group_type": 960021,
+    "is_retrofit": false,
+    "retrofit_base_id": null,
+    "is_type2": false,
+    "type2_base_id": null,
+    "armor_type": 1,
+    "attrs": {
+      "durability": 1553,
+      "cannon": 143,
+      "torpedo": 0,
+      "antiaircraft": 0,
+      "air": 0,
+      "reload": 66,
+      "armor": 0,
+      "hit": 19,
+      "dodge": 6,
+      "speed": 26,
+      "luck": 50,
+      "antisub": 0
+    },
+    "attrs_growth": {
+      "durability": 25546,
+      "cannon": 1008,
+      "torpedo": 0,
+      "antiaircraft": 0,
+      "air": 0,
+      "reload": 459,
+      "armor": 0,
+      "hit": 274,
+      "dodge": 227,
+      "speed": 0,
+      "luck": 0,
+      "antisub": 0
+    },
+    "equip_slots": [
+      [
+        4
+      ],
+      [
+        1
+      ],
+      [
+        1
+      ],
+      [
+        10
+      ],
+      [
+        10
+      ]
+    ],
+    "oil_at_start": 1,
+    "oil_at_end": 11,
+    "max_level": 100
+  },
+  "9600214": {
+    "name": {
+      "cn": "雷伊尔·贝号",
+      "en": null,
+      "jp": "リヤラ・ベイ",
+      "tw": null,
+      "kr": null
+    },
+    "english_name": "MOT Real bey",
+    "nationality": 96,
+    "nation_name": "MOT",
+    "type": 24,
+    "type_name": "风帆",
+    "rarity": 4,
+    "rarity_name": "SR",
+    "star": 5,
+    "star_max": 5,
+    "group_type": 960021,
+    "is_retrofit": false,
+    "retrofit_base_id": null,
+    "is_type2": false,
+    "type2_base_id": null,
+    "armor_type": 1,
+    "attrs": {
+      "durability": 2209,
+      "cannon": 204,
+      "torpedo": 0,
+      "antiaircraft": 0,
+      "air": 0,
+      "reload": 66,
+      "armor": 0,
+      "hit": 19,
+      "dodge": 6,
+      "speed": 26,
+      "luck": 50,
+      "antisub": 0
+    },
+    "attrs_growth": {
+      "durability": 25546,
+      "cannon": 1008,
+      "torpedo": 0,
+      "antiaircraft": 0,
+      "air": 0,
+      "reload": 459,
+      "armor": 0,
+      "hit": 274,
+      "dodge": 227,
+      "speed": 0,
+      "luck": 0,
+      "antisub": 0
+    },
+    "equip_slots": [
+      [
+        4
+      ],
+      [
+        1
+      ],
+      [
+        1
+      ],
+      [
+        10
+      ],
+      [
+        10
+      ]
+    ],
+    "oil_at_start": 1,
+    "oil_at_end": 13,
     "max_level": 100
   },
   "9701011": {

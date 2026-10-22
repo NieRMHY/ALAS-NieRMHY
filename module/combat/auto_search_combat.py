@@ -18,8 +18,8 @@ from module.base.timer import Timer
 from module.campaign.campaign_status import CampaignStatus
 from module.combat.assets import *
 from module.combat.combat import Combat
-from module.exception import CampaignEnd, RequestHumanTakeover, ScriptEnd
-from module.handler.assets import AUTO_SEARCH_MAP_OPTION_ON, FLEET_UNAVAILABLE
+from module.exception import CampaignEnd, GameStuckError, RequestHumanTakeover, ScriptEnd
+from module.handler.assets import AUTO_SEARCH_MAP_OPTION_OFF, AUTO_SEARCH_MAP_OPTION_ON, FLEET_UNAVAILABLE
 from module.logger import logger
 from module.map.assets import WITHDRAW, FLEET_NUM_1, FLEET_NUM_2
 from module.map.map_operation import MapOperation
@@ -45,6 +45,67 @@ class AutoSearchCombat(MapOperation, Combat, CampaignStatus):
     auto_search_defeat_recovery = True
     auto_search_oil_limit_triggered = False
     auto_search_coin_limit_triggered = False
+
+    def auto_search_recovery_state(self):
+        """异常重启只识别返回的关卡地图，不接管重启前的战斗或结算。"""
+        if self.is_auto_search_running() or (self.is_in_map() and self.appear(WITHDRAW, offset=(30, 30))):
+            return 'map'
+        return None
+
+    def prepare_auto_search_recovery(self, state):
+        """确认已回到地图后开启自律，后续战斗重新按普通入口计算心情。"""
+        if state != 'map':
+            return False
+        self.combat_result_reset()
+        self._withdraw = False
+        self._auto_search_status_confirm = False
+        self._auto_search_fleet_confirmed = False
+        if self.is_auto_search_running():
+            logger.info('[战役续接] 自律寻敌已开启，直接接管，不重复点击')
+        self._restart_resume_timer = Timer(30, count=60).start()
+        self._restart_resume_click_timer = Timer(2).start()
+        self._restart_resume_guard = True
+        self._restart_emotion_checked = False
+        self._auto_search_in_stage_timer.reset()
+        logger.info('[战役续接] 已返回关卡地图，恢复自律；后续战斗按正常流程计算心情')
+        return True
+
+    def handle_auto_search_map_option(self):
+        """重启续接时以模板和颜色共同确认 OFF，沿用原点击冷却。"""
+        if not self.__dict__.get('_restart_resume_guard', False):
+            return super().handle_auto_search_map_option()
+        if self._restart_resume_timer is None:
+            if not (self.is_auto_search_running() or self.is_in_map()):
+                return False
+            self._restart_resume_timer = Timer(30, count=60).start()
+        if self._restart_resume_timer.reached():
+            raise GameStuckError('[战役续接] 自律寻敌未在期限内进入战斗')
+        if self.is_auto_search_running():
+            return False
+        # 刚回到地图时先持续截图两秒，避免游戏尚未就绪就触发开关。
+        if not self._restart_resume_click_timer.reached():
+            return False
+        if self.is_combat_loading() or self.is_combat_executing():
+            return False
+        if not self.match_template_color(AUTO_SEARCH_MAP_OPTION_OFF,
+                                         offset=self._auto_search_offset, threshold=10):
+            return False
+        if not self._restart_emotion_checked:
+            self.auto_search_watch_fleet()
+            if not self.__dict__.get('_auto_search_fleet_confirmed'):
+                return False
+            try:
+                self.emotion.check_fleet(self.fleet_show_index, after_restart=True)
+            except (ScriptEnd, RequestHumanTakeover):
+                logger.warning('[战役续接] 舰队心情检查未通过，先撤退再交回任务处理')
+                try:
+                    self.withdraw()
+                except CampaignEnd:
+                    pass
+                raise
+            self._restart_emotion_checked = True
+            logger.info('[战役续接] 已确认自律寻敌关闭，尝试恢复')
+        return super().handle_auto_search_map_option()
 
     def _handle_auto_search_menu_missing(self):
         """处理自动搜索菜单缺失的异常情况。
@@ -83,7 +144,8 @@ class AutoSearchCombat(MapOperation, Combat, CampaignStatus):
             # 处理碧蓝航线客户端异常：
             # 从退役界面退出并立即开启自动搜索时，图标显示正在运行但实际未动作。
             # 定时点击：每 3 秒尝试关闭自动搜索一次，不包含初始阶段
-            if self.appear(AUTO_SEARCH_MAP_OPTION_ON, offset=self._auto_search_offset, interval=3) \
+            if not self.__dict__.get('_restart_resume_guard', False) \
+                    and self.appear(AUTO_SEARCH_MAP_OPTION_ON, offset=self._auto_search_offset, interval=3) \
                     and self.appear_then_click(AUTO_SEARCH_MAP_OPTION_ON):
                 continue
             if self.handle_combat_low_emotion():
@@ -113,6 +175,7 @@ class AutoSearchCombat(MapOperation, Combat, CampaignStatus):
         else:
             # 转场读不到编号时保留上一次正向确认，不能把二队改记为默认一队。
             return checked
+        self._auto_search_fleet_confirmed = True
         self.get_fleet_current_index()
         if self.fleet_current_index == prev:
             # 与当前舰队一致，仅输出一次日志
@@ -319,6 +382,7 @@ class AutoSearchCombat(MapOperation, Combat, CampaignStatus):
                 break
 
         logger.info('[自动搜索-战斗] 战斗执行')
+        self._restart_resume_guard = False
         self.submarine_call_reset()
         submarine_mode = 'do_not_use'
         if self.config.Submarine_Fleet:
@@ -445,7 +509,6 @@ class AutoSearchCombat(MapOperation, Combat, CampaignStatus):
         resume_checked = False
         resume_started = False
         resume_error = None
-
         for _ in self.loop():
 
             if self.handle_combat_defeat():

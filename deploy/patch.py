@@ -88,12 +88,12 @@ def check_running_directory():
 
 
 def patch_uiautomator2():
-    """修补 uiautomator2 的资源下载路径。
+    """修补 uiautomator2 的资源下载路径和 ATX Agent URL。
 
-    uiautomator2 默认从 tool.appetizer.io 或 github.com/openatx 下载资源，
-    但这些地址在国内可能不可用或速度慢。因此修补为使用本地缓存 uiautomator2cache/cache。
-
-    同时移除 minicap 安装，因为模拟器不需要它。
+    1. 将资源下载目录从默认路径修补为本地缓存 uiautomator2cache/cache。
+    2. 移除 minicap 安装，因为模拟器不需要它。
+    3. 修复 arm64-v8a 的 atx_agent_url，使其能正确安装 ATX。
+    4. 将 ATX Agent 下载地址修补为 atx.azurpilot.com。
     """
     cache_dir = site_package_file('uiautomator2cache', 'cache')
     init_file = site_package_file('uiautomator2', 'init.py')
@@ -115,6 +115,27 @@ def patch_uiautomator2():
         logger.info(f'{init_file} minicap_urls patched')
     else:
         logger.info(f'{init_file} minicap_urls no need to patch')
+
+    # 修补 atx_agent_url
+    res = re.search(r"'arm64-v8a': 'atx-agent_\{v}_linux_armv7.tar.gz'", content)
+    if res:
+        content = re.sub(r"'arm64-v8a': 'atx-agent_\{v}_linux_armv7.tar.gz'",
+                         "'arm64-v8a': 'atx-agent_{v}_linux_arm64.tar.gz'",
+                         content)
+        modified = True
+        logger.info(f'{init_file} atx_agent_url patched')
+    else:
+        logger.info(f'{init_file} atx_agent_url no need to patch')
+
+    res = re.search(r"return GITHUB_BASEURL \+ '/atx-agent/releases/download/%s/%s'", content)
+    if res:
+        content = re.sub(
+            r"return GITHUB_BASEURL \+ '/atx-agent/releases/download/%s/%s' % \(\s*__atx_agent_version__,\s*name\.format\(v=__atx_agent_version__\)\)",
+            r"return 'https://atx.azurpilot.com/%s' % (name.format(v=__atx_agent_version__))",
+            content,
+        )
+        modified = True
+        logger.info(f'{init_file} atx_agent_url download link patched to atx.azurpilot.com')
 
     # 修补 appdir
     if cache_dir and os.path.exists(cache_dir):

@@ -137,7 +137,7 @@ test('原生计算器完成手工添加、最高等级合并、保存、Excel �
   expect(errors).toEqual([])
 })
 
-test('截图可靠结果直接计算，保留最高等级，不确定名称保持只读', async ({page}) => {
+test('截图可靠结果直接计算，保留最高等级，不确定名称可人工校正', async ({page}) => {
     await page.goto('/#/i/demo-alt/mind-calculator')
     await expect(page.locator('.mind-add')).toBeVisible()
   const add = page.locator('.mind-add')
@@ -146,8 +146,12 @@ test('截图可靠结果直接计算，保留最高等级，不确定名称保�
   await add.getByRole('button', {name: '添加舰船'}).click()
   const screenshot = fileURLToPath(new URL('../../tests/fixtures/mind_dock_fleet_priority.png', import.meta.url))
   await page.locator('input[type=file][accept^="image/png"]').setInputFiles([screenshot, screenshot])
-  await expect(page.locator('.mind-ship-table tbody tr')).toHaveCount(21, {timeout: 30_000})
-  await expect(page.locator('.mind-totals strong').nth(3)).toHaveText('0')
+  // 两张截图里的新月身份都未确认，分别保留；其余已确认身份仍取最高等级。
+  await expect(page.locator('.mind-ship-table tbody tr')).toHaveCount(22, {timeout: 30_000})
+  await expect(page.locator('.mind-totals strong').nth(3)).toHaveText('2')
+  const crescents = page.locator('.mind-ship-table tbody tr').filter({has: page.locator('input[value="新月"]')})
+  await expect(crescents).toHaveCount(2)
+  await expect(crescents.locator('td:nth-child(5)')).toHaveText(['0', '0'])
   await expect(page.locator('.mind-totals strong').first()).not.toHaveText('0')
   const row = page.locator('.mind-ship-table tbody tr').filter({has: page.locator('input[value="热心.改"]')})
   await expect(row.locator('input[type=number]')).toHaveValue('105')
@@ -157,11 +161,11 @@ test('截图可靠结果直接计算，保留最高等级，不确定名称保�
     name: '待核对.json', mimeType: 'application/json',
     buffer: Buffer.from(JSON.stringify([{name: '人工核对舰', level: 100, base_rarity: 'SR', review: true}])),
   })
-  await expect(page.locator('.mind-totals strong').nth(3)).toHaveText('1')
+  await expect(page.locator('.mind-totals strong').nth(3)).toHaveText('3')
   const uncertain = page.locator('.mind-ship-table tbody tr').filter({has: page.locator('input[value="人工核对舰"]')})
-  await expect(uncertain.locator('input[type=text], input:not([type])')).toHaveAttribute('readonly', '')
+  await expect(uncertain.locator('input[type=text], input:not([type])')).not.toHaveAttribute('readonly', '')
   await expect(uncertain).toContainText('待核对')
-  await expect(uncertain.getByRole('combobox')).toBeEnabled()
+  await expect(uncertain.getByRole('combobox', {name: /^状态/})).toBeEnabled()
   await expect(uncertain.getByRole('button', {name: '删除 人工核对舰'})).toBeVisible()
   await page.getByRole('heading', {name: '心智单元计算器', exact: true}).scrollIntoViewIfNeeded()
   await page.screenshot({path: fileURLToPath(new URL('../test-results/mind-calculator-review.png', import.meta.url)), fullPage: true})
@@ -192,6 +196,55 @@ test('添加时指定精锐有效，身份只读且等级自动保存后重载�
     await page.getByLabel('等级 1', {exact: true}).press('Enter')
     await expect(page.getByLabel('等级 1', {exact: true})).toHaveValue('106')
   }
+})
+
+test('识别失败保留未知等级和重复核对项，人工校正后才计费并持久保存', async ({page}) => {
+  test.setTimeout(60_000)
+  await page.goto('/#/i/demo-alt/mind-calculator')
+  await expect(page.locator('.mind-add')).toBeVisible()
+  await importList(page, [{name: '卡辛', level: 100},
+    {name: '拉菲I', level: 0, review: true, source: '第 2 页第 3 列等级与身份未确认'},
+    {name: '重复误读', level: 110, review: true}, {name: '重复误读', level: 110, review: true}])
+  await expect(page.locator('.mind-ship-table tbody tr')).toHaveCount(4)
+  await expect(page.locator('.mind-totals strong').nth(3)).toHaveText('3')
+  await page.getByRole('button', {name: '保存舰船数据', exact: true}).click()
+  await expect(page.locator('.mind-intro')).toContainText('数据已保存到当前实例')
+  await page.reload()
+  await expect(page.getByLabel('等级 2', {exact: true})).toHaveValue('')
+  await expect(page.getByLabel('等级 2', {exact: true})).toHaveAttribute('placeholder', '未知')
+  await expect(page.locator('.mind-ship-table tbody tr')).toHaveCount(4)
+  await choose(page, '基础稀有度 2', '精锐')
+  await expect(page.locator('.mind-intro')).toContainText('数据已保存到当前实例')
+  await expect(page.locator('.mind-totals strong').nth(3)).toHaveText('3')
+  await page.reload()
+  await expect(page.getByLabel('船名 2', {exact: true})).toHaveValue('拉菲I')
+  await expect(page.getByLabel('基础稀有度 2', {exact: true})).toHaveText('精锐')
+  await page.locator('.mind-ship-table').scrollIntoViewIfNeeded()
+  await page.screenshot({path: fileURLToPath(new URL('../test-results/mind-calculator-unknown-review.png', import.meta.url)), fullPage: true})
+  await page.getByRole('combobox', {name: '状态 2', exact: true}).click()
+  await expect(page.getByRole('option', {name: '计入舰船', exact: true})).toBeDisabled()
+  await page.keyboard.press('Escape')
+  await expect(page.locator('.mind-totals strong').nth(3)).toHaveText('3')
+  await page.getByLabel('船名 2', {exact: true}).fill('无法匹配的舰名')
+  await page.getByLabel('船名 2', {exact: true}).press('Enter')
+  await expect(page.locator('.error-box')).toContainText('请选择舰船资料中的完整名称')
+  await expect(page.getByLabel('船名 2', {exact: true})).toHaveValue('拉菲I')
+  await page.getByLabel('船名 2', {exact: true}).fill('约克城II')
+  await page.getByLabel('船名 2', {exact: true}).press('Enter')
+  await expect(page.locator('.mind-intro')).toContainText('数据已保存到当前实例')
+  await page.getByLabel('等级 2', {exact: true}).fill('93')
+  await page.getByLabel('等级 2', {exact: true}).press('Enter')
+  await expect(page.locator('.mind-intro')).toContainText('数据已保存到当前实例')
+  await expect(page.locator('.mind-totals strong').nth(3)).toHaveText('3')
+  await choose(page, '状态 2', '计入舰船')
+  await expect(page.locator('.mind-totals strong').first()).toHaveText('3,960')
+  await expect(page.locator('.mind-intro')).toContainText('数据已保存到当前实例')
+  await page.reload()
+  await expect(page.getByLabel('船名 2', {exact: true})).toHaveValue('约克城II')
+  await expect(page.getByLabel('船名 2', {exact: true})).toHaveAttribute('readonly', '')
+  await expect(page.getByLabel('等级 2', {exact: true})).toHaveValue('93')
+  await expect(page.locator('.mind-totals strong').nth(3)).toHaveText('2')
+  await expect(page.locator('.mind-ship-table tbody tr')).toHaveCount(4)
 })
 
 test('等级自动保存冲突保留草稿，不覆盖已保存的数据', async ({page}) => {
@@ -225,20 +278,57 @@ test('等级自动保存冲突保留草稿，不覆盖已保存的数据', async
   await expect(page.getByLabel('等级 1', {exact: true})).toHaveValue('100')
 })
 
+test('同名舰船按群组保留，约克新月先待核对并可明确选择阵营保存', async ({page}) => {
+  await page.goto('/#/i/demo-main/mind-calculator')
+  for (const name of ['天城（战巡）', '天城（正航）', '加贺（战列）', '加贺（正航）',
+    '约克（皇家）', '约克（铁血）', '新月（皇家）', '新月（重樱）']) {
+    await expect(page.locator(`#mind-ship-catalog option[value="${name}"]`)).toHaveCount(1)
+  }
+  await importList(page, ['天城（战巡）', '天城（正航）', '加贺（战列）', '加贺（正航）', '约克', '新月']
+    .map(name => ({name, level: 100, rarity: 'SSR'})))
+  await expect(page.locator('.mind-ship-table tbody tr')).toHaveCount(6)
+  await expect(page.locator('.mind-totals strong').nth(3)).toHaveText('2')
+  await expect(page.locator('.mind-totals strong').first()).toHaveText('9,900')
+  await page.getByRole('button', {name: '保存舰船数据'}).click()
+  await expect(page.locator('.mind-intro')).toContainText('数据已保存到当前实例')
+  await page.getByLabel('船名 5', {exact: true}).fill('约克（铁血）')
+  await page.getByLabel('船名 5', {exact: true}).press('Enter')
+  await expect(page.locator('.mind-intro')).toContainText('数据已保存到当前实例')
+  await choose(page, '状态 5', '计入舰船')
+  await expect(page.locator('.mind-totals strong').nth(3)).toHaveText('1')
+  await expect(page.locator('.mind-totals strong').first()).toHaveText('11,220')
+  await expect(page.locator('.mind-intro')).toContainText('数据已保存到当前实例')
+  await page.reload()
+  await expect(page.getByLabel('船名 5', {exact: true})).toHaveValue('约克（铁血）')
+  await expect(page.getByLabel('船名 6', {exact: true})).toHaveValue('新月')
+  await expect(page.locator('.mind-totals strong').nth(3)).toHaveText('1')
+  await page.locator('.mind-ship-table').screenshot({path: test.info().outputPath('same-name-groups.png'), animations: 'disabled'})
+  await page.setViewportSize({width: 390, height: 844})
+  if ((await page.locator('.app-shell').getAttribute('class'))?.includes('mobile-open')) {
+    await page.getByRole('button', {name: '关闭导航', exact: true}).click()
+  }
+  await expect.poll(() => page.locator('.sidebar').evaluate(el => el.getBoundingClientRect().right)).toBeLessThanOrEqual(3)
+  await page.getByLabel('船名 6', {exact: true}).scrollIntoViewIfNeeded()
+  await expect(page.getByLabel('船名 6', {exact: true})).toBeInViewport()
+  await page.screenshot({path: test.info().outputPath('same-name-groups-mobile.png'), fullPage: true, animations: 'disabled'})
+})
+
 test('等级保存期间切换实例，返回后不会恢复已成功保存的旧草稿', async ({page}) => {
-  let delay = false, saving = false, delivered = false
+  let delay = false, release: (() => void) | undefined
   const pending = new Set<string>()
   await page.routeWebSocket('**/api/v1/ws', socket => {
     const server = socket.connectToServer()
     socket.onMessage(message => {
       const request = JSON.parse(String(message))
-      if (delay && request.method === 'mind.save') {pending.add(request.id); saving = true}
+      if (delay && request.method === 'mind.save') pending.add(request.id)
       server.send(message)
     })
     server.onMessage(message => {
       const response = JSON.parse(String(message))
-      if (pending.delete(response.id)) setTimeout(() => {socket.send(message); delivered = true}, 1200)
-      else socket.send(message)
+      if (pending.delete(response.id)) {
+        expect(response.ok).toBe(true)
+        release = () => socket.send(message)
+      } else socket.send(message)
     })
   })
   await page.goto('/#/i/demo-alt/mind-calculator')
@@ -250,10 +340,13 @@ test('等级保存期间切换实例，返回后不会恢复已成功保存的�
   delay = true
   await page.getByLabel('等级 1', {exact: true}).fill('105')
   await page.getByLabel('等级 1', {exact: true}).press('Enter')
-  await expect.poll(() => saving).toBe(true)
-  await page.goto('/#/i/demo-main/mind-calculator')
-  await expect.poll(() => delivered).toBe(true)
-  await page.goto('/#/i/demo-alt/mind-calculator')
+  // 等到服务端确认保存后再切换，以显式放行响应验证时序，不依赖固定延迟。
+  await expect.poll(() => !!release).toBe(true)
+  await page.evaluate(() => {location.hash = '/i/demo-main/task/MindCalculator'})
+  await expect(page).toHaveURL(/demo-main\/task\/MindCalculator$/)
+  release!()
+  await expect.poll(() => page.evaluate(() => sessionStorage.getItem('azurpilot.mind-draft.demo-alt'))).toBeNull()
+  await page.evaluate(() => {location.hash = '/i/demo-alt/task/MindCalculator'})
   await expect(page.getByLabel('等级 1', {exact: true})).toHaveValue('105')
   await expect(page.locator('.mind-intro')).toContainText('数据已保存到当前实例')
 })

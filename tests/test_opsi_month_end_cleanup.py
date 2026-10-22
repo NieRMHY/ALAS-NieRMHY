@@ -332,6 +332,7 @@ class TestMonthEndCleanupIdleScheduling(unittest.TestCase):
         scheduling.config = MonthEndCleanupConfig()
         scheduling.is_running_prevent_action_point_overflow_task = Mock(return_value=False)
         scheduling.get_yellow_coins = Mock(return_value=60000)
+        scheduling.get_routine_yellow_coins = Mock(return_value=60000)
         scheduling._get_scheduling_action_point = Mock(return_value=(total_ap, 100))
         scheduling._reset_month_end_cleanup_first_run_if_new_month = Mock()
         scheduling._is_month_end_cleanup_active = Mock(return_value=True)

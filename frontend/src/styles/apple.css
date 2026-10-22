@@ -155,7 +155,7 @@ body {background: var(--bg); background-attachment: fixed}
 /* 新版材质主题的页面滚动归内容列：外壳定在视口高度上，顶栏与调度器栏（同一个容器）不随页面滚动，
    需要翻滚的页面自己在 main 里滚，侧栏与容器留在原位。 */
 .app-shell:has(> .main-shell > .shell-frame > .topbar) {height: var(--viewport-height); overflow: hidden}
-.app-shell:has(> .main-shell > .shell-frame > .topbar) > .main-shell {min-height: 0}
+.app-shell:has(> .main-shell > .shell-frame > .topbar) > .main-shell {min-height: 0; height: 100%}
 .app-shell:has(> .main-shell > .shell-frame > .topbar) .main-shell > main {min-height: 0; overflow-y: auto}
 /* 内容列要真的让出右栏那一列：跨列的容器不会把宽度贡献给第二列，auto 会塌成 0。 */
 .main-shell:has(> .shell-frame > .right-rail) {grid-template-columns: minmax(0, 1fr) var(--right-rail-width)}

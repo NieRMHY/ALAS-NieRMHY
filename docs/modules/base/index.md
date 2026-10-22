@@ -171,7 +171,7 @@ module/base/
 | `device_id.py` | Windows 用 WMIC 查主板/CPU/BIOS/磁盘序列号，Linux 用 machine-id，macOS 用硬件 UUID（已舍弃 MAC 地址），拼接后 SHA-256 取前 32 位。变更时把旧 ID 暂存内存供统计数据库热迁移；`log/device_id.json` 每 5 分钟由 daemon 线程覆写 |
 | `backup.py` | 每日备份：SQLite `backup()` 保存 `azurpilot.db` 的已提交 WAL，再锁定并备份安全数据库、注册信息、密钥材料、`deploy.yaml` 与用户配置 JSON（排除 `template*`）；外部安全密钥不自动导出。全部成功后原子发布目录，写入 `AzurPilot_Data_Backup/<日期>/`，按保留天数清理。`enable=False` 时直接返回，不动备份目录 |
 | `api_client.py` | 远程 API 客户端（bug 日志、CL1 遥测、公告拉取），上报走 `async_executor` 异步化；`get_announcement` 同步。请求失败仅记日志，绝不阻断游戏流程 |
-| `debug_clip.py` | 设备端 `screenrecord` 录制调试录像（30fps 输出、真实时间戳），`clip_recording()` 上下文管理器由侵蚀 1 练级与短猫相接使用。所有失败路径只记日志、优雅降级为不录，绝不影响游戏逻辑 |
+| `debug_clip.py` | 设备端 `screenrecord` 录制调试录像（30fps 输出、真实时间戳），`clip_recording()` 上下文管理器由侵蚀 1 练级与短猫相接使用。单段逻辑录像上限 5 分钟：设备端单进程只能录 180 秒，更长部分由后台轮转线程按段续录，收尾时转码并按顺序拼接（拼接失败则分段保存），到达上限自动停止。所有失败路径只记日志、优雅降级为不录，绝不影响游戏逻辑 |
 
 ## 6. 工作流程
 

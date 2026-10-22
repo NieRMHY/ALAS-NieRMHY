@@ -316,6 +316,210 @@
         "type": "object"
       }
     },
+    "fleetTech.catalog": {
+      "mutates": false,
+      "params": {
+        "additionalProperties": false,
+        "description": "单实例操作通用入参模型。",
+        "properties": {
+          "instance": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Instance",
+            "type": "string"
+          }
+        },
+        "required": [
+          "instance"
+        ],
+        "title": "InstanceParams",
+        "type": "object"
+      }
+    },
+    "fleetTech.report": {
+      "mutates": false,
+      "params": {
+        "additionalProperties": false,
+        "description": "单实例操作通用入参模型。",
+        "properties": {
+          "instance": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Instance",
+            "type": "string"
+          }
+        },
+        "required": [
+          "instance"
+        ],
+        "title": "InstanceParams",
+        "type": "object"
+      }
+    },
+    "fleetTech.syncMind": {
+      "mutates": true,
+      "params": {
+        "additionalProperties": false,
+        "description": "单实例操作通用入参模型。",
+        "properties": {
+          "instance": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Instance",
+            "type": "string"
+          }
+        },
+        "required": [
+          "instance"
+        ],
+        "title": "InstanceParams",
+        "type": "object"
+      }
+    },
+    "fleetTech.patch": {
+      "mutates": true,
+      "params": {
+        "$defs": {
+          "FleetTechChange": {
+            "additionalProperties": false,
+            "description": "只修改明确提供的人工字段；恢复自动记录使用独立标记。",
+            "properties": {
+              "group_type": {
+                "minimum": 1,
+                "title": "Group Type",
+                "type": "integer"
+              },
+              "owned": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Owned"
+              },
+              "full_star": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Full Star"
+              },
+              "lv120": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Lv120"
+              },
+              "level": {
+                "anyOf": [
+                  {
+                    "maximum": 125,
+                    "minimum": 1,
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Level"
+              },
+              "restore": {
+                "title": "Restore",
+                "type": "boolean"
+              },
+              "toggle": {
+                "anyOf": [
+                  {
+                    "enum": [
+                      "owned",
+                      "complete",
+                      "star"
+                    ],
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Toggle"
+              },
+              "target": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Target"
+              }
+            },
+            "required": [
+              "group_type"
+            ],
+            "title": "FleetTechChange",
+            "type": "object"
+          }
+        },
+        "additionalProperties": false,
+        "properties": {
+          "instance": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Instance",
+            "type": "string"
+          },
+          "revision": {
+            "maxLength": 64,
+            "minLength": 64,
+            "title": "Revision",
+            "type": "string"
+          },
+          "changes": {
+            "items": {
+              "$ref": "#/$defs/FleetTechChange"
+            },
+            "maxItems": 1000,
+            "title": "Changes",
+            "type": "array"
+          },
+          "nations": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "maxProperties": 4,
+            "title": "Nations",
+            "type": "object"
+          }
+        },
+        "required": [
+          "instance",
+          "revision"
+        ],
+        "title": "FleetTechPatchParams",
+        "type": "object"
+      }
+    },
     "mind.report": {
       "mutates": false,
       "params": {

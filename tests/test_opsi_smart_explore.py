@@ -78,6 +78,7 @@ class SmartExploreTests(unittest.TestCase):
         self.runner._run_with_opsi_task_context = Mock(side_effect=lambda task, func, *a, **kw: func(*a, **kw))
         self.runner._get_scheduling_action_point = Mock(return_value=(2000, 150))
         self.runner.get_yellow_coins = Mock(return_value=70000)
+        self.runner.get_routine_yellow_coins = Mock(return_value=70000)
         self.runner._delay_smart_scheduling_for_ap_limit = Mock()
         self.runner._run_smart_explore_node = Mock()
 

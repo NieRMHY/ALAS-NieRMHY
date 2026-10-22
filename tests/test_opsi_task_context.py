@@ -1,16 +1,23 @@
 """代理上下文与延迟路由的组合回归，不连接游戏或写入用户配置。"""
 
 import unittest
+from concurrent.futures import Future
 from contextlib import nullcontext
 from datetime import datetime, timedelta
+from pathlib import Path
 from unittest.mock import Mock, PropertyMock, patch
 
+import numpy as np
+
+from module.base.utils import load_image
 from module.config.config import AzurLaneConfig, Function, TaskEnd
 from module.os.operation_siren import OperationSiren
 from module.os.tasks.prevent_action_point_overflow import OpsiPreventActionPointOverflow
 from module.os.tasks.scheduling import OpsiScheduling
 from module.os.tasks.task_context import current_opsi_context
 from module.os_handler.action_point import ActionPointLimit
+from module.os_handler.os_status import OCR_SHOP_YELLOW_COINS
+from module.os_handler.resource_read import BackgroundCoinRead, CoinReading
 
 
 class TestOpsiTaskContext(unittest.TestCase):
@@ -53,6 +60,81 @@ class TestOpsiTaskContext(unittest.TestCase):
             self.assertNotIn(name, runner.config.__dict__)
         self.assertFalse(runner.is_running_smart_scheduling_task())
         self.assertFalse(runner.is_running_prevent_action_point_overflow_task())
+
+    def make_currency_runner(self, task='OpsiScheduling'):
+        """子任务返回时仍留着开工前截图，下一次截图才显示已到账黄币。"""
+        runner = self.make_runner(task)
+        runner.config.config_name = 'isolated'
+        previous = np.zeros((720, 1280, 3), np.uint8)
+        current = previous.copy()
+        fixture = Path(__file__).parent / 'fixtures/opsi_yellow_coin_video/97451.png'
+        current[27:48, 1038:1128] = load_image(str(fixture))
+        identity = runner._background_coin_identity()
+        runner._last_yellow_coins = 91760
+        runner._last_yellow_owner = identity[:2]
+        runner._yellow_coin_read = (
+            (*identity[:2], 'map', identity[2]), previous[27:48, 1038:1128].copy(), 91760,
+        )
+        runner.device = Mock(image=previous)
+        runner.device.screenshot.side_effect = lambda: setattr(runner.device, 'image', current.copy())
+        runner.appear = Mock(return_value=False)
+        runner.appear_then_click = Mock(return_value=False)
+        runner.is_in_map = Mock(return_value=True)
+        runner.handle_map_event = Mock(return_value=False)
+        runner.action_point_check_due = Mock(return_value=False)
+        runner._close_scheduling_action_point = Mock()
+        runner._get_scheduling_action_point = Mock(return_value=(1608, 8))
+        runner._run_smart_scheduling_decision = Mock()
+        runner._delay_smart_scheduling_for_opsi_explore = Mock(return_value=False)
+        state = runner._coin_background = BackgroundCoinRead()
+        state.frame = previous
+        state.candidate = CoinReading(identity, datetime.now(), 91760, True)
+        state.future = Future()
+        state.future.set_result(state.candidate)
+        self.enterContext(patch('module.os_handler.resource_read._executor.submit', side_effect=lambda *args: Future()))
+        self.enterContext(patch('module.os_handler.os_status.record_resources_background'))
+        self.enterContext(patch.object(OCR_SHOP_YELLOW_COINS, 'last_valid', True, create=True))
+        self.enterContext(patch.object(OCR_SHOP_YELLOW_COINS, 'ocr', side_effect=lambda image:
+            97451 if np.array_equal(image[27:48, 1038:1128], current[27:48, 1038:1128]) else 91760))
+        return runner
+
+    def test_all_scheduled_children_refresh_parent_budget_after_return_or_partial_failure(self):
+        children = (
+            'OpsiHazard1Leveling', 'OpsiMeowfficerFarming', 'OpsiObscure', 'OpsiAbyssal',
+            'OpsiStronghold', 'OpsiExplore', 'OpsiExploreCleanup', 'OpsiShop',
+        )
+        for child in children:
+            for error in (None, TaskEnd, RuntimeError):
+                with self.subTest(child=child, error=error):
+                    runner = self.make_currency_runner()
+                    owner, bound = runner.config.task, dict(runner.config.bound)
+
+                    def finish():
+                        self.assertEqual(runner.config.task.command, child)
+                        if error:
+                            raise error('奖励到账后任务结束')
+
+                    if error:
+                        with self.assertRaisesRegex(error, '奖励到账后'):
+                            runner._run_with_opsi_task_context(child, finish)
+                    else:
+                        runner._run_with_opsi_task_context(child, finish)
+                    runner.run_smart_scheduling_once()
+                    runner._run_smart_scheduling_decision.assert_called_once_with(97451, 1608, 8)
+                    self.assertGreaterEqual(runner.device.screenshot.call_count, 2)
+                    self.assert_restored(runner, owner, bound)
+
+    def test_overflow_nested_scheduling_refreshes_budget_after_coin_child(self):
+        runner = self.make_currency_runner('OpsiPreventActionPointOverflow')
+        owner, bound = runner.config.task, dict(runner.config.bound)
+
+        def scheduling():
+            runner._run_with_opsi_task_context('OpsiObscure', lambda: None)
+            runner.run_smart_scheduling_once()
+
+        runner._run_with_prevent_action_point_overflow_context('OpsiScheduling', scheduling)
+        runner._run_smart_scheduling_decision.assert_called_once_with(97451, 1608, 8)
+        self.assert_restored(runner, owner, bound)
 
     def test_nested_context_restores_identity_on_return_and_exceptions(self):
         for error in (None, TaskEnd('结束'), RuntimeError('失败')):

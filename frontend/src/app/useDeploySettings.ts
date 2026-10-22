@@ -14,7 +14,7 @@ import { useConnection } from './context'
  * 三个设置页共用同一份逻辑与同一条 `deploy` 队列：队列按作用域取单例，
  * 页面切换不会丢掉未确认的输入。
  */
-export function useDeploySettings() {
+export function useDeploySettings(pollRemote = false) {
   const [data, setData] = useState<SettingsData>()
   const [error, setError] = useState('')
   const connection = useConnection()
@@ -25,19 +25,25 @@ export function useDeploySettings() {
     if (connection !== 'ready') return
     let active = true
     const confirmed = queue.confirmed()
-    void api.request('settings.get', {})
+    let timer: ReturnType<typeof setTimeout>
+    const load = () => void api.request('settings.get', {})
       .then(data => {
         if (active) {
           setData(data)
           setError('')
           queue.reconcile(confirmed)
+          if (pollRemote) timer = setTimeout(load, data.remote?.address ? 15000 : 3000)
         }
       })
       .catch(error => {
-        if (active) setError(error.message)
+        if (active) {
+          setError(error.message)
+          if (pollRemote) timer = setTimeout(load, 5000)
+        }
       })
-    return () => { active = false }
-  }, [connection, queue])
+    load()
+    return () => { active = false; clearTimeout(timer) }
+  }, [connection, queue, pollRemote])
 
   return {data, error, edits, queue}
 }

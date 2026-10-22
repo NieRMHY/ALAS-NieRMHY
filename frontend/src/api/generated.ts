@@ -13,6 +13,10 @@ export interface Parameters {
   "config.patch": { instance: string; revision?: string | null; changes: Array<{ path: string; value: unknown }> }
   "overview.get": { instance: string }
   "mind.catalog": { instance: string }
+  "fleetTech.catalog": { instance: string }
+  "fleetTech.report": { instance: string }
+  "fleetTech.syncMind": { instance: string }
+  "fleetTech.patch": { instance: string; revision: string; changes?: Array<{ group_type: number; owned?: boolean | null; full_star?: boolean | null; lv120?: boolean | null; level?: number | null; restore?: boolean; toggle?: "owned" | "complete" | "star" | null; target?: boolean | null }>; nations?: Record<string, unknown> }
   "mind.report": { instance: string }
   "mind.calculate": { instance: string; ships: Array<{ name: string; level: number; rarity?: "" | "N" | "R" | "SR" | "SSR" | "UR"; base_rarity?: "" | "N" | "R" | "SR" | "SSR" | "UR"; excluded?: boolean; review?: boolean; source?: string }> }
   "mind.save": { instance: string; ships: Array<{ name: string; level: number; rarity?: "" | "N" | "R" | "SR" | "SSR" | "UR"; base_rarity?: "" | "N" | "R" | "SR" | "SSR" | "UR"; excluded?: boolean; review?: boolean; source?: string }>; revision: string }

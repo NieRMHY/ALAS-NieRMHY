@@ -758,6 +758,7 @@ Campaign:
   UseClearMode: true
   UseFleetLock: true
   UseAutoSearch: true
+  ContinueAfterRestart: false
   Use2xBook: false
   AmbushEvade: true
   UseRecommendFleet: false
@@ -932,6 +933,13 @@ Emotion:
     value: calculate
     option: [calculate, ignore, calculate_ignore]
   IgnoreShipwreck: false
+  MinReserve:
+    value: 0
+    validate: [0, 150]
+  RecoveryWait:
+    type: stored
+    value: null
+    display: hide
   Fleet1Value:
     value: 119
     validate: [0, 150]
@@ -1316,6 +1324,11 @@ Dorm:
   Collect: true
   Feed: true
   FeedFilter: 20000 > 10000 > 5000 > 3000 > 2000 > 1000
+  ReserveFood: false
+  FeedReserveState:
+    type: stored
+    value: null
+    display: hide
   BuyFood:
     value: false
     display: disabled
@@ -1496,6 +1509,14 @@ Gacha:
     value: 1
     option: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
   UseTicket: true
+  TicketAmount:
+    value: 1
+    option: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+  ClearTicket: true
+  ClearTicketTime:
+    value: "09:30"
+    valuetype: str
+    validate: '^([01]?[0-9]|2[0-3]):[0-5][0-9]$'
   UseDrill: false
 BattlePass:
   Collect: true
@@ -1589,6 +1610,7 @@ Hard:
   HardFleet:
     value: 1
     option: [1, 2]
+  RunAt18: false
   HardNewMode:                 # Add by MHY, 困难图均衡模式开关
     type: checkbox
     value: false
@@ -1661,11 +1683,6 @@ OpsiGeneral:
   AutoSearchTimeLimit:
     value: 5
     validate: [1, 240]
-  # 计划作战滑动检查跳过：侵蚀一/短猫相接循环刷取同一海域时，打开
-  # 「计划作战」面板后不再滑动检查各选项，直接确认开始。需要面板选项
-  # 已在游戏内配置好（区域模式：重复、遭遇商人/装置：停止、自动提交：开启），
-  # 让任务正常跑过一次或手动配置一次后即可开启。
-  SkipStrategicSearchCheck: false
 OpsiAshBeacon:
   AttackMode:
     value: current
@@ -1803,13 +1820,29 @@ OpsiHazard1Leveling:
     type: checkbox
     value: false
     option: [true, false]
+  ActionPointCheckInterval:
+    value: 0
+    valuetype: int
+    validate: ^\d+$
+  # 侵蚀一和短猫复用游戏内已经确认过的计划作战选项。
+  SkipStrategicSearchCheck: false
   Cl1Filter: |-
     ActionPoint
   RecordNonCL1AP: true
   RecordSeaMiles:
-    type: checkbox
-    value: true
-    option: [true, false]
+    value: -1
+    valuetype: int
+    validate: ^(-1|\d+)$
+  SeaMilesLastRecord:
+    type: stored
+    value: null
+    display: hide
+  # 跨重启续查：记录“已经看见、但还没处理完”的地图事件（明石/探测装置/
+  # 塞壬装置），供卡死重启后继续完成；由代码自动维护，不在界面上暴露。
+  PendingMapEvent:
+    type: stored
+    value: null
+    display: hide
   DebugClip: false
 OpsiSirenBug:
   SirenResearch_Enable: true
@@ -2673,9 +2706,25 @@ MindCalculator:
     value: 95
     validate: "^[1-9][0-9]?$|^1[01][0-9]$|^12[0-5]$"
   MaxLevel:
-    value: 120
+    value: 125
     validate: "^[1-9][0-9]?$|^1[01][0-9]$|^12[0-5]$"
   Result:
+    type: stored
+    value: {}
+    display: hide
+  FleetTechRecord:
+    type: stored
+    value: {}
+    display: hide
+
+FleetTech:
+  MinLevel:
+    value: 95
+    validate: "^[1-9][0-9]?$|^1[01][0-9]$|^12[0-5]$"
+  MaxLevel:
+    value: 125
+    validate: "^[1-9][0-9]?$|^1[01][0-9]$|^12[0-5]$"
+  Record:
     type: stored
     value: {}
     display: hide

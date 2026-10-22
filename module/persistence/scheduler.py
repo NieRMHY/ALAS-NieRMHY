@@ -214,7 +214,8 @@ def write_observation(connection, instance, name, value, timestamp, source):
     register_instance(connection, instance)
     connection.execute('''INSERT INTO scheduler_observations VALUES(?,?,?,?,?,?,?) ON CONFLICT(instance,resource)
         DO UPDATE SET value=excluded.value,resource_limit=COALESCE(excluded.resource_limit,scheduler_observations.resource_limit),
-        total=COALESCE(excluded.total,scheduler_observations.total),observed_at=excluded.observed_at,source=excluded.source''',
+        total=COALESCE(excluded.total,scheduler_observations.total),observed_at=excluded.observed_at,source=excluded.source
+        WHERE excluded.observed_at>=scheduler_observations.observed_at''',
         (instance, name, *(float(number) if number is not None else None for number in numbers), timestamp, source))
 
 

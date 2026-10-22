@@ -290,13 +290,15 @@ class ResourceFlowTests(unittest.TestCase):
         from module.gacha.gacha_reward import RewardGacha
         gacha = RewardGacha.__new__(RewardGacha)
         config = SimpleNamespace(config_name='testpilot', Gacha_Pool='heavy', Gacha_Amount=2,
-                                 Gacha_UseTicket=False, Gacha_UseDrill=False)
+                                 Gacha_UseTicket=False, Gacha_UseDrill=False, Gacha_TicketAmount=1,
+                                 Gacha_ClearTicket=False)
         gacha.config = config
         gacha.device = Mock()
         gacha.gacha_flush_queue = Mock()
         gacha.ui_goto_gacha = Mock()
         gacha.get_coin = Mock(return_value=10000)
         gacha.gacha_goto_pool = Mock(return_value='heavy')
+        gacha.gacha_side_navbar_ensure = Mock(return_value=True)
         gacha.gacha_calculate = Mock(return_value=2)
         gacha.gacha_prep = Mock(side_effect=lambda amount: amount > 0)
         gacha.gacha_submit = Mock()
@@ -316,7 +318,8 @@ class ResourceFlowTests(unittest.TestCase):
         from module.gacha.gacha_reward import RewardGacha
         gacha = RewardGacha.__new__(RewardGacha)
         config = SimpleNamespace(config_name='testpilot', Gacha_Pool='light', Gacha_Amount=3,
-                                 Gacha_UseTicket=True, Gacha_UseDrill=False, update=Mock())
+                                 Gacha_UseTicket=True, Gacha_UseDrill=False, Gacha_TicketAmount=1,
+                                 Gacha_ClearTicket=False, update=Mock())
         gacha.config = config
         gacha.device = Mock()
         gacha.gacha_flush_queue = Mock()

@@ -206,6 +206,10 @@ flowchart TD
 
 ### 自律寻敌战斗（AutoSearchCombat）
 
+异常 Restart 的可选续接只负责返回原地图后恢复自律，不接管重启前的战斗、加载或结算。清理旧场 `CombatResult` 后，仍由普通 `auto_search_moving()` 与 `auto_search_combat()` 完成后续出击；每场在确认进入战斗后正常扣基础心情，真实结算和战败继续走原有处理器。重启前已保存的心情不回滚，旧场扣减标记也不用于免掉重启后新出击的消耗。默认关闭、地图归属与失败边界见 [战役执行](campaign.md#异常重启后续接原关卡)。
+
+恢复心情对象时保留其实际类型。`Emotion._check_fleet()` 统一计算当前实际舰队的下一场出击时间；普通任务据此延后。续接调用显式传入 `after_restart=True`，此时 `GemsEmotion.check_fleet()` 标记低心情，先撤退并交回紧急委托／三油低耗的换船编排；普通自动换队的原有延迟行为不变。
+
 游戏自己移动舰队、自己开战，脚本退居「监工」：
 
 - `auto_search_moving()`：等待期间监视石油/物资 OCR（触发 `auto_search_oil/coin_limit_triggered`）与舰队等级，处理退役、低情绪弹窗；自动搜索菜单出现则抛 `CampaignEnd`。
@@ -236,6 +240,10 @@ record()  ← 与 update 成对：同一计算时刻的 Value + 完整 Record + 
 ```
 
 公海舰队（`PublicEmotion_Enable` 且当前任务在 `PublicEmotion_Tasks` 列表）把上述过程收敛到一份共享情绪上。每次更新都读取最新共享存档，跨任务不能缓存旧的相位状态。计算模式下若仍出现红脸弹窗，`handle_combat_low_emotion()`（处理器层）会退出关卡，将对应舰队心情基准重建为 0，并按当前地图的心情消耗计算恢复时间、延后任务后自动重试；无需等待服务器刷新或人工重填校准值。
+
+`Emotion.MinReserve`（最少预留心情）位于无视沉船心情惩罚下方，默认 0 关闭，范围 0–150，仅在包含 `calculate` 的模式生效。它不提高平时的出击控制线：只有参与出击的舰队不足以完成下一轮并保持原控制线时，才将恢复目标提高到预留值（超过当前恢复上限则按上限，原出击需求更高时仍以需求为准）。例如控制线 30、预留 150，恢复后可以连续消耗到下一轮无法保持 30，再等待至 150。
+
+`Emotion._get_recovered()` 统一用于整图预检、自动换队预检和图内等待，沿用保守下限及批次恢复时间。隐藏的 `Emotion.RecoveryWait` 按当前任务记录需要恢复的舰队编号（公共账本记为 `Public`），提前重试或重启不能在刚够打一轮时取消预留等待；达标或关闭预留后清除对应标记。待命队不触发等待，使用公共账本的不同任务保留各自预留设置及等待状态，其他任务的实际消耗会使恢复时间重新计算。
 
 自动换队后原待命队即将参与战斗，恢复自律前调用 `Emotion.check_fleet(fleet_index)` 检查该画面编号对应账本的下一场基础消耗。忽略模式跳过，公共模式检查共享账本；检查不等待、不扣减。心情不足延后任务，未校准沿用人工接管，均先退出地图再上抛，不能开战后才发现接替队账本不可用。
 
@@ -322,6 +330,8 @@ stateDiagram-v2
 | --- | --- | --- | --- |
 | `Emotion.Mode` | 选项 | `calculate` | `calculate`（预检+等待）/ `ignore`（无视红脸直接确认）/ `calculate_ignore` |
 | `Emotion.IgnoreShipwreck` | bool | `false` | 无视沉船额外扣减（10 点） |
+| `Emotion.MinReserve` | int | 0 | 心情不足后恢复到的最少预留值，0 关闭，范围 0–150 |
+| `Emotion.RecoveryWait` | stored | null | 当前任务正在等待预留恢复的舰队编号，达标后清除 |
 | `Emotion.Fleet{1,2}Value` / `Record` | int / datetime | 119 / 2020-01-01 | 情绪现值与记账时间戳；`Record` 为隐藏项 |
 | `Emotion.Fleet{1,2}RecoveryState` / `PublicEmotion.FleetRecoveryState` | stored | null | 隐藏恢复存档；旧配置默认未校准，填写实测 Value 后建立基准 |
 | `Emotion.Fleet{1,2}Control` | 选项 | `prevent_green_face` | keep_exp_bonus(120) / prevent_green_face(40) / prevent_yellow_face(30) / prevent_red_face(2) |

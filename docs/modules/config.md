@@ -127,6 +127,14 @@ module/config/
 
 ## 6. 工作流程
 
+### 活动候选与旧配置刷新
+
+活动元数据的 `option` 是四服合集，仅供通用契约使用；实例页面应使用 `option_cn/en/jp/tw` 对应的候选。`campaign_event_options()` 通过实例 `Alas.Emulator.PackageName` 调用 `to_server()` 选择地区，开服检测的 `ServerName`、界面语言和进程全局服务器不参与判断；`auto` 沿用运行器的 CN 回退规则。
+
+`refresh_campaign_events()` 复用原有活动迁移规则，由 `ConfigUpdater.config_update()` 和 `ConfigService.read()` 共同调用：已不在当前候选中的活动、突袭、共斗和低耗任务活动回到首个候选，多活动时保留仍有效的选择；作战档案仅替换 `campaign_main`。API 读取只修改内存副本，磁盘内容、修改时间和 revision 均保持原状。
+
+`config.get` 与 `config.patch` 的返回值新增 `options`，按完整字段路径提供当前实例候选，例如 `Event.Campaign.Event`。前端任务页优先使用该映射，不直接展示四服合集。保存显式活动选择时按同批最终包名校验，跨服选项拒绝整批写入；仅切换包名时自动刷新已失效的活动选择。
+
 ### 生成管道（离线，CI 校验）
 
 ```mermaid

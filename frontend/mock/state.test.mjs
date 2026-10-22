@@ -3,6 +3,35 @@ import { describe, expect, it } from 'vitest'
 import { createMockState } from './state.mjs'
 
 describe('前端模拟服务', () => {
+  it('活动候选按实例包名隔离，切换地区时刷新旧选择', () => {
+    const {dispatch} = createMockState()
+    const schema = dispatch('schema.get', {language: 'zh-CN'})
+    for (const [server, packageName] of [
+      ['cn', 'com.bilibili.azurlane'], ['en', 'com.YoStarEN.AzurLane'],
+      ['jp', 'com.YoStarJP.AzurLane'], ['tw', 'com.hkmanjuu.azurlane.gp'],
+    ]) {
+      const saved = dispatch('config.patch', {instance: 'demo-main', changes: [
+        {path: 'Alas.Emulator.PackageName', value: packageName},
+      ]})
+      const candidates = schema.args.Event.Campaign.Event[`option_${server}`]
+      expect(saved.options['Event.Campaign.Event']).toEqual(candidates)
+      expect(saved.values.Event.Campaign.Event).toBe(candidates[0])
+    }
+    expect(dispatch('config.get', {instance: 'demo-alt'}).options['Event.Campaign.Event'])
+      .toEqual(schema.args.Event.Campaign.Event.option_cn)
+  })
+
+  it('跨服活动选择失败不会部分保存同一批其他字段', () => {
+    const {dispatch} = createMockState()
+    const initial = dispatch('config.get', {instance: 'demo-main'})
+    const taiwan = dispatch('schema.get', {language: 'zh-CN'}).args.Event.Campaign.Event.option_tw[0]
+    expect(() => dispatch('config.patch', {instance: 'demo-main', changes: [
+      {path: 'Alas.Emulator.Serial', value: 'should-not-save'},
+      {path: 'Event.Campaign.Event', value: taiwan},
+    ]})).toThrow(/当前服务器/)
+    expect(dispatch('config.get', {instance: 'demo-main'})).toEqual(initial)
+  })
+
   it('大世界模拟独立于游戏进程，支持完成、绘图、中断和重跑', () => {
     const {dispatch, tick} = createMockState()
     const name = 'demo-main'

@@ -45,6 +45,8 @@ from module.os.map import OSMap
 from module.os.tasks.task_context import TaskDelayRequest, current_opsi_context, opsi_task_context
 from module.os.tasks.smart_explore import SmartExploreMixin
 from module.os_handler.action_point import ActionPointLimit
+from module.os_handler.resource_read import CoinReplenishRequired
+from module.os_handler.resource_state import invalidate_coin_cache
 
 
 class CoinTaskMixin:
@@ -531,7 +533,6 @@ class CoinTaskMixin:
         )
         if preserve is None:
             preserve = 0
-        logger.info(f'[大世界-智能调度] 黄币保留使用智能调度配置: {preserve}')
         return preserve
 
     def _get_smart_scheduling_action_point_preserve(self):
@@ -1003,25 +1004,35 @@ class OpsiScheduling(SmartExploreMixin, CoinTaskMixin, OSMap):
             self.TASK_NAME_HAZARD1_LEVELING,
             self.TASK_NAME_MEOWFFICER_FARMING,
         )
-        with opsi_task_context(
-            self.config, task, bind_task=task_name, disable_task_switch=disable_task_switch,
-        ):
-            return func(*args, **kwargs)
+        try:
+            with opsi_task_context(
+                self.config, task, bind_task=task_name, disable_task_switch=disable_task_switch,
+            ):
+                return func(*args, **kwargs)
+        finally:
+            # 子任务可能已结算奖励，但设备仍持有旧帧；返回后的预算必须重新确认。
+            # 异常也可能发生在部分奖励到账后，不能沿用进入子任务前的余额。
+            invalidate_coin_cache(self.config)
 
-    def _get_scheduling_action_point(self, *, keep_open=False):
+    def _get_scheduling_action_point(self, *, keep_open=False, allow_cached=False):
         """读取智能调度决策所需的行动力。
 
         Args:
             keep_open (bool): 决策期间保留面板，确定子任务后合并开工补充。
+            allow_cached (bool): 仅常规调度允许按用户间隔复用库存，月末等强制读取不复用。
 
         Returns:
-            tuple[int, int]: (总行动力, 当前真实行动力)。
+            tuple[int, int]: (总行动力, 当前行动力)，缓存路径均为保守下界。
 
         Pages:
             in: page_os
             out: keep_open=True 时为 ACTION_POINT_USE，否则为 page_os。
         """
         self._close_scheduling_action_point()
+        if allow_cached:
+            cached = self.action_point_cached_read()
+            if cached is not None and cached[1] >= 100 and cached[0] > self._get_effective_cl1_ap_preserve():
+                return cached
         self.action_point_enter()
         self.action_point_safe_get()
         if keep_open:
@@ -1093,7 +1104,7 @@ class OpsiScheduling(SmartExploreMixin, CoinTaskMixin, OSMap):
         self._smart_scheduling_first_auto_search_pending = False
 
         if not run:
-            logger.info("智能调度跳过初始化自律寻敌")
+            logger.debug("智能调度跳过初始化自律寻敌")
             return
 
         self._close_scheduling_action_point()
@@ -1253,10 +1264,13 @@ class OpsiScheduling(SmartExploreMixin, CoinTaskMixin, OSMap):
         ):
             return
 
-        yellow_coins = self.get_yellow_coins()
+        yellow_coins = self.get_routine_yellow_coins()
         try:
-            total_ap, current_ap = self._get_scheduling_action_point(keep_open=True)
+            total_ap, current_ap = self._get_scheduling_action_point(keep_open=True, allow_cached=True)
             return self._run_smart_scheduling_decision(yellow_coins, total_ap, current_ap)
+        except CoinReplenishRequired:
+            logger.info('[大世界-智能调度] 本轮计划作战已退出，下一轮立即执行补黄币决策')
+            return
         except (GameStuckError, GameTooManyClickError, RequestHumanTakeover):
             # 已进入设备恢复流程，不再追加界面操作干扰原异常。
             self._scheduling_ap_panel_open = False
@@ -1611,7 +1625,6 @@ class OpsiScheduling(SmartExploreMixin, CoinTaskMixin, OSMap):
                 供侵蚀 1 开工检查复用。
         """
         self._clear_coin_task_notification_state()
-        logger.info('[大世界-智能调度] 执行侵蚀1练级任务')
         self._run_scheduled_hazard1_leveling(
             self._get_effective_cl1_ap_preserve(),
             fresh_ap=(total_ap, current_ap) if current_ap is not None else None,

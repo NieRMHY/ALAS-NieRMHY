@@ -410,6 +410,29 @@ class Emotion:
         """
         return 10
 
+    def _get_recovered(self, fleet, expected_reduce):
+        """心情不足后恢复到预留值；等待状态随任务保存，恢复后仍使用原控制线。"""
+        recovered = fleet.get_recovered(expected_reduce)
+        reserve = getattr(self.config, 'Emotion_MinReserve', 0) if self.is_calculate else 0
+        waiting = list(getattr(self.config, 'Emotion_RecoveryWait', None) or [])
+        key = str(fleet.fleet)
+        was_waiting = key in waiting
+        if reserve > 0 and (recovered > current_time() or was_waiting):
+            # 港区等恢复条件有上限，预留值不能造成永远无法结束的等待。
+            target = min(reserve, fleet.max)
+            recovered = max(recovered, fleet.state.recovered_at(target))
+            if recovered > current_time():
+                if not was_waiting:
+                    waiting.append(key)
+                    logger.info(f'[心情-预留] 舰队 {fleet.fleet} 心情不足，恢复至至少 {target} 后继续')
+            elif was_waiting:
+                waiting.remove(key)
+        elif was_waiting:
+            waiting.remove(key)
+        if was_waiting != (key in waiting):
+            self.config.Emotion_RecoveryWait = waiting or None
+        return recovered
+
     def _check_reduce(self, battle):
         """检查战役战斗带来的情绪减少量及是否需要延迟。
 
@@ -429,7 +452,7 @@ class Emotion:
             self.update()
             self.record()
             self.show()
-            recovered = self.public_fleet.get_recovered(reduce)
+            recovered = self._get_recovered(self.public_fleet, reduce)
             delay = recovered > current_time()
             return recovered, delay
 
@@ -453,7 +476,7 @@ class Emotion:
         self.record()
         self.show()
         # 待命舰队不参与本图消耗，其未校准状态不能阻塞正在出击的舰队。
-        recovered = max((f.get_recovered(b) for f, b in zip(self.fleets, battle) if b > 0),
+        recovered = max((self._get_recovered(f, b) for f, b in zip(self.fleets, battle) if b > 0),
                         default=current_time())
         delay = recovered > current_time()
         return recovered, delay
@@ -461,7 +484,7 @@ class Emotion:
     def check_reduce(self, battle):
         """进入战役前检查情绪是否充足。
 
-        若情绪不足以完成战役并保持控制阈值，将自动延迟任务并抛出 ScriptEnd。
+        若情绪不足以完成战役并保持控制阈值，将按出击需求及预留设置延迟任务并抛出 ScriptEnd。
 
         Args:
             battle (int): 本次战役中的战斗次数。
@@ -478,7 +501,7 @@ class Emotion:
             self.config.task_delay(target=recovered)
             raise ScriptEnd('[情绪-延迟] 情绪控制')
 
-    def check_fleet(self, fleet_index):
+    def check_fleet(self, fleet_index, after_restart=False):
         """自律恢复前检查实际接替舰队，不按原编队的待命设置跳过校准。
 
         检查下一场的基础消耗，不等待、不扣减心情。心情不足沿用任务延迟，
@@ -486,20 +509,25 @@ class Emotion:
 
         Args:
             fleet_index (int): 接替舰队的画面编号（1 或 2）。
+            after_restart (bool): 是否为异常重启续接预检，供专用心情策略区分。
         """
         if not self.is_calculate:
             return
-        self.update()
-        self.record()
-        self.show()
-        fleet = self.public_fleet if self.using_public else self.fleets[fleet_index - 1]
-        recovered = fleet.get_recovered(self.reduce_per_battle)
+        recovered = self._check_fleet(fleet_index)
         if recovered > current_time():
             self.config.task_delay(target=recovered)
             raise ScriptEnd('[情绪-延迟] 接替舰队情绪控制')
 
+    def _check_fleet(self, fleet_index):
+        """按实际舰队计算下一场出击时间，由任务选择等待或换船策略。"""
+        self.update()
+        self.record()
+        self.show()
+        fleet = self.public_fleet if self.using_public else self.fleets[fleet_index - 1]
+        return self._get_recovered(fleet, self.reduce_per_battle)
+
     def wait(self, fleet_index):
-        """等待指定舰队的情绪恢复到控制阈值。应在进入任何战斗之前调用。
+        """等待指定舰队满足出击需求及已触发的预留恢复。应在进入任何战斗之前调用。
 
         Args:
             fleet_index (int): 舰队编号（1 或 2）。
@@ -512,17 +540,22 @@ class Emotion:
         else:
             fleet = self.fleets[fleet_index - 1]
 
-        recovered = fleet.get_recovered(expected_reduce=self.reduce_per_battle)
+        recovered = self._get_recovered(fleet, expected_reduce=self.reduce_per_battle)
         if recovered > current_time():
             logger.hr('情绪等待')
             if self.using_public:
-                logger.info(f'[情绪-等待] 公海舰队情绪将恢复到 {fleet.limit}，时间 {recovered}')
+                logger.info(f'[情绪-等待] 公海舰队将满足出击与预留要求，时间 {recovered}')
             else:
-                logger.info(f'[情绪-等待] 舰队 {fleet_index} 情绪将恢复到 {fleet.limit}，时间 {recovered}')
+                logger.info(f'[情绪-等待] 舰队 {fleet_index} 将满足出击与预留要求，时间 {recovered}')
 
             while 1:
                 if current_time() > recovered:
-                    break
+                    # 扣除下一场心情前清除已达标的预留状态，避免每场都要求回满。
+                    self.update()
+                    self.record()
+                    recovered = self._get_recovered(fleet, self.reduce_per_battle)
+                    if recovered <= current_time():
+                        break
 
                 logger.attr('等待直到', recovered)
                 sleep(60)

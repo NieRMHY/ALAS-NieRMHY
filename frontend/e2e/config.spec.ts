@@ -4,6 +4,29 @@ const serialSelector = '[id="Alas.Emulator.Serial"]'
 const serialStatus = '[id="Alas.Emulator.Serial-status"]'
 // 字段为草稿式提交：键入期间不写配置，失焦或回车才提交，故断言保存前先 blur。
 
+test('海里数检测使用天数输入，关闭、每轮和按天检测保存后均保留', async ({page}, testInfo) => {
+  const path = 'OpsiHazard1Leveling.OpsiHazard1Leveling.RecordSeaMiles'
+  await page.goto('/#/i/testpilot/task/OpsiHazard1Leveling')
+  const value = page.locator(`[id="${path}"]`)
+  const status = page.locator(`[id="${path}-status"]`)
+  await expect(value).toBeVisible({timeout: 15000})
+  await expect(value).toHaveAttribute('inputmode', 'decimal')
+  await expect(value).toHaveRole('textbox')
+  await expect(value).toHaveValue('-1')
+  await expect(page.locator('[id="OpsiHazard1Leveling.OpsiHazard1Leveling.SeaMilesLastRecord"]')).toHaveCount(0)
+  await page.locator('.field-row').filter({has: value}).screenshot({path: testInfo.outputPath('sea-miles-check-interval.png')})
+  await value.fill('-2')
+  await value.press('Enter')
+  await expect(value).toHaveAttribute('aria-invalid', 'true')
+  for (const interval of ['0', '3', '-1']) {
+    await value.fill(interval)
+    await value.press('Enter')
+    await expect(status).toHaveText('已保存')
+    await page.reload()
+    await expect(value).toHaveValue(interval, {timeout: 15000})
+  }
+})
+
 for (const [task, stage] of [['EventA', 'a3'], ['EventB', 'B3'], ['EventC', 'c3'], ['EventD', 'D3']]) {
   test(`${task} 活动日常断点从旧数字 0 改成关卡名，刷新后保留并可重置`, async ({page}) => {
     await page.goto(`/#/i/testpilot/task/${task}`)

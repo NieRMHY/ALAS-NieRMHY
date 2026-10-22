@@ -1021,10 +1021,13 @@ class TestHazard1FreshActionPoint(unittest.TestCase):
         runner.config = SimpleNamespace(
             OS_ACTION_POINT_PRESERVE=preserve,
             OpsiHazard1Leveling_TargetZone=0,
-            OpsiHazard1Leveling_RecordSeaMiles=False,
+            OpsiHazard1Leveling_RecordSeaMiles=-1,
             OpsiFleet_Fleet=1,
             override=Mock(),
             is_task_enabled=Mock(return_value=False),
+            # 单轮入口会读隐藏的事件续查记录，桩配置保持无待续查。
+            cross_get=Mock(return_value=None),
+            cross_set=Mock(),
         )
         runner.zone = SimpleNamespace(zone_id=1, hazard_level=2)
         return runner

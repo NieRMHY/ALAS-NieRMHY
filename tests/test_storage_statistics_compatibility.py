@@ -89,7 +89,15 @@ class AccountTraversalTests(unittest.TestCase):
                 'GearDesignPlanAntiAirT5': 17, 'GearDesignPlanPlaneT5': 30, 'SecretDesignPlanT5': 5},
             'other_account_no_gifts.png': {
                 'GearDesignPlanGunT5': 3, 'GearDesignPlanTorpedoT5': 3,
-                'GearDesignPlanAntiAirT5': 1, 'SecretDesignPlanT5': 3}}
+                'GearDesignPlanAntiAirT5': 1, 'SecretDesignPlanT5': 3},
+            'live_connected_gold_amounts.png': {
+                'PlateGunT4': 104, 'PlateTorpedoT4': 1732, 'PlateAntiAirT4': 980, 'PlatePlaneT4': 1750,
+                'PrototypeGearPartsT4': 767, 'Ultra_High_Purity_Metals': 5126,
+                'Military_Grade_Electronic_Components': 3683, 'HBX_Blend_Gunpowder': 3865,
+                'High_Durability_Elastomers': 5759, 'Superconductive_Metals': 4296,
+                'Corrosion_Resistant_Alloys': 5396, 'GearDesignPlanGunT4': 716,
+                'GearDesignPlanTorpedoT4': 871, 'GearDesignPlanAntiAirT4': 913,
+                'GearDesignPlanPlaneT4': 779, 'SecretDesignPlanT4': 794}}
         original = json.loads((FIXTURES / 'expected.json').read_text(encoding='utf-8'))
         module = __import__('module.storage.statistics', fromlist=['StorageStatistics'])
         for name, amounts in additions.items():

@@ -29,7 +29,7 @@ MUTATIONS = [
     ("increment_battle_count", ()),
     ("increment_akashi_encounter", ()),
     ("add_akashi_ap_entry", (20, 10, 2, "cl1")),
-    ("add_ap_snapshot", (100,)),
+    ("add_ap_snapshot", (100, "cl1", None, 1100)),
     ("set_last_ap_notification", (100,)),
     ("add_yellow_coin_snapshot", (500,)),
     ("add_coins_snapshot", (500, 20)),
@@ -195,7 +195,7 @@ class TestStatisticsTransactions(unittest.TestCase):
         )
         self.assert_serialized(
             lambda: self.db.add_yellow_coin_snapshot("test", 900),
-            lambda: self.other.add_ap_snapshot("test", 100),
+            lambda: self.other.add_ap_snapshot("test", 100, ap_total=1100),
         )
         stats = self.db.get_stats("test", MONTH)
         self.assertEqual(stats["battle_count"], 11)

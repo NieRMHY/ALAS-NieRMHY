@@ -101,6 +101,8 @@ Node.js >= 22.12（推荐 24），首次准备用 `npm ci --prefix frontend`。
 
 ## 20. 相关模块
 
+- [舰队科技列表](fleet-technology.md) —— Lua 目录、累计扫描证据、人工校正和阵营加成。
+
 - [WebUI 总览](index.md)
 - [API 服务](api.md) —— 协议、认证与路由，前端所有业务通信的对端
 - [配置系统](../config.md) —— args.json、menu.json 与翻译文件的来源

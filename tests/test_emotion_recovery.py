@@ -91,6 +91,177 @@ class EmotionIntegrationTests(unittest.TestCase):
         self.enterContext(patch.object(config_source, 'logger', QuietLogger()))
         return clock, config, production.Emotion(config)
 
+    def test_reserve_allows_continuous_maps_down_to_control_line(self):
+        clock, config, emotion = self.setup_tracker(initial=150)
+        config.Emotion_MinReserve = 150
+        config.Emotion_Fleet1Control = 'prevent_yellow_face'
+        for _ in range(10):
+            emotion.check_reduce(6)
+            for _ in range(6):
+                emotion.reduce(1)
+        self.assertEqual(30, config.Emotion_Fleet1Value)
+        self.assertIsNone(getattr(config, 'Emotion_RecoveryWait', None))
+        with self.assertRaises(ScriptEnd):
+            emotion.check_reduce(6)
+        self.assertEqual(['1'], config.Emotion_RecoveryWait)
+        self.assertEqual(clock.now().replace(microsecond=0) + timedelta(hours=2, seconds=1),
+                         config.fields['Main.Scheduler.NextRun'])
+
+    def test_zero_reserve_preserves_existing_short_delay(self):
+        clock, config, emotion = self.setup_tracker(initial=30)
+        config.Emotion_MinReserve = 0
+        config.Emotion_Fleet1Control = 'prevent_yellow_face'
+        with self.assertRaises(ScriptEnd):
+            emotion.check_reduce(6)
+        self.assertEqual(clock.now().replace(microsecond=0) + timedelta(minutes=12, seconds=1),
+                         config.fields['Main.Scheduler.NextRun'])
+        self.assertIsNone(getattr(config, 'Emotion_RecoveryWait', None))
+
+    def test_reserve_survives_reload_and_releases_after_recovery(self):
+        for public in (False, True):
+            with self.subTest(public=public):
+                clock, config, emotion = self.setup_tracker(initial=30, public=public)
+                config.Emotion_MinReserve = 150
+                prefix = 'PublicEmotion_Fleet' if public else 'Emotion_Fleet1'
+                setattr(config, prefix + 'Control', 'prevent_yellow_face')
+                with self.assertRaises(ScriptEnd):
+                    emotion.check_reduce(6)
+                target = config.fields['Main.Scheduler.NextRun']
+                # 已够打一张图，但没有恢复到预留值，重建任务对象后也不能提前续刷。
+                clock.advance(12 * 60_000_000)
+                with self.assertRaises(ScriptEnd):
+                    production.Emotion(config).check_reduce(6)
+                self.assertEqual(target, config.fields['Main.Scheduler.NextRun'])
+                clock.advance((target - clock.now()) // timedelta(microseconds=1))
+                reloaded = production.Emotion(config)
+                reloaded.check_reduce(6)
+                self.assertIsNone(config.Emotion_RecoveryWait)
+                fleet = reloaded.public_fleet if public else reloaded.fleet_1
+                self.assertEqual(150, fleet.lower)
+                reloaded.reduce(1)
+                production.Emotion(config).check_reduce(6)
+                self.assertEqual(148, getattr(config, prefix + 'Value'))
+                self.assertIsNone(config.Emotion_RecoveryWait)
+
+    def test_reserve_uses_participating_fleets_for_each_order(self):
+        for order, waiting in (
+                ('fleet1_all_fleet2_standby', ['1']),
+                ('fleet1_standby_fleet2_all', ['2']),
+                ('fleet1_mob_fleet2_boss', ['1', '2']),
+                ('fleet1_boss_fleet2_mob', ['1', '2'])):
+            with self.subTest(order=order):
+                _, config, emotion = self.setup_tracker(initial=30)
+                config.Emotion_MinReserve = 150
+                config.Fleet_FleetOrder = order
+                config.Emotion_Fleet1Control = config.Emotion_Fleet2Control = 'prevent_yellow_face'
+                with self.assertRaises(ScriptEnd):
+                    emotion.check_reduce(6)
+                self.assertEqual(waiting, config.Emotion_RecoveryWait)
+
+    def test_reserve_wait_only_marks_the_insufficient_fleet(self):
+        clock, config, emotion = self.setup_tracker(initial=70)
+        config.Emotion_MinReserve = 150
+        config.Fleet_FleetOrder = 'fleet1_mob_fleet2_boss'
+        config.Emotion_Fleet2Value = 40
+        config.Emotion_Fleet2RecoveryState = EmotionRecoveryState.calibrate(
+            40, clock.now(), 'dormitory_floor_2', True, False).export()
+        with self.assertRaises(ScriptEnd):
+            emotion.check_reduce(6)
+        self.assertEqual(['2'], config.Emotion_RecoveryWait)
+        self.assertEqual(70, config.Emotion_Fleet1Value)
+
+    def test_reserve_handoff_precheck_uses_actual_successor(self):
+        clock, config, emotion = self.setup_tracker(initial=40)
+        config.Emotion_MinReserve = 150
+        with self.assertRaises(ScriptEnd):
+            emotion.check_fleet(2)
+        self.assertEqual(['2'], config.Emotion_RecoveryWait)
+        self.assertEqual((40, 40), (config.Emotion_Fleet1Value, config.Emotion_Fleet2Value))
+        self.assertEqual(clock.now().replace(microsecond=0) + timedelta(minutes=114, seconds=1),
+                         config.fields['Main.Scheduler.NextRun'])
+
+    def test_reserve_cannot_lower_full_sortie_requirement(self):
+        clock, config, emotion = self.setup_tracker(initial=40)
+        config.Emotion_MinReserve = 41
+        with self.assertRaises(ScriptEnd):
+            emotion.check_reduce(6)
+        self.assertEqual(clock.now().replace(microsecond=0) + timedelta(minutes=12, seconds=1),
+                         config.fields['Main.Scheduler.NextRun'])
+
+    def test_reserve_caps_port_recovery_without_infinite_delay(self):
+        clock, config, emotion = self.setup_tracker(initial=30)
+        config.Emotion_MinReserve = 150
+        config.Emotion_Fleet1Control = 'prevent_yellow_face'
+        config.Emotion_Fleet1Recover = 'not_in_dormitory'
+        config.Emotion_Fleet1Oath = False
+        config.Emotion_Fleet1RecoveryState = EmotionRecoveryState.calibrate(
+            30, clock.now(), 'not_in_dormitory', False, False).export()
+        with self.assertRaises(ScriptEnd):
+            emotion.check_reduce(6)
+        target = config.fields['Main.Scheduler.NextRun']
+        self.assertEqual(clock.now().replace(microsecond=0) + timedelta(minutes=270, seconds=1), target)
+        clock.advance((target - clock.now()) // timedelta(microseconds=1))
+        production.Emotion(config).check_reduce(6)
+        self.assertEqual(119, config.Emotion_Fleet1Value)
+        self.assertIsNone(config.Emotion_RecoveryWait)
+
+    def test_reserve_supports_double_book_oversized_map(self):
+        clock, config, emotion = self.setup_tracker(initial=120)
+        config.Emotion_MinReserve = 150
+        config.Emotion_Fleet1Control = 'keep_exp_bonus'
+        config.Campaign_Use2xBook = True
+        with self.assertRaises(ScriptEnd):
+            emotion.check_reduce(8)
+        target = config.fields['Main.Scheduler.NextRun']
+        self.assertEqual(clock.now().replace(microsecond=0) + timedelta(minutes=30, seconds=1), target)
+        clock.advance((target - clock.now()) // timedelta(microseconds=1))
+        production.Emotion(config).check_reduce(8)
+        self.assertEqual(150, config.Emotion_Fleet1Value)
+
+    def test_reserve_can_be_disabled_or_lowered_while_waiting(self):
+        for new_reserve in (0, 80):
+            with self.subTest(new_reserve=new_reserve):
+                clock, config, emotion = self.setup_tracker(initial=40)
+                config.Emotion_MinReserve = 150
+                with self.assertRaises(ScriptEnd):
+                    emotion.check_reduce(6)
+                clock.advance(42 * 60_000_000)
+                config.Emotion_MinReserve = new_reserve
+                production.Emotion(config).check_reduce(6)
+                self.assertIsNone(config.Emotion_RecoveryWait)
+
+    def test_reserve_is_limited_to_calculation_modes(self):
+        for mode in ('calculate', 'calculate_ignore', 'ignore'):
+            with self.subTest(mode=mode):
+                _, config, emotion = self.setup_tracker(initial=40)
+                config.Emotion_MinReserve = 150
+                config.Emotion_Mode = mode
+                if mode == 'ignore':
+                    before = copy.deepcopy(config.fields)
+                    emotion.check_reduce(6)
+                    emotion.check_fleet(2)
+                    emotion.reduce(1)
+                    self.assertEqual(before, config.fields)
+                else:
+                    with self.assertRaises(ScriptEnd):
+                        emotion.check_reduce(6)
+                    self.assertEqual(['1'], config.Emotion_RecoveryWait)
+
+    def test_reserve_in_map_wait_uses_same_recovery_target(self):
+        clock, config, emotion = self.setup_tracker(initial=40)
+        config.Emotion_MinReserve = 150
+        with patch.object(production, 'sleep', side_effect=lambda seconds: clock.advance(seconds * 1_000_000)) as sleep:
+            emotion.wait(1)
+            self.assertEqual(150, config.Emotion_Fleet1Value)
+            self.assertIsNone(config.Emotion_RecoveryWait)
+            calls = sleep.call_count
+            emotion.reduce(1)
+            emotion.wait(1)
+            self.assertEqual(calls, sleep.call_count)
+        production.Emotion(config).check_reduce(6)
+        self.assertEqual(148, config.Emotion_Fleet1Value)
+        self.assertIsNone(config.Emotion_RecoveryWait)
+
     def test_uncalibrated_standby_does_not_stop_and_legacy_config_migrates(self):
         _, config, emotion = self.setup_tracker()
         config.Emotion_Fleet2RecoveryState = None
@@ -446,6 +617,121 @@ class EmotionIntegrationTests(unittest.TestCase):
                     saved = json.loads(Path(path).read_text(encoding='utf-8'))['Main']['Emotion']
                     self.assertEqual(saved['Fleet1RecoveryState']['record'], real.Emotion_Fleet1Record.isoformat(timespec='microseconds'))
                     self.assertEqual(saved['Fleet1Value'], right.fleet_1.current)
+
+
+class EmotionReserveConfigTests(unittest.TestCase):
+    def setUp(self):
+        from module.api.config_service import ConfigService
+        from tests.test_api import fixture
+
+        self.directory = self.enterContext(tempfile.TemporaryDirectory())
+        self.configs = ConfigService(fixture(self.directory))
+
+    def test_generated_reserve_order_defaults_and_translations(self):
+        for task, groups in self.configs.args.items():
+            if 'Emotion' not in groups:
+                continue
+            with self.subTest(task=task):
+                fields = list(groups['Emotion'])
+                self.assertEqual('MinReserve', fields[fields.index('IgnoreShipwreck') + 1])
+                self.assertEqual(0, groups['Emotion']['MinReserve']['value'])
+                self.assertEqual([0, 150], groups['Emotion']['MinReserve']['validate'])
+                self.assertEqual('stored', groups['Emotion']['RecoveryWait']['type'])
+                self.assertEqual('hide', groups['Emotion']['RecoveryWait']['display'])
+        for language in ('zh-CN', 'en-US', 'ja-JP', 'zh-TW'):
+            translations = json.loads(Path(f'module/config/i18n/{language}.json').read_text(encoding='utf-8'))
+            for field in ('MinReserve', 'RecoveryWait'):
+                self.assertTrue(translations['Emotion'][field]['name'])
+                self.assertNotIn('Emotion.', translations['Emotion'][field]['name'])
+            self.assertTrue(translations['Emotion']['MinReserve']['help'])
+
+    def test_reserve_api_validates_integer_range_and_persists(self):
+        from module.api.protocol import ApiError, ConfigChange
+
+        path = 'Main.Emotion.MinReserve'
+        for value in (0, 1, 80, 150):
+            with self.subTest(value=value):
+                self.configs.patch('testpilot', None, [ConfigChange(path=path, value=value)])
+                self.assertEqual(value, self.configs.read_json(self.configs.path('testpilot'))['Main']['Emotion']['MinReserve'])
+        before = self.configs.path('testpilot').read_bytes()
+        for value in (-1, 151, 80.5, True, '150', None):
+            with self.subTest(value=value), self.assertRaises(ApiError):
+                self.configs.patch('testpilot', None, [ConfigChange(path=path, value=value)])
+        with self.assertRaises(ApiError):
+            self.configs.patch('testpilot', None, [ConfigChange(path='Main.Emotion.RecoveryWait', value=None)])
+        self.assertEqual(before, self.configs.path('testpilot').read_bytes())
+
+    def test_old_config_fills_disabled_defaults_without_writing_on_read(self):
+        path = self.configs.path('testpilot')
+        data = self.configs.read_json(path)
+        for field in ('MinReserve', 'RecoveryWait'):
+            data['Main']['Emotion'].pop(field)
+        path.write_text(json.dumps(data), encoding='utf-8')
+        before = path.read_bytes()
+        fields = self.configs.get('testpilot')['values']['Main']['Emotion']
+        self.assertEqual(0, fields['MinReserve'])
+        self.assertIsNone(fields['RecoveryWait'])
+        self.assertEqual(before, path.read_bytes())
+        migrated = AzurLaneConfig.__new__(AzurLaneConfig).config_update(data)
+        self.assertEqual(0, migrated['Main']['Emotion']['MinReserve'])
+        self.assertIsNone(migrated['Main']['Emotion']['RecoveryWait'])
+
+    def test_public_reserve_wait_persists_in_real_json_and_is_task_specific(self):
+        from module.api.protocol import ConfigChange
+
+        clock = Clock(500_000, LuaOracle(ShipSpec('dormitory_floor_2', True), 30, 500_000, 0))
+        self.enterContext(patch.object(production, 'current_time', clock.now))
+        self.enterContext(patch.object(config_source, 'current_time', clock.now))
+        self.enterContext(patch.object(production, 'logger', QuietLogger()))
+        self.enterContext(patch.object(config_source, 'logger', QuietLogger()))
+        with patch('module.api.config_service.current_time', clock.now):
+            self.configs.patch('testpilot', None, [
+                ConfigChange(path='Main.Emotion.MinReserve', value=150),
+                ConfigChange(path='General.PublicEmotion.Enable', value=True),
+                ConfigChange(path='General.PublicEmotion.Tasks', value='Main, Event'),
+                ConfigChange(path='General.PublicEmotion.FleetControl', value='prevent_yellow_face'),
+                ConfigChange(path='General.PublicEmotion.FleetRecover', value='dormitory_floor_2'),
+                ConfigChange(path='General.PublicEmotion.FleetOath', value=True),
+                ConfigChange(path='General.PublicEmotion.FleetValue', value=30),
+            ])
+        path = str(self.configs.path('testpilot'))
+        self.enterContext(patch('module.config.config.filepath_config', return_value=path))
+        self.enterContext(patch('module.config.config_updater.filepath_config', return_value=path))
+        self.enterContext(patch.object(AzurLaneConfig, 'config_override'))
+
+        def load(task):
+            config = AzurLaneConfig.__new__(AzurLaneConfig)
+            config.config_name = 'testpilot'
+            config.root = self.configs.root
+            config.modified, config.bound, config.overridden = {}, {}, {}
+            config.data = config.config_update(self.configs.read('testpilot')[0])
+            config._loaded_data = copy.deepcopy(config.data)
+            config.auto_update = True
+            config.bind(task)
+            config.task = Function(config.data[task])
+            return production.Emotion(config)
+
+        with self.assertRaises(ScriptEnd):
+            load('Main').check_reduce(6)
+        saved = self.configs.read_json(Path(path))
+        original_target = datetime.fromisoformat(saved['Main']['Scheduler']['NextRun'])
+        self.assertEqual(['Public'], saved['Main']['Emotion']['RecoveryWait'])
+        self.assertIsNone(saved['Event']['Emotion']['RecoveryWait'])
+
+        clock.advance(18 * 60_000_000)
+        other = load('Event')
+        other.check_reduce(1)
+        other.reduce(1)
+        self.assertEqual(46, other.config.PublicEmotion_FleetValue)
+        with self.assertRaises(ScriptEnd):
+            load('Main').check_reduce(6)
+        saved = self.configs.read_json(Path(path))
+        target = datetime.fromisoformat(saved['Main']['Scheduler']['NextRun'])
+        self.assertGreater(target, original_target)
+        self.assertIsNone(saved['Event']['Emotion']['RecoveryWait'])
+        clock.advance((target - clock.now()) // timedelta(microseconds=1))
+        load('Main').check_reduce(6)
+        self.assertIsNone(self.configs.read_json(Path(path))['Main']['Emotion']['RecoveryWait'])
 
 
 if __name__ == '__main__':

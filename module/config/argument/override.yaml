@@ -91,6 +91,7 @@ ThreeOilLowCost:
 
 Ambush11:
   Campaign:
+    ContinueAfterRestart: false
     Event:
       value: campaign_main
     Mode: normal
@@ -216,6 +217,7 @@ EventSp:
     AutoSearchMode: sub_standby
 Raid:
   Campaign:
+    ContinueAfterRestart: false
     Name: dynamic
     Mode: normal
     UseClearMode: true
@@ -256,6 +258,7 @@ Raid:
 # 心情控制为相关项，暴露在设置界面（默认值见 default.yaml）
 RaidAffection:
   Campaign:
+    ContinueAfterRestart: false
     Name: dynamic
     Mode: normal
     UseClearMode: true
@@ -311,6 +314,7 @@ RaidDaily:
     FailureInterval: 30
     ServerUpdate: 00:00
   Campaign:
+    ContinueAfterRestart: false
     Name: dynamic
     Mode: normal
     UseClearMode: true
@@ -347,6 +351,7 @@ Coalition:
     FailureInterval: 30
     ServerUpdate: 00:00
   Campaign:
+    ContinueAfterRestart: false
     Name: dynamic
     Event:
       type: state
@@ -382,6 +387,7 @@ CoalitionScuttle:
     FailureInterval: 30
     ServerUpdate: 00:00
   Campaign:
+    ContinueAfterRestart: false
     Name: dynamic
     Event:
       type: state
@@ -406,6 +412,7 @@ CoalitionSp:
     FailureInterval: 30
     ServerUpdate: 00:00
   Campaign:
+    ContinueAfterRestart: false
     Name: sp
     Mode: normal
     UseClearMode: true
@@ -434,6 +441,7 @@ CoalitionSp:
     FailureInterval: 30
     ServerUpdate: 00:00
   Campaign:
+    ContinueAfterRestart: false
     Name: sp
     Mode: normal
     UseClearMode: true
@@ -564,6 +572,7 @@ WarArchives:
     FailureInterval: 30
     ServerUpdate: 00:00
   Campaign:
+    ContinueAfterRestart: false
     Mode: normal
     AmbushEvade: true
 OperationHandover:
@@ -572,6 +581,7 @@ OperationHandover:
     FailureInterval: 30
     ServerUpdate: 00:00
   Campaign:
+    ContinueAfterRestart: false
     UseClearMode:
       display: hide
     UseFleetLock:

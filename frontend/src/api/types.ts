@@ -4,6 +4,7 @@
 
 import type {Catalog, ProgramSaved, ProgramSimulation, ProgramValidation, RuntimeProgramState} from '../scheduler/types'
 import type {MindCalculation, MindCatalog, MindReport, MindShip} from '../mind/types'
+import type {Catalog as FleetTechCatalog, Report as FleetTechReport} from '../fleet-tech/types'
 
 export type Scalar = string | number | boolean | null
 export type Value = Scalar | Value[] | {[key: string]: Value}
@@ -40,7 +41,7 @@ export interface Schema {
   args: Record<string, Record<string, Record<string, Field>>>
   translations: Record<string, unknown>
 }
-export interface Config { instance: string; revision: string; values: Values }
+export interface Config { instance: string; revision: string; values: Values; options?: Record<string, Value[]> }
 export interface OpsiSimulatorResult {
   cl1Count: number; meowCount: number; crashedProbability: number
   cl1Time: number; meowTime: number; ap: number; coin: number
@@ -136,6 +137,10 @@ export interface BackgroundGalleryEntry {
 
 export interface Results {
   'mind.catalog': MindCatalog
+  'fleetTech.catalog': FleetTechCatalog
+  'fleetTech.report': FleetTechReport
+  'fleetTech.patch': FleetTechReport
+  'fleetTech.syncMind': FleetTechReport
   'mind.report': MindReport
   'mind.calculate': MindCalculation
   'mind.save': MindReport

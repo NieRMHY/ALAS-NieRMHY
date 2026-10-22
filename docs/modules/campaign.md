@@ -43,6 +43,7 @@
 ```
 module/campaign/
 ├── run.py               # CampaignRun：任务级多轮编排（选关、加载、停止条件）
+├── recovery.py          # CampaignRecovery：异常 Restart 凭据、预算和原海域导航
 ├── campaign_base.py     # CampaignBase：单次出击执行与战斗策略分发
 ├── campaign_ui.py       # CampaignUI：章节/模式导航、入口获取、活动 UI 适配
 ├── campaign_ocr.py      # CampaignOcr：关卡入口模板匹配 + 关卡名 OCR
@@ -183,6 +184,50 @@ flowchart TD
 
 活动地图目录可能同时用于首发和复刻。`event_20240912_cn` 在进入选关页后按实际按钮识别布局：左下角作战／剧情选择器走 `20241219` 侧边栏导航，普通／困难开关走旧导航；未知画面通过 `CampaignNameError` 回到选关循环重截图，不盲点模式按钮。布局标记仅覆盖当前战役配置副本，每次导航重新判断；普通和困难关卡在新版地图准备页切换难度，SP 不启用该难度开关。不要按服务器或单一当前活动全局替换导航逻辑。
 
+### 异常重启后续接原关卡
+
+`Campaign.ContinueAfterRestart`（「重启后继续战斗」）默认关闭，适用于使用公共 `CampaignRun` 入口的主线与活动海域，包括活动每日 A–D、每日 SP、紧急委托与三油低耗任务。资格按实际地图目录（`campaign_main`、`campaign_hard` 或 `event_*`）判断，不按任务名称白名单判断；突袭、共斗、伏击、作战档案与作战交接等不适用任务隐藏开关。必须同时启用周回与自律寻敌，并在异常前实际确认该图处于这两种模式。三战撤退、一次性地图和重写关键执行入口的自定义战役不生成续接凭据。关闭时继续保留启动遇到地图撤退、章节识别遇到撤退按钮回退的原有行为。
+
+调用链：调度器 `run()` 用 `campaign_recovery_scope()` 绑定当前任务 → 公共 `CampaignRun.run()` 捕获设备／客户端异常 → `CampaignRecovery.capture()` 保留原地图、运行器及出击参数 → 原异常分支安排 Restart → 实际登录成功后允许原任务恢复 → 沿已有 Page 图回到原关卡地图 → 确认自律 OFF 后开启，自律 ON 时直接接管 → 按普通 `auto_search_moving()`、`auto_search_combat()` 流程执行后续战斗。
+
+恢复入口只处理异常重启后返回地图这一场景，不接管重启前的战斗、加载或结算画面，也不把返回地图推断为旧战斗重试。尚未核实的游戏返回行为不能自行扩展为产品机制；若会影响正确性，应先向用户确认。
+
+活动每日恢复原地图后继续执行原任务编排，记录 `EventDaily.LastStage` 并执行后续关卡；每日 SP 保留单次出击与次日调度。紧急委托和三油低耗保留 `GemsEmotion` 与原换船编排，续接不执行启动时强制换旗舰；实际舰队心情不足时先撤退，再交回换船策略。
+
+凭据只保存在当前调度进程内，包含原任务、配置／设备签名、原地图代次与恢复次数。切换其他业务任务、配置或账本改变、超过有效期、worker 重启后均不续接。原图归属来自原运行器和异常恢复链，不能只凭任意地图画面断言归属；不支持人工换图或换号后沿用上下文。
+
+导航复用已有 `Page` 图，不重新选关或入图。登录若直接出现地图，交回原任务恢复自律；渠道服等待主界面的悬浮球检查留待后续任务。已回到选关页且没有原地图时，按普通流程执行，不补记通关次数。
+
+| 当前状态 | 处理 |
+| --- | --- |
+| 原地图，自律关闭 | 首次确认地图后至少等待两秒，期间持续截图；再确认 OFF 模板与颜色、当前实际舰队及心情后开启，进入加载／战斗则不点击 |
+| 原地图，自律开启 | 直接进入普通移动／战斗循环，不反向关闭开关 |
+| 原地图，先前已有战斗记录 | 不依据旧评级或阶段分流；清理旧场结果，后续每场正常计算心情 |
+| 已触发停止条件 | 从地图直接撤退并结束本次调用，不开启自律、不接管旧结算、不增加未完成周回计数 |
+| 无法确认原地图 | 回退原流程或沿用有界导航超时，不猜测战斗／结算状态 |
+
+`CampaignBase` 保留本地图已记录的 `battle_count`、周回次数与地图代次，不重新入图或重置地图进度。恢复前读取当前持久化心情，旧场 `CombatResult` 不跨重启继续使用。后续每场由普通战斗入口新建结果、确认进入战斗后正常扣基础心情；真实 A/B 或确定战败的额外消耗继续执行原有策略。不回滚重启前已经保存的消耗，也不让旧扣减标记免掉新出击的消耗。
+
+每个海域最多恢复三次，关联 Restart 也最多三次（包括登录失败）；导航与开启自律有短期限，设备卡死、过量点击及任务重启限制继续生效。只有正常进入新地图后才分配新的预算。
+
+离线验证入口：`uv run python -m unittest tests.test_campaign_restart_recovery tests.test_campaign_restart_tasks`。覆盖地图 OFF/ON、每场正常扣减、实际舰队识别、停止条件、普通战败、周回计数、每日／SP 及换船编排。四服资源组合与 Mock 回放不代表真实重启验收。
+
+限制：进程退出会丢失原地图上下文；未观察到的旧结果不补造，也不凭地图进度推断胜负或消耗。当前支持范围以已确认的重启返回地图行为为准。
+
+相关实现与配置索引：
+
+| 文件 | 用途 |
+| --- | --- |
+| [alas.py](../../alas.py)、[login.py](../../module/handler/login.py) | 异常来源、原任务凭据、Restart 预算与登录交接 |
+| [recovery.py](../../module/campaign/recovery.py)、[run.py](../../module/campaign/run.py)、[campaign_base.py](../../module/campaign/campaign_base.py) | 原地图保留、恢复导航和周回计数 |
+| [campaign_abcd.py](../../module/event/campaign_abcd.py)、[gems_farming.py](../../module/campaign/gems_farming.py)、[emotion.py](../../module/combat/emotion.py) | 每日关卡进度、紧急委托换船和实际舰队心情预检 |
+| [auto_search_combat.py](../../module/combat/auto_search_combat.py)、[combat.py](../../module/combat/combat.py)、[result.py](../../module/combat/result.py) | 普通战斗执行、严格开关检测与每场心情记录 |
+| [argument.yaml](../../module/config/argument/argument.yaml)、[override.yaml](../../module/config/argument/override.yaml) | 默认关闭的配置定义与不适用任务的隐藏覆盖 |
+| [args.json](../../module/config/argument/args.json)、[config_generated.py](../../module/config/config_generated.py)、[template.json](../../config/template.json) | 配置生成器维护的定义、Python 属性和模板 |
+| [zh-CN.json](../../module/config/i18n/zh-CN.json)、[zh-MIAO.json](../../module/config/i18n/zh-MIAO.json)、[en-US.json](../../module/config/i18n/en-US.json)、[ja-JP.json](../../module/config/i18n/ja-JP.json)、[zh-TW.json](../../module/config/i18n/zh-TW.json) | 五种语言的名称与限制说明 |
+| [test_campaign_restart_recovery.py](../../tests/test_campaign_restart_recovery.py)、[test_campaign_restart_tasks.py](../../tests/test_campaign_restart_tasks.py) | 隔离配置、恢复回放、跨任务编排及四服资源组合测试 |
+| 本文、[combat.md](combat.md)、[entry/alas.md](entry/alas.md) | 战役、战斗与调度的机制及验收边界 |
+
 ### 大世界入口聚合（os_run.py）
 
 `OSCampaignRun` 自身不实现任何游戏操作。每个 `opsi_*` 方法都是同一模板：
@@ -288,6 +333,9 @@ stateDiagram-v2
 | `TaskBalancer.Enable` / `CoinLimit` / `TaskCall` | 混合 | false / 10000 / Main | 金币不足时切换到指定任务 |
 | `GemsFarming.*` | 混合 | — | 换旗舰/先锋、普通船筛选、装备码、情绪策略、先锋等级区间 |
 | `Emotion.Mode` / `Fleet1Value` 等 | 混合 | — | 心情计算模式与各舰队心情记录 |
+| `Hard.RunAt18` | bool | `false` | 困难图改为服务器时间 18:00 运行；关闭时沿用零点调度 |
+
+开启 `Hard.RunAt18` 后，若困难图在服务器时间 18:00 前被调起，只将任务延后到当天 18:00，不进入困难关卡；18:00 后到期则正常执行剩余次数，完成后安排到下一次 18:00。旧配置自动补齐为关闭，保留原有零点调度。
 
 关键关联：`GemsFarming`/`ThreeOilLowCost` 共用同一组 `GemsFarming.*` 参数；`StopCondition_MapAchievement` 与 `can_use_auto_search_continue()` 联动（非 `non_stop` 时禁用续战，因为自动搜索菜单里读不到地图信息）；活动类配置 `MAP_CHAPTER_SWITCH_*`、`STAGE_ENTRANCE` 由地图文件 `Config` 注入而非用户设置。
 
@@ -343,6 +391,14 @@ stateDiagram-v2
 5. **特殊 UI**（按需）：新章节侧边栏布局在 `campaign_ui.py` 加 `ASIDE_SWITCH_YYYYMMDD` 与 `campaign_set_chapter_*` 分支；新关卡名别名（如 `vsp`→`sp`）加进 `stage_name.py` 的别名字典；无「威胁：安全」指示器的活动在 `_apply_event_achievement_fallback` 处理。
 
 新增一类**任务**（而非活动）时：继承 `CampaignRun`（需要棋盘执行再加 `CampaignBase`），覆写 `run()` 或 `triggered_stop_condition()`，在 `alas.py` 加同名方法并在 `module/config/argument/` 登记任务与参数。
+
+### 飓风与雾霭回廊（20261022）
+
+- 国服、国际服和日服共用 `campaign/event_20261022_cn/` 的 T1–T6 与 SP。关卡数据来自活动 `51601` 的 `config_data`：`2070001`–`2070006`、`2070041`；该活动的 `act_id` 也出现在旧 `197xxxx` 章节中，不能仅按关联结果的首项提取。EX 不在自动刷图范围内。
+- Lua 的 `expedition_data_by_map` 使用 `ui_type=10`，T1–T3 属于上篇、T4–T6 属于下篇，SP 使用独立分区。活动基类沿用 `page_sp` 和 20241219 四分区导航；关卡没有普通／困难模式切换。`stage_name.py` 保留 T 关名，并支持与同类活动一致的 A/SP 数字别名及 A/B 日常关卡转换。
+- T 关精英为 `type=95`，由客户端 `ChapterConst.EnemySize` 与 `StaticChampionCellView.StartEggCellView` 渲染小型橙色精英图标，复用 `MAP_SIREN_HAS_BOSS_ICON_SMALL`。SP 的 `type=98` 不显示此图标且 `is_ai=0`，每次出击从地图的三个 `MS` 出生格（D2、C3、B4）初始化固定敌人，保留清除后的正常状态更新。
+- 日文名称「テンペスタと霧靄回廊」来自 JP `memory_group[380].title` 与 `expedition_data_by_map[2070001].name`。当前 EN Lua 尚无对应条目，英文名称暂自行翻译为 “Tempesta and the Corridor of Mist”；后续有正式名称时更新 `campaign/Readme.md` 并重新生成配置。
+- 地图、波次、配置和导航可离线核对；新海面背景的网格识别与滑动参数仍需本期 1280×720 截图或经授权的模拟器验收，不能将旧活动的校准值视为本期实测结果。
 
 ## 16. 修改注意事项
 

@@ -147,6 +147,34 @@ class Ocr:
         return result_list
 
 
+def ocr_batch(image, readers, *, show_log=True):
+    """合并同一模型的单区域识别，分别保留预处理、后处理和有效性标记。
+
+    Args:
+        image (np.ndarray): 同一张原始截图。
+        readers (list[Ocr]): 每个识别器必须只有一个区域，语言及字符表相同。
+        show_log (bool): 是否输出批量识别结果与耗时。
+
+    Returns:
+        list: 与识别器顺序一致的结果。
+    """
+    if not readers:
+        return []
+    first = readers[0]
+    if any(len(reader.buttons) != 1 or (reader.lang, reader.alphabet) != (first.lang, first.alphabet)
+           for reader in readers):
+        raise ValueError('合批识别要求单区域、相同语言与字符表')
+    started = time.perf_counter()
+    crops = [crop_to_text(reader.pre_process(crop(image, reader.buttons[0]))) for reader in readers]
+    raw = first.cnocr.atomic_ocr_for_single_lines(crops, first.alphabet)
+    if len(raw) != len(readers):
+        raise ValueError('OCR 合批返回数量与区域数量不一致')
+    results = [reader.after_process(''.join(value)) for reader, value in zip(readers, raw)]
+    if show_log:
+        logger.attr(f'OCR_BATCH {time.perf_counter() - started:.3f}s', results)
+    return results
+
+
 class OcrYuv(Ocr):
     """在 YUV 色彩空间的 Y 通道中执行 OCR 识别。"""
 

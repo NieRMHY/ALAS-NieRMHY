@@ -42,6 +42,7 @@ module/retire/
 ├── scanner.py         # ShipScanner/DockScanner 及子扫描器、DHash 去重、FleetManagementScanner
 ├── ship_name.py       # ShipNameMatcher：舰队 OCR 结果对舰船名的纠错
 ├── fleet_management.py# FleetManagement：FleetScan 任务，扫描结果持久化到配置
+├── fleet_tech_scan.py # FleetTechScan：独立群组身份、完整范围证明和科技记录保存
 └── assets.py          # 退役/船坞按钮与模板（assets/{cn,en,jp,tw}/retire）
 
 module/equipment/
@@ -74,6 +75,7 @@ module/storage/
 | `StorageBox.run()` | `BoxDisassemble` 独立任务（alas.py `box_disassemble`） |
 | `AutoEquip.run()` | `AutoEquip` 独立任务（alas.py `auto_equip`，亦列于 submodule 可用功能） |
 | `FleetManagement.run()` | `FleetScan` 独立任务 |
+| `FleetTechScan.run()` | 科技页面的独立船坞扫描；共享滚动识别基础设施，按稳定群组保留同名舰及无科技舰 |
 | `Equipment.equipment_take_on/off()` | 演习、困难模式等按 `fleet` 记录装卸装备的底层入口 |
 | `EquipmentCodeHandler.code_apply()` / `code_clear()` | GemsFarming/Ambush11 换船时回装/卸下配装 |
 

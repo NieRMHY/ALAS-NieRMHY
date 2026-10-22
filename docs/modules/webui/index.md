@@ -411,6 +411,8 @@ sequenceDiagram
 
 ## 20. 相关模块
 
+- [舰队科技列表](fleet-technology.md) —— Lua 目录、累计扫描证据、人工校正和阵营加成。
+
 - [WebUI 启动器](../entry/gui.md) —— 监督循环、双栈监听、热重载与依赖同步：本体系的进程骨架。
 - [API 服务](api.md) —— Starlette 应用组装、WS v1 协议、认证与业务编排。
 - [运行时服务](runtime.md) —— `ProcessManager`、`updater`、`State`、登记与预览等被消费的实现。

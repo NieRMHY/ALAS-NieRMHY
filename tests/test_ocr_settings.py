@@ -102,6 +102,27 @@ class TestOcrSettingsCache(unittest.TestCase):
         self.assertIs(first.model, second.model)
         self.factory.assert_called_once()
 
+    def test_debug_images_are_instance_local_with_shared_model_and_queue(self):
+        settings = OcrSettings('onnx', 'cpu', False, 'standard')
+        diagnostic = AlOcr(name='cn', settings=settings)
+        scanning = AlOcr(name='cn', settings=settings, save_debug_images=False)
+        with patch.object(AlOcr, '_save_debug_image') as save:
+            self.assertEqual(diagnostic.ocr('first'), '测试文本')
+            self.assertEqual(scanning.ocr('second'), '测试文本')
+            self.assertEqual(scanning.ocr_for_single_lines(['third', 'fourth']), ['测试文本'] * 2)
+            self.assertEqual(diagnostic.ocr_for_single_lines(['fifth']), ['测试文本'])
+        self.assertEqual(save.call_args_list, [call('first', '测试文本'), call('fifth', '测试文本')])
+        self.assertIs(diagnostic.model, scanning.model)
+        self.assertEqual(diagnostic.model.threads, [al_ocr._ocr_worker_ident] * 5)
+        self.factory.assert_called_once()
+
+    def test_disabled_debug_images_do_not_hide_model_failure(self):
+        scanning = AlOcr(name='cn', config=make_config(), save_debug_images=False)
+        scanning.init()
+        scanning.model.before_infer = Mock(side_effect=RuntimeError('推理失败'))
+        with self.assertRaisesRegex(RuntimeError, '推理失败'):
+            scanning.ocr_for_single_lines(['image'])
+
     def test_backend_device_vendor_and_version_each_separate_cache_entries(self):
         base = OcrSettings('onnxruntime', 'cpu', False, 'standard')
         choices = [

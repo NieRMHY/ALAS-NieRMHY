@@ -38,7 +38,7 @@ submodule/             # git submodule 挂载点（AlasMaaBridge、AlasFpyBridge
 
 | 入口 | 用途 |
 | --- | --- |
-| `get_available_func()` | 12 个工具任务名（Daemon…EmulatorManager），[运行时服务](../webui/runtime.md)按名分发 |
+| `get_available_func()` | 内置独立工具任务清单，供 `tasks.run` 启动校验与[运行时服务](../webui/runtime.md)分发共用；新增工具须与 `alas.py` 入口一起注册 |
 | `get_available_mod()/get_available_mod_func()` | 已安装桥接与其功能集 |
 | `list_mod_instance()/get_config_mod()` | 扫描 `config/*.json` 识别「哪个配置属于哪个桥」（文件名 `配置名-模块名.json` 约定） |
 | `load_mod(name)` | importlib 加载桥接包（MAA 需 DLL 预加载） |

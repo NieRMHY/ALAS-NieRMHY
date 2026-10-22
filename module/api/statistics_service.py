@@ -345,12 +345,13 @@ def _report(configs, instance: str, category: str, month: str, days: int, period
         from module.statistics.opsi_month import get_ap_timeline, get_coins_timeline
         ap = get_ap_timeline(year, month_number, instance)
         coins = get_coins_timeline(year, month_number, instance)
-        ap_normalized = [
-            {**row, 'ap': row['ap_total'] if row.get('ap_total') is not None else row.get('ap')}
-            for row in ap
-        ]
+        ap_normalized = []
+        for row in ap:
+            # 兼容已有当前读数与缓存估计记录：保留海里数，排除总行动力及资产曲线。
+            total = row.get('ap_total') if row.get('source') != 'hazard1_estimate' else None
+            ap_normalized.append({**row, 'ap': total, 'asset': row.get('asset') if total is not None else None})
         if include_series:
-            result['series'] = [series(ap_normalized, 'ap', '行动力'), series(ap, 'asset', '行动力资产'),
+            result['series'] = [series(ap_normalized, 'ap', '行动力'), series(ap_normalized, 'asset', '行动力资产'),
                                 series(ap, 'distance', '海里数'), series(coins, 'yellow_coins', '作战补给凭证'),
                                 series(coins, 'purple_coins', '特别兑换凭证')]
     elif category == 'commission':

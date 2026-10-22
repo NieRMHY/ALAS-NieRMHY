@@ -5,8 +5,24 @@ import types
 import unittest
 from unittest.mock import Mock, patch
 
+from deploy.git import GitManager
 from module.runtime.setting import State
 from module.runtime.updater import Updater
+
+
+class TestGitInstall(unittest.TestCase):
+    # Modify by MHY, 本地更新链只留纯 git，不加载 CDN 或云端更新开关
+    def test_source_update_uses_plain_git_without_cdn(self):
+        manager = Mock(spec=GitManager)
+        GitManager.git_install(manager)
+
+        manager.git_repository_init.assert_called_once_with(
+            repo=manager.Repository,
+            source='origin',
+            branch=manager.Branch,
+            proxy=manager.GitProxy,
+            ssl_verify=manager.SSLVerify,
+        )
 
 
 class TestUpdaterReload(unittest.TestCase):

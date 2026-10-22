@@ -45,7 +45,7 @@ class Cl1StoreIntegration(StoreCase):
     def test_writes_split_public_and_secure_columns_as_plaintext(self):
         db = self.make_db()
         db.increment_battle_count('inst', 3)
-        db.add_ap_snapshot('inst', 131, source='cl1')
+        db.add_ap_snapshot('inst', 131, source='cl1', ap_total=1131)
         db.add_commission_income('inst', {'Gem': 5})
         self.assertEqual(self.raw('SELECT battle_count FROM cl1_months')[0][0], 3)
         self.assertEqual(self.raw('SELECT ap FROM action_point_snapshots')[0][0], 131)

@@ -12,6 +12,7 @@
 """
 import time
 import typing as t
+from datetime import timezone
 
 from module.base.button import ButtonGrid
 from module.base.decorator import Config, cached_property
@@ -19,11 +20,14 @@ from module.base.filter import Filter
 from module.base.mask import Mask
 from module.base.timer import Timer
 from module.base.utils import *
+from module.config.time_source import now as current_time
+from module.config.utils import server_timezone
 from module.dorm.assets import *
 from module.dorm.buy_furniture import BuyFurniture
+from module.exception import GameStuckError
 from module.handler.assets import POPUP_CONFIRM
 from module.logger import logger
-from module.ocr.ocr import Digit, DigitCounter
+from module.ocr.ocr import Digit, DigitCounter, Ocr
 from module.template.assets import TEMPLATE_DORM_COIN, TEMPLATE_DORM_LOVE
 from module.ui.assets import DORM_CHECK
 from module.ui.page import page_dorm, page_dormmenu
@@ -39,7 +43,7 @@ TEMPLATE_DORM_OIL_COST = DORM_BUY_FOOD_CHECK.crop((0, 0, 28, 32), name='TEMPLATE
 
 
 class OcrDormFood(DigitCounter):
-    """宿舍食物 OCR，识别食物数量格式如 `1000/5800`。"""
+    """宿舍食物 OCR，识别食物数量格式如 `12084/50000`。"""
 
     # The OCR area includes the icon left of the number, OCR may read it as an extra
     # '7' in front of the number. The image is cut at the leftmost orange pixel, so
@@ -47,6 +51,7 @@ class OcrDormFood(DigitCounter):
     # the icon, the gray total (40000) and the background score below 130.
     ORANGE_THRESHOLD = 150
     ORANGE_MARGIN = 5
+    VALID_TOTALS = range(40000, 102001, 2000)
 
     def pre_process(self, image):
         orange = color_similarity_2d(image, color=(239, 158, 49))
@@ -68,16 +73,29 @@ class OcrDormFood(DigitCounter):
         result = super().after_process(result)
 
         if '/' not in result:
-            for exp in range(40000, 90001, 1000):
+            for exp in self.VALID_TOTALS:
                 res = re.match(rf'^(\d+){exp}$', result)
-                if res:
-                    # 10005800 -> 1000/5800
+                if res and int(res.group(1)) <= exp:
+                    # 100040000 -> 1000/40000
                     new = f'{res.group(1)}/{exp}'
                     logger.info(f'[宿舍-OCR] 食物OCR结果 {result} 修正为 {new}')
                     result = new
                     break
 
         return result
+
+    def ocr(self, image, direct_ocr=False):
+        result_list = Ocr.ocr(self, image, direct_ocr=direct_ocr)
+        result = result_list[0] if isinstance(result_list, list) else result_list
+
+        match = re.search(r'(\d+)/(\d+)', result)
+        if match:
+            current, total = int(match.group(1)), int(match.group(2))
+            if current <= total and total in self.VALID_TOTALS:
+                return current, total - current, total
+
+        logger.warning(f'[OCR] 意外的OCR结果: {result_list}')
+        return 0, 0, 0
 
 
 OCR_FILL = OcrDormFood(OCR_DORM_FILL, name='OCR_DORM_FILL')
@@ -363,18 +381,22 @@ class RewardDorm(UI):
         """
         return np.min(rgb2gray(self.image_crop(button, copy=False))) < 127
 
-    def _dorm_feed_click(self, button, count):
+    def _dorm_feed_click(self, button, count, reserve=None):
         """
         点击食物按钮进行喂食。
 
         Args:
             button (Button): 食物按钮。
-            count (int): 食物使用次数。
+            count (int): 本轮最多使用的食物数量。
+            reserve (int | None): 库存不足时需要保留的总数；None 使用原喂食方案。
 
         Pages:
             in: DORM_FEED_CHECK
         """
         logger.info(f'[宿舍-喂食] 喂食 {button} x {count}')
+        if reserve is not None:
+            self._dorm_feed_reserved(button, count, reserve=reserve)
+            return
         if count <= 3:
             for _ in range(count):
                 self.device.click(button)
@@ -393,6 +415,50 @@ class RewardDorm(UI):
             if self.handle_popup_cancel('DORM_FEED'):
                 continue
 
+    def _dorm_feed_reserved(self, button, count, reserve):
+        """按剩余数量连续喂食，再核对库存并补点未完成的数量。
+
+        Args:
+            button (Button): 本轮选择的食物按钮。
+            count (int): 本轮最多实际消耗的数量，不代表提交点击的次数。
+            reserve (int): 需要保留的总库存，本次单个食物豁免时为零。
+
+        Pages:
+            in: DORM_FEED_CHECK，已有可用截图
+            out: DORM_FEED_CHECK，库存或饱食度已确认到达本轮终点
+        """
+        index = self._dorm_food.buttons.index(button)
+        target = None
+        previous = None
+        progress = Timer(15, count=3).start()
+        self.popup_interval_clear()
+        for _ in self.loop():
+            remaining = 0
+            handled = self.handle_popup_cancel('DORM_FEED') or self.handle_info_bar()
+            if not handled and self.appear(DORM_FEED_CHECK, offset=(20, 20)):
+                food, fill = self.dorm_food_get()
+                if fill >= 0:
+                    amount = food[index].amount
+                    total = sum(f.amount for f in food)
+                    if target is None:
+                        target = max(amount - count, 0)
+                    if previous is not None and amount < previous:
+                        logger.attr('后宅食物实际消耗', previous - amount)
+                        progress.reset()
+                        # 只在库存确认减少后清理本按钮记录，吞操作仍保留连击检测。
+                        self.device.click_record_remove(button)
+                    previous = amount
+                    if amount <= target or total <= reserve or fill <= food[index].feed:
+                        return
+                    remaining = min(amount - target, total - reserve, fill // food[index].feed)
+
+            # 长批次先识别实际进展，避免把连点耗时误判为卡死。
+            if progress.reached():
+                raise GameStuckError('[宿舍-喂食] 未确认食物库存减少')
+            if remaining > 0:
+                self.device.multi_click(button, remaining)
+                self.device.sleep(1)
+
     def dorm_food_get(self):
         """
         获取当前食物信息和饱食度。
@@ -408,11 +474,35 @@ class RewardDorm(UI):
         amount = self._dorm_food_ocr.ocr(self.device.image)
         amount = [a if hf else 0 for a, hf in zip(amount, has_food)]
         food = [Food(feed=f, amount=a) for f, a in zip(FOOD_FEED_AMOUNT, amount)]
-        _, fill, total = OCR_FILL.ocr(self.device.image)
-        if total == 0:
+        current, fill, total = OCR_FILL.ocr(self.device.image)
+        # 零库存是合法结果，槽位中的深色图案不能作为 OCR 失败的依据。
+        if total not in OcrDormFood.VALID_TOTALS or current > total or fill < 0 or current + fill != total:
             fill = -1
         logger.info(f'[宿舍-食物] 食物库存: {[f.amount for f in food]}, 需填充: {fill}')
         return food, fill
+
+    def _dorm_food_reserve(self, total):
+        """记录当天首次可喂食检查，返回本次需要保留的食物总数。
+
+        首次启用当天不豁免；之后按服务器日期换日，仅首次检查且总库存
+        恰好为一个时豁免。操作前持久化，防止任务重试或重启重复豁免。
+
+        Args:
+            total (int): 六种食物的总库存，必须大于零。
+
+        Returns:
+            int: 通常保留一个，次日首次单个食物豁免时返回零。
+        """
+        today = current_time(timezone(server_timezone())).date().isoformat()
+        state = self.config.Dorm_FeedReserveState
+        previous = state.get('day') if isinstance(state, dict) else None
+        if previous != today:
+            self.config.Dorm_FeedReserveState = {'day': today}
+            if isinstance(previous, str) and previous < today and total == 1:
+                logger.info('[宿舍-喂食] 当天首次喂食仅剩一个食物，豁免保留一次')
+                return 0
+            logger.attr('后宅食物保留日期', today)
+        return 1
 
     def dorm_feed_once(self):
         """
@@ -449,15 +539,25 @@ class RewardDorm(UI):
         for selected in FOOD_FILTER.apply(food):
             button = self._dorm_food.buttons[food.index(selected)]
             if selected.amount > 0 and fill > selected.feed:
+                total = sum(f.amount for f in food)
+                reserve = self._dorm_food_reserve(total) if self.config.Dorm_ReserveFood else 0
                 count = min(fill // selected.feed, selected.amount)
-                self._dorm_feed_click(button=button, count=count)
+                # 其他种类仍有库存或本种食物超出饱食度需求时，原方案不会用尽总库存。
+                if self.config.Dorm_ReserveFood and count == total:
+                    count -= reserve
+                    if count <= 0:
+                        logger.info('[宿舍-喂食] 保留最后一个食物到第二天使用')
+                        return False
+                    self._dorm_feed_click(button=button, count=count, reserve=reserve)
+                else:
+                    self._dorm_feed_click(button=button, count=count)
                 return True
 
         return False
 
     def dorm_feed(self):
         """
-        循环执行喂食直到食物用完或饱食度满。
+        循环执行喂食直到可用食物用完或饱食度满。
 
         Returns:
             int: 执行喂食的次数。

@@ -146,6 +146,8 @@ Deploy:
     # [SSH] ssh（仅使用旧版 SSH 反向隧道）
     # [WebRTC] webrtc（P2P 优先，仍依赖 SSH 获取 fallback 入口）
     RemoteAccessMode: auto
+
+    # Quick Tunnel 固定入口注册服务，设备密钥保存在 config/remote-access.json
     # SSH 服务器登录用户名
     # Username when login into ssh server
     # [默认] null（启动时会随机生成一个）

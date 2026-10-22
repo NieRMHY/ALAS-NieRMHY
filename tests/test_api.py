@@ -37,6 +37,62 @@ class ConfigApiTests(unittest.TestCase):
         self.addCleanup(self.temp.cleanup)
         self.configs = ConfigService(fixture(self.temp.name))
 
+    def test_dorm_food_reserve_defaults_for_old_configs(self):
+        from module.config.config_updater import ConfigUpdater
+
+        path = self.configs.path('testpilot')
+        data = self.configs.read_json(path)
+        data['Dorm']['Dorm'].pop('ReserveFood')
+        data['Dorm']['Dorm'].pop('FeedReserveState')
+        path.write_text(json.dumps(data), encoding='utf-8')
+        before = path.read_bytes()
+        for values in (self.configs.get('testpilot')['values'], ConfigUpdater().config_update(data)):
+            self.assertFalse(values['Dorm']['Dorm']['ReserveFood'])
+            self.assertIsNone(values['Dorm']['Dorm']['FeedReserveState'])
+        self.assertEqual(before, path.read_bytes())
+
+    def test_dorm_food_reserve_persists_and_internal_state_is_read_only(self):
+        field = 'Dorm.Dorm.ReserveFood'
+        for enabled in (True, False):
+            with self.subTest(enabled=enabled):
+                result = self.configs.patch('testpilot', None, [ConfigChange(path=field, value=enabled)])
+                self.assertEqual(enabled, result['values']['Dorm']['Dorm']['ReserveFood'])
+                saved = self.configs.read_json(self.configs.path('testpilot'))
+                self.assertEqual(enabled, saved['Dorm']['Dorm']['ReserveFood'])
+        with self.assertRaises(ApiError) as caught:
+            self.configs.patch('testpilot', None, [ConfigChange(
+                path='Dorm.Dorm.FeedReserveState', value={'day': '2026-10-15'},
+            )])
+        self.assertEqual('READ_ONLY', caught.exception.code)
+
+    def test_gacha_clear_ticket_time_fills_default_for_old_configs(self):
+        from module.config.config_updater import ConfigUpdater
+
+        path = self.configs.path('testpilot')
+        data = self.configs.read_json(path)
+        data['Gacha']['Gacha'].pop('ClearTicketTime')
+        path.write_text(json.dumps(data), encoding='utf-8')
+        before = path.read_bytes()
+        values = self.configs.get('testpilot')['values']
+        self.assertEqual('09:30', values['Gacha']['Gacha']['ClearTicketTime'])
+        migrated = ConfigUpdater().config_update(data)
+        self.assertEqual('09:30', migrated['Gacha']['Gacha']['ClearTicketTime'])
+        self.assertEqual(before, path.read_bytes())
+
+    def test_gacha_clear_ticket_time_validates_and_persists(self):
+        field = 'Gacha.Gacha.ClearTicketTime'
+        for value in ['00:00', '9:30', '09:30', '11:45', '23:59']:
+            with self.subTest(value=value):
+                result = self.configs.patch('testpilot', None, [ConfigChange(path=field, value=value)])
+                self.assertEqual(value, result['values']['Gacha']['Gacha']['ClearTicketTime'])
+                saved = self.configs.read_json(self.configs.path('testpilot'))
+                self.assertEqual(value, saved['Gacha']['Gacha']['ClearTicketTime'])
+        before = self.configs.path('testpilot').read_bytes()
+        for value in ['', '24:00', '09:60', '-1:30', '9:3', '09:30:00', 930, None, False]:
+            with self.subTest(value=value), self.assertRaises(ApiError):
+                self.configs.patch('testpilot', None, [ConfigChange(path=field, value=value)])
+        self.assertEqual(before, self.configs.path('testpilot').read_bytes())
+
     def test_read_does_not_write_or_expose_unrelated_json(self):
         path = self.configs.path('testpilot')
         before = path.stat().st_mtime_ns
@@ -496,6 +552,71 @@ class SocketApiTests(unittest.TestCase):
         manager.start.assert_called_once_with('alas', ev=stop_event)
         manager.stop_by_user.assert_called_once_with()
         self.assertEqual(before, path.read_bytes())
+
+    def test_dock_scan_tools_start_over_real_websocket(self):
+        """扫描按钮须经过真实任务清单校验，并传递原任务和已保存范围。"""
+        from module.runtime.process_manager import ProcessManager
+
+        manager = SimpleNamespace(alive=False, state=2, current_task=None)
+
+        def start(task, **kwargs):
+            manager.alive, manager.state, manager.current_task = True, 1, task
+
+        def stop():
+            manager.alive, manager.state, manager.current_task = False, 2, None
+            return True
+
+        manager.start = Mock(side_effect=start)
+        manager.stop_by_user = Mock(side_effect=stop)
+        stop_event = object()
+        with patch.object(ProcessManager, 'get_manager', return_value=manager), \
+                patch.dict(ProcessManager._processes, {'testpilot': manager}, clear=True), \
+                patch.object(RuntimeService, '_record_running_now'), \
+                patch('module.runtime.updater.updater', SimpleNamespace(event=stop_event)), \
+                self.client.websocket_connect('/api/v1/ws') as ws:
+            self.login(ws)
+            for task, group in [('MindCalculatorScan', 'MindCalculator'), ('FleetTechScan', 'FleetTech')]:
+                with self.subTest(task=task):
+                    config = self.call(ws, 'config.get', {'instance': 'testpilot'})['result']
+                    patched = self.call(ws, 'config.patch', {
+                        'instance': 'testpilot', 'revision': config['revision'], 'changes': [
+                            {'path': f'{task}.{group}.MinLevel', 'value': 70},
+                            {'path': f'{task}.{group}.MaxLevel', 'value': 125},
+                        ],
+                    })
+                    self.assertTrue(patched['ok'], patched)
+                    response = self.call(ws, 'tasks.run', {'instance': 'testpilot', 'task': task})
+                    self.assertTrue(response['ok'], response)
+                    self.assertEqual('running', response['result']['status'])
+                    self.assertIn(task, [item['name'] for item in response['result']['tasks']])
+                    manager.start.assert_called_with(task, ev=stop_event)
+                    saved = json.loads((Path(self.temp.name) / 'config/testpilot.json').read_text(encoding='utf-8'))
+                    self.assertEqual((70, 125), (saved[task][group]['MinLevel'], saved[task][group]['MaxLevel']))
+                    self.assertTrue(self.call(ws, 'scheduler.stop', {'instance': 'testpilot'})['ok'])
+
+    def test_tasks_run_rejects_unregistered_tasks(self):
+        from module.runtime.process_manager import ProcessManager
+
+        manager = SimpleNamespace(alive=False, start=Mock())
+        with patch.object(ProcessManager, 'get_manager', return_value=manager), \
+                self.client.websocket_connect('/api/v1/ws') as ws:
+            self.login(ws)
+            for task in ['FleetTechnology', 'Main', 'UnknownScan']:
+                with self.subTest(task=task):
+                    response = self.call(ws, 'tasks.run', {'instance': 'testpilot', 'task': task})
+                    self.assertEqual('INVALID_PARAMS', response['error']['code'])
+            manager.start.assert_not_called()
+
+    def test_dock_scan_does_not_start_while_instance_is_running(self):
+        from module.runtime.process_manager import ProcessManager
+
+        manager = SimpleNamespace(alive=True, start=Mock())
+        with patch.object(ProcessManager, 'get_manager', return_value=manager), \
+                self.client.websocket_connect('/api/v1/ws') as ws:
+            self.login(ws)
+            response = self.call(ws, 'tasks.run', {'instance': 'testpilot', 'task': 'FleetTechScan'})
+            self.assertEqual('INSTANCE_RUNNING', response['error']['code'])
+            manager.start.assert_not_called()
 
     def test_subscribe_sends_scoped_snapshot(self):
         path = Path(self.temp.name) / 'config/testpilot.json'

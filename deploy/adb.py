@@ -93,19 +93,13 @@ class AdbManager(DeployConfig):
                     continue
                 initer.set_atx_agent_addr('127.0.0.1:7912')
 
-                for _ in range(2):
-                    try:
-                        initer.install()
-                        break
-                    except AssertionError:
-                        logger.info(f'AssertionError when installing uiautomator2 on device {device.serial}')
-                        logger.info('If you are using BlueStacks or LD player or WSA, '
-                                    'please enable ADB in the settings of your emulator')
-                        exit(1)
-                    except ConnectionError:
-                        if _ == 1:
-                            raise
-                        init.GITHUB_BASEURL = 'http://tool.appetizer.io/openatx'
+                try:
+                    initer.install()
+                except AssertionError:
+                    logger.info(f'AssertionError when installing uiautomator2 on device {device.serial}')
+                    logger.info('If you are using BlueStacks or LD player or WSA, '
+                                'please enable ADB in the settings of your emulator')
+                    exit(1)
 
                 initer._device.shell(["rm", "/data/local/tmp/minicap"])
                 initer._device.shell(["rm", "/data/local/tmp/minicap.so"])

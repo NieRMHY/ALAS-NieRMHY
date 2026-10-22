@@ -102,6 +102,7 @@ frontend/*.tsbuildinfo
 .github/scripts/package-lock.json
 
 # Python
+/.uv-cache/
 __pycache__/
 *.py[cod]
 *$py.class

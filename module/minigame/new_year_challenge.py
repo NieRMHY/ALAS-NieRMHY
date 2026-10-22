@@ -65,18 +65,18 @@ class NewYearChallenge(MinigameRun):
             # 入口
             if self.appear(NEW_YEAR_CHALLENGE_START, offset=(5, 5)):
                 break
-            # GOTO_CHOOSE_GAME -> 选游戏界面
-            if self.appear_then_click(GOTO_CHOOSE_GAME, offset=(5, 5), interval=3):
-                continue
             # 选择游戏
             if self.appear(NEW_YEAR_CHALLENGE_ENTRANCE, offset=(5, 500), interval=3):
                 self.device.click(NEW_YEAR_CHALLENGE_ENTRANCE)
                 self.interval_reset(page_game_room.check_button, interval=3)
                 continue
-            # 向下滚动查找
-            if self.ui_page_appear(page_game_room, interval=3) and MINIGAME_SCROLL.appear(main=self) \
-                    and not MINIGAME_SCROLL.set(main=self, position=0.25, distance_check=False):
-                MINIGAME_SCROLL.set_bottom(main=self)
+            # 列表中可能残留开始按钮，先确认列表并查找目标卡片。
+            if self.minigame_list_appear():
+                if self.ui_page_appear(page_game_room, interval=3) and MINIGAME_SCROLL.appear(main=self) \
+                        and not MINIGAME_SCROLL.set(main=self, position=0.25, distance_check=False):
+                    MINIGAME_SCROLL.set_bottom(main=self)
+                continue
+            if self.appear_then_click(GOTO_CHOOSE_GAME, offset=(5, 5), interval=3):
                 continue
 
     def use_coin(self, skip_first_screenshot=True):
@@ -153,6 +153,8 @@ class NewYearChallenge(MinigameRun):
                 self.device.screenshot()
             if self.deal_popup():
                 continue
+            if self.minigame_list_appear():
+                break
             if self.appear(BACK, offset=(5, 5)):
                 if self.appear(GOTO_CHOOSE_GAME, offset=(5, 5)):
                     break

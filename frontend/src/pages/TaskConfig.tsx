@@ -186,8 +186,9 @@ export function TaskConfig() {
           <h2 data-text={t(`${group}._info.name`)}>{t(`${group}._info.name`)}</h2>
         </div>
       </div>
-      {visible.map(([arg, field]) => {
+      {visible.map(([arg, definition]) => {
         const path = `${task}.${group}.${arg}`
+        const field = {...definition, option: config.options?.[path] ?? definition.option}
         const edit = edits[path]
         const value = edit ? edit.value : config.values[task]?.[group]?.[arg] ?? field.value
         const label = t(`${group}.${arg}.name`)

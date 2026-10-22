@@ -1,0 +1,44 @@
+[
+  {
+    "name": "纳希莫夫海军上将",
+    "level": 125,
+    "rarity": "UR",
+    "lua_id": 799024
+  },
+  {
+    "name": "安德烈亚·多利亚·META",
+    "level": 120,
+    "rarity": "SSR",
+    "lua_id": 9705084
+  },
+  {
+    "name": "安德烈亚·多利亚",
+    "level": 120,
+    "rarity": "SR",
+    "lua_id": 605074
+  },
+  {
+    "name": "布鲁克林",
+    "level": 120,
+    "rarity": "R",
+    "lua_id": 102034
+  },
+  {
+    "name": "小大凤",
+    "level": 105,
+    "rarity": "SR",
+    "lua_id": 307134
+  },
+  {
+    "name": "伊丽莎白女王·META",
+    "level": 120,
+    "rarity": "SSR",
+    "lua_id": 9705044
+  },
+  {
+    "name": "希佩尔海军上将·META",
+    "level": 105,
+    "rarity": "SSR",
+    "lua_id": 9703054
+  }
+]

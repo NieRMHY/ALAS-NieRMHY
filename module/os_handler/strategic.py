@@ -154,9 +154,11 @@ class StrategicSearchHandler(MapEventHandler):
             out: IN_MAP（策略搜索已在运行中）
         """
         logger.hr('策略搜索开始')
-        # 快速模式（大世界通用设置·跳过计划作战滑动检查）：面板会保留上一次的
+        # 快速模式（侵蚀1练级·跳过计划作战滑动检查）：面板会保留上一次的
         # 选项配置，循环刷取时每次重新滑动检查各选项属于重复动作，直接确认开始。
-        skip_check = self.config.OpsiGeneral_SkipStrategicSearchCheck
+        skip_check = self.config.cross_get(
+            'OpsiHazard1Leveling.OpsiHazard1Leveling.SkipStrategicSearchCheck', False,
+        )
         if skip_check:
             logger.info('[大世界-策略] 已开启快速模式，跳过计划作战面板选项检查')
         for _ in range(3):

@@ -216,7 +216,7 @@ flowchart TD
     F --> G["置位 dependency_sync_event + restart_event<br/>clearup() 后父监督器接管"]
 ```
 
-「先写盘再更新」是关键顺序：git reset/pull 即使报错也可能已部分改写源码，因此一旦开始更新，恢复只能走「依赖同步后重启」一条路。更新检查本身分两条路：`GitOverCdn` 开启时读 CDN 状态（`uptodate`/`behind`/`failed`，failed 回退 git）；否则 `git fetch` 后对比 `..origin/{Branch}`，本地存在上游没有的提交（开发分叉）时跳过更新。云端开关（`cloud_auto_update_enabled`）与强制更新开关每轮检查，强制开启时检查间隔缩短到 1 秒。
+「先写盘再更新」是关键顺序：git reset/pull 即使报错也可能已部分改写源码，因此一旦开始更新，恢复只能走「依赖同步后重启」一条路。更新检查只有纯 git 一条路：`git fetch` 后对比 `..origin/{Branch}`，本地存在上游没有的提交（开发分叉）时跳过更新。上游的 CDN 检查、云端更新开关与强制更新开关随合并剔除，`force_update` 恒为 False，检查按 `CheckUpdateInterval` 轮询；检测到更新只置位状态，由用户或定时任务显式执行更新。
 
 ### 更新检查的调度
 
@@ -263,10 +263,15 @@ worker 启停:  API/MCP ──lifecycle lock──> ProcessManager.start/stop_by
        _preview_queue(≤2) ──预览转发线程(校验 runId)──> hub.publish ──回调──>
        socket.preview_producer ──event('preview')──> 浏览器（每实例仅最新一帧）
 
-更新:  云端开关/GitOverCdn/git fetch ──> updater.state ──> update_service 快照
+更新:  git fetch ──> updater.state ──> update_service 快照
        run_update ──event.set()──> worker 任务边界退出 ──> reloadalas + pending 标记落盘
        ──restart_event──> gui.py 父监督器 ──依赖同步──> 重建 WebUI ──restart_processes──> 恢复实例
 ```
+
+预览是可丢帧的被动通道。复制预览副本或后台 JPEG 编码发生 `MemoryError` 时只丢当前预览帧，
+下次截图继续尝试；不能因额外预览分配失败中止已经取得有效截图的游戏任务。
+实际截图后端、识别与保存的内存异常仍沿原任务异常路径处理，不由预览通道吞掉。
+定向回归见 `tests.test_console_runtime.RuntimeTests` 的复制/编码失败与下一帧恢复用例。
 
 ## 9. 状态模型
 
@@ -323,8 +328,7 @@ stateDiagram-v2
 | 启动收尾进程失败/超时 | 设备依赖异常、动作超过 30 秒 | 记录告警；超时收尾进程被终止，不影响已完成的停止 |
 | 更新等不到实例退出 | worker 卡在不可中断的设备操作 | 等待 10 分钟后 `stop()` 强停；仍有存活则取消更新并重启实例 |
 | git 更新失败 | 网络、锁文件、分叉 | 不回滚恢复计划——reset/pull 可能已部分完成，交父进程以「同步后重启」收场 |
-| 更新检查线程异常 | 云端开关不可达、git 命令失败 | `state = 0`（或 failed），下个周期重试；不中断调度任务 |
-| 云端开关不可访问 | 控制点网络失败 | `_check_update` 跳过本轮检查（`fatal=False`） |
+| 更新检查线程异常 | git fetch 失败等 | `state = 0`（或 failed），下个周期重试；不中断调度任务 |
 | TaskHandler 任务抛异常 | 业务任务 bug | `logger.exception` 后立即移除该任务，其余任务不受影响 |
 | 预览队列异常（EOF/OSError） | worker 或队列消亡 | 转发线程退出；丢帧不中断实际任务，队列满时丢弃旧帧 |
 
@@ -342,7 +346,7 @@ stateDiagram-v2
 | TaskHandler 调度线程 | 服务子进程 daemon 线程 | `task_handler.start()` | `stop()` 置 `_alive=False` 后 join（2 秒超时） |
 | 更新检查线程 | 服务子进程 daemon 线程 | `updater.check_update` | 单次检查即结束 |
 | 日志/预览转发线程 ×2/实例 | 服务子进程线程 | `start_log_queue_handler` | 检测到本轮进程退出后 `join(1)` 回收 |
-| 远程访问线程 | 服务子进程**非 daemon** 线程 | provider.start() | stop_event 或进程内唯一线程时退出 |
+| SSH / WebRTC 远程访问线程 | 服务子进程**非 daemon** 线程 | provider.start() | stop_event 或进程内唯一线程时退出 |
 | preview 编码线程 | **worker 进程内** daemon 线程 | `preview.initialize` | 队列断开即退出 |
 
 同步约束：

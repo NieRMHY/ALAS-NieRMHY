@@ -52,6 +52,14 @@ export function createMockState({ empty = false } = {}) {
   const instances = new Map()
   // Modify by MHY, 保留心智计算器模拟接口，证券代理与接口不恢复。
   const mindShips = new Map()
+  const fleetRecords = new Map()
+  function fleetPython(action, params) {
+    const fields = get(params.instance).values.FleetTechScan.FleetTech
+    const output = mindPython(`tech.${action}`, {...params, ships: mindShips.get(params.instance) ?? [],
+      record: fleetRecords.get(params.instance) ?? {}, min_level: fields.MinLevel, max_level: fields.MaxLevel})
+    if (['patch', 'syncMind'].includes(action)) fleetRecords.set(params.instance, output.record)
+    return output.result
+  }
   function mindPython(action, params) {
     const run = spawnSync('uv', ['run', '--no-sync', 'python', '-X', 'utf8', '-m', 'dev_tools.mind_calculator_mock'], {
       cwd: fileURLToPath(new URL('../../', import.meta.url)), input: JSON.stringify({action, ...params}),
@@ -59,7 +67,7 @@ export function createMockState({ empty = false } = {}) {
     })
     if (run.error || run.status) fail('INTERNAL_ERROR', '计算器模拟服务运行失败')
     const result = JSON.parse(run.stdout)
-    if (result.error) fail('INVALID_PARAMS', result.error)
+    if (result.error) fail(result.code ?? 'INVALID_PARAMS', result.error)
     return result
   }
   const programs = new Map()
@@ -139,7 +147,28 @@ export function createMockState({ empty = false } = {}) {
     }
   }
   const get = name => instances.get(name) ?? fail('NOT_FOUND', '实例不存在')
-  const snapshot = name => ({ instance: name, revision: revision(get(name).values), values: structuredClone(get(name).values) })
+  const campaignOptions = values => {
+    const server = region(values.Alas.Emulator.PackageName) ?? 'cn'
+    return Object.fromEntries(Object.entries(args).flatMap(([task, groups]) => {
+      const candidates = groups.Campaign?.Event?.[`option_${server}`]
+      return candidates ? [[`${task}.Campaign.Event`, candidates]] : []
+    }))
+  }
+  const refreshCampaigns = (values, options) => {
+    for (const [path, candidates] of Object.entries(options)) {
+      const [task] = path.split('.')
+      const current = values[task]?.Campaign?.Event ?? 'campaign_main'
+      if (candidates.length && (task !== 'WarArchives' || current === 'campaign_main') && !candidates.includes(current)) {
+        values[task].Campaign.Event = candidates[0]
+      }
+    }
+  }
+  const snapshot = name => {
+    const values = structuredClone(get(name).values)
+    const options = campaignOptions(values)
+    refreshCampaigns(values, options)
+    return { instance: name, revision: revision(get(name).values), values, options }
+  }
   // 日志时间与真实后端一致使用本地时区（timestamp() 供调度比较，保持 UTC）。
   const logTime = date => [date.getHours(), date.getMinutes(), date.getSeconds()].map(n => String(n).padStart(2, '0')).join(':')
     + '.' + String(date.getMilliseconds()).padStart(3, '0')
@@ -498,6 +527,12 @@ export function createMockState({ empty = false } = {}) {
           data.values[task] ??= {}; data.values[task][group] ??= {}
           data.values[task][group][arg] = value
         }
+        const options = campaignOptions(data.values)
+        for (const [path, candidates] of Object.entries(options)) {
+          const [task] = path.split('.')
+          if (candidates.length && seen.has(path) && !candidates.includes(data.values[task].Campaign.Event)) fail('INVALID_PARAMS', '请选择当前服务器的活动')
+        }
+        refreshCampaigns(data.values, options)
         get(name).values = data.values
         log(name, `已保存 ${params.changes.length} 项配置。`)
         return snapshot(name)
@@ -505,6 +540,10 @@ export function createMockState({ empty = false } = {}) {
       case 'overview.get': return overview(name)
   // Modify by MHY, 保留心智计算器模拟接口，证券代理与接口不恢复。
       case 'mind.catalog': return mindPython('catalog', params)
+      case 'fleetTech.catalog': return fleetPython('catalog', params)
+      case 'fleetTech.report': return fleetPython('report', params)
+      case 'fleetTech.patch': return fleetPython('patch', params)
+      case 'fleetTech.syncMind': return fleetPython('syncMind', params)
       case 'mind.calculate': return mindPython('calculate', params)
       case 'mind.report': {
         const range = get(name).values.MindCalculatorScan.MindCalculator

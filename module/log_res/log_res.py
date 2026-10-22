@@ -61,14 +61,17 @@ class LogRes:
                 if original['Value'] != value:
                     _key = _key_group + '.Value'
                     self.config.modified[_key] = value
-                    _time = datetime.now().replace(microsecond=0)
+                    _time = self.__dict__.get('_recorded_at') or datetime.now().replace(microsecond=0)
                     _key_time = _key_group + f'.Record'
                     self.config.modified[_key_time] = _time
                     if key == 'YellowCoin':
                         try:
                             from module.statistics.cl1_database import db as cl1_db
                             instance_name = getattr(self.config, 'config_name', 'default')
-                            cl1_db.async_add_yellow_coin_snapshot(instance_name, int(value), source='dashboard')
+                            cl1_db.async_add_yellow_coin_snapshot(
+                                instance_name, int(value), source='dashboard',
+                                observed_at=self.__dict__.get('_recorded_at'),
+                            )
                         except Exception:
                             logger.exception('[日志资源] 保存金币快照失败')
                     # 记录全量资源快照
@@ -81,27 +84,27 @@ class LogRes:
                     _key = _key_group + f'.{value_name}'
                     self.config.modified[_key] = _value
                     _key_time = _key_group + f'.Record'
-                    _time = datetime.now().replace(microsecond=0)
+                    _time = self.__dict__.get('_recorded_at') or datetime.now().replace(microsecond=0)
                     self.config.modified[_key_time] = _time
                     _mod = True
                 if _mod:
-                    if key == 'ActionPoint':
+                    if (key == 'ActionPoint' and value.get('Total') is not None
+                            and self.__dict__.get('_observation_enabled', True)):
                         try:
                             from module.statistics.opsi_runtime import record_ap_snapshot
                             source = 'dashboard'
-                            task = getattr(getattr(self.config, 'task', None), 'command', None)
+                            task = getattr(self.config, '_bind_task_override', None) or getattr(
+                                getattr(self.config, 'task', None), 'command', None
+                            )
                             if task:
                                 source = task
-                            # 统计口径使用始终含体力箱的总行动力，避免被 OS_ACTION_POINT_BOX_USE
-                            # 的临时关闭（如防止行动力溢出任务）污染快照
-                            ap_total = getattr(self.config, '_action_point_total_with_box', None)
-                            if ap_total is None:
-                                ap_total = value.get('Total')
+                            # Total 必须来自本次完整面板读取，不能用旧配置或缓存箱子补齐。
                             record_ap_snapshot(
                                 self.config,
                                 ap_current=value.get('Value'),
-                                ap_total=ap_total,
+                                ap_total=value['Total'],
                                 source=source,
+                                observed_at=self.__dict__.get('_recorded_at'),
                             )
                         except Exception:
                             logger.exception('保存行动力快照失败')
@@ -115,15 +118,19 @@ class LogRes:
             logger.info('[日志资源] 仪表盘中无此资源')
             super().__setattr__(name=key, value=value)
 
-    def record(self, name, value, *, observed=True, source=None):
+    def record(self, name, value, *, observed=True, source=None, defer_history=False, observed_at=None):
         """缓存回退与失败读数可以保留旧记录，但不能更新成功观察时间。"""
         self.__dict__['_observation_enabled'] = observed
         self.__dict__['_observation_source'] = source
+        self.__dict__['_defer_history'] = defer_history
+        self.__dict__['_recorded_at'] = observed_at or datetime.now()
         try:
             setattr(self, name, value)
         finally:
             self.__dict__.pop('_observation_enabled', None)
             self.__dict__.pop('_observation_source', None)
+            self.__dict__.pop('_defer_history', None)
+            self.__dict__.pop('_recorded_at', None)
 
     def _observe(self, name, value):
         from pathlib import Path
@@ -138,9 +145,10 @@ class LogRes:
         from module.config.time_source import now
         task = getattr(getattr(self.config, 'task', None), 'command', None)
         source = self.__dict__.get('_observation_source') or task or 'task_observation'
-        ProgramStore(Path(filepath_config(instance)).parent).observe(instance, name, value, now().isoformat(sep=' '), source)
+        stamp = self.__dict__.get('_recorded_at') or now()
+        ProgramStore(Path(filepath_config(instance)).parent).observe(instance, name, value, stamp.isoformat(sep=' '), source)
         from module.statistics.resource_flow import observe
-        observe(self.config, name, current, source)
+        observe(self.config, name, current, source, observed_at=stamp)
 
     def _record_all_resource_snapshot(self, overrides=None):
         """读取当前所有 Dashboard 资源值并记录快照。
@@ -149,7 +157,7 @@ class LogRes:
             overrides (dict, optional): 需要覆盖的资源键值对。
         """
         try:
-            from module.statistics.resource_stats import record_resource_snapshot
+            from module.statistics.resource_stats import async_record_resource_snapshot, record_resource_snapshot
             instance_name = getattr(self.config, 'config_name', 'default')
             overrides = overrides or {}
             resources = {}
@@ -168,7 +176,10 @@ class LogRes:
                         resources[group_name] = int(value)
                     except (TypeError, ValueError):
                         pass
-            record_resource_snapshot(instance_name, resources)
+            if self.__dict__.get('_defer_history', False):
+                async_record_resource_snapshot(instance_name, resources, observed_at=self.__dict__.get('_recorded_at'))
+            else:
+                record_resource_snapshot(instance_name, resources)
         except Exception:
             logger.exception('[日志资源] 记录资源快照失败')
 

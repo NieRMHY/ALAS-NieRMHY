@@ -48,6 +48,9 @@ ISLAND_POST_SWIPE_DISTANCE = 550
 ISLAND_POST_SWIPE_TO_TOP_MAX = 5
 ISLAND_POST_SWIPE_SEARCH_MAX = 8
 
+# 规则里 `switch`（切换到啾咖啡餐厅）的等待上限：点击按钮后等对话关闭、场景切换完成
+ISLAND_SWITCH_TIMEOUT = 12
+
 # 岛屿走位路线与规则解析集中在 module/island/island_walk.py；可以用岛屿计划的
 # 全局配置 `IslandPlan.IslandWalk.<路线名>` 覆盖整条规则（所有控制方式都生效，
 # 桥接 swipe 的位移随负载漂移，按机器各配一套规则最稳）。
@@ -1438,18 +1441,32 @@ class Island(SelectCharacter):
                 if direction not in ISLAND_WALK_ACTIONS]
 
     def island_walk_switch_restaurant(self):
-        """规则里 `switch` 步骤：切换到啾咖啡餐厅并等待岛内可操作。
+        """规则里 `switch` 步骤：点击按钮切换到啾咖啡餐厅并等待切换完成。
+
+        不能用 `ISLAND_CHECK` 单独判断“已经切过去”：它就是岛屿页面的标记
+        （page_island = Page(ISLAND_CHECK)），切换前后都会出现，先判断它会导致
+        还没点按钮就被当成切换完成。所以这里是「先点按钮，再等按钮消失」：
+        按钮消失说明对话关闭、场景已切换，此时再确认岛屿页面标记在场。
 
         Pages:
             page_island
         """
         from module.island_daily_interact.assets import ROUTE_TWO_OPTION_COMPLETE
 
-        for _ in self.loop(timeout=12, skip_first=False):
-            if self.appear(ISLAND_CHECK):
-                return
+        # 按钮可能在对话关闭后短暂残留，所以先点一次，只有它还在（且隔了一段间隔）
+        # 才补点，避免连点触发画面上的其它交互。
+        click_timer = Timer(3).start()
+        clicked = False
+        for _ in self.loop(timeout=ISLAND_SWITCH_TIMEOUT, skip_first=False):
             if self.appear(ROUTE_TWO_OPTION_COMPLETE):
-                self.device.click(ROUTE_TWO_OPTION_COMPLETE)
+                if not clicked or click_timer.reached():
+                    logger.info('[岛屿-走位] switch: 点击切换餐厅按钮')
+                    self.device.click(ROUTE_TWO_OPTION_COMPLETE)
+                    clicked = True
+                    click_timer.reset()
+                continue
+            if clicked and self.appear(ISLAND_CHECK):
+                return
         raise GameStuckError('切换啾咖啡餐厅超时，停止后续岛屿走位')
 
     def island_walk_action(self, action):

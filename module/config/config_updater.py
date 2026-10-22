@@ -74,6 +74,31 @@ MARITIME_ESCORTS = ['MaritimeEscort']
 HOSPITAL = ['Hospital', 'HospitalEvent']
 
 
+def campaign_event_options(data, args):
+    """按实例包名读取各任务的活动候选，不修改共享元数据或全局服务器。"""
+    server = to_server(deep_get(data, 'Alas.Emulator.PackageName', 'cn'))
+    options = {}
+    for task in args:
+        candidates = deep_get(args, f'{task}.Campaign.Event.option_{server}')
+        if isinstance(candidates, list):
+            options[task] = candidates
+    return options
+
+
+def refresh_campaign_events(data, args, is_template=False):
+    """在内存配置中刷新已结束的活动，保留档案选择与主线刷图语义。"""
+    options = campaign_event_options(data, args)
+    if not is_template:
+        for task in EVENTS + RAIDS + COALITIONS + GEMS_FARMINGS:
+            candidates = options.get(task, [])
+            if candidates and deep_get(data, f'{task}.Campaign.Event', 'campaign_main') not in candidates:
+                deep_set(data, f'{task}.Campaign.Event', candidates[0])
+    for task in WAR_ARCHIVES:
+        candidates = options.get(task, [])
+        if candidates and deep_get(data, f'{task}.Campaign.Event', 'campaign_main') == 'campaign_main':
+            deep_set(data, f'{task}.Campaign.Event', candidates[0])
+
+
 class Event:
     """活动数据解析类。
 
@@ -644,6 +669,10 @@ class ConfigUpdater:
         # Add by MHY, 共斗刷好感计数器按线拆分，旧进度迁移到一队对应计数器
         ('RaidAffection.RaidAffection.VanguardAffection', 'RaidAffection.RaidAffection.Fleet1VanguardAffection'),
         ('RaidAffection.RaidAffection.MainAffection', 'RaidAffection.RaidAffection.Fleet1MainAffection'),
+        ('OpsiGeneral.OpsiGeneral.ActionPointCheckInterval',
+         'OpsiHazard1Leveling.OpsiHazard1Leveling.ActionPointCheckInterval'),
+        ('OpsiGeneral.OpsiGeneral.SkipStrategicSearchCheck',
+         'OpsiHazard1Leveling.OpsiHazard1Leveling.SkipStrategicSearchCheck'),
         ('OpsiScheduling.OpsiSmartExplore.BuyActionPoint', 'OpsiScheduling.OpsiScheduling.BuyActionPoint'),
         ('OpsiExplore.OpsiExplore.MeowfficerCleanup', 'OpsiExploreCleanup.Scheduler.Enable'),
         ('OpsiExplore.OpsiFleet', 'OpsiExploreCleanup.OpsiFleet'),
@@ -653,6 +682,8 @@ class ConfigUpdater:
         ('General.Enhance.SkipSingleCommonCV', 'General.Enhance.KeepCommonCV'),
         ('OpsiAshBeacon.OpsiAshBeacon.OneHitMode', 'OpsiAshBeacon.OpsiAshBeacon.AssistRequestLimit',
          meta_assist_limit_redirect),
+        ('OpsiHazard1Leveling.OpsiHazard1Leveling.RecordSeaMiles',
+         'OpsiHazard1Leveling.OpsiHazard1Leveling.RecordSeaMiles', sea_miles_interval_redirect),
         # ('OpsiDaily.OpsiDaily.BuySupply', 'OpsiShop.Scheduler.Enable'),
         # ('OpsiDaily.Scheduler.Enable', 'OpsiDaily.OpsiDaily.DoMission'),
         # ('OpsiShop.Scheduler.Enable', 'OpsiShop.OpsiShop.BuySupply'),
@@ -766,28 +797,7 @@ class ConfigUpdater:
         else:
             deep_default(new, 'Alas.DropRecord.AzurStatsID', random_id())
         # 更新到最新活动
-        server = to_server(deep_get(new, 'Alas.Emulator.PackageName', 'cn'))
-        if not is_template:
-            for task in EVENTS + RAIDS + COALITIONS:
-                opts = deep_get(self.args, keys=f'{task}.Campaign.Event.option_{server}', default=[])
-                if opts and not deep_get(new, keys=f'{task}.Campaign.Event', default='campaign_main') in opts:
-                    deep_set(new,
-                             keys=f'{task}.Campaign.Event',
-                             value=opts[0])
-
-            for task in GEMS_FARMINGS:
-                opts = deep_get(self.args, keys=f'{task}.Campaign.Event.option_{server}', default=[])
-                if opts and deep_get(new, keys=f'{task}.Campaign.Event', default='campaign_main') not in opts:
-                    deep_set(new,
-                             keys=f'{task}.Campaign.Event',
-                             value=opts[0])
-        # 作战档案不允许选择 campaign_main
-        for task in WAR_ARCHIVES:
-            opts = deep_get(self.args, keys=f'{task}.Campaign.Event.option_{server}', default=[])
-            if opts and deep_get(new, keys=f'{task}.Campaign.Event', default='campaign_main') == 'campaign_main':
-                deep_set(new,
-                         keys=f'{task}.Campaign.Event',
-                         value=opts[0])
+        refresh_campaign_events(new, self.args, is_template=is_template)
 
         # 活动不允许默认关卡 12-4
         def default_stage(t, stage):

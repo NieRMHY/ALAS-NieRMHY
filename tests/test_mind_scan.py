@@ -29,8 +29,156 @@ FIXTURES = Path(__file__).parent / 'fixtures'
 
 def cards_for_levels(levels, fleet=0):
     return [Card(93 + col * 165, 65 + row * 227, col,
-                 dict(name='拉菲', level=level, rarity='SR', source='', review=True), 6, True, fleet)
+                 dict(name='拉菲', level=level, rarity='SR', source='', review=False), 6, True, fleet)
             for index, level in enumerate(levels) for row, col in [divmod(index, 7)]]
+
+
+class ScrollEvidenceTests(unittest.TestCase):
+    def test_signed_displacements_at_sampling_and_search_boundaries(self):
+        from module.runtime.mind_recognition import estimate_scroll
+        # 包含暗背景与采样阈值两侧的纹理，正反位移都须由图像而非触控距离得出。
+        content = np.random.default_rng(20261011).integers(0, 230, (1030, 1140, 3), dtype=np.uint8)
+        def frame(offset):
+            pixels = np.zeros((720, 1280, 3), dtype=np.uint8)
+            pixels[65:640, 85:1225] = content[offset:offset + 575]
+            return pixels
+        first = frame(0)
+        for shift in (0, 1, 9, 227, 454):
+            with self.subTest(shift=shift):
+                second = frame(shift)
+                self.assertEqual(estimate_scroll(first, second), shift)
+                self.assertEqual(estimate_scroll(second, first), -shift)
+        with self.assertRaisesRegex(ValueError, '没有明确'):
+            estimate_scroll(first, frame(455))
+
+    def test_equal_nonzero_scores_are_ambiguous(self):
+        from module.runtime.mind_recognition import estimate_scroll
+        before = np.full((720, 1280, 3), 100, dtype=np.uint8)
+        after = np.full_like(before, 110)
+        with self.assertRaisesRegex(ValueError, '没有明确'):
+            estimate_scroll(before, after)
+
+
+class ScanFailureTests(unittest.TestCase):
+    def test_failed_scan_keeps_old_list_and_disables_only_its_ocr_debug(self):
+        import copy
+        from module.exception import MindCalculatorScanError
+        from module.retire.mind_scan import MindCalculatorScan
+        from unittest.mock import call
+        config = SimpleNamespace(MindCalculator_MinLevel=95, MindCalculator_MaxLevel=120,
+                                 data={'MindCalculatorScan': {'MindCalculator': {'Result': {'ships': [
+                                     {'name': '拉菲', 'level': 100, 'source': '旧清单'}]}}}}, modified={})
+        previous = copy.deepcopy(config.data)
+        scanner = MindCalculatorScan.__new__(MindCalculatorScan)
+        scanner.config, scanner.device = config, Mock()
+        scanner.ui_ensure, scanner.dock_reset, scanner.dock_sort_method_dsc_set = Mock(), Mock(), Mock()
+        scanner._prune_scan_evidence = Mock()
+        scanner.appear = Mock(return_value=False)
+        for error, message in ((MindCalculatorScanError('离线中止'), '离线中止'),
+                               (MemoryError('模拟分配失败'), '内存不足.*保留旧清单')):
+            with self.subTest(error=type(error).__name__):
+                scanner._scan_pages = Mock(side_effect=error)
+                with patch('module.retire.mind_scan.server.server', 'cn'), \
+                        patch('module.retire.mind_scan.DOCK_SCROLL') as scroll, patch('module.ocr.al_ocr.AlOcr') as ocr:
+                    scroll.appear.return_value = scroll.at_top.return_value = True
+                    with self.assertRaisesRegex(MindCalculatorScanError, message):
+                        scanner.run()
+                self.assertEqual(config.data, previous)
+                self.assertEqual(config.modified, {})
+                scanner._prune_scan_evidence.assert_not_called()
+                self.assertEqual(ocr.call_args_list, [call(config=config, name='ppocr_v6', save_debug_images=False),
+                                                      call(config=config, name='azur_lane', save_debug_images=False)])
+
+    def check_suffix_reread(self, recovered, signatures=None, extra_screenshots=0, kind='suffix', capture_error=False):
+        import copy
+        from module.retire.mind_scan import MindCalculatorScan
+        from module.exception import MindCalculatorScanError
+        class ImmediateTimer:
+            def __init__(self, limit, *args, **kwargs): self.limit = limit
+            def start(self): return self
+            def reset(self): return self
+            def reached(self): return self.limit < 5
+        uncertain = Card(93, 65, 0, dict(name='列克星敦I', level=93, rarity='SSR', base_rarity='',
+                                       excluded=False, review=True, source='后缀未确认'), 2, True)
+        confirmed = copy.deepcopy(uncertain)
+        confirmed.ship.update(name='列克星敦II', rarity='UR', base_rarity='UR', review=False)
+        confirmed.quality = 6
+        reason = 'II 型后缀'
+        if kind != 'suffix':
+            uncertain.ship = copy.deepcopy(confirmed.ship)
+            uncertain.fleet = -1 if kind == 'unknown_fleet' else 1
+            reason = '编队/排序'
+        scanner = MindCalculatorScan.__new__(MindCalculatorScan)
+        scanner.config, scanner.device = SimpleNamespace(Emulator_ControlMethod='MaaTouch', config_name='testpilot'), Mock()
+        scanner.device.image = np.zeros((720, 1280, 3), dtype=np.uint8)
+        scanner.appear = Mock(return_value=True)
+        scanner._stable_pixels = Mock(return_value=np.zeros((2, 2), dtype=np.uint8), side_effect=signatures)
+        scanner._policy = ScanPolicy(90, 115, True)
+        merger = Mock(slots=[], offset=0)
+        if kind == 'order':
+            previous = copy.deepcopy(confirmed)
+            previous.y, previous.ship['level'] = -162, 100
+            merger.slots = [[previous, previous.y]]
+        merger.advance.return_value = 0
+        merger.ships.return_value = [confirmed.ship]
+        thumb = np.ones(565)
+        scroll = SimpleNamespace(appear=lambda _: True, total=565, match_color=lambda _: thumb)
+        with tempfile.TemporaryDirectory() as temp, \
+                patch('module.retire.mind_scan.logger.log_file', str(Path(temp) / 'testpilot.txt')), \
+                patch('module.retire.mind_scan.Timer', ImmediateTimer), patch('module.retire.mind_scan.DOCK_SCROLL', scroll), \
+                patch('module.retire.mind_scan.ScanMerger', return_value=merger), \
+                patch('module.retire.mind_scan.grid_rows', return_value=[65, 292, 519]), \
+                patch('module.retire.mind_scan.recognize_cards') as recognize:
+            if capture_error:
+                self.enterContext(patch.object(Image.Image, 'save', side_effect=OSError('模拟诊断目录不可写')))
+            if recovered:
+                recognize.side_effect = [[uncertain], [confirmed]]
+                self.assertEqual(scanner._scan_pages(Mock(), Mock()), [confirmed.ship])
+                self.assertEqual(recognize.call_count, 2)
+                merger.add.assert_called_once()
+            else:
+                recognize.return_value = [uncertain]
+                self.assertEqual(scanner._scan_pages(Mock(), Mock()), [confirmed.ship])
+                self.assertEqual(recognize.call_count, 3)
+                merger.add.assert_called_once()
+                self.assertTrue(uncertain.ship['review'])
+                self.assertIn('待人工核对', uncertain.ship['source'])
+                if kind != 'suffix':
+                    self.assertFalse(scanner._policy.can_stop([uncertain], merger.slots))
+            self.assertEqual(scanner.device.screenshot.call_count, recognize.call_count * 2 + extra_screenshots)
+            captures = int(kind != 'suffix') + int(not recovered) + int(recovered and kind != 'suffix')
+            self.assertEqual(len(list(Path(temp).rglob('*.png'))), captures if not capture_error else 0)
+        scanner.device.drag.assert_not_called()
+        scanner.device.save_screenshot.assert_not_called()
+
+    def test_uncertain_second_type_takes_new_frame_before_merge(self):
+        self.check_suffix_reread(recovered=True)
+
+    def test_uncertain_second_type_is_marked_review_after_three_frames(self):
+        self.check_suffix_reread(recovered=False)
+
+    def test_fleet_and_order_conflicts_take_new_frame_before_merge(self):
+        for kind in ('unknown_fleet', 'order'):
+            with self.subTest(kind=kind):
+                self.check_suffix_reread(recovered=True, kind=kind)
+
+    def test_fleet_and_order_conflicts_are_marked_review_after_three_frames(self):
+        for kind in ('unknown_fleet', 'order'):
+            with self.subTest(kind=kind):
+                self.check_suffix_reread(recovered=False, kind=kind)
+
+    def test_unwritable_diagnostic_does_not_break_fresh_frame_recheck(self):
+        self.check_suffix_reread(recovered=True, kind='order', capture_error=True)
+
+    def test_stability_requires_new_frame_only_above_full_pixel_threshold(self):
+        # 覆盖原平均差阈值两侧及等号；新增稳定等待不能跳过识别前的新截图。
+        before = np.zeros((720, 1280), dtype=np.uint8)
+        for delta in (-1, 0, 1):
+            with self.subTest(delta=delta):
+                after = np.ones_like(before)
+                after[0, 0] = 1 + delta
+                self.check_suffix_reread(recovered=True, signatures=[before] + [after] * 8,
+                                        extra_screenshots=int(delta > 0))
 
 
 class RangeTests(unittest.TestCase):
@@ -58,13 +206,25 @@ class RangeTests(unittest.TestCase):
         self.assertEqual(len(merger.slots), 7 * 32)
         self.assertEqual(merger.offset, 227 * 29)
 
-    def test_uncertain_level_is_never_written_as_zero(self):
+    def test_uncertain_level_is_retained_as_unknown_review_without_billing(self):
         card = cards_for_levels([89])[0]
         card.level_reliable = False
         merger = ScanMerger(); merger.slots = [[card, card.y]]
         rows = merger.ships(90, 115)
-        self.assertEqual(rows, [])
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0]['level'], 0)
+        self.assertTrue(rows[0]['review'])
         self.assertEqual(calculate(rows)['mind'], 0)
+
+    def test_review_cards_outside_range_remain_visible_and_never_bill(self):
+        cards = cards_for_levels([118, 89, 100])
+        for card in cards[:2]:
+            card.ship['review'] = True
+        merger = ScanMerger(); merger.slots = [[card, card.y] for card in cards]
+        rows = merger.ships(90, 115)
+        self.assertEqual([row['level'] for row in rows], [118, 89, 100])
+        self.assertEqual(calculate(rows)['review'], 2)
+        self.assertEqual(calculate(rows)['included'], 1)
 
     def test_name_disagreement_does_not_invalidate_matching_levels(self):
         image = Image.new('RGB', (1280, 720), (80, 80, 80))
@@ -75,11 +235,13 @@ class RangeTests(unittest.TestCase):
         merger.add(image, retry)
         self.assertTrue(merger.slots[0][0].level_reliable)
         self.assertIn('跨屏读数不一致', merger.slots[0][0].ship['source'])
-        self.assertEqual(merger.ships(90, 115), [])
+        self.assertEqual(merger.ships(90, 115)[0]['level'], 118)
+        self.assertEqual(calculate(merger.ships(90, 115))['mind'], 0)
         retry[0].ship['level'] = 18
         merger.add(image, retry)
         self.assertFalse(merger.slots[0][0].level_reliable)
-        self.assertEqual(merger.ships(90, 115), [])
+        self.assertEqual(merger.ships(90, 115)[0]['level'], 0)
+        self.assertTrue(merger.ships(90, 115)[0]['review'])
 
     def test_three_rows_without_minimum_but_with_eligible_ships_continue(self):
         cards = cards_for_levels([115] * 7 + [100] * 7 + [91] * 7)
@@ -89,6 +251,21 @@ class RangeTests(unittest.TestCase):
     def test_complete_three_rows_below_minimum_stop(self):
         cards = cards_for_levels([89] * 7 + [80] * 7 + [70] * 7)
         self.assertTrue(ScanPolicy(90, 115, True).can_stop(cards, [[card, card.y] for card in cards]))
+
+    def test_sort_preview_does_not_poison_confirmed_cumulative_order(self):
+        cards = cards_for_levels([89] * 21)
+        slots = [[card, card.y] for card in cards]
+        policy = ScanPolicy(90, 115, True)
+        cards[1].fleet = 1
+        self.assertIn('普通舰之后', policy.sort_issue(slots))
+        self.assertTrue(policy.sort_valid)
+        cards[1].fleet = -1
+        self.assertIn('未确认', policy.sort_issue(slots))
+        self.assertFalse(policy.can_stop(cards, slots))
+        self.assertFalse(policy.sort_valid)
+        cards[1].fleet = 0
+        self.assertEqual(policy.sort_issue(slots), '')
+        self.assertTrue(policy.can_stop(cards, slots))
 
     def test_missing_uncertain_unsorted_and_fleet_priority_cannot_stop(self):
         for kind in ('missing', 'unknown_level', 'unknown_fleet', 'fleet', 'unsorted', 'unconfirmed_sort'):
@@ -123,7 +300,7 @@ class RangeTests(unittest.TestCase):
             configs = ConfigService(fixture(temp))
             service = MindCalculatorService(configs)
             report = service.report('testpilot')
-            self.assertEqual((report['min_level'], report['max_level']), (95, 120))
+            self.assertEqual((report['min_level'], report['max_level']), (95, 125))
             configs.patch('testpilot', configs.get('testpilot')['revision'], [
                 ConfigChange(path='MindCalculatorScan.MindCalculator.MinLevel', value=90),
                 ConfigChange(path='MindCalculatorScan.MindCalculator.MaxLevel', value=115),
@@ -152,7 +329,7 @@ class NativeLevelTests(unittest.TestCase):
         pixels = np.array(Image.open(FIXTURES / 'mind_dock_fleet_priority.png').convert('RGB'))
         y, x = grid_rows(pixels)[0], round(float(CARD_GRIDS.origin[0]))
         reader = FleetScanner()
-        with patch.object(reader, '_match', return_value=0):
+        with patch('module.runtime.mind_recognition._fleet_number', return_value=0):
             self.assertEqual(fleet_status(pixels[y + 117:y + 162, x:x + 35], reader), -1)
 
     def test_independent_real_glyphs_never_accept_another_level(self):
@@ -207,10 +384,23 @@ class ScreenshotTests(unittest.TestCase):
         # 名单、等级和基础稀有度已确认的原始结果直接计费，无需修改核对字段。
         selected = [c.ship for c in self.cards if 90 <= c.ship['level'] <= 115]
         report = calculate(selected)
-        self.assertTrue(all(not ship['review'] for ship in selected))
-        self.assertEqual(report['included'], len(selected) - 1)
+        self.assertEqual([ship['name'] for ship in selected if ship['review']], ['新月'])
+        self.assertEqual(report['review'], 1)
+        self.assertEqual(report['included'], len(selected) - 2)
         self.assertEqual(report['excluded'], 1)  # 帕特莉夏为联动舰，保存但不计费。
         self.assertGreater(report['mind'], 0)
+
+    def test_upload_defaults_skip_debug_io_and_explicit_reader_can_collect(self):
+        from dataclasses import asdict
+        from module.ocr.al_ocr import AlOcr, OcrSettings
+        with patch.object(AlOcr, '_save_debug_image') as save:
+            silent = recognize_cards(self.image)
+            save.assert_not_called()
+            names = AlOcr(name='ppocr_v6', settings=OcrSettings('onnx', 'cpu', False, 'standard'))
+            diagnostic = recognize_cards(self.image, name_ocr=names)
+            self.assertGreater(save.call_count, 0)
+        self.assertEqual([asdict(c) for c in silent], [asdict(c) for c in diagnostic])
+        self.assertEqual([asdict(c) for c in silent], [asdict(c) for c in self.cards])
 
     def test_scaled_and_black_border_images_share_layout(self):
         cases = [self.image.resize((1920, 1080)), self.image.resize((960, 540)),
@@ -265,6 +455,56 @@ class ScreenshotTests(unittest.TestCase):
         self.assertIsNone(_match_name(['列克星敦', '列克星敦II'], 'SSR')[0])
         for raw, name in [('酒句', '酒匂'), ('条鱼', '鲦鱼'), ('绦鱼', '鲦鱼'), ('四系乃', '四糸乃'), ('百雪', '白雪')]:
             self.assertEqual(_match_name([raw], 'SSR')[0]['name'], name)
+
+    def test_second_type_family_requests_evidence_without_guessing_identity(self):
+        from module.runtime.mind_recognition import second_type_family
+        self.assertTrue(second_type_family(['列克星敦I']))
+        self.assertTrue(second_type_family(['列克星敦', '列克星敦ⅡI']))
+        self.assertFalse(second_type_family(['不存在的舰船I', '倫敦']))
+        self.assertIsNone(_match_name(['列克星敦I'], 'SSR')[0])
+        self.assertIsNone(_match_name(['北安普敦I'], 'SSR')[0])
+        self.assertEqual(_match_name(['北安普敦ⅡI'], 'SSR')[0]['name'], '北安普敦II')
+
+    def test_only_unconfirmed_second_type_gets_nearest_neighbor_retry(self):
+        ocr = Mock()
+        ocr.ocr_for_single_lines.side_effect = [
+            ['列克星敦I'] + ['伦敦.改'] * 20,
+            ['列克星敦', '列克星敦II'], ['列克星敦II', '列克星敦II']]
+        cards = recognize_cards(self.image, name_ocr=ocr)
+        self.assertEqual(cards[0].ship['name'], '列克星敦II')
+        self.assertFalse(cards[0].ship['review'])
+        self.assertEqual(ocr.ocr_for_single_lines.call_count, 3)
+        variants = ocr.ocr_for_single_lines.call_args.args[0]
+        self.assertEqual([image.shape for image in variants], [(38, 296), (57, 444)])
+        ocr.ocr_for_single_lines.reset_mock(side_effect=True)
+        ocr.ocr_for_single_lines.return_value = ['伦敦.改'] * 21
+        recognize_cards(self.image, name_ocr=ocr)
+        ocr.ocr_for_single_lines.assert_called_once()
+
+    def test_failed_suffix_retry_remains_review(self):
+        ocr = Mock()
+        ocr.ocr_for_single_lines.side_effect = [
+            ['列克星敦I'] + ['伦敦.改'] * 20,
+            ['列克星敦I', '列克星敦I'], ['列克星敦I', '列克星敦I']]
+        card = recognize_cards(self.image, name_ocr=ocr)[0]
+        self.assertTrue(card.ship['review'])
+        self.assertEqual(card.ship['name'], '列克星敦I')
+
+    def test_real_second_type_crops_keep_suffix_under_nearest_scaling(self):
+        import cv2
+        from module.ocr.al_ocr import AlOcr, OcrSettings
+        from module.runtime.mind_recognition import _name_image
+        atlas = np.array(Image.open(FIXTURES / 'mind_names_second_types.png').convert('RGB'))
+        labels = json.loads((FIXTURES / 'mind_names_second_types.json').read_text(encoding='utf-8'))
+        reader = AlOcr(name='ppocr_v6', settings=OcrSettings('onnx', 'cpu', False, 'standard'), save_debug_images=False)
+        images = [cv2.resize(_name_image(atlas[top:bottom, left:right]), None,
+                             fx=scale, fy=scale, interpolation=cv2.INTER_NEAREST)
+                  for label in labels for left, top, right, bottom in [label['atlas_region']] for scale in (2, 3)]
+        reads = reader.ocr_for_single_lines(images)
+        for index, label in enumerate(labels):
+            info, _ = _match_name(reads[index * 2:index * 2 + 2], 'SSR')
+            self.assertIsNotNone(info, reads[index * 2:index * 2 + 2])
+            self.assertEqual(info['name'], label['name'])
 
     def test_invalid_images_have_specific_errors(self):
         with tempfile.TemporaryDirectory() as temp:

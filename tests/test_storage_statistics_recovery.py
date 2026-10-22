@@ -1,4 +1,4 @@
-"""三行扫描的虚拟时间回归：识别错误立即退出、有限等待及失败原子性。"""
+"""三行扫描的虚拟时间回归：页面错误立即退出、有限等待及失败原子性。"""
 
 from pathlib import Path
 import tempfile
@@ -74,11 +74,11 @@ class StorageRecoveryTests(unittest.TestCase):
         if card.amount != reference.amount:
             raise StorageRecognitionError('同页数量不一致')
 
-    def test_first_amount_error_stops_before_any_reread_or_extra_gesture(self):
+    def test_first_grid_error_stops_before_any_reread_or_extra_gesture(self):
         with patch.object(self.module, 'recognize_rows',
-                          side_effect=StorageRecognitionError('数量字形暂时无法确认')) as reader, \
+                          side_effect=StorageRecognitionError('材料网格不完整')) as reader, \
              patch.object(self.module, 'verify_targets') as verifier:
-            with self.assertRaisesRegex(StorageRecognitionError, '数量字形暂时无法确认'):
+            with self.assertRaisesRegex(StorageRecognitionError, '材料网格不完整'):
                 self.task._scan_pass(self.catalog)
         reader.assert_called_once()
         verifier.assert_not_called()
@@ -86,11 +86,11 @@ class StorageRecoveryTests(unittest.TestCase):
         self.assertEqual(self.device.position, 0.)
         self.device.click_record_clear.assert_not_called()
 
-    def test_same_page_quantity_conflict_stops_without_restarting_recognition(self):
+    def test_same_page_layout_conflict_stops_without_restarting_recognition(self):
         with patch.object(self.module, 'recognize_rows', side_effect=self.read) as reader, \
              patch.object(self.module, 'verify_targets',
-                          side_effect=StorageRecognitionError('同页数量不一致')) as verifier:
-            with self.assertRaisesRegex(StorageRecognitionError, '同页数量不一致'):
+                          side_effect=StorageRecognitionError('同页材料位置变化')) as verifier:
+            with self.assertRaisesRegex(StorageRecognitionError, '同页材料位置变化'):
                 self.task._scan_pass(self.catalog)
         reader.assert_called_once()
         verifier.assert_called_once()
@@ -138,8 +138,8 @@ class StorageRecoveryTests(unittest.TestCase):
             writer = self.enterContext(patch.object(self.module, 'save_snapshot'))
             self.enterContext(patch.object(self.module, 'StorageCatalog', return_value=self.catalog))
             self.enterContext(patch.object(self.module.server, 'server', 'cn'))
-            with patch.object(self.module, 'recognize_rows', side_effect=StorageRecognitionError('残缺数量')):
-                with self.assertRaisesRegex(StorageStatisticsError, '残缺数量'):
+            with patch.object(self.module, 'recognize_rows', side_effect=StorageRecognitionError('材料网格不完整')):
+                with self.assertRaisesRegex(StorageStatisticsError, '材料网格不完整'):
                     self.task.run()
             self.assertEqual(len(self.device.swipes), 2)
             self.assertEqual(self.device.position, 0.)

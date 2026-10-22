@@ -991,11 +991,7 @@ class Connection(ConnectionAttr):
         if init.abi not in ['x86_64', 'x86', 'arm64-v8a', 'armeabi-v7a', 'armeabi']:
             init.abi = init.abis[0]
         init.set_atx_agent_addr('127.0.0.1:7912')
-        try:
-            init.install()
-        except ConnectionError:
-            u2.init.GITHUB_BASEURL = 'http://tool.appetizer.io/openatx'
-            init.install()
+        init.install()
         self.uninstall_minicap()
 
     def uninstall_minicap(self):

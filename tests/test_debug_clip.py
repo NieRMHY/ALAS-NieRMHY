@@ -322,6 +322,13 @@ class TestRecorderCommand(ClipTestCase):
         rec.size = None
         self.assertNotIn('--size', rec._recorder_command())
 
+    def test_time_limit_follows_current_segment_budget(self):
+        """续录时每段的 --time-limit 是剩余预算，不再固定 180。"""
+        rec = self.make_clip()
+        rec.size = None
+        rec._segment_limit = 120
+        self.assertIn('--time-limit 120', rec._recorder_command())
+
 
 class TestStart(ClipTestCase):
     def setUp(self):
@@ -348,6 +355,9 @@ class TestStart(ClipTestCase):
             debug_clip, '_run_adb_cli', return_value=launch_output
         ) as cli:
             ok = rec.start()
+        if ok:
+            # 后台轮转线程会睡满一个设备段；测试里让它立即退出，避免线程堆积
+            rec._stop_rotation()
         return rec, ok, cli
 
     def launched_command(self, cli):
@@ -368,6 +378,10 @@ class TestStart(ClipTestCase):
         self.assertTrue(adb.command_starting_with('ls '))
         # 启动走 adb 命令行（adbutils 的 shell 会连带杀掉后台进程）
         self.assertIn('screenrecord', self.launched_command(cli))
+        # 首段预算取「设备上限」与「总上限」的较小值
+        self.assertEqual(rec._segment_limit, debug_clip.DEVICE_TIME_LIMIT)
+        self.assertEqual(rec._planned_seconds, debug_clip.DEVICE_TIME_LIMIT)
+        self.assertTrue(rec._segment_open)
 
     def test_stale_device_file_is_cleaned_before_recording(self):
         old = time.strftime('%Y%m%d_%H%M%S', time.localtime(time.time() - 7200))
@@ -422,6 +436,11 @@ class TestFinalize(ClipTestCase):
         rec.alive = True
         adb.alive = True
         rec._started_at = time.perf_counter() - 12
+        # 模拟「当前设备段正在录」：finalize 会先收尾这一段再汇总
+        rec._segment_started_at = rec._started_at
+        rec._segment_limit = debug_clip.DEVICE_TIME_LIMIT
+        rec._segment_open = True
+        rec._planned_seconds = rec._segment_limit
         return rec
 
     def test_successful_clip_is_saved_and_device_is_cleaned(self):
@@ -472,6 +491,7 @@ class TestFinalize(ClipTestCase):
         """录制时间过短时设备端还没写出文件，这属于正常跳过而不是失败。"""
         rec = self.started_clip(_FakeAdb(file_size=None))
         rec._started_at = time.perf_counter() - 0.5
+        rec._segment_started_at = rec._started_at
         self.assertIsNone(rec.finalize(keep=True))
 
     def test_pull_failure_is_reported(self):
@@ -486,12 +506,188 @@ class TestFinalize(ClipTestCase):
         self.assertIsNone(rec.finalize(keep=False))
         self.assertIsNone(rec.finalize(keep=True))
 
+    def test_finalize_assembles_every_pulled_segment(self):
+        """轮转已经拉回一段时，finalize 要收尾最后一段并按顺序拼接。"""
+        adb = _FakeAdb()
+        rec = self.started_clip(adb)
+        pulled = os.path.join(self.output_dir, '_tmp_clip_pull_999.mp4')
+        with open(pulled, 'wb') as f:
+            f.write(b'x' * 20000)
+        rec._raw_segments = [(pulled, 180.0)]
+
+        def fake_concat(parts, dst):
+            with open(dst, 'wb') as f:
+                f.write(b'x' * 30000)
+            return 24.0
+
+        with patch.object(rec, '_transcode', side_effect=self.fake_transcode), \
+                patch.object(rec, '_concat_parts', side_effect=fake_concat) as concat:
+            path = rec.finalize(keep=True)
+
+        self.assertIsNotNone(path)
+        self.assertEqual(len(concat.call_args[0][0]), 2)
+        self.assertEqual(
+            [n for n in os.listdir(self.output_dir) if n.startswith('_tmp')], []
+        )
+        self.assertTrue(adb.command_starting_with('rm -f'))
+
     @staticmethod
     def fake_transcode(src, dst, elapsed):
         """替代真实转码：写出目标文件并返回时长。"""
         with open(dst, 'wb') as f:
             f.write(b'x' * 20000)
         return 12.0
+
+
+class TestRotation(ClipTestCase):
+    """超过设备端 180 秒上限的录像由后台轮转按段续录，总上限 MAX_CLIP_SECONDS。"""
+
+    def make_rotating_clip(self):
+        rec = self.make_clip(adb=_FakeAdb())
+        rec.alive = True
+        rec._segment_open = True
+        rec._segment_limit = debug_clip.DEVICE_TIME_LIMIT
+        rec._segment_started_at = time.perf_counter()
+        rec._planned_seconds = debug_clip.DEVICE_TIME_LIMIT
+        return rec
+
+    def test_max_clip_seconds_is_five_minutes(self):
+        self.assertEqual(debug_clip.MAX_CLIP_SECONDS, 300)
+
+    def test_next_segment_uses_remaining_budget(self):
+        """首段用满 180 秒后，第二段只该再录剩下的 120 秒。"""
+        rec = self.make_rotating_clip()
+        with patch.object(rec, '_finish_segment', return_value=True), \
+                patch.object(rec, '_launch', return_value=True):
+            self.assertTrue(rec._rotate_once())
+        self.assertEqual(rec._segment_limit, 120.0)
+        self.assertEqual(rec._planned_seconds, 300.0)
+        self.assertTrue(rec.alive)
+        self.assertTrue(rec._segment_open)
+
+    def test_recording_stops_at_total_limit(self):
+        rec = self.make_rotating_clip()
+        rec._planned_seconds = debug_clip.MAX_CLIP_SECONDS
+        with patch.object(rec, '_finish_segment', return_value=True), \
+                patch.object(rec, '_start_segment') as start:
+            self.assertFalse(rec._rotate_once())
+        start.assert_not_called()
+        self.assertFalse(rec.alive)
+        self.assertTrue(rec._capped)
+
+    def test_rotation_failure_stops_without_claiming_cap(self):
+        """接段失败只是提前结束，不能谎报「已到达总时长上限」。"""
+        rec = self.make_rotating_clip()
+        with patch.object(rec, '_finish_segment', return_value=True), \
+                patch.object(rec, '_start_segment', return_value=False):
+            self.assertFalse(rec._rotate_once())
+        self.assertFalse(rec.alive)
+        self.assertFalse(rec._capped)
+
+    def test_stop_rotation_is_safe_without_thread(self):
+        rec = self.make_rotating_clip()
+        rec._stop_rotation()
+        self.assertIsNone(rec._rotate_thread)
+
+
+class TestAssemble(ClipTestCase):
+    """多段录像：能拼就拼成一个文件，拼不上也分段保留，绝不静默丢画面。"""
+
+    def make_raw_segments(self, count=2):
+        segments = []
+        for index in range(count):
+            path = os.path.join(self.output_dir, f'_tmp_clip_pull_{index}.mp4')
+            with open(path, 'wb') as f:
+                f.write(b'x' * 20000)
+            segments.append((path, 12.0))
+        return segments
+
+    @staticmethod
+    def fake_transcode(src, dst, elapsed):
+        with open(dst, 'wb') as f:
+            f.write(b'x' * 20000)
+        return 12.0
+
+    @staticmethod
+    def fake_concat(parts, dst):
+        with open(dst, 'wb') as f:
+            f.write(b'x' * 30000)
+        return 24.0
+
+    def final_path(self, name='eh1_clip_20200101_000000.mp4'):
+        return os.path.join(self.output_dir, name)
+
+    def test_multi_segment_is_joined_into_one_file(self):
+        rec = self.make_clip()
+        segments = self.make_raw_segments(2)
+        final = self.final_path()
+        with patch.object(rec, '_transcode', side_effect=self.fake_transcode), \
+                patch.object(rec, '_concat_parts', side_effect=self.fake_concat) as concat:
+            paths, duration = rec._assemble(segments, final)
+
+        self.assertEqual(paths, [final])
+        self.assertEqual(duration, 24.0)
+        self.assertTrue(os.path.exists(final))
+        self.assertEqual(concat.call_args[0][1], final)
+        # 原始段与分段中间产物都要清掉
+        self.assertEqual(
+            [n for n in os.listdir(self.output_dir) if n.startswith('_tmp')], []
+        )
+
+    def test_concat_failure_keeps_segments_as_separate_files(self):
+        rec = self.make_clip()
+        segments = self.make_raw_segments(2)
+        final = self.final_path()
+        with patch.object(rec, '_transcode', side_effect=self.fake_transcode), \
+                patch.object(rec, '_concat_parts', return_value=None):
+            paths, duration = rec._assemble(segments, final)
+
+        self.assertIsNone(duration)
+        self.assertFalse(os.path.exists(final))
+        self.assertEqual(
+            [os.path.basename(path) for path in paths],
+            ['eh1_clip_20200101_000000_01.mp4', 'eh1_clip_20200101_000000_02.mp4'],
+        )
+        for path in paths:
+            self.assertTrue(os.path.exists(path))
+
+    def test_concat_command_uses_stream_copy_in_order(self):
+        rec = self.make_clip()
+        parts = [path for path, _ in self.make_raw_segments(2)]
+        final = self.final_path()
+        captured = {}
+
+        def fake_run(cmd, **kwargs):
+            captured['cmd'] = cmd
+            list_path = cmd[cmd.index('-i') + 1]
+            with open(list_path, encoding='utf-8') as f:
+                captured['list'] = f.read()
+            with open(cmd[-1], 'wb') as f:
+                f.write(b'x' * 30000)
+            return subprocess.CompletedProcess(
+                cmd, 0, stdout=b'out_time=00:00:24.000000\n', stderr=b''
+            )
+
+        with patch.object(debug_clip, '_ffmpeg_path', return_value='/fake/ffmpeg'), \
+                patch.object(debug_clip.subprocess, 'run', side_effect=fake_run):
+            duration = rec._concat_parts(parts, final)
+
+        self.assertAlmostEqual(duration, 24.0, places=2)
+        cmd = captured['cmd']
+        self.assertIn('-f', cmd)
+        self.assertEqual(cmd[cmd.index('-f') + 1], 'concat')
+        # 只做流复制，不重新编码，避免二次损失画质
+        self.assertEqual(cmd[cmd.index('-c') + 1], 'copy')
+        self.assertIn('+faststart', cmd)
+        lines = captured['list'].strip().splitlines()
+        self.assertEqual(len(lines), 2)
+        self.assertIn(os.path.basename(parts[0]), lines[0])
+        self.assertIn(os.path.basename(parts[1]), lines[1])
+        # 拼接列表用完即删（分段文件本身由 _assemble 负责清理）
+        self.assertEqual(
+            [n for n in os.listdir(self.output_dir) if n.startswith('_tmp_clip_concat_')],
+            [],
+        )
 
 
 class TestTranscode(ClipTestCase):
