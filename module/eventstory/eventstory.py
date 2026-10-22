@@ -53,6 +53,7 @@ class EventStory(CampaignUI, Combat, LoginHandler):
         event = self.config.cross_get('Event.Campaign.Event', '')
         if event in [
             'event_20251023_cn',
+            'event_20261022_cn',
         ]:
             # SP 活动使用 page_sp 页面
             self.ui_ensure(page_sp)

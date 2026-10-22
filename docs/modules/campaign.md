@@ -63,7 +63,7 @@ campaign/                # 地图定义仓库（约 136 项，截至 2026-09）
 ├── campaign_sos/        # SOS 潜艇图（campaign_3_5 ~ campaign_10_5）
 ├── campaign_war_archives/  # 作战档案共享基类
 ├── event_YYYYMMDD_cn/   # 每期活动一个目录（约 83 个）
-└── war_archives_YYYYMMDD_cn/  # 档案收录的复刻活动地图（约 48 个）
+└── war_archives_YYYYMMDD_cn/  # 档案收录的复刻活动地图（约 50 个）
 ```
 
 一个活动目录的典型内容（以 `campaign/event_20260908_cn/` 为例）：`a1.py`…`d3.py` 每关一个文件、`sp.py` 特殊关、`d3_3.py` 变体关（复用 `d3` 的地图与刷新表、覆写战斗策略）、`campaign_base.py` 该活动共享的基类微调。
