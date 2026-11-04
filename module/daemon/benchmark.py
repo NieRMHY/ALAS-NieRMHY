@@ -7,16 +7,21 @@
 import time
 import typing as t
 
+import cv2
 import numpy as np
 from rich.table import Table
 from rich.text import Text
 
+from module.base.decorator import cached_property
 from module.base.utils import float2str as float2str_
 from module.base.utils import random_rectangle_point
 from module.campaign.campaign_ui import CampaignUI
 from module.daemon.daemon_base import DaemonBase
 from module.exception import RequestHumanTakeover
 from module.logger import logger
+
+# 框架入口先加载 Device 并注册 pkg_resources 兼容层，随后才能加载 u2/adbutils。
+import uiautomator2 as u2
 
 
 def float2str(n, decimal=3):
@@ -38,6 +43,64 @@ def float2str(n, decimal=3):
 class Benchmark(DaemonBase, CampaignUI):
     TEST_TOTAL = 15
     TEST_BEST = int(TEST_TOTAL * 0.8)
+    U2_PROBE_TIMEOUT = (3, 5)
+
+    @cached_property
+    def _u2_benchmark_client(self):
+        """测速不经过设备 u2 属性的 keepalive 初始化，避免触发 agent 安装恢复。"""
+        serial = self.device.serial
+        if serial.startswith(('emulator-', '127.0.0.1:')):
+            return u2.connect_usb(serial)
+        return u2.connect(serial)
+
+    def _benchmark_u2_screenshot(self):
+        """限时尝试已有截图服务，失败交给测速层跳过，不进入后端多轮重试。"""
+        with self._u2_benchmark_client.http.get(
+                '/screenshot/0', timeout=self.U2_PROBE_TIMEOUT, retry=False) as response:
+            response.raise_for_status()
+            image = cv2.imdecode(np.frombuffer(response.content, np.uint8), cv2.IMREAD_COLOR)
+        if image is None:
+            raise ValueError('uiautomator2 测速截图无效')
+        return cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+
+    @cached_property
+    def _u2_benchmark_click_client(self):
+        """点击还需要 uiautomator 服务；仅启动已有服务一次，限时确认就绪。"""
+        client = self._u2_benchmark_client
+        with client.http.get('/services/uiautomator', timeout=self.U2_PROBE_TIMEOUT, retry=False) as response:
+            response.raise_for_status()
+            if response.json().get('running'):
+                return client
+        with client.http.post('/services/uiautomator', timeout=self.U2_PROBE_TIMEOUT, retry=False) as response:
+            response.raise_for_status()
+
+        deadline = time.monotonic() + self.U2_PROBE_TIMEOUT[1]
+        payload = {'jsonrpc': '2.0', 'id': 1, 'method': 'deviceInfo', 'params': []}
+        while True:
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                raise TimeoutError('uiautomator2 测速点击服务启动超时')
+            timeout = tuple(min(limit, remaining) for limit in self.U2_PROBE_TIMEOUT)
+            with client.http.post('/jsonrpc/0', json=payload, timeout=timeout, retry=False) as response:
+                # 进程启动到 RPC 端口就绪之间，atx-agent 暂时返回 502。
+                if response.status_code != 502:
+                    response.raise_for_status()
+                    result = response.json()
+                    if result.get('error') is not None:
+                        raise RuntimeError(f'uiautomator2 测速服务启动失败: {result["error"]}')
+                    return client
+            time.sleep(min(0.1, remaining))
+
+    def _benchmark_u2_click(self, x, y):
+        """完整测速中的 u2 点击同样只尝试一次，不触发 JSON-RPC 自动恢复。"""
+        payload = {'jsonrpc': '2.0', 'id': 1, 'method': 'click', 'params': [x, y]}
+        with self._u2_benchmark_click_client.http.post(
+                '/jsonrpc/0', json=payload, timeout=self.U2_PROBE_TIMEOUT, retry=False) as response:
+            response.raise_for_status()
+            result = response.json()
+        if result.get('error') is not None:
+            raise RuntimeError(f'uiautomator2 测速点击失败: {result["error"]}')
+        return result['result']
 
     def benchmark_test(self, func, *args, quiet=False, **kwargs):
         """对指定函数执行多次基准测试，返回平均耗时。
@@ -49,8 +112,7 @@ class Benchmark(DaemonBase, CampaignUI):
             func: 待测试的函数。
             *args: 传递给 func 的位置参数。
             quiet: 为 True 时（auto 探测路径）探测失败只打一行警告，
-                不打印整段 traceback——某个候选后端在当前设备不可用（如
-                Android 15 上 atx-agent 截屏受限）是预期情况，不应制造恐慌。
+                不打印整段 traceback；失败只跳过本次测速候选。
             **kwargs: 传递给 func 的关键字参数。
 
         Returns:
@@ -265,14 +327,16 @@ class Benchmark(DaemonBase, CampaignUI):
 
         screenshot_result = []
         for method in screenshot:
-            result = self.benchmark_test(self.device.screenshot_methods[method], quiet=quiet)
+            func = self._benchmark_u2_screenshot if method == 'uiautomator2' else self.device.screenshot_methods[method]
+            result = self.benchmark_test(func, quiet=quiet)
             screenshot_result.append([method, result])
 
         area = (124, 4, 649, 106)  # 屏幕上可安全点击的区域
         click_result = []
         for method in click:
             x, y = random_rectangle_point(area)
-            result = self.benchmark_test(self.device.click_methods[method], x, y, quiet=quiet)
+            func = self._benchmark_u2_click if method == 'uiautomator2' else self.device.click_methods[method]
+            result = self.benchmark_test(func, x, y, quiet=quiet)
             click_result.append([method, result])
 
         def compare(res):
@@ -412,6 +476,8 @@ class Benchmark(DaemonBase, CampaignUI):
         logger.info(f'sdk_ver: {sdk}')
         if not (21 <= sdk <= 28):
             screenshot = remove('aScreenCap', 'aScreenCap_nc')
+        if not (23 <= sdk <= 32):
+            screenshot = remove('DroidCast', 'DroidCast_raw')
         if self.device.is_chinac_phone_cloud:
             screenshot = remove('ADB_nc', 'aScreenCap_nc')
         # 注意：nemu_ipc 不参与自动选择（速度虽快但触控有兼容性风险），
@@ -422,9 +488,7 @@ class Benchmark(DaemonBase, CampaignUI):
 
         self.TEST_TOTAL = 3
         self.TEST_BEST = 1
-        # quiet=True：auto 自动选路是"挑最快的可用后端"，探测失败的后端
-        # （如 Android 15 上 uiautomator2 截屏受限）本就会被排名淘汰，
-        # 无需在每次启动时打印整段 traceback 吓人。
+        # 保留 u2 测速候选；探测异常或超时只跳过本次候选，不按系统版本提前排除。
         method, _ = self.benchmark(screenshot, tuple(), quiet=True)
 
         return method

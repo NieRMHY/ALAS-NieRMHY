@@ -61,6 +61,8 @@ module/api/
 
 仓库报告使用 `statistics.report(category='storage', days=7)` 只读查询最近完整快照及时间窗口内成功扫描的历史序列。序列的可选 `icon` 在逐点与共用时间轴两种格式中保留，物品图标由 `/storage-items/` 静态挂载提供。主动扫描沿用 `tasks.run(task='StorageStatistics')` 与实例运行互斥；页面刷新不启动扫描。
 
+统计报表与 `statistics.resourceFlows` 的标签、表头、备注保持中文（前端按中文名查图标、导出与筛选）。两者附带 `glossary`（`{中文名: {语言: 名称}}`，只含本次出现的物品名与任务名，来源为物品名称表、仓库目录与配置页 i18n）；固定文案由前端 `components/statisticsText.ts` 在显示前翻译，新增后端文案时需同步补齐该字典的英、日、繁三列。
+
 其他分类报表在同一请求内共用一次受保护数据校验及协调锁，避免每个指标扫描全部历史。`CategorySection` 仅按 `statistics` 事件更新，同一分类最多保留一个正在执行的请求；期间收到的多次通知合并为一次后续刷新。运行概览事件不触发统计查询，SQLite WAL 的修改也纳入更新指纹；切换实例或参数后忽略旧响应。
 
 ## 4. 核心入口
@@ -422,3 +424,10 @@ ws.send_json({'v':1,'type':'request','id':'2','method':'events.subscribe',
 - [MCP SSE 服务器](../entry/mcp-server.md) — 挂载于 `/mcp` 的独立协议子应用
 - [配置系统](../config.md) — 被校验与读写的数据来源（argument YAML、i18n、事务）
 - [外部桥接与开发工具](../infra/submodule-tools.md) — `dev_tools/export_api_schema` 所在的开发工具层
+
+
+## 船坞共享扫描与数据分析
+
+`dock.report` 只读返回实例共享快照、来源、版本、时间、待核对数和扫描配置；`scan_range` 是已保存快照的实际覆盖范围，`min_level/max_level` 是下一次扫描配置。`dock.configure` 严格校验 `1 ≤ min_level ≤ max_level ≤ 125` 后仅保存配置，不操作设备。`tasks.run(DockScan)` 才显式启动共享扫描。
+
+`dock.report` 返回已确认的逐卡舰船、待确认差异和最近读取摘要。`dock.patch` 按副本 ID 新增、修改或删除舰船，`dock.stageImport` 暂存解析后的文件或截图记录，`dock.review` 校验正式数据及候选双版本后逐项确认或忽略。扫描与 `dock.importLegacy` 只生成候选；旧 JSON 转换必须显式发起，只读取当前实例本地文件，保留原文件。`fleetTech.report/patch` 读取或独立编辑累计科技和阵营等级，`fleetTech.mergeShips` 显式合并当前舰船的正向里程碑。`mind.plan` 按已确认副本和实际等级只读计算，`mind.import/recognize` 只解析上传内容；公共资料由 `mind.catalog`、`fleetTech.catalog` 提供。当前舰船不保存额外经验或旧计费排除标记。见 [舰船数据](fleet-analysis.md)。

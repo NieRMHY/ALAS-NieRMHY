@@ -151,35 +151,32 @@ class LogRes:
         observe(self.config, name, current, source, observed_at=stamp)
 
     def _record_all_resource_snapshot(self, overrides=None):
-        """读取当前所有 Dashboard 资源值并记录快照。
+        """记录本次读到的资源，其余资源沿用数据库里最近一行快照。
+
+        不从当前配置对象补全其他资源：战役等模块持有配置副本，副本里的 Dashboard 值可能已过期，
+        用它补全会写入一行旧石油、旧物资，使趋势图出现单点尖刺；从未读取的资源也会被记成 0。
 
         Args:
-            overrides (dict, optional): 需要覆盖的资源键值对。
+            overrides (dict, optional): 本次读到的资源键值对。
         """
         try:
             from module.statistics.resource_stats import async_record_resource_snapshot, record_resource_snapshot
             instance_name = getattr(self.config, 'config_name', 'default')
-            overrides = overrides or {}
             resources = {}
-            for group_name in self.groups:
-                if group_name in overrides:
-                    value = overrides[group_name]
-                elif f'Dashboard.{group_name}.Value' in self.config.modified:
-                    value = self.config.modified[f'Dashboard.{group_name}.Value']
-                else:
-                    group_data = deep_get(self.config.data, f'Dashboard.{group_name}')
-                    if not isinstance(group_data, dict):
-                        continue
-                    value = group_data.get('Value')
-                if value is not None:
+            for group_name, value in (overrides or {}).items():
+                if group_name in self.groups and value is not None:
                     try:
                         resources[group_name] = int(value)
                     except (TypeError, ValueError):
                         pass
+            if not resources:
+                # 只改了上限等附属字段时没有新的资源读数，不必重复写一行。
+                return
             if self.__dict__.get('_defer_history', False):
-                async_record_resource_snapshot(instance_name, resources, observed_at=self.__dict__.get('_recorded_at'))
+                async_record_resource_snapshot(instance_name, resources, observed_at=self.__dict__.get('_recorded_at'),
+                                               carry_forward=True)
             else:
-                record_resource_snapshot(instance_name, resources)
+                record_resource_snapshot(instance_name, resources, carry_forward=True)
         except Exception:
             logger.exception('[日志资源] 记录资源快照失败')
 

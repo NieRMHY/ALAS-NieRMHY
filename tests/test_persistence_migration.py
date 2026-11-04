@@ -65,6 +65,15 @@ class MigrationProcessTests(unittest.TestCase):
         with self.assertRaisesRegex(MigrationError, 'PID 1000002'):
             self.scan(current, [redirector, old])
 
+    def test_vanished_distant_ancestor_keeps_verified_windows_redirector(self):
+        import psutil
+        current = self.process(os.getpid(), self.base_interpreter, ['gui.py'])
+        redirector = self.process(1000001, self.interpreter, ['gui.py'])
+        current.parents.side_effect = psutil.NoSuchProcess(1000002)
+        current.parent.return_value = redirector
+        redirector.parent.return_value = None
+        self.scan(current, [current, redirector])
+
     def test_python_ancestor_running_an_entry_is_not_exempt(self):
         current = self.process(os.getpid(), self.base_interpreter, ['gui.py'])
         parent = self.process(1000001, self.base_interpreter, ['gui.py'])

@@ -1,11 +1,13 @@
 from .campaign_base import CampaignBase
 from module.map.map_base import CampaignMap
+from module.map.map_grids import SelectedGrids, RoadGrids
+from module.logger import logger
 from .t1 import Config as ConfigBase
 
 MAP = CampaignMap('T6')
 MAP.shape = 'K7'
 MAP.camera_data = ['D2', 'D5', 'H2', 'H5']
-MAP.camera_data_spawn_point = ['H5', 'H2']
+MAP.camera_data_spawn_point = ['H5']
 MAP.map_data = """
     -- -- -- -- ME -- ++ ++ -- -- ++
     ME ++ ++ ++ -- ME -- ++ Me ++ ++
@@ -45,6 +47,7 @@ A7, B7, C7, D7, E7, F7, G7, H7, I7, J7, K7, \
 
 class Config(ConfigBase):
     # ===== Start of generated config =====
+    MAP_SIREN_TEMPLATE = ['TempestaGhostBoss02']
     MOVABLE_ENEMY_TURN = (2,)
     MAP_HAS_SIREN = True
     MAP_HAS_MOVABLE_ENEMY = True
@@ -53,6 +56,11 @@ class Config(ConfigBase):
     MAP_HAS_AMBUSH = False
     MAP_HAS_MYSTERY = False
     # ===== End of generated config =====
+
+    MAP_SIREN_HAS_BOSS_ICON_SMALL = False
+    MAP_SWIPE_MULTIPLY = (1.148, 1.169)
+    MAP_SWIPE_MULTIPLY_MINITOUCH = (1.110, 1.130)
+    MAP_SWIPE_MULTIPLY_MAATOUCH = (1.078, 1.097)
 
 
 class Campaign(CampaignBase):

@@ -1,222 +1,239 @@
-import {useEffect, useMemo, useRef, useState, type ReactNode} from 'react'
-import {useParams} from 'react-router-dom'
+import {FleetFilterRow, fleetShipTypes as types, fleetAttributes as attrs, fleetRarities as rarities} from '../fleet-tech/filters'
+import {useEffect, useMemo, useRef, useState} from 'react'
+import {Link, useParams, useSearchParams} from 'react-router-dom'
 import {api} from '../api/client'
 import {useApp, useConnection} from '../app/context'
-import {editor} from '../config/editors'
 import {ErrorBox, Loading, PageTitle} from '../components/ui'
-import {Select} from '../components/FormControls'
-import {translateFleetTech} from '../fleet-tech/i18n'
-import {matches, preview, scanRows, shipType, type Catalog, type Change, type Report, type Row} from '../fleet-tech/types'
+import {fleetFactionOrder, translateFleetTech} from '../fleet-tech/i18n'
+import {useFleetPreference} from '../fleet-tech/preferences'
+import {catalogRows, changeMilestone, complete, matches, milestones, recordFields, shipType, type Bonuses, type Catalog, type Change, type Milestone, type RecordField, type Report, type Row, type State} from '../fleet-tech/types'
+import {technologyEfficiency} from '../mind/cultivation'
 import '../fleet-tech/style.css'
 
-const types = [1, 2, 3, 18, 4, 5, 7, 6, 13, 12, 10, 8, 17, 19, 22]
-const attrs = [1, 2, 3, 4, 5, 6, 9, 8, 12]
-const number = (value: number) => value.toLocaleString()
-const has = (value: object, key: string) => Object.hasOwn(value, key)
+const stageLabel = {owned: 'get', full_star: 'star', lv120: 'Lv.120'}
+const stateKey = (value: State) => value ? 'finished' : 'notFinished'
+const stateSymbol = (value: State) => value ? '✓' : '—'
+const nextState = (value: State): State => !value
+const nameFor = (row: Row, language: string) => row.names[language === 'en-US' ? 'en' : language === 'ja-JP' ? 'jp' : language === 'zh-TW' ? 'tw' : 'cn'] || row.name
+const pointsFor = (row: Row, key: Milestone) => row.technology?.[key === 'owned' ? 'pt_get' : key === 'full_star' ? 'pt_upgrage' : 'pt_level'] ?? 0
+const maximumPoints = (row: Row) => milestones.reduce((sum, key) => sum + pointsFor(row, key), 0)
+const nationOrder = (value: number) => {const index = fleetFactionOrder.indexOf(value); return index < 0 ? fleetFactionOrder.length : index}
+const columns = ['code', 'name', 'nation', 'shipClass', 'get', 'star', 'Lv.120', 'total', 'unlock', 'completionBonus', 'efficiency', 'awakening_pending'] as const
+type Column = typeof columns[number]
+type Sort = {column: Column; direction: 'ascending' | 'descending'}
+type Draft = {revision: string; changes: Record<number, Change>; nations: Record<string, number | null>}
+
+function effectFor(row: Row, stage: 'get' | 'level', tr: (key: string) => string) {
+  const t = row.technology
+  if (!t) return '—'
+  return `${[...new Set(t[`add_${stage}_shiptype`].map(shipType))].map(type => tr(`type.${type}`)).join('/')} ${tr(`attr.${t[`add_${stage}_attr`]}`)}+${t[`add_${stage}_value`]}`
+}
+
+export function TechnologyTable({rows, language, tr, mindCosts = {}, editing = false, disabled = false, sort = {column: 'code', direction: 'ascending'}, onSort, onChange, modified = [], targetGroup}: {
+  rows: Row[]; language: string; tr: (key: string) => string; editing?: boolean; disabled?: boolean; sort?: Sort
+  mindCosts?: Record<string, number>
+  onSort?: (column: Column) => void; onChange?: (row: Row, key: RecordField, value: State) => void; modified?: number[]; targetGroup?: string | null
+}) {
+  function header(column: Column, rowSpan = 1) {
+    return <th key={column} scope="col" rowSpan={rowSpan} aria-sort={sort.column === column ? sort.direction : 'none'} title={column === 'efficiency' ? tr('efficiencyHint') : undefined}><button type="button" className="ft-sort" onClick={() => onSort?.(column)}>{tr(column)}<span aria-hidden="true">{sort.column === column ? sort.direction === 'ascending' ? '↑' : '↓' : '↕'}</span></button></th>
+  }
+  return <div className="ft-table-wrap"><table><thead><tr>{columns.slice(0, 4).map(column => header(column, 2))}<th scope="colgroup" colSpan={4}>{tr('points')}</th><th scope="colgroup" colSpan={2}>{tr('statBonuses')}</th>{header('efficiency', 2)}{header('awakening_pending', 2)}</tr><tr>{columns.slice(4, 10).map(column => header(column))}</tr></thead><tbody>{rows.map(row => {
+    const title = `${tr('held')}: ${row.current_count} · ${row.current_level === null ? tr('unknown') : `Lv.${row.current_level}`}`
+    const identityHighlight = row.lv120 ? 'ft-marked' : ''
+    const efficiency = technologyEfficiency(row, mindCosts)
+    return <tr key={row.group_type} id={`technology-${row.group_type}`} data-group={row.group_type} className={[complete(row) ? 'ft-complete' : '', modified.includes(row.group_type) ? 'ft-modified' : '', targetGroup === String(row.group_type) ? 'ft-target' : ''].filter(Boolean).join(' ')}>
+      <td className={identityHighlight}>{String(row.code).padStart(3, '0')}</td><td className={`ft-name ft-rarity-${row.rarity} ${identityHighlight}`}><Link to={`?tab=data&group=${row.group_type}`} title={title}>{nameFor(row, language)}</Link></td><td className={identityHighlight}>{tr(`nation.${row.nationality}`)}</td><td className={identityHighlight}>{tr(`type.${shipType(row.type)}`)}</td>
+      {milestones.map(key => <td key={key} className={`ft-point ft-state-${stateKey(row[key])}`}><button type="button" className="ft-milestone-button" disabled={!editing || disabled} aria-pressed={row[key]} aria-label={`${row.name} · ${tr(stageLabel[key])} · ${tr(stateKey(row[key]))}`} title={editing ? tr('toggleMilestone') : tr(stateKey(row[key]))} onClick={() => onChange?.(row, key, nextState(row[key]))}><span className="ft-point-value"><b>{pointsFor(row, key)}</b><span className="ft-mark" aria-hidden="true">{stateSymbol(row[key])}</span></span></button></td>)}
+      <td className={complete(row) ? 'ft-marked' : ''} title={`${tr('confirmed')}: ${row.points}`}>{maximumPoints(row)}</td>
+      {(['get', 'level'] as const).map(stage => {
+        const key = stage === 'get' ? 'owned' : 'lv120', label = `${row.name} · ${tr(stage === 'get' ? 'unlock' : 'completionBonus')} · ${tr(stateKey(row[key]))}`
+        return <td key={stage} className={`ft-unlock ${row[key] === true ? 'ft-marked' : ''}`}><button type="button" className="ft-milestone-button" disabled={!editing || disabled} aria-pressed={row[key]} aria-label={label} title={editing ? tr('toggleMilestone') : tr(stateKey(row[key]))} onClick={() => onChange?.(row, key, nextState(row[key]))}><span>{effectFor(row, stage, tr)}</span><span className="ft-mark" aria-hidden="true">{stateSymbol(row[key])}</span></button></td>
+      })}
+      <td title={efficiency.value == null ? undefined : `${efficiency.points} ÷ ${efficiency.mind?.toLocaleString(language)} × 1000（100→120）`}>{efficiency.value == null ? '—' : efficiency.value.toLocaleString(language, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+      <td className={`ft-flag ${row.awakening_pending ? 'ft-awakening-pending' : ''}`}><button type="button" className="ft-milestone-button" disabled={!editing || disabled} aria-pressed={row.awakening_pending} aria-label={`${row.name} · ${tr('awakening_pending')} · ${tr(row.awakening_pending ? 'marked' : 'notMarked')}`} title={tr('awakeningHint')} onClick={() => onChange?.(row, 'awakening_pending', !row.awakening_pending)}><span className="ft-mark" aria-hidden="true">{stateSymbol(row.awakening_pending)}</span></button></td>
+    </tr>
+  })}</tbody></table></div>
+}
 
 export function FleetTechnology() {
-  const {instance = ''} = useParams(), {language, ui, instances, notify} = useApp(), connection = useConnection()
-  const tr = (key: string) => translateFleetTech(language, key)
+  const [search] = useSearchParams(), targetGroup = search.get('group')
+  const {instance = ''} = useParams(), {language, ui, notify} = useApp(), connection = useConnection()
+  const tr = (key: string) => key === 'Lv.120' ? key : translateFleetTech(language, key)
   const [catalog, setCatalog] = useState<Catalog>(), [report, setReport] = useState<Report>()
-  const catalogLoaded = useRef<Catalog | undefined>(undefined)
-  const saved = useRef<Report | undefined>(undefined), writing = useRef(false), epoch = useRef(0)
-  const scope = useRef({instance, token: 0})
-  if (scope.current.instance !== instance) scope.current = {instance, token: scope.current.token + 1}
   const [busy, setBusy] = useState(false), [error, setError] = useState('')
-  const [low, setLow] = useState('95'), [high, setHigh] = useState('125')
-  const [edit, setEdit] = useState(false), [bonuses, setBonuses] = useState(false), [extra, setExtra] = useState(false)
-  const [view, setView] = useState<'latest' | 'history'>('latest')
-  const [query, setQuery] = useState(''), [mode, setMode] = useState('all'), [stage, setStage] = useState('all')
-  const [filters, setFilters] = useState<Record<string, string[]>>({}), [page, setPage] = useState(0)
-  const [sort, setSort] = useState({key: 'code', direction: 1})
-  const pending = useRef<Record<string, Change>>({}), nationPending = useRef<Record<string, number | null>>({})
-  const [drafts, setDrafts] = useState<Record<string, Change>>({}), [nationDrafts, setNationDrafts] = useState<Record<string, number | null>>({})
-  const draftKey = `azurpilot.fleet-tech.${instance}`
-  const current = instances.find(item => item.name === instance), scanning = current?.status === 'running' && current.currentTask === 'FleetTechScan'
-  const scanReason = connection !== 'ready' ? ui('mind.scanDisconnected') : !current || !report ? ui('mind.scanLoading')
-    : current.status === 'running' ? ui(scanning ? 'mind.scanInProgress' : 'mind.scanRunning')
-    : current.status === 'updating' ? ui('mind.scanUpdating') : current.region && current.region !== 'cn' ? ui('mind.scanUnsupported') : ''
-  function remember() {
-    setDrafts({...pending.current}); setNationDrafts({...nationPending.current})
+  const [query, setQuery] = useFleetPreference<string>(instance, 'technology.query', ''), [filters, setFilters] = useFleetPreference<Record<string, string[]>>(instance, 'technology.filters', {})
+  const [sort, setSort] = useFleetPreference<Sort>(instance, 'technology.sort', {column: 'code', direction: 'ascending'})
+  const [editing, setEditing] = useFleetPreference<boolean>(instance, 'technology.editing', false), [bonuses, setBonuses] = useFleetPreference<boolean>(instance, 'technology.bonuses', false), [extra, setExtra] = useFleetPreference<boolean>(instance, 'technology.extra', false)
+  const scope = useRef(0), writing = useRef(false)
+  const storageKey = `azurpilot.fleet-tech.v1.${instance}`
+  const [draft, setDraft] = useState<Draft | null>(() => {
     try {
-      if (Object.keys(pending.current).length || Object.keys(nationPending.current).length) sessionStorage.setItem(draftKey, JSON.stringify({changes: pending.current, nations: nationPending.current}))
-      else sessionStorage.removeItem(draftKey)
-    } catch { /* 存储被禁用时，当前页面仍保留待提交编辑。 */ }
-  }
-  async function reload(clearError = false) {
-    const token = scope.current.token, version = ++epoch.current
-    try {
-      const [data, value] = await Promise.all([catalogLoaded.current ? Promise.resolve(catalogLoaded.current) : api.request('fleetTech.catalog', {instance}), api.request('fleetTech.report', {instance})])
-      if (scope.current.token === token && epoch.current === version && !writing.current
-          && (clearError || !saved.current || !Object.keys(pending.current).length && !Object.keys(nationPending.current).length)) {
-        if (!saved.current) {setLow(String(value.min_level)); setHigh(String(value.max_level))}
-        catalogLoaded.current = data; setCatalog(data); saved.current = value; setReport(value)
-        // 自动轮询保留操作失败提示，只有用户主动重载才清除。
-        if (clearError) setError('')
+      const value = JSON.parse(sessionStorage.getItem(storageKey) ?? 'null')
+      if (!value || typeof value.revision !== 'string' || !value.changes || !value.nations) return null
+      for (const change of Object.values(value.changes) as Record<string, unknown>[]) {
+        for (const key of recordFields) if (key in change) change[key] = change[key] === true
+        if (change.owned === false) {change.full_star = false; change.lv120 = false}
       }
-    } catch (e) {if (scope.current.token === token) setError((e as Error).message)}
+      return value
+    } catch {return null}
+  })
+  const dirty = !!draft && (!!Object.keys(draft.changes).length || !!Object.keys(draft.nations).length)
+  const stale = dirty && !!report && draft.revision !== report.revision
+  useEffect(() => {
+    try {if (dirty) sessionStorage.setItem(storageKey, JSON.stringify(draft)); else sessionStorage.removeItem(storageKey)} catch { /* Optional browser draft. */ }
+  }, [draft, dirty, storageKey])
+  useEffect(() => {
+    const guard = (event: BeforeUnloadEvent) => {if (dirty) {event.preventDefault(); event.returnValue = ''}}
+    window.addEventListener('beforeunload', guard)
+    return () => window.removeEventListener('beforeunload', guard)
+  }, [dirty])
+  const rows = useMemo(() => catalog ? catalogRows(catalog, report?.ships ?? []).filter(row => row.technology) : [], [catalog, report])
+  const previewRows = useMemo(() => rows.map(row => {
+    const next = {...row, ...draft?.changes[row.group_type]}
+    return {...next, points: milestones.reduce((sum, key) => sum + (next[key] === true ? pointsFor(next, key) : 0), 0)}
+  }), [rows, draft])
+  const levels = {...report?.nation_levels, ...draft?.nations}
+  const totals = useMemo(() => {
+    const shipBonuses: Bonuses = {}, nationBonuses: Bonuses = {}, bonuses: Bonuses = {}
+    const add = (target: Bonuses, types: number[], attr: number, amount: number) => {
+      for (const type of new Set(types.map(shipType))) {const values = target[String(type)] ??= {}; values[String(attr)] = (values[String(attr)] ?? 0) + amount}
+    }
+    for (const row of previewRows) {
+      const t = row.technology!
+      for (const stage of ['get', 'level'] as const) if (row[stage === 'get' ? 'owned' : 'lv120'] === true) {
+        add(shipBonuses, t[`add_${stage}_shiptype`], t[`add_${stage}_attr`], t[`add_${stage}_value`])
+        add(bonuses, t[`add_${stage}_shiptype`], t[`add_${stage}_attr`], t[`add_${stage}_value`])
+      }
+    }
+    for (const [id, level] of Object.entries({...report?.nation_levels, ...draft?.nations})) if (level && catalog?.nations[id]?.[level - 1]) {
+      for (const [types, attr, amount] of catalog.nations[id]![level - 1]!) {add(nationBonuses, types, attr, amount); add(bonuses, types, attr, amount)}
+    }
+    return {shipBonuses, nationBonuses, bonuses, points: previewRows.reduce((sum, row) => sum + row.points, 0), counts: Object.fromEntries(milestones.map(key => [key, previewRows.filter(row => row[key] === true).length]))}
+  }, [previewRows, report?.nation_levels, draft?.nations, catalog])
+  const filtered = useMemo(() => {
+    const collator = new Intl.Collator(language, {numeric: true}), previews = new Map(previewRows.map(row => [row.group_type, row]))
+    const valueFor = (row: Row): string | number | null => {
+      const t = row.technology!
+      switch (sort.column) {
+        case 'code': return row.code
+        case 'name': return nameFor(row, language)
+        case 'nation': return nationOrder(row.nationality)
+        case 'shipClass': return types.indexOf(shipType(row.type))
+        case 'get': return t.pt_get
+        case 'star': return t.pt_upgrage
+        case 'Lv.120': return t.pt_level
+        case 'total': return maximumPoints(row)
+        case 'unlock': return effectFor(row, 'get', tr)
+        case 'completionBonus': return effectFor(row, 'level', tr)
+        case 'awakening_pending': return Number(row.awakening_pending)
+        case 'efficiency': return technologyEfficiency(row, catalog?.mind_costs_100_to_120 ?? {}).value
+      }
+    }
+    // Keep edited rows visible until save, even if a status filter no longer matches the draft.
+    return rows.filter(row => matches(row, filters, query)).sort((a, b) => {
+      const left = valueFor(a), right = valueFor(b)
+      if (left === null && right !== null) return 1
+      if (right === null && left !== null) return -1
+      const result = typeof left === 'number' && typeof right === 'number' ? left - right : collator.compare(String(left), String(right))
+      return result * (sort.direction === 'ascending' ? 1 : -1) || a.code - b.code || a.group_type - b.group_type
+    }).map(row => previews.get(row.group_type)!)
+  }, [rows, previewRows, filters, query, sort, language, catalog?.mind_costs_100_to_120])
+  useEffect(() => {
+    if (targetGroup && report && catalog) document.getElementById(`technology-${targetGroup}`)?.scrollIntoView?.({block: 'center'})
+  }, [targetGroup, report, catalog])
+  async function reload(includeCatalog = false) {
+    const token = scope.current
+    try {
+      const [data, value] = await Promise.all([includeCatalog ? api.request('fleetTech.catalog', {instance}) : Promise.resolve(undefined), api.request('fleetTech.report', {instance})])
+      if (scope.current === token) {if (data) setCatalog(data); setReport(value); setError('')}
+    } catch (e) {if (scope.current === token) setError((e as Error).message)}
   }
   useEffect(() => {
-    const token = scope.current.token
-    let active = true
-    saved.current = undefined; writing.current = false; epoch.current++
-    setReport(undefined); setCatalog(undefined); catalogLoaded.current = undefined; setBusy(false); setError(''); setPage(0); setView('latest'); setEdit(false)
-    pending.current = {}; nationPending.current = {}
-    try {
-      const draft = JSON.parse(sessionStorage.getItem(draftKey) ?? 'null')
-      if (draft && typeof draft.changes === 'object' && draft.changes && typeof draft.nations === 'object' && draft.nations) {
-        pending.current = draft.changes; nationPending.current = draft.nations
-      }
-    } catch { /* 不恢复损坏的浏览器草稿。 */ }
-    setDrafts({...pending.current}); setNationDrafts({...nationPending.current})
-    if (connection !== 'ready') return
-    void Promise.all([api.request('fleetTech.catalog', {instance}), api.request('fleetTech.report', {instance})]).then(([data, value]) => {
-      if (active && scope.current.token === token) {
-        catalogLoaded.current = data; setCatalog(data); saved.current = value; setReport(value)
-        setLow(String(value.min_level)); setHigh(String(value.max_level))
-      }
-    }).catch(e => {if (active) setError(e.message)})
-    const timer = setInterval(() => {if (active && !writing.current) void reload()}, 5000)
-    return () => {active = false; scope.current.token++; epoch.current++; clearInterval(timer)}
+    scope.current++; setCatalog(undefined); setReport(undefined); setError(''); setBusy(false); writing.current = false
+    if (connection === 'ready') void reload(true)
+    return () => {scope.current++}
   }, [instance, connection])
-
+  function change(row: Row, key: RecordField, value: State) {
+    if (!report || busy || connection !== 'ready') return
+    setDraft(current => {
+      const changes = {...current?.changes}, original = rows.find(value => value.group_type === row.group_type)!
+      const state = {group_type: row.group_type, owned: original.owned, full_star: original.full_star, lv120: original.lv120, awakening_pending: original.awakening_pending, ...current?.changes[row.group_type]}
+      const next = key === 'awakening_pending' ? {...state, awakening_pending: value} : changeMilestone(state, key, value, row.full_star_rule)
+      // Keep all milestone states together, but a flag-only draft must stay independent.
+      const pending: Change = {group_type: row.group_type}
+      if (milestones.some(field => next[field] !== original[field])) {
+        for (const field of milestones) pending[field] = next[field]
+      }
+      if (next.awakening_pending !== original.awakening_pending) pending.awakening_pending = next.awakening_pending
+      if (Object.keys(pending).length === 1) delete changes[row.group_type]; else changes[row.group_type] = pending
+      const nations = current?.nations ?? {}
+      return Object.keys(changes).length || Object.keys(nations).length ? {revision: current?.revision ?? report.revision, changes, nations} : null
+    })
+  }
+  function changeNation(id: string, value: number | null) {
+    if (!report) return
+    setDraft(current => {
+      const nations = {...current?.nations}, changes = current?.changes ?? {}
+      if (value === (report.nation_levels[id] ?? null)) delete nations[id]; else nations[id] = value
+      return Object.keys(changes).length || Object.keys(nations).length ? {revision: current?.revision ?? report.revision, changes, nations} : null
+    })
+  }
   async function save() {
-    if (writing.current || !saved.current) return
-    const token = scope.current.token, changes = {...pending.current}, nations = {...nationPending.current}
-    writing.current = true; epoch.current++; setBusy(true); setError('')
+    if (!report || !draft || !dirty || stale || writing.current) return
+    const token = scope.current
+    writing.current = true; setBusy(true); setError('')
     try {
-      const value = await api.request('fleetTech.patch', {instance, revision: saved.current.revision, changes: Object.values(changes), nations})
-      // 请求成功时即使已切换实例，也只清除这次提交对应的旧草稿。
-      try {
-        if (sessionStorage.getItem(draftKey) === JSON.stringify({changes, nations})) sessionStorage.removeItem(draftKey)
-      } catch { /* 存储不可用时，服务端记录仍已保存。 */ }
-      if (scope.current.token !== token) return
-      saved.current = value; setReport(value)
-      for (const [key, change] of Object.entries(changes)) if (JSON.stringify(pending.current[key]) === JSON.stringify(change)) delete pending.current[key]
-      for (const [key, level] of Object.entries(nations)) if (nationPending.current[key] === level) delete nationPending.current[key]
-      remember(); notify(tr('saved'))
-    } catch (e) {if (scope.current.token === token) setError((e as Error).message)}
-    finally {if (scope.current.token === token) {writing.current = false; setBusy(false)}}
+      const changes = Object.values(draft.changes).map(change => {
+        const original = rows.find(row => row.group_type === change.group_type)!
+        // A manual flag must not resubmit or normalize unrelated milestone states.
+        const final = {...original, ...change}
+        return {group_type: change.group_type,
+          ...(milestones.some(key => final[key] !== original[key]) ? {owned: final.owned, full_star: final.full_star, lv120: final.lv120} : {}),
+          ...(final.awakening_pending !== original.awakening_pending ? {awakening_pending: final.awakening_pending} : {}),
+        }
+      })
+      const value = await api.request('fleetTech.patch', {instance, revision: draft.revision, changes, nations: draft.nations})
+      if (token === scope.current) {setReport(value); setDraft(null); notify(tr('saved'))}
+    } catch (e) {if (token === scope.current) setError((e as Error).message)}
+    finally {if (token === scope.current) {writing.current = false; setBusy(false)}}
   }
-  function commit(change: Change) {
-    const key = String(change.group_type)
-    pending.current[key] = change
-    remember(); void save()
+  async function mergeShips() {
+    if (!report || dirty || writing.current) return
+    const token = scope.current
+    writing.current = true; setBusy(true); setError('')
+    try {
+      const value = await api.request('fleetTech.mergeShips', {instance, revision: report.revision})
+      if (token === scope.current) {setReport(value); notify(tr('mergeSaved'))}
+    } catch (e) {if (token === scope.current) setError((e as Error).message)}
+    finally {if (token === scope.current) {writing.current = false; setBusy(false)}}
   }
-  async function action(run: () => Promise<unknown>) {
-    if (writing.current) return
-    const token = scope.current.token
-    writing.current = true; epoch.current++; setBusy(true); setError('')
-    try {await run()} catch (e) {if (scope.current.token === token) setError((e as Error).message)}
-    finally {if (scope.current.token === token) {writing.current = false; setBusy(false); void reload()}}
+  function group(key: string, options: [string, string][], label = tr(key === 'type' ? 'category' : key)) {
+    return <FleetFilterRow filter={key} label={label} options={options} filters={filters} setFilters={setFilters} all={tr('all')}/>
   }
-  const historyRows = useMemo(() => {
-    const progress = new Map(report?.ships.map(row => [row.group_type, row]))
-    return (catalog?.ships ?? []).flatMap(ship => progress.has(ship.group_type) ? [preview({...ship, ...progress.get(ship.group_type)!}, drafts[ship.group_type])] : [])
-  }, [catalog, report, drafts])
-  const hasScan = Array.isArray(report?.last_scan?.ships)
-  const latest = view === 'latest' && hasScan && !edit
-  const rows = useMemo(() => latest && catalog && report?.last_scan ? scanRows(catalog, report.last_scan) : historyRows,
-    [latest, catalog, report, historyRows])
-  function nation(value: number) {const label = tr(`nation.${value}`); return label.startsWith('nation.') ? `${tr('collaboration')} · ${value}` : label}
-  function rarity(value: string) {return value === 'PR' || value === 'DR' ? tr(`rarity.${value}`) : ui(`mind.rarity.${value}` as 'mind.rarity.N')}
-  function effect(row: Row, stage: 'get' | 'level') {
-    const t = row.technology
-    return t ? `${[...new Set(t[`add_${stage}_shiptype`].map(shipType))].map(value => tr(`type.${value}`)).join('/')} ${tr(`attr.${t[`add_${stage}_attr`]}`)}+${t[`add_${stage}_value`]}` : '—'
-  }
-  function sortValue(row: Row): number | string {
-    const t = row.technology
-    if (['pt_get', 'pt_upgrage', 'pt_level'].includes(sort.key)) return t?.[sort.key as 'pt_get'] ?? -1
-    if (sort.key === 'total') return t ? t.pt_get + t.pt_upgrage + t.pt_level : -1
-    if (sort.key === 'get' || sort.key === 'level') return effect(row, sort.key)
-    if (sort.key === 'scanLevel') return row.level ?? -1
-    return sort.key === 'name' ? row.name : sort.key === 'nation' ? row.nationality : sort.key === 'type' ? row.type : row.code
-  }
-  const filtered = rows.filter(row => matches(row, filters, query, mode, extra ? stage : 'all')).sort((a, b) => {
-    const x = sortValue(a), y = sortValue(b)
-    return sort.direction * (typeof x === 'number' && typeof y === 'number' ? x - y : String(x).localeCompare(String(y)))
-  })
-  const pages = Math.max(1, Math.ceil(filtered.length / 50)), currentPage = Math.min(page, pages - 1)
-  function toggle(key: string, value: string) {
-    setFilters(previous => ({...previous, [key]: !value ? [] : previous[key]?.includes(value) ? previous[key]!.filter(item => item !== value) : [...previous[key] ?? [], value]})); setPage(0)
-  }
-  function group(key: string, options: [string, string][]) {
-    return <div className="ft-filter-row" key={key}><strong>{tr(key === 'type' ? 'category' : key)}</strong><div className="ft-chips">{[['', tr('all')], ...options].map(([value, label]) => <button key={value} aria-pressed={value ? filters[key]?.includes(value) ?? false : !filters[key]?.length} onClick={() => toggle(key, value!)}>{label}</button>)}</div></div>
-  }
-  function head(key: string, label: string, span = 1) {
-    return <th rowSpan={span} aria-sort={sort.key === key ? sort.direction === 1 ? 'ascending' : 'descending' : 'none'}><button onClick={() => setSort({key, direction: sort.key === key ? -sort.direction : 1})}>{label} <small>↕</small></button></th>
-  }
-  function marker(row: Row, field: 'owned' | 'complete' | 'star', content: ReactNode, label: string) {
-    const active = field === 'owned' ? row.owned : field === 'complete' ? row.lv120 : !!row.full_star
-    const inner = <>{active && field === 'star' && edit && <span className="ft-check" aria-hidden="true">✓</span>}{content}</>
-    return edit ? <button className="ft-state-button" aria-label={`${label} ${row.name} (${row.code})`} aria-pressed={active}
-      disabled={busy || connection !== 'ready' || !!drafts[row.group_type]}
-      onClick={() => commit({group_type: row.group_type, toggle: field, target: !active})}>{inner}</button>
-      : <span className="ft-state-value">{inner}</span>
-  }
-  if (!catalog || !report) return error ? <ErrorBox message={error} retry={() => void reload(true)}/> : <Loading/>
-  const nations = [...new Set(historyRows.map(row => row.nationality))].sort((a, b) => a - b)
-  const dirty = Object.keys(drafts).length + Object.keys(nationDrafts).length
+  function bonusList(values: Bonuses) {return <div className="ft-bonus-grid">{types.filter(type => values[String(type)] && Object.keys(values[String(type)]!).length).map(type => <div key={type}><b>{tr(`type.${type}`)}</b> {attrs.filter(attr => values[String(type)]![String(attr)]).map(attr => `${tr(`attr.${attr}`)}+${values[String(type)]![String(attr)]}`).join(' · ')}</div>)}</div>}
+  if (!catalog || !report) return error ? <ErrorBox message={error} retry={() => void reload(!catalog)}/> : <Loading/>
+  const disabled = busy || connection !== 'ready'
   return <div className="fleet-technology">
-    <PageTitle title={tr('title')} actions={<button className="button secondary" disabled={busy || connection !== 'ready'} onClick={() => void reload(true)}>{ui('mind.reload')}</button>}/>
-    {error && <ErrorBox message={error} retry={() => void reload(true)}/>}
-    <section className="ft-summary"><div><small>{tr('historySummary')}</small><p>{tr('max')}： <b>{number(catalog.max_points)}</b></p><p>{tr('four')}： {[1, 2, 3, 4].map(id => <span key={id}>{nation(id)} {number(catalog.nation_points[id] ?? 0)}　</span>)}</p><p>{tr('count')}： <b>{report.completed} / {historyRows.filter(row => row.technology).length}</b>　{tr('confirmed')}：{number(report.confirmed_points)}　<small>{tr('pendingStar')}{report.pending_star}</small></p></div><small>{tr('version')}：Lua · {catalog.updated_at}<br/>{tr('all')} {historyRows.length} · {tr('tech')} {historyRows.filter(row => row.technology).length} · {tr('none')} {historyRows.filter(row => !row.technology).length}</small></section>
-    <section className="ft-toolbar">
-      <label>{tr('low')}<input aria-label={tr('low')} type="number" min={1} max={125} value={low} disabled={busy || !!scanReason} onChange={e => setLow(e.target.value)}/></label>
-      <label>{tr('high')}<input aria-label={tr('high')} type="number" min={1} max={125} value={high} disabled={busy || !!scanReason} onChange={e => setHigh(e.target.value)}/></label>
-      <button className="button primary" title={scanReason} disabled={busy || !!scanReason || !!dirty} onClick={() => void action(async () => {
-        const min = Number(low), max = Number(high)
-        if (!low.trim() || !high.trim() || !Number.isInteger(min) || !Number.isInteger(max) || min < 1 || max > 125 || min > max) throw new Error(ui('mind.invalidRange'))
-        await editor(`config:${instance}`).settled()
-        const config = await api.request('config.get', {instance})
-        await api.request('config.patch', {instance, revision: config.revision, changes: [{path: 'FleetTechScan.FleetTech.MinLevel', value: min}, {path: 'FleetTechScan.FleetTech.MaxLevel', value: max}]})
-        await api.request('tasks.run', {instance, task: 'FleetTechScan'})
-        setView('latest'); setEdit(false); setPage(0)
-      })}>{tr('scan')}</button>
-      {scanning && <button className="button secondary" disabled={busy} onClick={() => void action(() => api.request('scheduler.stop', {instance}))}>{ui('mind.stop')}</button>}
-      <button className="button secondary" disabled={busy || connection !== 'ready' || !!dirty} onClick={() => void action(() => api.request('fleetTech.syncMind', {instance}))}>{tr('sync')}</button>
-      {dirty > 0 && <button className="button secondary" disabled={busy || connection !== 'ready'} onClick={() => void save()}>{tr('retry')} ({dirty})</button>}
-      <small role="status">{busy ? ui('mind.processing') : dirty ? ui('mind.unsaved') : scanReason || tr('hint')}</small>
-    </section>
-    <section className="ft-view" aria-label={tr('resultView')}><div className="ft-chips">
-      <button aria-pressed={latest} disabled={!hasScan || busy} onClick={() => {setView('latest'); setEdit(false); setPage(0)}}>{tr('latestScan')}</button>
-      <button aria-pressed={!latest} disabled={busy} onClick={() => {setView('history'); setPage(0)}}>{tr('history')}</button>
-    </div><small>{tr(latest ? 'latestHint' : 'historyHint')}</small></section>
-    {report.last_scan && <p className="ft-scan-summary">{tr(report.last_scan.complete ? 'fullScan' : 'partialScan')} · Lv.{report.last_scan.min_level}–{report.last_scan.max_level} · {tr('matched')} {report.last_scan.matched_count} · {tr('review')} {report.review_ships.length} · {tr('scanTime')} {report.last_scan.updated_at.replace('T', ' ')}</p>}
-    {!!report.review_ships.length && <details className="ft-reviews"><summary>{tr('review')} ({report.review_ships.length})</summary><p>{tr('reviewHint')}</p>
-      {report.review_ships.map((ship, index) => <div key={index}><span>{ship.name} · {ship.level ? `Lv.${ship.level}` : tr('unknown')}</span>
-        {(ship.candidates?.length ? ship.candidates : ship.group_type ? [ship.group_type] : []).map(gid => {const row = historyRows.find(item => item.group_type === gid); return row && <button key={gid} className="button secondary" onClick={() => {setFilters({}); setMode('all'); setQuery(String(row.code)); setView('history'); setEdit(true); setPage(0)}}>{row.name} · {nation(row.nationality)} · {tr(`type.${shipType(row.type)}`)} · {row.code}</button>})}
-        <small>{ship.source}</small></div>)}
-    </details>}
+    <PageTitle title={tr('title')} actions={<button className="button secondary" disabled={disabled} onClick={() => void reload()}>{ui('mind.reload')}</button>}/>
+    {error && <ErrorBox message={error}/>}
+    <section className="ft-summary"><div><p>{tr('max')}：<b>{catalog.max_points.toLocaleString()}</b> · {tr('confirmed')}：<b>{totals.points.toLocaleString()}</b>{dirty && <span className="ft-draft-label">{tr('draftPreview')}</span>}</p><p>{tr('four')}：{['1', '2', '3', '4'].map(id => `${tr(`nation.${id}`)} ${catalog.nation_points[id] ?? 0}`).join(' · ')}</p><p>{milestones.map(key => <span key={key}>{tr(stageLabel[key])}：{totals.counts[key]} / {rows.length}　</span>)}</p><small>{tr('independentHint')}</small></div></section>
     <section className="ft-filters">
       {group('type', [['front', tr('front')], ['back', tr('back')], ...types.map(value => [String(value), tr(`type.${value}`)] as [string, string])])}
-      {group('rarity', ['N', 'R', 'SR', 'SSR', 'UR', 'PR', 'DR'].map(value => [value, rarity(value)]))}
-      {group('nation', [...nations.map(value => [String(value), nation(value)] as [string, string]), ['mu', tr('mu')], ['child', tr('child')]])}
+      {group('rarity', rarities.map(value => [value, tr(`rarity.${value}`)]))}
+      {group('nation', [...new Set(rows.map(row => row.nationality))].sort((a, b) => nationOrder(a) - nationOrder(b) || a - b).map(value => [String(value), tr(`nation.${value}`)]))}
       {group('bonusType', types.map(value => [String(value), tr(`type.${value}`)]))}
       {group('attr', attrs.map(value => [String(value), tr(`attr.${value}`)]))}
-      {group('status', ['incomplete', 'unfinished', 'unowned', 'owned', 'complete'].map(value => [value, tr(value)]))}
-      <div className="ft-filter-row"><strong>{tr('functions')}</strong><div className="ft-chips"><button aria-pressed={edit} onClick={() => {setView('history'); setEdit(!edit)}}>{tr('edit')}</button><button aria-pressed={bonuses} onClick={() => setBonuses(!bonuses)}>{tr('bonuses')}</button><button aria-pressed={extra} onClick={() => setExtra(!extra)}>{tr('extra')}</button></div></div>
+      {extra && <>{group('getBonusType', types.map(value => [String(value), tr(`type.${value}`)]), `${tr('unlock')} · ${tr('shipClass')}`)}{group('getAttr', attrs.map(value => [String(value), tr(`attr.${value}`)]), `${tr('unlock')} · ${tr('attr')}`)}{group('levelBonusType', types.map(value => [String(value), tr(`type.${value}`)]), `${tr('completionBonus')} · ${tr('shipClass')}`)}{group('levelAttr', attrs.map(value => [String(value), tr(`attr.${value}`)]), `${tr('completionBonus')} · ${tr('attr')}`)}</>}
+      {group('status', ['incomplete', 'unfinished', 'notTrained120', 'missingStar', 'awakening_pending', 'unowned', 'owned', 'lv120'].map(key => [key, tr(key === 'lv120' ? 'Lv.120' : key)]))}
+      <div className="ft-filter-row"><strong>{tr('functions')}</strong><div className="ft-chips"><button aria-pressed={editing} onClick={() => setEditing(!editing)}>{tr('edit')}</button><button aria-expanded={bonuses} aria-controls="fleet-tech-bonuses" onClick={() => setBonuses(!bonuses)}>{tr('bonuses')}</button><button aria-expanded={extra} onClick={() => {setExtra(!extra); if (extra) setFilters(current => {const next = {...current}; for (const key of ['getBonusType', 'getAttr', 'levelBonusType', 'levelAttr']) delete next[key]; return next})}}>{tr('extra')}</button></div></div>
     </section>
-    {extra && <label className="ft-stage">{tr('stage')}<Select value={stage} onChange={e => {setStage(e.target.value); setPage(0)}}><option value="all">{tr('all')}</option><option value="get">{tr('unlock')}</option><option value="level">Lv.120</option></Select></label>}
-    {bonuses && <section className="ft-bonuses"><h2>{tr('bonuses')}</h2><div className="ft-nation-levels">{Object.entries(catalog.nations).map(([id, levels]) => <label key={id}>{nation(Number(id))} {tr('factionLevel')}<Select aria-label={`${nation(Number(id))} ${tr('factionLevel')}`} disabled={busy || connection !== 'ready'} value={(has(nationDrafts, id) ? nationDrafts[id] : report.nation_levels[id]) ?? ''} onChange={e => {nationPending.current[id] = e.target.value === '' ? null : Number(e.target.value); remember(); void save()}}><option value="">{tr('unknown')}</option>{Array.from({length: levels.length + 1}, (_, value) => <option key={value} value={value}>{value}</option>)}</Select></label>)}</div><p>{tr('factionHint')}</p><div className="ft-bonus-grid">{Object.entries(report.bonuses).map(([type, values]) => <div key={type}><b>{tr(`type.${type}`)}</b> {Object.entries(values).map(([attr, value]) => `${tr(`attr.${attr}`)}+${value}`).join(' · ')}</div>)}</div></section>}
-    <div className="ft-search"><input aria-label={tr('search')} placeholder={tr('search')} value={query} onChange={e => {setQuery(e.target.value); setPage(0)}}/><label>{tr('scope')}<Select aria-label={tr('scope')} value={mode} onChange={e => {setMode(e.target.value); setPage(0)}}>{['all', 'tech', 'none'].map(value => <option value={value} key={value}>{tr(value)}</option>)}</Select></label><span>{ui('mind.rowCount', {count: filtered.length})}</span></div>
-    <div className="ft-table-wrap"><table><thead><tr>{head('code', tr('code'), 2)}{head('name', tr('name'), 2)}{latest && head('scanLevel', tr('observedLevel'), 2)}{head('nation', tr('nation'), 2)}{head('type', tr('shipClass'), 2)}<th colSpan={4}>{tr('points')}</th><th colSpan={2}>{tr('bonuses')}</th>{edit && <th rowSpan={2}>{tr('edit')}</th>}</tr><tr>{head('pt_get', tr('get'))}{head('pt_upgrage', tr('star'))}{head('pt_level', 'Lv.120')}{head('total', tr('total'))}{head('get', tr('unlock'))}{head('level', 'Lv.120')}</tr></thead><tbody>{filtered.slice(currentPage * 50, currentPage * 50 + 50).map(row => {
-      const t = row.technology, level = row.level
-      const name = row.names[language === 'en-US' ? 'en' : language === 'ja-JP' ? 'jp' : language === 'zh-TW' ? 'tw' : 'cn'] || row.name
-      return <tr key={row.group_type} className={`ft-${row.status}`} data-group={row.group_type} title={[row.level ? `Lv.${row.level}` : '', row.manual ? tr('manual') : ''].filter(Boolean).join(' · ') || undefined}>
-        <td>{String(row.code).padStart(3, '0')}</td><td className={`ft-name ft-rarity-${row.rarity}`}>{name}</td>{latest && <td>Lv.{row.level}</td>}
-        <td>{nation(row.nationality)}{row.variant && <small> · {tr(row.variant)}</small>}</td><td>{tr(`type.${shipType(row.type)}`)}</td>
-        <td>{t?.pt_get ?? '—'}</td><td className="ft-state-cell">{t ? marker(row, 'star', t.pt_upgrage, tr('star')) : '—'}</td>
-        <td>{t?.pt_level ?? '—'}</td><td>{t ? t.pt_get + t.pt_upgrage + t.pt_level : '—'}</td>
-        <td className={`ft-state-cell ft-unlock ${row.owned ? 'ft-marked' : ''}`}>{marker(row, 'owned', effect(row, 'get'), tr('unlock'))}</td>
-        <td className={`ft-state-cell ft-completion ${row.lv120 ? 'ft-marked' : ''}`}>{marker(row, 'complete', effect(row, 'level'), tr('completion'))}</td>
-        {edit && <td className="ft-edit"><label>{tr('level')}<input key={`${row.group_type}:${level}`} aria-label={`${tr('level')} ${row.name} (${row.code})`}
-          disabled={busy || connection !== 'ready' || !!drafts[row.group_type]} type="number" min={1} max={125} defaultValue={level ?? ''}
-          onKeyDown={e => {if (e.key === 'Enter') e.currentTarget.blur()}}
-          onBlur={e => {const value = e.target.value === '' ? null : Number(e.target.value); if (value !== level) {if (value !== null && (!Number.isInteger(value) || value < 1 || value > 125)) {setError(ui('mind.invalidRange')); return} commit({group_type: row.group_type, level: value})}}}/></label>
-          <button disabled={busy || connection !== 'ready'} onClick={() => commit({group_type: row.group_type, restore: true})}>{tr('restore')}</button></td>}
-      </tr>
-    })}</tbody></table>{!filtered.length && <p className="ft-empty">{ui('mind.empty')}</p>}</div>
-    <footer><a href="https://wiki.biligame.com/blhx/舰队科技" target="_blank" rel="noreferrer">{tr('attribution')}</a><div><button disabled={!currentPage} onClick={() => setPage(currentPage - 1)}>{ui('mind.previous')}</button><span>{currentPage + 1} / {pages}</span><button disabled={currentPage + 1 >= pages} onClick={() => setPage(currentPage + 1)}>{ui('mind.next')}</button></div></footer>
+    <div className="ft-toolbar ft-savebar"><button className="button primary" disabled={disabled || !dirty || stale} onClick={() => void save()}>{ui('analysis.save')}</button>{dirty && <><span role="status">{tr('pendingEdits')}: {Object.keys(draft.changes).length + Object.keys(draft.nations).length}</span><button className="button secondary" disabled={busy} onClick={() => {setDraft(null); setError('')}}>{ui('analysis.discard')}</button></>}<button className="button secondary" disabled={disabled || dirty} title={dirty ? tr('saveBeforeMerge') : tr('mergeHint')} onClick={() => void mergeShips()}>{tr('mergeShips')}</button><small>{tr('mergeHint')}</small></div>
+    {stale && <p role="alert">{ui('analysis.stale')}</p>}
+    {bonuses && <section id="fleet-tech-bonuses" className="ft-bonuses"><h2>{tr('bonuses')}{dirty && ` · ${tr('draftPreview')}`}</h2><div className="ft-nation-levels">{Object.entries(catalog.nations).map(([id, values]) => <label key={id}>{tr(`nation.${id}`)} {tr('factionLevel')}<select aria-label={`${tr(`nation.${id}`)} ${tr('factionLevel')}`} disabled={disabled} value={levels[id] ?? ''} onChange={event => changeNation(id, event.target.value === '' ? null : Number(event.target.value))}><option value="">{tr('unspecified')}</option>{Array.from({length: values.length + 1}, (_, value) => <option key={value} value={value}>{value}</option>)}</select></label>)}</div><h3>{tr('shipBonuses')}</h3>{bonusList(totals.shipBonuses)}<h3>{tr('nationBonuses')}</h3>{bonusList(totals.nationBonuses)}<h3>{tr('total')}</h3>{bonusList(totals.bonuses)}<p>{tr('unknownImpact')}</p></section>}
+    <div className="ft-search"><input aria-label={tr('search')} placeholder={tr('search')} value={query} onChange={event => setQuery(event.target.value)}/><span>{ui('mind.rowCount', {count: filtered.length})}</span><span className="ft-state-legend">✓ {tr('finished')} · — {tr('notFinished')}</span></div>
+    {editing && <p className="ft-edit-hint">{tr('inlineEditHint')}</p>}
+    <TechnologyTable rows={filtered} language={language} tr={tr} mindCosts={catalog.mind_costs_100_to_120} editing={editing} disabled={disabled} sort={sort} onSort={column => setSort(current => ({column, direction: current.column === column ? current.direction === 'ascending' ? 'descending' : 'ascending' : column === 'efficiency' ? 'descending' : 'ascending'}))} onChange={change} modified={Object.keys(draft?.changes ?? {}).map(Number)} targetGroup={targetGroup}/>
+    {!filtered.length && <p>{ui('mind.empty')}</p>}
+    <footer><small>{tr('version')}：{catalog.updated_at}</small><a href="https://wiki.biligame.com/blhx/舰队科技#舰队科技列表" target="_blank" rel="noreferrer">{tr('attribution')}</a></footer>
   </div>
 }

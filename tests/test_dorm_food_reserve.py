@@ -73,7 +73,7 @@ class DormFoodReserveTests(unittest.TestCase):
         self.dorm.handle_popup_cancel = Mock(return_value=False)
         self.dorm._dorm_feed_long_tap = Mock()
         device = self.dorm.device
-        device.click_record = deque(maxlen=15)
+        device.click_record = deque(maxlen=50)
         device.click_record_remove.side_effect = lambda button: Device.click_record_remove(device, button)
 
         def control_check(button):
@@ -370,7 +370,7 @@ class DormFoodReserveTests(unittest.TestCase):
     def test_batch_keeps_existing_click_guard_until_progress_is_confirmed(self):
         self.amounts[0] = 3
         self.use_observed_feeding(dropped=None)
-        self.dorm.device.click_record.extend([str(self.dorm._dorm_food.buttons[0])] * 11)
+        self.dorm.device.click_record.extend([str(self.dorm._dorm_food.buttons[0])] * 49)
         with self.assertRaises(GameTooManyClickError):
             self.dorm.dorm_feed_once()
         self.assertEqual(3, self.amounts[0])

@@ -432,6 +432,7 @@ class CampaignRun(CampaignEvent, ShopStatus):
 
             # 日志
             logger.hr(name, level=1)
+            logger.info(f'Campaign run: event="{folder}", name={name}')
             if self.config.StopCondition_RunCount > 0:
                 logger.info(f'[战役-运行] 剩余次数: {self.config.StopCondition_RunCount}')
             else:
@@ -443,6 +444,9 @@ class CampaignRun(CampaignEvent, ShopStatus):
             if not self.device.has_cached_image:
                 self.device.screenshot()
             self.campaign.device.image = self.device.image
+            if not resume_map:
+                from module.campaign.fleet_training import recover_reading
+                recover_reading(self, mode)
             if resume_map:
                 logger.info('[战役续接] 跳过选关与入场，恢复原战役状态循环')
             elif self.campaign.is_in_map():
@@ -491,6 +495,10 @@ class CampaignRun(CampaignEvent, ShopStatus):
             self.device.click_record_clear()
             try:
                 self.campaign._resume_after_restart = resume_map
+                from module.campaign.fleet_rotation import preflight_rotation
+                self.campaign._fleet_rotation_preflight = lambda battle: preflight_rotation(self, battle, mode)
+                from module.campaign.fleet_training import after_battle_due
+                self.campaign._fleet_training_after_battle = lambda: after_battle_due(self, mode)
                 resume_map = False
                 self.campaign.run()
             except ScriptEnd as e:

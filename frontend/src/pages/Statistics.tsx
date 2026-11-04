@@ -54,12 +54,14 @@ import { CategorySection } from '../components/CategorySection'
 import { PageChainSlots } from '../components/PageChainSlots'
 import { StatisticsEditConsole } from '../components/StatisticsEditConsole'
 import { buildSeriesView, downloadCsv } from '../components/statisticsData'
+import { withTranslatedKeys } from '../components/statisticsText'
 import type { UiKey } from '../i18n'
 import { readStatisticsPrefs, updateStatisticsPrefs } from '../app/statisticsPrefs'
 import {applySlots, cardKey, cardSpace, DEFAULT_TABLE_ROWS, defaultStatisticsLayout, foldCard, hasStatisticsLayout, hideCard, pageNeedsSeries, isCardFolded, isCardHidden, isChartCompact, isLinked, isMetricsTable, isPageEnabled, isPickerHidden, isStackedRise, linkChains, movePageBeside, orderCards, orderPages, placeCard, readChains, readStatisticsEditMode, readStatisticsLayout, rechain, resetStatisticsLayout, setChartCompact, setMetricsTable, setPageEnabled, setPickerHidden, setStackedRise, setTableDisplay, showCard, splitChains, tableDisplay, toggleSeriesFilter, unfoldCard, writeStatisticsEditMode, writeStatisticsLayout} from '../app/statisticsLayout'
 import type {StatisticsLayout} from '../app/statisticsLayout'
 
-const metricIcons: Record<string, LucideIcon> = {
+/* 图标表的键为中文名；withTranslatedKeys 补上译名，翻译后的指标名仍能找到图标。 */
+const metricIcons: Record<string, LucideIcon> = withTranslatedKeys({
   '战斗次数': Swords,
   '出击轮数': RotateCw,
   '出击消耗': Flame,
@@ -85,17 +87,17 @@ const metricIcons: Record<string, LucideIcon> = {
   '今日战斗': Swords,
   '今日经验': Sparkles,
   '今日运行': Timer,
-}
+})
 
 const iconBase = import.meta.env.BASE_URL
-const metricWebpIcons: Record<string, string> = {
+const metricWebpIcons: Record<string, string> = withTranslatedKeys({
   '完成委托': `${iconBase}honor_medal.webp`,
   '钻石': `${iconBase}diamond.webp`,
   '心智魔方': `${iconBase}cube.webp`,
   '心智单元': `${iconBase}cognitive_chips.webp`,
   '石油': `${iconBase}oil.webp`,
   '物资': `${iconBase}gold.webp`,
-}
+})
 
 function getMetricWebp(label: string): string | undefined {
   if (metricWebpIcons[label]) return metricWebpIcons[label]
@@ -584,19 +586,24 @@ export function Statistics() {
   }
 
   const categoryControl = <SegmentedControl<StatisticsView> className="statistics-category-control" label={ui('stats.categoryLabel')} value={management ? 'management' : category} onChange={selectPage} onItemContextMenu={editMode && !management ? id => {if (id !== 'management') togglePage(id, false)} : undefined} onItemMove={editMode && !management ? (id, delta) => {if (id !== 'management') movePageBy(id, delta)} : undefined} itemClassName={id => id === 'management' ? '' : `${isPageEnabled(layout, id) ? '' : 'is-disabled'}${!editMode && chainOf(id).length > 1 ? ' is-chained' : ''}`.trim()} trailing={!management && singleViewToggle} options={navigationEntries.map(([value, label]) => ({value, label: ui(label)}))}/>
+  /* 窄屏用明确的下拉入口展示全部分类，编辑模式的合并开关仍可单独操作。 */
+  const categoryPicker = <div className="statistics-category-picker">
+    <Select openOnFocus={condensed} className="statistics-category-select" aria-label={ui('stats.categoryLabel')} value={management ? 'management' : category} onChange={event => selectPage(event.target.value as StatisticsView)}>
+      {navigationEntries.map(([value, label]) => <option value={value} key={value}>{ui(label)}</option>)}
+    </Select>
+    {!management && singleViewToggle}
+  </div>
   const content = <>
     {condensed
       ? <div className={`statistics-toolbar-row${compact ? ' is-compact' : ''}`} ref={toolbarRow}>
           {categoryControl}
-          {/* 放不下时改用单按钮下拉；指针移入或键盘聚焦即展开，见 Select 的 openOnFocus */}
-          <Select openOnFocus className="statistics-category-select" aria-label={ui('stats.categoryLabel')} value={management ? 'management' : category} onChange={event => selectPage(event.target.value as StatisticsView)}>
-            {navigationEntries.map(([value, label]) => <option value={value} key={value}>{ui(label)}</option>)}
-          </Select>
+          {categoryPicker}
           <div className="statistics-toolbar-right" ref={toolbarRight}>{!management && <>{hasChart && activeView.foldControl(activeView.chartKey)}{hasChart && <button className="text-button" onClick={() => category && toggleExpanded(category)}>{expandedChart === category ? ui('stats.collapseChart') : ui('stats.expandChart')}</button>}{rangeControls}<ActionGroup>{actions}</ActionGroup></>}</div>
         </div>
       : <>
           <div className="statistics-toolbar-row">
             {categoryControl}
+            {categoryPicker}
             {legacy && !management && <ActionGroup>{actions}</ActionGroup>}
           </div>
           {!management && <div className="statistics-controls period-controls"><strong>{ui(categories[category!])}</strong>{rangeControls}{hints}</div>}
@@ -609,9 +616,9 @@ export function Statistics() {
           const at = layout.pages.findIndex(chain => chain.includes(id))
           return (
             <span className="statistics-page-order-item" key={id}>
-              <button type="button" aria-label={`${ui(label)} 前移`} disabled={at <= 0} onClick={() => movePageBy(id, -1)}>◀</button>
+              <button type="button" aria-label={ui('stats.moveEarlier', {label: ui(label)})} disabled={at <= 0} onClick={() => movePageBy(id, -1)}>◀</button>
               <span className="statistics-page-order-label">{ui(label)}</span>
-              <button type="button" aria-label={`${ui(label)} 后移`} disabled={at < 0 || at >= layout.pages.length - 1} onClick={() => movePageBy(id, 1)}>▶</button>
+              <button type="button" aria-label={ui('stats.moveLater', {label: ui(label)})} disabled={at < 0 || at >= layout.pages.length - 1} onClick={() => movePageBy(id, 1)}>▶</button>
             </span>
           )
         })}

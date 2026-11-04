@@ -1,22 +1,19 @@
-"""心智单元计算器的实例数据与文件导入导出接口。"""
+"""养成计算、舰船资料与文件导入接口。"""
 import base64
 import binascii
 import csv
 import io
 import json
 import zipfile
-from datetime import datetime
 from pathlib import Path
 from xml.etree.ElementTree import ParseError
 
 from pydantic import ValidationError
 
-from deploy.atomic import atomic_write
 from module.api.protocol import ApiError, MindShip
-from module.config.transaction import config_transaction
-from module.runtime.mind_calculator import RARITY_NAMES, calculate, catalog, revision
-
-TASK, GROUP = 'MindCalculatorScan', 'MindCalculator'
+from module.runtime import dock_data
+from module.runtime.fleet_database import FleetDatabase
+from module.runtime.mind_calculator import RARITY_NAMES, catalog
 
 
 def input_ship(ship):
@@ -33,11 +30,11 @@ def decode(content):
 
 
 def table_ships(rows):
-    """兼容原计算器的舰船明细表头，不依据位置猜测列含义。"""
+    """按表头读取舰船数据，不依据位置猜测列含义。"""
     aliases = {'name': ('name', '船名', '舰船', '名称'), 'level': ('level', '等级'),
                'rarity': ('rarity', '稀有度'), 'base_rarity': ('base_rarity', '基础稀有度'),
-               'excluded': ('excluded', '排除'), 'review': ('review', '需核对'), 'source': ('source', '来源'),
-               'status': ('status', '状态'), 'notes': ('notes', '备注')}
+               'review': ('review', '需核对'), 'source': ('source', '来源'),
+               'extra_exp': ('extra_exp', '额外经验', '零散经验')}
     columns = None
     output = []
     for index, row in enumerate(rows):
@@ -77,10 +74,15 @@ def table_ships(rows):
             if raw not in ('', '0', '1', 'true', 'false', '是', '否'):
                 raise ValueError(f'第 {index + 1} 行 {key} 字段无效')
             return raw in ('1', 'true', '是')
-        output.append(input_ship(dict(name=name, level=int(raw_level), rarity=rarity,
-                                      base_rarity=base_rarity, excluded=boolean('excluded'),
-                                      review=boolean('review') or value('status') in ('存疑', '等级未读到', '名字未匹配'),
-                                      source=str(value('source') or value('notes'))[:200])))
+        raw_exp = value('extra_exp', '')
+        extra_exp = None
+        if raw_exp != '' and raw_exp is not None:
+            if isinstance(raw_exp, bool) or not str(raw_exp).strip().isdigit():
+                raise ValueError(f'第 {index + 1} 行额外经验必须为非负整数或留空')
+            extra_exp = int(raw_exp)
+        output.append(input_ship(dict(extra_exp=extra_exp, name=name, level=int(raw_level), rarity=rarity,
+                                      base_rarity=base_rarity, review=boolean('review'),
+                                      source=str(value('source'))[:200])))
     if columns is None:
         raise ValueError('缺少“船名”和“等级”表头')
     return output
@@ -108,19 +110,7 @@ def import_ships(filename, content):
             try:
                 sheet = book['舰船明细'] if '舰船明细' in book.sheetnames else book.active
                 rows = list(sheet.iter_rows(max_row=5021, max_col=20, values_only=True))
-                ships = table_ships(rows)
-                # 原工具把排除清单放在明细右侧 M 列；按明确表头回读。
-                for index, row in enumerate(rows[:20]):
-                    if '排除船名' in row:
-                        column = row.index('排除船名')
-                        for values in rows[index + 1:]:
-                            name = values[column]
-                            if name and not str(name).startswith('本次没有需要排除的船'):
-                                ships.append(input_ship(dict(name=str(name), level=0, excluded=True)))
-                        break
-                if len(ships) > 5000:
-                    raise ValueError('最多导入 5000 艘舰船')
-                return ships
+                return table_ships(rows)
             finally:
                 book.close()
         raise ValueError('请选择 JSON、CSV 或 XLSX 文件')
@@ -133,26 +123,17 @@ class MindCalculatorService:
         """绑定配置服务并初始化心智计算器接口。"""
         self.configs = configs
 
-    def report(self, instance):
-        """返回指定实例保存的舰船列表及版本信息。"""
-        data, _ = self.configs.read(instance)
-        saved = data.get(TASK, {}).get(GROUP, {}).get('Result', {})
-        ships = saved.get('ships', [])
-        fields = data.get(TASK, {}).get(GROUP, {})
-        return dict(instance=instance, revision=revision(ships), updated_at=saved.get('updated_at', ''),
-                    min_level=fields.get('MinLevel', 95), max_level=fields.get('MaxLevel', 125),
-                    **calculate(ships))
 
-    def save(self, instance, expected_revision, ships):
-        """按版本校验保存实例的心智计算器清单。"""
-        with self.configs.lock, config_transaction(self.configs.path(instance)):
-            data, _ = self.configs.read(instance)
-            fields = data.setdefault(TASK, {}).setdefault(GROUP, {})
-            if revision(fields.get('Result', {}).get('ships', [])) != expected_revision:
-                raise ApiError('CONFLICT', '舰船数据已变化，请重新载入后再保存')
-            fields['Result'] = dict(ships=ships, updated_at=datetime.now().isoformat(timespec='seconds'))
-            atomic_write(str(self.configs.path(instance)), json.dumps(data, ensure_ascii=False, indent=2))
-            return self.report(instance)
+    def plan(self, instance, expected_revision, ship_ids, target_level):
+        """Project selected card IDs against one confirmed revision without writing facts."""
+        from module.runtime.fleet_cultivation import project
+        data = FleetDatabase(self.configs.path(instance)).load()
+        snapshot = dock_data.read_snapshot(data)
+        if snapshot['revision'] != expected_revision:
+            raise ApiError('CONFLICT', '舰船数据已更新，请重新载入后计算')
+        return dict(instance=instance, revision=snapshot['revision'],
+                    **project(snapshot['ships'], ship_ids, target_level))
+
 
     def catalog(self, instance):
         """返回用于计算与人工核对的舰船资料。"""
@@ -160,10 +141,6 @@ class MindCalculatorService:
         data = catalog()
         return dict(updated_at=data['updated_at'], ships=list(data['ships'].values()))
 
-    def calculate(self, instance, ships):
-        """计算选定舰船升级所需的心智单元。"""
-        self.configs.path(instance)
-        return calculate(ships)
 
     def import_file(self, instance, filename, content):
         """解析用户上传文件并返回可检查的舰船记录。"""
@@ -188,56 +165,3 @@ class MindCalculatorService:
         except RuntimeError as exc:
             raise ApiError('OCR_UNAVAILABLE', f'OCR 引擎无法完成识别，请检查模型和 OCR 配置：{str(exc)[:200]}') from None
         return {'ships': ships}
-
-    def export(self, instance, format):
-        """将指定实例的舰船清单导出为选定格式。"""
-        report = self.report(instance)
-        headers = ['船名', '等级', '稀有度', '基础稀有度', '排除', '需核对', '来源']
-        fields = ['name', 'level', 'rarity', 'base_rarity', 'excluded', 'review', 'source']
-        ships = [{key: ship[key] for key in fields} for ship in report['ships']]
-        if format == 'json':
-            raw = json.dumps(dict(version=1, ships=ships), ensure_ascii=False, indent=2).encode()
-        elif format == 'csv':
-            output = io.StringIO(newline='')
-            writer = csv.writer(output)
-            writer.writerow(headers)
-            def csv_value(value):
-                """安全编码 CSV 单元格以防公式注入。"""
-                text = str(value)
-                return "'" + text if text[:1] in ('=', '+', '-', '@', '\t', '\r') else text
-            writer.writerows([[csv_value(ship[key]) for key in fields] for ship in ships])
-            raw = output.getvalue().encode('utf-8-sig')
-        else:
-            from openpyxl import Workbook
-            from openpyxl.styles import Font, PatternFill
-            book = Workbook()
-            summary = book.active
-            summary.title = '心智单元汇总'
-            summary.append(['稀有度', '≤100', '101–105', '106–110', '111–115', '116–119', '≥120', '合并后舰船', '心智单元Ⅰ', '物资'])
-            for bucket in report['summary']:
-                summary.append([RARITY_NAMES[bucket['rarity']], *bucket['stages'], bucket['count'], bucket['mind'], bucket['gold']])
-            summary.append(['合计', *[sum(bucket['stages'][i] for bucket in report['summary']) for i in range(6)],
-                            report['included'], report['mind'], report['gold']])
-            summary.append(['目标 120 级；不含 120→125；改造按基础稀有度；同名只计最高等级；待核对数据不计费。'])
-            for title, subset in [('舰船明细', ships), ('需核对清单', [ship for ship in ships if ship['review'] or not ship['level']])]:
-                sheet = book.create_sheet(title)
-                sheet.append(headers)
-                for ship in subset:
-                    sheet.append([ship[key] for key in fields])
-            for sheet in book:
-                sheet.freeze_panes = 'B2'
-                sheet.auto_filter.ref = sheet.dimensions
-                for column in sheet.columns:
-                    sheet.column_dimensions[column[0].column_letter].width = 20
-                for cell in sheet[1]:
-                    cell.font = Font(bold=True, color='FFFFFF')
-                    cell.fill = PatternFill('solid', fgColor='2F80ED')
-                # 名称和来源可能来自上传文件，显式保存成文本，避免公式执行。
-                for row in sheet.iter_rows():
-                    for cell in row:
-                        if cell.data_type == 'f':
-                            cell.data_type = 's'
-            output = io.BytesIO()
-            book.save(output)
-            raw = output.getvalue()
-        return dict(filename=f'{instance}-mind-calculator.{format}', content=base64.b64encode(raw).decode())

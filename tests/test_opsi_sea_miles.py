@@ -154,9 +154,9 @@ class SeaMilesConfigTests(unittest.TestCase):
         field = deep_get(self.service.args, SEA_MILES_PATH)
         self.assertEqual((field['type'], field['value']), ('input', -1))
         self.assertNotIn('option', field)
-        for value in (-1, 0, 1, 7, 365):
+        for value in (-1, 0, 1, 7, 365, '2'):
             self.service.validate(SEA_MILES_PATH, value)
-        for value in (-2, 1.5, True, False, '2', None):
+        for value in (-2, 1.5, True, False, '2.5', None):
             with self.subTest(value=value), self.assertRaises(ApiError):
                 self.service.validate(SEA_MILES_PATH, value)
         with self.assertRaises(ApiError):

@@ -412,6 +412,9 @@ sequenceDiagram
 ## 20. 相关模块
 
 - [舰队科技列表](fleet-technology.md) —— Lua 目录、累计扫描证据、人工校正和阵营加成。
+- 舰队管理中的“自动换装备”使用独立页面`task/FleetEquipment`，保存默认关闭的开关和15种
+  舰种各三个独立装备码，不注册执行任务。按同排舰种顺序使用，空格跳过对应舰船换装；后端校验与中断恢复见
+  [退役与装备](../game/retire-equipment.md#智能换船联动自动换装备)。
 
 - [WebUI 启动器](../entry/gui.md) —— 监督循环、双栈监听、热重载与依赖同步：本体系的进程骨架。
 - [API 服务](api.md) —— Starlette 应用组装、WS v1 协议、认证与业务编排。

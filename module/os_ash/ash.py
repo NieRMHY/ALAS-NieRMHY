@@ -81,6 +81,13 @@ class AshCombat(Combat):
 
     当信标已完成或为空时，抛出 AshBeaconFinished 异常通知上层停止战斗循环。
     """
+    is_dossier = False
+
+    @property
+    def equipment_config_enabled(self):
+        if self.is_dossier:
+            return False
+        return super().equipment_config_enabled
 
     def handle_battle_status(self, drop=None):
         """

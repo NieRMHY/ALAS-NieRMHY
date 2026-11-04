@@ -26,6 +26,11 @@ from module.map.assets import (
 
 
 def screen(*buttons):
+    """拼一帧识别结果。
+
+    每次调用代表一次独立截图，内容相同的两帧也必须分别调用；列表乘法会复用同一个
+    frozenset 对象，不算新的一帧。
+    """
     return frozenset(button if isinstance(button, str) else button.name for button in buttons)
 
 
@@ -75,6 +80,7 @@ class ScreenReplay:
             FLEET_2=True, Fleet_FleetOrder='fleet1_all_fleet2_standby',
             Submarine_Fleet=0, Fleet_Fleet1Mode='combat_auto', Fleet_Fleet2Mode='combat_auto',
             BUTTON_OFFSET=(30, 30), MAP_IS_ONE_TIME_STAGE=False, modified={},
+            cross_get=lambda path, default=None: default,
             CoalitionScuttle_Fleet1Affection=0.0, CoalitionScuttle_Fleet2Affection=0.0)
         campaign.device = self.device
         # Modify by MHY, 连战回放保留两份心情账本，用于验证受益队好感与牺牲队豁免。
@@ -87,6 +93,10 @@ class ScreenReplay:
         campaign._hot_fix_check_wait = Timer(6)
         campaign._auto_search_in_stage_timer = Timer(3, count=6)
         campaign.appear = Mock(side_effect=self.appear)
+        # 补点 handler 用模板 + 颜色双确认，回放里只看按钮是否在画面中。
+        campaign.match_template_color = Mock(
+            side_effect=lambda button, offset=0, interval=0, similarity=0.85, threshold=30:
+            button.name in self.device.image)
         campaign.is_combat_executing = Mock(side_effect=lambda: 'COMBAT' in self.device.image)
         campaign.is_combat_loading = Mock(side_effect=lambda: 'LOADING' in self.device.image)
         campaign.is_in_stage = Mock(side_effect=lambda: 'STAGE' in self.device.image)
@@ -223,6 +233,111 @@ class AutoSearchDefeatTests(unittest.TestCase):
         campaign.emotion.reduce.assert_called_once_with(1)
         self.assertNotIn(WITHDRAW.name, replay.clicks)
 
+    def test_map_option_requires_two_frames_before_clicking_off(self):
+        replay = ScreenReplay([screen(AUTO_SEARCH_MAP_OPTION_OFF, FLEET_NUM_2)])
+        campaign = replay.make_campaign()
+        with patch('module.base.timer.time', side_effect=lambda: replay.time):
+            # 同一张截图反复检查只累计一次确认，不能触发点击。
+            for _ in range(3):
+                self.assertFalse(campaign.handle_auto_search_map_option())
+            self.assertEqual(replay.clicks, [])
+            # 换一张截图后确认成立，按原有冷却点击一次。
+            replay.time += 10
+            replay.device.image = screen(AUTO_SEARCH_MAP_OPTION_OFF, FLEET_NUM_2)
+            self.assertTrue(campaign.handle_auto_search_map_option())
+            self.assertEqual(replay.clicks, [AUTO_SEARCH_MAP_OPTION_OFF.name])
+            # 中间出现 ON 会清空累计确认，之后的第一张 OFF 只能重新被视为首帧。
+            replay.time += 10
+            replay.device.image = screen(AUTO_SEARCH_MAP_OPTION_OFF, FLEET_NUM_2)
+            self.assertFalse(campaign.handle_auto_search_map_option())
+            replay.time += 10
+            replay.device.image = screen(AUTO_SEARCH_MAP_OPTION_ON, FLEET_NUM_2)
+            self.assertFalse(campaign.handle_auto_search_map_option())
+            self.assertIsNone(campaign._auto_search_off_frame)
+            replay.time += 10
+            replay.device.image = screen(AUTO_SEARCH_MAP_OPTION_OFF, FLEET_NUM_2)
+            self.assertFalse(campaign.handle_auto_search_map_option())
+            self.assertEqual(replay.clicks.count(AUTO_SEARCH_MAP_OPTION_OFF.name), 1)
+            # 第二张 OFF 才再次点击。
+            replay.time += 10
+            replay.device.image = screen(AUTO_SEARCH_MAP_OPTION_OFF, FLEET_NUM_2)
+            self.assertTrue(campaign.handle_auto_search_map_option())
+            self.assertEqual(replay.clicks.count(AUTO_SEARCH_MAP_OPTION_OFF.name), 2)
+
+    def test_resume_guard_drops_confirmation_after_on(self):
+        """续接期间识别到 ON 后重新累计，避免 OFF→ON→OFF 被当成连续两帧。"""
+        replay = ScreenReplay([screen(AUTO_SEARCH_MAP_OPTION_OFF, FLEET_NUM_2)])
+        campaign = replay.make_campaign()
+        with patch('module.base.timer.time', side_effect=lambda: replay.time):
+            # 计时器在流程内启动，必须与回放共用同一时间源。
+            campaign.prepare_auto_search_recovery('map')
+            campaign.auto_search_watch_fleet = Mock()
+            campaign._auto_search_fleet_confirmed = True
+            replay.time += 5
+            self.assertFalse(campaign.handle_auto_search_map_option())
+            replay.time += 5
+            replay.device.image = screen(AUTO_SEARCH_MAP_OPTION_ON, FLEET_NUM_2)
+            self.assertFalse(campaign.handle_auto_search_map_option())
+            replay.time += 5
+            replay.device.image = screen(AUTO_SEARCH_MAP_OPTION_OFF, FLEET_NUM_2)
+            self.assertFalse(campaign.handle_auto_search_map_option())
+            replay.time += 5
+            replay.device.image = screen(AUTO_SEARCH_MAP_OPTION_OFF, FLEET_NUM_2)
+            self.assertTrue(campaign.handle_auto_search_map_option())
+        self.assertEqual(replay.clicks.count(AUTO_SEARCH_MAP_OPTION_OFF.name), 1)
+
+    def test_resume_guard_drops_confirmation_after_interrupted_frame(self):
+        """空白、加载和战斗帧均打断确认，包括残留 OFF 按钮的转场帧。"""
+        transitions = ((), ('LOADING',), ('COMBAT',),
+                       ('LOADING', AUTO_SEARCH_MAP_OPTION_OFF),
+                       ('COMBAT', AUTO_SEARCH_MAP_OPTION_OFF))
+        for transition in transitions:
+            with self.subTest(transition=transition):
+                replay = ScreenReplay([
+                    screen(AUTO_SEARCH_MAP_OPTION_OFF, FLEET_NUM_2), screen(*transition),
+                    screen(AUTO_SEARCH_MAP_OPTION_OFF, FLEET_NUM_2),
+                    screen(AUTO_SEARCH_MAP_OPTION_OFF, FLEET_NUM_2),
+                ])
+                campaign = replay.make_campaign()
+                with patch('module.base.timer.time', side_effect=lambda: replay.time):
+                    campaign.prepare_auto_search_recovery('map')
+                    campaign.auto_search_watch_fleet = Mock()
+                    campaign._auto_search_fleet_confirmed = True
+                    campaign.fleet_show_index = 2
+                    replay.time += 5
+                    self.assertFalse(campaign.handle_auto_search_map_option())
+                    self.assertIsNotNone(campaign._auto_search_off_frame)
+                    replay.screenshot()
+                    self.assertFalse(campaign.handle_auto_search_map_option())
+                    self.assertIsNone(campaign._auto_search_off_frame)
+                    replay.screenshot()
+                    self.assertFalse(campaign.handle_auto_search_map_option())
+                    self.assertEqual(replay.clicks, [])
+                    # 同一张截图多次检查不算新的确认。
+                    self.assertFalse(campaign.handle_auto_search_map_option())
+                    replay.screenshot()
+                    self.assertTrue(campaign.handle_auto_search_map_option())
+                self.assertEqual(replay.click_frames, [(3, AUTO_SEARCH_MAP_OPTION_OFF.name)])
+                campaign.emotion.check_fleet.assert_called_once_with(2, after_restart=True)
+
+    def test_resume_entry_drops_confirmation_from_previous_flow(self):
+        """续接入口复位重启前的确认，新流程仍需两帧才点击。"""
+        replay = ScreenReplay([screen(AUTO_SEARCH_MAP_OPTION_OFF, FLEET_NUM_2)])
+        campaign = replay.make_campaign()
+        with patch('module.base.timer.time', side_effect=lambda: replay.time):
+            self.assertFalse(campaign.handle_auto_search_map_option())
+            self.assertIsNotNone(campaign._auto_search_off_frame)
+            campaign.prepare_auto_search_recovery('map')
+            self.assertIsNone(campaign._auto_search_off_frame)
+            campaign.auto_search_watch_fleet = Mock()
+            campaign._auto_search_fleet_confirmed = True
+            replay.time += 5
+            self.assertFalse(campaign.handle_auto_search_map_option())
+            replay.time += 5
+            replay.device.image = screen(AUTO_SEARCH_MAP_OPTION_OFF, FLEET_NUM_2)
+            self.assertTrue(campaign.handle_auto_search_map_option())
+        self.assertEqual(replay.clicks.count(AUTO_SEARCH_MAP_OPTION_OFF.name), 1)
+
     def test_matching_on_template_cannot_toggle_or_cancel_pending_retreat(self):
         for policy in ('withdraw_continue', 'withdraw_stop'):
             with self.subTest(policy=policy):
@@ -283,7 +398,9 @@ class AutoSearchDefeatTests(unittest.TestCase):
                 frames = [screen('COMBAT'), screen(EXP_INFO_D), screen(OPTS_INFO_D), screen(GET_MISSION),
                           screen(FLEET_UNAVAILABLE, GET_MISSION)]
                 if handoff == 'stopped':
-                    frames.append(screen(AUTO_SEARCH_MAP_OPTION_OFF, FLEET_NUM_2))
+                    # 补点需要两帧确认，OFF 必须连续出现在两张截图上。
+                    # 两次 screen() 各生成一个对象，复用同一对象不算第二帧。
+                    frames.extend([screen(AUTO_SEARCH_MAP_OPTION_OFF, FLEET_NUM_2) for _ in range(2)])
                 replay = ScreenReplay([*frames, screen(AUTO_SEARCH_MAP_OPTION_ON, FLEET_NUM_2)])
                 campaign = replay.make_campaign(policy='switch_fleet')
                 campaign._defeat_count = 2
@@ -311,7 +428,7 @@ class AutoSearchDefeatTests(unittest.TestCase):
         replay = ScreenReplay([
             screen('COMBAT'), screen(EXP_INFO_D), screen(OPTS_INFO_D), screen(FLEET_UNAVAILABLE),
             *[screen(WITHDRAW, FLEET_NUM_1, SWITCH_OVER, FLEET_WITHDRAW)] * 5, screen(GET_MISSION),
-            screen(AUTO_SEARCH_MAP_OPTION_OFF, FLEET_NUM_2),
+            screen(AUTO_SEARCH_MAP_OPTION_OFF, FLEET_NUM_2), screen(AUTO_SEARCH_MAP_OPTION_OFF, FLEET_NUM_2),
             screen(AUTO_SEARCH_MAP_OPTION_ON, FLEET_NUM_2)])
         campaign = replay.make_campaign(policy='switch_fleet')
         replay.run()
@@ -422,6 +539,7 @@ class FleetHandoffTests(unittest.TestCase):
                     replay = ScreenReplay([
                         screen(original, AUTO_SEARCH_MAP_OPTION_ON), screen('COMBAT'),
                         screen(OPTS_INFO_D), screen(FLEET_UNAVAILABLE),
+                        screen(target, AUTO_SEARCH_MAP_OPTION_OFF),
                         screen(target, AUTO_SEARCH_MAP_OPTION_OFF), last])
                     campaign = replay.make_campaign(policy='switch_fleet')
                     campaign.config.Fleet_FleetOrder = order
@@ -478,11 +596,11 @@ class FleetHandoffTests(unittest.TestCase):
         replay = ScreenReplay([
             screen('COMBAT'), screen(OPTS_INFO_D), screen(FLEET_UNAVAILABLE),
             screen(FLEET_NUM_2), screen(FLEET_NUM_1, AUTO_SEARCH_MAP_OPTION_OFF, SWITCH_OVER),
-            screen(FLEET_NUM_2, AUTO_SEARCH_MAP_OPTION_OFF),
+            screen(FLEET_NUM_2, AUTO_SEARCH_MAP_OPTION_OFF), screen(FLEET_NUM_2, AUTO_SEARCH_MAP_OPTION_OFF),
             screen(FLEET_NUM_2, AUTO_SEARCH_MAP_OPTION_ON)])
         campaign = replay.make_campaign(policy='switch_fleet')
         replay.run()
-        self.assertEqual([i for i, name in replay.click_frames if name == AUTO_SEARCH_MAP_OPTION_OFF.name], [5])
+        self.assertEqual([i for i, name in replay.click_frames if name == AUTO_SEARCH_MAP_OPTION_OFF.name], [6])
         self.assertNotIn(SWITCH_OVER.name, replay.clicks)
         self.assertNotIn(FLEET_WITHDRAW.name, replay.clicks)
         self.assertTrue(campaign.combat_result.fleet_unavailable)

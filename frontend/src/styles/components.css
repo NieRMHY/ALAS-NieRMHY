@@ -1062,6 +1062,8 @@
 .nav-restore {position: fixed; left: 0; top: 50%; transform: translateY(-50%); z-index: 60; display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 58px; padding: 0; border: 0; border-radius: 0 11px 11px 0; background: color-mix(in srgb, var(--surface) 86%, transparent); color: var(--theme-muted); cursor: pointer; box-shadow: var(--glass-shadow); transition: color .15s ease, background .15s ease}
 .nav-restore:hover {color: var(--theme-accent); background: var(--surface)}
 .nav-restore:focus-visible {outline: 2px solid var(--theme-focus); outline-offset: 2px}
+/* 看图把手只用于桌面侧栏，窄屏由顶栏按钮打开导航抽屉。 */
+.nav-handle {display: none}
 @media (min-width: 951px) {
   /* 收起/展开为瞬时切换，避免低帧率下宽度动画挤压主内容。
      grid 轨道用 auto，宽度由 .sidebar 自己的 width 承担。 */

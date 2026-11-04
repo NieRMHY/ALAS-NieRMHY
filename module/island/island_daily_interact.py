@@ -488,30 +488,69 @@ class IslandDailyInteract(Island):
         return matches[0].move(DEVELOPMENT_PLAN_TASK_LIST_AREA[:2])
 
     def _run_weekly_photo_once(self):
+        """在照相模式中拍摄 3 张照片，关闭预览后退出照相模式。
+
+        确认任务后角色会先走到拍照地点，照相按钮出现后才能拍照；
+        每次点击照相按钮后，以照片预览遮住照相按钮作为拍照生效的依据，
+        再点击空白处关闭预览，避免预览未出现时连点导致漏拍。
+
+        Pages:
+            in: 每周照相模式（WEEKLY_PHOTO_CAMERA）或前往拍照地点途中
+            out: 点击 ISLAND_BACK 后的页面，或 page_island_phone
+        """
         from module.island_daily_interact.assets import (
             WEEKLY_PHOTO_CAMERA,
             WEEKLY_PHOTO_IDLE,
         )
 
-        for index in range(3):
-            logger.info(f'[岛屿-每日周任务] 每周照相第{index + 1}轮')
-            self._click_weekly_photo_button(WEEKLY_PHOTO_CAMERA, '照相按钮')
-            self._click_weekly_photo_button(WEEKLY_PHOTO_IDLE, '空闲按钮')
+        photo_count = 0
+        shot_pending = False
+        camera_timer = Timer(2)
+        idle_timer = Timer(1)
+        for _ in self.loop(timeout=40):
+            if self.appear(WEEKLY_PHOTO_CAMERA, offset=(20, 20)):
+                if photo_count >= 3:
+                    break
+                # 点击后照相按钮仍在，说明本次点击未生效，间隔后补点
+                if not shot_pending or camera_timer.reached():
+                    logger.info(f'[岛屿-每日周任务] 每周照相第{photo_count + 1}轮，点击照相按钮')
+                    self.device.click(WEEKLY_PHOTO_CAMERA)
+                    shot_pending = True
+                    camera_timer.reset()
+                continue
+            if shot_pending:
+                # 照相按钮被照片预览遮住，说明本次拍照已生效
+                photo_count += 1
+                shot_pending = False
+                logger.info(f'[岛屿-每日周任务] 已拍摄 {photo_count} 张照片')
+            if self._handle_island_reward_once():
+                continue
+            if photo_count and idle_timer.reached():
+                logger.info('[岛屿-每日周任务] 点击空闲区域关闭照片预览')
+                self.device.click(WEEKLY_PHOTO_IDLE)
+                idle_timer.reset()
+                continue
+        else:
+            logger.warning(f'[岛屿-每日周任务] 每周照相拍照超时，已拍摄 {photo_count} 张')
+            return False
 
+        back_timer = Timer(2)
         for _ in self.loop(timeout=12):
             if self._handle_island_reward_once():
                 continue
             if self.appear_then_click(ISLAND_BACK, interval=2):
                 return True
+            if self.ui_page_appear(page_island_phone):
+                return True
+            # 国际服照相模式的返回按钮带“Back”文字，与 ISLAND_BACK 外观不同，
+            # 但位置重叠，仍在照相模式时点击同一位置退出，返回后回到岛屿手机页面
+            if self.appear(WEEKLY_PHOTO_CAMERA, offset=(20, 20)) and back_timer.reached():
+                self.device.click(ISLAND_BACK)
+                back_timer.reset()
+                continue
 
         logger.warning('[岛屿-每日周任务] 每周照相通用奖励或返回按钮等待超时')
         return False
-
-    def _click_weekly_photo_button(self, button, label):
-        """每周照相页面按钮位置固定，直接点击，不做出现检测。"""
-        self.device.screenshot()
-        logger.info(f'[岛屿-每日周任务] 点击{label}')
-        self.device.click(button)
 
     def _click_optional_interact(self, button, label, timeout=8):
         """点击可选的交互按钮，超时则返回 False。

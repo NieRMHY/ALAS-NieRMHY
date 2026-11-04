@@ -1,7 +1,7 @@
 """
-私人休息室舰船互动逻辑。
+宿舍计划舰船互动逻辑。
 
-管理私人宿舍中与舰船角色的互动流程，包括目标房间导航、
+管理宿舍计划中与舰船角色的互动流程，包括目标房间导航、
 对话事件处理、互动按钮点击和完成状态检测。
 支持多目标舰船（安克雷奇、能代、天狼星等）的互动编排。
 
@@ -112,14 +112,14 @@ class PQInteract(UI):
         """
         target_title = target_ship.title().replace('_', ' ')
         if target_ship not in self.available_targets:
-            logger.error(f'[私人休息室-互动] 不支持的目标舰娘: {target_title}，无法继续子任务')
+            logger.error(f'[宿舍计划-互动] 不支持的目标舰娘: {target_title}，无法继续子任务')
             return False
         elif len(self.available_targets[target_ship]) < 2:
-            logger.error(f'[私人休息室-互动] 目标舰娘 {target_title} 缺少页面位置信息，无法继续子任务')
+            logger.error(f'[宿舍计划-互动] 目标舰娘 {target_title} 缺少页面位置信息，无法继续子任务')
             return False
 
         page_btn = self.available_targets[target_ship][1]
-        logger.hr(f'[私人休息室-互动] 寻找 {target_title} 页面', level=2)
+        logger.hr(f'[宿舍计划-互动] 寻找 {target_title} 页面', level=2)
 
         # 根据当前页面位置依次尝试左翻和右翻
         directions = [PRIVATE_QUARTERS_PAGE_LEFT, PRIVATE_QUARTERS_PAGE_RIGHT]
@@ -139,7 +139,7 @@ class PQInteract(UI):
 
                 # 成功找到目标位置
                 if self.appear(page_btn, offset=(20, 20)):
-                    logger.info(f'[私人休息室-互动] 已到达 {target_title} 页面')
+                    logger.info(f'[宿舍计划-互动] 已到达 {target_title} 页面')
                     return True
 
                 if self.appear_then_click(direction, offset=(20, 20), interval=1):
@@ -149,7 +149,7 @@ class PQInteract(UI):
                 if settle_timer.reached():
                     break
 
-        logger.warning(f'[私人休息室-互动] 未找到 {target_title} 页面')
+        logger.warning(f'[宿舍计划-互动] 未找到 {target_title} 页面')
         return False
 
     def _pq_goto_room_check(self):
@@ -175,10 +175,10 @@ class PQInteract(UI):
         """
         target_title = target_ship.title().replace('_', ' ')
         if target_ship not in self.available_targets:
-            logger.error(f'[私人休息室-互动] 不支持的目标舰娘: {target_title}，无法继续子任务')
+            logger.error(f'[宿舍计划-互动] 不支持的目标舰娘: {target_title}，无法继续子任务')
             return False
         elif len(self.available_targets[target_ship]) < 1:
-            logger.error(f'[私人休息室-互动] 目标舰娘 {target_title} 缺少房间入口信息，无法继续子任务')
+            logger.error(f'[宿舍计划-互动] 目标舰娘 {target_title} 缺少房间入口信息，无法继续子任务')
             return False
 
         target_btn = self.available_targets[target_ship][0]
@@ -191,7 +191,7 @@ class PQInteract(UI):
 
         # 检查是否弹出下载资源弹窗
         if self.handle_popup_cancel('PRIVATE_QUARTERS_DOWNLOAD_ASSET', offset=(20, 20)):
-            logger.error(f'[私人休息室-互动] 无法进入 {target_title} 的房间，请先下载所需资源')
+            logger.error(f'[宿舍计划-互动] 无法进入 {target_title} 的房间，请先下载所需资源')
             return False
 
         # 处理进入房间时的对话
@@ -200,13 +200,13 @@ class PQInteract(UI):
         # 检查好感度是否已满
         if self.appear(PRIVATE_QUARTERS_ROOM_TARGET_INTIMACY_MAX, offset=(20, 20)):
             logger.warning(
-                f'[私人休息室-互动] {target_title} 好感度已满，请更换目标或关闭子任务')
+                f'[宿舍计划-互动] {target_title} 好感度已满，请更换目标或关闭子任务')
             return False
 
         return True
 
     def _pq_goto_room_exit(self):
-        """退出当前舰船房间返回私人休息室主界面。"""
+        """退出当前舰船房间返回宿舍计划主界面。"""
         # 互动画面还没结束时，返回键会被互动画面吃掉，先按住返回把互动结束掉
         for _ in self.loop(timeout=Timer(read_run_param(
                 self.config, 'UiWait_PqInteractExitTimeout',
@@ -237,7 +237,7 @@ class PQInteract(UI):
         精力耗尽或超时时自动退出房间。
         """
         # 点击舰娘进入第 1 阶段
-        logger.hr('[私人休息室-互动] 互动开始', level=2)
+        logger.hr('[宿舍计划-互动] 互动开始', level=2)
         interact_offset = (-10, 0, 0, 65)
         target_timer = Timer(2.5, count=1)
 
@@ -252,14 +252,14 @@ class PQInteract(UI):
                 self.device.click(PRIVATE_QUARTERS_ROOM_TARGET_CLICK_AREA)
                 target_timer.reset()
         else:
-            logger.warning('[私人休息室-互动] 未能出现互动按钮，'
+            logger.warning('[宿舍计划-互动] 未能出现互动按钮，'
                            '可能今日精力已用完，跳过互动')
             self._pq_goto_room_exit()
             return
 
         # 重复执行 3 次互动循环
         for i in range(1, 4):
-            logger.hr(f'[私人休息室-互动] 互动循环 {i}/3', level=3)
+            logger.hr(f'[宿舍计划-互动] 互动循环 {i}/3', level=3)
             self.interval_clear([PRIVATE_QUARTERS_INTERACT_CHECK,
                                  PRIVATE_QUARTERS_INTERACT])
 
@@ -277,7 +277,7 @@ class PQInteract(UI):
                     self.device.click(PRIVATE_QUARTERS_INTERACT)
                     click_timer.reset()
             else:
-                logger.warning(f'[私人休息室-互动] 第 {i} 次互动没有进入互动画面，'
+                logger.warning(f'[宿舍计划-互动] 第 {i} 次互动没有进入互动画面，'
                                '可能今日精力已用完，结束互动')
                 break
 
@@ -291,10 +291,10 @@ class PQInteract(UI):
                 if self.appear(PRIVATE_QUARTERS_INTERACT_CHECK, offset=(20, 20), interval=2):
                     self.device.click(PRIVATE_QUARTERS_ROOM_BACK)
             else:
-                logger.warning(f'[私人休息室-互动] 第 {i} 次互动没有正常结束，结束互动')
+                logger.warning(f'[宿舍计划-互动] 第 {i} 次互动没有正常结束，结束互动')
                 break
 
-        logger.hr('[私人休息室-互动] 互动结束', level=2)
+        logger.hr('[宿舍计划-互动] 互动结束', level=2)
         self._pq_goto_room_exit()
 
     def pq_goto_room(self, target_ship, retry=3):
@@ -309,7 +309,7 @@ class PQInteract(UI):
         """
         success = False
         target_title = target_ship.title().replace('_', ' ')
-        logger.hr(f'[私人休息室-互动] 进入 {target_title} 房间', level=1)
+        logger.hr(f'[宿舍计划-互动] 进入 {target_title} 房间', level=1)
 
         if not self._pq_goto_room_seek(target_ship):
             return success
@@ -319,10 +319,10 @@ class PQInteract(UI):
                 break
 
             if self._pq_target_appear():
-                logger.info(f'[私人休息室-互动] {target_title} 正在等待你的到来！')
+                logger.info(f'[宿舍计划-互动] {target_title} 正在等待你的到来！')
                 success = True
                 break
-            logger.warning(f'[私人休息室-互动] {target_title} 未就绪，退出重试; 剩余次数={retry - (_ + 1)}')
+            logger.warning(f'[宿舍计划-互动] {target_title} 未就绪，退出重试; 剩余次数={retry - (_ + 1)}')
 
             self._pq_goto_room_exit()
 

@@ -1,3 +1,7 @@
+import {analysisZhCN, analysisZhTW, analysisEnUS, analysisJaJP} from './fleet-analysis-i18n'
+import {rotationZhCN, rotationZhTW, rotationEnUS, rotationJaJP} from './fleet-rotation-i18n'
+import {trainingZhCN, trainingZhTW, trainingEnUS, trainingJaJP} from './fleet-training-i18n'
+import {equipmentZhCN, equipmentZhTW, equipmentEnUS, equipmentJaJP} from './fleet-equipment-i18n'
 import {fleetTechZhCN, fleetTechZhTW, fleetTechEnUS, fleetTechJaJP} from './fleet-tech/i18n'
 import {mindZhCN, mindZhTW, mindEnUS, mindJaJP} from './mind/i18n'
 /**
@@ -20,11 +24,19 @@ export const languages: Record<Language, string> = {
 
 const zhCN = {
   ...resourceZhCN,
+  ...analysisZhCN,
   ...mindZhCN,
   ...fleetTechZhCN,
+  ...rotationZhCN,
+  ...trainingZhCN,
+  ...equipmentZhCN,
   'stats.category.storage': '仓库物品',
   'stats.runStorage': '运行仓库统计',
   'stats.storageStarted': '仓库统计已启动，完整扫描完成后更新数量。',
+  'stats.chipActive': '{label} (已启用，双击仅看此项)',
+  'stats.chipInactive': '{label} (未启用，双击仅看此项)',
+  'stats.moveEarlier': '{label} 前移',
+  'stats.moveLater': '{label} 后移',
   'simulator.start': '开始模拟',
   'simulator.stop': '中断模拟',
   'simulator.idle': '等待模拟',
@@ -301,6 +313,7 @@ const zhCN = {
   'fleet.submarine': '潜艇舰队',
   'fleet.noRecord': '暂无记录',
   'fleet.emotion': '心情 {value}', 'fleet.unknown': '未知',
+  'fleet.slot': '舰位 {number}', 'fleet.updateEmotion': '扫描时更新心情',
   'meow.title': '指挥喵评分报告',
   'meow.refresh': '刷新',
   'meow.refreshing': '正在刷新…',
@@ -591,11 +604,19 @@ export type UiTranslator = (key: UiKey, params?: TranslationParams) => string
 
 const enUS: Record<UiKey, string> = {
   ...resourceEnUS,
+  ...analysisEnUS,
   ...mindEnUS,
   ...fleetTechEnUS,
+  ...rotationEnUS,
+  ...trainingEnUS,
+  ...equipmentEnUS,
   'stats.category.storage': 'Inventory',
   'stats.runStorage': 'Scan inventory',
   'stats.storageStarted': 'Inventory scan started. Counts update after a complete scan.',
+  'stats.chipActive': '{label} (shown; double-click to show only this)',
+  'stats.chipInactive': '{label} (hidden; double-click to show only this)',
+  'stats.moveEarlier': 'Move {label} earlier',
+  'stats.moveLater': 'Move {label} later',
   'simulator.start': 'Start simulation',
   'simulator.stop': 'Interrupt simulation',
   'simulator.idle': 'Ready to simulate',
@@ -714,6 +735,7 @@ const enUS: Record<UiKey, string> = {
   'task.started': 'Task started', 'task.runTool': 'Run tool', 'task.runNow': 'Run now', 'task.searchConfig': 'Search settings', 'task.searchConfigPlaceholder': 'Search settings for this task…', 'task.noConfig': 'This task has no standalone settings', 'task.toolCanRun': 'Use the button above to run the tool.', 'task.viewRelated': 'View settings in the related task.', 'task.readonly': 'Read only', 'task.noConfigFound': 'No settings found', 'task.tryOtherKeyword': 'Try another keyword.', 'task.runTitle': 'Run {task}', 'task.runWarning': 'This action will connect to the emulator and run the tool. Make sure no task is currently running on this instance.', 'task.confirmRun': 'Run now',
   'fleet.emptyTitle': 'No fleet scan records yet', 'fleet.emptyHint': 'Choose Fleet Scan on the left, complete a scan, then view the result here.', 'fleet.invalid': 'Fleet record format is invalid. Please scan again.', 'fleet.title': 'Fleet {number}', 'fleet.vanguard': 'Vanguard', 'fleet.main': 'Main fleet', 'fleet.submarine': 'Submarine fleet', 'fleet.noRecord': 'No records',
   'fleet.emotion': 'Morale {value}', 'fleet.unknown': 'Unknown',
+  'fleet.slot': 'Slot {number}', 'fleet.updateEmotion': 'Update morale during scan',
   'meow.title': 'Meowfficer score report', 'meow.refresh': 'Refresh', 'meow.refreshing': 'Refreshing…', 'meow.emptyTitle': 'No score report yet', 'meow.emptyHint': 'Run the Meowfficer Score tool under Tools, then refresh here to see the result.', 'meow.summary': '{count} cats · generated {time}', 'meow.openReport': 'Open full report', 'meow.clear': 'Clear report', 'meow.clearTitle': 'Clear score report', 'meow.clearWarning': 'Deletes log/meowfficer_score.json / .md / .html and returns the panel to the empty state. Scoring itself is unaffected — run the task again to regenerate it.', 'meow.clearConfirm': 'Clear', 'meow.clearing': 'Clearing…', 'meow.score': 'score', 'meow.maxed': 'Maxed', 'meow.fixed': 'Assigned', 'meow.axisX': 'X (rainbow talents)', 'meow.axisY': 'Y (useful normal)', 'meow.noHits': 'No hits', 'meow.otherRubrics': 'Other rubrics ({count})', 'meow.source': 'Source: {source}', 'meow.screenshot': 'From screenshot: {name}', 'meow.pointsSpent': '{count} points spent', 'meow.inferred': 'Inferred entry — please verify', 'meow.disclaimer': 'Scoring rubrics come from public guides (28 Rule guide / Meowfficer handbook), not official in-game values.',
   'monitor.title': 'Run monitor', 'monitor.view': 'Monitor view', 'monitor.logs': 'Logs', 'monitor.preview': 'Screenshot', 'monitor.saveScreenshot': 'Save screenshot', 'monitor.screenshotAlt': 'Latest task screenshot', 'monitor.waitingScreenshot': 'Waiting for task screenshot', 'monitor.screenshotHint': 'Updates automatically after a task screenshot; the last frame is kept while idle.', 'monitor.recentLogs': 'Recent logs',
   'log.tools': 'Log tools', 'log.filtersExpand': 'Expand log filters', 'log.filtersCollapse': 'Collapse log filters', 'log.searchAndFilter': 'Search and filter', 'log.pauseFollow': 'Pause auto-scroll', 'log.order': 'Toggle log order', 'log.orderAsc': 'Oldest first — click for newest first', 'log.orderDesc': 'Newest first — click for oldest first', 'log.resumeFollow': 'Resume auto-scroll', 'log.clearView': 'Clear current log view', 'log.export': 'Export logs', 'log.exportShort': 'Export', 'log.search': 'Search logs', 'log.searchPlaceholder': 'Search log content…', 'log.level': 'Log level', 'log.allLevels': 'All levels', 'log.recent': 'Latest {count}', 'log.content': 'Log content', 'log.noMatch': 'No matching logs', 'log.ready': 'Log channel ready', 'log.adjustFilter': 'Adjust the filters and try again.', 'log.waiting': 'Logs will appear here after a task starts.',
@@ -736,11 +758,19 @@ const enUS: Record<UiKey, string> = {
 
 const jaJP: Record<UiKey, string> = {
   ...resourceJaJP,
+  ...analysisJaJP,
   ...mindJaJP,
   ...fleetTechJaJP,
+  ...rotationJaJP,
+  ...trainingJaJP,
+  ...equipmentJaJP,
   'stats.category.storage': '倉庫アイテム',
   'stats.runStorage': '倉庫を集計',
   'stats.storageStarted': '倉庫の集計を開始しました。全体の確認が終わると数量が更新されます。',
+  'stats.chipActive': '{label}（表示中、ダブルクリックでこれだけ表示）',
+  'stats.chipInactive': '{label}（非表示、ダブルクリックでこれだけ表示）',
+  'stats.moveEarlier': '{label} を前へ',
+  'stats.moveLater': '{label} を後ろへ',
   'simulator.start': 'シミュレーション開始',
   'simulator.stop': 'シミュレーション中断',
   'simulator.idle': '開始待ち',
@@ -859,6 +889,7 @@ const jaJP: Record<UiKey, string> = {
   'task.started': 'タスクを開始しました', 'task.runTool': 'ツールを実行', 'task.runNow': '今すぐ実行', 'task.searchConfig': '設定を検索', 'task.searchConfigPlaceholder': 'このタスクの設定を検索…', 'task.noConfig': 'このタスクには個別設定がありません', 'task.toolCanRun': '上のボタンからツールを実行できます。', 'task.viewRelated': '関連タスクの設定を確認してください。', 'task.readonly': '読み取り専用', 'task.noConfigFound': '設定が見つかりません', 'task.tryOtherKeyword': '別のキーワードを試してください。', 'task.runTitle': '{task} を実行', 'task.runWarning': 'エミュレーターへ接続してこのツールを実行します。このインスタンスで別のタスクが実行中でないことを確認してください。', 'task.confirmRun': '実行を確認',
   'fleet.emptyTitle': '艦隊スキャン記録がありません', 'fleet.emptyHint': '左側で艦隊スキャンを選択し、スキャン完了後にここで確認できます。', 'fleet.invalid': '艦隊記録の形式が正しくありません。再スキャンしてください。', 'fleet.title': '第 {number} 艦隊', 'fleet.vanguard': '前衛艦隊', 'fleet.main': '主力艦隊', 'fleet.submarine': '潜水艦隊', 'fleet.noRecord': '記録なし',
   'fleet.emotion': 'コンディション {value}', 'fleet.unknown': '不明',
+  'fleet.slot': '配置 {number}', 'fleet.updateEmotion': 'スキャン時にコンディションを更新',
   'meow.title': 'オフニャスコア報告', 'meow.refresh': '更新', 'meow.refreshing': '更新中…', 'meow.emptyTitle': 'スコア報告はまだありません', 'meow.emptyHint': '「ツール → オフニャスコア」を一度実行し、ここで更新すると結果が表示されます。', 'meow.summary': '計 {count} 匹 · 生成 {time}', 'meow.openReport': '完全なレポートを開く', 'meow.clear': 'レポートを消去', 'meow.clearTitle': 'スコアレポートを消去', 'meow.clearWarning': 'log/meowfficer_score の json / md / html を削除し、パネルは「未実行」の状態に戻ります。採点自体には影響せず、タスクを再実行すれば再生成されます。', 'meow.clearConfirm': '消去する', 'meow.clearing': '消去中…', 'meow.score': '参考スコア', 'meow.maxed': '完遂', 'meow.fixed': '指定済み', 'meow.axisX': 'X（虹天賦）', 'meow.axisY': 'Y（有用な通常天賦）', 'meow.noHits': '該当なし', 'meow.otherRubrics': 'その他の口径（{count}）', 'meow.source': '根拠：{source}', 'meow.screenshot': '元スクリーンショット：{name}', 'meow.pointsSpent': '{count} ポイント消費', 'meow.inferred': '推定項目です。確認してください', 'meow.disclaimer': '評価口径は公開攻略（28の法則実行編 / 詳細攻略）に基づくもので、ゲーム公式の数値ではありません。',
   'monitor.title': '実行モニター', 'monitor.view': 'モニター表示', 'monitor.logs': 'ログ', 'monitor.preview': 'スクリーンショット', 'monitor.saveScreenshot': 'スクリーンショットを保存', 'monitor.screenshotAlt': '最新のタスクスクリーンショット', 'monitor.waitingScreenshot': 'タスクのスクリーンショット待ち', 'monitor.screenshotHint': 'タスクのスクリーンショット後に自動更新し、待機中は最後の画面を保持します。', 'monitor.recentLogs': '最近のログ',
   'resource.cards': 'リソースカード', 'resource.settings': 'リソースカード設定', 'resource.cardsHint': 'クリックでカードを追加し、ドラッグで表示順を変更', 'resource.restoreDefault': '既定に戻す', 'resource.remove': '{label} を削除', 'resource.addCard': 'カードを追加', 'resource.allAdded': '利用可能なリソースはすべて追加済みです',  'resource.waitingSync': 'ゲーム内リソースの同期待ち', 'resource.recordedTooOld': 'ずいぶん前ですね…',
@@ -942,11 +973,19 @@ const jaJP: Record<UiKey, string> = {
 
 const zhTW: Record<UiKey, string> = {
   ...resourceZhTW,
+  ...analysisZhTW,
   ...mindZhTW,
   ...fleetTechZhTW,
+  ...rotationZhTW,
+  ...trainingZhTW,
+  ...equipmentZhTW,
   'stats.category.storage': '倉庫物品',
   'stats.runStorage': '執行倉庫統計',
   'stats.storageStarted': '倉庫統計已啟動，完整掃描完成後更新數量。',
+  'stats.chipActive': '{label}（已啟用，按兩下僅看此項）',
+  'stats.chipInactive': '{label}（未啟用，按兩下僅看此項）',
+  'stats.moveEarlier': '{label} 前移',
+  'stats.moveLater': '{label} 後移',
   'simulator.start': '開始模擬',
   'simulator.stop': '中斷模擬',
   'simulator.idle': '等待模擬',
@@ -1096,6 +1135,7 @@ const zhTW: Record<UiKey, string> = {
   'fleet.submarine': '潛艇艦隊',
   'fleet.noRecord': '暫無記錄',
   'fleet.emotion': '心情 {value}', 'fleet.unknown': '未知',
+  'fleet.slot': '艦位 {number}', 'fleet.updateEmotion': '掃描時更新心情',
   'meow.title': '指揮喵評分報告',
   'meow.refresh': '重新整理',
   'meow.refreshing': '正在整理…',
@@ -1194,7 +1234,7 @@ const zhTW: Record<UiKey, string> = {
   'settings.regionSidebar': "側欄", 'settings.regionTopbar': "頂欄",
 }
 
-/* Modify by MHY, 移除喵语（MIAO）中文语言包（nanoda 傲娇风格）。 */
+ /* Modify by MHY, 移除喵语（MIAO）中文语言包（nanoda 傲娇风格）。 */
 const dictionaries: Record<Language, Record<UiKey, string>> = {
   'zh-CN': zhCN,
   'zh-TW': zhTW,

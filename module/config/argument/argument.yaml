@@ -641,7 +641,7 @@ YukikazeTaskManager:
       > OpsiAshBeacon
       > OpsiDaily > OpsiShop > OpsiVoucher > EventShop
       > OpsiAbyssal > OpsiStronghold > OpsiObscure > OpsiArchive
-      > Daily > LimitChallenge > Hard > OpsiAshBeacon > OpsiAshAssist > OpsiMonthBoss
+      > Daily > LimitChallenge > Hard > OpsiAshBeacon > OpsiMonthBoss
       > Sos > EventSp > EventA > EventB > EventC > EventD
       > RaidDaily > CoalitionSp > WarArchives > MaritimeEscort
       > IslandJuuEatery > IslandJuuCoffee > IslandGrill > IslandTeahouse > IslandRestaurant
@@ -1367,7 +1367,10 @@ GuildOperation:
   Enable: true
   SelectNewOperation: false
   NewOperationMaxDate: 15
-  JoinThreshold: 1
+  JoinThreshold:
+    value: 1.0
+    valuetype: float
+    validate: [0.0, 1.0]
   AttackBoss: true
   BossFleetRecommend: false
 Reward:
@@ -1656,6 +1659,7 @@ Sos:
 # ==================== Opsi ====================
 
 OpsiAshAssist:
+  Enable: true
   Tier: 15
 OpsiGeneral:
   UseLogger: true
@@ -1695,6 +1699,7 @@ OpsiAshBeacon:
     value: null
     display: hide
   DossierAutoAttackMode: false
+  DossierSkipAssist: false
   RequestAssist: true
   EnsureFullyCollected: true
   AutoCollectShip: true
@@ -1976,6 +1981,12 @@ IslandFarm:
   WorkerFilter: |-
     WorkerJuu
   MinFarm: 660
+  CropTargets:
+    type: textarea
+    value: ''
+  DefaultCrop:
+    value: wheat
+    option: [ wheat, corn, rice, chinese_cabbage, potato, soybean, pasture, coffee_bean ]
   PlantPotatoes:
     value: 4
     option: [ 0, 1, 2, 3, 4 ]
@@ -1986,7 +1997,13 @@ IslandOrchard:
   WorkerFilter: |-
     WorkerJuu
   MinOrchard: 300
+  CropTargets:
+    type: textarea
+    value: ''
   IgnoreAvocado: true
+  DefaultCrop:
+    value: rubber
+    option: [ apple, citrus, banana, mango, lemon, avocado, rubber, pear, persimmon ]
   PlantRubber:
     value: 0
     option: [ 0, 1, 2, 3, 4 ]
@@ -1998,7 +2015,13 @@ IslandNursery:
   WorkerFilter: |-
     WorkerJuu
   MinNursery: 0
+  CropTargets:
+    type: textarea
+    value: ''
   IgnorePineapple: true
+  DefaultCrop:
+    value: lavender
+    option: [ carrot, onion, flax, strawberry, cotton, tea, lavender, pineapple, asparagus ]
   PlantLavender:
     value: 2
     option: [ 0, 1, 2 ]
@@ -2027,6 +2050,8 @@ IslandFishery:
   MinCrab: 50
   MinSquid: 50
   MinSeaCucumber: 50
+  MinFreshwaterFishMeat: 0
+  MinSaltwaterFishMeat: 0
   PlantYellowfinTuna:
     value: 3
     option: [ 0, 1, 2, 3 ]
@@ -2701,35 +2726,70 @@ IslandBusinessShop5:
 
 # ==================== Fleet Management ====================
 
-MindCalculator:
+Dock:
   MinLevel:
-    value: 95
+    value: 1
     validate: "^[1-9][0-9]?$|^1[01][0-9]$|^12[0-5]$"
   MaxLevel:
     value: 125
     validate: "^[1-9][0-9]?$|^1[01][0-9]$|^12[0-5]$"
-  Result:
-    type: stored
+
+FleetRotation:
+  Enabled: false
+  SelectedOnly: false
+  Rules:
+    type: textarea
+    value: '{}'
+  State:
+    type: storage
     value: {}
+
+FleetLevelTraining:
+  Enabled: false
+  Target:
+    value: 120
+    validate: [1, 125]
+
+FleetAffinityTraining:
+  Enabled: false
+  Target:
+    value: 100
+    validate: [1, 200]
+
+FleetDorm:
+  Enabled: false
+  Floor:
+    value: floor_1
+    option: [floor_1, floor_2]
+
+FleetTraining:
+  StopOnComplete: false
+  Notify: false
+  FullScanRecord:
+    type: stored
+    value: 2020-01-01 00:00:00
     display: hide
-  FleetTechRecord:
+  CheckIntervalHours:
+    value: 6.0
+    valuetype: float
+    validate: '^[0-9]+(?:\.[0-9]+)?(?:[eE][+-]?[0-9]+)?$'
+  State:
     type: stored
     value: {}
     display: hide
 
-FleetTech:
-  MinLevel:
-    value: 95
-    validate: "^[1-9][0-9]?$|^1[01][0-9]$|^12[0-5]$"
-  MaxLevel:
-    value: 125
-    validate: "^[1-9][0-9]?$|^1[01][0-9]$|^12[0-5]$"
-  Record:
+FleetEquipment:
+  Enabled: false
+  Codes:
+    type: textarea
+    value: '{}'
+  State:
     type: stored
     value: {}
     display: hide
 
 FleetInfo:
+  UpdateEmotion: true
   Result:
     type: stored
     value: {}
@@ -2758,6 +2818,55 @@ BoxDisassemble:
   BlueBoxLimit: 1000
   UseWhiteBox: true
   WhiteBoxLimit: 2000
+IslandProductionPlanner:
+  ApplySettings:
+    type: checkbox
+    value: false
+    option: [ true, false ]
+  RescanTechnology:
+    type: checkbox
+    value: true
+    option: [ true, false ]
+  ScanSeasonTasks:
+    type: checkbox
+    value: true
+    option: [ true, false ]
+  SeasonTaskTargets:
+    type: textarea
+    value: ''
+  ScanCargoOrders:
+    type: checkbox
+    value: true
+    option: [ true, false ]
+  CargoTargets:
+    type: textarea
+    value: ''
+  CargoTargetDays: 1
+  ExtraTargets:
+    type: textarea
+    value: ''
+  DailyProfitLowerLimit: 50000
+  DailyBufferSafetyMargin: 0
+  FieldsEfficiency:
+    value: 0
+    option: [ 0, 4, 12 ]
+  OrchardEfficiency:
+    value: 0
+    option: [ 0, 4, 12 ]
+  NurseryEfficiency:
+    value: 0
+    option: [ 0, 4, 12 ]
+  RestaurantGrade: &IslandPlannerGrade
+    value: bronze
+    option: [ bronze, silver, gold, diamond ]
+  TeahouseGrade:
+    <<: *IslandPlannerGrade
+  JuuEateryGrade:
+    <<: *IslandPlannerGrade
+  GrillGrade:
+    <<: *IslandPlannerGrade
+  JuuCoffeeGrade:
+    <<: *IslandPlannerGrade
 AutoEquip:
   ShipLimit:
     value: 0
@@ -2877,3 +2986,28 @@ OpsiSimulatorParameters:
   Meow3Time: 0
   Meow5Time: 0
   Deterministic: false
+Equipment:
+  Enable: false
+  ClearBeforeApply: true
+  Config:
+    type: textarea
+    mode: yaml
+    value: |-
+      flagship:
+        before: null
+        after: null
+      up:
+        before: null
+        after: null
+      down:
+        before: null
+        after: null
+      head:
+        before: null
+        after: null
+      middle:
+        before: null
+        after: null
+      tail:
+        before: null
+        after: null

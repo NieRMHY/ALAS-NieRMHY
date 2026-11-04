@@ -226,8 +226,8 @@ class EventStory(CampaignUI, Combat, LoginHandler):
                 # 通过重启游戏跳过活动战斗，比等待战斗结束快得多
                 logger.hr('活动剧情战斗', level=2)
                 self.config.override(Error_HandleError=True)
+                # Modify by MHY, 后续登录循环确认游戏就绪，移除固定等待。
                 self.app_stop()
-                self.device.sleep(2)
                 self.app_start()
                 continue
             if result == 'finish':

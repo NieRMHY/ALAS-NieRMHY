@@ -4,10 +4,12 @@ import unittest
 from datetime import datetime
 from unittest.mock import MagicMock, Mock, call, patch
 
-from module.config.config import TaskEnd
+from module.config.config import AzurLaneConfig, Function, TaskEnd
 from module.config.deep import deep_get, deep_set
 from module.exception import GameStuckError, GameTooManyClickError, RequestHumanTakeover, ScriptError
+from module.os.operation_siren import OperationSiren
 from module.os.tasks.meowfficer_farming import MeowfficerTargetZoneMixin
+from module.os.tasks.prevent_action_point_overflow import OpsiPreventActionPointOverflow
 from module.os.tasks.scheduling import OpsiScheduling
 
 
@@ -131,6 +133,230 @@ class TestMonthEndCleanupActionPoint(unittest.TestCase):
                 self.assertIs(raised.exception, error)
                 scheduling.notify_push.assert_not_called()
                 scheduling._delay_smart_scheduling_to_server_update.assert_not_called()
+
+
+class TestOperationSirenCoinTaskRouting(unittest.TestCase):
+    """保留真实方法解析、配置绑定和短猫准备流程，仅替换游戏操作与持久化。"""
+
+    def make_runner(self, *, target_zone='44', stay_in_zone=True):
+        runner = OperationSiren.__new__(OperationSiren)
+        config = AzurLaneConfig.__new__(AzurLaneConfig)
+        config.bound = {}
+        config.modified = {}
+        config.overridden = {}
+        config.auto_update = False
+        config.OS_ACTION_POINT_PRESERVE = 350
+        config.pending_task = []
+        config.waiting_task = []
+        config.data = {
+            name: {'Scheduler': {'Command': name, 'Enable': name == 'OpsiScheduling'}}
+            for name in ('OpsiScheduling', 'OpsiMeowfficerFarming', 'OpsiStronghold',
+                         'OpsiObscure', 'OpsiAbyssal', 'OpsiShop')
+        }
+        config.data['OpsiMeowfficerFarming']['OpsiMeowfficerFarming'] = {
+            'TargetZone': target_zone, 'StayInZone': stay_in_zone,
+        }
+        config.data['OpsiMeowfficerFarming']['OpsiTarget'] = {'TargetFarming': False}
+        config.data['OpsiScheduling']['OpsiScheduling'] = {'MonthEndMeowTargetZone': '0'}
+        config.data['OpsiScheduling']['Storage'] = {'Storage': {}}
+        config.task = Function(config.data['OpsiScheduling'])
+        config.bind(config.task)
+
+        def save_config():
+            for keys, value in config.modified.items():
+                deep_set(config.data, keys=keys, value=value)
+            config.modified.clear()
+
+        config.save = save_config
+        runner.config = config
+        for method in ('_meow_handle_stay_in_zone', '_meow_handle_target_zone_search',
+                       '_meow_handle_traditional_zone', '_meow_handle_normal_search'):
+            setattr(runner, method, Mock())
+        clip_cleanup = patch('module.base.debug_clip.cleanup_clips_if_due')
+        clip_cleanup.start()
+        self.addCleanup(clip_cleanup.stop)
+        return runner
+
+    def assert_restored(self, runner, owner, bound):
+        self.assertIs(runner.config.task, owner)
+        self.assertEqual(runner.config.bound, bound)
+        self.assertEqual(runner.config.OS_ACTION_POINT_PRESERVE, 350)
+        self.assertIsNone(runner._meow_target_zone_override)
+        self.assertEqual(runner.config.overridden, {})
+        self.assertFalse(runner.is_running_smart_scheduling_task())
+        self.assertFalse(runner.is_running_prevent_action_point_overflow_task())
+
+    def test_resolves_real_overflow_override(self):
+        runner = self.make_runner()
+        self.assertIs(runner._run_scheduled_coin_task_once.__func__,
+                      OpsiPreventActionPointOverflow._run_scheduled_coin_task_once)
+        # 防溢出未启用仍经过这份覆盖方法，关键字为 None 时也必须能接收。
+        self.assertFalse(runner.config.is_task_enabled('OpsiPreventActionPointOverflow'))
+        self.assertTrue(runner._run_scheduled_coin_task_once(
+            'OpsiMeowfficerFarming', 200, meow_target_zone=None,
+        ))
+
+    def test_default_arguments_keep_normal_meow_search(self):
+        runner = self.make_runner(target_zone='0', stay_in_zone=False)
+        owner, bound = runner.config.task, dict(runner.config.bound)
+
+        self.assertTrue(runner._run_scheduled_coin_task_once('OpsiMeowfficerFarming', 200))
+
+        runner._meow_handle_normal_search.assert_called_once_with()
+        runner._meow_handle_stay_in_zone.assert_not_called()
+        self.assert_restored(runner, owner, bound)
+
+    def test_none_target_keeps_user_zone_list(self):
+        runner = self.make_runner(target_zone='44,22')
+
+        self.assertTrue(runner._run_scheduled_coin_task_once(
+            'OpsiMeowfficerFarming', 200, meow_target_zone=None,
+        ))
+
+        self.assertEqual([zone.zone_id for zone in runner._meow_target_zone_list], [44, 22])
+        self.assertEqual(runner._meow_handle_target_zone_search.call_args.args[0].zone_id, 44)
+        runner._meow_handle_stay_in_zone.assert_not_called()
+
+    def test_specified_zone_and_fresh_ap_reach_real_meow_task(self):
+        for stay_in_zone in (False, True):
+            with self.subTest(stay_in_zone=stay_in_zone):
+                runner = self.make_runner(stay_in_zone=stay_in_zone)
+                owner, bound = runner.config.task, dict(runner.config.bound)
+                zone = runner.name_to_zone('22')
+                fresh_ap = (816, 166)
+
+                def check_task(*args, **kwargs):
+                    self.assertEqual(runner.config.task.command, 'OpsiMeowfficerFarming')
+                    self.assertTrue(runner.is_running_smart_scheduling_task())
+                    self.assertEqual(runner.config.OS_ACTION_POINT_PRESERVE, 200)
+                    self.assertEqual(runner._meow_target_zone_tokens(), [22])
+
+                handler = (runner._meow_handle_stay_in_zone if stay_in_zone
+                           else runner._meow_handle_traditional_zone)
+                handler.side_effect = check_task
+                self.assertTrue(runner._run_scheduled_coin_task_once(
+                    'OpsiMeowfficerFarming', 200, fresh_ap=fresh_ap, meow_target_zone=zone,
+                ))
+
+                if stay_in_zone:
+                    handler.assert_called_once_with(zone, fresh_ap=fresh_ap)
+                else:
+                    handler.assert_called_once_with(zone)
+                self.assertEqual(runner.config.OpsiMeowfficerFarming_TargetZone, '44')
+                self.assert_restored(runner, owner, bound)
+
+    def test_legacy_fresh_ap_positional_and_keyword_calls(self):
+        for positional in (False, True):
+            with self.subTest(positional=positional):
+                runner = self.make_runner()
+                fresh_ap = (816, 166)
+                args, kwargs = ((fresh_ap,), {}) if positional else ((), {'fresh_ap': fresh_ap})
+
+                self.assertTrue(runner._run_scheduled_coin_task_once(
+                    'OpsiMeowfficerFarming', 200, *args, **kwargs,
+                ))
+
+                runner._meow_handle_stay_in_zone.assert_called_once_with(
+                    runner.name_to_zone('44'), fresh_ap=fresh_ap,
+                )
+
+    def test_failure_restores_target_preserve_and_task(self):
+        runner = self.make_runner()
+        owner, bound = runner.config.task, dict(runner.config.bound)
+        runner._meow_handle_stay_in_zone.side_effect = GameStuckError('游戏交互失败')
+
+        with self.assertRaisesRegex(GameStuckError, '游戏交互失败'):
+            runner._run_scheduled_coin_task_once(
+                'OpsiMeowfficerFarming', 200, meow_target_zone=runner.name_to_zone('22'),
+            )
+
+        self.assert_restored(runner, owner, bound)
+
+    def test_month_end_cleanup_runs_through_real_dispatch_to_completion(self):
+        for target in ('0', '22'):
+            with self.subTest(target=target):
+                runner = self.make_runner()
+                owner, bound = runner.config.task, dict(runner.config.bound)
+                deep_set(runner.config.data, keys=runner.CONFIG_PATH_MONTH_END_MEOW_TARGET_ZONE, value=target)
+                runner._get_scheduling_action_point = Mock(side_effect=[
+                    (900, 166), (800, 166), (700, 166), (200, 100), (200, 100),
+                ])
+                order = []
+
+                def record_step(name):
+                    order.append(name)
+                    self.assertEqual(runner.config.task.command, name)
+                    if name != 'OpsiShop':
+                        self.assertEqual(runner.config.OS_ACTION_POINT_PRESERVE, 200)
+
+                for name, method in (('OpsiStronghold', 'clear_stronghold'),
+                                     ('OpsiObscure', 'clear_obscure'),
+                                     ('OpsiAbyssal', 'clear_abyssal'),
+                                     ('OpsiShop', 'perform_port_shop_purchase')):
+                    setattr(runner, method, lambda name=name: record_step(name))
+                runner._meow_handle_stay_in_zone.side_effect = (
+                    lambda *args, **kwargs: record_step('OpsiMeowfficerFarming')
+                )
+                runner.notify_push = Mock()
+                runner._delay_smart_scheduling_to_server_update = Mock()
+
+                with (patch('module.os.tasks.scheduling.get_os_reset_remain', return_value=1),
+                      self.assertRaises(TaskEnd)):
+                    runner._run_month_end_cleanup(200, 117226, 1000, 166)
+
+                self.assertEqual(order, ['OpsiStronghold', 'OpsiObscure', 'OpsiAbyssal',
+                                         'OpsiMeowfficerFarming', 'OpsiShop'])
+                runner._meow_handle_stay_in_zone.assert_called_once_with(
+                    runner.name_to_zone('22' if target == '22' else '44'), fresh_ap=None,
+                )
+                self.assertFalse(runner._is_month_end_cleanup_first_run())
+                runner.notify_push.assert_called_once()
+                runner._delay_smart_scheduling_to_server_update.assert_called_once_with('月末清理行动力已完成')
+                self.assert_restored(runner, owner, bound)
+
+    def test_no_content_result_is_preserved(self):
+        runner = self.make_runner()
+        owner, bound = runner.config.task, dict(runner.config.bound)
+
+        def no_content(*args, **kwargs):
+            runner._smart_scheduling_no_content_task = 'OpsiMeowfficerFarming'
+
+        runner._meow_handle_stay_in_zone.side_effect = no_content
+
+        self.assertFalse(runner._run_scheduled_coin_task_once(
+            'OpsiMeowfficerFarming', 200, meow_target_zone=runner.name_to_zone('22'),
+        ))
+
+        self.assertIsNone(runner._smart_scheduling_no_content_task)
+        self.assert_restored(runner, owner, bound)
+
+    def test_nested_overflow_keeps_resource_limits_and_forwards_zone(self):
+        runner = self.make_runner()
+        owner, bound = runner.config.task, dict(runner.config.bound)
+        zone = runner.name_to_zone('22')
+        fresh_ap = (190, 190)
+        box_use = runner.config.OS_ACTION_POINT_BOX_USE
+        buy_limit = runner.config.OpsiGeneral_BuyActionPointLimit
+
+        def check_limits(*args, **kwargs):
+            self.assertTrue(runner.is_running_prevent_action_point_overflow_task())
+            self.assertTrue(runner.is_running_smart_scheduling_task())
+            self.assertFalse(runner.config.OS_ACTION_POINT_BOX_USE)
+            self.assertEqual(runner.config.OpsiGeneral_BuyActionPointLimit, 0)
+            self.assertEqual(runner.config.OS_ACTION_POINT_PRESERVE, 0)
+
+        runner._meow_handle_stay_in_zone.side_effect = check_limits
+        with runner.config.temporary(OS_ACTION_POINT_BOX_USE=False, OpsiGeneral_BuyActionPointLimit=0):
+            result = runner._run_with_prevent_action_point_overflow_context(
+                'OpsiScheduling', runner._run_scheduled_coin_task_once,
+                'OpsiMeowfficerFarming', 0, fresh_ap=fresh_ap, meow_target_zone=zone,
+            )
+
+        self.assertTrue(result)
+        runner._meow_handle_stay_in_zone.assert_called_once_with(zone, fresh_ap=fresh_ap)
+        self.assertEqual(runner.config.OS_ACTION_POINT_BOX_USE, box_use)
+        self.assertEqual(runner.config.OpsiGeneral_BuyActionPointLimit, buy_limit)
+        self.assert_restored(runner, owner, bound)
 
 
 class TestMonthEndMeowTargetZoneParsing(unittest.TestCase):

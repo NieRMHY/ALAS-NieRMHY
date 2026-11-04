@@ -775,7 +775,7 @@ class SelectCharacter(UI):
         """短距离向下滑动角色列表，滑动后点击安全区域消除惯性（模仿经营模块）。"""
         self.device.swipe_vector(vector=(0, -200), box=self.CHARACTER_LIST_SCROLL_BOX,
                                  duration=(0.3, 0.5), name="IslandCharSwipe")
-        self.device.click(Button(area=(), color=(), button=self.CHARACTER_LIST_INERTIA_STOP, file={'cn': ''}))
+        self.device.click(Button(area=(), color=(), button=self.CHARACTER_LIST_INERTIA_STOP, file={'cn': '', 'en': '', 'jp': '', 'tw': ''}))
         self.device.sleep(1.0)
 
     def _swipe_character_list_to_top(self):
@@ -783,7 +783,7 @@ class SelectCharacter(UI):
         self.device.swipe_vector(vector=(0, 500), box=self.CHARACTER_LIST_SCROLL_BOX,
                                  duration=(0.3, 0.5), name="IslandCharSwipeReset")
         self.device.sleep(0.5)
-        self.device.click(Button(area=(), color=(), button=self.CHARACTER_LIST_INERTIA_STOP, file={'cn': ''}))
+        self.device.click(Button(area=(), color=(), button=self.CHARACTER_LIST_INERTIA_STOP, file={'cn': '', 'en': '', 'jp': '', 'tw': ''}))
         self.device.sleep(1.0)
 
     def _find_character_button_in_area(self, screenshot, character_names, area=None):

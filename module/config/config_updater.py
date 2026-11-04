@@ -29,13 +29,16 @@
 import re
 import typing as t
 from copy import deepcopy
+from pathlib import Path
 
 from cached_property import cached_property
 
 from deploy.utils import DEPLOY_TEMPLATE, poor_yaml_read, poor_yaml_write
 from module.base.timer import timer
+from module.campaign.stage_name import normalize_event_stage
 from module.config.deep import deep_default, deep_get, deep_iter, deep_set
 from module.config.env import IS_ON_PHONE_CLOUD
+from module.config.fleet_legacy import LEGACY_PATHS
 from module.config.server import VALID_CHANNEL_PACKAGE, VALID_PACKAGE, VALID_SERVER_LIST, to_package, to_server
 from module.config.redirect_utils.shop import migrate_shop_options
 from module.config.task_priority import get_scheduler_tasks, merge_task_priority
@@ -68,6 +71,8 @@ EVENTS = ['Event', 'Event2', 'Event3', 'EventA', 'EventB', 'EventC', 'EventD', '
 GEMS_FARMINGS = ['GemsFarming', 'ThreeOilLowCost']
 # Modify by MHY, RaidScuttle 已由 RaidAffection（共斗刷好感）替代
 RAIDS = ['Raid', 'RaidDaily', 'RaidAffection']
+# 根据关卡名在主线与所选活动之间切换的任务。
+MIXED_CAMPAIGNS = GEMS_FARMINGS + ['OperationHandover']
 WAR_ARCHIVES = ['WarArchives']
 COALITIONS = ['Coalition', 'CoalitionSp', 'CoalitionScuttle']
 MARITIME_ESCORTS = ['MaritimeEscort']
@@ -85,14 +90,38 @@ def campaign_event_options(data, args):
     return options
 
 
+def _event_stage_exists(folder, stage):
+    """Apply runtime event aliases before checking whether the selected map exists."""
+    if not isinstance(stage, str) or not stage.strip():
+        return False
+    name = re.sub(r'\s+', '', stage).lower()
+    name = re.sub(r'^([a-z]+)-(\d+)$', r'\1\2', name)
+    if name and name[0].isdigit():
+        name = 'campaign_' + name.replace('-', '_')
+    if name in ('d3-3', 'd3_3') and (folder / 'd3_3.py').is_file():
+        name = 'd3_3'
+    return (folder / (normalize_event_stage(name, folder.name) + '.py')).is_file()
+
+
 def refresh_campaign_events(data, args, is_template=False):
-    """在内存配置中刷新已结束的活动，保留档案选择与主线刷图语义。"""
+    """刷新已结束的活动，避免旧关卡名指向新活动中不存在的地图。"""
     options = campaign_event_options(data, args)
     if not is_template:
-        for task in EVENTS + RAIDS + COALITIONS + GEMS_FARMINGS:
+        for task in EVENTS + RAIDS + COALITIONS + MIXED_CAMPAIGNS:
             candidates = options.get(task, [])
             if candidates and deep_get(data, f'{task}.Campaign.Event', 'campaign_main') not in candidates:
                 deep_set(data, f'{task}.Campaign.Event', candidates[0])
+            if task in EVENTS and candidates:
+                event = deep_get(data, f'{task}.Campaign.Event', 'campaign_main')
+                folder = Path(__file__).resolve().parents[2] / 'campaign' / event
+                if folder.is_dir() and not _event_stage_exists(
+                        folder, deep_get(data, f'{task}.Campaign.Name')):
+                    # D3 can normalize to ht6 in a T-chapter event with no ht6.py.
+                    preferred = ('sp', 't1', 'a1', 'd3') if task == 'EventSp' else (
+                        't1', 'a1', 'd3', 'sp')
+                    fallback = next((name for name in preferred if (folder / (name + '.py')).is_file()), None)
+                    if fallback:
+                        deep_set(data, f'{task}.Campaign.Name', fallback.upper())
     for task in WAR_ARCHIVES:
         candidates = options.get(task, [])
         if candidates and deep_get(data, f'{task}.Campaign.Event', 'campaign_main') == 'campaign_main':
@@ -570,10 +599,10 @@ class ConfigGenerator:
                         if not hasattr(self, f'_{server}_latest_event_date'):
                             setattr(self, f'_{server}_latest_event_date', int(event.date))
                         if int(event.date) == getattr(self, f'_{server}_latest_event_date'):
-                            for task in EVENTS + GEMS_FARMINGS:
+                            for task in EVENTS + MIXED_CAMPAIGNS:
                                 insert(task)
 
-        for task in EVENTS + GEMS_FARMINGS + WAR_ARCHIVES + RAIDS + COALITIONS:
+        for task in EVENTS + MIXED_CAMPAIGNS + WAR_ARCHIVES + RAIDS + COALITIONS:
             latest = {}
             for server in ARCHIVES_PREFIX.keys():
                 latest[server] = deep_get(self.args, keys=f'{task}.Campaign.Event.option_{server}', default=[])
@@ -669,6 +698,7 @@ class ConfigUpdater:
         # Add by MHY, 共斗刷好感计数器按线拆分，旧进度迁移到一队对应计数器
         ('RaidAffection.RaidAffection.VanguardAffection', 'RaidAffection.RaidAffection.Fleet1VanguardAffection'),
         ('RaidAffection.RaidAffection.MainAffection', 'RaidAffection.RaidAffection.Fleet1MainAffection'),
+        ('FleetInfo', 'FleetInfo.FleetTraining.CheckIntervalHours', fleet_training_interval_redirect),
         ('OpsiGeneral.OpsiGeneral.ActionPointCheckInterval',
          'OpsiHazard1Leveling.OpsiHazard1Leveling.ActionPointCheckInterval'),
         ('OpsiGeneral.OpsiGeneral.SkipStrategicSearchCheck',
@@ -777,6 +807,13 @@ class ConfigUpdater:
             更新后的配置字典。
         """
         new = {}
+        # 保留尚未显式迁移的旧内容；不解析、不导入，也不作为分析数据源。
+        if not is_template:
+            missing = object()
+            for path in LEGACY_PATHS:
+                value = deep_get(old, path, missing)
+                if value is not missing:
+                    deep_set(new, path, deepcopy(value))
         for keys, data in deep_iter(self.args, depth=3):
             # 跳过非字典项（叶子值，如字符串、数字等）
             if not isinstance(data, dict):
@@ -791,7 +828,7 @@ class ConfigUpdater:
             value = parse_value(value, data=data)
             deep_set(new, keys=keys, value=value)
 
-        # 处理 AzurStatsID
+        # Modify by MHY, 保留本地统计身份，模板不携带用户标识。
         if is_template:
             deep_set(new, 'Alas.DropRecord.AzurStatsID', None)
         else:

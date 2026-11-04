@@ -653,8 +653,10 @@ class EmotionReserveConfigTests(unittest.TestCase):
             with self.subTest(value=value):
                 self.configs.patch('testpilot', None, [ConfigChange(path=path, value=value)])
                 self.assertEqual(value, self.configs.read_json(self.configs.path('testpilot'))['Main']['Emotion']['MinReserve'])
+        self.configs.patch('testpilot', None, [ConfigChange(path=path, value='150')])
+        self.assertEqual(150, self.configs.read_json(self.configs.path('testpilot'))['Main']['Emotion']['MinReserve'])
         before = self.configs.path('testpilot').read_bytes()
-        for value in (-1, 151, 80.5, True, '150', None):
+        for value in (-1, 151, 80.5, True, '150.5', None):
             with self.subTest(value=value), self.assertRaises(ApiError):
                 self.configs.patch('testpilot', None, [ConfigChange(path=path, value=value)])
         with self.assertRaises(ApiError):

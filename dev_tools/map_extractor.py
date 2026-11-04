@@ -339,6 +339,9 @@ DIC_SIREN_NAME_CHI_TO_ENG = {
     'haorenlichade_m_zhanlie': 'BonhommeRichard_BB',
     'haorenlichade_m_hangmu': 'BonhommeRichard_CV',
     'haorenlichade_m_qianting': 'BonhommeRichard_SS',
+
+    # 飓风与雾霭回廊
+    'fengfan_lingti_boss02': 'TempestaGhostBoss02',
 }
 
 
@@ -855,8 +858,8 @@ class ChapterTemplate:
     IS_WAR_ARCHIVES: 提取的地图是否适配作战档案模式。
 """
 FILE = '../AzurLaneLuaScripts'
-FOLDER = './campaign/event_20260908_cn'
-KEYWORD = '2060001'
+FOLDER = './campaign/event_20261022_cn'
+KEYWORD = '2027001'
 SELECT = True
 OVERWRITE = True
 IS_WAR_ARCHIVES = False

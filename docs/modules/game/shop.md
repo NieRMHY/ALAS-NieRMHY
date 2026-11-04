@@ -9,7 +9,7 @@
 - `module/shop`：常规商店框架与六个具体商店（通用、功勋、舰队、核心、勋章、代币/白票）。它们共享「识别货架 → 过滤排序 → 逐个购买」的流程，差异只在网格布局、货币类型和购买弹窗形态，因此以 `ShopBase` + `ShopClerk` 抽象公共流程，每个商店一个子类只覆盖差异点。
 - `module/shop_event`：活动商店。其货架随活动动态变化（无固定模板网格）、货币是活动点数 pt/URpt 且存在「UR 舰船用 URpt、URpt 用 pt 兑换」的换算链，购买策略（保船、保留点数、活动结束前清货架）与常规商店完全不同，故独立成模块。
 
-在系统中，调度器 `alas.py` 的 `ShopFrequent`/`ShopOnce`/`EventShop` 任务分别进入 `RewardShop.run_frequent()`、`RewardShop.run_once()` 和 `EventShop.run()`；大世界白票商店（`OpsiVoucher`）与档案任务（`OpsiArchive`）直接实例化 `VoucherShop`。大世界港口/明石商店（`module/os_shop`）与私人休息室商店（`module/private_quarters`）是独立模块，复用常规商店的基类与界面模式。
+在系统中，调度器 `alas.py` 的 `ShopFrequent`/`ShopOnce`/`EventShop` 任务分别进入 `RewardShop.run_frequent()`、`RewardShop.run_once()` 和 `EventShop.run()`；大世界白票商店（`OpsiVoucher`）与档案任务（`OpsiArchive`）直接实例化 `VoucherShop`。大世界港口/明石商店（`module/os_shop`）与宿舍计划商店（`module/private_quarters`）是独立模块，复用常规商店的基类与界面模式。
 
 ## 2. 模块职责
 
@@ -24,7 +24,7 @@
 ### 不负责
 
 - 大世界港口商店与明石商店的识别购买（`module/os_shop`），由其自身任务控制器负责。
-- 私人休息室商店（`module/private_quarters`，复用本系统模式但独立实现）。
+- 宿舍计划商店（`module/private_quarters`，复用本系统模式但独立实现）。
 - 页面跳转图谱与导航路径（`module/ui`），本模块只调用 `ui_ensure()`/`ui_goto()`。
 - 过滤字符串的配置定义、迁移与生成（`module/config`）。
 

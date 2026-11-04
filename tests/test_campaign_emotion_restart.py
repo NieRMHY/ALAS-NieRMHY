@@ -41,7 +41,8 @@ class CampaignEmotionRestartTests(unittest.TestCase):
                 runner.handle_commission_notice = Mock()
                 runner.triggered_stop_condition = Mock(return_value=False)
                 campaign = Mock()
-                campaign.config = SimpleNamespace(Campaign_Mode='normal', modified={}, MAP_IS_ONE_TIME_STAGE=False)
+                campaign.config = SimpleNamespace(Campaign_Mode='normal', modified={}, MAP_IS_ONE_TIME_STAGE=False,
+                                                  cross_get=lambda path, default=None: default)
                 campaign.emotion = emotion
                 campaign.map_is_auto_search = True
                 campaign.get_event_pt_limit.return_value = 0

@@ -12,17 +12,16 @@
 """
 from module.combat.combat import *
 from module.exercise.assets import *
-from module.exercise.equipment import ExerciseEquipment
 from module.exercise.hp_daemon import HpDaemon
 from module.exercise.opponent import OPPONENT, OpponentChoose
 from module.ui.assets import EXERCISE_CHECK
 
 
-class ExerciseCombat(HpDaemon, OpponentChoose, ExerciseEquipment, Combat):
+class ExerciseCombat(HpDaemon, OpponentChoose, Combat):
     """演习战斗处理器，整合对手选择、血量监控和装备管理。
 
     继承自 HpDaemon（血量监控）、OpponentChoose（对手选择）、
-    ExerciseEquipment（装备管理）和 Combat（战斗逻辑），
+    Combat（战斗及装备管理），
     提供完整的演习战斗执行流程。
 
     战斗流程：选择对手 -> 准备 -> 执行 -> 结算处理 -> 返回。
@@ -55,11 +54,7 @@ class ExerciseCombat(HpDaemon, OpponentChoose, ExerciseEquipment, Combat):
             else:
                 self.device.screenshot()
 
-            if self.appear(BATTLE_PREPARATION, offset=(20, 20), interval=2):
-                # self.equipment_take_on()
-                pass
-
-                self.device.click(BATTLE_PREPARATION)
+            if self.handle_battle_preparation():
                 continue
 
             # 结束
@@ -244,28 +239,3 @@ class ExerciseCombat(HpDaemon, OpponentChoose, ExerciseEquipment, Combat):
 
         self._preparation_quit()
         return False
-
-    def equipment_take_off_when_finished(self):
-        """演习全部出击结束后卸下舰队装备。
-
-        Returns:
-            bool: 成功卸下返回 True，无需卸下返回 False。
-        """
-        if self.config.EXERCISE_FLEET_EQUIPMENT is None:
-            return False
-        if not self.equipment_has_take_on:
-            return False
-
-        self._choose_opponent(0)
-        super().equipment_take_off()
-        self._preparation_quit()
-
-    # def equipment_take_on(self):
-    #     if self.config.EXERCISE_FLEET_EQUIPMENT is None:
-    #         return False
-    #     if self.equipment_has_take_on:
-    #         return False
-    #
-    #     self._choose_opponent(0)
-    #     super().equipment_take_on()
-    #     self._preparation_quit()

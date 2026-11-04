@@ -172,6 +172,15 @@ class ResourceStatsIntegration(StoreCase):
         self.assertEqual(timeline[0]['action_point'], 100)
         self.assertEqual(timeline[0]['purple_coin'], 15)
 
+    def test_carry_forward_only_writes_observed_resources(self):
+        """单项读数沿用最近一行的其他列；首行未读过的资源留空而不是 0。"""
+        resource_stats.record_resource_snapshot('inst', {'Oil': 6753}, carry_forward=True)
+        resource_stats.record_resource_snapshot('inst', {'Coin': 7882}, carry_forward=True)
+        resource_stats.record_resource_snapshot('inst', {'Pt': 4720}, carry_forward=True)
+        resource_stats.record_resource_snapshot('other', {'Oil': 1}, carry_forward=True)
+        rows = self.raw("SELECT oil,coin,pt,gem FROM resource_snapshots WHERE instance='inst' ORDER BY id")
+        self.assertEqual(rows, [(6753, None, None, None), (6753, 7882, None, None), (6753, 7882, 4720, None)])
+
 
 class ShipExpIntegration(StoreCase):
     def make_stats(self):

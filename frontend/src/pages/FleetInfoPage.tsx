@@ -14,6 +14,7 @@ export function FleetInfoPage() {
   const scanning = current?.status === 'running' && current.currentTask === 'FleetScan'
   const [value, setValue] = useState<unknown>(), [loaded, setLoaded] = useState(false)
   const [error, setError] = useState(''), [busy, setBusy] = useState(false)
+  const [updateEmotion, setUpdateEmotion] = useState(true)
   const reason = connection !== 'ready' ? ui('mind.scanDisconnected')
     : !current ? ui('mind.scanLoading')
     : current.status === 'updating' ? ui('mind.scanUpdating')
@@ -25,7 +26,11 @@ export function FleetInfoPage() {
     const load = async () => {
       try {
         const config = await api.request('config.get', {instance})
-        if (active) {setValue(config.values.FleetInfo?.FleetInfo?.Result); setLoaded(true); setError('')}
+        if (active) {
+          setValue(config.values.FleetInfo?.FleetInfo?.Result)
+          setUpdateEmotion(config.values.FleetInfo?.FleetInfo?.UpdateEmotion !== false)
+          setLoaded(true); setError('')
+        }
       } catch (error) {if (active) setError((error as Error).message)}
     }
     void load()
@@ -39,6 +44,10 @@ export function FleetInfoPage() {
       if (scanning) await api.request('scheduler.stop', {instance})
       else {
         await editor(`config:${instance}`).settled()
+        const config = await api.request('config.get', {instance})
+        await api.request('config.patch', {instance, revision: config.revision, changes: [
+          {path: 'FleetInfo.FleetInfo.UpdateEmotion', value: updateEmotion},
+        ]})
         await api.request('tasks.run', {instance, task: 'FleetScan'})
         notify(ui('task.started'))
       }
@@ -47,7 +56,11 @@ export function FleetInfoPage() {
   }
 
   return <>
-    <PageTitle title={t('Task.FleetInfo.name')} actions={<><span>{t('Task.FleetScan.name')}</span><button type="button" className={`toggle ${scanning ? 'on' : ''}`} role="switch" aria-checked={scanning} aria-label={t('Task.FleetScan.name')} disabled={busy || !!reason} title={reason || undefined} onClick={toggleScan}><span/></button></>}/>
+    <PageTitle title={t('Task.FleetInfo.name')} actions={<>
+      <label className="checkbox-label"><input type="checkbox" checked={updateEmotion} disabled={!loaded || scanning || busy || !!reason} onChange={event => setUpdateEmotion(event.target.checked)}/>{ui('fleet.updateEmotion')}</label>
+      <span>{t('Task.FleetScan.name')}</span><button type="button" className={`toggle ${scanning ? 'on' : ''}`} role="switch" aria-checked={scanning} aria-label={t('Task.FleetScan.name')} disabled={!loaded || busy || !!reason} title={reason || undefined} onClick={toggleScan}><span/></button>
+    </>}/>
+    <p className="muted">{ui('rotation.duplicates')}</p>
     {reason && <p className="muted" role="status">{reason}</p>}
     {error && <ErrorBox message={error}/>}
     {loaded ? <FleetInfo value={value}/> : !error && <Loading/>}
@@ -58,11 +71,11 @@ export function FleetInfoPage() {
 export function FleetInfo({value}: {value: unknown}) {
   const {ui} = useApp()
   if (!value || (typeof value === 'object' && !Object.keys(value).length)) return <Empty icon={<Ship size={32}/>} title={ui('fleet.emptyTitle')}>{ui('fleet.emptyHint')}</Empty>
-  let fleets: Record<string, Record<string, Array<{name: string; level?: number; emotion?: number | null} | string>>>
+  let fleets: Record<string, Record<string, Array<{name: string; level?: number; emotion?: number | null; slot?: number} | string>>>
   try {fleets = typeof value === 'string' ? JSON.parse(value) : value} catch {return <ErrorBox message={ui('fleet.invalid')}/>}
   const columns = {vanguard: ui('fleet.vanguard'), main: ui('fleet.main'), submarine: ui('fleet.submarine')}
   return <div className="fleet-grid">{[1, 2, 3, 4, 5, 6].map(fleet => <section className="panel" key={fleet}><div className="panel-heading"><h2>{ui('fleet.title', {number: fleet})}</h2><Ship size={18}/></div>{Object.entries(columns).map(([key, label]) => <div className="fleet-column" key={key}><h3>{label}</h3>{fleets[key]?.[fleet]?.length ? fleets[key][fleet].map((ship, index) => <div key={index}>
-    <span>{typeof ship === 'string' ? ship : ship.name}</span>
+    <span>{typeof ship !== 'string' && Number.isInteger(ship.slot) && ship.slot! >= 1 && ship.slot! <= 6 ? `${ui('fleet.slot', {number: ship.slot!})} · ` : ''}{typeof ship === 'string' ? ship : ship.name || ui('fleet.unknown')}</span>
     <small>{typeof ship !== 'string' && ship.level ? `Lv.${ship.level} · ` : ''}{ui('fleet.emotion', {value: typeof ship !== 'string' && Number.isInteger(ship.emotion) && ship.emotion! >= 0 && ship.emotion! <= 150 ? ship.emotion! : ui('fleet.unknown')})}</small>
   </div>) : <p>{ui('fleet.noRecord')}</p>}</div>)}</section>)}</div>
 }

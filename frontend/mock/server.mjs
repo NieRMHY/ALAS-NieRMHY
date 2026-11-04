@@ -80,7 +80,7 @@ export function createMockServer({password = '', empty = false} = {}) {
       try {
         request = JSON.parse(raw.toString())
         if (!request || request.v !== 1 || request.type !== 'request' || typeof request.id !== 'string' || !request.id.length || request.id.length > 100 || typeof request.method !== 'string') fail('INVALID_REQUEST', '请求信封无效')
-        if (raw.length > 1024 * 1024 && !['mind.import', 'mind.recognize', 'mind.save', 'mind.calculate'].includes(request.method)) fail('INVALID_REQUEST', '请求超过 1 MiB 限制')
+        if (raw.length > 1024 * 1024 && !['mind.import', 'mind.recognize'].includes(request.method)) fail('INVALID_REQUEST', '请求超过 1 MiB 限制')
         if (session.ids.has(request.id)) fail('DUPLICATE_REQUEST', '请求 ID 重复')
         session.ids.add(request.id)
         if (session.ids.size > 128) session.ids.delete(session.ids.values().next().value)

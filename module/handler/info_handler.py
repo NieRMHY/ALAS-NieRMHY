@@ -289,6 +289,25 @@ class InfoHandler(ModuleBase):
         if self.handle_use_data_key():
             return True
 
+        # 仅普通主线/活动换船入口安装此策略；其他任务保留原红脸处理。
+        if (getattr(self.emotion, 'selected_only', False) is True
+                and self.appear(POPUP_CANCEL, offset=self._popup_offset)
+                and self.appear(POPUP_CONFIRM, offset=self._popup_offset)):
+            if self.emotion.rotation_popup_allowed():
+                result = self.handle_popup_confirm('IGNORE_LOW_EMOTION')
+                if result:
+                    self.interval_reset(AUTO_SEARCH_MAP_OPTION_OFF)
+                return result
+            if self.handle_popup_cancel('IGNORE_LOW_EMOTION'):
+                logger.warning('[心情-换船] 培养心情未知或不足，退出后重新检查')
+                try:
+                    self._emotion_emergency_exit()
+                except CampaignEnd:
+                    pass
+                self.emotion.delay_rotation_popup(max(1, getattr(self, '_map_battle', 1)))
+                raise ScriptEnd('[心情-换船] 红脸弹窗取消，重新检查培养舰位心情')
+            return False
+
         # calculate 模式保底：正常不应出现红脸弹窗
         # 若出现则可能是ALAS计算错误或用户手动操作，需异常处理
         if self.emotion.is_calculate and not self.emotion.is_ignore:

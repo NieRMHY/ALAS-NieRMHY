@@ -224,6 +224,9 @@
 .statistics-category-control > button {position: relative; z-index: 1}
 .statistics-category-control > * {z-index: 1}
 .statistics-category-control button.is-chained::after {content:'';width:5px;height:5px;margin-left:6px;border-radius:50%;background:currentColor;opacity:.45}
+.statistics-category-picker {display:none; align-items:center; gap:10px; min-width:0; margin-bottom:20px}
+.statistics-category-picker > .statistics-category-select {flex:1; min-width:0}
+.statistics-category-picker > .statistics-single-view {flex-shrink:0; min-height:var(--form-height); padding:6px 12px; border:1px solid var(--theme-border); border-radius:var(--theme-radius-control); background:var(--theme-control-bg); white-space:nowrap}
 .statistics-chain-link {align-self:center;width:10px;height:1px;background:var(--theme-border)}
 .statistics-chain-add:hover {color:var(--theme-accent);border-color:var(--theme-accent)}
 .statistics-chain-picker {min-width:160px}
@@ -246,9 +249,9 @@
 :root[data-theme='extreme'] .statistics-toolbar-row {position:sticky;top:var(--topbar-height);z-index:30;display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:8px 0;margin-bottom:12px;background:var(--bg)}
 /* 分段控件放不下时换成单按钮下拉（指针移入即展开，见 Select 的 openOnFocus）。
    is-compact 由 Statistics 测量可用宽度得出，不用固定断点：右侧控件宽度随分类变化。 */
-:root[data-theme='extreme'] .statistics-toolbar-row .statistics-category-select {display:none}
+:root[data-theme='extreme'] .statistics-toolbar-row .statistics-category-picker {margin-bottom:0}
 :root[data-theme='extreme'] .statistics-toolbar-row.is-compact .statistics-category-control {display:none}
-:root[data-theme='extreme'] .statistics-toolbar-row.is-compact .statistics-category-select {display:inline-flex}
+:root[data-theme='extreme'] .statistics-toolbar-row.is-compact .statistics-category-picker {display:flex}
 :root[data-theme='extreme'] .instance-page-main > .statistics-toolbar-row {top:0}
 :root[data-theme='extreme'] .statistics-toolbar-row .statistics-category-control {margin-bottom:0;flex:0 0 auto;width:max-content}
 :root[data-theme='extreme'] .statistics-toolbar-right {display:flex;align-items:center;gap:12px;margin-left:auto;flex-wrap:wrap}
@@ -385,9 +388,20 @@
 
 @media(max-width:950px) {.resource-grid:not(.resource-fit) {grid-template-columns:repeat(auto-fit,minmax(140px,1fr)) !important}.resource-card-editor,.resource-picker-grid {grid-template-columns:1fr}.resource-settings-heading {gap:10px}.task-row {grid-template-columns:minmax(0,1fr) 48px 74px 10px !important}.stat-metrics {grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.statistics-controls {padding:15px;gap:10px}.statistics-controls label {max-width:100%}.statistics-controls input {max-width:100%}.statistics-sections {flex:none;grid-template-rows:auto auto}.schedule-panel, .monitor-panel {height:500px}.panel.chart-expanded {inset:5px}.statistics-note {font-size:11px}}
 
+@media(max-width:950px) {
+  /* 分类文字完整收在下拉菜单里，不再露出被切断的半个标签。 */
+  .statistics-toolbar-row .statistics-category-control {display:none}
+  .statistics-toolbar-row .statistics-category-picker {display:flex; width:100%}
+}
+
 /* 手机端：165px 起的网格在窄屏只放得下一列，而卡片是按多列设计的。
    窄屏改成「图标 + 名字在左、数值在右」的紧凑行，并允许名字折行，长物品名不再被省略号吃掉。 */
 @media(max-width:480px) {
+  /* 搜索独占一行，标题与导出操作保留在上方，避免按钮文字被挤成单字竖排。 */
+  .statistics-table > .panel-heading {flex-wrap:wrap; gap:10px}
+  .statistics-table > .panel-heading > .table-search {order:1; flex-basis:100%}
+  .statistics-table > .panel-heading > .table-search input {max-width:none}
+  .statistics-table > .panel-heading > .table-search > span {flex-shrink:0; white-space:nowrap}
   .summary-metrics-panel .summary-metrics {grid-template-columns:1fr;gap:2px}
   .summary-metrics-panel .summary-metric-card {flex-direction:row;align-items:center;gap:12px;min-height:0;padding:9px 10px}
   .summary-metrics-panel .summary-metric-head {flex-direction:row-reverse;justify-content:flex-end;flex:1 1 auto;min-width:0;margin-bottom:0;gap:10px}

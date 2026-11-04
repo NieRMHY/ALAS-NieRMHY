@@ -17,8 +17,7 @@ import numpy as np
 from module.api.app import create_app
 from module.api.config_service import ConfigService
 from module.api.mind_calculator_service import MindCalculatorService
-from module.api.protocol import ApiError, ConfigChange
-from module.runtime.mind_calculator import calculate
+from module.api.protocol import ApiError
 from module.runtime.mind_recognition import Card, ScanMerger, ScanPolicy, _match_name, normalize_screenshot, recognize_cards
 from tests.test_api import fixture
 
@@ -60,30 +59,50 @@ class ScrollEvidenceTests(unittest.TestCase):
 
 
 class ScanFailureTests(unittest.TestCase):
-    def test_failed_scan_keeps_old_list_and_disables_only_its_ocr_debug(self):
+    def test_failed_scan_preserves_database_and_disables_only_its_ocr_debug(self):
         import copy
         from module.exception import MindCalculatorScanError
-        from module.retire.mind_scan import MindCalculatorScan
+        from module.retire.dock_scan import DockScan
         from unittest.mock import call
-        config = SimpleNamespace(MindCalculator_MinLevel=95, MindCalculator_MaxLevel=120,
+        from pathlib import Path
+        from module.runtime import dock_data
+        from module.runtime.fleet_database import FleetDatabase
+        temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(temporary.cleanup)
+        config_path = Path(temporary.name) / 'testpilot.json'
+        database = FleetDatabase(config_path)
+        snapshot = dock_data.build_snapshot(
+            [dict(name='拉菲', group_type=10117, level=100, review=False)],
+            min_level=1, max_level=125, reached_bottom=True, filters_clear=True,
+            physical_count=1, expected_count=1, updated_at='2026-10-25T00:00:00')
+        database.save_scan(snapshot, dock_data.read_snapshot(database.load())['revision'])
+        pending = database.load(include_pending=True)
+        database.review([dict(id=row['id'], accept=True) for row in pending['pending_changes']],
+                        dock_data.read_snapshot(pending)['revision'], pending['pending_revision'])
+        database_before = database.path.read_bytes()
+        config = SimpleNamespace(config_name='testpilot', Dock_MinLevel=95, Dock_MaxLevel=120,
                                  data={'MindCalculatorScan': {'MindCalculator': {'Result': {'ships': [
                                      {'name': '拉菲', 'level': 100, 'source': '旧清单'}]}}}}, modified={})
         previous = copy.deepcopy(config.data)
-        scanner = MindCalculatorScan.__new__(MindCalculatorScan)
+        scanner = DockScan.__new__(DockScan)
         scanner.config, scanner.device = config, Mock()
         scanner.ui_ensure, scanner.dock_reset, scanner.dock_sort_method_dsc_set = Mock(), Mock(), Mock()
         scanner._prune_scan_evidence = Mock()
+        scanner._close_search = Mock()
         scanner.appear = Mock(return_value=False)
         for error, message in ((MindCalculatorScanError('离线中止'), '离线中止'),
-                               (MemoryError('模拟分配失败'), '内存不足.*保留旧清单')):
+                               (MemoryError('模拟分配失败'), '内存不足.*保留共享扫描数据')):
             with self.subTest(error=type(error).__name__):
                 scanner._scan_pages = Mock(side_effect=error)
-                with patch('module.retire.mind_scan.server.server', 'cn'), \
-                        patch('module.retire.mind_scan.DOCK_SCROLL') as scroll, patch('module.ocr.al_ocr.AlOcr') as ocr:
+                with patch('module.config.utils.filepath_config', return_value=str(config_path)), \
+                        patch('module.retire.dock_scan.server.server', 'cn'), \
+                        patch('module.retire.dock_scan.DOCK_SCROLL') as scroll, patch('module.ocr.al_ocr.AlOcr') as ocr, \
+                        patch('module.retire.enhancement.OCR_DOCK_AMOUNT.ocr', return_value=(1, 0, 1)):
                     scroll.appear.return_value = scroll.at_top.return_value = True
                     with self.assertRaisesRegex(MindCalculatorScanError, message):
                         scanner.run()
                 self.assertEqual(config.data, previous)
+                self.assertEqual(database.path.read_bytes(), database_before)
                 self.assertEqual(config.modified, {})
                 scanner._prune_scan_evidence.assert_not_called()
                 self.assertEqual(ocr.call_args_list, [call(config=config, name='ppocr_v6', save_debug_images=False),
@@ -91,15 +110,14 @@ class ScanFailureTests(unittest.TestCase):
 
     def check_suffix_reread(self, recovered, signatures=None, extra_screenshots=0, kind='suffix', capture_error=False):
         import copy
-        from module.retire.mind_scan import MindCalculatorScan
-        from module.exception import MindCalculatorScanError
+        from module.retire.dock_scan import DockScan
         class ImmediateTimer:
             def __init__(self, limit, *args, **kwargs): self.limit = limit
             def start(self): return self
             def reset(self): return self
             def reached(self): return self.limit < 5
         uncertain = Card(93, 65, 0, dict(name='列克星敦I', level=93, rarity='SSR', base_rarity='',
-                                       excluded=False, review=True, source='后缀未确认'), 2, True)
+                                       review=True, source='后缀未确认'), 2, True)
         confirmed = copy.deepcopy(uncertain)
         confirmed.ship.update(name='列克星敦II', rarity='UR', base_rarity='UR', review=False)
         confirmed.quality = 6
@@ -108,7 +126,7 @@ class ScanFailureTests(unittest.TestCase):
             uncertain.ship = copy.deepcopy(confirmed.ship)
             uncertain.fleet = -1 if kind == 'unknown_fleet' else 1
             reason = '编队/排序'
-        scanner = MindCalculatorScan.__new__(MindCalculatorScan)
+        scanner = DockScan.__new__(DockScan)
         scanner.config, scanner.device = SimpleNamespace(Emulator_ControlMethod='MaaTouch', config_name='testpilot'), Mock()
         scanner.device.image = np.zeros((720, 1280, 3), dtype=np.uint8)
         scanner.appear = Mock(return_value=True)
@@ -124,11 +142,11 @@ class ScanFailureTests(unittest.TestCase):
         thumb = np.ones(565)
         scroll = SimpleNamespace(appear=lambda _: True, total=565, match_color=lambda _: thumb)
         with tempfile.TemporaryDirectory() as temp, \
-                patch('module.retire.mind_scan.logger.log_file', str(Path(temp) / 'testpilot.txt')), \
-                patch('module.retire.mind_scan.Timer', ImmediateTimer), patch('module.retire.mind_scan.DOCK_SCROLL', scroll), \
-                patch('module.retire.mind_scan.ScanMerger', return_value=merger), \
-                patch('module.retire.mind_scan.grid_rows', return_value=[65, 292, 519]), \
-                patch('module.retire.mind_scan.recognize_cards') as recognize:
+                patch('module.retire.dock_scan.logger.log_file', str(Path(temp) / 'testpilot.txt')), \
+                patch('module.retire.dock_scan.Timer', ImmediateTimer), patch('module.retire.dock_scan.DOCK_SCROLL', scroll), \
+                patch('module.retire.dock_scan.ScanMerger', return_value=merger), \
+                patch('module.retire.dock_scan.grid_rows', return_value=[65, 292, 519]), \
+                patch('module.retire.dock_scan.recognize_cards') as recognize:
             if capture_error:
                 self.enterContext(patch.object(Image.Image, 'save', side_effect=OSError('模拟诊断目录不可写')))
             if recovered:
@@ -214,7 +232,6 @@ class RangeTests(unittest.TestCase):
         self.assertEqual(len(rows), 1)
         self.assertEqual(rows[0]['level'], 0)
         self.assertTrue(rows[0]['review'])
-        self.assertEqual(calculate(rows)['mind'], 0)
 
     def test_review_cards_outside_range_remain_visible_and_never_bill(self):
         cards = cards_for_levels([118, 89, 100])
@@ -223,8 +240,6 @@ class RangeTests(unittest.TestCase):
         merger = ScanMerger(); merger.slots = [[card, card.y] for card in cards]
         rows = merger.ships(90, 115)
         self.assertEqual([row['level'] for row in rows], [118, 89, 100])
-        self.assertEqual(calculate(rows)['review'], 2)
-        self.assertEqual(calculate(rows)['included'], 1)
 
     def test_name_disagreement_does_not_invalidate_matching_levels(self):
         image = Image.new('RGB', (1280, 720), (80, 80, 80))
@@ -236,7 +251,6 @@ class RangeTests(unittest.TestCase):
         self.assertTrue(merger.slots[0][0].level_reliable)
         self.assertIn('跨屏读数不一致', merger.slots[0][0].ship['source'])
         self.assertEqual(merger.ships(90, 115)[0]['level'], 118)
-        self.assertEqual(calculate(merger.ships(90, 115))['mind'], 0)
         retry[0].ship['level'] = 18
         merger.add(image, retry)
         self.assertFalse(merger.slots[0][0].level_reliable)
@@ -296,21 +310,19 @@ class RangeTests(unittest.TestCase):
             with self.assertRaises(ValueError): ScanPolicy(low, high)
 
     def test_range_config_defaults_and_api_persistence(self):
+        from module.api.dock_service import DockService
         with tempfile.TemporaryDirectory() as temp:
             configs = ConfigService(fixture(temp))
-            service = MindCalculatorService(configs)
+            service = DockService(configs)
             report = service.report('testpilot')
-            self.assertEqual((report['min_level'], report['max_level']), (95, 125))
-            configs.patch('testpilot', configs.get('testpilot')['revision'], [
-                ConfigChange(path='MindCalculatorScan.MindCalculator.MinLevel', value=90),
-                ConfigChange(path='MindCalculatorScan.MindCalculator.MaxLevel', value=115),
-            ])
-            report = service.report('testpilot')
+            self.assertEqual((report['min_level'], report['max_level']), (1, 125))
+            report = service.configure('testpilot', 90, 115)
             self.assertEqual((report['min_level'], report['max_level']), (90, 115))
-            with self.assertRaises(ApiError):
-                configs.patch('testpilot', configs.get('testpilot')['revision'], [
-                    ConfigChange(path='MindCalculatorScan.MindCalculator.MaxLevel', value=126),
-                ])
+            self.assertEqual(DockService(ConfigService(configs.root)).report('testpilot'), report)
+            with self.assertRaises(ApiError) as error:
+                service.configure('testpilot', 90, 126)
+            self.assertEqual(error.exception.code, 'INVALID_PARAMS')
+            self.assertEqual(service.report('testpilot'), report)
 
 
 class NativeLevelTests(unittest.TestCase):
@@ -358,8 +370,8 @@ class NativeLevelTests(unittest.TestCase):
         self.assertEqual(reader.read(glyphs), 0)
 
     def test_short_gesture_accounts_for_game_activation_distance(self):
-        from module.retire.mind_scan import MindCalculatorScan
-        scanner = MindCalculatorScan.__new__(MindCalculatorScan)
+        from module.retire.dock_scan import DockScan
+        scanner = DockScan.__new__(DockScan)
         scanner.config = SimpleNamespace(Emulator_ControlMethod='MaaTouch')
         scanner.device = Mock()
         scanner._drag_rows(13)
@@ -383,12 +395,7 @@ class ScreenshotTests(unittest.TestCase):
         self.assertEqual(self.cards[13].ship['name'], '阿尔弗雷多·奥里亚尼')
         # 名单、等级和基础稀有度已确认的原始结果直接计费，无需修改核对字段。
         selected = [c.ship for c in self.cards if 90 <= c.ship['level'] <= 115]
-        report = calculate(selected)
         self.assertEqual([ship['name'] for ship in selected if ship['review']], ['新月'])
-        self.assertEqual(report['review'], 1)
-        self.assertEqual(report['included'], len(selected) - 2)
-        self.assertEqual(report['excluded'], 1)  # 帕特莉夏为联动舰，保存但不计费。
-        self.assertGreater(report['mind'], 0)
 
     def test_upload_defaults_skip_debug_io_and_explicit_reader_can_collect(self):
         from dataclasses import asdict
@@ -431,7 +438,6 @@ class ScreenshotTests(unittest.TestCase):
         cards = recognize_cards(self.image, name_ocr=ocr)
         self.assertTrue(all(card.level_reliable for card in cards))
         self.assertTrue(all(card.ship['review'] for card in cards))
-        self.assertEqual(calculate([card.ship for card in cards])['mind'], 0)
 
     def test_native_name_crops_use_fleet_preprocessing(self):
         from module.ocr.al_ocr import AlOcr, OcrSettings
@@ -539,7 +545,7 @@ class TransportTests(unittest.TestCase):
         config = run.call_args.args[0]
         self.assertEqual(config.ws_max_size, 8 * 1024 * 1024)
         with tempfile.TemporaryDirectory() as temp, socket.socket() as listener:
-            app = create_app(root=fixture(temp), password='', manage_runtime=False, mount_mcp=False)
+            app = create_app(root=fixture(temp), password='', manage_runtime=False)
             listener.bind(('127.0.0.1', 0)); listener.listen()
             config.app, config.factory, config.log_level = app, False, 'error'
             config.loaded = False
@@ -559,11 +565,11 @@ class TransportTests(unittest.TestCase):
                     reply = json.loads(ws.recv(timeout=30))
                     self.assertTrue(reply['ok'], reply)
                     self.assertEqual(len(reply['result']['ships']), 21)
-                    ws.send(json.dumps(dict(v=1, type='request', id='oversize', method='mind.report', params=dict(instance='testpilot', junk='x' * (1024 * 1024)))))
+                    ws.send(json.dumps(dict(v=1, type='request', id='oversize', method='dock.report', params=dict(instance='testpilot', junk='x' * (1024 * 1024)))))
                     rejected = json.loads(ws.recv(timeout=5))
                     self.assertEqual(rejected['error']['code'], 'INVALID_REQUEST')
                     # 拒绝普通超大请求后，连接依然可用。
-                    ws.send(json.dumps(dict(v=1, type='request', id='alive', method='mind.report', params=dict(instance='testpilot'))))
+                    ws.send(json.dumps(dict(v=1, type='request', id='alive', method='dock.report', params=dict(instance='testpilot'))))
                     self.assertTrue(json.loads(ws.recv(timeout=5))['ok'])
             finally:
                 server.should_exit = True

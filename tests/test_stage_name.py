@@ -43,6 +43,7 @@ class StageNameRuleTests(unittest.TestCase):
             'event_20251023_cn', 'event_20260326_cn', 'event_20260625_cn',
             'event_20261022_cn',
             'war_archives_20230525_cn', 'war_archives_20231026_cn', 'war_archives_20240725_cn',
+            'war_archives_20241024_cn', 'war_archives_20251023_cn',
         ):
             for prefix in ('a', 'sp'):
                 for index in range(1, 7):
@@ -62,6 +63,7 @@ class StageNameRuleTests(unittest.TestCase):
             'event_20200917_cn', 'event_20230525_cn', 'war_archives_20200917_cn',
             'event_20231123_cn', 'event_20240725_cn', 'event_20240829_cn',
             'event_20241121_cn', 'event_20211125_cn', 'war_archives_20240725_cn',
+            'war_archives_20241024_cn', 'war_archives_20251023_cn',
         ):
             for abcd, t_ht in pairs:
                 with self.subTest(folder=folder, abcd=abcd):

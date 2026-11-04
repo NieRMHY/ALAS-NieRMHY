@@ -91,7 +91,8 @@ class StorageScheduleTests(unittest.TestCase):
             for days in (1, 14, 3650):
                 result = service.patch('testpilot', None, [ConfigChange(path=path, value=days)])
                 self.assertEqual(result['values']['StorageStatistics']['StorageStatistics']['RunIntervalDays'], days)
-            for value in (0, -1, True, 1.5, '7', 3651):
+            service.validate(path, '7')
+            for value in (0, -1, True, 1.5, '7.5', 3651):
                 with self.subTest(value=value), self.assertRaises(ApiError):
                     service.validate(path, value)
 

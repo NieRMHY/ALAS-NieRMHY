@@ -1,6 +1,6 @@
 # 其他游戏功能模块
 
-> 无法各自成篇的中小型游戏功能任务合集：演习、建造、每日任务、困难模式、SOS、作战档案、突袭、活动四件套、私人休息室、船坞、免费福利、小游戏、觉醒、作战委托、META 奖励与装备管理。
+> 无法各自成篇的中小型游戏功能任务合集：演习、建造、每日任务、困难模式、SOS、作战档案、突袭、活动四件套、宿舍计划、船坞、免费福利、小游戏、觉醒、作战委托、META 奖励与装备管理。
 
 ## 1. 模块概述
 
@@ -23,7 +23,7 @@
 ### 不负责
 
 - 通用战役/地图执行框架（`CampaignRun`、`module/map`，见[战役执行](../campaign.md)）
-- 商店通用购买框架（`module/shop`，见商店系统；私人休息室商店仅复用其 clerk）
+- 商店通用购买框架（`module/shop`，见商店系统；宿舍计划商店仅复用其 clerk）
 - 退役/强化、大世界、科研、委托、商店等已有独立文档的玩法
 - 截图/点击（设备层）与弹窗处理（处理器层）
 
@@ -31,7 +31,7 @@
 
 ```
 module/
-├── exercise/         # 演习 PvP：exercise.py 主任务，combat/opponent 战斗与对手选择，hp_daemon 血量监控，equipment 装备编辑
+├── exercise/         # 演习 PvP：exercise.py 主任务，combat/opponent 战斗与对手选择，hp_daemon 血量监控
 ├── gacha/            # 建造：gacha_reward.py 主任务，ui.py 建造页导航
 ├── daily/            # 每日任务：daily.py 单文件（含关卡/舰队映射与执行）
 ├── limit_challenge/  # 限界挑战：月度顺序挑战与出击去重
@@ -43,7 +43,7 @@ module/
 ├── eventstory/       # 活动剧情：eventstory.py 单文件
 ├── event_hospital/   # 医院活动：hospital.py 线索调查，hospital_event.py 突袭战斗，clue.py 线索识别，combat/ui.py
 ├── coalition/        # 联动活动：coalition.py 主循环，coalition_scuttle.py 沉船，coalition_sp.py，combat/ui.py
-├── private_quarters/ # 私人休息室：private_quarters.py 主任务，interact/shop/clerk/status/ui.py
+├── private_quarters/ # 宿舍计划：private_quarters.py 主任务，interact/shop/clerk/status/ui.py
 ├── shipyard/         # 船坞蓝图：shipyard_reward.py 主任务，ui.py 船坞界面，ui_globals.py 系列定义
 ├── freebies/         # 免费福利：freebies.py 总调度 + battle_pass/data_key/mail_white/supply_pack 四个子模块
 ├── minigame/         # 小游戏：minigame.py 代币与循环，new_year_challenge.py 具体游戏
@@ -90,7 +90,7 @@ module/
 
 ### 演习（module/exercise）
 
-`Exercise(ExerciseCombat)` 组合对手选择（`OpponentChoose`）、血量监控（`HpDaemon`）与装备编辑（`ExerciseEquipment`）。OCR 识别剩余次数与赛季倒计时（`DatedDuration` 专修 `10d 01:30:30` 格式）。消耗策略：`aggressive` 不保留次数；其余策略保留 5 次，并在剩余时间落入将军试炼区间（`ADMIRAL_TRIAL_HOUR_INTERVAL`）或不足 6 小时时清空保留。对手刷新每日最多 5 次，计数经 `Exercise_OpponentRefreshValue/Record` 跨天持久化；选择策略含 `max_exp / easiest / easiest_else_exp / leftmost`，`easiest_else_exp` 在刷新耗尽后放弃保胜率改为冲经验。
+`Exercise(ExerciseCombat)` 组合对手选择（`OpponentChoose`）、血量监控（`HpDaemon`）与 `Combat`，复用其 `EquipmentConfigHandler` 执行 `Equipment.Config` 战前/战后装备方案。仅首次出击前换装，连续尝试沿用同一方案，任务收尾时重新选择对手进入准备页恢复装备，再返回演习页。OCR 识别剩余次数与赛季倒计时（`DatedDuration` 专修 `10d 01:30:30` 格式）。消耗策略：`aggressive` 不保留次数；其余策略保留 5 次，并在剩余时间落入将军试炼区间（`ADMIRAL_TRIAL_HOUR_INTERVAL`）或不足 6 小时时清空保留。对手刷新每日最多 5 次，计数经 `Exercise_OpponentRefreshValue/Record` 跨天持久化；选择策略含 `max_exp / easiest / easiest_else_exp / leftmost`，`easiest_else_exp` 在刷新耗尽后放弃保胜率改为冲经验。
 
 ### 建造（module/gacha）
 
@@ -142,6 +142,8 @@ module/
 
 `EventStory(CampaignUI, Combat, LoginHandler)` 循环推进活动剧情：导航至剧情入口（个别活动在 `page_sp` 或有专属弹窗按钮），按首段/末段/中段/战斗中段按钮推进；遇到剧情内战斗时直接重启游戏跳过（比打完快）。完成后回主界面再进入一次以清掉残留奖励弹窗。个别活动经特判跳过（如剧情入口在小游戏内的活动）。
 
+入口页面按 `Event.Campaign.Event` 选择：`event_20251023_cn`、`event_20261022_cn` 使用 `page_sp`，其余常规活动使用 `page_event`；到达对应活动页后，通过左下角的 20241219 模式开关切换至剧情模式。SP 活动页的左上角标识为 `S.P.`，不能将其作为 `page_event` 导航，否则会反复返回主线页再点击活动入口。
+
 ### 医院活动（module/event_hospital）
 
 `Hospital(HospitalClue, HospitalCombat)`：先领每日奖励（红点检测），再进入线索系统在「地点/角色」两个标签页遍历旁白（`HospitalClue` 用颜色过滤+轮廓检测把线索列表转成按钮），每个旁白执行调查战斗；`OilExhausted` 时退出线索并延迟 2~4 小时。`HospitalEvent(Hospital, RaidRun)` 复用突袭运行框架执行活动战斗关：固定 `raid_name='raid_20250327'`，难度开关 easy/normal/hard，关闭推荐编队，停止条件与 RaidRun 一致。
@@ -150,9 +152,9 @@ module/
 
 `Coalition(CoalitionCombat, CampaignEvent)` 主循环：`Coalition_Mode`（含 tc1/tc2/tc3 与 easy/normal/hard 的双向兼容转换）与 `Coalition_Fleet` 决定目标，`coalition_ensure_mode()` 切换 story/battle，按 PT 与金币停止条件刷战斗；无油图标的活动先到战役菜单检查停止条件。`CoalitionSP` 只跑一次 SP 后延迟到次日。正常多队整关扣一次基础心情，单队每轮扣基础心情，各内部战斗独立记录非 S 额外消耗。`CoalitionScuttleRun`（沉船）整关只扣一次基础心情并豁免额外消耗，通过确认按钮集合处理 `SCUTTLE_CONFIRM`，复用公共战斗循环；SP 只有明确 S 且没有战败才按成功收尾。
 
-### 私人休息室（module/private_quarters）
+### 宿舍计划（module/private_quarters）
 
-`PrivateQuarters(PQInteract, PQShop)`：进入宿舍菜单 → 私人休息室；按配置购买每周玫瑰（金币）与蛋糕（钻石，商店复用 `module/shop` 的 `ShopClerk` 框架），再检查每日互动剩余次数（OCR），进入目标舰娘房间执行对话与触摸互动。可选舰娘及所在场景以 `PQInteract.available_targets` 为准；服务器差异以 `PrivateQuarters.not_supported_filter` 为准，TW 服无商店。
+`PrivateQuarters(PQInteract, PQShop)`：进入宿舍菜单 → 宿舍计划；按配置购买每周玫瑰（金币）与蛋糕（钻石，商店复用 `module/shop` 的 `ShopClerk` 框架），再检查每日互动剩余次数（OCR），进入目标舰娘房间执行对话与触摸互动。可选舰娘及所在场景以 `PQInteract.available_targets` 为准；服务器差异以 `PrivateQuarters.not_supported_filter` 为准，TW 服无商店。
 
 进房及对话处理后，`pq_goto_room()` 调用 `_pq_target_appear()`，以三种头顶气泡模板在 `(100, 100)` 偏移范围内确认舰娘就绪。每次检测最多向上微调一次视角，在 `Timer(1.5, count=3)` 窗口内持续截图；超时后退出房间，最多尝试三次。确认就绪才执行最多三次互动，精力耗尽导致互动按钮不出现时按现有超时退出；点击等待及互动阶段超时由 `RunParams.UiWait` 控制。
 
@@ -181,8 +183,9 @@ module/
 
 ### 作战委托（module/handover）
 
-`OperationHandover(CampaignRun)` 在主线关卡页启动「作战委托」：消耗石油与作战全权委托书，让舰队离线自动执行主线关卡，委托结束后再领掉落。委托期间出击类任务（主线、活动）会失败、只有大世界照常可用，因此它是调度优先级末尾的兜底任务。要点：
+`OperationHandover(CampaignRun)` 在主线或活动关卡页启动「作战委托」：消耗石油与作战全权委托书，让舰队离线自动执行指定关卡，委托结束后再领掉落。委托期间出击类任务（主线、活动）会失败、只有大世界照常可用，因此它是调度优先级末尾的兜底任务。要点：
 
+- **选择地图**：`Campaign.Name` 填 `12-4` 等主线关卡时直接进入主线；填活动关卡（如 `D3`、`T6`、`SP3`）时使用 `Campaign.Event` 所选活动，活动列表按实例服务器更新。复用战役的关卡别名规则与活动导航；C/D 等共用入口的关卡先确认准备页难度，再检查委托入口并准备舰队。关卡是否允许委托仍以游戏内入口状态为准。
 - **维护感知**：`MaintainOverride` 开启时先按当前服务器查停服公告；维护就在今天则整体切维护模式——当天 0 点起忽略次数与一键消耗，把下次运行排到维护前 10 分钟，到点用「次数拉满」跑最后一次。
 - **低频等待**：次数为 0 时尽量不进游戏——上次委托未结束就按剩余时间推迟；已完成才进游戏领奖；没有委托就按一键消耗定时或维护检查排期；两者都没开则 `Scheduler_Enable=False` 关闭任务。
 - **开委托流程**：目标关卡弹「作战委托 INFORM」→ 在进行中则按剩余时间推迟 / 已完成则领奖（连收结算、紧急委托、新船演出弹窗）→ 记录石油（低于 `OilLimit` 推迟）→ 面板定次数（维护前拉满 > 一键消耗按委托书数量 > 配置次数）→ 剩余时间不足且启用时用委托书兑换时间（1 本 = 1 小时）→ 石油够才点开始。
@@ -190,7 +193,7 @@ module/
 
 ### META 奖励（module/meta_reward）
 
-`MetaReward(BeaconReward, DossierReward)` 收取 META 系统三类奖励，**没有独立调度任务**，由 [大世界辅助模块](../os/auxiliary.md)的信标链路内嵌调用（`OpsiAshBeacon.run` 尾部与 `AshBeaconAssist.run`）：
+`MetaReward(BeaconReward, DossierReward)` 收取 META 系统三类奖励，**没有独立调度任务**，由 [大世界辅助模块](../os/auxiliary.md)的统一任务 `OpsiAshBeacon.run` 在支援与所选信标/档案阶段结束后内嵌调用；同类奖励只领取一次，等待求援时也保留此前的支援奖励收尾：
 
 - **BeaconReward**（继承 `Combat, UI`）：META 页收取同步奖励（点数满 100% 获取 META 舰船，含新舰锁定确认）与信标奖励红点。
 - **DossierReward**（继承 `Combat, UI`）：经 `DOSSIER_LIST` 进入旧档案页，收取已完成档案的遗留奖励。
@@ -205,7 +208,7 @@ module/
 无独立调度任务，是被组合的能力层：
 
 - `Equipment(EquipmentCodeHandler)`：装备页导航、舰船视图滑动、装备中过滤器、按预设记录穿/卸装备（记录以 `'9'` 分隔各舰索引）。
-- `EquipmentChange`：经强化页记录舰船当前装备图标，再逐槽换装（演习、困难各自派生 `ExerciseEquipment`/`HardEquipment` 适配入口按钮）。
+- `EquipmentChange`：经强化页记录舰船当前装备图标，再逐槽换装；`HardEquipment(Equipment)` 适配困难模式预设入口，演习与 META 则通过 `EquipmentConfigHandler` 应用站位装备码。
 - `FleetEquipment`：在编队页按舰队批量穿/卸，被 `FleetSelectionMixin`（主线、宝石收割等）使用。
 - `EquipmentCodeHandler`：读取/应用游戏内 Base64 配装码，经模拟器剪贴板交换，仅支持 uiautomator2 系控制方式；可导出到配置，宝石收割（`GemsEquipmentHandler`）据此在换装舰娘时保住原装备。
 
@@ -221,7 +224,7 @@ module/
 - **每日任务顺序依赖退出重进**：`Daily` 与 `EventStory` 等模块对「打完一关后界面顺序会乱」做了退出重进处理，改动导航逻辑时保持该行为。
 - **OCR 修正绑定当前字体**：`DatedDuration`、`RaidCounterPostMixin`、`OcrDataKey` 等后处理针对当前游戏 UI 字体，游戏改版后先拿旧截图离线验证。
 - **作战委托是优先级末位的排他任务**：委托期间主线/活动出击必然失败。给它改时间预算（委托时长、兑换）时，确认 `handover_idle_time` 的维护分支仍把维护日整段让路。
-- **META 奖励没有独立任务入口**：改它的页面流程要同时回归 `OpsiAshBeacon` 与 `AshBeaconAssist` 两条调用链（收尾 `ui_goto_main` 的约束见大世界辅助模块）。
+- **META 奖励没有独立任务入口**：改它的页面流程要回归统一 `OpsiAshBeacon` 任务内的支援和信标/档案阶段（收尾 `ui_goto_main` 的约束见大世界辅助模块）。
 - **装备码依赖剪贴板**：需 uiautomator2 系控制方式（`equipment_code_supported()`），换控制方式前确认该能力是否被下游（宝石收割）依赖。
 
 ## 20. 相关模块

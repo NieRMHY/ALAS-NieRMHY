@@ -1,5 +1,4 @@
-"""船坞心智单元计算：基础稀有度计费、最高等级合并与人工核对。"""
-import hashlib
+"""舰船身份资料、名称匹配与截图识别。"""
 import json
 import re
 import unicodedata
@@ -9,11 +8,6 @@ from pathlib import Path
 
 RARITIES = ('UR', 'SSR', 'SR', 'R', 'N')
 RARITY_NAMES = dict(zip(RARITIES, ('海上传奇', '超稀有', '精锐', '稀有', '普通')))
-MIND_COSTS = {
-    'N': (60, 120, 180, 300), 'R': (80, 160, 240, 400),
-    'SR': (120, 240, 360, 600), 'SSR': (200, 400, 600, 1000), 'UR': (300, 600, 900, 1500),
-}
-RESULT_PATH = 'MindCalculatorScan.MindCalculator.Result'
 SHIP_DATA_FILE = Path(__file__).parents[2] / 'assets/ship/ship_data.json'
 
 
@@ -21,6 +15,8 @@ SHIP_DATA_FILE = Path(__file__).parents[2] / 'assets/ship/ship_data.json'
 def catalog():
     """从共享舰船资料构建国服目录，改造按基础舰船稀有度计费。"""
     data = json.loads(SHIP_DATA_FILE.read_text(encoding='utf-8'))
+    handbook_codes = {row['group_type']: row['code'] for row in
+                      json.loads(SHIP_DATA_FILE.with_name('fleet_tech.json').read_text(encoding='utf-8'))['ships']}
     entries = {}
     for ship_id, row in data.items():
         if row['group_type'] is None or row['star_max'] is None or row['rarity_name'] not in RARITIES:
@@ -37,8 +33,10 @@ def catalog():
         group = ('联动' if row['nationality'] >= 100 else '布里' if row['nationality'] == 98 else 'META' if row['nationality'] == 97
                  else '幼体' if row.get('is_child') else '方案' if row['group_type'] // 100 % 100 == 99 else '')
         info = dict(name=name, raw_name=name, rarity=rarity, base_rarity=rarity, group_type=row['group_type'],
+                    code=handbook_codes.get(row['group_type']),
                     base_name=base['name']['cn'].strip() if row['is_retrofit'] else name,
-                    group=group, type=row['type_name'], nation=base.get('nation_name', str(base['nationality'])))
+                    group=group, type=row['type_name'], nationality=base['nationality'],
+                    nation=base.get('nation_name', str(base['nationality'])))
         if row['is_retrofit']:
             info.update(group='改造', rarity=RARITIES[max(0, RARITIES.index(rarity) - 1)])
         entries[row['group_type'], name] = info
@@ -123,36 +121,6 @@ def find_ship(name):
     return candidates[0] if len(candidates) == 1 else None
 
 
-def revision(ships):
-    """计算舰船清单的稳定版本摘要。"""
-    return hashlib.sha256(json.dumps(ships, ensure_ascii=False, sort_keys=True).encode()).hexdigest()
-
-
-def enrich(ship):
-    """资料补全默认稀有度，保留用户明确指定的计费基础稀有度。"""
-    item = dict(ship)
-    info = find_ship(item['name'])
-    if info:
-        item['name'] = info['name']
-        item['rarity'] = info['rarity']
-        item['base_rarity'] = item.get('base_rarity') or info['base_rarity']
-        item['group'] = info['group']
-        item['base_name'] = info['base_name']
-    else:
-        item['group'] = ''
-        item['base_name'] = re.sub(r'[.·・]?改$', '', item['name']).strip()
-        if not item.get('base_rarity') and item['base_name'] == item['name']:
-            item['base_rarity'] = item.get('rarity', '')
-        if len(find_ships(item['name'])) > 1:
-            item['review'] = True
-    item.setdefault('rarity', '')
-    item.setdefault('base_rarity', '')
-    item.setdefault('excluded', False)
-    item.setdefault('review', False)
-    item.setdefault('source', '')
-    return item
-
-
 def base_key(ship):
     """确定用于同名舰船合并的基础身份键。"""
     if ship.get('group_type') is not None:
@@ -168,52 +136,8 @@ def preference(ship):
     return ship['level'], bool(info and info['group'] == '改造')
 
 
-def calculate(ships):
-    """等级只能推断觉醒阶段：116 级起已走完四阶，目标限定为 120 级。"""
-    rows = [enrich(ship) for ship in ships]
-    highest = {}
-    for index, ship in enumerate(rows):
-        name = ship['name']
-        ship['automatic_excluded'] = ('兵装' in name or 'μ' in name.casefold()
-                                      or ship['group'] in ('幼体', '联动', '布里'))
-        if ship['excluded']:
-            ship['status'] = 'excluded'
-        elif ship['review'] or not 1 <= ship['level'] <= 125 or ship['base_rarity'] not in RARITIES:
-            ship['status'] = 'review'
-        elif ship['automatic_excluded']:
-            ship['status'] = 'excluded'
-        else:
-            ship['status'] = 'merged'
-            key = base_key(ship)
-            previous = highest.get(key)
-            if previous is None or preference(rows[previous]) < preference(ship):
-                highest[key] = index
-        ship['mind'] = ship['gold'] = 0
-    summary = {rarity: dict(rarity=rarity, stages=[0] * 6, stage_mind=[0] * 4,
-                           count=0, mind=0, gold=0) for rarity in RARITIES}
-    for index in highest.values():
-        ship = rows[index]
-        ship['status'] = 'included'
-        level, rarity = ship['level'], ship['base_rarity']
-        stage = 0 if level <= 100 else 1 if level <= 105 else 2 if level <= 110 else 3 if level <= 115 else 4
-        bucket = summary[rarity]
-        bucket['stages'][stage if level < 120 else 5] += 1
-        ship['mind'] = sum(MIND_COSTS[rarity][stage:])
-        ship['gold'] = ship['mind'] * 10
-        bucket['mind'] += ship['mind']
-        bucket['gold'] += ship['gold']
-        bucket['count'] += 1
-        for remaining in range(stage, 4):
-            bucket['stage_mind'][remaining] += MIND_COSTS[rarity][remaining]
-    return dict(ships=rows, summary=list(summary.values()),
-                mind=sum(row['mind'] for row in rows), gold=sum(row['gold'] for row in rows),
-                included=len(highest), merged=sum(row['status'] == 'merged' for row in rows),
-                excluded=sum(row['status'] == 'excluded' for row in rows),
-                review=sum(row['status'] == 'review' for row in rows))
-
-
 def recognize(image, source='', *, name_ocr=None, level_ocr=None, row_origins=None):
-    """读取完整卡片；可靠结果直接计费，身份不明的条目保留核对提示。"""
+    """读取完整卡片；身份不明的条目保留核对提示。"""
     import numpy as np
     from module.retire.assets import DOCK_CHECK
     from module.runtime.mind_recognition import normalize_screenshot, recognize_cards
@@ -229,10 +153,4 @@ def recognize(image, source='', *, name_ocr=None, level_ocr=None, row_origins=No
             location = f'第 {sorted({item.y for item in cards}).index(card.y) + 1} 行第 {card.col + 1} 列'
             card.ship.update(level=0, review=True,
                              source=f'{card.ship["source"]}；{location}等级未确认，待人工核对'[:200])
-    return highest_ships([card.ship for card in cards])
-
-
-def detect_rows(image, ocr):
-    """兼容等级锚点检测入口。"""
-    from module.runtime.mind_recognition import detect_rows as locate
-    return locate(image, ocr)
+    return [card.ship for card in cards]

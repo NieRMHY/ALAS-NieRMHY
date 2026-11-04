@@ -136,6 +136,8 @@ flowchart TD
 
 `_handle_app_login()` 是单一状态循环：截图 → 检测 `LOGIN_CHECK`（点击并标记登录成功）→ 依次处理安卓无响应、公告、维护、更新、国服协议、回归玩家、通用弹窗、主界面弹窗 → 直到 `is_in_main()` 持续确认（`confirm_timer`）后退出。`handle_app_login()` 在外层把截图间隔放宽到 1 秒，并用 `Restart.LoginWaitTimeout`（跨任务读取，默认 30 秒、上限 3600）覆盖卡死检测阈值，避免慢启动的后台模拟器被误判卡死。
 
+国服 B 站客户端（`com.bilibili.azurlane`）偶尔会在游戏开始画面上显示「登录记录」弹窗。登录循环会先用固定的弹窗标题和粉色「登录」按钮确认该状态，再点击当前已保存账号的登录按钮，下一帧继续原有登录流程；不读取账号名称，也不切换账号。导航中的 `ui_additional()` 复用同一处理入口。离线截图回放见 `tests/test_bilibili_login_record.py`。
+
 `ui_page_main_popups()` 返回 `True` 只表示本帧已执行操作，登录循环会继续截图，不能直接视为登录完成。自选轻量复刻选择页由该公共入口识别 `CAPSULE_RERUN_CHECK` 后复用 `BACK_ARROW_WHITE` 返回；重启游戏仍可能再次展示，因此需显式退出并持续确认主界面。离线回放见 `tests/test_capsule_rerun_login.py`。
 
 `app_restart()` 是带恢复梯度的重启状态机：
@@ -187,6 +189,12 @@ flowchart TD
 | module/notify | GemsFarming 无法设置自动搜索时的失败通知 |
 
 ## 8. 数据流
+
+普通主线/活动的「换船调度」任一模式开启并启用共享`SelectedOnly`时，复用原红脸确认按钮及点击间隔，
+但确认前复核培养舰位最低心情，培养充足时可确认固定舰船带来的红脸；培养心情未知或不足
+则取消、退出并使下次入口重新扫描，不清零已知培养高心情。关闭时按全队心情等待，
+红脸沿用计算模式清零保底；两种模式都保持培养心情计算。未启用该策略的任务保留原处理，
+数据密钥弹窗优先处理；卡死/重复点击检测未删除。
 
 ```
 device.screenshot()

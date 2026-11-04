@@ -4,6 +4,9 @@
 （ADB、uiautomator2、minitouch、Hermit、MaaTouch、scrcpy、nemu_ipc）
 自动分发到对应的底层实现。
 """
+from contextlib import contextmanager
+from contextvars import ContextVar
+
 from module.base.button import Button
 from module.base.decorator import cached_property
 from module.base.timer import Timer
@@ -24,6 +27,26 @@ ISLAND_ANDROID_SWIPE_FACTOR = 1.125
 # 岛屿行走（拖到偏移点并保持）只在这几种控制方式下有可靠实现，
 # 其他方式的"到位保持"语义无法保证，直接报错要求更换，避免静默走不动。
 ISLAND_WALK_SUPPORTED_METHODS = ('minitouch', 'MaaTouch', 'uiautomator2', 'azurpilot_android')
+
+
+_CONTROL_INTERVAL = ContextVar('control_interval', default=None)
+
+
+@contextmanager
+def control_interval(interval):
+    """仅在当前调用期间增加输入间隔，退出或异常时恢复原有操作节奏。"""
+    token = _CONTROL_INTERVAL.set(interval)
+    try:
+        yield
+    finally:
+        _CONTROL_INTERVAL.reset(token)
+
+
+def wait_control_interval(device):
+    """输入节流不代替界面就绪判断；调用方仍需用新截图确认状态。"""
+    interval = _CONTROL_INTERVAL.get()
+    if interval is not None:
+        device.sleep(interval)
 
 
 class Control(Hermit, Minitouch, Scrcpy, MaaTouch, NemuIpc):

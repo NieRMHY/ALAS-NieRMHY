@@ -1,5 +1,7 @@
 from .campaign_base import CampaignBase
 from module.map.map_base import CampaignMap
+from module.map.map_grids import SelectedGrids, RoadGrids
+from module.logger import logger
 from .t1 import Config as ConfigBase
 
 MAP = CampaignMap('T5')
@@ -48,6 +50,7 @@ A8, B8, C8, D8, E8, F8, G8, H8, I8, \
 
 class Config(ConfigBase):
     # ===== Start of generated config =====
+    MAP_SIREN_TEMPLATE = []
     MOVABLE_ENEMY_TURN = (2,)
     MAP_HAS_SIREN = True
     MAP_HAS_MOVABLE_ENEMY = True
@@ -56,6 +59,10 @@ class Config(ConfigBase):
     MAP_HAS_AMBUSH = False
     MAP_HAS_MYSTERY = False
     # ===== End of generated config =====
+
+    MAP_SWIPE_MULTIPLY = (1.263, 1.286)
+    MAP_SWIPE_MULTIPLY_MINITOUCH = (1.221, 1.244)
+    MAP_SWIPE_MULTIPLY_MAATOUCH = (1.185, 1.207)
 
 
 class Campaign(CampaignBase):

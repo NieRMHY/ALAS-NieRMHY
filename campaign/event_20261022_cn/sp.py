@@ -1,5 +1,7 @@
-from .campaign_base import CampaignBase, Config as ConfigBase
+from .campaign_base import CampaignBase
 from module.map.map_base import CampaignMap
+from module.map.map_grids import SelectedGrids, RoadGrids
+from module.logger import logger
 
 MAP = CampaignMap('SP')
 MAP.shape = 'H8'
@@ -46,8 +48,10 @@ A8, B8, C8, D8, E8, F8, G8, H8, \
     = MAP.flatten()
 
 
-class Config(ConfigBase):
+class Config:
     # ===== Start of generated config =====
+    MAP_SIREN_TEMPLATE = ['TempestaGhostBoss02']
+    MOVABLE_ENEMY_TURN = (2,)
     MAP_HAS_SIREN = True
     MAP_HAS_MOVABLE_ENEMY = False
     MAP_HAS_MAP_STORY = False
@@ -59,19 +63,19 @@ class Config(ConfigBase):
     STAR_REQUIRE_3 = 0
     # ===== End of generated config =====
 
+    MAP_CHAPTER_SWITCH_20241219 = True
+    STAGE_ENTRANCE = ['half', '20240725']
     MAP_IS_ONE_TIME_STAGE = True
+    MAP_ENSURE_EDGE_INSIGHT_CORNER = 'bottom'
     MAP_SIREN_HAS_BOSS_ICON_SMALL = False
+    MAP_SWIPE_MULTIPLY = (1.245, 1.268)
+    MAP_SWIPE_MULTIPLY_MINITOUCH = (1.204, 1.226)
+    MAP_SWIPE_MULTIPLY_MAATOUCH = (1.169, 1.190)
 
 
 class Campaign(CampaignBase):
     MAP = MAP
     ENEMY_FILTER = '1L > 1M > 1E > 1C > 2L > 2M > 2E > 2C > 3L > 3M > 3E > 3C'
-
-    def map_data_init(self, map_):
-        super().map_data_init(map_)
-        # SP 的 type=98 敌人没有精英图标，且 is_ai=0，按 Lua 固定出生格初始化。
-        for grid in self.map.select(may_siren=True):
-            grid.is_siren = True
 
     def battle_0(self):
         if self.clear_siren():

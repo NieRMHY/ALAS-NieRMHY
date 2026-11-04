@@ -1,8 +1,12 @@
 """Tests for CounterOcr.after_process in module.shop_event.item."""
+from pathlib import Path
+
+import numpy as np
 import pytest
+from PIL import Image
 
 from module.ocr.ocr import Ocr
-from module.shop_event.item import CounterOcr, EventShopItem
+from module.shop_event.item import CounterOcr, EventShopItem, EventShopItemGrid
 
 AMBIGUOUS_SLASHLESS_COUNTERS = {'15', '015', '350', '0350', '1350', '2350', '3350', '4350'}
 
@@ -132,3 +136,28 @@ def test_price_135_total_15_is_equip_ssr():
 
     assert item.name == 'EquipSSR'
     assert item.cost == 'pt'
+
+
+FIXTURES = Path(__file__).parent / 'fixtures'
+
+
+def _tag_image(name):
+    return np.array(Image.open(FIXTURES / name).convert('RGB'))
+
+
+def _tag_predictor():
+    return EventShopItemGrid.__new__(EventShopItemGrid)
+
+
+def test_predict_tag_en_unobtained_with_long_text():
+    # 国际服“Unobtained”白字较长，平均色偏浅，仍应识别为未获得
+    assert _tag_predictor().predict_tag(_tag_image('tag_unobtained_en.png')) == 'unobtained'
+
+
+def test_predict_tag_en_plain_item():
+    assert _tag_predictor().predict_tag(_tag_image('tag_none_en.png')) is None
+
+
+def test_predict_tag_solid_red_badge_unchanged():
+    image = np.full((22, 47, 3), (255, 72, 72), dtype=np.uint8)
+    assert _tag_predictor().predict_tag(image) == 'unobtained'

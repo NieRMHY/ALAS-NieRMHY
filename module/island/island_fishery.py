@@ -6,6 +6,7 @@
 from module.island_fishery.assets import *
 from module.island_rancher.assets import *
 from module.island.island import *
+from module.island.island_fish_meat import FRESHWATER_FISH_MEAT, SALTWATER_FISH_MEAT, IslandFishMeatExchange
 from module.base.button import Button
 
 def _click_area(device, area):
@@ -49,7 +50,7 @@ from module.logger import logger
 DISPATCH_STAMINA_MIN = 98
 
 
-class IslandFishery(Island, WarehouseOCR, LoginHandler):
+class IslandFishery(Island, WarehouseOCR, LoginHandler, IslandFishMeatExchange):
     """岛屿渔场自动化管理器。
 
     继承 Island（岛屿基础操作）、WarehouseOCR（仓库 OCR 识别）和
@@ -413,15 +414,20 @@ class IslandFishery(Island, WarehouseOCR, LoginHandler):
                 continue
             if self.appear(ISLAND_SELECT_PRODUCT_CHECK, offset=1):
                 if self.select_product(selection, selection_check):
-                    if self.ensure_select_product_material(
-                            item_button=item_config['shop'],
-                            required_quantity=required_quantity,
-                            shop_check=ISLAND_FRY_SHOP_CHECK,
-                            item_name=f"{self._item_cn(product)}鱼苗",
-                            tab_check=tab_check,
-                            tab_button=tab_button,
-                    ):
+                    material = self.ensure_select_product_material(
+                        item_button=item_config['shop'],
+                        required_quantity=required_quantity,
+                        shop_check=ISLAND_FRY_SHOP_CHECK,
+                        item_name=f"{self._item_cn(product)}鱼苗",
+                        tab_check=tab_check,
+                        tab_button=tab_button,
+                    )
+                    if material == MATERIAL_RESTOCKED:
                         continue
+                    if material == MATERIAL_INSUFFICIENT:
+                        logger.warning(f"[岛屿-渔场] {self._item_cn(product)}鱼苗不足且无法补买，跳过本次养殖")
+                        self.back_to_postmanage_from_dispatch()
+                        return False
                     self.device.sleep(0.3)
                     if not self.confirm_post_add_order(f"{product}养殖派遣"):
                         self.back_to_postmanage_from_dispatch()
@@ -633,6 +639,12 @@ class IslandFishery(Island, WarehouseOCR, LoginHandler):
                         logger.info(f"[岛屿-渔场] 养殖渔场岗位{post_info['post_id']}成功: {product_to_plant}")
 
         logger.info("[岛屿-渔场] \n渔场管理完成！")
+
+        # 鱼肉不足目标时把鱼兑换成鱼肉（目标为 0 时跳过，岛屿生产规划器会按货运缺口与菜品用量写入）
+        self.run_fish_meat_exchange({
+            FRESHWATER_FISH_MEAT: getattr(self.config, 'IslandFishery_MinFreshwaterFishMeat', 0),
+            SALTWATER_FISH_MEAT: getattr(self.config, 'IslandFishery_MinSaltwaterFishMeat', 0),
+        })
 
         # 设置下次运行时间：合并牧场和渔场的计时器，取最早的时间
         future_finish = []

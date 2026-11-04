@@ -1,4 +1,4 @@
-"""基于 uiautomator2 屏幕截图监听与差异保存工具。"""
+"""设备屏幕截图监听与差异保存工具。"""
 import os
 from datetime import datetime
 
@@ -54,9 +54,9 @@ def image_encode(image, ext='png', encode=None):
         elif ext == 'jpg' or ext == 'jpeg':
             # 最高画质
             encode = [cv2.IMWRITE_JPEG_QUALITY, 100]
-        elif ext.lower() == '.webp':
-            # 最高画质
-            encode = [cv2.IMWRITE_WEBP_QUALITY, 100]
+        elif ext == 'webp':
+            # 大于 100 时使用无损编码
+            encode = [cv2.IMWRITE_WEBP_QUALITY, 101]
         elif ext == 'tiff' or ext == 'tif':
             # TIFF 的 LZW 压缩
             encode = [cv2.IMWRITE_TIFF_COMPRESSION, 5]
@@ -100,19 +100,24 @@ class WatchScreen(ModuleBase):
         """持续监听设备屏幕，当图像相似度低于阈值时保存变化后的截图。
 
         Args:
-            similarity (float): 判断画面是否发生变化的相似度阈值，默认为 0.98。
+            similarity (float): 判断画面是否发生变化的相似度阈值，默认为 0.98；
+                大于或等于 1 时跳过相似度判断，保存每次截图。
         """
         start = now()
         before = self.device.screenshot()
-        file = os.path.abspath(f'screenshots/{start}/{start}.png')
+        file = os.path.abspath(f'screenshots/{start}/{start}.webp')
+        logger.info(f'Save file: {file}')
         image_save(before, file)
-        for image in self.loop():
-            res = cv2.matchTemplate(image, before, cv2.TM_CCOEFF_NORMED)
-            _, sim, _, loca = cv2.minMaxLoc(res)
+        for image in self.loop(skip_first=False):
+            if similarity < 1:
+                res = cv2.matchTemplate(image, before, cv2.TM_CCOEFF_NORMED)
+                _, sim, _, loca = cv2.minMaxLoc(res)
+            else:
+                sim = -1
 
             if sim < similarity:
                 name = now()
-                file = os.path.abspath(f'screenshots/{start}/{name}.png')
+                file = os.path.abspath(f'screenshots/{start}/{name}.webp')
                 logger.info(f'Save file: {file}')
                 image_save(image, file)
                 before = image

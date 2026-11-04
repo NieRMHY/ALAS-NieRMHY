@@ -490,9 +490,8 @@ def _report(configs, instance: str, category: str, month: str, days: int, period
                         + '、'.join(f'第 {item} 期' for item in summary['available'])
                         + '（可把「汇总周期」改成选定月份再看）')
             else:
-                hint = ('还没有科研掉落记录。统计在领奖时自动完成：'
-                        '把「科研截图」设为「保存」或「上传」即可（两者都会统计，'
-                        '区别只是要不要把截图落盘）。')
+                hint = ('还没有科研掉落记录。统计会在下次科研领奖时自动完成；'
+                        '「科研掉落上报」仅控制上传与截图保存，选择「不上传」也会保留本地统计。')
             result['tables'].append(table(title, detail_columns, [], note=hint))
             return result
         # 原始掉落记录：本视图认的物品才算「一次掉落」，只列这些

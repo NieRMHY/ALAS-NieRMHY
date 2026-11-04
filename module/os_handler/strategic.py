@@ -132,9 +132,14 @@ class StrategicSearchHandler(MapEventHandler):
     def strategic_search_confirm(self):
         """确认并开始执行策略搜索。"""
         logger.info('[大世界-策略] 策略搜索确认')
+        confirmed = False
         for _ in self.loop():
             if self.appear(STRATEGIC_SEARCH_POPUP_CHECK, offset=(20, 20)) \
                     and self.handle_popup_confirm(offset=(30, 30), name='STRATEGIC_SEARCH'):
+                confirmed = True
+                continue
+            # 计划作战确认后可能继续弹出指挥喵召回等确认框，处理后等待新截图。
+            if confirmed and self.handle_popup_confirm(offset=(30, 30), name='STRATEGIC_SEARCH_MEOWFFICER'):
                 continue
             if self.is_in_map():
                 return True
@@ -168,8 +173,8 @@ class StrategicSearchHandler(MapEventHandler):
                 success = self.strategic_search_set_option()
                 if not success:
                     continue
-            self.strategic_search_confirm()
-            return True
+            if self.strategic_search_confirm():
+                return True
 
         logger.warning('[大世界-策略] 策略搜索启动失败')
         return False

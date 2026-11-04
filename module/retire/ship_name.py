@@ -3,6 +3,7 @@
 import json
 import re
 import unicodedata
+from difflib import SequenceMatcher
 from functools import lru_cache
 from pathlib import Path
 from typing import Dict, Tuple
@@ -96,6 +97,33 @@ class ShipNameMatcher:
             str: 匹配到的标准舰娘名，若输入为空或无数据则返回去除首尾空格的原名称。
         """
         return self.resolve(value)[0]
+
+    def approximate(self, value: str, candidates=None) -> Tuple[str, str]:
+        """编队专用纠错：限定Lua名单，接受唯一标点变体、长前缀或高相似候选。
+
+        共享扫描器仍使用resolve；近似候选不跨改造/META身份，也不猜单字短名。
+        """
+        name, status = self.resolve(value)
+        if status in ('exact', 'prefix', 'empty', 'missing_catalog', 'ambiguous'):
+            return name, status
+        pool = set(self.names if candidates is None else candidates).intersection(self.names)
+        key = lambda text: re.sub(r'[.·・\-…⋯_]', '', self._normalize(text))
+        raw = key(value)
+        same = [item for item in pool if key(item) == raw]
+        if len(same) == 1:
+            return same[0], 'similar'
+        prefix = [item for item in pool if len(raw) >= 3 and key(item).startswith(raw)]
+        if len(prefix) == 1:
+            return prefix[0], 'prefix'
+        if len(raw) < 3:
+            return name, status
+        variants = lambda text: (key(text).endswith('改'), 'meta' in key(text))
+        ranked = sorted(((SequenceMatcher(None, raw, key(item)).ratio(), item) for item in pool
+                         if variants(item) == variants(value)), reverse=True)
+        if (ranked and ranked[0][0] >= .75
+                and (len(ranked) == 1 or ranked[0][0] - ranked[1][0] >= .12)):
+            return ranked[0][1], 'similar'
+        return name, 'ambiguous' if len(same) > 1 else status
 
     def retry_candidate(self, raw: str, retry: str):
         """彩色复识别须精确命中，且保留首轮可读前缀，不能换成另一个身份。"""

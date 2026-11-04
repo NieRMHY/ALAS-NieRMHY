@@ -134,6 +134,7 @@ class ResearchSelector(ResearchUI):
 
         通过逐个进入项目详情页识别项目属性，并按原始顺序重排。
         """
+        self.research_list_archive()
         projects = []
         proj_sorted = []
 
@@ -177,6 +178,19 @@ class ResearchSelector(ResearchUI):
                 break
 
         self.projects = projects
+        self.research_list_archive()
+
+    def research_list_archive(self):
+        """按「保存截图」档位归档科研候选列表，便于事后核对选了什么。
+
+        Modify by MHY, 本地没有云端上报，档位判断改用本地口径：
+        save / save_and_upload 都要落盘，do_not / upload 不落盘。
+        """
+        method = self.config.DropRecord_ResearchRecord
+        if method not in ('save', 'save_and_upload'):
+            return
+        with self.stat.new('research_refresh', method=method) as record:
+            record.add(self.device.image)
 
     def research_sort_filter(self, enforce=False):
         """

@@ -63,6 +63,17 @@ class OriginalFrameReplay(ScreenReplay):
             return ModuleBase.appear(self.campaign, button, **kwargs)
         return super().appear(button, **kwargs)
 
+    def make_campaign(self, *args, **kwargs):
+        task = super().make_campaign(*args, **kwargs)
+
+        def match_color(button, **options):
+            if isinstance(self.device.image, np.ndarray):
+                return ModuleBase.match_template_color(task, button, **options)
+            return button.name in self.device.image
+
+        task.match_template_color = Mock(side_effect=match_color)
+        return task
+
 
 class ChallengeRecognitionTests(unittest.TestCase):
     def setUp(self):

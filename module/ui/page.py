@@ -343,6 +343,9 @@ page_dorm.link(button=DORM_GOTO_MAIN, destination=page_main)
 # 秘书舰
 page_profile = Page(PROFILE_CHECK)
 page_secretary_group = Page(SECRETARY_GROUP_CHECK)
+# 经典主界面与新版白色主界面的头像都在左上角同一位置，点击即进入个人资料页；
+# 只给白色主界面建链接时，经典主界面无法导航到 page_profile，秘书舰任务卡死
+page_main.link(button=MAIN_GOTO_PROFILE, destination=page_profile)
 page_main_white.link(button=MAIN_GOTO_PROFILE, destination=page_profile)
 page_profile.link(button=SECRETARY_BUTTON, destination=page_secretary_group)
 page_secretary_group.link(button=BACK_ARROW, destination=page_profile)
@@ -358,7 +361,7 @@ page_academy = Page(ACADEMY_CHECK)
 page_dormmenu.link(button=DORMMENU_GOTO_ACADEMY, destination=page_academy)
 page_academy.link(button=GOTO_MAIN, destination=page_main)
 
-# 私人休息室
+# 宿舍计划
 page_private_quarters = Page(PRIVATE_QUARTERS_CHECK)
 page_dormmenu.link(button=DORMMENU_GOTO_PRIVATE_QUARTERS, destination=page_private_quarters)
 page_private_quarters.link(button=PQ_GOTO_MAIN, destination=page_main)
@@ -443,6 +446,8 @@ page_island_visit = Page(ISLAND_VISIT_CHECK)
 page_island_mill = Page(ISLAND_MILL_CHECK)
 page_island_season = Page(ISLAND_SEASON_CHECK)
 page_island_phone = Page(ISLAND_PHONE_CHECK)
+# 岛屿科技页（岛屿生产规划器扫描科技树），跳转与返回沿用 ALAS
+page_island_technology = Page(ISLAND_TECHNOLOGY_CHECK)
 
 page_dormmenu.link(button=DORMMENU_GOTO_ISLAND, destination=page_island)
 page_island_message.link(button=DORMMENU_GOTO_ISLAND_MESSAGE, destination=page_island)
@@ -462,6 +467,9 @@ page_island_management.link(button=ISLAND_MANAGEMENT_GOTO_VISIT, destination=pag
 page_island_visit.link(button=ISLAND_VISIT_GOTO_MANAGEMENT, destination=page_island_management)
 page_island_mill.link(button=ISLAND_MILL_GOTO_ISLAND, destination=page_island)
 page_island_season.link(button=ISLAND_SEASON_GOTO_ISLAND, destination=page_island)
+page_island.link(button=ISLAND_GOTO_ISLAND_TECHNOLOGY, destination=page_island_technology)
+page_island.link(button=ISLAND_GOTO_ISLAND_SEASON, destination=page_island_season)
+page_island_technology.link(button=BACK_ARROW_WHITE, destination=page_island)
 page_island_phone.link(button=ISLAND_PHONE_GOTO_MAIN, destination=page_main)
 page_island_phone.link(button=ISLAND_PHONE_GOTO_ISLAND, destination=page_island)
 page_island_phone.link(button=ISLAND_PHONE_GOTO_ISLAND_MANAGE, destination=page_island_management)

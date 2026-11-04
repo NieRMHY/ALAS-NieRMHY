@@ -12,7 +12,8 @@
 
 它们都被 [调度器](../entry/alas.md) 的异常恢复链调用：异常 → 记日志（error_context）→ 保存错误现场 → 推送通知（OnePush + WebUI 双通道）→ 决定恢复或等待服务器。理解这条链是读懂任何崩溃日志的前提。
 
-普通统计数值日志与既有 CL1 遥测保留；所有 Rich 异常渲染关闭 `tracebacks_show_locals`，避免敏感运行状态随局部变量落盘。
+<!-- Modify by MHY, 保留本地统计和日志，剔除遥测上报。 -->
+普通统计数值日志与本地 CL1 统计保留；所有 Rich 异常渲染关闭 `tracebacks_show_locals`，避免敏感运行状态随局部变量落盘。
 
 ## 2. 模块职责
 
@@ -110,7 +111,7 @@ module/
 
 ### 服务器状态检查（server_status 与 server_checker）
 
-两个文件刻意分层：`server_status.py` 是**协议层**——无状态、无缓存、无框架依赖，直接对各地区游戏网关发 10018 请求并解析 10019 响应（手写 protobuf varint 解码；cn_ios/渠道服走原始 HTTP JSON），把状态数字映射为 `normal/maintenance/full/reg_full/unopened`。`server_checker.py` 是**策略层**——`ServerChecker` 优先查公共 API（server-checker.nanoda.work，15 秒超时），404 时回退本地服务器列表判定，连接失败再直连游戏网关兜底，两者都不可达才进入快速重试（先探测百度区分「本机断网」与「API 故障」，再重试 3 次）。
+两个文件刻意分层：`server_status.py` 是**协议层**——无状态、无缓存、无框架依赖，直接对各地区游戏网关发 10018 请求并解析 10019 响应（手写 protobuf varint 解码；cn_ios/渠道服走原始 HTTP JSON），把状态数字映射为 `normal/maintenance/full/reg_full/unopened`。`server_checker.py` 是**策略层**——`ServerChecker` 优先查公共 API（server-checker.nanoda.work，连接和读取超时各 3 秒，避免慢接口长时间阻塞任务启动），404 时回退本地服务器列表判定；连接失败、超时或返回 429/5xx 时记录切换提示，再直连游戏网关兜底，两者都不可达才进入快速重试（先探测百度区分「本机断网」与「API 故障」，再重试 3 次）。3 秒是单阶段超时，不是整个检查过程的总时限；游戏网关自身的超时及维护等待规则不变。
 
 `alas.loop` 每轮取任务前调用 `checker.wait_until_available()`：服务器维护或 API 与网关都不可达时，检查间隔从 2 分钟逐步退避到 10 分钟，循环阻塞在此不推进任务；`is_recovered()` 在恢复瞬间返回一次 `True`，调度器随即刷新配置并注入 Restart 任务（阻塞期间游戏状态必然已失效）。`GamePageUnknownError` 处理路径也用它分流：服务器可用 → 当作页面识别问题重启游戏；不可用 → 等待维护结束。服务器配置为 `disabled`（默认值）时检查器恒返回可用。
 

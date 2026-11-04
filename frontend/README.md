@@ -157,3 +157,13 @@ npm run test:e2e:mock
 ## 资源管理
 
 实例侧栏「资源管理」对应 `/i/:instance/resources`，独立展示任务来源 → 资源 → 用途任务的桑基图、最近库存、收支依据与分页明细。支持自定义区间、资源和任务筛选、完整 CSV 导出及石油控制设置。刷新只读取本地账本，空实例不生成虚假收支。详细采集、归因与库存复核规则见 [资源管理文档](../docs/modules/webui/resource-management.md)。
+
+## 舰队数据分析与共享船坞
+
+舰队管理中的「舰队数据分析」统一提供共享船坞数据、心智分析与舰船科技分析。旧 `task/MindCalculator`、`mind-calculator` 和 `task/FleetTechnology` 链接跳转到相应分析标签；旧扫描任务不再显示在工具菜单。
+
+`dock.report({instance})` 返回共享扫描报告（`revision`、`updated_at`、`min_level`、`max_level`、`ships`、`complete`、`review_count`、`source`、`scan_range`）。`dock.configure({instance,min_level,max_level})` 保存 1–125 级范围并返回报告；点击统一扫描入口才调用 `tasks.run({instance,task:"DockScan"})`。扫描读取船坞舰名和等级，需要导航与滚动，不进行升级、突破、觉醒或换船。页面展示扫描时间、实际快照范围 `scan_range`、数据来源、完成情况与待核对数量；`min_level`/`max_level` 是下一次扫描设置，修改设置不会伪装成已扫描数据。
+
+「扫描更新」页的「导出舰船 JSON」按钮会重新读取 `dock.report`，下载 `<实例名>-ships-<导出时间>.json`。文件包含 `version: 1`、`exported_at` 及完整报告：`ships` 只包含已保存的舰船，保留独立卡片 ID、未知经验、满星/改造状态和识别待核对标记；`pending_changes`、`pending_revision`、`pending_read` 单独保留候选差异和读取摘要。导出用于备份和离线核对，不修改数据库、不确认候选差异，也不启动游戏任务。此完整报告与「导入舰船清单」的精简字段格式不同，不能直接用于该导入入口。
+
+心智的编辑、导入、截图识别和导出继续使用 `mind.*`；舰船科技的人工历史修订继续使用 `fleetTech.patch`。两者的草稿和人工设置独立，分析页面本身不触发游戏任务。

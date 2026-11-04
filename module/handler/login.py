@@ -115,6 +115,8 @@ class LoginHandler(UI):
                 confirm_timer.reset()
 
             # 登录处理
+            if self.handle_bilibili_login_record():
+                continue
             if self.match_template_color(LOGIN_CHECK, offset=(30, 30), interval=5):
                 self.device.click(LOGIN_CHECK)
                 if not login_success:

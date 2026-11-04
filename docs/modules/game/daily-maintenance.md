@@ -138,6 +138,8 @@ module/
 
 `run()` 进 `page_reward` 后进入 `tactical_class_receive()` 的单一状态循环，每帧依次尝试一组处理器：添加学员（`ADD_NEW_STUDENT`）→ 急速训练（`RAPID_TRAINING`，按 `Tactical_RapidTrainingSlot` 槽位偏移匹配）→ 完成时间 OCR 与退出 → 各类弹窗 → 教材选择（`TACTICAL_CLASS_START`）→ 船坞 → 技能确认 → META 技能退出 → 教材空弹窗。
 
+页面识别复用 `ui_page_appear(page_tactical)`，兼容英服备用标题 `TACTICAL_CHECK_2`；页面相关计时器同时重置或清除两种标题模板。
+
 选教材是核心决策点：`_tactical_books_get()` 轮询至教材数量稳定（15 次失败抛 `ScriptError`）→ 先选中第一本 → 按当前技能进度做**经验溢出过滤**（OCR `current/total`，10 级满级总经验 5800，`current + 教材经验 > total + 允许溢出量` 的教材被剔除）→ `BOOK_FILTER` 按配置排序 → 点击最优教材开课；过滤器无命中则取消本次课程。技能满级时（OCR 结果含 `MA`，即 `NEXT:MAX`），`Tactical_SkillAutoSwitch` 开启则自动切到下一个未满级技能；`AddNewStudent_Enable` 开启时从船坞选一名等级在 `AddNewStudent_MinLevel` ~ `AddNewStudent_MaxLevel` 之间的舰娘（等级限制为 0 表示该方向不限，`MaxLevel` 默认 0；阵营过滤自然跳过 META 舰）开始新课程。
 
 排程：OCR 各槽位剩余时间得 `tactical_finish`，`task_delay(target=...)` 精确到课程完成时刻；教材耗尽则延迟到次日服务器刷新。

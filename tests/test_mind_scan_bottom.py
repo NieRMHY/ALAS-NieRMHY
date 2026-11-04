@@ -8,16 +8,16 @@ import numpy as np
 from PIL import Image
 
 from module.retire.dock import DOCK_SCROLL
-from module.retire.fleet_tech_scan import FleetTechScan
-from module.retire.mind_scan import MindCalculatorScan
+from module.retire.dock_scan import DockScan
 from module.runtime.mind_recognition import ScanPolicy, grid_rows, recognize_cards
+from module.runtime.mind_calculator import highest_ships
 from tests.test_mind_scan import cards_for_levels
 
 FIXTURES = Path(__file__).parent / 'fixtures'
 
 
 class NativeBottomTests(unittest.TestCase):
-    def scanner(self, task=MindCalculatorScan, strip=None):
+    def scanner(self, task=DockScan, strip=None):
         scanner = task.__new__(task)
         pixels = np.array(Image.open(FIXTURES / 'mind_dock_bottom.png').convert('RGB'))
         if strip is not None:
@@ -26,8 +26,8 @@ class NativeBottomTests(unittest.TestCase):
         scanner.device = SimpleNamespace(image=pixels)
         return scanner
 
-    def test_both_tasks_confirm_connected_native_bottom_cap_without_extending_thumb(self):
-        for task in (MindCalculatorScan, FleetTechScan):
+    def test_scanner_confirms_connected_native_bottom_cap_without_extending_thumb(self):
+        for task in (DockScan,):
             scanner = self.scanner(task)
             thumb = scanner._dock_scroll_thumb()
             self.assertEqual((thumb[0], thumb[-1], DOCK_SCROLL.total), (488, 562, 565))
@@ -108,12 +108,13 @@ class NativeBottomTests(unittest.TestCase):
         scanner.device.drag.side_effect = drag
         scanner._read_cards = read
         with patch('module.base.timer.time', side_effect=lambda: now), \
-                patch('module.retire.mind_scan.grid_rows', side_effect=lambda _: [172, 399] if position == 585 else [76, 303, 530]):
+                patch('module.retire.dock_scan.grid_rows', side_effect=lambda _: [172, 399] if position == 585 else [76, 303, 530]):
             ships = scanner._scan_pages(Mock(), Mock())
         self.assertEqual(reads, [0, 585])
         self.assertEqual(scanner._scan_metadata, dict(reached_bottom=True, physical_count=35))
         self.assertEqual(scanner.device.drag.call_count, 3)
-        self.assertEqual(len(ships), 29)
+        self.assertEqual(len(scanner._scan_slots), 35)
+        self.assertEqual(len(highest_ships(ships)), 29)
         self.assertTrue(any(ship['name'] == '科隆' for ship in ships))
 
 

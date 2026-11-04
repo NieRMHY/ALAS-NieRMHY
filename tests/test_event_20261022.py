@@ -1,15 +1,18 @@
-"""飓风与雾霭回廊的跨服导航、关卡接入与固定 SP 敌人回归。"""
+"""飓风与雾霭回廊的跨服导航、关卡接入与上游 SP 模板回归。"""
 
-import copy
 import importlib
 import json
 import unittest
 from pathlib import Path
-from unittest.mock import Mock, call
+from unittest.mock import Mock, call, patch
 
 from campaign.event_20261022_cn import sp, t1
+from module.campaign.campaign_base import CampaignBase
 from module.config.config import AzurLaneConfig
-from module.exception import CampaignNameError
+from module.config.config_updater import _event_stage_exists, refresh_campaign_events
+from module.campaign.stage_name import normalize_event_stage
+from module.handler.fast_forward import to_map_file_name, to_map_input_name
+from module.template import assets as template_assets
 
 
 EVENT = 'event_20261022_cn'
@@ -37,7 +40,7 @@ def make_campaign(map_module=t1, server='cn'):
 
 class WindFogCorridorTests(unittest.TestCase):
     def test_stage_routes_use_correct_part_on_all_supported_servers(self):
-        for server in ('cn', 'en', 'jp'):
+        for server in ('cn', 'en', 'jp', 'tw'):
             for stage, aside in ((1, 'part1'), (2, 'part1'), (3, 'part1'),
                                  (4, 'part2'), (5, 'part2'), (6, 'part2')):
                 with self.subTest(server=server, stage=stage):
@@ -56,7 +59,7 @@ class WindFogCorridorTests(unittest.TestCase):
                     campaign.device.click.assert_not_called()
 
     def test_daily_sp_uses_sp_partition_without_difficulty_switch(self):
-        for server in ('cn', 'en', 'jp'):
+        for server in ('cn', 'en', 'jp', 'tw'):
             with self.subTest(server=server):
                 campaign = make_campaign(sp, server)
                 campaign.campaign_set_chapter('sp')
@@ -69,40 +72,62 @@ class WindFogCorridorTests(unittest.TestCase):
                 self.assertTrue(campaign.config.MAP_IS_ONE_TIME_STAGE)
                 self.assertFalse(campaign.config.MAP_HAS_MODE_SWITCH)
 
-    def test_invalid_t_stage_does_not_navigate(self):
+    def test_other_chapters_delegate_to_shared_navigation(self):
         campaign = make_campaign()
-        with self.assertRaises(CampaignNameError):
-            campaign.campaign_set_chapter('t7')
-        campaign.navigation.assert_not_called()
+        with patch.object(CampaignBase, 'campaign_set_chapter_20241219', return_value=False) as shared:
+            self.assertFalse(campaign.campaign_set_chapter_20241219('main', '1', 'story'))
+        shared.assert_called_once_with('main', '1', 'story')
         self.assertEqual(campaign.navigation.mock_calls, [])
         campaign.device.click.assert_not_called()
 
-    def test_sp_initialization_restores_only_fixed_sirens_each_sortie(self):
+    def test_sp_siren_template_is_registered_and_decodes(self):
         campaign = make_campaign(sp)
-        campaign.map_is_clear_mode = False
-        map_ = copy.deepcopy(sp.MAP)
-        expected = {(3, 1), (2, 2), (1, 3)}
-        for _ in range(2):
-            campaign.map_data_init(map_)
-            self.assertEqual({grid.location for grid in map_.select(is_siren=True)}, expected)
-            for grid in map_.select(is_siren=True):
-                grid.wipe_out()
         self.assertFalse(campaign.config.MAP_HAS_MOVABLE_ENEMY)
+        self.assertFalse(campaign.config.MAP_HAS_FLEET_STEP)
         self.assertFalse(campaign.config.MAP_SIREN_HAS_BOSS_ICON_SMALL)
-        self.assertEqual(campaign.config.MAP_SIREN_TEMPLATE, [])
+        self.assertEqual(campaign.config.MAP_SIREN_TEMPLATE, ['TempestaGhostBoss02'])
+        for name in campaign.config.MAP_SIREN_TEMPLATE:
+            template = getattr(template_assets, f'TEMPLATE_SIREN_{name}')
+            self.assertTrue(template.is_gif)
+            self.assertTrue(template.image)
+            for frame in template.image:
+                self.assertGreater(frame.size, 0)
 
-    def test_registered_event_uses_shared_directory_for_cn_en_jp(self):
+    def test_registered_event_uses_shared_directory_for_all_four_servers(self):
         args = json.loads((ROOT / 'module/config/argument/args.json').read_text(encoding='utf-8'))
         for task in ('Event', 'Event2', 'Event3', 'EventA', 'EventB', 'EventC', 'EventD', 'EventSp'):
-            for server in ('cn', 'en', 'jp'):
+            for server in ('cn', 'en', 'jp', 'tw'):
                 with self.subTest(task=task, server=server):
                     self.assertEqual(args[task]['Campaign']['Event'][f'option_{server}'], [EVENT])
+
+    def test_expired_event_resets_missing_stage_but_preserves_valid_stage(self):
+        args = json.loads((ROOT / 'module/config/argument/args.json').read_text(encoding='utf-8'))
+        for old_stage, expected in (('D3', 'T1'), ('12-4', 'T1'), ('T6', 'T6')):
+            with self.subTest(old_stage=old_stage):
+                data = {
+                    'Alas': {'Emulator': {'PackageName': 'com.hkmanjuu.azurlane.gp'}},
+                    'Event': {'Campaign': {'Event': 'event_20250912_cn', 'Name': old_stage}},
+                    'EventSp': {'Campaign': {'Event': 'event_20250912_cn', 'Name': 'D3'}},
+                }
+                refresh_campaign_events(data, args)
+                self.assertEqual(data['Event']['Campaign']['Event'], EVENT)
+                self.assertEqual(data['Event']['Campaign']['Name'], expected)
+                self.assertEqual(data['EventSp']['Campaign']['Name'], 'SP')
+
+    def test_hyphenated_stage_aliases_match_runtime_and_validation(self):
+        folder = ROOT / 'campaign' / EVENT
+        for stage, expected in (('SP-6', 't6'), ('A-1', 't1'), ('B-3', 't6')):
+            with self.subTest(stage=stage):
+                self.assertEqual(normalize_event_stage(to_map_file_name(stage), EVENT), expected)
+                self.assertEqual(to_map_input_name(stage), stage.replace('-', '').upper())
+                self.assertTrue(_event_stage_exists(folder, stage))
 
     def test_localized_event_names_survive_config_generation(self):
         for language, expected in (
             ('zh-CN', '飓风与雾霭回廊'),
-            ('en-US', 'Tempesta and the Corridor of Mist'),
+            ('en-US', 'Tempesta and the Corridor of Fog'),
             ('ja-JP', 'テンペスタと霧靄回廊'),
+            ('zh-TW', '颶風與霧靄迴廊'),
         ):
             with self.subTest(language=language):
                 path = ROOT / f'module/config/i18n/{language}.json'

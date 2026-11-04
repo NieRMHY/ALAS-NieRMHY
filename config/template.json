@@ -205,7 +205,7 @@
       "Target": 24000
     },
     "YukikazeTaskManager": {
-      "TaskPriorityAdjustment": "Restart\n> OpsiCrossMonth\n> Commission > Tactical > Research\n> Exercise\n> Dorm > Meowfficer > Guild > Gacha\n> Reward > StorageStatistics\n> ShopFrequent > ShopOnce > Shipyard > Freebies\n> PrivateQuarters\n> OpsiExplore > OpsiExploreCleanup\n> OpsiPreventActionPointOverflow\n> Minigame > Awaken\n> OpsiAshBeacon\n> OpsiDaily > OpsiShop > OpsiVoucher > EventShop\n> OpsiAbyssal > OpsiStronghold > OpsiObscure > OpsiArchive\n> Daily > LimitChallenge > Hard > OpsiAshBeacon > OpsiAshAssist > OpsiMonthBoss\n> Sos > EventSp > EventA > EventB > EventC > EventD\n> RaidDaily > CoalitionSp > WarArchives > MaritimeEscort\n> IslandJuuEatery > IslandJuuCoffee > IslandGrill > IslandTeahouse > IslandRestaurant\n> IslandFarm > IslandRancher > IslandMineForest > IslandDailyGather > IslandManufacture\n> IslandAirDrop > IslandBusiness > IslandDailyOrder > IslandDailyInteract > IslandPearlSell > IslandCargoPreparation\n> Event > Event2 > Event3 > Raid > Hospital > HospitalEvent > Coalition > RaidAffection > Main > Main2 > Main3\n> OpsiScheduling\n> OpsiMeowfficerFarming\n> GemsFarming\n> Ambush11\n> OpsiHazard1Leveling\n> ThreeOilLowCost\n> OperationHandover"
+      "TaskPriorityAdjustment": "Restart\n> OpsiCrossMonth\n> Commission > Tactical > Research\n> Exercise\n> Dorm > Meowfficer > Guild > Gacha\n> Reward > StorageStatistics\n> ShopFrequent > ShopOnce > Shipyard > Freebies\n> PrivateQuarters\n> OpsiExplore > OpsiExploreCleanup\n> OpsiPreventActionPointOverflow\n> Minigame > Awaken\n> OpsiAshBeacon\n> OpsiDaily > OpsiShop > OpsiVoucher > EventShop\n> OpsiAbyssal > OpsiStronghold > OpsiObscure > OpsiArchive\n> Daily > LimitChallenge > Hard > OpsiAshBeacon > OpsiMonthBoss\n> Sos > EventSp > EventA > EventB > EventC > EventD\n> RaidDaily > CoalitionSp > WarArchives > MaritimeEscort\n> IslandJuuEatery > IslandJuuCoffee > IslandGrill > IslandTeahouse > IslandRestaurant\n> IslandFarm > IslandRancher > IslandMineForest > IslandDailyGather > IslandManufacture\n> IslandAirDrop > IslandBusiness > IslandDailyOrder > IslandDailyInteract > IslandPearlSell > IslandCargoPreparation\n> Event > Event2 > Event3 > Raid > Hospital > HospitalEvent > Coalition > RaidAffection > Main > Main2 > Main3\n> OpsiScheduling\n> OpsiMeowfficerFarming\n> GemsFarming\n> Ambush11\n> OpsiHazard1Leveling\n> ThreeOilLowCost\n> OperationHandover"
     },
     "Storage": {
       "Storage": {}
@@ -2375,7 +2375,7 @@
       "Enable": true,
       "SelectNewOperation": false,
       "NewOperationMaxDate": 15,
-      "JoinThreshold": 1,
+      "JoinThreshold": 1.0,
       "AttackBoss": true,
       "BossFleetRecommend": false
     },
@@ -2588,6 +2588,11 @@
       "LowHpConfirmWait": 0.1,
       "OpponentRefreshValue": 0,
       "OpponentRefreshRecord": "2020-01-01 00:00:00"
+    },
+    "Equipment": {
+      "Enable": false,
+      "ClearBeforeApply": true,
+      "Config": "flagship:\n  before: null\n  after: null\nup:\n  before: null\n  after: null\ndown:\n  before: null\n  after: null\nhead:\n  before: null\n  after: null\nmiddle:\n  before: null\n  after: null\ntail:\n  before: null\n  after: null"
     },
     "Storage": {
       "Storage": {}
@@ -2826,27 +2831,19 @@
       "AssistRequestLimit": 0,
       "AssistRequestState": null,
       "DossierAutoAttackMode": false,
+      "DossierSkipAssist": false,
       "RequestAssist": true,
       "EnsureFullyCollected": true,
       "AutoCollectShip": true
     },
-    "Storage": {
-      "Storage": {}
-    }
-  },
-  "OpsiAshAssist": {
-    "Scheduler": {
-      "Enable": false,
-      "PushNotification": false,
-      "NextRun": "2020-01-01 00:00:00",
-      "Command": "OpsiAshAssist",
-      "SuccessInterval": 30,
-      "FailureInterval": 30,
-      "ServerUpdate": "00:00",
-      "Sensitive": false
-    },
     "OpsiAshAssist": {
+      "Enable": true,
       "Tier": 15
+    },
+    "Equipment": {
+      "Enable": false,
+      "ClearBeforeApply": true,
+      "Config": "flagship:\n  before: null\n  after: null\nup:\n  before: null\n  after: null\ndown:\n  before: null\n  after: null\nhead:\n  before: null\n  after: null\nmiddle:\n  before: null\n  after: null\ntail:\n  before: null\n  after: null"
     },
     "Storage": {
       "Storage": {}
@@ -3456,13 +3453,17 @@
       "Positions": 3,
       "WorkerFilter": "WorkerJuu",
       "MinFarm": 660,
+      "CropTargets": null,
+      "DefaultCrop": "wheat",
       "PlantPotatoes": 4
     },
     "IslandOrchard": {
       "Positions": 4,
       "WorkerFilter": "WorkerJuu",
       "MinOrchard": 300,
+      "CropTargets": null,
       "IgnoreAvocado": true,
+      "DefaultCrop": "rubber",
       "PlantRubber": 0,
       "AmagiChanRubber": false
     },
@@ -3470,7 +3471,9 @@
       "Positions": 2,
       "WorkerFilter": "WorkerJuu",
       "MinNursery": 0,
+      "CropTargets": null,
       "IgnorePineapple": true,
+      "DefaultCrop": "lavender",
       "PlantLavender": 2
     },
     "Storage": {
@@ -3508,6 +3511,8 @@
       "MinCrab": 50,
       "MinSquid": 50,
       "MinSeaCucumber": 50,
+      "MinFreshwaterFishMeat": 0,
+      "MinSaltwaterFishMeat": 0,
       "PlantYellowfinTuna": 3,
       "RancherFilter": "WorkerJuu"
     },
@@ -3885,8 +3890,39 @@
   },
   "FleetInfo": {
     "FleetInfo": {
+      "UpdateEmotion": true,
       "Result": {},
       "Record": "2020-01-01 00:00:00"
+    },
+    "FleetRotation": {
+      "Enabled": false,
+      "SelectedOnly": false,
+      "Rules": "{}",
+      "State": {}
+    },
+    "FleetLevelTraining": {
+      "Enabled": false,
+      "Target": 120
+    },
+    "FleetAffinityTraining": {
+      "Enabled": false,
+      "Target": 100
+    },
+    "FleetDorm": {
+      "Enabled": false,
+      "Floor": "floor_1"
+    },
+    "FleetTraining": {
+      "StopOnComplete": false,
+      "Notify": false,
+      "FullScanRecord": "2020-01-01 00:00:00",
+      "CheckIntervalHours": 6.0,
+      "State": {}
+    },
+    "FleetEquipment": {
+      "Enabled": false,
+      "Codes": "{}",
+      "State": {}
     },
     "Storage": {
       "Storage": {}
@@ -3954,22 +3990,10 @@
       "Storage": {}
     }
   },
-  "MindCalculatorScan": {
-    "MindCalculator": {
-      "MinLevel": 95,
-      "MaxLevel": 125,
-      "Result": {},
-      "FleetTechRecord": {}
-    },
-    "Storage": {
-      "Storage": {}
-    }
-  },
-  "FleetTechScan": {
-    "FleetTech": {
-      "MinLevel": 95,
-      "MaxLevel": 125,
-      "Record": {}
+  "DockScan": {
+    "Dock": {
+      "MinLevel": 1,
+      "MaxLevel": 125
     },
     "Storage": {
       "Storage": {}
@@ -4080,6 +4104,31 @@
       "DeviceInterval": 2,
       "ScanLimit": 0,
       "ScanPasses": 12
+    },
+    "Storage": {
+      "Storage": {}
+    }
+  },
+  "IslandProductionPlanner": {
+    "IslandProductionPlanner": {
+      "ApplySettings": false,
+      "RescanTechnology": true,
+      "ScanSeasonTasks": true,
+      "SeasonTaskTargets": null,
+      "ScanCargoOrders": true,
+      "CargoTargets": null,
+      "CargoTargetDays": 1,
+      "ExtraTargets": null,
+      "DailyProfitLowerLimit": 50000,
+      "DailyBufferSafetyMargin": 0,
+      "FieldsEfficiency": 0,
+      "OrchardEfficiency": 0,
+      "NurseryEfficiency": 0,
+      "RestaurantGrade": "bronze",
+      "TeahouseGrade": "bronze",
+      "JuuEateryGrade": "bronze",
+      "GrillGrade": "bronze",
+      "JuuCoffeeGrade": "bronze"
     },
     "Storage": {
       "Storage": {}

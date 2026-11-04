@@ -159,8 +159,12 @@ class DeployConfig(DeployConfigTransaction, ConfigModel):
         Returns:
             str: 绝对文件路径。
         """
+        # Modify by MHY, 配置外层引号不属于程序路径。
+        path = self.config[key]
+        if len(path) >= 2 and path[0] == path[-1] == '"':
+            path = path[1:-1]
         return (
-            os.path.abspath(os.path.join(self.root_filepath, self.config[key]))
+            os.path.abspath(os.path.join(self.root_filepath, path))
             .replace(r"\\", "/")
             .replace("\\", "/")
             .replace('"', '"')
@@ -195,7 +199,9 @@ class DeployConfig(DeployConfigTransaction, ConfigModel):
         if not output:
             command = command + ' >nul 2>nul'
         logger.info(command)
-        error_code = os.system(command)
+        # Modify by MHY, Windows 额外包裹命令以保留程序路径中的引号。
+        shell_command = f'"{command}"' if os.name == 'nt' and command.startswith('"') else command
+        error_code = os.system(shell_command)
         if error_code:
             if allow_failure:
                 logger.info(f"[ allowed failure ], error_code: {error_code}")

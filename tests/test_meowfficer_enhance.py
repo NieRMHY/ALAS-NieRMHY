@@ -131,7 +131,7 @@ class SelectionFlowTests(unittest.TestCase):
         device = Device.__new__(Device)
         device.image = main.device.image
         device.detect_record = set()
-        device.click_record = collections.deque(maxlen=15)
+        device.click_record = collections.deque(maxlen=50)
         device._prev_fingerprint = None
         device.app_is_running = Mock(return_value=True)
         main.device = device
@@ -141,7 +141,7 @@ class SelectionFlowTests(unittest.TestCase):
         def screenshot():
             clock[0] += 0.35
             screenshots.append(clock[0])
-            if len(screenshots) > 150:
+            if len(screenshots) > 700:
                 raise AssertionError('未选中目标时没有触发已有恢复保护')
             # 画面始终未选中，复用实际设备的两种卡死检测，不直接注入异常。
             device.stuck_record_check()
@@ -161,11 +161,11 @@ class SelectionFlowTests(unittest.TestCase):
             device.stuck_timer = Timer(60, count=60).start()
             device.stuck_timer_long = Timer(195, count=195).start()
             device._stuck_image_timer = Timer(30, count=0)
-            # 每次点击会重置卡死计时器，实际先由第 12 次重复点击触发恢复。
+            # 每次点击会重置卡死计时器，实际由第 50 次重复点击触发恢复。
             with self.assertRaisesRegex(GameTooManyClickError, '按钮点击次数过多'):
                 main._meow_select()
             self.assertGreater(confirm.call_count, 1)
-        self.assertEqual(len(clicks), 12)
+        self.assertEqual(len(clicks), 50)
         self.assertEqual(len({str(button) for button in clicks}), 1)
         self.assertGreater(len(screenshots), len(clicks))
         self.assertEqual(main.config.MeowfficerTrain_EnhanceIndex, 11)

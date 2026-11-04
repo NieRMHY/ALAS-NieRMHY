@@ -6,7 +6,7 @@
 
 from module.combat.assets import *
 from module.handler.assets import *
-from module.statistics.assets import GET_ITEMS_ODD
+from module.statistics.item_layout import single_row_is_odd
 from module.statistics.item import *
 from module.statistics.utils import *
 
@@ -70,8 +70,7 @@ class GetItemsStatistics:
         Returns:
             bool: 奇数个返回 True，偶数个返回 False。
         """
-        image = crop(image, GET_ITEMS_ODD.area, copy=False)
-        return np.mean(rgb2gray(image) > 127) > 0.1
+        return single_row_is_odd(image)
 
     def _stats_get_items_load(self, image):
         """根据截图匹配对应的网格布局并检查遮挡。

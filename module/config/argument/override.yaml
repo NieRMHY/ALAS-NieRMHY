@@ -599,11 +599,7 @@ OperationHandover:
 
 # ==================== Opsi ====================
 
-OpsiAshAssist:
-  Scheduler:
-    SuccessInterval: 30
-    FailureInterval: 30
-    ServerUpdate: 00:00
+# Modify by MHY, META 支援合入信标任务，移除旧独立调度覆盖。
 OpsiAshBeacon:
   Scheduler:
     SuccessInterval: 30

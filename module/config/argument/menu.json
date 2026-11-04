@@ -92,7 +92,6 @@
     "tasks": [
       "OpsiGeneral",
       "OpsiAshBeacon",
-      "OpsiAshAssist",
       "OpsiExplore",
       "OpsiExploreCleanup",
       "OpsiShop",
@@ -154,8 +153,7 @@
     "page": "tool",
     "tasks": [
       "FleetScan",
-      "MindCalculatorScan",
-      "FleetTechScan",
+      "DockScan",
       "Daemon",
       "OpsiDaemon",
       "EventStory",
@@ -166,7 +164,8 @@
       "AzurLaneUncensored",
       "GameManager",
       "EmulatorManager",
-      "MeowfficerScore"
+      "MeowfficerScore",
+      "IslandProductionPlanner"
     ]
   }
 }

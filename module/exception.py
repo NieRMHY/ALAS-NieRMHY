@@ -16,7 +16,7 @@
 游戏状态错误（触发模拟器重启）：
     - GameStuckError: 游戏卡死（1 分钟内无有效操作，战斗期间 5 分钟）
     - GameBugError: 游戏客户端 bug（重启通常可恢复）
-    - GameTooManyClickError: 点击次数过多（15 次操作中同一按钮被点 ≥12 次）
+    - GameTooManyClickError: 连续 50 次同按钮操作或双按钮交替操作
 
 连接/页面错误（触发重启或人工干预）：
     - GameNotRunningError: 游戏未运行
@@ -139,8 +139,8 @@ class GameBugError(Exception):
 class GameTooManyClickError(Exception):
     """点击次数过多，疑似陷入循环。
 
-    最近 15 次操作中，同一按钮被点击 ≥12 次，
-    或两个按钮各被点击 ≥6 次时触发。
+    连续 50 次操作为同一按钮，或两个按钮实际交替重复时触发。
+    地图滑动使用相机的位移与收敛检测。
     """
     pass
 
@@ -180,6 +180,10 @@ class RequestHumanTakeover(Exception):
 
 class MindCalculatorScanError(RequestHumanTakeover):
     """船坞识别或精确定位无法确认；结束工具任务并保留旧清单，不重启模拟器。"""
+
+
+class FleetManagementError(RequestHumanTakeover):
+    """编队页面、卡面或操作结果未确认；不靠OCR判断，也不通过重启重复换船。"""
 
 
 class AutoSearchSetError(Exception):

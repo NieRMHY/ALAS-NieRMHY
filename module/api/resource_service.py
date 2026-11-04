@@ -38,4 +38,6 @@ def resource_flows(configs, params):
     dashboard_control = values.get('General', {}).get('OilControl', {})
     result['oilControl'] = {'enable': dashboard_control.get('Enable', True),
                             'target': dashboard_control.get('Target', 24000)}
+    from module.statistics.glossary import build_glossary
+    result['glossary'] = build_glossary(item['label'] for item in result['resources'])
     return result

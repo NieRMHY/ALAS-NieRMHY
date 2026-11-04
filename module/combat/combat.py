@@ -33,6 +33,7 @@ from module.combat.level import Level
 from module.combat.result import CombatResult
 from module.combat.submarine import SubmarineCall
 from module.combat_ui.assets import *
+from module.equipment.equipment_config import EquipmentConfigHandler
 from module.handler.auto_search import AutoSearchHandler
 from module.logger import logger
 from module.map.assets import MAP_OFFENSIVE
@@ -42,7 +43,7 @@ from module.template.assets import TEMPLATE_COMBAT_LOADING
 from module.ui.assets import BACK_ARROW, EXERCISE_CHECK, MUNITIONS_CHECK
 
 
-class Combat(Level, HPBalancer, Retirement, SubmarineCall, CombatAuto, CombatManual, AutoSearchHandler):
+class Combat(Level, HPBalancer, Retirement, EquipmentConfigHandler, SubmarineCall, CombatAuto, CombatManual, AutoSearchHandler):
     """战斗系统核心处理器。
 
     整合等级检测、血量平衡、退役、潜艇、自动/手动战斗和自动搜索等功能，
@@ -260,6 +261,8 @@ class Combat(Level, HPBalancer, Retirement, SubmarineCall, CombatAuto, CombatMan
             return PAUSE_YoRHa
         if PAUSE_Ritual.match_template_color(self.device.image, offset=(10, 10)):
             return PAUSE_Ritual
+        if PAUSE_Bullet.match_template_color(self.device.image, offset=(10, 10)):
+            return PAUSE_Bullet
         return False
 
     def handle_combat_quit(self, offset=(20, 20), interval=3):
@@ -437,12 +440,17 @@ class Combat(Level, HPBalancer, Retirement, SubmarineCall, CombatAuto, CombatMan
                 break
 
     def handle_battle_preparation(self):
-        """点击战斗准备按钮。
+        """处理首次换装或点击战斗准备按钮。
 
         Returns:
-            bool: 是否点击了战斗准备按钮。
+            bool: 是否执行了换装或点击操作，需要获取新截图。
         """
-        if self.appear_then_click(BATTLE_PREPARATION, offset=(20, 20), interval=2):
+        if self.appear(BATTLE_PREPARATION, offset=(20, 20), interval=2):
+            if self.equipment_config_enabled and not self.equipment_handle_before_flag:
+                self.equipment_handle_before()
+                return True
+
+            self.device.click(BATTLE_PREPARATION)
             return True
 
         return False

@@ -54,7 +54,7 @@ module/runtime/
 ├── remote_access.py       # SSH / WebRTC 远程访问 provider
 ├── mcp_auth.py            # MCP 鉴权：凭据提取、常数时间比对、会话表、日志脱敏
 ├── password_utils.py      # 密码生成/校验、本机判定、远程访问标记头
-├── launcher.py            # LauncherControl：外部启动器命令通道
+├── launcher.py            # LauncherService：应用级启动器 WS、命令与通知
 ├── launcher_trust.py      # 启动器信任免密令牌
 ├── discord_presence.py    # Discord Rich Presence（pypresence 异步客户端）
 └── event_calculator.py    # Wiki 活动计算器数据服务（当前无前端消费者）

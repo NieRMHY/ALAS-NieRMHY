@@ -8,7 +8,7 @@ from unittest.mock import Mock, patch
 import numpy as np
 from PIL import Image
 
-from module.runtime.mind_calculator import calculate, find_ship, highest_ships
+from module.runtime.mind_calculator import find_ship, highest_ships
 from module.runtime.mind_name import match_lua_name
 from module.runtime.mind_recognition import _match_name, aircraft_icon, meta_frame, recognize_cards
 
@@ -123,17 +123,11 @@ class RealLuaCardTests(unittest.TestCase):
         self.assertEqual(card.ship['name'], '菈菈·撒塔琳·戴比路克')
         self.assertEqual(card.ship['level'], 76)
         self.assertFalse(card.ship['review'])
-        self.assertEqual(calculate([card.ship])['ships'][0]['status'], 'excluded')
 
     def test_lua_matching_keeps_meta_separate_and_excludes_the_child(self):
         ships = highest_ships([copy.deepcopy(card.ship) for card in self.cards[:5]])
         self.assertEqual(len(ships), 5)
-        report = calculate(ships)
-        self.assertEqual(report['included'], 4)
-        self.assertEqual(report['excluded'], 1)
-        child = next(ship for ship in report['ships'] if ship['name'] == '小大凤')
-        self.assertEqual(child['group'], '幼体')
-        self.assertEqual(child['mind'], 0)
+        self.assertEqual(find_ship('小大凤')['group'], '幼体')
 
     def test_confirmed_names_do_not_charge_unreadable_levels(self):
         reader = Mock()
@@ -145,7 +139,6 @@ class RealLuaCardTests(unittest.TestCase):
             cards = recognize_cards(self.image, row_origins=[75], level_ocr=ocr)
         self.assertEqual([card.ship['name'] for card in cards], [label['name'] for label in self.labels])
         self.assertTrue(all(card.ship['review'] and card.ship['level'] == 0 for card in cards))
-        self.assertEqual(calculate([card.ship for card in cards])['mind'], 0)
 
 
 if __name__ == '__main__':

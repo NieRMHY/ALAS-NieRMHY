@@ -43,9 +43,10 @@ export function resumeEditors() {
  *  文本框、时间或数字内容被全部清空时，按旧版本逻辑自动还原为默认设置，便于后续修改。
  *  配置加载时 `config_update()` 也把空值还原成默认值。NextRun 的默认值落在过去，
  *  保存后调度器下一轮就把它当待运行任务。 */
-export function prepareValue(value: Value, field: Pick<Field, 'type' | 'value' | 'validate' | 'preserve_empty'>): {payload: Value; text?: Value; error?: string} {
-  const numeric = !['select', 'multiselect', 'checkbox'].includes(field.type)
-    && (typeof field.value === 'number' || ['number', 'int', 'float'].includes(field.type))
+export function prepareValue(value: Value, field: Pick<Field, 'type' | 'value' | 'valuetype' | 'validate' | 'preserve_empty'>): {payload: Value; text?: Value; error?: string} {
+  const valueType = field.valuetype ?? field.type
+  const numeric = valueType !== 'str' && !['select', 'multiselect', 'checkbox'].includes(field.type)
+    && (typeof field.value === 'number' || ['number', 'int', 'float'].includes(valueType))
   // preserve_empty 表示空值本身有意义，这类字段照旧提交空值，不做回落。
   // 旧版本逻辑：当文本框/数字/时间等内容被全部清空时，自动还原为默认设置，便于后续修改。
   if (!field.preserve_empty && String(value).trim() === '') {
@@ -58,7 +59,7 @@ export function prepareValue(value: Value, field: Pick<Field, 'type' | 'value' |
   const text = String(value).trim()
   const number = Number(text)
   // JSON 无法区分默认值 1 与 1.0；任务字段的精确整数类型交给后端校验。
-  const integer = field.type === 'int'
+  const integer = valueType === 'int'
   if (!/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$/.test(text) || !Number.isFinite(number)) {
     return {payload: value, error: translateCurrentUi('edit.invalidNumber')}
   }

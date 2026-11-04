@@ -23,6 +23,9 @@ COUNTER_THRESHOLD = 150
 COUNTER_TOTALS = (500, 350, 100, 50, 40, 30, 20, 15, 10, 5, 4, 2, 1)
 PRICE_THRESHOLD = 230
 PRICE_BACKGROUND_COLOR = (61, 78, 91)
+UNOBTAINED_TAG_COLOR = (255, 72, 72)
+# 角标区域中红底像素占比达到该值即视为“未获得”角标
+UNOBTAINED_TAG_RED_RATIO = 0.4
 if server.server == 'jp':
     COUNTER_LEFT_STRIP = 54
 elif server.server == 'en':
@@ -260,8 +263,14 @@ class EventShopItemGrid(ItemGrid):
         Returns:
             str | None: 'unobtained' 表示未获得，无对应角标返回 None。
         """
-        color = cv2.mean(np.array(image))[:3]
-        if color_similar(color1=color, color2=(255, 72, 72), threshold=50):
+        image = np.array(image)
+        color = cv2.mean(image)[:3]
+        if color_similar(color1=color, color2=UNOBTAINED_TAG_COLOR, threshold=50):
+            return 'unobtained'
+        # 国际服角标文字“Unobtained”比“未获得”长，白字把平均色拉浅，
+        # 改为统计接近角标红底的像素占比
+        red = color_similarity_2d(image, UNOBTAINED_TAG_COLOR) >= 255 - 50
+        if np.mean(red) >= UNOBTAINED_TAG_RED_RATIO:
             return 'unobtained'
         return None
 

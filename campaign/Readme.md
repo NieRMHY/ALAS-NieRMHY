@@ -12,7 +12,6 @@ To add a new event, add a new row in here, and run `uv run -m module.config.conf
 
 **CN, EN, JP, TW** Event names in GUI. If an event is not aired on some servers, use `-`.
 
-
 | Aired Date | Directory                | Event Name                                   | CN                         | EN                                                 | JP                                   | TW                         |
 | :--------- | :----------------------- | :------------------------------------------- | :------------------------- | :------------------------------------------------- | :----------------------------------- | :------------------------- |
 | 20170607   | war archives 20181020 en | Strive, Wish, and Strategize                 | 努力、希望和计划           | Strive, Wish, and Strategize                       | 努力、希望と計画                     | 努力、希望和計劃           |
@@ -262,7 +261,7 @@ To add a new event, add a new row in here, and run `uv run -m module.config.conf
 | 20250703   | event 20250424 cn        | Toward Tulipa’s Seas                         | -                          | -                                                  | -                                    | 揚起鬱金之旗               |
 | 20250724   | event 20241219 cn        | Substellar Crepuscule                        | -                          | -                                                  | -                                    | 星光下的餘暉               |
 | 20250724   | event 20250724 cn        | The Alchemist and the Tower of Horizons      | 优米雅的炼金工房           | The Alchemist and the Tower of Horizons            | 錬金術士と天空邂逅の塔               | -                          |
-| 20250726   | event 20221124 cn        | The Alchemist and the Archipelago of Secrets | 复刻炼金术士与秘密遗迹群岛 | The Alchemist and the Archipelago of Secrets Rerun | 錬金術士と謎の遺跡群島（復刻）       | -                          |
+| 20250724   | event 20221124 cn        | The Alchemist and the Archipelago of Secrets | 复刻炼金术士与秘密遗迹群岛 | The Alchemist and the Archipelago of Secrets Rerun | 錬金術士と謎の遺跡群島（復刻）       | -                          |
 | 20250807   | event 20250724 cn        | The Alchemist and the Tower of Horizons      | -                          | -                                                  | -                                    | 鍊金術士與天際交會之塔     |
 | 20250807   | event 20221124 cn        | The Alchemist and the Archipelago of Secrets | -                          | -                                                  | -                                    | 復刻鍊金術士與秘密遺跡群島 |
 | 20250814   | event 20250814 cn        | Secrets of the Abyss                         | 奇渊下的秘密               | Secrets of the Abyss                               | 淵層界の秘密                         | -                          |
@@ -295,7 +294,7 @@ To add a new event, add a new row in here, and run `uv run -m module.config.conf
 | 20260402   | event 20260326 cn        | The Vagabond’s Recruitment Plan              | -                          | -                                                  | -                                    | 漫遊者招募計劃             |
 | 20260416   | event 20220915 cn        | Violet Tempest Blooming Lycoris              | -                          | -                                                  | -                                    | 復刻紫絳槿嵐               |
 | 20260417   | event 20260417 cn        | Vacation Lane – Beachside Brilliance         | 假日航线闪耀海滨           | Vacation Lane – Beachside Brilliance               | バケーションレーン・きらめく砂浜     | -                          |
-| 20260417   | event 20201126 cn        | Vacation Lane Rerun                          | 复刻假日航线               | Vacation Lane Rerun                                | バケーションレーン（復刻）           | 復刻假日航線               |
+| 20260417   | event 20201126 cn        | Vacation Lane Rerun                          | 复刻假日航线               | Vacation Lane Rerun                                | バケーションレーン（復刻）           | -                          |
 | 20260417   | event 20250424 cn        | Toward Tulipa’s Seas Rerun                   | 复刻扬起郁金之旗           | Toward Tulipa’s Seas Rerun                         | チュリッパの海へ（復刻）             | -                          |
 | 20260417   | event 20260417 cn        | Vacation Lane – Beachside Brilliance         | -                          | -                                                  | -                                    | 假日航線閃耀海濱           |
 | 20260417   | event 20201126 cn        | Vacation Lane Rerun                          | -                          | -                                                  | -                                    | 復刻假日航線               |
@@ -323,4 +322,12 @@ To add a new event, add a new row in here, and run `uv run -m module.config.conf
 | 20261008   | event 20250520 cn        | A Rose on the High Tower Rerun               | 复刻高塔上的蔷薇           | A Rose on the High Tower Rerun                     | 高い塔の薔薇（復刻）                 | -                          |
 | 20261008   | event 20250814 cn        | Secrets of the Abyss Rerun                   | 复刻奇渊下的秘密           | Secrets of the Abyss Rerun                         | 淵層界の秘密（復刻）                 | -                          |
 | 20261008   | event 20250912 cn        | A Dance for Amahara Above Rerun              | 复刻起舞于天原之上         | A Dance for Amahara Above Rerun                    | アマハラに舞い奉れ（復刻）           | -                          |
-| 20261022   | event 20261022 cn        | Tempesta and the Corridor of Mist            | 飓风与雾霭回廊             | Tempesta and the Corridor of Mist                  | テンペスタと霧靄回廊                 | -                          |
+| 20261022   | event 20261022 cn        | Tempesta and the Corridor of Fog             | 飓风与雾霭回廊             | Tempesta and the Corridor of Fog                   | テンペスタと霧靄回廊                 | -                          |
+| 20261022   | event 20240815 cn        | Windborne Steel Wings Rerun                  | -                          | -                                                  | -                                    | 復刻鐵翼擎風               |
+| 20261022   | event 20240912 cn        | Ode of Everblooming Crimson Rerun            | -                          | -                                                  | -                                    | 復刻喚醒蒼紅之炎           |
+| 20261022   | event 20241219 cn        | Substellar Crepuscule Rerun                  | -                          | -                                                  | -                                    | 復刻星光下的餘暉           |
+| 20261022   | event 20250227 cn        | Paradiso of Shackled Light Rerun             | -                          | -                                                  | -                                    | 復刻樊籠內的神光           |
+| 20261022   | event 20250520 cn        | A Rose on the High Tower Rerun               | -                          | -                                                  | -                                    | 復刻高塔上的薔薇           |
+| 20261022   | event 20250814 cn        | Secrets of the Abyss Rerun                   | -                          | -                                                  | -                                    | 復刻奇淵下的秘密           |
+| 20261022   | event 20250912 cn        | A Dance for Amahara Above Rerun              | -                          | -                                                  | -                                    | 復刻起舞於天原之上         |
+| 20261029   | event 20261022 cn        | Tempesta and the Corridor of Fog             | -                          | -                                                  | -                                    | 颶風與霧靄迴廊             |

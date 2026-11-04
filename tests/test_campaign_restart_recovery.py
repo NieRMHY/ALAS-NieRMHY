@@ -301,6 +301,7 @@ class RestartMapReplayTests(unittest.TestCase):
 
     def test_first_resume_click_waits_two_seconds(self):
         replay, campaign = self.make_replay([
+            screen('MAP', WITHDRAW, AUTO_SEARCH_MAP_OPTION_OFF, FLEET_NUM_1),
             screen('MAP', WITHDRAW, AUTO_SEARCH_MAP_OPTION_OFF, FLEET_NUM_1)])
         self.assertTrue(campaign.prepare_auto_search_recovery('map'))
         self.assertFalse(campaign.handle_auto_search_map_option())
@@ -308,6 +309,9 @@ class RestartMapReplayTests(unittest.TestCase):
         self.assertFalse(campaign.handle_auto_search_map_option())
         self.assertEqual([], replay.clicks)
         replay.time += 0.02
+        self.assertFalse(campaign.handle_auto_search_map_option())
+        self.assertEqual([], replay.clicks)
+        replay.screenshot()
         self.assertTrue(campaign.handle_auto_search_map_option())
         self.assertEqual([AUTO_SEARCH_MAP_OPTION_OFF.name], replay.clicks)
 
@@ -326,9 +330,14 @@ class RestartMapReplayTests(unittest.TestCase):
                 self.assertNotIn(AUTO_SEARCH_MAP_OPTION_OFF.name, replay.clicks)
                 campaign.emotion.reduce.assert_called_once_with(1)
 
-    def test_normal_auto_search_enable_keeps_existing_timing(self):
+    def test_normal_auto_search_enable_requires_two_frames_without_fixed_delay(self):
         replay, campaign = self.make_replay([
+            screen('MAP', WITHDRAW, AUTO_SEARCH_MAP_OPTION_OFF, FLEET_NUM_1),
             screen('MAP', WITHDRAW, AUTO_SEARCH_MAP_OPTION_OFF, FLEET_NUM_1)])
+        self.assertFalse(campaign.handle_auto_search_map_option())
+        self.assertEqual([], replay.clicks)
+        # 不推进虚拟时钟，只更换截图；普通入口不额外要求固定等待。
+        replay.device.image = replay.frames[1]
         self.assertTrue(campaign.handle_auto_search_map_option())
         self.assertEqual([AUTO_SEARCH_MAP_OPTION_OFF.name], replay.clicks)
         self.assertEqual(100.0, replay.time)
@@ -337,6 +346,7 @@ class RestartMapReplayTests(unittest.TestCase):
         for old_rank in (None, 'S', 'A'):
             with self.subTest(old_rank=old_rank):
                 replay, campaign = self.make_replay([
+                    screen('MAP', WITHDRAW, AUTO_SEARCH_MAP_OPTION_OFF, FLEET_NUM_1),
                     screen('MAP', WITHDRAW, AUTO_SEARCH_MAP_OPTION_OFF, FLEET_NUM_1),
                     screen('MAP', AUTO_SEARCH_MAP_OPTION_ON, FLEET_NUM_1),
                     screen('COMBAT'), screen('COMBAT'), screen(BATTLE_STATUS_S),
@@ -354,11 +364,15 @@ class RestartMapReplayTests(unittest.TestCase):
 
     def test_recovery_only_enables_map_auto_search_without_consuming_old_settlement(self):
         replay, campaign = self.make_replay([
+            screen('MAP', WITHDRAW, AUTO_SEARCH_MAP_OPTION_OFF, FLEET_NUM_1),
             screen('MAP', WITHDRAW, AUTO_SEARCH_MAP_OPTION_OFF, FLEET_NUM_1)])
         campaign.combat_result = CombatResult(rank='A', defeated=True, shipwreck_reduced=True)
         campaign._withdraw = True
         campaign.auto_search_combat_status = Mock(side_effect=AssertionError('不得接管旧结算'))
         self.assertTrue(self.prepare_map(campaign))
+        self.assertFalse(campaign.handle_auto_search_map_option())
+        self.assertEqual([], replay.clicks)
+        replay.screenshot()
         self.assertTrue(campaign.handle_auto_search_map_option())
         self.assertEqual([AUTO_SEARCH_MAP_OPTION_OFF.name], replay.clicks)
         self.assertEqual(2, campaign.battle_count)

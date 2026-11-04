@@ -1,4 +1,4 @@
-import {useCallback, useEffect, useRef, useState, type FormEvent} from 'react'
+import {useCallback, useEffect, useMemo, useRef, useState, type FormEvent} from 'react'
 import {useParams} from 'react-router-dom'
 import {Download, Fuel, RefreshCw, Search} from 'lucide-react'
 import {api} from '../api/client'
@@ -7,6 +7,7 @@ import {useApp, useConnection} from '../app/context'
 import {Checkbox, Select} from '../components/FormControls'
 import {Empty, ErrorBox, Loading, PageTitle} from '../components/ui'
 import {downloadCsv} from '../components/statisticsData'
+import {localizeFlowReport, statTextTranslator} from '../components/statisticsText'
 import {resourceIcons} from '../components/StatisticsTable'
 import {Sankey} from '../resources/Sankey'
 import type {UiKey} from '../i18n'
@@ -38,7 +39,7 @@ function OilControl({instance, value}: {instance: string; value: ResourceFlowRep
 }
 
 export function ResourceManagement() {
-  const {instance = ''} = useParams(), {ui, t} = useApp(), connection = useConnection()
+  const {instance = ''} = useParams(), {ui, t, language} = useApp(), connection = useConnection()
   const [days, setDays] = useState('7'), [draftStart, setDraftStart] = useState(''), [draftEnd, setDraftEnd] = useState('')
   const [interval, setInterval] = useState<{start?: string; end?: string}>({})
   const [resource, setResource] = useState('Oil'), [task, setTask] = useState(''), [offset, setOffset] = useState(0), [search, setSearch] = useState('')
@@ -62,7 +63,8 @@ export function ResourceManagement() {
     const unsubscribe = api.onEvent(event => {if (event.topic === 'statistics' && (event.data as {instance?: string})?.instance === instance) void load()})
     return () => {active = false; unsubscribe()}
   }, [connection, instance, days, interval, resource, task, offset, refresh])
-  const shown = report?.instance === instance ? report : undefined
+  /* 物品名、分组与用途来自后端中文，显示前译成界面语言。 */
+  const shown = useMemo(() => report?.instance === instance ? localizeFlowReport(report, language) : undefined, [report, instance, language])
   const resourceLabel = useCallback((key: string) => {
     return resourceKeys[key] ? ui(resourceKeys[key]) : shown?.resources.find(item => item.key === key)?.label ?? key
   }, [ui, shown])
@@ -80,7 +82,7 @@ export function ResourceManagement() {
         rows.push(...page.entries)
         if (offset + page.entries.length >= page.total || !page.entries.length) break
       }
-      downloadCsv(`${instance}-resource-flows`, [[ui('flow.time'), ui('flow.resource'), ui('flow.task'), ui('flow.operation'), ui('flow.net'), ui('flow.evidence')], ...rows.map(entry => [entry.ts, resourceLabel(entry.resource), taskLabel(entry.task), entry.operation, entry.amount, evidence(entry.evidence)])])
+      downloadCsv(`${instance}-resource-flows`, [[ui('flow.time'), ui('flow.resource'), ui('flow.task'), ui('flow.operation'), ui('flow.net'), ui('flow.evidence')], ...rows.map(entry => [entry.ts, resourceLabel(entry.resource), taskLabel(entry.task), statTextTranslator(language, source.glossary)(entry.operation), entry.amount, evidence(entry.evidence)])])
     } catch (error) {setError((error as Error).message)} finally {setExporting(false)}
   }
   const number = (value: number | null) => value === null ? '—' : value.toLocaleString()

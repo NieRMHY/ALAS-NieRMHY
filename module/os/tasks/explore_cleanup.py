@@ -1,6 +1,6 @@
 """每月开荒完成后的独立普通海域事件补扫任务。"""
 from module.config.utils import get_os_next_reset
-from module.exception import GameStuckError, RequestHumanTakeover
+from module.exception import GameStuckError
 from module.logger import logger
 from module.os.map import OSMap
 
@@ -50,7 +50,7 @@ class OpsiExploreCleanup(OSMap):
     def _run_explore_cleanup(self, max_zones=None):
         """只进入已开荒普通海域，复用全图事件扫描和短猫的逐队雷达补查。
 
-        每张图退出成功后保存断点；失败保留当前图，最多跨重启尝试三次。
+        每张图退出成功后保存断点；失败保留当前图，由调度器统一处理重启和连续失败延期。
 
         Args:
             max_zones (int | None): 本轮最多补扫的海域数；智能调度每轮一张，独立任务默认全部。
@@ -67,8 +67,7 @@ class OpsiExploreCleanup(OSMap):
             for index in range(state['next'], end):
                 if get_os_next_reset().isoformat() != reset:
                     raise GameStuckError('补扫期间跨月，停止旧月份补扫')
-                if state['attempts'] >= 3:
-                    raise RequestHumanTakeover(f"海域 {state['order'][index]} 补扫连续三次未完成，请检查日志")
+                # 旧尝试次数不能阻止重启后实际进图；连续失败由调度器统一限流。
                 state = dict(state, attempts=state['attempts'] + 1)
                 self.config.OpsiExploreCleanup_State = state
                 zone = state['order'][index]

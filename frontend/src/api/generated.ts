@@ -12,17 +12,21 @@ export interface Parameters {
   "config.export": { instance: string }
   "config.patch": { instance: string; revision?: string | null; changes: Array<{ path: string; value: unknown }> }
   "overview.get": { instance: string }
+  "fleetTraining.reset": { instance: string; revision: string }
+  "dock.report": { instance: string }
+  "dock.importLegacy": { instance: string; revision: string }
+  "dock.configure": { instance: string; min_level: number; max_level: number }
+  "dock.patch": { instance: string; revision: string; changes: Array<{ id?: number | null; delete?: boolean; group_type?: number | null; name?: string; level?: number; rarity?: "" | "N" | "R" | "SR" | "SSR" | "UR"; base_rarity?: "" | "N" | "R" | "SR" | "SSR" | "UR"; extra_exp?: number | null; full_star?: boolean | null; form?: "base" | "retrofit" | null; review?: boolean; source?: string }> }
+  "dock.stageImport": { instance: string; revision: string; ships: Array<{ name: string; level: number; rarity?: "" | "N" | "R" | "SR" | "SSR" | "UR"; base_rarity?: "" | "N" | "R" | "SR" | "SSR" | "UR"; extra_exp?: number | null; review?: boolean; source?: string }> }
+  "dock.review": { instance: string; revision: string; pending_revision: string; decisions: Array<{ id: string; accept: boolean; ship_id?: number | null }> }
   "mind.catalog": { instance: string }
   "fleetTech.catalog": { instance: string }
   "fleetTech.report": { instance: string }
-  "fleetTech.syncMind": { instance: string }
-  "fleetTech.patch": { instance: string; revision: string; changes?: Array<{ group_type: number; owned?: boolean | null; full_star?: boolean | null; lv120?: boolean | null; level?: number | null; restore?: boolean; toggle?: "owned" | "complete" | "star" | null; target?: boolean | null }>; nations?: Record<string, unknown> }
-  "mind.report": { instance: string }
-  "mind.calculate": { instance: string; ships: Array<{ name: string; level: number; rarity?: "" | "N" | "R" | "SR" | "SSR" | "UR"; base_rarity?: "" | "N" | "R" | "SR" | "SSR" | "UR"; excluded?: boolean; review?: boolean; source?: string }> }
-  "mind.save": { instance: string; ships: Array<{ name: string; level: number; rarity?: "" | "N" | "R" | "SR" | "SSR" | "UR"; base_rarity?: "" | "N" | "R" | "SR" | "SSR" | "UR"; excluded?: boolean; review?: boolean; source?: string }>; revision: string }
+  "fleetTech.mergeShips": { instance: string; revision: string }
+  "fleetTech.patch": { instance: string; revision: string; changes?: Array<{ group_type: number; owned?: boolean; full_star?: boolean; lv120?: boolean; awakening_pending?: boolean }>; nations?: Record<string, unknown> }
+  "mind.plan": { instance: string; revision: string; ship_ids: Array<number>; target_level?: 120 | 125 }
   "mind.import": { instance: string; filename: string; content: string }
   "mind.recognize": { instance: string; filename: string; content: string }
-  "mind.export": { instance: string; format?: "json" | "csv" | "xlsx" }
   "scheduler.start": { instance: string }
   "scheduler.stop": { instance: string }
   "scheduler.program.catalog": { instance: string }

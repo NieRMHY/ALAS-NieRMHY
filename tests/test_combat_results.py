@@ -131,7 +131,12 @@ class CombatScreenshotTests(unittest.TestCase):
         campaign = replay.make_campaign(policy='switch_fleet')
         replay.run()
         self.assertFalse(campaign._withdraw)
-        self.assertIn(AUTO_SEARCH_MAP_OPTION_OFF.name, replay.clicks)
+        # The real map frame already shows fleet 2 running. Recovery confirms
+        # that handoff instead of clicking the switch and stopping it again.
+        self.assertEqual(campaign.fleet_show_index, 2)
+        campaign.emotion.check_fleet.assert_called_once_with(2)
+        self.assertTrue(campaign.is_auto_search_running())
+        self.assertNotIn(AUTO_SEARCH_MAP_OPTION_OFF.name, replay.clicks)
         self.assertNotIn(WITHDRAW.name, replay.clicks)
         self.assertNotIn(GET_MISSION.name, replay.clicks)
 

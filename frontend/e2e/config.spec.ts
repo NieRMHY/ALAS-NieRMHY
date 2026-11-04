@@ -4,6 +4,35 @@ const serialSelector = '[id="Alas.Emulator.Serial"]'
 const serialStatus = '[id="Alas.Emulator.Serial-status"]'
 // 字段为草稿式提交：键入期间不写配置，失焦或回车才提交，故断言保存前先 blur。
 
+test('大舰队作战比例允许小数，越界输入不覆盖已保存设置', async ({page}, testInfo) => {
+  const path = 'Guild.GuildOperation.JoinThreshold'
+  await page.goto('/#/i/testpilot/task/Guild')
+  const input = page.locator(`[id="${path}"]`)
+  const status = page.locator(`[id="${path}-status"]`)
+  await expect(input).toBeVisible({timeout: 15000})
+  for (const value of ['0.20', '0.0', '1.0']) {
+    await input.fill(value)
+    await input.press('Enter')
+    // 成功响应会清除持久化草稿；保存提示会自动消失，不作为提交屏障。
+    await expect.poll(() => page.evaluate(() => sessionStorage.getItem('azurpilot.edits.config:testpilot'))).toBeNull()
+    await page.reload()
+    await expect(input).toHaveValue(String(Number(value)), {timeout: 15000})
+  }
+  await input.fill('1000')
+  await input.press('Enter')
+  await expect(input).toHaveAttribute('aria-invalid', 'true')
+  await expect(status).toContainText('0')
+  await page.locator('.field-row').filter({has: input}).screenshot({path: testInfo.outputPath('guild-threshold-range.png')})
+  // 清除本页草稿后重读服务端，证明越界值没有写入配置。
+  await page.evaluate(() => sessionStorage.removeItem('azurpilot.edits.config:testpilot'))
+  await page.reload()
+  await expect(input).toHaveValue('1', {timeout: 15000})
+  await input.fill('0.5')
+  await input.press('Enter')
+  await expect.poll(() => page.evaluate(() => sessionStorage.getItem('azurpilot.edits.config:testpilot'))).toBeNull()
+  await page.locator('.field-row').filter({has: input}).screenshot({path: testInfo.outputPath('guild-threshold-saved.png')})
+})
+
 test('海里数检测使用天数输入，关闭、每轮和按天检测保存后均保留', async ({page}, testInfo) => {
   const path = 'OpsiHazard1Leveling.OpsiHazard1Leveling.RecordSeaMiles'
   await page.goto('/#/i/testpilot/task/OpsiHazard1Leveling')

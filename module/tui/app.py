@@ -72,8 +72,11 @@ class AzurPilotTUI(App[None]):
 
     def tick_clock(self) -> None:
         """更新状态栏时钟。"""
-        header = self.screen_stack[0].query_one(HeaderBar)
-        header.tick_clock()
+        if self.screen_stack:
+            # Timers may fire while the default screen is mounting or tearing down.
+            header = next(iter(self.screen_stack[0].query(HeaderBar)), None)
+            if header is not None:
+                header.tick_clock()
 
     def refresh_all_data(self) -> None:
         """全量刷新实例列表、当前总览与时间表。"""

@@ -1,9 +1,11 @@
-from .campaign_base import CampaignBase, Config as ConfigBase
+from .campaign_base import CampaignBase
 from module.map.map_base import CampaignMap
+from module.map.map_grids import SelectedGrids, RoadGrids
+from module.logger import logger
 
 MAP = CampaignMap('T1')
 MAP.shape = 'E10'
-MAP.camera_data = ['B2', 'B6', 'B8']
+MAP.camera_data = ['B3', 'B5', 'B8']
 MAP.camera_data_spawn_point = ['B2']
 MAP.map_data = """
     ++ SP -- SP ++
@@ -49,8 +51,9 @@ A10, B10, C10, D10, E10, \
     = MAP.flatten()
 
 
-class Config(ConfigBase):
+class Config:
     # ===== Start of generated config =====
+    MAP_SIREN_TEMPLATE = []
     MOVABLE_ENEMY_TURN = (2,)
     MAP_HAS_SIREN = True
     MAP_HAS_MOVABLE_ENEMY = True
@@ -59,6 +62,14 @@ class Config(ConfigBase):
     MAP_HAS_AMBUSH = False
     MAP_HAS_MYSTERY = False
     # ===== End of generated config =====
+
+    MAP_CHAPTER_SWITCH_20241219 = True
+    STAGE_ENTRANCE = ['half', '20240725']
+    MAP_SIREN_HAS_BOSS_ICON_SMALL = True
+    MAP_ENSURE_EDGE_INSIGHT_CORNER = 'bottom'
+    MAP_SWIPE_MULTIPLY = (1.249, 1.273)
+    MAP_SWIPE_MULTIPLY_MINITOUCH = (1.208, 1.230)
+    MAP_SWIPE_MULTIPLY_MAATOUCH = (1.173, 1.194)
 
 
 class Campaign(CampaignBase):

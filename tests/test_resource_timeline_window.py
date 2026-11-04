@@ -1,15 +1,22 @@
 """资源时间线的窗口过滤：下推到 SQL 后窗口内的点一个不少。"""
 import calendar
 import shutil
-import sqlite3
 import tempfile
 import unittest
 from types import SimpleNamespace
 from unittest.mock import patch
 from tests.opsi_test_support import install_store
 from pathlib import Path
+from datetime import datetime
 
 from module.statistics import resource_stats
+
+
+def seed_snapshots(rows):
+    """走当前存储接口写入快照，不再直连已废弃的独立 SQLite 路径。"""
+    for stamp, oil in rows:
+        assert resource_stats.record_resource_snapshot('default', {'Oil': oil},
+                                                       observed_at=datetime.fromisoformat(stamp))
 
 
 def test_timeline_since_keeps_every_row_in_window():
@@ -22,12 +29,8 @@ def test_timeline_since_keeps_every_row_in_window():
     resource_stats._LOCAL_DB, resource_stats._table_ensured = str(database), False
     try:
         resource_stats._ensure_table()
-        with sqlite3.connect(database) as conn:
-            conn.executemany(
-                "INSERT INTO resource_snapshots (instance, ts, oil) VALUES ('default', ?, ?)",
-                [(f'2026-01-01T{hour:02d}:{minute:02d}:00', hour * 100 + minute)
-                 for hour in range(24) for minute in (0, 30)],
-            )
+        seed_snapshots([(f'2026-01-01T{hour:02d}:{minute:02d}:00', hour * 100 + minute)
+                        for hour in range(24) for minute in (0, 30)])
 
         whole = resource_stats.get_resource_timeline('default')
         window = resource_stats.get_resource_timeline('default', since='2026-01-01T20:00:00')
@@ -50,12 +53,8 @@ def test_timeline_until_drops_every_row_after_window():
     resource_stats._LOCAL_DB, resource_stats._table_ensured = str(database), False
     try:
         resource_stats._ensure_table()
-        with sqlite3.connect(database) as conn:
-            conn.executemany(
-                "INSERT INTO resource_snapshots (instance, ts, oil) VALUES ('default', ?, ?)",
-                [(f'2026-01-{day:02d}T00:00:00', day) for day in range(1, 11)]
-                + [(f'2026-02-{day:02d}T00:00:00', 100 + day) for day in range(1, 4)],
-            )
+        seed_snapshots([(f'2026-01-{day:02d}T00:00:00', day) for day in range(1, 11)]
+                       + [(f'2026-02-{day:02d}T00:00:00', 100 + day) for day in range(1, 4)])
 
         window = resource_stats.get_resource_timeline(
             'default', since='2026-01-05T00:00:00', until='2026-01-08T00:00:00')
@@ -77,12 +76,8 @@ def test_report_month_window_excludes_snapshots_after_the_month():
     resource_stats._LOCAL_DB, resource_stats._table_ensured = str(database), False
     try:
         resource_stats._ensure_table()
-        with sqlite3.connect(database) as conn:
-            conn.executemany(
-                "INSERT INTO resource_snapshots (instance, ts, oil) VALUES ('default', ?, ?)",
-                [(f'2026-01-{day:02d}T00:00:00', day) for day in range(1, 11)]
-                + [(f'2026-02-{day:02d}T00:00:00', 100 + day) for day in range(1, 4)],
-            )
+        seed_snapshots([(f'2026-01-{day:02d}T00:00:00', day) for day in range(1, 11)]
+                       + [(f'2026-02-{day:02d}T00:00:00', 100 + day) for day in range(1, 4)])
 
         from module.api.statistics_service import report
         configs = SimpleNamespace(path=lambda instance: database.parent / f'{instance}.json')
@@ -106,11 +101,7 @@ def test_report_skips_series_for_hidden_charts():
     resource_stats._LOCAL_DB, resource_stats._table_ensured = str(database), False
     try:
         resource_stats._ensure_table()
-        with sqlite3.connect(database) as conn:
-            conn.executemany(
-                "INSERT INTO resource_snapshots (instance, ts, oil) VALUES ('default', ?, ?)",
-                [(f'2026-01-{day:02d}T00:00:00', day) for day in range(1, 6)],
-            )
+        seed_snapshots([(f'2026-01-{day:02d}T00:00:00', day) for day in range(1, 6)])
 
         from module.api.statistics_service import report
         configs = SimpleNamespace(path=lambda instance: database.parent / f'{instance}.json')

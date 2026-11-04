@@ -40,7 +40,7 @@ function validateField(path, value) {
   if (field.option?.length && !field.option.includes(value)) fail('INVALID_PARAMS', '请选择有效选项')
   const kind = typeof field.value
   const valid = field.type === 'checkbox' || kind === 'boolean' ? typeof value === 'boolean'
-    : kind === 'number' ? typeof value === 'number' && Number.isFinite(value) && (!Number.isInteger(field.value) || Number.isInteger(value))
+    : kind === 'number' ? typeof value === 'number' && Number.isFinite(value) && (field.valuetype === 'float' || !Number.isInteger(field.value) || Number.isInteger(value))
       : typeof value === 'string' || (field.value === null && value === null)
   if (!valid || (typeof value === 'string' && value.length > 20000)) fail('INVALID_PARAMS', '参数类型或长度不正确')
   if (Array.isArray(field.validate) && (typeof value !== 'number' || value < field.validate[0] || value > field.validate[1])) fail('INVALID_PARAMS', '数值超出允许范围')
@@ -50,20 +50,19 @@ function validateField(path, value) {
 
 export function createMockState({ empty = false } = {}) {
   const instances = new Map()
-  // Modify by MHY, 保留心智计算器模拟接口，证券代理与接口不恢复。
-  const mindShips = new Map()
-  const fleetRecords = new Map()
-  function fleetPython(action, params) {
-    const fields = get(params.instance).values.FleetTechScan.FleetTech
-    const output = mindPython(`tech.${action}`, {...params, ships: mindShips.get(params.instance) ?? [],
-      record: fleetRecords.get(params.instance) ?? {}, min_level: fields.MinLevel, max_level: fields.MaxLevel})
-    if (['patch', 'syncMind'].includes(action)) fleetRecords.set(params.instance, output.record)
+  const fleetStates = new Map()
+  function fleetStatePython(action, params) {
+    const output = mindPython(action, {...params, state: fleetStates.get(params.instance),
+      config: get(params.instance).values})
+    if (['tech.patch', 'tech.mergeShips', 'dock.patch', 'dock.review', 'dock.importLegacy', 'dock.stageImport'].includes(action)) fleetStates.set(params.instance, output.state)
+    if (action === 'dock.importLegacy') get(params.instance).values = output.config
     return output.result
   }
+  const fleetPython = (action, params) => fleetStatePython(`tech.${action}`, params)
   function mindPython(action, params) {
     const run = spawnSync('uv', ['run', '--no-sync', 'python', '-X', 'utf8', '-m', 'dev_tools.mind_calculator_mock'], {
       cwd: fileURLToPath(new URL('../../', import.meta.url)), input: JSON.stringify({action, ...params}),
-      encoding: 'utf8', timeout: 30000, windowsHide: true,
+      encoding: 'utf8', timeout: 30000, maxBuffer: 32 * 1024 * 1024, windowsHide: true,
     })
     if (run.error || run.status) fail('INTERNAL_ERROR', '计算器模拟服务运行失败')
     const result = JSON.parse(run.stdout)
@@ -461,9 +460,11 @@ export function createMockState({ empty = false } = {}) {
     }
   }
   function dispatch(method, input = {}) {
-    const params = structuredClone(input)
+    let params = structuredClone(input)
     if (!Object.hasOwn(validators, method)) fail('METHOD_NOT_FOUND', '未知 API 方法')
     if (!validators[method](params)) fail('INVALID_PARAMS', '请求参数不符合 API 契约')
+    // Optional ledger fields carry presence semantics, matching Pydantic exclude_unset.
+    if (['dock.patch', 'dock.review', 'dock.stageImport', 'fleetTech.patch', 'mind.plan'].includes(method)) params = structuredClone(input)
     const name = params.instance
     if (name != null) get(name)
     switch (method) {
@@ -486,9 +487,20 @@ export function createMockState({ empty = false } = {}) {
         if (get(name).status === 'running') fail('INSTANCE_RUNNING', '请先停止实例再删除')
         if (simulations.get(name)?.running) fail('SIMULATOR_RUNNING', '请先中断大世界模拟器再删除实例')
         if (params.revision !== snapshot(name).revision) fail('CONFLICT', '配置已变化，请重新加载后删除')
-        instances.delete(name); startup.delete(name); programs.delete(name); simulations.delete(name)
+        instances.delete(name); startup.delete(name); programs.delete(name); simulations.delete(name); fleetStates.delete(name)
         return { deleted: name }
       case 'config.get': return snapshot(name)
+      case 'fleetTraining.reset': {
+        if (get(name).status === 'running') fail('INSTANCE_RUNNING', '请先停止实例，再刷新换船状态')
+        const current = snapshot(name)
+        if (params.revision !== current.revision) fail('CONFLICT', '配置已变化，请重新载入后刷新状态')
+        const fleet = current.values.FleetInfo
+        fleet.FleetTraining.State = {}; fleet.FleetRotation.State = {}; fleet.FleetEquipment.State = {}
+        fleet.FleetInfo.Result = {}; fleet.FleetInfo.Record = '2020-01-01 00:00:00'
+        fleet.FleetTraining.FullScanRecord = '2020-01-01 00:00:00'
+        get(name).values = current.values
+        return snapshot(name)
+      }
       case 'config.export': {
         if (!programs.has(name)) return snapshot(name).values
         const {mode, draft, active} = program(name)
@@ -538,29 +550,29 @@ export function createMockState({ empty = false } = {}) {
         return snapshot(name)
       }
       case 'overview.get': return overview(name)
-  // Modify by MHY, 保留心智计算器模拟接口，证券代理与接口不恢复。
+      // Modify by MHY, 只模拟本地船坞与培养接口，茗交所证券代理不恢复。
+      case 'dock.configure': {
+        if (params.min_level > params.max_level) fail('INVALID_PARAMS', '最低等级不能大于最高等级')
+        if (get(name).status === 'running') fail('INSTANCE_RUNNING', '实例运行中')
+        Object.assign(get(name).values.DockScan.Dock, {MinLevel: params.min_level, MaxLevel: params.max_level})
+        return dispatch('dock.report', {instance: name})
+      }
+      case 'dock.report': return fleetStatePython('dock.report', params)
+      case 'dock.importLegacy': return fleetStatePython('dock.importLegacy', params)
+      case 'dock.patch': return fleetStatePython('dock.patch', params)
+      case 'dock.review': return fleetStatePython('dock.review', params)
+      case 'dock.stageImport': return fleetStatePython('dock.stageImport', params)
       case 'mind.catalog': return mindPython('catalog', params)
       case 'fleetTech.catalog': return fleetPython('catalog', params)
       case 'fleetTech.report': return fleetPython('report', params)
       case 'fleetTech.patch': return fleetPython('patch', params)
-      case 'fleetTech.syncMind': return fleetPython('syncMind', params)
-      case 'mind.calculate': return mindPython('calculate', params)
-      case 'mind.report': {
-        const range = get(name).values.MindCalculatorScan.MindCalculator
-        return {...mindPython('report', {ships: mindShips.get(name) ?? []}), instance: name, updated_at: '', min_level: range.MinLevel, max_level: range.MaxLevel}
-      }
-      case 'mind.save': {
-        const current = mindPython('report', {ships: mindShips.get(name) ?? []})
-        if (current.revision !== params.revision) fail('CONFLICT', '舰船数据已变化，请重新载入后再保存')
-        mindShips.set(name, params.ships)
-        return dispatch('mind.report', {instance: name})
-      }
+      case 'fleetTech.mergeShips': return fleetPython('mergeShips', params)
+      case 'mind.plan': return fleetStatePython('mind.plan', params)
       case 'mind.import': return mindPython('import', params)
       case 'mind.recognize': return mindPython('recognize', params)
-      case 'mind.export': return mindPython('export', {...params, ships: mindShips.get(name) ?? []})
       case 'scheduler.start': case 'tasks.run':
         if (get(name).status === 'running') fail('INSTANCE_RUNNING', '实例已在运行')
-        if (method === 'tasks.run' && !['FleetScan', 'StorageStatistics'].includes(params.task) && !Object.values(menu).some(group => group.page === 'tool' && group.tasks.includes(params.task))) fail('INVALID_PARAMS', '该任务不支持单独运行')
+        if (method === 'tasks.run' && !['FleetScan', 'StorageStatistics', 'DockScan'].includes(params.task) && !Object.values(menu).some(group => group.page === 'tool' && group.tasks.includes(params.task))) fail('INVALID_PARAMS', '该任务不支持单独运行')
         get(name).status = 'running'; get(name).currentTask = params.task ?? 'Commission'; log(name, '模拟调度器已启动。')
         return overview(name)
       case 'scheduler.stop':
@@ -651,9 +663,10 @@ export function createMockState({ empty = false } = {}) {
           const dbKey = resKeyMap[res] ?? res
           const base = get(name).values.Dashboard[dbKey]?.Value ?? baseMap[res] ?? 500
           const safeDays = Math.max(1, Number(days) || 7)
+          // 与真实统计接口一致，发送墙上时钟微秒与紧凑点，供前端统一解码。
           return Array.from({ length: 24 }, (_, index) => ({
-            time: timestamp(new Date(Date.now() - (23 - index) * safeDays * 3600000)),
-            value: Math.max(0, Math.round(base * (.8 + index / 120 + Math.sin(index) * .03))),
+            t: Math.floor((Date.now() - (23 - index) * safeDays * 3600000) / 1000) * 1000000,
+            v: Math.max(0, Math.round(base * (.8 + index / 120 + Math.sin(index) * .03))),
           }))
         }
         const reportSeries = entries => entries.map(([key, label, res = key]) => ({

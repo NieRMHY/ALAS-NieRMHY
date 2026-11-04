@@ -159,7 +159,7 @@
       "help": ""
     },
     "CoalitionSp": {
-      "name": "怪谈纪实：逃离白夜山庄SP",
+      "name": "怪談実録：白夜山荘からの脱出SP",
       "help": ""
     },
     "Commission": {
@@ -258,10 +258,6 @@
       "name": "META作戦",
       "help": ""
     },
-    "OpsiAshAssist": {
-      "name": "META支援",
-      "help": ""
-    },
     "OpsiExplore": {
       "name": "月間開拓",
       "help": ""
@@ -308,7 +304,7 @@
     },
     "OpsiHazard1Leveling": {
       "name": "侵蝕1レベリング",
-      "help": ""
+      "help": "設定項目が多く、初期設定でほとんどの用途に対応します。変更前に侵蝕1レベリングの仕組みを理解してください。設定変更は自己責任です。"
     },
     "OpsiScheduling": {
       "name": "スマートスケジューリング",
@@ -410,13 +406,9 @@
       "name": "艦隊スキャン",
       "help": "艦隊に編成されている艦船をスキャンします"
     },
-    "MindCalculatorScan": {
-      "name": "メンタルユニット用ドックスキャン",
-      "help": "中国版の1280×720ドックをスキャンし、計算機で結果を確認します。完了まで既存データを保持し、ドックの絞り込みをリセットします。"
-    },
-    "FleetTechScan": {
-      "name": "艦船技術スキャン",
-      "help": "メンタル消費の除外条件とは独立して艦船とレベルを記録します。"
+    "DockScan": {
+      "name": "ドックデータスキャン",
+      "help": "ドックを読み取り、メンタルユニットと艦船技術の分析で共有します。育成や編成変更は行いません。"
     },
     "Daemon": {
       "name": "半自動クリック",
@@ -461,6 +453,10 @@
     "MeowfficerScore": {
       "name": "指揮猫スコア",
       "help": "指揮猫の天賦を読み取り、公開攻略の基準で採点します"
+    },
+    "IslandProductionPlanner": {
+      "name": "島生産プランナー",
+      "help": "ALAS から移植した島生産プランナー：島の技術をスキャンし、線形計画法で毎日の生産・販売計画を計算します（島コインの純収入を下限以上に保ちつつシーズン PT を最大化）。結果を各店舗の厨房、経営商品、放置生産、農地の作物目標に書き込みます。実際の生産は各島タスクが行います。"
     }
   },
   "Scheduler": {
@@ -769,8 +765,8 @@
       "help": "機密タスク実行中にエラーが発生した場合、ゲームを再起動せずにALASを停止します\n機密タスクには隠秘海域、深淵海域、月跨ぎデイリーなどが含まれます"
     },
     "TaskRestartLimit": {
-      "name": "同一タスクの連続再起動上限",
-      "help": "同じタスクの連続エラーによる復旧がこの回数に達すると、サーバーの翌日0時まで延期し、エラー通知設定で通知します。そのタスクの成功で回数をリセットします。他のタスクやゲーム再起動の成功ではリセットしません。0 = 無制限。"
+      "name": "同一タスクの連続エミュレータ再起動上限",
+      "help": "同じタスクのエミュレータ再起動がこの回数完了し、再試行でも再びエミュレータ再起動が必要な場合、サーバーの翌日0時まで延期してエラー通知を送ります。ゲーム再起動は数えません。ゲーム未起動、デバイスのオフライン、エミュレータ再起動未完了の場合は復旧を続け、通常タスクを延期しません。そのタスクの成功で回数をリセットし、他のタスクやゲーム再起動の成功ではリセットしません。0 = 無制限。"
     },
     "SaveErrorRetentionDays": {
       "name": "エラーログの有効期限 (日)",
@@ -806,12 +802,12 @@
       "help": ""
     },
     "GameStuckRestart": {
-      "name": "ゲームフリーズ時にエミュレータを再起動する",
-      "help": "ゲームフリーズ（GameStuckError発生）が指定回数に達した後、エミュレータの再起動を試みます。エミュレータのフリーズやメモリオーバーフローなどの問題の解決に役立つ場合があります。"
+      "name": "ゲームのフリーズ・繰り返す終了時にエミュレータを再起動する",
+      "help": "ゲームのフリーズや繰り返す終了が下の指定回数に達した後、エミュレータの再起動を試みます。ゲーム再起動後の再終了も対象です。エミュレータのフリーズやビデオメモリ不足の解決に役立つ場合があります。"
     },
     "GameStuckThreshold": {
-      "name": "ゲームフリーズからX秒後に再起動",
-      "help": "再起動をトリガーする前にスタックが連続して何回発生するか。"
+      "name": "エミュレータ再起動までのフリーズ・終了回数",
+      "help": "フリーズやゲーム終了が連続してこの回数に達するとエミュレータを再起動します。ゲーム再起動の成功ではリセットせず、通常タスクの成功でリセットします。"
     },
     "AdbOfflineRestart": {
       "name": "デバイスが検出されない場合はエミュレータを再起動します",
@@ -854,28 +850,28 @@
   },
   "Reboot": {
     "_info": {
-      "name": "Reboot._info.name",
-      "help": "Reboot._info.help"
+      "name": "ログインと再起動",
+      "help": "ゲーム再起動の試行回数・待機・観察のペース。"
     },
     "Tries": {
-      "name": "Reboot.Tries.name",
-      "help": "Reboot.Tries.help"
+      "name": "再起動試行回数",
+      "help": "アプリの起動に失敗した後の再試行回数。規定回数連続で失敗すると観察フェーズに移行し、それでも復旧しなければエミュレータの再起動を行います。\nデフォルトは 3 回。"
     },
     "FirstTryWaitSeconds": {
-      "name": "Reboot.FirstTryWaitSeconds.name",
-      "help": "Reboot.FirstTryWaitSeconds.help"
+      "name": "初回失敗時の待機（秒）",
+      "help": "初回の起動失敗後、再試行までの待機秒数。\nデフォルトは 30 秒。"
     },
     "SubsequentTryWaitSeconds": {
-      "name": "Reboot.SubsequentTryWaitSeconds.name",
-      "help": "Reboot.SubsequentTryWaitSeconds.help"
+      "name": "2回目以降の待機（秒）",
+      "help": "2 回目以降の起動失敗後の待機秒数。\nデフォルトは 20 秒。"
     },
     "ObserveSeconds": {
-      "name": "Reboot.ObserveSeconds.name",
-      "help": "Reboot.ObserveSeconds.help"
+      "name": "観察フェーズの長さ（秒）",
+      "help": "連続失敗後、アプリが自力で復旧するのを待つ時間。この時間を過ぎても復旧しなければエミュレータを再起動します。\nデフォルトは 180 秒。"
     },
     "ObserveInterval": {
-      "name": "Reboot.ObserveInterval.name",
-      "help": "Reboot.ObserveInterval.help"
+      "name": "観察チェック間隔（秒）",
+      "help": "観察フェーズ中にアプリの復旧を確認する間隔。\nデフォルトは 15 秒。"
     }
   },
   "Device": {
@@ -2041,7 +2037,7 @@
   "OperationHandover": {
     "_info": {
       "name": "作戦委託設定",
-      "help": ""
+      "help": "通常海域とイベント海域に対応。12-4 などの海域名は通常海域、D3・T6・SP3 などは選択したイベントを使用します。イベントの難易度は海域名に応じて自動で切り替えます。委託の可否はゲーム内の表示で確認します。"
     },
     "Count": {
       "name": "委託回数",
@@ -3833,14 +3829,14 @@
     "TargetShip": {
       "name": "毎日対話する艦娘を選択してください",
       "help": "毎日交流したい艦娘を選択してください",
-      "anchorage": "anchorage",
-      "noshiro": "noshiro",
-      "sirius": "sirius",
-      "new_jersey": "new_jersey",
-      "taihou": "taihou",
-      "aegir": "aegir",
-      "nakhimov": "nakhimov",
-      "implacable": "implacable"
+      "anchorage": "アンカレッジ",
+      "noshiro": "能代",
+      "sirius": "シリアス",
+      "new_jersey": "ニュージャージー",
+      "taihou": "大鳳",
+      "aegir": "エーギル",
+      "nakhimov": "アドミラル・ナヒーモフ",
+      "implacable": "インプラカブル"
     }
   },
   "Daily": {
@@ -4133,6 +4129,10 @@
       "name": "メタサポート",
       "help": "1 日 3 回のビーコンサポート"
     },
+    "Enable": {
+      "name": "META救援を有効化",
+      "help": "META戦で毎日3回の救援を行います。今期の信標と自動装備変更の設定を共用します。"
+    },
     "Tier": {
       "name": "レベルX以上のビーコンを検索",
       "help": "何度か試しても条件を満たすビーコンが見つからない場合は、ランダムに試してください。"
@@ -4233,6 +4233,10 @@
     "DossierAutoAttackMode": {
       "name": "アーカイブビーコン自動戦闘",
       "help": "アーカイブビーコンでの最初の戦闘の後、自動的に戦闘します。現在は中国サーバーでのみ利用可能です。"
+    },
+    "DossierSkipAssist": {
+      "name": "アーカイブ進行中はMETA救援を行わない",
+      "help": "アーカイブが開始済み、解析中、または自動戦闘中の場合は毎日のMETA救援を一時停止し、未受領の報酬がある場合は受け取ってから救援を再開します。\n装備の自動変更機能を使用する場合は、必ずこの機能を有効にしてください。"
     },
     "RequestAssist": {
       "name": "支援呼び出し",
@@ -4473,19 +4477,19 @@
     },
     "TargetZone": {
       "name": "指定海域",
-      "help": "指定した海域のみを出撃します。海域IDまたはCN/EN/JP/TWの海域名に対応します。0を入力すると侵蝕レベルによるデフォルト探索に戻ります。\n「指定海域での作戦計画」を有効にすると、42,55,45、42, 55, 45、42，55，45 のように複数海域を入力し、入力順に循環できます。"
+      "help": "指定した海域のみを出撃します。海域IDまたはCN/EN/JP/TWの海域名に対応します。0を入力すると侵蝕レベルによるデフォルト探索に戻ります。\n「指定海域を順番に周回」を有効にすると、42,55,45、42, 55, 45、42，55，45 のように複数海域を入力し、入力順に循環できます。"
     },
     "StayInZone": {
-      "name": "指定海域での作戦計画を立てる",
+      "name": "指定海域を順番に周回",
       "help": "有効にすると「指定海域」の設定に従って実行します。単一海域ならその海域に留まり、複数海域なら入力順に循環します。指定海域が0でない場合のみ有効です。"
     },
     "ExecuteFixedPatrolScan": {
-      "name": "固定巡回を実行",
-      "help": "有効にすると、固定巡回を実行します。10秒ごとに固定巡回を実行します。"
+      "name": "レーダー走査",
+      "help": "有効にすると、戦闘後に艦隊1〜4を切り替えてレーダーの残りの「?」を探し、処理します。艦隊は移動しません。初期設定はオフで、オフの場合は現在の艦隊のみ確認します。"
     },
     "DebugClip": {
       "name": "戦後デバッグ録画",
-      "help": "有効にすると、短猫相接の各ラウンドの戦後処理（イベント探索・イベント処理・強制移動）中に、ALAS 自身が見た画面を mp4 で log/clips/ に録画します（ファイル名は meow_clip_ で始まります）。イベントの有無にかかわらず毎ラウンド保存されるため、1 ラウンドずつ見返せます。保存日数は「セイレーン作戦共通設定」で設定します。"
+      "help": "有効にすると、短猫相接の各ラウンドの戦後処理（イベント探索・イベント処理・レーダー走査）中に、ALAS 自身が見た画面を mp4 で log/clips/ に録画します（ファイル名は meow_clip_ で始まります）。イベントの有無にかかわらず毎ラウンド保存されるため、1 ラウンドずつ見返せます。保存日数は「セイレーン作戦共通設定」で設定します。"
     }
   },
   "OpsiTarget": {
@@ -4520,10 +4524,10 @@
     },
     "OperationCoinsPreserve": {
       "name": "戦闘補給品引換券を X 個保持する",
-      "help": "短猫相接の侵蝕等級が低い海域を削除し、資金を節約します"
+      "help": "戦闘補給品引換券が X 個未満になると短猫相接を実行します。変更は推奨しません。"
     },
     "MinimumActionPointReserve": {
-      "name": "X ポイントのアクションを保持する",
+      "name": "行動力を X ポイント保持",
       "help": "やってみよう、自転車がバイクに変わる、雪風様が指揮官に幸運を与えてくれた、さあ！"
     },
     "ExecuteFixedPatrolScan": {
@@ -4542,7 +4546,7 @@
     },
     "SkipStrategicSearchCheck": {
       "name": "計画作戦のスワイプ確認をスキップ",
-      "help": "侵蝕 1 レベリングや短猫相接で同一海域を周回する際、計画作戦パネルを開いた後に各オプションのスワイプ確認を行わず、そのまま開始します。パネルのオプションがゲーム内で設定済みである必要があります（エリアモード：繰り返し、商人・装置と遭遇時：停止、任務自動提出：オン）。通常どおり一度実行するか、手動で設定してから有効にしてください。"
+      "help": "有効にすると、計画作戦の項目をスワイプ確認せずに開始します。事前に通常どおり一度実行するか、ゲーム内で海域の繰り返し、商人・装置で停止、任務の自動提出を設定してください。"
     },
     "Cl1Filter": {
       "name": "明石購入フィルター",
@@ -4566,7 +4570,7 @@
     },
     "DebugClip": {
       "name": "戦後デバッグ録画",
-      "help": "有効にすると、各侵蝕1ラウンドの戦後処理（再走査・イベント処理・強制移動）中に、ALAS 自身が見た画面を mp4 で log/clips/ に録画します。イベントの有無にかかわらず毎ラウンド保存されるため、1 ラウンドずつ見返せます。明石を取りこぼしていないか手動で確認するための機能です。動画は「セイレーン作戦共通設定」の保存日数に従って自動削除されます。"
+      "help": "有効にすると、各侵蝕1ラウンドの戦後処理（再走査・イベント処理・レーダー走査）中に、ALAS 自身が見た画面を mp4 で log/clips/ に録画します。イベントの有無にかかわらず毎ラウンド保存されるため、1 ラウンドずつ見返せます。明石を取りこぼしていないか手動で確認するための機能です。動画は「セイレーン作戦共通設定」の保存日数に従って自動削除されます。"
     }
   },
   "OpsiSirenBug": {
@@ -4840,6 +4844,22 @@
       "name": "作物在庫閾値",
       "help": "660以上を推奨"
     },
+    "CropTargets": {
+      "name": "作物ごとの補充目標",
+      "help": "1行に「作物: 目標在庫」を1つ記入します。例：\ncorn: 200\nwheat: 80\n記入した作物は在庫が自分の目標を下回ると植え直し、記入していない作物は「作物在庫閾値」を使います。目標を 0 にするとその作物は植えません。空欄なら全作物が「作物在庫閾値」を使います。不足率が最も大きい作物から植えます。\n使用できる作物：wheat, corn, rice, chinese_cabbage, potato, soybean, pasture, coffee_bean\n島生産プランナーを実行すると自動で書き換えられます。"
+    },
+    "DefaultCrop": {
+      "name": "デフォルト作物",
+      "help": "すべての作物が目標に達した後、空いた持ち場で植える作物（持ち場数は次の項目）。島生産プランナーが空き時間の生産量（シーズン PT 用）に合わせて書き換えます。",
+      "wheat": "wheat",
+      "corn": "corn",
+      "rice": "rice",
+      "chinese_cabbage": "chinese_cabbage",
+      "potato": "potato",
+      "soybean": "soybean",
+      "pasture": "pasture",
+      "coffee_bean": "coffee_bean"
+    },
     "PlantPotatoes": {
       "name": "小麦を植える",
       "help": "",
@@ -4871,9 +4891,26 @@
       "name": "果物在庫閾値",
       "help": ""
     },
+    "CropTargets": {
+      "name": "作物ごとの補充目標",
+      "help": "1行に「作物: 目標在庫」を1つ記入します。例：\napple: 150\nrubber: 0\n記入した作物は在庫が自分の目標を下回ると植え直し、記入していない作物は「果物在庫閾値」を使います。目標を 0 にするとその作物は植えません。空欄なら全作物が「果物在庫閾値」を使います。不足率が最も大きい作物から植えます。\n使用できる作物：apple, citrus, banana, mango, lemon, avocado, rubber, pear, persimmon\n島生産プランナーを実行すると自動で書き換えられます。"
+    },
     "IgnoreAvocado": {
       "name": "アボカドを無視",
       "help": ""
+    },
+    "DefaultCrop": {
+      "name": "デフォルト作物",
+      "help": "すべての作物が目標に達した後、空いた持ち場で植える作物（持ち場数は次の項目）。島生産プランナーが空き時間の生産量（シーズン PT 用）に合わせて書き換えます。",
+      "apple": "apple",
+      "citrus": "citrus",
+      "banana": "banana",
+      "mango": "mango",
+      "lemon": "lemon",
+      "avocado": "avocado",
+      "rubber": "rubber",
+      "pear": "pear",
+      "persimmon": "persimmon"
     },
     "PlantRubber": {
       "name": "ゴムを植える",
@@ -4908,9 +4945,26 @@
       "name": "苗床作物在庫閾値",
       "help": ""
     },
+    "CropTargets": {
+      "name": "作物ごとの補充目標",
+      "help": "1行に「作物: 目標在庫」を1つ記入します。例：\nstrawberry: 120\ntea: 60\n記入した作物は在庫が自分の目標を下回ると植え直し、記入していない作物は「苗床作物在庫閾値」を使います。目標を 0 にするとその作物は植えません。空欄なら全作物が「苗床作物在庫閾値」を使います。不足率が最も大きい作物から植えます。\n使用できる作物：carrot, onion, flax, strawberry, cotton, tea, lavender, pineapple, asparagus\n島生産プランナーを実行すると自動で書き換えられます。"
+    },
     "IgnorePineapple": {
       "name": "パイナップルを無視",
       "help": ""
+    },
+    "DefaultCrop": {
+      "name": "デフォルト作物",
+      "help": "すべての作物が目標に達した後、空いた持ち場で植える作物（持ち場数は次の項目）。島生産プランナーが空き時間の生産量（シーズン PT 用）に合わせて書き換えます。",
+      "carrot": "carrot",
+      "onion": "onion",
+      "flax": "flax",
+      "strawberry": "strawberry",
+      "cotton": "cotton",
+      "tea": "tea",
+      "lavender": "lavender",
+      "pineapple": "pineapple",
+      "asparagus": "asparagus"
     },
     "PlantLavender": {
       "name": "ラベンダーを植える",
@@ -5001,6 +5055,14 @@
     "MinSeaCucumber": {
       "name": "ナマコ在庫閾値",
       "help": ""
+    },
+    "MinFreshwaterFishMeat": {
+      "name": "淡水魚肉の下限",
+      "help": "漁場タスクの養殖後、淡水魚肉がこの値より少なければ、島ショップの「魚肉加工」で魚をこの数まで交換します（産出量の多い魚を優先）。0 で交換しません。島生産プランナーが輸送の不足分と料理の使用量に合わせて書き換えます。"
+    },
+    "MinSaltwaterFishMeat": {
+      "name": "海水魚肉の下限",
+      "help": "同上、海水魚肉用（キハダマグロ 1 匹で 18 個など）。0 で交換しません。"
     },
     "PlantYellowfinTuna": {
       "name": "キハダマグロを養殖",
@@ -6382,81 +6444,81 @@
       "name": "キャラクター1",
       "help": "",
       "None": "なし",
-      "WorkerJuu": "WorkerJuu",
-      "Cheshire": "Cheshire",
-      "YingSwei": "YingSwei",
-      "Saratoga": "Saratoga",
-      "Akashi": "Akashi",
-      "NewJersey": "NewJersey",
-      "Tashkent": "Tashkent",
-      "LeMalin": "LeMalin",
-      "Shimakaze": "Shimakaze",
-      "Amagi_chan": "Amagi_chan",
-      "Unicorn": "Unicorn",
-      "ChaoHo": "ChaoHo",
-      "ChenHai": "ChenHai",
-      "WilliamDPorter": "WilliamDPorter",
-      "Helena": "Helena",
-      "Friedrich": "Friedrich",
-      "Atago": "Atago",
-      "Yixian": "Yixian",
-      "August": "August",
-      "Eugen": "Eugen",
-      "Hood": "Hood",
-      "Javelin": "Javelin",
-      "Laffey": "Laffey",
-      "Explorer": "Explorer",
-      "Navigator": "Navigator",
-      "OceanCrosser": "OceanCrosser",
-      "FeiYun": "FeiYun",
-      "Takao": "Takao",
-      "Anchorage": "Anchorage",
-      "Belfast": "Belfast",
-      "ChangFeng": "ChangFeng",
-      "Mogador": "Mogador",
-      "RoyalFortune": "RoyalFortune",
-      "DaVinci": "DaVinci",
-      "Taihou": "Taihou"
+      "WorkerJuu": "作業饅頭",
+      "Cheshire": "チェシャー",
+      "YingSwei": "応瑞",
+      "Saratoga": "サラトガ",
+      "Akashi": "明石",
+      "NewJersey": "ニュージャージー",
+      "Tashkent": "タシュケント",
+      "LeMalin": "ル·マラン",
+      "Shimakaze": "島風",
+      "Amagi_chan": "天城ちゃん",
+      "Unicorn": "ユニコーン",
+      "ChaoHo": "肇和",
+      "ChenHai": "鎮海",
+      "WilliamDPorter": "ウィリアム・D・ポーター",
+      "Helena": "ヘレナ",
+      "Friedrich": "フリードリヒ·デア·グローセ",
+      "Atago": "愛宕",
+      "Yixian": "逸仙",
+      "August": "アウグスト·フォン·パーセヴァル",
+      "Eugen": "プリンツ·オイゲン",
+      "Hood": "フッド",
+      "Javelin": "ジャベリン",
+      "Laffey": "ラフィー",
+      "Explorer": "スカベンジャー",
+      "Navigator": "TB",
+      "OceanCrosser": "ナビゲーター",
+      "FeiYun": "飛雲",
+      "Takao": "高雄",
+      "Anchorage": "アンカレッジ",
+      "Belfast": "ベルファスト",
+      "ChangFeng": "長風",
+      "Mogador": "モガドール",
+      "RoyalFortune": "ロイヤル・フォーチュン",
+      "DaVinci": "レオナルド・ダ・ヴィンチ",
+      "Taihou": "大鳳"
     },
     "Char2": {
       "name": "キャラクター2",
       "help": "",
       "None": "なし",
-      "WorkerJuu": "WorkerJuu",
-      "Cheshire": "Cheshire",
-      "YingSwei": "YingSwei",
-      "Saratoga": "Saratoga",
-      "Akashi": "Akashi",
-      "NewJersey": "NewJersey",
-      "Tashkent": "Tashkent",
-      "LeMalin": "LeMalin",
-      "Shimakaze": "Shimakaze",
-      "Amagi_chan": "Amagi_chan",
-      "Unicorn": "Unicorn",
-      "ChaoHo": "ChaoHo",
-      "ChenHai": "ChenHai",
-      "WilliamDPorter": "WilliamDPorter",
-      "Helena": "Helena",
-      "Friedrich": "Friedrich",
-      "Atago": "Atago",
-      "Yixian": "Yixian",
-      "August": "August",
-      "Eugen": "Eugen",
-      "Hood": "Hood",
-      "Javelin": "Javelin",
-      "Laffey": "Laffey",
-      "Explorer": "Explorer",
-      "Navigator": "Navigator",
-      "OceanCrosser": "OceanCrosser",
-      "FeiYun": "FeiYun",
-      "Takao": "Takao",
-      "Anchorage": "Anchorage",
-      "Belfast": "Belfast",
-      "ChangFeng": "ChangFeng",
-      "Mogador": "Mogador",
-      "RoyalFortune": "RoyalFortune",
-      "DaVinci": "DaVinci",
-      "Taihou": "Taihou"
+      "WorkerJuu": "作業饅頭",
+      "Cheshire": "チェシャー",
+      "YingSwei": "応瑞",
+      "Saratoga": "サラトガ",
+      "Akashi": "明石",
+      "NewJersey": "ニュージャージー",
+      "Tashkent": "タシュケント",
+      "LeMalin": "ル·マラン",
+      "Shimakaze": "島風",
+      "Amagi_chan": "天城ちゃん",
+      "Unicorn": "ユニコーン",
+      "ChaoHo": "肇和",
+      "ChenHai": "鎮海",
+      "WilliamDPorter": "ウィリアム・D・ポーター",
+      "Helena": "ヘレナ",
+      "Friedrich": "フリードリヒ·デア·グローセ",
+      "Atago": "愛宕",
+      "Yixian": "逸仙",
+      "August": "アウグスト·フォン·パーセヴァル",
+      "Eugen": "プリンツ·オイゲン",
+      "Hood": "フッド",
+      "Javelin": "ジャベリン",
+      "Laffey": "ラフィー",
+      "Explorer": "スカベンジャー",
+      "Navigator": "TB",
+      "OceanCrosser": "ナビゲーター",
+      "FeiYun": "飛雲",
+      "Takao": "高雄",
+      "Anchorage": "アンカレッジ",
+      "Belfast": "ベルファスト",
+      "ChangFeng": "長風",
+      "Mogador": "モガドール",
+      "RoyalFortune": "ロイヤル・フォーチュン",
+      "DaVinci": "レオナルド・ダ・ヴィンチ",
+      "Taihou": "大鳳"
     },
     "Product1": {
       "name": "メニュー1",
@@ -6550,81 +6612,81 @@
       "name": "キャラクター1",
       "help": "",
       "None": "なし",
-      "WorkerJuu": "WorkerJuu",
-      "Cheshire": "Cheshire",
-      "YingSwei": "YingSwei",
-      "Saratoga": "Saratoga",
-      "Akashi": "Akashi",
-      "NewJersey": "NewJersey",
-      "Tashkent": "Tashkent",
-      "LeMalin": "LeMalin",
-      "Shimakaze": "Shimakaze",
-      "Amagi_chan": "Amagi_chan",
-      "Unicorn": "Unicorn",
-      "ChaoHo": "ChaoHo",
-      "ChenHai": "ChenHai",
-      "WilliamDPorter": "WilliamDPorter",
-      "Helena": "Helena",
-      "Friedrich": "Friedrich",
-      "Atago": "Atago",
-      "Yixian": "Yixian",
-      "August": "August",
-      "Eugen": "Eugen",
-      "Hood": "Hood",
-      "Javelin": "Javelin",
-      "Laffey": "Laffey",
-      "Explorer": "Explorer",
-      "Navigator": "Navigator",
-      "OceanCrosser": "OceanCrosser",
-      "FeiYun": "FeiYun",
-      "Takao": "Takao",
-      "Anchorage": "Anchorage",
-      "Belfast": "Belfast",
-      "ChangFeng": "ChangFeng",
-      "Mogador": "Mogador",
-      "RoyalFortune": "RoyalFortune",
-      "DaVinci": "DaVinci",
-      "Taihou": "Taihou"
+      "WorkerJuu": "作業饅頭",
+      "Cheshire": "チェシャー",
+      "YingSwei": "応瑞",
+      "Saratoga": "サラトガ",
+      "Akashi": "明石",
+      "NewJersey": "ニュージャージー",
+      "Tashkent": "タシュケント",
+      "LeMalin": "ル·マラン",
+      "Shimakaze": "島風",
+      "Amagi_chan": "天城ちゃん",
+      "Unicorn": "ユニコーン",
+      "ChaoHo": "肇和",
+      "ChenHai": "鎮海",
+      "WilliamDPorter": "ウィリアム・D・ポーター",
+      "Helena": "ヘレナ",
+      "Friedrich": "フリードリヒ·デア·グローセ",
+      "Atago": "愛宕",
+      "Yixian": "逸仙",
+      "August": "アウグスト·フォン·パーセヴァル",
+      "Eugen": "プリンツ·オイゲン",
+      "Hood": "フッド",
+      "Javelin": "ジャベリン",
+      "Laffey": "ラフィー",
+      "Explorer": "スカベンジャー",
+      "Navigator": "TB",
+      "OceanCrosser": "ナビゲーター",
+      "FeiYun": "飛雲",
+      "Takao": "高雄",
+      "Anchorage": "アンカレッジ",
+      "Belfast": "ベルファスト",
+      "ChangFeng": "長風",
+      "Mogador": "モガドール",
+      "RoyalFortune": "ロイヤル・フォーチュン",
+      "DaVinci": "レオナルド・ダ・ヴィンチ",
+      "Taihou": "大鳳"
     },
     "Char2": {
       "name": "キャラクター2",
       "help": "",
       "None": "なし",
-      "WorkerJuu": "WorkerJuu",
-      "Cheshire": "Cheshire",
-      "YingSwei": "YingSwei",
-      "Saratoga": "Saratoga",
-      "Akashi": "Akashi",
-      "NewJersey": "NewJersey",
-      "Tashkent": "Tashkent",
-      "LeMalin": "LeMalin",
-      "Shimakaze": "Shimakaze",
-      "Amagi_chan": "Amagi_chan",
-      "Unicorn": "Unicorn",
-      "ChaoHo": "ChaoHo",
-      "ChenHai": "ChenHai",
-      "WilliamDPorter": "WilliamDPorter",
-      "Helena": "Helena",
-      "Friedrich": "Friedrich",
-      "Atago": "Atago",
-      "Yixian": "Yixian",
-      "August": "August",
-      "Eugen": "Eugen",
-      "Hood": "Hood",
-      "Javelin": "Javelin",
-      "Laffey": "Laffey",
-      "Explorer": "Explorer",
-      "Navigator": "Navigator",
-      "OceanCrosser": "OceanCrosser",
-      "FeiYun": "FeiYun",
-      "Takao": "Takao",
-      "Anchorage": "Anchorage",
-      "Belfast": "Belfast",
-      "ChangFeng": "ChangFeng",
-      "Mogador": "Mogador",
-      "RoyalFortune": "RoyalFortune",
-      "DaVinci": "DaVinci",
-      "Taihou": "Taihou"
+      "WorkerJuu": "作業饅頭",
+      "Cheshire": "チェシャー",
+      "YingSwei": "応瑞",
+      "Saratoga": "サラトガ",
+      "Akashi": "明石",
+      "NewJersey": "ニュージャージー",
+      "Tashkent": "タシュケント",
+      "LeMalin": "ル·マラン",
+      "Shimakaze": "島風",
+      "Amagi_chan": "天城ちゃん",
+      "Unicorn": "ユニコーン",
+      "ChaoHo": "肇和",
+      "ChenHai": "鎮海",
+      "WilliamDPorter": "ウィリアム・D・ポーター",
+      "Helena": "ヘレナ",
+      "Friedrich": "フリードリヒ·デア·グローセ",
+      "Atago": "愛宕",
+      "Yixian": "逸仙",
+      "August": "アウグスト·フォン·パーセヴァル",
+      "Eugen": "プリンツ·オイゲン",
+      "Hood": "フッド",
+      "Javelin": "ジャベリン",
+      "Laffey": "ラフィー",
+      "Explorer": "スカベンジャー",
+      "Navigator": "TB",
+      "OceanCrosser": "ナビゲーター",
+      "FeiYun": "飛雲",
+      "Takao": "高雄",
+      "Anchorage": "アンカレッジ",
+      "Belfast": "ベルファスト",
+      "ChangFeng": "長風",
+      "Mogador": "モガドール",
+      "RoyalFortune": "ロイヤル・フォーチュン",
+      "DaVinci": "レオナルド・ダ・ヴィンチ",
+      "Taihou": "大鳳"
     },
     "Product1": {
       "name": "メニュー1",
@@ -6730,81 +6792,81 @@
       "name": "キャラクター1",
       "help": "",
       "None": "なし",
-      "WorkerJuu": "WorkerJuu",
-      "Cheshire": "Cheshire",
-      "YingSwei": "YingSwei",
-      "Saratoga": "Saratoga",
-      "Akashi": "Akashi",
-      "NewJersey": "NewJersey",
-      "Tashkent": "Tashkent",
-      "LeMalin": "LeMalin",
-      "Shimakaze": "Shimakaze",
-      "Amagi_chan": "Amagi_chan",
-      "Unicorn": "Unicorn",
-      "ChaoHo": "ChaoHo",
-      "ChenHai": "ChenHai",
-      "WilliamDPorter": "WilliamDPorter",
-      "Helena": "Helena",
-      "Friedrich": "Friedrich",
-      "Atago": "Atago",
-      "Yixian": "Yixian",
-      "August": "August",
-      "Eugen": "Eugen",
-      "Hood": "Hood",
-      "Javelin": "Javelin",
-      "Laffey": "Laffey",
-      "Explorer": "Explorer",
-      "Navigator": "Navigator",
-      "OceanCrosser": "OceanCrosser",
-      "FeiYun": "FeiYun",
-      "Takao": "Takao",
-      "Anchorage": "Anchorage",
-      "Belfast": "Belfast",
-      "ChangFeng": "ChangFeng",
-      "Mogador": "Mogador",
-      "RoyalFortune": "RoyalFortune",
-      "DaVinci": "DaVinci",
-      "Taihou": "Taihou"
+      "WorkerJuu": "作業饅頭",
+      "Cheshire": "チェシャー",
+      "YingSwei": "応瑞",
+      "Saratoga": "サラトガ",
+      "Akashi": "明石",
+      "NewJersey": "ニュージャージー",
+      "Tashkent": "タシュケント",
+      "LeMalin": "ル·マラン",
+      "Shimakaze": "島風",
+      "Amagi_chan": "天城ちゃん",
+      "Unicorn": "ユニコーン",
+      "ChaoHo": "肇和",
+      "ChenHai": "鎮海",
+      "WilliamDPorter": "ウィリアム・D・ポーター",
+      "Helena": "ヘレナ",
+      "Friedrich": "フリードリヒ·デア·グローセ",
+      "Atago": "愛宕",
+      "Yixian": "逸仙",
+      "August": "アウグスト·フォン·パーセヴァル",
+      "Eugen": "プリンツ·オイゲン",
+      "Hood": "フッド",
+      "Javelin": "ジャベリン",
+      "Laffey": "ラフィー",
+      "Explorer": "スカベンジャー",
+      "Navigator": "TB",
+      "OceanCrosser": "ナビゲーター",
+      "FeiYun": "飛雲",
+      "Takao": "高雄",
+      "Anchorage": "アンカレッジ",
+      "Belfast": "ベルファスト",
+      "ChangFeng": "長風",
+      "Mogador": "モガドール",
+      "RoyalFortune": "ロイヤル・フォーチュン",
+      "DaVinci": "レオナルド・ダ・ヴィンチ",
+      "Taihou": "大鳳"
     },
     "Char2": {
       "name": "キャラクター2",
       "help": "",
       "None": "なし",
-      "WorkerJuu": "WorkerJuu",
-      "Cheshire": "Cheshire",
-      "YingSwei": "YingSwei",
-      "Saratoga": "Saratoga",
-      "Akashi": "Akashi",
-      "NewJersey": "NewJersey",
-      "Tashkent": "Tashkent",
-      "LeMalin": "LeMalin",
-      "Shimakaze": "Shimakaze",
-      "Amagi_chan": "Amagi_chan",
-      "Unicorn": "Unicorn",
-      "ChaoHo": "ChaoHo",
-      "ChenHai": "ChenHai",
-      "WilliamDPorter": "WilliamDPorter",
-      "Helena": "Helena",
-      "Friedrich": "Friedrich",
-      "Atago": "Atago",
-      "Yixian": "Yixian",
-      "August": "August",
-      "Eugen": "Eugen",
-      "Hood": "Hood",
-      "Javelin": "Javelin",
-      "Laffey": "Laffey",
-      "Explorer": "Explorer",
-      "Navigator": "Navigator",
-      "OceanCrosser": "OceanCrosser",
-      "FeiYun": "FeiYun",
-      "Takao": "Takao",
-      "Anchorage": "Anchorage",
-      "Belfast": "Belfast",
-      "ChangFeng": "ChangFeng",
-      "Mogador": "Mogador",
-      "RoyalFortune": "RoyalFortune",
-      "DaVinci": "DaVinci",
-      "Taihou": "Taihou"
+      "WorkerJuu": "作業饅頭",
+      "Cheshire": "チェシャー",
+      "YingSwei": "応瑞",
+      "Saratoga": "サラトガ",
+      "Akashi": "明石",
+      "NewJersey": "ニュージャージー",
+      "Tashkent": "タシュケント",
+      "LeMalin": "ル·マラン",
+      "Shimakaze": "島風",
+      "Amagi_chan": "天城ちゃん",
+      "Unicorn": "ユニコーン",
+      "ChaoHo": "肇和",
+      "ChenHai": "鎮海",
+      "WilliamDPorter": "ウィリアム・D・ポーター",
+      "Helena": "ヘレナ",
+      "Friedrich": "フリードリヒ·デア·グローセ",
+      "Atago": "愛宕",
+      "Yixian": "逸仙",
+      "August": "アウグスト·フォン·パーセヴァル",
+      "Eugen": "プリンツ·オイゲン",
+      "Hood": "フッド",
+      "Javelin": "ジャベリン",
+      "Laffey": "ラフィー",
+      "Explorer": "スカベンジャー",
+      "Navigator": "TB",
+      "OceanCrosser": "ナビゲーター",
+      "FeiYun": "飛雲",
+      "Takao": "高雄",
+      "Anchorage": "アンカレッジ",
+      "Belfast": "ベルファスト",
+      "ChangFeng": "長風",
+      "Mogador": "モガドール",
+      "RoyalFortune": "ロイヤル・フォーチュン",
+      "DaVinci": "レオナルド・ダ・ヴィンチ",
+      "Taihou": "大鳳"
     },
     "Product1": {
       "name": "メニュー1",
@@ -6870,81 +6932,81 @@
       "name": "キャラクター1",
       "help": "",
       "None": "なし",
-      "WorkerJuu": "WorkerJuu",
-      "Cheshire": "Cheshire",
-      "YingSwei": "YingSwei",
-      "Saratoga": "Saratoga",
-      "Akashi": "Akashi",
-      "NewJersey": "NewJersey",
-      "Tashkent": "Tashkent",
-      "LeMalin": "LeMalin",
-      "Shimakaze": "Shimakaze",
-      "Amagi_chan": "Amagi_chan",
-      "Unicorn": "Unicorn",
-      "ChaoHo": "ChaoHo",
-      "ChenHai": "ChenHai",
-      "WilliamDPorter": "WilliamDPorter",
-      "Helena": "Helena",
-      "Friedrich": "Friedrich",
-      "Atago": "Atago",
-      "Yixian": "Yixian",
-      "August": "August",
-      "Eugen": "Eugen",
-      "Hood": "Hood",
-      "Javelin": "Javelin",
-      "Laffey": "Laffey",
-      "Explorer": "Explorer",
-      "Navigator": "Navigator",
-      "OceanCrosser": "OceanCrosser",
-      "FeiYun": "FeiYun",
-      "Takao": "Takao",
-      "Anchorage": "Anchorage",
-      "Belfast": "Belfast",
-      "ChangFeng": "ChangFeng",
-      "Mogador": "Mogador",
-      "RoyalFortune": "RoyalFortune",
-      "DaVinci": "DaVinci",
-      "Taihou": "Taihou"
+      "WorkerJuu": "作業饅頭",
+      "Cheshire": "チェシャー",
+      "YingSwei": "応瑞",
+      "Saratoga": "サラトガ",
+      "Akashi": "明石",
+      "NewJersey": "ニュージャージー",
+      "Tashkent": "タシュケント",
+      "LeMalin": "ル·マラン",
+      "Shimakaze": "島風",
+      "Amagi_chan": "天城ちゃん",
+      "Unicorn": "ユニコーン",
+      "ChaoHo": "肇和",
+      "ChenHai": "鎮海",
+      "WilliamDPorter": "ウィリアム・D・ポーター",
+      "Helena": "ヘレナ",
+      "Friedrich": "フリードリヒ·デア·グローセ",
+      "Atago": "愛宕",
+      "Yixian": "逸仙",
+      "August": "アウグスト·フォン·パーセヴァル",
+      "Eugen": "プリンツ·オイゲン",
+      "Hood": "フッド",
+      "Javelin": "ジャベリン",
+      "Laffey": "ラフィー",
+      "Explorer": "スカベンジャー",
+      "Navigator": "TB",
+      "OceanCrosser": "ナビゲーター",
+      "FeiYun": "飛雲",
+      "Takao": "高雄",
+      "Anchorage": "アンカレッジ",
+      "Belfast": "ベルファスト",
+      "ChangFeng": "長風",
+      "Mogador": "モガドール",
+      "RoyalFortune": "ロイヤル・フォーチュン",
+      "DaVinci": "レオナルド・ダ・ヴィンチ",
+      "Taihou": "大鳳"
     },
     "Char2": {
       "name": "キャラクター2",
       "help": "",
       "None": "なし",
-      "WorkerJuu": "WorkerJuu",
-      "Cheshire": "Cheshire",
-      "YingSwei": "YingSwei",
-      "Saratoga": "Saratoga",
-      "Akashi": "Akashi",
-      "NewJersey": "NewJersey",
-      "Tashkent": "Tashkent",
-      "LeMalin": "LeMalin",
-      "Shimakaze": "Shimakaze",
-      "Amagi_chan": "Amagi_chan",
-      "Unicorn": "Unicorn",
-      "ChaoHo": "ChaoHo",
-      "ChenHai": "ChenHai",
-      "WilliamDPorter": "WilliamDPorter",
-      "Helena": "Helena",
-      "Friedrich": "Friedrich",
-      "Atago": "Atago",
-      "Yixian": "Yixian",
-      "August": "August",
-      "Eugen": "Eugen",
-      "Hood": "Hood",
-      "Javelin": "Javelin",
-      "Laffey": "Laffey",
-      "Explorer": "Explorer",
-      "Navigator": "Navigator",
-      "OceanCrosser": "OceanCrosser",
-      "FeiYun": "FeiYun",
-      "Takao": "Takao",
-      "Anchorage": "Anchorage",
-      "Belfast": "Belfast",
-      "ChangFeng": "ChangFeng",
-      "Mogador": "Mogador",
-      "RoyalFortune": "RoyalFortune",
-      "DaVinci": "DaVinci",
-      "Taihou": "Taihou"
+      "WorkerJuu": "作業饅頭",
+      "Cheshire": "チェシャー",
+      "YingSwei": "応瑞",
+      "Saratoga": "サラトガ",
+      "Akashi": "明石",
+      "NewJersey": "ニュージャージー",
+      "Tashkent": "タシュケント",
+      "LeMalin": "ル·マラン",
+      "Shimakaze": "島風",
+      "Amagi_chan": "天城ちゃん",
+      "Unicorn": "ユニコーン",
+      "ChaoHo": "肇和",
+      "ChenHai": "鎮海",
+      "WilliamDPorter": "ウィリアム・D・ポーター",
+      "Helena": "ヘレナ",
+      "Friedrich": "フリードリヒ·デア·グローセ",
+      "Atago": "愛宕",
+      "Yixian": "逸仙",
+      "August": "アウグスト·フォン·パーセヴァル",
+      "Eugen": "プリンツ·オイゲン",
+      "Hood": "フッド",
+      "Javelin": "ジャベリン",
+      "Laffey": "ラフィー",
+      "Explorer": "スカベンジャー",
+      "Navigator": "TB",
+      "OceanCrosser": "ナビゲーター",
+      "FeiYun": "飛雲",
+      "Takao": "高雄",
+      "Anchorage": "アンカレッジ",
+      "Belfast": "ベルファスト",
+      "ChangFeng": "長風",
+      "Mogador": "モガドール",
+      "RoyalFortune": "ロイヤル・フォーチュン",
+      "DaVinci": "レオナルド・ダ・ヴィンチ",
+      "Taihou": "大鳳"
     },
     "Product1": {
       "name": "商品1",
@@ -7015,81 +7077,81 @@
       "name": "キャラクター1",
       "help": "",
       "None": "なし",
-      "WorkerJuu": "WorkerJuu",
-      "Cheshire": "Cheshire",
-      "YingSwei": "YingSwei",
-      "Saratoga": "Saratoga",
-      "Akashi": "Akashi",
-      "NewJersey": "NewJersey",
-      "Tashkent": "Tashkent",
-      "LeMalin": "LeMalin",
-      "Shimakaze": "Shimakaze",
-      "Amagi_chan": "Amagi_chan",
-      "Unicorn": "Unicorn",
-      "ChaoHo": "ChaoHo",
-      "ChenHai": "ChenHai",
-      "WilliamDPorter": "WilliamDPorter",
-      "Helena": "Helena",
-      "Friedrich": "Friedrich",
-      "Atago": "Atago",
-      "Yixian": "Yixian",
-      "August": "August",
-      "Eugen": "Eugen",
-      "Hood": "Hood",
-      "Javelin": "Javelin",
-      "Laffey": "Laffey",
-      "Explorer": "Explorer",
-      "Navigator": "Navigator",
-      "OceanCrosser": "OceanCrosser",
-      "FeiYun": "FeiYun",
-      "Takao": "Takao",
-      "Anchorage": "Anchorage",
-      "Belfast": "Belfast",
-      "ChangFeng": "ChangFeng",
-      "Mogador": "Mogador",
-      "RoyalFortune": "RoyalFortune",
-      "DaVinci": "DaVinci",
-      "Taihou": "Taihou"
+      "WorkerJuu": "作業饅頭",
+      "Cheshire": "チェシャー",
+      "YingSwei": "応瑞",
+      "Saratoga": "サラトガ",
+      "Akashi": "明石",
+      "NewJersey": "ニュージャージー",
+      "Tashkent": "タシュケント",
+      "LeMalin": "ル·マラン",
+      "Shimakaze": "島風",
+      "Amagi_chan": "天城ちゃん",
+      "Unicorn": "ユニコーン",
+      "ChaoHo": "肇和",
+      "ChenHai": "鎮海",
+      "WilliamDPorter": "ウィリアム・D・ポーター",
+      "Helena": "ヘレナ",
+      "Friedrich": "フリードリヒ·デア·グローセ",
+      "Atago": "愛宕",
+      "Yixian": "逸仙",
+      "August": "アウグスト·フォン·パーセヴァル",
+      "Eugen": "プリンツ·オイゲン",
+      "Hood": "フッド",
+      "Javelin": "ジャベリン",
+      "Laffey": "ラフィー",
+      "Explorer": "スカベンジャー",
+      "Navigator": "TB",
+      "OceanCrosser": "ナビゲーター",
+      "FeiYun": "飛雲",
+      "Takao": "高雄",
+      "Anchorage": "アンカレッジ",
+      "Belfast": "ベルファスト",
+      "ChangFeng": "長風",
+      "Mogador": "モガドール",
+      "RoyalFortune": "ロイヤル・フォーチュン",
+      "DaVinci": "レオナルド・ダ・ヴィンチ",
+      "Taihou": "大鳳"
     },
     "Char2": {
       "name": "キャラクター2",
       "help": "",
       "None": "なし",
-      "WorkerJuu": "WorkerJuu",
-      "Cheshire": "Cheshire",
-      "YingSwei": "YingSwei",
-      "Saratoga": "Saratoga",
-      "Akashi": "Akashi",
-      "NewJersey": "NewJersey",
-      "Tashkent": "Tashkent",
-      "LeMalin": "LeMalin",
-      "Shimakaze": "Shimakaze",
-      "Amagi_chan": "Amagi_chan",
-      "Unicorn": "Unicorn",
-      "ChaoHo": "ChaoHo",
-      "ChenHai": "ChenHai",
-      "WilliamDPorter": "WilliamDPorter",
-      "Helena": "Helena",
-      "Friedrich": "Friedrich",
-      "Atago": "Atago",
-      "Yixian": "Yixian",
-      "August": "August",
-      "Eugen": "Eugen",
-      "Hood": "Hood",
-      "Javelin": "Javelin",
-      "Laffey": "Laffey",
-      "Explorer": "Explorer",
-      "Navigator": "Navigator",
-      "OceanCrosser": "OceanCrosser",
-      "FeiYun": "FeiYun",
-      "Takao": "Takao",
-      "Anchorage": "Anchorage",
-      "Belfast": "Belfast",
-      "ChangFeng": "ChangFeng",
-      "Mogador": "Mogador",
-      "RoyalFortune": "RoyalFortune",
-      "DaVinci": "DaVinci",
-      "Taihou": "Taihou"
+      "WorkerJuu": "作業饅頭",
+      "Cheshire": "チェシャー",
+      "YingSwei": "応瑞",
+      "Saratoga": "サラトガ",
+      "Akashi": "明石",
+      "NewJersey": "ニュージャージー",
+      "Tashkent": "タシュケント",
+      "LeMalin": "ル·マラン",
+      "Shimakaze": "島風",
+      "Amagi_chan": "天城ちゃん",
+      "Unicorn": "ユニコーン",
+      "ChaoHo": "肇和",
+      "ChenHai": "鎮海",
+      "WilliamDPorter": "ウィリアム・D・ポーター",
+      "Helena": "ヘレナ",
+      "Friedrich": "フリードリヒ·デア·グローセ",
+      "Atago": "愛宕",
+      "Yixian": "逸仙",
+      "August": "アウグスト·フォン·パーセヴァル",
+      "Eugen": "プリンツ·オイゲン",
+      "Hood": "フッド",
+      "Javelin": "ジャベリン",
+      "Laffey": "ラフィー",
+      "Explorer": "スカベンジャー",
+      "Navigator": "TB",
+      "OceanCrosser": "ナビゲーター",
+      "FeiYun": "飛雲",
+      "Takao": "高雄",
+      "Anchorage": "アンカレッジ",
+      "Belfast": "ベルファスト",
+      "ChangFeng": "長風",
+      "Mogador": "モガドール",
+      "RoyalFortune": "ロイヤル・フォーチュン",
+      "DaVinci": "レオナルド・ダ・ヴィンチ",
+      "Taihou": "大鳳"
     },
     "Product1": {
       "name": "商品1",
@@ -7151,50 +7213,138 @@
       "help": "複数のブースト商品が検出された場合、フィルター順で最初のものを優先して置き換えます；置き換えスロットは商品5→1から最後の空でないスロットを探します"
     }
   },
-  "MindCalculator": {
+  "Dock": {
     "_info": {
-      "name": "メンタルユニット計算機",
-      "help": "レベル120までのメンタルユニットⅠと資金を集計します。"
+      "name": "共有ドックデータ",
+      "help": "ドックを読み取り、メンタルユニットと艦船技術の分析で共有します。育成や編成変更は行いません。"
     },
     "MinLevel": {
       "name": "スキャン最低レベル",
-      "help": "境界を含む。このレベル以上の艦船を取り込みます。"
+      "help": "ドックを読み取り、メンタルユニットと艦船技術の分析で共有します。育成や編成変更は行いません。"
     },
     "MaxLevel": {
       "name": "スキャン最高レベル",
-      "help": "境界を含む。このレベル以下の艦船を取り込みます。"
-    },
-    "Result": {
-      "name": "艦船スキャン結果",
-      "help": "インスタンスごとに艦船、レベル、確認状態を保存します。"
-    },
-    "FleetTechRecord": {
-      "name": "艦隊技術の記録",
-      "help": "インスタンスごとのスキャン履歴、手動修正、陣営技術レベルを保存します。"
+      "help": "ドックを読み取り、メンタルユニットと艦船技術の分析で共有します。育成や編成変更は行いません。"
     }
   },
-  "FleetTech": {
+  "FleetRotation": {
     "_info": {
-      "name": "技術スキャン",
-      "help": "初期値は95–125。未検出の確定にはフィルターなしの全範囲1–125スキャンが必要です。"
+      "name": "交代設定",
+      "help": "通常のメイン・イベント海域のみ。初期状態は無効です。"
     },
-    "MinLevel": {
-      "name": "最低レベル",
-      "help": "境界を含み、範囲外の既存記録を保持します。"
+    "Enabled": {
+      "name": "コンディション調整を有効化",
+      "help": "通常のメイン・イベント海域のみ。初期状態は無効です。"
     },
-    "MaxLevel": {
-      "name": "最高レベル",
-      "help": "境界を含み、最大125です。"
+    "SelectedOnly": {
+      "name": "交代対象艦のみコンディション計算",
+      "help": "初期設定は無効。有効時は選択配置のみで待機と交代を判定し、固定艦の低下警告は承認可能です。無効時は全艦隊の最低値で待機します。どちらも育成艦を計算し、交代基準はタスク設定を維持します。"
     },
-    "Record": {
-      "name": "艦船技術記録",
-      "help": "グループ、手動補正、レベル切替の履歴と範囲確認をインスタンスごとに保存します。"
+    "Rules": {
+      "name": "交代ルール",
+      "help": "各艦隊のslotsとsourcesを設定します。配置は初期状態で維持され、候補艦隊は番号順に循環します。"
+    },
+    "State": {
+      "name": "交代履歴",
+      "help": "前回の候補と交代済み配置を保存します。ゲーム内の編成を確認してから消去してください。"
+    }
+  },
+  "FleetLevelTraining": {
+    "_info": {
+      "name": "レベル育成",
+      "help": "初期設定は無効。育成配置と候補を共用し、同じ艦で全有効目標を確認して完了します。コンディション交代は完了にしません。"
+    },
+    "Enabled": {
+      "name": "有効化",
+      "help": "初期設定は無効。育成配置と候補を共用し、同じ艦で全有効目標を確認して完了します。コンディション交代は完了にしません。"
+    },
+    "Target": {
+      "name": "目標レベル",
+      "help": "初期設定は無効。育成配置と候補を共用し、同じ艦で全有効目標を確認して完了します。コンディション交代は完了にしません。"
+    }
+  },
+  "FleetAffinityTraining": {
+    "_info": {
+      "name": "好感度育成",
+      "help": "初期設定は無効。育成配置と候補を共用し、同じ艦で全有効目標を確認して完了します。コンディション交代は完了にしません。"
+    },
+    "Enabled": {
+      "name": "有効化",
+      "help": "初期設定は無効。育成配置と候補を共用し、同じ艦で全有効目標を確認して完了します。コンディション交代は完了にしません。"
+    },
+    "Target": {
+      "name": "目標好感度",
+      "help": "初期設定は無効。育成配置と候補を共用し、同じ艦で全有効目標を確認して完了します。コンディション交代は完了にしません。"
+    }
+  },
+  "FleetDorm": {
+    "_info": {
+      "name": "交代後の休憩",
+      "help": "全交代完了後、現艦隊全員を指定階の寮舎に配置し、タスクを続行します。"
+    },
+    "Enabled": {
+      "name": "交代後の休憩を有効化",
+      "help": "初期設定は無効。指定階の選択を解除し、艦隊番号で固定枠を含む全員を選択します。優先順は全戦闘担当、道中、ボス艦隊。階が未解放、枠不足、選択を確認できない場合は休憩をスキップしてタスクを続行します。中国版のみ対応。"
+    },
+    "Floor": {
+      "name": "寮舎の階",
+      "help": "1階は訓練、2階は休憩。階の解放や枠の拡張は自動購入しません。",
+      "floor_1": "floor_1",
+      "floor_2": "floor_2"
+    }
+  },
+  "FleetTraining": {
+    "_info": {
+      "name": "育成記録",
+      "help": "実読値、完了目標と未確認交代を保存し、再起動後も保持します。"
+    },
+    "StopOnComplete": {
+      "name": "現在の育成艦がすべて目標達成後に停止",
+      "help": "初期設定は無効。選択艦が有効なレベル・好感度目標をすべて達成すると現在のタスクを停止します。先に達成した艦は維持します。"
+    },
+    "Notify": {
+      "name": "育成・交代通知",
+      "help": "初期設定は無効。育成確認・目標達成・交代結果と交代／寮／装備の失敗を通知します。既存の読取結果を使い、ランチャーと共通OnePushへ送信します。"
+    },
+    "FullScanRecord": {
+      "name": "前回の全艦隊スキャン時刻",
+      "help": "全体スキャン成功後のみ更新し、部分的な読取ではリセットしません。"
+    },
+    "CheckIntervalHours": {
+      "name": "レベル・好感度の確認間隔（時間）",
+      "help": "初期値は6時間でレベル・好感度の確認だけに使用します。非負の小数、上限なし。期限後に出撃する対象艦隊を読み、全卒業条件を満たしてから交代します。コンディション基準は独立して発動します。交代が必要なら追加の間隔なしで全艦隊をスキャンします。0は毎戦闘後に確認します。"
+    },
+    "State": {
+      "name": "育成記録",
+      "help": "実読値、完了目標と未確認交代を保存し、再起動後も保持します。"
+    }
+  },
+  "FleetEquipment": {
+    "_info": {
+      "name": "自動装備変更",
+      "help": "交代前に旧艦船を装備解除し、交代後に実際の艦種に応じたコードを適用します。初期設定は無効です。"
+    },
+    "Enabled": {
+      "name": "自動装備変更を有効化",
+      "help": "無効時は従来の自動交代動作を保持します。"
+    },
+    "Codes": {
+      "name": "艦種別装備コード",
+      "help": "艦種ごとに最大3コード。主力・前衛別に配置順で使用し、空欄はその順番をスキップします。旧コードは第1欄に保持します。"
+    },
+    "State": {
+      "name": "未完了の装備変更",
+      "help": "有効時は未完了の配置を先に処理してから任務を再開します。"
     }
   },
   "FleetInfo": {
     "_info": {
       "name": "艦隊情報",
       "help": "艦隊スキャン結果を保存します。既存の信頼できる測定値から校正済み疲労度の誤差を減らします。追加のスキャンや待機は行いません。"
+    },
+    "UpdateEmotion": {
+      "name": "スキャン時にコンディションを更新",
+      "help": "スキャン前に読み取りの有無を選択できます。無効時は既存配置の参考値を保持し、回復位相の学習には使用しません。"
     },
     "Result": {
       "name": "スキャン結果",
@@ -7269,6 +7419,121 @@
     "WhiteBoxLimit": {
       "name": "各種類の白い装備を X 個のボックスに保管します",
       "help": ""
+    }
+  },
+  "IslandProductionPlanner": {
+    "_info": {
+      "name": "島生産プランナー",
+      "help": "初回：下の各店舗ランクを設定し、看板娘は「経営モジュール」で設定します。まず「設定に書き込む」を無効のまま実行してログで計画を確認し、その後有効にします。新しい技術や持ち場の解放、店舗ランクや看板娘の変更、シーズン切替の後は再実行してください。"
+    },
+    "ApplySettings": {
+      "name": "設定に書き込む",
+      "help": "無効ならログで計画をプレビューするだけです。有効にすると各店舗の Meal/MealNumber、AwayCook、経営商品、農地の「作物ごとの補充目標」、鉱山・林場・漁場の最低在庫、牧場の鶏肉/豚肉の下限と牛乳/羊毛の切替、製造業各ラインの持ち場数、空いた持ち場のデフォルト作物・製品と持ち場数を上書きします。",
+      "True": "True",
+      "False": "False"
+    },
+    "RescanTechnology": {
+      "name": "技術を再スキャン",
+      "help": "新しい技術や持ち場を解放したら有効にします。実行時に島の技術ページをスキャンし、終わると自動で無効になります。保存済みの技術状態がない場合もスキャンします。",
+      "True": "True",
+      "False": "False"
+    },
+    "ScanSeasonTasks": {
+      "name": "シーズン任務をスキャン",
+      "help": "実行時にシーズンページの「任務」タブを開き、達成済み任務の報酬を一括受け取りしてから未達成任務を読み取り、必要なアイテムを「シーズン任務の目標」に書き込みます。",
+      "True": "True",
+      "False": "False"
+    },
+    "SeasonTaskTargets": {
+      "name": "シーズン任務の目標",
+      "help": "1行に「アイテムの英語名: 数量」。シーズン残り日数で生産量を均等に割り振ります。「シーズン任務をスキャン」が有効なら実行ごとに自動で書き換え、無効なら手動で編集できます。"
+    },
+    "ScanCargoOrders": {
+      "name": "輸送依頼をスキャン",
+      "help": "実行時に輸送ページを開き、一部の品物を納品済みの依頼に足りない品物を読み取り、「輸送の不足分」に書き込みます。こうした依頼は交換すると納品済みの品物が戻らないため、補うしかありません。",
+      "True": "True",
+      "False": "False"
+    },
+    "CargoTargets": {
+      "name": "輸送の不足分",
+      "help": "1行に「アイテムの英語名: 数量」。「輸送依頼をスキャン」が有効なら実行ごとに自動で書き換え、無効なら手動で編集できます。"
+    },
+    "CargoTargetDays": {
+      "name": "輸送の不足分の期限（日）",
+      "help": "輸送の不足分を何日で補うか。計画はこれに合わせて生産量を割り振ります。既定は 1 日。"
+    },
+    "ExtraTargets": {
+      "name": "追加の目標",
+      "help": "手動で追加する備蓄目標。形式は同上で、「アイテム: {count: 数量, period: 日数}」で期限も指定できます。AzurPilot はシーズン注文を自動処理しないため、注文用に備蓄する場合はここに注文のアイテムを書きます。生産できないアイテムは無視され、ログに表示されます。"
+    },
+    "DailyProfitLowerLimit": {
+      "name": "1日の島コイン純収入下限",
+      "help": "計画の1日あたりの島コイン増減をこの値以上に保ちます。負の値（コインで PT を得る）や 0（収支均衡）も可。計画が見つからない場合は下げてください。"
+    },
+    "DailyBufferSafetyMargin": {
+      "name": "日次バッファの余裕",
+      "help": "毎日の消費目標を割合で増やします。0.1 なら 10% 多めに用意します。"
+    },
+    "FieldsEfficiency": {
+      "name": "農地の効率ボーナス",
+      "help": "農地の生産ボーナス。島の「キャラ収集報酬」で得られるもので、受け取り済みの報酬の値（0 / 4% / 12%）を選びます。分からなければ 0 を選んでください。計画が生産量をやや少なく見積もり、少し多めに植えるだけです。",
+      "0": "0",
+      "4": "4",
+      "12": "12"
+    },
+    "OrchardEfficiency": {
+      "name": "果樹園の効率ボーナス",
+      "help": "果樹園の生産ボーナス。島の「キャラ収集報酬」で得られるもので、受け取り済みの報酬の値（0 / 4% / 12%）を選びます。分からなければ 0 を選んでください。計画が生産量をやや少なく見積もり、少し多めに植えるだけです。",
+      "0": "0",
+      "4": "4",
+      "12": "12"
+    },
+    "NurseryEfficiency": {
+      "name": "苗圃の効率ボーナス",
+      "help": "苗圃の生産ボーナス。島の「キャラ収集報酬」で得られるもので、受け取り済みの報酬の値（0 / 4% / 12%）を選びます。分からなければ 0 を選んでください。計画が生産量をやや少なく見積もり、少し多めに植えるだけです。",
+      "0": "0",
+      "4": "4",
+      "12": "12"
+    },
+    "RestaurantGrade": {
+      "name": "有魚レストランのランク",
+      "help": "ゲーム内の店舗ランク。棚の数（ブロンズ/シルバー 2、ゴールド 3、ダイヤ 4）と棚の容量（ブロンズ 5、他 6）が決まります。",
+      "bronze": "bronze",
+      "silver": "silver",
+      "gold": "gold",
+      "diamond": "diamond"
+    },
+    "TeahouseGrade": {
+      "name": "白熊ドリンクのランク",
+      "help": "ゲーム内の店舗ランク。棚の数（ブロンズ/シルバー 2、ゴールド 3、ダイヤ 4）と棚の容量（ブロンズ 5、他 6）が決まります。",
+      "bronze": "bronze",
+      "silver": "silver",
+      "gold": "gold",
+      "diamond": "diamond"
+    },
+    "JuuEateryGrade": {
+      "name": "ジュウ簡餐のランク",
+      "help": "ゲーム内の店舗ランク。棚の数（ブロンズ/シルバー 2、ゴールド 3、ダイヤ 4）と棚の容量（ブロンズ 5、他 6）が決まります。",
+      "bronze": "bronze",
+      "silver": "silver",
+      "gold": "gold",
+      "diamond": "diamond"
+    },
+    "GrillGrade": {
+      "name": "イカ焼きのランク",
+      "help": "ゲーム内の店舗ランク。棚の数（ブロンズ/シルバー 2、ゴールド 3、ダイヤ 4）と棚の容量（ブロンズ 5、他 6）が決まります。",
+      "bronze": "bronze",
+      "silver": "silver",
+      "gold": "gold",
+      "diamond": "diamond"
+    },
+    "JuuCoffeeGrade": {
+      "name": "ジュウコーヒーのランク",
+      "help": "ゲーム内の店舗ランク。棚の数（ブロンズ/シルバー 2、ゴールド 3、ダイヤ 4）と棚の容量（ブロンズ 5、他 6）が決まります。",
+      "bronze": "bronze",
+      "silver": "silver",
+      "gold": "gold",
+      "diamond": "diamond"
     }
   },
   "AutoEquip": {
@@ -7530,6 +7795,24 @@
     "Deterministic": {
       "name": "ランダム性を無効化",
       "help": "デバッグ用。通常はオフにしてください。"
+    }
+  },
+  "Equipment": {
+    "_info": {
+      "name": "自動装備変更",
+      "help": "演習、METAビーコン、META救援が対象です。記憶履歴の編成では装備を変更しません。"
+    },
+    "Enable": {
+      "name": "有効にする",
+      "help": "初回出撃前に戦闘前の装備を適用し、タスク終了時に戦闘後の装備へ戻します。装備コード入力に対応した操作方式が必要です。"
+    },
+    "ClearBeforeApply": {
+      "name": "コード適用前に装備を外す",
+      "help": "戦闘前・戦闘後ともに、対象艦船すべての装備を外してからコードを順に適用し、艦船間で共用装備を移せるようにします。"
+    },
+    "Config": {
+      "name": "装備コード設定",
+      "help": "YAML形式：before は戦闘前、after は戦闘後の装備コードです。装備変更前に設定全体を検証します。\nbefore が空の位置は変更しません。before が設定済みで after が空の場合、戦闘後にその艦船の装備をすべて外します。未使用の位置や項目は省略でき、空白のみの文字列も空として扱います。\nflagship：旗艦、up/down：主力上段/下段、head/middle/tail：前衛先頭/中央/最後尾。"
     }
   },
   "Storage": {

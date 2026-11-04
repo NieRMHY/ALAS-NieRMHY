@@ -56,7 +56,8 @@ class ServerChecker:
     def _load_server(self) -> None:
         """通过 API 获取当前服务器状态。
 
-        公共 API 暂时不可用时，改为直连游戏网关。两种来源均无法取得状态
+        公共 API 的连接和读取超时各为 3 秒，失败后改为直连游戏网关，避免
+        慢接口长时间阻塞任务启动。两种来源均无法取得状态
         才会走既有的快速重试；响应结构错误和非预期客户端错误仍会抛出
         ``ScriptError``，由顶层临时禁用检测器。
 
@@ -72,13 +73,16 @@ class ServerChecker:
         try:
             session = requests.Session()
             session.trust_env = False
-            response = session.get(
-                url=(
-                    f'{self._base}/api/v1/servers/'
-                    f'{self._server_info.region}_{self._server_info.server_id}'
-                ),
-                timeout=15,
-            )
+            try:
+                response = session.get(
+                    url=(
+                        f'{self._base}/api/v1/servers/'
+                        f'{self._server_info.region}_{self._server_info.server_id}'
+                    ),
+                    timeout=(3, 3),
+                )
+            finally:
+                session.close()
             if response.status_code == 200:
                 self._load_response(response.json())
             elif response.status_code == 404:
@@ -102,7 +106,7 @@ class ServerChecker:
                     f'Response is {getattr(response, "text", "")}'
                 )
         except (requests.exceptions.ConnectionError, requests.exceptions.Timeout) as e:
-            logger.error(e)
+            logger.warning(f'[服务器检查] 公共状态 API 查询失败，尝试直连游戏网关：{e}')
             if self._load_gateway_server():
                 return
 
@@ -306,7 +310,10 @@ class ServerChecker:
             try:
                 session = requests.Session()
                 session.trust_env = False
-                session.get('https://www.baidu.com', timeout=5)
+                try:
+                    session.get('https://www.baidu.com', timeout=5)
+                finally:
+                    session.close()
                 network_available = True
             except requests.exceptions.RequestException as e:
                 logger.error(e)

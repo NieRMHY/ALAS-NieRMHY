@@ -98,17 +98,18 @@ class IslandMineForest(Island,LoginHandler):
         return post_info.get('state') == 'idle'
 
     # ==================== 仓库检测（OCR 文字识别物品，再用 Digit 读数量） ====================
-    # 所有可识别物品的中文名映射（矿山 + 林场）
-    # OCR 可能识别不完全，每个物品提供多个可能的名称
+    # 所有可识别物品的名称映射（矿山 + 林场）
+    # OCR 可能识别不完全，每个物品提供多个可能的名称；
+    # 国际服仓库显示英文名，且识别区域较窄，木材名称只取首个单词
     ITEM_CN_NAMES = {
-        'Copper': ['铜矿'],
-        'Aluminium': ['铝矿'],
-        'Iron': ['铁矿'],
-        'Sulphur': ['硫磺', '硫矿'],
-        'Silver': ['银矿'],
-        'Practical': ['实用之木', '实用之本'],
-        'Selected': ['精选之木', '精选之本'],
-        'Elegant': ['典雅之木', '典雅之本'],
+        'Copper': ['铜矿', 'Copper'],
+        'Aluminium': ['铝矿', 'Bauxite'],
+        'Iron': ['铁矿', 'Iron'],
+        'Sulphur': ['硫磺', '硫矿', 'Sulfur'],
+        'Silver': ['银矿', 'Silver'],
+        'Practical': ['实用之木', '实用之本', 'Workable'],
+        'Selected': ['精选之木', '精选之本', 'Premium'],
+        'Elegant': ['典雅之木', '典雅之本', 'Elegant'],
     }
 
     def warehouse_inventory(self, category):

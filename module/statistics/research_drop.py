@@ -19,6 +19,7 @@
 """
 
 import re
+import threading
 import typing as t
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -43,6 +44,8 @@ QUEUE_CARD_AREAS = (
 # 所以 scaling 固定 1.0（科研主页那 5 张卡是弧形排列，那套要按位置补缩放）。
 # 区域比角标本身（35x26）留出余量：太贴边模板匹配会失败（实测裁到 40x36 就全读不出）。
 SERIES_BADGE_AREA = (55, 118, 105, 160)
+# 队列页固定 5 张卡；超过 5 组的分组读不到自己的卡片。
+QUEUE_CARD_COUNT = len(QUEUE_CARD_AREAS)
 # 项目代号字表，与 module/research/project.py 的 OCR_RESEARCH 保持一致
 RESEARCH_ALPHABET = '0123456789BCDEGHQTMIULRF-'
 # 合法代号形如 D-737-MI
@@ -398,6 +401,8 @@ class ResearchDropParser:
             logger.info('[科研统计] 本组截图没有队列页，只统计掉落物')
 
         seen = set()
+        previous_items = None
+        from module.combat.assets import GET_ITEMS_3
         for frame in frames:
             if frame is queue_page:
                 continue
@@ -410,6 +415,18 @@ class ResearchDropParser:
             except Exception:
                 # 不是「获得道具」界面
                 continue
+            # 大额奖励会在翻页前后各截一张：两张重叠的部分只保留一次，
+            # 同一页内重复出现的格子仍按真实数量累加。
+            second_page = previous_items is not None
+            if second_page:
+                overlap = 0
+                for count in range(1, min(len(previous_items), len(items)) + 1):
+                    if [str(item) for item in previous_items[-count:]] == [str(item) for item in items[:count]]:
+                        overlap = count
+                items = items[overlap:]
+                previous_items = None
+            if not second_page and GET_ITEMS_3.match(frame, offset=(5, 0)):
+                previous_items = list(items)
             for item in items:
                 if not item.is_known_item():
                     continue
@@ -422,6 +439,9 @@ class ResearchDropParser:
 
 
 _parser: t.Optional[ResearchDropParser] = None
+# 解析器是进程级共享对象：调度线程领奖与 WebUI 补读可能同时进来，
+# 用可重入锁串行化，避免两条链路互相改写解析器的中间状态。
+_parser_lock = threading.RLock()
 
 
 def get_parser() -> ResearchDropParser:
@@ -436,19 +456,22 @@ def get_parser() -> ResearchDropParser:
     return _parser
 
 
-def record_research_drop(images: t.Sequence[np.ndarray], instance: str, imgid: str = '') -> t.Optional[dict]:
+def record_research_drop(images: t.Sequence[np.ndarray], instance: str, imgid: str = '', *,
+                         identity=None) -> t.Optional[dict]:
     """解析一组科研掉落截图并写入本地库。
 
     Args:
         images (list): 掉落记录的各帧截图。
         instance (str): ALAS 实例名，统计按实例隔离。
         imgid (str): 掉落记录的文件名（时间戳），用于防止同一条记录重复入库。
+        identity (tuple, optional): 外部读出的（项目代号, 期数），覆盖队列表识别结果。
 
     Returns:
         dict: 写入的条目；无有效掉落或重复时返回 None。
     """
     try:
-        drop = get_parser().parse(images)
+        with _parser_lock:
+            drop = get_parser().parse(images)
     except Exception as e:
         logger.warning(f'[科研统计] 解析失败，跳过本次记录: {e}')
         return None
@@ -458,9 +481,57 @@ def record_research_drop(images: t.Sequence[np.ndarray], instance: str, imgid: s
         return None
 
     from module.statistics.cl1_database import db as cl1_db
+    # 分组领奖时切片里只有奖励帧、没有队列页，项目身份只能由外部读到的卡片给出。
+    if identity is not None:
+        drop.project, drop.series = identity
     entry = cl1_db.add_research_drop(
         instance, drop.project, drop.series, drop.items, imgid=imgid)
     if entry is not None:
         detail = ', '.join(f'{name}x{amount}' for name, amount in drop.items.items())
         logger.info(f'[科研统计] {drop.project or "未知项目"} 记录入库: {detail}')
     return entry
+
+
+def read_research_identities(image, count):
+    """读出一次领奖涉及的最多 count 个卡片身份，兼容队列页与弧形科研列表两种布局。
+
+    分组领奖时每次 commit 都会问一次身份，但所有分组看的是同一张队列页：OCR 只做一遍，
+    否则 5 组就要把同一张图 OCR 5 次，全部压在领奖后的游戏线程上。
+
+    Args:
+        image (np.ndarray): 本次领取的第一帧截图（队列页或科研列表）。
+        count (int): 分组数量，即需要多少个身份。
+
+    Returns:
+        list[tuple[str, int]]: 与分组数量等长的（项目代号, 期数）。
+            队列页只有 5 张卡，超出的分组读不出身份，返回空串与 0，不猜别组的项目。
+    """
+    from module.research.assets import QUEUE_CHECK
+    from module.base.utils import crop
+    from module.research.series import match_series
+
+    with _parser_lock:
+        parser = get_parser()
+        if QUEUE_CHECK.match(image, offset=(10, 10)):
+            names = parser.ocr.ocr(image)
+            names = names if isinstance(names, list) else [names]
+            identities = []
+            for index in range(count):
+                if index >= QUEUE_CARD_COUNT or index >= len(names):
+                    identities.append(('', 0))
+                    continue
+                code = names[index].strip().upper()
+                code = code if code in parser.lookup else parser._correct_code(code)
+                offset = QUEUE_CARD_AREAS[index][0] - QUEUE_CARD_AREAS[0][0]
+                area = tuple(value + (offset if n % 2 == 0 else 0)
+                             for n, value in enumerate(SERIES_BADGE_AREA))
+                identities.append((code, match_series(crop(image, area), scaling=1.0)))
+            return identities
+    # 弧形科研列表上只有一个「已完成」项目，各分组共用同一个身份。
+    from module.research.project import get_research_finished, research_detect
+    finished = get_research_finished(image)
+    projects = research_detect(image)
+    if finished is None or finished >= len(projects):
+        return [('', 0)] * count
+    project = projects[finished]
+    return [(project.name, int(str(project.series).removeprefix('S') or 0))] * count

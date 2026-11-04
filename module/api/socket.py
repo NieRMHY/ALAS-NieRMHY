@@ -269,7 +269,8 @@ class Session:
                 if isinstance(decoded, dict) and isinstance(decoded.get('id'), str):
                     request_id = decoded['id'][:100]
                 request = Request.model_validate(decoded)
-                if size > 1024 * 1024 and request.method not in ('mind.import', 'mind.recognize', 'mind.save', 'mind.calculate'):
+                # Modify by MHY, 养成改为 mind.plan 后不再有整份清单入库的大报文
+                if size > 1024 * 1024 and request.method not in ('mind.import', 'mind.recognize'):
                     raise ApiError('INVALID_REQUEST', '请求超过 1 MiB 限制')
                 if self.requests > 30:
                     raise ApiError('RATE_LIMITED', '请求过于频繁')

@@ -23,9 +23,22 @@
 - 触控与输入：点击、长按、滑动、拖拽（贝塞尔曲线 + 抖动模拟人手）、向量滑动、按住滑动；u2 文本输入与 IME 检测。
 - 应用（碧蓝航线客户端）生命周期：前台包名检测、启动（am/monkey 双链）、停止、清缓存；UI 层级 dump 与 XPath 查询。
 - 模拟器发现与管理：注册表/进程扫描（Windows）、/Applications 扫描（macOS）、SSH 远程命令；启停命令按模拟器类型分发，含 MuMu12 专属的僵死进程清理与深度重启。
-- 运行稳定性检测：卡死检测（截图指纹 + 等待计时器双通道）、点击频率检测（最近 15 次点击统计）。
-- 单按钮连击保护阈值为 12 次；仅 S 经验结算按钮 `EXP_INFO_S` 放宽为 15 次，配合普通战斗处理器的 2 秒点击间隔等待自动跳转。双按钮各 6 次的交替点击保护不变。
+- 运行稳定性检测：卡死检测（截图指纹 + 等待计时器双通道）、最近 50 次输入的连点检测。
+- 连续 50 次同按钮操作或双按钮严格交替时触发连点保护；已确认状态推进时由调用方清理记录。包含地图滑动的窗口不触发该检测，地图流程继续使用已有恢复机制。
 - 基准测试入口：首次连接时自动为截图方式与 OCR 设备跑简化基准并写回配置。
+
+uiautomator2、minitouch、scrcpy、MaaTouch、nemu_ipc 控制下，前台应用检测、游戏启动/停止和
+UI 层级读取沿用 uiautomator2 通路，实际触控使用各自配置的后端。
+MuMu Android 15 的自动截图测速保留 uiautomator2 候选，
+成功时正常参与排名；异常或超时后才跳过本次候选，不按系统版本提前排除。
+简化测速与完整测速一样，只在 SDK 23–32 测试 DroidCast / DroidCast_raw。
+
+简化/完整截图测速和完整点击测速中的 u2 请求使用独立客户端，连接/读取超时分别为 3/5 秒，
+不经过 keepalive 初始化、agent 自动安装、JSON-RPC 自动恢复或设备后端多轮重试。
+完整点击测速先检查 uiautomator 服务，未运行时仅启动一次已有服务，并在启动请求后最多等待
+5 秒确认 `deviceInfo` 可用；就绪检查只对启动过程中的 HTTP 502 继续等待，不安装 agent 或辅助 APK。
+单项第一次失败即记为 `Failed` 并继续其他候选，成功则保留原有采样次数与排名方式；
+再次运行测速仍可尝试 u2。此限制仅用于测速，正常任务的截图、点击和恢复流程保持原有策略。
 
 ### 不负责
 
@@ -145,6 +158,23 @@ Input(Uiautomator2)
 | `nemu_ipc` | MuMu 内部 RPC 触控（低性能机易丢步，保留为可选项） |
 | `Hermit` | HTTP 注入，仅 VMOS（无 u2/minitouch 的环境） |
 | `scrcpy` | scrcpy 控制通道（代码保留，配置选项未暴露） |
+
+`control_interval()` 仅在当前调用范围内为输入增加随机间隔，默认不启用，正常返回或异常退出均恢复原值。
+智能换船的 `preflight_rotation()` 使用0.1–0.3秒间隔，通过 `Device.handle_control_check()` 覆盖点击、滑动和拖动，保留既有卡死及连点检测；普通任务不增加等待。该节流只控制输入节奏，界面就绪仍由截图状态循环确认。
+
+`PatchedIniter.push_url()` 为 atx-agent 预填 uiautomator2 的原有缓存，再沿用上游解包和 ADB 推送。
+<!-- Modify by MHY, 资源源沿用本地 GitHub 下载链。 -->
+下载使用 `requests`，不发送固定的 GitHub `Origin`；连接/读取超时分别为 5/30 秒，
+沿用相同版本和架构的 OpenATX 官方 GitHub Release，并保留一次失败重试。
+已有缓存和新下载都检查归档内的完整 `atx-agent` 文件；下载先写临时文件，检查后原子替换缓存，
+失败时清除残片并继续抛出错误。其他资源的下载以及 ABI 选择、禁用 minicap 的补丁保持原有流程。
+离线验证见 `tests.test_atx_agent_download`；下载和模拟推送验证不能代替真实设备上的 agent 启动验收。
+
+uiautomator2 的测试辅助 APK `com.github.uiautomator.test` 未声明 `versionName`。
+上游配套 packaging 20.9 会将空字符串解析为旧版 `LegacyVersion`，本项目使用的 packaging 24.2
+则会抛 `InvalidVersion`；不能把正常的测试 APK 当作损坏安装或依靠降级依赖处理。
+兼容类 `Device._is_apk_required()` 通过 `pm path` 的退出码与 `package:/...` 安装路径检查两份辅助 APK，
+只有缺失时才进入原有安装恢复；传输异常继续向上传播。回归见 `tests.test_uiautomator_apk_presence`。
 
 ### 连续触控（live_drag.py）
 
@@ -328,6 +358,7 @@ Device 构造也有自己的小型阶梯：`super().__init__` 抛 `EmulatorNotRu
 
 - 几乎所有连接资源都是 `cached_property`：`adb_binary`、`adb_client`、`adb`、`u2`、`reverse_server`、`droidcast_session`、`_minitouch_builder`、`nemu_ipc` 等。失效方式统一是 `del_cached_property` + 下次访问惰性重建；`release_resource()` 集中清理会话类资源。
 - `method/utils.py` 模块级 monkey patch：去掉 u2 的 minicap 安装、重定向 u2 日志到项目 logger、修补 adbutils 1.0 缺失的 `check_okay()`——import 即生效，不可重复触发。
+- ATX Agent 运行时安装沿用 OpenATX 官方 GitHub Release，按版本与 ABI 选择资源；只有归档校验通过后才发布缓存。重复失败继续交给已有安装恢复机制，不引入第三方 HTTP/3 传输。
 - 截图去抖动启用时（`Emulator_ScreenshotDedithering`）每张图多花 40–60ms；错误截图环形队列 `screenshot_deque`（长度由 `Error.ScreenshotLength` 控制，1–400）供错误现场保存。
 - 写回配置的自动检测结果：serial 修正、包名、`EmulatorInfo_*` 三元组、基准测试选出的 `Emulator_ScreenshotMethod` / `Optimization_OcrDevice`。雷电的 `127.0.0.1:5555+X ↔ emulator-5554+X` 配对与 MuMu12 的端口漂移是**动态修正，不写配置**。
 
@@ -394,6 +425,7 @@ image = device.screenshot()
 
 ## 19. 调试方法
 
+- 画面采集工具 [dev_tools/uiautomator2_screenshot.py](../../dev_tools/uiautomator2_screenshot.py) 使用实例配置中的截图后端，将首帧和变化帧保存为无损 WebP。默认相似度阈值为 0.98；调用 `watch(similarity=1)` 可跳过相似度计算，保存每轮的新截图，首帧只保存一次。
 - 日志统一带 `[设备-]` 前缀：`[设备-连接]` 连接与重连、`[设备-截图]` 分发与间隔、`[设备-卡死]`/`[设备-点击]` 触发的恢复检测、`[设备-Windows]` 模拟器启停。启动即打印 ADB 路径、serial、包名、服务器等 attr 行，可快速定位连错设备。
 - 截图方式可疑时：手动把 `Emulator.ScreenshotMethod` 设为 `auto` 重启，或在 WebUI 运行 Benchmark 任务看各后端耗时表（nemu_ipc/ldopengl 仅在对应模拟器可用时出现）。
 - 模拟器发现与启停可单独验证：`python -m module.device.platform.emulator_windows` 直接打印本机所有实例；`PlatformWindows('alas')` 可单独调试启停。

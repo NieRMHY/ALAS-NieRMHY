@@ -126,20 +126,22 @@ body {background: var(--bg); background-attachment: fixed}
   backdrop-filter: none;
   box-shadow: none !important;
 }
-/* 右栏就是 L 的竖列：材质归容器，自己不画底、不带边框与圆角。 */
-.shell-frame:has(> .right-rail) > .right-rail {
-  grid-area: 2 / 2 / 3 / 3;
-  z-index: 1;
-  /* 右栏不 sticky：在容器网格里 sticky 的 top 会把整块往下推。 */
-  position: relative !important;
-  top: auto !important;
-  height: auto;
-  border: none;
-  border-radius: 0;
-  box-shadow: none;
-  background: none;
-  -webkit-backdrop-filter: none;
-  backdrop-filter: none;
+/* 右栏作为 L 的竖列时才留在网格内；窄屏抽屉必须脱离文档流，避免把正文挤出视口。 */
+@media (min-width: 951px) {
+  .shell-frame:has(> .right-rail) > .right-rail {
+    grid-area: 2 / 2 / 3 / 3;
+    z-index: 1;
+    /* 右栏不 sticky：在容器网格里 sticky 的 top 会把整块往下推。 */
+    position: relative !important;
+    top: auto !important;
+    height: auto;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    background: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
 }
 /* 两块调度器板与顶栏同属容器内的一级层：面归容器，板子只留内容与二级/三级贴片。 */
 .shell-frame:has(> .right-rail) > .right-rail > .scheduler-widget,
@@ -619,6 +621,7 @@ html.home-active .topbar,
 @media (max-width: 480px) {
   .monitor-tabs {height: auto; min-height: 60px; padding: 8px 10px}
   .monitor-segmented button {min-width: 70px; height: 36px; min-height: 36px; padding: 0 8px; gap: 5px}
+  /* Modify by MHY, 日志工具条已移入表头，窄屏按表头高度收紧，不再另起一行。 */
   .monitor-panel .log-toolbar {gap: 1px}
   .monitor-panel .log-toolbar .icon-button {width: 32px; height: 32px}
   .monitor-panel .log-toolbar .text-button {width: 32px; min-height: 32px; padding: 0; gap: 0; justify-content: center; font-size: 0}
@@ -647,6 +650,8 @@ html.home-active .topbar,
 /* 窄屏（两列并成一列）下顶栏与卡片本就不相接，容器退回纯包裹，两块各自还原。 */
 @media (max-width: 950px) {
   .main-shell:has(> .shell-frame > .home-frame-topbar) .shell-frame {display: contents}
+  /* 单列首页按内容顺序排列并整体滚动，桌面网格坐标不能继续生成隐式第二列。 */
+  .main-shell:has(> .shell-frame > .home-frame-topbar) > .home-editorial {display: block; overflow-y: auto}
   .main-shell:has(> .shell-frame > .home-frame-topbar) .shell-frame > .topbar {
     width: auto;
     margin: 0 0 0 12px;

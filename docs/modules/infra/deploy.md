@@ -21,6 +21,7 @@
 - `git.py`：纯 Git 仓库更新，按部署配置执行 fetch、reset 与 fast-forward pull。
 - `adb.py` / `emulator.py`：adb 分发与自动连接；VirtualBox 系模拟器注册表扫描与端口发现。
 - `frontend.py`：按源码内容摘要决定是否重建 `frontend/dist`。
+- <!-- Add by MHY, 同步 Windows 路径修复的兼容语义。 --> `DeployConfig.filepath()` 去除配置值外层双引号；Windows 执行以带引号程序路径开头的命令时额外包裹一层引号，原有错误处理保持一致。
 - `atomic.py`：安装失败的原子清理（临时文件识别与回滚）。
 - `patch.py`：安装前环境修补（运行目录检查、uiautomator2/apkutils2 补丁、证书链）。
 - `launcher/Alas.bat`（打包为 `AzurPilot.exe`）：用户双击入口——跑安装器，成功后用 `pythonw` 拉起 `gui.py`。

@@ -14,6 +14,7 @@ import type {StatSeries} from '../api/types'
 import { Empty } from './ui'
 import {resolveIcon} from './StatisticsTable'
 import {buildSeriesView, isActionPointSeries, riseFallSegments} from './statisticsData'
+import {withTranslatedKeys} from './statisticsText'
 import { useApp } from '../app/context'
 import { usesMaterial } from '../app/theme'
 import {
@@ -39,7 +40,8 @@ function getSeriesColor(key: string, index: number, fallback?: string): string {
 }
 
 const iconBase = import.meta.env.BASE_URL
-const chartResourceIcons: Record<string, string> = {
+/* 键为中文名；withTranslatedKeys 补上译名，翻译后的序列名仍能找到图标。 */
+const chartResourceIcons: Record<string, string> = withTranslatedKeys({
   '石油': `${iconBase}oil.webp`,
   '物资': `${iconBase}gold.webp`,
   '钻石': `${iconBase}diamond.webp`,
@@ -57,7 +59,7 @@ const chartResourceIcons: Record<string, string> = {
   '作战补给凭证': `${iconBase}supply_token.webp`,
   '特别兑换凭证': `${iconBase}special_token.webp`,
   '完成委托': `${iconBase}honor_medal.webp`,
-}
+})
 
 function getChartIcon(series: StatSeries): string | undefined {
   if (series.icon) return resolveIcon(series.icon)?.src
@@ -504,7 +506,7 @@ export function StatisticsChart({series, heading = true, expanded = false, onTog
                 key={item.key} type="button"
                 className={`stat-chip ${active ? 'active' : ''} ${empty ? 'empty' : ''}`}
                 onClick={() => toggleKey(item.key)} onDoubleClick={() => selectOnly(item.key)}
-                title={empty ? ui('stats.noSeriesRecord') : `${item.label} (${active ? '已启用' : '未启用'}，双击仅看此项)`}
+                title={empty ? ui('stats.noSeriesRecord') : ui(active ? 'stats.chipActive' : 'stats.chipInactive', {label: item.label})}
                 disabled={empty}
               >
                 {getChartIcon(item) ? (

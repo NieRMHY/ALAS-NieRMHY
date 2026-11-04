@@ -1,10 +1,12 @@
 from .campaign_base import CampaignBase
 from module.map.map_base import CampaignMap
+from module.map.map_grids import SelectedGrids, RoadGrids
+from module.logger import logger
 from .t1 import Config as ConfigBase
 
 MAP = CampaignMap('T4')
 MAP.shape = 'G10'
-MAP.camera_data = ['D2', 'D6', 'D8']
+MAP.camera_data = ['D2', 'D5', 'D8']
 MAP.camera_data_spawn_point = ['D2']
 MAP.map_data = """
     -- -- SP -- SP -- --
@@ -53,6 +55,7 @@ A10, B10, C10, D10, E10, F10, G10, \
 
 class Config(ConfigBase):
     # ===== Start of generated config =====
+    MAP_SIREN_TEMPLATE = []
     MOVABLE_ENEMY_TURN = (2,)
     MAP_HAS_SIREN = True
     MAP_HAS_MOVABLE_ENEMY = True
@@ -61,6 +64,10 @@ class Config(ConfigBase):
     MAP_HAS_AMBUSH = False
     MAP_HAS_MYSTERY = False
     # ===== End of generated config =====
+
+    MAP_SWIPE_MULTIPLY = (1.250, 1.274)
+    MAP_SWIPE_MULTIPLY_MINITOUCH = (1.209, 1.231)
+    MAP_SWIPE_MULTIPLY_MAATOUCH = (1.174, 1.195)
 
 
 class Campaign(CampaignBase):

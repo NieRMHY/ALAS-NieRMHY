@@ -505,7 +505,7 @@ def recognize_cards(image, source='', *, name_ocr=None, level_ocr=None, row_orig
         # 名单身份、等级和基础稀有度均已确认才直接计费；不能以改造卡框猜基础稀有度。
         review = not (info and reliable and base_rarity in RARITIES)
         ship = dict(name=name[:100], level=value, rarity=info['rarity'] if info else frame_rarities[index],
-                    base_rarity=base_rarity, excluded=False, review=review,
+                    base_rarity=base_rarity, review=review,
                     source='；'.join([source, *notes]).strip('；')[:200])
         if identity is not None:
             ship.update(group_type=info['group_type'] if info else None,

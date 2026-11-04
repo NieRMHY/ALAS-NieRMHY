@@ -14,6 +14,7 @@ from dataclasses import replace
 from module.config.config import TaskEnd
 from module.logger import logger
 from module.os.tasks.scheduling import OpsiScheduling
+from module.os.tasks.smart_explore import task_zone_locked_until
 from module.os.tasks.task_context import prevent_overflow_context
 from module.os_handler.action_point import ActionPointLimit
 
@@ -138,10 +139,14 @@ class OpsiPreventActionPointOverflow(OpsiScheduling):
         )
         with self.config.multi_set():
             self._set_prevent_action_point_overflow_enabled(enable)
-            self.config.task_delay(
-                minute=delay_minutes,
-                task=self.TASK_NAME_PREVENT_AP_OVERFLOW,
-            )
+            locked_until = task_zone_locked_until(self.config, self.TASK_NAME_PREVENT_AP_OVERFLOW)
+            if locked_until is not None:
+                self.config.task_delay(target=locked_until, task=self.TASK_NAME_PREVENT_AP_OVERFLOW)
+            else:
+                self.config.task_delay(
+                    minute=delay_minutes,
+                    task=self.TASK_NAME_PREVENT_AP_OVERFLOW,
+                )
 
     def os_prevent_action_point_overflow(self):
         """防止行动力溢出任务入口。"""
@@ -162,7 +167,7 @@ class OpsiPreventActionPointOverflow(OpsiScheduling):
         with prevent_overflow_context(self.config):
             return self._run_with_opsi_task_context(task_name, func, *args, **kwargs)
 
-    def _run_scheduled_coin_task_once(self, task_name, ap_preserve, fresh_ap=None):
+    def _run_scheduled_coin_task_once(self, task_name, ap_preserve, fresh_ap=None, meow_target_zone=None):
         """由防止行动力溢出上下文直接执行一轮补黄币任务。
 
         Args:
@@ -170,13 +175,17 @@ class OpsiPreventActionPointOverflow(OpsiScheduling):
             ap_preserve (int): 行动力保留阈值。
             fresh_ap (tuple[int, int] | None): 智能调度决策读的复用读数，
                 原样透传。
+            meow_target_zone (Zone | None): 月末清理指定的耄耋相接海域，
+                原样透传；None 表示沿用耄耋相接自身设置。
 
         Returns:
             Any: 任务执行结果。
         """
         if self.is_running_prevent_action_point_overflow_task():
             logger.info(f'[大世界-防止行动力溢出] 直接执行一轮{self.TASK_NAMES.get(task_name, task_name)}')
-        return super()._run_scheduled_coin_task_once(task_name, ap_preserve, fresh_ap=fresh_ap)
+        return super()._run_scheduled_coin_task_once(
+            task_name, ap_preserve, fresh_ap=fresh_ap, meow_target_zone=meow_target_zone,
+        )
 
     def _run_prevent_action_point_overflow_target_once(self, task_name, lowerbound):
         """按配置执行一轮防止行动力溢出目标任务。

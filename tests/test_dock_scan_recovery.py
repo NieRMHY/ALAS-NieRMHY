@@ -8,7 +8,7 @@ import numpy as np
 from PIL import Image
 
 from module.exception import MindCalculatorScanError
-from module.retire.mind_scan import MindCalculatorScan
+from module.retire.dock_scan import DockScan
 from module.runtime.mind_recognition import ScanMerger, ScanPolicy, ScrollMotion, estimate_scroll
 from tests import test_mind_scan_stuck as regression
 
@@ -25,7 +25,7 @@ def repeat_frame(offset):
 class ScrollRecoveryTests(unittest.TestCase):
     def test_native_corner_sampling_phase_is_accepted_without_moving_endpoints(self):
         from module.retire.dock import DOCK_SCROLL
-        scanner = MindCalculatorScan.__new__(MindCalculatorScan)
+        scanner = DockScan.__new__(DockScan)
         pixels = np.zeros((720, 1280, 3), np.uint8)
         x1, y1, x2, y2 = DOCK_SCROLL.area
         pixels[y1:y2, x1:x2] = np.array(Image.open(FIXTURES / 'mind_dock_scroll_phase.png').convert('RGB'))
@@ -125,7 +125,7 @@ class LocalLoopTests(unittest.TestCase):
             return (np.arange(565) >= start) & (np.arange(565) < start + 90)
 
         scrollbar = SimpleNamespace(appear=lambda _: True, total=565, match_color=thumb)
-        with patch('module.retire.mind_scan.DOCK_SCROLL', scrollbar):
+        with patch('module.retire.dock_scan.DOCK_SCROLL', scrollbar):
             ships = loop.scan()
         self.assertEqual(loop.reads, [0, 681, 1362, 2043])
         self.assertEqual(len(ships), 84)
@@ -162,7 +162,7 @@ class LocalLoopTests(unittest.TestCase):
                     card.identity_ambiguous = True
             return cards
 
-        with patch('module.retire.mind_scan.recognize_cards', side_effect=ambiguous):
+        with patch('module.retire.dock_scan.recognize_cards', side_effect=ambiguous):
             ships = loop.scan()
         self.assertEqual(loop.reads, [0, 681, 1362])
         reviews = [ship for ship in ships if ship['review']]
@@ -176,21 +176,21 @@ class LocalLoopTests(unittest.TestCase):
             loop.now += 45
             return recognize(*args, **kwargs)
 
-        with patch('module.retire.mind_scan.recognize_cards', side_effect=slow):
+        with patch('module.retire.dock_scan.recognize_cards', side_effect=slow):
             self.assertEqual(len(loop.scan()), 42)
         self.assertEqual(loop.reads, [0, 681, 1362])
 
     def test_missing_card_retries_then_preserves_only_that_slot_as_unknown(self):
-        from module.retire.fleet_tech_scan import FleetTechScan
+        from module.retire.dock_scan import DockScan
         loop = self.loop()
-        loop.scanner._check_scan_page = FleetTechScan._check_scan_page.__get__(loop.scanner)
+        loop.scanner._check_scan_page = DockScan._check_scan_page.__get__(loop.scanner)
         recognize = loop.recognize
 
         def missing(*args, **kwargs):
             cards = recognize(*args, **kwargs)
             return cards[:11] + cards[12:] if loop.position == 0 else cards
 
-        with patch('module.retire.mind_scan.recognize_cards', side_effect=missing):
+        with patch('module.retire.dock_scan.recognize_cards', side_effect=missing):
             ships = loop.scan()
         unknown = [ship for ship in ships if ship['review']]
         self.assertEqual(len(unknown), 1)
@@ -200,10 +200,10 @@ class LocalLoopTests(unittest.TestCase):
         self.assertLess(loop.position, loop.bottom)
 
     def test_entire_missing_page_is_not_fabricated_from_grid_positions(self):
-        from module.retire.fleet_tech_scan import FleetTechScan
+        from module.retire.dock_scan import DockScan
         loop = self.loop()
-        loop.scanner._check_scan_page = FleetTechScan._check_scan_page.__get__(loop.scanner)
-        with patch('module.retire.mind_scan.recognize_cards', return_value=[]):
+        loop.scanner._check_scan_page = DockScan._check_scan_page.__get__(loop.scanner)
+        with patch('module.retire.dock_scan.recognize_cards', return_value=[]):
             with self.assertRaises(MindCalculatorScanError):
                 loop.scan()
         loop.scanner.device.drag.assert_not_called()

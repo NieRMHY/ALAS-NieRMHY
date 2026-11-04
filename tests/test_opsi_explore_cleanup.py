@@ -10,7 +10,7 @@ from unittest.mock import Mock, call, patch
 
 from module.config.config import AzurLaneConfig, TaskEnd
 from module.config.redirect_utils.utils import opsi_explore_cleanup_state_redirect
-from module.exception import GameStuckError, MapDetectionError, RequestHumanTakeover
+from module.exception import GameStuckError, GameTooManyClickError, MapDetectionError
 from module.os.globe_operation import GlobeOperation
 from module.os.map import OSMap
 from module.os.map_base import OSCampaignMap
@@ -144,15 +144,34 @@ class CleanupTests(unittest.TestCase):
             restarted.os_explore_cleanup()
         self.assertEqual([zone for stage, zone in restarted.calls if stage == 'enter'], [24, 22])
 
-    def test_three_unfinished_attempts_stop(self):
-        runner = self.runner(self.state())
-        runner.globe_goto = Mock(side_effect=GameStuckError('无法进入'))
-        for _ in range(3):
-            with self.assertRaises(GameStuckError):
+    def test_repeated_restarts_retry_unfinished_zone_and_can_finish(self):
+        stored = dict(self.state(), next=1)
+        for attempt in range(1, 4):
+            runner = self.runner(stored)
+            runner.map_rescan = Mock(side_effect=GameTooManyClickError('自律寻敌启动失败'))
+            with self.assertRaises(GameTooManyClickError):
                 runner.os_explore_cleanup()
-        with self.assertRaises(RequestHumanTakeover):
-            runner.os_explore_cleanup()
-        self.assertEqual(runner.globe_goto.call_count, 3)
+            stored = json.loads(json.dumps(runner.config.OpsiExploreCleanup_State))
+            self.assertEqual((stored['next'], stored['attempts']), (1, attempt))
+            self.assertEqual(runner.calls, [('enter', 24)])
+            self.assertFalse(runner._opsi_meowfficer_cleanup)
+            runner.os_map_goto_globe.assert_not_called()
+        restarted = self.runner(stored)
+        with self.assertRaises(TaskEnd):
+            restarted.os_explore_cleanup()
+        self.assertEqual([zone for stage, zone in restarted.calls if stage == 'enter'], [24, 22])
+        self.assertEqual(restarted.config.OpsiExploreCleanup_State,
+                         dict(self.state(), next=3, phase='done'))
+
+    def test_existing_exhausted_checkpoint_resumes_without_manual_reset(self):
+        for attempts in (3, 8):
+            with self.subTest(attempts=attempts):
+                runner = self.runner(dict(self.state(), next=1, attempts=attempts))
+                with self.assertRaises(TaskEnd):
+                    runner.os_explore_cleanup()
+                self.assertEqual([zone for stage, zone in runner.calls if stage == 'enter'], [24, 22])
+                self.assertEqual(runner.config.OpsiExploreCleanup_State,
+                                 dict(self.state(), next=3, phase='done'))
 
     def test_new_month_resets_own_progress_and_rejects_stale_100_percent(self):
         state = self.state()
@@ -224,7 +243,8 @@ class CleanupTests(unittest.TestCase):
         def loop():
             yield None
             raise GameStuckError('循环未退出')
-        runner = SimpleNamespace(loop=loop, is_in_globe=lambda: True, handle_zone_pinned=Mock(return_value=False))
+        runner = SimpleNamespace(loop=loop, is_in_globe=lambda: True, handle_zone_pinned=Mock(return_value=False),
+                                 record_globe_suppressed_zones=Mock())
         with patch('module.os.globe_operation.Timer', return_value=SimpleNamespace(start=lambda: SimpleNamespace(reached=lambda: True))):
             GlobeOperation.os_map_goto_globe(runner)
         runner.handle_zone_pinned.assert_called_once()

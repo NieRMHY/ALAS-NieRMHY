@@ -1,7 +1,7 @@
 """
-私人休息室状态 OCR 识别。
+宿舍计划状态 OCR 识别。
 
-提供私人宿舍商店的货币余额和互动次数的 OCR 读取能力，
+提供宿舍计划商店的货币余额和互动次数的 OCR 读取能力，
 包括金币、钻石和每日互动剩余次数。
 通过服务器分支适配不同区域的 OCR 参数（字体颜色差异）。
 
@@ -31,7 +31,7 @@ OCR_SHOP_PRICE = Digit([], letter=(64, 72, 77), name='OCR_SHOP_PRICE')
 
 
 class PQStatus(ShopStatus):
-    """私人休息室货币与互动次数状态识别器。"""
+    """宿舍计划货币与互动次数状态识别器。"""
 
     def status_get_gold_coins(self):
         """OCR 识别商店金币数量。
@@ -40,7 +40,7 @@ class PQStatus(ShopStatus):
             int: 金币数量。
 
         Pages:
-            in: 私人宿舍商店页
+            in: 宿舍计划商店页
         """
         amount = OCR_SHOP_GOLD_COINS.ocr(self.device.image)
         return amount
@@ -52,7 +52,7 @@ class PQStatus(ShopStatus):
             int: 钻石数量。
 
         Pages:
-            in: 私人宿舍商店页
+            in: 宿舍计划商店页
         """
         amount = OCR_SHOP_GEMS.ocr(self.device.image)
         return amount
@@ -64,7 +64,7 @@ class PQStatus(ShopStatus):
             int: 剩余互动次数。
 
         Pages:
-            in: 私人宿舍主页
+            in: 宿舍计划主页
         """
         count, _, _ = OCR_DAILY_COUNT.ocr(self.device.image)
         return count

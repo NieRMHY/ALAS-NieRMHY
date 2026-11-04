@@ -11,7 +11,6 @@
 
 import threading
 import hashlib
-from contextlib import closing
 import os
 import sqlite3
 import time
@@ -91,6 +90,7 @@ class DropImage:
         self.analyze = bool(analyze)
         self.info = info
         self.images = []
+        self.research_groups = []
         self.combat_count = 0
 
     def add(self, image):
@@ -112,6 +112,11 @@ class DropImage:
         """
         self.combat_count = count
 
+    def finish_research_reward(self, start):
+        """记录一次科研领奖的截图区间，翻页后的第二张也算在同一项目内。"""
+        if self.genre == 'research' and len(self.images) > start:
+            self.research_groups.append((start, len(self.images)))
+
     def handle_add(self, main, before=None):
         """在添加截图前后执行等待，并截取当前屏幕保存。
 
@@ -131,6 +136,7 @@ class DropImage:
     def clear(self):
         """清空已缓存的截图列表。"""
         self.images = []
+        self.research_groups = []
 
     @property
     def count(self):
@@ -151,7 +157,7 @@ class DropImage:
         if self:
             self.stat.commit(images=self.images, genre=self.genre, save=self.save,
                              local=self.local, info=self.info, combat_count=self.combat_count,
-                             analyze=self.analyze)
+                             analyze=self.analyze, research_groups=self.research_groups)
 
 
 class AzurStats:
@@ -653,7 +659,7 @@ class AzurStats:
         return False
 
     def commit(self, images, genre, save=False, local=False, info='', combat_count=0,
-               analyze=False):
+               analyze=False, research_groups=None):
         """提交并处理一组掉落截图，执行保存、本地入库或专用解析。
 
         Args:
@@ -674,7 +680,7 @@ class AzurStats:
         save, local = bool(save), bool(local)
         logger.info(
             f'Drop record commit, genre={genre}, amount={len(images)}, save={save}, local={local}')
-        image = pack(images)
+        image = pack(images) if save or local else None
         now = int(time.time() * 1000)
 
         if info:
@@ -697,7 +703,14 @@ class AzurStats:
             # 解析失败只记日志，绝不影响领奖流程本身。
             try:
                 from module.statistics.research_drop import record_research_drop
-                record_research_drop(images, instance=self.config.config_name, imgid=filename)
+                if research_groups:
+                    from module.statistics.research_drop import read_research_identities
+                    identities = read_research_identities(images[0], len(research_groups))
+                    for index, (start, end) in enumerate(research_groups):
+                        record_research_drop(images[start:end], instance=self.config.config_name,
+                                             imgid=f'{filename}:{index}', identity=identities[index])
+                else:
+                    record_research_drop(images, instance=self.config.config_name, imgid=filename)
             except Exception as e:
                 logger.warning(f'[科研统计] 掉落解析失败，跳过本次记录: {type(e).__name__}')
 
@@ -726,16 +739,16 @@ class AzurStats:
             method = None
         if method is not None:
             method_value = str(method)
-            save = save or 'save' in method_value
+            save = save or method_value in ('save', 'save_and_upload')
         if local is None:
             if is_opsi_drop_genre(genre):
-                # 大世界掉落统计（2026-09-25 用户定，与科研同口径）：
-                # 「保存」与「上传」都解析入库，区别只在要不要把截图落盘；
+                # Modify by MHY, 保留本地口径（2026-09-25 用户定，与科研同口径）：
+                # 大世界掉落「保存」与「上传」都解析入库，区别只在要不要把截图落盘；
                 # 只有「不记录」才不统计。侵蚀1练级不适用（见 is_opsi_drop_genre）。
                 local = method_value != 'do_not'
             else:
                 local = False
-        # 科研掉落走独立解析链路（写 cl1_record.db）：只要用户没有显式关掉记录，
+        # Modify by MHY, 不留云端上报分支：科研掉落只要用户没显式关掉记录就解析入库，
         # 存图与否都统计——save 档事后要能核对，upload 档就是不落盘只要数据。
         analyze = genre == 'research' and method_value != 'do_not'
         return DropImage(stat=self, genre=genre, save=save, local=local, info=info, analyze=analyze)

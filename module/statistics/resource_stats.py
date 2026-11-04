@@ -42,6 +42,15 @@ RESOURCE_COLUMNS = {
     'PurpleCoin': 'purple_coin',
 }
 
+# 快照写入语句写成完整字面量，数值全部走命名参数绑定；
+# 列顺序须与 RESOURCE_COLUMNS 一致，由 tests/test_resource_snapshot_sql.py 校验
+_SNAPSHOT_INSERT_SQL = (
+    'INSERT INTO resource_snapshots '
+    '(instance,ts,oil,coin,gem,pt,cube,core,medal,merit,guild_coin,action_point,yellow_coin,purple_coin) '
+    'VALUES (:instance,:ts,:oil,:coin,:gem,:pt,:cube,:core,:medal,:merit,:guild_coin,:action_point,'
+    ':yellow_coin,:purple_coin)'
+)
+
 
 def _ensure_table():
     """建表和旧数据转换统一由安装级迁移入口完成。"""
@@ -53,28 +62,49 @@ def _overlay_opsi_snapshot(row: Dict[str, Any]) -> Dict[str, Any]:
     return row
 
 
-def record_resource_snapshot(instance: str, resources: Dict[str, Any], *, observed_at: datetime = None) -> bool:
-    """以同一事务保存各项资源的当前读数。"""
+def record_resource_snapshot(instance: str, resources: Dict[str, Any], *, observed_at: datetime = None,
+                             carry_forward: bool = False) -> bool:
+    """以同一事务保存各项资源的当前读数。
+
+    Args:
+        instance: 实例名称。
+        resources: 资源名到读数的映射。
+        observed_at: 采样时间，缺省为当前时间。
+        carry_forward: 为 True 时只写入 ``resources`` 中给出的资源，其余列沿用该实例最近一行快照；
+            首行没有可沿用的值时留空，不把从未读取的资源记成 0。
+            运行中各个配置对象（例如战役使用的配置副本）的 Dashboard 值可能已过期，
+            用它们补全整行会让曲线出现一个点的旧值尖刺。
+    """
     from module.persistence.database import register_instance
     try:
         row = {'instance': instance, 'ts': (observed_at or datetime.now()).isoformat()}
         row.update({column: resources.get(name) for name, column in RESOURCE_COLUMNS.items()})
-        with _local_lock, _connect() as conn:
+        if not carry_forward:
+            with _local_lock, _connect() as conn:
+                register_instance(conn, instance)
+                conn.execute(_SNAPSHOT_INSERT_SQL, row)
+            return True
+        with _local_lock, _database().transaction() as conn:
             register_instance(conn, instance)
-            columns = ','.join(row)
-            values = ','.join(':' + name for name in row)
-            conn.execute(f'INSERT INTO resource_snapshots ({columns}) VALUES ({values})', row)
+            latest = conn.execute('SELECT * FROM resource_snapshots WHERE instance = ? ORDER BY id DESC LIMIT 1',
+                                  (instance,)).fetchone()
+            if latest is not None:
+                for name, column in RESOURCE_COLUMNS.items():
+                    if name not in resources:
+                        row[column] = latest[column]
+            conn.execute(_SNAPSHOT_INSERT_SQL, row)
         return True
     except Exception as error:
         logger.warning(f'[统计-资源] 记录资源快照失败: {type(error).__name__}')
         return False
 
 
-def async_record_resource_snapshot(instance: str, resources: Dict[str, Any], *, observed_at: datetime = None):
+def async_record_resource_snapshot(instance: str, resources: Dict[str, Any], *, observed_at: datetime = None,
+                                   carry_forward: bool = False):
     """固定主线程采样值与时间后排队，不向后台传递可变配置对象。"""
     from module.base.async_executor import async_executor
     future = async_executor.submit(record_resource_snapshot, instance, dict(resources),
-                                   observed_at=observed_at or datetime.now())
+                                   observed_at=observed_at or datetime.now(), carry_forward=carry_forward)
 
     def finished(result):
         if result.cancelled() or result.exception() is not None:

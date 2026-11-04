@@ -4,7 +4,7 @@
 负责岛屿系统中农场、果园、苗圃三大生产区域的自动化管理，包括：
 - 仓库库存检查与低库存作物识别
 - 空闲岗位检测与自动播种
-- 作物选择策略：优先补种低于阈值的作物，其次种植默认作物
+- 作物选择策略：优先补种低于目标的作物（可按作物单独设置目标），其次种植默认作物
 - 工人派遣与角色筛选（含小天城橡胶树优先机制）
 - 季节限定作物的智能过滤
 - 种子不足时自动从商店购买
@@ -20,6 +20,7 @@ from module.island.island import *
 from datetime import timedelta
 from module.config.time_source import now as current_time
 from module.handler.login import LoginHandler
+from module.island.farm_targets import parse_crop_targets, plan_crops_to_restock
 from module.island.warehouse import *
 from module.logger import logger
 
@@ -45,6 +46,7 @@ class IslandFarm(Island, WarehouseOCR, LoginHandler):
         farm_threshold (int): 农场作物库存最低阈值。
         orchard_threshold (int): 果园作物库存最低阈值。
         nursery_threshold (int): 苗圃作物库存最低阈值。
+        crop_targets (dict): 各区域按作物单独设置的目标库存，未设置的作物用区域阈值。
         worker_filters (dict): 各区域的工人派遣角色筛选器。
         ignore_avocado (bool): 是否忽略牛油果。
         ignore_pineapple (bool): 是否忽略菠萝。
@@ -80,19 +82,19 @@ class IslandFarm(Island, WarehouseOCR, LoginHandler):
         self.ignore_avocado = self.config.IslandOrchard_IgnoreAvocado
         self.ignore_pineapple = self.config.IslandNursery_IgnorePineapple
 
-        # 修改默认作物配置：数值类型，表示要种植默认作物的岗位数量
+        # 默认作物配置：所有作物达标后，最多 plant_default 个岗位种植 default_crop（可配置，岛屿生产规划器会按闲时产量改写）
         self.plant_config = {
             'farm': {
                 'plant_default': self.config.IslandFarm_PlantPotatoes,  # 0-4
-                'default_crop': 'wheat'
+                'default_crop': self.config.IslandFarm_DefaultCrop or 'wheat'
             },
             'orchard': {
                 'plant_default': self.config.IslandOrchard_PlantRubber,  # 0-4
-                'default_crop': 'rubber'
+                'default_crop': self.config.IslandOrchard_DefaultCrop or 'rubber'
             },
             'nursery': {
                 'plant_default': self.config.IslandNursery_PlantLavender,  # 0-2
-                'default_crop': 'lavender'
+                'default_crop': self.config.IslandNursery_DefaultCrop or 'lavender'
             }
         }
 
@@ -253,36 +255,46 @@ class IslandFarm(Island, WarehouseOCR, LoginHandler):
             'orchard': {},
             'nursery': {}
         }
+        # 按作物单独设置的目标库存，未设置的作物用区域阈值
+        self.crop_targets = {
+            category: parse_crop_targets(
+                text, known_crops=[item['name'] for item in self.INVENTORY_CONFIG[category]['items']])
+            for category, text in [
+                ('farm', self.config.IslandFarm_CropTargets),
+                ('orchard', self.config.IslandOrchard_CropTargets),
+                ('nursery', self.config.IslandNursery_CropTargets),
+            ]
+        }
 
     def check_inventory_and_prepare_lists(self):
         """检查库存并准备需要补种的列表。
 
-        按库存升序排序，优先补种库存最少的作物。
+        每种作物与自己的目标比较（`CropTargets` 单独设置优先，否则用区域阈值），
+        按「库存/目标」升序排序，优先补种缺口比例最大的作物。
         """
         for category in ['farm', 'orchard', 'nursery']:
             inventory = self.warehouse_inventory(category)
             config = self.INVENTORY_CONFIG[category]
-            threshold = config['threshold']
             self.inventory_counts[category] = inventory
-            for item_name, count in inventory.items():
+            skip = set()
+            for item_name in inventory:
                 if category == 'orchard' and item_name == 'avocado' and self.ignore_avocado:
-                    continue
-                if category == 'nursery' and item_name == 'pineapple' and self.ignore_pineapple:
-                    continue
+                    skip.add(item_name)
+                elif category == 'nursery' and item_name == 'pineapple' and self.ignore_pineapple:
+                    skip.add(item_name)
                 # === 季节限定：不在当季的果园作物（如秋季的秋月梨/柿子）不列入补种计划 ===
-                if category == 'orchard' and hasattr(self, 'season_config'):
-                    if not self._is_orchard_crop_in_season(item_name):
-                        logger.info(f"[岛屿-农田] 跳过非当季果园作物: {self._item_cn(item_name)}")
-                        continue
+                elif category == 'orchard' and hasattr(self, 'season_config')                         and not self._is_orchard_crop_in_season(item_name):
+                    logger.info(f"[岛屿-农田] 跳过非当季果园作物: {self._item_cn(item_name)}")
+                    skip.add(item_name)
                 # === 季节限定：不在当季的作物不列入补种计划 ===
-                if category == 'nursery' and hasattr(self, 'season_config'):
-                    if not self._is_nursery_crop_in_season(item_name):
-                        logger.info(f"[岛屿-农田] 跳过非当季苗圃作物: {self._item_cn(item_name)}")
-                        continue
-                if count < threshold:
-                    self.to_plant_lists[category].append(item_name)
-            # 库存最少的作物排最前，轮转分配时优先补种
-            self.to_plant_lists[category].sort(key=lambda name: inventory.get(name, 0))
+                elif category == 'nursery' and hasattr(self, 'season_config')                         and not self._is_nursery_crop_in_season(item_name):
+                    logger.info(f"[岛屿-农田] 跳过非当季苗圃作物: {self._item_cn(item_name)}")
+                    skip.add(item_name)
+            if self.crop_targets[category]:
+                logger.info(f"[岛屿-农田] {category}单独设置的作物目标: {self.crop_targets[category]}")
+            # 缺口比例最大的作物排最前，轮转分配时优先补种
+            self.to_plant_lists[category] = plan_crops_to_restock(
+                inventory, self.crop_targets[category], config['threshold'], skip=skip)
 
     def _is_orchard_crop_in_season(self, crop_name):
         """检查果园作物是否在当季（按季节配置）。
@@ -486,13 +498,20 @@ class IslandFarm(Island, WarehouseOCR, LoginHandler):
                 continue
             if self.appear(ISLAND_SELECT_PRODUCT_CHECK, offset=1):
                 if self.select_product(selection, selection_check):
-                    if self.ensure_select_product_material(
-                            item_button=seed_config['shop'],
-                            required_quantity=seed_config['seed_number'],
-                            shop_check=ISLAND_SHOP_SEED_TAB_CHECK,
-                            item_name=f"{self._item_cn(product)}种子",
-                    ):
+                    # seed_number 是补货目标而非单次需求；补货买不起时，
+                    # 现有种子够页面显示的单次需求就直接种，不够才跳过
+                    material = self.ensure_select_product_material(
+                        item_button=seed_config['shop'],
+                        required_quantity=seed_config['seed_number'],
+                        shop_check=ISLAND_SHOP_SEED_TAB_CHECK,
+                        item_name=f"{self._item_cn(product)}种子",
+                    )
+                    if material == MATERIAL_RESTOCKED:
                         continue
+                    if material == MATERIAL_INSUFFICIENT:
+                        logger.warning(f"[岛屿-农田] {self._item_cn(product)}种子不足且无法补买，跳过本次种植")
+                        self.back_to_postmanage_from_dispatch()
+                        return False
                     self.device.sleep(0.3)
                     if not self.confirm_post_add_order(f"{product}种植派遣"):
                         self.back_to_postmanage_from_dispatch()
@@ -647,17 +666,16 @@ class IslandFarm(Island, WarehouseOCR, LoginHandler):
 
             need_default = max(0, default_count - already_planted_default)
 
-            if to_plant_list:
-                # 未达标作物：每个未达标作物最多分配一个岗位，避免单个作物
-                # 被重复分配到所有空闲岗位（如香蕉缺 1 个却 4 个岗位全种香蕉）。
-                for i in range(min(idle_count, len(to_plant_list))):
-                    all_plants_to_plant[category].append(to_plant_list[i])
-            else:
-                # 所有未达标作物都已安排后才种植默认作物
-                if idle_count > 0 and need_default > 0:
-                    actual_default = min(idle_count, need_default)
-                    for _ in range(actual_default):
-                        all_plants_to_plant[category].append(default_crop)
+            # 未达标作物：每个未达标作物最多分配一个岗位，避免单个作物
+            # 被重复分配到所有空闲岗位（如香蕉缺 1 个却 4 个岗位全种香蕉）。
+            restock = to_plant_list[:idle_count]
+            all_plants_to_plant[category].extend(restock)
+            # 所有未达标作物都已安排后，剩余空闲岗位才种植默认作物
+            spare = idle_count - len(restock)
+            # 默认作物本身也在补种时，那个岗位同样算作默认作物岗位
+            need_default = max(0, need_default - restock.count(default_crop))
+            if spare > 0 and need_default > 0:
+                all_plants_to_plant[category].extend([default_crop] * min(spare, need_default))
 
             if all_plants_to_plant[category]:
                 logger.info(f"[岛屿-农田] \n{category}需要种植的作物: {all_plants_to_plant[category]}")

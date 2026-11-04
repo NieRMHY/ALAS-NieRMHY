@@ -10,6 +10,7 @@ import numpy as np
 from PIL import Image
 
 from module.runtime.fleet_tech import catalog
+from module.runtime.mind_calculator import RARITIES
 from module.runtime.mind_name import _similarity
 
 
@@ -64,8 +65,13 @@ class FleetTechIdentity:
 
     def _info(self, gid, retrofit=False):
         row = self.ships[gid]
+        # 科技目录的 PR/DR 是科研分类；扫描与底账统一使用标准稀有度。
         base_rarity = {'PR': 'SSR', 'DR': 'UR'}.get(row['rarity'], row['rarity'])
-        return dict(row, base_name=row['name'], base_rarity=base_rarity,
+        rarity = base_rarity
+        if retrofit and base_rarity in RARITIES:
+            # 改造只提升显示档位，心智费用仍按基础稀有度计算。
+            rarity = RARITIES[max(0, RARITIES.index(base_rarity) - 1)]
+        return dict(row, rarity=rarity, base_name=row['name'], base_rarity=base_rarity,
                     group='改造' if retrofit else 'META' if row['nationality'] == 97 else '',
                     name=row['retrofit_names'][0] if retrofit else row['name'])
 

@@ -85,7 +85,23 @@ def _startup_process_ids():
         command = current.cmdline()
         executable = os.path.normcase(str(Path(current.exe()).resolve()))
         interpreter = os.path.normcase(str(Path(sys.executable).resolve()))
-        for parent in current.parents():
+        try:
+            ancestors = current.parents()
+        except psutil.NoSuchProcess:
+            # A vanished distant ancestor can abort psutil.parents() before it
+            # returns the still-live uv / venv forwarding processes.
+            ancestors, seen = [], {current.pid}
+            parent = current
+            while True:
+                try:
+                    parent = parent.parent()
+                except (psutil.NoSuchProcess, psutil.AccessDenied):
+                    break
+                if parent is None or parent.pid in seen:
+                    break
+                seen.add(parent.pid)
+                ancestors.append(parent)
+        for parent in ancestors:
             parent_path = Path(parent.exe()).resolve()
             parent_executable = os.path.normcase(str(parent_path))
             parent_command = parent.cmdline()

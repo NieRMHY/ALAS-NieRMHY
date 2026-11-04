@@ -258,10 +258,6 @@
       "name": "META作战",
       "help": ""
     },
-    "OpsiAshAssist": {
-      "name": "META支援",
-      "help": ""
-    },
     "OpsiExplore": {
       "name": "每月开荒",
       "help": ""
@@ -410,13 +406,9 @@
       "name": "舰队扫描",
       "help": "扫描当前编入舰队的舰娘信息"
     },
-    "MindCalculatorScan": {
-      "name": "心智单元船坞扫描",
-      "help": "扫描国服 1280×720 船坞，结果在心智单元计算器中核对。完成前保留旧数据；会重置船坞筛选。"
-    },
-    "FleetTechScan": {
-      "name": "舰船科技扫描",
-      "help": "独立记录舰船身份和等级，不按心智计费条件排除。"
+    "DockScan": {
+      "name": "船坞数据扫描",
+      "help": "读取船坞卡片，保存共享数据供心智与舰船科技分析；不执行养成或换船。"
     },
     "Daemon": {
       "name": "半自动点击",
@@ -461,6 +453,10 @@
     "MeowfficerScore": {
       "name": "指挥喵评分",
       "help": "识别指挥喵天赋，按公开攻略口径评分"
+    },
+    "IslandProductionPlanner": {
+      "name": "岛屿生产规划器",
+      "help": "移植自 ALAS 的岛屿生产规划器：扫描岛屿科技，用线性规划算出每日生产与出售方案（在岛币净收入不低于下限的前提下季节 PT 最多），并写入各店铺后厨、经营商品、挂机生产与农田作物目标。实际生产仍由各岛屿任务执行。"
     }
   },
   "Scheduler": {
@@ -769,8 +765,8 @@
       "help": "运行敏感任务出错时停止ALAS，而不是重启游戏\n敏感任务包含隐秘海域、深渊坐标、跨月每日"
     },
     "TaskRestartLimit": {
-      "name": "同一任务连续重启上限",
-      "help": "同一任务连续出错恢复达到此次数后，延后至服务器次日零点，并通过错误推送设置提醒。任务成功后清零；其他任务或游戏重启成功不清零。0 = 不限制。"
+      "name": "同一任务连续重启模拟器上限",
+      "help": "同一任务完成此次数的模拟器重启后，若重试仍需重启模拟器，延后至服务器次日零点，并通过错误推送设置提醒。仅重启游戏不计数；游戏未运行、设备离线或模拟器重启未完成时继续恢复，不延后业务任务。该任务成功后清零；其他任务或游戏重启成功不清零。0 = 不限制。"
     },
     "SaveErrorRetentionDays": {
       "name": "错误日志过期天数",
@@ -806,12 +802,12 @@
       "help": ""
     },
     "GameStuckRestart": {
-      "name": "游戏卡死时重启模拟器",
-      "help": "在游戏连续卡死（触发GameStuckError）达到指定次数后，尝试重启模拟器。可能有助于解决模拟器假死或显存溢出等问题。"
+      "name": "游戏卡死或反复退出时重启模拟器",
+      "help": "游戏连续卡死或反复退出（包括重启游戏后再次退出）达到下方次数后，尝试重启模拟器。可能有助于解决模拟器假死或显存溢出等问题。"
     },
     "GameStuckThreshold": {
-      "name": "游戏卡死超过 X 秒后重启",
-      "help": "连续卡死多少次后触发重启。"
+      "name": "游戏卡死或退出重启阈值（次数）",
+      "help": "连续卡死或退出达到多少次后重启模拟器。游戏重启成功不会清零；普通任务成功后清零。"
     },
     "AdbOfflineRestart": {
       "name": "检测不到设备时重启模拟器",
@@ -854,28 +850,28 @@
   },
   "Reboot": {
     "_info": {
-      "name": "Reboot._info.name",
-      "help": "Reboot._info.help"
+      "name": "登录与重启",
+      "help": "游戏应用重启的尝试次数、等待与观察节奏。"
     },
     "Tries": {
-      "name": "Reboot.Tries.name",
-      "help": "Reboot.Tries.help"
+      "name": "重启尝试次数",
+      "help": "游戏启动失败后自动重试的次数。连续失败达到该次数后进入观察阶段，观察仍无恢复则触发模拟器重启。\n默认 3 次。"
     },
     "FirstTryWaitSeconds": {
-      "name": "Reboot.FirstTryWaitSeconds.name",
-      "help": "Reboot.FirstTryWaitSeconds.help"
+      "name": "首次失败等待（秒）",
+      "help": "第一次启动失败后等待多少秒再重试。\n默认 30 秒。"
     },
     "SubsequentTryWaitSeconds": {
-      "name": "Reboot.SubsequentTryWaitSeconds.name",
-      "help": "Reboot.SubsequentTryWaitSeconds.help"
+      "name": "后续失败等待（秒）",
+      "help": "第二次及之后的启动失败后等待多少秒再重试。\n默认 20 秒。"
     },
     "ObserveSeconds": {
-      "name": "Reboot.ObserveSeconds.name",
-      "help": "Reboot.ObserveSeconds.help"
+      "name": "观察阶段时长（秒）",
+      "help": "连续重启失败后进入观察阶段，等待应用自行恢复的时长；超时仍未恢复则触发模拟器重启。\n默认 180 秒。"
     },
     "ObserveInterval": {
-      "name": "Reboot.ObserveInterval.name",
-      "help": "Reboot.ObserveInterval.help"
+      "name": "观察检查间隔（秒）",
+      "help": "观察阶段内每隔多少秒检查一次应用是否恢复。\n默认 15 秒。"
     }
   },
   "Device": {
@@ -2041,7 +2037,7 @@
   "OperationHandover": {
     "_info": {
       "name": "作战委托设置",
-      "help": ""
+      "help": "支持主线和活动图。关卡名称填 12-4 等主线关卡时进入主线；填 D3、T6、SP3 等活动关卡时使用所选活动。活动图难度按关卡名称自动切换，是否支持委托以游戏内入口为准。"
     },
     "Count": {
       "name": "委托次数",
@@ -4133,6 +4129,10 @@
       "name": "META支援",
       "help": "打每天三次的信标支援"
     },
+    "Enable": {
+      "name": "启用META支援",
+      "help": "在META作战中完成每天三次支援，与当期信标共用自动换装配置。"
+    },
     "Tier": {
       "name": "寻找等级大于 X 的信标",
       "help": "如果尝试若干次仍找不到符合条件的信标，随缘打"
@@ -4233,6 +4233,10 @@
     "DossierAutoAttackMode": {
       "name": "档案信标自动作战",
       "help": "在档案信标首次战斗后进行自动作战，目前仅国服可用"
+    },
+    "DossierSkipAssist": {
+      "name": "开启档案时不进行支援",
+      "help": "档案已开启、正在解析或自动攻击时暂停每日META支援，待领奖时先领取奖励再恢复支援。\n开启自动换装备功能时务必开启此功能。"
     },
     "RequestAssist": {
       "name": "呼叫支援",
@@ -4480,12 +4484,12 @@
       "help": "开启后，将按“指定海域”配置运行。指定单个海域时一直停留在该海域；指定多个海域时按填写顺序循环。仅在指定海域不为0时生效。"
     },
     "ExecuteFixedPatrolScan": {
-      "name": "战后强制移动（效率模式）",
-      "help": "开启后，每轮战后若雷达上仍有问号，将依次切换 1~4 号舰队查看各自的雷达并清除问号（只切换舰队看雷达，不挪动舰队，套用侵蚀一的效率模式）\n默认关闭，关闭时战后只查看当前短猫舰队的雷达"
+      "name": "雷达扫描",
+      "help": "开启后，战后切换 1~4 号舰队扫描雷达并处理剩余问号，不移动舰队。默认关闭；关闭时只检查当前舰队。"
     },
     "DebugClip": {
       "name": "战后 debug 录屏",
-      "help": "开启后，在每轮短猫相接战后「找事件 / 处理事件 / 强制移动」期间，把 ALAS 自己看到的画面录成 mp4，保存到 log/clips/ 目录（文件名以 meow_clip_ 开头）。每一轮都会保存，不论有没有遇到事件，方便逐轮回看实际过程。保留天数见「大世界通用设置」。"
+      "help": "开启后，在每轮短猫相接战后「找事件 / 处理事件 / 雷达扫描」期间，把 ALAS 自己看到的画面录成 mp4，保存到 log/clips/ 目录（文件名以 meow_clip_ 开头）。每一轮都会保存，不论有没有遇到事件，方便逐轮回看实际过程。保留天数见「大世界通用设置」。"
     }
   },
   "OpsiTarget": {
@@ -4542,7 +4546,7 @@
     },
     "SkipStrategicSearchCheck": {
       "name": "跳过计划作战滑动检查",
-      "help": "侵蚀1练级与耄耋相接循环刷取同一海域时，打开「计划作战」面板后不再滑动检查各选项，直接确认开始。需要面板选项已在游戏内配置好（区域模式：重复、遭遇商人/装置：停止、自动提交：开启），让任务正常跑过一次或手动配置一次后即可开启。"
+      "help": "开启后，计划作战直接确认，不再滑动检查选项。请先正常运行一次或手动设好：重复海域、遇商人/装置停止、自动提交。"
     },
     "Cl1Filter": {
       "name": "明石购买筛选",
@@ -4566,7 +4570,7 @@
     },
     "DebugClip": {
       "name": "战后 debug 录屏",
-      "help": "开启后，在每轮侵蚀1战后「找事件 / 处理事件 / 强制移动」期间，把 ALAS 自己看到的画面录成 mp4，保存到 log/clips/ 目录。每一轮都会保存，不论有没有遇到事件，方便逐轮回看实际过程。用于人工核对是否漏猫。录像会按「大世界通用设置」里的保留天数自动清理。"
+      "help": "开启后，在每轮侵蚀1战后「找事件 / 处理事件 / 雷达扫描」期间，把 ALAS 自己看到的画面录成 mp4，保存到 log/clips/ 目录。每一轮都会保存，不论有没有遇到事件，方便逐轮回看实际过程。用于人工核对是否漏猫。录像会按「大世界通用设置」里的保留天数自动清理。"
     }
   },
   "OpsiSirenBug": {
@@ -4840,6 +4844,22 @@
       "name": "农田作物底线",
       "help": "建议660及以上"
     },
+    "CropTargets": {
+      "name": "按作物设置补种目标",
+      "help": "每行一条「作物: 目标库存」，如\ncorn: 200\nwheat: 80\n列出的作物库存低于自己的目标时补种，未列出的作物沿用「农田作物底线」；目标填 0 表示不补种该作物。留空则全部使用「农田作物底线」。缺口比例最大的作物优先补种。\n可用作物：wheat, corn, rice, chinese_cabbage, potato, soybean, pasture, coffee_bean\n岛屿生产规划器运行后会自动改写本项。"
+    },
+    "DefaultCrop": {
+      "name": "默认作物",
+      "help": "所有作物都达到目标后，空余岗位种植的作物（岗位数见下一项）。岛屿生产规划器会按闲时产量（为季节 PT）改写。",
+      "wheat": "wheat",
+      "corn": "corn",
+      "rice": "rice",
+      "chinese_cabbage": "chinese_cabbage",
+      "potato": "potato",
+      "soybean": "soybean",
+      "pasture": "pasture",
+      "coffee_bean": "coffee_bean"
+    },
     "PlantPotatoes": {
       "name": "种小麦",
       "help": "",
@@ -4871,9 +4891,26 @@
       "name": "水果底线",
       "help": ""
     },
+    "CropTargets": {
+      "name": "按作物设置补种目标",
+      "help": "每行一条「作物: 目标库存」，如\napple: 150\nrubber: 0\n列出的作物库存低于自己的目标时补种，未列出的作物沿用「水果底线」；目标填 0 表示不补种该作物。留空则全部使用「水果底线」。缺口比例最大的作物优先补种。\n可用作物：apple, citrus, banana, mango, lemon, avocado, rubber, pear, persimmon\n岛屿生产规划器运行后会自动改写本项。"
+    },
     "IgnoreAvocado": {
       "name": "忽视牛油果",
       "help": ""
+    },
+    "DefaultCrop": {
+      "name": "默认作物",
+      "help": "所有作物都达到目标后，空余岗位种植的作物（岗位数见下一项）。岛屿生产规划器会按闲时产量（为季节 PT）改写。",
+      "apple": "apple",
+      "citrus": "citrus",
+      "banana": "banana",
+      "mango": "mango",
+      "lemon": "lemon",
+      "avocado": "avocado",
+      "rubber": "rubber",
+      "pear": "pear",
+      "persimmon": "persimmon"
     },
     "PlantRubber": {
       "name": "种橡胶",
@@ -4908,9 +4945,26 @@
       "name": "苗圃作物底线",
       "help": ""
     },
+    "CropTargets": {
+      "name": "按作物设置补种目标",
+      "help": "每行一条「作物: 目标库存」，如\nstrawberry: 120\ntea: 60\n列出的作物库存低于自己的目标时补种，未列出的作物沿用「苗圃作物底线」；目标填 0 表示不补种该作物。留空则全部使用「苗圃作物底线」。缺口比例最大的作物优先补种。\n可用作物：carrot, onion, flax, strawberry, cotton, tea, lavender, pineapple, asparagus\n岛屿生产规划器运行后会自动改写本项。"
+    },
     "IgnorePineapple": {
       "name": "忽视菠萝",
       "help": ""
+    },
+    "DefaultCrop": {
+      "name": "默认作物",
+      "help": "所有作物都达到目标后，空余岗位种植的作物（岗位数见下一项）。岛屿生产规划器会按闲时产量（为季节 PT）改写。",
+      "carrot": "carrot",
+      "onion": "onion",
+      "flax": "flax",
+      "strawberry": "strawberry",
+      "cotton": "cotton",
+      "tea": "tea",
+      "lavender": "lavender",
+      "pineapple": "pineapple",
+      "asparagus": "asparagus"
     },
     "PlantLavender": {
       "name": "种薰衣草",
@@ -5001,6 +5055,14 @@
     "MinSeaCucumber": {
       "name": "海参底线",
       "help": ""
+    },
+    "MinFreshwaterFishMeat": {
+      "name": "淡水鱼肉底线",
+      "help": "渔场任务养殖完成后，若淡水鱼肉少于此值，在岛屿商店「鱼肉加工」把鱼兑换到此数量（优先用产量高的鱼）。0 为不兑换。岛屿生产规划器会按货运缺口与菜品用量改写。"
+    },
+    "MinSaltwaterFishMeat": {
+      "name": "海水鱼肉底线",
+      "help": "同上，针对海水鱼肉（如黄鳍金枪鱼每条 18 个）。0 为不兑换。"
     },
     "PlantYellowfinTuna": {
       "name": "养黄鳍金枪鱼",
@@ -7151,50 +7213,138 @@
       "help": "多个加成餐品时按过滤顺序优先替换第一个；替换槽位从餐品5→1倒查替换最后一个非空餐品\n可用餐品key对照：cheese:芝士, strawberry_milkshake:草莓奶绿, morning_light:晨光活力组合, wake_up_call:醒神套餐, fruity_fruitier:果香双杯乐\n示例：fruity_fruitier > wake_up_call > 30 > morning_light > strawberry_milkshake > 20 > cheese > 10"
     }
   },
-  "MindCalculator": {
+  "Dock": {
     "_info": {
-      "name": "心智单元计算器",
-      "help": "统计升至 120 级的心智单元Ⅰ与物资。"
+      "name": "共享船坞数据",
+      "help": "读取船坞卡片，保存共享数据供心智与舰船科技分析；不执行养成或换船。"
     },
     "MinLevel": {
       "name": "最低扫描等级",
-      "help": "包含边界。仅录入此等级及以上的舰船。"
+      "help": "读取船坞卡片，保存共享数据供心智与舰船科技分析；不执行养成或换船。"
     },
     "MaxLevel": {
       "name": "最高扫描等级",
-      "help": "包含边界。仅录入此等级及以下的舰船。"
-    },
-    "Result": {
-      "name": "舰船扫描结果",
-      "help": "按实例保存舰船、等级与核对状态。"
-    },
-    "FleetTechRecord": {
-      "name": "舰队科技记录",
-      "help": "按实例保存累计扫描证据、人工校正及阵营科技等级。"
+      "help": "读取船坞卡片，保存共享数据供心智与舰船科技分析；不执行养成或换船。"
     }
   },
-  "FleetTech": {
+  "FleetRotation": {
     "_info": {
-      "name": "科技扫描",
-      "help": "默认 95–125，完整 1–125 无过滤扫描才可确认未发现。"
+      "name": "换船配置",
+      "help": "仅联动普通主线和活动图；关闭时不自动换船。"
     },
-    "MinLevel": {
-      "name": "最低等级",
-      "help": "包含边界，范围外的已有记录保留。"
+    "Enabled": {
+      "name": "启用心情调度",
+      "help": "仅联动普通主线和活动图；关闭时不自动换船。"
     },
-    "MaxLevel": {
-      "name": "最高等级",
-      "help": "包含边界，最高 125 级。"
+    "SelectedOnly": {
+      "name": "仅计算更换舰船心情",
+      "help": "默认关闭。开启后只按勾选舰位心情决定等待或换船，可确认固定舰船带来的红脸；关闭后按全队最低心情等待。两种模式都计算培养舰船，沿用任务的保持经验加成、防绿脸等要求换船。"
     },
-    "Record": {
-      "name": "舰船科技记录",
-      "help": "按实例保存群组、人工校正、等级切换历史和扫描范围证据。"
+    "Rules": {
+      "name": "轮换规则",
+      "help": "按舰队设置slots和sources；舰位默认为不变，候补舰队按编号循环。"
+    },
+    "State": {
+      "name": "轮换记录",
+      "help": "保存上次来源和本轮已完成舰位；核对游戏编队后可清空。"
+    }
+  },
+  "FleetLevelTraining": {
+    "_info": {
+      "name": "等级调度",
+      "help": "默认关闭，复用培养舰位和候补。到期实读已启用条件，同一艘全部达标才完成；心情临时换船不标记完成。"
+    },
+    "Enabled": {
+      "name": "启用",
+      "help": "默认关闭，复用培养舰位和候补。到期实读已启用条件，同一艘全部达标才完成；心情临时换船不标记完成。"
+    },
+    "Target": {
+      "name": "目标等级",
+      "help": "默认关闭，复用培养舰位和候补。到期实读已启用条件，同一艘全部达标才完成；心情临时换船不标记完成。"
+    }
+  },
+  "FleetAffinityTraining": {
+    "_info": {
+      "name": "好感调度",
+      "help": "默认关闭，复用培养舰位和候补。到期实读已启用条件，同一艘全部达标才完成；心情临时换船不标记完成。"
+    },
+    "Enabled": {
+      "name": "启用",
+      "help": "默认关闭，复用培养舰位和候补。到期实读已启用条件，同一艘全部达标才完成；心情临时换船不标记完成。"
+    },
+    "Target": {
+      "name": "目标好感",
+      "help": "默认关闭，复用培养舰位和候补。到期实读已启用条件，同一艘全部达标才完成；心情临时换船不标记完成。"
+    }
+  },
+  "FleetDorm": {
+    "_info": {
+      "name": "换船休息",
+      "help": "整轮换船完成后，将当前整队安排到所选后宅楼层，再继续任务。"
+    },
+    "Enabled": {
+      "name": "启用换船休息",
+      "help": "默认关闭。先取消所选楼层原有舰船，再按舰队编号选齐当前整队（含固定舰位）。多队换船按全队出击、道中队、Boss队优先。楼层未解锁、栏位不足或无法确认选择时跳过休息，继续任务。当前仅支持国服。"
+    },
+    "Floor": {
+      "name": "后宅楼层",
+      "help": "一楼提供训练，二楼提供休息；不会自动解锁楼层或扩建栏位。",
+      "floor_1": "floor_1",
+      "floor_2": "floor_2"
+    }
+  },
+  "FleetTraining": {
+    "_info": {
+      "name": "培养记录",
+      "help": "按舰船保存实读数据、完成条件及待确认互换，重启后保留。"
+    },
+    "StopOnComplete": {
+      "name": "本轮全部达标后停止练级任务",
+      "help": "默认关闭。勾选舰船全部达到已启用的等级/好感目标后停止当前任务；先达标的舰船留在原位。"
+    },
+    "Notify": {
+      "name": "启用培养与换船推送",
+      "help": "默认关闭。推送培养检查、达标、换船结果及换船/后宅/装备失败。复用已有数据，发送到启动器和全局 OnePush 渠道。"
+    },
+    "FullScanRecord": {
+      "name": "最近全舰队扫描时间",
+      "help": "仅完整扫描成功后更新，局部调度实读不重置此时间。"
+    },
+    "CheckIntervalHours": {
+      "name": "等级/好感检查间隔（小时）",
+      "help": "默认6小时，仅用于等级和好感检查，支持非负小数且无上限。到期后只读取参与换船且实际出战的舰队及已开启条件，全部毕业要求达标才换船。心情到保留要求独立触发。确认需要换船后直接全舰队扫描，没有额外扫描间隔。0为每次结算检查。"
+    },
+    "State": {
+      "name": "培养记录",
+      "help": "按舰船保存实读数据、完成条件及待确认互换，重启后保留。"
+    }
+  },
+  "FleetEquipment": {
+    "_info": {
+      "name": "自动换装备",
+      "help": "智能换船前统一卸装，换船后按实际舰种应用装备码。默认关闭。"
+    },
+    "Enabled": {
+      "name": "启用自动换装备",
+      "help": "关闭时保持原智能换船行为。"
+    },
+    "Codes": {
+      "name": "舰种装备码",
+      "help": "每种舰种最多三个装备码，前后排分别按实际舰位顺序使用；空格跳过该顺序位，旧单码保留在第一格。"
+    },
+    "State": {
+      "name": "待完成换装",
+      "help": "保存尚未处理的目标舰位，开启后先补完再继续任务。"
     }
   },
   "FleetInfo": {
     "_info": {
       "name": "舰队信息",
       "help": "保存舰队扫描结果；已有可靠读数可被动缩小已校准心情的误差，不追加扫描或等待。"
+    },
+    "UpdateEmotion": {
+      "name": "扫描时更新心情",
+      "help": "每次扫描前可选择是否读取心情；关闭时保留已有舰位的心情参考，不参与恢复相位学习。"
     },
     "Result": {
       "name": "扫描结果",
@@ -7269,6 +7419,121 @@
     "WhiteBoxLimit": {
       "name": "保留每种白色装备箱 X 个",
       "help": ""
+    }
+  },
+  "IslandProductionPlanner": {
+    "_info": {
+      "name": "岛屿生产规划器",
+      "help": "首次使用：填好下方各店铺等级，商区角色在「经营模块」中设置；先不勾选「写入配置」运行一次，在日志中查看方案，再勾选写入。解锁新科技/岗位、改店铺等级或角色、换季后重新运行。"
+    },
+    "ApplySettings": {
+      "name": "写入配置",
+      "help": "关闭时只在日志中预览方案；开启后覆盖各店铺 Meal/MealNumber、AwayCook、经营商品，农田「按作物设置补种目标」，矿山/林场/渔场最低库存，牧场鸡肉/猪肉底线与牛奶/羊毛开关，、制造业各产线岗位数，以及空余岗位的默认作物/产品与岗位数。",
+      "True": "True",
+      "False": "False"
+    },
+    "RescanTechnology": {
+      "name": "重新扫描科技",
+      "help": "解锁新科技或岗位后开启。运行时进入岛屿科技页扫描，完成后自动关闭；没有保存过科技状态时也会扫描。",
+      "True": "True",
+      "False": "False"
+    },
+    "ScanSeasonTasks": {
+      "name": "扫描季节任务",
+      "help": "运行时进入季节页「任务」标签：先一键领取已完成任务的奖励，再读取未完成任务，把需要的物品写入「季节任务目标」。",
+      "True": "True",
+      "False": "False"
+    },
+    "SeasonTaskTargets": {
+      "name": "季节任务目标",
+      "help": "每行「物品英文名: 数量」，规划按本季剩余天数平均分配产量。开启「扫描季节任务」时每次运行自动改写；关闭后可手动编辑。"
+    },
+    "ScanCargoOrders": {
+      "name": "扫描货运委托",
+      "help": "运行时进入货运页面，读取已提交过部分货物的委托还缺的货物，写入「货运缺口」。这类委托更换后不退还已提交的货物，只能补齐。",
+      "True": "True",
+      "False": "False"
+    },
+    "CargoTargets": {
+      "name": "货运缺口",
+      "help": "每行「物品英文名: 数量」。开启「扫描货运委托」时每次运行自动改写；关闭后可手动编辑。"
+    },
+    "CargoTargetDays": {
+      "name": "货运缺口期限（天）",
+      "help": "货运缺口在多少天内补齐，规划按此分配产量。默认 1 天。"
+    },
+    "ExtraTargets": {
+      "name": "额外目标",
+      "help": "手动追加的备货目标，格式同上，也可写「物品: {count: 数量, period: 天数}」指定期限。AzurPilot 不自动处理季节订单，需要为订单备货时把订单物品写在这里。无法生产的物品会被忽略并在日志中提示。"
+    },
+    "DailyProfitLowerLimit": {
+      "name": "每日岛币净收入下限",
+      "help": "方案每天岛币净变化不低于此值。可填负数（用岛币换 PT）或 0（收支平衡）。无可行方案时调低。"
+    },
+    "DailyBufferSafetyMargin": {
+      "name": "日缓冲安全余量",
+      "help": "按比例放大每日消耗目标，如 0.1 为多备 10%。"
+    },
+    "FieldsEfficiency": {
+      "name": "农田效率加成",
+      "help": "丰壤农田的产出加成，来自岛屿「角色收集奖励」，按游戏内已领取的奖励数值选择（0 / 4% / 12%）。不确定时选 0：规划会略低估产量，只会多种一点，不会出错。",
+      "0": "0",
+      "4": "4",
+      "12": "12"
+    },
+    "OrchardEfficiency": {
+      "name": "果园效率加成",
+      "help": "坠香果园的产出加成，来自岛屿「角色收集奖励」，按游戏内已领取的奖励数值选择（0 / 4% / 12%）。不确定时选 0：规划会略低估产量，只会多种一点，不会出错。",
+      "0": "0",
+      "4": "4",
+      "12": "12"
+    },
+    "NurseryEfficiency": {
+      "name": "苗圃效率加成",
+      "help": "青芽苗圃的产出加成，来自岛屿「角色收集奖励」，按游戏内已领取的奖励数值选择（0 / 4% / 12%）。不确定时选 0：规划会略低估产量，只会多种一点，不会出错。",
+      "0": "0",
+      "4": "4",
+      "12": "12"
+    },
+    "RestaurantGrade": {
+      "name": "有鱼餐馆等级",
+      "help": "游戏内该店铺的等级，决定货架数量（铜/银 2、金 3、钻石 4）与货架容量（铜 5，其余 6）。",
+      "bronze": "bronze",
+      "silver": "silver",
+      "gold": "gold",
+      "diamond": "diamond"
+    },
+    "TeahouseGrade": {
+      "name": "白熊饮品等级",
+      "help": "游戏内该店铺的等级，决定货架数量（铜/银 2、金 3、钻石 4）与货架容量（铜 5，其余 6）。",
+      "bronze": "bronze",
+      "silver": "silver",
+      "gold": "gold",
+      "diamond": "diamond"
+    },
+    "JuuEateryGrade": {
+      "name": "啾啾简餐等级",
+      "help": "游戏内该店铺的等级，决定货架数量（铜/银 2、金 3、钻石 4）与货架容量（铜 5，其余 6）。",
+      "bronze": "bronze",
+      "silver": "silver",
+      "gold": "gold",
+      "diamond": "diamond"
+    },
+    "GrillGrade": {
+      "name": "乌鱼烤肉等级",
+      "help": "游戏内该店铺的等级，决定货架数量（铜/银 2、金 3、钻石 4）与货架容量（铜 5，其余 6）。",
+      "bronze": "bronze",
+      "silver": "silver",
+      "gold": "gold",
+      "diamond": "diamond"
+    },
+    "JuuCoffeeGrade": {
+      "name": "啾咖啡等级",
+      "help": "游戏内该店铺的等级，决定货架数量（铜/银 2、金 3、钻石 4）与货架容量（铜 5，其余 6）。",
+      "bronze": "bronze",
+      "silver": "silver",
+      "gold": "gold",
+      "diamond": "diamond"
     }
   },
   "AutoEquip": {
@@ -7530,6 +7795,24 @@
     "Deterministic": {
       "name": "取消随机性",
       "help": "调试用，一般情况下不开"
+    }
+  },
+  "Equipment": {
+    "_info": {
+      "name": "自动换装备",
+      "help": "用于演习、余烬信标和信标协助；档案编队不自动换装。"
+    },
+    "Enable": {
+      "name": "启用",
+      "help": "首次出击前应用战前方案，任务收尾时恢复战后方案。需要支持装备码输入的控制方式。"
+    },
+    "ClearBeforeApply": {
+      "name": "应用装备码之前清空装备",
+      "help": "战前和战后换装均先清空所有目标舰船，再依次应用装备码，便于在舰船间转移共用装备。"
+    },
+    "Config": {
+      "name": "装备码配置",
+      "help": "YAML 格式：before 为战前装备码，after 为战后装备码；换装前会校验整份配置。\nbefore 为空时不处理该位置；before 非空但 after 为空时，战后卸下该舰船的全部装备。可省略未使用的站位或阶段，空白字符串视为空值。\nflagship：旗舰；up：上僚舰；down：下僚舰；head：先锋领舰；middle：先锋中间；tail：先锋尾舰。"
     }
   },
   "Storage": {

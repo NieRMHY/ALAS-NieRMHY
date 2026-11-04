@@ -1,6 +1,30 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { createMockState } from './state.mjs'
+import { normalizeReport } from '../src/components/statisticsData'
+
+describe('刷新智能换船状态', () => {
+  it('独立接口清空记录并保留调度配置', () => {
+    const {dispatch} = createMockState()
+    const before = dispatch('config.get', {instance: 'demo-main'})
+    const after = dispatch('fleetTraining.reset', {instance: 'demo-main', revision: before.revision})
+    expect(after.values.FleetInfo.FleetTraining.State).toEqual({})
+    expect(after.values.FleetInfo.FleetRotation.State).toEqual({})
+    expect(after.values.FleetInfo.FleetEquipment.State).toEqual({})
+    expect(after.values.FleetInfo.FleetInfo.Result).toEqual({})
+    expect(after.values.FleetInfo.FleetRotation.Rules).toBe(before.values.FleetInfo.FleetRotation.Rules)
+    expect(after.values.FleetInfo.FleetTraining.CheckIntervalHours).toBe(before.values.FleetInfo.FleetTraining.CheckIntervalHours)
+    expect(after.values.FleetInfo.FleetEquipment).toEqual(before.values.FleetInfo.FleetEquipment)
+    expect(() => dispatch('fleetTraining.reset', {instance: 'demo-main', revision: '过期'})).toThrow(/配置已变化/)
+  })
+  it('实例运行时拒绝清空', () => {
+    const {dispatch} = createMockState()
+    dispatch('scheduler.start', {instance: 'demo-main'})
+    const before = dispatch('config.get', {instance: 'demo-main'})
+    expect(() => dispatch('fleetTraining.reset', {instance: 'demo-main', revision: before.revision})).toThrow(/先停止实例/)
+    expect(dispatch('config.get', {instance: 'demo-main'})).toEqual(before)
+  })
+})
 
 describe('前端模拟服务', () => {
   it('活动候选按实例包名隔离，切换地区时刷新旧选择', () => {
@@ -21,14 +45,15 @@ describe('前端模拟服务', () => {
       .toEqual(schema.args.Event.Campaign.Event.option_cn)
   })
 
-  it('跨服活动选择失败不会部分保存同一批其他字段', () => {
+  it('无效活动选择失败不会部分保存同一批其他字段', () => {
     const {dispatch} = createMockState()
     const initial = dispatch('config.get', {instance: 'demo-main'})
-    const taiwan = dispatch('schema.get', {language: 'zh-CN'}).args.Event.Campaign.Event.option_tw[0]
+    // 当前四服共用 event_20261022_cn，不能再将台服候选当作无效活动。
+    const invalidEvent = 'event_nonexistent'
     expect(() => dispatch('config.patch', {instance: 'demo-main', changes: [
       {path: 'Alas.Emulator.Serial', value: 'should-not-save'},
-      {path: 'Event.Campaign.Event', value: taiwan},
-    ]})).toThrow(/当前服务器/)
+      {path: 'Event.Campaign.Event', value: invalidEvent},
+    ]})).toThrow(/有效选项/)
     expect(dispatch('config.get', {instance: 'demo-main'})).toEqual(initial)
   })
 
@@ -154,6 +179,9 @@ describe('前端模拟服务', () => {
     expect(resources.series[0].label).toBe('石油')
     expect(resources.series.map(s => s.label)).toEqual(['石油', '物资', '钻石', '心智魔方', '活动 PT', '核心数据', '荣誉勋章', '功勋', '舰队币'])
     expect(resources.series[0].points).toHaveLength(24)
+    const decoded = normalizeReport(resources)
+    expect(decoded.series.flatMap(series => series.points).every(point =>
+      Number.isFinite(Date.parse(point.time.replace(' ', 'T'))) && Number.isFinite(point.value))).toBe(true)
 
     const action = dispatch('statistics.report', {instance: 'demo-main', category: 'action', days: 7})
     expect(action.series).toHaveLength(5)
