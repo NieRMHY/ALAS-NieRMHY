@@ -556,7 +556,8 @@ class TestResourceCacheInvalidation(unittest.TestCase):
         handler = OSMap.__new__(OSMap)
         handler.config = SimpleNamespace(task=SimpleNamespace(command='OpsiHazard1Leveling'))
         handler.device = Mock()
-        handler.appear = Mock(return_value=True)
+        # Modify by MHY, 本用例验证重启前缓存清理，识别依赖跟随颜色模板入口。
+        handler.match_template_color = Mock(return_value=True)
         handler.ui_ensure = Mock()
         names = ('_ap_snapshot', '_ap_purchase_count', '_yellow_coin_read', '_paired_purple_read')
         for name in names:

@@ -87,6 +87,28 @@ class TestRefreshSwitch(unittest.TestCase):
         self.assertEqual(config.values, {})
         self.assertEqual(config.saved, 0)
 
+    # Add by MHY, 冬季缺少经济与任务数据时消费一次性请求，但不覆盖用户方案。
+    def test_winter_refresh_preserves_manual_settings(self):
+        config = FakeConfig({
+            'IslandPlan.IslandPlan.RefreshPlan': True,
+            'IslandPlan.IslandPlan.Season': 'winter',
+            'IslandRestaurant.IslandRestaurant.Meal1': 'shiitake_chicken_soup',
+            'IslandRestaurant.IslandRestaurant.MealNumber1': 37,
+            'IslandBusiness.IslandBusinessShop1.Product1': 'green_jujube_porridge',
+            'IslandRestaurant.IslandRestaurantNextTask.AwayCook': 'shiitake_chicken_soup',
+        })
+        expected = dict(config.values)
+        expected['IslandPlan.IslandPlan.RefreshPlan'] = False
+        with patch('module.island.island_plan_refresh.current_progress') as progress, \
+                patch('module.island.island_plan_refresh.plan_all') as plan, \
+                patch('module.island.island_plan_refresh.save_generated') as save:
+            self.assertFalse(refresh_plan_if_requested(config))
+        self.assertEqual(config.values, expected)
+        self.assertEqual(config.saved, 1)
+        progress.assert_not_called()
+        plan.assert_not_called()
+        save.assert_not_called()
+
     def test_refresh_writes_and_resets(self):
         config = FakeConfig({
             'IslandPlan.IslandPlan.RefreshPlan': True,

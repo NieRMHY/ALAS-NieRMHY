@@ -46,6 +46,9 @@ KITCHENS = {
 BUSINESS_TASK = 'IslandBusiness'
 
 # AzurPilot 菜品名 -> 游戏物品 ID（按中文名与 data.py 对照得到）
+# Modify by MHY, 冬季菜品（冬菇炖鸡/青枣粥/马蹄糕/砂糖橘大福）暂不映射：上游冬季数据只有
+# 物品字典，缺少活动、生产槽位与原料供应（data.py 的活动表截至 2026-11-05），
+# 规划时按「AzurPilot 不支持」排除，等上游补齐冬季数据后再随合并引入
 DISH_ITEM_IDS = {
     # 有鱼餐馆
     'tofu': 3011, 'tofu_meat': 3012, 'omurice': 3013, 'cabbage_tofu': 3014, 'salad': 3015,
@@ -115,6 +118,8 @@ THRESHOLD_GROUPS = {
         5101: 'IslandRancher.IslandFishery.MinSquid',
         5107: 'IslandRancher.IslandFishery.MinYellowfinTuna',
         5108: 'IslandRancher.IslandFishery.MinSeaCucumber',
+        5003: 'IslandRancher.IslandFishery.MinKoiCarp',
+        5102: 'IslandRancher.IslandFishery.MinMackerel',
     },
 }
 

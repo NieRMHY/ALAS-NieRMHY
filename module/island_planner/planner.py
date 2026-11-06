@@ -31,6 +31,7 @@ from module.ui.page import page_island, page_island_phone
 
 TASK = 'IslandProductionPlanner'
 TECHNOLOGY_STORAGE = f'{TASK}.Storage.Storage.IslandTechnologyStatus'
+SEASON_CONFIG = 'IslandPlan.IslandPlan.Season'
 GRADE_KEYS = {
     601: 'RestaurantGrade',
     602: 'TeahouseGrade',
@@ -257,6 +258,12 @@ class IslandProductionPlanner(IslandSeasonTaskScanner, IslandTechnologyScanner):
 
     def run(self):
         logger.hr('Island production planner', level=1)
+        # Add by MHY, 冬季规划数据尚不完整：data.py 的季节活动表截至 2026-11-05，冬季缺少
+        # 活动、生产槽位与原料供应。先在这里阻断，不扫描科技/目标，也不求解或改写配置
+        if self.config.cross_get(SEASON_CONFIG, None) == 'winter':
+            logger.warning('[岛屿-规划] 当前季节为冬季，冬季规划数据尚不完整（缺少冬季活动、'
+                           '生产槽位与原料供应），本次跳过规划，配置保持不变')
+            return False
         technology_status = self.load_technology()
         targets = self.load_targets()
         calculator = self.create_calculator(technology_status)

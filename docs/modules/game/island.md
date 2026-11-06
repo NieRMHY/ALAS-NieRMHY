@@ -149,10 +149,10 @@ flowchart TD
 
 | 子模块 | 玩法 | 入口类 | 特殊机制 |
 | --- | --- | --- | --- |
-| `island_farm.py` | 农田、果园、苗圃播种 | `IslandFarm` | 三区域独立阈值/可配置默认作物，可按作物单独设目标（`farm_targets.py`，按库存/目标比例排序）；未达标作物每类最多占一岗，补种安排后剩余的空闲岗位按 `PlantPotatoes` 等配置种默认作物；果园秋季限定（秋月梨/柿子）按 4x1 计种子；牛油果/菠萝可忽略；小天城（Amagi_chan）橡胶优先开关 |
+| `island_farm.py` | 农田、果园、苗圃播种 | `IslandFarm` | 三区域独立阈值/可配置默认作物，可按作物单独设目标（`farm_targets.py`，按库存/目标比例排序）；未达标作物每类最多占一岗，补种安排后剩余的空闲岗位按 `PlantPotatoes` 等配置种默认作物；果园秋季限定（秋月梨/柿子）与冬季限定（砂糖橘/青枣）按每批 4 粒计种子；跨季默认作物回退到本区常驻作物；锁定岗位不计为空闲；牛油果/菠萝可忽略；小天城（Amagi_chan）橡胶优先开关 |
 | `island_rancher.py` | 磨坊 + 牧场 | `IslandRancher` | 按岗位固定饲料种类补磨坊加工（小麦→鸡饲料等）；`run()` 末尾内联 `IslandFishery(...).run(ranch_finish_times=...)` 合并计时器 |
-| `island_fishery.py` | 渔场养殖 | `IslandFishery` | 鱼苗商店分淡水/海水/其他页签；按每苗产量反推购买数；体力门槛 98；养殖后鱼肉少于 `MinFreshwaterFishMeat`/`MinSaltwaterFishMeat` 时调用 `island_fish_meat.py` 兑换 |
-| `island_fish_meat.py` | 鱼肉加工（移植自 ALAS） | `IslandFishMeatExchange`（混入渔场） | 岛屿主页「商店」→ 侧栏第 7 项「鱼肉加工」→ 淡水/海水子页签；鱼卡 OCR 鱼名与库存，按产量从高到低只换到目标数量；侧栏、确认弹窗、获得物品弹窗按颜色识别（EN 通用弹窗资源不匹配），点过「商店」后才点侧栏 |
+| `island_fishery.py` | 渔场养殖 | `IslandFishery` | 鱼苗商店分淡水/海水/其他页签；按每苗产量反推购买数；体力门槛 98；鲤鱼（淡水）、马鲛鱼（海水）每苗产 4，识别图取自国际服截图，尚无岗位「生产中」图，工作中的鲤鱼/马鲛鱼岗位按未知产品处理；产品选择页找不到目标产品时用 `back_to_postmanage_from_dispatch` 逐层退回，不再点无效的岗位关闭按钮导致卡死；养殖后鱼肉少于 `MinFreshwaterFishMeat`/`MinSaltwaterFishMeat` 时调用 `island_fish_meat.py` 兑换 |
+| `island_fish_meat.py` | 鱼肉加工（移植自 ALAS） | `IslandFishMeatExchange`（混入渔场） | 岛屿主页「商店」→ 侧栏第 7 项「鱼肉加工」→ 淡水/海水子页签；鱼卡 OCR 鱼名与库存，按产量从高到低只换到目标数量，各鱼保留渔场的养殖底线（`MinBass`/`MinKoiCarp`/`MinMackerel`/`MinYellowfinTuna`）；侧栏、确认弹窗、获得物品弹窗按颜色识别（EN 通用弹窗资源不匹配），点过「商店」后才点侧栏 |
 | `island_mine_forest.py` | 矿山/林场 | `IslandMineForest` | 仓库顺序不固定，自实现「OCR 品名 → 读数字」库存扫描（`ITEM_CN_NAMES` 同时收录中文名与国际服英文名首词）；每岗产 4 个、各产物有最大连续次数；体力门槛 80 |
 | `island_grill.py` | 乌鱼烤肉店 | `IslandGrill` | 最薄的店铺：仅声明 8 菜品、2 套餐、2 个岗位按钮（实际岗位数由 `IslandGrill.PostNumber` 决定，默认 1），全部逻辑走基类 |
 | `island_teahouse.py` | 白熊饮品 | `IslandTeahouse` | 季节高优先级饮品走固定坐标（不滑动不比色）；「迎春花茶优先生产」开关；为手动配置的季节饮品补注册防止 KeyError |
@@ -167,6 +167,8 @@ flowchart TD
 | `island_air_drop.py` | 每日空投 + 好友岛偷补给 | `IslandAirDrop` | 以服务器 0 点为每日边界；5 小时偷取冷却（`LastSteal` 落配置）；拜访次数 OCR 复检；`island_air_drop()` 按画面点补给气泡（最多 2 次）、关闭奖励弹窗，气泡变为「分享剩余补给」即停止，国际服误开的邀请好友窗口点 ✕ 关闭、不邀请 |
 | `island_pearl_sell.py` | 珍珠每周采购售卖 | `IslandPearlSell` | 周一 01:00 交易窗口；本岛价不达标时按排行榜拜访好友岛比价（买 1.1 折算）；每日 03:00 可选价格刷新 |
 | `island_cargo_preparation.py` | 货运委托 | `IslandCargoPreparation` | 3 栏位状态机（locked/pending/running/finished/refreshing/empty）；牛奶黑名单触发换货；尚未提交任何货物且仍缺货的委托也会更换（更换扣除一次运输次数、已提交货物不退还，因此已提交过的委托保留等待）；更换列表按每行左侧序号定位，只选「库存/需求」全部为蓝色的委托，没有则刷新一次，仍没有就保留原委托；默认 2 小时重跑 |
+
+冬季物品由 `SEASONAL_ITEMS` 统一启用：果园砂糖橘/青枣、有鱼餐馆冬菇炖鸡/青枣粥、啾啾简餐马蹄糕/砂糖橘大福，以及手工线梅花香包/冬季花束。餐馆与简餐初始化时把跨季的排产需求映射到当季同序号菜品；当前季节没有对应槽位或后厨不支持时跳过该项，保留需求数量及本地库存预留算法。商区识别同时包含商品列表图与已选货架裁图。
 
 ### 岛屿生产规划器（IslandProductionPlanner）
 
@@ -374,7 +376,7 @@ stateDiagram-v2
 
 | 配置 | 类型 | 默认值 | 说明 |
 | --- | --- | --- | --- |
-| `IslandPlan.Season` | select | spring | 全局季节，驱动所有限定物品过滤（选项仅四季，冬季限定为空表） |
+| `IslandPlan.Season` | select | spring | 全局季节，驱动四季限定物品过滤，冬季含果园、餐馆、简餐及手工产品 |
 | `IslandFarm.Positions` / `MinFarm` / `PlantPotatoes` / `WorkerFilter` | 数值/文本 | 3 / 660 / 4 / WorkerJuu | 农田岗位数、补种阈值、默认作物岗位数、工人优先级 |
 | `IslandFarm.CropTargets` / `IslandOrchard.CropTargets` / `IslandNursery.CropTargets` | 多行文本 | 空 | 按作物的补种目标，每行 `作物: 目标库存`（作物名为 `INVENTORY_CONFIG` 英文名）；未列出的作物用区域阈值，0 表示不补种；岛屿生产规划器会改写 |
 | `IslandFarm.DefaultCrop` / `IslandOrchard.DefaultCrop` / `IslandNursery.DefaultCrop` | select | wheat / rubber / lavender | 所有作物达标后空余岗位种植的作物（岗位数为 `PlantPotatoes` 等）；岛屿生产规划器会改写 |
@@ -464,10 +466,10 @@ stateDiagram-v2
 ## 17. 已知限制
 
 - 所有坐标、路线默认值（`module/island/island_walk.py` 的方向+时长序列）与固定坐标选品均按 1280×720 实测写死，游戏改版需重新校准；`IslandPlan.IslandWalk.<路线>` 可以整条覆盖规则（含方向顺序与时长），对所有控制方式生效。
-- `SEASONAL_ITEMS` 中冬季为空、代码保留的 `'none'` 季节分支在当前配置选项下不可达；赛季迭代（新季节物品上线）完全依赖手动维护代码。
+- `SEASONAL_ITEMS` 已覆盖冬季；代码保留的 `'none'` 季节分支在当前配置选项下不可达。新赛季仍需手动同步季节表、配方与识别图。
 - 制造业部分季节物品（夏季茉莉精油、秋季花束）在季节表中保留但有意不配置制作；`filter_element` 复用了 `TEMPLATE_FILE_CABINET` 模板（资源未单独提取），为已知的临时妥协。
 - 货物黑名单目前只实现了 Milk 一种识别模板；缺货委托不依赖黑名单，由更换列表的库存颜色判断。更换列表的行定位与颜色阈值基于国际服截图（`tests/fixtures/island_cargo/`），国服若布局不同需另行校准。
-- 岛屿生产规划器不能指定制造业产线内的产品比例（铁钉与餐具、皮革与鞋靴由 `island_manufacture.py` 按库存规则切换），只控制岗位数；季节订单需在 `ExtraTargets` 手动填写；每日订单不参与规划。`data.py` 需在游戏更新后从 ALAS 重新复制。
+- 岛屿生产规划器不能指定制造业产线内的产品比例（铁钉与餐具、皮革与鞋靴由 `island_manufacture.py` 按库存规则切换），只控制岗位数；季节订单需在 `ExtraTargets` 手动填写；每日订单不参与规划。`data.py` 需在游戏更新后从 ALAS 重新复制。当前冬季规划数据未覆盖完整的活动、生产槽位与原料供应；`IslandPlan.Season=winter` 时生产规划器在加载科技与目标之前跳过，不扫描、不求解、不改写配置，冬季后厨与果园按用户配置执行。本地「刷新生产/上架方案」也跳过冬季写回（一次性开关仍复位）；赛季常驻菜轮换在冬季保持用户设置，待经济库及任务表补齐后再接入自动规划。
 - 各生产玩法每轮固定追加 6 小时兜底延时，依赖 `Duration` OCR 读取剩余时间，极端字体渲染下可能识别失败退化为兜底值。
 
 ## 19. 调试方法

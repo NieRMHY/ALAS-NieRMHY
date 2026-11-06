@@ -204,6 +204,8 @@ flowchart BT
 | `fleet_repair()` / `port_goto()` | 港口维修与「走不动就换港口绕路」的容错包装 |
 | `boss_clear()`（`fleet.py`） | 月度/要塞 Boss 的多舰队轮换攻击，`limit_walk` 限制单次行走曼哈顿距离 ≤3 格 |
 
+初始化维修遵循当前任务身份：普通任务在首次自律前检查全舰队，侵蚀一献祭模式与 `RepairThreshold=0` 跳过维修。智能调度及其防溢出代理先保存 `_initial_fleet_repair_pending`，等实际子任务配置绑定后再决定；首个子任务已处理后清除标记，避免按父任务设置提前修掉献祭队。没有子任务、需要执行首次自律时先关闭行动力面板再维修。仓库修理先在新截图中确认舰队选择界面并选中目标舰队，再使用修理包；底部页签和关闭过程不复用过期的使用按钮点击冷却。回归见 `tests/test_opsi_fleet_repair.py`。
+
 ### 地图事件点击失败与重启续查（module/os/map_event_resume.py）
 
 明石与扫描装置可能刷新在地图左下角，与「第一舰队 FLEET SELECT」舰队栏及底部按钮重合：点击坐标先命中 UI，商店/装置对话永远不会出现；`handle_akashi_supply_buy()` 的 `ui_click` 会一直等 `is_in_map`，直到设备卡死检查抛 `GameStuckError`。现在把这条路径拆成三层有界处理：

@@ -211,7 +211,8 @@ class BusinessStockCheckMixin:
         if not key:
             return
         season = SeasonConfig(self.config).season
-        if not season:
+        # Modify by MHY, 冬季任务表未录入时不以空任务集恢复旧常驻菜，保留手填值。
+        if not season or season == 'winter':
             return
 
         # Modify by MHY, 需求数量与已完成来自配置：已勾选「已完成」的物品不再轮换成常驻餐品，

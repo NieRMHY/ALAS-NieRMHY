@@ -92,7 +92,7 @@ module/os_simulator/
 | --- | --- |
 | `ActionPointHandler(UI, MapEventHandler)` | 行动力核心。`ActionPointLimit` 异常携带 `current/total/cost/preserve`，`delay_minutes` 属性可按恢复速率换算延迟；`ActionPointBuyCounter` 把 OCR 结果 `05` 修正为 `0/5`（购买次数），JP 服字体单独分支。`handle_action_point(..., avoid_ap_overflow=True)` 在开箱会溢出时拒绝并抛 `ActionPointLimit`。智能调度在同一面板已安全首读且含箱口径一致时传 `skip_first_read=True`，只省掉补充前的重复读取，使用或购买后的确认读取保留 |
 | `MapEventHandler(EnemySearchingHandler)` | 大世界地图事件总入口：掉落页、档案弹窗、游戏提示、余烬弹窗、剧情跳过、`FleetLockSwitch`（带 `handle_additional` 清理遮挡）、自动搜索选项与退出。雾天（enemy_searching）用 `is_in_map` 特判 |
-| `StorageHandler(GlobeOperation, ZoneManager)` | 大世界仓库。注意与 `module/storage/storage.py` 的通用 `StorageHandler` 同名不同类。`RepairResult` 枚举表达修理结果；`storage_get_next_item` 是「取下一个隐秘/深渊坐标并进入」的封装；日志仪与调谐样本的一键使用 |
+| `StorageHandler(GlobeOperation, ZoneManager)` | 大世界仓库。注意与 `module/storage/storage.py` 的通用 `StorageHandler` 同名不同类。`RepairResult` 枚举表达修理结果；`storage_get_next_item` 是「取下一个隐秘/深渊坐标并进入」的封装；日志仪与调谐样本的一键使用。记录仪首扫与使用后重扫共用 `storage_logger_match`：普通记录仪相似度 0.5、解锁记录仪 0.75；确认仓库页后才重扫，无命中通过稳定计时退出，连续无效点击沿用设备预算上抛。回归见 `tests/test_opsi_storage_logger.py` |
 | `OSStatus(UI)` | 黄币/紫币 OCR（双读确认 + `_cache_lock` 缓存降级）；`is_in_task_explore`/`is_running_cl1_leveling` 等属性读取 `_bind_task_override`，是代理身份判断的唯一实现点 |
 | `PortHandler(OSShop)` | 港口进出（`PORT_CHECK`）、任务接取、`port_dock_repair` 港口维修；被 `OSMap` 与大世界守护共用 |
 | `MissionHandler` | `os_mission_overview_accept`（任务总览接取）、`MissionAtCurrentZone` 异常；`is_in_opsi_explore()` 在此定义（OpsiExplore 启用且 next_run 早于重置前 12 小时） |

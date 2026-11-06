@@ -20,7 +20,7 @@ import unittest
 from datetime import datetime
 from pathlib import Path
 from types import SimpleNamespace
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 import numpy as np
 import yaml
@@ -380,6 +380,12 @@ def options(group, key):
 
 MEAL_OPTIONS = {rid: options(k['task'], 'Meal1') for rid, k in sm.KITCHENS.items()}
 PRODUCT_OPTIONS = {rid: options(k['business'], 'Product1') for rid, k in sm.KITCHENS.items()}
+# Add by MHY, 冬季菜品本轮不并入规划（data.py 季节活动表截至 2026-11-05，缺冬季活动、
+# 生产槽位与原料供应）：WebUI 选项保留，但规划器不映射，restrict_calculator 会按不支持排除
+UNPLANNED_DISHES = {
+    'shiitake_chicken_soup', 'green_jujube_porridge',
+    'water_chestnut_cake', 'sugar_tangerine_daifuku',
+}
 
 
 def solve(technology, grades='gold', chars=('WorkerJuu', 'WorkerJuu'), profit=50000, open_ids=None, slot_limit=None):
@@ -420,7 +426,11 @@ class NameMappingTest(unittest.TestCase):
     def test_every_azurpilot_dish_option_has_an_item(self):
         for rid, kitchen in sm.KITCHENS.items():
             for name in MEAL_OPTIONS[rid] + PRODUCT_OPTIONS[rid]:
+                if name in UNPLANNED_DISHES:
+                    continue
                 self.assertIn(name, sm.DISH_ITEM_IDS, f'{kitchen["task"]}: {name}')
+        # 冬季数据补齐后这里会失败，提醒把菜品映射与冬季回归一起恢复
+        self.assertFalse(UNPLANNED_DISHES & set(sm.DISH_ITEM_IDS))
         for item_id in sm.DISH_ITEM_IDS.values():
             self.assertIn(item_id, DIC_ISLAND_ITEM)
 
@@ -733,6 +743,43 @@ class PlannerTaskTest(unittest.TestCase):
         written = planner.config.written
         self.assertIn('IslandMineForest.IslandMine.MineSilver', written)
         self.assertIn(written.get('IslandFarm.IslandFarm.DefaultCrop', 'wheat'), sm.CROP_ITEM_IDS['farm'])
+
+    def test_winter_season_skips_scan_solve_and_write(self):
+        # Add by MHY, 冬季规划数据尚未补齐：秋季赛季在 2026-11-05 结束，冬季缺少活动、
+        # 生产槽位与原料供应。即使勾选写入，也必须直接返回 False，不扫描、不求解、不写配置
+        from module.island_planner.planner import IslandProductionPlanner
+        technology = {str(tech_id): True for tech_id in DIC_ISLAND_TECHNOLOGY}
+        with patch.object(IslandProductionPlanner, '__init__', lambda self: None):
+            planner = IslandProductionPlanner()
+        planner.config = FakeConfig(
+            technology,
+            IslandProductionPlanner_RescanTechnology=False,
+            IslandProductionPlanner_ScanSeasonTasks=True,
+            IslandProductionPlanner_ScanCargoOrders=True,
+            IslandProductionPlanner_ApplySettings=True,
+        )
+        planner.config.data['IslandPlan']['IslandPlan']['Season'] = 'winter'
+        planner.get_technology_status = Mock(side_effect=AssertionError('冬季不应扫描科技'))
+        planner.scan_season_task_targets = Mock(side_effect=AssertionError('冬季不应扫描季节任务'))
+        planner.scan_cargo_targets = Mock(side_effect=AssertionError('冬季不应扫描货运'))
+        planner.create_calculator = Mock(side_effect=AssertionError('冬季不应求解'))
+        planner.config.cross_set_many = Mock()
+
+        with patch('module.island_planner.planner.get_current_season_remaining_days',
+                   return_value=self.SEASON_REMAINING_DAYS):
+            self.assertFalse(planner.run())
+
+        self.assertEqual(planner.config.written, {})
+        planner.config.cross_set_many.assert_not_called()
+        planner.get_technology_status.assert_not_called()
+        planner.scan_season_task_targets.assert_not_called()
+        planner.scan_cargo_targets.assert_not_called()
+
+    def test_non_winter_season_still_plans(self):
+        # 其它季节不受冬季阻断影响，仍按原流程（默认预览，不写配置）
+        planner, result = self.run_planner(config_data={'IslandPlan.IslandPlan.Season': 'autumn'})
+        self.assertTrue(result)
+        self.assertEqual(planner.config.written, {})
 
 
 class PriorityTest(unittest.TestCase):

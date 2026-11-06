@@ -34,6 +34,32 @@ class RepairResult(Enum):
 
 SCROLL_STORAGE = Scroll(STORATE_SCROLL, color=(247, 211, 66))
 
+# Add by MHY, 2026-11-06: 记录仪模板与各自的原相似度，仓库扫描与重扫共用同一份阈值
+STORAGE_LOGGER_TEMPLATES = {
+    TEMPLATE_STORAGE_LOGGER.name: (TEMPLATE_STORAGE_LOGGER, 0.5),
+    TEMPLATE_STORAGE_LOGGER_UNLOCK.name: (TEMPLATE_STORAGE_LOGGER_UNLOCK, 0.75),
+}
+
+
+def storage_logger_match(image, names=None):
+    """
+    在仓库截图中匹配记录仪按钮，每个模板使用自身相似度。
+
+    Args:
+        image (np.ndarray): rgb2gray 后的仓库截图。
+        names (tuple[str] | None): 限定要匹配的模板名称，None 表示全部记录仪模板。
+
+    Returns:
+        list[Button]: 匹配到的记录仪按钮，按模板顺序排列。
+    """
+    if names is None:
+        names = tuple(STORAGE_LOGGER_TEMPLATES)
+    items = []
+    for name in names:
+        template, similarity = STORAGE_LOGGER_TEMPLATES[name]
+        items.extend(template.match_multi(image, similarity=similarity))
+    return items
+
 
 class StorageHandler(GlobeOperation, ZoneManager):
     def is_in_storage(self):
@@ -103,6 +129,9 @@ class StorageHandler(GlobeOperation, ZoneManager):
             out: STORAGE_CHECK
         """
         success = False
+        # Add by MHY, 2026-11-06: 仅记录仪走重扫分支，重扫哪一个模板由按钮名决定
+        logger_name = button.name if button.name in STORAGE_LOGGER_TEMPLATES else None
+        confirm_timer = Timer(1.5, count=3).start()
         get_mission_counter = 0
         self.interval_clear(STORAGE_CHECK)
         self.interval_clear(STORAGE_USE)
@@ -112,6 +141,9 @@ class StorageHandler(GlobeOperation, ZoneManager):
         self.interval_clear(GET_MISSION)
 
         for _ in self.loop():
+            if logger_name and not self.is_in_storage():
+                confirm_timer.reset()
+
             # 误点击物品弹出信息说明
             if self.appear(GET_MISSION, offset=True, interval=2):
                 logger.info(f'[大世界-仓库] 使用物品信息 -> {GET_MISSION}')
@@ -144,6 +176,18 @@ class StorageHandler(GlobeOperation, ZoneManager):
                 continue
             if self.handle_story_skip():
                 continue
+            # Modify by MHY, 确认仓库稳定前重新定位记录仪。
+            if logger_name:
+                if self.is_in_storage():
+                    # Modify by MHY, 首扫与重扫共用阈值；失效点击仍由设备既有预算上抛。
+                    items = storage_logger_match(rgb2gray(self.device.image), names=(logger_name,))
+                    if items:
+                        confirm_timer.reset()
+                        if self.appear(STORAGE_CHECK, offset=(20, 20), interval=5):
+                            self.device.click(items[0])
+                    elif confirm_timer.reached():
+                        break
+                continue
             # 点击使用物品
             if self.appear(STORAGE_CHECK, offset=(20, 20), interval=5):
                 self.device.click(button)
@@ -167,8 +211,8 @@ class StorageHandler(GlobeOperation, ZoneManager):
                 SCROLL_STORAGE.set_bottom(main=self, skip_first_screenshot=True)
 
             image = rgb2gray(self.device.image)
-            items = TEMPLATE_STORAGE_LOGGER.match_multi(image, similarity=0.5)
-            items.extend(TEMPLATE_STORAGE_LOGGER_UNLOCK.match_multi(image, similarity=0.75))
+            # Add by MHY, 2026-11-06: 与 _storage_item_use 重扫共用同一份模板相似度
+            items = storage_logger_match(image)
             logger.attr('记录仪数量', len(items))
 
             if len(items):
