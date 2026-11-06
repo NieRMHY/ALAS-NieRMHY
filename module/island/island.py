@@ -14,7 +14,7 @@ from module.island.island_select_character import *
 from module.island.warehouse import *
 from module.handler.login import LoginHandler
 from module.ui.ui import *
-from module.exception import GameStuckError
+from module.exception import GameStuckError, ScriptError
 from module.logger import logger
 from module.base.runtime_params import (
     ISLAND_CHARACTER_CONFIRM_RETRY_WAIT,
@@ -24,6 +24,14 @@ from module.base.runtime_params import (
     ISLAND_MAP_DESTINATION_WAIT,
 )
 from module.config.utils import read_run_param
+from module.island.island_walk import (
+    ISLAND_WALK_ACTIONS,
+    ISLAND_WALK_MAX_HOLD,
+    ISLAND_WALK_MIN_HOLD,
+    ISLAND_WALK_ROUTES,
+    format_walk_rule,
+    parse_walk_rule,
+)
 import re
 
 # 等待/重试参数走 WebUI「运行参数」页（RunParams.UiWait），兜底默认值与
@@ -39,6 +47,24 @@ ISLAND_POST_SWIPE_STEP = 450
 ISLAND_POST_SWIPE_DISTANCE = 550
 ISLAND_POST_SWIPE_TO_TOP_MAX = 5
 ISLAND_POST_SWIPE_SEARCH_MAX = 8
+# 岗位列表可见区域下沿（post_manage_up_swipe 滑动框 y=69~656），按钮下沿超出时先上推列表再点击
+POST_LIST_VISIBLE_BOTTOM = 640
+POST_EDGE_NUDGE_MARGIN = 120
+POST_EDGE_NUDGE_LIMIT = 3
+
+# 规则里 `switch`（切换到啾咖啡餐厅）的等待上限：点击按钮后等对话关闭、场景切换完成
+ISLAND_SWITCH_TIMEOUT = 12
+
+# 种子/鱼苗商店只列出账号已解锁的商品，未解锁的商品不占格子，后面的商品会整体前移，
+# 各账号、各服务器的格子顺序都可能不同（如国际服未解锁洋葱时，草莓格子上是棉花）。
+# 因此商品按图标在整页范围内模板搜索定位，而不是在国服坐标上做颜色检测；
+# 种子包外观相同、只有中间图案不同，相似度需提高到 0.93 才不会误认成其他商品。
+ISLAND_SHOP_ITEM_SEARCH_OFFSET = (700, 300)
+ISLAND_SHOP_ITEM_SIMILARITY = 0.93
+
+# 岛屿走位路线与规则解析集中在 module/island/island_walk.py；可以用岛屿计划的
+# 全局配置 `IslandPlan.IslandWalk.<路线名>` 覆盖整条规则（所有控制方式都生效，
+# 桥接 swipe 的位移随负载漂移，按机器各配一套规则最稳）。
 
 # 岗位产品选择滑动惯性消除安全区域
 SELECT_PRODUCT_INERTIA_STOP = Button(
@@ -87,6 +113,23 @@ OCR_SELECT_PRODUCT_MATERIAL_COUNTER_AREAS = (
     (775, 536, 850, 562),
 )
 
+# 商店购买弹窗右上角的 ✕ 关闭按钮。各服务器位置相同，没有单独的模板图片，
+# 只在 ISLAND_SHOPPING_CHECK 确认弹窗打开时按固定坐标点击。
+ISLAND_SHOPPING_CLOSE = Button(
+    area=(970, 117, 1003, 150), color=(),
+    button=(970, 117, 1003, 150),
+    file={'cn': '', 'en': '', 'jp': '', 'tw': ''},
+    name='ISLAND_SHOPPING_CLOSE',
+)
+
+# ensure_select_product_material 的返回结果
+# READY：材料足够（或补货失败但已够本次派遣），可直接确认派遣
+# RESTOCKED：离开过产品选择页（补货成功或失败后返回），调用方需要重新选品
+# INSUFFICIENT：补货失败且材料不够一次派遣，调用方应跳过该岗位
+MATERIAL_READY = 'ready'
+MATERIAL_RESTOCKED = 'restocked'
+MATERIAL_INSUFFICIENT = 'insufficient'
+
 # select_product 中滑动操作的点击记录名称，提取为常量避免硬编码多处不一致
 SELECTION_UP_SWIPE_NAME = "SelectionUpSwipe"
 # select_product 最大滑动尝试次数，覆盖列表底部产品（海参等位于列表末尾）
@@ -105,7 +148,7 @@ ISLAND_ITEM_CN_NAMES = {
     'pineapple': '菠萝', 'asparagus': '芦笋',
     # 渔场
     'bass': '鲈鱼', 'yellowfin_tuna': '黄鳍金枪鱼', 'shell': '贝壳', 'shrimp': '小河虾',
-    'crayfish': '小龙虾', 'crab': '螃蟹', 'squid': '鱿鱼', 'sea_cucumber': '海参',
+    'crayfish': '小龙虾', 'crab': '螃蟹', 'squid': '鱿鱼', 'sea_cucumber': '海参', 'koi_carp': '鲤鱼', 'mackerel': '马鲛鱼',
     # 矿山/林场
     'Copper': '铜矿', 'Aluminium': '铝矿', 'Iron': '铁矿', 'Sulphur': '硫磺',
     'Silver': '银矿', 'Elegant': '典雅之木', 'Practical': '实用之木', 'Selected': '精选之木',
@@ -717,7 +760,9 @@ class Island(SelectCharacter):
             bool: 始终返回 False。
         """
         logger.warning(f"[岛屿] select_product 失败：未能找到产品 {self._item_cn(product)} 的选择项")
-        self.device.click(POST_CLOSE)
+        # 此时停在产品选择页，岗位详情的关闭按钮不在画面上；
+        # 直接点 POST_CLOSE 会无效并导致后续岗位打开卡死，改为逐层退回岗位管理页
+        self.back_to_postmanage_from_dispatch()
         return False
 
     def post_close(self):
@@ -1155,6 +1200,7 @@ class Island(SelectCharacter):
         retry_swipe_timer = Timer(3, count=3).start()
         retry_swipe_used = 0
         full_retry_used = 0
+        edge_nudge_used = 0
         # 补滑轮次放宽后单轮可达十几秒，45 秒预算在低端机上撑不满整条重试链，
         # 放宽到 90 秒；正常路径在补滑命中时就退出，不受影响。
         for image in self.loop(timeout=90, skip_first=False):
@@ -1169,6 +1215,15 @@ class Island(SelectCharacter):
             if self.appear(ISLAND_POST_SELECT, offset=1):
                 return True
             if post_appear:
+                # 岗位列表可见区域下沿约 y=656（见 post_manage_up_swipe 的滑动框）。岗位按钮匹配在下沿之下时，
+                # 点击落在列表外或画面外（y>720）不会打开岗位，会一直重复点击到 GameTooManyClickError
+                # （啾咖啡岗位 1 在滑动后常停在 y≈680~720）。先把列表上推一点再点击。
+                bottom = post.button[3]
+                if bottom > POST_LIST_VISIBLE_BOTTOM and edge_nudge_used < POST_EDGE_NUDGE_LIMIT:
+                    edge_nudge_used += 1
+                    logger.info(f"[岛屿] 岗位按钮 {post} 位于列表可见区域下沿之下 (y={bottom})，上推列表后再点击")
+                    self.post_manage_up_swipe(bottom - POST_LIST_VISIBLE_BOTTOM + POST_EDGE_NUDGE_MARGIN)
+                    continue
                 self.device.sleep(0.1)
                 self.device.click(post)
                 self.device.sleep(0.5)
@@ -1353,6 +1408,164 @@ class Island(SelectCharacter):
         p2 = (152, 507)
         self.device.island_swipe_hold(p1, p2, hold_time)
 
+    def island_move(self, direction, hold_time):
+        """按方向按住岛屿移动摇杆。
+
+        Args:
+            direction (str): 'up' / 'down' / 'left' / 'right'。
+            hold_time (int): 按住移动的时间（毫秒）。
+        """
+        actions = {
+            'up': self.island_up,
+            'down': self.island_down,
+            'left': self.island_left,
+            'right': self.island_right,
+        }
+        actions[direction](hold_time)
+
+    def island_walk_rule(self, route):
+        """读取某条路线的规则（岛屿计划全局配置，跨任务生效）。
+
+        Args:
+            route (str): 路线名，对应 `IslandPlan.IslandWalk.<路线名>`。
+
+        Returns:
+            str: 用户在岛屿计划里填写的规则字符串；未配置时返回空串。
+        """
+        return self.config.cross_get(f'IslandPlan.IslandWalk.{route}', default='') or ''
+
+    def island_walk_enabled(self, route):
+        """该路线是否勾选了走位校验。
+
+        Args:
+            route (str): 路线名。
+
+        Returns:
+            bool: 勾选了 `IslandPlan.IslandWalk.<路线名>Enable` 时返回 True。
+        """
+        return bool(self.config.cross_get(f'IslandPlan.IslandWalk.{route}Enable', default=False))
+
+    def island_walk_steps(self, route):
+        """返回本次实际执行的走位步骤。
+
+        优先使用岛屿计划全局配置里的规则字符串（所有控制方式都生效）；
+        未填写或解析失败时回退到代码默认值。
+
+        Args:
+            route (str): 路线名，见 `module/island/island_walk.py`。
+
+        Returns:
+            tuple: `((方向, 毫秒), ...)`。
+        """
+        steps = ISLAND_WALK_ROUTES[route]
+        raw = str(self.island_walk_rule(route)).strip()
+        if not raw:
+            return steps
+        parsed = parse_walk_rule(raw)
+        if parsed is None:
+            logger.warning(f'[岛屿-走位] 规则 {route}={raw!r} 解析失败，本次使用代码默认值')
+            return steps
+        logger.attr('岛屿走位', f'{route}: {format_walk_rule(parsed)}')
+        return parsed
+
+    def island_walk_durations(self, route):
+        """返回该路线所有走位步骤的时长（毫秒，跳过固定动作）。
+
+        Args:
+            route (str): 路线名。
+
+        Returns:
+            list[int]: 按执行顺序排列的毫秒时长。
+        """
+        return [hold for direction, hold in self.island_walk_steps(route)
+                if direction not in ISLAND_WALK_ACTIONS]
+
+    def island_walk_switch_restaurant(self):
+        """规则里 `switch` 步骤：点击按钮切换到啾咖啡餐厅并等待切换完成。
+
+        不能用 `ISLAND_CHECK` 单独判断“已经切过去”：它就是岛屿页面的标记
+        （page_island = Page(ISLAND_CHECK)），切换前后都会出现，先判断它会导致
+        还没点按钮就被当成切换完成。所以这里是「先点按钮，再等按钮消失」：
+        按钮消失说明对话关闭、场景已切换，此时再确认岛屿页面标记在场。
+
+        Pages:
+            page_island
+        """
+        from module.island_daily_interact.assets import ROUTE_TWO_OPTION_COMPLETE
+
+        # 按钮可能在对话关闭后短暂残留，所以先点一次，只有它还在（且隔了一段间隔）
+        # 才补点，避免连点触发画面上的其它交互。
+        click_timer = Timer(3).start()
+        clicked = False
+        for _ in self.loop(timeout=ISLAND_SWITCH_TIMEOUT, skip_first=False):
+            if self.appear(ROUTE_TWO_OPTION_COMPLETE):
+                if not clicked or click_timer.reached():
+                    logger.info('[岛屿-走位] switch: 点击切换餐厅按钮')
+                    self.device.click(ROUTE_TWO_OPTION_COMPLETE)
+                    clicked = True
+                    click_timer.reset()
+                continue
+            if clicked and self.appear(ISLAND_CHECK):
+                return
+        raise GameStuckError('切换啾咖啡餐厅超时，停止后续岛屿走位')
+
+    def island_walk_action(self, action):
+        """执行规则里的固定动作步骤。
+
+        Args:
+            action (str): `jump`（点跳跃按钮）或 `switch`（切换啾咖啡餐厅）。
+
+        Raises:
+            ScriptError: 未知动作。
+        """
+        if action == 'jump':
+            self.device.click(ISLAND_JUMP)
+        elif action == 'switch':
+            self.island_walk_switch_restaurant()
+        else:
+            raise ScriptError(f'未知的走位动作: {action}')
+
+    def island_walk_route(self, route):
+        """按路线依次走位；`jump` / `switch` 等动作步骤不占时长。
+
+        Args:
+            route (str): 路线名，见 `module/island/island_walk.py`。
+
+        Pages:
+            page_island
+        """
+        for direction, hold_time in self.island_walk_steps(route):
+            if direction in ISLAND_WALK_ACTIONS:
+                self.island_walk_action(direction)
+                continue
+            self.island_move(direction, hold_time)
+
+    def island_walk_composite_durations(self, route, count):
+        """复合路线（中间夹着拾取检测等固定操作）按位置取时长。
+
+        这类路线的方向和中间操作都由代码固定，配置只提供每一步的时长；
+        个数对不上时回退代码默认值并告警，避免取到不存在的下标。
+
+        Args:
+            route (str): 路线名。
+            count (int): 代码需要的走位步数。
+
+        Returns:
+            list[int]: 长度等于 count 的毫秒时长列表。
+        """
+        configured = [(direction, hold) for direction, hold in self.island_walk_steps(route)
+                      if direction not in ISLAND_WALK_ACTIONS]
+        default = [(direction, hold) for direction, hold in ISLAND_WALK_ROUTES[route]
+                   if direction not in ISLAND_WALK_ACTIONS]
+        if len(configured) != count or [direction for direction, _ in configured] != [
+                direction for direction, _ in default]:
+            logger.warning(
+                f'[岛屿-走位] {route} 的步数或方向与固定补滑路线不一致，'
+                '本次使用代码默认值'
+            )
+            return [hold for _, hold in default]
+        return [hold for _, hold in configured]
+
     def set_buy_number(self, target):
         """设置购买弹窗中的目标购买数量。
 
@@ -1411,6 +1624,7 @@ class Island(SelectCharacter):
 
         Returns:
             bool: 购买成功返回 True，失败或超时返回 False。
+                岛币不足等原因导致点击购买后弹窗仍不关闭时，会先关闭弹窗再返回 False。
         """
         quantity = max(1, int(quantity))
         if tab_check is not None and tab_button is not None:
@@ -1425,36 +1639,57 @@ class Island(SelectCharacter):
             # 不能退化为颜色检测，避免商店 3D 背景像素恰好匹配导致误判
             if self.appear(ISLAND_SHOPPING_CHECK, offset=(1, 1)):
                 break
-            if self.appear_then_click(item_button, interval=1.2):
+            # 按图标搜索整页定位商品；商品未解锁或不在列表时不会误点其他格子，超时后放弃购买
+            if self.appear_then_click(
+                    item_button,
+                    offset=ISLAND_SHOP_ITEM_SEARCH_OFFSET,
+                    similarity=ISLAND_SHOP_ITEM_SIMILARITY,
+                    interval=1.2,
+            ):
                 continue
         else:
-            logger.warning(f"[岛屿] 打开购买弹窗超时: {item_name or item_button}")
+            logger.warning(f"[岛屿] 打开购买弹窗超时（商店中未找到该商品，可能未解锁）: {item_name or item_button}")
             return False
 
         if self.appear(ISLAND_SHOPPING_CHECK, offset=(1, 1)):
             self.set_buy_number(quantity)
 
+        # 购买按钮只点一次，避免游戏响应慢时重复购买；点击后购买弹窗持续不关闭
+        # （岛币不足时游戏会把数量重置为 1 并保持弹窗）即视为购买失败，点 ✕ 关闭弹窗。
+        confirm_timer = Timer(3, count=6)
+        close_timer = Timer(1)
+        purchase_failed = False
         for _ in self.loop(timeout=15, skip_first=False):
             shop_visible = self.appear(shop_check, offset=1)
             shopping_shown = self.appear(ISLAND_SHOPPING_CHECK, offset=(1, 1))
             if shop_visible and not shopping_shown:
                 break
-            if self.appear_then_click(ISLAND_SHOP_CONFIRM, interval=1):
-                # 点击确认后立即复检：弹窗或确认按钮消失都视为购买完成，退出避免重复点击
-                self.device.sleep(0.5)
-                self.device.screenshot()
-                if not self.appear(ISLAND_SHOP_CONFIRM) or not self.appear(ISLAND_SHOPPING_CHECK, offset=(1, 1)):
-                    break
-                continue
             # 使用模板检测判断“购买成功”弹窗，商店页大面积浅色背景的平均颜色与弹窗资源接近，
             # 纯颜色检测会误判并要求反复点击确认按钮。
             if self.appear(ISLAND_SHOP_GET, offset=(1, 1)):
                 self.device.click(ISLAND_SHOP_CONFIRM)
                 continue
+            if not shopping_shown:
+                continue
+            if not purchase_failed and confirm_timer.started() and confirm_timer.reached():
+                logger.warning(
+                    f"[岛屿] 点击购买后弹窗仍未关闭，可能岛币不足，放弃购买: {item_name or item_button}"
+                )
+                purchase_failed = True
+            if purchase_failed:
+                if close_timer.reached():
+                    self.device.click(ISLAND_SHOPPING_CLOSE)
+                    close_timer.reset()
+                continue
+            if not confirm_timer.started() and self.appear_then_click(ISLAND_SHOP_CONFIRM, interval=1):
+                confirm_timer.start()
+                continue
         else:
             logger.warning(f"[岛屿] 确认购买超时: {item_name or item_button}")
             return False
 
+        if purchase_failed:
+            return False
         if self.appear(ISLAND_SHOP_GET, offset=(1, 1)):
             self.device.click(ISLAND_SHOP_CONFIRM)
         return True
@@ -1547,6 +1782,50 @@ class Island(SelectCharacter):
         if match:
             return int(match.group())
         return None
+
+    @staticmethod
+    def parse_select_product_material_required(counter_text):
+        """解析材料计数文本中斜杠右侧的单次派遣需求数。
+
+        Args:
+            counter_text (str): 规范化后的材料文本（如 "35/9" 或 "110/(2+6)"）。
+
+        Returns:
+            int: 需求数之和；没有斜杠或没有数字时返回 0，表示未知。
+        """
+        if '/' not in counter_text:
+            return 0
+        required_text = counter_text.split('/', 1)[1]
+        return sum(int(number) for number in re.findall(r'\d+', required_text))
+
+    @staticmethod
+    def plan_select_product_material(current, target, page_required, failed_quantity=None):
+        """根据库存、目标库存和此前购买失败的数量，决定材料是否补货。
+
+        补到 target 只是尽力而为：一旦这个数量买不起，库存已够页面显示的单次派遣
+        需求（page_required）时直接派遣；不够时只补差到单次需求，比失败数量还少才尝试。
+
+        Args:
+            current (int): 当前库存。
+            target (int): 目标库存（如种子的 seed_number）。
+            page_required (int): 页面显示的单次派遣需求，0 表示未识别。
+            failed_quantity (int, optional): 本次任务中已购买失败的最小数量。默认为 None。
+
+        Returns:
+            tuple[str, int]: (MATERIAL_READY | 'buy' | MATERIAL_INSUFFICIENT, 购买数量)。
+        """
+        if current >= target:
+            return MATERIAL_READY, 0
+        if failed_quantity is None or target - current < failed_quantity:
+            return 'buy', target - current
+        if page_required <= 0:
+            # 需求数没识别到：有库存就交给确认派遣按钮判断，没有库存只能跳过
+            return (MATERIAL_READY, 0) if current > 0 else (MATERIAL_INSUFFICIENT, 0)
+        if current >= page_required:
+            return MATERIAL_READY, 0
+        if page_required - current < failed_quantity:
+            return 'buy', page_required - current
+        return MATERIAL_INSUFFICIENT, 0
 
     @staticmethod
     def build_select_product_material_counter_text(current, result, prefix_text=None, allow_suffix_rebuild=True):
@@ -1718,12 +1997,7 @@ class Island(SelectCharacter):
             tuple[int | None, int]: (当前库存数量, 总需求数量)。
         """
         current, result = self.ocr_select_product_material_detail()
-
-        required = 0
-        if '/' in result:
-            required_text = result.split('/', 1)[1]
-            required_numbers = [int(number) for number in re.findall(r'\d+', required_text)]
-            required = sum(required_numbers)
+        required = self.parse_select_product_material_required(result)
 
         if current is None:
             logger.warning(f"[岛屿] 岗位派遣页材料数量识别失败: {result}")
@@ -1739,6 +2013,7 @@ class Island(SelectCharacter):
             bool: 返回成功为 True，超时为 False。
         """
         self.interval_clear([back_button])
+        close_timer = Timer(1)
         for _ in self.loop(timeout=15, skip_first=False):
             if self.appear(ISLAND_SELECT_PRODUCT_CHECK, offset=1):
                 return True
@@ -1746,6 +2021,12 @@ class Island(SelectCharacter):
                 return True
             if self.appear(ISLAND_SHOP_GET, offset=(1, 1)):
                 self.device.click(ISLAND_SHOP_CONFIRM)
+                continue
+            # 购买失败时残留的购买弹窗会遮住返回按钮，先点 ✕ 关闭
+            if self.appear(ISLAND_SHOPPING_CHECK, offset=(1, 1)):
+                if close_timer.reached():
+                    self.device.click(ISLAND_SHOPPING_CLOSE)
+                    close_timer.reset()
                 continue
             if self.appear_then_click(back_button, offset=(20, 20), interval=1):
                 continue
@@ -1766,25 +2047,38 @@ class Island(SelectCharacter):
             tab_button (Button, optional): 商店页签点击按钮。默认为 None。
 
         Returns:
-            bool: True 表示发生过补货，调用方需要重新选择产品；False 表示库存已足够。
+            str: MATERIAL_READY 表示可直接确认派遣；MATERIAL_RESTOCKED 表示离开过产品选择页，
+                调用方需要重新选择产品；MATERIAL_INSUFFICIENT 表示补货失败且不够一次派遣，调用方应跳过岗位。
         """
         required_quantity = max(1, int(required_quantity))
         current_quantity, counter_text = self.ocr_select_product_material_detail(expected_quantity=required_quantity)
+        page_required = self.parse_select_product_material_required(counter_text)
         display_name = item_name or getattr(item_button, 'name', '材料')
-        logger.info(f"[岛屿] {self._item_cn(display_name)}页面材料: {counter_text}，当前库存: {current_quantity}，目标库存: {required_quantity}")
+        cn_name = self._item_cn(display_name)
+        logger.info(f"[岛屿] {cn_name}页面材料: {counter_text}，当前库存: {current_quantity}，目标库存: {required_quantity}")
 
-        if current_quantity >= required_quantity:
-            return False
+        # 本次任务中每种材料买不起的最小数量；Island.__init__ 在测试中可能被替换，按需创建
+        failed_quantities = getattr(self, '_material_buy_failed', None)
+        if failed_quantities is None:
+            failed_quantities = self._material_buy_failed = {}
+        failed_quantity = failed_quantities.get(display_name)
 
-        buy_quantity = required_quantity - current_quantity
-        logger.info(f"[岛屿] {self._item_cn(display_name)}数量不足，进入商店补买 {buy_quantity} 个")
-        if not self.goto_shop_from_select_product(
+        action, buy_quantity = self.plan_select_product_material(
+            current_quantity, required_quantity, page_required, failed_quantity)
+        if action == MATERIAL_READY:
+            if current_quantity < required_quantity:
+                logger.info(f"[岛屿] {cn_name}补货失败，现有库存够本次派遣（需要 {page_required}），直接派遣")
+            return MATERIAL_READY
+        if action == MATERIAL_INSUFFICIENT:
+            logger.warning(f"[岛屿] {cn_name}补货失败且库存不够本次派遣（{counter_text}），跳过该岗位")
+            return MATERIAL_INSUFFICIENT
+
+        logger.info(f"[岛屿] {cn_name}数量不足，进入商店补买 {buy_quantity} 个")
+        if self.goto_shop_from_select_product(
             shop_check=shop_check,
             tab_check=tab_check,
             tab_button=tab_button,
-        ):
-            return True
-        if not self.buy_shop_item(
+        ) and self.buy_shop_item(
             item_button=item_button,
             quantity=buy_quantity,
             shop_check=shop_check,
@@ -1792,9 +2086,13 @@ class Island(SelectCharacter):
             tab_check=tab_check,
             tab_button=tab_button,
         ):
-            return True
+            self.back_to_select_product_after_shop()
+            return MATERIAL_RESTOCKED
+
+        failed_quantities[display_name] = min(buy_quantity, failed_quantity or buy_quantity)
+        logger.warning(f"[岛屿] {cn_name}补买 {buy_quantity} 个失败，返回产品选择页按现有库存处理")
         self.back_to_select_product_after_shop()
-        return True
+        return MATERIAL_RESTOCKED
 
     def goto_mill(self, max_attempts=3):
         """前往磨坊并打开磨坊界面。
@@ -1809,6 +2107,8 @@ class Island(SelectCharacter):
             logger.info(f"[岛屿] 尝试前往磨坊，第{attempt + 1}次尝试")
             if not self.island_map_goto('farm'):
                 continue
+            # 磨坊路线不在可配置的走位规则里：它和地图跳转强绑定，长度也短，
+            # 保持写死更省事（顺序 U,L,D,L,D）。
             self.island_up(800)
             self.island_left(1300)
             self.island_down(1000)

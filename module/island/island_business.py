@@ -76,6 +76,56 @@ TEMPLATE_BUSINESS_PRODUCT_COFFEE_CITRUS_COFFEE_CROPPED = Template(file={
     'tw': './assets/cn/island_business/TEMPLATE_BUSINESS_PRODUCT_COFFEE_CITRUS_COFFEE_CROPPED.png',
 })
 
+# Modify by MHY, 冬季经营图与货架裁图已随资源同步，四服共用无文字商品图。
+TEMPLATE_BUSINESS_PRODUCT_RESTAURANT_SHIITAKE_CHICKEN_SOUP = Template(file={
+    'cn': './assets/cn/island_business/TEMPLATE_BUSINESS_PRODUCT_RESTAURANT_SHIITAKE_CHICKEN_SOUP.png',
+    'en': './assets/cn/island_business/TEMPLATE_BUSINESS_PRODUCT_RESTAURANT_SHIITAKE_CHICKEN_SOUP.png',
+    'jp': './assets/cn/island_business/TEMPLATE_BUSINESS_PRODUCT_RESTAURANT_SHIITAKE_CHICKEN_SOUP.png',
+    'tw': './assets/cn/island_business/TEMPLATE_BUSINESS_PRODUCT_RESTAURANT_SHIITAKE_CHICKEN_SOUP.png',
+})
+TEMPLATE_BUSINESS_PRODUCT_RESTAURANT_SHIITAKE_CHICKEN_SOUP_CROPPED = Template(file={
+    'cn': './assets/cn/island_business/TEMPLATE_BUSINESS_PRODUCT_RESTAURANT_SHIITAKE_CHICKEN_SOUP_CROPPED.png',
+    'en': './assets/cn/island_business/TEMPLATE_BUSINESS_PRODUCT_RESTAURANT_SHIITAKE_CHICKEN_SOUP_CROPPED.png',
+    'jp': './assets/cn/island_business/TEMPLATE_BUSINESS_PRODUCT_RESTAURANT_SHIITAKE_CHICKEN_SOUP_CROPPED.png',
+    'tw': './assets/cn/island_business/TEMPLATE_BUSINESS_PRODUCT_RESTAURANT_SHIITAKE_CHICKEN_SOUP_CROPPED.png',
+})
+TEMPLATE_BUSINESS_PRODUCT_RESTAURANT_GREEN_JUJUBE_PORRIDGE = Template(file={
+    'cn': './assets/cn/island_business/TEMPLATE_BUSINESS_PRODUCT_RESTAURANT_GREEN_JUJUBE_PORRIDGE.png',
+    'en': './assets/cn/island_business/TEMPLATE_BUSINESS_PRODUCT_RESTAURANT_GREEN_JUJUBE_PORRIDGE.png',
+    'jp': './assets/cn/island_business/TEMPLATE_BUSINESS_PRODUCT_RESTAURANT_GREEN_JUJUBE_PORRIDGE.png',
+    'tw': './assets/cn/island_business/TEMPLATE_BUSINESS_PRODUCT_RESTAURANT_GREEN_JUJUBE_PORRIDGE.png',
+})
+TEMPLATE_BUSINESS_PRODUCT_RESTAURANT_GREEN_JUJUBE_PORRIDGE_CROPPED = Template(file={
+    'cn': './assets/cn/island_business/TEMPLATE_BUSINESS_PRODUCT_RESTAURANT_GREEN_JUJUBE_PORRIDGE_CROPPED.png',
+    'en': './assets/cn/island_business/TEMPLATE_BUSINESS_PRODUCT_RESTAURANT_GREEN_JUJUBE_PORRIDGE_CROPPED.png',
+    'jp': './assets/cn/island_business/TEMPLATE_BUSINESS_PRODUCT_RESTAURANT_GREEN_JUJUBE_PORRIDGE_CROPPED.png',
+    'tw': './assets/cn/island_business/TEMPLATE_BUSINESS_PRODUCT_RESTAURANT_GREEN_JUJUBE_PORRIDGE_CROPPED.png',
+})
+TEMPLATE_BUSINESS_PRODUCT_EATERY_WATER_CHESTNUT_CAKE = Template(file={
+    'cn': './assets/cn/island_business/TEMPLATE_BUSINESS_PRODUCT_EATERY_WATER_CHESTNUT_CAKE.png',
+    'en': './assets/cn/island_business/TEMPLATE_BUSINESS_PRODUCT_EATERY_WATER_CHESTNUT_CAKE.png',
+    'jp': './assets/cn/island_business/TEMPLATE_BUSINESS_PRODUCT_EATERY_WATER_CHESTNUT_CAKE.png',
+    'tw': './assets/cn/island_business/TEMPLATE_BUSINESS_PRODUCT_EATERY_WATER_CHESTNUT_CAKE.png',
+})
+TEMPLATE_BUSINESS_PRODUCT_EATERY_WATER_CHESTNUT_CAKE_CROPPED = Template(file={
+    'cn': './assets/cn/island_business/TEMPLATE_BUSINESS_PRODUCT_EATERY_WATER_CHESTNUT_CAKE_CROPPED.png',
+    'en': './assets/cn/island_business/TEMPLATE_BUSINESS_PRODUCT_EATERY_WATER_CHESTNUT_CAKE_CROPPED.png',
+    'jp': './assets/cn/island_business/TEMPLATE_BUSINESS_PRODUCT_EATERY_WATER_CHESTNUT_CAKE_CROPPED.png',
+    'tw': './assets/cn/island_business/TEMPLATE_BUSINESS_PRODUCT_EATERY_WATER_CHESTNUT_CAKE_CROPPED.png',
+})
+TEMPLATE_BUSINESS_PRODUCT_EATERY_SUGAR_TANGERINE_DAIFUKU = Template(file={
+    'cn': './assets/cn/island_business/TEMPLATE_BUSINESS_PRODUCT_EATERY_SUGAR_TANGERINE_DAIFUKU.png',
+    'en': './assets/cn/island_business/TEMPLATE_BUSINESS_PRODUCT_EATERY_SUGAR_TANGERINE_DAIFUKU.png',
+    'jp': './assets/cn/island_business/TEMPLATE_BUSINESS_PRODUCT_EATERY_SUGAR_TANGERINE_DAIFUKU.png',
+    'tw': './assets/cn/island_business/TEMPLATE_BUSINESS_PRODUCT_EATERY_SUGAR_TANGERINE_DAIFUKU.png',
+})
+TEMPLATE_BUSINESS_PRODUCT_EATERY_SUGAR_TANGERINE_DAIFUKU_CROPPED = Template(file={
+    'cn': './assets/cn/island_business/TEMPLATE_BUSINESS_PRODUCT_EATERY_SUGAR_TANGERINE_DAIFUKU_CROPPED.png',
+    'en': './assets/cn/island_business/TEMPLATE_BUSINESS_PRODUCT_EATERY_SUGAR_TANGERINE_DAIFUKU_CROPPED.png',
+    'jp': './assets/cn/island_business/TEMPLATE_BUSINESS_PRODUCT_EATERY_SUGAR_TANGERINE_DAIFUKU_CROPPED.png',
+    'tw': './assets/cn/island_business/TEMPLATE_BUSINESS_PRODUCT_EATERY_SUGAR_TANGERINE_DAIFUKU_CROPPED.png',
+})
+
 # ==================== 商店索引到名称的映射 ====================
 SHOP_INDEX_MAP = {
     1: '有鱼餐馆',
@@ -98,6 +148,10 @@ SEASONAL_FOOD_MAP = {
     'autumn': {
         'product_name': 'matsutake_chicken_soup',
         'display': '松茸鸡汤',
+    },
+    'winter': {
+        'product_name': 'shiitake_chicken_soup',
+        'display': '冬菇炖鸡',
     },
 }
 
@@ -122,6 +176,7 @@ class IslandBusiness(BusinessStockCheckMixin, Island):
     BUSINESS_REVIEW_OFFSET_X = 150
 
     def __init__(self, config, device=None, task=None):
+        """Initialize business shops, seasonal products, and review state."""
         super().__init__(config, device=device, task=task)
 
         # 商店定义及配置键前缀
@@ -143,6 +198,8 @@ class IslandBusiness(BusinessStockCheckMixin, Island):
                 {'name': 'amaranth_rice_ball', 'button': TEMPLATE_BUSINESS_PRODUCT_RESTAURANT_AMARANTH_RICE_BALL},
                 {'name': 'matsutake_chicken_soup', 'button': TEMPLATE_BUSINESS_PRODUCT_RESTAURANT_MATSUTAKE_CHICKEN_SOUP},
                 {'name': 'persimmon_cake', 'button': TEMPLATE_BUSINESS_PRODUCT_RESTAURANT_PERSIMMON_CAKE},
+                {'name': 'shiitake_chicken_soup', 'button': TEMPLATE_BUSINESS_PRODUCT_RESTAURANT_SHIITAKE_CHICKEN_SOUP},
+                {'name': 'green_jujube_porridge', 'button': TEMPLATE_BUSINESS_PRODUCT_RESTAURANT_GREEN_JUJUBE_PORRIDGE},
             ],
             '白熊饮品': [
                 {'name': 'spring_flower_tea', 'button': TEMPLATE_BUSINESS_PRODUCT_TEAHOUSE_SPRING_FLOWER_TEA},
@@ -170,6 +227,8 @@ class IslandBusiness(BusinessStockCheckMixin, Island):
                 {'name': 'berry_orange', 'button': TEMPLATE_BUSINESS_PRODUCT_EATERY_BERRY_ORANGE},
                 {'name': 'strawberry_charlotte', 'button': TEMPLATE_BUSINESS_PRODUCT_EATERY_STRAWBERRY_CHARLOTTE},
                 {'name': 'seafood_rice', 'button': TEMPLATE_BUSINESS_PRODUCT_EATERY_SEAFOOD_RICE},
+                {'name': 'water_chestnut_cake', 'button': TEMPLATE_BUSINESS_PRODUCT_EATERY_WATER_CHESTNUT_CAKE},
+                {'name': 'sugar_tangerine_daifuku', 'button': TEMPLATE_BUSINESS_PRODUCT_EATERY_SUGAR_TANGERINE_DAIFUKU},
             ],
             '啾咖啡': [
                 {'name': 'citrus_coffee', 'button': TEMPLATE_BUSINESS_PRODUCT_COFFEE_CITRUS_COFFEE},
@@ -191,6 +250,8 @@ class IslandBusiness(BusinessStockCheckMixin, Island):
                 {'name': 'amaranth_rice_ball', 'template': TEMPLATE_BUSINESS_PRODUCT_RESTAURANT_AMARANTH_RICE_BALL_CROPPED},
                 {'name': 'matsutake_chicken_soup', 'template': TEMPLATE_BUSINESS_PRODUCT_RESTAURANT_MATSUTAKE_CHICKEN_SOUP_CROPPED},
                 {'name': 'persimmon_cake', 'template': TEMPLATE_BUSINESS_PRODUCT_RESTAURANT_PERSIMMON_CAKE_CROPPED},
+                {'name': 'shiitake_chicken_soup', 'template': TEMPLATE_BUSINESS_PRODUCT_RESTAURANT_SHIITAKE_CHICKEN_SOUP_CROPPED},
+                {'name': 'green_jujube_porridge', 'template': TEMPLATE_BUSINESS_PRODUCT_RESTAURANT_GREEN_JUJUBE_PORRIDGE_CROPPED},
             ],
             '白熊饮品': [
                 {'name': 'spring_flower_tea', 'template': TEMPLATE_BUSINESS_PRODUCT_TEAHOUSE_SPRING_FLOWER_TEA_CROPPED},
@@ -218,6 +279,8 @@ class IslandBusiness(BusinessStockCheckMixin, Island):
                 {'name': 'berry_orange', 'template': TEMPLATE_BUSINESS_PRODUCT_EATERY_BERRY_ORANGE_CROPPED},
                 {'name': 'strawberry_charlotte', 'template': TEMPLATE_BUSINESS_PRODUCT_EATERY_STRAWBERRY_CHARLOTTE_CROPPED},
                 {'name': 'seafood_rice', 'template': TEMPLATE_BUSINESS_PRODUCT_EATERY_SEAFOOD_RICE_CROPPED},
+                {'name': 'water_chestnut_cake', 'template': TEMPLATE_BUSINESS_PRODUCT_EATERY_WATER_CHESTNUT_CAKE_CROPPED},
+                {'name': 'sugar_tangerine_daifuku', 'template': TEMPLATE_BUSINESS_PRODUCT_EATERY_SUGAR_TANGERINE_DAIFUKU_CROPPED},
             ],
             '啾咖啡': [
                 {'name': 'citrus_coffee', 'template': TEMPLATE_BUSINESS_PRODUCT_COFFEE_CITRUS_COFFEE_CROPPED},
@@ -384,6 +447,18 @@ class IslandBusiness(BusinessStockCheckMixin, Island):
                 'en': './assets/cn/island_restaurant/TEMPLATE_MATSUTAKE_CHICKEN_SOUP.png',
                 'jp': './assets/cn/island_restaurant/TEMPLATE_MATSUTAKE_CHICKEN_SOUP.png',
                 'tw': './assets/cn/island_restaurant/TEMPLATE_MATSUTAKE_CHICKEN_SOUP.png',
+            }),
+            'shiitake_chicken_soup': Template(file={
+                'cn': './assets/cn/island_restaurant/TEMPLATE_SHIITAKE_CHICKEN_SOUP.png',
+                'en': './assets/cn/island_restaurant/TEMPLATE_SHIITAKE_CHICKEN_SOUP.png',
+                'jp': './assets/cn/island_restaurant/TEMPLATE_SHIITAKE_CHICKEN_SOUP.png',
+                'tw': './assets/cn/island_restaurant/TEMPLATE_SHIITAKE_CHICKEN_SOUP.png',
+            }),
+            'green_jujube_porridge': Template(file={
+                'cn': './assets/cn/island_restaurant/TEMPLATE_GREEN_JUJUBE_PORRIDGE.png',
+                'en': './assets/cn/island_restaurant/TEMPLATE_GREEN_JUJUBE_PORRIDGE.png',
+                'jp': './assets/cn/island_restaurant/TEMPLATE_GREEN_JUJUBE_PORRIDGE.png',
+                'tw': './assets/cn/island_restaurant/TEMPLATE_GREEN_JUJUBE_PORRIDGE.png',
             }),
             # 白熊饮品
             'watermelon_juice': Template(file={
@@ -1414,7 +1489,7 @@ class IslandBusiness(BusinessStockCheckMixin, Island):
                     btn = Button(
                         area=button_rect, color=(),
                         button=button_rect,
-                        file={'cn': ''}
+                        file={'cn': '', 'en': '', 'jp': '', 'tw': ''}
                     )
                     self.device.click(btn)
                     self.device.sleep(1)
@@ -1444,7 +1519,7 @@ class IslandBusiness(BusinessStockCheckMixin, Island):
                     btn = Button(
                         area=button_rect, color=(),
                         button=button_rect,
-                        file={'cn': ''}
+                        file={'cn': '', 'en': '', 'jp': '', 'tw': ''}
                     )
                     self.device.click(btn)
                     self.device.sleep(1)
@@ -1802,7 +1877,12 @@ class IslandBusiness(BusinessStockCheckMixin, Island):
         # 统计成功分配的槽位：静默失败会导致商店只带 1 个角色开始经营，
         # 而经营中不会再重新派发，用户只能看到「商店里只有 1 个人」（真机踩过）
         assigned = 0
-        for slot_idx in range(2):
+        # Modify by MHY, 合并上游：只填充用户配置了角色的槽位，低等级单角色店铺
+        # 只有 1 个角色槽，继续探测第二个槽位必然失败，还可能误点其它按钮
+        slot_total = min(len(self.character_priority), 2)
+        if slot_total < 2:
+            logger.info(f"[岛屿-经营] 本店铺配置 {slot_total} 个经营角色，跳过多余槽位探测")
+        for slot_idx in range(slot_total):
             btn = BUSINESS_PLUS_A if slot_idx == 0 else BUSINESS_PLUS_B
             plus_button = self._appear_at_positions(btn)
             if not plus_button:
@@ -1861,8 +1941,8 @@ class IslandBusiness(BusinessStockCheckMixin, Island):
                 logger.info(f"[岛屿-经营] 第{slot_idx + 1}个角色未找到，跳过")
                 self.device.click(SELECT_UI_BACK)
                 self.device.sleep(0.5)
-        if assigned < 2:
-            logger.warning(f"[岛屿-经营] 本次只分配了 {assigned}/2 个经营角色，"
+        if assigned < slot_total:
+            logger.warning(f"[岛屿-经营] 本次只分配了 {assigned}/{slot_total} 个经营角色，"
                            f"商店可能以不满员状态开始经营")
 
     def _wait_for_character_selection(self):
@@ -1890,7 +1970,7 @@ class IslandBusiness(BusinessStockCheckMixin, Island):
         """短距离向下滑动，滑动后立即点击安全区域消除惯性"""
         self.device.swipe_vector(vector=(0, -200), box=(58, 150, 838, 480),
                                  duration=(0.3, 0.5), name="BusinessCharSwipe")
-        self.device.click(Button(area=(), color=(), button=self.BUSINESS_INERTIA_STOP_AREA, file={'cn': ''}))
+        self.device.click(Button(area=(), color=(), button=self.BUSINESS_INERTIA_STOP_AREA, file={'cn': '', 'en': '', 'jp': '', 'tw': ''}))
         self.device.sleep(1.0)
 
     def _swipe_up_reset(self):
@@ -1898,7 +1978,7 @@ class IslandBusiness(BusinessStockCheckMixin, Island):
         self.device.swipe_vector(vector=(0, 500), box=(58, 150, 838, 480),
                                  duration=(0.3, 0.5), name="BusinessCharSwipeReset")
         self.device.sleep(0.5)
-        self.device.click(Button(area=(), color=(), button=self.BUSINESS_INERTIA_STOP_AREA, file={'cn': ''}))
+        self.device.click(Button(area=(), color=(), button=self.BUSINESS_INERTIA_STOP_AREA, file={'cn': '', 'en': '', 'jp': '', 'tw': ''}))
         self.device.sleep(1.0)
 
     def _find_and_select_character(self):
@@ -1913,9 +1993,8 @@ class IslandBusiness(BusinessStockCheckMixin, Island):
             if result:
                 char_name, button = result
                 logger.info(f"[岛屿-经营] 选择角色: {char_name}")
-                self.device.click(button)
-                self.device.sleep(0.5)
-                return char_name
+                if self._select_character_by_portrait(button, char_name):
+                    return char_name
             # 短距离向下滑动继续搜索
             self._swipe_down_short()
 
@@ -1930,12 +2009,43 @@ class IslandBusiness(BusinessStockCheckMixin, Island):
             if result:
                 char_name, button = result
                 logger.info(f"[岛屿-经营] 切换排序后选择角色: {char_name}")
-                self.device.click(button)
-                self.device.sleep(0.5)
-                return char_name
+                if self._select_character_by_portrait(button, char_name):
+                    return char_name
             self._swipe_down_short()
 
         return False
+
+    def _select_character_by_portrait(self, portrait_button, character_name=None):
+        """点击角色头像完成选择，已处于选中状态时跳过点击。
+
+        经营角色槽可能默认已选中目标角色（例如店铺原有角色恰好是优先级首位），
+        此时再次点击同一格会取消选中，导致确认按钮不可用、槽位为空。
+        因此先检查选中状态，只有未选中才点击。
+
+        点击后不再重复点击：该界面上点击是“切换”语义，选中标记漏检时重复点击
+        会把刚选中的角色取消；是否真正选中交给后续确认流程（确认按钮）判定。
+
+        Args:
+            portrait_button (Button): 头像模板匹配得到的按钮。
+            character_name (str, optional): 角色名，用于日志与单元格命名。
+
+        Returns:
+            bool: 是否可以进入确认流程。
+        """
+        cell_button = self._cell_button_from_portrait(portrait_button, name=character_name)
+        label = character_name or '角色'
+
+        if self._check_selected_status(self.device.image, cell_button):
+            logger.info(f"[岛屿-经营] {label} 已处于选中状态，跳过点击避免取消选择")
+            return True
+
+        # 只点击一次：重复点击会把刚选中的角色取消
+        self.device.click(portrait_button)
+        self.device.sleep(0.5)
+        if not self._check_selected_status(self.device.screenshot(), cell_button):
+            # 识别标记漏检时仅记录日志，交由确认按钮流程判定是否真的选中
+            logger.warning(f"[岛屿-经营] {label} 点击后未检测到选中标记，交由确认按钮校验")
+        return True
 
     def _find_best_character(self):
         """

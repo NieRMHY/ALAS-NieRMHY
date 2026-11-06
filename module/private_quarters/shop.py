@@ -1,7 +1,7 @@
 """
-私人休息室商店主逻辑。
+宿舍计划商店主逻辑。
 
-编排私人宿舍商店的完整购买流程，包括商品过滤、货架扫描、
+编排宿舍计划商店的完整购买流程，包括商品过滤、货架扫描、
 余额检测和逐项购买。通过 Filter 和 PQShopItemGrid 实现
 商品分类与筛选，支持按优先级排序购买。
 
@@ -102,7 +102,7 @@ class PQShop(PQShopClerk, PQStatus):
 
     @cached_property
     def shop_private_quarters_items(self):
-        """私人宿舍商店商品网格，含模板匹配和 OCR 价格识别。
+        """宿舍计划商店商品网格，含模板匹配和 OCR 价格识别。
 
         Returns:
             PQShopItemGrid: 商品网格实例。
@@ -129,11 +129,11 @@ class PQShop(PQShopClerk, PQStatus):
         """OCR 识别商店货币（金币和钻石）并更新内部状态。
 
         Pages:
-            in: 私人宿舍商店页
+            in: 宿舍计划商店页
         """
         self._currency = self.status_get_gold_coins()
         self.gems = self.status_get_gems()
-        logger.info(f'[私人休息室-商店] 金币: {self._currency}, 钻石: {self.gems}')
+        logger.info(f'[宿舍计划-商店] 金币: {self._currency}, 钻石: {self.gems}')
 
     def shop_check_item(self, item):
         """检查商品是否可购买（余额是否充足）。

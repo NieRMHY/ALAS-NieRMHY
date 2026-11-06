@@ -215,7 +215,7 @@
 :root[data-theme='extreme'] .traceback-locals-block {padding: 3px 6px; font-size: 9px}
 :root[data-theme='extreme'] .traceback-exc-banner {border-radius: 0; margin: 0 4px 4px; padding: 4px 6px; font-size: 10px}
 :root[data-theme='extreme'] .traceback-raw-pre {padding: 4px 6px; font-size: 9px}
-:root[data-theme='extreme'] .llm-markdown-view {font-size: 11px; line-height: 1.5}
+/* Modify by MHY, 紧凑主题不再保留智能分析专用样式。 */
 :root[data-theme='extreme'] .cost-table .map-th-col {width: 26px; min-width: 26px; max-width: 26px; font-size: 10px; padding: 2px 0}
 :root[data-theme='extreme'] .cost-cell {width: 26px; height: 22px; font-size: 10px}
 :root[data-theme='extreme'] .system-banner-card {padding: 4px 0; margin: 2px 0}

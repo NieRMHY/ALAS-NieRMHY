@@ -21,6 +21,7 @@ from module.exercise.assets import *
 from module.exercise.combat import ExerciseCombat
 from module.logger import logger
 from module.ocr.ocr import Digit, Ocr, OcrYuv
+from module.ui.assets import EXERCISE_CHECK
 from module.ui.page import page_exercise
 from module.config.utils import get_server_next_update
 
@@ -342,7 +343,10 @@ class Exercise(ExerciseCombat):
                 logger.info('[演习-对手] 对手刷新次数耗尽')
                 break
 
-        # self.equipment_take_off_when_finished()
+        if self.equipment_config_enabled and self.equipment_handle_before_flag:
+            self._choose_opponent(0)
+            self.equipment_handle_after()
+            self.ui_back(EXERCISE_CHECK)
 
         # 调度器
         with self.config.multi_set():

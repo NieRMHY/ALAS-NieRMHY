@@ -9,6 +9,7 @@ from uuid import uuid4
 
 from module.config.time_source import now
 from module.logger import logger
+from module.persistence.database import register_instance
 from module.statistics import resource_stats
 
 _session = ContextVar('resource_session', default=None)
@@ -33,26 +34,8 @@ def canonical(name):
 
 
 def connect():
-    """跟随现有统计库路径，测试可隔离替换；连接在事务结束时释放。"""
-    Path(resource_stats._LOCAL_DB).parent.mkdir(parents=True, exist_ok=True)
-    connection = sqlite3.connect(resource_stats._LOCAL_DB, timeout=30,
-                                 factory=resource_stats._ClosingConnection)
-    connection.row_factory = sqlite3.Row
-    connection.executescript('''
-        CREATE TABLE IF NOT EXISTS resource_flows (
-            id INTEGER PRIMARY KEY, instance TEXT NOT NULL, ts TEXT NOT NULL,
-            resource TEXT NOT NULL, amount INTEGER NOT NULL, task TEXT NOT NULL,
-            operation TEXT NOT NULL, evidence TEXT NOT NULL, run_id TEXT,
-            event_key TEXT NOT NULL, UNIQUE(instance, event_key, resource)
-        );
-        CREATE INDEX IF NOT EXISTS resource_flows_window ON resource_flows(instance, ts, id);
-        CREATE TABLE IF NOT EXISTS resource_balances (
-            instance TEXT NOT NULL, resource TEXT NOT NULL, value INTEGER NOT NULL,
-            ts TEXT NOT NULL, run_id TEXT, cursor INTEGER NOT NULL,
-            PRIMARY KEY(instance, resource)
-        );
-    ''')
-    return connection
+    """共享总库连接；进入上下文时开始 IMMEDIATE 事务。"""
+    return resource_stats._database().connect()
 
 
 @contextmanager
@@ -87,6 +70,7 @@ def record(config, changes, operation, *, evidence='confirmed', event_key=None, 
         return False
     try:
         with connect() as connection:
+            register_instance(connection, instance)
             connection.executemany('''INSERT OR IGNORE INTO resource_flows
                 (instance, ts, resource, amount, task, operation, evidence, run_id, event_key)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)''', rows)
@@ -96,7 +80,7 @@ def record(config, changes, operation, *, evidence='confirmed', event_key=None, 
         return False
 
 
-def observe(config, resource, value, source=None):
+def observe(config, resource, value, source=None, *, observed_at=None):
     """复核库存：扣除上次读数后的明确交易，只把剩余差额记入账本。"""
     instance = getattr(config, 'config_name', None)
     if not isinstance(instance, str) or type(value) is not int or value < 0:
@@ -104,16 +88,18 @@ def observe(config, resource, value, source=None):
     resource = canonical(resource)
     state = session_for(config)
     run_id = state['id'] if state else None
-    stamp = now().isoformat(sep=' ')
+    stamp = (observed_at or now()).isoformat(sep=' ')
     try:
         with connect() as connection:
-            connection.execute('BEGIN IMMEDIATE')
+            register_instance(connection, instance)
             baseline = connection.execute('SELECT * FROM resource_balances WHERE instance=? AND resource=?',
                                           (instance, resource)).fetchone()
+            if baseline and baseline['ts'] > stamp:
+                return
             if baseline:
                 known = connection.execute('''SELECT COALESCE(SUM(amount), 0) FROM resource_flows
-                    WHERE instance=? AND resource=? AND id>?''',
-                    (instance, resource, baseline['cursor'])).fetchone()[0]
+                    WHERE instance=? AND resource=? AND (ts>? OR (ts=? AND id>?)) AND ts<=?''',
+                    (instance, resource, baseline['ts'], baseline['ts'], baseline['cursor'], stamp)).fetchone()[0]
                 residual = value - baseline['value'] - known
                 same_run = run_id is not None and baseline['run_id'] == run_id
                 # PT 跨活动归零不属于消费；读取任务也不能认领离线恢复和跨任务变化。
@@ -127,8 +113,8 @@ def observe(config, resource, value, source=None):
                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)''',
                         (instance, stamp, resource, residual, task, operation,
                          'observed' if same_run and not reset else 'adjustment', run_id, uuid4().hex))
-            cursor = connection.execute('SELECT COALESCE(MAX(id), 0) FROM resource_flows WHERE instance=?',
-                                        (instance,)).fetchone()[0]
+            cursor = connection.execute('SELECT COALESCE(MAX(id), 0) FROM resource_flows WHERE instance=? AND ts<=?',
+                                        (instance, stamp)).fetchone()[0]
             connection.execute('''INSERT INTO resource_balances VALUES (?, ?, ?, ?, ?, ?)
                 ON CONFLICT(instance, resource) DO UPDATE SET
                     value=excluded.value, ts=excluded.ts, run_id=excluded.run_id, cursor=excluded.cursor''',
@@ -153,7 +139,8 @@ def report(instance, start, end, resource=None, task=None, offset=0, limit=100, 
         raise ValueError('时间区间必须为递增的本地时间')
     filters = 'instance=? AND ts>=? AND ts<?'
     params = [instance, start.isoformat(sep=' '), end.isoformat(sep=' ')]
-    with connect() as connection:
+    # 查询报表不需要 BEGIN IMMEDIATE 写锁，避免影响收支写入和日报采集。
+    with resource_stats._database().transaction(write=False) as connection:
         through_id = through_id if through_id is not None else connection.execute(
             'SELECT COALESCE(MAX(id), 0) FROM resource_flows WHERE instance=?', (instance,)).fetchone()[0]
         filters += ' AND id<=?'

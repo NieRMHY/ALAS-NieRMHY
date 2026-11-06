@@ -21,6 +21,10 @@ def make_config(task, **groups):
     config.data = config.config_update({task: groups})
     config.bind(task)
     config.task = name_to_function(task)
+    # These map tests pin archived fixtures rather than following the current event.
+    campaign = groups.get('Campaign', {})
+    if 'Event' in campaign:
+        config.override(Campaign_Event=campaign['Event'])
     return config
 
 

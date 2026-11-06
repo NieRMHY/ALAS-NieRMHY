@@ -213,6 +213,11 @@ class MissionHandler(GlobeOperation, ZoneManager):
                 confirm_timer.reset()
 
             # 点击
+            # 保留海域中断自律并退出战斗后，结算「合计获得奖励」会延迟弹出，
+            # 可能到进入任务列表这一步才盖住界面；不处理会一直等不到任务列表
+            if self.appear_then_click(AUTO_SEARCH_REWARD, offset=(50, 50), interval=3):
+                confirm_timer.reset()
+                continue
             if self.appear_then_click(MISSION_ENTER, offset=(200, 5), interval=5):
                 confirm_timer.reset()
                 continue
@@ -327,6 +332,9 @@ class MissionHandler(GlobeOperation, ZoneManager):
                 logger.info('[大世界处理-任务] 已在任务区域')
                 return 'already_at_mission_zone'
 
+            # 保留海域中断自律后的结算弹窗也会延迟到这一步才弹出，先点掉
+            if self.appear_then_click(AUTO_SEARCH_REWARD, offset=(50, 50), interval=3):
+                continue
             if self.appear_then_click(MISSION_CHECKOUT, offset=checkout_offset, interval=2, similarity=0.78):
                 continue
             if self.handle_popup_confirm('OS_MISSION_CHECKOUT'):
@@ -413,8 +421,7 @@ class MissionHandler(GlobeOperation, ZoneManager):
         enable = self.config.is_task_enabled('OpsiExplore')
         next_run = self.config.cross_get(keys='OpsiExplore.Scheduler.NextRun', default=DEFAULT_TIME)
         next_reset = get_os_next_reset()
-        logger.attr('大世界下次重置', next_reset)
-        logger.attr('每月开荒', (enable, next_run))
+        logger.debug(f'[大世界-每月开荒] 启用={enable}，下次运行={next_run}，下次重置={next_reset}')
         # -12 小时以处理夏令时
         # `next_run` 可能在夏令时之前计算，但现在是夏令时
         # 2023-03-14 11:15:28.423 | INFO | [OpsiNextReset] 2023-04-01 03:00:00
@@ -424,5 +431,4 @@ class MissionHandler(GlobeOperation, ZoneManager):
             logger.info('每月开荒仍在运行，仅接取任务。每月开荒访问所有区域时会完成这些任务，不必担心遗漏。')
             return True
         else:
-            logger.info('未处于每月开荒，可以执行大世界每日')
             return False

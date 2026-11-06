@@ -199,6 +199,23 @@ describe('保留数值输入原文', () => {
   it('文本默认值允许提交逗号分隔的海域列表', () => {
     expect(prepareValue('12, 13, 71, 73', {type: 'input', value: '0'})).toEqual({payload: '12, 13, 71, 73'})
   })
+  it('比例参数遵循显式小数类型，兼容默认值在 JSON 中写成整数', () => {
+    const ratio = {type: 'input', value: 1, valuetype: 'float', validate: [0, 1]}
+    for (const value of ['0', '0.2', '.5', '1.0', ' 2e-1 ']) {
+      expect(prepareValue(value, ratio)).toEqual({payload: Number(value)})
+    }
+    for (const value of ['-0.1', '1.1', '1000', 'Infinity']) {
+      expect(prepareValue(value, ratio).error).toBeTruthy()
+    }
+  })
+  it('整数参数接受等值数字写法，但不能保存实际的小数', () => {
+    const integer = {type: 'input', value: 0, valuetype: 'int'}
+    for (const value of [' 2 ', '2.0', '+02', '2e0']) {
+      expect(prepareValue(value, integer)).toEqual({payload: 2})
+    }
+    expect(prepareValue('2.5', integer).error).toBeTruthy()
+    expect(prepareValue(' 001 ', {type: 'input', value: 0, valuetype: 'str'})).toEqual({payload: ' 001 '})
+  })
 })
 
 describe('清空时回落到参数默认值', () => {
@@ -220,8 +237,18 @@ describe('清空时回落到参数默认值', () => {
   it('默认值缺失时维持原有的报错行为', () => {
     expect(prepareValue('', {type: 'int', value: null}).error).toBeTruthy()
   })
-  it('非时间非数字字段的清空不受影响', () => {
-    expect(prepareValue('', {type: 'input', value: 'text'})).toEqual({payload: ''})
+  it('文本字段被全部清空时自动还原为参数默认值', () => {
+    expect(prepareValue('', {type: 'input', value: 'text'})).toEqual({payload: 'text', text: 'text'})
+    expect(prepareValue('   ', {type: 'input', value: '127.0.0.1:5555'})).toEqual({payload: '127.0.0.1:5555', text: '127.0.0.1:5555'})
+    expect(prepareValue('', {type: 'textarea', value: 'EquipUR > EquipSSR'})).toEqual({payload: 'EquipUR > EquipSSR', text: 'EquipUR > EquipSSR'})
+  })
+  it('声明 preserve_empty 的文本字段保留空值本身', () => {
+    expect(prepareValue('', {type: 'input', value: 'text', preserve_empty: true})).toEqual({payload: ''})
+    expect(prepareValue('', {type: 'textarea', value: '', preserve_empty: true})).toEqual({payload: ''})
+  })
+  it('默认值本身为空或缺失时清空保留空值', () => {
+    expect(prepareValue('', {type: 'input', value: ''})).toEqual({payload: ''})
+    expect(prepareValue('', {type: 'input', value: null})).toEqual({payload: ''})
   })
 })
 

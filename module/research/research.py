@@ -104,12 +104,13 @@ class RewardResearch(ResearchSelector, ResearchQueue, StorageHandler):
         Returns:
             bool: 重置是否成功执行。若重置功能不可用则返回 False。
         """
-        if not self.appear(RESET_AVAILABLE, threshold=10):
+        if not self.match_template_color(RESET_AVAILABLE, offset=(60, 20), threshold=10):
             logger.info('[科研-重置] 科研重置不可用')
             return False
 
         logger.info('[科研-重置] 科研重置')
-        drop.add(self.device.image)
+        if drop:
+            drop.add(self.device.image)
         executed = False
         while 1:
             if skip_first_screenshot:
@@ -117,7 +118,8 @@ class RewardResearch(ResearchSelector, ResearchQueue, StorageHandler):
             else:
                 self.device.screenshot()
 
-            if self.appear_then_click(RESET_AVAILABLE, interval=10, threshold=10):
+            if self.match_template_color(RESET_AVAILABLE, offset=(60, 20), threshold=10, interval=10):
+                self.device.click(RESET_AVAILABLE)
                 continue
             if self.handle_popup_confirm('RESEARCH_RESET'):
                 executed = True

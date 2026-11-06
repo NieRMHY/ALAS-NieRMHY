@@ -631,6 +631,18 @@ class FleetNameScanner(Scanner):
 class FleetEmotionDigit(Digit):
     """舰队信息专用心情解析：未知为 None，不截位猜数或把空白当零。"""
 
+    def prepare_low_emotion(self, image):
+        """保留原生一、两位数字，排除短标签右侧的立绘和底部亮线。"""
+        image = image[:20, :17]
+        gray = self.pre_process(image)
+        _, _, components, _ = cv2.connectedComponentsWithStats((gray < 160).astype(np.uint8))
+        clean = np.zeros_like(image)
+        for x, y, width, height, _ in components[1:]:
+            # 720p 心情数字约高15像素；立绘往往贯穿裁剪框或宽于单个数字。
+            if 10 <= height <= 20 and width <= 8 and y <= 7:
+                clean[y:y + height, x:x + width] = image[y:y + height, x:x + width]
+        return clean
+
     def after_process(self, result):
         if not result or not result.isascii() or not result.isdigit():
             return None
@@ -660,8 +672,39 @@ class FleetEmotionScanner(EmotionScanner):
         )
 
     def _scan(self, image):
-        # 不使用通用 EmotionScanner 的情绪颜色纠正，保留失败空值。
-        return self.ocr_model.ocr(image)
+        if server.server == 'jp':
+            # 日服使用不同的数字区域和字色，沿用既有识别。
+            return self.ocr_model.ocr(image)
+        status_scanner = EmotionStatusScanner()
+        number_offset = CARD_EMOTION_GRIDS.origin - CARD_GRIDS.origin
+        status_offset = CARD_EMOTION_STATUS_GRIDS.origin - CARD_EMOTION_GRIDS.origin
+        status_shape = CARD_EMOTION_STATUS_GRIDS.button_shape
+        statuses, images = [], []
+        for area in self.ocr_model.buttons:
+            left, top = np.array(area[:2]) + status_offset
+            status = status_scanner.get_emotion_status(crop(
+                image, (left, top, left + status_shape[0], top + status_shape[1]),
+            ))
+            if status in ('red', 'yellow'):
+                # 同时确认数字左侧和卡片右侧图标，避免把红色立绘当作零心情。
+                x, y = np.array(area[:2]) - number_offset
+                icon = crop(image, (x - 2, y + 29, x + 19, y + 51))
+                color = EMOTION_RED if status == 'red' else EMOTION_YELLOW
+                if not image_color_count(icon, color=color, count=300):
+                    status = 'unknown'
+            raw = crop(image, area)
+            images.append(self.ocr_model.prepare_low_emotion(raw) if status == 'yellow' else raw)
+            statuses.append(status)
+        results = self.ocr_model.ocr(images, direct_ocr=True)
+        results = results if isinstance(results, list) else [results]
+        # Lua 心情配置：红色只对应0，黄色对应1–30；不截位或猜测失败的数字。
+        for index, (value, status) in enumerate(zip(results, statuses)):
+            if status == 'red':
+                results[index] = 0
+            elif status == 'yellow' and (value is None or not 1 <= value <= 30):
+                results[index] = None
+        logger.attr('舰队心情OCR', results)
+        return results
 
 
 class FleetManagementScanner:

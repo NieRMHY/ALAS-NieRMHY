@@ -6,18 +6,16 @@
 """
 
 import cv2
-import numpy as np
 import typing as t
 
 from module.azur_stats.image.base import ImageBase
 from module.base.button import ButtonGrid
 from module.base.decorator import cached_property
-from module.base.utils import crop, rgb2gray
 from module.combat.assets import GET_ITEMS_1, GET_ITEMS_2, GET_ITEMS_3
 from module.handler.assets import INFO_BAR_1
 from module.logger import logger
-from module.statistics.assets import GET_ITEMS_ODD
 from module.statistics.item import AmountOcr, Item, ItemGrid
+from module.statistics.item_layout import single_row_is_odd
 from module.statistics.utils import ImageError
 
 ITEM_GRIDS_1_ODD = ButtonGrid(origin=(336, 298), delta=(128, 0), button_shape=(96, 96), grid_shape=(5, 1))
@@ -106,8 +104,7 @@ def has_odd_items(image):
     Returns:
         bool: 单行是否存在奇数个物品。
     """
-    image = crop(image, GET_ITEMS_ODD.area)
-    return np.mean(rgb2gray(image) > 127) > 0.1
+    return single_row_is_odd(image)
 
 
 class GetItems(ImageBase):
@@ -116,7 +113,7 @@ class GetItems(ImageBase):
     负责战斗与任务结算弹窗中掉落物品的排布检测、网格定位与物品识别。
     """
 
-    ITEM_TEMPLATE_FOLDER = f'./assets/stats_basic'
+    ITEM_TEMPLATE_FOLDER = './assets/stats_basic'
     ITEM_GRID_CLASS = ItemGrid
     # 提取新场景模板时为 True，常规运行时为 False
     ALLOW_TOO_MANY_NEW_TEMPLATE = False

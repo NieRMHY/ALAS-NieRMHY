@@ -80,7 +80,7 @@ def pick_cat_name(texts) -> str:
     """从一组 OCR 文本结果里提取指挥喵名称。
 
     猫名可能是玩家自定义的，所以不强行匹配天赋库，只做去噪：
-    取 2~6 个字、含汉字、且不含界面词的最长候选。
+    取 2~6 个字、含汉字、且不含界面词或舰队标签的最长候选。
 
     Args:
         texts (list[str]): OCR 识别出的文本序列。
@@ -96,6 +96,8 @@ def pick_cat_name(texts) -> str:
         if not any('\u4e00' <= char <= '\u9fff' for char in text):
             continue
         if any(word in text for word in NAME_NOISE):
+            continue
+        if re.search(r'[舰艦]\s*[队隊]', text):
             continue
         if len(text) > len(best):
             best = text

@@ -75,6 +75,39 @@ def parse_progress(text):
     return int(left), int(right)
 
 
+def fix_progress(have, need, need_cfg):
+    """
+    用赛季数据里已知的需求量校正 OCR 进度，返回 (当前数量, 需求量)。
+
+    Add by MHY, 真机 OCR 常在数字前多读出一位或符号：拿铁实际 82/100 被读成 282/100，
+    于是错发「赛季任务已达标」邮件（还有 7250/250、2150/150、760/60、500/5500）。
+    需求量是每项任务的固定值，右半边对不上就以赛季数据为准；左半边再按
+    「去掉前缀」的方式纠正，纠正后仍超过需求量的当作读错，不能算达标。
+
+    Args:
+        have: OCR 读到的当前数量
+        need: OCR 读到的需求量
+        need_cfg: 赛季数据里该任务的需求量；未知（0）时原样返回
+
+    Returns:
+        tuple: (have, need)
+    """
+    if not need_cfg:
+        return have, need
+    # 需求量是任务的固定值，右半边读错（500/5500、100/199）时直接以已知值为准
+    need = need_cfg
+    if have <= need:
+        return have, need
+    # 左半边比需求量还大：任务进度封顶在需求量，超过必是前面多读了一位
+    digits = str(have)
+    for cut in range(1, len(digits)):
+        stripped = int(digits[cut:])
+        if stripped <= need and digits[cut] != '0':
+            # 去掉前缀后合理才采用；282 -> 82、7250 -> 250、760 -> 60
+            return stripped, need
+    return need, need
+
+
 def normalize_name(text):
     """去掉 OCR 常见噪声（空白、标点、零宽字符）。"""
     if not text:
@@ -361,6 +394,8 @@ def read_cards(image, ocr, season=None, offsets=None):
                 card.update({'task': task, 'item': item})
                 if need_cfg and not need:
                     card['need'] = need_cfg
+                # Add by MHY, 进度读数用已知需求量校验（见 fix_progress）
+                card['have'], card['need'] = fix_progress(card['have'], card['need'], need_cfg)
             cards.append(card)
     return cards
 
@@ -536,7 +571,11 @@ def enter_season_page(island):
             continue
     island.device.stuck_record_clear()
     if not island.appear(ISLAND_SEASON_GOTO_ISLAND):
-        logger.warning('[岛屿-赛季计划] 进入开发季页面失败，退回岛屿页')
+        # Add by MHY, 入口区域被生成器覆盖成左上角 (0,0,56,54) 时这里只留一行告警，
+        # 十天都没人发现；带上匹配区域与实测均色，下次一眼能看出是识别还是导航的问题
+        entry_seen = island.appear(ISLAND_SEASON_ENTRY)
+        logger.warning(f'[岛屿-赛季计划] 进入开发季页面失败，退回岛屿页'
+                       f'（入口区域 {ISLAND_SEASON_ENTRY.area}，入口识别 {entry_seen}）')
         leave_season_page(island, timeout=6)
         return False
 

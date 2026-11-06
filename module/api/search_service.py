@@ -38,6 +38,14 @@ def _build_entries() -> list:
         for task, node in data.items():
             if task == 'Task' or not isinstance(node, dict):
                 continue
+            info = node.get('_info')
+            group_label = info.get('name', '') if isinstance(info, dict) else ''
+            # 卡片标题（三级标题）也是页面上能看到的文字，单独成一条命中，点了定位到整张卡片
+            if group_label:
+                entries.append({
+                    'kind': 'group', 'task': task, 'key': '', 'label': group_label, 'help': '',
+                    'values': '', 'haystack': f'{task} {group_label}',
+                })
             for option, meta in node.items():
                 if option == '_info' or not isinstance(meta, dict):
                     continue
@@ -76,16 +84,16 @@ def search_content(query: str) -> dict:
         query: 检索词，大小写不敏感。
 
     Returns:
-        dict: ``{'tasks': [...], 'options': [...]}``，每组条目为
-            ``{'task', 'key', 'label', 'help', 'values'}``；``values`` 是该配置项
-            下拉标签的拼接，用来解释这条为什么被搜到。无命中时两组均为空列表。
+        dict: ``{'tasks': [...], 'groups': [...], 'options': [...]}``，每组条目为 ``{'task', 'key', 'label', 'help', 'values'}``；
+            ``groups`` 是卡片标题命中（``key`` 为空），``values`` 是该配置项下拉标签的拼接，
+            用来解释这条为什么被搜到。无命中时每组均为空列表。
     """
     needle = query.strip().lower()
     if not needle:
-        return {'tasks': [], 'options': []}
+        return {'tasks': [], 'groups': [], 'options': []}
 
     seen = set()
-    tasks, options = [], []
+    tasks, groups, options = [], [], []
     for entry in _entries():
         if needle not in entry['haystack'].lower():
             continue
@@ -96,6 +104,8 @@ def search_content(query: str) -> dict:
         item = {key: entry[key] for key in ('task', 'key', 'label', 'help', 'values')}
         if entry['kind'] == 'task':
             tasks.append(item)
+        elif entry['kind'] == 'group':
+            groups.append(item)
         else:
             options.append(item)
-    return {'tasks': tasks, 'options': options}
+    return {'tasks': tasks, 'groups': groups, 'options': options}

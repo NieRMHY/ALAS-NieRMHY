@@ -14,6 +14,8 @@
 
 一个 AzurPilot 实例（一份用户配置）对应一个调度器进程。多个实例并行时，每个进程有独立的 `AzurLaneAutoScript` 与状态。
 
+所有运行入口在业务 worker 启动前执行 `module.persistence.database.initialize()`。首次迁移先备份、转换与检查，失败停止启动并保留旧源；总库完成标记存在而数据库丢失时必须恢复备份。模块导入不创建总库，详见 [普通业务数据存储](../infra/persistence.md)。
+
 ## 2. 模块职责
 
 ### 负责
@@ -25,7 +27,7 @@
 - 运行监护：任务超时或到达强制定时重启条件时，杀死模拟器进程强制中断任务。
 - 服务器维护感知：游戏服务器维护期间暂停调度，恢复后重启游戏。
 - 配置热重载：在任务边界与空闲等待中检测配置文件变更，无重启生效。
-- 附带生命周期事务：每日备份、错误现场保存与上报。
+- 附带生命周期事务：每日备份、错误现场保存。
 
 ### 不负责
 
@@ -142,12 +144,12 @@ flowchart TD
     K --> C
     L --> C
     N[失败计数与敏感判断] --> O{敏感任务失败?}
-    O -- 是 --> Z3[上报错误日志并 exit 1]
+    O -- 是 --> Z3[保存错误日志并 exit 1]
     O -- 否 --> P{连续失败达阈值?}
-    P -- 是 --> P1[强制重启模拟器<br>注入 Restart, 计数清零]
+    P -- 是 --> P1[注入 Restart 重启游戏<br>计数清零]
     P -- 否 --> C
     P1 --> C
-    C -. 任意未捕获异常 .-> Q[上报 + 重启模拟器<br>注入 Restart<br>指数退避 20s 起步, 上限 300s]
+    C -. 任意未捕获异常 .-> Q[保存错误日志 + 重启模拟器<br>注入 Restart<br>指数退避 20s 起步, 上限 300s]
     Q --> C
 ```
 
@@ -174,7 +176,7 @@ flowchart TD
 
 通用设置的 `General.OilControl.Enable` 默认关闭，需显式开启；`Target` 默认 24000（可设 1000–24999）。石油超过控制线时进入清理，低于控制线后结束；恰好等于控制线不新触发。自然恢复上限 `Dashboard.Oil.Limit` 不参与计算。仅原调度生效，增强调度与完全接管仍由卡片程序决定业务任务。
 
-`module/scheduler/oil_control.py` 在已有任务准备执行时观察石油，执行后及现有任务切换检查点重新判断；没有独立定时任务，也不提前唤醒等待中的游戏。只读的 `StorageStatistics` 直接放行，不为仓库扫描先跳转战役页，清油状态和待观察标记保留给下一项业务；系统恢复仍优先。观察采用战役页正向确认和连续两帧有效读数。读数不确定时不消费资源，五分钟后随现有任务再检查。
+`module/scheduler/oil_control.py` 在已有任务准备执行时观察石油，执行后及现有任务切换检查点重新判断；没有独立定时任务，也不提前唤醒等待中的游戏。只读的 `StorageStatistics` 和零油耗的 `LimitChallenge` 直接放行，不为它们先跳转战役页，清油状态和待观察标记保留给下一项业务；系统恢复仍优先。观察采用战役页正向确认和连续两帧有效读数。读数不确定时不消费资源，五分钟后随现有任务再检查。
 
 清理中的临时顺序为「用户停止／系统恢复 → 清油 → 原业务优先级」，不改写用户优先级配置。先从 Main/Main2/Main3/Event/Event2/Event3 中按原优先级选已启用、已到期、非故障冷却的普通模式任务；每轮每个候选最多调用一次，任务自身仍正常记录实际运行次数、心情和安全停止。清油调用临时提高石油停止线并关闭本次任务均衡器，退出时移除覆盖；达到清油控制线不添加日常低油等待，真实心情冷却和故障恢复照常生效。清油期间暂缓委托红点跳转，任务切换检查也暂缓普通业务抢占。
 
@@ -190,13 +192,13 @@ flowchart TD
 
 每个异常分支的第一动作都是 `_check_sensitive_exit()`：严格重启开启（`Error_StrictRestart`）且该任务配置了 `Scheduler.Sensitive` 时，立即保存现场、推送通知并 `exit(1)`——敏感任务（默认 `OpsiCrossMonth`、`OpsiObscure`、`OpsiAbyssal`）出错不做任何自动重启，避免在错误状态上继续写入。是否敏感不是写死的常量，而是运行时读 `{Task}.Scheduler.Sensitive` 配置动态判断，用户可自行调整。
 
-异常分级（详见第 11 节）的本质是一根「恢复力度」的标尺：重启游戏最轻（秒级），重启模拟器最重（分钟级）。多数异常走轻端；`GameStuckError` 与未预期异常带独立连续计数，连续超过 `Error_GameStuckThreshold` 才升级到模拟器重启。恢复动作完成后统一返回 `'recoverable'`。
+异常分级（详见第 11 节）的本质是一根「恢复力度」的标尺：重启游戏最轻（秒级），重启模拟器最重（分钟级）。本仓库按「减少模拟器重启」策略取舍：只有 `GameStuckError` / `GameTooManyClickError` 在连续达到 `Error_GameStuckThreshold`（且开启 `Error_GameStuckRestart`）时才升级到模拟器重启；游戏未运行、未预期异常与任务连续失败一律只重启游戏，`RequestHumanTakeover` 直接终止。恢复动作完成后统一返回 `'recoverable'`。
 
 推送策略与恢复力度解耦：可恢复分支统一走 `_notify_recoverable()`（OnePush + WebUI 双通道），开启 `Error_LowPushMode` 时整体跳过、只在日志留痕，避免无人值守时被「游戏未运行」「模拟器离线」这类会自动重试恢复的错误刷屏；需要人工介入或不依赖自动恢复的路径（`_check_sensitive_exit`、`ScriptError` 满 3 次退出、调度循环判定任务连续失败）直接调用 `handle_notify`，不受该模式影响。
 
 ### 全局异常兜底
 
-`loop()` 的最外层 `except` 是最后一道防线：上报错误日志（仅首次）、尽力重启模拟器、注入 `Restart`，然后按 `min(300, 20 × 2^(连续失败-1))` 秒指数退避后重试。调度器**永不因连续失败而退出**，退出只保留给代码 bug 与敏感任务。
+`loop()` 的最外层 `except` 是最后一道防线：保存错误现场（仅首次）、尽力重启模拟器、注入 `Restart`，然后按 `min(300, 20 × 2^(连续失败-1))` 秒指数退避后重试。调度器**永不因连续失败而退出**，退出只保留给代码 bug 与敏感任务。
 
 ## 7. 调用关系
 
@@ -218,9 +220,10 @@ flowchart TD
 | `module/handler/login.py`、`module/ui/ui.py` | `restart` / `start` / `goto_main` 三个基础任务 |
 | `module/notify` | onepush 推送与 WebUI 通知；可恢复告警经 `_notify_recoverable()` 双通道发出，可被 `Error_LowPushMode` 抑制 |
 | `module/base/backup.py` | 每日备份 |
-| `module/base/api_client.ApiClient` | 崩溃日志上报 |
 
 ### 与 `TaskHandler` 的区别
+
+任务调用用 `campaign_recovery_scope()` 绑定调度器，由公共 `CampaignRun.run()` 为符合配置的主线或活动海域保留异常上下文，包括活动每日、SP、紧急委托与三油低耗。只有实际执行 Restart 成功后才允许原任务消费，并回到原运行器的外层编排，继续处理每日进度或换船。其他业务任务运行会丢弃凭据，正常每日重启不会产生凭据；设备对象被重建时重新绑定到原战役，配置重新读盘。登录识别到原地图时交回任务恢复自律，后续战斗按普通入口计算心情，不接管旧战斗或旧结算；等待主界面的渠道悬浮球检查留待后续任务。凭据只存在于 worker 内存，原调度的敏感任务保护、错误计数与冷却不变。详见 [异常重启后续接原关卡](../campaign.md#异常重启后续接原关卡)。
 
 `module/runtime/task_handler.py` 的 `TaskHandler` 名字里也有「任务调度」，但它服务于 **WebUI 进程**：在 `module/api/lifecycle.py` 中承载更新检查、定时更新、远程访问保活等生成器任务。它不接触设备、不运行游戏任务，与调度循环零耦合。读到 `TaskHandler` 时不要与 `alas.py` 的调度混淆——游戏任务的唯一调度者是 `loop()`。
 
@@ -282,7 +285,7 @@ stateDiagram-v2
 | `Error.HandleError` | bool | true | 关闭后非可恢复失败将终止调度而非继续 |
 | `Error.LowPushMode` | checkbox | false | 低推送量模式；可恢复错误（游戏未运行、模拟器离线、卡死等）只记日志不推送 |
 | `Error.StrictRestart` | bool | false | 严格重启总开关（配合 `Sensitive` 生效） |
-| `Error.GameStuckRestart` / `GameStuckThreshold` | bool/int | false / 3 | 卡死是否允许升级到模拟器重启及阈值 |
+| `Error.GameStuckRestart` / `GameStuckThreshold` | bool/int | false / 3 | 卡死后是否允许升级到模拟器重启及次数阈值 |
 | `Error.AdbOfflineThreshold` | int | 3 | 模拟器重启超过该次数后拉长等待间隔（不放弃） |
 | `Error.WatchdogEnable` / `WatchdogTaskEnable` / `WatchdogTaskTimeout` | bool/bool/分钟 | false/false/120 | 运行监护总开关、任务超时子开关与阈值；超时为 0 表示禁用 |
 | `Optimization.WhenTaskQueueEmpty` | option | goto_main | 空闲行为：stay_there / goto_main / close_game |
@@ -305,26 +308,29 @@ stateDiagram-v2
 | 异常 | 原因 | 处理 | 返回 |
 | --- | --- | --- | --- |
 | `TaskEnd` | 任务主动结束（如情绪不足延迟） | 视为正常结束 | `True` |
-| `GameNotRunningError` | 游戏进程不存在 | 注入 `Restart` | `'recoverable'` |
+| `GameNotRunningError` | 游戏进程不存在或登录后再次退出 | 注入 `Restart`；启用 `GameStuckRestart` 后，连续退出达 `GameStuckThreshold` 则先重启模拟器 | `'recoverable'` |
 | `GameStuckError` / `GameTooManyClickError` | 画面无推进 / 重复连点 | 连续计数达 `GameStuckThreshold` 则重启模拟器，否则 10 秒后重启游戏 | `'recoverable'` |
 | `GameBugError` | 客户端 bug | 重启游戏 | `'recoverable'` |
 | `GamePageUnknownError` | 页面无法识别 | 先查服务器：可用则重启游戏；维护中则阻塞等待，等完返回 | `'recoverable'` / `False` |
 | `ScriptError` | 代码 bug | 连续 3 次内注入 `Restart` 重试；达到 3 次退出 | `'recoverable'` / `exit(1)` |
 | `EmulatorNotRunningError` | 模拟器离线 | `_try_restart_emulator()`（永不放弃，超阈值只加长间隔）+ `Restart` | `'recoverable'` |
-| `RequestHumanTakeover` | 严重到无法安全自动判断 | 也先尝试重启模拟器自动恢复，不再直接终止 | `'recoverable'` |
+| `RequestHumanTakeover` | 严重到无法安全自动判断 | 保存现场、推送 OnePush 与 WebUI 通知后终止；不重启模拟器、不注入 `Restart` | `exit(1)` |
+| `MindCalculatorScanError` | 船坞扫描识别或三排定位无法确认 | 记录具体原因、异常和错误截图，保留旧清单并结束当前工具任务；不重启模拟器 | `False` |
 | `AutoSearchSetError` | 自动搜索设置失败 | 重启游戏 | `'recoverable'` |
-| 其他 `Exception` | 未预期异常 | 连续计数达 `GameStuckThreshold` 升级为重启模拟器，否则仅重启游戏 | `'recoverable'` |
+| 其他 `Exception` | 未预期异常 | 只重启游戏，不升级为模拟器重启 | `'recoverable'` |
 | `EmulatorOpBusy` | 已有模拟器启停操作在跑 | 放弃本轮恢复，后台操作结束后下一轮调度接手（非错误，是并发保护） | `False`（重启函数内消化） |
 
-调度循环兜底（`loop()` 最外层 `except`）：保存并上报错误日志、重启模拟器、注入 `Restart`、按 20 秒起步、300 秒封顶的指数退避后重试，永不退出。
+调度循环兜底（`loop()` 最外层 `except`）：保存错误日志、重启模拟器、注入 `Restart`、按 20 秒起步、300 秒封顶的指数退避后重试，永不退出。
 
 终止路径只有四条：`ScriptError` 连续 3 次；敏感任务失败（`_check_sensitive_exit` 或失败计数命中）；`stop_event` 更新信号；配置/设备初始化即失败。其余一切故障都应自动恢复。
 
-**为什么恢复性失败不计入失败次数**：失败计数驱动的是「强制重启模拟器」这类高代价动作。可恢复错误已经各自触发过针对性恢复（重启游戏或模拟器），不再通过 `failure_record` 重复升级。
+**为什么恢复性失败不计入失败次数**：失败计数驱动任务级恢复动作（本仓库为重启游戏）。可恢复错误已经各自触发过针对性恢复（重启游戏或模拟器），不再通过 `failure_record` 重复升级。
 
-**同一任务连续重启上限**：`Error.TaskRestartLimit` 默认 3，0 表示关闭限制。独立的 `task_restart_record` 累计同一任务未成功的恢复轮次，包含 `'recoverable'`、`False` 和选出任务后的全局异常；该任务成功才清零，其他任务成功或 `Restart` 成功不会清掉原任务计数。达到上限后将故障任务的 `Scheduler.NextRun` 写为服务器下一次零点，发送 `Error.OnePushConfig` 错误推送和 WebUI 提醒，低推送量模式也保留此提醒。其他任务继续调度，本轮冷却也适用于自定义调度卡片和强制任务调用。
+**同一任务连续重启模拟器上限**：`Error.TaskRestartLimit` 默认 3，0 表示关闭限制。独立的 `task_restart_record` 只累计该任务故障引发且已完成的模拟器重启，重启游戏不计数。每次模拟器重启后仍允许任务重试；已用完次数且任务再次需要模拟器重启时，才将故障任务的 `Scheduler.NextRun` 写为服务器下一次零点，发送 `Error.OnePushConfig` 错误推送和 WebUI 提醒，低推送量模式也保留此提醒。该任务成功才清零，其他任务成功或 `Restart` 成功不会清掉原任务计数。其他任务继续调度，本轮冷却也适用于自定义调度卡片和强制任务调用。
 
-`Restart` 是系统恢复入口，豁免该上限，不累计恢复次数，也不受旧冷却记录阻拦。重启失败仍走原有客户端重试或模拟器恢复分支，避免游戏未运行时整个队列依次失败。普通任务在选出后的全局异常中达到上限时，也先尝试重启模拟器并安排 `Restart`，再延后故障任务；正常每日重启排期和随机延后设置保持不变。
+`Restart` 是系统恢复入口，豁免该上限，不累计重启次数，也不受旧冷却记录阻拦。游戏未运行与设备离线属于共享运行环境故障：游戏未运行只注入 `Restart` 重启游戏，只有模拟器离线才走模拟器恢复；两者都不消耗业务任务的次数，也不因业务任务次数已用完而延后任务。模拟器启停未完成（包括并发操作忙碌）不计次数。普通任务选出后的其他全局异常，也只累计已完成的模拟器重启；需要延后任务时仍安排 `Restart`，保持系统恢复入口可用。关闭 `Error.TaskRestartLimit` 时，本限制产生的进程内冷却会在取任务前解除；用户后来另设的排期保持不变。正常每日重启排期和随机延后设置保持不变。
+
+游戏反复退出保留 `consecutive_game_not_running` 诊断计数（`Error_GameStuckRestart` 开启时累加，任一模拟器重启成功后清零，普通任务成功也会清零），但不再升级为模拟器重启：`GameNotRunningError` 一律注入 `Restart` 重启游戏，只有模拟器离线（`EmulatorNotRunningError`）才进入模拟器恢复流程。这是本仓库「减少模拟器重启」策略的一部分，上游的升级路径在合并时被剔除。
 
 敏感任务与 `ScriptError` 的退出规则优先执行。选出任务后的全局异常（包括初始化和收尾阶段）在执行任何恢复或延后前，同样通过 `_check_sensitive_exit()` 检查严格重启模式与该任务的 `Scheduler.Sensitive`，防止绕过敏感任务保护。
 

@@ -12,12 +12,14 @@ WebUI 岛屿计划 → 总览 里勾选「刷新生产/上架方案」后，下�
 """
 from module.island.island_economy import SHOP_CN_NAMES
 from module.island.island_planner import (
+    DEFAULT_POST_NUMBERS,
     SHELF_SLOTS,
     SHOP_TASKS,
     config_key_values,
     load_verified,
     plan_all,
     refresh_verified_from_logs,
+    shop_post_number,
 )
 from module.island.island_state import state_file
 from module.logger import logger
@@ -26,7 +28,12 @@ REFRESH_KEY = 'IslandPlan.IslandPlan.RefreshPlan'
 VERIFIED_KEY = 'IslandPlan.IslandPlan.PlanVerifiedOnly'
 MINE_KEY = 'IslandPlan.IslandPlan.PlanMineVerified'
 SHELF_KEY = 'IslandPlan.IslandPlan.PlanShelfSlots'
+# Add by MHY, 额外餐品开关（默认关闭）：货架每格每天固定卖 per_slot 件，不在货架上的
+# 商品卖不掉，用剩余工时生产只会占满槽位、把赛季囤积挤掉
+EXTRA_MEALS_KEY = 'IslandPlan.IslandPlan.PlanExtraMeals'
 SEASON_KEY = 'IslandPlan.IslandPlan.Season'
+# 店铺等级：货架格数的兜底来源（见 plan_shelf_slots）
+LEVEL_KEY = 'IslandBusiness.IslandBusiness.ShopLevel'
 
 
 PAGE_FILE = state_file('island_season_plan_page.json')
@@ -42,48 +49,38 @@ GENERATED_FILE = state_file('island_plan_generated.json')
 SEASON_BUFFER = 20
 
 
-def season_stockpile(season=None):
+def season_stockpile(progress=None):
     """
-    从赛季页面读数算出各店还要生产到什么数量（排进基础需求用）。
+    从赛季进度算出各店还要生产到什么数量（排进基础需求用）。
 
     之前方案刷新从不传 stockpile，导致「只在赛季任务里需要、却不在货架也不在
     基础需求里」的物品永远生产不出来——真机实测胡萝卜厚蛋烧、拿铁、便携快餐
-    一直是 0，赛季任务卡死。页面读数是权威来源；材料类（农田牧场产物）没有
-    对应店铺，交给农田牧场，直接跳过。
+    一直是 0，赛季任务卡死。材料类（农田牧场产物）没有对应店铺，交给农田牧场，
+    直接跳过。
 
-    Add by MHY, 已提交（done）的物品必须排除：提交后本季不再需要它，否则库存被
-    别的菜谱消耗到需求线以下时又会被排回生产目标——真机上「提交过了还在产」
-    就是这么来的。蔬菜沙拉真机实测：done 之后库存 2100 只是碰巧高过需求 100 才
-    没被排产，掉下来就会被重新排进去。
+    Modify by MHY, 进度改为仓库读数（见 island_season_progress），不再依赖赛季页
+    OCR 与「已领取/done」标记：提交任务后仓库数量掉下去，缺口自然重新出现；
+    要停止某项生产，把配置里该物品的需求数量改成 0 即可。
 
     目标数量是「任务需求 + SEASON_BUFFER」：按需生产，不再让物品无限堆积。
 
     Args:
-        season: 赛季；传入时排除已提交的物品
+        progress: {物品: (当前数量, 需求数量)}，None 视为没有进度
 
     Returns:
         dict: {店铺: {物品: 目标数量}}，没有缺口时返回 {}
     """
-    import json
-    from module.island.island_away_cook import done_items, load_notified
     from module.island.island_economy import ECONOMY_PRODUCTS
 
-    try:
-        with open(PAGE_FILE, encoding='utf-8') as f:
-            data = json.load(f)
-    except (OSError, ValueError):
+    # Modify by MHY, 进度来自仓库读数（island_season_progress），不再读赛季页快照
+    if progress is None:
         return {}
-
-    done = done_items(season, load_notified()) if season else set()
     stockpile = {}
-    for info in data.values():
-        item = info.get('item')
-        if not item or item in done or info.get('claimed') or item not in ECONOMY_PRODUCTS:
+    for item, (have, need) in progress.items():
+        if item not in ECONOMY_PRODUCTS:
             continue
         shop = ECONOMY_PRODUCTS[item].get('shop')
-        need = int(info.get('need') or 0)
-        have = int(info.get('have') or 0)
-        if not shop or need + SEASON_BUFFER <= have:
+        if not shop or not need or need + SEASON_BUFFER <= have:
             continue
         # 目标给的是总量：planner 按目标库存排产。多留 SEASON_BUFFER 份余量，
         # 刚好够提交一次又不至于堆在仓库里。
@@ -148,25 +145,44 @@ def _manual_shelf(config):
     return manual
 
 
-def season_have():
+def season_have(progress):
     """
-    赛季页面读数里各物品的当前数量（供 planner 按「还差多少」估算产能）。
+    赛季进度里各物品的当前数量（供 planner 按「还差多少」估算产能）。
 
     不按目标总量估算：仓库已有 248/270 时，按从零做 270 估会被误判产能不足
-    （真机：碳烤肉串就差 22 个却被估成 102 时，远超整店预算 43.2 时）。
+    （真机：碳烤肉串就差 22 个却被估成 102 时，远超整店一天的岗位工时——按岗位数
+    只有 1~2 个岗位 x 24 时）。
+
+    Args:
+        progress: {物品: (当前数量, 需求数量)}
 
     Returns:
         dict: {物品: 当前数量}
     """
-    import json
+    return {item: int(have) for item, (have, _need) in (progress or {}).items()}
 
-    try:
-        with open(PAGE_FILE, encoding='utf-8') as f:
-            data = json.load(f)
-    except (OSError, ValueError):
-        return {}
-    return {info['item']: int(info.get('have') or 0)
-            for info in data.values() if info.get('item')}
+
+def current_progress(config, season):
+    """
+    读取当前赛季进度：{物品: [当前数量, 需求数量]}，读不到赛季时返回 None。
+
+    Modify by MHY, 餐品清单来自代码赛季表，需求数量与已完成来自配置，当前数量来自最近一次
+    仓库读数。已勾选「已完成」或需求为 0 的餐品不在其中，不参与排产、方案刷新与提醒。
+
+    Args:
+        config: AzurLaneConfig 实例
+        season: 赛季
+
+    Returns:
+        dict | None: {物品: [当前数量, 需求数量]}
+    """
+    from module.island.island_economy import ECONOMY_PRODUCTS
+    from module.island.island_season_progress import build_progress, load_have, read_slots
+
+    if not season:
+        return None
+    slots = read_slots(config, season, set(ECONOMY_PRODUCTS))
+    return build_progress(slots, load_have())
 
 
 def load_gap():
@@ -201,20 +217,97 @@ def flatten_gap(stockpile):
             for item in items}
 
 
+def season_done(config, season):
+    """
+    本赛季已勾选「已完成」的物品集合。
+
+    Add by MHY：current_progress() 已经把 done 项过滤掉了，判断「勾选完成后要不要刷新
+    方案」必须另取一份完整 slots 状态（island_season_progress.read_slots）。
+
+    Args:
+        config: AzurLaneConfig 实例
+        season: 赛季
+
+    Returns:
+        set[str]: 已完成的物品英文名
+    """
+    from module.island.island_economy import ECONOMY_PRODUCTS
+    from module.island.island_season_progress import read_slots
+
+    if not season:
+        return set()
+    slots = read_slots(config, season, set(ECONOMY_PRODUCTS))
+    return {s['item'] for s in slots if s['done']}
+
+
+def plan_shelf_slots(config):
+    """
+    方案上架格数：配置有值照用，没配时按店铺等级的格数（钻石 4 格）。
+
+    Add by MHY：原来缺省写死 5，绕过了钻石店的 4 格（island_economy.SHOP_LEVELS
+    diamond slots=4），方案按 5 格排产、多出来的那格游戏直接忽略。
+
+    Args:
+        config: AzurLaneConfig 实例
+
+    Returns:
+        int: 上架格数
+    """
+    from module.island.island_economy import SHOP_LEVELS
+
+    raw = config.cross_get(SHELF_KEY, default=None)
+    if raw:
+        try:
+            return int(raw)
+        except (TypeError, ValueError):
+            logger.warning(f'[岛屿-方案刷新] PlanShelfSlots={raw!r} 非法，改按店铺等级取格数')
+    level = config.cross_get(LEVEL_KEY, default=None)
+    slots = SHOP_LEVELS.get(level, SHOP_LEVELS['diamond']).get('slots')
+    return int(slots or SHOP_LEVELS['diamond']['slots'])
+
+
+def shop_post_numbers(config):
+    """
+    各店实际岗位数（配置 <Task>.<Task>.PostNumber）。
+
+    Add by MHY：方案产能原来写死「每店 2 岗 x 24 时」，从不读配置；真机五家店的
+    PostNumber 都是 2，而代码默认值是 2/2/1/1/2，两边对不上。
+
+    Args:
+        config: AzurLaneConfig 实例
+
+    Returns:
+        dict: {店铺标识: 岗位数}
+    """
+    numbers = {}
+    for shop, (task, _, _) in SHOP_TASKS.items():
+        raw = config.cross_get(f'{task}.{task}.PostNumber',
+                               default=DEFAULT_POST_NUMBERS.get(shop, 2))
+        numbers[shop] = shop_post_number(shop, raw)
+    return numbers
+
+
 def request_refresh_on_gap_change(config, season):
     """
-    赛季缺口变化时自动请求一次方案刷新（Add by MHY）。
+    赛季缺口出现新项、或「已完成」勾选变化时自动请求一次方案刷新（Add by MHY）。
 
     货架方案是一次性快照：物品进囤积时会被从货架剔除（摆上货架就会被顾客买走，
-    赛季任务就凑不齐），而攒够之后也不会自己回到货架——必须重新生成方案。
-    靠手勾「刷新生产/上架方案」容易忘，所以这里比对快照自动触发。
+    赛季任务就凑不齐）——必须重新生成方案才会生效。靠手勾「刷新生产/上架方案」
+    容易忘，所以这里比对快照自动触发。
 
-    只在两种变化上触发：
-      - 出现新缺口：要把该物品从货架挪进囤积
-      - 已提交（done）集合变化：任务交掉了，物品该回货架正常售卖
+    触发条件（Modify by MHY，两条并列）：
+      - 出现新缺口：要把该物品从货架挪进囤积；
+      - 「已完成」集合与快照不同：勾上某项后它从缺口集合里消失，是**子集**变化，
+        旧判据「gap - old_gap 非空」看不见，过期囤积会永远留在生产清单里占产能
+        （真机：蔬菜沙拉 x120、苹果汁 x270、拿铁 x120、汉堡肉饭 x70 占掉 43%~78%）。
+        取消勾选同样触发，好把该物品放回货架。
 
-    「攒够目标」本身不触发：那时物品正停在囤积里、既不上架也不被买走，刷新反而
-    会把它推回货架，被买空后又变成缺口，来回翻。
+    「攒够目标 / 缺口收窄」不触发：那时物品正停在囤积里、既不上架也不被买走，刷新
+    反而会把它推回货架，被买空后又变成缺口，来回翻。你提交任务后仓库数量掉下去，
+    缺口会重新出现，这时同样走「新缺口」触发，不再需要「已提交」标记。
+
+    旧版快照里 done 恒为空（save_gap 第二个参数一直传 set()）；若你已经勾过「已完成」，
+    升级后第一次比对必然不同、会多触发一次刷新——可接受，正好把过期囤积清出生产清单。
 
     Args:
         config: AzurLaneConfig 实例
@@ -223,16 +316,14 @@ def request_refresh_on_gap_change(config, season):
     Returns:
         bool: 是否请求了刷新
     """
-    from module.island.island_away_cook import done_items, load_notified
-
-    gap = flatten_gap(season_stockpile(season)) if season else set()
-    done = done_items(season, load_notified()) if season else set()
+    gap = flatten_gap(season_stockpile(current_progress(config, season)))
+    done = season_done(config, season)
     old_gap, old_done = load_gap()
     if gap == old_gap and done == old_done:
         return False
     save_gap(gap, done)
     if not (gap - old_gap) and done == old_done:
-        # 只是有物品攒够了：让它留在囤积里，不动方案
+        # 只是有物品攒够了（缺口收窄）：让它留在囤积里，不动方案
         return False
     config.cross_set(REFRESH_KEY, True)
     try:
@@ -257,15 +348,21 @@ def refresh_plan_if_requested(config):
         return False
 
     logger.hr('岛屿方案刷新', level=2)
-    # 赛季页读取已独立成 IslandSeasonPlan 任务（不再搭在每个岛屿任务上）
     season = config.cross_get(SEASON_KEY, default=None)
-    # 排产目标要排除本赛季已提交的物品，否则库存掉下来会被重新排产
-    stockpile = season_stockpile(season)
-    # 产能估算按「还差多少」，不是按目标总量
-    stock_have = season_have()
     try:
+        # Modify by MHY, 冬季经济与赛季表尚未录入，避免刷新清空手填冬季方案。
+        if season == 'winter':
+            logger.warning('[岛屿-方案刷新] 冬季规划数据尚不完整，保留现有生产与上架配置')
+            return False
+        # Modify by MHY, 赛季进度取自仓库读数（island_season_progress），不再读赛季页
+        progress = current_progress(config, season)
+        stockpile = season_stockpile(progress)
+        # 产能估算按「还差多少」，不是按目标总量
+        stock_have = season_have(progress)
         verified_only = bool(config.cross_get(VERIFIED_KEY, default=True))
-        shelf_slots = int(config.cross_get(SHELF_KEY, default=5) or 5)
+        extra_meals = bool(config.cross_get(EXTRA_MEALS_KEY, default=False))
+        shelf_slots = plan_shelf_slots(config)
+        post_numbers = shop_post_numbers(config)
         if config.cross_get(MINE_KEY, default=True):
             counts = refresh_verified_from_logs()
             logger.info(f"[岛屿-方案刷新] 已验证可生产白名单已更新: {counts}")
@@ -290,17 +387,19 @@ def refresh_plan_if_requested(config):
                         f"{ {SHOP_CN_NAMES.get(k, k): v for k, v in stockpile.items()} }")
         plans = plan_all(season=season, shelf_slots=shelf_slots,
                          verified_only=verified_only, manual_shelf=manual_shelf,
-                         stockpile=stockpile, stock_have=stock_have)
+                         stockpile=stockpile, stock_have=stock_have,
+                         post_numbers=post_numbers, extra_meals=extra_meals)
         values = config_key_values(plans)
         config.cross_set_many(values)
         save_generated(plans)
         logger.info(f"[岛屿-方案刷新] 已写入 {len(values)} 项配置（季节 {season}，"
-                    f"只排已验证商品 {verified_only}）")
+                    f"只排已验证商品 {verified_only}，额外餐品排产 {extra_meals}）")
         for shop, plan in plans.items():
             meals = '、'.join(f'{n}x{q}' for n, q in plan.meals) or '（空）'
             logger.info(f"[岛屿-方案刷新] {plan.cn_name}: 生产 {meals}；"
                         f"上架 {plan.shelf or '（空）'}；"
-                        f"产能 {plan.minutes / 60:.2f} 时")
+                        f"产能 {plan.minutes / 60:.2f} 时 / "
+                        f"{plan.capacity_hours:.1f} 时（{plan.post_number} 岗位）")
     except Exception:
         logger.exception("[岛屿-方案刷新] 刷新失败，本次跳过")
     finally:

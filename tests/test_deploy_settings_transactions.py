@@ -186,9 +186,12 @@ class DeploySettingsTransactionsTests(unittest.TestCase):
                                              'https://gitee.com/LmeSzinc/AzurLaneAutoScript'))
         config = RuntimeDeployConfig(str(self.file))
         config.Theme = 'dark'
+        # Modify by MHY, 迁移落盘与运行时统一指向自有仓库和正式渠道
         self.assertEqual(poor_yaml_read(str(self.file))['Repository'],
-                         deploy_config.GIT_OVER_CDN_REPOSITORY)
-        self.assertEqual(config.Repository, deploy_config.GIT_OVER_CDN_FALLBACK_REPOSITORY)
+                         deploy_config.GITHUB_REPOSITORY)
+        self.assertEqual(config.Repository, deploy_config.GITHUB_REPOSITORY)
+        self.assertEqual(config.Branch, 'essex')
+        self.assertEqual(poor_yaml_read(str(self.file))['Branch'], 'essex')
         self.assertEqual(config.Theme, 'dark')
 
     def test_nested_transaction_and_attribute_assignment_commit_together(self):

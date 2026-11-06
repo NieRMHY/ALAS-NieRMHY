@@ -61,6 +61,8 @@ module/api/
 
 仓库报告使用 `statistics.report(category='storage', days=7)` 只读查询最近完整快照及时间窗口内成功扫描的历史序列。序列的可选 `icon` 在逐点与共用时间轴两种格式中保留，物品图标由 `/storage-items/` 静态挂载提供。主动扫描沿用 `tasks.run(task='StorageStatistics')` 与实例运行互斥；页面刷新不启动扫描。
 
+统计报表与 `statistics.resourceFlows` 的标签、表头、备注保持中文（前端按中文名查图标、导出与筛选）。两者附带 `glossary`（`{中文名: {语言: 名称}}`，只含本次出现的物品名与任务名，来源为物品名称表、仓库目录与配置页 i18n）；固定文案由前端 `components/statisticsText.ts` 在显示前翻译，新增后端文案时需同步补齐该字典的英、日、繁三列。
+
 其他分类报表在同一请求内共用一次受保护数据校验及协调锁，避免每个指标扫描全部历史。`CategorySection` 仅按 `statistics` 事件更新，同一分类最多保留一个正在执行的请求；期间收到的多次通知合并为一次后续刷新。运行概览事件不触发统计查询，SQLite WAL 的修改也纳入更新指纹；切换实例或参数后忽略旧响应。
 
 ## 4. 核心入口
@@ -115,6 +117,10 @@ module/api/
 ### RuntimeService（runtime_service.py）
 
 把 `ProcessManager` 的进程世界翻译成前端视图：`STATES = {1: running, 2: stopped, 3: error, 4: updating}` 是进程状态与前端枚举的唯一映射；`logs()` 用对象身份匹配 `renderables` 的裁剪重叠区，保证游标单调递增；`capture()` 只读 `preview.hub` 的最新帧，**绝不主动触发截图**。
+
+`instances()` 保留 `server` 字段作为 `Emulator.ServerName` 开服检测配置，同时提供 `region` 作为游戏地区。
+地区复用 `to_server(Emulator.PackageName)`；包名未配置或为 `auto` 时返回 `null`，等待设备检测。
+需要判断国服功能是否可用的页面应读取 `region`，不能把可关闭的开服检测配置当作游戏地区。
 
 `overview()` 枚举任务时跳过非字典根节点，不能把内部元数据当作任务参数组；总览请求、订阅推送以及启停后返回的总览共用这一读取路径。
 
@@ -344,6 +350,8 @@ lifespan 关闭（顺序有讲究，测试固化）：
 - **SPA 回退只对无后缀 404 生效**：缺失的 `.js`/图片必须返回真实 404，否则错误页会被当作 JS 执行；`.开头` 的路径段（构建指纹等）永远 404。
 - **`config.patch` 的 revision 只是兼容参数**：字段赋值合并到锁内最新快照，不因旧 revision 拒绝写入；但 `delete` 仍校验 revision 防误删。改这块要同时看 `module/config/transaction.py` 与运行器的待写字段机制。
 - **读操作不得触发配置写回**：`ConfigService.read` 若发现磁盘配置与模板合并后有差异，只在内存补齐，不落盘——迁移写回是核心运行器的职责。
+- **活动候选按实例隔离**：读取与运行器共用 `refresh_campaign_events()` 刷新旧活动；`config.get/patch` 在 `options` 中按字段路径返回包名所属地区的候选。任务页面优先使用此映射，保存时以同批最终包名拒绝跨服选择，不修改共享 schema 或全局服务器。详见 [配置系统](../config.md) 的活动候选说明。
+- META 的 `OneHitMode → AssistRequestLimit` 在只读合并时复用核心纯转换函数，旧 `true/false` 显示为 `0/-1`，已有新值优先。读取不改磁盘；用户之后保存新字段时才由配置事务落盘。求援断点 `AssistRequestState` 隐藏且不可通过 API 编辑。
 - **实例名规则与上游一致**：`config/` 下除 `template` 外任何含 `Alas` 段的 `*.json` 都算实例；收紧 `validate_name` 会让上游认可的名字在 WebUI 里消失。
 - **`preview.capture` 与 `preview` topic 都只读 hub**：任何「顺手截一张」的改动都会让浏览器流量变成设备负载，破坏 7×24 运行假设。
 - **错误详情不回显输入**：`ValidationError` 的 details 只含 loc/type；新增错误分支时保持这一约定。
@@ -400,6 +408,8 @@ ws.send_json({'v':1,'type':'request','id':'2','method':'events.subscribe',
 ## 19. 调试方法
 
 - **健康检查**：`GET /healthz` 应返回 `{'status': 'ok', 'protocolVersion': 1}`；`GET /` 返回 503 说明前端未构建（在 `frontend/` 执行 `npm ci && npm run build`）。
+- **启动器通道**：`/api/launcher/{status,startup,stream,report,trusted-login}` 与 `/launcher-login` 只服务外部启动器，全部限定本机回环，非本机一律 403（控制台的启动器卡片读同一组端点，远端访问时即显示「只能在本机 WebUI 中设置」）。
+- **任务通知通道**：`/api/notify`（POST，仅本机，且要求 `application/json`——浏览器跨站请求发不出该类型，据此阻断恶意网页伪造推送）收到后兵分两路：经 `notify_hub` 以 `notifications` 主题广播给 WS 订阅者（前端 Notification API 弹 Windows 原生通知；授权框必须由用户手势触发，首条通知到达后等用户点击页面时申请；跨实例推送、未订阅即错过），同时进队列（上限 100，满时丢弃最旧）供 `/api/notify_stream`（SSE）给外部启动器订阅。路径与报文格式沿自旧版 WebUI，属启动器写死的对接面，改名即断连；`notifications` 与 `instances` 一样是全局主题，订阅时不绑定工作区实例。
 - **单测夹具**：`create_app(root=临时目录, password='...', manage_runtime=False, mount_mcp=False)` 是标准隔离模式，见 `tests/test_api.py` 的 `fixture()`。相关模块：`tests.test_api`（协议/认证/配置事务）、`tests.test_api_lifecycle`（真实 Manager 生命周期）、`tests.test_api_mcp_integration`（MCP 挂载与关闭顺序）、`tests.test_frontend_static`（MIME 与 SPA 回退）。
 - **契约差异**：前端类型对不上时先跑 `uv run python -m dev_tools.export_api_schema` 看 diff，再查是不是手改了生成物。
 - **日志**：业务异常在服务日志中带 `WebSocket API 执行失败` 标题（含完整堆栈）；订阅异常有 `订阅数据读取失败`。客户端只会看到无堆栈的 `INTERNAL_ERROR`。
@@ -414,3 +424,10 @@ ws.send_json({'v':1,'type':'request','id':'2','method':'events.subscribe',
 - [MCP SSE 服务器](../entry/mcp-server.md) — 挂载于 `/mcp` 的独立协议子应用
 - [配置系统](../config.md) — 被校验与读写的数据来源（argument YAML、i18n、事务）
 - [外部桥接与开发工具](../infra/submodule-tools.md) — `dev_tools/export_api_schema` 所在的开发工具层
+
+
+## 船坞共享扫描与数据分析
+
+`dock.report` 只读返回实例共享快照、来源、版本、时间、待核对数和扫描配置；`scan_range` 是已保存快照的实际覆盖范围，`min_level/max_level` 是下一次扫描配置。`dock.configure` 严格校验 `1 ≤ min_level ≤ max_level ≤ 125` 后仅保存配置，不操作设备。`tasks.run(DockScan)` 才显式启动共享扫描。
+
+`dock.report` 返回已确认的逐卡舰船、待确认差异和最近读取摘要。`dock.patch` 按副本 ID 新增、修改或删除舰船，`dock.stageImport` 暂存解析后的文件或截图记录，`dock.review` 校验正式数据及候选双版本后逐项确认或忽略。扫描与 `dock.importLegacy` 只生成候选；旧 JSON 转换必须显式发起，只读取当前实例本地文件，保留原文件。`fleetTech.report/patch` 读取或独立编辑累计科技和阵营等级，`fleetTech.mergeShips` 显式合并当前舰船的正向里程碑。`mind.plan` 按已确认副本和实际等级只读计算，`mind.import/recognize` 只解析上传内容；公共资料由 `mind.catalog`、`fleetTech.catalog` 提供。当前舰船不保存额外经验或旧计费排除标记。见 [舰船数据](fleet-analysis.md)。

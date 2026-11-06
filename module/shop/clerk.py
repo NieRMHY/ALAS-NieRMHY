@@ -79,18 +79,15 @@ class ShopClerk(ShopBase, Retirement):
         group = item.group
         if group == 'pr':
             postfix = None
-            for _ in range(3):
-                if _:
-                    self.device.sleep((0.3, 0.5))
-                    self.device.screenshot()
-
+            self.handle_info_bar()
+            for _ in self.loop(timeout=1.5):
                 for idx, btn in enumerate(SHOP_SELECT_PR):
                     if self.appear(btn, offset=(20, 20)):
                         postfix = f'{idx + 1}'
                         break
-
                 if postfix is not None:
                     break
+            else:
                 logger.warning('未能检测到PR系列，应用可能卡顿或冻结')
         else:
             postfix = f'_{item.tier.upper()}'
@@ -246,8 +243,13 @@ class ShopClerk(ShopBase, Retirement):
 
         # In case either -/+ shift position, use
         # shipyard ocr trick to accurately parse
-        self.appear(AMOUNT_MINUS, offset=index_offset)
-        self.appear(AMOUNT_PLUS, offset=index_offset)
+        # find AMOUNT_MINUS AMOUNT_PLUS
+        for _ in self.loop(timeout=1):
+            if self.appear(AMOUNT_MINUS, offset=index_offset) and self.appear(AMOUNT_PLUS, offset=index_offset):
+                break
+        else:
+            logger.warning('Wait AMOUNT_MINUS and AMOUNT_PLUS timeout, continue anyway')
+
         area = OCR_SHOP_AMOUNT.buttons[0]
         OCR_SHOP_AMOUNT.buttons = [(AMOUNT_MINUS.button[2] + 3, area[1], AMOUNT_PLUS.button[0] - 3, area[3])]
 

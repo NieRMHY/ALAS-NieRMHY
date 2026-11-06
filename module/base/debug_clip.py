@@ -37,10 +37,14 @@ Android 自带的 `screenrecord`（Android 4.4+）没有这个问题：它由系
 `DebugClipRetentionDays` 保留天数自动清理（0 表示永久保留）。产物无效时
 **不会**留下文件，也不会谎报「已保存」。
 
+一段逻辑录像最长 `MAX_CLIP_SECONDS`（5 分钟）。设备端 `screenrecord` 单进程最多只能录
+180 秒（`--time-limit` 的上限），所以更长的录像由后台线程按段续录，整段结束时把各段
+按顺序拼成一个 mp4；到达总时长上限后自动停止录制，已录到的部分照常保存。
+
 已知限制（都不影响游戏逻辑，失败时优雅降级为不录）：
-- 单段最长 180 秒（screenrecord 的 `--time-limit` 上限），超时会截断并打 warning；
+- 单段设备录像最长 180 秒，段与段之间约有 1 秒空档（收尾上一段 + 重启 recorder）；
 - 设备端 recorder 启动约 0.5 秒，这一段录不到（旧实现建立 scrcpy 连接也是这个量级）；
-- 本段结束时要做 pull + 转码，占用时间大致是片段长度的 0.15 倍，只发生在收尾；
+- 每段收尾时要做 pull，整段结束时转码并拼接，占用时间大致是录像长度的 0.15 倍；
 - 进程被强杀时设备上会留下临时文件，超过一小时的下次开录会清掉（不长于录像本身的价值）；
 - ALAS 截图方式为 scrcpy 时不再跳过录制（已经不存在 socket 冲突），但设备上会有两路
   视频编码，截图或录像出现异常时优先怀疑这里。
@@ -51,6 +55,7 @@ import os
 import re
 import shutil
 import subprocess
+import threading
 import time
 
 from module.device.pkg_resources import get_distribution
@@ -95,6 +100,19 @@ DEVICE_TMP_DIR = "/data/local/tmp"
 DEVICE_BITRATE = 4_000_000
 # screenrecord 的单段时长上限（--time-limit 的默认值与最大值都是 180）
 DEVICE_TIME_LIMIT = 180
+# 一段逻辑录像的总时长上限（5 分钟）。设备端单进程录不到 180 秒以上，长录像
+# 由轮转线程按段续录（每段不超过 DEVICE_TIME_LIMIT），收尾时按顺序拼接；
+# 到达总上限后不再开新段，已录部分照常保存。
+MAX_CLIP_SECONDS = 300
+# 剩余预算不足这么多秒时不再开新段（极短的尾段没有意义，还容易失败）
+MIN_SEGMENT_SECONDS = 1.0
+# 接段时在 recorder 自然到点之后再等这么久（秒）才收尾，
+# 给设备写完 mp4 的 moov atom 留一点余量
+SEGMENT_STOP_GRACE = 0.5
+# 停止轮转线程时等待它退出的上限（秒）；正常情况它睡在 Event 上，立即返回
+ROTATE_JOIN_TIMEOUT = 60.0
+# 拼接各段转码产物的超时（秒）：只做流复制，不重新编码
+CONCAT_TIMEOUT = 120.0
 # 启动/停止等待、轮询间隔与转码超时的默认值集中在
 # module/base/runtime_params.py（录屏域），可调参数走 WebUI
 # 「运行参数」页（RunParams.ScreenRecord）；单条 adb 命令超时
@@ -457,6 +475,16 @@ class _ScreenRecordClip:
         self._started_at = None
         self._stopped_at = None
         self._error = None
+        self._segment_started_at = None  # 当前设备段开始（perf_counter）
+        self._segment_stopped_at = None  # 当前设备段结束（perf_counter）
+        self._segment_limit = DEVICE_TIME_LIMIT  # 当前段传给 --time-limit 的秒数
+        self._segment_open = False  # 当前是否还有一个待收尾的设备段
+        self._planned_seconds = 0.0  # 已排入各段的名目时长之和
+        self._raw_segments = []  # 已拉回本地的原始段：[(路径, 该段实际经过秒数)]
+        self._capped = False  # 是否因总时长上限而停止录制
+        self._lock = threading.RLock()  # 轮转线程与 finalize 互斥
+        self._rotate_stop = threading.Event()
+        self._rotate_thread = None
 
     # ------------------------------------------------ 启动
     def start(self):
@@ -491,21 +519,47 @@ class _ScreenRecordClip:
             logger.error(f"[录屏] 连接 ADB 失败，本次不录制: {e}")
             return False
 
-        ts = time.strftime("%Y%m%d_%H%M%S")
-        self.remote_path = f"{DEVICE_TMP_DIR}/{self.prefix}{ts}.mp4"
-        self.remote_error_path = f"{DEVICE_TMP_DIR}/{self.prefix}{ts}.err"
         self.size = self._device_size()
         self._remove_stale_device_files()
-        if not self._launch():
+        self._raw_segments = []
+        self._planned_seconds = 0.0
+        self._capped = False
+        if not self._start_segment(min(DEVICE_TIME_LIMIT, MAX_CLIP_SECONDS)):
             self._remove_device_files()
             return False
 
-        self._started_at = time.perf_counter()
+        self._started_at = self._segment_started_at
         self.alive = True
         size_desc = f", {self.size}" if self.size else ""
         logger.info(
-            f"[录屏] 开始录制（设备端 screenrecord{size_desc}，收尾转 {self.fps}fps）: {self.remote_path}"
+            f"[录屏] 开始录制（设备端 screenrecord{size_desc}，收尾转 {self.fps}fps，"
+            f"最长 {MAX_CLIP_SECONDS} 秒）: {self.remote_path}"
         )
+        self._rotate_thread = threading.Thread(
+            target=self._rotation_loop, name="DebugClipRotate", daemon=True
+        )
+        self._rotate_thread.start()
+        return True
+
+    def _start_segment(self, limit):
+        """拉起当前段的 recorder。
+
+        Args:
+            limit (float): 本段允许录制的秒数，不超过 DEVICE_TIME_LIMIT。
+
+        Returns:
+            bool: 成功返回 True。
+        """
+        ts = time.strftime("%Y%m%d_%H%M%S")
+        self.remote_path = f"{DEVICE_TMP_DIR}/{self.prefix}{ts}.mp4"
+        self.remote_error_path = f"{DEVICE_TMP_DIR}/{self.prefix}{ts}.err"
+        self._segment_limit = max(1.0, min(float(limit), float(DEVICE_TIME_LIMIT)))
+        if not self._launch():
+            return False
+        self._segment_started_at = time.perf_counter()
+        self._segment_stopped_at = None
+        self._segment_open = True
+        self._planned_seconds += self._segment_limit
         return True
 
     def _device_size(self):
@@ -536,7 +590,7 @@ class _ScreenRecordClip:
         """
         size = f"--size {self.size} " if self.size else ""
         return (
-            f"nohup screenrecord --time-limit {DEVICE_TIME_LIMIT} "
+            f"nohup screenrecord --time-limit {int(round(self._segment_limit))} "
             f"--bit-rate {DEVICE_BITRATE} {size}{self.remote_path} "
             f">/dev/null 2>{self.remote_error_path} </dev/null & echo $!"
         )
@@ -603,6 +657,67 @@ class _ScreenRecordClip:
             return ""
         return f"｜设备端: {text[-400:]}"
 
+    # ------------------------------------------------ 长录像续录
+    def _segment_elapsed(self):
+        """当前设备段实际经过的秒数（收尾时用来判断是否录得太短）。"""
+        started = self._segment_started_at
+        if started is None:
+            started = self._started_at
+        stopped = self._segment_stopped_at
+        if stopped is None:
+            stopped = time.perf_counter()
+        if started is None:
+            return 0.0
+        return max(0.0, stopped - started)
+
+    def _rotation_loop(self):
+        """后台轮转：每段到点后收尾并接上新的一段，直到会话结束或达到总上限。"""
+        while True:
+            started = self._segment_started_at or time.perf_counter()
+            deadline = started + self._segment_limit + SEGMENT_STOP_GRACE
+            if self._rotate_stop.wait(max(0.0, deadline - time.perf_counter())):
+                return
+            if not self._rotate_once():
+                return
+
+    def _rotate_once(self):
+        """收尾当前段并接上新的一段；到达总时长上限时结束录制。
+
+        Returns:
+            bool: 是否已经接上新的一段（False 表示录制到此为止）。
+        """
+        with self._lock:
+            if self._rotate_stop.is_set() or not self.alive:
+                return False
+            self._finish_segment()
+            remaining = MAX_CLIP_SECONDS - self._planned_seconds
+            if remaining < MIN_SEGMENT_SECONDS:
+                self.alive = False
+                self._capped = True
+                logger.info(
+                    f"[录屏] 已达到 {MAX_CLIP_SECONDS} 秒总时长上限，停止录制"
+                )
+                return False
+            limit = min(DEVICE_TIME_LIMIT, remaining)
+            if not self._start_segment(limit):
+                self.alive = False
+                self._remove_device_files()
+                logger.warning("[录屏] 接续录制失败，本段之后不再录制")
+                return False
+            return True
+
+    def _stop_rotation(self):
+        """通知并等待轮转线程退出（不抛异常）。"""
+        self._rotate_stop.set()
+        thread = self._rotate_thread
+        self._rotate_thread = None
+        if thread is None:
+            return
+        thread.join(timeout=ROTATE_JOIN_TIMEOUT)
+        if thread.is_alive():
+            # 线程可能还卡在 adb 拉取上；随后的 _lock 仍会等它做完当前这一步
+            logger.warning("[录屏] 等待续录线程退出超时")
+
     # ------------------------------------------------ 收尾
     def _stop_recorder(self):
         """发 SIGINT 让 recorder 收尾。
@@ -637,6 +752,9 @@ class _ScreenRecordClip:
         if not stopped:
             self._set_error("等待 screenrecord 退出超时，录像可能不完整")
         self._stopped_at = time.perf_counter()
+        self._segment_stopped_at = self._stopped_at
+        # 这一段已经收尾；清掉 pid 避免后续重复按旧进程号发信号
+        self.pid = None
 
     def _file_size(self):
         """设备上录像文件的字节数。
@@ -694,6 +812,43 @@ class _ScreenRecordClip:
         except Exception as e:
             self._fail(f"从设备拉取录像失败: {e}")
             return False
+        return True
+
+    def _finish_segment(self):
+        """收尾当前设备段：停 recorder、校验产物并拉回本地。
+
+        成功的原始段记入 `_raw_segments`，等整段录像结束时统一转码拼接。
+
+        Returns:
+            bool: 成功拉回一个可用录像返回 True。
+        """
+        if not self._segment_open:
+            return False
+        self._stop_recorder()
+        self._segment_open = False
+        elapsed = self._segment_elapsed()
+        size = self._file_size()
+        if not size:
+            if elapsed < 2:
+                logger.warning("[录屏] 本段录制时间过短，设备端没有产出录像，本段跳过")
+            else:
+                self._fail(f"设备端 screenrecord 没有产出录像文件{self._device_error()}")
+            self._remove_device_files()
+            return False
+        if size < MIN_VALID_BYTES:
+            self._fail(f"设备端录像只有 {size} 字节，判定为无效{self._device_error()}")
+            self._remove_device_files()
+            return False
+
+        ts = time.strftime("%Y%m%d_%H%M%S")
+        local_path = os.path.join(self.output_dir, f"{TMP_PREFIX}pull_{ts}.mp4")
+        if not self._pull(local_path):
+            # 拉取失败时本地可能留下半截文件，不能让它占着目录
+            self._remove_file(local_path)
+            self._remove_device_files()
+            return False
+        self._raw_segments.append((local_path, elapsed))
+        self._remove_device_files()
         return True
 
     def _transcode(self, src, dst, elapsed):
@@ -772,21 +927,163 @@ class _ScreenRecordClip:
             return None
         return None
 
-    def _report(self, path, duration):
-        """汇报保存结果，并把「录像比实际短」这类偏差显式提示出来。"""
-        try:
-            size = os.path.getsize(path)
-        except OSError:
-            size = 0
-        desc = f"{duration:.1f}s" if duration else "时长未解析"
-        logger.info(f"[录屏] 已保存: {path} ({size / 1024 / 1024:.1f} MB, 时长 {desc})")
+    def _assemble(self, segments, final_path):
+        """把各原始段转码并按顺序拼成最终文件。
 
-        if duration:
-            if duration >= DEVICE_TIME_LIMIT - 2:
+        Args:
+            segments (list[tuple[str, float]]): (本地原始录像路径, 该段实际经过秒数)。
+            final_path (str): 最终产物路径。
+
+        Returns:
+            tuple[list[str], float | None]: (最终文件路径列表, 时长秒数)。
+                拼接失败时退化为分段保存，此时时长未知返回 None。
+        """
+        if len(segments) == 1:
+            src, elapsed = segments[0]
+            duration = self._transcode(src, final_path, elapsed)
+            self._remove_file(src)
+            if not os.path.exists(final_path):
+                return [], None
+            return [final_path], duration
+
+        ts = time.strftime("%Y%m%d_%H%M%S")
+        parts = []
+        for index, (src, elapsed) in enumerate(segments, 1):
+            part = os.path.join(self.output_dir, f"{TMP_PREFIX}part{index}_{ts}.mp4")
+            self._transcode(src, part, elapsed)
+            self._remove_file(src)
+            if os.path.exists(part):
+                parts.append(part)
+            else:
                 logger.warning(
-                    f"[录屏] 本段达到设备端 {DEVICE_TIME_LIMIT} 秒上限，之后的画面没有录到；"
-                    f"需要更长的录像请反馈"
+                    f"[录屏] 第 {index} 段转码失败，最终录像会缺少这一段"
                 )
+        if not parts:
+            return [], None
+        if len(parts) == 1:
+            try:
+                os.replace(parts[0], final_path)
+            except OSError as e:
+                self._fail(f"保存录像失败: {e}")
+                return [], None
+            return [final_path], None
+
+        duration = self._concat_parts(parts, final_path)
+        if os.path.exists(final_path):
+            for part in parts:
+                self._remove_file(part)
+            return [final_path], duration
+        return self._save_parts_separately(parts, final_path), None
+
+    def _concat_parts(self, parts, final_path):
+        """按顺序拼接各段转码产物（只做流复制，不重新编码）。
+
+        各段用的是同一套转码参数，流参数一致，因此可以用 concat demuxer
+        直接复制；这样既快又不会再损失一次画质。
+
+        Args:
+            parts (list[str]): 各段转码产物路径。
+            final_path (str): 拼接结果路径。
+
+        Returns:
+            float | None: 拼接后的时长（秒）；失败或解析不出返回 None。
+        """
+        ffmpeg = _ffmpeg_path()
+        if not ffmpeg:
+            return None
+        ts = time.strftime("%Y%m%d_%H%M%S")
+        list_path = os.path.join(self.output_dir, f"{TMP_PREFIX}concat_{ts}.txt")
+        try:
+            with open(list_path, "w", encoding="utf-8") as f:
+                for part in parts:
+                    escaped = os.path.abspath(part).replace("'", "'\\''")
+                    f.write(f"file '{escaped}'\n")
+        except OSError as e:
+            logger.warning(f"[录屏] 写入拼接列表失败: {e}")
+            return None
+
+        cmd = [
+            ffmpeg, "-y", "-hide_banner", "-loglevel", "error", "-nostats",
+            "-progress", "pipe:1",
+            "-f", "concat", "-safe", "0", "-i", list_path,
+            "-c", "copy",
+            "-movflags", "+faststart",
+            final_path,
+        ]
+        try:
+            proc = subprocess.run(
+                cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=CONCAT_TIMEOUT
+            )
+        except (OSError, subprocess.SubprocessError) as e:
+            logger.warning(f"[录屏] 拼接录像失败: {e}")
+            return None
+        finally:
+            self._remove_file(list_path)
+
+        if proc.returncode != 0:
+            output = proc.stderr.decode("utf-8", errors="replace").strip()
+            logger.warning(f"[录屏] 拼接录像失败（返回码 {proc.returncode}）｜{output[-400:]}")
+            return None
+        try:
+            if os.path.getsize(final_path) < MIN_VALID_BYTES:
+                return None
+        except OSError:
+            return None
+        return _parse_progress_duration(proc.stdout)
+
+    def _save_parts_separately(self, parts, final_path):
+        """无法拼接时把各段分别保存成独立文件，尽量不丢画面。
+
+        Args:
+            parts (list[str]): 各段产物路径。
+            final_path (str): 原本想要的最终路径，用它的文件名派生分段名。
+
+        Returns:
+            list[str]: 实际保存的文件列表。
+        """
+        base, ext = os.path.splitext(final_path)
+        saved = []
+        for index, part in enumerate(parts, 1):
+            target = f"{base}_{index:02d}{ext}"
+            try:
+                os.replace(part, target)
+            except OSError as e:
+                logger.warning(f"[录屏] 保存第 {index} 段失败: {e}")
+                continue
+            saved.append(target)
+        if saved:
+            logger.warning(
+                f"[录屏] 多段录像无法拼成一个文件，已分段保存 {len(saved)} 个文件"
+            )
+        return saved
+
+    def _report(self, paths, duration):
+        """汇报保存结果，并把「录像比实际短」这类偏差显式提示出来。
+
+        Args:
+            paths (list[str]): 实际保存的文件列表（正常只有一个）。
+            duration (float | None): 录像时长（秒），解析不出时为 None。
+        """
+        total_size = 0
+        for path in paths:
+            try:
+                total_size += os.path.getsize(path)
+            except OSError:
+                continue
+        size_desc = f"{total_size / 1024 / 1024:.1f} MB"
+        if len(paths) == 1:
+            desc = f"{duration:.1f}s" if duration else "时长未解析"
+            logger.info(f"[录屏] 已保存: {paths[0]} ({size_desc}, 时长 {desc})")
+        else:
+            logger.info(
+                f"[录屏] 已保存 {len(paths)} 个文件（共 {size_desc}）: {'; '.join(paths)}"
+            )
+
+        if self._capped:
+            logger.warning(
+                f"[录屏] 已达到 {MAX_CLIP_SECONDS} 秒总时长上限，之后的画面没有录到"
+            )
+        elif duration:
             elapsed = 0.0
             if self._started_at is not None and self._stopped_at is not None:
                 elapsed = max(0.0, self._stopped_at - self._started_at)
@@ -845,45 +1142,35 @@ class _ScreenRecordClip:
 
     def _finalize(self, keep):
         """finalize 的实际实现。"""
-        self._stop_recorder()
-        self.alive = False
-        try:
-            if not keep:
-                return None
-            elapsed = 0.0
-            if self._started_at is not None and self._stopped_at is not None:
-                elapsed = max(0.0, self._stopped_at - self._started_at)
+        # 先停轮转线程，避免收尾过程中又接上新的一段
+        self._stop_rotation()
+        with self._lock:
+            self.alive = False
+            try:
+                if not keep:
+                    self._stop_recorder()
+                    self._segment_open = False
+                    for path, _ in self._raw_segments:
+                        self._remove_file(path)
+                    self._raw_segments = []
+                    return None
 
-            size = self._file_size()
-            if not size:
-                if elapsed < 2:
-                    logger.warning("[录屏] 本段录制时间过短，设备端没有产出录像，本段跳过")
-                else:
-                    self._fail(f"设备端 screenrecord 没有产出录像文件{self._device_error()}")
-                return None
-            if size < MIN_VALID_BYTES:
-                self._fail(
-                    f"设备端录像只有 {size} 字节，判定为无效{self._device_error()}"
-                )
-                return None
+                self._finish_segment()
+                self._stopped_at = self._segment_stopped_at or time.perf_counter()
+                if not self._raw_segments:
+                    return None
 
-            ts = time.strftime("%Y%m%d_%H%M%S")
-            tmp_path = os.path.join(self.output_dir, f"{TMP_PREFIX}{ts}.mp4")
-            if not self._pull(tmp_path):
-                # 拉取失败时本地可能留下半截文件，不能让它占着目录
-                self._remove_file(tmp_path)
-                return None
-
-            final_path = os.path.join(self.output_dir, f"{self.prefix}{ts}.mp4")
-            duration = self._transcode(tmp_path, final_path, elapsed)
-            self._remove_file(tmp_path)
-            if not os.path.exists(final_path):
-                return None
-            self._report(final_path, duration)
-            return final_path
-        finally:
-            # 无论成功失败，设备上的临时文件都不能留
-            self._remove_device_files()
+                ts = time.strftime("%Y%m%d_%H%M%S")
+                final_path = os.path.join(self.output_dir, f"{self.prefix}{ts}.mp4")
+                paths, duration = self._assemble(self._raw_segments, final_path)
+                self._raw_segments = []
+                if not paths:
+                    return None
+                self._report(paths, duration)
+                return paths[0]
+            finally:
+                # 无论成功失败，设备上的临时文件都不能留
+                self._remove_device_files()
 
 
 def clip_start(config, fps=RECORD_FPS, prefix=CLIP_PREFIX_EH1):

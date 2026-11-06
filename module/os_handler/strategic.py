@@ -132,9 +132,14 @@ class StrategicSearchHandler(MapEventHandler):
     def strategic_search_confirm(self):
         """确认并开始执行策略搜索。"""
         logger.info('[大世界-策略] 策略搜索确认')
+        confirmed = False
         for _ in self.loop():
             if self.appear(STRATEGIC_SEARCH_POPUP_CHECK, offset=(20, 20)) \
                     and self.handle_popup_confirm(offset=(30, 30), name='STRATEGIC_SEARCH'):
+                confirmed = True
+                continue
+            # 计划作战确认后可能继续弹出指挥喵召回等确认框，处理后等待新截图。
+            if confirmed and self.handle_popup_confirm(offset=(30, 30), name='STRATEGIC_SEARCH_MEOWFFICER'):
                 continue
             if self.is_in_map():
                 return True
@@ -154,9 +159,11 @@ class StrategicSearchHandler(MapEventHandler):
             out: IN_MAP（策略搜索已在运行中）
         """
         logger.hr('策略搜索开始')
-        # 快速模式（大世界通用设置·跳过计划作战滑动检查）：面板会保留上一次的
+        # 快速模式（侵蚀1练级·跳过计划作战滑动检查）：面板会保留上一次的
         # 选项配置，循环刷取时每次重新滑动检查各选项属于重复动作，直接确认开始。
-        skip_check = self.config.OpsiGeneral_SkipStrategicSearchCheck
+        skip_check = self.config.cross_get(
+            'OpsiHazard1Leveling.OpsiHazard1Leveling.SkipStrategicSearchCheck', False,
+        )
         if skip_check:
             logger.info('[大世界-策略] 已开启快速模式，跳过计划作战面板选项检查')
         for _ in range(3):
@@ -166,8 +173,8 @@ class StrategicSearchHandler(MapEventHandler):
                 success = self.strategic_search_set_option()
                 if not success:
                     continue
-            self.strategic_search_confirm()
-            return True
+            if self.strategic_search_confirm():
+                return True
 
         logger.warning('[大世界-策略] 策略搜索启动失败')
         return False

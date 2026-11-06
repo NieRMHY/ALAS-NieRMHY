@@ -3,9 +3,8 @@
 统计载荷存在两代历史加密格式：V1（`OPSIV1.`，本机 DPAPI 密钥）与
 V2（`OPSIV2.XCHACHA20-POLY1305.`，本机凭据/设备封装密钥）。2026-10 起
 统计不再加密：载荷直接以明文 JSON 存放在既有列与文件位形里
-（cl1_data.secure_json、opsi_items.secure_payload、resource_snapshots.opsi_payload、
-daily_summary_cl1_events.secure_payload 存 JSON 文本，daily_summary_periods.report_text
-存正文文本，日志文件为普通 JSON/CSV）。
+（cl1_data.secure_json、opsi_items.secure_payload、resource_snapshots.opsi_payload
+存 JSON 文本，日志文件为普通 JSON/CSV）。
 
 本模块保留两类职责：
 1. 明文载荷的编解码、原子文件写出与统计写事务；
@@ -22,7 +21,6 @@ import hmac
 import io
 import json
 import os
-import re
 import sqlite3
 import threading
 import time
@@ -70,14 +68,13 @@ MISSING_MARKER = '__opsi_secure_missing__'
 
 # 加密时代的辅助对象（触发器与辅助表），解密迁移时连同触发器一并移除。
 AUX_PREFIX = '__opsi_'
-DATABASE_NAMES = ('cl1_data.db', 'azurstats_local.db', 'daily_summary.db')
+# Modify by MHY, 旧数据解密仅覆盖仍启用的本地统计数据库
+DATABASE_NAMES = ('cl1_data.db', 'azurstats_local.db')
 # 加密时代可能存放密文的位置：(库文件名, 表, 列, 载荷类别)。
 DATABASE_LAYOUT = (
     ('cl1_data.db', 'cl1_data', 'secure_json', 'cl1'),
     ('azurstats_local.db', 'opsi_items', 'secure_payload', 'loot'),
     ('azurstats_local.db', 'resource_snapshots', 'opsi_payload', 'res'),
-    ('daily_summary.db', 'daily_summary_cl1_events', 'secure_payload', 'daily'),
-    ('daily_summary.db', 'daily_summary_periods', 'report_text', 'reports'),
 )
 # 加密时代收尾遗留的标记文件：数据解密完成后一并移除。
 RESIDUE_FILES = ('keyring.json', 'pending.json', 'wipe.json', 'integrity.json', 'transition.bin', 'state.json')
@@ -132,18 +129,13 @@ def partition_cl1(data):
 def row_context(kind, row):
     if kind == 'cl1':
         return {'dataset': kind, 'instance': row['instance'], 'identity': row['month'], 'period': row['month']}
-    stamp = row.get('ts') if kind in ('res', 'daily') else row.get('created_at')
+    stamp = row.get('ts') if kind == 'res' else row.get('created_at')
     if isinstance(stamp, (int, float)):
         from datetime import datetime, timezone
         stamp = datetime.fromtimestamp(stamp, timezone.utc).isoformat()
     return {'dataset': kind, 'instance': row.get('instance'), 'identity': str(row['id']),
             'period': str(stamp or '')[:7], 'stamp': stamp,
             'imgid': row.get('imgid'), 'device': row.get('device_id'), 'genre': row.get('genre')}
-
-
-def report_context(instance, period):
-    month = re.search(r'\d{4}-\d{2}', period)
-    return {'dataset': 'reports', 'instance': instance, 'identity': str(period), 'period': month[0] if month else period}
 
 
 def file_context(root, kind, path, instance=None):
@@ -431,17 +423,6 @@ def decode_record(kind, value, context=None):
     return data if isinstance(data, dict) else None
 
 
-def decode_text(value, context=None):
-    """读取日报正文：明文即正文；旧密文解密出 {'text': ...}。"""
-    if not isinstance(value, str) or not value:
-        return None
-    if is_ciphertext(value):
-        payload = get_store().vault_keys().decrypt_record('reports', value, context)
-        text = payload.get('text') if isinstance(payload, dict) else None
-        return text if isinstance(text, str) else None
-    return value
-
-
 def decode_file_payload(kind, path, data, root=None):
     """读取统计文件载荷：普通 JSON 直接返回；旧包装解开并解密，失败返回 None。"""
     if not isinstance(data, dict):
@@ -539,12 +520,6 @@ def pending_blobs(root):
     return pending
 
 
-def _row_context_for(kind, row):
-    if kind == 'reports':
-        return report_context(row['instance'], row['period_key'])
-    return row_context(kind, row)
-
-
 def _decrypt_database(conn, path, keys, quarantined):
     """解密一个库文件里的全部密文行；返回解密行数。不可读行按原样保留并记入隔离。"""
     done = 0
@@ -555,16 +530,13 @@ def _decrypt_database(conn, path, keys, quarantined):
         try:
             row = dict(zip(columns_cache[table],
                            conn.execute(f'SELECT * FROM {table} WHERE rowid=?', (rowid,)).fetchone()))
-            payload = keys.decrypt_record(kind, value, _row_context_for(kind, row))
+            payload = keys.decrypt_record(kind, value, row_context(kind, row))
         except (sqlite3.Error, KeyError, TypeError, ValueError):
             payload = None
         updated = None
+        # Modify by MHY, 已移除日报正文分支，统计载荷统一保存 JSON
         if isinstance(payload, dict):
-            if kind == 'reports':
-                text = payload.get('text')
-                updated = text if isinstance(text, str) else None
-            else:
-                updated = serialize_obj(payload)
+            updated = serialize_obj(payload)
         if updated is None:
             quarantined.append(f'{Path(path).name}:{table}#{rowid}')
             continue

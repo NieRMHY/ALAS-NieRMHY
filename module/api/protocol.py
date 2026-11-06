@@ -39,6 +39,17 @@ class Params(BaseModel):
     model_config = ConfigDict(extra='forbid', strict=True)
 
 
+class MindShip(Params):
+    """导入的舰船字段与核对状态；额外经验用于补零散经验。"""
+    name: StrictStr = Field(min_length=1, max_length=100)
+    level: StrictInt = Field(ge=0, le=125)
+    rarity: Literal['', 'N', 'R', 'SR', 'SSR', 'UR'] = ''
+    base_rarity: Literal['', 'N', 'R', 'SR', 'SSR', 'UR'] = ''
+    extra_exp: StrictInt | None = Field(default=None, ge=0)
+    review: StrictBool = False
+    source: StrictStr = Field(default='', max_length=200)
+
+
 class Request(Params):
     """API 顶层请求信封模型。"""
     v: Literal[1]
@@ -57,11 +68,6 @@ class SchemaParams(Params):
     """配置界面架构查询参数模型。"""
     # Modify by MHY, 移除喵语（MIAO）中文语言包（nanoda 傲娇风格）
     language: Literal['zh-CN', 'en-US', 'ja-JP', 'zh-TW'] = 'zh-CN'
-
-
-class SearchContentParams(Params):
-    """侧栏内容检索请求参数模型。"""
-    query: StrictStr = Field(min_length=1, max_length=64)
 
 
 class SearchContentParams(Params):
@@ -92,6 +98,85 @@ class InstanceParams(Params):
     instance: StrictStr = Field(min_length=1, max_length=64)
 
 
+def _partial_update_schema(schema):
+    """局部更新的缺失字段必须保持缺失，禁止客户端填入默认 null。"""
+    for field in schema.get('properties', {}).values():
+        field.pop('default', None)
+
+
+class DockConfigureParams(InstanceParams):
+    """共享扫描范围；跨字段校验由服务在事务内执行。"""
+    min_level: int = Field(ge=1, le=125, strict=True)
+    max_level: int = Field(ge=1, le=125, strict=True)
+
+
+class DockCardChange(Params):
+    """按物理副本 ID 局部编辑底账；缺失 ID 表示新增。"""
+    model_config = ConfigDict(extra='forbid', strict=True, json_schema_extra=_partial_update_schema)
+    id: StrictInt | None = Field(default=None, ge=1)
+    delete: StrictBool = False
+    group_type: StrictInt | None = Field(default=None, ge=1)
+    name: StrictStr = Field(default=None, min_length=1, max_length=100)
+    level: StrictInt = Field(default=None, ge=0, le=125)
+    rarity: Literal['', 'N', 'R', 'SR', 'SSR', 'UR'] = None
+    base_rarity: Literal['', 'N', 'R', 'SR', 'SSR', 'UR'] = None
+    extra_exp: StrictInt | None = Field(default=None, ge=0)
+    full_star: StrictBool | None = None
+    form: Literal['base', 'retrofit'] | None = None
+    review: StrictBool = None
+    source: StrictStr = Field(default=None, max_length=200)
+
+
+class DockPatchParams(InstanceParams):
+    revision: StrictStr = Field(min_length=64, max_length=64)
+    changes: list[DockCardChange] = Field(min_length=1, max_length=5000)
+
+
+class DockStageImportParams(InstanceParams):
+    revision: StrictStr = Field(min_length=64, max_length=64)
+    ships: list[MindShip] = Field(min_length=1, max_length=5000)
+
+
+class CultivationParams(InstanceParams):
+    revision: StrictStr = Field(min_length=64, max_length=64)
+    ship_ids: list[StrictInt] = Field(max_length=5000)
+    target_level: Literal[120, 125] = 120
+
+
+class DockReviewDecision(Params):
+    """每个候选项独立决定；可显式指定要更新的物理副本。"""
+    id: StrictStr = Field(min_length=1, max_length=100)
+    accept: StrictBool
+    ship_id: StrictInt | None = Field(default=None, ge=1)
+
+
+class DockReviewParams(InstanceParams):
+    revision: StrictStr = Field(min_length=64, max_length=64)
+    pending_revision: StrictStr = Field(min_length=64, max_length=64)
+    decisions: list[DockReviewDecision] = Field(min_length=1, max_length=10000)
+
+
+class FleetTechChange(Params):
+    """只修改明确提供的人工字段；科技里程碑仅接受完成或未完成。"""
+    model_config = ConfigDict(extra='forbid', strict=True, json_schema_extra=_partial_update_schema)
+    group_type: StrictInt = Field(ge=1)
+    owned: StrictBool = False
+    full_star: StrictBool = False
+    lv120: StrictBool = False
+    awakening_pending: StrictBool = False
+
+
+class FleetTechPatchParams(InstanceParams):
+    revision: StrictStr = Field(min_length=64, max_length=64)
+    changes: list[FleetTechChange] = Field(default_factory=list, max_length=1000)
+    nations: dict[str, StrictInt | None] = Field(default_factory=dict, max_length=4)
+
+
+class MindFileParams(InstanceParams):
+    filename: StrictStr = Field(min_length=1, max_length=200)
+    content: StrictStr = Field(min_length=1, max_length=8_000_000)
+
+
 class CreateParams(Params):
     """新建实例请求参数模型。"""
     name: StrictStr = Field(min_length=1, max_length=64)
@@ -109,35 +194,6 @@ class ImportParams(Params):
 class TaskParams(InstanceParams):
     """单任务控制请求参数模型。"""
     task: StrictStr = Field(min_length=1, max_length=80)
-
-
-class ProgramValidateParams(InstanceParams):
-    """调度程序草稿的校验请求。"""
-
-    document: ProgramDocument
-    mode: Mode = 'takeover'
-
-
-class ProgramSaveParams(InstanceParams):
-    """按修订号保存调度程序草稿。"""
-
-    document: ProgramDocument
-    revision: StrictStr
-
-
-class ProgramApplyParams(InstanceParams):
-    """把草稿应用到运行中的调度器。"""
-
-    revision: StrictStr
-    mode: Mode
-
-
-class ProgramSimulateParams(ProgramValidateParams):
-    """带模拟上下文与步数上限的试运行请求。"""
-
-    context: dict[str, Any] = Field(default_factory=dict)
-    outcomes: list[Literal['completed', 'yielded', 'recoverable', 'failed']] = Field(default_factory=list, max_length=1000)
-    steps: StrictInt = Field(default=100, ge=1, le=1000)
 
 
 class ProgramValidateParams(InstanceParams):
@@ -189,7 +245,7 @@ class RevisionParams(InstanceParams):
 class SubscribeParams(Params):
     """WebSocket 主题订阅请求参数模型。"""
     instance: StrictStr | None = None
-    topics: list[Literal['instances', 'overview', 'logs', 'preview']] = Field(max_length=4)
+    topics: list[Literal['instances', 'overview', 'logs', 'preview', 'notifications']] = Field(max_length=5)
 
 
 class LogsParams(InstanceParams):
@@ -216,6 +272,8 @@ class StatisticsReportParams(InstanceParams):
     scope: Literal['series', 'consumable'] = 'series'
     # 大世界掉落专用：只看某个大世界任务（任务名转下划线，如 opsi_abyssal）；空表示全部
     task: StrictStr | None = Field(default=None, pattern=r'^[a-z][a-z0-9_]{0,40}$')
+    # 图表与原始记录都被隐藏时前端传 false，后端跳过序列的查询与构造
+    include_series: StrictBool = True
 
 
 class ResourceFlowsParams(InstanceParams):

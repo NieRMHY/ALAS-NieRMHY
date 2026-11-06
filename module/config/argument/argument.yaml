@@ -223,9 +223,7 @@ Watchdog:
   CheckInterval:
     value: 30
     validate: [5, 600]
-  DailySummaryCheckInterval:
-    value: 1
-    validate: [1, 60]
+# Modify by MHY, 保留独立重启参数组，移除日报轮询不改变相邻配置归属。
 Reboot:
   Tries:
     value: 3
@@ -348,6 +346,109 @@ Handover:
   ConflictRetryMinutes:
     value: 15
     validate: [5, 120]
+IslandWalk:
+  AirDrop:
+    type: textarea
+    value: "up 3000, right 800, up 2000, jump, up 1200, right 2000, up 6500, right 1000, up 2300, right 2000, up 4000, right 2600, up 500, jump, up 1300"
+    valuetype: str
+  AirDropEnable:
+    value: false
+  AirDropRetry:
+    type: textarea
+    value: "up 500, right 500, down 500"
+    valuetype: str
+  AirDropRetryEnable:
+    value: false
+  AirDropSelf:
+    type: textarea
+    value: "down 1000"
+    valuetype: str
+  AirDropSelfEnable:
+    value: false
+  DailyLakeniya:
+    type: textarea
+    value: "up 2000, right 1800, up 500"
+    valuetype: str
+  DailyLakeniyaEnable:
+    value: false
+  DailyLuxi:
+    type: textarea
+    value: "left 800, up 5500, left 1000, up 3700"
+    valuetype: str
+  DailyLuxiEnable:
+    value: false
+  DailyAobulaien:
+    type: textarea
+    value: "right 4600, up 5100, right 1100"
+    valuetype: str
+  DailyAobulaienEnable:
+    value: false
+  DailyQiaoan:
+    type: textarea
+    value: "right 6000, down 3000, right 2300"
+    valuetype: str
+  DailyQiaoanEnable:
+    value: false
+  DailyMorningdewFarm:
+    type: textarea
+    value: "left 500, down 200"
+    valuetype: str
+  DailyMorningdewFarmEnable:
+    value: false
+  DailyHemo:
+    type: textarea
+    value: "left 600, up 2000, left 800"
+    valuetype: str
+  DailyHemoEnable:
+    value: false
+  DailyMeili:
+    type: textarea
+    value: "right 1800, down 600"
+    valuetype: str
+  DailyMeiliEnable:
+    value: false
+  DailyAolipike:
+    type: textarea
+    value: "left 500, down 1500, left 1700, down 1900"
+    valuetype: str
+  DailyAolipikeEnable:
+    value: false
+  DailyAmoma:
+    type: textarea
+    value: "up 1500, left 400"
+    valuetype: str
+  DailyAmomaEnable:
+    value: false
+  DailyPateli:
+    type: textarea
+    value: "left 2200, jump, left 1200, up 500"
+    valuetype: str
+  DailyPateliEnable:
+    value: false
+  DailyBulaimei:
+    type: textarea
+    value: "up 2600, switch, left 600"
+    valuetype: str
+  DailyBulaimeiEnable:
+    value: false
+  DailyLisha:
+    type: textarea
+    value: "up 3000, left 2000, up 5500, right 300, up 2200, left 1100"
+    valuetype: str
+  DailyLishaEnable:
+    value: false
+  PearlAssembly:
+    type: textarea
+    value: "up 2500, right 1700, down 1700, right 500"
+    valuetype: str
+  PearlAssemblyEnable:
+    value: false
+  PearlPort:
+    type: textarea
+    value: "left 2500, jump, left 3000, down 1000"
+    valuetype: str
+  PearlPortEnable:
+    value: false
 Optimization:
   OcrDevice:
     value: auto
@@ -498,10 +599,16 @@ PublicEmotion:
   Tasks:
     type: textarea
     value: null
-  FleetValue: 119
+  FleetValue:
+    value: 119
+    validate: [0, 150]
   FleetRecord:
     value: 2020-01-01 00:00:00
     display: disabled
+  FleetRecoveryState:
+    type: stored
+    value: null
+    display: hide
   FleetControl:
     value: prevent_yellow_face
     option:
@@ -534,7 +641,7 @@ YukikazeTaskManager:
       > OpsiAshBeacon
       > OpsiDaily > OpsiShop > OpsiVoucher > EventShop
       > OpsiAbyssal > OpsiStronghold > OpsiObscure > OpsiArchive
-      > Daily > Hard > OpsiAshBeacon > OpsiAshAssist > OpsiMonthBoss
+      > Daily > LimitChallenge > Hard > OpsiAshBeacon > OpsiMonthBoss
       > Sos > EventSp > EventA > EventB > EventC > EventD
       > RaidDaily > CoalitionSp > WarArchives > MaritimeEscort
       > IslandJuuEatery > IslandJuuCoffee > IslandGrill > IslandTeahouse > IslandRestaurant
@@ -651,6 +758,7 @@ Campaign:
   UseClearMode: true
   UseFleetLock: true
   UseAutoSearch: true
+  ContinueAfterRestart: false
   Use2xBook: false
   AmbushEvade: true
   UseRecommendFleet: false
@@ -825,10 +933,23 @@ Emotion:
     value: calculate
     option: [calculate, ignore, calculate_ignore]
   IgnoreShipwreck: false
-  Fleet1Value: 119
+  MinReserve:
+    value: 0
+    validate: [0, 150]
+  RecoveryWait:
+    type: stored
+    value: null
+    display: hide
+  Fleet1Value:
+    value: 119
+    validate: [0, 150]
   Fleet1Record:
     value: 2020-01-01 00:00:00
     display: disabled
+  Fleet1RecoveryState:
+    type: stored
+    value: null
+    display: hide
   Fleet1Control:
     value: prevent_green_face
     option: [ keep_exp_bonus, prevent_green_face, prevent_yellow_face, prevent_red_face ]
@@ -837,10 +958,16 @@ Emotion:
     option: [not_in_dormitory, dormitory_floor_1, dormitory_floor_2]
   Fleet1Oath: false
   Fleet1Onsen: false
-  Fleet2Value: 119
+  Fleet2Value:
+    value: 119
+    validate: [0, 150]
   Fleet2Record:
     value: 2020-01-01 00:00:00
     display: disabled
+  Fleet2RecoveryState:
+    type: stored
+    value: null
+    display: hide
   Fleet2Control:
     value: prevent_green_face
     option: [ keep_exp_bonus, prevent_green_face, prevent_yellow_face, prevent_red_face ]
@@ -939,7 +1066,10 @@ TaskBalancer:
 EventDaily:
   StageFilter: |-
     A1 > A2 > A3
-  LastStage: 0
+  LastStage:
+    # 关卡名包含字母；文本模式兼容旧配置和跨天重置留下的数字 0。
+    mode: text
+    value: '0'
 Raid:
   Mode:
     value: hard
@@ -1194,6 +1324,11 @@ Dorm:
   Collect: true
   Feed: true
   FeedFilter: 20000 > 10000 > 5000 > 3000 > 2000 > 1000
+  ReserveFood: false
+  FeedReserveState:
+    type: stored
+    value: null
+    display: hide
   BuyFood:
     value: false
     display: disabled
@@ -1232,7 +1367,10 @@ GuildOperation:
   Enable: true
   SelectNewOperation: false
   NewOperationMaxDate: 15
-  JoinThreshold: 1
+  JoinThreshold:
+    value: 1.0
+    valuetype: float
+    validate: [0.0, 1.0]
   AttackBoss: true
   BossFleetRecommend: false
 Reward:
@@ -1374,6 +1512,14 @@ Gacha:
     value: 1
     option: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
   UseTicket: true
+  TicketAmount:
+    value: 1
+    option: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+  ClearTicket: true
+  ClearTicketTime:
+    value: "09:30"
+    valuetype: str
+    validate: '^([01]?[0-9]|2[0-3]):[0-5][0-9]$'
   UseDrill: false
 BattlePass:
   Collect: true
@@ -1442,11 +1588,32 @@ Daily:
   EmergencyModuleDevelopmentFleet:
     value: 1
     option: [1, 2, 3, 4, 5, 6]
+LimitChallenge:
+  TargetLevel:
+    value: easy
+    option: [easy, normal, hard]
+  Month:
+    type: stored
+    value: 0
+    display: hide
+  CompletedLevel:
+    type: stored
+    value: 0
+    display: hide
+  AttemptedLevel:
+    type: stored
+    value: 0
+    display: hide
+  Failed:
+    type: stored
+    value: false
+    display: hide
 Hard:
   HardStage: 11-4
   HardFleet:
     value: 1
     option: [1, 2]
+  RunAt18: false
   HardNewMode:                 # Add by MHY, 困难图均衡模式开关
     type: checkbox
     value: false
@@ -1492,6 +1659,7 @@ Sos:
 # ==================== Opsi ====================
 
 OpsiAshAssist:
+  Enable: true
   Tier: 15
 OpsiGeneral:
   UseLogger: true
@@ -1519,17 +1687,19 @@ OpsiGeneral:
   AutoSearchTimeLimit:
     value: 5
     validate: [1, 240]
-  # 计划作战滑动检查跳过：侵蚀一/短猫相接循环刷取同一海域时，打开
-  # 「计划作战」面板后不再滑动检查各选项，直接确认开始。需要面板选项
-  # 已在游戏内配置好（区域模式：重复、遭遇商人/装置：停止、自动提交：开启），
-  # 让任务正常跑过一次或手动配置一次后即可开启。
-  SkipStrategicSearchCheck: false
 OpsiAshBeacon:
   AttackMode:
     value: current
     option: [current, current_dossier, current_dossier_only]
-  OneHitMode: true
+  AssistRequestLimit:
+    value: 0
+    validate: '^(-1|[0-9]+)$'
+  AssistRequestState:
+    type: stored
+    value: null
+    display: hide
   DossierAutoAttackMode: false
+  DossierSkipAssist: false
   RequestAssist: true
   EnsureFullyCollected: true
   AutoCollectShip: true
@@ -1655,13 +1825,29 @@ OpsiHazard1Leveling:
     type: checkbox
     value: false
     option: [true, false]
+  ActionPointCheckInterval:
+    value: 0
+    valuetype: int
+    validate: ^\d+$
+  # 侵蚀一和短猫复用游戏内已经确认过的计划作战选项。
+  SkipStrategicSearchCheck: false
   Cl1Filter: |-
     ActionPoint
   RecordNonCL1AP: true
   RecordSeaMiles:
-    type: checkbox
-    value: true
-    option: [true, false]
+    value: -1
+    valuetype: int
+    validate: ^(-1|\d+)$
+  SeaMilesLastRecord:
+    type: stored
+    value: null
+    display: hide
+  # 跨重启续查：记录“已经看见、但还没处理完”的地图事件（明石/探测装置/
+  # 塞壬装置），供卡死重启后继续完成；由代码自动维护，不在界面上暴露。
+  PendingMapEvent:
+    type: stored
+    value: null
+    display: hide
   DebugClip: false
 OpsiSirenBug:
   SirenResearch_Enable: true
@@ -1777,9 +1963,17 @@ IslandPlan:
     type: checkbox
     value: true
     option: [ true, false ]
+  # Modify by MHY, 默认 4：钻石店货架只有 4 格；默认 5 会让方案按 5 格排产，
+  # 多出来的那格游戏直接忽略
   PlanShelfSlots:
     type: input
-    value: 5
+    value: 4
+  # Add by MHY, 额外餐品排产：默认关闭。货架每格每天固定卖 per_slot 件，
+  # 不在货架上的商品卖不掉，用剩余工时生产它们只会占满槽位、把赛季囤积挤掉
+  PlanExtraMeals:
+    type: checkbox
+    value: false
+    option: [ true, false ]
 IslandFarm:
   Positions:
     value: 3
@@ -1787,6 +1981,12 @@ IslandFarm:
   WorkerFilter: |-
     WorkerJuu
   MinFarm: 660
+  CropTargets:
+    type: textarea
+    value: ''
+  DefaultCrop:
+    value: wheat
+    option: [ wheat, corn, rice, chinese_cabbage, potato, soybean, pasture, coffee_bean ]
   PlantPotatoes:
     value: 4
     option: [ 0, 1, 2, 3, 4 ]
@@ -1797,7 +1997,13 @@ IslandOrchard:
   WorkerFilter: |-
     WorkerJuu
   MinOrchard: 300
+  CropTargets:
+    type: textarea
+    value: ''
   IgnoreAvocado: true
+  DefaultCrop:
+    value: rubber
+    option: [ apple, citrus, banana, mango, lemon, avocado, rubber, pear, persimmon, sugar_tangerine, green_jujube ]
   PlantRubber:
     value: 0
     option: [ 0, 1, 2, 3, 4 ]
@@ -1809,7 +2015,13 @@ IslandNursery:
   WorkerFilter: |-
     WorkerJuu
   MinNursery: 0
+  CropTargets:
+    type: textarea
+    value: ''
   IgnorePineapple: true
+  DefaultCrop:
+    value: lavender
+    option: [ carrot, onion, flax, strawberry, cotton, tea, lavender, pineapple, asparagus ]
   PlantLavender:
     value: 2
     option: [ 0, 1, 2 ]
@@ -1838,6 +2050,10 @@ IslandFishery:
   MinCrab: 50
   MinSquid: 50
   MinSeaCucumber: 50
+  MinKoiCarp: 0
+  MinMackerel: 0
+  MinFreshwaterFishMeat: 0
+  MinSaltwaterFishMeat: 0
   PlantYellowfinTuna:
     value: 3
     option: [ 0, 1, 2, 3 ]
@@ -1890,48 +2106,48 @@ IslandRestaurant:
   DoubleBambooShoots: false
   Meal1:
     value: tofu_meat
-    option: [ None, tofu, omurice, cabbage_tofu, salad, tofu_meat, tofu_combo, hearty_meal , double_bamboo_shoots, asparagus_shrimp, fish_chip, fo_tiao, onion_fish, matsutake_chicken_soup, persimmon_cake]
+    option: [ None, tofu, omurice, cabbage_tofu, salad, tofu_meat, tofu_combo, hearty_meal , double_bamboo_shoots, asparagus_shrimp, fish_chip, fo_tiao, onion_fish, matsutake_chicken_soup, persimmon_cake, shiitake_chicken_soup, green_jujube_porridge]
   MealNumber1:
     value: 7
   Meal2:
     value: hearty_meal
-    option: [ None, tofu, omurice, cabbage_tofu, salad, tofu_meat, tofu_combo, hearty_meal , double_bamboo_shoots, asparagus_shrimp, fish_chip, fo_tiao, onion_fish, matsutake_chicken_soup, persimmon_cake]
+    option: [ None, tofu, omurice, cabbage_tofu, salad, tofu_meat, tofu_combo, hearty_meal , double_bamboo_shoots, asparagus_shrimp, fish_chip, fo_tiao, onion_fish, matsutake_chicken_soup, persimmon_cake, shiitake_chicken_soup, green_jujube_porridge]
   MealNumber2:
     value: 7
   Meal3:
     value: omurice
-    option: [ None, tofu, omurice, cabbage_tofu, salad, tofu_meat, tofu_combo, hearty_meal , double_bamboo_shoots, asparagus_shrimp, fish_chip, fo_tiao, onion_fish, matsutake_chicken_soup, persimmon_cake]
+    option: [ None, tofu, omurice, cabbage_tofu, salad, tofu_meat, tofu_combo, hearty_meal , double_bamboo_shoots, asparagus_shrimp, fish_chip, fo_tiao, onion_fish, matsutake_chicken_soup, persimmon_cake, shiitake_chicken_soup, green_jujube_porridge]
   MealNumber3:
     value: 7
   Meal4:
     value: None
-    option: [ None, tofu, omurice, cabbage_tofu, salad, tofu_meat, tofu_combo, hearty_meal , double_bamboo_shoots, asparagus_shrimp, fish_chip, fo_tiao, onion_fish, matsutake_chicken_soup, persimmon_cake]
+    option: [ None, tofu, omurice, cabbage_tofu, salad, tofu_meat, tofu_combo, hearty_meal , double_bamboo_shoots, asparagus_shrimp, fish_chip, fo_tiao, onion_fish, matsutake_chicken_soup, persimmon_cake, shiitake_chicken_soup, green_jujube_porridge]
   MealNumber4:
     value: 0
   Meal5:
     value: None
-    option: [ None, tofu, omurice, cabbage_tofu, salad, tofu_meat, tofu_combo, hearty_meal , double_bamboo_shoots, asparagus_shrimp, fish_chip, fo_tiao, onion_fish, matsutake_chicken_soup, persimmon_cake]
+    option: [ None, tofu, omurice, cabbage_tofu, salad, tofu_meat, tofu_combo, hearty_meal , double_bamboo_shoots, asparagus_shrimp, fish_chip, fo_tiao, onion_fish, matsutake_chicken_soup, persimmon_cake, shiitake_chicken_soup, green_jujube_porridge]
   MealNumber5:
     value: 0
   Meal6:
     value: None
-    option: [ None, tofu, omurice, cabbage_tofu, salad, tofu_meat, tofu_combo, hearty_meal , double_bamboo_shoots, asparagus_shrimp, fish_chip, fo_tiao, onion_fish, matsutake_chicken_soup, persimmon_cake]
+    option: [ None, tofu, omurice, cabbage_tofu, salad, tofu_meat, tofu_combo, hearty_meal , double_bamboo_shoots, asparagus_shrimp, fish_chip, fo_tiao, onion_fish, matsutake_chicken_soup, persimmon_cake, shiitake_chicken_soup, green_jujube_porridge]
   MealNumber6:
     value: 0
   Meal7:
     value: None
-    option: [ None, tofu, omurice, cabbage_tofu, salad, tofu_meat, tofu_combo, hearty_meal , double_bamboo_shoots, asparagus_shrimp, fish_chip, fo_tiao, onion_fish, matsutake_chicken_soup, persimmon_cake]
+    option: [ None, tofu, omurice, cabbage_tofu, salad, tofu_meat, tofu_combo, hearty_meal , double_bamboo_shoots, asparagus_shrimp, fish_chip, fo_tiao, onion_fish, matsutake_chicken_soup, persimmon_cake, shiitake_chicken_soup, green_jujube_porridge]
   MealNumber7:
     value: 0
   Meal8:
     value: None
-    option: [ None, tofu, omurice, cabbage_tofu, salad, tofu_meat, tofu_combo, hearty_meal , double_bamboo_shoots, asparagus_shrimp, fish_chip, fo_tiao, onion_fish, matsutake_chicken_soup, persimmon_cake]
+    option: [ None, tofu, omurice, cabbage_tofu, salad, tofu_meat, tofu_combo, hearty_meal , double_bamboo_shoots, asparagus_shrimp, fish_chip, fo_tiao, onion_fish, matsutake_chicken_soup, persimmon_cake, shiitake_chicken_soup, green_jujube_porridge]
   MealNumber8:
     value: 0
 IslandRestaurantNextTask:
   AwayCook:
     value: None
-    option: [ None, tofu, omurice, cabbage_tofu, salad, tofu_meat, tofu_combo, hearty_meal , double_bamboo_shoots, asparagus_shrimp, fish_chip, fo_tiao, onion_fish, matsutake_chicken_soup, persimmon_cake]
+    option: [ None, tofu, omurice, cabbage_tofu, salad, tofu_meat, tofu_combo, hearty_meal , double_bamboo_shoots, asparagus_shrimp, fish_chip, fo_tiao, onion_fish, matsutake_chicken_soup, persimmon_cake, shiitake_chicken_soup, green_jujube_porridge]
 IslandTeahouse:
   PostNumber:
     value: 2
@@ -2041,48 +2257,48 @@ IslandJuuEatery:
     WorkerJuu
   Meal1:
     value: berry_orange
-    option: [ None, apple_pie, corn_cup, orange_pie, banana_crepe, orchard_duo, rice_mango, succulently_sweet, berry_orange, strawberry_charlotte, seafood_rice ]
+    option: [ None, apple_pie, corn_cup, orange_pie, banana_crepe, orchard_duo, rice_mango, succulently_sweet, berry_orange, strawberry_charlotte, seafood_rice, water_chestnut_cake, sugar_tangerine_daifuku ]
   MealNumber1:
     value: 7
   Meal2:
     value: succulently_sweet
-    option: [ None, apple_pie, corn_cup, orange_pie, banana_crepe, orchard_duo, rice_mango, succulently_sweet, berry_orange, strawberry_charlotte, seafood_rice ]
+    option: [ None, apple_pie, corn_cup, orange_pie, banana_crepe, orchard_duo, rice_mango, succulently_sweet, berry_orange, strawberry_charlotte, seafood_rice, water_chestnut_cake, sugar_tangerine_daifuku ]
   MealNumber2:
     value: 7
   Meal3:
     value: rice_mango
-    option: [ None, apple_pie, corn_cup, orange_pie, banana_crepe, orchard_duo, rice_mango, succulently_sweet, berry_orange, strawberry_charlotte, seafood_rice ]
+    option: [ None, apple_pie, corn_cup, orange_pie, banana_crepe, orchard_duo, rice_mango, succulently_sweet, berry_orange, strawberry_charlotte, seafood_rice, water_chestnut_cake, sugar_tangerine_daifuku ]
   MealNumber3:
     value: 7
   Meal4:
     value: None
-    option: [ None, apple_pie, corn_cup, orange_pie, banana_crepe, orchard_duo, rice_mango, succulently_sweet, berry_orange, strawberry_charlotte, seafood_rice ]
+    option: [ None, apple_pie, corn_cup, orange_pie, banana_crepe, orchard_duo, rice_mango, succulently_sweet, berry_orange, strawberry_charlotte, seafood_rice, water_chestnut_cake, sugar_tangerine_daifuku ]
   MealNumber4:
     value: 0
   Meal5:
     value: None
-    option: [ None, apple_pie, corn_cup, orange_pie, banana_crepe, orchard_duo, rice_mango, succulently_sweet, berry_orange, strawberry_charlotte, seafood_rice ]
+    option: [ None, apple_pie, corn_cup, orange_pie, banana_crepe, orchard_duo, rice_mango, succulently_sweet, berry_orange, strawberry_charlotte, seafood_rice, water_chestnut_cake, sugar_tangerine_daifuku ]
   MealNumber5:
     value: 0
   Meal6:
     value: None
-    option: [ None, apple_pie, corn_cup, orange_pie, banana_crepe, orchard_duo, rice_mango, succulently_sweet, berry_orange, strawberry_charlotte, seafood_rice ]
+    option: [ None, apple_pie, corn_cup, orange_pie, banana_crepe, orchard_duo, rice_mango, succulently_sweet, berry_orange, strawberry_charlotte, seafood_rice, water_chestnut_cake, sugar_tangerine_daifuku ]
   MealNumber6:
     value: 0
   Meal7:
     value: None
-    option: [ None, apple_pie, corn_cup, orange_pie, banana_crepe, orchard_duo, rice_mango, succulently_sweet, berry_orange, strawberry_charlotte, seafood_rice ]
+    option: [ None, apple_pie, corn_cup, orange_pie, banana_crepe, orchard_duo, rice_mango, succulently_sweet, berry_orange, strawberry_charlotte, seafood_rice, water_chestnut_cake, sugar_tangerine_daifuku ]
   MealNumber7:
     value: 0
   Meal8:
     value: None
-    option: [ None, apple_pie, corn_cup, orange_pie, banana_crepe, orchard_duo, rice_mango, succulently_sweet, berry_orange, strawberry_charlotte, seafood_rice ]
+    option: [ None, apple_pie, corn_cup, orange_pie, banana_crepe, orchard_duo, rice_mango, succulently_sweet, berry_orange, strawberry_charlotte, seafood_rice, water_chestnut_cake, sugar_tangerine_daifuku ]
   MealNumber8:
     value: 0
 IslandJuuEateryNextTask:
   AwayCook:
     value: None
-    option: [ None, apple_pie, corn_cup, orange_pie, banana_crepe, orchard_duo, rice_mango, succulently_sweet, berry_orange, strawberry_charlotte, seafood_rice ]
+    option: [ None, apple_pie, corn_cup, orange_pie, banana_crepe, orchard_duo, rice_mango, succulently_sweet, berry_orange, strawberry_charlotte, seafood_rice, water_chestnut_cake, sugar_tangerine_daifuku ]
 IslandJuuCoffee:
   PostNumber:
     value: 2
@@ -2163,11 +2379,67 @@ IslandDailyOrder:
     value: "2020-01-01 00:00:00"
 
 IslandSeasonPlan:
-  SyncDone:
+  # Add by MHY, 赛季任务：餐品由代码里的赛季表决定（SEASON_PLAN_TASKS），这里只填
+  # 需求数量与是否已完成。当前数量由店铺每次收取/核对销售时读仓库自动更新（不进配置）。
+  # 勾选「已完成」的餐品不再排产、不再发邮件，空闲产能自动转去做下一个缺口最大的。
+  # 新赛季上线时在代码赛季表里换餐品，并在这里为新餐品追加 Need_/Done_ 两项。
+  NotifyEnable:
     type: checkbox
     value: true
     option: [ true, false ]
-  Submit:
+  Need_apple_juice:
+    type: input
+    value: 250
+  Done_apple_juice:
+    type: checkbox
+    value: false
+    option: [ true, false ]
+  Need_iced_coffee:
+    type: input
+    value: 250
+  Done_iced_coffee:
+    type: checkbox
+    value: false
+    option: [ true, false ]
+  Need_roasted_skewer:
+    type: input
+    value: 250
+  Done_roasted_skewer:
+    type: checkbox
+    value: false
+    option: [ true, false ]
+  Need_salad:
+    type: input
+    value: 100
+  Done_salad:
+    type: checkbox
+    value: false
+    option: [ true, false ]
+  Need_carrot_omelette:
+    type: input
+    value: 100
+  Done_carrot_omelette:
+    type: checkbox
+    value: false
+    option: [ true, false ]
+  Need_latte:
+    type: input
+    value: 100
+  Done_latte:
+    type: checkbox
+    value: false
+    option: [ true, false ]
+  Need_stir_fried_chicken:
+    type: input
+    value: 100
+  Done_stir_fried_chicken:
+    type: checkbox
+    value: false
+    option: [ true, false ]
+  Need_steak_bowl:
+    type: input
+    value: 50
+  Done_steak_bowl:
     type: checkbox
     value: false
     option: [ true, false ]
@@ -2265,6 +2537,11 @@ _IslandBusinessChar: &IslandBusinessChar
     - RoyalFortune
     - DaVinci
     - Taihou
+    - Nagato
+    - Agir
+    - HwahJah
+    - Argus
+    - Ognevoy
 
 _IslandBusinessProduct1: &IslandBusinessProduct1
   type: select
@@ -2279,6 +2556,8 @@ _IslandBusinessProduct1: &IslandBusinessProduct1
     - amaranth_rice_ball
     - matsutake_chicken_soup
     - persimmon_cake
+    - shiitake_chicken_soup
+    - green_jujube_porridge
 
 _IslandBusinessProduct2: &IslandBusinessProduct2
   type: select
@@ -2306,6 +2585,8 @@ _IslandBusinessProduct3: &IslandBusinessProduct3
     - berry_orange
     - strawberry_charlotte
     - seafood_rice
+    - water_chestnut_cake
+    - sugar_tangerine_daifuku
 
 _IslandBusinessProduct4: &IslandBusinessProduct4
   type: select
@@ -2359,6 +2640,8 @@ IslandBusinessShop1:
       - amaranth_rice_ball
       - matsutake_chicken_soup
       - persimmon_cake
+      - shiitake_chicken_soup
+      - green_jujube_porridge
   BoostReplaceFilter:
     value: |-
       30 > 20 > 10
@@ -2456,7 +2739,70 @@ IslandBusinessShop5:
 
 # ==================== Fleet Management ====================
 
+Dock:
+  MinLevel:
+    value: 1
+    validate: "^[1-9][0-9]?$|^1[01][0-9]$|^12[0-5]$"
+  MaxLevel:
+    value: 125
+    validate: "^[1-9][0-9]?$|^1[01][0-9]$|^12[0-5]$"
+
+FleetRotation:
+  Enabled: false
+  SelectedOnly: false
+  Rules:
+    type: textarea
+    value: '{}'
+  State:
+    type: storage
+    value: {}
+
+FleetLevelTraining:
+  Enabled: false
+  Target:
+    value: 120
+    validate: [1, 125]
+
+FleetAffinityTraining:
+  Enabled: false
+  Target:
+    value: 100
+    validate: [1, 200]
+
+FleetDorm:
+  Enabled: false
+  Floor:
+    value: floor_1
+    option: [floor_1, floor_2]
+
+FleetTraining:
+  StopOnComplete: false
+  Notify: false
+  FullScanRecord:
+    type: stored
+    value: 2020-01-01 00:00:00
+    display: hide
+  CheckIntervalHours:
+    value: 6.0
+    valuetype: float
+    validate: '^[0-9]+(?:\.[0-9]+)?(?:[eE][+-]?[0-9]+)?$'
+  State:
+    type: stored
+    value: {}
+    display: hide
+
+FleetEquipment:
+  Enabled: false
+  Codes:
+    type: textarea
+    value: '{}'
+  State:
+    type: stored
+    value: {}
+    display: hide
+
 FleetInfo:
+  UpdateEmotion: true
   Result:
     type: stored
     value: {}
@@ -2485,6 +2831,55 @@ BoxDisassemble:
   BlueBoxLimit: 1000
   UseWhiteBox: true
   WhiteBoxLimit: 2000
+IslandProductionPlanner:
+  ApplySettings:
+    type: checkbox
+    value: false
+    option: [ true, false ]
+  RescanTechnology:
+    type: checkbox
+    value: true
+    option: [ true, false ]
+  ScanSeasonTasks:
+    type: checkbox
+    value: true
+    option: [ true, false ]
+  SeasonTaskTargets:
+    type: textarea
+    value: ''
+  ScanCargoOrders:
+    type: checkbox
+    value: true
+    option: [ true, false ]
+  CargoTargets:
+    type: textarea
+    value: ''
+  CargoTargetDays: 1
+  ExtraTargets:
+    type: textarea
+    value: ''
+  DailyProfitLowerLimit: 50000
+  DailyBufferSafetyMargin: 0
+  FieldsEfficiency:
+    value: 0
+    option: [ 0, 4, 12 ]
+  OrchardEfficiency:
+    value: 0
+    option: [ 0, 4, 12 ]
+  NurseryEfficiency:
+    value: 0
+    option: [ 0, 4, 12 ]
+  RestaurantGrade: &IslandPlannerGrade
+    value: bronze
+    option: [ bronze, silver, gold, diamond ]
+  TeahouseGrade:
+    <<: *IslandPlannerGrade
+  JuuEateryGrade:
+    <<: *IslandPlannerGrade
+  GrillGrade:
+    <<: *IslandPlannerGrade
+  JuuCoffeeGrade:
+    <<: *IslandPlannerGrade
 AutoEquip:
   ShipLimit:
     value: 0
@@ -2519,6 +2914,7 @@ Benchmark:
         phone_cloud_without_adb,
         android_phone,
         android_phone_vmos,
+        azurpilot_android,
       ]
   TestScene:
     value: screenshot_click
@@ -2603,3 +2999,28 @@ OpsiSimulatorParameters:
   Meow3Time: 0
   Meow5Time: 0
   Deterministic: false
+Equipment:
+  Enable: false
+  ClearBeforeApply: true
+  Config:
+    type: textarea
+    mode: yaml
+    value: |-
+      flagship:
+        before: null
+        after: null
+      up:
+        before: null
+        after: null
+      down:
+        before: null
+        after: null
+      head:
+        before: null
+        after: null
+      middle:
+        before: null
+        after: null
+      tail:
+        before: null
+        after: null

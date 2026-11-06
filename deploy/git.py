@@ -4,7 +4,8 @@ from deploy.utils import *
 
 
 class GitManager(DeployConfig):
-    """Git 仓库与更新管理类，负责源码拉取、分支同步及 GitOverCDN 更新。"""
+    """Git 仓库与更新管理类，负责源码拉取与分支同步。"""
+    # Modify by MHY, 保留纯 Git 更新链，不加载 CDN 或云端更新开关
 
     @cached_property
     def git(self):
@@ -33,8 +34,9 @@ class GitManager(DeployConfig):
         except FileNotFoundError:
             logger.info(f'File not found: {file}')
 
+    # Modify by MHY, 缺省使用本地正式渠道，锁文件随实际分支清理
     def git_repository_init(
-            self, repo, source='origin', branch='master', proxy='', ssl_verify=True
+            self, repo, source='origin', branch='essex', proxy='', ssl_verify=True
     ):
         logger.hr('Git Init', 1)
         if not self.execute(f'"{self.git}" init', allow_failure=True):
@@ -68,7 +70,7 @@ class GitManager(DeployConfig):
         for lock_file in [
             './.git/index.lock',
             './.git/HEAD.lock',
-            './.git/refs/heads/master.lock',
+            f'./.git/refs/heads/{branch}.lock',
         ]:
             if os.path.exists(lock_file):
                 logger.info(f'Lock file {lock_file} exists, removing')
@@ -81,7 +83,7 @@ class GitManager(DeployConfig):
 
     # Modify by MHY, 移除 nanoda 云端更新开关(kill-switch)与 git_over_cdn，改为纯 git pull
     def git_install(self):
-        """根据云端状态与本地配置执行 Git 源码拉取与更新。"""
+        """根据本地配置执行 Git 源码拉取与更新。"""
         logger.hr('Update AzurPilot', 0)
         self.git_repository_init(
             repo=self.Repository,

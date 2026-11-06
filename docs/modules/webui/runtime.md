@@ -54,8 +54,8 @@ module/runtime/
 ├── remote_access.py       # SSH / WebRTC 远程访问 provider
 ├── mcp_auth.py            # MCP 鉴权：凭据提取、常数时间比对、会话表、日志脱敏
 ├── password_utils.py      # 密码生成/校验、本机判定、远程访问标记头
-├── launcher.py            # LauncherControl：外部启动器命令通道（当前未接线）
-├── launcher_trust.py      # 启动器信任免密令牌（当前未接线）
+├── launcher.py            # LauncherService：应用级启动器 WS、命令与通知
+├── launcher_trust.py      # 启动器信任免密令牌
 ├── discord_presence.py    # Discord Rich Presence（pypresence 异步客户端）
 └── event_calculator.py    # Wiki 活动计算器数据服务（当前无前端消费者）
 ```
@@ -216,7 +216,7 @@ flowchart TD
     F --> G["置位 dependency_sync_event + restart_event<br/>clearup() 后父监督器接管"]
 ```
 
-「先写盘再更新」是关键顺序：git reset/pull 即使报错也可能已部分改写源码，因此一旦开始更新，恢复只能走「依赖同步后重启」一条路。更新检查本身分两条路：`GitOverCdn` 开启时读 CDN 状态（`uptodate`/`behind`/`failed`，failed 回退 git）；否则 `git fetch` 后对比 `..origin/{Branch}`，本地存在上游没有的提交（开发分叉）时跳过更新。云端开关（`cloud_auto_update_enabled`）与强制更新开关每轮检查，强制开启时检查间隔缩短到 1 秒。
+「先写盘再更新」是关键顺序：git reset/pull 即使报错也可能已部分改写源码，因此一旦开始更新，恢复只能走「依赖同步后重启」一条路。更新检查只有纯 git 一条路：`git fetch` 后对比 `..origin/{Branch}`，本地存在上游没有的提交（开发分叉）时跳过更新。上游的 CDN 检查、云端更新开关与强制更新开关随合并剔除，`force_update` 恒为 False，检查按 `CheckUpdateInterval` 轮询；检测到更新只置位状态，由用户或定时任务显式执行更新。
 
 ### 更新检查的调度
 
@@ -263,10 +263,15 @@ worker 启停:  API/MCP ──lifecycle lock──> ProcessManager.start/stop_by
        _preview_queue(≤2) ──预览转发线程(校验 runId)──> hub.publish ──回调──>
        socket.preview_producer ──event('preview')──> 浏览器（每实例仅最新一帧）
 
-更新:  云端开关/GitOverCdn/git fetch ──> updater.state ──> update_service 快照
+更新:  git fetch ──> updater.state ──> update_service 快照
        run_update ──event.set()──> worker 任务边界退出 ──> reloadalas + pending 标记落盘
        ──restart_event──> gui.py 父监督器 ──依赖同步──> 重建 WebUI ──restart_processes──> 恢复实例
 ```
+
+预览是可丢帧的被动通道。复制预览副本或后台 JPEG 编码发生 `MemoryError` 时只丢当前预览帧，
+下次截图继续尝试；不能因额外预览分配失败中止已经取得有效截图的游戏任务。
+实际截图后端、识别与保存的内存异常仍沿原任务异常路径处理，不由预览通道吞掉。
+定向回归见 `tests.test_console_runtime.RuntimeTests` 的复制/编码失败与下一帧恢复用例。
 
 ## 9. 状态模型
 
@@ -323,8 +328,7 @@ stateDiagram-v2
 | 启动收尾进程失败/超时 | 设备依赖异常、动作超过 30 秒 | 记录告警；超时收尾进程被终止，不影响已完成的停止 |
 | 更新等不到实例退出 | worker 卡在不可中断的设备操作 | 等待 10 分钟后 `stop()` 强停；仍有存活则取消更新并重启实例 |
 | git 更新失败 | 网络、锁文件、分叉 | 不回滚恢复计划——reset/pull 可能已部分完成，交父进程以「同步后重启」收场 |
-| 更新检查线程异常 | 云端开关不可达、git 命令失败 | `state = 0`（或 failed），下个周期重试；不中断调度任务 |
-| 云端开关不可访问 | 控制点网络失败 | `_check_update` 跳过本轮检查（`fatal=False`） |
+| 更新检查线程异常 | git fetch 失败等 | `state = 0`（或 failed），下个周期重试；不中断调度任务 |
 | TaskHandler 任务抛异常 | 业务任务 bug | `logger.exception` 后立即移除该任务，其余任务不受影响 |
 | 预览队列异常（EOF/OSError） | worker 或队列消亡 | 转发线程退出；丢帧不中断实际任务，队列满时丢弃旧帧 |
 
@@ -342,7 +346,7 @@ stateDiagram-v2
 | TaskHandler 调度线程 | 服务子进程 daemon 线程 | `task_handler.start()` | `stop()` 置 `_alive=False` 后 join（2 秒超时） |
 | 更新检查线程 | 服务子进程 daemon 线程 | `updater.check_update` | 单次检查即结束 |
 | 日志/预览转发线程 ×2/实例 | 服务子进程线程 | `start_log_queue_handler` | 检测到本轮进程退出后 `join(1)` 回收 |
-| 远程访问线程 | 服务子进程**非 daemon** 线程 | provider.start() | stop_event 或进程内唯一线程时退出 |
+| SSH / WebRTC 远程访问线程 | 服务子进程**非 daemon** 线程 | provider.start() | stop_event 或进程内唯一线程时退出 |
 | preview 编码线程 | **worker 进程内** daemon 线程 | `preview.initialize` | 队列断开即退出 |
 
 同步约束：
@@ -366,10 +370,14 @@ stateDiagram-v2
 | `cache/wiki_event_calculator.json` | `event_calculator` | `load_event_calculator` | Wiki 解析结果缓存（`cache_version=2`），网络失败时回退 |
 | 内存 `renderables` / `PreviewHub.frames` | 转发线程 / worker | RuntimeService | 日志环形缓冲（≤400）与每实例最新一帧，进程级不持久化 |
 
+普通调度、变量和最新资源观察统一保存在 `azurpilot.db`；实例删除先备份配置及普通调度切片，统计保留原实例名。
+
+TUI 使用相同服务边界；配置弹窗显示时，时钟刷新查询主屏幕的 `HeaderBar`，避免把弹窗当前屏幕当作主布局。
+
 ## 14. 生命周期
 
 - **创建**：`gui.py` 父监督器 spawn 服务子进程 → uvicorn 加载 `create_app` → lifespan 启动（`manage_runtime=True`）。
-- **初始化**（`module/api/lifecycle.startup`）：`State.init()` 创建 Manager 并认领登记所有权 → `updater.event = State.manager.Event()` → 按 `CheckUpdateInterval`/`AutoRestartTime` 装载更新任务、按 `EnableRemoteAccess` 挂载保活任务 → `TaskHandler.start()` → 可选启动 OCR 服务进程 → `ProcessManager.restart_processes(runs)`（CLI `--run` 或 `Webui.Run`）拉起实例。
+- **初始化**：lifespan 先执行普通总库安装级迁移，失败停止启动；随后 `module/api/lifecycle.startup`：`State.init()` 创建 Manager 并认领登记所有权 → `updater.event = State.manager.Event()` → 按 `CheckUpdateInterval`/`AutoRestartTime` 装载更新任务、按 `EnableRemoteAccess` 挂载保活任务 → `TaskHandler.start()` → 可选启动 OCR 服务进程 → `ProcessManager.restart_processes(runs)`（CLI `--run` 或 `Webui.Run`）拉起实例。
 - **运行**：TaskHandler 线程驱动周期任务；uvicorn 事件循环承载 API 与 MCP；worker 进程各自运行调度器。
 - **更新**：见第 6 节事务；结束时 `State._restart_requested = True`，clearup 逐项回收（TaskHandler → OCR → 远程访问 → 全部 worker），全部成功才 `State.clearup()`（关闭 Manager、清除 owner），随后父监督器终止本进程并重建。
 - **销毁**：父监督器 `_stop_webui_process_tree` 先停根（WebUI 及 SyncManager 等整树），再按登记回收 worker；父进程被强杀的场景由下一次启动的孤儿恢复兜底。
@@ -399,7 +407,7 @@ stateDiagram-v2
 
 ## 17. 已知限制
 
-- **`launcher.py`、`launcher_trust.py`、`event_calculator.py` 当前没有生产消费者**（截至 2026-09）：三者自旧 PyWebIO 前端迁移而来，逻辑与单测完整，但新 React 前端尚未实现启动器命令通道（`/api/launcher/*` 端点已随旧前端移除）、启动器免密令牌签发（无生产代码调用 `configure`/`issue_token`）与活动计算器页面。它们是预留能力，接线前不会生效。
+- **`event_calculator.py` 当前没有生产消费者**（截至 2026-09）：自旧 PyWebIO 前端迁移而来，逻辑与单测完整，但新 React 前端尚未实现活动计算器页面。它是预留能力，接线前不会生效。启动器命令通道与免密令牌已由 `module/api/launcher_api.py` 接入 `create_app`。
 - worker 的更新退出依赖任务边界轮询（`wait_until` 每 5 秒、任务间每次循环），**正在执行的长任务会推迟更新等待**，因此事务里有 10 分钟超时强停兜底；强停可能让该实例下次启动时状态不完整。
 - `alive` 在登记不可验证时保守返回 False，配合 `start()` 的二次验证避免重复启动；但这意味着登记文件损坏期间（自愈前）实例可能显示为已停止。
 - 远程访问线程是非 daemon 线程，其退出依赖 `stop_event` 或「进程内唯一线程」检测；极端情况下（其他线程意外全部退出）可能延迟进程退出。

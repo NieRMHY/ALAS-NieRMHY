@@ -27,10 +27,12 @@ from module.base.button import Button
 from module.base.decorator import run_once
 from module.base.timer import Timer
 from module.combat.assets import GET_ITEMS_1, GET_ITEMS_2, GET_SHIP
+from module.config.deep import deep_get
 from module.exception import (GameNotRunningError, GamePageUnknownError,
                               RequestHumanTakeover)
 from module.exercise.assets import EXERCISE_PREPARATION
-from module.handler.assets import (AUTO_SEARCH_MENU_EXIT, BATTLE_PASS_NEW_SEASON, BATTLE_PASS_NOTICE, GAME_TIPS,
+from module.handler.assets import (AUTO_SEARCH_MENU_EXIT, BATTLE_PASS_NEW_SEASON, BATTLE_PASS_NOTICE,
+                                   BILIBILI_LOGIN_BUTTON, BILIBILI_LOGIN_RECORD, GAME_TIPS,
                                    LOGIN_ANNOUNCE, LOGIN_ANNOUNCE_2, LOGIN_CHECK, LOGIN_RETURN_SIGN,
                                    MAINTENANCE_ANNOUNCE, MONTHLY_PASS_NOTICE)
 from module.handler.info_handler import InfoHandler
@@ -42,7 +44,8 @@ from module.ocr.ocr import Ocr
 from module.os_handler.assets import (AUTO_SEARCH_REWARD, EXCHANGE_CHECK, RESET_FLEET_PREPARATION, RESET_TICKET_POPUP)
 from module.raid.assets import *
 from module.ui.assets import *
-from module.ui.page import Page, page_academy, page_campaign, page_event, page_main, page_main_white, page_sp
+from module.ui.page import Page, page_academy, page_campaign, page_event, page_main, page_main_white, page_sp, \
+    page_tactical
 from module.ui_white.assets import *
 
 
@@ -69,11 +72,19 @@ class UI(InfoHandler):
             bool: 页面是否出现。
         """
         if page == page_main:
-            return self.appear(page_main.check_button, offset=(5, 5), interval=interval)
-        # 英文本地化导致学院标题字体宽度变化，需要额外检查其他按钮
-        if self.config.SERVER == 'en' and page == page_academy:
-            if self.appear(ACADEMY_GOTO_MUNITIONS, offset=offset, interval=interval):
+            if self.appear(page_main_white.check_button, offset=offset, interval=interval):
                 return True
+            if self.appear(page_main.check_button, offset=(5, 5), interval=interval):
+                return True
+            return False
+        # Modify by MHY, 英文本地化的标题宽度不同，兼容学院与战术页面的替代标记。
+        if self.config.SERVER == 'en':
+            if page == page_academy:
+                if self.appear(ACADEMY_GOTO_MUNITIONS, offset=offset, interval=interval):
+                    return True
+            if page == page_tactical:
+                if self.appear(TACTICAL_CHECK_2, offset=offset, interval=interval):
+                    return True
         return self.appear(page.check_button, offset=offset, interval=interval)
 
     def is_in_main(self, offset=(30, 30), interval=0):
@@ -543,9 +554,19 @@ class UI(InfoHandler):
         Returns:
             bool: 是否处理了弹窗。
         """
+        # 离开岛屿时 ui_current 要等到下一帧识别后才更新，期间仍需处理主界面弹窗。
+        # 岛屿管理页的邮箱按钮与 GET_SHIP 检测区域重叠，因此只跳过这一项。
+        is_island_page = bool(getattr(self, 'ui_current', None) and 'island' in self.ui_current.name)
+
         # 大舰队弹窗
         if self.handle_guild_popup_cancel():
             return True
+
+        # 自选轻量复刻会在登录后反复展示，确认页面后复用白色返回箭头退出。
+        if self.appear(CAPSULE_RERUN_CHECK, offset=(5, 5)):
+            if self.appear_then_click(BACK_ARROW_WHITE, offset=(30, 30), interval=3):
+                logger.info('[UI-额外] 退出自选轻量复刻选择页')
+                return True
 
         # 每日重置公告
         if self.appear_then_click(LOGIN_ANNOUNCE, offset=(30, 30), interval=3):
@@ -556,7 +577,7 @@ class UI(InfoHandler):
             return True
         if self.appear_then_click(GET_ITEMS_2, offset=True, interval=3):
             return True
-        if get_ship:
+        if get_ship and not is_island_page:
             if self.appear_then_click(GET_SHIP, offset=(20, 20), interval=5):
                 return True
         if self.appear_then_click(LOGIN_RETURN_SIGN, offset=(30, 30), interval=3):
@@ -639,6 +660,28 @@ class UI(InfoHandler):
 
         return False
 
+    def handle_bilibili_login_record(self):
+        """处理 B 站客户端偶发的已保存账号登录记录弹窗。
+
+        Pages:
+            in: 游戏开始画面上的登录记录弹窗
+            out: 等待 B 站登录完成后的游戏画面
+
+        Returns:
+            bool: 是否点击了弹窗的登录按钮。
+        """
+        if (self.config.SERVER != 'cn'
+                or deep_get(self.config.data, 'Alas.Emulator.PackageName', default='')
+                != 'com.bilibili.azurlane'):
+            return False
+        if not self.match_template_color(BILIBILI_LOGIN_RECORD, offset=(5, 5)):
+            return False
+        if self.match_template_color(BILIBILI_LOGIN_BUTTON, offset=(5, 5), interval=3):
+            self.device.click(BILIBILI_LOGIN_BUTTON)
+            logger.info('[登录] 点击 B 站登录记录弹窗的登录按钮')
+            return True
+        return False
+
     def ui_additional(self, get_ship=True):
         """处理 UI 切换过程中出现的各种弹窗。
 
@@ -660,11 +703,8 @@ class UI(InfoHandler):
             return True
 
         # 主界面和奖励页面弹窗
-        # 仅在非岛屿页面时处理，避免岛屿页面的 UI 元素被误检测为 GET_SHIP/GET_ITEMS
-        # 例如岛屿管理界面的邮箱按钮与 GET_SHIP 检测区域 (1104,610,1110,630) 重叠
-        if not (hasattr(self, 'ui_current') and self.ui_current and 'island' in self.ui_current.name):
-            if self.ui_page_main_popups(get_ship=get_ship):
-                return True
+        if self.ui_page_main_popups(get_ship=get_ship):
+            return True
 
         # 剧情跳过
         if self.handle_story_skip():
@@ -728,9 +768,16 @@ class UI(InfoHandler):
                 self.interval_reset(WITHDRAW)
 
         # 登录相关
+        if self.handle_bilibili_login_record():
+            return True
         if self.appear_then_click(LOGIN_CHECK, offset=(30, 30), interval=3):
             return True
         if self.appear_then_click(MAINTENANCE_ANNOUNCE, offset=(30, 30), interval=3):
+            return True
+        # rerun event select page
+        if self.appear(RERUN_SELECT_CHECK, offset=(30, 30), interval=3):
+            logger.info(f'UI additional: {RERUN_SELECT_CHECK} -> {SHOP_BACK_ARROW}')
+            self.device.click(SHOP_BACK_ARROW)
             return True
 
         # 误点击

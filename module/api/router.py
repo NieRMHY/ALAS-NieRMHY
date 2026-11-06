@@ -5,6 +5,7 @@ import threading
 from dataclasses import dataclass
 from typing import Callable
 
+from module.persistence.database import configured_database
 from module.api import background_service as background
 from module.api import protocol as p
 from module.api import search_service as search
@@ -58,6 +59,22 @@ class Router:
             'config.export': Method(p.InstanceParams, lambda x: configs.export(x.instance)),
             'config.patch': Method(p.PatchParams, lambda x: configs.patch(x.instance, x.revision, x.changes), True),
             'overview.get': Method(p.InstanceParams, lambda x: runtime.overview(x.instance)),
+            # Modify by MHY, 永久移除茗交所证券接口；培养与船坞数据沿用上游新接口
+            'fleetTraining.reset': Method(p.RevisionParams, self.reset_fleet_training, True),
+            'dock.report': Method(p.InstanceParams, lambda x: self.dock.report(x.instance)),
+            'dock.importLegacy': Method(p.RevisionParams, lambda x: self.dock.import_legacy(x.instance, x.revision), True),
+            'dock.configure': Method(p.DockConfigureParams, lambda x: self.dock.configure(x.instance, x.min_level, x.max_level), True),
+            'dock.patch': Method(p.DockPatchParams, lambda x: self.dock.patch(x.instance, x.revision, [change.model_dump(exclude_unset=True) for change in x.changes]), True),
+            'dock.stageImport': Method(p.DockStageImportParams, lambda x: self.dock.stage_import(x.instance, x.revision, [ship.model_dump(exclude_unset=True) for ship in x.ships]), True),
+            'dock.review': Method(p.DockReviewParams, lambda x: self.dock.review(x.instance, x.revision, x.pending_revision, [decision.model_dump(exclude_unset=True) for decision in x.decisions]), True),
+            'mind.catalog': Method(p.InstanceParams, lambda x: self.mind.catalog(x.instance)),
+            'fleetTech.catalog': Method(p.InstanceParams, lambda x: self.fleet_tech.catalog(x.instance)),
+            'fleetTech.report': Method(p.InstanceParams, lambda x: self.fleet_tech.report(x.instance)),
+            'fleetTech.mergeShips': Method(p.RevisionParams, lambda x: self.fleet_tech.merge_ships(x.instance, x.revision), True),
+            'fleetTech.patch': Method(p.FleetTechPatchParams, lambda x: self.fleet_tech.patch(x.instance, x.revision, x.changes, x.nations), True),
+            'mind.plan': Method(p.CultivationParams, lambda x: self.mind.plan(x.instance, x.revision, x.ship_ids, x.target_level)),
+            'mind.import': Method(p.MindFileParams, lambda x: self.mind.import_file(x.instance, x.filename, x.content)),
+            'mind.recognize': Method(p.MindFileParams, lambda x: self.mind.recognize(x.instance, x.filename, x.content)),
             'scheduler.start': Method(p.InstanceParams, lambda x: runtime.start(x.instance), True),
             'scheduler.stop': Method(p.InstanceParams, lambda x: runtime.stop(x.instance), True),
             'scheduler.program.catalog': Method(p.InstanceParams, lambda x: self.programs.catalog(x.instance)),
@@ -105,6 +122,22 @@ class Router:
             'background.preference.set': Method(p.BackgroundPreferenceParams,
                                                 lambda x: background.save_preference(x.material, x.preference), True),
         }
+
+    @property
+    def dock(self):
+        """船坞底账服务按需构造，浏览与配置都不启动游戏任务。"""
+        from module.api.dock_service import DockService
+        return DockService(self.configs)
+
+    @property
+    def fleet_tech(self):
+        from module.api.fleet_tech_service import FleetTechService
+        return FleetTechService(self.configs)
+
+    @property
+    def mind(self):
+        from module.api.mind_calculator_service import MindCalculatorService
+        return MindCalculatorService(self.configs)
 
     @property
     def opsi_simulator(self):
@@ -177,10 +210,13 @@ class Router:
             dict: 统计报表数据。
         """
         from module.api.statistics_service import compact_axis, report
+        from module.statistics.glossary import build_glossary, report_texts
         result = report(self.configs, params.instance, params.category, params.month,
                         params.days, params.period, research_series=params.series,
-                        research_scope=params.scope, loot_task=params.task)
-        return {**result, **compact_axis(result.get('series') or [])}
+                        research_scope=params.scope, loot_task=params.task,
+                        include_series=params.include_series)
+        # 标签保持中文（前端按中文名查图标）；物品名、任务名的译名随报表附带，固定文案由前端翻译。
+        return {**result, **compact_axis(result.get('series') or []), 'glossary': build_glossary(report_texts(result))}
 
     def resource_flows(self, params: p.ResourceFlowsParams):
         """查询库存与资源流向；沿用现有实例访问边界。"""
@@ -211,6 +247,7 @@ class Router:
         from module.api.meowfficer_service import clear
         return clear(self.configs, params.instance)
 
+    @configured_database
     def dispatch(self, method: str, params: dict):
         """分发并执行指定的 API 方法。
 
@@ -232,6 +269,13 @@ class Router:
         if entry.mutates and os.environ.get('DEMO') == '1':
             raise p.ApiError('READ_ONLY', '演示模式下禁止修改配置或运行任务')
         return entry.handler(validated)
+
+    def reset_fleet_training(self, params: p.RevisionParams):
+        """停止状态下清空智能换船记录；与启动共用生命周期锁，避免清空后被旧进程回写。"""
+        with ProcessManager._get_lifecycle_lock(params.instance):
+            if self.runtime.manager(params.instance).alive:
+                raise p.ApiError('INSTANCE_RUNNING', '请先停止实例，再刷新换船状态')
+            return self.configs.reset_fleet_training(params.instance, params.revision)
 
     def delete(self, params: p.RevisionParams):
         """删除指定实例及其关联的数据和进程。

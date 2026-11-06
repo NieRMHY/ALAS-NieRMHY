@@ -4,7 +4,6 @@
 # 此文件定义了 Device 类，是脚本与设备交互的综合管理入口。
 # 负责整合截图、点击、输入功能，并由于内置了防卡死检测和点击频率控制，能有效提高脚本自动化运行的稳定性。
 import collections
-import sys
 from contextlib import contextmanager
 
 import cv2
@@ -22,7 +21,7 @@ from module.base.utils import limit_in
 from module.config.time_source import now as current_time
 from module.config.utils import get_server_next_update
 from module.device.app_control import AppControl
-from module.device.control import Control
+from module.device.control import Control, wait_control_interval
 from module.device.input import Input
 from module.device.platform import Platform
 from module.device.screenshot import Screenshot
@@ -66,7 +65,7 @@ class Device(Screenshot, Control, AppControl, Input):
     """
     _screen_size_checked = False
     detect_record = set()
-    click_record = collections.deque(maxlen=15)
+    click_record = collections.deque(maxlen=50)
     stuck_timer = Timer(60, count=60).start()
     stuck_timer_long = Timer(195, count=195).start()
     stuck_long_wait_list = ['BATTLE_STATUS_S', 'PAUSE', 'LOGIN_CHECK', 'TEMPLATE_MANJUU']
@@ -84,6 +83,7 @@ class Device(Screenshot, Control, AppControl, Input):
         """
         # 初始化模拟器管理平台
         self._platform = None
+        self.click_record = collections.deque(maxlen=50)
 
         for trial in range(4):
             try:
@@ -491,6 +491,7 @@ class Device(Screenshot, Control, AppControl, Input):
         Args:
             button: 即将点击或操作的按钮对象或操作名。
         """
+        wait_control_interval(self)
         self.stuck_record_clear()
         self.click_record_add(button)
         self.click_record_check()
@@ -528,26 +529,30 @@ class Device(Screenshot, Control, AppControl, Input):
         return removed
 
     def click_record_check(self):
-        """检查点击频率是否异常（同一按钮被点击过多或两个按钮交替点击过多）。
+        """检测连续 50 次同按钮操作或双按钮交替操作。
+
+        已确认的状态推进由调用方通过 click_record_clear() 清理。
+        地图滑动由 Camera 的位移确认和有界定位保护，不按按钮次数判定。
 
         Raises:
             GameTooManyClickError: 点击频率异常。
         """
-        count = collections.Counter(self.click_record).most_common(2)
-        # S 经验结算可能等待动画结束，适当放宽但仍保留连击保护。
-        click_limit = 15 if count[0][0] == 'EXP_INFO_S' else 12
-        if count[0][1] >= click_limit:
-            show_function_call()
-            logger.warning(f'[设备-点击] 按钮点击次数过多: {count[0][0]}')
-            logger.warning(f'[设备-点击] 点击历史: {[str(prev) for prev in self.click_record]}')
-            self.click_record_clear()
-            raise GameTooManyClickError(f'[设备-点击] 按钮点击次数过多: {count[0][0]}')
-        if len(count) >= 2 and count[0][1] >= 6 and count[1][1] >= 6:
-            show_function_call()
-            logger.warning(f'[设备-点击] 两个按钮交替点击次数过多: {count[0][0]}, {count[1][0]}')
-            logger.warning(f'[设备-点击] 点击历史: {[str(prev) for prev in self.click_record]}')
-            self.click_record_clear()
-            raise GameTooManyClickError(f'[设备-点击] 两个按钮交替点击次数过多: {count[0][0]}, {count[1][0]}')
+        if len(self.click_record) < 50:
+            return
+        record = list(self.click_record)[-50:]
+        if any(name.startswith('MAP_SWIPE_') for name in record):
+            return
+        if all(name == record[0] for name in record):
+            reason = f'按钮点击次数过多: {record[0]}'
+        elif record[0] != record[1] and all(name == record[index % 2] for index, name in enumerate(record)):
+            reason = f'两个按钮交替点击次数过多: {record[0]}, {record[1]}'
+        else:
+            return
+        show_function_call()
+        logger.warning(f'[设备-点击] {reason}')
+        logger.warning(f'[设备-点击] 点击历史: {record}')
+        self.click_record_clear()
+        raise GameTooManyClickError(f'[设备-点击] {reason}')
 
     def disable_stuck_detection(self):
         """禁用卡死检测，用于半自动模式和调试场景。"""

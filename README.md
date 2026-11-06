@@ -19,7 +19,7 @@
 | LmeSzinc/AzurLaneAutoScript | 官方原项目 |
 | wess09/AzurPilot | 上游 AzurPilot 分支 |
 | 雪风源 | 雪风分支 |
-| nanoda | AzurPilot 发布分支 |
+| nanoda | AzurPilot `master` 发布分支（已审核同步至 `518247b1b`，2026-11-06） |
 | Alas-with-Dashboard | WebUI 面板部分功能 |
 | 其他社区 PR | guoh064、sui-feng-cb 等分支的部分功能 |
 

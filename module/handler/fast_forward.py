@@ -127,7 +127,7 @@ def to_map_input_name(name: str) -> str:
     # 移除空白字符
     name = re.sub('[ \t\n]', '', name).lower()
     # B-1 -> B1
-    res = re.match(r'([a-zA-Z])+[- ]+(\d+)', name)
+    res = re.match(r'([a-zA-Z]+)[- ]+(\d+)', name)
     if res:
         name = f'{res.group(1)}{res.group(2)}'
     # 转为大写以便移除 campaign 前缀
@@ -152,7 +152,7 @@ def to_map_file_name(name: str) -> str:
     # 移除空白字符
     name = re.sub('[ \t\n]', '', name).lower()
     # B-1 -> B1
-    res = re.match(r'([a-zA-Z])+[- ]+(\d+)', name)
+    res = re.match(r'([a-zA-Z]+)[- ]+(\d+)', name)
     if res:
         name = f'{res.group(1)}{res.group(2)}'
     # 7-2 -> campaign_7_2

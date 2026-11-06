@@ -6,6 +6,7 @@ sys.path.insert(0, '.')
 
 from module.island.island_season_plan_reader import (
     card_boxes,
+    fix_progress,
     match_task,
     normalize_name,
     parse_progress,
@@ -146,6 +147,46 @@ class TestReadCards(unittest.TestCase):
         cards = read_cards(None, self._fake_ocr(mapping))
         self.assertIsNone(cards[0]['task'])
         self.assertEqual(cards[0]['name'], '咖啡供应')
+
+
+class TestFixProgress(unittest.TestCase):
+    """真机 10-10 的 OCR 读数：前缀多读一位会让「82/100」变成「282/100」并错发达标邮件。"""
+
+    def test_real_ocr_samples(self):
+        samples = [
+            ('282/100', 100, (82, 100)),       # 拿铁实际 82
+            ('7250/250', 250, (250, 250)),
+            ('2150/150', 150, (150, 150)),
+            ('760/60', 60, (60, 60)),
+            ('210/10', 10, (10, 10)),
+            ('25/5', 5, (5, 5)),
+            ('500/5500', 500, (500, 500)),     # 需求量多读
+            ('100/199', 100, (100, 100)),      # 需求量读错
+            ('C1100/109', 100, (100, 100)),
+            ('-29/39', 30, (29, 30)),
+        ]
+        for text, cfg, want in samples:
+            with self.subTest(text=text):
+                have, need = parse_progress(text)
+                self.assertEqual(fix_progress(have, need, cfg), want)
+
+    def test_correct_readings_untouched(self):
+        for have, need in ((82, 100), (0, 100), (99, 100), (100, 100), (250, 250), (48, 250)):
+            with self.subTest(have=have):
+                self.assertEqual(fix_progress(have, need, need), (have, need))
+
+    def test_unknown_need_keeps_raw(self):
+        self.assertEqual(fix_progress(282, 100, 0), (282, 100))
+
+    def test_read_cards_applies_fix(self):
+        name_box, prog_box = card_boxes(0, 1)
+        mapping = {(name_box, 'ppocr_v6'): '拿铁时光', (prog_box, 'azur_lane'): '282/100'}
+
+        def ocr(image, area, lang):
+            return mapping.get((area, lang), '')
+
+        cards = read_cards(None, ocr, season='autumn')
+        self.assertEqual((cards[0]['have'], cards[0]['need']), (82, 100))
 
 
 class TestNormalizeName(unittest.TestCase):

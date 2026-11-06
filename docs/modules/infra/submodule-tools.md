@@ -38,7 +38,7 @@ submodule/             # git submodule 挂载点（AlasMaaBridge、AlasFpyBridge
 
 | 入口 | 用途 |
 | --- | --- |
-| `get_available_func()` | 12 个工具任务名（Daemon…EmulatorManager），[运行时服务](../webui/runtime.md)按名分发 |
+| `get_available_func()` | 内置独立工具任务清单，供 `tasks.run` 启动校验与[运行时服务](../webui/runtime.md)分发共用；新增工具须与 `alas.py` 入口一起注册 |
 | `get_available_mod()/get_available_mod_func()` | 已安装桥接与其功能集 |
 | `list_mod_instance()/get_config_mod()` | 扫描 `config/*.json` 识别「哪个配置属于哪个桥」（文件名 `配置名-模块名.json` 约定） |
 | `load_mod(name)` | importlib 加载桥接包（MAA 需 DLL 预加载） |
@@ -59,7 +59,8 @@ submodule/             # git submodule 挂载点（AlasMaaBridge、AlasFpyBridge
 | 离线调参 | `research_optimizer`、`coin_statistics`、`item_statistics` |
 | 生成与 CI | `button_extract`、`export_api_schema`（同步前端契约）、`import_smoke_test`（导入冒烟 + KNOWN_FAILURES 白名单，白名单过期也算失败）、`ci_pr_report` |
 | 截图辅助 | `coordinate_picker`、`button_region_editor`、`campaign_swipe`、`grids_debug`、`relative_crop` |
-| 资源快照 | `snapshot_resources`、`seed_resource_snapshots` |
+| 资源快照 | `snapshot_resources`、`seed_resource_snapshots`（共用普通总库，开发数据使用 `--config-dir` 临时目录） |
+| 普通存储维护 | `business_storage`（迁移、只读检查、WAL 备份、单实例调度切片及统计导入导出），见 [普通业务数据存储](persistence.md) |
 | 其他 | `ocr_ncnn_convert`（模型转换）、`war_archives_update`（档案活动登记）等 |
 
 CI 会重新生成按钮、配置与 API 契约并检查 diff（见 [.github/workflows/ci.yml](../../../.github/workflows/ci.yml)），因此这些生成器不是可选工具而是交付链的一环。

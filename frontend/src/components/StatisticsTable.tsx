@@ -10,9 +10,11 @@ import { downloadCsv } from './statisticsData'
 import { DEFAULT_TABLE_ROWS } from '../app/statisticsLayout'
 import { useApp } from '../app/context'
 import { localeForLanguage } from '../i18n'
+import { withTranslatedKeys } from './statisticsText'
 
 const iconBase = import.meta.env.BASE_URL
-export const resourceIcons: Record<string, string> = {
+/* 键为中文名；withTranslatedKeys 补上译名，翻译后的列名、物品名仍能找到图标。 */
+export const resourceIcons: Record<string, string> = withTranslatedKeys({
   '钻石': `${iconBase}diamond.webp`,
   '心智魔方': `${iconBase}cube.webp`,
   '魔方': `${iconBase}cube.webp`,
@@ -28,7 +30,7 @@ export const resourceIcons: Record<string, string> = {
   '荣誉勋章': `${iconBase}honor_medal.webp`,
   '功勋': `${iconBase}merit.webp`,
   '舰队币': `${iconBase}stamina.webp`,
-}
+})
 
 // 科研掉落用仓库里的模板图当图标，后端把 /research-items 挂到 assets/stats/research_items，
 // 不走前端构建，补了新模板立刻生效。单元格值形如 'research:BlueprintValparaiso'。

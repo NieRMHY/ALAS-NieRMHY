@@ -102,7 +102,7 @@ class InstanceLogPathTests(unittest.TestCase):
                     self.assertEqual(len(logging_module.logger.handlers), 1)
 
     def test_windows_automatic_gui_skips_only_background_processes(self):
-        for process_name in ('MainProcess', 'Process-1', 'SyncManager-1:2'):
+        for process_name in ('MainProcess', 'Process-1', 'SyncManager-1:2', 'dependency-sync'):
             with self.subTest(process=process_name), self.windows_logging(process_name):
                 logging_module.set_file_logger()
                 self.assertEqual(logging_module.logger.handlers, [])

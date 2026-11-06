@@ -11,7 +11,7 @@ from module.config.time_source import now as current_time
 from module.handler.login import LoginHandler
 from module.island.warehouse import *
 from module.logger import logger
-from module.island.island_season import get_global_season_config
+from module.island.island_season import SEASONAL_ITEMS, get_global_season_config
 
 
 
@@ -183,6 +183,53 @@ class IslandShopBase(Island, WarehouseOCR):
                 meal_number = getattr(self.config, number_key, 0)
                 self.post_products.append((meal_name, meal_number))
 
+    # Add by MHY, 跨季餐品映射复用上游实现，保留本地排产与库存预留。
+    def _normalize_seasonal_post_products(self, module_key):
+        """Replace off-season configured products with the current season layout.
+
+        Products configured for another season are mapped to the same slot in the
+        current season. If that slot does not exist, the configured demand is
+        removed. Products unavailable in ``shop_items`` are also removed so a
+        later production pass cannot index a missing ``name_to_config`` entry.
+
+        Args:
+            module_key (str): Seasonal item group, such as ``restaurant`` or
+                ``juu_eatery``.
+        """
+        if not hasattr(self, 'season_config') or self.season_config is None:
+            return
+
+        current_items = self.season_config.get_seasonal_items(module_key) or []
+        seasonal_slots = {}
+        for season_data in SEASONAL_ITEMS.values():
+            for slot_index, item_name in enumerate(season_data.get(module_key, [])):
+                seasonal_slots.setdefault(item_name, slot_index)
+
+        available_names = {item['name'] for item in self.shop_items}
+        normalized_products = []
+        for product_name, target in self.post_products:
+            slot_index = seasonal_slots.get(product_name)
+            if slot_index is not None and product_name not in current_items:
+                replacement = current_items[slot_index] if slot_index < len(current_items) else None
+                if replacement in available_names:
+                    logger.info(
+                        f"[岛屿] 跨季餐品 {self._item_cn(product_name)} 替换为 "
+                        f"{self._item_cn(replacement)}（槽位{slot_index + 1}）"
+                    )
+                    normalized_products.append((replacement, target))
+                    continue
+
+                logger.info(
+                    f"[岛屿] 当前季节没有 {self._item_cn(product_name)} 对应槽位，已跳过该配置"
+                )
+                continue
+
+            if product_name in available_names:
+                normalized_products.append((product_name, target))
+            else:
+                logger.info(f"[岛屿] 当前季节不生产 {self._item_cn(product_name)}，已跳过该配置")
+
+        self.post_products = normalized_products
 
     def initialize_shop(self):
         """初始化店铺商品配置与岗位状态，子类必须在初始化时调用。"""
@@ -254,21 +301,17 @@ class IslandShopBase(Island, WarehouseOCR):
             if self.warehouse_counts[dish['name']]:
                 logger.info(f"{self._item_cn(dish['name'])}: {self.warehouse_counts[dish['name']]}")
 
-        # Add by MHY, 赛季任务物品进度写日志。这里只用仓库读数做记录，
-        # 不再据此推送「攒够」提醒：
-        # 1) 仓库读数不等于任务进度（真机实测仓库 ≥250 而页面只有 222/250，
-        #    差额被每日订单/货运吃掉），照它发提醒会误报
-        # 2) 顺带踩过 IslandGrill 没有 season_config 属性，每次都抛异常被吞
-        # 真正权威的是赛季任务页面，提醒与提交都以页面读数为准。
+        # Modify by MHY, 赛季任务进度直接取仓库读数：赛季页 OCR 会误读（拿铁 82 读成
+        # 282），而这里每次收取/生产前读的是准确库存。记录失败不能影响生产排产。
         try:
-            from module.island.island_season_plan_data import cn_name
-            from module.island.island_economy import ECONOMY_PRODUCTS
-            progress = {cn_name(name): count for name, count in self.warehouse_counts.items()
-                        if count and name in ECONOMY_PRODUCTS}
-            if progress:
-                logger.info(f'[岛屿-赛季任务] {self.shop_type} 仓库读数: {progress}')
+            from module.island.island_season_progress import record_readings
+            changed = record_readings(dict(self.warehouse_counts))
+            if changed:
+                from module.island.island_season_plan_data import cn_name
+                logger.info('[岛屿-赛季进度] ' + '、'.join(
+                    f'{cn_name(item)} {old}->{new}' for item, (old, new) in changed.items()))
         except Exception:
-            logger.warning('[岛屿-赛季任务] 仓库读数记录失败，已跳过')
+            logger.exception('[岛屿-赛季进度] 仓库读数记录失败，已跳过')
         return self.warehouse_counts
 
     def select_special_character(self, product):
@@ -295,13 +338,23 @@ class IslandShopBase(Island, WarehouseOCR):
             failed_product (str): 未能识别选中的商品名称。
             failed_count (int): 当前累计失败次数。
 
+        Returns:
+            bool: True 表示已重新进入岗位，可以继续派遣；False 表示达到上限，已返回岗位管理页，
+                本轮放弃该商品。
+
         Raises:
-            GameStuckError: 连续失败达到上限或界面异常时抛出。
+            GameStuckError: 无法返回岗位管理页或无法重新打开岗位时抛出。
         """
         if failed_count >= self.PRODUCT_SELECT_RETRY_LIMIT:
-            raise GameStuckError(
-                f"{self._item_cn(product)}生产选择餐品时连续{failed_count}次未识别到 {self._item_cn(failed_product)}"
+            # 产品列表里始终找不到该商品，通常是岛屿科技尚未解锁（或缺少对应服务器的识别图），
+            # 界面本身并未卡住。重启游戏也找不到，只会每轮重复重启，因此本轮跳过该商品。
+            logger.warning(
+                f"[岛屿] {self._item_cn(product)}生产选择餐品时连续{failed_count}次未识别到 "
+                f"{self._item_cn(failed_product)}，可能尚未解锁，本轮跳过"
             )
+            if not self.back_to_postmanage_from_dispatch():
+                raise GameStuckError(f"{self._item_cn(product)}生产选择餐品失败后无法返回岗位管理页")
+            return False
 
         logger.warning(
             f"{self._item_cn(product)}生产选择餐品时未识别到 {self._item_cn(failed_product)}，"
@@ -315,6 +368,7 @@ class IslandShopBase(Island, WarehouseOCR):
         if not self.post_open(post_button):
             raise GameStuckError(f"{self._item_cn(product)}生产选择餐品失败后无法重新打开岗位")
         self.device.sleep(0.5)
+        return True
 
     def increase_product_selection_failure(self, product_select_failures, failed_product):
         """记录单个餐品的选择失败次数。
@@ -391,9 +445,9 @@ class IslandShopBase(Island, WarehouseOCR):
                                     failed_count = self.increase_product_selection_failure(
                                         product_select_failures, product2
                                     )
-                                    self.retry_product_selection_from_postmanage(
-                                        post_button, product, product2, failed_count
-                                    )
+                                    if not self.retry_product_selection_from_postmanage(
+                                            post_button, product, product2, failed_count):
+                                        return 0
                                     continue
                                 self.device.sleep(0.5)
                                 if self.produce_check():
@@ -428,9 +482,10 @@ class IslandShopBase(Island, WarehouseOCR):
                     failed_count = self.increase_product_selection_failure(
                         product_select_failures, product
                     )
-                    self.retry_product_selection_from_postmanage(
-                        post_button, product, product, failed_count
-                    )
+                    if not self.retry_product_selection_from_postmanage(
+                            post_button, product, product, failed_count):
+                        # 调用方把返回 0 的商品记入 chef_unavailable_products，本轮不再尝试
+                        return 0
                 continue
         else:
             raise GameStuckError(f"{self._item_cn(product)}生产派遣流程超时")
@@ -948,9 +1003,10 @@ class IslandShopBase(Island, WarehouseOCR):
     def _get_usable_stock(self, material, material_stock):
         """获取套餐制作时指定原材料的可用库存。
 
-        保留线内商品（_reserved_targets）只能消耗仓库库存中超出自身
-        目标的部分，避免套餐消耗其尚未达标的保底库存；其余材料直接用
-        仓库库存。在产数量不计入可用量（做套餐查原料时在产不算）。
+        保留线内商品（_reserved_targets）只有在库存低于自身目标时才完全
+        禁止作为套餐原料；达到目标后允许先消耗，再由套餐分解补充回目标。
+        这样既保护尚未达标产品的保底库存，也避免库存恰好等于目标时把
+        可用量错误算成 0。在产数量不计入可用量（做套餐查原料时在产不算）。
 
         Args:
             material (str): 原料名称。
@@ -960,7 +1016,8 @@ class IslandShopBase(Island, WarehouseOCR):
             int: 允许被套餐消耗的可用库存数量。
         """
         if material in self._reserved_targets:
-            return max(0, material_stock - self._reserved_targets[material])
+            if material_stock < self._reserved_targets[material]:
+                return 0
         return material_stock
 
     def get_max_producible(self, product, requested_quantity, skip_zero_materials=False):
@@ -988,9 +1045,9 @@ class IslandShopBase(Island, WarehouseOCR):
                 quantity_per = composition.get('quantity_per', 1)
                 if quantity_per == 0:
                     continue
-                # 保留线内的产品只能消耗"仓库超额库存"（见 _get_usable_stock），
-                # 否则套餐会在前置项目因材料不足被跳过时，把其本就不够的
-                # 保底库存吃掉。
+                # 保留线内的产品低于目标时不能消耗（见 _get_usable_stock），
+                # 避免套餐吃掉前置项目尚未达标的保底库存；达到目标后允许
+                # 先消耗并由套餐分解补回。
                 usable_stock = self._get_usable_stock(material, material_stock)
                 max_by_material = usable_stock // quantity_per
                 if max_by_material <= 0:
@@ -1001,7 +1058,7 @@ class IslandShopBase(Island, WarehouseOCR):
                     else:
                         # 排产阶段 或 有但不满足一批：严格处理
                         if material in self._reserved_targets:
-                            logger.info(f"[岛屿]   {self._item_cn(product)} 原材料 {self._item_cn(material)} 无超额库存（仓库未超出目标 {self._reserved_targets[material]}），暂不消耗其保底库存")
+                            logger.info(f"[岛屿]   {self._item_cn(product)} 原材料 {self._item_cn(material)} 暂不可用（库存 {material_stock} 低于目标 {self._reserved_targets[material]}），暂不消耗其保底库存")
                         else:
                             logger.info(f"[岛屿]   {self._item_cn(product)} 缺少原材料: {self._item_cn(material)} (库存: {material_stock})")
                         return 0

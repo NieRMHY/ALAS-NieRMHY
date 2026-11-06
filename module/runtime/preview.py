@@ -118,7 +118,7 @@ def initialize(instance: str, output: queue.Queue, task_sink: queue.Queue, run_i
                     output.put_nowait(frame)
             except (OSError, EOFError, BrokenPipeError):
                 return
-            except (ValueError, queue.Full):
+            except (MemoryError, ValueError, queue.Full):
                 # 预览丢帧不能中断实际任务或造成无界积压。
                 continue
 
@@ -135,7 +135,11 @@ def publish(image):
     """
     if _images is None:
         return
-    frame = (image.copy(), datetime.now().isoformat())
+    try:
+        frame = (image.copy(), datetime.now().isoformat())
+    except MemoryError:
+        # 预览副本分配失败只丢当前预览帧；游戏仍使用已经取得的原截图。
+        return
     try:
         _images.put_nowait(frame)
     except queue.Full:

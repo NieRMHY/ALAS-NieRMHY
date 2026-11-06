@@ -9,7 +9,7 @@
 - `module/shop`：常规商店框架与六个具体商店（通用、功勋、舰队、核心、勋章、代币/白票）。它们共享「识别货架 → 过滤排序 → 逐个购买」的流程，差异只在网格布局、货币类型和购买弹窗形态，因此以 `ShopBase` + `ShopClerk` 抽象公共流程，每个商店一个子类只覆盖差异点。
 - `module/shop_event`：活动商店。其货架随活动动态变化（无固定模板网格）、货币是活动点数 pt/URpt 且存在「UR 舰船用 URpt、URpt 用 pt 兑换」的换算链，购买策略（保船、保留点数、活动结束前清货架）与常规商店完全不同，故独立成模块。
 
-在系统中，调度器 `alas.py` 的 `ShopFrequent`/`ShopOnce`/`EventShop` 任务分别进入 `RewardShop.run_frequent()`、`RewardShop.run_once()` 和 `EventShop.run()`；大世界白票商店（`OpsiVoucher`）与档案任务（`OpsiArchive`）直接实例化 `VoucherShop`。大世界港口/明石商店（`module/os_shop`）与私人休息室商店（`module/private_quarters`）是独立模块，复用常规商店的基类与界面模式。
+在系统中，调度器 `alas.py` 的 `ShopFrequent`/`ShopOnce`/`EventShop` 任务分别进入 `RewardShop.run_frequent()`、`RewardShop.run_once()` 和 `EventShop.run()`；大世界白票商店（`OpsiVoucher`）与档案任务（`OpsiArchive`）直接实例化 `VoucherShop`。大世界港口/明石商店（`module/os_shop`）与宿舍计划商店（`module/private_quarters`）是独立模块，复用常规商店的基类与界面模式。
 
 ## 2. 模块职责
 
@@ -24,7 +24,7 @@
 ### 不负责
 
 - 大世界港口商店与明石商店的识别购买（`module/os_shop`），由其自身任务控制器负责。
-- 私人休息室商店（`module/private_quarters`，复用本系统模式但独立实现）。
+- 宿舍计划商店（`module/private_quarters`，复用本系统模式但独立实现）。
 - 页面跳转图谱与导航路径（`module/ui`），本模块只调用 `ui_ensure()`/`ui_goto()`。
 - 过滤字符串的配置定义、迁移与生成（`module/config`）。
 
@@ -108,7 +108,7 @@ flowchart TD
 
 每轮 `shop_buy` 先检查外观箱、未获得舰船等特殊商品，再按 `FILTER` 优先级与实际余额选品；刷新和购买数量采用官源规则。
 
-活动商店先扫描全部货架，再处理 UR 舰与 URpt、为未获得物品保留 PT，最后按过滤器购买普通商品。活动是否结束以商店截止日期剩余不足 7 天判断。
+活动商店先扫描全部货架，再处理 UR 舰与 URpt、为未获得物品保留 PT，最后按过滤器购买普通商品。活动是否结束以商店截止日期剩余不足 7 天判断。截止日期按服务器时区解析：支持带年份与不带年份的起止日期，保留识别到的结束时分秒，缺少时间时按当日 23:59:59；无年份时从当前年前后一年推算最近日期（超过 90 天则回退当前年），非法日期按原有截图循环重试。与当前时间比较时统一使用校时入口及服务器偏移。回归见 `tests/shop_event/test_event_shop_deadline.py`。
 
 基础识别和购买流程采用官源。AzurPilot 保留普通商店独立开关、金币阈值及溢出买猫箱、仪表盘资源记录；大世界保留行动力专购、黄币完成状态与行动力统计。行动力专购不能更新普通黄币完成状态，也不能以其他未解锁商品判断失败。
 

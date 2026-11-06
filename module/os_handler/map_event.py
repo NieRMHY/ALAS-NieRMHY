@@ -14,6 +14,7 @@ from module.logger import logger
 from module.os.assets import GLOBE_GOTO_MAP
 from module.os_handler.assets import *
 from module.os_handler.enemy_searching import EnemySearchingHandler
+from module.os_handler.resource_state import reset_resource_caches
 from module.statistics.azurstats import DropImage
 from module.ui.assets import BACK_ARROW
 from module.ui.switch import Switch
@@ -84,13 +85,15 @@ class MapEventHandler(EnemySearchingHandler):
             logger.info(f'{GET_ADAPTABILITY} -> {CLICK_SAFE_AREA}')
             self.device.click(CLICK_SAFE_AREA)
             return True
-        if self.appear(GET_MEOWFFICER_ITEMS_1, interval=interval):
+        # 国际服「Search Complete」标题比素材位置低约 6 像素，固定位置判断会漏判而卡死，
+        # 因此在小范围内做模板匹配
+        if self.appear(GET_MEOWFFICER_ITEMS_1, offset=(20, 20), interval=interval):
             if drop:
                 drop.handle_add(main=self, before=2)
             logger.info(f'{GET_MEOWFFICER_ITEMS_1} -> {CLICK_SAFE_AREA}')
             self.device.click(CLICK_SAFE_AREA)
             return True
-        if self.appear(GET_MEOWFFICER_ITEMS_2, interval=interval):
+        if self.appear(GET_MEOWFFICER_ITEMS_2, offset=(20, 20), interval=interval):
             if drop:
                 drop.handle_add(main=self, before=2)
             logger.info(f'{GET_MEOWFFICER_ITEMS_2} -> {CLICK_SAFE_AREA}')
@@ -236,6 +239,7 @@ class MapEventHandler(EnemySearchingHandler):
                 self._story_timeout.reset()
 
                 # 重启应用
+                reset_resource_caches(self)
                 self.device.app_stop()
                 self.device.app_start()
 
@@ -365,10 +369,30 @@ class MapEventHandler(EnemySearchingHandler):
         self.device.click_record_clear()
 
     def _os_auto_search_enable_budget_clear(self):
-        """关闭外观消失或界面被剧情挡住时，清零开启自律的重试预算。"""
+        """确认自律开启、领奖、剧情打断或离开地图时，清零开启自律的重试预算。"""
         timer = self.__dict__.get('_os_auto_search_enable_timer')
         if timer is not None:
             timer.clear()
+
+    _os_auto_search_battle_settle_time = 2
+
+    def _os_auto_search_battle_settle_start(self):
+        """记录一场战斗刚刚结束。
+
+        战斗结算返回地图后的短暂时间内，自律寻敌按钮可能仍显示关闭外观
+        但游戏尚未完成状态切换，此时点击会把仍在执行的自律寻敌点停。
+        """
+        if '_os_auto_search_battle_settle_timer' not in self.__dict__:
+            self._os_auto_search_battle_settle_timer = Timer(
+                self._os_auto_search_battle_settle_time)
+        self._os_auto_search_battle_settle_timer.reset()
+
+    def _os_auto_search_battle_settling(self):
+        """是否处于战斗结算返回地图后的过渡窗口。"""
+        timer = self.__dict__.get('_os_auto_search_battle_settle_timer')
+        if timer is None:
+            return False
+        return not timer.reached()
 
     def handle_os_auto_search_map_option(self, drop=None, enable: Optional[bool] = True):
         """
@@ -394,6 +418,7 @@ class MapEventHandler(EnemySearchingHandler):
                 self.os_auto_search_quit(drop=drop)
                 raise CampaignEnd
         if self.appear(AUTO_SEARCH_REWARD, offset=(50, 50)):
+            self._os_auto_search_enable_budget_clear()
             self.device.screenshot_interval_set()
             cleared = self.os_auto_search_quit(drop=drop)
             if fast_farming and enable is True \
@@ -414,6 +439,10 @@ class MapEventHandler(EnemySearchingHandler):
         if enable is None:
             pass
         elif enable:
+            if self._os_auto_search_battle_settling():
+                # 战斗结算刚回到地图，按钮可能还是界面重建的过渡外观；
+                # 此期间点击会把仍在执行的自律寻敌关掉，等状态稳定后再处理。
+                return False
             click_interval = 0.5 if fast_farming else 3
             if click_interval < 3:
                 # 剧情可能透出地图按钮，先处理剧情；回到地图后才重试开启自律。
@@ -437,8 +466,11 @@ class MapEventHandler(EnemySearchingHandler):
                 self.get_interval_timer(AUTO_SEARCH_OS_MAP_OPTION_OFF,
                                         interval=click_interval, renew=True).reset()
                 return True
-            # 关闭外观消失：自律已开启或界面已切换，重试预算清零
-            self._os_auto_search_enable_budget_clear()
+            # 点击冷却也会使上方匹配返回 False，不能据此认定自律已经开启。
+            if (self.match_template_color(AUTO_SEARCH_OS_MAP_OPTION_ON, offset=(5, 120))
+                    or self.appear(STORY_SKIP_3, offset=(20, 20))
+                    or not self.is_in_map()):
+                self._os_auto_search_enable_budget_clear()
         else:
             if self.match_template_color(AUTO_SEARCH_OS_MAP_OPTION_ON, offset=(5, 120), interval=3):
                 self.device.click(AUTO_SEARCH_OS_MAP_OPTION_ON)

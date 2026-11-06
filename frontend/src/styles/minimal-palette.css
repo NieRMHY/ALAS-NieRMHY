@@ -102,7 +102,7 @@
    --theme-segment-border: var(--border); --theme-segment-indicator: var(--accent-soft);
   --theme-toast-bg: var(--text); --theme-toast-text: var(--surface); --theme-toast-error-bg: var(--red);
   --theme-error-bg: var(--theme-danger-soft); --theme-error-border: var(--red);
-  --theme-selection: var(--accent-soft); --theme-scrollbar-thumb: #9caab8;
+  --theme-selection: color-mix(in srgb, var(--accent) 25%, transparent); --theme-scrollbar-thumb: #9caab8;
   --theme-status-stopped-bg: var(--surface-muted); --theme-status-stopped-text: var(--muted);
   --theme-log-debug: var(--muted); --theme-log-info: var(--accent); --theme-log-warning: var(--theme-warning);
   --theme-log-error: var(--red); --theme-log-critical: var(--red); --theme-log-time: var(--secondary);

@@ -1,5 +1,7 @@
 # 部署与启动链路（deploy/ + 启动入口）
 
+<!-- Modify by MHY, 部署职责与错误处理按本地纯 Git 更新链同步 -->
+
 > 从「拿到一份源码」到「WebUI 起来、实例跑起来」的全部工程环节：安装器、启动脚本、Docker、依赖自举与前端构建。
 
 ## 1. 模块概述
@@ -7,7 +9,7 @@
 `deploy/` 不是游戏业务，而是把仓库变成可运行系统的安装与启动工程。它要解决三件事：
 
 - **自举**：用户机器上可能只有系统 Python。安装器先用它引导 `uv`，再由 `uv` 建出仓库内 `.venv/`，之后一切 Python、git、adb 都从 `.venv/` 取——系统环境零污染，依赖完全由 `pyproject.toml` + `uv.lock` 锁定。
-- **安装**：git 拉仓库（含国内 CDN 兜底）、同步依赖、装 uiautomator2、连模拟器、构建前端，全部封装成 `python -m deploy.installer` 一个命令。
+- **安装**：从自有 GitHub 仓库拉取源码、同步依赖、装 uiautomator2、连模拟器、构建前端，全部封装成 `python -m deploy.installer` 一个命令。
 - **自更新**：WebUI 运行中可以替换源码与 `.venv`（父进程监督 + 更新事务，见 [WebUI 总览](../webui/index.md)）；安装器是冷启动路径，两者共享 `deploy/uv.py` 的依赖同步。
 
 ## 2. 模块职责
@@ -16,9 +18,10 @@
 
 - `installer.py`：安装总入口，组合五个管理器（git → 停调度器 → 依赖 → 前端 → adb）。
 - `uv.py`：`.venv` 自举、uv 解析、依赖同步（`sync_project_venv`）、常驻依赖同步服务（`dependency_sync_service`，gui.py 运行期调用）。
-- `git.py`：仓库更新（常规 git 与 GitOverCdn 兜底）、随机 User-Agent 绕镜像封禁。
+- `git.py`：纯 Git 仓库更新，按部署配置执行 fetch、reset 与 fast-forward pull。
 - `adb.py` / `emulator.py`：adb 分发与自动连接；VirtualBox 系模拟器注册表扫描与端口发现。
 - `frontend.py`：按源码内容摘要决定是否重建 `frontend/dist`。
+- <!-- Add by MHY, 同步 Windows 路径修复的兼容语义。 --> `DeployConfig.filepath()` 去除配置值外层双引号；Windows 执行以带引号程序路径开头的命令时额外包裹一层引号，原有错误处理保持一致。
 - `atomic.py`：安装失败的原子清理（临时文件识别与回滚）。
 - `patch.py`：安装前环境修补（运行目录检查、uiautomator2/apkutils2 补丁、证书链）。
 - `launcher/Alas.bat`（打包为 `AzurPilot.exe`）：用户双击入口——跑安装器，成功后用 `pythonw` 拉起 `gui.py`。
@@ -35,7 +38,7 @@
 deploy/
 ├── installer.py     # 总入口：Installer(GitManager, PipManager, AdbManager, AppManager, AlasManager)
 ├── config.py        # DeployConfig（config/deploy.yaml 的模型）+ ExecutionError
-├── git.py / git_over_cdn/   # 仓库更新；CDN 客户端与端点表
+├── git.py           # 自有 GitHub 仓库与本地发布渠道更新
 ├── pip.py / uv.py   # 依赖同步（实际是 uv sync，类名保留 pip 是历史）
 ├── adb.py / emulator.py     # adb 安装与模拟器探测（Windows 注册表 + VirtualBox）
 ├── frontend.py      # ensure_frontend：源码摘要 → npm ci + build
@@ -68,7 +71,7 @@ deploy/
 ```
 Alas.bat → python -m deploy.installer
   patch.pre_checks()          # 运行目录、site-packages 补丁
-  git_install()               # git pull / GitOverCdn 兜底
+  git_install()               # 自有仓库的纯 Git 更新
   alas_kill()                 # 停掉本实例的 alas 进程
   pip_install()               # 实为 uv sync（--frozen），失败抛 ExecutionError
   app_update()                # ensure_frontend()：摘要变化才 npm ci + build
@@ -77,7 +80,14 @@ Alas.bat → python -m deploy.installer
 成功 → start pythonw gui.py --electron
 ```
 
+`GitManager.git_install()` 按本地配置直接执行 Git/CDN 更新，不再请求云端更新总开关。云端仅保留运行期间的强制更新开关，其访问失败不阻止正常版本检查。
+
 ### 启动后的依赖自举
+
+仓库的 `[tool.uv] cache-dir` 与启动器的 `UV_CACHE_DIR` 统一指向项目内 `.uv-cache/`，
+直接执行 `uv run gui.py` 和启动器内部同步均不依赖 Windows 用户全局缓存目录的写权限。
+该目录由 uv 管理并已忽略；不需要修改系统缓存 ACL 或重建 `.venv`。用户显式设置的
+`UV_CACHE_DIR` 或 `--cache-dir` 仍可覆盖项目默认值。
 
 `gui.py` 不直接信任 `.venv`：启动时用 `deploy/uv.py` 的 `dependency_sync_service` 做带超时与重试的依赖同步（pending 状态记录在 `module/runtime/setting.py`，崩溃后下次启动重做）。WebUI 服务有 120 秒就绪超时与最多 3 次重启；运行期检测到依赖标记时同样先同步再拉服务。
 
@@ -89,13 +99,18 @@ Alas.bat → python -m deploy.installer
 
 部署参数在 `config/deploy.yaml`（模型见 `deploy/config.py`）：git 仓库/分支/代理/SSL、Python 与 uv、镜像源、adb 替换与自动连接、OCR 服务器、更新检查间隔与自动重启时刻。安装器读它，WebUI 的部署设置页写它——两边经同一份文件交互。
 
+<!-- Add by MHY, 本地更新源、渠道迁移与部署模板生成约定 -->
+默认更新地址为 `https://github.com/NieRMHY/ALAS-NieRMHY.git`，正式渠道使用 `essex`，开发渠道使用 `dev_essex`。通用和 Windows 部署配置在本地将旧的上游地址、历史镜像以及 `global/cn/cnb/gitcode` 别名迁移到自有仓库，对应的 `master/dev` 转为本地发布渠道；已有自定义仓库和其他分支保持原值。重定向不查询网络所在国家，也不访问镜像或云端控制接口。迁移时配置字典和运行时属性在同一事务内同步，避免写入其他设置时恢复旧更新源。
+
+八份 `config/deploy.template*.yaml` 来自 `deploy/template`，由 `ConfigGenerator.generate_deploy_template()` 生成。修改默认源或渠道应先改基础模板，再仅生成部署模板；合并期间不要为此运行整个配置生成器。国内模板只覆盖 PyPI 镜像和语言，Linux、Docker、AidLux 模板保留各自工具路径。`deploy/Windows/template.yaml` 独立维护相同的仓库与渠道默认值。Docker 一键部署脚本同样默认克隆自有仓库的 `essex`，可用 `BRANCH=dev_essex` 显式选择开发渠道。
+
 ## 11. 异常与错误处理
 
 | 情况 | 处理 |
 | --- | --- |
 | 任一管理器抛 `ExecutionError` | 安装器 `exit(1)`，bat `pause` 停留展示日志 |
 | uv sync 失败 | 输出 uv 日志（敏感文本经 `redact_sensitive_text` 脱敏）后中止 |
-| git 418/镜像封禁 | 随机 git User-Agent + GitOverCdn 端点轮换兜底 |
+| Git 网络或权限错误 | 保留 Git 错误输出并中止；检查 GitProxy、仓库权限及分支配置 |
 | Windows 文件占用 | `atomic.py` 按重试上限等待后清理 |
 | `.venv` 损坏 | `uv.py` 检测 python 不可用 → 自举重建 |
 
@@ -104,13 +119,14 @@ Alas.bat → python -m deploy.installer
 - **`PipManager` 名字是历史遗留**：它调用 `uv sync`，不要在其中加 pip 逻辑；依赖问题先查 `deploy/uv.py`。
 - **`deploy/Windows/` 是旧布局副本**，主流程已用顶层 `deploy/*.py`；改安装逻辑改顶层，勿两边都改。
 - **前端产物摘要机制**：只改 `dist/` 不改源码会被下次启动重建覆盖；发布产物请走正常构建。
-- **随机 User-Agent、CDN 兜底是可用性关键**（国内网络），不要当可疑代码清理。
+- <!-- Modify by MHY, 本地部署坚持纯净更新链 -->
+  **本地更新源固定为自有 GitHub 仓库**，不恢复云端更新开关、CDN、CNB 或 GitCode 分流；Windows 旧版 Git 部署器保持删除。
 - `Alas.bat` 转 `AzurPilot.exe` 由外部工具完成，仓库只维护 bat。
 
 ## 17. 已知限制
 
 - 模拟器自动探测仅支持 Windows 注册表可见的 VirtualBox 系模拟器；其他场景手动填 serial。
-- 安装器假设能访问 git 远端或 CDN 端点；完全离线的首次安装不可行。
+- 安装器假设能访问配置的 Git 远端；完全离线的首次安装不可行。
 
 ## 20. 相关模块
 

@@ -1931,8 +1931,7 @@ class RewardCommission(Dock, UI, InfoHandler):
             self._prune_commission_reward_screenshots(instance)
         return paths
 
-    @staticmethod
-    def _prune_commission_reward_screenshots(instance, max_keep=None, base=None):
+    def _prune_commission_reward_screenshots(self, instance, max_keep=None, base=None):
         """清理实例目录下超量的委托收益截图，仅保留最近 max_keep 张。
 
         截图保留张数与统计页「最近委托记录」的 50 条上限对应：

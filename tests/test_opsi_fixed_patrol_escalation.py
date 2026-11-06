@@ -260,6 +260,9 @@ class ClearQuestionStub:
     def wait_until_walk_stable(self, **kwargs):
         return self.walk_result
 
+    def _close_fleet_bar_if_open(self):
+        return False
+
 
 class TestClearQuestion(unittest.TestCase):
     def run_clear_question(self, predictions, walk_result=''):

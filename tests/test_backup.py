@@ -132,11 +132,36 @@ class BackupSwitchTestCase(BackupTestCase):
         from contextlib import closing
         make_cl1_db(self.config_dir / 'cl1_data.db')
         backup_module.backup(enable=True)
-        path = self.backup_root / self.date_name(0) / 'cl1_data.db'
+        path = self.backup_root / self.date_name(0) / 'azurpilot.db'
         self.assertEqual(path.read_bytes()[:16], b'SQLite format 3\x00')
         with closing(sqlite3.connect(path)) as conn:
-            row = conn.execute('SELECT data_json FROM cl1_data').fetchone()
-        self.assertIn('akashi_ap_entries', row[0])
+            row = conn.execute('SELECT amount FROM akashi_ap_purchases').fetchone()
+        self.assertEqual(row[0], 20)
+
+    # Add by MHY, 日常备份必须保留迁移时跳过的密文和未迁移清单。
+    def test_daily_backup_keeps_unmigrated_history_recovery_material(self):
+        import sqlite3
+        from contextlib import closing
+        from module.statistics import opsi_secure
+
+        source = self.config_dir / 'azurstats_local.db'
+        payload = opsi_secure.BLOB_PREFIX + 'unreadable'
+        with closing(sqlite3.connect(source)) as connection, connection:
+            connection.execute('CREATE TABLE opsi_items(id INTEGER PRIMARY KEY,imgid TEXT,item TEXT,amount INTEGER,secure_payload TEXT)')
+            connection.execute('INSERT INTO opsi_items VALUES(19,?,?,?,?)',
+                               ('legacy', 'PlateT4', 2, payload))
+        original = source.read_bytes()
+        backup_module.backup(enable=True)
+
+        folder = self.backup_root / self.date_name(0)
+        report = next((folder / 'storage-backups').glob('*/unmigrated.json'))
+        self.assertEqual(json.loads(report.read_text(encoding='utf-8'))[0]['identity'],
+                         {'table': 'opsi_items', 'rowid': 19})
+        with closing(sqlite3.connect(report.parent / 'config' / source.name)) as connection:
+            self.assertEqual(connection.execute('SELECT secure_payload FROM opsi_items WHERE id=19').fetchone()[0], payload)
+        with closing(sqlite3.connect(folder / 'azurpilot.db')) as connection:
+            self.assertEqual(connection.execute('SELECT COUNT(*) FROM opsi_items').fetchone()[0], 0)
+        self.assertEqual(source.read_bytes(), original)
 
     def test_old_stats_backup_expiry_is_removed(self):
         folder = make_backup_dir(self.backup_root, 30)

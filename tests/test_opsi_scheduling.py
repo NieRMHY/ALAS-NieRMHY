@@ -918,7 +918,7 @@ class _ClickRecordDevice:
     click_record_clear = Device.click_record_clear
 
     def __init__(self):
-        self.click_record = collections.deque(maxlen=15)
+        self.click_record = collections.deque(maxlen=50)
 
 
 class ActionPointPopupStub:
@@ -969,14 +969,14 @@ class TestActionPointPopupClickRecord(unittest.TestCase):
             stub.device.click_record_check()
 
         # 智能调度代理一轮短猫会连续读 4 次行动力，清完图时几秒就是一轮
-        for _ in range(10):
+        for _ in range(30):
             stub.open()
             ActionPointHandler.action_point_quit(stub)
             stub.device.click_record_check()
 
         self.assertNotIn(str(ACTION_POINT_REMAIN_OS), list(stub.device.click_record))
         self.assertNotIn(str(ACTION_POINT_CANCEL), list(stub.device.click_record))
-        self.assertEqual(stub.interval_clear.call_args_list, [unittest.mock.call(OS_CHECK)] * 10)
+        self.assertEqual(stub.interval_clear.call_args_list, [unittest.mock.call(OS_CHECK)] * 30)
 
 
 class TestActionPointReuse(unittest.TestCase):
@@ -1021,10 +1021,13 @@ class TestHazard1FreshActionPoint(unittest.TestCase):
         runner.config = SimpleNamespace(
             OS_ACTION_POINT_PRESERVE=preserve,
             OpsiHazard1Leveling_TargetZone=0,
-            OpsiHazard1Leveling_RecordSeaMiles=False,
+            OpsiHazard1Leveling_RecordSeaMiles=-1,
             OpsiFleet_Fleet=1,
             override=Mock(),
             is_task_enabled=Mock(return_value=False),
+            # 单轮入口会读隐藏的事件续查记录，桩配置保持无待续查。
+            cross_get=Mock(return_value=None),
+            cross_set=Mock(),
         )
         runner.zone = SimpleNamespace(zone_id=1, hazard_level=2)
         return runner

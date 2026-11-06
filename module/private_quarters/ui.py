@@ -1,7 +1,7 @@
 """
-私人休息室商店界面导航。
+宿舍计划商店界面导航。
 
-提供私人宿舍商店的页面检测与导航栏控制，
+提供宿舍计划商店的页面检测与导航栏控制，
 包括底部标签栏（全部/礼物/家具/杂物）和左侧房间入口栏。
 通过 Navbar 实现标签页切换与状态检测。
 
@@ -14,7 +14,7 @@ from module.ui.navbar import Navbar
 
 
 class PQShopUI(ShopUI):
-    """私人休息室商店界面导航与标签栏交互。"""
+    """宿舍计划商店界面导航与标签栏交互。"""
 
     @cached_property
     def _shop_bottom_navbar(self):

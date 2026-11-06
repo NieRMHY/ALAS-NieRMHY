@@ -297,15 +297,7 @@
 .exc-banner-text {word-break: break-word}
 .traceback-raw-pre {margin: 0; padding: 8px 10px; font-size: 10px; font-family: var(--theme-font-mono); line-height: 1.4; color: var(--text); overflow-x: auto; white-space: pre}
 
-/* LLM 智能诊断卡片与 Markdown 格式化排版 */
-.llm-header {background: #8b5cf610}
-.text-llm {color: #8b5cf6}
-.llm-model {background: #8b5cf620; color: #8b5cf6}
-.llm-markdown-view {font-size: 12px; line-height: 1.6}
-.llm-markdown-view .md-h3 {font-size: 13px; font-weight: 700; margin: 8px 0 4px; color: var(--text)}
-.llm-markdown-view .md-p {margin-bottom: 6px; font-size: 12px}
-.llm-markdown-view .md-ol, .llm-markdown-view .md-ul {margin-bottom: 6px; padding-left: 18px; font-size: 12px}
-.llm-markdown-view .md-li {margin-bottom: 2px}
+/* Modify by MHY, 已移除智能分析报告卡片专用样式。 */
 
 /* 寻路移动代价热力图与无缝网格 (Cost Grid Heatmap) */
 .cost-table {border-collapse: collapse; font-family: var(--theme-font-mono); font-size: 11px; line-height: 1}
@@ -1070,6 +1062,8 @@
 .nav-restore {position: fixed; left: 0; top: 50%; transform: translateY(-50%); z-index: 60; display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 58px; padding: 0; border: 0; border-radius: 0 11px 11px 0; background: color-mix(in srgb, var(--surface) 86%, transparent); color: var(--theme-muted); cursor: pointer; box-shadow: var(--glass-shadow); transition: color .15s ease, background .15s ease}
 .nav-restore:hover {color: var(--theme-accent); background: var(--surface)}
 .nav-restore:focus-visible {outline: 2px solid var(--theme-focus); outline-offset: 2px}
+/* 看图把手只用于桌面侧栏，窄屏由顶栏按钮打开导航抽屉。 */
+.nav-handle {display: none}
 @media (min-width: 951px) {
   /* 收起/展开为瞬时切换，避免低帧率下宽度动画挤压主内容。
      grid 轨道用 auto，宽度由 .sidebar 自己的 width 承担。 */
@@ -1261,8 +1255,8 @@
 .inspector-body .field-label {flex: 0 0 62px; min-width: 0}
 .inspector-body .field-control {width: auto; flex: 1 1 auto; min-width: 0}
 
-/* 侧栏搜索命中的配置项列表：任务树之外的第二组结果。 */
-.nav-search-hits { display: flex; flex-direction: column; gap: 2px; padding: 4px 8px 8px; overflow-y: auto; }
+/* 侧栏搜索的命中列表（卡片与配置项）：排在搜索框下方、任务树上方。 */
+.nav-search-hits { display: flex; flex-direction: column; gap: 2px; padding: 4px 8px 8px; overflow-y: auto; flex: 0 1 auto; min-height: 0; max-height: 45%; }
 .nav-search-hit { display: flex; flex-direction: column; gap: 2px; align-items: flex-start; padding: 6px 8px; border: 1px solid transparent; border-radius: 8px; background: transparent; color: inherit; text-align: left; cursor: pointer; }
 .nav-search-hit:hover { background: var(--theme-inset-bg, var(--theme-plate-bg)); border-color: var(--theme-inset-edge, transparent); }
 .nav-search-hit-label { font-size: 13px; }
@@ -1272,3 +1266,4 @@
 
 /* 从搜索跳进来的那一项：短暂描边，说明"就是这一项"。 */
 .field-row.is-search-target { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+.config-group.is-search-target { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: var(--theme-radius-panel, 26px); }

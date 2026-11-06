@@ -25,6 +25,18 @@ class ShipNameTests(unittest.TestCase):
         for value in ('胜利·META', '灵敏·META', '匆忙', '热心.改', ''):
             self.assertEqual(matcher.correct(value), value)
 
+    def test_formation_approximation_uses_catalog_and_preserves_variant_identity(self):
+        matcher = self.matcher(['独角兽.改', '独角兽', '热心.改', '热心',
+                                '文琴佐·焦贝蒂', '皇家方舟', '皇家方舟·META', '松鲷'])
+        for raw, expected in [('独角鲁.改', '独角兽.改'), ('热心-改', '热心.改'),
+                              ('文琴佐.焦贝蒂', '文琴佐·焦贝蒂'), ('文琴佐·焦', '文琴佐·焦贝蒂')]:
+            self.assertEqual(matcher.approximate(raw)[0], expected)
+        for raw in ('松', '皇家方舟..', '完全未知姓名'):
+            self.assertEqual(matcher.approximate(raw)[0], raw)
+        self.assertEqual(matcher.approximate('热心.改'), ('热心.改', 'exact'))
+        # 共享扫描器的保守纠错入口不随编队专用近似规则改变。
+        self.assertEqual(matcher.correct('独角鲁.改'), '独角鲁.改')
+
     def test_unique_explicit_truncation_only(self):
         matcher = self.matcher(['松鲷', '松风', '阿尔弗雷多·奥里亚尼', '皇家方舟', '皇家方舟·META'])
         self.assertEqual(matcher.correct('阿尔弗雷多·奥..'), '阿尔弗雷多·奥里亚尼')

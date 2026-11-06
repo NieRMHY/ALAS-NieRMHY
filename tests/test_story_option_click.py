@@ -14,6 +14,7 @@ import unittest
 from types import SimpleNamespace
 
 from module.base.button import Button
+from module.device.device import Device
 from module.exception import GameTooManyClickError
 from module.handler.assets import STORY_SKIP_3
 from module.handler.info_handler import InfoHandler
@@ -51,13 +52,10 @@ class FakeTimer:
 
 
 class FakeDevice:
-    """复刻 device.click_record_check 的规则。
-
-    最近 15 次点击中，同一个按钮 ≥12 次，或两个按钮各 ≥6 次即报错。
-    """
+    """复用真实设备的重复操作检测，不连接设备。"""
 
     def __init__(self):
-        self.click_record = collections.deque(maxlen=15)
+        self.click_record = collections.deque(maxlen=50)
         self.history = []
         self.clears = 0
 
@@ -75,12 +73,7 @@ class FakeDevice:
         return sum(1 for name in self.history if name.startswith(prefix))
 
     def _check(self):
-        count = collections.Counter(self.click_record).most_common(2)
-        if count and count[0][1] >= 12:
-            raise GameTooManyClickError(f'[设备-点击] 按钮点击次数过多: {count[0][0]}')
-        if len(count) >= 2 and count[0][1] >= 6 and count[1][1] >= 6:
-            raise GameTooManyClickError(
-                f'[设备-点击] 两个按钮交替点击次数过多: {count[0][0]}, {count[1][0]}')
+        Device.click_record_check(self)
 
 
 class StoryHandlerStub(InfoHandler):

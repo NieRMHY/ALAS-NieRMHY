@@ -1,7 +1,10 @@
 """服务器状态检查器的 API 协议与故障恢复测试。"""
 
+import threading
 import unittest
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from json import JSONDecodeError
+from time import monotonic
 from unittest.mock import Mock, patch
 
 import requests
@@ -57,12 +60,12 @@ class ServerCheckerTestCase(unittest.TestCase):
         return ServerChecker(server)
 
     def assert_requested_server(self, composite_id):
-        """断言单服务器查询使用 HTTPS、复合 ID 与 15 秒超时。"""
+        """断言单服务器查询使用 HTTPS、复合 ID 与连接、读取各 3 秒超时。"""
         self.session.get.assert_called_once()
         args, kwargs = self.session.get.call_args
         url = kwargs.get("url", args[0] if args else None)
         self.assertEqual(url, f"{API_BASE}/{composite_id}")
-        self.assertEqual(kwargs.get("timeout"), 15)
+        self.assertEqual(kwargs.get("timeout"), (3, 3))
 
 
 class TestServerMapping(ServerCheckerTestCase):
@@ -249,6 +252,82 @@ class TestServerApiFailure(ServerCheckerTestCase):
 
         self.assertFalse(checker.is_available())
         self.assertGreater(checker._timer.limit, 0)
+
+    def test_read_timeout_uses_gateway_status_without_fast_retry(self):
+        self.session.get.side_effect = requests.exceptions.ReadTimeout('read timed out')
+        for state, expected in ((0, True), (1, False), (2, True), (3, True), (99, False), (-1, False)):
+            with self.subTest(state=state), patch(
+                'module.server_checker.query_server',
+                return_value=GatewayServer(1, '莱茵演习', state, 0, 1),
+            ) as query, patch.object(ServerChecker, 'fast_retry') as retry:
+                checker = self.build_checker('cn_android-0')
+
+                self.assertEqual(checker.is_available(), expected)
+                query.assert_called_once_with('cn', 1)
+                retry.assert_not_called()
+
+    def test_read_timeout_preserves_gateway_recovery_detection(self):
+        self.session.get.side_effect = requests.exceptions.ReadTimeout('read timed out')
+        with patch(
+            'module.server_checker.query_server',
+            side_effect=[
+                GatewayServer(1, '莱茵演习', 1, 0, 1),
+                GatewayServer(1, '莱茵演习', 0, 0, 1),
+            ],
+        ):
+            checker = self.build_checker('cn_android-0')
+            self.assertFalse(checker.is_available())
+            checker.check_now()
+
+        self.assertTrue(checker.is_available())
+        self.assertTrue(checker.is_recovered())
+        self.assertFalse(checker.is_recovered())
+
+
+class TestServerApiTimeout(unittest.TestCase):
+    """用真实 HTTP 连接验证慢接口不会长时间阻塞备用查询。"""
+
+    def test_slow_api_falls_back_before_five_seconds(self):
+        received = threading.Event()
+        release = threading.Event()
+
+        class SlowHandler(BaseHTTPRequestHandler):
+            def do_GET(self):
+                received.set()
+                release.wait(6)
+                self.close_connection = True
+
+            def log_message(self, format, *args):
+                pass
+
+        with ThreadingHTTPServer(('127.0.0.1', 0), SlowHandler) as server:
+            worker = threading.Thread(
+                target=server.serve_forever,
+                kwargs={'poll_interval': 0.01},
+                daemon=True,
+            )
+            worker.start()
+            try:
+                with patch(
+                    'module.server_checker.SERVER_API_BASE',
+                    f'http://127.0.0.1:{server.server_port}',
+                ), patch(
+                    'module.server_checker.query_server',
+                    return_value=GatewayServer(1, '莱茵演习', 0, 0, 1),
+                ) as query, patch.object(ServerChecker, 'fast_retry') as retry:
+                    started = monotonic()
+                    checker = ServerChecker('cn_android-0')
+                    elapsed = monotonic() - started
+            finally:
+                release.set()
+                server.shutdown()
+                worker.join(timeout=1)
+
+        self.assertTrue(received.is_set())
+        self.assertTrue(checker.is_available())
+        self.assertLess(elapsed, 5)
+        query.assert_called_once_with('cn', 1)
+        retry.assert_not_called()
 
 
 if __name__ == "__main__":

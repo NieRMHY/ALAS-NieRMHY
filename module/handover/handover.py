@@ -1,7 +1,7 @@
 """作战委托模块。
 
-在主线关卡页启动「作战委托」：消耗石油与作战全权委托书，让舰队离线自动
-执行指定主线关卡若干次，委托结束后再领取掉落。委托期间出击类任务（主线、
+在主线或活动关卡页启动「作战委托」：消耗石油与作战全权委托书，让舰队离线自动
+执行指定关卡若干次，委托结束后再领取掉落。委托期间出击类任务（主线、
 活动）都会失败，只有大世界照常可用，因此本任务排在调度优先级的末尾。
 
 流程：
@@ -13,7 +13,7 @@
 2. 委托次数为 0 时这个任务只在有必要时才进游戏：上一次开的委托还在做就等它结束，
    做完了就进去领奖励；手上没有委托才按定时功能排下一次运行（一键消耗的触发
    时刻、维护检查）；两个功能都没开就直接关掉本任务
-3. 进入主线关卡页
+3. 按关卡名称进入主线或所选活动关卡页，活动图先确认普通 / 困难模式
 4. 上一次的委托没结束时，目标关卡进关卡页直接弹出「作战委托 INFORM」弹窗，
    其他关卡先弹阻止页，点它的「查看委托」进同一个弹窗
 5. 弹窗里委托仍在进行（HANDOVER_STOP_CHECK）则关掉弹窗，按剩余时间推迟
@@ -33,7 +33,7 @@
     这类当天等不来的原因直接放弃本周（记下记录，按定时功能排下一次运行，见
     handover_consume_all_book_give_up）；界面操作失败才隔一段时间重试
 
-配置路径: Campaign.Name, OperationHandover.Count,
+配置路径: Campaign.Name, Campaign.Event, OperationHandover.Count,
          OperationHandover.AutoSupplementTime, OperationHandover.UseHandoverBook,
          OperationHandover.OilLimit, OperationHandover.ConsumeAllBook,
          OperationHandover.ConsumeAllBookWeekday, OperationHandover.ConsumeAllBookTime,
@@ -55,6 +55,7 @@ from module.base.timer import Timer
 from module.config.utils import read_run_param
 from module.base.utils import crop
 from module.campaign.run import CampaignRun
+from module.campaign.stage_name import normalize_event_stage, normalize_post_loop_stage
 from module.config.time_source import now as current_time
 from module.config.utils import SERVER_TO_TIMEZONE
 from module.handler.assets import NEW_SHIP_SKIP, POPUP_CONFIRM
@@ -187,7 +188,7 @@ class OperationHandover(CampaignRun):
                     return
                 logger.info('[作战委托] 委托次数为 0，上一次委托做完了，进去领取奖励')
 
-        # 进入主线关卡页，并按 Fleet 组准备编队
+        # 进入目标关卡页，并按 Fleet 组准备编队
         self.handover_enter()
 
         # 上一次的委托仍在进行，不打断它，关掉弹窗等它做完再回来领取
@@ -296,7 +297,7 @@ class OperationHandover(CampaignRun):
         self.config.task_delay(minute=needed.total_seconds() / 60)
 
     def handover_enter(self):
-        """进入主线关卡页，并按 Fleet 组准备编队。
+        """进入主线或活动关卡页，并按 Fleet 组准备编队。
 
         进入方式与地图模块 MapOperation.enter_map() 一致：ensure_campaign_ui()
         只切换章节，不会点开关卡节点，必须再点击一次 ENTRANCE 才进得了关卡页。
@@ -314,7 +315,9 @@ class OperationHandover(CampaignRun):
             out: 关卡页 / 作战委托弹窗
         """
         name = to_map_file_name(self.config.Campaign_Name)
-        self.load_campaign(name, folder='campaign_main')
+        folder = 'campaign_main' if self.stage_is_main(name) else self.config.Campaign_Event
+        name = normalize_post_loop_stage(normalize_event_stage(name, folder), folder)
+        self.load_campaign(name, folder=folder)
 
         self.device.screenshot()
         self.campaign.ensure_campaign_ui(name=self.stage, mode='normal', skip_first_screenshot=True)
@@ -329,9 +332,24 @@ class OperationHandover(CampaignRun):
             if self.handover_handle_popup():
                 continue
 
+            # 进行中或已完成的委托会挡住难度开关，先交给 run() 处理。
+            if self.handover_dialog_appear():
+                break
+            if self.appear_then_click(HANDOVER_CHECK, offset=(20, 20), interval=3):
+                continue
+
+            # 新活动的 A/C、B/D 共用关卡入口。先在准备页确认实际难度，
+            # 切换后的新截图才可用于检查委托入口和配置舰队。
+            stage_ready = self.appear(HANDOVER_TAB) or self.appear(HANDOVER_TAB_UNSUPPORTED)
+            fleet_ready = self.campaign.appear(FLEET_PREPARATION, offset=(20, 50))
+            if (stage_ready or fleet_ready) and not self.campaign.handle_map_mode_switch(
+                    self.campaign.config.Campaign_Mode):
+                self.campaign.map_fleet_checked = False
+                continue
+
             # 舰队准备。与 enter_map() 相同，只有编队准备界面出现时才调用
             # fleet_preparation()，在章节选择页上调用会卡死在 FleetOperator.clear()。
-            if fleet_timer.reached() and self.campaign.appear(FLEET_PREPARATION, offset=(20, 50)):
+            if fleet_timer.reached() and fleet_ready:
                 if not self.campaign.map_fleet_checked:
                     self.campaign.fleet_preparation()
                     self.campaign.map_fleet_checked = True
@@ -340,16 +358,8 @@ class OperationHandover(CampaignRun):
                 continue
 
             # 已到关卡页
-            if self.appear(HANDOVER_TAB) or self.appear(HANDOVER_TAB_UNSUPPORTED):
+            if stage_ready:
                 break
-
-            # 上一次的委托还在，弹出了作战委托弹窗
-            if self.handover_dialog_appear():
-                break
-
-            # 委托进行中的阻止页，点「查看委托」进弹窗
-            if self.appear_then_click(HANDOVER_CHECK, offset=(20, 20), interval=3):
-                continue
 
             # 进入关卡
             if campaign_timer.reached() and self.campaign.appear_then_click(self.campaign.ENTRANCE):
@@ -756,7 +766,10 @@ class OperationHandover(CampaignRun):
         """
         server = self.config.SERVER
         try:
-            response = requests.get(HANDOVER_MAINTAIN_API, timeout=10).json()
+            # Modify by MHY, 保留本地 api-blhx-maintain 聚合接口，只补上 HTTP 状态校验
+            response = requests.get(HANDOVER_MAINTAIN_API, timeout=10)
+            response.raise_for_status()
+            response = response.json()
         except Exception as e:
             logger.warning(f'[作战委托] 查询维护时间失败，按不维护处理: {e}')
             return None, timedelta(), '查询维护时间失败'

@@ -16,6 +16,12 @@ import yaml
 
 from deploy.atomic import atomic_write
 from module.api.protocol import ApiError
+from module.combat.emotion_state import EmotionRecoveryState
+from module.config.config_updater import campaign_event_options, refresh_campaign_events
+from module.config.redirect_utils.utils import (
+    fleet_training_interval_redirect, meta_assist_limit_redirect, sea_miles_interval_redirect,
+)
+from module.config.time_source import now as current_time
 from module.config.transaction import config_transaction
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -102,6 +108,8 @@ class ConfigService:
         """
         self.root = root
         self.directory = root / 'config'
+        from module.persistence.database import get_database
+        self.database = get_database(self.directory)
         # 导入源单独一个目录：config/ 下的 *.json 都算实例，导入源不能与实例列表混在一起。
         self.import_directory = self.directory / 'import'
         self.lock = threading.RLock()
@@ -327,6 +335,21 @@ class ConfigService:
                             if 'KeepCommonCV' not in fields and isinstance(legacy, bool):
                                 merged[task][group]['KeepCommonCV'] = legacy
                             merged[task][group].pop('SkipSingleCommonCV', None)
+                        if task == 'OpsiAshBeacon' and group == 'OpsiAshBeacon':
+                            if 'AssistRequestLimit' not in fields and 'OneHitMode' in fields:
+                                merged[task][group]['AssistRequestLimit'] = meta_assist_limit_redirect(
+                                    fields['OneHitMode'])
+                            merged[task][group].pop('OneHitMode', None)
+                        if task == 'OpsiHazard1Leveling' and group == 'OpsiHazard1Leveling':
+                            if 'RecordSeaMiles' in fields:
+                                merged[task][group]['RecordSeaMiles'] = sea_miles_interval_redirect(
+                                    fields['RecordSeaMiles'])
+        fleet = data.get('FleetInfo')
+        if isinstance(fleet, dict):
+            merged['FleetInfo']['FleetTraining']['CheckIntervalHours'] = fleet_training_interval_redirect(fleet)
+            for group in ('FleetLevelTraining', 'FleetAffinityTraining'):
+                merged['FleetInfo'][group].pop('CheckIntervalHours', None)
+                merged['FleetInfo'][group].pop('CheckInterval', None)
         from module.config.redirect_utils.shop import migrate_shop_options
 
         merged, shop_warnings = migrate_shop_options(data, merged)
@@ -335,6 +358,7 @@ class ConfigService:
 
             for task, reason in shop_warnings:
                 logger.warning(f'{task}：{reason}，已暂停任务，请检查购买配置后重新启用')
+        refresh_campaign_events(merged, self.args)
         return merged, hashlib.sha256(raw).hexdigest()
 
     def schema(self, language='zh-CN'):
@@ -364,16 +388,20 @@ class ConfigService:
             name (str): 实例名称。
 
         Returns:
-            dict: 包含 instance, revision, values 的字典。
+            dict: 包含 instance、revision、values 与实例活动候选 options 的字典。
         """
         data, revision = self.read(name)
-        return {'instance': name, 'revision': revision, 'values': data}
+        # 上游活动候选：按当前服务器筛出 Campaign.Event 的可选值，前端下拉据此渲染。
+        options = {f'{task}.Campaign.Event': candidates
+                   for task, candidates in campaign_event_options(data, self.args).items()}
+        return {'instance': name, 'revision': revision, 'values': data, 'options': options}
 
     def export(self, name):
         """配置导出携带方案，排除调度运行变量和资源历史。"""
         from module.scheduler.store import ProgramStore
         data, _ = self.read(name)
-        store = ProgramStore(self.directory)
+        # Modify by MHY, 导出沿用统一持久化，移除禁用模块身份依赖
+        store = ProgramStore(self.directory, store=self.database)
         if store.exists(name):
             data['_schedulerProgram'] = store.export(name)
         return data
@@ -394,7 +422,14 @@ class ConfigService:
         """
         # 先归一化，落盘名与返回给客户端的实例名才是同一个。
         name = validate_name(name)
-        with self.lock:
+        with self.lock, config_transaction(self.path(name, exists=False)):
+            from module.runtime.fleet_database import FleetDatabase
+            path = self.path(name, exists=False)
+            if not path.exists():
+                database = FleetDatabase(path)
+                database.load()
+                if database.path.exists():
+                    raise ApiError('ALREADY_EXISTS', '同名舰船数据库仍存在，请先备份并移走后再创建实例')
             if import_file:
                 data = self.read_import(import_file)
             elif source:
@@ -403,7 +438,7 @@ class ConfigService:
                 data = copy.deepcopy(self.template)
             bundle = data.pop('_schedulerProgram', None)
             from module.scheduler.store import ProgramStore
-            store = ProgramStore(self.directory)
+            store = ProgramStore(self.directory, store=self.database)
             if bundle is not None:
                 try:
                     bundle = store.import_bundle(bundle)
@@ -426,6 +461,26 @@ class ConfigService:
                 raise
             return self.get(name)
 
+
+    @staticmethod
+    def _normalize_number(field, value):
+        """兼容数字文本和整数的小数写法，保存时仍保留参数需要的数值类型。"""
+        value_type = field.get('valuetype', field.get('type'))
+        if field.get('option') or value_type in ('checkbox', 'str') or isinstance(field.get('value'), bool):
+            return value
+        if value_type not in ('int', 'float', 'number') and type(field.get('value')) not in (int, float):
+            return value
+        if isinstance(value, str) and len(value) <= 20000:
+            text = value.strip()
+            if re.fullmatch(r'[+-]?(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)(?:[eE][+-]?[0-9]+)?', text):
+                try:
+                    value = float(text) if any(char in text for char in '.eE') else int(text)
+                except ValueError:
+                    return value
+        integer = value_type == 'int' or (value_type not in ('float', 'number') and type(field.get('value')) is int)
+        if integer and type(value) is float and math.isfinite(value) and value.is_integer():
+            return int(value)
+        return value
 
     def validate(self, path, value):
         """严格校验单项参数的修改路径与取值范围。
@@ -466,16 +521,32 @@ class ConfigService:
             return parts
         if options and not any(type(value) is type(item) and value == item for item in options):
             raise ApiError('INVALID_PARAMS', f'请选择有效选项：{path}')
+        value = self._normalize_number(field, value)
+        value_type = field.get('valuetype', kind)
         if kind == 'checkbox' or isinstance(default, bool):
             valid = isinstance(value, bool)
-        elif isinstance(default, int):
+        elif value_type == 'str':
+            valid = isinstance(value, str)
+        elif value_type == 'int' or (value_type not in ('float', 'number') and isinstance(default, int)):
             valid = type(value) is int
-        elif isinstance(default, float):
+        elif value_type in ('float', 'number') or isinstance(default, float):
             valid = type(value) in (float, int)
         else:
             valid = isinstance(value, str) or (default is None and value is None)
         if not valid or (isinstance(value, str) and len(value) > 20000) or (type(value) is float and not math.isfinite(value)):
             raise ApiError('INVALID_PARAMS', f'参数类型或长度不正确：{path}')
+        if path == 'FleetInfo.FleetRotation.Rules':
+            from module.runtime.fleet_rotation import parse_rules
+            try:
+                parse_rules(value)
+            except ValueError as exc:
+                raise ApiError('INVALID_PARAMS', str(exc)) from exc
+        if path == 'FleetInfo.FleetEquipment.Codes':
+            from module.runtime.fleet_equipment import parse_codes
+            try:
+                parse_codes(value)
+            except ValueError as exc:
+                raise ApiError('INVALID_PARAMS', str(exc)) from exc
         rule = field.get('validate')
         if rule == 'datetime' or kind == 'datetime':
             try:
@@ -520,15 +591,63 @@ class ConfigService:
             # 无关字段的运行状态更新不应拒绝用户输入；同字段按事务顺序生效。
             data, _ = self.read(name)
             seen = set()
+            edited_groups = {}
             for change in changes:
                 task, group, arg = self.validate(change.path, change.value)
                 if change.path in seen:
                     raise ApiError('INVALID_PARAMS', '同一次保存不能重复修改同一个参数')
                 seen.add(change.path)
-                data.setdefault(task, {}).setdefault(group, {})[arg] = change.value
+                value = self._normalize_number(self.args[task][group][arg], change.value)
+                data.setdefault(task, {}).setdefault(group, {})[arg] = value
                 if change.path in OPSI_EXPLORE_PROGRESS:
                     self._reset_opsi_explore_progress(data, change.path)
-                self._sync_record_time(data[task][group], arg)
+                edited_groups.setdefault((task, group), set()).add(arg)
+            # 同一批可能同时修改包名，必须以最终服务器校验显式选择的活动。
+            for task, options in campaign_event_options(data, self.args).items():
+                if options and f'{task}.Campaign.Event' in seen and data[task]['Campaign']['Event'] not in options:
+                    raise ApiError('INVALID_PARAMS', f'{task}.Campaign.Event: 请选择当前服务器的活动')
+            refresh_campaign_events(data, self.args)
+            # 按最终配置校准；同一批先改心情再改恢复条件，也使用最终条件。
+            now = current_time() if any(group in ('Emotion', 'PublicEmotion') and
+                                        any(arg.endswith('Value') for arg in args)
+                                        for (_, group), args in edited_groups.items()) else None
+            for (task, group), args in edited_groups.items():
+                fields = data[task][group]
+                for arg in args:
+                    self._sync_record_time(fields, arg, now if group in ('Emotion', 'PublicEmotion') else None)
+                if group in ('Emotion', 'PublicEmotion'):
+                    prefixes = ('Fleet1', 'Fleet2') if group == 'Emotion' else ('Fleet',)
+                    for prefix in prefixes:
+                        if prefix + 'Value' in args:
+                            try:
+                                fields[prefix + 'RecoveryState'] = EmotionRecoveryState.calibrate(
+                                    fields[prefix + 'Value'], now, fields[prefix + 'Recover'],
+                                    fields[prefix + 'Oath'], fields[prefix + 'Onsen']).export()
+                            except KeyError as exc:
+                                raise ApiError(
+                                    'INVALID_PARAMS', f'{task}.{group}.{exc.args[0]}: 缺少心情恢复配置'
+                                ) from None
+                            except ValueError as exc:
+                                raise ApiError(
+                                    'INVALID_PARAMS', f'{task}.{group}.{prefix}Value: {exc}'
+                                ) from None
+                        elif any(prefix + suffix in args for suffix in ('Recover', 'Oath', 'Onsen')):
+                            fields[prefix + 'RecoveryState'] = None
+            atomic_write(str(self.path(name)), json.dumps(data, ensure_ascii=False, indent=2))
+            return self.get(name)
+
+    def reset_fleet_training(self, name, revision):
+        """原子清空培养记录、编队快照及中断操作状态，保留全部用户设置。"""
+        with self.lock, config_transaction(self.path(name)):
+            data, current = self.read(name)
+            if revision != current:
+                raise ApiError('CONFLICT', '配置已变化，请重新载入后刷新状态')
+            fleet = data.setdefault('FleetInfo', {})
+            fleet.setdefault('FleetTraining', {})['State'] = {}
+            fleet.setdefault('FleetRotation', {})['State'] = {}
+            fleet.setdefault('FleetEquipment', {})['State'] = {}
+            fleet.setdefault('FleetInfo', {}).update(Result={}, Record='2020-01-01 00:00:00')
+            fleet['FleetTraining']['FullScanRecord'] = '2020-01-01 00:00:00'
             atomic_write(str(self.path(name)), json.dumps(data, ensure_ascii=False, indent=2))
             return self.get(name)
 
@@ -545,7 +664,7 @@ class ConfigService:
                 storage.pop('SmartExplore', None)
 
     @staticmethod
-    def _sync_record_time(fields, arg):
+    def _sync_record_time(fields, arg, now=None):
         """把 Value 参数对应的时间戳重置为当前时间。
 
         情绪等参数由“值 + 记录时间”两个字段推算实时状态，改值不刷新时间戳时，
@@ -554,12 +673,14 @@ class ConfigService:
         Args:
             fields (dict): 当前分组配置字典。
             arg (str): 当前修改的参数名。
+            now (datetime, optional): 心情校准使用的统一精确时间，其他成对字段沿用原格式。
         """
         if not arg.endswith('Value'):
             return
         record = arg[:-len('Value')] + 'Record'
         if record in fields:
-            fields[record] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            fields[record] = (datetime.now().strftime('%Y-%m-%d %H:%M:%S') if now is None
+                              else now.isoformat(sep=' ', timespec='microseconds'))
 
     def delete(self, name, revision):
         """删除指定实例并自动创建备份。
@@ -581,7 +702,23 @@ class ConfigService:
             backup = self.directory / 'backup'
             backup.mkdir(exist_ok=True)
             target = backup / f'{name}-{datetime.now():%Y%m%d-%H%M%S-%f}.json'
-            self.path(name).replace(target)
+            import shutil
+            shutil.copy2(self.path(name), target)
+            from module.runtime.fleet_database import FleetDatabase
+            path = self.path(name)
+            database = FleetDatabase(path)
+            # 先验证舰船库，再归档其他运行数据，避免损坏数据库导致删除半途失败。
+            database.load()
             from module.scheduler.store import ProgramStore
-            ProgramStore(self.directory).archive(name, backup / target.stem)
+            fleet_backup = backup / f'{target.stem}.fleet.sqlite3'
+            archived_fleet = database.path.exists()
+            if archived_fleet:
+                database.path.replace(fleet_backup)
+            try:
+                ProgramStore(self.directory, store=self.database).archive(name, backup / target.stem)
+                path.unlink()
+            except BaseException:
+                if archived_fleet:
+                    fleet_backup.replace(database.path)
+                raise
             return {'deleted': name}
