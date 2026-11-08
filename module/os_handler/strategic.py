@@ -4,6 +4,7 @@
 提供战略搜索面板的进入、标签页切换（已净化/未净化）、
 搜索选项勾选、确认弹窗处理以及滚动条控制等操作。
 """
+from module.base.timer import Timer
 from module.base.utils import get_color
 from module.logger import logger
 from module.os_handler.assets import *
@@ -75,7 +76,27 @@ class StrategicSearchHandler(MapEventHandler):
             bool: 配置是否成功，若因未知原因弹窗意外关闭则返回 False。
         """
         logger.info('[大世界-策略] 设置策略搜索选项')
+        is_jp = self.config.SERVER == 'jp'
+        if is_jp:
+            # 日服选项文本换行：先确保区域模式与商人选项在同一个可见范围。
+            STRATEGIC_SEARCH_SCROLL.drag_threshold = 0.01
+            STRATEGIC_SEARCH_SCROLL.set(0.17, main=self, random_range=(-0.01, 0.01), distance_check=False)
+            if not self._strategy_search_scroll_appear():
+                return False
+
+        # Add by MHY, 2026-11-08: 换行布局识别失败要有界退出，交给上层三次重试，不能静默空转
+        merchant_timer = Timer(10) if is_jp else None
         for _ in self.loop():
+            if is_jp:
+                if not self.appear(STRATEGIC_SEARCH_MERCHANT_CHECK, offset=(20, 100)):
+                    if merchant_timer.reached():
+                        logger.warning('[大世界-策略] 日服选项布局识别失败，放弃本轮设置')
+                        return False
+                    continue
+                for button in (STRATEGIC_SEARCH_ZONEMODE_REPEAT, STRATEGIC_SEARCH_ZONEMODE_RANDOM,
+                               STRATEGIC_SEARCH_MERCHANT_STOP, STRATEGIC_SEARCH_MERCHANT_CONTINUE):
+                    button.load_offset(STRATEGIC_SEARCH_MERCHANT_CHECK)
+
             if self._strategy_option_selected(STRATEGIC_SEARCH_ZONEMODE_REPEAT) \
                     and self._strategy_option_selected(STRATEGIC_SEARCH_MERCHANT_STOP):
                 logger.attr('区域模式', '重复')

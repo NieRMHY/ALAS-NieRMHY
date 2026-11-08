@@ -201,7 +201,8 @@ class ResourceFlowTests(unittest.TestCase):
                 shop = object.__new__(shop_type)
                 shop.config, shop.device = self.config, Mock()
                 shop.shop_interval_clear = shop.interval_reset = Mock()
-                shop.appear = Mock(side_effect=lambda button, **kwargs: button is arrow and 'interval' not in kwargs)
+                # Modify by MHY, 切服截图测试可能重载资源，按按钮语义标识匹配而非对象地址。
+                shop.appear = Mock(side_effect=lambda button, **kwargs: button.name == arrow.name and 'interval' not in kwargs)
                 shop.appear_then_click = shop.handle_retirement = shop.shop_obstruct_handle = Mock(return_value=False)
                 shop.info_bar_count = Mock(return_value=0)
                 shop.shop_purchase_result_handle = Mock(side_effect=[True, False])
@@ -228,7 +229,8 @@ class ResourceFlowTests(unittest.TestCase):
                 shop = object.__new__(shop_type)
                 shop.config, shop.device = self.config, Mock()
                 shop.shop_interval_clear = shop.interval_reset = Mock()
-                shop.appear = Mock(side_effect=lambda button, **kwargs: button is arrow and 'interval' not in kwargs)
+                # Modify by MHY, 切服截图测试可能重载资源，按按钮语义标识匹配而非对象地址。
+                shop.appear = Mock(side_effect=lambda button, **kwargs: button.name == arrow.name and 'interval' not in kwargs)
                 shop.appear_then_click = shop.handle_retirement = shop.shop_buy_handle = Mock(return_value=False)
                 shop.shop_obstruct_handle = shop.shop_purchase_result_handle = Mock(return_value=False)
                 shop.info_bar_count = Mock(side_effect=[1, 0])

@@ -42,7 +42,7 @@ module/os_handler/    # 约 3000 行，12 个功能文件 + assets
 ├── os_status.py      # OSStatus：黄币/紫币 OCR 与任务上下文判断
 ├── port.py           # PortHandler：港口进出、维修、接任务
 ├── mission.py        # MissionHandler：任务接取、is_in_opsi_explore
-├── strategic.py      # StrategicSearchHandler：战略搜索（激光）
+├── strategic.py      # StrategicSearchHandler：策略搜索（激光、日服换行布局与滚动偏移）
 ├── target.py         # OSTargetHandler：海域成就（TARGET_SWITCH 选择器）
 ├── map_order.py      # MapOrderHandler：作战指令（潜艇呼叫/侦察扫描冷却）
 ├── enemy_searching.py# 雾天敌情识别适配
@@ -267,6 +267,7 @@ META 页截图 → MetaState 状态机 → 攻击/领奖循环
 - **`handle_ash_beacon_attack` 的「只打档案」例外**：该模式不消耗当期信标数据，不能用持有量反复触发并打断智能调度的自动搜索。
 - **`MetaReward` 领奖后必须回主界面**：`OpsiAshBeacon.run` 统一收尾的 `ui_goto_main` 有注释说明——删掉会让下个任务在 META 页启动而卡识别。
 - **明石货架是 `@Config.when(SERVER=...)` 三分支**，新服务器适配要新增分支而不是改默认分支。
+- **策略搜索的日服换行布局**：日服选项文本换行，先滚到 0.17 并确认 `STRATEGIC_SEARCH_MERCHANT_CHECK`，再用 `load_offset` 把区域模式/商人选项对齐到同一可见范围；识别不到时按 10 秒有界失败返回，交给上层三次重试，不能改成无界 `continue`。其他服务器沿用原有滚动流程，不加载这组偏移。离线回归见 `tests/test_strategic_search_jp.py`，只有 CN 截图夹具，日服实机布局仍待验收。
 - **`ActionPointLimit.delay_minutes` 的换算依赖行动力恢复速率**，修改恢复速率常量（如游戏改动）时同步检查大世界核心的延迟逻辑。
 - **os_simulator 独立于游戏调度**：保留配置兼容，WebUI 只用配置快照和已有统计模拟，不运行实际游戏任务；启动前需等待页面参数保存完成。
 

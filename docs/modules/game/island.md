@@ -176,19 +176,19 @@ flowchart TD
 
 1. **科技状态**：读取 `IslandProductionPlanner.Storage.Storage.IslandTechnologyStatus`；没有保存或勾选 `RescanTechnology` 时进入 `page_island_technology`（岛屿主页右上 `ISLAND_GOTO_ISLAND_TECHNOLOGY`，`BACK_ARROW_WHITE` 返回）扫描，扫描后自动取消勾选。扫描与语言无关：用 `assets/island/technology/technology_chart_{2..6}.png` 连线轮廓模板匹配当前视野，按 `data.py` 节点坐标读亮度（>160 即解锁）；左侧 2~6 号标签按颜色识别，1 号标签无生产科技不扫描。点击带 2 秒间隔，每个标签最多滑动 15 次。
 2. **季节任务与额外目标**：`ScanSeasonTasks` 开启时进入 `page_island_season`（岛屿主页右上 `ISLAND_GOTO_ISLAND_SEASON`）底部第 3 个「任务」标签，先 `ISLAND_SEASON_TASK_RECEIVE_ALL` 一键领取已完成任务的奖励（否则已完成任务会被当成目标），再按 `TEMPLATE_ISLAND_SEASON_REWARD` 定位任务卡、OCR 任务名（EN 用 cnocr 并按任务表还原空格，编辑距离纠正到当前季节任务），遇到 `TEMPLATE_ISLAND_SEASON_TASK_OBTAINED` 或滚到底停止（最多翻 20 页），把以物品为目标的未完成任务汇总写入 `SeasonTaskTargets`（预览模式也写）。第一页就识别不到任务卡片（页面未就绪等）时不更新目标、沿用上次保存的值；翻页后内容不变即停止；编辑距离超过 max(3, 任务名长度/2) 的 OCR 结果不予识别（避免把读错的「F」纠正成某个任务）。`ExtraTargets` 为手动追加目标（YAML，值为数量或 `{count, period}`）。两者合并为需求：期限默认本季剩余天数，按 ALAS 方式换算成每日速率并作为约束；当前科技无法生产的物品记录警告后忽略。同名物品（两个 Corn）优先取可生产的。ALAS 的「卡住的季节订单」由其订单任务记录，AzurPilot 不处理季节订单，改由 `ExtraTargets` 手动表达。
-   **货运缺口**：`ScanCargoOrders` 开启时进入货运页（`page_island_phone` → `island_transport_enter`），`cargo.py` 按 ALAS 的方式识别三个主栏位的货物格：物品用 `assets/island/transport/` 的物品图标模板（与语言无关，移植自 ALAS），「库存/需求」用 cnocr（EN 文字下移 6 像素，阈值 125/110），顶部蓝条判定国际服逐件提交的「COMPLETED」格。只有已提交过货物的委托计入（更换不退还已提交货物，只能补齐），其余格子的「需求 - 库存」写入 `CargoTargets`，按 `CargoTargetDays`（默认 1 天）换算速率；同一物品多个委托需求相加、库存只算一次。尚未提交的委托由货物筹备任务更换，不计入。进入货运页后连续两次截图读到相同且完整的结果才采用（最多 5 秒，已提交标记与数字可能晚于页面模板显示）；已提交过货物的委托中有格子识别失败或有图标无数字，或 5 秒内读数不稳定时，本次不改写 `CargoTargets`，沿用上次保存的目标。鱼肉缺口由渔场任务养鱼后自动兑换（`island_fish_meat.py`），规划器写入鱼肉目标。
-3. **求解**：`ProductionPlanCalculator` 以「每日净增物品的季节 PT」为目标，约束包括物品平衡、各生产分组工时（解锁岗位数 × 24 小时 × 效率）、餐厅货架（等级决定货架数 2/2/3/4、容量 5/6 + 服务员加成）、每日岛币净收入 ≥ `DailyProfitLowerLimit`。SciPy 自带 `scipy.optimize.milp`，不需要 ALAS 的兼容层。`priorities.py` 在 ALAS 的单次求解后再求一次：保持季节 PT 不低于最优值、最大化岛币（优先级：目标 → PT → 岛币）。PT 优先时多余岛币会用来买种子饲料换 PT，岛币通常停在下限，下限决定留多少岛币。效率加成来自岛屿角色收集奖励，配置以整数百分比保存（0/4/12，由 `efficiency_rate` 换算）：WebUI 用「.」分隔翻译键，ALAS 的 0.04/0.12 小数选项在 AzurPilot 中无法选择。求解前 `restrict_calculator` 排除 AzurPilot 后厨选项里没有的配方、商区选项里没有的出售菜品，以及农田配置里没有的作物；季节活动按服务器时间从 `data.py` 读取。
+   **货运缺口**：`ScanCargoOrders` 开启时进入货运页（`page_island_phone` → `island_transport_enter`），`cargo.py` 按 ALAS 的方式识别三个主栏位的货物格：物品用 `assets/island/transport/` 的物品图标模板（与语言无关，移植自 ALAS），「库存/需求」用 cnocr（EN 文字下移 6 像素，阈值 125/110），顶部蓝条判定国际服逐件提交的「COMPLETED」格。只有已提交过货物的委托计入（更换不退还已提交货物，只能补齐）。同一物品多个委托需求相加、库存只算一次，得到两份数据：**需求总量**写入 `CargoTargets` 作为库存目标（任务端「仓库+在制品 < 目标」自己会扣掉已有库存，拿缺口当目标会把库存扣两次、永远补不满）；**缺口（需求 − 库存）**只喂 LP，按 `CargoTargetDays`（默认 1 天）换算速率 —— 大单多数已由库存满足，用绝对量喂 LP 会让它按整单需求规划产能。尚未提交的委托由货物筹备任务更换，不计入。进入货运页后连续两次截图读到相同且完整的结果才采用（最多 5 秒，已提交标记与数字可能晚于页面模板显示）；已提交过货物的委托中有格子识别失败或有图标无数字，或 5 秒内读数不稳定时，本次不改写 `CargoTargets`，沿用上次保存的目标（此时 LP 也用保存的需求量，属于可接受的过度规划）。鱼肉缺口由渔场任务养鱼后自动兑换（`island_fish_meat.py`），规划器写入鱼肉目标。
+3. **求解**：`ProductionPlanCalculator` 以「每日净增物品的季节 PT」为目标，约束包括物品平衡、各生产分组工时（解锁岗位数 × 24 小时 × 效率）、餐厅货架（等级决定货架数 2/2/3/4、容量 5/6 + 服务员加成）、每日岛币净收入 ≥ `DailyProfitLowerLimit`。SciPy 自带 `scipy.optimize.milp`，不需要 ALAS 的兼容层。`priorities.py` 在 ALAS 的单次求解后再求一次：保持季节 PT 不低于最优值、最大化岛币（优先级：目标 → PT → 岛币）。PT 优先时多余岛币会用来买种子饲料换 PT，岛币通常停在下限，下限决定留多少岛币。效率加成来自岛屿角色收集奖励，配置以整数百分比保存（0/4/12，由 `efficiency_rate` 换算）：WebUI 用「.」分隔翻译键，ALAS 的 0.04/0.12 小数选项在 AzurPilot 中无法选择。求解前 `restrict_calculator` 排除 AzurPilot 后厨选项里没有的配方、商区选项里没有的出售菜品、农田配置里没有的作物，以及 `UnlockedFish` 未勾选的鱼种（渔场产品的解锁条件不在岛屿科技里，只能由用户勾选）。规划季节由 `IslandProductionPlanner.Season` 决定：`auto` 按服务器时间取当前季节，`season_N` 指定第 N 季（指定非当前季时期限取整季天数）；季节活动 `DIC_ISLAND_SEASON[<季>]['activity']` 决定季节配方（type 5004）与采集品（type 5003）是否可用。`Priority=coins` 时求解顺序改为目标 → 岛币 → PT；`AutoPositions` 打开时按科技解锁的全部岗位规划，并把岗位数回写各区域 `Positions`/`PostNumber`。所选季节的季节配方在 `data.py` 里缺生产槽位或餐厅菜单时（见已知限制），`run` 在扫描科技与目标、写配置之前直接跳过并输出中文警告，手填的赛季生产/上架方案保持不变。
 4. **餐厅营业与服务员**：分批经营开启时只有 `Batch1Shops`/`Batch2Shops` 中的店参与出售；`IslandBusinessShopN.Char1/2` 中对本店有加成的角色（肇和、柴郡、海伦娜、欧根亲王、奥古斯特、贝尔法斯特、长风）计入加成，其余角色及 None（工作啾代班）只占位。店铺等级由本任务的 `*Grade` 手动填写。
 5. **写回**（`settings_map.py`，`ApplySettings` 关闭时只在日志预览，标 `*` 的为会改变的项）：
-   - 下列「一天用量/消耗」均含目标物品的每日速率（`daily_need`），目标物品在计划中是累积而非消耗，不计入会导致不为其开工。
-   - 后厨 `Meal1~8/MealNumber1~8`：先列出售菜品（按日销量降序，目标 = 货架容量 + 一天用量），再列原料/中间品（按日消耗降序，目标 = 一天用量）；超过 8 个时丢弃末尾并告警。
+   - 下列各处的数字都是**库存下限** = **目标剩余量 + 日缓冲**（`settings_map.target_floor` / `stock_targets`，对应 ALAS 的 `get_production_target_stock(hard_floor, reserve, daily_buffer)`，`reserve` 未移植、取 0）。目标剩余量是待完成需求（季节任务、货运需求量、额外目标）的**绝对数量**，不按期限摊薄 —— 生产任务都是「仓库+在制品 < 目标才开工」，写摊薄后的速率会让目标物品补到一两个就停、永远交不了货。日缓冲是计划日消耗（被其它配方消耗或作为菜品售出，已含 `DailyBufferSafetyMargin` 安全边际并向上取整），两者用途不同、相加不构成重复扣减。
+   - 后厨 `Meal1~8/MealNumber1~8`：先列出售菜品（按日销量降序，目标 = 货架容量 + 库存下限；`capacity` 相当于 ALAS 的 `reserve`「摆满一层」的保留量，计划里查不到该菜品缓冲时退回日销量），再列原料/中间品（按日消耗降序，目标 = 库存下限）；超过 8 个时丢弃末尾并告警。
    - `*NextTask.AwayCook`：该后厨闲时累积量最大的产品，没有则 None。
    - 商区 `Product1~5`：计划出售的菜品，按日销量降序。
-   - `CropTargets`：三个区域所有作物都写明目标（一天计划消耗，未使用为 0），因此规划后 `MinFarm` 等区域阈值不再生效。只为攒 PT 的闲时作物不计入目标（补种按库存/目标比例排序，计入会挤占真正需要的作物），只在日志中提示，由默认作物岗位数（`PlantPotatoes` 等）安排。
-   - 矿山/林场/渔场 `IslandMine/IslandForest/IslandFishery.Min*`：一天计划消耗量，不用的为 0；求解前排除 AzurPilot 不生产的煤炭、自然之木和未配置的鱼种。闲时累积同作物只作提示（由 `MineSilver`/`CutElegant`/`PlantYellowfinTuna` 安排）。
-   - 牧场 `IslandRancher.MinChicken`（禽肉）/`MinPork`（鲜肉）取计划日产量（按牧场科技等级放大，禽肉为副产物，每 3 批摊一次；用到时至少为 1），`Milk`/`Wool` 按计划是否养牛/羊开关。
-   - 制造业 `WoodProcessing/ElectronicProcessing/Industrial/Handmade.Positions`：计划工作量需要的岗位数（不超过已解锁岗位与 2）。AzurPilot 各产线产品写死（文件柜、净水滤芯、铁钉/刀叉餐具、皮革/鞋靴/季节手工品），求解前排除其余制造配方。
-   - 空余岗位（补种安排后剩余的空闲岗位）：闲时累积（为季节 PT）的产品写入默认产品设置。农田三区新增 `DefaultCrop`（默认小麦/橡胶/薰衣草，与原写死的默认作物相同），写入需要岗位最多的闲时作物与 `PlantPotatoes`/`PlantRubber`/`PlantLavender` 岗位数；矿山 `MineSilver`、林场 `CutElegant`、渔场 `PlantYellowfinTuna` 的默认产品写死，只写岗位数（闲时产品不同时置 0 并提示）。岗位数 = 闲时产量换算的工作量 / 单岗位日工作量，向上取整，不超过已解锁岗位与该区域 `Positions` 配置。农田三区、矿山、林场、渔场的规划产能同样按 `Positions` 计算，超出配置的已解锁岗位视为不可用（区域任务只运行配置的岗位）。
+   - `CropTargets`：三个区域所有作物都写明库存下限（目标剩余量 + 日缓冲，未使用为 0），因此规划后 `MinFarm` 等区域阈值不再生效。只为攒 PT 的闲时作物不计入目标（补种按库存/目标比例排序，计入会挤占真正需要的作物），只在日志中提示，由默认作物岗位数（`PlantPotatoes` 等）安排。
+   - 矿山/林场/渔场 `IslandMine/IslandForest/IslandFishery.Min*`：库存下限（目标剩余量 + 日缓冲），不用的为 0；求解前排除 AzurPilot 不生产的煤炭、自然之木和未配置的鱼种。闲时累积同作物只作提示（由 `MineSilver`/`CutElegant`/`PlantYellowfinTuna` 安排）。
+   - 牧场 `IslandRancher.MinChicken`（禽肉）/`MinPork`（鲜肉）取「计划日产量 + 目标剩余量」（按牧场科技等级放大，禽肉为副产物，每 3 批摊一次；用到时至少为 1），`Milk`/`Wool` 按计划是否养牛/羊开关。
+   - 制造业各产线 `Positions`：计划工作量需要的岗位数（不超过已解锁岗位与 2）；`WoodProcessing/ElectronicProcessing/Industrial/Handmade.Products`：把计划生产的产品按计划工作量降序写成 `a > b` 的生产顺序（该产线没有计划时留空，`island_manufacture.py` 沿用固定规则）。可产产品见 `settings_map.MANUFACTURE_PRODUCTS`（纸张/记事本/桌椅、墨盒、炭笔/电缆、布料/绳索，以及四个有识别图的季节手工品），求解前排除其余制造配方。
+   - 空余岗位（补种安排后剩余的空闲岗位）：闲时累积（为季节 PT）的产品写入默认产品设置。农田三区 `DefaultCrop`（默认小麦/橡胶/薰衣草）、矿山 `DefaultOre`、林场 `DefaultWood`、渔场 `DefaultFish` 选择默认产品，岗位数写 `PlantPotatoes`/`PlantRubber`/`PlantLavender`/`MineSilver`/`CutElegant`/`PlantYellowfinTuna`（配置名沿用旧名，含义是「默认产品的岗位数」）；`FillSparePosts` 打开时写满该区域已解锁岗位，没有闲时产品则取可生产产品里单位工作量价值最高的。岗位数 = 闲时产量换算的工作量 / 单岗位日工作量，向上取整，不超过已解锁岗位与该区域 `Positions` 配置。农田三区、矿山、林场、渔场的规划产能同样按 `Positions` 计算，超出配置的已解锁岗位视为不可用（区域任务只运行配置的岗位）。
 6. 无可行方案时不改配置，日志给出瓶颈（通常是岛币下限过高）。
 
 ### 两套规划实现的分工（Add by MHY, 合并上游规划器后补）
@@ -376,14 +376,15 @@ stateDiagram-v2
 
 | 配置 | 类型 | 默认值 | 说明 |
 | --- | --- | --- | --- |
-| `IslandPlan.Season` | select | spring | 全局季节，驱动四季限定物品过滤，冬季含果园、餐馆、简餐及手工产品 |
+| `IslandPlan.Season` | select | spring | 全局季节，驱动四季限定物品过滤，冬季含果园、餐馆、简餐及手工产品；与 `IslandProductionPlanner.Season` 是两项配置——前者管 AzurPilot 各岛屿任务的季节物品，后者只决定生产规划器的规划季节 |
 | `IslandFarm.Positions` / `MinFarm` / `PlantPotatoes` / `WorkerFilter` | 数值/文本 | 3 / 660 / 4 / WorkerJuu | 农田岗位数、补种阈值、默认作物岗位数、工人优先级 |
 | `IslandFarm.CropTargets` / `IslandOrchard.CropTargets` / `IslandNursery.CropTargets` | 多行文本 | 空 | 按作物的补种目标，每行 `作物: 目标库存`（作物名为 `INVENTORY_CONFIG` 英文名）；未列出的作物用区域阈值，0 表示不补种；岛屿生产规划器会改写 |
 | `IslandFarm.DefaultCrop` / `IslandOrchard.DefaultCrop` / `IslandNursery.DefaultCrop` | select | wheat / rubber / lavender | 所有作物达标后空余岗位种植的作物（岗位数为 `PlantPotatoes` 等）；岛屿生产规划器会改写 |
 | `IslandProductionPlanner.ApplySettings` / `RescanTechnology` / `DailyProfitLowerLimit` / `DailyBufferSafetyMargin` / `*Efficiency` / `*Grade` | checkbox/数值/select | false / true / 50000 / 0 / 0 / bronze | 规划器写入开关、重新扫描科技、每日岛币下限、日缓冲余量、农田/果园/苗圃效率加成、五家店铺等级 |
+| `IslandProductionPlanner.Season` / `Priority` / `FillSparePosts` / `AutoPositions` / `UnlockedFish` | select/select/checkbox/checkbox/multiselect | auto / pt / true / true / 全部鱼 | 规划季节（auto 按服务器时间，season_N 指定第 N 季）、求解优先级（pt 先季节 PT，coins 先岛币）、填满空余岗位、按科技回写各区域岗位数、渔场已解锁鱼种 |
 | `IslandOrchard.AmagiChanRubber` | checkbox | false | 小天城优先种橡胶 |
 | `IslandRancher.MinChicken` / `MinPork` | 数值 | — | 畜牧产品阈值 |
-| `IslandFishery.PlantYellowfinTuna` / `Min*` | 数值 | — | 默认金枪鱼岗位数与各鱼种阈值 |
+| `IslandFishery.PlantYellowfinTuna` / `Min*` / `DefaultFish` | 数值/select | — / yellowfin_tuna | 默认产品的岗位数、各鱼种阈值、空余岗位的默认产品（未知值退回黄鳍金枪鱼） |
 | `IslandTeahouse.Seasonal` | checkbox | false | 迎春花茶/季节饮品优先生产开关（与全局季节叠加） |
 | `IslandJuuCoffee.Friedrich` | checkbox | false | 特殊角色（腓特烈）派遣开关 |
 | `IslandBusiness.BatchEnabled` / `Batch1Shops` / `Batch2Shops` | checkbox/multiselect | true / [3,1,5] / [2,4] | 分批经营与批次划分 |
@@ -395,6 +396,7 @@ stateDiagram-v2
 | `IslandPlan.IslandWalk.*` | 多行文本（走位规则） | 见 `module/island/island_walk.py` | 每条路线的走位规则，如 `up 3000, right 800, jump`（对所有控制方式生效）；`<路线>Enable` 勾选后由「全局配置」任务走一遍做校验 |
 | `IslandPlan.PlanShelfSlots` / `PlanVerifiedOnly` / `PlanMineVerified` | input/checkbox | 4 / true / true | 方案生成参数：上架格数（见 §6.5 口径，未配置时按店铺等级）、只排已验证可生产的商品、刷新前从日志挖掘白名单 |
 | `IslandPlan.PlanExtraMeals` | checkbox | false | 额外餐品排产：关闭时生产清单只排货架补货与赛季囤积，打开才用剩余工时生产不在货架上的商品（见 §6.5 口径） |
+| `IslandMine.DefaultOre` / `IslandForest.DefaultWood` | select | Silver / Elegant | 空余岗位生产的默认矿石/木材（岗位数为 `MineSilver`/`CutElegant`） |
 | `IslandRestaurant/Teahouse/Grill/JuuEatery/JuuCoffee.PostNumber` | 数值 | 2/2/1/1/2 | 各店岗位数，方案生成器的日产能上限 = 岗位数 × 24 时 × 0.9（真机五家店都填 2） |
 
 关联关系：季节是唯一贯穿所有模块的横切配置，由 `SeasonConfig` 在各任务 `__init__` 时读取并缓存；店铺类任务的 `Meal{i}`+`MealNumber{i}` 成对声明 8 个排产槽位；`WorkerFilter`/`ChefFilter` 均为 `>` 分隔的角色优先级串，`WorkerJuu`（工作啾）作为通用回退。
@@ -469,7 +471,9 @@ stateDiagram-v2
 - `SEASONAL_ITEMS` 已覆盖冬季；代码保留的 `'none'` 季节分支在当前配置选项下不可达。新赛季仍需手动同步季节表、配方与识别图。
 - 制造业部分季节物品（夏季茉莉精油、秋季花束）在季节表中保留但有意不配置制作；`filter_element` 复用了 `TEMPLATE_FILE_CABINET` 模板（资源未单独提取），为已知的临时妥协。
 - 货物黑名单目前只实现了 Milk 一种识别模板；缺货委托不依赖黑名单，由更换列表的库存颜色判断。更换列表的行定位与颜色阈值基于国际服截图（`tests/fixtures/island_cargo/`），国服若布局不同需另行校准。
-- 岛屿生产规划器不能指定制造业产线内的产品比例（铁钉与餐具、皮革与鞋靴由 `island_manufacture.py` 按库存规则切换），只控制岗位数；季节订单需在 `ExtraTargets` 手动填写；每日订单不参与规划。`data.py` 需在游戏更新后从 ALAS 重新复制。当前冬季规划数据未覆盖完整的活动、生产槽位与原料供应；`IslandPlan.Season=winter` 时生产规划器在加载科技与目标之前跳过，不扫描、不求解、不改写配置，冬季后厨与果园按用户配置执行。本地「刷新生产/上架方案」也跳过冬季写回（一次性开关仍复位）；赛季常驻菜轮换在冬季保持用户设置，待经济库及任务表补齐后再接入自动规划。
+- 岛屿生产规划器只能控制制造业产线岗位数与产品顺序（`<产线>.Products`），不能指定各产品的产量比例；季节订单需在 `ExtraTargets` 手动填写；每日订单不参与规划。`data.py` 需在游戏更新后从 ALAS 重新复制，不要手改。
+- 第 5 季（冬季）数据已随 2026-11-05 的 ALAS 数据并入：活动 990027-990030、槽位 `activity_formula`（9900025-9900032）、采集原料 4043-4046、菜品 4051-4054、手工品 4055/4056 与整季日期、任务表都在 `data.py` 里，生产规划器照常规划冬季（回归见 `tests/test_island_winter_logic.py` 与 `test_island_planner.PlannerTaskTest`）。台服第 5 季日期为空（`tw: ''`），`resolve_season` 会退回按时间选择，台服 2026-11-19 前仍是第 4 季。本地「刷新生产/上架方案」与赛季常驻菜轮换仍在冬季保持用户设置：本地经济库是 wiki 2026-09 手工表（59 个商品，没有冬季菜品的售价与材料成本），赛季任务表只有秋季，凭空补数只会写错目标。
+- 季节配方靠 `data.py` 的 `DIC_ISLAND_SLOT[<槽位>]['activity_formula']` 建立「配方 → 生产组」映射，`DIC_ISLAND_RESTAURANT_MENU_TO_RECIPE` 建立「餐厅菜单项 → 配方」映射；这两张表只列数据最新一季的配方（当前为第 5 季）。台服仍在上一个季节、或用 `Season=season_N` 指定旧季时，`IslandProductionPlanner.run` 会在扫描科技/目标与写配置之前按数据检查所选季节的季节配方（活动类型 5004）：缺 `activity_formula` 槽位或餐厅菜单时直接跳过并输出中文警告，手填的季节生产/上架方案保持不变，不再生成一份不含季节配方的方案去覆盖它们（Add by MHY）。这两张表都由 ALAS 按版本生成，等上游更新或台服追上进度，不要手改，也不要凭空补历史配方。
 - 各生产玩法每轮固定追加 6 小时兜底延时，依赖 `Duration` OCR 读取剩余时间，极端字体渲染下可能识别失败退化为兜底值。
 
 ## 19. 调试方法

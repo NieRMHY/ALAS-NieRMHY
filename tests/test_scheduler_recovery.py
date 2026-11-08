@@ -9,12 +9,14 @@ from module.config.config import TaskEnd
 from module.exception import (
     AutoSearchSetError,
     EmulatorNotRunningError,
+    FleetManagementError,
     GameBugError,
     GameNotRunningError,
     GamePageUnknownError,
     GameStuckError,
     GameTooManyClickError,
     MindCalculatorScanError,
+    OSZoneLockedError,
     RequestHumanTakeover,
     ScriptError,
     StorageStatisticsError,
@@ -74,6 +76,186 @@ class TestSchedulerRecovery(unittest.TestCase):
 
         script._try_restart_emulator.assert_not_called()
         script.config.task_call.assert_not_called()
+
+    def test_task_errors_stop_before_recovery_when_disabled(self):
+        errors = (
+            GameNotRunningError, GameStuckError, GameTooManyClickError,
+            GameBugError, GamePageUnknownError, ScriptError,
+            EmulatorNotRunningError, RequestHumanTakeover, AutoSearchSetError,
+            RuntimeError,
+        )
+        for error_type in errors:
+            with self.subTest(error=error_type.__name__):
+                script = self.make_script()
+                script.config.Error_HandleError = False
+                script.config.Error_GameStuckThreshold = 1
+                script.commission.side_effect = error_type('测试异常')
+
+                with self.assertRaises(SystemExit) as caught:
+                    self.run_tasks(script, ['Commission'])
+
+                self.assertEqual(caught.exception.code, 1)
+                script.save_error_log.assert_called_once_with()
+                script._try_restart_emulator.assert_not_called()
+                script.config.task_call.assert_not_called()
+                script.config.task_delay.assert_not_called()
+                script.device.sleep.assert_not_called()
+                script.checker.check_now.assert_not_called()
+                self.assertEqual(script.task_restart_record, {})
+
+    def test_global_errors_stop_without_recovery_when_disabled(self):
+        for stage in ('selection', 'initialization', 'finalization'):
+            with self.subTest(stage=stage):
+                script = self.make_script()
+                script.config.Error_HandleError = False
+                tasks = ['Commission']
+                error = RuntimeError('调度器异常')
+                if stage == 'selection':
+                    tasks = [error]
+                elif stage == 'initialization':
+                    script.device.stuck_record_clear.side_effect = error
+                else:
+                    # Modify by MHY, 以本地实际收尾入口注入错误，不依赖已移除的日报服务。
+                    script._record_task_restart = Mock(side_effect=error)
+
+                with self.assertRaises(SystemExit) as caught:
+                    self.run_tasks(script, tasks)
+
+                self.assertEqual(caught.exception.code, 1)
+                script.save_error_log.assert_called_once_with()
+                script._try_restart_emulator.assert_not_called()
+                script.config.task_call.assert_not_called()
+                script.config.task_delay.assert_not_called()
+                self.sleep.assert_not_called()
+
+    def test_disabled_recovery_still_stops_if_error_log_cannot_be_saved(self):
+        script = self.make_script()
+        script.config.Error_HandleError = False
+        script.commission.side_effect = EmulatorNotRunningError('设备离线')
+        script.save_error_log.side_effect = OSError('无法保存错误现场')
+
+        with self.assertRaises(SystemExit) as caught:
+            self.run_tasks(script, ['Commission'])
+
+        self.assertEqual(caught.exception.code, 1)
+        script._try_restart_emulator.assert_not_called()
+        script.config.task_call.assert_not_called()
+
+    def test_disabled_recovery_prevents_failed_result_escalation(self):
+        for result in (False, 'recoverable'):
+            with self.subTest(result=result):
+                script = self.make_script()
+                script.config.Error_HandleError = False
+                script.failure_record['Commission'] = 2
+                # Modify by MHY, 失败结果也应在累计重启预算前终止。
+                script._record_task_restart = Mock()
+                script.run = Mock(return_value=result)
+
+                self.assertIs(self.run_tasks(script, ['Commission']), False)
+
+                script._try_restart_emulator.assert_not_called()
+                script.config.task_call.assert_not_called()
+                script._record_task_restart.assert_not_called()
+
+    # Add by MHY, 海域未开荒属于可延期状态，严格模式也不应重启或终止调度。
+    def test_locked_zone_defers_without_failure_escalation(self):
+        script = self.make_script(strict=True, sensitive=True)
+        script.failure_record['Commission'] = 2
+        script.commission.side_effect = OSZoneLockedError('海域未解锁')
+
+        self.run_tasks(script, ['Commission'])
+
+        script.config.task_delay.assert_called_once_with(server_update=True)
+        script.config.task_call.assert_not_called()
+        script._try_restart_emulator.assert_not_called()
+        self.assertEqual(script.failure_record['Commission'], 2)
+        self.assertEqual(script.task_restart_record, {})
+        self.notify.assert_not_called()
+
+    def test_normal_task_clears_locked_zone_result(self):
+        script = self.make_script()
+        script.commission.side_effect = OSZoneLockedError('海域未解锁')
+        self.assertFalse(script.run('Commission'))
+        self.assertTrue(script._os_zone_locked_failed)
+
+        script.commission.side_effect = None
+        self.assertTrue(script.run('Commission'))
+        self.assertFalse(script._os_zone_locked_failed)
+
+    def test_watchdog_timeout_respects_recovery_switch(self):
+        for enabled in (False, True):
+            with self.subTest(enabled=enabled):
+                script = self.make_script()
+                script.config.Error_HandleError = enabled
+                script._emulator_op_with_timeout = Mock()
+                with (
+                    patch('alas.os._exit') as stop_worker,
+                    patch('module.device.platform.Platform') as platform,
+                ):
+                    script._watchdog_recover(120, task_name='Commission')
+
+                if enabled:
+                    stop_worker.assert_not_called()
+                    platform.assert_called_once_with(script.config, connect=False)
+                    script._emulator_op_with_timeout.assert_called_once()
+                else:
+                    stop_worker.assert_called_once_with(1)
+                    platform.assert_not_called()
+                    script._emulator_op_with_timeout.assert_not_called()
+
+    def test_scheduled_restart_is_independent_of_error_recovery_switch(self):
+        script = self.make_script()
+        script.config.Error_HandleError = False
+        script.config.EmulatorManagement_ScheduledEmulatorRestart = True
+        script.config.EmulatorManagement_RestartIntervalHours = 1
+        script.last_emulator_restart_time = 0
+        with patch('alas.time.monotonic', return_value=7200):
+            self.run_tasks(script, ['Commission'])
+
+        script._try_restart_emulator.assert_called_once_with()
+        script.config.task_call.assert_called_once_with('Restart')
+        script.get_next_task.assert_not_called()
+
+    def test_sensitive_failure_notifications_are_preserved_when_recovery_is_disabled(self):
+        script = self.make_script(strict=True, sensitive=True)
+        script.config.Error_HandleError = False
+        script.commission.side_effect = EmulatorNotRunningError('设备离线')
+
+        with self.assertRaises(SystemExit) as caught:
+            self.run_tasks(script, ['Commission'])
+
+        self.assertEqual(caught.exception.code, 1)
+        script.save_error_log.assert_called_once_with()
+        self.notify.assert_called_once()
+        self.webui.assert_called_once()
+        script._try_restart_emulator.assert_not_called()
+        script.config.task_call.assert_not_called()
+
+    def test_normal_completion_is_preserved_when_recovery_is_disabled(self):
+        for outcome in (None, TaskEnd()):
+            with self.subTest(outcome=outcome):
+                script = self.make_script()
+                script.config.Error_HandleError = False
+                script.commission.side_effect = [outcome]
+
+                self.assertTrue(script.run('Commission'))
+
+                script.save_error_log.assert_not_called()
+                script._try_restart_emulator.assert_not_called()
+                script.config.task_call.assert_not_called()
+
+    def test_scan_failure_results_are_preserved_when_recovery_is_disabled(self):
+        for error_type in (MindCalculatorScanError, FleetManagementError):
+            with self.subTest(error=error_type.__name__):
+                script = self.make_script()
+                script.config.Error_HandleError = False
+                script.commission.side_effect = error_type('无法确认识别结果')
+
+                self.assertFalse(script.run('Commission'))
+
+                script.save_error_log.assert_called_once_with()
+                script._try_restart_emulator.assert_not_called()
+                script.config.task_call.assert_not_called()
 
     def test_repeated_storage_recognition_failures_do_not_restart_or_stop_scheduler(self):
         script = self.make_script()

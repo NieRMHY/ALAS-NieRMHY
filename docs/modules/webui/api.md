@@ -14,7 +14,7 @@ module/api 是 React WebUI 的全部后端。浏览器加载 `http://{host}:{por
 
 模块本身刻意做成**薄适配层**：它不做游戏业务，只做「协议收发 + 参数校验 + 编排」。真正的业务要么委托给 `module/runtime/`（进程管理、更新器、部署设置），要么委托给 `module/config/transaction` 的跨进程事务与 `module/statistics/` 的统计数据源。这使 API 层可以在测试中用临时配置目录 + 关闭真实进程生命周期的方式完整运行（`create_app` 的测试参数），而不接触任何设备。
 
-与独立 MCP 服务的关系是**宿主与挂载件**：`create_app(mount_mcp=True)` 时把 MCP SSE 应用以 `Mount('/mcp')` 挂进来，两者共享同一份 `ConfigService`/`RuntimeService` 对象和同一个访问密码，关闭时先等 MCP 在途操作结束再回收共享运行时。独立运行的 MCP（`mcp_server_sse.py`，见 [MCP SSE 服务器](../entry/mcp-server.md)）则自己管理生命周期。
+与独立 MCP 服务的关系是**宿主与挂载件**：`create_app(mount_mcp=True)` 时把 MCP SSE 应用以 `Mount('/mcp')` 挂进来，两者共享同一份 `ConfigService`/`RuntimeService` 对象，MCP 沿用本地免密入口；宿主显式管理传输生命周期，关闭时先排空 MCP 在途操作再回收共享运行时。独立运行的 MCP（`mcp_server_sse.py`，见 [MCP SSE 服务器](../entry/mcp-server.md)）则自己管理生命周期。
 
 ## 2. 模块职责
 
@@ -169,7 +169,7 @@ flowchart TD
 | --- | --- |
 | [WebUI 启动器](../entry/gui.md) | uvicorn 加载 `create_app` 工厂；传入 `--key`/`--run` 参数与 `State.webui_host` |
 | [前端](frontend.md) | 唯一业务客户端；参数类型由本模块模型生成 |
-| [MCP SSE 服务器](../entry/mcp-server.md) | 挂载为 `/mcp` 子应用，复用 configs/runtime 与密码 |
+| [MCP SSE 服务器](../entry/mcp-server.md) | 挂载为 `/mcp` 子应用，复用 configs/runtime，MCP 免密 |
 
 ### 下游
 

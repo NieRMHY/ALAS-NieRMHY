@@ -2,23 +2,25 @@
 import asyncio
 import json
 import multiprocessing
+import tempfile
 import threading
 import time
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
 from module.api.protocol import ApiError
 from module.mcp.device_worker import restart_adb
 from module.mcp.execution import BoundedCalls, DEVICE_TIMEOUTS, DeviceCleanupError, run_device
-from module.runtime.setting import State
 
 
-def fake_device_result(operation, instance, result_path):
-    Path(result_path).write_text(json.dumps({'text': f'{operation}:{instance}'}), encoding='utf-8')
+def fake_device_result(operation, instance, params, result_path):
+    Path(result_path).write_text(
+        json.dumps({'text': f'{operation}:{instance}', 'params': params}), encoding='utf-8')
 
 
-def fake_device_hang(operation, instance, result_path):
+def fake_device_hang(operation, instance, params, result_path):
     time.sleep(60)
 
 
@@ -87,10 +89,56 @@ class BoundedCallsTest(unittest.IsolatedAsyncioTestCase):
             await runner.close()
 
 
+class DeviceCaptureTest(unittest.TestCase):
+    def test_capture_skips_game_side_effects_of_device_screenshot(self):
+        """观测与动作前校验必须是只读：不能触发夜间委托点击与统计写盘。"""
+        import numpy as np
+
+        from module.device.screenshot import Screenshot
+        from module.mcp import device_contract, device_worker
+
+        class FakeDevice:
+            config = SimpleNamespace(Emulator_ScreenshotMethod='ADB')
+
+            def screenshot(self):
+                raise AssertionError('MCP 观测不应走 Device.screenshot')
+
+        device = FakeDevice()
+        with tempfile.TemporaryDirectory() as directory, \
+                patch.object(device_contract, 'frame_root',
+                             lambda: Path(directory) / 'mcp_frames'), \
+                patch.object(Screenshot, 'screenshot',
+                             return_value=np.zeros((720, 1280, 3), dtype='uint8')) as raw:
+            result = device_worker.capture(device, 'demo')
+        raw.assert_called_once_with(device)
+        self.assertEqual((1280, 720), (result['width'], result['height']))
+        self.assertEqual('landscape', result['orientation'])
+
+
+    # Add by MHY, 截图后端失败时也保持观测只读，不能借回退触发游戏点击。
+    def test_capture_failure_does_not_fall_back_to_game_screenshot(self):
+        from module.device.screenshot import Screenshot
+        from module.exception import RequestHumanTakeover
+        from module.mcp.device_worker import capture_image
+
+        device = SimpleNamespace(screenshot=Mock())
+        with patch.object(Screenshot, 'screenshot', side_effect=RequestHumanTakeover('截图后端不可用')):
+            with self.assertRaises(RequestHumanTakeover):
+                capture_image(device)
+        device.screenshot.assert_not_called()
+
+
 class DeviceExecutionTest(unittest.TestCase):
     def test_real_spawn_returns_result_without_loading_device(self):
         with patch('module.mcp.device_worker.execute', fake_device_result):
-            self.assertEqual({'text': 'get_screenshot:demo'}, run_device('get_screenshot', 'demo'))
+            self.assertEqual({'text': 'get_screenshot:demo', 'params': {}},
+                             run_device('get_screenshot', 'demo'))
+
+    def test_control_parameters_are_forwarded_to_worker(self):
+        params = {'x': 320, 'y': 180, 'lease_id': 'a' * 32}
+        with patch('module.mcp.device_worker.execute', fake_device_result):
+            self.assertEqual({'text': 'click:demo', 'params': params},
+                             run_device('click', 'demo', params))
 
     def test_real_spawn_timeout_reaps_child(self):
         started = time.monotonic()
@@ -128,14 +176,19 @@ class DeviceExecutionTest(unittest.TestCase):
         process.close.assert_not_called()
 
     def test_adb_commands_have_timeout_and_failures_propagate(self):
-        with patch.object(State, '_deploy_config_', Mock(AdbExecutable='adb'), create=True), \
-                patch('module.mcp.device_worker.os.path.exists', return_value=True), \
+        with patch('module.mcp.device_worker.adb_executable', return_value='adb'), \
+                patch('module.mcp.device_worker.adb_serials', return_value=['127.0.0.1:16384']), \
                 patch('module.mcp.device_worker.subprocess.run') as run:
-            restart_adb()
-            self.assertEqual([['adb', 'kill-server'], ['adb', 'start-server']], [call.args[0] for call in run.call_args_list])
+            run.return_value = Mock(returncode=0, stdout='connected\nList of devices attached\n'
+                                                           '127.0.0.1:16384\tdevice\n')
+            restarted = restart_adb()
+            self.assertEqual([['adb', 'kill-server'], ['adb', 'start-server'],
+                              ['adb', 'connect', '127.0.0.1:16384'], ['adb', 'devices']],
+                             [call.args[0] for call in run.call_args_list])
             for call in run.call_args_list:
-                self.assertTrue(call.kwargs['check'])
                 self.assertEqual(20, call.kwargs['timeout'])
+            self.assertEqual(['127.0.0.1:16384'], restarted['reconnected'])
+            self.assertEqual(['127.0.0.1:16384'], restarted['devices'])
             run.reset_mock()
             run.side_effect = TimeoutError('模拟超时')
             with self.assertRaises(TimeoutError):

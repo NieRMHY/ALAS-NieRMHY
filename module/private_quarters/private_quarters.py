@@ -244,14 +244,14 @@ class PrivateQuarters(PQInteract, PQShop):
                 check_19 = now.replace(hour=19, minute=0, second=0, microsecond=0)
                 if now >= check_19:
                     # 19 点后仍为 0，互动资格确实耗尽，等次日刷新
-                    logger.info('19 点后每日亲密度仍为 0，等待次日刷新')
+                    logger.info('19 点后每日互动仍为 0，等待次日刷新')
                     self.config.task_delay(server_update=True)
                 elif now + timedelta(hours=2) >= check_19:
                     # 2 小时后越过 19 点复查线，直接等 19 点检查
-                    logger.info('每日亲密度读数为 0，下午 7 点复查')
+                    logger.info('每日互动读数为 0，下午 7 点复查')
                     self.config.task_delay(target=check_19)
                 else:
-                    logger.info('每日亲密度读数为 0，2 小时后重试等待服务端刷新')
+                    logger.info('每日互动读数为 0，2 小时后重试等待服务端刷新')
                     self.config.task_delay(target=now + timedelta(hours=2))
                 self.config.task_stop()
                 return

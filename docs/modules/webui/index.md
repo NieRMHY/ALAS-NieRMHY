@@ -29,7 +29,7 @@ WebUI 不是一个目录，而是一个跨四层协作的体系：
 - 进程安全：worker 的启动、停止、状态追踪、身份登记与孤儿回收；WebUI 自身的监督、热重载与依赖同步。
 - 跨进程配置一致性：WebUI 写配置与调度器读配置经同一把事务锁串行化（见第 8 节）。
 - 认证与访问控制：WebSocket 会话认证、来源校验、本机免密、公网密码策略、远程访问隧道状态。
-- 承载 MCP SSE 子应用（`/mcp`），与 WebUI 共享服务对象与密码（见 [MCP SSE 服务器](../entry/mcp-server.md)）。
+- 承载 MCP SSE 子应用（`/mcp`），与 WebUI 共享配置和运行服务，MCP 沿用免密入口（见 [MCP SSE 服务器](../entry/mcp-server.md)）。
 
 ### 不负责
 
@@ -159,7 +159,7 @@ flowchart TB
 | --- | --- |
 | 浏览器（用户） | 唯一常规交互方；静态资源 + 单条 WebSocket |
 | Electron 桌面启动器 | 以 `--electron` 拉起 gui.py 并内嵌页面；免密信任令牌与命令通道分别见 `module/runtime/launcher_trust.py`、`module/runtime/launcher.py`，接线在 `module/api/launcher_api.py` |
-| MCP 客户端 | 经 `/mcp` 挂载或独立 SSE 服务访问，与 WebUI 共享同一份服务对象与密码 |
+| MCP 客户端 | 经 `/mcp` 挂载或独立 SSE 服务访问，与 WebUI 共享配置和运行服务，MCP 免密 |
 
 ### 下游
 
@@ -420,6 +420,6 @@ sequenceDiagram
 - [API 服务](api.md) —— Starlette 应用组装、WS v1 协议、认证与业务编排。
 - [运行时服务](runtime.md) —— `ProcessManager`、`updater`、`State`、登记与预览等被消费的实现。
 - [前端](frontend.md) —— React 控制台索引；协议与界面细节见 frontend/API.md 与 frontend/README.md。
-- [MCP SSE 服务器](../entry/mcp-server.md) —— 挂载于 `/mcp` 的对外集成，共享服务对象与密码。
+- [MCP SSE 服务器](../entry/mcp-server.md) —— 挂载于 `/mcp` 的对外集成，共享配置和运行服务，MCP 免密。
 - [调度器（alas.py）](../entry/alas.md) —— worker 进程内运行的调度循环。
 - [配置系统](../config.md) —— 实例配置的 schema 来源、生成器与事务锁的实现方。

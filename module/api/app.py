@@ -78,7 +78,12 @@ def create_app(*, root: Path = ROOT, password=None, manage_runtime=True, mount_m
                         init_discord_rpc()
                     except Exception:
                         logger.exception('Discord RPC 启动失败，继续运行 WebUI')
-            yield
+            # Modify by MHY, 显式管理挂载应用的传输生命周期，关闭后再排空工具与共享运行时。
+            if mcp_app is not None:
+                async with mcp_app.router.lifespan_context(mcp_app):
+                    yield
+            else:
+                yield
         finally:
             try:
                 # 先禁止 MCP 新操作并等待在途操作结束，再回收共享运行时。
@@ -197,10 +202,10 @@ def create_app(*, root: Path = ROOT, password=None, manage_runtime=True, mount_m
     if storage_items.is_dir():
         routes.append(Mount('/storage-items', StaticFiles(directory=storage_items)))
     if mount_mcp:
-        # Modify by MHY, 本地保留 MCP 旧版免密 ASGI 应用（上游为 create_app 工厂+鉴权），
-        # 直接挂载模块级应用，不做密码注入
-        from mcp_server_sse import mcp_asgi_app
-        routes.append(Mount('/mcp', mcp_asgi_app))
+        # Modify by MHY, 免密工厂复用 WebUI 的服务对象，避免挂载端读到另一套实例与运行状态。
+        from mcp_server_sse import create_app as create_mcp_app
+        mcp_app = create_mcp_app(configs, runtime, manage_runtime=False)
+        routes.append(Mount('/mcp', mcp_app))
     if (dist / 'index.html').is_file():
         routes.append(Mount('/', FrontendFiles(directory=dist)))
     else:

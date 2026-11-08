@@ -1291,10 +1291,12 @@ test('配置字体、多行输入与 YAML 编辑实时保存及主题颜色', as
   await page.screenshot({path: 'test-results/yaml-light.png'})
   await page.goto('/#/interface')
   await page.getByRole('combobox', {name: '界面主题', exact: true}).click()
-  await page.getByRole('option', {name: '深色', exact: true}).click()
+  // Modify by MHY, 主题类别与明暗已拆开，按实际控件切换旧版暗色。
+  await page.getByRole('option', {name: '旧版', exact: true}).click()
+  await page.getByRole('tablist', {name: '明暗', exact: true}).getByRole('tab', {name: '深色', exact: true}).click()
   await page.goto('/#/i/demo-main/task/Alas')
   await expect(editor).toBeVisible()
-  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'legacy-dark')
   expect(await token.evaluate(node => getComputedStyle(node).color)).not.toBe(lightColor)
   await row.scrollIntoViewIfNeeded()
   await page.screenshot({path: 'test-results/yaml-dark.png'})
@@ -1391,7 +1393,9 @@ test('语言偏好持久化，模拟启停、预览、统计和部署设置', as
   await page.getByRole('option', {name: '简体中文', exact: true}).click()
   await page.goto('/#/remote')
   await page.getByLabel('监听端口').fill('23456')
-  await page.waitForTimeout(500)
+  // Modify by MHY, 字段采用失焦提交，等待真实保存状态而非固定休眠。
+  await page.getByLabel('监听端口').press('Tab')
+  await expect(page.locator('#deploy-WebuiPort-status')).toHaveAttribute('aria-label', '已保存')
   await page.reload()
   await expect(page.getByLabel('监听端口')).toHaveValue('23456')
   await page.goto('/#/i/demo-main/overview')
@@ -1702,6 +1706,9 @@ test('日志工具条固定在表头，窄窗口下不再压住日志内容', as
   expect(geometry.insideHeader).toBe(true)
   expect(geometry.headerOverflow).toBeLessThanOrEqual(1)
   await page.locator('.monitor-panel').screenshot({path: 'test-results/log-toolbar.png', animations: 'disabled'})
+  // Modify by MHY, 补齐既有用例闭合，让后续测试独立注册。
+})
+
 /* 材质细节按画布叠加层分四档：切层只列该层的旋钮，滑块只认真实变化。 */
 test('材质细节四层接线：逐层可调，重复值不落盘', async ({page}) => {
   await page.emulateMedia({reducedMotion: 'reduce'})

@@ -42,6 +42,7 @@ module/os/
 ├── operation_siren.py   # OperationSiren：全部任务类的最终组合体
 ├── map.py               # OSMap：主控类（导航/寻敌/维修/重扫）
 ├── map_event_resume.py  # MapEventResumeMixin：地图事件待办记录与重启续查
+├── abyssal_resume.py    # AbyssalResumeMixin：深渊断点、关卡确认与低士气提示
 ├── fleet.py             # OSFleet：行走、血量、Boss 战
 ├── globe_operation.py   # GlobeOperation：球面图操作（选区/钉住/进出）
 ├── globe_camera.py      # GlobeCamera：球面相机与聚焦
@@ -196,13 +197,14 @@ flowchart BT
 
 | 方法 | 说明 |
 | --- | --- |
-| `os_init()` | 所有任务的前置：强制潜艇每战出击、覆盖通用剧情配置（大世界处理器局部使用 SKIP）→ 进入海域 → `zone_init`/`hp_reset` → 从特殊海域退出 → 按任务身份决定是否 `run_first_auto_search()`（智能调度会把该决策延后到决策点） |
+| `os_init()` | 所有任务的前置：强制潜艇每战出击、覆盖通用剧情配置（大世界处理器局部使用 SKIP）→ 进入海域 → `zone_init` → 深渊续接（开启时；画面认不出深渊则保留现场请求人工介入）→ `hp_reset` → 从特殊海域退出 / 隐秘续接 → 按任务身份决定是否 `run_first_auto_search()`（智能调度会把该决策延后到决策点） |
 | `globe_goto(zone, types, refresh, stop_if_safe)` | 跨海域导航的标准路径：特殊海域先退出 → 海域图进球面 → 聚焦/类型选择/进入 → `zone_init` |
 | `os_map_goto_globe()` | 包装重试 3 次：`RewardUncollectedError`（探索奖励未领不能离开海域）时先 `run_auto_search(rescan=True, after_auto_search=False)` 再试；禁用 after_auto_search 防止递归退出海域 |
-| `run_auto_search(question, rescan, after_auto_search, interrupt)` | 自律寻敌主循环：drop 统计上下文内跑战斗、清问号、按 `rescan` 重扫（`current`/`full`），特殊任务可整体关闭 |
+| `run_auto_search(question, rescan, after_auto_search, interrupt, on_search_finished, on_map_scanned)` | 自律寻敌主循环：drop 统计上下文内跑战斗、清问号、按 `rescan` 重扫（`current`/`full`），特殊任务可整体关闭；`on_map_scanned` 在常规扫描后、退出海域前拿到同一掉落记录（隐秘补扫用） |
+| `clear_question_any_fleet(drop, rescan)` | 换队遍历雷达清问号；`rescan=False` 时只做雷达补查，不隐式全图扫描或固定坐标巡逻 |
 | `map_rescan(rescan_mode)` | 全图重扫：明石商店、扫描装置、伐木塔、双舰队机关（`ALREADY_SOLVED_MAP_EVENTS` 集合去重）；明石/装置点击被遮挡时先收起舰队栏，再换舰队，仍不行走恢复式强制移动 |
 | `fleet_repair()` / `port_goto()` | 港口维修与「走不动就换港口绕路」的容错包装 |
-| `boss_clear()`（`fleet.py`） | 月度/要塞 Boss 的多舰队轮换攻击，`limit_walk` 限制单次行走曼哈顿距离 ≤3 格 |
+| `boss_clear()`（`fleet.py`） | 月度/要塞 Boss 的多舰队轮换攻击，`limit_walk` 限制单次行走曼哈顿距离 ≤3 格；深渊额外接 `abyssal_state`（续接）或 `abyssal_check`（本次关卡确认），跳过已完成舰队并避免把问号出口误判成可再战 |
 
 初始化维修遵循当前任务身份：普通任务在首次自律前检查全舰队，侵蚀一献祭模式与 `RepairThreshold=0` 跳过维修。智能调度及其防溢出代理先保存 `_initial_fleet_repair_pending`，等实际子任务配置绑定后再决定；首个子任务已处理后清除标记，避免按父任务设置提前修掉献祭队。没有子任务、需要执行首次自律时先关闭行动力面板再维修。仓库修理先在新截图中确认舰队选择界面并选中目标舰队，再使用修理包；底部页签和关闭过程不复用过期的使用按钮点击冷却。回归见 `tests/test_opsi_fleet_repair.py`。
 
@@ -214,6 +216,16 @@ flowchart BT
 - **升级恢复**：明石失败走 `_recover_unreachable_akashi()`：先换其余舰队（`_goto_akashi_with_other_fleets` / `_goto_scanning_device_with_other_fleets`），仍不行则 `_mark_event_unreachable(node)` + 置 `_question_unreachable` + `_execute_fixed_patrol_scan(ExecuteFixedPatrolScan=True, recovery=True)`。`recovery=True` 只对本次已看见的事件临时绕过「强制移动」开关，置位 `_question_unreachable` 则让 L2 挪舰队不受当前行动力门槛限制；两者都不改用户配置。装置确认失败同样返回 `False` 交给强制移动，不再伪装成功导致重扫空转。
 - **重启续查**：看到明石/装置、尚未处理完时，在开始购买或装置后续自律之前 `_save_pending_map_event()` 写入隐藏配置；购买/装置确认并完成后续自律后 `_finish_pending_map_event()` 清除，本次换队与强制移动整遍仍没解决时同样清除（等价于放弃这只事件、继续下一轮）。侵蚀一单轮开始（`fleet_set` 之后、海里数检测之前）调用 `_resume_pending_map_event()`：扫描装置已提交物品的记录按剩余次数补自律（敌人模式共 3 次，重启后只补没跑完的）；其余先清已解事件集合、`map_rescan(rescan_mode="full")` 全图重扫，仍未清记录则置 `_question_unreachable` 并执行 `recovery=True` 的强制移动；整遍仍没看到事件就清掉记录继续本轮。服务器、重置周期、海域、事件类型/模式与记录不符时记录自动作废；中途异常向上抛并保留记录。续查只在单轮入口触发一次，重扫与强制移动内部不再递归调用续查，`_in_akashi_recovery` 防的是强制移动自身嵌套。
 - **装置后续自律按模式补跑**：装置确认提交物品后，敌人模式执行 3 次 `os_auto_search_run()`（游戏可能把自律暂停，必须逐次重新点击直到三次）、资源模式 1 次（点「自律收柱子」）、`collected`（信息收集）0 次、未知模式 1 次；资源在点击后即被消耗，不要求对应事件再次完成。每次跑完把剩余次数写回续查记录，卡死重启后只补没跑完的次数。只有敌人模式且 `OpsiSirenBug.Siren_Fleet` 有效时才临时切换舰队，结束后恢复原舰队；旧记录没有剩余次数时按模式跑满。
+
+### 特殊海域重启续接（深渊 / 隐秘 / 跨月）
+
+`OpsiAbyssal.ContinueAfterRestart` 默认关闭。开启后深渊断点写在 `OpsiAbyssal.Storage.Storage.AbyssalResume`（服务器、重置周期、海域、进入时的探路舰队、阶段、当前出战舰队、是否已开战、已完成舰队、单阶段续接机会）。`OSFleet.boss_clear()` 只在确认进入战斗时标记出战，单纯行军中断不会跳过该舰队；重启后先脱离中断的 Boss 战、回到待命位置，再按原筛选顺序继续。同一阶段只续接一次，换阶段重置机会，第二次重启按原流程退出；确认 Boss 已清除且已回到普通海域时清除断点，不重复记账。舰队耗尽时退出当前深渊并继续后续任务，不再请求人工接管。低士气弹窗只在续接上下文存在时由 `handle_abyssal_low_resolve()` 点 X 关闭，随后退回地图交给下一支舰队。
+
+深渊的关卡确认不只看雷达：入口问号、第二阶段画面优先于红色障碍的误判。**海域类型只由当前画面的专有特征决定**：`ABYSSAL_MAP_CHECK`（「击破深渊海域中的塞壬守卫」目标栏）或 `ABYSSAL_STAGE_2`，`abyssal_page_state()` 据此返回 confirmed/other/unknown；`is_in_abyssal()` 为真只表示画面已确认深渊。断点里的服务器/重置周期/海域永远不能替代页面证据——大世界的海域名会去掉「深渊/隐秘/塞壬要塞」后缀，同海域的深渊、隐秘、要塞得到同一个海域编号，按断点认类型会把普通隐秘或要塞当成深渊。`ABYSSAL_PAGE_OTHER` 还会排除可正向识别的非深渊页面（不在特殊海域，或海域名命中各服务器既有的隐秘关键字）。
+
+`OpsiObscure.OpsiObscure.ResumeState` 记录隐秘海域的一次续接（同样带服务器/重置周期/海域）：重启后只补自律、扫描和退出，不重复侦察与潜艇指令；第二次重启正常退出并清记录。跨月每日清理隐秘复用同一流程。`FullScan` 与 `RadarScan` 默认关闭，属于实验性补扫：前者只做一次全图扫描（有概率卡死），后者在未处理到事件时逐队扫雷达且不再隐式触发全图扫描；两者都只在 `run_auto_search(on_map_scanned=...)` 的同一掉落记录内执行。
+
+`OpsiScheduling.StrongholdCheckDelayDays` 大于 0 时，要塞清空后按该天数推迟检查；0 保持原规则（周刷新与月重置取较早者再加 2 小时缓冲）。无效或负数按 0 处理。
 
 ## 6. 工作流程
 
@@ -300,7 +312,7 @@ OCR：行动力面板 / 黄币 / 紫币 ──▶ 决策（智能调度状态机
 | `OpsiMeowfficerFarming.*` | `StayInZone` 等 | 耄耋相接模式 |
 | `OpsiPreventActionPointOverflow.*` | `Task`（OpsiScheduling/OpsiHazard1Leveling/OpsiMeowfficerFarming）、上下限 | 防溢出目标任务与阈值（上限 ≤200） |
 | `OpsiDaily.*` / `OpsiShop.*` / `OpsiVoucher.*` | —— | 日常/商店/兑换参数 |
-| `OpsiObscure/OpsiAbyssal/OpsiStronghold/OpsiArchive/OpsiMonthBoss/OpsiExplore/OpsiCrossMonth.*` | —— | 各玩法参数；后三者的 `Scheduler.Sensitive` 默认 true（异常时严格重启停机） |
+| `OpsiObscure/OpsiAbyssal/OpsiStronghold/OpsiArchive/OpsiMonthBoss/OpsiExplore/OpsiCrossMonth.*` | `OpsiAbyssal.ContinueAfterRestart`、`OpsiObscure.FullScan/RadarScan`、`OpsiScheduling.StrongholdCheckDelayDays` | 各玩法参数；后三者的 `Scheduler.Sensitive` 默认 true（异常时严格重启停机）。三个新项默认关闭或 0，见第 5 节续接说明 |
 | `OpsiAshBeacon.*` | `EnsureFullyCollected`、`AttackMode` | 信标收集影响 CL1 的 AP 保留（未收满则忽略保留） |
 | `OpsiCheckLeveling.*` | `TargetLevel`、`CheckInterval` | 练度检查（非独立任务，CL1 前置调用） |
 | `Alas.DropRecord.Opsi*` | `OpsiHazard1Leveling` / `OpsiMeowfficerFarming` / `OpsiDaily` / `OpsiObscure` / `OpsiAbyssal` / `OpsiStronghold` / `OpsiExplore` / `OpsiOther` | 掉落记录开关，按任务拆分；跨月每日跟大世界每日、档案坐标跟隐秘海域、月度Boss跟深渊海域共用开关，其余走 `OpsiOther`。运行期由 `module/os/config.py` 的 `opsi_drop_record(config)` 取当前任务的开关 |
@@ -331,6 +343,7 @@ OCR：行动力面板 / 黄币 / 紫币 ──▶ 决策（智能调度状态机
 
 - 进度状态全部持久化在配置文件：`OpsiExplore_LastZone`、`OpsiExploreCleanup_State`、智能调度的状态键（`_get_smart_scheduling_state_value`，存于配置而非内存，防进程重启丢账）、各任务 `NextRun/LastRun`。
 - 地图事件续查记录保存在隐藏配置 `OpsiHazard1Leveling.OpsiHazard1Leveling.PendingMapEvent`（`MapEventResumeMixin` 维护）：看到明石/扫描装置、开始购买或装置提交物品后的自律之前写入，记录服务器、重置周期、海域、事件类型、格子、装置模式/是否已提交物品/剩余自律次数与当时舰队。购买或装置后续自律真正完成后才清除；卡死重启、进程中断保留记录，侵蚀一下一轮优先续查。服务器、重置周期、海域、事件类型/格子不符即作废；「已提交物品」按剩余次数补自律（敌人模式共 3 次、资源模式 1 次），不要求对应事件再次完成。
+- 特殊海域续接记录保存在 `OpsiAbyssal.Storage.Storage.AbyssalResume` 与 `OpsiObscure.OpsiObscure.ResumeState`：进入海域并开始操作前写入，确认退出或 Boss 清除后才清除；服务器、重置周期、海域不符即作废。断点只用于恢复进度，不作为海域类型证据：画面认不出深渊时，完整断点只用来判断「值不值得保留现场」。深渊每阶段只有一次续接，重启两次仍无法推进时按原流程退出，不无限重试。
 - “普通海域事件补扫”是独立任务 `OpsiExploreCleanup`，使用自己的 `Scheduler.Enable`、`Progress` 和 `State`。初始化游戏前检查 `OpsiExplore.ExploreProgress` 是否为 `已完成百分之100.00`，已有开荒月度标记时还检查月份，避免沿用上月完成状态；不满足则提示重新运行每月开荒并延期。每月开荒完成后只唤起已启用的补扫任务，不在开荒任务内部执行补扫。
 - 补扫按原开荒顺序严格进入普通海域（`DANGEROUS`），不选择或刷新安全海域（`SAFE`）。每张图先全图识别，再处理地图事件并逐队检查雷达；找到一种事件后仍检查其他舰队。沿用现有事件及战斗逻辑，不使用侵蚀一的固定坐标挪队。进入同一海域也重新确认类型，不把“当前海域相同”当作已经进入目标地图。
 - 补扫状态保存月份、原始顺序、下一海域索引和尝试次数，成功退出当前图才推进断点。中途异常重启后重新尝试未完成海域，完成后继续后续海域；旧 `attempts >= 3` 也可直接续扫，无需手动清零。尝试次数仅作诊断，实际异常仍交给调度器按 `Error.TaskRestartLimit` 处理重启和连续失败延期。独立任务与智能调度代理共用此恢复规则，智能调度仍每轮只补扫一张图。本月完成后延迟到下次重置；跨月先清除补扫自己的旧进度。旧开关和旧补扫断点通过配置迁移进入独立任务；开荒自身的月度标记不会被当成补扫进度。
@@ -378,6 +391,8 @@ OCR：行动力面板 / 黄币 / 紫币 ──▶ 决策（智能调度状态机
 - 自律寻敌要求游戏内已通关大世界剧情；未解锁的账号在 `run_auto_search` 会持续卡识别直到底层超时。
 - 球面图定位依赖固定模板与单应性参数，分辨率/画质异常时的恢复能力有限（详见[地图系统与检测](../map.md)的限制节）。
 - 档案坐标、月度 Boss 等玩法与服务器版本强耦合：TW 无月度 Boss、成就领取仅 cn/jp，相关分支靠运行时判断而非配置隐藏。
+- 深渊续接新增的 `ABYSSAL_MAP_CHECK`、`ABYSSAL_LOW_RESOLVE` 目前只有国服截图，生成资源把 en/jp/tw 指向 cn 文件：非国服认不出深渊关卡特征，低士气提示也无法识别；补其他服务器截图后需重跑 `button_extract`。非国服在特殊海域重启、且存在同服务器/重置周期/海域的完整断点时，既不续接也不退出海域：保留断点与现场，用 `RequestHumanTakeover` 终止调度并在日志里说明需要人工确认（同海域的隐秘/要塞与深渊共用海域编号，靠断点猜类型会进错图）。海域名命中既有隐秘关键字的页面可正向排除，仍按隐秘原流程处理；要塞、档案没有可用的类型特征，同样按无法确认处理。
+- 隐秘海域的 `FullScan` 为实验性开关，全图扫描有概率卡死，默认关闭。
 
 ## 18. 示例
 

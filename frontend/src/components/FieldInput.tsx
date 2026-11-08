@@ -9,6 +9,8 @@ import { AutoTextarea } from './AutoTextarea'
 import { useApp } from '../app/context'
 
 const YamlEditor = lazy(() => import('./YamlEditor').then(module => ({default: module.YamlEditor})))
+// Add by MHY, 过滤器/优先级/排序字段用语法高亮编辑器（取自 nanoda 上游 FilterEditor）
+const FilterEditor = lazy(() => import('./FilterEditor').then(module => ({default: module.FilterEditor})))
 
 interface Props {
   id: string; value: Value; onChange: (value: Value) => void; type?: string
@@ -36,7 +38,14 @@ export function FieldInput({id, value, onChange, type, options, disabled, label,
       {options.map(option => <option value={JSON.stringify(option)} key={JSON.stringify(option)}>{translateOption?.(option) ?? String(option)}</option>)}
     </Select>
   }
-  if (type === 'textarea' || type === 'task_priority') return <AutoTextarea id={id} value={String(value ?? '')} disabled={disabled} label={label} invalid={invalid} onChange={onChange}/>
+  // Add by MHY, 过滤器只按配置元数据判定：显式 mode/type，或参数名以 Filter/Priority/Order 结尾
+  // （Alas 的过滤与优先级字段都这样命名）。不再按值里的 ">" 猜测，否则正文含箭头符号的普通文本字段
+  // （命令、说明、聊天模板）也会被换成代码编辑器。
+  const argName = id.slice(id.lastIndexOf('.') + 1)
+  const isFilter = mode === 'filter' || type === 'filter' || type === 'task_priority'
+    || /(?:filter|priority|order)$/i.test(argName)
+  if (isFilter) return <Suspense fallback={<AutoTextarea id={id} value={String(value ?? '')} disabled={disabled} label={label} invalid={invalid} onChange={onChange}/>}><FilterEditor id={id} value={String(value ?? '')} disabled={disabled} label={label} invalid={invalid} onChange={onChange}/></Suspense>
+  if (type === 'textarea') return <AutoTextarea id={id} value={String(value ?? '')} disabled={disabled} label={label} invalid={invalid} onChange={onChange}/>
   // mode=text 用于语义上允许数字或文本的字段；即使旧配置当前存的是数字也必须显示文本框。
   const isNumber = mode !== 'text' && (typeof value === 'number' || ['int', 'number', 'float'].includes(type ?? ''))
   const Input = type === 'password' ? PasswordInput : 'input'

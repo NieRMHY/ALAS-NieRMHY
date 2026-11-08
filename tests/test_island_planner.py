@@ -42,7 +42,12 @@ from module.island.island_planner import (
 )
 from module.island_planner import settings_map as sm
 from module.island_planner.calculator import ProductionPlanCalculator
-from module.island_planner.data import DIC_ISLAND_ITEM, DIC_ISLAND_RECIPE, DIC_ISLAND_TECHNOLOGY
+from module.island_planner.data import (
+    DIC_ISLAND_ITEM,
+    DIC_ISLAND_RECIPE,
+    DIC_ISLAND_SEASON,
+    DIC_ISLAND_TECHNOLOGY,
+)
 from module.island_planner.utils import get_current_activity_list
 
 
@@ -380,12 +385,6 @@ def options(group, key):
 
 MEAL_OPTIONS = {rid: options(k['task'], 'Meal1') for rid, k in sm.KITCHENS.items()}
 PRODUCT_OPTIONS = {rid: options(k['business'], 'Product1') for rid, k in sm.KITCHENS.items()}
-# Add by MHY, 冬季菜品本轮不并入规划（data.py 季节活动表截至 2026-11-05，缺冬季活动、
-# 生产槽位与原料供应）：WebUI 选项保留，但规划器不映射，restrict_calculator 会按不支持排除
-UNPLANNED_DISHES = {
-    'shiitake_chicken_soup', 'green_jujube_porridge',
-    'water_chestnut_cake', 'sugar_tangerine_daifuku',
-}
 
 
 def solve(technology, grades='gold', chars=('WorkerJuu', 'WorkerJuu'), profit=50000, open_ids=None, slot_limit=None):
@@ -424,13 +423,11 @@ class NameMappingTest(unittest.TestCase):
         self.assertEqual(parse_targets('Corn: 200', 'ExtraTargets'), {expected: [200]})
 
     def test_every_azurpilot_dish_option_has_an_item(self):
+        # Modify by MHY, 第 5 季数据已并入（见 test_island_winter_logic），冬季菜品不再是
+        # 「规划器不支持」的例外：配置里的每个菜品选项都必须有物品映射
         for rid, kitchen in sm.KITCHENS.items():
             for name in MEAL_OPTIONS[rid] + PRODUCT_OPTIONS[rid]:
-                if name in UNPLANNED_DISHES:
-                    continue
                 self.assertIn(name, sm.DISH_ITEM_IDS, f'{kitchen["task"]}: {name}')
-        # 冬季数据补齐后这里会失败，提醒把菜品映射与冬季回归一起恢复
-        self.assertFalse(UNPLANNED_DISHES & set(sm.DISH_ITEM_IDS))
         for item_id in sm.DISH_ITEM_IDS.values():
             self.assertIn(item_id, DIC_ISLAND_ITEM)
 
@@ -535,6 +532,29 @@ class ProductionLineTest(unittest.TestCase):
         self.assertEqual(len(notes), 1)
         self.assertIn('Silver Ore 40/day', notes[0])
 
+    def test_targets_become_stock_thresholds(self):
+        # 目标按剩余量进库存下限；按期限摊薄会让「50 个 / 87 天」变成 1 个
+        calculator = self.make()
+        calculator.product_daily_buffer_items[2701] = 2
+        calculator.idle_accumulating_items_per_day = {}
+        floors = sm.target_floor({2701: [{'count': 50, 'period': 87.0}]})
+        self.assertEqual(floors, {2701: 50})
+        stock = sm.stock_targets(calculator, floors)
+        self.assertEqual(stock[2701], 52)  # 50 + 日缓冲 2（两者用途不同，不重复扣减）
+        values, _ = sm.threshold_settings(calculator, stock)
+        self.assertEqual(values['IslandMineForest.IslandMine.MinCopper'], 52)
+        # 没有目标的物品不受影响，仍只写日缓冲
+        self.assertEqual(values['IslandMineForest.IslandMine.MinIron'], 12)
+
+    def test_target_floor_counts_every_entry(self):
+        # 同一物品多条目标（季节任务 + 额外目标）应累加，三种输入形状都要能读
+        floors = sm.target_floor({
+            2701: [{'count': 30, 'period': 87.0}, 20],
+            2703: {'total_need_count': 15},
+            2702: 0,
+        })
+        self.assertEqual(floors, {2701: 50, 2703: 15})
+
     def test_ranch(self):
         calculator = self.make()
         values = sm.ranch_settings(calculator)
@@ -552,6 +572,39 @@ class ProductionLineTest(unittest.TestCase):
         self.assertEqual(values['IslandManufacture.Industrial.Positions'],
                          min(-(-workload // sm.DAILY_WORKLOAD), 2))
         self.assertEqual(values['IslandManufacture.WoodProcessing.Positions'], 0)
+        # 生产顺序：计划生产的产品按工作量降序，没有计划的产线为空（沿用固定规则）
+        self.assertEqual(values['IslandManufacture.Industrial.Products'], 'iron_nail')
+        self.assertEqual(values['IslandManufacture.WoodProcessing.Products'], '')
+
+    def test_manufacture_product_order_by_workload(self):
+        calculator = self.make()
+        recipes = {sm.recipe_product(r): r for r, g in calculator.recipe_group.items() if g == 'manufacturing_lumber'}
+        calculator.production_plan = {recipes[3048]: 1, recipes[3049]: 3}   # 纸张 1 批，记事本 3 批
+        values = sm.manufacture_settings(calculator)
+        expected = sorted(['paper', 'notebook'], key=lambda name: -DIC_ISLAND_RECIPE[
+            recipes[sm.MANUFACTURE_PRODUCTS['manufacturing_lumber']['products'][name]]]['workload']
+            * (3 if name == 'notebook' else 1))
+        self.assertEqual(values['IslandManufacture.WoodProcessing.Products'], ' > '.join(expected))
+        # 每个产线的产品名都是 AzurPilot 识别的产品
+        for data in sm.MANUFACTURE_PRODUCTS.values():
+            products = values[f'{data["line"]}.Products']
+            for name in filter(None, products.split(' > ')):
+                self.assertIn(name, data['products'])
+
+    def test_auto_position_settings(self):
+        tech = {tech_id: True for tech_id in DIC_ISLAND_TECHNOLOGY}
+        tech[310103] = tech[310104] = False     # 农田第 3、4 个岗位未解锁
+        values = sm.auto_position_settings(ProductionPlanCalculator(tech))
+        self.assertEqual(values['IslandFarm.IslandFarm.Positions'], 2)
+        self.assertEqual(values['IslandRancher.IslandFishery.Positions'], 3)
+        self.assertEqual(values['IslandRestaurant.IslandRestaurant.PostNumber'], 2)
+        # 选项范围内：岗位数配置的最大值不超过选项
+        for path, value in values.items():
+            task, group, key = path.split('.')
+            self.assertIn(value, ARGUMENT[group][key]['option'], path)
+        # 一个岗位都没解锁的区域不写入
+        none = sm.auto_position_settings(ProductionPlanCalculator({}))
+        self.assertNotIn('IslandMineForest.IslandMine.Positions', none)
 
 
 class SolveTest(unittest.TestCase):
@@ -561,6 +614,16 @@ class SolveTest(unittest.TestCase):
 
     def tearDown(self):
         server.server = self.previous_server
+
+    def test_cargo_demand_becomes_stock_target(self):
+        # 货运给 settings 的是需求量：库存目标 = 需求量 + 计划日消耗，而不是缺口 + 缓冲
+        calculator, _ = solve({tech_id: True for tech_id in DIC_ISLAND_TECHNOLOGY})
+        self.assertTrue(calculator.lp_success, calculator.lp_message)
+        buffer = calculator.product_daily_buffer_items.get(2011, 0)  # 草莓
+        values, _ = sm.build_settings(calculator, MEAL_OPTIONS, PRODUCT_OPTIONS,
+                                      {2011: [{'count': 35, 'period': 1.0}]})
+        nursery = parse_crop_targets(values['IslandFarm.IslandNursery.CropTargets'])
+        self.assertEqual(nursery['strawberry'], 35 + buffer)
 
     def test_full_technology_plan_writes_valid_settings(self):
         calculator, excluded = solve({tech_id: True for tech_id in DIC_ISLAND_TECHNOLOGY})
@@ -635,9 +698,10 @@ class FakeConfig:
 
 
 class PlannerTaskTest(unittest.TestCase):
-    # Add by MHY, 固定「本季剩余天数」：上游测试直接用服务器时间，赛季快结束时
+    # Add by MHY, 固定规划季节与「本季剩余天数」：上游按服务器时间取季节，赛季快结束时
     # 同样的目标摊到不足一天的产能里会不可行（2026-11-04 只剩 0.7 天时，
     # Apple Pie 84 需要 127/天 > 48h 产能），测试会随日期飘红
+    SEASON_ID = 5
     SEASON_REMAINING_DAYS = 20
 
     def setUp(self):
@@ -647,7 +711,8 @@ class PlannerTaskTest(unittest.TestCase):
     def tearDown(self):
         server.server = self.previous_server
 
-    def run_planner(self, cargo_scan=None, config_data=None, **overrides):
+    def run_planner(self, cargo_scan=None, config_data=None, season_id=None,
+                    season_scan=None, real_season=False, now=None, **overrides):
         from unittest.mock import patch
         from module.island_planner.planner import IslandProductionPlanner
         technology = {str(tech_id): True for tech_id in DIC_ISLAND_TECHNOLOGY}
@@ -660,10 +725,18 @@ class PlannerTaskTest(unittest.TestCase):
             task, group, key = path.split('.')
             planner.config.data[task][group][key] = value
         planner.get_technology_status = lambda: self.fail('saved technology must not trigger a scan')
-        planner.scan_season_task_targets = lambda: {3009: 30}
-        planner.scan_cargo_targets = cargo_scan or (lambda: {2011: 33})
-        with patch('module.island_planner.planner.get_current_season_remaining_days',
-                   return_value=self.SEASON_REMAINING_DAYS):
+        planner.scan_season_task_targets = season_scan or (lambda: {3009: 30})
+        # 扫描返回 (缺口, 需求量)
+        planner.scan_cargo_targets = cargo_scan or (lambda: ({2011: 33}, {2011: 35}))
+        if real_season:
+            # Add by MHY, 走真实的 resolve_season，只固定服务器时间：验证 auto 与显式旧季的选择
+            with patch('module.island_planner.planner._get_server_time',
+                       return_value=now or datetime(2026, 11, 8, 12)):
+                return planner, planner.run()
+        season_id = self.SEASON_ID if season_id is None else season_id
+        with patch('module.island_planner.planner.resolve_season',
+                   return_value=(season_id, DIC_ISLAND_SEASON[season_id]['activity'],
+                                 self.SEASON_REMAINING_DAYS)):
             return planner, planner.run()
 
     def test_preview_does_not_write(self):
@@ -695,6 +768,18 @@ class PlannerTaskTest(unittest.TestCase):
         meals = [planner.config.written.get(f'IslandJuuEatery.IslandJuuEatery.Meal{i}') for i in range(1, 9)]
         self.assertIn('apple_pie', meals)
 
+    def test_targets_become_stock_targets(self):
+        # 目标数量要进后厨的库存目标；按每日速率摊薄会写成 1，永远做不完
+        planner, result = self.run_planner(IslandProductionPlanner_ApplySettings=True,
+                                           IslandProductionPlanner_ExtraTargets='Apple Pie: 84')
+        self.assertTrue(result)
+        numbers = {
+            planner.config.written.get(f'IslandJuuEatery.IslandJuuEatery.Meal{i}'):
+                planner.config.written.get(f'IslandJuuEatery.IslandJuuEatery.MealNumber{i}')
+            for i in range(1, 9)
+        }
+        self.assertGreaterEqual(numbers.get('apple_pie', 0), 84)
+
     def test_scan_writes_season_targets(self):
         planner, result = self.run_planner(IslandProductionPlanner_ScanSeasonTasks=True)
         self.assertTrue(result)
@@ -706,9 +791,32 @@ class PlannerTaskTest(unittest.TestCase):
     def test_scan_writes_cargo_targets(self):
         planner, result = self.run_planner(IslandProductionPlanner_ScanCargoOrders=True)
         self.assertTrue(result)
+        # CargoTargets 存需求量（缺口 + 扫描时的库存），库存目标才不会被重复扣减
         self.assertEqual(
             planner.config.written['IslandProductionPlanner.IslandProductionPlanner.CargoTargets'].strip(),
-            'Strawberries (2011): 33')
+            'Strawberries (2011): 35')
+
+    def test_cargo_targets_use_demand_not_shortfall(self):
+        # 委托需求 35、库存 2 → 缺口 33；写入的库存目标必须是需求量 35，
+        # 拿缺口当目标会让任务端「仓库 < 目标」把库存再扣一次，永远补不满
+        planner, result = self.run_planner(
+            IslandProductionPlanner_ApplySettings=True,
+            IslandProductionPlanner_ScanCargoOrders=True,
+            cargo_scan=lambda: ({2011: 33}, {2011: 35}))
+        self.assertTrue(result)
+        # 草莓属于苗圃
+        nursery = parse_crop_targets(planner.config.written['IslandFarm.IslandNursery.CropTargets'])
+        self.assertGreaterEqual(nursery['strawberry'], 35)
+
+    def test_cargo_fully_in_stock_keeps_target(self):
+        # 委托已被库存完全满足（缺口为空）时，CargoTargets 仍要记录需求量，不能被清空
+        planner, result = self.run_planner(
+            IslandProductionPlanner_ScanCargoOrders=True,
+            cargo_scan=lambda: ({}, {2011: 35}))
+        self.assertTrue(result)
+        self.assertEqual(
+            planner.config.written['IslandProductionPlanner.IslandProductionPlanner.CargoTargets'].strip(),
+            'Strawberries (2011): 35')
 
     def scan_cargo(self, reads):
         from unittest.mock import Mock, patch
@@ -727,13 +835,24 @@ class PlannerTaskTest(unittest.TestCase):
         # 第一张截图已提交标记还没显示（completed 全为 0），不能据此清空目标
         loading = [{'completed': 0, 'items': [(2011, 2, 35)], 'unreadable': 0}]
         ready = [{'completed': 2, 'items': [(2011, 2, 35)], 'unreadable': 0}]
-        self.assertEqual(self.scan_cargo([loading, ready, ready]), {2011: 33})
-        self.assertIsNone(self.scan_cargo([loading, ready]))
+        # 返回值是 (缺口, 需求量)：库存 2、需求 35 → 缺口 33、目标 35
+        self.assertEqual(self.scan_cargo([loading, ready, ready]), ({2011: 33}, {2011: 35}))
+        self.assertEqual(self.scan_cargo([loading, ready]), (None, None))
 
     def test_incomplete_cargo_scan_keeps_saved_targets(self):
-        planner, result = self.run_planner(cargo_scan=lambda: None, IslandProductionPlanner_ScanCargoOrders=True)
+        planner, result = self.run_planner(cargo_scan=lambda: (None, None), IslandProductionPlanner_ScanCargoOrders=True)
         self.assertTrue(result)
         self.assertNotIn('IslandProductionPlanner.IslandProductionPlanner.CargoTargets', planner.config.written)
+
+    def test_cargo_fallback_warns_to_lp_overplan(self):
+        # 扫描失败时沿用保存的需求量：库存目标照写，但要提示 LP 按整单需求规划可能偏大
+        from unittest.mock import patch
+        with patch('module.island_planner.planner.logger') as logger:
+            self.run_planner(cargo_scan=lambda: (None, None),
+                             IslandProductionPlanner_ScanCargoOrders=True,
+                             IslandProductionPlanner_CargoTargets='Strawberries (2011): 35')
+        messages = [str(call.args[0]) for call in logger.warning.call_args_list if call.args]
+        self.assertTrue(any('沿用上次保存的需求量' in text for text in messages), messages)
 
     def test_apply_writes_default_products(self):
         # 矿山配置 4 个岗位，计划用剩的岗位写入默认产品（银矿）
@@ -744,42 +863,76 @@ class PlannerTaskTest(unittest.TestCase):
         self.assertIn('IslandMineForest.IslandMine.MineSilver', written)
         self.assertIn(written.get('IslandFarm.IslandFarm.DefaultCrop', 'wheat'), sm.CROP_ITEM_IDS['farm'])
 
-    def test_winter_season_skips_scan_solve_and_write(self):
-        # Add by MHY, 冬季规划数据尚未补齐：秋季赛季在 2026-11-05 结束，冬季缺少活动、
-        # 生产槽位与原料供应。即使勾选写入，也必须直接返回 False，不扫描、不求解、不写配置
-        from module.island_planner.planner import IslandProductionPlanner
-        technology = {str(tech_id): True for tech_id in DIC_ISLAND_TECHNOLOGY}
-        with patch.object(IslandProductionPlanner, '__init__', lambda self: None):
-            planner = IslandProductionPlanner()
-        planner.config = FakeConfig(
-            technology,
-            IslandProductionPlanner_RescanTechnology=False,
+    def test_winter_season_plans_with_winter_chain(self):
+        # Modify by MHY, 第 5 季数据已完整（活动 990027-990030、槽位 activity_formula
+        # 9900027-9900030、采集原料 4043-4046、实际 pt_num），冬季不再阻断规划：
+        # 冬季菜品目标要经冬季配方（9900027）进后厨
+        planner, result = self.run_planner(
+            IslandProductionPlanner_ApplySettings=True,
+            IslandProductionPlanner_ExtraTargets='Shiitake Mushroom Chicken Stew: 20')
+        self.assertTrue(result)
+        meals = [planner.config.written.get(f'IslandRestaurant.IslandRestaurant.Meal{i}')
+                 for i in range(1, 9)]
+        self.assertIn('shiitake_chicken_soup', meals)
+
+    def test_season_data_gaps_follow_data(self):
+        # Add by MHY, 缺口判断只看 data.py：第 4 季的 8 个配方没有槽位、菜品没有菜单，
+        # 第 5 季槽位与菜单齐全，没有季节时不做限制
+        from module.island_planner.planner import season_data_gaps
+        missing_slots, missing_menu = season_data_gaps(DIC_ISLAND_SEASON[4]['activity'])
+        self.assertEqual(len(missing_slots), 8)
+        self.assertTrue(missing_menu)
+        self.assertEqual(season_data_gaps(DIC_ISLAND_SEASON[5]['activity']), ([], []))
+        self.assertEqual(season_data_gaps(None), ([], []))
+
+    def test_explicit_old_season_skips_before_scan_and_write(self):
+        # Add by MHY, 指定第 4 季（旧季）时不能照常求解：旧季只有配方、没有槽位与菜单，
+        # 必须在扫描科技/目标与写配置之前退出，手填的赛季配置保持原样
+        planner, result = self.run_planner(
+            real_season=True, now=datetime(2026, 11, 8, 12),
+            IslandProductionPlanner_Season='season_4',
+            IslandProductionPlanner_ApplySettings=True,
             IslandProductionPlanner_ScanSeasonTasks=True,
             IslandProductionPlanner_ScanCargoOrders=True,
+            season_scan=lambda: self.fail('旧季数据缺口时不应扫描季节任务'),
+            cargo_scan=lambda: self.fail('旧季数据缺口时不应扫描货运'))
+        self.assertFalse(result)
+        self.assertEqual(planner.config.written, {})
+
+    def test_old_season_skip_logs_reason(self):
+        # Add by MHY, 跳过时必须有明确中文日志，说明不扫描、不写配置，不能静默跳过
+        from unittest.mock import patch
+        with patch('module.island_planner.planner.logger') as logger:
+            planner, result = self.run_planner(
+                real_season=True, now=datetime(2026, 11, 8, 12),
+                IslandProductionPlanner_Season='season_4')
+        messages = [str(call.args[0]) for call in logger.warning.call_args_list if call.args]
+        self.assertFalse(result)
+        self.assertTrue(any('不扫描' in text and '不写入' in text for text in messages), messages)
+
+    def test_tw_auto_old_season_skips_before_scan_and_write(self):
+        # Add by MHY, 台服第 5 季日期为空，auto 在 2026-11-08 仍选中第 4 季；
+        # 该季没有季节槽位/菜单数据，同样要在扫描与写入之前跳过
+        server.server = 'tw'
+        planner, result = self.run_planner(
+            real_season=True, now=datetime(2026, 11, 8, 12),
             IslandProductionPlanner_ApplySettings=True,
-        )
-        planner.config.data['IslandPlan']['IslandPlan']['Season'] = 'winter'
-        planner.get_technology_status = Mock(side_effect=AssertionError('冬季不应扫描科技'))
-        planner.scan_season_task_targets = Mock(side_effect=AssertionError('冬季不应扫描季节任务'))
-        planner.scan_cargo_targets = Mock(side_effect=AssertionError('冬季不应扫描货运'))
-        planner.create_calculator = Mock(side_effect=AssertionError('冬季不应求解'))
-        planner.config.cross_set_many = Mock()
-
-        with patch('module.island_planner.planner.get_current_season_remaining_days',
-                   return_value=self.SEASON_REMAINING_DAYS):
-            self.assertFalse(planner.run())
-
+            IslandProductionPlanner_ScanSeasonTasks=True,
+            IslandProductionPlanner_ScanCargoOrders=True,
+            season_scan=lambda: self.fail('台服旧季数据缺口时不应扫描季节任务'),
+            cargo_scan=lambda: self.fail('台服旧季数据缺口时不应扫描货运'))
+        self.assertFalse(result)
         self.assertEqual(planner.config.written, {})
-        planner.config.cross_set_many.assert_not_called()
-        planner.get_technology_status.assert_not_called()
-        planner.scan_season_task_targets.assert_not_called()
-        planner.scan_cargo_targets.assert_not_called()
 
-    def test_non_winter_season_still_plans(self):
-        # 其它季节不受冬季阻断影响，仍按原流程（默认预览，不写配置）
-        planner, result = self.run_planner(config_data={'IslandPlan.IslandPlan.Season': 'autumn'})
+    def test_no_active_season_still_plans(self):
+        # Add by MHY, 台服 2026-11-19 后没有进行中的季节（第 5 季 tw 日期为空）：
+        # 没有季节配方可查，规划器照常求解，不受旧季数据缺口保护影响
+        server.server = 'tw'
+        planner, result = self.run_planner(
+            real_season=True, now=datetime(2026, 12, 1, 12),
+            IslandProductionPlanner_ApplySettings=True)
         self.assertTrue(result)
-        self.assertEqual(planner.config.written, {})
+        self.assertIn('IslandFarm.IslandFarm.CropTargets', planner.config.written)
 
 
 class PriorityTest(unittest.TestCase):
@@ -839,6 +992,94 @@ class PriorityTest(unittest.TestCase):
         self.assertEqual(sm.idle_posts(calculator, 'mine', 2705), expected)
 
 
+class PlannerOptionTest(unittest.TestCase):
+    """季节选择、优先级、已解锁的鱼与填满空余岗位。"""
+
+    def setUp(self):
+        self.previous_server = server.server
+        server.server = 'en'
+
+    def tearDown(self):
+        server.server = self.previous_server
+
+    def test_resolve_season(self):
+        from module.island_planner.data import DIC_ISLAND_SEASON
+        from module.island_planner.planner import resolve_season
+        winter_day = datetime(2026, 11, 6, 12)
+        season_id, activity, remaining = resolve_season('auto', winter_day)
+        self.assertEqual(season_id, 5)
+        self.assertEqual(activity, DIC_ISLAND_SEASON[5]['activity'])
+        self.assertAlmostEqual(remaining, (datetime(2027, 2, 1, 23, 59, 59) - winter_day).total_seconds() / 86400)
+        # 指定不在进行中的季节：用该季活动，期限为整季天数
+        season_id, activity, remaining = resolve_season('season_4', winter_day)
+        self.assertEqual((season_id, activity), (4, DIC_ISLAND_SEASON[4]['activity']))
+        self.assertAlmostEqual(
+            remaining,
+            (datetime(2026, 11, 4, 23, 59, 59) - datetime(2026, 8, 6)).total_seconds() / 86400)
+        # 未知季节按当前时间选择；台服第 5 季还没有日期，11 月 6 日仍在第 4 季
+        self.assertEqual(resolve_season('season_99', winter_day)[0], 5)
+        server.server = 'tw'
+        self.assertEqual(resolve_season('auto', winter_day)[0], 4)
+        self.assertEqual(resolve_season('season_5', winter_day), (5, DIC_ISLAND_SEASON[5]['activity'], None))
+
+    def winter_calculator(self, tech=None, unlocked_fish=None, profit=0):
+        from module.island_planner.data import DIC_ISLAND_SEASON
+        calculator = ProductionPlanCalculator(
+            tech or {tech_id: True for tech_id in DIC_ISLAND_TECHNOLOGY},
+            activity_list=DIC_ISLAND_SEASON[5]['activity'],
+            restaurant_settings=sm.restaurant_settings({rid: 'gold' for rid in sm.KITCHENS}, {}),
+            daily_profit_lower_limit=profit)
+        sm.restrict_calculator(calculator, MEAL_OPTIONS, PRODUCT_OPTIONS, unlocked_fish=unlocked_fish)
+        return calculator
+
+    def test_unlocked_fish_limits_fishery(self):
+        calculator = self.winter_calculator(unlocked_fish=['shell', 'shrimp'])
+        fishery = sm.producible_items(calculator, 'fishery')
+        self.assertEqual(set(fishery), {5001, 5005})
+        # 未勾选全部时不限制（None），黄鳍金枪鱼可用
+        self.assertIn(5107, sm.producible_items(self.winter_calculator(), 'fishery'))
+
+    def test_fill_spare_posts_uses_unlocked_products(self):
+        from module.island_planner.priorities import solve_with_priorities
+        calculator = self.winter_calculator(unlocked_fish=['shell', 'shrimp', 'crayfish'])
+        self.assertTrue(solve_with_priorities(calculator, current_time=datetime(2026, 11, 6, 12)))
+        values, _ = sm.default_product_settings(calculator, fill_spare_posts=True)
+        for group, data in sm.DEFAULT_PRODUCTS.items():
+            count_path, limit = data['count']
+            unlocked = sum(calculator.slot_available.get(slot, False) for slot in calculator.GROUP_TO_SLOTS[group])
+            # 全科技解锁时每个区域都有可生产产品：写满已解锁岗位，默认产品可生产且是合法选项
+            self.assertEqual(values[count_path], min(limit, unlocked), count_path)
+            product = values[data['product_path']]
+            self.assertIn(data['products'][product], sm.producible_items(calculator, group), data['product_path'])
+            task, group_name, key = data['product_path'].split('.')
+            self.assertIn(product, ARGUMENT[group_name][key]['option'])
+        self.assertIn(values['IslandRancher.IslandFishery.DefaultFish'], ('shell', 'shrimp', 'crayfish'))
+
+    def test_fallback_product_skips_locked_items(self):
+        calculator = self.winter_calculator()
+        calculator.idle_accumulating_items_per_day = {}
+        candidates = sm.DEFAULT_PRODUCTS['mine']['products']
+        self.assertEqual(sm.fallback_product(calculator, 'mine', candidates), 'Silver')
+        for recipe_id, group in calculator.recipe_group.items():
+            if group == 'mine' and 2705 in DIC_ISLAND_RECIPE[recipe_id]['commission_product']:
+                calculator.recipe_available[recipe_id] = False
+        self.assertNotEqual(sm.fallback_product(calculator, 'mine', candidates), 'Silver')
+        # 不填满时没有闲时产品就不写默认产品，岗位数为 0
+        values, _ = sm.default_product_settings(calculator, fill_spare_posts=False)
+        self.assertEqual(values['IslandMineForest.IslandMine.MineSilver'], 0)
+        self.assertNotIn('IslandMineForest.IslandMine.DefaultOre', values)
+
+    def test_coins_priority_earns_at_least_pt_priority(self):
+        from module.island_planner.priorities import solve_with_priorities
+        now = datetime(2026, 11, 6, 12)
+        by_pt = self.winter_calculator()
+        self.assertTrue(solve_with_priorities(by_pt, current_time=now, priority='pt'))
+        by_coins = self.winter_calculator()
+        self.assertTrue(solve_with_priorities(by_coins, current_time=now, priority='coins'))
+        self.assertGreaterEqual(by_coins.daily_profit, by_pt.daily_profit - 1e-6)
+        self.assertGreaterEqual(by_pt.total_pt, by_coins.total_pt - 1e-6)
+
+
 class CargoReaderTest(unittest.TestCase):
     """EN 货运页截图：栏位 1 淡水鱼肉 6/16（另 2 格已提交），栏位 2 淡水鱼肉 6/26（未提交），
     栏位 3 草莓 2/35（另 2 格已提交）。"""
@@ -852,18 +1093,22 @@ class CargoReaderTest(unittest.TestCase):
 
     def test_partial_orders(self):
         from module.base.utils import load_image
-        from module.island_planner.cargo import partial_order_targets, read_cargo_slots
+        from module.island_planner.cargo import partial_order_demands, partial_order_targets, read_cargo_slots
         slots = read_cargo_slots(load_image(str(ROOT / 'tests/fixtures/island_planner/en_cargo_partial.png')))
         self.assertEqual([slot['completed'] for slot in slots], [2, 0, 2])
         self.assertEqual([slot['items'] for slot in slots],
                          [[(2521, 6, 16)], [(2521, 6, 26)], [(2011, 2, 35)]])
         # 未提交过货物的栏位 2 可以更换，不计入
-        self.assertEqual(partial_order_targets(slots), {2011: 33, 2521: 10})
+        # 缺口 = 需求 - 库存（喂 LP）；需求量 = 需求总量（写入 CargoTargets 当库存目标）
+        self.assertEqual(partial_order_demands(slots), {2011: 33, 2521: 10})
+        self.assertEqual(partial_order_targets(slots), {2011: 35, 2521: 16})
 
     def test_shared_stock_counts_once(self):
-        from module.island_planner.cargo import partial_order_targets
+        from module.island_planner.cargo import partial_order_demands, partial_order_targets
         slots = [{'completed': 1, 'items': [(2011, 5, 10)]}, {'completed': 2, 'items': [(2011, 5, 20)]}]
-        self.assertEqual(partial_order_targets(slots), {2011: 25})
+        # 同一物品多个委托：需求相加，库存只扣一次
+        self.assertEqual(partial_order_demands(slots), {2011: 25})
+        self.assertEqual(partial_order_targets(slots), {2011: 30})
 
     def test_item_without_number_is_unreadable(self):
         # 数字还没渲染出来的货物格（有图标、无数字）不能被当作空格跳过
@@ -979,7 +1224,8 @@ class SeasonScanGuardTest(unittest.TestCase):
                                     IslandProductionPlanner_ScanCargoOrders=False,
                                     IslandProductionPlanner_SeasonTaskTargets='Apple Pie: 30')
         planner.scan_season_task_targets = lambda: None
-        targets = planner.load_targets()
+        demands, targets = planner.load_targets()
+        self.assertEqual(demands, {3009: [30]})
         self.assertEqual(targets, {3009: [30]})
         self.assertNotIn('IslandProductionPlanner.IslandProductionPlanner.SeasonTaskTargets', planner.config.written)
 

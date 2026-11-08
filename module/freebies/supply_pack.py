@@ -4,6 +4,8 @@
 
 from calendar import day_name
 
+import cv2
+
 from module.base.timer import Timer
 from module.campaign.campaign_status import CampaignStatus
 from module.combat.assets import GET_ITEMS_1, GET_ITEMS_2
@@ -14,6 +16,11 @@ from module.ocr.ocr import Digit
 from module.shop.assets import SHOP_OCR_OIL, SHOP_OCR_OIL_CHECK
 from module.ui.page import page_shop, page_supply_pack
 
+# Add by MHY, 价格栏相邻两帧的平均灰度差（每通道）超过该值视为仍在动画
+SUPPLY_PACK_STABLE_DIFF = 1.0
+# Add by MHY, 找包总耗时上限：8 次左滑加每页稳定确认，正常约 40 秒
+SUPPLY_PACK_SEARCH_TIMEOUT = 90
+
 
 class SupplyPack(CampaignStatus):
     """商店免费补给包购买处理器。
@@ -22,7 +29,7 @@ class SupplyPack(CampaignStatus):
     """
 
     def supply_pack_find(self, supply_pack, skip_first_screenshot=True):
-        """在补给包列表中查找指定补给包，最多向左滑动 8 次。
+        """稳定检查当前屏后再向左查找补给包，最多滑动 8 次。
 
         Returns:
             bool: 是否找到补给包。
@@ -31,16 +38,45 @@ class SupplyPack(CampaignStatus):
             in: page_supply_pack
             out: page_supply_pack
         """
-        for attempt in range(9):
+        confirm_timer = Timer(1, count=3).start()
+        # Add by MHY, 兜底上限：页面缺失或价格栏一直变化时，原无限循环会永久截图
+        search_timeout = Timer(SUPPLY_PACK_SEARCH_TIMEOUT).start()
+        previous = None
+        attempt = 0
+        while True:
             if skip_first_screenshot:
                 skip_first_screenshot = False
             else:
                 self.device.screenshot()
 
+            if search_timeout.reached():
+                logger.warning(f'[免费福利-补给] 查找超时 {SUPPLY_PACK_SEARCH_TIMEOUT} 秒，未找到 {supply_pack}')
+                return False
+
             if self.appear(supply_pack, offset=(0, -20, 400, 20)):
                 return True
-            if attempt < 8:
-                self.device.swipe_vector((-400, 0), box=(230, 200, 1060, 600))
+
+            if self.appear(page_supply_pack.check_button, offset=(20, 20)):
+                # 只观察识别范围内的价格栏，避开商品立绘动画；过渡帧不能算作检查完成。
+                x1, y1, x2, y2 = supply_pack.area
+                current = self.image_crop((x1, y1 - 20, x2 + 400, y2 + 20))
+                if previous is None or \
+                        cv2.norm(current, previous, cv2.NORM_L1) > current.size * SUPPLY_PACK_STABLE_DIFF:
+                    previous = current
+                    confirm_timer.reset()
+                    continue
+
+                if confirm_timer.reached():
+                    if attempt >= 8:
+                        break
+                    logger.info('[免费福利-补给] 当前屏稳定检查未找到补给包，向左查找')
+                    self.device.swipe_vector((-400, 0), box=(230, 200, 1060, 600))
+                    attempt += 1
+                    previous = None
+                    confirm_timer.reset()
+            else:
+                previous = None
+                confirm_timer.reset()
 
         logger.warning(f'[免费福利-补给] 左滑 8 次后仍未找到 {supply_pack}')
         return False

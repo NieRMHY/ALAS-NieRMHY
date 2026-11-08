@@ -350,9 +350,11 @@ def refresh_plan_if_requested(config):
     logger.hr('岛屿方案刷新', level=2)
     season = config.cross_get(SEASON_KEY, default=None)
     try:
-        # Modify by MHY, 冬季经济与赛季表尚未录入，避免刷新清空手填冬季方案。
+        # Modify by MHY, 上游 data.py 已带第 5 季，但本地经济表仍是 wiki 2026-09 的 59 个商品
+        # （没有冬季菜品的售价与材料成本），赛季任务表也只有秋季：照常刷新会把冬季菜品从
+        # 手填方案里挤掉，所以冬季保留现有生产与上架配置。
         if season == 'winter':
-            logger.warning('[岛屿-方案刷新] 冬季规划数据尚不完整，保留现有生产与上架配置')
+            logger.warning('[岛屿-方案刷新] 本地经济表暂无冬季菜品数据，保留现有生产与上架配置')
             return False
         # Modify by MHY, 赛季进度取自仓库读数（island_season_progress），不再读赛季页
         progress = current_progress(config, season)
