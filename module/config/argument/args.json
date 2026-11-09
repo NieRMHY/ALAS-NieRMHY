@@ -16903,6 +16903,22 @@
           false
         ]
       },
+      "WinterTaskEnabled": {
+        "type": "checkbox",
+        "value": true,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "MealBuffer": {
+        "type": "input",
+        "value": 20,
+        "validate": [
+          0,
+          999
+        ]
+      },
       "Need_apple_juice": {
         "type": "input",
         "value": 250
@@ -16992,6 +17008,198 @@
         "value": 50
       },
       "Done_steak_bowl": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "Need_tea": {
+        "type": "input",
+        "value": 500
+      },
+      "Done_tea": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "Need_citrus": {
+        "type": "input",
+        "value": 500
+      },
+      "Done_citrus": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "Need_mango": {
+        "type": "input",
+        "value": 200
+      },
+      "Done_mango": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "Need_avocado": {
+        "type": "input",
+        "value": 100
+      },
+      "Done_avocado": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "Need_freshwater_fish_meat": {
+        "type": "input",
+        "value": 100
+      },
+      "Done_freshwater_fish_meat": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "Need_seawater_fish_meat": {
+        "type": "input",
+        "value": 100
+      },
+      "Done_seawater_fish_meat": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "Need_chicken_potato": {
+        "type": "input",
+        "value": 100
+      },
+      "Done_chicken_potato": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "Need_rice_mango": {
+        "type": "input",
+        "value": 50
+      },
+      "Done_rice_mango": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "Need_strawberry_charlotte": {
+        "type": "input",
+        "value": 25
+      },
+      "Done_strawberry_charlotte": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "Need_silver": {
+        "type": "input",
+        "value": 25
+      },
+      "Done_silver": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "Need_elegant_wood": {
+        "type": "input",
+        "value": 25
+      },
+      "Done_elegant_wood": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "Need_sachet": {
+        "type": "input",
+        "value": 10
+      },
+      "Done_sachet": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "Need_cutlery": {
+        "type": "input",
+        "value": 10
+      },
+      "Done_cutlery": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "Need_ink_cartridge": {
+        "type": "input",
+        "value": 10
+      },
+      "Done_ink_cartridge": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "Need_clock": {
+        "type": "input",
+        "value": 10
+      },
+      "Done_clock": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "Need_battery": {
+        "type": "input",
+        "value": 10
+      },
+      "Done_battery": {
         "type": "checkbox",
         "value": false,
         "option": [

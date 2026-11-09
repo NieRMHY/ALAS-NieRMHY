@@ -11,32 +11,62 @@ from module.island.island_away_cook import (
     rotation_key,
     season_items_for_shop,
 )
+from module.island.island_season_plan_data import WINTER_ENABLED_KEY
+
+
+def fake_config(notify=True, winter=True, **values):
+    """只有 cross_get 的配置替身：提醒总开关 + 冬季任务开关，其余键由 values 补。"""
+    from unittest import mock
+
+    store = {'IslandSeasonPlan.IslandSeasonPlan.NotifyEnable': notify,
+             WINTER_ENABLED_KEY: winter}
+    store.update(values)
+    config = mock.Mock()
+    config.config_name = 'ALAS'
+    config.Error_OnePushConfig = 'provider: smtp'
+    config.cross_get.side_effect = lambda key, default=None: store.get(key, default)
+    return config
+
+
+def run_notify(progress, notified=None, season='autumn', config=None, reserve=None,
+               buffer=20, unknown=(), error=None, stub_reserve=True):
+    """跑一遍 notify_ready_from_progress，返回 (提醒物品, 邮件, 通知状态, 落盘次数)。
+
+    stub_reserve=False 时不桩 business_requirements/meal_buffer，用真实配置算营业储备。
+    """
+    from contextlib import nullcontext
+    from unittest import mock
+    from module.island import island_away_cook as away_cook
+
+    sent = []
+    notified = {} if notified is None else notified
+    saved = []
+    if stub_reserve:
+        requirements = (mock.patch('module.island.island_winter_meals.business_requirements',
+                                   side_effect=error) if error else
+                        mock.patch('module.island.island_winter_meals.business_requirements',
+                                   return_value=(dict(reserve or {}), set(unknown))))
+        buffer_patch = mock.patch('module.island.island_winter_meals.meal_buffer',
+                                  return_value=buffer)
+    else:
+        requirements = nullcontext()
+        buffer_patch = nullcontext()
+    with requirements, buffer_patch, \
+            mock.patch.object(away_cook, 'load_notified', return_value=notified), \
+            mock.patch.object(away_cook, 'save_notified', side_effect=saved.append), \
+            mock.patch('module.notify.notify.handle_notify',
+                       side_effect=lambda *a, **k: sent.append(k) or True):
+        fired = away_cook.notify_ready_from_progress(config or fake_config(), season, progress)
+    return fired, sent, notified, saved
 
 
 class TestNotifyReadyFromProgress(unittest.TestCase):
     """进度（仓库读数）达标才发邮件；通知函数必须真的跑一遍：写过 notify_title 却忘了
     import 只有调用时才暴露。"""
 
-    def _config(self):
-        from unittest import mock
-        config = mock.Mock()
-        config.config_name = 'ALAS'
-        config.Error_OnePushConfig = 'provider: smtp'
-        return config
-
-    def _run(self, progress, notified=None):
-        from unittest import mock
-        from module.island import island_away_cook as away_cook
-
-        sent = []
-        notified = {} if notified is None else notified
-        saved = []
-        with mock.patch.object(away_cook, 'load_notified', return_value=notified), \
-                mock.patch.object(away_cook, 'save_notified', side_effect=saved.append), \
-                mock.patch('module.notify.notify.handle_notify',
-                           side_effect=lambda *a, **k: sent.append(k) or True):
-            fired = away_cook.notify_ready_from_progress(self._config(), 'autumn', progress)
-        return fired, sent, notified, saved
+    def _run(self, progress, notified=None, **kwargs):
+        kwargs.setdefault('season', 'autumn')
+        return run_notify(progress, notified=notified, **kwargs)
 
     def test_ready_sends_one_mail(self):
         fired, sent, _, _ = self._run({'apple_juice': [250, 250]})
@@ -93,6 +123,109 @@ class TestNotifyReadyFromProgress(unittest.TestCase):
         self.assertEqual(fired, [])
 
 
+class TestWinterMealNotify(unittest.TestCase):
+    """冬季餐品：任务需求 + 营业储备 + MealBuffer 都够了才提醒。"""
+
+    def _run(self, progress, notified=None, **kwargs):
+        kwargs.setdefault('season', 'winter')
+        return run_notify(progress, notified=notified, **kwargs)
+
+    def test_threshold_includes_reserve_and_buffer(self):
+        """需求 100 + 营业储备 12 + 缓冲 20 = 132：差一件就不能提醒。"""
+        reserve = {'chicken_potato': 12}
+        fired, sent, _, _ = self._run({'chicken_potato': [131, 100]}, reserve=reserve)
+        self.assertEqual((fired, sent), ([], []))
+        fired, sent, _, _ = self._run({'chicken_potato': [132, 100]}, reserve=reserve)
+        self.assertEqual(fired, ['chicken_potato'])
+        self.assertEqual(len(sent), 1)
+
+    def test_buffer_alone_is_not_enough(self):
+        """只按需求 + 缓冲（120）攒够还不行，还要留出营业储备。"""
+        reserve = {'chicken_potato': 12}
+        fired, _, _, _ = self._run({'chicken_potato': [120, 100]}, reserve=reserve)
+        self.assertEqual(fired, [])
+
+    def test_reserve_for_other_items_does_not_change_threshold(self):
+        reserve = {'rice_mango': 99}
+        fired, _, _, _ = self._run({'chicken_potato': [120, 100]}, reserve=reserve)
+        self.assertEqual(fired, ['chicken_potato'])
+
+    def test_switch_off_sends_nothing(self):
+        fired, sent, _, _ = self._run({'chicken_potato': [999, 100]},
+                                      config=fake_config(winter=False))
+        self.assertEqual((fired, sent), ([], []))
+
+    def test_notify_switch_off_sends_nothing(self):
+        fired, sent, _, _ = self._run({'chicken_potato': [999, 100]},
+                                      config=fake_config(notify=False))
+        self.assertEqual((fired, sent), ([], []))
+
+    def test_reserve_failure_sends_nothing(self):
+        """营业储备算不出来（配方循环等）时宁可不提醒，不能把销售占用当 0。"""
+        fired, sent, _, _ = self._run({'chicken_potato': [999, 100]},
+                                      error=ValueError('餐品配方存在循环依赖'))
+        self.assertEqual((fired, sent), ([], []))
+
+    def test_unknown_stock_never_notifies(self):
+        fired, sent, _, _ = self._run({'chicken_potato': [None, 100]})
+        self.assertEqual((fired, sent), ([], []))
+
+    def test_drop_between_need_and_target_resets(self):
+        """销售消耗掉一部分（还在需求之上、储备之下）就复位，攒回来再提醒。"""
+        notified = {}
+        reserve = {'chicken_potato': 12}
+        self._run({'chicken_potato': [132, 100]}, notified, reserve=reserve)
+        self._run({'chicken_potato': [110, 100]}, notified, reserve=reserve)
+        self.assertFalse(notified['winter']['chicken_potato']['notified'])
+        fired, sent, _, _ = self._run({'chicken_potato': [132, 100]}, notified,
+                                      reserve=reserve)
+        self.assertEqual(fired, ['chicken_potato'])
+        self.assertEqual(len(sent), 1)
+
+    def test_message_states_basis_and_caveats(self):
+        fired, sent, _, _ = self._run({'chicken_potato': [140, 100]},
+                                      reserve={'chicken_potato': 12})
+        self.assertEqual(fired, ['chicken_potato'])
+        content = sent[0]['content']
+        self.assertIn('最近一次仓库读数', content)
+        self.assertIn('提交前请在游戏内核对', content)
+        self.assertIn('Done_', content)
+        self.assertIn('自动提交', content)
+        self.assertIn('销售', content)
+        self.assertIn('营业储备', content)
+        self.assertIn('餐品缓冲 20', content)
+        self.assertNotIn('绝不影响销售', content)
+        self.assertIn('可以提交', sent[0]['title'])
+
+    def test_unknown_shops_pause_notification(self):
+        fired, sent, _, _ = self._run({'chicken_potato': [140, 100]},
+                                      reserve={'chicken_potato': 12},
+                                      unknown={'juu_eatery'})
+        self.assertEqual(fired, [])
+        self.assertEqual(sent, [])
+
+    def test_real_business_requirements_drive_threshold(self):
+        """不桩 business_requirements：钻石店一格禽肉土豆拼盘 = 6 件营业储备。"""
+        config = fake_config(**{
+            'IslandBusiness.IslandBusiness.ShopLevel': 'diamond',
+            'IslandBusiness.IslandBusinessShop4.Product1': 'chicken_potato',
+        })
+        fired, sent, _, _ = self._run({'chicken_potato': [125, 100]}, config=config,
+                                      stub_reserve=False)
+        self.assertEqual((fired, sent), ([], []))
+        fired, sent, _, _ = self._run({'chicken_potato': [126, 100]}, config=config,
+                                      stub_reserve=False)
+        self.assertEqual(fired, ['chicken_potato'])
+        self.assertEqual(len(sent), 1)
+
+    def test_non_winter_keeps_plain_need(self):
+        """非冬季不受营业储备影响：需求 100 攒够就提醒。"""
+        fired, sent, _, _ = self._run({'chicken_potato': [100, 100]},
+                                      season='autumn', reserve={'chicken_potato': 999})
+        self.assertEqual(fired, ['chicken_potato'])
+        self.assertEqual(len(sent), 1)
+
+
 class TestSeasonItemsForShop(unittest.TestCase):
     def test_coffee_items(self):
         """咖啡店要交冰咖啡和拿铁"""
@@ -125,8 +258,14 @@ class TestPickAwayCook(unittest.TestCase):
         self.assertEqual(pick_away_cook('juu_coffee', 'autumn', counts), 'None')
 
     def test_missing_stock_counts_as_zero(self):
-        """读不到库存的物品按 0 算（保守）"""
+        """读不到库存的物品按 0 算（保守多产，不会误判成已攒够）"""
         self.assertEqual(pick_away_cook('grill', 'autumn', {}), 'roasted_skewer')
+
+    def test_none_and_negative_counts_are_tolerated(self):
+        """-1/None 是未知读数的写法：轮换不能让它们参与比较而报错。"""
+        counts = {'roasted_skewer': None, 'carrot_omelette': -1,
+                  'stir_fried_chicken': 0, 'steak_bowl': 0}
+        self.assertEqual(pick_away_cook('grill', 'autumn', counts), 'roasted_skewer')
 
     def test_producible_filter(self):
         """不在可生产集合里的物品跳过"""

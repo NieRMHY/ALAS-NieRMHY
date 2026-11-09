@@ -328,7 +328,7 @@
     },
     "IslandSeasonPlan": {
       "name": "Season Tasks (Development Plan)",
-      "help": "No longer reads the Development Plan page (it misreads digits). Each time a shop collects production or checks sales, the warehouse is read as the current amount. You only enter each task's required amount and tick Done for dishes you already submitted. Done dishes stop being produced and notified, and idle capacity moves to the next-largest gap. The dishes for a new season are updated by the program."
+      "help": "No longer reads the Development Plan page (it misreads digits). Each time a shop collects production or checks sales, the warehouse is read as the current amount. You only enter each task's required amount and tick Done for submitted items. Done items stop being planned and notified, and idle capacity moves to the next-largest gap. In winter, natural tasks reserve 100 extra and meal tasks add the Meal Buffer; the season list is updated by the program."
     },
     "IslandBusiness": {
       "name": "Business Module",
@@ -6387,13 +6387,23 @@
   "IslandSeasonPlan": {
     "_info": {
       "name": "Season Tasks (Development Plan)",
-      "help": "No longer reads the Development Plan page (it misreads digits). Each time a shop collects production or checks sales, the warehouse is read as the current amount. You only enter each task's required amount and tick Done for dishes you already submitted. Done dishes stop being produced and notified, and idle capacity moves to the next-largest gap. The dishes for a new season are updated by the program."
+      "help": "No longer reads the Development Plan page (it misreads digits). Each time a shop collects production or checks sales, the warehouse is read as the current amount. You only enter each task's required amount and tick Done for submitted items. Done items stop being planned and notified, and idle capacity moves to the next-largest gap. In winter, natural tasks reserve 100 extra and meal tasks add the Meal Buffer; the season list is updated by the program."
     },
     "NotifyEnable": {
       "name": "Ready email",
       "help": "Send one email when the warehouse reaches the required amount (once per item; reset when it drops). Tick Done for tasks you already submitted, otherwise a stock above the requirement keeps notifying.",
       "True": "On",
       "False": "Off"
+    },
+    "WinterTaskEnabled": {
+      "name": "Winter Task Mode",
+      "help": "Only applies when Season is Winter: natural tasks reserve 100 extra items, and meal tasks add the Meal Buffer. Turning this off removes the 16 winter tasks from planning and notifications; other seasons are unaffected.",
+      "True": "On",
+      "False": "Off"
+    },
+    "MealBuffer": {
+      "name": "Meal Buffer",
+      "help": "Extra amount produced beyond each winter meal task's required amount. Default 20; 0 is allowed. Applies only to winter meal tasks; natural tasks always reserve 100 extra and manufacture tasks get no buffer."
     },
     "Need_apple_juice": {
       "name": "Apple Juice · Required",
@@ -6472,6 +6482,166 @@
     "Done_steak_bowl": {
       "name": "Steak Rice Bowl · Done",
       "help": "When ticked, Steak Rice Bowl is no longer produced or notified and idle capacity moves to the next-largest gap. Untick to resume.",
+      "True": "On",
+      "False": "Off"
+    },
+    "Need_tea": {
+      "name": "Tea Leaves · Required",
+      "help": "Amount to submit for \"Stocking Up on Tea\". Natural tasks reserve 100 extra when planning. 0 means do not produce."
+    },
+    "Done_tea": {
+      "name": "Tea Leaves · Done",
+      "help": "When ticked, Tea Leaves is no longer planned or notified, and idle capacity moves to the next-largest gap. Untick to resume.",
+      "True": "On",
+      "False": "Off"
+    },
+    "Need_citrus": {
+      "name": "Citrus Fruit · Required",
+      "help": "Amount to submit for \"Citrus Resupply\". Natural tasks reserve 100 extra when planning. 0 means do not produce."
+    },
+    "Done_citrus": {
+      "name": "Citrus Fruit · Done",
+      "help": "When ticked, Citrus Fruit is no longer planned or notified, and idle capacity moves to the next-largest gap. Untick to resume.",
+      "True": "On",
+      "False": "Off"
+    },
+    "Need_mango": {
+      "name": "Mango · Required",
+      "help": "Amount to submit for \"A Mango Windfall\". The game requires 250; the default is 200, and the natural-task reserve of 100 still covers the submission. 0 means do not produce."
+    },
+    "Done_mango": {
+      "name": "Mango · Done",
+      "help": "When ticked, Mango is no longer planned or notified, and idle capacity moves to the next-largest gap. Untick to resume.",
+      "True": "On",
+      "False": "Off"
+    },
+    "Need_avocado": {
+      "name": "Avocado · Required",
+      "help": "Amount to submit for \"Fragrant Avocado\". Natural tasks reserve 100 extra when planning. 0 means do not produce."
+    },
+    "Done_avocado": {
+      "name": "Avocado · Done",
+      "help": "When ticked, Avocado is no longer planned or notified, and idle capacity moves to the next-largest gap. Untick to resume.",
+      "True": "On",
+      "False": "Off"
+    },
+    "Need_freshwater_fish_meat": {
+      "name": "Freshwater Fish Meat · Required",
+      "help": "Amount to submit for \"Freshwater Foods\". Natural tasks reserve 100 extra when planning. 0 means do not produce."
+    },
+    "Done_freshwater_fish_meat": {
+      "name": "Freshwater Fish Meat · Done",
+      "help": "When ticked, Freshwater Fish Meat is no longer planned or notified, and idle capacity moves to the next-largest gap. Untick to resume.",
+      "True": "On",
+      "False": "Off"
+    },
+    "Need_seawater_fish_meat": {
+      "name": "Saltwater Fish Meat · Required",
+      "help": "Amount to submit for \"Seafood Stocks\". Natural tasks reserve 100 extra when planning. 0 means do not produce."
+    },
+    "Done_seawater_fish_meat": {
+      "name": "Saltwater Fish Meat · Done",
+      "help": "When ticked, Saltwater Fish Meat is no longer planned or notified, and idle capacity moves to the next-largest gap. Untick to resume.",
+      "True": "On",
+      "False": "Off"
+    },
+    "Need_chicken_potato": {
+      "name": "Chicken and Potato Hors d'Oeuvre · Required",
+      "help": "Amount to submit for \"Platters of Abundance\". Meal tasks add the Meal Buffer when planning. 0 means do not produce."
+    },
+    "Done_chicken_potato": {
+      "name": "Chicken and Potato Hors d'Oeuvre · Done",
+      "help": "When ticked, Chicken and Potato Hors d'Oeuvre is no longer planned or notified, and idle capacity moves to the next-largest gap. Untick to resume.",
+      "True": "On",
+      "False": "Off"
+    },
+    "Need_rice_mango": {
+      "name": "Sticky Rice with Mango · Required",
+      "help": "Amount to submit for \"Sweet Treats\". Meal tasks add the Meal Buffer when planning. 0 means do not produce."
+    },
+    "Done_rice_mango": {
+      "name": "Sticky Rice with Mango · Done",
+      "help": "When ticked, Sticky Rice with Mango is no longer planned or notified, and idle capacity moves to the next-largest gap. Untick to resume.",
+      "True": "On",
+      "False": "Off"
+    },
+    "Need_strawberry_charlotte": {
+      "name": "Strawberry Charlotte · Required",
+      "help": "Amount to submit for \"Dessert Reserves\". Meal tasks add the Meal Buffer when planning. 0 means do not produce."
+    },
+    "Done_strawberry_charlotte": {
+      "name": "Strawberry Charlotte · Done",
+      "help": "When ticked, Strawberry Charlotte is no longer planned or notified, and idle capacity moves to the next-largest gap. Untick to resume.",
+      "True": "On",
+      "False": "Off"
+    },
+    "Need_silver": {
+      "name": "Silver Ore · Required",
+      "help": "Amount to submit for \"Extracting Silver Ore\". Natural tasks reserve 100 extra when planning. 0 means do not produce."
+    },
+    "Done_silver": {
+      "name": "Silver Ore · Done",
+      "help": "When ticked, Silver Ore is no longer planned or notified, and idle capacity moves to the next-largest gap. Untick to resume.",
+      "True": "On",
+      "False": "Off"
+    },
+    "Need_elegant_wood": {
+      "name": "Elegant Wood · Required",
+      "help": "Amount to submit for \"Checking Timber Stocks\". Natural tasks reserve 100 extra when planning. 0 means do not produce."
+    },
+    "Done_elegant_wood": {
+      "name": "Elegant Wood · Done",
+      "help": "When ticked, Elegant Wood is no longer planned or notified, and idle capacity moves to the next-largest gap. Untick to resume.",
+      "True": "On",
+      "False": "Off"
+    },
+    "Need_sachet": {
+      "name": "Aroma Sachet · Required",
+      "help": "Amount to submit for \"Sachet Supply\". Manufacture tasks are produced to the required amount with no buffer. 0 means do not produce."
+    },
+    "Done_sachet": {
+      "name": "Aroma Sachet · Done",
+      "help": "When ticked, Aroma Sachet is no longer planned or notified, and idle capacity moves to the next-largest gap. Untick to resume.",
+      "True": "On",
+      "False": "Off"
+    },
+    "Need_cutlery": {
+      "name": "Utensils · Required",
+      "help": "Amount to submit for \"Setting the Table\". Manufacture tasks are produced to the required amount with no buffer. 0 means do not produce."
+    },
+    "Done_cutlery": {
+      "name": "Utensils · Done",
+      "help": "When ticked, Utensils is no longer planned or notified, and idle capacity moves to the next-largest gap. Untick to resume.",
+      "True": "On",
+      "False": "Off"
+    },
+    "Need_ink_cartridge": {
+      "name": "Ink Cartridge · Required",
+      "help": "Amount to submit for \"Providing for Paperwork\". Manufacture tasks are produced to the required amount with no buffer. 0 means do not produce."
+    },
+    "Done_ink_cartridge": {
+      "name": "Ink Cartridge · Done",
+      "help": "When ticked, Ink Cartridge is no longer planned or notified, and idle capacity moves to the next-largest gap. Untick to resume.",
+      "True": "On",
+      "False": "Off"
+    },
+    "Need_clock": {
+      "name": "Clock · Required",
+      "help": "Amount to submit for \"Time Management\". Manufacture tasks are produced to the required amount with no buffer. 0 means do not produce."
+    },
+    "Done_clock": {
+      "name": "Clock · Done",
+      "help": "When ticked, Clock is no longer planned or notified, and idle capacity moves to the next-largest gap. Untick to resume.",
+      "True": "On",
+      "False": "Off"
+    },
+    "Need_battery": {
+      "name": "Battery · Required",
+      "help": "Amount to submit for \"Power Reserves\". Manufacture tasks are produced to the required amount with no buffer. 0 means do not produce."
+    },
+    "Done_battery": {
+      "name": "Battery · Done",
+      "help": "When ticked, Battery is no longer planned or notified, and idle capacity moves to the next-largest gap. Untick to resume.",
       "True": "On",
       "False": "Off"
     }

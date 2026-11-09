@@ -12,6 +12,12 @@ IslandSeasonPlan.Progress（见 island_season_progress），本任务只做三�
 本任务不碰游戏画面：没有设备操作，也不会因为页面识别失败而重启游戏。
 页面读取器（island_season_plan_reader）与就地提交逻辑作为储备保留在仓库里。
 
+冬季另有两条口径（Add by MHY）：
+    - WinterTaskEnabled 关闭时 island_season_progress.read_slots 返回空列表，进度与
+      提醒一起停；冬季餐品的提醒阈值是「任务需求 + 营业储备 + MealBuffer」，营业储备
+      与缓冲由 island_winter_meals 按当前货架/套餐配置算（见 notify_ready_from_progress）。
+    - 自动提交仍未接入，提醒只说明「最近一次仓库读数已经够」，不改货架与原始 Meal 配置。
+
 收餐会触发本任务，限流避免每家店铺跑完都真算一遍。
 """
 from module.island.island_away_cook import notify_ready_from_progress

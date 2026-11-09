@@ -211,7 +211,7 @@ class BusinessStockCheckMixin:
         if not key:
             return
         season = SeasonConfig(self.config).season
-        # Modify by MHY, 本地赛季任务表只录入秋季（冬季任务尚未整理成餐品/数量表），
+        # Modify by MHY, 冬季按独立任务配额增产，保持用户货架与闲时生产配置，
         # 不以空任务集恢复旧常驻菜，保留手填值。
         if not season or season == 'winter':
             return

@@ -9,6 +9,7 @@ from module.ui.page import *
 from module.handler.login import LoginHandler
 from module.config.utils import *
 from module.island.warehouse import *
+from module.island.island_winter_resources import ore_threshold
 from datetime import timedelta
 from module.config.time_source import now as current_time
 
@@ -83,14 +84,20 @@ class IslandMineForest(Island,LoginHandler):
     NUMBER_REL = (45, 90, 99, 110)
 
     def _get_threshold(self, product_name):
-        """获取指定产品的最低库存阈值"""
+        """获取指定产品的最低库存阈值。
+
+        Add by MHY, 冬季开发计划任务（银矿 25 / 典雅之木 25）在运行时取较大值叠加：
+        max(日常下限, 未提交需求 + 缓冲)，不写回 `IslandMine_Min*`/`IslandForest_Min*`。
+        """
         mine_products = ['Copper', 'Aluminium', 'Iron', 'Sulphur', 'Silver']
         forest_products = ['Elegant', 'Practical', 'Selected']
         if product_name in mine_products:
-            return getattr(self.config, f'IslandMine_Min{product_name}', 0)
+            base = getattr(self.config, f'IslandMine_Min{product_name}', 0)
         elif product_name in forest_products:
-            return getattr(self.config, f'IslandForest_Min{product_name}', 0)
-        return 0
+            base = getattr(self.config, f'IslandForest_Min{product_name}', 0)
+        else:
+            base = 0
+        return ore_threshold(self.config, product_name, base)
 
     @staticmethod
     def _post_available_for_dispatch(post_info):

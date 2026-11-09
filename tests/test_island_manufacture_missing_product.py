@@ -64,6 +64,7 @@ class MissingProductTest(unittest.TestCase):
         factory.manufacture = {'industrial_production': {'items': [item('iron_nail'), item('cutlery')]}}
         factory.config = SimpleNamespace(Industrial_Products='')
         factory.warehouse_counts = {'iron_nail': 30}
+        factory.winter_quota_plan = None
         factory.get_idle_posts_by_category = Mock(return_value=['POST1'])
         factory.select_product_with_material_check = Mock()
         factory.schedule_industrial_production()
@@ -80,8 +81,15 @@ class ProductOrderTest(unittest.TestCase):
         factory.manufacture = {category: {'items': [item(name) for name in names]}}
         factory.config = SimpleNamespace(**{f'{line}_Products': products})
         factory.warehouse_counts = {}
+        factory.post_items = {}
         factory.get_idle_posts_by_category = Mock(return_value=['POST1', 'POST2'])
-        factory.select_product_with_material_check = Mock()
+
+        # Modify by MHY, 选品替身同步真实派遣后的实际数量，供本轮在制记账。
+        def fake_select(post_id, product_list):
+            factory._last_actual_number = 7
+            return product_list[0]
+
+        factory.select_product_with_material_check = Mock(side_effect=fake_select)
         return factory
 
     def test_parse_product_order(self):
@@ -95,6 +103,10 @@ class ProductOrderTest(unittest.TestCase):
         calls = factory.select_product_with_material_check.call_args_list
         self.assertEqual([call.args[0] for call in calls], ['POST1', 'POST2'])
         self.assertEqual([p['name'] for p in calls[0].args[1]], ['notebook', 'paper'])
+        self.assertEqual(factory.post_items, {
+            post: {'status': 'working', 'product': 'notebook', 'number': 7}
+            for post in ('POST1', 'POST2')
+        })
 
     def test_empty_order_keeps_fixed_rule(self):
         factory = self.make('', names=('file_cabinet', 'paper', 'notebook'))

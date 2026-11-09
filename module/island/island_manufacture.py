@@ -14,6 +14,16 @@ from datetime import timedelta
 from module.config.time_source import now as current_time
 from module.logger import logger
 from module.base.button import Button
+# Add by MHY, 2026-11-09: 冬季开发计划制造任务的有限配额（纯逻辑在 quota 模块）
+from module.island.island_manufacture_quota import (
+    CAPABILITY_DISPATCHABLE,
+    DEFAULT_BATCH_LIMIT,
+    DEPENDENCY_ITEMS,
+    describe_decision,
+    plan_winter_quota,
+    read_winter_task_settings,
+    season_quota_enabled,
+)
 
 
 # 固定位置按钮 — 在产品选择界面不滑动时，荠菜的固定位置
@@ -94,6 +104,15 @@ class IslandManufacture(IslandShopBase):
         shop_items (list): 展平的所有产品配置列表。
         unavailable_products (set): 当前批次已确认材料不足的产品集合。
     """
+    # 岗位 ID 按制造类别分组（排产与冬季配额共用，避免各处再抄一份列表）
+    POST_IDS = {
+        'wood_processing': ('ISLAND_WOOD_PROCESSING_POST1', 'ISLAND_WOOD_PROCESSING_POST2'),
+        'electronic_processing': ('ISLAND_ELECTRONIC_PROCESSING_POST1',
+                                  'ISLAND_ELECTRONIC_PROCESSING_POST2'),
+        'industrial_production': ('ISLAND_INDUSTRIAL_POST1', 'ISLAND_INDUSTRIAL_POST2'),
+        'handmade': ('ISLAND_HANDMADE_POST1', 'ISLAND_HANDMADE_POST2'),
+    }
+
     def __init__(self, *args, **kwargs):
         # 先初始化基类
         IslandShopBase.__init__(self, *args, **kwargs)
@@ -197,6 +216,15 @@ class IslandManufacture(IslandShopBase):
         # 本批生产已确认材料不足的物品（同一批内后续岗位直接跳过）
         self.unavailable_products = set()
 
+        # Add by MHY, 2026-11-09: 冬季任务有限配额状态（每个 run 重建）
+        # post_items 记录每个岗位本轮识别到的产品/数量，配额据此判断在制是否已知
+        self.winter_quota_plan = None
+        self.winter_quota_ordered = {}
+        self.post_items = {}
+        self._post_check_product = None
+        self._last_actual_number = 0
+        self._warehouse_scanned = False
+
     def _init_post_buttons(self):
         """根据配置初始化启用的制造业岗位按钮。
 
@@ -235,19 +263,224 @@ class IslandManufacture(IslandShopBase):
         Returns:
             list[str]: 属于该类别的空闲岗位 ID 列表。
         """
-        category_posts = []
-        if category == 'wood_processing':
-            category_posts = ['ISLAND_WOOD_PROCESSING_POST1', 'ISLAND_WOOD_PROCESSING_POST2']
-        elif category == 'electronic_processing':
-            category_posts = ['ISLAND_ELECTRONIC_PROCESSING_POST1', 'ISLAND_ELECTRONIC_PROCESSING_POST2']
-        elif category == 'industrial_production':
-            category_posts = ['ISLAND_INDUSTRIAL_POST1', 'ISLAND_INDUSTRIAL_POST2']
-        elif category == 'handmade':
-            category_posts = ['ISLAND_HANDMADE_POST1', 'ISLAND_HANDMADE_POST2']
-
         # 只返回实际存在的空闲岗位
-        return [post_id for post_id in category_posts
+        return [post_id for post_id in self.POST_IDS.get(category, ())
                 if post_id in self.posts and self.posts[post_id]['status'] == 'idle']
+
+    def post_category(self, post_id):
+        """岗位 ID 对应的制造类别；未知岗位返回 None。"""
+        for category, post_ids in self.POST_IDS.items():
+            if post_id in post_ids:
+                return category
+        return None
+
+    # ==================== 冬季任务有限配额 ====================
+
+    def get_warehouse_counts(self):
+        """读取仓库库存，并记录本轮确实扫过仓库（配额据此判断库存是否已知）。"""
+        counts = super().get_warehouse_counts()
+        self._warehouse_scanned = True
+        return counts
+
+    def post_product_check(self):
+        """识别岗位在产产品，同时留给 post_check 记录到岗位级状态。"""
+        product = super().post_product_check()
+        self._post_check_product = product
+        return product
+
+    def post_check(self, post_id, time_var_name):
+        """巡检岗位状态，并记录岗位级产品/数量供冬季配额判断在制。
+
+        基类只把数量累加到 post_check_meal，无法区分「某岗位数量没读到」和
+        「该产品没在产」。这里用累加前后的差值还原单岗位数量，读不到记 None。
+        """
+        before = dict(self.post_check_meal)
+        self._post_check_product = None
+        super().post_check(post_id, time_var_name)
+        status = self.posts.get(post_id, {}).get('status')
+        product = self._post_check_product if status == 'working' else None
+        number = None
+        if product is not None:
+            delta = self.post_check_meal.get(product, 0) - before.get(product, 0)
+            if delta > 0:
+                number = delta
+        self.post_items[post_id] = {'status': status, 'product': product, 'number': number}
+
+    def _warehouse_stock(self, item):
+        """配额用的仓库库存读数，未识别时保留 None。
+
+        Modify by MHY, 2026-11-09：优先用本轮 strict 扫描的 warehouse_observations，
+        识别失败（None）也保留，避免「没读到」被 warehouse_counts 的 0 兜底盖掉。
+        没有该属性的旧测试夹具退回 warehouse_counts，保持原行为。
+
+        Args:
+            item (str): 商品名称。
+
+        Returns:
+            int | None: 已知库存；未知返回 None。
+        """
+        observations = getattr(self, 'warehouse_observations', None)
+        if observations is None:
+            return self.warehouse_counts.get(item)
+        return observations.get(item)
+
+    def _winter_quota_state(self, tasks):
+        """把岗位/仓库/本轮下单整理成配额层需要的观测状态。
+
+        未知一律用 None 表示：没有仓库模板、没扫仓库、在产数量读不到都算未知，
+        配额层会因此暂停任务派产，而不是按 0 补满缺口。仓库读数优先取 strict
+        扫描结果（warehouse_observations），只有旧数据才回退 warehouse_counts。
+        """
+        stock = {}
+        wip = {}
+        dependency_stock = {}
+        post_unknown = False
+        wip_totals = {}
+        wip_unknown = set()
+        # 只有可派产任务所在产线的未知在产才影响配额；其它产线的无识别图
+        # 产品（如布料/墨盒）在产时不该把餐具任务一起挂起。
+        dispatchable_lines = {task.get('line') for task in tasks
+                              if task['capability'] == CAPABILITY_DISPATCHABLE}
+
+        for post_id, post_info in self.post_items.items():
+            relevant = self.post_category(post_id) in dispatchable_lines
+            status = post_info.get('status')
+            if status == 'working':
+                product = post_info.get('product')
+                if product is None:
+                    if relevant:
+                        post_unknown = True
+                    continue
+                number = post_info.get('number')
+                if number is None:
+                    wip_unknown.add(product)
+                else:
+                    wip_totals[product] = wip_totals.get(product, 0) + number
+            elif status not in ('idle', 'locked'):
+                # Modify by MHY, 锁定岗位确定没有在制；其余未知状态仍暂停配额。
+                if relevant:
+                    post_unknown = True
+
+        for task in tasks:
+            item = task['item']
+            if task['capability'] != CAPABILITY_DISPATCHABLE:
+                stock[item] = None
+                wip[item] = None
+                continue
+            product_config = self.name_to_config.get(item) or {}
+            if self._warehouse_scanned and product_config.get('template') is not None:
+                stock[item] = self._warehouse_stock(item)
+            else:
+                stock[item] = None
+            if item in wip_unknown:
+                wip[item] = None
+            else:
+                # Modify by MHY, 本轮有限订单已记入 ordered，重算时从在制中剔除。
+                wip[item] = max(0, wip_totals.get(item, 0) - self.winter_quota_ordered.get(item, 0))
+
+        for dependency in DEPENDENCY_ITEMS:
+            dependency_config = self.name_to_config.get(dependency) or {}
+            if self._warehouse_scanned and dependency_config.get('template') is not None:
+                dependency_stock[dependency] = self._warehouse_stock(dependency)
+            else:
+                dependency_stock[dependency] = None
+
+        return {
+            'stock': stock,
+            'wip': wip,
+            'ordered': dict(self.winter_quota_ordered),
+            'post_unknown': post_unknown,
+            'dependency_stock': dependency_stock,
+        }
+
+    def prepare_winter_quota(self):
+        """计算本轮冬季任务配额；非冬季或开关关闭时清空计划。"""
+        self.winter_quota_plan = None
+        enabled, tasks = read_winter_task_settings(self.config)
+        season = getattr(self, 'current_season', None)
+        if not season_quota_enabled(season, enabled):
+            return None
+
+        posts_by_line = {}
+        for line in ('industrial_production', 'electronic_processing',
+                     'handmade', 'wood_processing'):
+            posts_by_line[line] = len(self.get_idle_posts_by_category(line))
+        plan = plan_winter_quota(tasks, self._winter_quota_state(tasks), posts_by_line)
+        self.winter_quota_plan = plan
+        logger.info('[岛屿-制造业][冬季配额] 冬季开发计划制造任务启用，按有限缺口补产')
+        for decision in plan['items']:
+            logger.info(describe_decision(decision))
+        return plan
+
+    def winter_quota_active(self):
+        """冬季任务配额是否生效（冬季 + WinterTaskEnabled），供排产回退判断。"""
+        enabled, _ = read_winter_task_settings(self.config)
+        return season_quota_enabled(getattr(self, 'current_season', None), enabled)
+
+    def dispatch_winter_quota_batches(self, category):
+        """把本产线的冬季配额批次派给空闲岗位。
+
+        批次在 plan 里已经按缺口拆好，多岗位不会各自补满整个缺口；派完或
+        遇到选择/材料失败就停，剩余缺口留到下一轮重新观测。
+
+        每次派产后按岗位实际显示的数量扣减剩余缺口：实际比请求少时下一个岗位
+        按剩余缺口补，实际比请求多时直接收工，都不会重复下单。实际数量读不到
+        时既不当 0 也不按请求值记账，直接停止本项派产。
+        """
+        if not self.winter_quota_plan:
+            return 0
+        dispatched = 0
+        for decision in self.winter_quota_plan['items']:
+            if decision['status'] != 'dispatch' or not decision['batches']:
+                continue
+            if decision.get('line') != category:
+                continue
+            item_config = self.name_to_config.get(decision['item'])
+            if item_config is None:
+                logger.warning(
+                    f"[岛屿-制造业][冬季配额] {decision['cn']} 不在本店产品配置中，跳过")
+                continue
+            batches = decision['batches']
+            gap = decision.get('gap')
+            remaining = int(gap) if gap is not None else sum(batches)
+            batch_limit = int(decision.get('batch_limit') or DEFAULT_BATCH_LIMIT)
+            for post_id in self.get_idle_posts_by_category(category):
+                if remaining <= 0 or not batches:
+                    break
+                quantity = min(batch_limit, remaining)
+                result = self.select_product_with_material_check(
+                    post_id, [item_config], quantity=quantity)
+                if result is None:
+                    logger.info(
+                        f"[岛屿-制造业][冬季配额] {decision['cn']} 本轮未能派发"
+                        f"（选择/材料/角色原因），缺口保留到下一轮")
+                    break
+                actual = self._last_actual_number
+                if actual is None or actual <= 0:
+                    logger.warning(
+                        f"[岛屿-制造业][冬季配额] {decision['cn']} 派遣后未读到实际数量，"
+                        f"本轮停止该项派产，缺口留到下一轮重新观测（不按请求值记账）")
+                    # 读不到实际数量就不猜测；岗位按「在产品已知、数量未知」记录，
+                    # 清空批次避免同一轮再次下单
+                    self.post_items[post_id] = {
+                        'status': 'working', 'product': decision['item'], 'number': None}
+                    batches.clear()
+                    break
+                batches.pop(0)
+                remaining -= actual
+                self.winter_quota_ordered[decision['item']] = (
+                    self.winter_quota_ordered.get(decision['item'], 0) + actual)
+                self.post_items[post_id] = {
+                    'status': 'working', 'product': decision['item'], 'number': actual}
+                dispatched += actual
+                logger.info(
+                    f"[岛屿-制造业][冬季配额] {decision['cn']} 派产 x{quantity}"
+                    f"（实际 x{actual}，{post_id}），剩余缺口 {max(remaining, 0)}")
+            decision['gap'] = max(remaining, 0)
+            if remaining <= 0:
+                # 实际产量已够本轮缺口：剩余批次作废，避免下一岗位重复下单
+                batches.clear()
+        return dispatched
 
     def select_product(self, product_selection, product_selection_check):
         """选择制造产品。
@@ -270,19 +503,32 @@ class IslandManufacture(IslandShopBase):
         # 其他产品使用父类逻辑（模板匹配 + 向下滑动查找）
         return super().select_product(product_selection, product_selection_check)
 
-    def select_product_with_material_check(self, post_id, product_list):
+    @staticmethod
+    def _post_confirm_unavailable(image):
+        """选品页确认按钮是否因材料/角色不足变灰，沿用基类的取色区域。"""
+        color = get_color(image, (493, 597, 621, 643))
+        return color_similar(color, (153, 156, 156), 80)
+
+    def select_product_with_material_check(self, post_id, product_list, quantity=None):
         """选择产品并检查材料是否充足。
 
         按候选列表顺序尝试进入岗位选择；若材料不足则记忆并退出重置滑动，尝试下一个产品。
 
+        冬季配额传入 quantity 时只派有限批次：选品页数量从 1 起（与餐馆/茶馆/
+        矿场一致），点 quantity-1 次 +1；如果加到目标数量后确认按钮变灰（材料
+        只够更少的数量），退回按 1 件重新派遣，避免硬点无效的确认导致等待超时。
+
         Args:
             post_id (str): 目标岗位标识。
             product_list (list[dict]): 待尝试的产品配置列表。
+            quantity (int | None): 冬季任务配额的有限批次；None 时沿用 POST_MAX。
 
         Returns:
             dict | None: 成功安排生产的产品配置，全部失败则返回 None。
         """
         post_button = self.posts[post_id]['button']
+        self._last_actual_number = 0
+        requested_quantity = quantity
 
         for product_info in product_list:
             product_name = product_info['name']
@@ -347,12 +593,9 @@ class IslandManufacture(IslandShopBase):
                         logger.warning(f"[岛屿-制造业] 多次未找到 {self._item_cn(product_name)}，可能尚未解锁，本批跳过")
                     continue  # 下一轮重进重试同一产品
 
-                # 检查确认按钮状态
+                # 检查确认按钮状态：灰色（153, 156, 156）表示材料不足
                 image = self.device.screenshot()
-                color = get_color(image, (493, 597, 621, 643))
-
-                # 如果确认按钮是灰色（153, 156, 156），表示材料不足
-                if color_similar(color, (153, 156, 156), 80):
+                if self._post_confirm_unavailable(image):
                     # 记忆本批材料不足的物品，后续岗位不再重复尝试
                     self.unavailable_products.add(product_name)
                     logger.info(f"[岛屿-制造业] 材料不足，跳过产品: {self._item_cn(product_name)}")
@@ -367,7 +610,30 @@ class IslandManufacture(IslandShopBase):
                     break  # 跳出重试循环 -> 下一个产品
 
                 # 材料充足，派遣生产
-                self.appear_then_click(POST_MAX)
+                if requested_quantity is None:
+                    self.appear_then_click(POST_MAX)
+                else:
+                    # 冬季任务配额：复用 +1 数量调节，按缺口派有限批次，不用 POST_MAX。
+                    # 点击间隔 0.1s，避免连续点击被模拟器丢帧；加完数量后复查确认
+                    # 按钮颜色，材料只够 1 件以上不足时退回按 1 件重派。
+                    self.device.sleep(0.5)
+                    if int(requested_quantity) > 1:
+                        self.post_add_one(int(requested_quantity) - 1, interval=0.1)
+                        self.device.sleep(0.3)
+                    if int(requested_quantity) > 1 and self._post_confirm_unavailable(
+                            self.device.screenshot()):
+                        logger.warning(
+                            f"[岛屿-制造业] {self._item_cn(product_name)} 请求 "
+                            f"{requested_quantity} 件时材料不足，退回按 1 件派遣")
+                        requested_quantity = 1
+                        self.device.click(SELECT_UI_BACK)
+                        self.device.sleep(0.3)
+                        self.wait_until_appear(ISLAND_POSTMANAGE_CHECK)
+                        self.device.sleep(0.5)
+                        self.post_close()
+                        for _ in range(self.post_manage_swipe_count):
+                            self.post_manage_up_swipe(450)
+                        continue
                 self.device.click(POST_ADD_ORDER)
                 logger.info(f"[岛屿-制造业] 选择产品成功: {self._item_cn(product_name)}")
                 self.wait_until_appear(ISLAND_POSTMANAGE_CHECK)
@@ -382,6 +648,16 @@ class IslandManufacture(IslandShopBase):
                 ocr_post_number = Digit(OCR_POST_NUMBER, letter=(57, 58, 60), threshold=100,
                                         alphabet='0123456789')
                 actual_number = ocr_post_number.ocr(image)
+                self._last_actual_number = actual_number
+                if requested_quantity is not None:
+                    if actual_number <= 0:
+                        logger.warning(
+                            f"[岛屿-制造业] {self._item_cn(product_name)} 派遣后未读到数量，"
+                            f"按未知处理（不按请求值记账）")
+                    elif actual_number != requested_quantity:
+                        logger.warning(
+                            f"[岛屿-制造业] {self._item_cn(product_name)} 请求 "
+                            f"{requested_quantity} 件，岗位显示 {actual_number} 件")
                 time_work = Duration(ISLAND_WORKING_TIME)
                 time_value = time_work.ocr(self.device.image)
                 finish_time = current_time() + time_value
@@ -436,7 +712,14 @@ class IslandManufacture(IslandShopBase):
     def _schedule_line(self, category, product_list):
         """按产品列表为该类别的空闲岗位排产。"""
         for post_id in self.get_idle_posts_by_category(category):
-            self.select_product_with_material_check(post_id, product_list)
+            product = self.select_product_with_material_check(post_id, product_list)
+            if product is not None:
+                # Add by MHY, 后续任务缺口要扣除本轮普通排产；未知数量仍保留未知。
+                actual = self._last_actual_number
+                self.post_items[post_id] = {
+                    'status': 'working', 'product': product['name'],
+                    'number': actual if actual is not None and actual > 0 else None,
+                }
 
     def schedule_wood_processing(self):
         """安排木料加工生产：按 WoodProcessing.Products 的顺序，未配置时只生产文件柜。"""
@@ -455,23 +738,31 @@ class IslandManufacture(IslandShopBase):
         self._schedule_line('electronic_processing', product_list)
 
     def schedule_industrial_production(self):
-        """安排工业生产：按 Industrial.Products 的顺序，未配置时根据铁钉库存切换铁钉或餐具。"""
+        """安排工业生产：显式日常排产优先，冬季缺口用剩余岗位补齐。
+
+        无 Products 配置时先派有限任务，再回退铁钉；任务达标或 Done 后不再
+        自动按 MAX 继续造餐具。非冬季仍沿用原回退规则。
+        """
         product_list = self.configured_product_list('industrial_production')
         if product_list is not None:
             self._schedule_line('industrial_production', product_list)
+            # Modify by MHY, 日常订单计入在制后重算，避免抢占日常岗位或重复补任务。
+            self.prepare_winter_quota()
+            self.dispatch_winter_quota_batches('industrial_production')
             return
+        self.dispatch_winter_quota_batches('industrial_production')
         idle_posts = self.get_idle_posts_by_category('industrial_production')
         if not idle_posts:
             return
+        items = {item['name']: item for item in self.manufacture['industrial_production']['items']}
         # 检查库存iron_nail
         iron_nail_stock = self.warehouse_counts.get('iron_nail', 0)
-        # 根据规则选择产品：铁钉足够时优先餐具；餐具未解锁或材料不足时继续生产铁钉，岗位不空闲
-        if iron_nail_stock >= 20:
-            items = {item['name']: item for item in self.manufacture['industrial_production']['items']}
+        # 铁钉足够时优先餐具是旧的高 PT 回退；冬季任务模式下餐具只由配额补，
+        # 否则任务达标/ Done 之后仍会每轮按 MAX 继续造餐具。
+        if iron_nail_stock >= 20 and not self.winter_quota_active():
             product_list = [items['cutlery'], items['iron_nail']]
         else:
-            product_list = [item for item in self.manufacture['industrial_production']['items']
-                            if item['name'] == 'iron_nail']
+            product_list = [items['iron_nail']]
 
         for post_id in idle_posts:
             self.select_product_with_material_check(post_id, product_list)
@@ -523,6 +814,12 @@ class IslandManufacture(IslandShopBase):
         self.island_error = False
         # 每批生产开始时清空“材料不足”记忆，避免跨批沿用旧库存状态
         self.unavailable_products = set()
+        # 在制品与岗位级观测每轮重建：旧数据会把已完成的数量继续算进在制
+        self.post_check_meal = {}
+        self.post_items = {}
+        self.winter_quota_ordered = {}
+        self.winter_quota_plan = None
+        self._warehouse_scanned = False
 
         # 第一步：检查岗位状态
         self.goto_postmanage()
@@ -550,6 +847,7 @@ class IslandManufacture(IslandShopBase):
         idle_posts = self.get_idle_posts()
         if idle_posts:
             self.get_warehouse_counts()
+            self.prepare_winter_quota()
             # 如果有空闲岗位，重新进入岗位管理界面安排生产
             logger.info(f"[岛屿-制造业] 有 {len(idle_posts)} 个空闲岗位，开始安排生产")
 

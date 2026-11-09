@@ -43,6 +43,9 @@ module/island/                  # 运行时玩法逻辑（本包）
 ├── island_farm.py / farm_targets.py / island_rancher.py / island_fishery.py
 ├── island_fish_meat.py         # 鱼肉加工兑换（移植自 ALAS，混入渔场）
 ├── island_mine_forest.py       # 矿山/林场
+├── island_winter_resources.py  # 冬季开发计划自然资源下限叠加（Add by MHY）
+├── island_winter_meals.py      # 冬季餐品营业储备、备用产能与独立账本（Add by MHY）
+├── island_manufacture_quota.py # 冬季制造任务有限配额（Add by MHY）
 ├── island_grill.py / island_teahouse.py / island_restaurant.py
 ├── island_juu_coffee.py / island_juu_eatery.py / island_manufacture.py
 ├── island_business.py          # 商区经营（最大的单文件，含按钮状态机与批次逻辑）
@@ -170,6 +173,18 @@ flowchart TD
 
 冬季物品由 `SEASONAL_ITEMS` 统一启用：果园砂糖橘/青枣、有鱼餐馆冬菇炖鸡/青枣粥、啾啾简餐马蹄糕/砂糖橘大福，以及手工线梅花香包/冬季花束。餐馆与简餐初始化时把跨季的排产需求映射到当季同序号菜品；当前季节没有对应槽位或后厨不支持时跳过该项，保留需求数量及本地库存预留算法。商区识别同时包含商品列表图与已选货架裁图。
 
+冬季开发计划还要上交一批自然资源（茶叶 500、柑橘 500、芒果 200、牛油果 100、淡水/海水鱼肉各 100、银矿 25、典雅之木 25），提交会把仓库吃空，所以 `island_winter_resources.py` 在**运行时**把相关下限抬到 `max(原日常下限, 未提交需求 + 100)`：茶叶/柑橘/芒果/牛油果进 `IslandFarm` 的补种目标（与 `CropTargets`、`MinOrchard` 等取较大值，且不受「忽略牛油果」与当季过滤影响），银矿/典雅之木进 `IslandMineForest._get_threshold`，鱼肉只抬 `MinFreshwaterFishMeat`/`MinSaltwaterFishMeat` 的兑换目标（各鱼保留数量与养殖计划不动，鱼肉读不到时保持未知、不按 0 兑换）。勾选 `Done_<物品>` 或把需求改成 0、关闭 `WinterTaskEnabled`、或不在冬季时，一切回到原来的日常下限。叠加结果不写回任何阈值配置，避免阈值逐轮累加。
+
+冬季 16 项按产出方式分三类，只有一部分会自动排产（总开关 `IslandSeasonPlan.WinterTaskEnabled`，默认开）：
+
+- **自然类 8 项**：走上段的运行时下限叠加（`max(日常下限, Need + 100)`）。
+- **餐品类 3 项**（禽肉土豆拼盘 100、芒果糯米饭 50、草莓夏洛特 25）：`island_winter_meals.py` 按「普通补货 → 冬季有限增产 → 闲时生产」调度。普通目标取 `max(MealNumber 库存下限, 一轮货架直售数量 + 各套餐递归耗用)`，跨店原料相加；八个原槽位（含重复项）顺序保留，仅在本轮运行中抬高目标或补入缺失商品。任务目标再加未提交需求与 `MealBuffer`（默认 20），扣除已知仓库与在产数量后派单。日工时上限为「本店配置岗位数 × 24 小时 × 90% − 一轮货架补货及其整条配方工时」；货架按等级和实际配置服务员的加成估算，这只是补货容量，并非已经验证的日销量，较大的 `MealNumber` 库存下限也不会每天重复计费。芝士另留足直售、醒神套餐及普通夏洛特的全部需求，只有超出部分才能供任务夏洛特使用。当天各店已派工时 `spent` 与最近一次已知库存加在产 `totals` 存入按实例隔离的 `config/island/winter_meals_<实例>.json`；实际少产按实际量回账，已开工但数量未知保留预占，跨天清空二者。`Done_<物品>` 或需求为 0 后移除任务增量，恢复用户原有闲时生产；任务活跃时，相关餐品、任务芝士及消耗它们的挂机套餐都受有限配额约束。
+- **制造类 5 项**：只有刀叉餐具（`cutlery`）的选择/仓库/岗位素材齐全，其余香囊/墨盒/钟表/蓄电池只登记能力状态、不派产（`island_manufacture_quota.py`）。配额按「需求 − 已知库存 − 已知在制 − 本轮已下单」算，任何一项未知就挂起。工业线先执行显式 `Industrial.Products`，将新订单计入在制，再用剩余岗位补任务；未配置产品顺序时先补有限缺口，再回退铁钉，避免常驻回退占满任务岗位。已确认锁定的岗位不计入未知在制，未识别状态仍会暂停同产线配额。
+
+库存严格读取当前可见的 6×2 仓库页：未找到模板、数字识别失败或在产数量未知均保留未知状态，相关有限排产与达标提醒暂停。账本是最近巡检快照，期间销售、货运或手动提交会改变仓库；提醒阈值包含任务量、营业储备和缓冲，提交前仍需核对现货，提交后勾选 `Done_` 或更新剩余需求。自动提交保持关闭。芒果配置默认按本次要求使用 200，游戏原始任务表仍保留 250，显式 `Need_mango` 优先。
+
+冬季**不改货架 `Product*` 与原始 `Meal*` 配置**：四道冬季餐品的配方和工时由 `island_winter_recipes.py` 从游戏数据推导，供营业储备及工时计算使用；本地经济库仍缺它们的售价与材料成本，方案刷新 `refresh_plan_if_requested` 与经营端常驻餐品轮换 `_rotate_away_cook` 在冬季直接返回，保留用户手填的方案；冬季餐品只按上面的独立账本补任务缺口。部署时先在本地完成验证、提交并推送 GitHub，再通过现有更新入口拉取和重启；不直接覆盖远端源码。
+
 ### 岛屿生产规划器（IslandProductionPlanner）
 
 工具页任务，思路、数据表与线性规划移植自 ALAS（LmeSzinc/AzurLaneAutoScript，GPL-3.0）的 Island Production Planner，仅作为「计算器」把方案写入 AzurPilot 已有配置，生产仍由上表各任务执行。
@@ -250,14 +265,20 @@ flowchart TD
 赛季「开发计划」页的进度数字会被 OCR 误读（拿铁 82 读成 282、牛奶 7250 这类前缀多读），
 而邮件、方案刷新、常驻餐品轮换都依赖它，所以三类数据各管各的：
 
-- **餐品清单**：由代码里的赛季表 `SEASON_PLAN_TASKS` 固定，用户不选。只含店铺餐品（秋季 8 项），
-  材料类（小麦、牛奶等）交给农田牧场，不在其中。
+- **餐品清单**：由代码里的赛季表 `SEASON_PLAN_TASKS` 固定，用户不选。只含店铺餐品（秋季 8 项、
+  冬季 3 项：禽肉土豆拼盘/芒果糯米饭/草莓夏洛特），材料类（小麦、牛奶等）交给农田牧场；冬季的
+  自然资源与制造品分别由 `island_winter_resources.py`、`island_manufacture_quota.py` 处理（见 §6）。
 - **需求数量与已完成（配置 `IslandSeasonPlan`）**：每个餐品两项 `Need_<物品>`（默认取赛季表）与
   `Done_<物品>`（开关），另有总开关 `NotifyEnable`（达标邮件提醒，默认开启）。配置里读不到的键
   按赛季表默认值、未完成处理。
 - **当前数量**：`get_warehouse_counts`（每次收取/排产前）与经营端 `_rotate_away_cook`（核对销售前）
   读到仓库库存后调用 `island_season_progress.record_readings`，直接覆盖写入
   `config/island/island_season_have.json`，不累加、不封顶（蔬菜沙拉 2100 就是 2100），读数不进配置。
+- **冬季总开关与未知读数**：`WinterTaskEnabled` 关闭时 `read_slots` 直接返回空列表，冬季的进度、
+  提醒与任务排产增量停止；日常排产继续，货架与闲时生产设置保持原样。其他赛季不受影响。仓库读数缺失、`None`、负数（-1 是
+  「没有仓库模板」的约定）都算**未知**：不当 0、不算缺口、不算达标——默认不进 `build_progress`
+  的进度，需要区分「未知」与「真的 0」时用 `build_progress(..., with_known=True)`（条目为
+  `[当前或 None, 需求, 是否已知]`）或 `progress_values`。
 - **已完成**：勾选后该餐品整体退出进度——不排产、不发邮件、不再被轮换成常驻餐品，空闲产能自动转去
   做下一个缺口最大的；取消勾选即恢复。需求数量改成 0 同样会停掉该项。提交任务后仓库数量掉下去、又
   重新出现缺口时，会再次触发方案刷新。
@@ -271,7 +292,11 @@ flowchart TD
   某项「已完成」，升级后第一次比对必然不同、会多触发一次刷新（可接受，正好把过期囤积清出生产清单）。
 - **`IslandSeasonPlan` 任务**：纯逻辑，不继承 `Island`、不碰设备；只做进度达标发一封邮件
   （`notify_ready_from_progress`，每项只提醒一次，进度回落后复位）、缺口出现新项时请求方案刷新、写日志。
-  收餐会触发它，20 分钟限流，异常也必排下次运行。
+  收餐会触发它，20 分钟限流，异常也必排下次运行。冬季餐品的提醒线是「任务需求 + 营业储备 +
+  `MealBuffer`」：营业储备由 `island_winter_meals.business_requirements` 按当前货架直售与套餐
+  （含整条配方耗用）算，算不出来就整轮不提醒（不能把销售占用当 0）；消息里写明依据是最近一次
+  仓库读数（落盘时间）、提交前要自己在游戏内核对、提交后勾 `Done_<物品>`、自动提交尚未接入，
+  销售仍可能继续消耗库存，不承诺对销售没有影响。
 - **排产**：`season_stockpile` 按「需求 + `SEASON_BUFFER`」把缺口排进各店基础需求，`season_have` 供产能
   估算；空闲产能生产逻辑（常驻餐品轮换、独占排产）不变，只是清单改读赛季表 + 配置。独占囤积物的
   **目标数量照排、不截断**：`MealNumber` 是库存目标，写小了运行端做到那个数就停，而缺口没消失时
@@ -280,9 +305,12 @@ flowchart TD
 - **新赛季上线（改代码，不是用户操作）**：在 `island_season_plan_data.SEASON_PLAN_TASKS` 里换餐品；
   `argument.yaml` 的 `IslandSeasonPlan` 为新餐品追加 `Need_<物品>` / `Done_<物品>`，补四语翻译，
   然后跑 `config_updater`。`tests/test_island_season_progress.py` 会检查赛季表里每个店铺餐品都有
-  对应的配置键与翻译，漏掉会直接失败。
+  对应的配置键与翻译，漏掉会直接失败。冬季 16 项在 `WINTER_TASKS` 里维护（`SEASON_PLAN_TASKS['winter']`
+  由它派生），每项带 `task_id/item_id/type`，`type` 决定排产归属与缓冲口径。
 - **与货架的关系**：任务餐品由方案生成器排除出货架（囤积不上架），攒够后不会被顾客买走；
-  若你手动把任务餐品放上货架，仓库数量会被持续消耗、永远攒不够。
+  若你手动把任务餐品放上货架，仓库数量会被持续消耗、永远攒不够。冬季不跑方案刷新（见 §6），
+  手填货架里若还有任务餐品，销售会持续吃库存，所以冬季提醒额外加营业储备与 `MealBuffer`，
+  且消息里不承诺对销售没有影响。
 - **储备代码**：`island_season_plan_reader`（进开发季页读卡片）与 `island_season_submit`（读到卡片
   就地点击提交）不再接入任何任务，仅作储备；入口模板见 §16。
 
@@ -385,6 +413,7 @@ stateDiagram-v2
 | `IslandOrchard.AmagiChanRubber` | checkbox | false | 小天城优先种橡胶 |
 | `IslandRancher.MinChicken` / `MinPork` | 数值 | — | 畜牧产品阈值 |
 | `IslandFishery.PlantYellowfinTuna` / `Min*` / `DefaultFish` | 数值/select | — / yellowfin_tuna | 默认产品的岗位数、各鱼种阈值、空余岗位的默认产品（未知值退回黄鳍金枪鱼） |
+| `IslandSeasonPlan.WinterTaskEnabled` / `MealBuffer` / `NotifyEnable` / `Need_<物品>` / `Done_<物品>` | checkbox/数值/checkbox/数值/checkbox | true / 20 / true / 见配置（芒果 200） / false | 冬季开发计划任务：自然资源下限在运行时叠加为 `max(日常下限, 需求 + 100)`（见 `island_winter_resources.py`）；餐品提醒线为 `需求 + 营业储备 + MealBuffer`（见 `island_winter_meals.py`）；`WinterTaskEnabled` 关闭时冬季进度、提醒与任务排产增量停止（`read_slots` 返回空），日常排产继续，`Done` 或需求 0 取消该项增量，只影响冬季 |
 | `IslandTeahouse.Seasonal` | checkbox | false | 迎春花茶/季节饮品优先生产开关（与全局季节叠加） |
 | `IslandJuuCoffee.Friedrich` | checkbox | false | 特殊角色（腓特烈）派遣开关 |
 | `IslandBusiness.BatchEnabled` / `Batch1Shops` / `Batch2Shops` | checkbox/multiselect | true / [3,1,5] / [2,4] | 分批经营与批次划分 |
@@ -472,7 +501,7 @@ stateDiagram-v2
 - 制造业部分季节物品（夏季茉莉精油、秋季花束）在季节表中保留但有意不配置制作；`filter_element` 复用了 `TEMPLATE_FILE_CABINET` 模板（资源未单独提取），为已知的临时妥协。
 - 货物黑名单目前只实现了 Milk 一种识别模板；缺货委托不依赖黑名单，由更换列表的库存颜色判断。更换列表的行定位与颜色阈值基于国际服截图（`tests/fixtures/island_cargo/`），国服若布局不同需另行校准。
 - 岛屿生产规划器只能控制制造业产线岗位数与产品顺序（`<产线>.Products`），不能指定各产品的产量比例；季节订单需在 `ExtraTargets` 手动填写；每日订单不参与规划。`data.py` 需在游戏更新后从 ALAS 重新复制，不要手改。
-- 第 5 季（冬季）数据已随 2026-11-05 的 ALAS 数据并入：活动 990027-990030、槽位 `activity_formula`（9900025-9900032）、采集原料 4043-4046、菜品 4051-4054、手工品 4055/4056 与整季日期、任务表都在 `data.py` 里，生产规划器照常规划冬季（回归见 `tests/test_island_winter_logic.py` 与 `test_island_planner.PlannerTaskTest`）。台服第 5 季日期为空（`tw: ''`），`resolve_season` 会退回按时间选择，台服 2026-11-19 前仍是第 4 季。本地「刷新生产/上架方案」与赛季常驻菜轮换仍在冬季保持用户设置：本地经济库是 wiki 2026-09 手工表（59 个商品，没有冬季菜品的售价与材料成本），赛季任务表只有秋季，凭空补数只会写错目标。
+- 第 5 季（冬季）数据已随 2026-11-05 的 ALAS 数据并入：活动 990027-990030、槽位 `activity_formula`（9900025-9900032）、采集原料 4043-4046、菜品 4051-4054、手工品 4055/4056 与整季日期、任务表都在 `data.py` 里，生产规划器照常规划冬季（回归见 `tests/test_island_winter_logic.py` 与 `test_island_planner.PlannerTaskTest`）。台服第 5 季日期为空（`tw: ''`），`resolve_season` 会退回按时间选择，台服 2026-11-19 前仍是第 4 季。本地「刷新生产/上架方案」与赛季常驻菜轮换在冬季仍然保持用户设置：本地经济库是 wiki 2026-09 手工表（59 个商品，没有冬季菜品的售价与材料成本），凭空补数只会写错目标。赛季任务表已补上冬季 16 项，其中自然类按运行时下限叠加、餐品类用 `island_winter_meals.py` 的备用产能与独立账本补缺口、制造类只有刀叉餐具素材齐全（其余挂起，见 `island_manufacture_quota.py`）；`island_winter_recipes.py` 已从游戏原表补齐四道冬季餐品的配方和工时，但不伪造价格或利润；出现仍未识别的营业商品时，有限餐品增产与冬季达标提醒暂停。
 - 季节配方靠 `data.py` 的 `DIC_ISLAND_SLOT[<槽位>]['activity_formula']` 建立「配方 → 生产组」映射，`DIC_ISLAND_RESTAURANT_MENU_TO_RECIPE` 建立「餐厅菜单项 → 配方」映射；这两张表只列数据最新一季的配方（当前为第 5 季）。台服仍在上一个季节、或用 `Season=season_N` 指定旧季时，`IslandProductionPlanner.run` 会在扫描科技/目标与写配置之前按数据检查所选季节的季节配方（活动类型 5004）：缺 `activity_formula` 槽位或餐厅菜单时直接跳过并输出中文警告，手填的季节生产/上架方案保持不变，不再生成一份不含季节配方的方案去覆盖它们（Add by MHY）。这两张表都由 ALAS 按版本生成，等上游更新或台服追上进度，不要手改，也不要凭空补历史配方。
 - 各生产玩法每轮固定追加 6 小时兜底延时，依赖 `Duration` OCR 读取剩余时间，极端字体渲染下可能识别失败退化为兜底值。
 

@@ -2422,14 +2422,23 @@ IslandDailyOrder:
     value: "2020-01-01 00:00:00"
 
 IslandSeasonPlan:
-  # Add by MHY, 赛季任务：餐品由代码里的赛季表决定（SEASON_PLAN_TASKS），这里只填
+  # Add by MHY, 赛季任务：物品由代码里的赛季表决定（SEASON_PLAN_TASKS），这里只填
   # 需求数量与是否已完成。当前数量由店铺每次收取/核对销售时读仓库自动更新（不进配置）。
-  # 勾选「已完成」的餐品不再排产、不再发邮件，空闲产能自动转去做下一个缺口最大的。
-  # 新赛季上线时在代码赛季表里换餐品，并在这里为新餐品追加 Need_/Done_ 两项。
+  # 勾选「已完成」的物品不再排产、不再发邮件，空闲产能自动转去做下一个缺口最大的。
+  # 新赛季上线时在代码赛季表里换物品，并在这里为新物品追加 Need_/Done_ 两项。
+  # 冬季（第 5 季）16 项：自然类固定多备 100 件，餐品类另加 MealBuffer 缓冲。
   NotifyEnable:
     type: checkbox
     value: true
     option: [ true, false ]
+  WinterTaskEnabled:
+    type: checkbox
+    value: true
+    option: [ true, false ]
+  MealBuffer:
+    type: input
+    value: 20
+    validate: [ 0, 999 ]
   Need_apple_juice:
     type: input
     value: 250
@@ -2483,6 +2492,103 @@ IslandSeasonPlan:
     type: input
     value: 50
   Done_steak_bowl:
+    type: checkbox
+    value: false
+    option: [ true, false ]
+  # Add by MHY, 冬季（第 5 季）16 项；Need_ 是提交需求数量，自然类排产时会再加 100。
+  Need_tea:
+    value: 500
+  Done_tea:
+    type: checkbox
+    value: false
+    option: [ true, false ]
+  Need_citrus:
+    value: 500
+  Done_citrus:
+    type: checkbox
+    value: false
+    option: [ true, false ]
+  Need_mango:
+    value: 200
+  Done_mango:
+    type: checkbox
+    value: false
+    option: [ true, false ]
+  Need_avocado:
+    value: 100
+  Done_avocado:
+    type: checkbox
+    value: false
+    option: [ true, false ]
+  Need_freshwater_fish_meat:
+    value: 100
+  Done_freshwater_fish_meat:
+    type: checkbox
+    value: false
+    option: [ true, false ]
+  Need_seawater_fish_meat:
+    value: 100
+  Done_seawater_fish_meat:
+    type: checkbox
+    value: false
+    option: [ true, false ]
+  Need_chicken_potato:
+    value: 100
+  Done_chicken_potato:
+    type: checkbox
+    value: false
+    option: [ true, false ]
+  Need_rice_mango:
+    value: 50
+  Done_rice_mango:
+    type: checkbox
+    value: false
+    option: [ true, false ]
+  Need_strawberry_charlotte:
+    value: 25
+  Done_strawberry_charlotte:
+    type: checkbox
+    value: false
+    option: [ true, false ]
+  Need_silver:
+    value: 25
+  Done_silver:
+    type: checkbox
+    value: false
+    option: [ true, false ]
+  Need_elegant_wood:
+    value: 25
+  Done_elegant_wood:
+    type: checkbox
+    value: false
+    option: [ true, false ]
+  Need_sachet:
+    value: 10
+  Done_sachet:
+    type: checkbox
+    value: false
+    option: [ true, false ]
+  Need_cutlery:
+    value: 10
+  Done_cutlery:
+    type: checkbox
+    value: false
+    option: [ true, false ]
+  Need_ink_cartridge:
+    value: 10
+  Done_ink_cartridge:
+    type: checkbox
+    value: false
+    option: [ true, false ]
+  Need_clock:
+    value: 10
+  Done_clock:
+    type: checkbox
+    value: false
+    option: [ true, false ]
+  Need_battery:
+    value: 10
+  Done_battery:
     type: checkbox
     value: false
     option: [ true, false ]

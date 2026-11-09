@@ -159,7 +159,11 @@ def season_have(progress):
     Returns:
         dict: {物品: 当前数量}
     """
-    return {item: int(have) for item, (have, _need) in (progress or {}).items()}
+    from module.island.island_season_progress import progress_values
+
+    # Modify by MHY, 未读到的库存留空，交给规划器按缺失信息处理。
+    return {item: have for item, entry in (progress or {}).items()
+            if (have := progress_values(entry)[0]) is not None}
 
 
 def current_progress(config, season):
@@ -350,11 +354,9 @@ def refresh_plan_if_requested(config):
     logger.hr('岛屿方案刷新', level=2)
     season = config.cross_get(SEASON_KEY, default=None)
     try:
-        # Modify by MHY, 上游 data.py 已带第 5 季，但本地经济表仍是 wiki 2026-09 的 59 个商品
-        # （没有冬季菜品的售价与材料成本），赛季任务表也只有秋季：照常刷新会把冬季菜品从
-        # 手填方案里挤掉，所以冬季保留现有生产与上架配置。
+        # Modify by MHY, 冬季任务由运行时独立叠加，刷新不重选营业货架或改写原槽位。
         if season == 'winter':
-            logger.warning('[岛屿-方案刷新] 本地经济表暂无冬季菜品数据，保留现有生产与上架配置')
+            logger.info('[岛屿-方案刷新] 冬季任务在后厨按营业储备与剩余工时动态排产，保留现有配置')
             return False
         # Modify by MHY, 赛季进度取自仓库读数（island_season_progress），不再读赛季页
         progress = current_progress(config, season)

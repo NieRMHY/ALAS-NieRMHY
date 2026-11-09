@@ -249,7 +249,11 @@ class IslandShopBase(Island, WarehouseOCR):
         """
         post_button = self.posts[post_id]['button']
         self.post_close()
-        self.post_open(post_button)
+        # Modify by MHY, 已确认锁定的岗位不参与在制判断，也不沿用旧完成时间。
+        if not self.post_open(post_button):
+            self.posts[post_id]['status'] = 'locked'
+            setattr(self, time_var_name, None)
+            return
         self.device.sleep(0.5)
         image = self.device.screenshot()
         ocr_post_number = Digit(OCR_POST_NUMBER, letter=(57, 58, 60), threshold=100,
@@ -265,6 +269,8 @@ class IslandShopBase(Island, WarehouseOCR):
             finish_time = current_time() + time_value
             setattr(self, time_var_name, finish_time)
             self.posts[post_id]['status'] = 'working'
+            if product is None or number <= 0 or not getattr(ocr_post_number, 'last_valid', False):
+                self._winter_queue_unknown = True
             if product is not None:
                 if product in self.post_check_meal:
                     self.post_check_meal[product] += number
@@ -297,11 +303,13 @@ class IslandShopBase(Island, WarehouseOCR):
         self.warehouse_filter(self.filter_asset)
         image = self.device.screenshot()
 
+        # Add by MHY, 数字兜底供普通排产使用；有限配额保留未命中与识别失败。
+        self.warehouse_observations = {}
         for dish in self.shop_items:
-            # 没有仓库模板的产品（部分制造产品）不统计库存
-            if dish['template'] is None:
-                continue
-            self.warehouse_counts[dish['name']] = self.ocr_item_quantity(image, dish['template'])
+            quantity = (self.ocr_item_quantity(image, dish['template'], strict=True)
+                        if dish['template'] is not None else None)
+            self.warehouse_observations[dish['name']] = quantity
+            self.warehouse_counts[dish['name']] = quantity if quantity is not None else 0
             if self.warehouse_counts[dish['name']]:
                 logger.info(f"{self._item_cn(dish['name'])}: {self.warehouse_counts[dish['name']]}")
 
@@ -309,7 +317,7 @@ class IslandShopBase(Island, WarehouseOCR):
         # 282），而这里每次收取/生产前读的是准确库存。记录失败不能影响生产排产。
         try:
             from module.island.island_season_progress import record_readings
-            changed = record_readings(dict(self.warehouse_counts))
+            changed = record_readings(dict(self.warehouse_observations))
             if changed:
                 from module.island.island_season_plan_data import cn_name
                 logger.info('[岛屿-赛季进度] ' + '、'.join(
@@ -461,7 +469,11 @@ class IslandShopBase(Island, WarehouseOCR):
                                     return 0  # 返回0表示原料不足
                                 else:
                                     self.post_add_one(number - 1)
-                                    self.device.sleep(0.5)
+                                    if self.produce_check():
+                                        logger.warning(f"[岛屿] {self._item_cn(product2)}批量原料不足，本轮跳过")
+                                        self.back_to_postmanage_from_dispatch()
+                                        return 0
+                                    product = product2
                                     self.device.click(POST_ADD_ORDER)
                                     self.device.sleep(0.5)
                                     break
@@ -478,7 +490,11 @@ class IslandShopBase(Island, WarehouseOCR):
                             return 0  # 返回0表示原料不足
                     else:
                         self.post_add_one(number - 1)
-                        self.device.sleep(0.5)
+                        # Add by MHY, 单份可做不代表整批可做，加量后重新确认原料。
+                        if self.produce_check():
+                            logger.warning(f"[岛屿] {self._item_cn(product)}批量原料不足，本轮跳过")
+                            self.back_to_postmanage_from_dispatch()
+                            return 0
                         self.device.click(POST_ADD_ORDER)
                         self.device.sleep(0.5)
                         break
@@ -507,6 +523,9 @@ class IslandShopBase(Island, WarehouseOCR):
         finish_time = current_time() + time_value
         setattr(self, time_var_name, finish_time)
         self.posts[post_id]['status'] = 'working'
+        if actual_number <= 0 or not getattr(ocr_post_number, 'last_valid', False):
+            self._winter_queue_unknown = True
+            actual_number = 0
         # 扣除前置材料（子类可覆盖）
         self.deduct_materials(product, actual_number)
         logger.info(f"[岛屿] 已安排生产：{self._item_cn(product)} x{actual_number}")
@@ -647,7 +666,85 @@ class IslandShopBase(Island, WarehouseOCR):
         """
         return {}
 
+    # Add by MHY, 冬季营业目标仅在本轮叠加，不污染用户槽位或上架配置。
     def run(self):
+        from module.island.island_winter_meals import business_requirements, enabled
+        original = self.post_products
+        self._winter_meals = None
+        if enabled(self.config):
+            baseline, unknown = business_requirements(self.config)
+            self._winter_meals = (baseline, unknown)
+            self.post_products = [(item, max(target, baseline.get(item, 0)))
+                                  for item, target in original]
+            present = {item for item, _ in original}
+            self.post_products.extend((item, target) for item, target in baseline.items()
+                                      if item in self.name_to_config and item not in present)
+        try:
+            return self._run_shop()
+        finally:
+            self.post_products = original
+
+    def _run_winter_task_meals(self, produced_pass):
+        from module.island.island_winter_meals import MEAL_RECIPES, load_ledger, plan_batches, save_ledger
+        if self._winter_meals is None:
+            return
+        baseline, unknown = self._winter_meals
+        totals = self._rebuild_current_totals(produced_pass)
+        own = {item: qty for item, qty in baseline.items()
+               if MEAL_RECIPES[item]['shop'] == self.shop_type}
+        try:
+            ledger = load_ledger(self.config)
+            # 只发布本店现场可识别库存；未知不沿用上次值，不推算收获时间。
+            for item, product in MEAL_RECIPES.items():
+                if product['shop'] == self.shop_type:
+                    observations = getattr(self, 'warehouse_observations', self.warehouse_counts)
+                    stock = observations.get(item)
+                    known = stock is not None and stock >= 0 and not self._winter_queue_unknown
+                    ledger['totals'][item] = totals.get(item, 0) if known else None
+            save_ledger(self.config, ledger)
+            if unknown or self._winter_queue_unknown:
+                logger.warning('[岛屿-冬季任务] 营业配方或在产数量未确认，暂缓任务增产')
+                return
+            if any(ledger['totals'].get(item) is None or totals.get(item, 0) < target
+                   for item, target in own.items()):
+                logger.info('[岛屿-冬季任务] 营业备餐仍有缺口，暂缓任务增产')
+                return
+            spent = ledger['spent'].get(self.shop_type, 0)
+            stock = {item: self.warehouse_counts.get(item) if value is not None else None
+                     for item, value in getattr(self, 'warehouse_observations',
+                                                self.warehouse_counts).items()}
+            batches = plan_batches(self.config, self.shop_type, baseline, unknown,
+                                   ledger['totals'], stock, spent)
+            for item, count in batches.items():
+                for post_id in self.get_idle_posts():
+                    batch = self.get_max_producible(item, min(count, self.POST_PRODUCE_LIMIT))
+                    if batch <= 0:
+                        break
+                    minutes = MEAL_RECIPES[item]['time_min']
+                    # 先占用配额再点击；中途异常宁可少生产，下一轮不重复整批派遣。
+                    ledger['spent'][self.shop_type] = spent + batch * minutes
+                    save_ledger(self.config, ledger)
+                    actual = self.post_produce(post_id, product=item, number=batch,
+                                               time_var_name=f'{self.time_prefix}{post_id[-1]}')
+                    if actual <= 0 and self.posts[post_id]['status'] == 'working':
+                        # Add by MHY, 立即失效跨店快照，避免芝士继续按旧夏洛特缺口补产。
+                        ledger['totals'][item] = None
+                        save_ledger(self.config, ledger)
+                        logger.warning('[岛屿-冬季任务] 岗位已工作但数量未知，保留配额并等待下轮识别')
+                        return
+                    actual = max(0, actual)
+                    produced_pass[item] = produced_pass.get(item, 0) + actual
+                    ledger['totals'][item] += actual
+                    spent += actual * minutes
+                    ledger['spent'][self.shop_type] = spent
+                    save_ledger(self.config, ledger)
+                    count -= actual
+                    if actual <= 0 or count <= 0:
+                        break
+        except (OSError, ValueError, TypeError) as exc:
+            logger.warning(f'[岛屿-冬季任务] 账本或配置异常，暂停增产：{exc}')
+
+    def _run_shop(self):
         """运行店铺生产与岗位调度主流程。
 
         巡检各岗位状态与仓库库存，计算并排产基础需求商品；
@@ -661,6 +758,7 @@ class IslandShopBase(Island, WarehouseOCR):
         self.unavailable_characters.clear()
         # 在制品和保留线每轮重新建立，不能累加同一实例上轮的识别结果。
         self.post_check_meal.clear()
+        self._winter_queue_unknown = False
         self._reserved_targets.clear()
         self.goto_postmanage()
         self.post_manage_mode(POST_MANAGE_PRODUCTION)
@@ -769,6 +867,8 @@ class IslandShopBase(Island, WarehouseOCR):
                         self.to_post_products = {}
                     continue
 
+            self._run_winter_task_meals(_produced_pass)
+
             # ============ 检查是否还有空闲岗位，安排特殊餐品或常驻餐品 ============
             # 重新检查空闲岗位（因为可能部分岗位被基础需求占用）
             idle_posts_after_basic = self.get_idle_posts()
@@ -776,6 +876,13 @@ class IslandShopBase(Island, WarehouseOCR):
             # 获取特殊餐品和常驻餐品配置
             special_food = self.special_food if self.FILL_SPECIAL_FOOD else None
             away_cook = getattr(self.config, self.config_away_cook, None)
+            if self._winter_meals is not None:
+                from module.island.island_winter_meals import protected_away
+                # Add by MHY, 活跃任务及其消耗套餐都走有限配额，完成后恢复用户挂机。
+                if protected_away(self.config, away_cook):
+                    away_cook = None
+                if protected_away(self.config, special_food):
+                    special_food = None
 
 
             # 检查特殊餐品是否为有效值（不为None且不为"None"）

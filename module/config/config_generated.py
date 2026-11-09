@@ -1206,6 +1206,8 @@ class GeneratedConfig:
 
     # 配置组 `IslandSeasonPlan`
     IslandSeasonPlan_NotifyEnable = True  # True, False
+    IslandSeasonPlan_WinterTaskEnabled = True  # True, False
+    IslandSeasonPlan_MealBuffer = 20
     IslandSeasonPlan_Need_apple_juice = 250
     IslandSeasonPlan_Done_apple_juice = False  # True, False
     IslandSeasonPlan_Need_iced_coffee = 250
@@ -1222,6 +1224,38 @@ class GeneratedConfig:
     IslandSeasonPlan_Done_stir_fried_chicken = False  # True, False
     IslandSeasonPlan_Need_steak_bowl = 50
     IslandSeasonPlan_Done_steak_bowl = False  # True, False
+    IslandSeasonPlan_Need_tea = 500
+    IslandSeasonPlan_Done_tea = False  # True, False
+    IslandSeasonPlan_Need_citrus = 500
+    IslandSeasonPlan_Done_citrus = False  # True, False
+    IslandSeasonPlan_Need_mango = 200
+    IslandSeasonPlan_Done_mango = False  # True, False
+    IslandSeasonPlan_Need_avocado = 100
+    IslandSeasonPlan_Done_avocado = False  # True, False
+    IslandSeasonPlan_Need_freshwater_fish_meat = 100
+    IslandSeasonPlan_Done_freshwater_fish_meat = False  # True, False
+    IslandSeasonPlan_Need_seawater_fish_meat = 100
+    IslandSeasonPlan_Done_seawater_fish_meat = False  # True, False
+    IslandSeasonPlan_Need_chicken_potato = 100
+    IslandSeasonPlan_Done_chicken_potato = False  # True, False
+    IslandSeasonPlan_Need_rice_mango = 50
+    IslandSeasonPlan_Done_rice_mango = False  # True, False
+    IslandSeasonPlan_Need_strawberry_charlotte = 25
+    IslandSeasonPlan_Done_strawberry_charlotte = False  # True, False
+    IslandSeasonPlan_Need_silver = 25
+    IslandSeasonPlan_Done_silver = False  # True, False
+    IslandSeasonPlan_Need_elegant_wood = 25
+    IslandSeasonPlan_Done_elegant_wood = False  # True, False
+    IslandSeasonPlan_Need_sachet = 10
+    IslandSeasonPlan_Done_sachet = False  # True, False
+    IslandSeasonPlan_Need_cutlery = 10
+    IslandSeasonPlan_Done_cutlery = False  # True, False
+    IslandSeasonPlan_Need_ink_cartridge = 10
+    IslandSeasonPlan_Done_ink_cartridge = False  # True, False
+    IslandSeasonPlan_Need_clock = 10
+    IslandSeasonPlan_Done_clock = False  # True, False
+    IslandSeasonPlan_Need_battery = 10
+    IslandSeasonPlan_Done_battery = False  # True, False
 
     # 配置组 `IslandDailyInteract`
     IslandDailyInteract_WeeklyPhoto = True  # True, False
