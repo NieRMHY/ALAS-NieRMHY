@@ -76,6 +76,56 @@ TEMPLATE_BUSINESS_PRODUCT_COFFEE_CITRUS_COFFEE_CROPPED = Template(file={
     'tw': './assets/cn/island_business/TEMPLATE_BUSINESS_PRODUCT_COFFEE_CITRUS_COFFEE_CROPPED.png',
 })
 
+# Modify by MHY, 冬季经营图与货架裁图已随资源同步，四服共用无文字商品图。
+TEMPLATE_BUSINESS_PRODUCT_RESTAURANT_SHIITAKE_CHICKEN_SOUP = Template(file={
+    'cn': './assets/cn/island_business/TEMPLATE_BUSINESS_PRODUCT_RESTAURANT_SHIITAKE_CHICKEN_SOUP.png',
+    'en': './assets/cn/island_business/TEMPLATE_BUSINESS_PRODUCT_RESTAURANT_SHIITAKE_CHICKEN_SOUP.png',
+    'jp': './assets/cn/island_business/TEMPLATE_BUSINESS_PRODUCT_RESTAURANT_SHIITAKE_CHICKEN_SOUP.png',
+    'tw': './assets/cn/island_business/TEMPLATE_BUSINESS_PRODUCT_RESTAURANT_SHIITAKE_CHICKEN_SOUP.png',
+})
+TEMPLATE_BUSINESS_PRODUCT_RESTAURANT_SHIITAKE_CHICKEN_SOUP_CROPPED = Template(file={
+    'cn': './assets/cn/island_business/TEMPLATE_BUSINESS_PRODUCT_RESTAURANT_SHIITAKE_CHICKEN_SOUP_CROPPED.png',
+    'en': './assets/cn/island_business/TEMPLATE_BUSINESS_PRODUCT_RESTAURANT_SHIITAKE_CHICKEN_SOUP_CROPPED.png',
+    'jp': './assets/cn/island_business/TEMPLATE_BUSINESS_PRODUCT_RESTAURANT_SHIITAKE_CHICKEN_SOUP_CROPPED.png',
+    'tw': './assets/cn/island_business/TEMPLATE_BUSINESS_PRODUCT_RESTAURANT_SHIITAKE_CHICKEN_SOUP_CROPPED.png',
+})
+TEMPLATE_BUSINESS_PRODUCT_RESTAURANT_GREEN_JUJUBE_PORRIDGE = Template(file={
+    'cn': './assets/cn/island_business/TEMPLATE_BUSINESS_PRODUCT_RESTAURANT_GREEN_JUJUBE_PORRIDGE.png',
+    'en': './assets/cn/island_business/TEMPLATE_BUSINESS_PRODUCT_RESTAURANT_GREEN_JUJUBE_PORRIDGE.png',
+    'jp': './assets/cn/island_business/TEMPLATE_BUSINESS_PRODUCT_RESTAURANT_GREEN_JUJUBE_PORRIDGE.png',
+    'tw': './assets/cn/island_business/TEMPLATE_BUSINESS_PRODUCT_RESTAURANT_GREEN_JUJUBE_PORRIDGE.png',
+})
+TEMPLATE_BUSINESS_PRODUCT_RESTAURANT_GREEN_JUJUBE_PORRIDGE_CROPPED = Template(file={
+    'cn': './assets/cn/island_business/TEMPLATE_BUSINESS_PRODUCT_RESTAURANT_GREEN_JUJUBE_PORRIDGE_CROPPED.png',
+    'en': './assets/cn/island_business/TEMPLATE_BUSINESS_PRODUCT_RESTAURANT_GREEN_JUJUBE_PORRIDGE_CROPPED.png',
+    'jp': './assets/cn/island_business/TEMPLATE_BUSINESS_PRODUCT_RESTAURANT_GREEN_JUJUBE_PORRIDGE_CROPPED.png',
+    'tw': './assets/cn/island_business/TEMPLATE_BUSINESS_PRODUCT_RESTAURANT_GREEN_JUJUBE_PORRIDGE_CROPPED.png',
+})
+TEMPLATE_BUSINESS_PRODUCT_EATERY_WATER_CHESTNUT_CAKE = Template(file={
+    'cn': './assets/cn/island_business/TEMPLATE_BUSINESS_PRODUCT_EATERY_WATER_CHESTNUT_CAKE.png',
+    'en': './assets/cn/island_business/TEMPLATE_BUSINESS_PRODUCT_EATERY_WATER_CHESTNUT_CAKE.png',
+    'jp': './assets/cn/island_business/TEMPLATE_BUSINESS_PRODUCT_EATERY_WATER_CHESTNUT_CAKE.png',
+    'tw': './assets/cn/island_business/TEMPLATE_BUSINESS_PRODUCT_EATERY_WATER_CHESTNUT_CAKE.png',
+})
+TEMPLATE_BUSINESS_PRODUCT_EATERY_WATER_CHESTNUT_CAKE_CROPPED = Template(file={
+    'cn': './assets/cn/island_business/TEMPLATE_BUSINESS_PRODUCT_EATERY_WATER_CHESTNUT_CAKE_CROPPED.png',
+    'en': './assets/cn/island_business/TEMPLATE_BUSINESS_PRODUCT_EATERY_WATER_CHESTNUT_CAKE_CROPPED.png',
+    'jp': './assets/cn/island_business/TEMPLATE_BUSINESS_PRODUCT_EATERY_WATER_CHESTNUT_CAKE_CROPPED.png',
+    'tw': './assets/cn/island_business/TEMPLATE_BUSINESS_PRODUCT_EATERY_WATER_CHESTNUT_CAKE_CROPPED.png',
+})
+TEMPLATE_BUSINESS_PRODUCT_EATERY_SUGAR_TANGERINE_DAIFUKU = Template(file={
+    'cn': './assets/cn/island_business/TEMPLATE_BUSINESS_PRODUCT_EATERY_SUGAR_TANGERINE_DAIFUKU.png',
+    'en': './assets/cn/island_business/TEMPLATE_BUSINESS_PRODUCT_EATERY_SUGAR_TANGERINE_DAIFUKU.png',
+    'jp': './assets/cn/island_business/TEMPLATE_BUSINESS_PRODUCT_EATERY_SUGAR_TANGERINE_DAIFUKU.png',
+    'tw': './assets/cn/island_business/TEMPLATE_BUSINESS_PRODUCT_EATERY_SUGAR_TANGERINE_DAIFUKU.png',
+})
+TEMPLATE_BUSINESS_PRODUCT_EATERY_SUGAR_TANGERINE_DAIFUKU_CROPPED = Template(file={
+    'cn': './assets/cn/island_business/TEMPLATE_BUSINESS_PRODUCT_EATERY_SUGAR_TANGERINE_DAIFUKU_CROPPED.png',
+    'en': './assets/cn/island_business/TEMPLATE_BUSINESS_PRODUCT_EATERY_SUGAR_TANGERINE_DAIFUKU_CROPPED.png',
+    'jp': './assets/cn/island_business/TEMPLATE_BUSINESS_PRODUCT_EATERY_SUGAR_TANGERINE_DAIFUKU_CROPPED.png',
+    'tw': './assets/cn/island_business/TEMPLATE_BUSINESS_PRODUCT_EATERY_SUGAR_TANGERINE_DAIFUKU_CROPPED.png',
+})
+
 # ==================== 商店索引到名称的映射 ====================
 SHOP_INDEX_MAP = {
     1: '有鱼餐馆',
@@ -98,6 +148,10 @@ SEASONAL_FOOD_MAP = {
     'autumn': {
         'product_name': 'matsutake_chicken_soup',
         'display': '松茸鸡汤',
+    },
+    'winter': {
+        'product_name': 'shiitake_chicken_soup',
+        'display': '冬菇炖鸡',
     },
 }
 
@@ -122,6 +176,7 @@ class IslandBusiness(BusinessStockCheckMixin, Island):
     BUSINESS_REVIEW_OFFSET_X = 150
 
     def __init__(self, config, device=None, task=None):
+        """Initialize business shops, seasonal products, and review state."""
         super().__init__(config, device=device, task=task)
 
         # 商店定义及配置键前缀
@@ -143,6 +198,8 @@ class IslandBusiness(BusinessStockCheckMixin, Island):
                 {'name': 'amaranth_rice_ball', 'button': TEMPLATE_BUSINESS_PRODUCT_RESTAURANT_AMARANTH_RICE_BALL},
                 {'name': 'matsutake_chicken_soup', 'button': TEMPLATE_BUSINESS_PRODUCT_RESTAURANT_MATSUTAKE_CHICKEN_SOUP},
                 {'name': 'persimmon_cake', 'button': TEMPLATE_BUSINESS_PRODUCT_RESTAURANT_PERSIMMON_CAKE},
+                {'name': 'shiitake_chicken_soup', 'button': TEMPLATE_BUSINESS_PRODUCT_RESTAURANT_SHIITAKE_CHICKEN_SOUP},
+                {'name': 'green_jujube_porridge', 'button': TEMPLATE_BUSINESS_PRODUCT_RESTAURANT_GREEN_JUJUBE_PORRIDGE},
             ],
             '白熊饮品': [
                 {'name': 'spring_flower_tea', 'button': TEMPLATE_BUSINESS_PRODUCT_TEAHOUSE_SPRING_FLOWER_TEA},
@@ -170,6 +227,8 @@ class IslandBusiness(BusinessStockCheckMixin, Island):
                 {'name': 'berry_orange', 'button': TEMPLATE_BUSINESS_PRODUCT_EATERY_BERRY_ORANGE},
                 {'name': 'strawberry_charlotte', 'button': TEMPLATE_BUSINESS_PRODUCT_EATERY_STRAWBERRY_CHARLOTTE},
                 {'name': 'seafood_rice', 'button': TEMPLATE_BUSINESS_PRODUCT_EATERY_SEAFOOD_RICE},
+                {'name': 'water_chestnut_cake', 'button': TEMPLATE_BUSINESS_PRODUCT_EATERY_WATER_CHESTNUT_CAKE},
+                {'name': 'sugar_tangerine_daifuku', 'button': TEMPLATE_BUSINESS_PRODUCT_EATERY_SUGAR_TANGERINE_DAIFUKU},
             ],
             '啾咖啡': [
                 {'name': 'citrus_coffee', 'button': TEMPLATE_BUSINESS_PRODUCT_COFFEE_CITRUS_COFFEE},
@@ -191,6 +250,8 @@ class IslandBusiness(BusinessStockCheckMixin, Island):
                 {'name': 'amaranth_rice_ball', 'template': TEMPLATE_BUSINESS_PRODUCT_RESTAURANT_AMARANTH_RICE_BALL_CROPPED},
                 {'name': 'matsutake_chicken_soup', 'template': TEMPLATE_BUSINESS_PRODUCT_RESTAURANT_MATSUTAKE_CHICKEN_SOUP_CROPPED},
                 {'name': 'persimmon_cake', 'template': TEMPLATE_BUSINESS_PRODUCT_RESTAURANT_PERSIMMON_CAKE_CROPPED},
+                {'name': 'shiitake_chicken_soup', 'template': TEMPLATE_BUSINESS_PRODUCT_RESTAURANT_SHIITAKE_CHICKEN_SOUP_CROPPED},
+                {'name': 'green_jujube_porridge', 'template': TEMPLATE_BUSINESS_PRODUCT_RESTAURANT_GREEN_JUJUBE_PORRIDGE_CROPPED},
             ],
             '白熊饮品': [
                 {'name': 'spring_flower_tea', 'template': TEMPLATE_BUSINESS_PRODUCT_TEAHOUSE_SPRING_FLOWER_TEA_CROPPED},
@@ -218,6 +279,8 @@ class IslandBusiness(BusinessStockCheckMixin, Island):
                 {'name': 'berry_orange', 'template': TEMPLATE_BUSINESS_PRODUCT_EATERY_BERRY_ORANGE_CROPPED},
                 {'name': 'strawberry_charlotte', 'template': TEMPLATE_BUSINESS_PRODUCT_EATERY_STRAWBERRY_CHARLOTTE_CROPPED},
                 {'name': 'seafood_rice', 'template': TEMPLATE_BUSINESS_PRODUCT_EATERY_SEAFOOD_RICE_CROPPED},
+                {'name': 'water_chestnut_cake', 'template': TEMPLATE_BUSINESS_PRODUCT_EATERY_WATER_CHESTNUT_CAKE_CROPPED},
+                {'name': 'sugar_tangerine_daifuku', 'template': TEMPLATE_BUSINESS_PRODUCT_EATERY_SUGAR_TANGERINE_DAIFUKU_CROPPED},
             ],
             '啾咖啡': [
                 {'name': 'citrus_coffee', 'template': TEMPLATE_BUSINESS_PRODUCT_COFFEE_CITRUS_COFFEE_CROPPED},
@@ -384,6 +447,18 @@ class IslandBusiness(BusinessStockCheckMixin, Island):
                 'en': './assets/cn/island_restaurant/TEMPLATE_MATSUTAKE_CHICKEN_SOUP.png',
                 'jp': './assets/cn/island_restaurant/TEMPLATE_MATSUTAKE_CHICKEN_SOUP.png',
                 'tw': './assets/cn/island_restaurant/TEMPLATE_MATSUTAKE_CHICKEN_SOUP.png',
+            }),
+            'shiitake_chicken_soup': Template(file={
+                'cn': './assets/cn/island_restaurant/TEMPLATE_SHIITAKE_CHICKEN_SOUP.png',
+                'en': './assets/cn/island_restaurant/TEMPLATE_SHIITAKE_CHICKEN_SOUP.png',
+                'jp': './assets/cn/island_restaurant/TEMPLATE_SHIITAKE_CHICKEN_SOUP.png',
+                'tw': './assets/cn/island_restaurant/TEMPLATE_SHIITAKE_CHICKEN_SOUP.png',
+            }),
+            'green_jujube_porridge': Template(file={
+                'cn': './assets/cn/island_restaurant/TEMPLATE_GREEN_JUJUBE_PORRIDGE.png',
+                'en': './assets/cn/island_restaurant/TEMPLATE_GREEN_JUJUBE_PORRIDGE.png',
+                'jp': './assets/cn/island_restaurant/TEMPLATE_GREEN_JUJUBE_PORRIDGE.png',
+                'tw': './assets/cn/island_restaurant/TEMPLATE_GREEN_JUJUBE_PORRIDGE.png',
             }),
             # 白熊饮品
             'watermelon_juice': Template(file={
@@ -1010,6 +1085,9 @@ class IslandBusiness(BusinessStockCheckMixin, Island):
         """传统不分批模式（保持原有行为）"""
         # 标记本轮是否曾处理过蓝色开始经营按钮
         self._has_seen_blue = False
+        # 本轮已确认开始经营的商店。传统模式只处理排在最前的蓝色按钮，
+        # 同一商店确认后仍是蓝色说明经营没有开始，再进去只会无限循环
+        started_shops = set()
 
         while True:
             logger.info("[岛屿-经营] --- 处理商店 ---")
@@ -1025,9 +1103,20 @@ class IslandBusiness(BusinessStockCheckMixin, Island):
                 if current_shop:
                     shop_name = current_shop['name']
                     logger.info(f"[岛屿-经营] 当前商店: {shop_name}")
+                    if shop_name in started_shops:
+                        logger.warning(f"[岛屿-经营] {shop_name} 确认后仍未开始经营，跳过该店继续检查其他商店")
+                        self._leave_shop_without_start()
+                        self._run_remaining_shops(skip_shops={shop_name})
+                        return
                     self._load_shop_characters(current_shop)
                     self._select_business_characters()
-                    self._select_business_product(shop_name)
+                    selected = self._select_business_product(shop_name)
+                    if selected == 0:
+                        logger.warning(f"[岛屿-经营] {shop_name} 没有可出售的餐品，不开始经营，跳过该店继续检查其他商店")
+                        self._leave_shop_without_start()
+                        self._run_remaining_shops(skip_shops={shop_name})
+                        return
+                    started_shops.add(shop_name)
                 else:
                     logger.warning("[岛屿-经营] 无法识别当前商店，返回后跳过")
                     self.device.click(ISLAND_BACK)
@@ -1154,6 +1243,8 @@ class IslandBusiness(BusinessStockCheckMixin, Island):
     _SHOP_BUTTON_TO_REMAIN_TIME_OFFSET_Y = (-79, -59)
     # 经营商店列表的可视区域
     _BUSINESS_LIST_SEARCH_AREA = (50, 80, 1200, 640)
+    # 店名标签纵向距离小于此值视为同一行（相邻两行约相距 177 像素）
+    _SHOP_SAME_ROW_Y = 60
     # 商店行高（经验值，适用于各行）
     _BUSINESS_ROW_HEIGHT = 160
 
@@ -1282,9 +1373,20 @@ class IslandBusiness(BusinessStockCheckMixin, Island):
                     'similarity': found['similarity'],
                 })
 
+        # 同一行只保留相似度最高的商店：店名相近时（国际服 "Manjuu Eatery" 与 "Café Manjuu"），
+        # 另一家商店的模板也可能在这一行过阈值，按它点击会进错店
+        results.sort(key=lambda r: -r['similarity'])
+        kept = []
+        for r in results:
+            if any(abs(r['label_rect'][1] - k['label_rect'][1]) < self._SHOP_SAME_ROW_Y for k in kept):
+                logger.info(f"[岛屿-经营] {r['shop']['name']} 与其他商店识别在同一行"
+                            f"（相似度 {r['similarity']:.2f}），忽略")
+                continue
+            kept.append(r)
+
         # 按标签的 Y 坐标从上到下排序
-        results.sort(key=lambda r: r['label_rect'][1])
-        return results
+        kept.sort(key=lambda r: r['label_rect'][1])
+        return kept
 
     def _scroll_business_down(self):
         """在经营商店列表中向下滑动一页"""
@@ -1307,7 +1409,11 @@ class IslandBusiness(BusinessStockCheckMixin, Island):
         self.device.sleep(1.0)
 
     def _process_shop_entry(self, shop):
-        """进入商店后处理：加成替换 → 选角色 → 选餐品 → 确认经营"""
+        """进入商店后处理：加成替换 → 选角色 → 选餐品 → 确认经营
+
+        Returns:
+            bool: 是否确认开始经营；没有可出售的餐品时为 False。
+        """
         shop_name = shop['name']
         self._load_shop_characters(shop)
 
@@ -1316,12 +1422,17 @@ class IslandBusiness(BusinessStockCheckMixin, Island):
 
         # 选择角色和餐品
         self._select_business_characters()
-        self._select_business_product(shop_name)
+        if self._select_business_product(shop_name) == 0:
+            # 没有可出售的餐品时「开始经营」不可用，点了也不会开始；直接返回，调用方已记为处理过
+            logger.warning(f"[岛屿-经营] {shop_name} 没有可出售的餐品，本次不开始经营")
+            self._leave_shop_without_start()
+            return False
 
         # 确认经营并返回
         self._confirm_business_start()
         self.post_manage_mode(POST_MANAGE_BUSINESS)
         self.device.sleep(0.5)
+        return True
 
     def _check_batch_completion(self, batch_results):
         """
@@ -1340,7 +1451,7 @@ class IslandBusiness(BusinessStockCheckMixin, Island):
             'has_blue': has_blue,
         }
 
-    def _run_batch(self, batch_shops):
+    def _run_batch(self, batch_shops, skip_shops=(), final=None):
         """
         执行指定批次的商店经营（逐商店扫描模式）。
 
@@ -1359,13 +1470,19 @@ class IslandBusiness(BusinessStockCheckMixin, Island):
 
         Args:
             batch_shops: 当前批次的商店列表
+            skip_shops: 不再进入的商店名（如传统模式已确认没有餐品的商店）
+            final (bool | None): 是否为最后一批，决定退出时是否设置任务延时；
+                None 时按分批配置判断（第二批或没有第二批）
         """
         self._has_seen_blue = False
         total_darkblue_count = 0  # 本批次内深蓝商店计数
-        processed_shop_names = set()  # 已启动过经营的商店，避免界面刷新延迟导致重复进入
+        processed_shop_names = set(skip_shops)  # 已处理过的商店，避免界面刷新延迟导致重复进入
         claimed_shop_names = set()  # 已领取过奖励的商店，仍需在后续扫描中复检是否变为可经营
         started_shop_names = set()  # 本批次实际开始经营的商店
         seen_shop_names = set()  # 跨滚动位置累积看到过的商店（用于判断是否已遍历全部）
+        # 点进去不是目标商店的识别位置 (商店名, 滑动次数, 标签 Y)。每次重扫都从顶部开始，
+        # 同一滑动次数下的位置可复现；只排除这一处误识别，目标商店真正所在的行仍会处理
+        rejected_rows = []
         max_scrolls = 8  # 最大滑动次数
 
         # 先回到列表顶部
@@ -1374,7 +1491,14 @@ class IslandBusiness(BusinessStockCheckMixin, Island):
         scroll_attempt = 0
         while scroll_attempt < max_scrolls:
             self.device.screenshot()
-            visible_shops = self._scan_visible_batch_shops(batch_shops)
+            visible_shops = [
+                r for r in self._scan_visible_batch_shops(batch_shops)
+                if not any(
+                    name == r['shop']['name'] and attempt == scroll_attempt
+                    and abs(y - r['label_rect'][1]) < self._SHOP_SAME_ROW_Y
+                    for name, attempt, y in rejected_rows
+                )
+            ]
 
             if not visible_shops:
                 logger.info("[岛屿-经营] 当前视野中无本批次商店，尝试向下滑动")
@@ -1414,7 +1538,7 @@ class IslandBusiness(BusinessStockCheckMixin, Island):
                     btn = Button(
                         area=button_rect, color=(),
                         button=button_rect,
-                        file={'cn': ''}
+                        file={'cn': '', 'en': '', 'jp': '', 'tw': ''}
                     )
                     self.device.click(btn)
                     self.device.sleep(1)
@@ -1422,10 +1546,12 @@ class IslandBusiness(BusinessStockCheckMixin, Island):
                     # 进入商店后处理
                     current_shop = self._detect_current_shop()
                     if current_shop and current_shop['name'] == shop_name:
-                        self._process_shop_entry(current_shop)
+                        if self._process_shop_entry(current_shop):
+                            started_shop_names.add(shop_name)
                         processed_shop_names.add(shop_name)
-                        started_shop_names.add(shop_name)
                     else:
+                        # 记下这处误识别：否则回到顶部重新扫描后会点同一位置，无限进错店
+                        rejected_rows.append((shop_name, scroll_attempt, shop_info['label_rect'][1]))
                         logger.warning(f"[岛屿-经营] 进入商店后识别到的不是 {shop_name}，返回后跳过")
                         self.device.click(ISLAND_BACK)
                         self.device.sleep(1)
@@ -1444,7 +1570,7 @@ class IslandBusiness(BusinessStockCheckMixin, Island):
                     btn = Button(
                         area=button_rect, color=(),
                         button=button_rect,
-                        file={'cn': ''}
+                        file={'cn': '', 'en': '', 'jp': '', 'tw': ''}
                     )
                     self.device.click(btn)
                     self.device.sleep(1)
@@ -1487,6 +1613,8 @@ class IslandBusiness(BusinessStockCheckMixin, Island):
         # ========== 退出判断 ==========
         # 先回到顶部
         self._scroll_business_to_top()
+        is_final = final if final is not None else (
+            batch_shops == self._get_batch2_shops() or not self._get_batch2_shops())
 
         if total_darkblue_count > 0 and not self._has_seen_blue:
             # 所有商店都在经营中（从未处理过蓝色按钮）
@@ -1500,15 +1628,20 @@ class IslandBusiness(BusinessStockCheckMixin, Island):
 
         if self._has_seen_blue:
             # 处理过蓝色按钮（部分或全部商店已启动）
+            if not started_shop_names:
+                # 进入了商店但都没有可出售的餐品，等后厨做出餐品后再试
+                logger.warning(f"[岛屿-经营] 批次内商店都没有可出售的餐品，{self.NO_FOOD_RETRY_MINUTES} 分钟后再试")
+                self.config.task_delay(minute=self.NO_FOOD_RETRY_MINUTES)
+                return started_shop_names
             logger.info(f"[岛屿-经营] 批次经营已启动，正常退出")
-            if batch_shops == self._get_batch2_shops() or not self._get_batch2_shops():
+            if is_final:
                 self._set_task_delay()
             return started_shop_names
 
         # 所有商店都是灰色不可经营
         # 只有当前是第二批，或没有第二批时，才设置延后到服务器0点
         # 第一批全 gray 时让 _run_batch_mode 继续处理第二批
-        if batch_shops == self._get_batch2_shops() or not self._get_batch2_shops():
+        if is_final:
             logger.info("[岛屿-经营] 批次内所有商店不可经营，延后至下次服务器刷新（0点）")
             self.config.task_delay(server_update='00:00')
 
@@ -1802,7 +1935,12 @@ class IslandBusiness(BusinessStockCheckMixin, Island):
         # 统计成功分配的槽位：静默失败会导致商店只带 1 个角色开始经营，
         # 而经营中不会再重新派发，用户只能看到「商店里只有 1 个人」（真机踩过）
         assigned = 0
-        for slot_idx in range(2):
+        # Modify by MHY, 合并上游：只填充用户配置了角色的槽位，低等级单角色店铺
+        # 只有 1 个角色槽，继续探测第二个槽位必然失败，还可能误点其它按钮
+        slot_total = min(len(self.character_priority), 2)
+        if slot_total < 2:
+            logger.info(f"[岛屿-经营] 本店铺配置 {slot_total} 个经营角色，跳过多余槽位探测")
+        for slot_idx in range(slot_total):
             btn = BUSINESS_PLUS_A if slot_idx == 0 else BUSINESS_PLUS_B
             plus_button = self._appear_at_positions(btn)
             if not plus_button:
@@ -1861,8 +1999,8 @@ class IslandBusiness(BusinessStockCheckMixin, Island):
                 logger.info(f"[岛屿-经营] 第{slot_idx + 1}个角色未找到，跳过")
                 self.device.click(SELECT_UI_BACK)
                 self.device.sleep(0.5)
-        if assigned < 2:
-            logger.warning(f"[岛屿-经营] 本次只分配了 {assigned}/2 个经营角色，"
+        if assigned < slot_total:
+            logger.warning(f"[岛屿-经营] 本次只分配了 {assigned}/{slot_total} 个经营角色，"
                            f"商店可能以不满员状态开始经营")
 
     def _wait_for_character_selection(self):
@@ -1890,7 +2028,7 @@ class IslandBusiness(BusinessStockCheckMixin, Island):
         """短距离向下滑动，滑动后立即点击安全区域消除惯性"""
         self.device.swipe_vector(vector=(0, -200), box=(58, 150, 838, 480),
                                  duration=(0.3, 0.5), name="BusinessCharSwipe")
-        self.device.click(Button(area=(), color=(), button=self.BUSINESS_INERTIA_STOP_AREA, file={'cn': ''}))
+        self.device.click(Button(area=(), color=(), button=self.BUSINESS_INERTIA_STOP_AREA, file={'cn': '', 'en': '', 'jp': '', 'tw': ''}))
         self.device.sleep(1.0)
 
     def _swipe_up_reset(self):
@@ -1898,7 +2036,7 @@ class IslandBusiness(BusinessStockCheckMixin, Island):
         self.device.swipe_vector(vector=(0, 500), box=(58, 150, 838, 480),
                                  duration=(0.3, 0.5), name="BusinessCharSwipeReset")
         self.device.sleep(0.5)
-        self.device.click(Button(area=(), color=(), button=self.BUSINESS_INERTIA_STOP_AREA, file={'cn': ''}))
+        self.device.click(Button(area=(), color=(), button=self.BUSINESS_INERTIA_STOP_AREA, file={'cn': '', 'en': '', 'jp': '', 'tw': ''}))
         self.device.sleep(1.0)
 
     def _find_and_select_character(self):
@@ -1913,9 +2051,8 @@ class IslandBusiness(BusinessStockCheckMixin, Island):
             if result:
                 char_name, button = result
                 logger.info(f"[岛屿-经营] 选择角色: {char_name}")
-                self.device.click(button)
-                self.device.sleep(0.5)
-                return char_name
+                if self._select_character_by_portrait(button, char_name):
+                    return char_name
             # 短距离向下滑动继续搜索
             self._swipe_down_short()
 
@@ -1930,12 +2067,43 @@ class IslandBusiness(BusinessStockCheckMixin, Island):
             if result:
                 char_name, button = result
                 logger.info(f"[岛屿-经营] 切换排序后选择角色: {char_name}")
-                self.device.click(button)
-                self.device.sleep(0.5)
-                return char_name
+                if self._select_character_by_portrait(button, char_name):
+                    return char_name
             self._swipe_down_short()
 
         return False
+
+    def _select_character_by_portrait(self, portrait_button, character_name=None):
+        """点击角色头像完成选择，已处于选中状态时跳过点击。
+
+        经营角色槽可能默认已选中目标角色（例如店铺原有角色恰好是优先级首位），
+        此时再次点击同一格会取消选中，导致确认按钮不可用、槽位为空。
+        因此先检查选中状态，只有未选中才点击。
+
+        点击后不再重复点击：该界面上点击是“切换”语义，选中标记漏检时重复点击
+        会把刚选中的角色取消；是否真正选中交给后续确认流程（确认按钮）判定。
+
+        Args:
+            portrait_button (Button): 头像模板匹配得到的按钮。
+            character_name (str, optional): 角色名，用于日志与单元格命名。
+
+        Returns:
+            bool: 是否可以进入确认流程。
+        """
+        cell_button = self._cell_button_from_portrait(portrait_button, name=character_name)
+        label = character_name or '角色'
+
+        if self._check_selected_status(self.device.image, cell_button):
+            logger.info(f"[岛屿-经营] {label} 已处于选中状态，跳过点击避免取消选择")
+            return True
+
+        # 只点击一次：重复点击会把刚选中的角色取消
+        self.device.click(portrait_button)
+        self.device.sleep(0.5)
+        if not self._check_selected_status(self.device.screenshot(), cell_button):
+            # 识别标记漏检时仅记录日志，交由确认按钮流程判定是否真的选中
+            logger.warning(f"[岛屿-经营] {label} 点击后未检测到选中标记，交由确认按钮校验")
+        return True
 
     def _find_best_character(self):
         """
@@ -1980,13 +2148,21 @@ class IslandBusiness(BusinessStockCheckMixin, Island):
         return os.path.join(dir_name, f'TEMPLATE_{base_name}')
 
     def _select_business_product(self, shop_name=None):
+        """在商店经营界面逐个选择配置的餐品。
+
+        Returns:
+            int | None: 选中的餐品数量；没有配置餐品时返回 None（不判断能否经营）。
+                返回 0 表示库存里没有可出售的餐品（如新季节刚开始，界面显示
+                「You have no food items to sell.」），此时「开始经营」按钮不可用。
+        """
         # 优先使用配置的产品列表，否则使用全部
         products = self.active_products.get(shop_name, self.shop_products.get(shop_name, []))
         if not products:
-            return
+            return None
         # 等待界面稳定
         self.device.sleep(1.0)
 
+        selected = 0
         # 逐个选择配置的餐品
         for p in products:
             b = p.get('button')
@@ -2006,6 +2182,37 @@ class IslandBusiness(BusinessStockCheckMixin, Island):
                 logger.info(f"[岛屿-经营] 选择餐品: {p['name']} (相似度: {sim:.2f})")
                 self.device.click(offset_btn)
                 self.device.sleep(0.5)
+                selected += 1
+        return selected
+
+    # 商店没有可出售的餐品时，多久后再试（等后厨做出餐品）
+    NO_FOOD_RETRY_MINUTES = 60
+
+    def _run_remaining_shops(self, skip_shops):
+        """传统模式中排在最前的商店无法开始经营时，逐店检查其余商店。
+
+        传统模式只点排在最前的蓝色按钮，最前的商店没有餐品时后面的商店永远轮不到。
+        这里改用分批模式的逐店扫描（全部商店、视为最后一批），跳过已确认无法开始的商店。
+        没有任何商店开始经营时，NO_FOOD_RETRY_MINUTES 分钟后再试。
+
+        Args:
+            skip_shops (set[str]): 不再进入的商店名。
+        """
+        started = self._run_batch(self.shops, skip_shops=skip_shops, final=True)
+        self._trigger_shop_refill(started)
+        if not started:
+            logger.info(f"[岛屿-经营] 没有商店开始经营，{self.NO_FOOD_RETRY_MINUTES} 分钟后再试")
+            self.config.task_delay(minute=self.NO_FOOD_RETRY_MINUTES)
+
+    def _leave_shop_without_start(self):
+        """不开始经营，直接从商店经营界面返回经营页签。"""
+        self.device.click(ISLAND_BACK)
+        self.device.sleep(1)
+        self.device.screenshot()
+        if not self.appear(POST_MANAGE_BUSINESS, offset=30) and not self.appear(POST_MANAGE_PRODUCTION, offset=30):
+            self.goto_postmanage()
+        self.post_manage_mode(POST_MANAGE_BUSINESS)
+        self.device.sleep(0.5)
 
     def _confirm_business_start(self):
         start_button = self._appear_at_positions(BUSINESS_START_IN_SHOP)

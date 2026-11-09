@@ -5,8 +5,24 @@ import types
 import unittest
 from unittest.mock import Mock, patch
 
+from deploy.git import GitManager
 from module.runtime.setting import State
 from module.runtime.updater import Updater
+
+
+class TestGitInstall(unittest.TestCase):
+    # Modify by MHY, 本地更新链只留纯 git，不加载 CDN 或云端更新开关
+    def test_source_update_uses_plain_git_without_cdn(self):
+        manager = Mock(spec=GitManager)
+        GitManager.git_install(manager)
+
+        manager.git_repository_init.assert_called_once_with(
+            repo=manager.Repository,
+            source='origin',
+            branch=manager.Branch,
+            proxy=manager.GitProxy,
+            ssl_verify=manager.SSLVerify,
+        )
 
 
 class TestUpdaterReload(unittest.TestCase):
@@ -364,7 +380,8 @@ class TestUpdaterForceUpdate(unittest.TestCase):
         updater._force_update_checking = False
         return updater
 
-    def test_detected_update_starts_immediately_when_force_update_is_enabled(self):
+    # Modify by MHY, 加快轮询不恢复上游云端开关或自动应用行为。
+    def test_fast_polling_still_waits_for_explicit_update(self):
         updater = self._updater()
         updater.force_update = True
         updater._check_update = Mock(return_value=True)
@@ -373,7 +390,7 @@ class TestUpdaterForceUpdate(unittest.TestCase):
         updater._check_update_thread()
 
         self.assertEqual(1, updater.state)
-        updater.run_update.assert_called_once_with()
+        updater.run_update.assert_not_called()
 
     def test_detected_update_waits_for_manual_or_scheduled_update_when_force_is_disabled(self):
         updater = self._updater()
@@ -385,33 +402,66 @@ class TestUpdaterForceUpdate(unittest.TestCase):
         self.assertEqual(1, updater.state)
         updater.run_update.assert_not_called()
 
-    def test_existing_update_starts_when_force_update_is_later_enabled(self):
+    def test_enabling_fast_polling_does_not_apply_existing_update(self):
         updater = self._updater()
-        updater._check_cloud_update = Mock(return_value=True)
-        updater._check_cloud_force_update = Mock(return_value=True)
+        updater.state = 1
+        updater.force_update = True
         updater.run_update = Mock()
+        updater._check_update_thread = Mock()
 
-        updater._check_force_update_thread()
+        updater.check_update()
 
-        self.assertTrue(updater.force_update)
-        self.assertFalse(updater._force_update_checking)
-        updater.run_update.assert_called_once_with()
+        self.assertEqual(1, updater.state)
+        updater._check_update_thread.assert_not_called()
+        updater.run_update.assert_not_called()
 
-    def test_force_update_uses_one_second_check_schedule(self):
+    def test_update_checks_follow_configured_interval_in_both_modes(self):
+        for force_update in (False, True):
+            for interval in (2, 5):
+                with self.subTest(force_update=force_update, interval=interval):
+                    updater = self._updater()
+                    updater.force_update = force_update
+                    object.__setattr__(updater, "CheckUpdateInterval", interval)
+                    updater.read = Mock()
+                    updater._check_update = Mock(return_value=False)
+                    updater.run_update = Mock()
+                    updater.check_update = Mock(side_effect=updater._check_update_thread)
+                    handler = types.SimpleNamespace(_task=types.SimpleNamespace(delay=None))
+                    loop = updater.check_update_loop()
+                    self.addCleanup(loop.close)
+                    next(loop)
+
+                    seconds = interval * 60
+                    times = (0, 1, seconds - 1, seconds, seconds + 1, 2 * seconds)
+                    with patch("module.runtime.updater.time.monotonic", side_effect=times):
+                        loop.send(handler)
+                        self.assertEqual(1, updater._check_update.call_count)
+                        for expected in (1, 1, 2, 2, 3):
+                            next(loop)
+                            self.assertEqual(expected, updater._check_update.call_count)
+
+                    self.assertEqual(0, updater.state)
+                    updater.run_update.assert_not_called()
+
+    def test_enabling_force_update_does_not_bypass_scheduled_check(self):
         updater = self._updater()
         object.__setattr__(updater, "CheckUpdateInterval", 5)
         updater.read = Mock()
         updater.check_update = Mock()
         handler = types.SimpleNamespace(_task=types.SimpleNamespace(delay=None))
         loop = updater.check_update_loop()
+        self.addCleanup(loop.close)
         next(loop)
 
         with patch(
-            "module.runtime.updater.time.monotonic", side_effect=[0.0, 0.5, 1.5]
+            "module.runtime.updater.time.monotonic", side_effect=[0, 1, 299, 300, 301]
         ):
             loop.send(handler)
-            next(loop)
             updater.force_update = True
+            next(loop)
+            next(loop)
+            self.assertEqual(1, updater.check_update.call_count)
+            next(loop)
             next(loop)
 
         self.assertEqual(2, updater.check_update.call_count)

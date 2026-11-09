@@ -1,7 +1,7 @@
 """
-私人休息室商店店员逻辑。
+宿舍计划商店店员逻辑。
 
-封装私人宿舍商店的购买流程，继承通用 ShopClerk 和 PQShopUI，
+封装宿舍计划商店的购买流程，继承通用 ShopClerk 和 PQShopUI，
 提供商品购买执行、间隔计时器清除等操作。
 支持最大数量购买和确认弹窗处理。
 
@@ -18,7 +18,7 @@ from module.shop.clerk import ShopClerk
 class PQShopClerk(ShopClerk, PQShopUI):
     def shop_interval_clear(self):
         """
-        清除私人宿舍商店相关的按钮间隔计时器。
+        清除宿舍计划商店相关的按钮间隔计时器。
 
         子类可覆写此方法以清除特定资产的间隔。
         """
@@ -41,8 +41,8 @@ class PQShopClerk(ShopClerk, PQShopUI):
             bool: 成功完成购买返回 True。
 
         Pages:
-            in: 私人宿舍商店
-            out: 私人宿舍商店
+            in: 宿舍计划商店
+            out: 宿舍计划商店
         """
 
         # Helper funcs to ensure the appearance for pre and post
@@ -94,8 +94,8 @@ class PQShopClerk(ShopClerk, PQShopUI):
             bool: 是否成功完成（True=全部买完或无可买项，False=余额不足）
 
         Pages:
-            in: 私人宿舍商店
-            out: 私人宿舍商店
+            in: 宿舍计划商店
+            out: 宿舍计划商店
         """
         for _ in range(12):
             logger.hr('Shop buy', level=2)

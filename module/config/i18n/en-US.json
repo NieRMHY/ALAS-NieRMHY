@@ -84,7 +84,7 @@
     },
     "Ambush11": {
       "name": "Ambush 1-1",
-      "help": ""
+      "help": "Farm ambushes on 1-1 without defeating the boss to gain resources. Supports automatic ship replacement through the Emergency Commission flow."
     },
     "EventGeneral": {
       "name": "Event General",
@@ -210,6 +210,10 @@
       "name": "Daily Missions",
       "help": ""
     },
+    "LimitChallenge": {
+      "name": "Limit Challenge",
+      "help": "Challenge each difficulty at most once per month, in order up to the target. A defeat defers the task until next month. Configure the dedicated fleet in the game first. Currently uses CN recognition assets."
+    },
     "Hard": {
       "name": "Main Campaign - Hard Mode",
       "help": ""
@@ -252,10 +256,6 @@
     },
     "OpsiAshBeacon": {
       "name": "META Battle",
-      "help": ""
-    },
-    "OpsiAshAssist": {
-      "name": "META Support",
       "help": ""
     },
     "OpsiExplore": {
@@ -304,7 +304,7 @@
     },
     "OpsiHazard1Leveling": {
       "name": "Corrosion 1 Leveling",
-      "help": ""
+      "help": "This task has many settings, but the defaults suit most needs. Understand Corrosion 1 leveling before changing them; use custom settings at your own risk."
     },
     "OpsiScheduling": {
       "name": "Smart Scheduling",
@@ -312,7 +312,7 @@
     },
     "OpsiPreventActionPointOverflow": {
       "name": "Prevent AP Overflow",
-      "help": "Runs Operation Siren tasks when current AP reaches the upper limit."
+      "help": "Runs Operation Siren tasks when current AP reaches the upper limit.\nNot needed by default; only recommended when you crash in Operation Siren or spend a long time on commissions instead of playing Operation Siren."
     },
     "OpsiCrossMonth": {
       "name": "Cross-Month Daily",
@@ -324,15 +324,15 @@
     },
     "IslandPlan": {
       "name": "Global Config",
-      "help": "Global configuration for Island Plan, including season settings."
+      "help": "Global settings of the island: season and every walk route. Running this task walks each route ticked in \"Island walk rules\" once on the island so you can check whether the character reaches the target; afterwards (or when nothing is ticked) the task is postponed to the next day."
     },
     "IslandSeasonPlan": {
       "name": "Season Tasks (Development Plan)",
-      "help": "Read the island \"Development Season - Development Plan\" page: track each task progress, sync claimed state, notify when items are ready; optional auto submit"
+      "help": "No longer reads the Development Plan page (it misreads digits). Each time a shop collects production or checks sales, the warehouse is read as the current amount. You only enter each task's required amount and tick Done for dishes you already submitted. Done dishes stop being produced and notified, and idle capacity moves to the next-largest gap. The dishes for a new season are updated by the program."
     },
     "IslandBusiness": {
       "name": "Business Module",
-      "help": "Auto-manage 5 shops: Fish Restaurant, Polar Bear Drinks, Squid Grill, Juu Eatery, Juu Coffee."
+      "help": "Auto-manage 5 shops: Fish Restaurant, Polar Bear Drinks, Squid Grill, Juu Eatery, Juu Coffee.\nIncludes automated operations such as selecting characters, selecting meals, and starting business."
     },
     "IslandFarm": {
       "name": "Farmland",
@@ -356,15 +356,15 @@
     },
     "IslandGrill": {
       "name": "Squid Grill",
-      "help": "Sequentially produce meals matching the menu requirements."
+      "help": "Meals are produced in order from 1 to 8. The production target is the \"Meal X amount\" option; the next item runs only after the previous one is fully met, and later items do not affect the completion of earlier ones at runtime."
     },
     "IslandJuuEatery": {
       "name": "Juu Eatery",
-      "help": "Sequentially produce meals matching the menu requirements."
+      "help": "Meals are produced in order from 1 to 8. The production target is the \"Meal X amount\" option; the next item runs only after the previous one is fully met, and later items do not affect the completion of earlier ones at runtime."
     },
     "IslandJuuCoffee": {
       "name": "Juu Coffee",
-      "help": "Sequentially produce meals matching the menu requirements."
+      "help": "Meals are produced in order from 1 to 8. The production target is the \"Meal X amount\" option; the next item runs only after the previous one is fully met, and later items do not affect the completion of earlier ones at runtime."
     },
     "IslandManufacture": {
       "name": "Manufacturing",
@@ -372,7 +372,7 @@
     },
     "IslandDailyGather": {
       "name": "Daily Gathering",
-      "help": "Gather resources from the management interface gathering tab."
+      "help": "Gather resources from the management interface gathering tab with simulated UI clicks. Runs at 03:10 and 18:00. Flow: choose gathering target → toggle the switch → assign characters → depart."
     },
     "IslandAirDrop": {
       "name": "Daily Supply",
@@ -380,7 +380,7 @@
     },
     "IslandCargoPreparation": {
       "name": "Cargo Preparation",
-      "help": "Auto-manage cargo commissions."
+      "help": "Auto-manage island cargo commissions: collect finished cargo rewards, avoid blacklisted cargo such as milk, enter the change page to confirm the first commission selected by default, and load cargo that can be submitted."
     },
     "IslandDailyOrder": {
       "name": "Daily Order",
@@ -392,7 +392,7 @@
     },
     "IslandPearlSell": {
       "name": "Weekly Pearl Trade",
-      "help": "Island movement only supports the minitouch / MaaTouch / uiautomator2 / azurpilot_android control methods. Process pearls every Tuesday at 01:00."
+      "help": "Island movement only supports the minitouch / MaaTouch / uiautomator2 / azurpilot_android control methods. Process pearls automatically every Tuesday at 01:00: first purchase this week's pearls, then sell the pearls you own. Make sure you have enough coins to buy 200x220 pearls, the minimum required to buy out this week's pearls in one go, otherwise errors may occur."
     },
     "FleetInfo": {
       "name": "Fleet Information",
@@ -405,6 +405,10 @@
     "FleetScan": {
       "name": "Fleet Scan",
       "help": "Scan ships assigned to fleets"
+    },
+    "DockScan": {
+      "name": "Dock data scan",
+      "help": "Read dock cards into shared data for mental-chip and fleet-technology analysis; does not upgrade or swap ships."
     },
     "Daemon": {
       "name": "Semi-Auto Click",
@@ -449,6 +453,10 @@
     "MeowfficerScore": {
       "name": "Meowfficer Score",
       "help": "Read meowfficer talents and score them with public guide rules"
+    },
+    "IslandProductionPlanner": {
+      "name": "Island Production Planner",
+      "help": "Island Production Planner ported from ALAS: scans island technology and uses linear programming to work out a daily production and sales plan (most season PT while keeping daily island coin income at or above a minimum). It writes the plan into each shop's kitchen list, business products, idle cooking and farm crop targets. The island tasks still do the actual work."
     }
   },
   "Scheduler": {
@@ -664,6 +672,12 @@
       "True": "Enabled",
       "False": "Disabled"
     },
+    "DisableChannelFloat": {
+      "name": "Disable the Tencent YYB channel floating ball (root required)",
+      "help": "Only affects the Tencent YYB channel client (com.tencent.tmgp.bilibili.blhx). Before starting the game, sets the floating ball switch in the YSDK config to off and locks the file with chattr +i so the server cannot turn it back on after login. Only a config file on the device is changed; the APK is untouched. Requires root or su and runs only when the game process has fully stopped; if it cannot run safely it is skipped without affecting startup. Turning this option off does not restore the floating ball. To restore it, run chattr -i /data/data/com.tencent.tmgp.bilibili.blhx/shared_prefs/YSDK_CONFIG.xml as root and delete that file.",
+      "True": "Enabled",
+      "False": "Disabled"
+    },
     "ScreenshotDedithering": {
       "name": "Remove image color dithering",
       "help": "Enable when running on a real device"
@@ -757,8 +771,8 @@
       "help": "When an error occurs, directly terminate ALAS without restarting the game. Use for debugging, commission tasks, research tasks, Obscured Zones, Abyssal Zones, and other critical timing tasks"
     },
     "TaskRestartLimit": {
-      "name": "Consecutive restart limit per task",
-      "help": "After this many consecutive failed recovery attempts, defer the task until the next server midnight and send an alert using error notification settings. Only success of that task resets its count; other tasks and successful game restarts do not. 0 = unlimited."
+      "name": "Consecutive emulator restart limit per task",
+      "help": "After this many completed emulator restarts for a task, defer it until the next server midnight if another emulator restart is needed, and send an error notification. Game restarts do not count. An exited game, an offline device or an incomplete emulator restart keeps recovering without deferring business tasks. Only success of that task resets its count; other tasks and successful game restarts do not. 0 = unlimited."
     },
     "SaveErrorRetentionDays": {
       "name": "Error log expiration (days)",
@@ -794,12 +808,12 @@
       "help": ""
     },
     "GameStuckRestart": {
-      "name": "Restart the emulator when the game freezes",
-      "help": "After the game freezes (triggers GameStuckError) for the specified number of times, try restarting the emulator. It may help solve problems such as emulator freeze or memory overflow."
+      "name": "Restart the emulator when the game freezes or repeatedly exits",
+      "help": "Try restarting the emulator after repeated freezes or game exits reach the count below, including exits after successful game restarts. This may help with emulator freezes or video memory issues."
     },
     "GameStuckThreshold": {
-      "name": "Restart when the game is stuck for X seconds",
-      "help": "How many consecutive times it is stuck before triggering a restart."
+      "name": "Freeze or game exit count before emulator restart",
+      "help": "Restart the emulator after this many consecutive freezes or game exits. Successful game restarts do not reset the count; a successful ordinary task does."
     },
     "AdbOfflineRestart": {
       "name": "Restart the emulator when the device is not detected",
@@ -838,10 +852,6 @@
     "CheckInterval": {
       "name": "Watchdog check interval (seconds)",
       "help": "How often the watchdog thread checks task status; determines the detection granularity of task timeouts. Smaller values react faster at slightly higher cost.\nDefault 30."
-    },
-    "DailySummaryCheckInterval": {
-      "name": "Daily summary check interval (seconds)",
-      "help": "How often the daily summary timer thread checks its trigger time. Smaller values trigger more precisely at slightly higher cost.\nDefault 1."
     }
   },
   "Reboot": {
@@ -1014,7 +1024,7 @@
       "help": "Handover pacing between commissions and server maintenance."
     },
     "ConsumeRetryMinutes": {
-      "name": "Book consume retry interval (min)",
+      "name": "Permit consume retry interval (min)",
       "help": "When the one-click commission book consume has not triggered today, retry after this many minutes. Each retry re-enters the game; keep it not too short.\nDefault 30."
     },
     "MaintainLeadMinutes": {
@@ -1028,6 +1038,148 @@
     "ConflictRetryMinutes": {
       "name": "Task conflict retry interval (min)",
       "help": "When the commission end time cannot be read, postpone the conflicting task by this many minutes.\nDefault 15."
+    }
+  },
+  "IslandWalk": {
+    "_info": {
+      "name": "Island walk rules",
+      "help": "Each route is a rule string: `up 3000` holds up for 3000 ms (plain integers are milliseconds, 3.0 or 1.5s are seconds); `jump` only taps the jump button once, `switch` moves to Café Manjuu (the middle step of the Bremen route), separated by commas. Every control method walks with these rules; empty rules or unknown directions/durations fall back to the built-in defaults. Tick the \"verify\" checkbox to run that route once in the Global Config task and check whether the character reaches the target; the task is postponed to the next day afterwards (or when nothing is ticked)."
+    },
+    "AirDrop": {
+      "name": "AirDrop run (visit island)",
+      "help": "Friend island air drop route; the two jumps tap the jump button."
+    },
+    "AirDropEnable": {
+      "name": "AirDrop run (visit island): verify",
+      "help": "When ticked, the Global Config task walks this route once so you can check whether the character reaches the target."
+    },
+    "AirDropRetry": {
+      "name": "AirDrop retry swipes",
+      "help": "(duration only) Extra swipes when the drop is not taken; the direction order is fixed to up → right → down and needs 3 durations. A wrong count falls back to defaults."
+    },
+    "AirDropRetryEnable": {
+      "name": "AirDrop retry swipes: verify",
+      "help": "When ticked, the Global Config task walks this route once so you can check whether the character reaches the target."
+    },
+    "AirDropSelf": {
+      "name": "Own island air drop step",
+      "help": "Step down after taking the drop on your own island."
+    },
+    "AirDropSelfEnable": {
+      "name": "Own island air drop step: verify",
+      "help": "When ticked, the Global Config task walks this route once so you can check whether the character reaches the target."
+    },
+    "DailyLakeniya": {
+      "name": "Laconia route",
+      "help": "Plantation: Laconia."
+    },
+    "DailyLakeniyaEnable": {
+      "name": "Lakeniya route: verify",
+      "help": "When ticked, the Global Config task walks this route once so you can check whether the character reaches the target."
+    },
+    "DailyLuxi": {
+      "name": "Lusitania route",
+      "help": "Plantation: Lusitania."
+    },
+    "DailyLuxiEnable": {
+      "name": "Luxi route: verify",
+      "help": "When ticked, the Global Config task walks this route once so you can check whether the character reaches the target."
+    },
+    "DailyAobulaien": {
+      "name": "O'Brien route",
+      "help": "Plains: O'Brien."
+    },
+    "DailyAobulaienEnable": {
+      "name": "OBrien route: verify",
+      "help": "When ticked, the Global Config task walks this route once so you can check whether the character reaches the target."
+    },
+    "DailyQiaoan": {
+      "name": "John route",
+      "help": "Plains: John."
+    },
+    "DailyQiaoanEnable": {
+      "name": "Joan route: verify",
+      "help": "When ticked, the Global Config task walks this route once so you can check whether the character reaches the target."
+    },
+    "DailyMorningdewFarm": {
+      "name": "Morningdew farm cat route",
+      "help": "Farm: pet the cat."
+    },
+    "DailyMorningdewFarmEnable": {
+      "name": "Morningdew farm cat route: verify",
+      "help": "When ticked, the Global Config task walks this route once so you can check whether the character reaches the target."
+    },
+    "DailyHemo": {
+      "name": "Homeric route",
+      "help": "Farm: Homeric."
+    },
+    "DailyHemoEnable": {
+      "name": "Hemo route: verify",
+      "help": "When ticked, the Global Config task walks this route once so you can check whether the character reaches the target."
+    },
+    "DailyMeili": {
+      "name": "Amerigo route",
+      "help": "Farm: Amerigo."
+    },
+    "DailyMeiliEnable": {
+      "name": "Meili route: verify",
+      "help": "When ticked, the Global Config task walks this route once so you can check whether the character reaches the target."
+    },
+    "DailyAolipike": {
+      "name": "Olympic route",
+      "help": "Farm: Olympic."
+    },
+    "DailyAolipikeEnable": {
+      "name": "Aolipike route: verify",
+      "help": "When ticked, the Global Config task walks this route once so you can check whether the character reaches the target."
+    },
+    "DailyAmoma": {
+      "name": "Am-Mer-Mar route",
+      "help": "Commercial: Am-Mer-Mar."
+    },
+    "DailyAmomaEnable": {
+      "name": "Amoma route: verify",
+      "help": "When ticked, the Global Config task walks this route once so you can check whether the character reaches the target."
+    },
+    "DailyPateli": {
+      "name": "Patrick route",
+      "help": "Island Harbor: Patrick (a jump in the middle)."
+    },
+    "DailyPateliEnable": {
+      "name": "Pateli route: verify",
+      "help": "When ticked, the Global Config task walks this route once so you can check whether the character reaches the target."
+    },
+    "DailyBulaimei": {
+      "name": "Bremen route",
+      "help": "The middle `switch` step taps the button that moves you to Café Manjuu and waits until you can act; direction and order are editable."
+    },
+    "DailyBulaimeiEnable": {
+      "name": "Bremen route: verify",
+      "help": "When ticked, the Global Config task walks this route once so you can check whether the character reaches the target."
+    },
+    "DailyLisha": {
+      "name": "Elizabeth route",
+      "help": "Get-Together Island: Elizabeth."
+    },
+    "DailyLishaEnable": {
+      "name": "Lisha route: verify",
+      "help": "When ticked, the Global Config task walks this route once so you can check whether the character reaches the target."
+    },
+    "PearlAssembly": {
+      "name": "Pearl NPC on Get-Together Island",
+      "help": "Pearl NPC on Get-Together Island."
+    },
+    "PearlAssemblyEnable": {
+      "name": "Pearl NPC on assembly island: verify",
+      "help": "When ticked, the Global Config task walks this route once so you can check whether the character reaches the target."
+    },
+    "PearlPort": {
+      "name": "Pearl NPC at port",
+      "help": "Pearl NPC at the port (a jump in the middle)."
+    },
+    "PearlPortEnable": {
+      "name": "Pearl NPC at port: verify",
+      "help": "When ticked, the Global Config task walks this route once so you can check whether the character reaches the target."
     }
   },
   "Optimization": {
@@ -1439,7 +1591,7 @@
     },
     "RetireMode": {
       "name": "Select retirement mode",
-      "help": "If you choose to strengthen, you will fall back to one-click retirement when the strengthening materials are insufficient.",
+      "help": "If you choose to enhance, you will fall back to one-click retirement when the enhancement materials are insufficient.",
       "one_click_retire": "Retire with one click",
       "enhance": "Enhance",
       "old_retire": "Traditional retirement"
@@ -1460,10 +1612,14 @@
     },
     "FleetValue": {
       "name": "Morale value",
-      "help": ""
+      "help": "Pause sorties, confirm recovery settings, then enter the lowest measured fleet morale (an integer from 0 to 150). Saving establishes a new baseline immediately. The value and timestamp must describe the same observed state; recheck if recovery occurs while entering it. Displays an estimate; sortie decisions use the conservative lower bound. Even if the value is unchanged, clear and re-enter it, then press Enter; also save in the TUI. Reliable complete readings from existing fleet scans can narrow recovery timing uncertainty without extra screenshots or waits. Accuracy is unchanged when no valid observations are available."
     },
     "FleetRecord": {
       "name": "Morale record time",
+      "help": ""
+    },
+    "FleetRecoveryState": {
+      "name": "Shared fleet morale recovery record",
       "help": ""
     },
     "FleetControl": {
@@ -1757,18 +1913,18 @@
       "event_20240425_cn": "Heart-Linking Harmony",
       "event_20240521_cn": "Light of the Martyrium Rerun",
       "event_20240725_cn": "Interlude of Illusions",
-      "event_20240815_cn": "Windborne Steel Wings",
+      "event_20240815_cn": "Windborne Steel Wings Rerun",
       "event_20240829_cn": "Whence Flowers Bear No Fruit",
-      "event_20240912_cn": "Ode of Everblooming Crimson",
+      "event_20240912_cn": "Ode of Everblooming Crimson Rerun",
       "event_20241024_cn": "Tempesta and the Sleeping Sea",
       "event_20241121_cn": "Dangerous Inventions Incoming",
-      "event_20241219_cn": "Substellar Crepuscule",
-      "event_20250227_cn": "Paradiso of Shackled Light",
+      "event_20241219_cn": "Substellar Crepuscule Rerun",
+      "event_20250227_cn": "Paradiso of Shackled Light Rerun",
       "event_20250424_cn": "Toward Tulipa’s Seas Rerun",
-      "event_20250520_cn": "A Rose on the High Tower",
+      "event_20250520_cn": "A Rose on the High Tower Rerun",
       "event_20250724_cn": "The Alchemist and the Tower of Horizons",
-      "event_20250814_cn": "Secrets of the Abyss",
-      "event_20250912_cn": "A Dance for Amahara Above",
+      "event_20250814_cn": "Secrets of the Abyss Rerun",
+      "event_20250912_cn": "A Dance for Amahara Above Rerun",
       "event_20251023_cn": "Tempesta and Islas de Libertád",
       "event_20251218_cn": "A Note Through the Firmament",
       "event_20260226_cn": "Springtide Inn Online",
@@ -1778,6 +1934,7 @@
       "event_20260625_cn": "Miracle by Midnight",
       "event_20260813_cn": "Depths of the Astrarium",
       "event_20260908_cn": "Tales of the Paranormal",
+      "event_20261022_cn": "Tempesta and the Corridor of Fog",
       "raid_20200624": "Air Raid Drills with Essex Rerun",
       "raid_20210708": "Cross Wave rerun",
       "raid_20220127": "Mystery Investigation",
@@ -1837,7 +1994,9 @@
       "war_archives_20230525_cn": "archives Confluence of Nothingness",
       "war_archives_20230803_cn": "archives Anthem of Remembrance",
       "war_archives_20231026_cn": "archives Tempesta and the Fountain of Youth",
-      "war_archives_20240725_cn": "archives Interlude of Illusions"
+      "war_archives_20240725_cn": "archives Interlude of Illusions",
+      "war_archives_20241024_cn": "archives Tempesta and the Sleeping Sea",
+      "war_archives_20251023_cn": "archives Tempesta and Islas de Libertád"
     },
     "Mode": {
       "name": "Select stage mode",
@@ -1857,6 +2016,10 @@
       "name": "Use auto-search",
       "help": ""
     },
+    "ContinueAfterRestart": {
+      "name": "Continue battle after restart",
+      "help": "Available for main and event map tasks, including daily event stages, SP, urgent commissions and three-oil farming; off by default. Requires clearing mode and auto search. After an abnormal restart returns to the original map, enable auto search and account for morale normally in each subsequent battle. Does not resume a pre-restart battle or settlement. Map context exists only in this scheduler process; changed settings or exhausted retries fall back to the existing flow."
+    },
     "Use2xBook": {
       "name": "Use high-efficiency combat manual",
       "help": "Double oil consumption, double drop settlement"
@@ -1871,7 +2034,7 @@
     },
     "DefeatWithdraw": {
       "name": "Defeat in mob action",
-      "help": "Handling method when defeated in mob battle during the journey",
+      "help": "Handling method when defeated in mob battle during the journey. Withdraw & stop task requires 3 consecutive defeats before the task stops. Switching fleets is unavailable if the flagship may sink; only when a vanguard ship sinks can you switch fleets and continue sorties",
       "withdraw_continue": "Withdraw & continue task",
       "switch_fleet": "Switch fleet & continue",
       "withdraw_stop": "Withdraw & stop task"
@@ -1880,7 +2043,7 @@
   "OperationHandover": {
     "_info": {
       "name": "Operation handover settings",
-      "help": ""
+      "help": "Supports main and event stages. Names such as 12-4 use the main campaign; D3, T6, and SP3 use the selected event. Event difficulty follows the stage name. Handover availability is checked in game."
     },
     "Count": {
       "name": "Handover count",
@@ -2027,12 +2190,12 @@
     "Fleet1": {
       "name": "Fleet 1 uses fleet number X",
       "help": "",
-      "1": "1 ",
-      "2": "2 ",
-      "3": "3 ",
-      "4": "4 ",
-      "5": "5 ",
-      "6": "6 "
+      "1": "1",
+      "2": "2",
+      "3": "3",
+      "4": "4",
+      "5": "5",
+      "6": "6"
     },
     "Fleet1Formation": {
       "name": "Fleet 1 formation",
@@ -2053,21 +2216,21 @@
     "Fleet1Step": {
       "name": "Fleet 1 step size",
       "help": "Limit movement distance in event maps",
-      "2": "2 ",
-      "3": "3 ",
-      "4": "4 ",
-      "5": "5 "
+      "2": "2",
+      "3": "3",
+      "4": "4",
+      "5": "5"
     },
     "Fleet2": {
       "name": "Fleet 2 uses fleet number X",
       "help": "",
       "0": "Not used",
-      "1": "1 ",
-      "2": "2 ",
-      "3": "3 ",
-      "4": "4 ",
-      "5": "5 ",
-      "6": "6 "
+      "1": "1",
+      "2": "2",
+      "3": "3",
+      "4": "4",
+      "5": "5",
+      "6": "6"
     },
     "Fleet2Formation": {
       "name": "Fleet 2 formation",
@@ -2088,10 +2251,10 @@
     "Fleet2Step": {
       "name": "Fleet 2 step size",
       "help": "Limit movement distance in event maps",
-      "2": "2 ",
-      "3": "3 ",
-      "4": "4 ",
-      "5": "5 "
+      "2": "2",
+      "3": "3",
+      "4": "4",
+      "5": "5"
     },
     "FleetOrder": {
       "name": "Fleet role",
@@ -2103,7 +2266,7 @@
     },
     "SkipPreparation": {
       "name": "Skip fleet preparation",
-      "help": "When enabled, skips the fleet selection step in the preparation screen and directly uses the currently pre-selected fleet for sortie\nSuitable for accounts with unlocked fleet slots, to avoid dropdown detection getting stuck\nBefore enabling, make sure Fleet 1 and Fleet 2 are manually selected in-game"
+      "help": "When enabled, skips the fleet selection step in the preparation screen and directly uses the currently pre-selected fleet for sortie\nSuitable for accounts whose fleet slots are not fully unlocked, to avoid dropdown detection getting stuck\nBefore enabling, make sure Fleet 1 and Fleet 2 are manually selected in-game"
     }
   },
   "Submarine": {
@@ -2115,8 +2278,8 @@
       "name": "Use submarine fleet X",
       "help": "",
       "0": "Not used",
-      "1": "1 ",
-      "2": "2 "
+      "1": "1",
+      "2": "2"
     },
     "Mode": {
       "name": "Select submarine sortie plan",
@@ -2136,7 +2299,7 @@
     },
     "DistanceToBoss": {
       "name": "Move submarine near the boss before the boss battle",
-      "help": "Only takes effect when \"Submarine Attack Mode\" is \"Boss Only\" or \"Hunt and Boss\"\nSelecting \"X tiles from Boss\" requires ensuring the submarine hunting range covers the Boss. Distance is calculated using Manhattan distance. Selecting \"Use Open Ocean Support\" requires U-522/Da Vinci in the submarine fleet.",
+      "help": "Only takes effect when \"Submarine Sortie Plan\" is \"Boss Only\" or \"Hunt and Boss\"\nSelecting \"X tiles from Boss\" requires ensuring the submarine hunting range covers the Boss. Distance is calculated using Manhattan distance. Selecting \"Use Open Ocean Support\" requires U-522/Da Vinci in the submarine fleet.",
       "to_boss_position": "To boss position",
       "1_grid_to_boss": "1 tile from boss",
       "2_grid_to_boss": "2 tiles from boss",
@@ -2154,7 +2317,7 @@
     },
     "Mode": {
       "name": "Morale mode",
-      "help": "AzurPilot uses a built-in morale calculator and does not read morale values through OCR in real time, so please apply the correct morale settings.",
+      "help": "Displays estimated morale; sortie decisions use the conservative lower bound. Before first use, after changing ships or recovery settings, pause sorties and enter the lowest measured morale in the fleet to calibrate. With an accurate baseline, fixed uniform dorm/oath conditions and no extra recovery bonuses, estimation error is at most 3 points. Mixed recovery rates, hot springs and drinks need separate verification.",
       "calculate": "Calculate morale consumption",
       "ignore": "Ignore low morale warning",
       "calculate_ignore": "Calculate morale + ignore low morale warning"
@@ -2163,12 +2326,24 @@
       "name": "Ignore shipwreck morale penalty",
       "help": "When enabled, the extra 10 morale penalty for sinking ships in battle (non-S rating) is no longer counted. Only effective when the morale mode includes \"Calculate morale consumption\"."
     },
+    "MinReserve": {
+      "name": "Minimum morale reserve",
+      "help": "0 disables this setting; range: 0–150. Applies only to modes that calculate morale consumption. When morale cannot cover the next sortie while staying above the control threshold, delay the task until morale recovers to this value. After recovery, keep running with the original control threshold. For example, reserve 150 with threshold 30 waits for 150 when the next sortie cannot maintain 30. The reserve is capped at the current recovery maximum; a higher sortie requirement takes precedence."
+    },
+    "RecoveryWait": {
+      "name": "Morale reserve recovery state",
+      "help": ""
+    },
     "Fleet1Value": {
       "name": "Fleet 1 morale value",
-      "help": ""
+      "help": "Pause sorties, confirm recovery settings, then enter the lowest measured fleet morale (an integer from 0 to 150). Saving establishes a new baseline immediately. The value and timestamp must describe the same observed state; recheck if recovery occurs while entering it. Displays an estimate; sortie decisions use the conservative lower bound. Even if the value is unchanged, clear and re-enter it, then press Enter; also save in the TUI. Reliable complete readings from existing fleet scans can narrow recovery timing uncertainty without extra screenshots or waits. Accuracy is unchanged when no valid observations are available."
     },
     "Fleet1Record": {
       "name": "Fleet 1 morale record time",
+      "help": ""
+    },
+    "Fleet1RecoveryState": {
+      "name": "Fleet 1 morale recovery record",
       "help": ""
     },
     "Fleet1Control": {
@@ -2196,10 +2371,14 @@
     },
     "Fleet2Value": {
       "name": "Fleet 2 morale value",
-      "help": ""
+      "help": "Pause sorties, confirm recovery settings, then enter the lowest measured fleet morale (an integer from 0 to 150). Saving establishes a new baseline immediately. The value and timestamp must describe the same observed state; recheck if recovery occurs while entering it. Displays an estimate; sortie decisions use the conservative lower bound. Even if the value is unchanged, clear and re-enter it, then press Enter; also save in the TUI. Reliable complete readings from existing fleet scans can narrow recovery timing uncertainty without extra screenshots or waits. Accuracy is unchanged when no valid observations are available."
     },
     "Fleet2Record": {
       "name": "Fleet 2 morale record time",
+      "help": ""
+    },
+    "Fleet2RecoveryState": {
+      "name": "Fleet 2 morale recovery record",
       "help": ""
     },
     "Fleet2Control": {
@@ -2303,7 +2482,7 @@
       "help": "Use a low-power fleet to level up at 12-2, retreat after defeating non-3-star enemies.\nIncrease EXP/oil ratio by reducing fleet power"
     },
     "LargeEnemyTolerance": {
-      "name": "Fight up to X-star enemies",
+      "name": "Fight up to X battles of 3-star enemies",
       "help": "",
       "0": "0",
       "1": "1",
@@ -2342,7 +2521,7 @@
   "GemsFarming": {
     "_info": {
       "name": "Urgent Commission Farming",
-      "help": "Warning: This feature allows players to earn a small amount of Gems, but it is not an efficient way to farm Gems\nNew Azur Lane players often overvalue limit break avoidance and low oil cost, while neglecting ship development\nRunning this feature only makes you feel productive, while your account actually makes zero progress\nPlease press the return button"
+      "help": "Warning: This feature allows players to earn a small amount of Gems, but it is not an efficient way to farm Gems.\nPlayers new to Azur Lane tend to overvalue 0 limit break and low oil cost while neglecting ship development.\nRunning this feature only makes you feel productive, while your account actually makes zero progress.\nThe main purpose of this feature is to let players with established fleets farm extra Wisdom Cubes; treat Gems as a by-product rationally.\n\nThis feature replaces the flagship after it reaches level 32.\nFor the urgent commission refresh mechanism, see https://bbs.nga.cn/read.php?tid=27134956\nOil cost per commission: A3 > A1 > 2-4 > 2-1. When an event map is available, choose the event map; 2-1 picks up question mark boxes for more supplies.\nThe first fleet does all the fighting: the vanguard should be a level 100 0-limit-break destroyer with damage equipment, and the back row should be white-rarity 0-limit-break carriers at level 33 or below.\nThe second fleet should provide cross-fleet support (cross-fleet barrage, cross-fleet support).\n\nIf fleet roles cannot be set, the task stops in the following ways to prevent the cross-support fleet from sortying and burning a lot of oil:\nIf error push is configured, a task-stopped message is pushed and the task stops.\nIf error push is not configured, AzurPilot is stopped directly."
     },
     "EventFallbackStage": {
       "name": "Stage after event",
@@ -2350,7 +2529,7 @@
     },
     "ChangeFlagship": {
       "name": "Change flagship",
-      "help": "White-rarity light carriers and white-rarity carriers will be treated as retirement targets\nOnly 0 limit break, no equipment, white-rarity light carriers will be used as replacement\nControls: When to replace the flagship",
+      "help": "Replaces the flagship when its level is >=32 or it has a red face.\nLooks for white-rarity carriers between level 1 and 31, and the replaced flagship is selected for retirement. All white-rarity carriers above level 1 are treated as retirement targets, so make sure to lock ships that are not targets. When swapping ships, the flagship's equipment is replaced, which is done by recording the previous equipment.\n\nEquipment replacement only touches slots that currently have equipment equipped, even if it is white gear. If a flagship is specified, all 5 equipment slots are replaced; if no flagship is specified, only the auxiliaries are replaced.",
       "ship": "Change ship",
       "ship_equip": "Change ships + equipment"
     },
@@ -2367,11 +2546,11 @@
     },
     "CommonCVFilter": {
       "name": "Custom flagship carrier filter",
-      "help": "Filter usable light carriers, syntax same as common CV filter\nSeparated by spaces, case-insensitive\nExample: bogue: Bogue, ranger: Ranger, langley: Langley, hermes: Hermes"
+      "help": "To use a custom filter, set \"Designated flagship carrier\" to \"Custom\". Flagship carriers are then replaced following the filter order.\nbogue: Bogue    ranger: Ranger    langley: Langley    hermes: Hermes"
     },
     "ChangeVanguard": {
       "name": "Change vanguard",
-      "help": "Replace vanguard with low-oil-cost ships from Eagle Union or Iron Blood\nOnly 0 limit break, no equipment, white-rarity destroyers will be used as replacement\nControls: When to replace the vanguard",
+      "help": "Replace vanguard with low-oil-cost ships from Eagle Union or Iron Blood\nOnly 0 limit break, no equipment, white-rarity destroyers will be used as replacement\nControls: When to replace the vanguard\n\nWith vanguard replacement enabled, morale calculation uses this task's dorm recovery and married bonus settings. Set them for the entire fleet, including replacement ships: use the slowest member's dorm recovery and enable the married bonus only when every member is oathed. These settings do not place ships in the dorm or perform an oath.",
       "disabled": "Do not change",
       "ship": "Change ship",
       "ship_equip": "Change ships + equipment"
@@ -2389,11 +2568,11 @@
     },
     "CommonDDFilter": {
       "name": "Custom front row filter",
-      "help": "Filter usable low-oil-cost vanguard ships\nSeparate by spaces\nfoote: Foote, cassin: Cassin, downes: Downes"
+      "help": "To use a custom filter, set \"Designated vanguard\" to \"Custom\". Vanguard ships are then replaced following the filter order.\nz20: Z20    z21: Z21    aulick: Aulick    foote: Foote    cassin: Cassin    downes: Downes"
     },
     "EquipmentCode": {
       "name": "Equipment code",
-      "help": "Default equipment code for light carriers\nSeparate by spaces\nbogue: Bogue, hermes: Hermes, langley: Langley, ranger: Ranger"
+      "help": "Only takes effect when \"Change ships + equipment\" is selected.\nWhen swapping a ship out, if the current ship's equipment code in settings is null, it will be exported; when swapping a ship in, if the equipment code in settings is null, the code exported from the previous ship is used, otherwise the code in settings is used.\nBlueStacks users need to enable the virtual keyboard first, see https://support.bluestacks.com/hc/zh-tw/articles/360061968892-%E5%A6%82%E4%BD%95%E5%9C%A8-BlueStacks-5-%E4%B8%8A%E4%BD%BF%E7%94%A8%E5%B0%8F%E9%8D%B5%E7%9B%A4-%E8%99%9B%E6%93%AC%E9%8D%B5%E7%9B%A4\nDD: vanguard destroyer    bogue: Bogue    hermes: Hermes    langley: Langley    ranger: Ranger"
     },
     "UseEmotionFirst": {
       "name": "Prioritize morale",
@@ -2405,7 +2584,7 @@
     },
     "AllowHighFlagshipLevel": {
       "name": "Only replace max-level back row",
-      "help": "When the flagship has a replacement and its level is higher than the vanguard\nUse white-rarity light carriers in the back row to consume oil and earn experience\nIf the back row has other ships, this function will not be used\nPlease manually add ships that need leveling"
+      "help": "When enabled, only level 100 white-rarity light carriers are chosen when replacing the flagship.\nMake sure the dock has eligible ships before using this."
     },
     "AllowLowVanguardLevel": {
       "name": "Allow low-level vanguard replacement",
@@ -2443,11 +2622,11 @@
     },
     "PtLimit": {
       "name": "Stop when event PT reaches X",
-      "help": "When accumulated PT reaches the given value, all event tasks are disabled. 0 means no limit. Cannot trigger immediately when using auto-search.\nAfter enabling, you only need to open all event tasks without counting total runs.\nGems farming and Three-oil low-cost farming follow their own Stage after event setting: continue on a main campaign stage, or stop if set to 0."
+      "help": "When accumulated PT reaches the given value, all event tasks are disabled. 0 means no limit. Cannot trigger immediately when using auto-search.\nAfter enabling, you only need to open all event tasks without counting total runs.\nUrgent Commission and 3-Oil Low Cost follow their own Stage after event setting: continue on a main campaign stage, or stop if set to 0."
     },
     "TimeLimit": {
       "name": "Event time limit",
-      "help": "When local time exceeds the given value, all event tasks are disabled. '2023-01-01 00:00:00' means no limit. Timer resets after triggering once.\nAfter setting, prevents forgetting to close tasks after an event ends.\nGems farming and Three-oil low-cost farming follow their own Stage after event setting: continue on a main campaign stage, or stop if set to 0."
+      "help": "When local time exceeds the given value, all event tasks are disabled. '2023-01-01 00:00:00' means no limit. Timer resets after triggering once.\nAfter setting, prevents forgetting to close tasks after an event ends.\nUrgent Commission and 3-Oil Low Cost follow their own Stage after event setting: continue on a main campaign stage, or stop if set to 0."
     }
   },
   "TaskBalancer": {
@@ -2549,11 +2728,11 @@
   },
   "MaritimeEscort": {
     "_info": {
-      "name": "Trade convoy",
+      "name": "Maritime Escort",
       "help": "Enter and immediately retreat, can earn about 70% of the rewards"
     },
     "Enable": {
-      "name": "Enable trade convoy",
+      "name": "Enable Maritime Escort",
       "help": ""
     }
   },
@@ -2779,11 +2958,11 @@
   },
   "Tactical": {
     "_info": {
-      "name": "Tactical class",
+      "name": "Tactical Class",
       "help": ""
     },
     "TacticalFilter": {
-      "name": "Tactics academy filter",
+      "name": "Tactical Class filter",
       "help": "Generally no modification is required"
     },
     "RapidTrainingSlot": {
@@ -2831,7 +3010,7 @@
   "AddNewStudent": {
     "_info": {
       "name": "Learn new skills",
-      "help": "When there is a vacant position in the Tactics Academy, a ship girl will be automatically assigned and will learn the first skill that is not yet full level."
+      "help": "When there is a vacant position in the Tactical Class, a ship girl will be automatically assigned and will learn the first skill that is not yet full level."
     },
     "Enable": {
       "name": "Enable this feature",
@@ -2852,7 +3031,7 @@
   },
   "StorageStatistics": {
     "_info": {
-      "name": "Storage statistics",
+      "name": "Inventory statistics",
       "help": ""
     },
     "RunIntervalDays": {
@@ -2968,6 +3147,14 @@
       "name": "Feed filter",
       "help": "Generally no modification is required"
     },
+    "ReserveFood": {
+      "name": "Keep one food item for the next day",
+      "help": "Keep one item across all six food types. Days reset at server midnight. No exemption on the first enabled day. On each following day's first eligible feeding, a single remaining item may be used; more than one item cancels that day's exemption. Keep one item from food obtained later that day."
+    },
+    "FeedReserveState": {
+      "name": "Food reserve state",
+      "help": "Automatically records the server date of the first eligible feeding check to prevent repeated exemptions after restarting."
+    },
     "BuyFood": {
       "name": "Automatically purchase food",
       "help": "For status display only. Disable setting. Do not ask anything about this switch."
@@ -2999,11 +3186,11 @@
       "help": ""
     },
     "BuyAmount": {
-      "name": "Buy X meowfficer boxes daily",
+      "name": "Buy X Cat Boxes daily",
       "help": "The first cat box of the day is free"
     },
     "FortChoreMeowfficer": {
-      "name": "Meow nest interaction",
+      "name": "Comf-Fort interaction",
       "help": "Clean, feed and entertain cats"
     }
   },
@@ -3083,7 +3270,7 @@
       "help": "Only takes effect when \"Start a new Guild Operation\" is enabled.\nIt is not recommended to start three Guild Operations per month, because each player can only participate twice a month, and most members cannot participate in the dispatch of the third operation. This will affect the evaluation of dispatch events, resulting in reduced final rewards."
     },
     "JoinThreshold": {
-      "name": "Only join a guild operation when progress > X",
+      "name": "Only join a guild operation when progress ≤ X",
       "help": "0.0 ~ 1.0. For example, '0.5' means to join only when the combat progress is less than half, and '1' means to join directly regardless of the progress."
     },
     "AttackBoss": {
@@ -3147,12 +3334,12 @@
       "help": "Rarities include ultra, super_rare, elite, rare, and common\nPlease enter the custom order below\nDefault priority: ultra > super_rare > elite > rare > common"
     },
     "LowFavorabilityPriority": {
-      "name": "Low favorability priority",
-      "help": "Ships will be selected in ascending order of favorability"
+      "name": "Low affinity priority",
+      "help": "Ships will be selected in ascending order of affinity"
     },
     "FavouriteOnly": {
       "name": "Only pick from favorited ships",
-      "help": "When enabled, only ships marked as favourite in the dock are picked as secretary. Disable it to pick from all ships by rarity and favorability"
+      "help": "When enabled, only ships marked as favourite in the dock are picked as secretary. Disable it to pick from all ships by rarity and affinity"
     },
     "BackupEnable": {
       "name": "Backup secretary",
@@ -3194,7 +3381,7 @@
     },
     "ConsumeCoins": {
       "name": "Spend overflowing coins",
-      "help": "When coins exceed the limit, auto-purchase items from the Arms Dealer. Stops when coins drop below the limit"
+      "help": "When coins exceed the threshold, purchase all items that consume coins. 0 means disabled. Range: 1-600000"
     },
     "OverflowCoins": {
       "name": "Buy meowfficer boxes on coin overflow",
@@ -3216,7 +3403,7 @@
     },
     "Refresh": {
       "name": "Refresh shop",
-      "help": "Refreshing costs 50 Guild coins. Guild coins are not very valuable, it is recommended to enable."
+      "help": "Refreshing costs 50 Fleet Currency. Fleet Currency is not very valuable, it is recommended to enable."
     },
     "Filter": {
       "name": "Shop filter",
@@ -3522,7 +3709,29 @@
     },
     "UseTicket": {
       "name": "Use single build permit",
-      "help": "When enabled, pools that support build permits will use them first. When no permits are available or building in a standard pool, Cubes will be used instead."
+      "help": "When enabled, first visit the event pool to use single build permits, regardless of the selected pool type. If the event pool has no available permits or not enough for the requested amount, complete the remaining builds in the selected pool using Cubes and Coins."
+    },
+    "TicketAmount": {
+      "name": "Use X single build permits daily",
+      "help": "Requires single build permits to be enabled. Use all remaining permits if fewer are available; this amount may exceed the daily build minimum. When the event pool is selected, also use remaining permits to meet the minimum.",
+      "1": "1",
+      "2": "2",
+      "3": "3",
+      "4": "4",
+      "5": "5",
+      "6": "6",
+      "7": "7",
+      "8": "8",
+      "9": "9",
+      "10": "10"
+    },
+    "ClearTicket": {
+      "name": "Use all permits on the last event day",
+      "help": "Requires single build permits to be enabled. Event date recognition currently supports CN only. Use all permits in batches on the event end date once the configured time is reached. With more than 10 permits, force Quick Finishers for intermediate batches; the final batch follows the Quick Finisher setting. Still complete the daily build minimum afterward."
+    },
+    "ClearTicketTime": {
+      "name": "Time to use all build permits",
+      "help": "Enter a time in the game server's time zone (HH:MM), default 09:30. Requires single build permits and last-day permit clearing to be enabled. Before this time on the last event day, postpone the build task until the configured time."
     },
     "UseDrill": {
       "name": "Use quick finisher to complete build",
@@ -3760,6 +3969,35 @@
       "6": "6"
     }
   },
+  "LimitChallenge": {
+    "_info": {
+      "name": "Limit Challenge",
+      "help": "Challenge each difficulty at most once per month, in order up to the target. A defeat defers the task until next month. Configure the dedicated fleet in the game first. Currently uses CN recognition assets."
+    },
+    "TargetLevel": {
+      "name": "Target difficulty",
+      "help": "Easy → Normal → Hard. Clear and collect the previous reward to unlock the next difficulty. S/A/B count as a clear; C/D count as defeat. Uses the dedicated in-game fleet without consuming oil or morale.",
+      "easy": "Easy",
+      "normal": "Normal",
+      "hard": "Hard"
+    },
+    "Month": {
+      "name": "Progress month",
+      "help": ""
+    },
+    "CompletedLevel": {
+      "name": "Cleared difficulty",
+      "help": ""
+    },
+    "AttemptedLevel": {
+      "name": "Attempted difficulty",
+      "help": ""
+    },
+    "Failed": {
+      "name": "Defeated this month",
+      "help": ""
+    }
+  },
   "Hard": {
     "_info": {
       "name": "Hard mode",
@@ -3774,6 +4012,10 @@
       "help": "",
       "1": "1",
       "2": "2"
+    },
+    "RunAt18": {
+      "name": "Run at 18:00",
+      "help": "Disabled by default. When enabled, daily runs move from midnight to 18:00 server time. Runs due before 18:00 are postponed."
     },
     "HardNewMode": {
       "name": "Balanced Mode",
@@ -3893,6 +4135,10 @@
       "name": "META assist",
       "help": "Beacon assist three times a day"
     },
+    "Enable": {
+      "name": "Enable META assists",
+      "help": "Complete the three daily assists within META fights, sharing equipment settings with your current-season beacons."
+    },
     "Tier": {
       "name": "Find beacons with level above X",
       "help": "If you try several times and still can't find a beacon that meets the criteria, fight a random one."
@@ -3968,31 +4214,35 @@
     "AutoSearchTimeLimit": {
       "name": "Auto-search time limit",
       "help": "Unit: minutes. During auto search, the script will assume the game is stuck if no event is detected for this period."
-    },
-    "SkipStrategicSearchCheck": {
-      "name": "Skip plan battle option checks",
-      "help": "When looping a single zone (Corrosion 1 leveling / Meowfficer farming), open the plan battle panel and confirm directly without scroll-checking every option. The panel options must already be configured in-game (zone mode: repeat, stop on merchant/device, auto-submit missions); let the task run once normally, or configure them manually first."
     }
   },
   "OpsiAshBeacon": {
     "_info": {
-      "name": "META fight",
+      "name": "META Showdown",
       "help": ""
     },
     "AttackMode": {
-      "name": "META fight",
+      "name": "META Showdown",
       "help": "",
       "current": "Current season",
       "current_dossier": "Current season + Dossier",
       "current_dossier_only": "Dossier"
     },
-    "OneHitMode": {
-      "name": "Hit and run",
-      "help": "Only attack each beacon once, then call for assist every half hour.\nDoes not work on Dossier beacons."
+    "AssistRequestLimit": {
+      "name": "Assist request limit",
+      "help": "0: Attack each beacon once, then keep requesting assistance every half hour (default).\n-1: Keep attacking; the Call for Assist setting controls assistance requests.\nPositive integer: Request assistance this many times, wait half an hour after the final request, then finish the beacon yourself if needed. The request before the first battle counts; friends, guild and world together count as one request.\nProgress survives restarts and resets for each new beacon. Does not affect Dossier beacons."
+    },
+    "AssistRequestState": {
+      "name": "Beacon assist progress",
+      "help": "Stores the current beacon's request count and next check time."
     },
     "DossierAutoAttackMode": {
       "name": "Dossier beacon auto combat",
       "help": "Automatically fight after the first battle at the Dossier beacon. Currently only available on CN Server."
+    },
+    "DossierSkipAssist": {
+      "name": "Pause assists while a Dossier is active",
+      "help": "Pause daily META assists while a Dossier is open, being analyzed, or in auto combat. Collect pending Dossier rewards before resuming assists.\nYou must enable this option when using automatic equipment switching."
     },
     "RequestAssist": {
       "name": "Request assist",
@@ -4014,7 +4264,7 @@
     },
     "Filter": {
       "name": "Sortie fleet filter",
-      "help": "Fight the BOSS in rotation. If one fleet dies, replace it with another.\nPlease make sure the fleet is strong enough to ultimately defeat the BOSS.\nUse \"Call submarine\" to call a submarine before combat, but the run interval will be increased to 60 minutes."
+      "help": "Fight the BOSS in rotation. If one fleet dies, replace it with another.\nPlease make sure the fleet is strong enough to ultimately defeat the BOSS.\nUse \"CallSubmarine\" to call a submarine before combat, but the run interval will be increased to 60 minutes."
     }
   },
   "OpsiFleet": {
@@ -4038,11 +4288,11 @@
   "OpsiExplore": {
     "_info": {
       "name": "Monthly exploration",
-      "help": "Explore all sea zones in Operation Siren at the beginning of each month, without needing to buy a Campaign Information Recorder (5000 Oil item).\nThis function will clear a sea zone every 27 minutes to ensure airspace search cooldown.\nThe following conditions must be met before using this feature:\n- Complete Operation Siren main story and finish Simulation Battle + Siren Proving Ground\nSmart and monthly exploration cannot be enabled together. Disable the monthly exploration task before enabling smart exploration. If monthly exploration reached 100% this month, smart exploration is unnecessary and skips all three routes."
+      "help": "Explore all sea zones in Operation Siren at the beginning of each month, without needing to buy an Operation Siren Data Logger (5000 Oil item).\nThis function will clear a sea zone every 27 minutes to ensure airspace search cooldown.\nThe following conditions must be met before using this feature:\n- Complete Operation Siren main story and finish Simulation Battle + Siren Proving Ground\nSmart and monthly exploration cannot be enabled together. Disable the monthly exploration task before enabling smart exploration. If monthly exploration reached 100% this month, smart exploration is unnecessary and skips all three routes."
     },
     "SpecialRadar": {
-      "name": "Campaign Information Recorder has been purchased (5000 Oil item)",
-      "help": "The Campaign Information Recorder is not required.\nCannot be checked if not purchased and used."
+      "name": "Operation Siren Data Logger has been purchased (5000 Oil item)",
+      "help": "The Operation Siren Data Logger is not required.\nCannot be checked if not purchased and used."
     },
     "ForceRun": {
       "name": "Force run regardless of run interval",
@@ -4071,7 +4321,7 @@
   },
   "OpsiExploreCleanup": {
     "_info": {
-      "name": "Ordinary-zone event cleanup",
+      "name": "Explorable-zone event cleanup",
       "help": "Requires 100% monthly exploration. Revisit original DANGEROUS zones in exploration order, scan the full map and every fleet radar, and handle missed events and their enemies. Never enter SAFE zones. Uses separate monthly checkpoints saved after leaving each zone, without repeating completed months. If exploration is incomplete, ask to rerun monthly exploration."
     },
     "Progress": {
@@ -4113,7 +4363,7 @@
     },
     "Filter": {
       "name": "Shop filter",
-      "help": "Reference documentation https://github.com/LmeSzinc/AzurLaneAutoScript/wiki/reward_shop_filter_string"
+      "help": "Supports Operation Siren Data Logger (LoggerUnlock), Hidden Zone Data Logger (HiddenZoneDataLogger)\nReference documentation https://github.com/LmeSzinc/AzurLaneAutoScript/wiki/reward_shop_filter_string You can set LoggerUnlock > HiddenZoneDataLogger > LoggerAbyssal > LoggerObscure > Book > Coin > Fragment to buy the Operation Siren Data Logger and the Hidden Zone Data Logger."
     }
   },
   "OpsiDaily": {
@@ -4152,16 +4402,28 @@
   },
   "OpsiObscure": {
     "_info": {
-      "name": "Obscured zone",
-      "help": "Clear an Obscured Zone every 27 minutes to ensure the zone search cooldown\nThe following conditions must be met before using this feature:\n- Clear the Operation Siren main storyline and complete Simulation Battle + Siren Proving Ground\n- Enable Operation Siren Exploration mission or use the Campaign Information Recorder (5000 Oil item)"
+      "name": "Hidden zone",
+      "help": "Clear a Hidden Zone every 27 minutes to ensure the zone search cooldown\nThe following conditions must be met before using this feature:\n- Clear the Operation Siren main storyline and complete Simulation Battle + Siren Proving Ground\n- Enable the Monthly exploration task or use the Operation Siren Data Logger (5000 Oil item)"
     },
     "SkipHazard2Obscure": {
       "name": "Skip Corrosion Level 2 coordinates",
-      "help": "When enabled, Obscured Zones with Corrosion Level 2 will not be cleared."
+      "help": "When enabled, Hidden Zones with Corrosion Level 2 will not be cleared."
     },
     "ForceRun": {
       "name": "Force run ignoring interval",
       "help": "When enabled, it will consume additional Action Points. Generally not needed, just run it slowly."
+    },
+    "FullScan": {
+      "name": "Full map scan (experimental)",
+      "help": "Off by default. May get stuck. After auto search, nearby radar questions and the current view scan, scan the full map once if no event has been handled. Handle any event found using the existing flow."
+    },
+    "RadarScan": {
+      "name": "Radar scan",
+      "help": "Off by default. If no event has been handled after the full map scan, switch fleets to check radar questions. If full map scanning is off, check after auto search and the existing current view checks. Only switch fleets and handle detected events; do not run fixed-position patrols or extra full map scans. Restore the sortie fleet afterward."
+    },
+    "ResumeState": {
+      "name": "Obscure zone resume record",
+      "help": "Automatically records the single resume attempt for this zone. Exit normally after another restart; clear the record after a successful exit."
     }
   },
   "OpsiAbyssal": {
@@ -4172,6 +4434,10 @@
     "ForceRun": {
       "name": "Force run ignoring interval",
       "help": "When enabled, it will consume additional Action Points. Generally not needed, just run it slowly."
+    },
+    "ContinueAfterRestart": {
+      "name": "Resume Abyssal battles after restart",
+      "help": "Disabled by default. Resume the current Abyssal Zone with the original exploration fleet and configured Boss fleet order. Each stage has one restart continuation; the next stage resets it to one without accumulation. Another restart in the same stage exits normally. Low morale closes the prompt, withdraws the fleet and proceeds to the next. Clear all markers when the Abyssal Zone is gone."
     }
   },
   "OpsiStronghold": {
@@ -4195,7 +4461,7 @@
   "OpsiMonthBoss": {
     "_info": {
       "name": "Monthly boss",
-      "help": "Clear the (Normal/Hard) Monthly Boss. On Normal difficulty, will continue attacking until defeated. On Hard difficulty, will terminate the task directly upon failure.\nThe following conditions must be met before using this feature:\n- Clear the Operation Siren main storyline and complete Simulation Battle + Siren Proving Ground\n- Enable Operation Siren Exploration mission or use the Campaign Information Recorder (5000 Oil item)"
+      "help": "Clear the (Normal/Hard) Monthly Boss. On Normal difficulty, will continue attacking until defeated. On Hard difficulty, will terminate the task directly upon failure.\nThe following conditions must be met before using this feature:\n- Clear the Operation Siren main storyline and complete Simulation Battle + Siren Proving Ground\n- Enable Operation Siren Exploration mission or use the Operation Siren Data Logger (5000 Oil item)"
     },
     "Mode": {
       "name": "Monthly boss difficulty",
@@ -4215,7 +4481,7 @@
   "OpsiMeowfficerFarming": {
     "_info": {
       "name": "Meowfficer farming",
-      "help": "Attack sea zones with designated Corrosion levels in clockwise order\nThe following conditions must be met before using this feature:\n- Clear the Operation Siren main storyline and complete Simulation Battle + Siren Proving Ground\n- Enable Operation Siren Exploration mission or use the Campaign Information Recorder (5000 Oil item)"
+      "help": "Attack sea zones with designated Corrosion levels in clockwise order\nThe following conditions must be met before using this feature:\n- Clear the Operation Siren main storyline and complete Simulation Battle + Siren Proving Ground\n- Enable Monthly exploration or use the Operation Siren Data Logger (5000 Oil item)"
     },
     "ActionPointPreserve": {
       "name": "Preserve X action points",
@@ -4233,19 +4499,19 @@
     },
     "TargetZone": {
       "name": "Target zone",
-      "help": "Only attack the designated sea zone. Supports zone IDs and CN/EN/JP/TW zone names. Use 0 to return to the default logic by Corrosion level.\nWhen Planned Operation in Target Zone is enabled, multiple zones can be entered and cycled in order, e.g. 42,55,45, 42, 55, 45, or 42, 55, 45."
+      "help": "Only attack the designated sea zone. Supports zone IDs and CN/EN/JP/TW zone names. Use 0 to return to the default logic by Corrosion level.\nWhen Cycle through target zones is enabled, multiple zones can be entered and cycled in order, e.g. 42,55,45, 42, 55, 45, or 42, 55, 45."
     },
     "StayInZone": {
-      "name": "Planned operation in target zone",
+      "name": "Cycle through target zones",
       "help": "After enabling this, the task runs according to Target Zone. With one zone it stays there; with multiple zones it cycles through them in the configured order. Only takes effect when Target Zone is not 0."
     },
     "ExecuteFixedPatrolScan": {
-      "name": "Fixed patrol scan",
-      "help": "After enabling this, the task will scan the fixed patrol zone every 10 seconds."
+      "name": "Radar scan",
+      "help": "After each battle, switch through fleets 1-4 to scan their radars and handle remaining question marks. Fleets do not move. Off by default; when off, only the current fleet is checked."
     },
     "DebugClip": {
       "name": "Post-battle debug recording",
-      "help": "When enabled, during each Meowfficer-farming round's post-battle handling (event detection / event resolution / forced movement), record what ALAS itself sees into an mp4 under log/clips/ (filename starts with meow_clip_). Every round is saved, whether or not an event occurred, so you can review each round. Retention is configured under OS General Settings."
+      "help": "When enabled, during each Meowfficer-farming round's post-battle handling (event detection / event resolution / radar scan), record what ALAS itself sees into an mp4 under log/clips/ (filename starts with meow_clip_). Every round is saved, whether or not an event occurred, so you can review each round. Retention is configured under OS General Settings."
     }
   },
   "OpsiTarget": {
@@ -4279,8 +4545,8 @@
       "22": "22 | NA Ocean SW B"
     },
     "OperationCoinsPreserve": {
-      "name": "Preserve X combat supply vouchers",
-      "help": "When Combat Supply Vouchers are lower than X, run Meowfficer Farming. Not recommended to modify."
+      "name": "Preserve X Operation Supply Coins",
+      "help": "When Operation Supply Coins are lower than X, run Meowfficer Farming. Not recommended to modify."
     },
     "MinimumActionPointReserve": {
       "name": "Preserve X Action Points",
@@ -4296,6 +4562,14 @@
       "True": "Enabled",
       "False": "Disabled"
     },
+    "ActionPointCheckInterval": {
+      "name": "Routine AP check interval (minutes)",
+      "help": "0 disables scheduled checks. Read AP only for resupply, when the interval expires, or for the first confirmation after recovery. Otherwise skip screenshots and OCR. Applies to CL1, smart scheduling and Meowfficer farming."
+    },
+    "SkipStrategicSearchCheck": {
+      "name": "Skip planned operation swipe checks",
+      "help": "Confirm planned operations without swiping through the options. First run the task normally or set these in-game: repeat zone, stop for merchant/device, and auto-submit missions."
+    },
     "Cl1Filter": {
       "name": "Akashi Purchase Filter",
       "help": "By default, only Action Points are purchased. If you want to also buy purple coins, set it to ‘ActionPoint > PurpleCoins’"
@@ -4306,13 +4580,19 @@
     },
     "RecordSeaMiles": {
       "name": "Sea miles recording",
-      "help": "Record sea miles to statistics after each Corrosion 1 leveling cycle",
-      "True": "Enabled",
-      "False": "Disabled"
+      "help": "Record sea miles to statistics after each Corrosion 1 leveling cycle"
+    },
+    "SeaMilesLastRecord": {
+      "name": "Last sea miles check",
+      "help": "Internal timestamp of the last successful sea miles check, used to calculate the check interval."
+    },
+    "PendingMapEvent": {
+      "name": "Pending map event",
+      "help": "Internal record of a map event that has already been spotted but not finished (Akashi / scanning device / Siren research device). Used to resume it after a stuck restart. No need to edit manually."
     },
     "DebugClip": {
       "name": "Post-battle debug recording",
-      "help": "When enabled, during each Corrosion 1 round's post-battle handling (rescan / event resolution / forced movement), record what ALAS itself sees into an mp4 under log/clips/. Every round is saved, whether or not an event occurred, so you can review each round. Use this to manually verify whether Akashi is missed. Clips are cleaned up automatically according to the clip retention setting under OS General Settings."
+      "help": "When enabled, during each Corrosion 1 round's post-battle handling (rescan / event resolution / radar scan), record what ALAS itself sees into an mp4 under log/clips/. Every round is saved, whether or not an event occurred, so you can review each round. Use this to manually verify whether Akashi is missed. Clips are cleaned up automatically according to the clip retention setting under OS General Settings."
     }
   },
   "OpsiSirenBug": {
@@ -4326,7 +4606,7 @@
     },
     "Siren_Mode": {
       "name": "Interaction mode with Siren detection device",
-      "help": "Choose how to interact with Siren devices. Detecting resources costs purple coins (Special Exchange Vouchers), detecting enemies costs Siren Energy Storage",
+      "help": "Choose how to interact with Siren devices. Detecting resources costs purple coins (Special Item Tokens), detecting enemies costs Energy Storage Device",
       "resource": "Repeatedly attempt to detect hidden resources",
       "enemy": "Repeatedly attempt to detect hidden enemies"
     },
@@ -4412,8 +4692,8 @@
       "False": "Disabled"
     },
     "OperationCoinsPreserve": {
-      "name": "Smart Scheduling: preserve X combat supply vouchers",
-      "help": "When Combat Supply Vouchers are lower than X, run yellow coin replenishment task. Not recommended to modify."
+      "name": "Smart Scheduling: preserve X Operation Supply Coins",
+      "help": "When Operation Supply Coins are lower than X, run yellow coin replenishment task. Not recommended to modify."
     },
     "ActionPointPreserve": {
       "name": "Coin replenishment: preserve X action points",
@@ -4430,7 +4710,7 @@
       "False": "Disabled"
     },
     "EnableObscure": {
-      "name": "Enable obscured zone",
+      "name": "Enable hidden zone",
       "help": "Whether to enable Obscured Zone task for yellow coin replenishment in Smart Scheduling",
       "True": "Enabled",
       "False": "Disabled"
@@ -4454,6 +4734,10 @@
     "ObscureAbyssalCheckDelayDays": {
       "name": "Obscure/Abyssal recheck delay (days)",
       "help": "After all Obscure Zones and Abyssal Zones are cleared, Smart Scheduling delays their checks by the given number of days and skips them in the meantime to speed up coin replenishing. 0 checks every round. The Operation Siren monthly reset refreshes them, and checks resume after the reset."
+    },
+    "StrongholdCheckDelayDays": {
+      "name": "Siren Stronghold recheck delay (days)",
+      "help": "After no Siren Strongholds are found, Smart Scheduling skips their checks for the specified number of days. 0 keeps the existing weekly refresh or monthly Operation Siren reset schedule with its original grace period. Positive values wait the full number of days, even across refreshes. Only normal coin replenishment checks in Smart Scheduling are affected; standalone Stronghold tasks and month-end cleanup are unchanged."
     },
     "MonthEndActionPointCleanupEnable": {
       "name": "Enable month-end action point cleanup",
@@ -4526,11 +4810,11 @@
   "IslandPlan": {
     "_info": {
       "name": "Global config",
-      "help": "Global configuration for Island Plan, including season settings."
+      "help": "Global settings of the island plan: the season decides which seasonal items the tasks use; \"Island walk rules\" lets you customize each walk route (applies to every control method), and ticking a verify checkbox makes the Global Config task run it once to check the landing spot."
     },
     "Season": {
       "name": "Current season",
-      "help": "Some items are season-limited. Adjust according to the current season. Autumn limited items: Persimmon Cake, Matsutake Chicken Soup, Carrot Pear Juice, Chrysanthemum Tea, Autumn Pear, Persimmon, Peanut Oil, Autumn Bouquet.",
+      "help": "Some items are season-limited. Adjust according to the current season.\nSpring: Cold Mixed Bamboo Shoots and Asparagus, Shrimp and Asparagus Stir-Fry, Winter Jasmine Tea, Fresh Pineapple Juice, Asparagus, Pineapple, Dried Shepherd's Purse, Spring Bouquet.\nSummer: Amaranth Onigiri, Tomato and Egg Stir-Fry, Watermelon Juice, Cucumber Juice, Tomato, Cucumber, Jasmine Essential Oil, Summery Bouquet.\nAutumn: Dried Persimmon, Matsutake and Chicken Soup, Carrot and Pear Juice, Chrysanthemum Tea, Yoizuki Pear, Kaki Persimmon, Peanut Oil, Autumn Bouquet.\nWinter: Shiitake Mushroom Chicken Stew, Green Jujube Porridge, Water Chestnut Cakes, Satsuma Mandarin Daifuku, Satsuma Mandarin, Green Jujube, Plum-Scented Sachet, Brumal Bouquet.",
       "spring": "Spring",
       "summer": "Summer",
       "autumn": "Autumn",
@@ -4557,6 +4841,12 @@
     "PlanShelfSlots": {
       "name": "Shelf slots",
       "help": "How many shelf slots the generated list should use"
+    },
+    "PlanExtraMeals": {
+      "name": "Extra meal production",
+      "help": "When off, the production list only covers shelf restock and season stockpiles; turn it on to spend leftover work hours on high-profit items that are not on the shelf",
+      "True": "Enabled",
+      "False": "Disabled"
     }
   },
   "IslandFarm": {
@@ -4574,11 +4864,27 @@
     },
     "WorkerFilter": {
       "name": "Farm worker filter",
-      "help": "Connect with >, e.g. ChaoHo > NewJersey > Amagi_chan\nSaratoga > Akashi > Tashkent > YingSwei\nLeMalin > Unicorn > Shimakaze > Cheshire\nChenHai > WilliamDPorter\nHelena > Friedrich > Atago\nYixian > August > Eugen > Hood > Javelin > Laffey > Explorer > Navigator > OceanCrosser > FeiYun > Takao > Anchorage > Belfast > ChangFeng > Mogador > RoyalFortune > DaVinci > Taihou\nOnly recognizes the first two rows in default order. If the specified character is unavailable, falls back to WorkerJuu."
+      "help": "Connect with >, e.g. ChaoHo > NewJersey > Amagi_chan\nSaratoga > Akashi > Tashkent > YingSwei\nLeMalin > Unicorn > Shimakaze > Cheshire\nChenHai > WilliamDPorter\nHelena > Friedrich > Atago\nYixian > August > Eugen > Hood > Javelin > Laffey > Explorer > Navigator > OceanCrosser > FeiYun > Takao > Anchorage > Belfast > ChangFeng > Mogador > RoyalFortune > DaVinci > Taihou > Nagato > Agir > HwahJah > Argus > Ognevoy\nOnly recognizes the first two rows in default order. If the specified character is unavailable, falls back to WorkerJuu."
     },
     "MinFarm": {
       "name": "Crop stock threshold",
       "help": "Recommended 660 or above."
+    },
+    "CropTargets": {
+      "name": "Per-crop restock targets",
+      "help": "One \"crop: target stock\" per line, e.g.\ncorn: 200\nwheat: 80\nA listed crop is replanted when its stock drops below its own target; crops not listed use \"Crop stock threshold\". A target of 0 means never replant that crop. Leave empty to use \"Crop stock threshold\" for every crop. The crop furthest below its target is planted first.\nCrops: wheat, corn, rice, chinese_cabbage, potato, soybean, pasture, coffee_bean\nThe Island Production Planner rewrites this setting when it runs."
+    },
+    "DefaultCrop": {
+      "name": "Default crop",
+      "help": "The crop spare posts plant once every crop has reached its target (number of posts is the next setting). The Island Production Planner rewrites it from the spare-time output it plans for season points.",
+      "wheat": "Wheat",
+      "corn": "Corn",
+      "rice": "Rice",
+      "chinese_cabbage": "Napa Cabbage",
+      "potato": "Potato",
+      "soybean": "Soy Beans",
+      "pasture": "Grass",
+      "coffee_bean": "Coffee Beans"
     },
     "PlantPotatoes": {
       "name": "Plant wheat",
@@ -4593,7 +4899,7 @@
   "IslandOrchard": {
     "_info": {
       "name": "Orchard",
-      "help": "The warehouse only recognizes two rows. Please clean up regularly."
+      "help": "The depot only recognizes two rows. Please clean up regularly."
     },
     "Positions": {
       "name": "Orchard positions",
@@ -4605,15 +4911,34 @@
     },
     "WorkerFilter": {
       "name": "Orchard worker filter",
-      "help": "Connect with >, e.g. ChaoHo > NewJersey > Amagi_chan\nSaratoga > Akashi > Tashkent > YingSwei\nLeMalin > Unicorn > Shimakaze > Cheshire\nChenHai > WilliamDPorter\nHelena > Friedrich > Atago\nYixian > August > Eugen > Hood > Javelin > Laffey > Explorer > Navigator > OceanCrosser > FeiYun > Takao > Anchorage > Belfast > ChangFeng > Mogador > RoyalFortune > DaVinci > Taihou\nOnly recognizes the first two rows in default order. If the specified character is unavailable, falls back to WorkerJuu."
+      "help": "Connect with >, e.g. ChaoHo > NewJersey > Amagi_chan\nSaratoga > Akashi > Tashkent > YingSwei\nLeMalin > Unicorn > Shimakaze > Cheshire\nChenHai > WilliamDPorter\nHelena > Friedrich > Atago\nYixian > August > Eugen > Hood > Javelin > Laffey > Explorer > Navigator > OceanCrosser > FeiYun > Takao > Anchorage > Belfast > ChangFeng > Mogador > RoyalFortune > DaVinci > Taihou > Nagato > Agir > HwahJah > Argus > Ognevoy\nOnly recognizes the first two rows in default order. If the specified character is unavailable, falls back to WorkerJuu."
     },
     "MinOrchard": {
       "name": "Fruit stock threshold",
       "help": ""
     },
+    "CropTargets": {
+      "name": "Per-crop restock targets",
+      "help": "One \"crop: target stock\" per line, e.g.\napple: 150\nrubber: 0\nA listed crop is replanted when its stock drops below its own target; crops not listed use \"Fruit stock threshold\". A target of 0 means never replant that crop. Leave empty to use \"Fruit stock threshold\" for every crop. The crop furthest below its target is planted first.\nCrops: apple, citrus, banana, mango, lemon, avocado, rubber, pear, persimmon, sugar_tangerine, green_jujube\nAutumn Pear and Persimmon use 4x1 planting and consume 4 seeds per dispatch; Sugar Tangerine and Green Jujube use normal 4x4 planting and consume at least 16 seeds per dispatch.\nThe Island Production Planner rewrites this setting when it runs."
+    },
     "IgnoreAvocado": {
       "name": "Ignore avocado",
       "help": ""
+    },
+    "DefaultCrop": {
+      "name": "Default crop",
+      "help": "The crop spare posts plant once every crop has reached its target (number of posts is the next setting). The Island Production Planner rewrites it from the spare-time output it plans for season points.",
+      "apple": "Apple",
+      "citrus": "Citrus Fruit",
+      "banana": "Banana",
+      "mango": "Mango",
+      "lemon": "Lemon",
+      "avocado": "Avocado",
+      "rubber": "Rubber",
+      "pear": "Yoizuki Pear",
+      "persimmon": "Kaki Persimmon",
+      "sugar_tangerine": "sugar_tangerine",
+      "green_jujube": "green_jujube"
     },
     "PlantRubber": {
       "name": "Plant rubber",
@@ -4642,15 +4967,32 @@
     },
     "WorkerFilter": {
       "name": "Nursery worker filter",
-      "help": "Connect with >, e.g. ChaoHo > NewJersey > Amagi_chan\nSaratoga > Akashi > Tashkent > YingSwei\nLeMalin > Unicorn > Shimakaze > Cheshire\nChenHai > WilliamDPorter\nHelena > Friedrich > Atago\nYixian > August > Eugen > Hood > Javelin > Laffey > Explorer > Navigator > OceanCrosser > FeiYun > Takao > Anchorage > Belfast > ChangFeng > Mogador > RoyalFortune > DaVinci > Taihou\nOnly recognizes the first two rows in default order. If the specified character is unavailable, falls back to WorkerJuu."
+      "help": "Connect with >, e.g. ChaoHo > NewJersey > Amagi_chan\nSaratoga > Akashi > Tashkent > YingSwei\nLeMalin > Unicorn > Shimakaze > Cheshire\nChenHai > WilliamDPorter\nHelena > Friedrich > Atago\nYixian > August > Eugen > Hood > Javelin > Laffey > Explorer > Navigator > OceanCrosser > FeiYun > Takao > Anchorage > Belfast > ChangFeng > Mogador > RoyalFortune > DaVinci > Taihou > Nagato > Agir > HwahJah > Argus > Ognevoy\nOnly recognizes the first two rows in default order. If the specified character is unavailable, falls back to WorkerJuu."
     },
     "MinNursery": {
       "name": "Nursery crop stock threshold",
       "help": ""
     },
+    "CropTargets": {
+      "name": "Per-crop restock targets",
+      "help": "One \"crop: target stock\" per line, e.g.\nstrawberry: 120\ntea: 60\nA listed crop is replanted when its stock drops below its own target; crops not listed use \"Nursery crop stock threshold\". A target of 0 means never replant that crop. Leave empty to use \"Nursery crop stock threshold\" for every crop. The crop furthest below its target is planted first.\nCrops: carrot, onion, flax, strawberry, cotton, tea, lavender, pineapple, asparagus\nThe Island Production Planner rewrites this setting when it runs."
+    },
     "IgnorePineapple": {
       "name": "Ignore pineapple",
       "help": ""
+    },
+    "DefaultCrop": {
+      "name": "Default crop",
+      "help": "The crop spare posts plant once every crop has reached its target (number of posts is the next setting). The Island Production Planner rewrites it from the spare-time output it plans for season points.",
+      "carrot": "Carrot",
+      "onion": "Onion",
+      "flax": "Flax",
+      "strawberry": "Strawberries",
+      "cotton": "Cotton",
+      "tea": "Tea Leaves",
+      "lavender": "Lavender",
+      "pineapple": "Pineapple",
+      "asparagus": "Asparagus"
     },
     "PlantLavender": {
       "name": "Plant lavender",
@@ -4671,7 +5013,7 @@
     },
     "ChickenFilter": {
       "name": "Chicken worker filter",
-      "help": "Connect with >, e.g. ChaoHo > NewJersey > Amagi_chan\nSaratoga > Akashi > Tashkent > YingSwei\nLeMalin > Unicorn > Shimakaze > Cheshire\nChenHai > WilliamDPorter\nHelena > Friedrich > Atago\nYixian > August > Eugen > Hood > Javelin > Laffey > Explorer > Navigator > OceanCrosser > FeiYun > Takao > Anchorage > Belfast > ChangFeng > Mogador > RoyalFortune > DaVinci > Taihou\nOnly recognizes the first two rows in default order. If the specified character is unavailable, falls back to WorkerJuu."
+      "help": "Connect with >, e.g. ChaoHo > NewJersey > Amagi_chan\nSaratoga > Akashi > Tashkent > YingSwei\nLeMalin > Unicorn > Shimakaze > Cheshire\nChenHai > WilliamDPorter\nHelena > Friedrich > Atago\nYixian > August > Eugen > Hood > Javelin > Laffey > Explorer > Navigator > OceanCrosser > FeiYun > Takao > Anchorage > Belfast > ChangFeng > Mogador > RoyalFortune > DaVinci > Taihou > Nagato > Agir > HwahJah > Argus > Ognevoy\nOnly recognizes the first two rows in default order. If the specified character is unavailable, falls back to WorkerJuu."
     },
     "MinPork": {
       "name": "Pork stock threshold",
@@ -4679,7 +5021,7 @@
     },
     "PigFilter": {
       "name": "Pig worker filter",
-      "help": "Connect with >, e.g. ChaoHo > NewJersey > Amagi_chan\nSaratoga > Akashi > Tashkent > YingSwei\nLeMalin > Unicorn > Shimakaze > Cheshire\nChenHai > WilliamDPorter\nHelena > Friedrich > Atago\nYixian > August > Eugen > Hood > Javelin > Laffey > Explorer > Navigator > OceanCrosser > FeiYun > Takao > Anchorage > Belfast > ChangFeng > Mogador > RoyalFortune > DaVinci > Taihou\nOnly recognizes the first two rows in default order. If the specified character is unavailable, falls back to WorkerJuu."
+      "help": "Connect with >, e.g. ChaoHo > NewJersey > Amagi_chan\nSaratoga > Akashi > Tashkent > YingSwei\nLeMalin > Unicorn > Shimakaze > Cheshire\nChenHai > WilliamDPorter\nHelena > Friedrich > Atago\nYixian > August > Eugen > Hood > Javelin > Laffey > Explorer > Navigator > OceanCrosser > FeiYun > Takao > Anchorage > Belfast > ChangFeng > Mogador > RoyalFortune > DaVinci > Taihou > Nagato > Agir > HwahJah > Argus > Ognevoy\nOnly recognizes the first two rows in default order. If the specified character is unavailable, falls back to WorkerJuu."
     },
     "Milk": {
       "name": "Raise cattle",
@@ -4687,7 +5029,7 @@
     },
     "RancherFilter": {
       "name": "Character filter",
-      "help": "Connect with >, e.g. ChaoHo > NewJersey > Amagi_chan\nSaratoga > Akashi > Tashkent > YingSwei\nLeMalin > Unicorn > Shimakaze > Cheshire\nChenHai > WilliamDPorter\nHelena > Friedrich > Atago\nYixian > August > Eugen > Hood > Javelin > Laffey > Explorer > Navigator > OceanCrosser > FeiYun > Takao > Anchorage > Belfast > ChangFeng > Mogador > RoyalFortune > DaVinci > Taihou\nOnly recognizes the first two rows in default order. If the specified character is unavailable, falls back to WorkerJuu."
+      "help": "Connect with >, e.g. ChaoHo > NewJersey > Amagi_chan\nSaratoga > Akashi > Tashkent > YingSwei\nLeMalin > Unicorn > Shimakaze > Cheshire\nChenHai > WilliamDPorter\nHelena > Friedrich > Atago\nYixian > August > Eugen > Hood > Javelin > Laffey > Explorer > Navigator > OceanCrosser > FeiYun > Takao > Anchorage > Belfast > ChangFeng > Mogador > RoyalFortune > DaVinci > Taihou > Nagato > Agir > HwahJah > Argus > Ognevoy\nOnly recognizes the first two rows in default order. If the specified character is unavailable, falls back to WorkerJuu."
     },
     "Wool": {
       "name": "Raise sheep",
@@ -4695,7 +5037,7 @@
     },
     "WoolWorkerFilter": {
       "name": "Sheep worker filter",
-      "help": "Connect with >, e.g. ChaoHo > NewJersey > Amagi_chan\nSaratoga > Akashi > Tashkent > YingSwei\nLeMalin > Unicorn > Shimakaze > Cheshire\nChenHai > WilliamDPorter\nHelena > Friedrich > Atago\nYixian > August > Eugen > Hood > Javelin > Laffey > Explorer > Navigator > OceanCrosser > FeiYun > Takao > Anchorage > Belfast > ChangFeng > Mogador > RoyalFortune > DaVinci > Taihou\nOnly recognizes the first two rows in default order. If the specified character is unavailable, falls back to WorkerJuu."
+      "help": "Connect with >, e.g. ChaoHo > NewJersey > Amagi_chan\nSaratoga > Akashi > Tashkent > YingSwei\nLeMalin > Unicorn > Shimakaze > Cheshire\nChenHai > WilliamDPorter\nHelena > Friedrich > Atago\nYixian > August > Eugen > Hood > Javelin > Laffey > Explorer > Navigator > OceanCrosser > FeiYun > Takao > Anchorage > Belfast > ChangFeng > Mogador > RoyalFortune > DaVinci > Taihou > Nagato > Agir > HwahJah > Argus > Ognevoy\nOnly recognizes the first two rows in default order. If the specified character is unavailable, falls back to WorkerJuu."
     }
   },
   "IslandFishery": {
@@ -4710,16 +5052,20 @@
       "2": "2",
       "3": "3"
     },
-    "MinBass": {
-      "name": "Bass stock threshold",
-      "help": ""
-    },
-    "MinYellowfinTuna": {
-      "name": "Yellowfin tuna stock threshold",
-      "help": ""
-    },
     "MinShell": {
       "name": "Shell stock threshold",
+      "help": ""
+    },
+    "MinCatfish": {
+      "name": "Catfish stock threshold",
+      "help": ""
+    },
+    "MinKoiCarp": {
+      "name": "Koi carp stock threshold",
+      "help": ""
+    },
+    "MinCommonCarp": {
+      "name": "Common carp stock threshold",
       "help": ""
     },
     "MinShrimp": {
@@ -4730,6 +5076,10 @@
       "name": "Crayfish stock threshold",
       "help": ""
     },
+    "MinBass": {
+      "name": "Bass stock threshold",
+      "help": ""
+    },
     "MinCrab": {
       "name": "Crab stock threshold",
       "help": ""
@@ -4738,21 +5088,68 @@
       "name": "Squid stock threshold",
       "help": ""
     },
+    "MinMackerel": {
+      "name": "Mackerel stock threshold",
+      "help": ""
+    },
+    "MinTuna": {
+      "name": "Tuna stock threshold",
+      "help": ""
+    },
+    "MinSalmon": {
+      "name": "Salmon stock threshold",
+      "help": ""
+    },
+    "MinRedSeaBream": {
+      "name": "Red sea bream stock threshold",
+      "help": ""
+    },
+    "MinYellowfinTuna": {
+      "name": "Yellowfin tuna stock threshold",
+      "help": ""
+    },
     "MinSeaCucumber": {
       "name": "Sea cucumber stock threshold",
       "help": ""
     },
+    "MinFreshwaterFishMeat": {
+      "name": "Minimum Freshwater Fish Meat",
+      "help": "After the fishery run, if you own less Freshwater Fish Meat than this, fish are exchanged in the island shop (\"Process Fish Meat\") up to this amount, using the highest-yield fish first. 0 = no exchange. The Island Production Planner rewrites it from cargo and dish needs."
+    },
+    "MinSaltwaterFishMeat": {
+      "name": "Minimum Saltwater Fish Meat",
+      "help": "Same for Saltwater Fish Meat (e.g. one Yellowfin Tuna gives 18). 0 = no exchange."
+    },
     "PlantYellowfinTuna": {
-      "name": "Raise yellowfin tuna",
-      "help": "",
+      "name": "Default fish posts",
+      "help": "Number of spare fishery posts that raise the default fish once every minimum is met.",
       "0": "0",
       "1": "1",
       "2": "2",
       "3": "3"
     },
+    "DefaultFish": {
+      "name": "Default fish",
+      "help": "What spare fishery posts raise once every fish has reached its minimum (number of posts is the previous setting). The Island Production Planner picks an unlocked fish.",
+      "shell": "Shellfish",
+      "catfish": "Catfish",
+      "koi_carp": "Koi Carp",
+      "common_carp": "Common Carp",
+      "shrimp": "Freshwater Shrimp",
+      "crayfish": "Crayfish",
+      "bass": "Sea Bass",
+      "crab": "Crab",
+      "squid": "Squid",
+      "mackerel": "Mackerel",
+      "tuna": "Tuna",
+      "salmon": "Salmon",
+      "red_sea_bream": "Red Sea Bream",
+      "yellowfin_tuna": "Yellowfin Tuna",
+      "sea_cucumber": "Sea Cucumber"
+    },
     "RancherFilter": {
       "name": "Character filter",
-      "help": "Connect with >, e.g. ChaoHo > NewJersey > Amagi_chan\nSaratoga > Akashi > Tashkent > YingSwei\nLeMalin > Unicorn > Shimakaze > Cheshire\nChenHai > WilliamDPorter\nHelena > Friedrich > Atago\nYixian > August > Eugen > Hood > Javelin > Laffey > Explorer > Navigator > OceanCrosser > FeiYun > Takao > Anchorage > Belfast > ChangFeng > Mogador > RoyalFortune > DaVinci > Taihou\nOnly recognizes the first two rows in default order. If the specified character is unavailable, falls back to WorkerJuu."
+      "help": "Connect with >, e.g. ChaoHo > NewJersey > Amagi_chan\nSaratoga > Akashi > Tashkent > YingSwei\nLeMalin > Unicorn > Shimakaze > Cheshire\nChenHai > WilliamDPorter\nHelena > Friedrich > Atago\nYixian > August > Eugen > Hood > Javelin > Laffey > Explorer > Navigator > OceanCrosser > FeiYun > Takao > Anchorage > Belfast > ChangFeng > Mogador > RoyalFortune > DaVinci > Taihou > Nagato > Agir > HwahJah > Argus > Ognevoy\nOnly recognizes the first two rows in default order. If the specified character is unavailable, falls back to WorkerJuu."
     }
   },
   "IslandMine": {
@@ -4769,17 +5166,26 @@
       "4": "4"
     },
     "MineSilver": {
-      "name": "Silver mining slots",
-      "help": "Number of idle mine posts to produce Silver; remaining stay idle",
+      "name": "Default ore posts",
+      "help": "Number of spare mine posts that produce the default ore; the rest stay idle.",
       "0": "0",
       "1": "1",
       "2": "2",
       "3": "3",
       "4": "4"
     },
+    "DefaultOre": {
+      "name": "Default ore",
+      "help": "What spare mine posts produce once every ore has reached its minimum (number of posts is the previous setting).",
+      "Copper": "Copper Ore",
+      "Aluminium": "Bauxite Ore",
+      "Iron": "Iron Ore",
+      "Sulphur": "Sulfur",
+      "Silver": "Silver Ore"
+    },
     "WorkerFilter": {
       "name": "Mine worker filter",
-      "help": "Connect with >, e.g. ChaoHo > NewJersey > Amagi_chan\nSaratoga > Akashi > Tashkent > YingSwei\nLeMalin > Unicorn > Shimakaze > Cheshire\nChenHai > WilliamDPorter\nHelena > Friedrich > Atago\nYixian > August > Eugen > Hood > Javelin > Laffey > Explorer > Navigator > OceanCrosser > FeiYun > Takao > Anchorage > Belfast > ChangFeng > Mogador > RoyalFortune > DaVinci > Taihou\nOnly recognizes the first two rows in default order. If the specified character is unavailable, falls back to WorkerJuu."
+      "help": "Connect with >, e.g. ChaoHo > NewJersey > Amagi_chan\nSaratoga > Akashi > Tashkent > YingSwei\nLeMalin > Unicorn > Shimakaze > Cheshire\nChenHai > WilliamDPorter\nHelena > Friedrich > Atago\nYixian > August > Eugen > Hood > Javelin > Laffey > Explorer > Navigator > OceanCrosser > FeiYun > Takao > Anchorage > Belfast > ChangFeng > Mogador > RoyalFortune > DaVinci > Taihou > Nagato > Agir > HwahJah > Argus > Ognevoy\nOnly recognizes the first two rows in default order. If the specified character is unavailable, falls back to WorkerJuu."
     },
     "MinCopper": {
       "name": "Copper ore min stock",
@@ -4816,17 +5222,24 @@
       "4": "4"
     },
     "CutElegant": {
-      "name": "Elegant wood slots",
-      "help": "Number of idle forest posts to produce Elegant wood; remaining stay idle",
+      "name": "Default wood posts",
+      "help": "Number of spare forest posts that produce the default wood; the rest stay idle.",
       "0": "0",
       "1": "1",
       "2": "2",
       "3": "3",
       "4": "4"
     },
+    "DefaultWood": {
+      "name": "Default wood",
+      "help": "What spare forest posts produce once every wood has reached its minimum (number of posts is the previous setting).",
+      "Practical": "Workable Wood",
+      "Selected": "Premium Wood",
+      "Elegant": "Elegant Wood"
+    },
     "WorkerFilter": {
       "name": "Forest worker filter",
-      "help": "Connect with >, e.g. ChaoHo > NewJersey > Amagi_chan\nSaratoga > Akashi > Tashkent > YingSwei\nLeMalin > Unicorn > Shimakaze > Cheshire\nChenHai > WilliamDPorter\nHelena > Friedrich > Atago\nYixian > August > Eugen > Hood > Javelin > Laffey > Explorer > Navigator > OceanCrosser > FeiYun > Takao > Anchorage > Belfast > ChangFeng > Mogador > RoyalFortune > DaVinci > Taihou\nOnly recognizes the first two rows in default order. If the specified character is unavailable, falls back to WorkerJuu."
+      "help": "Connect with >, e.g. ChaoHo > NewJersey > Amagi_chan\nSaratoga > Akashi > Tashkent > YingSwei\nLeMalin > Unicorn > Shimakaze > Cheshire\nChenHai > WilliamDPorter\nHelena > Friedrich > Atago\nYixian > August > Eugen > Hood > Javelin > Laffey > Explorer > Navigator > OceanCrosser > FeiYun > Takao > Anchorage > Belfast > ChangFeng > Mogador > RoyalFortune > DaVinci > Taihou > Nagato > Agir > HwahJah > Argus > Ognevoy\nOnly recognizes the first two rows in default order. If the specified character is unavailable, falls back to WorkerJuu."
     },
     "MinElegant": {
       "name": "Elegant wood min stock",
@@ -4848,13 +5261,13 @@
     },
     "WorkerFilter": {
       "name": "Gathering worker filter",
-      "help": "Connect with >. Up to 3 characters, mapped to gathering slots 1-3.\nConnect with >, e.g. ChaoHo > NewJersey > Amagi_chan\nSaratoga > Akashi > Tashkent > YingSwei\nLeMalin > Unicorn > Shimakaze > Cheshire\nChenHai > WilliamDPorter\nHelena > Friedrich > Atago\nYixian > August > Eugen > Hood > Javelin > Laffey > Explorer > Navigator > OceanCrosser > FeiYun > Takao > Anchorage > Belfast > ChangFeng > Mogador > RoyalFortune > DaVinci > Taihou\nDaily gathering cannot use WorkerJuu; it will be ignored if entered.\nOnly recognizes the first two rows in default order. If the specified character is unavailable, that slot falls back to the existing gathering logic."
+      "help": "Connect with >. Up to 3 characters, mapped to gathering slots 1-3.\nConnect with >, e.g. ChaoHo > NewJersey > Amagi_chan\nSaratoga > Akashi > Tashkent > YingSwei\nLeMalin > Unicorn > Shimakaze > Cheshire\nChenHai > WilliamDPorter\nHelena > Friedrich > Atago\nYixian > August > Eugen > Hood > Javelin > Laffey > Explorer > Navigator > OceanCrosser > FeiYun > Takao > Anchorage > Belfast > ChangFeng > Mogador > RoyalFortune > DaVinci > Taihou > Nagato > Agir > HwahJah > Argus > Ognevoy\nDaily gathering cannot use WorkerJuu; it will be ignored if entered.\nOnly recognizes the first two rows in default order. If the specified character is unavailable, that slot falls back to the existing gathering logic."
     }
   },
   "IslandRestaurant": {
     "_info": {
-      "name": "Fish restaurant",
-      "help": "Meals are produced sequentially from 1 to 8. The production target is the Meal X quantity option. The next item is only executed after the previous one is fully satisfied. Later items will not affect the completion of earlier items during runtime.\nDouble Bamboo Shoots and Asparagus Shrimp in meals 1-8 will automatically switch to corresponding seasonal meals based on the current season."
+      "name": "Golden Koi Restaurant",
+      "help": "Meals are produced sequentially from 1 to 8. The production target is the Meal X quantity option. The next item is only executed after the previous one is fully satisfied. Later items will not affect the completion of earlier items during runtime.\nSeasonal meals in Meal 1-8 switch by slot: spring uses Cold Mixed Bamboo Shoots and Asparagus / Shrimp and Asparagus Stir-Fry, summer uses Amaranth Onigiri / Tomato and Egg Stir-Fry, autumn uses Dried Persimmon / Matsutake and Chicken Soup, and winter uses Shiitake Mushroom Chicken Stew / Green Jujube Porridge."
     },
     "PostNumber": {
       "name": "Assign X chef positions",
@@ -4864,11 +5277,11 @@
     },
     "ChefFilter": {
       "name": "Chef filter",
-      "help": "Connect with >, e.g. ChaoHo > NewJersey > Amagi_chan\nSaratoga > Akashi > Tashkent > YingSwei\nLeMalin > Unicorn > Shimakaze > Cheshire\nChenHai > WilliamDPorter\nHelena > Friedrich > Atago\nYixian > August > Eugen > Hood > Javelin > Laffey > Explorer > Navigator > OceanCrosser > FeiYun > Takao > Anchorage > Belfast > ChangFeng > Mogador > RoyalFortune > DaVinci > Taihou\nOnly recognizes the first two rows in default order. If the specified character is unavailable, falls back to WorkerJuu."
+      "help": "Connect with >, e.g. ChaoHo > NewJersey > Amagi_chan\nSaratoga > Akashi > Tashkent > YingSwei\nLeMalin > Unicorn > Shimakaze > Cheshire\nChenHai > WilliamDPorter\nHelena > Friedrich > Atago\nYixian > August > Eugen > Hood > Javelin > Laffey > Explorer > Navigator > OceanCrosser > FeiYun > Takao > Anchorage > Belfast > ChangFeng > Mogador > RoyalFortune > DaVinci > Taihou > Nagato > Agir > HwahJah > Argus > Ognevoy\nOnly recognizes the first two rows in default order. If the specified character is unavailable, falls back to WorkerJuu."
     },
     "DoubleBambooShoots": {
       "name": "Prioritize seasonal dish",
-      "help": "When enabled, produce the current restaurant seasonal dish before base meals. Spring uses Cold Bamboo Shoots, summer uses Amaranth Rice Ball, autumn uses Matsutake Chicken Soup; winter has no extra restaurant seasonal dish."
+      "help": "When enabled, produce the current restaurant high-priority seasonal dish and click its fixed slot: Cold Mixed Bamboo Shoots and Asparagus (spring), Amaranth Onigiri (summer), and Shiitake Mushroom Chicken Stew (winter) use slot 1; Matsutake and Chicken Soup (autumn) uses slot 2."
     },
     "Meal1": {
       "name": "Meal 1",
@@ -4877,17 +5290,19 @@
       "tofu": "Tofu",
       "omurice": "Omurice",
       "cabbage_tofu": "Cabbage Tofu Soup",
-      "salad": "Garden Salad",
-      "tofu_meat": "Mapo Tofu",
+      "salad": "Vegetable Salad",
+      "tofu_meat": "Tofu with Minced Meat",
       "tofu_combo": "Classic Tofu Combo",
       "hearty_meal": "Hearty Meal Set",
-      "double_bamboo_shoots": "Cold Bamboo Shoots",
-      "asparagus_shrimp": "Asparagus Shrimp",
+      "double_bamboo_shoots": "Cold Mixed Bamboo Shoots and Asparagus",
+      "asparagus_shrimp": "Shrimp and Asparagus Stir-Fry",
       "fish_chip": "Fish & Chips",
-      "fo_tiao": "Buddha Jumps Over the Wall",
-      "onion_fish": "Steamed Onion Fish",
+      "fo_tiao": "Buddha's Temptation",
+      "onion_fish": "Steamed Fish with Onions",
       "matsutake_chicken_soup": "Matsutake Chicken Soup",
-      "persimmon_cake": "Persimmon Cake"
+      "persimmon_cake": "Dried Persimmon",
+      "shiitake_chicken_soup": "shiitake_chicken_soup",
+      "green_jujube_porridge": "green_jujube_porridge"
     },
     "MealNumber1": {
       "name": "Produce meal 1 to X servings",
@@ -4910,7 +5325,9 @@
       "fo_tiao": "Buddha Jumps Over the Wall",
       "onion_fish": "Steamed Onion Fish",
       "matsutake_chicken_soup": "Matsutake Chicken Soup",
-      "persimmon_cake": "Persimmon Cake"
+      "persimmon_cake": "Persimmon Cake",
+      "shiitake_chicken_soup": "shiitake_chicken_soup",
+      "green_jujube_porridge": "green_jujube_porridge"
     },
     "MealNumber2": {
       "name": "Produce meal 2 to X servings",
@@ -4933,7 +5350,9 @@
       "fo_tiao": "Buddha Jumps Over the Wall",
       "onion_fish": "Steamed Onion Fish",
       "matsutake_chicken_soup": "Matsutake Chicken Soup",
-      "persimmon_cake": "Persimmon Cake"
+      "persimmon_cake": "Persimmon Cake",
+      "shiitake_chicken_soup": "shiitake_chicken_soup",
+      "green_jujube_porridge": "green_jujube_porridge"
     },
     "MealNumber3": {
       "name": "Produce meal 3 to X servings",
@@ -4956,7 +5375,9 @@
       "fo_tiao": "Buddha Jumps Over the Wall",
       "onion_fish": "Steamed Onion Fish",
       "matsutake_chicken_soup": "Matsutake Chicken Soup",
-      "persimmon_cake": "Persimmon Cake"
+      "persimmon_cake": "Persimmon Cake",
+      "shiitake_chicken_soup": "shiitake_chicken_soup",
+      "green_jujube_porridge": "green_jujube_porridge"
     },
     "MealNumber4": {
       "name": "Produce meal 4 to X servings",
@@ -4979,7 +5400,9 @@
       "fo_tiao": "Buddha Jumps Over the Wall",
       "onion_fish": "Steamed Onion Fish",
       "matsutake_chicken_soup": "Matsutake Chicken Soup",
-      "persimmon_cake": "Persimmon Cake"
+      "persimmon_cake": "Persimmon Cake",
+      "shiitake_chicken_soup": "shiitake_chicken_soup",
+      "green_jujube_porridge": "green_jujube_porridge"
     },
     "MealNumber5": {
       "name": "Produce meal 5 to X servings",
@@ -5002,7 +5425,9 @@
       "fo_tiao": "Buddha Jumps Over the Wall",
       "onion_fish": "Steamed Onion Fish",
       "matsutake_chicken_soup": "Matsutake Chicken Soup",
-      "persimmon_cake": "Persimmon Cake"
+      "persimmon_cake": "Persimmon Cake",
+      "shiitake_chicken_soup": "shiitake_chicken_soup",
+      "green_jujube_porridge": "green_jujube_porridge"
     },
     "MealNumber6": {
       "name": "Produce meal 6 to X servings",
@@ -5025,7 +5450,9 @@
       "fo_tiao": "Buddha Jumps Over the Wall",
       "onion_fish": "Steamed Onion Fish",
       "matsutake_chicken_soup": "Matsutake Chicken Soup",
-      "persimmon_cake": "Persimmon Cake"
+      "persimmon_cake": "Persimmon Cake",
+      "shiitake_chicken_soup": "shiitake_chicken_soup",
+      "green_jujube_porridge": "green_jujube_porridge"
     },
     "MealNumber7": {
       "name": "Produce meal 7 to X servings",
@@ -5048,7 +5475,9 @@
       "fo_tiao": "Buddha Jumps Over the Wall",
       "onion_fish": "Steamed Onion Fish",
       "matsutake_chicken_soup": "Matsutake Chicken Soup",
-      "persimmon_cake": "Persimmon Cake"
+      "persimmon_cake": "Persimmon Cake",
+      "shiitake_chicken_soup": "shiitake_chicken_soup",
+      "green_jujube_porridge": "green_jujube_porridge"
     },
     "MealNumber8": {
       "name": "Produce meal 8 to X servings",
@@ -5077,7 +5506,9 @@
       "fo_tiao": "Buddha Jumps Over the Wall",
       "onion_fish": "Steamed Onion Fish",
       "matsutake_chicken_soup": "Matsutake Chicken Soup",
-      "persimmon_cake": "Persimmon Cake"
+      "persimmon_cake": "Persimmon Cake",
+      "shiitake_chicken_soup": "shiitake_chicken_soup",
+      "green_jujube_porridge": "green_jujube_porridge"
     }
   },
   "IslandTeahouse": {
@@ -5093,28 +5524,28 @@
     },
     "ChefFilter": {
       "name": "Chef filter",
-      "help": "Connect with >, e.g. ChaoHo > NewJersey > Amagi_chan\nSaratoga > Akashi > Tashkent > YingSwei\nLeMalin > Unicorn > Shimakaze > Cheshire\nChenHai > WilliamDPorter\nHelena > Friedrich > Atago\nYixian > August > Eugen > Hood > Javelin > Laffey > Explorer > Navigator > OceanCrosser > FeiYun > Takao > Anchorage > Belfast > ChangFeng > Mogador > RoyalFortune > DaVinci > Taihou\nOnly recognizes the first two rows in default order. If the specified character is unavailable, falls back to WorkerJuu."
+      "help": "Connect with >, e.g. ChaoHo > NewJersey > Amagi_chan\nSaratoga > Akashi > Tashkent > YingSwei\nLeMalin > Unicorn > Shimakaze > Cheshire\nChenHai > WilliamDPorter\nHelena > Friedrich > Atago\nYixian > August > Eugen > Hood > Javelin > Laffey > Explorer > Navigator > OceanCrosser > FeiYun > Takao > Anchorage > Belfast > ChangFeng > Mogador > RoyalFortune > DaVinci > Taihou > Nagato > Agir > HwahJah > Argus > Ognevoy\nOnly recognizes the first two rows in default order. If the specified character is unavailable, falls back to WorkerJuu."
     },
     "Seasonal": {
       "name": "Prioritize seasonal drink",
-      "help": "When enabled, produce the current Teahouse seasonal drink before base drinks. Spring uses Spring Flower Tea, summer uses Watermelon Juice, autumn uses Chrysanthemum Tea; winter has no extra teahouse seasonal drink."
+      "help": "When enabled, produce the current Teahouse seasonal drink before base drinks. Spring uses Winter Jasmine Tea, summer uses Watermelon Juice, autumn uses Chrysanthemum Tea; winter has no extra teahouse seasonal drink."
     },
     "Meal1": {
       "name": "Meal 1",
       "help": "",
       "None": "None",
       "apple_juice": "Apple Juice",
-      "banana_mango": "Banana Mango Juice",
-      "honey_lemon": "Honey Lemon Water",
-      "strawberry_lemon": "Strawberry Lemonade",
-      "strawberry_honey": "Strawberry Honey Smoothie",
-      "floral_fruity": "Floral Fruity",
-      "fruit_paradise": "Fruit Paradise",
+      "banana_mango": "Banana and Mango Juice",
+      "honey_lemon": "Honey and Lemon Water",
+      "strawberry_lemon": "Strawberry Lemon Drink",
+      "strawberry_honey": "Strawberry Honey Frappé",
+      "floral_fruity": "Floral and Fruity",
+      "fruit_paradise": "Colorful Fruit Paradise",
       "lavender_tea": "Lavender Tea",
       "sunny_honey": "Sunny Honey",
-      "spring_flower_tea": "Spring Flower Tea",
+      "spring_flower_tea": "Winter Jasmine Tea",
       "chrysanthemum_tea": "Chrysanthemum Tea",
-      "carrot_pear_juice": "Carrot Pear Juice"
+      "carrot_pear_juice": "Carrot and Pear Juice"
     },
     "MealNumber1": {
       "name": "Produce meal 1 to X servings",
@@ -5293,7 +5724,7 @@
   },
   "IslandGrill": {
     "_info": {
-      "name": "Squid Grill",
+      "name": "Fin-'n'-Feather Grill",
       "help": "Meals are produced sequentially from 1 to 8. The production target is the Meal X quantity option. The next item is only executed after the previous one is fully satisfied. Later items will not affect the completion of earlier items during runtime."
     },
     "PostNumber": {
@@ -5304,7 +5735,7 @@
     },
     "ChefFilter": {
       "name": "Chef filter",
-      "help": "Connect with >, e.g. ChaoHo > NewJersey > Amagi_chan\nSaratoga > Akashi > Tashkent > YingSwei\nLeMalin > Unicorn > Shimakaze > Cheshire\nChenHai > WilliamDPorter\nHelena > Friedrich > Atago\nYixian > August > Eugen > Hood > Javelin > Laffey > Explorer > Navigator > OceanCrosser > FeiYun > Takao > Anchorage > Belfast > ChangFeng > Mogador > RoyalFortune > DaVinci > Taihou\nOnly recognizes the first two rows in default order. If the specified character is unavailable, falls back to WorkerJuu."
+      "help": "Connect with >, e.g. ChaoHo > NewJersey > Amagi_chan\nSaratoga > Akashi > Tashkent > YingSwei\nLeMalin > Unicorn > Shimakaze > Cheshire\nChenHai > WilliamDPorter\nHelena > Friedrich > Atago\nYixian > August > Eugen > Hood > Javelin > Laffey > Explorer > Navigator > OceanCrosser > FeiYun > Takao > Anchorage > Belfast > ChangFeng > Mogador > RoyalFortune > DaVinci > Taihou > Nagato > Agir > HwahJah > Argus > Ognevoy\nOnly recognizes the first two rows in default order. If the specified character is unavailable, falls back to WorkerJuu."
     },
     "Meal1": {
       "name": "Meal 1",
@@ -5464,8 +5895,8 @@
   },
   "IslandJuuEatery": {
     "_info": {
-      "name": "Juu Eatery",
-      "help": "Meals are produced sequentially from 1 to 8. The production target is the Meal X quantity option. The next item is only executed after the previous one is fully satisfied. Later items will not affect the completion of earlier items during runtime."
+      "name": "Manjuu Eatery",
+      "help": "Meals are produced sequentially from 1 to 8. The production target is the Meal X quantity option. The next item is only executed after the previous one is fully satisfied. Later items will not affect the completion of earlier items during runtime. In winter, slot 1 enables Water Chestnut Cakes and slot 2 enables Satsuma Mandarin Daifuku."
     },
     "PostNumber": {
       "name": "Assign X cook positions",
@@ -5475,7 +5906,7 @@
     },
     "ChefFilter": {
       "name": "Chef filter",
-      "help": "Connect with >, e.g. ChaoHo > NewJersey > Amagi_chan\nSaratoga > Akashi > Tashkent > YingSwei\nLeMalin > Unicorn > Shimakaze > Cheshire\nChenHai > WilliamDPorter\nHelena > Friedrich > Atago\nYixian > August > Eugen > Hood > Javelin > Laffey > Explorer > Navigator > OceanCrosser > FeiYun > Takao > Anchorage > Belfast > ChangFeng > Mogador > RoyalFortune > DaVinci > Taihou\nOnly recognizes the first two rows in default order. If the specified character is unavailable, falls back to WorkerJuu."
+      "help": "Connect with >, e.g. ChaoHo > NewJersey > Amagi_chan\nSaratoga > Akashi > Tashkent > YingSwei\nLeMalin > Unicorn > Shimakaze > Cheshire\nChenHai > WilliamDPorter\nHelena > Friedrich > Atago\nYixian > August > Eugen > Hood > Javelin > Laffey > Explorer > Navigator > OceanCrosser > FeiYun > Takao > Anchorage > Belfast > ChangFeng > Mogador > RoyalFortune > DaVinci > Taihou > Nagato > Agir > HwahJah > Argus > Ognevoy\nOnly recognizes the first two rows in default order. If the specified character is unavailable, falls back to WorkerJuu."
     },
     "Meal1": {
       "name": "Meal 1",
@@ -5486,11 +5917,13 @@
       "orange_pie": "Orange Pie",
       "banana_crepe": "Banana Crepe",
       "orchard_duo": "Orchard Duo",
-      "rice_mango": "Mango Sticky Rice",
-      "succulently_sweet": "Sweet Combo",
-      "berry_orange": "Berry Orange Dessert Set",
+      "rice_mango": "Sticky Rice with Mango",
+      "succulently_sweet": "Succulently Sweet",
+      "berry_orange": "Berry and Orange Dessert",
       "strawberry_charlotte": "Strawberry Charlotte",
-      "seafood_rice": "Seafood Rice"
+      "seafood_rice": "Paella",
+      "water_chestnut_cake": "water_chestnut_cake",
+      "sugar_tangerine_daifuku": "sugar_tangerine_daifuku"
     },
     "MealNumber1": {
       "name": "Produce meal 1 to X servings",
@@ -5509,7 +5942,9 @@
       "succulently_sweet": "Sweet Combo",
       "berry_orange": "Berry Orange Dessert Set",
       "strawberry_charlotte": "Strawberry Charlotte",
-      "seafood_rice": "Seafood Rice"
+      "seafood_rice": "Seafood Rice",
+      "water_chestnut_cake": "water_chestnut_cake",
+      "sugar_tangerine_daifuku": "sugar_tangerine_daifuku"
     },
     "MealNumber2": {
       "name": "Produce meal 2 to X servings",
@@ -5528,7 +5963,9 @@
       "succulently_sweet": "Sweet Combo",
       "berry_orange": "Berry Orange Dessert Set",
       "strawberry_charlotte": "Strawberry Charlotte",
-      "seafood_rice": "Seafood Rice"
+      "seafood_rice": "Seafood Rice",
+      "water_chestnut_cake": "water_chestnut_cake",
+      "sugar_tangerine_daifuku": "sugar_tangerine_daifuku"
     },
     "MealNumber3": {
       "name": "Produce meal 3 to X servings",
@@ -5547,7 +5984,9 @@
       "succulently_sweet": "Sweet Combo",
       "berry_orange": "Berry Orange Dessert Set",
       "strawberry_charlotte": "Strawberry Charlotte",
-      "seafood_rice": "Seafood Rice"
+      "seafood_rice": "Seafood Rice",
+      "water_chestnut_cake": "water_chestnut_cake",
+      "sugar_tangerine_daifuku": "sugar_tangerine_daifuku"
     },
     "MealNumber4": {
       "name": "Produce meal 4 to X servings",
@@ -5566,7 +6005,9 @@
       "succulently_sweet": "Sweet Combo",
       "berry_orange": "Berry Orange Dessert Set",
       "strawberry_charlotte": "Strawberry Charlotte",
-      "seafood_rice": "Seafood Rice"
+      "seafood_rice": "Seafood Rice",
+      "water_chestnut_cake": "water_chestnut_cake",
+      "sugar_tangerine_daifuku": "sugar_tangerine_daifuku"
     },
     "MealNumber5": {
       "name": "Produce meal 5 to X servings",
@@ -5585,7 +6026,9 @@
       "succulently_sweet": "Sweet Combo",
       "berry_orange": "Berry Orange Dessert Set",
       "strawberry_charlotte": "Strawberry Charlotte",
-      "seafood_rice": "Seafood Rice"
+      "seafood_rice": "Seafood Rice",
+      "water_chestnut_cake": "water_chestnut_cake",
+      "sugar_tangerine_daifuku": "sugar_tangerine_daifuku"
     },
     "MealNumber6": {
       "name": "Produce meal 6 to X servings",
@@ -5604,7 +6047,9 @@
       "succulently_sweet": "Sweet Combo",
       "berry_orange": "Berry Orange Dessert Set",
       "strawberry_charlotte": "Strawberry Charlotte",
-      "seafood_rice": "Seafood Rice"
+      "seafood_rice": "Seafood Rice",
+      "water_chestnut_cake": "water_chestnut_cake",
+      "sugar_tangerine_daifuku": "sugar_tangerine_daifuku"
     },
     "MealNumber7": {
       "name": "Produce meal 7 to X servings",
@@ -5623,7 +6068,9 @@
       "succulently_sweet": "Sweet Combo",
       "berry_orange": "Berry Orange Dessert Set",
       "strawberry_charlotte": "Strawberry Charlotte",
-      "seafood_rice": "Seafood Rice"
+      "seafood_rice": "Seafood Rice",
+      "water_chestnut_cake": "water_chestnut_cake",
+      "sugar_tangerine_daifuku": "sugar_tangerine_daifuku"
     },
     "MealNumber8": {
       "name": "Produce meal 8 to X servings",
@@ -5648,12 +6095,14 @@
       "succulently_sweet": "Sweet Combo",
       "berry_orange": "Berry Orange Dessert Set",
       "strawberry_charlotte": "Strawberry Charlotte",
-      "seafood_rice": "Seafood Rice"
+      "seafood_rice": "Seafood Rice",
+      "water_chestnut_cake": "water_chestnut_cake",
+      "sugar_tangerine_daifuku": "sugar_tangerine_daifuku"
     }
   },
   "IslandJuuCoffee": {
     "_info": {
-      "name": "Juu Coffee",
+      "name": "Café Manjuu",
       "help": "Meals are produced sequentially from 1 to 8. The production target is the Meal X quantity option. The next item is only executed after the previous one is fully satisfied. Later items will not affect the completion of earlier items during runtime."
     },
     "PostNumber": {
@@ -5664,7 +6113,7 @@
     },
     "ChefFilter": {
       "name": "Chef filter",
-      "help": "Connect with >, e.g. ChaoHo > NewJersey > Amagi_chan\nSaratoga > Akashi > Tashkent > YingSwei\nLeMalin > Unicorn > Shimakaze > Cheshire\nChenHai > WilliamDPorter\nHelena > Friedrich > Atago\nYixian > August > Eugen > Hood > Javelin > Laffey > Explorer > Navigator > OceanCrosser > FeiYun > Takao > Anchorage > Belfast > ChangFeng > Mogador > RoyalFortune > DaVinci > Taihou\nOnly recognizes the first two rows in default order. If the specified character is unavailable, falls back to WorkerJuu."
+      "help": "Connect with >, e.g. ChaoHo > NewJersey > Amagi_chan\nSaratoga > Akashi > Tashkent > YingSwei\nLeMalin > Unicorn > Shimakaze > Cheshire\nChenHai > WilliamDPorter\nHelena > Friedrich > Atago\nYixian > August > Eugen > Hood > Javelin > Laffey > Explorer > Navigator > OceanCrosser > FeiYun > Takao > Anchorage > Belfast > ChangFeng > Mogador > RoyalFortune > DaVinci > Taihou > Nagato > Agir > HwahJah > Argus > Ognevoy\nOnly recognizes the first two rows in default order. If the specified character is unavailable, falls back to WorkerJuu."
     },
     "Friedrich": {
       "name": "Friedrich",
@@ -5679,7 +6128,7 @@
       "cheese": "Cheese",
       "latte": "Latte",
       "citrus_coffee": "Citrus Coffee",
-      "strawberry_milkshake": "Strawberry Milk Tea",
+      "strawberry_milkshake": "Strawberry Milkshake",
       "morning_light": "Morning Light Combo",
       "wake_up_call": "Wake-Up Call Set",
       "fruity_fruitier": "Fruity Fruitier"
@@ -5829,15 +6278,15 @@
       "cheese": "Cheese",
       "latte": "Latte",
       "citrus_coffee": "Citrus Coffee",
-      "strawberry_milkshake": "Strawberry Milk Tea",
-      "morning_light": "Morning Light Combo",
-      "wake_up_call": "Wake-Up Call Set",
-      "fruity_fruitier": "Fruity Fruitier"
+      "strawberry_milkshake": "Strawberry Milkshake",
+      "morning_light": "Morning Light Energy Combo",
+      "wake_up_call": "The Wake-Up Call",
+      "fruity_fruitier": "Fruity & Fruitier"
     }
   },
   "WoodProcessing": {
     "_info": {
-      "name": "Wood Processing",
+      "name": "Lumber Processing",
       "help": "Only crafts filing cabinets."
     },
     "Positions": {
@@ -5846,6 +6295,10 @@
       "0": "0",
       "1": "1",
       "2": "2"
+    },
+    "Products": {
+      "name": "Production order",
+      "help": "Products to make, in order, separated by \">\" (e.g. \"paper > notebook\"); the next one is tried when materials run short. Empty: the built-in rule. The Island Production Planner writes it. Products: file_cabinet, paper, notebook, chair_desk"
     }
   },
   "ElectronicProcessing": {
@@ -5859,6 +6312,10 @@
       "0": "0",
       "1": "1",
       "2": "2"
+    },
+    "Products": {
+      "name": "Production order",
+      "help": "Products to make, in order, separated by \">\" (e.g. \"paper > notebook\"); the next one is tried when materials run short. Empty: the built-in rule. The Island Production Planner writes it. Products: filter_element, ink_cartridge"
     }
   },
   "Industrial": {
@@ -5872,6 +6329,10 @@
       "0": "0",
       "1": "1",
       "2": "2"
+    },
+    "Products": {
+      "name": "Production order",
+      "help": "Products to make, in order, separated by \">\" (e.g. \"paper > notebook\"); the next one is tried when materials run short. Empty: the built-in rule. The Island Production Planner writes it. Products: iron_nail, cutlery, charcoal_brush, cable"
     }
   },
   "Handmade": {
@@ -5885,6 +6346,10 @@
       "0": "0",
       "1": "1",
       "2": "2"
+    },
+    "Products": {
+      "name": "Production order",
+      "help": "Products to make, in order, separated by \">\" (e.g. \"paper > notebook\"); the next one is tried when materials run short. Empty: the built-in rule. The Island Production Planner writes it. Products: leather, boot, peanut_oil, cloth, rope, shepherd_purse, summer_bouquet, plum_blossom_sachet, winter_bouquet"
     }
   },
   "IslandAirDrop": {
@@ -5922,17 +6387,91 @@
   "IslandSeasonPlan": {
     "_info": {
       "name": "Season Tasks (Development Plan)",
-      "help": "Read the island \"Development Season → Development Plan\" page: log each task progress and sync the done state from the \"Claimed\" badge (claimed tasks are no longer produced)"
+      "help": "No longer reads the Development Plan page (it misreads digits). Each time a shop collects production or checks sales, the warehouse is read as the current amount. You only enter each task's required amount and tick Done for dishes you already submitted. Done dishes stop being produced and notified, and idle capacity moves to the next-largest gap. The dishes for a new season are updated by the program."
     },
-    "SyncDone": {
-      "name": "Sync done state",
-      "help": "Sync with the in-game \"Claimed\" badge: claimed task items stop being produced, visible-but-unclaimed ones clear the done flag",
+    "NotifyEnable": {
+      "name": "Ready email",
+      "help": "Send one email when the warehouse reaches the required amount (once per item; reset when it drops). Tick Done for tasks you already submitted, otherwise a stock above the requirement keeps notifying.",
       "True": "On",
       "False": "Off"
     },
-    "Submit": {
-      "name": "Auto submit",
-      "help": "When enabled, automatically click submit and claim rewards once a season task is ready; verify manually once before enabling",
+    "Need_apple_juice": {
+      "name": "Apple Juice · Required",
+      "help": "Amount to submit for \"甜蜜引擎\". 0 means do not produce."
+    },
+    "Done_apple_juice": {
+      "name": "Apple Juice · Done",
+      "help": "When ticked, Apple Juice is no longer produced or notified and idle capacity moves to the next-largest gap. Untick to resume.",
+      "True": "On",
+      "False": "Off"
+    },
+    "Need_iced_coffee": {
+      "name": "Iced Coffee · Required",
+      "help": "Amount to submit for \"咖啡供应\". 0 means do not produce."
+    },
+    "Done_iced_coffee": {
+      "name": "Iced Coffee · Done",
+      "help": "When ticked, Iced Coffee is no longer produced or notified and idle capacity moves to the next-largest gap. Untick to resume.",
+      "True": "On",
+      "False": "Off"
+    },
+    "Need_roasted_skewer": {
+      "name": "Charcoal Skewers · Required",
+      "help": "Amount to submit for \"烤肉能量\". 0 means do not produce."
+    },
+    "Done_roasted_skewer": {
+      "name": "Charcoal Skewers · Done",
+      "help": "When ticked, Charcoal Skewers is no longer produced or notified and idle capacity moves to the next-largest gap. Untick to resume.",
+      "True": "On",
+      "False": "Off"
+    },
+    "Need_salad": {
+      "name": "Veggie Salad · Required",
+      "help": "Amount to submit for \"健康饮食\". 0 means do not produce."
+    },
+    "Done_salad": {
+      "name": "Veggie Salad · Done",
+      "help": "When ticked, Veggie Salad is no longer produced or notified and idle capacity moves to the next-largest gap. Untick to resume.",
+      "True": "On",
+      "False": "Off"
+    },
+    "Need_carrot_omelette": {
+      "name": "Carrot Omelette · Required",
+      "help": "Amount to submit for \"营养组合\". 0 means do not produce."
+    },
+    "Done_carrot_omelette": {
+      "name": "Carrot Omelette · Done",
+      "help": "When ticked, Carrot Omelette is no longer produced or notified and idle capacity moves to the next-largest gap. Untick to resume.",
+      "True": "On",
+      "False": "Off"
+    },
+    "Need_latte": {
+      "name": "Latte · Required",
+      "help": "Amount to submit for \"拿铁时光\". 0 means do not produce."
+    },
+    "Done_latte": {
+      "name": "Latte · Done",
+      "help": "When ticked, Latte is no longer produced or notified and idle capacity moves to the next-largest gap. Untick to resume.",
+      "True": "On",
+      "False": "Off"
+    },
+    "Need_stir_fried_chicken": {
+      "name": "Stir-fried Chicken · Required",
+      "help": "Amount to submit for \"禽肉快炒\". 0 means do not produce."
+    },
+    "Done_stir_fried_chicken": {
+      "name": "Stir-fried Chicken · Done",
+      "help": "When ticked, Stir-fried Chicken is no longer produced or notified and idle capacity moves to the next-largest gap. Untick to resume.",
+      "True": "On",
+      "False": "Off"
+    },
+    "Need_steak_bowl": {
+      "name": "Steak Rice Bowl · Required",
+      "help": "Amount to submit for \"便携快餐\". 0 means do not produce."
+    },
+    "Done_steak_bowl": {
+      "name": "Steak Rice Bowl · Done",
+      "help": "When ticked, Steak Rice Bowl is no longer produced or notified and idle capacity moves to the next-largest gap. Untick to resume.",
       "True": "On",
       "False": "Off"
     }
@@ -5988,7 +6527,7 @@
   "IslandBusiness": {
     "_info": {
       "name": "Business",
-      "help": "Manage island shop business operations"
+      "help": "Manage island shop business operations, supporting batch running, seasonal product replacement, and boosted product replacement"
     },
     "BatchEnabled": {
       "name": "Enable batch",
@@ -5999,20 +6538,20 @@
     "Batch1Shops": {
       "name": "Batch 1 shops",
       "help": "Select shops for the first batch",
-      "1": "Fish Restaurant",
-      "2": "Teahouse",
-      "3": "Juu Eatery",
-      "4": "Grill",
-      "5": "Juu Coffee"
+      "1": "Golden Koi Restaurant",
+      "2": "Polar Bear Teahouse",
+      "3": "Manjuu Eatery",
+      "4": "Fin-'n'-Feather Grill",
+      "5": "Café Manjuu"
     },
     "Batch2Shops": {
       "name": "Batch 2 shops",
       "help": "Select shops for the second batch",
-      "1": "Fish Restaurant",
-      "2": "Teahouse",
-      "3": "Juu Eatery",
-      "4": "Grill",
-      "5": "Juu Coffee"
+      "1": "Golden Koi Restaurant",
+      "2": "Polar Bear Teahouse",
+      "3": "Manjuu Eatery",
+      "4": "Fin-'n'-Feather Grill",
+      "5": "Café Manjuu"
     },
     "SeasonalReplaceEnabled": {
       "name": "Seasonal replace",
@@ -6041,7 +6580,7 @@
   },
   "IslandBusinessShop1": {
     "_info": {
-      "name": "Fish Restaurant",
+      "name": "Golden Koi Restaurant",
       "help": ""
     },
     "Char1": {
@@ -6072,8 +6611,8 @@
       "Javelin": "Javelin",
       "Laffey": "Laffey",
       "Explorer": "Explorer",
-      "Navigator": "Navigator",
-      "OceanCrosser": "Ocean Crosser",
+      "Navigator": "TB",
+      "OceanCrosser": "Oceana",
       "FeiYun": "Fei Yun",
       "Takao": "Takao",
       "Anchorage": "Anchorage",
@@ -6082,7 +6621,12 @@
       "Mogador": "Mogador",
       "RoyalFortune": "Royal Fortune",
       "DaVinci": "Da Vinci",
-      "Taihou": "Taihou"
+      "Taihou": "Taihou",
+      "Nagato": "Nagato",
+      "Agir": "Agir",
+      "HwahJah": "HwahJah",
+      "Argus": "Argus",
+      "Ognevoy": "Ognevoy"
     },
     "Char2": {
       "name": "Character 2",
@@ -6122,20 +6666,27 @@
       "Mogador": "Mogador",
       "RoyalFortune": "Royal Fortune",
       "DaVinci": "Da Vinci",
-      "Taihou": "Taihou"
+      "Taihou": "Taihou",
+      "Nagato": "Nagato",
+      "Agir": "Agir",
+      "HwahJah": "HwahJah",
+      "Argus": "Argus",
+      "Ognevoy": "Ognevoy"
     },
     "Product1": {
       "name": "Product 1",
       "help": "",
       "None": "None",
-      "double_bamboo_shoots": "Cold Bamboo Shoots",
-      "tofu_meat": "Mapo Tofu",
+      "double_bamboo_shoots": "Cold Mixed Bamboo Shoots and Asparagus",
+      "tofu_meat": "Tofu with Minced Meat",
       "tofu_combo": "Classic Tofu Combo",
-      "hearty_meal": "Hearty Meal Set",
-      "fo_tiao": "Buddha Jumps Over the Wall",
-      "amaranth_rice_ball": "Amaranth Rice Ball",
-      "matsutake_chicken_soup": "Matsutake Chicken Soup",
-      "persimmon_cake": "Persimmon Cake"
+      "hearty_meal": "Hearty Meal",
+      "fo_tiao": "Buddha's Temptation",
+      "amaranth_rice_ball": "Amaranth Onigiri",
+      "matsutake_chicken_soup": "Matsutake and Chicken Soup",
+      "persimmon_cake": "Dried Persimmon",
+      "shiitake_chicken_soup": "shiitake_chicken_soup",
+      "green_jujube_porridge": "green_jujube_porridge"
     },
     "Product2": {
       "name": "Product 2",
@@ -6148,7 +6699,9 @@
       "fo_tiao": "Buddha Jumps Over the Wall",
       "amaranth_rice_ball": "Amaranth Rice Ball",
       "matsutake_chicken_soup": "Matsutake Chicken Soup",
-      "persimmon_cake": "Persimmon Cake"
+      "persimmon_cake": "Persimmon Cake",
+      "shiitake_chicken_soup": "shiitake_chicken_soup",
+      "green_jujube_porridge": "green_jujube_porridge"
     },
     "Product3": {
       "name": "Product 3",
@@ -6161,7 +6714,9 @@
       "fo_tiao": "Buddha Jumps Over the Wall",
       "amaranth_rice_ball": "Amaranth Rice Ball",
       "matsutake_chicken_soup": "Matsutake Chicken Soup",
-      "persimmon_cake": "Persimmon Cake"
+      "persimmon_cake": "Persimmon Cake",
+      "shiitake_chicken_soup": "shiitake_chicken_soup",
+      "green_jujube_porridge": "green_jujube_porridge"
     },
     "Product4": {
       "name": "Product 4",
@@ -6174,7 +6729,9 @@
       "fo_tiao": "Buddha Jumps Over the Wall",
       "amaranth_rice_ball": "Amaranth Rice Ball",
       "matsutake_chicken_soup": "Matsutake Chicken Soup",
-      "persimmon_cake": "Persimmon Cake"
+      "persimmon_cake": "Persimmon Cake",
+      "shiitake_chicken_soup": "shiitake_chicken_soup",
+      "green_jujube_porridge": "green_jujube_porridge"
     },
     "Product5": {
       "name": "Product 5",
@@ -6187,7 +6744,9 @@
       "fo_tiao": "Buddha Jumps Over the Wall",
       "amaranth_rice_ball": "Amaranth Rice Ball",
       "matsutake_chicken_soup": "Matsutake Chicken Soup",
-      "persimmon_cake": "Persimmon Cake"
+      "persimmon_cake": "Persimmon Cake",
+      "shiitake_chicken_soup": "shiitake_chicken_soup",
+      "green_jujube_porridge": "green_jujube_porridge"
     },
     "SeasonalFallback": {
       "name": "Seasonal fallback",
@@ -6200,16 +6759,18 @@
       "fo_tiao": "Buddha Jumps Over the Wall",
       "amaranth_rice_ball": "Amaranth Rice Ball",
       "matsutake_chicken_soup": "Matsutake Chicken Soup",
-      "persimmon_cake": "Persimmon Cake"
+      "persimmon_cake": "Persimmon Cake",
+      "shiitake_chicken_soup": "shiitake_chicken_soup",
+      "green_jujube_porridge": "green_jujube_porridge"
     },
     "BoostReplaceFilter": {
       "name": "Boost replace filter",
-      "help": "When multiple boosted products are detected, the first one in filter order is prioritized for replacement; the replacement slot is the last non-empty slot searched from Product5→1"
+      "help": "When multiple boosted products are detected, the first one in filter order is prioritized for replacement; the replacement slot is the last non-empty slot searched from Product5→1\nAvailable product keys: double_bamboo_shoots:Cold Mixed Bamboo Shoots and Asparagus, tofu_meat:Tofu with Minced Meat, tofu_combo:Classic Tofu Combo, hearty_meal:Hearty Meal, fo_tiao:Buddha's Temptation, amaranth_rice_ball:Amaranth Onigiri, persimmon_cake:Dried Persimmon, matsutake_chicken_soup:Matsutake and Chicken Soup, shiitake_chicken_soup:Shiitake Mushroom Chicken Stew, green_jujube_porridge:Green Jujube Porridge\nExample: fo_tiao > hearty_meal > 30 > tofu_combo > tofu_meat > 20 > double_bamboo_shoots > 10"
     }
   },
   "IslandBusinessShop2": {
     "_info": {
-      "name": "Polar Bear Drinks",
+      "name": "Polar Bear Teahouse",
       "help": ""
     },
     "Char1": {
@@ -6240,8 +6801,8 @@
       "Javelin": "Javelin",
       "Laffey": "Laffey",
       "Explorer": "Explorer",
-      "Navigator": "Navigator",
-      "OceanCrosser": "Ocean Crosser",
+      "Navigator": "TB",
+      "OceanCrosser": "Oceana",
       "FeiYun": "Fei Yun",
       "Takao": "Takao",
       "Anchorage": "Anchorage",
@@ -6250,7 +6811,12 @@
       "Mogador": "Mogador",
       "RoyalFortune": "Royal Fortune",
       "DaVinci": "Da Vinci",
-      "Taihou": "Taihou"
+      "Taihou": "Taihou",
+      "Nagato": "Nagato",
+      "Agir": "Agir",
+      "HwahJah": "HwahJah",
+      "Argus": "Argus",
+      "Ognevoy": "Ognevoy"
     },
     "Char2": {
       "name": "Character 2",
@@ -6280,8 +6846,8 @@
       "Javelin": "Javelin",
       "Laffey": "Laffey",
       "Explorer": "Explorer",
-      "Navigator": "Navigator",
-      "OceanCrosser": "Ocean Crosser",
+      "Navigator": "TB",
+      "OceanCrosser": "Oceana",
       "FeiYun": "Fei Yun",
       "Takao": "Takao",
       "Anchorage": "Anchorage",
@@ -6290,7 +6856,12 @@
       "Mogador": "Mogador",
       "RoyalFortune": "Royal Fortune",
       "DaVinci": "Da Vinci",
-      "Taihou": "Taihou"
+      "Taihou": "Taihou",
+      "Nagato": "Nagato",
+      "Agir": "Agir",
+      "HwahJah": "HwahJah",
+      "Argus": "Argus",
+      "Ognevoy": "Ognevoy"
     },
     "Product1": {
       "name": "Product 1",
@@ -6384,7 +6955,7 @@
     },
     "BoostReplaceFilter": {
       "name": "Boost replace filter",
-      "help": "When multiple boosted products are detected, the first one in filter order is prioritized for replacement; the replacement slot is the last non-empty slot searched from Product5→1"
+      "help": "When multiple boosted products are detected, the first one in filter order is prioritized for replacement; the replacement slot is the last non-empty slot searched from Product5→1\nAvailable product keys: spring_flower_tea: Spring Flower Tea, strawberry_lemon: Strawberry Lemonade, strawberry_honey: Strawberry Honey Smoothie, floral_fruity: Floral Fruity, fruit_paradise: Fruit Paradise, lavender_tea: Lavender Tea, sunny_honey: Sunny Honey, watermelon_juice: Watermelon Juice, chrysanthemum_tea: Chrysanthemum Tea, carrot_pear_juice: Carrot Pear Juice\nExample: fruit_paradise > floral_fruity > 30 > lavender_tea > sunny_honey > 20 > spring_flower_tea > 10"
     }
   },
   "IslandBusinessShop3": {
@@ -6396,7 +6967,7 @@
       "name": "Character 1",
       "help": "",
       "None": "None",
-      "WorkerJuu": "Worker Juu",
+      "WorkerJuu": "Workerjuu",
       "Cheshire": "Cheshire",
       "YingSwei": "Ying Swei",
       "Saratoga": "Saratoga",
@@ -6413,16 +6984,16 @@
       "Helena": "Helena",
       "Friedrich": "Friedrich",
       "Atago": "Atago",
-      "Yixian": "Yixian",
+      "Yixian": "Yat Sen",
       "August": "August",
       "Eugen": "Eugen",
       "Hood": "Hood",
       "Javelin": "Javelin",
       "Laffey": "Laffey",
       "Explorer": "Explorer",
-      "Navigator": "Navigator",
-      "OceanCrosser": "Ocean Crosser",
-      "FeiYun": "Fei Yun",
+      "Navigator": "TB",
+      "OceanCrosser": "Oceana",
+      "FeiYun": "Fei Yuen",
       "Takao": "Takao",
       "Anchorage": "Anchorage",
       "Belfast": "Belfast",
@@ -6430,7 +7001,12 @@
       "Mogador": "Mogador",
       "RoyalFortune": "Royal Fortune",
       "DaVinci": "Da Vinci",
-      "Taihou": "Taihou"
+      "Taihou": "Taihou",
+      "Nagato": "Nagato",
+      "Agir": "Agir",
+      "HwahJah": "HwahJah",
+      "Argus": "Argus",
+      "Ognevoy": "Ognevoy"
     },
     "Char2": {
       "name": "Character 2",
@@ -6470,7 +7046,12 @@
       "Mogador": "Mogador",
       "RoyalFortune": "Royal Fortune",
       "DaVinci": "Da Vinci",
-      "Taihou": "Taihou"
+      "Taihou": "Taihou",
+      "Nagato": "Nagato",
+      "Agir": "Agir",
+      "HwahJah": "HwahJah",
+      "Argus": "Argus",
+      "Ognevoy": "Ognevoy"
     },
     "Product1": {
       "name": "Product 1",
@@ -6478,9 +7059,11 @@
       "None": "None",
       "orchard_duo": "Orchard Duo",
       "succulently_sweet": "Sweet Combo",
-      "berry_orange": "Berry Orange Dessert Set",
+      "berry_orange": "Berry and Orange Dessert",
       "strawberry_charlotte": "Strawberry Charlotte",
-      "seafood_rice": "Seafood Rice"
+      "seafood_rice": "Seafood Rice",
+      "water_chestnut_cake": "water_chestnut_cake",
+      "sugar_tangerine_daifuku": "sugar_tangerine_daifuku"
     },
     "Product2": {
       "name": "Product 2",
@@ -6490,7 +7073,9 @@
       "succulently_sweet": "Sweet Combo",
       "berry_orange": "Berry Orange Dessert Set",
       "strawberry_charlotte": "Strawberry Charlotte",
-      "seafood_rice": "Seafood Rice"
+      "seafood_rice": "Seafood Rice",
+      "water_chestnut_cake": "water_chestnut_cake",
+      "sugar_tangerine_daifuku": "sugar_tangerine_daifuku"
     },
     "Product3": {
       "name": "Product 3",
@@ -6500,7 +7085,9 @@
       "succulently_sweet": "Sweet Combo",
       "berry_orange": "Berry Orange Dessert Set",
       "strawberry_charlotte": "Strawberry Charlotte",
-      "seafood_rice": "Seafood Rice"
+      "seafood_rice": "Seafood Rice",
+      "water_chestnut_cake": "water_chestnut_cake",
+      "sugar_tangerine_daifuku": "sugar_tangerine_daifuku"
     },
     "Product4": {
       "name": "Product 4",
@@ -6510,7 +7097,9 @@
       "succulently_sweet": "Sweet Combo",
       "berry_orange": "Berry Orange Dessert Set",
       "strawberry_charlotte": "Strawberry Charlotte",
-      "seafood_rice": "Seafood Rice"
+      "seafood_rice": "Seafood Rice",
+      "water_chestnut_cake": "water_chestnut_cake",
+      "sugar_tangerine_daifuku": "sugar_tangerine_daifuku"
     },
     "Product5": {
       "name": "Product 5",
@@ -6520,16 +7109,18 @@
       "succulently_sweet": "Sweet Combo",
       "berry_orange": "Berry Orange Dessert Set",
       "strawberry_charlotte": "Strawberry Charlotte",
-      "seafood_rice": "Seafood Rice"
+      "seafood_rice": "Seafood Rice",
+      "water_chestnut_cake": "water_chestnut_cake",
+      "sugar_tangerine_daifuku": "sugar_tangerine_daifuku"
     },
     "BoostReplaceFilter": {
       "name": "Boost replace filter",
-      "help": "When multiple boosted products are detected, the first one in filter order is prioritized for replacement; the replacement slot is the last non-empty slot searched from Product5→1"
+      "help": "When multiple boosted products are detected, the first one in filter order is prioritized for replacement; the replacement slot is the last non-empty slot searched from Product5→1\nAvailable product keys: orchard_duo:Orchard Duo, succulently_sweet:Succulently Sweet, berry_orange:Berry and Orange Dessert, strawberry_charlotte:Strawberry Charlotte, seafood_rice:Paella, water_chestnut_cake:Water Chestnut Cakes, sugar_tangerine_daifuku:Satsuma Mandarin Daifuku"
     }
   },
   "IslandBusinessShop4": {
     "_info": {
-      "name": "Squid Grill",
+      "name": "Fin-'n'-Feather Grill",
       "help": "Meals are produced sequentially from 1 to 8. The production target is the Meal X quantity option. The next item is only executed after the previous one is fully satisfied. Later items will not affect the completion of earlier items during runtime."
     },
     "Char1": {
@@ -6570,7 +7161,12 @@
       "Mogador": "Mogador",
       "RoyalFortune": "Royal Fortune",
       "DaVinci": "Da Vinci",
-      "Taihou": "Taihou"
+      "Taihou": "Taihou",
+      "Nagato": "Nagato",
+      "Agir": "Agir",
+      "HwahJah": "HwahJah",
+      "Argus": "Argus",
+      "Ognevoy": "Ognevoy"
     },
     "Char2": {
       "name": "Character 2",
@@ -6610,17 +7206,22 @@
       "Mogador": "Mogador",
       "RoyalFortune": "Royal Fortune",
       "DaVinci": "Da Vinci",
-      "Taihou": "Taihou"
+      "Taihou": "Taihou",
+      "Nagato": "Nagato",
+      "Agir": "Agir",
+      "HwahJah": "HwahJah",
+      "Argus": "Argus",
+      "Ognevoy": "Ognevoy"
     },
     "Product1": {
       "name": "Product 1",
       "help": "",
       "None": "None",
-      "roasted_skewer": "Grilled Skewers",
+      "roasted_skewer": "Coal-Roasted Skewer",
       "stir_fried_chicken": "Stir-Fried Chicken",
       "steak_bowl": "Steak Bowl",
       "crayfish_stir_fry": "Crayfish Stir-Fry",
-      "carnival": "BBQ Carnival",
+      "carnival": "The Carne-val",
       "double_energy": "Double Energy Combo"
     },
     "Product2": {
@@ -6669,7 +7270,7 @@
     },
     "BoostReplaceFilter": {
       "name": "Boost replace filter",
-      "help": "When multiple boosted products are detected, the first one in filter order is prioritized for replacement; the replacement slot is the last non-empty slot searched from Product5→1"
+      "help": "When multiple boosted products are detected, the first one in filter order is prioritized for replacement; the replacement slot is the last non-empty slot searched from Product5→1\nAvailable product keys: roasted_skewer:Coal-Roasted Skewer, stir_fried_chicken:Stir-Fried Chicken, steak_bowl:Steak Bowl, crayfish_stir_fry:Crayfish Stir-Fry, carnival:The Carne-val, double_energy:Double Energy Combo\nExample: double_energy > carnival > 30 > crayfish_stir_fry > steak_bowl > stir_fried_chicken > 20 > roasted_skewer > 10"
     }
   },
   "IslandBusinessShop5": {
@@ -6705,8 +7306,8 @@
       "Javelin": "Javelin",
       "Laffey": "Laffey",
       "Explorer": "Explorer",
-      "Navigator": "Navigator",
-      "OceanCrosser": "Ocean Crosser",
+      "Navigator": "TB",
+      "OceanCrosser": "Oceana",
       "FeiYun": "Fei Yun",
       "Takao": "Takao",
       "Anchorage": "Anchorage",
@@ -6715,7 +7316,12 @@
       "Mogador": "Mogador",
       "RoyalFortune": "Royal Fortune",
       "DaVinci": "Da Vinci",
-      "Taihou": "Taihou"
+      "Taihou": "Taihou",
+      "Nagato": "Nagato",
+      "Agir": "Agir",
+      "HwahJah": "HwahJah",
+      "Argus": "Argus",
+      "Ognevoy": "Ognevoy"
     },
     "Char2": {
       "name": "Character 2",
@@ -6745,8 +7351,8 @@
       "Javelin": "Javelin",
       "Laffey": "Laffey",
       "Explorer": "Explorer",
-      "Navigator": "Navigator",
-      "OceanCrosser": "Ocean Crosser",
+      "Navigator": "TB",
+      "OceanCrosser": "Oceana",
       "FeiYun": "Fei Yun",
       "Takao": "Takao",
       "Anchorage": "Anchorage",
@@ -6755,7 +7361,12 @@
       "Mogador": "Mogador",
       "RoyalFortune": "Royal Fortune",
       "DaVinci": "Da Vinci",
-      "Taihou": "Taihou"
+      "Taihou": "Taihou",
+      "Nagato": "Nagato",
+      "Agir": "Agir",
+      "HwahJah": "HwahJah",
+      "Argus": "Argus",
+      "Ognevoy": "Ognevoy"
     },
     "Product1": {
       "name": "Product 1",
@@ -6814,13 +7425,141 @@
     },
     "BoostReplaceFilter": {
       "name": "Boost replace filter",
-      "help": "When multiple boosted products are detected, the first one in filter order is prioritized for replacement; the replacement slot is the last non-empty slot searched from Product5→1"
+      "help": "When multiple boosted products are detected, the first one in filter order is prioritized for replacement; the replacement slot is the last non-empty slot searched from Product5→1\nAvailable product keys: cheese: Cheese, strawberry_milkshake: Strawberry Milk Tea, morning_light: Morning Light Combo, wake_up_call: Wake-Up Call Set, fruity_fruitier: Fruity Fruitier\nExample: fruity_fruitier > wake_up_call > 30 > morning_light > strawberry_milkshake > 20 > cheese > 10"
+    }
+  },
+  "Dock": {
+    "_info": {
+      "name": "Shared dock data",
+      "help": "Read dock cards into shared data for mental-chip and fleet-technology analysis; does not upgrade or swap ships."
+    },
+    "MinLevel": {
+      "name": "Minimum scan level",
+      "help": "Read dock cards into shared data for mental-chip and fleet-technology analysis; does not upgrade or swap ships."
+    },
+    "MaxLevel": {
+      "name": "Maximum scan level",
+      "help": "Read dock cards into shared data for Cognitive Chips and fleet-technology analysis; does not upgrade or swap ships."
+    }
+  },
+  "FleetRotation": {
+    "_info": {
+      "name": "Rotation configuration",
+      "help": "Normal main and event stages only; disabled by default."
+    },
+    "Enabled": {
+      "name": "Enable morale scheduling",
+      "help": "Normal main and event stages only; no automatic rotation when disabled."
+    },
+    "SelectedOnly": {
+      "name": "Calculate morale for rotating ships only",
+      "help": "Off by default. When enabled, only selected slots control morale waiting and rotation; warnings from fixed ships may be confirmed. When disabled, wait for the whole fleet minimum. Both modes track training ships and retain task morale controls for rotation."
+    },
+    "Rules": {
+      "name": "Rotation rules",
+      "help": "Configure slots and sources for each fleet. Slots stay unchanged by default. Reserves rotate in number order."
+    },
+    "State": {
+      "name": "Rotation history",
+      "help": "Stores the last reserve and completed slots. Check the in-game formation before clearing."
+    }
+  },
+  "FleetLevelTraining": {
+    "_info": {
+      "name": "Level training",
+      "help": "Off by default. Uses training slots and reserves. Verify every enabled goal on the same ship before completion; morale swaps keep progress."
+    },
+    "Enabled": {
+      "name": "Enabled",
+      "help": "Off by default. Uses training slots and reserves. Verify every enabled goal on the same ship before completion; morale swaps keep progress."
+    },
+    "Target": {
+      "name": "Target level",
+      "help": "Off by default. Uses training slots and reserves. Verify every enabled goal on the same ship before completion; morale swaps keep progress."
+    }
+  },
+  "FleetAffinityTraining": {
+    "_info": {
+      "name": "Affinity training",
+      "help": "Off by default. Uses training slots and reserves. Verify every enabled goal on the same ship before completion; morale swaps keep progress."
+    },
+    "Enabled": {
+      "name": "Enabled",
+      "help": "Off by default. Uses training slots and reserves. Verify every enabled goal on the same ship before completion; morale swaps keep progress."
+    },
+    "Target": {
+      "name": "Target affinity",
+      "help": "Off by default. Uses training slots and reserves. Verify every enabled goal on the same ship before completion; morale swaps keep progress."
+    }
+  },
+  "FleetDorm": {
+    "_info": {
+      "name": "Rest after rotation",
+      "help": "After all swaps, arrange the entire current fleet on the selected dorm floor, then continue the task."
+    },
+    "Enabled": {
+      "name": "Enable rest after rotation",
+      "help": "Off by default. Clear the selected floor and select the entire current fleet by its number, including fixed slots. Priority: all-battle fleet, mob fleet, boss fleet. Skip rest and continue if the floor is locked, slots are insufficient or selection cannot be verified. CN only."
+    },
+    "Floor": {
+      "name": "Dorm floor",
+      "help": "Train on the first floor or rest on the second. Floors and slots are not purchased automatically.",
+      "floor_1": "floor_1",
+      "floor_2": "floor_2"
+    }
+  },
+  "FleetTraining": {
+    "_info": {
+      "name": "Training records",
+      "help": "Persists verified readings, completed goals and pending swaps across restarts."
+    },
+    "StopOnComplete": {
+      "name": "Stop after all current training ships graduate",
+      "help": "Off by default. Stop the current task once all selected ships meet their enabled level/affinity goals. Keep early graduates in place."
+    },
+    "Notify": {
+      "name": "Training and replacement notifications",
+      "help": "Off by default. Report checks, graduation, replacements and replacement/dorm/equipment failures. Reuses existing readings and sends to the launcher and global OnePush channel."
+    },
+    "FullScanRecord": {
+      "name": "Last full fleet scan",
+      "help": "Updated only after a successful full scan; partial scheduling reads do not reset this time."
+    },
+    "CheckIntervalHours": {
+      "name": "Level/affinity check interval (hours)",
+      "help": "Defaults to 6 hours for level and affinity checks only; nonnegative decimals with no upper limit. Read participating active fleets when due and swap only after all enabled graduation goals are met. Morale reserve triggers independently. Confirmed swaps always scan all fleets without another interval. 0 checks after every battle."
+    },
+    "State": {
+      "name": "Training records",
+      "help": "Persists verified readings, completed goals and pending swaps across restarts."
+    }
+  },
+  "FleetEquipment": {
+    "_info": {
+      "name": "Automatic equipment",
+      "help": "Unequip outgoing ships and apply incoming ship codes by actual type. Off by default."
+    },
+    "Enabled": {
+      "name": "Enable automatic equipment change",
+      "help": "When off, keep the original smart rotation behavior."
+    },
+    "Codes": {
+      "name": "Equipment codes by type",
+      "help": "Up to three codes per type, ordered by actual slot separately in each row. Empty positions are skipped; old single codes remain first."
+    },
+    "State": {
+      "name": "Pending equipment",
+      "help": "Pending target slots are processed before resuming a task when enabled."
     }
   },
   "FleetInfo": {
     "_info": {
       "name": "Fleet information",
-      "help": "Stores fleet scan results"
+      "help": "Stores fleet scan results. Existing reliable readings can passively reduce uncertainty in calibrated morale without additional scans or waits."
+    },
+    "UpdateEmotion": {
+      "name": "Update morale during scan",
+      "help": "Choose whether to read morale for this scan. When disabled, existing slot morale references are retained and recovery-phase learning is skipped."
     },
     "Result": {
       "name": "Scan result",
@@ -6870,7 +7609,7 @@
   "BoxDisassemble": {
     "_info": {
       "name": "Disassemble equipment box",
-      "help": "Dismantle the equipment box in the warehouse, start it after the configuration is completed and wait."
+      "help": "Dismantle the equipment box in the depot, start it after the configuration is completed and wait."
     },
     "UsePurpleBox": {
       "name": "Disassemble purple equipment box",
@@ -6895,6 +7634,168 @@
     "WhiteBoxLimit": {
       "name": "Keep X number of white equipment boxes of each type",
       "help": ""
+    }
+  },
+  "IslandProductionPlanner": {
+    "_info": {
+      "name": "Island Production Planner",
+      "help": "First use: set each shop grade below; waitresses are set in \"Business Module\". Run once with \"Write settings\" off and read the plan in the log, then turn it on and run again. Re-run after unlocking technology or posts, changing a shop grade or waitress, or when the season changes."
+    },
+    "ApplySettings": {
+      "name": "Write settings",
+      "help": "Off: only preview the plan in the log. On: overwrite each shop's Meal/MealNumber, AwayCook and business products, the farm \"Per-crop restock targets\", mine/forest/fishery minimum stock, ranch chicken/pork minimums and milk/wool switches, the number of posts per factory line, and the default crop/product and post count for spare posts.",
+      "True": "True",
+      "False": "False"
+    },
+    "Season": {
+      "name": "Season",
+      "help": "Which island season to plan for. Auto: the season running now on your server. A season number plans with that season's gathering and recipes; a season that is not running uses its full length as the target period. The game data only lists the newest season's building recipes, so an older season plans its gathering and tasks but not its seasonal dishes and crops.",
+      "auto": "Auto (current season)",
+      "season_1": "Season 1",
+      "season_2": "Season 2",
+      "season_3": "Season 3",
+      "season_4": "Season 4",
+      "season_5": "Season 5 (winter)"
+    },
+    "Priority": {
+      "name": "Priority",
+      "help": "Applies after targets and the daily coin minimum are met. Season points: most season PT, then most coins. Coins: most daily coins, then most season PT.",
+      "pt": "Season points",
+      "coins": "Coins"
+    },
+    "FillSparePosts": {
+      "name": "Fill spare posts",
+      "help": "On: once all minimums are met, every unlocked farm, orchard, nursery, mine, forest and fishery post produces a default product: the planned spare-time product, or the most valuable unlocked product when none is planned. Off: only the posts the plan needs for spare-time output.",
+      "True": "On",
+      "False": "Off"
+    },
+    "AutoPositions": {
+      "name": "Auto post counts",
+      "help": "On: set each area's post count (farm, orchard, nursery, mine, forest, fishery and the shop kitchens) from the posts your island research has unlocked, and plan with all of them. Off: plan within the post counts you set.",
+      "True": "On",
+      "False": "Off"
+    },
+    "UnlockedFish": {
+      "name": "Unlocked fish",
+      "help": "Fish you can raise at the fishery. The game data does not say which fish are unlocked, so untick the ones you have not unlocked yet; the planner will not plan them or use them for spare posts.",
+      "shell": "Shellfish",
+      "catfish": "Catfish",
+      "koi_carp": "Koi Carp",
+      "common_carp": "Common Carp",
+      "shrimp": "Freshwater Shrimp",
+      "crayfish": "Crayfish",
+      "bass": "Sea Bass",
+      "crab": "Crab",
+      "squid": "Squid",
+      "mackerel": "Mackerel",
+      "tuna": "Tuna",
+      "salmon": "Salmon",
+      "red_sea_bream": "Red Sea Bream",
+      "yellowfin_tuna": "Yellowfin Tuna",
+      "sea_cucumber": "Sea Cucumber"
+    },
+    "RescanTechnology": {
+      "name": "Rescan technology",
+      "help": "Turn on after unlocking new technology or posts. The run opens the island Technology page to scan it and turns this off afterwards. It also scans when no technology status is saved yet.",
+      "True": "True",
+      "False": "False"
+    },
+    "ScanSeasonTasks": {
+      "name": "Scan season tasks",
+      "help": "Each run opens the Tasks tab of the season page, claims rewards for finished tasks, reads the unfinished ones and writes the items they need into \"Season task targets\".",
+      "True": "True",
+      "False": "False"
+    },
+    "SeasonTaskTargets": {
+      "name": "Season task targets",
+      "help": "One \"item English name: amount\" per line; the plan spreads production over the days left in the season. Rewritten on every run while \"Scan season tasks\" is on; edit it by hand when that is off."
+    },
+    "ScanCargoOrders": {
+      "name": "Scan cargo orders",
+      "help": "Each run opens the cargo page and reads what is still missing from orders where some items were already delivered, then writes it into \"Cargo shortfall\". Those orders cannot be swapped without losing the delivered items, so they have to be completed.",
+      "True": "True",
+      "False": "False"
+    },
+    "CargoTargets": {
+      "name": "Cargo shortfall",
+      "help": "One \"item English name: amount\" per line. Rewritten on every run while \"Scan cargo orders\" is on; edit it by hand when that is off."
+    },
+    "CargoTargetDays": {
+      "name": "Cargo shortfall deadline (days)",
+      "help": "How many days to fill the cargo shortfall in; the plan spreads production over this. Default 1 day."
+    },
+    "ExtraTargets": {
+      "name": "Extra targets",
+      "help": "Extra stock goals you add by hand, same format, or \"item: {count: amount, period: days}\" for a deadline. AzurPilot does not handle season orders, so to stock up for an order, write its items here. Items that cannot be produced yet are skipped with a note in the log."
+    },
+    "DailyProfitLowerLimit": {
+      "name": "Minimum daily island coin income",
+      "help": "The plan keeps the daily net change in island coins at or above this. Can be negative (spend coins for PT) or 0 (break even). Lower it if no plan is found."
+    },
+    "DailyBufferSafetyMargin": {
+      "name": "Daily buffer safety margin",
+      "help": "Scales daily usage targets up, e.g. 0.1 keeps 10% extra."
+    },
+    "FieldsEfficiency": {
+      "name": "Farmland efficiency bonus",
+      "help": "Faircrop Fields output bonus from the island Character Collection rewards; pick the value you have claimed (0, 4% or 12%). If unsure, pick 0: the plan slightly underestimates output and just plants a little more.",
+      "0": "0",
+      "4": "4",
+      "12": "12"
+    },
+    "OrchardEfficiency": {
+      "name": "Orchard efficiency bonus",
+      "help": "Sweetscent Orchard output bonus from the island Character Collection rewards; pick the value you have claimed (0, 4% or 12%). If unsure, pick 0: the plan slightly underestimates output and just plants a little more.",
+      "0": "0",
+      "4": "4",
+      "12": "12"
+    },
+    "NurseryEfficiency": {
+      "name": "Nursery efficiency bonus",
+      "help": "Newsprout Nursery output bonus from the island Character Collection rewards; pick the value you have claimed (0, 4% or 12%). If unsure, pick 0: the plan slightly underestimates output and just plants a little more.",
+      "0": "0",
+      "4": "4",
+      "12": "12"
+    },
+    "RestaurantGrade": {
+      "name": "Fish Restaurant grade",
+      "help": "The shop's grade in game. It sets the number of shelves (bronze/silver 2, gold 3, diamond 4) and shelf capacity (bronze 5, others 6).",
+      "bronze": "bronze",
+      "silver": "silver",
+      "gold": "gold",
+      "diamond": "diamond"
+    },
+    "TeahouseGrade": {
+      "name": "Polar Bear Drinks grade",
+      "help": "The shop's grade in game. It sets the number of shelves (bronze/silver 2, gold 3, diamond 4) and shelf capacity (bronze 5, others 6).",
+      "bronze": "bronze",
+      "silver": "silver",
+      "gold": "gold",
+      "diamond": "diamond"
+    },
+    "JuuEateryGrade": {
+      "name": "Juu Eatery grade",
+      "help": "The shop's grade in game. It sets the number of shelves (bronze/silver 2, gold 3, diamond 4) and shelf capacity (bronze 5, others 6).",
+      "bronze": "bronze",
+      "silver": "silver",
+      "gold": "gold",
+      "diamond": "diamond"
+    },
+    "GrillGrade": {
+      "name": "Squid Grill grade",
+      "help": "The shop's grade in game. It sets the number of shelves (bronze/silver 2, gold 3, diamond 4) and shelf capacity (bronze 5, others 6).",
+      "bronze": "bronze",
+      "silver": "silver",
+      "gold": "gold",
+      "diamond": "diamond"
+    },
+    "JuuCoffeeGrade": {
+      "name": "Juu Coffee grade",
+      "help": "The shop's grade in game. It sets the number of shelves (bronze/silver 2, gold 3, diamond 4) and shelf capacity (bronze 5, others 6).",
+      "bronze": "bronze",
+      "silver": "silver",
+      "gold": "gold",
+      "diamond": "diamond"
     }
   },
   "AutoEquip": {
@@ -6949,7 +7850,8 @@
       "plone_cloud_with_adb": "Cloud mobile phone with public network ADB",
       "phone_cloud_without_adb": "Cloud mobile phone without public network ADB",
       "android_phone": "Android real phone",
-      "android_phone_vmos": "Android real machine VMOS virtual machine"
+      "android_phone_vmos": "Android real machine VMOS virtual machine",
+      "azurpilot_android": "azurpilot_android"
     },
     "TestScene": {
       "name": "Test scene",
@@ -7155,6 +8057,24 @@
     "Deterministic": {
       "name": "Disable randomness",
       "help": "For debugging. Generally should be off."
+    }
+  },
+  "Equipment": {
+    "_info": {
+      "name": "Automatic equipment changes",
+      "help": "For exercises, META beacons, and META assists. Dossier fleets are excluded."
+    },
+    "Enable": {
+      "name": "Enable",
+      "help": "Apply the before setup before the first battle and restore the after setup when the task ends. Requires a control method that supports equipment code input."
+    },
+    "ClearBeforeApply": {
+      "name": "Clear equipment before applying codes",
+      "help": "Before both setup changes, unequip all selected ships before applying any codes so shared equipment can move between ships."
+    },
+    "Config": {
+      "name": "Equipment code configuration",
+      "help": "YAML: before is the code used before battle; after is the code restored afterward. The entire configuration is checked before changing equipment.\nAn empty before skips that position. If before is set and after is empty, all equipment on that ship is removed afterward. Unused positions or phases may be omitted; blank strings count as empty.\nflagship: flagship; up/down: upper/lower main fleet escort; head/middle/tail: leading/middle/rear vanguard ship."
     }
   },
   "Storage": {
@@ -7606,7 +8526,7 @@
       "ShipExpProgressTitle": "Daily EXP Check: Detected Ship Levels and Progress",
       "LastCheckTime": "Last check time: {value}",
       "AvgOpsiRoundTime": "Avg OpSi-1 round time: {value}{unit}",
-      "TodayBattleUnit": "",
+      "TodayBattleUnit": " battles",
       "NoTodayBattleData": "No battle data for today yet. It will update automatically after battles.",
       "LoadShipExpFailed": "Failed to load ship EXP data: {e}",
       "TargetExpRequired": "EXP required for target level",
@@ -7633,34 +8553,34 @@
       "NoResourceData": "No resource data yet. It will be recorded automatically when the script runs.",
       "NoValidResourceData": "No valid resource data",
       "BackgroundBtn": "Background",
-      "ChartAp": "AP: ",
+      "ChartAp": "AP:",
       "ChartApLabel": "AP",
-      "ChartAsset": "Assets: ",
-      "ChartChange": "Change: ",
+      "ChartAsset": "Assets:",
+      "ChartChange": "Change:",
       "ChartChangeLabel": "Change",
-      "ChartClose": "Close: ",
-      "ChartDelta": "Change: ",
-      "ChartDensity": "Point density: ",
-      "ChartDistance": "Distance: ",
-      "ChartHigh": "High: ",
-      "ChartLow": "Low: ",
-      "ChartMa10": "  MA10 (10-period avg): ",
-      "ChartMa5": "  MA5 (5-period avg): ",
+      "ChartClose": "Close:",
+      "ChartDelta": "Change:",
+      "ChartDensity": "Point density:",
+      "ChartDistance": "Distance:",
+      "ChartHigh": "High:",
+      "ChartLow": "Low:",
+      "ChartMa10": "  MA10 (10-period avg):",
+      "ChartMa5": "  MA5 (5-period avg):",
       "ChartMaxLabel": "Max",
-      "ChartMean": "Mean: ",
+      "ChartMean": "Mean:",
       "ChartMeanLabel": "Mean",
       "ChartMinLabel": "Min",
-      "ChartOpen": "Open: ",
+      "ChartOpen": "Open:",
       "ChartPanelTitle": "AP Trend - {view}",
-      "ChartPurple": "Purple Coins: ",
+      "ChartPurple": "Purple Coins:",
       "ChartResetBtn": "Reset",
       "ChartSeriesAp": "AP",
       "ChartSeriesAsset": "Assets",
       "ChartSeriesDistance": "Distance",
       "ChartSeriesPurple": "Purple Coins",
       "ChartSeriesYellow": "Yellow Coins",
-      "ChartSource": "Source: ",
-      "ChartYellow": "Yellow Coins: ",
+      "ChartSource": "Source:",
+      "ChartYellow": "Yellow Coins:",
       "ExtractAlreadyLocal": "The current background is already a local image; nothing to extract.",
       "ExtractDone": "Extracted to bg/{sub}/{name}",
       "ExtractFailed": "Extraction failed: {error}",

@@ -119,13 +119,23 @@ module/config/
 
 ### 生成器与数据结构
 
-`ConfigGenerator.args` 产出的 `args.json` 中，每个参数是带属性的对象：`type`（checkbox/select/textarea/input/datetime/storage/state/lock/task_priority 等）、`value`、可选 `option` / `validate` / `display` / `preserve_empty` / `mode`。前端与 `ConfigService.validate` 都依赖这套属性做控件渲染与白名单校验。
+`ConfigGenerator.args` 产出的 `args.json` 中，每个参数是带属性的对象：`type`（checkbox/select/textarea/input/datetime/storage/state/lock/task_priority 等）、`value`、可选 `valuetype` / `option` / `validate` / `display` / `preserve_empty` / `mode`。前端与 `ConfigService.validate` 都依赖这套属性做控件渲染与白名单校验。
+
+数值输入优先遵循 `valuetype: int/float`，未声明时沿用默认值的数值类型；不能仅凭 JSON 中的 `1` 判断比例只能填整数。`config.patch` 接受数字文本、首尾空格、小数和科学计数写法，并在保存前转换为数值；整数参数允许 `2.0` 这类等值写法，实际小数仍拒绝。文本与下拉选项不做这类转换，范围、日期、YAML 和只读保护继续生效。`GuildOperation.JoinThreshold` 明确为 `0–1` 的比例，默认仍是 `1`；游戏中的参与判断保持原有行为。
 
 ### 事务锁（transaction.py）
 
 `config_transaction(path)` 是本模块唯一的跨进程同步原语，见第 12 节。
 
 ## 6. 工作流程
+
+### 活动候选与旧配置刷新
+
+活动元数据的 `option` 是四服合集，仅供通用契约使用；实例页面应使用 `option_cn/en/jp/tw` 对应的候选。`campaign_event_options()` 通过实例 `Alas.Emulator.PackageName` 调用 `to_server()` 选择地区，开服检测的 `ServerName`、界面语言和进程全局服务器不参与判断；`auto` 沿用运行器的 CN 回退规则。
+
+`refresh_campaign_events()` 复用原有活动迁移规则，由 `ConfigUpdater.config_update()` 和 `ConfigService.read()` 共同调用：已不在当前候选中的活动、突袭、共斗和低耗任务活动回到首个候选，多活动时保留仍有效的选择；作战档案仅替换 `campaign_main`。API 读取只修改内存副本，磁盘内容、修改时间和 revision 均保持原状。
+
+`config.get` 与 `config.patch` 的返回值新增 `options`，按完整字段路径提供当前实例候选，例如 `Event.Campaign.Event`。前端任务页优先使用该映射，不直接展示四服合集。保存显式活动选择时按同批最终包名校验，跨服选项拒绝整批写入；仅切换包名时自动刷新已失效的活动选择。
 
 ### 生成管道（离线，CI 校验）
 
@@ -268,9 +278,15 @@ stateDiagram-v2
 | `Alas.Emulator.PackageName` | 决定 `to_server()` → 全局 server → 资源目录与 i18n 活动 option 的选取 |
 | `Alas.Optimization.TaskHoardingDuration` | 调度器空闲时的「囤积」时长，影响 `get_next` 的等待策略 |
 | `OpsiScheduling.OperationCoinsPreserve` / `OpsiHazard1Leveling.OperationCoinsPreserve` | 两个配置独立保存；智能调度两种模式均读取自身配置，侵蚀 1 独立运行时读取自身配置。`UseSmartSchedulingOperationCoinsPreserve` 只切换黄币目标调度与体力调度（见第 15 节的联动说明） |
-| `<Task>.Emotion.*Value / *Record` | 成对字段：改 Value 必须同步刷新 Record 时间戳，否则情绪恢复量被重复计入（API 层 `_sync_record_time` 负责） |
+| `<Task>.Emotion.*Value / *Record / *RecoveryState` | 心情手动校准：API 在同一事务中按最终恢复条件保存实测值、完整微秒时间和隐藏相位；PublicEmotion 同样处理。仅修改恢复条件会使基准失效，需重新填写实测值。旧任务不能分别覆盖三字段。 |
+
+心情 RecoveryState 版本 2 保存允许间隙的相位片段，兼容版本 1；手动 Value 校准仍重新建立完全未知相位。舰队扫描只过滤可信观测不符的相位，不为旧配置自动建立准确基准。学习结果附带内存中的舰队映射／共享设置核对条件，随 FleetInfo 原有保存事务写入；磁盘上任一条件改变时，三字段整体丢弃，扫描结果仍正常保存。没有新增 API 或轮询。
+
+内部 `set_record(Emotion_Fleet*Value=...)` 同样原子更新完整时间和恢复状态，兼容 GemsFarming、Ambush11 等换船调用，不追加识别。此入口保留调用方原有读数语义；换船时的局部读数或启发式最低值不自动满足准确初值前提，不属于标准固定舰队的 3 点保证。
 | `Dashboard.*`（Oil/Coin/Gem 等） | 仪表盘资源，由 dashboard.yaml 定义、任务运行时写回 Value/Record |
 | `Storage.Storage` | 生成器给每个任务附加的 `storage` 类型组，WebUI 禁止编辑，运行时当作键值状态区使用 |
+
+META 支援并入 `OpsiAshBeacon`：菜单、参数与模板只保留一个调度任务，内部支援设置为 `OpsiAshBeacon.OpsiAshAssist.Enable/Tier`，共用 `OpsiAshBeacon.Equipment`。`DossierSkipAssist` 默认关闭，启用后先处理所选信标/档案，只有确认档案未开启且没有正在解析的档案时才支援；待领奖也属于已开启状态，必须先领奖，再用新截图确认回到解析入口后恢复支援。原「META支援完成后再开启档案」开关已从配置定义和运行逻辑删除，旧字段随配置加载更新被丢弃，不再阻挡开启档案，也不改变新开关的值。四种语言标签随配置一并生成并维护。
 
 ## 11. 异常与错误处理
 
@@ -303,14 +319,15 @@ stateDiagram-v2
 
 | 数据 | 位置 | 生命周期 |
 | --- | --- | --- |
-| 用户配置 | `config/<name>.json` | 持久；`save()` 事务内原子替换；删除实例时移入 `config/backup/` |
+| 用户配置 | `config/<name>.json` | 持久；`save()` 事务内原子替换；删除前完成配置、调度切片及安全历史归档 |
+| 普通业务数据 | 实际配置目录 `azurpilot.db` | 统计与调度共用；复制只带方案，删除保留统计，见 [普通业务数据存储](infra/persistence.md) |
 | 配置锁文件 | `config/<name>.json.lock` | 1 字节占位文件，随配置文件存在 |
 | 全新实例模板 | `config/template.json` | 生成器产物；`ConfigService.create` 的默认来源 |
 | 选项树/菜单 | `module/config/argument/args.json`、`menu.json` | 生成；调度器取优先级默认值、WebUI 取 schema 时实时读取 |
 | 翻译 | `module/config/i18n/<lang>.json` | 普通译文生成时保留旧值；活动名、服务器名称等动态条目会重建（见第 6 节） |
 | 读盘基线 | `AzurLaneConfig._loaded_data` | 每次 load/save 后更新，用于判断外部修改 |
 | 绑定表 | `bound` dict | 每次 `bind()` 清空重建 |
-| NTP 偏移 | `network_time` 单例内存 | 启动校准、30 分钟刷新；失败退回本机时间并可环境变量禁用 |
+| NTP 偏移 | `network_time` 单例内存 | 首次读取时后台校准、30 分钟刷新；失败保留缓存或使用本机时间，可环境变量禁用 |
 
 ## 14. 生命周期
 
@@ -318,6 +335,12 @@ stateDiagram-v2
 - **运行**：任务开始前 `bind(task)` 重绑参数；任务中赋值即保存；任务边界与空闲等待中经 `should_reload()`（mtime）感知外部修改，alas.py 丢弃整个 config 缓存重建——**配置对象本身被整体替换而非增量更新**。
 - **销毁**：无显式析构；随进程退出。持锁期间崩溃由操作系统文件锁兜底释放。
 - 模板配置在构造后直接返回（不 load/bind），生命周期止于属性默认值容器。
+
+### 后台网络校时
+
+首次读取时间时启动后台 NTP 查询并立即使用本机时间；成功后原子发布校准时间快照，刷新失败保留上次成功结果。`refresh()` 与 `refresh_time()` 返回已有缓存的同步状态，不代表新请求已完成，`force=True` 也不等待网络。查询在锁外执行，同一时间源只允许一个 daemon 查询线程；成功后 30 分钟刷新，失败退避 10 分钟。`timestamp()`、`now()`、`status()` 不等待 DNS 或 UDP，校时不会写入或重置任务记录。手机本机时间不准或首次成功校准的偏差较大时，定时判断仍可能改变；应保持系统自动时间设置。
+
+线程创建或启动失败时同样保留缓存或使用本机时间，按失败退避间隔重试，不中断时间读取。fork 子进程首次读取时会重新创建锁、清除继承的查询标记和时间缓存，再独立发起后台校准；清除缓存是为了避免使用父进程尚未完整发布的时间快照，查询间隔和超时设置保持不变。
 
 ## 15. 扩展方式
 
@@ -341,6 +364,8 @@ stateDiagram-v2
 ### 版本迁移（redirection）
 
 `ConfigUpdater.redirection` 表：`(源路径, 目标路径, 可选转换函数)`。源值缺失则跳过；目标已有值则不覆盖（同键迁移除外）。转换函数放 `redirect_utils/`（如 `upload_redirect` 合并布尔对、`coalition_to_little_academy` 归一联动难度、`execute_fixed_patrol_scan_redirect` 清洗旧枚举、`opsi_record_redirect` 把单一掉落开关铺给按任务拆分的 8 个新开关）。目标路径写成 tuple 时，转换函数需返回等长序列逐个对应。新增迁移后旧配置在下次 `read_file` 时自动转换，无需用户操作。
+
+META 的旧 `OpsiAshBeacon.OpsiAshBeacon.OneHitMode` 开关迁移到整数 `AssistRequestLimit`（`true → 0`、`false → -1`），已有新值优先。`ConfigService.read()` 在只读合并时复用同一纯转换函数，确保运行器启动前也显示旧实例的实际策略；读取不写磁盘，后续事务保存才写入新字段。隐藏的 `AssistRequestState` 保留求援断点，不允许 WebUI 编辑。
 
 ### 保存联动
 

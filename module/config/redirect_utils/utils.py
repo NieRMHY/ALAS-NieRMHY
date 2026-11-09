@@ -16,6 +16,33 @@
 from module.config.server import to_server
 
 
+def fleet_training_hours_redirect(value):
+    """旧培养间隔从分钟换算为小时，保持原有实际等待时间。"""
+    return value / 60
+
+
+def fleet_training_interval_redirect(value):
+    """合并旧独立间隔；优先启用项的最短间隔，已有共用值保持不变。"""
+    if not isinstance(value, dict):
+        return 6.0
+    shared = value.get('FleetTraining', {})
+    if isinstance(shared, dict) and 'CheckIntervalHours' in shared:
+        return shared['CheckIntervalHours']
+    configured, enabled = [], []
+    for name in ('FleetLevelTraining', 'FleetAffinityTraining'):
+        fields = value.get(name, {})
+        if not isinstance(fields, dict):
+            continue
+        hours = fields.get('CheckIntervalHours')
+        if hours is None and type(fields.get('CheckInterval')) in (int, float):
+            hours = fleet_training_hours_redirect(fields['CheckInterval'])
+        if type(hours) in (int, float) and 0 <= hours < float('inf'):
+            configured.append(hours)
+            if fields.get('Enabled') is True:
+                enabled.append(hours)
+    return min(enabled or configured, default=6.0)
+
+
 def upload_redirect(value):
     """重定向上传配置属性（Upload）。
 
@@ -71,6 +98,26 @@ def dossier_redirect(value):
         return 'current_dossier'
     else:
         return 'current'
+
+
+def meta_assist_limit_redirect(value):
+    """将一击即走开关迁移为求援次数上限，保持原有作战策略。"""
+    # 核心重定向会跳过 null，WebUI 的只读迁移也应保留默认的无限求援。
+    if value is None:
+        return 0
+    return 0 if value else -1
+
+
+def sea_miles_interval_redirect(value):
+    """海里记录旧开关迁移为天数间隔，保留已有的数字设置。"""
+    if value is None:
+        return -1
+    if isinstance(value, list):
+        # 兼容旧版复选框保存的 [] / [True]，沿用原复选框解析规则。
+        return 0 if any(bool(item) for item in value) else -1
+    if isinstance(value, bool):
+        return 0 if value else -1
+    return value
 
 
 def enhance_favourite_redirect(value):

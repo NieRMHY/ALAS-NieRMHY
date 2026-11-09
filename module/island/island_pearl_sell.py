@@ -63,7 +63,7 @@ class IslandPearlSell(Island):
         判断交易与每日价格刷新触发条件，执行低价采购、高价售卖或价格刷新，
         并计算更新下一次执行时间。
         """
-        logger.hr("岛屿珍珠出售运行", level=1)
+        logger.hr("岛屿珍珠售卖运行", level=1)
         now = current_time().replace(microsecond=0)
 
         pearl_trade_time = self._get_next_pearl_trade_time(now=now)
@@ -126,7 +126,7 @@ class IslandPearlSell(Island):
         Returns:
             str: 采购阶段状态（PHASE_DONE / PHASE_SKIPPED / PHASE_DELAYED）。
         """
-        logger.hr("珍珠购买阶段", level=2)
+        logger.hr("珍珠采购阶段", level=2)
         self._purchase_quota_exhausted = False
 
         # 检查购买延时——如果还没到购买时间则跳过采购，让售卖正常执行
@@ -243,7 +243,7 @@ class IslandPearlSell(Island):
         Returns:
             str: 售卖阶段状态（PHASE_DONE / PHASE_SKIPPED / PHASE_DELAYED）。
         """
-        logger.hr("珍珠出售阶段", level=2)
+        logger.hr("珍珠售卖阶段", level=2)
         sell_price_limit = int(self.config.IslandPearlSell_SellPrice)
 
         if not self._enter_home_pearl_shop("assembly"):
@@ -331,18 +331,18 @@ class IslandPearlSell(Island):
         return True
 
     def move_to_assembly_role_a(self):
-        """移动角色到集会所珍珠售卖 NPC 身旁。"""
-        self.island_up(2500)
-        self.island_right(1700)
-        self.island_down(1700)
-        self.island_right(500)
+        """移动角色到集会所珍珠售卖 NPC 身旁。
+
+        规则见 `IslandPlan.IslandWalk.PearlAssembly`。
+        """
+        self.island_walk_route('PearlAssembly')
 
     def move_to_port_role_b(self):
-        """移动角色到港口珍珠采购 NPC 身旁。"""
-        self.island_left(2500)
-        self.device.click(ISLAND_JUMP)
-        self.island_left(3000)
-        self.island_down(1000)
+        """移动角色到港口珍珠采购 NPC 身旁。
+
+        规则见 `IslandPlan.IslandWalk.PearlPort`。
+        """
+        self.island_walk_route('PearlPort')
 
     def pearl_shop_enter_button(self, destination):
         """获取对应地点的珍珠商店交互对话入口按钮。

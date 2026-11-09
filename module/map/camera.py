@@ -420,9 +420,11 @@ class Camera(MapOperation):
 
             if len(record) > 0:
                 # 即使两条边缘可见也要滑动，以避免一些尴尬的相机位置。
-                prev_homo = self.view.backend.homo_loca
+                # 只有单应性（Homography）后端有 homo_loca，透视（Perspective）后端没有，
+                # 取不到时跳过下方的到边检测，避免 AttributeError
+                prev_homo = getattr(self.view.backend, 'homo_loca', None)
                 self.map_swipe((x, y))
-                cur_homo = self.view.backend.homo_loca
+                cur_homo = getattr(self.view.backend, 'homo_loca', None)
                 if prev_homo is not None and cur_homo is not None:
                     delta = np.subtract(cur_homo, prev_homo)
                     base = self.view.swipe_base

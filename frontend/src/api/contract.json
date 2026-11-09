@@ -66,6 +66,39 @@
     "instances.create": {
       "mutates": true,
       "params": {
+        "$defs": {
+          "CreateEmulatorParams": {
+            "additionalProperties": false,
+            "description": "首次设置随实例一起保存的模拟器参数。",
+            "properties": {
+              "serial": {
+                "maxLength": 256,
+                "minLength": 1,
+                "title": "Serial",
+                "type": "string"
+              },
+              "package_name": {
+                "maxLength": 128,
+                "minLength": 1,
+                "title": "Package Name",
+                "type": "string"
+              },
+              "server_name": {
+                "maxLength": 64,
+                "minLength": 1,
+                "title": "Server Name",
+                "type": "string"
+              }
+            },
+            "required": [
+              "serial",
+              "package_name",
+              "server_name"
+            ],
+            "title": "CreateEmulatorParams",
+            "type": "object"
+          }
+        },
         "additionalProperties": false,
         "description": "新建实例请求参数模型。",
         "properties": {
@@ -98,6 +131,17 @@
             ],
             "default": null,
             "title": "Import File"
+          },
+          "emulator": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/CreateEmulatorParams"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
           }
         },
         "required": [
@@ -293,6 +337,737 @@
           "instance"
         ],
         "title": "InstanceParams",
+        "type": "object"
+      }
+    },
+    "fleetTraining.reset": {
+      "mutates": true,
+      "params": {
+        "additionalProperties": false,
+        "description": "带版本校验的请求参数模型。",
+        "properties": {
+          "instance": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Instance",
+            "type": "string"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "string"
+          }
+        },
+        "required": [
+          "instance",
+          "revision"
+        ],
+        "title": "RevisionParams",
+        "type": "object"
+      }
+    },
+    "dock.report": {
+      "mutates": false,
+      "params": {
+        "additionalProperties": false,
+        "description": "单实例操作通用入参模型。",
+        "properties": {
+          "instance": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Instance",
+            "type": "string"
+          }
+        },
+        "required": [
+          "instance"
+        ],
+        "title": "InstanceParams",
+        "type": "object"
+      }
+    },
+    "dock.importLegacy": {
+      "mutates": true,
+      "params": {
+        "additionalProperties": false,
+        "description": "带版本校验的请求参数模型。",
+        "properties": {
+          "instance": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Instance",
+            "type": "string"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "string"
+          }
+        },
+        "required": [
+          "instance",
+          "revision"
+        ],
+        "title": "RevisionParams",
+        "type": "object"
+      }
+    },
+    "dock.configure": {
+      "mutates": true,
+      "params": {
+        "additionalProperties": false,
+        "description": "共享扫描范围；跨字段校验由服务在事务内执行。",
+        "properties": {
+          "instance": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Instance",
+            "type": "string"
+          },
+          "min_level": {
+            "maximum": 125,
+            "minimum": 1,
+            "title": "Min Level",
+            "type": "integer"
+          },
+          "max_level": {
+            "maximum": 125,
+            "minimum": 1,
+            "title": "Max Level",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "instance",
+          "min_level",
+          "max_level"
+        ],
+        "title": "DockConfigureParams",
+        "type": "object"
+      }
+    },
+    "dock.patch": {
+      "mutates": true,
+      "params": {
+        "$defs": {
+          "DockCardChange": {
+            "additionalProperties": false,
+            "description": "按物理副本 ID 局部编辑底账；缺失 ID 表示新增。",
+            "properties": {
+              "id": {
+                "anyOf": [
+                  {
+                    "minimum": 1,
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Id"
+              },
+              "delete": {
+                "title": "Delete",
+                "type": "boolean"
+              },
+              "group_type": {
+                "anyOf": [
+                  {
+                    "minimum": 1,
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Group Type"
+              },
+              "name": {
+                "maxLength": 100,
+                "minLength": 1,
+                "title": "Name",
+                "type": "string"
+              },
+              "level": {
+                "maximum": 125,
+                "minimum": 0,
+                "title": "Level",
+                "type": "integer"
+              },
+              "rarity": {
+                "enum": [
+                  "",
+                  "N",
+                  "R",
+                  "SR",
+                  "SSR",
+                  "UR"
+                ],
+                "title": "Rarity",
+                "type": "string"
+              },
+              "base_rarity": {
+                "enum": [
+                  "",
+                  "N",
+                  "R",
+                  "SR",
+                  "SSR",
+                  "UR"
+                ],
+                "title": "Base Rarity",
+                "type": "string"
+              },
+              "extra_exp": {
+                "anyOf": [
+                  {
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Extra Exp"
+              },
+              "full_star": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Full Star"
+              },
+              "form": {
+                "anyOf": [
+                  {
+                    "enum": [
+                      "base",
+                      "retrofit"
+                    ],
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Form"
+              },
+              "review": {
+                "title": "Review",
+                "type": "boolean"
+              },
+              "source": {
+                "maxLength": 200,
+                "title": "Source",
+                "type": "string"
+              }
+            },
+            "title": "DockCardChange",
+            "type": "object"
+          }
+        },
+        "additionalProperties": false,
+        "properties": {
+          "instance": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Instance",
+            "type": "string"
+          },
+          "revision": {
+            "maxLength": 64,
+            "minLength": 64,
+            "title": "Revision",
+            "type": "string"
+          },
+          "changes": {
+            "items": {
+              "$ref": "#/$defs/DockCardChange"
+            },
+            "maxItems": 5000,
+            "minItems": 1,
+            "title": "Changes",
+            "type": "array"
+          }
+        },
+        "required": [
+          "instance",
+          "revision",
+          "changes"
+        ],
+        "title": "DockPatchParams",
+        "type": "object"
+      }
+    },
+    "dock.stageImport": {
+      "mutates": true,
+      "params": {
+        "$defs": {
+          "MindShip": {
+            "additionalProperties": false,
+            "description": "导入的舰船字段与核对状态；额外经验用于补零散经验。",
+            "properties": {
+              "name": {
+                "maxLength": 100,
+                "minLength": 1,
+                "title": "Name",
+                "type": "string"
+              },
+              "level": {
+                "maximum": 125,
+                "minimum": 0,
+                "title": "Level",
+                "type": "integer"
+              },
+              "rarity": {
+                "default": "",
+                "enum": [
+                  "",
+                  "N",
+                  "R",
+                  "SR",
+                  "SSR",
+                  "UR"
+                ],
+                "title": "Rarity",
+                "type": "string"
+              },
+              "base_rarity": {
+                "default": "",
+                "enum": [
+                  "",
+                  "N",
+                  "R",
+                  "SR",
+                  "SSR",
+                  "UR"
+                ],
+                "title": "Base Rarity",
+                "type": "string"
+              },
+              "extra_exp": {
+                "anyOf": [
+                  {
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Extra Exp"
+              },
+              "review": {
+                "default": false,
+                "title": "Review",
+                "type": "boolean"
+              },
+              "source": {
+                "default": "",
+                "maxLength": 200,
+                "title": "Source",
+                "type": "string"
+              }
+            },
+            "required": [
+              "name",
+              "level"
+            ],
+            "title": "MindShip",
+            "type": "object"
+          }
+        },
+        "additionalProperties": false,
+        "properties": {
+          "instance": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Instance",
+            "type": "string"
+          },
+          "revision": {
+            "maxLength": 64,
+            "minLength": 64,
+            "title": "Revision",
+            "type": "string"
+          },
+          "ships": {
+            "items": {
+              "$ref": "#/$defs/MindShip"
+            },
+            "maxItems": 5000,
+            "minItems": 1,
+            "title": "Ships",
+            "type": "array"
+          }
+        },
+        "required": [
+          "instance",
+          "revision",
+          "ships"
+        ],
+        "title": "DockStageImportParams",
+        "type": "object"
+      }
+    },
+    "dock.review": {
+      "mutates": true,
+      "params": {
+        "$defs": {
+          "DockReviewDecision": {
+            "additionalProperties": false,
+            "description": "每个候选项独立决定；可显式指定要更新的物理副本。",
+            "properties": {
+              "id": {
+                "maxLength": 100,
+                "minLength": 1,
+                "title": "Id",
+                "type": "string"
+              },
+              "accept": {
+                "title": "Accept",
+                "type": "boolean"
+              },
+              "ship_id": {
+                "anyOf": [
+                  {
+                    "minimum": 1,
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Ship Id"
+              }
+            },
+            "required": [
+              "id",
+              "accept"
+            ],
+            "title": "DockReviewDecision",
+            "type": "object"
+          }
+        },
+        "additionalProperties": false,
+        "properties": {
+          "instance": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Instance",
+            "type": "string"
+          },
+          "revision": {
+            "maxLength": 64,
+            "minLength": 64,
+            "title": "Revision",
+            "type": "string"
+          },
+          "pending_revision": {
+            "maxLength": 64,
+            "minLength": 64,
+            "title": "Pending Revision",
+            "type": "string"
+          },
+          "decisions": {
+            "items": {
+              "$ref": "#/$defs/DockReviewDecision"
+            },
+            "maxItems": 10000,
+            "minItems": 1,
+            "title": "Decisions",
+            "type": "array"
+          }
+        },
+        "required": [
+          "instance",
+          "revision",
+          "pending_revision",
+          "decisions"
+        ],
+        "title": "DockReviewParams",
+        "type": "object"
+      }
+    },
+    "mind.catalog": {
+      "mutates": false,
+      "params": {
+        "additionalProperties": false,
+        "description": "单实例操作通用入参模型。",
+        "properties": {
+          "instance": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Instance",
+            "type": "string"
+          }
+        },
+        "required": [
+          "instance"
+        ],
+        "title": "InstanceParams",
+        "type": "object"
+      }
+    },
+    "fleetTech.catalog": {
+      "mutates": false,
+      "params": {
+        "additionalProperties": false,
+        "description": "单实例操作通用入参模型。",
+        "properties": {
+          "instance": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Instance",
+            "type": "string"
+          }
+        },
+        "required": [
+          "instance"
+        ],
+        "title": "InstanceParams",
+        "type": "object"
+      }
+    },
+    "fleetTech.report": {
+      "mutates": false,
+      "params": {
+        "additionalProperties": false,
+        "description": "单实例操作通用入参模型。",
+        "properties": {
+          "instance": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Instance",
+            "type": "string"
+          }
+        },
+        "required": [
+          "instance"
+        ],
+        "title": "InstanceParams",
+        "type": "object"
+      }
+    },
+    "fleetTech.mergeShips": {
+      "mutates": true,
+      "params": {
+        "additionalProperties": false,
+        "description": "带版本校验的请求参数模型。",
+        "properties": {
+          "instance": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Instance",
+            "type": "string"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "string"
+          }
+        },
+        "required": [
+          "instance",
+          "revision"
+        ],
+        "title": "RevisionParams",
+        "type": "object"
+      }
+    },
+    "fleetTech.patch": {
+      "mutates": true,
+      "params": {
+        "$defs": {
+          "FleetTechChange": {
+            "additionalProperties": false,
+            "description": "只修改明确提供的人工字段；科技里程碑仅接受完成或未完成。",
+            "properties": {
+              "group_type": {
+                "minimum": 1,
+                "title": "Group Type",
+                "type": "integer"
+              },
+              "owned": {
+                "title": "Owned",
+                "type": "boolean"
+              },
+              "full_star": {
+                "title": "Full Star",
+                "type": "boolean"
+              },
+              "lv120": {
+                "title": "Lv120",
+                "type": "boolean"
+              },
+              "awakening_pending": {
+                "title": "Awakening Pending",
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "group_type"
+            ],
+            "title": "FleetTechChange",
+            "type": "object"
+          }
+        },
+        "additionalProperties": false,
+        "properties": {
+          "instance": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Instance",
+            "type": "string"
+          },
+          "revision": {
+            "maxLength": 64,
+            "minLength": 64,
+            "title": "Revision",
+            "type": "string"
+          },
+          "changes": {
+            "items": {
+              "$ref": "#/$defs/FleetTechChange"
+            },
+            "maxItems": 1000,
+            "title": "Changes",
+            "type": "array"
+          },
+          "nations": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "maxProperties": 4,
+            "title": "Nations",
+            "type": "object"
+          }
+        },
+        "required": [
+          "instance",
+          "revision"
+        ],
+        "title": "FleetTechPatchParams",
+        "type": "object"
+      }
+    },
+    "mind.plan": {
+      "mutates": false,
+      "params": {
+        "additionalProperties": false,
+        "properties": {
+          "instance": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Instance",
+            "type": "string"
+          },
+          "revision": {
+            "maxLength": 64,
+            "minLength": 64,
+            "title": "Revision",
+            "type": "string"
+          },
+          "ship_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "maxItems": 5000,
+            "title": "Ship Ids",
+            "type": "array"
+          },
+          "target_level": {
+            "default": 120,
+            "enum": [
+              120,
+              125
+            ],
+            "title": "Target Level",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "instance",
+          "revision",
+          "ship_ids"
+        ],
+        "title": "CultivationParams",
+        "type": "object"
+      }
+    },
+    "mind.import": {
+      "mutates": false,
+      "params": {
+        "additionalProperties": false,
+        "properties": {
+          "instance": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Instance",
+            "type": "string"
+          },
+          "filename": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Filename",
+            "type": "string"
+          },
+          "content": {
+            "maxLength": 8000000,
+            "minLength": 1,
+            "title": "Content",
+            "type": "string"
+          }
+        },
+        "required": [
+          "instance",
+          "filename",
+          "content"
+        ],
+        "title": "MindFileParams",
+        "type": "object"
+      }
+    },
+    "mind.recognize": {
+      "mutates": false,
+      "params": {
+        "additionalProperties": false,
+        "properties": {
+          "instance": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Instance",
+            "type": "string"
+          },
+          "filename": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Filename",
+            "type": "string"
+          },
+          "content": {
+            "maxLength": 8000000,
+            "minLength": 1,
+            "title": "Content",
+            "type": "string"
+          }
+        },
+        "required": [
+          "instance",
+          "filename",
+          "content"
+        ],
+        "title": "MindFileParams",
         "type": "object"
       }
     },
@@ -1748,6 +2523,11 @@
             ],
             "default": null,
             "title": "Task"
+          },
+          "include_series": {
+            "default": true,
+            "title": "Include Series",
+            "type": "boolean"
           }
         },
         "required": [
@@ -2372,11 +3152,12 @@
                 "instances",
                 "overview",
                 "logs",
-                "preview"
+                "preview",
+                "notifications"
               ],
               "type": "string"
             },
-            "maxItems": 4,
+            "maxItems": 5,
             "title": "Topics",
             "type": "array"
           }

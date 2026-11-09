@@ -4,6 +4,7 @@
 对应缺口：配置商品仓库没货时，上架会静默失败（格子空着）。
 """
 import unittest
+from unittest.mock import Mock, patch
 
 from module.island.island_business_stock import BusinessStockCheckMixin
 
@@ -47,6 +48,22 @@ class TestReplaceMissingProducts(unittest.TestCase):
         self.assertEqual(replacements, [])
         self.assertEqual([p['name'] for p in new_products],
                          ['tofu_combo', 'hearty_meal', 'tofu_meat', 'fo_tiao'])
+
+    # Add by MHY, 冬季新品未录入经济库也应保留有库存的手填上架与常驻餐品。
+    def test_winter_manual_products_and_away_cook_are_preserved(self):
+        winter = make_item('shiitake_chicken_soup')
+        host = FakeBusiness([winter, make_item('tofu_combo')], [winter])
+        host.config = Mock()
+        host.config.cross_get.return_value = 'winter'
+        products, replacements = host.replace_missing_products(
+            '有鱼餐馆', {'shiitake_chicken_soup': 7, 'tofu_combo': 12})
+        self.assertEqual(products, [winter])
+        self.assertEqual(replacements, [])
+        with patch('module.island.island_business_stock.load_defaults') as load:
+            host._rotate_away_cook('restaurant', {'shiitake_chicken_soup': 7})
+        load.assert_not_called()
+        host.config.cross_set.assert_not_called()
+        host.config.update.assert_not_called()
 
     def test_missing_replaced_by_high_profit_in_stock(self):
         host = FakeBusiness([make_item(n) for n in self.pool], self.active)

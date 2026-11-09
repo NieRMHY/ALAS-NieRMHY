@@ -216,7 +216,7 @@ class AmountOcr(Digit):
         return image.astype(np.uint8)
 
     def ocr_with_validation(self, image, item_name=None, direct_ocr=False, trim=True,
-                            amount_max=None, amount_default_max=None):
+                            amount_max=None, amount_default_max=None, *, initial_result=None):
         """带验证的数量识别，可先匹配字形；超限重试后按场景处理。
 
         掉落场景开启 strict_amount_max 时拒绝无法确认的超限读数，避免截断后
@@ -252,10 +252,18 @@ class AmountOcr(Digit):
                 # 末位为 0 时匹配器不返回数量，因此不会把真实的 10 削成个位数。
                 matched = read_amount_digits(raw_image[:, -14:])
             if matched is not None and 0 < matched <= max_val:
+                self.last_valid = True
                 return matched
             if matched is not None and matched > max_val and self.strict_amount_max:
+                self.last_valid = False
                 logger.warning(f'[统计-物品] {item_name} 字形读数 {matched} 超过上限 {max_val}，跳过本格')
                 return 0
+
+        if initial_result is not None:
+            amount = self.after_process(initial_result)
+            if amount <= max_val and (amount > 0 or not trim):
+                # 首轮已合批且校验通过，无需再次预处理同一区域。
+                return amount
 
         if direct_ocr:
             pre_image = self.pre_process(image)
@@ -283,54 +291,57 @@ class AmountOcr(Digit):
         if trim:
             images = [crop_to_text(i) for i in images]
 
-        result_str = self.cnocr.atomic_ocr_for_single_lines(images, self.alphabet)[0]
+        result_str = (self.cnocr.atomic_ocr_for_single_lines(images, self.alphabet)[0]
+                      if initial_result is None else initial_result)
         amount = self.after_process(result_str)
 
         if amount == 0 and trim:
             result_str = self.cnocr.atomic_ocr_for_single_lines(images_untrimmed, self.alphabet)[0]
             retry_amount = self.after_process(result_str)
             if retry_amount > 0:
-                logger.info(f'{item_name} amount 读数为 0，未裁剪重试后修正为 {retry_amount}')
+                logger.info(f'{item_name} 数量读数为 0，未裁剪重试后修正为 {retry_amount}')
                 amount = retry_amount
 
         if amount <= max_val:
             return amount
 
         for retry in range(self.MAX_RETRY):
-            logger.warning(f'{item_name} amount {amount} 超过最大值 {max_val}, retry {retry + 1}/{self.MAX_RETRY}')
+            logger.warning(f'{item_name} 数量 {amount} 超过最大值 {max_val}，第 {retry + 1}/{self.MAX_RETRY} 次重试')
             if alt_images is not None:
                 result_str = self.cnocr.atomic_ocr_for_single_lines(alt_images, self.alphabet)[0]
             else:
                 result_str = self.cnocr.atomic_ocr_for_single_lines(images, self.alphabet)[0]
             amount = self.after_process(result_str)
             if amount <= max_val:
-                logger.info(f'{item_name} amount validated after {retry + 1} retries: {amount}')
+                logger.info(f'{item_name} 数量经 {retry + 1} 次重试后校验通过: {amount}')
                 return amount
 
         if self.strict_amount_max and amount > max_val:
+            self.last_valid = False
             logger.warning(f'[统计-物品] {item_name} 数量 {amount} 超过上限 {max_val}，'
                            '本格数量无法确认，保留截图供重放')
             return 0
 
         if amount > max_val and amount >= 10:
+            self.last_valid = False
             if self.drop_leading_on_overflow:
                 # 残影在数字左侧，多出来的正是首位；可能不止一位，丢到不超限为止
                 digits = str(amount)
                 while len(digits) > 1 and int(digits) > max_val:
                     digits = digits[1:]
                 truncated = int(digits)
-                logger.warning(f'{item_name} amount {amount} still 超过最大值 after {self.MAX_RETRY} retries, '
-                              f'dropping leading digit to {truncated}')
+                logger.warning(f'{item_name} 数量 {amount} 经 {self.MAX_RETRY} 次重试仍超过最大值，'
+                              f'丢弃首位数字后为 {truncated}')
             else:
                 truncated = int(str(amount)[:-1])
-                logger.warning(f'{item_name} amount {amount} still 超过最大值 after {self.MAX_RETRY} retries, '
-                              f'truncating to {truncated}')
+                logger.warning(f'{item_name} 数量 {amount} 经 {self.MAX_RETRY} 次重试仍超过最大值，'
+                              f'截断为 {truncated}')
             return truncated
 
         return amount
 
     def ocr_batch_with_validation(self, image_list, item_names=None, direct_ocr=True, trim=True,
-                                  amount_max=None, amount_default_max=None):
+                                  amount_max=None, amount_default_max=None, *, batch_first=False):
         """批量带验证的 OCR 识别，逐个物品进行校验。
 
         Args:
@@ -346,12 +357,27 @@ class AmountOcr(Digit):
         if item_names is None:
             item_names = [None] * len(image_list)
 
+        initial_results = [None] * len(image_list)
+        if batch_first and direct_ocr and image_list and not self.use_digit_templates:
+            # 只合并首轮推理，未裁剪兜底、超限复识别和逐项校验仍走原流程。
+            prepared = [self.pre_process(image) for image in image_list]
+            if trim:
+                prepared = [crop_to_text(image) for image in prepared]
+            initial_results = self.cnocr.atomic_ocr_for_single_lines(prepared, self.alphabet)
+            if len(initial_results) != len(image_list):
+                raise ValueError('数量 OCR 合批返回数量不一致')
+
         results = []
-        for image, item_name in zip(image_list, item_names):
+        validities = []
+        for image, item_name, initial in zip(image_list, item_names, initial_results):
+            options = {'initial_result': initial} if initial is not None else {}
             amount = self.ocr_with_validation(image, item_name=item_name, direct_ocr=direct_ocr,
                                               trim=trim, amount_max=amount_max,
-                                              amount_default_max=amount_default_max)
+                                              amount_default_max=amount_default_max,
+                                              **options)
             results.append(amount)
+            validities.append(bool(getattr(self, 'last_valid', False)))
+        self.last_batch_validity = tuple(validities)
         return results
 
 

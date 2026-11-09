@@ -15,10 +15,7 @@ import os
 
 from module.base.template import Template
 from module.island.island_away_cook import (
-    done_items,
     load_defaults,
-    load_notified,
-
     resolve_away_cook,
     rotation_key,
     save_defaults,
@@ -26,6 +23,8 @@ from module.island.island_away_cook import (
 )
 from module.island.island_economy import EconomyDatabase
 from module.island.island_season import SeasonConfig
+from module.island.island_economy import ECONOMY_PRODUCTS
+from module.island.island_season_progress import read_slots, record_readings
 from module.island.warehouse import WarehouseOCR
 from module.logger import logger
 
@@ -212,12 +211,19 @@ class BusinessStockCheckMixin:
         if not key:
             return
         season = SeasonConfig(self.config).season
-        if not season:
+        # Modify by MHY, 本地赛季任务表只录入秋季（冬季任务尚未整理成餐品/数量表），
+        # 不以空任务集恢复旧常驻菜，保留手填值。
+        if not season or season == 'winter':
             return
+
+        # Modify by MHY, 需求数量与已完成来自配置：已勾选「已完成」的物品不再轮换成常驻餐品，
+        # 空闲产能自动转去做下一个缺口最大的
+        slots = read_slots(self.config, season, set(ECONOMY_PRODUCTS))
+        shop_items = season_items_for_shop(shop_type, season, slots)
 
         # 赛季物品的库存：有仓库模板的才读得到，没有的按 0 处理
         season_counts = dict(counts)
-        for item, _, _ in season_items_for_shop(shop_type, season):
+        for item, _, _ in shop_items:
             if item in season_counts:
                 continue
             template = self._stock_check_template(shop_type, item)
@@ -226,21 +232,21 @@ class BusinessStockCheckMixin:
                 continue
             season_counts[item] = WarehouseOCR().ocr_item_quantity(self.device.image, template)
 
-        # 赛季物品进度写进日志，方便核对（攒够会另发通知）
-        progress = {item: f'{season_counts.get(item, 0)}/{need}'
-                    for item, need, _ in season_items_for_shop(shop_type, season)}
+        # Modify by MHY, 赛季进度直接取仓库读数（不再 OCR 赛季页）：核对销售前读到的
+        # 就是准确库存，顺带记进进度，缺口与达标邮件都按它算。只记有仓库模板的项，
+        # 读不到的按 0 处理只用于本次轮换，不覆盖进度。
+        readable = {item: season_counts[item] for item, _, _ in shop_items
+                    if item in counts or self._stock_check_template(shop_type, item) is not None}
+        record_readings(readable)
+
+        progress = {item: f'{season_counts.get(item, 0)}/{need}' for item, need, _ in shop_items}
         if progress:
             logger.info(f"[岛屿-赛季任务] {shop_type} 进度: {progress}")
-
-        # 这里曾按仓库读数发「攒够」提醒，已去掉：仓库读数不等于任务进度
-        # （真机实测仓库 ≥250 而赛季页面只有 222/250，差额被每日订单/货运吃掉），
-        # 会误报「可以提交了」。提醒与提交统一以赛季页面的读数为准。
 
         current = self.config.cross_get(key, default='None')
         defaults = load_defaults()
         target, defaults = resolve_away_cook(
-            shop_type, season, season_counts, current, defaults,
-            skip=done_items(season, load_notified()))
+            shop_type, season, season_counts, current, defaults, slots=slots)
         if target != current:
             logger.info(f"[岛屿-常驻餐品] {shop_type}: {current} -> {target}"
                         f"（赛季缺口 {season}）")

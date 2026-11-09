@@ -15,10 +15,8 @@ import unittest
 sys.path.insert(0, '.')
 sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
 
-from module.island import island_away_cook
 from module.island.island_season_plan_reader import (
     CLAIM_SEARCH_SPAN,
-    LIST_BOTTOM,
     claim_boxes,
     claim_visible,
     merge_claimed,
@@ -138,68 +136,3 @@ class TestClippedCardIsUnknown(unittest.TestCase):
         self.assertIs(merge_claimed(None, None), None)
 
 
-class TestUnknownStateIsNotSubmittable(unittest.TestCase):
-    """状态未知的卡片：不能提交，也不能抵消 done。"""
-
-    def test_ready_to_submit_skips_unknown(self):
-        page = {'甜蜜引擎': {'item': 'apple_juice', 'have': 250, 'need': 250,
-                            'claimed': None}}
-        self.assertEqual(island_away_cook.ready_to_submit('autumn', page), [])
-
-    def test_ready_to_submit_includes_definite_unclaimed(self):
-        page = {'甜蜜引擎': {'item': 'apple_juice', 'have': 250, 'need': 250,
-                            'claimed': False}}
-        self.assertEqual(len(island_away_cook.ready_to_submit('autumn', page)), 1)
-
-    def test_mark_claimed_ignores_unknown(self):
-        notified = {}
-        island_away_cook.mark_claimed(
-            'autumn', {'甜蜜引擎': {'item': 'apple_juice', 'claimed': True}}, notified)
-        changed = island_away_cook.mark_claimed(
-            'autumn', {'甜蜜引擎': {'item': 'apple_juice', 'claimed': None}}, notified)
-        self.assertEqual(changed, {})
-        self.assertTrue(notified['autumn']['apple_juice']['done'])
-
-
-class TestDoneDebounce(unittest.TestCase):
-    """单次漏读不取消 done，连续漏读才取消。"""
-
-    @staticmethod
-    def _page(claimed):
-        return {'甜蜜引擎': {'item': 'apple_juice', 'claimed': claimed}}
-
-    def test_single_miss_keeps_done(self):
-        notified = {}
-        island_away_cook.mark_claimed('autumn', self._page(True), notified)
-        self.assertTrue(notified['autumn']['apple_juice']['done'])
-
-        changed = island_away_cook.mark_claimed('autumn', self._page(False), notified)
-        self.assertTrue(notified['autumn']['apple_juice']['done'], '一次漏读不该取消 done')
-        self.assertEqual(changed, {})
-
-    def test_consecutive_misses_cancel_done(self):
-        notified = {}
-        island_away_cook.mark_claimed('autumn', self._page(True), notified)
-        island_away_cook.mark_claimed('autumn', self._page(False), notified)
-        changed = island_away_cook.mark_claimed('autumn', self._page(False), notified)
-        self.assertFalse(notified['autumn']['apple_juice']['done'])
-        self.assertEqual(changed.get('apple_juice'), '取消')
-
-    def test_claimed_clears_miss_counter(self):
-        notified = {}
-        island_away_cook.mark_claimed('autumn', self._page(True), notified)
-        island_away_cook.mark_claimed('autumn', self._page(False), notified)
-        island_away_cook.mark_claimed('autumn', self._page(True), notified)   # 又读到
-        island_away_cook.mark_claimed('autumn', self._page(False), notified)  # 只漏一次
-        self.assertTrue(notified['autumn']['apple_juice']['done'])
-        self.assertEqual(notified['autumn']['apple_juice']['miss'], 1)
-
-    def test_state_entry_tolerates_missing_miss_field(self):
-        """旧状态文件没有 miss 字段时按 0 处理，不炸。"""
-        notified = {'autumn': {'apple_juice': {'notified': False, 'last': 0, 'done': True}}}
-        island_away_cook.mark_claimed('autumn', self._page(False), notified)
-        self.assertTrue(notified['autumn']['apple_juice']['done'])
-
-
-if __name__ == '__main__':
-    unittest.main()

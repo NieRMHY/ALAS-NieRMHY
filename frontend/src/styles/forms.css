@@ -287,3 +287,116 @@ input[type='range']:focus-visible {outline: 2px solid var(--theme-focus); outlin
 .material-detail-modal .field-label label {color: var(--theme-text); font-size: 13px}
 .material-detail-modal .knob-value {color: var(--theme-text); font-size: 13px}
 .material-detail-modal .knob-region-title {font-size: 14px}
+
+/* Add by MHY, 过滤器语法高亮编辑器：外框直接复用 forms.css 的输入控件 token（高度、圆角、边框、焦点环、禁用态），
+   语法色只固定色相、明度与主题文字色混合，light/dark/extreme/legacy-*/minimal 共用同一套规则，
+   不再为单个主题写覆盖块。 */
+.filter-editor {position: relative; width: 100%}
+.filter-editor .cm-editor {
+  /* 色相常量：与主题文字色混合后自动适配明暗主题 */
+  --filter-violet: color-mix(in srgb, #7c3aed 74%, var(--theme-input-text));
+  --filter-indigo: color-mix(in srgb, #6366f1 74%, var(--theme-input-text));
+  --filter-blue: color-mix(in srgb, #2563eb 74%, var(--theme-input-text));
+  --filter-sky: color-mix(in srgb, #0284c7 74%, var(--theme-input-text));
+  --filter-cyan: color-mix(in srgb, #0891b2 74%, var(--theme-input-text));
+  --filter-teal: color-mix(in srgb, #0d9488 74%, var(--theme-input-text));
+  --filter-green: color-mix(in srgb, #059669 74%, var(--theme-input-text));
+  --filter-amber: color-mix(in srgb, #d97706 74%, var(--theme-input-text));
+  --filter-orange: color-mix(in srgb, #ea580c 74%, var(--theme-input-text));
+  --filter-red: color-mix(in srgb, #dc2626 74%, var(--theme-input-text));
+  --filter-pink: color-mix(in srgb, #db2777 74%, var(--theme-input-text));
+  min-height: var(--form-height);
+  border: 1px solid var(--form-edge);
+  border-radius: var(--theme-radius-control);
+  background: var(--theme-input-bg);
+  color: var(--theme-input-text);
+  box-shadow: var(--form-shadow);
+  font-family: var(--theme-font-mono, "JetBrains Mono", Consolas, monospace);
+  font-size: 13px;
+  line-height: 1.5;
+  transition: border-color .16s ease, box-shadow .16s ease, background-color .16s ease;
+  outline: none;
+}
+.filter-editor .cm-editor.cm-focused {
+  border-color: var(--theme-focus);
+  box-shadow: 0 0 0 3px var(--theme-focus-ring);
+}
+.filter-editor .cm-scroller {font-family: inherit; line-height: inherit; overflow-x: hidden}
+.filter-editor .cm-content {padding: 8px 12px; white-space: pre-wrap; word-break: break-all}
+.filter-editor .cm-line {padding: 0}
+.filter-editor .cm-cursor {border-left-color: var(--theme-input-text)}
+/* 非法值与禁用态沿用 input[aria-invalid='true'] / input:disabled 的取值。 */
+.filter-editor[aria-invalid='true'] .cm-editor {
+  border-color: var(--theme-danger);
+  background: color-mix(in srgb, var(--theme-danger) 4%, var(--theme-input-bg));
+}
+.filter-editor.is-disabled .cm-editor {opacity: .55; cursor: not-allowed}
+
+/* 语法高亮 Token —— 连接符、分隔符与通用项 */
+.cm-filter-arrow {color: var(--theme-accent); font-weight: 700; padding: 0 4px}
+.cm-filter-delimiter {color: var(--theme-muted); opacity: .6}
+.cm-filter-item {color: var(--theme-input-text); font-weight: 500}
+
+/* 徽章类 token：文字取色相，底色与描边由 currentColor 稀释后跟随主题。 */
+.cm-filter-tier-marker, .cm-filter-shortest, .cm-filter-cheapest, .cm-filter-reset, .cm-filter-dorm-food, .cm-filter-worker {
+  font-weight: 700;
+  padding: 0 5px;
+  border: 1px solid color-mix(in srgb, currentColor 38%, transparent);
+  border-radius: 4px;
+  background: color-mix(in srgb, currentColor 14%, transparent);
+}
+.cm-filter-tier-marker {color: var(--filter-violet)}
+.cm-filter-shortest {color: var(--filter-amber)}
+.cm-filter-cheapest {color: var(--filter-teal)}
+.cm-filter-reset {color: var(--filter-red)}
+.cm-filter-dorm-food {color: var(--filter-pink)}
+.cm-filter-worker {color: var(--filter-orange)}
+.cm-filter-preset {color: var(--filter-amber); font-weight: 600}
+
+/* 时间与数值 */
+.cm-filter-time, .cm-filter-number {color: var(--filter-blue); font-weight: 600; font-variant-numeric: tabular-nums}
+
+/* 委托过滤器 */
+.cm-filter-comm {font-weight: 600}
+.cm-filter-comm-urgent {color: var(--filter-red); font-weight: 700}
+.cm-filter-comm-extra {color: var(--filter-violet); font-weight: 700}
+.cm-filter-comm-daily {color: var(--filter-sky)}
+.cm-filter-comm-major {color: var(--filter-amber); font-weight: 700}
+.cm-filter-comm-night {color: var(--filter-indigo)}
+
+/* 委托与研究共用的产出、物品类目 */
+.cm-filter-genre {font-weight: 600}
+.cm-filter-genre-gem {color: var(--filter-red); font-weight: 700}
+.cm-filter-genre-cube {color: var(--filter-sky); font-weight: 700}
+.cm-filter-genre-oil {color: var(--filter-amber)}
+.cm-filter-genre-drill {color: var(--theme-muted)}
+.cm-filter-genre-box {color: var(--filter-orange)}
+.cm-filter-genre-chip {color: var(--filter-violet)}
+.cm-filter-genre-part {color: var(--filter-teal)}
+.cm-filter-genre-resource {color: var(--filter-green)}
+.cm-filter-genre-event {color: var(--filter-pink)}
+.cm-filter-genre-book {color: var(--filter-indigo)}
+.cm-filter-genre-retrofit {color: var(--filter-pink)}
+.cm-filter-genre-ship {color: var(--filter-green)}
+
+/* 科研过滤器 */
+.cm-filter-series {color: var(--filter-sky); font-weight: 600}
+.cm-filter-dr {color: var(--filter-amber); font-weight: 700}
+.cm-filter-pry {color: var(--filter-violet); font-weight: 700}
+.cm-filter-genre-code {color: var(--filter-teal); font-weight: 600}
+.cm-filter-ship {color: var(--filter-green); font-weight: 600}
+
+/* 商店、舰队、关卡、稀有度与调度任务 */
+.cm-filter-shop-group {color: var(--filter-indigo); font-weight: 600}
+.cm-filter-shop-sub {color: var(--filter-teal); font-weight: 600}
+.cm-filter-tier {color: var(--filter-orange); font-weight: 600}
+.cm-filter-fleet {color: var(--filter-cyan); font-weight: 600}
+.cm-filter-stage {color: var(--filter-blue); font-weight: 600}
+.cm-filter-rarity {color: var(--filter-violet); font-weight: 600}
+.cm-filter-task {color: var(--filter-indigo); font-weight: 600}
+
+/* 战术学院过滤器 */
+.cm-filter-tactical-same {color: var(--filter-teal); font-weight: 700}
+.cm-filter-tactical-red {color: var(--filter-red); font-weight: 600}
+.cm-filter-tactical-blue {color: var(--filter-sky); font-weight: 600}
+.cm-filter-tactical-yellow {color: var(--filter-amber); font-weight: 600}

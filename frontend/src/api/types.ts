@@ -3,12 +3,14 @@
  */
 
 import type {Catalog, ProgramSaved, ProgramSimulation, ProgramValidation, RuntimeProgramState} from '../scheduler/types'
+import type {MindCatalog, MindShip} from '../mind/types'
+import type {Catalog as FleetTechCatalog, Report as FleetTechReport} from '../fleet-tech/types'
 
 export type Scalar = string | number | boolean | null
 export type Value = Scalar | Value[] | {[key: string]: Value}
 type Values = Record<string, Record<string, Record<string, Value>>>
 export type Status = 'running' | 'stopped' | 'error' | 'updating'
-export interface Instance { name: string; status: Status; serial: string; server: string; currentTask?: string | null }
+export interface Instance { name: string; status: Status; serial: string; server: string; region?: 'cn' | 'en' | 'jp' | 'tw' | null; currentTask?: string | null }
 export interface UpdateStatus {
   state: string; localHead: string | null; upstreamHead: string | null; branch: string
   ahead: number; behind: number; available: boolean; busy: boolean; canApply: boolean; canCancel: boolean; error: string
@@ -18,7 +20,7 @@ export interface UpdateStatus {
 }
 interface Commit { sha: string; author: string; date: string; message: string }
 export interface CommitHistory { entries: Commit[]; total: number; hasMore: boolean; localHead: string | null; upstreamHead: string | null }
-export interface Field { type: string; value: Value; mode?: string; display?: string; option?: Value[]; validate?: string | number[]; preserve_empty?: boolean }
+export interface Field { type: string; value: Value; valuetype?: string; mode?: string; display?: string; option?: Value[]; validate?: string | number[]; preserve_empty?: boolean }
 /** 侧栏内容检索的一条命中：要么是任务名，要么是某个配置项。 */
 export interface SearchContentHit {
   task: string
@@ -30,6 +32,7 @@ export interface SearchContentHit {
 
 export interface SearchContentResult {
   tasks: SearchContentHit[]
+  groups: SearchContentHit[]
   options: SearchContentHit[]
 }
 
@@ -38,7 +41,7 @@ export interface Schema {
   args: Record<string, Record<string, Record<string, Field>>>
   translations: Record<string, unknown>
 }
-export interface Config { instance: string; revision: string; values: Values }
+export interface Config { instance: string; revision: string; values: Values; options?: Record<string, Value[]> }
 export interface OpsiSimulatorResult {
   cl1Count: number; meowCount: number; crashedProbability: number
   cl1Time: number; meowTime: number; ap: number; coin: number
@@ -75,7 +78,11 @@ export interface StatisticsReport {
   series: StatSeries[]; tables: StatTable[]; notes: string[]
   /** 大世界掉落专用：任务筛选选项（含当前时间窗口内没有记录的任务），count 表示窗口内掉落记录数。 */
   taskOptions?: {key: string; label: string; count: number}[]
+  /** 本次出现的物品名、任务名的译名：{中文名: {语言: 名称}}；固定文案由前端翻译。 */
+  glossary?: StatGlossary
 }
+/** 统计接口附带的名称对照：{中文名: {语言: 名称}}。 */
+export type StatGlossary = Record<string, Partial<Record<string, string>>>
 
 export interface StatisticsReportWire extends Omit<StatisticsReport, 'series'> {
   /** 共用时间轴（微秒整数）。 */
@@ -132,7 +139,43 @@ export interface BackgroundGalleryEntry {
   source?: string
 }
 
+export interface DockCard {
+  full_star?: boolean | null; form?: 'base' | 'retrofit' | null
+  id: number; group_type: number | null; name: string; level: number
+  rarity: string; base_rarity: string; extra_exp: number | null; review: boolean; source: string
+}
+
+export interface LedgerDifference {
+  id: string; kind: 'ship' | 'technology' | 'nation'; operation: 'add' | 'update' | 'remove' | 'resolve'
+  ship_id: number | null; group_type: number | null; name: string
+  before: Record<string, unknown> | null; after: Record<string, unknown> | null; fields: string[]
+  candidates: {id: number; name: string; level: number}[]
+}
+
+export interface DockReport {
+  pending_read?: {source: string; updated_at: string; observed_count: number; review_count: number; complete: boolean}
+  pending_revision: string | null; pending_changes: LedgerDifference[]
+  legacy_imported?: boolean
+  scan_range?: {min_level: number; max_level: number}
+  instance: string; revision: string; updated_at: string | null; min_level: number; max_level: number
+  ships: DockCard[]; complete: boolean; review_count: number; source: string
+}
+
 export interface Results {
+  'dock.report': DockReport
+  'dock.configure': DockReport
+  'dock.importLegacy': DockReport
+  'dock.patch': DockReport
+  'dock.review': DockReport
+  'dock.stageImport': DockReport
+  'mind.catalog': MindCatalog
+  'fleetTech.catalog': FleetTechCatalog
+  'fleetTech.report': FleetTechReport
+  'fleetTech.patch': FleetTechReport
+  'fleetTech.mergeShips': FleetTechReport
+  'mind.plan': import('../mind/cultivation').CultivationReport
+  'mind.import': {ships: MindShip[]}
+  'mind.recognize': {ships: MindShip[]}
   'statistics.resourceFlows': ResourceFlowReport
   'opsi.simulator.status': OpsiSimulatorStatus
   'opsi.simulator.start': OpsiSimulatorStatus
@@ -173,6 +216,7 @@ export interface Results {
   'instances.delete': {deleted: string}
   'config.get': Config
   'config.patch': Config
+  'fleetTraining.reset': Config
   'overview.get': Overview
   'scheduler.start': Overview
   'scheduler.stop': Overview
@@ -201,6 +245,8 @@ export interface ResourceFlowReport {
   flows: {resource: string; task: string; operation: string; evidence: ResourceFlowEntry['evidence']; income: number; expense: number; count: number}[]
   entries: ResourceFlowEntry[]
   oilControl: {enable: boolean; target: number}
+  /** 物品名的译名：{中文名: {语言: 名称}}。 */
+  glossary?: StatGlossary
 }
 
 

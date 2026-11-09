@@ -16,7 +16,7 @@
 游戏状态错误（触发模拟器重启）：
     - GameStuckError: 游戏卡死（1 分钟内无有效操作，战斗期间 5 分钟）
     - GameBugError: 游戏客户端 bug（重启通常可恢复）
-    - GameTooManyClickError: 点击次数过多（15 次操作中同一按钮被点 ≥12 次）
+    - GameTooManyClickError: 连续 50 次同按钮操作或双按钮交替操作
 
 连接/页面错误（触发重启或人工干预）：
     - GameNotRunningError: 游戏未运行
@@ -29,8 +29,11 @@
 
 不可恢复错误（需要人工干预）：
     - RequestHumanTakeover: 请求人工接管（配置错误等严重问题）
+    - MindCalculatorScanError: 船坞扫描识别或定位不确定，结束工具任务但不重启模拟器
     - AutoSearchSetError: 自动搜索设置失败
     - HardNotSatisfied: 困难模式前置条件不满足
+    - OSExploreError: 大世界探索错误
+    - OSZoneLockedError: 大世界海域未解锁错误（未完成开荒，请使用每月开荒）
 
 并发保护（非错误，调用方应放弃本轮并等待下一轮）：
     - EmulatorOpBusy: 已有模拟器启停操作正在进行
@@ -138,8 +141,8 @@ class GameBugError(Exception):
 class GameTooManyClickError(Exception):
     """点击次数过多，疑似陷入循环。
 
-    最近 15 次操作中，同一按钮被点击 ≥12 次，
-    或两个按钮各被点击 ≥6 次时触发。
+    连续 50 次操作为同一按钮，或两个按钮实际交替重复时触发。
+    地图滑动使用相机的位移与收敛检测。
     """
     pass
 
@@ -177,6 +180,14 @@ class RequestHumanTakeover(Exception):
     pass
 
 
+class MindCalculatorScanError(RequestHumanTakeover):
+    """船坞识别或精确定位无法确认；结束工具任务并保留旧清单，不重启模拟器。"""
+
+
+class FleetManagementError(RequestHumanTakeover):
+    """编队页面、卡面或操作结果未确认；不靠OCR判断，也不通过重启重复换船。"""
+
+
 class AutoSearchSetError(Exception):
     """自动搜索设置失败。
 
@@ -203,4 +214,14 @@ class EmulatorOpBusy(Exception):
 
     调用方收到此异常时应放弃本轮操作，等待下一轮调度，而不是立即重试。
     """
+    pass
+
+
+class OSExploreError(Exception):
+    """大世界探索错误。"""
+    pass
+
+
+class OSZoneLockedError(OSExploreError):
+    """大世界海域未解锁错误（未完成开荒，请使用每月开荒）。"""
     pass

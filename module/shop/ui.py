@@ -140,7 +140,8 @@ class ShopUI(UI):
                 refreshed = True
                 continue
 
-        self.handle_info_bar()
+        # 刷新后会出现信息栏，等待其消失再结束
+        self.ensure_no_info_bar(timeout=1)
         return refreshed
 
     def ui_goto_shop(self):

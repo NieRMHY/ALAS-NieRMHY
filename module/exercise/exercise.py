@@ -21,6 +21,7 @@ from module.exercise.assets import *
 from module.exercise.combat import ExerciseCombat
 from module.logger import logger
 from module.ocr.ocr import Digit, Ocr, OcrYuv
+from module.ui.assets import EXERCISE_CHECK
 from module.ui.page import page_exercise
 from module.config.utils import get_server_next_update
 
@@ -305,7 +306,7 @@ class Exercise(ExerciseCombat):
             admiral_start, admiral_end = admiral_interval
 
             if admiral_start > int(remain_time.total_seconds() // 3600) >= admiral_end:  # 达到将军试炼设定时间
-                logger.info('[演习-调度] 达到将军试炼设定时间，消耗所有次数')
+                logger.info('[演习-调度] 达到冲击元帅的设定时间，消耗所有次数')
                 self.preserve = 0
                 forced_run = True
             elif int(remain_time.total_seconds() // 3600) < 6:  # 未设置为 "sun18" 时，仍在周日 18 点前消耗
@@ -342,7 +343,10 @@ class Exercise(ExerciseCombat):
                 logger.info('[演习-对手] 对手刷新次数耗尽')
                 break
 
-        # self.equipment_take_off_when_finished()
+        if self.equipment_config_enabled and self.equipment_handle_before_flag:
+            self._choose_opponent(0)
+            self.equipment_handle_after()
+            self.ui_back(EXERCISE_CHECK)
 
         # 调度器
         with self.config.multi_set():

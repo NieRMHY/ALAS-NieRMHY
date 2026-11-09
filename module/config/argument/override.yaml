@@ -47,12 +47,8 @@ GemsFarming:
   Emotion:
     Mode: calculate_ignore
     Fleet1Control: prevent_red_face
-    Fleet1Recover: not_in_dormitory
-    Fleet1Oath: false
     # 支持二队出击，心情值与记录时间必须保留运行时写入，不能强制覆盖。
     Fleet2Control: prevent_red_face
-    Fleet2Recover: not_in_dormitory
-    Fleet2Oath: false
 
 ThreeOilLowCost:
   Scheduler:
@@ -83,14 +79,11 @@ ThreeOilLowCost:
   Emotion:
     Mode: calculate_ignore
     Fleet1Control: prevent_red_face
-    Fleet1Recover: not_in_dormitory
-    Fleet1Oath: false
     Fleet2Control: prevent_red_face
-    Fleet2Recover: not_in_dormitory
-    Fleet2Oath: false
 
 Ambush11:
   Campaign:
+    ContinueAfterRestart: false
     Event:
       value: campaign_main
     Mode: normal
@@ -216,6 +209,7 @@ EventSp:
     AutoSearchMode: sub_standby
 Raid:
   Campaign:
+    ContinueAfterRestart: false
     Name: dynamic
     Mode: normal
     UseClearMode: true
@@ -256,6 +250,7 @@ Raid:
 # 心情控制为相关项，暴露在设置界面（默认值见 default.yaml）
 RaidAffection:
   Campaign:
+    ContinueAfterRestart: false
     Name: dynamic
     Mode: normal
     UseClearMode: true
@@ -311,6 +306,7 @@ RaidDaily:
     FailureInterval: 30
     ServerUpdate: 00:00
   Campaign:
+    ContinueAfterRestart: false
     Name: dynamic
     Mode: normal
     UseClearMode: true
@@ -347,6 +343,7 @@ Coalition:
     FailureInterval: 30
     ServerUpdate: 00:00
   Campaign:
+    ContinueAfterRestart: false
     Name: dynamic
     Event:
       type: state
@@ -382,6 +379,7 @@ CoalitionScuttle:
     FailureInterval: 30
     ServerUpdate: 00:00
   Campaign:
+    ContinueAfterRestart: false
     Name: dynamic
     Event:
       type: state
@@ -406,6 +404,7 @@ CoalitionSp:
     FailureInterval: 30
     ServerUpdate: 00:00
   Campaign:
+    ContinueAfterRestart: false
     Name: sp
     Mode: normal
     UseClearMode: true
@@ -434,6 +433,7 @@ CoalitionSp:
     FailureInterval: 30
     ServerUpdate: 00:00
   Campaign:
+    ContinueAfterRestart: false
     Name: sp
     Mode: normal
     UseClearMode: true
@@ -564,6 +564,7 @@ WarArchives:
     FailureInterval: 30
     ServerUpdate: 00:00
   Campaign:
+    ContinueAfterRestart: false
     Mode: normal
     AmbushEvade: true
 OperationHandover:
@@ -572,6 +573,7 @@ OperationHandover:
     FailureInterval: 30
     ServerUpdate: 00:00
   Campaign:
+    ContinueAfterRestart: false
     UseClearMode:
       display: hide
     UseFleetLock:
@@ -589,11 +591,7 @@ OperationHandover:
 
 # ==================== Opsi ====================
 
-OpsiAshAssist:
-  Scheduler:
-    SuccessInterval: 30
-    FailureInterval: 30
-    ServerUpdate: 00:00
+# Modify by MHY, META 支援合入信标任务，移除旧独立调度覆盖。
 OpsiAshBeacon:
   Scheduler:
     SuccessInterval: 30

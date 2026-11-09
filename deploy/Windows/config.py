@@ -3,15 +3,37 @@ import subprocess
 import sys
 from typing import Optional, Union
 
+# Modify by MHY, 保留旧测试与调用方的导入兼容，部署重定向不发起定位请求
 from deploy.geo import get_country_code
 from deploy.config_transaction import DeployConfigTransaction
 from deploy.Windows.logger import logger
 from deploy.Windows.utils import DEPLOY_CONFIG, DEPLOY_TEMPLATE, cached_property
 
 
-GIT_OVER_CDN_REPOSITORY = 'git://git.pull/AzurPilot'
-GIT_OVER_CDN_FALLBACK_REPOSITORY = 'https://gitcode.com/ddl2/AzurLaneAutoScript'
-GITHUB_REPOSITORY = 'https://github.com/wess09/AzurPilot'
+# Modify by MHY, 旧更新源只用于本地迁移，不访问镜像或定位接口
+GITHUB_REPOSITORY = 'https://github.com/NieRMHY/ALAS-NieRMHY.git'
+LEGACY_REPOSITORIES = {
+    'global', 'cn', 'cnb', 'gitcode',
+    'https://github.com/wess09/AzurPilot',
+    'https://github.com/LmeSzinc/AzurLaneAutoScript',
+    'git://git.pull/AzurPilot',
+    'git://git.pull/AzurLaneAutoScript',
+    'https://cnb.cool/AzurPilot/AzurPilot',
+    'https://gitcode.com/ddl2/AzurPilot',
+    'https://gitcode.com/ddl2/AzurLaneAutoScript',
+    'https://gitee.com/LmeSzinc/AzurLaneAutoScript',
+    'https://gitee.com/lmeszinc/azur-lane-auto-script-mirror',
+    'https://e.coding.net/llop18870/alas/AzurLaneAutoScript',
+    'https://e.coding.net/saarcenter/alas/AzurLaneAutoScript',
+    'https://git.saarcenter.com/LmeSzinc/AzurLaneAutoScript',
+    'git://git.lyoko.io/AzurLaneAutoScript',
+    'https://gitcode.com/ZhangMusan/AzurLaneAutoScript',
+    'https://gitcode.com/nerom/AzurLaneAutoScript',
+    'https://gitee.com/wqeaxc/AzurLaneAutoScript1',
+    'https://git.nanoda.work/git/AzurLaneAutoScript',
+    'https://git.nanoda.work/git/AzurPilot',
+    'https://git.nanoda.work',
+}
 
 
 class ExecutionError(Exception):
@@ -22,7 +44,8 @@ class ConfigModel:
     """Windows 部署配置模型，定义所有配置项及其默认值。"""
     # Git 配置
     Repository: str = GITHUB_REPOSITORY
-    Branch: str = "master"
+    # Modify by MHY, 正式发布与开发渠道使用 essex / dev_essex
+    Branch: str = "essex"
     GitExecutable: str = "./.venv/Scripts/git/cmd/git.exe"
     GitProxy: Optional[str] = None
     SSLVerify: bool = False
@@ -95,7 +118,6 @@ class DeployConfig(DeployConfigTransaction, ConfigModel):
         self.template_file = DEPLOY_TEMPLATE
         self.config = {}
         self.config_template = {}
-        self._github_location_checked = False
         self.read()
 
         self.show_config()
@@ -118,27 +140,14 @@ class DeployConfig(DeployConfigTransaction, ConfigModel):
         每次 `read()` 之后必须调用。
         """
         self.config.pop('AutoUpdate', None)
-        self._redirect_github_repository()
-        if self.Repository in ['global']:
-            super().__setattr__('Repository', 'https://github.com/wess09/AzurPilot')
-        if self.Repository in ['cn', GIT_OVER_CDN_REPOSITORY]:
-            super().__setattr__('Repository', GIT_OVER_CDN_FALLBACK_REPOSITORY)
-
-    def _redirect_github_repository(self):
-        """为官方 GitHub 源一次性选择适合当前网络的更新镜像。"""
-        if self._github_location_checked or self.Repository != GITHUB_REPOSITORY:
-            return
-
-        self._github_location_checked = True
-        country_code = get_country_code()
-        if country_code == 'cn':
-            logger.info('检测到中国大陆网络，切换至国内 Git 更新源')
-            object.__setattr__(self, 'Repository', GIT_OVER_CDN_REPOSITORY)
-            self.config['Repository'] = GIT_OVER_CDN_REPOSITORY
-        elif country_code is None:
-            logger.warning('无法检测网络所在国家，保留 GitHub 更新源')
-        else:
-            logger.info('当前网络不在中国大陆，保留 GitHub 更新源')
+        # Modify by MHY, 迁移旧渠道并同步字典与属性，避免运行期配置再次触发自动保存
+        repository = self.Repository.strip().rstrip('/').removesuffix('.git')
+        if repository in LEGACY_REPOSITORIES or repository == GITHUB_REPOSITORY.removesuffix('.git'):
+            object.__setattr__(self, 'Repository', GITHUB_REPOSITORY)
+            self.config['Repository'] = GITHUB_REPOSITORY
+            branch = {'master': 'essex', 'dev': 'dev_essex'}.get(self.Branch, self.Branch)
+            object.__setattr__(self, 'Branch', branch)
+            self.config['Branch'] = branch
 
     def filepath(self, path):
         """获取绝对文件路径。

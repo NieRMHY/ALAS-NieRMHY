@@ -235,9 +235,10 @@ stateDiagram-v2
 
 ## 13. 缓存与持久化
 
-- **收益数据**：`module/statistics/cl1_database.py` 的模块级单例 `db`（SQLite，`./stats/cl1_data.db`）。收益（`commission_income_entries`）与钻石委托结算（`gem_commission_entries`）在同一事务提交，跨月运行记录回写上月，失败整体回滚。
+- **收益数据**：`module/statistics/cl1_database.py` 的模块级单例 `db`（SQLite，`./config/cl1_data.db`）。收益（`commission_income_entries`）与钻石委托结算（`gem_commission_entries`）在同一事务提交，跨月运行记录回写上月，失败整体回滚。
 - **钻石委托运行列表**（`running_gem_commissions`）：启动时写入、`_sync_running_gem_commissions` 补录跨会话遗漏、收益到达时按「最早到期的同时长委托」匹配结算、`settle_expired_gem_commissions` 把到期未获钻石的记录按失败归档。
-- **收益截图**：`./log/commission_rewards/<instance>/<YYYY-MM>/`，毫秒时间戳命名；`DropRecord_CommissionIncomeScreenshot=do_not` 时不落盘；每次保存后按张数（50）或天数清理。
+- **收益截图**：`./log/commission_rewards/<instance>/<YYYY-MM>/`，时间戳含微秒；`DropRecord_CommissionIncomeScreenshot=do_not` 时不落盘，收益仍入库。`DropRecord_RetentionDays>0` 时交给掉落模块按天数清理，否则保存后按 `RunParams.UiWait.CommissionRewardScreenshotKeep` 限制张数（默认 50，范围 5–500），跳过 `bak/`。清理方法需要实例配置，必须保留实例方法绑定。
+- **保存顺序**：`_persist_commission_income()` 先保存截图并执行张数清理，再调用数据库事务。日志出现「已保存收益截图」只能证明图片已落盘；应继续确认「委托收入记录」及统计读回。截图写入的文件异常允许无截图入账，数据库异常则返回失败、保留运行委托且不发送成功通知。
 - **无跨运行内存状态**：扫描结果、选择结果都是 run() 内的临时变量；重复出现的同名委托靠数据库同名检查去重，而不是内存缓存。
 
 ## 14. 生命周期
@@ -289,7 +290,7 @@ DailyEvent > Gem-8 > Gem-4 > Gem-2      # 活动委托最优先，钻石按时�
 - **规划决策**：看日志 `委托最优策略` 一段——层级价值倍率、等待半衰期、每层候选、`折现价值/等待损失`、束搜索状态数与最优性证书，最后按时间轴输出全部「启动/完成/截止放弃」事件。对参数不确定时运行 `uv run python dev_tools/commission_value_table.py` 生成价值模型评估表（含低层推迟高层的临界等待秒数）。
 - **识别问题**：`[委托-检测] 发现N个无效委托` 通常是 info_bar 干扰；`未知类型的名称` 说明字典缺条目或 OCR 纠错缺失，结合 `委托` 日志里的 suffix_hash 定位。
 - **统计问题**：委托收益相关日志带 `[委托-收入]` 前缀；钻石委托链路（写入→同步→结算）可用 `module/debug/commission_debug.py` 的调试处理器在不进游戏的情况下注入伪造收益验证。
-- **单测**：`uv run python -m unittest tests.test_commission_planner`（规划器与过滤器，含与暴力枚举的对拍）、`tests.test_commission_settlement`（统计库事务边界）。
+- **单测**：`uv run python -m unittest tests.test_commission_planner`（规划器与过滤器，含与暴力枚举的对拍）、`tests.test_commission_settlement`（真实截图保存 → 缺省清理参数 → 临时 SQLite 入账 → 收益聚合读回，以及跨月结算和失败回滚）、`tests.test_drop_cleanup`（截图保留策略）。验证收益入库时不要把截图清理方法替换为 Mock，或始终显式传入 `max_keep`，否则会漏掉生产调用的配置读取分支。
 
 ## 20. 相关模块
 

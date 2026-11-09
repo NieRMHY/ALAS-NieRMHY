@@ -52,6 +52,8 @@ module/daemon/
 
 各文件 `__main__` 块支持脱离调度器直接运行：`b = AzurLaneDaemon('alas', task='Daemon'); b.run()`。
 
+独立导入 `module.daemon.benchmark` 时，先由框架入口加载 `Device`、注册 `module.device.pkg_resources` 轻量兼容层，再导入 `uiautomator2` 及其 `adbutils` 依赖。该顺序支持没有系统 `pkg_resources` 的干净依赖环境；回归测试见 `tests/test_ci_import.py`。
+
 ## 6. 工作流程
 
 ### 主线守护（daemon.py）的优先级链

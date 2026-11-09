@@ -42,6 +42,7 @@ class RewardTracker:
         from module.commission.assets import EXP_INFO_S_REWARD
         from module.os_handler.assets import AUTO_SEARCH_REWARD
         layout = None
+        opsi = False
         try:
             state = resource_flow.session_for(self.config)
             opsi = state['task'].startswith('Opsi')
@@ -75,6 +76,13 @@ class RewardTracker:
                 if item.is_known_item() and isinstance(item.amount, int) and item.amount > 0:
                     key = resource_flow.canonical(item.name)
                     changes[key] = changes.get(key, 0) + int(item.amount)
+            inventory_unknown = not items or any(not item.is_known_item() for item in items)
+            if opsi and (any(key.startswith('ActionPoint') for key in changes) or inventory_unknown):
+                from module.os_handler.resource_state import invalidate_action_point_inventory
+                invalidate_action_point_inventory(self.config)
+            if opsi and (changes.keys() & {'YellowCoin', 'PurpleCoin'} or inventory_unknown):
+                from module.os_handler.resource_state import invalidate_coin_cache
+                invalidate_coin_cache(self.config)
             # 清油观察或恢复时遇到遗留奖励，不能将上一任务的收入认领到当前操作。
             task = 'Unattributed' if state['task'] in ('OilControl', 'Restart', 'Start') else None
             if resource_flow.record(self.config, changes, '奖励领取', evidence='recognition', task=task):
@@ -85,6 +93,10 @@ class RewardTracker:
             # 旁路统计的故障不能改变现有领取、卡死检测和恢复流程。
             logger.warning(f'[资源管理] 奖励解析失败：{type(error).__name__}')
             if layout is not None:
+                if opsi:
+                    from module.os_handler.resource_state import invalidate_action_point_inventory, invalidate_coin_cache
+                    invalidate_action_point_inventory(self.config)
+                    invalidate_coin_cache(self.config)
                 self.layouts.add(layout)
 
 
@@ -95,6 +107,12 @@ def receipt_totals(config):
 
 def record_purchase(config, item, quantity=1, receipts=None):
     """仅在已确认购买结果后调用，价格与数量缺失时不推测支出。"""
+    if str(getattr(item, 'name', '')).startswith('ActionPoint'):
+        from module.os_handler.resource_state import invalidate_action_point_inventory
+        invalidate_action_point_inventory(config)
+    if getattr(item, 'cost', None) in ('YellowCoins', 'PurpleCoins'):
+        from module.os_handler.resource_state import invalidate_coin_cache
+        invalidate_coin_cache(config)
     cost = getattr(item, 'cost', None)
     price = getattr(item, 'price', None)
     if not isinstance(cost, str) or type(price) is not int or price <= 0 or type(quantity) is not int or quantity <= 0:

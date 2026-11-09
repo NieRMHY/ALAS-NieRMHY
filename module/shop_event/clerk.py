@@ -10,6 +10,7 @@ Pages: in: EVENT_SHOP
 
 import cv2
 
+import module.config.server as server
 from module.base.button import ButtonGrid
 from module.base.decorator import cached_property
 from module.base.timer import Timer
@@ -95,8 +96,16 @@ class EventShopClerk(EventShopUI):
                 break
             if attempt >= 2:
                 message = f'Invalid event shop counter after {attempt + 1} scans: {[str(item) for item in invalid]}'
-                logger.error(message)
-                raise ItemNotFoundError(message)
+                if len(invalid) == len(shop_items):
+                    logger.error(message)
+                    raise ItemNotFoundError(message)
+                # 只有部分格子始终读不出库存（如国际服底部置灰的售罄卡片偶发误读价格）时，
+                # 重载商店后仍是同一画面，反复重载只会卡死；这些格子库存未知本就不会购买，
+                # 跳过它们并保留其余已正确识别的商品
+                logger.warning(f'{message}, skipped')
+                shop_items = [item for item in shop_items if item not in invalid]
+                self.event_shop_items.items = shop_items
+                break
             logger.warning(f'Invalid event shop counter, retrying: {[str(item) for item in invalid]}')
             self.device.screenshot()
 
@@ -205,6 +214,12 @@ class EventShopClerk(EventShopUI):
                     continue
             elif self.appear(SHOP_BUY_CONFIRM, offset=(20, 40)):
                 self.device.click(SHOP_BUY_CONFIRM)
+                executed = True
+                timer.reset()
+                continue
+            # 国际服活动商店的确认按钮与普通商店不同。
+            elif server.server == 'en' and self.appear_then_click(
+                    SHOP_EVENT_BUY_CONFIRM, offset=(20, 40), interval=2):
                 executed = True
                 timer.reset()
                 continue

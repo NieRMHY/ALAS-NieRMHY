@@ -1,9 +1,12 @@
 import unittest
+from pathlib import Path
 from unittest.mock import patch
 
 from deploy import config as deploy_config
 from deploy import geo
+from deploy import git as deploy_git
 from deploy.Windows import config as windows_config
+from deploy.utils import poor_yaml_read
 
 
 class TestIp9Location(unittest.TestCase):
@@ -11,9 +14,7 @@ class TestIp9Location(unittest.TestCase):
     def test_returns_lowercase_country_code(self, get):
         response = get.return_value
         response.json.return_value = {'data': {'country_code': 'CN'}}
-
         self.assertEqual(geo.get_country_code(), 'cn')
-
         get.assert_called_once_with(
             geo.IP9_LOCATION_URL,
             timeout=5,
@@ -23,71 +24,102 @@ class TestIp9Location(unittest.TestCase):
 
     @patch('deploy.geo.requests.get')
     def test_invalid_response_returns_none(self, get):
-        response = get.return_value
-        response.json.return_value = {'data': {}}
-
+        get.return_value.json.return_value = {'data': {}}
         self.assertIsNone(geo.get_country_code())
 
 
+# Modify by MHY, 部署只迁移旧更新源，不请求定位或启用 CDN / 镜像分流
 class TestDeployLocation(unittest.TestCase):
-    def make_config(self, config_module, repository=None):
+    def make_config(self, config_module, repository=None, branch='essex'):
         instance = object.__new__(config_module.DeployConfig)
-        instance.config = {
-            'Repository': repository or config_module.GITHUB_REPOSITORY,
-        }
+        instance.config = {'Repository': repository or config_module.GITHUB_REPOSITORY,
+                           'Branch': branch}
         instance.Repository = instance.config['Repository']
-        instance.Branch = 'master'
-        instance._github_location_checked = False
+        instance.Branch = branch
         return instance
 
-    def test_china_uses_cdn_and_gitcode_fallback(self):
+    @patch('deploy.geo.requests.get', side_effect=AssertionError('部署不得联网定位'))
+    def test_local_channels_stay_on_own_github_without_location_lookup(self, get):
         for config_module in (deploy_config, windows_config):
-            with self.subTest(config_module=config_module.__name__), patch.object(
-                config_module, 'get_country_code', return_value='cn'
-            ) as get_country_code:
-                config = self.make_config(config_module)
+            for branch in ('essex', 'dev_essex'):
+                with self.subTest(module=config_module.__name__, branch=branch):
+                    config = self.make_config(config_module, branch=branch)
+                    config.config_redirect()
+                    config.config_redirect()
+                    self.assertEqual(config.Repository, 'https://github.com/NieRMHY/ALAS-NieRMHY.git')
+                    self.assertEqual(config.config['Repository'], config.Repository)
+                    self.assertEqual(config.Branch, branch)
+                    self.assertFalse(getattr(config, 'GitOverCdn', False))
+        get.assert_not_called()
 
-                config.config_redirect()
-
-                self.assertEqual(config.config['Repository'], config_module.GIT_OVER_CDN_REPOSITORY)
-                self.assertEqual(config.Repository, config_module.GIT_OVER_CDN_FALLBACK_REPOSITORY)
-                get_country_code.assert_called_once_with()
-
-    def test_non_china_keeps_github_and_only_checks_once(self):
+    def test_old_repositories_and_aliases_migrate_to_local_channels(self):
+        repositories = (
+            'global', 'cn', 'cnb', 'gitcode',
+            'https://github.com/wess09/AzurPilot.git/',
+            'git://git.pull/AzurPilot',
+            'https://cnb.cool/AzurPilot/AzurPilot',
+            'https://gitcode.com/ddl2/AzurPilot',
+            'https://gitcode.com/ddl2/AzurLaneAutoScript.git',
+            'https://gitee.com/LmeSzinc/AzurLaneAutoScript',
+            'https://github.com/NieRMHY/ALAS-NieRMHY',
+        )
         for config_module in (deploy_config, windows_config):
-            with self.subTest(config_module=config_module.__name__), patch.object(
-                config_module, 'get_country_code', return_value='us'
-            ) as get_country_code:
-                config = self.make_config(config_module)
+            for repository in repositories:
+                for old_branch, branch in (('master', 'essex'), ('dev', 'dev_essex')):
+                    with self.subTest(module=config_module.__name__, repository=repository, branch=old_branch):
+                        config = self.make_config(config_module, repository, old_branch)
+                        config.config_redirect()
+                        self.assertEqual(config.Repository, deploy_config.GITHUB_REPOSITORY)
+                        self.assertEqual(config.config['Repository'], config.Repository)
+                        self.assertEqual(config.Branch, branch)
+                        self.assertEqual(config.config['Branch'], branch)
 
-                config.config_redirect()
-                config.config_redirect()
-
-                self.assertEqual(config.config['Repository'], config_module.GITHUB_REPOSITORY)
-                self.assertEqual(config.Repository, config_module.GITHUB_REPOSITORY)
-                get_country_code.assert_called_once_with()
-
-    def test_failed_lookup_keeps_github(self):
+    def test_custom_repository_and_feature_branch_are_preserved(self):
         for config_module in (deploy_config, windows_config):
-            with self.subTest(config_module=config_module.__name__), patch.object(
-                config_module, 'get_country_code', return_value=None
-            ):
-                config = self.make_config(config_module)
+            for repository, branch in (('https://github.com/example/custom', 'master'),
+                                       (config_module.GITHUB_REPOSITORY, 'feature/local')):
+                with self.subTest(module=config_module.__name__, repository=repository):
+                    config = self.make_config(config_module, repository, branch)
+                    config.config_redirect()
+                    self.assertEqual(config.Repository, repository)
+                    self.assertEqual(config.Branch, branch)
 
-                config.config_redirect()
-
-                self.assertEqual(config.config['Repository'], config_module.GITHUB_REPOSITORY)
-
-    def test_custom_repository_does_not_query_location(self):
+    def test_all_templates_default_to_own_repository_and_stable_channel(self):
+        files = [Path('deploy/template'), Path('deploy/Windows/template.yaml')]
+        files.extend(Path('config').glob('deploy.template*.yaml'))
+        self.assertEqual(len(files), 10)
+        for file in files:
+            with self.subTest(file=file):
+                values = poor_yaml_read(str(file))
+                self.assertEqual(values['Repository'], deploy_config.GITHUB_REPOSITORY)
+                self.assertEqual(values['Branch'], 'essex')
+                self.assertFalse(values['CDN'])
         for config_module in (deploy_config, windows_config):
-            with self.subTest(config_module=config_module.__name__), patch.object(
-                config_module, 'get_country_code'
-            ) as get_country_code:
-                config = self.make_config(config_module, 'https://github.com/example/custom')
+            self.assertEqual(config_module.ConfigModel.Repository, deploy_config.GITHUB_REPOSITORY)
+            self.assertEqual(config_module.ConfigModel.Branch, 'essex')
 
-                config.config_redirect()
+    def test_windows_legacy_git_deployer_remains_deleted(self):
+        self.assertFalse(Path('deploy/Windows/git.py').exists())
 
-                get_country_code.assert_not_called()
+    @patch('deploy.geo.requests.get', side_effect=AssertionError('Git 更新不得请求云端接口'))
+    def test_git_update_uses_selected_local_channel(self, get):
+        for branch in ('essex', 'dev_essex'):
+            with self.subTest(branch=branch):
+                manager = object.__new__(deploy_git.GitManager)
+                manager.git = 'git'
+                manager.Repository = deploy_config.GITHUB_REPOSITORY
+                manager.Branch = branch
+                manager.GitProxy = None
+                manager.SSLVerify = True
+                with patch.object(manager, 'execute', return_value=True) as execute, \
+                        patch.object(deploy_git.os.path, 'exists', return_value=False):
+                    manager.git_install()
+                commands = [call.args[0] for call in execute.call_args_list]
+                self.assertIn(f'"git" remote set-url origin {manager.Repository}', commands)
+                self.assertIn(f'"git" fetch origin {branch}', commands)
+                self.assertIn(f'"git" reset --hard origin/{branch}', commands)
+                self.assertIn(f'"git" pull --ff-only origin {branch}', commands)
+        get.assert_not_called()
 
 
 if __name__ == '__main__':

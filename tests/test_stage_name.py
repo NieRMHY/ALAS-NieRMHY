@@ -41,7 +41,9 @@ class StageNameRuleTests(unittest.TestCase):
             'event_20211125_cn', 'event_20231026_cn', 'event_20241024_cn',
             'event_20250424_cn', 'event_20250724_cn', 'event_20250814_cn',
             'event_20251023_cn', 'event_20260326_cn', 'event_20260625_cn',
+            'event_20261022_cn',
             'war_archives_20230525_cn', 'war_archives_20231026_cn', 'war_archives_20240725_cn',
+            'war_archives_20241024_cn', 'war_archives_20251023_cn',
         ):
             for prefix in ('a', 'sp'):
                 for index in range(1, 7):
@@ -61,6 +63,7 @@ class StageNameRuleTests(unittest.TestCase):
             'event_20200917_cn', 'event_20230525_cn', 'war_archives_20200917_cn',
             'event_20231123_cn', 'event_20240725_cn', 'event_20240829_cn',
             'event_20241121_cn', 'event_20211125_cn', 'war_archives_20240725_cn',
+            'war_archives_20241024_cn', 'war_archives_20251023_cn',
         ):
             for abcd, t_ht in pairs:
                 with self.subTest(folder=folder, abcd=abcd):
@@ -121,6 +124,9 @@ class StageNameIntegrationTests(unittest.TestCase):
             (' 7-2\t\n', 'campaign_main', 'campaign_7_2'),
             ('CAMPAIGN_12_4', 'campaign_main', 'campaign_12_4'),
             ('A-1', 'event_20260326_cn', 't1'),
+            ('T6', 'event_20261022_cn', 't6'),
+            ('B3', 'event_20261022_cn', 't6'),
+            ('SP', 'event_20261022_cn', 'sp'),
             ('D3', 'event_20260908_cn', 'd3'),
             ('ΜSP', 'event_20240425_cn', 'sp'),
             ('LSP', 'event_20240425_cn', 'isp1'),

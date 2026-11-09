@@ -1,0 +1,15 @@
+.cultivation-heading { display: flex; align-items: center; gap: 12px; min-height: 24px; margin-bottom: 16px; }
+.cultivation-calculator .ft-summary h2 { margin: 0; font-size: var(--fleet-font-heading, 15px); }
+.cultivation-heading [role=status] { color: var(--theme-muted); font-size: var(--fleet-font-body, 13px); }
+.cultivation-totals { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-bottom: 16px; }
+.cultivation-totals > div { display: flex; flex-direction: column; gap: 8px; padding: 16px; border: 1px solid var(--ft-line); border-radius: var(--theme-radius-control); background: var(--theme-plate-bg); color: var(--theme-muted); }
+.cultivation-totals strong { color: var(--theme-text); font-size: var(--fleet-font-metric, 24px); font-variant-numeric: tabular-nums; }
+.cultivation-calculator .cultivation-review { margin: 8px 0 0; font-size: var(--fleet-font-body, 13px); }
+.cultivation-calculator input[type=checkbox] { min-height: auto; accent-color: var(--theme-accent); }
+.cultivation-included { display: inline-flex; align-items: center; gap: 6px; margin-left: auto; font-size: var(--fleet-font-body, 13px); }
+.cultivation-table table { min-width: 900px; }
+.cultivation-table .ft-name { white-space: normal; }
+.cultivation-warning { display: block; margin-top: 4px; font-size: var(--fleet-font-note, 12px); line-height: 1.6; }
+.cultivation-warning { color: var(--theme-warning); }
+.cultivation-excluded td { opacity: .6; }
+@media (max-width: 800px) { .cultivation-included { margin-left: 0; } }

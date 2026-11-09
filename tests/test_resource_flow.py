@@ -201,7 +201,8 @@ class ResourceFlowTests(unittest.TestCase):
                 shop = object.__new__(shop_type)
                 shop.config, shop.device = self.config, Mock()
                 shop.shop_interval_clear = shop.interval_reset = Mock()
-                shop.appear = Mock(side_effect=lambda button, **kwargs: button is arrow and 'interval' not in kwargs)
+                # Modify by MHY, 切服截图测试可能重载资源，按按钮语义标识匹配而非对象地址。
+                shop.appear = Mock(side_effect=lambda button, **kwargs: button.name == arrow.name and 'interval' not in kwargs)
                 shop.appear_then_click = shop.handle_retirement = shop.shop_obstruct_handle = Mock(return_value=False)
                 shop.info_bar_count = Mock(return_value=0)
                 shop.shop_purchase_result_handle = Mock(side_effect=[True, False])
@@ -228,7 +229,8 @@ class ResourceFlowTests(unittest.TestCase):
                 shop = object.__new__(shop_type)
                 shop.config, shop.device = self.config, Mock()
                 shop.shop_interval_clear = shop.interval_reset = Mock()
-                shop.appear = Mock(side_effect=lambda button, **kwargs: button is arrow and 'interval' not in kwargs)
+                # Modify by MHY, 切服截图测试可能重载资源，按按钮语义标识匹配而非对象地址。
+                shop.appear = Mock(side_effect=lambda button, **kwargs: button.name == arrow.name and 'interval' not in kwargs)
                 shop.appear_then_click = shop.handle_retirement = shop.shop_buy_handle = Mock(return_value=False)
                 shop.shop_obstruct_handle = shop.shop_purchase_result_handle = Mock(return_value=False)
                 shop.info_bar_count = Mock(side_effect=[1, 0])
@@ -245,6 +247,8 @@ class ResourceFlowTests(unittest.TestCase):
         shop.get_currency_coins = Mock(return_value=300)
         shop.get_coins_no_limit = Mock(return_value=1000)
         shop.interval_clear = shop.ui_ensure_index = Mock()
+        shop.appear = Mock(return_value=True)
+        shop.loop = Mock(return_value=iter([None]))
         item = SimpleNamespace(price=10, count=100)
         with patch('module.os_shop.shop.OCR_SHOP_AMOUNT.ocr', return_value=1):
             self.assertTrue(shop.shop_buy_amount_handler(item))
@@ -290,13 +294,15 @@ class ResourceFlowTests(unittest.TestCase):
         from module.gacha.gacha_reward import RewardGacha
         gacha = RewardGacha.__new__(RewardGacha)
         config = SimpleNamespace(config_name='testpilot', Gacha_Pool='heavy', Gacha_Amount=2,
-                                 Gacha_UseTicket=False, Gacha_UseDrill=False)
+                                 Gacha_UseTicket=False, Gacha_UseDrill=False, Gacha_TicketAmount=1,
+                                 Gacha_ClearTicket=False)
         gacha.config = config
         gacha.device = Mock()
         gacha.gacha_flush_queue = Mock()
         gacha.ui_goto_gacha = Mock()
         gacha.get_coin = Mock(return_value=10000)
         gacha.gacha_goto_pool = Mock(return_value='heavy')
+        gacha.gacha_side_navbar_ensure = Mock(return_value=True)
         gacha.gacha_calculate = Mock(return_value=2)
         gacha.gacha_prep = Mock(side_effect=lambda amount: amount > 0)
         gacha.gacha_submit = Mock()
@@ -311,6 +317,38 @@ class ResourceFlowTests(unittest.TestCase):
             with self.assertRaises(RuntimeError):
                 gacha.gacha_run()
         self.assertEqual(2, self.report()['total'])
+
+    def test_build_tickets_and_configured_pool_orders_keep_separate_expenses(self):
+        from module.gacha.gacha_reward import RewardGacha
+        gacha = RewardGacha.__new__(RewardGacha)
+        config = SimpleNamespace(config_name='testpilot', Gacha_Pool='light', Gacha_Amount=3,
+                                 Gacha_UseTicket=True, Gacha_UseDrill=False, Gacha_TicketAmount=1,
+                                 Gacha_ClearTicket=False, update=Mock())
+        gacha.config = config
+        gacha.device = Mock()
+        gacha.gacha_flush_queue = Mock()
+        gacha.ui_goto_gacha = Mock()
+        gacha.get_coin = Mock(return_value=10000)
+        gacha.gacha_goto_pool = Mock(side_effect=lambda pool: pool)
+        gacha.gacha_side_navbar_ensure = Mock(return_value=True)
+        gacha.appear = Mock(return_value=True)
+        gacha.gacha_prep = Mock(side_effect=lambda amount: amount > 0)
+        gacha.gacha_submit = Mock()
+        with flow.task_session('testpilot', 'Gacha'), \
+                patch('module.gacha.gacha_reward.OCR_BUILD_CUBE_COUNT') as cubes, \
+                patch('module.gacha.gacha_reward.OCR_BUILD_TICKET_COUNT') as tickets, \
+                patch('module.gacha.gacha_reward.LogRes'):
+            cubes.ocr.return_value = 100
+            tickets.ocr.return_value = 1
+            self.assertTrue(gacha.gacha_run())
+
+        result = self.report()
+        self.assertEqual(3, result['total'])
+        self.assertEqual({'GachaTicket': 1, 'Coin': 1200, 'Cube': 2},
+                         {row['resource']: row['expense'] for row in result['flows']})
+        self.assertEqual({'建造 event × 1', '建造 light × 2'},
+                         {row['operation'] for row in result['entries']})
+        self.assertEqual({'Gacha'}, {row['task'] for row in result['flows']})
 
     def test_oil_food_price_is_kept_when_natural_recovery_offsets_the_net_cost(self):
         from module.scheduler.oil_control import NativeOilControl

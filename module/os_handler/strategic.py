@@ -4,6 +4,7 @@
 提供战略搜索面板的进入、标签页切换（已净化/未净化）、
 搜索选项勾选、确认弹窗处理以及滚动条控制等操作。
 """
+from module.base.timer import Timer
 from module.base.utils import get_color
 from module.logger import logger
 from module.os_handler.assets import *
@@ -75,7 +76,27 @@ class StrategicSearchHandler(MapEventHandler):
             bool: 配置是否成功，若因未知原因弹窗意外关闭则返回 False。
         """
         logger.info('[大世界-策略] 设置策略搜索选项')
+        is_jp = self.config.SERVER == 'jp'
+        if is_jp:
+            # 日服选项文本换行：先确保区域模式与商人选项在同一个可见范围。
+            STRATEGIC_SEARCH_SCROLL.drag_threshold = 0.01
+            STRATEGIC_SEARCH_SCROLL.set(0.17, main=self, random_range=(-0.01, 0.01), distance_check=False)
+            if not self._strategy_search_scroll_appear():
+                return False
+
+        # Add by MHY, 2026-11-08: 换行布局识别失败要有界退出，交给上层三次重试，不能静默空转
+        merchant_timer = Timer(10) if is_jp else None
         for _ in self.loop():
+            if is_jp:
+                if not self.appear(STRATEGIC_SEARCH_MERCHANT_CHECK, offset=(20, 100)):
+                    if merchant_timer.reached():
+                        logger.warning('[大世界-策略] 日服选项布局识别失败，放弃本轮设置')
+                        return False
+                    continue
+                for button in (STRATEGIC_SEARCH_ZONEMODE_REPEAT, STRATEGIC_SEARCH_ZONEMODE_RANDOM,
+                               STRATEGIC_SEARCH_MERCHANT_STOP, STRATEGIC_SEARCH_MERCHANT_CONTINUE):
+                    button.load_offset(STRATEGIC_SEARCH_MERCHANT_CHECK)
+
             if self._strategy_option_selected(STRATEGIC_SEARCH_ZONEMODE_REPEAT) \
                     and self._strategy_option_selected(STRATEGIC_SEARCH_MERCHANT_STOP):
                 logger.attr('区域模式', '重复')
@@ -132,9 +153,14 @@ class StrategicSearchHandler(MapEventHandler):
     def strategic_search_confirm(self):
         """确认并开始执行策略搜索。"""
         logger.info('[大世界-策略] 策略搜索确认')
+        confirmed = False
         for _ in self.loop():
             if self.appear(STRATEGIC_SEARCH_POPUP_CHECK, offset=(20, 20)) \
                     and self.handle_popup_confirm(offset=(30, 30), name='STRATEGIC_SEARCH'):
+                confirmed = True
+                continue
+            # 计划作战确认后可能继续弹出指挥喵召回等确认框，处理后等待新截图。
+            if confirmed and self.handle_popup_confirm(offset=(30, 30), name='STRATEGIC_SEARCH_MEOWFFICER'):
                 continue
             if self.is_in_map():
                 return True
@@ -154,9 +180,11 @@ class StrategicSearchHandler(MapEventHandler):
             out: IN_MAP（策略搜索已在运行中）
         """
         logger.hr('策略搜索开始')
-        # 快速模式（大世界通用设置·跳过计划作战滑动检查）：面板会保留上一次的
+        # 快速模式（侵蚀1练级·跳过计划作战滑动检查）：面板会保留上一次的
         # 选项配置，循环刷取时每次重新滑动检查各选项属于重复动作，直接确认开始。
-        skip_check = self.config.OpsiGeneral_SkipStrategicSearchCheck
+        skip_check = self.config.cross_get(
+            'OpsiHazard1Leveling.OpsiHazard1Leveling.SkipStrategicSearchCheck', False,
+        )
         if skip_check:
             logger.info('[大世界-策略] 已开启快速模式，跳过计划作战面板选项检查')
         for _ in range(3):
@@ -166,8 +194,8 @@ class StrategicSearchHandler(MapEventHandler):
                 success = self.strategic_search_set_option()
                 if not success:
                     continue
-            self.strategic_search_confirm()
-            return True
+            if self.strategic_search_confirm():
+                return True
 
         logger.warning('[大世界-策略] 策略搜索启动失败')
         return False

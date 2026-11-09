@@ -35,7 +35,10 @@ class ErrorBoundary extends Component<{children: ReactNode}, {failed: boolean}> 
   }
 }
 const SchedulerProgram = lazy(() => import('./pages/SchedulerProgram').then(module => ({default: module.SchedulerProgram})))
+// Modify by MHY, 保留本地资源管理独立页；养成计算与舰队科技已并入舰队分析页签。
 const ResourceManagement = lazy(() => import('./pages/ResourceManagement').then(module => ({default: module.ResourceManagement})))
+const FleetAnalysis = lazy(() => import('./pages/FleetAnalysis').then(module => ({default: module.FleetAnalysis})))
+const FleetSwitch = lazy(() => import('./pages/FleetSwitch').then(module => ({default: module.FleetSwitch})))
 
 const router = createHashRouter([
   {path: '/', element: <App/>, errorElement: <ErrorPage/>, children: [{index: true, element: <Home/>}, {path: 'interface', element: <InterfaceSettings/>}, {path: 'remote', element: <RemoteAccess/>}, {path: 'settings', element: <Settings/>}, {path: 'updater', element: <Updater/>}, {path: 'configs', element: <ConfigManager/>}, {path: 'dev', element: <DevControls/>}]},
@@ -45,6 +48,14 @@ const router = createHashRouter([
     {path: 'resources', element: <Suspense fallback={<div>{translateCurrentUi('common.loading')}</div>}><ResourceManagement/></Suspense>},
     {path: 'logs', element: <Navigate to="../overview" replace/>}, {path: 'statistics', element: <Statistics/>}, {path: 'scheduler', element: <Navigate to="../task/SchedulerProgram" replace/>}, {path: 'settings', element: <Navigate to="/settings" replace/>},
     {path: 'task/SchedulerProgram', element: <Suspense fallback={<div>{translateCurrentUi('common.loading')}</div>}><SchedulerProgram/></Suspense>},
+    {path: 'task/FleetAnalysis', element: <Suspense fallback={<div>{translateCurrentUi('common.loading')}</div>}><FleetAnalysis/></Suspense>},
+    {path: 'task/FleetSwitch', element: <Suspense fallback={<div>{translateCurrentUi('common.loading')}</div>}><FleetSwitch/></Suspense>},
+    {path: 'task/FleetInfo', element: <Navigate to="../FleetSwitch?tab=info" relative="path" replace/>},
+    {path: 'task/FleetRotation', element: <Navigate to="../FleetSwitch?tab=rotation" relative="path" replace/>},
+    {path: 'task/FleetTraining', element: <Navigate to="../FleetSwitch?tab=training" relative="path" replace/>},
+    {path: 'task/FleetLevelTraining', element: <Navigate to="../FleetSwitch?tab=training" relative="path" replace/>},
+    {path: 'task/FleetAffinityTraining', element: <Navigate to="../FleetSwitch?tab=training" relative="path" replace/>},
+    {path: 'task/FleetEquipment', element: <Navigate to="../FleetSwitch?tab=equipment" relative="path" replace/>},
   ]},
   {path: '*', element: <Navigate to="/" replace/>},
 ])

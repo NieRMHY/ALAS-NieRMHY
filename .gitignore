@@ -6,6 +6,7 @@ cache/
 screenshots/
 debug_ocr/
 ocr_debug/
+/assets/ship/mind_calculator.json
 
 config/reloadflag
 config/reloadalas
@@ -30,6 +31,11 @@ config/opsi_secure/
 config/opsi_secure/
 
 config/*.db
+config/*.db-wal
+config/*.db-shm
+/config/azurpilot.migrated*
+/config/azurpilot.*.tmp*
+/config/storage-backups/
 config/*/config.db*
 config/*/account.destroyed
 config/tmp*
@@ -96,6 +102,7 @@ frontend/*.tsbuildinfo
 .github/scripts/package-lock.json
 
 # Python
+/.uv-cache/
 __pycache__/
 *.py[cod]
 *$py.class
@@ -303,3 +310,6 @@ cursor-helper/**/review/reports/files/
 # cursor-helper/**/review/reports/summary/**
 # cursor-helper/**/fix/fix_report.md
 # cursor-helper/**/organize-rules/**
+
+# 独立舰船数据库及 SQLite 事务旁文件（实例私有数据）
+/config/fleet/

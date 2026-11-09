@@ -305,6 +305,14 @@ class OSShop(PortShop, AkashiShop):
             if OCR_SHOP_AMOUNT.ocr(self.device.image) > 1:
                 break
 
+        # find AMOUNT_MINUS AMOUNT_PLUS
+        index_offset = (40, 20)
+        for _ in self.loop(timeout=1):
+            if self.appear(AMOUNT_MINUS, offset=index_offset) and self.appear(AMOUNT_PLUS, offset=index_offset):
+                break
+        else:
+            logger.warning('Wait AMOUNT_MINUS and AMOUNT_PLUS timeout, continue anyway')
+
         self.ui_ensure_index(limit, letter=OCR_SHOP_AMOUNT, prev_button=AMOUNT_MINUS, next_button=AMOUNT_PLUS,
                              skip_first_screenshot=True)
         item._resource_purchase_quantity = limit
@@ -355,6 +363,9 @@ class OSShop(PortShop, AkashiShop):
                 if self.is_coins_both_not_enough():
                     logger.info('货币不足，无法购买任何物品，停止购买')
                     break
+                # 没有购买，货币不变，下一件不必重新截图识别；否则连续跳过几十件时
+                # 画面 30 秒不变会被判定为卡死
+                skip_get_coins = True
                 continue
             logger.info(f'购买物品 {item.name}，商店 {item.shop_index + 1}，位置 {item.scroll_pos:.2f}')
             self.os_shop_side_navbar_ensure(upper=item.shop_index + 1)

@@ -2,15 +2,44 @@
 
 import json
 from pathlib import Path
+import tempfile
 import unittest
 
 import cv2
 import numpy as np
 
 from module.base.utils import load_image
+from module.storage.amount_glyphs import StorageAmountGlyphs
 from module.storage.statistics_recognition import StorageCatalog, recognize_rows
 
 FIXTURES = Path(__file__).parent / 'fixtures/storage_statistics'
+
+
+class GlyphLoadingTests(unittest.TestCase):
+    def test_chinese_install_path_preserves_dock_and_storage_templates(self):
+        root = Path(__file__).resolve().parents[1]
+        for relative in ('assets/ship/dock_level_digits.png', 'assets/stats/storage_items/amount_glyphs.png'):
+            with self.subTest(template=relative), tempfile.TemporaryDirectory() as temp:
+                source = root / relative
+                target = Path(temp) / '中文安装目录' / source.name
+                target.parent.mkdir()
+                target.write_bytes(source.read_bytes())
+                expected = StorageAmountGlyphs(source)
+                actual = StorageAmountGlyphs(target)
+                np.testing.assert_array_equal(actual.masks, expected.masks)
+                np.testing.assert_array_equal(actual.offsets, expected.offsets)
+                np.testing.assert_array_equal(actual.norms, expected.norms)
+
+    def test_missing_empty_corrupt_and_wrong_size_templates_keep_validation(self):
+        with tempfile.TemporaryDirectory() as temp:
+            target = Path(temp) / 'digits.png'
+            wrong_size = cv2.imencode('.png', np.zeros((24, 199), dtype=np.uint8))[1].tobytes()
+            for content in (None, b'', b'not a PNG', wrong_size):
+                with self.subTest(content=content is None or len(content)):
+                    if content is not None:
+                        target.write_bytes(content)
+                    with self.assertRaisesRegex(ValueError, '模板缺失或尺寸无效'):
+                        StorageAmountGlyphs(target)
 
 
 class GrayAmountTests(unittest.TestCase):
@@ -55,6 +84,20 @@ class GrayAmountTests(unittest.TestCase):
         for fill in (0, 128, 255):
             with self.subTest(fill=fill):
                 self.assertIsNone(self.catalog.gray_digits.classify(np.full((24, 20), fill, dtype=np.uint8)))
+
+    def test_native_gold_frame_combines_gray_digits_and_connected_binary_digits(self):
+        # 独立原始帧：8/9 需要灰度匹配，粘连的 71/77 需要二值拆分，不新增训练模板。
+        rows = recognize_rows(load_image(str(FIXTURES / 'live_connected_gold_amounts.png')),
+                              self.catalog, target_only=True)
+        self.assertEqual({card.identifier: card.amount for row in rows for card in row if card.identifier}, {
+            'PlateGunT4': 104, 'PlateTorpedoT4': 1732, 'PlateAntiAirT4': 980, 'PlatePlaneT4': 1750,
+            'PrototypeGearPartsT4': 767, 'Ultra_High_Purity_Metals': 5126,
+            'Military_Grade_Electronic_Components': 3683, 'HBX_Blend_Gunpowder': 3865,
+            'High_Durability_Elastomers': 5759, 'Superconductive_Metals': 4296,
+            'Corrosion_Resistant_Alloys': 5396, 'GearDesignPlanGunT4': 716,
+            'GearDesignPlanTorpedoT4': 871, 'GearDesignPlanAntiAirT4': 913,
+            'GearDesignPlanPlaneT4': 779, 'SecretDesignPlanT4': 794})
+        self.assertTrue(all(card.error is None for row in rows for card in row))
 
 
 if __name__ == '__main__':

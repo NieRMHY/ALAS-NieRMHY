@@ -11,6 +11,8 @@
 通过指定海域列表实现高效的指挥喵资源收集。
 """
 
+from contextlib import ExitStack
+
 from module.config.config import TaskEnd
 from module.config.utils import get_os_reset_remain
 from module.exception import (
@@ -187,12 +189,14 @@ class OpsiMeowfficerFarming(MeowfficerTargetZoneMixin, CoinTaskMixin, OSMap):
 
             if not smart_scheduled and self.is_cl1_mode_enabled and cl1_yellow_enough:
                 try:
-                    self.action_point_set(cost=0, keep_current_ap=keep_current_ap, check_rest_ap=check_rest_ap)
+                    self.action_point_set(cost=0, keep_current_ap=keep_current_ap, check_rest_ap=check_rest_ap,
+                                          routine=True)
                 except ActionPointLimit:
                     self.config.task_delay(server_update=True)
                     self.config.task_stop()
             else:
-                self.action_point_set(cost=0, keep_current_ap=keep_current_ap, check_rest_ap=check_rest_ap)
+                self.action_point_set(cost=0, keep_current_ap=keep_current_ap, check_rest_ap=check_rest_ap,
+                                      routine=True)
 
             if not smart_scheduled:
                 self.check_and_notify_action_point_threshold()
@@ -278,9 +282,11 @@ class OpsiMeowfficerFarming(MeowfficerTargetZoneMixin, CoinTaskMixin, OSMap):
         """
         logger.hr(f'大世界-耄耋相接（指定海域循环）, zone_id={zone.zone_id}', level=1)
         self.get_current_zone()
+        self.poll_background_resources(sample=True)
         if self.zone.zone_id != zone.zone_id or not self.is_zone_name_hidden:
             self.globe_goto(zone, types='SAFE', refresh=True)
             # 换海域会消耗行动力，开工检查必须重新读取。
+            self.invalidate_action_point_cache()
             fresh_ap = None
 
         # 智能调度代跑时决策读刚读过行动力：达到开工线时弹窗只会
@@ -289,10 +295,10 @@ class OpsiMeowfficerFarming(MeowfficerTargetZoneMixin, CoinTaskMixin, OSMap):
             _fresh_total, _fresh_current = fresh_ap
             logger.info(
                 f'[大世界-耄耋相接] 复用刚读到的行动力'
-                f'(当前={_fresh_current}, 总={_fresh_total})，跳过行动点弹窗'
+                f'(当前={_fresh_current}, 总={_fresh_total})，跳过行动力弹窗'
             )
         else:
-            self.action_point_set(cost=120, keep_current_ap=True, check_rest_ap=True)
+            self.action_point_set(cost=120, keep_current_ap=True, check_rest_ap=True, routine=True)
         self.fleet_set(self.config.OpsiFleet_Fleet)
         self.os_order_execute(recon_scan=False, submarine_call=self.config.OpsiFleet_Submarine)
 
@@ -343,8 +349,10 @@ class OpsiMeowfficerFarming(MeowfficerTargetZoneMixin, CoinTaskMixin, OSMap):
 
         self.meow_search_metrics_start()
         try:
-            self.run_auto_search()
-            with self._meow_debug_clip():
+            with ExitStack() as stack:
+                self.run_auto_search(
+                    on_search_finished=lambda: stack.enter_context(self._meow_debug_clip())
+                )
                 self.handle_after_auto_search()
         finally:
             self.meow_search_metrics_end()
@@ -396,14 +404,11 @@ class OpsiMeowfficerFarming(MeowfficerTargetZoneMixin, CoinTaskMixin, OSMap):
 
         self.meow_search_metrics_start()
         try:
-            self.run_auto_search()
-            with self._meow_debug_clip():
-                self._solved_map_event = set()
-                self._solved_fleet_mechanism = False
-                # 重扫地图找画面上可见的事件；逐队扫雷达清问号是强制移动的事
-                # （_meow_fixed_patrol_scan，随机海域同样要跑）。这里原来只扫
-                # 当前舰队的雷达，和强制移动的主队那一趟重叠，一并交给它。
-                self.map_rescan()
+            with ExitStack() as stack:
+                # 扫描留在自律寻敌的掉落上下文内，保留已解决事件供雷达补扫和统计使用。
+                self.run_auto_search(
+                    rescan="full", on_search_finished=lambda: stack.enter_context(self._meow_debug_clip())
+                )
                 self._meow_fixed_patrol_scan()
                 self.handle_after_auto_search()
         finally:

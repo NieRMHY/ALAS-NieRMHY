@@ -43,6 +43,13 @@ class FrontendStaticTests(unittest.TestCase):
             self.assertEqual(response.headers['cache-control'], 'no-cache')
         self.assertEqual(self.client.get('/healthz').json()['status'], 'ok')
 
+    def test_robots_txt_disallows_all(self):
+        response = self.client.get('/robots.txt')
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('text/plain', response.headers['content-type'])
+        self.assertIn('User-agent: *', response.text)
+        self.assertIn('Disallow: /', response.text)
+
     def test_missing_and_private_resources_are_not_pages(self):
         for path in ['/missing.webp', '/assets/missing.js', '/.source-fingerprint',
                      '/%2e%2e/%2e%2e/config/testpilot.json']:

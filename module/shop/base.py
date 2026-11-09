@@ -33,7 +33,7 @@ FILTER_REGEX = re.compile(
     '|logger|tuning'
     '|type93pureoxygentorpedo|type1armorpiercingshell|superheavyshell'
     '|hecombatplan|fragment|hiddenzonedatalogger'
-    '|albacore|bataan|bearn|bluegill|carabiniere|casablanca|contedicavour|dukeofyork'
+    '|adventuregalley|albacore|bataan|bearn|bluegill|carabiniere|casablanca|contedicavour|dukeofyork'
     '|echo|eldridge|gangut|glorious|grenville|hibiki|hunter|icarus'
     '|kawakaze|kinggeorgev|kinu|kuroshio|lagalissonniere|lemalinmuse|letemeraire|littorio'
     '|mikuma|minsk|newcastle|oyashio|quincy|ryuujou|sanjuan|sheffieldmuse'
@@ -48,9 +48,9 @@ FILTER_REGEX = re.compile(
     '|red|blue|yellow'
     '|general|gun|torpedo|antiair|plane|wild'
     '|dd|cl|bb|cv'
-    '|iris'
+    '|iris|sardegna'
     '|abyssal|archive|obscure|unlock'
-    '|combat|offense|survival)?'
+    '|combat|offence|offense|survival)?'
 
     '(s[1-5]|t[1-6])?$',
     flags=re.IGNORECASE)

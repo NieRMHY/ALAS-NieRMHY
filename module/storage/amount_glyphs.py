@@ -27,7 +27,12 @@ class StorageAmountGlyphs:
     MIN_MARGIN = .006
 
     def __init__(self, path):
-        atlas = cv2.imread(str(Path(path)), cv2.IMREAD_GRAYSCALE)
+        # Python 读取文件名后再解码，避免 OpenCV 在 Windows 中文安装路径下读不到模板。
+        try:
+            content = Path(path).read_bytes()
+        except OSError:
+            content = b''
+        atlas = cv2.imdecode(np.frombuffer(content, dtype=np.uint8), cv2.IMREAD_GRAYSCALE) if content else None
         if atlas is None or atlas.shape[1] != 10 * GLYPH_WIDTH or atlas.shape[0] % GLYPH_HEIGHT:
             raise ValueError('仓库灰度数量模板缺失或尺寸无效')
         masks = []
@@ -44,12 +49,28 @@ class StorageAmountGlyphs:
         self.offsets = np.array(offsets)
         self.norms = np.mean(self.masks * self.masks, axis=1)
 
-    def classify(self, glyph):
-        """同时约束原生灰度误差与次优数字差距，不强取不确定候选。"""
+    def _errors(self, glyph):
+        """返回每种数字的最小模板误差，保留统一的候选比较范围。"""
         vector = (255 - glyph.astype(np.float32)).ravel() / 255
         # 小矩阵不调度多线程 BLAS，避免每个数字产生线程开销。
         errors = self.norms + np.mean(vector * vector) - 2 * np.einsum('ij,j->i', self.masks, vector) / vector.size
-        errors = np.minimum.reduceat(np.maximum(errors, 0), self.offsets)
+        return np.minimum.reduceat(np.maximum(errors, 0), self.offsets)
+
+    def classify(self, glyph):
+        """完整字形允许有界采样对齐，误差及次优数字差距门槛保持不变。"""
+        errors = self._errors(glyph)
+        first, second = np.argsort(errors)[:2]
+        if errors[first] < self.MAX_ERROR and errors[second] - errors[first] > self.MIN_MARGIN:
+            return int(first)
+        # 不同设备的抗锯齿会让二值基线偏移一个像素；固定画布无需重新训练数字。
+        # 只平移完整字形，不缩放或删除笔画；所有数字比较相同的有限采样相位。
+        for dx in (-1., -.5, 0., .5, 1.):
+            for dy in (-1., -.5, 0., .5, 1.):
+                if dx == dy == 0:
+                    continue
+                shifted = cv2.warpAffine(glyph, np.array([[1, 0, dx], [0, 1, dy]], dtype=np.float32),
+                                         (GLYPH_WIDTH, GLYPH_HEIGHT), flags=cv2.INTER_LINEAR, borderValue=255)
+                errors = np.minimum(errors, self._errors(shifted))
         first, second = np.argsort(errors)[:2]
         if errors[first] < self.MAX_ERROR and errors[second] - errors[first] > self.MIN_MARGIN:
             return int(first)

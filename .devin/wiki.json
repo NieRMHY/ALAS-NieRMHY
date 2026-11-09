@@ -276,7 +276,7 @@
       "parent": "工程与运维 / Engineering & Operations",
       "page_notes": [
         {
-          "content": "重点查看 assets/cn、en、jp、tw、module/config/argument、翻译 JSON/生成文件、frontend/src/i18n.ts 及资源提取工具。区分游戏服务器资源与 Web 控制台语言；如果存在 zh-MIAO 等 UI 语言，按代码实际支持范围说明，不要误写成游戏服务器。"
+          "content": "重点查看 assets/cn、en、jp、tw、module/config/argument、翻译 JSON/生成文件、frontend/src/i18n.ts 及资源提取工具。区分游戏服务器资源与 Web 控制台语言；按代码实际支持范围说明，不要误写成游戏服务器。"
         }
       ]
     },

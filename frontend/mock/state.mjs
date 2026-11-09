@@ -17,6 +17,12 @@ const locales = Object.fromEntries(['zh-CN', 'zh-TW', 'en-US', 'ja-JP'].map(lang
 const ajv = new Ajv({ strict: false, useDefaults: true })
 const validators = Object.fromEntries(Object.entries(contract.methods).map(([method, entry]) => [method, ajv.compile(entry.params)]))
 const revision = values => createHash('sha256').update(JSON.stringify(values)).digest('hex')
+// 与后端按游戏包名确定地区的规则一致，开服检测配置不参与判断。
+const region = packageName => !packageName || packageName === 'auto' ? null : ({
+  en: 'en', jp: 'jp', tw: 'tw',
+  'com.YoStarEN.AzurLane': 'en', 'com.YoStarJP.AzurLane': 'jp', 'com.hkmanjuu.azurlane.gp': 'tw',
+  'com.hkmanjuu.azurlane.gp.mc': 'tw',
+})[packageName] ?? 'cn'
 const timestamp = date => date.toISOString().slice(0, 19).replace('T', ' ')
 const translate = key => key.split('.').reduce((value, part) => value?.[part], locales['zh-CN']) ?? key
 export const fail = (code, message, details = null) => { throw Object.assign(new Error(message), { code, details }) }
@@ -34,7 +40,7 @@ function validateField(path, value) {
   if (field.option?.length && !field.option.includes(value)) fail('INVALID_PARAMS', '请选择有效选项')
   const kind = typeof field.value
   const valid = field.type === 'checkbox' || kind === 'boolean' ? typeof value === 'boolean'
-    : kind === 'number' ? typeof value === 'number' && Number.isFinite(value) && (!Number.isInteger(field.value) || Number.isInteger(value))
+    : kind === 'number' ? typeof value === 'number' && Number.isFinite(value) && (field.valuetype === 'float' || !Number.isInteger(field.value) || Number.isInteger(value))
       : typeof value === 'string' || (field.value === null && value === null)
   if (!valid || (typeof value === 'string' && value.length > 20000)) fail('INVALID_PARAMS', '参数类型或长度不正确')
   if (Array.isArray(field.validate) && (typeof value !== 'number' || value < field.validate[0] || value > field.validate[1])) fail('INVALID_PARAMS', '数值超出允许范围')
@@ -44,6 +50,25 @@ function validateField(path, value) {
 
 export function createMockState({ empty = false } = {}) {
   const instances = new Map()
+  const fleetStates = new Map()
+  function fleetStatePython(action, params) {
+    const output = mindPython(action, {...params, state: fleetStates.get(params.instance),
+      config: get(params.instance).values})
+    if (['tech.patch', 'tech.mergeShips', 'dock.patch', 'dock.review', 'dock.importLegacy', 'dock.stageImport'].includes(action)) fleetStates.set(params.instance, output.state)
+    if (action === 'dock.importLegacy') get(params.instance).values = output.config
+    return output.result
+  }
+  const fleetPython = (action, params) => fleetStatePython(`tech.${action}`, params)
+  function mindPython(action, params) {
+    const run = spawnSync('uv', ['run', '--no-sync', 'python', '-X', 'utf8', '-m', 'dev_tools.mind_calculator_mock'], {
+      cwd: fileURLToPath(new URL('../../', import.meta.url)), input: JSON.stringify({action, ...params}),
+      encoding: 'utf8', timeout: 30000, maxBuffer: 32 * 1024 * 1024, windowsHide: true,
+    })
+    if (run.error || run.status) fail('INTERNAL_ERROR', '计算器模拟服务运行失败')
+    const result = JSON.parse(run.stdout)
+    if (result.error) fail(result.code ?? 'INVALID_PARAMS', result.error)
+    return result
+  }
   const programs = new Map()
   const simulations = new Map()
   function simulation(name) {
@@ -121,7 +146,28 @@ export function createMockState({ empty = false } = {}) {
     }
   }
   const get = name => instances.get(name) ?? fail('NOT_FOUND', '实例不存在')
-  const snapshot = name => ({ instance: name, revision: revision(get(name).values), values: structuredClone(get(name).values) })
+  const campaignOptions = values => {
+    const server = region(values.Alas.Emulator.PackageName) ?? 'cn'
+    return Object.fromEntries(Object.entries(args).flatMap(([task, groups]) => {
+      const candidates = groups.Campaign?.Event?.[`option_${server}`]
+      return candidates ? [[`${task}.Campaign.Event`, candidates]] : []
+    }))
+  }
+  const refreshCampaigns = (values, options) => {
+    for (const [path, candidates] of Object.entries(options)) {
+      const [task] = path.split('.')
+      const current = values[task]?.Campaign?.Event ?? 'campaign_main'
+      if (candidates.length && (task !== 'WarArchives' || current === 'campaign_main') && !candidates.includes(current)) {
+        values[task].Campaign.Event = candidates[0]
+      }
+    }
+  }
+  const snapshot = name => {
+    const values = structuredClone(get(name).values)
+    const options = campaignOptions(values)
+    refreshCampaigns(values, options)
+    return { instance: name, revision: revision(get(name).values), values, options }
+  }
   // 日志时间与真实后端一致使用本地时区（timestamp() 供调度比较，保持 UTC）。
   const logTime = date => [date.getHours(), date.getMinutes(), date.getSeconds()].map(n => String(n).padStart(2, '0')).join(':')
     + '.' + String(date.getMilliseconds()).padStart(3, '0')
@@ -355,12 +401,7 @@ export function createMockState({ empty = false } = {}) {
       + `${indent}异常：ScriptEnd: [心情-保底] 计算模式红脸弹窗，心情清零并延时\n`
       + stackTraceText().split('\n').map(line => indent + line).join('\n'), 'ERROR')
 
-    // 10. LLM 智能分析报告
-    bare(rule('═', '[LLM] LLM 错误分析'))
-    seed('[LLM] 正在调用 LLM 分析异常原因...')
-    seed('[LLM] 该错误已被 LLM 分析过，直接复用上次的分析结果以节省 API ...')
-    seed(`[LLM] \n[LLM 分析报告 (由 gpt-4o-mini 提供, 复用缓存)]\n### 根本原因\n任务在执行 \`opsi_ash_beacon\` 时遇到了心情归零保底机制，触发了 \`ScriptEnd\` 正常流程中断。\n\n### 处置建议\n1. 检查调度设置中的心情恢复时长；\n2. 确认大世界信标是否已进入冷却状态。`)
-    bare(rule('═', '[LLM] LLM 分析结束'))
+    // Modify by MHY, 演示日志与已移除的智能分析功能保持一致。
 
     seed('CRITICAL 级别消息，用于验证最高级别配色', 'CRITICAL')
     seed('DEBUG 级别消息，级别筛选为 ALL 时同样可见', 'DEBUG')
@@ -372,6 +413,7 @@ export function createMockState({ empty = false } = {}) {
       values.Main.Emotion.Fleet1Record = '2026-09-12 23:45:12.123456'
       values.Main.Scheduler.NextRun = '2099-01-01 12:00:00'
       values.Alas.Emulator.Serial = `127.0.0.1:${5555 + index * 2}`
+      values.Alas.Emulator.ServerName = 'cn_android-20'
       /* 四个演示实例各占一档：小狗 / 中狗 / 大狗 / 狗王，用来一次看全行动力图标的四档。 */
       const apTotal = {'demo-main': 6001, 'demo-alt': 8001, 'demo-error': 10001, 'demo-dog': 12001}[name] ?? 6001
       const dashboardDefaults = {
@@ -418,9 +460,11 @@ export function createMockState({ empty = false } = {}) {
     }
   }
   function dispatch(method, input = {}) {
-    const params = structuredClone(input)
+    let params = structuredClone(input)
     if (!Object.hasOwn(validators, method)) fail('METHOD_NOT_FOUND', '未知 API 方法')
     if (!validators[method](params)) fail('INVALID_PARAMS', '请求参数不符合 API 契约')
+    // Optional ledger fields carry presence semantics, matching Pydantic exclude_unset.
+    if (['dock.patch', 'dock.review', 'dock.stageImport', 'fleetTech.patch', 'mind.plan'].includes(method)) params = structuredClone(input)
     const name = params.instance
     if (name != null) get(name)
     switch (method) {
@@ -431,7 +475,7 @@ export function createMockState({ empty = false } = {}) {
       case 'updater.cancel': return { accepted: true }
       case 'system.ping': return { pong: true }
       case 'schema.get': return { args, menu, translations: locales[params.language] }
-      case 'instances.list': return [...instances].map(([name, item]) => ({ name, status: item.status, currentTask: item.status === 'running' ? 'Commission' : null, serial: item.values.Alas.Emulator.Serial, server: item.values.Alas.Emulator.ServerName }))
+      case 'instances.list': return [...instances].map(([name, item]) => ({ name, status: item.status, currentTask: item.status === 'running' ? item.currentTask ?? 'Commission' : null, serial: item.values.Alas.Emulator.Serial, server: item.values.Alas.Emulator.ServerName, region: region(item.values.Alas.Emulator.PackageName) }))
       case 'instances.create': {
         if (!/^[A-Za-z0-9\u3041-\u3096\u30a1-\u30fa\u30fc\u31f0-\u31ff\uff66-\uff9f\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff][A-Za-z0-9_. \u3041-\u3096\u30a1-\u30fa\u30fc\u31f0-\u31ff\uff66-\uff9f\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\-]{0,63}$/.test(params.name) || /^(template|deploy|backup|con|prn|aux|nul|com[1-9]|lpt[1-9])(\.|$)/i.test(params.name)) fail('INVALID_PARAMS', '实例名称无效')
         if ([...instances.keys()].some(name => name.toLowerCase() === params.name.toLowerCase())) fail('ALREADY_EXISTS', '同名实例已存在')
@@ -443,9 +487,20 @@ export function createMockState({ empty = false } = {}) {
         if (get(name).status === 'running') fail('INSTANCE_RUNNING', '请先停止实例再删除')
         if (simulations.get(name)?.running) fail('SIMULATOR_RUNNING', '请先中断大世界模拟器再删除实例')
         if (params.revision !== snapshot(name).revision) fail('CONFLICT', '配置已变化，请重新加载后删除')
-        instances.delete(name); startup.delete(name); programs.delete(name); simulations.delete(name)
+        instances.delete(name); startup.delete(name); programs.delete(name); simulations.delete(name); fleetStates.delete(name)
         return { deleted: name }
       case 'config.get': return snapshot(name)
+      case 'fleetTraining.reset': {
+        if (get(name).status === 'running') fail('INSTANCE_RUNNING', '请先停止实例，再刷新换船状态')
+        const current = snapshot(name)
+        if (params.revision !== current.revision) fail('CONFLICT', '配置已变化，请重新载入后刷新状态')
+        const fleet = current.values.FleetInfo
+        fleet.FleetTraining.State = {}; fleet.FleetRotation.State = {}; fleet.FleetEquipment.State = {}
+        fleet.FleetInfo.Result = {}; fleet.FleetInfo.Record = '2020-01-01 00:00:00'
+        fleet.FleetTraining.FullScanRecord = '2020-01-01 00:00:00'
+        get(name).values = current.values
+        return snapshot(name)
+      }
       case 'config.export': {
         if (!programs.has(name)) return snapshot(name).values
         const {mode, draft, active} = program(name)
@@ -484,15 +539,41 @@ export function createMockState({ empty = false } = {}) {
           data.values[task] ??= {}; data.values[task][group] ??= {}
           data.values[task][group][arg] = value
         }
+        const options = campaignOptions(data.values)
+        for (const [path, candidates] of Object.entries(options)) {
+          const [task] = path.split('.')
+          if (candidates.length && seen.has(path) && !candidates.includes(data.values[task].Campaign.Event)) fail('INVALID_PARAMS', '请选择当前服务器的活动')
+        }
+        refreshCampaigns(data.values, options)
         get(name).values = data.values
         log(name, `已保存 ${params.changes.length} 项配置。`)
         return snapshot(name)
       }
       case 'overview.get': return overview(name)
+      // Modify by MHY, 只模拟本地船坞与培养接口，茗交所证券代理不恢复。
+      case 'dock.configure': {
+        if (params.min_level > params.max_level) fail('INVALID_PARAMS', '最低等级不能大于最高等级')
+        if (get(name).status === 'running') fail('INSTANCE_RUNNING', '实例运行中')
+        Object.assign(get(name).values.DockScan.Dock, {MinLevel: params.min_level, MaxLevel: params.max_level})
+        return dispatch('dock.report', {instance: name})
+      }
+      case 'dock.report': return fleetStatePython('dock.report', params)
+      case 'dock.importLegacy': return fleetStatePython('dock.importLegacy', params)
+      case 'dock.patch': return fleetStatePython('dock.patch', params)
+      case 'dock.review': return fleetStatePython('dock.review', params)
+      case 'dock.stageImport': return fleetStatePython('dock.stageImport', params)
+      case 'mind.catalog': return mindPython('catalog', params)
+      case 'fleetTech.catalog': return fleetPython('catalog', params)
+      case 'fleetTech.report': return fleetPython('report', params)
+      case 'fleetTech.patch': return fleetPython('patch', params)
+      case 'fleetTech.mergeShips': return fleetPython('mergeShips', params)
+      case 'mind.plan': return fleetStatePython('mind.plan', params)
+      case 'mind.import': return mindPython('import', params)
+      case 'mind.recognize': return mindPython('recognize', params)
       case 'scheduler.start': case 'tasks.run':
         if (get(name).status === 'running') fail('INSTANCE_RUNNING', '实例已在运行')
-        if (method === 'tasks.run' && !['FleetScan', 'StorageStatistics'].includes(params.task) && !Object.values(menu).some(group => group.page === 'tool' && group.tasks.includes(params.task))) fail('INVALID_PARAMS', '该任务不支持单独运行')
-        get(name).status = 'running'; log(name, '模拟调度器已启动。')
+        if (method === 'tasks.run' && !['FleetScan', 'StorageStatistics', 'DockScan'].includes(params.task) && !Object.values(menu).some(group => group.page === 'tool' && group.tasks.includes(params.task))) fail('INVALID_PARAMS', '该任务不支持单独运行')
+        get(name).status = 'running'; get(name).currentTask = params.task ?? 'Commission'; log(name, '模拟调度器已启动。')
         return overview(name)
       case 'scheduler.stop':
         get(name).status = 'stopped'; log(name, '模拟调度器已停止。')
@@ -582,9 +663,10 @@ export function createMockState({ empty = false } = {}) {
           const dbKey = resKeyMap[res] ?? res
           const base = get(name).values.Dashboard[dbKey]?.Value ?? baseMap[res] ?? 500
           const safeDays = Math.max(1, Number(days) || 7)
+          // 与真实统计接口一致，发送墙上时钟微秒与紧凑点，供前端统一解码。
           return Array.from({ length: 24 }, (_, index) => ({
-            time: timestamp(new Date(Date.now() - (23 - index) * safeDays * 3600000)),
-            value: Math.max(0, Math.round(base * (.8 + index / 120 + Math.sin(index) * .03))),
+            t: Math.floor((Date.now() - (23 - index) * safeDays * 3600000) / 1000) * 1000000,
+            v: Math.max(0, Math.round(base * (.8 + index / 120 + Math.sin(index) * .03))),
           }))
         }
         const reportSeries = entries => entries.map(([key, label, res = key]) => ({
@@ -919,7 +1001,8 @@ export function createMockState({ empty = false } = {}) {
           url: 'https://github.com/wess09/AzurPilot'
         }
       case 'events.subscribe':
-        if (params.topics.some(topic => topic !== 'instances') && !name) fail('INVALID_PARAMS', '订阅此主题需要指定实例')
+        // Modify by MHY, 通知与实例列表都允许在主页全局订阅。
+        if (params.topics.some(topic => !['instances', 'notifications'].includes(topic)) && !name) fail('INVALID_PARAMS', '订阅此主题需要指定实例')
         return { topics: params.topics, instance: name ?? null }
       case 'background.gallery.list': return []
       case 'background.gallery.open': return { path: 'cache/background/library' }

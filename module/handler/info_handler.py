@@ -28,7 +28,8 @@ from module.handler.assets import *
 from module.logger import logger
 from module.os_handler.assets import CLICK_SAFE_AREA as OS_CLICK_SAFE_AREA
 from module.ui.assets import BACK_ARROW
-from module.ui_white.assets import POPUP_CANCEL_WHITE, POPUP_CONFIRM_WHITE, POPUP_SINGLE_WHITE
+from module.ui_white.assets import (POPUP_CANCEL_WHITE, POPUP_CONFIRM_WHITE, POPUP_CONFIRM_WHITE_BOLD,
+                                    POPUP_SINGLE_WHITE)
 
 
 def info_letter_preprocess(image):
@@ -154,6 +155,13 @@ class InfoHandler(ModuleBase):
             self.device.click(POPUP_CONFIRM_WHITE)
             POPUP_CONFIRM_WHITE.name = POPUP_CONFIRM_WHITE.name[:-len(name) - 1]
             return True
+        # 国际服新版白色弹窗的「Confirm」为粗体（如邮件「No mail found meeting these conditions.」），
+        # 旧的细体模板认不出；其他服的同名图沿用原确认图
+        if self.appear(POPUP_CONFIRM_WHITE_BOLD, offset=offset, interval=interval):
+            POPUP_CONFIRM_WHITE_BOLD.name = POPUP_CONFIRM_WHITE_BOLD.name + '_' + name
+            self.device.click(POPUP_CONFIRM_WHITE_BOLD)
+            POPUP_CONFIRM_WHITE_BOLD.name = POPUP_CONFIRM_WHITE_BOLD.name[:-len(name) - 1]
+            return True
         return False
 
     def handle_popup_cancel(self, name='', offset=None, interval=2):
@@ -221,7 +229,7 @@ class InfoHandler(ModuleBase):
         """清除常用弹窗按钮的点击冷却间隔。"""
         self.interval_clear([
             POPUP_CANCEL, POPUP_CONFIRM,
-            POPUP_CANCEL_WHITE, POPUP_CONFIRM_WHITE,
+            POPUP_CANCEL_WHITE, POPUP_CONFIRM_WHITE, POPUP_CONFIRM_WHITE_BOLD,
         ])
 
     _hot_fix_check_wait = Timer(6)
@@ -238,6 +246,9 @@ class InfoHandler(ModuleBase):
         Raises:
             GameNotRunningError: 检测到服务器热更新导致游戏进程退出时抛出。
         """
+        # 两种弹窗共用同位置的「确定」；先核对换队正文，避免委托处理器抢走战败信号。
+        if self.appear(FLEET_UNAVAILABLE, offset=(160, 30)):
+            return False
         appear = self.appear(GET_MISSION, offset=True, interval=2)
         if appear:
             logger.info('[处理器-委托] 收到紧急委托')
@@ -273,7 +284,7 @@ class InfoHandler(ModuleBase):
 
         作战档案出击后的「消耗档案密钥」弹窗同样由 POPUP_CANCEL /
         POPUP_CONFIRM 这两个通用按钮组成，仅凭按钮判定会把出击被数据密钥
-        弹窗拦住误判成红脸弹窗（取消弹窗、清零心情、任务延后到次日），
+        弹窗拦住误判成红脸弹窗（取消弹窗、清零心情、延后任务），
         因此先交给 handle_use_data_key() 处理。
 
         Returns:
@@ -286,12 +297,31 @@ class InfoHandler(ModuleBase):
         if self.handle_use_data_key():
             return True
 
+        # 仅普通主线/活动换船入口安装此策略；其他任务保留原红脸处理。
+        if (getattr(self.emotion, 'selected_only', False) is True
+                and self.appear(POPUP_CANCEL, offset=self._popup_offset)
+                and self.appear(POPUP_CONFIRM, offset=self._popup_offset)):
+            if self.emotion.rotation_popup_allowed():
+                result = self.handle_popup_confirm('IGNORE_LOW_EMOTION')
+                if result:
+                    self.interval_reset(AUTO_SEARCH_MAP_OPTION_OFF)
+                return result
+            if self.handle_popup_cancel('IGNORE_LOW_EMOTION'):
+                logger.warning('[心情-换船] 培养心情未知或不足，退出后重新检查')
+                try:
+                    self._emotion_emergency_exit()
+                except CampaignEnd:
+                    pass
+                self.emotion.delay_rotation_popup(max(1, getattr(self, '_map_battle', 1)))
+                raise ScriptEnd('[心情-换船] 红脸弹窗取消，重新检查培养舰位心情')
+            return False
+
         # calculate 模式保底：正常不应出现红脸弹窗
         # 若出现则可能是ALAS计算错误或用户手动操作，需异常处理
         if self.emotion.is_calculate and not self.emotion.is_ignore:
             if self.handle_popup_cancel('IGNORE_LOW_EMOTION'):
                 logger.warning('[心情-保底] 计算模式下出现红脸弹窗，'
-                               '可能是ALAS计算错误或用户手动操作')
+                               '可能是AzurPilot计算错误或用户手动操作')
                 logger.hr('心情异常保底')
                 # 退出关卡（弹窗已取消，阻止战斗）
                 # 捕获 withdraw() 抛出的 CampaignEnd，确保后续心情清零和延时被执行
@@ -299,10 +329,12 @@ class InfoHandler(ModuleBase):
                     self._emotion_emergency_exit()
                 except CampaignEnd:
                     logger.info('[心情-保底] 撤退完成，已回到关卡页面')
-                # 心情清零，强制下次任务等待恢复
+                # 从0建立有效的保守恢复起点，任务重载后仍可自动恢复。
                 self.emotion.emergency_reset()
-                # 延时当前任务至下次服务器刷新
-                self.config.task_delay(server_update=True)
+                # 按下次完整出击预留心情；没有地图战斗次数的任务至少预留一场。
+                battle = max(1, getattr(self, '_map_battle', 1))
+                recovered, _ = self.emotion._check_reduce(battle)
+                self.config.task_delay(target=recovered)
                 raise ScriptEnd('[心情-保底] 计算模式红脸弹窗，心情清零并延时')
 
         if not self.emotion.is_ignore:
@@ -702,7 +734,7 @@ class InfoHandler(ModuleBase):
             )
 
             if not siren_research_enabled:
-                logger.info('[Handler] [Story] 塞壬研究装置未启用，选择离开')
+                logger.info('[Handler] [Story] 塞壬信息收集装置未启用，选择离开')
                 self.siren_device_mode = None
                 return options[-1]
 

@@ -22,8 +22,12 @@ import time
 import module.base.utils as _base_utils
 from module.base.timer import Timer
 from module.base.utils import *
+from module.exception import OSExploreError, OSZoneLockedError
 from module.logger import logger
+from module.config.utils import get_os_next_reset
+from module.ocr.ocr import Digit
 from module.os.assets import *
+from module.os.tasks.smart_explore import SMART_EXPLORE_DELAY_TASKS, SMART_EXPLORE_TASK_MIN_ZONES, _smart_explore_pending
 from module.os_handler.action_point import ActionPointHandler
 from module.os_handler.assets import AUTO_SEARCH_REWARD
 from module.os_handler.port import PORT_CHECK
@@ -76,10 +80,6 @@ _ZONE_PINNED_SIMILARITY_THRESHOLDS = {
 _ZONE_PINNED_SIMILARITY_DEFAULT = 0.75
 
 
-class OSExploreError(Exception):
-    pass
-
-
 class RewardUncollectedError(Exception):
     pass
 
@@ -91,6 +91,28 @@ class GlobeOperation(ActionPointHandler):
     海域进出和行动力消耗处理。
     """
     _zone_unpin_interval = Timer(0.5)
+
+    def record_globe_suppressed_zones(self):
+        """在正常全球地图截图中确认压制统计；达标后本月不再识别。"""
+        min_zones = (SMART_EXPLORE_DELAY_TASKS['OpsiArchive'] if self.config.is_task_enabled('OpsiArchive')
+                     else SMART_EXPLORE_TASK_MIN_ZONES)
+        if not _smart_explore_pending(self.config, min_zones):
+            return
+        image = self.device.image
+        previous = getattr(self, '_suppressed_zones_candidate', None)
+        if previous is not None and previous[2] is image:
+            return
+        count = Digit((1184, 411, 1244, 438), letter=(255, 207, 66), threshold=128,
+                      name='OS_SUPPRESSION_COUNT').ocr(image)
+        reset = get_os_next_reset().isoformat()
+        if not SMART_EXPLORE_TASK_MIN_ZONES <= count <= 72:
+            self._suppressed_zones_candidate = None
+            return
+        if previous is not None and previous[:2] == (reset, count):
+            self.config.cross_set('OpsiScheduling.Storage.Storage.SuppressedZones', dict(reset=reset, count=count))
+            self._suppressed_zones_candidate = None
+        else:
+            self._suppressed_zones_candidate = (reset, count, image)
 
     def is_in_globe(self):
         """检查当前是否处于大世界全球地图界面。
@@ -401,6 +423,24 @@ class GlobeOperation(ActionPointHandler):
 
         return True
 
+    def handle_combat_result_on_exit(self):
+        """离开海域时关闭刚结束的战斗结算页。
+
+        要塞中一支舰队阵亡后自律寻敌停止，其他舰队正在进行的战斗仍会结束并停在
+        「PERFECT S / Touch to continue」结算页，不关闭就无法返回全球地图。
+        战斗处理方法在 OSMap 混入的 Combat 中，单独使用本类时跳过。
+
+        Returns:
+            bool: 是否处理了结算页。
+        """
+        if not hasattr(self, 'handle_battle_status'):
+            return False
+        if self.handle_battle_status():
+            return True
+        if self.handle_exp_info():
+            return True
+        return False
+
     def os_map_goto_globe(self, unpin=True):
         """从海域地图返回全球地图。
 
@@ -418,23 +458,25 @@ class GlobeOperation(ActionPointHandler):
         for _ in self.loop():
             # End
             if self.is_in_globe():
+                self.record_globe_suppressed_zones()
                 break
 
             if self.appear_then_click(MAP_GOTO_GLOBE, offset=(200, 5), interval=5):
-                # 仅用于初始化 MAP_GOTO_GLOBE_FOG 的间隔计时器
-                self.appear(MAP_GOTO_GLOBE_FOG, interval=5)
-                self.interval_reset(MAP_GOTO_GLOBE_FOG)
+                self.get_interval_timer(MAP_GOTO_GLOBE_FOG, interval=5, renew=True).reset()
                 click_count += 1
                 if click_count >= 5:
                     # 当海域存在探索奖励时，游戏不会允许你离开。
-                    logger.warning('[大世界-操作] 无法前往全球地图, 可能有未收集的海域探索奖励阻止退出')
+                    logger.warning('[大世界-操作] 无法前往作战总览, 可能有未收集的海域探索奖励阻止退出')
                     raise RewardUncollectedError
                 continue
-            if self.appear_then_click(MAP_GOTO_GLOBE_FOG, interval=5):
-                # 仅在要塞中遇到；即使地图中有未领取的探索奖励，游戏也不会阻止退出
+            # 离开要塞后迷雾可能残留，港口内按钮还会向左偏移。
+            if self.match_template_color(MAP_GOTO_GLOBE_FOG, offset=(200, 5), interval=5, threshold=40):
+                self.device.click(MAP_GOTO_GLOBE_FOG)
                 self.interval_reset(MAP_GOTO_GLOBE)
                 continue
             if self.handle_map_event():
+                continue
+            if self.handle_combat_result_on_exit():
                 continue
             # 意外进入港口
             if self.appear(PORT_CHECK, offset=(20, 20), interval=5):
@@ -452,6 +494,8 @@ class GlobeOperation(ActionPointHandler):
 
         confirm_timer = Timer(1, count=2).start()
         for _ in self.loop():
+            if self.is_in_globe():
+                self.record_globe_suppressed_zones()
             if unpin:
                 if self.handle_zone_pinned():
                     confirm_timer.reset()
@@ -490,8 +534,8 @@ class GlobeOperation(ActionPointHandler):
 
             if self.is_zone_pinned():
                 if self.appear(ZONE_LOCKED, offset=(20, 20)):
-                    logger.warning(f'[大世界-操作] 海域 {zone} 已锁定, 相邻海域可能未被探索过')
-                    raise OSExploreError
+                    logger.warning(f'[大世界-操作] 海域 {zone} 已锁定, 未完成开荒，请使用每月开荒')
+                    raise OSZoneLockedError(f'未完成开荒，请使用每月开荒: {zone}')
                 if click_count > 5:
                     logger.warning(f'[大世界-操作] 无法进入海域 {zone}, 相邻海域可能未被探索过')
                     raise OSExploreError

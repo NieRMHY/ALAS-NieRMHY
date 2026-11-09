@@ -371,6 +371,14 @@
           false
         ]
       },
+      "DisableChannelFloat": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
       "ScreenshotDedithering": {
         "type": "checkbox",
         "value": false
@@ -1020,13 +1028,22 @@
       },
       "FleetValue": {
         "type": "input",
-        "value": 119
+        "value": 119,
+        "validate": [
+          0,
+          150
+        ]
       },
       "FleetRecord": {
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
         "validate": "datetime",
         "display": "disabled"
+      },
+      "FleetRecoveryState": {
+        "type": "stored",
+        "value": null,
+        "display": "hide"
       },
       "FleetControl": {
         "type": "select",
@@ -1073,7 +1090,7 @@
     "YukikazeTaskManager": {
       "TaskPriorityAdjustment": {
         "type": "task_priority",
-        "value": "Restart\n> OpsiCrossMonth\n> Commission > Tactical > Research\n> Exercise\n> Dorm > Meowfficer > Guild > Gacha\n> Reward > StorageStatistics\n> ShopFrequent > ShopOnce > Shipyard > Freebies\n> PrivateQuarters\n> OpsiExplore > OpsiExploreCleanup\n> OpsiPreventActionPointOverflow\n> Minigame > Awaken\n> OpsiAshBeacon\n> OpsiDaily > OpsiShop > OpsiVoucher > EventShop\n> OpsiAbyssal > OpsiStronghold > OpsiObscure > OpsiArchive\n> Daily > Hard > OpsiAshBeacon > OpsiAshAssist > OpsiMonthBoss\n> Sos > EventSp > EventA > EventB > EventC > EventD\n> RaidDaily > CoalitionSp > WarArchives > MaritimeEscort\n> IslandJuuEatery > IslandJuuCoffee > IslandGrill > IslandTeahouse > IslandRestaurant\n> IslandFarm > IslandRancher > IslandMineForest > IslandDailyGather > IslandManufacture\n> IslandAirDrop > IslandBusiness > IslandDailyOrder > IslandDailyInteract > IslandPearlSell > IslandCargoPreparation\n> Event > Event2 > Event3 > Raid > Hospital > HospitalEvent > Coalition > RaidAffection > Main > Main2 > Main3\n> OpsiScheduling\n> OpsiMeowfficerFarming\n> GemsFarming\n> Ambush11\n> OpsiHazard1Leveling\n> ThreeOilLowCost\n> OperationHandover"
+        "value": "Restart\n> OpsiCrossMonth\n> Commission > Tactical > Research\n> Exercise\n> Dorm > Meowfficer > Guild > Gacha\n> Reward > StorageStatistics\n> ShopFrequent > ShopOnce > Shipyard > Freebies\n> PrivateQuarters\n> OpsiExplore > OpsiExploreCleanup\n> OpsiPreventActionPointOverflow\n> Minigame > Awaken\n> OpsiAshBeacon\n> OpsiDaily > OpsiShop > OpsiVoucher > EventShop\n> OpsiAbyssal > OpsiStronghold > OpsiObscure > OpsiArchive\n> Daily > LimitChallenge > Hard > OpsiAshBeacon > OpsiMonthBoss\n> Sos > EventSp > EventA > EventB > EventC > EventD\n> RaidDaily > CoalitionSp > WarArchives > MaritimeEscort\n> IslandJuuEatery > IslandJuuCoffee > IslandGrill > IslandTeahouse > IslandRestaurant\n> IslandFarm > IslandRancher > IslandMineForest > IslandDailyGather > IslandManufacture\n> IslandAirDrop > IslandBusiness > IslandDailyOrder > IslandDailyInteract > IslandPearlSell > IslandCargoPreparation\n> Event > Event2 > Event3 > Raid > Hospital > HospitalEvent > Coalition > RaidAffection > Main > Main2 > Main3\n> OpsiScheduling\n> OpsiMeowfficerFarming\n> GemsFarming\n> Ambush11\n> OpsiHazard1Leveling\n> ThreeOilLowCost\n> OperationHandover"
       }
     },
     "Storage": {
@@ -1371,6 +1388,10 @@
         "type": "checkbox",
         "value": true
       },
+      "ContinueAfterRestart": {
+        "type": "checkbox",
+        "value": false
+      },
       "Use2xBook": {
         "type": "checkbox",
         "value": false
@@ -1596,15 +1617,37 @@
         "type": "checkbox",
         "value": false
       },
+      "MinReserve": {
+        "type": "input",
+        "value": 0,
+        "validate": [
+          0,
+          150
+        ]
+      },
+      "RecoveryWait": {
+        "type": "stored",
+        "value": null,
+        "display": "hide"
+      },
       "Fleet1Value": {
         "type": "input",
-        "value": 119
+        "value": 119,
+        "validate": [
+          0,
+          150
+        ]
       },
       "Fleet1Record": {
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
         "validate": "datetime",
         "display": "disabled"
+      },
+      "Fleet1RecoveryState": {
+        "type": "stored",
+        "value": null,
+        "display": "hide"
       },
       "Fleet1Control": {
         "type": "select",
@@ -1635,13 +1678,22 @@
       },
       "Fleet2Value": {
         "type": "input",
-        "value": 119
+        "value": 119,
+        "validate": [
+          0,
+          150
+        ]
       },
       "Fleet2Record": {
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
         "validate": "datetime",
         "display": "disabled"
+      },
+      "Fleet2RecoveryState": {
+        "type": "stored",
+        "value": null,
+        "display": "hide"
       },
       "Fleet2Control": {
         "type": "select",
@@ -1836,6 +1888,10 @@
         "type": "checkbox",
         "value": true
       },
+      "ContinueAfterRestart": {
+        "type": "checkbox",
+        "value": false
+      },
       "Use2xBook": {
         "type": "checkbox",
         "value": false
@@ -2061,15 +2117,37 @@
         "type": "checkbox",
         "value": false
       },
+      "MinReserve": {
+        "type": "input",
+        "value": 0,
+        "validate": [
+          0,
+          150
+        ]
+      },
+      "RecoveryWait": {
+        "type": "stored",
+        "value": null,
+        "display": "hide"
+      },
       "Fleet1Value": {
         "type": "input",
-        "value": 119
+        "value": 119,
+        "validate": [
+          0,
+          150
+        ]
       },
       "Fleet1Record": {
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
         "validate": "datetime",
         "display": "disabled"
+      },
+      "Fleet1RecoveryState": {
+        "type": "stored",
+        "value": null,
+        "display": "hide"
       },
       "Fleet1Control": {
         "type": "select",
@@ -2100,13 +2178,22 @@
       },
       "Fleet2Value": {
         "type": "input",
-        "value": 119
+        "value": 119,
+        "validate": [
+          0,
+          150
+        ]
       },
       "Fleet2Record": {
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
         "validate": "datetime",
         "display": "disabled"
+      },
+      "Fleet2RecoveryState": {
+        "type": "stored",
+        "value": null,
+        "display": "hide"
       },
       "Fleet2Control": {
         "type": "select",
@@ -2301,6 +2388,10 @@
         "type": "checkbox",
         "value": true
       },
+      "ContinueAfterRestart": {
+        "type": "checkbox",
+        "value": false
+      },
       "Use2xBook": {
         "type": "checkbox",
         "value": false
@@ -2526,15 +2617,37 @@
         "type": "checkbox",
         "value": false
       },
+      "MinReserve": {
+        "type": "input",
+        "value": 0,
+        "validate": [
+          0,
+          150
+        ]
+      },
+      "RecoveryWait": {
+        "type": "stored",
+        "value": null,
+        "display": "hide"
+      },
       "Fleet1Value": {
         "type": "input",
-        "value": 119
+        "value": 119,
+        "validate": [
+          0,
+          150
+        ]
       },
       "Fleet1Record": {
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
         "validate": "datetime",
         "display": "disabled"
+      },
+      "Fleet1RecoveryState": {
+        "type": "stored",
+        "value": null,
+        "display": "hide"
       },
       "Fleet1Control": {
         "type": "select",
@@ -2565,13 +2678,22 @@
       },
       "Fleet2Value": {
         "type": "input",
-        "value": 119
+        "value": 119,
+        "validate": [
+          0,
+          150
+        ]
       },
       "Fleet2Record": {
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
         "validate": "datetime",
         "display": "disabled"
+      },
+      "Fleet2RecoveryState": {
+        "type": "stored",
+        "value": null,
+        "display": "hide"
       },
       "Fleet2Control": {
         "type": "select",
@@ -2852,54 +2974,22 @@
         "type": "select",
         "value": "campaign_main",
         "option": [
-          "event_20240815_cn",
-          "event_20240912_cn",
-          "event_20241219_cn",
-          "event_20250227_cn",
-          "event_20250520_cn",
-          "event_20250814_cn",
-          "event_20250912_cn",
-          "event_20260908_cn"
+          "event_20261022_cn"
         ],
         "option_cn": [
-          "event_20241219_cn",
-          "event_20250912_cn",
-          "event_20250814_cn",
-          "event_20250520_cn",
-          "event_20250227_cn",
-          "event_20240912_cn",
-          "event_20240815_cn"
+          "event_20261022_cn"
         ],
         "option_en": [
-          "event_20241219_cn",
-          "event_20250912_cn",
-          "event_20250814_cn",
-          "event_20250520_cn",
-          "event_20250227_cn",
-          "event_20240912_cn",
-          "event_20240815_cn"
+          "event_20261022_cn"
         ],
         "option_jp": [
-          "event_20241219_cn",
-          "event_20250912_cn",
-          "event_20250814_cn",
-          "event_20250520_cn",
-          "event_20250227_cn",
-          "event_20240912_cn",
-          "event_20240815_cn"
+          "event_20261022_cn"
         ],
         "option_tw": [
-          "event_20260908_cn"
+          "event_20261022_cn"
         ],
         "option_bold": [
-          "event_20240815_cn",
-          "event_20240912_cn",
-          "event_20241219_cn",
-          "event_20250227_cn",
-          "event_20250520_cn",
-          "event_20250814_cn",
-          "event_20250912_cn",
-          "event_20260908_cn"
+          "event_20261022_cn"
         ]
       },
       "Mode": {
@@ -2924,6 +3014,10 @@
       "UseAutoSearch": {
         "type": "checkbox",
         "value": true
+      },
+      "ContinueAfterRestart": {
+        "type": "checkbox",
+        "value": false
       },
       "Use2xBook": {
         "type": "checkbox",
@@ -3157,15 +3251,37 @@
         "type": "checkbox",
         "value": false
       },
+      "MinReserve": {
+        "type": "input",
+        "value": 0,
+        "validate": [
+          0,
+          150
+        ]
+      },
+      "RecoveryWait": {
+        "type": "stored",
+        "value": null,
+        "display": "hide"
+      },
       "Fleet1Value": {
         "type": "input",
-        "value": 119
+        "value": 119,
+        "validate": [
+          0,
+          150
+        ]
       },
       "Fleet1Record": {
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
         "validate": "datetime",
         "display": "disabled"
+      },
+      "Fleet1RecoveryState": {
+        "type": "stored",
+        "value": null,
+        "display": "hide"
       },
       "Fleet1Control": {
         "type": "select",
@@ -3185,13 +3301,11 @@
           "not_in_dormitory",
           "dormitory_floor_1",
           "dormitory_floor_2"
-        ],
-        "display": "hide"
+        ]
       },
       "Fleet1Oath": {
         "type": "checkbox",
-        "value": false,
-        "display": "hide"
+        "value": false
       },
       "Fleet1Onsen": {
         "type": "checkbox",
@@ -3199,13 +3313,22 @@
       },
       "Fleet2Value": {
         "type": "input",
-        "value": 119
+        "value": 119,
+        "validate": [
+          0,
+          150
+        ]
       },
       "Fleet2Record": {
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
         "validate": "datetime",
         "display": "disabled"
+      },
+      "Fleet2RecoveryState": {
+        "type": "stored",
+        "value": null,
+        "display": "hide"
       },
       "Fleet2Control": {
         "type": "select",
@@ -3225,13 +3348,11 @@
           "not_in_dormitory",
           "dormitory_floor_1",
           "dormitory_floor_2"
-        ],
-        "display": "hide"
+        ]
       },
       "Fleet2Oath": {
         "type": "checkbox",
-        "value": false,
-        "display": "hide"
+        "value": false
       },
       "Fleet2Onsen": {
         "type": "checkbox",
@@ -3429,54 +3550,22 @@
         "type": "select",
         "value": "campaign_main",
         "option": [
-          "event_20240815_cn",
-          "event_20240912_cn",
-          "event_20241219_cn",
-          "event_20250227_cn",
-          "event_20250520_cn",
-          "event_20250814_cn",
-          "event_20250912_cn",
-          "event_20260908_cn"
+          "event_20261022_cn"
         ],
         "option_cn": [
-          "event_20241219_cn",
-          "event_20250912_cn",
-          "event_20250814_cn",
-          "event_20250520_cn",
-          "event_20250227_cn",
-          "event_20240912_cn",
-          "event_20240815_cn"
+          "event_20261022_cn"
         ],
         "option_en": [
-          "event_20241219_cn",
-          "event_20250912_cn",
-          "event_20250814_cn",
-          "event_20250520_cn",
-          "event_20250227_cn",
-          "event_20240912_cn",
-          "event_20240815_cn"
+          "event_20261022_cn"
         ],
         "option_jp": [
-          "event_20241219_cn",
-          "event_20250912_cn",
-          "event_20250814_cn",
-          "event_20250520_cn",
-          "event_20250227_cn",
-          "event_20240912_cn",
-          "event_20240815_cn"
+          "event_20261022_cn"
         ],
         "option_tw": [
-          "event_20260908_cn"
+          "event_20261022_cn"
         ],
         "option_bold": [
-          "event_20240815_cn",
-          "event_20240912_cn",
-          "event_20241219_cn",
-          "event_20250227_cn",
-          "event_20250520_cn",
-          "event_20250814_cn",
-          "event_20250912_cn",
-          "event_20260908_cn"
+          "event_20261022_cn"
         ]
       },
       "Mode": {
@@ -3501,6 +3590,10 @@
       "UseAutoSearch": {
         "type": "checkbox",
         "value": true
+      },
+      "ContinueAfterRestart": {
+        "type": "checkbox",
+        "value": false
       },
       "Use2xBook": {
         "type": "checkbox",
@@ -3734,15 +3827,37 @@
         "type": "checkbox",
         "value": false
       },
+      "MinReserve": {
+        "type": "input",
+        "value": 0,
+        "validate": [
+          0,
+          150
+        ]
+      },
+      "RecoveryWait": {
+        "type": "stored",
+        "value": null,
+        "display": "hide"
+      },
       "Fleet1Value": {
         "type": "input",
-        "value": 119
+        "value": 119,
+        "validate": [
+          0,
+          150
+        ]
       },
       "Fleet1Record": {
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
         "validate": "datetime",
         "display": "disabled"
+      },
+      "Fleet1RecoveryState": {
+        "type": "stored",
+        "value": null,
+        "display": "hide"
       },
       "Fleet1Control": {
         "type": "select",
@@ -3762,13 +3877,11 @@
           "not_in_dormitory",
           "dormitory_floor_1",
           "dormitory_floor_2"
-        ],
-        "display": "hide"
+        ]
       },
       "Fleet1Oath": {
         "type": "checkbox",
-        "value": false,
-        "display": "hide"
+        "value": false
       },
       "Fleet1Onsen": {
         "type": "checkbox",
@@ -3776,13 +3889,22 @@
       },
       "Fleet2Value": {
         "type": "input",
-        "value": 119
+        "value": 119,
+        "validate": [
+          0,
+          150
+        ]
       },
       "Fleet2Record": {
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
         "validate": "datetime",
         "display": "disabled"
+      },
+      "Fleet2RecoveryState": {
+        "type": "stored",
+        "value": null,
+        "display": "hide"
       },
       "Fleet2Control": {
         "type": "select",
@@ -3802,13 +3924,11 @@
           "not_in_dormitory",
           "dormitory_floor_1",
           "dormitory_floor_2"
-        ],
-        "display": "hide"
+        ]
       },
       "Fleet2Oath": {
         "type": "checkbox",
-        "value": false,
-        "display": "hide"
+        "value": false
       },
       "Fleet2Onsen": {
         "type": "checkbox",
@@ -4033,6 +4153,11 @@
         "display": "hide"
       },
       "UseAutoSearch": {
+        "type": "checkbox",
+        "value": false,
+        "display": "hide"
+      },
+      "ContinueAfterRestart": {
         "type": "checkbox",
         "value": false,
         "display": "hide"
@@ -4267,15 +4392,37 @@
         "type": "checkbox",
         "value": false
       },
+      "MinReserve": {
+        "type": "input",
+        "value": 0,
+        "validate": [
+          0,
+          150
+        ]
+      },
+      "RecoveryWait": {
+        "type": "stored",
+        "value": null,
+        "display": "hide"
+      },
       "Fleet1Value": {
         "type": "input",
-        "value": 119
+        "value": 119,
+        "validate": [
+          0,
+          150
+        ]
       },
       "Fleet1Record": {
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
         "validate": "datetime",
         "display": "disabled"
+      },
+      "Fleet1RecoveryState": {
+        "type": "stored",
+        "value": null,
+        "display": "hide"
       },
       "Fleet1Control": {
         "type": "select",
@@ -4306,13 +4453,22 @@
       },
       "Fleet2Value": {
         "type": "input",
-        "value": 119
+        "value": 119,
+        "validate": [
+          0,
+          150
+        ]
       },
       "Fleet2Record": {
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
         "validate": "datetime",
         "display": "disabled"
+      },
+      "Fleet2RecoveryState": {
+        "type": "stored",
+        "value": null,
+        "display": "hide"
       },
       "Fleet2Control": {
         "type": "select",
@@ -4454,54 +4610,22 @@
         "type": "select",
         "value": "campaign_main",
         "option": [
-          "event_20240815_cn",
-          "event_20240912_cn",
-          "event_20241219_cn",
-          "event_20250227_cn",
-          "event_20250520_cn",
-          "event_20250814_cn",
-          "event_20250912_cn",
-          "event_20260908_cn"
+          "event_20261022_cn"
         ],
         "option_cn": [
-          "event_20241219_cn",
-          "event_20250912_cn",
-          "event_20250814_cn",
-          "event_20250520_cn",
-          "event_20250227_cn",
-          "event_20240912_cn",
-          "event_20240815_cn"
+          "event_20261022_cn"
         ],
         "option_en": [
-          "event_20241219_cn",
-          "event_20250912_cn",
-          "event_20250814_cn",
-          "event_20250520_cn",
-          "event_20250227_cn",
-          "event_20240912_cn",
-          "event_20240815_cn"
+          "event_20261022_cn"
         ],
         "option_jp": [
-          "event_20241219_cn",
-          "event_20250912_cn",
-          "event_20250814_cn",
-          "event_20250520_cn",
-          "event_20250227_cn",
-          "event_20240912_cn",
-          "event_20240815_cn"
+          "event_20261022_cn"
         ],
         "option_tw": [
-          "event_20260908_cn"
+          "event_20261022_cn"
         ],
         "option_bold": [
-          "event_20240815_cn",
-          "event_20240912_cn",
-          "event_20241219_cn",
-          "event_20250227_cn",
-          "event_20250520_cn",
-          "event_20250814_cn",
-          "event_20250912_cn",
-          "event_20260908_cn"
+          "event_20261022_cn"
         ]
       },
       "Mode": {
@@ -4524,6 +4648,10 @@
       "UseAutoSearch": {
         "type": "checkbox",
         "value": true
+      },
+      "ContinueAfterRestart": {
+        "type": "checkbox",
+        "value": false
       },
       "Use2xBook": {
         "type": "checkbox",
@@ -4751,15 +4879,37 @@
         "type": "checkbox",
         "value": false
       },
+      "MinReserve": {
+        "type": "input",
+        "value": 0,
+        "validate": [
+          0,
+          150
+        ]
+      },
+      "RecoveryWait": {
+        "type": "stored",
+        "value": null,
+        "display": "hide"
+      },
       "Fleet1Value": {
         "type": "input",
-        "value": 119
+        "value": 119,
+        "validate": [
+          0,
+          150
+        ]
       },
       "Fleet1Record": {
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
         "validate": "datetime",
         "display": "disabled"
+      },
+      "Fleet1RecoveryState": {
+        "type": "stored",
+        "value": null,
+        "display": "hide"
       },
       "Fleet1Control": {
         "type": "select",
@@ -4790,13 +4940,22 @@
       },
       "Fleet2Value": {
         "type": "input",
-        "value": 119
+        "value": 119,
+        "validate": [
+          0,
+          150
+        ]
       },
       "Fleet2Record": {
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
         "validate": "datetime",
         "display": "disabled"
+      },
+      "Fleet2RecoveryState": {
+        "type": "stored",
+        "value": null,
+        "display": "hide"
       },
       "Fleet2Control": {
         "type": "select",
@@ -4967,54 +5126,22 @@
         "type": "select",
         "value": "campaign_main",
         "option": [
-          "event_20240815_cn",
-          "event_20240912_cn",
-          "event_20241219_cn",
-          "event_20250227_cn",
-          "event_20250520_cn",
-          "event_20250814_cn",
-          "event_20250912_cn",
-          "event_20260908_cn"
+          "event_20261022_cn"
         ],
         "option_cn": [
-          "event_20241219_cn",
-          "event_20250912_cn",
-          "event_20250814_cn",
-          "event_20250520_cn",
-          "event_20250227_cn",
-          "event_20240912_cn",
-          "event_20240815_cn"
+          "event_20261022_cn"
         ],
         "option_en": [
-          "event_20241219_cn",
-          "event_20250912_cn",
-          "event_20250814_cn",
-          "event_20250520_cn",
-          "event_20250227_cn",
-          "event_20240912_cn",
-          "event_20240815_cn"
+          "event_20261022_cn"
         ],
         "option_jp": [
-          "event_20241219_cn",
-          "event_20250912_cn",
-          "event_20250814_cn",
-          "event_20250520_cn",
-          "event_20250227_cn",
-          "event_20240912_cn",
-          "event_20240815_cn"
+          "event_20261022_cn"
         ],
         "option_tw": [
-          "event_20260908_cn"
+          "event_20261022_cn"
         ],
         "option_bold": [
-          "event_20240815_cn",
-          "event_20240912_cn",
-          "event_20241219_cn",
-          "event_20250227_cn",
-          "event_20250520_cn",
-          "event_20250814_cn",
-          "event_20250912_cn",
-          "event_20260908_cn"
+          "event_20261022_cn"
         ]
       },
       "Mode": {
@@ -5037,6 +5164,10 @@
       "UseAutoSearch": {
         "type": "checkbox",
         "value": true
+      },
+      "ContinueAfterRestart": {
+        "type": "checkbox",
+        "value": false
       },
       "Use2xBook": {
         "type": "checkbox",
@@ -5264,15 +5395,37 @@
         "type": "checkbox",
         "value": false
       },
+      "MinReserve": {
+        "type": "input",
+        "value": 0,
+        "validate": [
+          0,
+          150
+        ]
+      },
+      "RecoveryWait": {
+        "type": "stored",
+        "value": null,
+        "display": "hide"
+      },
       "Fleet1Value": {
         "type": "input",
-        "value": 119
+        "value": 119,
+        "validate": [
+          0,
+          150
+        ]
       },
       "Fleet1Record": {
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
         "validate": "datetime",
         "display": "disabled"
+      },
+      "Fleet1RecoveryState": {
+        "type": "stored",
+        "value": null,
+        "display": "hide"
       },
       "Fleet1Control": {
         "type": "select",
@@ -5303,13 +5456,22 @@
       },
       "Fleet2Value": {
         "type": "input",
-        "value": 119
+        "value": 119,
+        "validate": [
+          0,
+          150
+        ]
       },
       "Fleet2Record": {
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
         "validate": "datetime",
         "display": "disabled"
+      },
+      "Fleet2RecoveryState": {
+        "type": "stored",
+        "value": null,
+        "display": "hide"
       },
       "Fleet2Control": {
         "type": "select",
@@ -5480,54 +5642,22 @@
         "type": "select",
         "value": "campaign_main",
         "option": [
-          "event_20240815_cn",
-          "event_20240912_cn",
-          "event_20241219_cn",
-          "event_20250227_cn",
-          "event_20250520_cn",
-          "event_20250814_cn",
-          "event_20250912_cn",
-          "event_20260908_cn"
+          "event_20261022_cn"
         ],
         "option_cn": [
-          "event_20241219_cn",
-          "event_20250912_cn",
-          "event_20250814_cn",
-          "event_20250520_cn",
-          "event_20250227_cn",
-          "event_20240912_cn",
-          "event_20240815_cn"
+          "event_20261022_cn"
         ],
         "option_en": [
-          "event_20241219_cn",
-          "event_20250912_cn",
-          "event_20250814_cn",
-          "event_20250520_cn",
-          "event_20250227_cn",
-          "event_20240912_cn",
-          "event_20240815_cn"
+          "event_20261022_cn"
         ],
         "option_jp": [
-          "event_20241219_cn",
-          "event_20250912_cn",
-          "event_20250814_cn",
-          "event_20250520_cn",
-          "event_20250227_cn",
-          "event_20240912_cn",
-          "event_20240815_cn"
+          "event_20261022_cn"
         ],
         "option_tw": [
-          "event_20260908_cn"
+          "event_20261022_cn"
         ],
         "option_bold": [
-          "event_20240815_cn",
-          "event_20240912_cn",
-          "event_20241219_cn",
-          "event_20250227_cn",
-          "event_20250520_cn",
-          "event_20250814_cn",
-          "event_20250912_cn",
-          "event_20260908_cn"
+          "event_20261022_cn"
         ]
       },
       "Mode": {
@@ -5550,6 +5680,10 @@
       "UseAutoSearch": {
         "type": "checkbox",
         "value": true
+      },
+      "ContinueAfterRestart": {
+        "type": "checkbox",
+        "value": false
       },
       "Use2xBook": {
         "type": "checkbox",
@@ -5776,15 +5910,37 @@
         "type": "checkbox",
         "value": false
       },
+      "MinReserve": {
+        "type": "input",
+        "value": 0,
+        "validate": [
+          0,
+          150
+        ]
+      },
+      "RecoveryWait": {
+        "type": "stored",
+        "value": null,
+        "display": "hide"
+      },
       "Fleet1Value": {
         "type": "input",
-        "value": 119
+        "value": 119,
+        "validate": [
+          0,
+          150
+        ]
       },
       "Fleet1Record": {
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
         "validate": "datetime",
         "display": "disabled"
+      },
+      "Fleet1RecoveryState": {
+        "type": "stored",
+        "value": null,
+        "display": "hide"
       },
       "Fleet1Control": {
         "type": "select",
@@ -5815,13 +5971,22 @@
       },
       "Fleet2Value": {
         "type": "input",
-        "value": 119
+        "value": 119,
+        "validate": [
+          0,
+          150
+        ]
       },
       "Fleet2Record": {
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
         "validate": "datetime",
         "display": "disabled"
+      },
+      "Fleet2RecoveryState": {
+        "type": "stored",
+        "value": null,
+        "display": "hide"
       },
       "Fleet2Control": {
         "type": "select",
@@ -6051,6 +6216,11 @@
         "value": false,
         "display": "hide"
       },
+      "ContinueAfterRestart": {
+        "type": "checkbox",
+        "value": false,
+        "display": "hide"
+      },
       "Use2xBook": {
         "type": "checkbox",
         "value": false,
@@ -6135,15 +6305,37 @@
         "type": "checkbox",
         "value": false
       },
+      "MinReserve": {
+        "type": "input",
+        "value": 0,
+        "validate": [
+          0,
+          150
+        ]
+      },
+      "RecoveryWait": {
+        "type": "stored",
+        "value": null,
+        "display": "hide"
+      },
       "Fleet1Value": {
         "type": "input",
-        "value": 119
+        "value": 119,
+        "validate": [
+          0,
+          150
+        ]
       },
       "Fleet1Record": {
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
         "validate": "datetime",
         "display": "disabled"
+      },
+      "Fleet1RecoveryState": {
+        "type": "stored",
+        "value": null,
+        "display": "hide"
       },
       "Fleet1Control": {
         "type": "select",
@@ -6176,12 +6368,21 @@
       "Fleet2Value": {
         "type": "stored",
         "value": 119,
+        "validate": [
+          0,
+          150
+        ],
         "display": "hide"
       },
       "Fleet2Record": {
         "type": "stored",
         "value": "2020-01-01 00:00:00",
         "validate": "datetime",
+        "display": "hide"
+      },
+      "Fleet2RecoveryState": {
+        "type": "stored",
+        "value": null,
         "display": "hide"
       },
       "Fleet2Control": {
@@ -6408,6 +6609,11 @@
         "value": false,
         "display": "hide"
       },
+      "ContinueAfterRestart": {
+        "type": "checkbox",
+        "value": false,
+        "display": "hide"
+      },
       "Use2xBook": {
         "type": "checkbox",
         "value": false,
@@ -6492,15 +6698,37 @@
         "type": "checkbox",
         "value": false
       },
+      "MinReserve": {
+        "type": "input",
+        "value": 0,
+        "validate": [
+          0,
+          150
+        ]
+      },
+      "RecoveryWait": {
+        "type": "stored",
+        "value": null,
+        "display": "hide"
+      },
       "Fleet1Value": {
         "type": "input",
-        "value": 119
+        "value": 119,
+        "validate": [
+          0,
+          150
+        ]
       },
       "Fleet1Record": {
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
         "validate": "datetime",
         "display": "disabled"
+      },
+      "Fleet1RecoveryState": {
+        "type": "stored",
+        "value": null,
+        "display": "hide"
       },
       "Fleet1Control": {
         "type": "select",
@@ -6531,13 +6759,22 @@
       },
       "Fleet2Value": {
         "type": "input",
-        "value": 119
+        "value": 119,
+        "validate": [
+          0,
+          150
+        ]
       },
       "Fleet2Record": {
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
         "validate": "datetime",
         "display": "disabled"
+      },
+      "Fleet2RecoveryState": {
+        "type": "stored",
+        "value": null,
+        "display": "hide"
       },
       "Fleet2Control": {
         "type": "select",
@@ -6695,15 +6932,37 @@
         "type": "checkbox",
         "value": false
       },
+      "MinReserve": {
+        "type": "input",
+        "value": 0,
+        "validate": [
+          0,
+          150
+        ]
+      },
+      "RecoveryWait": {
+        "type": "stored",
+        "value": null,
+        "display": "hide"
+      },
       "Fleet1Value": {
         "type": "input",
-        "value": 119
+        "value": 119,
+        "validate": [
+          0,
+          150
+        ]
       },
       "Fleet1Record": {
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
         "validate": "datetime",
         "display": "disabled"
+      },
+      "Fleet1RecoveryState": {
+        "type": "stored",
+        "value": null,
+        "display": "hide"
       },
       "Fleet1Control": {
         "type": "select",
@@ -6739,12 +6998,21 @@
       "Fleet2Value": {
         "type": "stored",
         "value": 119,
+        "validate": [
+          0,
+          150
+        ],
         "display": "hide"
       },
       "Fleet2Record": {
         "type": "stored",
         "value": "2020-01-01 00:00:00",
         "validate": "datetime",
+        "display": "hide"
+      },
+      "Fleet2RecoveryState": {
+        "type": "stored",
+        "value": null,
         "display": "hide"
       },
       "Fleet2Control": {
@@ -6892,6 +7160,11 @@
         "value": false,
         "display": "hide"
       },
+      "ContinueAfterRestart": {
+        "type": "checkbox",
+        "value": false,
+        "display": "hide"
+      },
       "Use2xBook": {
         "type": "checkbox",
         "value": false,
@@ -6997,15 +7270,37 @@
         "type": "checkbox",
         "value": false
       },
+      "MinReserve": {
+        "type": "input",
+        "value": 0,
+        "validate": [
+          0,
+          150
+        ]
+      },
+      "RecoveryWait": {
+        "type": "stored",
+        "value": null,
+        "display": "hide"
+      },
       "Fleet1Value": {
         "type": "input",
-        "value": 119
+        "value": 119,
+        "validate": [
+          0,
+          150
+        ]
       },
       "Fleet1Record": {
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
         "validate": "datetime",
         "display": "disabled"
+      },
+      "Fleet1RecoveryState": {
+        "type": "stored",
+        "value": null,
+        "display": "hide"
       },
       "Fleet1Control": {
         "type": "select",
@@ -7037,12 +7332,21 @@
       "Fleet2Value": {
         "type": "stored",
         "value": 119,
+        "validate": [
+          0,
+          150
+        ],
         "display": "hide"
       },
       "Fleet2Record": {
         "type": "stored",
         "value": "2020-01-01 00:00:00",
         "validate": "datetime",
+        "display": "hide"
+      },
+      "Fleet2RecoveryState": {
+        "type": "stored",
+        "value": null,
         "display": "hide"
       },
       "Fleet2Control": {
@@ -7216,6 +7520,11 @@
         "value": false,
         "display": "hide"
       },
+      "ContinueAfterRestart": {
+        "type": "checkbox",
+        "value": false,
+        "display": "hide"
+      },
       "Use2xBook": {
         "type": "checkbox",
         "value": false,
@@ -7321,15 +7630,37 @@
         "type": "checkbox",
         "value": false
       },
+      "MinReserve": {
+        "type": "input",
+        "value": 0,
+        "validate": [
+          0,
+          150
+        ]
+      },
+      "RecoveryWait": {
+        "type": "stored",
+        "value": null,
+        "display": "hide"
+      },
       "Fleet1Value": {
         "type": "input",
-        "value": 119
+        "value": 119,
+        "validate": [
+          0,
+          150
+        ]
       },
       "Fleet1Record": {
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
         "validate": "datetime",
         "display": "disabled"
+      },
+      "Fleet1RecoveryState": {
+        "type": "stored",
+        "value": null,
+        "display": "hide"
       },
       "Fleet1Control": {
         "type": "select",
@@ -7360,13 +7691,22 @@
       },
       "Fleet2Value": {
         "type": "input",
-        "value": 119
+        "value": 119,
+        "validate": [
+          0,
+          150
+        ]
       },
       "Fleet2Record": {
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
         "validate": "datetime",
         "display": "disabled"
+      },
+      "Fleet2RecoveryState": {
+        "type": "stored",
+        "value": null,
+        "display": "hide"
       },
       "Fleet2Control": {
         "type": "select",
@@ -7668,9 +8008,13 @@
           "war_archives_20230525_cn",
           "war_archives_20230803_cn",
           "war_archives_20231026_cn",
-          "war_archives_20240725_cn"
+          "war_archives_20240725_cn",
+          "war_archives_20241024_cn",
+          "war_archives_20251023_cn"
         ],
         "option_cn": [
+          "war_archives_20251023_cn",
+          "war_archives_20241024_cn",
           "war_archives_20240725_cn",
           "war_archives_20230525_cn",
           "war_archives_20230803_cn",
@@ -7721,6 +8065,8 @@
           "war_archives_20181020_en"
         ],
         "option_en": [
+          "war_archives_20251023_cn",
+          "war_archives_20241024_cn",
           "war_archives_20240725_cn",
           "war_archives_20230525_cn",
           "war_archives_20230803_cn",
@@ -7771,6 +8117,8 @@
           "war_archives_20181020_en"
         ],
         "option_jp": [
+          "war_archives_20251023_cn",
+          "war_archives_20241024_cn",
           "war_archives_20240725_cn",
           "war_archives_20230525_cn",
           "war_archives_20230803_cn",
@@ -7821,6 +8169,8 @@
           "war_archives_20181020_en"
         ],
         "option_tw": [
+          "war_archives_20251023_cn",
+          "war_archives_20241024_cn",
           "war_archives_20240725_cn",
           "war_archives_20230525_cn",
           "war_archives_20230803_cn",
@@ -7918,7 +8268,9 @@
           "war_archives_20230525_cn",
           "war_archives_20230803_cn",
           "war_archives_20231026_cn",
-          "war_archives_20240725_cn"
+          "war_archives_20240725_cn",
+          "war_archives_20241024_cn",
+          "war_archives_20251023_cn"
         ]
       },
       "Mode": {
@@ -7941,6 +8293,11 @@
       "UseAutoSearch": {
         "type": "checkbox",
         "value": true
+      },
+      "ContinueAfterRestart": {
+        "type": "checkbox",
+        "value": false,
+        "display": "hide"
       },
       "Use2xBook": {
         "type": "checkbox",
@@ -8212,15 +8569,37 @@
         "type": "checkbox",
         "value": false
       },
+      "MinReserve": {
+        "type": "input",
+        "value": 0,
+        "validate": [
+          0,
+          150
+        ]
+      },
+      "RecoveryWait": {
+        "type": "stored",
+        "value": null,
+        "display": "hide"
+      },
       "Fleet1Value": {
         "type": "input",
-        "value": 119
+        "value": 119,
+        "validate": [
+          0,
+          150
+        ]
       },
       "Fleet1Record": {
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
         "validate": "datetime",
         "display": "disabled"
+      },
+      "Fleet1RecoveryState": {
+        "type": "stored",
+        "value": null,
+        "display": "hide"
       },
       "Fleet1Control": {
         "type": "select",
@@ -8251,13 +8630,22 @@
       },
       "Fleet2Value": {
         "type": "input",
-        "value": 119
+        "value": 119,
+        "validate": [
+          0,
+          150
+        ]
       },
       "Fleet2Record": {
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
         "validate": "datetime",
         "display": "disabled"
+      },
+      "Fleet2RecoveryState": {
+        "type": "stored",
+        "value": null,
+        "display": "hide"
       },
       "Fleet2Control": {
         "type": "select",
@@ -8400,7 +8788,8 @@
       },
       "LastStage": {
         "type": "input",
-        "value": 0
+        "value": "0",
+        "mode": "text"
       }
     },
     "Campaign": {
@@ -8413,54 +8802,22 @@
         "type": "select",
         "value": "campaign_main",
         "option": [
-          "event_20240815_cn",
-          "event_20240912_cn",
-          "event_20241219_cn",
-          "event_20250227_cn",
-          "event_20250520_cn",
-          "event_20250814_cn",
-          "event_20250912_cn",
-          "event_20260908_cn"
+          "event_20261022_cn"
         ],
         "option_cn": [
-          "event_20241219_cn",
-          "event_20250912_cn",
-          "event_20250814_cn",
-          "event_20250520_cn",
-          "event_20250227_cn",
-          "event_20240912_cn",
-          "event_20240815_cn"
+          "event_20261022_cn"
         ],
         "option_en": [
-          "event_20241219_cn",
-          "event_20250912_cn",
-          "event_20250814_cn",
-          "event_20250520_cn",
-          "event_20250227_cn",
-          "event_20240912_cn",
-          "event_20240815_cn"
+          "event_20261022_cn"
         ],
         "option_jp": [
-          "event_20241219_cn",
-          "event_20250912_cn",
-          "event_20250814_cn",
-          "event_20250520_cn",
-          "event_20250227_cn",
-          "event_20240912_cn",
-          "event_20240815_cn"
+          "event_20261022_cn"
         ],
         "option_tw": [
-          "event_20260908_cn"
+          "event_20261022_cn"
         ],
         "option_bold": [
-          "event_20240815_cn",
-          "event_20240912_cn",
-          "event_20241219_cn",
-          "event_20250227_cn",
-          "event_20250520_cn",
-          "event_20250814_cn",
-          "event_20250912_cn",
-          "event_20260908_cn"
+          "event_20261022_cn"
         ]
       },
       "Mode": {
@@ -8483,6 +8840,10 @@
       "UseAutoSearch": {
         "type": "checkbox",
         "value": true
+      },
+      "ContinueAfterRestart": {
+        "type": "checkbox",
+        "value": false
       },
       "Use2xBook": {
         "type": "checkbox",
@@ -8716,15 +9077,37 @@
         "type": "checkbox",
         "value": false
       },
+      "MinReserve": {
+        "type": "input",
+        "value": 0,
+        "validate": [
+          0,
+          150
+        ]
+      },
+      "RecoveryWait": {
+        "type": "stored",
+        "value": null,
+        "display": "hide"
+      },
       "Fleet1Value": {
         "type": "input",
-        "value": 119
+        "value": 119,
+        "validate": [
+          0,
+          150
+        ]
       },
       "Fleet1Record": {
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
         "validate": "datetime",
         "display": "disabled"
+      },
+      "Fleet1RecoveryState": {
+        "type": "stored",
+        "value": null,
+        "display": "hide"
       },
       "Fleet1Control": {
         "type": "select",
@@ -8755,13 +9138,22 @@
       },
       "Fleet2Value": {
         "type": "input",
-        "value": 119
+        "value": 119,
+        "validate": [
+          0,
+          150
+        ]
       },
       "Fleet2Record": {
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
         "validate": "datetime",
         "display": "disabled"
+      },
+      "Fleet2RecoveryState": {
+        "type": "stored",
+        "value": null,
+        "display": "hide"
       },
       "Fleet2Control": {
         "type": "select",
@@ -8904,7 +9296,8 @@
       },
       "LastStage": {
         "type": "input",
-        "value": 0
+        "value": "0",
+        "mode": "text"
       }
     },
     "Campaign": {
@@ -8917,54 +9310,22 @@
         "type": "select",
         "value": "campaign_main",
         "option": [
-          "event_20240815_cn",
-          "event_20240912_cn",
-          "event_20241219_cn",
-          "event_20250227_cn",
-          "event_20250520_cn",
-          "event_20250814_cn",
-          "event_20250912_cn",
-          "event_20260908_cn"
+          "event_20261022_cn"
         ],
         "option_cn": [
-          "event_20241219_cn",
-          "event_20250912_cn",
-          "event_20250814_cn",
-          "event_20250520_cn",
-          "event_20250227_cn",
-          "event_20240912_cn",
-          "event_20240815_cn"
+          "event_20261022_cn"
         ],
         "option_en": [
-          "event_20241219_cn",
-          "event_20250912_cn",
-          "event_20250814_cn",
-          "event_20250520_cn",
-          "event_20250227_cn",
-          "event_20240912_cn",
-          "event_20240815_cn"
+          "event_20261022_cn"
         ],
         "option_jp": [
-          "event_20241219_cn",
-          "event_20250912_cn",
-          "event_20250814_cn",
-          "event_20250520_cn",
-          "event_20250227_cn",
-          "event_20240912_cn",
-          "event_20240815_cn"
+          "event_20261022_cn"
         ],
         "option_tw": [
-          "event_20260908_cn"
+          "event_20261022_cn"
         ],
         "option_bold": [
-          "event_20240815_cn",
-          "event_20240912_cn",
-          "event_20241219_cn",
-          "event_20250227_cn",
-          "event_20250520_cn",
-          "event_20250814_cn",
-          "event_20250912_cn",
-          "event_20260908_cn"
+          "event_20261022_cn"
         ]
       },
       "Mode": {
@@ -8987,6 +9348,10 @@
       "UseAutoSearch": {
         "type": "checkbox",
         "value": true
+      },
+      "ContinueAfterRestart": {
+        "type": "checkbox",
+        "value": false
       },
       "Use2xBook": {
         "type": "checkbox",
@@ -9220,15 +9585,37 @@
         "type": "checkbox",
         "value": false
       },
+      "MinReserve": {
+        "type": "input",
+        "value": 0,
+        "validate": [
+          0,
+          150
+        ]
+      },
+      "RecoveryWait": {
+        "type": "stored",
+        "value": null,
+        "display": "hide"
+      },
       "Fleet1Value": {
         "type": "input",
-        "value": 119
+        "value": 119,
+        "validate": [
+          0,
+          150
+        ]
       },
       "Fleet1Record": {
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
         "validate": "datetime",
         "display": "disabled"
+      },
+      "Fleet1RecoveryState": {
+        "type": "stored",
+        "value": null,
+        "display": "hide"
       },
       "Fleet1Control": {
         "type": "select",
@@ -9259,13 +9646,22 @@
       },
       "Fleet2Value": {
         "type": "input",
-        "value": 119
+        "value": 119,
+        "validate": [
+          0,
+          150
+        ]
       },
       "Fleet2Record": {
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
         "validate": "datetime",
         "display": "disabled"
+      },
+      "Fleet2RecoveryState": {
+        "type": "stored",
+        "value": null,
+        "display": "hide"
       },
       "Fleet2Control": {
         "type": "select",
@@ -9408,7 +9804,8 @@
       },
       "LastStage": {
         "type": "input",
-        "value": 0
+        "value": "0",
+        "mode": "text"
       }
     },
     "Campaign": {
@@ -9421,54 +9818,22 @@
         "type": "select",
         "value": "campaign_main",
         "option": [
-          "event_20240815_cn",
-          "event_20240912_cn",
-          "event_20241219_cn",
-          "event_20250227_cn",
-          "event_20250520_cn",
-          "event_20250814_cn",
-          "event_20250912_cn",
-          "event_20260908_cn"
+          "event_20261022_cn"
         ],
         "option_cn": [
-          "event_20241219_cn",
-          "event_20250912_cn",
-          "event_20250814_cn",
-          "event_20250520_cn",
-          "event_20250227_cn",
-          "event_20240912_cn",
-          "event_20240815_cn"
+          "event_20261022_cn"
         ],
         "option_en": [
-          "event_20241219_cn",
-          "event_20250912_cn",
-          "event_20250814_cn",
-          "event_20250520_cn",
-          "event_20250227_cn",
-          "event_20240912_cn",
-          "event_20240815_cn"
+          "event_20261022_cn"
         ],
         "option_jp": [
-          "event_20241219_cn",
-          "event_20250912_cn",
-          "event_20250814_cn",
-          "event_20250520_cn",
-          "event_20250227_cn",
-          "event_20240912_cn",
-          "event_20240815_cn"
+          "event_20261022_cn"
         ],
         "option_tw": [
-          "event_20260908_cn"
+          "event_20261022_cn"
         ],
         "option_bold": [
-          "event_20240815_cn",
-          "event_20240912_cn",
-          "event_20241219_cn",
-          "event_20250227_cn",
-          "event_20250520_cn",
-          "event_20250814_cn",
-          "event_20250912_cn",
-          "event_20260908_cn"
+          "event_20261022_cn"
         ]
       },
       "Mode": {
@@ -9491,6 +9856,10 @@
       "UseAutoSearch": {
         "type": "checkbox",
         "value": true
+      },
+      "ContinueAfterRestart": {
+        "type": "checkbox",
+        "value": false
       },
       "Use2xBook": {
         "type": "checkbox",
@@ -9724,15 +10093,37 @@
         "type": "checkbox",
         "value": false
       },
+      "MinReserve": {
+        "type": "input",
+        "value": 0,
+        "validate": [
+          0,
+          150
+        ]
+      },
+      "RecoveryWait": {
+        "type": "stored",
+        "value": null,
+        "display": "hide"
+      },
       "Fleet1Value": {
         "type": "input",
-        "value": 119
+        "value": 119,
+        "validate": [
+          0,
+          150
+        ]
       },
       "Fleet1Record": {
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
         "validate": "datetime",
         "display": "disabled"
+      },
+      "Fleet1RecoveryState": {
+        "type": "stored",
+        "value": null,
+        "display": "hide"
       },
       "Fleet1Control": {
         "type": "select",
@@ -9763,13 +10154,22 @@
       },
       "Fleet2Value": {
         "type": "input",
-        "value": 119
+        "value": 119,
+        "validate": [
+          0,
+          150
+        ]
       },
       "Fleet2Record": {
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
         "validate": "datetime",
         "display": "disabled"
+      },
+      "Fleet2RecoveryState": {
+        "type": "stored",
+        "value": null,
+        "display": "hide"
       },
       "Fleet2Control": {
         "type": "select",
@@ -9912,7 +10312,8 @@
       },
       "LastStage": {
         "type": "input",
-        "value": 0
+        "value": "0",
+        "mode": "text"
       }
     },
     "Campaign": {
@@ -9925,54 +10326,22 @@
         "type": "select",
         "value": "campaign_main",
         "option": [
-          "event_20240815_cn",
-          "event_20240912_cn",
-          "event_20241219_cn",
-          "event_20250227_cn",
-          "event_20250520_cn",
-          "event_20250814_cn",
-          "event_20250912_cn",
-          "event_20260908_cn"
+          "event_20261022_cn"
         ],
         "option_cn": [
-          "event_20241219_cn",
-          "event_20250912_cn",
-          "event_20250814_cn",
-          "event_20250520_cn",
-          "event_20250227_cn",
-          "event_20240912_cn",
-          "event_20240815_cn"
+          "event_20261022_cn"
         ],
         "option_en": [
-          "event_20241219_cn",
-          "event_20250912_cn",
-          "event_20250814_cn",
-          "event_20250520_cn",
-          "event_20250227_cn",
-          "event_20240912_cn",
-          "event_20240815_cn"
+          "event_20261022_cn"
         ],
         "option_jp": [
-          "event_20241219_cn",
-          "event_20250912_cn",
-          "event_20250814_cn",
-          "event_20250520_cn",
-          "event_20250227_cn",
-          "event_20240912_cn",
-          "event_20240815_cn"
+          "event_20261022_cn"
         ],
         "option_tw": [
-          "event_20260908_cn"
+          "event_20261022_cn"
         ],
         "option_bold": [
-          "event_20240815_cn",
-          "event_20240912_cn",
-          "event_20241219_cn",
-          "event_20250227_cn",
-          "event_20250520_cn",
-          "event_20250814_cn",
-          "event_20250912_cn",
-          "event_20260908_cn"
+          "event_20261022_cn"
         ]
       },
       "Mode": {
@@ -9995,6 +10364,10 @@
       "UseAutoSearch": {
         "type": "checkbox",
         "value": true
+      },
+      "ContinueAfterRestart": {
+        "type": "checkbox",
+        "value": false
       },
       "Use2xBook": {
         "type": "checkbox",
@@ -10228,15 +10601,37 @@
         "type": "checkbox",
         "value": false
       },
+      "MinReserve": {
+        "type": "input",
+        "value": 0,
+        "validate": [
+          0,
+          150
+        ]
+      },
+      "RecoveryWait": {
+        "type": "stored",
+        "value": null,
+        "display": "hide"
+      },
       "Fleet1Value": {
         "type": "input",
-        "value": 119
+        "value": 119,
+        "validate": [
+          0,
+          150
+        ]
       },
       "Fleet1Record": {
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
         "validate": "datetime",
         "display": "disabled"
+      },
+      "Fleet1RecoveryState": {
+        "type": "stored",
+        "value": null,
+        "display": "hide"
       },
       "Fleet1Control": {
         "type": "select",
@@ -10267,13 +10662,22 @@
       },
       "Fleet2Value": {
         "type": "input",
-        "value": 119
+        "value": 119,
+        "validate": [
+          0,
+          150
+        ]
       },
       "Fleet2Record": {
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
         "validate": "datetime",
         "display": "disabled"
+      },
+      "Fleet2RecoveryState": {
+        "type": "stored",
+        "value": null,
+        "display": "hide"
       },
       "Fleet2Control": {
         "type": "select",
@@ -10419,54 +10823,22 @@
         "type": "select",
         "value": "campaign_main",
         "option": [
-          "event_20240815_cn",
-          "event_20240912_cn",
-          "event_20241219_cn",
-          "event_20250227_cn",
-          "event_20250520_cn",
-          "event_20250814_cn",
-          "event_20250912_cn",
-          "event_20260908_cn"
+          "event_20261022_cn"
         ],
         "option_cn": [
-          "event_20241219_cn",
-          "event_20250912_cn",
-          "event_20250814_cn",
-          "event_20250520_cn",
-          "event_20250227_cn",
-          "event_20240912_cn",
-          "event_20240815_cn"
+          "event_20261022_cn"
         ],
         "option_en": [
-          "event_20241219_cn",
-          "event_20250912_cn",
-          "event_20250814_cn",
-          "event_20250520_cn",
-          "event_20250227_cn",
-          "event_20240912_cn",
-          "event_20240815_cn"
+          "event_20261022_cn"
         ],
         "option_jp": [
-          "event_20241219_cn",
-          "event_20250912_cn",
-          "event_20250814_cn",
-          "event_20250520_cn",
-          "event_20250227_cn",
-          "event_20240912_cn",
-          "event_20240815_cn"
+          "event_20261022_cn"
         ],
         "option_tw": [
-          "event_20260908_cn"
+          "event_20261022_cn"
         ],
         "option_bold": [
-          "event_20240815_cn",
-          "event_20240912_cn",
-          "event_20241219_cn",
-          "event_20250227_cn",
-          "event_20250520_cn",
-          "event_20250814_cn",
-          "event_20250912_cn",
-          "event_20260908_cn"
+          "event_20261022_cn"
         ]
       },
       "Mode": {
@@ -10489,6 +10861,10 @@
       "UseAutoSearch": {
         "type": "checkbox",
         "value": true
+      },
+      "ContinueAfterRestart": {
+        "type": "checkbox",
+        "value": false
       },
       "Use2xBook": {
         "type": "checkbox",
@@ -10723,15 +11099,37 @@
         "type": "checkbox",
         "value": false
       },
+      "MinReserve": {
+        "type": "input",
+        "value": 0,
+        "validate": [
+          0,
+          150
+        ]
+      },
+      "RecoveryWait": {
+        "type": "stored",
+        "value": null,
+        "display": "hide"
+      },
       "Fleet1Value": {
         "type": "input",
-        "value": 119
+        "value": 119,
+        "validate": [
+          0,
+          150
+        ]
       },
       "Fleet1Record": {
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
         "validate": "datetime",
         "display": "disabled"
+      },
+      "Fleet1RecoveryState": {
+        "type": "stored",
+        "value": null,
+        "display": "hide"
       },
       "Fleet1Control": {
         "type": "select",
@@ -10762,13 +11160,22 @@
       },
       "Fleet2Value": {
         "type": "input",
-        "value": 119
+        "value": 119,
+        "validate": [
+          0,
+          150
+        ]
       },
       "Fleet2Record": {
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
         "validate": "datetime",
         "display": "disabled"
+      },
+      "Fleet2RecoveryState": {
+        "type": "stored",
+        "value": null,
+        "display": "hide"
       },
       "Fleet2Control": {
         "type": "select",
@@ -10962,6 +11369,11 @@
         "value": false,
         "display": "hide"
       },
+      "ContinueAfterRestart": {
+        "type": "checkbox",
+        "value": false,
+        "display": "hide"
+      },
       "Use2xBook": {
         "type": "checkbox",
         "value": false,
@@ -11047,15 +11459,37 @@
         "type": "checkbox",
         "value": false
       },
+      "MinReserve": {
+        "type": "input",
+        "value": 0,
+        "validate": [
+          0,
+          150
+        ]
+      },
+      "RecoveryWait": {
+        "type": "stored",
+        "value": null,
+        "display": "hide"
+      },
       "Fleet1Value": {
         "type": "input",
-        "value": 119
+        "value": 119,
+        "validate": [
+          0,
+          150
+        ]
       },
       "Fleet1Record": {
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
         "validate": "datetime",
         "display": "disabled"
+      },
+      "Fleet1RecoveryState": {
+        "type": "stored",
+        "value": null,
+        "display": "hide"
       },
       "Fleet1Control": {
         "type": "select",
@@ -11087,12 +11521,21 @@
       "Fleet2Value": {
         "type": "stored",
         "value": 119,
+        "validate": [
+          0,
+          150
+        ],
         "display": "hide"
       },
       "Fleet2Record": {
         "type": "stored",
         "value": "2020-01-01 00:00:00",
         "validate": "datetime",
+        "display": "hide"
+      },
+      "Fleet2RecoveryState": {
+        "type": "stored",
+        "value": null,
         "display": "hide"
       },
       "Fleet2Control": {
@@ -11240,6 +11683,11 @@
         "value": false,
         "display": "hide"
       },
+      "ContinueAfterRestart": {
+        "type": "checkbox",
+        "value": false,
+        "display": "hide"
+      },
       "Use2xBook": {
         "type": "checkbox",
         "value": false,
@@ -11346,15 +11794,37 @@
         "type": "checkbox",
         "value": false
       },
+      "MinReserve": {
+        "type": "input",
+        "value": 0,
+        "validate": [
+          0,
+          150
+        ]
+      },
+      "RecoveryWait": {
+        "type": "stored",
+        "value": null,
+        "display": "hide"
+      },
       "Fleet1Value": {
         "type": "input",
-        "value": 119
+        "value": 119,
+        "validate": [
+          0,
+          150
+        ]
       },
       "Fleet1Record": {
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
         "validate": "datetime",
         "display": "disabled"
+      },
+      "Fleet1RecoveryState": {
+        "type": "stored",
+        "value": null,
+        "display": "hide"
       },
       "Fleet1Control": {
         "type": "select",
@@ -11386,12 +11856,21 @@
       "Fleet2Value": {
         "type": "stored",
         "value": 119,
+        "validate": [
+          0,
+          150
+        ],
         "display": "hide"
       },
       "Fleet2Record": {
         "type": "stored",
         "value": "2020-01-01 00:00:00",
         "validate": "datetime",
+        "display": "hide"
+      },
+      "Fleet2RecoveryState": {
+        "type": "stored",
+        "value": null,
         "display": "hide"
       },
       "Fleet2Control": {
@@ -12020,6 +12499,15 @@
         "type": "textarea",
         "value": "20000 > 10000 > 5000 > 3000 > 2000 > 1000"
       },
+      "ReserveFood": {
+        "type": "checkbox",
+        "value": false
+      },
+      "FeedReserveState": {
+        "type": "stored",
+        "value": null,
+        "display": "hide"
+      },
       "BuyFood": {
         "type": "checkbox",
         "value": false,
@@ -12248,7 +12736,12 @@
       },
       "JoinThreshold": {
         "type": "input",
-        "value": 1
+        "value": 1.0,
+        "valuetype": "float",
+        "validate": [
+          0.0,
+          1.0
+        ]
       },
       "AttackBoss": {
         "type": "checkbox",
@@ -12579,7 +13072,22 @@
         "type": "select",
         "value": "campaign_main",
         "option": [
-          "campaign_main"
+          "event_20261022_cn"
+        ],
+        "option_cn": [
+          "event_20261022_cn"
+        ],
+        "option_en": [
+          "event_20261022_cn"
+        ],
+        "option_jp": [
+          "event_20261022_cn"
+        ],
+        "option_tw": [
+          "event_20261022_cn"
+        ],
+        "option_bold": [
+          "event_20261022_cn"
         ]
       },
       "Mode": {
@@ -12604,6 +13112,11 @@
       "UseAutoSearch": {
         "type": "checkbox",
         "value": true,
+        "display": "hide"
+      },
+      "ContinueAfterRestart": {
+        "type": "checkbox",
+        "value": false,
         "display": "hide"
       },
       "Use2xBook": {
@@ -12918,6 +13431,98 @@
       }
     }
   },
+  "LimitChallenge": {
+    "Scheduler": {
+      "Enable": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "PushNotification": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "NextRun": {
+        "type": "datetime",
+        "value": "2020-01-01 00:00:00",
+        "validate": "datetime"
+      },
+      "Command": {
+        "type": "input",
+        "value": "LimitChallenge",
+        "display": "hide"
+      },
+      "SuccessInterval": {
+        "type": "input",
+        "value": 0,
+        "display": "hide"
+      },
+      "FailureInterval": {
+        "type": "input",
+        "value": 120,
+        "display": "hide"
+      },
+      "ServerUpdate": {
+        "type": "input",
+        "value": "00:00",
+        "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      }
+    },
+    "LimitChallenge": {
+      "TargetLevel": {
+        "type": "select",
+        "value": "easy",
+        "option": [
+          "easy",
+          "normal",
+          "hard"
+        ]
+      },
+      "Month": {
+        "type": "stored",
+        "value": 0,
+        "display": "hide"
+      },
+      "CompletedLevel": {
+        "type": "stored",
+        "value": 0,
+        "display": "hide"
+      },
+      "AttemptedLevel": {
+        "type": "stored",
+        "value": 0,
+        "display": "hide"
+      },
+      "Failed": {
+        "type": "stored",
+        "value": false,
+        "display": "hide"
+      }
+    },
+    "Storage": {
+      "Storage": {
+        "type": "storage",
+        "value": {},
+        "valuetype": "ignore",
+        "display": "disabled"
+      }
+    }
+  },
   "Hard": {
     "Scheduler": {
       "Enable": {
@@ -12982,6 +13587,10 @@
           1,
           2
         ]
+      },
+      "RunAt18": {
+        "type": "checkbox",
+        "value": false
       },
       "HardNewMode": {
         "type": "checkbox",
@@ -13150,6 +13759,21 @@
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
         "validate": "datetime"
+      }
+    },
+    "Equipment": {
+      "Enable": {
+        "type": "checkbox",
+        "value": false
+      },
+      "ClearBeforeApply": {
+        "type": "checkbox",
+        "value": true
+      },
+      "Config": {
+        "type": "textarea",
+        "value": "flagship:\n  before: null\n  after: null\nup:\n  before: null\n  after: null\ndown:\n  before: null\n  after: null\nhead:\n  before: null\n  after: null\nmiddle:\n  before: null\n  after: null\ntail:\n  before: null\n  after: null",
+        "mode": "yaml"
       }
     },
     "Storage": {
@@ -13767,6 +14391,32 @@
         "type": "checkbox",
         "value": true
       },
+      "TicketAmount": {
+        "type": "select",
+        "value": 1,
+        "option": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10
+        ]
+      },
+      "ClearTicket": {
+        "type": "checkbox",
+        "value": true
+      },
+      "ClearTicketTime": {
+        "type": "input",
+        "value": "09:30",
+        "valuetype": "str",
+        "validate": "^([01]?[0-9]|2[0-3]):[0-5][0-9]$"
+      },
       "UseDrill": {
         "type": "checkbox",
         "value": false
@@ -14119,10 +14769,6 @@
           1,
           240
         ]
-      },
-      "SkipStrategicSearchCheck": {
-        "type": "checkbox",
-        "value": false
       }
     },
     "Storage": {
@@ -14196,11 +14842,21 @@
           "current_dossier_only"
         ]
       },
-      "OneHitMode": {
-        "type": "checkbox",
-        "value": true
+      "AssistRequestLimit": {
+        "type": "input",
+        "value": 0,
+        "validate": "^(-1|[0-9]+)$"
+      },
+      "AssistRequestState": {
+        "type": "stored",
+        "value": null,
+        "display": "hide"
       },
       "DossierAutoAttackMode": {
+        "type": "checkbox",
+        "value": false
+      },
+      "DossierSkipAssist": {
         "type": "checkbox",
         "value": false
       },
@@ -14217,71 +14873,29 @@
         "value": true
       }
     },
-    "Storage": {
-      "Storage": {
-        "type": "storage",
-        "value": {},
-        "valuetype": "ignore",
-        "display": "disabled"
-      }
-    }
-  },
-  "OpsiAshAssist": {
-    "Scheduler": {
+    "OpsiAshAssist": {
       "Enable": {
         "type": "checkbox",
-        "value": false,
-        "option": [
-          true,
-          false
-        ]
+        "value": true
       },
-      "PushNotification": {
-        "type": "checkbox",
-        "value": false,
-        "option": [
-          true,
-          false
-        ]
-      },
-      "NextRun": {
-        "type": "datetime",
-        "value": "2020-01-01 00:00:00",
-        "validate": "datetime"
-      },
-      "Command": {
-        "type": "input",
-        "value": "OpsiAshAssist",
-        "display": "hide"
-      },
-      "SuccessInterval": {
-        "type": "input",
-        "value": 30,
-        "display": "hide"
-      },
-      "FailureInterval": {
-        "type": "input",
-        "value": 30,
-        "display": "hide"
-      },
-      "ServerUpdate": {
-        "type": "input",
-        "value": "00:00",
-        "display": "hide"
-      },
-      "Sensitive": {
-        "type": "checkbox",
-        "value": false,
-        "option": [
-          true,
-          false
-        ]
-      }
-    },
-    "OpsiAshAssist": {
       "Tier": {
         "type": "input",
         "value": 15
+      }
+    },
+    "Equipment": {
+      "Enable": {
+        "type": "checkbox",
+        "value": false
+      },
+      "ClearBeforeApply": {
+        "type": "checkbox",
+        "value": true
+      },
+      "Config": {
+        "type": "textarea",
+        "value": "flagship:\n  before: null\n  after: null\nup:\n  before: null\n  after: null\ndown:\n  before: null\n  after: null\nhead:\n  before: null\n  after: null\nmiddle:\n  before: null\n  after: null\ntail:\n  before: null\n  after: null",
+        "mode": "yaml"
       }
     },
     "Storage": {
@@ -14810,6 +15424,19 @@
       "ForceRun": {
         "type": "checkbox",
         "value": false
+      },
+      "FullScan": {
+        "type": "checkbox",
+        "value": false
+      },
+      "RadarScan": {
+        "type": "checkbox",
+        "value": false
+      },
+      "ResumeState": {
+        "type": "stored",
+        "value": null,
+        "display": "hide"
       }
     },
     "OpsiFleet": {
@@ -14891,6 +15518,10 @@
     },
     "OpsiAbyssal": {
       "ForceRun": {
+        "type": "checkbox",
+        "value": false
+      },
+      "ContinueAfterRestart": {
         "type": "checkbox",
         "value": false
       }
@@ -15388,6 +16019,16 @@
           false
         ]
       },
+      "ActionPointCheckInterval": {
+        "type": "input",
+        "value": 0,
+        "valuetype": "int",
+        "validate": "^\\d+$"
+      },
+      "SkipStrategicSearchCheck": {
+        "type": "checkbox",
+        "value": false
+      },
       "Cl1Filter": {
         "type": "textarea",
         "value": "ActionPoint"
@@ -15397,12 +16038,20 @@
         "value": true
       },
       "RecordSeaMiles": {
-        "type": "checkbox",
-        "value": true,
-        "option": [
-          true,
-          false
-        ]
+        "type": "input",
+        "value": -1,
+        "valuetype": "int",
+        "validate": "^(-1|\\d+)$"
+      },
+      "SeaMilesLastRecord": {
+        "type": "stored",
+        "value": null,
+        "display": "hide"
+      },
+      "PendingMapEvent": {
+        "type": "stored",
+        "value": null,
+        "display": "hide"
       },
       "DebugClip": {
         "type": "checkbox",
@@ -15630,6 +16279,10 @@
         "value": "OpsiStronghold > OpsiObscure > OpsiAbyssal > OpsiMeowfficerFarming"
       },
       "ObscureAbyssalCheckDelayDays": {
+        "type": "input",
+        "value": 0
+      },
+      "StrongholdCheckDelayDays": {
         "type": "input",
         "value": 0
       },
@@ -15926,6 +16579,57 @@
     }
   },
   "IslandPlan": {
+    "Scheduler": {
+      "Enable": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "PushNotification": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "NextRun": {
+        "type": "datetime",
+        "value": "2020-01-01 00:00:00",
+        "validate": "datetime"
+      },
+      "Command": {
+        "type": "input",
+        "value": "IslandPlan",
+        "display": "hide"
+      },
+      "SuccessInterval": {
+        "type": "input",
+        "value": 0,
+        "display": "hide"
+      },
+      "FailureInterval": {
+        "type": "input",
+        "value": 120,
+        "display": "hide"
+      },
+      "ServerUpdate": {
+        "type": "input",
+        "value": "00:00",
+        "display": "hide"
+      },
+      "Sensitive": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      }
+    },
     "IslandPlan": {
       "Season": {
         "type": "select",
@@ -15963,7 +16667,170 @@
       },
       "PlanShelfSlots": {
         "type": "input",
-        "value": 5
+        "value": 4
+      },
+      "PlanExtraMeals": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      }
+    },
+    "IslandWalk": {
+      "AirDrop": {
+        "type": "textarea",
+        "value": "up 3000, right 800, up 2000, jump, up 1200, right 2000, up 6500, right 1000, up 2300, right 2000, up 4000, right 2600, up 500, jump, up 1300",
+        "valuetype": "str"
+      },
+      "AirDropEnable": {
+        "type": "checkbox",
+        "value": false
+      },
+      "AirDropRetry": {
+        "type": "textarea",
+        "value": "up 500, right 500, down 500",
+        "valuetype": "str"
+      },
+      "AirDropRetryEnable": {
+        "type": "checkbox",
+        "value": false
+      },
+      "AirDropSelf": {
+        "type": "textarea",
+        "value": "down 1000",
+        "valuetype": "str"
+      },
+      "AirDropSelfEnable": {
+        "type": "checkbox",
+        "value": false
+      },
+      "DailyLakeniya": {
+        "type": "textarea",
+        "value": "up 2000, right 1800, up 500",
+        "valuetype": "str"
+      },
+      "DailyLakeniyaEnable": {
+        "type": "checkbox",
+        "value": false
+      },
+      "DailyLuxi": {
+        "type": "textarea",
+        "value": "left 800, up 5500, left 1000, up 3700",
+        "valuetype": "str"
+      },
+      "DailyLuxiEnable": {
+        "type": "checkbox",
+        "value": false
+      },
+      "DailyAobulaien": {
+        "type": "textarea",
+        "value": "right 4600, up 5100, right 1100",
+        "valuetype": "str"
+      },
+      "DailyAobulaienEnable": {
+        "type": "checkbox",
+        "value": false
+      },
+      "DailyQiaoan": {
+        "type": "textarea",
+        "value": "right 6000, down 3000, right 2300",
+        "valuetype": "str"
+      },
+      "DailyQiaoanEnable": {
+        "type": "checkbox",
+        "value": false
+      },
+      "DailyMorningdewFarm": {
+        "type": "textarea",
+        "value": "left 500, down 200",
+        "valuetype": "str"
+      },
+      "DailyMorningdewFarmEnable": {
+        "type": "checkbox",
+        "value": false
+      },
+      "DailyHemo": {
+        "type": "textarea",
+        "value": "left 600, up 2000, left 800",
+        "valuetype": "str"
+      },
+      "DailyHemoEnable": {
+        "type": "checkbox",
+        "value": false
+      },
+      "DailyMeili": {
+        "type": "textarea",
+        "value": "right 1800, down 600",
+        "valuetype": "str"
+      },
+      "DailyMeiliEnable": {
+        "type": "checkbox",
+        "value": false
+      },
+      "DailyAolipike": {
+        "type": "textarea",
+        "value": "left 500, down 1500, left 1700, down 1900",
+        "valuetype": "str"
+      },
+      "DailyAolipikeEnable": {
+        "type": "checkbox",
+        "value": false
+      },
+      "DailyAmoma": {
+        "type": "textarea",
+        "value": "up 1500, left 400",
+        "valuetype": "str"
+      },
+      "DailyAmomaEnable": {
+        "type": "checkbox",
+        "value": false
+      },
+      "DailyPateli": {
+        "type": "textarea",
+        "value": "left 2200, jump, left 1200, up 500",
+        "valuetype": "str"
+      },
+      "DailyPateliEnable": {
+        "type": "checkbox",
+        "value": false
+      },
+      "DailyBulaimei": {
+        "type": "textarea",
+        "value": "up 2600, switch, left 600",
+        "valuetype": "str"
+      },
+      "DailyBulaimeiEnable": {
+        "type": "checkbox",
+        "value": false
+      },
+      "DailyLisha": {
+        "type": "textarea",
+        "value": "up 3000, left 2000, up 5500, right 300, up 2200, left 1100",
+        "valuetype": "str"
+      },
+      "DailyLishaEnable": {
+        "type": "checkbox",
+        "value": false
+      },
+      "PearlAssembly": {
+        "type": "textarea",
+        "value": "up 2500, right 1700, down 1700, right 500",
+        "valuetype": "str"
+      },
+      "PearlAssemblyEnable": {
+        "type": "checkbox",
+        "value": false
+      },
+      "PearlPort": {
+        "type": "textarea",
+        "value": "left 2500, jump, left 3000, down 1000",
+        "valuetype": "str"
+      },
+      "PearlPortEnable": {
+        "type": "checkbox",
+        "value": false
       }
     },
     "Storage": {
@@ -16028,7 +16895,7 @@
       }
     },
     "IslandSeasonPlan": {
-      "SyncDone": {
+      "NotifyEnable": {
         "type": "checkbox",
         "value": true,
         "option": [
@@ -16036,7 +16903,95 @@
           false
         ]
       },
-      "Submit": {
+      "Need_apple_juice": {
+        "type": "input",
+        "value": 250
+      },
+      "Done_apple_juice": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "Need_iced_coffee": {
+        "type": "input",
+        "value": 250
+      },
+      "Done_iced_coffee": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "Need_roasted_skewer": {
+        "type": "input",
+        "value": 250
+      },
+      "Done_roasted_skewer": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "Need_salad": {
+        "type": "input",
+        "value": 100
+      },
+      "Done_salad": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "Need_carrot_omelette": {
+        "type": "input",
+        "value": 100
+      },
+      "Done_carrot_omelette": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "Need_latte": {
+        "type": "input",
+        "value": 100
+      },
+      "Done_latte": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "Need_stir_fried_chicken": {
+        "type": "input",
+        "value": 100
+      },
+      "Done_stir_fried_chicken": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "Need_steak_bowl": {
+        "type": "input",
+        "value": 50
+      },
+      "Done_steak_bowl": {
         "type": "checkbox",
         "value": false,
         "option": [
@@ -16215,7 +17170,12 @@
           "Mogador",
           "RoyalFortune",
           "DaVinci",
-          "Taihou"
+          "Taihou",
+          "Nagato",
+          "Agir",
+          "HwahJah",
+          "Argus",
+          "Ognevoy"
         ]
       },
       "Char2": {
@@ -16257,7 +17217,12 @@
           "Mogador",
           "RoyalFortune",
           "DaVinci",
-          "Taihou"
+          "Taihou",
+          "Nagato",
+          "Agir",
+          "HwahJah",
+          "Argus",
+          "Ognevoy"
         ]
       },
       "Product1": {
@@ -16272,7 +17237,9 @@
           "fo_tiao",
           "amaranth_rice_ball",
           "matsutake_chicken_soup",
-          "persimmon_cake"
+          "persimmon_cake",
+          "shiitake_chicken_soup",
+          "green_jujube_porridge"
         ]
       },
       "Product2": {
@@ -16287,7 +17254,9 @@
           "fo_tiao",
           "amaranth_rice_ball",
           "matsutake_chicken_soup",
-          "persimmon_cake"
+          "persimmon_cake",
+          "shiitake_chicken_soup",
+          "green_jujube_porridge"
         ]
       },
       "Product3": {
@@ -16302,7 +17271,9 @@
           "fo_tiao",
           "amaranth_rice_ball",
           "matsutake_chicken_soup",
-          "persimmon_cake"
+          "persimmon_cake",
+          "shiitake_chicken_soup",
+          "green_jujube_porridge"
         ]
       },
       "Product4": {
@@ -16317,7 +17288,9 @@
           "fo_tiao",
           "amaranth_rice_ball",
           "matsutake_chicken_soup",
-          "persimmon_cake"
+          "persimmon_cake",
+          "shiitake_chicken_soup",
+          "green_jujube_porridge"
         ]
       },
       "Product5": {
@@ -16332,7 +17305,9 @@
           "fo_tiao",
           "amaranth_rice_ball",
           "matsutake_chicken_soup",
-          "persimmon_cake"
+          "persimmon_cake",
+          "shiitake_chicken_soup",
+          "green_jujube_porridge"
         ]
       },
       "SeasonalFallback": {
@@ -16347,7 +17322,9 @@
           "fo_tiao",
           "amaranth_rice_ball",
           "matsutake_chicken_soup",
-          "persimmon_cake"
+          "persimmon_cake",
+          "shiitake_chicken_soup",
+          "green_jujube_porridge"
         ]
       },
       "BoostReplaceFilter": {
@@ -16395,7 +17372,12 @@
           "Mogador",
           "RoyalFortune",
           "DaVinci",
-          "Taihou"
+          "Taihou",
+          "Nagato",
+          "Agir",
+          "HwahJah",
+          "Argus",
+          "Ognevoy"
         ]
       },
       "Char2": {
@@ -16437,7 +17419,12 @@
           "Mogador",
           "RoyalFortune",
           "DaVinci",
-          "Taihou"
+          "Taihou",
+          "Nagato",
+          "Agir",
+          "HwahJah",
+          "Argus",
+          "Ognevoy"
         ]
       },
       "Product1": {
@@ -16587,7 +17574,12 @@
           "Mogador",
           "RoyalFortune",
           "DaVinci",
-          "Taihou"
+          "Taihou",
+          "Nagato",
+          "Agir",
+          "HwahJah",
+          "Argus",
+          "Ognevoy"
         ]
       },
       "Char2": {
@@ -16629,7 +17621,12 @@
           "Mogador",
           "RoyalFortune",
           "DaVinci",
-          "Taihou"
+          "Taihou",
+          "Nagato",
+          "Agir",
+          "HwahJah",
+          "Argus",
+          "Ognevoy"
         ]
       },
       "Product1": {
@@ -16641,7 +17638,9 @@
           "succulently_sweet",
           "berry_orange",
           "strawberry_charlotte",
-          "seafood_rice"
+          "seafood_rice",
+          "water_chestnut_cake",
+          "sugar_tangerine_daifuku"
         ]
       },
       "Product2": {
@@ -16653,7 +17652,9 @@
           "succulently_sweet",
           "berry_orange",
           "strawberry_charlotte",
-          "seafood_rice"
+          "seafood_rice",
+          "water_chestnut_cake",
+          "sugar_tangerine_daifuku"
         ]
       },
       "Product3": {
@@ -16665,7 +17666,9 @@
           "succulently_sweet",
           "berry_orange",
           "strawberry_charlotte",
-          "seafood_rice"
+          "seafood_rice",
+          "water_chestnut_cake",
+          "sugar_tangerine_daifuku"
         ]
       },
       "Product4": {
@@ -16677,7 +17680,9 @@
           "succulently_sweet",
           "berry_orange",
           "strawberry_charlotte",
-          "seafood_rice"
+          "seafood_rice",
+          "water_chestnut_cake",
+          "sugar_tangerine_daifuku"
         ]
       },
       "Product5": {
@@ -16689,7 +17694,9 @@
           "succulently_sweet",
           "berry_orange",
           "strawberry_charlotte",
-          "seafood_rice"
+          "seafood_rice",
+          "water_chestnut_cake",
+          "sugar_tangerine_daifuku"
         ]
       },
       "BoostReplaceFilter": {
@@ -16737,7 +17744,12 @@
           "Mogador",
           "RoyalFortune",
           "DaVinci",
-          "Taihou"
+          "Taihou",
+          "Nagato",
+          "Agir",
+          "HwahJah",
+          "Argus",
+          "Ognevoy"
         ]
       },
       "Char2": {
@@ -16779,7 +17791,12 @@
           "Mogador",
           "RoyalFortune",
           "DaVinci",
-          "Taihou"
+          "Taihou",
+          "Nagato",
+          "Agir",
+          "HwahJah",
+          "Argus",
+          "Ognevoy"
         ]
       },
       "Product1": {
@@ -16892,7 +17909,12 @@
           "Mogador",
           "RoyalFortune",
           "DaVinci",
-          "Taihou"
+          "Taihou",
+          "Nagato",
+          "Agir",
+          "HwahJah",
+          "Argus",
+          "Ognevoy"
         ]
       },
       "Char2": {
@@ -16934,7 +17956,12 @@
           "Mogador",
           "RoyalFortune",
           "DaVinci",
-          "Taihou"
+          "Taihou",
+          "Nagato",
+          "Agir",
+          "HwahJah",
+          "Argus",
+          "Ognevoy"
         ]
       },
       "Product1": {
@@ -17087,6 +18114,24 @@
         "type": "input",
         "value": 660
       },
+      "CropTargets": {
+        "type": "textarea",
+        "value": ""
+      },
+      "DefaultCrop": {
+        "type": "select",
+        "value": "wheat",
+        "option": [
+          "wheat",
+          "corn",
+          "rice",
+          "chinese_cabbage",
+          "potato",
+          "soybean",
+          "pasture",
+          "coffee_bean"
+        ]
+      },
       "PlantPotatoes": {
         "type": "select",
         "value": 4,
@@ -17118,9 +18163,30 @@
         "type": "input",
         "value": 300
       },
+      "CropTargets": {
+        "type": "textarea",
+        "value": ""
+      },
       "IgnoreAvocado": {
         "type": "checkbox",
         "value": true
+      },
+      "DefaultCrop": {
+        "type": "select",
+        "value": "rubber",
+        "option": [
+          "apple",
+          "citrus",
+          "banana",
+          "mango",
+          "lemon",
+          "avocado",
+          "rubber",
+          "pear",
+          "persimmon",
+          "sugar_tangerine",
+          "green_jujube"
+        ]
       },
       "PlantRubber": {
         "type": "select",
@@ -17155,9 +18221,28 @@
         "type": "input",
         "value": 0
       },
+      "CropTargets": {
+        "type": "textarea",
+        "value": ""
+      },
       "IgnorePineapple": {
         "type": "checkbox",
         "value": true
+      },
+      "DefaultCrop": {
+        "type": "select",
+        "value": "lavender",
+        "option": [
+          "carrot",
+          "onion",
+          "flax",
+          "strawberry",
+          "cotton",
+          "tea",
+          "lavender",
+          "pineapple",
+          "asparagus"
+        ]
       },
       "PlantLavender": {
         "type": "select",
@@ -17274,23 +18359,31 @@
           3
         ]
       },
-      "MinBass": {
-        "type": "input",
-        "value": 50
-      },
-      "MinYellowfinTuna": {
-        "type": "input",
-        "value": 50
-      },
       "MinShell": {
         "type": "input",
         "value": 50
+      },
+      "MinCatfish": {
+        "type": "input",
+        "value": 0
+      },
+      "MinKoiCarp": {
+        "type": "input",
+        "value": 0
+      },
+      "MinCommonCarp": {
+        "type": "input",
+        "value": 0
       },
       "MinShrimp": {
         "type": "input",
         "value": 50
       },
       "MinCrayfish": {
+        "type": "input",
+        "value": 50
+      },
+      "MinBass": {
         "type": "input",
         "value": 50
       },
@@ -17302,9 +18395,37 @@
         "type": "input",
         "value": 50
       },
+      "MinMackerel": {
+        "type": "input",
+        "value": 0
+      },
+      "MinTuna": {
+        "type": "input",
+        "value": 0
+      },
+      "MinSalmon": {
+        "type": "input",
+        "value": 0
+      },
+      "MinRedSeaBream": {
+        "type": "input",
+        "value": 0
+      },
+      "MinYellowfinTuna": {
+        "type": "input",
+        "value": 50
+      },
       "MinSeaCucumber": {
         "type": "input",
         "value": 50
+      },
+      "MinFreshwaterFishMeat": {
+        "type": "input",
+        "value": 0
+      },
+      "MinSaltwaterFishMeat": {
+        "type": "input",
+        "value": 0
       },
       "PlantYellowfinTuna": {
         "type": "select",
@@ -17314,6 +18435,27 @@
           1,
           2,
           3
+        ]
+      },
+      "DefaultFish": {
+        "type": "select",
+        "value": "yellowfin_tuna",
+        "option": [
+          "shell",
+          "catfish",
+          "koi_carp",
+          "common_carp",
+          "shrimp",
+          "crayfish",
+          "bass",
+          "crab",
+          "squid",
+          "mackerel",
+          "tuna",
+          "salmon",
+          "red_sea_bream",
+          "yellowfin_tuna",
+          "sea_cucumber"
         ]
       },
       "RancherFilter": {
@@ -17404,6 +18546,17 @@
           4
         ]
       },
+      "DefaultOre": {
+        "type": "select",
+        "value": "Silver",
+        "option": [
+          "Copper",
+          "Aluminium",
+          "Iron",
+          "Sulphur",
+          "Silver"
+        ]
+      },
       "WorkerFilter": {
         "type": "textarea",
         "value": "WorkerJuu"
@@ -17449,6 +18602,15 @@
           2,
           3,
           4
+        ]
+      },
+      "DefaultWood": {
+        "type": "select",
+        "value": "Elegant",
+        "option": [
+          "Practical",
+          "Selected",
+          "Elegant"
         ]
       },
       "WorkerFilter": {
@@ -17564,7 +18726,9 @@
           "fo_tiao",
           "onion_fish",
           "matsutake_chicken_soup",
-          "persimmon_cake"
+          "persimmon_cake",
+          "shiitake_chicken_soup",
+          "green_jujube_porridge"
         ]
       },
       "MealNumber1": {
@@ -17589,7 +18753,9 @@
           "fo_tiao",
           "onion_fish",
           "matsutake_chicken_soup",
-          "persimmon_cake"
+          "persimmon_cake",
+          "shiitake_chicken_soup",
+          "green_jujube_porridge"
         ]
       },
       "MealNumber2": {
@@ -17614,7 +18780,9 @@
           "fo_tiao",
           "onion_fish",
           "matsutake_chicken_soup",
-          "persimmon_cake"
+          "persimmon_cake",
+          "shiitake_chicken_soup",
+          "green_jujube_porridge"
         ]
       },
       "MealNumber3": {
@@ -17639,7 +18807,9 @@
           "fo_tiao",
           "onion_fish",
           "matsutake_chicken_soup",
-          "persimmon_cake"
+          "persimmon_cake",
+          "shiitake_chicken_soup",
+          "green_jujube_porridge"
         ]
       },
       "MealNumber4": {
@@ -17664,7 +18834,9 @@
           "fo_tiao",
           "onion_fish",
           "matsutake_chicken_soup",
-          "persimmon_cake"
+          "persimmon_cake",
+          "shiitake_chicken_soup",
+          "green_jujube_porridge"
         ]
       },
       "MealNumber5": {
@@ -17689,7 +18861,9 @@
           "fo_tiao",
           "onion_fish",
           "matsutake_chicken_soup",
-          "persimmon_cake"
+          "persimmon_cake",
+          "shiitake_chicken_soup",
+          "green_jujube_porridge"
         ]
       },
       "MealNumber6": {
@@ -17714,7 +18888,9 @@
           "fo_tiao",
           "onion_fish",
           "matsutake_chicken_soup",
-          "persimmon_cake"
+          "persimmon_cake",
+          "shiitake_chicken_soup",
+          "green_jujube_porridge"
         ]
       },
       "MealNumber7": {
@@ -17739,7 +18915,9 @@
           "fo_tiao",
           "onion_fish",
           "matsutake_chicken_soup",
-          "persimmon_cake"
+          "persimmon_cake",
+          "shiitake_chicken_soup",
+          "green_jujube_porridge"
         ]
       },
       "MealNumber8": {
@@ -17766,7 +18944,9 @@
           "fo_tiao",
           "onion_fish",
           "matsutake_chicken_soup",
-          "persimmon_cake"
+          "persimmon_cake",
+          "shiitake_chicken_soup",
+          "green_jujube_porridge"
         ]
       }
     },
@@ -18386,7 +19566,9 @@
           "succulently_sweet",
           "berry_orange",
           "strawberry_charlotte",
-          "seafood_rice"
+          "seafood_rice",
+          "water_chestnut_cake",
+          "sugar_tangerine_daifuku"
         ]
       },
       "MealNumber1": {
@@ -18407,7 +19589,9 @@
           "succulently_sweet",
           "berry_orange",
           "strawberry_charlotte",
-          "seafood_rice"
+          "seafood_rice",
+          "water_chestnut_cake",
+          "sugar_tangerine_daifuku"
         ]
       },
       "MealNumber2": {
@@ -18428,7 +19612,9 @@
           "succulently_sweet",
           "berry_orange",
           "strawberry_charlotte",
-          "seafood_rice"
+          "seafood_rice",
+          "water_chestnut_cake",
+          "sugar_tangerine_daifuku"
         ]
       },
       "MealNumber3": {
@@ -18449,7 +19635,9 @@
           "succulently_sweet",
           "berry_orange",
           "strawberry_charlotte",
-          "seafood_rice"
+          "seafood_rice",
+          "water_chestnut_cake",
+          "sugar_tangerine_daifuku"
         ]
       },
       "MealNumber4": {
@@ -18470,7 +19658,9 @@
           "succulently_sweet",
           "berry_orange",
           "strawberry_charlotte",
-          "seafood_rice"
+          "seafood_rice",
+          "water_chestnut_cake",
+          "sugar_tangerine_daifuku"
         ]
       },
       "MealNumber5": {
@@ -18491,7 +19681,9 @@
           "succulently_sweet",
           "berry_orange",
           "strawberry_charlotte",
-          "seafood_rice"
+          "seafood_rice",
+          "water_chestnut_cake",
+          "sugar_tangerine_daifuku"
         ]
       },
       "MealNumber6": {
@@ -18512,7 +19704,9 @@
           "succulently_sweet",
           "berry_orange",
           "strawberry_charlotte",
-          "seafood_rice"
+          "seafood_rice",
+          "water_chestnut_cake",
+          "sugar_tangerine_daifuku"
         ]
       },
       "MealNumber7": {
@@ -18533,7 +19727,9 @@
           "succulently_sweet",
           "berry_orange",
           "strawberry_charlotte",
-          "seafood_rice"
+          "seafood_rice",
+          "water_chestnut_cake",
+          "sugar_tangerine_daifuku"
         ]
       },
       "MealNumber8": {
@@ -18556,7 +19752,9 @@
           "succulently_sweet",
           "berry_orange",
           "strawberry_charlotte",
-          "seafood_rice"
+          "seafood_rice",
+          "water_chestnut_cake",
+          "sugar_tangerine_daifuku"
         ]
       }
     },
@@ -18887,6 +20085,11 @@
           1,
           2
         ]
+      },
+      "Products": {
+        "type": "input",
+        "value": "",
+        "preserve_empty": true
       }
     },
     "ElectronicProcessing": {
@@ -18898,6 +20101,11 @@
           1,
           2
         ]
+      },
+      "Products": {
+        "type": "input",
+        "value": "",
+        "preserve_empty": true
       }
     },
     "Industrial": {
@@ -18909,6 +20117,11 @@
           1,
           2
         ]
+      },
+      "Products": {
+        "type": "input",
+        "value": "",
+        "preserve_empty": true
       }
     },
     "Handmade": {
@@ -18920,6 +20133,11 @@
           1,
           2
         ]
+      },
+      "Products": {
+        "type": "input",
+        "value": "",
+        "preserve_empty": true
       }
     },
     "Storage": {
@@ -19371,6 +20589,10 @@
   },
   "FleetInfo": {
     "FleetInfo": {
+      "UpdateEmotion": {
+        "type": "checkbox",
+        "value": true
+      },
       "Result": {
         "type": "stored",
         "value": {},
@@ -19380,6 +20602,108 @@
         "type": "stored",
         "value": "2020-01-01 00:00:00",
         "validate": "datetime",
+        "display": "hide"
+      }
+    },
+    "FleetRotation": {
+      "Enabled": {
+        "type": "checkbox",
+        "value": false
+      },
+      "SelectedOnly": {
+        "type": "checkbox",
+        "value": false
+      },
+      "Rules": {
+        "type": "textarea",
+        "value": "{}"
+      },
+      "State": {
+        "type": "storage",
+        "value": {}
+      }
+    },
+    "FleetLevelTraining": {
+      "Enabled": {
+        "type": "checkbox",
+        "value": false
+      },
+      "Target": {
+        "type": "input",
+        "value": 120,
+        "validate": [
+          1,
+          125
+        ]
+      }
+    },
+    "FleetAffinityTraining": {
+      "Enabled": {
+        "type": "checkbox",
+        "value": false
+      },
+      "Target": {
+        "type": "input",
+        "value": 100,
+        "validate": [
+          1,
+          200
+        ]
+      }
+    },
+    "FleetDorm": {
+      "Enabled": {
+        "type": "checkbox",
+        "value": false
+      },
+      "Floor": {
+        "type": "select",
+        "value": "floor_1",
+        "option": [
+          "floor_1",
+          "floor_2"
+        ]
+      }
+    },
+    "FleetTraining": {
+      "StopOnComplete": {
+        "type": "checkbox",
+        "value": false
+      },
+      "Notify": {
+        "type": "checkbox",
+        "value": false
+      },
+      "FullScanRecord": {
+        "type": "stored",
+        "value": "2020-01-01 00:00:00",
+        "validate": "datetime",
+        "display": "hide"
+      },
+      "CheckIntervalHours": {
+        "type": "input",
+        "value": 6.0,
+        "valuetype": "float",
+        "validate": "^[0-9]+(?:\\.[0-9]+)?(?:[eE][+-]?[0-9]+)?$"
+      },
+      "State": {
+        "type": "stored",
+        "value": {},
+        "display": "hide"
+      }
+    },
+    "FleetEquipment": {
+      "Enabled": {
+        "type": "checkbox",
+        "value": false
+      },
+      "Codes": {
+        "type": "textarea",
+        "value": "{}"
+      },
+      "State": {
+        "type": "stored",
+        "value": {},
         "display": "hide"
       }
     },
@@ -19400,14 +20724,6 @@
         "validate": [
           5,
           600
-        ]
-      },
-      "DailySummaryCheckInterval": {
-        "type": "input",
-        "value": 1,
-        "validate": [
-          1,
-          60
         ]
       }
     },
@@ -19752,6 +21068,28 @@
       }
     }
   },
+  "DockScan": {
+    "Dock": {
+      "MinLevel": {
+        "type": "input",
+        "value": 1,
+        "validate": "^[1-9][0-9]?$|^1[01][0-9]$|^12[0-5]$"
+      },
+      "MaxLevel": {
+        "type": "input",
+        "value": 125,
+        "validate": "^[1-9][0-9]?$|^1[01][0-9]$|^12[0-5]$"
+      }
+    },
+    "Storage": {
+      "Storage": {
+        "type": "storage",
+        "value": {},
+        "valuetype": "ignore",
+        "display": "disabled"
+      }
+    }
+  },
   "Daemon": {
     "Daemon": {
       "EnterMap": {
@@ -19916,7 +21254,8 @@
           "plone_cloud_with_adb",
           "phone_cloud_without_adb",
           "android_phone",
-          "android_phone_vmos"
+          "android_phone_vmos",
+          "azurpilot_android"
         ]
       },
       "TestScene": {
@@ -20082,6 +21421,224 @@
         "validate": [
           1,
           60
+        ]
+      }
+    },
+    "Storage": {
+      "Storage": {
+        "type": "storage",
+        "value": {},
+        "valuetype": "ignore",
+        "display": "disabled"
+      }
+    }
+  },
+  "IslandProductionPlanner": {
+    "IslandProductionPlanner": {
+      "ApplySettings": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "Season": {
+        "type": "select",
+        "value": "auto",
+        "option": [
+          "auto",
+          "season_1",
+          "season_2",
+          "season_3",
+          "season_4",
+          "season_5"
+        ]
+      },
+      "Priority": {
+        "type": "select",
+        "value": "pt",
+        "option": [
+          "pt",
+          "coins"
+        ]
+      },
+      "FillSparePosts": {
+        "type": "checkbox",
+        "value": true,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "AutoPositions": {
+        "type": "checkbox",
+        "value": true,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "UnlockedFish": {
+        "type": "multiselect",
+        "value": [
+          "shell",
+          "catfish",
+          "koi_carp",
+          "common_carp",
+          "shrimp",
+          "crayfish",
+          "bass",
+          "crab",
+          "squid",
+          "mackerel",
+          "tuna",
+          "salmon",
+          "red_sea_bream",
+          "yellowfin_tuna",
+          "sea_cucumber"
+        ],
+        "option": [
+          "shell",
+          "catfish",
+          "koi_carp",
+          "common_carp",
+          "shrimp",
+          "crayfish",
+          "bass",
+          "crab",
+          "squid",
+          "mackerel",
+          "tuna",
+          "salmon",
+          "red_sea_bream",
+          "yellowfin_tuna",
+          "sea_cucumber"
+        ]
+      },
+      "RescanTechnology": {
+        "type": "checkbox",
+        "value": true,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "ScanSeasonTasks": {
+        "type": "checkbox",
+        "value": true,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "SeasonTaskTargets": {
+        "type": "textarea",
+        "value": ""
+      },
+      "ScanCargoOrders": {
+        "type": "checkbox",
+        "value": true,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "CargoTargets": {
+        "type": "textarea",
+        "value": ""
+      },
+      "CargoTargetDays": {
+        "type": "input",
+        "value": 1
+      },
+      "ExtraTargets": {
+        "type": "textarea",
+        "value": ""
+      },
+      "DailyProfitLowerLimit": {
+        "type": "input",
+        "value": 50000
+      },
+      "DailyBufferSafetyMargin": {
+        "type": "input",
+        "value": 0
+      },
+      "FieldsEfficiency": {
+        "type": "select",
+        "value": 0,
+        "option": [
+          0,
+          4,
+          12
+        ]
+      },
+      "OrchardEfficiency": {
+        "type": "select",
+        "value": 0,
+        "option": [
+          0,
+          4,
+          12
+        ]
+      },
+      "NurseryEfficiency": {
+        "type": "select",
+        "value": 0,
+        "option": [
+          0,
+          4,
+          12
+        ]
+      },
+      "RestaurantGrade": {
+        "type": "select",
+        "value": "bronze",
+        "option": [
+          "bronze",
+          "silver",
+          "gold",
+          "diamond"
+        ]
+      },
+      "TeahouseGrade": {
+        "type": "select",
+        "value": "bronze",
+        "option": [
+          "bronze",
+          "silver",
+          "gold",
+          "diamond"
+        ]
+      },
+      "JuuEateryGrade": {
+        "type": "select",
+        "value": "bronze",
+        "option": [
+          "bronze",
+          "silver",
+          "gold",
+          "diamond"
+        ]
+      },
+      "GrillGrade": {
+        "type": "select",
+        "value": "bronze",
+        "option": [
+          "bronze",
+          "silver",
+          "gold",
+          "diamond"
+        ]
+      },
+      "JuuCoffeeGrade": {
+        "type": "select",
+        "value": "bronze",
+        "option": [
+          "bronze",
+          "silver",
+          "gold",
+          "diamond"
         ]
       }
     },

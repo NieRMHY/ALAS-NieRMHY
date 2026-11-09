@@ -6,12 +6,10 @@
 # 当各项资源数值（如石油、物资、钻石等）发生变化时，记录快照以便后续绘制历史趋势图。
 import sqlite3
 import threading
-import os
 from datetime import datetime
 from typing import Any, Dict, List
 
 from module.logger import logger
-from module.statistics import opsi_secure
 
 
 _local_lock = threading.Lock()
@@ -19,18 +17,13 @@ _LOCAL_DB = './config/azurstats_local.db'
 _table_ensured = False
 
 
-class _ClosingConnection(sqlite3.Connection):
-    """事务结束后立即释放连接，避免资源快照库在 Windows 上残留文件锁。"""
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        try:
-            return super().__exit__(exc_type, exc_value, traceback)
-        finally:
-            self.close()
+def _database():
+    from module.persistence.database import for_legacy_path
+    return for_legacy_path(_LOCAL_DB, 'statistics')
 
 
 def _connect() -> sqlite3.Connection:
-    return sqlite3.connect(_LOCAL_DB, factory=_ClosingConnection)
+    return _database().connect()
 
 
 # Dashboard 使用的资源名称与数据库列名保持在同一处，供区间聚合复用。
@@ -49,117 +42,83 @@ RESOURCE_COLUMNS = {
     'PurpleCoin': 'purple_coin',
 }
 
+# 快照写入语句写成完整字面量，数值全部走命名参数绑定；
+# 列顺序须与 RESOURCE_COLUMNS 一致，由 tests/test_resource_snapshot_sql.py 校验
+_SNAPSHOT_INSERT_SQL = (
+    'INSERT INTO resource_snapshots '
+    '(instance,ts,oil,coin,gem,pt,cube,core,medal,merit,guild_coin,action_point,yellow_coin,purple_coin) '
+    'VALUES (:instance,:ts,:oil,:coin,:gem,:pt,:cube,:core,:medal,:merit,:guild_coin,:action_point,'
+    ':yellow_coin,:purple_coin)'
+)
+
 
 def _ensure_table():
-    """确保 resource_snapshots 表存在（仅首次调用时执行）。"""
-    global _table_ensured
-    if _table_ensured:
-        return
-    os.makedirs(os.path.dirname(_LOCAL_DB), exist_ok=True)
-    with _connect() as conn:
-        conn.execute('''
-            CREATE TABLE IF NOT EXISTS resource_snapshots (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                instance TEXT NOT NULL,
-                ts TEXT NOT NULL,
-                oil INTEGER,
-                coin INTEGER,
-                gem INTEGER,
-                pt INTEGER,
-                cube INTEGER,
-                core INTEGER,
-                medal INTEGER,
-                merit INTEGER,
-                guild_coin INTEGER,
-                action_point INTEGER,
-                yellow_coin INTEGER,
-                purple_coin INTEGER,
-                opsi_payload TEXT
-            )
-        ''')
-        conn.execute('CREATE INDEX IF NOT EXISTS idx_res_snap_instance ON resource_snapshots(instance)')
-        conn.execute('CREATE INDEX IF NOT EXISTS idx_res_snap_ts ON resource_snapshots(instance, ts)')
-        columns = {row[1] for row in conn.execute('PRAGMA table_info(resource_snapshots)')}
-        if 'opsi_payload' not in columns:
-            # 三个大世界货币列存放在这一列（JSON 文本）。
-            conn.execute('ALTER TABLE resource_snapshots ADD COLUMN opsi_payload TEXT')
-        conn.commit()
-    _table_ensured = True
+    """建表和旧数据转换统一由安装级迁移入口完成。"""
+    _database().ensure_ready()
 
 
 def _overlay_opsi_snapshot(row: Dict[str, Any]) -> Dict[str, Any]:
-    """把快照行里的大世界三列从载荷列还原；旧密文暂不可读时保持空值。"""
-    value = row.pop('opsi_payload', None)
-    if not value:
-        return row
-    payload = opsi_secure.decode_record('res', value, opsi_secure.row_context('res', row))
-    if payload:
-        row.update(payload)
+    """保留业务适配入口；资源值直接读取原生列。"""
     return row
 
 
-def record_resource_snapshot(instance: str, resources: Dict[str, Any]) -> bool:
-    """记录一次资源快照。
-
-    当游戏内任何资源数值发生变化时调用，记录所有资源的当前值。
+def record_resource_snapshot(instance: str, resources: Dict[str, Any], *, observed_at: datetime = None,
+                             carry_forward: bool = False) -> bool:
+    """以同一事务保存各项资源的当前读数。
 
     Args:
-        instance: 实例名称
-        resources: 资源字典，包含所有 Dashboard 资源的当前值
-            key 为资源名（如 Oil, Coin, Gem, Pt, Cube 等），
-            value 为资源数值（int）
-
-    Returns:
-        bool: 是否成功记录
+        instance: 实例名称。
+        resources: 资源名到读数的映射。
+        observed_at: 采样时间，缺省为当前时间。
+        carry_forward: 为 True 时只写入 ``resources`` 中给出的资源，其余列沿用该实例最近一行快照；
+            首行没有可沿用的值时留空，不把从未读取的资源记成 0。
+            运行中各个配置对象（例如战役使用的配置副本）的 Dashboard 值可能已过期，
+            用它们补全整行会让曲线出现一个点的旧值尖刺。
     """
+    from module.persistence.database import register_instance
     try:
-        _ensure_table()
-        now = datetime.now().isoformat()
-
-        row = {
-            'instance': instance,
-            'ts': now,
-            'oil': resources.get('Oil'),
-            'coin': resources.get('Coin'),
-            'gem': resources.get('Gem'),
-            'pt': resources.get('Pt'),
-            'cube': resources.get('Cube'),
-            'core': resources.get('Core'),
-            'medal': resources.get('Medal'),
-            'merit': resources.get('Merit'),
-            'guild_coin': resources.get('GuildCoin'),
-            'action_point': resources.get('ActionPoint'),
-            'yellow_coin': resources.get('YellowCoin'),
-            'purple_coin': resources.get('PurpleCoin'),
-            'opsi_payload': None,
-        }
-
-        # 大世界三列仍存放在载荷列（JSON 文本），保持既有列形不变。
-        row['opsi_payload'] = opsi_secure.serialize_obj({name: row[name] for name in opsi_secure.RES_SECURE_FIELDS})
-        for name in opsi_secure.RES_SECURE_FIELDS:
-            row[name] = None
-        with _local_lock:
-            with _connect() as conn:
-                with opsi_secure.immediate_transaction(conn):
-                    conn.execute('''
-                        INSERT INTO resource_snapshots (
-                            instance, ts, oil, coin, gem, pt, cube, core, medal, merit, guild_coin,
-                            action_point, yellow_coin, purple_coin, opsi_payload
-                        ) VALUES (
-                            :instance, :ts, :oil, :coin, :gem, :pt, :cube, :core, :medal, :merit, :guild_coin,
-                            :action_point, :yellow_coin, :purple_coin, :opsi_payload
-                        )
-                    ''', row)
+        row = {'instance': instance, 'ts': (observed_at or datetime.now()).isoformat()}
+        row.update({column: resources.get(name) for name, column in RESOURCE_COLUMNS.items()})
+        if not carry_forward:
+            with _local_lock, _connect() as conn:
+                register_instance(conn, instance)
+                conn.execute(_SNAPSHOT_INSERT_SQL, row)
+            return True
+        with _local_lock, _database().transaction() as conn:
+            register_instance(conn, instance)
+            latest = conn.execute('SELECT * FROM resource_snapshots WHERE instance = ? ORDER BY id DESC LIMIT 1',
+                                  (instance,)).fetchone()
+            if latest is not None:
+                for name, column in RESOURCE_COLUMNS.items():
+                    if name not in resources:
+                        row[column] = latest[column]
+            conn.execute(_SNAPSHOT_INSERT_SQL, row)
         return True
-    except Exception as e:
-        logger.warning(f'[统计-资源] 记录资源快照失败: {type(e).__name__}')
+    except Exception as error:
+        logger.warning(f'[统计-资源] 记录资源快照失败: {type(error).__name__}')
         return False
+
+
+def async_record_resource_snapshot(instance: str, resources: Dict[str, Any], *, observed_at: datetime = None,
+                                   carry_forward: bool = False):
+    """固定主线程采样值与时间后排队，不向后台传递可变配置对象。"""
+    from module.base.async_executor import async_executor
+    future = async_executor.submit(record_resource_snapshot, instance, dict(resources),
+                                   observed_at=observed_at or datetime.now(), carry_forward=carry_forward)
+
+    def finished(result):
+        if result.cancelled() or result.exception() is not None:
+            logger.warning('[统计-资源] 后台快照写入失败')
+
+    future.add_done_callback(finished)
+    return future
 
 
 def get_resource_timeline(
     instance: str = 'default',
     limit: int = 500,
     since: str = None,
+    until: str = None,
     include_opsi: bool = True,
 ) -> List[Dict[str, Any]]:
     """获取资源快照时间序列数据，用于绘制资源变化曲线。
@@ -168,8 +127,8 @@ def get_resource_timeline(
         instance: 实例名称
         limit: 最大返回条数
         since: 起始时间（ISO 文本，含）。为空表示不限
-        include_opsi: 是否解密大世界三列（行动力/黄币/紫币）。不需要这些列
-            的调用方（如资源趋势页）传 False，避免对大量行做无谓解密。
+        until: 结束时间（ISO 文本，含）。为空表示不限
+        include_opsi: 是否返回大世界三列（行动力/黄币/紫币）。
 
     Returns:
         list[dict]: 按时间排序的快照列表，每个包含:
@@ -179,23 +138,23 @@ def get_resource_timeline(
     """
     try:
         _ensure_table()
-        with _connect() as conn:
+        with _database().transaction(write=False) as conn:
             conn.row_factory = sqlite3.Row
             rows = conn.execute(
                 '''
                 SELECT * FROM resource_snapshots
-                WHERE instance = ? AND (? IS NULL OR ts >= ?)
+                WHERE instance = ? AND (? IS NULL OR ts >= ?) AND (? IS NULL OR ts <= ?)
                 ORDER BY id DESC
                 LIMIT ?
                 ''',
-                (instance, since, since, limit),
+                (instance, since, since, until, until, limit),
             ).fetchall()
             if include_opsi:
                 result = [_overlay_opsi_snapshot(dict(row)) for row in rows]
             else:
                 result = [dict(row) for row in rows]
                 for item in result:
-                    item.pop('opsi_payload', None)
+                    item.update(action_point=None, yellow_coin=None, purple_coin=None)
             result.reverse()
             return result
     except Exception as e:
@@ -283,7 +242,7 @@ def get_resource_interval_summary(
     try:
         _ensure_table()
         with _local_lock:
-            with _connect() as conn:
+            with _database().transaction(write=False) as conn:
                 conn.row_factory = sqlite3.Row
                 rows = conn.execute(
                     '''

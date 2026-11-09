@@ -10,7 +10,7 @@
 
 模块内的另一条主线是**更新事务**。更新要改写源码与 `.venv`，运行中的 worker 和 WebUI 都无法「给自己换环境」。`updater` 把这件事编排成多步事务：通知 worker 在任务边界自行退出 → 等待全部实例停止（超时强停）→ 把恢复计划写盘 → 执行 git 更新 → 置位重启与依赖同步事件，把收尾交还给 `gui.py` 父监督器。整条链路用 `State.restart_lock` 串行化，手动启停不能插入中途。
 
-第三条线是**身份与安全**。进程终止若只看 PID，在操作系统复用 PID 时可能误杀无关进程；worker 登记与终止因此一律以「PID + 进程创建时间」二元组验证身份（`process_control`、`worker_registry`）。MCP 工具集把停止实例、改配置、git pull 等破坏性操作直接暴露在 HTTP 上，`mcp_auth` 单独做一层鉴权；密码策略、本机免密判定、远程访问隧道标记则集中在 `password_utils`，供 WebUI 与独立 MCP 共用。
+第三条线是**进程身份与控制边界**。worker 登记与终止以「PID + 进程创建时间」二元组验证身份（`process_control`、`worker_registry`），避免 PID 复用时误杀进程。本地 MCP 沿用免密入口；输入类工具额外校验调度器停机状态、设备租约与观测帧，配置事务校验 revision。启动器信任令牌仍由 `launcher_trust` 管理。
 
 ## 2. 模块职责
 
@@ -21,7 +21,7 @@
 - WebUI 后台任务调度：`TaskHandler` 驱动更新检查、每日定时更新与远程访问保活。
 - 更新流程：`updater` 检查上游、编排停止-更新-重启事务，`module/api/update_service.py` 只是它的 WebUI 门面。
 - 被动截图通道：`preview.py` 接收 worker 截图、后台编码 JPEG、按实例保留最新帧。
-- 横切安全能力：`mcp_auth`（MCP 鉴权与会话）、`password_utils`（密码策略与本机判定）、`launcher_trust`（启动器信任令牌）。
+- 进程与入口能力：`process_control` / `worker_registry` 验证进程身份，`launcher_trust` 验证启动器信任令牌；本地 MCP 不引入访问密码。
 - 远程访问：`remote_access.py` 的 SSH 反向隧道与 WebRTC P2P 两种 provider 及自动切换。
 - 部署设置：`deploy_settings` 定义表单 schema 与校验，`config.py` 的 `DeployConfig` 把属性赋值自动落盘到 `deploy.yaml`。
 - 共享状态根：`setting.py` 的 `State`（跨进程事件、SyncManager、进程注册表）。
@@ -52,10 +52,9 @@ module/runtime/
 ├── preview.py             # PreviewHub：被动截图最新帧分发
 ├── scheduler_stop.py      # 手动停止后的收尾动作（独立进程执行）
 ├── remote_access.py       # SSH / WebRTC 远程访问 provider
-├── mcp_auth.py            # MCP 鉴权：凭据提取、常数时间比对、会话表、日志脱敏
 ├── password_utils.py      # 密码生成/校验、本机判定、远程访问标记头
-├── launcher.py            # LauncherControl：外部启动器命令通道（当前未接线）
-├── launcher_trust.py      # 启动器信任免密令牌（当前未接线）
+├── launcher.py            # LauncherService：应用级启动器 WS、命令与通知
+├── launcher_trust.py      # 启动器信任免密令牌
 ├── discord_presence.py    # Discord Rich Presence（pypresence 异步客户端）
 └── event_calculator.py    # Wiki 活动计算器数据服务（当前无前端消费者）
 ```
@@ -69,7 +68,6 @@ module/runtime/
 | `updater.py` | `updater` 模块级单例；状态机与事务编排 |
 | `setting.py` | `State` 类属性容器；`mark/is/clear_dependency_sync_pending` 持久化标记 |
 | `deploy_settings.py` | `DEPLOY_GROUPS` 字段定义 → `deploy_settings_schema`/`save_deploy_settings` |
-| `mcp_auth.py` | `authorize` 集中判定；`register_session`/`expire_session`；`redact` + uvicorn 过滤器 |
 
 ## 4. 核心入口
 
@@ -80,7 +78,6 @@ module/runtime/
 | `ProcessManager.running_instances()` / `restart_processes()` | 枚举运行实例；应用 lifespan 启动与更新恢复时拉起 worker |
 | `updater.check_update()` / `run_update()` | 更新检查与事务执行；由 `TaskHandler` 任务与 `update_service` 触发 |
 | `module.api.lifecycle.startup/clearup`（消费方） | 应用 lifespan 调用 `State.init()`、装载 `TaskHandler` 任务、逐项回收 |
-| `mcp_auth.authorize(path, method, headers, query_string)` | MCP ASGI 层的唯一鉴权判定 |
 | `State.init()` / `State.clearup()` | 共享状态（Manager、登记所有权）的创建与销毁 |
 | `worker_registry.claim_owner(pid)` | WebUI 服务子进程启动时原子认领登记所有权 |
 | `load_event_calculator()` / `LauncherControl` | 预留服务（见第 17 节） |
@@ -216,7 +213,7 @@ flowchart TD
     F --> G["置位 dependency_sync_event + restart_event<br/>clearup() 后父监督器接管"]
 ```
 
-「先写盘再更新」是关键顺序：git reset/pull 即使报错也可能已部分改写源码，因此一旦开始更新，恢复只能走「依赖同步后重启」一条路。更新检查本身分两条路：`GitOverCdn` 开启时读 CDN 状态（`uptodate`/`behind`/`failed`，failed 回退 git）；否则 `git fetch` 后对比 `..origin/{Branch}`，本地存在上游没有的提交（开发分叉）时跳过更新。云端开关（`cloud_auto_update_enabled`）与强制更新开关每轮检查，强制开启时检查间隔缩短到 1 秒。
+「先写盘再更新」是关键顺序：git reset/pull 即使报错也可能已部分改写源码，因此一旦开始更新，恢复只能走「依赖同步后重启」一条路。更新检查只有纯 git 一条路：`git fetch` 后对比 `..origin/{Branch}`，本地存在上游没有的提交（开发分叉）时跳过更新。上游的 CDN 检查、云端更新开关与强制更新开关随合并剔除，`force_update` 恒为 False，检查按 `CheckUpdateInterval` 轮询；检测到更新只置位状态，由用户或定时任务显式执行更新。
 
 ### 更新检查的调度
 
@@ -232,7 +229,7 @@ flowchart TD
 | `module/api/lifecycle.py` | lifespan 启动时 `State.init()`、装载 updater 任务与远程访问保活、`restart_processes(runs)`；关闭时逐项回收 |
 | `module/api/update_service.py` | `updater.fetch/apply/cancel` 的门面，与更新器共用 `_update_lock` |
 | `module/api/socket.py` / `router.py` | 预览订阅（`hub.subscribe`）、本机判定与隧道标记（`password_utils`） |
-| `mcp_server_sse.py` + `module/mcp/` | 挂载/独立模式都经 `mcp_auth.authorize` 鉴权、经 `ProcessManager` 启停实例 |
+| `mcp_server_sse.py` + `module/mcp/` | 挂载模式复用宿主服务；独立模式管理自身生命周期；经 `RuntimeService` 启停实例，均沿用免密入口 |
 | `gui.py` | 不走本模块的入口，而是消费 `worker_registry`（孤儿回收）与 `State` 事件（热重载） |
 | `alas.py`（worker 内） | `preview.set_task` 上报任务边界；`AzurLaneConfig.stop_event` 消费更新事件 |
 
@@ -263,10 +260,15 @@ worker 启停:  API/MCP ──lifecycle lock──> ProcessManager.start/stop_by
        _preview_queue(≤2) ──预览转发线程(校验 runId)──> hub.publish ──回调──>
        socket.preview_producer ──event('preview')──> 浏览器（每实例仅最新一帧）
 
-更新:  云端开关/GitOverCdn/git fetch ──> updater.state ──> update_service 快照
+更新:  git fetch ──> updater.state ──> update_service 快照
        run_update ──event.set()──> worker 任务边界退出 ──> reloadalas + pending 标记落盘
        ──restart_event──> gui.py 父监督器 ──依赖同步──> 重建 WebUI ──restart_processes──> 恢复实例
 ```
+
+预览是可丢帧的被动通道。复制预览副本或后台 JPEG 编码发生 `MemoryError` 时只丢当前预览帧，
+下次截图继续尝试；不能因额外预览分配失败中止已经取得有效截图的游戏任务。
+实际截图后端、识别与保存的内存异常仍沿原任务异常路径处理，不由预览通道吞掉。
+定向回归见 `tests.test_console_runtime.RuntimeTests` 的复制/编码失败与下一帧恢复用例。
 
 ## 9. 状态模型
 
@@ -308,7 +310,7 @@ stateDiagram-v2
 | `RemoteAccess.RemoteAccessMode` | select | auto | `auto`/`webrtc`/`ssh`，决定激活哪个远程访问 provider |
 | `RemoteAccess.EnableRemoteAccess` | bool | false | 启动时挂载远程访问保活任务 |
 | `RemoteAccess.SSHServer` / `SignalingServer` / `StunServers` / `TurnServers` | str\|null | null | 隧道与信令配置；未配置信令时从 SSHServer 推导 |
-| `Webui.Password` | str\|null | null | WebUI 与 MCP 共用密码；公网监听未设置时自动生成并回写 |
+| `Webui.Password` | 文本或 null | null | WebUI 可显式配置密码；本地不自动生成，也不向 MCP 注入口令 |
 | `Optimization.WhenSchedulerStopped`（实例配置） | select | stay_there | 手动停止后的收尾动作，`scheduler_stop` 消费 |
 
 关联：`DeployConfig.__setattr__`（`module/runtime/config.py`）拦截大写开头且已存在的键，变更即 `write()` 落盘——`updater` 读取 `CheckUpdateInterval` 等属性时每次都 `read()` 最新值，设置页保存后无需重启即对下一次读取生效。`deploy.yaml` 中不属于 `DEPLOY_FIELDS` 的键（如旧版 `Language`/`Theme`）按 `LEGACY_DEPLOY_FIELDS` 兼容解析，不出现在设置表单中。
@@ -323,8 +325,7 @@ stateDiagram-v2
 | 启动收尾进程失败/超时 | 设备依赖异常、动作超过 30 秒 | 记录告警；超时收尾进程被终止，不影响已完成的停止 |
 | 更新等不到实例退出 | worker 卡在不可中断的设备操作 | 等待 10 分钟后 `stop()` 强停；仍有存活则取消更新并重启实例 |
 | git 更新失败 | 网络、锁文件、分叉 | 不回滚恢复计划——reset/pull 可能已部分完成，交父进程以「同步后重启」收场 |
-| 更新检查线程异常 | 云端开关不可达、git 命令失败 | `state = 0`（或 failed），下个周期重试；不中断调度任务 |
-| 云端开关不可访问 | 控制点网络失败 | `_check_update` 跳过本轮检查（`fatal=False`） |
+| 更新检查线程异常 | git fetch 失败等 | `state = 0`（或 failed），下个周期重试；不中断调度任务 |
 | TaskHandler 任务抛异常 | 业务任务 bug | `logger.exception` 后立即移除该任务，其余任务不受影响 |
 | 预览队列异常（EOF/OSError） | worker 或队列消亡 | 转发线程退出；丢帧不中断实际任务，队列满时丢弃旧帧 |
 
@@ -342,7 +343,7 @@ stateDiagram-v2
 | TaskHandler 调度线程 | 服务子进程 daemon 线程 | `task_handler.start()` | `stop()` 置 `_alive=False` 后 join（2 秒超时） |
 | 更新检查线程 | 服务子进程 daemon 线程 | `updater.check_update` | 单次检查即结束 |
 | 日志/预览转发线程 ×2/实例 | 服务子进程线程 | `start_log_queue_handler` | 检测到本轮进程退出后 `join(1)` 回收 |
-| 远程访问线程 | 服务子进程**非 daemon** 线程 | provider.start() | stop_event 或进程内唯一线程时退出 |
+| SSH / WebRTC 远程访问线程 | 服务子进程**非 daemon** 线程 | provider.start() | stop_event 或进程内唯一线程时退出 |
 | preview 编码线程 | **worker 进程内** daemon 线程 | `preview.initialize` | 队列断开即退出 |
 
 同步约束：
@@ -366,10 +367,14 @@ stateDiagram-v2
 | `cache/wiki_event_calculator.json` | `event_calculator` | `load_event_calculator` | Wiki 解析结果缓存（`cache_version=2`），网络失败时回退 |
 | 内存 `renderables` / `PreviewHub.frames` | 转发线程 / worker | RuntimeService | 日志环形缓冲（≤400）与每实例最新一帧，进程级不持久化 |
 
+普通调度、变量和最新资源观察统一保存在 `azurpilot.db`；实例删除先备份配置及普通调度切片，统计保留原实例名。
+
+TUI 使用相同服务边界；配置弹窗显示时，时钟刷新查询主屏幕的 `HeaderBar`，避免把弹窗当前屏幕当作主布局。
+
 ## 14. 生命周期
 
 - **创建**：`gui.py` 父监督器 spawn 服务子进程 → uvicorn 加载 `create_app` → lifespan 启动（`manage_runtime=True`）。
-- **初始化**（`module/api/lifecycle.startup`）：`State.init()` 创建 Manager 并认领登记所有权 → `updater.event = State.manager.Event()` → 按 `CheckUpdateInterval`/`AutoRestartTime` 装载更新任务、按 `EnableRemoteAccess` 挂载保活任务 → `TaskHandler.start()` → 可选启动 OCR 服务进程 → `ProcessManager.restart_processes(runs)`（CLI `--run` 或 `Webui.Run`）拉起实例。
+- **初始化**：lifespan 先执行普通总库安装级迁移，失败停止启动；随后 `module/api/lifecycle.startup`：`State.init()` 创建 Manager 并认领登记所有权 → `updater.event = State.manager.Event()` → 按 `CheckUpdateInterval`/`AutoRestartTime` 装载更新任务、按 `EnableRemoteAccess` 挂载保活任务 → `TaskHandler.start()` → 可选启动 OCR 服务进程 → `ProcessManager.restart_processes(runs)`（CLI `--run` 或 `Webui.Run`）拉起实例。
 - **运行**：TaskHandler 线程驱动周期任务；uvicorn 事件循环承载 API 与 MCP；worker 进程各自运行调度器。
 - **更新**：见第 6 节事务；结束时 `State._restart_requested = True`，clearup 逐项回收（TaskHandler → OCR → 远程访问 → 全部 worker），全部成功才 `State.clearup()`（关闭 Manager、清除 owner），随后父监督器终止本进程并重建。
 - **销毁**：父监督器 `_stop_webui_process_tree` 先停根（WebUI 及 SyncManager 等整树），再按登记回收 worker；父进程被强杀的场景由下一次启动的孤儿恢复兜底。
@@ -383,7 +388,6 @@ stateDiagram-v2
 - **新增停止收尾动作**：在 `scheduler_stop.STOP_ACTIONS` 加选项、`execute_stop_action` 加分支，并在 `module/config/argument/argument.yaml` 的 `WhenSchedulerStopped` 选项中登记（五个 i18n 文件补翻译）。
 - **新增远程访问 provider**：继承 `RemoteAccessProvider`（start/stop/is_alive/get_state/get_entry_point/get_connection_state/get_error 七个接口），接入 `AutoRemoteAccessProvider` 的模式分派。
 - **新增部署设置字段**：`deploy_settings.py` 的 `DEPLOY_GROUPS` 加 `DeployField`，`deploy/config.py` 加模板默认值，`gui.yaml` 补 `Gui.DeploySetting.*` 翻译；类型解析在 `_parse_value` 扩展。
-- **新增 MCP 端点保护**：只需扩展 `mcp_auth.ROUTE_METHODS` 与 `route_of` 的末尾匹配，`authorize` 会自动覆盖。
 
 ## 16. 修改注意事项
 
@@ -393,13 +397,12 @@ stateDiagram-v2
 - **run_update 的事务边界不可收缩**：`restart_lock` 必须覆盖「停 worker → 写恢复计划 → git → 置位事件」全程；手动重启插进中间会产生新旧版本 worker 并存。恢复计划写盘失败时更新尚未开始，可以直接回滚重启实例；但 git 开始之后失败**不能**回滚计划。
 - **`TaskHandler` 的计时语义是「执行后重新计时」**：改回「按固定周期补跑」会让系统休眠醒来后瞬间挤满过期刷新任务。
 - **预览链路必须保持被动**：`hub.get` 与 `preview.capture` 都只读已有帧。任何「查询时顺手截一张」的实现都会把浏览器流量变成设备负载，破坏 7×24 假设（`module/api` 侧有同样的红线）。
-- **`mcp_auth` 只依赖标准库**是刻意的：独立 MCP 进程的 CI 导入守卫禁止 WebUI/OCR 依赖进入；给它加 `requests`/PIL 之类的依赖会破坏进程隔离测试。
 - **登记文件的迁移逻辑以「旧 owner 存活状态」为唯一裁决**：不要加入两份文件的内容比对——所有写事务在同一把跨进程锁内串行，内容不一致不代表存在并发会话。
 - worker 进程通过 spawn 创建，**模块级单例在每个进程各有一份**：`State`、`updater`、`preview.hub` 在 worker 内的状态与 WebUI 侧互不可见；跨进程只走显式的队列、Event 与登记文件。
 
 ## 17. 已知限制
 
-- **`launcher.py`、`launcher_trust.py`、`event_calculator.py` 当前没有生产消费者**（截至 2026-09）：三者自旧 PyWebIO 前端迁移而来，逻辑与单测完整，但新 React 前端尚未实现启动器命令通道（`/api/launcher/*` 端点已随旧前端移除）、启动器免密令牌签发（无生产代码调用 `configure`/`issue_token`）与活动计算器页面。它们是预留能力，接线前不会生效。
+- **`event_calculator.py` 当前没有生产消费者**（截至 2026-09）：自旧 PyWebIO 前端迁移而来，逻辑与单测完整，但新 React 前端尚未实现活动计算器页面。它是预留能力，接线前不会生效。启动器命令通道与免密令牌已由 `module/api/launcher_api.py` 接入 `create_app`。
 - worker 的更新退出依赖任务边界轮询（`wait_until` 每 5 秒、任务间每次循环），**正在执行的长任务会推迟更新等待**，因此事务里有 10 分钟超时强停兜底；强停可能让该实例下次启动时状态不完整。
 - `alive` 在登记不可验证时保守返回 False，配合 `start()` 的二次验证避免重复启动；但这意味着登记文件损坏期间（自愈前）实例可能显示为已停止。
 - 远程访问线程是非 daemon 线程，其退出依赖 `stop_event` 或「进程内唯一线程」检测；极端情况下（其他线程意外全部退出）可能延迟进程退出。
@@ -439,8 +442,7 @@ if updater.check_update():        # 异步检查；结果落在 updater.state / 
 - 实例状态不符预期时，先核对三处：`ProcessManager._processes` 是否有该实例、`cache/webui-workers.json` 的登记（owner_pid/worker pid/created_at）、对应 PID 是否存活（`psutil.Process(pid).create_time()`）。三者不一致即身份验证拒绝的来源。
 - 「拒绝启动 worker」日志（更新事务/清理中/登记不一致）出现时，检查 `State._restart_requested`、`State._clearup` 与 `reloadalas` 文件是否残留。
 - 更新卡在 `wait` 状态：`updater.state` 属性 + 各实例 `alive` 逐个排查；10 分钟超时强停的记录会以 `critical` 输出。
-- MCP 鉴权问题：401 表示凭据未命中（三种传参方式见 `DENIED_MESSAGES`）；`mcp_auth.redact` 保证日志不落明文，排障时可临时在测试中直接调用 `check(candidate)`。
-- 单测覆盖：`tests/test_process_manager.py`（状态与事件）、`tests/test_webui_worker_registry.py`（登记/认领/回收）、`tests/test_webui_updater.py`（更新事务）、`tests/test_mcp_auth.py`、`tests/test_runtime_task_handler.py`、`tests/test_scheduler_stop.py`、`tests/test_process_control.py`、`tests/test_console_runtime.py`（预览）、`tests/test_webui_lifecycle.py`（State）。
+- 单测覆盖：`tests/test_process_manager.py`（状态与事件）、`tests/test_webui_worker_registry.py`（登记/认领/回收）、`tests/test_webui_updater.py`（更新事务）、`tests/test_mcp_contract.py`、`tests/test_mcp_legacy.py`、`tests/test_mcp_execution.py`、`tests/test_runtime_task_handler.py`、`tests/test_scheduler_stop.py`、`tests/test_process_control.py`、`tests/test_console_runtime.py`（预览）、`tests/test_webui_lifecycle.py`（State）。
 
 ## 20. 相关模块
 
@@ -448,5 +450,5 @@ if updater.check_update():        # 异步检查；结果落在 updater.state / 
 - [API 服务](api.md)：消费本模块状态的协议层；`RuntimeService` 是 `ProcessManager` 的投影。
 - [WebUI 启动器（gui.py）](../entry/gui.md)：父监督器，消费 `State` 事件与登记文件；worker 由本模块而非 gui.py 拉起。
 - [调度器（alas.py）](../entry/alas.md)：worker 进程内运行的调度循环；`stop_event` 的消费方。
-- [MCP SSE 服务器](../entry/mcp-server.md)：`mcp_auth` 的使用者；经 `RuntimeService` 间接驱动本模块。
+- [MCP SSE 服务器](../entry/mcp-server.md)：经 `RuntimeService` 驱动实例；挂载模式复用服务并由宿主管理关闭顺序。
 - [配置系统](../config.md)：`State.deploy_config` 的存储格式与 `AzurLaneConfig.stop_event` 的宿主。

@@ -1931,8 +1931,7 @@ class RewardCommission(Dock, UI, InfoHandler):
             self._prune_commission_reward_screenshots(instance)
         return paths
 
-    @staticmethod
-    def _prune_commission_reward_screenshots(instance, max_keep=None, base=None):
+    def _prune_commission_reward_screenshots(self, instance, max_keep=None, base=None):
         """清理实例目录下超量的委托收益截图，仅保留最近 max_keep 张。
 
         截图保留张数与统计页「最近委托记录」的 50 条上限对应：
@@ -2510,7 +2509,7 @@ class RewardCommission(Dock, UI, InfoHandler):
         # 选择 BACK_ARROW，但从该页面无法导航到 page_reward
         self.device.screenshot()
         if self.appear(TACTICAL_CLASS_START, offset=(30, 30)):
-            logger.info('[委托-战术] 检测到战术课堂开始按钮，点击取消退出')
+            logger.info('[委托-战术] 检测到战术学院课程开始按钮，点击取消退出')
             self.device.click(TACTICAL_CLASS_CANCEL)
             self.device.sleep((0.5, 1.0))
         self.ui_ensure(page_reward)

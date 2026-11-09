@@ -22,6 +22,10 @@ class TestGitCodeSync(unittest.TestCase):
         bash = str(Path(os.environ.get('ProgramFiles', 'C:/Program Files')) / 'Git/bin/bash.exe') if os.name == 'nt' else shutil.which('bash')
         if not bash or not Path(bash).exists():
             self.skipTest('环境未提供 Bash')
+        probe = subprocess.run([bash, '-c', 'exit 0'], capture_output=True)
+        if os.name == 'nt' and b'NtCreateDirectoryObject' in probe.stderr:
+            self.skipTest('Windows does not grant the named-object privileges required by MSYS Bash')
+        self.assertEqual(probe.returncode, 0, probe.stderr.decode(errors='replace'))
         stub = '''
 set -e
 git() {

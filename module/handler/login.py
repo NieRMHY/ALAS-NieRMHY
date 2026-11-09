@@ -100,6 +100,12 @@ class LoginHandler(UI):
 
             self.device.screenshot()
 
+            # 仅由异常恢复凭据设置；识别到原地图后交回任务开启自律。
+            recovery_check = self.__dict__.get('campaign_recovery_check')
+            if recovery_check is not None and recovery_check() is not None:
+                logger.info('[登录] 检测到异常重启保留的地图，交回原任务恢复自律')
+                break
+
             # 结束条件
             if self.is_in_main():
                 if confirm_timer.reached():
@@ -109,6 +115,8 @@ class LoginHandler(UI):
                 confirm_timer.reset()
 
             # 登录处理
+            if self.handle_bilibili_login_record():
+                continue
             if self.match_template_color(LOGIN_CHECK, offset=(30, 30), interval=5):
                 self.device.click(LOGIN_CHECK)
                 if not login_success:
@@ -149,7 +157,8 @@ class LoginHandler(UI):
                 continue
             # 主界面弹窗
             if self.ui_page_main_popups(get_ship=login_success):
-                return True
+                # 关闭弹窗只表示已操作；下一帧仍需确认确实回到了主界面。
+                continue
             # 始终尝试返回主界面
             if self.appear_then_click(GOTO_MAIN, offset=(30, 30), interval=5):
                 continue

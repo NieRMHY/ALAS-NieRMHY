@@ -16,6 +16,7 @@ from module.api.config_service import ConfigService, ROOT
 from module.api.protocol import ApiError, ConfigChange
 from module.api.runtime_service import RuntimeService
 from module.api.socket import Gateway, Session
+from tests.platform_capabilities import supports_symlinks
 
 
 def fixture(directory):
@@ -37,6 +38,73 @@ class ConfigApiTests(unittest.TestCase):
         self.addCleanup(self.temp.cleanup)
         self.configs = ConfigService(fixture(self.temp.name))
 
+    @unittest.skipUnless(supports_symlinks(), 'OS does not grant symbolic-link creation privileges')
+    def test_importable_excludes_symbolic_links(self):
+        imports = self.configs.directory / 'import'
+        imports.mkdir(exist_ok=True)
+        source = imports / 'shared.json'
+        source.write_text(json.dumps({'Alas': {}}), encoding='utf-8')
+        (imports / 'link.json').symlink_to(source)
+        names = [entry['name'] for entry in self.configs.importable()]
+        self.assertIn('shared', names)
+        self.assertNotIn('link', names)
+
+    def test_dorm_food_reserve_defaults_for_old_configs(self):
+        from module.config.config_updater import ConfigUpdater
+
+        path = self.configs.path('testpilot')
+        data = self.configs.read_json(path)
+        data['Dorm']['Dorm'].pop('ReserveFood')
+        data['Dorm']['Dorm'].pop('FeedReserveState')
+        path.write_text(json.dumps(data), encoding='utf-8')
+        before = path.read_bytes()
+        for values in (self.configs.get('testpilot')['values'], ConfigUpdater().config_update(data)):
+            self.assertFalse(values['Dorm']['Dorm']['ReserveFood'])
+            self.assertIsNone(values['Dorm']['Dorm']['FeedReserveState'])
+        self.assertEqual(before, path.read_bytes())
+
+    def test_dorm_food_reserve_persists_and_internal_state_is_read_only(self):
+        field = 'Dorm.Dorm.ReserveFood'
+        for enabled in (True, False):
+            with self.subTest(enabled=enabled):
+                result = self.configs.patch('testpilot', None, [ConfigChange(path=field, value=enabled)])
+                self.assertEqual(enabled, result['values']['Dorm']['Dorm']['ReserveFood'])
+                saved = self.configs.read_json(self.configs.path('testpilot'))
+                self.assertEqual(enabled, saved['Dorm']['Dorm']['ReserveFood'])
+        with self.assertRaises(ApiError) as caught:
+            self.configs.patch('testpilot', None, [ConfigChange(
+                path='Dorm.Dorm.FeedReserveState', value={'day': '2026-10-15'},
+            )])
+        self.assertEqual('READ_ONLY', caught.exception.code)
+
+    def test_gacha_clear_ticket_time_fills_default_for_old_configs(self):
+        from module.config.config_updater import ConfigUpdater
+
+        path = self.configs.path('testpilot')
+        data = self.configs.read_json(path)
+        data['Gacha']['Gacha'].pop('ClearTicketTime')
+        path.write_text(json.dumps(data), encoding='utf-8')
+        before = path.read_bytes()
+        values = self.configs.get('testpilot')['values']
+        self.assertEqual('09:30', values['Gacha']['Gacha']['ClearTicketTime'])
+        migrated = ConfigUpdater().config_update(data)
+        self.assertEqual('09:30', migrated['Gacha']['Gacha']['ClearTicketTime'])
+        self.assertEqual(before, path.read_bytes())
+
+    def test_gacha_clear_ticket_time_validates_and_persists(self):
+        field = 'Gacha.Gacha.ClearTicketTime'
+        for value in ['00:00', '9:30', '09:30', '11:45', '23:59']:
+            with self.subTest(value=value):
+                result = self.configs.patch('testpilot', None, [ConfigChange(path=field, value=value)])
+                self.assertEqual(value, result['values']['Gacha']['Gacha']['ClearTicketTime'])
+                saved = self.configs.read_json(self.configs.path('testpilot'))
+                self.assertEqual(value, saved['Gacha']['Gacha']['ClearTicketTime'])
+        before = self.configs.path('testpilot').read_bytes()
+        for value in ['', '24:00', '09:60', '-1:30', '9:3', '09:30:00', 930, None, False]:
+            with self.subTest(value=value), self.assertRaises(ApiError):
+                self.configs.patch('testpilot', None, [ConfigChange(path=field, value=value)])
+        self.assertEqual(before, self.configs.path('testpilot').read_bytes())
+
     def test_read_does_not_write_or_expose_unrelated_json(self):
         path = self.configs.path('testpilot')
         before = path.stat().st_mtime_ns
@@ -51,12 +119,10 @@ class ConfigApiTests(unittest.TestCase):
         imports.mkdir()
         shutil.copyfile(self.configs.directory / 'testpilot.json', imports / 'shared.json')
         (imports / 'broken.json').write_text('{ not json', encoding='utf-8')
-        (imports / 'link.json').symlink_to(imports / 'shared.json')
 
         names = [entry['name'] for entry in self.configs.importable()]
         self.assertIn('shared', names)
         self.assertNotIn('broken', names)     # 解不开的 JSON
-        self.assertNotIn('link', names)       # 符号链接
         self.assertNotIn('testpilot', names)  # 实例目录里的不会被当作导入源
 
         # 文件名不合规的不能被列出来：read_import 会拒掉它，列出来就是一个选不了的选项
@@ -100,6 +166,48 @@ class ConfigApiTests(unittest.TestCase):
         with self.assertRaises(ApiError):
             self.configs.schema('../deploy')
 
+    def test_meta_assist_legacy_switch_is_migrated_before_runner_start(self):
+        path = self.configs.path('testpilot')
+        for old, expected in ((True, 0), (False, -1), (None, 0)):
+            with self.subTest(old=old):
+                data = self.configs.read_json(path)
+                fields = data['OpsiAshBeacon']['OpsiAshBeacon']
+                fields.pop('AssistRequestLimit', None)
+                fields['OneHitMode'] = old
+                path.write_text(json.dumps(data), encoding='utf-8')
+                before = path.read_bytes()
+                values, revision = self.configs.read('testpilot')
+                fields = values['OpsiAshBeacon']['OpsiAshBeacon']
+                self.assertEqual(fields['AssistRequestLimit'], expected)
+                self.assertNotIn('OneHitMode', fields)
+                self.assertEqual(path.read_bytes(), before)
+                self.configs.patch('testpilot', revision, [ConfigChange(
+                    path='OpsiAshBeacon.OpsiAshBeacon.AssistRequestLimit', value=2,
+                )])
+                saved = self.configs.read_json(path)['OpsiAshBeacon']['OpsiAshBeacon']
+                self.assertEqual(saved['AssistRequestLimit'], 2)
+                self.assertNotIn('OneHitMode', saved)
+
+    def test_meta_assist_explicit_new_limit_wins_over_legacy_switch(self):
+        path = self.configs.path('testpilot')
+        data = self.configs.read_json(path)
+        data['OpsiAshBeacon']['OpsiAshBeacon'].update(OneHitMode=False, AssistRequestLimit=3)
+        path.write_text(json.dumps(data), encoding='utf-8')
+        values, _ = self.configs.read('testpilot')
+        self.assertEqual(values['OpsiAshBeacon']['OpsiAshBeacon']['AssistRequestLimit'], 3)
+
+    def test_meta_assist_schema_accepts_only_supported_integer_values(self):
+        key = 'OpsiAshBeacon.OpsiAshBeacon.AssistRequestLimit'
+        field = self.configs.args['OpsiAshBeacon']['OpsiAshBeacon']['AssistRequestLimit']
+        self.assertEqual((field['type'], field['value']), ('input', 0))
+        for value in (-1, 0, 1, 5, 100, '2', 2.0):
+            self.assertEqual(self.configs.validate(key, value), key.split('.'))
+        for value in (-2, 1.5, True, '2.5', None):
+            with self.subTest(value=value), self.assertRaises(ApiError):
+                self.configs.validate(key, value)
+        with self.assertRaises(ApiError):
+            self.configs.validate('OpsiAshBeacon.OpsiAshBeacon.AssistRequestState', {})
+
     def test_rejects_path_traversal_and_reserved_names(self):
         for name in ['../template', 'a/b', 'a\\b', 'template', 'template.fpy', 'CON', 'c:foo', '']:
             with self.subTest(name=name), self.assertRaises(ApiError):
@@ -141,6 +249,26 @@ class ConfigApiTests(unittest.TestCase):
         latest = self.configs.patch('testpilot', original['revision'], [ConfigChange(path='Alas.Emulator.Serial', value='auto')])
         self.assertEqual('auto', latest['values']['Alas']['Emulator']['Serial'])
 
+    def test_event_daily_last_stage_saves_text_from_legacy_zero(self):
+        """旧数字断点可改成关卡名，刷新后保留大小写，输入 0 仍可重置。"""
+        path = self.configs.path('testpilot')
+        data = self.configs.read_json(path)
+        tasks = ('EventA', 'EventB', 'EventC', 'EventD')
+        for task in tasks:
+            data[task]['EventDaily']['LastStage'] = 0
+        path.write_text(json.dumps(data, ensure_ascii=False), encoding='utf-8')
+
+        for task in tasks:
+            with self.subTest(task=task):
+                original = self.configs.get('testpilot')
+                self.assertEqual(0, original['values'][task]['EventDaily']['LastStage'])
+                for stage in ('a3', 'D3', '0'):
+                    changed = self.configs.patch('testpilot', '', [
+                        ConfigChange(path=f'{task}.EventDaily.LastStage', value=stage)])
+                    self.assertEqual(stage, changed['values'][task]['EventDaily']['LastStage'])
+                    self.assertEqual(stage, self.configs.get('testpilot')['values'][task]['EventDaily']['LastStage'])
+                    self.assertEqual(stage, self.configs.read_json(path)[task]['EventDaily']['LastStage'])
+
     def test_invalid_batch_does_not_partially_save(self):
         original = self.configs.get('testpilot')
         with self.assertRaises(ApiError):
@@ -165,6 +293,55 @@ class ConfigApiTests(unittest.TestCase):
                             self.configs.validate(f'{task}.{group}.{arg}', field['validate'][1] + 1)
                         return
         self.fail('未找到数值范围参数')
+
+    def test_guild_join_threshold_accepts_fractions_within_documented_range(self):
+        """默认值 1.0 经 JSON 传输成为 1 后，比例仍可保存小数。"""
+        path = 'Guild.GuildOperation.JoinThreshold'
+        for value in [0, 0.2, 0.5, 1, 1.0, ' 0.2 ', '.5', '1e-1']:
+            with self.subTest(value=value):
+                original = self.configs.get('testpilot')
+                saved = self.configs.patch('testpilot', original['revision'], [ConfigChange(path=path, value=value)])
+                expected = float(value)
+                self.assertEqual(expected, saved['values']['Guild']['GuildOperation']['JoinThreshold'])
+                self.assertEqual(expected, self.configs.read_json(self.configs.path('testpilot'))['Guild']['GuildOperation']['JoinThreshold'])
+        original = self.configs.get('testpilot')
+        for value in [-0.01, 1.01, 1000, True, None, float('inf'), float('nan'), 'abc', '']:
+            with self.subTest(value=value), self.assertRaises(ApiError):
+                self.configs.patch('testpilot', original['revision'], [ConfigChange(path=path, value=value)])
+            self.assertEqual(original, self.configs.get('testpilot'))
+
+    def test_numeric_input_forms_are_normalized_without_changing_integer_semantics(self):
+        path = 'Guild.GuildOperation.NewOperationMaxDate'
+        for value in [2, 2.0, '2.0', '  +02  ', '2e0']:
+            with self.subTest(value=value):
+                original = self.configs.get('testpilot')
+                saved = self.configs.patch('testpilot', original['revision'], [ConfigChange(path=path, value=value)])
+                actual = saved['values']['Guild']['GuildOperation']['NewOperationMaxDate']
+                self.assertEqual(2, actual)
+                self.assertIs(int, type(actual))
+        for value in [2.5, '2.5', True, 'true', 'NaN', '1e999', [], {}]:
+            with self.subTest(value=value), self.assertRaises(ApiError):
+                self.configs.validate(path, value)
+
+    def test_explicit_numeric_type_takes_priority_over_default_literal(self):
+        field = self.configs.args['Guild']['GuildOperation']['JoinThreshold']
+        field['value'] = 1
+        self.assertEqual(['Guild', 'GuildOperation', 'JoinThreshold'],
+                         self.configs.validate('Guild.GuildOperation.JoinThreshold', 0.2))
+
+    def test_numeric_normalization_preserves_text_options_and_batch_atomicity(self):
+        original = self.configs.get('testpilot')
+        serial = 'Alas.Emulator.Serial'
+        saved = self.configs.patch('testpilot', original['revision'], [ConfigChange(path=serial, value=' 000123 ')])
+        self.assertEqual(' 000123 ', saved['values']['Alas']['Emulator']['Serial'])
+        with self.assertRaises(ApiError):
+            self.configs.validate('Main.Fleet.FleetOrder', 1.0)
+        before = self.configs.path('testpilot').read_bytes()
+        with self.assertRaises(ApiError):
+            self.configs.patch('testpilot', saved['revision'], [
+                ConfigChange(path=serial, value='should-not-save'),
+                ConfigChange(path='Guild.GuildOperation.JoinThreshold', value='1000')])
+        self.assertEqual(before, self.configs.path('testpilot').read_bytes())
 
     def test_hidden_and_fixed_fields_are_read_only(self):
         for path in ['Main.Scheduler.Command', 'Restart.Scheduler.Enable']:
@@ -269,6 +446,21 @@ class SocketApiTests(unittest.TestCase):
             self.assertTrue(self.call(ws, 'auth.login', {'password': 'test-secret'})['ok'])
             self.assertEqual('testpilot', self.call(ws, 'instances.list')['result'][0]['name'])
 
+    def test_large_calculator_file_keeps_other_message_limits(self):
+        """舰船文件可超过 1 MiB，其余方法仍受原限制约束。"""
+        import base64
+        rows = [{'name': '扩展文件舰船' * 8, 'level': 100, 'source': 'x' * 200}] * 3000
+        content = base64.b64encode(json.dumps({'ships': rows}, ensure_ascii=False).encode()).decode()
+        self.assertGreater(len(content), 1024 * 1024)
+        with self.client.websocket_connect('/api/v1/ws') as ws:
+            self.login(ws)
+            result = self.call(ws, 'mind.import', {'instance': 'testpilot', 'filename': 'ships.json', 'content': content})
+            self.assertTrue(result['ok'], result)
+            self.assertEqual(len(result['result']['ships']), 3000)
+            result = self.call(ws, 'config.get', {'instance': 'testpilot', 'padding': content})
+            self.assertEqual(result['error']['code'], 'INVALID_REQUEST')
+            self.assertIn('1 MiB', result['error']['message'])
+
     def test_update_methods_require_auth_and_validate_pagination(self):
         with self.client.websocket_connect('/api/v1/ws') as ws:
             ws.receive_json()
@@ -343,6 +535,21 @@ class SocketApiTests(unittest.TestCase):
             self.login(ws)
             self.assertEqual('METHOD_NOT_FOUND', self.call(ws, '__dict__')['error']['code'])
 
+    # Add by MHY, 合并后证券接口和订阅必须继续禁用，通知订阅保留
+    def test_removed_exchange_methods_and_topic_stay_unavailable(self):
+        with self.client.websocket_connect('/api/v1/ws') as ws:
+            self.login(ws)
+            for method in ('stock.status', 'stock.request', 'stock.rebuild'):
+                with self.subTest(method=method):
+                    result = self.call(ws, method, {'instance': 'testpilot'})
+                    self.assertEqual('METHOD_NOT_FOUND', result['error']['code'])
+            result = self.call(ws, 'events.subscribe', {'topics': ['stock']})
+            self.assertEqual('INVALID_PARAMS', result['error']['code'])
+            result = self.call(ws, 'events.subscribe', {'topics': ['notifications']})
+            self.assertTrue(result['ok'], result)
+            self.assertEqual(['notifications'], result['result']['topics'])
+            self.assertFalse((Path(self.temp.name) / 'config' / 'scheduler').exists())
+
     def test_session_ids_cannot_repeat_mutations(self):
         with self.client.websocket_connect('/api/v1/ws') as ws:
             self.login(ws)
@@ -404,6 +611,71 @@ class SocketApiTests(unittest.TestCase):
         manager.start.assert_called_once_with('alas', ev=stop_event)
         manager.stop_by_user.assert_called_once_with()
         self.assertEqual(before, path.read_bytes())
+
+    def test_dock_scan_tools_start_over_real_websocket(self):
+        """扫描按钮须经过真实任务清单校验，并传递原任务和已保存范围。"""
+        from module.runtime.process_manager import ProcessManager
+
+        manager = SimpleNamespace(alive=False, state=2, current_task=None)
+
+        def start(task, **kwargs):
+            manager.alive, manager.state, manager.current_task = True, 1, task
+
+        def stop():
+            manager.alive, manager.state, manager.current_task = False, 2, None
+            return True
+
+        manager.start = Mock(side_effect=start)
+        manager.stop_by_user = Mock(side_effect=stop)
+        stop_event = object()
+        with patch.object(ProcessManager, 'get_manager', return_value=manager), \
+                patch.dict(ProcessManager._processes, {'testpilot': manager}, clear=True), \
+                patch.object(RuntimeService, '_record_running_now'), \
+                patch('module.runtime.updater.updater', SimpleNamespace(event=stop_event)), \
+                self.client.websocket_connect('/api/v1/ws') as ws:
+            self.login(ws)
+            for task, group in [('DockScan', 'Dock')]:
+                with self.subTest(task=task):
+                    config = self.call(ws, 'config.get', {'instance': 'testpilot'})['result']
+                    patched = self.call(ws, 'config.patch', {
+                        'instance': 'testpilot', 'revision': config['revision'], 'changes': [
+                            {'path': f'{task}.{group}.MinLevel', 'value': 70},
+                            {'path': f'{task}.{group}.MaxLevel', 'value': 125},
+                        ],
+                    })
+                    self.assertTrue(patched['ok'], patched)
+                    response = self.call(ws, 'tasks.run', {'instance': 'testpilot', 'task': task})
+                    self.assertTrue(response['ok'], response)
+                    self.assertEqual('running', response['result']['status'])
+                    self.assertIn(task, [item['name'] for item in response['result']['tasks']])
+                    manager.start.assert_called_with(task, ev=stop_event)
+                    saved = json.loads((Path(self.temp.name) / 'config/testpilot.json').read_text(encoding='utf-8'))
+                    self.assertEqual((70, 125), (saved[task][group]['MinLevel'], saved[task][group]['MaxLevel']))
+                    self.assertTrue(self.call(ws, 'scheduler.stop', {'instance': 'testpilot'})['ok'])
+
+    def test_tasks_run_rejects_unregistered_tasks(self):
+        from module.runtime.process_manager import ProcessManager
+
+        manager = SimpleNamespace(alive=False, start=Mock())
+        with patch.object(ProcessManager, 'get_manager', return_value=manager), \
+                self.client.websocket_connect('/api/v1/ws') as ws:
+            self.login(ws)
+            for task in ['FleetTechnology', 'MindCalculatorScan', 'FleetTechScan', 'Main', 'UnknownScan']:
+                with self.subTest(task=task):
+                    response = self.call(ws, 'tasks.run', {'instance': 'testpilot', 'task': task})
+                    self.assertEqual('INVALID_PARAMS', response['error']['code'])
+            manager.start.assert_not_called()
+
+    def test_dock_scan_does_not_start_while_instance_is_running(self):
+        from module.runtime.process_manager import ProcessManager
+
+        manager = SimpleNamespace(alive=True, start=Mock())
+        with patch.object(ProcessManager, 'get_manager', return_value=manager), \
+                self.client.websocket_connect('/api/v1/ws') as ws:
+            self.login(ws)
+            response = self.call(ws, 'tasks.run', {'instance': 'testpilot', 'task': 'DockScan'})
+            self.assertEqual('INSTANCE_RUNNING', response['error']['code'])
+            manager.start.assert_not_called()
 
     def test_subscribe_sends_scoped_snapshot(self):
         path = Path(self.temp.name) / 'config/testpilot.json'
@@ -506,6 +778,33 @@ class SocketApiTests(unittest.TestCase):
                 await session.enqueue({})
             ws.close.assert_awaited_once()
         asyncio.run(check())
+
+
+class RuntimeMetadataTests(unittest.TestCase):
+    def test_game_region_uses_package_instead_of_server_checker_setting(self):
+        """开服检测关闭或选择国服检测区，都不能决定设备实际运行的游戏地区。"""
+        emulator = {'ServerName': 'disabled', 'PackageName': 'auto'}
+        temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(temporary.cleanup)
+        configs = SimpleNamespace(directory=Path(temporary.name), names=lambda: ['test'],
+                                  read=lambda _: ({'Alas': {'Emulator': emulator}}, ''))
+        runtime = RuntimeService(configs)
+        cases = [
+            ('auto', 'disabled', None), ('', 'disabled', None),
+            ('com.bilibili.azurlane', 'disabled', 'cn'),
+            ('com.bilibili.blhx.huawei', 'cn_channel-0', 'cn'),
+            ('com.YoStarEN.AzurLane', 'disabled', 'en'),
+            ('com.YoStarJP.AzurLane', 'cn_android-0', 'jp'),
+            ('com.hkmanjuu.azurlane.gp', 'disabled', 'tw'),
+            ('com.hkmanjuu.azurlane.gp.mc', 'disabled', 'tw'),
+        ]
+        with patch('module.api.runtime_service.ProcessManager._processes', {}):
+            for package, checker, expected in cases:
+                with self.subTest(package=package, checker=checker):
+                    emulator.update(PackageName=package, ServerName=checker)
+                    instance = runtime.instances()[0]
+                    self.assertEqual(expected, instance['region'])
+                    self.assertEqual(checker, instance['server'])
 
 
 class LogCursorTests(unittest.TestCase):

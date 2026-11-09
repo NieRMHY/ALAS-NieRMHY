@@ -4,7 +4,7 @@ export interface Parameters {
   "schema.get": { language?: "zh-CN" | "en-US" | "ja-JP" | "zh-TW" }
   "search.content": { query: string }
   "instances.list": Record<string, never>
-  "instances.create": { name: string; source?: string | null; import_file?: string | null }
+  "instances.create": { name: string; source?: string | null; import_file?: string | null; emulator?: { serial: string; package_name: string; server_name: string } | null }
   "instances.importable": Record<string, never>
   "instances.importConfig": { name: string; content: string }
   "instances.delete": { instance: string; revision: string }
@@ -12,6 +12,21 @@ export interface Parameters {
   "config.export": { instance: string }
   "config.patch": { instance: string; revision?: string | null; changes: Array<{ path: string; value: unknown }> }
   "overview.get": { instance: string }
+  "fleetTraining.reset": { instance: string; revision: string }
+  "dock.report": { instance: string }
+  "dock.importLegacy": { instance: string; revision: string }
+  "dock.configure": { instance: string; min_level: number; max_level: number }
+  "dock.patch": { instance: string; revision: string; changes: Array<{ id?: number | null; delete?: boolean; group_type?: number | null; name?: string; level?: number; rarity?: "" | "N" | "R" | "SR" | "SSR" | "UR"; base_rarity?: "" | "N" | "R" | "SR" | "SSR" | "UR"; extra_exp?: number | null; full_star?: boolean | null; form?: "base" | "retrofit" | null; review?: boolean; source?: string }> }
+  "dock.stageImport": { instance: string; revision: string; ships: Array<{ name: string; level: number; rarity?: "" | "N" | "R" | "SR" | "SSR" | "UR"; base_rarity?: "" | "N" | "R" | "SR" | "SSR" | "UR"; extra_exp?: number | null; review?: boolean; source?: string }> }
+  "dock.review": { instance: string; revision: string; pending_revision: string; decisions: Array<{ id: string; accept: boolean; ship_id?: number | null }> }
+  "mind.catalog": { instance: string }
+  "fleetTech.catalog": { instance: string }
+  "fleetTech.report": { instance: string }
+  "fleetTech.mergeShips": { instance: string; revision: string }
+  "fleetTech.patch": { instance: string; revision: string; changes?: Array<{ group_type: number; owned?: boolean; full_star?: boolean; lv120?: boolean; awakening_pending?: boolean }>; nations?: Record<string, unknown> }
+  "mind.plan": { instance: string; revision: string; ship_ids: Array<number>; target_level?: 120 | 125 }
+  "mind.import": { instance: string; filename: string; content: string }
+  "mind.recognize": { instance: string; filename: string; content: string }
   "scheduler.start": { instance: string }
   "scheduler.stop": { instance: string }
   "scheduler.program.catalog": { instance: string }
@@ -29,7 +44,7 @@ export interface Parameters {
   "opsi.simulator.figure": { instance: string }
   "preview.capture": { instance: string }
   "statistics.refreshLoot": { instance: string }
-  "statistics.report": { instance: string; category?: "resources" | "action" | "opsi" | "commission" | "ships" | "loot" | "research" | "storage"; month?: string | null; days?: number; period?: "day" | "week" | "month"; series?: number; scope?: "series" | "consumable"; task?: string | null }
+  "statistics.report": { instance: string; category?: "resources" | "action" | "opsi" | "commission" | "ships" | "loot" | "research" | "storage"; month?: string | null; days?: number; period?: "day" | "week" | "month"; series?: number; scope?: "series" | "consumable"; task?: string | null; include_series?: boolean }
   "statistics.resourceFlows": { instance: string; days?: number; start?: string | null; end?: string | null; resource?: string | null; task?: string | null; offset?: number; limit?: number; through_id?: number | null }
   "meowfficer.scoreReport": { instance: string; limit?: number }
   "meowfficer.clearReport": { instance: string }
@@ -54,7 +69,7 @@ export interface Parameters {
   "background.preference.get": Record<string, never>
   "background.preference.set": { material: "glass" | "plain"; preference?: Record<string, unknown> }
   "auth.login": { password?: string }
-  "events.subscribe": { instance?: string | null; topics: Array<"instances" | "overview" | "logs" | "preview"> }
+  "events.subscribe": { instance?: string | null; topics: Array<"instances" | "overview" | "logs" | "preview" | "notifications"> }
 }
 export interface SchedulerModels {
   ProgramDocument: { entry: string; nodes: Array<{ id: string; type: string; label?: string; comment?: string; params?: Record<string, unknown>; position?: Record<string, unknown> }>; edges?: Array<{ id: string; source: string; sourcePort: string; target: string; targetPort?: string; kind?: "control" | "data" }>; schemaVersion?: number; name?: string; subgraphs?: Array<{ entry: string; nodes: Array<{ id: string; type: string; label?: string; comment?: string; params?: Record<string, unknown>; position?: Record<string, unknown> }>; edges?: Array<{ id: string; source: string; sourcePort: string; target: string; targetPort?: string; kind?: "control" | "data" }>; id: string; name: string; pure?: boolean; inputs?: Array<{ name: string; type?: "any" | "number" | "boolean" | "string" | "time" | "duration" | "resource" | "task" | "tasks" | "result" | "list" | "object"; required?: boolean }>; outputs?: Array<{ name: string; type?: "any" | "number" | "boolean" | "string" | "time" | "duration" | "resource" | "task" | "tasks" | "result" | "list" | "object"; required?: boolean }> }>; variables?: Array<{ name: string; type?: "any" | "number" | "boolean" | "string" | "time" | "duration" | "resource" | "task" | "tasks" | "result" | "list" | "object"; initial?: unknown; persistent?: boolean }>; viewport?: Record<string, unknown> }

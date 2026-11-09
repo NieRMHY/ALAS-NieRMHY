@@ -51,6 +51,23 @@ class TestEntryPointImports(unittest.TestCase):
     def test_alas_imports(self):
         self._assert_import_ok("alas")
 
+    def test_benchmark_imports_without_system_pkg_resources(self):
+        """干净环境独立导入测速模块时，应先注册设备层的轻量兼容实现。"""
+        code = (
+            "import importlib.abc\n"
+            "import sys\n"
+            "class MissingPkgResources(importlib.abc.MetaPathFinder):\n"
+            "    def find_spec(self, fullname, path=None, target=None):\n"
+            "        if fullname == 'pkg_resources' or fullname.startswith('pkg_resources.'):\n"
+            "            raise ModuleNotFoundError('测试环境不提供 pkg_resources', name=fullname)\n"
+            "sys.modules.pop('pkg_resources', None)\n"
+            "sys.meta_path.insert(0, MissingPkgResources())\n"
+            "import module.daemon.benchmark\n"
+            "assert sys.modules['pkg_resources'] is sys.modules['module.device.pkg_resources']\n"
+        )
+        proc = _run_py(code)
+        self.assertEqual(proc.returncode, 0, f"测速模块独立导入失败：{proc.stderr[-1500:]}")
+
     def test_gui_imports(self):
         self._assert_import_ok("gui")
 

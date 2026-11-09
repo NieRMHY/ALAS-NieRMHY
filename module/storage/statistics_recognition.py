@@ -10,6 +10,7 @@ import cv2
 import numpy as np
 
 from module.base.utils import extract_white_letters, load_image
+from module.logger import logger
 from module.statistics.amount_digits import DigitTemplates
 from module.storage.amount_glyphs import StorageAmountGlyphs, native_glyph
 
@@ -19,14 +20,22 @@ GRID_AREA = (130, 65, 1235, 637)
 
 
 class StorageRecognitionError(ValueError):
-    """画面、物品或数量无法可靠确认，禁止提交本次快照。"""
+    """页面、网格或滚动位置无法确认，禁止提交本次快照。"""
+
+
+class StorageItemRecognitionError(StorageRecognitionError):
+    """单格身份或数量无法确认，记录为未知后继续扫描。"""
+
+    def __init__(self, message, identifiers=()):
+        super().__init__(message)
+        self.identifiers = tuple(identifiers)
 
 
 class StorageNoProgressError(StorageRecognitionError):
     """页面只含已读行，需要再向下浏览以露出新行。"""
 
 
-class StorageAmountGlyphError(StorageRecognitionError):
+class StorageAmountGlyphError(StorageItemRecognitionError):
     """数量完整，但抗锯齿字形尚未达到匹配置信度。"""
 
 
@@ -40,6 +49,19 @@ class StorageCard:
     identifier: str | None = None
     amount: int | None = None
     comparison_amount: int | None = None
+    error: str | None = None
+    unconfirmed_identifiers: tuple[str, ...] = ()
+
+
+def _skip_card(card, error):
+    """保留不确定身份供汇总排除，不能把同一物品的部分数量当成总量。"""
+    card.amount = None
+    card.error = str(error)
+    identifiers = (*card.unconfirmed_identifiers, *error.identifiers)
+    if card.identifier is not None:
+        identifiers += (card.identifier,)
+    card.unconfirmed_identifiers = tuple(dict.fromkeys(identifiers))
+    logger.warning(f'仓库物品跳过：{card.identifier or "未知物品"}（位置 {card.area}）：{error}；继续扫描')
 
 
 class StorageCatalog:
@@ -98,22 +120,21 @@ class StorageCatalog:
         first, score = ranks[0]
         margin = score - (ranks[1][1] if len(ranks) > 1 else 0.)
         if score < .90 or margin < .035:
-            raise StorageRecognitionError(f'物品身份不确定：候选 {first}，相似度 {score:.3f}，差距 {margin:.3f}')
+            raise StorageItemRecognitionError(
+                f'物品身份不确定：候选 {first}，相似度 {score:.3f}，差距 {margin:.3f}',
+                identifiers=[identifier for identifier, score in ranks if score >= .78])
         return first
 
     def verify(self, card, reference):
         """同页仅核对已确认目标的模板和完整数量，不重跑整个目录。"""
         identifier = reference.identifier
+        card.identifier = identifier
         score = self._scores(card.image, card.context, identifier).get(identifier, -1.)
         if score < .90:
-            raise StorageRecognitionError(f'{identifier} 的同页图标变化，相似度 {score:.3f}')
-        card.identifier = identifier
-        try:
-            card.amount = self.read_amount(card.image)
-        except StorageRecognitionError as error:
-            raise StorageRecognitionError(f'{identifier}（位置 {card.area}）：{error}') from error
+            raise StorageItemRecognitionError(f'{identifier} 的同页图标变化，相似度 {score:.3f}')
+        card.amount = self.read_amount(card.image)
         if card.amount != reference.amount:
-            raise StorageRecognitionError(f'{identifier} 的同页数量不一致：{reference.amount} → {card.amount}')
+            raise StorageItemRecognitionError(f'{identifier} 的同页数量不一致：{reference.amount} → {card.amount}')
 
     def is_target_rarity(self, icon):
         """先筛目录中的金/彩底色，紫色等非目标格不执行模板及数量匹配。"""
@@ -153,7 +174,7 @@ class StorageCatalog:
             for threshold in (85, 90, 95, 110, 120, 125):
                 try:
                     candidates.append(self._read_amount_mask(image < threshold))
-                except StorageRecognitionError:
+                except StorageItemRecognitionError:
                     continue
             if len(candidates) >= 2 and len(set(candidates)) == 1:
                 return candidates[0]
@@ -169,11 +190,11 @@ class StorageCatalog:
                  if area >= 8 and height >= 5]
         parts.sort(key=lambda part: part[1])
         if not parts:
-            raise StorageRecognitionError('仓库数量字形无法确认')
+            raise StorageItemRecognitionError('仓库数量字形无法确认')
         last = parts[-1]
         baseline = last[2] + last[4]
         if not 3 <= binary.shape[1] - last[1] - last[3] <= 10 or not 21 <= baseline <= 26:
-            raise StorageRecognitionError('仓库数量末位或基线不完整')
+            raise StorageItemRecognitionError('仓库数量末位或基线不完整')
         selected = [last]
         for part in reversed(parts[:-1]):
             if abs(part[2] + part[4] - baseline) > 2:
@@ -181,13 +202,13 @@ class StorageCatalog:
             gap = selected[-1][1] - part[1] - part[3]
             if gap > 5:
                 if gap < 10:
-                    raise StorageRecognitionError('仓库数量首位可能残缺')
+                    raise StorageItemRecognitionError('仓库数量首位可能残缺')
                 break
             selected.append(part)
         for label, x, y, width, height in reversed(selected):
             # 仓库数量字高为 18–19px；破损首位不能被当成图标残影删掉。
             if not 17 <= height <= 21 or x == 0 or x + width >= binary.shape[1]:
-                raise StorageRecognitionError('仓库数量存在截断或残缺字形')
+                raise StorageItemRecognitionError('仓库数量存在截断或残缺字形')
         return labels, list(reversed(selected)), baseline
 
     def _read_amount_mask(self, binary):
@@ -206,33 +227,43 @@ class StorageCatalog:
                 raise StorageAmountGlyphError('仓库数量字形无法确认')
             result += text
         if not result or result.startswith('0'):
-            raise StorageRecognitionError('仓库数量格式无效')
+            raise StorageItemRecognitionError('仓库数量格式无效')
         return int(result)
 
     def _read_amount_gray(self, image):
-        """只匹配几何完整的单字形；粘连数字仍由既有有界拆分处理。"""
-        _, parts, baseline = self._amount_parts(image < 100)
+        """完整单字形用灰度匹配，粘连部分组合已有的二值有界拆分。"""
+        labels, parts, baseline = self._amount_parts(image < 100)
         result = ''
-        for _, x, y, width, height in parts:
+        for label, x, y, width, height in parts:
             if width > height * .85:
-                raise StorageAmountGlyphError('仓库粘连数量字形无法确认')
+                mask = (labels[y:y + height, x:x + width] == label).astype(np.uint8)
+                text, scores = self.digits.split(mask)
+                if not text or not self.digits.confident(scores):
+                    raise StorageAmountGlyphError('仓库粘连数量字形无法确认')
+                result += text
+                continue
             digit = self.gray_digits.classify(native_glyph(image, x, width, baseline))
             if digit is None:
                 raise StorageAmountGlyphError('仓库灰度数量字形无法确认')
             result += str(digit)
         if not result or result.startswith('0'):
-            raise StorageRecognitionError('仓库数量格式无效')
+            raise StorageItemRecognitionError('仓库数量格式无效')
         return int(result)
 
     def snapshot_items(self, rows):
-        """按物理位置去重后汇总；未发现的目录物品保留 None。"""
+        """按物理位置去重后汇总；缺失或有失败格的物品保留 None。"""
         amounts = {}
+        unconfirmed = set()
         for row in rows:
             for card in row:
+                unconfirmed.update(card.unconfirmed_identifiers)
                 if card.identifier is not None:
-                    amounts[card.identifier] = amounts.get(card.identifier, 0) + card.amount
+                    if card.amount is None or card.error is not None:
+                        unconfirmed.add(card.identifier)
+                    else:
+                        amounts[card.identifier] = amounts.get(card.identifier, 0) + card.amount
         return [dict(id=item['id'], name=item['name'], group=item['group'],
-                     amount=amounts.get(item['id'])) for item in self.items]
+                     amount=None if item['id'] in unconfirmed else amounts.get(item['id'])) for item in self.items]
 
 
 def detect_rows(image):
@@ -346,7 +377,7 @@ def same_row(left, right):
 
 
 class StorageTraversal:
-    """用标定行号或唯一重叠拼接；缺行、歧义或数量变化时拒绝。"""
+    """用标定行号或唯一重叠拼接；已确认位置上的单格冲突只作废该物品。"""
 
     def __init__(self):
         self.rows = []
@@ -358,11 +389,20 @@ class StorageTraversal:
             if type(row_start) is not int or not 0 <= row_start <= len(self.rows):
                 raise StorageRecognitionError('三行分页出现缺行或无效行号')
             count = len(self.rows) - row_start
-            if count > len(rows) or not all(same_targets(a, b)
-                                           for a, b in zip(self.rows[row_start:], rows[:count])):
-                raise StorageRecognitionError('仓库末页重叠物品或数量不一致')
+            if count > len(rows) or any(len(a) != len(b) or any(x.present != y.present for x, y in zip(a, b))
+                                       for a, b in zip(self.rows[row_start:], rows[:count])):
+                raise StorageRecognitionError('仓库末页重叠行列或空格不一致')
             if count == len(rows) and not at_bottom:
                 raise StorageNoProgressError('滚动后未出现新行')
+            for old_row, row in zip(self.rows[row_start:], rows[:count]):
+                for old, card in zip(old_row, row):
+                    if old.error or card.error or (old.identifier, old.amount) != (card.identifier, card.amount):
+                        identifiers = tuple(identifier for identifier in (old.identifier, card.identifier)
+                                            if identifier is not None)
+                        error = StorageItemRecognitionError(
+                            '末页重叠格的物品或数量未能一致确认',
+                            identifiers=(*old.unconfirmed_identifiers, *card.unconfirmed_identifiers, *identifiers))
+                        _skip_card(card, error)
             self.rows[row_start:] = rows
             self.pages += 1
             return
@@ -397,18 +437,48 @@ def same_targets(left, right):
 
 
 def is_purple(icon):
-    """普通紫色底的红绿分量接近；彩色纸张左上角仍偏蓝绿。"""
+    """两个上角共同确认紫色，避免虹彩动画的单角恰好呈紫色。"""
     image = cv2.resize(icon, (96, 96), interpolation=cv2.INTER_AREA)
-    red, green, blue = image[5:13, 5:13].mean(axis=(0, 1))
-    return blue - green >= 35 and abs(red - green) <= 22
+    corners = np.array([image[5:13, x:x + 8] for x in (5, 83)], dtype=np.int16)
+    red, green, blue = np.moveaxis(corners, -1, 0)
+    purple = (blue - green >= 35) & (np.abs(red - green) <= 22)
+    # 图案可能覆盖少量背景；每角要求至少半数像素通过，不能混色取均值伪造紫色。
+    return bool(np.all(purple.mean(axis=(1, 2)) >= .5))
+
+
+def _same_calibration_card(left, right):
+    """只为运动标定核对主体；不以此确认统计身份或替代完整数量。"""
+    if same_card(left, right):
+        return True
+    if (not left.present or not right.present or left.identifier != right.identifier
+            or left.identifier is not None):
+        return False
+    if np.max(np.abs(left.image[7:17, 7:17].mean(axis=(0, 1))
+                     - right.image[7:17, 7:17].mean(axis=(0, 1)))) > 45:
+        return False
+    # 开扫标定没有数量读数。排除共同边框及数字后，严格核对去除低频虹彩的主体；
+    # 后续还须至少五列同位移且所有候选位移唯一，重复图标不能自行决定行号。
+    details = []
+    for card in (left, right):
+        gray = cv2.cvtColor(card.image, cv2.COLOR_RGB2GRAY).astype(np.float32)
+        details.append(cv2.GaussianBlur(gray, (7, 7), 0) - cv2.GaussianBlur(gray, (31, 31), 0))
+    score = cv2.minMaxLoc(cv2.matchTemplate(details[0][9:103, 9:119], details[1][12:100, 12:116],
+                                          cv2.TM_CCOEFF_NORMED))[1]
+    return score >= .985
 
 
 def calibrate_scroll(before, after, thumb_delta):
     """以至少五列完整格的唯一位移标定比例，保留单格图像匹配门槛。"""
-    offsets = [a[0].area[1] - b[0].area[1]
-               for a in before for b in after
-               if len(a) == len(b) == 7 and all(card.present for card in a + b)
-               and sum(same_card(left, right) for left, right in zip(a, b)) >= 5]
+    if len(before) < 2:
+        raise StorageRecognitionError('滚动条标定需要至少两行完整材料')
+    pairs = [(a, b) for a in before for b in after
+             if len(a) == len(b) == 7 and all(card.present for card in a + b)]
+    offsets = [a[0].area[1] - b[0].area[1] for a, b in pairs
+               if sum(same_card(left, right) for left, right in zip(a, b)) >= 5]
+    if not offsets:
+        # 整格已能确认位移时保留数量等细节，不能让相同图标排列制造额外歧义。
+        offsets = [a[0].area[1] - b[0].area[1] for a, b in pairs
+                   if sum(_same_calibration_card(left, right) for left, right in zip(a, b)) >= 5]
     if not offsets or max(offsets) - min(offsets) > 2 or thumb_delta <= 0:
         raise StorageRecognitionError('滚动条距离标定缺少唯一完整重叠行')
     pitch = float(round(np.median([b[0].area[1] - a[0].area[1] for a, b in zip(before, before[1:])])))
@@ -419,6 +489,7 @@ def calibrate_scroll(before, after, thumb_delta):
 
 
 def recognize_rows(image, catalog, *, rows=None, target_only=False):
+    """逐格识别，单格身份或数量失败不影响后续材料。"""
     if rows is None:
         rows = detect_rows(image)
     for row in rows:
@@ -427,18 +498,18 @@ def recognize_rows(image, catalog, *, rows=None, target_only=False):
                 continue
             if target_only and not catalog.is_target_rarity(card.image):
                 continue
-            card.identifier = catalog.identify(card.image, card.context)
-            if card.identifier is not None:
-                try:
+            try:
+                card.identifier = catalog.identify(card.image, card.context)
+                if card.identifier is not None:
                     card.amount = catalog.read_amount(card.image)
-                except StorageRecognitionError as error:
-                    raise StorageRecognitionError(f'{card.identifier}（位置 {card.area}）：{error}') from error
-            elif not target_only:
-                # 未登记物品的完整数量只帮助核对同一格，不进入统计或推断其身份。
-                try:
-                    card.comparison_amount = catalog.read_amount(card.image)
-                except StorageRecognitionError:
-                    pass
+                elif not target_only:
+                    # 未登记物品的完整数量只帮助核对同一格，不进入统计或推断其身份。
+                    try:
+                        card.comparison_amount = catalog.read_amount(card.image)
+                    except StorageItemRecognitionError:
+                        pass
+            except StorageItemRecognitionError as error:
+                _skip_card(card, error)
     return rows
 
 
@@ -457,6 +528,13 @@ def verify_targets(rows, reference, catalog):
                 raise StorageRecognitionError(
                     f'同页材料位置或空格变化：第 {row_index} 行第 {column_index} 列，'
                     f'位置 {old.area} → {card.area}，存在 {old.present} → {card.present}')
-            if old.identifier is not None:
-                catalog.verify(card, old)
+            if old.error is not None:
+                card.identifier = old.identifier
+                card.error = old.error
+                card.unconfirmed_identifiers = old.unconfirmed_identifiers
+            elif old.identifier is not None:
+                try:
+                    catalog.verify(card, old)
+                except StorageItemRecognitionError as error:
+                    _skip_card(card, error)
     return rows

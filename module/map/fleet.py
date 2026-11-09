@@ -1014,6 +1014,15 @@ class Fleet(SubmarineAdvanced, Camera, AmbushHandler):
             fortress=self.config.MAP_HAS_FORTRESS,
             bouncing_enemy=self.config.MAP_HAS_BOUNCING_ENEMY,
         )
+        # log fleet steps for easier debugging, no need to predict from path finding logs like
+        # Full path: [F9, F8, G8, G7, G6, G5, F5]
+        # Path: [G5, F5]
+        logger.attr('fleet_reversed', self.fleets_reversed)
+        if self.config.MAP_HAS_FLEET_STEP:
+            s1, s2 = self.config.Fleet_Fleet1Step, self.config.Fleet_Fleet2Step
+            if self.fleets_reversed:
+                s1, s2 = s2, s1
+            logger.info(f'Fleet1Step: {s1}, Fleet2Step: {s2}')
 
     def map_control_init(self):
         """操作前的准备工作。
@@ -1382,7 +1391,7 @@ class Fleet(SubmarineAdvanced, Camera, AmbushHandler):
         logger.attr('距Boss距离', distance_to_boss)
 
         if np.sum(np.abs(np.subtract(self.fleet_submarine_location, boss))) <= distance_to_boss:
-            logger.info('[地图-潜艇] Boss已在狩猎区域内')
+            logger.info('[地图-潜艇] Boss已在狩猎范围内')
             self.find_path_initial()
             return False
         else:
@@ -1423,7 +1432,7 @@ class Fleet(SubmarineAdvanced, Camera, AmbushHandler):
         logger.attr('距Boss距离', distance_to_boss)
 
         if np.sum(np.abs(np.subtract(self.fleet_submarine_location, boss))) <= distance_to_boss:
-            logger.info('[地图-潜艇] Boss已在狩猎区域内')
+            logger.info('[地图-潜艇] Boss已在狩猎范围内')
             self.find_path_initial()
             return False
         else:

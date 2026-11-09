@@ -129,6 +129,10 @@ class ResearchUI(UI):
                 return GET_ITEMS_3
             else:
                 return GET_ITEMS_2
+        # 英文服两行版 GET_ITEMS 的标题比 GET_ITEMS_3 低 7px，超出上面的偏移范围，
+        # 因此这里单独再匹配一次 GET_ITEMS_2。
+        if self.appear(GET_ITEMS_2, offset=(5, 5)):
+            return GET_ITEMS_2
         if self.appear(GET_ITEMS_1, offset=(5, 5)):
             return GET_ITEMS_1
         return None
@@ -143,6 +147,8 @@ class ResearchUI(UI):
         """
         if not drop:
             return
+        # Modify by MHY, 保留分组边界，截图仍由现有状态识别驱动。
+        start = drop.count
         button = self.get_items()
         if button == GET_ITEMS_1 or button == GET_ITEMS_2:
             drop.add(self.device.image)
@@ -150,11 +156,15 @@ class ResearchUI(UI):
             self.device.sleep(1.5)
             self.device.screenshot()
             drop.add(self.device.image)
+
             self.device.swipe_vector((0, 250), box=ITEMS_3_SWIPE.area, random_range=(-10, -10, 10, 10),
                                      padding=0)
             self.device.sleep(2)
             self.device.screenshot()
             drop.add(self.device.image)
+
+        if hasattr(drop, 'finish_research_reward'):
+            drop.finish_research_reward(start)
 
     def get_research_status(self, image):
         """检测科研主页 5 个槽位的当前项目状态。

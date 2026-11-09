@@ -11,12 +11,14 @@ def make_clerk(counter_results):
     results = iter(counter_results)
 
     def predict(*args, **kwargs):
-        count, total_count = next(results)
+        counters = next(results)
+        if isinstance(counters[0], int):
+            counters = [counters]
         scanner.items = [SimpleNamespace(
             count=count,
             total_count=total_count,
             button=(0, 100, 1, 101),
-        )]
+        ) for count, total_count in counters]
 
     scanner.predict = Mock(side_effect=predict)
     scanner.extract_template = Mock()
@@ -59,3 +61,14 @@ def test_event_shop_get_items_rejects_persistent_invalid_counter():
 
     assert scanner.predict.call_count == 3
     assert clerk.device.screenshot.call_count == 2
+
+
+def test_event_shop_get_items_skips_persistent_invalid_minority():
+    # 部分格子持续读不出库存时跳过它们，保留其余商品，不再抛错触发重载
+    clerk, scanner = make_clerk([[(5, 5), (0, 0)]] * 3)
+
+    items = EventShopClerk.event_shop_get_items(clerk)
+
+    assert [(item.count, item.total_count) for item in items] == [(5, 5)]
+    assert scanner.items == items
+    assert scanner.predict.call_count == 3

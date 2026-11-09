@@ -17,7 +17,7 @@ from module.ui.scroll import Scroll
 
 
 class StorageStatistics(StorageUI):
-    """材料仓库金/彩区域按三行扫描一遍；识别或同页核对失败立即保留旧快照。"""
+    """材料仓库金/彩区域按三行扫描；跳过单格错误，无法继续浏览才保留旧快照。"""
 
     def _scroll_materials(self, start, end):
         """精确拖动列表；不支持拖拽的后端只滑动，避免设备层回退点击物品。"""
@@ -28,7 +28,7 @@ class StorageStatistics(StorageUI):
             self.device.swipe(start, end, duration=.3, name='StorageStatistics', distance_check=False)
 
     def _scan_pass(self, catalog):
-        """标定滚动条后按三行定位，同页核对后推进；识别错误立即退出。
+        """标定滚动条后按三行定位；单格失败继续，页面或定位失效时退出。
 
         Pages:
             in: page_storage, material
@@ -178,7 +178,7 @@ class StorageStatistics(StorageUI):
         raise StorageRecognitionError('仓库扫描中断')
 
     def run(self):
-        """单遍完整扫描及同页核对通过后原子更新，出错立即停止。
+        """单遍扫描完成后原子更新；单格错误存为未知，不中断其他物品。
 
         Pages:
             in: 任意可导航页面
@@ -196,6 +196,9 @@ class StorageStatistics(StorageUI):
             self.ui_goto_storage()
             self._storage_enter_material()
             scan = self._scan_pass(catalog)
+            skipped = sum(card.error is not None for row in scan.rows for card in row)
+            if skipped:
+                logger.warning(f'仓库扫描完成，{skipped} 个物品格未能确认，相关数量保存为未知')
             items = catalog.snapshot_items(scan.rows)
             save_snapshot(self.config.config_name, server.server, items,
                           started_at=started_at, pages=scan.pages, catalog_version=catalog.version)

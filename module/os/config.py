@@ -43,7 +43,7 @@ def opsi_drop_record(config):
         config (AzurLaneConfig): 已绑定当前任务的配置对象。
 
     Returns:
-        str: 记录方式，do_not / save / upload / save_and_upload。
+        str: 截图保存方式，save / do_not；本地掉落统计独立记录。
     """
     task = config.task.command
     arg = OPSI_DROP_RECORD_SHARED.get(task)

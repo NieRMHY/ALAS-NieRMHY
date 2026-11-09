@@ -6,7 +6,6 @@ Alas:
       - Emulator
       - EmulatorInfo
       - Error
-      - DailySummary
       - Optimization
       - DropRecord
       - Backup
@@ -292,12 +291,16 @@ DailyMission:
     Daily:
       - Scheduler
       - Daily
+    LimitChallenge:
+      - Scheduler
+      - LimitChallenge
     Hard:
       - Scheduler
       - Hard
     Exercise:
       - Scheduler
       - Exercise
+      - Equipment
     ShopFrequent:
       - Scheduler
       - GeneralShop
@@ -334,9 +337,8 @@ Opsi:
     OpsiAshBeacon:
       - Scheduler
       - OpsiAshBeacon
-    OpsiAshAssist:
-      - Scheduler
       - OpsiAshAssist
+      - Equipment
     OpsiExplore:
       - Scheduler
       - OpsiExplore
@@ -406,7 +408,9 @@ Island:
   page: 'setting'
   tasks:
     IslandPlan:
+      - Scheduler
       - IslandPlan
+      - IslandWalk
     IslandSeasonPlan:
       - Scheduler
       - IslandSeasonPlan
@@ -484,6 +488,12 @@ FleetManagement:
   tasks:
     FleetInfo:
       - FleetInfo
+      - FleetRotation
+      - FleetLevelTraining
+      - FleetAffinityTraining
+      - FleetDorm
+      - FleetTraining
+      - FleetEquipment
 
 # ==================== Run Params ====================
 
@@ -506,6 +516,8 @@ Tool:
   page: tool
   tasks:
     FleetScan: []
+    DockScan:
+      - Dock
     Daemon:
       - Daemon
     OpsiDaemon:
@@ -528,6 +540,8 @@ Tool:
       - EmulatorManager
     MeowfficerScore:
       - MeowfficerScore
+    IslandProductionPlanner:
+      - IslandProductionPlanner
 Dashboard:
   page: dashboard
   tasks:

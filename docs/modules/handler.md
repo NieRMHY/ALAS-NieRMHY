@@ -19,7 +19,6 @@ AzurPilot 的游戏流程是持续的「截图 → 识别 → 操作」状态循
 
 - 信息栏（info bar）检测与等待、通用弹窗确认/取消、紧急委托、剧情跳过与选项选择、加载动画等待（InfoHandler）
 - 应用启动、登录画面、热更新检测、崩溃后的应用重启与观察恢复（LoginHandler）
-- 4399 渠道服 SDK 悬浮球的定位、拖拽与隐藏（channel_float）
 - 地图内事件：敌人搜索动画等待、伏击/空袭、神秘格子、策略面板、通关模式与自动搜索开关（EnemySearching/AutoSearch/FastForward/Strategy/Mystery/Ambush）
 - 截图与日志的敏感信息脱敏（sensitive_info）
 
@@ -43,7 +42,6 @@ module/handler/
 ├── strategy.py           # StrategyHandler：策略面板与潜艇/舰队移动
 ├── mystery.py            # MysteryHandler：神秘格子事件
 ├── ambush.py             # AmbushHandler：伏击与空袭（继承 Combat）
-├── channel_float.py      # 渠道服悬浮球（函数 + ChannelFloatHandler）
 ├── sensitive_info.py     # 敏感信息遮罩（模块级函数）
 └── assets.py             # 识别资源（button_extract 生成，勿手改）
 ```
@@ -58,7 +56,6 @@ module/handler/
 | strategy.py | `StrategyHandler` | 阵型/潜艇开关、潜艇与舰队移动、空袭 |
 | mystery.py | `MysteryHandler` | 道具/弹药/航母支援三种神秘事件 |
 | ambush.py | `AmbushHandler` | 伏击回避/迎击、空袭等待、步数不足 |
-| channel_float.py | `ChannelFloatHandler`、`channel_float_position()`、`hide_button()` | 4399 悬浮球动态定位与消除；新版对话框用白区定位 + 底部绿块过滤，关闭后二次确认防模态卡死 |
 | sensitive_info.py | `handle_sensitive_image/text/logs()` | 隐私遮罩与路径脱敏 |
 
 ## 4. 核心入口
@@ -68,7 +65,6 @@ module/handler/
 | `InfoHandler.handle_*` 系列 | 各业务状态循环内直接调用的弹窗/事件处理，本层最主要的使用方式 |
 | `UI.ui_additional()`（module/ui/ui.py） | 导航与登录循环的「弹窗巡检」入口，聚合调用 InfoHandler 的多数方法 |
 | `LoginHandler.app_start() / app_restart() / handle_app_login()` | 调度器 `alas.py` 的 `start/restart/goto_main` 动作入口 |
-| `ChannelFloatHandler.run()` | 调度器每个会话（调度器启动或游戏重启后）调用一次 |
 | `handle_sensitive_image / handle_sensitive_logs` | `alas.py` 保存错误现场时调用 |
 | `FastForwardHandler.map_get_info() / handle_fast_forward()` 等 | `MapOperation.enter_map` 序列调用 |
 
@@ -81,7 +77,6 @@ module/handler/
 ```mermaid
 flowchart TD
     ModuleBase["ModuleBase（基础层）"] --> InfoHandler
-    ModuleBase --> ChannelFloatHandler
     InfoHandler --> EnemySearchingHandler
     InfoHandler --> StrategyHandler
     InfoHandler --> UI["UI（UI 导航）"]
@@ -96,14 +91,13 @@ flowchart TD
 | 类 | 继承自 | 职责 |
 | --- | --- | --- |
 | `InfoHandler` | `ModuleBase` | 弹窗、信息栏、剧情、加载动画的统一检测与处理 |
-| `LoginHandler` | `UI` | 登录循环、应用停止/启动/重启、国服协议与渠道悬浮球 |
+| `LoginHandler` | `UI` | 登录循环、应用停止/启动/重启与国服协议 |
 | `EnemySearchingHandler` | `InfoHandler` | 敌人搜索动画等待、`is_in_stage` 检测、回关卡页抛 `CampaignEnd` |
 | `AutoSearchHandler` | `EnemySearchingHandler` | 舰队准备侧边栏切换、自动搜索设置项确保 |
 | `FastForwardHandler` | `AutoSearchHandler` | 通关模式/舰队锁定/自动搜索/二倍书开关、地图状态、停止条件 |
 | `StrategyHandler` | `InfoHandler` | 策略面板：阵型、潜艇视图/狩猎、潜艇与舰队移动、空袭 |
 | `MysteryHandler` | `StrategyHandler` + `EnemySearchingHandler` | 神秘格子的道具/弹药/航母事件 |
 | `AmbushHandler` | `Combat` | 伏击回避/迎击与空袭，红色覆盖层透明度检测 |
-| `ChannelFloatHandler` | `ModuleBase` | 会话级悬浮球检查入口（拖拽与隐藏） |
 
 关键状态字段：
 
@@ -130,9 +124,15 @@ flowchart TD
 
 `UI` 继承 `InfoHandler`，其 `ui_additional()` 是导航/登录循环的统一兜底：按「大世界弹窗 → 通用确认/紧急委托 → 主界面弹窗（`ui_page_main_popups`）→ 剧情跳过 → 游戏提示 → 后宅/指挥喵/准备界面撤退 → 登录相关」的固定优先级逐个尝试，任一返回 `True` 即消费一次循环。`ui_get_current_page()` 与 `ui_goto()` 在识别不到已知页面或需要处理遮挡弹窗时都会调用它。新增「任意页面都可能出现」的弹窗时挂进这条链；只属于特定页面的则留在该任务的循环里。
 
+紧急委托的 `GET_MISSION` 会匹配战败后无可用舰队弹窗的蓝色「确定」。`handle_urgent_commission()` 必须先排除 `FLEET_UNAVAILABLE` 正文并返回 `False`，由战败结算流程确认弹窗、记录结果并等待游戏自动换队；不能仅靠共享按钮推断弹窗身份。详见 [战败与结果记账](defeat-handling.md)。
+
 ### 6.3 登录与重启
 
 `_handle_app_login()` 是单一状态循环：截图 → 检测 `LOGIN_CHECK`（点击并标记登录成功）→ 依次处理安卓无响应、公告、维护、更新、国服协议、回归玩家、通用弹窗、主界面弹窗 → 直到 `is_in_main()` 持续确认（`confirm_timer`）后退出。`handle_app_login()` 在外层把截图间隔放宽到 1 秒，并用 `Restart.LoginWaitTimeout`（跨任务读取，默认 30 秒、上限 3600）覆盖卡死检测阈值，避免慢启动的后台模拟器被误判卡死。
+
+国服 B 站客户端（`com.bilibili.azurlane`）偶尔会在游戏开始画面上显示「登录记录」弹窗。登录循环会先用固定的弹窗标题和粉色「登录」按钮确认该状态，再点击当前已保存账号的登录按钮，下一帧继续原有登录流程；不读取账号名称，也不切换账号。导航中的 `ui_additional()` 复用同一处理入口。离线截图回放见 `tests/test_bilibili_login_record.py`。
+
+`ui_page_main_popups()` 返回 `True` 只表示本帧已执行操作，登录循环会继续截图，不能直接视为登录完成。自选轻量复刻选择页由该公共入口识别 `CAPSULE_RERUN_CHECK` 后复用 `BACK_ARROW_WHITE` 返回；重启游戏仍可能再次展示，因此需显式退出并持续确认主界面。离线回放见 `tests/test_capsule_rerun_login.py`。
 
 `app_restart()` 是带恢复梯度的重启状态机：
 
@@ -167,7 +167,6 @@ flowchart TD
 | module/ui（UI） | 继承 `InfoHandler` 并在 `ui_additional` 中调用其方法；`LoginHandler` 反向继承 `UI` |
 | module/combat（Combat） | 继承 `AutoSearchHandler`；调用 `handle_combat_low_emotion`、`handle_in_map_*_enemy_searching` 等 |
 | module/map（MapOperation、Fleet） | 继承 `MysteryHandler`/`FastForwardHandler`/`AmbushHandler`，在移动与出击循环中调用 |
-| alas.py（调度器） | `restart/start/goto_main` 用 `LoginHandler`；`handle_channel_float` 用 `ChannelFloatHandler`；`save_error_log` 用 sensitive_info |
 | module/os_handler | 子类化 `EnemySearchingHandler` 覆盖大世界的 `is_in_map` 等 |
 | 各奖励类任务（dorm、shop、tactical 等） | 直接调用 `handle_info_bar`、`handle_game_tips`、`handle_mission_popup_ack` 等通用方法 |
 
@@ -183,6 +182,12 @@ flowchart TD
 | module/notify | GemsFarming 无法设置自动搜索时的失败通知 |
 
 ## 8. 数据流
+
+普通主线/活动的「换船调度」任一模式开启并启用共享`SelectedOnly`时，复用原红脸确认按钮及点击间隔，
+但确认前复核培养舰位最低心情，培养充足时可确认固定舰船带来的红脸；培养心情未知或不足
+则取消、退出并使下次入口重新扫描，不清零已知培养高心情。关闭时按全队心情等待，
+红脸沿用计算模式清零保底；两种模式都保持培养心情计算。未启用该策略的任务保留原处理，
+数据密钥弹窗优先处理；卡死/重复点击检测未删除。
 
 ```
 device.screenshot()
@@ -220,18 +225,17 @@ device.screenshot()
 | `Emotion.Mode` | option | calculate | `handle_combat_low_emotion` 的 ignore/计算模式分支 |
 | `StopCondition.MapAchievement` / `StopCondition.StageIncrease` | option/checkbox | non_stop/false | `triggered_map_stop`/`handle_map_stop` 的成就与关卡推进 |
 | `Restart.LoginWaitTimeout` | 数值（1–3600） | 30 | 登录等待阶段卡死检测宽容秒数 |
-| `Restart.Restart.MoveChannelFloat` | checkbox | false | 4399 悬浮球开关（仅渠道服包名+服务器同时匹配才生效） |
 | `Alas.Error.RestartOperationTimeoutEnable` / `RestartOperationTimeout` | checkbox/数值 | false/120 | 重启操作硬超时保护 |
 | `STORY_OPTION`、`STORY_ALLOW_SKIP`、`USE_DATA_KEY`、`MAP_HAS_AMBUSH`、`MAP_MYSTERY_*` 等 | 代码内默认（config_manual） | 见 config_manual | 由各活动地图与任务覆盖的内部旗标，不属于用户配置 |
 
-注意两处**跨任务读取**：登录等待与悬浮球开关用 `deep_get(self.config.data, 'Restart.Restart.LoginWaitTimeout')` 等路径直读，因为触发登录的可能是任意任务（大世界恢复、未知页面），不能依赖当前绑定任务；塞壬装置选项读取 `OpsiHazard1Leveling.OpsiSirenBug.*` 也基于同样原因。
+登录等待用 `deep_get(self.config.data, 'Restart.Restart.LoginWaitTimeout')` 跨任务直读，因为触发登录的可能是任意任务（大世界恢复、未知页面），不依赖当前绑定任务；塞壬装置选项读取 `OpsiHazard1Leveling.OpsiSirenBug.*` 也基于同样原因。应用宝渠道服的可选 YSDK 配置由设备启动阶段调用 `module/game_setting/channel_float.py`，本层不再提供截图拖拽悬浮球能力。
 
 ## 11. 异常与错误处理
 
 | 异常 | 原因 | 处理 |
 | --- | --- | --- |
 | `CampaignEnd` | `handle_in_stage` 确认回到关卡页面（含短暂页面切换的计时器防误判） | 由战役流程捕获，结束当前关卡；`_emotion_emergency_exit` 内部会捕获 |
-| `ScriptEnd` | calculate 模式出现红脸弹窗的保底（清心情、延时任务）；达到地图成就停止条件 | 上层调度器结束当前任务 |
+| `ScriptEnd` | calculate 模式出现红脸弹窗的保底（从 0 建立有效恢复起点，按出击需求延时任务，恢复后自动重试）；达到地图成就停止条件 | 上层调度器结束当前任务 |
 | `GameTooManyClickError` | 剧情选项连续点击超限、登录中模拟器无响应累计 | 设备层记录，`alas.run` 决定重启 |
 | `GameNotRunningError` | 紧急委托点击后 3–6 秒热更新检测发现进程退出；重启流程 | 调度器触发 Restart 任务 |
 | `EmulatorNotRunningError` | 应用重启 3 次失败且观察期未恢复；重启操作硬超时 | 调度器 `_try_restart_emulator` 重启模拟器 |
@@ -270,13 +274,13 @@ device.screenshot()
 - **重启相关常量与配置回退**成对出现（如 `RESTART_OPERATION_TIMEOUT` 仅是配置读取失败的兜底），调整时保持「配置优先、非法回退默认并告警」的行为。
 - **assets.py 与 `Mask` 遮罩图**由生成器/资源流程维护，手改会被 CI 差异检查打回。
 - 伏击类模板依赖 `info_letter_preprocess()` 提升信息栏文字对比度，替换识别方式时需保留预处理。
+- **任务列表循环的结算弹窗兜底**：`os_mission_enter()` 与接取委托循环各自带 `AUTO_SEARCH_REWARD` 点击——保留海域中断自律并退出战斗后，「合计获得奖励」会延迟弹出并盖住任务列表。它是与其他大世界循环同一模式但独立的防御分支，删除前先核对各自等待的画面；缺失时界面静止 60 秒被判卡死并强杀重启。
 
 ## 17. 已知限制
 
 - 继承链最深约五层（`ModuleBase → InfoHandler → EnemySearchingHandler → AutoSearchHandler → FastForwardHandler`），且 `MysteryHandler` 多继承两条链；修改链上方法签名需检查 MRO 中被覆盖的实现（如 `handle_auto_search_continue`、`handle_auto_search_exit`）。
 - `handle_vote_popup()` 因投票弹窗下线恒返回 `False`，保留是为兼容调用方。
 - `EnemySearchingHandler.is_event_animation()` 与 `handle_auto_search_exit()` 是占位实现，依赖子类（大世界、AutoSearchHandler）覆盖。
-- 悬浮球处理存在两条入口：`ChannelFloatHandler.run()`（alas 会话级，等待进主界面）与 `LoginHandler` 内嵌的轻量版（登录循环内拖拽），共享 channel_float.py 的定位函数；两处行为需保持同步。
 - 剧情选项三套检测依赖写死的画面区域与颜色，游戏改版时是首要失效点。
 
 ## 18. 示例

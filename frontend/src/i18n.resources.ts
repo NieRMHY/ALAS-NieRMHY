@@ -1,4 +1,4 @@
-/** 资源管理的五种语言；数据里的物品名称沿用现有物品目录。 */
+/** 资源管理的四种语言；数据里的物品名称沿用现有物品目录。 */
 export const resourceZhCN = {
   'flow.food': '后宅粮食', 'flow.urPt': '活动 UR 点数', 'flow.furnitureCoin': '家具币', 'flow.gachaTicket': '建造券',
   'nav.resources': '资源管理', 'flow.hint': '追溯每个任务的获取与消耗，查看资源去了哪里。',
@@ -62,4 +62,3 @@ export const resourceZhTW: Record<ResourceKeys, string> = {
   'flow.oil': '石油自動控制', 'flow.oilEnable': '啟用自動清油', 'flow.oilTarget': '控制線', 'flow.oilHint': '僅原調度生效：先打已到期的圖，冷卻時後宅購糧。隨既有任務檢查，不定時喚醒遊戲。',
   'flow.saved': '已儲存', 'flow.saving': '儲存中', 'flow.save': '儲存控制設定', 'flow.targetInvalid': '控制線須為 1000 至 24999 的整數',
 }
-export const resourceZhMiao: Record<ResourceKeys, string> = Object.fromEntries(Object.entries(resourceZhCN).map(([key, value]) => [key, `${value}喵`])) as Record<ResourceKeys, string>

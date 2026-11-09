@@ -9,13 +9,15 @@ import { AutoTextarea } from './AutoTextarea'
 import { useApp } from '../app/context'
 
 const YamlEditor = lazy(() => import('./YamlEditor').then(module => ({default: module.YamlEditor})))
+// Add by MHY, 过滤器/优先级/排序字段用语法高亮编辑器（取自 nanoda 上游 FilterEditor）
+const FilterEditor = lazy(() => import('./FilterEditor').then(module => ({default: module.FilterEditor})))
 
 interface Props {
   id: string; value: Value; onChange: (value: Value) => void; type?: string
   options?: Value[]; disabled?: boolean; label: string; mode?: string; translateOption?: (value: Value) => string
-  preserveText?: boolean; invalid?: boolean
+  preserveText?: boolean; invalid?: boolean; resubmitOnEdit?: boolean
 }
-export function FieldInput({id, value, onChange, type, options, disabled, label, mode, translateOption, preserveText, invalid}: Props) {
+export function FieldInput({id, value, onChange, type, options, disabled, label, mode, translateOption, preserveText, invalid, resubmitOnEdit}: Props) {
   const {ui} = useApp()
   const accessibility = {'aria-label': label, 'aria-invalid': invalid || undefined, 'aria-describedby': invalid ? `${id}-status` : undefined}
   // 只读时间沿用旧界面的原始文本，保留秒、小数秒和历史格式。
@@ -36,7 +38,14 @@ export function FieldInput({id, value, onChange, type, options, disabled, label,
       {options.map(option => <option value={JSON.stringify(option)} key={JSON.stringify(option)}>{translateOption?.(option) ?? String(option)}</option>)}
     </Select>
   }
-  if (type === 'textarea' || type === 'task_priority') return <AutoTextarea id={id} value={String(value ?? '')} disabled={disabled} label={label} invalid={invalid} onChange={onChange}/>
+  // Add by MHY, 过滤器只按配置元数据判定：显式 mode/type，或参数名以 Filter/Priority/Order 结尾
+  // （Alas 的过滤与优先级字段都这样命名）。不再按值里的 ">" 猜测，否则正文含箭头符号的普通文本字段
+  // （命令、说明、聊天模板）也会被换成代码编辑器。
+  const argName = id.slice(id.lastIndexOf('.') + 1)
+  const isFilter = mode === 'filter' || type === 'filter' || type === 'task_priority'
+    || /(?:filter|priority|order)$/i.test(argName)
+  if (isFilter) return <Suspense fallback={<AutoTextarea id={id} value={String(value ?? '')} disabled={disabled} label={label} invalid={invalid} onChange={onChange}/>}><FilterEditor id={id} value={String(value ?? '')} disabled={disabled} label={label} invalid={invalid} onChange={onChange}/></Suspense>
+  if (type === 'textarea') return <AutoTextarea id={id} value={String(value ?? '')} disabled={disabled} label={label} invalid={invalid} onChange={onChange}/>
   // mode=text 用于语义上允许数字或文本的字段；即使旧配置当前存的是数字也必须显示文本框。
   const isNumber = mode !== 'text' && (typeof value === 'number' || ['int', 'number', 'float'].includes(type ?? ''))
   const Input = type === 'password' ? PasswordInput : 'input'
@@ -44,7 +53,7 @@ export function FieldInput({id, value, onChange, type, options, disabled, label,
   /* 键入期间只改草稿，失焦或回车才提交。 */
   const draft = useDraftInput(display, next => {
     onChange(preserveText ? next : type === 'datetime' ? (next.length === 16 ? `${next.replace('T', ' ')}:00` : next.replace('T', ' ')) : isNumber && next !== '' ? Number(next) : next)
-  })
+  }, resubmitOnEdit)
   return <Input {...accessibility} id={id} disabled={disabled}
     inputMode={isNumber ? 'decimal' : undefined}
     type={type === 'password' ? 'password' : type === 'datetime' && !preserveText ? 'datetime-local' : isNumber && !preserveText ? 'number' : 'text'}

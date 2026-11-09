@@ -118,7 +118,7 @@
   --theme-segment-indicator: var(--accent-soft);
   --theme-toast-bg: var(--text); --theme-toast-text: var(--surface); --theme-toast-error-bg: var(--red);
   --theme-error-bg: var(--theme-danger-soft); --theme-error-border: var(--red);
-  --theme-selection: var(--accent-soft); --theme-scrollbar-thumb: #b5b5b5;
+  --theme-selection: color-mix(in srgb, var(--accent) 25%, transparent); --theme-scrollbar-thumb: #b5b5b5;
   --theme-status-stopped-bg: var(--surface-muted); --theme-status-stopped-text: var(--muted);
 
   /* 契约层 —— 日志 */
@@ -165,7 +165,7 @@
   --theme-input-bg: var(--theme-control-bg); --theme-input-border: var(--border);
   --theme-toggle-off: #938f99; --theme-toggle-on: #7a77bb; --theme-toggle-knob: #ffffff;
   --theme-segment-indicator: #3e3b6a;
-  --theme-selection: #3e3b6a; --theme-scrollbar-thumb: #5a5e66;
+  --theme-scrollbar-thumb: #5a5e66;
   --theme-shadow-panel: 0 1px 2px rgb(0 0 0 / .2);
   --theme-shadow-popover: 0 4px 12px rgb(0 0 0 / .25);
   --theme-shadow-modal: 0 8px 24px rgb(0 0 0 / .35);

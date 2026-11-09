@@ -1,6 +1,7 @@
 """滚动条三行标定、行号完整性与金/彩识别范围的真实截图回归。"""
 
 from pathlib import Path
+from dataclasses import replace
 import unittest
 from unittest.mock import patch
 
@@ -64,12 +65,14 @@ class ThreeRowPagingTests(unittest.TestCase):
         self.assertEqual(pitch, 178)
         self.assertAlmostEqual(scale, 238 / 15)
         self.assertAlmostEqual(3 * pitch / scale, 33.6555, places=3)
-        with patch('module.storage.statistics_recognition.same_card',
+        with patch('module.storage.statistics_recognition.same_card', return_value=False), \
+             patch('module.storage.statistics_recognition._same_calibration_card',
                    side_effect=lambda a, b: a is before[2][0] or a is before[2][1]
                    or a is before[2][2] or a is before[2][3]):
             with self.assertRaisesRegex(StorageRecognitionError, '缺少唯一完整重叠行'):
                 calibrate_scroll(before, after, 15)
-        with patch('module.storage.statistics_recognition.same_card', return_value=True):
+        with patch('module.storage.statistics_recognition.same_card', return_value=False), \
+             patch('module.storage.statistics_recognition._same_calibration_card', return_value=True):
             with self.assertRaisesRegex(StorageRecognitionError, '缺少唯一完整重叠行'):
                 calibrate_scroll(before, after, 15)
 
@@ -192,8 +195,40 @@ class ThreeRowPagingTests(unittest.TestCase):
         self.assertEqual(traversal.pages, 2)
         traversal.append(rows[4:7], row_start=4, at_bottom=True)
         self.assertEqual(len(traversal.rows), 7)
+        invalid = [[replace(rows[4][0], present=False)], *rows[5:7]]
         with self.assertRaisesRegex(StorageRecognitionError, '不一致'):
-            traversal.append(rows[5:8], row_start=4, at_bottom=True)
+            traversal.append(invalid, row_start=4, at_bottom=True)
+
+    def test_bottom_overlap_amount_conflict_skips_one_item_and_deduplicates_the_rest(self):
+        image = load_image(str(FIXTURES / 'page_4.png'))
+        rows = recognize_rows(image, self.catalog, target_only=True)
+        traversal = StorageTraversal()
+        traversal.append(rows, row_start=0)
+        overlap = [[replace(card) for card in row] for row in rows]
+        damaged = next(card for row in overlap for card in row if card.identifier)
+        damaged.amount += 1
+        traversal.append(overlap, row_start=0, at_bottom=True)
+        self.assertEqual(len(traversal.rows), 3)
+        self.assertEqual(traversal.pages, 2)
+        quantities = {item['id']: item['amount'] for item in self.catalog.snapshot_items(traversal.rows)}
+        self.assertIsNone(quantities[damaged.identifier])
+        original = {item['id']: item['amount'] for item in self.catalog.snapshot_items(rows)}
+        for identifier, amount in original.items():
+            if identifier != damaged.identifier:
+                self.assertEqual(quantities[identifier], amount)
+
+    def test_bottom_overlap_identity_conflict_invalidates_both_candidates(self):
+        image = load_image(str(FIXTURES / 'page_4.png'))
+        rows = recognize_rows(image, self.catalog, target_only=True)
+        traversal = StorageTraversal()
+        traversal.append(rows, row_start=0)
+        overlap = [[replace(card) for card in row] for row in rows]
+        overlap[0][0].identifier = 'GearDesignPlanTorpedoT4'
+        traversal.append(overlap, row_start=0, at_bottom=True)
+        quantities = {item['id']: item['amount'] for item in self.catalog.snapshot_items(traversal.rows)}
+        self.assertIsNone(quantities['GearDesignPlanGunT4'])
+        self.assertIsNone(quantities['GearDesignPlanTorpedoT4'])
+        self.assertEqual(quantities['SecretDesignPlanT4'], 767)
 
 
 if __name__ == '__main__':

@@ -20,8 +20,10 @@
 from module.config.utils import get_os_reset_remain
 from module.logger import logger
 from module.os.config import OSConfig
+from module.os.globe_operation import OSZoneLockedError
 from module.os.map_operation import OSMapOperation
 from module.os.operation_siren import OperationSiren
+from module.os.tasks.smart_explore import delay_task_for_locked_zone, delay_task_for_smart_explore
 from module.os_handler.action_point import ActionPointLimit
 
 
@@ -78,6 +80,9 @@ class OSCampaignRun(OSMapOperation):
         try:
             campaign = self.load_campaign()
             return runner(campaign)
+        except OSZoneLockedError:
+            logger.warning(f'[{self.config.task.command}] 遇到海域未解锁: 未完成开荒，请使用每月开荒')
+            delay_task_for_locked_zone(self.config)
         finally:
             if prevent_enabled:
                 if campaign is not None:
@@ -126,10 +131,15 @@ class OSCampaignRun(OSMapOperation):
 
     def opsi_shop(self):
         """执行大世界港口商店购买任务。"""
+        if delay_task_for_smart_explore(self.config):
+            return
         try:
             self._run_opsi_task_with_ap_overflow_guard(lambda campaign: campaign.os_shop())
         except ActionPointLimit as e:
             self.delay_opsi_tasks_after_ap_limit(e)
+        except OSZoneLockedError:
+            logger.warning(f'[{self.config.task.command}] 遇到海域未解锁: 未完成开荒，请使用每月开荒')
+            delay_task_for_locked_zone(self.config)
 
     def opsi_voucher(self):
         """执行大世界特别兑换凭证购买任务。"""
@@ -140,6 +150,8 @@ class OSCampaignRun(OSMapOperation):
 
     def opsi_daily(self):
         """执行大世界每日任务。"""
+        if delay_task_for_smart_explore(self.config):
+            return
         try:
             self._run_opsi_task_with_ap_overflow_guard(lambda campaign: campaign.os_daily())
         except ActionPointLimit as e:
@@ -147,6 +159,8 @@ class OSCampaignRun(OSMapOperation):
 
     def opsi_meowfficer_farming(self):
         """执行大世界指挥喵打捞刷取任务。"""
+        if delay_task_for_smart_explore(self.config):
+            return
         try:
             self._run_opsi_task_with_ap_overflow_guard(lambda campaign: campaign.os_meowfficer_farming())
         except ActionPointLimit:
@@ -168,6 +182,8 @@ class OSCampaignRun(OSMapOperation):
 
     def opsi_obscure(self):
         """执行大世界隐秘海域任务。"""
+        if delay_task_for_smart_explore(self.config):
+            return
         try:
             self._run_opsi_task_with_ap_overflow_guard(lambda campaign: campaign.os_obscure())
         except ActionPointLimit as e:
@@ -180,6 +196,8 @@ class OSCampaignRun(OSMapOperation):
             self.config.task_delay(server_update=True)
             self.config.task_stop()
             return
+        if delay_task_for_smart_explore(self.config):
+            return
         try:
             self._run_opsi_task_with_ap_overflow_guard(lambda campaign: campaign.clear_month_boss())
         except ActionPointLimit as e:
@@ -187,6 +205,8 @@ class OSCampaignRun(OSMapOperation):
 
     def opsi_abyssal(self):
         """执行大世界深渊海域任务。"""
+        if delay_task_for_smart_explore(self.config):
+            return
         try:
             self._run_opsi_task_with_ap_overflow_guard(lambda campaign: campaign.os_abyssal())
         except ActionPointLimit as e:
@@ -194,6 +214,8 @@ class OSCampaignRun(OSMapOperation):
 
     def opsi_archive(self):
         """执行大世界档案海域任务。"""
+        if delay_task_for_smart_explore(self.config):
+            return
         try:
             self._run_opsi_task_with_ap_overflow_guard(lambda campaign: campaign.os_archive())
         except ActionPointLimit as e:
@@ -201,6 +223,8 @@ class OSCampaignRun(OSMapOperation):
 
     def opsi_stronghold(self):
         """执行大世界要塞海域任务。"""
+        if delay_task_for_smart_explore(self.config):
+            return
         try:
             self._run_opsi_task_with_ap_overflow_guard(lambda campaign: campaign.os_stronghold())
         except ActionPointLimit as e:
@@ -225,8 +249,14 @@ class OSCampaignRun(OSMapOperation):
 
     def opsi_prevent_action_point_overflow(self):
         """执行大世界防止行动力溢出任务。"""
-        campaign = self.load_campaign()
-        campaign.os_prevent_action_point_overflow()
+        if delay_task_for_smart_explore(self.config):
+            return
+        try:
+            campaign = self.load_campaign()
+            campaign.os_prevent_action_point_overflow()
+        except OSZoneLockedError:
+            logger.warning(f'[{self.config.task.command}] 遇到海域未解锁: 未完成开荒，请使用每月开荒')
+            delay_task_for_locked_zone(self.config)
 
     def opsi_cross_month(self):
         """执行大世界跨月重置前置与收尾任务。"""

@@ -5,14 +5,17 @@ import os
 import random
 import re
 import socket
+import tarfile
+import tempfile
 import time
 import typing as t
+import zlib
 
+import requests
 import uiautomator2 as u2
 import uiautomator2cache
 from adbutils import AdbTimeout
 from lxml import etree
-
 from module.device.method.remove_warning import remove_shell_warning
 
 try:
@@ -156,6 +159,66 @@ class PatchedIniter(u2.init.Initer):
                 % self.abis)
         return u2.init.GITHUB_BASEURL + '/atx-agent/releases/download/%s/%s' % (
             u2.version.__atx_agent_version__, name.format(v=u2.version.__atx_agent_version__))
+
+    @staticmethod
+    def _atx_archive_valid(path):
+        """确认缓存是包含完整 agent 文件的 gzip 归档，排除错误页和下载残片。"""
+        try:
+            with tarfile.open(path, 'r:gz') as archive:
+                member = archive.getmember('atx-agent')
+                if not member.isfile() or member.size <= 0:
+                    return False
+                with archive.extractfile(member) as binary:
+                    while binary.read(64 * 1024):
+                        pass
+            return True
+        except (OSError, EOFError, tarfile.TarError, KeyError, zlib.error):
+            return False
+
+    def _cache_atx_agent(self, url):
+        # Modify by MHY, 校验下载缓存，沿用 GitHub 资源源和 requests 传输。
+        path = u2.init.gen_cachepath(url)
+        if self._atx_archive_valid(path):
+            return
+
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        version = u2.version.__atx_agent_version__
+        official = f'https://github.com/openatx/atx-agent/releases/download/{version}/{os.path.basename(url)}'
+        last_error = None
+        # Modify by MHY, 直取 GitHub 时保留一次重试与归档完整性校验。
+        for source in (url, official):
+            partial = None
+            try:
+                self.logger.info(f'[设备-ATX] 下载 {source}')
+                # 上游固定发送 Origin: https://github.com，重定向到 CNB 后会得到 403。
+                with requests.get(source, stream=True, headers={'Accept-Encoding': 'identity'},
+                              timeout=(5, 30)) as response:
+                    response.raise_for_status()
+                    with tempfile.NamedTemporaryFile(dir=os.path.dirname(path), suffix='.part',
+                                                     delete=False) as output:
+                        partial = output.name
+                        for chunk in response.iter_content(64 * 1024):
+                            output.write(chunk)
+                    expected = response.headers.get('Content-Length')
+                    if expected is not None and os.path.getsize(partial) != int(expected):
+                        raise ValueError('atx-agent 下载长度不完整')
+                if not self._atx_archive_valid(partial):
+                    raise ValueError('atx-agent 下载内容不是有效的 agent 归档')
+                os.replace(partial, path)
+                return
+            except (requests.RequestException, ValueError) as error:
+                self.logger.warning(f'[设备-ATX] 下载失败 {source}: {error}')
+                last_error = error
+            finally:
+                if partial is not None and os.path.exists(partial):
+                    os.unlink(partial)
+        raise last_error
+
+    def push_url(self, url, dest=None, mode=0o755, tgz=False, extract_name=None):
+        """仅修正 agent 下载，解包、推送及其他资源沿用上游安装流程。"""
+        if tgz and extract_name == 'atx-agent' and url == self.atx_agent_url:
+            self._cache_atx_agent(url)
+        return super().push_url(url, dest=dest, mode=mode, tgz=tgz, extract_name=extract_name)
 
     @property
     def minicap_urls(self):
@@ -442,7 +505,20 @@ class IniterNoMinicap(u2.init.Initer):
 
 
 class Device(u2.Device):
-    """继承 u2.Device，覆写悬浮窗等行为。"""
+    """继承 u2.Device，兼容辅助 APK 检查并禁用悬浮窗。"""
+
+    def _is_apk_required(self) -> bool:
+        """按安装路径检查辅助 APK，避免解析测试包未声明的 versionName。
+
+        uiautomator2 旧实现用版本解析判断存在性；新版 packaging 拒绝空版本，
+        但随库分发的测试 APK 本身没有 versionName，不能据此要求重新安装。
+        """
+        for package in ('com.github.uiautomator', 'com.github.uiautomator.test'):
+            result = self.shell(['pm', 'path', package])
+            if result.exit_code != 0 or not any(
+                    line.strip().startswith('package:/') for line in result.output.splitlines()):
+                return True
+        return False
 
     def show_float_window(self, show=True):
         """禁止弹出悬浮窗。"""

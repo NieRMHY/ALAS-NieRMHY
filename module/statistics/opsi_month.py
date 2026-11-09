@@ -279,4 +279,5 @@ def get_asset_timeline(
 
     data = cl1_db.get_stats(instance_name or "default", key_prefix)
     snapshots = data.get("ap_snapshots", [])
-    return sorted([s for s in snapshots if s.get("ts")], key=lambda e: e.get("ts", ""))
+    return sorted([s for s in snapshots if s.get("ts") and s.get("ap_total") is not None
+                   and s.get("source") != "hazard1_estimate"], key=lambda e: e.get("ts", ""))
