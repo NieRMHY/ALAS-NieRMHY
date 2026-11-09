@@ -1,4 +1,4 @@
-"""冬季开发计划自然资源下限叠加：开关、Done、高日常底、鱼肉 keep 与未知库存。"""
+"""冬季开发计划自然资源下限叠加：开关、旧完成标记兼容、高日常底、鱼肉 keep 与未知库存。"""
 
 import unittest
 from unittest.mock import Mock, patch
@@ -138,10 +138,12 @@ class WinterTargetTests(unittest.TestCase):
             'silver': 125, 'elegant_wood': 125,
         })
 
-    def test_done_removes_the_override(self):
-        config = FakeConfig(values=done('tea'))
-        self.assertNotIn('tea', winter.active_task_needs(config))
-        self.assertEqual(winter.crop_task_targets(config, 'nursery'), {})
+    def test_legacy_done_keeps_all_natural_floors(self):
+        values = {f'{GROUP}.Done_{item}': True for item in winter.WINTER_TASK_ITEMS}
+        config = FakeConfig(values=values)
+        self.assertEqual(winter.active_task_needs(config),
+                         winter.active_task_needs(FakeConfig()))
+        self.assertEqual(winter.crop_task_targets(config, 'nursery'), {'tea': 600})
 
     def test_zero_need_removes_the_override(self):
         config = FakeConfig(values=need('citrus', 0))
@@ -169,7 +171,7 @@ class WinterTargetTests(unittest.TestCase):
         config = FakeConfig(values={'IslandSeasonPlan.IslandSeasonPlan.Need_saltwater_fish_meat': 50})
         self.assertEqual(winter.task_need(config, 'seawater_fish_meat'), 50)
         done_config = FakeConfig(values={'IslandSeasonPlan.IslandSeasonPlan.Done_saltwater_fish_meat': True})
-        self.assertTrue(winter.task_done(done_config, 'seawater_fish_meat'))
+        self.assertEqual(winter.active_task_needs(done_config)['seawater_fish_meat'], 200)
 
     def test_crop_targets_belong_to_their_own_area(self):
         config = FakeConfig()
@@ -223,11 +225,11 @@ class WinterDataConsistencyTests(unittest.TestCase):
         self.assertEqual(winter.WINTER_TASK_ITEMS['seawater_fish_meat']['meat_id'],
                          SALTWATER_FISH_MEAT)
 
-    def test_done_accepts_string_flags(self):
-        on = FakeConfig(values={f'{GROUP}.Done_tea': 'true'})
-        off = FakeConfig(values={f'{GROUP}.Done_tea': 'false'})
-        self.assertTrue(winter.task_done(on, 'tea'))
-        self.assertFalse(winter.task_done(off, 'tea'))
+    def test_legacy_done_string_flags_do_not_stop_stock(self):
+        for flag in ('true', 'false', '1', 'yes', 'on'):
+            with self.subTest(flag=flag):
+                config = FakeConfig(values={f'{GROUP}.Done_tea': flag})
+                self.assertEqual(winter.active_task_needs(config)['tea'], 600)
 
     def test_invalid_need_falls_back_and_negative_is_zero(self):
         invalid = FakeConfig(values=need('tea', 'abc'))
@@ -304,12 +306,17 @@ class FarmOverlayTests(unittest.TestCase):
         self.assertEqual(farm.to_plant_lists, first)
         self.assertEqual(farm.config.writes, [])
 
-    def test_done_task_stops_the_override(self):
+    def test_legacy_done_keeps_restocking_after_consumption(self):
+        # Add by MHY, 同一执行器先达标、再消耗，旧完成标记始终不影响补种。
         farm = make_farm(values=done('tea'))
-        lists = prepare_farm(farm, {
-            'farm': {}, 'orchard': ORCHARD_STOCK, 'nursery': NURSERY_STOCK,
-        })
-        self.assertEqual(lists['nursery'], [])
+        inventories = {
+            'farm': {}, 'orchard': ORCHARD_STOCK,
+            'nursery': dict(NURSERY_STOCK, tea=650),
+        }
+        self.assertEqual(prepare_farm(farm, inventories)['nursery'], [])
+        inventories['nursery']['tea'] = 100
+        self.assertEqual(prepare_farm(farm, inventories)['nursery'], ['tea'])
+        self.assertEqual(farm.config.writes, [])
 
 
 class MineForestOverlayTests(unittest.TestCase):
@@ -331,10 +338,10 @@ class MineForestOverlayTests(unittest.TestCase):
         self.assertEqual(summer._get_threshold('Silver'), 40)
         self.assertEqual(summer._get_threshold('Elegant'), 30)
 
-    def test_done_flag_returns_to_the_configured_threshold(self):
+    def test_legacy_done_keeps_the_winter_threshold(self):
         mine = make_mine(IslandMine_MinSilver=40, IslandForest_MinElegant=30,
                          values=done('silver'))
-        self.assertEqual(mine._get_threshold('Silver'), 40)
+        self.assertEqual(mine._get_threshold('Silver'), 125)
         self.assertEqual(mine._get_threshold('Elegant'), 125)
 
     def test_zero_need_returns_to_the_configured_threshold(self):
@@ -363,11 +370,11 @@ class FishMeatOverlayTests(unittest.TestCase):
         self.assertEqual(merged[FRESHWATER_FISH_MEAT], -1)
         self.assertEqual(merged[SALTWATER_FISH_MEAT], 200)
 
-    def test_done_flag_keeps_the_original_exchange_target(self):
+    def test_legacy_done_keeps_the_winter_exchange_target(self):
         config = FakeConfig(values=done('freshwater_fish_meat'))
         self.assertEqual(
             winter.exchange_targets(config, {FRESHWATER_FISH_MEAT: 0}),
-            {FRESHWATER_FISH_MEAT: 0})
+            {FRESHWATER_FISH_MEAT: 200})
 
     def test_zero_need_keeps_the_original_exchange_target(self):
         config = FakeConfig(values=need('seawater_fish_meat', 0))

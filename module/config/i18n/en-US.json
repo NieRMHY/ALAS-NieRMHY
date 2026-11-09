@@ -6387,17 +6387,17 @@
   "IslandSeasonPlan": {
     "_info": {
       "name": "Season Tasks (Development Plan)",
-      "help": "No longer reads the Development Plan page (it misreads digits). Each time a shop collects production or checks sales, the warehouse is read as the current amount. You only enter each task's required amount and tick Done for submitted items. Done items stop being planned and notified, and idle capacity moves to the next-largest gap. In winter, natural tasks reserve 100 extra and meal tasks add the Meal Buffer; the season list is updated by the program."
+      "help": "The list contains the 16 current winter tasks. Natural products continuously maintain the higher of the stock baseline plus 100 and the daily minimum. They replenish after consumption and have no Done checkbox. Enter the required quantity for meals and manufactured products, then mark them Done after submission to end extra task production. Meal stock comes from warehouse readings during shop collection and sales checks, rather than the Development Plan page."
     },
     "NotifyEnable": {
       "name": "Ready email",
-      "help": "Send one email when the warehouse reaches the required amount (once per item; reset when it drops). Tick Done for tasks you already submitted, otherwise a stock above the requirement keeps notifying.",
+      "help": "Send one email when meal stock covers the task requirement, business reserve and Meal Buffer. Each item is notified once and resets when stock drops. Mark submitted meals Done to end reminders. Natural products replenish continuously and use no readiness email.",
       "True": "On",
       "False": "Off"
     },
     "WinterTaskEnabled": {
       "name": "Winter Task Mode",
-      "help": "Only applies when Season is Winter: natural tasks reserve 100 extra items, and meal tasks add the Meal Buffer. Turning this off removes the 16 winter tasks from planning and notifications; other seasons are unaffected.",
+      "help": "Applies only in winter. Natural products maintain their stock baseline plus 100; meals receive limited extra production including the Meal Buffer, and manufactured products fill the task deficit. Turning this off removes winter task additions and meal reminders while daily production continues.",
       "True": "On",
       "False": "Off"
     },
@@ -6405,145 +6405,29 @@
       "name": "Meal Buffer",
       "help": "Extra amount produced beyond each winter meal task's required amount. Default 20; 0 is allowed. Applies only to winter meal tasks; natural tasks always reserve 100 extra and manufacture tasks get no buffer."
     },
-    "Need_apple_juice": {
-      "name": "Apple Juice · Required",
-      "help": "Amount to submit for \"甜蜜引擎\". 0 means do not produce."
-    },
-    "Done_apple_juice": {
-      "name": "Apple Juice · Done",
-      "help": "When ticked, Apple Juice is no longer produced or notified and idle capacity moves to the next-largest gap. Untick to resume.",
-      "True": "On",
-      "False": "Off"
-    },
-    "Need_iced_coffee": {
-      "name": "Iced Coffee · Required",
-      "help": "Amount to submit for \"咖啡供应\". 0 means do not produce."
-    },
-    "Done_iced_coffee": {
-      "name": "Iced Coffee · Done",
-      "help": "When ticked, Iced Coffee is no longer produced or notified and idle capacity moves to the next-largest gap. Untick to resume.",
-      "True": "On",
-      "False": "Off"
-    },
-    "Need_roasted_skewer": {
-      "name": "Charcoal Skewers · Required",
-      "help": "Amount to submit for \"烤肉能量\". 0 means do not produce."
-    },
-    "Done_roasted_skewer": {
-      "name": "Charcoal Skewers · Done",
-      "help": "When ticked, Charcoal Skewers is no longer produced or notified and idle capacity moves to the next-largest gap. Untick to resume.",
-      "True": "On",
-      "False": "Off"
-    },
-    "Need_salad": {
-      "name": "Veggie Salad · Required",
-      "help": "Amount to submit for \"健康饮食\". 0 means do not produce."
-    },
-    "Done_salad": {
-      "name": "Veggie Salad · Done",
-      "help": "When ticked, Veggie Salad is no longer produced or notified and idle capacity moves to the next-largest gap. Untick to resume.",
-      "True": "On",
-      "False": "Off"
-    },
-    "Need_carrot_omelette": {
-      "name": "Carrot Omelette · Required",
-      "help": "Amount to submit for \"营养组合\". 0 means do not produce."
-    },
-    "Done_carrot_omelette": {
-      "name": "Carrot Omelette · Done",
-      "help": "When ticked, Carrot Omelette is no longer produced or notified and idle capacity moves to the next-largest gap. Untick to resume.",
-      "True": "On",
-      "False": "Off"
-    },
-    "Need_latte": {
-      "name": "Latte · Required",
-      "help": "Amount to submit for \"拿铁时光\". 0 means do not produce."
-    },
-    "Done_latte": {
-      "name": "Latte · Done",
-      "help": "When ticked, Latte is no longer produced or notified and idle capacity moves to the next-largest gap. Untick to resume.",
-      "True": "On",
-      "False": "Off"
-    },
-    "Need_stir_fried_chicken": {
-      "name": "Stir-fried Chicken · Required",
-      "help": "Amount to submit for \"禽肉快炒\". 0 means do not produce."
-    },
-    "Done_stir_fried_chicken": {
-      "name": "Stir-fried Chicken · Done",
-      "help": "When ticked, Stir-fried Chicken is no longer produced or notified and idle capacity moves to the next-largest gap. Untick to resume.",
-      "True": "On",
-      "False": "Off"
-    },
-    "Need_steak_bowl": {
-      "name": "Steak Rice Bowl · Required",
-      "help": "Amount to submit for \"便携快餐\". 0 means do not produce."
-    },
-    "Done_steak_bowl": {
-      "name": "Steak Rice Bowl · Done",
-      "help": "When ticked, Steak Rice Bowl is no longer produced or notified and idle capacity moves to the next-largest gap. Untick to resume.",
-      "True": "On",
-      "False": "Off"
-    },
     "Need_tea": {
-      "name": "Tea Leaves · Required",
-      "help": "Amount to submit for \"Stocking Up on Tea\". Natural tasks reserve 100 extra when planning. 0 means do not produce."
-    },
-    "Done_tea": {
-      "name": "Tea Leaves · Done",
-      "help": "When ticked, Tea Leaves is no longer planned or notified, and idle capacity moves to the next-largest gap. Untick to resume.",
-      "True": "On",
-      "False": "Off"
+      "name": "Tea Leaves · Stock Baseline",
+      "help": "Maintain the higher of this value plus 100 and the daily minimum. Replenish after consumption without a Done checkbox and retain excess stock. Set 0 to disable only this winter addition; daily replenishment continues."
     },
     "Need_citrus": {
-      "name": "Citrus Fruit · Required",
-      "help": "Amount to submit for \"Citrus Resupply\". Natural tasks reserve 100 extra when planning. 0 means do not produce."
-    },
-    "Done_citrus": {
-      "name": "Citrus Fruit · Done",
-      "help": "When ticked, Citrus Fruit is no longer planned or notified, and idle capacity moves to the next-largest gap. Untick to resume.",
-      "True": "On",
-      "False": "Off"
+      "name": "Citrus Fruit · Stock Baseline",
+      "help": "Maintain the higher of this value plus 100 and the daily minimum. Replenish after consumption without a Done checkbox and retain excess stock. Set 0 to disable only this winter addition; daily replenishment continues."
     },
     "Need_mango": {
-      "name": "Mango · Required",
-      "help": "Amount to submit for \"A Mango Windfall\". The game requires 250; the default is 200, and the natural-task reserve of 100 still covers the submission. 0 means do not produce."
-    },
-    "Done_mango": {
-      "name": "Mango · Done",
-      "help": "When ticked, Mango is no longer planned or notified, and idle capacity moves to the next-largest gap. Untick to resume.",
-      "True": "On",
-      "False": "Off"
+      "name": "Mango · Stock Baseline",
+      "help": "Maintain the higher of this value plus 100 and the daily minimum. Replenish after consumption without a Done checkbox and retain excess stock. Set 0 to disable only this winter addition; daily replenishment continues. The game task requires 250. The default baseline is 200, giving a winter minimum of 300."
     },
     "Need_avocado": {
-      "name": "Avocado · Required",
-      "help": "Amount to submit for \"Fragrant Avocado\". Natural tasks reserve 100 extra when planning. 0 means do not produce."
-    },
-    "Done_avocado": {
-      "name": "Avocado · Done",
-      "help": "When ticked, Avocado is no longer planned or notified, and idle capacity moves to the next-largest gap. Untick to resume.",
-      "True": "On",
-      "False": "Off"
+      "name": "Avocado · Stock Baseline",
+      "help": "Maintain the higher of this value plus 100 and the daily minimum. Replenish after consumption without a Done checkbox and retain excess stock. Set 0 to disable only this winter addition; daily replenishment continues."
     },
     "Need_freshwater_fish_meat": {
-      "name": "Freshwater Fish Meat · Required",
-      "help": "Amount to submit for \"Freshwater Foods\". Natural tasks reserve 100 extra when planning. 0 means do not produce."
-    },
-    "Done_freshwater_fish_meat": {
-      "name": "Freshwater Fish Meat · Done",
-      "help": "When ticked, Freshwater Fish Meat is no longer planned or notified, and idle capacity moves to the next-largest gap. Untick to resume.",
-      "True": "On",
-      "False": "Off"
+      "name": "Freshwater Fish Meat · Stock Baseline",
+      "help": "Maintain the higher of this value plus 100 and the daily minimum. Replenish after consumption without a Done checkbox and retain excess stock. Set 0 to disable only this winter addition; daily replenishment continues."
     },
     "Need_seawater_fish_meat": {
-      "name": "Saltwater Fish Meat · Required",
-      "help": "Amount to submit for \"Seafood Stocks\". Natural tasks reserve 100 extra when planning. 0 means do not produce."
-    },
-    "Done_seawater_fish_meat": {
-      "name": "Saltwater Fish Meat · Done",
-      "help": "When ticked, Saltwater Fish Meat is no longer planned or notified, and idle capacity moves to the next-largest gap. Untick to resume.",
-      "True": "On",
-      "False": "Off"
+      "name": "Saltwater Fish Meat · Stock Baseline",
+      "help": "Maintain the higher of this value plus 100 and the daily minimum. Replenish after consumption without a Done checkbox and retain excess stock. Set 0 to disable only this winter addition; daily replenishment continues."
     },
     "Need_chicken_potato": {
       "name": "Chicken and Potato Hors d'Oeuvre · Required",
@@ -6576,24 +6460,12 @@
       "False": "Off"
     },
     "Need_silver": {
-      "name": "Silver Ore · Required",
-      "help": "Amount to submit for \"Extracting Silver Ore\". Natural tasks reserve 100 extra when planning. 0 means do not produce."
-    },
-    "Done_silver": {
-      "name": "Silver Ore · Done",
-      "help": "When ticked, Silver Ore is no longer planned or notified, and idle capacity moves to the next-largest gap. Untick to resume.",
-      "True": "On",
-      "False": "Off"
+      "name": "Silver Ore · Stock Baseline",
+      "help": "Maintain the higher of this value plus 100 and the daily minimum. Replenish after consumption without a Done checkbox and retain excess stock. Set 0 to disable only this winter addition; daily replenishment continues."
     },
     "Need_elegant_wood": {
-      "name": "Elegant Wood · Required",
-      "help": "Amount to submit for \"Checking Timber Stocks\". Natural tasks reserve 100 extra when planning. 0 means do not produce."
-    },
-    "Done_elegant_wood": {
-      "name": "Elegant Wood · Done",
-      "help": "When ticked, Elegant Wood is no longer planned or notified, and idle capacity moves to the next-largest gap. Untick to resume.",
-      "True": "On",
-      "False": "Off"
+      "name": "Elegant Wood · Stock Baseline",
+      "help": "Maintain the higher of this value plus 100 and the daily minimum. Replenish after consumption without a Done checkbox and retain excess stock. Set 0 to disable only this winter addition; daily replenishment continues."
     },
     "Need_sachet": {
       "name": "Aroma Sachet · Required",

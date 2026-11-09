@@ -11,10 +11,10 @@
 
 生效规则（只在冬季、且 `WinterTaskEnabled` 打开时参与）：
 
-    生效下限 = max(原日常下限, 未提交任务需求 + TASK_BUFFER)
+    生效下限 = max(原日常下限, 配置库存基准 + TASK_BUFFER)
 
-- 「未提交」= `Need_<物品>` > 0 且 `Done_<物品>` 未勾选；`Done` 勾上或需求填 0
-  都表示这项不用再补，直接回到原来的日常下限。
+- `Need_<物品>` > 0 时持续保有库存，达标后消耗会重新补足，无需标记完成。
+  旧配置的 `Done_` 不影响下限；需求填 0 才关闭该项叠加，回到日常下限。
 - 取 max 而不是覆盖：原日常下限更高时（例如农场 660）不会因为任务需求低而下降。
 - 叠加只在运行时计算，绝不写回 `CropTargets`/`Min*` 等阈值配置。仓库读数每天在变，
   写回会让阈值一轮轮往上叠，也会盖掉用户自己的设置。
@@ -23,7 +23,7 @@
 - 牛油果：「忽略牛油果」只约束日常补种，任务要交的那份仍然补种（见 `protected_crops`）。
 - 鱼肉：只能靠「鱼肉加工」把鱼兑换出来，所以只抬兑换目标；各鱼的保留数量（keep）与
   渔场养殖计划都不动，库存读不到（未知）时也不会被当成 0 去兑换。
-- 配置里缺 `Need_`/`Done_`/`WinterTaskEnabled` 键（旧配置、新赛季）时用赛季表的
+- 配置里缺 `Need_`/`WinterTaskEnabled` 键（旧配置、新赛季）时用赛季表的
   默认值，不依赖配置生成器先落地。
 """
 from module.island import island_season_plan_data as season_data
@@ -122,22 +122,13 @@ def task_need(config, item):
         return default
 
 
-def task_done(config, item):
-    """该项任务是否已标记提交完成（兼容字符串形式的 true/false）。"""
-    value = _configured(config, item, 'Done')
-    if isinstance(value, str):
-        return value.strip().lower() in ('true', '1', 'yes', 'on')
-    return bool(value)
-
-
 def active_task_needs(config):
-    """未提交任务的叠加目标：{物品: 需求 + 缓冲}；任务关闭或非冬季时为空。"""
+    """持续库存叠加目标：{物品: 库存基准 + 缓冲}；任务关闭或非冬季时为空。"""
     if not winter_task_enabled(config):
         return {}
     targets = {}
+    # Modify by MHY, 自然库存随消耗持续补足，忽略旧配置的完成标记。
     for item in WINTER_TASK_ITEMS:
-        if task_done(config, item):
-            continue
         need = task_need(config, item)
         if need <= 0:
             continue

@@ -36,6 +36,11 @@ EXPECTED = [
     (80001516, '电力储备', 'battery', 3055, 10, 'manufacture'),
 ]
 WINTER_ITEMS = [row[2] for row in EXPECTED]
+NATURAL_ITEMS = {row[2] for row in EXPECTED if row[5] == 'natural'}
+FINITE_ITEMS = set(WINTER_ITEMS) - NATURAL_ITEMS
+CURRENT_KEYS = {'WinterTaskEnabled', 'MealBuffer', 'NotifyEnable'} | {
+    f'Need_{item}' for item in WINTER_ITEMS
+} | {f'Done_{item}' for item in FINITE_ITEMS}
 NEED_DEFAULTS = {
     'tea': 500, 'citrus': 500, 'mango': 200, 'avocado': 100,
     'freshwater_fish_meat': 100, 'seawater_fish_meat': 100,
@@ -46,13 +51,13 @@ NEED_DEFAULTS = {
 
 # 每语种的新增文案（抽查项：物品名 + 选项名）
 I18N_NAMES = {
-    'zh-CN': {'Need_tea': '茶叶 · 需求数量', 'Done_battery': '蓄电池 · 已完成',
+    'zh-CN': {'Need_tea': '茶叶 · 库存基准', 'Done_battery': '蓄电池 · 已完成',
               'WinterTaskEnabled': '冬季任务模式', 'MealBuffer': '餐品缓冲'},
-    'zh-TW': {'Need_tea': '茶葉 · 需求數量', 'Done_battery': '蓄電池 · 已完成',
+    'zh-TW': {'Need_tea': '茶葉 · 庫存基準', 'Done_battery': '蓄電池 · 已完成',
               'WinterTaskEnabled': '冬季任務模式', 'MealBuffer': '餐品緩衝'},
-    'en-US': {'Need_tea': 'Tea Leaves · Required', 'Done_battery': 'Battery · Done',
+    'en-US': {'Need_tea': 'Tea Leaves · Stock Baseline', 'Done_battery': 'Battery · Done',
               'WinterTaskEnabled': 'Winter Task Mode', 'MealBuffer': 'Meal Buffer'},
-    'ja-JP': {'Need_tea': '茶葉 · 必要数', 'Done_battery': '蓄電池 · 完了',
+    'ja-JP': {'Need_tea': '茶葉 · 在庫基準', 'Done_battery': '蓄電池 · 完了',
               'WinterTaskEnabled': '冬季任務モード', 'MealBuffer': '料理バッファ'},
 }
 
@@ -214,8 +219,12 @@ class TestConfigEntries(unittest.TestCase):
             done_key = f'Done_{item}'
             self.assertIn(need_key, args)
             self.assertEqual(args[need_key]['value'], NEED_DEFAULTS[item])
-            self.assertIn(done_key, args)
-            self.assertEqual(args[done_key]['value'], False)
+            if item in NATURAL_ITEMS:
+                self.assertNotIn(done_key, args)
+            else:
+                self.assertIn(done_key, args)
+                self.assertEqual(args[done_key]['value'], False)
+        self.assertEqual(set(args), CURRENT_KEYS)
         self.assertNotIn('Need_Silver', args)
         self.assertNotIn('Need_Elegant', args)
 
@@ -230,7 +239,10 @@ class TestConfigEntries(unittest.TestCase):
         for item in WINTER_ITEMS:
             self.assertEqual(args[f'Need_{item}']['value'], NEED_DEFAULTS[item])
             self.assertEqual(template[f'Need_{item}'], NEED_DEFAULTS[item])
-            self.assertFalse(template[f'Done_{item}'])
+            if item in FINITE_ITEMS:
+                self.assertFalse(template[f'Done_{item}'])
+        self.assertEqual(set(args), CURRENT_KEYS)
+        self.assertEqual(set(template), CURRENT_KEYS)
 
     def test_generated_config_class(self):
         self.assertTrue(GeneratedConfig.IslandSeasonPlan_WinterTaskEnabled)
@@ -239,6 +251,31 @@ class TestConfigEntries(unittest.TestCase):
         self.assertEqual(GeneratedConfig.IslandSeasonPlan_Need_silver, 25)
         self.assertEqual(GeneratedConfig.IslandSeasonPlan_Need_elegant_wood, 25)
         self.assertFalse(GeneratedConfig.IslandSeasonPlan_Done_battery)
+        self.assertEqual({key.removeprefix('IslandSeasonPlan_')
+                          for key in vars(GeneratedConfig) if key.startswith('IslandSeasonPlan_')},
+                         CURRENT_KEYS)
+
+    def test_old_config_migrates_without_losing_current_choices(self):
+        # Add by MHY, 旧界面字段退出白名单，用户当前库存基准与有限任务完成状态保留。
+        from module.config.config_updater import ConfigUpdater
+
+        with open('config/template.json', encoding='utf-8') as f:
+            old = json.load(f)
+        group = old['IslandSeasonPlan']['IslandSeasonPlan']
+        for _, item, _ in D.SEASON_PLAN_TASKS['autumn']:
+            group[f'Need_{item}'] = 999
+            group[f'Done_{item}'] = True
+        for item in NATURAL_ITEMS:
+            group[f'Done_{item}'] = True
+        group.update(Need_tea=777, Need_silver=0, Done_chicken_potato=True, Done_battery=True)
+        del group['Need_mango']
+        migrated = ConfigUpdater().config_update(old)['IslandSeasonPlan']['IslandSeasonPlan']
+        self.assertEqual(set(migrated), CURRENT_KEYS)
+        self.assertEqual(migrated['Need_tea'], 777)
+        self.assertEqual(migrated['Need_silver'], 0)
+        self.assertEqual(migrated['Need_mango'], 200)
+        self.assertTrue(migrated['Done_chicken_potato'])
+        self.assertTrue(migrated['Done_battery'])
 
 
 class TestTranslations(unittest.TestCase):
@@ -249,16 +286,19 @@ class TestTranslations(unittest.TestCase):
             self.assertIn('_info', group)
             for key, expected_name in I18N_NAMES[lang].items():
                 self.assertEqual(group[key]['name'], expected_name, (lang, key))
+            self.assertEqual(set(group), CURRENT_KEYS | {'_info'})
             for item in WINTER_ITEMS:
-                for prefix in ('Need_', 'Done_'):
+                prefixes = ('Need_',) if item in NATURAL_ITEMS else ('Need_', 'Done_')
+                for prefix in prefixes:
                     key = f'{prefix}{item}'
                     self.assertIn(key, group, (lang, key))
                     self.assertTrue(group[key]['name'])
                     self.assertTrue(group[key]['help'])
                     self.assertNotIn('IslandSeasonPlan.', group[key]['name'])
                     self.assertNotIn('IslandSeasonPlan.', group[key]['help'])
-                self.assertIn(group[f'Done_{item}']['True'], ('开启', '開啟', 'On', 'オン'))
-                self.assertIn(group[f'Done_{item}']['False'], ('关闭', '關閉', 'Off', 'オフ'))
+                if item in FINITE_ITEMS:
+                    self.assertIn(group[f'Done_{item}']['True'], ('开启', '開啟', 'On', 'オン'))
+                    self.assertIn(group[f'Done_{item}']['False'], ('关闭', '關閉', 'Off', 'オフ'))
             self.assertNotEqual(group['WinterTaskEnabled']['True'], 'True')
             self.assertNotEqual(group['WinterTaskEnabled']['False'], 'False')
 

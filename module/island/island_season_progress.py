@@ -9,10 +9,11 @@
     需求数量    配置 Need_<物品>，默认取赛季表，可改
     已完成      配置 Done_<物品>，勾选后该项不再排产、不再发邮件，空闲产能转去做下一个
 
-换赛季时只需在赛季表里换餐品并在 argument.yaml 为新餐品追加 Need_/Done_ 两项；
+换赛季时更新赛季表与 argument.yaml 的餐品 Need_/Done_，同时移除过季配置；
 配置里没有对应键的餐品（旧赛季遗留）读不到配置，按赛季表默认值、未完成处理。
 
-冬季任务另受 IslandSeasonPlan.WinterTaskEnabled 控制（read_slots 关闭时返回空列表）。
+冬季餐品另受 IslandSeasonPlan.WinterTaskEnabled 控制（read_slots 关闭时返回空列表）。
+自然资源由 island_winter_resources 持续维持库存，无完成标记，不进入本模块的餐品提醒。
 仓库读数缺失、None、负数、非数字与非有限值（NaN/inf）都是「未知」：不当 0、不算达标，
 也不触发缺口刷新；需要区分「未知」与「0」的调用方用 build_progress(..., with_known=True)
 或 progress_values。

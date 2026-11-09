@@ -281,16 +281,15 @@ class TestSeasonChange(unittest.TestCase):
             slots = P.read_slots(fake_config(), 'winter', SHOP_ITEMS)
         self.assertEqual(slots, [{'item': 'omelette', 'need': 40, 'done': False}])
 
-    def test_season_table_dishes_all_have_config_keys(self):
-        """赛季表里每个店铺餐品都必须在配置里有 Need_/Done_ 键，否则用户改了也读不到。"""
+    def test_current_season_dishes_all_have_config_keys(self):
+        # Modify by MHY, 历史赛季保留识别表，配置仅展示当前冬季。
         with open('module/config/argument/args.json', encoding='utf-8') as f:
             group = json.load(f)['IslandSeasonPlan']['IslandSeasonPlan']
         missing = []
-        for season in SEASON_PLAN_TASKS:
-            for item, _ in P.season_dishes(season, SHOP_ITEMS):
-                for key in (f'Need_{item}', f'Done_{item}'):
-                    if key not in group:
-                        missing.append(key)
+        for item, _ in P.season_dishes('winter', SHOP_ITEMS):
+            for key in (f'Need_{item}', f'Done_{item}'):
+                if key not in group:
+                    missing.append(key)
         self.assertEqual(missing, [], '赛季表加了餐品，要在 argument.yaml 里补 Need_/Done_ 并补翻译')
 
 
@@ -476,14 +475,14 @@ class TestConfigSchema(unittest.TestCase):
     def test_each_dish_has_need_and_done(self):
         group = self._group()
         self.assertEqual(group['NotifyEnable']['type'], 'checkbox')
-        for item in AUTUMN_DISHES:
+        for item in WINTER_DISHES:
             self.assertEqual(group[f'Need_{item}']['type'], 'input')
             self.assertEqual(group[f'Done_{item}']['type'], 'checkbox')
             self.assertFalse(group[f'Done_{item}']['value'])
 
     def test_default_need_matches_season_table(self):
         group = self._group()
-        for item, need in P.season_dishes('autumn', SHOP_ITEMS):
+        for item, need in P.season_dishes('winter', SHOP_ITEMS):
             self.assertEqual(group[f'Need_{item}']['value'], need, item)
 
     def test_no_item_picker_left(self):
@@ -491,7 +490,7 @@ class TestConfigSchema(unittest.TestCase):
         self.assertFalse([k for k in self._group() if k.startswith('Item')])
 
     def test_translations_in_all_languages(self):
-        keys = ['NotifyEnable'] + [f'{p}_{i}' for i in AUTUMN_DISHES for p in ('Need', 'Done')]
+        keys = ['NotifyEnable'] + [f'{p}_{i}' for i in WINTER_DISHES for p in ('Need', 'Done')]
         for lang in ('zh-CN', 'zh-TW', 'en-US', 'ja-JP'):
             with open(f'module/config/i18n/{lang}.json', encoding='utf-8') as f:
                 group = json.load(f)['IslandSeasonPlan']

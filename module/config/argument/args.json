@@ -16919,173 +16919,29 @@
           999
         ]
       },
-      "Need_apple_juice": {
-        "type": "input",
-        "value": 250
-      },
-      "Done_apple_juice": {
-        "type": "checkbox",
-        "value": false,
-        "option": [
-          true,
-          false
-        ]
-      },
-      "Need_iced_coffee": {
-        "type": "input",
-        "value": 250
-      },
-      "Done_iced_coffee": {
-        "type": "checkbox",
-        "value": false,
-        "option": [
-          true,
-          false
-        ]
-      },
-      "Need_roasted_skewer": {
-        "type": "input",
-        "value": 250
-      },
-      "Done_roasted_skewer": {
-        "type": "checkbox",
-        "value": false,
-        "option": [
-          true,
-          false
-        ]
-      },
-      "Need_salad": {
-        "type": "input",
-        "value": 100
-      },
-      "Done_salad": {
-        "type": "checkbox",
-        "value": false,
-        "option": [
-          true,
-          false
-        ]
-      },
-      "Need_carrot_omelette": {
-        "type": "input",
-        "value": 100
-      },
-      "Done_carrot_omelette": {
-        "type": "checkbox",
-        "value": false,
-        "option": [
-          true,
-          false
-        ]
-      },
-      "Need_latte": {
-        "type": "input",
-        "value": 100
-      },
-      "Done_latte": {
-        "type": "checkbox",
-        "value": false,
-        "option": [
-          true,
-          false
-        ]
-      },
-      "Need_stir_fried_chicken": {
-        "type": "input",
-        "value": 100
-      },
-      "Done_stir_fried_chicken": {
-        "type": "checkbox",
-        "value": false,
-        "option": [
-          true,
-          false
-        ]
-      },
-      "Need_steak_bowl": {
-        "type": "input",
-        "value": 50
-      },
-      "Done_steak_bowl": {
-        "type": "checkbox",
-        "value": false,
-        "option": [
-          true,
-          false
-        ]
-      },
       "Need_tea": {
         "type": "input",
         "value": 500
-      },
-      "Done_tea": {
-        "type": "checkbox",
-        "value": false,
-        "option": [
-          true,
-          false
-        ]
       },
       "Need_citrus": {
         "type": "input",
         "value": 500
       },
-      "Done_citrus": {
-        "type": "checkbox",
-        "value": false,
-        "option": [
-          true,
-          false
-        ]
-      },
       "Need_mango": {
         "type": "input",
         "value": 200
-      },
-      "Done_mango": {
-        "type": "checkbox",
-        "value": false,
-        "option": [
-          true,
-          false
-        ]
       },
       "Need_avocado": {
         "type": "input",
         "value": 100
       },
-      "Done_avocado": {
-        "type": "checkbox",
-        "value": false,
-        "option": [
-          true,
-          false
-        ]
-      },
       "Need_freshwater_fish_meat": {
         "type": "input",
         "value": 100
       },
-      "Done_freshwater_fish_meat": {
-        "type": "checkbox",
-        "value": false,
-        "option": [
-          true,
-          false
-        ]
-      },
       "Need_seawater_fish_meat": {
         "type": "input",
         "value": 100
-      },
-      "Done_seawater_fish_meat": {
-        "type": "checkbox",
-        "value": false,
-        "option": [
-          true,
-          false
-        ]
       },
       "Need_chicken_potato": {
         "type": "input",
@@ -17127,25 +16983,9 @@
         "type": "input",
         "value": 25
       },
-      "Done_silver": {
-        "type": "checkbox",
-        "value": false,
-        "option": [
-          true,
-          false
-        ]
-      },
       "Need_elegant_wood": {
         "type": "input",
         "value": 25
-      },
-      "Done_elegant_wood": {
-        "type": "checkbox",
-        "value": false,
-        "option": [
-          true,
-          false
-        ]
       },
       "Need_sachet": {
         "type": "input",

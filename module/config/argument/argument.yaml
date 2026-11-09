@@ -2422,11 +2422,10 @@ IslandDailyOrder:
     value: "2020-01-01 00:00:00"
 
 IslandSeasonPlan:
-  # Add by MHY, 赛季任务：物品由代码里的赛季表决定（SEASON_PLAN_TASKS），这里只填
-  # 需求数量与是否已完成。当前数量由店铺每次收取/核对销售时读仓库自动更新（不进配置）。
-  # 勾选「已完成」的物品不再排产、不再发邮件，空闲产能自动转去做下一个缺口最大的。
-  # 新赛季上线时在代码赛季表里换物品，并在这里为新物品追加 Need_/Done_ 两项。
-  # 冬季（第 5 季）16 项：自然类固定多备 100 件，餐品类另加 MealBuffer 缓冲。
+  # Modify by MHY, 配置只展示当前冬季 16 项，过季清单保留在代码中供识别与兼容。
+  # 自然类仅配置 Need_，持续维持 max(日常下限, Need_ + 100)，无需勾选完成。
+  # 餐品与制造品保留 Need_/Done_，已完成后退出任务增量；餐品另加 MealBuffer。
+  # 新赛季更新清单时同步移除过季配置，自然类不添加 Done_。
   NotifyEnable:
     type: checkbox
     value: true
@@ -2439,99 +2438,19 @@ IslandSeasonPlan:
     type: input
     value: 20
     validate: [ 0, 999 ]
-  Need_apple_juice:
-    type: input
-    value: 250
-  Done_apple_juice:
-    type: checkbox
-    value: false
-    option: [ true, false ]
-  Need_iced_coffee:
-    type: input
-    value: 250
-  Done_iced_coffee:
-    type: checkbox
-    value: false
-    option: [ true, false ]
-  Need_roasted_skewer:
-    type: input
-    value: 250
-  Done_roasted_skewer:
-    type: checkbox
-    value: false
-    option: [ true, false ]
-  Need_salad:
-    type: input
-    value: 100
-  Done_salad:
-    type: checkbox
-    value: false
-    option: [ true, false ]
-  Need_carrot_omelette:
-    type: input
-    value: 100
-  Done_carrot_omelette:
-    type: checkbox
-    value: false
-    option: [ true, false ]
-  Need_latte:
-    type: input
-    value: 100
-  Done_latte:
-    type: checkbox
-    value: false
-    option: [ true, false ]
-  Need_stir_fried_chicken:
-    type: input
-    value: 100
-  Done_stir_fried_chicken:
-    type: checkbox
-    value: false
-    option: [ true, false ]
-  Need_steak_bowl:
-    type: input
-    value: 50
-  Done_steak_bowl:
-    type: checkbox
-    value: false
-    option: [ true, false ]
-  # Add by MHY, 冬季（第 5 季）16 项；Need_ 是提交需求数量，自然类排产时会再加 100。
+  # Modify by MHY, 自然类 Need_ 为库存基准，0 关闭该项叠加，日常下限仍生效。
   Need_tea:
     value: 500
-  Done_tea:
-    type: checkbox
-    value: false
-    option: [ true, false ]
   Need_citrus:
     value: 500
-  Done_citrus:
-    type: checkbox
-    value: false
-    option: [ true, false ]
   Need_mango:
     value: 200
-  Done_mango:
-    type: checkbox
-    value: false
-    option: [ true, false ]
   Need_avocado:
     value: 100
-  Done_avocado:
-    type: checkbox
-    value: false
-    option: [ true, false ]
   Need_freshwater_fish_meat:
     value: 100
-  Done_freshwater_fish_meat:
-    type: checkbox
-    value: false
-    option: [ true, false ]
   Need_seawater_fish_meat:
     value: 100
-  Done_seawater_fish_meat:
-    type: checkbox
-    value: false
-    option: [ true, false ]
   Need_chicken_potato:
     value: 100
   Done_chicken_potato:
@@ -2552,16 +2471,8 @@ IslandSeasonPlan:
     option: [ true, false ]
   Need_silver:
     value: 25
-  Done_silver:
-    type: checkbox
-    value: false
-    option: [ true, false ]
   Need_elegant_wood:
     value: 25
-  Done_elegant_wood:
-    type: checkbox
-    value: false
-    option: [ true, false ]
   Need_sachet:
     value: 10
   Done_sachet:
