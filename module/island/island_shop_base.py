@@ -605,6 +605,12 @@ class IslandShopBase(Island, WarehouseOCR):
     def _compute_base_demands(self, check_materials=False, force_skip=None):
         """计算基础需求：严格按槽位顺序处理，找到第一个有缺口的槽位即停止。
 
+        只处理首个缺口是保留线算法的一部分，不能改成一次性汇总所有槽位：
+        后面的槽位目标一旦提前进入保留线，会把它自己的原料锁死，例如
+        "花茶套餐在前、苹果汁 270 在后" 时，苹果汁目标远高于库存，花茶
+        需要的苹果汁会被当成保底库存而永远做不出来。重复槽位也依赖逐轮
+        推进保留 "先 2 后 1" 的原语义，不能合并成一次总需求。
+
         保留线：取本轮已迭代槽位中各产品的最高目标（无缺口时覆盖全部
         槽位，全部达标时保留线取最大目标），扣除后 current_totals 为
         超额库存，可作为原料被后续槽位消费。
@@ -658,8 +664,12 @@ class IslandShopBase(Island, WarehouseOCR):
             else:
                 self.current_totals[name] = current - max_target
 
-    def get_priority_production(self):
-        """返回基础需求之前安排的产品及数量，由店铺声明季节规则。
+    def get_priority_production(self, produced=None):
+        """返回营业需求排产结束后、剩余空岗上的季节优先批次。
+
+        Args:
+            produced (dict[str, int] | None): 本轮基础需求已实际排产的数量。
+                子类用它把季节批次控制在"一批"以内，避免和营业需求重复下单。
 
         Returns:
             dict[str, int]: 优先排产商品名称到数量的映射。
@@ -811,17 +821,6 @@ class IslandShopBase(Island, WarehouseOCR):
             _force_skip_run = set()  # 排产多次无法生产的缺口（非原料原因），本轮强制跳过
             _loop_count = 0
 
-            # 季节优先排产也记入本轮在制品；基础需求必须按扣料后的库存重算。
-            priority_products = self.get_priority_production()
-            if priority_products:
-                self.to_post_products = priority_products
-                logger.info(f"[岛屿] 季节优先生产计划: {self._inv_cn(priority_products)}")
-                self._schedule_and_track(_produced_pass)
-                self.current_totals = self._rebuild_current_totals(_produced_pass)
-                self._compute_base_demands()
-                if self.to_post_products:
-                    self.to_post_products = self.process_meal_requirements(self.to_post_products)
-
             self._schedule_and_track(_produced_pass)
 
             while self.get_idle_posts():
@@ -866,6 +865,23 @@ class IslandShopBase(Island, WarehouseOCR):
                         _force_skip_run.update(stuck_now)
                         self.to_post_products = {}
                     continue
+
+            # Add by MHY, 营业直接需求及其套餐原料先补齐，剩余空岗才做季节优先批次。
+            # 原来季节优先排在基础排产之前，菊花茶/季节菜品会先占满岗位，
+            # 基础备货每轮都报"没有空岗"，营业槽位整天补不上。
+            if not self.to_post_products and self.get_idle_posts():
+                priority_products = self.get_priority_production(_produced_pass)
+                if priority_products:
+                    self.to_post_products = priority_products
+                    logger.info(f"[岛屿] 季节优先生产计划: {self._inv_cn(priority_products)}")
+                    self._schedule_and_track(_produced_pass)
+                    self.current_totals = self._rebuild_current_totals(_produced_pass)
+                    # 季节批次可能消耗刚达到目标的营业原料，有空岗时补回目标。
+                    self._compute_base_demands(force_skip=_force_skip_run)
+                    if self.to_post_products:
+                        self.to_post_products = self.process_meal_requirements(
+                            self.to_post_products)
+                        self._schedule_and_track(_produced_pass)
 
             self._run_winter_task_meals(_produced_pass)
 

@@ -13,7 +13,12 @@ from module.island.island_juu_coffee import IslandJuuCoffee
 from module.island.island_juu_eatery import IslandJuuEatery
 from module.island.island_restaurant import IslandRestaurant
 from module.island.island_season import SeasonConfig
-from module.island.island_teahouse import IslandTeahouse
+from module.island.island_teahouse import (
+    FIXED_SELECT_CHRYSANTHEMUM_TEA,
+    FIXED_SELECT_SPRING_FLOWER_TEA,
+    SELECT_CHRYSANTHEMUM_TEA,
+    IslandTeahouse,
+)
 
 
 NOW = datetime(2026, 9, 19, 12)
@@ -187,7 +192,7 @@ class IslandShopProductionTests(unittest.TestCase):
         ui.run()
         self.assertEqual(ui.orders, [('tofu_meat', 3, None), ('tofu', 6, None)])
 
-    def test_seasonal_production_precedes_base_demands(self):
+    def test_business_demand_precedes_seasonal_priority(self):
         cases = [
             (IslandRestaurant, 'tofu', 'double_bamboo_shoots', 'spring'),
             (IslandRestaurant, 'tofu', 'matsutake_chicken_soup', 'autumn'),
@@ -198,13 +203,15 @@ class IslandShopProductionTests(unittest.TestCase):
             with self.subTest(shop=cls.__name__, season=season):
                 ui = ShopUI(cls, [(basic, 3)], seasonal=True, season=season)
                 ui.run()
-                self.assertEqual(ui.orders, [(priority, 7, None), (basic, 3, None)])
+                # 营业槽位先占岗，季节优先只用剩下的空岗。
+                self.assertEqual(ui.orders, [(basic, 3, None), (priority, 7, None)])
 
     def test_restaurant_seasonal_extra_batch_preserves_quantity_rule(self):
         ui = ShopUI(IslandRestaurant, [('double_bamboo_shoots', 3)], seasonal=True)
         ui.run()
-        self.assertEqual(ui.orders, [('double_bamboo_shoots', 7, None),
-                                     ('double_bamboo_shoots', 3, None)])
+        # 营业目标 3 先补齐，剩余空岗再补季节额外一批 7；总量与旧顺序一致。
+        self.assertEqual(ui.orders, [('double_bamboo_shoots', 3, None),
+                                     ('double_bamboo_shoots', 7, None)])
 
     def test_teahouse_seasonal_batch_counts_toward_base_target(self):
         ui = ShopUI(IslandTeahouse, [('spring_flower_tea', 7), ('apple_juice', 3)],
@@ -220,6 +227,61 @@ class IslandShopProductionTests(unittest.TestCase):
         self.assertEqual(ui.orders, [('spring_flower_tea', 3, None)])
         self.assertEqual(ui.shop.to_post_products, {'spring_flower_tea': 3})
         self.assertNotIn('spring_flower_tea', ui.shop.warehouse_counts)
+
+    def collect(self, ui):
+        """按游戏结算下一轮库存：仓库扣料后的账 + 本轮已收获产量。"""
+        stock = dict(ui.shop.warehouse_counts)
+        for product, number, _ in ui.orders:
+            stock[product] = stock.get(product, 0) + number
+        ui.stock = stock
+        ui.orders.clear()
+
+    def test_autumn_teahouse_business_slots_do_not_starve_behind_seasonal_priority(self):
+        """真实日志回归：营业槽位与套餐原料先补齐，季节优先不再抢空岗。"""
+        ui = ShopUI(
+            IslandTeahouse,
+            [('floral_fruity', 6), ('lavender_tea', 6), ('fruit_paradise', 6),
+             ('chrysanthemum_tea', 6), ('apple_juice', 270)],
+            {'floral_fruity': 0, 'lavender_tea': 1, 'apple_juice': 0,
+             'banana_mango': 530, 'strawberry_honey': 0, 'fruit_paradise': 0,
+             'sunny_honey': 0, 'fresh_honey': 108},
+            seasonal=True, season='autumn',
+        )
+
+        ui.run()
+        # 花茶原料苹果汁为 0：先补花茶原料，而不是菊花茶额外批次。
+        self.assertEqual(ui.orders, [('lavender_tea', 5, None), ('apple_juice', 6, None)])
+        self.assertNotIn('chrysanthemum_tea', [product for product, _, _ in ui.orders])
+        self.collect(ui)
+
+        # 花茶开产并消耗两种原料；同一轮用剩余空岗补回薰衣草茶目标。
+        ui.run()
+        self.assertEqual(ui.orders, [('floral_fruity', 6, None), ('lavender_tea', 6, None)])
+        self.collect(ui)
+
+        # 前两槽满足后处理第 3 槽：先补草莓蜜沁原料，再用剩余空岗做第 4 槽营业目标。
+        ui.run()
+        self.assertEqual(ui.orders, [('strawberry_honey', 6, None),
+                                     ('chrysanthemum_tea', 6, None)])
+        self.collect(ui)
+
+        # 第 3 槽成品与第 5 槽苹果汁继续按顺序开产；没有季节额外批次抢岗。
+        ui.run()
+        self.assertEqual(ui.orders, [('fruit_paradise', 6, None), ('apple_juice', 7, None)])
+
+    def test_duplicate_slots_keep_order_with_seasonal_priority(self):
+        ui = ShopUI(IslandTeahouse, [('apple_juice', 2), ('apple_juice', 3)],
+                    seasonal=True, season='autumn')
+        ui.run()
+        # 同名槽位仍按 2、1 逐轮推进，不被合并；两个岗位都归营业需求，季节批次不插队。
+        self.assertEqual(ui.orders, [('apple_juice', 2, None), ('apple_juice', 1, None)])
+
+    def test_restaurant_seasonal_priority_waits_for_large_business_gap(self):
+        ui = ShopUI(IslandRestaurant, [('double_bamboo_shoots', 10)], seasonal=True)
+        ui.run()
+        # 营业目标 10 需要两个岗位各一批；没有剩余空岗时不再追加季节额外批次。
+        self.assertEqual(ui.orders, [('double_bamboo_shoots', 7, None),
+                                     ('double_bamboo_shoots', 3, None)])
 
     def test_seasonal_special_food_does_not_fill_remaining_posts(self):
         for cls in (IslandRestaurant, IslandTeahouse):
@@ -314,6 +376,62 @@ class IslandShopProductionTests(unittest.TestCase):
         with self.assertRaises(GameBugError):
             ui.run()
         ui.shop.config.task_delay.assert_called_once()
+
+
+class TeahouseSeasonalSelectionTests(unittest.TestCase):
+    """固定坐标季节饮品只在配置季节生效；错误季节的手填项走模板搜索。"""
+
+    def test_fixed_coordinate_drink_is_only_armed_in_its_season(self):
+        cases = (
+            ('spring', 'spring_flower_tea', FIXED_SELECT_SPRING_FLOWER_TEA),
+            ('summer', 'watermelon_juice', FIXED_SELECT_SPRING_FLOWER_TEA),
+            ('autumn', 'chrysanthemum_tea', FIXED_SELECT_CHRYSANTHEMUM_TEA),
+            ('winter', None, None),
+        )
+        for season, expected, fixed in cases:
+            with self.subTest(season=season):
+                drink = ShopUI(IslandTeahouse, seasonal=True, season=season).shop.seasonal_high_priority_drink
+                self.assertEqual(drink['name'] if drink else None, expected)
+                if drink:
+                    self.assertIs(drink['selection'], fixed)
+
+    def make_shop(self, products, seasonal, season):
+        """按真实配置键构造茶馆，让 setup_config 读到 Meal 槽位。"""
+        config = SimpleNamespace(
+            IslandTeahouse_ChefFilter='WorkerJuu',
+            IslandTeahouse_Seasonal=seasonal,
+            cross_get=Mock(return_value=season),
+            task_delay=Mock(),
+        )
+        for index, (name, number) in enumerate(products, 1):
+            setattr(config, f'IslandTeahouse_Meal{index}', name)
+            setattr(config, f'IslandTeahouse_MealNumber{index}', number)
+
+        def init_island(shop, config, device=None, task=None):
+            shop.config = config
+            shop.device = device
+            shop.unavailable_characters = set()
+
+        with patch.object(Island, '__init__', init_island), patch(
+                'module.island.island_shop_base.get_global_season_config',
+                side_effect=SeasonConfig,
+        ):
+            return IslandTeahouse(config)
+
+    def test_off_season_configured_chrysanthemum_uses_template_search(self):
+        for seasonal in (False, True):
+            with self.subTest(seasonal=seasonal):
+                shop = self.make_shop([('chrysanthemum_tea', 6)], seasonal, 'spring')
+                if seasonal:
+                    self.assertEqual(shop.seasonal_high_priority_drink['name'],
+                                     'spring_flower_tea')
+                else:
+                    self.assertIsNone(shop.seasonal_high_priority_drink)
+                # 春/冬错误季节手填菊花茶时走常规模板搜索，而不是秋季固定第二格。
+                self.assertIs(shop.name_to_config['chrysanthemum_tea']['selection'],
+                              SELECT_CHRYSANTHEMUM_TEA)
+                self.assertIsNot(shop.name_to_config['chrysanthemum_tea']['selection'],
+                                 FIXED_SELECT_CHRYSANTHEMUM_TEA)
 
 
 if __name__ == '__main__':
