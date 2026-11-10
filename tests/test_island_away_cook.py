@@ -13,6 +13,20 @@ from module.island.island_away_cook import (
 )
 from module.island.island_season_plan_data import WINTER_ENABLED_KEY
 
+# Add by MHY, 2026-11-10：选品测试直接注入 read_slots 的产物，隔离赛季表变化；
+# season 只影响无 slots 时的兜底，不参与这里的选择计算。
+COFFEE_SLOTS = [
+    {'item': 'iced_coffee', 'need': 250, 'done': False},
+    {'item': 'latte', 'need': 100, 'done': False},
+]
+GRILL_SLOTS = [
+    {'item': 'roasted_skewer', 'need': 250, 'done': False},
+    {'item': 'carrot_omelette', 'need': 100, 'done': False},
+    {'item': 'stir_fried_chicken', 'need': 100, 'done': False},
+    {'item': 'steak_bowl', 'need': 50, 'done': False},
+]
+RESTAURANT_SLOTS = [{'item': 'salad', 'need': 100, 'done': False}]
+
 
 def fake_config(notify=True, winter=True, **values):
     """只有 cross_get 的配置替身：提醒总开关 + 冬季任务开关，其余键由 values 补。"""
@@ -229,14 +243,26 @@ class TestWinterMealNotify(unittest.TestCase):
 class TestSeasonItemsForShop(unittest.TestCase):
     def test_coffee_items(self):
         """咖啡店要交冰咖啡和拿铁"""
-        items = {name: need for name, need, _ in season_items_for_shop('juu_coffee', 'autumn')}
+        items = {name: need for name, need, _ in
+                 season_items_for_shop('juu_coffee', 'winter', slots=COFFEE_SLOTS)}
         self.assertEqual(items, {'iced_coffee': 250, 'latte': 100})
 
     def test_grill_items(self):
         """烤肉店要交 4 样"""
-        items = {name: need for name, need, _ in season_items_for_shop('grill', 'autumn')}
+        items = {name: need for name, need, _ in
+                 season_items_for_shop('grill', 'winter', slots=GRILL_SLOTS)}
         self.assertEqual(items, {'roasted_skewer': 250, 'carrot_omelette': 100,
                                   'stir_fried_chicken': 100, 'steak_bowl': 50})
+
+    def test_retired_season_without_slots_returns_empty(self):
+        """秋季已过季：没传 slots 时不能回退到过季表，否则配置缺键会重新选中旧物品。"""
+        for shop in AWAY_COOK_KEYS:
+            self.assertEqual(season_items_for_shop(shop, 'autumn'), [], shop)
+
+    def test_winter_fallback_only_uses_active_table(self):
+        """进行中赛季仍可按赛季表兜底（离线/旧调用），过季表不参与。"""
+        items = {name: need for name, need, _ in season_items_for_shop('grill', 'winter')}
+        self.assertEqual(items, {'chicken_potato': 100})
 
     def test_unknown_season(self):
         self.assertEqual(season_items_for_shop('grill', 'nonexistent'), [])
@@ -246,73 +272,129 @@ class TestPickAwayCook(unittest.TestCase):
     def test_pick_biggest_gap(self):
         """冰咖啡还差 50、拿铁还差 100 -> 先产拿铁"""
         counts = {'iced_coffee': 200, 'latte': 0}
-        self.assertEqual(pick_away_cook('juu_coffee', 'autumn', counts), 'latte')
+        self.assertEqual(pick_away_cook('juu_coffee', 'winter', counts,
+                                       slots=COFFEE_SLOTS), 'latte')
 
     def test_pick_switches_when_done(self):
         """拿铁攒够后切回冰咖啡"""
         counts = {'iced_coffee': 0, 'latte': 100}
-        self.assertEqual(pick_away_cook('juu_coffee', 'autumn', counts), 'iced_coffee')
+        self.assertEqual(pick_away_cook('juu_coffee', 'winter', counts,
+                                       slots=COFFEE_SLOTS), 'iced_coffee')
 
     def test_all_done_returns_none(self):
         counts = {'iced_coffee': 250, 'latte': 100}
-        self.assertEqual(pick_away_cook('juu_coffee', 'autumn', counts), 'None')
+        self.assertEqual(pick_away_cook('juu_coffee', 'winter', counts,
+                                       slots=COFFEE_SLOTS), 'None')
 
     def test_missing_stock_counts_as_zero(self):
         """读不到库存的物品按 0 算（保守多产，不会误判成已攒够）"""
-        self.assertEqual(pick_away_cook('grill', 'autumn', {}), 'roasted_skewer')
+        self.assertEqual(pick_away_cook('grill', 'winter', {},
+                                       slots=GRILL_SLOTS), 'roasted_skewer')
 
     def test_none_and_negative_counts_are_tolerated(self):
         """-1/None 是未知读数的写法：轮换不能让它们参与比较而报错。"""
         counts = {'roasted_skewer': None, 'carrot_omelette': -1,
                   'stir_fried_chicken': 0, 'steak_bowl': 0}
-        self.assertEqual(pick_away_cook('grill', 'autumn', counts), 'roasted_skewer')
+        self.assertEqual(pick_away_cook('grill', 'winter', counts,
+                                       slots=GRILL_SLOTS), 'roasted_skewer')
 
     def test_producible_filter(self):
         """不在可生产集合里的物品跳过"""
         counts = {'roasted_skewer': 0, 'carrot_omelette': 0,
                   'stir_fried_chicken': 0, 'steak_bowl': 0}
-        picked = pick_away_cook('grill', 'autumn', counts,
-                               producible={'steak_bowl'})
+        picked = pick_away_cook('grill', 'winter', counts,
+                               producible={'steak_bowl'}, slots=GRILL_SLOTS)
         self.assertEqual(picked, 'steak_bowl')
 
     def test_exclude_filter(self):
-        picked = pick_away_cook('juu_coffee', 'autumn', {},
-                               exclude={'iced_coffee'})
+        picked = pick_away_cook('juu_coffee', 'winter', {},
+                               exclude={'iced_coffee'}, slots=COFFEE_SLOTS)
         self.assertEqual(picked, 'latte')
 
+    def test_retired_season_without_slots_picks_none(self):
+        """过季赛季没有活动槽位时不能再选中秋季物品。"""
+        self.assertEqual(pick_away_cook('juu_coffee', 'autumn', {}), 'None')
+
     def test_shop_without_season_items(self):
-        self.assertEqual(pick_away_cook('juu_eatery', 'autumn', {}), 'None')
+        self.assertEqual(pick_away_cook('juu_coffee', 'winter', {}), 'None')
 
 
 class TestResolveAwayCook(unittest.TestCase):
     def test_records_user_default_when_overriding(self):
-        """有赛季缺口时覆盖，并记住用户原值（餐馆的豆腐）"""
-        target, defaults = resolve_away_cook('restaurant', 'autumn', {}, 'tofu', {})
+        """有赛季缺口时覆盖，并记住用户原值与自动写入值（餐馆的豆腐）"""
+        target, defaults = resolve_away_cook('restaurant', 'winter', {}, 'tofu', {},
+                                             slots=RESTAURANT_SLOTS)
         self.assertEqual(target, 'salad')
-        self.assertEqual(defaults, {'restaurant': 'tofu'})
+        self.assertEqual(defaults, {'restaurant': {'value': 'tofu', 'auto': 'salad'}})
 
     def test_restores_user_default_when_done(self):
         """赛季物品攒够后还原用户原值，岗位不再空转"""
         counts = {'salad': 100}
-        target, defaults = resolve_away_cook('restaurant', 'autumn', counts, 'salad',
-                                             {'restaurant': 'tofu'})
+        target, defaults = resolve_away_cook(
+            'restaurant', 'winter', counts, 'salad',
+            {'restaurant': {'value': 'tofu', 'auto': 'salad'}},
+            slots=RESTAURANT_SLOTS)
         self.assertEqual(target, 'tofu')
         self.assertEqual(defaults, {})
 
     def test_keeps_current_when_no_gap_and_no_backup(self):
         """没有缺口也没有备份时保持原值（不动用户配置）"""
-        target, defaults = resolve_away_cook('teahouse', 'autumn', {'apple_juice': 250},
-                                             'None', {})
+        target, defaults = resolve_away_cook('teahouse', 'autumn', {}, 'None', {}, slots=[])
         self.assertEqual(target, 'None')
         self.assertEqual(defaults, {})
 
     def test_switch_between_season_items(self):
         """同一店多个赛季物品之间切换时不覆盖备份"""
         counts = {'iced_coffee': 250, 'latte': 0}
-        target, defaults = resolve_away_cook('juu_coffee', 'autumn', counts, 'iced_coffee',
-                                             {'juu_coffee': 'cheese'})
+        target, defaults = resolve_away_cook(
+            'juu_coffee', 'winter', counts, 'iced_coffee',
+            {'juu_coffee': {'value': 'cheese', 'auto': 'iced_coffee'}},
+            slots=COFFEE_SLOTS)
         self.assertEqual(target, 'latte')
-        self.assertEqual(defaults, {'juu_coffee': 'cheese'})
+        self.assertEqual(defaults, {'juu_coffee': {'value': 'cheese', 'auto': 'latte'}})
+
+    def test_retired_season_restores_auto_written_value(self):
+        """过季且当前值仍是自动写入值：还原用户原值，回收历史自动 AwayCook。"""
+        target, defaults = resolve_away_cook(
+            'juu_coffee', 'autumn', {}, 'latte',
+            {'juu_coffee': {'value': 'cheese', 'auto': 'latte'}}, slots=[])
+        self.assertEqual(target, 'cheese')
+        self.assertEqual(defaults, {})
+
+    def test_retired_season_keeps_manual_edit(self):
+        """当前值已不是自动写入值：用户手填优先，不能盲目覆盖。"""
+        target, defaults = resolve_away_cook(
+            'juu_coffee', 'autumn', {}, 'mocha',
+            {'juu_coffee': {'value': 'cheese', 'auto': 'latte'}}, slots=[])
+        self.assertEqual(target, 'mocha')
+        self.assertEqual(defaults, {})
+
+    def test_legacy_backup_restores_only_retired_item(self):
+        """旧备份没有 auto 标记：仅当现值仍是过季任务物品时才认作历史自动残留。"""
+        target, defaults = resolve_away_cook(
+            'juu_coffee', 'autumn', {}, 'latte', {'juu_coffee': 'cheese'}, slots=[])
+        self.assertEqual(target, 'cheese')
+        self.assertEqual(defaults, {})
+        target, defaults = resolve_away_cook(
+            'juu_coffee', 'autumn', {}, 'mocha', {'juu_coffee': 'cheese'}, slots=[])
+        self.assertEqual(target, 'mocha')
+        self.assertEqual(defaults, {})
+
+    def test_retired_without_backup_keeps_current(self):
+        """没有用户原值记录的历史残留：保留现值，只告警，不替用户清空。"""
+        target, defaults = resolve_away_cook('juu_coffee', 'autumn', {}, 'apple_juice',
+                                             {}, slots=[])
+        self.assertEqual(target, 'apple_juice')
+        self.assertEqual(defaults, {})
+
+    def test_manual_change_during_override_becomes_new_original(self):
+        """自动接管期间用户手改：下一次覆盖时以手填值作为新的原值。"""
+        target, defaults = resolve_away_cook(
+            'juu_coffee', 'winter', {'iced_coffee': 0, 'latte': 0}, 'mocha',
+            {'juu_coffee': {'value': 'cheese', 'auto': 'iced_coffee'}},
+            slots=COFFEE_SLOTS)
+        self.assertEqual(target, 'iced_coffee')
+        self.assertEqual(defaults, {'juu_coffee': {'value': 'mocha', 'auto': 'iced_coffee'}})
 
 
 class TestRotationKey(unittest.TestCase):

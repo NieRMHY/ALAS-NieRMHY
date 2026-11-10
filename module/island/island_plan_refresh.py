@@ -21,6 +21,7 @@ from module.island.island_planner import (
     refresh_verified_from_logs,
     shop_post_number,
 )
+from module.island.island_season_plan_data import season_is_active, season_is_retired
 from module.island.island_state import state_file
 from module.logger import logger
 
@@ -60,7 +61,8 @@ def season_stockpile(progress=None):
 
     Modify by MHY, 进度改为仓库读数（见 island_season_progress），不再依赖赛季页
     OCR 与「已领取/done」标记：提交任务后仓库数量掉下去，缺口自然重新出现；
-    要停止某项生产，把配置里该物品的需求数量改成 0 即可。
+    要停止某项生产，把配置里该物品的需求数量改成 0 即可。progress 只应来自进行中
+    赛季（current_progress 已过滤过季任务），过季物品不会在这里生成囤货目标。
 
     目标数量是「任务需求 + SEASON_BUFFER」：按需生产，不再让物品无限堆积。
 
@@ -173,6 +175,9 @@ def current_progress(config, season):
     Modify by MHY, 餐品清单来自代码赛季表，需求数量与已完成来自配置，当前数量来自最近一次
     仓库读数。已勾选「已完成」或需求为 0 的餐品不在其中，不参与排产、方案刷新与提醒。
 
+    Add by MHY, 2026-11-10：只有进行中的赛季才有任务清单。过季赛季直接返回空进度，
+    不读配置里的残留需求，也不产生缺口。
+
     Args:
         config: AzurLaneConfig 实例
         season: 赛季
@@ -185,6 +190,8 @@ def current_progress(config, season):
 
     if not season:
         return None
+    if not season_is_active(season):
+        return {}
     slots = read_slots(config, season, set(ECONOMY_PRODUCTS))
     return build_progress(slots, load_have())
 
@@ -239,6 +246,9 @@ def season_done(config, season):
     from module.island.island_season_progress import read_slots
 
     if not season:
+        return set()
+    # Add by MHY, 2026-11-10：过季任务已不参与排产，不再把旧 Done_ 当成变化依据
+    if not season_is_active(season):
         return set()
     slots = read_slots(config, season, set(ECONOMY_PRODUCTS))
     return {s['item'] for s in slots if s['done']}
@@ -313,6 +323,10 @@ def request_refresh_on_gap_change(config, season):
     旧版快照里 done 恒为空（save_gap 第二个参数一直传 set()）；若你已经勾过「已完成」，
     升级后第一次比对必然不同、会多触发一次刷新——可接受，正好把过期囤积清出生产清单。
 
+    Add by MHY, 2026-11-10：过季或未启用的赛季没有可排产的任务，直接返回，不写快照、
+    不设置刷新开关。否则旧快照里残留的秋季缺口会在换季/降级后触发一次空任务刷新，
+    把用户手填的营业方案覆盖成空 stockpile 的默认方案。
+
     Args:
         config: AzurLaneConfig 实例
         season: 赛季
@@ -320,6 +334,8 @@ def request_refresh_on_gap_change(config, season):
     Returns:
         bool: 是否请求了刷新
     """
+    if not season_is_active(season):
+        return False
     gap = flatten_gap(season_stockpile(current_progress(config, season)))
     done = season_done(config, season)
     old_gap, old_done = load_gap()
@@ -354,6 +370,11 @@ def refresh_plan_if_requested(config):
     logger.hr('岛屿方案刷新', level=2)
     season = config.cross_get(SEASON_KEY, default=None)
     try:
+        # Add by MHY, 2026-11-10：过季赛季没有任务缺口，一次性请求也保留现有营业方案。
+        # 之前的秋季任务会在这里按默认需求生成 stockpile，写回后又被常驻餐品轮换选中。
+        if season_is_retired(season):
+            logger.info(f'[岛屿-方案刷新] 赛季 {season} 的任务已过季，保留现有生产/上架方案')
+            return False
         # Modify by MHY, 冬季任务由运行时独立叠加，刷新不重选营业货架或改写原槽位。
         if season == 'winter':
             logger.info('[岛屿-方案刷新] 冬季任务在后厨按营业储备与剩余工时动态排产，保留现有配置')

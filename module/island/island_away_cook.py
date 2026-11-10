@@ -13,10 +13,18 @@
 冬季另有两处口径（Add by MHY）：轮换在冬季保持用户设置（不覆盖 AwayCook）；达标提醒的
 门槛提高到「任务需求 + 营业储备 + MealBuffer」，营业储备与缓冲来自 island_winter_meals，
 见 notify_ready_from_progress。
+
+Add by MHY, 2026-11-10：过季任务不再产生缺口；库存校验会按备份里的来源标记回收历史
+自动写入的 AwayCook，用户手改过或没有备份的残留只告警、不擅自清空。
 """
 from module.island.island_economy import ECONOMY_PRODUCTS
-from module.island.island_season_plan_data import SEASON_PLAN_TASKS
+from module.island.island_season_plan_data import (
+    SEASON_PLAN_TASKS,
+    is_retired_season_item,
+    season_is_retired,
+)
 from module.island.island_state import state_file
+from module.logger import logger
 
 # 店铺类型 -> 常驻餐品配置键
 # 路径格式 <Task>.<Group>.<Arg>，与 config/template.json 一致
@@ -35,7 +43,8 @@ def season_items_for_shop(shop, season, slots=None):
 
     Modify by MHY, 需求数量与已完成来自配置（IslandSeasonPlan.Need_<物品>/Done_<物品>）：
     已标记完成或需求为 0 的餐品不在其中，所以不会再被轮换成常驻餐品。没传 slots 时退回
-    代码里的赛季表（离线测试用）。
+    进行中的赛季表（离线测试用）。过季任务表只用于页面识别，不能当轮换兜底，否则配置
+    缺键时会重新选中已经退场的秋季物品。
 
     Args:
         shop: 店铺类型标识
@@ -45,6 +54,10 @@ def season_items_for_shop(shop, season, slots=None):
     Returns:
         list[(物品, 需要数量, 单件工时)]
     """
+    if season_is_retired(season):
+        # Add by MHY, 2026-11-10：过季赛季即使调用方传了旧 slots 也不再选品，
+        # 避免历史自动值被继续写成常驻餐品。
+        return []
     if slots is not None:
         pairs = [(s['item'], s['need']) for s in slots if not s['done'] and s['need'] > 0]
     else:
@@ -121,10 +134,16 @@ def rotation_key(shop):
 
 
 DEFAULT_FILE = state_file('island_away_cook_default.json')
+# Add by MHY, 2026-11-10：没有备份可还原的过季残留每个 (店铺, 现值) 只提示一次。
+_STALE_LOGGED = set()
 
 
 def load_defaults(path=DEFAULT_FILE):
-    """读取用户原本的常驻餐品设置（轮换前的值）。"""
+    """读取用户原本的常驻餐品设置（轮换前的值）。
+
+    Modify by MHY, 2026-11-10：新记录是 {'value': 用户原值, 'auto': 上次自动写入值}；
+    旧状态文件里的纯字符串原样返回，由 resolve_away_cook 按无 auto 标记兼容处理。
+    """
     import json
     import os
     if not os.path.exists(path):
@@ -338,36 +357,93 @@ def notify_ready_from_progress(config, season, progress):
     return [item for item, _, _ in ready]
 
 
+def _default_entry(value):
+    """
+    常驻餐品备份项归一化：{'value': 用户原值, 'auto': 上次自动写入值}。
+
+    Add by MHY, 2026-11-10：auto 让回收历史自动值时能区分「当前仍是自己写的」与
+    「用户后来手改过」。旧状态文件里的纯字符串按无标记处理，只有当前值仍是过季
+    任务物品时才认作历史自动残留。
+    """
+    if isinstance(value, dict):
+        return {'value': value.get('value', 'None'), 'auto': value.get('auto')}
+    return {'value': value, 'auto': None}
+
+
+def _warn_stale_once(shop, current):
+    """
+    没有备份可还原的过季残留只提示一次。
+
+    Add by MHY, 2026-11-10：历史 Meal/AwayCook 没有来源标记，不能凭猜测替用户清掉
+    手填值；这里保留现值并在日志里点名，交给人工或上层定点修正。
+    """
+    key = (shop, current)
+    if key in _STALE_LOGGED:
+        return
+    _STALE_LOGGED.add(key)
+    logger.warning(f'[岛屿-常驻餐品] {shop} 当前值 {current} 属于已过季任务，'
+                   f'但没有可还原的用户原值记录；保留现值，请人工确认')
+
+
 def resolve_away_cook(shop, season, counts, current, defaults=None, producible=None,
                       exclude=None, skip=None, slots=None):
     """
     决定该店常驻餐品该写什么，并维护「用户原值」备份。
 
     规则：
-      - 有赛季缺口 -> 写缺口最大的赛季物品，同时把用户原值记进 defaults
-      - 没有缺口   -> 还原用户原值（例如餐馆的豆腐），避免赛季物品攒够后
-                      岗位又空转
+      - 有赛季缺口 -> 写缺口最大的赛季物品，同时把用户原值记进 defaults，
+        并记录本次自动写入值
+      - 没有缺口   -> 仅当当前值仍是上次自动写入的值（旧备份没有 auto 标记时，
+        要求当前值仍是过季任务物品）才还原用户原值；用户手改过就保留现值并丢弃
+        过期备份，避免把自动化残留当成用户设置。
+
+    Modify by MHY, 2026-11-10：过季任务不再产生缺口，下一次库存校验会走「没有缺口」
+    分支，按上面的条件安全回收历史自动值；没有备份的残留只告警、不改配置。
 
     Args:
         shop: 店铺类型标识
         season: 赛季
         counts: {物品: 仓库库存}
         current: 当前配置值
-        defaults: {店铺: 用户原值}
+        defaults: {店铺: 用户原值/自动值记录}
         producible: 可生产集合
         exclude: 排除集合
 
     Returns:
         tuple: (要写入的值, 更新后的 defaults)
     """
-    defaults = dict(defaults or {})
+    defaults = {shop_name: _default_entry(value)
+                for shop_name, value in (defaults or {}).items()}
     target = pick_away_cook(shop, season, counts,
                             producible=producible, exclude=exclude, skip=skip, slots=slots)
     if target != 'None':
         if shop not in defaults:
-            defaults[shop] = current
+            defaults[shop] = {'value': current, 'auto': target}
+        else:
+            entry = defaults[shop]
+            if entry['auto'] is not None and current != entry['auto']:
+                # 用户在自动接管期间手改过：以手填值作为新的原值
+                entry['value'] = current
+            entry['auto'] = target
         return target, defaults
     if shop in defaults:
-        original = defaults.pop(shop)
-        return original, defaults
+        entry = defaults.pop(shop)
+        original, auto = entry['value'], entry['auto']
+        if auto is None:
+            if is_retired_season_item(current):
+                logger.info(f'[岛屿-常驻餐品] {shop}: 还原过季任务前的用户原值 '
+                            f'{current} -> {original}')
+                return original, defaults
+            logger.info(f'[岛屿-常驻餐品] {shop}: 当前值 {current} 不是过季任务物品，'
+                        f'保留手填值并丢弃过期备份')
+            return current, defaults
+        if current == auto:
+            logger.info(f'[岛屿-常驻餐品] {shop}: 回收自动写入的 {current}，'
+                        f'还原用户原值 {original}')
+            return original, defaults
+        logger.info(f'[岛屿-常驻餐品] {shop}: 当前值 {current} 已不是自动写入的 {auto}，'
+                    f'保留手填值并丢弃过期备份')
+        return current, defaults
+    if is_retired_season_item(current):
+        _warn_stale_once(shop, current)
     return current, defaults

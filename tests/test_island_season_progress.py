@@ -15,10 +15,15 @@ sys.path.insert(0, '.')
 
 from module.island import island_season_progress as P
 from module.island.island_economy import ECONOMY_PRODUCTS
-from module.island.island_season_plan_data import SEASON_PLAN_TASKS, WINTER_ENABLED_KEY
+from module.island.island_season_plan_data import (
+    RETIRED_SEASON_PLAN_TASKS,
+    SEASON_PLAN_TASKS,
+    WINTER_ENABLED_KEY,
+)
 
 SHOP_ITEMS = set(ECONOMY_PRODUCTS)
-AUTUMN_DISHES = [i for _, i, _ in SEASON_PLAN_TASKS['autumn'] if i in SHOP_ITEMS]
+RETIRED_AUTUMN_DISHES = [i for _, i, _ in RETIRED_SEASON_PLAN_TASKS['autumn']
+                         if i in SHOP_ITEMS]
 WINTER_DISHES = [i for _, i, _ in SEASON_PLAN_TASKS['winter'] if i in SHOP_ITEMS]
 
 
@@ -42,14 +47,10 @@ def fake_config(need=None, done=(), notify=True, winter=None):
 
 
 class TestSeasonDishes(unittest.TestCase):
-    def test_autumn_has_eight_shop_dishes(self):
-        """餐品清单固定来自代码赛季表：8 个店铺餐品，材料类不在其中。"""
-        dishes = dict(P.season_dishes('autumn', SHOP_ITEMS))
-        self.assertEqual(len(dishes), 8)
-        self.assertEqual(dishes['latte'], 100)
-        self.assertEqual(dishes['steak_bowl'], 50)
-        self.assertNotIn('wheat', dishes)
-        self.assertNotIn('milk', dishes)
+    def test_retired_autumn_has_no_planning_dishes(self):
+        """过季秋季任务只留给页面读取器识别，不再产生需求与排产餐品。"""
+        self.assertEqual(P.season_dishes('autumn', SHOP_ITEMS), [])
+        self.assertEqual(len(RETIRED_AUTUMN_DISHES), 8)
 
     def test_winter_has_three_meal_dishes(self):
         """冬季 16 项里只有 3 项餐品属于店铺，自然资源/制造品不在餐品清单。"""
@@ -62,38 +63,44 @@ class TestSeasonDishes(unittest.TestCase):
         self.assertEqual(P.season_dishes('nonexistent', SHOP_ITEMS), [])
 
     def test_order_follows_season_table(self):
-        self.assertEqual([i for i, _ in P.season_dishes('autumn', SHOP_ITEMS)], AUTUMN_DISHES)
+        self.assertEqual([i for i, _ in P.season_dishes('winter', SHOP_ITEMS)], WINTER_DISHES)
 
 
 class TestReadSlots(unittest.TestCase):
     def test_defaults_when_config_empty(self):
-        slots = P.read_slots(fake_config(), 'autumn', SHOP_ITEMS)
-        self.assertEqual(len(slots), 8)
+        slots = P.read_slots(fake_config(), 'winter', SHOP_ITEMS)
+        self.assertEqual(len(slots), 3)
         by_item = {s['item']: s for s in slots}
-        self.assertEqual(by_item['apple_juice']['need'], 250)
+        self.assertEqual(by_item['chicken_potato']['need'], 100)
         self.assertFalse(any(s['done'] for s in slots))
 
     def test_user_need_and_done_are_read(self):
-        config = fake_config(need={'latte': 150}, done=['salad'])
-        by_item = {s['item']: s for s in P.read_slots(config, 'autumn', SHOP_ITEMS)}
-        self.assertEqual(by_item['latte']['need'], 150)
-        self.assertTrue(by_item['salad']['done'])
-        self.assertFalse(by_item['latte']['done'])
+        config = fake_config(need={'rice_mango': 60}, done=['chicken_potato'])
+        by_item = {s['item']: s for s in P.read_slots(config, 'winter', SHOP_ITEMS)}
+        self.assertEqual(by_item['rice_mango']['need'], 60)
+        self.assertTrue(by_item['chicken_potato']['done'])
+        self.assertFalse(by_item['rice_mango']['done'])
+
+    def test_retired_autumn_ignores_legacy_config(self):
+        """配置里残留秋季 Need_/Done_ 也不能把过季任务读回来。"""
+        config = fake_config(need={'apple_juice': 999, 'latte': 999},
+                             done=['salad', 'latte'])
+        self.assertEqual(P.read_slots(config, 'autumn', SHOP_ITEMS), [])
 
     def test_bad_need_falls_back_to_default(self):
         by_item = {s['item']: s for s in
-                   P.read_slots(fake_config(need={'latte': 'abc'}), 'autumn', SHOP_ITEMS)}
-        self.assertEqual(by_item['latte']['need'], 100)
+                   P.read_slots(fake_config(need={'rice_mango': 'abc'}), 'winter', SHOP_ITEMS)}
+        self.assertEqual(by_item['rice_mango']['need'], 50)
 
     def test_negative_need_clamped(self):
         by_item = {s['item']: s for s in
-                   P.read_slots(fake_config(need={'latte': -5}), 'autumn', SHOP_ITEMS)}
-        self.assertEqual(by_item['latte']['need'], 0)
+                   P.read_slots(fake_config(need={'rice_mango': -5}), 'winter', SHOP_ITEMS)}
+        self.assertEqual(by_item['rice_mango']['need'], 0)
 
     def test_none_need_uses_default(self):
         by_item = {s['item']: s for s in
-                   P.read_slots(fake_config(need={'latte': None}), 'autumn', SHOP_ITEMS)}
-        self.assertEqual(by_item['latte']['need'], 100)
+                   P.read_slots(fake_config(need={'rice_mango': None}), 'winter', SHOP_ITEMS)}
+        self.assertEqual(by_item['rice_mango']['need'], 50)
 
 
 class TestConfigValueParsing(unittest.TestCase):
@@ -106,32 +113,33 @@ class TestConfigValueParsing(unittest.TestCase):
 
     def test_float_string_need_is_parsed(self):
         by_item = {s['item']: s for s in
-                   P.read_slots(fake_config(need={'latte': '150.0'}), 'autumn', SHOP_ITEMS)}
-        self.assertEqual(by_item['latte']['need'], 150)
-        self.assertIsInstance(by_item['latte']['need'], int)
+                   P.read_slots(fake_config(need={'rice_mango': '150.0'}), 'winter', SHOP_ITEMS)}
+        self.assertEqual(by_item['rice_mango']['need'], 150)
+        self.assertIsInstance(by_item['rice_mango']['need'], int)
 
     def test_need_clamped_and_bad_value_falls_back(self):
-        for raw, expected in ((150.9, 150), (-5, 0), ('  ', 100), (None, 100)):
+        for raw, expected in ((150.9, 150), (-5, 0), ('  ', 50), (None, 50)):
             by_item = {s['item']: s for s in
-                       P.read_slots(fake_config(need={'latte': raw}), 'autumn', SHOP_ITEMS)}
-            self.assertEqual(by_item['latte']['need'], expected, raw)
+                       P.read_slots(fake_config(need={'rice_mango': raw}), 'winter', SHOP_ITEMS)}
+            self.assertEqual(by_item['rice_mango']['need'], expected, raw)
 
     def test_string_false_done_is_not_completed(self):
-        slots = P.read_slots(fake_config(done={'salad': 'false'}), 'autumn', SHOP_ITEMS)
-        self.assertFalse({s['item']: s for s in slots}['salad']['done'])
-        self.assertIn('salad', [s['item'] for s in P.active_slots(slots)])
+        slots = P.read_slots(fake_config(done={'chicken_potato': 'false'}), 'winter', SHOP_ITEMS)
+        self.assertFalse({s['item']: s for s in slots}['chicken_potato']['done'])
+        self.assertIn('chicken_potato', [s['item'] for s in P.active_slots(slots)])
 
     def test_string_true_done_is_completed(self):
         by_item = {s['item']: s for s in
-                   P.read_slots(fake_config(done={'salad': 'true'}), 'autumn', SHOP_ITEMS)}
-        self.assertTrue(by_item['salad']['done'])
+                   P.read_slots(fake_config(done={'chicken_potato': 'true'}), 'winter',
+                                SHOP_ITEMS)}
+        self.assertTrue(by_item['chicken_potato']['done'])
 
     def test_keys_share_plan_data_namespace(self):
         """read_slots 读的键必须和 configured_need 里的分组一致，否则配置写了也读不到。"""
         from module.island import island_season_plan_data as D
         self.assertEqual(P.GROUP, D.CONFIG_GROUP)
-        self.assertEqual(P.need_key('latte'), f'{D.CONFIG_GROUP}.Need_latte')
-        self.assertEqual(P.done_key('latte'), f'{D.CONFIG_GROUP}.Done_latte')
+        self.assertEqual(P.need_key('rice_mango'), f'{D.CONFIG_GROUP}.Need_rice_mango')
+        self.assertEqual(P.done_key('rice_mango'), f'{D.CONFIG_GROUP}.Done_rice_mango')
 
 
 class TestWinterSwitch(unittest.TestCase):
@@ -152,8 +160,9 @@ class TestWinterSwitch(unittest.TestCase):
         self.assertEqual(P.active_slots(slots), [])
         self.assertEqual(P.build_progress(slots, {'chicken_potato': 999}), {})
 
-    def test_autumn_ignores_winter_switch(self):
-        self.assertEqual(len(P.read_slots(fake_config(winter=False), 'autumn', SHOP_ITEMS)), 8)
+    def test_retired_autumn_empty_regardless_of_winter_switch(self):
+        for value in (True, False):
+            self.assertEqual(P.read_slots(fake_config(winter=value), 'autumn', SHOP_ITEMS), [])
 
     def test_string_false_disables_winter(self):
         """配置可能存成字符串 'false'：bool('false') 是 True，必须按布尔语义解析。"""
@@ -164,39 +173,41 @@ class TestUnknownStock(unittest.TestCase):
     """库存缺失/None/负数都是未知：不当 0、不算缺口、不算达标。"""
 
     def setUp(self):
-        self.slots = P.read_slots(fake_config(), 'autumn', SHOP_ITEMS)
+        self.slots = P.read_slots(fake_config(), 'winter', SHOP_ITEMS)
 
     def test_missing_reading_is_not_zero(self):
-        progress = P.build_progress(self.slots, {'latte': 82})
-        self.assertNotIn('salad', progress)
-        self.assertEqual(P.gaps(progress), {'latte': (82, 100)})
-        self.assertEqual(progress['latte'], [82, 100])
+        progress = P.build_progress(self.slots, {'rice_mango': 20})
+        self.assertNotIn('chicken_potato', progress)
+        self.assertEqual(P.gaps(progress), {'rice_mango': (20, 50)})
+        self.assertEqual(progress['rice_mango'], [20, 50])
 
     def test_none_reading_is_unknown(self):
-        self.assertEqual(P.build_progress(self.slots, {'latte': None, 'salad': 100}),
-                         {'salad': [100, 100]})
+        self.assertEqual(P.build_progress(self.slots, {'rice_mango': None,
+                                                       'chicken_potato': 100}),
+                         {'chicken_potato': [100, 100]})
 
     def test_negative_reading_is_unknown(self):
         """-1 是 island_business_stock 的「没有仓库模板」约定，不能当 0。"""
-        self.assertEqual(P.build_progress(self.slots, {'latte': -1}), {})
+        self.assertEqual(P.build_progress(self.slots, {'rice_mango': -1}), {})
 
     def test_with_known_keeps_unknown_with_flag(self):
-        progress = P.build_progress(self.slots, {'latte': 82, 'salad': -1}, with_known=True)
-        self.assertEqual(progress['latte'], [82, 100, True])
-        self.assertEqual(progress['salad'], [None, 100, False])
-        self.assertEqual(progress['apple_juice'], [None, 250, False])
+        progress = P.build_progress(self.slots, {'rice_mango': 20, 'chicken_potato': -1},
+                                    with_known=True)
+        self.assertEqual(progress['rice_mango'], [20, 50, True])
+        self.assertEqual(progress['chicken_potato'], [None, 100, False])
+        self.assertEqual(progress['strawberry_charlotte'], [None, 25, False])
 
     def test_ready_and_gaps_ignore_unknown_entries(self):
-        progress = {'latte': [None, 100, False], 'salad': [100, 100, True],
-                    'apple_juice': [-1, 250]}
-        self.assertEqual([i for i, _, _ in P.ready_items(progress)], ['salad'])
+        progress = {'rice_mango': [None, 50, False], 'chicken_potato': [100, 100, True],
+                    'strawberry_charlotte': [-1, 25]}
+        self.assertEqual([i for i, _, _ in P.ready_items(progress)], ['chicken_potato'])
         self.assertEqual(P.gaps(progress), {})
 
     def test_known_zero_is_a_gap_but_not_ready(self):
         """真实读到 0 仍然是已知读数：算缺口，但不算达标。"""
-        progress = {'latte': [0, 100, True]}
+        progress = {'rice_mango': [0, 50, True]}
         self.assertEqual(P.ready_items(progress), [])
-        self.assertEqual(P.gaps(progress), {'latte': (0, 100)})
+        self.assertEqual(P.gaps(progress), {'rice_mango': (0, 50)})
 
     def test_progress_values_legacy_and_known(self):
         self.assertEqual(P.progress_values([10, 20]), (10, 20))
@@ -215,51 +226,82 @@ class TestUnknownStock(unittest.TestCase):
             self.assertIsNone(P.stock_reading(value), value)
 
     def test_infinite_stock_does_not_crash_progress(self):
-        self.assertEqual(P.build_progress(self.slots, {'latte': float('inf')}), {})
+        self.assertEqual(P.build_progress(self.slots, {'rice_mango': float('inf')}), {})
         self.assertEqual(
-            P.build_progress(self.slots, {'latte': float('inf')}, with_known=True)['latte'],
-            [None, 100, False])
+            P.build_progress(self.slots, {'rice_mango': float('inf')},
+                             with_known=True)['rice_mango'],
+            [None, 50, False])
 
 
 class TestDoneExcludesFromPlanning(unittest.TestCase):
     """已完成 = 不再生产、不再提醒，空闲产能转去做下一个。"""
 
     def setUp(self):
-        self.config = fake_config(need={'iced_coffee': 0}, done=['salad'])
-        self.slots = P.read_slots(self.config, 'autumn', SHOP_ITEMS)
+        self.config = fake_config(need={'rice_mango': 0}, done=['chicken_potato'])
+        self.slots = P.read_slots(self.config, 'winter', SHOP_ITEMS)
 
     def test_done_and_zero_need_are_inactive(self):
         active = [s['item'] for s in P.active_slots(self.slots)]
-        self.assertNotIn('salad', active)
-        self.assertNotIn('iced_coffee', active)
-        self.assertIn('latte', active)
+        self.assertNotIn('chicken_potato', active)
+        self.assertNotIn('rice_mango', active)
+        self.assertIn('strawberry_charlotte', active)
 
     def test_done_item_not_in_progress_even_with_huge_stock(self):
-        """蔬菜沙拉库存 2100：已完成不再出现在进度里，也就不会再发邮件或排产。"""
-        progress = P.build_progress(self.slots, {'salad': 2100, 'latte': 82})
-        self.assertNotIn('salad', progress)
-        self.assertEqual(progress['latte'], [82, 100])
+        """禽肉土豆拼盘库存 2100：已完成不再出现在进度里，也就不会再发邮件或排产。"""
+        progress = P.build_progress(self.slots, {'chicken_potato': 2100,
+                                                 'strawberry_charlotte': 20})
+        self.assertNotIn('chicken_potato', progress)
+        self.assertEqual(progress['strawberry_charlotte'], [20, 25])
 
     def test_done_item_stays_excluded_when_stock_drops(self):
-        self.assertNotIn('salad', P.build_progress(self.slots, {'salad': 3}))
+        self.assertNotIn('chicken_potato',
+                         P.build_progress(self.slots, {'chicken_potato': 3}))
 
     def test_unticking_done_resumes(self):
-        slots = P.read_slots(fake_config(), 'autumn', SHOP_ITEMS)
-        self.assertEqual(P.build_progress(slots, {'salad': 20})['salad'], [20, 100])
+        slots = P.read_slots(fake_config(), 'winter', SHOP_ITEMS)
+        self.assertEqual(P.build_progress(slots, {'chicken_potato': 20})['chicken_potato'],
+                         [20, 100])
 
     def test_next_gap_becomes_active_after_done(self):
         """做完一个标记完成后，缺口自然落到下一个。"""
         from module.island.island_away_cook import pick_away_cook
-        have = {'latte': 0, 'iced_coffee': 0}
-        before = P.read_slots(fake_config(), 'autumn', SHOP_ITEMS)
-        after = P.read_slots(fake_config(done=['iced_coffee']), 'autumn', SHOP_ITEMS)
-        self.assertEqual(pick_away_cook('juu_coffee', 'autumn', have, slots=before), 'iced_coffee')
-        self.assertEqual(pick_away_cook('juu_coffee', 'autumn', have, slots=after), 'latte')
+        have = {'rice_mango': 0, 'strawberry_charlotte': 0}
+        before = P.read_slots(fake_config(), 'winter', SHOP_ITEMS)
+        after = P.read_slots(fake_config(done=['rice_mango']), 'winter', SHOP_ITEMS)
+        self.assertEqual(pick_away_cook('juu_eatery', 'winter', have, slots=before),
+                         'rice_mango')
+        self.assertEqual(pick_away_cook('juu_eatery', 'winter', have, slots=after),
+                         'strawberry_charlotte')
 
     def test_all_done_in_shop_picks_none(self):
         from module.island.island_away_cook import pick_away_cook
-        slots = P.read_slots(fake_config(done=['iced_coffee', 'latte']), 'autumn', SHOP_ITEMS)
-        self.assertEqual(pick_away_cook('juu_coffee', 'autumn', {}, slots=slots), 'None')
+        slots = P.read_slots(fake_config(done=['rice_mango', 'strawberry_charlotte']),
+                             'winter', SHOP_ITEMS)
+        self.assertEqual(pick_away_cook('juu_eatery', 'winter', {}, slots=slots), 'None')
+
+
+class TestRetiredSeason(unittest.TestCase):
+    """过季秋季任务只用于识别：残留配置不能恢复默认需求、缺口或提醒。"""
+
+    def test_no_slots_no_progress_no_gap(self):
+        from module.island.island_plan_refresh import current_progress, season_stockpile
+
+        config = fake_config(need={'apple_juice': 270, 'latte': 999},
+                             done=['salad', 'latte'])
+        slots = P.read_slots(config, 'autumn', SHOP_ITEMS)
+        self.assertEqual(P.active_slots(slots), [])
+        progress = P.build_progress(slots, {'apple_juice': 0, 'latte': 0})
+        self.assertEqual(progress, {})
+        self.assertEqual(P.gaps(progress), {})
+        self.assertEqual(P.ready_items(progress), [])
+        self.assertEqual(current_progress(config, 'autumn'), {})
+        self.assertEqual(season_stockpile(current_progress(config, 'autumn')), {})
+
+    def test_no_ready_notification_for_retired_stock(self):
+        """即使仓库读数是 0/旧进度，过季赛季也不会产达标进度。"""
+        config = fake_config()
+        slots = P.read_slots(config, 'autumn', SHOP_ITEMS)
+        self.assertEqual(P.build_progress(slots, {'apple_juice': 0}), {})
 
 
 class TestSeasonChange(unittest.TestCase):
@@ -411,9 +453,9 @@ class TestNotifySwitch(unittest.TestCase):
 
     def test_done_dish_never_reaches_notify(self):
         """已完成的餐品不在进度里，邮件函数根本看不到它。"""
-        config = fake_config(done=['salad'])
-        slots = P.read_slots(config, 'autumn', SHOP_ITEMS)
-        progress = P.build_progress(slots, {'salad': 2100, 'latte': 82})
+        config = fake_config(done=['chicken_potato'])
+        slots = P.read_slots(config, 'winter', SHOP_ITEMS)
+        progress = P.build_progress(slots, {'chicken_potato': 2100, 'rice_mango': 20})
         fired, sent = self._run(config, progress)
         self.assertEqual((fired, sent), ([], []))
 

@@ -10,6 +10,9 @@
 数据用于：
   - 判断哪些任务当前可提交（仓库够不够）
   - 反推生产计划（缺的物品要不要排产）
+
+Add by MHY, 2026-11-10：过季任务移到 RETIRED_SEASON_PLAN_TASKS，只供页面读取器识别，
+不参与上面两类计算；活动表 SEASON_PLAN_TASKS 里只保留仍在进行的赛季。
 """
 
 # 奖励（所有赛季任务相同）
@@ -76,7 +79,16 @@ WINTER_TASKS = (
 
 # 赛季 -> [(任务名, 物品英文名, 需要数量)]；物品名与经济库/仓库模板一致。
 # 冬季由 WINTER_TASKS 派生，保持既有三元组 API 不变。
+# Modify by MHY, 2026-11-10：只有仍在进行的赛季才放进这张表。过季任务挪到
+# RETIRED_SEASON_PLAN_TASKS，读需求、算缺口、排产与常驻餐品轮换都只认这张表，
+# 配置里残留的 Need_/Done_ 或缺失的键都不会再把旧任务默认值带回来。
 SEASON_PLAN_TASKS = {
+    'winter': [(task['name'], task['item'], task['need']) for task in WINTER_TASKS],
+}
+
+# Add by MHY, 2026-11-10：秋季任务已随赛季结束退场，只保留任务名/物品/需求给
+# 开发计划页读取器识别旧截图与旧配置，不参与任何排产、缺口或配置写回。
+RETIRED_SEASON_PLAN_TASKS = {
     'autumn': [
         ('麦田守望', 'wheat', 500),
         ('动物食品', 'pasture', 500),
@@ -95,8 +107,11 @@ SEASON_PLAN_TASKS = {
         ('禽肉快炒', 'stir_fried_chicken', 100),
         ('便携快餐', 'steak_bowl', 50),
     ],
-    'winter': [(task['name'], task['item'], task['need']) for task in WINTER_TASKS],
 }
+
+# Add by MHY, 2026-11-10：过季任务涉及的物品集合，供常驻餐品识别历史自动值。
+RETIRED_SEASON_ITEMS = {item for tasks in RETIRED_SEASON_PLAN_TASKS.values()
+                        for _, item, _ in tasks if item}
 
 # 物品中文名（用于日志与配置显示；基础材料不在经济库里，单独列）
 ITEM_CN = {
@@ -129,9 +144,28 @@ ORDER_MILESTONES = [
 ]
 
 
+def season_is_active(season):
+    """该赛季是否仍有进行中的开发计划任务（只有任务表里的赛季参与排产）。"""
+    return season in SEASON_PLAN_TASKS
+
+
+def season_is_retired(season):
+    """该赛季是否已过季（任务只用于识别，不参与排产）。"""
+    return season in RETIRED_SEASON_PLAN_TASKS
+
+
+def is_retired_season_item(item):
+    """物品是否属于已过季的开发计划任务。"""
+    return bool(item) and item in RETIRED_SEASON_ITEMS
+
+
 def plan_tasks(season):
     """
     取某赛季的提交任务列表（含与季节无关的订单里程碑）。
+
+    Modify by MHY, 2026-11-10：过季任务仍可被页面读取器识别，但识别结果不得进入
+    排产；需要排产的调用方先看 season_is_active，或直接读只含进行中赛季的
+    SEASON_PLAN_TASKS。
 
     Args:
         season: spring/summer/autumn/winter
@@ -139,7 +173,11 @@ def plan_tasks(season):
     Returns:
         list[(任务名, 物品英文名, 需要数量)]；订单里程碑的物品名为 None
     """
-    return list(SEASON_PLAN_TASKS.get(season, [])) + list(ORDER_MILESTONES)
+    tasks = SEASON_PLAN_TASKS.get(season)
+    if tasks is None:
+        # 只有任务表里完全没有该赛季时才回退到过季表：给读取器识别旧截图用
+        tasks = RETIRED_SEASON_PLAN_TASKS.get(season, [])
+    return list(tasks) + list(ORDER_MILESTONES)
 
 
 def task_of_item(item, season):
@@ -171,15 +209,16 @@ def winter_task(item):
 
 
 def season_items(season):
-    """该赛季任务涉及的物品集合（不含订单里程碑）。"""
+    """该赛季进行中任务涉及的物品集合（不含订单里程碑与过季任务）。"""
     return {item for _, item, _ in SEASON_PLAN_TASKS.get(season, []) if item}
 
 
 def task_type(item, season):
     """
-    任务类型：natural / meal / manufacture；不是该赛季任务返回 None。
+    任务类型：natural / meal / manufacture；不是该赛季进行中的任务返回 None。
 
-    冬季用 WINTER_TASKS 里的显式标注；其他赛季按是否属于店铺商品推断。
+    冬季用 WINTER_TASKS 里的显式标注；其他赛季按是否属于店铺商品推断。过季任务
+    不再参与分类，避免旧物品被排产逻辑当成当前需求。
     """
     if not item:
         return None
@@ -340,6 +379,9 @@ def submit_priority(season, warehouse, producible=None):
     Returns:
         list[(任务名, 物品, 需要数量, 当前库存, 是否可提交)]
     """
+    if not season_is_active(season):
+        # Add by MHY, 2026-11-10：过季赛季没有进行中的提交任务，不能按旧默认需求给建议
+        return []
     result = []
     for name, item, need in plan_tasks(season):
         if not item:

@@ -65,6 +65,43 @@ class TestReplaceMissingProducts(unittest.TestCase):
         host.config.cross_set.assert_not_called()
         host.config.update.assert_not_called()
 
+    # Add by MHY, 2026-11-10：过季赛季下一次库存校验会回收带来源标记的自动 AwayCook。
+    def test_retired_season_restores_recorded_away_cook(self):
+        host = FakeBusiness([], [])
+        host.config = Mock()
+        host.config.cross_get.return_value = 'apple_juice'
+        with patch('module.island.island_business_stock.SeasonConfig') as season_cls, \
+                patch('module.island.island_business_stock.read_slots', return_value=[]), \
+                patch('module.island.island_business_stock.record_readings'), \
+                patch('module.island.island_business_stock.load_defaults',
+                      return_value={'juu_coffee': {'value': 'cheese',
+                                                   'auto': 'apple_juice'}}), \
+                patch('module.island.island_business_stock.save_defaults') as save:
+            season_cls.return_value.season = 'autumn'
+            host._rotate_away_cook('juu_coffee', {})
+        host.config.cross_set.assert_called_once_with(
+            'IslandJuuCoffee.IslandJuuCoffeeNextTask.AwayCook', 'cheese')
+        host.config.update.assert_called_once()
+        save.assert_called_once_with({})
+
+    # Add by MHY, 2026-11-10：当前值不是自动写入值，说明用户手改过，不能覆盖。
+    def test_retired_season_keeps_manual_away_cook(self):
+        host = FakeBusiness([], [])
+        host.config = Mock()
+        host.config.cross_get.return_value = 'mocha'
+        with patch('module.island.island_business_stock.SeasonConfig') as season_cls, \
+                patch('module.island.island_business_stock.read_slots', return_value=[]), \
+                patch('module.island.island_business_stock.record_readings'), \
+                patch('module.island.island_business_stock.load_defaults',
+                      return_value={'juu_coffee': {'value': 'cheese',
+                                                   'auto': 'apple_juice'}}), \
+                patch('module.island.island_business_stock.save_defaults') as save:
+            season_cls.return_value.season = 'autumn'
+            host._rotate_away_cook('juu_coffee', {})
+        host.config.cross_set.assert_not_called()
+        host.config.update.assert_not_called()
+        save.assert_called_once_with({})
+
     def test_missing_replaced_by_high_profit_in_stock(self):
         host = FakeBusiness([make_item(n) for n in self.pool], self.active)
         counts = {'tofu_combo': 6, 'hearty_meal': 0, 'tofu_meat': 2,

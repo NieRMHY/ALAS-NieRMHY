@@ -98,13 +98,20 @@ class TestWinterTaskData(unittest.TestCase):
         self.assertEqual(D.task_of_item(None, 'winter'), (None, 0))
         self.assertEqual(D.task_of_item('latte', 'winter'), (None, 0))
 
-    def test_autumn_kept(self):
-        autumn = D.SEASON_PLAN_TASKS['autumn']
+    def test_autumn_moved_to_retired(self):
+        # Add by MHY, 2026-11-10：秋季任务已退场，只留在过季表供识别，不再进排产表。
+        self.assertNotIn('autumn', D.SEASON_PLAN_TASKS)
+        self.assertFalse(D.season_is_active('autumn'))
+        self.assertTrue(D.season_is_retired('autumn'))
+        autumn = D.RETIRED_SEASON_PLAN_TASKS['autumn']
         self.assertEqual(len(autumn), 16)
         self.assertEqual(autumn[0], ('麦田守望', 'wheat', 500))
         self.assertEqual(autumn[-1], ('便携快餐', 'steak_bowl', 50))
         self.assertNotIn('tea', [row[1] for row in autumn])
-        self.assertNotIn('winter', [s for s in D.SEASON_PLAN_TASKS if s == 'spring'])
+        self.assertEqual(len(D.plan_tasks('autumn')), 22)
+        self.assertEqual(D.season_items('autumn'), set())
+        self.assertTrue(D.is_retired_season_item('apple_juice'))
+        self.assertFalse(D.is_retired_season_item('chicken_potato'))
 
     def test_type_classification(self):
         self.assertEqual(Counter(t['type'] for t in D.WINTER_TASKS),
@@ -112,9 +119,9 @@ class TestWinterTaskData(unittest.TestCase):
         for item in WINTER_ITEMS:
             self.assertIn(D.task_type(item, 'winter'),
                           (D.TASK_TYPE_NATURAL, D.TASK_TYPE_MEAL, D.TASK_TYPE_MANUFACTURE))
-        self.assertEqual(D.task_type('wheat', 'autumn'), D.TASK_TYPE_NATURAL)
-        self.assertEqual(D.task_type('latte', 'autumn'), D.TASK_TYPE_MEAL)
-        self.assertIsNone(D.task_type('tea', 'autumn'))
+        # 过季任务不参与分类，避免旧物品被当成当前排产目标
+        for item in ('wheat', 'latte', 'apple_juice'):
+            self.assertIsNone(D.task_type(item, 'autumn'))
         self.assertIsNone(D.task_type(None, 'winter'))
 
     def test_winter_meals_are_visible_to_season_progress(self):
@@ -262,7 +269,7 @@ class TestConfigEntries(unittest.TestCase):
         with open('config/template.json', encoding='utf-8') as f:
             old = json.load(f)
         group = old['IslandSeasonPlan']['IslandSeasonPlan']
-        for _, item, _ in D.SEASON_PLAN_TASKS['autumn']:
+        for _, item, _ in D.RETIRED_SEASON_PLAN_TASKS['autumn']:
             group[f'Need_{item}'] = 999
             group[f'Done_{item}'] = True
         for item in NATURAL_ITEMS:

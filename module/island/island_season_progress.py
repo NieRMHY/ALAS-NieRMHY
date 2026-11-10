@@ -5,12 +5,13 @@
 所以「当前数量」直接取仓库读数（不进配置，见 HAVE_FILE）。
 
 三类数据各管各的：
-    餐品清单    代码里的赛季表 SEASON_PLAN_TASKS（新赛季上线时由代码更新，用户不选）
+    餐品清单    代码里仍在进行的赛季表 SEASON_PLAN_TASKS（新赛季上线时由代码更新，用户不选）
     需求数量    配置 Need_<物品>，默认取赛季表，可改
     已完成      配置 Done_<物品>，勾选后该项不再排产、不再发邮件，空闲产能转去做下一个
 
-换赛季时更新赛季表与 argument.yaml 的餐品 Need_/Done_，同时移除过季配置；
-配置里没有对应键的餐品（旧赛季遗留）读不到配置，按赛季表默认值、未完成处理。
+换赛季时把旧赛季从 SEASON_PLAN_TASKS 移到 RETIRED_SEASON_PLAN_TASKS，并清掉对应
+配置。过季任务不再读 Need_/Done_，配置缺失也不会回退默认需求；只有进行中赛季的
+配置键缺失时才按表内默认值处理（新赛季刚上线、配置尚未生成）。
 
 冬季餐品另受 IslandSeasonPlan.WinterTaskEnabled 控制（read_slots 关闭时返回空列表）。
 自然资源由 island_winter_resources 持续维持库存，无完成标记，不进入本模块的餐品提醒。
@@ -29,6 +30,7 @@ from module.island.island_season_plan_data import (
     SEASON_PLAN_TASKS,
     _as_bool,
     configured_need,
+    season_is_retired,
     winter_task_enabled,
 )
 from module.island.island_state import state_file
@@ -40,6 +42,8 @@ HAVE_FILE = state_file('island_season_have.json')
 # Modify by MHY, 与 configured_need 共用同一命名空间常量，赛季表分组改名时不会两处漂移。
 GROUP = CONFIG_GROUP
 NOTIFY_KEY = f'{GROUP}.NotifyEnable'
+# Add by MHY, 2026-11-10：过季提示每个赛季只打一次，避免每家店每次核对库存都刷屏。
+_RETIRED_LOGGED = set()
 
 
 def need_key(item):
@@ -62,6 +66,9 @@ def season_dishes(season, shop_items):
         season: 赛季
         shop_items: 店铺餐品物品集合（经济库）
     """
+    if season_is_retired(season):
+        # Add by MHY, 2026-11-10：双保险。即使活动表被误加回过季赛季，也不能再读默认需求。
+        return []
     return [(item, need) for _, item, need in SEASON_PLAN_TASKS.get(season, [])
             if item in shop_items]
 
@@ -72,6 +79,9 @@ def read_slots(config, season, shop_items):
 
     Modify by MHY, 冬季另有总开关 WinterTaskEnabled：关掉时返回空列表，
     冬季任务进度、提醒与排产增量随之停止；日常排产继续，货架与闲时生产设置保持原样。
+
+    Add by MHY, 2026-11-10：过季赛季（如秋季）不在活动表里，直接返回空列表，
+    配置里残留的 Need_/Done_ 不再生效，也不产生缺口。
 
     Args:
         config: AzurLaneConfig 实例
@@ -91,6 +101,12 @@ def read_slots(config, season, shop_items):
                       'need': configured_need(config, item, default_need),
                       'done': _as_bool(config.cross_get(done_key(item), default=False),
                                        default=False)})
+    # Modify by MHY, 2026-11-10：过季任务不在赛季表里，slot 必为空；这里只提示一次，
+    # 说明旧 Need_/Done_ 已不生效，需要把 IslandPlan.Season 更新到进行中的赛季。
+    if not slots and season_is_retired(season) and season not in _RETIRED_LOGGED:
+        _RETIRED_LOGGED.add(season)
+        logger.info(f'[岛屿-赛季任务] 赛季 {season} 的任务已过季，需求与缺口不再参与排产；'
+                    f'如游戏已换季，请更新 IslandPlan.Season')
     return slots
 
 
