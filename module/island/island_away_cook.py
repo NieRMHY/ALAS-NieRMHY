@@ -418,6 +418,10 @@ def resolve_away_cook(shop, season, counts, current, defaults=None, producible=N
                             producible=producible, exclude=exclude, skip=skip, slots=slots)
     if target != 'None':
         if shop not in defaults:
+            # Modify by MHY, 来源不明的过季残留不能成为下一轮自动恢复的原值。
+            if is_retired_season_item(current):
+                _warn_stale_once(shop, current)
+                return current, defaults
             defaults[shop] = {'value': current, 'auto': target}
         else:
             entry = defaults[shop]

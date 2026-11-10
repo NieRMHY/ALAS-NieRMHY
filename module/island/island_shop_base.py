@@ -669,7 +669,7 @@ class IslandShopBase(Island, WarehouseOCR):
 
         Args:
             produced (dict[str, int] | None): 本轮基础需求已实际排产的数量。
-                子类用它把季节批次控制在"一批"以内，避免和营业需求重复下单。
+                是否抵扣季节批次由子类决定：饮品抵扣，餐馆保留额外一批。
 
         Returns:
             dict[str, int]: 优先排产商品名称到数量的映射。

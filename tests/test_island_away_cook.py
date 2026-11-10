@@ -387,6 +387,16 @@ class TestResolveAwayCook(unittest.TestCase):
         self.assertEqual(target, 'apple_juice')
         self.assertEqual(defaults, {})
 
+    # Add by MHY, 有新缺口也不把无来源的旧残留记为用户原值。
+    def test_new_gap_preserves_untracked_retired_value_without_backup(self):
+        slots = [{'item': 'latte', 'need': 100, 'done': False}]
+        target, defaults = resolve_away_cook(
+            'juu_coffee', 'winter', {'latte': 0}, 'iced_coffee', {}, slots=slots)
+        self.assertEqual((target, defaults), ('iced_coffee', {}))
+        target, defaults = resolve_away_cook(
+            'juu_coffee', 'winter', {'latte': 100}, target, defaults, slots=slots)
+        self.assertEqual((target, defaults), ('iced_coffee', {}))
+
     def test_manual_change_during_override_becomes_new_original(self):
         """自动接管期间用户手改：下一次覆盖时以手填值作为新的原值。"""
         target, defaults = resolve_away_cook(

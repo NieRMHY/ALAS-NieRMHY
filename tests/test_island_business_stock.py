@@ -54,14 +54,16 @@ class TestReplaceMissingProducts(unittest.TestCase):
         winter = make_item('shiitake_chicken_soup')
         host = FakeBusiness([winter, make_item('tofu_combo')], [winter])
         host.config = Mock()
-        host.config.cross_get.return_value = 'winter'
+        host.config.cross_get.side_effect = lambda key, default=None: (
+            'winter' if key == 'IslandPlan.IslandPlan.Season' else 'shiitake_chicken_soup')
         products, replacements = host.replace_missing_products(
             '有鱼餐馆', {'shiitake_chicken_soup': 7, 'tofu_combo': 12})
         self.assertEqual(products, [winter])
         self.assertEqual(replacements, [])
-        with patch('module.island.island_business_stock.load_defaults') as load:
+        with patch('module.island.island_business_stock.load_defaults', return_value={}), \
+                patch('module.island.island_business_stock.save_defaults'), \
+                patch('module.island.island_business_stock.record_readings'):
             host._rotate_away_cook('restaurant', {'shiitake_chicken_soup': 7})
-        load.assert_not_called()
         host.config.cross_set.assert_not_called()
         host.config.update.assert_not_called()
 
@@ -156,6 +158,74 @@ class TestReplaceMissingProducts(unittest.TestCase):
         new_products, replacements = host.replace_missing_products('有鱼餐馆', {})
         self.assertEqual(new_products, [])
         self.assertEqual(replacements, [])
+
+
+# Add by MHY, 校验库存识别到经营决策的链路，不把未知数量当成空仓。
+class TestStockCheckReadings(unittest.TestCase):
+    def make_host(self):
+        host = FakeBusiness([make_item('tofu_combo'), make_item('hearty_meal')],
+                            [make_item('tofu_combo')])
+        host.device = Mock()
+        host.goto_warehouse_within_postmanage = Mock()
+        host._stock_check_template = Mock(side_effect=lambda shop, name: name)
+        host._rotate_away_cook = Mock()
+        return host
+
+    def check(self, host, readings):
+        with patch('module.island.island_business_stock.WarehouseOCR') as warehouse, \
+                patch('module.island.island_business_stock.logger') as log, \
+                patch('PIL.Image.fromarray'):
+            warehouse.return_value.ocr_item_quantity.side_effect = readings
+            result = host.check_configured_products_stock('有鱼餐馆')
+            for call in warehouse.return_value.ocr_item_quantity.call_args_list:
+                self.assertTrue(call.kwargs['strict'])
+        return result, log
+
+    def test_zero_stock_reports_shortage_even_without_any_positive_reading(self):
+        host = self.make_host()
+        result, log = self.check(host, [0, 0])
+        self.assertEqual(result, 0)
+        self.assertTrue(any('仍缺货且无替补' in str(c) for c in log.warning.call_args_list))
+        self.assertFalse(any('库存充足' in str(c) for c in log.info.call_args_list))
+
+    def test_unknown_item_is_preserved_with_stocked_alternative(self):
+        host = self.make_host()
+        result, log = self.check(host, [None, 6])
+        self.assertEqual(result, 0)
+        self.assertEqual(host.active_products['有鱼餐馆'][0]['name'], 'tofu_combo')
+        self.assertTrue(any('库存未知' in str(c) for c in log.warning.call_args_list))
+        self.assertFalse(any('库存充足' in str(c) for c in log.info.call_args_list))
+
+    def test_known_empty_item_uses_stocked_alternative(self):
+        host = self.make_host()
+        result, _ = self.check(host, [0, 6])
+        self.assertEqual(result, 1)
+        self.assertEqual(host.active_products['有鱼餐馆'][0]['name'], 'hearty_meal')
+
+    def test_unreadable_page_still_checks_stale_auto_configuration(self):
+        host = self.make_host()
+        result, log = self.check(host, [None, None])
+        self.assertEqual(result, 0)
+        host._rotate_away_cook.assert_called_once_with(
+            'restaurant', {'tofu_combo': -1, 'hearty_meal': -1})
+        self.assertFalse(any('库存充足' in str(c) for c in log.info.call_args_list))
+
+    def test_winter_restores_old_auto_value_without_rotating_finite_tasks(self):
+        host = self.make_host()
+        host.config = Mock()
+        host.config.cross_get.return_value = 'salad'
+        with patch('module.island.island_business_stock.SeasonConfig') as season, \
+                patch('module.island.island_business_stock.read_slots') as slots, \
+                patch('module.island.island_business_stock.load_defaults',
+                      return_value={'restaurant': 'tofu'}), \
+                patch('module.island.island_business_stock.save_defaults') as save, \
+                patch('module.island.island_business_stock.record_readings'):
+            season.return_value.season = 'winter'
+            BusinessStockCheckMixin._rotate_away_cook(host, 'restaurant', {})
+        slots.assert_not_called()
+        host.config.cross_set.assert_called_once_with(
+            'IslandRestaurant.IslandRestaurantNextTask.AwayCook', 'tofu')
+        save.assert_called_once_with({})
 
 
 if __name__ == '__main__':

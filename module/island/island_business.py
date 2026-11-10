@@ -1114,6 +1114,8 @@ class IslandBusiness(BusinessStockCheckMixin, Island):
                     if selected == 0:
                         logger.warning(f"[岛屿-经营] {shop_name} 没有可出售的餐品，不开始经营，跳过该店继续检查其他商店")
                         self._leave_shop_without_start()
+                        # Modify by MHY, 完全缺货也要立即补货，不能只唤醒成功营业的店。
+                        self._trigger_shop_refill({shop_name})
                         self._run_remaining_shops(skip_shops={shop_name})
                         return
                     started_shops.add(shop_name)
@@ -1426,6 +1428,8 @@ class IslandBusiness(BusinessStockCheckMixin, Island):
             # 没有可出售的餐品时「开始经营」不可用，点了也不会开始；直接返回，调用方已记为处理过
             logger.warning(f"[岛屿-经营] {shop_name} 没有可出售的餐品，本次不开始经营")
             self._leave_shop_without_start()
+            # Modify by MHY, 缺货店不会进入 started_shops，在这里补齐生产触发。
+            self._trigger_shop_refill({shop_name})
             return False
 
         # 确认经营并返回

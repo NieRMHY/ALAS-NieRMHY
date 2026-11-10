@@ -269,6 +269,15 @@ class IslandShopProductionTests(unittest.TestCase):
         ui.run()
         self.assertEqual(ui.orders, [('fruit_paradise', 6, None), ('apple_juice', 7, None)])
 
+    # Add by MHY, 季节套餐扣掉营业原料后，剩余岗位应补回基础目标。
+    def test_seasonal_batch_replenishes_consumed_business_material(self):
+        ui = ShopUI(IslandTeahouse, [('apple_juice', 270)],
+                    {'apple_juice': 270, 'lavender_tea': 7})
+        ui.shop.get_priority_production = lambda produced=None: {'floral_fruity': 7}
+        ui.run()
+        self.assertEqual(ui.orders, [('floral_fruity', 7, None), ('apple_juice', 7, None)])
+        self.assertEqual(ui.shop.warehouse_counts['apple_juice'], 263)
+
     def test_duplicate_slots_keep_order_with_seasonal_priority(self):
         ui = ShopUI(IslandTeahouse, [('apple_juice', 2), ('apple_juice', 3)],
                     seasonal=True, season='autumn')

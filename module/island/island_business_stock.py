@@ -75,7 +75,8 @@ class BusinessStockCheckMixin:
 
         for item in products:
             name = item['name']
-            stock = counts.get(name, 0)
+            # Modify by MHY, 缺失读数与模板未匹配都表示未知，避免误换货架。
+            stock = counts.get(name, -1)
             if stock < 0:
                 # 库存未知（没有仓库模板）：保守起见保持原配置
                 new_products.append(item)
@@ -164,12 +165,19 @@ class BusinessStockCheckMixin:
             if template is None:
                 counts[name] = -1  # 无仓库模板：库存未知，保持原配置
                 continue
-            counts[name] = warehouse.ocr_item_quantity(self.device.image, template)
+            # Modify by MHY, 单页未匹配或 OCR 失败不等于零库存。
+            count = warehouse.ocr_item_quantity(self.device.image, template, strict=True)
+            counts[name] = count if count is not None else -1
 
-        logger.info(f"[岛屿-库存校验] {shop_name} 读取库存: "
-                    f"{ {k: v for k, v in counts.items() if v > 0} }")
-        if not any(value > 0 for value in counts.values()):
-            # 全 0 说明页面/筛选没到位，读取不可信：保存现场并跳过，不据此改配置
+        logger.info(f"[岛屿-库存校验] {shop_name} 读取库存（-1 为未知）: {counts}")
+        # Modify by MHY, 旧自动常驻菜的恢复依赖来源记录，与本次截图是否可读无关。
+        try:
+            self._rotate_away_cook(shop_type, counts)
+        except Exception as e:
+            logger.warning(f"[岛屿-常驻餐品] 轮换失败: {e}")
+
+        if not any(value >= 0 for value in counts.values()):
+            # 整页未知时保留原清单，保存现场以便核对筛选和模板。
             logger.warning(f"[岛屿-库存校验] {shop_name} 未读到任何库存，跳过本次校验")
             try:
                 from PIL import Image
@@ -180,19 +188,21 @@ class BusinessStockCheckMixin:
                 logger.warning("[岛屿-库存校验] 现场截图保存失败")
             return 0
 
-        # 顺带按赛季缺口轮换「常驻餐品」，把剩下的空闲岗位用起来
-        try:
-            self._rotate_away_cook(shop_type, counts)
-        except Exception as e:
-            logger.warning(f"[岛屿-常驻餐品] 轮换失败: {e}")
-
         new_products, replacements = self.replace_missing_products(shop_name, counts)
         for missing, candidate, stock in replacements:
             logger.info(f"[岛屿-库存校验] {shop_name} {missing} 无库存，"
                         f"替换为 {candidate}（库存 {stock}）")
         if replacements:
             self.active_products[shop_name] = new_products
-        else:
+        # Modify by MHY, 无可替补与库存充足是不同结果，未知读数单独报告。
+        missing = [p['name'] for p in new_products
+                   if 0 <= counts.get(p['name'], -1) < self.STOCK_MIN]
+        unknown = [p['name'] for p in new_products if counts.get(p['name'], -1) < 0]
+        if missing:
+            logger.warning(f"[岛屿-库存校验] {shop_name} 仍缺货且无替补: {missing}")
+        if unknown:
+            logger.warning(f"[岛屿-库存校验] {shop_name} 库存未知，保留配置待上架页核对: {unknown}")
+        if not replacements and not missing and not unknown:
             logger.info(f"[岛屿-库存校验] {shop_name} 配置商品库存充足，无需替换")
         return len(replacements)
 
@@ -200,8 +210,8 @@ class BusinessStockCheckMixin:
         """
         按赛季任务缺口切换本店常驻餐品（Island<店>NextTask.AwayCook）。
 
-        缺口用刚读到的仓库库存算；没有库存模板的物品按 0 计（保守：当作
-        还没攒）。物品攒够后自动切到下一个缺得最多的。
+        缺口只采用已确认的库存；未知读数不触发轮换。
+        任务停用后，仅凭自动值记录恢复历史常驻菜。
 
         Args:
             shop_type: 店铺类型标识
@@ -211,37 +221,41 @@ class BusinessStockCheckMixin:
         if not key:
             return
         season = SeasonConfig(self.config).season
-        # Modify by MHY, 冬季按独立任务配额增产，保持用户货架与闲时生产配置，
-        # 不以空任务集恢复旧常驻菜，保留手填值。
-        if not season or season == 'winter':
+        # Modify by MHY, 冬季也核对历史自动值；恢复策略由来源记录决定。
+        if not season:
             return
 
         # Modify by MHY, 需求数量与已完成来自配置：已勾选「已完成」的物品不再轮换成常驻餐品，
         # 空闲产能自动转去做下一个缺口最大的
-        slots = read_slots(self.config, season, set(ECONOMY_PRODUCTS))
+        # Modify by MHY, 冬季只回收旧自动值，有限任务由后厨配额管理，绝不改成常驻菜。
+        slots = [] if season == 'winter' else read_slots(self.config, season, set(ECONOMY_PRODUCTS))
         shop_items = season_items_for_shop(shop_type, season, slots)
 
-        # 赛季物品的库存：有仓库模板的才读得到，没有的按 0 处理
+        # Modify by MHY, 赛季物品同样使用严格读数，未知状态不产生生产缺口。
         season_counts = dict(counts)
         for item, _, _ in shop_items:
             if item in season_counts:
                 continue
             template = self._stock_check_template(shop_type, item)
             if template is None:
-                season_counts[item] = 0
+                season_counts[item] = -1
                 continue
-            season_counts[item] = WarehouseOCR().ocr_item_quantity(self.device.image, template)
+            count = WarehouseOCR().ocr_item_quantity(self.device.image, template, strict=True)
+            season_counts[item] = count if count is not None else -1
 
-        # Modify by MHY, 赛季进度直接取仓库读数（不再 OCR 赛季页）：核对销售前读到的
-        # 就是准确库存，顺带记进进度，缺口与达标邮件都按它算。只记有仓库模板的项，
-        # 读不到的按 0 处理只用于本次轮换，不覆盖进度。
+        # Modify by MHY, 只有有效库存覆盖进度，未知读数保留上次记录。
         readable = {item: season_counts[item] for item, _, _ in shop_items
-                    if item in counts or self._stock_check_template(shop_type, item) is not None}
+                    if season_counts.get(item, -1) >= 0}
         record_readings(readable)
 
-        progress = {item: f'{season_counts.get(item, 0)}/{need}' for item, need, _ in shop_items}
+        progress = {item: f'{readable.get(item, "未知")}/{need}'
+                    for item, need, _ in shop_items}
         if progress:
             logger.info(f"[岛屿-赛季任务] {shop_type} 进度: {progress}")
+        if len(readable) < len(shop_items):
+            # Modify by MHY, 未读到全部任务库存时，不按零补产，也不当成任务完成恢复。
+            logger.warning(f"[岛屿-常驻餐品] {shop_type} 任务库存未知，本轮保持常驻菜")
+            return
 
         current = self.config.cross_get(key, default='None')
         defaults = load_defaults()
@@ -249,7 +263,7 @@ class BusinessStockCheckMixin:
             shop_type, season, season_counts, current, defaults, slots=slots)
         if target != current:
             logger.info(f"[岛屿-常驻餐品] {shop_type}: {current} -> {target}"
-                        f"（赛季缺口 {season}）")
+                        f"（赛季 {season} 自动配置核对）")
             self.config.cross_set(key, target)
         save_defaults(defaults)
         if target != current:

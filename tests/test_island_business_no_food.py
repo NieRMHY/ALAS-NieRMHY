@@ -36,6 +36,7 @@ class LegacyNoFoodTest(unittest.TestCase):
         business._run_legacy_mode()
         business._confirm_business_start.assert_not_called()
         business._leave_shop_without_start.assert_called_once()
+        business._trigger_shop_refill.assert_called_once_with({'有鱼餐馆'})
         business._run_remaining_shops.assert_called_once_with(skip_shops={'有鱼餐馆'})
 
     def test_start_that_did_not_take_stops_the_loop(self):
@@ -87,14 +88,18 @@ class BatchNoFoodTest(unittest.TestCase):
         business._leave_shop_without_start = Mock()
         business.post_manage_mode = Mock()
         business.device = Mock()
+        business._trigger_shop_refill = Mock()
 
         business._select_business_product = Mock(return_value=0)
         self.assertFalse(business._process_shop_entry({'name': '有鱼餐馆'}))
         business._confirm_business_start.assert_not_called()
+        business._trigger_shop_refill.assert_called_once_with({'有鱼餐馆'})
+        business._trigger_shop_refill.reset_mock()
 
         business._select_business_product = Mock(return_value=1)
         self.assertTrue(business._process_shop_entry({'name': '有鱼餐馆'}))
         business._confirm_business_start.assert_called_once()
+        business._trigger_shop_refill.assert_not_called()
 
 
 if __name__ == '__main__':
