@@ -17,7 +17,7 @@ export interface Parameters {
   "dock.importLegacy": { instance: string; revision: string }
   "dock.configure": { instance: string; min_level: number; max_level: number }
   "dock.patch": { instance: string; revision: string; changes: Array<{ id?: number | null; delete?: boolean; group_type?: number | null; name?: string; level?: number; rarity?: "" | "N" | "R" | "SR" | "SSR" | "UR"; base_rarity?: "" | "N" | "R" | "SR" | "SSR" | "UR"; extra_exp?: number | null; full_star?: boolean | null; form?: "base" | "retrofit" | null; review?: boolean; source?: string }> }
-  "dock.stageImport": { instance: string; revision: string; ships: Array<{ name: string; level: number; rarity?: "" | "N" | "R" | "SR" | "SSR" | "UR"; base_rarity?: "" | "N" | "R" | "SR" | "SSR" | "UR"; extra_exp?: number | null; review?: boolean; source?: string }> }
+  "dock.stageImport": { instance: string; revision: string; ships: Array<{ name: string; level: number; rarity?: "" | "N" | "R" | "SR" | "SSR" | "UR"; base_rarity?: "" | "N" | "R" | "SR" | "SSR" | "UR"; extra_exp?: number | null; review?: boolean; source?: string; group_type?: number | null; full_star?: boolean | null; form?: "base" | "retrofit" | null }> }
   "dock.review": { instance: string; revision: string; pending_revision: string; decisions: Array<{ id: string; accept: boolean; ship_id?: number | null }> }
   "mind.catalog": { instance: string }
   "fleetTech.catalog": { instance: string }
@@ -61,6 +61,10 @@ export interface Parameters {
   "updater.apply": Record<string, never>
   "updater.cancel": Record<string, never>
   "background.access": Record<string, never>
+  "plugins.access": Record<string, never>
+  "plugins.list": Record<string, never>
+  "plugins.storage.get": { id: string; instance?: string | null; key: string; action: "get" | "set" | "delete"; value?: unknown }
+  "plugins.storage.write": { id: string; instance?: string | null; key: string; action: "get" | "set" | "delete"; value?: unknown }
   "background.resolve": { url: string }
   "background.gallery.list": Record<string, never>
   "background.gallery.add": { url: string; name?: string }
@@ -69,8 +73,10 @@ export interface Parameters {
   "background.preference.get": Record<string, never>
   "background.preference.set": { material: "glass" | "plain"; preference?: Record<string, unknown> }
   "auth.login": { password?: string }
-  "events.subscribe": { instance?: string | null; topics: Array<"instances" | "overview" | "logs" | "preview" | "notifications"> }
+  "events.subscribe": { instance?: string | null; topics: Array<"instances" | "overview" | "logs" | "preview" | "notifications" | "plugins"> }
 }
+export const webSocketTransport = {"frameBytes": 65536, "requestBytes": 8388608, "responseBytes": 67108864, "dataTopics": ["logs", "preview"]} as const
+export const dataMethods = ["schema.get", "config.get", "config.export", "dock.report", "mind.catalog", "fleetTech.catalog", "fleetTech.report", "mind.plan", "mind.import", "mind.recognize", "scheduler.program.catalog", "scheduler.program.get", "scheduler.program.validate", "scheduler.program.simulate", "logs.get", "opsi.simulator.status", "opsi.simulator.figure", "preview.capture", "statistics.report", "statistics.resourceFlows", "meowfficer.scoreReport", "statistics.resources"] as const
 export interface SchedulerModels {
   ProgramDocument: { entry: string; nodes: Array<{ id: string; type: string; label?: string; comment?: string; params?: Record<string, unknown>; position?: Record<string, unknown> }>; edges?: Array<{ id: string; source: string; sourcePort: string; target: string; targetPort?: string; kind?: "control" | "data" }>; schemaVersion?: number; name?: string; subgraphs?: Array<{ entry: string; nodes: Array<{ id: string; type: string; label?: string; comment?: string; params?: Record<string, unknown>; position?: Record<string, unknown> }>; edges?: Array<{ id: string; source: string; sourcePort: string; target: string; targetPort?: string; kind?: "control" | "data" }>; id: string; name: string; pure?: boolean; inputs?: Array<{ name: string; type?: "any" | "number" | "boolean" | "string" | "time" | "duration" | "resource" | "task" | "tasks" | "result" | "list" | "object"; required?: boolean }>; outputs?: Array<{ name: string; type?: "any" | "number" | "boolean" | "string" | "time" | "duration" | "resource" | "task" | "tasks" | "result" | "list" | "object"; required?: boolean }> }>; variables?: Array<{ name: string; type?: "any" | "number" | "boolean" | "string" | "time" | "duration" | "resource" | "task" | "tasks" | "result" | "list" | "object"; initial?: unknown; persistent?: boolean }>; viewport?: Record<string, unknown> }
   CardDefinition: { type: string; label: string; category: string; pure?: boolean; entry?: boolean; inputs?: Array<{ name: string; type?: "any" | "number" | "boolean" | "string" | "time" | "duration" | "resource" | "task" | "tasks" | "result" | "list" | "object"; required?: boolean }>; outputs?: Array<{ name: string; type?: "any" | "number" | "boolean" | "string" | "time" | "duration" | "resource" | "task" | "tasks" | "result" | "list" | "object"; required?: boolean }>; exits?: Array<string>; params?: Record<string, unknown> }

@@ -87,7 +87,8 @@ class TestDeployLocation(unittest.TestCase):
     def test_all_templates_default_to_own_repository_and_stable_channel(self):
         files = [Path('deploy/template'), Path('deploy/Windows/template.yaml')]
         files.extend(Path('config').glob('deploy.template*.yaml'))
-        self.assertEqual(len(files), 10)
+        # Modify by MHY, 上游已移除 AidLux 和 Docker 的四份部署模板。
+        self.assertEqual(len(files), 6)
         for file in files:
             with self.subTest(file=file):
                 values = poor_yaml_read(str(file))

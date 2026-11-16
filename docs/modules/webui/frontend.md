@@ -44,7 +44,7 @@
 运行时只刷新记录和编队快照，不覆盖未保存输入。页面不显示任务运行侧栏，不调用`tasks.run`，
 不改写心智计算器状态。浏览器验证使用隔离模拟服务，真实模拟器未在本轮验收。
 
-frontend/ 是 AzurPilot 的浏览器控制台，替代旧版 PyWebIO 界面，覆盖主页与实例导航、任务配置表单、总览日志与截图预览、统计图表、系统设置、远程访问与更新器。前端不包含任何游戏逻辑，所有业务操作都通过 WebSocket API 交给 [API 服务](api.md)执行。
+frontend/ 是 AzurPilot 的浏览器控制台，替代旧版 PyWebIO 界面，覆盖主页与实例导航、任务配置表单、总览日志与截图预览、统计图表、系统设置、远程访问与更新器，并提供 APU 插件包的管理页与运行时。前端不包含任何游戏逻辑，所有业务操作都通过 WebSocket API 交给 [API 服务](api.md)执行；协议分为操作与数据两条连接，大消息按帧传输。
 
 frontend/README.md 与 frontend/API.md 已经是本前端的详细文档：前者覆盖界面行为、主题材质、启动开发与迁移边界，后者定义消息协议。本文不重复其内容，只作为模块文档体系的索引篇，说明目录分工、构建测试入口与生成产物红线。
 
@@ -61,7 +61,8 @@ frontend/README.md 与 frontend/API.md 已经是本前端的详细文档：前�
 ### 负责
 
 - 渲染单页应用（hash 路由）：主页、实例总览、任务配置、统计、系统设置、更新器等页面
-- WebSocket 连接管理：认证、心跳、请求关联、超时与重连（`src/api/client.ts`）
+- WebSocket 双通道连接管理：按方法把读写请求分发到 control/data 两条连接，各自认证、心跳、超时与重连；大消息分帧发送与重组（`src/api/socket.ts`、`src/api/client.ts`）
+- 插件运行时：插件管理页、iframe 沙箱、导航/总览/调度槽位、主题样式注入与插件数据通道（`src/plugins/`）
 - 配置表单展示与保存：字段保存队列、草稿恢复、重试与数值校验（`src/config/EditQueue.ts`）
 - 任务优先级字段的拖动排序与解析：`src/app/taskPriority.ts`（纯函数：解析/合并/移动）+ `src/components/TaskPriorityField.tsx`（拖拽交互），写入 `Scheduler_Scheduler_Tasks`，提交值用 `
 > ` 分隔（注释行与全角箭头已兼容归一）
@@ -81,14 +82,16 @@ frontend/README.md 与 frontend/API.md 已经是本前端的详细文档：前�
 ```text
 frontend/
 ├── src/main.tsx              # 应用入口：hash 路由表、错误兜底、先加载主题再挂载
-├── src/api/                  # client.ts 连接层；generated.ts 与 contract.json 为生成产物
+├── src/api/                  # socket.ts 单通道传输；client.ts 双通道分发；generated.ts 与 contract.json 为生成产物
 ├── src/app/                  # 布局、主题系统（theme.ts 按需加载）、连接上下文、任务优先级解析（taskPriority.ts）、各类偏好
 ├── src/pages/                # 页面：Home / Overview / TaskConfig / Statistics / Settings / Updater 等
 ├── src/components/           # 可复用组件：FormControls、LogPanel、StatisticsChart、TaskPriorityField（任务优先级拖动排序）、实例切换等
 ├── src/config/               # EditQueue 跨页面字段保存队列、草稿恢复、输入校验
+├── src/plugins/              # 插件上下文、iframe 沙箱、页面/导航/调度槽位与插件样式
 ├── src/styles/               # 设计变量与界面样式（apple / forms / compact / minimal 等 css）
-├── src/i18n.ts               # 控制台固定文案（五种语言），独立于游戏翻译 module/config/i18n
+├── src/i18n.ts               # 控制台固定文案（四种语言），独立于游戏翻译 module/config/i18n
 ├── e2e/                      # Playwright 浏览器测试
+├── plugin-sdk/               # APU SDK bridge、插件清单示例与作者文档
 ├── mock/                     # 内存模拟服务（server.mjs、state.mjs）及其测试
 ├── playwright.config.ts      # e2e 主配置：连接 tests/serve_frontend.py 临时后端
 ├── playwright.mock.config.ts # e2e mock 配置：连接独立 mock server 与 Vite mock 模式
@@ -115,6 +118,25 @@ Node.js >= 22.12（推荐 24），首次准备用 `npm ci --prefix frontend`。
 
 两个 e2e 配置的区别：主配置在仓库根目录以 `uv run python -m tests.serve_frontend` 起服务——它使用临时配置目录、拒绝执行真实游戏任务（替换 `runtime.start/stop` 与 `updater.fetch/apply/cancel`），连接真实 Python API 跑除 `mock.spec.ts` 外的全部用例；mock 配置只跑 `mock.spec.ts`，同时拉起 mock server（22492）与 Vite mock 模式（5174），完全不需要 Python 与模拟器。
 
+## 5. 双通道传输与插件运行时
+
+前端 `src/api/socket.ts` 提供单通道 RPC 传输，`src/api/client.ts` 按方法把请求分发到两条 WebSocket：
+
+- `/api/v1/ws?channel=control`：认证、实例/配置/调度写操作、插件管理、事件订阅；
+- `/api/v1/ws?channel=data`：大读取，包括日志、预览、统计报表、配置/船坞/科研/调度读取等；清单来自生成产物 `dataMethods`，订阅主题 `logs`、`preview` 也走这里。
+
+两条连接独立认证、心跳、超时与重连。数据连接断开时操作连接保持 `ready`，读取请求在数据连接重连成功后自动重试一次；写请求始终由调用方决定是否重试。会话事件里的 `channel` 与后端 `module/api/ws_transport.py` 协商分帧：单帧 64 KiB、请求 8 MiB、响应 64 MiB，超过单帧的 JSON 按“首字节 0 续片 / 1 末片”的二进制分片发送与重组。旧后端不返回 `channel` 时客户端退回单连接模式，全部请求仍走操作连接；`events.subscribe` 的参数由 `ApiClient.subscriptionParams()` 按同一能力裁剪——旧后端的 `SubscribeParams` 不认识 `plugins` 主题，原样发过去会让整条订阅判 `INVALID_PARAMS`，连带丢掉通知与实例事件，所以只在 hello 声明了 `channel` 的后端才带插件主题。
+
+Socket 地址始终由 `new URL('api/v1/ws', document.baseURI)` 生成，并按页面协议选择 `ws/wss`；这是 SSH 前缀反代与 `/<peer_id>/` 隧道路径能继续工作的前提，不能改成绝对路径。`index.html` 的单段路径 `<base>` 注入逻辑保持不变，也不引入 Clarity 遥测。
+
+插件包（APU API 1）由后端 `module/api/plugin_service.py` 安装到 `config/plugins/plugins.db`。前端 `src/plugins/` 提供管理页、iframe 沙箱、导航/总览/调度槽位与样式注入：
+
+- 插件列表走 control 连接的 `plugins.list`，并订阅 `plugins` 主题自动刷新；导入、启停、卸载走同源 HTTP `/api/v1/plugins`，令牌由 `plugins.access` 下发，插件拿不到访问密码。
+- iframe 使用 `sandbox="allow-scripts"`；父页面校验握手 nonce 后用 MessagePort 按 manifest 权限提供 `instance.read`、`storage`、`scheduler.control`，导航替换视图只能打开宿主列出的地址。
+- 与本地外壳兼容的插件主题能力：`pages`、`panels`、`navigationView`、`overviewView`、`scheduler`、`styles`（`shell`/`navigation`/`overview`/`scheduler`/`global`）、`replaceSchedulerStyles` 与 `icons`。`theme.navigation` 的停靠位置和 `theme.overview` 的块顺序没有实现，因为本地是固定侧栏 + 固定总览布局，不能按上游多外壳模型假装支持。
+- 用户 `public/theme.css`、本地主题（浅色/深色/旧版浅色/旧版深色/简约/紧凑 + 玻璃/朴素材质）与皮肤 CSS 继续生效；插件 `global` 槽位在应用挂载后加载，可覆盖本地主题变量，但不删除主题切换能力。已删的公告、茗交所、LLM、配对、Cloudflare/公网直连入口不会因插件系统恢复。
+- 主题样式预载分两段：`index.html` 按 localStorage 的 `azurpilot.apu-styles` 记录先挂 `<link data-apu-preload>`，避免首帧闪默认外观；插件列表首次成功加载后由 `PluginStyles` 调 `src/plugins/themeStyles.ts` 的 `syncThemeStyles(ready, theme)` 接管：撤掉全部预载链接并按当前主题改写记录。`ready` 之前（登录前、列表未返回）一律不动记录——那时 `theme` 必然是空的，提前写缓存会把预载记录清成 `null`，下次刷新又要闪一遍。
+
 ## 6. 工作流程
 
 - 开发联调：`uv run python gui.py` 起后端（默认端口见 config/deploy.yaml 的 `WebuiPort`），另开 `npm run dev`，Vite 将 `/api`（含 WebSocket）与 `/healthz` 代理到后端，`AZURPILOT_BACKEND` 可换目标；代理保留 Host，浏览器来源校验仍然有效。
@@ -124,16 +146,42 @@ Node.js >= 22.12（推荐 24），首次准备用 `npm ci --prefix frontend`。
 
 ## 16. 修改注意事项
 
-- **生成产物红线**：`src/api/generated.ts` 与 `src/api/contract.json` 由 `uv run python -m dev_tools.export_api_schema` 生成，禁止手改；CI 会重新生成并用 `git diff --exit-code` 校验。新增 API 方法的顺序：先定义后端参数模型与路由，再运行生成器，然后更新 `src/api/types.ts` 响应类型与对应测试；不得通过方法名反射任意 Python 属性。
+- **生成产物红线**：`src/api/generated.ts` 与 `src/api/contract.json` 由 `uv run python -m dev_tools.export_api_schema` 生成，禁止手改；CI 会重新生成并用 `git diff --exit-code` 校验。新增 API 方法的顺序：先定义后端参数模型与路由，再运行生成器，然后更新 `src/api/types.ts` 响应类型与对应测试；不得通过方法名反射任意 Python 属性。带 `data_channel=True` 的后端方法会同时写入 `dataMethods`，双通道客户端据此把读取分发到数据连接；插件方法 `plugins.access/list/storage.*` 也由同一生成器输出，不要手写契约。
+- **前端 UI 栈以本仓库实现为准**（Add by MHY, 合并 upstream_nanoda 时适用）：主题家族（浅色/深色/旧版浅色/旧版深色/简约/紧凑 + 材质轴）、背景、日志与页面外壳都是本地定制，依赖只用 [package.json](../../../frontend/package.json) 里的 CodeMirror、ECharts、motion、liquid-glass-react 等；上游的 Tailwind + shadcn 重写版不采用，冲突时按本地实现解析，不要整片取上游覆盖主题、外壳与样式。远程访问页沿用本仓库的 SSH 隧道界面，不引入上游的公网直连/P2P/Cloudflare 入口；公告、茗交所（MMEX）、LLM 日报与错误分析、配对码页面保持移除状态，mock 也不再提供 `announcement.get` 之类的已删接口。
+- **插件主题按本地槽位实现**：`src/plugins/` 只消费 `pages`/`panels`/`navigationView`/`overviewView`/`scheduler`/`styles`/`replaceSchedulerStyles`/`icons`；`theme.navigation` 停靠位置与 `theme.overview` 块顺序未实现，不要为了插件把外壳改成多布局模型。`PluginThemeViews` 的导航 items 必须来自本地真实路由，禁止恢复 stock 侧栏入口。插件 `global` 样式可以覆盖本地主题变量，但不能替代或删除 `public/theme.css`、本地主题家族和材质轴。
+- **旧版两列总览里的插件面板必须跨两列**：`.instance-page-grid` 在 ≥951px 是「左栏调度 + 右列资源/日志」的定高网格，`PluginPanels` 是它的第三个流内子项，留在自动流里会掉进 16–20rem 的左列并被 `main` 的 `overflow:hidden` 裁掉。`legacy.css` 用 `:has(> .apu-panels)` 把它放到第二行整行跨列，行高按内容但封顶 `min(38dvh, 26rem)`、超出部分在面板区自己滚；没有插件时这一行不存在，两列布局保持原样。
+- **e2e 的 WebSocket 路由要带查询串**：双通道连接地址含 `?channel=control|data`，`page.routeWebSocket` 用 `**/api/v1/ws*`；只写 `**/api/v1/ws` 会漏接连接，导致测试挂起。直接 `new WebSocket(...)` 的夹具可不带 channel，后端会按单连接处理。
 - **`base: './'` 不能改回绝对路径**：这是远程访问反代的硬性要求，且配套要求 deploy.yaml 的 `RemoteAccessMode` 为 ssh。
 - **不要在 React 中重复登记游戏配置**：配置表单直接读取后端生成的 args.json、menu.json 与翻译文件；新增任务或参数只需改 `module/config/` 并重新生成。
 - 新增选择器使用 `FormControls.tsx` 的 `Select`，配置字段使用 `FieldInput`，不要在各页面单独绘制箭头、勾选等图标。
-- 控制台固定文案在 `src/i18n.ts`（五种语言）；游戏任务配置的名称与说明翻译在 `module/config/i18n/`，二者独立，别改错位置。
+- 控制台固定文案在 `src/i18n.ts`（四种语言）；游戏任务配置的名称与说明翻译在 `module/config/i18n/`，二者独立，别改错位置。
 - 主题与语言只存浏览器（localStorage），不写入服务端部署配置；**背景是例外**：生效记录存 `cache/background/preference.json`，图库文件存 `cache/background/library/`，所以换浏览器或换访问地址（局域网 IP 与 frp 公网域名各算一份浏览器存储）看到的是同一张背景。旧的浏览器 IndexedDB 上传图会在首次打开时自动迁移进服务端图库。
+
+## 17. 上游差异与已接纳修复
+
+合并 upstream_nanoda/master 时，上游前端同时包含两件事：独立的协议/插件功能，以及整体 Tailwind 4 + shadcn 的换肤重写。本树只接纳前者：
+
+**已接纳**
+
+- 操作/数据双 WebSocket 与二进制分帧传输（`src/api/socket.ts`、`src/api/client.ts`、`src/api/client.test.ts`），保留 `document.baseURI` 反代路径与断线重连语义；旧后端无 `channel` 时单连接兼容。
+- APU 插件 SDK、插件管理页、插件页面/面板、导航替换、总览替换、调度器替换、主题样式槽位、插件存储与权限校验（`frontend/plugin-sdk/`、`src/plugins/`、`src/pages/Plugins.tsx`）。
+- `useInstanceOverview` 的跨实例隔离：切换实例后的首帧不再显示上一个实例的总览，旧实例返回的异步结果也不会写进新实例。
+- `useSchedulerControls` 的同步防重入与过期实例结果拦截：同帧连点不会重复发启停请求，实例切换后返回的旧响应会被丢弃。
+- 插件调度卡片的 `data-apu-part`、`replaceSchedulerStyles` 与图标替换；插件导航不包含 stock 侧栏入口。
+- 生成契约中的 `plugins.*` 与 `dataMethods`；e2e 的 WebSocket 路由匹配补上 `?channel=` 查询串。
+
+**未接纳（保留本地实现）**
+
+- 上游把整站迁到 Tailwind 4 + shadcn/radix 的组件与样式重写，包括外壳、设置页、表单、弹层、表格和主题家族更名。本树继续用本地 React 组件、现有 CSS 域文件、六套主题与玻璃/朴素材质轴。
+- 上游 `theme.navigation` 的 top/left/right/bottom 停靠位置与 `theme.overview` 的内置块顺序；本地是固定侧栏 + 固定总览布局，接入这两个字段会与本地外壳冲突，已在上文说明具体机制。
+- 上游启动器 WebSocket 票据（`auth.launcher`）与桌面启动器协议：本树后端只有本地启动器通道，未导出该方法。
+- 上游公告、茗交所（MMEX）、LLM、配对、Cloudflare/公网直连相关页面与入口：本树保持删除，也没有用插件系统变相恢复。
+- 上游的品牌图标/ProjectLogo 与 Clarity 遥测：本树继续使用 ALAS 品牌与本地图标，`index.html` 不含 Clarity。
 
 ## 19. 调试方法
 
 - 界面交互问题先用 mock 模式复现（无需 Python 与模拟器）；`AZURPILOT_MOCK_SCENARIO=empty` 从零实例测首次创建，`AZURPILOT_MOCK_PASSWORD` 可测登录与重连。
+- 隔离合并树里 `module/config/i18n` 可能仍是冲突件：给 mock 与测试设置 `AZURPILOT_CONFIG_ROOT=/path/to/resolved/tree`，它会只读借用该树的 `module/config`、`config/template.json` 与 `assets`；不要为此改写父树或直接改冲突中的 i18n。
 - 模拟统计报告的逐点序列同真实接口使用 `{t, v, s?}`，时间为微秒整数；通过前端 `normalizeReport` 还原后再渲染，避免旧 `{time, value}` 夹具导致日期与指标显示 NaN。
 - e2e 失败先看截图输出在被 git 忽略的 `frontend/test-results/`；先确认跑的是哪套配置（主配置连临时 Python 后端，mock 配置连内存模拟服务）。
 - 类型报错疑似与后端契约不一致时，先重跑 `dev_tools.export_api_schema`，再排查是否有人手改了生成产物。

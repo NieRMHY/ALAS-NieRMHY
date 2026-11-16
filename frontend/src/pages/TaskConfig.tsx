@@ -19,7 +19,7 @@ import { MeowfficerScorePanel } from '../components/MeowfficerScorePanel'
 import { OpsiSimulatorPanel } from '../components/OpsiSimulatorPanel'
 import { FieldInput } from '../components/FieldInput'
 import { StorageField } from '../components/StorageField'
-import { SchedulerWidget } from '../components/SchedulerWidget'
+import { PluginScheduler } from '../plugins/PluginScheduler'
 import { TaskQueue } from '../components/TaskQueue'
 import { useInstanceOverview } from '../components/useInstanceOverview'
 import { editor, prepareValue } from '../config/editors'
@@ -333,7 +333,7 @@ export function TaskConfig() {
   const rail = <aside className={`task-config-rail is-${railView}`} aria-label={railView === 'scheduler' ? ui('scheduler.rail') : ui('task.groupNav')}>
     {railView === 'scheduler'
       ? <div className="task-rail-scheduler">
-          <SchedulerWidget instance={instance} data={railData} onData={setRailData} action={railToggle}/>
+          <PluginScheduler instance={instance} data={railData} onData={setRailData} action={railToggle}/>
           <section className="rail-schedule" aria-label={ui('scheduler.plan')}>
             <div className="rail-section-heading">
               <div><Clock3 size={15}/><span>{ui('scheduler.plan')}</span></div>

@@ -39,7 +39,7 @@ test('智能开荒位于智能调度末尾，显示前置条件并持久化独�
 
 test('两处只读开荒进度可通过清空按钮保存为空', async ({page}) => {
   let seed: {task: string; group: string; arg: string} | undefined
-  await page.routeWebSocket('**/api/v1/ws', socket => {
+  await page.routeWebSocket('**/api/v1/ws*', socket => {
     const server = socket.connectToServer()
     let getId: string | undefined
     socket.onMessage(message => {

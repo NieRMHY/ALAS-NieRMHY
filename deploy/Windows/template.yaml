@@ -91,10 +91,10 @@ Deploy:
     # See here (http://app.azurlane.cloud/en.html) for more infomation.
     EnableRemoteAccess: false
     # Remote access mode
-    # [Auto] auto (prefer P2P/TURN and fall back to SSH forwarding)
-    # [SSH] ssh (legacy SSH reverse tunnel only)
-    # [WebRTC] webrtc (prefer P2P and keep SSH fallback)
+    # Modify by MHY, auto 与 ssh 均只使用已配置的 SSH 反向隧道
+    # auto and ssh both use the configured SSH reverse tunnel
     RemoteAccessMode: auto
+
     # Username when login into ssh server
     # [Default] null (will generate a random one when startup)
     SSHUser: null

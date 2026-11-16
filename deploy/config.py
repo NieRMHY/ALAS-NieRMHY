@@ -76,6 +76,7 @@ class ConfigModel:
     # 远程访问
     EnableRemoteAccess: bool = False
     RemoteAccessMode: str = "auto"
+
     SSHUser: Optional[str] = None
     SSHServer: Optional[str] = None
     SSHExecutable: Optional[str] = None

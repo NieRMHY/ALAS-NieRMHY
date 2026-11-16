@@ -25,7 +25,7 @@ test('三种绘图模式均可从页面运行，结果和独立日志在刷新�
   let heldId = ''
   let startId = ''
   let heldResponse: string | Buffer | undefined
-  await page.routeWebSocket('**/api/v1/ws', socket => {
+  await page.routeWebSocket('**/api/v1/ws*', socket => {
     const server = socket.connectToServer()
     socket.onMessage(message => {
       const request = JSON.parse(String(message))

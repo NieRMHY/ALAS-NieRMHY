@@ -9,7 +9,7 @@ import { Link, NavLink, Outlet, useLocation, useNavigate, useParams } from 'reac
 import { getLayout, subscribeLayout } from './layout'
 import {usesMaterial} from './theme'
 import {NavHandle} from './NavHandle'
-import { ArrowRight, CalendarClock, ChartNoAxesCombined, CirclePause, CirclePlay, Code2, Compass, Download, ExternalLink, FileJson, GalleryHorizontal, Globe, House, LayoutDashboard, LoaderCircle, Maximize2, Menu, Minimize2, Palette, PanelTop, Settings2, WifiOff, Workflow, X } from 'lucide-react'
+import { ArrowRight, CalendarClock, ChartNoAxesCombined, CirclePause, CirclePlay, Code2, Compass, Download, ExternalLink, FileJson, GalleryHorizontal, Globe, House, LayoutDashboard, LoaderCircle, Maximize2, Menu, Minimize2, Palette, PanelTop, Puzzle, Settings2, WifiOff, Workflow, X } from 'lucide-react'
 import { api } from '../api/client'
 import { editor } from '../config/editors'
 import {bulkAction, bulkTargets} from './instanceBulk'
@@ -37,9 +37,12 @@ import { useSystemNotifications } from './systemNotifications'
 import { usesLegacyLayout, usesLegacyShell, showsRightRail } from './theme'
 import { cycleTabSize, readLastPath, readTabSize, readTopbarMode, setTopbarMode, subscribeTabSize, subscribeTopbarMode, writeLastPath } from './topbarPrefs'
 import { INSTANCE_NAME_PATTERN } from './instanceName'
+import { PluginLinks } from '../plugins/views'
+import { PluginNavigation } from '../plugins/PluginThemeViews'
+import { usePlugins } from '../plugins/context'
 
 /* 旧版外壳下也要显示居中页名的顶层路由。 */
-const PRIMARY_NAV_PATHS = ['/updater', '/interface', '/remote', '/configs', '/settings', '/dev']
+const PRIMARY_NAV_PATHS = ['/updater', '/interface', '/remote', '/configs', '/settings', '/dev', '/plugins']
 
 export function CreateInstance({onClose, startWithImport = false}: {onClose: () => void; startWithImport?: boolean}) {
   const [name, setName] = useState('')
@@ -133,7 +136,8 @@ export function App() {
   const {instancesLoaded, instances, schema, t, ui, notify, previewEnabled, devMode, setDevMode, theme, compactRailSide} = useApp()
   /* 开发者工具的模拟状态：只影响实例状态徽章与更新角标。 */
   const devOverride = useDevOverride()
-  const {instance} = useParams()
+  const {instance, pluginId, pageId} = useParams()
+  const {plugins} = usePlugins()
   const navigate = useNavigate()
   const location = useLocation()
   const [creating, setCreating] = useState(false)
@@ -155,7 +159,9 @@ export function App() {
   /* 图形调度是系统编辑页，不伪装成可执行的游戏任务。 */
   const schedulerEditor = currentTask === SCHEDULER_EDITOR
   const currentTaskLabel = currentTask ? taskLabel(currentTask, ui, t) : ''
-  const activeSection = location.pathname.includes('/task/') ? ui('nav.taskConfig') : location.pathname.endsWith('/resources') ? ui('nav.resources') : location.pathname.endsWith('/statistics') ? ui('nav.statistics') : location.pathname.endsWith('/settings') ? ui('nav.settings') : location.pathname.endsWith('/interface') ? ui('nav.interface') : location.pathname.endsWith('/remote') ? ui('nav.remote') : location.pathname.endsWith('/updater') ? ui('nav.updater') : location.pathname.endsWith('/configs') ? ui('nav.configs') : location.pathname.endsWith('/dev') ? ui('nav.developer') : instance ? instance : ui('nav.home')
+  const pluginTitle = plugins.find(plugin => plugin.enabled && plugin.manifest.id === pluginId)
+    ?.manifest.pages?.find(page => page.id === pageId)?.title
+  const activeSection = pluginTitle ?? (location.pathname === '/plugins' ? ui('nav.plugins') : location.pathname.includes('/task/') ? ui('nav.taskConfig') : location.pathname.endsWith('/resources') ? ui('nav.resources') : location.pathname.endsWith('/statistics') ? ui('nav.statistics') : location.pathname.endsWith('/settings') ? ui('nav.settings') : location.pathname.endsWith('/interface') ? ui('nav.interface') : location.pathname.endsWith('/remote') ? ui('nav.remote') : location.pathname.endsWith('/updater') ? ui('nav.updater') : location.pathname.endsWith('/configs') ? ui('nav.configs') : location.pathname.endsWith('/dev') ? ui('nav.developer') : instance ? instance : ui('nav.home'))
   function handleBrandLogoClick(event: MouseEvent<HTMLImageElement>) {
     if (devMode || !recordDevLogoClick()) return
     event.preventDefault()
@@ -196,7 +202,12 @@ export function App() {
   useEffect(() => {
     if (connection !== 'ready') return
     /* notifications 与当前实例无关：任何工作区都要订，任务出错时才能弹系统通知。 */
-    void api.request('events.subscribe', {instance: instance ?? null, topics: instance ? previewEnabled ? ['notifications', 'instances', 'overview', 'logs', 'preview'] : ['notifications', 'instances', 'overview', 'logs'] : ['notifications', 'instances']}).catch(error => notify(error.message, true))
+    const topics: Array<'notifications' | 'instances' | 'plugins' | 'overview' | 'logs' | 'preview'> = ['notifications', 'instances', 'plugins']
+    if (instance) {
+      topics.push('overview', 'logs')
+      if (previewEnabled) topics.push('preview')
+    }
+    void api.request('events.subscribe', {instance: instance ?? null, topics}).catch(error => notify(error.message, true))
   }, [instance, connection, notify, previewEnabled])
   // 旧版主题下点进实例后，外壳回到「顶栏跨全宽 + 单列侧栏」；主页视图一律沿用新版外壳。
   const legacyShell = usesLegacyShell(theme, instance)
@@ -219,9 +230,9 @@ export function App() {
   // Modify by MHY, 顶栏/侧栏品牌位换 essex 头图（原 azurpilot.svg），文字 ESSEX Secretary
   const brand = <><Link to="/" className="brand-title" aria-label={`ALAS ${ui('nav.home')}`}><img src={`${import.meta.env.BASE_URL}alas-icon.png`} alt="" className="brand-logo" onClick={handleBrandLogoClick}/><span>ESSEX Secretary</span></Link>{updateAvailable && <Link className="update-notice sidebar-update-notice" to="/updater" aria-label={ui('nav.newVersion')} title={ui('nav.newVersion')}><span>{ui('nav.newBadge')}</span></Link>}</>
   // 旧版顶栏的第三列是居中的页面名：实例页写任务名，无实例时写导航项名。
-  const pageTitle = instance
+  const pageTitle = pluginTitle ?? (instance
     ? currentTask ? currentTaskLabel : location.pathname.endsWith('/resources') ? ui('nav.resources') : location.pathname.endsWith('/statistics') ? ui('nav.statistics') : ui('nav.overview')
-    : activeSection
+    : activeSection)
   /* 分页模式把所有实例铺在顶栏一行；原模式仍把实例收在下拉里。两种模式共用这一个开关。 */
   const tabsMode = topbarMode === 'tabs' && instances.length > 0
   /* 窄屏下 home.css 会把标签条藏起来，此时展示切换器。 */
@@ -295,7 +306,7 @@ export function App() {
      隧道远程访问首帧就走 auth，React 会直接抛 #300 崩掉整页。 */
   if (connection === 'auth') return <Login/>
   const hasDockedInspector = inspector.open && inspector.docked && !inspector.minimized
-  return <div className={`app-shell ${layout.sidebarCollapsed ? 'nav-collapsed' : ''} ${hasDockedInspector ? 'has-docked-inspector' : ''} ${showRail ? 'with-rail' : ''} ${currentTask ? 'task-config-shell' : ''} ${legacyShell ? 'legacy-shell' : ''} ${legacyHomeShell ? 'legacy-shell legacy-home-shell' : ''} ${mobileOpen ? 'mobile-open' : ''} ${railOpen ? 'rail-open' : ''}`}>
+  return <div data-apu-component="shell" className={`app-shell ${layout.sidebarCollapsed ? 'nav-collapsed' : ''} ${hasDockedInspector ? 'has-docked-inspector' : ''} ${showRail ? 'with-rail' : ''} ${currentTask ? 'task-config-shell' : ''} ${legacyShell ? 'legacy-shell' : ''} ${legacyHomeShell ? 'legacy-shell legacy-home-shell' : ''} ${mobileOpen ? 'mobile-open' : ''} ${railOpen ? 'rail-open' : ''}`}>
     <a className="skip-link" href="#main-content" onClick={event => {event.preventDefault(); document.getElementById('main-content')?.focus()}}>{ui('nav.skipContent')}</a>
     {(legacyShell || legacyHomeShell) && topbar}
     <NavHandle/>
@@ -303,10 +314,11 @@ export function App() {
       {/* 旧版把招牌放进顶栏，桌面端这一行隐藏；窄屏侧栏是抽屉，招牌回抽屉里。 */}
       <div className={`sidebar-brand ${legacyShell || legacyHomeShell ? 'legacy-sidebar-actions' : ''}`.trim()}><div className="sidebar-brand-left">{brand}</div><button className="mobile-close icon-button" aria-label={ui('nav.close')} onClick={() => setMobileOpen(false)}><X size={18}/></button></div>
       <SidebarTransition viewKey={instance ? `instance:${instance}` : 'global'}>
-        <nav className="primary-nav" aria-label={ui('nav.primary')}>
+        <PluginNavigation instance={instance} onNavigate={closeDrawer} fallback={<nav className="primary-nav" data-apu-component="navigation" aria-label={ui('nav.primary')}>
           {/* Modify by MHY, 保留资源管理入口，公告与证券入口不恢复。 */}
-          {instance ? <><NavLink to={`${base}/overview`} onClick={closeDrawer}><LayoutDashboard size={17}/>{ui('nav.overview')}</NavLink><NavLink to={`${base}/resources`} onClick={closeDrawer}><Workflow size={17}/>{ui('nav.resources')}</NavLink><NavLink to={`${base}/statistics`} onClick={closeDrawer}><ChartNoAxesCombined size={17}/>{ui('nav.statistics')}</NavLink></> : <><NavLink to="/" end onClick={closeDrawer}><House size={17}/>{ui('nav.home')}</NavLink><NavLink to="/updater" onClick={closeDrawer}><Download size={17}/>{ui('nav.updater')}{updateAvailable && <span className="tiny-dot teal"/>}</NavLink><NavLink to="/interface" onClick={closeDrawer}><Palette size={17}/>{ui('nav.interface')}</NavLink><NavLink to="/remote" onClick={closeDrawer}><Globe size={17}/>{ui('nav.remote')}</NavLink><NavLink to="/configs" onClick={closeDrawer}><FileJson size={17}/>{ui('nav.configs')}</NavLink><NavLink to="/settings" onClick={closeDrawer}><Settings2 size={17}/>{ui('nav.settings')}</NavLink><NavLink to="/dev" onClick={closeDrawer}><Code2 size={17}/>{ui('nav.developer')}</NavLink><a className="nav-open-source" href="https://github.com/wess09/AzurPilot" target="_blank" rel="noreferrer" onClick={closeDrawer}><ExternalLink size={17}/>{ui('nav.openSource')}</a></>}
-        </nav>
+          {instance ? <><NavLink to={`${base}/overview`} onClick={closeDrawer}><LayoutDashboard size={17}/>{ui('nav.overview')}</NavLink><NavLink to={`${base}/resources`} onClick={closeDrawer}><Workflow size={17}/>{ui('nav.resources')}</NavLink><NavLink to={`${base}/statistics`} onClick={closeDrawer}><ChartNoAxesCombined size={17}/>{ui('nav.statistics')}</NavLink></> : <><NavLink to="/" end onClick={closeDrawer}><House size={17}/>{ui('nav.home')}</NavLink><NavLink to="/updater" onClick={closeDrawer}><Download size={17}/>{ui('nav.updater')}{updateAvailable && <span className="tiny-dot teal"/>}</NavLink><NavLink to="/interface" onClick={closeDrawer}><Palette size={17}/>{ui('nav.interface')}</NavLink><NavLink to="/plugins" onClick={closeDrawer}><Puzzle size={17}/>{ui('nav.plugins')}</NavLink><NavLink to="/remote" onClick={closeDrawer}><Globe size={17}/>{ui('nav.remote')}</NavLink><NavLink to="/configs" onClick={closeDrawer}><FileJson size={17}/>{ui('nav.configs')}</NavLink><NavLink to="/settings" onClick={closeDrawer}><Settings2 size={17}/>{ui('nav.settings')}</NavLink><NavLink to="/dev" onClick={closeDrawer}><Code2 size={17}/>{ui('nav.developer')}</NavLink><a className="nav-open-source" href="https://github.com/wess09/AzurPilot" target="_blank" rel="noreferrer" onClick={closeDrawer}><ExternalLink size={17}/>{ui('nav.openSource')}</a></>}
+          <PluginLinks instance={instance} onNavigate={closeDrawer}/>
+        </nav>}/>
         {instance && <TaskNav onNavigate={closeDrawer}/>}
       </SidebarTransition>
     </aside>

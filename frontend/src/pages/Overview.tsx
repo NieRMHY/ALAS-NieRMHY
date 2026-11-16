@@ -15,6 +15,9 @@ import { InstanceActions } from '../components/InstanceActions'
 import { LegacyRail } from '../components/LegacyRail'
 import { Statistics } from './Statistics'
 import { readOverviewPanel, setOverviewPanel, subscribeOverviewPanel } from '../app/overviewPanelPrefs'
+import { PluginFrame } from '../plugins/PluginFrame'
+import { PluginPanels } from '../plugins/views'
+import { usePlugins } from '../plugins/context'
 
 function loadResourceSelection(instance: string) {
   try {
@@ -31,6 +34,7 @@ export function Overview() {
   const [error, setError] = useState('')
   const [selectedResources, setSelectedResources] = useState<string[]>(() => loadResourceSelection(instance))
   const connection = useConnection()
+  const {theme: pluginTheme} = usePlugins()
   const panel = useSyncExternalStore(subscribeOverviewPanel, readOverviewPanel, readOverviewPanel)
 
   useEffect(() => setSelectedResources(loadResourceSelection(instance)), [instance])
@@ -54,6 +58,10 @@ export function Overview() {
     if (event.topic === 'overview' && (event.data as OverviewData).instance === instance) setData(event.data as OverviewData)
   }), [instance])
 
+  const overviewView = pluginTheme?.manifest.theme?.overviewView
+  if (overviewView && pluginTheme) return <div className="apu-overview-view" data-apu-component="overview">
+    <PluginFrame plugin={pluginTheme} entry={overviewView} title={ui('nav.overview')} instance={instance}/>
+  </div>
   if (error) return <ErrorBox message={error}/>
   if (!data) return <Loading/>
 
@@ -62,7 +70,7 @@ export function Overview() {
   const actions = <InstanceActions resources={data.resources} selectedResources={selectedResources} onResourcesChange={updateResourceSelection} showLabel={condensed}/>
 
   // 旧版版式：左列调度器与任务计划，右列资源卡与日志；右栏在旧版主题下不渲染。
-  if (usesLegacyLayout(theme)) return <div className="instance-page-grid">
+  if (usesLegacyLayout(theme)) return <div className="instance-page-grid" data-apu-component="overview">
     <h1 className="legacy-sr-title">{instance}</h1>
     <LegacyRail instance={instance} data={data} onData={setData}>
       {/* 标题即切换主区显示日志还是统计的按钮。 */}
@@ -84,13 +92,15 @@ export function Overview() {
           : <MonitorPanel instance={instance}/>}
       </div>
     </div>
+    <PluginPanels instance={instance}/>
   </div>
 
-  return <div className="overview-page">
+  return <div className="overview-page" data-apu-component="overview">
     {!condensed && <PageTitle className="instance-page-title" title={instance} actions={actions}/>}
     <ResourceCards resources={data.resources} selected={selectedResources}/>
     <div className="overview-main">
       <MonitorPanel instance={instance} actions={condensed ? actions : undefined}/>
     </div>
+    <PluginPanels instance={instance}/>
   </div>
 }

@@ -59,7 +59,7 @@ test('新建实例使用真实 API，移动端无横向溢出', async ({page}) =
 
 test('断线后自动恢复，保留未保存草稿', async ({page}) => {
   const sockets: WebSocketRoute[] = []
-  await page.routeWebSocket('**/api/v1/ws', socket => {
+  await page.routeWebSocket('**/api/v1/ws*', socket => {
     socket.connectToServer()
     sockets.push(socket)
   })
@@ -89,7 +89,7 @@ test('自动预览在重连后恢复订阅，离开总览后取消', async ({pag
     const message = JSON.parse(String(frame.payload))
     if (message.method === 'events.subscribe') subscriptions.push(message.params.topics)
   }))
-  await page.routeWebSocket('**/api/v1/ws', socket => {
+  await page.routeWebSocket('**/api/v1/ws*', socket => {
     socket.connectToServer()
     sockets.push(socket)
   })

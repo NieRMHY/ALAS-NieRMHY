@@ -18,6 +18,7 @@ permissions:
   contents: read
 
 jobs:
+
   frontend:
     name: React 与 WebSocket 检查
     runs-on: ubuntu-latest
@@ -48,6 +49,8 @@ jobs:
       - name: 校验 API 与前端
         run: |
           uv run ruff check module/api module/runtime deploy/frontend.py --select F821,F401
+          # Modify by MHY, 远程访问保留 SSH 通道及其失败恢复验证。
+          uv run python -m pytest tests/test_ssh_provider_failure.py tests/test_deploy_redirect_fields.py tests/test_plugin_service.py tests/test_write_queue.py -q
           uv run python -m unittest tests.test_api tests.test_api_lifecycle tests.test_config_transaction tests.test_runtime_task_handler tests.test_frontend_build tests.test_gui_supervisor_exit
           uv run python -m unittest tests.test_island_walk_rules tests.test_island_cargo_preparation tests.test_mind_calculator tests.test_mind_scan tests.test_mind_scan_stuck tests.test_mind_scan_bottom tests.test_mind_scan_identity tests.test_dock_scan_recovery tests.test_fleet_tech tests.test_fleet_tech_scan
           uv run python -m unittest tests.test_dock_data tests.test_dock_service tests.test_fleet_database tests.test_fleet_database_lifecycle tests.test_fleet_ledger tests.test_fleet_legacy tests.test_fleet_legacy_service tests.test_mind_calculator_mock
@@ -131,7 +134,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      # OpenCV 在无头 CI 环境需要系统运行库（与 deploy/docker/Dockerfile 保持一致）。
+      # OpenCV 在无头 CI 环境需要系统运行库。
       - name: Install system deps
         run: sudo apt-get update && sudo apt-get install -y libgl1 libglib2.0-0 libgomp1
 

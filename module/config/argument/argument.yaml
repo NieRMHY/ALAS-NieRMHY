@@ -2625,6 +2625,7 @@ _IslandBusinessProduct2: &IslandBusinessProduct2
   option:
     - None
     - spring_flower_tea
+    - banana_mango
     - strawberry_lemon
     - strawberry_honey
     - floral_fruity
@@ -2727,6 +2728,7 @@ IslandBusinessShop2:
     option:
       - None
       - spring_flower_tea
+      - banana_mango
       - strawberry_lemon
       - strawberry_honey
       - floral_fruity

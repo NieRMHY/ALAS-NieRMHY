@@ -556,6 +556,11 @@ button:disabled, input:disabled, textarea:disabled, select:disabled, .select-tri
   .instance-page-main {display: flex; flex-direction: column; gap: 12px; min-height: 0; overflow: hidden}
   .instance-page-main .resource-grid {margin-bottom: 0}
   .instance-page-panel {display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; overflow-y: auto}
+  /* Modify by MHY, 插件面板是总览网格第三项：自动流会把它排到左列下方的 16–20rem 窄格里，
+     两列的定高加上 main 的 overflow:hidden 又会把它整段裁掉。给它一整行跨两列，
+     行高按内容但封顶，更高的部分在面板区自己滚；没有插件时这一行不存在，两列布局保持原样。 */
+  .instance-page-grid:has(> .apu-panels) {grid-template-rows: minmax(0, 1fr) auto}
+  .instance-page-grid > .apu-panels {grid-column: 1 / -1; grid-auto-rows: max-content; align-content: start; min-height: 0; max-height: min(38dvh, 26rem); overflow-y: auto; margin-bottom: 0}
   /* 搜索框与参数卡同宽，「任务设置和搜索对齐」；下方间距交给 --config-card-gap，与卡片之间保持一致。 */
   .task-config-settings .config-toolbar .input-icon {max-width: none}
   /* 资源统计在旧版下没有左列，整页一条内容带；和 .instance-page-grid 一样撑满 main 的剩余高度。 */

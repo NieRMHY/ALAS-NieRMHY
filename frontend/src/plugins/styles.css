@@ -1,0 +1,22 @@
+/* 插件 iframe、面板与主题槽位：沿用本地控制台的间距与变量。 */
+.apu-frame {position:relative; min-width:0; min-height:5rem}
+.apu-frame iframe {display:block; width:100%; height:var(--apu-frame-height, 12rem); border:0; background:transparent}
+.apu-frame iframe.apu-frame-pending {visibility:hidden}
+.apu-frame-loading {position:absolute; inset:0; display:grid; place-items:center; margin:0; color:var(--muted)}
+.apu-page {--apu-frame-height:clamp(22rem, 65dvh, 52rem); width:100%; min-width:0; padding:0; overflow:hidden}
+.apu-panels {display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%, 18rem),1fr)); gap:12px; flex:none; margin-bottom:12px}
+.apu-panel {min-width:0; overflow:hidden}
+.apu-panel .panel-heading h2 {display:flex; align-items:center; gap:8px}
+.apu-scheduler {min-width:0; --apu-frame-height:11rem}
+.apu-scheduler-icon {width:1em; height:1em; object-fit:contain; flex:none}
+.apu-navigation {--apu-frame-height:clamp(18rem, 55vh, 44rem); min-width:0}
+.apu-plugin-row {display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px; padding:16px 21px; border-top:1px solid var(--border)}
+.apu-plugin-meta {min-width:0; max-width:100%; overflow-wrap:anywhere}
+.apu-plugin-meta h3 {margin:0; font-size:14px; font-weight:600}
+.apu-plugin-meta p {margin:2px 0 0; color:var(--muted); font-size:13px}
+.apu-plugin-meta .apu-plugin-permissions {font-size:12px}
+.apu-plugin-actions {display:flex; flex-wrap:wrap; gap:8px}
+.apu-plugin-confirm {justify-content:flex-end; padding-top:8px}
+.apu-plugin-message {padding:0 21px 16px}
+.apu-plugin-empty {margin:0; padding:16px 21px; border-top:1px solid var(--border); color:var(--muted); font-size:13px}
+.apu-overview-view {--apu-frame-height:clamp(22rem, 65dvh, 52rem); width:100%; min-width:0}
