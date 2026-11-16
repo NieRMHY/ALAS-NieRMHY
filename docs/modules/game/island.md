@@ -158,7 +158,7 @@ flowchart TD
 | `island_rancher.py` | 磨坊 + 牧场 | `IslandRancher` | 按岗位固定饲料种类补磨坊加工（小麦→鸡饲料等）；`run()` 末尾内联 `IslandFishery(...).run(ranch_finish_times=...)` 合并计时器 |
 | `island_fishery.py` | 渔场养殖 | `IslandFishery` | 鱼苗商店分淡水/海水/其他页签；按每苗产量反推购买数；体力门槛 98；鲤鱼（淡水）、马鲛鱼（海水）每苗产 4，识别图取自国际服截图，尚无岗位「生产中」图，工作中的鲤鱼/马鲛鱼岗位按未知产品处理；产品选择页找不到目标产品时用 `back_to_postmanage_from_dispatch` 逐层退回，不再点无效的岗位关闭按钮导致卡死；养殖后鱼肉少于 `MinFreshwaterFishMeat`/`MinSaltwaterFishMeat` 时调用 `island_fish_meat.py` 兑换 |
 | `island_fish_meat.py` | 鱼肉加工（移植自 ALAS） | `IslandFishMeatExchange`（混入渔场） | 岛屿主页「商店」→ 侧栏第 7 项「鱼肉加工」→ 淡水/海水子页签；鱼卡 OCR 鱼名与库存，按产量从高到低只换到目标数量，各鱼保留渔场的养殖底线（`MinBass`/`MinKoiCarp`/`MinMackerel`/`MinYellowfinTuna`）；侧栏、确认弹窗、获得物品弹窗按颜色识别（EN 通用弹窗资源不匹配），点过「商店」后才点侧栏 |
-| `island_mine_forest.py` | 矿山/林场 | `IslandMineForest` | 仓库顺序不固定，自实现「OCR 品名 → 读数字」库存扫描（`ITEM_CN_NAMES` 同时收录中文名与国际服英文名首词）；每岗产 4 个、各产物有最大连续次数；体力门槛 80 |
+| `island_mine_forest.py` | 矿山/林场 | `IslandMineForest` | 仓库顺序不固定，自实现「OCR 品名 → 读数字」库存扫描（`ITEM_CN_NAMES` 同时收录中文名与国际服英文名首词）；每岗每次产 4 个、各产物有单次派遣最大次数；体力门槛 80；派遣先补各类 `Min*` 库存缺口（计入在产数量，按仓库库存升序轮转，受空岗数量限制），有富余岗位时再按 `MineSilver`/`CutElegant` 的数量生产默认品种，超出的空岗闲置 |
 | `island_grill.py` | 乌鱼烤肉店 | `IslandGrill` | 最薄的店铺：仅声明 8 菜品、2 套餐、2 个岗位按钮（实际岗位数由 `IslandGrill.PostNumber` 决定，默认 1），全部逻辑走基类 |
 | `island_teahouse.py` | 白熊饮品 | `IslandTeahouse` | 季节高优先级饮品走固定坐标（不滑动不比色）；「迎春花茶优先生产」开关；为手动配置的季节饮品补注册防止 KeyError |
 | `island_restaurant.py` | 有鱼餐馆 | `IslandRestaurant` | 季节菜品自动切换槽位；覆盖 `select_product` 支持固定坐标季节菜 |
@@ -180,7 +180,7 @@ flowchart TD
 冬季 16 项按产出方式分三类，只有一部分会自动排产（总开关 `IslandSeasonPlan.WinterTaskEnabled`，默认开）：
 
 - **自然类 8 项**：走上段的持续库存下限叠加（`max(日常下限, Need + 100)`），配置仅保留 `Need_`，没有 `Done_`。
-- **餐品类 3 项**（禽肉土豆拼盘 100、芒果糯米饭 50、草莓夏洛特 25）：`island_winter_meals.py` 按「普通补货 → 冬季有限增产 → 闲时生产」调度。普通目标取 `max(MealNumber 库存下限, 一轮货架直售数量 + 各套餐递归耗用)`，跨店原料相加；八个原槽位（含重复项）顺序保留，仅在本轮运行中抬高目标或补入缺失商品。任务目标再加未提交需求与 `MealBuffer`（默认 20），扣除已知仓库与在产数量后派单。日工时上限为「本店配置岗位数 × 24 小时 × 90% − 一轮货架补货及其整条配方工时」；货架按等级和实际配置服务员的加成估算，这只是补货容量，并非已经验证的日销量，较大的 `MealNumber` 库存下限也不会每天重复计费。芝士另留足直售、醒神套餐及普通夏洛特的全部需求，只有超出部分才能供任务夏洛特使用。当天各店已派工时 `spent` 与最近一次已知库存加在产 `totals` 存入按实例隔离的 `config/island/winter_meals_<实例>.json`；实际少产按实际量回账，已开工但数量未知保留预占，跨天清空二者。`Done_<物品>` 或需求为 0 后移除任务增量，恢复用户原有闲时生产；任务活跃时，相关餐品、任务芝士及消耗它们的挂机套餐都受有限配额约束。
+- **餐品类 3 项**（禽肉土豆拼盘 100、芒果糯米饭 50、草莓夏洛特 25）：`island_winter_meals.py` 按「普通补货 → 冬季有限增产 → 闲时生产」调度。普通目标取 `max(MealNumber 库存下限, 一轮货架直售数量 + 各套餐递归耗用)`，跨店原料相加；八个原槽位（含重复项）顺序保留，仅在本轮运行中抬高目标或补入缺失商品。任务目标再加未提交需求与 `MealBuffer`（默认 20），扣除已知仓库与在产数量后派单。日工时上限为「本店配置岗位数 × 24 小时 × 90% − 一轮货架补货及其整条配方工时」；货架按等级和实际配置服务员的加成估算，这只是补货容量，并非已经验证的日销量，较大的 `MealNumber` 库存下限也不会每天重复计费。芝士另留足直售、醒神套餐及普通夏洛特的全部需求，只有超出部分才能供任务夏洛特使用。当天各店已派工时 `spent` 与最近一次已知库存加在产 `totals` 存入按实例隔离的 `config/island/winter_meals_<实例>.json`；实际少产按实际量回账，已开工但数量未知保留预占，跨天清空二者。`Done_<物品>` 或需求为 0 只从下一轮起移除该任务的增量与提醒（已开工批次照常完成，店铺营业与闲时配置继续），恢复用户原有闲时生产；任务活跃时，相关餐品、任务芝士及消耗它们的挂机套餐都受有限配额约束。
 - **制造类 5 项**：只有刀叉餐具（`cutlery`）的选择/仓库/岗位素材齐全，其余香囊/墨盒/钟表/蓄电池只登记能力状态、不派产（`island_manufacture_quota.py`）。配额按「需求 − 已知库存 − 已知在制 − 本轮已下单」算，任何一项未知就挂起。工业线先执行显式 `Industrial.Products`，将新订单计入在制，再用剩余岗位补任务；未配置产品顺序时先补有限缺口，再回退铁钉，避免常驻回退占满任务岗位。已确认锁定的岗位不计入未知在制，未识别状态仍会暂停同产线配额。
 
 库存严格读取当前可见的 6×2 仓库页：未找到模板、数字识别失败或在产数量未知均保留未知状态，相关有限排产与达标提醒暂停。账本是最近巡检快照，期间销售、货运或手动提交会改变仓库；提醒阈值包含任务量、营业储备和缓冲，提交前仍需核对现货；餐品与制造品提交后勾选 `Done_` 或更新剩余需求，自然类无需标记、持续保有库存。自动提交保持关闭。芒果配置默认按本次要求使用 200，游戏原始任务表仍保留 250，显式 `Need_mango` 优先。
@@ -284,9 +284,10 @@ flowchart TD
   「没有仓库模板」的约定）都算**未知**：不当 0、不算缺口、不算达标——默认不进 `build_progress`
   的进度，需要区分「未知」与「真的 0」时用 `build_progress(..., with_known=True)`（条目为
   `[当前或 None, 需求, 是否已知]`）或 `progress_values`。
-- **已完成**：勾选后该餐品整体退出进度——不排产、不发邮件、不再被轮换成常驻餐品，空闲产能自动转去
-  做下一个缺口最大的；取消勾选即恢复。需求数量改成 0 同样会停掉该项。提交任务后仓库数量掉下去、又
-  重新出现缺口时，会再次触发方案刷新。
+- **已完成**：勾选后该餐品退出冬季进度，从下一轮起停止该项任务增量与达标提醒；已开工批次照常完成，
+  日常营业需求与用户闲时配置继续。各店依次处理普通补货、已启用的季节优先批次、其余未完成任务、闲时生产；冬季任务按表内顺序
+  使用本店剩余预算，岗位与预算不跨店转移，当天已派工时也不会因勾选完成而退还。取消勾选后恢复任务目标。
+  餐品需求设为 0 同样只关闭该项冬季增量。仍活跃的任务出现新缺口时，会再次触发方案刷新。
 - **方案刷新触发条件**（`request_refresh_on_gap_change`，两条件并列，任一成立即刷新）：
   出现**新缺口**（要把该物品从货架挪进囤积），或**「已完成」集合与快照不同**。后者是必需的：
   勾上「已完成」后该项从缺口集合里消失，只比较「是否出现新缺口」的旧判据看不见这种子集变化，
@@ -423,7 +424,7 @@ stateDiagram-v2
 | `IslandOrchard.AmagiChanRubber` | checkbox | false | 小天城优先种橡胶 |
 | `IslandRancher.MinChicken` / `MinPork` | 数值 | — | 畜牧产品阈值 |
 | `IslandFishery.PlantYellowfinTuna` / `Min*` / `DefaultFish` | 数值/select | — / yellowfin_tuna | 默认产品的岗位数、各鱼种阈值、空余岗位的默认产品（未知值退回黄鳍金枪鱼） |
-| `IslandSeasonPlan.WinterTaskEnabled` / `MealBuffer` / `NotifyEnable` / `Need_<物品>` / `Done_<物品>` | checkbox/数值/checkbox/数值/checkbox | true / 20 / true / 见配置（芒果 200） / false | 冬季开发计划任务：自然资源下限在运行时叠加为 `max(日常下限, 需求 + 100)`（见 `island_winter_resources.py`）；餐品提醒线为 `需求 + 营业储备 + MealBuffer`（见 `island_winter_meals.py`）；`WinterTaskEnabled` 关闭时冬季进度、提醒与任务排产增量停止（`read_slots` 返回空），日常排产继续，自然类持续保库存、无 `Done`，餐品与制造品的 `Done` 或各项需求 0 取消该项增量，只影响冬季 |
+| `IslandSeasonPlan.WinterTaskEnabled` / `MealBuffer` / `NotifyEnable` / `Need_<物品>` / `Done_<物品>` | checkbox/数值/checkbox/数值/checkbox | true / 20 / true / 见配置（芒果 200） / false | 冬季开发计划任务：自然资源下限在运行时叠加为 `max(日常下限, 需求 + 100)`（见 `island_winter_resources.py`）；餐品提醒线为 `需求 + 营业储备 + MealBuffer`（见 `island_winter_meals.py`）；`WinterTaskEnabled` 关闭时冬季进度、提醒与任务排产增量停止（`read_slots` 返回空），日常排产继续，自然类持续保库存、无 `Done`，餐品与制造品的 `Done` 或各项需求 0 只取消该项增量及餐品达标提醒（已开工批次不取消，制造品尚无达标提醒），只影响冬季 |
 | `IslandTeahouse.Seasonal` | checkbox | false | 迎春花茶/季节饮品优先生产开关（与全局季节叠加） |
 | `IslandJuuCoffee.Friedrich` | checkbox | false | 特殊角色（腓特烈）派遣开关 |
 | `IslandBusiness.BatchEnabled` / `Batch1Shops` / `Batch2Shops` | checkbox/multiselect | true / [3,1,5] / [2,4] | 分批经营与批次划分 |
@@ -435,6 +436,7 @@ stateDiagram-v2
 | `IslandPlan.IslandWalk.*` | 多行文本（走位规则） | 见 `module/island/island_walk.py` | 每条路线的走位规则，如 `up 3000, right 800, jump`（对所有控制方式生效）；`<路线>Enable` 勾选后由「全局配置」任务走一遍做校验 |
 | `IslandPlan.PlanShelfSlots` / `PlanVerifiedOnly` / `PlanMineVerified` | input/checkbox | 4 / true / true | 方案生成参数：上架格数（见 §6.5 口径，未配置时按店铺等级）、只排已验证可生产的商品、刷新前从日志挖掘白名单 |
 | `IslandPlan.PlanExtraMeals` | checkbox | false | 额外餐品排产：关闭时生产清单只排货架补货与赛季囤积，打开才用剩余工时生产不在货架上的商品（见 §6.5 口径） |
+| `IslandMine.MineSilver` / `IslandForest.CutElegant` | 数值 | 1 / 1 | 默认品种的岗位数；资源场要满产就设成与 `Positions` 相同：空岗先补各类 `Min*` 库存缺口，剩下的最多用此数生产 `DefaultOre`/`DefaultWood`，再多的空岗闲置，填 0 只补库存 |
 | `IslandMine.DefaultOre` / `IslandForest.DefaultWood` | select | Silver / Elegant | 空余岗位生产的默认矿石/木材（岗位数为 `MineSilver`/`CutElegant`） |
 | `IslandRestaurant/Teahouse/Grill/JuuEatery/JuuCoffee.PostNumber` | 数值 | 2/2/1/1/2 | 各店岗位数，方案生成器的日产能上限 = 岗位数 × 24 时 × 0.9（真机五家店都填 2） |
 
