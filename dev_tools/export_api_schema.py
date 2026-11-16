@@ -4,6 +4,7 @@ from pathlib import Path
 
 from module.api.protocol import AuthParams, SubscribeParams
 from module.api.router import Method, Router
+from module.api.ws_transport import DATA_TOPICS, FRAME_BYTES, REQUEST_BYTES, RESPONSE_BYTES
 
 
 def typescript(schema, definitions):
@@ -42,11 +43,22 @@ def main():
     registry['auth.login'] = Method(AuthParams, lambda _: None)
     registry['events.subscribe'] = Method(SubscribeParams, lambda _: None)
     contracts, lines = {}, ['// 由 dev_tools.export_api_schema 生成，请勿手动编辑。', 'export interface Parameters {']
+    data_methods = []
     for name, entry in registry.items():
         schema = entry.params.model_json_schema()
         contracts[name] = {'mutates': entry.mutates, 'params': schema}
+        # Modify by MHY, 只保留双连接通道标记；本地已无本机限定方法，不再输出 localOnly
+        if entry.data_channel:
+            if entry.mutates:
+                raise ValueError(f'{name}: 写操作必须走操作通道')
+            contracts[name]['channel'] = 'data'
+            data_methods.append(name)
         lines.append(f'  "{name}": {typescript(schema, schema.get("$defs", {}))}')
     lines.append('}')
+    transport = {'frameBytes': FRAME_BYTES, 'requestBytes': REQUEST_BYTES, 'responseBytes': RESPONSE_BYTES,
+                 'dataTopics': sorted(DATA_TOPICS)}
+    lines.append(f'export const webSocketTransport = {json.dumps(transport)} as const')
+    lines.append(f'export const dataMethods = {json.dumps(data_methods)} as const')
     from module.scheduler.models import (ProgramDocument, CardDefinition, PortDefinition, ResourceObservation,
                                         TaskInvocation, TaskOutcome, ProgramState)
     models = {}
@@ -59,7 +71,9 @@ def main():
     directory = Path(__file__).resolve().parents[1] / 'frontend/src/api'
     directory.mkdir(parents=True, exist_ok=True)
     (directory / 'generated.ts').write_text('\n'.join(lines) + '\n', encoding='utf-8')
-    (directory / 'contract.json').write_text(json.dumps({'version': 1, 'methods': contracts, 'schedulerModels': models},
+    # Modify by MHY, 本地启动器走 HTTP 通道，不导出 /api/v2/launcher/ws 协议
+    (directory / 'contract.json').write_text(json.dumps({'version': 1, 'webSocketTransport': transport,
+                                                        'methods': contracts, 'schedulerModels': models},
                                                      ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
 
 

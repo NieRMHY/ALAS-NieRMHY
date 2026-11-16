@@ -328,7 +328,7 @@
     },
     "IslandSeasonPlan": {
       "name": "Season Tasks (Development Plan)",
-      "help": "No longer reads the Development Plan page (it misreads digits). Each time a shop collects production or checks sales, the warehouse is read as the current amount. You only enter each task's required amount and tick Done for dishes you already submitted. Done dishes stop being produced and notified, and idle capacity moves to the next-largest gap. The dishes for a new season are updated by the program."
+      "help": "No longer reads the Development Plan page (it misreads digits). Each time a shop collects production or checks sales, the warehouse is read as the current amount. You only enter each task's required amount and tick Done for submitted items. From the next round, Done stops that seasonal task increment and meal ready notifications; batches already started still finish. Normal settings remain active, and other tasks use their own shop positions and budget. Natural resources need no Done mark. In winter, natural tasks reserve 100 extra and meal tasks add the Meal Buffer; the season list is updated by the program."
     },
     "IslandBusiness": {
       "name": "Business Module",
@@ -1993,6 +1993,7 @@
       "war_archives_20230223_cn": "archives Revelations of Dust",
       "war_archives_20230525_cn": "archives Confluence of Nothingness",
       "war_archives_20230803_cn": "archives Anthem of Remembrance",
+      "war_archives_20230817_cn": "archives The Fools Scales",
       "war_archives_20231026_cn": "archives Tempesta and the Fountain of Youth",
       "war_archives_20240725_cn": "archives Interlude of Illusions",
       "war_archives_20241024_cn": "archives Tempesta and the Sleeping Sea",
@@ -4133,7 +4134,7 @@
   "OpsiAshAssist": {
     "_info": {
       "name": "META assist",
-      "help": "Beacon assist three times a day"
+      "help": "Beacon assist three times a day\nOperation Siren main storyline must be cleared before using this feature."
     },
     "Enable": {
       "name": "Enable META assists",
@@ -4147,7 +4148,7 @@
   "OpsiGeneral": {
     "_info": {
       "name": "Operation Siren general settings",
-      "help": "All Operation Siren features use these settings"
+      "help": "All Operation Siren features use these settings\nOperation Siren main storyline must be cleared before using this feature."
     },
     "UseLogger": {
       "name": "Use coordinate logger",
@@ -4219,7 +4220,7 @@
   "OpsiAshBeacon": {
     "_info": {
       "name": "META Showdown",
-      "help": ""
+      "help": "Operation Siren main storyline must be cleared before using this feature."
     },
     "AttackMode": {
       "name": "META Showdown",
@@ -4260,7 +4261,7 @@
   "OpsiFleetFilter": {
     "_info": {
       "name": "Fleet settings",
-      "help": ""
+      "help": "Operation Siren main storyline must be cleared before using this feature."
     },
     "Filter": {
       "name": "Sortie fleet filter",
@@ -4270,7 +4271,7 @@
   "OpsiFleet": {
     "_info": {
       "name": "Fleet settings",
-      "help": ""
+      "help": "Operation Siren main storyline must be cleared before using this feature."
     },
     "Fleet": {
       "name": "Sortie fleet",
@@ -4322,7 +4323,7 @@
   "OpsiExploreCleanup": {
     "_info": {
       "name": "Explorable-zone event cleanup",
-      "help": "Requires 100% monthly exploration. Revisit original DANGEROUS zones in exploration order, scan the full map and every fleet radar, and handle missed events and their enemies. Never enter SAFE zones. Uses separate monthly checkpoints saved after leaving each zone, without repeating completed months. If exploration is incomplete, ask to rerun monthly exploration."
+      "help": "Requires 100% monthly exploration. Revisit original DANGEROUS zones in exploration order, scan the full map and every fleet radar, and handle missed events and their enemies. Never enter SAFE zones. Uses separate monthly checkpoints saved after leaving each zone, without repeating completed months. If exploration is incomplete, ask to rerun monthly exploration.\nOperation Siren main storyline must be cleared before using this feature."
     },
     "Progress": {
       "name": "Cleanup progress",
@@ -4517,7 +4518,7 @@
   "OpsiTarget": {
     "_info": {
       "name": "Zone achievements",
-      "help": ""
+      "help": "Operation Siren main storyline must be cleared before using this feature."
     },
     "TargetFarming": {
       "name": "Farm safe zone achievements",
@@ -4534,8 +4535,8 @@
   },
   "OpsiHazard1Leveling": {
     "_info": {
-      "name": "Corrosion 1 Leveling",
-      "help": "Consume Combat Supply Vouchers to gain large amounts of EXP and small amounts of Action Points\nIt is recommended to bring 1-2 preloaded carriers to obtain the highest hourly income.\n\nSome safety restrictions of the original ALAS have been lifted, please set parameters carefully"
+      "name": "Corrosion 1 leveling",
+      "help": "Consume Operation Supply Coins to gain large amounts of EXP and small amounts of Action Points\nIt is recommended to bring 1-2 preloaded carriers to obtain the highest hourly income.\n\nSome safety restrictions of the original ALAS have been lifted, please set parameters carefully\nOperation Siren main storyline must be cleared before using this feature."
     },
     "TargetZone": {
       "name": "Target zone",
@@ -4598,7 +4599,7 @@
   "OpsiSirenBug": {
     "_info": {
       "name": "Siren research device",
-      "help": "Basic options for handling Siren Research Devices"
+      "help": "Basic options for handling Siren Research Devices\nOperation Siren main storyline must be cleared before using this feature."
     },
     "SirenResearch_Enable": {
       "name": "Enable Siren research device",
@@ -4622,8 +4623,8 @@
   },
   "OpsiCheckLeveling": {
     "_info": {
-      "name": "Operation Siren Fleet EXP Check",
-      "help": "Check whether all ships in the sortie fleet have gained full experience, and if so, send a push notification.\nYou need to configure \"Error Push Settings\" in ALAS settings first."
+      "name": "Operation Siren fleet EXP check",
+      "help": "Check whether all ships in the sortie fleet have gained full experience, and if so, send a push notification.\nYou need to configure \"Error Push Settings\" in ALAS settings first.\nIf the EXP check fails, it will be retried. It is recommended to fill all six ship slots or increase the check interval; after 3 consecutive failures a push is sent and the task is delayed.\nOperation Siren main storyline must be cleared before using this feature."
     },
     "TargetLevel": {
       "name": "Push when all ships can level up to this level (0 means no limit)",
@@ -4655,7 +4656,7 @@
   "OpsiFleetAutoChange": {
     "_info": {
       "name": "Fleet auto-compose",
-      "help": "Automatically replace ships that have reached the target level."
+      "help": "Automatically replace ships that have reached the target level.\nOperation Siren main storyline must be cleared before using this feature."
     },
     "Enable": {
       "name": "Enable auto-compose",
@@ -4679,7 +4680,7 @@
   "OpsiScheduling": {
     "_info": {
       "name": "Smart Scheduling Plus",
-      "help": "Operation Siren smart scheduling function, used to coordinate switching between Corrosion 1 Leveling and yellow coin replenishment tasks.\nOnce enabled, it will automatically switch between different tasks and send push notifications based on coins and Action Points.\n\nSome safety restrictions of the original ALAS have been lifted, please set parameters carefully"
+      "help": "Operation Siren smart scheduling function, used to coordinate switching between Corrosion 1 Leveling and yellow coin replenishment tasks.\nOnce enabled, it will automatically switch between different tasks and send push notifications based on coins and Action Points.\n\nSome safety restrictions of the original ALAS have been lifted, please set parameters carefully\nOperation Siren main storyline must be cleared before using this feature."
     },
     "BuyActionPoint": {
       "name": "Buy port AP when AP is insufficient",
@@ -4767,7 +4768,7 @@
   "OpsiSmartExplore": {
     "_info": {
       "name": "Smart exploration",
-      "help": "Smart and monthly exploration cannot be enabled together. Disable the monthly exploration task before enabling smart exploration. If monthly exploration reached 100% this month, smart exploration is unnecessary and skips all three routes."
+      "help": "Smart and monthly exploration cannot be enabled together. Disable the monthly exploration task before enabling smart exploration. If monthly exploration reached 100% this month, smart exploration is unnecessary and skips all three routes.\nOperation Siren main storyline must be cleared before using this feature."
     },
     "Enable": {
       "name": "Enable smart exploration",
@@ -4789,7 +4790,7 @@
   "OpsiPreventActionPointOverflow": {
     "_info": {
       "name": "Prevent AP overflow",
-      "help": "Runs Operation Siren tasks when current AP reaches the upper limit.\nWhen Smart Scheduling is selected, it runs Meowfficer Farming if both AP and Operation Supply Coins are insufficient and no other task can run."
+      "help": "Runs Operation Siren tasks when current AP reaches the upper limit.\nWhen Smart Scheduling is selected, it runs Meowfficer Farming if both AP and Operation Supply Coins are insufficient and no other task can run.\nOperation Siren main storyline must be cleared before using this feature."
     },
     "Task": {
       "name": "Task to run",
@@ -5167,7 +5168,7 @@
     },
     "MineSilver": {
       "name": "Default ore posts",
-      "help": "Number of spare mine posts that produce the default ore; the rest stay idle.",
+      "help": "Idle posts first replenish ore stock deficits, then up to this many remaining posts produce the default ore. 0 leaves posts idle once stock targets are met. Set this to the configured miner position count to keep all remaining posts working.",
       "0": "0",
       "1": "1",
       "2": "2",
@@ -5223,7 +5224,7 @@
     },
     "CutElegant": {
       "name": "Default wood posts",
-      "help": "Number of spare forest posts that produce the default wood; the rest stay idle.",
+      "help": "Idle posts first replenish wood stock deficits, then up to this many remaining posts produce the default wood. 0 leaves posts idle once stock targets are met. Set this to the configured lumberjack position count to keep all remaining posts working.",
       "0": "0",
       "1": "1",
       "2": "2",
@@ -6387,91 +6388,133 @@
   "IslandSeasonPlan": {
     "_info": {
       "name": "Season Tasks (Development Plan)",
-      "help": "No longer reads the Development Plan page (it misreads digits). Each time a shop collects production or checks sales, the warehouse is read as the current amount. You only enter each task's required amount and tick Done for dishes you already submitted. Done dishes stop being produced and notified, and idle capacity moves to the next-largest gap. The dishes for a new season are updated by the program."
+      "help": "The list contains the 16 current winter tasks. Natural products continuously maintain the higher of the stock baseline plus 100 and the daily minimum. They replenish after consumption and have no Done checkbox. Enter the required quantity for meals and manufactured products, then mark them Done after submission to end extra task production. Meal stock comes from warehouse readings during shop collection and sales checks, rather than the Development Plan page."
     },
     "NotifyEnable": {
       "name": "Ready email",
-      "help": "Send one email when the warehouse reaches the required amount (once per item; reset when it drops). Tick Done for tasks you already submitted, otherwise a stock above the requirement keeps notifying.",
+      "help": "Send one email when meal stock covers the task requirement, business reserve and Meal Buffer. Each item is notified once and resets when stock drops. Mark submitted meals Done to end reminders. Natural products replenish continuously and use no readiness email.",
       "True": "On",
       "False": "Off"
     },
-    "Need_apple_juice": {
-      "name": "Apple Juice · Required",
-      "help": "Amount to submit for \"甜蜜引擎\". 0 means do not produce."
-    },
-    "Done_apple_juice": {
-      "name": "Apple Juice · Done",
-      "help": "When ticked, Apple Juice is no longer produced or notified and idle capacity moves to the next-largest gap. Untick to resume.",
+    "WinterTaskEnabled": {
+      "name": "Winter Task Mode",
+      "help": "Applies only in winter. Natural products maintain their stock baseline plus 100; meals receive limited extra production including the Meal Buffer, and manufactured products fill the task deficit. Turning this off removes winter task additions and meal reminders while daily production continues.",
       "True": "On",
       "False": "Off"
     },
-    "Need_iced_coffee": {
-      "name": "Iced Coffee · Required",
-      "help": "Amount to submit for \"咖啡供应\". 0 means do not produce."
+    "MealBuffer": {
+      "name": "Meal Buffer",
+      "help": "Extra amount produced beyond each winter meal task's required amount. Default 20; 0 is allowed. Applies only to winter meal tasks; natural tasks always reserve 100 extra and manufacture tasks get no buffer."
     },
-    "Done_iced_coffee": {
-      "name": "Iced Coffee · Done",
-      "help": "When ticked, Iced Coffee is no longer produced or notified and idle capacity moves to the next-largest gap. Untick to resume.",
+    "Need_tea": {
+      "name": "Tea Leaves · Stock Baseline",
+      "help": "Maintain the higher of this value plus 100 and the daily minimum. Replenish after consumption without a Done checkbox and retain excess stock. Set 0 to disable only this winter addition; daily replenishment continues."
+    },
+    "Need_citrus": {
+      "name": "Citrus Fruit · Stock Baseline",
+      "help": "Maintain the higher of this value plus 100 and the daily minimum. Replenish after consumption without a Done checkbox and retain excess stock. Set 0 to disable only this winter addition; daily replenishment continues."
+    },
+    "Need_mango": {
+      "name": "Mango · Stock Baseline",
+      "help": "Maintain the higher of this value plus 100 and the daily minimum. Replenish after consumption without a Done checkbox and retain excess stock. Set 0 to disable only this winter addition; daily replenishment continues. The game task requires 250. The default baseline is 200, giving a winter minimum of 300."
+    },
+    "Need_avocado": {
+      "name": "Avocado · Stock Baseline",
+      "help": "Maintain the higher of this value plus 100 and the daily minimum. Replenish after consumption without a Done checkbox and retain excess stock. Set 0 to disable only this winter addition; daily replenishment continues."
+    },
+    "Need_freshwater_fish_meat": {
+      "name": "Freshwater Fish Meat · Stock Baseline",
+      "help": "Maintain the higher of this value plus 100 and the daily minimum. Replenish after consumption without a Done checkbox and retain excess stock. Set 0 to disable only this winter addition; daily replenishment continues."
+    },
+    "Need_seawater_fish_meat": {
+      "name": "Saltwater Fish Meat · Stock Baseline",
+      "help": "Maintain the higher of this value plus 100 and the daily minimum. Replenish after consumption without a Done checkbox and retain excess stock. Set 0 to disable only this winter addition; daily replenishment continues."
+    },
+    "Need_chicken_potato": {
+      "name": "Chicken and Potato Hors d'Oeuvre · Required",
+      "help": "Amount to submit for \"Platters of Abundance\"; winter planning adds the Meal Buffer on top of that. 0 only turns off this winter increment; the shop keeps operating on your normal settings."
+    },
+    "Done_chicken_potato": {
+      "name": "Chicken and Potato Hors d'Oeuvre · Done",
+      "help": "When ticked, the winter task increment and ready mail for \"Chicken and Potato Hors d'Oeuvre\" stop from the next round; batches already started still finish, and the shop continues with normal replenishment, enabled seasonal-priority batches, other unfinished tasks, then idle production. Each shop has its own budget. Untick to resume.",
       "True": "On",
       "False": "Off"
     },
-    "Need_roasted_skewer": {
-      "name": "Charcoal Skewers · Required",
-      "help": "Amount to submit for \"烤肉能量\". 0 means do not produce."
+    "Need_rice_mango": {
+      "name": "Sticky Rice with Mango · Required",
+      "help": "Amount to submit for \"Sweet Treats\"; winter planning adds the Meal Buffer on top of that. 0 only turns off this winter increment; the shop keeps operating on your normal settings."
     },
-    "Done_roasted_skewer": {
-      "name": "Charcoal Skewers · Done",
-      "help": "When ticked, Charcoal Skewers is no longer produced or notified and idle capacity moves to the next-largest gap. Untick to resume.",
+    "Done_rice_mango": {
+      "name": "Sticky Rice with Mango · Done",
+      "help": "When ticked, the winter task increment and ready mail for \"Sticky Rice with Mango\" stop from the next round; batches already started still finish, and the shop continues with normal replenishment, enabled seasonal-priority batches, other unfinished tasks, then idle production. Each shop has its own budget. Untick to resume.",
       "True": "On",
       "False": "Off"
     },
-    "Need_salad": {
-      "name": "Veggie Salad · Required",
-      "help": "Amount to submit for \"健康饮食\". 0 means do not produce."
+    "Need_strawberry_charlotte": {
+      "name": "Strawberry Charlotte · Required",
+      "help": "Amount to submit for \"Dessert Reserves\"; winter planning adds the Meal Buffer on top of that. 0 only turns off this winter increment; the shop keeps operating on your normal settings."
     },
-    "Done_salad": {
-      "name": "Veggie Salad · Done",
-      "help": "When ticked, Veggie Salad is no longer produced or notified and idle capacity moves to the next-largest gap. Untick to resume.",
+    "Done_strawberry_charlotte": {
+      "name": "Strawberry Charlotte · Done",
+      "help": "When ticked, the winter task increment and ready mail for \"Strawberry Charlotte\" stop from the next round; batches already started still finish, and the shop continues with normal replenishment, enabled seasonal-priority batches, other unfinished tasks, then idle production. Each shop has its own budget. Untick to resume.",
       "True": "On",
       "False": "Off"
     },
-    "Need_carrot_omelette": {
-      "name": "Carrot Omelette · Required",
-      "help": "Amount to submit for \"营养组合\". 0 means do not produce."
+    "Need_silver": {
+      "name": "Silver Ore · Stock Baseline",
+      "help": "Maintain the higher of this value plus 100 and the daily minimum. Replenish after consumption without a Done checkbox and retain excess stock. Set 0 to disable only this winter addition; daily replenishment continues."
     },
-    "Done_carrot_omelette": {
-      "name": "Carrot Omelette · Done",
-      "help": "When ticked, Carrot Omelette is no longer produced or notified and idle capacity moves to the next-largest gap. Untick to resume.",
+    "Need_elegant_wood": {
+      "name": "Elegant Wood · Stock Baseline",
+      "help": "Maintain the higher of this value plus 100 and the daily minimum. Replenish after consumption without a Done checkbox and retain excess stock. Set 0 to disable only this winter addition; daily replenishment continues."
+    },
+    "Need_sachet": {
+      "name": "Aroma Sachet · Required",
+      "help": "Amount to submit for \"Sachet Supply\". Manufacture tasks are produced to the required amount with no buffer. 0 only turns off this winter increment; the line keeps following your normal product settings."
+    },
+    "Done_sachet": {
+      "name": "Aroma Sachet · Done",
+      "help": "When ticked, the winter task increment for \"Aroma Sachet\" stop from the next round; batches already started still finish, then the line runs on its own capacity and your normal settings. Auto dispatch is not wired for this item yet. Untick to resume.",
       "True": "On",
       "False": "Off"
     },
-    "Need_latte": {
-      "name": "Latte · Required",
-      "help": "Amount to submit for \"拿铁时光\". 0 means do not produce."
+    "Need_cutlery": {
+      "name": "Utensils · Required",
+      "help": "Amount to submit for \"Setting the Table\". Manufacture tasks are produced to the required amount with no buffer. 0 only turns off this winter increment; the line keeps following your normal product settings."
     },
-    "Done_latte": {
-      "name": "Latte · Done",
-      "help": "When ticked, Latte is no longer produced or notified and idle capacity moves to the next-largest gap. Untick to resume.",
+    "Done_cutlery": {
+      "name": "Utensils · Done",
+      "help": "When ticked, the winter task increment for \"Utensils\" stop from the next round; batches already started still finish, then the line runs on its own capacity and your normal settings. Auto dispatch is wired for this item. Untick to resume.",
       "True": "On",
       "False": "Off"
     },
-    "Need_stir_fried_chicken": {
-      "name": "Stir-fried Chicken · Required",
-      "help": "Amount to submit for \"禽肉快炒\". 0 means do not produce."
+    "Need_ink_cartridge": {
+      "name": "Ink Cartridge · Required",
+      "help": "Amount to submit for \"Providing for Paperwork\". Manufacture tasks are produced to the required amount with no buffer. 0 only turns off this winter increment; the line keeps following your normal product settings."
     },
-    "Done_stir_fried_chicken": {
-      "name": "Stir-fried Chicken · Done",
-      "help": "When ticked, Stir-fried Chicken is no longer produced or notified and idle capacity moves to the next-largest gap. Untick to resume.",
+    "Done_ink_cartridge": {
+      "name": "Ink Cartridge · Done",
+      "help": "When ticked, the winter task increment for \"Ink Cartridge\" stop from the next round; batches already started still finish, then the line runs on its own capacity and your normal settings. Auto dispatch is not wired for this item yet. Untick to resume.",
       "True": "On",
       "False": "Off"
     },
-    "Need_steak_bowl": {
-      "name": "Steak Rice Bowl · Required",
-      "help": "Amount to submit for \"便携快餐\". 0 means do not produce."
+    "Need_clock": {
+      "name": "Clock · Required",
+      "help": "Amount to submit for \"Time Management\". Manufacture tasks are produced to the required amount with no buffer. 0 only turns off this winter increment; the line keeps following your normal product settings."
     },
-    "Done_steak_bowl": {
-      "name": "Steak Rice Bowl · Done",
-      "help": "When ticked, Steak Rice Bowl is no longer produced or notified and idle capacity moves to the next-largest gap. Untick to resume.",
+    "Done_clock": {
+      "name": "Clock · Done",
+      "help": "When ticked, the winter task increment for \"Clock\" stop from the next round; batches already started still finish, then the line runs on its own capacity and your normal settings. Auto dispatch is not wired for this item yet. Untick to resume.",
+      "True": "On",
+      "False": "Off"
+    },
+    "Need_battery": {
+      "name": "Battery · Required",
+      "help": "Amount to submit for \"Power Reserves\". Manufacture tasks are produced to the required amount with no buffer. 0 only turns off this winter increment; the line keeps following your normal product settings."
+    },
+    "Done_battery": {
+      "name": "Battery · Done",
+      "help": "When ticked, the winter task increment for \"Battery\" stop from the next round; batches already started still finish, then the line runs on its own capacity and your normal settings. Auto dispatch is not wired for this item yet. Untick to resume.",
       "True": "On",
       "False": "Off"
     }
@@ -6868,6 +6911,7 @@
       "help": "",
       "None": "None",
       "spring_flower_tea": "Spring Flower Tea",
+      "banana_mango": "Banana Mango Juice",
       "strawberry_lemon": "Strawberry Lemonade",
       "strawberry_honey": "Strawberry Honey Smoothie",
       "floral_fruity": "Floral Fruity",
@@ -6883,6 +6927,7 @@
       "help": "",
       "None": "None",
       "spring_flower_tea": "Spring Flower Tea",
+      "banana_mango": "Banana Mango Juice",
       "strawberry_lemon": "Strawberry Lemonade",
       "strawberry_honey": "Strawberry Honey Smoothie",
       "floral_fruity": "Floral Fruity",
@@ -6898,6 +6943,7 @@
       "help": "",
       "None": "None",
       "spring_flower_tea": "Spring Flower Tea",
+      "banana_mango": "Banana Mango Juice",
       "strawberry_lemon": "Strawberry Lemonade",
       "strawberry_honey": "Strawberry Honey Smoothie",
       "floral_fruity": "Floral Fruity",
@@ -6913,6 +6959,7 @@
       "help": "",
       "None": "None",
       "spring_flower_tea": "Spring Flower Tea",
+      "banana_mango": "Banana Mango Juice",
       "strawberry_lemon": "Strawberry Lemonade",
       "strawberry_honey": "Strawberry Honey Smoothie",
       "floral_fruity": "Floral Fruity",
@@ -6928,6 +6975,7 @@
       "help": "",
       "None": "None",
       "spring_flower_tea": "Spring Flower Tea",
+      "banana_mango": "Banana Mango Juice",
       "strawberry_lemon": "Strawberry Lemonade",
       "strawberry_honey": "Strawberry Honey Smoothie",
       "floral_fruity": "Floral Fruity",
@@ -6943,6 +6991,7 @@
       "help": "Fallback drink when seasonal drink stock is low",
       "None": "None",
       "spring_flower_tea": "Spring Flower Tea",
+      "banana_mango": "Banana Mango Juice",
       "strawberry_lemon": "Strawberry Lemonade",
       "strawberry_honey": "Strawberry Honey Smoothie",
       "floral_fruity": "Floral Fruity",
@@ -7983,7 +8032,7 @@
   "OpsiSimulatorParameters": {
     "_info": {
       "name": "Parameter settings",
-      "help": ""
+      "help": "Operation Siren main storyline must be cleared before using this feature."
     },
     "Samples": {
       "name": "Sample count",
@@ -8384,7 +8433,7 @@
       "EnableRemoteAccess": "Enable Remote Access",
       "EnableRemoteAccessHelp": "Expose WebUI through an SSH reverse tunnel. Set a password before public access.",
       "RemoteAccessMode": "Remote Access Mode",
-      "RemoteAccessModeHelp": "auto prefers P2P/TURN and falls back to SSH; webrtc prefers P2P; ssh uses legacy SSH forwarding only.",
+      "RemoteAccessModeHelp": "auto and ssh both use the configured SSH reverse tunnel.",
       "SSHUser": "SSH User",
       "SSHUserHelp": "Remote access login username. Leave empty to generate one on startup.",
       "SSHServer": "SSH Server",

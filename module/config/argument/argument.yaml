@@ -2422,67 +2422,84 @@ IslandDailyOrder:
     value: "2020-01-01 00:00:00"
 
 IslandSeasonPlan:
-  # Add by MHY, 赛季任务：餐品由代码里的赛季表决定（SEASON_PLAN_TASKS），这里只填
-  # 需求数量与是否已完成。当前数量由店铺每次收取/核对销售时读仓库自动更新（不进配置）。
-  # 勾选「已完成」的餐品不再排产、不再发邮件，空闲产能自动转去做下一个缺口最大的。
-  # 新赛季上线时在代码赛季表里换餐品，并在这里为新餐品追加 Need_/Done_ 两项。
+  # Modify by MHY, 配置只展示当前冬季 16 项，过季清单保留在代码中供识别与兼容。
+  # 自然类仅配置 Need_，持续维持 max(日常下限, Need_ + 100)，无需勾选完成。
+  # 餐品与制造品保留 Need_/Done_，已完成后退出任务增量；餐品另加 MealBuffer。
+  # 新赛季更新清单时同步移除过季配置，自然类不添加 Done_。
   NotifyEnable:
     type: checkbox
     value: true
     option: [ true, false ]
-  Need_apple_juice:
-    type: input
-    value: 250
-  Done_apple_juice:
+  WinterTaskEnabled:
     type: checkbox
-    value: false
+    value: true
     option: [ true, false ]
-  Need_iced_coffee:
+  MealBuffer:
     type: input
-    value: 250
-  Done_iced_coffee:
-    type: checkbox
-    value: false
-    option: [ true, false ]
-  Need_roasted_skewer:
-    type: input
-    value: 250
-  Done_roasted_skewer:
-    type: checkbox
-    value: false
-    option: [ true, false ]
-  Need_salad:
-    type: input
+    value: 20
+    validate: [ 0, 999 ]
+  # Modify by MHY, 自然类 Need_ 为库存基准，0 关闭该项叠加，日常下限仍生效。
+  Need_tea:
+    value: 500
+  Need_citrus:
+    value: 500
+  Need_mango:
+    value: 200
+  Need_avocado:
     value: 100
-  Done_salad:
-    type: checkbox
-    value: false
-    option: [ true, false ]
-  Need_carrot_omelette:
-    type: input
+  Need_freshwater_fish_meat:
     value: 100
-  Done_carrot_omelette:
-    type: checkbox
-    value: false
-    option: [ true, false ]
-  Need_latte:
-    type: input
+  Need_seawater_fish_meat:
     value: 100
-  Done_latte:
-    type: checkbox
-    value: false
-    option: [ true, false ]
-  Need_stir_fried_chicken:
-    type: input
+  Need_chicken_potato:
     value: 100
-  Done_stir_fried_chicken:
+  Done_chicken_potato:
     type: checkbox
     value: false
     option: [ true, false ]
-  Need_steak_bowl:
-    type: input
+  Need_rice_mango:
     value: 50
-  Done_steak_bowl:
+  Done_rice_mango:
+    type: checkbox
+    value: false
+    option: [ true, false ]
+  Need_strawberry_charlotte:
+    value: 25
+  Done_strawberry_charlotte:
+    type: checkbox
+    value: false
+    option: [ true, false ]
+  Need_silver:
+    value: 25
+  Need_elegant_wood:
+    value: 25
+  Need_sachet:
+    value: 10
+  Done_sachet:
+    type: checkbox
+    value: false
+    option: [ true, false ]
+  Need_cutlery:
+    value: 10
+  Done_cutlery:
+    type: checkbox
+    value: false
+    option: [ true, false ]
+  Need_ink_cartridge:
+    value: 10
+  Done_ink_cartridge:
+    type: checkbox
+    value: false
+    option: [ true, false ]
+  Need_clock:
+    value: 10
+  Done_clock:
+    type: checkbox
+    value: false
+    option: [ true, false ]
+  Need_battery:
+    value: 10
+  Done_battery:
     type: checkbox
     value: false
     option: [ true, false ]
@@ -2608,6 +2625,7 @@ _IslandBusinessProduct2: &IslandBusinessProduct2
   option:
     - None
     - spring_flower_tea
+    - banana_mango
     - strawberry_lemon
     - strawberry_honey
     - floral_fruity
@@ -2710,6 +2728,7 @@ IslandBusinessShop2:
     option:
       - None
       - spring_flower_tea
+      - banana_mango
       - strawberry_lemon
       - strawberry_honey
       - floral_fruity

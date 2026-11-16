@@ -34,23 +34,28 @@ class TestOrderMilestonesInTaskTable(unittest.TestCase):
     def test_names_matchable(self):
         """读取器按任务名匹配，这 6 个名字必须能映射回来。"""
         for name, _, need in ORDER_MILESTONES:
-            task, item, got_need = match_task(name, 'autumn')
+            task, item, got_need = match_task(name, 'winter')
             self.assertEqual(task, name)
             self.assertIsNone(item)
             self.assertEqual(got_need, need)
 
     def test_do_not_leak_into_item_queries(self):
         """item=None 不能污染按物品反查与店铺赛季物品列表。"""
-        self.assertEqual(task_of_item(None, 'autumn'), (None, 0))
+        self.assertEqual(task_of_item(None, 'winter'), (None, 0))
         self.assertEqual(cn_name(None), '')
         for shop in ('restaurant', 'teahouse', 'juu_eatery', 'grill', 'juu_coffee'):
-            for item, _, _ in season_items_for_shop(shop, 'autumn'):
+            for item, _, _ in season_items_for_shop(shop, 'winter'):
                 self.assertIsNotNone(item, f'{shop} 的赛季物品列表混入了 None')
 
     def test_submit_priority_skips_them(self):
         """订单里程碑没有物品，按仓库排优先级时应被跳过。"""
-        rows = submit_priority('autumn', {'wheat': 500}, producible=None)
+        rows = submit_priority('winter', {'chicken_potato': 100}, producible=None)
+        self.assertTrue(rows)
         self.assertTrue(all(row[1] is not None for row in rows))
+
+    def test_retired_season_has_no_submit_rows(self):
+        """过季秋季任务不再给出提交优先级，避免旧默认需求回流。"""
+        self.assertEqual(submit_priority('autumn', {'wheat': 500}, producible=None), [])
 
 
 if __name__ == '__main__':

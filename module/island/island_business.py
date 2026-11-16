@@ -203,6 +203,7 @@ class IslandBusiness(BusinessStockCheckMixin, Island):
             ],
             '白熊饮品': [
                 {'name': 'spring_flower_tea', 'button': TEMPLATE_BUSINESS_PRODUCT_TEAHOUSE_SPRING_FLOWER_TEA},
+                {'name': 'banana_mango', 'button': TEMPLATE_BUSINESS_PRODUCT_TEAHOUSE_BANANA_MANGO},
                 {'name': 'strawberry_lemon', 'button': TEMPLATE_BUSINESS_PRODUCT_TEAHOUSE_STRAWBERRY_LEMON},
                 {'name': 'strawberry_honey', 'button': TEMPLATE_BUSINESS_PRODUCT_TEAHOUSE_STRAWBERRY_HONEY},
                 {'name': 'floral_fruity', 'button': TEMPLATE_BUSINESS_PRODUCT_TEAHOUSE_FLORAL_FRUITY},
@@ -255,6 +256,7 @@ class IslandBusiness(BusinessStockCheckMixin, Island):
             ],
             '白熊饮品': [
                 {'name': 'spring_flower_tea', 'template': TEMPLATE_BUSINESS_PRODUCT_TEAHOUSE_SPRING_FLOWER_TEA_CROPPED},
+                {'name': 'banana_mango', 'template': TEMPLATE_BUSINESS_PRODUCT_TEAHOUSE_BANANA_MANGO_CROPPED},
                 {'name': 'strawberry_lemon', 'template': TEMPLATE_BUSINESS_PRODUCT_TEAHOUSE_STRAWBERRY_LEMON_CROPPED},
                 {'name': 'strawberry_honey', 'template': TEMPLATE_BUSINESS_PRODUCT_TEAHOUSE_STRAWBERRY_HONEY_CROPPED},
                 {'name': 'floral_fruity', 'template': TEMPLATE_BUSINESS_PRODUCT_TEAHOUSE_FLORAL_FRUITY_CROPPED},
@@ -1114,6 +1116,8 @@ class IslandBusiness(BusinessStockCheckMixin, Island):
                     if selected == 0:
                         logger.warning(f"[岛屿-经营] {shop_name} 没有可出售的餐品，不开始经营，跳过该店继续检查其他商店")
                         self._leave_shop_without_start()
+                        # Modify by MHY, 完全缺货也要立即补货，不能只唤醒成功营业的店。
+                        self._trigger_shop_refill({shop_name})
                         self._run_remaining_shops(skip_shops={shop_name})
                         return
                     started_shops.add(shop_name)
@@ -1335,7 +1339,9 @@ class IslandBusiness(BusinessStockCheckMixin, Island):
         if color_similar(area_color, (230, 192, 71), threshold=80):
             return 'yellow'
         # 深蓝 (60, 67, 84) - 经营中
-        if color_similar(area_color, (60, 67, 84), threshold=80):
+        # 阈值不能放宽到 80：当日次数用完的灰色「休息中 (0/1)」按钮平均色约 (133, 133, 131)，
+        # 与深蓝差值约 73，会被误判为经营中，进而去 OCR 并不存在的倒计时
+        if color_similar(area_color, (60, 67, 84), threshold=40):
             return 'darkblue'
 
         # 以上都不是 → 灰色不可经营
@@ -1426,6 +1432,8 @@ class IslandBusiness(BusinessStockCheckMixin, Island):
             # 没有可出售的餐品时「开始经营」不可用，点了也不会开始；直接返回，调用方已记为处理过
             logger.warning(f"[岛屿-经营] {shop_name} 没有可出售的餐品，本次不开始经营")
             self._leave_shop_without_start()
+            # Modify by MHY, 缺货店不会进入 started_shops，在这里补齐生产触发。
+            self._trigger_shop_refill({shop_name})
             return False
 
         # 确认经营并返回

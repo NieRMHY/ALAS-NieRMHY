@@ -157,7 +157,10 @@ class IslandJuuEatery(IslandShopBase):
 
         self.warehouse_filter('juu_coffee')
         image = self.device.screenshot()
-        self.cheese_stock = self.ocr_item_quantity(image, TEMPLATE_CHEESE)
+        # Add by MHY, 任务夏洛特只使用本轮确认的芝士现货。
+        quantity = self.ocr_item_quantity(image, TEMPLATE_CHEESE, strict=True)
+        self.warehouse_observations['cheese'] = quantity
+        self.cheese_stock = quantity if quantity is not None else 0
         self.special_materials['cheese'] = self.cheese_stock
         logger.info(f"[岛屿-啾啾简餐] 芝士数量: {self.cheese_stock}")
 

@@ -4,6 +4,9 @@
 `IslandFarm.INVENTORY_CONFIG` 中的英文名（如 `corn`、`chinese_cabbage`）。
 列出的作物用自己的目标，未列出的作物沿用区域阈值（`MinFarm` 等）；目标为 0
 表示该作物不补种。本模块不依赖设备与界面，便于离线测试，也供岛屿生产规划器写回。
+
+运行时叠加（如冬季开发计划的任务需求）用 [overlay_targets]，只合并出新的字典给本轮
+补种用，不写回配置：写回会让阈值一轮轮往上叠，也会盖掉用户自己的设置。
 """
 import re
 
@@ -56,6 +59,27 @@ def format_crop_targets(targets):
 def crop_target(crop, targets, threshold):
     """作物的补种目标：单独设置优先，否则用区域阈值。"""
     return targets.get(normalize_crop_name(crop), threshold)
+
+
+def overlay_targets(targets, overrides, threshold=0):
+    """把额外目标合并进作物目标表：同名作物取较大值，返回新字典。
+
+    用于运行时叠加任务需求（见 island_winter_resources）。不就地改 `targets`，
+    调用方也不会把结果写回配置，所以配置里的阈值保持用户原样。
+
+    Args:
+        targets (dict[str, int]): 配置里的作物目标，见 parse_crop_targets。
+        overrides (dict[str, int]): 额外目标，如冬季任务的「需求 + 缓冲」。
+        threshold (int): 区域阈值，作物没单独设置时作为原日常下限。
+
+    Returns:
+        dict[str, int]: 合并后的作物目标。
+    """
+    merged = {crop: int(amount) for crop, amount in (targets or {}).items()}
+    for crop, target in (overrides or {}).items():
+        crop = normalize_crop_name(crop)
+        merged[crop] = max(int(merged.get(crop, threshold)), int(target))
+    return merged
 
 
 def plan_crops_to_restock(inventory, targets, threshold, skip=()):

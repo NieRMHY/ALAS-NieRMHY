@@ -369,16 +369,20 @@ class IslandRestaurant(IslandShopBase):
 
         return result
 
-    def get_priority_production(self):
-        """季节菜品先排额外一批，并合并当前基础需求中的同名缺口。
+    def get_priority_production(self, produced=None):
+        """营业需求排产结束后，用剩余空岗补一批季节菜品。
+
+        Args:
+            produced (dict[str, int] | None): 本轮基础需求已排产数量。基础缺口
+                已由基础阶段按槽位顺序补齐，这里只补一批额外产量；保留参数
+                与基类签名一致，避免子类调用方分叉。
 
         Returns:
             dict[str, int]: 优先排产菜品名称到数量的映射。
         """
         if not self.seasonal_dish_slot:
             return {}
-        name = self.seasonal_dish_slot['name']
-        return {name: self.POST_PRODUCE_LIMIT + self.to_post_products.get(name, 0)}
+        return {self.seasonal_dish_slot['name']: self.POST_PRODUCE_LIMIT}
 
     def test(self):
         """测试餐厅厨师配置读取。"""

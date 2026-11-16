@@ -7,9 +7,11 @@ import sqlite3
 from contextlib import contextmanager, closing
 from datetime import datetime
 from pathlib import Path
+from time import sleep
 from uuid import uuid4
 
 from module.config.transaction import config_transaction
+from module.logger import logger
 from module.persistence.database import DEFAULT_DIRECTORY, VERSION, create_schema, get_database, register_instance
 from module.persistence import scheduler as native
 from module.scheduler.templates import default_program
@@ -111,9 +113,40 @@ class ProgramStore:
             return native.read_observations(connection, instance) if connection else {}
 
     def observe(self, instance, name, value, timestamp, source):
-        # Modify by MHY, 资源观察只写统一总库，不创建行动力认证链
-        with self.connection(instance, write=True) as connection:
-            native.write_observation(connection, instance, name, value, timestamp, source)
+        """写入普通资源观测，持续写锁争用时返回 False。
+
+        Modify by MHY, 只写统一总库并保留上游的写锁退避重试；
+        本地已永久移除行动力认证历史链（action_point_history/action_point_chain）。
+        """
+        self.path(instance)
+        self.database.ensure_ready()
+        # 只重试可安全重放的普通观测。
+        for backoff in (0.05, 0.1, None):
+            try:
+                with self.database.transaction(timeout=0.05) as connection:
+                    native.write_observation(connection, instance, name, value, timestamp, source)
+                return True
+            except sqlite3.OperationalError as error:
+                code = getattr(error, 'sqlite_errorcode', 0) & 0xFF
+                if code not in (sqlite3.SQLITE_BUSY, sqlite3.SQLITE_LOCKED):
+                    raise
+                if backoff is None:
+                    logger.warning('[调度观测] 写锁重试耗尽，跳过本次观测：实例=%s 资源=%s 来源=%s 错误=%s',
+                                   instance, name, source, error.sqlite_errorname)
+                    return False
+                sleep(backoff)
+
+    def observe_async(self, instance, name, value, timestamp, source):
+        """排队写入普通观测，调用方不必等待落库。"""
+        self.path(instance)
+        self.database.ensure_ready()
+        from module.persistence.write_queue import write_queue
+        payload = copy.deepcopy(value)
+        write_queue.enqueue(
+            'latest', ('observation', self.database.directory, instance, name),
+            lambda connection: native.write_observation(connection, instance, name, payload, timestamp, source),
+            directory=self.database.directory)
+        return True
 
     def copy(self, source, target):
         if self.exists(source):

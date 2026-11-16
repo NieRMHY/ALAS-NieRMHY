@@ -109,10 +109,33 @@ class TestRefreshSwitch(unittest.TestCase):
         plan.assert_not_called()
         save.assert_not_called()
 
-    def test_refresh_writes_and_resets(self):
+    # Add by MHY, 2026-11-10：过季任务不产生缺口，一次性刷新请求也不能改写营业方案。
+    def test_retired_season_refresh_preserves_manual_settings(self):
         config = FakeConfig({
             'IslandPlan.IslandPlan.RefreshPlan': True,
             'IslandPlan.IslandPlan.Season': 'autumn',
+            'IslandRestaurant.IslandRestaurant.Meal1': 'salad',
+            'IslandRestaurant.IslandRestaurant.MealNumber1': 37,
+            'IslandBusiness.IslandBusinessShop1.Product1': 'apple_juice',
+            'IslandRestaurant.IslandRestaurantNextTask.AwayCook': 'salad',
+        })
+        expected = dict(config.values)
+        expected['IslandPlan.IslandPlan.RefreshPlan'] = False
+        with patch('module.island.island_plan_refresh.current_progress') as progress, \
+                patch('module.island.island_plan_refresh.plan_all') as plan, \
+                patch('module.island.island_plan_refresh.save_generated') as save:
+            self.assertFalse(refresh_plan_if_requested(config))
+        self.assertEqual(config.values, expected)
+        self.assertEqual(config.saved, 1)
+        progress.assert_not_called()
+        plan.assert_not_called()
+        save.assert_not_called()
+
+    def test_refresh_writes_and_resets(self):
+        config = FakeConfig({
+            'IslandPlan.IslandPlan.RefreshPlan': True,
+            # Add by MHY, 2026-11-10：秋季已过季，刷新写入路径改用 spring 覆盖
+            'IslandPlan.IslandPlan.Season': 'spring',
             'IslandPlan.IslandPlan.PlanVerifiedOnly': False,
             'IslandPlan.IslandPlan.PlanMineVerified': False,
             'IslandPlan.IslandPlan.PlanShelfSlots': 5,
@@ -160,7 +183,8 @@ class TestExtraMealsSwitch(unittest.TestCase):
     def _refresh_with(self, extra):
         values = {
             'IslandPlan.IslandPlan.RefreshPlan': True,
-            'IslandPlan.IslandPlan.Season': 'autumn',
+            # Add by MHY, 2026-11-10：秋季已过季，用 spring 验证透传逻辑
+            'IslandPlan.IslandPlan.Season': 'spring',
             # 别去挖真实日志更新白名单，测试不该动工作区里的名单文件
             'IslandPlan.IslandPlan.PlanMineVerified': False,
             'IslandPlan.IslandPlan.PlanVerifiedOnly': False,

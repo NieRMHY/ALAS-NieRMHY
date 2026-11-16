@@ -2,6 +2,8 @@
 
 import unittest
 from datetime import datetime, timedelta
+from pathlib import Path
+from tempfile import TemporaryDirectory
 from unittest.mock import Mock, call, patch
 
 from alas import AzurLaneAutoScript
@@ -46,7 +48,6 @@ class TestSchedulerRecovery(unittest.TestCase):
             Error_GameStuckRestart=True,
             Error_GameStuckThreshold=3,
             Error_HandleError=True,
-            Error_LlmAnalysis=False,
         )
         script.config.cross_get.return_value = sensitive
         script.__dict__['device'] = Mock()
@@ -737,6 +738,45 @@ class TestSchedulerRecovery(unittest.TestCase):
             call.emulator(), call.game('Restart'),
         ])
         self.assertEqual(script.task_restart_record, {})
+
+    # Modify by MHY, 观测写入改为 write_queue 排队（上游异步化）：锁争用不再同步告警，
+    # 用例改断言「主流程继续 + 观测留在队列等下一个窗口」，避免把异步化当成回归。
+    def test_main_continues_when_resource_observation_cannot_get_write_lock(self):
+        from module.log_res import LogRes
+        from module.persistence.write_queue import write_queue
+        from module.scheduler.store import ProgramStore
+
+        directory = Path(self.enterContext(TemporaryDirectory())) / 'config'
+        store = ProgramStore(directory)
+        store.database.ensure_ready()
+        profile = directory / 'testpilot.json'
+        profile.write_text('{}', encoding='utf-8')
+        script = self.make_script()
+        script.config.config_name = 'testpilot'
+        script.config.task.command = 'Main'
+        script.config.data = {'Dashboard': {'Oil': {'Value': 123, 'Record': None}}}
+        script.config.modified = {}
+        recorder = LogRes(script.config)
+        script.main = lambda: setattr(recorder, 'Oil', 456)
+        self.addCleanup(write_queue.clear)
+
+        with patch('module.config.utils.filepath_config', return_value=profile), \
+                patch('module.statistics.resource_flow.observe') as ledger, \
+                patch.object(LogRes, '_record_all_resource_snapshot') as snapshot, \
+                patch.object(write_queue, 'enqueue') as enqueue, \
+                store.database.transaction():
+            self.assertIs(script.run('main'), True)
+
+        self.assertEqual(456, script.config.modified['Dashboard.Oil.Value'])
+        self.assertEqual({}, store.observations('testpilot'))
+        # 观测进排队写入而不是同步落库，锁争用不会中断任务
+        enqueue.assert_called()
+        ledger.assert_not_called()
+        # 排队成功后资源快照照常记录（上游异步语义），不再因锁争用整条跳过
+        snapshot.assert_called_once()
+        script.config.task_call.assert_not_called()
+        script._try_restart_emulator.assert_not_called()
+        self.assertEqual({}, script.task_restart_record)
 
     def test_global_failure_preserves_sensitive_task_protection(self):
         for strict, sensitive in ((False, False), (False, True), (True, False), (True, True)):

@@ -2,7 +2,7 @@
 
 ## 连接与认证
 
-地址为同源 `/api/v1/ws`，HTTPS 下使用 `wss`。协议版本固定为 `v: 1`。服务只通过 HTTP 提供静态资源与 `/healthz`；业务数据与操作使用 WebSocket。独立 MCP 是另一项对外集成，仍保留自己的 SSE 协议。
+WebUI 使用两条同源 WebSocket：`/api/v1/ws?channel=control` 承载认证、写操作与事件订阅，`/api/v1/ws?channel=data` 承载日志、预览、统计报表等大读取。HTTPS 下使用 `wss`。协议版本固定为 `v: 1`。旧客户端不带 `channel` 时后端保持单连接模式；新版客户端在会话事件没有 `channel` 时也会退回单连接。服务只通过 HTTP 提供静态资源、插件资源与 `/healthz`；独立 MCP 是另一项对外集成，仍保留自己的 SSE 协议。
 
 服务升级连接前检查 Origin 与 Host 是否一致，拒绝跨站连接。最多同时保留 32 个连接，每连接请求上限 30 次/秒、单请求 1 MiB。反向代理必须支持 WebSocket Upgrade，并正确保留外部 Host/Origin。
 
@@ -40,7 +40,7 @@
 {"v":1,"type":"response","id":"request-42","ok":false,"error":{"code":"INVALID_PARAMS","message":"参数格式不正确：Main.Scheduler.NextRun","details":null}}
 ```
 
-同一连接最近 128 个请求 ID 不允许重复。ID 用于关联请求，**不是**跨连接的幂等键。配置字段赋值由独立队列在断线或超时后自动重试；启停、创建、删除等操作不自动重试，必须先查询最终状态。默认请求超时 45 秒，超时不代表服务端事务回滚。
+单帧上限 64 KiB（首字节 0 表示还有续片、1 表示末片），请求上限 8 MiB，响应上限 64 MiB；超过单帧的 JSON 在 `channel` 模式下改用二进制分片，接收端按同一规则重组。同一连接最近 128 个请求 ID 不允许重复。ID 用于关联请求，**不是**跨连接的幂等键。配置字段赋值由独立队列在断线或超时后自动重试；启停、创建、删除等操作不自动重试，必须先查询最终状态。默认请求超时 45 秒，超时不代表服务端事务回滚。
 
 ## 方法
 
@@ -50,6 +50,9 @@
 | --- | --- | --- |
 | `auth.login` | password | 当前连接通过认证 |
 | `background.access` | 无 | 已授权会话获取仅用于背景 HTTP 接口的随机令牌，服务重启后失效 |
+| `plugins.access` | 无 | 获取插件 HTTP 接口令牌，插件 iframe 不接触访问密码 |
+| `plugins.list` | 无 | 已安装插件清单、启用状态与内容修订号 |
+| `plugins.storage.get` / `plugins.storage.write` | id、可选 instance、key、action、可选 value | 按插件与实例隔离的 JSON 存储；写接口只接受 set/delete |
 | `system.ping` | 无 | pong |
 | `schema.get` | 可选 language | 任务菜单、参数定义与指定语言翻译；默认 zh-CN |
 | `instances.list` | 无 | 实例名称、状态、序列号、服务器、currentTask（停止时为 null） |
@@ -136,7 +139,7 @@ API 和核心运行器共用跨进程事务锁。API 只合并请求指定的字
 {"v":1,"type":"request","id":"subscribe-1","method":"events.subscribe","params":{"instance":"alas","topics":["instances","overview","logs"]}}
 ```
 
-支持 `instances`、`overview`、`logs`、`preview`。除 `instances` 外必须提供 instance；空 topics 表示取消订阅。订阅会立即生效，并在下一次采样时发送初始快照。默认两秒采样，内容未变化时不发送。预览在总览切换到截图时订阅，在每次已有截图完成后通过独立事件通道推送，不使用轮询计时器，不访问 ADB 或额外调用截图后端。
+支持 `instances`、`overview`、`logs`、`preview`、`notifications`、`plugins`。除 `instances`、`notifications`、`plugins` 外必须提供 instance；空 topics 表示取消订阅。`logs`、`preview` 必须订阅在 `channel=data`，其余主题在 `channel=control`；在错误的通道订阅会返回 `WRONG_CHANNEL`。订阅会立即生效，并在下一次采样时发送初始快照。默认两秒采样，内容未变化时不发送。预览在总览切换到截图时订阅，在每次已有截图完成后通过独立事件通道推送，不使用轮询计时器，不访问 ADB 或额外调用截图后端。
 
 ```json
 {"v":1,"type":"event","topic":"overview","seq":2,"data":{"instance":"alas","status":"stopped","revision":"SHA256","tasks":[],"resources":[],"emulator":{}}}
@@ -167,7 +170,7 @@ INTERNAL_ERROR 不向浏览器返回堆栈；参数校验详情不回显输入�
 
 1. 在 `module/api/protocol.py` 添加严格参数模型。
 2. 在独立业务服务中实现操作，在 `router.py` 显式登记是否写入。
-3. 执行 `uv run python -m dev_tools.export_api_schema` 更新 JSON Schema 和 TypeScript 参数类型。
+3. 执行 `uv run python -m dev_tools.export_api_schema` 更新 JSON Schema、TypeScript 参数类型、`dataMethods` 与传输常量；读取类方法在 `Method(..., data_channel=True)` 声明。
 4. 更新 `types.ts` 响应类型和 API 文档，并增加真实 WebSocket 回归。
 5. v1 只允许兼容性新增；删除方法、更换字段语义或类型需要新版本路径。
 

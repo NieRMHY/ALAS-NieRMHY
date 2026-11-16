@@ -39,6 +39,14 @@ class Params(BaseModel):
     model_config = ConfigDict(extra='forbid', strict=True)
 
 
+class PluginStorageParams(Params):
+    id: StrictStr = Field(pattern=r'^[a-z0-9][a-z0-9._-]{0,79}$')
+    instance: StrictStr | None = Field(default=None, max_length=128)
+    key: StrictStr = Field(min_length=1, max_length=120)
+    action: Literal['get', 'set', 'delete']
+    value: Any = None
+
+
 class MindShip(Params):
     """导入的舰船字段与核对状态；额外经验用于补零散经验。"""
     name: StrictStr = Field(min_length=1, max_length=100)
@@ -48,6 +56,9 @@ class MindShip(Params):
     extra_exp: StrictInt | None = Field(default=None, ge=0)
     review: StrictBool = False
     source: StrictStr = Field(default='', max_length=200)
+    group_type: StrictInt | None = Field(default=None, ge=1)
+    full_star: StrictBool | None = None
+    form: Literal['base', 'retrofit'] | None = None
 
 
 class Request(Params):
@@ -255,7 +266,8 @@ class RevisionParams(InstanceParams):
 class SubscribeParams(Params):
     """WebSocket 主题订阅请求参数模型。"""
     instance: StrictStr | None = None
-    topics: list[Literal['instances', 'overview', 'logs', 'preview', 'notifications']] = Field(max_length=5)
+    # Modify by MHY, 移除茗交所/启动器主题，接纳插件主题
+    topics: list[Literal['instances', 'overview', 'logs', 'preview', 'notifications', 'plugins']] = Field(max_length=6)
 
 
 class LogsParams(InstanceParams):

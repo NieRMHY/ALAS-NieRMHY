@@ -23,7 +23,10 @@ FIXED_SELECT_SPRING_FLOWER_TEA = Button(
 )
 
 # 秋季高优先级饮品（菊花茶，槽位2）的固定位置——固定第二格（y300 行），
-# 与槽位1（胡萝卜秋梨汁，y143 行）不在同一格
+# 与槽位1（胡萝卜秋梨汁，y143 行）不在同一格。
+# 固定坐标只对当前配置季节的饮品列表成立：IslandPlan.Season 与实际游戏赛季
+# 不一致（赛季切换当天）时，同一格会换成别的饮品，这里没有图标校验；实景
+# 未确认前不要改坐标，也不要凭空补选品判定。
 FIXED_SELECT_CHRYSANTHEMUM_TEA = Button(
     area=(), color=(), button=(212, 300, 292, 360),
     file={'cn': '', 'en': '', 'jp': '', 'tw': ''}
@@ -398,15 +401,23 @@ class IslandTeahouse(IslandShopBase):
 
         return super().post_produce(post_id, product, number, time_var_name, product2)
 
-    def get_priority_production(self):
-        """返回季节高优先级饮品的排产计划。
+    def get_priority_production(self, produced=None):
+        """返回营业需求排产结束后、剩余空岗上的季节高优先级饮品批次。
+
+        Args:
+            produced (dict[str, int] | None): 本轮基础需求已经排产的饮品数量。
+                季节批次按一整批计算，扣除基础阶段已排的部分，避免同一轮重复下单。
 
         Returns:
             dict[str, int]: 优先排产饮品名称到数量的映射。
         """
         if not self.seasonal_high_priority_drink:
             return {}
-        return {self.seasonal_high_priority_drink['name']: self.POST_PRODUCE_LIMIT}
+        name = self.seasonal_high_priority_drink['name']
+        remaining = self.POST_PRODUCE_LIMIT - (produced or {}).get(name, 0)
+        if remaining <= 0:
+            return {}
+        return {name: remaining}
 
     def deduct_materials(self, product, number):
         """扣除制作饮品消耗的原材料（包括蜂蜜和套餐原材料）。

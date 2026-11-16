@@ -104,7 +104,7 @@ test('智能换船整合四个页签，旧入口兼容且刷新与手机布局�
     localStorage.setItem('azurpilot.material', 'plain')
     localStorage.setItem('azurpilot.background.plain', JSON.stringify({source: 'off'}))
   })
-  await page.routeWebSocket('**/api/v1/ws', socket => {
+  await page.routeWebSocket('**/api/v1/ws*', socket => {
     const server = socket.connectToServer()
     socket.onMessage(message => {methods.push(JSON.parse(String(message)).method); server.send(message)})
     server.onMessage(message => socket.send(message))
@@ -160,7 +160,7 @@ test('换船调度区分心情触发和毕业检查，移除全舰扫描间隔',
     localStorage.setItem('azurpilot.material', 'plain')
     localStorage.setItem('azurpilot.background.plain', JSON.stringify({source: 'off'}))
   })
-  await page.routeWebSocket('**/api/v1/ws', socket => {
+  await page.routeWebSocket('**/api/v1/ws*', socket => {
     const server = socket.connectToServer()
     socket.onMessage(message => {requests.push(JSON.parse(String(message))); server.send(message)})
     server.onMessage(message => socket.send(message))
@@ -261,7 +261,7 @@ test('异常实例无需恢复未完成操作即可刷新换船状态并保留�
     localStorage.setItem('azurpilot.material', 'plain')
     localStorage.setItem('azurpilot.background.plain', JSON.stringify({source: 'off'}))
   })
-  await page.routeWebSocket('**/api/v1/ws', socket => {
+  await page.routeWebSocket('**/api/v1/ws*', socket => {
     const server = socket.connectToServer()
     socket.onMessage(message => {
       const request = JSON.parse(String(message))
@@ -324,7 +324,7 @@ test('换船调度记录按舰位展示真实舰名心情，三框区分且历�
     localStorage.setItem('azurpilot.material', 'plain')
     localStorage.setItem('azurpilot.background.plain', JSON.stringify({source: 'off'}))
   })
-  await page.routeWebSocket('**/api/v1/ws', socket => {
+  await page.routeWebSocket('**/api/v1/ws*', socket => {
     const server = socket.connectToServer()
     socket.onMessage(message => {methods.push(JSON.parse(String(message)).method); server.send(message)})
     server.onMessage(message => {
@@ -407,7 +407,7 @@ test('同名舰船实读按舰位展示60好感，不串用另一艘布里的记
     localStorage.setItem('azurpilot.material', 'plain')
     localStorage.setItem('azurpilot.background.plain', JSON.stringify({source: 'off'}))
   })
-  await page.routeWebSocket('**/api/v1/ws', socket => {
+  await page.routeWebSocket('**/api/v1/ws*', socket => {
     const server = socket.connectToServer()
     socket.onMessage(message => {methods.push(JSON.parse(String(message)).method); server.send(message)})
     server.onMessage(message => {
@@ -452,7 +452,7 @@ test('仅等级调度展示未突破舰船的实际120级与存储经验', async
     localStorage.setItem('azurpilot.material', 'plain')
     localStorage.setItem('azurpilot.background.plain', JSON.stringify({source: 'off'}))
   })
-  await page.routeWebSocket('**/api/v1/ws', socket => {
+  await page.routeWebSocket('**/api/v1/ws*', socket => {
     const server = socket.connectToServer()
     socket.onMessage(message => {methods.push(JSON.parse(String(message)).method); server.send(message)})
     server.onMessage(message => {
@@ -618,7 +618,7 @@ test('侵蚀一资源检查配置位于献祭流下方且通用页不再显示',
 test('舰队科技完整图鉴区分累计里程碑与当前持有', async ({page}) => {
   await page.addInitScript(() => localStorage.setItem('azurpilot.language', 'zh-CN'))
   let catalogCount = 0
-  await page.routeWebSocket('**/api/v1/ws', socket => {
+  await page.routeWebSocket('**/api/v1/ws*', socket => {
     const server = socket.connectToServer(), methods = new Map<string, string>()
     socket.onMessage(message => {const request = JSON.parse(String(message)); methods.set(request.id, request.method); server.send(message)})
     server.onMessage(message => {
@@ -668,7 +668,7 @@ test('统计慢请求合并更新且概览事件不重复取数', async ({page})
   let overview = ''
   let emit: (topic: string, instance?: string) => void = () => {}
   let release: () => void = () => {}
-  await page.routeWebSocket('**/api/v1/ws', socket => {
+  await page.routeWebSocket('**/api/v1/ws*', socket => {
     const server = socket.connectToServer()
     emit = (topic, instance = 'demo-main') => {
       /* 概览事件回放服务端的真实载荷：右栏直接按 Overview 形状消费事件数据，占位载荷会把它渲染崩。 */
@@ -713,7 +713,7 @@ test('统计切换分类后丢弃旧响应和旧刷新回调', async ({page}) =>
   let held = ''
   let oldId = ''
   let release: () => void = () => {}
-  await page.routeWebSocket('**/api/v1/ws', socket => {
+  await page.routeWebSocket('**/api/v1/ws*', socket => {
     const server = socket.connectToServer()
     release = () => socket.send(held)
     socket.onMessage(message => {
@@ -1500,7 +1500,7 @@ test('主页实例状态、任务搜索收起与导航固定', async ({page}) =>
 
 test('空实例主页仍可访问全局设置，系统设置不请求实例数据', async ({page}) => {
   const methods: string[] = []
-  await page.routeWebSocket('**/api/v1/ws', socket => {
+  await page.routeWebSocket('**/api/v1/ws*', socket => {
     const server = socket.connectToServer()
     const ids = new Set<string>()
     socket.onMessage(message => {
@@ -1531,7 +1531,7 @@ test('空实例主页仍可访问全局设置，系统设置不请求实例数�
 })
 
 test('实例列表读取失败不阻塞全局设置', async ({page}) => {
-  await page.routeWebSocket('**/api/v1/ws', socket => {
+  await page.routeWebSocket('**/api/v1/ws*', socket => {
     const server = socket.connectToServer()
     socket.onMessage(message => {
       const request = JSON.parse(String(message))

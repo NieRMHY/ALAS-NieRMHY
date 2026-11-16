@@ -1,16 +1,22 @@
 # API 服务（module/api）
 
-> WebUI 的后端服务：一个 Starlette ASGI 应用把 React 静态资源、同源 WebSocket 业务通道与 MCP SSE 子应用组装进同一进程；业务数据全部经 v1 信封走单一 WebSocket，HTTP 只保留静态资源、健康检查与一份自包含报告页。
+> WebUI 的后端服务：一个 Starlette ASGI 应用把 React 静态资源、同源 WebSocket 业务通道与 MCP SSE 子应用组装进同一进程；业务数据经 v1 信封走 control/data 双连接，HTTP 只保留静态资源、健康检查与本地启动器通道。
 
 ## 1. 模块概述
 
 `statistics.resourceFlows` 是资源管理的只读查询方法，参数模型为 `ResourceFlowsParams`，`resource_service.py` 核验实例、日期与分页后委托本地资源账本聚合，并补充可靠仪表盘及仓库库存。它不访问设备或启动游戏；石油控制设置继续通过原有配置 API 读写。数据与导出快照语义见 [资源管理](resource-management.md)。
 
-module/api 是 React WebUI 的全部后端。浏览器加载 `http://{host}:{port}` 后，页面资源由静态文件服务提供，而之后的一切业务——读配置、改配置、启动调度器、看日志、看截图、读统计、管理更新——都通过同一条 `/api/v1/ws` WebSocket 连接完成。这个「业务全走 WS」的决策是模块的设计核心：
+浏览器使用两个 WebSocket 连接，两者都转发到 `/api/v1/ws`。反向代理须保留查询参数、Host、Origin，并转发文本和二进制消息。两个连接分别验证访问凭据并维护独立的请求队列、心跳和重连。
 
-- **单一通道**：认证、限流、背压、请求去重集中在一个会话对象里实现，不需要每个 HTTP 端点重复一套防护；服务器推送事件（实例状态、日志、截图帧）与请求响应复用同一条连接，避免 HTTP 轮询。
-- **代理友好**：反向代理只需要正确转发一条 WebSocket Upgrade 路径，并保留外部 Host/Origin 即可；不需要为几十个 REST 端点配置路由。
-- **安全边界清晰**：WebSocket 不受浏览器 CORS 保护，因此在升级前必须做 Origin/Host 校验；认证、限流都在连接内完成，凭据只出现在消息体中，不进 URL 与日志。
+| 连接 | 用途 |
+| --- | --- |
+| `?channel=control` | 调度启停、配置保存、更新等操作，实例和总览状态，以及统计数据变化通知 |
+| `?channel=data` | 统计报表、资源流水、配置架构与快照、舰船目录、日志和截图。路由方法由生成的 API 契约标记 |
+| 无 `channel` 参数 | 旧客户端使用的单连接协议 |
+
+显式通道在 `session` 事件中回显 `channel`。认证和心跳在两条连接各自完成，数据连接重连后重订阅日志和截图。操作和数据各用独立的业务并发额度，数据通道拒绝写操作。
+
+显式通道使用 UTF-8 JSON。消息不超过 64 KiB 时发送文本，超过时按字节切成独立的二进制消息，每条最多 64 KiB。二进制消息的首字节 `0` 表示还有后续，`1` 表示末片。每个方向在同一连接中顺序发送整条消息的所有分片，接收方拼接后再解析 JSON。请求总量限制仍是普通请求 1 MiB、舰船导入和识别请求 8 MiB。显式通道的响应最多 64 MiB。分片降低单条 WebSocket 消息的大小，报表仍按原范围返回完整数据。
 
 模块本身刻意做成**薄适配层**：它不做游戏业务，只做「协议收发 + 参数校验 + 编排」。真正的业务要么委托给 `module/runtime/`（进程管理、更新器、部署设置），要么委托给 `module/config/transaction` 的跨进程事务与 `module/statistics/` 的统计数据源。这使 API 层可以在测试中用临时配置目录 + 关闭真实进程生命周期的方式完整运行（`create_app` 的测试参数），而不接触任何设备。
 
@@ -74,6 +80,7 @@ module/api/
 | `Router.dispatch`（router.py） | 方法名 → 参数验证 → handler 的唯一分发路径 |
 | `ConfigService` / `RuntimeService` | MCP 工具与 WS handler 共用的两个服务对象 |
 | `startup` / `clearup`（lifecycle.py） | lifespan 调用的共享运行时启动与清理 |
+| `/api/v1/plugins`、`/api/v1/plugins/{id}`、`/api/v1/plugins/{id}/{revision}/{path}`（app.py） | 插件管理请求使用 `plugins.access` 取得的进程级令牌；已启用插件的静态资源按修订号分发 |
 | `dev_tools.export_api_schema.main` | 契约生成入口（CI 校验 diff） |
 
 追代码建议从 `create_app` 读起：它一次展示了密码解析、服务对象组装、MCP 挂载与关闭顺序。
@@ -86,9 +93,9 @@ module/api/
 
 | 字段 | 类型 | 说明 |
 | --- | --- | --- |
-| `password` | str | 访问密码；为空表示免密（本机/回环部署） |
-| `connections` | int | 当前 WS 连接数，上限 32，超出以 1013 拒绝 |
-| `workers` | `asyncio.Semaphore(8)` | 全局并发业务线程上限，dispatch 与订阅采样共享 |
+| `password` | str | 访问密码；为空表示应用免密，外部部署可由反向代理提供 Basic Auth 等入口认证 |
+| `connections` | int | 总连接上限 32，数据连接最多 16 条，超出以 1013 拒绝 |
+| `workers` / `data_workers` | asyncio.Semaphore | 操作及旧协议共享 8 个并发额度，数据通道独占 4 个额度 |
 | `failures` | OrderedDict | 按来源 IP 的登录失败退避表，上限 1024 条，超限淘汰最旧 |
 
 ### Session（socket.py）
@@ -108,7 +115,7 @@ module/api/
 
 ### Method 与 Router（router.py）
 
-`Method(params, handler, mutates)` 三元组是注册表的最小单元：`params` 是 pydantic 严格模型，`mutates` 标记写操作。`Router.methods` 是全部方法的**显式白名单**——`dispatch` 只查表，未知方法返回 `METHOD_NOT_FOUND`，从结构上排除了「把 WS 方法名分发成任意 Python 属性调用」的漏洞（有专门回归：`test_unknown_method_does_not_dispatch_python_attributes`）。跨服务协调的写操作（删除实例、设置页）直接作为 Router 方法实现，因为它们要同时动 `ProcessManager`、日志缓存、preview hub 或部署配置，不属于任何单一服务。
+`Method(params, handler, mutates, data_channel)` 是注册表的最小单元：`params` 是 pydantic 严格模型，`mutates` 标记写操作，`data_channel` 标记该方法只允许由 `?channel=data` 连接调用（数据连接拒绝写操作，操作连接拒绝 `data_channel` 方法，违反时返回 `WRONG_CHANNEL`）。`Router.methods` 是全部方法的**显式白名单**——`dispatch` 只查表，未知方法返回 `METHOD_NOT_FOUND`，从结构上排除了「把 WS 方法名分发成任意 Python 属性调用」的漏洞（有专门回归：`test_unknown_method_does_not_dispatch_python_attributes`）。跨服务协调的写操作（删除实例、设置页）直接作为 Router 方法实现，因为它们要同时动 `ProcessManager`、日志缓存、preview hub 或部署配置，不属于任何单一服务。
 
 ### ConfigService（config_service.py）
 
@@ -124,11 +131,15 @@ module/api/
 
 `overview()` 枚举任务时跳过非字典根节点，不能把内部元数据当作任务参数组；总览请求、订阅推送以及启停后返回的总览共用这一读取路径。
 
+### PluginService（plugin_service.py / plugin_manifest.py）
+
+把 APU 插件包存进配置目录下的 `plugins/plugins.db`（不入库、不联网）：导入时校验 zip 路径、解压体积（80 MiB/512 文件）、`manifest.json` 的 `apiVersion=1` 与资源引用，主题 CSS 逐条校验后按 `@scope([data-apu-component])` 包装；只有 `enabled=1` 且声明 `storage` 权限的插件才能读写自身键值（单条 64 KiB、总计 1 MiB）。插件只贡献前端主题/页面/面板资源，不执行后端代码。HTTP 管理接口始终校验 `x-azurpilot-plugin-token`，空密码模式也通过已接纳的 WebSocket 会话取得令牌；演示模式允许读取，阻止导入、启停和删除。HTML 资源使用 `sandbox allow-scripts` 与浏览器同源 CSP，保留独立沙箱源，并兼容代理改写 Host 或添加路径前缀；插件与宿主的交互走带 nonce 的 MessagePort。
+
 ## 6. 工作流程
 
 ```mermaid
 flowchart TD
-    A[WS 连接 /api/v1/ws] --> B{Origin 存在且与 Host 一致?}
+    A[WS 连接 /api/v1/ws] --> B{Origin 存在且是 http/https?}
     B -- 否 --> C[关闭 1008]
     B -- 是 --> D{连接数 &lt; 32?}
     D -- 否 --> E[关闭 1013]
@@ -154,7 +165,7 @@ flowchart TD
 
 关键顺序细节：
 
-1. **升级前校验**：Origin 存在时其 scheme 必须是 http/https 且 netloc 与 Host 头一致，否则 1008 拒绝——这一步发生在 `accept()` 之前，跨站脚本无法借浏览器发起跨站 WebSocket。
+1. **升级前校验**：Origin 存在时其 scheme 必须是 http/https，否则 1008 拒绝；`channel` 只接受 `control`/`data`/`空`。本地分支放宽了「Origin 必须与 Host 一致」（frp/Lucky 等反代会改写 Host 头，严格相等会误杀合法反代连接），安全边界因此落在密码鉴权层：这一步只挡浏览器跨站，认证由第 2 步与 `auth.login` 负责。
 2. **认证判定**：`Session.authorized = 本机直连 or 密码为空`。本机判定由 `is_local_client` 完成：来源地址、Host 头、Origin 三者都必须是 `127.0.0.1/::1/localhost`，且未命中远程访问隧道标记头 `x-azurpilot-remote-access`（隧道流量同样来自回环，靠标记头区分）。
 3. **登录退避**：`auth.login` 用 `secrets.compare_digest` 比对；失败按来源 IP 记数，锁定 `min(60, 次数×2)` 秒。
 4. **业务执行**：除 `auth.login` 与 `events.subscribe` 外，所有方法经 `asyncio.to_thread` 在工作线程执行（阻塞 IO 不阻塞事件循环），`Semaphore(8)` 限制全局并发。

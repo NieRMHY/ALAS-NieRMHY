@@ -50,6 +50,7 @@ dependencies = [
     "keyring>=25.6.0",
     "portalocker>=3.2.0",
     "openpyxl>=3.1.5,<4",
+    "tinycss2>=1.4,<2",
 ]
 
 [dependency-groups]

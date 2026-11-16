@@ -127,7 +127,8 @@ class TestManualShelfSource(TempStateMixin, unittest.TestCase):
         """端到端：刷新写出的 Product1-5 不会再被自己当成手动配置。"""
         config = FakeConfig({
             'IslandPlan.IslandPlan.RefreshPlan': True,
-            'IslandPlan.IslandPlan.Season': 'autumn',
+            # Add by MHY, 2026-11-10：秋季已过季，刷新路径改用 spring 验证
+            'IslandPlan.IslandPlan.Season': 'spring',
             'IslandPlan.IslandPlan.PlanVerifiedOnly': False,
             'IslandPlan.IslandPlan.PlanMineVerified': False,
             'IslandPlan.IslandPlan.PlanShelfSlots': 4,
@@ -166,7 +167,8 @@ class TestRefreshShelfSlotsEnd2End(TempStateMixin, unittest.TestCase):
     def test_fifth_slot_cleared_without_config(self):
         config = FakeConfig({
             'IslandPlan.IslandPlan.RefreshPlan': True,
-            'IslandPlan.IslandPlan.Season': 'autumn',
+            # Add by MHY, 2026-11-10：秋季已过季，刷新路径改用 spring 验证
+            'IslandPlan.IslandPlan.Season': 'spring',
             'IslandPlan.IslandPlan.PlanVerifiedOnly': False,
             'IslandPlan.IslandPlan.PlanMineVerified': False,
         })

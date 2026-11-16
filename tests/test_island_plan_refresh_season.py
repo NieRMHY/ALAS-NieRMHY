@@ -85,7 +85,7 @@ class TestAutoRefreshOnGapChange(unittest.TestCase):
                 patch.object(island_plan_refresh, 'season_stockpile', lambda progress: gap), \
                 patch.object(island_plan_refresh, 'season_done',
                              lambda config, season: set(done)):
-            return island_plan_refresh.request_refresh_on_gap_change(self.config, 'autumn')
+            return island_plan_refresh.request_refresh_on_gap_change(self.config, 'winter')
 
     def test_flatten_gap(self):
         self.assertEqual(island_plan_refresh.flatten_gap({'grill': {'steak_bowl': 70}}),
@@ -151,6 +151,25 @@ class TestAutoRefreshOnGapChange(unittest.TestCase):
         self.assertEqual(done, {'salad'})
         self.config.reset_mock()
         self.assertFalse(self._call({'grill': {'steak_bowl': 70}}, done={'salad'}))
+
+    def test_retired_season_never_requests_or_saves(self):
+        """过季赛季即使留下旧缺口快照也不请求刷新：空任务不能覆盖营业方案。"""
+        island_plan_refresh.save_gap({'teahouse/apple_juice'}, {'salad'})
+        self.config.reset_mock()
+        with patch.object(island_plan_refresh, 'current_progress') as progress, \
+                patch.object(island_plan_refresh, 'season_stockpile') as stockpile, \
+                patch.object(island_plan_refresh, 'season_done') as done, \
+                patch.object(island_plan_refresh, 'save_gap') as save:
+            self.assertFalse(
+                island_plan_refresh.request_refresh_on_gap_change(self.config, 'autumn'))
+        progress.assert_not_called()
+        stockpile.assert_not_called()
+        done.assert_not_called()
+        save.assert_not_called()
+        self.config.cross_set.assert_not_called()
+        gap, done_set = island_plan_refresh.load_gap()
+        self.assertEqual(gap, {'teahouse/apple_juice'})
+        self.assertEqual(done_set, {'salad'})
 
 
 if __name__ == '__main__':

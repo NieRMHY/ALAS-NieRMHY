@@ -2,7 +2,7 @@
 
 <!-- Modify by MHY, 部署职责与错误处理按本地纯 Git 更新链同步 -->
 
-> 从「拿到一份源码」到「WebUI 起来、实例跑起来」的全部工程环节：安装器、启动脚本、Docker、依赖自举与前端构建。
+> 从「拿到一份源码」到「WebUI 起来、实例跑起来」的全部工程环节：安装器、启动脚本、依赖自举与前端构建。
 
 ## 1. 模块概述
 
@@ -41,15 +41,13 @@ deploy/
 ├── git.py           # 自有 GitHub 仓库与本地发布渠道更新
 ├── pip.py / uv.py   # 依赖同步（实际是 uv sync，类名保留 pip 是历史）
 ├── adb.py / emulator.py     # adb 安装与模拟器探测（Windows 注册表 + VirtualBox）
-├── frontend.py      # ensure_frontend：源码摘要 → npm ci + build
+├── frontend.py      # ensure_frontend：源码摘要 → 依赖复用/安装 → build
 ├── app.py           # AppManager：安装期前端构建步骤
 ├── patch.py         # pre_checks：路径检查、site-packages 补丁
 ├── atomic.py        # 失败清理（Windows 文件占用重试）
 ├── launcher/Alas.bat        # 双击入口（AzurPilot.exe 的本体）
 ├── Windows/         # Windows 专用 deploy 变体（模板 yaml 等）
-├── docker/          # Dockerfile（含 cn 镜像源变体）与构建脚本
-├── install/         # 平台辅助（模拟器探测）
-└── AidLux/          # 安卓本地部署方案
+└── install/         # 平台辅助（模拟器探测）
 ```
 
 ## 4. 核心入口
@@ -60,7 +58,6 @@ deploy/
 | `AzurPilot.exe` / `deploy/launcher/Alas.bat` | 用户入口：安装器成功后 `pythonw gui.py` |
 | `uv run python gui.py` | 开发态启动 WebUI（跳过安装器） |
 | `python -m deploy.app` | 只重建前端产物 |
-| `deploy/docker/Dockerfile` | 容器构建（多阶段，预装前端产物） |
 
 完整运行环境仍按 `pyproject.toml` 与 `uv.lock` 安装：当前 Apple Silicon 的 ONNX Runtime wheel 最低为 macOS 14，较旧系统不能直接安装这份锁定环境。跨平台依赖预检使用 `MACOSX_DEPLOYMENT_TARGET=14.0 uv sync --frozen --dry-run --python-platform aarch64-apple-darwin`；这只验证安装计划，不替代原生 Mac 上的安装、测试或模拟器验收。
 
@@ -74,13 +71,13 @@ Alas.bat → python -m deploy.installer
   git_install()               # 自有仓库的纯 Git 更新
   alas_kill()                 # 停掉本实例的 alas 进程
   pip_install()               # 实为 uv sync（--frozen），失败抛 ExecutionError
-  app_update()                # ensure_frontend()：摘要变化才 npm ci + build
+  app_update()                # ensure_frontend()：摘要变化才校验依赖并 build
   adb_install()               # adb 就位、替换系统 adb、自动连接、装 uiautomator2
 失败 → atomic_failure_cleanup → 退出码 1 → bat pause
 成功 → start pythonw gui.py --electron
 ```
 
-`GitManager.git_install()` 按本地配置直接执行 Git/CDN 更新，不再请求云端更新总开关。云端仅保留运行期间的强制更新开关，其访问失败不阻止正常版本检查。
+`GitManager.git_install()` 按本地配置直接执行 Git 更新，不再请求云端更新总开关。云端仅保留运行期间的强制更新开关，其访问失败不阻止正常版本检查。
 
 ### 启动后的依赖自举
 
@@ -93,7 +90,8 @@ Alas.bat → python -m deploy.installer
 
 ### 前端构建判据
 
-`ensure_frontend` 对 `package.json`、`vite.config.ts`、`src/**`、`public/**` 做内容哈希（不依赖 git 检出时间），摘要变化才重建。这就是「改前端源码后不重启构建，界面不更新」的原因。
+<!-- Modify by MHY, 同步上游依赖复用并保留便携 Node 查找。 -->
+`ensure_frontend` 按前端输入内容摘要判断是否重建。构建前校验 `package.json` 和锁文件：依赖摘要、平台和架构匹配且 Vite/TypeScript 工具齐备时复用 `node_modules`；否则执行 `npm install`，按失败场景回退官方源或 `npm ci`。安装过程中清单或锁文件变化会中止，成功构建后才写入构建摘要。Node 优先使用 PATH，缺失时继续查找本地便携发行版。Android 预构建包须通过清单摘要和源码指纹校验后才可使用。
 
 ## 10. 配置
 
@@ -102,7 +100,7 @@ Alas.bat → python -m deploy.installer
 <!-- Add by MHY, 本地更新源、渠道迁移与部署模板生成约定 -->
 默认更新地址为 `https://github.com/NieRMHY/ALAS-NieRMHY.git`，正式渠道使用 `essex`，开发渠道使用 `dev_essex`。通用和 Windows 部署配置在本地将旧的上游地址、历史镜像以及 `global/cn/cnb/gitcode` 别名迁移到自有仓库，对应的 `master/dev` 转为本地发布渠道；已有自定义仓库和其他分支保持原值。重定向不查询网络所在国家，也不访问镜像或云端控制接口。迁移时配置字典和运行时属性在同一事务内同步，避免写入其他设置时恢复旧更新源。
 
-八份 `config/deploy.template*.yaml` 来自 `deploy/template`，由 `ConfigGenerator.generate_deploy_template()` 生成。修改默认源或渠道应先改基础模板，再仅生成部署模板；合并期间不要为此运行整个配置生成器。国内模板只覆盖 PyPI 镜像和语言，Linux、Docker、AidLux 模板保留各自工具路径。`deploy/Windows/template.yaml` 独立维护相同的仓库与渠道默认值。Docker 一键部署脚本同样默认克隆自有仓库的 `essex`，可用 `BRANCH=dev_essex` 显式选择开发渠道。
+四份 `config/deploy.template*.yaml` 来自 `deploy/template`，由 `ConfigGenerator.generate_deploy_template()` 生成。修改默认源或渠道应先改基础模板，再生成部署模板。国内模板只覆盖 PyPI 镜像和语言，Linux 模板保留自身工具路径；`deploy/Windows/template.yaml` 独立维护相同的仓库与渠道默认值。上游已移除 Docker/AidLux 部署目录与模板，本仓库沿用源码安装和启动器链路。
 
 ## 11. 异常与错误处理
 

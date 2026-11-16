@@ -7,6 +7,7 @@ from module.island_fishery.assets import *
 from module.island_rancher.assets import *
 from module.island.island import *
 from module.island.island_fish_meat import FRESHWATER_FISH_MEAT, SALTWATER_FISH_MEAT, IslandFishMeatExchange
+from module.island.island_winter_resources import exchange_targets
 from module.base.button import Button
 
 def _click_area(device, area):
@@ -699,10 +700,12 @@ class IslandFishery(Island, WarehouseOCR, LoginHandler, IslandFishMeatExchange):
 
         # 鱼肉不足目标时把鱼兑换成鱼肉（目标为 0 时跳过，岛屿生产规划器会按货运缺口与菜品用量写入）；
         # 兑换时保留各鱼的养殖底线，避免把菜品要用的鱼换光
-        self.run_fish_meat_exchange({
+        # Add by MHY, 冬季开发计划要 100 淡水 + 100 海水鱼肉：只抬兑换目标（与 `Min*` 取较大值），
+        # 各鱼的保留数量 keep 与养殖计划都不动，鱼肉库存读不到时也不会当成 0 去兑换
+        self.run_fish_meat_exchange(exchange_targets(self.config, {
             FRESHWATER_FISH_MEAT: getattr(self.config, 'IslandFishery_MinFreshwaterFishMeat', 0),
             SALTWATER_FISH_MEAT: getattr(self.config, 'IslandFishery_MinSaltwaterFishMeat', 0),
-        }, keep={fish_id: self.fishery_threshold.get(name, 0) for name, fish_id in FISH_MEAT_FISH_IDS.items()})
+        }), keep={fish_id: self.fishery_threshold.get(name, 0) for name, fish_id in FISH_MEAT_FISH_IDS.items()})
 
         # 设置下次运行时间：合并牧场和渔场的计时器，取最早的时间
         future_finish = []

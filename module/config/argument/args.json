@@ -8007,12 +8007,14 @@
           "war_archives_20230223_cn",
           "war_archives_20230525_cn",
           "war_archives_20230803_cn",
+          "war_archives_20230817_cn",
           "war_archives_20231026_cn",
           "war_archives_20240725_cn",
           "war_archives_20241024_cn",
           "war_archives_20251023_cn"
         ],
         "option_cn": [
+          "war_archives_20230817_cn",
           "war_archives_20251023_cn",
           "war_archives_20241024_cn",
           "war_archives_20240725_cn",
@@ -8065,6 +8067,7 @@
           "war_archives_20181020_en"
         ],
         "option_en": [
+          "war_archives_20230817_cn",
           "war_archives_20251023_cn",
           "war_archives_20241024_cn",
           "war_archives_20240725_cn",
@@ -8117,6 +8120,7 @@
           "war_archives_20181020_en"
         ],
         "option_jp": [
+          "war_archives_20230817_cn",
           "war_archives_20251023_cn",
           "war_archives_20241024_cn",
           "war_archives_20240725_cn",
@@ -8169,6 +8173,7 @@
           "war_archives_20181020_en"
         ],
         "option_tw": [
+          "war_archives_20230817_cn",
           "war_archives_20251023_cn",
           "war_archives_20241024_cn",
           "war_archives_20240725_cn",
@@ -8267,6 +8272,7 @@
           "war_archives_20230223_cn",
           "war_archives_20230525_cn",
           "war_archives_20230803_cn",
+          "war_archives_20230817_cn",
           "war_archives_20231026_cn",
           "war_archives_20240725_cn",
           "war_archives_20241024_cn",
@@ -16903,83 +16909,51 @@
           false
         ]
       },
-      "Need_apple_juice": {
-        "type": "input",
-        "value": 250
-      },
-      "Done_apple_juice": {
+      "WinterTaskEnabled": {
         "type": "checkbox",
-        "value": false,
+        "value": true,
         "option": [
           true,
           false
         ]
       },
-      "Need_iced_coffee": {
+      "MealBuffer": {
         "type": "input",
-        "value": 250
-      },
-      "Done_iced_coffee": {
-        "type": "checkbox",
-        "value": false,
-        "option": [
-          true,
-          false
+        "value": 20,
+        "validate": [
+          0,
+          999
         ]
       },
-      "Need_roasted_skewer": {
+      "Need_tea": {
         "type": "input",
-        "value": 250
+        "value": 500
       },
-      "Done_roasted_skewer": {
-        "type": "checkbox",
-        "value": false,
-        "option": [
-          true,
-          false
-        ]
+      "Need_citrus": {
+        "type": "input",
+        "value": 500
       },
-      "Need_salad": {
+      "Need_mango": {
+        "type": "input",
+        "value": 200
+      },
+      "Need_avocado": {
         "type": "input",
         "value": 100
       },
-      "Done_salad": {
-        "type": "checkbox",
-        "value": false,
-        "option": [
-          true,
-          false
-        ]
-      },
-      "Need_carrot_omelette": {
+      "Need_freshwater_fish_meat": {
         "type": "input",
         "value": 100
       },
-      "Done_carrot_omelette": {
-        "type": "checkbox",
-        "value": false,
-        "option": [
-          true,
-          false
-        ]
-      },
-      "Need_latte": {
+      "Need_seawater_fish_meat": {
         "type": "input",
         "value": 100
       },
-      "Done_latte": {
-        "type": "checkbox",
-        "value": false,
-        "option": [
-          true,
-          false
-        ]
-      },
-      "Need_stir_fried_chicken": {
+      "Need_chicken_potato": {
         "type": "input",
         "value": 100
       },
-      "Done_stir_fried_chicken": {
+      "Done_chicken_potato": {
         "type": "checkbox",
         "value": false,
         "option": [
@@ -16987,11 +16961,91 @@
           false
         ]
       },
-      "Need_steak_bowl": {
+      "Need_rice_mango": {
         "type": "input",
         "value": 50
       },
-      "Done_steak_bowl": {
+      "Done_rice_mango": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "Need_strawberry_charlotte": {
+        "type": "input",
+        "value": 25
+      },
+      "Done_strawberry_charlotte": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "Need_silver": {
+        "type": "input",
+        "value": 25
+      },
+      "Need_elegant_wood": {
+        "type": "input",
+        "value": 25
+      },
+      "Need_sachet": {
+        "type": "input",
+        "value": 10
+      },
+      "Done_sachet": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "Need_cutlery": {
+        "type": "input",
+        "value": 10
+      },
+      "Done_cutlery": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "Need_ink_cartridge": {
+        "type": "input",
+        "value": 10
+      },
+      "Done_ink_cartridge": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "Need_clock": {
+        "type": "input",
+        "value": 10
+      },
+      "Done_clock": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
+      "Need_battery": {
+        "type": "input",
+        "value": 10
+      },
+      "Done_battery": {
         "type": "checkbox",
         "value": false,
         "option": [
@@ -17433,6 +17487,7 @@
         "option": [
           "None",
           "spring_flower_tea",
+          "banana_mango",
           "strawberry_lemon",
           "strawberry_honey",
           "floral_fruity",
@@ -17450,6 +17505,7 @@
         "option": [
           "None",
           "spring_flower_tea",
+          "banana_mango",
           "strawberry_lemon",
           "strawberry_honey",
           "floral_fruity",
@@ -17467,6 +17523,7 @@
         "option": [
           "None",
           "spring_flower_tea",
+          "banana_mango",
           "strawberry_lemon",
           "strawberry_honey",
           "floral_fruity",
@@ -17484,6 +17541,7 @@
         "option": [
           "None",
           "spring_flower_tea",
+          "banana_mango",
           "strawberry_lemon",
           "strawberry_honey",
           "floral_fruity",
@@ -17501,6 +17559,7 @@
         "option": [
           "None",
           "spring_flower_tea",
+          "banana_mango",
           "strawberry_lemon",
           "strawberry_honey",
           "floral_fruity",
@@ -17518,6 +17577,7 @@
         "option": [
           "None",
           "spring_flower_tea",
+          "banana_mango",
           "strawberry_lemon",
           "strawberry_honey",
           "floral_fruity",

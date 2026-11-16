@@ -21,7 +21,8 @@ from module.island.island import *
 from datetime import timedelta
 from module.config.time_source import now as current_time
 from module.handler.login import LoginHandler
-from module.island.farm_targets import parse_crop_targets, plan_crops_to_restock
+from module.island.farm_targets import overlay_targets, parse_crop_targets, plan_crops_to_restock
+from module.island.island_winter_resources import crop_task_targets, protected_crops
 from module.island.warehouse import *
 from module.logger import logger
 
@@ -290,13 +291,21 @@ class IslandFarm(Island, WarehouseOCR, LoginHandler):
 
         每种作物与自己的目标比较（`CropTargets` 单独设置优先，否则用区域阈值），
         按「库存/目标」升序排序，优先补种缺口比例最大的作物。
+
+        Add by MHY, 冬季开发计划任务要交的作物在运行时抬到「需求 + 缓冲」，与日常目标
+        取较大值（见 island_winter_resources）。叠加只作用于本轮补种列表，不写回
+        `CropTargets`；这些作物同时不受忽略项与当季过滤影响，否则任务要的东西长不出来。
         """
         for category in ['farm', 'orchard', 'nursery']:
             inventory = self.warehouse_inventory(category)
             config = self.INVENTORY_CONFIG[category]
             self.inventory_counts[category] = inventory
+            task_targets = crop_task_targets(self.config, category)
+            task_crops = protected_crops(self.config, category)
             skip = set()
             for item_name in inventory:
+                if item_name in task_crops:
+                    continue
                 if category == 'orchard' and item_name == 'avocado' and self.ignore_avocado:
                     skip.add(item_name)
                 elif category == 'nursery' and item_name == 'pineapple' and self.ignore_pineapple:
@@ -311,9 +320,13 @@ class IslandFarm(Island, WarehouseOCR, LoginHandler):
                     skip.add(item_name)
             if self.crop_targets[category]:
                 logger.info(f"[岛屿-农田] {category}单独设置的作物目标: {self.crop_targets[category]}")
+            if task_targets:
+                detail = '、'.join(f'{crop} {amount}' for crop, amount in sorted(task_targets.items()))
+                logger.info(f"[岛屿-农田] {category}冬季任务目标（与日常目标取较大值）: {detail}")
             # 缺口比例最大的作物排最前，轮转分配时优先补种
             self.to_plant_lists[category] = plan_crops_to_restock(
-                inventory, self.crop_targets[category], config['threshold'], skip=skip)
+                inventory, overlay_targets(self.crop_targets[category], task_targets, config['threshold']),
+                config['threshold'], skip=skip)
 
     def _is_orchard_crop_in_season(self, crop_name):
         """检查果园作物是否在当季（按季节配置）。

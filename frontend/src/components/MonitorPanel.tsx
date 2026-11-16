@@ -119,7 +119,7 @@ export function MonitorPanel({instance, actions}: {instance: string; actions?: R
   </div>
     <div className="monitor-view" hidden={view !== 'logs'}><LogPanel active={view === 'logs'} toolbarSlot={toolbarSlot}/></div>
     <div className="monitor-view" hidden={view !== 'preview'}>
-      <RecentLogs instance={instance}/>
+      {view === 'preview' && <RecentLogs instance={instance}/>}
       <div className="preview-stage"><div className="preview-screen">{frame?.image ? <img src={frame.image} alt={ui('monitor.screenshotAlt')}/> : <Empty icon={<Image size={42}/>} title={ui('monitor.waitingScreenshot')}>{ui('monitor.screenshotHint')}</Empty>}</div></div>
     </div>
   </section>

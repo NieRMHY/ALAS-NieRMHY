@@ -61,7 +61,9 @@ export function createMockServer({password = '', empty = false} = {}) {
   server.on('upgrade', (request, socket, head) => {
     let validOrigin = false
     try {validOrigin = new URL(request.headers.origin).host === request.headers.host} catch { /* 缺少来源时拒绝连接。 */ }
-    if (request.url !== '/api/v1/ws' || !validOrigin) {socket.end('HTTP/1.1 403 Forbidden\r\n\r\n'); return}
+    // 双通道客户端会在查询串带 channel；升级检查只看路径，旧 mock 仍按单连接返回会话。
+    const upgradePath = new URL(request.url, 'http://localhost').pathname
+    if (upgradePath !== '/api/v1/ws' || !validOrigin) {socket.end('HTTP/1.1 403 Forbidden\r\n\r\n'); return}
     sockets.handleUpgrade(request, socket, head, ws => sockets.emit('connection', ws))
   })
   const sessions = new Set()
@@ -114,8 +116,8 @@ export function createMockServer({password = '', empty = false} = {}) {
           if (topic === 'notifications') continue
           if (topic === 'preview' && session.last.has(topic) && Date.now() - (session.previewAt ?? 0) < 3000) continue
           if (topic === 'preview') session.previewAt = Date.now()
-          const method = {instances: 'instances.list', overview: 'overview.get', logs: 'logs.get', preview: 'preview.capture'}[topic]
-          const data = state.dispatch(method, topic === 'instances' ? {} : {instance: session.instance})
+          const method = {instances: 'instances.list', overview: 'overview.get', logs: 'logs.get', preview: 'preview.capture', plugins: 'plugins.list'}[topic]
+          const data = state.dispatch(method, topic === 'instances' || topic === 'plugins' ? {} : {instance: session.instance})
           const serialized = JSON.stringify(data)
           if (session.last.get(topic) !== serialized) {session.event(topic, data); session.last.set(topic, serialized)}
         } catch (error) {

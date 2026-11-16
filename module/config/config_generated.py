@@ -1206,22 +1206,32 @@ class GeneratedConfig:
 
     # 配置组 `IslandSeasonPlan`
     IslandSeasonPlan_NotifyEnable = True  # True, False
-    IslandSeasonPlan_Need_apple_juice = 250
-    IslandSeasonPlan_Done_apple_juice = False  # True, False
-    IslandSeasonPlan_Need_iced_coffee = 250
-    IslandSeasonPlan_Done_iced_coffee = False  # True, False
-    IslandSeasonPlan_Need_roasted_skewer = 250
-    IslandSeasonPlan_Done_roasted_skewer = False  # True, False
-    IslandSeasonPlan_Need_salad = 100
-    IslandSeasonPlan_Done_salad = False  # True, False
-    IslandSeasonPlan_Need_carrot_omelette = 100
-    IslandSeasonPlan_Done_carrot_omelette = False  # True, False
-    IslandSeasonPlan_Need_latte = 100
-    IslandSeasonPlan_Done_latte = False  # True, False
-    IslandSeasonPlan_Need_stir_fried_chicken = 100
-    IslandSeasonPlan_Done_stir_fried_chicken = False  # True, False
-    IslandSeasonPlan_Need_steak_bowl = 50
-    IslandSeasonPlan_Done_steak_bowl = False  # True, False
+    IslandSeasonPlan_WinterTaskEnabled = True  # True, False
+    IslandSeasonPlan_MealBuffer = 20
+    IslandSeasonPlan_Need_tea = 500
+    IslandSeasonPlan_Need_citrus = 500
+    IslandSeasonPlan_Need_mango = 200
+    IslandSeasonPlan_Need_avocado = 100
+    IslandSeasonPlan_Need_freshwater_fish_meat = 100
+    IslandSeasonPlan_Need_seawater_fish_meat = 100
+    IslandSeasonPlan_Need_chicken_potato = 100
+    IslandSeasonPlan_Done_chicken_potato = False  # True, False
+    IslandSeasonPlan_Need_rice_mango = 50
+    IslandSeasonPlan_Done_rice_mango = False  # True, False
+    IslandSeasonPlan_Need_strawberry_charlotte = 25
+    IslandSeasonPlan_Done_strawberry_charlotte = False  # True, False
+    IslandSeasonPlan_Need_silver = 25
+    IslandSeasonPlan_Need_elegant_wood = 25
+    IslandSeasonPlan_Need_sachet = 10
+    IslandSeasonPlan_Done_sachet = False  # True, False
+    IslandSeasonPlan_Need_cutlery = 10
+    IslandSeasonPlan_Done_cutlery = False  # True, False
+    IslandSeasonPlan_Need_ink_cartridge = 10
+    IslandSeasonPlan_Done_ink_cartridge = False  # True, False
+    IslandSeasonPlan_Need_clock = 10
+    IslandSeasonPlan_Done_clock = False  # True, False
+    IslandSeasonPlan_Need_battery = 10
+    IslandSeasonPlan_Done_battery = False  # True, False
 
     # 配置组 `IslandDailyInteract`
     IslandDailyInteract_WeeklyPhoto = True  # True, False
@@ -1259,12 +1269,12 @@ class GeneratedConfig:
     # 配置组 `IslandBusinessShop2`
     IslandBusinessShop2_Char1 = 'None'  # None, WorkerJuu, Cheshire, YingSwei, Saratoga, Akashi, NewJersey, Tashkent, LeMalin, Shimakaze, Amagi_chan, Unicorn, ChaoHo, ChenHai, WilliamDPorter, Helena, Friedrich, Atago, Yixian, August, Eugen, Hood, Javelin, Laffey, Explorer, Navigator, OceanCrosser, FeiYun, Takao, Anchorage, Belfast, ChangFeng, Mogador, RoyalFortune, DaVinci, Taihou, Nagato, Agir, HwahJah, Argus, Ognevoy
     IslandBusinessShop2_Char2 = 'None'  # None, WorkerJuu, Cheshire, YingSwei, Saratoga, Akashi, NewJersey, Tashkent, LeMalin, Shimakaze, Amagi_chan, Unicorn, ChaoHo, ChenHai, WilliamDPorter, Helena, Friedrich, Atago, Yixian, August, Eugen, Hood, Javelin, Laffey, Explorer, Navigator, OceanCrosser, FeiYun, Takao, Anchorage, Belfast, ChangFeng, Mogador, RoyalFortune, DaVinci, Taihou, Nagato, Agir, HwahJah, Argus, Ognevoy
-    IslandBusinessShop2_Product1 = 'None'  # None, spring_flower_tea, strawberry_lemon, strawberry_honey, floral_fruity, fruit_paradise, lavender_tea, sunny_honey, watermelon_juice, chrysanthemum_tea, carrot_pear_juice
-    IslandBusinessShop2_Product2 = 'None'  # None, spring_flower_tea, strawberry_lemon, strawberry_honey, floral_fruity, fruit_paradise, lavender_tea, sunny_honey, watermelon_juice, chrysanthemum_tea, carrot_pear_juice
-    IslandBusinessShop2_Product3 = 'None'  # None, spring_flower_tea, strawberry_lemon, strawberry_honey, floral_fruity, fruit_paradise, lavender_tea, sunny_honey, watermelon_juice, chrysanthemum_tea, carrot_pear_juice
-    IslandBusinessShop2_Product4 = 'None'  # None, spring_flower_tea, strawberry_lemon, strawberry_honey, floral_fruity, fruit_paradise, lavender_tea, sunny_honey, watermelon_juice, chrysanthemum_tea, carrot_pear_juice
-    IslandBusinessShop2_Product5 = 'None'  # None, spring_flower_tea, strawberry_lemon, strawberry_honey, floral_fruity, fruit_paradise, lavender_tea, sunny_honey, watermelon_juice, chrysanthemum_tea, carrot_pear_juice
-    IslandBusinessShop2_SeasonalFallback = 'sunny_honey'  # None, spring_flower_tea, strawberry_lemon, strawberry_honey, floral_fruity, fruit_paradise, lavender_tea, sunny_honey, watermelon_juice, chrysanthemum_tea, carrot_pear_juice
+    IslandBusinessShop2_Product1 = 'None'  # None, spring_flower_tea, banana_mango, strawberry_lemon, strawberry_honey, floral_fruity, fruit_paradise, lavender_tea, sunny_honey, watermelon_juice, chrysanthemum_tea, carrot_pear_juice
+    IslandBusinessShop2_Product2 = 'None'  # None, spring_flower_tea, banana_mango, strawberry_lemon, strawberry_honey, floral_fruity, fruit_paradise, lavender_tea, sunny_honey, watermelon_juice, chrysanthemum_tea, carrot_pear_juice
+    IslandBusinessShop2_Product3 = 'None'  # None, spring_flower_tea, banana_mango, strawberry_lemon, strawberry_honey, floral_fruity, fruit_paradise, lavender_tea, sunny_honey, watermelon_juice, chrysanthemum_tea, carrot_pear_juice
+    IslandBusinessShop2_Product4 = 'None'  # None, spring_flower_tea, banana_mango, strawberry_lemon, strawberry_honey, floral_fruity, fruit_paradise, lavender_tea, sunny_honey, watermelon_juice, chrysanthemum_tea, carrot_pear_juice
+    IslandBusinessShop2_Product5 = 'None'  # None, spring_flower_tea, banana_mango, strawberry_lemon, strawberry_honey, floral_fruity, fruit_paradise, lavender_tea, sunny_honey, watermelon_juice, chrysanthemum_tea, carrot_pear_juice
+    IslandBusinessShop2_SeasonalFallback = 'sunny_honey'  # None, spring_flower_tea, banana_mango, strawberry_lemon, strawberry_honey, floral_fruity, fruit_paradise, lavender_tea, sunny_honey, watermelon_juice, chrysanthemum_tea, carrot_pear_juice
     IslandBusinessShop2_BoostReplaceFilter = '30 > 20 > strawberry_honey > fruit_paradise > 10'
 
     # 配置组 `IslandBusinessShop3`
