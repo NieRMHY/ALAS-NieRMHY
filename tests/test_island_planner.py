@@ -566,6 +566,14 @@ class ProductionLineTest(unittest.TestCase):
         self.assertFalse(values['IslandRancher.IslandRancher.Milk'])
         self.assertFalse(values['IslandRancher.IslandRancher.Wool'])
 
+    def test_continuous_ranch_preserves_switches(self):
+        # 持续养殖时 Milk/Wool 是用户对牛/羊岗位的解锁勾选，规划器不能每次应用方案都关掉
+        calculator = self.make()
+        values = sm.ranch_settings(calculator, continuous=True)
+        self.assertNotIn('IslandRancher.IslandRancher.Milk', values)
+        self.assertNotIn('IslandRancher.IslandRancher.Wool', values)
+        self.assertIn('IslandRancher.IslandRancher.MinChicken', values)
+
     def test_manufacture_positions(self):
         values = sm.manufacture_settings(self.make())
         workload = DIC_ISLAND_RECIPE[701010]['workload'] * 10
@@ -752,6 +760,15 @@ class PlannerTaskTest(unittest.TestCase):
         self.assertIn('IslandFarm.IslandFarm.CropTargets', written)
         self.assertIn('IslandBusiness.IslandBusinessShop1.Product1', written)
         self.assertTrue(all(path.split('.')[2] in ARGS[path.split('.')[0]][path.split('.')[1]] for path in written))
+
+    def test_continuous_ranch_does_not_disable_switches(self):
+        planner, result = self.run_planner(
+            IslandProductionPlanner_ApplySettings=True,
+            IslandRancher_ContinuousBreeding=True)
+        self.assertTrue(result)
+        written = planner.config.written
+        self.assertNotIn('IslandRancher.IslandRancher.Milk', written)
+        self.assertNotIn('IslandRancher.IslandRancher.Wool', written)
 
     def test_infeasible_plan_keeps_settings(self):
         planner, result = self.run_planner(IslandProductionPlanner_ApplySettings=True,

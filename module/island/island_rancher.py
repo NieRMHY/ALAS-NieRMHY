@@ -15,6 +15,8 @@ from module.logger import logger
 
 # Add by MHY, 补料和派遣共用同一库存门槛。
 FEED_DISPATCH_THRESHOLD = 50
+# Add by MHY, 持续养殖时缺料/派遣失败的复查间隔，避免空岗一直等到 6 小时兜底。
+RANCH_RETRY_HOURS = 2
 
 
 class IslandRancher(Island, WarehouseOCR, LoginHandler):
@@ -98,6 +100,14 @@ class IslandRancher(Island, WarehouseOCR, LoginHandler):
             'farm': {}
         }
         self.ranch_last_finish_time = None
+
+    @property
+    def continuous_breeding(self):
+        """是否启用四岗持续养殖。
+
+        新配置项在旧生成文件里可能还不存在，读取失败时按关闭处理，保持原阈值行为。
+        """
+        return bool(getattr(self.config, 'IslandRancher_ContinuousBreeding', False))
 
     def raise_if_island_error(self):
         """若检测到岛屿异常弹窗则抛出 GameBugError。
@@ -232,9 +242,14 @@ class IslandRancher(Island, WarehouseOCR, LoginHandler):
                 continue
             current_quantity = self.inventory_counts['mill'].get(feed_item)
             if current_quantity is not None and current_quantity < feed_target_quantity:
-                target = self.name_to_config[feed_item]['number']
+                if self.continuous_breeding:
+                    # 持续养殖每轮都会派遣，只补到门槛能少占原料，避免固定 11 组的高库存开销。
+                    target = self.feed_groups_to_threshold(feed_item, current_quantity, feed_target_quantity)
+                    logger.info(f"[岛屿-牧场] {self._item_cn(feed_item)}库存不足: {current_quantity}/{feed_target_quantity}，按缺口加工 {target} 组")
+                else:
+                    target = self.name_to_config[feed_item]['number']
+                    logger.info(f"[岛屿-牧场] {self._item_cn(feed_item)}库存不足: {current_quantity}/{feed_target_quantity}，固定加工 {target} 组")
                 mill_needs.append((feed_item, target))
-                logger.info(f"[岛屿-牧场] {self._item_cn(feed_item)}库存不足: {current_quantity}/{feed_target_quantity}，固定加工 {target} 组")
 
         return mill_needs
 
@@ -301,6 +316,23 @@ class IslandRancher(Island, WarehouseOCR, LoginHandler):
         if 0 < groups < quantity:
             return groups
         return None
+
+    def feed_groups_to_threshold(self, mill_item, current_quantity, feed_target_quantity):
+        """按当前缺口计算补到派遣门槛所需的最少组数。
+
+        持续养殖每轮都会派遣，固定加工 11 组会把大量原料压成饲料库存；
+        这里只补到门槛，下一轮再按新的缺口补。
+
+        Args:
+            mill_item (str): 饲料内部名称。
+            current_quantity (int): 当前饲料库存（已确认，不为 None）。
+            feed_target_quantity (int): 饲料派遣门槛。
+
+        Returns:
+            int: 至少 1 组的加工组数。
+        """
+        per_group = self.mill_output_quantity(mill_item, 1)
+        return max(1, -(-(feed_target_quantity - current_quantity) // per_group))
 
     def process_mill_item_with_inventory(self, mill_item, quantity, fallback_quantity=None):
         """结合当前原料库存检查并执行磨坊加工。
@@ -480,6 +512,31 @@ class IslandRancher(Island, WarehouseOCR, LoginHandler):
         logger.warning(f"[岛屿-牧场] 通过牧场岗位{post_id}进入磨坊超时")
         return False
 
+    def ranch_feed_action(self, feed_count):
+        """根据饲料库存决定当前岗位是否继续尝试派遣。
+
+        未知库存不等于 0：默认模式沿用原逻辑等待下次扫描，持续养殖则继续走到
+        产物选择页，由游戏页面显示的实际饲料数量决定能否确认派遣。
+
+        Args:
+            feed_count (int | None): 仓库 OCR 读到的饲料数量。
+
+        Returns:
+            str: dispatch（继续派遣）、retry（已确认不足）或 skip（未知且未开持续养殖）。
+        """
+        if feed_count is None:
+            return 'dispatch' if self.continuous_breeding else 'skip'
+        if feed_count < FEED_DISPATCH_THRESHOLD:
+            return 'retry'
+        return 'dispatch'
+
+    def mark_ranch_retry(self, post_id, reason):
+        """持续养殖下把失败岗位记为短周期复查，避免空岗一直等到 6 小时兜底。"""
+        if not self.continuous_breeding:
+            return
+        self.ranch_last_finish_time = current_time() + timedelta(hours=RANCH_RETRY_HOURS)
+        logger.warning(f"[岛屿-牧场] 牧场岗位{post_id}{reason}，{RANCH_RETRY_HOURS} 小时后复查")
+
     def ranch_post_get_and_add(self, post_id, character='WorkerJuu'):
         """在牧场岗位中收取产物并追加派遣角色。
 
@@ -532,15 +589,24 @@ class IslandRancher(Island, WarehouseOCR, LoginHandler):
                 continue
             if self.appear(ISLAND_SELECT_PRODUCT_CHECK, offset=1):
                 feed_item = self.ranch_feed_map.get(post_id)
-                # Modify by MHY, 未知库存等待下次扫描，避免按空库存反复补料。
                 feed_count = self.inventory_counts['mill'].get(feed_item)
-                if feed_item and (feed_count is None or feed_count < FEED_DISPATCH_THRESHOLD):
-                    logger.info(f"[岛屿-牧场] {self._item_cn(feed_item)}库存未知或不足 {FEED_DISPATCH_THRESHOLD}，跳过牧场岗位{post_id}")
+                feed_action = self.ranch_feed_action(feed_count)
+                if feed_item and feed_action == 'retry':
+                    logger.info(f"[岛屿-牧场] {self._item_cn(feed_item)}库存不足 {FEED_DISPATCH_THRESHOLD}，跳过牧场岗位{post_id}")
+                    self.mark_ranch_retry(post_id, '饲料不足')
                     self.back_to_postmanage_after_feed_purchase()
                     return True
+                if feed_item and feed_action == 'skip':
+                    # 默认模式：未知库存等待下次扫描，避免按空库存反复补料。
+                    logger.info(f"[岛屿-牧场] {self._item_cn(feed_item)}库存未知，跳过牧场岗位{post_id}")
+                    self.back_to_postmanage_after_feed_purchase()
+                    return True
+                if feed_item and feed_count is None:
+                    logger.info(f"[岛屿-牧场] {self._item_cn(feed_item)}库存未知，持续养殖继续尝试派遣，由游戏页面确认饲料是否足够")
                 self.device.sleep(0.3)
                 if not self.confirm_post_add_order(f"牧场岗位{post_id}派遣"):
                     self.back_to_postmanage_from_dispatch()
+                    self.mark_ranch_retry(post_id, '派遣确认失败')
                     return True
                 continue
             if (
@@ -691,6 +757,11 @@ class IslandRancher(Island, WarehouseOCR, LoginHandler):
         finish_time = self.ranch_ocr_finish_time(post_id)
         if finish_time is None:
             self.post_close()
+            if self.continuous_breeding:
+                # 派遣可能已经生效，只是剩余时间 OCR 失败；短周期复查，避免岗位完成后空置到 6 小时兜底。
+                setattr(self, time_var_name, current_time() + timedelta(hours=RANCH_RETRY_HOURS))
+                logger.warning(f"[岛屿-牧场] 牧场岗位{post_id}未取得有效完成时间，{RANCH_RETRY_HOURS} 小时后复查")
+                return True
             logger.warning(f"[岛屿-牧场] 牧场岗位{post_id}未取得有效完成时间，本次不写入岗位计时器")
             return False
         setattr(self, time_var_name, finish_time)
@@ -725,45 +796,53 @@ class IslandRancher(Island, WarehouseOCR, LoginHandler):
             logger.info(f"{self._item_cn(item_config['name'])}: {count}")
 
     def check_ranch_needs(self):
-        """根据库存阈值与岗位开关确定需要执行的牧场岗位。
+        """根据库存阈值、岗位开关与持续养殖模式确定需要执行的牧场岗位。
 
-        养鸡（POST1）/养猪（POST2）按库存阈值触发；养牛（POST3）/养羊（POST4）
-        分别由 IslandRancher_Milk / IslandRancher_Wool 开关控制，关闭时不排产。
+        默认保持原行为：养鸡（POST1）/养猪（POST2）按库存阈值触发；
+        养牛（POST3）/养羊（POST4）分别由 IslandRancher_Milk /
+        IslandRancher_Wool 开关控制。开启 IslandRancher_ContinuousBreeding 后，
+        鸡舍/猪圈每轮都排产；牛棚/羊圈仍按 Milk/Wool 勾选判断是否已解锁，
+        避免空跑未解锁岗位。库存未知时不再当作 0：默认模式跳过，持续模式照常排产。
 
         Returns:
             list[str]: 需要执行的牧场岗位 ID 列表。
         """
         ranch_needs = []
+        continuous = self.continuous_breeding
+        chicken_count = self.inventory_counts['ranch'].get('chicken')
+        pork_count = self.inventory_counts['ranch'].get('pork')
 
-        chicken_count = self.inventory_counts['ranch'].get('chicken', 0)
-        if chicken_count < self.ranch_chicken_threshold:
-            ranch_needs.append('ISLAND_RANCH_POST1')
-            logger.info("[岛屿-牧场] 需要执行养鸡任务")
-
-        pork_count = self.inventory_counts['ranch'].get('pork', 0)
-        if pork_count < self.ranch_pork_threshold:
-            ranch_needs.append('ISLAND_RANCH_POST2')
-            logger.info("[岛屿-牧场] 需要执行养猪任务")
-
-        if self.is_ranch_post_enabled('ISLAND_RANCH_POST3'):
-            ranch_needs.append('ISLAND_RANCH_POST3')
-            logger.info("[岛屿-牧场] 需要执行养牛任务")
+        if continuous:
+            ranch_needs.extend(['ISLAND_RANCH_POST1', 'ISLAND_RANCH_POST2'])
+            logger.info(
+                f"[岛屿-牧场] 持续养殖：鸡舍/猪圈常驻排产"
+                f"（当前禽肉 {chicken_count}、鲜肉 {pork_count}）")
         else:
-            logger.info("[岛屿-牧场] 养牛已在配置中关闭，跳过")
+            if chicken_count is None:
+                logger.warning("[岛屿-牧场] 禽肉库存未知，本次不按 0 排产鸡舍")
+            elif chicken_count < self.ranch_chicken_threshold:
+                ranch_needs.append('ISLAND_RANCH_POST1')
+                logger.info("[岛屿-牧场] 需要执行养鸡任务")
+            if pork_count is None:
+                logger.warning("[岛屿-牧场] 鲜肉库存未知，本次不按 0 排产猪圈")
+            elif pork_count < self.ranch_pork_threshold:
+                ranch_needs.append('ISLAND_RANCH_POST2')
+                logger.info("[岛屿-牧场] 需要执行养猪任务")
 
-        if self.is_ranch_post_enabled('ISLAND_RANCH_POST4'):
-            ranch_needs.append('ISLAND_RANCH_POST4')
-            logger.info("[岛屿-牧场] 需要执行养羊任务")
-        else:
-            logger.info("[岛屿-牧场] 养羊已在配置中关闭，跳过")
+        for post_id, task_name in (('ISLAND_RANCH_POST3', '养牛'), ('ISLAND_RANCH_POST4', '养羊')):
+            if self.is_ranch_post_enabled(post_id):
+                ranch_needs.append(post_id)
+                logger.info(f"[岛屿-牧场] {'持续养殖' if continuous else '需要'}执行{task_name}任务")
+            else:
+                logger.info(f"[岛屿-牧场] {task_name}未勾选或已关闭，跳过")
         return ranch_needs
 
     def is_ranch_post_enabled(self, post_id):
         """判断牧场岗位是否在配置中启用。
 
-        养鸡/养猪由库存阈值控制，始终参与检查；养牛/养羊分别对应
-        IslandRancher_Milk / IslandRancher_Wool 开关，关闭时不再排产，
-        也不为其补充对应饲料。
+        养鸡/养猪视为已解锁岗位；养牛/养羊分别对应 IslandRancher_Milk /
+        IslandRancher_Wool 开关，关闭时不再排产，也不为其补充对应饲料。
+        持续养殖模式同样遵守这两个勾选，避免对未解锁岗位反复尝试派遣。
 
         Args:
             post_id (str): 牧场岗位标识。
@@ -786,6 +865,8 @@ class IslandRancher(Island, WarehouseOCR, LoginHandler):
             GameBugError: 遇到游戏内部错误需要重启时抛出。
         """
         self.island_error = False
+        if self.continuous_breeding:
+            logger.info("[岛屿-牧场] 已开启四岗持续养殖：每轮巡检都会为已解锁岗位补派遣")
         self.ui_ensure(page_island)
         time_vars = ['time_ranch1', 'time_ranch2', 'time_ranch3', 'time_ranch4']
         all_configs = [
@@ -824,6 +905,7 @@ class IslandRancher(Island, WarehouseOCR, LoginHandler):
                 all_needs.append(post_id)
 
         # 执行牧场岗位
+        retry_times = []
         if all_needs:
             logger.info(f"[岛屿-牧场] 需要执行的牧场岗位: {all_needs}")
             for post_id in all_needs:
@@ -839,12 +921,15 @@ class IslandRancher(Island, WarehouseOCR, LoginHandler):
                     self.raise_if_island_error()
                     if not success:
                         logger.warning(f"[岛屿-牧场] 牧场岗位 {post_id} 执行失败，跳过")
+                        if self.continuous_breeding:
+                            retry_times.append(current_time() + timedelta(hours=RANCH_RETRY_HOURS))
                 else:
                     logger.warning(f"[岛屿-牧场] 未找到岗位 {post_id} 对应的时间变量名")
         else:
             logger.info("[岛屿-牧场] 没有需要执行的牧场岗位")
 
         finish_times = [getattr(self, var) for var in time_vars if getattr(self, var) is not None]
+        finish_times.extend(retry_times)
         six_hours_later = current_time() + timedelta(hours=6)
         finish_times.append(six_hours_later)
         finish_times.sort()

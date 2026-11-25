@@ -13,6 +13,7 @@ from module.island.island_rancher import IslandRancher
 
 class StubRancher:
     feed_groups_to_target = IslandRancher.feed_groups_to_target
+    feed_groups_to_threshold = IslandRancher.feed_groups_to_threshold
     check_mill_supplement_needs = IslandRancher.check_mill_supplement_needs
 
     def is_ranch_post_enabled(self, post_id):
@@ -21,8 +22,9 @@ class StubRancher:
     mill_material_needed = staticmethod(IslandRancher.mill_material_needed)
     mill_output_quantity = staticmethod(IslandRancher.mill_output_quantity)
 
-    def __init__(self, farm, mill):
+    def __init__(self, farm, mill, continuous=False):
         self.inventory_counts = {'farm': dict(farm), 'mill': dict(mill), 'ranch': {}}
+        self.continuous_breeding = continuous
         self.ranch_feed_map = {
             'ISLAND_RANCH_POST1': 'chicken_feed',
             'ISLAND_RANCH_POST2': 'pig_feed',
@@ -30,11 +32,11 @@ class StubRancher:
             'ISLAND_RANCH_POST4': 'sheep_feed',
         }
         self.name_to_config = {
-            'chicken_feed': {'required_material': 'wheat'},
-            'pig_feed': {'required_material': 'corn'},
-            'cattle_feed': {'required_material': 'pasture'},
-            'sheep_feed': {'required_material': 'pasture'},
-            'wheat_flour': {'required_material': 'wheat'},
+            'chicken_feed': {'required_material': 'wheat', 'number': 11},
+            'pig_feed': {'required_material': 'corn', 'number': 11},
+            'cattle_feed': {'required_material': 'pasture', 'number': 11},
+            'sheep_feed': {'required_material': 'pasture', 'number': 11},
+            'wheat_flour': {'required_material': 'wheat', 'number': 55},
         }
         self.processed = []
 
@@ -122,6 +124,38 @@ class PartialFeedTest(unittest.TestCase):
         stub.supplement([('wheat_flour', 200)])
         self.assertEqual(stub.processed, [])
         self.assertEqual(stub.inventory_counts['farm']['wheat'], 218)
+
+    # Add by MHY, 持续养殖按缺口补料：只补到派遣门槛，不再固定压 11 组库存。
+    def test_continuous_mode_crafts_only_missing_groups(self):
+        stub = StubRancher(farm={'wheat': 1000}, mill={'chicken_feed': 14}, continuous=True)
+        self.assertEqual(stub.check_mill_supplement_needs(), [('chicken_feed', 4)])
+        stub.supplement(stub.check_mill_supplement_needs())
+        self.assertEqual(stub.processed, [('chicken_feed', 4)])
+        self.assertEqual(stub.inventory_counts['mill']['chicken_feed'], 54)
+        self.assertEqual(stub.inventory_counts['farm']['wheat'], 1000 - 120)
+
+    def test_continuous_mode_one_group_near_threshold(self):
+        stub = StubRancher(farm={'wheat': 1000}, mill={'chicken_feed': 49}, continuous=True)
+        self.assertEqual(stub.check_mill_supplement_needs(), [('chicken_feed', 1)])
+        stub.supplement(stub.check_mill_supplement_needs())
+        self.assertEqual(stub.inventory_counts['mill']['chicken_feed'], 59)
+
+    def test_continuous_mode_zero_feed_uses_five_groups(self):
+        stub = StubRancher(farm={'wheat': 150}, mill={'chicken_feed': 0}, continuous=True)
+        self.assertEqual(stub.check_mill_supplement_needs(), [('chicken_feed', 5)])
+        stub.supplement(stub.check_mill_supplement_needs())
+        self.assertEqual(stub.inventory_counts['mill']['chicken_feed'], 50)
+        self.assertEqual(stub.inventory_counts['farm']['wheat'], 0)
+
+    def test_continuous_mode_unknown_feed_still_waits(self):
+        for mill in ({}, {'chicken_feed': None}):
+            with self.subTest(mill=mill):
+                stub = StubRancher(farm={'wheat': 1000}, mill=mill, continuous=True)
+                self.assertEqual(stub.check_mill_supplement_needs(), [])
+
+    def test_legacy_mode_keeps_fixed_batch(self):
+        stub = StubRancher(farm={'wheat': 1000}, mill={'chicken_feed': 14})
+        self.assertEqual(stub.check_mill_supplement_needs(), [('chicken_feed', 11)])
 
 
 if __name__ == "__main__":

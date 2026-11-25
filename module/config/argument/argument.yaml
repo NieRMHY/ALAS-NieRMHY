@@ -2043,6 +2043,9 @@ IslandNursery:
     value: 2
     option: [ 0, 1, 2 ]
 IslandRancher:
+  # Add by MHY, 四岗持续养殖：开启后鸡舍/猪圈不再等库存低于阈值才排产，
+  # 牛棚/羊圈仍由 Milk/Wool 勾选表示已解锁。关闭时保持原有阈值行为。
+  ContinuousBreeding: false
   MinChicken: 300
   ChickenFilter: |-
     WorkerJuu

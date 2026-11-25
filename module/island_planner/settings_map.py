@@ -522,14 +522,19 @@ def _ranch_output(calculator, group):
     return output
 
 
-def ranch_settings(calculator, floors=None):
+def ranch_settings(calculator, floors=None, continuous=False):
     """牧场：鸡舍/猪圈阈值取 计划日产量 + 目标剩余量；牛/羊开关看计划是否使用。
 
     阈值是库存下限，任务按「仓库+在制品 未达阈值」开工；加上目标剩余量后，被季节
     任务、货运缺口或额外目标要求的禽肉/皮料会一直补到目标为止。
 
+    持续养殖开启时，任务端不再用阈值决定鸡舍/猪圈是否排产，Milk/Wool 也变成
+    用户对牛棚/羊圈「已解锁」的勾选；此时规划器不写这两个开关，避免每次应用方案
+    都把用户勾选的四岗关掉。
+
     Args:
         floors (dict | None): `{物品ID: 目标剩余量}`，见 [target_floor]；省略时只按计划日产量。
+        continuous (bool): 是否开启四岗持续养殖（IslandRancher.ContinuousBreeding）。
     """
     floors = floors or {}
     values = {}
@@ -542,8 +547,9 @@ def ranch_settings(calculator, floors=None):
         produced = ceil(output.get(item_id, 0) - 1e-9)
         # 用到该岗位时至少为 1，保证库存为 0 时会开工；未解锁副产物时禽肉不会增加，鸡舍会一直开工
         values[path] = max(get_production_target_stock(floors.get(item_id, 0), 0, produced), 1)
-    for group, path in RANCH_SWITCHES.items():
-        values[path] = any(amount > 1e-6 for amount in _ranch_output(calculator, group).values())
+    if not continuous:
+        for group, path in RANCH_SWITCHES.items():
+            values[path] = any(amount > 1e-6 for amount in _ranch_output(calculator, group).values())
     return values
 
 
@@ -735,7 +741,7 @@ def default_product_settings(calculator, fill_spare_posts=False, priority='pt'):
 
 
 def build_settings(calculator, meal_options, product_options, task_targets=None, fill_spare_posts=False,
-                   priority='pt', auto_positions=False):
+                   priority='pt', auto_positions=False, continuous_breeding=False):
     """求解成功后，生成要写入的全部配置。
 
     Args:
@@ -743,6 +749,7 @@ def build_settings(calculator, meal_options, product_options, task_targets=None,
             额外目标）。库存下限用它而不是 LP 的 `demand_items`：货运在 LP 里是
             「缺口」（已扣除扫描时的库存），拿它当库存下限会把库存扣两次。
             省略时只写计划日缓冲。
+        continuous_breeding (bool): 开启四岗持续养殖时不写 Milk/Wool，保留用户勾选。
 
     Returns:
         tuple[dict, list[str]]: ({配置路径: 值}, 提示信息)。
@@ -764,7 +771,7 @@ def build_settings(calculator, meal_options, product_options, task_targets=None,
     threshold_values, threshold_notes = threshold_settings(calculator, stock)
     values.update(threshold_values)
     notes.extend(threshold_notes)
-    values.update(ranch_settings(calculator, floors))
+    values.update(ranch_settings(calculator, floors, continuous=continuous_breeding))
     values.update(manufacture_settings(calculator))
     if auto_positions:
         values.update(auto_position_settings(calculator))
