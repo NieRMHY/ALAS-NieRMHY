@@ -155,7 +155,7 @@ flowchart TD
 | 子模块 | 玩法 | 入口类 | 特殊机制 |
 | --- | --- | --- | --- |
 | `island_farm.py` | 农田、果园、苗圃播种 | `IslandFarm` | 三区域独立阈值/可配置默认作物，可按作物单独设目标（`farm_targets.py`，按库存/目标比例排序）；未达标作物每类最多占一岗，补种安排后剩余的空闲岗位按 `PlantPotatoes` 等配置种默认作物；果园秋季限定（秋月梨/柿子）与冬季限定（砂糖橘/青枣）按每批 4 粒计种子；跨季默认作物回退到本区常驻作物；锁定岗位不计为空闲；牛油果/菠萝可忽略；小天城（Amagi_chan）橡胶优先开关 |
-| `island_rancher.py` | 磨坊 + 牧场 | `IslandRancher` | 按岗位固定饲料种类补磨坊加工（小麦→鸡饲料等）；整批原料不足时，按已知库存只加工补到派遣门槛 50 所需的最少组数，面粉仍保持整批；磨坊及农场原料严格 OCR，未知成品暂停补货与派遣，避免当作 0 重复消耗原料；`run()` 末尾内联 `IslandFishery(...).run(ranch_finish_times=...)` 合并计时器 |
+| `island_rancher.py` | 磨坊 + 牧场 | `IslandRancher` | 默认按禽肉、鲜肉库存下限补养；「四岗持续养殖」开启后，鸡猪到库存上限也续养，牛羊仍按各自开关。持续模式缺料、派遣失败或读不到完成时间时，两小时后复查。牧场和渔场合并计时，优先使用最早的到期时间。 |
 | `island_fishery.py` | 渔场养殖 | `IslandFishery` | 鱼苗商店分淡水/海水/其他页签；按每苗产量反推购买数；体力门槛 98；鲤鱼（淡水）、马鲛鱼（海水）每苗产 4，识别图取自国际服截图，尚无岗位「生产中」图，工作中的鲤鱼/马鲛鱼岗位按未知产品处理。黑鲷鱼（物品 5106）同样没有「生产中」图；已有海水鱼苗、选品、选中确认及仓库图，可设 `MinBlackPorgy`（默认 0），规划器按 `UnlockedFish` 决定是否纳入；产品选择页找不到目标产品时用 `back_to_postmanage_from_dispatch` 逐层退回，不再点无效的岗位关闭按钮导致卡死；养殖后鱼肉少于 `MinFreshwaterFishMeat`/`MinSaltwaterFishMeat` 时调用 `island_fish_meat.py` 兑换 |
 | `island_fish_meat.py` | 鱼肉加工（移植自 ALAS） | `IslandFishMeatExchange`（混入渔场） | 岛屿主页「商店」→ 侧栏第 7 项「鱼肉加工」→ 淡水/海水子页签；鱼卡 OCR 鱼名与库存，按产量从高到低只换到目标数量，各鱼保留渔场的养殖底线（`MinBass`/`MinKoiCarp`/`MinMackerel`/`MinYellowfinTuna`）；侧栏、确认弹窗、获得物品弹窗按颜色识别（EN 通用弹窗资源不匹配），点过「商店」后才点侧栏 |
 | `island_mine_forest.py` | 矿山/林场 | `IslandMineForest` | 仓库顺序不固定，自实现「OCR 品名 → 读数字」库存扫描（`ITEM_CN_NAMES` 同时收录中文名与国际服英文名首词）；每岗每次产 4 个、各产物有单次派遣最大次数；体力门槛 80；派遣先补各类 `Min*` 库存缺口（计入在产数量，按仓库库存升序轮转，受空岗数量限制），有富余岗位时再按 `MineSilver`/`CutElegant` 的数量生产默认品种，超出的空岗闲置 |
@@ -207,7 +207,7 @@ flowchart TD
    - 商区 `Product1~5`：计划出售的菜品，按日销量降序。
    - `CropTargets`：三个区域所有作物都写明库存下限（目标剩余量 + 日缓冲，未使用为 0），因此规划后 `MinFarm` 等区域阈值不再生效。只为攒 PT 的闲时作物不计入目标（补种按库存/目标比例排序，计入会挤占真正需要的作物），只在日志中提示，由默认作物岗位数（`PlantPotatoes` 等）安排。
    - 矿山/林场/渔场 `IslandMine/IslandForest/IslandFishery.Min*`：库存下限（目标剩余量 + 日缓冲），不用的为 0；求解前排除 AzurPilot 不生产的煤炭、自然之木和未配置的鱼种。闲时累积同作物只作提示（由 `MineSilver`/`CutElegant`/`PlantYellowfinTuna` 安排）。
-   - 牧场 `IslandRancher.MinChicken`（禽肉）/`MinPork`（鲜肉）取「计划日产量 + 目标剩余量」（按牧场科技等级放大，禽肉为副产物，每 3 批摊一次；用到时至少为 1），`Milk`/`Wool` 按计划是否养牛/羊开关。
+   - 牧场 `IslandRancher.MinChicken`（禽肉）/`MinPork`（鲜肉）取「计划日产量 + 目标剩余量」（按牧场科技等级放大，禽肉为副产物，每 3 批摊一次；用到时至少为 1），`Milk`/`Wool` 按计划是否养牛/羊开关。 开启「四岗持续养殖」后，规划器保留用户的牛羊开关，鸡猪运行时也不再按库存阈值停养。
    - 制造业各产线 `Positions`：计划工作量需要的岗位数（不超过已解锁岗位与 2）；`WoodProcessing/ElectronicProcessing/Industrial/Handmade.Products`：把计划生产的产品按计划工作量降序写成 `a > b` 的生产顺序（该产线没有计划时留空，`island_manufacture.py` 沿用固定规则）。可产产品见 `settings_map.MANUFACTURE_PRODUCTS`（纸张/记事本/桌椅、墨盒、炭笔/电缆、布料/绳索，以及四个有识别图的季节手工品），求解前排除其余制造配方。
    - 空余岗位（补种安排后剩余的空闲岗位）：闲时累积（为季节 PT）的产品写入默认产品设置。农田三区 `DefaultCrop`（默认小麦/橡胶/薰衣草）、矿山 `DefaultOre`、林场 `DefaultWood`、渔场 `DefaultFish` 选择默认产品，岗位数写 `PlantPotatoes`/`PlantRubber`/`PlantLavender`/`MineSilver`/`CutElegant`/`PlantYellowfinTuna`（配置名沿用旧名，含义是「默认产品的岗位数」）；`FillSparePosts` 打开时写满该区域已解锁岗位，没有闲时产品则取可生产产品里单位工作量价值最高的。岗位数 = 闲时产量换算的工作量 / 单岗位日工作量，向上取整，不超过已解锁岗位与该区域 `Positions` 配置。农田三区、矿山、林场、渔场的规划产能同样按 `Positions` 计算，超出配置的已解锁岗位视为不可用（区域任务只运行配置的岗位）。
 6. 无可行方案时不改配置，日志给出瓶颈（通常是岛币下限过高）。

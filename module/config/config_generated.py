@@ -1006,6 +1006,7 @@ class GeneratedConfig:
     IslandNursery_PlantLavender = 2  # 0, 1, 2
 
     # 配置组 `IslandRancher`
+    IslandRancher_ContinuousBreeding = False
     IslandRancher_MinChicken = 300
     IslandRancher_ChickenFilter = 'WorkerJuu'
     IslandRancher_MinPork = 300

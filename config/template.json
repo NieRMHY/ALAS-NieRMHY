@@ -3508,6 +3508,7 @@
       "Sensitive": false
     },
     "IslandRancher": {
+      "ContinuousBreeding": false,
       "MinChicken": 300,
       "ChickenFilter": "WorkerJuu",
       "MinPork": 300,

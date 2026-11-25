@@ -2773,11 +2773,11 @@
     },
     "Fleet1Affection": {
       "name": "Fleet 1 Affection",
-      "help": "Current affection of fleet 1. +0.05 per win when morale ≥ 40 at sortie; pauses at 100"
+      "help": "Current affection of fleet 1. +0.0625 per win when morale ≥ 40 at sortie; pauses at 100"
     },
     "Fleet2Affection": {
       "name": "Fleet 2 Affection",
-      "help": "Current affection of fleet 2. +0.05 per win when morale ≥ 40 at sortie; pauses at 100"
+      "help": "Current affection of fleet 2. +0.0625 per win when morale ≥ 40 at sortie; pauses at 100"
     }
   },
   "RaidAffection": {
@@ -5008,6 +5008,10 @@
     "_info": {
       "name": "Ranch",
       "help": ""
+    },
+    "ContinuousBreeding": {
+      "name": "Continuous breeding",
+      "help": "Keep chickens and pigs in production regardless of meat stocks. Cattle and sheep follow their own switches. Retry after two hours if feed or dispatch fails."
     },
     "MinChicken": {
       "name": "Chicken stock threshold",

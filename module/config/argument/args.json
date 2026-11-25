@@ -18382,6 +18382,10 @@
       }
     },
     "IslandRancher": {
+      "ContinuousBreeding": {
+        "type": "checkbox",
+        "value": false
+      },
       "MinChicken": {
         "type": "input",
         "value": 300
