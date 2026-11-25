@@ -153,6 +153,15 @@ class IslandWinterShopRuntimeTests(unittest.TestCase):
             ('seafood_rice', 7, None),
         ])
 
+    def test_unknown_rice_does_not_cancel_known_charlotte(self):
+        ui = self.shop(IslandJuuEatery,
+                       stock={'rice_mango': None, 'strawberry_charlotte': 2, 'cheese': 6},
+                       post_number=1,
+                       config=winter_values(Need_rice_mango=50, Need_strawberry_charlotte=25))
+        ui.run()
+        self.assertEqual(ui.orders, [('strawberry_charlotte', 3, None)])
+        self.assertIsNone(self.ledger()['totals']['rice_mango'])
+
     def test_duplicate_slots_keep_order_and_restore_in_finally(self):
         ui = self.shop(
             IslandJuuEatery,
