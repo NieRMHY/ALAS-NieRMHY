@@ -8,6 +8,7 @@
 import unittest
 from pathlib import Path
 from types import SimpleNamespace
+from unittest.mock import Mock
 
 import yaml
 
@@ -83,6 +84,27 @@ class RanchNeedsTest(unittest.TestCase):
 
 
 class FeedDecisionTest(unittest.TestCase):
+    def test_only_complete_dispatch_counter_triggers_feed_recovery(self):
+        for text, purchases in [('0/1', 1), ('/1', 0), ('0', 0), ('', 0), ('8/1', 0), ('0/0', 0)]:
+            with self.subTest(text=text):
+                stub = Mock(inventory_counts={'mill': {'chicken_feed': None}})
+                stub.ocr_select_product_material_text.return_value = text
+                stub.feed_groups_to_threshold.return_value = 5
+                stub.back_to_select_product_after_shop.return_value = True
+                self.assertTrue(IslandRancher.recover_unread_feed(stub, 'chicken_feed'))
+                self.assertEqual(stub.process_mill_item_with_inventory.call_count, purchases)
+                if purchases:
+                    stub.process_mill_item_with_inventory.assert_called_once_with('chicken_feed', 5)
+                else:
+                    self.assertIsNone(stub.inventory_counts['mill']['chicken_feed'])
+
+    def test_confirmed_feed_shortage_with_no_wheat_does_not_dispatch(self):
+        stub = Mock(inventory_counts={'mill': {'chicken_feed': None}})
+        stub.ocr_select_product_material_text.return_value = '0/1'
+        stub.process_mill_item_with_inventory.return_value = False
+        self.assertFalse(IslandRancher.recover_unread_feed(stub, 'chicken_feed'))
+        stub.back_to_select_product_after_shop.assert_not_called()
+
     def test_known_feed_states(self):
         stub = RancherStub(chicken=0, pork=0)
         self.assertEqual(stub.ranch_feed_action(50), 'dispatch')

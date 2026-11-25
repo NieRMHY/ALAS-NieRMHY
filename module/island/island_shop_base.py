@@ -695,13 +695,11 @@ class IslandShopBase(Island, WarehouseOCR):
             self.post_products = original
 
     def _run_winter_task_meals(self, produced_pass):
-        from module.island.island_winter_meals import MEAL_RECIPES, load_ledger, plan_batches, save_ledger
+        from module.island.island_winter_meals import MEAL_RECIPES, load_ledger, plan_batches, save_ledger, task_targets
         if self._winter_meals is None:
             return
         baseline, unknown = self._winter_meals
         totals = self._rebuild_current_totals(produced_pass)
-        own = {item: qty for item, qty in baseline.items()
-               if MEAL_RECIPES[item]['shop'] == self.shop_type}
         try:
             ledger = load_ledger(self.config)
             # 只发布本店现场可识别库存；未知不沿用上次值，不推算收获时间。
@@ -715,10 +713,13 @@ class IslandShopBase(Island, WarehouseOCR):
             if unknown or self._winter_queue_unknown:
                 logger.warning('[岛屿-冬季任务] 营业配方或在产数量未确认，暂缓任务增产')
                 return
-            if any(ledger['totals'].get(item) is None or totals.get(item, 0) < target
-                   for item, target in own.items()):
-                logger.info('[岛屿-冬季任务] 营业备餐仍有缺口，暂缓任务增产')
+            if not self.get_idle_posts():
+                logger.info('[岛屿-冬季任务] 没有剩余空岗，本轮未派增产单')
                 return
+            # Modify by MHY, 营业单已经先用过岗位。某道菜暂时补不出，不应拦住其他菜使用空岗。
+            for item in task_targets(self.config, baseline, ledger['totals']):
+                if MEAL_RECIPES[item]['shop'] == self.shop_type and ledger['totals'].get(item) is None:
+                    logger.info(f'[岛屿-冬季任务] {self._item_cn(item)}库存未确认，跳过该项增产')
             spent = ledger['spent'].get(self.shop_type, 0)
             stock = {item: self.warehouse_counts.get(item) if value is not None else None
                      for item, value in getattr(self, 'warehouse_observations',

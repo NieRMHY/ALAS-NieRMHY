@@ -162,6 +162,23 @@ class IslandWinterShopRuntimeTests(unittest.TestCase):
         self.assertEqual(ui.orders, [('strawberry_charlotte', 3, None)])
         self.assertIsNone(self.ledger()['totals']['rice_mango'])
 
+    def test_blocked_shelf_recipe_leaves_idle_post_for_rice(self):
+        config = winter_values(Need_rice_mango=5, **{
+            'IslandJuuEatery.IslandJuuEatery.Meal1': 'seafood_rice',
+            'IslandJuuEatery.IslandJuuEatery.MealNumber1': 6})
+        ui = self.shop(IslandJuuEatery, [('seafood_rice', 6)],
+                       stock={'seafood_rice': 5, 'rice_mango': 0}, post_number=1, config=config)
+        ui.rejected.add('seafood_rice')
+        ui.run()
+        self.assertEqual(ui.orders, [('rice_mango', 5, None)])
+
+    def test_two_available_posts_both_go_to_feasible_shelf_orders_first(self):
+        ui = self.shop(IslandJuuEatery, [('apple_pie', 1), ('banana_crepe', 2)],
+                       stock={'rice_mango': 0}, post_number=2,
+                       config=winter_values(Need_rice_mango=50))
+        ui.run()
+        self.assertEqual(ui.orders, [('apple_pie', 1, None), ('banana_crepe', 2, None)])
+
     def test_duplicate_slots_keep_order_and_restore_in_finally(self):
         ui = self.shop(
             IslandJuuEatery,

@@ -537,6 +537,24 @@ class IslandRancher(Island, WarehouseOCR, LoginHandler):
         self.ranch_last_finish_time = current_time() + timedelta(hours=RANCH_RETRY_HOURS)
         logger.warning(f"[岛屿-牧场] 牧场岗位{post_id}{reason}，{RANCH_RETRY_HOURS} 小时后复查")
 
+    def recover_unread_feed(self, feed_item):
+        # Add by MHY, 仓库缺少图标时只信派遣页完整的“持有/所需”，不把 OCR 兜底当作缺料。
+        text = self.ocr_select_product_material_text()
+        held, slash, needed = text.partition('/')
+        if not slash or not held.isdecimal() or not needed.isdecimal():
+            return True
+        held, needed = int(held), int(needed)
+        if not needed or held >= needed:
+            return True
+        logger.info(f'[岛屿-牧场] 派遣页确认{self._item_cn(feed_item)}不足：{held}/{needed}，尝试补料')
+        self.inventory_counts['mill'][feed_item] = held
+        groups = self.feed_groups_to_threshold(feed_item, held, FEED_DISPATCH_THRESHOLD)
+        if not self.goto_shop_from_select_product(shop_check=ISLAND_MILL_CHECK):
+            return False
+        if not self.process_mill_item_with_inventory(feed_item, groups):
+            return False
+        return self.back_to_select_product_after_shop(back_button=ISLAND_MILL_BACK)
+
     def ranch_post_get_and_add(self, post_id, character='WorkerJuu'):
         """在牧场岗位中收取产物并追加派遣角色。
 
@@ -602,7 +620,13 @@ class IslandRancher(Island, WarehouseOCR, LoginHandler):
                     self.back_to_postmanage_after_feed_purchase()
                     return True
                 if feed_item and feed_count is None:
-                    logger.info(f"[岛屿-牧场] {self._item_cn(feed_item)}库存未知，持续养殖继续尝试派遣，由游戏页面确认饲料是否足够")
+                    if not self.recover_unread_feed(feed_item):
+                        self.back_to_postmanage_after_mill_purchase()
+                        self.mark_ranch_retry(post_id, '派遣页复核或磨坊补料失败')
+                        return True
+                    if self.inventory_counts['mill'].get(feed_item) is not None:
+                        # 从磨坊返回可能落在岗位详情；先重新确认所在页面。
+                        continue
                 self.device.sleep(0.3)
                 if not self.confirm_post_add_order(f"牧场岗位{post_id}派遣"):
                     self.back_to_postmanage_from_dispatch()
@@ -783,7 +807,7 @@ class IslandRancher(Island, WarehouseOCR, LoginHandler):
         image = self.device.screenshot()
         self.inventory_counts['ranch'] = {}
         for item_config in self.INVENTORY_CONFIG['ranch']['items']:
-            count = self.ocr_item_quantity(image, item_config['template'])
+            count = self.ocr_item_quantity(image, item_config['template'], strict=True)
             self.inventory_counts['ranch'][item_config['name']] = count
             logger.info(f"{self._item_cn(item_config['name'])}: {count}")
 
