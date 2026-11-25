@@ -1847,6 +1847,7 @@
       "coalition_20251120": "DATE A LANE",
       "coalition_20260122": "特集写真-撮影進行中",
       "coalition_20260723": "怪談実録",
+      "coalition_20261124": "真理学園の転校生",
       "event_20200227_cn": "凍絶の北海",
       "event_20200312_cn": "南洋に靡く硝煙（復刻）",
       "event_20200326_cn": "闇靄払う銀翼",
@@ -2772,11 +2773,11 @@
     },
     "Fleet1Affection": {
       "name": "編成1好感度",
-      "help": "編成1の現在好感度。出撃時に心情が40以上の勝利ごとに0.05加算。100に達するとタスク停止"
+      "help": "編成1の現在好感度。出撃時に心情が40以上の勝利ごとに0.0625加算。100に達するとタスク停止"
     },
     "Fleet2Affection": {
       "name": "編成2好感度",
-      "help": "編成2の現在好感度。出撃時に心情が40以上の勝利ごとに0.05加算。100に達するとタスク停止"
+      "help": "編成2の現在好感度。出撃時に心情が40以上の勝利ごとに0.0625加算。100に達するとタスク停止"
     }
   },
   "RaidAffection": {
@@ -4938,8 +4939,8 @@
       "rubber": "ゴム",
       "pear": "宵月梨",
       "persimmon": "柿",
-      "sugar_tangerine": "sugar_tangerine",
-      "green_jujube": "green_jujube"
+      "sugar_tangerine": "砂糖みかん",
+      "green_jujube": "青ナツメ"
     },
     "PlantRubber": {
       "name": "ゴムを植える",
@@ -5007,6 +5008,10 @@
     "_info": {
       "name": "牧場",
       "help": ""
+    },
+    "ContinuousBreeding": {
+      "name": "4枠の継続飼育",
+      "help": "鶏と豚は肉の在庫量にかかわらず継続して飼育します。牛と羊は各設定に従います。飼料不足や派遣失敗時は2時間後に再確認します。"
     },
     "MinChicken": {
       "name": "鶏肉在庫閾値",
@@ -5105,6 +5110,10 @@
       "name": "マダイ在庫閾値",
       "help": ""
     },
+    "MinBlackPorgy": {
+      "name": "クロダイ在庫閾値",
+      "help": ""
+    },
     "MinYellowfinTuna": {
       "name": "キハダマグロ在庫閾値",
       "help": ""
@@ -5145,6 +5154,7 @@
       "tuna": "マグロ",
       "salmon": "サーモン",
       "red_sea_bream": "マダイ",
+      "black_porgy": "クロダイ",
       "yellowfin_tuna": "キハダ",
       "sea_cucumber": "ナマコ"
     },
@@ -5302,8 +5312,8 @@
       "onion_fish": "玉ねぎ蒸し魚",
       "matsutake_chicken_soup": "松茸チキンスープ",
       "persimmon_cake": "干し柿",
-      "shiitake_chicken_soup": "shiitake_chicken_soup",
-      "green_jujube_porridge": "green_jujube_porridge"
+      "shiitake_chicken_soup": "冬シイタケと鶏の煮込み",
+      "green_jujube_porridge": "青ナツメ入り粥"
     },
     "MealNumber1": {
       "name": "メニュー1をX人前生産",
@@ -5327,8 +5337,8 @@
       "onion_fish": "玉ねぎ蒸し魚",
       "matsutake_chicken_soup": "松茸チキンスープ",
       "persimmon_cake": "柿のケーキ",
-      "shiitake_chicken_soup": "shiitake_chicken_soup",
-      "green_jujube_porridge": "green_jujube_porridge"
+      "shiitake_chicken_soup": "冬シイタケと鶏の煮込み",
+      "green_jujube_porridge": "青ナツメ入り粥"
     },
     "MealNumber2": {
       "name": "メニュー2をX人前生産",
@@ -5352,8 +5362,8 @@
       "onion_fish": "玉ねぎ蒸し魚",
       "matsutake_chicken_soup": "松茸チキンスープ",
       "persimmon_cake": "柿のケーキ",
-      "shiitake_chicken_soup": "shiitake_chicken_soup",
-      "green_jujube_porridge": "green_jujube_porridge"
+      "shiitake_chicken_soup": "冬シイタケと鶏の煮込み",
+      "green_jujube_porridge": "青ナツメ入り粥"
     },
     "MealNumber3": {
       "name": "メニュー3をX人前生産",
@@ -5377,8 +5387,8 @@
       "onion_fish": "玉ねぎ蒸し魚",
       "matsutake_chicken_soup": "松茸チキンスープ",
       "persimmon_cake": "柿のケーキ",
-      "shiitake_chicken_soup": "shiitake_chicken_soup",
-      "green_jujube_porridge": "green_jujube_porridge"
+      "shiitake_chicken_soup": "冬シイタケと鶏の煮込み",
+      "green_jujube_porridge": "青ナツメ入り粥"
     },
     "MealNumber4": {
       "name": "メニュー4をX人前生産",
@@ -5402,8 +5412,8 @@
       "onion_fish": "玉ねぎ蒸し魚",
       "matsutake_chicken_soup": "松茸チキンスープ",
       "persimmon_cake": "柿のケーキ",
-      "shiitake_chicken_soup": "shiitake_chicken_soup",
-      "green_jujube_porridge": "green_jujube_porridge"
+      "shiitake_chicken_soup": "冬シイタケと鶏の煮込み",
+      "green_jujube_porridge": "青ナツメ入り粥"
     },
     "MealNumber5": {
       "name": "メニュー5をX人前生産",
@@ -5427,8 +5437,8 @@
       "onion_fish": "玉ねぎ蒸し魚",
       "matsutake_chicken_soup": "松茸チキンスープ",
       "persimmon_cake": "柿のケーキ",
-      "shiitake_chicken_soup": "shiitake_chicken_soup",
-      "green_jujube_porridge": "green_jujube_porridge"
+      "shiitake_chicken_soup": "冬シイタケと鶏の煮込み",
+      "green_jujube_porridge": "青ナツメ入り粥"
     },
     "MealNumber6": {
       "name": "メニュー6をX人前生産",
@@ -5452,8 +5462,8 @@
       "onion_fish": "玉ねぎ蒸し魚",
       "matsutake_chicken_soup": "松茸チキンスープ",
       "persimmon_cake": "柿のケーキ",
-      "shiitake_chicken_soup": "shiitake_chicken_soup",
-      "green_jujube_porridge": "green_jujube_porridge"
+      "shiitake_chicken_soup": "冬シイタケと鶏の煮込み",
+      "green_jujube_porridge": "青ナツメ入り粥"
     },
     "MealNumber7": {
       "name": "メニュー7をX人前生産",
@@ -5477,8 +5487,8 @@
       "onion_fish": "玉ねぎ蒸し魚",
       "matsutake_chicken_soup": "松茸チキンスープ",
       "persimmon_cake": "柿のケーキ",
-      "shiitake_chicken_soup": "shiitake_chicken_soup",
-      "green_jujube_porridge": "green_jujube_porridge"
+      "shiitake_chicken_soup": "冬シイタケと鶏の煮込み",
+      "green_jujube_porridge": "青ナツメ入り粥"
     },
     "MealNumber8": {
       "name": "メニュー8をX人前生産",
@@ -5508,8 +5518,8 @@
       "onion_fish": "玉ねぎ蒸し魚",
       "matsutake_chicken_soup": "松茸チキンスープ",
       "persimmon_cake": "柿のケーキ",
-      "shiitake_chicken_soup": "shiitake_chicken_soup",
-      "green_jujube_porridge": "green_jujube_porridge"
+      "shiitake_chicken_soup": "冬シイタケと鶏の煮込み",
+      "green_jujube_porridge": "青ナツメ入り粥"
     }
   },
   "IslandTeahouse": {
@@ -5923,8 +5933,8 @@
       "berry_orange": "ベリーオレンジスイーツ",
       "strawberry_charlotte": "いちごシャルロット",
       "seafood_rice": "パエリア",
-      "water_chestnut_cake": "water_chestnut_cake",
-      "sugar_tangerine_daifuku": "sugar_tangerine_daifuku"
+      "water_chestnut_cake": "クワイケーキ",
+      "sugar_tangerine_daifuku": "砂糖みかん大福"
     },
     "MealNumber1": {
       "name": "メニュー1をX人前生産",
@@ -5944,8 +5954,8 @@
       "berry_orange": "ベリーオレンジデザートセット",
       "strawberry_charlotte": "シャーロット",
       "seafood_rice": "シーフードライス",
-      "water_chestnut_cake": "water_chestnut_cake",
-      "sugar_tangerine_daifuku": "sugar_tangerine_daifuku"
+      "water_chestnut_cake": "クワイケーキ",
+      "sugar_tangerine_daifuku": "砂糖みかん大福"
     },
     "MealNumber2": {
       "name": "メニュー2をX人前生産",
@@ -5965,8 +5975,8 @@
       "berry_orange": "ベリーオレンジデザートセット",
       "strawberry_charlotte": "シャーロット",
       "seafood_rice": "シーフードライス",
-      "water_chestnut_cake": "water_chestnut_cake",
-      "sugar_tangerine_daifuku": "sugar_tangerine_daifuku"
+      "water_chestnut_cake": "クワイケーキ",
+      "sugar_tangerine_daifuku": "砂糖みかん大福"
     },
     "MealNumber3": {
       "name": "メニュー3をX人前生産",
@@ -5986,8 +5996,8 @@
       "berry_orange": "ベリーオレンジデザートセット",
       "strawberry_charlotte": "シャーロット",
       "seafood_rice": "シーフードライス",
-      "water_chestnut_cake": "water_chestnut_cake",
-      "sugar_tangerine_daifuku": "sugar_tangerine_daifuku"
+      "water_chestnut_cake": "クワイケーキ",
+      "sugar_tangerine_daifuku": "砂糖みかん大福"
     },
     "MealNumber4": {
       "name": "メニュー4をX人前生産",
@@ -6007,8 +6017,8 @@
       "berry_orange": "ベリーオレンジデザートセット",
       "strawberry_charlotte": "シャーロット",
       "seafood_rice": "シーフードライス",
-      "water_chestnut_cake": "water_chestnut_cake",
-      "sugar_tangerine_daifuku": "sugar_tangerine_daifuku"
+      "water_chestnut_cake": "クワイケーキ",
+      "sugar_tangerine_daifuku": "砂糖みかん大福"
     },
     "MealNumber5": {
       "name": "メニュー5をX人前生産",
@@ -6028,8 +6038,8 @@
       "berry_orange": "ベリーオレンジデザートセット",
       "strawberry_charlotte": "シャーロット",
       "seafood_rice": "シーフードライス",
-      "water_chestnut_cake": "water_chestnut_cake",
-      "sugar_tangerine_daifuku": "sugar_tangerine_daifuku"
+      "water_chestnut_cake": "クワイケーキ",
+      "sugar_tangerine_daifuku": "砂糖みかん大福"
     },
     "MealNumber6": {
       "name": "メニュー6をX人前生産",
@@ -6049,8 +6059,8 @@
       "berry_orange": "ベリーオレンジデザートセット",
       "strawberry_charlotte": "シャーロット",
       "seafood_rice": "シーフードライス",
-      "water_chestnut_cake": "water_chestnut_cake",
-      "sugar_tangerine_daifuku": "sugar_tangerine_daifuku"
+      "water_chestnut_cake": "クワイケーキ",
+      "sugar_tangerine_daifuku": "砂糖みかん大福"
     },
     "MealNumber7": {
       "name": "メニュー7をX人前生産",
@@ -6070,8 +6080,8 @@
       "berry_orange": "ベリーオレンジデザートセット",
       "strawberry_charlotte": "シャーロット",
       "seafood_rice": "シーフードライス",
-      "water_chestnut_cake": "water_chestnut_cake",
-      "sugar_tangerine_daifuku": "sugar_tangerine_daifuku"
+      "water_chestnut_cake": "クワイケーキ",
+      "sugar_tangerine_daifuku": "砂糖みかん大福"
     },
     "MealNumber8": {
       "name": "メニュー8をX人前生産",
@@ -6097,8 +6107,8 @@
       "berry_orange": "ベリーオレンジデザートセット",
       "strawberry_charlotte": "シャーロット",
       "seafood_rice": "シーフードライス",
-      "water_chestnut_cake": "water_chestnut_cake",
-      "sugar_tangerine_daifuku": "sugar_tangerine_daifuku"
+      "water_chestnut_cake": "クワイケーキ",
+      "sugar_tangerine_daifuku": "砂糖みかん大福"
     }
   },
   "IslandJuuCoffee": {
@@ -6728,8 +6738,8 @@
       "amaranth_rice_ball": "ヒユナ入りおにぎり",
       "matsutake_chicken_soup": "松茸と鶏のスープ",
       "persimmon_cake": "干し柿",
-      "shiitake_chicken_soup": "shiitake_chicken_soup",
-      "green_jujube_porridge": "green_jujube_porridge"
+      "shiitake_chicken_soup": "冬シイタケと鶏の煮込み",
+      "green_jujube_porridge": "青ナツメ入り粥"
     },
     "Product2": {
       "name": "メニュー2",
@@ -6743,8 +6753,8 @@
       "amaranth_rice_ball": "アマランスおにぎり",
       "matsutake_chicken_soup": "松茸チキンスープ",
       "persimmon_cake": "柿のケーキ",
-      "shiitake_chicken_soup": "shiitake_chicken_soup",
-      "green_jujube_porridge": "green_jujube_porridge"
+      "shiitake_chicken_soup": "冬シイタケと鶏の煮込み",
+      "green_jujube_porridge": "青ナツメ入り粥"
     },
     "Product3": {
       "name": "メニュー3",
@@ -6758,8 +6768,8 @@
       "amaranth_rice_ball": "アマランスおにぎり",
       "matsutake_chicken_soup": "松茸チキンスープ",
       "persimmon_cake": "柿のケーキ",
-      "shiitake_chicken_soup": "shiitake_chicken_soup",
-      "green_jujube_porridge": "green_jujube_porridge"
+      "shiitake_chicken_soup": "冬シイタケと鶏の煮込み",
+      "green_jujube_porridge": "青ナツメ入り粥"
     },
     "Product4": {
       "name": "メニュー4",
@@ -6773,8 +6783,8 @@
       "amaranth_rice_ball": "アマランスおにぎり",
       "matsutake_chicken_soup": "松茸チキンスープ",
       "persimmon_cake": "柿のケーキ",
-      "shiitake_chicken_soup": "shiitake_chicken_soup",
-      "green_jujube_porridge": "green_jujube_porridge"
+      "shiitake_chicken_soup": "冬シイタケと鶏の煮込み",
+      "green_jujube_porridge": "青ナツメ入り粥"
     },
     "Product5": {
       "name": "メニュー5",
@@ -6788,8 +6798,8 @@
       "amaranth_rice_ball": "アマランスおにぎり",
       "matsutake_chicken_soup": "松茸チキンスープ",
       "persimmon_cake": "柿のケーキ",
-      "shiitake_chicken_soup": "shiitake_chicken_soup",
-      "green_jujube_porridge": "green_jujube_porridge"
+      "shiitake_chicken_soup": "冬シイタケと鶏の煮込み",
+      "green_jujube_porridge": "青ナツメ入り粥"
     },
     "SeasonalFallback": {
       "name": "季節代替メニュー",
@@ -6803,8 +6813,8 @@
       "amaranth_rice_ball": "アマランスおにぎり",
       "matsutake_chicken_soup": "松茸チキンスープ",
       "persimmon_cake": "柿のケーキ",
-      "shiitake_chicken_soup": "shiitake_chicken_soup",
-      "green_jujube_porridge": "green_jujube_porridge"
+      "shiitake_chicken_soup": "冬シイタケと鶏の煮込み",
+      "green_jujube_porridge": "青ナツメ入り粥"
     },
     "BoostReplaceFilter": {
       "name": "ブースト置き換えフィルター",
@@ -7111,8 +7121,8 @@
       "berry_orange": "ベリーオレンジデザートセット",
       "strawberry_charlotte": "シャーロット",
       "seafood_rice": "シーフードライス",
-      "water_chestnut_cake": "water_chestnut_cake",
-      "sugar_tangerine_daifuku": "sugar_tangerine_daifuku"
+      "water_chestnut_cake": "クワイケーキ",
+      "sugar_tangerine_daifuku": "砂糖みかん大福"
     },
     "Product2": {
       "name": "メニュー2",
@@ -7123,8 +7133,8 @@
       "berry_orange": "ベリーオレンジデザートセット",
       "strawberry_charlotte": "シャーロット",
       "seafood_rice": "シーフードライス",
-      "water_chestnut_cake": "water_chestnut_cake",
-      "sugar_tangerine_daifuku": "sugar_tangerine_daifuku"
+      "water_chestnut_cake": "クワイケーキ",
+      "sugar_tangerine_daifuku": "砂糖みかん大福"
     },
     "Product3": {
       "name": "メニュー3",
@@ -7135,8 +7145,8 @@
       "berry_orange": "ベリーオレンジデザートセット",
       "strawberry_charlotte": "シャーロット",
       "seafood_rice": "シーフードライス",
-      "water_chestnut_cake": "water_chestnut_cake",
-      "sugar_tangerine_daifuku": "sugar_tangerine_daifuku"
+      "water_chestnut_cake": "クワイケーキ",
+      "sugar_tangerine_daifuku": "砂糖みかん大福"
     },
     "Product4": {
       "name": "メニュー4",
@@ -7147,8 +7157,8 @@
       "berry_orange": "ベリーオレンジデザートセット",
       "strawberry_charlotte": "シャーロット",
       "seafood_rice": "シーフードライス",
-      "water_chestnut_cake": "water_chestnut_cake",
-      "sugar_tangerine_daifuku": "sugar_tangerine_daifuku"
+      "water_chestnut_cake": "クワイケーキ",
+      "sugar_tangerine_daifuku": "砂糖みかん大福"
     },
     "Product5": {
       "name": "メニュー5",
@@ -7159,8 +7169,8 @@
       "berry_orange": "ベリーオレンジデザートセット",
       "strawberry_charlotte": "シャーロット",
       "seafood_rice": "シーフードライス",
-      "water_chestnut_cake": "water_chestnut_cake",
-      "sugar_tangerine_daifuku": "sugar_tangerine_daifuku"
+      "water_chestnut_cake": "クワイケーキ",
+      "sugar_tangerine_daifuku": "砂糖みかん大福"
     },
     "BoostReplaceFilter": {
       "name": "ブースト置き換えフィルター",
@@ -7740,6 +7750,7 @@
       "tuna": "マグロ",
       "salmon": "サーモン",
       "red_sea_bream": "マダイ",
+      "black_porgy": "クロダイ",
       "yellowfin_tuna": "キハダ",
       "sea_cucumber": "ナマコ"
     },

@@ -332,7 +332,7 @@
     },
     "IslandBusiness": {
       "name": "Business Module",
-      "help": "Auto-manage 5 shops: Fish Restaurant, Polar Bear Drinks, Squid Grill, Juu Eatery, Juu Coffee.\nIncludes automated operations such as selecting characters, selecting meals, and starting business."
+      "help": "Auto-manage 5 shops: Golden Koi Restaurant, Polar Bear Teahouse, Fin-'n'-Feather Grill, Manjuu Eatery, Café Manjuu.\nIncludes automated operations such as selecting characters, selecting meals, and starting business."
     },
     "IslandFarm": {
       "name": "Farmland",
@@ -347,23 +347,23 @@
       "help": ""
     },
     "IslandRestaurant": {
-      "name": "Fish Restaurant",
+      "name": "Golden Koi Restaurant",
       "help": ""
     },
     "IslandTeahouse": {
-      "name": "Polar Bear Drinks",
+      "name": "Polar Bear Teahouse",
       "help": ""
     },
     "IslandGrill": {
-      "name": "Squid Grill",
+      "name": "Fin-'n'-Feather Grill",
       "help": "Meals are produced in order from 1 to 8. The production target is the \"Meal X amount\" option; the next item runs only after the previous one is fully met, and later items do not affect the completion of earlier ones at runtime."
     },
     "IslandJuuEatery": {
-      "name": "Juu Eatery",
+      "name": "Manjuu Eatery",
       "help": "Meals are produced in order from 1 to 8. The production target is the \"Meal X amount\" option; the next item runs only after the previous one is fully met, and later items do not affect the completion of earlier ones at runtime."
     },
     "IslandJuuCoffee": {
-      "name": "Juu Coffee",
+      "name": "Café Manjuu",
       "help": "Meals are produced in order from 1 to 8. The production target is the \"Meal X amount\" option; the next item runs only after the previous one is fully met, and later items do not affect the completion of earlier ones at runtime."
     },
     "IslandManufacture": {
@@ -1847,6 +1847,7 @@
       "coalition_20251120": "DATE A LANE",
       "coalition_20260122": "Light & Shadow Fashion Shoot!",
       "coalition_20260723": "Authentic Horror Story",
+      "coalition_20261124": "The Transfer Student at Veritas Academy",
       "event_20200227_cn": "Northern Overture",
       "event_20200312_cn": "The Solomon Ranger Rerun",
       "event_20200326_cn": "Microlayer Medley",
@@ -2772,11 +2773,11 @@
     },
     "Fleet1Affection": {
       "name": "Fleet 1 Affection",
-      "help": "Current affection of fleet 1. +0.05 per win when morale ≥ 40 at sortie; pauses at 100"
+      "help": "Current affection of fleet 1. +0.0625 per win when morale ≥ 40 at sortie; pauses at 100"
     },
     "Fleet2Affection": {
       "name": "Fleet 2 Affection",
-      "help": "Current affection of fleet 2. +0.05 per win when morale ≥ 40 at sortie; pauses at 100"
+      "help": "Current affection of fleet 2. +0.0625 per win when morale ≥ 40 at sortie; pauses at 100"
     }
   },
   "RaidAffection": {
@@ -4938,8 +4939,8 @@
       "rubber": "Rubber",
       "pear": "Yoizuki Pear",
       "persimmon": "Kaki Persimmon",
-      "sugar_tangerine": "sugar_tangerine",
-      "green_jujube": "green_jujube"
+      "sugar_tangerine": "Satsuma Mandarin",
+      "green_jujube": "Green Jujube"
     },
     "PlantRubber": {
       "name": "Plant rubber",
@@ -5008,6 +5009,10 @@
       "name": "Ranch",
       "help": ""
     },
+    "ContinuousBreeding": {
+      "name": "Continuous breeding",
+      "help": "Keep chickens and pigs in production regardless of meat stocks. Cattle and sheep follow their own switches. Retry after two hours if feed or dispatch fails."
+    },
     "MinChicken": {
       "name": "Chicken stock threshold",
       "help": ""
@@ -5054,63 +5059,67 @@
       "3": "3"
     },
     "MinShell": {
-      "name": "Shell stock threshold",
+      "name": "Shellfish min stock",
       "help": ""
     },
     "MinCatfish": {
-      "name": "Catfish stock threshold",
+      "name": "Catfish min stock",
       "help": ""
     },
     "MinKoiCarp": {
-      "name": "Koi carp stock threshold",
+      "name": "Koi Carp min stock",
       "help": ""
     },
     "MinCommonCarp": {
-      "name": "Common carp stock threshold",
+      "name": "Common Carp min stock",
       "help": ""
     },
     "MinShrimp": {
-      "name": "Shrimp stock threshold",
+      "name": "Freshwater Shrimp min stock",
       "help": ""
     },
     "MinCrayfish": {
-      "name": "Crayfish stock threshold",
+      "name": "Crayfish min stock",
       "help": ""
     },
     "MinBass": {
-      "name": "Bass stock threshold",
+      "name": "Sea Bass min stock",
       "help": ""
     },
     "MinCrab": {
-      "name": "Crab stock threshold",
+      "name": "Crab min stock",
       "help": ""
     },
     "MinSquid": {
-      "name": "Squid stock threshold",
+      "name": "Squid min stock",
       "help": ""
     },
     "MinMackerel": {
-      "name": "Mackerel stock threshold",
+      "name": "Mackerel min stock",
       "help": ""
     },
     "MinTuna": {
-      "name": "Tuna stock threshold",
+      "name": "Tuna min stock",
       "help": ""
     },
     "MinSalmon": {
-      "name": "Salmon stock threshold",
+      "name": "Salmon min stock",
       "help": ""
     },
     "MinRedSeaBream": {
-      "name": "Red sea bream stock threshold",
+      "name": "Red Sea Bream min stock",
+      "help": ""
+    },
+    "MinBlackPorgy": {
+      "name": "Black Porgy min stock",
       "help": ""
     },
     "MinYellowfinTuna": {
-      "name": "Yellowfin tuna stock threshold",
+      "name": "Yellowfin Tuna min stock",
       "help": ""
     },
     "MinSeaCucumber": {
-      "name": "Sea cucumber stock threshold",
+      "name": "Sea Cucumber min stock",
       "help": ""
     },
     "MinFreshwaterFishMeat": {
@@ -5145,6 +5154,7 @@
       "tuna": "Tuna",
       "salmon": "Salmon",
       "red_sea_bream": "Red Sea Bream",
+      "black_porgy": "Black Porgy",
       "yellowfin_tuna": "Yellowfin Tuna",
       "sea_cucumber": "Sea Cucumber"
     },
@@ -5189,23 +5199,23 @@
       "help": "Connect with >, e.g. ChaoHo > NewJersey > Amagi_chan\nSaratoga > Akashi > Tashkent > YingSwei\nLeMalin > Unicorn > Shimakaze > Cheshire\nChenHai > WilliamDPorter\nHelena > Friedrich > Atago\nYixian > August > Eugen > Hood > Javelin > Laffey > Explorer > Navigator > OceanCrosser > FeiYun > Takao > Anchorage > Belfast > ChangFeng > Mogador > RoyalFortune > DaVinci > Taihou > Nagato > Agir > HwahJah > Argus > Ognevoy\nOnly recognizes the first two rows in default order. If the specified character is unavailable, falls back to WorkerJuu."
     },
     "MinCopper": {
-      "name": "Copper ore min stock",
+      "name": "Copper Ore min stock",
       "help": "Mine positions only produce when copper ore in warehouse falls below this value."
     },
     "MinAluminium": {
-      "name": "Aluminium ore min stock",
+      "name": "Bauxite Ore min stock",
       "help": "Mine positions only produce when aluminium ore in warehouse falls below this value."
     },
     "MinIron": {
-      "name": "Iron ore min stock",
+      "name": "Iron Ore min stock",
       "help": "Mine positions only produce when iron ore in warehouse falls below this value."
     },
     "MinSulphur": {
-      "name": "Sulphur min stock",
+      "name": "Sulfur min stock",
       "help": "Mine positions only produce when sulphur in warehouse falls below this value."
     },
     "MinSilver": {
-      "name": "Silver ore min stock",
+      "name": "Silver Ore min stock",
       "help": "Mine positions only produce when silver ore in warehouse falls below this value."
     }
   },
@@ -5243,15 +5253,15 @@
       "help": "Connect with >, e.g. ChaoHo > NewJersey > Amagi_chan\nSaratoga > Akashi > Tashkent > YingSwei\nLeMalin > Unicorn > Shimakaze > Cheshire\nChenHai > WilliamDPorter\nHelena > Friedrich > Atago\nYixian > August > Eugen > Hood > Javelin > Laffey > Explorer > Navigator > OceanCrosser > FeiYun > Takao > Anchorage > Belfast > ChangFeng > Mogador > RoyalFortune > DaVinci > Taihou > Nagato > Agir > HwahJah > Argus > Ognevoy\nOnly recognizes the first two rows in default order. If the specified character is unavailable, falls back to WorkerJuu."
     },
     "MinElegant": {
-      "name": "Elegant wood min stock",
+      "name": "Elegant Wood min stock",
       "help": "Forest positions only produce when elegant wood in warehouse falls below this value."
     },
     "MinPractical": {
-      "name": "Practical wood min stock",
+      "name": "Workable Wood min stock",
       "help": "Forest positions only produce when practical wood in warehouse falls below this value."
     },
     "MinSelected": {
-      "name": "Selected wood min stock",
+      "name": "Premium Wood min stock",
       "help": "Forest positions only produce when selected wood in warehouse falls below this value."
     }
   },
@@ -5290,20 +5300,20 @@
       "None": "None",
       "tofu": "Tofu",
       "omurice": "Omurice",
-      "cabbage_tofu": "Cabbage Tofu Soup",
+      "cabbage_tofu": "Cabbage and Tofu Soup",
       "salad": "Vegetable Salad",
       "tofu_meat": "Tofu with Minced Meat",
       "tofu_combo": "Classic Tofu Combo",
-      "hearty_meal": "Hearty Meal Set",
+      "hearty_meal": "Hearty Meal",
       "double_bamboo_shoots": "Cold Mixed Bamboo Shoots and Asparagus",
       "asparagus_shrimp": "Shrimp and Asparagus Stir-Fry",
       "fish_chip": "Fish & Chips",
       "fo_tiao": "Buddha's Temptation",
       "onion_fish": "Steamed Fish with Onions",
-      "matsutake_chicken_soup": "Matsutake Chicken Soup",
+      "matsutake_chicken_soup": "Matsutake and Chicken Soup",
       "persimmon_cake": "Dried Persimmon",
-      "shiitake_chicken_soup": "shiitake_chicken_soup",
-      "green_jujube_porridge": "green_jujube_porridge"
+      "shiitake_chicken_soup": "Shiitake Mushroom Chicken Stew",
+      "green_jujube_porridge": "Green Jujube Porridge"
     },
     "MealNumber1": {
       "name": "Produce meal 1 to X servings",
@@ -5315,20 +5325,20 @@
       "None": "None",
       "tofu": "Tofu",
       "omurice": "Omurice",
-      "cabbage_tofu": "Cabbage Tofu Soup",
-      "salad": "Garden Salad",
-      "tofu_meat": "Mapo Tofu",
+      "cabbage_tofu": "Cabbage and Tofu Soup",
+      "salad": "Vegetable Salad",
+      "tofu_meat": "Tofu with Minced Meat",
       "tofu_combo": "Classic Tofu Combo",
-      "hearty_meal": "Hearty Meal Set",
-      "double_bamboo_shoots": "Cold Bamboo Shoots",
-      "asparagus_shrimp": "Asparagus Shrimp",
+      "hearty_meal": "Hearty Meal",
+      "double_bamboo_shoots": "Cold Mixed Bamboo Shoots and Asparagus",
+      "asparagus_shrimp": "Shrimp and Asparagus Stir-Fry",
       "fish_chip": "Fish & Chips",
-      "fo_tiao": "Buddha Jumps Over the Wall",
-      "onion_fish": "Steamed Onion Fish",
-      "matsutake_chicken_soup": "Matsutake Chicken Soup",
-      "persimmon_cake": "Persimmon Cake",
-      "shiitake_chicken_soup": "shiitake_chicken_soup",
-      "green_jujube_porridge": "green_jujube_porridge"
+      "fo_tiao": "Buddha's Temptation",
+      "onion_fish": "Steamed Fish with Onions",
+      "matsutake_chicken_soup": "Matsutake and Chicken Soup",
+      "persimmon_cake": "Dried Persimmon",
+      "shiitake_chicken_soup": "Shiitake Mushroom Chicken Stew",
+      "green_jujube_porridge": "Green Jujube Porridge"
     },
     "MealNumber2": {
       "name": "Produce meal 2 to X servings",
@@ -5340,20 +5350,20 @@
       "None": "None",
       "tofu": "Tofu",
       "omurice": "Omurice",
-      "cabbage_tofu": "Cabbage Tofu Soup",
-      "salad": "Garden Salad",
-      "tofu_meat": "Mapo Tofu",
+      "cabbage_tofu": "Cabbage and Tofu Soup",
+      "salad": "Vegetable Salad",
+      "tofu_meat": "Tofu with Minced Meat",
       "tofu_combo": "Classic Tofu Combo",
-      "hearty_meal": "Hearty Meal Set",
-      "double_bamboo_shoots": "Cold Bamboo Shoots",
-      "asparagus_shrimp": "Asparagus Shrimp",
+      "hearty_meal": "Hearty Meal",
+      "double_bamboo_shoots": "Cold Mixed Bamboo Shoots and Asparagus",
+      "asparagus_shrimp": "Shrimp and Asparagus Stir-Fry",
       "fish_chip": "Fish & Chips",
-      "fo_tiao": "Buddha Jumps Over the Wall",
-      "onion_fish": "Steamed Onion Fish",
-      "matsutake_chicken_soup": "Matsutake Chicken Soup",
-      "persimmon_cake": "Persimmon Cake",
-      "shiitake_chicken_soup": "shiitake_chicken_soup",
-      "green_jujube_porridge": "green_jujube_porridge"
+      "fo_tiao": "Buddha's Temptation",
+      "onion_fish": "Steamed Fish with Onions",
+      "matsutake_chicken_soup": "Matsutake and Chicken Soup",
+      "persimmon_cake": "Dried Persimmon",
+      "shiitake_chicken_soup": "Shiitake Mushroom Chicken Stew",
+      "green_jujube_porridge": "Green Jujube Porridge"
     },
     "MealNumber3": {
       "name": "Produce meal 3 to X servings",
@@ -5365,20 +5375,20 @@
       "None": "None",
       "tofu": "Tofu",
       "omurice": "Omurice",
-      "cabbage_tofu": "Cabbage Tofu Soup",
-      "salad": "Garden Salad",
-      "tofu_meat": "Mapo Tofu",
+      "cabbage_tofu": "Cabbage and Tofu Soup",
+      "salad": "Vegetable Salad",
+      "tofu_meat": "Tofu with Minced Meat",
       "tofu_combo": "Classic Tofu Combo",
-      "hearty_meal": "Hearty Meal Set",
-      "double_bamboo_shoots": "Cold Bamboo Shoots",
-      "asparagus_shrimp": "Asparagus Shrimp",
+      "hearty_meal": "Hearty Meal",
+      "double_bamboo_shoots": "Cold Mixed Bamboo Shoots and Asparagus",
+      "asparagus_shrimp": "Shrimp and Asparagus Stir-Fry",
       "fish_chip": "Fish & Chips",
-      "fo_tiao": "Buddha Jumps Over the Wall",
-      "onion_fish": "Steamed Onion Fish",
-      "matsutake_chicken_soup": "Matsutake Chicken Soup",
-      "persimmon_cake": "Persimmon Cake",
-      "shiitake_chicken_soup": "shiitake_chicken_soup",
-      "green_jujube_porridge": "green_jujube_porridge"
+      "fo_tiao": "Buddha's Temptation",
+      "onion_fish": "Steamed Fish with Onions",
+      "matsutake_chicken_soup": "Matsutake and Chicken Soup",
+      "persimmon_cake": "Dried Persimmon",
+      "shiitake_chicken_soup": "Shiitake Mushroom Chicken Stew",
+      "green_jujube_porridge": "Green Jujube Porridge"
     },
     "MealNumber4": {
       "name": "Produce meal 4 to X servings",
@@ -5390,20 +5400,20 @@
       "None": "None",
       "tofu": "Tofu",
       "omurice": "Omurice",
-      "cabbage_tofu": "Cabbage Tofu Soup",
-      "salad": "Garden Salad",
-      "tofu_meat": "Mapo Tofu",
+      "cabbage_tofu": "Cabbage and Tofu Soup",
+      "salad": "Vegetable Salad",
+      "tofu_meat": "Tofu with Minced Meat",
       "tofu_combo": "Classic Tofu Combo",
-      "hearty_meal": "Hearty Meal Set",
-      "double_bamboo_shoots": "Cold Bamboo Shoots",
-      "asparagus_shrimp": "Asparagus Shrimp",
+      "hearty_meal": "Hearty Meal",
+      "double_bamboo_shoots": "Cold Mixed Bamboo Shoots and Asparagus",
+      "asparagus_shrimp": "Shrimp and Asparagus Stir-Fry",
       "fish_chip": "Fish & Chips",
-      "fo_tiao": "Buddha Jumps Over the Wall",
-      "onion_fish": "Steamed Onion Fish",
-      "matsutake_chicken_soup": "Matsutake Chicken Soup",
-      "persimmon_cake": "Persimmon Cake",
-      "shiitake_chicken_soup": "shiitake_chicken_soup",
-      "green_jujube_porridge": "green_jujube_porridge"
+      "fo_tiao": "Buddha's Temptation",
+      "onion_fish": "Steamed Fish with Onions",
+      "matsutake_chicken_soup": "Matsutake and Chicken Soup",
+      "persimmon_cake": "Dried Persimmon",
+      "shiitake_chicken_soup": "Shiitake Mushroom Chicken Stew",
+      "green_jujube_porridge": "Green Jujube Porridge"
     },
     "MealNumber5": {
       "name": "Produce meal 5 to X servings",
@@ -5415,20 +5425,20 @@
       "None": "None",
       "tofu": "Tofu",
       "omurice": "Omurice",
-      "cabbage_tofu": "Cabbage Tofu Soup",
-      "salad": "Garden Salad",
-      "tofu_meat": "Mapo Tofu",
+      "cabbage_tofu": "Cabbage and Tofu Soup",
+      "salad": "Vegetable Salad",
+      "tofu_meat": "Tofu with Minced Meat",
       "tofu_combo": "Classic Tofu Combo",
-      "hearty_meal": "Hearty Meal Set",
-      "double_bamboo_shoots": "Cold Bamboo Shoots",
-      "asparagus_shrimp": "Asparagus Shrimp",
+      "hearty_meal": "Hearty Meal",
+      "double_bamboo_shoots": "Cold Mixed Bamboo Shoots and Asparagus",
+      "asparagus_shrimp": "Shrimp and Asparagus Stir-Fry",
       "fish_chip": "Fish & Chips",
-      "fo_tiao": "Buddha Jumps Over the Wall",
-      "onion_fish": "Steamed Onion Fish",
-      "matsutake_chicken_soup": "Matsutake Chicken Soup",
-      "persimmon_cake": "Persimmon Cake",
-      "shiitake_chicken_soup": "shiitake_chicken_soup",
-      "green_jujube_porridge": "green_jujube_porridge"
+      "fo_tiao": "Buddha's Temptation",
+      "onion_fish": "Steamed Fish with Onions",
+      "matsutake_chicken_soup": "Matsutake and Chicken Soup",
+      "persimmon_cake": "Dried Persimmon",
+      "shiitake_chicken_soup": "Shiitake Mushroom Chicken Stew",
+      "green_jujube_porridge": "Green Jujube Porridge"
     },
     "MealNumber6": {
       "name": "Produce meal 6 to X servings",
@@ -5440,20 +5450,20 @@
       "None": "None",
       "tofu": "Tofu",
       "omurice": "Omurice",
-      "cabbage_tofu": "Cabbage Tofu Soup",
-      "salad": "Garden Salad",
-      "tofu_meat": "Mapo Tofu",
+      "cabbage_tofu": "Cabbage and Tofu Soup",
+      "salad": "Vegetable Salad",
+      "tofu_meat": "Tofu with Minced Meat",
       "tofu_combo": "Classic Tofu Combo",
-      "hearty_meal": "Hearty Meal Set",
-      "double_bamboo_shoots": "Cold Bamboo Shoots",
-      "asparagus_shrimp": "Asparagus Shrimp",
+      "hearty_meal": "Hearty Meal",
+      "double_bamboo_shoots": "Cold Mixed Bamboo Shoots and Asparagus",
+      "asparagus_shrimp": "Shrimp and Asparagus Stir-Fry",
       "fish_chip": "Fish & Chips",
-      "fo_tiao": "Buddha Jumps Over the Wall",
-      "onion_fish": "Steamed Onion Fish",
-      "matsutake_chicken_soup": "Matsutake Chicken Soup",
-      "persimmon_cake": "Persimmon Cake",
-      "shiitake_chicken_soup": "shiitake_chicken_soup",
-      "green_jujube_porridge": "green_jujube_porridge"
+      "fo_tiao": "Buddha's Temptation",
+      "onion_fish": "Steamed Fish with Onions",
+      "matsutake_chicken_soup": "Matsutake and Chicken Soup",
+      "persimmon_cake": "Dried Persimmon",
+      "shiitake_chicken_soup": "Shiitake Mushroom Chicken Stew",
+      "green_jujube_porridge": "Green Jujube Porridge"
     },
     "MealNumber7": {
       "name": "Produce meal 7 to X servings",
@@ -5465,20 +5475,20 @@
       "None": "None",
       "tofu": "Tofu",
       "omurice": "Omurice",
-      "cabbage_tofu": "Cabbage Tofu Soup",
-      "salad": "Garden Salad",
-      "tofu_meat": "Mapo Tofu",
+      "cabbage_tofu": "Cabbage and Tofu Soup",
+      "salad": "Vegetable Salad",
+      "tofu_meat": "Tofu with Minced Meat",
       "tofu_combo": "Classic Tofu Combo",
-      "hearty_meal": "Hearty Meal Set",
-      "double_bamboo_shoots": "Cold Bamboo Shoots",
-      "asparagus_shrimp": "Asparagus Shrimp",
+      "hearty_meal": "Hearty Meal",
+      "double_bamboo_shoots": "Cold Mixed Bamboo Shoots and Asparagus",
+      "asparagus_shrimp": "Shrimp and Asparagus Stir-Fry",
       "fish_chip": "Fish & Chips",
-      "fo_tiao": "Buddha Jumps Over the Wall",
-      "onion_fish": "Steamed Onion Fish",
-      "matsutake_chicken_soup": "Matsutake Chicken Soup",
-      "persimmon_cake": "Persimmon Cake",
-      "shiitake_chicken_soup": "shiitake_chicken_soup",
-      "green_jujube_porridge": "green_jujube_porridge"
+      "fo_tiao": "Buddha's Temptation",
+      "onion_fish": "Steamed Fish with Onions",
+      "matsutake_chicken_soup": "Matsutake and Chicken Soup",
+      "persimmon_cake": "Dried Persimmon",
+      "shiitake_chicken_soup": "Shiitake Mushroom Chicken Stew",
+      "green_jujube_porridge": "Green Jujube Porridge"
     },
     "MealNumber8": {
       "name": "Produce meal 8 to X servings",
@@ -5496,25 +5506,25 @@
       "None": "None",
       "tofu": "Tofu",
       "omurice": "Omurice",
-      "cabbage_tofu": "Cabbage Tofu Soup",
-      "salad": "Garden Salad",
-      "tofu_meat": "Mapo Tofu",
+      "cabbage_tofu": "Cabbage and Tofu Soup",
+      "salad": "Vegetable Salad",
+      "tofu_meat": "Tofu with Minced Meat",
       "tofu_combo": "Classic Tofu Combo",
-      "hearty_meal": "Hearty Meal Set",
-      "double_bamboo_shoots": "Cold Bamboo Shoots",
-      "asparagus_shrimp": "Asparagus Shrimp",
+      "hearty_meal": "Hearty Meal",
+      "double_bamboo_shoots": "Cold Mixed Bamboo Shoots and Asparagus",
+      "asparagus_shrimp": "Shrimp and Asparagus Stir-Fry",
       "fish_chip": "Fish & Chips",
-      "fo_tiao": "Buddha Jumps Over the Wall",
-      "onion_fish": "Steamed Onion Fish",
-      "matsutake_chicken_soup": "Matsutake Chicken Soup",
-      "persimmon_cake": "Persimmon Cake",
-      "shiitake_chicken_soup": "shiitake_chicken_soup",
-      "green_jujube_porridge": "green_jujube_porridge"
+      "fo_tiao": "Buddha's Temptation",
+      "onion_fish": "Steamed Fish with Onions",
+      "matsutake_chicken_soup": "Matsutake and Chicken Soup",
+      "persimmon_cake": "Dried Persimmon",
+      "shiitake_chicken_soup": "Shiitake Mushroom Chicken Stew",
+      "green_jujube_porridge": "Green Jujube Porridge"
     }
   },
   "IslandTeahouse": {
     "_info": {
-      "name": "Polar Bear Drinks",
+      "name": "Polar Bear Teahouse",
       "help": "Meals are produced sequentially from 1 to 8. The production target is the Meal X quantity option. The next item is only executed after the previous one is fully satisfied. Later items will not affect the completion of earlier items during runtime.\nHoney drinks support automatic production; make sure honey stock is sufficient.\nSpring Flower Tea and Fresh Pineapple Juice in meals will automatically switch to corresponding seasonal meals based on the current season."
     },
     "PostNumber": {
@@ -5557,17 +5567,17 @@
       "help": "",
       "None": "None",
       "apple_juice": "Apple Juice",
-      "banana_mango": "Banana Mango Juice",
-      "honey_lemon": "Honey Lemon Water",
-      "strawberry_lemon": "Strawberry Lemonade",
-      "strawberry_honey": "Strawberry Honey Smoothie",
-      "floral_fruity": "Floral Fruity",
-      "fruit_paradise": "Fruit Paradise",
+      "banana_mango": "Banana and Mango Juice",
+      "honey_lemon": "Honey and Lemon Water",
+      "strawberry_lemon": "Strawberry Lemon Drink",
+      "strawberry_honey": "Strawberry Honey Frappé",
+      "floral_fruity": "Floral and Fruity",
+      "fruit_paradise": "Colorful Fruit Paradise",
       "lavender_tea": "Lavender Tea",
       "sunny_honey": "Sunny Honey",
-      "spring_flower_tea": "Spring Flower Tea",
+      "spring_flower_tea": "Winter Jasmine Tea",
       "chrysanthemum_tea": "Chrysanthemum Tea",
-      "carrot_pear_juice": "Carrot Pear Juice"
+      "carrot_pear_juice": "Carrot and Pear Juice"
     },
     "MealNumber2": {
       "name": "Produce meal 2 to X servings",
@@ -5578,17 +5588,17 @@
       "help": "",
       "None": "None",
       "apple_juice": "Apple Juice",
-      "banana_mango": "Banana Mango Juice",
-      "honey_lemon": "Honey Lemon Water",
-      "strawberry_lemon": "Strawberry Lemonade",
-      "strawberry_honey": "Strawberry Honey Smoothie",
-      "floral_fruity": "Floral Fruity",
-      "fruit_paradise": "Fruit Paradise",
+      "banana_mango": "Banana and Mango Juice",
+      "honey_lemon": "Honey and Lemon Water",
+      "strawberry_lemon": "Strawberry Lemon Drink",
+      "strawberry_honey": "Strawberry Honey Frappé",
+      "floral_fruity": "Floral and Fruity",
+      "fruit_paradise": "Colorful Fruit Paradise",
       "lavender_tea": "Lavender Tea",
       "sunny_honey": "Sunny Honey",
-      "spring_flower_tea": "Spring Flower Tea",
+      "spring_flower_tea": "Winter Jasmine Tea",
       "chrysanthemum_tea": "Chrysanthemum Tea",
-      "carrot_pear_juice": "Carrot Pear Juice"
+      "carrot_pear_juice": "Carrot and Pear Juice"
     },
     "MealNumber3": {
       "name": "Produce meal 3 to X servings",
@@ -5599,17 +5609,17 @@
       "help": "",
       "None": "None",
       "apple_juice": "Apple Juice",
-      "banana_mango": "Banana Mango Juice",
-      "honey_lemon": "Honey Lemon Water",
-      "strawberry_lemon": "Strawberry Lemonade",
-      "strawberry_honey": "Strawberry Honey Smoothie",
-      "floral_fruity": "Floral Fruity",
-      "fruit_paradise": "Fruit Paradise",
+      "banana_mango": "Banana and Mango Juice",
+      "honey_lemon": "Honey and Lemon Water",
+      "strawberry_lemon": "Strawberry Lemon Drink",
+      "strawberry_honey": "Strawberry Honey Frappé",
+      "floral_fruity": "Floral and Fruity",
+      "fruit_paradise": "Colorful Fruit Paradise",
       "lavender_tea": "Lavender Tea",
       "sunny_honey": "Sunny Honey",
-      "spring_flower_tea": "Spring Flower Tea",
+      "spring_flower_tea": "Winter Jasmine Tea",
       "chrysanthemum_tea": "Chrysanthemum Tea",
-      "carrot_pear_juice": "Carrot Pear Juice"
+      "carrot_pear_juice": "Carrot and Pear Juice"
     },
     "MealNumber4": {
       "name": "Produce meal 4 to X servings",
@@ -5620,17 +5630,17 @@
       "help": "",
       "None": "None",
       "apple_juice": "Apple Juice",
-      "banana_mango": "Banana Mango Juice",
-      "honey_lemon": "Honey Lemon Water",
-      "strawberry_lemon": "Strawberry Lemonade",
-      "strawberry_honey": "Strawberry Honey Smoothie",
-      "floral_fruity": "Floral Fruity",
-      "fruit_paradise": "Fruit Paradise",
+      "banana_mango": "Banana and Mango Juice",
+      "honey_lemon": "Honey and Lemon Water",
+      "strawberry_lemon": "Strawberry Lemon Drink",
+      "strawberry_honey": "Strawberry Honey Frappé",
+      "floral_fruity": "Floral and Fruity",
+      "fruit_paradise": "Colorful Fruit Paradise",
       "lavender_tea": "Lavender Tea",
       "sunny_honey": "Sunny Honey",
-      "spring_flower_tea": "Spring Flower Tea",
+      "spring_flower_tea": "Winter Jasmine Tea",
       "chrysanthemum_tea": "Chrysanthemum Tea",
-      "carrot_pear_juice": "Carrot Pear Juice"
+      "carrot_pear_juice": "Carrot and Pear Juice"
     },
     "MealNumber5": {
       "name": "Produce meal 5 to X servings",
@@ -5641,17 +5651,17 @@
       "help": "",
       "None": "None",
       "apple_juice": "Apple Juice",
-      "banana_mango": "Banana Mango Juice",
-      "honey_lemon": "Honey Lemon Water",
-      "strawberry_lemon": "Strawberry Lemonade",
-      "strawberry_honey": "Strawberry Honey Smoothie",
-      "floral_fruity": "Floral Fruity",
-      "fruit_paradise": "Fruit Paradise",
+      "banana_mango": "Banana and Mango Juice",
+      "honey_lemon": "Honey and Lemon Water",
+      "strawberry_lemon": "Strawberry Lemon Drink",
+      "strawberry_honey": "Strawberry Honey Frappé",
+      "floral_fruity": "Floral and Fruity",
+      "fruit_paradise": "Colorful Fruit Paradise",
       "lavender_tea": "Lavender Tea",
       "sunny_honey": "Sunny Honey",
-      "spring_flower_tea": "Spring Flower Tea",
+      "spring_flower_tea": "Winter Jasmine Tea",
       "chrysanthemum_tea": "Chrysanthemum Tea",
-      "carrot_pear_juice": "Carrot Pear Juice"
+      "carrot_pear_juice": "Carrot and Pear Juice"
     },
     "MealNumber6": {
       "name": "Produce meal 6 to X servings",
@@ -5662,17 +5672,17 @@
       "help": "",
       "None": "None",
       "apple_juice": "Apple Juice",
-      "banana_mango": "Banana Mango Juice",
-      "honey_lemon": "Honey Lemon Water",
-      "strawberry_lemon": "Strawberry Lemonade",
-      "strawberry_honey": "Strawberry Honey Smoothie",
-      "floral_fruity": "Floral Fruity",
-      "fruit_paradise": "Fruit Paradise",
+      "banana_mango": "Banana and Mango Juice",
+      "honey_lemon": "Honey and Lemon Water",
+      "strawberry_lemon": "Strawberry Lemon Drink",
+      "strawberry_honey": "Strawberry Honey Frappé",
+      "floral_fruity": "Floral and Fruity",
+      "fruit_paradise": "Colorful Fruit Paradise",
       "lavender_tea": "Lavender Tea",
       "sunny_honey": "Sunny Honey",
-      "spring_flower_tea": "Spring Flower Tea",
+      "spring_flower_tea": "Winter Jasmine Tea",
       "chrysanthemum_tea": "Chrysanthemum Tea",
-      "carrot_pear_juice": "Carrot Pear Juice"
+      "carrot_pear_juice": "Carrot and Pear Juice"
     },
     "MealNumber7": {
       "name": "Produce meal 7 to X servings",
@@ -5683,17 +5693,17 @@
       "help": "",
       "None": "None",
       "apple_juice": "Apple Juice",
-      "banana_mango": "Banana Mango Juice",
-      "honey_lemon": "Honey Lemon Water",
-      "strawberry_lemon": "Strawberry Lemonade",
-      "strawberry_honey": "Strawberry Honey Smoothie",
-      "floral_fruity": "Floral Fruity",
-      "fruit_paradise": "Fruit Paradise",
+      "banana_mango": "Banana and Mango Juice",
+      "honey_lemon": "Honey and Lemon Water",
+      "strawberry_lemon": "Strawberry Lemon Drink",
+      "strawberry_honey": "Strawberry Honey Frappé",
+      "floral_fruity": "Floral and Fruity",
+      "fruit_paradise": "Colorful Fruit Paradise",
       "lavender_tea": "Lavender Tea",
       "sunny_honey": "Sunny Honey",
-      "spring_flower_tea": "Spring Flower Tea",
+      "spring_flower_tea": "Winter Jasmine Tea",
       "chrysanthemum_tea": "Chrysanthemum Tea",
-      "carrot_pear_juice": "Carrot Pear Juice"
+      "carrot_pear_juice": "Carrot and Pear Juice"
     },
     "MealNumber8": {
       "name": "Produce meal 8 to X servings",
@@ -5710,17 +5720,17 @@
       "help": "Produce permanent meals after all above are completed.",
       "None": "None",
       "apple_juice": "Apple Juice",
-      "banana_mango": "Banana Mango Juice",
-      "honey_lemon": "Honey Lemon Water",
-      "strawberry_lemon": "Strawberry Lemonade",
-      "strawberry_honey": "Strawberry Honey Smoothie",
-      "floral_fruity": "Floral Fruity",
-      "fruit_paradise": "Fruit Paradise",
+      "banana_mango": "Banana and Mango Juice",
+      "honey_lemon": "Honey and Lemon Water",
+      "strawberry_lemon": "Strawberry Lemon Drink",
+      "strawberry_honey": "Strawberry Honey Frappé",
+      "floral_fruity": "Floral and Fruity",
+      "fruit_paradise": "Colorful Fruit Paradise",
       "lavender_tea": "Lavender Tea",
       "sunny_honey": "Sunny Honey",
-      "spring_flower_tea": "Spring Flower Tea",
+      "spring_flower_tea": "Winter Jasmine Tea",
       "chrysanthemum_tea": "Chrysanthemum Tea",
-      "carrot_pear_juice": "Carrot Pear Juice"
+      "carrot_pear_juice": "Carrot and Pear Juice"
     }
   },
   "IslandGrill": {
@@ -5742,13 +5752,13 @@
       "name": "Meal 1",
       "help": "",
       "None": "None",
-      "roasted_skewer": "Grilled Skewers",
-      "chicken_potato": "Chicken Potato Platter",
-      "carrot_omelette": "Carrot Omelette",
+      "roasted_skewer": "Coal-Roasted Skewer",
+      "chicken_potato": "Chicken and Potato Hors d'Oeuvre",
+      "carrot_omelette": "Rolled Carrot Omelette",
       "stir_fried_chicken": "Stir-Fried Chicken",
       "steak_bowl": "Steak Bowl",
       "crayfish_stir_fry": "Crayfish Stir-Fry",
-      "carnival": "BBQ Carnival",
+      "carnival": "The Carne-val",
       "double_energy": "Double Energy Combo"
     },
     "MealNumber1": {
@@ -5759,13 +5769,13 @@
       "name": "Meal 2",
       "help": "",
       "None": "None",
-      "roasted_skewer": "Grilled Skewers",
-      "chicken_potato": "Chicken Potato Platter",
-      "carrot_omelette": "Carrot Omelette",
+      "roasted_skewer": "Coal-Roasted Skewer",
+      "chicken_potato": "Chicken and Potato Hors d'Oeuvre",
+      "carrot_omelette": "Rolled Carrot Omelette",
       "stir_fried_chicken": "Stir-Fried Chicken",
       "steak_bowl": "Steak Bowl",
       "crayfish_stir_fry": "Crayfish Stir-Fry",
-      "carnival": "BBQ Carnival",
+      "carnival": "The Carne-val",
       "double_energy": "Double Energy Combo"
     },
     "MealNumber2": {
@@ -5776,13 +5786,13 @@
       "name": "Meal 3",
       "help": "",
       "None": "None",
-      "roasted_skewer": "Grilled Skewers",
-      "chicken_potato": "Chicken Potato Platter",
-      "carrot_omelette": "Carrot Omelette",
+      "roasted_skewer": "Coal-Roasted Skewer",
+      "chicken_potato": "Chicken and Potato Hors d'Oeuvre",
+      "carrot_omelette": "Rolled Carrot Omelette",
       "stir_fried_chicken": "Stir-Fried Chicken",
       "steak_bowl": "Steak Bowl",
       "crayfish_stir_fry": "Crayfish Stir-Fry",
-      "carnival": "BBQ Carnival",
+      "carnival": "The Carne-val",
       "double_energy": "Double Energy Combo"
     },
     "MealNumber3": {
@@ -5793,13 +5803,13 @@
       "name": "Meal 4",
       "help": "",
       "None": "None",
-      "roasted_skewer": "Grilled Skewers",
-      "chicken_potato": "Chicken Potato Platter",
-      "carrot_omelette": "Carrot Omelette",
+      "roasted_skewer": "Coal-Roasted Skewer",
+      "chicken_potato": "Chicken and Potato Hors d'Oeuvre",
+      "carrot_omelette": "Rolled Carrot Omelette",
       "stir_fried_chicken": "Stir-Fried Chicken",
       "steak_bowl": "Steak Bowl",
       "crayfish_stir_fry": "Crayfish Stir-Fry",
-      "carnival": "BBQ Carnival",
+      "carnival": "The Carne-val",
       "double_energy": "Double Energy Combo"
     },
     "MealNumber4": {
@@ -5810,13 +5820,13 @@
       "name": "Meal 5",
       "help": "",
       "None": "None",
-      "roasted_skewer": "Grilled Skewers",
-      "chicken_potato": "Chicken Potato Platter",
-      "carrot_omelette": "Carrot Omelette",
+      "roasted_skewer": "Coal-Roasted Skewer",
+      "chicken_potato": "Chicken and Potato Hors d'Oeuvre",
+      "carrot_omelette": "Rolled Carrot Omelette",
       "stir_fried_chicken": "Stir-Fried Chicken",
       "steak_bowl": "Steak Bowl",
       "crayfish_stir_fry": "Crayfish Stir-Fry",
-      "carnival": "BBQ Carnival",
+      "carnival": "The Carne-val",
       "double_energy": "Double Energy Combo"
     },
     "MealNumber5": {
@@ -5827,13 +5837,13 @@
       "name": "Meal 6",
       "help": "",
       "None": "None",
-      "roasted_skewer": "Grilled Skewers",
-      "chicken_potato": "Chicken Potato Platter",
-      "carrot_omelette": "Carrot Omelette",
+      "roasted_skewer": "Coal-Roasted Skewer",
+      "chicken_potato": "Chicken and Potato Hors d'Oeuvre",
+      "carrot_omelette": "Rolled Carrot Omelette",
       "stir_fried_chicken": "Stir-Fried Chicken",
       "steak_bowl": "Steak Bowl",
       "crayfish_stir_fry": "Crayfish Stir-Fry",
-      "carnival": "BBQ Carnival",
+      "carnival": "The Carne-val",
       "double_energy": "Double Energy Combo"
     },
     "MealNumber6": {
@@ -5844,13 +5854,13 @@
       "name": "Meal 7",
       "help": "",
       "None": "None",
-      "roasted_skewer": "Grilled Skewers",
-      "chicken_potato": "Chicken Potato Platter",
-      "carrot_omelette": "Carrot Omelette",
+      "roasted_skewer": "Coal-Roasted Skewer",
+      "chicken_potato": "Chicken and Potato Hors d'Oeuvre",
+      "carrot_omelette": "Rolled Carrot Omelette",
       "stir_fried_chicken": "Stir-Fried Chicken",
       "steak_bowl": "Steak Bowl",
       "crayfish_stir_fry": "Crayfish Stir-Fry",
-      "carnival": "BBQ Carnival",
+      "carnival": "The Carne-val",
       "double_energy": "Double Energy Combo"
     },
     "MealNumber7": {
@@ -5861,13 +5871,13 @@
       "name": "Meal 8",
       "help": "",
       "None": "None",
-      "roasted_skewer": "Grilled Skewers",
-      "chicken_potato": "Chicken Potato Platter",
-      "carrot_omelette": "Carrot Omelette",
+      "roasted_skewer": "Coal-Roasted Skewer",
+      "chicken_potato": "Chicken and Potato Hors d'Oeuvre",
+      "carrot_omelette": "Rolled Carrot Omelette",
       "stir_fried_chicken": "Stir-Fried Chicken",
       "steak_bowl": "Steak Bowl",
       "crayfish_stir_fry": "Crayfish Stir-Fry",
-      "carnival": "BBQ Carnival",
+      "carnival": "The Carne-val",
       "double_energy": "Double Energy Combo"
     },
     "MealNumber8": {
@@ -5884,13 +5894,13 @@
       "name": "Permanent meal",
       "help": "Produce permanent meals after all above are completed.",
       "None": "None",
-      "roasted_skewer": "Grilled Skewers",
-      "chicken_potato": "Chicken Potato Platter",
-      "carrot_omelette": "Carrot Omelette",
+      "roasted_skewer": "Coal-Roasted Skewer",
+      "chicken_potato": "Chicken and Potato Hors d'Oeuvre",
+      "carrot_omelette": "Rolled Carrot Omelette",
       "stir_fried_chicken": "Stir-Fried Chicken",
       "steak_bowl": "Steak Bowl",
       "crayfish_stir_fry": "Crayfish Stir-Fry",
-      "carnival": "BBQ Carnival",
+      "carnival": "The Carne-val",
       "double_energy": "Double Energy Combo"
     }
   },
@@ -5916,15 +5926,15 @@
       "apple_pie": "Apple Pie",
       "corn_cup": "Corn Cup",
       "orange_pie": "Orange Pie",
-      "banana_crepe": "Banana Crepe",
+      "banana_crepe": "Banana Crêpe",
       "orchard_duo": "Orchard Duo",
       "rice_mango": "Sticky Rice with Mango",
       "succulently_sweet": "Succulently Sweet",
       "berry_orange": "Berry and Orange Dessert",
       "strawberry_charlotte": "Strawberry Charlotte",
       "seafood_rice": "Paella",
-      "water_chestnut_cake": "water_chestnut_cake",
-      "sugar_tangerine_daifuku": "sugar_tangerine_daifuku"
+      "water_chestnut_cake": "Water Chestnut Cakes",
+      "sugar_tangerine_daifuku": "Satsuma Mandarin Daifuku"
     },
     "MealNumber1": {
       "name": "Produce meal 1 to X servings",
@@ -5937,15 +5947,15 @@
       "apple_pie": "Apple Pie",
       "corn_cup": "Corn Cup",
       "orange_pie": "Orange Pie",
-      "banana_crepe": "Banana Crepe",
+      "banana_crepe": "Banana Crêpe",
       "orchard_duo": "Orchard Duo",
-      "rice_mango": "Mango Sticky Rice",
-      "succulently_sweet": "Sweet Combo",
-      "berry_orange": "Berry Orange Dessert Set",
+      "rice_mango": "Sticky Rice with Mango",
+      "succulently_sweet": "Succulently Sweet",
+      "berry_orange": "Berry and Orange Dessert",
       "strawberry_charlotte": "Strawberry Charlotte",
-      "seafood_rice": "Seafood Rice",
-      "water_chestnut_cake": "water_chestnut_cake",
-      "sugar_tangerine_daifuku": "sugar_tangerine_daifuku"
+      "seafood_rice": "Paella",
+      "water_chestnut_cake": "Water Chestnut Cakes",
+      "sugar_tangerine_daifuku": "Satsuma Mandarin Daifuku"
     },
     "MealNumber2": {
       "name": "Produce meal 2 to X servings",
@@ -5958,15 +5968,15 @@
       "apple_pie": "Apple Pie",
       "corn_cup": "Corn Cup",
       "orange_pie": "Orange Pie",
-      "banana_crepe": "Banana Crepe",
+      "banana_crepe": "Banana Crêpe",
       "orchard_duo": "Orchard Duo",
-      "rice_mango": "Mango Sticky Rice",
-      "succulently_sweet": "Sweet Combo",
-      "berry_orange": "Berry Orange Dessert Set",
+      "rice_mango": "Sticky Rice with Mango",
+      "succulently_sweet": "Succulently Sweet",
+      "berry_orange": "Berry and Orange Dessert",
       "strawberry_charlotte": "Strawberry Charlotte",
-      "seafood_rice": "Seafood Rice",
-      "water_chestnut_cake": "water_chestnut_cake",
-      "sugar_tangerine_daifuku": "sugar_tangerine_daifuku"
+      "seafood_rice": "Paella",
+      "water_chestnut_cake": "Water Chestnut Cakes",
+      "sugar_tangerine_daifuku": "Satsuma Mandarin Daifuku"
     },
     "MealNumber3": {
       "name": "Produce meal 3 to X servings",
@@ -5979,15 +5989,15 @@
       "apple_pie": "Apple Pie",
       "corn_cup": "Corn Cup",
       "orange_pie": "Orange Pie",
-      "banana_crepe": "Banana Crepe",
+      "banana_crepe": "Banana Crêpe",
       "orchard_duo": "Orchard Duo",
-      "rice_mango": "Mango Sticky Rice",
-      "succulently_sweet": "Sweet Combo",
-      "berry_orange": "Berry Orange Dessert Set",
+      "rice_mango": "Sticky Rice with Mango",
+      "succulently_sweet": "Succulently Sweet",
+      "berry_orange": "Berry and Orange Dessert",
       "strawberry_charlotte": "Strawberry Charlotte",
-      "seafood_rice": "Seafood Rice",
-      "water_chestnut_cake": "water_chestnut_cake",
-      "sugar_tangerine_daifuku": "sugar_tangerine_daifuku"
+      "seafood_rice": "Paella",
+      "water_chestnut_cake": "Water Chestnut Cakes",
+      "sugar_tangerine_daifuku": "Satsuma Mandarin Daifuku"
     },
     "MealNumber4": {
       "name": "Produce meal 4 to X servings",
@@ -6000,15 +6010,15 @@
       "apple_pie": "Apple Pie",
       "corn_cup": "Corn Cup",
       "orange_pie": "Orange Pie",
-      "banana_crepe": "Banana Crepe",
+      "banana_crepe": "Banana Crêpe",
       "orchard_duo": "Orchard Duo",
-      "rice_mango": "Mango Sticky Rice",
-      "succulently_sweet": "Sweet Combo",
-      "berry_orange": "Berry Orange Dessert Set",
+      "rice_mango": "Sticky Rice with Mango",
+      "succulently_sweet": "Succulently Sweet",
+      "berry_orange": "Berry and Orange Dessert",
       "strawberry_charlotte": "Strawberry Charlotte",
-      "seafood_rice": "Seafood Rice",
-      "water_chestnut_cake": "water_chestnut_cake",
-      "sugar_tangerine_daifuku": "sugar_tangerine_daifuku"
+      "seafood_rice": "Paella",
+      "water_chestnut_cake": "Water Chestnut Cakes",
+      "sugar_tangerine_daifuku": "Satsuma Mandarin Daifuku"
     },
     "MealNumber5": {
       "name": "Produce meal 5 to X servings",
@@ -6021,15 +6031,15 @@
       "apple_pie": "Apple Pie",
       "corn_cup": "Corn Cup",
       "orange_pie": "Orange Pie",
-      "banana_crepe": "Banana Crepe",
+      "banana_crepe": "Banana Crêpe",
       "orchard_duo": "Orchard Duo",
-      "rice_mango": "Mango Sticky Rice",
-      "succulently_sweet": "Sweet Combo",
-      "berry_orange": "Berry Orange Dessert Set",
+      "rice_mango": "Sticky Rice with Mango",
+      "succulently_sweet": "Succulently Sweet",
+      "berry_orange": "Berry and Orange Dessert",
       "strawberry_charlotte": "Strawberry Charlotte",
-      "seafood_rice": "Seafood Rice",
-      "water_chestnut_cake": "water_chestnut_cake",
-      "sugar_tangerine_daifuku": "sugar_tangerine_daifuku"
+      "seafood_rice": "Paella",
+      "water_chestnut_cake": "Water Chestnut Cakes",
+      "sugar_tangerine_daifuku": "Satsuma Mandarin Daifuku"
     },
     "MealNumber6": {
       "name": "Produce meal 6 to X servings",
@@ -6042,15 +6052,15 @@
       "apple_pie": "Apple Pie",
       "corn_cup": "Corn Cup",
       "orange_pie": "Orange Pie",
-      "banana_crepe": "Banana Crepe",
+      "banana_crepe": "Banana Crêpe",
       "orchard_duo": "Orchard Duo",
-      "rice_mango": "Mango Sticky Rice",
-      "succulently_sweet": "Sweet Combo",
-      "berry_orange": "Berry Orange Dessert Set",
+      "rice_mango": "Sticky Rice with Mango",
+      "succulently_sweet": "Succulently Sweet",
+      "berry_orange": "Berry and Orange Dessert",
       "strawberry_charlotte": "Strawberry Charlotte",
-      "seafood_rice": "Seafood Rice",
-      "water_chestnut_cake": "water_chestnut_cake",
-      "sugar_tangerine_daifuku": "sugar_tangerine_daifuku"
+      "seafood_rice": "Paella",
+      "water_chestnut_cake": "Water Chestnut Cakes",
+      "sugar_tangerine_daifuku": "Satsuma Mandarin Daifuku"
     },
     "MealNumber7": {
       "name": "Produce meal 7 to X servings",
@@ -6063,15 +6073,15 @@
       "apple_pie": "Apple Pie",
       "corn_cup": "Corn Cup",
       "orange_pie": "Orange Pie",
-      "banana_crepe": "Banana Crepe",
+      "banana_crepe": "Banana Crêpe",
       "orchard_duo": "Orchard Duo",
-      "rice_mango": "Mango Sticky Rice",
-      "succulently_sweet": "Sweet Combo",
-      "berry_orange": "Berry Orange Dessert Set",
+      "rice_mango": "Sticky Rice with Mango",
+      "succulently_sweet": "Succulently Sweet",
+      "berry_orange": "Berry and Orange Dessert",
       "strawberry_charlotte": "Strawberry Charlotte",
-      "seafood_rice": "Seafood Rice",
-      "water_chestnut_cake": "water_chestnut_cake",
-      "sugar_tangerine_daifuku": "sugar_tangerine_daifuku"
+      "seafood_rice": "Paella",
+      "water_chestnut_cake": "Water Chestnut Cakes",
+      "sugar_tangerine_daifuku": "Satsuma Mandarin Daifuku"
     },
     "MealNumber8": {
       "name": "Produce meal 8 to X servings",
@@ -6090,15 +6100,15 @@
       "apple_pie": "Apple Pie",
       "corn_cup": "Corn Cup",
       "orange_pie": "Orange Pie",
-      "banana_crepe": "Banana Crepe",
+      "banana_crepe": "Banana Crêpe",
       "orchard_duo": "Orchard Duo",
-      "rice_mango": "Mango Sticky Rice",
-      "succulently_sweet": "Sweet Combo",
-      "berry_orange": "Berry Orange Dessert Set",
+      "rice_mango": "Sticky Rice with Mango",
+      "succulently_sweet": "Succulently Sweet",
+      "berry_orange": "Berry and Orange Dessert",
       "strawberry_charlotte": "Strawberry Charlotte",
-      "seafood_rice": "Seafood Rice",
-      "water_chestnut_cake": "water_chestnut_cake",
-      "sugar_tangerine_daifuku": "sugar_tangerine_daifuku"
+      "seafood_rice": "Paella",
+      "water_chestnut_cake": "Water Chestnut Cakes",
+      "sugar_tangerine_daifuku": "Satsuma Mandarin Daifuku"
     }
   },
   "IslandJuuCoffee": {
@@ -6130,9 +6140,9 @@
       "latte": "Latte",
       "citrus_coffee": "Citrus Coffee",
       "strawberry_milkshake": "Strawberry Milkshake",
-      "morning_light": "Morning Light Combo",
-      "wake_up_call": "Wake-Up Call Set",
-      "fruity_fruitier": "Fruity Fruitier"
+      "morning_light": "Morning Light Energy Combo",
+      "wake_up_call": "The Wake-Up Call",
+      "fruity_fruitier": "Fruity & Fruitier"
     },
     "MealNumber1": {
       "name": "Produce meal 1 to X servings",
@@ -6147,10 +6157,10 @@
       "cheese": "Cheese",
       "latte": "Latte",
       "citrus_coffee": "Citrus Coffee",
-      "strawberry_milkshake": "Strawberry Milk Tea",
-      "morning_light": "Morning Light Combo",
-      "wake_up_call": "Wake-Up Call Set",
-      "fruity_fruitier": "Fruity Fruitier"
+      "strawberry_milkshake": "Strawberry Milkshake",
+      "morning_light": "Morning Light Energy Combo",
+      "wake_up_call": "The Wake-Up Call",
+      "fruity_fruitier": "Fruity & Fruitier"
     },
     "MealNumber2": {
       "name": "Produce meal 2 to X servings",
@@ -6165,10 +6175,10 @@
       "cheese": "Cheese",
       "latte": "Latte",
       "citrus_coffee": "Citrus Coffee",
-      "strawberry_milkshake": "Strawberry Milk Tea",
-      "morning_light": "Morning Light Combo",
-      "wake_up_call": "Wake-Up Call Set",
-      "fruity_fruitier": "Fruity Fruitier"
+      "strawberry_milkshake": "Strawberry Milkshake",
+      "morning_light": "Morning Light Energy Combo",
+      "wake_up_call": "The Wake-Up Call",
+      "fruity_fruitier": "Fruity & Fruitier"
     },
     "MealNumber3": {
       "name": "Produce meal 3 to X servings",
@@ -6183,10 +6193,10 @@
       "cheese": "Cheese",
       "latte": "Latte",
       "citrus_coffee": "Citrus Coffee",
-      "strawberry_milkshake": "Strawberry Milk Tea",
-      "morning_light": "Morning Light Combo",
-      "wake_up_call": "Wake-Up Call Set",
-      "fruity_fruitier": "Fruity Fruitier"
+      "strawberry_milkshake": "Strawberry Milkshake",
+      "morning_light": "Morning Light Energy Combo",
+      "wake_up_call": "The Wake-Up Call",
+      "fruity_fruitier": "Fruity & Fruitier"
     },
     "MealNumber4": {
       "name": "Produce meal 4 to X servings",
@@ -6201,10 +6211,10 @@
       "cheese": "Cheese",
       "latte": "Latte",
       "citrus_coffee": "Citrus Coffee",
-      "strawberry_milkshake": "Strawberry Milk Tea",
-      "morning_light": "Morning Light Combo",
-      "wake_up_call": "Wake-Up Call Set",
-      "fruity_fruitier": "Fruity Fruitier"
+      "strawberry_milkshake": "Strawberry Milkshake",
+      "morning_light": "Morning Light Energy Combo",
+      "wake_up_call": "The Wake-Up Call",
+      "fruity_fruitier": "Fruity & Fruitier"
     },
     "MealNumber5": {
       "name": "Produce meal 5 to X servings",
@@ -6219,10 +6229,10 @@
       "cheese": "Cheese",
       "latte": "Latte",
       "citrus_coffee": "Citrus Coffee",
-      "strawberry_milkshake": "Strawberry Milk Tea",
-      "morning_light": "Morning Light Combo",
-      "wake_up_call": "Wake-Up Call Set",
-      "fruity_fruitier": "Fruity Fruitier"
+      "strawberry_milkshake": "Strawberry Milkshake",
+      "morning_light": "Morning Light Energy Combo",
+      "wake_up_call": "The Wake-Up Call",
+      "fruity_fruitier": "Fruity & Fruitier"
     },
     "MealNumber6": {
       "name": "Produce meal 6 to X servings",
@@ -6237,10 +6247,10 @@
       "cheese": "Cheese",
       "latte": "Latte",
       "citrus_coffee": "Citrus Coffee",
-      "strawberry_milkshake": "Strawberry Milk Tea",
-      "morning_light": "Morning Light Combo",
-      "wake_up_call": "Wake-Up Call Set",
-      "fruity_fruitier": "Fruity Fruitier"
+      "strawberry_milkshake": "Strawberry Milkshake",
+      "morning_light": "Morning Light Energy Combo",
+      "wake_up_call": "The Wake-Up Call",
+      "fruity_fruitier": "Fruity & Fruitier"
     },
     "MealNumber7": {
       "name": "Produce meal 7 to X servings",
@@ -6255,10 +6265,10 @@
       "cheese": "Cheese",
       "latte": "Latte",
       "citrus_coffee": "Citrus Coffee",
-      "strawberry_milkshake": "Strawberry Milk Tea",
-      "morning_light": "Morning Light Combo",
-      "wake_up_call": "Wake-Up Call Set",
-      "fruity_fruitier": "Fruity Fruitier"
+      "strawberry_milkshake": "Strawberry Milkshake",
+      "morning_light": "Morning Light Energy Combo",
+      "wake_up_call": "The Wake-Up Call",
+      "fruity_fruitier": "Fruity & Fruitier"
     },
     "MealNumber8": {
       "name": "Produce meal 8 to X servings",
@@ -6728,83 +6738,83 @@
       "amaranth_rice_ball": "Amaranth Onigiri",
       "matsutake_chicken_soup": "Matsutake and Chicken Soup",
       "persimmon_cake": "Dried Persimmon",
-      "shiitake_chicken_soup": "shiitake_chicken_soup",
-      "green_jujube_porridge": "green_jujube_porridge"
+      "shiitake_chicken_soup": "Shiitake Mushroom Chicken Stew",
+      "green_jujube_porridge": "Green Jujube Porridge"
     },
     "Product2": {
       "name": "Product 2",
       "help": "",
       "None": "None",
-      "double_bamboo_shoots": "Cold Bamboo Shoots",
-      "tofu_meat": "Mapo Tofu",
+      "double_bamboo_shoots": "Cold Mixed Bamboo Shoots and Asparagus",
+      "tofu_meat": "Tofu with Minced Meat",
       "tofu_combo": "Classic Tofu Combo",
-      "hearty_meal": "Hearty Meal Set",
-      "fo_tiao": "Buddha Jumps Over the Wall",
-      "amaranth_rice_ball": "Amaranth Rice Ball",
-      "matsutake_chicken_soup": "Matsutake Chicken Soup",
-      "persimmon_cake": "Persimmon Cake",
-      "shiitake_chicken_soup": "shiitake_chicken_soup",
-      "green_jujube_porridge": "green_jujube_porridge"
+      "hearty_meal": "Hearty Meal",
+      "fo_tiao": "Buddha's Temptation",
+      "amaranth_rice_ball": "Amaranth Onigiri",
+      "matsutake_chicken_soup": "Matsutake and Chicken Soup",
+      "persimmon_cake": "Dried Persimmon",
+      "shiitake_chicken_soup": "Shiitake Mushroom Chicken Stew",
+      "green_jujube_porridge": "Green Jujube Porridge"
     },
     "Product3": {
       "name": "Product 3",
       "help": "",
       "None": "None",
-      "double_bamboo_shoots": "Cold Bamboo Shoots",
-      "tofu_meat": "Mapo Tofu",
+      "double_bamboo_shoots": "Cold Mixed Bamboo Shoots and Asparagus",
+      "tofu_meat": "Tofu with Minced Meat",
       "tofu_combo": "Classic Tofu Combo",
-      "hearty_meal": "Hearty Meal Set",
-      "fo_tiao": "Buddha Jumps Over the Wall",
-      "amaranth_rice_ball": "Amaranth Rice Ball",
-      "matsutake_chicken_soup": "Matsutake Chicken Soup",
-      "persimmon_cake": "Persimmon Cake",
-      "shiitake_chicken_soup": "shiitake_chicken_soup",
-      "green_jujube_porridge": "green_jujube_porridge"
+      "hearty_meal": "Hearty Meal",
+      "fo_tiao": "Buddha's Temptation",
+      "amaranth_rice_ball": "Amaranth Onigiri",
+      "matsutake_chicken_soup": "Matsutake and Chicken Soup",
+      "persimmon_cake": "Dried Persimmon",
+      "shiitake_chicken_soup": "Shiitake Mushroom Chicken Stew",
+      "green_jujube_porridge": "Green Jujube Porridge"
     },
     "Product4": {
       "name": "Product 4",
       "help": "",
       "None": "None",
-      "double_bamboo_shoots": "Cold Bamboo Shoots",
-      "tofu_meat": "Mapo Tofu",
+      "double_bamboo_shoots": "Cold Mixed Bamboo Shoots and Asparagus",
+      "tofu_meat": "Tofu with Minced Meat",
       "tofu_combo": "Classic Tofu Combo",
-      "hearty_meal": "Hearty Meal Set",
-      "fo_tiao": "Buddha Jumps Over the Wall",
-      "amaranth_rice_ball": "Amaranth Rice Ball",
-      "matsutake_chicken_soup": "Matsutake Chicken Soup",
-      "persimmon_cake": "Persimmon Cake",
-      "shiitake_chicken_soup": "shiitake_chicken_soup",
-      "green_jujube_porridge": "green_jujube_porridge"
+      "hearty_meal": "Hearty Meal",
+      "fo_tiao": "Buddha's Temptation",
+      "amaranth_rice_ball": "Amaranth Onigiri",
+      "matsutake_chicken_soup": "Matsutake and Chicken Soup",
+      "persimmon_cake": "Dried Persimmon",
+      "shiitake_chicken_soup": "Shiitake Mushroom Chicken Stew",
+      "green_jujube_porridge": "Green Jujube Porridge"
     },
     "Product5": {
       "name": "Product 5",
       "help": "",
       "None": "None",
-      "double_bamboo_shoots": "Cold Bamboo Shoots",
-      "tofu_meat": "Mapo Tofu",
+      "double_bamboo_shoots": "Cold Mixed Bamboo Shoots and Asparagus",
+      "tofu_meat": "Tofu with Minced Meat",
       "tofu_combo": "Classic Tofu Combo",
-      "hearty_meal": "Hearty Meal Set",
-      "fo_tiao": "Buddha Jumps Over the Wall",
-      "amaranth_rice_ball": "Amaranth Rice Ball",
-      "matsutake_chicken_soup": "Matsutake Chicken Soup",
-      "persimmon_cake": "Persimmon Cake",
-      "shiitake_chicken_soup": "shiitake_chicken_soup",
-      "green_jujube_porridge": "green_jujube_porridge"
+      "hearty_meal": "Hearty Meal",
+      "fo_tiao": "Buddha's Temptation",
+      "amaranth_rice_ball": "Amaranth Onigiri",
+      "matsutake_chicken_soup": "Matsutake and Chicken Soup",
+      "persimmon_cake": "Dried Persimmon",
+      "shiitake_chicken_soup": "Shiitake Mushroom Chicken Stew",
+      "green_jujube_porridge": "Green Jujube Porridge"
     },
     "SeasonalFallback": {
       "name": "Seasonal fallback",
       "help": "Fallback dish when seasonal dish stock is low",
       "None": "None",
-      "double_bamboo_shoots": "Cold Bamboo Shoots",
-      "tofu_meat": "Mapo Tofu",
+      "double_bamboo_shoots": "Cold Mixed Bamboo Shoots and Asparagus",
+      "tofu_meat": "Tofu with Minced Meat",
       "tofu_combo": "Classic Tofu Combo",
-      "hearty_meal": "Hearty Meal Set",
-      "fo_tiao": "Buddha Jumps Over the Wall",
-      "amaranth_rice_ball": "Amaranth Rice Ball",
-      "matsutake_chicken_soup": "Matsutake Chicken Soup",
-      "persimmon_cake": "Persimmon Cake",
-      "shiitake_chicken_soup": "shiitake_chicken_soup",
-      "green_jujube_porridge": "green_jujube_porridge"
+      "hearty_meal": "Hearty Meal",
+      "fo_tiao": "Buddha's Temptation",
+      "amaranth_rice_ball": "Amaranth Onigiri",
+      "matsutake_chicken_soup": "Matsutake and Chicken Soup",
+      "persimmon_cake": "Dried Persimmon",
+      "shiitake_chicken_soup": "Shiitake Mushroom Chicken Stew",
+      "green_jujube_porridge": "Green Jujube Porridge"
     },
     "BoostReplaceFilter": {
       "name": "Boost replace filter",
@@ -6910,97 +6920,97 @@
       "name": "Product 1",
       "help": "",
       "None": "None",
-      "spring_flower_tea": "Spring Flower Tea",
-      "banana_mango": "Banana Mango Juice",
-      "strawberry_lemon": "Strawberry Lemonade",
-      "strawberry_honey": "Strawberry Honey Smoothie",
-      "floral_fruity": "Floral Fruity",
-      "fruit_paradise": "Fruit Paradise",
+      "spring_flower_tea": "Winter Jasmine Tea",
+      "banana_mango": "Banana and Mango Juice",
+      "strawberry_lemon": "Strawberry Lemon Drink",
+      "strawberry_honey": "Strawberry Honey Frappé",
+      "floral_fruity": "Floral and Fruity",
+      "fruit_paradise": "Colorful Fruit Paradise",
       "lavender_tea": "Lavender Tea",
       "sunny_honey": "Sunny Honey",
       "watermelon_juice": "Watermelon Juice",
       "chrysanthemum_tea": "Chrysanthemum Tea",
-      "carrot_pear_juice": "Carrot Pear Juice"
+      "carrot_pear_juice": "Carrot and Pear Juice"
     },
     "Product2": {
       "name": "Product 2",
       "help": "",
       "None": "None",
-      "spring_flower_tea": "Spring Flower Tea",
-      "banana_mango": "Banana Mango Juice",
-      "strawberry_lemon": "Strawberry Lemonade",
-      "strawberry_honey": "Strawberry Honey Smoothie",
-      "floral_fruity": "Floral Fruity",
-      "fruit_paradise": "Fruit Paradise",
+      "spring_flower_tea": "Winter Jasmine Tea",
+      "banana_mango": "Banana and Mango Juice",
+      "strawberry_lemon": "Strawberry Lemon Drink",
+      "strawberry_honey": "Strawberry Honey Frappé",
+      "floral_fruity": "Floral and Fruity",
+      "fruit_paradise": "Colorful Fruit Paradise",
       "lavender_tea": "Lavender Tea",
       "sunny_honey": "Sunny Honey",
       "watermelon_juice": "Watermelon Juice",
       "chrysanthemum_tea": "Chrysanthemum Tea",
-      "carrot_pear_juice": "Carrot Pear Juice"
+      "carrot_pear_juice": "Carrot and Pear Juice"
     },
     "Product3": {
       "name": "Product 3",
       "help": "",
       "None": "None",
-      "spring_flower_tea": "Spring Flower Tea",
-      "banana_mango": "Banana Mango Juice",
-      "strawberry_lemon": "Strawberry Lemonade",
-      "strawberry_honey": "Strawberry Honey Smoothie",
-      "floral_fruity": "Floral Fruity",
-      "fruit_paradise": "Fruit Paradise",
+      "spring_flower_tea": "Winter Jasmine Tea",
+      "banana_mango": "Banana and Mango Juice",
+      "strawberry_lemon": "Strawberry Lemon Drink",
+      "strawberry_honey": "Strawberry Honey Frappé",
+      "floral_fruity": "Floral and Fruity",
+      "fruit_paradise": "Colorful Fruit Paradise",
       "lavender_tea": "Lavender Tea",
       "sunny_honey": "Sunny Honey",
       "watermelon_juice": "Watermelon Juice",
       "chrysanthemum_tea": "Chrysanthemum Tea",
-      "carrot_pear_juice": "Carrot Pear Juice"
+      "carrot_pear_juice": "Carrot and Pear Juice"
     },
     "Product4": {
       "name": "Product 4",
       "help": "",
       "None": "None",
-      "spring_flower_tea": "Spring Flower Tea",
-      "banana_mango": "Banana Mango Juice",
-      "strawberry_lemon": "Strawberry Lemonade",
-      "strawberry_honey": "Strawberry Honey Smoothie",
-      "floral_fruity": "Floral Fruity",
-      "fruit_paradise": "Fruit Paradise",
+      "spring_flower_tea": "Winter Jasmine Tea",
+      "banana_mango": "Banana and Mango Juice",
+      "strawberry_lemon": "Strawberry Lemon Drink",
+      "strawberry_honey": "Strawberry Honey Frappé",
+      "floral_fruity": "Floral and Fruity",
+      "fruit_paradise": "Colorful Fruit Paradise",
       "lavender_tea": "Lavender Tea",
       "sunny_honey": "Sunny Honey",
       "watermelon_juice": "Watermelon Juice",
       "chrysanthemum_tea": "Chrysanthemum Tea",
-      "carrot_pear_juice": "Carrot Pear Juice"
+      "carrot_pear_juice": "Carrot and Pear Juice"
     },
     "Product5": {
       "name": "Product 5",
       "help": "",
       "None": "None",
-      "spring_flower_tea": "Spring Flower Tea",
-      "banana_mango": "Banana Mango Juice",
-      "strawberry_lemon": "Strawberry Lemonade",
-      "strawberry_honey": "Strawberry Honey Smoothie",
-      "floral_fruity": "Floral Fruity",
-      "fruit_paradise": "Fruit Paradise",
+      "spring_flower_tea": "Winter Jasmine Tea",
+      "banana_mango": "Banana and Mango Juice",
+      "strawberry_lemon": "Strawberry Lemon Drink",
+      "strawberry_honey": "Strawberry Honey Frappé",
+      "floral_fruity": "Floral and Fruity",
+      "fruit_paradise": "Colorful Fruit Paradise",
       "lavender_tea": "Lavender Tea",
       "sunny_honey": "Sunny Honey",
       "watermelon_juice": "Watermelon Juice",
       "chrysanthemum_tea": "Chrysanthemum Tea",
-      "carrot_pear_juice": "Carrot Pear Juice"
+      "carrot_pear_juice": "Carrot and Pear Juice"
     },
     "SeasonalFallback": {
       "name": "Fallback drink",
       "help": "Fallback drink when seasonal drink stock is low",
       "None": "None",
-      "spring_flower_tea": "Spring Flower Tea",
-      "banana_mango": "Banana Mango Juice",
-      "strawberry_lemon": "Strawberry Lemonade",
-      "strawberry_honey": "Strawberry Honey Smoothie",
-      "floral_fruity": "Floral Fruity",
-      "fruit_paradise": "Fruit Paradise",
+      "spring_flower_tea": "Winter Jasmine Tea",
+      "banana_mango": "Banana and Mango Juice",
+      "strawberry_lemon": "Strawberry Lemon Drink",
+      "strawberry_honey": "Strawberry Honey Frappé",
+      "floral_fruity": "Floral and Fruity",
+      "fruit_paradise": "Colorful Fruit Paradise",
       "lavender_tea": "Lavender Tea",
       "sunny_honey": "Sunny Honey",
       "watermelon_juice": "Watermelon Juice",
       "chrysanthemum_tea": "Chrysanthemum Tea",
-      "carrot_pear_juice": "Carrot Pear Juice"
+      "carrot_pear_juice": "Carrot and Pear Juice"
     },
     "BoostReplaceFilter": {
       "name": "Boost replace filter",
@@ -7009,7 +7019,7 @@
   },
   "IslandBusinessShop3": {
     "_info": {
-      "name": "Juu Eatery",
+      "name": "Manjuu Eatery",
       "help": "Meals are produced sequentially from 1 to 8. The production target is the Meal X quantity option. The next item is only executed after the previous one is fully satisfied. Later items will not affect the completion of earlier items during runtime."
     },
     "Char1": {
@@ -7107,60 +7117,60 @@
       "help": "",
       "None": "None",
       "orchard_duo": "Orchard Duo",
-      "succulently_sweet": "Sweet Combo",
+      "succulently_sweet": "Succulently Sweet",
       "berry_orange": "Berry and Orange Dessert",
       "strawberry_charlotte": "Strawberry Charlotte",
-      "seafood_rice": "Seafood Rice",
-      "water_chestnut_cake": "water_chestnut_cake",
-      "sugar_tangerine_daifuku": "sugar_tangerine_daifuku"
+      "seafood_rice": "Paella",
+      "water_chestnut_cake": "Water Chestnut Cakes",
+      "sugar_tangerine_daifuku": "Satsuma Mandarin Daifuku"
     },
     "Product2": {
       "name": "Product 2",
       "help": "",
       "None": "None",
       "orchard_duo": "Orchard Duo",
-      "succulently_sweet": "Sweet Combo",
-      "berry_orange": "Berry Orange Dessert Set",
+      "succulently_sweet": "Succulently Sweet",
+      "berry_orange": "Berry and Orange Dessert",
       "strawberry_charlotte": "Strawberry Charlotte",
-      "seafood_rice": "Seafood Rice",
-      "water_chestnut_cake": "water_chestnut_cake",
-      "sugar_tangerine_daifuku": "sugar_tangerine_daifuku"
+      "seafood_rice": "Paella",
+      "water_chestnut_cake": "Water Chestnut Cakes",
+      "sugar_tangerine_daifuku": "Satsuma Mandarin Daifuku"
     },
     "Product3": {
       "name": "Product 3",
       "help": "",
       "None": "None",
       "orchard_duo": "Orchard Duo",
-      "succulently_sweet": "Sweet Combo",
-      "berry_orange": "Berry Orange Dessert Set",
+      "succulently_sweet": "Succulently Sweet",
+      "berry_orange": "Berry and Orange Dessert",
       "strawberry_charlotte": "Strawberry Charlotte",
-      "seafood_rice": "Seafood Rice",
-      "water_chestnut_cake": "water_chestnut_cake",
-      "sugar_tangerine_daifuku": "sugar_tangerine_daifuku"
+      "seafood_rice": "Paella",
+      "water_chestnut_cake": "Water Chestnut Cakes",
+      "sugar_tangerine_daifuku": "Satsuma Mandarin Daifuku"
     },
     "Product4": {
       "name": "Product 4",
       "help": "",
       "None": "None",
       "orchard_duo": "Orchard Duo",
-      "succulently_sweet": "Sweet Combo",
-      "berry_orange": "Berry Orange Dessert Set",
+      "succulently_sweet": "Succulently Sweet",
+      "berry_orange": "Berry and Orange Dessert",
       "strawberry_charlotte": "Strawberry Charlotte",
-      "seafood_rice": "Seafood Rice",
-      "water_chestnut_cake": "water_chestnut_cake",
-      "sugar_tangerine_daifuku": "sugar_tangerine_daifuku"
+      "seafood_rice": "Paella",
+      "water_chestnut_cake": "Water Chestnut Cakes",
+      "sugar_tangerine_daifuku": "Satsuma Mandarin Daifuku"
     },
     "Product5": {
       "name": "Product 5",
       "help": "",
       "None": "None",
       "orchard_duo": "Orchard Duo",
-      "succulently_sweet": "Sweet Combo",
-      "berry_orange": "Berry Orange Dessert Set",
+      "succulently_sweet": "Succulently Sweet",
+      "berry_orange": "Berry and Orange Dessert",
       "strawberry_charlotte": "Strawberry Charlotte",
-      "seafood_rice": "Seafood Rice",
-      "water_chestnut_cake": "water_chestnut_cake",
-      "sugar_tangerine_daifuku": "sugar_tangerine_daifuku"
+      "seafood_rice": "Paella",
+      "water_chestnut_cake": "Water Chestnut Cakes",
+      "sugar_tangerine_daifuku": "Satsuma Mandarin Daifuku"
     },
     "BoostReplaceFilter": {
       "name": "Boost replace filter",
@@ -7277,44 +7287,44 @@
       "name": "Product 2",
       "help": "",
       "None": "None",
-      "roasted_skewer": "Grilled Skewers",
+      "roasted_skewer": "Coal-Roasted Skewer",
       "stir_fried_chicken": "Stir-Fried Chicken",
       "steak_bowl": "Steak Bowl",
       "crayfish_stir_fry": "Crayfish Stir-Fry",
-      "carnival": "BBQ Carnival",
+      "carnival": "The Carne-val",
       "double_energy": "Double Energy Combo"
     },
     "Product3": {
       "name": "Product 3",
       "help": "",
       "None": "None",
-      "roasted_skewer": "Grilled Skewers",
+      "roasted_skewer": "Coal-Roasted Skewer",
       "stir_fried_chicken": "Stir-Fried Chicken",
       "steak_bowl": "Steak Bowl",
       "crayfish_stir_fry": "Crayfish Stir-Fry",
-      "carnival": "BBQ Carnival",
+      "carnival": "The Carne-val",
       "double_energy": "Double Energy Combo"
     },
     "Product4": {
       "name": "Product 4",
       "help": "",
       "None": "None",
-      "roasted_skewer": "Grilled Skewers",
+      "roasted_skewer": "Coal-Roasted Skewer",
       "stir_fried_chicken": "Stir-Fried Chicken",
       "steak_bowl": "Steak Bowl",
       "crayfish_stir_fry": "Crayfish Stir-Fry",
-      "carnival": "BBQ Carnival",
+      "carnival": "The Carne-val",
       "double_energy": "Double Energy Combo"
     },
     "Product5": {
       "name": "Product 5",
       "help": "",
       "None": "None",
-      "roasted_skewer": "Grilled Skewers",
+      "roasted_skewer": "Coal-Roasted Skewer",
       "stir_fried_chicken": "Stir-Fried Chicken",
       "steak_bowl": "Steak Bowl",
       "crayfish_stir_fry": "Crayfish Stir-Fry",
-      "carnival": "BBQ Carnival",
+      "carnival": "The Carne-val",
       "double_energy": "Double Energy Combo"
     },
     "BoostReplaceFilter": {
@@ -7324,7 +7334,7 @@
   },
   "IslandBusinessShop5": {
     "_info": {
-      "name": "Juu Coffee",
+      "name": "Café Manjuu",
       "help": "Meals are produced sequentially from 1 to 8. The production target is the Meal X quantity option. The next item is only executed after the previous one is fully satisfied. Later items will not affect the completion of earlier items during runtime."
     },
     "Char1": {
@@ -7423,10 +7433,10 @@
       "None": "None",
       "cheese": "Cheese",
       "citrus_coffee": "Citrus Coffee",
-      "strawberry_milkshake": "Strawberry Milk Tea",
-      "morning_light": "Morning Light Combo",
-      "wake_up_call": "Wake-Up Call Set",
-      "fruity_fruitier": "Fruity Fruitier"
+      "strawberry_milkshake": "Strawberry Milkshake",
+      "morning_light": "Morning Light Energy Combo",
+      "wake_up_call": "The Wake-Up Call",
+      "fruity_fruitier": "Fruity & Fruitier"
     },
     "Product2": {
       "name": "Product 2",
@@ -7434,10 +7444,10 @@
       "None": "None",
       "cheese": "Cheese",
       "citrus_coffee": "Citrus Coffee",
-      "strawberry_milkshake": "Strawberry Milk Tea",
-      "morning_light": "Morning Light Combo",
-      "wake_up_call": "Wake-Up Call Set",
-      "fruity_fruitier": "Fruity Fruitier"
+      "strawberry_milkshake": "Strawberry Milkshake",
+      "morning_light": "Morning Light Energy Combo",
+      "wake_up_call": "The Wake-Up Call",
+      "fruity_fruitier": "Fruity & Fruitier"
     },
     "Product3": {
       "name": "Product 3",
@@ -7445,10 +7455,10 @@
       "None": "None",
       "cheese": "Cheese",
       "citrus_coffee": "Citrus Coffee",
-      "strawberry_milkshake": "Strawberry Milk Tea",
-      "morning_light": "Morning Light Combo",
-      "wake_up_call": "Wake-Up Call Set",
-      "fruity_fruitier": "Fruity Fruitier"
+      "strawberry_milkshake": "Strawberry Milkshake",
+      "morning_light": "Morning Light Energy Combo",
+      "wake_up_call": "The Wake-Up Call",
+      "fruity_fruitier": "Fruity & Fruitier"
     },
     "Product4": {
       "name": "Product 4",
@@ -7456,10 +7466,10 @@
       "None": "None",
       "cheese": "Cheese",
       "citrus_coffee": "Citrus Coffee",
-      "strawberry_milkshake": "Strawberry Milk Tea",
-      "morning_light": "Morning Light Combo",
-      "wake_up_call": "Wake-Up Call Set",
-      "fruity_fruitier": "Fruity Fruitier"
+      "strawberry_milkshake": "Strawberry Milkshake",
+      "morning_light": "Morning Light Energy Combo",
+      "wake_up_call": "The Wake-Up Call",
+      "fruity_fruitier": "Fruity & Fruitier"
     },
     "Product5": {
       "name": "Product 5",
@@ -7467,10 +7477,10 @@
       "None": "None",
       "cheese": "Cheese",
       "citrus_coffee": "Citrus Coffee",
-      "strawberry_milkshake": "Strawberry Milk Tea",
-      "morning_light": "Morning Light Combo",
-      "wake_up_call": "Wake-Up Call Set",
-      "fruity_fruitier": "Fruity Fruitier"
+      "strawberry_milkshake": "Strawberry Milkshake",
+      "morning_light": "Morning Light Energy Combo",
+      "wake_up_call": "The Wake-Up Call",
+      "fruity_fruitier": "Fruity & Fruitier"
     },
     "BoostReplaceFilter": {
       "name": "Boost replace filter",
@@ -7740,6 +7750,7 @@
       "tuna": "Tuna",
       "salmon": "Salmon",
       "red_sea_bream": "Red Sea Bream",
+      "black_porgy": "Black Porgy",
       "yellowfin_tuna": "Yellowfin Tuna",
       "sea_cucumber": "Sea Cucumber"
     },
@@ -7807,7 +7818,7 @@
       "12": "12"
     },
     "RestaurantGrade": {
-      "name": "Fish Restaurant grade",
+      "name": "Golden Koi Restaurant grade",
       "help": "The shop's grade in game. It sets the number of shelves (bronze/silver 2, gold 3, diamond 4) and shelf capacity (bronze 5, others 6).",
       "bronze": "bronze",
       "silver": "silver",
@@ -7815,7 +7826,7 @@
       "diamond": "diamond"
     },
     "TeahouseGrade": {
-      "name": "Polar Bear Drinks grade",
+      "name": "Polar Bear Teahouse grade",
       "help": "The shop's grade in game. It sets the number of shelves (bronze/silver 2, gold 3, diamond 4) and shelf capacity (bronze 5, others 6).",
       "bronze": "bronze",
       "silver": "silver",
@@ -7823,7 +7834,7 @@
       "diamond": "diamond"
     },
     "JuuEateryGrade": {
-      "name": "Juu Eatery grade",
+      "name": "Manjuu Eatery grade",
       "help": "The shop's grade in game. It sets the number of shelves (bronze/silver 2, gold 3, diamond 4) and shelf capacity (bronze 5, others 6).",
       "bronze": "bronze",
       "silver": "silver",
@@ -7831,7 +7842,7 @@
       "diamond": "diamond"
     },
     "GrillGrade": {
-      "name": "Squid Grill grade",
+      "name": "Fin-'n'-Feather Grill grade",
       "help": "The shop's grade in game. It sets the number of shelves (bronze/silver 2, gold 3, diamond 4) and shelf capacity (bronze 5, others 6).",
       "bronze": "bronze",
       "silver": "silver",
@@ -7839,7 +7850,7 @@
       "diamond": "diamond"
     },
     "JuuCoffeeGrade": {
-      "name": "Juu Coffee grade",
+      "name": "Café Manjuu grade",
       "help": "The shop's grade in game. It sets the number of shelves (bronze/silver 2, gold 3, diamond 4) and shelf capacity (bronze 5, others 6).",
       "bronze": "bronze",
       "silver": "silver",

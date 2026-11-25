@@ -442,7 +442,8 @@ class IslandProductionPlanner(IslandSeasonTaskScanner, IslandTechnologyScanner):
         values, notes = settings_map.build_settings(
             calculator, meal_options, product_options, task_targets=targets,
             fill_spare_posts=bool(self.get('FillSparePosts')), priority=priority,
-            auto_positions=bool(self.get('AutoPositions')))
+            auto_positions=bool(self.get('AutoPositions')),
+            continuous_breeding=bool(getattr(self.config, 'IslandRancher_ContinuousBreeding', False)))
         for note in notes:
             logger.info(f'[岛屿-规划] {note}')
         changed = {path: value for path, value in values.items() if self.config.cross_get(path) != value}

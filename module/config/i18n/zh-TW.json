@@ -1847,6 +1847,7 @@
       "coalition_20251120": "DATE A LANE",
       "coalition_20260122": "光影風尚-拍攝進行時",
       "coalition_20260723": "怪談紀實",
+      "coalition_20261124": "The Transfer Student at Veritas Academy",
       "event_20200227_cn": "Northern Overture",
       "event_20200312_cn": "斯圖爾特的硝煙",
       "event_20200326_cn": "Microlayer Medley",
@@ -2772,11 +2773,11 @@
     },
     "Fleet1Affection": {
       "name": "編隊1好感度",
-      "help": "編隊1當前好感度。每場勝利且出擊時心情≥40 增加 0.05；達到 100 後暫停任務"
+      "help": "編隊1當前好感度。每場勝利且出擊時心情≥40 增加 0.0625；達到 100 後暫停任務"
     },
     "Fleet2Affection": {
       "name": "編隊2好感度",
-      "help": "編隊2當前好感度。每場勝利且出擊時心情≥40 增加 0.05；達到 100 後暫停任務"
+      "help": "編隊2當前好感度。每場勝利且出擊時心情≥40 增加 0.0625；達到 100 後暫停任務"
     }
   },
   "RaidAffection": {
@@ -4938,8 +4939,8 @@
       "rubber": "橡膠",
       "pear": "秋月梨",
       "persimmon": "柿子",
-      "sugar_tangerine": "sugar_tangerine",
-      "green_jujube": "green_jujube"
+      "sugar_tangerine": "砂糖橘",
+      "green_jujube": "青棗"
     },
     "PlantRubber": {
       "name": "種橡膠",
@@ -5007,6 +5008,10 @@
     "_info": {
       "name": "牧場",
       "help": ""
+    },
+    "ContinuousBreeding": {
+      "name": "四崗持續養殖",
+      "help": "雞舍、豬圈不因肉類庫存達標而停養；牛棚、羊圈依各自開關續養。缺料或派遣失敗時兩小時後複查。"
     },
     "MinChicken": {
       "name": "雞肉底線",
@@ -5105,6 +5110,10 @@
       "name": "紅鯛魚底線",
       "help": ""
     },
+    "MinBlackPorgy": {
+      "name": "黑鯛魚底線",
+      "help": ""
+    },
     "MinYellowfinTuna": {
       "name": "黃鰭鮪魚底線",
       "help": ""
@@ -5145,6 +5154,7 @@
       "tuna": "金槍魚",
       "salmon": "三文魚",
       "red_sea_bream": "紅鯛魚",
+      "black_porgy": "黑鯛魚",
       "yellowfin_tuna": "黃鰭金槍魚",
       "sea_cucumber": "海參"
     },
@@ -5302,8 +5312,8 @@
       "onion_fish": "洋蔥蒸魚",
       "matsutake_chicken_soup": "松茸雞湯",
       "persimmon_cake": "柿子餅",
-      "shiitake_chicken_soup": "shiitake_chicken_soup",
-      "green_jujube_porridge": "green_jujube_porridge"
+      "shiitake_chicken_soup": "冬菇燉雞",
+      "green_jujube_porridge": "青棗粥"
     },
     "MealNumber1": {
       "name": "生產餐品1至 X 份",
@@ -5327,8 +5337,8 @@
       "onion_fish": "洋蔥蒸魚",
       "matsutake_chicken_soup": "松茸雞湯",
       "persimmon_cake": "柿子餅",
-      "shiitake_chicken_soup": "shiitake_chicken_soup",
-      "green_jujube_porridge": "green_jujube_porridge"
+      "shiitake_chicken_soup": "冬菇燉雞",
+      "green_jujube_porridge": "青棗粥"
     },
     "MealNumber2": {
       "name": "生產餐品2至 X 份",
@@ -5352,8 +5362,8 @@
       "onion_fish": "洋蔥蒸魚",
       "matsutake_chicken_soup": "松茸雞湯",
       "persimmon_cake": "柿子餅",
-      "shiitake_chicken_soup": "shiitake_chicken_soup",
-      "green_jujube_porridge": "green_jujube_porridge"
+      "shiitake_chicken_soup": "冬菇燉雞",
+      "green_jujube_porridge": "青棗粥"
     },
     "MealNumber3": {
       "name": "生產餐品3至 X 份",
@@ -5377,8 +5387,8 @@
       "onion_fish": "洋蔥蒸魚",
       "matsutake_chicken_soup": "松茸雞湯",
       "persimmon_cake": "柿子餅",
-      "shiitake_chicken_soup": "shiitake_chicken_soup",
-      "green_jujube_porridge": "green_jujube_porridge"
+      "shiitake_chicken_soup": "冬菇燉雞",
+      "green_jujube_porridge": "青棗粥"
     },
     "MealNumber4": {
       "name": "生產餐品4至 X 份",
@@ -5402,8 +5412,8 @@
       "onion_fish": "洋蔥蒸魚",
       "matsutake_chicken_soup": "松茸雞湯",
       "persimmon_cake": "柿子餅",
-      "shiitake_chicken_soup": "shiitake_chicken_soup",
-      "green_jujube_porridge": "green_jujube_porridge"
+      "shiitake_chicken_soup": "冬菇燉雞",
+      "green_jujube_porridge": "青棗粥"
     },
     "MealNumber5": {
       "name": "生產餐品5至 X 份",
@@ -5427,8 +5437,8 @@
       "onion_fish": "洋蔥蒸魚",
       "matsutake_chicken_soup": "松茸雞湯",
       "persimmon_cake": "柿子餅",
-      "shiitake_chicken_soup": "shiitake_chicken_soup",
-      "green_jujube_porridge": "green_jujube_porridge"
+      "shiitake_chicken_soup": "冬菇燉雞",
+      "green_jujube_porridge": "青棗粥"
     },
     "MealNumber6": {
       "name": "生產餐品6至 X 份",
@@ -5452,8 +5462,8 @@
       "onion_fish": "洋蔥蒸魚",
       "matsutake_chicken_soup": "松茸雞湯",
       "persimmon_cake": "柿子餅",
-      "shiitake_chicken_soup": "shiitake_chicken_soup",
-      "green_jujube_porridge": "green_jujube_porridge"
+      "shiitake_chicken_soup": "冬菇燉雞",
+      "green_jujube_porridge": "青棗粥"
     },
     "MealNumber7": {
       "name": "生產餐品7至 X 份",
@@ -5477,8 +5487,8 @@
       "onion_fish": "洋蔥蒸魚",
       "matsutake_chicken_soup": "松茸雞湯",
       "persimmon_cake": "柿子餅",
-      "shiitake_chicken_soup": "shiitake_chicken_soup",
-      "green_jujube_porridge": "green_jujube_porridge"
+      "shiitake_chicken_soup": "冬菇燉雞",
+      "green_jujube_porridge": "青棗粥"
     },
     "MealNumber8": {
       "name": "生產餐品8至 X 份",
@@ -5508,8 +5518,8 @@
       "onion_fish": "洋蔥蒸魚",
       "matsutake_chicken_soup": "松茸雞湯",
       "persimmon_cake": "柿子餅",
-      "shiitake_chicken_soup": "shiitake_chicken_soup",
-      "green_jujube_porridge": "green_jujube_porridge"
+      "shiitake_chicken_soup": "冬菇燉雞",
+      "green_jujube_porridge": "青棗粥"
     }
   },
   "IslandTeahouse": {
@@ -5923,8 +5933,8 @@
       "berry_orange": "莓果香橙甜點組",
       "strawberry_charlotte": "草莓夏洛特",
       "seafood_rice": "海鮮飯",
-      "water_chestnut_cake": "water_chestnut_cake",
-      "sugar_tangerine_daifuku": "sugar_tangerine_daifuku"
+      "water_chestnut_cake": "馬蹄糕",
+      "sugar_tangerine_daifuku": "砂糖橘大福"
     },
     "MealNumber1": {
       "name": "生產餐品1至 X 份",
@@ -5944,8 +5954,8 @@
       "berry_orange": "莓果香橙甜點組",
       "strawberry_charlotte": "草莓夏洛特",
       "seafood_rice": "海鮮飯",
-      "water_chestnut_cake": "water_chestnut_cake",
-      "sugar_tangerine_daifuku": "sugar_tangerine_daifuku"
+      "water_chestnut_cake": "馬蹄糕",
+      "sugar_tangerine_daifuku": "砂糖橘大福"
     },
     "MealNumber2": {
       "name": "生產餐品2至 X 份",
@@ -5965,8 +5975,8 @@
       "berry_orange": "莓果香橙甜點組",
       "strawberry_charlotte": "草莓夏洛特",
       "seafood_rice": "海鮮飯",
-      "water_chestnut_cake": "water_chestnut_cake",
-      "sugar_tangerine_daifuku": "sugar_tangerine_daifuku"
+      "water_chestnut_cake": "馬蹄糕",
+      "sugar_tangerine_daifuku": "砂糖橘大福"
     },
     "MealNumber3": {
       "name": "生產餐品3至 X 份",
@@ -5986,8 +5996,8 @@
       "berry_orange": "莓果香橙甜點組",
       "strawberry_charlotte": "草莓夏洛特",
       "seafood_rice": "海鮮飯",
-      "water_chestnut_cake": "water_chestnut_cake",
-      "sugar_tangerine_daifuku": "sugar_tangerine_daifuku"
+      "water_chestnut_cake": "馬蹄糕",
+      "sugar_tangerine_daifuku": "砂糖橘大福"
     },
     "MealNumber4": {
       "name": "生產餐品4至 X 份",
@@ -6007,8 +6017,8 @@
       "berry_orange": "莓果香橙甜點組",
       "strawberry_charlotte": "草莓夏洛特",
       "seafood_rice": "海鮮飯",
-      "water_chestnut_cake": "water_chestnut_cake",
-      "sugar_tangerine_daifuku": "sugar_tangerine_daifuku"
+      "water_chestnut_cake": "馬蹄糕",
+      "sugar_tangerine_daifuku": "砂糖橘大福"
     },
     "MealNumber5": {
       "name": "生產餐品5至 X 份",
@@ -6028,8 +6038,8 @@
       "berry_orange": "莓果香橙甜點組",
       "strawberry_charlotte": "草莓夏洛特",
       "seafood_rice": "海鮮飯",
-      "water_chestnut_cake": "water_chestnut_cake",
-      "sugar_tangerine_daifuku": "sugar_tangerine_daifuku"
+      "water_chestnut_cake": "馬蹄糕",
+      "sugar_tangerine_daifuku": "砂糖橘大福"
     },
     "MealNumber6": {
       "name": "生產餐品6至 X 份",
@@ -6049,8 +6059,8 @@
       "berry_orange": "莓果香橙甜點組",
       "strawberry_charlotte": "草莓夏洛特",
       "seafood_rice": "海鮮飯",
-      "water_chestnut_cake": "water_chestnut_cake",
-      "sugar_tangerine_daifuku": "sugar_tangerine_daifuku"
+      "water_chestnut_cake": "馬蹄糕",
+      "sugar_tangerine_daifuku": "砂糖橘大福"
     },
     "MealNumber7": {
       "name": "生產餐品7至 X 份",
@@ -6070,8 +6080,8 @@
       "berry_orange": "莓果香橙甜點組",
       "strawberry_charlotte": "草莓夏洛特",
       "seafood_rice": "海鮮飯",
-      "water_chestnut_cake": "water_chestnut_cake",
-      "sugar_tangerine_daifuku": "sugar_tangerine_daifuku"
+      "water_chestnut_cake": "馬蹄糕",
+      "sugar_tangerine_daifuku": "砂糖橘大福"
     },
     "MealNumber8": {
       "name": "生產餐品8至 X 份",
@@ -6097,8 +6107,8 @@
       "berry_orange": "莓果香橙甜點組",
       "strawberry_charlotte": "草莓夏洛特",
       "seafood_rice": "海鮮飯",
-      "water_chestnut_cake": "water_chestnut_cake",
-      "sugar_tangerine_daifuku": "sugar_tangerine_daifuku"
+      "water_chestnut_cake": "馬蹄糕",
+      "sugar_tangerine_daifuku": "砂糖橘大福"
     }
   },
   "IslandJuuCoffee": {
@@ -6728,8 +6738,8 @@
       "amaranth_rice_ball": "莧菜飯糰",
       "matsutake_chicken_soup": "松茸雞湯",
       "persimmon_cake": "柿子餅",
-      "shiitake_chicken_soup": "shiitake_chicken_soup",
-      "green_jujube_porridge": "green_jujube_porridge"
+      "shiitake_chicken_soup": "冬菇燉雞",
+      "green_jujube_porridge": "青棗粥"
     },
     "Product2": {
       "name": "餐品2",
@@ -6743,8 +6753,8 @@
       "amaranth_rice_ball": "莧菜飯糰",
       "matsutake_chicken_soup": "松茸雞湯",
       "persimmon_cake": "柿子餅",
-      "shiitake_chicken_soup": "shiitake_chicken_soup",
-      "green_jujube_porridge": "green_jujube_porridge"
+      "shiitake_chicken_soup": "冬菇燉雞",
+      "green_jujube_porridge": "青棗粥"
     },
     "Product3": {
       "name": "餐品3",
@@ -6758,8 +6768,8 @@
       "amaranth_rice_ball": "莧菜飯糰",
       "matsutake_chicken_soup": "松茸雞湯",
       "persimmon_cake": "柿子餅",
-      "shiitake_chicken_soup": "shiitake_chicken_soup",
-      "green_jujube_porridge": "green_jujube_porridge"
+      "shiitake_chicken_soup": "冬菇燉雞",
+      "green_jujube_porridge": "青棗粥"
     },
     "Product4": {
       "name": "餐品4",
@@ -6773,8 +6783,8 @@
       "amaranth_rice_ball": "莧菜飯糰",
       "matsutake_chicken_soup": "松茸雞湯",
       "persimmon_cake": "柿子餅",
-      "shiitake_chicken_soup": "shiitake_chicken_soup",
-      "green_jujube_porridge": "green_jujube_porridge"
+      "shiitake_chicken_soup": "冬菇燉雞",
+      "green_jujube_porridge": "青棗粥"
     },
     "Product5": {
       "name": "餐品5",
@@ -6788,8 +6798,8 @@
       "amaranth_rice_ball": "莧菜飯糰",
       "matsutake_chicken_soup": "松茸雞湯",
       "persimmon_cake": "柿子餅",
-      "shiitake_chicken_soup": "shiitake_chicken_soup",
-      "green_jujube_porridge": "green_jujube_porridge"
+      "shiitake_chicken_soup": "冬菇燉雞",
+      "green_jujube_porridge": "青棗粥"
     },
     "SeasonalFallback": {
       "name": "季節餐品備用餐品",
@@ -6803,8 +6813,8 @@
       "amaranth_rice_ball": "莧菜飯糰",
       "matsutake_chicken_soup": "松茸雞湯",
       "persimmon_cake": "柿子餅",
-      "shiitake_chicken_soup": "shiitake_chicken_soup",
-      "green_jujube_porridge": "green_jujube_porridge"
+      "shiitake_chicken_soup": "冬菇燉雞",
+      "green_jujube_porridge": "青棗粥"
     },
     "BoostReplaceFilter": {
       "name": "有魚餐館加成替換過濾",
@@ -7111,8 +7121,8 @@
       "berry_orange": "莓果香橙甜點組",
       "strawberry_charlotte": "草莓夏洛特",
       "seafood_rice": "海鮮飯",
-      "water_chestnut_cake": "water_chestnut_cake",
-      "sugar_tangerine_daifuku": "sugar_tangerine_daifuku"
+      "water_chestnut_cake": "馬蹄糕",
+      "sugar_tangerine_daifuku": "砂糖橘大福"
     },
     "Product2": {
       "name": "餐品2",
@@ -7123,8 +7133,8 @@
       "berry_orange": "莓果香橙甜點組",
       "strawberry_charlotte": "草莓夏洛特",
       "seafood_rice": "海鮮飯",
-      "water_chestnut_cake": "water_chestnut_cake",
-      "sugar_tangerine_daifuku": "sugar_tangerine_daifuku"
+      "water_chestnut_cake": "馬蹄糕",
+      "sugar_tangerine_daifuku": "砂糖橘大福"
     },
     "Product3": {
       "name": "餐品3",
@@ -7135,8 +7145,8 @@
       "berry_orange": "莓果香橙甜點組",
       "strawberry_charlotte": "草莓夏洛特",
       "seafood_rice": "海鮮飯",
-      "water_chestnut_cake": "water_chestnut_cake",
-      "sugar_tangerine_daifuku": "sugar_tangerine_daifuku"
+      "water_chestnut_cake": "馬蹄糕",
+      "sugar_tangerine_daifuku": "砂糖橘大福"
     },
     "Product4": {
       "name": "餐品4",
@@ -7147,8 +7157,8 @@
       "berry_orange": "莓果香橙甜點組",
       "strawberry_charlotte": "草莓夏洛特",
       "seafood_rice": "海鮮飯",
-      "water_chestnut_cake": "water_chestnut_cake",
-      "sugar_tangerine_daifuku": "sugar_tangerine_daifuku"
+      "water_chestnut_cake": "馬蹄糕",
+      "sugar_tangerine_daifuku": "砂糖橘大福"
     },
     "Product5": {
       "name": "餐品5",
@@ -7159,8 +7169,8 @@
       "berry_orange": "莓果香橙甜點組",
       "strawberry_charlotte": "草莓夏洛特",
       "seafood_rice": "海鮮飯",
-      "water_chestnut_cake": "water_chestnut_cake",
-      "sugar_tangerine_daifuku": "sugar_tangerine_daifuku"
+      "water_chestnut_cake": "馬蹄糕",
+      "sugar_tangerine_daifuku": "砂糖橘大福"
     },
     "BoostReplaceFilter": {
       "name": "啾啾簡餐加成替換過濾",
@@ -7740,6 +7750,7 @@
       "tuna": "金槍魚",
       "salmon": "三文魚",
       "red_sea_bream": "紅鯛魚",
+      "black_porgy": "黑鯛魚",
       "yellowfin_tuna": "黃鰭金槍魚",
       "sea_cucumber": "海參"
     },

@@ -339,6 +339,20 @@ class CombatResultTests(unittest.TestCase):
                 self.assertFalse(campaign._withdraw)
                 self.assertEqual(campaign.combat_result.rank, 'A')
 
+    # Add by MHY, 确认本次三队活动使用新页面、困难入口和对应的战斗场数。
+    def test_veritas_scuttle_uses_hard_entrance_and_three_battles(self):
+        from module.coalition.assets import VERITAS_FLEET_PREPARATION, VERITAS_HARD
+        from module.ui.page import get_coalition_page, page_coalition, page_coalition_veritas
+
+        event = 'coalition_20261124'
+        self.assertIs(get_coalition_page(event), page_coalition_veritas)
+        self.assertIs(get_coalition_page('coalition_20260723'), page_coalition)
+        self.assertIs(CoalitionScuttleRun.coalition_get_entrance(event, 'hard'), VERITAS_HARD)
+        self.assertIs(CoalitionScuttleRun.coalition_get_fleet_preparation(event), VERITAS_FLEET_PREPARATION)
+        for stage, battles in zip(('easy', 'normal', 'hard', 'sp', 'ex'), range(1, 6)):
+            with self.subTest(stage=stage):
+                self.assertEqual(CoalitionScuttleRun.coalition_get_battles(event, stage), battles)
+
     # Add by MHY, 回放本地三队连战，重复评价/经验页不能多扣心情或重复加好感。
     def test_affection_coalition_keeps_two_beneficiaries_and_untracked_sacrifice(self):
         replay = ScreenReplay([

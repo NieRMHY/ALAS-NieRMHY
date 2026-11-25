@@ -72,20 +72,26 @@ describe('current ships and scan separation', () => {
   it('saves an inline edit for the selected physical copy without editing its duplicate', async () => {
     const onReport = vi.fn(), onBusy = vi.fn()
     const updated = {...report, revision: 'r2', ships: report.ships.map(ship => ship.id === 2 ? {...ship, level: 121} : ship)}
-    vi.mocked(api.request).mockResolvedValueOnce(catalog).mockResolvedValueOnce(updated)
+    const storageKey = 'azurpilot.fleet-ledger.v1.test'
+    let finishSave!: (value: DockReport) => void
+    vi.mocked(api.request).mockResolvedValueOnce(catalog).mockReturnValueOnce(new Promise<DockReport>(resolve => {finishSave = resolve}))
     render(<MemoryRouter><FleetLedger instance="test" report={report} onReport={onReport} onBusy={onBusy}/></MemoryRouter>)
     const second = await screen.findByRole<HTMLInputElement>('spinbutton', {name: '等级 · 重复舰船 #2'})
     fireEvent.change(second, {target: {value: '121'}})
     expect(screen.getByRole<HTMLInputElement>('spinbutton', {name: '等级 · 重复舰船 #1'}).value).toBe('120')
     fireEvent.click(screen.getByRole('button', {name: '保存'}))
-    await waitFor(() => expect(onReport).toHaveBeenCalledExactlyOnceWith(updated))
     expect(api.request).toHaveBeenLastCalledWith('dock.patch', {instance: 'test', revision: 'r1', changes: [{
       id: 2, name: '重复舰船', group_type: 100, level: 121, rarity: 'SSR', base_rarity: 'SSR',
       full_star: null, form: null, review: false,
     }]})
+    // Modify by MHY, 分开验证请求在途和 React 完成草稿清理后的状态。
+    expect(onBusy.mock.calls).toEqual([[true]])
+    expect(JSON.parse(sessionStorage.getItem(storageKey) ?? 'null')).toMatchObject({revision: 'r1', ships: {2: {level: 121}}})
+    await act(async () => finishSave(updated))
+    expect(onReport).toHaveBeenCalledExactlyOnceWith(updated)
     expect(onBusy.mock.calls).toEqual([[true], [false]])
     expect(screen.getByText(translateUi('zh-CN', 'analysis.saved'))).toBeTruthy()
-    expect(sessionStorage.getItem('azurpilot.fleet-ledger.v1.test')).toBeNull()
+    expect(sessionStorage.getItem(storageKey)).toBeNull()
   })
 
   it('shows the highest copy per identity without merging unknown or different identities', async () => {

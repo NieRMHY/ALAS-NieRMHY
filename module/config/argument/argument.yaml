@@ -2043,6 +2043,9 @@ IslandNursery:
     value: 2
     option: [ 0, 1, 2 ]
 IslandRancher:
+  # Add by MHY, 四岗持续养殖：开启后鸡舍/猪圈不再等库存低于阈值才排产，
+  # 牛棚/羊圈仍由 Milk/Wool 勾选表示已解锁。关闭时保持原有阈值行为。
+  ContinuousBreeding: false
   MinChicken: 300
   ChickenFilter: |-
     WorkerJuu
@@ -2072,6 +2075,7 @@ IslandFishery:
   MinTuna: 0
   MinSalmon: 0
   MinRedSeaBream: 0
+  MinBlackPorgy: 0
   MinYellowfinTuna: 50
   MinSeaCucumber: 50
   MinFreshwaterFishMeat: 0
@@ -2081,7 +2085,7 @@ IslandFishery:
     option: [ 0, 1, 2, 3 ]
   DefaultFish:
     value: yellowfin_tuna
-    option: [ shell, catfish, koi_carp, common_carp, shrimp, crayfish, bass, crab, squid, mackerel, tuna, salmon, red_sea_bream, yellowfin_tuna, sea_cucumber ]
+    option: [ shell, catfish, koi_carp, common_carp, shrimp, crayfish, bass, crab, squid, mackerel, tuna, salmon, red_sea_bream, black_porgy, yellowfin_tuna, sea_cucumber ]
   RancherFilter: |-
     WorkerJuu
 IslandMine:
@@ -2914,8 +2918,8 @@ IslandProductionPlanner:
     option: [ true, false ]
   UnlockedFish:
     type: multiselect
-    value: [ shell, catfish, koi_carp, common_carp, shrimp, crayfish, bass, crab, squid, mackerel, tuna, salmon, red_sea_bream, yellowfin_tuna, sea_cucumber ]
-    option: [ shell, catfish, koi_carp, common_carp, shrimp, crayfish, bass, crab, squid, mackerel, tuna, salmon, red_sea_bream, yellowfin_tuna, sea_cucumber ]
+    value: [ shell, catfish, koi_carp, common_carp, shrimp, crayfish, bass, crab, squid, mackerel, tuna, salmon, red_sea_bream, black_porgy, yellowfin_tuna, sea_cucumber ]
+    option: [ shell, catfish, koi_carp, common_carp, shrimp, crayfish, bass, crab, squid, mackerel, tuna, salmon, red_sea_bream, black_porgy, yellowfin_tuna, sea_cucumber ]
   RescanTechnology:
     type: checkbox
     value: true

@@ -7118,22 +7118,24 @@
         "type": "state",
         "value": "campaign_main",
         "option": [
-          "coalition_20260723"
+          "coalition_20260723",
+          "coalition_20261124"
         ],
         "option_cn": [
-          "coalition_20260723"
+          "coalition_20261124"
         ],
         "option_en": [
-          "coalition_20260723"
+          "coalition_20261124"
         ],
         "option_jp": [
-          "coalition_20260723"
+          "coalition_20261124"
         ],
         "option_tw": [
           "coalition_20260723"
         ],
         "option_bold": [
-          "coalition_20260723"
+          "coalition_20260723",
+          "coalition_20261124"
         ]
       },
       "Mode": {
@@ -7478,22 +7480,24 @@
         "type": "state",
         "value": "campaign_main",
         "option": [
-          "coalition_20260723"
+          "coalition_20260723",
+          "coalition_20261124"
         ],
         "option_cn": [
-          "coalition_20260723"
+          "coalition_20261124"
         ],
         "option_en": [
-          "coalition_20260723"
+          "coalition_20261124"
         ],
         "option_jp": [
-          "coalition_20260723"
+          "coalition_20261124"
         ],
         "option_tw": [
           "coalition_20260723"
         ],
         "option_bold": [
-          "coalition_20260723"
+          "coalition_20260723",
+          "coalition_20261124"
         ]
       },
       "Mode": {
@@ -11647,22 +11651,24 @@
         "type": "select",
         "value": "campaign_main",
         "option": [
-          "coalition_20260723"
+          "coalition_20260723",
+          "coalition_20261124"
         ],
         "option_cn": [
-          "coalition_20260723"
+          "coalition_20261124"
         ],
         "option_en": [
-          "coalition_20260723"
+          "coalition_20261124"
         ],
         "option_jp": [
-          "coalition_20260723"
+          "coalition_20261124"
         ],
         "option_tw": [
           "coalition_20260723"
         ],
         "option_bold": [
-          "coalition_20260723"
+          "coalition_20260723",
+          "coalition_20261124"
         ]
       },
       "Mode": {
@@ -18376,6 +18382,10 @@
       }
     },
     "IslandRancher": {
+      "ContinuousBreeding": {
+        "type": "checkbox",
+        "value": false
+      },
       "MinChicken": {
         "type": "input",
         "value": 300
@@ -18471,6 +18481,10 @@
         "type": "input",
         "value": 0
       },
+      "MinBlackPorgy": {
+        "type": "input",
+        "value": 0
+      },
       "MinYellowfinTuna": {
         "type": "input",
         "value": 50
@@ -18514,6 +18528,7 @@
           "tuna",
           "salmon",
           "red_sea_bream",
+          "black_porgy",
           "yellowfin_tuna",
           "sea_cucumber"
         ]
@@ -21555,6 +21570,7 @@
           "tuna",
           "salmon",
           "red_sea_bream",
+          "black_porgy",
           "yellowfin_tuna",
           "sea_cucumber"
         ],
@@ -21572,6 +21588,7 @@
           "tuna",
           "salmon",
           "red_sea_bream",
+          "black_porgy",
           "yellowfin_tuna",
           "sea_cucumber"
         ]
