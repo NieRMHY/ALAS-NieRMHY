@@ -123,7 +123,7 @@ class CoalitionScuttleRun(Coalition, CoalitionScuttleCombat):
             logger.warning('AL does not allow single coalition with emotion < 30, '
                            'emotion control is forced to prevent_yellow_face')
             self.config.override(Emotion_Fleet1Control='prevent_yellow_face')
-        if stage == 'sp':
+        if stage == 'sp' or (event == 'coalition_20261124' and stage == 'ex'):
             self.config.override(Coalition_Fleet='multi')
 
         # Modify by MHY, 编队1/2各扣1场2点心情，第3编队（牺牲）不预估
