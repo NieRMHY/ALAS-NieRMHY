@@ -294,6 +294,11 @@ class IslandShopBase(Island, WarehouseOCR):
                 return item['name']
         return None
 
+    def _read_dish_stock(self, image):
+        return {dish['name']: (self.ocr_item_quantity(image, dish['template'], strict=True)
+                               if dish['template'] is not None else None)
+                for dish in self.shop_items}
+
     def get_warehouse_counts(self):
         """切换仓库筛选并 OCR 识别店铺所有相关商品的库存数量。
 
@@ -304,14 +309,11 @@ class IslandShopBase(Island, WarehouseOCR):
         image = self.device.screenshot()
 
         # Add by MHY, 数字兜底供普通排产使用；有限配额保留未命中与识别失败。
-        self.warehouse_observations = {}
-        for dish in self.shop_items:
-            quantity = (self.ocr_item_quantity(image, dish['template'], strict=True)
-                        if dish['template'] is not None else None)
-            self.warehouse_observations[dish['name']] = quantity
-            self.warehouse_counts[dish['name']] = quantity if quantity is not None else 0
-            if self.warehouse_counts[dish['name']]:
-                logger.info(f"{self._item_cn(dish['name'])}: {self.warehouse_counts[dish['name']]}")
+        self.warehouse_observations = self._read_dish_stock(image)
+        for name, quantity in self.warehouse_observations.items():
+            self.warehouse_counts[name] = quantity if quantity is not None else 0
+            if quantity:
+                logger.info(f"{self._item_cn(name)}: {quantity}")
 
         # Modify by MHY, 赛季任务进度直接取仓库读数：赛季页 OCR 会误读（拿铁 82 读成
         # 282），而这里每次收取/生产前读的是准确库存。记录失败不能影响生产排产。

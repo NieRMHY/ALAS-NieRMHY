@@ -144,6 +144,48 @@ class IslandJuuEatery(IslandShopBase):
         # 初始化店铺
         self.initialize_shop()
 
+    def _complete_eatery_page(self, image):
+        # Add by MHY, 滚动条、被裁切的第三排或非仓库画面都不能证明某道菜缺货。
+        if (image.shape[:2] != (720, 1280)
+                or not ISLAND_WAREHOUSE_CHECK.match_template_color(image, offset=(0, 0))
+                or image[135:575, 1149:1153].min() < 205
+                or image[484:574, 300:1115].min() < 205):
+            return None
+        visible = []
+        at_end = False
+        for _, _, button in self.warehouse_grid.generate():
+            x, y, right, bottom = button.area
+            # 空格的图标与名称区域全是浅色底；未加载的图标下若已有名牌，仍算未识别卡。
+            if image[y:bottom + 27, x:right].min() >= 205:
+                at_end = True
+                continue
+            if at_end:
+                return None
+            cell = image[y:bottom, x:right]
+            matches = [dish['name'] for dish in self.shop_items
+                       if dish['template'] is not None and dish['template'].match(cell, similarity=0.85)]
+            if len(matches) != 1 or matches[0] in visible:
+                return None
+            visible.append(matches[0])
+        return tuple(visible) if visible and at_end else None
+
+    def _read_dish_stock(self, image):
+        stock = super()._read_dish_stock(image)
+        pending = [name for name in ('rice_mango', 'strawberry_charlotte') if stock.get(name) is None]
+        if getattr(self, '_winter_meals', None) is None or not pending:
+            return stock
+        visible = self._complete_eatery_page(image)
+        if not visible or any(stock.get(name) is None for name in visible):
+            return stock
+        # 避免连续取到同一段尚未绘制完的列表；等待本身不作完整性证据。
+        self.device.sleep(0.4)
+        if visible == self._complete_eatery_page(self.device.screenshot()):
+            for name in pending:
+                if name not in visible:
+                    stock[name] = 0
+                    logger.info(f'[岛屿-啾啾简餐] 完整仓库未列出{self._item_cn(name)}，现货确认 0')
+        return stock
+
     def get_warehouse_counts(self):
         """获取简餐店商品以及芝士、牛奶等特殊材料的仓库库存。
 

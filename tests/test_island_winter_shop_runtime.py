@@ -14,6 +14,9 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
+import numpy as np
+from PIL import Image
+
 from tests.test_island_shop_production import NOW, ShopUI
 
 from module.island import island_winter_meals
@@ -134,6 +137,75 @@ class IslandWinterShopRuntimeTests(unittest.TestCase):
         paths = sorted(Path(self.state_dir.name).glob('winter_meals_*.json'))
         self.assertEqual(len(paths), 1, f'应有且只有一个冬季账本: {paths}')
         return json.loads(paths[0].read_text(encoding='utf-8'))
+
+    @staticmethod
+    def warehouse_frame(name='stock'):
+        path = Path(__file__).parent / 'fixtures' / 'island_eatery_stock' / f'{name}.png'
+        frame = np.zeros((720, 1280, 3), dtype=np.uint8)
+        with Image.open(path) as panel:
+            frame[111:653, 258:1180] = np.asarray(panel)
+        return frame
+
+    def test_complete_eatery_stock_dispatches_only_uncovered_rice(self):
+        ui = self.shop(IslandJuuEatery, post_number=2, config=winter_values(Need_rice_mango=5),
+                       working={'ISLAND_JUU_EATERY_POST1': ('rice_mango', 3)})
+        shop = ui.shop
+        shop.warehouse_filter = Mock()
+        shop.device = Mock()
+        shop.device.screenshot.return_value = self.warehouse_frame()
+        shop.get_warehouse_counts = lambda: IslandShopBase.get_warehouse_counts(shop)
+        # 真实图标定位；仅替换依赖模型的数字识别和持久化，覆盖截图至岗位派单。
+        with patch('module.island.warehouse.WarehouseQuantityDigit.ocr',
+                   lambda digit, image: digit.after_process('12')), patch(
+                   'module.island.island_season_progress.record_readings') as record:
+            ui.run()
+        self.assertEqual(record.call_args.args[0]['rice_mango'], 0)
+        self.assertEqual(shop.warehouse_observations['strawberry_charlotte'], 12)
+        self.assertEqual(ui.orders, [('rice_mango', 2, None)])
+        self.assertEqual(self.ledger()['totals']['rice_mango'], 5)
+
+    def test_unverified_eatery_pages_do_not_prove_zero(self):
+        shop = self.shop(IslandJuuEatery).shop
+        stock = self.warehouse_frame()
+        for reason, box, value in (
+                ('滚动条', (150, 190, 1149, 1153), 130),
+                ('第三排', (488, 550, 312, 370), 140),
+                ('未知图标', (150, 259, 301, 405), 150),
+                ('格子缺失', (150, 287, 301, 405), 240),
+                ('全空', (145, 574, 296, 1120), 240)):
+            with self.subTest(reason=reason):
+                image = stock.copy()
+                y1, y2, x1, x2 = box
+                image[y1:y2, x1:x2] = value
+                self.assertIsNone(shop._complete_eatery_page(image))
+        self.assertIsNone(shop._complete_eatery_page(self.warehouse_frame('filter')))
+
+    def test_different_confirmation_frame_or_unreadable_quantity_stays_unknown(self):
+        shop = self.shop(IslandJuuEatery).shop
+        shop._winter_meals = ({}, set())
+        image = self.warehouse_frame()
+        visible = shop._complete_eatery_page(image)
+        stock = {dish['name']: 12 if dish['name'] in visible else None for dish in shop.shop_items}
+        shop.device = Mock()
+        shop.device.screenshot.return_value = self.warehouse_frame('filter')
+        with patch.object(IslandShopBase, '_read_dish_stock', return_value=stock.copy()):
+            self.assertIsNone(shop._read_dish_stock(image)['rice_mango'])
+        # 同一仓库的下一帧才出现糯米饭：两张各自有效，但第一张的缺席不算数。
+        later = image.copy()
+        later[317:454, 585:689] = image[317:454, 301:405]
+        rice = shop.name_to_config['rice_mango']['template'].image
+        h, w = rice.shape[:2]
+        later[325:325+h, 595:595+w] = rice
+        self.assertIn('rice_mango', shop._complete_eatery_page(later))
+        shop.device.screenshot.return_value = later
+        with patch.object(IslandShopBase, '_read_dish_stock', return_value=stock.copy()):
+            self.assertIsNone(shop._read_dish_stock(image)['rice_mango'])
+        stock['strawberry_charlotte'] = None
+        shop.device.screenshot.return_value = image
+        with patch.object(IslandShopBase, '_read_dish_stock', return_value=stock):
+            result = shop._read_dish_stock(image)
+            self.assertIsNone(result['strawberry_charlotte'])
+            self.assertIsNone(result['rice_mango'])
 
     def test_ordinary_orders_precede_finite_then_away(self):
         ui = self.shop(
